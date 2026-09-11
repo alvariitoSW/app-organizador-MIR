@@ -3634,6 +3634,7 @@ document.addEventListener('click',e=>{
   if(a==='confirm-yes'){const r=confirmResolve;confirmResolve=null;closeModal();if(r)r(true);return;}
   act(a,el);
 });
+let searchDebounce=null;
 document.addEventListener('input',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
@@ -3643,9 +3644,15 @@ document.addEventListener('input',e=>{
     const campo=a==='food-q'?'foodQ':'gymQ';
     if(v===(ui[campo]||'').trim())return;
     ui[campo]=v;
-    const foco=document.activeElement&&document.activeElement.id;
-    render();
-    if(foco){const nx=document.getElementById(foco);if(nx){nx.focus();try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}}
+    /* el listado a filtrar es corto, pero renderGym()/renderFood() recalculan de paso totales de
+       toda tu historia (volumen semanal, PRs...): con la tecla a tumba abierta eso se nota, así que
+       se agrupan las pulsaciones en vez de repintar entero en cada una */
+    clearTimeout(searchDebounce);
+    searchDebounce=setTimeout(function(){
+      const foco=document.activeElement&&document.activeElement.id;
+      render();
+      if(foco){const nx=document.getElementById(foco);if(nx){nx.focus();try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}}
+    },140);
   }
 });
 document.addEventListener('change',e=>{

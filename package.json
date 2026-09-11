@@ -1,0 +1,11 @@
+{
+  "name": "app-organizador-mir",
+  "private": true,
+  "description": "Guardias · rotación y cocina — app de una sola página, sin build.",
+  "scripts": {
+    "test": "node tests/regression.test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}
