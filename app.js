@@ -195,12 +195,14 @@ let store, ui={tab:'week',marks:new Set(),draftPattern:null,openDays:new Set(),
   icsTxt:'',icsEncima:false};
 const allOpen=()=>store.shifts.length&&store.shifts.every(s=>ui.openDays.has(s.id));
 function load(){
-  let ok=false;
-  try{const raw=localStorage.getItem(KEY);
-    if(raw&&raw!=='undefined'&&raw!=='null'){const o=JSON.parse(raw);
+  let ok=false,raw=null,habiaAlgo=false;
+  try{raw=localStorage.getItem(KEY);
+    habiaAlgo=!!(raw&&raw!=='undefined'&&raw!=='null');
+    if(habiaAlgo){const o=JSON.parse(raw);
       if(o&&Array.isArray(o.shifts)&&o.menu&&Array.isArray(o.dishes)){store=o;ok=true;}}}catch(e){
     console.warn('no se pudo leer el planning guardado, se arranca de cero');}
-  if(!ok)store=DEFAULTS();
+  if(!ok){store=DEFAULTS();
+    if(habiaAlgo)setTimeout(function(){flash('⚠ no se ha podido leer tu planning guardado (datos dañados o de un formato antiguo): se ha cargado el ejemplo. No hemos borrado nada — tus datos anteriores siguen tal cual en el navegador',7000);},0);}
   normalize(store);
   try{const m=JSON.parse(localStorage.getItem(MKEY)||'[]');if(Array.isArray(m))ui.marks=new Set(m);}catch(e){}
   try{if(localStorage.getItem(TKEY)!=='light')document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}
@@ -265,7 +267,9 @@ function normalize(o){
     o.menu[s2.id].forEach(sl=>{if(sl.mealId&&!mids.has(sl.mealId))sl.mealId='';});});
   return o;
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){console.warn('no se pudo guardar',e);}}
+let saveFailWarned=false;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));saveFailWarned=false;}catch(e){console.warn('no se pudo guardar',e);
+  if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}}
 function saveMarks(){try{localStorage.setItem(MKEY,JSON.stringify(Array.from(ui.marks)));}catch(e){}}
 const shiftById=id=>store.shifts.find(s=>s.id===id);
 const shiftByCode=c=>store.shifts.find(s=>s.code===c)||(c&&store.shifts.find(s=>s.name.toLowerCase()===String(c).toLowerCase()));
@@ -284,7 +288,7 @@ function rotationStrip(){
     const keys=Object.keys(plan).filter(function(k){return plan[k].hasNeed;});
     const rac=Math.round(keys.reduce(function(a,k){return a+plan[k].portions;},0)*10)/10;
     const dots=codes.map(function(id){const sh=shiftById(id);
-      return `<span class="tag" style="background:${sh?sh.color+'22':'transparent'};color:${sh?sh.color:'var(--ink2)'};padding:2px 6px" title="${sh?esc(sh.name):'sin asignar'}">${sh?sh.icon:'·'}</span>`;}).join('');
+      return `<span class="tag" style="background:${sh?sh.color+'22':'transparent'};color:${sh?sh.color:'var(--ink2)'};padding:2px 6px" title="${sh?esc(sh.name):'sin asignar'}">${sh?esc(sh.icon):'·'}</span>`;}).join('');
     return `<tr><td><b>${i+1}</b></td><td>${esc(p.name)}</td><td>${dots}</td><td><b>${g}</b></td><td>${rac} rac. · ${keys.length} sesión(es)</td></tr>`;
   }).join('');
   const active=store.patterns[store.rotation.pattern];
@@ -638,7 +642,7 @@ function dayPicker(shiftId){
   const dBtn=function(d){const on=!!loose[d.id];
     return '<button class="'+(on?'on':'')+'" data-a="pick-dish" data-shift="'+shiftId+'" data-id="'+d.id+'" title="'+
       (on?'hoy hay '+rac(loose[d.id])+' — toca para quitarlas':'añadir 1 ración a un hueco de hoy')+'">'
-      +(on?'✓ ':'+ ')+d.icon+' '+esc(d.name)+' <small>'+(on?fmt(loose[d.id])+' rac. · +'+d.kcal+'k':'1 rac. · '+d.kcal+'k')+'</small></button>';};
+      +(on?'✓ ':'+ ')+esc(d.icon)+' '+esc(d.name)+' <small>'+(on?fmt(loose[d.id])+' rac. · +'+d.kcal+'k':'1 rac. · '+d.kcal+'k')+'</small></button>';};
   return '<div class="pick" data-pick="'+shiftId+'">'
     +'<h4>Elegir qué comer este día</h4>'
     +'<span class="row" style="gap:6px;width:auto"><button class="btn s" data-a="bf-quick" data-id="'+shiftId+'">☕ desayuno rápido de diario</button>'+
@@ -900,6 +904,7 @@ function buscarOffNombre(txt){
     .catch(function(e){return {ok:false,msg:'no he podido consultar: '+((e&&e.message)||'sin red')};});}
 function iniciarEscaner(){
   /* la cámara del móvil con el detector de códigos que trae Chrome; si no hay, se escribe el número */
+  if(ui.scanStream)pararEscaner();
   const v=document.getElementById('scanV');
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))
     return Promise.resolve('la cámara necesita https y permiso: escribe el código abajo, el resultado es el mismo');
@@ -966,7 +971,7 @@ function renderWeek(){
         Object.keys(dishQty(inf.items)).forEach(function(idx){const dd=dishById(idx);
           if(dd&&isBatch(dd.batchId)&&bs.indexOf(dd.batchId)<0)bs.push(dd.batchId);});
         const dishTxt=inf.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
-          return dd.icon+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
+          return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
         return '<div class="meal compact"><span class="mt">'+esc(x.time||'·')+'</span><span>'+
           '<span class="ml">'+esc(x.label||'')+'</span><span class="mn">'+dishTxt+'</span>'+
           '<span class="md">'+esc(inf.name?('🍱 '+inf.name+' · '):'')+esc(tt.kcal?(tt.kcal+' kcal · '+tt.prot+' g P'):'')+
@@ -975,10 +980,10 @@ function renderWeek(){
       :'<div class="empty">Día sin asignar: elige qué es (y si toca guardia, de qué).</div>';
     const pick='<select data-a="day-pick" data-i="'+i+'" onchange="PG.render()" style="max-width:190px">'+
       '<option value="">— sin día —</option>'+store.shifts.map(function(x){
-        return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+x.icon+' '+esc(x.name)+'</option>';}).join('')+'</select>';
+        return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>';
     const head='<span class="drday">'+d.short+(d.sub?' '+d.sub:'')+'</span>'+
       '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+
-        (sh?sh.icon+' '+esc(sh.name)+(d.guard?' · '+esc(d.guard):''):'sin asignar')+'</span>'+
+        (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' · '+esc(d.guard):''):'sin asignar')+'</span>'+
       '<span class="drsch">'+(sh?esc(dayLine(d)):'—')+'</span>'+
       (!anyDate&&sh&&rh.sleep?'<span class="drsleep">🛌 '+esc(schedLine(sh.id,null).replace(/^🛌 /,''))+'</span>':'')+
       (d.key&&sl.h!=null?'<span class="drsleep'+(sl.h<suenoCfg().min?' low':'')+'" title="mínimo '+suenoCfg().min+' h">'+
@@ -1098,7 +1103,7 @@ function serviciosCard(){
   const cur=store.rotation.month||{};
   return '<div class="card"><h2>🔁 Tus servicios <span class="mini">'+
     (r.servicios||[]).length+' · hasta '+(hm?MON[+hm[2]-1]+' '+hm[1]:'—')+'</span></h2>'+
-    '<p class="note">Rotas <b>'+(r.servicios||[]).join(', ')+'</b>. Nada de urgencias ni UMI: aquí manda tu lista. '+
+    '<p class="note">Rotas <b>'+(r.servicios||[]).map(esc).join(', ')+'</b>. Nada de urgencias ni UMI: aquí manda tu lista. '+
     'Elije desde qué mes, cuántos meses se está en cada servicio y date al botón; la app escribe en cada mes el servicio que toca '+
     'y sus guardias, que luego mueves tú día a día.</p>'+
     '<div class="fgrid c3"><label class="fld">Empieza en<input type="month" id="svcDesde" value="'+desde+'" data-a="svc-m"></label>'+
@@ -1116,8 +1121,8 @@ function serviciosCard(){
         '<button class="btn d s" data-a="svc-del" data-ix="'+ix+'" title="quitar">×</button></span>';}).join('')+
       '<button class="btn s" data-a="svc-add">+ servicio</button></div></div>'+
     (ciclo.length?'<div style="margin-top:10px"><table><thead><tr><th>Mes</th><th>Servicio</th><th>Guardias</th><th>Puestas</th></tr></thead><tbody>'+
-      +ciclo.map(function(c){const mm=cur[c.key]||{},gc=guardCount(c.y,c.m);
-        return '<tr><td>'+MON[c.m]+' '+c.y+'</td><td>'+(mm.service||c.service)+
+      ciclo.map(function(c){const mm=cur[c.key]||{},gc=guardCount(c.y,c.m);
+        return '<tr><td>'+MON[c.m]+' '+c.y+'</td><td>'+esc(mm.service||c.service)+
           (mm.service?'':' <span class="mini">· propuesto</span>')+'</td><td>'+(mm.guardias!=null?mm.guardias:r.guardiasMes)+
           '</td><td>'+(gc.any||'—')+'</td></tr>';}).join('')+'</tbody></table></div>':'')+
     '</div>';}
@@ -1130,7 +1135,7 @@ function renderMonth(){
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+'">'+
       '<span class="dnum">'+d.date.getDate()+'</span>'+
-      '<span class="dnm">'+(d.shiftId?d.icon+' '+esc(d.name):'·')+'</span>'+
+      '<span class="dnm">'+(d.shiftId?esc(d.icon)+' '+esc(d.name):'·')+'</span>'+
       (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,9))+'</span>':'')+
       (d.vac?'<span class="dflag vac">VAC</span>':'')+
       (d.jor?'<span class="djob">'+fmtTimeOut(d.jor.start)+'–'+fmtTimeOut(d.jor.end)+'</span>':'')+
@@ -1194,17 +1199,17 @@ function renderMonth(){
       ${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
         return `<div class="row" style="padding:4px 0;border-top:1px dashed var(--line);font-size:12px">
           <b style="min-width:96px">${DAYSH[d.wday]} ${d.date.getDate()}</b>
-          <span style="min-width:132px">${d.icon} ${esc(sh.name)}${d.guard?' · '+esc(d.guard):''}</span>
+          <span style="min-width:132px">${esc(d.icon)} ${esc(sh.name)}${d.guard?' · '+esc(d.guard):''}</span>
           <span class="mini">${esc(dayLine(d))}</span></div>`;}).join('')||'<div class="empty">Mes vacío: reparte las guardias o asígnalas día a día.</div>'}</div>
   </div>`;}
 function renderDayModal(dateStr){
   const d=parseDate(dateStr);if(!d)return;
   const sel='<select data-a="day-sel" data-key="'+iso(d)+'" style="max-width:200px"><option value="">— sin día —</option>'+
-    store.shifts.map(function(x){return '<option value="'+x.id+'" '+(dayInfo(iso(d)).shiftId===x.id?'selected':'')+'>'+x.icon+' '+esc(x.name)+'</option>';}).join('')+'</select>';
+    store.shifts.map(function(x){return '<option value="'+x.id+'" '+(dayInfo(iso(d)).shiftId===x.id?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>';
   const info=dayInfo(dateStr),key=iso(d);
   const opts=store.shifts.map(function(s){
     return '<button class="btn s '+(info.shiftId===s.id?'p':'')+'" data-a="day-set" data-key="'+key+'" data-sid="'+s.id+'" data-guard="">'+
-      s.icon+' '+esc(s.name)+'</button>';}).join('');
+      esc(s.icon)+' '+esc(s.name)+'</button>';}).join('');
   const gd=store.shifts.filter(isGuardia),tipos=gTipos();
   const guardBtn=gd.length?('<span class="mini">'+(d.getDay()===6
       ?'eres sábado: el saliente cae en lunes':'el día siguiente queda saliente solo')+'</span>'+
@@ -1668,7 +1673,7 @@ function renderTypes(){
     const t=dayTotals(sh.id);
     const slots=slotsFor(sh.id);
     return `<div class="card" data-shift="${sh.id}">
-      <h2>${sh.icon} ${esc(sh.name)}
+      <h2>${esc(sh.icon)} ${esc(sh.name)}
         <span class="tag">entrada ${esc(sh.start||'—')}</span><span class="tag">salida ${esc(sh.end||'—')}</span>
         <span class="tag">carga ${esc(sh.intensity||'—')}</span>
         <span class="sp"></span><span class="mini no-print">${esc(sh.id)}</span></h2>
@@ -1684,13 +1689,13 @@ function renderTypes(){
     <p class="note">Bloques reutilizables (el táper de guardia, el brunch del saliente…). Un cambio aquí actualiza todos los días que las usen.</p>
     ${store.meals.map(m=>{const t=totals(m.items);return `<div class="row" style="justify-content:space-between;padding:7px 0;border-top:1px dashed var(--line)">
       <span><b>${esc(m.name)}</b> <span class="mini">${t.kcal} kcal · ${t.prot} g P</span><br>
-      <span class="mini">${m.items.map(it=>{const d=dishById(it.id);return d?d.icon+' '+esc(d.name)+(num(it.portions,1)>1?' ×'+fmt(it.portions):''):''}).filter(Boolean).join(' + ')}${m.note?' · '+esc(m.note):''}</span></span>
+      <span class="mini">${m.items.map(it=>{const d=dishById(it.id);return d?esc(d.icon)+' '+esc(d.name)+(num(it.portions,1)>1?' ×'+fmt(it.portions):''):''}).filter(Boolean).join(' + ')}${m.note?' · '+esc(m.note):''}</span></span>
       <span class="row"><button class="btn s" data-a="meal-edit" data-id="${m.id}">Editar</button><button class="btn d" data-a="meal-del" data-id="${m.id}">×</button></span></div>`}).join('')}
     <div class="row" style="margin-top:10px"><button class="btn s" data-a="meal-new">+ Crear comida</button></div></div>`;
   const dishes=`<div class="card"><h2>Catálogo de platos</h2>
     <p class="note">Cada plato define cuántas raciones salen por tanda, kcal/proteína por ración y su lista de la compra.</p>
     ${store.dishes.map(d=>{const b=batchById(d.batchId);return `<div class="row" style="justify-content:space-between;padding:7px 0;border-top:1px dashed var(--line)">
-      <span><b>${d.icon} ${esc(d.name)}</b><br><span class="mini">${rac(d.portions)} por tanda · ${d.kcal} kcal · ${d.prot} g P por ración${b&&isBatch(d.batchId)?' · ':''}${b&&isBatch(d.batchId)?'<span class="tag '+tagFor(d.batchId)+'">'+esc(b.label)+'</span>':''}</span></span>
+      <span><b>${esc(d.icon)} ${esc(d.name)}</b><br><span class="mini">${rac(d.portions)} por tanda · ${d.kcal} kcal · ${d.prot} g P por ración${b&&isBatch(d.batchId)?' · ':''}${b&&isBatch(d.batchId)?'<span class="tag '+tagFor(d.batchId)+'">'+esc(b.label)+'</span>':''}</span></span>
       <span class="row"><button class="btn s" data-a="dish-edit" data-id="${d.id}">Editar</button><button class="btn d" data-a="dish-del" data-id="${d.id}">×</button></span></div>`}).join('')}
     <div class="row" style="margin-top:10px"><button class="btn s" data-a="dish-new">+ Nuevo plato</button></div></div>`;
   $('#main').innerHTML=`<div class="grid">${cards}${meals}${dishes}</div>`;
@@ -1698,7 +1703,7 @@ function renderTypes(){
 function slotRow(shiftId,s,i,count){
   const inf=slotItems(shiftId,s);
   const mealOpt=`<option value="">platos sueltos</option>${store.meals.map(m=>`<option value="${m.id}" ${s.mealId===m.id?'selected':''}>🍱 ${esc(m.name)}</option>`).join('')}`;
-  const dishOpt=id=>store.dishes.map(d=>`<option value="${d.id}" ${d.id===id?'selected':''}>${d.icon} ${esc(d.name)}${isBatch(d.batchId)?' · '+esc((batchById(d.batchId)||{}).label||''):''}</option>`).join('');
+  const dishOpt=id=>store.dishes.map(d=>`<option value="${d.id}" ${d.id===id?'selected':''}>${esc(d.icon)} ${esc(d.name)}${isBatch(d.batchId)?' · '+esc((batchById(d.batchId)||{}).label||''):''}</option>`).join('');
   const t=totals(inf.items);
   const sub=inf.items.map((it,j)=>`<span class="tag"><select style="border:0;background:transparent;font-size:11px;padding:0;max-width:170px" data-a="it-dish" data-i="${i}" data-j="${j}" data-shift="${shiftId}">${dishOpt(it.id)}</select>
      <input type="number" step="0.5" min="0.5" style="width:44px;border:0;background:transparent;font-size:11px;padding:0" value="${fmt(num(it.portions,1))}" data-a="it-port" data-i="${i}" data-j="${j}" data-shift="${shiftId}">
@@ -1740,7 +1745,7 @@ function renderBatches(){
       <div class="cols">
         <div><b class="mini">TANDAS A HACER</b><ul>
           ${items.map(d=>{const x=u.items.find(i=>i.dish.id===d.id)||{needPort:0,runs:0,cooked:0};
-            return `<li>${d.icon} <b>${esc(d.name)}</b><br><span class="mini">${x.needPort?`tocan ${x.needPort} rac. → <b>${x.runs} tanda${x.runs>1?'s':''}</b> (${x.cooked} rac.)`:'no entra esta semana'}${x.cooked>x.needPort&&x.needPort?` · sobran ${Math.round((x.cooked-x.needPort)*10)/10} para congelar`:''}</span></li>`}).join('')}
+            return `<li>${esc(d.icon)} <b>${esc(d.name)}</b><br><span class="mini">${x.needPort?`tocan ${x.needPort} rac. → <b>${x.runs} tanda${x.runs>1?'s':''}</b> (${x.cooked} rac.)`:'no entra esta semana'}${x.cooked>x.needPort&&x.needPort?` · sobran ${Math.round((x.cooked-x.needPort)*10)/10} para congelar`:''}</span></li>`}).join('')}
         </ul></div>
         <div><b class="mini">PASOS</b><ul>
           ${items.map(d=>`<li><b>${esc(d.name)}</b><ul>${(d.steps||[]).map(s=>`<li class="mini">${esc(s)}</li>`).join('')}</ul></li>`).join('')}
@@ -1853,7 +1858,7 @@ function renderShop(){
       <div class="card"><h2>Básicos del desayuno de diario</h2>
         <p class="note">Whey, leche de proteínas, café, fruta y nueces: no son tanda de cocina, pero se gastan cada día y hay que reponerlos.</p>
         <ul>${(function(){const st0=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);});
-          return st0.length?st0.map(function(x){return '<li class="mini"><b>'+fmt(x.q)+'×</b> '+x.d.icon+' '+esc(x.d.name)+
+          return st0.length?st0.map(function(x){return '<li class="mini"><b>'+fmt(x.q)+'×</b> '+esc(x.d.icon)+' '+esc(x.d.name)+
             (x.viaMeal?' <span class="mini">· viene en comida armada</span>':'')+'</li>';}).join('')
             :'<li class="mini">Ningún desayuno rápido montado esta semana: nada que reponer de esto.</li>';})()}</ul></div>
       <div class="card"><h2>Para el carro</h2><ul>${html||'<div class="empty">Sin tandas esta semana: nada que comprar fresco.</div>'}</ul></div>
@@ -1925,7 +1930,7 @@ function renderCfg(){
     return `<tr>
       <td style="min-width:150px"><input value="${esc(p.name)}" data-a="pat-name" data-id="${p.id}"><input value="${esc(p.note||'')}" placeholder="nota" data-a="pat-note" data-id="${p.id}" style="margin-top:4px;font-size:11.5px"></td>
       <td>${p.days.map((c,di)=>`<select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="width:44px;margin:0 2px 3px 0">${store.shifts.map(s=>`<option value="${esc(s.code)}" ${s.code===c?'selected':''}>${esc(s.code)}</option>`).join('')}</select>`).join('')}</td>
-      <td style="width:120px"><div class="row" style="gap:3px">${p.days.map(c=>{const s=shiftById(resolveCode(c));return `<span class="tag" style="background:${s?s.color+'22':'#ccc'};color:${s?s.color:'inherit'};padding:2px 6px">${s?s.icon:'·'}</span>`}).join('')}</div></td>
+      <td style="width:120px"><div class="row" style="gap:3px">${p.days.map(c=>{const s=shiftById(resolveCode(c));return `<span class="tag" style="background:${s?s.color+'22':'#ccc'};color:${s?s.color:'inherit'};padding:2px 6px">${s?esc(s.icon):'·'}</span>`}).join('')}</div></td>
       <td style="width:40px"><b>${g}</b></td>
       <td style="width:60px"><button class="btn s ${pi===r.pattern?'p':''}" data-a="pat-use" data-id="${p.id}">usar</button></td>
       <td style="width:46px"><button class="btn s" data-a="pat-copy" data-id="${p.id}">dupl</button></td>
@@ -1938,7 +1943,7 @@ function renderCfg(){
     const falta=(h!=null&&h<SC.min)?Math.round((SC.min-h)*60):0;
     const cells=RKEYS.map(function(k){return '<td style="width:78px"><input type="time" value="'+esc(rh[k[0]]||'')+
       '" data-a="rh-f" data-id="'+sh.id+'" data-f="'+k[0]+'"></td>';}).join('');
-    return '<tr><td>'+sh.icon+' '+esc(sh.name)+'</td>'+cells+
+    return '<tr><td>'+esc(sh.icon)+' '+esc(sh.name)+'</td>'+cells+
       '<td><span class="mini" style="'+(falta?'color:var(--warn);font-weight:700':'')+'">'+(h?fmtHM(h*60):'—')+
       (falta?('<br><span class="mini" style="color:var(--warn)">faltan '+falta+' min</span>'):'')+'</span></td>'+
       '<td><span class="mini">'+(rec?('🛌 '+rec+'<br>🍽 '+(ven?ven.from+'–'+ven.to:'—')):'—')+'</span></td>'+
@@ -2121,6 +2126,7 @@ function render(){
   }
 }
 function renderNow(){
+  if(ui.scanStream)pararEscaner();
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
   $('#tabs').innerHTML=TABS.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}">${t[1]}${BADGE[t[0]]?'<span class="tb">'+BADGE[t[0]]+'</span>':''}</button>`).join('');
@@ -2138,8 +2144,8 @@ function renderNow(){
   ({week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderWeek)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
 }
-function flash(msg){let f=$('#flash');if(!f){f=document.createElement('div');f.id='flash';document.body.appendChild(f);}
-  f.textContent=msg;clearTimeout(f._t);f._t=setTimeout(()=>f.remove(),2600);}
+function flash(msg,ms){let f=$('#flash');if(!f){f=document.createElement('div');f.id='flash';document.body.appendChild(f);}
+  f.textContent=msg;clearTimeout(f._t);f._t=setTimeout(()=>f.remove(),ms||2600);}
 
 /* ===================== modales ===================== */
 let modalSave=null,mealCtx=null,draftMeal=null,mealSlot=null;
@@ -2226,7 +2232,7 @@ function editMeal(id,opts){
     <label class="fld">Nota (cuándo / cómo)<input value="${esc(o.note||'')}" data-k="note"></label></div>
     <div style="margin-top:12px"><b class="mini">PLATOS QUE LLEVA</b>
     ${o.items.map((it,j)=>`<div class="row" style="margin-top:6px">
-      <select style="flex:1 1 240px" data-k="md-${j}">${store.dishes.map(d=>`<option value="${d.id}" ${it.id===d.id?'selected':''}>${d.icon} ${esc(d.name)}</option>`).join('')}</select>
+      <select style="flex:1 1 240px" data-k="md-${j}">${store.dishes.map(d=>`<option value="${d.id}" ${it.id===d.id?'selected':''}>${esc(d.icon)} ${esc(d.name)}</option>`).join('')}</select>
       <input type="number" step="0.5" min="0.5" style="width:76px" value="${fmt(num(it.portions,1))}" data-k="mp-${j}" title="raciones">
       <button class="btn s" data-a="m-del-item" data-j="${j}">quitar</button></div>`).join('')||'<div class="empty">Sin platos: añade uno.</div>'}
       <div class="row" style="margin-top:9px"><button class="btn s" data-a="m-add-item">+ Añadir plato</button>
@@ -2292,7 +2298,7 @@ function editDayRhythm(dateStr){
 }
 function editDayRhythmShift(shiftId){
   const sh=shiftById(shiftId);if(!sh)return;
-  openModal('Horas de '+sh.icon+' '+esc(sh.name)+' <span class="mini">· se editan en la tabla 2 de «Turno y rotación»</span>',
+  openModal('Horas de '+esc(sh.icon)+' '+esc(sh.name)+' <span class="mini">· se editan en la tabla 2 de «Turno y rotación»</span>',
     rhythmForm(Object.assign({},(store.rhythm||{})[shiftId]||{}),null),function(){
       const v=fields(),cur=(store.rhythm||{})[shiftId]||{};
       RKEYS.forEach(function(k){if(v[k[0]]!==undefined)cur[k[0]]=v[k[0]];});
@@ -2328,8 +2334,9 @@ function act(a,el){
     case 'copy':copy(JSON.stringify(store,null,1));break;
     case 'import':
       try{const raw=$('#importBox').value.trim();if(!raw)throw ' vacío';const o=JSON.parse(raw);
-        if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu)throw 'x';
-        store=o;save();render();flash('Importado ✔');
+        if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
+        if(!confirm('¿Sustituir TODOS tus datos actuales por este JSON? No se puede deshacer — si quieres conservar lo que tienes, cópialo antes con «JSON»/«copiar».'))break;
+        normalize(o);store=o;save();render();flash('Importado ✔');
       }catch(e){flash('Ese JSON no es válido');}break;
     case 'reset':if(confirm('¿Sustituir todo por el ejemplo por defecto?')){store=DEFAULTS();save();render();flash('Ejemplo restaurado');}break;
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
