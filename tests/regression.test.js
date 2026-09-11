@@ -126,6 +126,21 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   await page.click('[data-a="m-cancel"]');
   await page.waitForTimeout(150);
 
+  // 5b) subir un .ics con el selector de archivo lo lee y lo analiza solo (sin copiar/pegar a mano)
+  const icsFixture = path.join(require('os').tmpdir(), 'regression-test.ics');
+  fs.writeFileSync(icsFixture,
+    'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20260915\r\nSUMMARY:Guardia Urgencias\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n');
+  const icsFile = await page.$('#icsFile');
+  await icsFile.setInputFiles(icsFixture);
+  await page.waitForTimeout(300);
+  const icsUpload = await page.evaluate(() => ({
+    boxHasContent: (document.getElementById('icsBox') || {}).value?.includes('Guardia Urgencias'),
+    prevOk: window.PG.ui.icsPrev ? window.PG.ui.icsPrev.ok : null,
+  }));
+  fs.unlinkSync(icsFixture);
+  check('subir un archivo .ics lo lee y lo analiza automáticamente',
+    icsUpload.boxHasContent && icsUpload.prevOk === true, JSON.stringify(icsUpload));
+
   // 6) ningún confirm() nativo del navegador (todo pasa por el modal propio)
   check('no ha aparecido ningún confirm() nativo', nativeDialogs.length === 0, JSON.stringify(nativeDialogs));
 

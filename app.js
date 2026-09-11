@@ -2128,9 +2128,12 @@ function renderData(){
       ${calNotas()}</div>
     <div class="card"><h2>📅 Tu calendario de Google · 2 · para dentro</h2>
       <p class="note">Exporta tu calendario de Google a <code>.ics</code> (⚙ → Importar y exportar → Exportar calendario),
-      pégalo aquí y la app reconoce tus días. Antes de escribir nada te enseña <b>lo que va a hacer y lo que deja como
-      está</b>, con el título de cada evento y su hora.</p>
-      <textarea id="icsBox" rows="7" data-a="ics-in" style="margin-top:6px" placeholder="BEGIN:VCALENDAR&#10;BEGIN:VEVENT&#10;DTSTART;VALUE=DATE:20260911&#10;SUMMARY:Guardia Urgencias&#10;END:VEVENT&#10;END:VCALENDAR">${esc(ui.icsTxt||'')}</textarea>
+      sube aquí ese archivo (o pégalo a mano abajo) y la app reconoce tus días. Antes de escribir nada te enseña
+      <b>lo que va a hacer y lo que deja como está</b>, con el título de cada evento y su hora.</p>
+      <div class="row" style="margin-top:8px;align-items:center">
+        <label class="fld" style="flex:0 0 auto">archivo .ics<input type="file" id="icsFile" data-a="ics-file" accept=".ics,text/calendar"></label>
+        <span class="mini">se lee aquí mismo, en tu navegador — no se sube a ningún sitio</span></div>
+      <textarea id="icsBox" rows="7" data-a="ics-in" style="margin-top:8px" placeholder="BEGIN:VCALENDAR&#10;BEGIN:VEVENT&#10;DTSTART;VALUE=DATE:20260911&#10;SUMMARY:Guardia Urgencias&#10;END:VEVENT&#10;END:VCALENDAR">${esc(ui.icsTxt||'')}</textarea>
       <div class="row" style="margin-top:8px">
         <label class="fld">empezar a mirar desde<input type="date" id="icsDesde" data-a="cal-ics-desde" value="${esc(ui.icsDesde||calIniMes(iso(monthDate)))}"></label>
         <label class="fld">y hasta<input type="date" id="icsHasta" data-a="cal-ics-hasta" value="${esc(ui.icsHasta||calFinMes(iso(monthDate)))}"></label>
@@ -3753,6 +3756,13 @@ document.addEventListener('change',e=>{
     case 'wk-set':{const d=parseDate(el.value);if(d){weekDate=mondayOf(d);render();}break;}
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
     case 'rot-anchor':{if(el.value){store.rotation.anchor=el.value;store.rotation.anchorSet=true;save();render();}break;}
+    case 'ics-file':{const f=el.files&&el.files[0];if(!f)break;
+      const rd=new FileReader();
+      rd.onload=function(){ui.icsTxt=String(rd.result||'');
+        const box=document.getElementById('icsBox');if(box)box.value=ui.icsTxt;
+        icsAnalizar();};
+      rd.onerror=function(){flash('no he podido leer ese archivo: pégalo a mano en la caja de abajo');};
+      rd.readAsText(f);break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
     case 'pat-name':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.name=el.value;save();}break;}
     case 'pat-note':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.note=el.value;save();}break;}
