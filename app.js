@@ -189,7 +189,20 @@ function DEFAULTS(){return {
 };}
 
 /* ===================== store ===================== */
-const KEY='planGuardias.v1', MKEY='planGuardias.marks.v1', TKEY='planGuardias.theme';
+const KEY='planGuardias.v1', MKEY='planGuardias.marks.v1', TKEY='planGuardias.theme',
+  BKEY='planGuardias.lastBackup', FKEY='planGuardias.firstUse', NKEY='planGuardias.backupNag';
+function marcarBackup(){try{localStorage.setItem(BKEY,String(Date.now()));}catch(e){}}
+function diasDesdeBackup(){try{const t=+localStorage.getItem(BKEY);
+  return t?Math.floor((Date.now()-t)/864e5):null;}catch(e){return null;}}
+function diasDesdePrimerUso(){try{let t=+localStorage.getItem(FKEY);
+  if(!t){t=Date.now();localStorage.setItem(FKEY,String(t));}
+  return Math.floor((Date.now()-t)/864e5);}catch(e){return 999;}}
+function avisarBackupSiToca(){
+  const db=diasDesdeBackup(),dp=diasDesdePrimerUso();
+  if(!((db===null&&dp>13)||(db!==null&&db>13)))return;
+  try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
+    localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
+  setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
 let store, ui={tab:'week',marks:new Set(),draftPattern:null,openDays:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false};
@@ -1495,7 +1508,8 @@ function renderFood(){
     '<div class="card"><h2>📷 Escanear el paquete (Mercadona y compañía)</h2>'+
     '<p class="note">Se abre la cámara, enfocas el código de barras y la app lo busca en Open Food Facts: te guarda el producto con sus '+
     'kcal y su proteína por 100 g. Hace falta https y dar permiso a la cámara; si tu navegador no lee códigos, escribe el número que va '+
-    'debajo del barras: el resultado es el mismo.</p>'+
+    'debajo del barras: el resultado es el mismo. <b>El código de barras (no tu nombre ni nada tuyo) sale de tu dispositivo hacia '+
+    'Open Food Facts</b>, un servicio externo, para poder consultarlo — el vídeo de la cámara no sale de aquí.</p>'+
     '<div class="scanbox" id="scanBox"><video id="scanV" playsinline muted></video></div>'+
     '<div class="row"><button class="btn p" data-a="scan-start">📷 abrir la cámara</button>'+
     '<button class="btn s" data-a="scan-stop">parar</button>'+
@@ -1520,7 +1534,8 @@ function renderFood(){
     armarioHtml(f,prods,ver,sel)+
     '</div>'+
     '<div class="card"><h2>🎯 Objetivo y semana</h2>'+
-    '<p class="note">El objetivo no te lo impone nadie: ponlo tú o saca la media de tus propios menús.</p>'+
+    '<p class="note">El objetivo no te lo impone nadie: ponlo tú o saca la media de tus propios menús. '+
+    '<b>Esto no sustituye el criterio de un nutricionista o de tu médico</b> — es sólo una cuenta para saber de cuánto hablas, no una pauta.</p>'+
     '<div class="fgrid c3"><label class="fld">kcal al día<input type="number" min="0" max="6000" step="50" value="'+(+ob.kcal||0)+
       '" data-a="food-ob" data-k="kcal"></label>'+
     '<label class="fld">proteína (g)<input type="number" min="0" max="400" step="5" value="'+(+ob.prot||0)+'" data-a="food-ob" data-k="prot"></label>'+
@@ -2053,13 +2068,19 @@ function renderData(){
         <button class="btn s" data-a="cal-url">leer la URL</button></div>
       <p class="mini" style="margin-top:4px">Sólo <code>https://</code> y sólo si ese servidor deja leer desde fuera
       (en Google, «disponible para cualquier persona» + la URL pública del calendario). Si falla, no toca nada:
-      pega el fichero a mano.</p>
+      pega el fichero a mano. <b>Ojo:</b> es tu navegador el que pide esa URL directamente, sin pasar por ningún
+      servidor nuestro — quien aloje ese calendario puede ver que alguien lo ha leído, como al abrir cualquier enlace.</p>
       <p class="mini" style="margin-top:6px">la app no se conecta a Google por su cuenta (harían falta claves y un servidor):
       lee y escribe ficheros <code>.ics</code>, que es el idioma común de los calendarios. El <code>IMPORT_TAG</code>
       y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p></div>
     <div class="card"><h2>Exportar / importar JSON</h2>
-      <p class="note">Todo vive en este navegador. Descarga el JSON para llevártelo al móvil o para que te lo edite; se vuelve a meter aquí mismo.</p>
-      <div class="row"><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
+      <p class="note"><b>Todo vive sólo en este navegador</b>: no hay cuenta ni servidor detrás, y nada se comparte solo entre compañeros.
+      Si quieres pasarte el cuadrante a otro móvil, compartirlo con alguien o tener una copia por si acaso, descarga el JSON — es la
+      única copia de seguridad que existe, así que conviene hacerla de vez en cuando.</p>
+      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>13?'color:var(--warn);font-weight:700':''}">
+      ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
+        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>13?' — te toca otra':''))}</p>
+      <div class="row" style="margin-top:6px"><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div></div>
@@ -2356,8 +2377,8 @@ function act(a,el){
     case 'mode-date':store.rotation.mode='date';save();render();break;
     case 'clear-overrides':store.rotation.shiftByDay={};store.rotation.daySet={};store.rotation.dayRhythm={};
       save();render();flash('Días vuelve a la rotación (y se quita lo escrito a mano en el calendario)');break;
-    case 'export':dl();break;
-    case 'copy':copy(JSON.stringify(store,null,1));break;
+    case 'export':dl();marcarBackup();render();break;
+    case 'copy':copy(JSON.stringify(store,null,1));marcarBackup();render();break;
     case 'import':
       try{const raw=$('#importBox').value.trim();if(!raw)throw ' vacío';const o=JSON.parse(raw);
         if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
@@ -3699,3 +3720,4 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS};
 load();
 render();
+avisarBackupSiToca();
