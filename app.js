@@ -401,8 +401,9 @@ function vacationOf(dateStr){const v=vacMap()[dateStr];if(!v)return null;const v
   return {ix:v.ix,shiftId:v.shiftId,label:v.label,start:vs?vs.start:'',end:vs?vs.end:''};}
 function vacDays(y,m){return monthDays(y,m).filter(function(d){return d.vac;}).length;}
 function addVacation(start,end,label){
-  const s0=parseDate(start),e0=parseDate(end);
+  let s0=parseDate(start),e0=parseDate(end);
   if(!s0||!e0)return 'pon dos fechas válidas (aaaa-mm-dd)';
+  if(e0<s0){const t=s0;s0=e0;e0=t;}   /* si el fin queda antes que el inicio, se giran: nunca un rango al revés */
   if(!store.rotation.vacaciones)store.rotation.vacaciones=[];
   store.rotation.vacaciones.push({start:iso(s0),end:iso(e0),label:String(label||'').trim()});
   const n=Math.round((Date.UTC(e0.getFullYear(),e0.getMonth(),e0.getDate())
@@ -1051,7 +1052,8 @@ function renderWeek(){
 /* ===================== render: mes (calendario y guardias) ===================== */
 let monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);
 function vacRangeRow(v,ix){
-  const a=parseDate(v.start),b=parseDate(v.end);
+  let a=parseDate(v.start),b=parseDate(v.end);
+  if(a&&b&&b<a){const t=a;a=b;b=t;}   /* datos antiguos guardados al revés: se muestran ya girados */
   const n=(a&&b)?Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000)+1:0;
   return '<div class="row" style="padding:5px 0;border-top:1px dashed var(--line);font-size:13px">'+
     '<b style="min-width:150px">'+(a?a.getDate()+' '+MON[a.getMonth()]:'?')+' → '+(b?b.getDate()+' '+MON[b.getMonth()]:'?')+'</b>'+
@@ -3257,13 +3259,24 @@ function icsHM(t){const m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim());
 function icsCompacta(t){return icsHM(t).replace(':','')+'00';}
 function icsTimestamp(d){const p=function(n){return String(n).padStart(2,'0');};
   return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
-function icsFecha(v){
+function tzWallToLocal(y,mo,d,h,mi,s,tz){
+  /* "las 8:00 en Europe/Madrid" -> el Date real que le corresponde, para leerlo luego en la hora de este navegador */
+  try{
+    const guess=Date.UTC(y,mo,d,h,mi,s||0);
+    const dtf=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const p=dtf.formatToParts(new Date(guess)).reduce(function(a,x){a[x.type]=x.value;return a;},{});
+    const comoUtc=Date.UTC(+p.year,+p.month-1,+p.day,(+p.hour)%24,+p.minute,+p.second);
+    return new Date(guess-(comoUtc-guess));
+  }catch(e){return null;}}
+function icsFecha(v,tz){
   /* 20260911, 20260911T080000, 20260911T060000Z */
   const m=/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/.exec(String(v||'').trim());
   if(!m)return null;
-  const hh=m[4]?String(Math.min(23,+m[4])).padStart(2,'0'):'';
-  return {key:m[1]+'-'+m[2]+'-'+m[3],hm:hh?(hh+':'+((+m[5]||0)<10?'0'+(+m[5]||0):''+(+m[5]||0))):'',
-    allDay:!m[4],utc:!!m[7]};}   /* la Z es el grupo 7: con el 6 toda hora con segundos parecía UTC */
+  let hh=m[4]?String(Math.min(23,+m[4])).padStart(2,'0'):'',mi=+m[5]||0,key=m[1]+'-'+m[2]+'-'+m[3],tzOk=false;
+  if(m[4]&&tz&&!m[7]){const loc=tzWallToLocal(+m[1],+m[2]-1,+m[3],+m[4],mi,+m[6]||0,tz);
+    if(loc){key=iso(loc);hh=String(loc.getHours()).padStart(2,'0');mi=loc.getMinutes();tzOk=true;}}
+  return {key:key,hm:hh?(hh+':'+(mi<10?'0'+mi:''+mi)):'',
+    allDay:!m[4],utc:!!m[7],tzAplicada:tzOk};}   /* la Z es el grupo 7: con el 6 toda hora con segundos parecía UTC */
 function calFinMes(d){const x=parseDate(d)||new Date();
   /* el día 0 del mes siguiente: así febrero de un bisiestro acaba en 29 y no revienta en 31 */
   return iso(new Date(x.getFullYear(),x.getMonth()+1,0,12));}
@@ -3382,7 +3395,7 @@ function icsPreviewHTML(p){
 function icsUnfold(t){/* el .ics pliega las líneas largas: se vuelve a pegar lo que sigue, conservando el espacio */
   return String(t||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n([ \t])/g,'$1');}
 function parseIcs(txt){
-  const src=icsUnfold(txt),ev=[],avisos=[];
+  const src=icsUnfold(txt),ev=[],avisos=[],tzsFallidas=new Set();
   const re=/BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;let m;
   while((m=re.exec(src))){
     const f={},cab=m[1].split('\n');
@@ -3391,11 +3404,14 @@ function parseIcs(txt){
       const multi=/^(CATEGORIES|COMMENT|CONFERENCE|REQUEST-STATUS|X-)/i.test(k);
       if(!multi&&f[k]!==undefined)return;
       f[k]=l.slice(i+1).trim();
-      if(/VALUE=DATE/i.test(pre))f.__allDay=1;});
-    const ini=icsFecha(f.DTSTART);
+      if(/VALUE=DATE/i.test(pre))f.__allDay=1;
+      const tzm=/;TZID=([^;:]+)/i.exec(pre);if(tzm)f[k+'_TZID']=tzm[1].replace(/^"|"$/g,'');});
+    const ini=icsFecha(f.DTSTART,f.DTSTART_TZID);
     if(!ini){avisos.push('un evento sin fecha clara: me lo salto');continue;}
     if(ini.utc)avisos.push('viene en UTC (la Z final): la hora puede cuadrar una o dos horas fuera');
-    const fin=icsFecha(f.DTEND||'');
+    if(f.DTSTART_TZID&&!ini.tzAplicada&&!tzsFallidas.has(f.DTSTART_TZID)){tzsFallidas.add(f.DTSTART_TZID);
+      avisos.push('la zona horaria «'+f.DTSTART_TZID+'» no la reconoce este navegador: la hora se ha leído tal cual, puede que no cuadre');}
+    const fin=icsFecha(f.DTEND||'',f.DTEND_TZID);
     let finKey=fin?fin.key:ini.key;
     /* en los eventos de todo el día el DTEND es el día siguiente (exclusivo): el último día que ocupa es el de antes */
     if(!ini.hm&&fin&&fin.key>ini.key)finKey=iso(addDays(parseDate(fin.key),-1));
