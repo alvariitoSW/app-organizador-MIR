@@ -65,6 +65,19 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   const monthText = await page.evaluate(() => document.getElementById('main').innerText);
   check('serviciosCard no pinta NaN', !monthText.includes('NaN'), monthText.includes('NaN') ? 'apareció "NaN" en la vista de mes' : '');
 
+  // 1b) vacMap() está memorizada (informe de rendimiento) — comprobar que la caché se invalida al cambiar datos
+  const vacCache = await page.evaluate(() => {
+    const before = window.PG.vacationOf('2027-03-15');
+    window.PG.addVacation('2027-03-10', '2027-03-20', 'test-cache');
+    const after = window.PG.vacationOf('2027-03-15');
+    window.PG.delVacation(window.PG.store.rotation.vacaciones.length - 1);
+    const afterDel = window.PG.vacationOf('2027-03-15');
+    return { before, after, afterDel };
+  });
+  check('la caché de vacMap() se invalida al añadir/quitar vacaciones',
+    vacCache.before === null && !!vacCache.after && vacCache.afterDel === null,
+    JSON.stringify(vacCache));
+
   // 2) addVacation ordena un rango invertido en vez de guardar días negativos
   const vac = await page.evaluate(() => {
     const before = window.PG.store.rotation.vacaciones.length;

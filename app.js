@@ -314,7 +314,10 @@ const tagFor=id=>{const i=store.batches.findIndex(b=>b.id===id);return 'b'+((i<0
 
 /* ===================== semana ===================== */
 let weekDate=mondayOf(new Date());
+let _renderTick=0;
+let _weekDaysCache=null,_weekDaysTick=-1;
 function weekDays(){
+  if(_weekDaysTick===_renderTick&&_weekDaysCache)return _weekDaysCache;
   const r=store.rotation,out=[];
   if(r.mode==='date'){
     for(let i=0;i<7;i++){
@@ -333,6 +336,7 @@ function weekDays(){
         shiftId:(typeof manual==='string'?manual:null)||resolveCode(p.days[i]),auto:manual==null,idx:i,guard:''});
     }
   }
+  _weekDaysCache=out;_weekDaysTick=_renderTick;
   return out;
 }
 function shiftForDate(date){
@@ -399,16 +403,24 @@ function rhythmOf(shiftId,dateStr){
   const r={};Object.keys(base).forEach(k=>r[k]=base[k]);
   Object.keys(ov).forEach(k=>{if(ov[k]!==''&&ov[k]!=null)r[k]=ov[k];});
   return r;}
+let _vacMapCache=null,_vacMapSig='';
 function vacMap(){
-  /* los rangos de vacaciones se traducen a días sueltos: así el calendario, la cocina y la compra los ven */
-  const out={},vs=(store.rotation&&store.rotation.vacaciones)||[];
+  /* los rangos de vacaciones se traducen a días sueltos: así el calendario, la cocina y la compra los ven.
+     dayInfo() llama a esto para CADA día que se pinta, así que se cachea por firma: reconstruir day-por-día
+     un mapa entero en cada consulta era el cuello de botella medido en el informe de rendimiento (la pestaña
+     Mes tardaba ~550ms con años de datos porque este mapa se rehacía cientos de veces por render). */
+  const vs=(store.rotation&&store.rotation.vacaciones)||[];
   const n=store.shifts.filter(function(x){return /vacacion|festiv/i.test(String(x.name||''));})[0]||
     store.shifts.filter(function(x){return x.code==='V';})[0]||shiftById('sh-v');
-  if(!n)return out;   /* sin tipo de día de vacaciones no hay mapa, pero tampoco vacío: esto se llamaba así y reventaba */
+  const sig=(n?n.id:'')+'|'+vs.length+'|'+vs.map(function(v){return v.start+'~'+v.end+'~'+(v.label||'');}).join(',');
+  if(_vacMapCache&&_vacMapSig===sig)return _vacMapCache;
+  const out={};
+  if(!n){_vacMapCache=out;_vacMapSig=sig;return out;}   /* sin tipo de día de vacaciones no hay mapa, pero tampoco vacío: esto se llamaba así y reventaba */
   vs.forEach(function(v,ix){const a=parseDate(v.start),b=parseDate(v.end);if(!a||!b)return;
     const lo=a<=b?a:b,hi=a<=b?b:a;
     for(let d=new Date(lo.getTime());d<=hi;d=addDays(d,1)){const k=iso(d);
       if(!out[k])out[k]={shiftId:n.id,ix:ix,label:v.label||'vacaciones'};}});
+  _vacMapCache=out;_vacMapSig=sig;
   return out;}
 function vacationOf(dateStr){const v=vacMap()[dateStr];if(!v)return null;const vs=(store.rotation.vacaciones||[])[v.ix];
   return {ix:v.ix,shiftId:v.shiftId,label:v.label,start:vs?vs.start:'',end:vs?vs.end:''};}
@@ -437,9 +449,9 @@ function jornadaEn(wday,shiftId,override){
   const descanso=/libre|descanso|asuntos|franco|vacante/i.test(sh.name||'');
   if(descanso&&(override||j.aplicaLibres===false))return null;
   return {start:j.start,end:j.end};}
-function jornadaOf(dateStr){
+function jornadaOf(dateStr,infOpt){
   const d=parseDate(dateStr);if(!d)return null;
-  const inf=dayInfo(dateStr);
+  const inf=infOpt||dayInfo(dateStr);
   return jornadaEn(d.getDay(),inf.shiftId,!!dayOverride(dateStr));}
 function baseWorkday(dateStr){
   /* si el hueco está vacío y es un laborable de tu jornada, el día es «Día de trabajo» con sus horas */
@@ -455,8 +467,8 @@ function dayInfo(dateStr){
   const shiftId=raw||(!ov&&!vac?baseWorkday(dateStr):null);
   return {shiftId:shiftId,auto:!ov&&!vac,ov:ov,pat:auto?auto.pat:null,day:auto?auto.day:null,
           guard:ov&&ov.guard?ov.guard:'',vac:vac,rhythm:rhythmOf(shiftId,dateStr)};}
-function sleepOf(dateStr){
-  const inf=dayInfo(dateStr);const rh=inf.rhythm||{};
+function sleepOf(dateStr,infOpt){
+  const inf=infOpt||dayInfo(dateStr);const rh=inf.rhythm||{};
   return {bed:rh.sleep||'',wake:rh.wake||'',h:(rh.sleep&&rh.wake)?sleepHours(rh.sleep,rh.wake):null};}
 function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10};const o=store.sueno||{};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o[k]==='number'&&o[k]>0)d[k]=o[k];});
@@ -468,19 +480,24 @@ function acostarsePara(wake){/* hora de ENANAS en la cama para dormir el mínimo
 function ventanaCena(bed){/* cenar entre 3 h y 1,5 h antes de dormir para que la digestión no robe sueño */
   const c=suenoCfg(),b=mins(bed);if(b==null)return null;return {from:hm(b-c.cenaMax),to:hm(b-c.cenaMin)};}
 function despertarBase(){const rh=rhythmOf('sh-t')||{};return rh.wake||(store.rhythm&&store.rhythm['sh-t']&&store.rhythm['sh-t'].wake)||'06:50';}
-function nightOf(dateStr){
+function nightOf(dateStr,slOpt){
   /* qué toca esa noche: acostarse sugerido, hora real, horas dormidas y ventana de cena */
-  const sl=sleepOf(dateStr),c=suenoCfg();
+  const sl=slOpt||sleepOf(dateStr),c=suenoCfg();
   const wake=sl.wake,bed=sl.bed,rec=acostarsePara(wake);
   return {wake:wake,bed:bed,rec:rec,h:sl.h,min:c.min,corto:sl.h!=null&&sl.h<c.min,
     cena:ventanaCena(rec||bed||''),falta:(sl.h!=null&&sl.h<c.min)?Math.round((c.min-sl.h)*60):0};}
+let _monthDaysCache={},_monthDaysTick=-1;
 function monthDays(y,m){
+  if(_monthDaysTick!==_renderTick){_monthDaysCache={};_monthDaysTick=_renderTick;}
+  const mk=y+'-'+m;
+  if(_monthDaysCache[mk])return _monthDaysCache[mk];
   const out=[],first=new Date(y,m,1,12,0,0,0),len=new Date(y,m+1,0).getDate();
   for(let i=0;i<len;i++){
-    const d=new Date(y,m,1+i,12,0,0,0),key=iso(d),inf=dayInfo(key),sh=shiftById(inf.shiftId),sl=sleepOf(key);
+    const d=new Date(y,m,1+i,12,0,0,0),key=iso(d),inf=dayInfo(key),sh=shiftById(inf.shiftId),sl=sleepOf(key,inf);
     out.push({key:key,date:d,wday:(d.getDay()+6)%7,shiftId:inf.shiftId,guard:inf.guard,over:!!inf.ov,vac:inf.vac,
-      jor:jornadaOf(key),
+      jor:jornadaOf(key,inf),inf:inf,
       color:sh?sh.color:'',icon:sh?sh.icon:'·',name:sh?sh.name:'sin asignar',sleepH:sl.h,bed:sl.bed,wake:sl.wake});}
+  _monthDaysCache[mk]=out;
   return out;}
 function monthService(y,m){
   /* el servicio que rotas ese mes y cuántas guardias tocan: lo pones tú, la app no lo inventa */
@@ -954,7 +971,7 @@ function buscarYmostrar(code){
 /* ===================== render: hoy (pantalla de inicio) ===================== */
 function renderHoy(){
   const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
-  const sl=sleepOf(hoy),nt=nightOf(hoy);
+  const sl=sleepOf(hoy,inf),nt=nightOf(hoy,sl);
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy),ob=(store.food&&store.food.objetivo)||{kcal:0,prot:0};
   const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
@@ -1192,6 +1209,7 @@ function renderMonth(){
   const cells=[];for(let i=0;i<lead;i++)cells.push('<span></span>');
   list.forEach(function(d){
     const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
+    const seg=d.key?diaSegundo(d.key,d.inf):null;
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+'">'+
       '<span class="dnum">'+d.date.getDate()+'</span>'+
@@ -1199,7 +1217,7 @@ function renderMonth(){
       (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,9))+'</span>':'')+
       (d.vac?'<span class="dflag vac">VAC</span>':'')+
       (d.jor?'<span class="djob">'+fmtTimeOut(d.jor.start)+'–'+fmtTimeOut(d.jor.end)+'</span>':'')+
-      (d.key&&diaSegundo(d.key).on?'<span class="dgym" title="segundo entreno: '+esc(diaSegundo(d.key).tipo||'entreno')+' a las '+esc(diaSegundo(d.key).hora||'—')+'">🏊</span>':'')+
+      (seg&&seg.on?'<span class="dgym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">🏊</span>':'')+
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<(store.sueno?store.sueno.min:8)?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<(store.sueno?store.sueno.min:8)?' ⚠':'')+'</span>':'')+
       (manual?'<span class="dsl" title="puesto a mano">✎</span>':'')+'</button>');});
@@ -1362,13 +1380,27 @@ function addSet(fecha,opt){
 function delSet(id){const g=gymS(),i=g.registro.findIndex(function(x){return x.id===id;});
   if(i<0)return 'esa serie ya no estaba';const s=g.registro[i];g.registro.splice(i,1);save();
   return 'borrada: '+s.ex+' '+s.kg+'×'+s.reps;}
-function setsDe(fecha){const k=foodKey(fecha);return gymS().registro.filter(function(x){return x.fecha===k;});}
+let _gymIdxLen=-1,_gymIdxByFecha=null,_gymIdxByEx=null;
+function gymIdx(){
+  /* registro puede llegar a miles de series tras años de uso: recorrerlo entero por cada fecha/ejercicio
+     consultado (setsDe, prDe, ejercicioUltimo...) era el hallazgo #1 del informe de rendimiento sobre
+     Entreno. Se indexa una vez y se reutiliza; solo se rehace si registro cambió de tamaño — en este
+     archivo nunca se edita una serie en sitio, solo se añade o se borra entera, así que el tamaño basta. */
+  const reg=gymS().registro;
+  if(_gymIdxByFecha&&_gymIdxLen===reg.length)return {byFecha:_gymIdxByFecha,byEx:_gymIdxByEx};
+  const byFecha={},byEx={};
+  reg.forEach(function(x){
+    (byFecha[x.fecha]||(byFecha[x.fecha]=[])).push(x);
+    (byEx[x.ex]||(byEx[x.ex]=[])).push(x);});
+  _gymIdxByFecha=byFecha;_gymIdxByEx=byEx;_gymIdxLen=reg.length;
+  return {byFecha:byFecha,byEx:byEx};}
+function setsDe(fecha){const k=foodKey(fecha);return gymIdx().byFecha[k]||[];}
 function volumenDe(fecha){const k=foodKey(fecha);
-  return Math.round(gymS().registro.filter(function(x){return x.fecha===k;})
+  return Math.round((gymIdx().byFecha[k]||[])
     .reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0));}
 function prDe(nombre){
   /* mejor serie estimada (Epley) y el máximo peso que has movido, sacado de tu propio registro */
-  const xs=gymS().registro.filter(function(x){return x.ex===nombre;});
+  const xs=gymIdx().byEx[nombre]||[];
   if(!xs.length)return null;
   let best=null,one=null;
   xs.forEach(function(x){const rm=Math.round((+x.kg||0)*(1+(+x.reps||0)/30)*10)/10;
@@ -1376,7 +1408,7 @@ function prDe(nombre){
     if(!best||(x.kg||0)>(best.kg||0))best=x;});
   return {maxKg:best.kg,maxReps:best.reps,maxFecha:best.fecha,rm:one.rm,rmKg:one.kg,rmReps:one.reps,n:xs.length};}
 function ejercicioUltimo(nombre){
-  const xs=gymS().registro.filter(function(x){return x.ex===nombre;});
+  const xs=gymIdx().byEx[nombre]||[];
   return xs.length?xs[xs.length-1]:null;}
 function pasarRutina(fecha){
   /* monta las series de la rutina con el último peso que usaste en cada una */
@@ -1389,12 +1421,12 @@ function pasarRutina(fecha){
       g.registro.push({id:uid('gs'),fecha:k,ex:r.ex,kg:kg,reps:+r.reps||8,rpe:null,nota:'',ts:Date.now()});n++;}});
   save();
   return n+' series montadas de tu rutina ('+g.rutina.length+' ejercicios) con el último peso que usaste';}
-function diaSegundo(dateStr){
+function diaSegundo(dateStr,infOpt){
   /* el segundo día de gym: lo que marques para ese día concreto manda sobre la regla de la semana */
   const g=gymS(),k=foodKey(dateStr);
   if(!k)return {on:false,auto:false,tipo:g.segundo.tipo,hora:g.segundo.hora};
   const d=parseDate(k),mk=g.marks[k];
-  const sh=shiftById(dayInfo(k).shiftId||'');
+  const sh=shiftById((infOpt||dayInfo(k)).shiftId||'');
   const bloqueado=!!(sh&&(isGuardia(sh)||/saliente|vacacion|festiv/i.test(sh.name||'')));
   const porSemana=!!(g.segundo.on&&!bloqueado&&d&&g.segundo.dias.indexOf(d.getDay())>=0);
   if(mk&&typeof mk.on==='boolean')
@@ -2194,6 +2226,7 @@ function render(){
   }
 }
 function renderNow(){
+  _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
   if(ui.scanStream)pararEscaner();
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
@@ -2206,7 +2239,9 @@ function renderNow(){
   if(ui.tab==='month')$('#wkLabel').textContent=mlbl;
   $('#hsub').innerHTML=`${store.shifts.length} tipos de día · ${store.dishes.length} platos · ${store.meals.length} comidas armadas · se guarda solo en este navegador · `+
     `<kbd>1</kbd>–<kbd>9</kbd> pestañas <kbd>←</kbd><kbd>→</kbd> semana <kbd>T</kbd> tema <kbd>/</kbd> buscar`;
-  const mm=$('#main');if(mm){mm.classList.remove('in');void mm.offsetWidth;mm.classList.add('in');}
+  const mm=$('#main');if(mm){mm.classList.remove('in');
+    /* reiniciar la animación sin forzar un reflow síncrono (antes: void mm.offsetWidth) */
+    requestAnimationFrame(function(){mm.classList.add('in');});}
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
@@ -3109,8 +3144,8 @@ function svcAliasList(){
     if(enBase||/^(urg|umi|urgencias)$/.test(k))out.push([k,enBase||alias[k]]);});
   out.sort(function(a,b){return b[0].length-a[0].length;});
   return out;}
-function matchSvcIn(seg){
-  const cn=' '+canon(seg)+' ',AL=svcAliasList();
+function matchSvcIn(seg,alOpt){
+  const cn=' '+canon(seg)+' ',AL=alOpt||svcAliasList();
   for(let k=0;k<AL.length;k++){if(cn.indexOf(' '+AL[k][0]+' ')>=0)return AL[k][1];}
   return null;}
 function guardiasEn(seg){
@@ -3126,6 +3161,7 @@ function parseServicesText(txt){
   const fullRe='enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre';
   const nameRe=new RegExp('(^|[^a-záéíóúñ])((?:'+fullRe+'|'+names.join('|')+')(?:[a-z]{0,4}))(?![a-z])','ig');
   const ymRe=/((?:19|20)\d{2})[-/.](0?[1-9]|1[0-2])(?![\d])/g;
+  const AL=svcAliasList();   /* se calcula una vez para todo el texto, no por cada mes que aparezca en él */
   const months=[];let m;
   String(txt||'').replace(/\r/g,'').split(/\n+/).forEach(function(raw){
     const line=String(raw||'').replace(/^[-•*\s]+/,'').trim();
@@ -3141,9 +3177,9 @@ function parseServicesText(txt){
     marks.sort(function(a,b){return a.at-b.at;});
     for(let i=0;i<marks.length;i++){
       const fin=(i+1<marks.length)?marks[i+1].at:line.length;
-      const found=matchSvcIn(line.slice(marks[i].at,fin))||
+      const found=matchSvcIn(line.slice(marks[i].at,fin),AL)||
         /* «enero y febrero: Rayos» → el servicio va escrito al final de la línea */
-        (marks.length>1?matchSvcIn(line.slice(marks[i].at)):null);
+        (marks.length>1?matchSvcIn(line.slice(marks[i].at),AL):null);
       if(!found){continue;}
       let g=guardiasEn(line.slice(marks[i].at,fin));if(g==null&&marks.length>1)g=guardiasEn(line.slice(marks[i].at));
       const mons=[marks[i].mon];
@@ -3151,7 +3187,7 @@ function parseServicesText(txt){
         const sep=line.slice(marks[k-1].to,marks[k].at);
         if(!/^\s*(?:,|;|y|o|&|\+|-|a|hasta|al)?\s*$/i.test(sep))break;
         const finK=(k+1<marks.length)?marks[k+1].at:line.length;
-        const f2=matchSvcIn(line.slice(marks[k].at,finK));
+        const f2=matchSvcIn(line.slice(marks[k].at,finK),AL);
         if(f2&&f2!==found)break;                    /* ese mes anuncia su propio servicio */
         mons.push(marks[k].mon);}
       months.push({months:mons,service:found,guardias:(g!=null?g:null),year:(marks[i].year||null),
@@ -3185,9 +3221,16 @@ function parseVacacionesText(txt){
     out.push({start:iso2(a),end:iso2(b),label:lab});});
   return {ranges:out.length?out:[],count:out.length};}
 function applyRhythm(info,opt){
-  /* escribe en el planning lo que se ha leído: horas por tipo de día, jornada y servicio del mes */
+  /* escribe en el planning lo que se ha leído: horas por tipo de día, jornada y servicio del mes.
+     el "dry run" (Analizar, antes de Aplicar) necesita un borrador aislado para no tocar el store real
+     hasta confirmar — pero solo hace falta clonar de verdad lo que esta función escribe (rhythm/rotation/
+     menu); food.log y gym.registro, que son lo grande del store tras años de uso, se quedan compartidos
+     porque nunca se escriben aquí. Antes se clonaba el store entero por esto. */
   opt=opt||{};
-  const g=JSON.parse(JSON.stringify(store));
+  const g=Object.assign({},store,{
+    rhythm:JSON.parse(JSON.stringify(store.rhythm||{})),
+    rotation:JSON.parse(JSON.stringify(store.rotation||{})),
+    menu:JSON.parse(JSON.stringify(store.menu||{}))});
   let rh=0,wrk=0,sv=0,quick=0,vac=0;
   const R=(info&&info.rhythm)||{days:{},work:null};
   const put=function(shiftId,key,val){if(!val||!shiftId)return;
