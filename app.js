@@ -2201,7 +2201,23 @@ function openModal(title,html,onSave,extra){
 function closeModal(){$('#overlay').classList.remove('on');modalSave=null;
   if(modalPrevFocus&&document.body.contains(modalPrevFocus)&&modalPrevFocus.focus)modalPrevFocus.focus();
   modalPrevFocus=null;}
+let confirmResolve=null;
+function confirmar(msg,textoSi){
+  /* confirm() propio: mismo diálogo accesible que el resto de la app, en vez del cuadro nativo del navegador */
+  return new Promise(function(resolve){
+    confirmResolve=resolve;
+    modalPrevFocus=document.activeElement;
+    const modal=$('#modal');
+    modal.innerHTML='<h3 id="modalTitle">¿Seguro?</h3><p style="margin:0">'+esc(msg)+'</p>'+
+      '<div class="row" style="margin-top:14px;justify-content:flex-end">'+
+      '<button class="btn" data-a="m-cancel">Cancelar</button>'+
+      '<button class="btn bad" data-a="confirm-yes">'+esc(textoSi||'Sí, continuar')+'</button></div>';
+    $('#overlay').classList.add('on');modalSave=null;
+    mejoraAccesibilidad(modal);
+    const f=focusablesIn(modal);(f[0]||modal).focus();
+  });}
 function cancelModal(){
+  if(confirmResolve){const r=confirmResolve;confirmResolve=null;closeModal();r(false);return;}
   if(mealSlot){const sh=mealSlot.shift,s=store.menu[sh]&&store.menu[sh][mealSlot.i];
     if(s&&mealSlot.restore)s.items=mealSlot.restore;}
   if(draftMeal&&!mealById(draftMeal.id))draftMeal=null;
@@ -2379,13 +2395,14 @@ function act(a,el){
       save();render();flash('Días vuelve a la rotación (y se quita lo escrito a mano en el calendario)');break;
     case 'export':dl();marcarBackup();render();break;
     case 'copy':copy(JSON.stringify(store,null,1));marcarBackup();render();break;
-    case 'import':
-      try{const raw=$('#importBox').value.trim();if(!raw)throw ' vacío';const o=JSON.parse(raw);
+    case 'import':{let raw,o;
+      try{raw=$('#importBox').value.trim();if(!raw)throw ' vacío';o=JSON.parse(raw);
         if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
-        if(!confirm('¿Sustituir TODOS tus datos actuales por este JSON? No se puede deshacer — si quieres conservar lo que tienes, cópialo antes con «JSON»/«copiar».'))break;
-        normalize(o);store=o;save();render();flash('Importado ✔');
-      }catch(e){flash('Ese JSON no es válido');}break;
-    case 'reset':if(confirm('¿Sustituir todo por el ejemplo por defecto?')){store=DEFAULTS();save();render();flash('Ejemplo restaurado');}break;
+      }catch(e){flash('Ese JSON no es válido');break;}
+      confirmar('¿Sustituir TODOS tus datos actuales por este JSON? No se puede deshacer — si quieres conservar lo que tienes, cópialo antes con «JSON»/«copiar».').then(function(ok){
+        if(!ok)return;normalize(o);store=o;save();render();flash('Importado ✔');});break;}
+    case 'reset':confirmar('¿Sustituir todo por el ejemplo por defecto?').then(function(ok){
+      if(!ok)return;store=DEFAULTS();save();render();flash('Ejemplo restaurado');});break;
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
     case 'draft':{const t=$('#pasteBox').value||'';
       window._draftExtras=mapCodes($('#codeMap').value);window._draftInfo=parsePlanning(t,window._draftExtras);
@@ -2473,19 +2490,20 @@ function act(a,el){
       vs.ranges.forEach(function(v){store.rotation.vacaciones.push(v);});save();render();
       flash(vs.count+' rango(s) de vacaciones sacados del texto pegado');break;}
     case 'vac-del':{if(el.tagName!=='BUTTON')break;const n=store.rotation.vacaciones?store.rotation.vacaciones.length:0;
-      if(n>1&&!confirm('¿Quitar estas vacaciones?'))break;
+      if(n>1){confirmar('¿Quitar estas vacaciones?').then(function(ok){if(ok)flash(delVacation(el.dataset.ix));});break;}
       flash(delVacation(el.dataset.ix));break;}
     case 'mon-today':monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);render();break;
     case 'mon-autopos':store.rotation.autoPos=!store.rotation.autoPos;save();render();break;
     case 'mon-auto':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
       flash(distributeGuardias(y,m,false));save();render();break;}
     case 'mon-auto-rep':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
-      if(!confirm('¿Repartir de nuevo las guardias de este mes? Se quitan las que hay puestas.'))break;
-      flash(distributeGuardias(y,m,true));save();render();break;}
+      confirmar('¿Repartir de nuevo las guardias de este mes? Se quitan las que hay puestas.').then(function(ok){
+        if(!ok)return;flash(distributeGuardias(y,m,true));save();render();});break;}
     case 'mon-clear':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
-      if(!confirm('¿Quitar todo lo que has puesto a mano en este mes?'))break;
-      monthDays(y,m).forEach(function(d){if(dayOverride(d.key))setDayOverride(d.key,null);});
-      save();render();flash('mes vaciado (la plantilla manda otra vez)');break;}
+      confirmar('¿Quitar todo lo que has puesto a mano en este mes?').then(function(ok){
+        if(!ok)return;
+        monthDays(y,m).forEach(function(d){if(dayOverride(d.key))setDayOverride(d.key,null);});
+        save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
     case 'mon-sync':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
       flash(syncToRotation(y,m));break;}
     case 'mon-day':renderDayModal(el.dataset.key);break;
@@ -2553,8 +2571,8 @@ function act(a,el){
       const hm=/^(\d{4})-(\d{2})$/.exec((document.getElementById('svcHasta')||{}).value||'');
       if(!dm||!hm){flash('pon el mes de empezar y el mes de acabar');break;}
       flash(planServicios(+dm[1],+dm[2]-1,+hm[1],+hm[2]-1,num((document.getElementById('svcMeses')||{}).value,1)));render();break;}
-    case 'svc-clear':{if(!confirm('¿Quitar el servicio y las guardias asignadas a TODOS los meses? Tus días puestos a mano se quedan.'))break;
-      store.rotation.month={};save();render();flash('reparto de servicios quitado');break;}
+    case 'svc-clear':{confirmar('¿Quitar el servicio y las guardias asignadas a TODOS los meses? Tus días puestos a mano se quedan.').then(function(ok){
+      if(!ok)return;store.rotation.month={};save();render();flash('reparto de servicios quitado');});break;}
     case 'svc-add':{store.rotation.servicios.push('Servicio '+(store.rotation.servicios.length+1));save();render();break;}
     case 'svc-del':{store.rotation.servicios.splice(+el.dataset.ix,1);save();render();break;}
     case 'day-set':{const v=el.dataset.sid||'';
@@ -2573,8 +2591,8 @@ function act(a,el){
         seg:'¿Quitar el segundo día de gym y las marcas puestas a mano?',
         all:'¿Limpiar TODO el entreno (series, rutina y segundo día)? La biblioteca importada se queda.',
         todo:'¿Limpiar todo el entreno, incluida la biblioteca de openGym? (También se puede deshacer)'};
-      if(!confirm(txts[el.dataset.what]||'¿Limpiar esa parte del entreno?'))break;
-      const rw=gymWipe(el.dataset.what);flash(rw.msg);break;}
+      confirmar(txts[el.dataset.what]||'¿Limpiar esa parte del entreno?').then(function(ok){
+        if(!ok)return;const rw=gymWipe(el.dataset.what);flash(rw.msg);});break;}
     case 'gym-undo':{const ru=gymUndoWipe();flash(ru.msg);break;}
     case 'cal-descargar':{const rr=calRangoUI();
       const tx=icsTexto(rr.desde,rr.hasta,{import:calNombreTxt(rr.desde)});
@@ -2655,10 +2673,11 @@ function act(a,el){
     case 'shift-new':editShift(null);break;
     case 'shift-edit':editShift(id);break;
     case 'shift-del':{if(store.shifts.length<=1){flash('Hace falta al menos un tipo de día');break;}
-      const s=shiftById(id);if(!confirm('¿Eliminar «'+s.name+'» con su menú?'))break;
-      store.shifts=store.shifts.filter(x=>x.id!==id);delete store.menu[id];
-      store.patterns.forEach(p=>{p.days=p.days.map(c=>c===s.code?'':c);});
-      save();render();break;}
+      const s=shiftById(id);confirmar('¿Eliminar «'+s.name+'» con su menú?').then(function(ok){
+        if(!ok)return;
+        store.shifts=store.shifts.filter(x=>x.id!==id);delete store.menu[id];
+        store.patterns.forEach(p=>{p.days=p.days.map(c=>c===s.code?'':c);});
+        save();render();});break;}
     case 'dup-day':{const src=clone(store.menu[id]||[]).map(s=>Object.assign(s,{id:uid('sl')}));
       const base=shiftById(id);const n={id:uid('sh'),code:(base.code+'2').slice(0,3),name:'Copia '+base.name,icon:base.icon,start:base.start,end:base.end,intensity:base.intensity,desc:base.desc,color:base.color};
       store.shifts.push(n);store.menu[n.id]=src;save();render();flash('Día duplicado: edita su menú');break;}
@@ -2681,19 +2700,21 @@ function act(a,el){
     case 'it-del':{const sh=curShiftId(el)||id;if(!sh)break;const s=store.menu[sh][+el.dataset.i];s.items.splice(+el.dataset.j,1);save();render();break;}
     case 'dish-new':editDish(null);break;
     case 'dish-edit':editDish(id);break;
-    case 'dish-del':{if(!confirm('¿Eliminar «'+dishById(id).name+'» del catálogo?'))break;
-      store.dishes=store.dishes.filter(d=>d.id!==id);purgeDish(id);save();render();break;}
+    case 'dish-del':{const dnm=dishById(id).name;confirmar('¿Eliminar «'+dnm+'» del catálogo?').then(function(ok){
+      if(!ok)return;store.dishes=store.dishes.filter(d=>d.id!==id);purgeDish(id);save();render();});break;}
     case 'meal-new':draftMeal=null;editMeal(null);break;
     case 'meal-edit':editMeal(id);break;
-    case 'meal-del':{if(!confirm('¿Eliminar esta comida armada? Los días que la usen se quedan sin plato.'))break;
+    case 'meal-del':confirmar('¿Eliminar esta comida armada? Los días que la usen se quedan sin plato.').then(function(ok){
+      if(!ok)return;
       store.meals=store.meals.filter(m=>m.id!==id);
       Object.keys(store.menu).forEach(k=>store.menu[k].forEach(s=>{if(s.mealId===id)s.mealId='';}));
-      save();render();break;}
+      save();render();});break;
     case 'batch-new':{store.batches.push({id:uid('b'),label:'Nueva sesión',when:'',note:''});save();render();break;}
     case 'batch-edit':editBatch(id);break;
-    case 'batch-del':{const b=batchById(id);if(!b)break;if(!confirm('¿Eliminar la sesión «'+b.label+'»? Sus platos pasan a «sin lote».'))break;
+    case 'batch-del':{const b=batchById(id);if(!b)break;confirmar('¿Eliminar la sesión «'+b.label+'»? Sus platos pasan a «sin lote».').then(function(ok){
+      if(!ok)return;
       store.dishes.forEach(d=>{if(d.batchId===id)d.batchId='bn';});
-      store.batches=store.batches.filter(x=>x.id!==id);save();render();break;}
+      store.batches=store.batches.filter(x=>x.id!==id);save();render();});break;}
     case 'mark':{const on=!ui.marks.has(id);if(on)ui.marks.add(id);else ui.marks.delete(id);
       el.classList.toggle('done',on);const cb=el.querySelector('input');if(cb)cb.checked=on;saveMarks();break;}
     case 'mark-clear':ui.marks=new Set();saveMarks();render();break;
@@ -2701,9 +2722,10 @@ function act(a,el){
     case 'pat-new':{store.patterns.push({id:uid('pat'),name:'Semana nueva',days:['G','','','','','',''],note:''});save();render();break;}
     case 'pat-copy':{const n=clone(store.patterns.find(p=>p.id===id));n.id=uid('pat');n.name+=' (copia)';store.patterns.push(n);save();render();break;}
     case 'pat-del':{if(store.patterns.length<=1){flash('Debe quedar al menos una semana tipo');break;}
-      if(!confirm('¿Eliminar esta semana tipo?'))break;
-      store.patterns=store.patterns.filter(p=>p.id!==id);
-      store.rotation.pattern=Math.min(store.rotation.pattern,store.patterns.length-1);save();render();break;}
+      confirmar('¿Eliminar esta semana tipo?').then(function(ok){
+        if(!ok)return;
+        store.patterns=store.patterns.filter(p=>p.id!==id);
+        store.rotation.pattern=Math.min(store.rotation.pattern,store.patterns.length-1);save();render();});break;}
     case 'm-add-item':{const m=mealById(mealCtx)||draftMeal;if(!m)break;
       capMeal();m.items=m.items||[];m.items.push({kind:'dish',id:(store.dishes[0]||{}).id,portions:1});
       editMeal(mealCtx);break;}
@@ -3602,13 +3624,14 @@ document.addEventListener('keydown',e=>{
     if(s2){e.preventDefault();s2.focus();s2.select();}}
 });
 document.addEventListener('click',e=>{
-  if(e.target.id==='overlay'){$('#overlay').classList.remove('on');modalSave=null;return;}
+  if(e.target.id==='overlay'){cancelModal();return;}
   const el=e.target.closest('[data-a]');
   if(!el)return;
   const a=el.dataset.a;
   if(a==='m-save'){try{capMeal();if(modalSave)modalSave();closeModal();save();render();}
     catch(err){flash(err&&err.message?err.message:'Revisa los campos');}return;}
   if(a==='m-cancel'){cancelModal();return;}
+  if(a==='confirm-yes'){const r=confirmResolve;confirmResolve=null;closeModal();if(r)r(true);return;}
   act(a,el);
 });
 document.addEventListener('input',e=>{
