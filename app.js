@@ -203,10 +203,10 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'week',marks:new Set(),draftPattern:null,openDays:new Set(),
+let store, ui={tab:'hoy',marks:new Set(),draftPattern:null,openDays:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false};
-const allOpen=()=>store.shifts.length&&store.shifts.every(s=>ui.openDays.has(s.id));
+const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
   try{raw=localStorage.getItem(KEY);
@@ -951,6 +951,49 @@ function buscarYmostrar(code){
     if(out)out.textContent=res.msg;
     flash(res.msg);render();return r;});}
 
+/* ===================== render: hoy (pantalla de inicio) ===================== */
+function renderHoy(){
+  const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
+  const sl=sleepOf(hoy),nt=nightOf(hoy);
+  const ft=foodTotals(hoy),pl=planTotalsOf(hoy),ob=(store.food&&store.food.objetivo)||{kcal:0,prot:0};
+  const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
+  const slots=sh?slotsFor(sh.id):[];
+  let nextIdx=-1;slots.forEach(function(s,i){if(nextIdx<0&&(s.time||'')>=nowHM)nextIdx=i;});
+  const mealRows=slots.map(function(s,i){
+    const info=slotItems(sh.id,s),t=totals(info.items);
+    const dishTxt=info.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
+      return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
+    const pasada=(s.time||'')&&(s.time||'')<nowHM&&i!==nextIdx;
+    return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(s.time||'·')+'</span><span>'+
+      '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
+      '<span class="mn">'+dishTxt+'</span>'+
+      (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
+      '</span></div>';}).join('');
+  const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
+    (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(inf.guard):'')+(sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):'')):'sin día asignado');
+  const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'</h2>'+
+    '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
+    (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
+    (sl.h!=null?'<p class="mini" style="margin-top:6px">🛌 dormiste '+fmtHM(sl.h*60)+(sl.h<suenoCfg().min?' ⚠ menos de lo tuyo':'')+
+      (nt.rec?' · esta noche, a la cama sobre las '+esc(nt.rec):'')+'</p>':
+      (nt.rec?'<p class="mini" style="margin-top:6px">🛌 para dormir lo tuyo, a la cama sobre las '+esc(nt.rec)+'</p>':''))+
+    '<div style="margin-top:10px">'+
+      barRow('apuntado hoy',ft.kcal,+ob.kcal||0,'',' kcal')+
+      (pl.kcal?barRow('plan de tus menús',pl.kcal,+ob.kcal||0,'plan',' kcal'):'')+
+    '</div>'+
+    '<div class="row" style="margin-top:10px">'+
+      '<button class="btn s" data-a="tab" data-t="food">🍽 apuntar comida</button>'+
+      '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
+      '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
+    '</div></div>'+
+    '<div class="card"><h2>Comidas de hoy</h2>'+
+    (slots.length?mealRows:'<div class="empty">'+(sh?'Este tipo de día no tiene comidas montadas todavía: abre «Días y menús».':
+      'Hoy no tiene un tipo de día asignado: ponlo en «Mes» o «Turno y rotación».')+'</div>')+
+    '</div></div>';
+}
 /* ===================== render: semana ===================== */
 function renderWeek(){
   const r=store.rotation, days=weekDays();
@@ -975,7 +1018,7 @@ function renderWeek(){
     slotsFor(sh.id).forEach(function(sl){out.push.apply(out,slotItems(sh.id,sl).items);});return out;};
   const rows=days.map(function(d,i){
     const sh=shiftById(d.shiftId);
-    const open=!anyDate||ui.openDays.has(d.key||('tpl'+d.idx));
+    const open=ui.openDays.has(d.key||('tpl'+d.idx));
     const rh=sh?rhythmOf(sh.id,d.key):{};
     const sl=d.key?sleepOf(d.key):{h:null};
     const nt=d.key?nightOf(d.key):{rec:''};
@@ -1006,7 +1049,7 @@ function renderWeek(){
       '<span class="sp"></span>'+
       (d.key&&foodLog(d.key).length?'<span class="drnum" title="lo que llevas apuntado en la pestaña Comida">🍽 '+foodTotals(d.key).kcal+' kcal apuntadas</span>':'')+
       '<span class="drnum">'+(sh?(t.kcal+' kcal · '+t.parts+' rac.'):'—')+'</span>'+
-      (anyDate?'<span class="mini">'+(open?'▴':'▾')+'</span>':'');
+      '<span class="mini">'+(open?'▴':'▾')+'</span>';
     const det='<div class="drdet">'+mealHtml+
       '<div class="row" style="margin-top:9px">'+
         (sh?'<button class="btn s" data-a="day-edit" data-id="'+sh.id+'">abrir menús de este tipo de día</button>':'')+
@@ -1018,7 +1061,8 @@ function renderWeek(){
         '<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar estas horas</button></div>':'')+
       '</div>';
     return '<div class="drow'+(open?' open':'')+'">'+
-      '<div class="drmain"'+(anyDate?' data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'"':'')+'>'+head+'</div>'+
+      '<div class="drmain" data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'" role="button" tabindex="0" '+
+      'aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
       (open?det:'')+'</div>';}).join('');
     const pb=planBatches(days), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
@@ -1031,10 +1075,10 @@ function renderWeek(){
       (r.mode==='date'?`<p class="note" style="margin:10px 0 0">Ciclo de ${store.patterns.length} semana(s): <b>${esc(store.patterns.map(p=>p.days.join('·')).join('  |  '))}</b>. Ancla la rotación al lunes de una semana con 1 guardia.</p>`:'')}
       ${store.patterns.length>1?rotationStrip():''}
       <div class="row" style="margin-top:10px">
-        ${anyDate?`<button class="btn s" data-a="wk-expand-all">${allOpen()?'cerrar todos':'abrir todos'}</button>
-          <span class="mini">toca un día para ver o esconder sus comidas · las horas se cuentan por fecha en «Mes»</span>
+        <button class="btn s" data-a="wk-expand-all">${allOpen()?'cerrar todos':'abrir todos'}</button>
+        ${anyDate?`<span class="mini">toca un día para ver o esconder sus comidas · las horas se cuentan por fecha en «Mes»</span>
           <button class="btn s" data-a="mode-date">ver mi semana real</button>`
-        :`<span class="mini">estructura de la semana tipo · toca «abrir menús» en un día para cambiar lo que se come ese día</span>
+        :`<span class="mini">toca un día para ver o esconder sus comidas</span>
           <button class="btn s" data-a="tab" data-t="month">organizar el mes →</button>`}</div>
       <div class="kpis">
         <div><b>${g}</b><span>guardias</span></div>
@@ -1057,7 +1101,8 @@ function renderWeek(){
         :'<div class="empty">Nada en lote esta semana.</div>'}
       </div>
       <div class="card"><h2>Reglas de oro</h2><p class="note">Lo que sostiene el planning cuando la semana se tuerce.</p>
-        <ul>${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        <details class="dtip"><summary class="mini">ver las ${store.rules.length} reglas</summary>
+        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>
         <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></div>
     </div></div>`;
 }
@@ -2137,7 +2182,7 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['week','Semana'],['month','Mes'],['food','Comida'],['gym','Entreno'],['types','Días y menús'],['batches','Cocina en lote'],['shop','Compra'],['cfg','Turno y rotación'],['data','Datos']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['food','Comida'],['gym','Entreno'],['types','Días y menús'],['batches','Cocina en lote'],['shop','Compra'],['cfg','Turno y rotación'],['data','Datos']];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function render(){
   try{renderNow();}catch(e){
@@ -2165,7 +2210,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderWeek)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderHoy)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
   mejoraAccesibilidad($('#main'));
 }
@@ -2660,7 +2705,9 @@ function act(a,el){
       if(a==='day-quickbf'){const dd=weekDays()[+el.dataset.i];sh=dd&&dd.shiftId;}
       if(!sh){flash('ese día aún no tiene tipo asignado');break;}
       flash(quickBreakfast(sh,null));save();render();break;}
-    case 'day-open':{const k=el.dataset.key;if(ui.openDays.has(k))ui.openDays.delete(k);else ui.openDays.add(k);render();break;}
+    case 'day-open':{const k=el.dataset.key;if(ui.openDays.has(k))ui.openDays.delete(k);else ui.openDays.add(k);
+      render();
+      const nx=document.querySelector('[data-a="day-open"][data-key="'+CSS.escape(k)+'"]');if(nx)nx.focus();break;}
     case 'wk-expand-all':{if(allOpen())ui.openDays=new Set();
       else ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));render();break;}
     case 'rules':editRules();break;
@@ -3622,6 +3669,8 @@ document.addEventListener('keydown',e=>{
   if(k==='t'||k==='T'){const b=document.querySelector('[data-a="theme"]');if(b)b.click();return;}
   if(k==='/'){const s2=document.getElementById(ui.tab==='gym'?'gymQ':(ui.tab==='food'?'fdQ':''));
     if(s2){e.preventDefault();s2.focus();s2.select();}}
+  if((k==='Enter'||k===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset&&t.dataset.a){
+    e.preventDefault();t.click();}
 });
 document.addEventListener('click',e=>{
   if(e.target.id==='overlay'){cancelModal();return;}

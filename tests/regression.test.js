@@ -54,6 +54,11 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   await page.goto(base + 'index.html');
   await page.waitForTimeout(300);
 
+  // 0) rediseño: "Hoy" es la pantalla de inicio
+  const defaultTab = await page.evaluate(() => window.PG.ui.tab);
+  const hoyVisible = await page.evaluate(() => /Comidas de hoy/.test(document.getElementById('main').innerText));
+  check('la app arranca en la pestaña "Hoy"', defaultTab === 'hoy' && hoyVisible, 'tab=' + defaultTab);
+
   // 1) el ciclo de servicios no vuelve a pintar "NaN" (bug del "+ +" en serviciosCard)
   await page.click('[data-a="tab"][data-t="month"]');
   await page.waitForTimeout(200);
@@ -141,6 +146,30 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('cambiar de pestaña detiene el stream de la cámara',
     camState.stream === null || camState.stream === undefined,
     'ui.scanStream tras cambiar de tab: ' + JSON.stringify(camState));
+
+  // 9) rediseño: los días de "Semana" empiezan plegados, y "abrir todos" los despliega
+  await page.waitForTimeout(200); // ya estamos en el tab "week" desde la prueba de la cámara
+  const collapsedByDefault = await page.evaluate(() => document.querySelectorAll('.drow.open').length);
+  await page.click('[data-a="wk-expand-all"]');
+  await page.waitForTimeout(150);
+  const afterExpandAll = await page.evaluate(() => document.querySelectorAll('.drow.open').length);
+  const totalRows = await page.evaluate(() => document.querySelectorAll('.drow').length);
+  check('los días de la semana empiezan plegados', collapsedByDefault === 0, 'abiertos al entrar: ' + collapsedByDefault);
+  check('"abrir todos" despliega todos los días', afterExpandAll === totalRows && totalRows > 0,
+    afterExpandAll + '/' + totalRows + ' abiertos');
+
+  // 10) rediseño: cada fila de día es alcanzable y accionable por teclado, y conserva el foco al alternar
+  await page.click('[data-a="wk-expand-all"]'); // los vuelve a cerrar todos
+  await page.waitForTimeout(150);
+  await page.focus('.drmain');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(150);
+  const kbdState = await page.evaluate(() => ({
+    focusedIsRow: document.activeElement.getAttribute('data-a') === 'day-open',
+    expanded: document.activeElement.getAttribute('aria-expanded'),
+  }));
+  check('Enter en una fila de día la expande sin perder el foco',
+    kbdState.focusedIsRow && kbdState.expanded === 'true', JSON.stringify(kbdState));
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
