@@ -1422,7 +1422,7 @@ function armarioHtml(f,prods,ver,sel){
     const pon='<td><span class="row" style="gap:4px"><input class="g" id="gq-'+x.ean+'" type="number" min="1" step="5" value="150">'+
       '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'" data-gq="gq-'+x.ean+'">apuntar</button></span></td>';
     const est='<td><span class="row" style="gap:3px;justify-content:flex-end">'+
-      '<button class="btn s '+(f.fav.indexOf(x.ean)>=0?'g':'')+'" data-a="ean-fav" data-ean="'+x.ean+'" title="favorito">'+
+      '<button class="btn s '+(f.fav.indexOf(x.ean)>=0?'g':'')+'" data-a="ean-fav" data-ean="'+x.ean+'" title="favorito" aria-pressed="'+(f.fav.indexOf(x.ean)>=0?'true':'false')+'">'+
       (f.fav.indexOf(x.ean)>=0?'★':'☆')+'</button>'+
       '<button class="btn d s" data-a="ean-del" data-ean="'+x.ean+'" title="quitar del armario">×</button></span></td></tr>';
     return cab+mac+pon+est;}).join('');
@@ -2131,7 +2131,7 @@ function renderNow(){
   if(ui.scanStream)pararEscaner();
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
-  $('#tabs').innerHTML=TABS.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}">${t[1]}${BADGE[t[0]]?'<span class="tb">'+BADGE[t[0]]+'</span>':''}</button>`).join('');
+  $('#tabs').innerHTML=TABS.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${BADGE[t[0]]?'<span class="tb">'+BADGE[t[0]]+'</span>':''}</button>`).join('');
   const d=store.rotation.mode==='date'?addDays(mondayOf(weekDate),6):null;
   const mlbl=MONTH_FULL[monthDate.getMonth()]+' '+monthDate.getFullYear();
   $('#wkLabel').textContent=store.rotation.mode==='date'
@@ -2142,20 +2142,44 @@ function renderNow(){
     `<kbd>1</kbd>–<kbd>9</kbd> pestañas <kbd>←</kbd><kbd>→</kbd> semana <kbd>T</kbd> tema <kbd>/</kbd> buscar`;
   const mm=$('#main');if(mm){mm.classList.remove('in');void mm.offsetWidth;mm.classList.add('in');}
   const bt=document.querySelector('[data-a="theme"]');
-  if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';bt.title=osc?'Modo día':'Modo noche HUD';}
+  if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
+    bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
   ({week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderWeek)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
+  mejoraAccesibilidad($('#main'));
 }
 function flash(msg,ms){let f=$('#flash');if(!f){f=document.createElement('div');f.id='flash';document.body.appendChild(f);}
   f.textContent=msg;clearTimeout(f._t);f._t=setTimeout(()=>f.remove(),ms||2600);}
+function mejoraAccesibilidad(root){
+  /* botones de solo icono (×, ★/☆, ‹›…) que ya llevan title: que un lector de pantalla tenga algo que decir */
+  if(!root)return;
+  root.querySelectorAll('button[title]:not([aria-label])').forEach(function(b){
+    if((b.textContent||'').trim().length<=2)b.setAttribute('aria-label',b.title);});}
 
 /* ===================== modales ===================== */
-let modalSave=null,mealCtx=null,draftMeal=null,mealSlot=null;
+let modalSave=null,mealCtx=null,draftMeal=null,mealSlot=null,modalPrevFocus=null;
+function focusablesIn(el){
+  return Array.prototype.slice.call(el.querySelectorAll(
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  )).filter(function(x){return x.offsetParent!==null;});}
+function trapModalTab(e){
+  const modal=$('#modal');if(!modal)return;
+  const f=focusablesIn(modal);
+  if(!f.length){e.preventDefault();modal.focus();return;}
+  const first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
 function openModal(title,html,onSave,extra){
-  $('#modal').innerHTML=`<h3>${title}</h3>${html}<div class="row" style="margin-top:14px;justify-content:flex-end">${extra||''}<button class="btn" data-a="m-cancel">Cancelar</button>${onSave?'<button class="btn p" data-a="m-save">Guardar</button>':''}</div>`;
+  modalPrevFocus=document.activeElement;
+  const modal=$('#modal');
+  modal.innerHTML=`<h3 id="modalTitle">${title}</h3>${html}<div class="row" style="margin-top:14px;justify-content:flex-end">${extra||''}<button class="btn" data-a="m-cancel">Cancelar</button>${onSave?'<button class="btn p" data-a="m-save">Guardar</button>':''}</div>`;
   $('#overlay').classList.add('on');modalSave=onSave;
+  mejoraAccesibilidad(modal);
+  const f=focusablesIn(modal);(f[0]||modal).focus();
 }
-function closeModal(){$('#overlay').classList.remove('on');modalSave=null;}
+function closeModal(){$('#overlay').classList.remove('on');modalSave=null;
+  if(modalPrevFocus&&document.body.contains(modalPrevFocus)&&modalPrevFocus.focus)modalPrevFocus.focus();
+  modalPrevFocus=null;}
 function cancelModal(){
   if(mealSlot){const sh=mealSlot.shift,s=store.menu[sh]&&store.menu[sh][mealSlot.i];
     if(s&&mealSlot.restore)s.items=mealSlot.restore;}
@@ -3542,8 +3566,11 @@ document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const t=e.target,tag=t&&t.tagName;
   const escribiendo=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable);
+  if($('#overlay')&&$('#overlay').classList.contains('on')){
+    if(e.key==='Escape'){cancelModal();return;}
+    if(e.key==='Tab'){trapModalTab(e);return;}
+    return;}
   if(escribiendo){if(e.key==='Escape'&&t.blur)t.blur();return;}
-  if($('#overlay')&&$('#overlay').classList.contains('on')){if(e.key==='Escape')cancelModal();return;}
   const k=e.key||'';
   if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];render();
     const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'center'});}return;}
@@ -3648,7 +3675,6 @@ document.addEventListener('change',e=>{
     case 'meta-notes':store.meta.notes=el.value;save();break;
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 window.addEventListener('beforeprint',()=>{if(ui.tab!=='week')return;});
 
 /* ===================== arranque ===================== */

@@ -15,9 +15,9 @@
         <div class="sub" id="hsub"></div>
       </div>
       <div class="row no-print" id="topBtns">
-        <button class="btn s" data-a="wk-prev">‹</button>
+        <button class="btn s" data-a="wk-prev" title="Semana anterior" aria-label="Semana anterior">‹</button>
         <strong class="mini" id="wkLabel" style="font-size:13px"></strong>
-        <button class="btn s" data-a="wk-next">›</button>
+        <button class="btn s" data-a="wk-next" title="Semana siguiente" aria-label="Semana siguiente">›</button>
         <button class="btn s" data-a="theme" title="Modo noche">🌙</button>
         <button class="btn s" data-a="print">Imprimir</button>
         <button class="btn s" data-a="export">JSON</button>
@@ -28,7 +28,7 @@
 </header>
 <main id="main"></main>
 <footer id="foot"></footer>
-<div id="overlay"><div id="modal"></div></div>
+<div id="overlay"><div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1"></div></div>
 <script src="app.js"></script>
 </body>
 </html>
