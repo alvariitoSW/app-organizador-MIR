@@ -867,6 +867,19 @@ function foodKey(dateStr){const d=parseDate(dateStr);return d?iso(d):'';}
 function foodLog(dateStr){const f=food(),k=foodKey(dateStr);
   if(!k)return [];
   if(!f.log[k]||!Array.isArray(f.log[k]))f.log[k]=[];return f.log[k];}
+function posDeSlot(label,time){
+  /* a qué "momento" (desayuno/comida/cena...) corresponde una comida ya montada en el menú,
+     para registrarla de un toque sin tener que preguntarle al usuario cada vez */
+  const t=String(label||'').toLowerCase();
+  if(/desayuno/.test(t))return 'desayuno';
+  if(/post.?.?entreno|pre.?.?entreno/.test(t))return 'post-entreno';
+  if(/cena/.test(t))return 'cena';
+  if(/merienda/.test(t))return 'merienda';
+  if(/media ma[ñn]ana|snack/.test(t))return 'media';
+  if(/comida/.test(t))return 'comida';
+  const h=+String(time||'').split(':')[0];
+  if(!isNaN(h)){if(h<10)return 'desayuno';if(h<12)return 'media';if(h<16)return 'comida';if(h<19)return 'merienda';return 'cena';}
+  return 'comida';}
 function addFoodEntry(dateStr,opt){
   opt=opt||{};
   const k=foodKey(dateStr);if(!k)return 'ese día no tiene pinta de fecha (falta el calendario o la rotación por fecha)';
@@ -986,6 +999,7 @@ function renderHoy(){
       '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
       '<span class="mn">'+dishTxt+'</span>'+
       (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
+      (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'">✓ ya me la he comido</button>':'')+
       '</span></div>';}).join('');
   const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(inf.guard):'')+(sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):'')):'sin día asignado');
@@ -2609,6 +2623,12 @@ function act(a,el){
       const paso=e.dishId?0.5:25;
       flash(bumpFoodEntry(el.dataset.key,el.dataset.id,a==='fe-more'?paso:-paso));render();break;}
     case 'fe-del':flash(delFoodEntry(el.dataset.key,el.dataset.id));render();break;
+    case 'hoy-log-slot':{const hk=iso(new Date()),s=(store.menu[el.dataset.shift]||[]).find(function(x){return x.id===el.dataset.slot;});
+      if(!s){flash('esa comida ya no está en el menú');break;}
+      const info=slotItems(el.dataset.shift,s),cat=posDeSlot(s.label,s.time);
+      if(!info.items.length){flash('esa comida no tiene platos asignados todavía');break;}
+      info.items.forEach(function(it){addFoodEntry(hk,{dishId:it.id,rac:num(it.portions,1),pos:cat,when:cat});});
+      flash('apuntado: '+(s.label||'esa comida')+' ('+info.items.length+' plato'+(info.items.length>1?'s':'')+')');render();break;}
     case 'ean-del':flash(delEanProduct(el.dataset.ean));render();break;
     case 'ean-fav':flash(toggleFavEan(el.dataset.ean));render();break;
     case 'food-sugerir':flash(sugerirObjetivo());break;

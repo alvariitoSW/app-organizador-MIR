@@ -219,6 +219,18 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   });
   check('el detalle "día a día" de Mes empieza plegado', monthDetailState === false, 'open=' + monthDetailState);
 
+  // 13) menos toques: registrar una comida ya montada desde "Hoy" en un solo tap
+  await page.click('[data-a="tab"][data-t="hoy"]');
+  await page.waitForTimeout(200);
+  const hoyKey = new Date().toISOString().slice(0, 10);
+  const kcalAntes = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKey);
+  const logBtn = await page.$('[data-a="hoy-log-slot"]');
+  if (logBtn) await logBtn.click();
+  await page.waitForTimeout(200);
+  const kcalDespues = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKey);
+  check('el botón "ya me la he comido" registra la comida de un toque',
+    !!logBtn && kcalDespues > kcalAntes, 'antes=' + kcalAntes + ' después=' + kcalDespues);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
