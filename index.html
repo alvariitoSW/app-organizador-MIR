@@ -20,16 +20,20 @@
         <div class="sub" id="hsub"></div>
       </div>
       <div class="row no-print" id="topBtns">
-        <button class="btn s" data-a="wk-prev" title="Semana anterior" aria-label="Semana anterior">‹</button>
-        <strong class="mini" id="wkLabel" style="font-size:13px"></strong>
-        <button class="btn s" data-a="wk-next" title="Semana siguiente" aria-label="Semana siguiente">›</button>
+        <span class="wknav" id="wkNav">
+          <button class="btn s" data-a="wk-prev" title="Semana anterior" aria-label="Semana anterior">‹</button>
+          <strong class="mini" id="wkLabel" style="font-size:13px"></strong>
+          <button class="btn s" data-a="wk-next" title="Semana siguiente" aria-label="Semana siguiente">›</button>
+        </span>
         <button class="btn s" data-a="theme" title="Modo noche">🌙</button>
         <button class="btn s" data-a="print">Imprimir</button>
         <button class="btn s" data-a="export">JSON</button>
       </div>
     </div>
-    <nav id="tabs"></nav>
-    <div id="calModes" class="calmodes" hidden></div>
+    <div class="navrow">
+      <nav id="tabs"></nav>
+      <div id="calModes" class="calmodes" hidden></div>
+    </div>
   </div>
 </header>
 <main id="main"></main>

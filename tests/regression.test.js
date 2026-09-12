@@ -281,6 +281,49 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('el botón "ya me la he comido" registra la comida de un toque',
     !!logBtn && kcalDespues > kcalAntes, 'antes=' + kcalAntes + ' después=' + kcalDespues);
 
+  // 14) examen de calidad del formato: en "Mes" las flechas de la cabecera mueven el mes, no una fecha oculta
+  await gotoTab('month');
+  await page.waitForTimeout(200);
+  const monthNavCheck = await page.evaluate(() => {
+    const before = { month: window.PG.monthDate.getMonth(), weekDate: window.PG.weekDate.toISOString().slice(0, 10) };
+    document.querySelector('[data-a="wk-prev"]').click();
+    const after = { month: window.PG.monthDate.getMonth(), weekDate: window.PG.weekDate.toISOString().slice(0, 10) };
+    return { before, after };
+  });
+  await page.waitForTimeout(150);
+  check('en "Mes", ‹ mueve el mes y no toca weekDate a escondidas',
+    monthNavCheck.after.month !== monthNavCheck.before.month && monthNavCheck.after.weekDate === monthNavCheck.before.weekDate,
+    JSON.stringify(monthNavCheck));
+
+  // 15) las flechas de semana se ocultan donde no aplican (Hoy, Semana en plantilla) y siguen visibles en Semana + "por fecha"
+  // — se comprueba el estilo calculado (display), no solo el atributo hidden: un display:flex propio puede anularlo en silencio
+  const wkNavDisplay = () => document.getElementById('wkNav').offsetParent === null
+    ? 'none' : getComputedStyle(document.getElementById('wkNav')).display;
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const wkNavEnHoy = await page.evaluate(wkNavDisplay);
+  await gotoTab('week');
+  await page.waitForTimeout(150);
+  const wkNavEnSemanaPlantilla = await page.evaluate(wkNavDisplay);
+  const wkNavEnSemanaPorFecha = await page.evaluate(() => {
+    window.PG.store.rotation.mode = 'date';
+    window.PG.render();
+    const d = document.getElementById('wkNav').offsetParent === null ? 'none' : getComputedStyle(document.getElementById('wkNav')).display;
+    window.PG.store.rotation.mode = 'plantilla';
+    window.PG.render();
+    return d;
+  });
+  check('las flechas de semana se ocultan de verdad (display:none) en Hoy y en Semana-plantilla, y aparecen en Semana + "por fecha"',
+    wkNavEnHoy === 'none' && wkNavEnSemanaPlantilla === 'none' && wkNavEnSemanaPorFecha !== 'none',
+    JSON.stringify({ wkNavEnHoy, wkNavEnSemanaPlantilla, wkNavEnSemanaPorFecha }));
+
+  // 16) el aviso de "☰ Más" tiene un texto accesible que explica el punto, no solo un carácter suelto
+  // (ya hay comida apuntada hoy desde la prueba 13, así que BADGE.food está activo)
+  const masLabelInfo = await page.evaluate(() => document.querySelector('[data-a="drawer-toggle"]').getAttribute('aria-label'));
+  check('"☰ Más" lleva un aria-label que explica el punto de aviso (no solo "●")',
+    typeof masLabelInfo === 'string' && masLabelInfo.length > 'Más'.length,
+    'aria-label=' + JSON.stringify(masLabelInfo));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

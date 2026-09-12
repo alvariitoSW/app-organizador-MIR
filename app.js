@@ -2262,7 +2262,8 @@ function renderNow(){
     `<button class="${inCal?'on':''}" data-a="nav-cal"${inCal?' aria-current="true"':''}>Calendario</button>`+
     `<button class="${ui.tab==='gym'?'on':''}" data-a="tab" data-t="gym"${ui.tab==='gym'?' aria-current="true"':''}>Entreno${BADGE.gym?'<span class="tb">'+BADGE.gym+'</span>':''}</button>`+
     `<button class="${ui.tab==='shop'?'on':''}" data-a="tab" data-t="shop"${ui.tab==='shop'?' aria-current="true"':''}>Compra</button>`+
-    `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer">☰ Más${BADGE.food?'<span class="tb">●</span>':''}</button>`;
+    (function(){const masLbl='Más'+(BADGE.food?' — hay comida apuntada hoy sin revisar':'');
+      return `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer" title="${esc(masLbl)}" aria-label="${esc(masLbl)}">☰ Más${BADGE.food?'<span class="tb" aria-hidden="true">●</span>':''}</button>`;})();
   const cm=$('#calModes');
   if(cm){cm.hidden=!inCal;
     cm.innerHTML=inCal?CAL_MODES.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${(t[0]==='month'&&BADGE.month)?'<span class="tb">'+BADGE.month+'</span>':''}</button>`).join(''):'';}
@@ -2277,6 +2278,17 @@ function renderNow(){
     ? `${weekDate.getDate()} ${MON[weekDate.getMonth()]} – ${d.getDate()} ${MON[d.getMonth()]}`
     : `plantilla · ${esc(store.patterns[store.rotation.pattern]?store.patterns[store.rotation.pattern].name:'—')}`;
   if(ui.tab==='month')$('#wkLabel').textContent=mlbl;
+  /* las flechas ‹ › solo tienen un efecto real en Mes (mueven el mes) o en Semana+«por fecha» (mueven la semana);
+     en cualquier otro caso (Hoy, Semana en plantilla, Entreno, Compra, cajón) se ocultan para no cambiar una fecha oculta sin avisar */
+  const wkNav=$('#wkNav');
+  if(wkNav){
+    const modoFecha=store.rotation.mode==='date';
+    wkNav.hidden=!(ui.tab==='month'||(ui.tab==='week'&&modoFecha));
+    const lbl=ui.tab==='month'?'mes':'semana';
+    const bPrev=document.querySelector('[data-a="wk-prev"]'),bNext=document.querySelector('[data-a="wk-next"]');
+    if(bPrev){bPrev.title=lbl+' anterior';bPrev.setAttribute('aria-label',bPrev.title);}
+    if(bNext){bNext.title=lbl+' siguiente';bNext.setAttribute('aria-label',bNext.title);}
+  }
   $('#hsub').innerHTML=`${store.shifts.length} tipos de día · ${store.dishes.length} platos · ${store.meals.length} comidas armadas · se guarda solo en este navegador · `+
     `<kbd>1</kbd>–<kbd>9</kbd> pestañas <kbd>←</kbd><kbd>→</kbd> semana <kbd>T</kbd> tema <kbd>/</kbd> buscar`;
   const mm=$('#main');if(mm){mm.classList.remove('in');
@@ -2531,8 +2543,11 @@ function act(a,el){
       const bt=document.querySelector('[data-a="theme"]');
       if(bt){bt.textContent=osc?'☀️':'🌙';bt.title=osc?'Modo día':'Modo noche HUD';}
       break;}
-    case 'wk-prev':weekDate=addDays(weekDate,-7);render();break;
-    case 'wk-next':weekDate=addDays(weekDate,7);render();break;
+    case 'wk-prev':case 'wk-next':{
+      /* en Mes, estas flechas mueven el mes (monthDate); en cualquier otro sitio donde sigan visibles (Semana+por fecha), la semana */
+      if(ui.tab==='month'){monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+(a==='wk-next'?1:-1),1,12,0,0,0);}
+      else{weekDate=addDays(weekDate,a==='wk-next'?7:-7);}
+      render();break;}
     case 'today':weekDate=mondayOf(new Date());render();break;
     case 'print':window.print();break;
     case 'mode-template':store.rotation.mode='template';save();render();break;
@@ -3787,7 +3802,8 @@ document.addEventListener('keydown',e=>{
   if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];if(CAL_SET.has(tb[0]))ui.calMode=tb[0];render();
     const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]')||document.querySelector('#calModes button[data-t="'+tb[0]+'"]');
     if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'center'});}return;}
-  if(k==='ArrowRight'||k==='ArrowLeft'){const b=document.querySelector('[data-a="'+(k==='ArrowRight'?'wk-next':'wk-prev')+'"]');
+  if(k==='ArrowRight'||k==='ArrowLeft'){const nav=$('#wkNav');if(nav&&nav.hidden)return;
+    const b=document.querySelector('[data-a="'+(k==='ArrowRight'?'wk-next':'wk-prev')+'"]');
     if(b)b.click();return;}
   if(k==='t'||k==='T'){const b=document.querySelector('[data-a="theme"]');if(b)b.click();return;}
   if(k==='/'){const s2=document.getElementById(ui.tab==='gym'?'gymQ':(ui.tab==='food'?'fdQ':''));
