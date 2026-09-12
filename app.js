@@ -203,7 +203,7 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'hoy',marks:new Set(),draftPattern:null,openDays:new Set(),
+let store, ui={tab:'hoy',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
@@ -1274,11 +1274,12 @@ function renderMonth(){
       <div class="row no-print" style="margin-bottom:6px"><button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
         <span class="mini">sobrescribe lo que hayas puesto tú en este mes</span></div>
       <p class="note">Cada guardia arrastra su día saliente al día siguiente; si la guardia cae en sábado, el saliente es el lunes (el domingo se descansa en casa). Los laborables sin marcar salen ya con la jornada puesta.</p>
-      ${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
+      <details class="dtip"><summary class="mini">ver el mes día a día, con horas (${list.length} días — el calendario de arriba ya resume esto)</summary>
+      <div style="margin-top:6px">${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
         return `<div class="row" style="padding:4px 0;border-top:1px dashed var(--line);font-size:12px">
           <b style="min-width:96px">${DAYSH[d.wday]} ${d.date.getDate()}</b>
           <span style="min-width:132px">${esc(d.icon)} ${esc(sh.name)}${d.guard?' · '+esc(d.guard):''}</span>
-          <span class="mini">${esc(dayLine(d))}</span></div>`;}).join('')||'<div class="empty">Mes vacío: reparte las guardias o asígnalas día a día.</div>'}</div>
+          <span class="mini">${esc(dayLine(d))}</span></div>`;}).join('')||'<div class="empty">Mes vacío: reparte las guardias o asígnalas día a día.</div>'}</div></details></div>
   </div>`;}
 function renderDayModal(dateStr){
   const d=parseDate(dateStr);if(!d)return;
@@ -1772,7 +1773,9 @@ function renderTypes(){
         <span class="tag">carga ${esc(sh.intensity||'—')}</span>
         <span class="sp"></span><span class="mini no-print">${esc(sh.id)}</span></h2>
       <p class="note">${esc(sh.desc||'')} <b>· ${t.kcal} kcal · ${t.prot} g proteína · ${t.parts} raciones/día</b></p>
-      <ul class="slots">${slots.map((s,i)=>slotRow(sh.id,s,i,slots.length)).join('')||'<li class="empty">Sin comidas todavía: elige abajo qué quieres comer este día.</li>'}</ul>${dayPicker(sh.id)}
+      <ul class="slots">${slots.map((s,i)=>slotRow(sh.id,s,i,slots.length)).join('')||'<li class="empty">Sin comidas todavía: elige abajo qué quieres comer este día.</li>'}</ul>
+      <div class="row" style="margin-top:9px"><button class="btn s" data-a="toggle-picker" data-id="${sh.id}" aria-expanded="${ui.openPickers.has(sh.id)?'true':'false'}">${ui.openPickers.has(sh.id)?'▴ cerrar comidas y platos':'▾ elegir/cambiar comidas y platos'}</button></div>
+      ${ui.openPickers.has(sh.id)?dayPicker(sh.id):''}
       <div class="row" style="margin-top:11px">
         <button class="btn s" data-a="slot-add" data-id="${sh.id}">+ Comida</button>
         <button class="btn s" data-a="shift-edit" data-id="${sh.id}">Editar nombre y horario</button>
@@ -2746,6 +2749,9 @@ function act(a,el){
     case 'day-open':{const k=el.dataset.key;if(ui.openDays.has(k))ui.openDays.delete(k);else ui.openDays.add(k);
       render();
       const nx=document.querySelector('[data-a="day-open"][data-key="'+CSS.escape(k)+'"]');if(nx)nx.focus();break;}
+    case 'toggle-picker':{const k=el.dataset.id;if(ui.openPickers.has(k))ui.openPickers.delete(k);else ui.openPickers.add(k);
+      render();
+      const nx=document.querySelector('[data-a="toggle-picker"][data-id="'+CSS.escape(k)+'"]');if(nx)nx.focus();break;}
     case 'wk-expand-all':{if(allOpen())ui.openDays=new Set();
       else ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));render();break;}
     case 'rules':editRules();break;

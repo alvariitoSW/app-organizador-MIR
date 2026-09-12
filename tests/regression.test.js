@@ -199,6 +199,26 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('Enter en una fila de día la expande sin perder el foco',
     kbdState.focusedIsRow && kbdState.expanded === 'true', JSON.stringify(kbdState));
 
+  // 11) simplificación de interfaz: el picker de "Días y menús" empieza plegado
+  await page.click('[data-a="tab"][data-t="types"]');
+  await page.waitForTimeout(200);
+  const pickersClosedByDefault = await page.evaluate(() => document.querySelectorAll('.pick').length);
+  await page.click('[data-a="toggle-picker"]');
+  await page.waitForTimeout(150);
+  const pickersAfterToggle = await page.evaluate(() => document.querySelectorAll('.pick').length);
+  check('el picker de comidas/platos empieza plegado y se abre al tocarlo',
+    pickersClosedByDefault === 0 && pickersAfterToggle === 1,
+    'antes: ' + pickersClosedByDefault + ' después: ' + pickersAfterToggle);
+
+  // 12) simplificación de interfaz: el detalle día a día de "Mes" (repite el calendario) empieza plegado
+  await page.click('[data-a="tab"][data-t="month"]');
+  await page.waitForTimeout(200);
+  const monthDetailState = await page.evaluate(() => {
+    const d = Array.from(document.querySelectorAll('.dtip')).find((x) => /ver el mes día a día/.test(x.textContent));
+    return d ? d.open : null;
+  });
+  check('el detalle "día a día" de Mes empieza plegado', monthDetailState === false, 'open=' + monthDetailState);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
