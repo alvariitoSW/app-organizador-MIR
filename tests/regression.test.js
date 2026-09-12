@@ -40,8 +40,10 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   const port = server.address().port;
   const base = `http://127.0.0.1:${port}/`;
 
+  const preinstalled = '/opt/pw-browsers/chromium';
   const browser = await chromium.launch({
     args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+    executablePath: fs.existsSync(preinstalled) ? preinstalled : undefined,
   });
   const context = await browser.newContext();
   await context.grantPermissions(['camera']);
@@ -51,16 +53,64 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
 
+  // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
+  // el resto vive en el menú lateral (☰ Más)
+  const CAL_TABS = new Set(['hoy', 'week', 'month']);
+  const DRAWER_TABS = new Set(['food', 'types', 'batches', 'cfg', 'data']);
+  async function gotoTab(tab) {
+    if (CAL_TABS.has(tab)) {
+      await page.click('[data-a="nav-cal"]');
+      await page.waitForTimeout(80);
+      await page.click(`#calModes button[data-t="${tab}"]`);
+    } else if (DRAWER_TABS.has(tab)) {
+      await page.click('[data-a="drawer-toggle"]');
+      await page.waitForTimeout(80);
+      await page.click(`[data-a="drawer-nav"][data-t="${tab}"]`);
+    } else {
+      await page.click(`[data-a="tab"][data-t="${tab}"]`);
+    }
+    await page.waitForTimeout(150);
+  }
+
   await page.goto(base + 'index.html');
   await page.waitForTimeout(300);
 
-  // 0) rediseño: "Hoy" es la pantalla de inicio
+  // 0) propuesta de navegación: al entrar, el calendario en modo "Mes" es la pantalla principal
   const defaultTab = await page.evaluate(() => window.PG.ui.tab);
-  const hoyVisible = await page.evaluate(() => /Comidas de hoy/.test(document.getElementById('main').innerText));
-  check('la app arranca en la pestaña "Hoy"', defaultTab === 'hoy' && hoyVisible, 'tab=' + defaultTab);
+  const monthVisible = await page.evaluate(() => document.querySelectorAll('#main .cal .dbox').length > 0);
+  check('la app arranca en el calendario, en modo "Mes"', defaultTab === 'month' && monthVisible, 'tab=' + defaultTab);
+
+  // 0b) Entreno y Compra son pestañas fijas (fuera del menú); el resto vive en el menú lateral
+  const navShape = await page.evaluate(() => ({
+    gymEnTabs: !!document.querySelector('#tabs [data-a="tab"][data-t="gym"]'),
+    shopEnTabs: !!document.querySelector('#tabs [data-a="tab"][data-t="shop"]'),
+    foodFueraDeTabs: !document.querySelector('#tabs [data-a="tab"][data-t="food"]'),
+    foodEnCajon: !!document.querySelector('#drawer [data-a="drawer-nav"][data-t="food"]'),
+  }));
+  check('Entreno y Compra quedan fijos fuera del menú; el resto (p. ej. Comida) va al cajón lateral',
+    navShape.gymEnTabs && navShape.shopEnTabs && navShape.foodFueraDeTabs && navShape.foodEnCajon,
+    JSON.stringify(navShape));
+
+  // 0c) el menú lateral (☰ Más) es accesible: atrapa el foco y Esc lo cierra devolviendo el foco al botón
+  await page.click('[data-a="drawer-toggle"]');
+  await page.waitForTimeout(150);
+  const drawerOpenState = await page.evaluate(() => ({
+    ariaHidden: document.getElementById('drawer').getAttribute('aria-hidden'),
+    focusDentro: !!document.getElementById('drawer').contains(document.activeElement),
+  }));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  const drawerClosedState = await page.evaluate(() => ({
+    ariaHidden: document.getElementById('drawer').getAttribute('aria-hidden'),
+    focusEnBoton: document.activeElement && document.activeElement.getAttribute('data-a') === 'drawer-toggle',
+  }));
+  check('el menú lateral se abre con foco dentro y Esc lo cierra devolviendo el foco al botón',
+    drawerOpenState.ariaHidden === 'false' && drawerOpenState.focusDentro &&
+    drawerClosedState.ariaHidden === 'true' && drawerClosedState.focusEnBoton,
+    JSON.stringify({ drawerOpenState, drawerClosedState }));
 
   // 1) el ciclo de servicios no vuelve a pintar "NaN" (bug del "+ +" en serviciosCard)
-  await page.click('[data-a="tab"][data-t="month"]');
+  await gotoTab('month');
   await page.waitForTimeout(200);
   const monthText = await page.evaluate(() => document.getElementById('main').innerText);
   check('serviciosCard no pinta NaN', !monthText.includes('NaN'), monthText.includes('NaN') ? 'apareció "NaN" en la vista de mes' : '');
@@ -116,7 +166,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     xss.imgInjected === 0, 'imágenes inyectadas: ' + xss.imgInjected);
 
   // 5) importar JSON pide confirmación (antes: sustituía todo sin preguntar)
-  await page.click('[data-a="tab"][data-t="data"]');
+  await gotoTab('data');
   await page.waitForTimeout(200);
   await page.fill('#importBox', JSON.stringify({ shifts: [], menu: {}, dishes: [] }));
   await page.click('[data-a="import"]');
@@ -145,7 +195,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('no ha aparecido ningún confirm() nativo', nativeDialogs.length === 0, JSON.stringify(nativeDialogs));
 
   // 7) el modal atrapa el foco y lo devuelve al cerrar
-  await page.click('[data-a="tab"][data-t="types"]');
+  await gotoTab('types');
   await page.waitForTimeout(200);
   await page.focus('[data-a="dish-new"]');
   await page.keyboard.press('Enter');
@@ -159,12 +209,12 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     'role=' + dialogRole + ' focusRestored=' + focusRestored);
 
   // 8) la cámara del escáner se detiene sola al cambiar de pestaña (antes: se quedaba encendida)
-  await page.click('[data-a="tab"][data-t="food"]');
+  await gotoTab('food');
   await page.waitForTimeout(200);
   await page.evaluate(() => window.PG.iniciarEscaner());
   await page.waitForTimeout(300);
   const camAbierta = await page.evaluate(() => !!window.PG.ui.scanStream);
-  await page.click('[data-a="tab"][data-t="week"]');
+  await gotoTab('week');
   await page.waitForTimeout(200);
   const camState = await page.evaluate(() => {
     const s = window.PG.ui.scanStream;
@@ -200,7 +250,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     kbdState.focusedIsRow && kbdState.expanded === 'true', JSON.stringify(kbdState));
 
   // 11) simplificación de interfaz: el picker de "Días y menús" empieza plegado
-  await page.click('[data-a="tab"][data-t="types"]');
+  await gotoTab('types');
   await page.waitForTimeout(200);
   const pickersClosedByDefault = await page.evaluate(() => document.querySelectorAll('.pick').length);
   await page.click('[data-a="toggle-picker"]');
@@ -211,7 +261,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     'antes: ' + pickersClosedByDefault + ' después: ' + pickersAfterToggle);
 
   // 12) simplificación de interfaz: el detalle día a día de "Mes" (repite el calendario) empieza plegado
-  await page.click('[data-a="tab"][data-t="month"]');
+  await gotoTab('month');
   await page.waitForTimeout(200);
   const monthDetailState = await page.evaluate(() => {
     const d = Array.from(document.querySelectorAll('.dtip')).find((x) => /ver el mes día a día/.test(x.textContent));
@@ -220,7 +270,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('el detalle "día a día" de Mes empieza plegado', monthDetailState === false, 'open=' + monthDetailState);
 
   // 13) menos toques: registrar una comida ya montada desde "Hoy" en un solo tap
-  await page.click('[data-a="tab"][data-t="hoy"]');
+  await gotoTab('hoy');
   await page.waitForTimeout(200);
   const hoyKey = new Date().toISOString().slice(0, 10);
   const kcalAntes = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKey);

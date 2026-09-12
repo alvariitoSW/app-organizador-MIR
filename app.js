@@ -203,7 +203,7 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'hoy',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
+let store, ui={tab:'month',calMode:'month',drawerOpen:false,marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
@@ -2234,7 +2234,14 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['food','Comida'],['gym','Entreno'],['types','Días y menús'],['batches','Cocina en lote'],['shop','Compra'],['cfg','Turno y rotación'],['data','Datos']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['types','Días y menús'],['batches','Cocina en lote'],['cfg','Turno y rotación'],['data','Datos']];
+const CAL_SET=new Set(['hoy','week','month']);
+const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
+const DRAWER_GROUPS=[
+  ['Comida',[['food','🍽 Comida']]],
+  ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote']]],
+  ['Configuración',[['cfg','🕐 Turno y rotación'],['data','📤 Datos']]]
+];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function render(){
   try{renderNow();}catch(e){
@@ -2250,7 +2257,20 @@ function renderNow(){
   if(ui.scanStream)pararEscaner();
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
-  $('#tabs').innerHTML=TABS.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${BADGE[t[0]]?'<span class="tb">'+BADGE[t[0]]+'</span>':''}</button>`).join('');
+  const inCal=CAL_SET.has(ui.tab);
+  $('#tabs').innerHTML=
+    `<button class="${inCal?'on':''}" data-a="nav-cal"${inCal?' aria-current="true"':''}>Calendario</button>`+
+    `<button class="${ui.tab==='gym'?'on':''}" data-a="tab" data-t="gym"${ui.tab==='gym'?' aria-current="true"':''}>Entreno${BADGE.gym?'<span class="tb">'+BADGE.gym+'</span>':''}</button>`+
+    `<button class="${ui.tab==='shop'?'on':''}" data-a="tab" data-t="shop"${ui.tab==='shop'?' aria-current="true"':''}>Compra</button>`+
+    `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer">☰ Más${BADGE.food?'<span class="tb">●</span>':''}</button>`;
+  const cm=$('#calModes');
+  if(cm){cm.hidden=!inCal;
+    cm.innerHTML=inCal?CAL_MODES.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${(t[0]==='month'&&BADGE.month)?'<span class="tb">'+BADGE.month+'</span>':''}</button>`).join(''):'';}
+  const dr=$('#drawer');
+  if(dr)dr.innerHTML='<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
+    DRAWER_GROUPS.map(g=>'<div class="drawer-group"><h4>'+g[0]+'</h4>'+
+      g[1].map(t=>`<button class="drawer-item ${ui.tab===t[0]?'on':''}" data-a="drawer-nav" data-t="${t[0]}">${t[1]}${BADGE[t[0]]?'<span class="tb">'+BADGE[t[0]]+'</span>':''}</button>`).join('')+
+      '</div>').join('');
   const d=store.rotation.mode==='date'?addDays(mondayOf(weekDate),6):null;
   const mlbl=MONTH_FULL[monthDate.getMonth()]+' '+monthDate.getFullYear();
   $('#wkLabel').textContent=store.rotation.mode==='date'
@@ -2265,7 +2285,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderHoy)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderMonth)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
   mejoraAccesibilidad($('#main'));
 }
@@ -2278,7 +2298,7 @@ function mejoraAccesibilidad(root){
     if((b.textContent||'').trim().length<=2)b.setAttribute('aria-label',b.title);});}
 
 /* ===================== modales ===================== */
-let modalSave=null,mealCtx=null,draftMeal=null,mealSlot=null,modalPrevFocus=null;
+let modalSave=null,mealCtx=null,draftMeal=null,mealSlot=null,modalPrevFocus=null,drawerPrevFocus=null;
 function focusablesIn(el){
   return Array.prototype.slice.call(el.querySelectorAll(
     'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
@@ -2301,6 +2321,28 @@ function openModal(title,html,onSave,extra){
 function closeModal(){$('#overlay').classList.remove('on');modalSave=null;
   if(modalPrevFocus&&document.body.contains(modalPrevFocus)&&modalPrevFocus.focus)modalPrevFocus.focus();
   modalPrevFocus=null;}
+function openDrawer(){
+  ui.drawerOpen=true;drawerPrevFocus=document.activeElement;
+  const dr=$('#drawer');
+  dr.classList.add('on');dr.setAttribute('aria-hidden','false');
+  $('#drawerScrim').classList.add('on');
+  const mb=document.querySelector('[data-a="drawer-toggle"]');if(mb)mb.setAttribute('aria-expanded','true');
+  const f=focusablesIn(dr);(f[0]||dr).focus();}
+function closeDrawer(){
+  ui.drawerOpen=false;
+  const dr=$('#drawer');
+  dr.classList.remove('on');dr.setAttribute('aria-hidden','true');
+  $('#drawerScrim').classList.remove('on');
+  const mb=document.querySelector('[data-a="drawer-toggle"]');if(mb)mb.setAttribute('aria-expanded','false');
+  if(drawerPrevFocus&&document.body.contains(drawerPrevFocus)&&drawerPrevFocus.focus)drawerPrevFocus.focus();
+  drawerPrevFocus=null;}
+function trapDrawerTab(e){
+  const dr=$('#drawer');if(!dr)return;
+  const f=focusablesIn(dr);
+  if(!f.length){e.preventDefault();dr.focus();return;}
+  const first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
 let confirmResolve=null;
 function confirmar(msg,textoSi){
   /* confirm() propio: mismo diálogo accesible que el resto de la app, en vez del cuadro nativo del navegador */
@@ -2478,7 +2520,11 @@ function curShiftId(el){const n=el&&el.closest?el.closest('[data-shift]'):null;i
 function act(a,el){
   const id=el.dataset.id;
   switch(a){
-    case 'tab':ui.tab=el.dataset.t;render();window.scrollTo(0,0);break;
+    case 'tab':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;render();window.scrollTo(0,0);break;
+    case 'nav-cal':ui.tab=ui.calMode||'month';render();window.scrollTo(0,0);break;
+    case 'drawer-toggle':if(ui.drawerOpen)closeDrawer();else openDrawer();break;
+    case 'drawer-close':closeDrawer();break;
+    case 'drawer-nav':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':{document.documentElement.classList.toggle('dark');
       const osc=document.documentElement.classList.contains('dark');
       try{localStorage.setItem(TKEY,osc?'dark':'light');}catch(e){}
@@ -3728,14 +3774,19 @@ document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const t=e.target,tag=t&&t.tagName;
   const escribiendo=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable);
+  if(ui.drawerOpen){
+    if(e.key==='Escape'){closeDrawer();return;}
+    if(e.key==='Tab'){trapDrawerTab(e);return;}
+    return;}
   if($('#overlay')&&$('#overlay').classList.contains('on')){
     if(e.key==='Escape'){cancelModal();return;}
     if(e.key==='Tab'){trapModalTab(e);return;}
     return;}
   if(escribiendo){if(e.key==='Escape'&&t.blur)t.blur();return;}
   const k=e.key||'';
-  if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];render();
-    const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'center'});}return;}
+  if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];if(CAL_SET.has(tb[0]))ui.calMode=tb[0];render();
+    const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]')||document.querySelector('#calModes button[data-t="'+tb[0]+'"]');
+    if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'center'});}return;}
   if(k==='ArrowRight'||k==='ArrowLeft'){const b=document.querySelector('[data-a="'+(k==='ArrowRight'?'wk-next':'wk-prev')+'"]');
     if(b)b.click();return;}
   if(k==='t'||k==='T'){const b=document.querySelector('[data-a="theme"]');if(b)b.click();return;}
@@ -3746,6 +3797,7 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('click',e=>{
   if(e.target.id==='overlay'){cancelModal();return;}
+  if(e.target.id==='drawerScrim'){closeDrawer();return;}
   const el=e.target.closest('[data-a]');
   if(!el)return;
   const a=el.dataset.a;
@@ -3875,7 +3927,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   food,foodKey,offNum,mapOffProduct,addEanProduct,delEanProduct,toggleFavEan,porcionDe,foodLog,addFoodEntry,delFoodEntry,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
-  set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS};
+  set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
+  openDrawer,closeDrawer,CAL_SET};
 load();
 render();
 avisarBackupSiToca();
