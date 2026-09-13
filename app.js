@@ -203,7 +203,7 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'month',calMode:'month',drawerOpen:false,marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
+let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
@@ -329,7 +329,7 @@ function weekDays(){
       const legacy=(r.shiftByDay&&r.shiftByDay[iso(d)]!==undefined)?r.shiftByDay[iso(d)]:null;
       const shiftId=inf.shiftId||(typeof legacy==='string'?legacy:null);
       out.push({date:d,key:iso(d),label:DAYN[i],short:DAYSH[i],sub:d.getDate()+' '+MON[d.getMonth()],
-        shiftId:shiftId,auto:inf.auto&&!legacy,guard:inf.guard,pat:inf.pat,day:inf.day});
+        shiftId:shiftId,auto:inf.auto&&!legacy,guard:inf.guard,pat:inf.pat,day:inf.day,inf:inf});
     }
   }else{
     const p=store.patterns[r.pattern]||store.patterns[0]||{days:[]};
@@ -1028,49 +1028,131 @@ function buscarYmostrar(code){
     if(out)out.textContent=res.msg;
     flash(res.msg);render();return r;});}
 
-/* ===================== render: hoy (pantalla de inicio) ===================== */
-function renderHoy(){
-  const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
-  const sl=sleepOf(hoy,inf),nt=nightOf(hoy,sl);
-  const ft=foodTotals(hoy),pl=planTotalsOf(hoy),ob=(store.food&&store.food.objetivo)||{kcal:0,prot:0};
-  const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
-  const slots=sh?slotsFor(sh.id):[];
-  let nextIdx=-1;slots.forEach(function(s,i){if(nextIdx<0&&(s.time||'')>=nowHM)nextIdx=i;});
-  const mealRows=slots.map(function(s,i){
+/* ===================== calendario: piezas compartidas entre Hoy/Semana/Mes =====================
+   Reformulación del informe "Reformular Mes, Semana y Hoy": antes cada pantalla resolvía "qué día
+   es hoy" y "qué pasa este día" a su manera (Hoy con new Date() fijo, Mes con un modal aparte,
+   Semana con su propio maquetado de comidas) — estas funciones son la base común que reutilizan
+   las tres, para que marcar "hoy" y ver el detalle de un día se vea y se calcule igual en todas. */
+function isToday(key){return !!key&&key===iso(new Date());}
+function modoAvisoHTML(){
+  /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
+     está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
+  if(store.rotation.mode==='date')return '';
+  return '<p class="mini">ℹ️ «Semana» está en modo plantilla (sin fechas reales) ahora mismo — este calendario siempre usa la fecha real.</p>';
+}
+function daySleepLineHTML(dateStr,inf){
+  const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr);
+  if(sl.h!=null)return '<p class="mini" style="margin-top:6px">🛌 '+(today?'dormiste ':'durmió ')+fmtHM(sl.h*60)+
+    (sl.h<suenoCfg().min?' ⚠ menos de lo tuyo':'')+(today&&nt.rec?' · esta noche, a la cama sobre las '+esc(nt.rec):'')+'</p>';
+  if(nt.rec)return '<p class="mini" style="margin-top:6px">🛌 para dormir lo tuyo, a la cama sobre las '+esc(nt.rec)+'</p>';
+  return '';
+}
+function mealRowsHTML(dateStr,sh){
+  if(!sh)return '<div class="empty">Sin tipo de día asignado: ponlo en «Mes» o «Turno y rotación».</div>';
+  const slots=slotsFor(sh.id);
+  if(!slots.length)return '<div class="empty">Este tipo de día no tiene comidas montadas todavía: abre «Días y menús».</div>';
+  const today=isToday(dateStr),now=new Date();
+  const nowHM=today?(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')):'';
+  let nextIdx=-1;if(today)slots.forEach(function(s,i){if(nextIdx<0&&(s.time||'')>=nowHM)nextIdx=i;});
+  return slots.map(function(s,i){
     const info=slotItems(sh.id,s),t=totals(info.items);
     const dishTxt=info.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
       return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
-    const pasada=(s.time||'')&&(s.time||'')<nowHM&&i!==nextIdx;
+    const pasada=today&&(s.time||'')&&(s.time||'')<nowHM&&i!==nextIdx;
     return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(s.time||'·')+'</span><span>'+
       '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
       '<span class="mn">'+dishTxt+'</span>'+
       (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
-      (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'">✓ ya me la he comido</button>':'')+
+      (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓ ya me la he comido</button>':'')+
       '</span></div>';}).join('');
+}
+function timelineBar(dateStr,inf){
+  /* barra de 24h de un día (informe: sustituye a la línea de texto de Semana, y es la agenda de Hoy):
+     sueño de sleepOf(), trabajo/guardia de las horas del propio tipo de día o de la jornada base,
+     comidas de slotsFor() — los mismos tres orígenes de datos que ya se listaban como texto */
+  if(!dateStr)return '';
+  inf=inf||dayInfo(dateStr);
+  const sh=shiftById(inf.shiftId),sl=sleepOf(dateStr,inf),jor=jornadaOf(dateStr,inf);
+  const pct=function(t){const m=mins(t);return m==null?null:Math.max(0,Math.min(100,m/1440*100));};
+  const segs=[];
+  if(sl.wake){const p=pct(sl.wake);if(p!=null)segs.push('<i class="tl-seg sleep" style="left:0%;width:'+p.toFixed(1)+'%"></i>');}
+  if(sl.bed){const p=pct(sl.bed);if(p!=null)segs.push('<i class="tl-seg sleep" style="left:'+p.toFixed(1)+'%;width:'+(100-p).toFixed(1)+'%"></i>');}
+  const guardia=!!(sh&&isGuardia(sh));
+  const work=(sh&&sh.start)?{start:sh.start,end:sh.end}:jor;
+  if(work&&work.start){
+    const p1=pct(work.start);let m2=mins(work.end);
+    if(p1!=null&&m2!=null){let p2=m2/1440*100;if(p2<=p1)p2=100;
+      segs.push('<i class="tl-seg '+(guardia?'guard':'work')+'" style="left:'+p1.toFixed(1)+'%;width:'+(p2-p1).toFixed(1)+'%"></i>');}}
+  const dots=(sh?slotsFor(sh.id):[]).map(function(s){const p=pct(s.time);if(p==null)return '';
+    return '<i class="tl-dot" style="left:'+p.toFixed(1)+'%" title="'+esc(s.time||'')+' · '+esc(s.label||'')+'"></i>';}).join('');
+  let now='';
+  if(isToday(dateStr)){const d=new Date(),p=(d.getHours()*60+d.getMinutes())/1440*100;
+    now='<i class="tl-now" style="left:'+p.toFixed(1)+'%" title="ahora"></i>';}
+  return '<div class="tl-wrap"><div class="tl-axis"><span style="left:0%">0h</span><span style="left:25%">6h</span>'+
+    '<span style="left:50%">12h</span><span style="left:75%">18h</span><span style="left:100%">24h</span></div>'+
+    '<div class="tl-bar">'+segs.join('')+dots+now+'</div></div>';
+}
+function dayPanelHTML(dateStr){
+  /* panel inline de un día (informe, decisión A: recomendada) — lo que antes abría renderDayModal()
+     como ventana aparte, ahora se pinta bajo la propia cuadrícula de Mes: se ve el detalle (sueño,
+     comidas) con el mismo componente que usa Hoy, y las acciones de asignar quedan plegadas debajo */
+  const d=parseDate(dateStr);if(!d)return '';
+  const key=iso(d),inf=dayInfo(key),sh=shiftById(inf.shiftId),today=isToday(key);
+  const opts=store.shifts.map(function(s){
+    return '<button class="btn s '+(inf.shiftId===s.id?'p':'')+'" data-a="day-set" data-key="'+key+'" data-sid="'+s.id+'" data-guard="">'+
+      esc(s.icon)+' '+esc(s.name)+'</button>';}).join('');
+  const gd=store.shifts.filter(isGuardia),tipos=gTipos();
+  const guardBtn=gd.length?('<span class="mini">'+(d.getDay()===6?'eres sábado: el saliente cae en lunes':'el día siguiente queda saliente solo')+'</span> '+
+    tipos.map(function(t){const on=inf.shiftId===gd[0].id&&String(inf.guard||'').toLowerCase()===t.code;
+      return '<button class="btn s '+(on?'p':'')+'" data-a="day-guardia" data-key="'+key+'" data-guard="'+t.code+'">'+
+        (on?'✓ ':'')+'🩺 '+esc(t.label)+'</button>';}).join('')+
+    (inf.shiftId===gd[0].id?' <button class="btn s" data-a="day-guardia" data-key="'+key+'" data-guard="">quitar guardia y saliente</button>':''))
+    :'<span class="mini">marca en «Turno y rotación» qué tipo de día es guardia</span>';
+  return '<div class="daydetail'+(today?' today':'')+'">'+
+    '<div class="row" style="align-items:baseline;justify-content:space-between">'+
+      '<b>'+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' de '+MON[d.getMonth()]+' · '+(sh?esc(sh.icon)+' '+esc(sh.name):'sin asignar')+'</b>'+
+      (today?'<span class="tag b2">hoy</span>':'')+
+    '</div>'+
+    timelineBar(key,inf)+
+    daySleepLineHTML(key,inf)+
+    '<div style="margin-top:6px">'+mealRowsHTML(key,sh)+'</div>'+
+    '<details class="dtip" style="margin-top:9px"><summary class="mini">cambiar qué día es ▾</summary>'+
+      '<div class="row" style="margin-top:8px">'+opts+'</div>'+
+      '<div class="row" style="margin-top:8px;gap:8px">'+guardBtn+'</div>'+
+      '<div class="row" style="margin-top:8px">'+
+        '<button class="btn s" data-a="day-set" data-key="'+key+'" data-sid="" data-guard="">quitar lo puesto</button>'+
+        '<button class="btn s '+(diaSegundo(key).on?'g':'')+'" data-a="gym-seg-hoy" data-key="'+key+'">'+(diaSegundo(key).on?'✓':'○')+' 🏊 segundo entreno</button>'+
+        '<span class="sp"></span><button class="btn s" data-a="day-rhythm" data-key="'+key+'">editar horas 🛌⏰</button>'+
+      '</div></details>'+
+    '</div>';
+}
+/* ===================== render: hoy (pantalla de inicio) ===================== */
+function renderHoy(){
+  const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
+  const sl=sleepOf(hoy,inf),nt=nightOf(hoy,sl);
+  const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
+  const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
   const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(inf.guard):'')+(sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):'')):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
   $('#main').innerHTML='<div class="grid">'+
     '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'</h2>'+
+    modoAvisoHTML()+
     '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
     (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
-    (sl.h!=null?'<p class="mini" style="margin-top:6px">🛌 dormiste '+fmtHM(sl.h*60)+(sl.h<suenoCfg().min?' ⚠ menos de lo tuyo':'')+
-      (nt.rec?' · esta noche, a la cama sobre las '+esc(nt.rec):'')+'</p>':
-      (nt.rec?'<p class="mini" style="margin-top:6px">🛌 para dormir lo tuyo, a la cama sobre las '+esc(nt.rec)+'</p>':''))+
-    '<div style="margin-top:10px">'+
-      barRow('apuntado hoy',ft.kcal,+ob.kcal||0,'',' kcal')+
-      (pl.kcal?barRow('plan de tus menús',pl.kcal,+ob.kcal||0,'plan',' kcal'):'')+
+    timelineBar(hoy,inf)+
+    '<div class="kpis" style="margin-top:10px">'+
+      '<div><b>'+ft.kcal+'</b><span>kcal hoy</span></div>'+
+      '<div><b>'+(pl.kcal||'—')+'</b><span>kcal plan</span></div>'+
+      '<div><b>'+(sl.h!=null?fmtHM(sl.h*60):'—')+'</b><span>dormido</span></div>'+
+      '<div><b>'+(nt.rec||'—')+'</b><span>a la cama</span></div>'+
     '</div>'+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="tab" data-t="food">🍽 apuntar comida</button>'+
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
-    '<div class="card"><h2>Comidas de hoy</h2>'+
-    (slots.length?mealRows:'<div class="empty">'+(sh?'Este tipo de día no tiene comidas montadas todavía: abre «Días y menús».':
-      'Hoy no tiene un tipo de día asignado: ponlo en «Mes» o «Turno y rotación».')+'</div>')+
-    '</div></div>';
+    '<div class="card"><h2>Comidas de hoy</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
 }
 /* ===================== render: semana ===================== */
 function renderWeek(){
@@ -1116,14 +1198,14 @@ function renderWeek(){
     const pick='<select data-a="day-pick" data-i="'+i+'" onchange="PG.render()" style="max-width:190px">'+
       '<option value="">— sin día —</option>'+store.shifts.map(function(x){
         return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>';
+    /* la barra de 24h (informe: reformular Semana) solo puede pintarse con una fecha real —
+       en modo plantilla no hay un día concreto del que sacar sueño/horas, así que ahí se
+       mantiene la línea de texto dayLine() de siempre */
     const head='<span class="drday">'+d.short+(d.sub?' '+d.sub:'')+'</span>'+
       '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+
         (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' · '+esc(d.guard):''):'sin asignar')+'</span>'+
-      '<span class="drsch">'+(sh?esc(dayLine(d)):'—')+'</span>'+
+      (!d.key&&sh?'<span class="drsch">'+esc(dayLine(d))+'</span>':'')+
       (!anyDate&&sh&&rh.sleep?'<span class="drsleep">🛌 '+esc(schedLine(sh.id,null).replace(/^🛌 /,''))+'</span>':'')+
-      (d.key&&sl.h!=null?'<span class="drsleep'+(sl.h<suenoCfg().min?' low':'')+'" title="mínimo '+suenoCfg().min+' h">'+
-        (sl.h<suenoCfg().min?'⚠ ':'')+fmtHM(sl.h*60)+' de sueño'+
-        (sl.h<suenoCfg().min&&nt.rec?(' · a la cama '+nt.rec):'')+'</span>':'')+
       '<span class="sp"></span>'+
       (d.key&&foodLog(d.key).length?'<span class="drnum" title="lo que llevas apuntado en la pestaña Comida">🍽 '+foodTotals(d.key).kcal+' kcal apuntadas</span>':'')+
       '<span class="drnum">'+(sh?(t.kcal+' kcal · '+t.parts+' rac.'):'—')+'</span>'+
@@ -1138,9 +1220,10 @@ function renderWeek(){
         (rh.leave?' · 🚌 '+esc(rh.leave)+' → '+esc(rh.arrive||''):'')+'</span>'+
         '<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar estas horas</button></div>':'')+
       '</div>';
-    return '<div class="drow'+(open?' open':'')+'">'+
+    return '<div class="drow'+(open?' open':'')+(isToday(d.key)?' today':'')+'">'+
       '<div class="drmain" data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'" role="button" tabindex="0" '+
       'aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
+      (d.key&&sh?timelineBar(d.key,d.inf):'')+
       (open?det:'')+'</div>';}).join('');
     const pb=planBatches(days), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
@@ -1164,9 +1247,11 @@ function renderWeek(){
         <div><b>${portions}</b><span>raciones a preparar</span></div>
         <div><b>${g?Math.round(tot.k/7*10)/10:0}</b><span>kcal/día de media</span></div>
         <div><b>${g?Math.round(tot.p/7):0} g</b><span>proteína/día</span></div>
-        ${anyDate?`<div><b>${ss.avg!=null?ss.avg+'h':'—'}</b><span>sueño de media</span></div>
-        <div><b>${ss.low}</b><span>noches con &lt;${ss.min} h</span></div>`:''}
       </div>
+      ${anyDate?`<div class="kpis" style="margin-top:6px">
+        <div><b>${ss.avg!=null?ss.avg+'h':'—'}</b><span>sueño de media</span></div>
+        <div><b>${ss.low}</b><span>noches con &lt;${ss.min} h</span></div>
+      </div>`:''}
       ${g>0&&used.length===0?'<p class="note" style="margin:10px 0 0;color:var(--warn)">⚠ Hay días de guardia pero ningún plato marcado como lote: se comería cada día cocinando de cero.</p>':''}
     </div>
     <div class="daylist">${rows}</div>
@@ -1271,8 +1356,8 @@ function renderMonth(){
   list.forEach(function(d){
     const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
-    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+'" data-a="mon-day" data-key="'+d.key+'"'+
-      ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+'">'+
+    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
+      ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dnum">'+d.date.getDate()+'</span>'+
       '<span class="dnm">'+(d.shiftId?esc(d.icon)+' '+esc(d.name):'·')+'</span>'+
       (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,9))+'</span>':'')+
@@ -1287,6 +1372,7 @@ function renderMonth(){
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
   $('#main').innerHTML=`<div class="grid">
     <div class="card"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
+      ${modoAvisoHTML()}
       <p class="note"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; si la guardia es en sábado, el saliente es el lunes) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
       <div class="row">
         <button class="btn s" data-a="mon-prev">‹</button>
@@ -1296,7 +1382,8 @@ function renderMonth(){
         <span class="sp"></span>
         <button class="btn s" data-a="mon-auto">repartir ${svc.guardias} guardias</button>
         <button class="btn s" data-a="mon-clear">vaciar mes</button></div>
-      <div class="row" style="margin-top:10px">
+      <details class="dtip" style="margin-top:10px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
+      <div class="row" style="margin-top:8px">
         <label class="fld">Servicio que rotas este mes<select data-a="mon-svc">
           <option value="" ${svc.set&&svc.service?'':'selected'}>· sin poner: lo marcas tú ·</option>
           ${(store.rotation.servicios||[]).map(function(x){
@@ -1309,6 +1396,7 @@ function renderMonth(){
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s ${store.rotation.autoPos?'g':''}" data-a="mon-autopos">
           ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
+      </details>
       <div class="kpis">
         <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
         <div><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))}</span></div>
@@ -1320,6 +1408,7 @@ function renderMonth(){
         <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
       </div>
       <div class="cal"><span class="wd">Lun</span><span class="wd">Mar</span><span class="wd">Mié</span><span class="wd">Jue</span><span class="wd">Vie</span><span class="wd">Sáb</span><span class="wd">Dom</span>${cells.join('')}</div>
+      ${ui.monSel?dayPanelHTML(ui.monSel):''}
       <div class="row" style="margin-top:10px">
         <span class="mini">${list.filter(function(d){return d.over;}).length} día(s) puestos a mano · ${list.length-list.filter(function(d){return d.over;}).length} salen de la plantilla/rotación</span>
       <span class="sp"></span><span class="mini">horas de hoy: ${esc((function(){var td=list.filter(function(d){return d.key===iso(new Date());})[0];
@@ -1342,35 +1431,6 @@ function renderMonth(){
           <span style="min-width:132px">${esc(d.icon)} ${esc(sh.name)}${d.guard?' · '+esc(d.guard):''}</span>
           <span class="mini">${esc(dayLine(d))}</span></div>`;}).join('')||'<div class="empty">Mes vacío: reparte las guardias o asígnalas día a día.</div>'}</div></details></div>
   </div>`;}
-function renderDayModal(dateStr){
-  const d=parseDate(dateStr);if(!d)return;
-  const sel='<select data-a="day-sel" data-key="'+iso(d)+'" style="max-width:200px"><option value="">— sin día —</option>'+
-    store.shifts.map(function(x){return '<option value="'+x.id+'" '+(dayInfo(iso(d)).shiftId===x.id?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>';
-  const info=dayInfo(dateStr),key=iso(d);
-  const opts=store.shifts.map(function(s){
-    return '<button class="btn s '+(info.shiftId===s.id?'p':'')+'" data-a="day-set" data-key="'+key+'" data-sid="'+s.id+'" data-guard="">'+
-      esc(s.icon)+' '+esc(s.name)+'</button>';}).join('');
-  const gd=store.shifts.filter(isGuardia),tipos=gTipos();
-  const guardBtn=gd.length?('<span class="mini">'+(d.getDay()===6
-      ?'eres sábado: el saliente cae en lunes':'el día siguiente queda saliente solo')+'</span>'+
-    tipos.map(function(t){const on=info.shiftId===gd[0].id&&String(info.guard||'').toLowerCase()===t.code;
-      return '<button class="btn s '+(on?'p':'')+'" data-a="day-guardia" data-key="'+key+'" data-guard="'+t.code+'">'+
-        (on?'✓ ':'')+'🩺 '+esc(t.label)+'</button>';}).join('')+
-    (info.shiftId===gd[0].id?'<button class="btn s" data-a="day-guardia" data-key="'+key+'" data-guard="">quitar guardia y saliente</button>':'')+
-    (info.guard?'<span class="mini">ahora: '+esc(gEtiqueta(info.guard))+'</span>':''))
-    :'<span class="mini">marca en «Turno y rotación» qué tipo de día es guardia (carga alta y nombre con «guardia»)</span>';
-
-  openModal('Asignar el '+d.getDate()+' de '+MON[d.getMonth()]+
-    '<span class="mini"> · '+DAYN[(d.getDay()+6)%7]+(info.shiftId?' · ahora: '+esc((shiftById(info.shiftId)||{}).name||'')+' · lo pusiste tú':' · ahora: lo que diga la plantilla')+'</span>',
-    '<p class="note">Elige qué día es. Al marcar una guardia se pone solo el saliente del día de después; al quitarla, se quita también si lo puso la app.</p>'+
-    '<div class="row">'+opts+'</div><div class="row" style="margin-top:8px;gap:8px">'+guardBtn+'</div>'+
-    '<div class="row" style="margin-top:12px;border-top:1px dashed var(--line);padding-top:10px">'+
-      '<span class="mini">o elige el día sin guardar:</span>'+sel+
-      '<button class="btn s" data-a="day-set" data-key="'+key+'" data-sid="" data-guard="">quitar lo puesto</button>'+
-      '<button class="btn s '+(diaSegundo(key).on?'g':'')+'" data-a="gym-seg-hoy" data-key="'+key+'">'+
-        (diaSegundo(key).on?'✓':'○')+' 🏊 segundo entreno</button>'+
-      '<span class="sp"></span><button class="btn s" data-a="day-rhythm" data-key="'+key+'">editar horas 🛌⏰</button></div>',null);
-}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
 const GYM_URL='https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json';
@@ -3021,7 +3081,14 @@ function act(a,el){
         save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
     case 'mon-sync':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
       flash(syncToRotation(y,m));break;}
-    case 'mon-day':renderDayModal(el.dataset.key);break;
+    case 'mon-day':{
+      /* antes abría renderDayModal() como ventana aparte; ahora despliega el panel inline debajo
+         del calendario (informe "reformular Mes/Semana/Hoy", decisión A) — si se llama desde fuera
+         de Mes (p. ej. "cambiar qué día es" en Semana), entra en Mes con ese día ya seleccionado */
+      const key=el.dataset.key;
+      ui.monSel=(ui.monSel===key)?'':key;
+      if(ui.tab!=='month'){ui.tab='month';ui.calMode='month';}
+      render();break;}
     case 'food-prev':case 'food-next':{const cur=foodKey(ui.foodDate||iso(new Date()));
       const dd=parseDate(cur)||new Date();ui.foodDate=iso(addDays(dd,a==='food-next'?1:-1));render();break;}
     case 'food-today':ui.foodDate=iso(new Date());render();break;
@@ -3038,7 +3105,7 @@ function act(a,el){
       const paso=e.dishId?0.5:25;
       flash(bumpFoodEntry(el.dataset.key,el.dataset.id,a==='fe-more'?paso:-paso));render();break;}
     case 'fe-del':flash(delFoodEntry(el.dataset.key,el.dataset.id));render();break;
-    case 'hoy-log-slot':{const hk=iso(new Date()),s=(store.menu[el.dataset.shift]||[]).find(function(x){return x.id===el.dataset.slot;});
+    case 'hoy-log-slot':{const hk=el.dataset.key||iso(new Date()),s=(store.menu[el.dataset.shift]||[]).find(function(x){return x.id===el.dataset.slot;});
       if(!s){flash('esa comida ya no está en el menú');break;}
       const info=slotItems(el.dataset.shift,s),cat=posDeSlot(s.label,s.time);
       if(!info.items.length){flash('esa comida no tiene platos asignados todavía');break;}
@@ -3130,13 +3197,13 @@ function act(a,el){
     case 'svc-del':{store.rotation.servicios.splice(+el.dataset.ix,1);save();render();break;}
     case 'day-set':{const v=el.dataset.sid||'';
       setDayOverride(el.dataset.key,v||'',el.dataset.guard||(v?'':''));save();
-      if(el.dataset.guard){renderDayModal(el.dataset.key);}else{closeModal();render();}
+      render();
       const auto=v?((ponerSalienteAuto(el.dataset.key).txt)||''):'';
       flash(v?('día puesto: '+((shiftById(v)||{}).name||'')+(el.dataset.guard?(' · '+el.dataset.guard):'')+
         (store.rotation.autoPos!==false?auto:'')):'día liberado (y su saliente automático, si lo puso la app)');break;}
     case 'day-rhythm':editDayRhythm(el.dataset.key);break;
     case 'day-guardia':{const rg=setGuardiaTipo(el.dataset.key,el.dataset.guard||'');flash(rg.msg);
-      if(rg.ok)renderDayModal(el.dataset.key);break;}
+      if(rg.ok)render();break;}
     case 'gtipo-add':{const inp=document.getElementById('gtipoNuevo');const r=addGuardiaTipo(inp?inp.value:'');
       if(r.ok&&inp)inp.value='';flash(r.msg);break;}
     case 'gym-wipe':{const txts={log:'¿Borrar las series apuntadas? Tus pesos y tus marcas salen de ahí (luego se pueden deshacer).',
@@ -4252,9 +4319,6 @@ document.addEventListener('change',e=>{
         delete store.rotation.shiftByDay[iso(d.date)];}
       else store.rotation.shiftByDay['tpl'+store.rotation.pattern+'#'+d.idx]=el.value;
       save();render();break;}
-    case 'day-sel':{const v=el.value||'';setDayOverride(el.dataset.key,v,(dayOverride(el.dataset.key)||{}).guard);
-      const auto=v?((ponerSalienteAuto(el.dataset.key).txt)||''):'';
-      closeModal();save();render();flash(v?('día puesto: '+((shiftById(v)||{}).name||'')+auto):'día liberado (y su saliente automático, si lo puso la app)');break;}
     case 'rh-f':{if(!store.rhythm)store.rhythm={};const o=store.rhythm[el.dataset.id]||(store.rhythm[el.dataset.id]={});
       o[el.dataset.f]=el.value;save();render();break;}
     case 'mon-set':{const mm=/^(\d{4})-(\d{2})$/.exec(el.value||'');if(mm){monthDate=new Date(+mm[1],+mm[2]-1,1,12,0,0,0);render();}break;}
@@ -4332,7 +4396,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,
   parsePlanning,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
-  guardCount,distributeGuardias,syncToRotation,quickBreakfast,staplesFor,schedLine,dayLine,RKEYS,renderDayModal,
+  guardCount,distributeGuardias,syncToRotation,quickBreakfast,staplesFor,schedLine,dayLine,RKEYS,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
@@ -4350,7 +4414,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   FOOD_CATALOGO,foodImportCatalogo,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
-  openDrawer,closeDrawer,CAL_SET};
+  openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML};
 load();
 render();
 avisarBackupSiToca();

@@ -339,6 +339,8 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('en "Mes", ‹ mueve el mes y no toca weekDate a escondidas',
     monthNavCheck.after.month !== monthNavCheck.before.month && monthNavCheck.after.weekDate === monthNavCheck.before.weekDate,
     JSON.stringify(monthNavCheck));
+  await page.click('[data-a="mon-today"]'); // deja monthDate como estaba, para no afectar a pruebas siguientes
+  await page.waitForTimeout(150);
 
   // 15) las flechas de semana se ocultan donde no aplican (Hoy, Semana en plantilla) y siguen visibles en Semana + "por fecha"
   // — se comprueba el estilo calculado (display), no solo el atributo hidden: un display:flex propio puede anularlo en silencio
@@ -507,6 +509,90 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   const kcalDespuesManual = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKeyManual);
   check('el alimento añadido a mano se registra igual que uno escaneado',
     kcalDespuesManual > kcalAntesManual, 'antes=' + kcalAntesManual + ' después=' + kcalDespuesManual);
+
+  // ===================== Reformulación de Calendario: "hoy", panel inline y barra de 24h =====================
+
+  // 23) en "Mes", la casilla de hoy lleva la marca visual "today", y tocarla abre un panel inline
+  // (con su barra de 24h) en vez del modal de antes
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  // una prueba anterior (¹⁴, las flechas de la cabecera) deja monthDate movido a otro mes: se vuelve
+  // al mes actual antes de buscar la casilla de hoy, o el test 14 lo dejaría en un mes sin ese día
+  await page.click('[data-a="mon-today"]');
+  await page.waitForTimeout(150);
+  const hoyKeyMes = new Date().toISOString().slice(0, 10);
+  const mesHoyClase = await page.evaluate(
+    (k) => {
+      const cell = document.querySelector('.dbox[data-key="' + k + '"]');
+      return { existe: !!cell, esHoy: cell ? cell.classList.contains('today') : null };
+    },
+    hoyKeyMes
+  );
+  check('en "Mes", la casilla de hoy lleva la clase "today"',
+    mesHoyClase.existe && mesHoyClase.esHoy === true, JSON.stringify(mesHoyClase));
+
+  await page.click('.dbox[data-key="' + hoyKeyMes + '"]');
+  await page.waitForTimeout(200);
+  const panelAbierto = await page.evaluate(() => ({
+    panel: !!document.querySelector('.daydetail'),
+    barra: !!document.querySelector('.daydetail .tl-bar'),
+    modalAbierto: document.getElementById('overlay').classList.contains('on'),
+  }));
+  check('tocar un día en "Mes" abre un panel inline con su barra de 24h, sin abrir el modal',
+    panelAbierto.panel && panelAbierto.barra && !panelAbierto.modalAbierto, JSON.stringify(panelAbierto));
+
+  await page.click('.dbox[data-key="' + hoyKeyMes + '"]');
+  await page.waitForTimeout(200);
+  const panelCerrado = await page.evaluate(() => !document.querySelector('.daydetail'));
+  check('tocar el mismo día otra vez cierra el panel', panelCerrado);
+
+  // 24) la configuración pesada de Mes (servicio, tipos de guardia, cupo) empieza plegada
+  const configPlegada = await page.evaluate(() => {
+    const d = Array.from(document.querySelectorAll('.dtip')).find((x) => /configurar este mes/.test(x.textContent));
+    return d ? d.open : null;
+  });
+  check('la configuración del mes (servicio, tipos de guardia, cupo) empieza plegada',
+    configPlegada === false, 'open=' + configPlegada);
+
+  // 25) "Hoy" muestra la agenda de 24h con la marca de "ahora"
+  await gotoTab('hoy');
+  await page.waitForTimeout(200);
+  const hoyBarra = await page.evaluate(() => ({
+    barra: !!document.querySelector('#main .tl-bar'),
+    ahora: !!document.querySelector('#main .tl-now'),
+  }));
+  check('"Hoy" muestra la agenda de 24h con la marca de "ahora"',
+    hoyBarra.barra && hoyBarra.ahora, JSON.stringify(hoyBarra));
+
+  // 26) en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h
+  // sustituye a la línea de texto densa que había antes
+  await page.evaluate(() => {
+    window.PG.store.rotation.mode = 'date';
+    const monday = new Date();
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    window.PG.weekDate = monday;
+    window.PG.render();
+  });
+  await gotoTab('week');
+  await page.waitForTimeout(200);
+  const semanaEstado = await page.evaluate(() => {
+    const row = document.querySelector('.drow.today');
+    return { filaHoy: !!row, tieneBarra: row ? !!row.querySelector('.tl-bar') : false };
+  });
+  check('en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h',
+    semanaEstado.filaHoy && semanaEstado.tieneBarra, JSON.stringify(semanaEstado));
+
+  // 27) aviso de modo compartido (decisión B del informe): si "Semana" está en plantilla (sin fechas
+  // reales), Mes y Hoy —que siempre usan la fecha real— lo avisan para que el cambio no sorprenda
+  await page.evaluate(() => { window.PG.store.rotation.mode = 'template'; window.PG.render(); });
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const avisoMes = await page.evaluate(() => /modo plantilla/.test(document.getElementById('main').innerText));
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const avisoHoy = await page.evaluate(() => /modo plantilla/.test(document.getElementById('main').innerText));
+  check('Mes y Hoy avisan cuando "Semana" está en modo plantilla',
+    avisoMes && avisoHoy, JSON.stringify({ avisoMes, avisoHoy }));
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
