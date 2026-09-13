@@ -59,7 +59,7 @@ function DEFAULTS(){return {
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
-  gym:{biblioteca:[],rutina:[],registro:[],fav:[],fuente:'',marks:{},
+  gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
   patterns:[
     {id:'pat1',name:'1 guardia · repartida',days:['G','S','T','T','F','L','L'],note:'Lunes guardia → martes saliente → miércoles y jueves de 8 a 15 → viernes con gym → finde en casa.'},
@@ -255,9 +255,12 @@ function normalize(o){
   if(!o.food.eans||typeof o.food.eans!=='object')o.food.eans={};
   if(!o.food.log||typeof o.food.log!=='object')o.food.log={};
   if(!Array.isArray(o.food.fav))o.food.fav=[];
-  if(!o.gym||typeof o.gym!=='object')o.gym=JSON.parse(JSON.stringify(d.gym||{biblioteca:[],rutina:[],registro:[],fav:[],
+  if(!o.gym||typeof o.gym!=='object')o.gym=JSON.parse(JSON.stringify(d.gym||{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],
     segundo:{on:true,dias:[2,5],tipo:'piscina',hora:'15:30'}}));
-  ['biblioteca','rutina','registro','fav'].forEach(function(k){if(!Array.isArray(o.gym[k]))o.gym[k]=[];});
+  ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(o.gym[k]))o.gym[k]=[];});
+  migrarRutinas(o.gym);
+  if(!Array.isArray(o.gym.sesiones))o.gym.sesiones=[];
+  if(!Array.isArray(o.gym.cardio))o.gym.cardio=[];
   if(!o.gym.segundo||typeof o.gym.segundo!=='object')
     o.gym.segundo={on:true,dias:[2,5],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=[2,5];
@@ -1331,14 +1334,31 @@ const GYM_SITIO='https://opengym-bc111a.gitlab.io/#/library';
 const GYM_DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
 function gymS(){
   if(!store.gym||typeof store.gym!=='object')
-    store.gym={biblioteca:[],rutina:[],registro:[],fav:[],fuente:'',marks:{},
+    store.gym={biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
       segundo:{on:true,dias:[3],tipo:'piscina',hora:'15:30'}};
   const g=store.gym;
-  ['biblioteca','rutina','registro','fav'].forEach(function(k){if(!Array.isArray(g[k]))g[k]=[];});
+  ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(g[k]))g[k]=[];});
+  migrarRutinas(g);
+  if(!Array.isArray(g.sesiones))g.sesiones=[];
+  if(!Array.isArray(g.cardio))g.cardio=[];
   if(!g.segundo||typeof g.segundo!=='object')g.segundo={on:true,dias:[3],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(g.segundo.dias))g.segundo.dias=[3];
   if(!g.marks||typeof g.marks!=='object')g.marks={};
   return g;}
+function migrarRutinas(g){
+  /* gym.rutina (única, sin nombre) -> gym.rutinas[] (varias, con nombre): la rutina que hubiera se
+     convierte en la primera rutina con nombre, sin perder ni un ejercicio. Se hace una sola vez: en
+     cuanto gym.rutinas ya existe como array (aunque se quede vacío después, p. ej. si el usuario borra
+     todas sus rutinas) no se vuelve a tocar — mismo patrón que el resto de migraciones silenciosas de
+     normalize(). */
+  if(Array.isArray(g.rutinas))return;
+  const vieja=Array.isArray(g.rutina)?g.rutina:[];
+  g.rutinas=vieja.length?[{id:uid('rt'),nombre:'Mi rutina',notas:'',
+    ejercicios:vieja.map(function(r){return {ex:r.ex,series:Math.max(1,+r.series||3),reps:Math.max(1,+r.reps||8),
+      pesoObjetivo:Math.max(0,+r.pesoObjetivo||0),descansoSeg:Math.max(0,+r.descansoSeg||90),nota:r.nota||'',
+      c:r.c||'',eq:r.eq||'',tg:r.tg||'',msc:r.msc||''};})}]:[];
+  delete g.rutina;
+}
 function gymImportText(txt){
   /* acepta el exercises.json del dataset (array o {exercises:[…]}) y se queda con el índice, sin imágenes */
   let data;
@@ -1370,26 +1390,64 @@ function gymBuscar(txt,max){
   const de=function(x){return String(x.n||'').toLowerCase()+' '+String(x.c||'')+' '+String(x.eq||'')+' '+String(x.tg||'');};
   const lista=q?g.biblioteca.filter(function(x){return de(x).indexOf(q)>=0;}):g.biblioteca;
   return lista.slice(0,max||40);}
-function addRutina(nombre,det){
+function nuevaRutina(nombre){
+  const g=gymS(),nm=String(nombre||'').trim()||('Rutina '+(g.rutinas.length+1));
+  const r={id:uid('rt'),nombre:nm.slice(0,40),notas:'',ejercicios:[]};
+  g.rutinas.push(r);ui.gymRutinaSel=r.id;
+  save();render();
+  return 'nueva rutina creada: '+r.nombre+' — ya puedes añadirle ejercicios';}
+function delRutinaCard(rid){
+  const g=gymS(),i=g.rutinas.findIndex(function(r){return r.id===rid;});
+  if(i<0)return 'esa rutina ya no estaba';
+  const nm=g.rutinas[i].nombre;
+  g.rutinas.splice(i,1);
+  if(ui.gymRutinaSel===rid)ui.gymRutinaSel='';
+  if(ui.gymSesionActiva&&ui.gymSesionActiva.rutinaId===rid)ui.gymSesionActiva=null;
+  save();render();
+  return 'rutina eliminada: '+nm+' (las sesiones que ya hiciste con ella se quedan en el historial)';}
+function addRutina(rid,nombre,det){
   det=det||{};
   const g=gymS(),nm=String(nombre||'').trim();
   if(!nm)return 'escribe el ejercicio (o búscalo en la biblioteca y dale a «a la rutina»)';
+  if(!g.rutinas.length)g.rutinas.push({id:uid('rt'),nombre:'Mi rutina',notas:'',ejercicios:[]});
+  let rt=g.rutinas.find(function(r){return r.id===rid;});
+  if(!rt)rt=g.rutinas[0];
   const ex=g.biblioteca.filter(function(x){return x.n===nm||x.id===nm;})[0]||{};
-  if(g.rutina.some(function(r){return r.ex===nm;}))return '«'+nm+'» ya está en la rutina';
-  g.rutina.push({ex:nm,series:Math.max(1,+det.series||3),reps:Math.max(1,+det.reps||8),c:ex.c||'',eq:ex.eq||''});
-  save();render();return 'añadido a la rutina: '+nm;}
-function delRutina(ix){const g=gymS(),r=g.rutina[ix];if(!r)return 'ese ya no estaba';
-  g.rutina.splice(ix,1);save();render();return 'quitado de la rutina: '+r.ex;}
-function setRutina(ix,campo,val){const r=gymS().rutina[ix];if(!r)return;
-  r[campo]=Math.max(1,Math.min(12,+val||1));save();}
+  if(rt.ejercicios.some(function(x){return x.ex===nm;}))return '«'+nm+'» ya está en «'+rt.nombre+'»';
+  rt.ejercicios.push({ex:nm,series:Math.max(1,+det.series||3),reps:Math.max(1,+det.reps||8),
+    pesoObjetivo:Math.max(0,+det.pesoObjetivo||0),descansoSeg:Math.max(0,+det.descansoSeg||90),nota:'',
+    c:ex.c||'',eq:ex.eq||'',tg:ex.tg||'',msc:ex.msc||''});
+  save();render();return 'añadido a «'+rt.nombre+'»: '+nm;}
+function delRutina(rid,ix){
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;});
+  if(!rt)return 'esa rutina ya no está';
+  const r=rt.ejercicios[ix];if(!r)return 'ese ejercicio ya no estaba';
+  rt.ejercicios.splice(ix,1);save();render();return 'quitado de «'+rt.nombre+'»: '+r.ex;}
+function setRutina(rid,ix,campo,val){
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;});if(!rt)return;
+  const r=rt.ejercicios[ix];if(!r)return;
+  if(campo==='series')r.series=Math.max(1,Math.min(12,+val||1));
+  else if(campo==='reps')r.reps=Math.max(1,Math.min(30,+val||1));
+  else if(campo==='pesoObjetivo')r.pesoObjetivo=Math.max(0,+val||0);
+  else if(campo==='descansoSeg')r.descansoSeg=Math.max(0,Math.min(600,+val||0));
+  else if(campo==='nota')r.nota=String(val||'').slice(0,90);
+  save();}
+function moverEjercicio(rid,ix,dir){
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;});if(!rt)return;
+  const j=ix+dir;if(j<0||j>=rt.ejercicios.length)return;
+  const tmp=rt.ejercicios[ix];rt.ejercicios[ix]=rt.ejercicios[j];rt.ejercicios[j]=tmp;
+  save();render();}
 function addSet(fecha,opt){
   opt=opt||{};
   const g=gymS(),k=foodKey(fecha)||iso(new Date());
   const nm=String(opt.ex||'').trim();
   if(!nm)return 'dime qué ejercicio es';
   const kg=Math.max(0,Math.round((+opt.kg||0)*10)/10),reps=Math.max(1,Math.min(200,+opt.reps||1));
+  /* si hay una sesión en curso ese mismo día, la serie que apuntes a mano cuenta también para ella
+     (para "9 de 10 series hechas" y su volumen), aunque no viniera pre-montada por «empezar rutina» */
+  const sid=(ui.gymSesionActiva&&ui.gymSesionActiva.fecha===k)?ui.gymSesionActiva.id:null;
   g.registro.push({id:uid('gs'),fecha:k,ex:nm,kg:kg,reps:reps,rpe:(+opt.rpe||0)||null,
-    nota:String(opt.nota||'').slice(0,90),ts:Date.now()});
+    nota:String(opt.nota||'').slice(0,90),ts:Date.now(),sesionId:sid});
   save();
   return 'serie apuntada: '+nm+' '+kg+' kg × '+reps;}
 function delSet(id){const g=gymS(),i=g.registro.findIndex(function(x){return x.id===id;});
@@ -1425,17 +1483,149 @@ function prDe(nombre){
 function ejercicioUltimo(nombre){
   const xs=gymIdx().byEx[nombre]||[];
   return xs.length?xs[xs.length-1]:null;}
-function pasarRutina(fecha){
-  /* monta las series de la rutina con el último peso que usaste en cada una */
-  const g=gymS(),k=foodKey(fecha)||iso(new Date());
-  if(!g.rutina.length)return 'no tienes nada en la rutina: añade ejercicios arriba';
-  let n=0;
-  g.rutina.forEach(function(r){
-    const ult=ejercicioUltimo(r.ex),kg=ult?ult.kg:0;
-    for(let i=0;i<Math.max(1,+r.series||3);i++){
-      g.registro.push({id:uid('gs'),fecha:k,ex:r.ex,kg:kg,reps:+r.reps||8,rpe:null,nota:'',ts:Date.now()});n++;}});
-  save();
-  return n+' series montadas de tu rutina ('+g.rutina.length+' ejercicios) con el último peso que usaste';}
+/* ===================== empezar/terminar una rutina = una sesión ===================== */
+function empezarRutina(rid,fecha){
+  /* monta las series de esa rutina con el último peso que usaste en cada ejercicio (misma idea que
+     antes pasarRutina(), pero ahora sabiendo de qué rutina se trata) y abre una "sesión en curso":
+     hasta que no le des a «he terminado» (o «descartar»), no hay una sola sesión más que empezar. */
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;});
+  if(!rt)return 'esa rutina ya no existe';
+  if(!rt.ejercicios.length)return '«'+rt.nombre+'» no tiene ejercicios todavía: añade alguno primero';
+  if(ui.gymSesionActiva)return 'ya tienes una sesión en curso: termínala o descártala antes de empezar otra';
+  const k=foodKey(fecha)||iso(new Date());
+  const sid=uid('gses');let n=0;
+  rt.ejercicios.forEach(function(ej){
+    const ult=ejercicioUltimo(ej.ex),kg=ult?ult.kg:(+ej.pesoObjetivo||0);
+    for(let i=0;i<Math.max(1,+ej.series||3);i++){
+      g.registro.push({id:uid('gs'),fecha:k,ex:ej.ex,kg:kg,reps:+ej.reps||8,rpe:null,nota:'',ts:Date.now(),sesionId:sid});n++;}});
+  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n};
+  save();render();
+  return n+' series montadas de «'+rt.nombre+'» con el último peso que usaste — apúntalas abajo y dale a «he terminado» cuando acabes';}
+function duracionTipica(rid){
+  const g=gymS(),ss=g.sesiones.filter(function(s){return s.rutinaId===rid;});
+  if(!ss.length)return 45;
+  return Math.round(ss.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ss.length)||45;}
+function terminarSesion(minutos,completo,nota){
+  const g=gymS();
+  if(!ui.gymSesionActiva)return 'no hay ninguna sesión en curso';
+  const sa=ui.gymSesionActiva,rt=g.rutinas.find(function(r){return r.id===sa.rutinaId;});
+  const seriesIds=g.registro.filter(function(x){return x.sesionId===sa.id;}).map(function(x){return x.id;});
+  const dur=Math.max(1,Math.min(600,Math.round(+minutos||duracionTipica(sa.rutinaId))));
+  const comp=(typeof completo==='boolean')?completo:(seriesIds.length>=sa.plan);
+  g.sesiones.push({id:sa.id,rutinaId:sa.rutinaId,fecha:sa.fecha,duracionMin:dur,seriesIds:seriesIds,
+    completo:comp,nota:String(nota||'').slice(0,140)});
+  ui.gymSesionActiva=null;
+  save();render();
+  return 'sesión guardada: '+(rt?rt.nombre:'')+' · '+seriesIds.length+' series · '+dur+' min'+(comp?' · entera':' · parcial');}
+function descartarSesion(){
+  const g=gymS();
+  if(!ui.gymSesionActiva)return 'no hay ninguna sesión en curso';
+  const sid=ui.gymSesionActiva.id;
+  g.registro=g.registro.filter(function(x){return x.sesionId!==sid;});
+  ui.gymSesionActiva=null;save();render();
+  return 'sesión descartada: las series que había montado se han quitado del registro';}
+function historialRutina(rid){
+  const g=gymS(),hoy=new Date(),mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const ss=g.sesiones.filter(function(s){return s.rutinaId===rid;});
+  const esteMes=ss.filter(function(s){return (s.fecha||'').slice(0,7)===mesActual;});
+  const media=ss.length?Math.round(ss.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ss.length):0;
+  let ultima=null;
+  ss.forEach(function(s){if(!ultima||s.fecha>ultima)ultima=s.fecha;});
+  const diasDesde=ultima?Math.max(0,Math.floor((Date.now()-(parseDate(ultima)||hoy).getTime())/864e5)):null;
+  return {n:ss.length,esteMes:esteMes.length,media:media,ultima:ultima,diasDesde:diasDesde};}
+function sesionesRecientes(n){
+  const g=gymS();
+  return g.sesiones.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).slice(0,n||20);}
+/* ===================== cardio: natación, carrera, bici… aparte de la fuerza ===================== */
+function addCardio(opt){
+  opt=opt||{};
+  const g=gymS();
+  const tipo=String(opt.tipo||'otro').trim().slice(0,20)||'otro';
+  const k=foodKey(opt.fecha)||iso(new Date());
+  const dur=Math.max(1,Math.min(600,Math.round(+opt.duracionMin||30)));
+  const kmVal=(opt.distanciaKm===''||opt.distanciaKm==null)?null:Math.max(0,Math.round((+opt.distanciaKm||0)*100)/100);
+  g.cardio.push({id:uid('cd'),fecha:k,tipo:tipo,duracionMin:dur,distanciaKm:kmVal,nota:String(opt.nota||'').slice(0,140)});
+  save();render();
+  return 'cardio apuntado: '+tipo+' · '+dur+' min'+(kmVal?(' · '+kmVal+' km'):'');}
+function delCardio(id){
+  const g=gymS(),i=g.cardio.findIndex(function(x){return x.id===id;});
+  if(i<0)return 'ese cardio ya no estaba';
+  const x=g.cardio[i];g.cardio.splice(i,1);save();render();
+  return 'borrado: '+x.tipo+' del '+x.fecha;}
+/* ===================== diagrama de músculos: de la biblioteca a 10 regiones fijas ===================== */
+const MREGIONES=['pecho','espalda','hombros','biceps','triceps','cuadriceps','isquiotibiales','gluteos','gemelos','core'];
+const MREG_LABEL={pecho:'Pecho',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',triceps:'Tríceps',
+  cuadriceps:'Cuádriceps',isquiotibiales:'Isquiotibiales',gluteos:'Glúteos',gemelos:'Gemelos',core:'Core / abdomen'};
+/* La biblioteca de openGym trae category/body_part (c), target muscle (tg) y músculos secundarios (msc)
+   con el vocabulario típico de ese tipo de dataset (inglés, "chest"/"upper legs"/"hamstrings"/"lats"...).
+   No hay una tabla 1:1 con las 10 regiones fijas de este diagrama, así que se hace por coincidencia de
+   palabra clave: tg (el músculo objetivo, lo más específico) manda; msc (secundarios) se suma aparte;
+   c (categoría/body_part, mucho más genérico: "upper legs", "back"...) solo se usa si tg no dio ninguna
+   región, para no dejar el ejercicio sin ninguna región reconocida. */
+const MUSCLE_MAP=[
+  [/pector|pecho|chest|serratus/,'pecho'],
+  [/\blat\b|lats|upper back|middle back|lower back|\bback\b|espalda|trapez|\btraps\b|rhomboid|spine|neck/,'espalda'],
+  [/delt|shoulder|hombro/,'hombros'],
+  [/bicep|brachialis|forearm|antebrazo/,'biceps'],
+  [/tricep/,'triceps'],
+  [/quad|cuádricep|cuadricep|upper leg/,'cuadriceps'],
+  [/hamstring|isquio/,'isquiotibiales'],
+  [/glute|glúteo|gluteo/,'gluteos'],
+  [/calf|calves|gastroc|soleus|lower leg|gemelo/,'gemelos'],
+  [/\babs\b|abdomin|oblique|waist|\bcore\b|abductor|adductor/,'core']];
+function regionesDeTexto(txt){
+  const t=String(txt||'').toLowerCase(),out=new Set();
+  MUSCLE_MAP.forEach(function(p){if(p[0].test(t))out.add(p[1]);});
+  return out;}
+function regionesDeEjercicio(ej){
+  const out=new Set();
+  regionesDeTexto(ej&&ej.tg).forEach(function(r){out.add(r);});
+  regionesDeTexto(ej&&ej.msc).forEach(function(r){out.add(r);});
+  if(!out.size)regionesDeTexto(ej&&ej.c).forEach(function(r){out.add(r);});
+  return out;}
+function regionesDeRutina(rid){
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;}),out=new Set();
+  if(rt)rt.ejercicios.forEach(function(ej){regionesDeEjercicio(ej).forEach(function(r){out.add(r);});});
+  return out;}
+function regionesDeSesion(sid){
+  const g=gymS(),s=g.sesiones.find(function(x){return x.id===sid;});
+  return s?regionesDeRutina(s.rutinaId):new Set();}
+function libMatch(nombre){
+  const g=gymS(),q=String(nombre||'').toLowerCase();
+  return g.biblioteca.find(function(x){return String(x.n||'').toLowerCase()===q;})||null;}
+function svgCuerpo(activas){
+  activas=activas||new Set();
+  const on=function(r){return activas.has(r)?' on':'';};
+  const R=function(x,y,w,h,rx,region){
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" class="mreg'+on(region)+'" data-region="'+region+'"><title>'+esc(MREG_LABEL[region]||region)+'</title></rect>';};
+  const E=function(cx,cy,rx,ry,region){
+    return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" class="mreg'+on(region)+'" data-region="'+region+'"><title>'+esc(MREG_LABEL[region]||region)+'</title></ellipse>';};
+  return '<svg viewBox="0 0 200 300" class="mbody" role="img" aria-label="Diagrama del cuerpo con los grupos musculares que se han trabajado resaltados">'+
+    '<circle cx="100" cy="24" r="16" class="mneutro"/>'+
+    '<rect x="92" y="38" width="16" height="14" class="mneutro"/>'+
+    '<rect x="40" y="122" width="14" height="44" rx="6" class="mneutro"/>'+
+    '<rect x="146" y="122" width="14" height="44" rx="6" class="mneutro"/>'+
+    '<circle cx="47" cy="170" r="7" class="mneutro"/>'+
+    '<circle cx="153" cy="170" r="7" class="mneutro"/>'+
+    '<ellipse cx="86" cy="270" rx="10" ry="6" class="mneutro"/>'+
+    '<ellipse cx="114" cy="270" rx="10" ry="6" class="mneutro"/>'+
+    R(78,48,44,8,4,'espalda')+
+    E(58,62,16,13,'hombros')+E(142,62,16,13,'hombros')+
+    R(70,58,60,40,10,'pecho')+
+    R(36,66,18,58,8,'biceps')+R(146,66,18,58,8,'biceps')+
+    R(30,68,7,54,3,'triceps')+R(163,68,7,54,3,'triceps')+
+    R(76,96,48,42,8,'core')+
+    E(80,142,11,9,'gluteos')+E(120,142,11,9,'gluteos')+
+    R(72,138,22,66,10,'cuadriceps')+R(106,138,22,66,10,'cuadriceps')+
+    R(65,140,7,62,3,'isquiotibiales')+R(128,140,7,62,3,'isquiotibiales')+
+    R(74,206,17,52,8,'gemelos')+R(109,206,17,52,8,'gemelos')+
+    '</svg>';}
+function diagramaHTML(regiones,titulo){
+  const arr=Array.from(regiones||[]);
+  const leyenda=arr.length?arr.map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')
+    :'<span class="mini">sin ejercicios de la biblioteca reconocidos todavía: importa la biblioteca de openGym y añade los ejercicios desde ahí (no a mano) para que el diagrama se rellene</span>';
+  return '<details class="dtip" style="margin-top:10px"><summary class="mini">'+esc(titulo||'ver qué músculos trabaja')+'</summary>'+
+    '<div class="mdiagram">'+svgCuerpo(regiones)+'<div class="mlegend"><b>Resalta:</b>'+leyenda+'</div></div></details>';}
 function diaSegundo(dateStr,infOpt){
   /* el segundo día de gym: lo que marques para ese día concreto manda sobre la regla de la semana */
   const g=gymS(),k=foodKey(dateStr);
@@ -1483,17 +1673,19 @@ function gymLine(dateStr){
 /* ===================== limpiar el entreno (con red de seguridad) ===================== */
 function gymWipe(que){
   const g=gymS(),fab={on:true,dias:[2],tipo:'piscina',hora:'15:30'};
-  const antes={registro:g.registro.slice(),rutina:g.rutina.slice(),fav:(g.fav||[]).slice(),
-    marks:JSON.parse(JSON.stringify(g.marks||{})),segundo:JSON.parse(JSON.stringify(g.segundo||{})),
+  const antes={registro:g.registro.slice(),rutinas:clone(g.rutinas),sesiones:g.sesiones.slice(),cardio:g.cardio.slice(),
+    fav:(g.fav||[]).slice(),marks:JSON.parse(JSON.stringify(g.marks||{})),segundo:JSON.parse(JSON.stringify(g.segundo||{})),
     biblioteca:g.biblioteca.slice(),fuente:g.fuente||''};
   let n=0;
-  if(que==='log'){n=g.registro.length;g.registro=[];}
-  else if(que==='rut'){n=g.rutina.length;g.rutina=[];g.fav=[];}
+  if(que==='log'){n=g.registro.length;g.registro=[];ui.gymSesionActiva=null;}
+  else if(que==='rut'){n=g.rutinas.length;g.rutinas=[];g.fav=[];ui.gymRutinaSel='';ui.gymSesionActiva=null;}
   else if(que==='seg'){n=Object.keys(g.marks||{}).length;g.marks={};g.segundo=JSON.parse(JSON.stringify(fab));}
-  else if(que==='all'){n=g.registro.length+g.rutina.length;
-    g.registro=[];g.rutina=[];g.fav=[];g.marks={};g.segundo=JSON.parse(JSON.stringify(fab));}
-  else if(que==='todo'){n=g.registro.length+g.rutina.length+g.biblioteca.length;
-    g.registro=[];g.rutina=[];g.fav=[];g.marks={};g.biblioteca=[];g.fuente='';g.segundo=JSON.parse(JSON.stringify(fab));}
+  else if(que==='all'){n=g.registro.length+g.rutinas.length+g.sesiones.length+g.cardio.length;
+    g.registro=[];g.rutinas=[];g.sesiones=[];g.cardio=[];g.fav=[];g.marks={};g.segundo=JSON.parse(JSON.stringify(fab));
+    ui.gymSesionActiva=null;ui.gymRutinaSel='';}
+  else if(que==='todo'){n=g.registro.length+g.rutinas.length+g.sesiones.length+g.cardio.length+g.biblioteca.length;
+    g.registro=[];g.rutinas=[];g.sesiones=[];g.cardio=[];g.fav=[];g.marks={};g.biblioteca=[];g.fuente='';g.segundo=JSON.parse(JSON.stringify(fab));
+    ui.gymSesionActiva=null;ui.gymRutinaSel='';}
   else return {ok:false,msg:'no sé qué quieres limpiar'};
   ui.gymUndo={antes:antes,que:que};
   save();render();
@@ -1503,10 +1695,11 @@ function gymWipe(que){
 function gymUndoWipe(){
   if(!ui.gymUndo)return {ok:false,msg:'no hay ningún borrado que deshacer ahora mismo'};
   const g=gymS(),a=ui.gymUndo.antes;
-  g.registro=a.registro;g.rutina=a.rutina;g.fav=a.fav;g.marks=a.marks;g.segundo=a.segundo;
+  g.registro=a.registro;g.rutinas=a.rutinas;g.sesiones=a.sesiones||[];g.cardio=a.cardio||[];
+  g.fav=a.fav;g.marks=a.marks;g.segundo=a.segundo;
   g.biblioteca=a.biblioteca;g.fuente=a.fuente;
   ui.gymUndo=null;save();render();
-  return {ok:true,msg:'restaurado: '+g.registro.length+' serie(s), '+g.rutina.length+' en la rutina'+
+  return {ok:true,msg:'restaurado: '+g.registro.length+' serie(s), '+g.rutinas.length+' rutina(s)'+
     (g.biblioteca.length?' y la biblioteca de '+g.biblioteca.length+' ejercicios':'')};}
 /* ===================== comida: la vista (día, escáner, armario y objetivo) ===================== */
 function barRow(lab,val,obj,cls,u){
@@ -1644,6 +1837,107 @@ function renderFood(){
 }
 
 /* ===================== entreno: la vista ===================== */
+function renderRutinaCard(rt,selDate){
+  const g=gymS(),hist=historialRutina(rt.id);
+  const filas=rt.ejercicios.map(function(ej,ix){
+    const ult=ejercicioUltimo(ej.ex),p=prDe(ej.ex),lib=libMatch(ej.ex);
+    return '<tr><td><b>'+esc(ej.ex)+'</b>'+(ej.eq?'<br><span class="mini">'+esc(ej.eq)+'</span>':'')+
+      (lib?'<br><a class="mini" href="'+GYM_SITIO+'" target="_blank" rel="noopener">🔗 ver en openGym</a>':'')+'</td>'+
+      '<td style="width:56px"><input type="number" min="1" max="12" value="'+(ej.series||3)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="series"></td>'+
+      '<td style="width:68px"><input type="number" min="1" max="30" value="'+(ej.reps||8)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="reps"></td>'+
+      '<td style="width:80px"><input type="number" min="0" step="2.5" value="'+(ej.pesoObjetivo||0)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="pesoObjetivo"></td>'+
+      '<td style="width:76px"><input type="number" min="0" max="600" step="15" value="'+(ej.descansoSeg||90)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="descansoSeg"></td>'+
+      '<td style="min-width:120px"><input value="'+esc(ej.nota||'')+'" data-a="rt-nota" data-id="'+rt.id+'" data-ix="'+ix+'" placeholder="pausa 1s abajo…"></td>'+
+      '<td class="mini chipnum">'+(ult?(ult.kg+'×'+ult.reps):'—')+'</td>'+
+      '<td class="mini chipnum">'+(p?('1RM ~'+p.rm+' kg'):'—')+'</td>'+
+      '<td style="text-align:right;white-space:nowrap">'+
+        '<button class="btn s" style="padding:2px 5px" data-a="rt-up" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix===0?'disabled':'')+' title="subir">↑</button>'+
+        '<button class="btn s" style="padding:2px 5px" data-a="rt-down" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix>=rt.ejercicios.length-1?'disabled':'')+' title="bajar">↓</button>'+
+        '<button class="btn d s" data-a="rt-del" data-id="'+rt.id+'" data-ix="'+ix+'" title="quitar de la rutina">×</button></td></tr>';}).join('');
+  return '<div class="card">'+
+    '<h2>📋 <input value="'+esc(rt.nombre)+'" data-a="rt-nombre" data-id="'+rt.id+'" placeholder="nombre de la rutina" '+
+      'style="font:inherit;font-weight:800;border:1px solid transparent;background:transparent;padding:2px 4px;max-width:210px"></h2>'+
+    '<div class="row"><label class="fld" style="flex:1 1 220px">notas (cuándo la haces)'+
+      '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+rt.id+'" placeholder="martes y viernes"></label></div>'+
+    (rt.ejercicios.length?('<div style="overflow-x:auto;margin-top:8px"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap">'+
+      '<th style="min-width:120px">Ejercicio</th><th>series</th>'+
+      '<th>reps</th><th>peso obj.</th><th>descanso</th><th style="min-width:130px">nota</th><th>último</th><th>tu marca</th><th></th></tr></thead>'+
+      '<tbody>'+filas+'</tbody></table></div>')
+      :'<div class="empty">Sin ejercicios todavía: añade uno abajo, o busca en la biblioteca de arriba y dale a «a la rutina».</div>')+
+    '<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
+      '<label class="fld" style="flex:1 1 160px">añadir ejercicio<input id="rtNew-'+rt.id+'" list="gymLista" placeholder="Press banca"></label>'+
+      '<label class="fld" style="flex:0 0 70px">series<input id="rtNs-'+rt.id+'" type="number" min="1" max="12" value="3"></label>'+
+      '<label class="fld" style="flex:0 0 70px">reps<input id="rtNr-'+rt.id+'" type="number" min="1" max="30" value="8"></label>'+
+      '<button class="btn s" data-a="rt-add" data-id="'+rt.id+'">añadir</button></div>'+
+    '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'+
+      '<button class="btn p" data-a="ses-empezar" data-id="'+rt.id+'" data-key="'+selDate+'" '+
+        (!rt.ejercicios.length||ui.gymSesionActiva?'disabled':'')+'>▶ empezar '+esc(rt.nombre)+'</button>'+
+      '<span class="sp"></span><button class="btn d s" data-a="rt-borrar" data-id="'+rt.id+'">eliminar rutina</button></div>'+
+    '<p class="mini" style="margin-top:8px">'+(hist.n?('hecha '+hist.esteMes+' '+(hist.esteMes===1?'vez':'veces')+' este mes · '+
+      'media '+hist.media+' min · última vez '+(hist.diasDesde===0?'hoy':('hace '+hist.diasDesde+' día'+(hist.diasDesde===1?'':'s'))))
+      :'todavía no la has empezado ninguna vez')+'</p>'+
+    diagramaHTML(regionesDeRutina(rt.id),'ver qué músculos trabaja esta rutina')+
+    '</div>';}
+function renderSesionActiva(){
+  const sa=ui.gymSesionActiva;if(!sa)return '';
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===sa.rutinaId;});
+  const hechas=g.registro.filter(function(x){return x.sesionId===sa.id;});
+  const vol=Math.round(hechas.reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0));
+  return '<div class="card"><h2>🏁 Sesión en curso: '+esc(rt?rt.nombre:'')+'</h2>'+
+    '<p class="note">'+hechas.length+' de '+sa.plan+' series hechas · '+vol.toLocaleString('es-ES')+' kg de volumen. '+
+    'Apunta o ajusta las series en «El día» (más abajo) y, cuando acabes, dale a «he terminado».</p>'+
+    '<div class="fgrid c3">'+
+      '<label class="fld">¿cuánto has tardado? (min)<input id="sesMinutos" type="number" min="1" max="240" value="'+duracionTipica(sa.rutinaId)+'"></label>'+
+      '<label class="fld">nota<input id="sesNota" placeholder="floja, con prisa…"></label>'+
+      '<label class="fld" style="flex-direction:row;align-items:center;gap:6px">'+
+        '<input type="checkbox" id="sesCompleto" style="width:auto" '+(hechas.length>=sa.plan?'checked':'')+'> la he hecho entera</label>'+
+    '</div>'+
+    '<div class="row" style="margin-top:10px">'+
+      '<button class="btn p" data-a="ses-terminar">✓ he terminado</button>'+
+      '<button class="btn s" data-a="ses-descartar">descartar sesión</button></div>'+
+    '</div>';}
+function renderHistorialCard(){
+  const g=gymS();
+  if(!g.rutinas.length)return '';
+  const filas=g.rutinas.map(function(rt){
+    const h=historialRutina(rt.id);
+    return '<div class="row" style="justify-content:space-between;border-top:1px dashed var(--line);padding:6px 0">'+
+      '<b>'+esc(rt.nombre)+'</b>'+
+      '<span class="mini chipnum">'+h.esteMes+' este mes</span>'+
+      '<span class="mini chipnum">'+(h.n?(h.media+' min de media'):'sin sesiones')+'</span>'+
+      '<span class="mini">'+(h.ultima?('hace '+h.diasDesde+' día'+(h.diasDesde===1?'':'s')):'nunca')+'</span></div>';}).join('');
+  const recientes=sesionesRecientes(20);
+  const ultima=recientes[0];
+  const listaSes=recientes.length?('<div class="daylist" style="margin-top:8px">'+recientes.map(function(s){
+    const rt=g.rutinas.find(function(r){return r.id===s.rutinaId;});
+    return '<div class="frow"><span><span class="fn">'+esc(rt?rt.nombre:'(rutina borrada)')+'</span>'+
+      '<span class="fm"> · '+s.fecha.slice(8)+'/'+s.fecha.slice(5,7)+'</span></span>'+
+      '<span class="mini chipnum">'+s.duracionMin+' min</span>'+
+      '<span class="mini">'+(s.completo?'✓ entera':'parcial')+'</span></div>';}).join('')+'</div>')
+    :'<div class="empty">Ninguna sesión guardada todavía: empieza una rutina de arriba y termínala para que aparezca aquí.</div>';
+  return '<div class="card"><h2>🗓️ Historial de rutinas</h2>'+filas+
+    (ultima?diagramaHTML(regionesDeSesion(ultima.id),'músculos de tu última sesión ('+esc((g.rutinas.find(function(r){return r.id===ultima.rutinaId;})||{}).nombre||'')+')'):'')+
+    '<details class="dtip" style="margin-top:10px"><summary class="mini">últimas sesiones</summary>'+listaSes+'</details>'+
+    '</div>';}
+function renderCardioCard(){
+  const g=gymS(),tipos=['natación','carrera','bici','otro'];
+  const list=g.cardio.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).slice(0,20);
+  return '<div class="card"><h2>🏃 Cardio</h2>'+
+    '<p class="note">Aparte del entreno de fuerza: natación, carrera, bici… lo justo para que quede constancia real.</p>'+
+    '<div class="fgrid c3">'+
+      '<label class="fld">tipo<select id="cardioTipo">'+tipos.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('')+'</select></label>'+
+      '<label class="fld">fecha<input type="date" id="cardioFecha" value="'+iso(new Date())+'"></label>'+
+      '<label class="fld">minutos<input type="number" min="1" max="360" id="cardioMin" value="30"></label>'+
+      '<label class="fld">km (opcional)<input type="number" min="0" step="0.1" id="cardioKm"></label>'+
+      '<label class="fld" style="grid-column:1/-1">nota<input id="cardioNota" placeholder="ritmo, sensaciones…"></label>'+
+    '</div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn p" data-a="cardio-add">apuntar cardio</button></div>'+
+    (list.length?('<div class="daylist" style="margin-top:10px">'+list.map(function(x){
+      return '<div class="frow"><span><span class="fn">'+esc(x.tipo)+'</span><span class="fm"> · '+x.fecha.slice(8)+'/'+x.fecha.slice(5,7)+'</span></span>'+
+        '<span class="mini chipnum">'+x.duracionMin+' min'+(x.distanciaKm?(' · '+x.distanciaKm+' km'):'')+'</span>'+
+        '<span><button class="btn d s" data-a="cardio-del" data-id="'+x.id+'" title="borrar">×</button></span></div>';}).join('')+'</div>')
+      :'<div class="empty" style="margin-top:8px">Nada apuntado todavía.</div>')+
+    '</div>';}
 function renderGym(){
   const g=gymS(),hoy=iso(new Date());
   const sel=(ui.gymDate&&foodKey(ui.gymDate))?foodKey(ui.gymDate):hoy;
@@ -1656,7 +1950,8 @@ function renderGym(){
   const maxvol=Math.max(1,sem.reduce(function(a,x){return Math.max(a,x.vol);},0));
   const nombres={},conte={};
   g.registro.forEach(function(x){nombres[x.ex]=(nombres[x.ex]||0)+1;});
-  const enRutina={};g.rutina.forEach(function(r){enRutina[r.ex]=1;});
+  const enRutina={};g.rutinas.forEach(function(rt){rt.ejercicios.forEach(function(r){enRutina[r.ex]=1;});});
+  if(!g.rutinas.some(function(r){return r.id===ui.gymRutinaSel;}))ui.gymRutinaSel=(g.rutinas[0]||{}).id||'';
   const opcEx=Object.keys(nombres).concat(Object.keys(enRutina)).filter(function(x,i,a){return a.indexOf(x)===i;})
     .sort().map(function(nm){return '<option value="'+esc(nm)+'"></option>';}).join('');
   const prs=Object.keys(nombres).map(function(nm){const p=prDe(nm);return p?{ex:nm,p:p}:null;}).filter(Boolean)
@@ -1666,14 +1961,14 @@ function renderGym(){
     '<div class="card"><h2>🏋️ Entreno <span class="mini">'+(hay?(g.biblioteca.length+' ejercicios en el móvil'):'sin biblioteca importada')+'</span></h2>'+
     '<p class="note">Se integra con la biblioteca de <a href="'+GYM_SITIO+'" target="_blank" rel="noopener">openGym</a> '+
     '(los mismos ejercicios, con su vídeo en el sitio). La lista se baja una vez y se queda en el móvil: '+
-    'luego buscas, montas tu rutina y apuntas las series. El peso y las repeticiones son tuyos; esto no te dice qué levantar.</p>'+
+    'luego buscas, montas tus rutinas y apuntas las series. El peso y las repeticiones son tuyos; esto no te dice qué levantar.</p>'+
     '<div class="row"><button class="btn p" data-a="gym-fetch">importar la biblioteca de openGym</button>'+
     '<button class="btn s" data-a="gym-clear">quitar la lista</button>'+
     '<span class="sp"></span><span class="mini">'+esc(g.fuente||'todavía no la has importado')+'</span></div>'+
     '<div class="row" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:9px">'+
       '<span class="mini">🧹 limpiar:</span>'+
       '<button class="btn s" data-a="gym-wipe" data-what="log">las series del registro</button>'+
-      '<button class="btn s" data-a="gym-wipe" data-what="rut">la rutina</button>'+
+      '<button class="btn s" data-a="gym-wipe" data-what="rut">las rutinas</button>'+
       '<button class="btn s" data-a="gym-wipe" data-what="seg">el segundo día</button>'+
       '<button class="btn d" data-a="gym-wipe" data-what="all">todo el entreno</button>'+
       '<button class="btn d" data-a="gym-wipe" data-what="todo">todo, con la biblioteca</button>'+
@@ -1686,34 +1981,24 @@ function renderGym(){
     (hay?('<div class="row" style="margin-top:10px"><label class="fld" style="flex:1 1 220px">buscar en la biblioteca'+
       '<input id="gymQ" value="'+esc(q)+'" data-a="gym-q" placeholder="sentadilla, press, lumbar, plank…"></label>'+
       '<span class="mini">'+res.length+' resultado(s)'+(q?' para «'+esc(q)+'»':' (escribe para afinar)')+'</span></div>'+
+      (g.rutinas.length?('<div class="row" style="margin-top:6px"><label class="fld" style="flex:0 0 210px">añadir a la rutina'+
+        '<select data-a="gym-rut-sel">'+g.rutinas.map(function(r){return '<option value="'+r.id+'" '+(r.id===ui.gymRutinaSel?'selected':'')+'>'+esc(r.nombre)+'</option>';}).join('')+
+        '</select></label></div>'):'')+
       (res.length?('<div class="daylist" style="margin-top:6px">'+res.map(function(x){
         return '<div class="frow"><span><span class="fn">'+esc(x.n)+'</span>'+
           '<span class="fm">'+esc([x.c,x.eq,x.tg].filter(Boolean).join(' · '))+'</span></span>'+
-          '<span class="mini">'+(enRutina[x.n]?'en la rutina':'')+'</span>'+
+          '<span class="mini">'+(enRutina[x.n]?'en alguna rutina':'')+'</span>'+
           '<span class="row" style="gap:4px"><button class="btn s" data-a="gym-rut" data-n="'+esc(x.n)+'">a la rutina</button>'+
           '<button class="btn s" data-a="gym-set-ex" data-n="'+esc(x.n)+'">apuntar serie</button></span></div>';}).join('')+'</div>')
         :'<div class="empty" style="margin-top:6px">nada con ese nombre: prueba con la palabra en inglés (squats, bench, row…)</div>')):'')+
     '</div>'+
-    '<div class="card"><h2>📋 Mi rutina <span class="mini">'+g.rutina.length+' ejercicios</span></h2>'+
-    '<p class="note">Lo que quieres hacer cada día de fuerza. «Pasar la rutina al día» te monta las series con el último peso que usaste '+
-    'en cada uno, y a partir de ahí ya las vas subiendo tú.</p>'+
-    (g.rutina.length?('<div style="overflow-x:auto"><table><thead><tr><th>Ejercicio</th><th>series</th><th>reps</th>'+
-      '<th>último</th><th>tu marca</th><th></th></tr></thead><tbody>'+g.rutina.map(function(r,ix){
-        const ult=ejercicioUltimo(r.ex),p=prDe(r.ex);
-        return '<tr><td><b>'+esc(r.ex)+'</b>'+(r.eq?'<br><span class="mini">'+esc(r.eq)+'</span>':'')+'</td>'+
-          '<td style="width:64px"><input type="number" min="1" max="12" value="'+(r.series||3)+'" data-a="rut-n" data-ix="'+ix+'" data-f="series"></td>'+
-          '<td style="width:64px"><input type="number" min="1" max="30" value="'+(r.reps||8)+'" data-a="rut-n" data-ix="'+ix+'" data-f="reps"></td>'+
-          '<td class="mini chipnum">'+(ult?(ult.kg+'×'+ult.reps+' <span class="mini">'+ult.fecha.slice(8)+'/'+ult.fecha.slice(5,7)+'</span>'):'—')+'</td>'+
-          '<td class="mini chipnum">'+(p?('1RM ~'+p.rm+' kg'):'—')+'</td>'+
-          '<td style="text-align:right"><button class="btn d s" data-a="rut-del" data-ix="'+ix+'" title="quitar de la rutina">×</button></td></tr>';}).join('')+
-      '</tbody></table></div>'):'<div class="empty">Aún no has montado la rutina: busca en la biblioteca y dale a «a la rutina».</div>')+
-    '<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
-      '<label class="fld" style="flex:1 1 200px">o escríbelo a mano<input id="gymNew" placeholder="Curl martillo 8 kg"></label>'+
-      '<label class="fld" style="flex:0 0 74px">series<input id="gymNs" type="number" min="1" max="12" value="3"></label>'+
-      '<label class="fld" style="flex:0 0 74px">reps<input id="gymNr" type="number" min="1" max="30" value="10"></label>'+
-      '<span class="sp"></span><button class="btn s" data-a="gym-add">añadir</button>'+
-      '<button class="btn p" data-a="gym-pasar" data-key="'+sel+'">pasar la rutina al '+d.getDate()+'</button></div>'+
-    '</div>'+
+    renderSesionActiva()+
+    g.rutinas.map(function(rt){return renderRutinaCard(rt,sel);}).join('')+
+    '<div class="card"><h2>+ Nueva rutina</h2>'+
+    '<p class="note">Una tarjeta por rutina (Empuje, Tirón, Pierna…), cada una con sus propios ejercicios.</p>'+
+    '<div class="row"><label class="fld" style="flex:1 1 200px">nombre<input id="rtNombreNueva" placeholder="Empuje, Tirón, Pierna…"></label>'+
+    '<button class="btn p" data-a="rt-nueva">crear rutina</button></div></div>'+
+    renderHistorialCard()+
     '<div class="card"><h2>📈 El día: '+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' de '+MONTH_FULL[d.getMonth()]+'</h2>'+
     '<div class="row"><button class="btn s" data-a="gym-prev">‹</button>'+
     '<input type="date" value="'+sel+'" data-a="gym-day" style="width:158px">'+
@@ -1766,6 +2051,7 @@ function renderGym(){
         '<span class="mini">'+x.sets+' series</span></div>'+
         '<div class="fbar'+(x.k===sel?' plan':'')+'"><i style="width:'+Math.round(x.vol/maxvol*100)+'%"></i></div></div>';}).join('')+'</div>'+
     '<p class="mini" style="margin-top:6px">el volumen es kg × repeticiones de lo que apuntas: sírvelo para comparar semanas, no para castigarte</p></div>'+
+    renderCardioCard()+
     '<div class="card"><h2>🏆 Tus marcas</h2>'+
     (prs.length?('<div style="overflow-x:auto"><table><thead><tr><th>Ejercicio</th><th>más peso</th><th>1RM estimado</th>'+
       '<th>series hechas</th></tr></thead><tbody>'+prs.map(function(x){
@@ -2717,19 +3003,36 @@ function act(a,el){
       flash((r&&r.msg)||'sin más');if(r&&r.ok&&ta)ta.value='';break;}
     case 'gym-clear':{const gg=gymS();gg.biblioteca=[];gg.fuente='';render();
       flash('lista quitada: tu rutina y tus marcas se quedan');break;}
-    case 'gym-rut':flash(addRutina(el.dataset.n));break;
+    case 'gym-rut':flash(addRutina(ui.gymRutinaSel,el.dataset.n));break;
     case 'gym-set-ex':{ui.gymEx=el.dataset.n;render();
       const se=document.getElementById('setEx');if(se)se.focus();
       flash('ejercicio puesto en la ficha: rellena kg y reps');break;}
-    case 'gym-add':{const n=document.getElementById('gymNew');
-      flash(addRutina(n?n.value:'',
-        {series:(document.getElementById('gymNs')||{}).value,reps:(document.getElementById('gymNr')||{}).value}));break;}
-    case 'gym-pasar':{const r=pasarRutina(el.dataset.key);render();flash(r);break;}
+    case 'rt-nueva':{const inp=document.getElementById('rtNombreNueva');
+      flash(nuevaRutina(inp?inp.value:''));if(inp)inp.value='';break;}
+    case 'rt-add':{const rid=el.dataset.id,n=document.getElementById('rtNew-'+rid);
+      const r=addRutina(rid,n?n.value:'',
+        {series:(document.getElementById('rtNs-'+rid)||{}).value,reps:(document.getElementById('rtNr-'+rid)||{}).value});
+      flash(r);if(n)n.value='';break;}
+    case 'rt-del':flash(delRutina(el.dataset.id,+el.dataset.ix));break;
+    case 'rt-up':moverEjercicio(el.dataset.id,+el.dataset.ix,-1);break;
+    case 'rt-down':moverEjercicio(el.dataset.id,+el.dataset.ix,1);break;
+    case 'rt-borrar':{const nm=((gymS().rutinas.find(function(r){return r.id===el.dataset.id;}))||{}).nombre||'';
+      confirmar('¿Eliminar la rutina «'+nm+'» entera? Las sesiones ya guardadas con ella se quedan en el historial.').then(function(ok){
+        if(!ok)return;flash(delRutinaCard(el.dataset.id));});break;}
+    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key));break;
+    case 'ses-terminar':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
+      const chk=document.getElementById('sesCompleto');
+      flash(terminarSesion(gv('sesMinutos'),chk?!!chk.checked:undefined,gv('sesNota')));break;}
+    case 'ses-descartar':{confirmar('¿Descartar esta sesión? Las series que has montado se quitan del registro.').then(function(ok){
+        if(!ok)return;flash(descartarSesion());});break;}
+    case 'cardio-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
+      flash(addCardio({tipo:gv('cardioTipo'),fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
+        distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
+    case 'cardio-del':flash(delCardio(el.dataset.id));break;
     case 'gym-set':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
       const r=addSet(el.dataset.key,{ex:gv('setEx'),kg:gv('setKg'),reps:gv('setReps'),rpe:gv('setRpe'),nota:gv('setNota')});
       ui.gymEx=gv('setEx');render();flash(r);break;}
     case 'set-del':{const r=delSet(el.dataset.id);render();flash(r);break;}
-    case 'rut-del':flash(delRutina(+el.dataset.ix));break;
     case 'gym-seg-on':{const gg=gymS();gg.segundo.on=!gg.segundo.on;if(gg.segundo.on&&!gg.segundo.dias.length)gg.segundo.dias=[3];
       render();flash(gg.segundo.on?'segundo día activado: se pondrá solo en los días marcados':'segundo día apagado');break;}
     case 'gym-seg-day':flash(toggleSegundoDia(+el.dataset.day));break;
@@ -2754,9 +3057,9 @@ function act(a,el){
     case 'gtipo-add':{const inp=document.getElementById('gtipoNuevo');const r=addGuardiaTipo(inp?inp.value:'');
       if(r.ok&&inp)inp.value='';flash(r.msg);break;}
     case 'gym-wipe':{const txts={log:'¿Borrar las series apuntadas? Tus pesos y tus marcas salen de ahí (luego se pueden deshacer).',
-        rut:'¿Vaciar la rutina? El registro de series se queda.',
+        rut:'¿Vaciar tus rutinas? El registro de series y el historial de sesiones se quedan.',
         seg:'¿Quitar el segundo día de gym y las marcas puestas a mano?',
-        all:'¿Limpiar TODO el entreno (series, rutina y segundo día)? La biblioteca importada se queda.',
+        all:'¿Limpiar TODO el entreno (series, rutinas, sesiones, cardio y segundo día)? La biblioteca importada se queda.',
         todo:'¿Limpiar todo el entreno, incluida la biblioteca de openGym? (También se puede deshacer)'};
       confirmar(txts[el.dataset.what]||'¿Limpiar esa parte del entreno?').then(function(ok){
         if(!ok)return;const rw=gymWipe(el.dataset.what);flash(rw.msg);});break;}
@@ -3876,7 +4179,13 @@ document.addEventListener('change',e=>{
     case 'food-ob':{const fb=food(),v=Math.max(0,Math.round(+el.value||0));
       if(!fb.objetivo)fb.objetivo={kcal:0,prot:0};fb.objetivo[el.dataset.k]=v;save();render();break;}
     case 'gym-day':{const k=foodKey(el.value);if(k)ui.gymDate=k;render();break;}
-    case 'rut-n':setRutina(+el.dataset.ix,el.dataset.f,el.value);render();break;
+    case 'rt-n':setRutina(el.dataset.id,+el.dataset.ix,el.dataset.f,el.value);render();break;
+    case 'rt-nota':setRutina(el.dataset.id,+el.dataset.ix,'nota',el.value);break;
+    case 'rt-nombre':{const rt=gymS().rutinas.find(function(r){return r.id===el.dataset.id;});
+      if(rt){rt.nombre=el.value.trim().slice(0,40)||rt.nombre;save();render();}break;}
+    case 'rt-notas':{const rt=gymS().rutinas.find(function(r){return r.id===el.dataset.id;});
+      if(rt){rt.notas=el.value;save();}break;}
+    case 'gym-rut-sel':ui.gymRutinaSel=el.value;break;
     case 'gym-seg-tipo':{const gg=gymS();gg.segundo.tipo=el.value;
       const k=foodKey(ui.gymDate||iso(new Date()));if(gg.marks[k])gg.marks[k].tipo=el.value;
       save();render();flash('segundo entreno: '+el.value);break;}
@@ -3938,8 +4247,12 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,
-  gymS,gymImportText,gymImportUrl,gymBuscar,addRutina,delRutina,setRutina,addSet,delSet,setsDe,volumenDe,prDe,
-  ejercicioUltimo,pasarRutina,diaSegundo,toggleSegundo,setSegundoCampo,toggleSegundoDia,resumenGym,volumenSemana,gymLine,
+  gymS,gymImportText,gymImportUrl,gymBuscar,nuevaRutina,delRutinaCard,addRutina,delRutina,setRutina,moverEjercicio,
+  addSet,delSet,setsDe,volumenDe,prDe,
+  ejercicioUltimo,empezarRutina,terminarSesion,descartarSesion,duracionTipica,historialRutina,sesionesRecientes,
+  addCardio,delCardio,libMatch,regionesDeTexto,regionesDeEjercicio,regionesDeRutina,regionesDeSesion,svgCuerpo,
+  MREGIONES,MREG_LABEL,GYM_SITIO,GYM_URL,
+  diaSegundo,toggleSegundo,setSegundoCampo,toggleSegundoDia,resumenGym,volumenSemana,gymLine,
   food,foodKey,offNum,mapOffProduct,addEanProduct,delEanProduct,toggleFavEan,porcionDe,foodLog,addFoodEntry,delFoodEntry,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
