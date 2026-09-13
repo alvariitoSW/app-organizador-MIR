@@ -2536,10 +2536,11 @@ function renderData(){
         <input type="number" id="rhythmYear" value="${new Date().getFullYear()}" min="2000" max="2100" style="max-width:110px"></label>
       <p class="mini" style="margin-top:6px">Lo que no se entienda se ignora y se dice: no se toca ningún horario que no hayas mencionado y no se reparte ninguna guardia ni se da por hecho ningún servicio de mes si tú no lo escribes.</p></div>
     <div class="card"><h2>📅 Tu calendario de Google · 1 · para fuera</h2>
-      <p class="note">Se genera un <code>.ics</code> con tus guardias (con su tipo y su hora), los salientes, los días
-      de entreno y las vacaciones del rango que elijas, en un cuaderno con el nombre que tú pongas. La <b>jornada de 8 a 15
-      no sale</b>: si trabajas de lunes a viernes eso ya lo tiene tu calendario y saldría duplicado. Dale a
-      <b>ver la lista</b> y abajo tienes los cuatro pasos para dejarlo sincronizado en Google.</p>
+      <p class="note">Se genera un <code>.ics</code> del rango que elijas con solo tres cosas, cada una con su hora de
+      inicio y fin: <b>guardias</b> (con su tipo), <b>trabajo</b> (tu jornada u otro día con horas propias) y
+      <b>entrenos</b> (fuerza y el segundo entreno) — en un cuaderno con el nombre que tú pongas. <b>Nada de vacaciones,
+      salientes ni días libres</b>: eso se queda solo en la app. Dale a <b>ver la lista</b> y abajo tienes los cuatro
+      pasos para dejarlo sincronizado en Google.</p>
       <div class="row">
         <label class="fld">desde<input type="date" id="calDesde" data-a="cal-desde" value="${esc(ui.calDesde||calRango().desde)}"></label>
         <label class="fld">hasta<input type="date" id="calHasta" data-a="cal-hasta" value="${esc(ui.calHasta||calRango().hasta)}" min="${esc(ui.calDesde||calRango().desde)}"></label>
@@ -3932,7 +3933,7 @@ function calNotas(){
     li('Y sin la URL','si solo quieres verlo en el móvil: baja el <code>.ics</code> y ábrelo con Google Calendar. No se sincroniza: es una foto del planning en la fecha en que lo descargaste.')+
     li('Ojo con los recordatorios y el color','al descargar, el navegador te abre el fichero: cópialo a la carpeta que sincronices (o vuelve a pulsar <b>descargar</b> desde la pestaña de Google: el navegador no deja escribir en ella).')+
     li('Este .ics no se auto-refresca','cada vez que cambie tu planning, vuelve a descargar e importar el mismo fichero con el mismo nombre: los <code>UID</code> estables y el <code>IMPORT_TAG</code> hacen que Google actualice los eventos en vez de duplicarlos. No hace falta borrar el calendario cada vez.')+
-    li('Qué se ve afectado','solo lo que exportas tú: guardias con su tipo, salientes, entrenos y vacaciones. La jornada de 8 a 15 no sale, y lo que tú ya tengas en Google queda igual; al importar, ningún día que marcaras a mano se pisa sin avisar.')+
+    li('Qué se manda a Google','solo tres cosas, cada una con su hora de inicio y fin: <b>guardias</b>, <b>trabajo</b> (tu jornada u otro día con horas propias) y <b>entrenos</b> (fuerza y el segundo entreno). Nada de vacaciones, salientes ni días libres — eso se queda solo en la app. Lo que tú ya tengas en Google queda igual; al importar, ningún día que marcaras a mano se pisa sin avisar.')+
     '</div>';}
 function calRefresca(){
   /* si la lista está abierta, que siempre sea el fichero de verdad: ni nombre viejo ni rango viejo */
@@ -3988,31 +3989,31 @@ function calRango(desdeStr){
   const hasta=calFinMes(iso(new Date(base.getFullYear(),base.getMonth()+1,1,12)));
   return {desde:ini,hasta:hasta};}
 function calEventos(desde,hasta){
-  /* solo lo que tú has puesto en el planning: nada de inventar eventos */
+  /* a Google solo le mandamos tres cosas, y siempre con su hora de inicio y fin: guardias, trabajo
+     y entrenos. Nada de vacaciones, salientes ni días libres — eso se queda solo en la app. */
   const out=[],i0=parseDate(desde),i1=parseDate(hasta);
   if(!i0||!i1)return out;
   for(let d=new Date(i0.getTime());d<=i1;d=addDays(d,1)){
     const k=iso(d),inf=dayInfo(k),sh=shiftById(inf.shiftId);
-    if(inf.vac){out.push({allDay:true,fecha:icsNum(k),isoKey:k,summ:'🏖️ Vacaciones'+(inf.vac.label?' · '+inf.vac.label:''),
-      desc:'fuera del servicio',cat:'VACACIONES'});continue;}
-    if(!sh)continue;
+    if(inf.vac||!sh)continue;
+    const nm=sh.name||'',st=icsHM(sh.start||''),en=sh.end?icsHM(sh.end):'',conHoras=!!sh.start;
     if(isGuardia(sh)){
-      const st=icsHM(sh.start||'08:00'),en=sh.end?icsHM(sh.end):'';
       const tipo=inf.guard?gTipo(inf.guard).label:'sin tipo';
-      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:st,horaFin:(en&&en>st)?en:'',
+      out.push({allDay:!conHoras,fecha:icsNum(k),isoKey:k,hora:st,horaFin:(en&&en>st)?en:'',
         dur:(en&&en>st)?0:24*60,
         summ:'🩺 Guardia · '+tipo+(inf.guard?(' ['+inf.guard+']'):''),
-        desc:'Guardia de '+tipo+'. '+(d.getDay()===6?'Saliente: el lunes.':'Saliente: mañana.')+
-          ' (en la app, el post-guardia lo pone la rotación'+(store.rotation.autoPos!==false?'':' —apagado')+').',
-        cat:'GUARDIA'});continue;}
-    if(/saliente/i.test(sh.name||''))
-      {out.push({allDay:true,fecha:icsNum(k),isoKey:k,summ:'🛋️ '+sh.name,desc:'después de guardia: día suave, sin cocina',cat:'DESCANSO'});continue;}
-    if(/fuerza|entreno/i.test(sh.name||''))
-      out.push({allDay:true,fecha:icsNum(k),isoKey:k,summ:'💪 '+sh.name,desc:dayLine({key:k,shiftId:sh.id})||'',cat:'ENTRENO'});
-    const g2=diaSegundo(k);
-    if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:90,
-      summ:'🏊 '+(g2.tipo||'entreno'),desc:'segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+
-        ' · '+((nightOf(k)||{}).cena?('cena '+(nightOf(k).cena.from)+'–'+(nightOf(k).cena.to)):''),cat:'ENTRENO'});
+        desc:'Guardia de '+tipo+'.',cat:'GUARDIA'});continue;}
+    if(/saliente|libre|vacacion|festiv/i.test(nm))continue;   /* fuera, a propósito: no se manda */
+    if(!conHoras)continue;   /* sin horas propias no hay «inicio y fin» que mandar */
+    if(/fuerza|entreno/i.test(nm))
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:st,horaFin:(en&&en>st)?en:'',dur:(en&&en>st)?0:60,
+        summ:'💪 '+nm,desc:'Entreno de fuerza.',cat:'ENTRENO'});
+    else
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:st,horaFin:(en&&en>st)?en:'',dur:(en&&en>st)?0:7*60,
+        summ:'💼 '+nm,desc:'Jornada de trabajo.',cat:'TRABAJO'});
+    const g2=diaSegundo(k,inf);
+    if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:60,
+      summ:'🏊 '+(g2.tipo||'entreno'),desc:'Segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+'.',cat:'ENTRENO'});
   }
   return out;}
 function icsTexto(desde,hasta,opt){

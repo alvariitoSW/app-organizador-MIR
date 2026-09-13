@@ -594,6 +594,44 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('Mes y Hoy avisan cuando "Semana" está en modo plantilla',
     avisoMes && avisoHoy, JSON.stringify({ avisoMes, avisoHoy }));
 
+  // ===================== Exportar a Google: solo guardias, trabajo y entrenos, con sus horas =====================
+
+  // 28) calEventos() manda solo guardia/trabajo/entreno, cada uno con hora de inicio y fin real —
+  // nunca saliente, día libre ni vacaciones (a petición explícita del usuario)
+  const calScope = await page.evaluate(() => {
+    const base = '2027-04';
+    window.PG.setDayOverride(base + '-05', 'sh-g', 'urg'); // guardia
+    window.PG.setDayOverride(base + '-06', 'sh-s', '');    // saliente (debe quedar fuera)
+    window.PG.setDayOverride(base + '-07', 'sh-t', '');    // trabajo
+    window.PG.setDayOverride(base + '-08', 'sh-f', '');    // entreno de fuerza
+    window.PG.setDayOverride(base + '-09', 'sh-l', '');    // día libre (debe quedar fuera)
+    window.PG.addVacation(base + '-10', base + '-11', 'test-export'); // vacaciones (deben quedar fuera)
+    const evs = window.PG.calEventos(base + '-05', base + '-11');
+    const porFecha = {};
+    evs.forEach((e) => { (porFecha[e.isoKey] = porFecha[e.isoKey] || []).push(e); });
+    return porFecha;
+  });
+  check('a Google solo se manda guardia, trabajo y entreno de fuerza — nunca saliente, libre ni vacaciones',
+    !!calScope['2027-04-05'] && !calScope['2027-04-06'] && !!calScope['2027-04-07'] &&
+    !!calScope['2027-04-08'] && !calScope['2027-04-09'] && !calScope['2027-04-10'] && !calScope['2027-04-11'],
+    JSON.stringify(calScope));
+
+  const guardiaEv = (calScope['2027-04-05'] || [])[0];
+  const trabajoEv = (calScope['2027-04-07'] || [])[0];
+  const entrenoEv = (calScope['2027-04-08'] || [])[0];
+  check('cada evento exportado lleva su hora de inicio y fin real (no "todo el día")',
+    !!guardiaEv && !guardiaEv.allDay && guardiaEv.hora === '08:00' && guardiaEv.cat === 'GUARDIA' &&
+    !!trabajoEv && !trabajoEv.allDay && trabajoEv.hora === '08:00' && trabajoEv.horaFin === '15:00' && trabajoEv.cat === 'TRABAJO' &&
+    !!entrenoEv && !entrenoEv.allDay && entrenoEv.hora === '06:30' && entrenoEv.horaFin === '08:00' && entrenoEv.cat === 'ENTRENO',
+    JSON.stringify({ guardiaEv, trabajoEv, entrenoEv }));
+
+  // 29) un evento de "trabajo" exportado se reconoce como tal si se vuelve a importar (viceversa)
+  const reimport = await page.evaluate(() =>
+    window.PG.icsClasificar({ resumen: '💼 Día de trabajo', desc: 'Jornada de trabajo.', lugar: '' })
+  );
+  check('un evento de "trabajo" exportado se reconoce como tal al reimportarlo (viceversa)',
+    reimport.kind === 'trabajo', JSON.stringify(reimport));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
