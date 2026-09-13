@@ -71,7 +71,7 @@ main.in{animation:viewIn .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .grid{display:grid;gap:13px}
 @media(min-width:900px){.g2{grid-template-columns:1fr 1fr}}
-.card{position:relative;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:var(--r);
+.card{position:relative;min-width:0;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:var(--r);
   box-shadow:var(--shadow);padding:14px 15px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 9%,transparent),transparent 42%)}
@@ -244,6 +244,14 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .kpis div{flex:1 1 112px;background:color-mix(in srgb,var(--card) 62%,var(--bg));border:1px solid var(--line);border-radius:12px;padding:8px 11px}
 .kpis b{display:block;font-size:19px;letter-spacing:-.02em;line-height:1.15}
 .kpis span{font-size:10px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+/* diagrama 2D de músculos (SVG inline, sin imagen externa: funciona offline y en los dos temas) */
+.mdiagram{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-top:8px}
+.mbody{width:140px;max-width:100%;height:auto;flex:none;display:block}
+.mneutro{fill:color-mix(in srgb,var(--ink2) 16%,transparent);stroke:var(--line);stroke-width:1}
+.mreg{fill:color-mix(in srgb,var(--ink2) 22%,transparent);stroke:var(--line);stroke-width:1;transition:fill .15s,stroke .15s}
+.mreg.on{fill:var(--brand);stroke:color-mix(in srgb,var(--brand) 70%,var(--line))}
+.mlegend{flex:1 1 160px;font-size:12px;color:var(--ink2);min-width:140px}
+.mlegend b{color:var(--ink);display:block;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
 .session{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:11px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}
 .session h3{margin:0 0 2px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}

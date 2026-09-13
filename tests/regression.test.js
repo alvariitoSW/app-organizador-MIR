@@ -324,6 +324,92 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     typeof masLabelInfo === 'string' && masLabelInfo.length > 'Más'.length,
     'aria-label=' + JSON.stringify(masLabelInfo));
 
+  // ===================== Entreno: rutinas, sesiones, músculos y cardio =====================
+
+  // 17) migración de datos reales: una rutina antigua (gym.rutina, única y sin nombre) se convierte
+  // en la primera de gym.rutinas[] (con nombre) sin perder ni un ejercicio
+  const migInfo = await page.evaluate(() => {
+    const o = window.PG.DEFAULTS();
+    o.gym.rutina = [
+      { ex: 'Peso muerto', series: 5, reps: 5, c: 'back', eq: 'barbell' },
+      { ex: 'Remo con barra', series: 4, reps: 10, c: 'back', eq: 'barbell' },
+    ];
+    delete o.gym.rutinas;
+    window.PG.store = o; // el setter pasa por normalize(), que debe migrar en silencio
+    const g = window.PG.gymS();
+    return {
+      rutinaGone: !('rutina' in g),
+      n: g.rutinas.length,
+      ejercicios: g.rutinas[0] ? g.rutinas[0].ejercicios.map((e) => e.ex) : [],
+    };
+  });
+  check('una rutina antigua se convierte en la primera de gym.rutinas[] sin perder ejercicios',
+    migInfo.rutinaGone && migInfo.n === 1 && migInfo.ejercicios.length === 2 &&
+    migInfo.ejercicios.includes('Peso muerto') && migInfo.ejercicios.includes('Remo con barra'),
+    JSON.stringify(migInfo));
+
+  await page.evaluate(() => window.PG.render());
+  await gotoTab('gym');
+  await page.waitForTimeout(200);
+  const migradaEnUI = await page.evaluate(() => document.getElementById('main').innerText);
+  check('la rutina migrada se ve en la UI con su nombre y sus ejercicios',
+    migradaEnUI.includes('Mi rutina') && migradaEnUI.includes('Peso muerto') && migradaEnUI.includes('Remo con barra'),
+    migradaEnUI.slice(0, 300));
+
+  // 18) flujo completo por la UI de verdad: crear rutina -> empezar -> apuntar serie -> terminar -> sesión guardada con su duración
+  await page.fill('#rtNombreNueva', 'Rutina UI');
+  await page.click('[data-a="rt-nueva"]');
+  await page.waitForTimeout(200);
+  const ridUI = await page.evaluate(() => window.PG.gymS().rutinas.find((r) => r.nombre === 'Rutina UI').id);
+  await page.fill('#rtNew-' + ridUI, 'Curl bíceps');
+  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(200);
+  await page.click('[data-a="ses-empezar"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(200);
+  const sesionActivaVisible = await page.evaluate(() => !!document.querySelector('[data-a="ses-terminar"]'));
+  await page.fill('#setEx', 'Curl bíceps');
+  await page.fill('#setKg', '12');
+  await page.fill('#setReps', '10');
+  await page.click('[data-a="gym-set"]');
+  await page.waitForTimeout(200);
+  await page.fill('#sesMinutos', '33');
+  await page.click('[data-a="ses-terminar"]');
+  await page.waitForTimeout(200);
+  const sesionActivaGone = await page.evaluate(() => !document.querySelector('[data-a="ses-terminar"]'));
+  const sesionGuardada = await page.evaluate(
+    (rid) => window.PG.gymS().sesiones.filter((s) => s.rutinaId === rid),
+    ridUI
+  );
+  check('flujo completo: empezar → apuntar serie → terminar guarda una sesión con su duración',
+    sesionActivaVisible && sesionActivaGone && sesionGuardada.length === 1 &&
+    sesionGuardada[0].duracionMin === 33 && sesionGuardada[0].seriesIds.length >= 1,
+    JSON.stringify({ sesionActivaVisible, sesionActivaGone, sesionGuardada }));
+
+  // 19) el diagrama de músculos resalta al menos una región para una sesión de prueba
+  await page.evaluate((rid) => {
+    const g = window.PG.gymS();
+    const rt = g.rutinas.find((r) => r.id === rid);
+    rt.ejercicios[0].tg = 'pectorals'; // vocabulario típico de la biblioteca -> mapea a "pecho"
+    window.PG.render();
+  }, ridUI);
+  await gotoTab('gym');
+  await page.waitForTimeout(200);
+  const regionesResaltadas = await page.evaluate(() => document.querySelectorAll('.mreg.on').length);
+  check('el diagrama de músculos resalta al menos una región para una sesión de prueba',
+    regionesResaltadas >= 1, 'regiones resaltadas: ' + regionesResaltadas);
+
+  // 20) se puede registrar un cardio (natación/carrera/bici/otro) aparte de la fuerza
+  await page.selectOption('#cardioTipo', 'carrera');
+  await page.fill('#cardioFecha', '2026-09-10');
+  await page.fill('#cardioMin', '35');
+  await page.fill('#cardioKm', '5.2');
+  await page.click('[data-a="cardio-add"]');
+  await page.waitForTimeout(200);
+  const cardioGuardado = await page.evaluate(() => window.PG.gymS().cardio.some(
+    (c) => c.tipo === 'carrera' && c.duracionMin === 35 && c.distanciaKm === 5.2 && c.fecha === '2026-09-10'
+  ));
+  check('se puede registrar un cardio con tipo, duración y distancia', cardioGuardado);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
