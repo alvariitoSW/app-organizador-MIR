@@ -225,8 +225,53 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     camState.stream === null || camState.stream === undefined,
     'ui.scanStream tras cambiar de tab: ' + JSON.stringify(camState));
 
+  // 8b) auditoría de la cámara: si getUserMedia rechaza, el mensaje es claro (según el tipo de error)
+  // y el recuadro no se queda "encendido" con un vídeo en negro simulando un escaneo que no existe
+  await gotoTab('food');
+  await page.waitForTimeout(150);
+  const denegado = await page.evaluate(async () => {
+    const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));
+    const msg = await window.PG.iniciarEscaner();
+    navigator.mediaDevices.getUserMedia = orig;
+    return { msg, onClass: document.getElementById('scanBox').classList.contains('on'), stream: window.PG.ui.scanStream };
+  });
+  check('si se deniega el permiso, el mensaje lo dice claro y el recuadro no queda "encendido"',
+    /permiso de c[aá]mara denegado/.test(denegado.msg) && denegado.onClass === false && !denegado.stream,
+    JSON.stringify(denegado));
+
+  // 8c) el escáner arma un aviso de "30 s sin detectar nada" y lo limpia al pararse (sin esperar 30 s
+  // de verdad). Este Chromium de pruebas no trae BarcodeDetector (es habitual en Linux de escritorio),
+  // así que se simula uno que nunca encuentra nada — el propio Chrome de Android sí lo trae.
+  await page.evaluate(() => { window.BarcodeDetector = function () { this.detect = () => Promise.resolve([]); }; });
+  await page.evaluate(() => window.PG.iniciarEscaner());
+  await page.waitForTimeout(200);
+  const timeoutArmado = await page.evaluate(() => window.PG.ui.scanTimeout != null);
+  await page.evaluate(() => window.PG.pararEscaner());
+  const timeoutLimpio = await page.evaluate(() => window.PG.ui.scanTimeout == null);
+  await page.evaluate(() => { delete window.BarcodeDetector; });
+  check('el escáner arma un aviso de "30 s sin detectar nada" y lo limpia al pararse',
+    timeoutArmado && timeoutLimpio, 'armado=' + timeoutArmado + ' limpio=' + timeoutLimpio);
+
+  // 8d) un render() que no cambia de pestaña (p. ej. al escribir en otro filtro) no debe apagar
+  // la cámara a medio escaneo — antes, renderNow() la paraba en CUALQUIER repintado
+  await page.evaluate(() => window.PG.iniciarEscaner());
+  await page.waitForTimeout(200);
+  const sigueAbiertaTrasRender = await page.evaluate(() => { window.PG.render(); return !!window.PG.ui.scanStream; });
+  check('un render() sin cambiar de pestaña no apaga la cámara a medio escaneo', sigueAbiertaTrasRender);
+
+  // 8e) pasar a segundo plano (visibilitychange, p. ej. bloquear el móvil) apaga la cámara sola
+  const trasSegundoPlano = await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    return !!window.PG.ui.scanStream;
+  });
+  await page.evaluate(() => Object.defineProperty(document, 'hidden', { value: false, configurable: true }));
+  check('pasar a segundo plano (visibilitychange) apaga la cámara', !trasSegundoPlano);
+
   // 9) rediseño: los días de "Semana" empiezan plegados, y "abrir todos" los despliega
-  await page.waitForTimeout(200); // ya estamos en el tab "week" desde la prueba de la cámara
+  await gotoTab('week');
+  await page.waitForTimeout(200);
   const collapsedByDefault = await page.evaluate(() => document.querySelectorAll('.drow.open').length);
   await page.click('[data-a="wk-expand-all"]');
   await page.waitForTimeout(150);
@@ -323,6 +368,57 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('"☰ Más" lleva un aria-label que explica el punto de aviso (no solo "●")',
     typeof masLabelInfo === 'string' && masLabelInfo.length > 'Más'.length,
     'aria-label=' + JSON.stringify(masLabelInfo));
+
+  // 17) catálogo local de alimentos (Mercadona, Carrefour, 100 Montaditos): se importa y se busca
+  // SIN ninguna llamada de red — se bloquea toda petición que no sea al propio servidor de prueba
+  // y aun así tiene que aparecer un resultado al buscar
+  await gotoTab('food');
+  await page.waitForTimeout(150);
+  let redUsadaEnCatalogo = false;
+  await page.route('**/*', (route) => {
+    const url = route.request().url();
+    if (url.startsWith(base)) return route.continue();
+    redUsadaEnCatalogo = true;
+    return route.abort();
+  });
+  const catalogo = await page.evaluate(() => {
+    const r = window.PG.foodImportCatalogo();
+    window.PG.ui.foodQ = 'yogur griego';
+    window.PG.render();
+    const encontrado = document.getElementById('main').innerText.toLowerCase().includes('yogur griego');
+    window.PG.ui.foodQ = '';
+    return { r, encontrado, total: window.PG.FOOD_CATALOGO.length };
+  });
+  await page.unroute('**/*');
+  await page.evaluate(() => window.PG.render());
+  check('el catálogo local (Mercadona, Carrefour, 100 Montaditos) se importa y se busca sin red',
+    catalogo.total >= 100 && (catalogo.r.n > 0 || catalogo.r.ya > 0) && catalogo.encontrado && !redUsadaEnCatalogo,
+    JSON.stringify({ n: catalogo.r.n, ya: catalogo.r.ya, total: catalogo.total, encontrado: catalogo.encontrado, redUsada: redUsadaEnCatalogo }));
+
+  // 18) alta manual de un alimento sin código de barras: se guarda con un id sintético (mismo
+  // patrón que addEanProduct() cuando no llega opt.ean) y se puede registrar como cualquier otro
+  await page.fill('#foodNewNombre', 'Lentejas de la abuela');
+  await page.fill('#foodNewKcal', '110');
+  await page.fill('#foodNewProt', '7');
+  await page.click('[data-a="food-new-add"]');
+  await page.waitForTimeout(200);
+  const altaManual = await page.evaluate(() => {
+    const f = window.PG.food();
+    const entry = Object.values(f.eans).find((p) => p.nombre === 'Lentejas de la abuela');
+    return { guardado: !!entry, ean: entry ? entry.ean : null, esSintetico: entry ? !/^\d+$/.test(entry.ean) : null };
+  });
+  check('el alta manual guarda el alimento con un id sintético (sin EAN real)',
+    altaManual.guardado && altaManual.esSintetico === true, JSON.stringify(altaManual));
+
+  const hoyKeyManual = new Date().toISOString().slice(0, 10);
+  const kcalAntesManual = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKeyManual);
+  await page.selectOption('#feSel', 'ean:' + altaManual.ean);
+  await page.fill('#feG', '200');
+  await page.click('[data-a="fe-add"]');
+  await page.waitForTimeout(200);
+  const kcalDespuesManual = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKeyManual);
+  check('el alimento añadido a mano se registra igual que uno escaneado',
+    kcalDespuesManual > kcalAntesManual, 'antes=' + kcalAntesManual + ' después=' + kcalDespuesManual);
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
