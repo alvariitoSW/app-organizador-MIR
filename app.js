@@ -11,6 +11,7 @@ const rac=n=>{n=Math.round((n||0)*10)/10;return fmt(n)+(n===1?' ración':' racio
 const MON=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const DAYN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const DAYSH=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DOWN0=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];   /* indexado como Date#getDay() */
 function mondayOf(d){const x=new Date(d.getTime());x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
 function addDays(d,n){const x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
 function iso(d){const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10);}
@@ -28,7 +29,7 @@ function monthOf(s){const d=parseDate(s);return d?d.getFullYear()+'-'+String(d.g
 
 /* ===================== datos por defecto ===================== */
 function DEFAULTS(){return {
-  meta:{owner:'',notes:''},
+  meta:{owner:'',notes:'',backupAvisoD:13},
   shifts:[
     {id:'sh-g',code:'G',name:'Guardia',icon:'🩺',start:'08:00',end:'08:00',intensity:'alto',
       desc:'Turno de 24 h en destino: no se cocina, todo viene de táper.',color:'#ef4444'},
@@ -54,10 +55,12 @@ function DEFAULTS(){return {
   },
   rotation:{mode:'template',pattern:0,anchor:iso(mondayOf(new Date())),index:0,shiftByDay:{},daySet:{},
              monthService:'',quota:{urg:4,umi:2},autoPos:true,guardiasMes:6,
-             calNombre:'',calAlarm:true,calOculto:true,
+             calNombre:'',calAlarm:true,calOculto:true,icsAvisoMin:30,calWeekStart:'lun',
+             saltoDia:{from:6,to:1},
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
+  tema:{brand:'',brand2:''},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
@@ -197,9 +200,10 @@ function diasDesdeBackup(){try{const t=+localStorage.getItem(BKEY);
 function diasDesdePrimerUso(){try{let t=+localStorage.getItem(FKEY);
   if(!t){t=Date.now();localStorage.setItem(FKEY,String(t));}
   return Math.floor((Date.now()-t)/864e5);}catch(e){return 999;}}
+function avisoBackupD(){const v=store.meta&&+store.meta.backupAvisoD;return (v&&v>0)?v:13;}
 function avisarBackupSiToca(){
-  const db=diasDesdeBackup(),dp=diasDesdePrimerUso();
-  if(!((db===null&&dp>13)||(db!==null&&db>13)))return;
+  const db=diasDesdeBackup(),dp=diasDesdePrimerUso(),n=avisoBackupD();
+  if(!((db===null&&dp>n)||(db!==null&&db>n)))return;
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
@@ -219,6 +223,14 @@ function load(){
   normalize(store);
   try{const m=JSON.parse(localStorage.getItem(MKEY)||'[]');if(Array.isArray(m))ui.marks=new Set(m);}catch(e){}
   try{if(localStorage.getItem(TKEY)!=='light')document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}
+  aplicarTema();
+}
+function aplicarTema(){
+  /* color de acento (Ajustes): dos variables CSS, iguales en claro y oscuro; vacío = el de la app */
+  const t=(store.tema)||{},root=document.documentElement.style;
+  const ok=v=>/^#[0-9a-fA-F]{6}$/.test(v||'');
+  if(ok(t.brand))root.setProperty('--brand',t.brand);else root.removeProperty('--brand');
+  if(ok(t.brand2))root.setProperty('--brand2',t.brand2);else root.removeProperty('--brand2');
 }
 function normalize(o){
   const d=DEFAULTS();
@@ -227,6 +239,7 @@ function normalize(o){
   if(!o.rhythm||typeof o.rhythm!=='object')o.rhythm={};
   o.shifts.forEach(function(s2){if(!o.rhythm[s2.id])o.rhythm[s2.id]=d.rhythm[s2.id]||{wake:'',breakfast:'',leave:'',arrive:'',sleep:''};});
   if(!o.meta)o.meta={owner:'',notes:''};
+  if(typeof o.meta.backupAvisoD!=='number'||o.meta.backupAvisoD<1)o.meta.backupAvisoD=13;
   if(!Array.isArray(o.patterns)||!o.patterns.length)o.patterns=d.patterns;
   if(!o.rotation||typeof o.rotation!=='object')o.rotation=d.rotation;
   if(typeof o.rotation.pattern!=='number'||!o.patterns[o.rotation.pattern])
@@ -237,6 +250,15 @@ function normalize(o){
   if(!o.rotation.quota||typeof o.rotation.quota!=='object')o.rotation.quota={urg:4,umi:2};
   ['urg','umi'].forEach(function(k){if(typeof o.rotation.quota[k]!=='number')o.rotation.quota[k]=(k==='urg'?4:2);});
   if(o.rotation.autoPos===undefined)o.rotation.autoPos=true;
+  if(!o.rotation.saltoDia||typeof o.rotation.saltoDia!=='object')o.rotation.saltoDia={from:6,to:1};
+  o.rotation.saltoDia.from=Math.max(0,Math.min(6,+o.rotation.saltoDia.from));
+  o.rotation.saltoDia.to=Math.max(0,Math.min(6,+o.rotation.saltoDia.to));
+  if(isNaN(o.rotation.saltoDia.from))o.rotation.saltoDia.from=6;
+  if(isNaN(o.rotation.saltoDia.to))o.rotation.saltoDia.to=1;
+  if(typeof o.rotation.icsAvisoMin!=='number'||o.rotation.icsAvisoMin<0)o.rotation.icsAvisoMin=30;
+  if(o.rotation.calWeekStart!=='lun'&&o.rotation.calWeekStart!=='dom')o.rotation.calWeekStart='lun';
+  if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:''};
+  ['brand','brand2'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
   if(typeof o.rotation.guardiasMes!=='number')
@@ -373,6 +395,10 @@ function setDayOverride(dateStr,shiftId,guard){
   const sh=shiftById(shiftId);
   if(sh&&isGuardia(sh)){if(store.rotation.autoPos!==false)ponerSalienteAuto(dateStr);}
   else limpiarSalientesAuto(dateStr);}
+function saltoDia(){const s=(store.rotation&&store.rotation.saltoDia)||{};
+  const from=(s.from!=null?+s.from:6),to=(s.to!=null?+s.to:1);
+  return {from:isNaN(from)?6:from,to:isNaN(to)?1:to};}
+function saltoDiaTxt(){const s=saltoDia();return 'si cae en '+DOWN0[s.from]+', el '+DOWN0[s.to];}
 function marcarAuto(fecha,shiftId,de){
   if(!shiftId)return false;
   const cur=dayOverride(fecha);
@@ -382,15 +408,19 @@ function marcarAuto(fecha,shiftId,de){
   store.rotation.daySet[fecha]={shift:shiftId,auto:'pos',de:de};return true;
 }
 function ponerSalienteAuto(dateStr){
-  /* la guardia se acaba a las 8 del día siguiente: ese día es saliente; si es sábado, el lunes (el domingo se descansa en casa) */
+  /* la guardia se acaba a las 8 del día siguiente: ese día es saliente; si cae en el día que marque
+     «Ajustes → qué día de la semana absorbe el saliente» (sábado→lunes de fábrica), los días de por
+     medio quedan libres y el saliente se pasa al día configurado (se descansa en casa) */
   const S=shiftByCode('S'),L=shiftByCode('L'),d=parseDate(dateStr);
   if(!d)return {ok:false,msg:'fecha rara'};
   limpiarSalientesAuto(dateStr);
   const DN3=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const wd=d.getDay();let n=0,txt='';
-  if(wd===6){
-    const doM=iso(addDays(d,1)),lu=iso(addDays(d,2));
-    if(L&&marcarAuto(doM,L.id,dateStr))n++;
-    if(S&&marcarAuto(lu,S.id,dateStr)){n++;txt=' (sábado → el saliente cae el lunes)';}
+  const sd=saltoDia();
+  if(wd===sd.from){
+    let gap=(sd.to-wd+7)%7;if(gap===0)gap=7;
+    for(let i=1;i<gap;i++){const k=iso(addDays(d,i));if(L&&marcarAuto(k,L.id,dateStr))n++;}
+    const destino=iso(addDays(d,gap));
+    if(S&&marcarAuto(destino,S.id,dateStr)){n++;txt=' ('+DN3[wd]+' → el saliente cae el '+DN3[(wd+gap)%7]+')';}
   }else{
     const sig=iso(addDays(d,1));
     if(S&&marcarAuto(sig,S.id,dateStr)){n++;const dd=parseDate(sig);txt=' al '+DN3[dd.getDay()]+' '+dd.getDate();}
@@ -592,9 +622,9 @@ function setGuardiaTipo(dateStr,code){
     return {ok:true,msg:'guardia quitada del '+k+' (y su saliente automático, si lo puso la app)'};}
   const t=gTipo(code);
   setDayOverride(k,G.id,t.code);save();render();
-  const sab=parseDate(k)&&parseDate(k).getDay()===6;
+  const sd=saltoDia(),cae=parseDate(k)&&parseDate(k).getDay()===sd.from;
   return {ok:true,msg:'guardia de '+t.label+' el '+k.slice(8)+' '+MON[+k.slice(5,7)-1]+
-    (store.rotation.autoPos!==false?(' · el '+(sab?'lunes':'día siguiente')+' queda saliente solo')
+    (store.rotation.autoPos!==false?(' · el '+(cae?DOWN0[sd.to]:'día siguiente')+' queda saliente solo')
       :' · el post-guardia automático está apagado: lo pones tú')};}
 function renombraTipo(code,label){
   const l=gTipos(),t=l.filter(function(x){return x.code===code;})[0];
@@ -793,7 +823,7 @@ function distributeGuardias(y,m,replace){
   if(!out.length)return 'no he podido encajar ninguna guardia: no hay huecos separados entre sí';
   const g=guardCount(y,m);
   const extra=g.any-out.length;
-  return out.length+' guardia(s) ('+gTiposTxt(g)+'), cada una con su saliente al día siguiente (si cae en sábado, el lunes)'+
+  return out.length+' guardia(s) ('+gTiposTxt(g)+'), cada una con su saliente al día siguiente ('+saltoDiaTxt()+')'+
     (extra>0?' · la plantilla suma '+extra+' más: el mes queda en '+g.any+' · cambia de semana tipo o quita días en el calendario'
             :' · el mes queda en '+g.any+' de '+svc.guardias);}
   function syncToRotation(y,m){
@@ -1101,8 +1131,8 @@ function dayPanelHTML(dateStr){
   const opts=store.shifts.map(function(s){
     return '<button class="btn s '+(inf.shiftId===s.id?'p':'')+'" data-a="day-set" data-key="'+key+'" data-sid="'+s.id+'" data-guard="">'+
       esc(s.icon)+' '+esc(s.name)+'</button>';}).join('');
-  const gd=store.shifts.filter(isGuardia),tipos=gTipos();
-  const guardBtn=gd.length?('<span class="mini">'+(d.getDay()===6?'eres sábado: el saliente cae en lunes':'el día siguiente queda saliente solo')+'</span> '+
+  const gd=store.shifts.filter(isGuardia),tipos=gTipos(),sd0=saltoDia();
+  const guardBtn=gd.length?('<span class="mini">'+(d.getDay()===sd0.from?('eres '+DOWN0[sd0.from]+': el saliente cae el '+DOWN0[sd0.to]):'el día siguiente queda saliente solo')+'</span> '+
     tipos.map(function(t){const on=inf.shiftId===gd[0].id&&String(inf.guard||'').toLowerCase()===t.code;
       return '<button class="btn s '+(on?'p':'')+'" data-a="day-guardia" data-key="'+key+'" data-guard="'+t.code+'">'+
         (on?'✓ ':'')+'🩺 '+esc(t.label)+'</button>';}).join('')+
@@ -1351,7 +1381,9 @@ function serviciosCard(){
     '</div>';}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo);
-  const list=monthDays(y,mo),lead=(new Date(y,mo,1).getDay()+6)%7;
+  const domFirst=store.rotation.calWeekStart==='dom';
+  const list=monthDays(y,mo),lead=domFirst?new Date(y,mo,1).getDay():(new Date(y,mo,1).getDay()+6)%7;
+  const WDH=domFirst?['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const cells=[];for(let i=0;i<lead;i++)cells.push('<span></span>');
   list.forEach(function(d){
     const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
@@ -1373,7 +1405,7 @@ function renderMonth(){
   $('#main').innerHTML=`<div class="grid">
     <div class="card"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
       ${modoAvisoHTML()}
-      <p class="note"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; si la guardia es en sábado, el saliente es el lunes) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
+      <p class="note"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
       <div class="row">
         <button class="btn s" data-a="mon-prev">‹</button>
         <input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" style="width:160px">
@@ -1407,7 +1439,7 @@ function renderMonth(){
         <div><b>${acostarsePara(despertarBase())}</b><span>acostarse para ${store.sueno?store.sueno.min:8} h</span></div>
         <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
       </div>
-      <div class="cal"><span class="wd">Lun</span><span class="wd">Mar</span><span class="wd">Mié</span><span class="wd">Jue</span><span class="wd">Vie</span><span class="wd">Sáb</span><span class="wd">Dom</span>${cells.join('')}</div>
+      <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
       <div class="row" style="margin-top:10px">
         <span class="mini">${list.filter(function(d){return d.over;}).length} día(s) puestos a mano · ${list.length-list.filter(function(d){return d.over;}).length} salen de la plantilla/rotación</span>
@@ -1423,7 +1455,7 @@ function renderMonth(){
     <div class="card"><h2>Cómo va quedando el mes</h2>
       <div class="row no-print" style="margin-bottom:6px"><button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
         <span class="mini">sobrescribe lo que hayas puesto tú en este mes</span></div>
-      <p class="note">Cada guardia arrastra su día saliente al día siguiente; si la guardia cae en sábado, el saliente es el lunes (el domingo se descansa en casa). Los laborables sin marcar salen ya con la jornada puesta.</p>
+      <p class="note">Cada guardia arrastra su día saliente al día siguiente; ${saltoDiaTxt()} (se descansa en casa el resto de días de por medio). Los laborables sin marcar salen ya con la jornada puesta.</p>
       <details class="dtip"><summary class="mini">ver el mes día a día, con horas (${list.length} días — el calendario de arriba ya resume esto)</summary>
       <div style="margin-top:6px">${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
         return `<div class="row" style="padding:4px 0;border-top:1px dashed var(--line);font-size:12px">
@@ -2506,6 +2538,75 @@ function renderCfg(){
   </div>`;
 }
 
+/* ===================== render: ajustes ===================== */
+function renderAjustes(){
+  const sd=saltoDia(),tm=store.tema||{},tipos=gTipos();
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const diaOpts=sel=>DOWN0.map(function(n,i){return '<option value="'+i+'" '+(i===sel?'selected':'')+'>'+cap(n)+'</option>';}).join('');
+  const tipoRows=tipos.map(function(t){
+    return '<div class="row" style="margin-top:6px">'+
+      '<label class="fld" style="flex:1 1 160px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
+      '<label class="fld" style="flex:0 0 110px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
+    '</div>';}).join('');
+  $('#main').innerHTML=`<div class="grid">
+    <div class="card"><h2>⚙️ Ajustes</h2><p class="note">Números, horas y reglas sueltas que antes solo se cambiaban programando. Lo que ya tiene su propio sitio —horarios de cada tipo de día, ritmo de sueño, jornada, objetivo de comida— sigue en «Turno y rotación» y «Comida»; aquí va lo que faltaba.</p></div>
+
+    <div class="card"><h2>Sueño</h2>
+      <p class="note">El resto de números de sueño (horas mínimas, ventana de la cena) están en «Turno y rotación → 2c».</p>
+      <label class="fld" style="max-width:220px">Minutos que tardas en dormirte (se restan de la hora de acostarse)
+        <input type="number" min="0" max="60" value="${suenoCfg().latencia}" data-a="sueno-f" data-k="latencia"></label>
+    </div>
+
+    <div class="card"><h2>Guardias y rotación</h2>
+      <p class="note">De fábrica: si la guardia cae en sábado, el saliente se pasa al lunes y el día de por medio queda libre. Si tu rotación descansa otro día, cámbialo aquí.</p>
+      <div class="row">
+        <label class="fld">Si la guardia cae en<select data-a="salto-from">${diaOpts(sd.from)}</select></label>
+        <label class="fld">el saliente se pasa al<select data-a="salto-to">${diaOpts(sd.to)}</select></label>
+      </div>
+      <p class="mini" style="margin-top:8px">Ahora mismo: ${saltoDiaTxt()}.</p>
+      <label class="fld" style="max-width:220px;margin-top:10px">Guardias por mes, por defecto (para un mes que no hayas tocado)
+        <input type="number" min="0" max="15" value="${store.rotation.guardiasMes!=null?store.rotation.guardiasMes:6}" data-a="guard-default"></label>
+      <p class="mini" style="margin-top:10px">Tipos de guardia y cuántas de cada uno tocan al mes (esto es lo mismo que ves dentro de «Mes → configurar este mes»; aquí queda a mano sin tener que entrar cada vez):</p>
+      ${tipoRows}
+      <div class="row" style="margin-top:8px">
+        <label class="fld" style="flex:0 0 200px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
+      </div>
+    </div>
+
+    <div class="card"><h2>Copias de seguridad</h2>
+      <p class="note">El aviso de «Datos» de que te toca otra copia salta pasados estos días desde la última.</p>
+      <label class="fld" style="max-width:220px">Avisar a partir de (días sin copia)
+        <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
+    </div>
+
+    <div class="card"><h2>Calendario de Google</h2>
+      <p class="note">Afecta al <code>.ics</code> que generas en «Datos». El nombre y la etiqueta son los mismos que ves allí: cambiarlos aquí o allí es lo mismo.</p>
+      <label class="fld" style="max-width:260px">Minutos de aviso antes de cada evento exportado
+        <input type="number" min="0" max="180" value="${+store.rotation.icsAvisoMin||30}" data-a="ics-aviso-min"></label>
+      <div class="row" style="margin-top:10px">
+        <label class="fld" style="flex:1 1 220px">nombre del cuaderno<input id="calNombre" value="${esc(store.rotation.calNombre||'')}" placeholder="${esc(calNombreTxt(calRangoUI().desde))}"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="cal-nombre">poner el nombre</button></label>
+      </div>
+      <label class="fld" style="margin-top:8px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">
+        <input type="checkbox" id="calOculto" data-a="cal-oculto" style="width:auto" ${store.rotation.calOculto!==false?'checked':''}>
+        <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></label>
+    </div>
+
+    <div class="card"><h2>Apariencia</h2>
+      <div class="row">
+        <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
+      </div>
+      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro.</p>
+      <label class="fld" style="max-width:220px;margin-top:12px">Primer día de la semana en «Mes»
+        <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
+          <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label>
+    </div>
+  </div>`;
+}
+
 /* ===================== render: datos ===================== */
 function renderData(){
   $('#main').innerHTML=`<div class="grid">
@@ -2589,9 +2690,9 @@ function renderData(){
       <p class="note"><b>Todo vive sólo en este navegador</b>: no hay cuenta ni servidor detrás, y nada se comparte solo entre compañeros.
       Si quieres pasarte el cuadrante a otro móvil, compartirlo con alguien o tener una copia por si acaso, descarga el JSON — es la
       única copia de seguridad que existe, así que conviene hacerla de vez en cuando.</p>
-      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>13?'color:var(--warn);font-weight:700':''}">
+      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
       ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
-        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>13?' — te toca otra':''))}</p>
+        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
       <div class="row" style="margin-top:6px"><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
@@ -2649,13 +2750,13 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['types','Días y menús'],['batches','Cocina en lote'],['cfg','Turno y rotación'],['data','Datos']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['types','Días y menús'],['batches','Cocina en lote'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 const DRAWER_GROUPS=[
   ['Comida',[['food','🍽 Comida']]],
   ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote']]],
-  ['Configuración',[['cfg','🕐 Turno y rotación'],['data','📤 Datos']]]
+  ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function render(){
@@ -2712,7 +2813,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
   mejoraAccesibilidad($('#main'));
 }
@@ -4048,9 +4149,10 @@ function icsTexto(desde,hasta,opt){
         'DTEND:'+icsNum(cruza?nextIso(kISO):e.fecha)+'T'+icsCompacta(hm(fn)));}
     cuerpo.push('SUMMARY:'+icsEscTxt(e.summ),'DESCRIPTION:'+icsEscTxt(e.desc||''),
       'CATEGORIES:'+icsEscTxt(e.cat||'OTRO'),'STATUS:CONFIRMED','SEQUENCE:0');
-    if(store.rotation.calAlarm!==false)
+    if(store.rotation.calAlarm!==false){
+      const av=Math.max(0,+store.rotation.icsAvisoMin||30);
       cuerpo.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEscTxt(e.summ),
-        'TRIGGER;VALUE=DURATION:-PT30M','END:VALARM');
+        'TRIGGER;VALUE=DURATION:-PT'+av+'M','END:VALARM');}
     const bloque=cuerpo.join('\r\n');
     L.push('BEGIN:VEVENT','UID:'+(e.uid||icsUID(e.fecha+'|'+(e.allDay?'D':'T')+kISO+'|'+(e.summ||''))));
     L.push('DTSTAMP:'+stamp);
@@ -4343,6 +4445,18 @@ document.addEventListener('change',e=>{
     case 'sueno-f':{if(!store.sueno)store.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
       const k=el.dataset.k,v=+el.value;if(v>0)store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
       save();render();break;}
+    case 'salto-from':{if(!store.rotation.saltoDia)store.rotation.saltoDia={from:6,to:1};
+      store.rotation.saltoDia.from=Math.max(0,Math.min(6,+el.value));save();render();break;}
+    case 'salto-to':{if(!store.rotation.saltoDia)store.rotation.saltoDia={from:6,to:1};
+      store.rotation.saltoDia.to=Math.max(0,Math.min(6,+el.value));save();render();break;}
+    case 'ics-aviso-min':{store.rotation.icsAvisoMin=Math.max(0,Math.min(180,+el.value||30));save();render();break;}
+    case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
+    case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
+      store.meta.backupAvisoD=Math.max(1,Math.min(90,+el.value||13));save();render();break;}
+    case 'tema-f':{if(!store.tema)store.tema={brand:'',brand2:''};
+      store.tema[el.dataset.k]=el.value||'';aplicarTema();save();break;}
+    case 'tema-reset':{store.tema={brand:'',brand2:''};aplicarTema();save();render();
+      flash('color de acento restablecido al de la app');break;}
     case 'jor-f':{const j=store.rotation.jornada||(store.rotation.jornada={start:'',end:'',workdays:[1,2,3,4,5]});
       j[el.dataset.f]=el.value||'';save();render();break;}
     case 'mon-svc':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
@@ -4401,6 +4515,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
+  saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,

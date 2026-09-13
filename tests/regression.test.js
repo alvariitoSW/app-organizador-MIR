@@ -56,7 +56,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
   // el resto vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
-  const DRAWER_TABS = new Set(['food', 'types', 'batches', 'cfg', 'data']);
+  const DRAWER_TABS = new Set(['food', 'types', 'batches', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
@@ -631,6 +631,89 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   );
   check('un evento de "trabajo" exportado se reconoce como tal al reimportarlo (viceversa)',
     reimport.kind === 'trabajo', JSON.stringify(reimport));
+
+  // ===================== "⚙️ Ajustes" (informe: pequeños cambios sin programar) =====================
+
+  // 30) existe en el cajón y trae los campos nuevos
+  await gotoTab('ajustes');
+  await page.waitForTimeout(150);
+  const ajustesUI = await page.evaluate(() => ({
+    saltoFrom: !!document.querySelector('[data-a="salto-from"]'),
+    saltoTo: !!document.querySelector('[data-a="salto-to"]'),
+    latencia: !!document.querySelector('[data-a="sueno-f"][data-k="latencia"]'),
+    guardDefault: !!document.querySelector('[data-a="guard-default"]'),
+    backup: !!document.querySelector('[data-a="backup-aviso-d"]'),
+    icsMin: !!document.querySelector('[data-a="ics-aviso-min"]'),
+    temaBrand: !!document.querySelector('[data-a="tema-f"][data-k="brand"]'),
+    weekStart: !!document.querySelector('[data-a="cal-weekstart"]'),
+    enDrawer: !!document.querySelector('[data-a="drawer-nav"][data-t="ajustes"]'),
+  }));
+  check('la pestaña "Ajustes" existe en el cajón lateral y trae los campos del informe',
+    Object.values(ajustesUI).every(Boolean), JSON.stringify(ajustesUI));
+
+  // 31) qué día "absorbe" el saliente es configurable (antes, sábado→lunes fijo en el código)
+  const saltoTest = await page.evaluate(() => {
+    window.PG.store.rotation.saltoDia = { from: 0, to: 2 }; // domingo -> martes, para probar que no es solo sábado/lunes
+    const fmt = (x) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+    let dom = new Date(2027, 4, 1);
+    while (dom.getDay() !== 0) dom.setDate(dom.getDate() + 1); // primer domingo de mayo de 2027
+    const lun = new Date(dom); lun.setDate(dom.getDate() + 1);
+    const mar = new Date(dom); mar.setDate(dom.getDate() + 2);
+    window.PG.setDayOverride(fmt(dom), 'sh-g', 'urg');
+    const infoLun = window.PG.dayInfo(fmt(lun)), infoMar = window.PG.dayInfo(fmt(mar));
+    const txt = window.PG.saltoDiaTxt();
+    window.PG.store.rotation.saltoDia = { from: 6, to: 1 }; // deja el valor de fábrica
+    return { txt, lunKind: infoLun.shiftId, marKind: infoMar.shiftId };
+  });
+  check('el día en que "cae" la guardia especial y el día al que se pasa el saliente son configurables',
+    saltoTest.txt === 'si cae en domingo, el martes' && saltoTest.lunKind === 'sh-l' && saltoTest.marKind === 'sh-s',
+    JSON.stringify(saltoTest));
+
+  // 32) el umbral de aviso de copia de seguridad es configurable (antes, 13 días fijo)
+  const backupCfg = await page.evaluate(() => {
+    const before = window.PG.avisoBackupD();
+    window.PG.store.meta.backupAvisoD = 5;
+    const after = window.PG.avisoBackupD();
+    window.PG.store.meta.backupAvisoD = 13;
+    return { before, after };
+  });
+  check('el umbral de aviso de "te toca otra copia" es configurable (store.meta.backupAvisoD)',
+    backupCfg.before === 13 && backupCfg.after === 5, JSON.stringify(backupCfg));
+
+  // 33) los minutos de aviso del .ics exportado son configurables (antes, -PT30M fijo)
+  const icsAviso = await page.evaluate(() => {
+    window.PG.store.rotation.icsAvisoMin = 45;
+    window.PG.setDayOverride('2027-05-20', 'sh-t', '');
+    const txt = window.PG.icsTexto('2027-05-20', '2027-05-20', {});
+    window.PG.store.rotation.icsAvisoMin = 30;
+    return txt;
+  });
+  check('los minutos de aviso (VALARM) del .ics exportado son configurables',
+    icsAviso.indexOf('TRIGGER;VALUE=DURATION:-PT45M') >= 0, icsAviso.slice(0, 500));
+
+  // 34) el color de acento se aplica como variable CSS de verdad, y se puede restablecer
+  const temaTest = await page.evaluate(() => {
+    window.PG.store.tema = { brand: '#123456', brand2: '#abcdef' };
+    window.PG.aplicarTema();
+    const applied = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
+    window.PG.store.tema = { brand: '', brand2: '' };
+    window.PG.aplicarTema();
+    const reverted = document.documentElement.style.getPropertyValue('--brand');
+    return { applied, reverted };
+  });
+  check('el color de acento (Ajustes) se aplica como variable CSS y se puede restablecer al de la app',
+    temaTest.applied === '#123456' && temaTest.reverted === '', JSON.stringify(temaTest));
+
+  // 35) el primer día de la semana de "Mes" es configurable (antes, siempre empezaba en lunes)
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const headerLun = await page.evaluate(() => document.querySelector('#main .cal .wd').textContent);
+  await page.evaluate(() => { window.PG.store.rotation.calWeekStart = 'dom'; window.PG.render(); });
+  await page.waitForTimeout(100);
+  const headerDom = await page.evaluate(() => document.querySelector('#main .cal .wd').textContent);
+  await page.evaluate(() => { window.PG.store.rotation.calWeekStart = 'lun'; window.PG.render(); });
+  check('el primer día de la semana en "Mes" es configurable (Lunes/Domingo)',
+    headerLun === 'Lun' && headerDom === 'Dom', JSON.stringify({ headerLun, headerDom }));
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
