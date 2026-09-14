@@ -820,6 +820,27 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('la rutina muestra el muñeco y una recomendación siempre visibles, que cambian según sus ejercicios',
     rutinaDiag.avisoVacia && rutinaDiag.pechoTrabajado && rutinaDiag.diagramaVisible, JSON.stringify(rutinaDiag));
 
+  // 42) Comida: la búsqueda por nombre se puede acotar a Mercadona (filtro de marca en Open Food Facts,
+  // ya que Mercadona no tiene API propia) — activado por defecto
+  await gotoTab('food');
+  await page.waitForTimeout(150);
+  await page.evaluate(() => { window.PG.ui.foodPanel = 'scan'; window.PG.render(); });
+  const mercadonaUI = await page.evaluate(() => ({
+    checkboxExiste: !!document.getElementById('scanMerc'),
+    marcadoPorDefecto: !!(document.getElementById('scanMerc') || {}).checked,
+  }));
+  let ultimaUrlOff = '';
+  await page.route('https://world.openfoodfacts.org/**', (route) => {
+    ultimaUrlOff = route.request().url();
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ products: [] }) });
+  });
+  await page.evaluate(() => window.PG.buscarOffNombre('yogur', 'mercadona'));
+  await page.waitForTimeout(150);
+  await page.unroute('https://world.openfoodfacts.org/**');
+  check('la búsqueda por nombre se puede acotar a Mercadona (filtro de marca en Open Food Facts)',
+    mercadonaUI.checkboxExiste && mercadonaUI.marcadoPorDefecto && ultimaUrlOff.includes('tag_0=mercadona'),
+    JSON.stringify({ mercadonaUI, ultimaUrlOff }));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

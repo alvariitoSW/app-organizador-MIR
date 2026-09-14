@@ -210,7 +210,7 @@ function avisarBackupSiToca(){
 let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
-  foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio'};
+  foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -996,15 +996,21 @@ function buscarEan(code){
       if(!out)return {ok:false,msg:'no encuentro el '+c+' con datos de nutrición: prueba a buscarlo por nombre'};
       return {ok:true,p:out};})
     .catch(function(e){return {ok:false,msg:'no he podido consultar ('+((e&&e.message)||'sin red')+')'};});}
-function buscarOffNombre(txt){
+function buscarOffNombre(txt,marca){
+  /* búsqueda por nombre en Open Food Facts; con "marca" (p. ej. "mercadona") se filtra a esa marca
+     -sus propias etiquetas Hacendado, Deliplus, etc. van con el nombre "Mercadona" en Open Food Facts-,
+     para que se sienta como buscar en el catálogo de esa cadena aunque por debajo siga siendo OFF */
   const t=String(txt||'').trim();
   if(t.length<3)return Promise.resolve({ok:false,msg:'escribe al menos 3 letras del producto'});
   if(typeof fetch!=='function')return Promise.resolve({ok:false,msg:'este navegador no sale a la red'});
+  const filtroMarca=marca?('&tagtype_0=brands&tag_contains_0=contains&tag_0='+encodeURIComponent(marca)):'';
   const url=offUrl('cgi/search.pl?search_terms='+encodeURIComponent(t)+
-    '&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,brands,quantity,nutriments');
+    '&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,brands,quantity,nutriments'+filtroMarca);
   return fetch(url).then(function(r){return r.json();})
     .then(function(j){const list=((j&&j.products)||[]).map(mapOffProduct).filter(Boolean).slice(0,10);
-      return {ok:list.length>0,list:list,msg:list.length?(list.length+' producto(s) para «'+t+'»'):'nada por ahí con «'+t+'»: prueba con el código de barras'};})
+      return {ok:list.length>0,list:list,
+        msg:list.length?(list.length+' producto(s) para «'+t+'»'+(marca?' en '+marca:'')):
+          'nada por ahí con «'+t+'»'+(marca?' en '+marca+(': prueba a quitar el filtro de marca o'):':')+' prueba con el código de barras'};})
     .catch(function(e){return {ok:false,msg:'no he podido consultar: '+((e&&e.message)||'sin red')};});}
 const SCAN_TIMEOUT_MS=30000;
 function camErrMsg(e){
@@ -1926,6 +1932,9 @@ function renderFood(){
       '<label class="fld">&nbsp;<span class="row" style="gap:6px">'+
       '<button class="btn s" data-a="scan-go">buscar el código</button>'+
       '<button class="btn s" data-a="scan-find">buscar por nombre</button></span></label></div>'+
+    '<label class="fld" style="margin-top:6px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">'+
+      '<input type="checkbox" id="scanMerc" data-a="scan-solo-merc" style="width:auto" '+(ui.scanSoloMercadona?'checked':'')+'>'+
+      '<span>🛒 solo Mercadona (Hacendado, Deliplus…)</span></label>'+
     '<p id="scanOut">'+esc(ui.scanMsg||'')+'</p>'+
     ((ui.scanRes||[]).length?('<div class="daylist" style="margin-top:4px">'+ui.scanRes.map(function(x,ix){
       return '<div class="frow"><span><span class="fn">'+esc(x.nombre)+'</span>'+
@@ -3284,8 +3293,10 @@ function act(a,el){
       ui.scanMsg='buscando '+c+'…';const o=document.getElementById('scanOut');if(o)o.textContent=ui.scanMsg;
       Promise.resolve(buscarYmostrar(c)).then(function(){render();});break;}
     case 'scan-find':{const t=(document.getElementById('scanQ')||{}).value||'';
-      Promise.resolve(buscarOffNombre(t)).then(function(r){ui.scanMsg=r.msg;ui.scanRes=r.ok?(r.list||[]):[];
+      const marca=ui.scanSoloMercadona?'mercadona':'';
+      Promise.resolve(buscarOffNombre(t,marca)).then(function(r){ui.scanMsg=r.msg;ui.scanRes=r.ok?(r.list||[]):[];
         render();flash(r.msg);});break;}
+    case 'scan-solo-merc':ui.scanSoloMercadona=!!el.checked;break;
     case 'scan-save':{const x=(ui.scanRes||[])[+el.dataset.ix];if(!x)break;
       const res=addEanProduct(x);flash(res.msg);if(res.ok)render();break;}
     case 'scan-today':{const x=(ui.scanRes||[])[+el.dataset.ix];if(!x)break;
