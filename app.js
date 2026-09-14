@@ -1323,9 +1323,7 @@ function vacCardMonth(y,mo,list){
     return a&&b&&a<=new Date(y,mo+1,0,12)&&b>=new Date(y,mo,1,12);}).length;
   const first=new Date(y,mo,1,12),last=new Date(y,mo,Math.min(new Date(y,mo+1,0).getDate(),7),12);
   return '<div class="card"><h2>🏖️ Vacaciones</h2>'+
-    '<p class="note">Marca el rango y esos días quedan como día de vacaciones: no cuentan la jornada de diario, '+
-    'no entran en el reparto de guardias y la cocina se hace con lo que de verdad estás en casa. '+
-    'Lo que tú pongas a mano en un día manda sobre el rango.</p>'+
+    '<p class="note">Marca el rango: esos días no cuentan jornada ni guardias. Lo que pongas a mano en un día concreto manda sobre el rango.</p>'+
     '<div class="row" style="margin-top:6px"><label class="fld">Desde<input type="date" id="vacA" value="'+iso(first)+'"></label>'+
     '<label class="fld">Hasta<input type="date" id="vacB" value="'+iso(last)+'"></label>'+
     '<label class="fld" style="flex:1">Nombre<input id="vacL" placeholder="agosto, verano, con los niños…"></label>'+
@@ -1363,9 +1361,7 @@ function serviciosCard(){
   const cur=store.rotation.month||{};
   return '<div class="card"><h2>🔁 Tus servicios <span class="mini">'+
     (r.servicios||[]).length+' · hasta '+(hm?MON[+hm[2]-1]+' '+hm[1]:'—')+'</span></h2>'+
-    '<p class="note">Rotas <b>'+(r.servicios||[]).map(esc).join(', ')+'</b>. Nada de urgencias ni UMI: aquí manda tu lista. '+
-    'Elije desde qué mes, cuántos meses se está en cada servicio y date al botón; la app escribe en cada mes el servicio que toca '+
-    'y sus guardias, que luego mueves tú día a día.</p>'+
+    '<p class="note">Rotas <b>'+(r.servicios||[]).map(esc).join(', ')+'</b>.</p>'+
     '<div class="fgrid c3"><label class="fld">Empieza en<input type="month" id="svcDesde" value="'+desde+'" data-a="svc-m"></label>'+
       '<label class="fld">Meses por servicio<select id="svcMeses" data-a="svc-m"><option value="1" '+(per===1?'selected':'')+'>1 mes en cada sitio</option>'+
         '<option value="2" '+(per===2?'selected':'')+'>2 meses en cada sitio</option></select></label>'+
@@ -1412,8 +1408,10 @@ function renderMonth(){
   $('#main').innerHTML=`<div class="grid">
     <div class="card"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
       ${modoAvisoHTML()}
-      <p class="note"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
-      <div class="row">
+      <details class="dtip"><summary class="mini">ⓘ cómo se calcula este mes ▾</summary>
+      <p class="note" style="margin-top:6px"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
+      </details>
+      <div class="row" style="margin-top:8px">
         <button class="btn s" data-a="mon-prev">‹</button>
         <input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" style="width:160px">
         <button class="btn s" data-a="mon-next">›</button>
@@ -1437,32 +1435,33 @@ function renderMonth(){
           ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
       </details>
       <div class="kpis">
-        <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
         <div><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))}</span></div>
         <div><b>${list.filter(function(d){return /saliente/i.test(d.name);}).length}</b><span>días salientes</span></div>
+        <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
+        <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
+      </div>
+      <details class="dtip" style="margin-top:6px"><summary class="mini">ver más números ▾</summary>
+      <div class="kpis" style="margin-top:8px">
         <div><b>${media||'—'}${media!=null?'h':''}</b><span>sueño de media</span></div>
         <div><b>${fiascos}</b><span>noches con menos de ${store.sueno?store.sueno.min:8} h</span></div>
         <div><b>${list.filter(function(d){return d.over&&d.shiftId;}).length}</b><span>días escritos a mano</span></div>
         <div><b>${acostarsePara(despertarBase())}</b><span>acostarse para ${store.sueno?store.sueno.min:8} h</span></div>
-        <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
       </div>
+      </details>
       <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
       <div class="row" style="margin-top:10px">
-        <span class="mini">${list.filter(function(d){return d.over;}).length} día(s) puestos a mano · ${list.length-list.filter(function(d){return d.over;}).length} salen de la plantilla/rotación</span>
-      <span class="sp"></span><span class="mini">horas de hoy: ${esc((function(){var td=list.filter(function(d){return d.key===iso(new Date());})[0];
-          return td?dayLine(td):'sin asignar';})())}</span>
+        <span class="mini">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo · ':''}${!svc.set&&!store.rotation.monthService
+          ?'sin servicio puesto'
+          :(g.any!==svc.guardias?'⚠ '+g.any+'/'+svc.guardias+' guardias':'cupo cubierto')}</span>
         <span class="sp"></span><button class="btn s" data-a="mon-sync">volcar al calendario de «Semana»</button></div>
-      <p class="mini" style="margin-top:6px">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo —tócalas y elige '+(gTipos().map(function(t){return t.label;}).join(' o '))+' · ':''}${!svc.set&&!store.rotation.monthService
-        ?'el servicio del mes (dónde trabajas) lo pones tú; las guardias van por tipo y no dependen de eso'
-        :(g.any!==svc.guardias?'⚠ el mes lleva '+g.any+' guardias y el cupo pide '+svc.guardias+' ('+esc(gTiposTxt(g))+')'
-          :'cupo cubierto: '+esc(gTiposTxt(g))+' · '+list.filter(function(d){return /saliente/i.test(d.name);}).length+' salientes')}</p></div>
+    </div>
     ${serviciosCard()}
     ${vacCardMonth(y,mo,list)}
     <div class="card"><h2>Cómo va quedando el mes</h2>
       <div class="row no-print" style="margin-bottom:6px"><button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
         <span class="mini">sobrescribe lo que hayas puesto tú en este mes</span></div>
-      <p class="note">Cada guardia arrastra su día saliente al día siguiente; ${saltoDiaTxt()} (se descansa en casa el resto de días de por medio). Los laborables sin marcar salen ya con la jornada puesta.</p>
+      <p class="note">Cada guardia arrastra su saliente al día siguiente (${saltoDiaTxt()}). Los laborables sin marcar ya llevan la jornada puesta.</p>
       <details class="dtip"><summary class="mini">ver el mes día a día, con horas (${list.length} días — el calendario de arriba ya resume esto)</summary>
       <div style="margin-top:6px">${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
         return `<div class="row" style="padding:4px 0;border-top:1px dashed var(--line);font-size:12px">

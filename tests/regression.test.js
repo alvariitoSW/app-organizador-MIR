@@ -841,6 +841,21 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     mercadonaUI.checkboxExiste && mercadonaUI.marcadoPorDefecto && ultimaUrlOff.includes('tag_0=mercadona'),
     JSON.stringify({ mercadonaUI, ultimaUrlOff }));
 
+  // 43) Mes: la explicación larga y los números secundarios quedan plegados, no siempre a la vista
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const mesSimple = await page.evaluate(() => {
+    const kpis = document.querySelector('#main .card .kpis');
+    const summaries = Array.from(document.querySelectorAll('#main details > summary'));
+    return {
+      kpisVisibles: kpis ? kpis.children.length : 0,
+      explicacionPlegada: summaries.some((s) => /cómo se calcula/i.test(s.textContent) && !s.parentElement.open),
+      masNumerosPlegado: summaries.some((s) => /ver más números/i.test(s.textContent) && !s.parentElement.open),
+    };
+  });
+  check('en "Mes", la explicación larga y los KPI secundarios quedan plegados por defecto',
+    mesSimple.kpisVisibles <= 4 && mesSimple.explicacionPlegada && mesSimple.masNumerosPlegado, JSON.stringify(mesSimple));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
