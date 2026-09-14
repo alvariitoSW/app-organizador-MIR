@@ -211,6 +211,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   // 8) la cámara del escáner se detiene sola al cambiar de pestaña (antes: se quedaba encendida)
   await gotoTab('food');
   await page.waitForTimeout(200);
+  await page.evaluate(() => { window.PG.ui.foodPanel = 'scan'; window.PG.render(); });
   await page.evaluate(() => window.PG.iniciarEscaner());
   await page.waitForTimeout(300);
   const camAbierta = await page.evaluate(() => !!window.PG.ui.scanStream);
@@ -229,6 +230,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   // y el recuadro no se queda "encendido" con un vídeo en negro simulando un escaneo que no existe
   await gotoTab('food');
   await page.waitForTimeout(150);
+  await page.evaluate(() => { window.PG.ui.foodPanel = 'scan'; window.PG.render(); });
   const denegado = await page.evaluate(async () => {
     const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));
@@ -474,6 +476,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   const catalogo = await page.evaluate(() => {
     const r = window.PG.foodImportCatalogo();
     window.PG.ui.foodQ = 'yogur griego';
+    window.PG.ui.foodPanel = 'productos';
     window.PG.render();
     const encontrado = document.getElementById('main').innerText.toLowerCase().includes('yogur griego');
     window.PG.ui.foodQ = '';
@@ -487,6 +490,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
 
   // 22) alta manual de un alimento sin código de barras: se guarda con un id sintético (mismo
   // patrón que addEanProduct() cuando no llega opt.ean) y se puede registrar como cualquier otro
+  await page.evaluate(() => { window.PG.ui.foodPanel = 'mano'; window.PG.render(); });
   await page.fill('#foodNewNombre', 'Lentejas de la abuela');
   await page.fill('#foodNewKcal', '110');
   await page.fill('#foodNewProt', '7');
@@ -714,6 +718,107 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   await page.evaluate(() => { window.PG.store.rotation.calWeekStart = 'lun'; window.PG.render(); });
   check('el primer día de la semana en "Mes" es configurable (Lunes/Domingo)',
     headerLun === 'Lun' && headerDom === 'Dom', JSON.stringify({ headerLun, headerDom }));
+
+  // ===================== Rediseño de Comida y Entreno =====================
+
+  // 36) Comida: el resumen del día es un anillo de kcal + barra de proteína (no tres barras y cuatro KPI)
+  await gotoTab('food');
+  await page.waitForTimeout(150);
+  const comidaHero = await page.evaluate(() => ({
+    ring: !!document.querySelector('#main .ringFill'),
+    protBar: !!document.querySelector('#main .protrow'),
+    noOldKpis: !document.querySelector('#main .kpis'),
+  }));
+  check('Comida resume el día con un anillo de kcal y una barra de proteína, sin los cuatro KPI de antes',
+    comidaHero.ring && comidaHero.protBar && comidaHero.noOldKpis, JSON.stringify(comidaHero));
+
+  // 37) Comida: escanear / catálogo / a mano / mis productos quedan plegados detrás de un selector
+  const panelToggle = await page.evaluate(() => {
+    window.PG.ui.foodPanel = '';
+    window.PG.render();
+    const antes = !!document.getElementById('foodNewNombre');
+    window.PG.ui.foodPanel = 'mano';
+    window.PG.render();
+    const conPanel = !!document.getElementById('foodNewNombre');
+    window.PG.ui.foodPanel = '';
+    window.PG.render();
+    return { antes, conPanel };
+  });
+  check('en Comida, el formulario "a mano" (y el resto) están plegados hasta que tocas su botón',
+    panelToggle.antes === false && panelToggle.conPanel === true, JSON.stringify(panelToggle));
+
+  // 38) Comida: el objetivo (kcal/proteína) está plegado detrás de "✎ objetivo"
+  const objToggle = await page.evaluate(() => {
+    window.PG.ui.foodObjOpen = false;
+    window.PG.render();
+    const antes = !!document.querySelector('[data-a="food-ob"][data-k="kcal"]');
+    window.PG.ui.foodObjOpen = true;
+    window.PG.render();
+    const conToggle = !!document.querySelector('[data-a="food-ob"][data-k="kcal"]');
+    window.PG.ui.foodObjOpen = false;
+    window.PG.render();
+    return { antes, conToggle };
+  });
+  check('en Comida, los campos de objetivo solo se ven tras tocar "✎ objetivo"',
+    objToggle.antes === false && objToggle.conToggle === true, JSON.stringify(objToggle));
+
+  // 39) Entreno: hay una gráfica (mapa de calor) de los días entrenados de las últimas 6 semanas
+  await gotoTab('gym');
+  await page.waitForTimeout(150);
+  const heat = await page.evaluate(() => ({
+    cells: document.querySelectorAll('#main .hcell').length,
+    stat: !!document.querySelector('#main .heatstat'),
+  }));
+  check('Entreno tiene una gráfica de los días entrenados (mapa de calor de 6 semanas)',
+    heat.cells === 42 && heat.stat, JSON.stringify(heat));
+
+  // 40) Entreno: la biblioteca se puede filtrar por tipo (gimnasio/calistenia) y por parte del cuerpo
+  const filtro = await page.evaluate(() => {
+    window.PG.gymImportText(JSON.stringify([
+      { name: 'Press banca de prueba', category: 'chest', equipment: 'barbell', target: 'pectorals' },
+      { name: 'Flexiones de prueba', category: 'chest', equipment: 'body weight', target: 'pectorals' },
+      { name: 'Plancha de prueba', category: 'waist', equipment: 'body weight', target: 'abs' },
+    ]));
+    window.PG.ui.gymFiltroTipo = 'calistenia';
+    window.PG.ui.gymFiltroRegion = '';
+    window.PG.ui.gymQ = 'de prueba';
+    window.PG.render();
+    const soloCalistenia = document.getElementById('main').innerText;
+    window.PG.ui.gymFiltroRegion = 'core';
+    window.PG.render();
+    const calisteniaYCore = document.getElementById('main').innerText;
+    window.PG.ui.gymFiltroTipo = '';
+    window.PG.ui.gymFiltroRegion = '';
+    window.PG.ui.gymQ = '';
+    window.PG.render();
+    return {
+      calisteniaTieneFlexiones: soloCalistenia.includes('Flexiones de prueba'),
+      calisteniaSinBanca: !soloCalistenia.includes('Press banca de prueba'),
+      coreSoloPlancha: calisteniaYCore.includes('Plancha de prueba') && !calisteniaYCore.includes('Flexiones de prueba'),
+    };
+  });
+  check('en Entreno, la biblioteca se filtra por tipo (gimnasio/calistenia) y por parte del cuerpo',
+    filtro.calisteniaTieneFlexiones && filtro.calisteniaSinBanca && filtro.coreSoloPlancha, JSON.stringify(filtro));
+
+  // 41) Entreno: el diagrama de músculos y la recomendación de una rutina están siempre a la vista
+  // (no plegados), y la recomendación cambia según los ejercicios que lleve la rutina
+  const rutinaDiag = await page.evaluate(() => {
+    const g = window.PG.gymS();
+    g.rutinas = [{ id: 'rt-test', nombre: 'Rutina de prueba', notas: '', ejercicios: [] }];
+    window.PG.render();
+    const vacia = document.getElementById('main').innerText;
+    window.PG.addRutina('rt-test', 'Press banca de prueba', {});
+    window.PG.addRutina('rt-test', 'Plancha de prueba', {});
+    const conEjercicios = document.getElementById('main').innerText;
+    const diagramaVisible = !!document.querySelector('#main .mdiagram .mbody');
+    return {
+      avisoVacia: vacia.includes('añade ejercicios'),
+      pechoTrabajado: conEjercicios.includes('Pecho'),
+      diagramaVisible,
+    };
+  });
+  check('la rutina muestra el muñeco y una recomendación siempre visibles, que cambian según sus ejercicios',
+    rutinaDiag.avisoVacia && rutinaDiag.pechoTrabajado && rutinaDiag.diagramaVisible, JSON.stringify(rutinaDiag));
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

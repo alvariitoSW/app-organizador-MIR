@@ -209,7 +209,8 @@ function avisarBackupSiToca(){
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
 let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
-  icsTxt:'',icsEncima:false};
+  icsTxt:'',icsEncima:false,
+  foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio'};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -1719,6 +1720,18 @@ function regionesDeEjercicio(ej){
   regionesDeTexto(ej&&ej.msc).forEach(function(r){out.add(r);});
   if(!out.size)regionesDeTexto(ej&&ej.c).forEach(function(r){out.add(r);});
   return out;}
+function tipoDeEjercicio(ej){
+  /* la biblioteca de openGym no trae "tipo": se saca del equipo — sin equipo (o "body weight") es calistenia,
+     cualquier otro equipo (barra, mancuerna, máquina, polea…) es gimnasio */
+  return /body ?weight|bodyweight|^none$|^-$/i.test((ej&&ej.eq||'').trim())?'calistenia':'gimnasio';}
+function recomendacionRutina(regiones){
+  /* misma idea que empuje/tirón/pierna/core del informe de rediseño: si a una rutina le falta alguno
+     de los cuatro grupos grandes, se lo dice; si los tiene todos, un mensaje de que está equilibrada */
+  const MAYORES=['pecho','espalda','cuadriceps','core'];
+  if(!regiones||!regiones.size)return 'añade ejercicios para ver qué trabajas';
+  const falta=MAYORES.filter(function(r){return !regiones.has(r);});
+  if(!falta.length)return 'equilibrada: empuje, tirón, pierna y core cubiertos';
+  return 'falta: '+falta.map(function(r){return MREG_LABEL[r];}).join(', ');}
 function regionesDeRutina(rid){
   const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;}),out=new Set();
   if(rt)rt.ejercicios.forEach(function(ej){regionesDeEjercicio(ej).forEach(function(r){out.add(r);});});
@@ -1838,11 +1851,6 @@ function gymUndoWipe(){
   return {ok:true,msg:'restaurado: '+g.registro.length+' serie(s), '+g.rutinas.length+' rutina(s)'+
     (g.biblioteca.length?' y la biblioteca de '+g.biblioteca.length+' ejercicios':'')};}
 /* ===================== comida: la vista (día, escáner, armario y objetivo) ===================== */
-function barRow(lab,val,obj,cls,u){
-  const pc=obj>0?Math.min(100,Math.round(val/obj*100)):(val>0?100:0);
-  return '<div class="fb'+(cls?' '+cls:'')+'"><div class="fbt"><span>'+lab+'</span><b>'+val+(u||'')+'</b>'+
-    (obj>0?('<span class="mini">de '+obj+' · '+pc+'%</span>'):'')+'</div>'+
-    '<div class="fbar'+((obj>0&&val>obj)?' pasada':'')+'"><i style="width:'+pc+'%"></i></div></div>';}
 function armarioHtml(f,prods,ver,sel){
   /* el armario de productos: filtro, tabla y acciones, sin liarse con paréntesis anidados */
   if(!prods.length)return '<div class="empty">Aún no has guardado ningún producto: escanea el primero arriba y de ahí sale todo lo demás.</div>';
@@ -1863,25 +1871,33 @@ function armarioHtml(f,prods,ver,sel){
   return filtro+'<div style="overflow-x:auto"><table class="ptable"><thead><tr><th>Producto</th><th>por 100 g</th>'+
     '<th>proteína</th><th>apuntar</th><th></th></tr></thead><tbody>'+filas+'</tbody></table></div>';
 }
+function kcalRingHTML(val,obj){
+  /* el resumen del día (informe: rediseño de Comida) en un anillo, en vez de tres barras y cuatro KPI */
+  const r=52,circ=2*Math.PI*r;
+  const pct=obj>0?Math.min(1,val/obj):0,off=circ*(1-pct);
+  const over=obj>0&&val>obj;
+  return '<div class="ringwrap"><svg viewBox="0 0 120 120">'+
+    '<circle class="ringTrack" cx="60" cy="60" r="'+r+'"></circle>'+
+    '<circle class="ringFill'+(over?' over':'')+'" cx="60" cy="60" r="'+r+'" style="stroke-dasharray:'+circ.toFixed(1)+';stroke-dashoffset:'+off.toFixed(1)+'"></circle>'+
+    '</svg><div class="ringnum"><b>'+val+'</b><span>kcal hoy</span></div></div>';
+}
 function renderFood(){
   const f=food(),hoy=iso(new Date());
   const sel=(ui.foodDate&&foodKey(ui.foodDate))?foodKey(ui.foodDate):hoy;
   const ft=foodTotals(sel),pl=planTotalsOf(sel),ob=f.objetivo||{},d=parseDate(sel)||new Date();
   const pos=['desayuno','media','comida','merienda','cena','post-entreno'];
   const lista=foodLog(sel);
-  const filas=lista.length?pos.map(function(g){
+  const gruposHtml=lista.length?pos.map(function(g){
     const xs=lista.filter(function(x){return (x.p||'comida')===g;});if(!xs.length)return '';
-    const tk=Math.round(xs.reduce(function(a,x){return a+(+x.kcal||0);},0));
-    return '<div class="fgrp">'+g+' · '+tk+' kcal</div>'+xs.map(function(x){
+    return '<div class="moment">'+g+'</div>'+xs.map(function(x){
       const peso=x.ean?(' · '+x.g+' g'):(' · '+x.rac+' ración(es)');
-      return '<div class="frow"><span><span class="fn">'+esc(x.nombre)+'</span>'+
-        '<span class="fm">'+esc(x.marca||'')+peso+'</span></span>'+
-        '<span class="mini chipnum">'+(x.kcal||0)+' kcal · '+(x.prot||0)+' g prot</span>'+
-        '<span class="row" style="gap:3px">'+
-        '<button class="btn s" data-a="fe-less" data-key="'+sel+'" data-id="'+x.id+'" title="quitar un poco">−</button>'+
-        '<button class="btn s" data-a="fe-more" data-key="'+sel+'" data-id="'+x.id+'" title="añadir un poco">+</button>'+
-        '<button class="btn d s" data-a="fe-del" data-key="'+sel+'" data-id="'+x.id+'" title="quitar la toma">×</button></span></div>';}).join('');
-    }).join(''):'<div class="empty">Todavía no has apuntado nada en este día: escanea el paquete o elígelo de «Mis productos».</div>';
+      return '<div class="logrow"><span class="nm"><b>'+esc(x.nombre)+'</b><span>'+esc(x.marca||'')+peso+'</span></span>'+
+        '<span class="kc">'+(x.kcal||0)+' kcal</span>'+
+        '<span class="row" style="gap:2px">'+
+        '<button class="btn s" style="padding:3px 7px" data-a="fe-less" data-key="'+sel+'" data-id="'+x.id+'" title="quitar un poco">−</button>'+
+        '<button class="btn s" style="padding:3px 7px" data-a="fe-more" data-key="'+sel+'" data-id="'+x.id+'" title="añadir un poco">+</button>'+
+        '<button class="btn d s" style="padding:3px 7px" data-a="fe-del" data-key="'+sel+'" data-id="'+x.id+'" title="quitar la toma">×</button></span></div>';}).join('');
+    }).join(''):'<p class="empty">Nada apuntado todavía hoy.</p>';
   const prods=Object.keys(f.eans).map(function(k){return f.eans[k];}).sort(function(a,b){
     return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');});
   const qq=(ui.foodQ||'').toLowerCase();
@@ -1896,48 +1912,17 @@ function renderFood(){
     for(let i=0;i<7;i++){const dd=addDays(ini,i),k=iso(dd),t=foodTotals(k),q=planTotalsOf(k);
       out.push({k:k,nm:DAYSH[i]+' '+dd.getDate(),hoy:k===hoy,pl:q.kcal,lg:t.kcal,ob:+ob.kcal||0});}
     return out;})();
-  $('#main').innerHTML='<div class="grid">'+
-    '<div class="card"><h2>🔥 El día, en calorías y en proteína</h2>'+
-    '<p class="note">La vara morada es <b>lo que ya está montado en tus menús</b> (el plan de tandas); la azul, <b>lo que has apuntado</b>. '+
-    'Si te pasas del objetivo se pone ámbar: esto no es una dieta pautada, es para saber de cuánto hablamos.</p>'+
-    '<div class="row"><button class="btn s" data-a="food-prev">‹</button>'+
-    '<input type="date" value="'+sel+'" data-a="food-day" style="width:158px">'+
-    '<button class="btn s" data-a="food-next">›</button>'+
-    '<button class="btn s" data-a="food-today">hoy</button>'+
-    '<span class="mini">'+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' de '+MONTH_FULL[d.getMonth()]+' · '+
-    (pl.shiftId?esc((shiftById(pl.shiftId)||{}).name||''):'sin día asignado')+'</span></div>'+
-    '<div style="margin-top:4px">'+
-      barRow('lo que llevas apuntado',ft.kcal,ob.kcal,'',' kcal')+
-      barRow('el plan de tus menús',pl.kcal,ob.kcal,'plan',' kcal')+
-      barRow('proteína',ft.prot,ob.prot,'',' g')+
-    '</div>'+
-    '<div class="kpis"><div><b>'+Math.max(0,(+ob.kcal||0)-ft.kcal)+'</b><span>kcal que quedan</span></div>'+
-    '<div><b>'+(ft.kcal-pl.kcal>0?'+':'')+(ft.kcal-pl.kcal)+'</b><span>registro vs plan</span></div>'+
-    '<div><b>'+lista.length+'</b><span>tomas apuntadas</span></div>'+
-    '<div><b>'+(ft.azucar||0)+'</b><span>g de azúcares</span></div></div>'+
-    (favs.length?('<div class="pick" style="margin-top:8px"><h4>favoritos, a un toque</h4>'+favs.map(function(x){
-      return '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'">+'+esc(x.nombre)+' <small>'+
-        (x.kcal||0)+'/100 g</small></button>';}).join('')+'</div>'):'')+
-    '<div style="margin-top:8px">'+filas+'</div>'+
-    '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'+
-      '<label class="fld" style="flex:2 1 200px">qué<select id="feSel"><option value="">— elegir —</option>'+opts+'</select></label>'+
-      '<label class="fld" style="flex:0 0 92px">gramos<input id="feG" type="number" min="1" step="5" value="150"></label>'+
-      '<label class="fld" style="flex:0 0 116px">en qué momento<select id="fePos">'+
-        pos.map(function(x){return '<option value="'+x+'" '+(x==='comida'?'selected':'')+'>'+x+'</option>';}).join('')+'</select></label>'+
-      '<span class="sp"></span><button class="btn p" data-a="fe-add" data-key="'+sel+'">apuntar</button></div>'+
-    '</div>'+
-    '<div class="card"><h2>📷 Escanear el paquete (Mercadona y compañía)</h2>'+
-    '<p class="note">Se abre la cámara, enfocas el código de barras y la app lo busca en Open Food Facts: te guarda el producto con sus '+
-    'kcal y su proteína por 100 g. Hace falta https y dar permiso a la cámara; si tu navegador no lee códigos, escribe el número que va '+
-    'debajo del barras: el resultado es el mismo. <b>El código de barras (no tu nombre ni nada tuyo) sale de tu dispositivo hacia '+
-    'Open Food Facts</b>, un servicio externo, para poder consultarlo — el vídeo de la cámara no sale de aquí.</p>'+
+  const panel=ui.foodPanel;
+  const panelBtn=function(key,label){return '<button class="btn s '+(panel===key?'p':'')+'" data-a="food-panel" data-k="'+key+'">'+label+'</button>';};
+  const panelBody=panel==='scan'?(
+    '<p class="note" style="margin-top:10px">Enfoca el código de barras: se busca en Open Food Facts y se guarda con sus kcal y proteína. '+
+    'Solo el código (no tu nombre ni nada tuyo) sale hacia ese servicio externo.</p>'+
     '<div class="scanbox" id="scanBox"><video id="scanV" playsinline muted></video></div>'+
     '<div class="row"><button class="btn p" data-a="scan-start">📷 abrir la cámara</button>'+
-    '<button class="btn s" data-a="scan-stop">parar</button>'+
-    '<span class="sp"></span><span class="mini">sin red no busca: los productos guardados siguen valiendo</span></div>'+
+    '<button class="btn s" data-a="scan-stop">parar</button></div>'+
     '<div class="fgrid c3" style="margin-top:8px">'+
       '<label class="fld">código de barras<input id="scanEan" inputmode="numeric" placeholder="8410046001962"></label>'+
-      '<label class="fld">o busca por nombre<input id="scanQ" placeholder="yogur proteico, fiambre de pavo…"></label>'+
+      '<label class="fld">o busca por nombre<input id="scanQ" placeholder="yogur proteico…"></label>'+
       '<label class="fld">&nbsp;<span class="row" style="gap:6px">'+
       '<button class="btn s" data-a="scan-go">buscar el código</button>'+
       '<button class="btn s" data-a="scan-find">buscar por nombre</button></span></label></div>'+
@@ -1947,18 +1932,13 @@ function renderFood(){
         '<span class="fm">'+esc(x.marca||'')+(x.envase?' · '+esc(x.envase):'')+'</span></span>'+
         '<span class="mini chipnum">'+(x.kcal||0)+' kcal · '+(x.prot||0)+' g prot /100 g</span>'+
         '<span class="row" style="gap:4px"><button class="btn s" data-a="scan-save" data-ix="'+ix+'" data-key="'+sel+'">guardar</button>'+
-        '<button class="btn s" data-a="scan-today" data-ix="'+ix+'" data-key="'+sel+'">apuntar 100 g hoy</button></span></div>';}).join('')+'</div>'):'')+
-    '</div>'+
-    '<div class="card"><h2>📦 Catálogo local <span class="mini">'+(f.catalogoFuente?'importado':'sin importar')+'</span></h2>'+
-    '<p class="note">Una selección de '+FOOD_CATALOGO.length+' productos ya con sus kcal y su proteína por 100 g: Mercadona, Carrefour y '+
-    '100 Montaditos. Se importa una vez, se queda en el móvil y desde ahí se busca y se apunta <b>siempre sin necesitar red</b>, '+
-    'igual que lo que escaneas.</p>'+
+        '<button class="btn s" data-a="scan-today" data-ix="'+ix+'" data-key="'+sel+'">apuntar 100 g hoy</button></span></div>';}).join('')+'</div>'):'')
+  ):panel==='catalogo'?(
+    '<p class="note" style="margin-top:10px">'+FOOD_CATALOGO.length+' productos de Mercadona, Carrefour y 100 Montaditos, con kcal y proteína. Se importa una vez y funciona sin red.</p>'+
     '<div class="row"><button class="btn p" data-a="food-catalogo-import">'+(f.catalogoFuente?'completar/repasar el catálogo':'importar el catálogo local')+'</button>'+
-    '<span class="sp"></span><span class="mini">'+esc(f.catalogoFuente||'todavía no lo has importado')+'</span></div>'+
-    '</div>'+
-    '<div class="card"><h2>✍️ Añadir un alimento a mano</h2>'+
-    '<p class="note">Para lo que no tiene código de barras (comida casera, un táper, algo que no está en Open Food Facts): '+
-    'ponle sus kcal y su proteína por 100 g y se guarda igual que un escaneado, listo para apuntar.</p>'+
+    '<span class="sp"></span><span class="mini">'+esc(f.catalogoFuente||'todavía no lo has importado')+'</span></div>'
+  ):panel==='mano'?(
+    '<p class="note" style="margin-top:10px">Para lo que no tiene código de barras: ponle sus kcal y proteína por 100 g y se guarda igual que un escaneado.</p>'+
     '<div class="fgrid c3">'+
       '<label class="fld">nombre<input id="foodNewNombre" placeholder="Lentejas de mi madre"></label>'+
       '<label class="fld">marca u origen (opcional)<input id="foodNewMarca" placeholder="casero"></label>'+
@@ -1971,28 +1951,55 @@ function renderFood(){
       '<label class="fld">fibra g/100 g<input id="foodNewFibra" type="number" min="0" step="0.1" value=""></label>'+
       '<label class="fld">sal g/100 g<input id="foodNewSal" type="number" min="0" step="0.01" value=""></label>'+
       '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn p" data-a="food-new-add">guardar alimento</button></label>'+
+    '</div>'
+  ):panel==='productos'?(
+    '<div style="margin-top:10px">'+armarioHtml(f,prods,ver,sel)+'</div>'
+  ):'';
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card">'+
+      '<div class="row"><button class="btn s" data-a="food-prev">‹</button>'+
+      '<input type="date" value="'+sel+'" data-a="food-day" style="width:150px">'+
+      '<button class="btn s" data-a="food-next">›</button>'+
+      '<button class="btn s" data-a="food-today">hoy</button>'+
+      '<span class="mini">'+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' de '+MONTH_FULL[d.getMonth()]+'</span></div>'+
+      '<div class="kcalhero">'+
+        kcalRingHTML(ft.kcal,+ob.kcal||0)+
+        '<div class="heroside">'+
+          '<div><div class="protrow"><span>proteína</span><b>'+ft.prot+' / '+(+ob.prot||0)+' g</b></div>'+
+          '<div class="fbar" style="margin-top:4px"><i style="width:'+((+ob.prot||0)>0?Math.min(100,Math.round(ft.prot/(+ob.prot)*100)):0)+'%"></i></div></div>'+
+          (pl.kcal?'<p class="mini" style="margin:0">cocinado para hoy: '+pl.kcal+' kcal</p>':'')+
+          '<button class="btn s" style="align-self:flex-start" data-a="food-obj-toggle">'+(ui.foodObjOpen?'▴ objetivo':'✎ objetivo')+'</button>'+
+        '</div>'+
+      '</div>'+
+      (ui.foodObjOpen?('<div class="row" style="margin-top:2px;border-top:1px solid var(--line);padding-top:10px">'+
+        '<label class="fld" style="flex:0 0 110px">kcal/día<input type="number" min="0" max="6000" step="50" value="'+(+ob.kcal||0)+'" data-a="food-ob" data-k="kcal"></label>'+
+        '<label class="fld" style="flex:0 0 120px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+(+ob.prot||0)+'" data-a="food-ob" data-k="prot"></label>'+
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'):'')+
+      (favs.length?('<div class="pick" style="margin-top:10px"><h4>favoritos, a un toque</h4>'+favs.map(function(x){
+        return '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'">+'+esc(x.nombre)+' <small>'+
+          (x.kcal||0)+'/100 g</small></button>';}).join('')+'</div>'):'')+
+      '<div class="foodlog">'+gruposHtml+'</div>'+
+      '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'+
+        '<label class="fld" style="flex:2 1 200px">qué<select id="feSel"><option value="">— elegir —</option>'+opts+'</select></label>'+
+        '<label class="fld" style="flex:0 0 92px">gramos<input id="feG" type="number" min="1" step="5" value="150"></label>'+
+        '<label class="fld" style="flex:0 0 116px">en qué momento<select id="fePos">'+
+          pos.map(function(x){return '<option value="'+x+'" '+(x==='comida'?'selected':'')+'>'+x+'</option>';}).join('')+'</select></label>'+
+        '<span class="sp"></span><button class="btn p" data-a="fe-add" data-key="'+sel+'">apuntar</button></div>'+
     '</div>'+
+    '<div class="card"><h2>Añadir de otra forma</h2>'+
+      '<div class="row">'+panelBtn('scan','📷 Escanear')+panelBtn('catalogo','📦 Catálogo')+panelBtn('mano','✍️ A mano')+
+        panelBtn('productos','🧾 Mis productos ('+prods.length+')')+'</div>'+
+      panelBody+
     '</div>'+
-    '<div class="card"><h2>🧾 Mis productos <span class="mini">'+prods.length+' guardados</span></h2>'+
-    '<p class="note">Lo que escaneas se queda aquí, en el móvil, y lo apuntas en un toque. Si cambia el formato del paquete, '+
-    'vuelve a escanearlo: se actualiza encima de lo viejo.</p>'+
-    armarioHtml(f,prods,ver,sel)+
-    '</div>'+
-    '<div class="card"><h2>🎯 Objetivo y semana</h2>'+
-    '<p class="note">El objetivo no te lo impone nadie: ponlo tú o saca la media de tus propios menús. '+
-    '<b>Esto no sustituye el criterio de un nutricionista o de tu médico</b> — es sólo una cuenta para saber de cuánto hablas, no una pauta.</p>'+
-    '<div class="fgrid c3"><label class="fld">kcal al día<input type="number" min="0" max="6000" step="50" value="'+(+ob.kcal||0)+
-      '" data-a="food-ob" data-k="kcal"></label>'+
-    '<label class="fld">proteína (g)<input type="number" min="0" max="400" step="5" value="'+(+ob.prot||0)+'" data-a="food-ob" data-k="prot"></label>'+
-    '<label class="fld">&nbsp;<button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'+
-    '<div style="margin-top:10px">'+sem.map(function(x){
+    '<div class="card"><h2>Objetivo, semana a semana</h2>'+
+    '<div>'+sem.map(function(x){
       return '<div class="row" style="padding:3px 0;'+(x.hoy?'font-weight:700':'')+'" data-a="food-jump" data-key="'+x.k+'">'+
         '<span style="min-width:62px">'+x.nm+'</span>'+
         '<span class="fbar" style="flex:1"><i style="width:'+(x.ob?Math.min(100,Math.round((x.lg||0)/x.ob*100)):(x.pl?100:0))+'%"></i></span>'+
         '<span class="mini chipnum" style="min-width:126px">'+(x.lg||0)+'/'+(x.ob||'—')+(x.pl?(' · plan '+x.pl):'')+'</span></div>';}).join('')+'</div>'+
-    '<p class="mini" style="margin-top:6px">'+(ob.kcal?('media de la semana registrada: '+
-      Math.round(sem.reduce(function(a,x){return a+(x.lg||0);},0)/7)+' kcal · objetivo '+ob.kcal+' kcal · '+
-      DAYSH[0]+' a '+DAYSH[6]):'sin objetivo puesto: dale a «sugerir desde mis menús» o escríbelo arriba')+'</p>'+
+    '<p class="mini" style="margin-top:6px">'+(ob.kcal?('media de la semana: '+
+      Math.round(sem.reduce(function(a,x){return a+(x.lg||0);},0)/7)+' kcal · objetivo '+ob.kcal+' kcal'):
+      'sin objetivo puesto: dale a «✎ objetivo» arriba')+'</p>'+
     '</div></div>';
 }
 
@@ -2014,11 +2021,16 @@ function renderRutinaCard(rt,selDate){
         '<button class="btn s" style="padding:2px 5px" data-a="rt-up" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix===0?'disabled':'')+' title="subir">↑</button>'+
         '<button class="btn s" style="padding:2px 5px" data-a="rt-down" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix>=rt.ejercicios.length-1?'disabled':'')+' title="bajar">↓</button>'+
         '<button class="btn d s" data-a="rt-del" data-id="'+rt.id+'" data-ix="'+ix+'" title="quitar de la rutina">×</button></td></tr>';}).join('');
+  const regiones=regionesDeRutina(rt.id);
+  const leyenda=regiones.size?Array.from(regiones).map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')
+    :'<span class="mini">añade ejercicios de la biblioteca para que se rellene</span>';
   return '<div class="card">'+
     '<h2>📋 <input value="'+esc(rt.nombre)+'" data-a="rt-nombre" data-id="'+rt.id+'" placeholder="nombre de la rutina" '+
       'style="font:inherit;font-weight:800;border:1px solid transparent;background:transparent;padding:2px 4px;max-width:210px"></h2>'+
     '<div class="row"><label class="fld" style="flex:1 1 220px">notas (cuándo la haces)'+
       '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+rt.id+'" placeholder="martes y viernes"></label></div>'+
+    '<div class="mdiagram" style="margin-top:10px">'+svgCuerpo(regiones)+'<div class="mlegend"><b>Trabaja:</b>'+leyenda+
+      '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regiones))+'</p></div></div>'+
     (rt.ejercicios.length?('<div style="overflow-x:auto;margin-top:8px"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap">'+
       '<th style="min-width:120px">Ejercicio</th><th>series</th>'+
       '<th>reps</th><th>peso obj.</th><th>descanso</th><th style="min-width:130px">nota</th><th>último</th><th>tu marca</th><th></th></tr></thead>'+
@@ -2036,7 +2048,6 @@ function renderRutinaCard(rt,selDate){
     '<p class="mini" style="margin-top:8px">'+(hist.n?('hecha '+hist.esteMes+' '+(hist.esteMes===1?'vez':'veces')+' este mes · '+
       'media '+hist.media+' min · última vez '+(hist.diasDesde===0?'hoy':('hace '+hist.diasDesde+' día'+(hist.diasDesde===1?'':'s'))))
       :'todavía no la has empezado ninguna vez')+'</p>'+
-    diagramaHTML(regionesDeRutina(rt.id),'ver qué músculos trabaja esta rutina')+
     '</div>';}
 function renderSesionActiva(){
   const sa=ui.gymSesionActiva;if(!sa)return '';
@@ -2098,13 +2109,37 @@ function renderCardioCard(){
         '<span><button class="btn d s" data-a="cardio-del" data-id="'+x.id+'" title="borrar">×</button></span></div>';}).join('')+'</div>')
       :'<div class="empty" style="margin-top:8px">Nada apuntado todavía.</div>')+
     '</div>';}
+function entrenoHeatmapCard(){
+  /* informe: falta una gráfica con los días entrenados — 6 semanas, fuerza (sesiones) y cardio aparte */
+  const g=gymS(),hoy=new Date(),hoyK=iso(hoy);
+  const inicio=addDays(mondayOf(hoy),-35);
+  const porFecha={};
+  g.sesiones.forEach(function(s){porFecha[s.fecha]=Math.max(porFecha[s.fecha]||0,2);});
+  g.cardio.forEach(function(c){porFecha[c.fecha]=Math.max(porFecha[c.fecha]||0,1);});
+  const cells=[];
+  for(let i=0;i<42;i++){const k=iso(addDays(inicio,i));cells.push({k:k,lvl:k>hoyK?-1:(porFecha[k]||0)});}
+  const trained=cells.filter(function(c){return c.lvl>0;}).length;
+  let racha=0;
+  for(let i=cells.length-1;i>=0;i--){if(cells[i].lvl<0)continue;if(cells[i].lvl>0)racha++;else break;}
+  const cellsHtml=cells.map(function(c){
+    return '<div class="hcell'+(c.lvl<0?' off':c.lvl===2?' l2':c.lvl===1?' l1':'')+'" title="'+c.k+'"></div>';}).join('');
+  return '<div class="card"><h2>📈 Días entrenados <span class="mini">últimas 6 semanas</span></h2>'+
+    '<div class="heat"><span class="wd">L</span><span class="wd">M</span><span class="wd">X</span><span class="wd">J</span>'+
+    '<span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>'+cellsHtml+'</div>'+
+    '<div class="heatstat"><span><b>'+trained+'</b> día(s) entrenado(s)</span><span><b>'+racha+'</b> de racha</span></div>'+
+    '</div>';
+}
 function renderGym(){
   const g=gymS(),hoy=iso(new Date());
   const sel=(ui.gymDate&&foodKey(ui.gymDate))?foodKey(ui.gymDate):hoy;
   const d=parseDate(sel)||new Date();
   const q=ui.gymQ||'';
   const hay=g.biblioteca.length>0;
-  const res=hay?gymBuscar(q,40):[];
+  const filtroTipo=ui.gymFiltroTipo||'',filtroRegion=ui.gymFiltroRegion||'';
+  const res=hay?gymBuscar(q,200).filter(function(x){
+    if(filtroTipo&&tipoDeEjercicio(x)!==filtroTipo)return false;
+    if(filtroRegion&&!regionesDeEjercicio(x).has(filtroRegion))return false;
+    return true;}).slice(0,40):[];
   const sets=setsDe(sel);
   const sem=volumenSemana(sel);
   const maxvol=Math.max(1,sem.reduce(function(a,x){return Math.max(a,x.vol);},0));
@@ -2118,6 +2153,7 @@ function renderGym(){
     .sort(function(a,b){return b.p.rm-a.p.rm;}).slice(0,10);
   const sg=diaSegundo(sel);
   $('#main').innerHTML='<div class="grid">'+
+    entrenoHeatmapCard()+
     '<div class="card"><h2>🏋️ Entreno <span class="mini">'+(hay?(g.biblioteca.length+' ejercicios en el móvil'):'sin biblioteca importada')+'</span></h2>'+
     '<p class="note">Se integra con la biblioteca de <a href="'+GYM_SITIO+'" target="_blank" rel="noopener">openGym</a> '+
     '(los mismos ejercicios, con su vídeo en el sitio). La lista se baja una vez y se queda en el móvil: '+
@@ -2140,7 +2176,14 @@ function renderGym(){
       '<span class="mini">también vale el fichero exercises.json del dataset (MIT) de hasaneyldrm</span></div></details>'+
     (hay?('<div class="row" style="margin-top:10px"><label class="fld" style="flex:1 1 220px">buscar en la biblioteca'+
       '<input id="gymQ" value="'+esc(q)+'" data-a="gym-q" placeholder="sentadilla, press, lumbar, plank…"></label>'+
-      '<span class="mini">'+res.length+' resultado(s)'+(q?' para «'+esc(q)+'»':' (escribe para afinar)')+'</span></div>'+
+      '<span class="mini">'+res.length+' resultado(s)'+(q?' para «'+esc(q)+'»':'')+'</span></div>'+
+      '<div class="row" style="margin-top:6px"><span class="mini">tipo:</span>'+
+        '<button class="btn s '+(filtroTipo==='gimnasio'?'p':'')+'" data-a="gym-filtro-tipo" data-t="gimnasio">🏋️ gimnasio</button>'+
+        '<button class="btn s '+(filtroTipo==='calistenia'?'p':'')+'" data-a="gym-filtro-tipo" data-t="calistenia">🤸 calistenia</button>'+
+      '</div>'+
+      '<div class="row" style="margin-top:6px"><span class="mini">parte del cuerpo:</span>'+
+        MREGIONES.map(function(r){return '<button class="btn s '+(filtroRegion===r?'p':'')+'" data-a="gym-filtro-region" data-r="'+r+'">'+esc(MREG_LABEL[r])+'</button>';}).join('')+
+      '</div>'+
       (g.rutinas.length?('<div class="row" style="margin-top:6px"><label class="fld" style="flex:0 0 210px">añadir a la rutina'+
         '<select data-a="gym-rut-sel">'+g.rutinas.map(function(r){return '<option value="'+r.id+'" '+(r.id===ui.gymRutinaSel?'selected':'')+'>'+esc(r.nombre)+'</option>';}).join('')+
         '</select></label></div>'):'')+
@@ -3195,6 +3238,8 @@ function act(a,el){
       const dd=parseDate(cur)||new Date();ui.foodDate=iso(addDays(dd,a==='food-next'?1:-1));render();break;}
     case 'food-today':ui.foodDate=iso(new Date());render();break;
     case 'food-jump':{const k=foodKey(el.dataset.key);if(k)ui.foodDate=k;render();break;}
+    case 'food-panel':ui.foodPanel=(ui.foodPanel===el.dataset.k)?'':el.dataset.k;render();break;
+    case 'food-obj-toggle':ui.foodObjOpen=!ui.foodObjOpen;render();break;
     case 'fe-add':{const pick=(document.getElementById('feSel')||{}).value||'';
       const g=+(document.getElementById('feG')||{}).value||150;
       const when=(document.getElementById('fePos')||{}).value||'comida';
@@ -3256,6 +3301,8 @@ function act(a,el){
     case 'gym-clear':{const gg=gymS();gg.biblioteca=[];gg.fuente='';render();
       flash('lista quitada: tu rutina y tus marcas se quedan');break;}
     case 'gym-rut':flash(addRutina(ui.gymRutinaSel,el.dataset.n));break;
+    case 'gym-filtro-tipo':ui.gymFiltroTipo=(ui.gymFiltroTipo===el.dataset.t)?'':el.dataset.t;render();break;
+    case 'gym-filtro-region':ui.gymFiltroRegion=(ui.gymFiltroRegion===el.dataset.r)?'':el.dataset.r;render();break;
     case 'gym-set-ex':{ui.gymEx=el.dataset.n;render();
       const se=document.getElementById('setEx');if(se)se.focus();
       flash('ejercicio puesto en la ficha: rellena kg y reps');break;}
@@ -4520,6 +4567,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,
   gymS,gymImportText,gymImportUrl,gymBuscar,nuevaRutina,delRutinaCard,addRutina,delRutina,setRutina,moverEjercicio,
+  tipoDeEjercicio,recomendacionRutina,entrenoHeatmapCard,kcalRingHTML,
   addSet,delSet,setsDe,volumenDe,prDe,
   ejercicioUltimo,empezarRutina,terminarSesion,descartarSesion,duracionTipica,historialRutina,sesionesRecientes,
   addCardio,delCardio,libMatch,regionesDeTexto,regionesDeEjercicio,regionesDeRutina,regionesDeSesion,svgCuerpo,
