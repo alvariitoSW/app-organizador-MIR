@@ -232,7 +232,8 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
-  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:''};
+  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',
+  imp:{txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -2620,6 +2621,266 @@ function renderHabitos(){
     '</div>';
 }
 /* ===================== render: días y menús ===================== */
+/* ===================== importar recetas de redes sociales ===================== */
+/* El caso de uso: ves una receta en TikTok/Instagram y quieres el plato en la app sin teclearlo.
+   Dos caminos, y la pantalla usa el que haya: el parser de aquí abajo (funciona en todas partes,
+   también sin conexión) y, dentro del Artifact de claude.ai, pedirle a Claude que lea el texto o
+   una captura. La app NO puede bajarse el vídeo ni la descripción: su red está cerrada. */
+const RICONOS=[[/pollo|pechuga|muslo|pavo/i,'🍗'],[/salm[óo]n|pescado|at[úu]n|merluza|bacalao|gamba|marisco/i,'🐟'],
+  [/huevo|tortilla|revuelto/i,'🍳'],[/arroz|paella|risotto/i,'🍚'],[/pasta|espagueti|macarr|bolo[ñn]|lasa[ñn]a|fideo/i,'🍝'],
+  [/lenteja|garbanzo|alubia|jud[íi]a|legumbre|potaje|cocido|estofado/i,'🍲'],[/ensalada|lechuga|canon|r[úu]cula/i,'🥗'],
+  [/sopa|crema|caldo|pur[ée]/i,'🍜'],[/ternera|cerdo|solomillo|filete|carne|albondiga|alb[óo]ndiga/i,'🥩'],
+  [/bocadillo|s[áa]ndwich|sandwich|tosta|wrap/i,'🥪'],[/avena|porridge|yogur|batido|smoothie/i,'🥣'],
+  [/tarta|bizcocho|galleta|postre|brownie|crepe|tortita/i,'🍰'],[/pizza/i,'🍕'],[/taco|burrito|fajita|quesadilla/i,'🌮'],
+  [/curry/i,'🍛'],[/patata|boniato/i,'🥔'],[/verdura|brocoli|br[óo]coli|calabac[íi]n|espinaca|pimiento/i,'🥦'],[/pan\b|masa madre/i,'🍞']];
+function recetaIcono(txt){
+  const t=String(txt||'');
+  for(let i=0;i<RICONOS.length;i++)if(RICONOS[i][0].test(t))return RICONOS[i][1];
+  return '🍽';}
+function recetaLineas(txt){
+  /* una descripción de TikTok viene con hashtags, enlaces, viñetas y líneas de solo emojis */
+  return String(txt||'').split(/\r?\n+/).map(function(l){
+    return String(l).replace(/https?:\/\/\S+/g,'').replace(/#[^\s#]+/g,'')
+      .replace(/^[\s\-•*·—–>»]+/,'').replace(/\s+/g,' ').trim();})
+    .filter(function(l){return l&&!/^[^\p{L}\d]+$/u.test(l);});}
+function recetaTrocea(linea,destino){
+  /* «200 g arroz, 2 cebollas, aceite» en una sola línea es lo normal en un pie de foto */
+  const trozos=linea.split(/\s*[,;]\s*/).filter(Boolean);
+  const conCantidad=trozos.filter(function(t){return parseIng(t).num!=null;}).length;
+  if(trozos.length>1&&conCantidad>=2)trozos.forEach(function(t){destino.push(t);});
+  else destino.push(linea);}
+const R_RUIDO=/^(s[íi]gueme|s[íi]guenos|guarda|gu[áa]rdalo|comenta|comparte|link en bio|enlace en bio|receta completa|m[áa]s recetas|suscr[íi]bete|dale a|no te pierdas|te leo|ap[úu]ntate)\b/i;
+function recetaRuido(l){
+  /* coletillas de las redes y la línea de macros: ni son pasos ni son ingredientes */
+  const t=String(l||'').trim();
+  if(!t)return true;
+  if(R_RUIDO.test(t))return true;
+  if(/^@[\w.]+$/.test(t))return true;
+  if(/^\d{2,4}\s*(kcal|calor[íi]as)\b/i.test(t))return true;
+  if(/^\d{1,3}\s*g?\s*(de\s*)?prote/i.test(t))return true;
+  if(/^\d{2,4}\s*kcal\b.*prote/i.test(t))return true;
+  return false;}
+function recetaTitulo(t){
+  /* «POLLO AL LIMÓN 🍋🔥 guárdalo que…» y «🍝 PASTA DE ATÚN»: se corta en los emojis y se
+     queda el trozo con más letra, que es el nombre del plato */
+  const trozos=String(t||'').split(/[\p{Extended_Pictographic}]/u)
+    .map(function(x){return x.replace(/[️‍]/g,'').trim();}).filter(Boolean);
+  /* el primero que valga, no el más largo: la coletilla de después del emoji suele ser más larga
+     que el nombre del plato («POLLO AL LIMÓN 🍋 guárdalo que lo vas a hacer seguro») */
+  let n=trozos.filter(function(x){return x.length>=4&&!recetaRuido(x);})[0]||trozos[0]||String(t||'').trim();
+  n=n.replace(/^[\s:·\-–—]+/,'').replace(/[\s:.·\-–—]+$/,'').trim();
+  if(n&&!/\p{Ll}/u.test(n))n=n.charAt(0).toUpperCase()+n.slice(1).toLowerCase();   /* venía TODO EN MAYÚSCULAS */
+  return n;}
+function parseReceta(txt){
+  /* devuelve la misma forma que un plato del catálogo, para poder guardarlo sin traducir nada */
+  const crudo=String(txt||'');
+  const lineas=recetaLineas(crudo);
+  if(!lineas.length)return null;
+  const H_ING=/^(ingredientes?|necesitas|qu[ée] necesitas|lista de la compra|para la receta)\b\s*:?\s*(.*)$/i;
+  const H_PAS=/^(preparaci[óo]n|pasos?|elaboraci[óo]n|c[óo]mo se hace|modo de preparaci[óo]n|instrucciones|procedimiento|receta)\b\s*:?\s*(.*)$/i;
+  const ing=[],pas=[],otras=[];
+  let modo='';
+  lineas.forEach(function(l){
+    if(recetaRuido(l))return;
+    /* «Ingredientes (para 4 personas):» — el paréntesis de detrás del encabezado no es un ingrediente */
+    const resto=function(x){return String(x||'').replace(/^\(.*?\)\s*:?\s*/,'').replace(/^:\s*/,'').trim();};
+    const hi=H_ING.exec(l);
+    if(hi){modo='ing';const r0=resto(hi[2]);if(r0)recetaTrocea(r0,ing);return;}
+    const hp=H_PAS.exec(l);
+    if(hp){modo='pas';const r1=resto(hp[2]);if(r1)pas.push(r1);return;}
+    const numerada=/^\d{1,2}\s*[.)\-]\s+/.test(l);
+    const limpia=l.replace(/^\d{1,2}\s*[.)\-]\s+/,'').trim();
+    if(modo==='ing'){recetaTrocea(l,ing);return;}
+    if(modo==='pas'){if(limpia)pas.push(limpia);return;}
+    /* sin encabezados: lo que arranca con una cantidad es ingrediente (aunque la línea sea larga: en
+       un pie de foto la lista entera suele venir en un renglón); lo numerado o largo, paso */
+    if(numerada&&limpia.length>18){pas.push(limpia);return;}
+    if(parseIng(l).num!=null){recetaTrocea(l,ing);return;}
+    otras.push(l);});
+  /* si no ha quedado ningún paso, los renglones largos sueltos lo son: muchas recetas cuentan el
+     método en prosa, sin numerar ni encabezar */
+  if(!pas.length){
+    for(let i=otras.length-1;i>=0;i--)if(otras[i].length>55)pas.unshift(otras.splice(i,1)[0]);}
+  if(!ing.length&&!pas.length)return null;
+  const meta=crudo.replace(/\s+/g,' ');
+  const mRac=/\bpara\s+(\d{1,2})\s*(?:personas|raciones|comensales|pers\b)/i.exec(meta)||/\b(\d{1,2})\s*raciones\b/i.exec(meta);
+  const mKcal=/\b(\d{2,4})\s*(?:kcal|calor[íi]as)\b/i.exec(meta);
+  const mProt=/\b(\d{1,3})\s*g?\s*(?:de\s*)?prote/i.exec(meta);
+  const titulo=recetaTitulo(otras.filter(function(l){return l.length>=4;})[0]||lineas[0]||'Receta importada');
+  return {name:(titulo||'Receta importada').slice(0,70),
+    icon:recetaIcono(titulo+' '+ing.join(' ')),
+    portions:mRac?Math.max(1,Math.min(20,+mRac[1])):4,
+    kcal:mKcal?Math.max(0,Math.min(3000,+mKcal[1])):0,
+    prot:mProt?Math.max(0,Math.min(300,+mProt[1])):0,
+    ingredients:ing.slice(0,40),steps:pas.slice(0,20)};}
+function recetaSana(o){
+  /* lo que vuelve de Claude no está validado por el contrato: se comprueba campo a campo */
+  if(!o||typeof o!=='object'||Array.isArray(o))return null;
+  const lista=function(v){return (Array.isArray(v)?v:[]).map(function(x){return String(x==null?'':x).trim();})
+    .filter(Boolean).slice(0,40);};
+  const nombre=String(o.name==null?'':o.name).trim().slice(0,70);
+  const ing=lista(o.ingredients),pas=lista(o.steps);
+  if(!nombre||(!ing.length&&!pas.length))return null;
+  const n=function(v,def,max){const x=Math.round(+v);return (isFinite(x)&&x>=0&&x<=max)?x:def;};
+  return {name:nombre,
+    icon:(String(o.icon==null?'':o.icon).trim()||recetaIcono(nombre)).slice(0,4),
+    portions:Math.max(1,n(o.portions,4,20)),kcal:n(o.kcal,0,3000),prot:n(o.prot,0,300),
+    ingredients:ing,steps:pas.slice(0,20)};}
+/* --- el puente con Claude: solo existe dentro del Artifact --- */
+let _sampleFn=null,_sampleLim=null,_sampleEstado='buscando';
+function claudeBuscar(){
+  /* window.claude no existe en GitHub Pages ni en un index.html abierto a pelo: ahí no hay nada que hacer */
+  if(typeof window==='undefined'||!window.claude||typeof window.claude.use!=='function'){_sampleEstado='no';return;}
+  window.claude.use('sample').then(function(s){
+    if(!s){_sampleEstado='no';return;}
+    _sampleFn=s;_sampleEstado='si';
+    return s.limits().then(function(l){_sampleLim=l;}).catch(function(){});
+  }).catch(function(){_sampleEstado='no';})
+   .then(function(){if(ui.tab==='import')render();});}
+const IMP_ERRORES={
+  not_granted:'No has dado permiso para que esta página use Claude. Pega el texto y dale a «Leerlo aquí mismo».',
+  sampling_disabled:'Tu cuenta no tiene disponible esta función de Claude.',
+  not_declared:'Esta versión de la app no tiene activado el acceso a Claude.',
+  capability_disabled:'Claude no está disponible en esta ventana.',
+  capability_removed:'Esta versión del visor no admite esta llamada.',
+  images_unavailable:'Desde aquí no se pueden mandar imágenes. Prueba pegando el texto.',
+  image_rejected:'Esa imagen no vale (formato raro, o demasiado grande). Prueba con una captura normal.',
+  rate_limited:'Has hecho muchas consultas seguidas. Espera un poco y vuelve a darle.',
+  session_expired:'Se ha cerrado tu sesión de Claude: vuelve a entrar y prueba otra vez.',
+  refused:'Claude no ha querido responder a esto. Prueba con otro texto.',
+  empty_completion:'Claude no ha devuelto nada. Prueba con menos texto o más claro.',
+  invalid_json:'La respuesta ha venido mal formada. Dale otra vez.',
+  prompt_too_large:'El texto es demasiado largo. Pega solo la parte de la receta.',
+  cancelled:''};
+function impPrompt(txt,conImagen){
+  return 'Te paso '+(conImagen?'una captura de pantalla y ':'')+'el texto de una publicación de redes sociales '+
+    '(TikTok, Instagram, un blog…). Saca de ahí la receta.\n\n'+
+    'Responde SOLO con un objeto JSON con esta forma exacta:\n'+
+    '{"name":"","icon":"","portions":4,"kcal":0,"prot":0,"ingredients":[],"steps":[]}\n\n'+
+    '- name: el nombre del plato, en español y corto.\n'+
+    '- icon: UN solo emoji de comida que lo represente.\n'+
+    '- portions: cuántas raciones salen de la receta entera. Si no lo dice, estímalo.\n'+
+    '- kcal y prot: POR RACIÓN. Si no vienen, estímalos a ojo por los ingredientes. Números enteros, prot en gramos.\n'+
+    '- ingredients: una línea por ingrediente, empezando por la cantidad y la unidad cuando se sepa. '+
+    'Ejemplos: "700 g patata", "2 cebolla", "aceite de oliva".\n'+
+    '- steps: los pasos en orden, frases cortas y en imperativo.\n\n'+
+    'Si ahí no hay ninguna receta, responde {"error":"sin receta"}.\n\n'+
+    'TEXTO:\n'+String(txt||'').slice(0,20000);}
+function impConClaude(){
+  if(!_sampleFn){flash('Claude no está disponible en esta ventana');return;}
+  const imgs=ui.imp.imagenes||null;
+  const conImagen=!!(imgs&&imgs.length);
+  if(!conImagen&&!String(ui.imp.txt||'').trim()){flash('Pega antes el texto de la receta');return;}
+  ui.imp.estado='pensando';ui.imp.msg='';render();
+  const opciones={modelTier:'default'};
+  if(conImagen)opciones.images=imgs;
+  _sampleFn.json(impPrompt(ui.imp.txt,conImagen),opciones).then(function(data){
+    if(data&&data.error){ui.imp.estado='error';ui.imp.msg='Claude no ha visto ninguna receta ahí dentro.';render();return;}
+    const r=recetaSana(data);
+    if(!r){ui.imp.estado='error';ui.imp.msg='La respuesta no traía una receta reconocible. Prueba otra vez.';render();return;}
+    ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='claude';render();
+    flash('Receta leída por Claude: '+r.name);
+  }).catch(function(e){
+    const code=(e&&e.code)||'upstream_error';
+    if(code==='cancelled'){ui.imp.estado='';render();return;}
+    ui.imp.estado='error';
+    ui.imp.msg=IMP_ERRORES[code]||'No ha salido («'+code+'»). Puedes leerlo aquí mismo con el lector de la app.';
+    if(code==='not_granted'||code==='sampling_disabled'||code==='not_declared'||code==='capability_disabled')_sampleEstado='no';
+    render();});}
+function impLocal(){
+  const r=parseReceta(ui.imp.txt);
+  if(!r){ui.imp.estado='error';
+    ui.imp.msg='No he sacado nada en claro. Suele pasar cuando la receta se dice en el vídeo y no está escrita: copia el comentario donde esté la lista de ingredientes.';
+    render();return;}
+  ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='local';render();
+  flash('Receta leída: '+r.name);}
+function impGuardar(){
+  const r=ui.imp.receta;
+  if(!r)return 'no hay receta que guardar';
+  const lote=ui.imp.destinoLote||(store.batches[0]||{id:'bn'}).id;
+  const plato={id:uid('d'),name:r.name,icon:r.icon||'🍽',batchId:lote,
+    portions:Math.max(1,+r.portions||1),kcal:Math.max(0,+r.kcal||0),prot:Math.max(0,+r.prot||0),
+    ingredients:(r.ingredients||[]).slice(),steps:(r.steps||[]).slice()};
+  store.dishes.push(plato);
+  let extra='';
+  const dia=ui.imp.destinoDia;
+  if(dia&&shiftById(dia)){
+    if(!store.menu[dia])store.menu[dia]=[];
+    store.menu[dia].push({id:uid('sl'),time:'',label:plato.name,items:[{kind:'dish',id:plato.id,portions:1}]});
+    extra=' y puesto en el menú de '+shiftById(dia).name;}
+  ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  save();render();
+  return 'Guardado: '+plato.icon+' '+plato.name+extra;}
+function impPreviaHTML(r){
+  return '<div class="tarj" data-imp="previa">'+
+    '<div class="tarj-top">'+
+      '<input class="tarj-ic" value="'+esc(r.icon)+'" data-a="imp-f" data-f="icon" maxlength="4" aria-label="icono">'+
+      '<input class="tarj-nm" value="'+esc(r.name)+'" data-a="imp-f" data-f="name" aria-label="nombre del plato">'+
+      '<span class="tag '+(ui.imp.via==='claude'?'b2':'b3')+'">'+(ui.imp.via==='claude'?'leída por Claude':'leída por la app')+'</span>'+
+    '</div>'+
+    '<div class="fgrid c3 tight" style="margin-top:9px">'+
+      '<label class="fld">raciones<input type="number" min="1" max="20" value="'+(+r.portions||1)+'" data-a="imp-f" data-f="portions"></label>'+
+      '<label class="fld">kcal / ración<input type="number" min="0" value="'+(+r.kcal||0)+'" data-a="imp-f" data-f="kcal"></label>'+
+      '<label class="fld">proteína g / ración<input type="number" min="0" value="'+(+r.prot||0)+'" data-a="imp-f" data-f="prot"></label>'+
+    '</div>'+
+    '<label class="fld" style="margin-top:9px">ingredientes · uno por línea, con la cantidad delante'+
+      '<textarea rows="'+Math.min(12,Math.max(4,(r.ingredients||[]).length+1))+'" data-a="imp-f" data-f="ingredients">'+
+      esc((r.ingredients||[]).join('\n'))+'</textarea></label>'+
+    '<label class="fld" style="margin-top:9px">pasos'+
+      '<textarea rows="'+Math.min(12,Math.max(3,(r.steps||[]).length+1))+'" data-a="imp-f" data-f="steps">'+
+      esc((r.steps||[]).join('\n'))+'</textarea></label>'+
+    '<h3 class="subh">¿Dónde lo metes?</h3>'+
+    '<div class="fgrid c2 tight">'+
+      '<label class="fld">sesión de cocina<select data-a="imp-f" data-f="destinoLote">'+
+        store.batches.map(function(b){return '<option value="'+esc(b.id)+'" '+(ui.imp.destinoLote===b.id?'selected':'')+'>'+esc(b.label)+'</option>';}).join('')+
+      '</select></label>'+
+      '<label class="fld">y en el menú de…<select data-a="imp-f" data-f="destinoDia">'+
+        '<option value="">de momento en ningún menú</option>'+
+        store.shifts.map(function(s){return '<option value="'+esc(s.id)+'" '+(ui.imp.destinoDia===s.id?'selected':'')+'>'+esc(s.icon)+' '+esc(s.name)+'</option>';}).join('')+
+      '</select></label>'+
+    '</div>'+
+    '<div class="row" style="margin-top:11px">'+
+      '<button class="btn p" data-a="imp-save">Guardar el plato</button>'+
+      '<button class="btn s" data-a="imp-descartar">descartar</button></div>'+
+    '</div>';}
+function renderImport(){
+  if(!ui.imp)ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  const hayClaude=_sampleEstado==='si'&&!!_sampleFn;
+  const puedeImagen=hayClaude&&!!(_sampleLim&&_sampleLim.images);
+  const pensando=ui.imp.estado==='pensando';
+  const tipos=puedeImagen?(_sampleLim.images.mediaTypes||[]).join(','):'';
+  const nImg=(ui.imp.imagenes&&ui.imp.imagenes.length)||0;
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card"><h2>📥 Importar una receta</h2>'+
+      '<p class="note">Copia la descripción del TikTok (o el comentario donde está la receta) y pégala aquí. '+
+      'La app no puede abrir el vídeo ni bajarse la descripción sola: eso lo bloquean tanto TikTok como el navegador.</p>'+
+      '<label class="fld">texto de la receta'+
+        '<textarea id="impTxt" rows="8" data-a="imp-txt" placeholder="Pega aquí la descripción del vídeo…">'+esc(ui.imp.txt||'')+'</textarea></label>'+
+      (puedeImagen?('<div class="row" style="margin-top:9px;gap:7px">'+
+        '<label class="fld" style="flex:1 1 200px">…o una captura de pantalla de la receta'+
+        '<input type="file" accept="'+esc(tipos)+'" data-a="imp-img"'+(_sampleLim.images.maxCount>1?' multiple':'')+'></label>'+
+        (nImg?'<span class="tag b2" style="align-self:flex-end;margin-bottom:6px">'+nImg+' imagen'+(nImg===1?'':'es')+'</span>':'')+
+        '</div>'):'')+
+      '<div class="row" style="margin-top:11px">'+
+        (hayClaude?'<button class="btn p" data-a="imp-claude"'+(pensando?' disabled':'')+'>'+
+          (pensando?'Claude está leyéndola…':'✨ Que la lea Claude')+'</button>':'')+
+        '<button class="btn '+(hayClaude?'s':'p')+'" data-a="imp-local"'+(pensando?' disabled':'')+'>Leerla aquí mismo</button>'+
+        (String(ui.imp.txt||'').trim()||nImg?'<button class="btn s" data-a="imp-clear">limpiar</button>':'')+
+      '</div>'+
+      (ui.imp.estado==='error'?'<p class="note" style="margin-top:10px;color:var(--warn)">⚠ '+esc(ui.imp.msg)+'</p>':'')+
+      (pensando?'<p class="mini" style="margin-top:10px">Puede tardar entre 5 y 60 segundos. La primera vez te pedirá permiso.</p>':'')+
+      (hayClaude?'<p class="mini" style="margin-top:10px">💡 «Que la lea Claude» se apaña con el texto desordenado, con emojis y sin lista de ingredientes; '+
+        'gasta de tu cuenta de Claude. «Leerla aquí mismo» no gasta nada y funciona sin conexión, pero necesita que la receta venga más o menos escrita.'
+        :'<p class="mini" style="margin-top:10px">💡 Esta versión lee la receta con el lector de la app. En la versión del Artifact de claude.ai '+
+        'sale además un botón para que la lea Claude, que se apaña con texto mucho más desordenado.')+'</p>'+
+    '</div>'+
+    (ui.imp.receta?impPreviaHTML(ui.imp.receta):'')+
+    '<div class="card"><h2>Compartir desde TikTok</h2>'+
+      '<p class="note">Si instalas la app en el móvil (Android: menú del navegador → «Instalar aplicación»), aparece en el menú de compartir de TikTok: '+
+      '«Compartir → Guardias» y el enlace y la descripción entran aquí solos, sin copiar ni pegar. En iPhone no se puede: Safari no lo admite.</p>'+
+    '</div>'+
+  '</div>';
+}
 function renderTypes(){
   const cards=store.shifts.map(sh=>{
     const t=dayTotals(sh.id);
@@ -3373,13 +3634,13 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['habitos','Hábitos'],['types','Días y menús'],['batches','Cocina en lote'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['habitos','Hábitos'],['types','Días y menús'],['batches','Cocina en lote'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 const DRAWER_GROUPS=[
   ['Comida',[['food','🍽 Comida']]],
   ['Seguimiento',[['habitos','✅ Hábitos']]],
-  ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote']]],
+  ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote'],['import','📥 Importar receta']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -3435,7 +3696,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,habitos:renderHabitos,types:renderTypes,batches:renderBatches,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
   mejoraAccesibilidad($('#main'));
 }
@@ -3982,6 +4243,11 @@ function act(a,el){
         if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
         c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
       break;}
+    case 'imp-claude':impConClaude();break;
+    case 'imp-local':impLocal();break;
+    case 'imp-clear':{ui.imp.txt='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';render();break;}
+    case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
+    case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
     case 'lista-add':{const n=document.getElementById('lsNueva');
       flash(addLista(n?n.value:''));break;}
@@ -5108,6 +5374,16 @@ document.addEventListener('input',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
   if(a==='ics-in'){ui.icsTxt=el.value||'';return;}
+  if(a==='imp-txt'){ui.imp.txt=el.value||'';return;}
+  if(a==='imp-f'){
+    const f=el.dataset.f;
+    if(f==='destinoLote'||f==='destinoDia'){ui.imp[f]=el.value||'';return;}
+    const r=ui.imp.receta;if(!r)return;
+    if(f==='ingredients'||f==='steps')r[f]=String(el.value||'').split('\n').map(function(x){return x.trim();}).filter(Boolean);
+    else if(f==='portions')r.portions=Math.max(1,Math.round(+el.value||1));
+    else if(f==='kcal'||f==='prot')r[f]=Math.max(0,Math.round(+el.value||0));
+    else r[f]=String(el.value||'').slice(0,70);
+    return;}
   if(a==='food-q'||a==='gym-q'){
     const v=(el.value||'').trim();
     const campo=a==='food-q'?'foodQ':'gymQ';
@@ -5184,6 +5460,9 @@ document.addEventListener('change',e=>{
       if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
       store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
+    case 'imp-img':{const fs=el.files;
+      ui.imp.imagenes=(fs&&fs.length)?Array.prototype.slice.call(fs):null;
+      ui.imp.estado='';ui.imp.msg='';render();break;}
     case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
       store.franja.horas=+el.value||24;save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};
@@ -5268,6 +5547,23 @@ document.addEventListener('visibilitychange',function(){
 
 /* ===================== arranque ===================== */
 /* expone el modelo para depurar / testear desde la consola */
+function compartidoEntrante(){
+  /* el share_target del manifest entrega title/text/url en la query de index.html (método GET).
+     Se vacía la barra de direcciones para que al recargar no vuelva a abrirse la importación. */
+  try{
+    const q=new URLSearchParams(location.search||'');
+    const partes=['title','text','url'].map(function(k){return (q.get(k)||'').trim();}).filter(Boolean);
+    if(!partes.length)return;
+    if(!ui.imp)ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+    ui.imp.txt=partes.join('\n');
+    ui.tab='import';
+    if(history&&history.replaceState)history.replaceState(null,'',location.pathname);
+  }catch(e){/* navegador sin URLSearchParams o sin history: se entra a la app como siempre */}}
+function registrarSW(){
+  /* hace falta para poder instalar la app y que TikTok la ofrezca al compartir. Donde no se puede
+     (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
+  if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
+  try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
 window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,
@@ -5281,6 +5577,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
+  parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
@@ -5302,5 +5599,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
+compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 render();
 avisarBackupSiToca();
+claudeBuscar();
+registrarSW();

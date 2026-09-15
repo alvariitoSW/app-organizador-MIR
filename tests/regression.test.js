@@ -57,7 +57,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
   // el resto vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
-  const DRAWER_TABS = new Set(['food', 'habitos', 'types', 'batches', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['food', 'habitos', 'types', 'batches', 'import', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
@@ -1444,6 +1444,185 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('la cocina de la semana enseña cada plato como una ficha con su icono y sus raciones',
     cocina && cocina.bloques >= 1 && cocina.platos >= 2 && cocina.conIcono && cocina.raciones,
     JSON.stringify(cocina));
+
+  // 114-121) importar recetas de redes sociales: el lector propio, la pantalla, dónde va el plato,
+  // la validación de lo que devuelve Claude y la entrada por «Compartir»
+  const CAP_TIKTOK = [
+    'POLLO AL LIMÓN EN 15 MIN 🍋🔥 guardalo que lo vas a hacer seguro',
+    '#recetasfaciles #mealprep',
+    '',
+    'Ingredientes (para 4 personas):',
+    '- 600 g pechuga de pollo',
+    '- 2 limones',
+    '- 200 ml nata de cocinar',
+    '- sal y pimienta',
+    '',
+    'Preparación:',
+    '1. Salpimenta el pollo en tiras y dóralo 5 min a fuego fuerte.',
+    '2. Añade el ajo picado y el zumo de los limones, 2 min.',
+    '',
+    '420 kcal y 38 g de proteína por ración 💪',
+    'Sígueme para más 👉 @cocinafit',
+  ].join('\n');
+
+  const leida = await page.evaluate((t) => window.PG.parseReceta(t), CAP_TIKTOK);
+  check('el lector de la app saca de un pie de TikTok el nombre, las raciones y los macros',
+    leida && leida.name === 'Pollo al limón en 15 min' && leida.portions === 4 &&
+    leida.kcal === 420 && leida.prot === 38 && leida.icon === '🍗',
+    JSON.stringify(leida && { n: leida.name, p: leida.portions, k: leida.kcal, pr: leida.prot }));
+
+  check('separa ingredientes de pasos y tira los hashtags, el «(para 4 personas)» y el «sígueme»',
+    leida && leida.ingredients.length === 4 && leida.ingredients[0] === '600 g pechuga de pollo' &&
+    leida.steps.length === 2 && !leida.ingredients.some((x) => /personas|#/.test(x)) &&
+    !leida.steps.some((x) => /s[íi]gueme|kcal/i.test(x)),
+    JSON.stringify(leida && { i: leida.ingredients, s: leida.steps }));
+
+  // un pie sin encabezados, con la lista entera en un renglón y el método en prosa
+  const suelta = await page.evaluate(() => window.PG.parseReceta(
+    '🍝 PASTA CREMOSA DE ATÚN\n300g pasta, 2 latas de atún, 150 ml nata, 1 cebolla\n' +
+    'Cueces la pasta. Pochas la cebolla, añades el atún y la nata, remueves y listo en 12 minutos.'));
+  check('también lee un pie sin encabezados: parte la lista de un renglón y coge el método en prosa',
+    suelta && suelta.name === 'Pasta cremosa de atún' && suelta.ingredients.length === 4 &&
+    suelta.ingredients[1] === '2 latas de atún' && suelta.steps.length === 1,
+    JSON.stringify(suelta));
+
+  const nada = await page.evaluate(() => window.PG.parseReceta('me encanta esta receta 😍😍\n#viral #fyp'));
+  check('un pie sin receta no inventa un plato: devuelve null', nada === null, JSON.stringify(nada));
+
+  // lo que devuelve Claude no lo valida el contrato: recetaSana() lo comprueba campo a campo
+  const basura = await page.evaluate(() => [
+    window.PG.recetaSana(null),
+    window.PG.recetaSana({ name: 'X' }),
+    window.PG.recetaSana({ name: '', ingredients: ['a'] }),
+    window.PG.recetaSana({ name: 'Arroz', ingredients: ['200 g arroz'], portions: 999, kcal: -5, prot: 'x' }),
+  ]);
+  check('lo que devuelve Claude se valida: sin nombre o sin contenido se descarta, y los números se acotan',
+    basura[0] === null && basura[1] === null && basura[2] === null &&
+    basura[3] && basura[3].portions === 4 && basura[3].kcal === 0 && basura[3].prot === 0,
+    JSON.stringify(basura));
+
+  // la pantalla: pegar, leer y que salga la previa editable
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const sinClaude = await page.evaluate(() => ({
+    boton: !!document.querySelector('[data-a="imp-claude"]'),
+    local: !!document.querySelector('[data-a="imp-local"]'),
+  }));
+  check('fuera del Artifact no se ofrece el botón de Claude, solo el lector de la app',
+    !sinClaude.boton && sinClaude.local, JSON.stringify(sinClaude));
+
+  await page.fill('#impTxt', CAP_TIKTOK);
+  await page.click('[data-a="imp-local"]');
+  await page.waitForTimeout(250);
+  const previa = await page.evaluate(() => {
+    const t = document.querySelector('[data-imp="previa"]');
+    return t ? { nombre: t.querySelector('.tarj-nm').value, dia: !!t.querySelector('[data-f="destinoDia"]') } : null;
+  });
+  check('tras leerla sale una previa editable que pregunta dónde va el plato',
+    previa && previa.nombre === 'Pollo al limón en 15 min' && previa.dia, JSON.stringify(previa));
+
+  const primerDia = await page.evaluate(() => window.PG.store.shifts[0].id);
+  await page.selectOption('[data-a="imp-f"][data-f="destinoDia"]', primerDia);
+  await page.click('[data-a="imp-save"]');
+  await page.waitForTimeout(300);
+  const guardado = await page.evaluate((sid) => {
+    const d = window.PG.store.dishes.find((x) => x.name === 'Pollo al limón en 15 min');
+    const slot = (window.PG.store.menu[sid] || []).find((s) => (s.items || []).some((i) => d && i.id === d.id));
+    return { plato: !!d, ingredientes: d ? d.ingredients.length : 0, enMenu: !!slot, limpio: window.PG.ui.imp.receta === null };
+  }, primerDia);
+  check('al guardar entra en el catálogo con sus ingredientes y se coloca en el menú del día elegido',
+    guardado.plato && guardado.ingredientes === 4 && guardado.enMenu && guardado.limpio, JSON.stringify(guardado));
+
+  // «Compartir → Guardias» llega como ?title=&text=&url= en index.html
+  await page.goto(base + 'index.html?title=' + encodeURIComponent('Lentejas exprés') +
+    '&text=' + encodeURIComponent('250 g lenteja pardina\n1 cebolla\nCuece 20 min.') +
+    '&url=' + encodeURIComponent('https://www.tiktok.com/@x/video/1'));
+  await page.waitForTimeout(400);
+  const compartido = await page.evaluate(() => ({
+    tab: window.PG.ui.tab,
+    txt: window.PG.ui.imp.txt,
+    query: location.search,
+  }));
+  check('compartir desde otra app abre la importación con el texto ya puesto y limpia la barra de direcciones',
+    compartido.tab === 'import' && /Lentejas expr[ée]s/.test(compartido.txt) &&
+    /250 g lenteja/.test(compartido.txt) && compartido.query === '',
+    JSON.stringify(compartido));
+
+  // 122-124) el camino de Claude solo existe dentro del Artifact, así que aquí se prueba contra un
+  // doble que imita el contrato de la capacidad «sample» (claude.use → sample.json / sample.limits)
+  const STUB_OK = `window.__llamadas = [];
+    const s = function () {};
+    s.json = function (input, opts) {
+      window.__llamadas.push({ input: input, tier: opts && opts.modelTier });
+      return Promise.resolve({ name: 'Pollo con arroz', icon: '🍗', portions: 4, kcal: 530, prot: 42,
+        ingredients: ['400 g pollo', '300 g arroz'], steps: ['Dora el pollo.', 'Añade el arroz.'] });
+    };
+    s.limits = function () { return Promise.resolve({ maxPromptBytes: 65536,
+      images: { maxCount: 4, maxInputBytes: 20000000, mediaTypes: ['image/jpeg', 'image/png'] } }); };
+    window.claude = { use: function (n) { return Promise.resolve(n === 'sample' ? s : null); } };`;
+
+  const STUB_DENEGADO = `const s = function () {};
+    s.json = function () { return Promise.reject({ code: 'not_granted', message: 'nope' }); };
+    s.limits = function () { return Promise.resolve({ maxPromptBytes: 65536 }); };
+    window.claude = { use: function (n) { return Promise.resolve(n === 'sample' ? s : null); } };`;
+
+  async function conClaude(stub) {
+    const p2 = await context.newPage();
+    const errs2 = [];
+    p2.on('pageerror', (e) => errs2.push(String((e && e.message) || e)));
+    await p2.addInitScript(stub);
+    await p2.goto(base + 'index.html');
+    await p2.waitForFunction(() => window.PG);
+    await p2.waitForTimeout(400);   // claude.use() nunca resuelve dentro del primer script
+    await p2.evaluate(() => { window.PG.ui.tab = 'import'; window.PG.render(); });
+    await p2.waitForTimeout(200);
+    return { p2, errs2 };
+  }
+
+  {
+    const { p2, errs2 } = await conClaude(STUB_OK);
+    const ofrece = await p2.evaluate(() => ({
+      boton: !!document.querySelector('[data-a="imp-claude"]'),
+      imagen: !!document.querySelector('[data-a="imp-img"]'),
+    }));
+    await p2.fill('#impTxt', 'receta rica 😋 pollo con arroz, lo cuento en el vídeo');
+    await p2.click('[data-a="imp-claude"]');
+    await p2.waitForTimeout(400);
+    const res = await p2.evaluate(() => {
+      const t = document.querySelector('[data-imp="previa"]');
+      return {
+        llamadas: window.__llamadas.length,
+        tier: window.__llamadas[0] && window.__llamadas[0].tier,
+        pideJson: !!window.__llamadas[0] && /Responde SOLO con un objeto JSON/.test(window.__llamadas[0].input),
+        llevaTexto: !!window.__llamadas[0] && /pollo con arroz/.test(window.__llamadas[0].input),
+        nombre: t && t.querySelector('.tarj-nm').value,
+        marcada: t && /Claude/.test(t.textContent),
+      };
+    });
+    check('dentro del Artifact se ofrece leer la receta con Claude, y con captura si el visor lo permite',
+      ofrece.boton && ofrece.imagen, JSON.stringify(ofrece));
+    check('pulsarlo hace UNA llamada con el texto y el formato pedido, y pinta la receta que vuelve',
+      res.llamadas === 1 && res.tier === 'default' && res.pideJson && res.llevaTexto &&
+      res.nombre === 'Pollo con arroz' && res.marcada, JSON.stringify(res));
+    check('el camino de Claude no lanza errores de JavaScript', errs2.length === 0, JSON.stringify(errs2));
+    await p2.close();
+  }
+
+  {
+    const { p2 } = await conClaude(STUB_DENEGADO);
+    const sinImagen = await p2.evaluate(() => !!document.querySelector('[data-a="imp-img"]'));
+    await p2.fill('#impTxt', 'pollo con arroz');
+    await p2.click('[data-a="imp-claude"]');
+    await p2.waitForTimeout(400);
+    const tras = await p2.evaluate(() => {
+      const n = document.querySelector('#main .note[style*="warn"]');
+      return { aviso: n ? n.textContent : '', boton: !!document.querySelector('[data-a="imp-claude"]'),
+        local: !!document.querySelector('[data-a="imp-local"]') };
+    });
+    check('si el visor deniega el permiso se explica en español, se retira el botón y queda el lector propio',
+      !sinImagen && /No has dado permiso/.test(tras.aviso) && !tras.boton && tras.local, JSON.stringify(tras));
+    await p2.close();
+  }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
