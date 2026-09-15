@@ -1003,8 +1003,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await gotoTab('month');
   await page.waitForTimeout(150);
-  const mesConEvento = await page.evaluate(() => !!document.querySelector('#main .devt'));
-  check('"Mes" marca con 📅 los días que llevan un evento recurrente', mesConEvento, '');
+  const mesConEvento = await page.evaluate(() =>
+    [...document.querySelectorAll('#main .dbox .dline.evt')].some((l) => /Entreno con Marta/.test(l.textContent)));
+  check('"Mes" dice en la propia casilla cómo se llama el evento, sin tener que pinchar el día', mesConEvento, '');
 
   // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
   // mapa de calor de 6 semanas, y borrarlo (con confirmación)

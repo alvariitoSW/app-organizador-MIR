@@ -231,31 +231,33 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .meal.compact{padding:5px 0;font-size:12.5px}
 .meal.next{background:color-mix(in srgb,var(--brand) 8%,transparent);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
 .meal.past{opacity:.5}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:10px}
+/* sin huecos entre columnas: las casillas comparten borde y se gana ancho para el texto */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-top:10px;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--line)}
 .cal .wd{text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
-.dbox{min-height:64px;min-width:0;border:1px solid var(--line);border-top:3px solid var(--line);border-radius:11px;padding:4px 5px;cursor:pointer;
-  background:color-mix(in srgb,var(--card) 62%,var(--bg));display:flex;flex-direction:column;gap:2px;transition:transform .14s,border-color .16s,box-shadow .16s;
-  color:var(--ink);font:inherit;text-align:left}
-.dbox:hover{border-color:color-mix(in srgb,var(--brand) 60%,var(--line));box-shadow:var(--glow)}
-@media(hover:hover){.dbox:hover{transform:translateY(-2px)}}
+.dbox{min-height:76px;min-width:0;border:0;border-top:3px solid var(--line);outline:.5px solid var(--line);padding:3px 4px;cursor:pointer;
+  background:color-mix(in srgb,var(--card) 62%,var(--bg));display:flex;flex-direction:column;gap:1px;transition:background .16s,box-shadow .16s;
+  color:var(--ink);font:inherit;text-align:left;overflow:hidden}
+.dbox:hover{background:color-mix(in srgb,var(--brand) 12%,var(--card));box-shadow:var(--glow)}
 .dbox.on{background:color-mix(in srgb,var(--card) 94%,transparent)}
 .dbox.blank{opacity:.5}
 .dbox.off{opacity:.35}
-.dbox.today{outline:2px solid var(--brand);outline-offset:-1px;box-shadow:var(--glow)}
-.dbox.sel{border-top-color:var(--brand2)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--brand2) 55%,transparent)}
+.dbox.today{outline:2px solid var(--brand);outline-offset:-2px;box-shadow:var(--glow);z-index:1}
+.dbox.sel{border-top-color:var(--brand2)!important;outline:2px solid var(--brand2);outline-offset:-2px;z-index:1}
 /* móvil: que quepa el mes entero sin scroll dentro de la propia cuadrícula — casillas más bajas,
    nombre del día en una sola línea (con puntos suspensivos) y las líneas de detalle (horario, sueño)
    se ocultan aquí porque ya se ven enteras al tocar el día */
 @media(max-width:560px){
   main{padding:14px 8px}
   .card{padding:14px 9px}
-  .cal{gap:3px}
-  .dbox{min-height:88px;padding:8px 7px;gap:4px;border-radius:7px}
-  .dnum{font-size:14px}
-  .dnm{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .djob,.dsl{display:none}
-  .dflag{font-size:11.5px}
-  .dgym,.devt{font-size:13.5px}
+  .cal{gap:0}
+  .dbox{min-height:96px;padding:4px 3px;gap:1px}
+  .dbox .dnum{font-size:11.5px}
+  .dbox .dic{font-size:10.5px}
+  .dbox .dnm{font-size:9.5px;font-weight:800;-webkit-line-clamp:2}
+  .dbox .dline{font-size:8.5px}
+  .dbox .dsl{display:none}
+  .dbox .dflag{font-size:9px}
 }
 .daydetail{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}
@@ -291,8 +293,19 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .subh{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);
   margin:14px 0 4px;padding-top:9px;border-top:1px solid var(--line)}
 .tl-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--brand);box-shadow:0 0 6px color-mix(in srgb,var(--brand) 80%,transparent)}
-.dnum{font-size:11px;font-weight:800;color:var(--ink2)}
-.dnm{font-size:11.5px;font-weight:700;line-height:1.2}
+.dtop{display:flex;align-items:center;gap:3px;min-width:0}
+.dnum{font-size:11px;font-weight:800;color:var(--ink2);flex:none}
+.dman{font-size:9px;color:var(--ink2);margin-left:auto;flex:none}
+.dic{font-size:11px;line-height:1;flex:none}
+/* hasta dos líneas: un nombre de tipo de día largo se parte en vez de cortarse en «Salie…» */
+.dnm{font-size:11.5px;font-weight:700;line-height:1.15;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+/* una línea por cosa del día: jornada, entreno, evento… cortas y con su color */
+.dline{display:flex;align-items:center;gap:3px;min-width:0;font-size:9.5px;font-weight:700;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
+.dline>i{width:5px;height:5px;border-radius:99px;flex:none}
+.dline.gym{color:var(--accent)}
+.dline.evt{color:var(--ink)}
 .mini{font-size:11.5px;color:var(--ink2)}
 .kpis{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
 .kpis div{flex:1 1 112px;background:color-mix(in srgb,var(--card) 62%,var(--bg));border:1px solid var(--line);border-radius:12px;padding:8px 11px}

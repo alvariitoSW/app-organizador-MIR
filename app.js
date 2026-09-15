@@ -817,6 +817,13 @@ function schedLine(shiftId,dateStr){
   return s+tr;}
 function fmtTimeOut(t){const m=toMin(t);if(m==null)return '';const h=Math.floor(m/60),mi=m%60;
   return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');}
+function nombreCorto(n){
+  /* en la casilla del mes «Día de trabajo» no cabe: el «Día de» sobra, el icono ya dice que es un día */
+  return String(n||'').replace(/^d[íi]a\s+(de\s+|del\s+)?/i,'').trim()||String(n||'');}
+function hCorta(t){/* en la casilla del mes no cabe «08:00»: las horas en punto van sin :00 */
+  const m=toMin(t);if(m==null)return '';
+  const h=Math.floor(m/60),mi=m%60;
+  return mi?String(h)+':'+String(mi).padStart(2,'0'):String(h);}
 function dayLine(d){
   const sh=shiftById(d.shiftId);
   if(!sh)return '<span class="mini">sin asignar</span>';
@@ -1500,18 +1507,28 @@ function renderMonth(){
     const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
     const evsDia=d.key?eventosDeFecha(d.key):[];
+    /* el usuario pedía ver de un vistazo qué toca cada día en vez de puntitos: además del tipo de
+       día van una línea por cosa (jornada, entreno, eventos), cortas y con su color */
+    const lineas=[];
+    if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
+    if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
+      '🏊 '+esc(seg.hora||'')+'</span>');
+    evsDia.slice(0,2).forEach(function(ev){
+      lineas.push('<span class="dline evt" title="'+esc(ev.hora+' '+ev.titulo)+'">'+
+        '<i style="background:'+esc(ev.color||tlColor('evt'))+'"></i>'+esc(ev.titulo)+'</span>');});
+    if(evsDia.length>2)lineas.push('<span class="dline evt">+'+(evsDia.length-2)+' más</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
-      '<span class="dnum">'+d.date.getDate()+'</span>'+
-      '<span class="dnm">'+(d.shiftId?esc(d.icon)+' '+esc(d.name):'·')+'</span>'+
-      (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,9))+'</span>':'')+
-      (d.vac?'<span class="dflag vac">VAC</span>':'')+
-      (d.jor?'<span class="djob">'+fmtTimeOut(d.jor.start)+'–'+fmtTimeOut(d.jor.end)+'</span>':'')+
-      (seg&&seg.on?'<span class="dgym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">🏊</span>':'')+
-      (evsDia.length?'<span class="devt" title="'+esc(evsDia.map(function(ev){return ev.hora+' '+ev.titulo;}).join(', '))+'">📅</span>':'')+
+      '<span class="dtop"><span class="dnum">'+d.date.getDate()+'</span>'+
+        (d.shiftId?'<span class="dic">'+esc(d.icon)+'</span>':'')+
+        (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,3))+'</span>':'')+
+        (d.vac?'<span class="dflag vac">VAC</span>':'')+
+        (manual?'<span class="dman" title="puesto a mano">✎</span>':'')+'</span>'+
+      '<span class="dnm">'+(d.shiftId?esc(nombreCorto(d.name)):'·')+'</span>'+
+      lineas.join('')+
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<(store.sueno?store.sueno.min:8)?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<(store.sueno?store.sueno.min:8)?' ⚠':'')+'</span>':'')+
-      (manual?'<span class="dsl" title="puesto a mano">✎</span>':'')+'</button>');});
+      '</button>');});
   const fiascos=list.filter(function(d){return d.shiftId&&d.sleepH!=null&&d.sleepH<(store.sueno?store.sueno.min:8);}).length;
   const conSueño=list.filter(function(d){return d.sleepH!=null;});
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
@@ -5177,6 +5194,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
+  nombreCorto,hCorta,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,
