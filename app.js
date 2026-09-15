@@ -72,6 +72,14 @@ function DEFAULTS(){return {
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
   eventos:[],
+  listas:[
+    {id:'ls-siempre',nombre:'La compra de siempre',fija:true,
+     items:['Leche','Huevos (docena)','Yogur griego natural (12)','Fruta para 7 raciones','Pan de masa madre',
+            'Café','Frutos secos naturales','Aceite de oliva virgen extra','Verdura para la semana','Pechuga de pollo']},
+    {id:'ls-despensa',nombre:'Despensa · repaso mensual',fija:false,
+     items:['Arroz basmati / pasta integral (1 kg)','Lenteja pardina y garbanzos de bote (6-8)','Tomate triturado (6 bricks)',
+            'Sal, pimienta, pimentón, curry, jengibre, comino','Congelados de rescate: verdura al vapor, pimiento, gambas',
+            'Tápers de cristal (mín. 8), film, papel de hornear']}],
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
@@ -223,7 +231,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
-  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:''};
+  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:''};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -274,6 +282,11 @@ function normalize(o){
   if(o.rotation.calWeekStart!=='lun'&&o.rotation.calWeekStart!=='dom')o.rotation.calWeekStart='lun';
   if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:'',ink:''};
   ['brand','brand2','ink'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
+  if(!Array.isArray(o.listas))o.listas=[];
+  o.listas=o.listas.map(function(l){return l&&typeof l==='object'?{
+    id:String(l.id||uid('ls')),nombre:String(l.nombre||'Lista').slice(0,60),fija:!!l.fija,
+    items:(Array.isArray(l.items)?l.items:[]).map(function(x){return String(x||'').trim().slice(0,90);}).filter(Boolean)}:null;})
+    .filter(Boolean);
   if(!o.franja||typeof o.franja!=='object')o.franja={};
   o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
@@ -2699,6 +2712,79 @@ function mergeIng(dishes,scale){
 }
 
 /* ===================== render: compra ===================== */
+/* ===================== listas de la compra propias ===================== */
+function listasS(){if(!Array.isArray(store.listas))store.listas=[];return store.listas;}
+function listaById(id){return listasS().filter(function(l){return l.id===id;})[0]||null;}
+function addLista(nombre){
+  const n=String(nombre||'').trim().slice(0,60);
+  if(!n)return 'ponle un nombre a la lista';
+  listasS().push({id:uid('ls'),nombre:n,fija:false,items:[]});
+  save();render();return 'lista creada: '+n;}
+function delLista(id){
+  const ls=listasS(),i=ls.findIndex(function(l){return l.id===id;});
+  if(i<0)return 'esa lista ya no estaba';
+  const n=ls[i].nombre;ls.splice(i,1);save();render();return 'borrada: '+n;}
+function addItemLista(id,txt){
+  const l=listaById(id);if(!l)return 'esa lista ya no está';
+  const t=String(txt||'').trim().slice(0,90);
+  if(!t)return 'escribe qué hay que comprar';
+  if(l.items.some(function(x){return x.toLowerCase()===t.toLowerCase();}))return 'eso ya está en la lista';
+  l.items.push(t);save();render();return 'apuntado: '+t;}
+function delItemLista(id,i){
+  const l=listaById(id);if(!l||!l.items[i])return '';
+  const t=l.items.splice(i,1)[0];save();render();return 'quitado: '+t;}
+function itemsDeRutina(){
+  /* lo que compras sí o sí: las listas marcadas «de rutina» entran solas en la compra de la semana */
+  const out=[];
+  listasS().forEach(function(l){if(!l.fija)return;
+    l.items.forEach(function(x){out.push({texto:x,lista:l.nombre});});});
+  return out;}
+function platosConLista(items){
+  /* «en base a esa lista, hacer los platos de la semana»: cuánto de cada receta cubre lo que compras */
+  const tengo=items.map(function(x){return String(x).toLowerCase();});
+  /* la primera palabra de la línea de la compra («Pechuga de pollo» → «pechuga»); las de menos de
+     4 letras se descartan para no encajar «sal» dentro de «salmón» */
+  const claves=tengo.map(function(t){return (t.split(/[\s(,.]/)[0]||'');}).filter(function(t){return t.length>=4;});
+  const cubre=function(ing){
+    const it=parseIng(ing).item.toLowerCase();
+    if(!it)return false;
+    return tengo.some(function(t){return t.indexOf(it)>=0;})||claves.some(function(c){return it.indexOf(c)>=0;});};
+  return (store.dishes||[]).map(function(d){
+    const ing=(d.ingredients||[]);
+    if(!ing.length)return null;
+    const hay=ing.filter(cubre),faltan=ing.filter(function(x){return !cubre(x);});
+    return {dish:d,pct:Math.round(hay.length/ing.length*100),faltan:faltan.map(function(x){return parseIng(x).item;})};})
+    .filter(function(x){return x&&x.pct>=50;})
+    .sort(function(a,b){return b.pct-a.pct;})
+    .slice(0,6);}
+function listaTarjHTML(l){
+  const items=l.items.map(function(x,i){
+    return '<div class="frow"><span><span class="fm">'+esc(x)+'</span></span>'+
+      '<span><button class="btn d s" data-a="lista-item-del" data-id="'+l.id+'" data-i="'+i+'" title="quitar">×</button></span></div>';}).join('');
+  const sug=ui.listaPlatos===l.id?platosConLista(l.items):null;
+  return '<div class="tarj'+(l.fija?' usada':'')+'" data-lista="'+l.id+'">'+
+    '<div class="tarj-top">'+
+      '<input class="tarj-nm" value="'+esc(l.nombre)+'" data-a="lista-nombre" data-id="'+l.id+'" aria-label="nombre de la lista">'+
+      '<button class="btn s'+(l.fija?' g':'')+'" data-a="lista-fija" data-id="'+l.id+'" '+
+        'title="si está activo, esta lista entra sola en la compra de la semana">'+(l.fija?'✓ de rutina':'○ de rutina')+'</button>'+
+      '<button class="btn d" data-a="lista-del" data-id="'+l.id+'" title="borrar la lista">×</button>'+
+    '</div>'+
+    (items?('<div class="daylist" style="margin-top:8px">'+items+'</div>')
+      :'<div class="empty" style="margin-top:8px">Lista vacía: apunta abajo lo que compras siempre.</div>')+
+    '<div class="row" style="margin-top:8px;gap:6px">'+
+      '<input id="lsNew-'+l.id+'" placeholder="añadir a la lista…" style="flex:1 1 150px">'+
+      '<button class="btn s" data-a="lista-item-add" data-id="'+l.id+'">+</button>'+
+      '<span class="sp"></span>'+
+      '<button class="btn s" data-a="lista-platos" data-id="'+l.id+'">'+(sug?'ocultar platos':'qué platos salen ▸')+'</button>'+
+    '</div>'+
+    (sug?('<div style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">'+
+      (sug.length?sug.map(function(x){
+        return '<div class="frow"><span><span class="fn">'+esc(x.dish.icon||'🍽')+' '+esc(x.dish.name)+'</span>'+
+          (x.faltan.length?'<span class="fm"> · te falta '+esc(x.faltan.slice(0,3).join(', '))+'</span>':'<span class="fm"> · lo tienes todo</span>')+'</span>'+
+          '<span class="mini chipnum">'+x.pct+'%</span></div>';}).join('')
+        :'<div class="empty">Con esta lista no sale ninguna receta entera todavía. Añade más cosas.</div>')+
+      '</div>'):'')+
+    '</div>';}
 function renderShop(){
   const days=weekDays(), pb=planBatches(days);
   /* se usa la misma cuenta que la tarjeta de cocina: tandas completas de cada receta */
@@ -2713,26 +2799,49 @@ function renderShop(){
       if(i.also)agg[key].notes.add(i.also);});});
   const rows=order.map(k=>{const m=agg[k];
     const q=m.hasNum?fmt(roundNice(m.num))+(m.unit?' '+m.unit:''):'al gusto';
-    return {sort:m.item,label:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),from:Array.from(m.notes).join(', ')};});
+    /* «3 recetas, 2 recetas» no dice nada: si todas las notas son recuentos, se queda el mayor */
+    const notas=Array.from(m.notes);
+    const cuentas=notas.map(function(x){const mm=/^(\d+) recetas$/.exec(x);return mm?+mm[1]:null;});
+    const from=cuentas.every(function(c){return c!=null;})&&notas.length
+      ? Math.max.apply(Math,cuentas)+' recetas' : notas.join(', ');
+    return {sort:m.item,label:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),from:from};});
   rows.sort((a,b)=>a.sort.localeCompare(b.sort,'es'));
   const key=(store.rotation.mode==='date'?iso(weekDate):'tpl'+store.rotation.pattern);
-  const html=rows.map(r=>{const id=key+'#'+r.sort;const on=ui.marks.has(id);
-    return `<li class="chk ${on?'done':''}" data-a="mark" data-id="${esc(id)}"><input type="checkbox" ${on?'checked':''}><span>${esc(r.label)} <span class="mini">· ${esc(r.from)}</span></span></li>`}).join('');
+  const chk=function(id,texto,nota){const on=ui.marks.has(id);
+    /* el «·» solo si de verdad hay una nota: antes salía «25 g curry ·» a secas */
+    return '<li class="chk '+(on?'done':'')+'" data-a="mark" data-id="'+esc(id)+'">'+
+      '<input type="checkbox" '+(on?'checked':'')+'><span>'+esc(texto)+
+      (nota?' <span class="mini">· '+esc(nota)+'</span>':'')+'</span></li>';};
+  const rutina=itemsDeRutina();
+  /* la lista de origen solo se nombra si hay más de una «de rutina»: con una sola era repetir el
+     mismo nombre en cada línea */
+  const variasFijas=listasS().filter(function(l){return l.fija;}).length>1;
+  const htmlRutina=rutina.map(function(r){return chk('fija#'+r.texto,r.texto,variasFijas?r.lista:'');}).join('');
+  const htmlFresco=rows.map(function(r){return chk(key+'#'+r.sort,r.label,r.from);}).join('');
+  /* los desayunos rápidos no son tanda de cocina pero se gastan cada día: se reponen igual, así que
+     van en la misma lista en vez de en una tarjeta aparte */
+  const basicos=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);});
+  const htmlBasicos=basicos.map(function(x){
+    return chk('base#'+x.d.id,fmt(x.q)+'× '+x.d.icon+' '+x.d.name,x.viaMeal?'viene en comida armada':'');}).join('');
+  const listas=listasS().map(listaTarjHTML).join('');
   $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>Lista de la compra</h2><p class="note">Sale de las tandas que tocan en la semana vista (${days.filter(d=>isGuardia(shiftById(d.shiftId))).length} día(s) de guardia, ${days.filter(d=>{const s=shiftById(d.shiftId);return s&&!isGuardia(s)&&/saliente/i.test(s.name);}).length} saliente(s)). Las cantidades van a tanda completa, no a ración suelta: por eso a veces sobra y se congela.</p>
+    <div class="card"><h2>La compra de esta semana</h2>
+      <p class="note">Lo que compras siempre (tus listas «de rutina») más lo fresco que piden las tandas de la semana vista. Marca lo que ya tengas.</p>
       <div class="row"><button class="btn s" data-a="mark-clear">Limpiar marcados</button><button class="btn s" data-a="print">Imprimir</button>
-      <span class="sp"></span><span class="mini">${rows.length} líneas · ${recipes} receta(s) en ${Object.keys(pb).filter(k=>pb[k].hasNeed).length} sesión(es)</span></div></div>
-    <div class="grid g2">
-      <div class="card"><h2>Básicos del desayuno de diario</h2>
-        <p class="note">Whey, leche de proteínas, café, fruta y nueces: no son tanda de cocina, pero se gastan cada día y hay que reponerlos.</p>
-        <ul>${(function(){const st0=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);});
-          return st0.length?st0.map(function(x){return '<li class="mini"><b>'+fmt(x.q)+'×</b> '+esc(x.d.icon)+' '+esc(x.d.name)+
-            (x.viaMeal?' <span class="mini">· viene en comida armada</span>':'')+'</li>';}).join('')
-            :'<li class="mini">Ningún desayuno rápido montado esta semana: nada que reponer de esto.</li>';})()}</ul></div>
-      <div class="card"><h2>Para el carro</h2><ul>${html||'<div class="empty">Sin tandas esta semana: nada que comprar fresco.</div>'}</ul></div>
-      <div class="card"><h2>Despensa <span class="mini" style="margin-left:auto;font-weight:400">repasa 1 vez al mes</span></h2>
-        <ul>${['Aceite de oliva virgen extra (2 l)','Sal, pimienta, pimentón, curry, jengibre, comino','Arroz basmati / pasta integral (1 kg)','Lenteja pardina y garbanzos de bote (6-8 unidades)','Tomate triturado (6 bricks) o frito','Café y descafeinado','Frutos secos naturales (1 kg) y fruta para 7 raciones','Yogur griego natural (12-16 unidades)','Pan de masa madre: congelado en rebanadas, sacas lo que toques','Congelados de rescate: verdura al vapor, pimiento asado, gambas','Tápers de cristal (mín. 8), film, papel de hornear, cinta para etiquetas con fecha'].map(x=>`<li class="mini">${esc(x)}</li>`).join('')}</ul></div>
-    </div></div>`;
+      <span class="sp"></span><span class="mini">${rutina.length} de rutina · ${basicos.length} básicos · ${rows.length} frescos (${recipes} receta(s))</span></div>
+      ${rutina.length?`<h3 class="subh">De rutina</h3><ul>${htmlRutina}</ul>`:''}
+      ${basicos.length?`<h3 class="subh">Básicos del desayuno de diario</h3><ul>${htmlBasicos}</ul>`:''}
+      ${rows.length?`<h3 class="subh">Fresco de esta semana</h3><ul>${htmlFresco}</ul>`
+        :'<div class="empty" style="margin-top:10px">Sin tandas esta semana: nada que comprar fresco.</div>'}
+    </div>
+    <div class="card"><h2>Mis listas</h2>
+      <p class="note">Las listas que haces siempre. Márcalas «de rutina» y entran solas arriba; y con «qué platos salen» ves qué recetas puedes hacer con lo que llevas.</p>
+      ${listas||'<div class="empty">Todavía no tienes ninguna lista.</div>'}
+      <div class="row" style="margin-top:10px;gap:6px">
+        <input id="lsNueva" placeholder="nombre de la lista nueva…" style="flex:1 1 180px">
+        <button class="btn p" data-a="lista-add">+ Crear lista</button></div>
+    </div>
+  </div>`;
 }
 
 /* ===================== render: turno y rotación ===================== */
@@ -3771,6 +3880,20 @@ function act(a,el){
       flash(addCardio({tipo:tipoNuevo,fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
         distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
+    case 'lista-add':{const n=document.getElementById('lsNueva');
+      flash(addLista(n?n.value:''));break;}
+    case 'lista-del':{const l=listaById(el.dataset.id);if(!l)break;
+      confirmar('¿Borrar la lista «'+l.nombre+'»?').then(function(ok){if(ok)flash(delLista(el.dataset.id));});break;}
+    case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
+    case 'lista-fija':{const l=listaById(el.dataset.id);if(l){l.fija=!l.fija;save();render();}break;}
+    case 'lista-item-add':{const lid=el.dataset.id,n=document.getElementById('lsNew-'+lid);
+      flash(addItemLista(lid,n?n.value:''));
+      /* addItemLista() ha repintado #main: el input de antes está desmontado y sin foco, así que
+         en el móvil se cerraría el teclado y el siguiente toque enviaría vacío (mismo caso que rt-add) */
+      const n2=document.getElementById('lsNew-'+lid);if(n2)n2.focus();
+      break;}
+    case 'lista-item-del':flash(delItemLista(el.dataset.id,+el.dataset.i));break;
+    case 'lista-platos':{ui.listaPlatos=(ui.listaPlatos===el.dataset.id)?'':el.dataset.id;render();break;}
     case 'cardio-open':{ui.cardioAbierto=el.dataset.tipo||'';render();
       setTimeout(function(){const c=document.querySelector('#main .card[data-cardio]');
         if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);
@@ -5053,6 +5176,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
+  listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,

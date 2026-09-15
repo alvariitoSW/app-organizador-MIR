@@ -1279,6 +1279,60 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.evaluate(() => { window.PG.store.franja = { horas: 24, colores: {} }; window.PG.render(); });
   await page.waitForTimeout(150);
 
+  // 99-103) Compra: fuera "Para el carro"; ahora manda lo que el usuario compra de rutina, en listas
+  // suyas, y desde cada lista se ve qué platos salen con ella
+  await gotoTab('shop');
+  await page.waitForTimeout(250);
+  const compra = await page.evaluate(() => ({
+    carro: /Para el carro/.test(document.getElementById('main').textContent),
+    listas: document.querySelectorAll('#main .tarj[data-lista]').length,
+    rutina: [...document.querySelectorAll('#main .chk')].some((l) => /Pechuga de pollo/.test(l.textContent)),
+    crear: !!document.querySelector('[data-a="lista-add"]'),
+  }));
+  check('Compra: ya no hay "Para el carro"; hay listas propias y lo de rutina sale en la compra',
+    !compra.carro && compra.listas >= 1 && compra.rutina && compra.crear, JSON.stringify(compra));
+
+  // el "·" de la nota solo sale si de verdad hay nota (antes se veía "25 g curry ·" a secas)
+  const puntoSuelto = await page.evaluate(() =>
+    [...document.querySelectorAll('#main .chk span')].some((s) => /·\s*$/.test(s.textContent)));
+  check('ninguna línea de la compra acaba en un "·" suelto sin nota detrás', !puntoSuelto, '');
+
+  await page.fill('#lsNueva', 'Fin de semana');
+  await page.click('[data-a="lista-add"]');
+  await page.waitForTimeout(250);
+  const nueva = await page.evaluate(() => window.PG.listasS().find((l) => l.nombre === 'Fin de semana'));
+  await page.fill(`#lsNew-${nueva.id}`, 'Cerveza sin alcohol');
+  await page.click(`[data-a="lista-item-add"][data-id="${nueva.id}"]`);
+  await page.waitForTimeout(250);
+  const conItem = await page.evaluate((id) => {
+    const l = window.PG.listaById(id);
+    return { items: l.items, foco: document.activeElement && document.activeElement.id };
+  }, nueva.id);
+  check('se puede crear una lista propia, añadirle cosas y el campo sigue enfocado para la siguiente',
+    conItem.items.includes('Cerveza sin alcohol') && conItem.foco === 'lsNew-' + nueva.id, JSON.stringify(conItem));
+
+  // marcarla "de rutina" la mete en la compra de la semana; desmarcarla la saca
+  await page.click(`[data-a="lista-fija"][data-id="${nueva.id}"]`);
+  await page.waitForTimeout(250);
+  const enCompra = await page.evaluate(() =>
+    [...document.querySelectorAll('#main .chk')].some((l) => /Cerveza sin alcohol/.test(l.textContent)));
+  await page.click(`[data-a="lista-fija"][data-id="${nueva.id}"]`);
+  await page.waitForTimeout(250);
+  const fueraDeCompra = await page.evaluate(() =>
+    [...document.querySelectorAll('#main .chk')].some((l) => /Cerveza sin alcohol/.test(l.textContent)));
+  check('marcar una lista "de rutina" la mete en la compra de la semana, y desmarcarla la saca',
+    enCompra && !fueraDeCompra, JSON.stringify({ enCompra, fueraDeCompra }));
+
+  // "qué platos salen": recetas ordenadas por cuánto cubre la lista, y sin falsos positivos por "sal"
+  const platos = await page.evaluate(() => window.PG.platosConLista(['Café', 'Leche', 'Huevos', 'Sal']));
+  check('desde una lista se ve qué platos salen con ella, ordenados por cuánto la cubren',
+    platos.length >= 1 && platos[0].pct >= platos[platos.length - 1].pct &&
+    !platos.some((p) => /salm[óo]n/i.test(p.dish.name) && p.faltan.length === 0),
+    JSON.stringify(platos.map((p) => [p.dish.name, p.pct])));
+
+  await page.evaluate((id) => { window.PG.delLista(id); }, nueva.id);
+  await page.waitForTimeout(200);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
