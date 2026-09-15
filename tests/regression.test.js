@@ -34,6 +34,7 @@ function serveStatic() {
 
 const results = [];
 function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: detail || '' }); }
+function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return x.toISOString().slice(0, 10); }
 
 (async () => {
   const server = await serveStatic();
@@ -56,7 +57,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
   // el resto vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
-  const DRAWER_TABS = new Set(['food', 'types', 'batches', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['food', 'habitos', 'types', 'batches', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
@@ -855,6 +856,95 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   });
   check('en "Mes", la explicación larga y los KPI secundarios quedan plegados por defecto',
     mesSimple.kpisVisibles <= 4 && mesSimple.explicacionPlegada && mesSimple.masNumerosPlegado, JSON.stringify(mesSimple));
+
+  // 44) Ajustes: el mínimo de horas de sueño (antes solo en "Turno y rotación") también se puede
+  // tocar aquí, junto al resto de números de sueño
+  await gotoTab('ajustes');
+  await page.waitForTimeout(150);
+  const suenoAjustes = await page.evaluate(() => ({
+    claves: Array.from(document.querySelectorAll('#main input[data-a="sueno-f"]')).map((i) => i.dataset.k),
+  }));
+  check('en Ajustes, el mínimo de horas de sueño se puede editar junto al resto de números de sueño',
+    suenoAjustes.claves.includes('min') && suenoAjustes.claves.includes('latencia'), JSON.stringify(suenoAjustes));
+
+  // 45) Ajustes: se puede crear un evento que se repite cada semana (título, hora, color, días),
+  // desactivarlo sin borrarlo y borrarlo
+  await page.fill('#evNuevoTitulo', 'Fisioterapia de prueba');
+  await page.fill('#evNuevaHora', '19:30');
+  await page.click('[data-a="ev-dia"][data-day="1"]');
+  await page.click('[data-a="ev-add"]');
+  await page.waitForTimeout(150);
+  const evCreado = await page.evaluate(() => {
+    const list = window.PG.eventosS();
+    return { n: list.length, titulo: list[0] && list[0].titulo, dow: list[0] && list[0].dow, on: list[0] && list[0].on };
+  });
+  check('Ajustes: se puede crear un evento semanal recurrente (título, hora y día)',
+    evCreado.n === 1 && evCreado.titulo === 'Fisioterapia de prueba' && evCreado.dow.includes(1) && evCreado.on === true,
+    JSON.stringify(evCreado));
+
+  await page.click('input[data-a="ev-toggle"]');
+  await page.waitForTimeout(150);
+  const evApagado = await page.evaluate(() => window.PG.eventosS()[0].on);
+  check('Ajustes: el evento se puede desactivar sin borrarlo', evApagado === false, String(evApagado));
+
+  await page.click('[data-a="ev-del"]');
+  await page.waitForTimeout(150);
+  const evTrasBorrar = await page.evaluate(() => window.PG.eventosS().length);
+  check('Ajustes: el evento se puede borrar', evTrasBorrar === 0, String(evTrasBorrar));
+
+  // 46) los eventos recurrentes de hoy aparecen en "Hoy" y el día correspondiente se marca en "Mes"
+  const hoyDow = await page.evaluate(() => new Date().getDay());
+  await page.evaluate((dow) => {
+    window.PG.store.eventos.push({ id: 'ev-test', titulo: 'Entreno con Marta (prueba)', hora: '08:00', dow: [dow], color: '#38e1ff', on: true });
+    window.PG.save();
+  }, hoyDow);
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const hoyConEvento = await page.evaluate(() => document.getElementById('main').innerText);
+  check('"Hoy" muestra los eventos recurrentes que tocan hoy', hoyConEvento.includes('Entreno con Marta (prueba)'), '');
+
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const mesConEvento = await page.evaluate(() => !!document.querySelector('#main .devt'));
+  check('"Mes" marca con 📅 los días que llevan un evento recurrente', mesConEvento, '');
+
+  // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
+  // mapa de calor de 6 semanas, y borrarlo (con confirmación)
+  await gotoTab('habitos');
+  await page.waitForTimeout(150);
+  const habitosVacio = await page.evaluate(() => document.getElementById('main').innerText);
+  check('Hábitos: la pestaña nueva existe y, sin hábitos, invita a crear el primero',
+    /Hábitos/i.test(habitosVacio) && /crea el primero/i.test(habitosVacio), '');
+
+  await page.fill('#habNuevoNombre', 'Estirar de prueba');
+  await page.click('[data-a="hab-add"]');
+  await page.waitForTimeout(150);
+  const habCreado = await page.evaluate(() => {
+    const items = window.PG.habitosS().items;
+    return { n: items.length, nombre: items[0] && items[0].nombre, dow: items[0] && items[0].dow };
+  });
+  check('Hábitos: se puede crear un hábito (todos los días si no marcas ninguno en concreto)',
+    habCreado.n === 1 && habCreado.nombre === 'Estirar de prueba' && habCreado.dow.length === 7, JSON.stringify(habCreado));
+
+  const habId = await page.evaluate(() => window.PG.habitosS().items[0].id);
+  await page.click(`.wdot button.today[data-id="${habId}"]`);
+  await page.waitForTimeout(150);
+  const hoyKeyHab = isoDate(new Date());
+  const marcado = await page.evaluate(
+    ({ hid, key }) => window.PG.habitoHecho(hid, key),
+    { hid: habId, key: hoyKeyHab },
+  );
+  check('Hábitos: tocar el círculo de hoy marca el hábito como hecho', marcado === true, String(marcado));
+
+  const heatCells = await page.evaluate(() => document.querySelectorAll('#main .heat .hcell').length);
+  check('Hábitos: la tarjeta de constancia muestra el mapa de calor de 6 semanas (42 días)', heatCells === 42, String(heatCells));
+
+  await page.click(`[data-a="hab-del"][data-id="${habId}"]`);
+  await page.waitForTimeout(150);
+  await page.click('[data-a="confirm-yes"]');
+  await page.waitForTimeout(150);
+  const habTrasBorrar = await page.evaluate(() => window.PG.habitosS().items.length);
+  check('Hábitos: se puede borrar un hábito (con confirmación) y se limpia su historial', habTrasBorrar === 0, String(habTrasBorrar));
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
