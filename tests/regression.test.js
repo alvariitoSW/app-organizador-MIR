@@ -992,6 +992,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     cellHeight != null && cellHeight <= 60, String(cellHeight));
   if (prevViewport) await page.setViewportSize(prevViewport);
 
+  // 52) "Mes" en móvil: la cuadrícula no desborda el ancho de la pantalla (bug real: un grid item sin
+  // min-width:0 no encoge por debajo de su contenido, así que el "white-space:nowrap" del nombre del
+  // tipo de día podía ensanchar toda la cuadrícula y sacarla de la pantalla en horizontal)
+  const prevViewport2 = page.viewportSize();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(150);
+  const sinDesborde = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  check('"Mes" en móvil: la página no se desborda en horizontal', sinDesborde.scrollWidth <= sinDesborde.clientWidth, JSON.stringify(sinDesborde));
+  if (prevViewport2) await page.setViewportSize(prevViewport2);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

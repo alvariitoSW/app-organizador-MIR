@@ -231,7 +231,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .meal.past{opacity:.5}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
 .cal .wd{text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
-.dbox{min-height:64px;border:1px solid var(--line);border-top:3px solid var(--line);border-radius:11px;padding:4px 5px;cursor:pointer;
+.dbox{min-height:64px;min-width:0;border:1px solid var(--line);border-top:3px solid var(--line);border-radius:11px;padding:4px 5px;cursor:pointer;
   background:color-mix(in srgb,var(--card) 62%,var(--bg));display:flex;flex-direction:column;gap:2px;transition:transform .14s,border-color .16s,box-shadow .16s;
   color:var(--ink);font:inherit;text-align:left}
 .dbox:hover{border-color:color-mix(in srgb,var(--brand) 60%,var(--line));box-shadow:var(--glow)}
