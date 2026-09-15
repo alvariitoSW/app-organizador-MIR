@@ -1005,6 +1005,35 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('"Mes" en móvil: la página no se desborda en horizontal', sinDesborde.scrollWidth <= sinDesborde.clientWidth, JSON.stringify(sinDesborde));
   if (prevViewport2) await page.setViewportSize(prevViewport2);
 
+  // 53) la cabecera se esconde al bajar y vuelve a aparecer al subir, para ganar sitio en pantalla
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await page.waitForTimeout(400);
+  const headerEscondida = await page.evaluate(() => document.querySelector('header').classList.contains('hide'));
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
+  const headerDeVuelta = await page.evaluate(() => !document.querySelector('header').classList.contains('hide'));
+  check('la cabecera se esconde al bajar y reaparece al subir (o al volver arriba del todo)',
+    headerEscondida && headerDeVuelta, JSON.stringify({ headerEscondida, headerDeVuelta }));
+
+  // 54) Ajustes: hay un atajo directo a las horas y a las comidas de cada tipo de día, sin tener que
+  // buscarlo por el menú — "horas" abre el modal de horario y "comidas" lleva a su tarjeta en "Días y menús"
+  await gotoTab('ajustes');
+  await page.waitForTimeout(150);
+  const firstShiftId = await page.evaluate(() => window.PG.store.shifts[0].id);
+  await page.click(`[data-a="day-rhythm-shift"][data-id="${firstShiftId}"]`);
+  await page.waitForTimeout(200);
+  const modalAbierto = await page.evaluate(() => document.getElementById('overlay').classList.contains('on'));
+  await page.click('[data-a="m-cancel"]');
+  await page.waitForTimeout(150);
+  check('Ajustes: el botón "horas" de un tipo de día abre directamente su modal de horario', modalAbierto, '');
+
+  await page.click(`[data-a="day-edit"][data-id="${firstShiftId}"]`);
+  await page.waitForTimeout(250);
+  const fueATypes = await page.evaluate((sid) => window.PG.ui.tab === 'types' && !!document.querySelector(`#main .card[data-shift="${sid}"]`), firstShiftId);
+  check('Ajustes: el botón "comidas" de un tipo de día lleva a su tarjeta en "Días y menús"', fueATypes, '');
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

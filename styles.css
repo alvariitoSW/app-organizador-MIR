@@ -29,7 +29,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
   -webkit-mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%);mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%)}
 ::selection{background:color-mix(in srgb,var(--brand) 35%,transparent)}
 header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);
-  border-bottom:1px solid var(--line);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4)}
+  border-bottom:1px solid var(--line);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+header.hide{transform:translateY(-100%)}
 header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
   background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--brand) 70%,transparent),color-mix(in srgb,var(--brand2) 70%,transparent),transparent)}
 @supports not (background:color-mix(in srgb,red 50%,transparent)){header{background:var(--bg)}}

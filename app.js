@@ -2761,7 +2761,20 @@ function renderAjustes(){
       '<label class="fld" style="flex:0 0 110px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
     '</div>';}).join('');
   $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>⚙️ Ajustes</h2><p class="note">Números, horas y reglas sueltas que antes solo se cambiaban programando. Lo que ya tiene su propio sitio —horarios de cada tipo de día, ritmo de sueño, jornada, objetivo de comida— sigue en «Turno y rotación» y «Comida»; aquí va lo que faltaba.</p></div>
+    <div class="card"><h2>⚙️ Ajustes</h2><p class="note">Números, horas y reglas sueltas que antes solo se cambiaban programando. Lo que ya tiene su propio sitio —horarios de cada tipo de día, ritmo de sueño, jornada, objetivo de comida— sigue en «Turno y rotación» y «Comida»; aquí tienes un atajo directo a cada uno.</p></div>
+
+    <div class="card"><h2>🕐 Horarios de cada tipo de día</h2>
+      <p class="note">Entrada/salida y cuándo te levantas, desayunas y te acuestas de cada tipo de día — un botón te lleva directo a cambiarlo, sin buscar por el menú.</p>
+      ${store.shifts.map(function(s){
+        const rh=(store.rhythm&&store.rhythm[s.id])||{};
+        return '<div class="logrow"><span class="evdot" style="background:'+esc(s.color||'#38e1ff')+'"></span>'+
+          '<span class="nm"><b>'+esc(s.icon)+' '+esc(s.name)+'</b><span>'+
+            (s.start?esc(s.start)+'–'+esc(s.end||''):'sin hora fija')+
+            (rh.wake?' · 🛌 '+esc(rh.sleep||'—')+' → ⏰ '+esc(rh.wake):'')+'</span></span>'+
+          '<button class="btn s" data-a="day-rhythm-shift" data-id="'+s.id+'">horas →</button>'+
+          '<button class="btn s" data-a="day-edit" data-id="'+s.id+'">comidas →</button>'+
+          '</div>';}).join('')}
+    </div>
 
     <div class="card"><h2>Sueño</h2>
       <p class="note">La ventana de la cena sigue en «Turno y rotación → 2c»; el mínimo de horas y cuánto tardas en dormirte están aquí.</p>
@@ -4776,6 +4789,25 @@ document.addEventListener('visibilitychange',function(){
     ui.scanMsg=msg;const o=document.getElementById('scanOut');if(o)o.textContent=msg;
   }
 });
+/* cabecera que se esconde al bajar y vuelve al subir: en pantallas pequeñas, más sitio para ver
+   el calendario en vez de tenerla siempre fija ocupando espacio */
+(function(){
+  let lastY=0,ticking=false;
+  function onScroll(){
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(function(){
+      ticking=false;
+      const h=document.querySelector('header');if(!h)return;
+      const y=window.scrollY||document.documentElement.scrollTop||0;
+      if(ui.drawerOpen||document.getElementById('overlay').classList.contains('on')){h.classList.remove('hide');lastY=y;return;}
+      if(y<=40)h.classList.remove('hide');
+      else if(y>lastY+4)h.classList.add('hide');
+      else if(y<lastY-4)h.classList.remove('hide');
+      lastY=y;
+    });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+})();
 
 /* ===================== arranque ===================== */
 /* expone el modelo para depurar / testear desde la consola */
