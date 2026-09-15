@@ -213,7 +213,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
-  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:''};
+  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:''};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -1146,12 +1146,17 @@ function timelineBar(dateStr,inf){
       segs.push('<i class="tl-seg '+(guardia?'guard':'work')+'" style="left:'+p1.toFixed(1)+'%;width:'+(p2-p1).toFixed(1)+'%"></i>');}}
   const dots=(sh?slotsFor(sh.id):[]).map(function(s){const p=pct(s.time);if(p==null)return '';
     return '<i class="tl-dot" style="left:'+p.toFixed(1)+'%" title="'+esc(s.time||'')+' · '+esc(s.label||'')+'"></i>';}).join('');
+  const seg2=diaSegundo(dateStr,inf);
+  const gymDot=(seg2&&seg2.on&&seg2.hora)?(function(){const p=pct(seg2.hora);
+    return p==null?'':'<i class="tl-dot gym" style="left:'+p.toFixed(1)+'%" title="🏊 segundo entreno · '+esc(seg2.hora)+'"></i>';})():'';
+  const evDots=eventosDeFecha(dateStr).map(function(ev){const p=pct(ev.hora);if(p==null)return '';
+    return '<i class="tl-dot evt" style="left:'+p.toFixed(1)+'%;background:'+esc(ev.color)+'" title="📅 '+esc(ev.hora)+' '+esc(ev.titulo)+'"></i>';}).join('');
   let now='';
   if(isToday(dateStr)){const d=new Date(),p=(d.getHours()*60+d.getMinutes())/1440*100;
     now='<i class="tl-now" style="left:'+p.toFixed(1)+'%" title="ahora"></i>';}
   return '<div class="tl-wrap"><div class="tl-axis"><span style="left:0%">0h</span><span style="left:25%">6h</span>'+
     '<span style="left:50%">12h</span><span style="left:75%">18h</span><span style="left:100%">24h</span></div>'+
-    '<div class="tl-bar">'+segs.join('')+dots+now+'</div></div>';
+    '<div class="tl-bar">'+segs.join('')+dots+gymDot+evDots+now+'</div></div>';
 }
 function dayPanelHTML(dateStr){
   /* panel inline de un día (informe, decisión A: recomendada) — lo que antes abría renderDayModal()
@@ -1209,6 +1214,10 @@ function renderHoy(){
       '<div><b>'+(sl.h!=null?fmtHM(sl.h*60):'—')+'</b><span>dormido</span></div>'+
       '<div><b>'+(nt.rec||'—')+'</b><span>a la cama</span></div>'+
     '</div>'+
+    '<div class="row" style="margin-top:6px">'+
+      '<button class="btn s" data-a="hoy-food-obj">✎ objetivo de kcal →</button>'+
+      '<button class="btn s" data-a="tab" data-t="ajustes">🌙 horas de sueño →</button>'+
+    '</div>'+
     (eventosDeFecha(hoy).length?('<div class="row" style="margin-top:8px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(hoy))+'</div>'):'')+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="tab" data-t="food">🍽 apuntar comida</button>'+
@@ -1216,7 +1225,8 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
     proximosPuntualesHTML()+
-    '<div class="card"><h2>Comidas de hoy</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
+    habitosHoyHTML()+
+    '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
 }
 /* ===================== render: semana ===================== */
 function renderWeek(){
@@ -1321,7 +1331,7 @@ function renderWeek(){
     </div>
     <div class="daylist">${rows}</div>
     <div class="grid g2">
-      <div class="card"><h2>Lo que hay que cocinar esta semana</h2><p class="note">Suma las raciones que tocan en todos los días (guardia, saliente, fuerza, libre) y las redondea a tandas completas.</p>
+      <div class="card"><h2>Lo que hay que cocinar esta semana</h2><p class="note">Por sesión de cocina (domingo, miércoles…): qué platos y cuántas raciones te tocan esta semana. El detalle completo está en «Cocina en lote».</p>
         ${used.length?used.map(b=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-top:1px dashed var(--line)">
           <span><b>${esc(b.label)}</b> <span class="mini">${esc(b.when||'')}</span><br>
           <span class="mini">${b.items.filter(i=>i.runs>0).map(i=>esc(i.dish.name)+(i.cooked>i.needPort?' (sobra '+(Math.round((i.cooked-i.needPort)*10)/10)+' rac. → congelador)':'')).join(' · ')}</span></span>
@@ -1404,11 +1414,13 @@ function serviciosCard(){
         Math.max(6,x.length)+'ch" value="'+esc(x)+'" data-a="svc-edit" data-ix="'+ix+'">'+
         '<button class="btn d s" data-a="svc-del" data-ix="'+ix+'" title="quitar">×</button></span>';}).join('')+
       '<button class="btn s" data-a="svc-add">+ servicio</button></div></div>'+
-    (ciclo.length?'<div style="margin-top:10px"><table><thead><tr><th>Mes</th><th>Servicio</th><th>Guardias</th><th>Puestas</th></tr></thead><tbody>'+
-      ciclo.map(function(c){const mm=cur[c.key]||{},gc=guardCount(c.y,c.m);
-        return '<tr><td>'+MON[c.m]+' '+c.y+'</td><td>'+esc(mm.service||c.service)+
-          (mm.service?'':' <span class="mini">· propuesto</span>')+'</td><td>'+(mm.guardias!=null?mm.guardias:r.guardiasMes)+
-          '</td><td>'+(gc.any||'—')+'</td></tr>';}).join('')+'</tbody></table></div>':'')+
+    (ciclo.length?'<div style="margin-top:10px"><table><thead><tr><th>Mes</th><th>Servicio</th><th>Quedan</th></tr></thead><tbody>'+
+      ciclo.map(function(c,i){const mm=cur[c.key]||{},serv=mm.service||c.service;
+        let j=i;while(j+1<ciclo.length&&((cur[ciclo[j+1].key]||{}).service||ciclo[j+1].service)===serv)j++;
+        const restantes=j-i;
+        return '<tr><td>'+MON[c.m]+' '+c.y+'</td><td>'+esc(serv)+
+          (mm.service?'':' <span class="mini">· propuesto</span>')+'</td><td><span class="mini">'+
+          (restantes>0?('quedan '+restantes+' mes'+(restantes===1?'':'es')):'último mes')+'</span></td></tr>';}).join('')+'</tbody></table></div>':'')+
     '</div>';}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo);
@@ -1471,14 +1483,14 @@ function renderMonth(){
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s ${store.rotation.autoPos?'g':''}" data-a="mon-autopos">
           ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
       </details>
-      <div class="kpis" style="margin-top:8px">
+      <div class="kpis compact" style="margin-top:8px">
         <div><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))}</span></div>
         <div><b>${list.filter(function(d){return /saliente/i.test(d.name);}).length}</b><span>días salientes</span></div>
         <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
         <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
       </div>
       <details class="dtip" style="margin-top:6px"><summary class="mini">ver más números ▾</summary>
-      <div class="kpis" style="margin-top:8px">
+      <div class="kpis compact" style="margin-top:8px">
         <div><b>${media||'—'}${media!=null?'h':''}</b><span>sueño de media</span></div>
         <div><b>${fiascos}</b><span>noches con menos de ${store.sueno?store.sueno.min:8} h</span></div>
         <div><b>${list.filter(function(d){return d.over&&d.shiftId;}).length}</b><span>días escritos a mano</span></div>
@@ -1488,16 +1500,10 @@ function renderMonth(){
     </div>
     ${serviciosCard()}
     ${vacCardMonth(y,mo,list)}
-    <div class="card"><h2>Cómo va quedando el mes</h2>
-      <div class="row no-print" style="margin-bottom:6px"><button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
-        <span class="mini">sobrescribe lo que hayas puesto tú en este mes</span></div>
-      <p class="note">Cada guardia arrastra su saliente al día siguiente (${saltoDiaTxt()}). Los laborables sin marcar ya llevan la jornada puesta.</p>
-      <details class="dtip"><summary class="mini">ver el mes día a día, con horas (${list.length} días — el calendario de arriba ya resume esto)</summary>
-      <div style="margin-top:6px">${list.map(function(d){const sh=shiftById(d.shiftId);if(!sh)return '';
-        return `<div class="row" style="padding:4px 0;border-top:1px dashed var(--line);font-size:12px">
-          <b style="min-width:96px">${DAYSH[d.wday]} ${d.date.getDate()}</b>
-          <span style="min-width:132px">${esc(d.icon)} ${esc(sh.name)}${d.guard?' · '+esc(d.guard):''}</span>
-          <span class="mini">${esc(dayLine(d))}</span></div>`;}).join('')||'<div class="empty">Mes vacío: reparte las guardias o asígnalas día a día.</div>'}</div></details></div>
+    <div class="card"><h2>Repartir el mes desde cero</h2>
+      <p class="note">Vuelve a repartir las guardias según tu patrón — sobrescribe lo que hayas cambiado a mano en este mes. Cada guardia arrastra su saliente al día siguiente (${saltoDiaTxt()}).</p>
+      <button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
+    </div>
   </div>`;}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
@@ -2129,23 +2135,33 @@ function renderHistorialCard(){
     '<details class="dtip" style="margin-top:10px"><summary class="mini">últimas sesiones</summary>'+listaSes+'</details>'+
     '</div>';}
 function renderCardioCard(){
-  const g=gymS(),tipos=['natación','carrera','bici','otro'];
-  const list=g.cardio.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).slice(0,20);
+  const g=gymS(),tipos=[['natación','🏊'],['carrera','🏃'],['bici','🚴'],['otro','🤸']];
+  const porTipo={};g.cardio.forEach(function(x){(porTipo[x.tipo]=porTipo[x.tipo]||[]).push(x);});
+  Object.keys(porTipo).forEach(function(t){porTipo[t].sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});});
+  const bloques=tipos.map(function(t){
+    const nm=t[0],ic=t[1],lista=(porTipo[nm]||[]).slice(0,20);
+    const ultimo=lista[0];
+    return '<details class="dtip" '+(ui.cardioAbierto===nm?'open':'')+'>'+
+      '<summary class="mini" data-a="cardio-open" data-tipo="'+nm+'">'+ic+' '+(nm.charAt(0).toUpperCase()+nm.slice(1))+' <b style="color:var(--ink);text-transform:none;letter-spacing:0">'+lista.length+'</b>'+
+      (ultimo?' <span style="text-transform:none;letter-spacing:0">· última vez '+ultimo.fecha.slice(8)+'/'+ultimo.fecha.slice(5,7)+'</span>':'')+' ▾</summary>'+
+      (lista.length?('<div class="daylist" style="margin-top:8px">'+lista.map(function(x){
+        return '<div class="frow"><span><span class="fn">'+x.fecha.slice(8)+'/'+x.fecha.slice(5,7)+'</span>'+
+          (x.nota?'<span class="fm"> · '+esc(x.nota)+'</span>':'')+'</span>'+
+          '<span class="mini chipnum">'+x.duracionMin+' min'+(x.distanciaKm?(' · '+x.distanciaKm+' km'):'')+'</span>'+
+          '<span><button class="btn d s" data-a="cardio-del" data-id="'+x.id+'" title="borrar">×</button></span></div>';}).join('')+'</div>')
+        :'<div class="empty" style="margin-top:8px">Nada apuntado todavía de '+nm+'.</div>')+
+      '</details>';}).join('');
   return '<div class="card"><h2>🏃 Cardio</h2>'+
-    '<p class="note">Aparte del entreno de fuerza: natación, carrera, bici… lo justo para que quede constancia real.</p>'+
-    '<div class="fgrid c3">'+
-      '<label class="fld">tipo<select id="cardioTipo">'+tipos.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('')+'</select></label>'+
+    '<p class="note">Aparte del entreno de fuerza: natación, carrera, bici… toca un tipo para ver o apuntar el suyo.</p>'+
+    bloques+
+    '<div class="fgrid c3" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">'+
+      '<label class="fld">tipo<select id="cardioTipo">'+tipos.map(function(t){return '<option value="'+t[0]+'" '+(ui.cardioAbierto===t[0]?'selected':'')+'>'+t[0]+'</option>';}).join('')+'</select></label>'+
       '<label class="fld">fecha<input type="date" id="cardioFecha" value="'+iso(new Date())+'"></label>'+
       '<label class="fld">minutos<input type="number" min="1" max="360" id="cardioMin" value="30"></label>'+
       '<label class="fld">km (opcional)<input type="number" min="0" step="0.1" id="cardioKm"></label>'+
       '<label class="fld" style="grid-column:1/-1">nota<input id="cardioNota" placeholder="ritmo, sensaciones…"></label>'+
     '</div>'+
     '<div class="row" style="margin-top:8px"><button class="btn p" data-a="cardio-add">apuntar cardio</button></div>'+
-    (list.length?('<div class="daylist" style="margin-top:10px">'+list.map(function(x){
-      return '<div class="frow"><span><span class="fn">'+esc(x.tipo)+'</span><span class="fm"> · '+x.fecha.slice(8)+'/'+x.fecha.slice(5,7)+'</span></span>'+
-        '<span class="mini chipnum">'+x.duracionMin+' min'+(x.distanciaKm?(' · '+x.distanciaKm+' km'):'')+'</span>'+
-        '<span><button class="btn d s" data-a="cardio-del" data-id="'+x.id+'" title="borrar">×</button></span></div>';}).join('')+'</div>')
-      :'<div class="empty" style="margin-top:8px">Nada apuntado todavía.</div>')+
     '</div>';}
 function entrenoHeatmapCard(){
   /* informe: falta una gráfica con los días entrenados — 6 semanas, fuerza (sesiones) y cardio aparte */
@@ -2318,6 +2334,22 @@ function toggleHabito(hid,key){
   if(!Object.keys(h.registro[key]).length)delete h.registro[key];
   save();
 }
+function habitosHoyHTML(){
+  /* referencia cruzada (informe): un vistazo a los hábitos de hoy desde «Hoy», sin tener que
+     entrar en su propia pestaña */
+  const hb=habitosS(),hoyDow=new Date().getDay(),hoyKey=iso(new Date());
+  const items=hb.items.filter(function(h){return (h.dow||[]).indexOf(hoyDow)>=0;});
+  if(!items.length)return '';
+  const hechos=items.filter(function(h){return habitoHecho(h.id,hoyKey);}).length;
+  return '<div class="card"><h2>✅ Hábitos de hoy<span class="mini" style="margin-left:auto;font-weight:400">'+hechos+'/'+items.length+'</span></h2>'+
+    items.map(function(h){
+      const on=habitoHecho(h.id,hoyKey);
+      return '<label class="row" style="gap:8px;padding:5px 0;cursor:pointer">'+
+        '<input type="checkbox" data-a="hab-mark" data-id="'+h.id+'" data-key="'+hoyKey+'" style="width:auto" '+(on?'checked':'')+'>'+
+        '<span style="'+(on?'color:var(--ink2);text-decoration:line-through':'')+'">'+esc(h.icono)+' '+esc(h.nombre)+'</span></label>';
+    }).join('')+
+    '<div class="row" style="margin-top:6px"><button class="btn s" data-a="tab" data-t="habitos">ver todos los hábitos →</button></div></div>';
+}
 function rachaHabito(hab){
   /* cuenta hacia atrás desde hoy los días que tocan según hab.dow: si hoy toca y aún no está marcado,
      no rompe la racha (el día no ha terminado); el primer día pasado sin marcar sí la corta */
@@ -2427,8 +2459,9 @@ function renderTypes(){
       <h2>${esc(sh.icon)} ${esc(sh.name)}
         <span class="tag">entrada ${esc(sh.start||'—')}</span><span class="tag">salida ${esc(sh.end||'—')}</span>
         <span class="tag">carga ${esc(sh.intensity||'—')}</span>
+        <span class="tag b2">${t.kcal} kcal</span><span class="tag b3">${t.prot} g prot.</span><span class="tag">${t.parts} rac./día</span>
         <span class="sp"></span><span class="mini no-print">${esc(sh.id)}</span></h2>
-      <p class="note">${esc(sh.desc||'')} <b>· ${t.kcal} kcal · ${t.prot} g proteína · ${t.parts} raciones/día</b></p>
+      ${sh.desc?`<details class="dtip"><summary class="mini">ⓘ notas de este tipo de día ▾</summary><p class="note" style="margin-top:6px">${esc(sh.desc)}</p></details>`:''}
       <ul class="slots">${slots.map((s,i)=>slotRow(sh.id,s,i,slots.length)).join('')||'<li class="empty">Sin comidas todavía: elige abajo qué quieres comer este día.</li>'}</ul>
       <div class="row" style="margin-top:9px"><button class="btn s" data-a="toggle-picker" data-id="${sh.id}" aria-expanded="${ui.openPickers.has(sh.id)?'true':'false'}">${ui.openPickers.has(sh.id)?'▴ cerrar comidas y platos':'▾ elegir/cambiar comidas y platos'}</button></div>
       ${ui.openPickers.has(sh.id)?dayPicker(sh.id):''}
@@ -2615,10 +2648,8 @@ function renderShop(){
             (x.viaMeal?' <span class="mini">· viene en comida armada</span>':'')+'</li>';}).join('')
             :'<li class="mini">Ningún desayuno rápido montado esta semana: nada que reponer de esto.</li>';})()}</ul></div>
       <div class="card"><h2>Para el carro</h2><ul>${html||'<div class="empty">Sin tandas esta semana: nada que comprar fresco.</div>'}</ul></div>
-      <div class="card"><h2>Despensa (repasa 1 vez al mes)</h2><p class="note">No lo incluyas en la lista semanal, pero si falta, la semana se para.</p>
-        <ul>${['Aceite de oliva virgen extra (2 l)','Sal, pimienta, pimentón, curry, jengibre, comino','Arroz basmati / pasta integral (1 kg)','Lenteja pardina y garbanzos de bote (6-8 unidades)','Tomate triturado (6 bricks) o frito','Café y descafeinado','Frutos secos naturales (1 kg) y fruta para 7 raciones','Yogur griego natural (12-16 unidades)','Pan de masa madre: congelado en rebanadas, sacas lo que toques','Congelados de rescate: verdura al vapor, pimiento asado, gambas','Tápers de cristal (mín. 8), film, papel de hornear, cinta para etiquetas con fecha'].map(x=>`<li class="mini">${esc(x)}</li>`).join('')}</ul>
-        <h2 style="margin-top:16px">Ritmo sugerido</h2>
-        <ul class="mini">${['17:00 – puesta en marcha: precalienta horno, pesa y pica todo de una vez.','17:30 – cazuela larga (legumbre o arroz) mientras fríes patata y verdura.','18:10 – horno: proteína + verdura en dos bandejas a la vez.','18:40 – emplatado en táperes, etiqueta con fecha, 1 h templando antes a la nevera.','19:00 – 2 tápers al congelador, fregadero vacío, semana resuelta.'].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div class="card"><h2>Despensa <span class="mini" style="margin-left:auto;font-weight:400">repasa 1 vez al mes</span></h2>
+        <ul>${['Aceite de oliva virgen extra (2 l)','Sal, pimienta, pimentón, curry, jengibre, comino','Arroz basmati / pasta integral (1 kg)','Lenteja pardina y garbanzos de bote (6-8 unidades)','Tomate triturado (6 bricks) o frito','Café y descafeinado','Frutos secos naturales (1 kg) y fruta para 7 raciones','Yogur griego natural (12-16 unidades)','Pan de masa madre: congelado en rebanadas, sacas lo que toques','Congelados de rescate: verdura al vapor, pimiento asado, gambas','Tápers de cristal (mín. 8), film, papel de hornear, cinta para etiquetas con fecha'].map(x=>`<li class="mini">${esc(x)}</li>`).join('')}</ul></div>
     </div></div>`;
 }
 
@@ -2672,19 +2703,17 @@ function renderCfg(){
     <td style="width:46px"><input value="${esc(s.icon)}" data-a="sh-f" data-id="${s.id}" data-f="icon" style="text-align:center;padding-left:4px;padding-right:4px"></td>
     <td><input value="${esc(s.name)}" data-a="sh-f" data-id="${s.id}" data-f="name"></td>
     <td style="width:54px"><input value="${esc(s.code)}" data-a="sh-f" data-id="${s.id}" data-f="code" style="text-align:center" maxlength="3"></td>
-    <td style="width:78px"><input value="${esc(s.start)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="start"></td>
-    <td style="width:78px"><input value="${esc(s.end)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="end"></td>
+    <td style="width:92px"><input value="${esc(s.start)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="start"></td>
+    <td style="width:92px"><input value="${esc(s.end)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="end"></td>
     <td style="width:96px"><select data-a="sh-f" data-id="${s.id}" data-f="intensity">${['bajo','medio','alto'].map(x=>`<option ${s.intensity===x?'selected':''}>${x}</option>`).join('')}</select></td>
     <td style="width:44px"><input type="color" value="${esc(s.color||'#2563eb')}" data-a="sh-f" data-id="${s.id}" data-f="color" style="height:28px;padding:1px"></td>
     <td><input value="${esc(s.desc)}" data-a="sh-f" data-id="${s.id}" data-f="desc"></td>
     <td style="width:26px"><button class="btn d" data-a="shift-del" data-id="${s.id}">×</button></td></tr>`).join('');
   const pats=store.patterns.map((p,pi)=>{
-    const g=p.days.filter(c=>isGuardia(shiftById(resolveCode(c)))).length;
     return `<tr>
       <td style="min-width:150px"><input value="${esc(p.name)}" data-a="pat-name" data-id="${p.id}"><input value="${esc(p.note||'')}" placeholder="nota" data-a="pat-note" data-id="${p.id}" style="margin-top:4px;font-size:11.5px"></td>
-      <td>${p.days.map((c,di)=>`<select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="width:44px;margin:0 2px 3px 0">${store.shifts.map(s=>`<option value="${esc(s.code)}" ${s.code===c?'selected':''}>${esc(s.code)}</option>`).join('')}</select>`).join('')}</td>
+      <td>${p.days.map((c,di)=>`<select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="width:56px;margin:0 3px 4px 0">${store.shifts.map(s=>`<option value="${esc(s.code)}" ${s.code===c?'selected':''}>${esc(s.code)}</option>`).join('')}</select>`).join('')}</td>
       <td style="width:120px"><div class="row" style="gap:3px">${p.days.map(c=>{const s=shiftById(resolveCode(c));return `<span class="tag" style="background:${s?s.color+'22':'#ccc'};color:${s?s.color:'inherit'};padding:2px 6px">${s?esc(s.icon):'·'}</span>`}).join('')}</div></td>
-      <td style="width:40px"><b>${g}</b></td>
       <td style="width:60px"><button class="btn s ${pi===r.pattern?'p':''}" data-a="pat-use" data-id="${p.id}">usar</button></td>
       <td style="width:46px"><button class="btn s" data-a="pat-copy" data-id="${p.id}">dupl</button></td>
       <td style="width:26px"><button class="btn d" data-a="pat-del" data-id="${p.id}">×</button></td></tr>`}).join('');
@@ -2694,9 +2723,9 @@ function renderCfg(){
     const h=sleepHours(rh.sleep,rh.wake);
     const rec=acostarsePara(rh.wake),ven=ventanaCena(rec||rh.sleep);
     const falta=(h!=null&&h<SC.min)?Math.round((SC.min-h)*60):0;
-    const cells=RKEYS.map(function(k){return '<td style="width:78px"><input type="time" value="'+esc(rh[k[0]]||'')+
+    const cells=RKEYS.map(function(k){return '<td style="width:92px"><input type="time" value="'+esc(rh[k[0]]||'')+
       '" data-a="rh-f" data-id="'+sh.id+'" data-f="'+k[0]+'"></td>';}).join('');
-    return '<tr><td>'+esc(sh.icon)+' '+esc(sh.name)+'</td>'+cells+
+    return '<tr><td style="white-space:nowrap">'+esc(sh.icon)+' '+esc(sh.name)+'</td>'+cells+
       '<td><span class="mini" style="'+(falta?'color:var(--warn);font-weight:700':'')+'">'+(h?fmtHM(h*60):'—')+
       (falta?('<br><span class="mini" style="color:var(--warn)">faltan '+falta+' min</span>'):'')+'</span></td>'+
       '<td><span class="mini">'+(rec?('🛌 '+rec+'<br>🍽 '+(ven?ven.from+'–'+ven.to:'—')):'—')+'</span></td>'+
@@ -2706,7 +2735,7 @@ function renderCfg(){
       <div style="overflow-x:auto"><table><thead><tr><th></th><th>Nombre</th><th>Clave</th><th>Entra</th><th>Sale</th><th>Carga</th><th></th><th>Notas</th><th></th></tr></thead><tbody>${shifts}</tbody></table></div>
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="shift-new">+ Añadir tipo de día</button></div></div>
     <div class="card"><h2>3 · Estructura semanal genérica</h2><p class="note">Una fila = una semana tipo. Las claves son los tipos de día (G, S, F, L…). Ten siempre una fila para <b>1 guardia</b> y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica, y todo (menús, tandas, compra) se recalcula.</p>
-      <div style="overflow-x:auto"><table><thead><tr><th style="min-width:150px">Semana tipo</th><th>L → D</th><th>Vista</th><th>G</th><th></th><th></th><th></th></tr></thead><tbody>${pats}</tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th style="min-width:150px">Semana tipo</th><th>L → D</th><th>Vista</th><th></th><th></th><th></th></tr></thead><tbody>${pats}</tbody></table></div>
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ Semana tipo</button>
       <button class="btn s" data-a="autofill">Autocompletar 1 y 2 guardias desde mi turno</button></div></div>
     <div class="card"><h2>4 · Rotación por fecha</h2><p class="note">Si tu calendario es un ciclo de semanas (p. ej. <i>1G·S → 2G·S·S → libre</i>), ordena arriba las semanas del ciclo y pon la fecha de un lunes que sepas qué semana era. La app repite el ciclo sola y cada día de la vista «Semana» lleva el menú que corresponde; y si un día se tuerce, lo cambias en esa misma vista sin romper la rotación.</p>
@@ -2717,11 +2746,10 @@ function renderCfg(){
       </div>
       <div class="row" style="margin-top:8px"><button class="btn s" data-a="mode-date">Activar rotación por fecha</button>
       <button class="btn s" data-a="mode-template">Volver a plantilla</button>
-      <button class="btn s" data-a="clear-overrides">Quitar mis cambios a mano en los días</button></div>
-      <p class="mini" style="margin-top:8px">Ciclo: ${store.patterns.map((p,i)=>(i===r.pattern&&r.mode==='template'?'<b>':'')+esc(p.name)+' → '+p.days.join('·')+(i===r.pattern&&r.mode==='template'?'</b>':'')).join(' → ')||'—'}</p></div>
+      <button class="btn s" data-a="clear-overrides">Quitar mis cambios a mano en los días</button></div></div>
     <div class="card"><h2>2 · A qué horas te levantas y te acuestas</h2>
       <p class="note">Se aplica por tipo de día; si un día concreto cambia, lo ajustas en el calendario («Mes» → toca el día → <i>editar horas</i>) sin romper la plantilla. Con estas horas la app cuenta tus horas de sueño y te avisa cuando un día te quedas por debajo de 6,5 h.</p>
-      <div style="overflow-x:auto"><table><thead><tr><th>Tipo de día</th><th>Levantarse</th><th>Desayuno</th><th>Salir de casa</th><th>Llegar</th><th>Acostarse</th><th>Sueño</th><th>Noche sugerida</th><th></th></tr></thead><tbody>${rhythmRows}</tbody></table></div>
+      <div style="overflow-x:auto"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap"><th style="min-width:120px">Tipo de día</th><th>Levantarse</th><th>Desayuno</th><th>Salir de casa</th><th>Llegar</th><th>Acostarse</th><th>Sueño</th><th style="min-width:120px">Noche sugerida</th><th></th></tr></thead><tbody>${rhythmRows}</tbody></table></div>
       <div class="row" style="margin-top:9px">
         <button class="btn s" data-a="bf-defaults">poner el desayuno rápido de diario en los días de trabajar</button>
         <button class="btn s" data-a="mon-autopos">${store.rotation.autoPos?'✓':'○'} post-guardia automático</button>
@@ -3098,8 +3126,6 @@ function renderNow(){
     if(bPrev){bPrev.title=lbl+' anterior';bPrev.setAttribute('aria-label',bPrev.title);}
     if(bNext){bNext.title=lbl+' siguiente';bNext.setAttribute('aria-label',bNext.title);}
   }
-  $('#hsub').innerHTML=`${store.shifts.length} tipos de día · ${store.dishes.length} platos · ${store.meals.length} comidas armadas · se guarda solo en este navegador · `+
-    `<kbd>1</kbd>–<kbd>9</kbd> pestañas <kbd>←</kbd><kbd>→</kbd> semana <kbd>T</kbd> tema <kbd>/</kbd> buscar`;
   const mm=$('#main');if(mm){mm.classList.remove('in');
     /* reiniciar la animación sin forzar un reflow síncrono (antes: void mm.offsetWidth) */
     requestAnimationFrame(function(){mm.classList.add('in');});}
@@ -3462,6 +3488,7 @@ function act(a,el){
     case 'vac-del':{if(el.tagName!=='BUTTON')break;const n=store.rotation.vacaciones?store.rotation.vacaciones.length:0;
       if(n>1){confirmar('¿Quitar estas vacaciones?').then(function(ok){if(ok)flash(delVacation(el.dataset.ix));});break;}
       flash(delVacation(el.dataset.ix));break;}
+    case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'ev-modo':{if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
       ui.evNuevo.modo=el.dataset.modo==='fecha'?'fecha':'semanal';render();break;}
     case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
@@ -3607,7 +3634,12 @@ function act(a,el){
     case 'rt-add':{const rid=el.dataset.id,n=document.getElementById('rtNew-'+rid);
       const r=addRutina(rid,n?n.value:'',
         {series:(document.getElementById('rtNs-'+rid)||{}).value,reps:(document.getElementById('rtNr-'+rid)||{}).value});
-      flash(r);if(n)n.value='';break;}
+      flash(r);
+      /* addRutina() ya ha vuelto a pintar #main: el input de antes ha quedado desmontado y sin foco,
+         así que sin esto tocar «añadir» varias veces seguidas exige volver a tocar la caja cada vez
+         (parece que "solo deja meter un ejercicio") — se recupera el foco en la caja nueva */
+      const n2=document.getElementById('rtNew-'+rid);if(n2)n2.focus();
+      break;}
     case 'rt-del':flash(delRutina(el.dataset.id,+el.dataset.ix));break;
     case 'rt-up':moverEjercicio(el.dataset.id,+el.dataset.ix,-1);break;
     case 'rt-down':moverEjercicio(el.dataset.id,+el.dataset.ix,1);break;
@@ -3621,9 +3653,11 @@ function act(a,el){
     case 'ses-descartar':{confirmar('¿Descartar esta sesión? Las series que has montado se quitan del registro.').then(function(ok){
         if(!ok)return;flash(descartarSesion());});break;}
     case 'cardio-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
-      flash(addCardio({tipo:gv('cardioTipo'),fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
+      const tipoNuevo=gv('cardioTipo');ui.cardioAbierto=tipoNuevo;
+      flash(addCardio({tipo:tipoNuevo,fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
         distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
+    case 'cardio-open':{const t=el.dataset.tipo;ui.cardioAbierto=(ui.cardioAbierto===t)?'':t;render();break;}
     case 'gym-set':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
       const r=addSet(el.dataset.key,{ex:gv('setEx'),kg:gv('setKg'),reps:gv('setReps'),rpe:gv('setRpe'),nota:gv('setNota')});
       ui.gymEx=gv('setEx');render();flash(r);break;}
@@ -4906,7 +4940,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
   eventosS,eventosDelDia,eventosDeFecha,diasCorta,eventoRowHTML,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
-  habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos};
+  habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
 render();
 avisarBackupSiToca();

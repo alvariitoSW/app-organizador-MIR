@@ -308,14 +308,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     pickersClosedByDefault === 0 && pickersAfterToggle === 1,
     'antes: ' + pickersClosedByDefault + ' después: ' + pickersAfterToggle);
 
-  // 12) simplificación de interfaz: el detalle día a día de "Mes" (repite el calendario) empieza plegado
+  // 12) simplificación de interfaz: la vista "día a día" de "Mes" (repetía el calendario de arriba,
+  // 0 valor añadido según el comentario del usuario) se ha quitado del todo, no solo plegado
   await gotoTab('month');
   await page.waitForTimeout(200);
-  const monthDetailState = await page.evaluate(() => {
-    const d = Array.from(document.querySelectorAll('.dtip')).find((x) => /ver el mes día a día/.test(x.textContent));
-    return d ? d.open : null;
-  });
-  check('el detalle "día a día" de Mes empieza plegado', monthDetailState === false, 'open=' + monthDetailState);
+  const monthDetailGone = await page.evaluate(() => !document.querySelector('#main').textContent.includes('ver el mes día a día'));
+  check('la vista "día a día" de Mes (redundante con el calendario) ya no existe', monthDetailGone, '');
 
   // 13) menos toques: registrar una comida ya montada desde "Hoy" en un solo tap
   await gotoTab('hoy');
@@ -435,6 +433,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     sesionGuardada[0].duracionMin === 33 && sesionGuardada[0].seriesIds.length >= 1,
     JSON.stringify({ sesionActivaVisible, sesionActivaGone, sesionGuardada }));
 
+  // 18b) se pueden añadir varios ejercicios seguidos a una rutina sin tener que volver a tocar la
+  // caja cada vez (bug real: addRutina() vuelve a pintar #main, así que la caja de antes queda
+  // desmontada y sin foco — sin refocarla, un segundo toque en "añadir" con el teclado ya cerrado
+  // no añade nada y parece que "solo deja meter un ejercicio")
+  await page.fill('#rtNew-' + ridUI, 'Press militar');
+  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(150);
+  const focoTrasAnadir = await page.evaluate((rid) => document.activeElement && document.activeElement.id === 'rtNew-' + rid, ridUI);
+  await page.keyboard.type('Sentadilla');
+  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(150);
+  const ejerciciosTrasVarios = await page.evaluate(
+    (rid) => window.PG.gymS().rutinas.find((r) => r.id === rid).ejercicios.map((e) => e.ex),
+    ridUI
+  );
+  check('tras añadir un ejercicio, la caja recupera el foco y se pueden seguir añadiendo más seguidos',
+    focoTrasAnadir && ejerciciosTrasVarios.includes('Curl bíceps') &&
+    ejerciciosTrasVarios.includes('Press militar') && ejerciciosTrasVarios.includes('Sentadilla'),
+    JSON.stringify({ focoTrasAnadir, ejerciciosTrasVarios }));
+
   // 19) el diagrama de músculos resalta al menos una región para una sesión de prueba
   await page.evaluate((rid) => {
     const g = window.PG.gymS();
@@ -459,6 +477,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     (c) => c.tipo === 'carrera' && c.duracionMin === 35 && c.distanciaKm === 5.2 && c.fecha === '2026-09-10'
   ));
   check('se puede registrar un cardio con tipo, duración y distancia', cardioGuardado);
+
+  // 20b) Cardio ya no es una lista larga sin fin: se agrupa en 3-4 bloques por tipo (natación/carrera/
+  // bici/otro), plegados, y tras apuntar uno el bloque de ese tipo queda abierto como confirmación
+  const cardioAgrupado = await page.evaluate(() => {
+    const detalles = Array.from(document.querySelectorAll('#main details.dtip')).filter(
+      (d) => /\b(Natación|Carrera|Bici|Otro)\b/.test((d.querySelector('summary') || {}).textContent || '')
+    );
+    const carrera = detalles.find((d) => /\bCarrera\b/.test(d.querySelector('summary').textContent));
+    return {
+      bloques: detalles.length === 4,
+      carreraAbierta: carrera ? carrera.open : null,
+      carreraTieneUno: carrera ? /10\/09/.test(carrera.textContent) : null,
+    };
+  });
+  check('Cardio agrupa las entradas por tipo en bloques plegables, y el tipo recién usado queda abierto',
+    cardioAgrupado.bloques && cardioAgrupado.carreraAbierta === true && cardioAgrupado.carreraTieneUno,
+    JSON.stringify(cardioAgrupado));
 
   // ===================== Comida: catálogo offline y alta manual =====================
 
@@ -994,6 +1029,82 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
   const habTrasBorrar = await page.evaluate(() => window.PG.habitosS().items.length);
   check('Hábitos: se puede borrar un hábito (con confirmación) y se limpia su historial', habTrasBorrar === 0, String(habTrasBorrar));
+
+  // 47b) referencia cruzada: un hábito de hoy se ve y se puede marcar desde "Hoy" sin entrar en la
+  // pestaña de Hábitos
+  const hoyDowCross = await page.evaluate(() => new Date().getDay());
+  const habCrossId = await page.evaluate((dow) => {
+    const h = window.PG.habitosS();
+    h.items.push({ id: 'hab-cross', nombre: 'Estirar de referencia', icono: '🧘', color: '#38e1ff', dow: [dow], creado: '2026-01-01' });
+    window.PG.save();
+    return 'hab-cross';
+  }, hoyDowCross);
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const habCrossVisible = await page.evaluate(() => document.getElementById('main').innerText.includes('Estirar de referencia'));
+  await page.click(`[data-a="hab-mark"][data-id="${habCrossId}"]`);
+  await page.waitForTimeout(150);
+  const habCrossMarcado = await page.evaluate((id) => {
+    const d = new Date(); const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return window.PG.habitoHecho(id, x.toISOString().slice(0, 10));
+  }, habCrossId);
+  check('"Hoy" muestra los hábitos del día y se pueden marcar desde ahí', habCrossVisible && habCrossMarcado, JSON.stringify({ habCrossVisible, habCrossMarcado }));
+  await page.evaluate(() => { window.PG.habitosS().items = window.PG.habitosS().items.filter((h) => h.id !== 'hab-cross'); window.PG.save(); });
+
+  // 47c) "Hoy": el objetivo de kcal y las horas de sueño se pueden abrir con un botón directo, y las
+  // comidas de hoy llevan un botón que lleva a cambiar sus horas/platos en "Días y menús"
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  await page.click('[data-a="hoy-food-obj"]');
+  await page.waitForTimeout(150);
+  const objAbierto = await page.evaluate(() => window.PG.ui.tab === 'food' && window.PG.ui.foodObjOpen === true);
+  check('"Hoy": el botón de objetivo de kcal lleva a Comida con el objetivo ya abierto', objAbierto, '');
+
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const comidasBtn = await page.$('#main [data-a="day-edit"]');
+  let fueATypesDesdeHoy = false;
+  if (comidasBtn) {
+    await comidasBtn.click();
+    await page.waitForTimeout(250);
+    fueATypesDesdeHoy = await page.evaluate(() => window.PG.ui.tab === 'types');
+  }
+  check('"Hoy": "Comidas de hoy" lleva un botón que abre su tarjeta en "Días y menús" (cuando hay un tipo de día asignado)',
+    !comidasBtn || fueATypesDesdeHoy, String(!!comidasBtn));
+
+  // 47d) la franja de 24h marca, con su propio color, el segundo entreno y los eventos del día (antes
+  // solo se veían sueño/trabajo/comidas) — colores fijos por categoría, no aleatorios
+  const hoyDowTl = await page.evaluate(() => new Date().getDay());
+  await page.evaluate((dow) => {
+    const g = window.PG.gymS();
+    g.segundo = { on: true, dias: [dow], tipo: 'piscina', hora: '17:00' };
+    window.PG.store.eventos.push({ id: 'ev-tl-test', titulo: 'Evento de prueba', hora: '20:00', modo: 'semanal', dow: [dow], color: '#7c5cff', on: true });
+    window.PG.save();
+  }, hoyDowTl);
+  // el segundo entreno se bloquea en guardia/saliente/vacaciones/festivo: fuerza hoy a un día normal
+  const hoyKeyTl = await page.evaluate(() => {
+    const x = new Date(); const y = new Date(x.getTime() - x.getTimezoneOffset() * 60000);
+    return y.toISOString().slice(0, 10);
+  });
+  await page.evaluate((key) => {
+    if (!window.PG.store.rotation.daySet) window.PG.store.rotation.daySet = {};
+    window.PG.store.rotation.daySet[key] = { shift: 'sh-t' };
+    window.PG.save();
+  }, hoyKeyTl);
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const marcasTimeline = await page.evaluate(() => ({
+    gym: !!document.querySelector('#main .tl-dot.gym'),
+    evt: !!document.querySelector('#main .tl-dot.evt'),
+  }));
+  check('la franja de 24h muestra marcas de color propio para el segundo entreno y los eventos del día',
+    marcasTimeline.gym && marcasTimeline.evt, JSON.stringify(marcasTimeline));
+  await page.evaluate((key) => {
+    window.PG.store.eventos = window.PG.store.eventos.filter((e) => e.id !== 'ev-tl-test');
+    window.PG.gymS().segundo = { on: true, dias: [2], tipo: 'piscina', hora: '15:30' };
+    if (window.PG.store.rotation.daySet) delete window.PG.store.rotation.daySet[key];
+    window.PG.save();
+  }, hoyKeyTl);
 
   // 48) "Mes": el nombre del tipo de día (p. ej. "Saliente", "Vacaciones") usa el color de texto del
   // tema en vez del negro por defecto del navegador — bug real: ".dbox" es un <button> sin "color"
