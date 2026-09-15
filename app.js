@@ -4790,20 +4790,27 @@ document.addEventListener('visibilitychange',function(){
   }
 });
 /* cabecera que se esconde al bajar y vuelve al subir: en pantallas pequeñas, más sitio para ver
-   el calendario en vez de tenerla siempre fija ocupando espacio */
+   el calendario en vez de tenerla siempre fija ocupando espacio.
+   El scroll táctil no es monótono (rebotes de inercia de unos pocos px hacia arriba en pleno
+   gesto de bajar), así que en vez de comparar cada frame con el anterior (eso hacía que la
+   cabecera "parpadeara" y no se llegara a esconder hasta casi el final) se acumula el recorrido
+   en una misma dirección y solo se decide al pasar un umbral: bajar 26 px seguidos la esconde,
+   subir 14 px seguidos la trae de vuelta. */
 (function(){
-  let lastY=0,ticking=false;
+  let lastY=0,downRun=0,upRun=0,ticking=false;
   function onScroll(){
     if(ticking)return;ticking=true;
     requestAnimationFrame(function(){
       ticking=false;
       const h=document.querySelector('header');if(!h)return;
       const y=window.scrollY||document.documentElement.scrollTop||0;
-      if(ui.drawerOpen||document.getElementById('overlay').classList.contains('on')){h.classList.remove('hide');lastY=y;return;}
-      if(y<=40)h.classList.remove('hide');
-      else if(y>lastY+4)h.classList.add('hide');
-      else if(y<lastY-4)h.classList.remove('hide');
-      lastY=y;
+      if(ui.drawerOpen||document.getElementById('overlay').classList.contains('on')){
+        h.classList.remove('hide');lastY=y;downRun=upRun=0;return;}
+      const dy=y-lastY;lastY=y;
+      if(y<=40){h.classList.remove('hide');downRun=upRun=0;return;}
+      if(dy>0){downRun+=dy;upRun=0;}else if(dy<0){upRun-=dy;downRun=0;}
+      if(downRun>26)h.classList.add('hide');
+      else if(upRun>14)h.classList.remove('hide');
     });
   }
   window.addEventListener('scroll',onScroll,{passive:true});

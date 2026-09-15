@@ -247,13 +247,13 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
    nombre del día en una sola línea (con puntos suspensivos) y las líneas de detalle (horario, sueño)
    se ocultan aquí porque ya se ven enteras al tocar el día */
 @media(max-width:560px){
-  .cal{gap:4px}
-  .dbox{min-height:0;padding:4px 4px;gap:1px}
-  .dnum{font-size:10px}
-  .dnm{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cal{gap:6px}
+  .dbox{min-height:58px;padding:6px 6px;gap:2px}
+  .dnum{font-size:12px}
+  .dnm{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .djob,.dsl{display:none}
-  .dflag{font-size:8.5px}
-  .dgym,.devt{font-size:9.5px}
+  .dflag{font-size:9.5px}
+  .dgym,.devt{font-size:11px}
 }
 .daydetail{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}

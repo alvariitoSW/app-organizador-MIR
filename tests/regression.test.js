@@ -979,8 +979,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   });
   check('"Mes": la cuadrícula del calendario aparece antes que las explicaciones y los números', ordenOk, '');
 
-  // 51) "Mes" en móvil: cada casilla es compacta (una línea por dato, sin horario/sueño de más) para
-  // que quepa el mes entero sin tener que hacer mucho scroll
+  // 51) "Mes" en móvil: cada casilla tiene una línea por dato (sin horario/sueño de más, eso se ve
+  // al tocar el día) y un tamaño cómodo de tocar, ni la tira gigante de antes ni una miniatura
   const prevViewport = page.viewportSize();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(150);
@@ -988,8 +988,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const box = document.querySelector('#main .dbox.on') || document.querySelector('#main .dbox');
     return box ? box.getBoundingClientRect().height : null;
   });
-  check('"Mes" en móvil: las casillas del calendario son compactas (≤60px de alto)',
-    cellHeight != null && cellHeight <= 60, String(cellHeight));
+  check('"Mes" en móvil: las casillas del calendario tienen un tamaño cómodo (entre 44 y 90px de alto)',
+    cellHeight != null && cellHeight >= 44 && cellHeight <= 90, String(cellHeight));
   if (prevViewport) await page.setViewportSize(prevViewport);
 
   // 52) "Mes" en móvil: la cuadrícula no desborda el ancho de la pantalla (bug real: un grid item sin
@@ -1016,6 +1016,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const headerDeVuelta = await page.evaluate(() => !document.querySelector('header').classList.contains('hide'));
   check('la cabecera se esconde al bajar y reaparece al subir (o al volver arriba del todo)',
     headerEscondida && headerDeVuelta, JSON.stringify({ headerEscondida, headerDeVuelta }));
+
+  // 53b) el scroll táctil no es monótono (pequeños rebotes de inercia hacia arriba en pleno gesto de
+  // bajar) — la cabecera tiene que esconderse pronto de todas formas, no solo cerca del final de la
+  // página (bug real: comparar cada frame contra el anterior con un margen de unos pocos px hacía que
+  // esos rebotes cancelaran el escondido una y otra vez)
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
+  const escondidaConRebotes = await page.evaluate(async () => {
+    const steps = [10, 22, 35, 33, 48, 60, 78, 74, 95, 110, 130];
+    for (const y of steps) {
+      window.scrollTo(0, y);
+      window.dispatchEvent(new Event('scroll'));
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
+    return document.querySelector('header').classList.contains('hide');
+  });
+  check('la cabecera se esconde pronto aunque el scroll táctil tenga pequeños rebotes hacia arriba (no solo al final de la página)',
+    escondidaConRebotes, '');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
 
   // 54) Ajustes: hay un atajo directo a las horas y a las comidas de cada tipo de día, sin tener que
   // buscarlo por el menú — "horas" abre el modal de horario y "comidas" lleva a su tarjeta en "Días y menús"
