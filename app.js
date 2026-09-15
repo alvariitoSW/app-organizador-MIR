@@ -213,7 +213,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
-  evNuevo:{dow:[]},habNuevo:{dow:[]},habDetalle:''};
+  evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:''};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -302,9 +302,14 @@ function normalize(o){
     .filter(function(x){return x>=0&&x<=6;}).sort(function(a,b){return a-b;});
   if(!Array.isArray(o.eventos))o.eventos=[];
   o.eventos=o.eventos.filter(function(e){return e&&e.id;}).map(function(e){
+    const modo=e.modo==='fecha'?'fecha':'semanal';
     return {id:e.id,titulo:String(e.titulo||''),hora:/^\d{2}:\d{2}$/.test(e.hora||'')?e.hora:'09:00',
+      modo:modo,
       dow:Array.isArray(e.dow)?e.dow.map(Number).filter(function(x){return x>=0&&x<=6;}):[],
-      color:/^#[0-9a-fA-F]{6}$/.test(e.color||'')?e.color:'#38e1ff',on:e.on!==false};});
+      fecha:/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||'')?e.fecha:'',
+      recordatorio:!!e.recordatorio,cuentaAtras:!!e.cuentaAtras,
+      color:/^#[0-9a-fA-F]{6}$/.test(e.color||'')?e.color:'#38e1ff',on:e.on!==false};})
+    .filter(function(e){return e.modo==='semanal'?e.dow.length>0:!!e.fecha;});
   if(!o.habitos||typeof o.habitos!=='object')o.habitos={items:[],registro:{}};
   if(!Array.isArray(o.habitos.items))o.habitos.items=[];
   o.habitos.items=o.habitos.items.filter(function(h){return h&&h.id;}).map(function(h){
@@ -1210,6 +1215,7 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
+    proximosPuntualesHTML()+
     '<div class="card"><h2>Comidas de hoy</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
 }
 /* ===================== render: semana ===================== */
@@ -2737,11 +2743,25 @@ function diasCorta(dow){
   if(dow.length>=7)return 'todos los días';
   return dow.slice().sort(function(a,b){return a-b;}).map(function(i){return DS[i];}).join('·');
 }
-function eventosDelDia(dow){return eventosS().filter(function(e){return e.on!==false&&(e.dow||[]).indexOf(dow)>=0;});}
-function eventosDeFecha(key){const d=parseDate(key);return d?eventosDelDia(d.getDay()):[];}
+function fechaCorta(key){const d=parseDate(key);return d?(d.getDate()+' '+MON[d.getMonth()]):'—';}
+function diasHasta(key){const d=parseDate(key);if(!d)return null;const hoy=new Date();
+  return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()))/86400000);}
+function cuentaAtrasTxt(key){const n=diasHasta(key);if(n==null)return '';
+  if(n<0)return 'ya pasó';if(n===0)return 'es hoy';if(n===1)return 'mañana';return 'faltan '+n+' días';}
+function eventosDelDia(dow){return eventosS().filter(function(e){return e.on!==false&&e.modo!=='fecha'&&(e.dow||[]).indexOf(dow)>=0;});}
+function eventosPuntualesDe(key){return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha===key;});}
+function eventosDeFecha(key){const d=parseDate(key);if(!d)return [];
+  return eventosDelDia(d.getDay()).concat(eventosPuntualesDe(key))
+    .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});}
+function eventosPuntualesProximos(){const hoy=iso(new Date());
+  return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha>=hoy;})
+    .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});}
 function eventoRowHTML(ev){
+  const sub=ev.modo==='fecha'?(fechaCorta(ev.fecha)+' · '+esc(ev.hora)+(ev.cuentaAtras?' · '+cuentaAtrasTxt(ev.fecha):'')):
+    (diasCorta(ev.dow)+' · '+esc(ev.hora));
   return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
-    '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+diasCorta(ev.dow)+' · '+esc(ev.hora)+'</span></span>'+
+    '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+(ev.modo==='fecha'?' <span class="tag b2" style="font-size:9px;vertical-align:middle">puntual</span>':'')+'</b>'+
+    '<span>'+sub+(ev.recordatorio?' · 🔔':'')+'</span></span>'+
     '<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap">'+
       '<input type="checkbox" data-a="ev-toggle" data-id="'+ev.id+'" style="width:auto" '+(ev.on!==false?'checked':'')+'> activo</label>'+
     '<button class="btn d" data-a="ev-del" data-id="'+ev.id+'" title="quitar este evento">×</button></div>';
@@ -2750,6 +2770,19 @@ function eventosTagsHTML(list){
   if(!list||!list.length)return '';
   return list.map(function(ev){return '<span class="tag" style="border:1px solid '+esc(ev.color)+';color:'+esc(ev.color)+'">'+
     esc(ev.hora)+' '+esc(ev.titulo)+'</span>';}).join('');
+}
+function proximosPuntualesHTML(){
+  const prox=eventosPuntualesProximos();
+  if(!prox.length)return '';
+  return '<div class="card"><h2>📌 Próximos<span class="mini" style="margin-left:auto;font-weight:400">'+prox.length+'</span></h2>'+
+    '<p class="note">Eventos puntuales que has apuntado — se editan en «Ajustes».</p>'+
+    prox.slice(0,6).map(function(ev){
+      return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
+        '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+fechaCorta(ev.fecha)+' · '+esc(ev.hora)+
+        (ev.recordatorio?' · 🔔 recordatorio':'')+'</span></span>'+
+        (ev.cuentaAtras?'<span class="tag b2">'+cuentaAtrasTxt(ev.fecha)+'</span>':'')+
+        '</div>';}).join('')+
+    '</div>';
 }
 function renderAjustes(){
   const sd=saltoDia(),tm=store.tema||{},tipos=gTipos(),DOWL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -2787,19 +2820,33 @@ function renderAjustes(){
       <p class="mini" style="margin-top:8px">Con ${suenoCfg().min} h mínimas, tocaría acostarse a las <b>${acostarsePara(despertarBase())}</b> en tus días de diario.</p>
     </div>
 
-    <div class="card"><h2>📅 Eventos que se repiten cada semana<span class="mini" style="margin-left:auto;font-weight:400">${eventosS().length} en total</span></h2>
-      <p class="note">Fisio, entreno con alguien, una clase… se añaden solos a «Semana» y salen marcados en «Mes» el día que toque.</p>
+    <div class="card"><h2>📅 Eventos<span class="mini" style="margin-left:auto;font-weight:400">${eventosS().length} en total</span></h2>
+      <p class="note">Los que se repiten cada semana (fisio, entreno con alguien…) o los puntuales (una presentación, una cita) — ambos se añaden solos a «Semana» y «Mes» el día que toque.</p>
       ${eventosS().length?eventosS().map(eventoRowHTML).join(''):'<div class="empty">Nada apuntado todavía.</div>'}
       <div class="row" style="margin-top:${eventosS().length?'12':'6'}px;${eventosS().length?'padding-top:10px;border-top:1px solid var(--line)':''}">
-        <label class="fld" style="flex:1 1 180px">título<input id="evNuevoTitulo" placeholder="p. ej. Fisioterapia"></label>
+        <button class="btn s ${ui.evNuevo.modo!=='fecha'?'p':''}" data-a="ev-modo" data-modo="semanal">se repite cada semana</button>
+        <button class="btn s ${ui.evNuevo.modo==='fecha'?'p':''}" data-a="ev-modo" data-modo="fecha">un día en concreto</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="fld" style="flex:1 1 180px">título<input id="evNuevoTitulo" placeholder="${ui.evNuevo.modo==='fecha'?'p. ej. Presentación':'p. ej. Fisioterapia'}"></label>
         <label class="fld" style="flex:0 0 100px">hora<input type="time" id="evNuevaHora" value="18:00"></label>
         <label class="fld" style="flex:0 0 54px">color<input type="color" id="evNuevoColor" value="#38e1ff" style="height:30px;padding:2px"></label>
       </div>
-      <div class="row" style="margin-top:6px"><span class="mini">qué días:</span>
-        ${DOWL.map(function(nm,ix){return '<button class="btn s '+(ui.evNuevo.dow.indexOf(ix)>=0?'p':'')+'" data-a="ev-dia" data-day="'+ix+'">'+nm+'</button>';}).join('')}
-      </div>
+      ${ui.evNuevo.modo==='fecha'?(
+        '<div class="row" style="margin-top:6px"><label class="fld" style="flex:0 0 170px">qué día<input type="date" id="evNuevaFecha" value="'+esc(ui.evNuevo.fecha||iso(new Date()))+'"></label></div>'+
+        '<div class="row" style="margin-top:8px">'+
+          '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)"><input type="checkbox" id="evNuevoRecordatorio" style="width:auto"> 🔔 avisarme (queda en «Hoy» y en «Próximos»)</label>'+
+          '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)"><input type="checkbox" id="evNuevoCuenta" style="width:auto"> ⏳ mostrar cuenta atrás</label>'+
+        '</div>'
+      ):(
+        '<div class="row" style="margin-top:6px"><span class="mini">qué días:</span>'+
+        DOWL.map(function(nm,ix){return '<button class="btn s '+(ui.evNuevo.dow.indexOf(ix)>=0?'p':'')+'" data-a="ev-dia" data-day="'+ix+'">'+nm+'</button>';}).join('')+
+        '</div>'
+      )}
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="ev-add">+ añadir evento</button></div>
     </div>
+
+    ${proximosPuntualesHTML()}
 
     <div class="card"><h2>Guardias y rotación</h2>
       <p class="note">De fábrica: si la guardia cae en sábado, el saliente se pasa al lunes y el día de por medio queda libre. Si tu rotación descansa otro día, cámbialo aquí.</p>
@@ -3415,16 +3462,29 @@ function act(a,el){
     case 'vac-del':{if(el.tagName!=='BUTTON')break;const n=store.rotation.vacaciones?store.rotation.vacaciones.length:0;
       if(n>1){confirmar('¿Quitar estas vacaciones?').then(function(ok){if(ok)flash(delVacation(el.dataset.ix));});break;}
       flash(delVacation(el.dataset.ix));break;}
-    case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evNuevo)ui.evNuevo={dow:[]};
+    case 'ev-modo':{if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
+      ui.evNuevo.modo=el.dataset.modo==='fecha'?'fecha':'semanal';render();break;}
+    case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
       const at=ui.evNuevo.dow.indexOf(ix);
       if(at>=0){ui.evNuevo.dow.splice(at,1);el.classList.remove('p');}
       else{ui.evNuevo.dow.push(ix);el.classList.add('p');}
       break;}
     case 'ev-add':{const t=($('#evNuevoTitulo')||{}).value||'',h=($('#evNuevaHora')||{}).value||'18:00',
-        c=($('#evNuevoColor')||{}).value||'#38e1ff',dow=(ui.evNuevo&&ui.evNuevo.dow||[]).slice();
-      if(!t.trim()||!dow.length){flash('ponle un título y marca al menos un día');break;}
-      eventosS().push({id:uid('ev'),titulo:t.trim(),hora:h,dow:dow.sort(function(a,b){return a-b;}),color:c,on:true});
-      ui.evNuevo={dow:[]};save();render();flash('evento añadido');break;}
+        c=($('#evNuevoColor')||{}).value||'#38e1ff',modo=(ui.evNuevo&&ui.evNuevo.modo)==='fecha'?'fecha':'semanal';
+      if(!t.trim()){flash('ponle un título');break;}
+      if(modo==='fecha'){
+        const fecha=($('#evNuevaFecha')||{}).value||'';
+        if(!fecha){flash('elige un día');break;}
+        const rec=!!($('#evNuevoRecordatorio')||{}).checked,cuenta=!!($('#evNuevoCuenta')||{}).checked;
+        eventosS().push({id:uid('ev'),titulo:t.trim(),hora:h,modo:'fecha',fecha:fecha,dow:[],
+          recordatorio:rec,cuentaAtras:cuenta,color:c,on:true});
+      }else{
+        const dow=(ui.evNuevo&&ui.evNuevo.dow||[]).slice();
+        if(!dow.length){flash('marca al menos un día');break;}
+        eventosS().push({id:uid('ev'),titulo:t.trim(),hora:h,modo:'semanal',dow:dow.sort(function(a,b){return a-b;}),
+          fecha:'',recordatorio:false,cuentaAtras:false,color:c,on:true});
+      }
+      ui.evNuevo={dow:[],modo:modo,fecha:''};save();render();flash('evento añadido');break;}
     case 'ev-del':{if(el.tagName!=='BUTTON')break;
       store.eventos=eventosS().filter(function(e){return e.id!==el.dataset.id;});
       save();render();break;}
@@ -4845,6 +4905,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
   eventosS,eventosDelDia,eventosDeFecha,diasCorta,eventoRowHTML,eventosTagsHTML,
+  fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos};
 load();
 render();

@@ -892,6 +892,55 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const evTrasBorrar = await page.evaluate(() => window.PG.eventosS().length);
   check('Ajustes: el evento se puede borrar', evTrasBorrar === 0, String(evTrasBorrar));
 
+  // 45b) Ajustes: además de los que se repiten cada semana, se puede añadir un evento puntual (un día
+  // en concreto, no una recurrencia) con recordatorio y cuenta atrás opcionales — esto es lo que
+  // faltaba: antes solo se podían marcar días de la semana, no una fecha suelta como "una presentación"
+  await page.click('[data-a="ev-modo"][data-modo="fecha"]');
+  await page.waitForTimeout(120);
+  const soloFecha = await page.evaluate(() => ({
+    hayFecha: !!document.getElementById('evNuevaFecha'),
+    hayDias: !!document.querySelector('[data-a="ev-dia"]'),
+  }));
+  check('Ajustes: al elegir "un día en concreto" aparece un selector de fecha (y no los días de la semana)',
+    soloFecha.hayFecha && !soloFecha.hayDias, JSON.stringify(soloFecha));
+
+  const enDiez = await page.evaluate(() => {
+    const d = new Date(); d.setDate(d.getDate() + 10);
+    const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return x.toISOString().slice(0, 10);
+  });
+  await page.fill('#evNuevoTitulo', 'Presentación de prueba');
+  await page.fill('#evNuevaFecha', enDiez);
+  await page.check('#evNuevoRecordatorio');
+  await page.check('#evNuevoCuenta');
+  await page.click('[data-a="ev-add"]');
+  await page.waitForTimeout(150);
+  const puntualCreado = await page.evaluate(() => {
+    const ev = window.PG.eventosS()[0];
+    return ev && { titulo: ev.titulo, modo: ev.modo, fecha: ev.fecha, recordatorio: ev.recordatorio, cuentaAtras: ev.cuentaAtras };
+  });
+  check('Ajustes: se puede crear un evento puntual en una fecha concreta, con recordatorio y cuenta atrás',
+    puntualCreado && puntualCreado.titulo === 'Presentación de prueba' && puntualCreado.modo === 'fecha' &&
+    puntualCreado.fecha === enDiez && puntualCreado.recordatorio === true && puntualCreado.cuentaAtras === true,
+    JSON.stringify(puntualCreado));
+
+  const proximosAjustes = await page.evaluate(() => document.getElementById('main').innerText);
+  check('Ajustes: el evento puntual aparece en la tarjeta "Próximos" con su cuenta atrás',
+    /Próximos/.test(proximosAjustes) && /Presentación de prueba/.test(proximosAjustes) && /faltan 10 días/.test(proximosAjustes),
+    '');
+
+  await gotoTab('hoy');
+  await page.waitForTimeout(150);
+  const proximosHoy = await page.evaluate(() => document.getElementById('main').innerText);
+  check('"Hoy" también muestra la tarjeta "Próximos" con el evento puntual (el recordatorio está a la vista)',
+    /Próximos/.test(proximosHoy) && /Presentación de prueba/.test(proximosHoy), '');
+
+  const enElDia = await page.evaluate((key) => window.PG.eventosDeFecha(key).map((e) => e.titulo), enDiez);
+  check('el evento puntual aparece exactamente en su fecha vía eventosDeFecha() (para "Mes"/"Semana")',
+    enElDia.includes('Presentación de prueba'), JSON.stringify(enElDia));
+
+  await page.evaluate(() => { window.PG.store.eventos = []; window.PG.save(); });
+
   // 46) los eventos recurrentes de hoy aparecen en "Hoy" y el día correspondiente se marca en "Mes"
   const hoyDow = await page.evaluate(() => new Date().getDay());
   await page.evaluate((dow) => {
