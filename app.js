@@ -12,6 +12,15 @@ const MON=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DAYN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const DAYSH=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWN0=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];   /* indexado como Date#getDay() */
+/* franja de 24 h: un color fijo por categoría (no por tipo de día), configurable en Ajustes */
+const TLCAT=[['sleep','Dormir','#7c5cff'],['work','Trabajo','#f59e0b'],['guard','Guardia','#ef4444'],
+             ['meal','Comidas','#10b981'],['gym','Gimnasio','#22d3ee'],['evt','Eventos','#a855f7']];
+const TLKEYS=TLCAT.map(function(c){return c[0];});
+function tlColor(k){const c=((store.franja||{}).colores||{})[k];
+  if(c)return c;
+  for(let i=0;i<TLCAT.length;i++)if(TLCAT[i][0]===k)return TLCAT[i][2];
+  return '#888888';}
+function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf(h)>=0?h:24;}
 function mondayOf(d){const x=new Date(d.getTime());x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
 function addDays(d,n){const x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
 function iso(d){const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10);}
@@ -61,6 +70,7 @@ function DEFAULTS(){return {
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
   tema:{brand:'',brand2:'',ink:''},
+  franja:{horas:24,colores:{}},
   eventos:[],
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
@@ -264,6 +274,11 @@ function normalize(o){
   if(o.rotation.calWeekStart!=='lun'&&o.rotation.calWeekStart!=='dom')o.rotation.calWeekStart='lun';
   if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:'',ink:''};
   ['brand','brand2','ink'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
+  if(!o.franja||typeof o.franja!=='object')o.franja={};
+  o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
+  if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
+  Object.keys(o.franja.colores).forEach(function(k){
+    if(TLKEYS.indexOf(k)<0||!/^#[0-9a-fA-F]{6}$/.test(o.franja.colores[k]||''))delete o.franja.colores[k];});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
   if(typeof o.rotation.guardiasMes!=='number')
@@ -1127,36 +1142,76 @@ function mealRowsHTML(dateStr,sh){
       (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓ ya me la he comido</button>':'')+
       '</span></div>';}).join('');
 }
+function franjaVentana(marcas){
+  /* cuántas horas de la franja se ven (Ajustes → «Franja de 24 h»). Si son menos de 24,
+     la ventana se centra en lo que realmente pasa ese día en vez de recortar por el principio. */
+  const H=tlHoras();
+  if(H>=24)return {from:0,to:1440};
+  const w=H*60,ok=marcas.filter(function(m){return m!=null;});
+  if(!ok.length)return {from:480,to:Math.min(1440,480+w)};
+  const lo=Math.min.apply(Math,ok),hi=Math.max.apply(Math,ok);
+  let from=Math.round((lo+hi)/2-w/2);
+  if(from<0)from=0;
+  if(from+w>1440)from=1440-w;
+  return {from:from,to:from+w};
+}
 function timelineBar(dateStr,inf){
-  /* barra de 24h de un día (informe: sustituye a la línea de texto de Semana, y es la agenda de Hoy):
+  /* barra del día (informe: sustituye a la línea de texto de Semana, y es la agenda de Hoy):
      sueño de sleepOf(), trabajo/guardia de las horas del propio tipo de día o de la jornada base,
-     comidas de slotsFor() — los mismos tres orígenes de datos que ya se listaban como texto */
+     comidas de slotsFor() — los mismos tres orígenes de datos que ya se listaban como texto.
+     Cada categoría lleva su color fijo (tlColor), configurable en Ajustes. */
   if(!dateStr)return '';
   inf=inf||dayInfo(dateStr);
   const sh=shiftById(inf.shiftId),sl=sleepOf(dateStr,inf),jor=jornadaOf(dateStr,inf);
-  const pct=function(t){const m=mins(t);return m==null?null:Math.max(0,Math.min(100,m/1440*100));};
-  const segs=[];
-  if(sl.wake){const p=pct(sl.wake);if(p!=null)segs.push('<i class="tl-seg sleep" style="left:0%;width:'+p.toFixed(1)+'%"></i>');}
-  if(sl.bed){const p=pct(sl.bed);if(p!=null)segs.push('<i class="tl-seg sleep" style="left:'+p.toFixed(1)+'%;width:'+(100-p).toFixed(1)+'%"></i>');}
   const guardia=!!(sh&&isGuardia(sh));
   const work=(sh&&sh.start)?{start:sh.start,end:sh.end}:jor;
-  if(work&&work.start){
-    const p1=pct(work.start);let m2=mins(work.end);
-    if(p1!=null&&m2!=null){let p2=m2/1440*100;if(p2<=p1)p2=100;
-      segs.push('<i class="tl-seg '+(guardia?'guard':'work')+'" style="left:'+p1.toFixed(1)+'%;width:'+(p2-p1).toFixed(1)+'%"></i>');}}
-  const dots=(sh?slotsFor(sh.id):[]).map(function(s){const p=pct(s.time);if(p==null)return '';
-    return '<i class="tl-dot" style="left:'+p.toFixed(1)+'%" title="'+esc(s.time||'')+' · '+esc(s.label||'')+'"></i>';}).join('');
+  const comidas=(sh?slotsFor(sh.id):[]);
   const seg2=diaSegundo(dateStr,inf);
-  const gymDot=(seg2&&seg2.on&&seg2.hora)?(function(){const p=pct(seg2.hora);
-    return p==null?'':'<i class="tl-dot gym" style="left:'+p.toFixed(1)+'%" title="🏊 segundo entreno · '+esc(seg2.hora)+'"></i>';})():'';
-  const evDots=eventosDeFecha(dateStr).map(function(ev){const p=pct(ev.hora);if(p==null)return '';
-    return '<i class="tl-dot evt" style="left:'+p.toFixed(1)+'%;background:'+esc(ev.color)+'" title="📅 '+esc(ev.hora)+' '+esc(ev.titulo)+'"></i>';}).join('');
+  const evs=eventosDeFecha(dateStr);
+  const V=franjaVentana([mins(sl.wake),mins(sl.bed),
+    work&&mins(work.start),work&&mins(work.end),
+    (seg2&&seg2.on)?mins(seg2.hora):null]
+    .concat(comidas.map(function(c){return mins(c.time);}))
+    .concat(evs.map(function(e){return mins(e.hora);})));
+  const span=V.to-V.from;
+  const pct=function(m){return m==null?null:(m-V.from)/span*100;};
+  const dentro=function(m){return m!=null&&m>=V.from&&m<=V.to;};
+  const seg=function(m1,m2,color,titulo){
+    if(m1==null||m2==null)return '';
+    const a=Math.max(m1,V.from),b=Math.min(m2,V.to);
+    if(b<=a)return '';
+    return '<i class="tl-seg" style="left:'+pct(a).toFixed(1)+'%;width:'+((b-a)/span*100).toFixed(1)+
+      '%;background:'+esc(color)+'" title="'+esc(titulo||'')+'"></i>';};
+  const segs=[];
+  if(sl.wake)segs.push(seg(0,mins(sl.wake),tlColor('sleep'),'durmiendo hasta las '+sl.wake));
+  if(sl.bed)segs.push(seg(mins(sl.bed),1440,tlColor('sleep'),'a la cama a las '+sl.bed));
+  if(work&&work.start){
+    let m1=mins(work.start),m2=mins(work.end);
+    if(m1!=null&&m2!=null){if(m2<=m1)m2=1440;
+      segs.push(seg(m1,m2,tlColor(guardia?'guard':'work'),(guardia?'guardia ':'trabajo ')+work.start+'–'+work.end));}}
+  const dots=comidas.map(function(c){const m=mins(c.time);if(!dentro(m))return '';
+    return '<i class="tl-dot" style="left:'+pct(m).toFixed(1)+'%;background:'+esc(tlColor('meal'))+
+      '" title="'+esc(c.time||'')+' · '+esc(c.label||'')+'"></i>';}).join('');
+  const gymDot=(seg2&&seg2.on&&dentro(mins(seg2.hora)))?
+    ('<i class="tl-dot gym" style="left:'+pct(mins(seg2.hora)).toFixed(1)+'%;background:'+esc(tlColor('gym'))+
+      '" title="🏊 segundo entreno · '+esc(seg2.hora)+'"></i>'):'';
+  const evDots=evs.map(function(ev){const m=mins(ev.hora);if(!dentro(m))return '';
+    return '<i class="tl-dot evt" style="left:'+pct(m).toFixed(1)+'%;background:'+esc(ev.color||tlColor('evt'))+
+      '" title="📅 '+esc(ev.hora)+' '+esc(ev.titulo)+'"></i>';}).join('');
   let now='';
-  if(isToday(dateStr)){const d=new Date(),p=(d.getHours()*60+d.getMinutes())/1440*100;
-    now='<i class="tl-now" style="left:'+p.toFixed(1)+'%" title="ahora"></i>';}
-  return '<div class="tl-wrap"><div class="tl-axis"><span style="left:0%">0h</span><span style="left:25%">6h</span>'+
-    '<span style="left:50%">12h</span><span style="left:75%">18h</span><span style="left:100%">24h</span></div>'+
+  if(isToday(dateStr)){const d=new Date(),m=d.getHours()*60+d.getMinutes();
+    if(dentro(m))now='<i class="tl-now" style="left:'+pct(m).toFixed(1)+'%" title="ahora"></i>';}
+  const ejes=[0,.25,.5,.75,1].map(function(f){const m=V.from+span*f;
+    /* los extremos se anclan al borde: con translateX(-50%) se salían de la tarjeta */
+    const pos=f===0?'left:0;transform:none':(f===1?'right:0;left:auto;transform:none':'left:'+(f*100)+'%');
+    return '<span style="'+pos+'">'+Math.round(m/60)+'h</span>';}).join('');
+  return '<div class="tl-wrap"><div class="tl-axis">'+ejes+'</div>'+
     '<div class="tl-bar">'+segs.join('')+dots+gymDot+evDots+now+'</div></div>';
+}
+function franjaLeyendaHTML(){
+  return '<div class="tlleg">'+TLCAT.map(function(c){
+    return '<span><i style="background:'+esc(tlColor(c[0]))+'"></i>'+esc(c[1])+'</span>';}).join('')+
+    '<span class="sp"></span><button class="btn s" data-a="franja-cfg" style="padding:2px 8px;font-size:10.5px">colores y horas ▸</button></div>';
 }
 function dayPanelHTML(dateStr){
   /* panel inline de un día (informe, decisión A: recomendada) — lo que antes abría renderDayModal()
@@ -1207,7 +1262,7 @@ function renderHoy(){
     modoAvisoHTML()+
     '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
     (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
-    timelineBar(hoy,inf)+
+    timelineBar(hoy,inf)+franjaLeyendaHTML()+
     '<div class="kpis" style="margin-top:10px">'+
       '<div><b>'+ft.kcal+'</b><span>kcal hoy</span></div>'+
       '<div><b>'+(pl.kcal||'—')+'</b><span>kcal plan</span></div>'+
@@ -2929,6 +2984,19 @@ function renderAjustes(){
       <label class="fld" style="margin-top:8px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">
         <input type="checkbox" id="calOculto" data-a="cal-oculto" style="width:auto" ${store.rotation.calOculto!==false?'checked':''}>
         <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></label>
+    </div>
+
+    <div class="card" data-cfg="franja"><h2>La franja del día</h2>
+      <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
+      <label class="fld" style="max-width:260px">Cuántas horas se ven
+        <select data-a="franja-horas">${[[24,'24 h · el día entero'],[18,'18 h'],[12,'12 h · centrada en tu día']].map(function(o){
+          return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
+      <div class="colgrid">${TLCAT.map(function(c){
+        return '<label class="fld">'+esc(c[1])+
+          '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
+          '</label>';}).join('')}</div>
+      <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
+      <div style="margin-top:12px">${timelineBar(iso(new Date()))}</div>
     </div>
 
     <div class="card"><h2>Apariencia</h2>
@@ -4852,6 +4920,18 @@ document.addEventListener('change',e=>{
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
     case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
       store.meta.backupAvisoD=Math.max(1,Math.min(90,+el.value||13));save();render();break;}
+    case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
+      store.franja.horas=+el.value||24;save();render();break;}
+    case 'franja-color':{if(!store.franja)store.franja={horas:24};
+      if(!store.franja.colores)store.franja.colores={};
+      store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
+    case 'franja-reset':{if(!store.franja)store.franja={horas:24};
+      store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
+    case 'franja-cfg':{ui.tab='ajustes';render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="franja"]');
+        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
+      break;}
     case 'tema-f':{if(!store.tema)store.tema={brand:'',brand2:''};
       store.tema[el.dataset.k]=el.value||'';aplicarTema();save();break;}
     case 'tema-reset':{store.tema={brand:'',brand2:'',ink:''};aplicarTema();save();render();
@@ -4941,6 +5021,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
+  TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,

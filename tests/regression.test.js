@@ -1214,6 +1214,57 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const fueATypes = await page.evaluate((sid) => window.PG.ui.tab === 'types' && !!document.querySelector(`#main .card[data-shift="${sid}"]`), firstShiftId);
   check('Ajustes: el botón "comidas" de un tipo de día lleva a su tarjeta en "Días y menús"', fueATypes, '');
 
+  // 92-95) la franja del día: un color fijo por categoría (no por tipo de día), cambiable en Ajustes,
+  // y la opción de ver menos de 24 h centradas en lo que pasa ese día
+  await gotoTab('ajustes');
+  await page.waitForTimeout(200);
+  const franjaCard = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cfg="franja"]');
+    if (!c) return null;
+    return {
+      horas: !!c.querySelector('select[data-a="franja-horas"]'),
+      colores: [...c.querySelectorAll('input[data-a="franja-color"]')].map(i => i.dataset.k),
+      preview: !!c.querySelector('.tl-bar'),
+    };
+  });
+  check('Ajustes: la franja del día tiene un color por categoría y un selector de cuántas horas se ven',
+    franjaCard && franjaCard.horas && franjaCard.preview &&
+    ['sleep', 'work', 'guard', 'meal', 'gym', 'evt'].every(k => franjaCard.colores.includes(k)),
+    JSON.stringify(franjaCard));
+
+  // cambiar el color de "trabajo" en Ajustes tiene que verse en la franja de "Hoy"
+  await page.evaluate(() => {
+    const i = document.querySelector('#main input[data-a="franja-color"][data-k="work"]');
+    i.value = '#ff00aa';
+    i.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForTimeout(200);
+  await gotoTab('hoy');
+  await page.waitForTimeout(200);
+  const usaColorPropio = await page.evaluate(() =>
+    [...document.querySelectorAll('#main .tl-seg')].some(s => /255,\s*0,\s*170/.test(getComputedStyle(s).backgroundColor)));
+  check('el color de "trabajo" que eliges en Ajustes se aplica a la franja de "Hoy"', usaColorPropio, '');
+
+  // la leyenda dice qué es cada color y lleva de vuelta a Ajustes
+  const leyenda = await page.evaluate(() => {
+    const l = document.querySelector('#main .tlleg');
+    return l ? { n: l.querySelectorAll('i').length, atajo: !!l.querySelector('[data-a="franja-cfg"]') } : null;
+  });
+  check('"Hoy" explica con una leyenda qué es cada color de la franja y lleva a cambiarlos',
+    leyenda && leyenda.n === 6 && leyenda.atajo, JSON.stringify(leyenda));
+
+  // a 12 h la franja deja de empezar en 0h: se centra en la parte del día que tiene algo
+  const ejes24 = await page.evaluate(() => [...document.querySelectorAll('#main .tl-axis span')].map(s => s.textContent));
+  await page.evaluate(() => { window.PG.store.franja = { horas: 12, colores: {} }; window.PG.render(); });
+  await page.waitForTimeout(200);
+  const ejes12 = await page.evaluate(() => [...document.querySelectorAll('#main .tl-axis span')].map(s => s.textContent));
+  check('eligiendo 12 h la franja se centra en tu día en vez de mostrar las 24 h enteras',
+    ejes24[0] === '0h' && ejes24[ejes24.length - 1] === '24h' &&
+    ejes12[0] !== '0h' && (parseInt(ejes12[ejes12.length - 1], 10) - parseInt(ejes12[0], 10)) === 12,
+    JSON.stringify([ejes24, ejes12]));
+  await page.evaluate(() => { window.PG.store.franja = { horas: 24, colores: {} }; window.PG.render(); });
+  await page.waitForTimeout(150);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
