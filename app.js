@@ -2189,34 +2189,61 @@ function renderHistorialCard(){
     (ultima?diagramaHTML(regionesDeSesion(ultima.id),'músculos de tu última sesión ('+esc((g.rutinas.find(function(r){return r.id===ultima.rutinaId;})||{}).nombre||'')+')'):'')+
     '<details class="dtip" style="margin-top:10px"><summary class="mini">últimas sesiones</summary>'+listaSes+'</details>'+
     '</div>';}
+const CTIPOS=[['natación','🏊'],['carrera','🏃'],['bici','🚴'],['otro','🤸']];
+function cardioPorTipo(){
+  const g=gymS(),porTipo={};
+  g.cardio.forEach(function(x){(porTipo[x.tipo]=porTipo[x.tipo]||[]).push(x);});
+  Object.keys(porTipo).forEach(function(t){
+    porTipo[t].sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});});
+  return porTipo;}
+function cardioFormHTML(tipo){
+  return '<div class="fgrid c3 tight" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">'+
+    '<label class="fld">fecha<input type="date" id="cardioFecha" value="'+iso(new Date())+'"></label>'+
+    '<label class="fld">minutos<input type="number" min="1" max="360" id="cardioMin" value="30"></label>'+
+    '<label class="fld">km (opcional)<input type="number" min="0" step="0.1" id="cardioKm"></label>'+
+    '<label class="fld" style="grid-column:1/-1">nota<input id="cardioNota" placeholder="ritmo, sensaciones…"></label>'+
+    '</div>'+
+    '<input type="hidden" id="cardioTipo" value="'+esc(tipo)+'">'+
+    '<div class="row" style="margin-top:8px"><button class="btn p" data-a="cardio-add">apuntar '+esc(tipo)+'</button></div>';}
 function renderCardioCard(){
-  const g=gymS(),tipos=[['natación','🏊'],['carrera','🏃'],['bici','🚴'],['otro','🤸']];
-  const porTipo={};g.cardio.forEach(function(x){(porTipo[x.tipo]=porTipo[x.tipo]||[]).push(x);});
-  Object.keys(porTipo).forEach(function(t){porTipo[t].sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});});
-  const bloques=tipos.map(function(t){
-    const nm=t[0],ic=t[1],lista=(porTipo[nm]||[]).slice(0,20);
-    const ultimo=lista[0];
-    return '<details class="dtip" '+(ui.cardioAbierto===nm?'open':'')+'>'+
-      '<summary class="mini" data-a="cardio-open" data-tipo="'+nm+'">'+ic+' '+(nm.charAt(0).toUpperCase()+nm.slice(1))+' <b style="color:var(--ink);text-transform:none;letter-spacing:0">'+lista.length+'</b>'+
-      (ultimo?' <span style="text-transform:none;letter-spacing:0">· última vez '+ultimo.fecha.slice(8)+'/'+ultimo.fecha.slice(5,7)+'</span>':'')+' ▾</summary>'+
-      (lista.length?('<div class="daylist" style="margin-top:8px">'+lista.map(function(x){
+  /* el usuario pidió quitar el scroll infinito: primero los tipos como fichas y, al tocar una,
+     su propia pantalla con un botón de volver — en vez de cuatro acordeones abiertos a la vez */
+  const porTipo=cardioPorTipo(),abierto=ui.cardioAbierto;
+  const ficha=CTIPOS.filter(function(t){return t[0]===abierto;})[0];
+  if(ficha){
+    const nm=ficha[0],lista=porTipo[nm]||[];
+    const minTot=lista.reduce(function(a,x){return a+(x.duracionMin||0);},0);
+    const kmTot=Math.round(lista.reduce(function(a,x){return a+(x.distanciaKm||0);},0)*10)/10;
+    const mes=lista.filter(function(x){return (x.fecha||'').slice(0,7)===iso(new Date()).slice(0,7);}).length;
+    return '<div class="card" data-cardio="'+esc(nm)+'">'+
+      '<div class="row" style="align-items:center;gap:8px">'+
+        '<button class="btn s" data-a="cardio-back">‹ Cardio</button>'+
+        '<h2 style="margin:0">'+ficha[1]+' '+esc(nm.charAt(0).toUpperCase()+nm.slice(1))+'</h2></div>'+
+      '<div class="kpis compact" style="margin-top:10px">'+
+        '<div><b>'+lista.length+'</b><span>sesiones</span></div>'+
+        '<div><b>'+mes+'</b><span>este mes</span></div>'+
+        '<div><b>'+fmtHM(minTot)+'</b><span>en total</span></div>'+
+        (kmTot?'<div><b>'+kmTot+'</b><span>km</span></div>':'')+
+      '</div>'+
+      (lista.length?('<div class="daylist" style="margin-top:10px">'+lista.map(function(x){
         return '<div class="frow"><span><span class="fn">'+x.fecha.slice(8)+'/'+x.fecha.slice(5,7)+'</span>'+
           (x.nota?'<span class="fm"> · '+esc(x.nota)+'</span>':'')+'</span>'+
           '<span class="mini chipnum">'+x.duracionMin+' min'+(x.distanciaKm?(' · '+x.distanciaKm+' km'):'')+'</span>'+
           '<span><button class="btn d s" data-a="cardio-del" data-id="'+x.id+'" title="borrar">×</button></span></div>';}).join('')+'</div>')
-        :'<div class="empty" style="margin-top:8px">Nada apuntado todavía de '+nm+'.</div>')+
-      '</details>';}).join('');
+        :'<div class="empty" style="margin-top:10px">Nada apuntado todavía de '+esc(nm)+'. Apúntalo aquí abajo.</div>')+
+      cardioFormHTML(nm)+
+      '</div>';}
+  const fichas=CTIPOS.map(function(t){
+    const nm=t[0],lista=porTipo[nm]||[],ultimo=lista[0];
+    return '<button class="ctile" data-a="cardio-open" data-tipo="'+esc(nm)+'">'+
+      '<span class="ctile-ic">'+t[1]+'</span>'+
+      '<b>'+esc(nm.charAt(0).toUpperCase()+nm.slice(1))+'</b>'+
+      '<span class="ctile-n">'+lista.length+(lista.length===1?' sesión':' sesiones')+'</span>'+
+      '<span class="mini">'+(ultimo?('última: '+ultimo.fecha.slice(8)+'/'+ultimo.fecha.slice(5,7)):'sin apuntar')+'</span>'+
+      '</button>';}).join('');
   return '<div class="card"><h2>🏃 Cardio</h2>'+
-    '<p class="note">Aparte del entreno de fuerza: natación, carrera, bici… toca un tipo para ver o apuntar el suyo.</p>'+
-    bloques+
-    '<div class="fgrid c3" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">'+
-      '<label class="fld">tipo<select id="cardioTipo">'+tipos.map(function(t){return '<option value="'+t[0]+'" '+(ui.cardioAbierto===t[0]?'selected':'')+'>'+t[0]+'</option>';}).join('')+'</select></label>'+
-      '<label class="fld">fecha<input type="date" id="cardioFecha" value="'+iso(new Date())+'"></label>'+
-      '<label class="fld">minutos<input type="number" min="1" max="360" id="cardioMin" value="30"></label>'+
-      '<label class="fld">km (opcional)<input type="number" min="0" step="0.1" id="cardioKm"></label>'+
-      '<label class="fld" style="grid-column:1/-1">nota<input id="cardioNota" placeholder="ritmo, sensaciones…"></label>'+
-    '</div>'+
-    '<div class="row" style="margin-top:8px"><button class="btn p" data-a="cardio-add">apuntar cardio</button></div>'+
+    '<p class="note">Aparte del entreno de fuerza. Toca un tipo y entras en su pantalla.</p>'+
+    '<div class="ctiles">'+fichas+'</div>'+
     '</div>';}
 function entrenoHeatmapCard(){
   /* informe: falta una gráfica con los días entrenados — 6 semanas, fuerza (sesiones) y cardio aparte */
@@ -3740,11 +3767,15 @@ function act(a,el){
     case 'ses-descartar':{confirmar('¿Descartar esta sesión? Las series que has montado se quitan del registro.').then(function(ok){
         if(!ok)return;flash(descartarSesion());});break;}
     case 'cardio-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
-      const tipoNuevo=gv('cardioTipo');ui.cardioAbierto=tipoNuevo;
+      const tipoNuevo=gv('cardioTipo')||ui.cardioAbierto||'otro';ui.cardioAbierto=tipoNuevo;
       flash(addCardio({tipo:tipoNuevo,fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
         distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
-    case 'cardio-open':{const t=el.dataset.tipo;ui.cardioAbierto=(ui.cardioAbierto===t)?'':t;render();break;}
+    case 'cardio-open':{ui.cardioAbierto=el.dataset.tipo||'';render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cardio]');
+        if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},40);
+      break;}
+    case 'cardio-back':ui.cardioAbierto='';render();break;
     case 'gym-set':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
       const r=addSet(el.dataset.key,{ex:gv('setEx'),kg:gv('setKg'),reps:gv('setReps'),rpe:gv('setRpe'),nota:gv('setNota')});
       ui.gymEx=gv('setEx');render();flash(r);break;}

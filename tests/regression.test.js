@@ -466,34 +466,48 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('el diagrama de músculos resalta al menos una región para una sesión de prueba',
     regionesResaltadas >= 1, 'regiones resaltadas: ' + regionesResaltadas);
 
-  // 20) se puede registrar un cardio (natación/carrera/bici/otro) aparte de la fuerza
-  await page.selectOption('#cardioTipo', 'carrera');
+  // 20) Cardio ya no es un scroll infinito: primero las fichas de tipo y, al tocar una, su propia
+  // pantalla con un botón de volver (comentario del usuario). Se apunta desde dentro de esa pantalla.
+  const fichasCardio = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('#main .ctile[data-a="cardio-open"]')).map((b) => b.dataset.tipo));
+  check('Cardio empieza con una ficha por tipo en vez de cuatro listas abiertas a la vez',
+    ['natación', 'carrera', 'bici', 'otro'].every((t) => fichasCardio.includes(t)) &&
+    (await page.evaluate(() => !document.querySelector('#main .card[data-cardio]'))),
+    JSON.stringify(fichasCardio));
+
+  await page.click('.ctile[data-a="cardio-open"][data-tipo="carrera"]');
+  await page.waitForTimeout(250);
+  const pantallaCarrera = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cardio="carrera"]');
+    return c ? { volver: !!c.querySelector('[data-a="cardio-back"]'), otras: document.querySelectorAll('#main .ctile').length } : null;
+  });
+  check('al tocar un tipo entras en su pantalla, con botón de volver y sin las demás fichas delante',
+    pantallaCarrera && pantallaCarrera.volver && pantallaCarrera.otras === 0, JSON.stringify(pantallaCarrera));
+
   await page.fill('#cardioFecha', '2026-09-10');
   await page.fill('#cardioMin', '35');
   await page.fill('#cardioKm', '5.2');
   await page.click('[data-a="cardio-add"]');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(250);
   const cardioGuardado = await page.evaluate(() => window.PG.gymS().cardio.some(
     (c) => c.tipo === 'carrera' && c.duracionMin === 35 && c.distanciaKm === 5.2 && c.fecha === '2026-09-10'
   ));
-  check('se puede registrar un cardio con tipo, duración y distancia', cardioGuardado);
+  check('se puede registrar un cardio con duración y distancia desde la pantalla de su tipo', cardioGuardado);
 
-  // 20b) Cardio ya no es una lista larga sin fin: se agrupa en 3-4 bloques por tipo (natación/carrera/
-  // bici/otro), plegados, y tras apuntar uno el bloque de ese tipo queda abierto como confirmación
-  const cardioAgrupado = await page.evaluate(() => {
-    const detalles = Array.from(document.querySelectorAll('#main details.dtip')).filter(
-      (d) => /\b(Natación|Carrera|Bici|Otro)\b/.test((d.querySelector('summary') || {}).textContent || '')
-    );
-    const carrera = detalles.find((d) => /\bCarrera\b/.test(d.querySelector('summary').textContent));
-    return {
-      bloques: detalles.length === 4,
-      carreraAbierta: carrera ? carrera.open : null,
-      carreraTieneUno: carrera ? /10\/09/.test(carrera.textContent) : null,
-    };
+  const trasApuntar = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cardio="carrera"]');
+    return c ? /10\/09/.test(c.textContent) : null;
   });
-  check('Cardio agrupa las entradas por tipo en bloques plegables, y el tipo recién usado queda abierto',
-    cardioAgrupado.bloques && cardioAgrupado.carreraAbierta === true && cardioAgrupado.carreraTieneUno,
-    JSON.stringify(cardioAgrupado));
+  check('tras apuntarlo sigues en la pantalla de ese tipo y el registro aparece en su lista', trasApuntar === true, '');
+
+  await page.click('[data-a="cardio-back"]');
+  await page.waitForTimeout(250);
+  const volvioAlIndice = await page.evaluate(() => {
+    const t = document.querySelector('#main .ctile[data-tipo="carrera"]');
+    return { indice: !!t && !document.querySelector('#main .card[data-cardio]'), cuenta: t ? t.textContent : '' };
+  });
+  check('el botón de volver te devuelve a las fichas, que ya cuentan la sesión apuntada',
+    volvioAlIndice.indice && /1 sesión/.test(volvioAlIndice.cuenta), JSON.stringify(volvioAlIndice));
 
   // ===================== Comida: catálogo offline y alta manual =====================
 

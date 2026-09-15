@@ -276,6 +276,18 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .colgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(94px,1fr));gap:9px;margin-top:10px}
 .colgrid .fld{min-width:0}
 .colgrid input[type=color]{width:100%}
+/* cardio: fichas de tipo en vez de cuatro acordeones (se entra en la pantalla de cada uno) */
+.ctiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:9px;margin-top:10px}
+.ctile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;
+  font:inherit;color:var(--ink);cursor:pointer;padding:11px 12px;border-radius:12px;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 42%,var(--card));
+  transition:transform .14s,border-color .16s,box-shadow .16s}
+.ctile:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--brand) 60%,var(--line));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.ctile:active{transform:translateY(0)}
+.ctile-ic{font-size:22px;line-height:1.2}
+.ctile>b{font-size:14px}
+.ctile-n{font-size:12px;font-weight:700;color:var(--brand)}
 .tl-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--brand);box-shadow:0 0 6px color-mix(in srgb,var(--brand) 80%,transparent)}
 .dnum{font-size:11px;font-weight:800;color:var(--ink2)}
 .dnm{font-size:11.5px;font-weight:700;line-height:1.2}
@@ -388,12 +400,12 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .semdia>span{font-size:10px;font-weight:800;color:var(--ink2);letter-spacing:.06em}
 .semdia>select{width:100%;padding:5px 2px;text-align:center;font-size:12px;font-weight:700}
 .semdia>b{font-size:14px;line-height:1}
-/* dentro de una tarjeta los campos son cortos (clave, horas): caben de dos en dos ya en el móvil */
-.tarj .fgrid{grid-template-columns:1fr 1fr;gap:8px}
-@media(min-width:600px){.tarj .fgrid.c3{grid-template-columns:1fr 1fr 1fr}}
+/* campos cortos (clave, horas, minutos): caben de dos en dos ya en el móvil */
+.tarj .fgrid,.fgrid.tight{grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:600px){.tarj .fgrid.c3,.fgrid.tight.c3{grid-template-columns:1fr 1fr 1fr}}
 /* los <input> traen un ancho intrínseco propio: sin esto se salen de su columna y se cortan */
-.tarj .fld{min-width:0}
-.tarj .fld>input,.tarj .fld>select{width:100%}
+.tarj .fld,.fgrid.tight .fld{min-width:0}
+.tarj .fld>input,.tarj .fld>select,.fgrid.tight .fld>input,.fgrid.tight .fld>select{width:100%}
 .tarj>input{width:100%}
 .empty{color:var(--ink2);font-size:12.5px;font-style:italic;padding:8px 0}
 footer{max-width:1220px;margin:0 auto;padding:6px 14px 40px;color:var(--ink2);font-size:11.5px;position:relative;z-index:1}
