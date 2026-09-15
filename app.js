@@ -60,7 +60,7 @@ function DEFAULTS(){return {
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
-  tema:{brand:'',brand2:''},
+  tema:{brand:'',brand2:'',ink:''},
   eventos:[],
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
@@ -235,6 +235,7 @@ function aplicarTema(){
   const ok=v=>/^#[0-9a-fA-F]{6}$/.test(v||'');
   if(ok(t.brand))root.setProperty('--brand',t.brand);else root.removeProperty('--brand');
   if(ok(t.brand2))root.setProperty('--brand2',t.brand2);else root.removeProperty('--brand2');
+  if(ok(t.ink))root.setProperty('--ink',t.ink);else root.removeProperty('--ink');
 }
 function normalize(o){
   const d=DEFAULTS();
@@ -261,8 +262,8 @@ function normalize(o){
   if(isNaN(o.rotation.saltoDia.to))o.rotation.saltoDia.to=1;
   if(typeof o.rotation.icsAvisoMin!=='number'||o.rotation.icsAvisoMin<0)o.rotation.icsAvisoMin=30;
   if(o.rotation.calWeekStart!=='lun'&&o.rotation.calWeekStart!=='dom')o.rotation.calWeekStart='lun';
-  if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:''};
-  ['brand','brand2'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
+  if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:'',ink:''};
+  ['brand','brand2','ink'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
   if(typeof o.rotation.guardiasMes!=='number')
@@ -1431,9 +1432,6 @@ function renderMonth(){
   $('#main').innerHTML=`<div class="grid">
     <div class="card"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
       ${modoAvisoHTML()}
-      <details class="dtip"><summary class="mini">ⓘ cómo se calcula este mes ▾</summary>
-      <p class="note" style="margin-top:6px"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
-      </details>
       <div class="row" style="margin-top:8px">
         <button class="btn s" data-a="mon-prev">‹</button>
         <input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" style="width:160px">
@@ -1442,7 +1440,17 @@ function renderMonth(){
         <span class="sp"></span>
         <button class="btn s" data-a="mon-auto">repartir ${svc.guardias} guardias</button>
         <button class="btn s" data-a="mon-clear">vaciar mes</button></div>
-      <details class="dtip" style="margin-top:10px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
+      <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
+      ${ui.monSel?dayPanelHTML(ui.monSel):''}
+      <div class="row" style="margin-top:10px">
+        <span class="mini">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo · ':''}${!svc.set&&!store.rotation.monthService
+          ?'sin servicio puesto'
+          :(g.any!==svc.guardias?'⚠ '+g.any+'/'+svc.guardias+' guardias':'cupo cubierto')}</span>
+        <span class="sp"></span><button class="btn s" data-a="mon-sync">volcar al calendario de «Semana»</button></div>
+      <details class="dtip" style="margin-top:12px"><summary class="mini">ⓘ cómo se calcula este mes ▾</summary>
+      <p class="note" style="margin-top:6px"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
+      </details>
+      <details class="dtip" style="margin-top:6px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
       <div class="row" style="margin-top:8px">
         <label class="fld">Servicio que rotas este mes<select data-a="mon-svc">
           <option value="" ${svc.set&&svc.service?'':'selected'}>· sin poner: lo marcas tú ·</option>
@@ -1457,7 +1465,7 @@ function renderMonth(){
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s ${store.rotation.autoPos?'g':''}" data-a="mon-autopos">
           ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
       </details>
-      <div class="kpis">
+      <div class="kpis" style="margin-top:8px">
         <div><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))}</span></div>
         <div><b>${list.filter(function(d){return /saliente/i.test(d.name);}).length}</b><span>días salientes</span></div>
         <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
@@ -1471,13 +1479,6 @@ function renderMonth(){
         <div><b>${acostarsePara(despertarBase())}</b><span>acostarse para ${store.sueno?store.sueno.min:8} h</span></div>
       </div>
       </details>
-      <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
-      ${ui.monSel?dayPanelHTML(ui.monSel):''}
-      <div class="row" style="margin-top:10px">
-        <span class="mini">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo · ':''}${!svc.set&&!store.rotation.monthService
-          ?'sin servicio puesto'
-          :(g.any!==svc.guardias?'⚠ '+g.any+'/'+svc.guardias+' guardias':'cupo cubierto')}</span>
-        <span class="sp"></span><button class="btn s" data-a="mon-sync">volcar al calendario de «Semana»</button></div>
     </div>
     ${serviciosCard()}
     ${vacCardMonth(y,mo,list)}
@@ -2827,9 +2828,10 @@ function renderAjustes(){
       <div class="row">
         <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
         <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color del texto<input type="color" value="${esc(tm.ink||'#e9f2ff')}" data-a="tema-f" data-k="ink" style="height:30px;width:56px;padding:2px"></label>
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
       </div>
-      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro.</p>
+      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
       <label class="fld" style="max-width:220px;margin-top:12px">Primer día de la semana en «Mes»
         <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
           <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label>
@@ -4726,8 +4728,8 @@ document.addEventListener('change',e=>{
       store.meta.backupAvisoD=Math.max(1,Math.min(90,+el.value||13));save();render();break;}
     case 'tema-f':{if(!store.tema)store.tema={brand:'',brand2:''};
       store.tema[el.dataset.k]=el.value||'';aplicarTema();save();break;}
-    case 'tema-reset':{store.tema={brand:'',brand2:''};aplicarTema();save();render();
-      flash('color de acento restablecido al de la app');break;}
+    case 'tema-reset':{store.tema={brand:'',brand2:'',ink:''};aplicarTema();save();render();
+      flash('colores restablecidos a los de la app');break;}
     case 'jor-f':{const j=store.rotation.jornada||(store.rotation.jornada={start:'',end:'',workdays:[1,2,3,4,5]});
       j[el.dataset.f]=el.value||'';save();render();break;}
     case 'mon-svc':{const y=monthDate.getFullYear(),m=monthDate.getMonth();

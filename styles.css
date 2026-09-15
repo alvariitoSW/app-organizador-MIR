@@ -232,7 +232,8 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
 .cal .wd{text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
 .dbox{min-height:64px;border:1px solid var(--line);border-top:3px solid var(--line);border-radius:11px;padding:4px 5px;cursor:pointer;
-  background:color-mix(in srgb,var(--card) 62%,var(--bg));display:flex;flex-direction:column;gap:2px;transition:transform .14s,border-color .16s,box-shadow .16s}
+  background:color-mix(in srgb,var(--card) 62%,var(--bg));display:flex;flex-direction:column;gap:2px;transition:transform .14s,border-color .16s,box-shadow .16s;
+  color:var(--ink);font:inherit;text-align:left}
 .dbox:hover{border-color:color-mix(in srgb,var(--brand) 60%,var(--line));box-shadow:var(--glow)}
 @media(hover:hover){.dbox:hover{transform:translateY(-2px)}}
 .dbox.on{background:color-mix(in srgb,var(--card) 94%,transparent)}
@@ -240,6 +241,18 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .dbox.off{opacity:.35}
 .dbox.today{outline:2px solid var(--brand);outline-offset:-1px;box-shadow:var(--glow)}
 .dbox.sel{border-top-color:var(--brand2)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--brand2) 55%,transparent)}
+/* móvil: que quepa el mes entero sin scroll dentro de la propia cuadrícula — casillas más bajas,
+   nombre del día en una sola línea (con puntos suspensivos) y las líneas de detalle (horario, sueño)
+   se ocultan aquí porque ya se ven enteras al tocar el día */
+@media(max-width:560px){
+  .cal{gap:4px}
+  .dbox{min-height:0;padding:4px 4px;gap:1px}
+  .dnum{font-size:10px}
+  .dnm{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .djob,.dsl{display:none}
+  .dflag{font-size:8.5px}
+  .dgym,.devt{font-size:9.5px}
+}
 .daydetail{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}
 .daydetail.today{border-color:var(--brand);box-shadow:var(--glow)}

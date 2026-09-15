@@ -946,6 +946,52 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const habTrasBorrar = await page.evaluate(() => window.PG.habitosS().items.length);
   check('Hábitos: se puede borrar un hábito (con confirmación) y se limpia su historial', habTrasBorrar === 0, String(habTrasBorrar));
 
+  // 48) "Mes": el nombre del tipo de día (p. ej. "Saliente", "Vacaciones") usa el color de texto del
+  // tema en vez del negro por defecto del navegador — bug real: ".dbox" es un <button> sin "color"
+  // propio, así que heredaba "buttontext" del navegador (negro en algunos móviles, aunque el resto de
+  // la app esté en modo oscuro) en vez de var(--ink)
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const dnmColor = await page.evaluate(() => {
+    const el = document.querySelector('.dbox .dnm');
+    return el ? getComputedStyle(el).color : null;
+  });
+  check('"Mes": el nombre del tipo de día usa el color de texto del tema, no el negro por defecto del botón',
+    dnmColor === 'rgb(233, 242, 255)', String(dnmColor));
+
+  // 49) Ajustes: además del arreglo de arriba, hay un color de texto configurable a mano (por si algún
+  // móvil concreto sigue sin verse bien)
+  await gotoTab('ajustes');
+  await page.waitForTimeout(150);
+  const inkPicker = await page.evaluate(() => !!document.querySelector('#main input[data-a="tema-f"][data-k="ink"]'));
+  check('Ajustes: el color del texto se puede fijar a mano, además del principal y el secundario', inkPicker, '');
+
+  // 50) "Mes": la cuadrícula aparece antes que las explicaciones y los números, para que se vea nada
+  // más entrar en vez de tener que bajar primero por todo eso
+  await gotoTab('month');
+  await page.waitForTimeout(150);
+  const ordenOk = await page.evaluate(() => {
+    const cal = document.querySelector('#main .cal');
+    const detalle = Array.from(document.querySelectorAll('#main details.dtip summary'))
+      .find((s) => /cómo se calcula/i.test(s.textContent));
+    if (!cal || !detalle) return false;
+    return !!(cal.compareDocumentPosition(detalle) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  check('"Mes": la cuadrícula del calendario aparece antes que las explicaciones y los números', ordenOk, '');
+
+  // 51) "Mes" en móvil: cada casilla es compacta (una línea por dato, sin horario/sueño de más) para
+  // que quepa el mes entero sin tener que hacer mucho scroll
+  const prevViewport = page.viewportSize();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(150);
+  const cellHeight = await page.evaluate(() => {
+    const box = document.querySelector('#main .dbox.on') || document.querySelector('#main .dbox');
+    return box ? box.getBoundingClientRect().height : null;
+  });
+  check('"Mes" en móvil: las casillas del calendario son compactas (≤60px de alto)',
+    cellHeight != null && cellHeight <= 60, String(cellHeight));
+  if (prevViewport) await page.setViewportSize(prevViewport);
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
