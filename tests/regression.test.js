@@ -988,8 +988,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const box = document.querySelector('#main .dbox.on') || document.querySelector('#main .dbox');
     return box ? box.getBoundingClientRect().height : null;
   });
-  check('"Mes" en móvil: las casillas del calendario tienen un tamaño cómodo (entre 44 y 90px de alto)',
-    cellHeight != null && cellHeight >= 44 && cellHeight <= 90, String(cellHeight));
+  check('"Mes" en móvil: las casillas del calendario tienen un tamaño cómodo (entre 44 y 110px de alto)',
+    cellHeight != null && cellHeight >= 44 && cellHeight <= 110, String(cellHeight));
   if (prevViewport) await page.setViewportSize(prevViewport);
 
   // 52) "Mes" en móvil: la cuadrícula no desborda el ancho de la pantalla (bug real: un grid item sin

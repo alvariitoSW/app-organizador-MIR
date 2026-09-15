@@ -249,13 +249,13 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 @media(max-width:560px){
   main{padding:14px 8px}
   .card{padding:14px 9px}
-  .cal{gap:7px}
-  .dbox{min-height:76px;padding:7px 6px;gap:3px}
-  .dnum{font-size:13px}
-  .dnm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cal{gap:8px}
+  .dbox{min-height:88px;padding:8px 7px;gap:4px}
+  .dnum{font-size:14px}
+  .dnm{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .djob,.dsl{display:none}
-  .dflag{font-size:10.5px}
-  .dgym,.devt{font-size:12.5px}
+  .dflag{font-size:11.5px}
+  .dgym,.devt{font-size:13.5px}
 }
 .daydetail{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}
