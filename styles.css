@@ -312,6 +312,12 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .svcdot{width:9px;height:9px;border-radius:99px;background:var(--svc);flex:none}
 .svcrow>input{flex:1 1 90px;min-width:0}
 .svcrow>select{flex:0 0 104px}
+/* un KPI que se puede tocar para ir a donde se cambia ese número */
+.kpi-go{font:inherit;color:var(--ink);text-align:left;cursor:pointer;
+  background:color-mix(in srgb,var(--card) 62%,var(--bg));border:1px solid var(--line);border-radius:12px;
+  transition:border-color .16s,box-shadow .16s}
+.kpi-go:hover{border-color:color-mix(in srgb,var(--brand) 60%,var(--line));box-shadow:var(--glow)}
+.kpis.compact .kpi-go{flex:1 1 92px;padding:6px 8px;border-radius:10px}
 /* hasta dos líneas: un nombre de tipo de día largo se parte en vez de cortarse en «Salie…» */
 .dnm{font-size:11.5px;font-weight:700;line-height:1.15;overflow:hidden;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}

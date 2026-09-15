@@ -1376,6 +1376,54 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('Ajustes deja tocar las rotaciones y cuánto dura cada una, sin salir de Ajustes',
     enAjustes && enAjustes.filas === 3 && enAjustes.meses && enAjustes.nueva, JSON.stringify(enAjustes));
 
+  // 108-111) los atajos son botones: hay que pulsarlos de verdad. La app tiene dos switch (clic y
+  // change) y un case en el que no toca no se dispara nunca, así que cada atajo se prueba clicando.
+  await gotoTab('month');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="mes-cfg"][data-to="vac"]');
+  await page.waitForTimeout(250);
+  const aVacaciones = await page.evaluate(() => {
+    const c = document.querySelector('#main [data-cfg="vac"]');
+    return !!c && /brand/.test(c.style.outline);
+  });
+  check('el KPI de vacaciones del mes lleva a la tarjeta donde se apuntan', aVacaciones, '');
+
+  await page.click('[data-a="mes-cfg"][data-to="mescfg"]');
+  await page.waitForTimeout(250);
+  const abreCupo = await page.evaluate(() => {
+    const d = document.querySelector('#main details[data-cfg="mescfg"]');
+    return !!d && d.open && /repartir el mes desde cero/i.test(d.textContent);
+  });
+  check('el KPI de guardias abre la configuración del mes, que ya incluye "repartir desde cero"', abreCupo, '');
+
+  await gotoTab('hoy');
+  await page.waitForTimeout(250);
+  await page.click('#main [data-a="franja-cfg"]');
+  await page.waitForTimeout(350);
+  const aFranja = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cfg="franja"]');
+    return { tab: window.PG.ui.tab, marcada: !!c && /brand/.test(c.style.outline) };
+  });
+  check('el atajo de la leyenda de la franja abre Ajustes y marca su tarjeta',
+    aFranja.tab === 'ajustes' && aFranja.marcada, JSON.stringify(aFranja));
+
+  await page.click('#main [data-a="ir-servicios"]');
+  await page.waitForTimeout(350);
+  const aServicios = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cfg="servicios"]');
+    return { tab: window.PG.ui.tab, marcada: !!c && /brand/.test(c.style.outline) };
+  });
+  check('desde Ajustes, "ver el año repartido" lleva a la tira de rotaciones del mes',
+    aServicios.tab === 'month' && aServicios.marcada, JSON.stringify(aServicios));
+
+  // cambiar la duración de una rotación es un <select>: se dispara con "change", no con un clic
+  await gotoTab('ajustes');
+  await page.waitForTimeout(250);
+  await page.selectOption('#main [data-cfg="rotaciones"] [data-a="svc-meses"][data-ix="0"]', '3');
+  await page.waitForTimeout(250);
+  const duracionGuardada = await page.evaluate(() => window.PG.store.rotation.svcMeses[0]);
+  check('cambiar los meses de una rotación en el desplegable se guarda', duracionGuardada === 3, String(duracionGuardada));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -1453,7 +1453,7 @@ function vacCardMonth(y,mo,list){
   const toc=vs.filter(function(v){const a=parseDate(v.start),b=parseDate(v.end);
     return a&&b&&a<=new Date(y,mo+1,0,12)&&b>=new Date(y,mo,1,12);}).length;
   const first=new Date(y,mo,1,12),last=new Date(y,mo,Math.min(new Date(y,mo+1,0).getDate(),7),12);
-  return '<div class="card"><h2>🏖️ Vacaciones</h2>'+
+  return '<div class="card" data-cfg="vac"><h2>🏖️ Vacaciones</h2>'+
     '<p class="note">Marca el rango: esos días no cuentan jornada ni guardias. Lo que pongas a mano en un día concreto manda sobre el rango.</p>'+
     '<div class="row" style="margin-top:6px"><label class="fld">Desde<input type="date" id="vacA" value="'+iso(first)+'"></label>'+
     '<label class="fld">Hasta<input type="date" id="vacB" value="'+iso(last)+'"></label>'+
@@ -1466,7 +1466,7 @@ function vacCardMonth(y,mo,list){
 function jornadaCard(){
   const j=store.rotation.jornada||{start:'',end:'',workdays:[1,2,3,4,5]},vs=store.rotation.vacaciones||[];
   const DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  return '<div class="card"><h2>2b · La jornada de diario y tus vacaciones</h2>'+
+  return '<div class="card" data-cfg="jornada"><h2>2b · La jornada de diario y tus vacaciones</h2>'+
     '<p class="note"><b>Base de todos los meses:</b> se trabaja de '+(j.start||'—')+' a '+(j.end||'—')+' los días marcados abajo. '+
     'Se da por hecha en cada mes en los días de trabajar que no tengan hora propia; el saliente, las vacaciones y lo que marques tú en el calendario no la llevan.</p>'+
     '<div class="row"><label class="fld">Entrada<input type="time" value="'+esc(j.start||'')+'" data-a="jor-f" data-f="start"></label>'+
@@ -1596,7 +1596,10 @@ function renderMonth(){
       <details class="dtip" style="margin-top:12px"><summary class="mini">ⓘ cómo se calcula este mes ▾</summary>
       <p class="note" style="margin-top:6px"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
       </details>
-      <details class="dtip" style="margin-top:6px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
+      <details class="dtip" data-cfg="mescfg" style="margin-top:6px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
+      <div class="row" style="margin-top:8px">
+        <button class="btn s" data-a="mon-auto-rep">repartir el mes desde cero</button>
+        <span class="mini">tira lo que hayas puesto a mano y vuelve a repartir las ${svc.guardias} guardias según tu plantilla (${saltoDiaTxt()})</span></div>
       <div class="row" style="margin-top:8px">
         <label class="fld">Servicio que rotas este mes<select data-a="mon-svc">
           <option value="" ${svc.set&&svc.service?'':'selected'}>· sin poner: lo marcas tú ·</option>
@@ -1612,10 +1615,10 @@ function renderMonth(){
           ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
       </details>
       <div class="kpis compact" style="margin-top:8px">
-        <div><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))}</span></div>
+        <button class="kpi-go" data-a="mes-cfg" data-to="mescfg" title="cambiar el cupo de guardias de este mes"><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))} ✎</span></button>
         <div><b>${list.filter(function(d){return /saliente/i.test(d.name);}).length}</b><span>días salientes</span></div>
-        <div><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')}</span></div>
-        <div><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones</span></div>
+        <button class="kpi-go" data-a="mes-cfg" data-to="jornada" title="cambiar la jornada de diario"><b>${list.filter(function(d){return d.jor||/trabajo|fuerza/i.test(d.name);}).length}</b><span>días de ${esc((store.rotation.jornada||{}).start||'08:00')}–${esc((store.rotation.jornada||{}).end||'15:00')} ✎</span></button>
+        <button class="kpi-go" data-a="mes-cfg" data-to="vac" title="apuntar o quitar vacaciones"><b>${list.filter(function(d){return d.vac;}).length}</b><span>días de vacaciones ✎</span></button>
       </div>
       <details class="dtip" style="margin-top:6px"><summary class="mini">ver más números ▾</summary>
       <div class="kpis compact" style="margin-top:8px">
@@ -1628,10 +1631,6 @@ function renderMonth(){
     </div>
     ${serviciosCard()}
     ${vacCardMonth(y,mo,list)}
-    <div class="card"><h2>Repartir el mes desde cero</h2>
-      <p class="note">Vuelve a repartir las guardias según tu patrón — sobrescribe lo que hayas cambiado a mano en este mes. Cada guardia arrastra su saliente al día siguiente (${saltoDiaTxt()}).</p>
-      <button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
-    </div>
   </div>`;}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
@@ -3945,12 +3944,34 @@ function act(a,el){
       const tipoNuevo=gv('cardioTipo')||ui.cardioAbierto||'otro';ui.cardioAbierto=tipoNuevo;
       flash(addCardio({tipo:tipoNuevo,fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
         distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
+    case 'franja-reset':{if(!store.franja)store.franja={horas:24};
+      store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
+    case 'mes-cfg':{
+      /* el número por sí solo no se puede tocar: el KPI lleva al sitio donde se cambia (315fd543) */
+      const to=el.dataset.to;
+      if(to==='jornada'){ui.tab='types';render();}
+      const buscar=function(){const c=document.querySelector('#main [data-cfg="'+to+'"]');
+        if(!c)return;
+        if(c.tagName==='DETAILS')c.open=true;
+        c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);};
+      setTimeout(buscar,to==='jornada'?80:0);
+      break;}
+    case 'ir-servicios':{ui.tab='month';ui.calMode='month';render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="servicios"]');
+        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
+      break;}
+    case 'franja-cfg':{ui.tab='ajustes';render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="franja"]');
+        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
+      break;}
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
     case 'lista-add':{const n=document.getElementById('lsNueva');
       flash(addLista(n?n.value:''));break;}
     case 'lista-del':{const l=listaById(el.dataset.id);if(!l)break;
       confirmar('¿Borrar la lista «'+l.nombre+'»?').then(function(ok){if(ok)flash(delLista(el.dataset.id));});break;}
-    case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
     case 'lista-fija':{const l=listaById(el.dataset.id);if(l){l.fija=!l.fija;save();render();}break;}
     case 'lista-item-add':{const lid=el.dataset.id,n=document.getElementById('lsNew-'+lid);
       flash(addItemLista(lid,n?n.value:''));
@@ -3985,9 +4006,6 @@ function act(a,el){
     case 'svc-del':{const ix=+el.dataset.ix;store.rotation.servicios.splice(ix,1);
       if(Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses.splice(ix,1);
       save();render();break;}
-    case 'svc-meses':{const ix=+el.dataset.ix;
-      if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
-      store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'day-set':{const v=el.dataset.sid||'';
       setDayOverride(el.dataset.key,v||'',el.dataset.guard||(v?'':''));save();
       render();
@@ -5147,23 +5165,15 @@ document.addEventListener('change',e=>{
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
     case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
       store.meta.backupAvisoD=Math.max(1,Math.min(90,+el.value||13));save();render();break;}
+    case 'svc-meses':{const ix=+el.dataset.ix;
+      if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
+      store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
+    case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
     case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
       store.franja.horas=+el.value||24;save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};
       if(!store.franja.colores)store.franja.colores={};
       store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
-    case 'franja-reset':{if(!store.franja)store.franja={horas:24};
-      store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
-    case 'ir-servicios':{ui.tab='month';ui.calMode='month';render();
-      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="servicios"]');
-        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
-      break;}
-    case 'franja-cfg':{ui.tab='ajustes';render();
-      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="franja"]');
-        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
-      break;}
     case 'tema-f':{if(!store.tema)store.tema={brand:'',brand2:''};
       store.tema[el.dataset.k]=el.value||'';aplicarTema();save();break;}
     case 'tema-reset':{store.tema={brand:'',brand2:'',ink:''};aplicarTema();save();render();
