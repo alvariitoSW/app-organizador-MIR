@@ -1424,11 +1424,26 @@ function renderWeek(){
     </div>
     <div class="daylist">${rows}</div>
     <div class="grid g2">
-      <div class="card"><h2>Lo que hay que cocinar esta semana</h2><p class="note">Por sesión de cocina (domingo, miércoles…): qué platos y cuántas raciones te tocan esta semana. El detalle completo está en «Cocina en lote».</p>
-        ${used.length?used.map(b=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-top:1px dashed var(--line)">
-          <span><b>${esc(b.label)}</b> <span class="mini">${esc(b.when||'')}</span><br>
-          <span class="mini">${b.items.filter(i=>i.runs>0).map(i=>esc(i.dish.name)+(i.cooked>i.needPort?' (sobra '+(Math.round((i.cooked-i.needPort)*10)/10)+' rac. → congelador)':'')).join(' · ')}</span></span>
-          <span class="mini"><b style="font-size:14px">${b.portions}</b> rac. <button class="btn s" data-a="tab" data-t="batches">abrir →</button></span></div>`).join('')
+      <div class="card"><h2>Lo que hay que cocinar esta semana</h2>
+        <p class="note">Un bloque por sesión de cocina: qué pones al fuego ese día y cuántos tápers salen de cada cosa. Lo que sobre de una tanda va al congelador.</p>
+        ${used.length?used.map(b=>`<div class="cocblq">
+          <div class="tarj-top">
+            <b style="font-size:13.5px">${esc(b.label)}</b>
+            <span class="sp"></span>
+            <span class="tag b2">${b.portions} raciones</span></div>
+          <div class="row" style="margin-top:3px">
+            <span class="mini">${esc(b.when||'')}</span>
+            <span class="sp"></span>
+            <button class="btn s" data-a="tab" data-t="batches">abrir →</button></div>
+          <div class="platos">${b.items.filter(i=>i.runs>0).map(function(i){
+            const sobra=i.cooked>i.needPort?Math.round((i.cooked-i.needPort)*10)/10:0;
+            return '<div class="plato" title="'+esc(i.dish.name)+'">'+
+              '<span class="pic">'+esc(i.dish.icon||'🍽')+'</span>'+
+              '<b>'+esc(i.dish.name)+'</b>'+
+              '<span class="mini">'+fmt(i.cooked)+' rac.</span>'+
+              (sobra?'<span class="tag b4">sobran '+fmt(sobra)+' 🧊</span>':'')+
+              '</div>';}).join('')}</div>
+          </div>`).join('')
         :'<div class="empty">Nada en lote esta semana.</div>'}
       </div>
       <div class="card"><h2>Reglas de oro</h2><p class="note">Lo que sostiene el planning cuando la semana se tuerce.</p>

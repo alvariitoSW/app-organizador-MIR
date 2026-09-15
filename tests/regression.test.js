@@ -1424,6 +1424,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const duracionGuardada = await page.evaluate(() => window.PG.store.rotation.svcMeses[0]);
   check('cambiar los meses de una rotación en el desplegable se guarda', duracionGuardada === 3, String(duracionGuardada));
 
+  // 113) "Lo que hay que cocinar esta semana": cada plato como ficha con su icono, no una línea de
+  // nombres separados por puntos (comentario fe187a10)
+  await gotoTab('week');
+  await page.waitForTimeout(250);
+  const cocina = await page.evaluate(() => {
+    const card = [...document.querySelectorAll('#main .card')]
+      .find((c) => /cocinar esta semana/i.test((c.querySelector('h2') || {}).textContent || ''));
+    if (!card) return null;
+    const p = card.querySelector('.plato');
+    return {
+      bloques: card.querySelectorAll('.cocblq').length,
+      platos: card.querySelectorAll('.plato').length,
+      conIcono: !!p && (p.querySelector('.pic') || {}).textContent.trim().length > 0,
+      raciones: !!p && /rac\./.test(p.textContent),
+      congelador: /🧊/.test(card.textContent),
+    };
+  });
+  check('la cocina de la semana enseña cada plato como una ficha con su icono y sus raciones',
+    cocina && cocina.bloques >= 1 && cocina.platos >= 2 && cocina.conIcono && cocina.raciones,
+    JSON.stringify(cocina));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

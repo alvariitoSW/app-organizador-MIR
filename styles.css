@@ -318,6 +318,18 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
   transition:border-color .16s,box-shadow .16s}
 .kpi-go:hover{border-color:color-mix(in srgb,var(--brand) 60%,var(--line));box-shadow:var(--glow)}
 .kpis.compact .kpi-go{flex:1 1 92px;padding:6px 8px;border-radius:10px}
+/* cocina de la semana: cada plato como una ficha con su icono grande, en vez de una línea de texto
+   con los nombres separados por puntos */
+.cocblq{border-top:1px dashed var(--line);padding:10px 0}
+.cocblq:first-of-type{border-top:none}
+.platos{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:9px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;
+  border:1px solid var(--line);border-radius:11px;padding:8px 9px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.plato .pic{font-size:24px;line-height:1.15}
+.plato>b{font-size:12px;line-height:1.2;overflow-wrap:anywhere;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.plato .tag{font-size:9.5px;padding:2px 6px}
 /* hasta dos líneas: un nombre de tipo de día largo se parte en vez de cortarse en «Salie…» */
 .dnm{font-size:11.5px;font-weight:700;line-height:1.15;overflow:hidden;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
