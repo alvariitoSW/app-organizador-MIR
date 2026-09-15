@@ -368,6 +368,28 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 #drawer button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .fgrid{display:grid;gap:10px}
 @media(min-width:600px){.fgrid.c2{grid-template-columns:1fr 1fr}.fgrid.c3{grid-template-columns:1fr 1fr 1fr}}
+
+/* tarjetas de configuración: un bloque por tipo de día / semana tipo, en vez de una fila
+   de tabla de 9 columnas que en el móvil obligaba a hacer scroll lateral */
+.tarj{border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-top:9px;min-width:0;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.tarj-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.tarj-ic{flex:none;width:40px;text-align:center;font-size:16px;padding:5px 2px}
+.tarj-nm{flex:1 1 130px;min-width:0;font-weight:700}
+.tarj.usada{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));
+  background:color-mix(in srgb,var(--ok) 7%,var(--card));box-shadow:inset 3px 0 0 var(--ok)}
+.semdias{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:9px}
+.semdia{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.semdia>span{font-size:10px;font-weight:800;color:var(--ink2);letter-spacing:.06em}
+.semdia>select{width:100%;padding:5px 2px;text-align:center;font-size:12px;font-weight:700}
+.semdia>b{font-size:14px;line-height:1}
+/* dentro de una tarjeta los campos son cortos (clave, horas): caben de dos en dos ya en el móvil */
+.tarj .fgrid{grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:600px){.tarj .fgrid.c3{grid-template-columns:1fr 1fr 1fr}}
+/* los <input> traen un ancho intrínseco propio: sin esto se salen de su columna y se cortan */
+.tarj .fld{min-width:0}
+.tarj .fld>input,.tarj .fld>select{width:100%}
+.tarj>input{width:100%}
 .empty{color:var(--ink2);font-size:12.5px;font-style:italic;padding:8px 0}
 footer{max-width:1220px;margin:0 auto;padding:6px 14px 40px;color:var(--ink2);font-size:11.5px;position:relative;z-index:1}
 #daystrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}

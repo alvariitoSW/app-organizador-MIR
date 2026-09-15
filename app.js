@@ -2699,43 +2699,62 @@ function ven0(){const c=(store.shifts||[]).map(function(sh){const rh=rhythmOf(sh
   return ventanaCena(acostarsePara(rh.wake)||rh.sleep);}).filter(Boolean)[0];return c?c.to:'—';}
 function renderCfg(){
   const r=store.rotation;
-  const shifts=store.shifts.map(s=>`<tr>
-    <td style="width:46px"><input value="${esc(s.icon)}" data-a="sh-f" data-id="${s.id}" data-f="icon" style="text-align:center;padding-left:4px;padding-right:4px"></td>
-    <td><input value="${esc(s.name)}" data-a="sh-f" data-id="${s.id}" data-f="name"></td>
-    <td style="width:54px"><input value="${esc(s.code)}" data-a="sh-f" data-id="${s.id}" data-f="code" style="text-align:center" maxlength="3"></td>
-    <td style="width:92px"><input value="${esc(s.start)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="start"></td>
-    <td style="width:92px"><input value="${esc(s.end)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="end"></td>
-    <td style="width:96px"><select data-a="sh-f" data-id="${s.id}" data-f="intensity">${['bajo','medio','alto'].map(x=>`<option ${s.intensity===x?'selected':''}>${x}</option>`).join('')}</select></td>
-    <td style="width:44px"><input type="color" value="${esc(s.color||'#2563eb')}" data-a="sh-f" data-id="${s.id}" data-f="color" style="height:28px;padding:1px"></td>
-    <td><input value="${esc(s.desc)}" data-a="sh-f" data-id="${s.id}" data-f="desc"></td>
-    <td style="width:26px"><button class="btn d" data-a="shift-del" data-id="${s.id}">×</button></td></tr>`).join('');
+  /* un bloque por tipo de día en vez de una fila de tabla de 9 columnas: en el móvil la tabla
+     obligaba a hacer scroll lateral y las horas no se leían (comentarios del usuario) */
+  const shifts=store.shifts.map(s=>`<div class="tarj">
+    <div class="tarj-top">
+      <input class="tarj-ic" value="${esc(s.icon)}" data-a="sh-f" data-id="${s.id}" data-f="icon" maxlength="4" aria-label="icono">
+      <input class="tarj-nm" value="${esc(s.name)}" data-a="sh-f" data-id="${s.id}" data-f="name" placeholder="nombre del día" aria-label="nombre">
+      <input type="color" value="${esc(s.color||'#2563eb')}" data-a="sh-f" data-id="${s.id}" data-f="color" style="height:30px;width:42px;padding:2px;flex:none" aria-label="color">
+      <button class="btn d" data-a="shift-del" data-id="${s.id}" title="quitar este tipo de día">×</button>
+    </div>
+    <div class="fgrid c3" style="margin-top:8px">
+      <label class="fld">clave<input value="${esc(s.code)}" data-a="sh-f" data-id="${s.id}" data-f="code" maxlength="3" style="text-align:center"></label>
+      <label class="fld">entra<input value="${esc(s.start)}" placeholder="08:00" data-a="sh-f" data-id="${s.id}" data-f="start"></label>
+      <label class="fld">sale<input value="${esc(s.end)}" placeholder="15:00" data-a="sh-f" data-id="${s.id}" data-f="end"></label>
+      <label class="fld">carga<select data-a="sh-f" data-id="${s.id}" data-f="intensity">${['bajo','medio','alto'].map(x=>`<option ${s.intensity===x?'selected':''}>${x}</option>`).join('')}</select></label>
+      <label class="fld" style="grid-column:1/-1">notas<input value="${esc(s.desc)}" data-a="sh-f" data-id="${s.id}" data-f="desc" placeholder="opcional"></label>
+    </div></div>`).join('');
+  const DSEM=['L','M','X','J','V','S','D'];
   const pats=store.patterns.map((p,pi)=>{
-    return `<tr>
-      <td style="min-width:150px"><input value="${esc(p.name)}" data-a="pat-name" data-id="${p.id}"><input value="${esc(p.note||'')}" placeholder="nota" data-a="pat-note" data-id="${p.id}" style="margin-top:4px;font-size:11.5px"></td>
-      <td>${p.days.map((c,di)=>`<select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="width:56px;margin:0 3px 4px 0">${store.shifts.map(s=>`<option value="${esc(s.code)}" ${s.code===c?'selected':''}>${esc(s.code)}</option>`).join('')}</select>`).join('')}</td>
-      <td style="width:120px"><div class="row" style="gap:3px">${p.days.map(c=>{const s=shiftById(resolveCode(c));return `<span class="tag" style="background:${s?s.color+'22':'#ccc'};color:${s?s.color:'inherit'};padding:2px 6px">${s?esc(s.icon):'·'}</span>`}).join('')}</div></td>
-      <td style="width:60px"><button class="btn s ${pi===r.pattern?'p':''}" data-a="pat-use" data-id="${p.id}">usar</button></td>
-      <td style="width:46px"><button class="btn s" data-a="pat-copy" data-id="${p.id}">dupl</button></td>
-      <td style="width:26px"><button class="btn d" data-a="pat-del" data-id="${p.id}">×</button></td></tr>`}).join('');
+    const usada=pi===r.pattern;
+    return `<div class="tarj${usada?' usada':''}">
+      <div class="tarj-top">
+        <input class="tarj-nm" value="${esc(p.name)}" data-a="pat-name" data-id="${p.id}" placeholder="nombre de la semana tipo" aria-label="nombre">
+        ${usada?'<span class="tag b3">en uso</span>':`<button class="btn s" data-a="pat-use" data-id="${p.id}">usar</button>`}
+        <button class="btn s" data-a="pat-copy" data-id="${p.id}" title="duplicar">⧉</button>
+        <button class="btn d" data-a="pat-del" data-id="${p.id}" title="quitar">×</button>
+      </div>
+      <div class="semdias">${p.days.map((c,di)=>{const s=shiftById(resolveCode(c));
+        return `<label class="semdia"><span>${DSEM[di]}</span>
+          <select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="border-color:${s?s.color:'var(--line)'}">${store.shifts.map(x=>`<option value="${esc(x.code)}" ${x.code===c?'selected':''}>${esc(x.code)}</option>`).join('')}</select>
+          <b style="color:${s?s.color:'var(--ink2)'}">${s?esc(s.icon):'·'}</b></label>`;}).join('')}</div>
+      <input value="${esc(p.note||'')}" placeholder="nota (cuándo usas esta semana)" data-a="pat-note" data-id="${p.id}" style="margin-top:8px;font-size:12px">
+    </div>`}).join('');
   const SC=suenoCfg();
+  /* mismas horas, pero cada tipo de día en su bloque con las etiquetas visibles al lado de cada hora */
   const rhythmRows=store.shifts.map(function(sh){
     const rh=(store.rhythm&&store.rhythm[sh.id])||{};
     const h=sleepHours(rh.sleep,rh.wake);
     const rec=acostarsePara(rh.wake),ven=ventanaCena(rec||rh.sleep);
     const falta=(h!=null&&h<SC.min)?Math.round((SC.min-h)*60):0;
-    const cells=RKEYS.map(function(k){return '<td style="width:92px"><input type="time" value="'+esc(rh[k[0]]||'')+
-      '" data-a="rh-f" data-id="'+sh.id+'" data-f="'+k[0]+'"></td>';}).join('');
-    return '<tr><td style="white-space:nowrap">'+esc(sh.icon)+' '+esc(sh.name)+'</td>'+cells+
-      '<td><span class="mini" style="'+(falta?'color:var(--warn);font-weight:700':'')+'">'+(h?fmtHM(h*60):'—')+
-      (falta?('<br><span class="mini" style="color:var(--warn)">faltan '+falta+' min</span>'):'')+'</span></td>'+
-      '<td><span class="mini">'+(rec?('🛌 '+rec+'<br>🍽 '+(ven?ven.from+'–'+ven.to:'—')):'—')+'</span></td>'+
-      '<td style="width:74px"><button class="btn s" data-a="day-rhythm-shift" data-id="'+sh.id+'">ver horas</button></td></tr>';}).join('');
+    return '<div class="tarj"><div class="tarj-top">'+
+      '<span class="tarj-ic" style="border:0;background:none">'+esc(sh.icon)+'</span>'+
+      '<b style="flex:1;font-size:13.5px">'+esc(sh.name)+'</b>'+
+      '<span class="tag '+(falta?'b4':'b3')+'">'+(h?fmtHM(h*60):'—')+(falta?(' · faltan '+falta+' min'):'')+'</span>'+
+      '</div>'+
+      '<div class="fgrid c3" style="margin-top:8px">'+
+      RKEYS.map(function(k){return '<label class="fld">'+k[1]+
+        '<input type="time" value="'+esc(rh[k[0]]||'')+'" data-a="rh-f" data-id="'+sh.id+'" data-f="'+k[0]+'"></label>';}).join('')+
+      '</div>'+
+      (rec?'<p class="mini" style="margin-top:8px">sugerido: 🛌 '+esc(rec)+' · 🍽 cena '+(ven?esc(ven.from)+'–'+esc(ven.to):'—')+'</p>':'')+
+      '</div>';}).join('');
   $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>1 · Mi turno, las piezas del día</h2><p class="note">Pon aquí los horarios reales de tu destino. <b>Guardia</b> = las 24 h completas; <b>saliente</b> = día de salida; <b>fuerza</b> = entreno; <b>libre</b> = descanso. Con el horario y la intensidad la app ya sabe qué menú y qué tanda toca. Añade filas si tu destino usa «vacante», «asuntos propios», «noche»… y asígnales menú.</p>
-      <div style="overflow-x:auto"><table><thead><tr><th></th><th>Nombre</th><th>Clave</th><th>Entra</th><th>Sale</th><th>Carga</th><th></th><th>Notas</th><th></th></tr></thead><tbody>${shifts}</tbody></table></div>
+    <div class="card"><h2>1 · Mi turno, las piezas del día</h2><p class="note">Los horarios reales de tu destino, un bloque por tipo de día. Con el horario y la carga, la app ya sabe qué menú y qué tanda tocan.</p>
+      ${shifts}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="shift-new">+ Añadir tipo de día</button></div></div>
-    <div class="card"><h2>3 · Estructura semanal genérica</h2><p class="note">Una fila = una semana tipo. Las claves son los tipos de día (G, S, F, L…). Ten siempre una fila para <b>1 guardia</b> y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica, y todo (menús, tandas, compra) se recalcula.</p>
-      <div style="overflow-x:auto"><table><thead><tr><th style="min-width:150px">Semana tipo</th><th>L → D</th><th>Vista</th><th></th><th></th><th></th></tr></thead><tbody>${pats}</tbody></table></div>
+    <div class="card"><h2>3 · Estructura semanal genérica</h2><p class="note">Una tarjeta = una semana tipo. Ten una para <b>1 guardia</b> y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica y todo se recalcula.</p>
+      ${pats}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ Semana tipo</button>
       <button class="btn s" data-a="autofill">Autocompletar 1 y 2 guardias desde mi turno</button></div></div>
     <div class="card"><h2>4 · Rotación por fecha</h2><p class="note">Si tu calendario es un ciclo de semanas (p. ej. <i>1G·S → 2G·S·S → libre</i>), ordena arriba las semanas del ciclo y pon la fecha de un lunes que sepas qué semana era. La app repite el ciclo sola y cada día de la vista «Semana» lleva el menú que corresponde; y si un día se tuerce, lo cambias en esa misma vista sin romper la rotación.</p>
@@ -2749,7 +2768,7 @@ function renderCfg(){
       <button class="btn s" data-a="clear-overrides">Quitar mis cambios a mano en los días</button></div></div>
     <div class="card"><h2>2 · A qué horas te levantas y te acuestas</h2>
       <p class="note">Se aplica por tipo de día; si un día concreto cambia, lo ajustas en el calendario («Mes» → toca el día → <i>editar horas</i>) sin romper la plantilla. Con estas horas la app cuenta tus horas de sueño y te avisa cuando un día te quedas por debajo de 6,5 h.</p>
-      <div style="overflow-x:auto"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap"><th style="min-width:120px">Tipo de día</th><th>Levantarse</th><th>Desayuno</th><th>Salir de casa</th><th>Llegar</th><th>Acostarse</th><th>Sueño</th><th style="min-width:120px">Noche sugerida</th><th></th></tr></thead><tbody>${rhythmRows}</tbody></table></div>
+      ${rhythmRows}
       <div class="row" style="margin-top:9px">
         <button class="btn s" data-a="bf-defaults">poner el desayuno rápido de diario en los días de trabajar</button>
         <button class="btn s" data-a="mon-autopos">${store.rotation.autoPos?'✓':'○'} post-guardia automático</button>
