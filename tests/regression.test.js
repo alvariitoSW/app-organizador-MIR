@@ -1334,6 +1334,48 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.evaluate((id) => { window.PG.delLista(id); }, nueva.id);
   await page.waitForTimeout(200);
 
+  // 104-107) rotaciones: la tira del año en vez de la tabla, duración propia por servicio y editor
+  // también en Ajustes (comentarios eb241fac y f3caa38a)
+  await page.evaluate(() => {
+    window.PG.store.rotation.servicios = ['Rayos', 'Cardiología', 'Medicina Interna'];
+    window.PG.store.rotation.svcMeses = [2, 1, 1];
+    window.PG.save();
+  });
+  await gotoTab('month');
+  await page.waitForTimeout(250);
+  const tira = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cfg="servicios"]');
+    if (!c) return null;
+    return {
+      tabla: !!c.querySelector('table'),
+      bloques: [...c.querySelectorAll('.svcblq')].map((b) => b.querySelector('b').textContent + '|' + b.querySelector('span').textContent),
+      ahora: c.querySelectorAll('.svcblq.ahora').length,
+    };
+  });
+  check('las rotaciones se ven como una tira de bloques por servicio, no como una tabla',
+    tira && !tira.tabla && tira.bloques.length >= 2 && tira.ahora === 1, JSON.stringify(tira));
+
+  check('una rotación de 2 meses ocupa dos meses seguidos en la tira',
+    tira && /^Rayos\|.*·/.test(tira.bloques[0]) && !/·/.test(tira.bloques[1].split('|')[1]),
+    JSON.stringify(tira && tira.bloques.slice(0, 2)));
+
+  const cicloDur = await page.evaluate(() => {
+    const c = window.PG.cicloServicios(2026, 8, 2027, 1, 1, ['Rayos', 'Cardiología', 'Medicina Interna']);
+    return c.map((x) => x.service);
+  });
+  check('cicloServicios respeta los meses propios de cada rotación (2-1-1, no 1-1-1)',
+    cicloDur[0] === 'Rayos' && cicloDur[1] === 'Rayos' && cicloDur[2] === 'Cardiología' && cicloDur[3] === 'Medicina Interna',
+    JSON.stringify(cicloDur));
+
+  await gotoTab('ajustes');
+  await page.waitForTimeout(250);
+  const enAjustes = await page.evaluate(() => {
+    const c = document.querySelector('#main .card[data-cfg="rotaciones"]');
+    return c ? { filas: c.querySelectorAll('.svcrow').length, meses: !!c.querySelector('[data-a="svc-meses"]'), nueva: !!c.querySelector('[data-a="svc-add"]') } : null;
+  });
+  check('Ajustes deja tocar las rotaciones y cuánto dura cada una, sin salir de Ajustes',
+    enAjustes && enAjustes.filas === 3 && enAjustes.meses && enAjustes.nueva, JSON.stringify(enAjustes));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

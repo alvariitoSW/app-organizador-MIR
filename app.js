@@ -67,6 +67,7 @@ function DEFAULTS(){return {
              calNombre:'',calAlarm:true,calOculto:true,icsAvisoMin:30,calWeekStart:'lun',
              saltoDia:{from:6,to:1},
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
+             svcMeses:[1,1,1,1,1,1,1],
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
   tema:{brand:'',brand2:'',ink:''},
@@ -294,6 +295,10 @@ function normalize(o){
     if(TLKEYS.indexOf(k)<0||!/^#[0-9a-fA-F]{6}$/.test(o.franja.colores[k]||''))delete o.franja.colores[k];});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
+  /* cuántos meses dura cada rotación: hay servicios de 1 mes y servicios de 2 o 3 */
+  if(!Array.isArray(o.rotation.svcMeses))o.rotation.svcMeses=[];
+  o.rotation.svcMeses=o.rotation.servicios.map(function(_,ix){
+    const n=Math.round(+o.rotation.svcMeses[ix]);return (n>=1&&n<=6)?n:1;});
   if(typeof o.rotation.guardiasMes!=='number')
     o.rotation.guardiasMes=o.rotation.quota?((+o.rotation.quota.urg||0)+(+o.rotation.quota.umi||0)||6):6;
   if(!o.rotation.month)o.rotation.month={};
@@ -598,15 +603,28 @@ function setGuardiasMes(y,m,n){
   const cur=store.rotation.month[key]||{service:store.rotation.monthService,guardias:store.rotation.guardiasMes};
   store.rotation.month[key]={service:cur.service,guardias:Math.max(0,Math.min(15,+n||0))};}
 function svcLabel(y,m){return monthService(y,m).service||'sin servicio';}
+function svcMesesDe(nombre,porDefecto){
+  /* cada rotación puede durar lo suyo: se busca por nombre para que valga aunque el orden venga de fuera */
+  const r=store.rotation,ix=(r.servicios||[]).indexOf(nombre);
+  const n=(ix>=0)?Math.round(+(r.svcMeses||[])[ix]):0;
+  return (n>=1&&n<=6)?n:Math.max(1,+porDefecto||1);}
+function svcColor(nombre){
+  /* un color estable por servicio para poder ver el año de un vistazo */
+  const PAL=['#38e1ff','#7c5cff','#10b981','#f59e0b','#ef4444','#a855f7','#22d3ee','#84cc16','#f472b6'];
+  const ix=(store.rotation.servicios||[]).indexOf(nombre);
+  return ix>=0?PAL[ix%PAL.length]:'var(--ink2)';}
 function cicloServicios(desdeY,desdeM,hastaY,hastaM,mesesPor,orden){
   /* solo devuelve el reparto, no escribe nada: así la interfaz puede enseñarlo antes de aplicarlo */
   const sv=(orden&&orden.length)?orden:(store.rotation.servicios||[]);
-  const per=Math.max(1,+mesesPor||1),out=[];let i=0;
+  const out=[];
   let cur=new Date(desdeY,desdeM,1,12),fin=new Date(hastaY,hastaM,1,12);
+  if(!sv.length)return out;
+  let i=0,quedan=svcMesesDe(sv[0],mesesPor);
   while(cur<=fin&&out.length<240){
     out.push({key:cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0'),
-      y:cur.getFullYear(),m:cur.getMonth(),service:sv.length?sv[Math.floor(i/per)%sv.length]:''});
-    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1,12);i++;}
+      y:cur.getFullYear(),m:cur.getMonth(),service:sv[i%sv.length]});
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1,12);
+    if(--quedan<=0){i++;quedan=svcMesesDe(sv[i%sv.length],mesesPor);}}
   return out;}
 function planServicios(desdeY,desdeM,hastaY,hastaM,mesesPor){
   const r=store.rotation;
@@ -1464,38 +1482,63 @@ function jornadaCard(){
     (vs.length?'<div style="margin-top:6px">'+vs.map(vacRangeRow).join('')+'</div>'
       :'<p class="mini" style="margin-top:4px">Ninguna apuntada: cuando cojas días, mete el rango y se marcan solos en el mes.</p>')+
     '</div>';}
+function serviciosEditorHTML(){
+  /* el mismo editor sirve en «Turno y rotación» y en Ajustes: el usuario pedía poder tocar las
+     rotaciones nuevas (R2) desde Ajustes sin buscarlas en otra pantalla */
+  const r=store.rotation;
+  return '<div class="svcls">'+(r.servicios||[]).map(function(x,ix){
+    const mes=svcMesesDe(x,1);
+    return '<div class="svcrow" style="--svc:'+svcColor(x)+'">'+
+      '<i class="svcdot"></i>'+
+      '<input value="'+esc(x)+'" data-a="svc-edit" data-ix="'+ix+'" aria-label="nombre del servicio">'+
+      '<select data-a="svc-meses" data-ix="'+ix+'" aria-label="cuántos meses dura">'+
+        [1,2,3,4,5,6].map(function(n){return '<option value="'+n+'" '+(mes===n?'selected':'')+'>'+n+' mes'+(n===1?'':'es')+'</option>';}).join('')+
+      '</select>'+
+      '<button class="btn d" data-a="svc-del" data-ix="'+ix+'" title="quitar">×</button>'+
+      '</div>';}).join('')+'</div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn s" data-a="svc-add">+ Añadir rotación</button></div>';}
+function anyoServiciosHTML(ciclo,cur){
+  /* «que aparezcan los meses del año que quedan y así saber en qué roto»: una tira de meses con el
+     color de su servicio en vez de una tabla de tres columnas */
+  if(!ciclo.length)return '';
+  const hoyK=iso(new Date()).slice(0,7);
+  let out='',i=0;
+  while(i<ciclo.length){
+    const serv=((cur[ciclo[i].key]||{}).service)||ciclo[i].service;
+    let j=i;while(j+1<ciclo.length&&(((cur[ciclo[j+1].key]||{}).service)||ciclo[j+1].service)===serv)j++;
+    const meses=ciclo.slice(i,j+1);
+    const activo=meses.some(function(c){return c.key===hoyK;});
+    out+='<div class="svcblq'+(activo?' ahora':'')+'" style="--svc:'+svcColor(serv)+'" '+
+      'title="'+esc(serv)+': '+meses.map(function(c){return MON[c.m]+' '+c.y;}).join(', ')+'">'+
+      '<b>'+esc(serv)+'</b>'+
+      '<span>'+meses.map(function(c){return MON[c.m];}).join(' · ')+
+        (meses[0].y!==meses[meses.length-1].y?' '+meses[meses.length-1].y:'')+'</span>'+
+      (activo?'<span class="tag b2">ahora</span>':'')+
+      '</div>';
+    i=j+1;}
+  return '<div class="svctira">'+out+'</div>';}
 function serviciosCard(){
   const r=store.rotation,now=new Date();
   const desde=(document.getElementById('svcDesde')||{}).value||now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const hasta=(document.getElementById('svcHasta')||{}).value||(now.getFullYear()+(now.getMonth()>5?1:0))+'-06';
-  const per=+( (document.getElementById('svcMeses')||{}).value||1);
   const dm=/^(\d{4})-(\d{2})$/.exec(desde),hm=/^(\d{4})-(\d{2})$/.exec(hasta);
-  const ciclo=dm&&hm?cicloServicios(+dm[1],+dm[2]-1,+hm[1],+hm[2]-1,per,r.servicios):[];
+  const ciclo=dm&&hm?cicloServicios(+dm[1],+dm[2]-1,+hm[1],+hm[2]-1,1,r.servicios):[];
   const cur=store.rotation.month||{};
-  return '<div class="card"><h2>🔁 Tus servicios <span class="mini">'+
-    (r.servicios||[]).length+' · hasta '+(hm?MON[+hm[2]-1]+' '+hm[1]:'—')+'</span></h2>'+
-    '<p class="note">Rotas <b>'+(r.servicios||[]).map(esc).join(', ')+'</b>.</p>'+
-    '<div class="fgrid c3"><label class="fld">Empieza en<input type="month" id="svcDesde" value="'+desde+'" data-a="svc-m"></label>'+
-      '<label class="fld">Meses por servicio<select id="svcMeses" data-a="svc-m"><option value="1" '+(per===1?'selected':'')+'>1 mes en cada sitio</option>'+
-        '<option value="2" '+(per===2?'selected':'')+'>2 meses en cada sitio</option></select></label>'+
-      '<label class="fld">Hasta<input type="month" id="svcHasta" value="'+hasta+'" data-a="svc-m"></label></div>'+
-    '<div class="row" style="margin-top:8px"><label class="fld" style="flex:0 0 120px">Guardias por mes'+
-      '<input type="number" min="0" max="15" value="'+(r.guardiasMes!=null?r.guardiasMes:6)+'" data-a="guard-default"></label>'+
-      '<span class="sp"></span><button class="btn p" data-a="svc-plan">repartir el ciclo</button>'+
+  const j=r.jornada||{};
+  return '<div class="card" data-cfg="servicios"><h2>🔁 Tus rotaciones</h2>'+
+    anyoServiciosHTML(ciclo,cur)+
+    '<p class="mini" style="margin-top:8px">El servicio del mes no toca tu calendario: los días de trabajar siguen con la jornada de '+
+      esc(j.start||'—')+' a '+esc(j.end||'—')+' y solo cambia dónde vas.</p>'+
+    '<details class="dtip" style="margin-top:10px"><summary class="mini">cambiar las rotaciones y el reparto ▾</summary>'+
+      serviciosEditorHTML()+
+      '<div class="fgrid c3 tight" style="margin-top:10px">'+
+        '<label class="fld">Empieza en<input type="month" id="svcDesde" value="'+desde+'" data-a="svc-m"></label>'+
+        '<label class="fld">Hasta<input type="month" id="svcHasta" value="'+hasta+'" data-a="svc-m"></label>'+
+        '<label class="fld">Guardias por mes<input type="number" min="0" max="15" value="'+(r.guardiasMes!=null?r.guardiasMes:6)+'" data-a="guard-default"></label>'+
+      '</div>'+
+      '<div class="row" style="margin-top:8px"><button class="btn p" data-a="svc-plan">repartir el ciclo</button>'+
       '<button class="btn s" data-a="svc-clear">quitar el reparto</button></div>'+
-    '<div style="margin-top:10px"><span class="mini">servicios (se editan en el sitio):</span>'+
-    '<div class="row" style="margin-top:4px">'+(r.servicios||[]).map(function(x,ix){
-      return '<span class="tag b2" style="gap:2px;padding:2px 4px 2px 8px"><input style="border:0;background:none;font-weight:700;color:inherit;width:'+
-        Math.max(6,x.length)+'ch" value="'+esc(x)+'" data-a="svc-edit" data-ix="'+ix+'">'+
-        '<button class="btn d s" data-a="svc-del" data-ix="'+ix+'" title="quitar">×</button></span>';}).join('')+
-      '<button class="btn s" data-a="svc-add">+ servicio</button></div></div>'+
-    (ciclo.length?'<div style="margin-top:10px"><table><thead><tr><th>Mes</th><th>Servicio</th><th>Quedan</th></tr></thead><tbody>'+
-      ciclo.map(function(c,i){const mm=cur[c.key]||{},serv=mm.service||c.service;
-        let j=i;while(j+1<ciclo.length&&((cur[ciclo[j+1].key]||{}).service||ciclo[j+1].service)===serv)j++;
-        const restantes=j-i;
-        return '<tr><td>'+MON[c.m]+' '+c.y+'</td><td>'+esc(serv)+
-          (mm.service?'':' <span class="mini">· propuesto</span>')+'</td><td><span class="mini">'+
-          (restantes>0?('quedan '+restantes+' mes'+(restantes===1?'':'es')):'último mes')+'</span></td></tr>';}).join('')+'</tbody></table></div>':'')+
+    '</details>'+
     '</div>';}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo);
@@ -3139,6 +3182,12 @@ function renderAjustes(){
         <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></label>
     </div>
 
+    <div class="card" data-cfg="rotaciones"><h2>Mis rotaciones</h2>
+      <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
+      ${serviciosEditorHTML()}
+      <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div>
+    </div>
+
     <div class="card" data-cfg="franja"><h2>La franja del día</h2>
       <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
       <label class="fld" style="max-width:260px">Cuántas horas se ven
@@ -3930,8 +3979,15 @@ function act(a,el){
       flash(planServicios(+dm[1],+dm[2]-1,+hm[1],+hm[2]-1,num((document.getElementById('svcMeses')||{}).value,1)));render();break;}
     case 'svc-clear':{confirmar('¿Quitar el servicio y las guardias asignadas a TODOS los meses? Tus días puestos a mano se quedan.').then(function(ok){
       if(!ok)return;store.rotation.month={};save();render();flash('reparto de servicios quitado');});break;}
-    case 'svc-add':{store.rotation.servicios.push('Servicio '+(store.rotation.servicios.length+1));save();render();break;}
-    case 'svc-del':{store.rotation.servicios.splice(+el.dataset.ix,1);save();render();break;}
+    case 'svc-add':{store.rotation.servicios.push('Servicio '+(store.rotation.servicios.length+1));
+      if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
+      store.rotation.svcMeses.push(1);save();render();break;}
+    case 'svc-del':{const ix=+el.dataset.ix;store.rotation.servicios.splice(ix,1);
+      if(Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses.splice(ix,1);
+      save();render();break;}
+    case 'svc-meses':{const ix=+el.dataset.ix;
+      if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
+      store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'day-set':{const v=el.dataset.sid||'';
       setDayOverride(el.dataset.key,v||'',el.dataset.guard||(v?'':''));save();
       render();
@@ -5098,6 +5154,11 @@ document.addEventListener('change',e=>{
       store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};
       store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
+    case 'ir-servicios':{ui.tab='month';ui.calMode='month';render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="servicios"]');
+        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
+      break;}
     case 'franja-cfg':{ui.tab='ajustes';render();
       setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="franja"]');
         if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
@@ -5195,6 +5256,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
+  svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,
