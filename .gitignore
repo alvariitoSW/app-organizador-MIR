@@ -1,2 +1,5 @@
 node_modules/
 .claude/worktrees/
+
+# el lienzo sellado: 2,5 MB de editor, se regenera desde design/entreno/*
+design/entreno/entreno-rediseno.html

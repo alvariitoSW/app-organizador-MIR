@@ -1,0 +1,70 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Entreno · portada"
+    },
+    {
+      "file": "Sesion.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Entrenando"
+    },
+    {
+      "file": "Rutinas.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Rutinas"
+    },
+    {
+      "file": "Progreso.dc.html",
+      "x": 0,
+      "y": 964,
+      "w": 390,
+      "h": 1200,
+      "title": "Progreso (se desplaza)"
+    },
+    {
+      "file": "Biblioteca.dc.html",
+      "x": 470,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Biblioteca"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": -370,
+      "y": 0,
+      "w": 280,
+      "text": "Entreno, rediseñado\n\nAhora: 8 tarjetas apiladas, 2.974 px (3,3 pantallas) y 27 botones nada más entrar.\n\nAquí: la portada cabe en media pantalla. Entrenar es lo único grande; el resto entra por su ficha y vuelve con «‹ Entreno», como ya hace Cardio."
+    },
+    {
+      "id": "nota-sesion",
+      "x": 470,
+      "y": -132,
+      "w": 390,
+      "text": "La pantalla de entrenar: lo que toca hoy, las series ya hechas como fichas y el par kg/reps siempre a mano abajo."
+    },
+    {
+      "id": "nota-prog",
+      "x": 0,
+      "y": 876,
+      "w": 390,
+      "text": "Progreso junta las tres tarjetas de números que antes estaban sueltas por el medio: mapa de calor, volumen y marcas."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
