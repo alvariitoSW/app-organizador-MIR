@@ -73,6 +73,7 @@ function DEFAULTS(){return {
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
   lector:{proxy:''},
+  impPendiente:null,   /* lo último compartido desde otra app, hasta que se use o se limpie */
   eventos:[],
   listas:[
     {id:'ls-siempre',nombre:'La compra de siempre',fija:true,
@@ -295,6 +296,12 @@ function normalize(o){
   o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
   /* el «lector de enlaces»: una función propia que va a buscar la descripción de un vídeo.
      Solo https, y solo lo que el usuario haya escrito a mano en Ajustes. */
+  if(o.impPendiente&&typeof o.impPendiente==='object'){
+    o.impPendiente={txt:String(o.impPendiente.txt||'').slice(0,20000),
+      url:String(o.impPendiente.url||'').slice(0,500),
+      ts:+o.impPendiente.ts||0,abierto:!!o.impPendiente.abierto};
+    if(!o.impPendiente.txt&&!o.impPendiente.url)o.impPendiente=null;
+  }else o.impPendiente=null;
   if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
   o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
@@ -3191,8 +3198,30 @@ function impGuardar(){
     store.menu[dia].push({id:uid('sl'),time:'',label:plato.name,items:[{kind:'dish',id:plato.id,portions:1}]});
     extra=' y puesto en el menú de '+shiftById(dia).name;}
   ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  store.impPendiente=null;   /* ya está guardada: no hay nada pendiente que rescatar */
   save();render();
   return 'Guardado: '+plato.icon+' '+plato.name+extra;}
+function impPegar(){
+  /* la red de seguridad de todo esto: en iPhone no hay «compartir con la app» que valga, y en
+     Android TikTok solo enseña la app si tiras de «Más». Copiar el enlace sí funciona siempre. */
+  if(!navigator.clipboard||!navigator.clipboard.readText){
+    flash('Este navegador no me deja leer el portapapeles: pega el enlace en el campo a mano');return;}
+  navigator.clipboard.readText().then(function(t){
+    const txt=String(t||'').trim();
+    if(!txt){flash('El portapapeles está vacío: copia antes el enlace en TikTok');return;}
+    const m=/https?:\/\/\S+/.exec(txt);
+    if(!ui.imp)ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+    if(m){
+      ui.imp.url=m[0];
+      const resto=txt.replace(/https?:\/\/\S+/g,'').replace(/\n{2,}/g,'\n').trim();
+      if(resto)ui.imp.txt=resto;
+      impFuenteNueva();render();
+      flash('Enlace pegado: dale a «traer la descripción»');
+    }else{
+      ui.imp.txt=txt;impFuenteNueva();render();
+      flash('Texto pegado: dale a «Leerla aquí mismo»');}
+  }).catch(function(){
+    flash('No me has dado permiso para leer el portapapeles: pega el enlace a mano en el campo');});}
 function impPreviaHTML(r){
   return '<div class="tarj" data-imp="previa">'+
     '<div class="tarj-top">'+
@@ -3242,6 +3271,7 @@ function renderImport(){
         '<label class="fld" style="flex:1 1 190px;min-width:0">enlace del vídeo'+
           '<input id="impUrl" type="url" inputmode="url" value="'+esc(ui.imp.url||'')+'" data-a="imp-url" placeholder="https://www.tiktok.com/@…">'+
         '</label>'+
+        '<button class="btn s" data-a="imp-pegar" title="pegar lo que tengas copiado">📋 pegar</button>'+
         '<button class="btn s" data-a="imp-traer"'+(trayendo?' disabled':'')+'>'+(trayendo?'trayendo…':'traer la descripción')+'</button>'+
       '</div>'+
       (enArtifact()
@@ -3269,9 +3299,13 @@ function renderImport(){
         'sale además un botón para que la lea Claude, que se apaña con texto mucho más desordenado.')+'</p>'+
     '</div>'+
     (ui.imp.receta?impPreviaHTML(ui.imp.receta):'')+
-    '<div class="card"><h2>Compartir desde TikTok</h2>'+
-      '<p class="note">Si instalas la app en el móvil (Android: menú del navegador → «Instalar aplicación»), aparece en el menú de compartir de TikTok: '+
-      '«Compartir → Guardias» y el enlace y la descripción entran aquí solos, sin copiar ni pegar. En iPhone no se puede: Safari no lo admite.</p>'+
+    '<div class="card"><h2>Traer una receta de TikTok</h2>'+
+      '<p class="note"><b>Lo que funciona siempre, en cualquier móvil:</b> en el vídeo, «Compartir → Copiar enlace»; '+
+      'vuelves aquí y le das a 📋 pegar. Dos toques.</p>'+
+      '<p class="note"><b>En Android, con la app instalada</b> (menú del navegador → «Instalar aplicación»), también puedes mandarla directamente: '+
+      '«Compartir → <b>Más</b> → Guardias». El «Más» es importante: en la fila de iconos que TikTok enseña de primeras solo salen sus apps de siempre, '+
+      'la nuestra está en el menú del sistema que hay detrás de «Más» (en algunos móviles se llama «Otros» o «Compartir con»).</p>'+
+      '<p class="note" style="margin:0">En iPhone esto último no existe —Safari no admite que una app web reciba lo compartido—, así que ahí el camino es copiar y pegar.</p>'+
     '</div>'+
   '</div>';
 }
@@ -4756,7 +4790,8 @@ function act(a,el){
     case 'imp-claude':impConClaude();break;
     case 'imp-local':impLocal();break;
     case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';
-      impFuenteNueva();render();break;}
+      impFuenteNueva();impOlvidaPendiente();render();break;}
+    case 'imp-pegar':impPegar();break;
     case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
     case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
@@ -6107,8 +6142,24 @@ function compartidoEntrante(){
     ui.imp.txt=cuerpo;
     ui.imp.url=url;
     ui.tab='import';
+    /* A disco antes de nada. Android mata la app en cuanto vuelves a TikTok, y como la barra de
+       direcciones se limpia dos líneas más abajo, al reabrir no quedaba ni rastro de la receta:
+       compartías, mirabas otra cosa y al volver la pantalla estaba vacía. */
+    store.impPendiente={txt:cuerpo,url:url,ts:Date.now(),abierto:true};
+    save();
     if(history&&history.replaceState)history.replaceState(null,'',location.pathname);
   }catch(e){/* navegador sin URLSearchParams o sin history: se entra a la app como siempre */}}
+function compartidoPendiente(){
+  /* al abrir sin nada en la query: si quedó algo compartido sin usar, se recupera. La primera vez
+     además te lleva a la pantalla; a partir de ahí se queda esperando sin dar la lata. */
+  const pen=store.impPendiente;
+  if(!pen||(!pen.txt&&!pen.url))return;
+  if(Date.now()-(+pen.ts||0)>7*24*3600*1000){store.impPendiente=null;save();return;}
+  if(!ui.imp)ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  if(ui.imp.txt||ui.imp.url)return;   /* ya hay algo en marcha: no se pisa */
+  ui.imp.txt=pen.txt;ui.imp.url=pen.url;
+  if(!pen.abierto){ui.tab='import';pen.abierto=true;save();}}
+function impOlvidaPendiente(){if(store.impPendiente){store.impPendiente=null;save();}}
 function registrarSW(){
   /* hace falta para poder instalar la app y que TikTok la ofrezca al compartir. Donde no se puede
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
@@ -6128,7 +6179,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
-  enArtifact,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
+  enArtifact,impPegar,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
@@ -6152,6 +6203,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
+compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 render();
 avisarBackupSiToca();
 claudeBuscar();

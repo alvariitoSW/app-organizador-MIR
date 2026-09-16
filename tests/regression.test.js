@@ -1869,6 +1869,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== Compartir desde TikTok con la app instalada =====================
+  {
+    // lo compartido sobrevive a que el sistema mate la app: Android cierra la PWA en cuanto vuelves
+    // a TikTok y, como la barra de direcciones se limpia, antes no quedaba ni rastro de la receta
+    await page.reload();
+    await page.waitForTimeout(500);
+    const rescatado = await page.evaluate(() => ({
+      txt: window.PG.ui.imp.txt,
+      url: window.PG.ui.imp.url,
+      tab: window.PG.ui.tab,
+      enDisco: !!window.PG.store.impPendiente,
+    }));
+    check('lo compartido se recupera tras recargar (Android mata la app al volver a TikTok)',
+      rescatado.url === 'https://www.tiktok.com/@a/video/9' && /lenteja/.test(rescatado.txt) &&
+      rescatado.enDisco, JSON.stringify(rescatado));
+    // pero no te secuestra la app en cada arranque: a la pantalla te lleva solo la primera vez
+    check('el rescate no te lleva a Importar cada vez que abres, solo la primera',
+      rescatado.tab !== 'import', 'tab tras recargar: ' + rescatado.tab);
+
+    // y se olvida al limpiar, o no habría forma de quitárselo de encima
+    await gotoTab('import');
+    await page.waitForTimeout(200);
+    await page.click('[data-a="imp-clear"]');
+    await page.waitForTimeout(200);
+    await page.reload();
+    await page.waitForTimeout(500);
+    const limpio = await page.evaluate(() => ({
+      enDisco: !!window.PG.store.impPendiente, txt: window.PG.ui.imp.txt, url: window.PG.ui.imp.url,
+    }));
+    check('«limpiar» se lleva también lo compartido guardado, y ya no vuelve al recargar',
+      !limpio.enDisco && !limpio.txt && !limpio.url, JSON.stringify(limpio));
+
+    // 📋 pegar: el camino que funciona en cualquier móvil (en iPhone no hay «compartir con la app»
+    // y en Android TikTok solo la enseña detrás de «Más»). Separa el enlace del resto del texto.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await gotoTab('import');
+    await page.waitForTimeout(200);
+    await page.evaluate(() => navigator.clipboard.writeText(
+      'Crema de calabaza\n1 calabaza\n1 puerro https://vm.tiktok.com/ZGpeg/'));
+    await page.click('[data-a="imp-pegar"]');
+    await page.waitForTimeout(400);
+    const pegado = await page.evaluate(() => ({
+      url: window.PG.ui.imp.url,
+      campo: (document.querySelector('#impUrl') || {}).value,
+      txt: window.PG.ui.imp.txt,
+    }));
+    check('«📋 pegar» separa el enlace del texto y los deja cada uno en su sitio',
+      pegado.url === 'https://vm.tiktok.com/ZGpeg/' && pegado.campo === pegado.url &&
+      /calabaza/.test(pegado.txt) && !/https?:\/\//.test(pegado.txt), JSON.stringify(pegado));
+    await page.click('[data-a="imp-clear"]');
+    await page.waitForTimeout(200);
+  }
+
   // ===================== Rediseño de Comida: portada, apuntar, qué cocino y modo cocina =====================
   // Estas pruebas encadenan gestos a propósito. La auditoría anterior dejó seis fallos con la suite
   // en verde porque cada prueba partía de cero y tocaba un solo camino; aquí se navega de verdad.
