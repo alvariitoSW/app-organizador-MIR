@@ -73,6 +73,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150);
   }
 
+  // Entreno ya no es una sola pantalla: portada de fichas + una pantalla por sección
+  async function gotoGym(panel) {
+    await gotoTab('gym');
+    await page.waitForTimeout(120);
+    if (await page.evaluate(() => !!window.PG.ui.gymPanel)) {
+      await page.click('[data-a="gym-panel"][data-p=""]');
+      await page.waitForTimeout(150);
+    }
+    if (panel) {
+      await page.click(`[data-a="gym-panel"][data-p="${panel}"]`);
+      await page.waitForTimeout(200);
+    }
+  }
+
   await page.goto(base + 'index.html');
   await page.waitForTimeout(300);
 
@@ -397,8 +411,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     JSON.stringify(migInfo));
 
   await page.evaluate(() => window.PG.render());
-  await gotoTab('gym');
-  await page.waitForTimeout(200);
+  await gotoGym('rutinas');
   const migradaEnUI = await page.evaluate(() => document.getElementById('main').innerText);
   check('la rutina migrada se ve en la UI con su nombre y sus ejercicios',
     migradaEnUI.includes('Mi rutina') && migradaEnUI.includes('Peso muerto') && migradaEnUI.includes('Remo con barra'),
@@ -414,6 +427,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(200);
   await page.click('[data-a="ses-empezar"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
+  await gotoGym('sesion');   // el formulario de apuntar vive en «Entrenar»
   const sesionActivaVisible = await page.evaluate(() => !!document.querySelector('[data-a="ses-terminar"]'));
   await page.fill('#setEx', 'Curl bíceps');
   await page.fill('#setKg', '12');
@@ -437,6 +451,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // caja cada vez (bug real: addRutina() vuelve a pintar #main, así que la caja de antes queda
   // desmontada y sin foco — sin refocarla, un segundo toque en "añadir" con el teclado ya cerrado
   // no añade nada y parece que "solo deja meter un ejercicio")
+  await gotoGym('rutinas');   // los ejercicios de una rutina se añaden en «Rutinas», no en «Entrenar»
   await page.fill('#rtNew-' + ridUI, 'Press militar');
   await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(150);
@@ -460,14 +475,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     rt.ejercicios[0].tg = 'pectorals'; // vocabulario típico de la biblioteca -> mapea a "pecho"
     window.PG.render();
   }, ridUI);
-  await gotoTab('gym');
-  await page.waitForTimeout(200);
+  await gotoGym('rutinas');
   const regionesResaltadas = await page.evaluate(() => document.querySelectorAll('.mreg.on').length);
   check('el diagrama de músculos resalta al menos una región para una sesión de prueba',
     regionesResaltadas >= 1, 'regiones resaltadas: ' + regionesResaltadas);
 
   // 20) Cardio ya no es un scroll infinito: primero las fichas de tipo y, al tocar una, su propia
   // pantalla con un botón de volver (comentario del usuario). Se apunta desde dentro de esa pantalla.
+  await gotoGym('cardio');
   const fichasCardio = await page.evaluate(() =>
     Array.from(document.querySelectorAll('#main .ctile[data-a="cardio-open"]')).map((b) => b.dataset.tipo));
   check('Cardio empieza con una ficha por tipo en vez de cuatro listas abiertas a la vez',
@@ -813,8 +828,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     objToggle.antes === false && objToggle.conToggle === true, JSON.stringify(objToggle));
 
   // 39) Entreno: hay una gráfica (mapa de calor) de los días entrenados de las últimas 6 semanas
-  await gotoTab('gym');
-  await page.waitForTimeout(150);
+  await gotoGym('progreso');
   const heat = await page.evaluate(() => ({
     cells: document.querySelectorAll('#main .hcell').length,
     stat: !!document.querySelector('#main .heatstat'),
@@ -829,6 +843,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       { name: 'Flexiones de prueba', category: 'chest', equipment: 'body weight', target: 'pectorals' },
       { name: 'Plancha de prueba', category: 'waist', equipment: 'body weight', target: 'abs' },
     ]));
+    window.PG.ui.gymPanel = 'biblioteca';   // el buscador vive en su propia pantalla
     window.PG.ui.gymFiltroTipo = 'calistenia';
     window.PG.ui.gymFiltroRegion = '';
     window.PG.ui.gymQ = 'de prueba';
@@ -855,6 +870,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const rutinaDiag = await page.evaluate(() => {
     const g = window.PG.gymS();
     g.rutinas = [{ id: 'rt-test', nombre: 'Rutina de prueba', notas: '', ejercicios: [] }];
+    window.PG.ui.gymPanel = 'rutinas';   // las tarjetas de rutina viven en su propia pantalla
     window.PG.render();
     const vacia = document.getElementById('main').innerText;
     window.PG.addRutina('rt-test', 'Press banca de prueba', {});

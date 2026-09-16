@@ -290,6 +290,41 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .ctile-ic{font-size:22px;line-height:1.2}
 .ctile>b{font-size:14px}
 .ctile-n{font-size:12px;font-weight:700;color:var(--brand)}
+
+/* Entreno: portada de fichas y cabecera de las pantallas de dentro */
+.gico{width:26px;height:26px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.gico.sm{width:17px;height:17px;stroke-width:2}
+.subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
+.volver{display:inline-flex;align-items:center;gap:5px;flex:none}
+.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.ghero{position:relative;border:1px solid color-mix(in srgb,var(--brand) 34%,var(--line));border-radius:var(--r);padding:14px 13px;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--brand) 12%,var(--card)),var(--card) 55%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 12%,transparent),var(--shadow)}
+.ghero-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ghero-top .gico{color:var(--brand)}
+.ghero-tit{font-size:16px;font-weight:800;letter-spacing:.02em}
+.ghero-sub{font-size:11.5px;color:var(--ink2);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.exlist{display:flex;flex-direction:column;margin:11px 0 12px}
+.exrow{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px dashed var(--line)}
+.exrow:first-child{border-top:none}
+.exrow .nm{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dots{display:flex;gap:4px;flex:none;flex-wrap:wrap;justify-content:flex-end;max-width:110px}
+.gdot{width:9px;height:9px;border-radius:999px;background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line)}
+.gdot.on{background:var(--ok);border-color:transparent}
+/* más alto que un botón normal: se pulsa con la mano sudada y el móvil en la otra */
+.gbig{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+.gtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gtile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:var(--ink);
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:104px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));transition:transform .14s,border-color .16s,box-shadow .16s}
+.gtile:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--brand) 60%,var(--line));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.gtile:active{transform:translateY(0)}
+.gtile .gico{color:var(--ink2);margin-bottom:4px}
+.gtile>b{font-size:13.5px;line-height:1.2}
+.gtile .n{font-size:13px;font-weight:800;color:var(--brand)}
+.gtile .s{font-size:10.5px;color:var(--ink2)}
+@media(min-width:600px){.gtiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .subh{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);
   margin:14px 0 4px;padding-top:9px;border-top:1px solid var(--line)}
 .tl-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--brand);box-shadow:0 0 6px color-mix(in srgb,var(--brand) 80%,transparent)}
