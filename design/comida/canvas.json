@@ -1,0 +1,94 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Comida · el día"
+    },
+    {
+      "file": "Anadir.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Apuntar comida"
+    },
+    {
+      "file": "DiasMenus.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Días y menús"
+    },
+    {
+      "file": "MenuDia.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 1000,
+      "title": "El menú de un día"
+    },
+    {
+      "file": "QueCocino.dc.html",
+      "x": 0,
+      "y": 1160,
+      "w": 390,
+      "h": 844,
+      "title": "Qué puedo cocinar"
+    },
+    {
+      "file": "ModoCocina.dc.html",
+      "x": 470,
+      "y": 1160,
+      "w": 390,
+      "h": 844,
+      "title": "Modo cocina"
+    },
+    {
+      "file": "Inventar.dc.html",
+      "x": 940,
+      "y": 1160,
+      "w": 390,
+      "h": 844,
+      "title": "Inventar una receta"
+    },
+    {
+      "file": "Catalogo.dc.html",
+      "x": 1410,
+      "y": 1160,
+      "w": 390,
+      "h": 844,
+      "title": "Catálogo de platos"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": -370,
+      "y": 0,
+      "w": 290,
+      "text": "Comida y menús, rediseñado\n\nHoy «Días y menús» son 9.912 px —11 pantallas—, 202 botones y 64 campos en una sola vista: los seis tipos de día abiertos a la vez.\n\nArriba: las cuatro pantallas del día a día. Abajo: las tres de recetas que pediste."
+    },
+    {
+      "id": "bug",
+      "x": 0,
+      "y": 876,
+      "w": 390,
+      "text": "Fallo real encontrado de paso: en «Objetivo, semana a semana» la barra se pone al 100 % cuando no tienes objetivo puesto, hayas comido lo que hayas comido. Aquí la tira semanal mide lo comido contra el plan del día."
+    },
+    {
+      "id": "nota-cocina",
+      "x": 470,
+      "y": 1064,
+      "w": 390,
+      "text": "Modo cocina: un paso a la vez en grande y los ingredientes ya escalados a las raciones que elijas."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

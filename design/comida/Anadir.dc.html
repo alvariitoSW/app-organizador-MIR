@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#e9f2ff;
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+a{color:#38e1ff;text-decoration:none}
+a:hover{color:#7c5cff}
+.bgfx{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,#38e1ff 22%,transparent),transparent 70%),
+   radial-gradient(900px 500px at 92% 4%,color-mix(in srgb,#7c5cff 18%,transparent),transparent 72%),
+   linear-gradient(#070b14,#0b1120 60%,#070b14)}
+.gridfx{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px),
+   linear-gradient(90deg,color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%)}
+.scr{position:relative;z-index:1;min-height:844px;display:flex;flex-direction:column}
+header{position:relative;background:color-mix(in srgb,#070b14 82%,transparent);border-bottom:1px solid #1e2b44;
+  backdrop-filter:blur(14px) saturate(1.4)}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,#38e1ff 70%,transparent),color-mix(in srgb,#7c5cff 70%,transparent),transparent)}
+.hwrap{padding:12px 14px 0}
+h1{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:9px;font-weight:800;text-transform:uppercase;
+  background:linear-gradient(92deg,#e9f2ff,color-mix(in srgb,#38e1ff 85%,#e9f2ff) 55%,color-mix(in srgb,#7c5cff 85%,#e9f2ff));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:4px;padding:10px 0 8px}
+nav button{appearance:none;border:1px solid transparent;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12.5px;
+  color:#8fa6c6;border-radius:999px;cursor:pointer;white-space:nowrap;letter-spacing:.02em}
+nav button.on{color:#04121c;background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 70%,#38e1ff));
+  border-color:color-mix(in srgb,#38e1ff 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,#38e1ff 85%,transparent)}
+main{padding:14px 8px;position:relative;z-index:1;flex:1}
+.grid{display:grid;gap:13px}
+.card{position:relative;min-width:0;background:color-mix(in srgb,#111a2b 88%,transparent);border:1px solid #1e2b44;border-radius:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.9);padding:14px 9px}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,color-mix(in srgb,#38e1ff 9%,transparent),transparent 42%)}
+.card>h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.card>h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
+  background:linear-gradient(#38e1ff,#7c5cff);box-shadow:0 0 12px color-mix(in srgb,#38e1ff 70%,transparent)}
+.note{color:#8fa6c6;font-size:12.5px;margin:0 0 12px}
+.mini{font-size:11.5px;color:#8fa6c6}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:13px;padding:7px 13px;border-radius:11px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff;cursor:pointer}
+.btn.p{background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 80%,#38e1ff));border-color:transparent;color:#051018;font-weight:800;
+  box-shadow:0 10px 26px -14px color-mix(in srgb,#38e1ff 90%,transparent)}
+.btn.s{padding:5px 9px;font-size:12px;border-radius:9px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:color-mix(in srgb,#8fa6c6 16%,transparent);color:#8fa6c6;white-space:nowrap;border:1px solid transparent}
+.tag.b2{background:color-mix(in srgb,#38e1ff 18%,transparent);color:color-mix(in srgb,#38e1ff 75%,#e9f2ff);border-color:color-mix(in srgb,#38e1ff 30%,transparent)}
+.tag.b3{background:color-mix(in srgb,#34d399 18%,transparent);color:color-mix(in srgb,#34d399 75%,#e9f2ff);border-color:color-mix(in srgb,#34d399 30%,transparent)}
+.tag.b4{background:color-mix(in srgb,#fbbf24 18%,transparent);color:color-mix(in srgb,#fbbf24 80%,#e9f2ff);border-color:color-mix(in srgb,#fbbf24 30%,transparent)}
+.ico{width:26px;height:26px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:18px;height:18px}
+/* --- comida --- */
+.subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.volver{display:inline-flex;align-items:center;gap:5px;flex:none}
+.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:#e9f2ff;
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:96px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tile .ico{color:#8fa6c6;margin-bottom:4px}
+.tile b{font-size:13.5px;line-height:1.2}
+.tile .n{font-size:13px;font-weight:800;color:#38e1ff}
+.tile .s{font-size:10.5px;color:#8fa6c6}
+/* anillo de kcal */
+.ringrow{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.ringnum b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ringnum span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.06em}
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:#8fa6c6}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden}
+.mbar i{display:block;height:100%}
+.mbar i.p{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.mbar i.g{background:linear-gradient(90deg,#34d399,#a3e635)}
+.mbar i.w{background:linear-gradient(90deg,#fbbf24,#fb7185)}
+/* registro del día */
+.logrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed #1e2b44}
+.logrow:first-child{border-top:none}
+.logrow .h{font-size:11px;font-weight:800;color:#8fa6c6;width:38px;flex:none}
+.logrow .nm{flex:1;min-width:0}
+.logrow .nm b{display:block;font-size:13px}
+.logrow .kc{font-size:12px;font-weight:800;flex:none}
+/* tira semanal */
+.wk{display:flex;gap:5px;margin-top:10px;align-items:flex-end}
+.wkd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wkb{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;
+  display:flex;align-items:flex-end;overflow:hidden}
+.wkb i{display:block;width:100%;background:linear-gradient(180deg,#38e1ff,#7c5cff)}
+.wkb.over i{background:linear-gradient(180deg,#fbbf24,#fb7185)}
+.wkd span{font-size:9.5px;font-weight:800;color:#8fa6c6}
+.wkd.hoy span{color:#38e1ff}
+/* buscador y resultados */
+.buscador{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);color:#8fa6c6;font-size:13.5px}
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.modo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;font:inherit;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;cursor:pointer;min-height:62px}
+.modo.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#e9f2ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.modo span{font-size:10px;font-weight:700}
+.res{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed #1e2b44}
+.res:first-child{border-top:none}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-size:13px}
+/* platos */
+.platos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:10px 10px;border-radius:12px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.plato .pic{font-size:26px;line-height:1.15}
+.plato b{font-size:12.5px;line-height:1.2}
+.plato .mini{font-size:10.5px}
+.cocinable{border-color:color-mix(in srgb,#34d399 45%,#1e2b44);background:color-mix(in srgb,#34d399 8%,#111a2b)}
+/* modo cocina */
+.paso{font-size:19px;line-height:1.45;font-weight:600;margin:14px 0}
+.pasonum{display:flex;align-items:center;gap:9px}
+.pasopunto{width:8px;height:8px;border-radius:999px;background:#1e2b44}
+.pasopunto.on{background:#38e1ff;box-shadow:0 0 10px color-mix(in srgb,#38e1ff 80%,transparent)}
+.ingr{display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed #1e2b44;font-size:13px}
+.ingr:first-child{border-top:none}
+.ingr b{font-weight:800}
+.navpaso{margin-top:auto;position:relative;z-index:1;padding:11px 9px 14px;border-top:1px solid #1e2b44;display:flex;gap:8px;
+  background:color-mix(in srgb,#070b14 92%,transparent)}
+.chip{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:9px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff}
+.chip.on{border-color:color-mix(in srgb,#38e1ff 45%,#1e2b44);color:#38e1ff}
+/* solo lleva barra lo que de verdad es progreso; lo demás, cifra y ya */
+.dosdatos{display:flex;gap:8px}
+.dosdatos div{flex:1;min-width:0;border:1px solid #1e2b44;border-radius:10px;padding:6px 9px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.dosdatos b{display:block;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:-.02em}
+.dosdatos span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.05em}
+  </style>
+</helmet>
+<div class="scr">
+  <div class="bgfx"></div>
+  <div class="gridfx"></div>
+
+<header>
+  <div class="hwrap">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="#38e1ff" stroke-width="2" stroke-linecap="round" style="width:22px;height:22px;flex:none"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>Guardias · rotación y cocina</h1>
+    <nav><button class="">Calendario</button><button class="">Entreno</button><button class="">Compra</button><button class="on">☰ Más</button></nav>
+  </div>
+</header>
+  <main>
+    
+<div class="subcab">
+  <button class="btn s volver"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg> Comida</button>
+  <h2 class="subtit">Apuntar comida</h2>
+</div>
+    <div class="modos">
+      <button class="modo on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>buscar</span></button><button class="modo"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5A2 2 0 0 1 5 6.5h2l1.5-2h7L17 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>escanear</span></button><button class="modo"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5 3.5 16.5z"/><path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9"/></svg><span>mis productos</span></button><button class="modo"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></svg><span>a mano</span></button>
+    </div>
+    <div style="margin-top:11px">
+      <div class="buscador"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg> pollo</div>
+    </div>
+    <div class="card" style="margin-top:11px">
+      <div class="res"><span class="nm"><b>Pechuga de pollo a la plancha</b><span class="mini">165 kcal · 31 g P  /100 g</span></span>
+          <span class="tag">del catálogo</span><button class="btn s"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="res"><span class="nm"><b>Pollo al curry con boniato</b><span class="mini">620 kcal · 42 g P  /ración</span></span>
+          <span class="tag">plato tuyo</span><button class="btn s"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="res"><span class="nm"><b>Muslo de pollo asado</b><span class="mini">209 kcal · 26 g P  /100 g</span></span>
+          <span class="tag">del catálogo</span><button class="btn s"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="res"><span class="nm"><b>Caldo de pollo</b><span class="mini">38 kcal · 3 g P  /100 ml</span></span>
+          <span class="tag">del catálogo</span><button class="btn s"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    </div>
+    <div class="card" style="margin-top:11px">
+      <h2>Pechuga de pollo a la plancha</h2>
+      <div class="fgrid c3 tight">
+        <label class="fld">cantidad<input value="180" style="font-size:16px"></label>
+        <label class="fld">unidad<select><option>gramos</option><option>ración</option></select></label>
+        <label class="fld">momento<select><option>comida</option><option>desayuno</option><option>cena</option></select></label>
+      </div>
+      <div class="row" style="margin-top:10px;gap:14px">
+        <span class="tag b2">297 kcal</span><span class="tag b3">56 g proteína</span>
+      </div>
+      <button class="btn p big" style="margin-top:11px">apuntar</button>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>
