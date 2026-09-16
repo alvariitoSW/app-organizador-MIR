@@ -330,6 +330,9 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .plato>b{font-size:12px;line-height:1.2;overflow-wrap:anywhere;overflow:hidden;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .plato .tag{font-size:9.5px;padding:2px 6px}
+/* importar receta: el enlace y su botón en la misma fila, con el botón alineado abajo */
+.enlacefila{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
+.enlacefila .fld>input{width:100%}
 /* hasta dos líneas: un nombre de tipo de día largo se parte en vez de cortarse en «Salie…» */
 .dnm{font-size:11.5px;font-weight:700;line-height:1.15;overflow:hidden;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}

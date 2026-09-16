@@ -1624,6 +1624,94 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await p2.close();
   }
 
+  // 127-132) pegar el enlace: traer la descripción sola, y decir la verdad cuando no se puede
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const campoEnlace = await page.evaluate(() => ({
+    campo: !!document.querySelector('#impUrl'),
+    boton: !!document.querySelector('[data-a="imp-traer"]'),
+  }));
+  check('la pantalla de importar tiene un campo para el enlace del vídeo',
+    campoEnlace.campo && campoEnlace.boton, JSON.stringify(campoEnlace));
+
+  // el navegador bloquea CORS: fetch rechaza con TypeError, sin estado. Es EL caso que justifica
+  // montar el lector propio, así que el aviso tiene que explicarlo y no quedarse en «ha fallado».
+  await page.evaluate(() => {
+    window.__fetchReal = window.fetch;
+    window.fetch = () => Promise.reject(new TypeError('Failed to fetch'));
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@cocinafit/video/123');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const avisoCors = await page.evaluate(() => {
+    const n = document.querySelector('#main .note[style*="warn"]');
+    return n ? n.textContent : '';
+  });
+  check('si el navegador no deja pedírsela a TikTok, se explica y se manda al lector propio',
+    /no permite CORS/.test(avisoCors) && /lector de enlaces/i.test(avisoCors), avisoCors.slice(0, 120));
+
+  // con oEmbed respondiendo, la descripción entra y se lee sola
+  await page.evaluate(() => {
+    window.__pedido = null;
+    window.fetch = (u) => {
+      window.__pedido = String(u);
+      return Promise.resolve({ ok: true, status: 200,
+        json: () => Promise.resolve({ title: 'LENTEJAS EXPRÉS 🍲\n250 g lenteja pardina\n1 cebolla\nCuece 20 min y listo.', author_name: 'cocinafit' }) });
+    };
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(350);
+  const traido = await page.evaluate(() => ({
+    pedido: window.__pedido,
+    txt: window.PG.ui.imp.txt,
+    nombre: (window.PG.ui.imp.receta || {}).name,
+    ingredientes: ((window.PG.ui.imp.receta || {}).ingredients || []).length,
+  }));
+  check('con la descripción traída, se pide a oEmbed con el enlace codificado',
+    /tiktok\.com\/oembed\?url=https%3A%2F%2Fwww\.tiktok\.com/.test(traido.pedido || ''), traido.pedido);
+  check('la descripción entra en el cuadro y se lee sola, sin tocar nada más',
+    /LENTEJAS/.test(traido.txt) && traido.nombre === 'Lentejas exprés' && traido.ingredientes === 2,
+    JSON.stringify(traido));
+
+  // con lector propio configurado se usa ese, no la plataforma
+  await page.evaluate(() => {
+    window.PG.store.lector = { proxy: 'https://recetas.ejemplo.workers.dev' };
+    window.PG.save();
+    window.PG.ui.imp.receta = null;
+    window.PG.render();
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(350);
+  const viaProxy = await page.evaluate(() => window.__pedido);
+  check('si has puesto tu lector en Ajustes, la petición va por él y no por la plataforma',
+    /^https:\/\/recetas\.ejemplo\.workers\.dev\?url=https%3A%2F%2Fwww\.tiktok\.com/.test(viaProxy || ''), viaProxy);
+
+  // un enlace que no es de ningún sitio conocido, sin lector propio
+  await page.evaluate(() => { window.PG.store.lector = { proxy: '' }; window.PG.save(); });
+  const rechazado = await page.evaluate(() => window.PG.traerDescripcion('https://ejemplo.com/receta')
+    .then(() => null).catch((e) => e.msg));
+  check('un enlace de un sitio que no conoce se rechaza explicando qué sitios lee',
+    /TikTok y de YouTube/.test(rechazado || ''), rechazado);
+
+  await page.evaluate(() => { if (window.__fetchReal) window.fetch = window.__fetchReal; });
+
+  // dentro del Artifact no hay red: se avisa antes de gastar un toque
+  {
+    const p3 = await context.newPage();
+    await p3.addInitScript(`window.claude = { use: function () { return Promise.resolve(null); } };`);
+    await p3.goto(base + 'index.html');
+    await p3.waitForFunction(() => window.PG);
+    await p3.waitForTimeout(300);
+    // la promesa hay que esperarla DENTRO de la página: al serializarla vuelve como {}
+    const enArt = await p3.evaluate(async () => ({
+      detecta: window.PG.enArtifact(),
+      tipo: await window.PG.traerDescripcion('https://www.tiktok.com/@x/video/1').then(() => null).catch((e) => e.tipo),
+    }));
+    check('dentro del Artifact ni lo intenta: avisa de que ahí no se puede salir a la red',
+      enArt.detecta === true && enArt.tipo === 'artifact', JSON.stringify(enArt));
+    await p3.close();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -3,7 +3,9 @@
   "private": true,
   "description": "Guardias · rotación y cocina — app de una sola página, sin build.",
   "scripts": {
-    "test": "node tests/regression.test.js"
+    "test": "node tests/regression.test.js && node tests/worker-recetas.test.mjs",
+    "test:app": "node tests/regression.test.js",
+    "test:lector": "node tests/worker-recetas.test.mjs"
   },
   "devDependencies": {
     "playwright": "^1.47.0"

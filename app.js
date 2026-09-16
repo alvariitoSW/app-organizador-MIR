@@ -72,6 +72,7 @@ function DEFAULTS(){return {
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
+  lector:{proxy:''},
   eventos:[],
   listas:[
     {id:'ls-siempre',nombre:'La compra de siempre',fija:true,
@@ -233,7 +234,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',
-  imp:{txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
+  imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
@@ -291,6 +292,10 @@ function normalize(o){
     .filter(Boolean);
   if(!o.franja||typeof o.franja!=='object')o.franja={};
   o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
+  /* el «lector de enlaces»: una función propia que va a buscar la descripción de un vídeo.
+     Solo https, y solo lo que el usuario haya escrito a mano en Ajustes. */
+  if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
+  o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
   Object.keys(o.franja.colores).forEach(function(k){
     if(TLKEYS.indexOf(k)<0||!/^#[0-9a-fA-F]{6}$/.test(o.franja.colores[k]||''))delete o.franja.colores[k];});
@@ -2726,6 +2731,87 @@ function recetaSana(o){
     icon:(String(o.icon==null?'':o.icon).trim()||recetaIcono(nombre)).slice(0,4),
     portions:Math.max(1,n(o.portions,4,20)),kcal:n(o.kcal,0,3000),prot:n(o.prot,0,300),
     ingredients:ing,steps:pas.slice(0,20)};}
+/* --- pegar el enlace: ir a buscar la descripción del vídeo ---
+   Dos caminos y ninguno puede fallar en silencio:
+   1. sin nada configurado, se le pide directamente a la plataforma (oEmbed). Puede que el navegador
+      no deje: oEmbed es público, pero que mande o no las cabeceras CORS lo decide la plataforma.
+   2. con un «lector de enlaces» propio puesto en Ajustes (una función tuya; hay una lista para
+      copiar y pegar en tools/worker-recetas.js), se le pide a ella y CORS deja de ser problema.
+   Dentro del Artifact de claude.ai ninguno de los dos funciona: ahí toda petición externa está
+   cerrada, y por eso se avisa antes de gastarle un toque al usuario. */
+function enArtifact(){return !!(typeof window!=='undefined'&&window.claude&&typeof window.claude.use==='function');}
+const LECTOR_SITIOS=[
+  {re:/^https?:\/\/([\w-]+\.)*tiktok\.com\//i,nombre:'TikTok',
+   oembed:function(u){return 'https://www.tiktok.com/oembed?url='+encodeURIComponent(u);}},
+  {re:/^https?:\/\/(([\w-]+\.)*youtube\.com|youtu\.be)\//i,nombre:'YouTube',
+   oembed:function(u){return 'https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(u);}},
+  {re:/^https?:\/\/([\w-]+\.)*instagram\.com\//i,nombre:'Instagram',oembed:null}
+];
+function lectorSitio(url){
+  const u=String(url||'').trim();
+  for(let i=0;i<LECTOR_SITIOS.length;i++)if(LECTOR_SITIOS[i].re.test(u))return LECTOR_SITIOS[i];
+  return null;}
+function lectorProxy(){return ((store.lector||{}).proxy||'').trim();}
+function lectorNormaliza(data){
+  /* vale tanto lo que devuelve oEmbed tal cual como lo que devuelve tu función ya masticado */
+  if(!data||typeof data!=='object')return null;
+  const txt=String(data.texto||data.title||'').trim();
+  const autor=String(data.autor||data.author_name||'').trim();
+  if(!txt&&!autor)return null;
+  return {texto:txt,autor:autor};}
+function traerDescripcion(url){
+  const u=String(url||'').trim();
+  if(!/^https?:\/\//i.test(u))return Promise.reject({tipo:'url',msg:'Eso no parece un enlace. Pega la dirección completa del vídeo.'});
+  if(enArtifact())return Promise.reject({tipo:'artifact',
+    msg:'Aquí dentro (el Artifact de claude.ai) no se puede salir a la red. Usa «Que la lea Claude» con el texto o una captura, o abre la app del móvil.'});
+  const sitio=lectorSitio(u),proxy=lectorProxy();
+  if(!sitio&&!proxy)return Promise.reject({tipo:'url',msg:'De momento sé leer enlaces de TikTok y de YouTube. Para otros, pon tu lector de enlaces en Ajustes.'});
+  if(sitio&&!sitio.oembed&&!proxy)return Promise.reject({tipo:'url',
+    msg:'Los enlaces de Instagram no se pueden leer sin un lector propio (Instagram pide credenciales). Pon uno en Ajustes o pega el texto.'});
+  const destino=proxy?(proxy+(proxy.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u)):sitio.oembed(u);
+  return fetch(destino,{headers:{accept:'application/json'}}).then(function(res){
+    if(!res.ok)return res.text().then(function(t){
+      throw {tipo:'http',msg:(proxy?'Tu lector de enlaces':'La plataforma')+' ha respondido '+res.status+'. '+
+        (String(t||'').slice(0,120)||'Prueba a pegar el texto a mano.')};});
+    return res.json();
+  }).then(function(data){
+    if(data&&data.error)throw {tipo:'http',msg:String(data.error).slice(0,160)};
+    const n=lectorNormaliza(data);
+    if(!n)throw {tipo:'vacio',msg:'El enlace no traía descripción ninguna. Si la receta solo se dice en el vídeo, copia el comentario donde esté escrita.'};
+    return n;
+  }).catch(function(e){
+    if(e&&e.tipo)throw e;
+    /* un fallo de CORS llega como TypeError sin estado: es el caso que justifica el paso 2 */
+    throw {tipo:'cors',msg:(proxy
+      ?'No he podido hablar con tu lector de enlaces. Comprueba la dirección en Ajustes.'
+      :'El navegador no ha dejado pedírselo a '+((sitio&&sitio.nombre)||'la plataforma')+' (no permite CORS). '+
+        'Monta tu propio lector de enlaces —está explicado en tools/LECTOR-DE-ENLACES.md— y ponlo en Ajustes; mientras tanto, pega el texto.')};});}
+function impTraerEnlace(){
+  const u=String(ui.imp.url||'').trim();
+  if(!u){flash('Pega antes el enlace del vídeo');return;}
+  ui.imp.estado='trayendo';ui.imp.msg='';render();
+  traerDescripcion(u).then(function(d){
+    const partes=[d.texto,d.autor?('— '+d.autor):''].filter(Boolean);
+    ui.imp.txt=partes.join('\n');
+    ui.imp.estado='';ui.imp.msg='';
+    const r=parseReceta(ui.imp.txt);
+    if(r){ui.imp.receta=r;ui.imp.via='local';render();flash('Descripción traída y leída: '+r.name);}
+    else{render();flash('Descripción traída: ahora dale a leerla');}
+  }).catch(function(e){
+    ui.imp.estado='error';ui.imp.msg=(e&&e.msg)||'No he podido traer la descripción.';render();});}
+function lectorProbar(){
+  const u='https://www.tiktok.com/@cocina/video/1234567890123456789';
+  const proxy=lectorProxy();
+  if(!proxy){flash('Escribe primero la dirección de tu lector');return;}
+  flash('Probando tu lector…');
+  fetch(proxy+(proxy.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u),{headers:{accept:'application/json'}})
+    .then(function(res){
+      /* el vídeo de prueba no existe, así que lo que se comprueba es que TU función contesta y que
+         el navegador acepta su respuesta: eso es justo lo que fallaba sin ella */
+      return res.text().then(function(){
+        flash(res.status<500?'✓ Tu lector responde y el navegador lo acepta ('+res.status+')'
+          :'Responde, pero con error '+res.status+': revisa el código de la función');});
+    }).catch(function(){flash('✗ No he podido hablar con esa dirección. ¿La has copiado entera, con https?');});}
 /* --- el puente con Claude: solo existe dentro del Artifact --- */
 let _sampleFn=null,_sampleLim=null,_sampleEstado='buscando';
 function claudeBuscar(){
@@ -2808,7 +2894,7 @@ function impGuardar(){
     if(!store.menu[dia])store.menu[dia]=[];
     store.menu[dia].push({id:uid('sl'),time:'',label:plato.name,items:[{kind:'dish',id:plato.id,portions:1}]});
     extra=' y puesto en el menú de '+shiftById(dia).name;}
-  ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
   save();render();
   return 'Guardado: '+plato.icon+' '+plato.name+extra;}
 function impPreviaHTML(r){
@@ -2844,17 +2930,28 @@ function impPreviaHTML(r){
       '<button class="btn s" data-a="imp-descartar">descartar</button></div>'+
     '</div>';}
 function renderImport(){
-  if(!ui.imp)ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+  if(!ui.imp)ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
   const hayClaude=_sampleEstado==='si'&&!!_sampleFn;
   const puedeImagen=hayClaude&&!!(_sampleLim&&_sampleLim.images);
   const pensando=ui.imp.estado==='pensando';
+  const trayendo=ui.imp.estado==='trayendo';
   const tipos=puedeImagen?(_sampleLim.images.mediaTypes||[]).join(','):'';
   const nImg=(ui.imp.imagenes&&ui.imp.imagenes.length)||0;
   $('#main').innerHTML='<div class="grid">'+
     '<div class="card"><h2>📥 Importar una receta</h2>'+
       '<p class="note">Copia la descripción del TikTok (o el comentario donde está la receta) y pégala aquí. '+
       'La app no puede abrir el vídeo ni bajarse la descripción sola: eso lo bloquean tanto TikTok como el navegador.</p>'+
-      '<label class="fld">texto de la receta'+
+      '<div class="enlacefila">'+
+        '<label class="fld" style="flex:1 1 190px;min-width:0">enlace del vídeo'+
+          '<input id="impUrl" type="url" inputmode="url" value="'+esc(ui.imp.url||'')+'" data-a="imp-url" placeholder="https://www.tiktok.com/@…">'+
+        '</label>'+
+        '<button class="btn s" data-a="imp-traer"'+(trayendo?' disabled':'')+'>'+(trayendo?'trayendo…':'traer la descripción')+'</button>'+
+      '</div>'+
+      (enArtifact()
+        ?'<p class="mini" style="margin-top:6px">⚠ Aquí dentro el enlace no se puede leer: el Artifact no deja salir a la red. En la app del móvil sí.</p>'
+        :(lectorProxy()?'<p class="mini" style="margin-top:6px">Usando tu lector de enlaces.</p>'
+          :'<p class="mini" style="margin-top:6px">Se le pide directamente a la plataforma. Si el navegador no deja, te lo digo y montas tu lector (Ajustes).</p>'))+
+      '<label class="fld" style="margin-top:10px">texto de la receta'+
         '<textarea id="impTxt" rows="8" data-a="imp-txt" placeholder="Pega aquí la descripción del vídeo…">'+esc(ui.imp.txt||'')+'</textarea></label>'+
       (puedeImagen?('<div class="row" style="margin-top:9px;gap:7px">'+
         '<label class="fld" style="flex:1 1 200px">…o una captura de pantalla de la receta'+
@@ -2862,9 +2959,9 @@ function renderImport(){
         (nImg?'<span class="tag b2" style="align-self:flex-end;margin-bottom:6px">'+nImg+' imagen'+(nImg===1?'':'es')+'</span>':'')+
         '</div>'):'')+
       '<div class="row" style="margin-top:11px">'+
-        (hayClaude?'<button class="btn p" data-a="imp-claude"'+(pensando?' disabled':'')+'>'+
+        (hayClaude?'<button class="btn p" data-a="imp-claude"'+(pensando||trayendo?' disabled':'')+'>'+
           (pensando?'Claude está leyéndola…':'✨ Que la lea Claude')+'</button>':'')+
-        '<button class="btn '+(hayClaude?'s':'p')+'" data-a="imp-local"'+(pensando?' disabled':'')+'>Leerla aquí mismo</button>'+
+        '<button class="btn '+(hayClaude?'s':'p')+'" data-a="imp-local"'+(pensando||trayendo?' disabled':'')+'>Leerla aquí mismo</button>'+
         (String(ui.imp.txt||'').trim()||nImg?'<button class="btn s" data-a="imp-clear">limpiar</button>':'')+
       '</div>'+
       (ui.imp.estado==='error'?'<p class="note" style="margin-top:10px;color:var(--warn)">⚠ '+esc(ui.imp.msg)+'</p>':'')+
@@ -3461,6 +3558,15 @@ function renderAjustes(){
       <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
       ${serviciosEditorHTML()}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div>
+    </div>
+
+    <div class="card" data-cfg="lector"><h2>Lector de enlaces</h2>
+      <p class="note">Para que al pegar el enlace de un TikTok la app traiga sola la descripción. Solo hace falta si el navegador no deja pedírsela directamente a la plataforma — si te sale ese aviso al importar, monta el tuyo: son 5 minutos y es gratis. Los pasos están en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>
+      <label class="fld">dirección de tu lector (opcional)
+        <input type="url" inputmode="url" value="${esc((store.lector||{}).proxy||'')}" data-a="lector-f" placeholder="https://recetas.tu-usuario.workers.dev"></label>
+      <div class="row" style="margin-top:9px">
+        <button class="btn s" data-a="lector-probar">probar</button>
+        <span class="mini">se queda en tu navegador; solo se le manda el enlace del vídeo</span></div>
     </div>
 
     <div class="card" data-cfg="franja"><h2>La franja del día</h2>
@@ -4243,9 +4349,11 @@ function act(a,el){
         if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
         c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
       break;}
+    case 'imp-traer':impTraerEnlace();break;
+    case 'lector-probar':lectorProbar();break;
     case 'imp-claude':impConClaude();break;
     case 'imp-local':impLocal();break;
-    case 'imp-clear':{ui.imp.txt='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';render();break;}
+    case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';render();break;}
     case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
     case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
@@ -5375,6 +5483,9 @@ document.addEventListener('input',e=>{
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
   if(a==='ics-in'){ui.icsTxt=el.value||'';return;}
   if(a==='imp-txt'){ui.imp.txt=el.value||'';return;}
+  if(a==='imp-url'){ui.imp.url=el.value||'';return;}
+  if(a==='lector-f'){if(!store.lector)store.lector={proxy:''};
+    store.lector.proxy=String(el.value||'').trim().slice(0,300);save();return;}
   if(a==='imp-f'){
     const f=el.dataset.f;
     if(f==='destinoLote'||f==='destinoDia'){ui.imp[f]=el.value||'';return;}
@@ -5554,7 +5665,7 @@ function compartidoEntrante(){
     const q=new URLSearchParams(location.search||'');
     const partes=['title','text','url'].map(function(k){return (q.get(k)||'').trim();}).filter(Boolean);
     if(!partes.length)return;
-    if(!ui.imp)ui.imp={txt:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
+    if(!ui.imp)ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
     ui.imp.txt=partes.join('\n');
     ui.tab='import';
     if(history&&history.replaceState)history.replaceState(null,'',location.pathname);
@@ -5578,6 +5689,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
+  enArtifact,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
