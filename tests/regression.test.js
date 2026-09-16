@@ -1712,6 +1712,114 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await p3.close();
   }
 
+  // 133-138) SECUENCIAS, no caminos sueltos. Las pruebas de arriba salían de un estado limpio y por
+  // eso no vieron ninguno de estos seis: todos aparecen al encadenar dos gestos.
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const CAP_OK = 'LENTEJAS EXPRÉS 🍲\nIngredientes:\n250 g lenteja pardina\n1 cebolla\nPreparación:\nCuece 20 minutos.';
+
+  // leer una receta y luego darle a «limpiar»: la previa y su botón de guardar tienen que irse
+  await page.fill('#impTxt', CAP_OK);
+  await page.click('[data-a="imp-local"]');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="imp-clear"]');
+  await page.waitForTimeout(250);
+  const trasLimpiar = await page.evaluate(() => ({
+    txt: document.querySelector('#impTxt').value,
+    previa: !!document.querySelector('[data-imp="previa"]'),
+    guardar: !!document.querySelector('[data-a="imp-save"]'),
+  }));
+  check('«limpiar» se lleva también la receta leída, no solo el texto',
+    trasLimpiar.txt === '' && !trasLimpiar.previa && !trasLimpiar.guardar, JSON.stringify(trasLimpiar));
+
+  // traer un enlace con receta y luego otro SIN receta: no puede quedarse la primera en pantalla,
+  // o acabas guardando el plato del enlace anterior
+  await page.evaluate(() => {
+    window.__fetchReal2 = window.fetch;
+    window.__n = 0;
+    window.fetch = () => {
+      window.__n++;
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(
+        window.__n === 1
+          ? { title: 'LENTEJAS EXPRÉS 🍲\nIngredientes:\n250 g lenteja pardina\n1 cebolla\nPreparación:\nCuece 20 minutos.' }
+          : { title: 'que rico todo 😍 #fyp' }) });
+    };
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@a/video/1');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const previa1 = await page.evaluate(() => {
+    const t = document.querySelector('[data-imp="previa"]'); return t ? t.querySelector('.tarj-nm').value : null;
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@a/video/2');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const previa2 = await page.evaluate(() => !!document.querySelector('[data-imp="previa"]'));
+  check('un enlace nuevo sin receta se lleva por delante la receta del enlace anterior',
+    previa1 === 'Lentejas exprés' && previa2 === false, JSON.stringify({ previa1, previa2 }));
+
+  // una respuesta 200 que no es JSON no es un bloqueo de CORS: mandar ahí al usuario a montar un
+  // proxy es mandarlo a arreglar lo que no está roto
+  await page.evaluate(() => {
+    window.fetch = () => Promise.resolve({ ok: true, status: 200,
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')) });
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const avisoFormato = await page.evaluate(() => {
+    const n = document.querySelector('#main .note[style*="warn"]'); return n ? n.textContent : '';
+  });
+  check('un 200 con algo que no es JSON se explica como formato, no como CORS',
+    !/no permite CORS/.test(avisoFormato) && /formato|JSON/i.test(avisoFormato), avisoFormato.slice(0, 90));
+
+  // el lector sin https:// se completa al salir del campo, en vez de guardarse muerto
+  await gotoTab('ajustes');
+  await page.waitForTimeout(250);
+  await page.fill('[data-a="lector-f"]', 'recetas.ejemplo.workers.dev');
+  await page.keyboard.press('Tab');   // fill() no dispara «change»; salir del campo sí
+  await page.waitForTimeout(250);
+  const lectorGuardado = await page.evaluate(() => window.PG.store.lector.proxy);
+  const sobreviveNormalize = await page.evaluate(() => {
+    const copia = JSON.parse(JSON.stringify(window.PG.store));
+    window.PG.store = copia;                      // pasa por normalize(), como al recargar
+    return window.PG.store.lector.proxy;
+  });
+  check('un lector escrito sin https:// se completa solo y sobrevive a recargar',
+    lectorGuardado === 'https://recetas.ejemplo.workers.dev' &&
+    sobreviveNormalize === 'https://recetas.ejemplo.workers.dev',
+    JSON.stringify({ lectorGuardado, sobreviveNormalize }));
+
+  // «probar» con una dirección equivocada que devuelve 404 no puede decir que va bien
+  await page.evaluate(() => {
+    window.fetch = () => Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('<html>404</html>') });
+  });
+  await page.click('[data-a="lector-probar"]');
+  await page.waitForTimeout(350);
+  const avisoProbar = await page.evaluate(() => {
+    const f = document.getElementById('flash'); return f ? f.textContent : '';
+  });
+  check('«probar» solo da el visto bueno si contesta tu lector, no ante cualquier 404',
+    /^✗/.test(avisoProbar.trim()), avisoProbar.slice(0, 80));
+  await page.evaluate(() => {
+    if (window.__fetchReal2) window.fetch = window.__fetchReal2;
+    window.PG.store.lector = { proxy: '' }; window.PG.save();
+  });
+
+  // compartir desde TikTok: el enlace va a su campo, no revuelto con el texto de la receta
+  await page.goto(base + 'index.html?title=' + encodeURIComponent('Lentejas') +
+    '&text=' + encodeURIComponent('250 g lenteja\n1 cebolla') +
+    '&url=' + encodeURIComponent('https://www.tiktok.com/@a/video/9'));
+  await page.waitForTimeout(400);
+  const compartido2 = await page.evaluate(() => ({
+    url: window.PG.ui.imp.url,
+    campo: (document.querySelector('#impUrl') || {}).value,
+    txt: window.PG.ui.imp.txt,
+  }));
+  check('al compartir, el enlace va al campo de enlace y el texto queda limpio de URLs',
+    compartido2.url === 'https://www.tiktok.com/@a/video/9' &&
+    compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
+    JSON.stringify(compartido2));
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

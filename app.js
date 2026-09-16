@@ -2773,7 +2773,12 @@ function traerDescripcion(url){
     if(!res.ok)return res.text().then(function(t){
       throw {tipo:'http',msg:(proxy?'Tu lector de enlaces':'La plataforma')+' ha respondido '+res.status+'. '+
         (String(t||'').slice(0,120)||'Prueba a pegar el texto a mano.')};});
-    return res.json();
+    /* si contesta pero con algo que no es JSON, el fallo es de formato, no de CORS: mandar al
+       usuario a montar un proxy por esto sería mandarlo a arreglar lo que no está roto */
+    return res.json().catch(function(){
+      throw {tipo:'formato',msg:(lectorProxy()
+        ?'Tu lector ha contestado, pero con algo que no es JSON. Revisa que el código del Worker esté pegado entero.'
+        :'La respuesta no venía en el formato esperado. Pega el texto de la receta a mano.')};});
   }).then(function(data){
     if(data&&data.error)throw {tipo:'http',msg:String(data.error).slice(0,160)};
     const n=lectorNormaliza(data);
@@ -2786,9 +2791,14 @@ function traerDescripcion(url){
       ?'No he podido hablar con tu lector de enlaces. Comprueba la dirección en Ajustes.'
       :'El navegador no ha dejado pedírselo a '+((sitio&&sitio.nombre)||'la plataforma')+' (no permite CORS). '+
         'Monta tu propio lector de enlaces —está explicado en tools/LECTOR-DE-ENLACES.md— y ponlo en Ajustes; mientras tanto, pega el texto.')};});}
+function impFuenteNueva(){
+  /* en cuanto cambia el texto de origen, la receta de antes deja de valer: si se queda en pantalla
+     acabas guardando el plato del enlace anterior */
+  ui.imp.receta=null;ui.imp.via='';}
 function impTraerEnlace(){
   const u=String(ui.imp.url||'').trim();
   if(!u){flash('Pega antes el enlace del vídeo');return;}
+  impFuenteNueva();
   ui.imp.estado='trayendo';ui.imp.msg='';render();
   traerDescripcion(u).then(function(d){
     const partes=[d.texto,d.autor?('— '+d.autor):''].filter(Boolean);
@@ -2806,11 +2816,15 @@ function lectorProbar(){
   flash('Probando tu lector…');
   fetch(proxy+(proxy.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u),{headers:{accept:'application/json'}})
     .then(function(res){
-      /* el vídeo de prueba no existe, así que lo que se comprueba es que TU función contesta y que
-         el navegador acepta su respuesta: eso es justo lo que fallaba sin ella */
-      return res.text().then(function(){
-        flash(res.status<500?'✓ Tu lector responde y el navegador lo acepta ('+res.status+')'
-          :'Responde, pero con error '+res.status+': revisa el código de la función');});
+      /* el vídeo de prueba no existe a propósito: lo que se comprueba no es que lo encuentre, sino
+         que contesta TU función (JSON con nuestra forma) y que el navegador acepta la respuesta.
+         Un 404 de una dirección equivocada también es un 404, así que el estado por sí solo no vale. */
+      return res.text().then(function(t){
+        let d=null;try{d=JSON.parse(t);}catch(e){}
+        const nuestro=d&&typeof d==='object'&&(typeof d.texto==='string'||typeof d.error==='string');
+        if(nuestro)flash('✓ Tu lector responde y el navegador lo acepta');
+        else if(res.status>=500)flash('✗ Responde con error '+res.status+': revisa que el código esté pegado entero');
+        else flash('✗ Ahí hay algo, pero no es tu lector ('+res.status+'). ¿Es esa la dirección del Worker?');});
     }).catch(function(){flash('✗ No he podido hablar con esa dirección. ¿La has copiado entera, con https?');});}
 /* --- el puente con Claude: solo existe dentro del Artifact --- */
 let _sampleFn=null,_sampleLim=null,_sampleEstado='buscando';
@@ -2861,21 +2875,22 @@ function impConClaude(){
   const opciones={modelTier:'default'};
   if(conImagen)opciones.images=imgs;
   _sampleFn.json(impPrompt(ui.imp.txt,conImagen),opciones).then(function(data){
-    if(data&&data.error){ui.imp.estado='error';ui.imp.msg='Claude no ha visto ninguna receta ahí dentro.';render();return;}
+    if(data&&data.error){impFuenteNueva();ui.imp.estado='error';ui.imp.msg='Claude no ha visto ninguna receta ahí dentro.';render();return;}
     const r=recetaSana(data);
-    if(!r){ui.imp.estado='error';ui.imp.msg='La respuesta no traía una receta reconocible. Prueba otra vez.';render();return;}
+    if(!r){impFuenteNueva();ui.imp.estado='error';ui.imp.msg='La respuesta no traía una receta reconocible. Prueba otra vez.';render();return;}
     ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='claude';render();
     flash('Receta leída por Claude: '+r.name);
   }).catch(function(e){
     const code=(e&&e.code)||'upstream_error';
     if(code==='cancelled'){ui.imp.estado='';render();return;}
-    ui.imp.estado='error';
+    impFuenteNueva();ui.imp.estado='error';
     ui.imp.msg=IMP_ERRORES[code]||'No ha salido («'+code+'»). Puedes leerlo aquí mismo con el lector de la app.';
     if(code==='not_granted'||code==='sampling_disabled'||code==='not_declared'||code==='capability_disabled')_sampleEstado='no';
     render();});}
 function impLocal(){
   const r=parseReceta(ui.imp.txt);
-  if(!r){ui.imp.estado='error';
+  if(!r)impFuenteNueva();
+  if(!r){impFuenteNueva();ui.imp.estado='error';
     ui.imp.msg='No he sacado nada en claro. Suele pasar cuando la receta se dice en el vídeo y no está escrita: copia el comentario donde esté la lista de ingredientes.';
     render();return;}
   ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='local';render();
@@ -2939,8 +2954,9 @@ function renderImport(){
   const nImg=(ui.imp.imagenes&&ui.imp.imagenes.length)||0;
   $('#main').innerHTML='<div class="grid">'+
     '<div class="card"><h2>📥 Importar una receta</h2>'+
-      '<p class="note">Copia la descripción del TikTok (o el comentario donde está la receta) y pégala aquí. '+
-      'La app no puede abrir el vídeo ni bajarse la descripción sola: eso lo bloquean tanto TikTok como el navegador.</p>'+
+      '<p class="note">Pega el enlace y la app intenta traer la descripción sola; si no puede, te lo dice y '+
+      'pegas el texto tú. Lo que no hay forma de hacer es escuchar el vídeo: si la receta solo se dice en voz alta '+
+      'y no está escrita en ninguna parte, copia el comentario donde esté.</p>'+
       '<div class="enlacefila">'+
         '<label class="fld" style="flex:1 1 190px;min-width:0">enlace del vídeo'+
           '<input id="impUrl" type="url" inputmode="url" value="'+esc(ui.imp.url||'')+'" data-a="imp-url" placeholder="https://www.tiktok.com/@…">'+
@@ -4353,7 +4369,8 @@ function act(a,el){
     case 'lector-probar':lectorProbar();break;
     case 'imp-claude':impConClaude();break;
     case 'imp-local':impLocal();break;
-    case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';render();break;}
+    case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';
+      impFuenteNueva();render();break;}
     case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
     case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
@@ -5485,7 +5502,7 @@ document.addEventListener('input',e=>{
   if(a==='imp-txt'){ui.imp.txt=el.value||'';return;}
   if(a==='imp-url'){ui.imp.url=el.value||'';return;}
   if(a==='lector-f'){if(!store.lector)store.lector={proxy:''};
-    store.lector.proxy=String(el.value||'').trim().slice(0,300);save();return;}
+    store.lector.proxy=String(el.value||'').trim().slice(0,300);save();return;}   /* crudo mientras escribe */
   if(a==='imp-f'){
     const f=el.dataset.f;
     if(f==='destinoLote'||f==='destinoDia'){ui.imp[f]=el.value||'';return;}
@@ -5571,6 +5588,16 @@ document.addEventListener('change',e=>{
       if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
       store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
+    case 'lector-f':{
+      /* al salir del campo se completa el https:// que falte: guardarlo tal cual lo dejaba inservible
+         (fetch lo resolvía contra la propia web) y además normalize() lo borraba al recargar */
+      let v=String(el.value||'').trim().slice(0,300);
+      if(v&&!/^https?:\/\//i.test(v))v='https://'+v.replace(/^\/+/,'');
+      v=v.replace(/^http:\/\//i,'https://');
+      if(!store.lector)store.lector={proxy:''};
+      store.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(v)?v:'';
+      if(v&&!store.lector.proxy)flash('Esa dirección no vale: tiene que ser una URL https');
+      save();render();break;}
     case 'imp-img':{const fs=el.files;
       ui.imp.imagenes=(fs&&fs.length)?Array.prototype.slice.call(fs):null;
       ui.imp.estado='';ui.imp.msg='';render();break;}
@@ -5663,10 +5690,16 @@ function compartidoEntrante(){
      Se vacía la barra de direcciones para que al recargar no vuelva a abrirse la importación. */
   try{
     const q=new URLSearchParams(location.search||'');
-    const partes=['title','text','url'].map(function(k){return (q.get(k)||'').trim();}).filter(Boolean);
-    if(!partes.length)return;
+    const titulo=(q.get('title')||'').trim(),texto=(q.get('text')||'').trim(),enlace=(q.get('url')||'').trim();
+    /* TikTok manda a veces el enlace dentro de «text» en vez de en «url»: se saca de donde esté y
+       va al campo del enlace, no al cuadro de la receta */
+    const m=/https?:\/\/\S+/.exec(enlace||texto||'');
+    const url=m?m[0]:'';
+    const cuerpo=[titulo,texto].filter(Boolean).join('\n').replace(/https?:\/\/\S+/g,'').replace(/\n{2,}/g,'\n').trim();
+    if(!cuerpo&&!url)return;
     if(!ui.imp)ui.imp={txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null};
-    ui.imp.txt=partes.join('\n');
+    ui.imp.txt=cuerpo;
+    ui.imp.url=url;
     ui.tab='import';
     if(history&&history.replaceState)history.replaceState(null,'',location.pathname);
   }catch(e){/* navegador sin URLSearchParams o sin history: se entra a la app como siempre */}}

@@ -34,7 +34,13 @@ export default {
     };
     const responde = (cuerpo, estado) => new Response(JSON.stringify(cuerpo), {
       status: estado || 200,
-      headers: { ...cors, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=3600' },
+      headers: {
+        ...cors,
+        'content-type': 'application/json; charset=utf-8',
+        /* solo se cachea lo que salió bien: un 502 pasajero guardado una hora dejaba el enlace
+           roto ese rato aunque la plataforma ya hubiera vuelto */
+        'cache-control': (estado && estado >= 400) ? 'no-store' : 'public, max-age=3600',
+      },
     });
 
     if (peticion.method === 'OPTIONS') return new Response(null, { headers: cors });
@@ -54,7 +60,8 @@ export default {
         cf: { cacheTtl: 3600 },
       });
       if (r.ok) {
-        const d = await r.json();
+        /* si contesta 200 con algo que no es JSON, no se aborta: para eso está la reserva de abajo */
+        const d = await r.json().catch(() => null);
         const texto = String((d && d.title) || '').trim();
         if (texto) return responde({ texto, autor: String((d && d.author_name) || '').trim(), via: 'oembed' });
       }

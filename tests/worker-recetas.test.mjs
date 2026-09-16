@@ -56,5 +56,23 @@ check('con ORIGEN puesto, solo esa web puede usarlo', r.headers.get('access-cont
 r=await worker.fetch(pide('https://www.instagram.com/reel/abc/'),{});
 check('Instagram responde que hace falta pegar el texto', r.status===400 && /credenciales/.test((await r.json()).error));
 
+// 11) un error no se cachea: un 502 pasajero guardado una hora dejaba el enlace roto ese rato
+globalThis.fetch=async()=>{throw new Error('caida pasajera');};
+r=await worker.fetch(pide('https://www.tiktok.com/@x/video/1'),{});
+check('los errores salen con no-store, no cacheados una hora', r.headers.get('cache-control')==='no-store', r.headers.get('cache-control'));
+
+globalThis.fetch=async()=>new Response(JSON.stringify({title:'algo'}),{status:200});
+r=await worker.fetch(pide('https://www.tiktok.com/@x/video/1'),{});
+check('lo que sale bien sí se cachea', /max-age=3600/.test(r.headers.get('cache-control')||''), r.headers.get('cache-control'));
+
+// 12) oEmbed contesta 200 pero con HTML: no debe abortar, debe caer en la reserva de og:description
+globalThis.fetch=async(u)=>String(u).includes('/oembed')
+  ? new Response('<!doctype html><h1>vaya</h1>',{status:200})
+  : new Response('<html><head><meta property="og:description" content="200 g arroz, 1 cebolla"></head></html>',{status:200});
+r=await worker.fetch(pide('https://www.tiktok.com/@x/video/1'),{});
+b=await r.json();
+check('si oEmbed contesta 200 con algo que no es JSON, tira de og en vez de reventar',
+  r.status===200 && b.via==='og' && /200 g arroz/.test(b.texto), JSON.stringify(b));
+
 console.log('\n'+ok+'/'+(ok+fail)+' pruebas del lector OK');
 process.exit(fail?1:0);

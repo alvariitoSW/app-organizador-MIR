@@ -59,6 +59,32 @@ click through the real UI for the actual check.
 - `.claude/worktrees/` is gitignored (scratch copies for background agents); the
   rest of `.claude/` (this skill included) is tracked.
 
+## Probar secuencias, no caminos sueltos
+
+La suite llegó a 133 pruebas en verde con seis fallos reales vivos en la pantalla de
+importar recetas. Todos aparecían al **encadenar dos gestos**, y ninguno al probar cada
+camino por separado desde un estado limpio:
+
+- leer una receta → «limpiar»: la previa y su botón de guardar seguían ahí;
+- traer un enlace con receta → traer otro sin receta: se quedaba la primera, y guardabas
+  el plato del enlace anterior;
+- un 200 que no es JSON se culpaba a CORS y mandaba al usuario a montar un proxy.
+
+Antes de dar por buena una pantalla nueva, condúcela en cadena: haz, deshaz, repite con
+otra entrada, vuelve atrás. Y comprueba lo que queda **en pantalla**, no solo el estado.
+
+Dos trampas de Playwright que salieron en eso:
+
+- `page.fill()` **no** dispara `change` en un `<input>` de texto. Si el manejador está en
+  el listener de `change` (la app tiene dos switch: uno de clics y otro de `change`),
+  hay que salir del campo: `await page.keyboard.press('Tab')`.
+- `page.evaluate(() => ({p: unaPromesa}))` devuelve `{}`: la promesa no sobrevive a la
+  serialización. Hay que esperarla dentro: `evaluate(async () => ({v: await ...}))`.
+
+Un `case` en el switch que no toca no se dispara nunca y no da error: al añadir una
+acción, comprueba si el elemento es un botón (clic) o un `input`/`select` (`change`), y
+**pulsa el botón de verdad en la prueba** en vez de comprobar solo que existe.
+
 ## Regression suite (not a substitute for driving the UI, but keep it green)
 
 `node tests/regression.test.js` — custom Playwright script (not Jest), same
