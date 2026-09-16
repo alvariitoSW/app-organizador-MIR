@@ -325,6 +325,33 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .gtile .n{font-size:13px;font-weight:800;color:var(--brand)}
 .gtile .s{font-size:10.5px;color:var(--ink2)}
 @media(min-width:600px){.gtiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Comida y menús: filas de lista, fichas de plato y buscador */
+.res{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px dashed var(--line);min-height:52px}
+.res:first-child{border-top:none}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-size:13.5px}
+.res .nm .mini{display:block}
+.res:hover .nm b{color:color-mix(in srgb,var(--brand) 60%,var(--ink))}
+.platos{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:9px;margin-top:10px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;
+  border:1px solid var(--line);border-radius:11px;padding:9px 10px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));transition:border-color .16s}
+.plato:hover{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.plato .pic{font-size:24px;line-height:1.15}
+.plato>b{font-size:12px;line-height:1.2;overflow-wrap:anywhere;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.plato .tag{font-size:9.5px;padding:2px 6px}
+.plato.listo{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));background:color-mix(in srgb,var(--ok) 8%,var(--card))}
+/* «qué cocino»: fichas con botón dentro, así que dos columnas — a tres, el nombre del plato se
+   parte en cuatro renglones y el botón queda más ancho que la tarjeta */
+.platos.acc{grid-template-columns:repeat(2,minmax(0,1fr))}
+.platos.acc .plato>b{font-size:12.5px}
+.platos.acc .btn{width:100%;justify-content:center}
+.buscador{display:flex;align-items:center;gap:8px;padding:0;border-radius:12px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 55%,var(--card));overflow:hidden}
+.buscador input{border:0;background:none;width:100%;padding:11px 12px;font-size:13.5px}
+.buscador input:focus{outline:none;box-shadow:none}
 .subh{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);
   margin:14px 0 4px;padding-top:9px;border-top:1px solid var(--line)}
 .tl-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--brand);box-shadow:0 0 6px color-mix(in srgb,var(--brand) 80%,transparent)}
@@ -416,6 +443,45 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .logrow .nm b{display:block;font-size:13px;font-weight:700}
 .logrow .nm span{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
 .logrow .kc{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap}
+/* comida (2): lo que no es progreso va como cifra, no como barra */
+.dosdatos{display:flex;gap:8px}
+.dosdatos>div{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:6px 9px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.dosdatos b{display:block;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:-.02em}
+.dosdatos span{font-size:9px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+/* la semana: una barra por día, medida contra el objetivo o contra el día más alto */
+.semtira{display:flex;gap:5px;margin-top:10px;align-items:flex-end}
+.semd{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit}
+.semd .semb{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,var(--card) 60%,var(--bg));
+  border:1px solid var(--line);display:flex;align-items:flex-end;overflow:hidden}
+.semd .semb i{display:block;width:100%;background:linear-gradient(180deg,var(--brand),var(--brand2));
+  transition:height .4s cubic-bezier(.2,.8,.2,1)}
+.semd .semb.pasada i{background:linear-gradient(180deg,var(--warn),var(--bad))}
+.semd .nm{font-size:9.5px;font-weight:800;color:var(--ink2);text-transform:uppercase}
+.semd.hoy .nm{color:var(--brand)}
+.semd.ver .semb{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+/* apuntar comida: las cuatro maneras, como pestañas de una sola pantalla */
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:2px}
+.modo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;
+  border-radius:11px;font:inherit;min-height:62px;cursor:pointer;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink2)}
+.modo.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--ink);
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.modo span{font-size:10px;font-weight:700;text-align:center;line-height:1.15}
+.res.sel{background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.res.sel .nm b{color:var(--brand)}
+/* modo cocina: ingredientes escalados arriba, un paso grande abajo */
+.ingr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px dashed var(--line);font-size:13px}
+.ingr:first-child{border-top:none}
+.ingr b{font-weight:800;white-space:nowrap}
+.racchip{font:inherit;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--card) 62%,var(--bg));color:var(--ink)}
+.racchip.on{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));color:var(--brand)}
+.pasonum{display:flex;align-items:center;gap:9px}
+.pasopunto{width:9px;height:9px;border-radius:999px;background:var(--line);cursor:pointer;flex:none}
+.pasopunto.on{background:var(--brand);box-shadow:0 0 10px color-mix(in srgb,var(--brand) 80%,transparent)}
+.paso{font-size:18px;line-height:1.45;font-weight:600;margin:14px 0 4px}
 /* entreno: mapa de calor de los días entrenados (6 semanas) */
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:8px;max-width:320px}
 .heat .wd{text-align:center;font-size:9px;font-weight:800;color:var(--ink2);text-transform:uppercase;padding-bottom:2px}
