@@ -224,6 +224,32 @@ function diasDesdePrimerUso(){try{let t=+localStorage.getItem(FKEY);
   if(!t){t=Date.now();localStorage.setItem(FKEY,String(t));}
   return Math.floor((Date.now()-t)/864e5);}catch(e){return 999;}}
 function avisoBackupD(){const v=store.meta&&+store.meta.backupAvisoD;return (v&&v>0)?v:13;}
+/* Sin pedirlo, lo guardado en el navegador es «de usar y tirar»: Android y Chrome pueden borrarlo
+   cuando al móvil le falta espacio, sin avisar y sin que tú hayas tocado nada. Esto pide que se
+   trate como almacenamiento permanente —en una app instalada suele concederse sin preguntar— y así
+   solo desaparece si lo borras tú a propósito. No sustituye a la copia en JSON: si desinstalas la
+   app o borras los datos del sitio, se va igual. */
+let _almacen={estado:'?',usado:null,total:null};
+function pedirPersistencia(){
+  if(typeof navigator==='undefined'||!navigator.storage)return Promise.resolve();
+  const st=navigator.storage;
+  const paso=(st.persisted&&st.persist)
+    ? st.persisted().then(function(ya){
+        if(ya)return true;
+        return st.persist();
+      }).then(function(ok){_almacen.estado=ok?'si':'no';})
+       .catch(function(){_almacen.estado='?';})
+    : Promise.resolve();
+  return paso.then(function(){
+    if(!st.estimate)return;
+    return st.estimate().then(function(e){
+      _almacen.usado=(e&&e.usage)||0;_almacen.total=(e&&e.quota)||null;}).catch(function(){});
+  }).then(function(){if(ui.tab==='data')render();}).catch(function(){});}
+function tamanoLegible(n){
+  if(n==null)return '';
+  if(n<1024)return n+' B';
+  if(n<1024*1024)return Math.round(n/1024)+' KB';
+  return (Math.round(n/1024/1024*10)/10)+' MB';}
 function avisarBackupSiToca(){
   const db=diasDesdeBackup(),dp=diasDesdePrimerUso(),n=avisoBackupD();
   if(!((db===null&&dp>n)||(db!==null&&db>n)))return;
@@ -4158,10 +4184,26 @@ function renderData(){
       <p class="mini" style="margin-top:6px">la app no se conecta a Google por su cuenta (harían falta claves y un servidor):
       lee y escribe ficheros <code>.ics</code>, que es el idioma común de los calendarios. El <code>IMPORT_TAG</code>
       y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p></div>
-    <div class="card"><h2>Exportar / importar JSON</h2>
-      <p class="note"><b>Todo vive sólo en este navegador</b>: no hay cuenta ni servidor detrás, y nada se comparte solo entre compañeros.
-      Si quieres pasarte el cuadrante a otro móvil, compartirlo con alguien o tener una copia por si acaso, descarga el JSON — es la
-      única copia de seguridad que existe, así que conviene hacerla de vez en cuando.</p>
+    <div class="card"><h2>Dónde se guarda todo esto</h2>
+      <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
+      se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
+      ni yo ni nadie puede verlo. La contrapartida es que <b>nadie puede devolvértelo si lo pierdes</b>.</p>
+      <div class="dosdatos" style="margin-bottom:11px">
+        <div><b>${_almacen.estado === 'si' ? '✓' : (_almacen.estado === 'no' ? '⚠' : '…')}</b><span>${
+          _almacen.estado === 'si' ? 'protegido' : (_almacen.estado === 'no' ? 'sin proteger' : 'comprobando')}</span></div>
+        <div><b>${_almacen.usado != null ? esc(tamanoLegible(_almacen.usado)) : '—'}</b><span>ocupado</span></div>
+      </div>
+      <p class="mini" style="margin:0 0 11px">${_almacen.estado === 'si'
+        ? 'El navegador se ha comprometido a no borrar tus datos para hacer sitio. Solo desaparecen si los borras tú.'
+        : (_almacen.estado === 'no'
+          ? '⚠ El navegador no ha querido marcarlos como permanentes: si al móvil le falta espacio, podría borrarlos para hacer hueco. Instala la app desde el menú del navegador («Instalar aplicación») y suele concederse; mientras tanto, baja el JSON más a menudo.'
+          : 'Comprobando si el navegador los tiene marcados como permanentes…')}</p>
+      <p class="note" style="margin-bottom:6px"><b>Lo que sí se los lleva por delante, aunque estén protegidos:</b>
+      desinstalar la app, «borrar datos del sitio» o limpiar el navegador a fondo, y cambiar de móvil.
+      Para cualquiera de esas tres, la única red de seguridad es el JSON de aquí abajo.</p>
+      <h2 style="margin-top:14px">Copia de seguridad (JSON)</h2>
+      <p class="note">Descárgalo y guárdalo donde quieras —Drive, el correo a ti mismo, lo que sea—. Sirve también para
+      pasarte todo a otro móvil: lo bajas aquí y lo pegas allí en «Importar JSON».</p>
       <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
       ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
         (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
@@ -6275,7 +6317,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
-  enArtifact,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
+  enArtifact,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
@@ -6303,5 +6345,6 @@ compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo
 impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
+pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 registrarSW();

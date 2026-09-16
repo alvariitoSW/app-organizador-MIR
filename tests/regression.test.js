@@ -1875,6 +1875,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== Dónde se guardan los datos =====================
+  {
+    // sin pedirlo, lo guardado en el navegador es «de usar y tirar»: Android puede borrarlo cuando
+    // al móvil le falta espacio. La app pide que se marque como permanente al arrancar.
+    const almacen = await page.evaluate(async () => {
+      await window.PG.pedirPersistencia();
+      return {
+        pidePersistencia: typeof window.PG.pedirPersistencia === 'function',
+        // en este Chromium de pruebas no hay «engagement» ni app instalada, así que persist()
+        // devuelve false: lo que se comprueba es que se pregunta y que se cuenta el resultado
+        persistido: await navigator.storage.persisted(),
+      };
+    });
+    await gotoTab('data');
+    await page.waitForTimeout(400);
+    const tarjeta = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /Dónde se guarda/.test(x.textContent));
+      return c ? { txt: c.innerText, cifras: c.querySelectorAll('.dosdatos b').length } : null;
+    });
+    check('«Datos» dice dónde vive todo y si el navegador puede borrarlo',
+      almacen.pidePersistencia && tarjeta && tarjeta.cifras === 2 &&
+      /en ning[úu]n sitio m[áa]s/i.test(tarjeta.txt) &&
+      /(protegido|sin proteger|comprobando)/i.test(tarjeta.txt) &&
+      /desinstalar/i.test(tarjeta.txt),
+      JSON.stringify({ almacen, cifras: tarjeta && tarjeta.cifras }));
+
+    // y en un navegador sin navigator.storage la app no puede reventar por esto
+    const sinApi = await page.evaluate(async () => {
+      const real = navigator.storage;
+      Object.defineProperty(navigator, 'storage', { value: undefined, configurable: true });
+      let reventó = false;
+      try { await window.PG.pedirPersistencia(); } catch (e) { reventó = true; }
+      window.PG.render();
+      const vivo = !!document.querySelector('#main .card');
+      Object.defineProperty(navigator, 'storage', { value: real, configurable: true });
+      return { reventó, vivo };
+    });
+    check('en un navegador sin API de almacenamiento, la app sigue funcionando igual',
+      !sinApi.reventó && sinApi.vivo, JSON.stringify(sinApi));
+  }
+
   // ===================== Compartir desde TikTok con la app instalada =====================
   {
     // lo compartido sobrevive a que el sistema mate la app: Android cierra la PWA en cuanto vuelves
