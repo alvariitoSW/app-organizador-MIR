@@ -1684,7 +1684,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     campoEnlace.campo && campoEnlace.boton, JSON.stringify(campoEnlace));
 
   // el navegador bloquea CORS: fetch rechaza con TypeError, sin estado. Es EL caso que justifica
-  // montar el lector propio, así que el aviso tiene que explicarlo y no quedarse en «ha fallado».
+  // las salidas alternativas, así que el aviso tiene que explicarlo —no quedarse en «ha fallado»—
+  // y ofrecerlas ahí mismo, en vez de mandar al usuario a buscarlas por su cuenta.
   await page.evaluate(() => {
     window.__fetchReal = window.fetch;
     window.fetch = () => Promise.reject(new TypeError('Failed to fetch'));
@@ -1696,8 +1697,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const n = document.querySelector('#main .note[style*="warn"]');
     return n ? n.textContent : '';
   });
-  check('si el navegador no deja pedírsela a TikTok, se explica y se manda al lector propio',
-    /no permite CORS/.test(avisoCors) && /lector de enlaces/i.test(avisoCors), avisoCors.slice(0, 120));
+  const salidasCors = await page.evaluate(() => ({
+    publico: !!document.querySelector('[data-a="lector-publico"]'),
+    propio: !!document.querySelector('[data-a="ir-lector"]'),
+  }));
+  check('si el navegador no deja pedírsela a TikTok, se explica y se ofrecen las dos salidas',
+    /no permite CORS/.test(avisoCors) && salidasCors.publico && salidasCors.propio,
+    avisoCors.slice(0, 120) + ' ' + JSON.stringify(salidasCors));
 
   // con oEmbed respondiendo, la descripción entra y se lee sola
   await page.evaluate(() => {

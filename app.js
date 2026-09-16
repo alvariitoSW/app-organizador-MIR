@@ -72,7 +72,7 @@ function DEFAULTS(){return {
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
-  lector:{proxy:''},
+  lector:{proxy:'',publico:false},
   impPendiente:null,   /* lo último compartido desde otra app, hasta que se use o se limpie */
   eventos:[],
   listas:[
@@ -235,7 +235,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
-  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',
+  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,
   imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
@@ -304,6 +304,7 @@ function normalize(o){
   }else o.impPendiente=null;
   if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
   o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
+  o.lector.publico=!!o.lector.publico;   /* usar intermediarios públicos: solo si lo has aceptado */
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
   Object.keys(o.franja.colores).forEach(function(k){
     if(TLKEYS.indexOf(k)<0||!/^#[0-9a-fA-F]{6}$/.test(o.franja.colores[k]||''))delete o.franja.colores[k];});
@@ -3035,6 +3036,14 @@ const LECTOR_SITIOS=[
    oembed:function(u){return 'https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(u);}},
   {re:/^https?:\/\/([\w-]+\.)*instagram\.com\//i,nombre:'Instagram',oembed:null}
 ];
+/* Intermediarios públicos: la app NO los usa salvo que lo hayas aceptado (store.lector.publico).
+   Lo único que sale hacia ellos es la dirección del vídeo, que es pública de por sí; ni tus datos
+   ni tus recetas pasan por ahí. Están en orden: si uno no contesta se prueba el siguiente. */
+const LECTORES_PUBLICOS=[
+  {nombre:'AllOrigins',url:function(d){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(d);}},
+  {nombre:'CodeTabs',url:function(d){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(d);}}
+];
+function lectorPublicoOn(){return !!(store.lector||{}).publico;}
 function lectorSitio(url){
   const u=String(url||'').trim();
   for(let i=0;i<LECTOR_SITIOS.length;i++)if(LECTOR_SITIOS[i].re.test(u))return LECTOR_SITIOS[i];
@@ -3047,6 +3056,38 @@ function lectorNormaliza(data){
   const autor=String(data.autor||data.author_name||'').trim();
   if(!txt&&!autor)return null;
   return {texto:txt,autor:autor};}
+function pedirALector(destino,quien){
+  /* un intento contra un sitio concreto. Los fallos van etiquetados para poder distinguir «no me
+     dejan» (se prueba el siguiente) de «me han contestado que no hay descripción» (no hay más que
+     rascar, por muchos intermediarios que se prueben). */
+  return fetch(destino,{headers:{accept:'application/json'}}).then(function(res){
+    if(!res.ok)return res.text().then(function(t){
+      throw {tipo:'http',quien:quien,msg:quien+' ha respondido '+res.status+'. '+(String(t||'').slice(0,120))};});
+    return res.json().catch(function(){
+      throw {tipo:'formato',quien:quien,
+        msg:quien+' ha contestado, pero con algo que no es JSON: no es que el navegador lo bloquee, '+
+          'es que la respuesta no venía en el formato esperado.'};});
+  }).then(function(data){
+    if(data&&data.error)throw {tipo:'http',quien:quien,msg:String(data.error).slice(0,160)};
+    const n=lectorNormaliza(data);
+    if(!n)throw {tipo:'vacio',quien:quien,
+      msg:'El enlace no traía descripción ninguna. Si la receta solo se dice en el vídeo, copia el comentario donde esté escrita.'};
+    n.via=quien;return n;
+  }).catch(function(e){
+    if(e&&e.tipo)throw e;
+    /* un fallo de CORS llega como TypeError sin estado: ni siquiera hemos llegado a hablar */
+    throw {tipo:'cors',quien:quien,msg:'El navegador no ha dejado pedírselo a '+quien+' (no permite CORS).'};});}
+function lectorIntentos(u){
+  /* en qué orden se prueba. Tu propio lector va primero y solo; si lo has montado es por algo, y
+     no tiene sentido mandar tus enlaces a terceros teniéndolo. */
+  const proxy=lectorProxy(),sitio=lectorSitio(u),out=[];
+  if(proxy){out.push({quien:'Tu lector de enlaces',
+    destino:proxy+(proxy.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u)});return out;}
+  if(sitio&&sitio.oembed)out.push({quien:sitio.nombre,destino:sitio.oembed(u)});
+  if(lectorPublicoOn()&&sitio&&sitio.oembed){
+    const oe=sitio.oembed(u);
+    LECTORES_PUBLICOS.forEach(function(l){out.push({quien:l.nombre,destino:l.url(oe),publico:true});});}
+  return out;}
 function traerDescripcion(url){
   const u=String(url||'').trim();
   if(!/^https?:\/\//i.test(u))return Promise.reject({tipo:'url',msg:'Eso no parece un enlace. Pega la dirección completa del vídeo.'});
@@ -3056,29 +3097,28 @@ function traerDescripcion(url){
   if(!sitio&&!proxy)return Promise.reject({tipo:'url',msg:'De momento sé leer enlaces de TikTok y de YouTube. Para otros, pon tu lector de enlaces en Ajustes.'});
   if(sitio&&!sitio.oembed&&!proxy)return Promise.reject({tipo:'url',
     msg:'Los enlaces de Instagram no se pueden leer sin un lector propio (Instagram pide credenciales). Pon uno en Ajustes o pega el texto.'});
-  const destino=proxy?(proxy+(proxy.indexOf('?')>=0?'&':'?')+'url='+encodeURIComponent(u)):sitio.oembed(u);
-  return fetch(destino,{headers:{accept:'application/json'}}).then(function(res){
-    if(!res.ok)return res.text().then(function(t){
-      throw {tipo:'http',msg:(proxy?'Tu lector de enlaces':'La plataforma')+' ha respondido '+res.status+'. '+
-        (String(t||'').slice(0,120)||'Prueba a pegar el texto a mano.')};});
-    /* si contesta pero con algo que no es JSON, el fallo es de formato, no de CORS: mandar al
-       usuario a montar un proxy por esto sería mandarlo a arreglar lo que no está roto */
-    return res.json().catch(function(){
-      throw {tipo:'formato',msg:(lectorProxy()
-        ?'Tu lector ha contestado, pero con algo que no es JSON. Revisa que el código del Worker esté pegado entero.'
-        :'La respuesta no venía en el formato esperado. Pega el texto de la receta a mano.')};});
-  }).then(function(data){
-    if(data&&data.error)throw {tipo:'http',msg:String(data.error).slice(0,160)};
-    const n=lectorNormaliza(data);
-    if(!n)throw {tipo:'vacio',msg:'El enlace no traía descripción ninguna. Si la receta solo se dice en el vídeo, copia el comentario donde esté escrita.'};
-    return n;
-  }).catch(function(e){
-    if(e&&e.tipo)throw e;
-    /* un fallo de CORS llega como TypeError sin estado: es el caso que justifica el paso 2 */
-    throw {tipo:'cors',msg:(proxy
-      ?'No he podido hablar con tu lector de enlaces. Comprueba la dirección en Ajustes.'
-      :'El navegador no ha dejado pedírselo a '+((sitio&&sitio.nombre)||'la plataforma')+' (no permite CORS). '+
-        'Monta tu propio lector de enlaces —está explicado en tools/LECTOR-DE-ENLACES.md— y ponlo en Ajustes; mientras tanto, pega el texto.')};});}
+  const intentos=lectorIntentos(u);
+  if(!intentos.length)return Promise.reject({tipo:'url',msg:'No sé por dónde pedir ese enlace.'});
+  /* se van probando en fila; el primero que traiga algo gana */
+  return intentos.reduce(function(cadena,intento){
+    return cadena.catch(function(fallo){
+      /* «no hay descripción» es una respuesta, no un fallo de camino: probar otro intermediario
+         daría exactamente lo mismo, así que se para aquí */
+      if(fallo&&fallo.tipo==='vacio')throw fallo;
+      return pedirALector(intento.destino,intento.quien);});
+  },Promise.reject({tipo:'inicio'})).catch(function(e){
+    if(e&&e.tipo==='vacio')throw e;
+    const puedeMas=!proxy&&!lectorPublicoOn();
+    /* «me han contestado, pero mal» NO es lo mismo que «no me dejan hablar». Mandar al usuario a
+       montar un proxy por un 200 con HTML dentro es mandarlo a arreglar lo que no está roto: el
+       último intento sabe qué le pasó y se cuenta tal cual. */
+    if(e&&(e.tipo==='formato'||e.tipo==='http'))throw {tipo:e.tipo,ofrecer:puedeMas,
+      msg:e.msg+(puedeMas?'':' Prueba a pegar el texto de la receta a mano.')};
+    throw {tipo:'cors',ofrecer:puedeMas,
+      msg:(proxy?'No he podido hablar con tu lector de enlaces. Comprueba la dirección en Ajustes.'
+        :(lectorPublicoOn()
+          ?'Ni la plataforma ni los lectores públicos me han dejado traerla. Monta tu propio lector (Ajustes) o pega el texto a mano.'
+          :'El navegador no ha dejado pedírselo a '+((sitio&&sitio.nombre)||'la plataforma')+' (no permite CORS).'))};});}
 function impFuenteNueva(){
   /* en cuanto cambia el texto de origen, la receta de antes deja de valer: si se queda en pantalla
      acabas guardando el plato del enlace anterior */
@@ -3088,15 +3128,28 @@ function impTraerEnlace(){
   if(!u){flash('Pega antes el enlace del vídeo');return;}
   impFuenteNueva();
   ui.imp.estado='trayendo';ui.imp.msg='';render();
+  ui.imp.ofrecer=false;
   traerDescripcion(u).then(function(d){
     const partes=[d.texto,d.autor?('— '+d.autor):''].filter(Boolean);
     ui.imp.txt=partes.join('\n');
     ui.imp.estado='';ui.imp.msg='';
     const r=parseReceta(ui.imp.txt);
-    if(r){ui.imp.receta=r;ui.imp.via='local';render();flash('Descripción traída y leída: '+r.name);}
-    else{render();flash('Descripción traída: ahora dale a leerla');}
+    if(r){ui.imp.receta=r;ui.imp.via='local';render();flash('Receta lista: '+r.name+(d.via?(' · vía '+d.via):''));}
+    else{render();flash('Descripción traída'+(d.via?(' vía '+d.via):'')+': ahora dale a leerla');}
   }).catch(function(e){
-    ui.imp.estado='error';ui.imp.msg=(e&&e.msg)||'No he podido traer la descripción.';render();});}
+    ui.imp.estado='error';ui.imp.msg=(e&&e.msg)||'No he podido traer la descripción.';
+    ui.imp.ofrecer=!!(e&&e.ofrecer);   /* quedan salidas que ofrecerle al usuario */
+    render();});}
+function impAutoDesdeEnlace(){
+  /* «mando el link y ya está»: si llega un enlace y no viene con una receta legible detrás, la app
+     va sola a por la descripción y la convierte en receta. Solo en el móvil: dentro del Artifact no
+     se puede salir a la red y el intento acabaría en un aviso que no lleva a ninguna parte. */
+  if(!ui.imp||!String(ui.imp.url||'').trim())return;
+  if(ui.imp.receta||ui.imp.estado==='trayendo')return;
+  if(String(ui.imp.txt||'').trim()&&parseReceta(ui.imp.txt))return;   /* ya venía la receta en el texto */
+  if(enArtifact())return;
+  if(!lectorIntentos(String(ui.imp.url).trim()).length)return;
+  setTimeout(impTraerEnlace,0);}
 function lectorProbar(){
   const u='https://www.tiktok.com/@cocina/video/1234567890123456789';
   const proxy=lectorProxy();
@@ -3216,7 +3269,8 @@ function impPegar(){
       const resto=txt.replace(/https?:\/\/\S+/g,'').replace(/\n{2,}/g,'\n').trim();
       if(resto)ui.imp.txt=resto;
       impFuenteNueva();render();
-      flash('Enlace pegado: dale a «traer la descripción»');
+      flash('Enlace pegado: voy a por la receta…');
+      impAutoDesdeEnlace();
     }else{
       ui.imp.txt=txt;impFuenteNueva();render();
       flash('Texto pegado: dale a «Leerla aquí mismo»');}
@@ -3276,8 +3330,10 @@ function renderImport(){
       '</div>'+
       (enArtifact()
         ?'<p class="mini" style="margin-top:6px">⚠ Aquí dentro el enlace no se puede leer: el Artifact no deja salir a la red. En la app del móvil sí.</p>'
-        :(lectorProxy()?'<p class="mini" style="margin-top:6px">Usando tu lector de enlaces.</p>'
-          :'<p class="mini" style="margin-top:6px">Se le pide directamente a la plataforma. Si el navegador no deja, te lo digo y montas tu lector (Ajustes).</p>'))+
+        :(lectorProxy()?'<p class="mini" style="margin-top:6px">Usando tu lector de enlaces: nada sale hacia terceros.</p>'
+          :(lectorPublicoOn()
+            ?'<p class="mini" style="margin-top:6px">Primero se le pide a la plataforma; si no deja, tiras de los lectores públicos (activados en Ajustes).</p>'
+            :'<p class="mini" style="margin-top:6px">Se le pide directamente a la plataforma. Si el navegador no deja, te ofrezco ahí mismo por dónde salir.</p>')))+
       '<label class="fld" style="margin-top:10px">texto de la receta'+
         '<textarea id="impTxt" rows="8" data-a="imp-txt" placeholder="Pega aquí la descripción del vídeo…">'+esc(ui.imp.txt||'')+'</textarea></label>'+
       (puedeImagen?('<div class="row" style="margin-top:9px;gap:7px">'+
@@ -3291,7 +3347,14 @@ function renderImport(){
         '<button class="btn '+(hayClaude?'s':'p')+'" data-a="imp-local"'+(pensando||trayendo?' disabled':'')+'>Leerla aquí mismo</button>'+
         (String(ui.imp.txt||'').trim()||nImg?'<button class="btn s" data-a="imp-clear">limpiar</button>':'')+
       '</div>'+
-      (ui.imp.estado==='error'?'<p class="note" style="margin-top:10px;color:var(--warn)">⚠ '+esc(ui.imp.msg)+'</p>':'')+
+      (ui.imp.estado==='error'?('<p class="note" style="margin-top:10px;color:var(--warn)">⚠ '+esc(ui.imp.msg)+'</p>'+
+        (ui.imp.ofrecer?('<div class="card" style="margin-top:8px;background:color-mix(in srgb,var(--warn) 7%,var(--card))">'+
+          '<p class="note" style="margin-bottom:9px">Hay dos maneras de saltárselo:</p>'+
+          '<div class="row"><button class="btn p" data-a="lector-publico">Usar un lector público ahora</button>'+
+          '<button class="btn s" data-a="ir-lector">Montar el mío (5 min, una vez)</button></div>'+
+          '<p class="mini" style="margin:9px 0 0">Con el lector público, lo único que sale de tu móvil es <b>la dirección del vídeo</b> '+
+          '—que es pública— hacia un servicio gratuito de terceros. Ni tus recetas ni tus datos pasan por ahí. '+
+          'Se queda activado hasta que lo apagues en Ajustes.</p></div>'):'')):'')+
       (pensando?'<p class="mini" style="margin-top:10px">Puede tardar entre 5 y 60 segundos. La primera vez te pedirá permiso.</p>':'')+
       (hayClaude?'<p class="mini" style="margin-top:10px">💡 «Que la lea Claude» se apaña con el texto desordenado, con emojis y sin lista de ingredientes; '+
         'gasta de tu cuenta de Claude. «Leerla aquí mismo» no gasta nada y funciona sin conexión, pero necesita que la receta venga más o menos escrita.'
@@ -3962,12 +4025,30 @@ function renderAjustes(){
     </div>
 
     <div class="card" data-cfg="lector"><h2>Lector de enlaces</h2>
-      <p class="note">Para que al pegar el enlace de un TikTok la app traiga sola la descripción. Solo hace falta si el navegador no deja pedírsela directamente a la plataforma — si te sale ese aviso al importar, monta el tuyo: son 5 minutos y es gratis. Los pasos están en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>
-      <label class="fld">dirección de tu lector (opcional)
+      <p class="note">Para que al mandarle un enlace de TikTok la app traiga sola la descripción y la convierta en receta.
+      Primero lo intenta directamente con la plataforma; esto es para cuando el navegador no la deja.</p>
+
+      <div class="res" style="border-top:0">
+        <span class="nm"><b>Lectores públicos</b><span class="mini">servicios gratuitos de terceros que hacen de intermediarios</span></span>
+        <button class="btn s${lectorPublicoOn() ? ' g' : ''}" data-a="${lectorPublicoOn() ? 'lector-publico-off' : 'lector-publico'}">${lectorPublicoOn() ? '✓ activados' : '○ desactivados'}</button>
+      </div>
+      <p class="mini" style="margin:0 0 12px">Lo único que sale de tu móvil es <b>la dirección del vídeo</b>, que es pública de por sí.
+      Ni tus recetas, ni tus menús, ni nada tuyo pasa por ahí. Se prueban ${LECTORES_PUBLICOS.length} por orden:
+      ${LECTORES_PUBLICOS.map(function(l){return esc(l.nombre);}).join(' y ')}. Son de terceros: van y vienen, y pueden dejar de funcionar sin avisar.</p>
+
+      <label class="fld">tu propio lector — el más fiable, y nada sale hacia terceros
         <input type="url" inputmode="url" value="${esc((store.lector||{}).proxy||'')}" data-a="lector-f" placeholder="https://recetas.tu-usuario.workers.dev"></label>
       <div class="row" style="margin-top:9px">
         <button class="btn s" data-a="lector-probar">probar</button>
-        <span class="mini">se queda en tu navegador; solo se le manda el enlace del vídeo</span></div>
+        <button class="btn s" data-a="lector-guia">${ui.lectorGuia ? '▴ ocultar los pasos' : '▾ cómo montarlo (5 min, gratis)'}</button>
+        <span class="mini">si lo pones, se usa solo este</span></div>
+      ${ui.lectorGuia ? ('<ol class="mini" style="margin:11px 0 0;padding-left:20px;line-height:1.7">' +
+        '<li>Entra en <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">dash.cloudflare.com</a> y crea una cuenta (gratis, sin tarjeta).</li>' +
+        '<li>Workers &amp; Pages → <b>Create</b> → <b>Worker</b>. Ponle el nombre que quieras y dale a <b>Deploy</b>.</li>' +
+        '<li><b>Edit code</b>: borra lo que haya y pega el contenido de <code>tools/worker-recetas.js</code> del repositorio de la app. <b>Deploy</b> otra vez.</li>' +
+        '<li>Copia la dirección que te da (acaba en <code>.workers.dev</code>) y pégala aquí arriba. Dale a «probar».</li>' +
+        '</ol><p class="mini" style="margin:8px 0 0">El Worker solo acepta enlaces de TikTok, YouTube e Instagram: no es un proxy abierto. ' +
+        'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}
     </div>
 
     <div class="card" data-cfg="franja"><h2>La franja del día</h2>
@@ -4787,11 +4868,26 @@ function act(a,el){
       render();window.scrollTo(0,0);break;}
     case 'imp-traer':impTraerEnlace();break;
     case 'lector-probar':lectorProbar();break;
+    case 'lector-guia':ui.lectorGuia=!ui.lectorGuia;render();break;
+    case 'ir-lector':{ui.tab='ajustes';ui.lectorGuia=true;render();
+      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="lector"]');
+        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
+        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
+      break;}
     case 'imp-claude':impConClaude();break;
     case 'imp-local':impLocal();break;
-    case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';
+    case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';ui.imp.ofrecer=false;
       impFuenteNueva();impOlvidaPendiente();render();break;}
     case 'imp-pegar':impPegar();break;
+    case 'lector-publico':{
+      if(!store.lector)store.lector={proxy:'',publico:false};
+      store.lector.publico=true;save();
+      ui.imp.estado='';ui.imp.msg='';ui.imp.ofrecer=false;
+      flash('Lector público activado: reintentando…');
+      impTraerEnlace();break;}
+    case 'lector-publico-off':{
+      if(!store.lector)store.lector={proxy:'',publico:false};
+      store.lector.publico=false;save();render();flash('Desactivado: ya no se usan intermediarios públicos');break;}
     case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
     case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;
@@ -6179,7 +6275,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
-  enArtifact,impPegar,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
+  enArtifact,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
@@ -6204,6 +6300,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
 load();
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
+impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
 claudeBuscar();
