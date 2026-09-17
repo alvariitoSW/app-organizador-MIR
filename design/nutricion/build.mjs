@@ -1,6 +1,6 @@
 /* Maquetas de la app de nutrición dentro de la app. La piel sale de _base.css (copiada de la app). */
 import {readFileSync, writeFileSync} from 'node:fs';
-const CSS = readFileSync('_base.css', 'utf8');
+const CSS = readFileSync('../_base.css', 'utf8');
 
 const ICO = {
   mas:'<path d="M12 5v14M5 12h14"/>',

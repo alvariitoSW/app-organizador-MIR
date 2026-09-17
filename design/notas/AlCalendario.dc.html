@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#e9f2ff;
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+a{color:#38e1ff;text-decoration:none}
+a:hover{color:#7c5cff}
+.bgfx{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,#38e1ff 22%,transparent),transparent 70%),
+   radial-gradient(900px 500px at 92% 4%,color-mix(in srgb,#7c5cff 18%,transparent),transparent 72%),
+   linear-gradient(#070b14,#0b1120 60%,#070b14)}
+.gridfx{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px),
+   linear-gradient(90deg,color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%)}
+.scr{position:relative;z-index:1;min-height:844px;display:flex;flex-direction:column}
+header{position:relative;background:color-mix(in srgb,#070b14 82%,transparent);border-bottom:1px solid #1e2b44;
+  backdrop-filter:blur(14px) saturate(1.4)}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,#38e1ff 70%,transparent),color-mix(in srgb,#7c5cff 70%,transparent),transparent)}
+.hwrap{padding:12px 14px 0}
+h1{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:9px;font-weight:800;text-transform:uppercase;
+  background:linear-gradient(92deg,#e9f2ff,color-mix(in srgb,#38e1ff 85%,#e9f2ff) 55%,color-mix(in srgb,#7c5cff 85%,#e9f2ff));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:4px;padding:10px 0 8px}
+nav button{appearance:none;border:1px solid transparent;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12.5px;
+  color:#8fa6c6;border-radius:999px;cursor:pointer;white-space:nowrap;letter-spacing:.02em}
+nav button.on{color:#04121c;background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 70%,#38e1ff));
+  border-color:color-mix(in srgb,#38e1ff 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,#38e1ff 85%,transparent)}
+main{padding:14px 8px;position:relative;z-index:1;flex:1}
+.grid{display:grid;gap:13px}
+.card{position:relative;min-width:0;background:color-mix(in srgb,#111a2b 88%,transparent);border:1px solid #1e2b44;border-radius:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.9);padding:14px 9px}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,color-mix(in srgb,#38e1ff 9%,transparent),transparent 42%)}
+.card>h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.card>h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
+  background:linear-gradient(#38e1ff,#7c5cff);box-shadow:0 0 12px color-mix(in srgb,#38e1ff 70%,transparent)}
+.note{color:#8fa6c6;font-size:12.5px;margin:0 0 12px}
+.mini{font-size:11.5px;color:#8fa6c6}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:13px;padding:7px 13px;border-radius:11px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff;cursor:pointer}
+.btn.p{background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 80%,#38e1ff));border-color:transparent;color:#051018;font-weight:800;
+  box-shadow:0 10px 26px -14px color-mix(in srgb,#38e1ff 90%,transparent)}
+.btn.s{padding:5px 9px;font-size:12px;border-radius:9px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:color-mix(in srgb,#8fa6c6 16%,transparent);color:#8fa6c6;white-space:nowrap;border:1px solid transparent}
+.tag.b2{background:color-mix(in srgb,#38e1ff 18%,transparent);color:color-mix(in srgb,#38e1ff 75%,#e9f2ff);border-color:color-mix(in srgb,#38e1ff 30%,transparent)}
+.tag.b3{background:color-mix(in srgb,#34d399 18%,transparent);color:color-mix(in srgb,#34d399 75%,#e9f2ff);border-color:color-mix(in srgb,#34d399 30%,transparent)}
+.tag.b4{background:color-mix(in srgb,#fbbf24 18%,transparent);color:color-mix(in srgb,#fbbf24 80%,#e9f2ff);border-color:color-mix(in srgb,#fbbf24 30%,transparent)}
+.ico{width:26px;height:26px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:18px;height:18px}
+/* --- comida --- */
+.subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.volver{display:inline-flex;align-items:center;gap:5px;flex:none}
+.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:#e9f2ff;
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:96px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tile .ico{color:#8fa6c6;margin-bottom:4px}
+.tile b{font-size:13.5px;line-height:1.2}
+.tile .n{font-size:13px;font-weight:800;color:#38e1ff}
+.tile .s{font-size:10.5px;color:#8fa6c6}
+/* anillo de kcal */
+.ringrow{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.ringnum b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ringnum span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.06em}
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:#8fa6c6}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden}
+.mbar i{display:block;height:100%}
+.mbar i.p{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.mbar i.g{background:linear-gradient(90deg,#34d399,#a3e635)}
+.mbar i.w{background:linear-gradient(90deg,#fbbf24,#fb7185)}
+/* registro del día */
+.logrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed #1e2b44}
+.logrow:first-child{border-top:none}
+.logrow .h{font-size:11px;font-weight:800;color:#8fa6c6;width:38px;flex:none}
+.logrow .nm{flex:1;min-width:0}
+.logrow .nm b{display:block;font-size:13px}
+.logrow .kc{font-size:12px;font-weight:800;flex:none}
+/* tira semanal */
+.wk{display:flex;gap:5px;margin-top:10px;align-items:flex-end}
+.wkd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wkb{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;
+  display:flex;align-items:flex-end;overflow:hidden}
+.wkb i{display:block;width:100%;background:linear-gradient(180deg,#38e1ff,#7c5cff)}
+.wkb.over i{background:linear-gradient(180deg,#fbbf24,#fb7185)}
+.wkd span{font-size:9.5px;font-weight:800;color:#8fa6c6}
+.wkd.hoy span{color:#38e1ff}
+/* buscador y resultados */
+.buscador{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);color:#8fa6c6;font-size:13.5px}
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.modo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;font:inherit;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;cursor:pointer;min-height:62px}
+.modo.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#e9f2ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.modo span{font-size:10px;font-weight:700}
+.res{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed #1e2b44}
+.res:first-child{border-top:none}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-size:13px}
+/* platos */
+.platos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:10px 10px;border-radius:12px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.plato .pic{font-size:26px;line-height:1.15}
+.plato b{font-size:12.5px;line-height:1.2}
+.plato .mini{font-size:10.5px}
+.cocinable{border-color:color-mix(in srgb,#34d399 45%,#1e2b44);background:color-mix(in srgb,#34d399 8%,#111a2b)}
+/* modo cocina */
+.paso{font-size:19px;line-height:1.45;font-weight:600;margin:14px 0}
+.pasonum{display:flex;align-items:center;gap:9px}
+.pasopunto{width:8px;height:8px;border-radius:999px;background:#1e2b44}
+.pasopunto.on{background:#38e1ff;box-shadow:0 0 10px color-mix(in srgb,#38e1ff 80%,transparent)}
+.ingr{display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed #1e2b44;font-size:13px}
+.ingr:first-child{border-top:none}
+.ingr b{font-weight:800}
+.navpaso{margin-top:auto;position:relative;z-index:1;padding:11px 9px 14px;border-top:1px solid #1e2b44;display:flex;gap:8px;
+  background:color-mix(in srgb,#070b14 92%,transparent)}
+.chip{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:9px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff}
+.chip.on{border-color:color-mix(in srgb,#38e1ff 45%,#1e2b44);color:#38e1ff}
+/* solo lleva barra lo que de verdad es progreso; lo demás, cifra y ya */
+.dosdatos{display:flex;gap:8px}
+.dosdatos div{flex:1;min-width:0;border:1px solid #1e2b44;border-radius:10px;padding:6px 9px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.dosdatos b{display:block;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:-.02em}
+.dosdatos span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.05em}
+
+/* --- notas --- */
+/* un h2 dentro de una tarjeta pero no hijo directo se quedaba a tamaño de navegador (2 em):
+   en «Notas de este día» se veía el doble de grande que «Eventos», justo al lado */
+.card h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.card h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
+  background:linear-gradient(#38e1ff,#7c5cff);box-shadow:0 0 12px color-mix(in srgb,#38e1ff 70%,transparent)}
+.card .subcab h2::before{display:none}
+.captura{border:1px solid color-mix(in srgb,#38e1ff 35%,#1e2b44);border-radius:14px;padding:11px 12px;
+  background:color-mix(in srgb,#38e1ff 7%,#111a2b)}
+.captura .txt{color:#8fa6c6;font-size:13.5px;min-height:42px;line-height:1.45}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chipx{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#e9f2ff;min-height:36px}
+.chipx.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#38e1ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.nota{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-top:1px dashed #1e2b44}
+.nota:first-of-type{border-top:0}
+.nota .tick{width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid #1e2b44;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;color:transparent}
+.nota.hecha .tick{border-color:color-mix(in srgb,#34d399 60%,#1e2b44);color:#34d399;background:color-mix(in srgb,#34d399 12%,transparent)}
+.nota .cuerpo{flex:1;min-width:0}
+.nota .t{font-size:13.5px;line-height:1.45;margin:0}
+.nota.hecha .t{color:#8fa6c6;text-decoration:line-through}
+.nota .pies{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pie{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;
+  border:1px solid #1e2b44;color:#8fa6c6;white-space:nowrap}
+.pie.dia{border-color:color-mix(in srgb,#38e1ff 40%,#1e2b44);color:color-mix(in srgb,#38e1ff 80%,#e9f2ff)}
+.pie.hoy{border-color:color-mix(in srgb,#fbbf24 45%,#1e2b44);color:color-mix(in srgb,#fbbf24 85%,#e9f2ff)}
+.pie.ev{border-color:color-mix(in srgb,#34d399 40%,#1e2b44);color:color-mix(in srgb,#34d399 80%,#e9f2ff)}
+.pie .ico{width:12px;height:12px;stroke-width:2.2}
+.franja{width:3px;border-radius:2px;flex:none;align-self:stretch;min-height:34px}
+.editor{border:1px solid #1e2b44;border-radius:13px;padding:12px;background:color-mix(in srgb,#070b14 42%,#111a2b);
+  font-size:14.5px;line-height:1.55;min-height:120px}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;color:#8fa6c6;
+  text-transform:uppercase;letter-spacing:.05em;min-width:0}
+.fld .campo{border:1px solid #1e2b44;border-radius:10px;padding:9px 11px;background:color-mix(in srgb,#070b14 55%,#111a2b);
+  color:#e9f2ff;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0}
+.fld .campo.gris{color:#8fa6c6;font-weight:400}
+.acciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.acc{display:flex;align-items:center;gap:8px;padding:12px 11px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b);color:#e9f2ff;font-size:12.5px;font-weight:700;min-height:52px}
+.acc.p{border-color:color-mix(in srgb,#38e1ff 50%,#1e2b44);background:color-mix(in srgb,#38e1ff 11%,#111a2b)}
+.acc.mala{border-color:color-mix(in srgb,#fb7185 35%,#1e2b44);color:color-mix(in srgb,#fb7185 85%,#e9f2ff)}
+.acc .ico{width:19px;height:19px;flex:none;color:#8fa6c6}
+.acc.p .ico{color:#38e1ff}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+/* la cuadrícula del mes, tal cual está en la app */
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:8px}
+.mdow{font-size:9.5px;font-weight:800;color:#8fa6c6;text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.dbox{min-height:114px;border:1px solid #1e2b44;border-radius:9px;padding:4px 3px;display:flex;flex-direction:column;gap:2px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.dbox.hoy{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);background:color-mix(in srgb,#38e1ff 10%,#111a2b)}
+.dnum{font-size:11px;font-weight:800}
+.dnm{font-size:8.5px;color:#8fa6c6;line-height:1.15}
+.dmarcas{display:flex;gap:2px;flex-wrap:wrap;margin-top:auto;align-items:center}
+.dpt{width:5px;height:5px;border-radius:999px;display:block}
+.dnota{font-size:9px}
+.evrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px dashed #1e2b44}
+.evrow:first-of-type{border-top:0}
+.evdot{width:8px;height:8px;border-radius:999px;flex:none}
+.evrow .nm{flex:1;min-width:0;font-size:13px;font-weight:700}
+.evrow .hr{font-size:11.5px;font-weight:800;color:#8fa6c6}
+  </style>
+</helmet>
+<div class="scr">
+  <div class="bgfx"></div>
+  <div class="gridfx"></div>
+
+<header>
+  <div class="hwrap">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="#38e1ff" stroke-width="2" stroke-linecap="round" style="width:22px;height:22px;flex:none"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>Guardias · rotación y cocina</h1>
+    <nav><button class="">Calendario</button><button class="">Entreno</button><button class="">Compra</button><button class="on">☰ Más</button></nav>
+  </div>
+</header>
+<main>
+  
+<div class="subcab">
+  <button class="btn s volver"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg> La nota</button>
+  <h2 class="subtit">Al calendario</h2>
+</div>
+
+  <div class="card">
+    <p class="note" style="margin-bottom:10px">De esta nota:</p>
+    <div class="nota" style="border:0;padding:0">
+      <span class="franja" style="background:#34d399"></span>
+      <div class="cuerpo"><p class="t">Cumple de Marta — mirar regalo</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>El evento</h2>
+    <div class="row">
+      <label class="fld" style="flex:1 1 100%">título<span class="campo">Cumple de Marta</span></label>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <label class="fld" style="flex:1 1 140px">qué día<span class="campo">26 sep 2026</span></label>
+      <label class="fld" style="flex:0 0 92px">hora<span class="campo gris">—:—</span></label>
+      <label class="fld" style="flex:0 0 76px">color<span class="campo">🟢</span></label>
+    </div>
+    <div class="chips">
+      <span class="chipx on"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16s-2-1.5-2-6.5z"/><path d="M13.7 19a2 2 0 0 1-3.4 0"/></svg> avisarme</span>
+      <span class="chipx on">cuenta atrás</span>
+      <span class="chipx">se repite cada año</span>
+    </div>
+    <p class="mini" style="margin:10px 0 0">Sin hora, sale como algo del día entero. Con «cuenta atrás» te dice cuántos días faltan.</p>
+  </div>
+
+  <div class="card">
+    <h2>Lo que va a pasar</h2>
+    <p class="note" style="margin:0">La nota <b>no se duplica</b>: se queda enlazada al evento. Sale en «Notas», en la casilla del 26 y al abrir ese día. Si borras el evento, la nota sigue ahí con su día.</p>
+  </div>
+
+  <button class="btn p big" style="margin-top:12px"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg> crear el evento</button>
+</main>
+</div>
+</x-dc>
+</body>
+</html>
