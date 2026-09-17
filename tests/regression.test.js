@@ -57,7 +57,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
   // el resto vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
-  const DRAWER_TABS = new Set(['food', 'habitos', 'types', 'batches', 'import', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['food', 'notas', 'habitos', 'types', 'batches', 'import', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
@@ -2012,8 +2012,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el botón «editar un día» elige el día de hoy y abre su editor ya desplegado',
       abierto.dia === hoyKeyDia && abierto.panel && abierto.editorDesplegado, JSON.stringify(abierto));
 
-    // la nota se guarda tecleando, sin botón de guardar, y sobrevive a cerrar la app
-    await page.fill('#notaDia-' + hoyKeyDia, 'Llevar el informe de la sesión');
+    // el día ya no tiene UNA nota en un textarea: tiene las notas de la libreta que caen en él.
+    // «+ nota para este día» crea una y la abre para escribirla.
+    const panelNotas = await page.evaluate(() => ({
+      titulo: [...document.querySelectorAll('.daydetail h2')].map((h) => h.textContent.trim())
+        .find((t) => /Notas de este día/.test(t)) || '',
+      botonAdd: !!document.querySelector('[data-a="nota-add-dia"]'),
+      textareaViejo: !!document.querySelector('[id^="notaDia-"]'),
+    }));
+    check('el día enseña sus notas de la libreta, no un único campo de texto',
+      /Notas de este día/.test(panelNotas.titulo) && panelNotas.botonAdd && !panelNotas.textareaViejo,
+      JSON.stringify(panelNotas));
+
+    await page.click('[data-a="nota-add-dia"]');
+    await page.waitForTimeout(400);
+    await page.fill('#ntTxt', 'Llevar el informe de la sesión');
     await page.waitForTimeout(300);
     await page.reload();
     await page.waitForTimeout(700);
@@ -2021,11 +2034,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="mon-today"]');
     await page.waitForTimeout(300);
     const notaTrasRecargar = await page.evaluate((k) => ({
-      enDisco: window.PG.store.notasDia[k] || '',
+      enDisco: window.PG.notasDeFecha(k).map((x) => x.txt),
       enLaCasilla: document.querySelectorAll('.dnota').length,
     }), hoyKeyDia);
-    check('la nota de un día se guarda al escribirla, sobrevive a recargar y se ve en su casilla',
-      notaTrasRecargar.enDisco === 'Llevar el informe de la sesión' && notaTrasRecargar.enLaCasilla === 1,
+    check('una nota de un día se guarda al escribirla, sobrevive a recargar y se ve en su casilla',
+      notaTrasRecargar.enDisco.join('|') === 'Llevar el informe de la sesión' && notaTrasRecargar.enLaCasilla === 1,
       JSON.stringify(notaTrasRecargar));
 
     // y un evento se crea desde el propio día, sin ir a otra pestaña a escribir la fecha a mano
@@ -2043,15 +2056,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       evDesdeElDia.creados.length === 1 && evDesdeElDia.creados[0] === 'Sesión clínica 08:30' &&
       evDesdeElDia.enLaAgenda >= 1, JSON.stringify(evDesdeElDia));
 
-    // vaciar la nota la borra, no deja una entrada vacía criando polvo
-    await page.fill('#notaDia-' + hoyKeyDia, '');
-    await page.waitForTimeout(300);
-    check('vaciar la nota la borra del todo',
-      await page.evaluate((k) => !(k in window.PG.store.notasDia), hoyKeyDia), '');
+    // marcar una nota como hecha no la borra en el momento: aguanta dos días por si te arrepientes
+    const hechaYPurga = await page.evaluate((k) => {
+      const P = window.PG;
+      const x = P.notasDeFecha(k)[0];
+      P.toggleNotaHecha(x.id);
+      const recien = P.purgaNotas();
+      x.hecha = Date.now() - 3 * 86400000;
+      const vieja = P.purgaNotas();
+      return { marcada: !!x.hecha, recien, vieja, quedan: P.notasDeFecha(k).length };
+    }, hoyKeyDia);
+    check('una nota hecha aguanta 2 días y luego se borra sola',
+      hechaYPurga.recien === 0 && hechaYPurga.vieja === 1 && hechaYPurga.quedan === 0,
+      JSON.stringify(hechaYPurga));
 
     await page.evaluate(() => {
       window.PG.eventosS().length = 0;
       window.PG.store.notasDia = {};
+      window.PG.store.notas.length = 0;
       window.PG.ui.monSel = '';
       window.PG.save();
     });
@@ -2184,7 +2206,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         ev.push({ id: 'ap' + i, titulo: 'Un evento de título larguísimo ' + i, hora: '0' + (i % 10) + ':00',
           modo: 'fecha', fecha: dia, dow: [], color: '#38e1ff', on: true });
       }
-      window.PG.store.notasDia[dia] = 'una nota que tampoco cabría';
+      window.PG.store.notas.push({ id: 'nt-lleno', txt: 'una nota que tampoco cabría', fecha: dia, hecha: 0, color: '', evId: '', ts: Date.now() });
       window.PG.save();
       window.PG.render();
       const celda = [...document.querySelectorAll('.dbox')].find((x) => x.querySelector('.dpt'));
@@ -2232,6 +2254,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: iso(new Date(y, m, 9)), color: '#a855f7', dow: [], on: true });
       ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: iso(new Date(y, m, 25)), color: '#38e1ff', dow: [], on: true });
       window.PG.store.notasDia = {};
+      window.PG.store.notas.length = 0;
       window.PG.store.rotation.daySet = {};
       window.PG.save();
       window.PG.render();
@@ -2707,6 +2730,218 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('sin clave de FoodData Central la app lo dice y deja el valor aproximado de la tabla',
       !usda.on && !usda.intento.ok && /clave/.test(usda.intento.msg) && usda.fuenteDelPlatano === 'tabla',
       JSON.stringify(usda));
+  }
+
+  // ===================== el sol, la marca de hoy, Semana y Notas =====================
+  // 65) el sol se calcula en el móvil y cuadra con la realidad, sin inventarse los casos polares
+  {
+    const sol = await page.evaluate(() => {
+      const P = window.PG;
+      // en la zona horaria del SITIO, no en la del ordenador que corre la prueba: horaLocal() usa el
+      // reloj del móvil, así que fijar aquí una hora local haría que la prueba dependiese del runner
+      const en = (d, tz) => new Intl.DateTimeFormat('es-ES',
+        { hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false }).format(d);
+      const lpa = P.SITIOS_FIJOS[0], mad = P.SITIOS_FIJOS[1];
+      const a = P.solDe('2026-09-17', lpa), b = P.solDe('2026-09-17', mad);
+      const jun = P.solDe('2026-06-21', lpa), dic = P.solDe('2026-12-21', lpa);
+      // Tenerife está 0,81° más al oeste que Las Palmas: el sol sale unos minutos más tarde
+      const tfe = P.solDe('2026-09-17', { lat: 28.4636, lon: -16.2518 });
+      return {
+        lpaNombre: lpa.nombre, madNombre: mad.nombre,
+        lpaCanarias: en(a.sale, 'Atlantic/Canary') + '-' + en(a.pone, 'Atlantic/Canary'),
+        madPeninsula: en(b.sale, 'Europe/Madrid') + '-' + en(b.pone, 'Europe/Madrid'),
+        luzJun: jun.luzMin, luzDic: dic.luzMin,
+        tfeMasTarde: (tfe.sale - a.sale) / 60000,
+        polarVerano: P.solDe('2026-06-21', { lat: 69.65, lon: 18.96 }).polar,
+        polarInvierno: P.solDe('2026-12-21', { lat: 69.65, lon: 18.96 }).polar,
+        // longitud con el signo bien puesto: al oeste, más tarde en UTC
+        madAntesQueBcn: P.solDe('2026-09-17', { lat: 41.3874, lon: 2.1686 }).sale < b.sale,
+      };
+    });
+    check('el sol se calcula en el móvil, cuadra con la realidad y no se inventa los casos polares',
+      sol.lpaNombre === 'Las Palmas de Gran Canaria' && sol.madNombre === 'Madrid' &&
+      sol.lpaCanarias === '07:47-20:05' && sol.madPeninsula === '07:57-20:21' &&
+      sol.luzJun > sol.luzDic && sol.luzJun > 800 && sol.luzDic < 640 &&
+      sol.tfeMasTarde >= 2 && sol.tfeMasTarde <= 5 && sol.madAntesQueBcn === true &&
+      sol.polarVerano === 'dia' && sol.polarInvierno === 'noche', JSON.stringify(sol));
+  }
+
+  // 66) se puede añadir un sitio propio y el sol cambia con él; los dos de fábrica no se borran
+  {
+    const sitios = await page.evaluate(() => {
+      const P = window.PG;
+      const antes = P.solTxt('2026-09-17');
+      const r = P.addSitio('Valencia', 39.4699, -0.3763);
+      const despues = P.solTxt('2026-09-17');
+      const mal = P.addSitio('Sitio imposible', 999, 0);
+      const fijo = P.delSitio('lpa');
+      const quitado = P.delSitio(r.id);
+      return { ok: r.ok, antes, despues, cambia: antes !== despues, mal: mal.ok, fijo,
+        sitioTrasBorrar: P.sitioActual().id, total: P.sitiosS().length };
+    });
+    check('puedes añadir sitios tuyos, Las Palmas y Madrid no se borran y una latitud imposible se rechaza',
+      sitios.ok && sitios.cambia && !sitios.mal && /no se quitan/.test(sitios.fijo) &&
+      sitios.sitioTrasBorrar === 'lpa' && sitios.total === 2, JSON.stringify(sitios));
+  }
+
+  // 67) Semana: los días van primero y hoy se ve de verdad, no solo un borde
+  {
+    await gotoTab('week');
+    await page.evaluate(() => { window.PG.store.rotation.mode = 'date'; window.PG.save(); window.PG.render(); });
+    await page.waitForTimeout(350);
+    const sem = await page.evaluate(() => {
+      const main = document.querySelector('#main');
+      const filas = [...main.querySelectorAll('.drow')];
+      const r0 = filas[0] ? filas[0].getBoundingClientRect() : null;
+      const hoy = main.querySelector('.drow.today');
+      const otra = filas.find((f) => !f.classList.contains('today'));
+      return {
+        antesDelPrimerDia: r0 ? Math.round(r0.top + window.scrollY - main.getBoundingClientRect().top) : -1,
+        kpis: main.querySelectorAll('.res3 div').length,
+        // la configuración se fue a «Turno y rotación»: aquí ya no está
+        sinConfig: !main.querySelector('[data-a="autofill"]') && !main.querySelector('[data-a="rot-anchor"]'),
+        irACfg: !!main.querySelector('[data-a="ir-semana-cfg"]'),
+        chipHoy: !!(hoy && hoy.querySelector('.hoychip')),
+        fondoDistinto: !!(hoy && otra && getComputedStyle(hoy).backgroundColor !== getComputedStyle(otra).backgroundColor),
+        sol: main.querySelectorAll('.drsol').length,
+        noche: main.querySelectorAll('.tl-noche').length,
+      };
+    });
+    check('Semana empieza por los días, con hoy marcado de verdad y el sol en cada uno',
+      sem.antesDelPrimerDia < 60 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
+      sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.noche >= 7, JSON.stringify(sem));
+  }
+
+  // 68) la configuración de la semana vive ahora en «Turno y rotación»
+  {
+    await page.click('#main [data-a="ir-semana-cfg"]');
+    await page.waitForTimeout(600);
+    const cfg = await page.evaluate(() => ({
+      tab: window.PG.ui.tab,
+      tarjeta: !!document.querySelector('#main .card[data-cfg="semana"]'),
+      autofill: !!document.querySelector('#main .card[data-cfg="semana"] [data-a="autofill"]'),
+    }));
+    check('«patrón y rotación» lleva a la tarjeta de configuración en Turno y rotación',
+      cfg.tab === 'cfg' && cfg.tarjeta && cfg.autofill, JSON.stringify(cfg));
+  }
+
+  // 69) «hoy» se mueve solo al pasar la medianoche con la app abierta
+  {
+    await gotoTab('hoy');
+    const rueda = await page.evaluate(async () => {
+      const base = new Date();
+      const manana = new Date(base.getFullYear(), base.getMonth(), base.getDate() + 1, 0, 0, 30).getTime();
+      const antes = document.querySelector('#main h2').textContent.trim();
+      const OrigDate = Date;
+      window.Date = class extends OrigDate {
+        constructor(...a) { if (!a.length) super(manana); else super(...a); }
+        static now() { return manana; }
+      };
+      window.dispatchEvent(new Event('focus'));
+      await new Promise((r) => setTimeout(r, 300));
+      const despues = document.querySelector('#main h2').textContent.trim();
+      window.Date = OrigDate;
+      return { antes, despues };
+    });
+    await page.waitForTimeout(200);
+    check('con la app abierta, al pasar la medianoche «hoy» pasa solo al día siguiente',
+      rueda.antes !== rueda.despues && /Hoy/.test(rueda.despues), JSON.stringify(rueda));
+  }
+
+  // 70) Notas: lo que hubiera en notasDia se migra una vez y sin duplicar
+  {
+    const migra = await page.evaluate((k) => {
+      const P = window.PG;
+      P.store.notas.length = 0;
+      P.store.notasDia = { [k]: 'Llamar a la gestoría' };
+      P.save();
+      const n1 = P.migraNotasDia();
+      const n2 = P.migraNotasDia();
+      return { n1, n2, notas: P.notasS().length, viejo: Object.keys(P.store.notasDia).length,
+        texto: P.notasS()[0] ? P.notasS()[0].txt : '', fecha: P.notasS()[0] ? P.notasS()[0].fecha : '' };
+    }, isoDate(new Date()));
+    check('las notas de día que ya tuvieras se migran a la libreta una sola vez',
+      migra.n1 === 1 && migra.n2 === 0 && migra.notas === 1 && migra.viejo === 0 &&
+      migra.texto === 'Llamar a la gestoría' && migra.fecha === isoDate(new Date()), JSON.stringify(migra));
+  }
+
+  // 71) Notas: capturar, filtrar y que lo sin día no ensucie el calendario
+  {
+    await gotoTab('notas');
+    await page.fill('#ntNueva', 'Mirar si el curso de eco está abierto');
+    await page.click('[data-a="nota-add"]');
+    await page.waitForTimeout(300);
+    const libreta = await page.evaluate(() => {
+      const P = window.PG, c = P.notasCuenta();
+      const m = document.querySelector('#main');
+      return { ...c, filas: m.querySelectorAll('.nota').length,
+        captura: !!m.querySelector('#ntNueva'),
+        filtros: m.querySelectorAll('.chipx').length };
+    });
+    check('la libreta captura una nota suelta y la separa de las que tienen día',
+      libreta.total === 2 && libreta.sinDia === 1 && libreta.conDia === 1 &&
+      libreta.filas === 2 && libreta.captura && libreta.filtros === 4, JSON.stringify(libreta));
+  }
+
+  // 72) Notas: pasar una al calendario la enlaza, no la duplica
+  {
+    const alCal = await page.evaluate(() => {
+      const P = window.PG;
+      P.eventosS().length = 0;
+      const x = P.notasS().find((n) => n.fecha);
+      const notasAntes = P.notasS().length;
+      const r = P.notaAEvento(x.id, { hora: '08:30' });
+      const ev = P.eventoDeNota(P.notaById(x.id));
+      const sinDia = P.notasS().find((n) => !n.fecha);
+      const falla = P.notaAEvento(sinDia.id, {});
+      return { ok: r.ok, eventos: P.eventosS().length, notas: P.notasS().length, notasAntes,
+        hora: ev && ev.hora, fecha: ev && ev.fecha, enlaceInverso: ev && ev.notaId === x.id,
+        sinDiaFalla: !falla.ok && /día/.test(falla.msg) };
+    });
+    check('pasar una nota al calendario crea el evento y lo enlaza, sin duplicar la nota',
+      alCal.ok && alCal.eventos === 1 && alCal.notas === alCal.notasAntes &&
+      alCal.hora === '08:30' && alCal.enlaceInverso && alCal.sinDiaFalla, JSON.stringify(alCal));
+  }
+
+  // 73) Notas: desenlazar quita el evento pero deja la nota con su día
+  {
+    const desen = await page.evaluate(() => {
+      const P = window.PG;
+      const x = P.notasS().find((n) => n.evId);
+      const fecha = x.fecha;
+      const msg = P.desenlazaNota(x.id);
+      const y = P.notaById(x.id);
+      return { msg, eventos: P.eventosS().length, sigue: !!y, mantieneDia: y.fecha === fecha, evId: y.evId };
+    });
+    check('quitar una nota del calendario borra el evento y le deja su día a la nota',
+      desen.eventos === 0 && desen.sigue && desen.mantieneDia && !desen.evId, JSON.stringify(desen));
+  }
+
+  // 74) Notas: el enlace roto del Mes ya lleva al editor de eventos, que vive en Ajustes
+  {
+    await page.evaluate(() => {
+      window.PG.eventosS().push({ id: 'ev-z', titulo: 'Congreso', modo: 'fecha',
+        fecha: window.PG.iso(new Date()), hora: '09:00', color: '#38e1ff', on: true, dow: [] });
+      window.PG.save();
+    });
+    await gotoTab('month');
+    await page.waitForTimeout(250);
+    const antesDelClic = await page.evaluate(() => !!document.querySelector('#main [data-a="ir-eventos"]'));
+    await page.click('#main [data-a="ir-eventos"]');
+    await page.waitForTimeout(600);
+    const tras = await page.evaluate(() => ({
+      tab: window.PG.ui.tab,
+      editor: !!document.querySelector('#main .card[data-cfg="eventos"]'),
+      puedeAnadir: !!document.querySelector('#main .card[data-cfg="eventos"] [data-a="ev-add"]'),
+    }));
+    check('«añadir o quitar eventos» del Mes lleva al editor de eventos, no a Hábitos',
+      antesDelClic && tras.tab === 'ajustes' && tras.editor && tras.puedeAnadir,
+      JSON.stringify({ antesDelClic, ...tras }));
+    await page.evaluate(() => {
+      window.PG.eventosS().length = 0;
+      window.PG.store.notas.length = 0;
+      window.PG.save();
+    });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

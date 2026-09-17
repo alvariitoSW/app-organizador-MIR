@@ -43,13 +43,16 @@ Hoy hay `store.notasDia` = **una** nota por día, texto suelto. Pasaría a
   la nota apunta al evento. Si borras el evento, la nota se queda con su día.
 - Lo que ya tengas en `notasDia` se migra solo, una nota por día, sin perder nada.
 
-## Decisiones que hay que confirmar antes de construir
+## Decidido, y ya construido
 
-1. **Dónde vive Notas**: entrada propia en el cajón ☰ Más (lo que dibujan las
-   maquetas) o dentro de Calendario como cuarto modo junto a Hoy/Semana/Mes.
-2. **Marcar hecha**: ¿hace falta, o una nota se borra y ya?
-3. **Los eventos** — si se mueven de Ajustes a Notas, o se quedan donde están y
-   solo se arregla el enlace roto.
+1. **Notas vive en el cajón ☰ Más**, entre Comida y Hábitos.
+2. **«Marcar hecha» existe** y la nota se queda a la vista **2 días**
+   (`NOTA_PURGA_DIAS`) antes de borrarse sola. Cada nota hecha dice cuántos días
+   le quedan.
+3. **Los eventos se quedan en Ajustes.** Lo que se arregló es el enlace: el botón
+   «+ añadir o quitar eventos» del Mes llevaba a Hábitos, donde no hay ninguno.
+
+Fijado en `tests/regression.test.js` (pruebas 70–74).
 
 ## Cómo se regeneran
 

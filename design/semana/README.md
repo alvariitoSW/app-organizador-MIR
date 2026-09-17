@@ -76,14 +76,31 @@ que hay que añadir al construir:
    cambias una de las dos), la app lo dice en Ajustes en vez de dar horas que no
    son.
 
-## Decisiones que hay que confirmar antes de construir
+## Decidido, y ya construido
 
-1. **La configuración de Semana se va a «Turno y rotación»**: ¿de acuerdo, o
-   prefieres que se quede plegada en Semana?
-2. **Las horas del sol en cada día de la semana**, o solo en Hoy y en el día
-   abierto (en la semana ocupan una línea por día).
-3. **La lista de sitios**: ¿te vale con las 6 ciudades + «otro», o quieres solo
-   Las Palmas y el resto a mano?
+1. **La configuración se fue a «Turno y rotación»** (tarjeta «Cómo se arma tu
+   semana»). En Semana queda una línea de resumen y el botón «patrón y rotación».
+2. **Las horas del sol van en cada día**, en Semana y en Hoy. En Mes no.
+3. **Vienen dos sitios de fábrica**, Las Palmas de Gran Canaria y Madrid, y se
+   pueden añadir más (nombre + latitud/longitud, o «usar mi ubicación»). Los dos
+   de fábrica no se borran.
+
+### Lo que salió al construir, medido otra vez a 412×915
+
+| | antes | después |
+|---|---|---|
+| Semana entera | 2692 px (2,94 pantallas) | **2073 px (2,27)** |
+| Antes de ver el lunes | **1007 px (110 % de pantalla)** | **14 px** |
+| Alto de cada día | 89 px | 111 px (ahora lleva el sol) |
+| KPIs | 7 | **3** |
+| Controles a la vista | 11 | 7 |
+| Señal de hoy | solo el borde izquierdo | borde, fondo, resplandor y etiqueta `HOY` |
+
+**La franja de 24 h sombrea la noche por encima de los bloques**, no ilumina el
+día por debajo: al fondo, los tramos de dormir y de trabajo tapaban justo la
+franja de luz y no se veía nada.
+
+Fijado en `tests/regression.test.js` (pruebas 65–69).
 
 ## Cómo se regeneran
 

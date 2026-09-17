@@ -74,8 +74,10 @@ function DEFAULTS(){return {
   franja:{horas:24,colores:{}},
   lector:{proxy:'',publico:false},
   usda:{key:''},
+  sitio:'lpa',sitios:[],
   impPendiente:null,   /* lo último compartido desde otra app, hasta que se use o se limpie */
-  notasDia:{},         /* una nota libre por día: {'2026-09-17':'llevar el informático'} */
+  notasDia:{},         /* se migra a notas[] al arrancar; se deja para no romper copias viejas */
+  notas:[],            /* la libreta: {id,txt,fecha:''|'2026-09-17',hecha:0|ts,color,evId} */
   eventos:[],
   listas:[
     {id:'ls-siempre',nombre:'La compra de siempre',fija:true,
@@ -265,7 +267,8 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
   alimQ:'',alimGrupo:'',alimSel:'',alimG:100,neveraQ:'',microAbierto:'',
-  plato:null,platoQ:'',ideasCache:null,alimNuevo:null,
+  plato:null,platoQ:'',ideasCache:null,alimNuevo:null,sitioNuevo:false,
+  notaSel:'',notaFiltro:'',notaNueva:'',notaEvAviso:false,notaEvCuenta:false,
   imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
@@ -332,6 +335,14 @@ function normalize(o){
       ts:+o.impPendiente.ts||0,abierto:!!o.impPendiente.abierto};
     if(!o.impPendiente.txt&&!o.impPendiente.url)o.impPendiente=null;
   }else o.impPendiente=null;
+  if(!Array.isArray(o.notas))o.notas=[];
+  o.notas=o.notas.map(function(x){return (x&&typeof x==='object')?{
+    id:String(x.id||uid('nt')),txt:String(x.txt||'').slice(0,600),
+    fecha:/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'')?x.fecha:'',
+    hecha:(+x.hecha>0)?+x.hecha:0,
+    color:/^#[0-9a-fA-F]{6}$/.test(x.color||'')?x.color:'',
+    evId:String(x.evId||''),ts:+x.ts||Date.now()}:null;})
+    .filter(function(x){return x&&x.txt.trim();});
   if(!o.notasDia||typeof o.notasDia!=='object'||Array.isArray(o.notasDia))o.notasDia={};
   Object.keys(o.notasDia).forEach(function(k){
     const t=String(o.notasDia[k]||'').slice(0,400);
@@ -339,6 +350,12 @@ function normalize(o){
   if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
   o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
   o.lector.publico=!!o.lector.publico;   /* usar intermediarios públicos: solo si lo has aceptado */
+  if(!Array.isArray(o.sitios))o.sitios=[];
+  o.sitios=o.sitios.map(function(x){return (x&&typeof x==='object'&&x.id)?{
+    id:String(x.id).slice(0,20),nombre:String(x.nombre||'Sitio').slice(0,48),
+    lat:Math.max(-90,Math.min(90,+x.lat||0)),lon:Math.max(-180,Math.min(180,+x.lon||0)),
+    tz:String(x.tz||'').slice(0,40)}:null;}).filter(Boolean);
+  if(typeof o.sitio!=='string'||!o.sitio)o.sitio='lpa';
   if(!o.usda||typeof o.usda!=='object')o.usda={key:''};
   o.usda.key=String(o.usda.key||'').trim().slice(0,120);   /* clave de FoodData Central: tuya, se queda en el móvil */
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
@@ -495,14 +512,109 @@ function resolveCode(c){
   const s=shiftByCode(c);
   return s?s.id:null;
 }
-function notaDia(key){return String((store.notasDia||{})[key]||'');}
+/* ===================== notas =====================
+   Una nota es un trozo de texto que puede tener día o no tenerlo. Sin día vive solo en la libreta y
+   no ensucia el calendario; con día sale en la casilla del Mes y al abrirlo. Si además la pasas al
+   calendario, la nota guarda el id del evento (evId): no se duplica nada, se enlaza. */
+const NOTA_PURGA_DIAS=2;
+function notasS(){
+  if(!Array.isArray(store.notas))store.notas=[];
+  return store.notas;}
+function migraNotasDia(){
+  /* lo que ya tenías en store.notasDia era UNA nota por día, texto suelto. Pasa a la lista sin
+     perder nada y sin crear duplicados si la migración ya se hizo. */
+  const viejo=store.notasDia;
+  if(!viejo||typeof viejo!=='object')return 0;
+  const ks=Object.keys(viejo);
+  if(!ks.length)return 0;
+  const lista=notasS();
+  let n=0;
+  ks.forEach(function(k){
+    const txt=String(viejo[k]||'').trim();
+    if(!txt)return;
+    if(lista.some(function(x){return x.fecha===k&&x.txt===txt;}))return;
+    lista.push({id:uid('nt'),txt:txt,fecha:k,hecha:0,color:'',evId:'',ts:Date.now()});
+    n++;});
+  store.notasDia={};   /* ya vive en store.notas: dejarlo duplicado acabaría en dos verdades */
+  if(n)save();
+  return n;}
+function purgaNotas(){
+  /* «que se borre a los 2 días»: una nota marcada como hecha se queda a la vista dos días —por si te
+     arrepientes— y luego se va sola. Se mira al arrancar y al entrar en Notas. */
+  const lista=notasS(),limite=Date.now()-NOTA_PURGA_DIAS*86400000;
+  let n=0;
+  for(let i=lista.length-1;i>=0;i--){
+    const x=lista[i];
+    if(x.hecha&&x.hecha<limite){lista.splice(i,1);n++;}}
+  if(n)save();
+  return n;}
+function notaById(id){return notasS().filter(function(x){return x.id===id;})[0]||null;}
+function notasDeFecha(key){
+  return notasS().filter(function(x){return x.fecha===key;})
+    .sort(function(a,b){return (a.hecha?1:0)-(b.hecha?1:0)||a.ts-b.ts;});}
+function notaDia(key){
+  /* se queda por compatibilidad: las notas de un día, en una sola cadena */
+  return notasDeFecha(key).map(function(x){return x.txt;}).join('\n');}
+function addNota(txt,fecha){
+  const t=String(txt||'').trim().slice(0,600);
+  if(!t)return {ok:false,msg:'escribe algo primero'};
+  const f=fecha?(foodKey(fecha)||''):'';
+  const nota={id:uid('nt'),txt:t,fecha:f,hecha:0,color:'',evId:'',ts:Date.now()};
+  notasS().push(nota);save();
+  return {ok:true,id:nota.id,msg:'apuntado'+(f?(' para el '+fechaCorta(f)):'')};}
+function setNota(id,campo,valor){
+  const x=notaById(id);if(!x)return 'esa nota ya no está';
+  if(campo==='txt')x.txt=String(valor||'').slice(0,600);
+  else if(campo==='fecha')x.fecha=valor?(foodKey(valor)||''):'';
+  else if(campo==='color')x.color=/^#[0-9a-fA-F]{6}$/.test(valor||'')?valor:'';
+  save();return '';}
 function setNotaDia(key,txt){
-  /* se guarda al vuelo mientras escribes: sin botón de guardar que se pueda olvidar. No se
-     repinta aquí —eso desmontaría el propio campo—; el mes se refresca al cerrar el día. */
-  if(!store.notasDia)store.notasDia={};
-  const t=String(txt||'').slice(0,400);
-  if(t.trim())store.notasDia[key]=t;else delete store.notasDia[key];
-  save();}
+  /* la usaba el editor de un día del Mes: ahora escribe sobre la primera nota de ese día, o crea
+     una si no hay ninguna. Así el campo de siempre sigue funcionando. */
+  const k=foodKey(key);if(!k)return '';
+  const t=String(txt||'').slice(0,600);
+  const suyas=notasDeFecha(k);
+  if(!suyas.length){if(t.trim())addNota(t,k);return '';}
+  if(!t.trim()&&suyas.length===1){delNota(suyas[0].id);return '';}
+  suyas[0].txt=t;save();return '';}
+function toggleNotaHecha(id){
+  const x=notaById(id);if(!x)return 'esa nota ya no está';
+  x.hecha=x.hecha?0:Date.now();save();
+  return x.hecha?('hecha · se borra sola dentro de '+NOTA_PURGA_DIAS+' días'):'vuelve a estar pendiente';}
+function delNota(id){
+  const lista=notasS(),i=lista.findIndex(function(x){return x.id===id;});
+  if(i<0)return 'esa nota ya no estaba';
+  lista.splice(i,1);save();return 'nota borrada';}
+function notaAEvento(id,opts){
+  /* de nota a evento del calendario. La nota NO se copia: se queda enlazada por evId, así que si
+     cambias la hora en un sitio es la misma en el otro. */
+  const x=notaById(id);if(!x)return {ok:false,msg:'esa nota ya no está'};
+  opts=opts||{};
+  const fecha=foodKey(opts.fecha||x.fecha||'');
+  if(!fecha)return {ok:false,msg:'ponle primero un día a la nota'};
+  const titulo=String(opts.titulo||x.txt.split('\n')[0]||'').trim().slice(0,60);
+  if(!titulo)return {ok:false,msg:'la nota está vacía: no sé cómo llamar al evento'};
+  const ev={id:uid('ev'),titulo:titulo,modo:'fecha',fecha:fecha,
+    hora:String(opts.hora||'').slice(0,5),color:x.color||tlColor('evt'),on:true,
+    recordatorio:!!opts.recordatorio,cuentaAtras:!!opts.cuentaAtras,notaId:x.id};
+  eventosS().push(ev);
+  x.fecha=fecha;x.evId=ev.id;save();
+  return {ok:true,ev:ev,msg:'en el calendario: '+titulo+' · '+fechaCorta(fecha)};}
+function desenlazaNota(id){
+  const x=notaById(id);if(!x)return 'esa nota ya no está';
+  if(!x.evId)return 'esta nota no tiene evento';
+  const evs=eventosS(),i=evs.findIndex(function(e){return e.id===x.evId;});
+  if(i>=0)evs.splice(i,1);
+  x.evId='';save();
+  return 'fuera del calendario · la nota se queda con su día';}
+function eventoDeNota(x){
+  if(!x||!x.evId)return null;
+  return eventosS().filter(function(e){return e.id===x.evId;})[0]||null;}
+function notasCuenta(){
+  const l=notasS();
+  return {total:l.length,sinDia:l.filter(function(x){return !x.fecha&&!x.hecha;}).length,
+    conDia:l.filter(function(x){return x.fecha&&!x.hecha;}).length,
+    hechas:l.filter(function(x){return !!x.hecha;}).length};}
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
 function setDayOverride(dateStr,shiftId,guard){
@@ -1557,6 +1669,145 @@ function buscarYmostrar(code){
    es hoy" y "qué pasa este día" a su manera (Hoy con new Date() fijo, Mes con un modal aparte,
    Semana con su propio maquetado de comidas) — estas funciones son la base común que reutilizan
    las tres, para que marcar "hoy" y ver el detalle de un día se vea y se calcule igual en todas. */
+/* ===================== el sol: orto, ocaso y dónde estoy =====================
+   Todo se calcula aquí, en el móvil, con la ecuación del orto/ocaso (la de NOAA) a partir de la
+   latitud, la longitud y la fecha. Ni red, ni API, ni clave: de guardia sin cobertura sigue dando
+   la hora, y no sale del teléfono ni dónde estás. Precisión de unos minutos, y la app lo dice. */
+const SOL_RAD=Math.PI/180;
+const SITIOS_FIJOS=[
+  {id:'lpa',nombre:'Las Palmas de Gran Canaria',lat:28.1235,lon:-15.4363,tz:'Atlantic/Canary'},
+  {id:'mad',nombre:'Madrid',lat:40.4168,lon:-3.7038,tz:'Europe/Madrid'}];
+function sitiosS(){
+  /* los dos de fábrica más los que añadas tú, que se guardan igual que el resto de tus datos */
+  if(!Array.isArray(store.sitios))store.sitios=[];
+  return SITIOS_FIJOS.concat(store.sitios);}
+function sitioActual(){
+  const id=(store.sitio||'')||SITIOS_FIJOS[0].id;
+  return sitiosS().filter(function(s){return s.id===id;})[0]||SITIOS_FIJOS[0];}
+function setSitio(id){
+  if(!sitiosS().some(function(s){return s.id===id;}))return 'ese sitio ya no está';
+  store.sitio=id;save();render();
+  return 'ahora el sol se calcula para '+sitioActual().nombre;}
+function addSitio(nombre,lat,lon){
+  const n=String(nombre||'').trim().slice(0,48);
+  const la=+lat,lo=+lon;
+  if(!n)return {ok:false,msg:'ponle nombre al sitio'};
+  if(!isFinite(la)||la<-90||la>90)return {ok:false,msg:'la latitud va de -90 a 90 (Las Palmas es 28.12)'};
+  if(!isFinite(lo)||lo<-180||lo>180)return {ok:false,msg:'la longitud va de -180 a 180 (Las Palmas es -15.44)'};
+  if(!Array.isArray(store.sitios))store.sitios=[];
+  const id='st-'+Math.random().toString(36).slice(2,7);
+  store.sitios.push({id:id,nombre:n,lat:Math.round(la*1e4)/1e4,lon:Math.round(lo*1e4)/1e4,tz:''});
+  store.sitio=id;save();
+  return {ok:true,id:id,msg:'guardado: '+n};}
+function delSitio(id){
+  if(SITIOS_FIJOS.some(function(s){return s.id===id;}))return 'Las Palmas y Madrid vienen con la app: esos no se quitan';
+  if(!Array.isArray(store.sitios))store.sitios=[];
+  const i=store.sitios.findIndex(function(s){return s.id===id;});
+  if(i<0)return 'ese sitio ya no estaba';
+  const nm=store.sitios[i].nombre;store.sitios.splice(i,1);
+  if(store.sitio===id)store.sitio=SITIOS_FIJOS[0].id;
+  save();return 'quitado '+nm;}
+function solDe(fecha,sitio){
+  /* fecha: Date o 'YYYY-MM-DD'. Devuelve las horas de salida y puesta como Date, o marca el caso
+     polar en vez de inventarse una hora que no existe. */
+  const d=(fecha instanceof Date)?fecha:parseDate(fecha);
+  if(!d)return {sinDatos:true};
+  const s=sitio||sitioActual();
+  const lat=+s.lat,lon=+s.lon;
+  const jd=Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0)/86400000+2440587.5;
+  const n=Math.round(jd-2451545.0+0.0008);
+  /* longitud en grados, este positivo: cuanto más al oeste, más tarde sale el sol en UTC */
+  const Js=n-lon/360;
+  const M=(357.5291+0.98560028*Js)%360;
+  const C=1.9148*Math.sin(M*SOL_RAD)+0.0200*Math.sin(2*M*SOL_RAD)+0.0003*Math.sin(3*M*SOL_RAD);
+  const lam=(M+C+180+102.9372)%360;
+  const Jt=2451545.0+Js+0.0053*Math.sin(M*SOL_RAD)-0.0069*Math.sin(2*lam*SOL_RAD);
+  const sinDec=Math.sin(lam*SOL_RAD)*Math.sin(23.4397*SOL_RAD);
+  const cosDec=Math.cos(Math.asin(sinDec));
+  const cosW=(Math.sin(-0.833*SOL_RAD)-Math.sin(lat*SOL_RAD)*sinDec)/(Math.cos(lat*SOL_RAD)*cosDec);
+  if(cosW>1)return {polar:'noche'};    /* no amanece en todo el día */
+  if(cosW<-1)return {polar:'dia'};     /* no se pone en todo el día */
+  const w=Math.acos(cosW)/SOL_RAD;
+  const aFecha=function(J){return new Date((J-2440587.5)*86400000);};
+  const sale=aFecha(Jt-w/360),pone=aFecha(Jt+w/360);
+  return {sale:sale,pone:pone,luzMin:Math.round((pone-sale)/60000)};}
+function horaLocal(d){
+  /* la hora del teléfono, que es lo que el usuario mira en la pantalla de bloqueo */
+  if(!d)return '';
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function horaDecimal(d){return d?(d.getHours()+d.getMinutes()/60+d.getSeconds()/3600):0;}
+function solDeKey(key,sitio){return solDe(key,sitio);}
+function solTxt(key){
+  const s=solDe(key);
+  if(s.polar==='dia')return 'no se pone';
+  if(s.polar==='noche')return 'no amanece';
+  if(s.sinDatos)return '';
+  return horaLocal(s.sale)+' · '+horaLocal(s.pone);}
+function luzTxt(min){
+  if(min==null)return '';
+  const h=Math.floor(min/60),m=min%60;
+  return h+' h'+(m?' '+String(m).padStart(2,'0'):'');}
+function tzDelMovil(){
+  try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){return '';}}
+function tzCuadra(){
+  /* si el sitio elegido tiene zona horaria conocida y no es la del móvil, las horas del sol que se
+     ven serían de otro huso. Mejor avisar que dar una hora que no es. */
+  const s=sitioActual(),mia=tzDelMovil();
+  if(!s.tz||!mia)return {ok:true};
+  return {ok:s.tz===mia,sitio:s.tz,movil:mia};}
+/* ---------- el sol, pintado ---------- */
+function arcoSolHTML(s,ahora){
+  /* el arco es el recorrido del sol y el punto es dónde va ahora: de un vistazo se ve si queda
+     tarde o si ya es de noche, sin tener que restar horas mentalmente */
+  if(s.polar||s.sinDatos){
+    return '<div class="arco arcovacio">'+(s.polar==='dia'?'☀️':'🌙')+'</div>';}
+  const h0=horaDecimal(s.sale),h1=horaDecimal(s.pone);
+  const t=Math.max(0,Math.min(1,(ahora-h0)/Math.max(0.01,h1-h0)));
+  const R=62,cx=70,cy=66;
+  const ang=Math.PI*(1-t);
+  const px=cx+R*Math.cos(ang),py=cy-R*Math.sin(ang);
+  const grande=t>0.5?1:0;
+  const rec=(t<=0)?'':('<path d="M8 66 A'+R+' '+R+' 0 '+grande+' 1 '+px.toFixed(1)+' '+py.toFixed(1)+
+    '" stroke="url(#solg)" stroke-width="3" stroke-linecap="round"/>');
+  const dia=(ahora>=h0&&ahora<=h1);
+  return '<div class="arco"><svg viewBox="0 0 140 78" width="140" height="78" fill="none">'+
+    '<path d="M8 66 A'+R+' '+R+' 0 0 1 132 66" stroke="var(--line)" stroke-width="2.5" stroke-linecap="round"/>'+
+    rec+
+    '<defs><linearGradient id="solg" x1="0" y1="1" x2="1" y2="0">'+
+      '<stop offset="0" stop-color="var(--bad)"/><stop offset="1" stop-color="var(--warn)"/></linearGradient></defs>'+
+    (dia?('<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="12" fill="var(--warn)" opacity=".2"/>'+
+          '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="7" fill="var(--warn)"/>'):'')+
+    '<line x1="4" y1="66" x2="136" y2="66" stroke="var(--line)" stroke-width="1.5"/>'+
+    '</svg></div>';}
+function solHoyHTML(key){
+  const k=key||iso(new Date());
+  const s=solDe(k),sit=sitioActual();
+  const esHoy=(k===iso(new Date()));
+  const ahora=esHoy?horaDecimal(new Date()):12;
+  if(s.sinDatos)return '';
+  if(s.polar){
+    return '<div class="solhero">'+arcoSolHTML(s,ahora)+
+      '<div class="solnum"><div class="solfila">'+(s.polar==='dia'?'☀️ hoy el sol no se pone':'🌙 hoy el sol no sale')+'</div>'+
+      '<div class="solfila mini">'+esc(sit.nombre)+'</div></div></div>';}
+  const h0=horaDecimal(s.sale),h1=horaDecimal(s.pone);
+  const queda=esHoy?Math.round((h1-ahora)*60):null;
+  const ayer=solDe(addDays(parseDate(k)||new Date(),-1));
+  const delta=(ayer&&ayer.luzMin!=null&&s.luzMin!=null)?(s.luzMin-ayer.luzMin):null;
+  return '<div class="solhero">'+arcoSolHTML(s,ahora)+
+    '<div class="solnum">'+
+      '<div class="solfila"><span>🌅</span>'+(esHoy&&ahora>h0?'salió':'sale')+'<b>'+horaLocal(s.sale)+'</b></div>'+
+      '<div class="solfila"><span>🌇</span>'+(esHoy&&ahora>h1?'se puso':'se pone')+'<b>'+horaLocal(s.pone)+'</b></div>'+
+      '<div class="solfila"><span>☀️</span>'+
+        (queda!=null&&queda>0?('quedan<b>'+luzTxt(queda)+'</b>'):('luz<b>'+luzTxt(s.luzMin)+'</b>'))+'</div>'+
+    '</div></div>'+
+    '<p class="mini" style="margin:9px 0 0">'+esc(sit.nombre)+
+      (delta!=null&&delta!==0?(' · '+Math.abs(delta)+' min '+(delta>0?'más':'menos')+' de luz que ayer'):'')+'</p>';}
+function solPiesHTML(key){
+  /* las dos horas en una línea, para la fila de un día en Semana */
+  const s=solDe(key);
+  if(s.sinDatos)return '';
+  if(s.polar)return '<span class="pie sol">'+(s.polar==='dia'?'☀️ no se pone':'🌙 no amanece')+'</span>';
+  return '<span class="pie sol">🌅 '+horaLocal(s.sale)+'</span><span class="pie sol">🌇 '+horaLocal(s.pone)+'</span>';}
 function isToday(key){return !!key&&key===iso(new Date());}
 function modoAvisoHTML(){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
@@ -1646,6 +1897,20 @@ function timelineBar(dateStr,inf){
   const evDots=evs.map(function(ev){const m=mins(ev.hora);if(!dentro(m))return '';
     return '<i class="tl-dot evt" style="left:'+pct(m).toFixed(1)+'%;background:'+esc(ev.color||tlColor('evt'))+
       '" title="📅 '+esc(ev.hora)+' '+esc(ev.titulo)+'"></i>';}).join('');
+  /* la noche, por ENCIMA de todo lo demás: se oscurecen las horas sin sol en vez de iluminar las que
+     lo tienen. Al fondo no valía —los bloques de dormir y de trabajo tapaban justo la franja de luz—
+     y así además se lee bien que una guardia se come la noche entera. Se recorta a la ventana
+     visible igual que los tramos, porque la barra no siempre enseña las 24 h. */
+  const sol=solDe(dateStr);
+  let noche='';
+  const trozoNoche=function(m1,m2,lado){
+    const a=Math.max(m1,V.from),b=Math.min(m2,V.to);
+    if(b<=a)return '';
+    return '<i class="tl-noche '+lado+'" style="left:'+pct(a).toFixed(1)+'%;width:'+((b-a)/span*100).toFixed(1)+'%"></i>';};
+  if(sol.polar==='noche')noche='<i class="tl-noche" style="left:0;width:100%" title="hoy el sol no sale"></i>';
+  else if(sol.sale&&sol.pone){
+    const m1=sol.sale.getHours()*60+sol.sale.getMinutes(),m2=sol.pone.getHours()*60+sol.pone.getMinutes();
+    noche=trozoNoche(0,m1,'alba')+trozoNoche(m2,1440,'ocaso');}
   let now='';
   if(isToday(dateStr)){const d=new Date(),m=d.getHours()*60+d.getMinutes();
     if(dentro(m))now='<i class="tl-now" style="left:'+pct(m).toFixed(1)+'%" title="ahora"></i>';}
@@ -1654,7 +1919,8 @@ function timelineBar(dateStr,inf){
     const pos=f===0?'left:0;transform:none':(f===1?'right:0;left:auto;transform:none':'left:'+(f*100)+'%');
     return '<span style="'+pos+'">'+Math.round(m/60)+'h</span>';}).join('');
   return '<div class="tl-wrap"><div class="tl-axis">'+ejes+'</div>'+
-    '<div class="tl-bar">'+segs.join('')+dots+gymDot+evDots+now+'</div></div>';
+    '<div class="tl-bar" title="'+esc(sol.sale&&sol.pone?('luz de '+horaLocal(sol.sale)+' a '+horaLocal(sol.pone)):'')+
+      '">'+segs.join('')+noche+dots+gymDot+evDots+now+'</div></div>';
 }
 function franjaLeyendaHTML(){
   return '<div class="tlleg">'+TLCAT.map(function(c){
@@ -1687,10 +1953,9 @@ function dayPanelHTML(dateStr){
     (eventosDeFecha(key).length?('<div class="row" style="margin-top:6px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(key))+'</div>'):'')+
     '<div style="margin-top:6px">'+mealRowsHTML(key,sh)+'</div>'+
     /* lo que pedía el usuario: poder meter cosas suyas en un día concreto y que se queden.
-       La nota se guarda tecleando; el evento se crea aquí sin ir a otra pestaña a escribir la fecha. */
-    '<label class="fld" style="margin-top:10px">nota de este día'+
-      '<textarea rows="2" id="notaDia-'+key+'" data-a="dia-nota" data-key="'+key+'" maxlength="400" '+
-      'placeholder="lo que sea: llevar el portátil, cumple de mi madre, cambiar la guardia con Ana…">'+esc(notaDia(key))+'</textarea></label>'+
+       Antes era UNA nota por día en un textarea; ahora son las notas de la libreta que caen en este
+       día, con su propio hueco, y el evento se crea aquí sin ir a otra pestaña a escribir la fecha. */
+    '<div style="margin-top:10px">'+notasDelDiaHTML(key)+'</div>'+
     '<div class="row" style="margin-top:8px;gap:6px">'+
       '<label class="fld" style="flex:2 1 150px">añadir un evento este día'+
         '<input id="evDia-'+key+'" data-a="dia-ev-tit" placeholder="Sesión clínica" maxlength="70"></label>'+
@@ -1726,7 +1991,8 @@ function renderHoy(){
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(inf.guard):'')+(sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):'')):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'</h2>'+
+    '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'<span class="hoychip">hoy</span>'+
+      '<span class="mini" style="margin-left:auto;font-weight:700">son las '+horaLocal(now)+'</span></h2>'+
     modoAvisoHTML()+
     '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
     (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
@@ -1742,6 +2008,14 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="ajustes">🌙 horas de sueño →</button>'+
     '</div>'+
     (eventosDeFecha(hoy).length?('<div class="row" style="margin-top:8px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(hoy))+'</div>'):'')+
+    '</div>'+
+    /* el sol: cuánta luz queda es lo que de verdad usas para decidir si sales a correr o no */
+    '<div class="card"><h2>El sol hoy</h2>'+solHoyHTML(hoy)+
+      '<div class="row" style="margin-top:10px">'+
+        '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
+        '<span class="mini">se calcula en el móvil, sin internet</span></div>'+
+    '</div>'+
+    '<div class="card">'+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="tab" data-t="food">🍽 apuntar comida</button>'+
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
@@ -1752,6 +2026,42 @@ function renderHoy(){
     '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
 }
 /* ===================== render: semana ===================== */
+function resumenSemana(){
+  /* una línea en vez de la tarjeta entera: qué patrón se está aplicando y de dónde sale */
+  const r=store.rotation,p=store.patterns[r.pattern];
+  if(r.mode==='date')
+    return 'Por fecha · ciclo de '+store.patterns.length+' semana(s)'+(r.anchor?(', anclado al '+r.anchor):', sin anclar todavía')+'.';
+  return 'Plantilla'+(p?(' · '+p.name):'')+'. Los días no llevan fecha: para eso, «por fecha · rotación».';}
+function semanaConfigHTML(){
+  /* Todo esto vivía encima de la semana y ocupaba el 110 % de la pantalla del móvil: había que
+     hacer scroll de una pantalla entera de ajustes antes de ver el lunes. Es configuración, así que
+     ahora vive en «Turno y rotación», que es donde el usuario la va a buscar. */
+  const r=store.rotation;
+  return '<div class="card" data-cfg="semana"><h2>Cómo se arma tu semana</h2>'+
+    '<p class="note">Lo que decide qué día es cada día en la vista «Semana».</p>'+
+    '<div class="row">'+
+      '<button class="btn s '+(r.mode==='template'?'p':'')+'" data-a="mode-template">Plantilla (1 o 2 guardias)</button>'+
+      '<button class="btn s '+(r.mode==='date'?'p':'')+'" data-a="mode-date">Por fecha · rotación</button>'+
+      (r.mode==='template'
+        ?('<select id="patSel" data-a="pat-sel" style="max-width:260px">'+store.patterns.map(function(p,i){
+            return '<option value="'+p.id+'" '+(i===r.pattern?'selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>')
+        :('<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)">lunes de ref.'+
+          '<input type="date" value="'+esc(r.anchor||'')+'" data-a="rot-anchor" style="width:145px"></label>'+
+          '<button class="btn s" data-a="today">hoy</button>'))+
+      '<span class="sp"></span>'+
+      '<button class="btn s" data-a="autofill">Autocompletar semanas desde mi turno</button>'+
+    '</div>'+
+    (store.patterns[r.pattern]&&r.mode==='template'
+      ?('<p class="note" style="margin:10px 0 0">'+esc(store.patterns[r.pattern].note||'')+
+        ' Cambia cualquier día en «Semana» y todo se adapta: menús, tandas y compra.</p>')
+      :(r.mode==='date'
+        ?('<p class="note" style="margin:10px 0 0">Ciclo de '+store.patterns.length+' semana(s): <b>'+
+          esc(store.patterns.map(function(p){return p.days.join('·');}).join('  |  '))+
+          '</b>. Ancla la rotación al lunes de una semana con 1 guardia.</p>')
+        :''))+
+    (store.patterns.length>1?rotationStrip():'')+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
+  '</div>';}
 function renderWeek(){
   const r=store.rotation, days=weekDays();
   const sleepStats=(function(){const c=suenoCfg();return function(){
@@ -1759,16 +2069,6 @@ function renderWeek(){
     days.forEach(function(d){if(!d.date)return;const sl=sleepOf(d.key);
       if(sl.h==null||!d.shiftId)return;n++;t+=sl.h;if(sl.h<min)low++;});
     return {n:n,avg:n?Math.round(t/n*10)/10:null,low:low,min:min};};})();
-  const modeSeg=`<div class="row">
-    <button class="btn s ${r.mode==='template'?'p':''}" data-a="mode-template">Plantilla (1 o 2 guardias)</button>
-    <button class="btn s ${r.mode==='date'?'p':''}" data-a="mode-date">Por fecha · rotación</button>
-    ${r.mode==='template'?`<select id="patSel" data-a="pat-sel" style="max-width:260px">${store.patterns.map((p,i)=>`<option value="${p.id}" ${i===r.pattern?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`
-      :`<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)">lunes de ref.
-        <input type="date" value="${esc(r.anchor||'')}" data-a="rot-anchor" style="width:145px"></label>
-       <button class="btn s" data-a="today">hoy</button>`}
-    <span class="sp"></span>
-    <button class="btn s" data-a="autofill">Autocompletar semanas desde mi turno</button>
-  </div>`;
   const anyDate=days.some(function(d){return !!d.date;});
   const ss=sleepStats();
   const dayItems=function(d){const sh=shiftById(d.shiftId);if(!sh)return [];const out=[];
@@ -1804,6 +2104,7 @@ function renderWeek(){
       (!d.key&&sh?'<span class="drsch">'+esc(dayLine(d))+'</span>':'')+
       (!anyDate&&sh&&rh.sleep?'<span class="drsleep">🛌 '+esc(schedLine(sh.id,null).replace(/^🛌 /,''))+'</span>':'')+
       (d.key?eventosTagsHTML(eventosDeFecha(d.key)):'')+
+      (isToday(d.key)?'<span class="hoychip">hoy</span>':'')+
       '<span class="sp"></span>'+
       (d.key&&foodLog(d.key).length?'<span class="drnum" title="lo que llevas apuntado en la pestaña Comida">🍽 '+foodTotals(d.key).kcal+' kcal apuntadas</span>':'')+
       '<span class="drnum">'+(sh?(t.kcal+' kcal · '+t.parts+' rac.'):'—')+'</span>'+
@@ -1822,6 +2123,8 @@ function renderWeek(){
       '<div class="drmain" data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'" role="button" tabindex="0" '+
       'aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
       (d.key&&sh?timelineBar(d.key,d.inf):'')+
+      /* el sol de ese día: las dos horas, debajo de la franja que ya las pinta */
+      (d.key?('<div class="drsol">'+solPiesHTML(d.key)+'</div>'):'')+
       (open?det:'')+'</div>';}).join('');
     const pb=planBatches(days), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
@@ -1829,30 +2132,23 @@ function renderWeek(){
   const portions=used.reduce((a,b)=>a+b.portions,0);
   const tot=days.reduce((a,d)=>{const t=dayTotals(d.shiftId);a.k+=t.kcal;a.p+=t.prot;return a;},{k:0,p:0});
   $('#main').innerHTML=`<div class="grid">
-    <div class="card">${modeSeg}
-      ${store.patterns[r.pattern]&&r.mode==='template'?`<p class="note" style="margin:10px 0 0">${esc(store.patterns[r.pattern].note||'')} Cambia cualquier día abajo y la semana se adapta (menús, tandas y compra).</p>`:
-      (r.mode==='date'?`<p class="note" style="margin:10px 0 0">Ciclo de ${store.patterns.length} semana(s): <b>${esc(store.patterns.map(p=>p.days.join('·')).join('  |  '))}</b>. Ancla la rotación al lunes de una semana con 1 guardia.</p>`:'')}
-      ${store.patterns.length>1?rotationStrip():''}
-      <div class="row" style="margin-top:10px">
-        <button class="btn s" data-a="wk-expand-all">${allOpen()?'cerrar todos':'abrir todos'}</button>
-        ${anyDate?`<span class="mini">toca un día para ver o esconder sus comidas · las horas se cuentan por fecha en «Mes»</span>
-          <button class="btn s" data-a="mode-date">ver mi semana real</button>`
-        :`<span class="mini">toca un día para ver o esconder sus comidas</span>
-          <button class="btn s" data-a="tab" data-t="month">organizar el mes →</button>`}</div>
-      <div class="kpis">
-        <div><b>${g}</b><span>guardias</span></div>
-        <div><b>${used.length}</b><span>sesiones de cocina</span></div>
-        <div><b>${portions}</b><span>raciones a preparar</span></div>
-        <div><b>${g?Math.round(tot.k/7*10)/10:0}</b><span>kcal/día de media</span></div>
-        <div><b>${g?Math.round(tot.p/7):0} g</b><span>proteína/día</span></div>
-      </div>
-      ${anyDate?`<div class="kpis" style="margin-top:6px">
-        <div><b>${ss.avg!=null?ss.avg+'h':'—'}</b><span>sueño de media</span></div>
-        <div><b>${ss.low}</b><span>noches con &lt;${ss.min} h</span></div>
-      </div>`:''}
-      ${g>0&&used.length===0?'<p class="note" style="margin:10px 0 0;color:var(--warn)">⚠ Hay días de guardia pero ningún plato marcado como lote: se comería cada día cocinando de cero.</p>':''}
-    </div>
     <div class="daylist">${rows}</div>
+    <div class="card"><h2>La semana en números</h2>
+      <div class="res3">
+        <div><b>${g}</b><span>guardia${g===1?'':'s'}</span></div>
+        <div><b>${used.length}</b><span>sesiones de cocina</span></div>
+        <div><b>${anyDate&&ss.avg!=null?ss.avg+' h':(g?Math.round(tot.k/7):0)}</b><span>${anyDate&&ss.avg!=null?'sueño de media':'kcal/día de media'}</span></div>
+      </div>
+      <p class="mini" style="margin:10px 0 0">${esc(resumenSemana())}</p>
+      ${anyDate&&ss.low?`<p class="mini" style="margin:5px 0 0;color:var(--warn)">${ss.low} noche(s) por debajo de ${ss.min} h.</p>`:''}
+      ${g>0&&used.length===0?'<p class="note" style="margin:8px 0 0;color:var(--warn)">⚠ Hay días de guardia pero ningún plato marcado como lote: se comería cocinando de cero cada día.</p>':''}
+      <div class="row" style="margin-top:10px">
+        <button class="btn s" data-a="ir-semana-cfg">⚙️ patrón y rotación</button>
+        <button class="btn s" data-a="wk-expand-all">${allOpen()?'cerrar todos':'abrir todos'}</button>
+        ${anyDate?'':'<button class="btn s" data-a="mode-date">ver mi semana real</button>'}
+        <button class="btn s" data-a="tab" data-t="month">el mes →</button>
+      </div>
+    </div>
     <div class="grid g2">
       <div class="card"><h2>Lo que hay que cocinar esta semana</h2>
         <p class="note">Un bloque por sesión de cocina: qué pones al fuego ese día y cuántos tápers salen de cada cosa. Lo que sobre de una tanda va al congelador.</p>
@@ -3345,6 +3641,123 @@ function renderAlimNuevo(){
     '<button class="btn p gbig" data-a="alim-guardar">'+(a.id?'guardar los cambios':'guardar el alimento')+'</button>'+
     '</div>';
 }
+/* ---------- Notas: la libreta ---------- */
+function notaColor(x){return x.color||(x.evId?tlColor('evt'):(x.fecha?'var(--brand)':'var(--ink2)'));}
+function notaPiesHTML(x){
+  const out=[];
+  if(x.fecha){
+    const hoy=iso(new Date());
+    const cls=x.fecha===hoy?'dia hoy':'dia';
+    out.push('<span class="pie '+cls+'">📅 '+esc(x.fecha===hoy?('hoy, '+fechaCorta(x.fecha)):fechaCorta(x.fecha))+'</span>');
+  }else out.push('<span class="pie">sin día</span>');
+  const ev=eventoDeNota(x);
+  if(ev)out.push('<span class="pie ev">🔔 '+esc(ev.hora||'en el calendario')+'</span>');
+  if(x.hecha){
+    const quedan=Math.max(0,Math.ceil((x.hecha+NOTA_PURGA_DIAS*86400000-Date.now())/86400000));
+    out.push('<span class="pie">se borra en '+quedan+' día'+(quedan===1?'':'s')+'</span>');}
+  return out.join('');}
+function notaFilaHTML(x,conAbrir){
+  return '<div class="nota'+(x.hecha?' hecha':'')+'">'+
+    '<button class="tick" data-a="nota-hecha" data-id="'+x.id+'" title="'+(x.hecha?'volver a pendiente':'marcar hecha')+'" '+
+      'aria-label="'+(x.hecha?'volver a pendiente':'marcar hecha')+'">✓</button>'+
+    '<span class="franja" style="background:'+esc(notaColor(x))+'"></span>'+
+    '<button class="cuerpo" '+(conAbrir!==false?('data-a="nota-abrir" data-id="'+x.id+'"'):'')+'>'+
+      '<span class="t">'+esc(x.txt.split('\n')[0])+(x.txt.indexOf('\n')>=0?' …':'')+'</span>'+
+      '<span class="pies">'+notaPiesHTML(x)+'</span></button>'+
+  '</div>';}
+function renderNotas(){
+  purgaNotas();
+  if(ui.notaSel)return renderNotaAbierta();
+  const c=notasCuenta(),filtro=ui.notaFiltro||'';
+  const todas=notasS().slice().sort(function(a,b){
+    return (a.hecha?1:0)-(b.hecha?1:0)||(a.fecha&&b.fecha?a.fecha.localeCompare(b.fecha):(a.fecha?-1:(b.fecha?1:0)))||b.ts-a.ts;});
+  const ver=todas.filter(function(x){
+    if(filtro==='sin')return !x.fecha&&!x.hecha;
+    if(filtro==='con')return !!x.fecha&&!x.hecha;
+    if(filtro==='hechas')return !!x.hecha;
+    return true;});
+  const conDia=ver.filter(function(x){return x.fecha&&!x.hecha;});
+  const sinDia=ver.filter(function(x){return !x.fecha&&!x.hecha;});
+  const hechas=ver.filter(function(x){return !!x.hecha;});
+  const bloque=function(titulo,lista){
+    if(!lista.length)return '';
+    return '<div class="card"><h2>'+esc(titulo)+' <span class="mini">'+lista.length+'</span></h2>'+
+      lista.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">📝 Notas</h2><span class="tag b2">'+c.total+'</span></div>'+
+    '<div class="captura">'+
+      '<textarea id="ntNueva" rows="2" data-a="nota-txt" placeholder="Apunta algo y ya le pones día luego…">'+esc(ui.notaNueva||'')+'</textarea>'+
+      '<div class="row" style="margin-top:9px">'+
+        '<button class="btn p" data-a="nota-add">+ guardar</button>'+
+        '<button class="btn s" data-a="nota-add" data-hoy="1">📅 guardar para hoy</button>'+
+        '<span class="sp"></span><span class="mini">se guarda en tu móvil</span></div>'+
+    '</div>'+
+    '<div class="chips">'+
+      [['','todas',c.total],['sin','sin día',c.sinDia],['con','con día',c.conDia],['hechas','hechas',c.hechas]]
+        .map(function(f){
+          return '<button class="chipx'+(filtro===f[0]?' on':'')+'" data-a="nota-filtro" data-f="'+f[0]+'">'+
+            esc(f[1])+' <b>'+f[2]+'</b></button>';}).join('')+
+    '</div>'+
+    (todas.length?
+      (bloque('Con día',conDia)+bloque('Sin día',sinDia)+bloque('Hechas',hechas)||
+        '<div class="card"><div class="empty">Nada en este filtro.</div></div>'):
+      '<div class="card"><div class="empty">Todavía no has apuntado nada. Escribe arriba: lo que no tenga día se queda aquí y no molesta en el calendario.</div></div>')+
+    '</div>';
+}
+function renderNotaAbierta(){
+  const x=notaById(ui.notaSel);
+  if(!x){ui.notaSel='';return renderNotas();}
+  const ev=eventoDeNota(x);
+  const hoy=iso(new Date());
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="nota-cerrar">'+gymIco('atras','gico sm')+' Notas</button>'+
+      '<h2 class="subtit">La nota</h2></div>'+
+    '<textarea class="editor" id="ntTxt" rows="5" data-a="nota-f" data-id="'+x.id+'" data-k="txt">'+esc(x.txt)+'</textarea>'+
+    '<div class="row">'+
+      '<label class="fld" style="flex:1 1 150px">qué día'+
+        '<input type="date" value="'+esc(x.fecha)+'" data-a="nota-f" data-id="'+x.id+'" data-k="fecha"></label>'+
+      '<label class="fld" style="flex:0 0 76px">color'+
+        '<input type="color" value="'+esc(x.color||'#38e1ff')+'" data-a="nota-f" data-id="'+x.id+'" data-k="color" style="height:38px;padding:3px"></label>'+
+      (x.fecha?'':'<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="nota-hoy" data-id="'+x.id+'">ponerle hoy</button></label>')+
+    '</div>'+
+    '<p class="mini" style="margin:0">'+(x.fecha?
+      ('Con día puesto sale en el calendario: en la casilla del '+fechaCorta(x.fecha)+' y al abrir ese día.'):
+      'Sin día vive solo aquí. Ponle uno y saldrá en el calendario.')+'</p>'+
+    (ev?('<div class="card"><h2>📅 En el calendario</h2>'+
+      '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color||tlColor('evt'))+'"></span>'+
+      '<span class="nm"><b>'+esc(ev.titulo)+'</b><span>'+esc(fechaCorta(ev.fecha))+(ev.hora?(' · '+esc(ev.hora)):' · todo el día')+'</span></span></div>'+
+      '<p class="mini" style="margin:8px 0 0">Creado desde esta nota: es el mismo evento, no una copia.</p>'+
+      '<div class="row" style="margin-top:9px">'+
+        '<button class="btn s" data-a="mon-day" data-key="'+esc(ev.fecha)+'">ver ese día en el mes</button>'+
+        '<button class="btn s" data-a="nota-desenlaza" data-id="'+x.id+'">quitarlo del calendario</button></div></div>'):
+      (x.fecha?('<div class="card"><h2>📅 Pasarla al calendario</h2>'+
+        '<p class="note">Se crea un evento el '+esc(fechaCorta(x.fecha))+' con la primera línea de la nota como título. '+
+        'La nota no se duplica: se queda enlazada.</p>'+
+        '<div class="row">'+
+          '<label class="fld" style="flex:1 1 140px">título<input id="ntEvTit" value="'+esc(x.txt.split('\n')[0].slice(0,60))+'"></label>'+
+          '<label class="fld" style="flex:0 0 106px">hora (opcional)<input id="ntEvHora" type="time" value=""></label></div>'+
+        '<div class="chips">'+
+          '<button class="chipx'+(ui.notaEvAviso?' on':'')+'" data-a="nota-ev-aviso">🔔 avisarme</button>'+
+          '<button class="chipx'+(ui.notaEvCuenta?' on':'')+'" data-a="nota-ev-cuenta">cuenta atrás</button></div>'+
+        '<button class="btn p gbig" style="margin-top:11px" data-a="nota-al-calendario" data-id="'+x.id+'">crear el evento</button></div>'):'')
+    )+
+    '<div class="row">'+
+      '<button class="btn s" data-a="nota-hecha" data-id="'+x.id+'">'+(x.hecha?'✓ hecha · volver a pendiente':'✓ marcar hecha')+'</button>'+
+      (x.fecha?'<button class="btn s" data-a="nota-sin-dia" data-id="'+x.id+'">quitarle el día</button>':'')+
+      '<button class="btn d s" data-a="nota-del" data-id="'+x.id+'">borrar la nota</button></div>'+
+    (x.hecha?('<p class="mini" style="margin:0">Marcada como hecha: se borrará sola a los '+NOTA_PURGA_DIAS+' días.</p>'):'')+
+    '</div>';
+}
+function notasDelDiaHTML(key){
+  /* el cruce con el calendario: las notas de ese día, al abrirlo en el Mes */
+  const ns=notasDeFecha(key);
+  return '<div class="card"><h2>📝 Notas de este día <span class="mini">'+ns.length+'</span></h2>'+
+    (ns.length?ns.map(function(x){return notaFilaHTML(x);}).join(''):
+      '<div class="empty">Ninguna. Apunta lo que no quieras que se te olvide ese día.</div>')+
+    '<div class="row" style="margin-top:10px">'+
+      '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota para este día</button>'+
+      '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='add')return renderFoodAdd();
@@ -4865,6 +5278,8 @@ function renderCfg(){
     </div>
     ${jornadaCard()}
     ${suenoCard()}
+    ${semanaConfigHTML()}
+
     <div class="card"><h2>5 · Notas del planning</h2><p class="note">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>
       <textarea rows="4" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">${esc(store.meta.notes||'')}</textarea></div>
   </div>`;
@@ -4917,7 +5332,7 @@ function agendaMesHTML(y,mo){
     (filas||'<p class="mini" style="margin:0">Ninguno con fecha este mes.</p>')+
     (fijos.length?('<p class="mini" style="margin:9px 0 0">Además, todas las semanas: '+
       fijos.map(function(e){return esc(e.titulo||'(sin título)')+' <span style="opacity:.7">('+diasCorta(e.dow)+')</span>';}).join(' · ')+'</p>'):'')+
-    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="habitos">+ añadir o quitar eventos</button></div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-eventos">+ añadir o quitar eventos</button></div>'+
     '</div>';}
 function eventosPuntualesProximos(){const hoy=iso(new Date());
   return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha>=hoy;})
@@ -4986,7 +5401,7 @@ function renderAjustes(){
       <p class="mini" style="margin-top:8px">Con ${suenoCfg().min} h mínimas, tocaría acostarse a las <b>${acostarsePara(despertarBase())}</b> en tus días de diario.</p>
     </div>
 
-    <div class="card"><h2>📅 Eventos<span class="mini" style="margin-left:auto;font-weight:400">${eventosS().length} en total</span></h2>
+    <div class="card" data-cfg="eventos"><h2>📅 Eventos<span class="mini" style="margin-left:auto;font-weight:400">${eventosS().length} en total</span></h2>
       <p class="note">Los que se repiten cada semana (fisio, entreno con alguien…) o los puntuales (una presentación, una cita) — ambos se añaden solos a «Semana» y «Mes» el día que toque.</p>
       ${eventosS().length?eventosS().map(eventoRowHTML).join(''):'<div class="empty">Nada apuntado todavía.</div>'}
       <div class="row" style="margin-top:${eventosS().length?'12':'6'}px;${eventosS().length?'padding-top:10px;border-top:1px solid var(--line)':''}">
@@ -5081,6 +5496,32 @@ function renderAjustes(){
         '<li>Copia la dirección que te da (acaba en <code>.workers.dev</code>) y pégala aquí arriba. Dale a «probar».</li>' +
         '</ol><p class="mini" style="margin:8px 0 0">El Worker solo acepta enlaces de TikTok, YouTube e Instagram: no es un proxy abierto. ' +
         'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}
+    </div>
+
+    <div class="card" data-cfg="sol"><h2>☀️ El sol y dónde estoy</h2>
+      <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy» y en «Semana». Se calcula aquí,
+      en el móvil, con la latitud y la longitud: no sale nada a internet y funciona sin cobertura. Las horas salen
+      en el reloj de tu móvil y la precisión es de unos minutos.</p>
+      ${solHoyHTML()}
+      <div class="chips" style="margin-top:11px">${sitiosS().map(function(s){
+        const mio=!SITIOS_FIJOS.some(function(f){return f.id===s.id;});
+        return '<button class="chipx'+(s.id===sitioActual().id?' on':'')+'" data-a="sitio-set" data-id="'+esc(s.id)+'">'+
+          esc(s.nombre)+(mio?('<b class="x" data-a="sitio-del" data-id="'+esc(s.id)+'" title="quitar este sitio">×</b>'):'')+'</button>';}).join('')+
+        '<button class="chipx" data-a="sitio-nuevo">'+(ui.sitioNuevo?'▴ cancelar':'+ añadir un sitio')+'</button>'}</div>
+      ${ui.sitioNuevo?`<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
+        <label class="fld" style="flex:1 1 150px">nombre<input id="stNombre" placeholder="Valencia"></label>
+        <label class="fld" style="flex:0 0 108px">latitud<input id="stLat" type="number" step="0.0001" min="-90" max="90" placeholder="39.4699"></label>
+        <label class="fld" style="flex:0 0 108px">longitud<input id="stLon" type="number" step="0.0001" min="-180" max="180" placeholder="-0.3763"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn p" data-a="sitio-add">guardar el sitio</button></label>
+        </div>
+        <p class="mini" style="margin:8px 0 0">La longitud es <b>negativa al oeste</b>: Las Palmas es −15.44 y Barcelona +2.17.
+        O deja que lo ponga el móvil: <button class="btn s" style="padding:3px 9px" data-a="sitio-gps">usar mi ubicación</button></p>`:''}
+      ${(function(){const t=tzCuadra();
+        if(t.ok)return '';
+        return '<p class="note" style="margin:11px 0 0;color:var(--warn)">⚠ Tu móvil está en <b>'+esc(t.movil)+
+          '</b> y «'+esc(sitioActual().nombre)+'» va por <b>'+esc(t.sitio)+'</b>. Las horas se enseñan siempre en el '+
+          '<b>reloj de tu móvil</b>, así que verás el sol de '+esc(sitioActual().nombre)+' puesto en tu hora: no es la hora '+
+          'a la que allí amanece. Cambia el sitio, o la zona horaria del móvil.</p>';})()}
     </div>
 
     <div class="card" data-cfg="usda"><h2>Datos de los alimentos</h2>
@@ -5316,7 +5757,7 @@ const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 const DRAWER_GROUPS=[
   ['Comida',[['food','🍽 Comida']]],
-  ['Seguimiento',[['habitos','✅ Hábitos']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos']]],
   ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote'],['import','📥 Importar receta']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
@@ -5373,7 +5814,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -6048,6 +6489,81 @@ function act(a,el){
     case 'plato-guardar':{const m=guardarPlato();flash(m);render();break;}
     case 'ir-usda':{ui.tab='ajustes';ui.usdaGuia=true;render();
       setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="usda"]');
+        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
+        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
+      break;}
+    case 'sitio-set':flash(setSitio(el.dataset.id));break;
+    case 'sitio-nuevo':{ui.sitioNuevo=!ui.sitioNuevo;render();break;}
+    case 'sitio-add':{
+      const n=document.getElementById('stNombre'),la=document.getElementById('stLat'),lo=document.getElementById('stLon');
+      const r=addSitio(n?n.value:'',la?la.value:'',lo?lo.value:'');
+      flash(r.msg);
+      if(r.ok){ui.sitioNuevo=false;render();}
+      break;}
+    case 'sitio-del':
+      /* la × vive dentro del chip que cambia de sitio. No hace falta parar la propagación: el
+         despachador usa closest('[data-a]') desde el elemento pulsado, así que gana la ×. */
+      flash(delSitio(el.dataset.id));render();break;
+    case 'sitio-gps':{
+      if(!navigator.geolocation){flash('este navegador no sabe darme la ubicación: pon la latitud y la longitud a mano');break;}
+      flash('pidiendo la ubicación…');
+      navigator.geolocation.getCurrentPosition(function(p){
+        const la=document.getElementById('stLat'),lo=document.getElementById('stLon');
+        if(la)la.value=Math.round(p.coords.latitude*1e4)/1e4;
+        if(lo)lo.value=Math.round(p.coords.longitude*1e4)/1e4;
+        flash('ahí está: ponle nombre y guarda');
+      },function(e){flash('no me ha dejado ('+((e&&e.message)||'sin permiso')+'): ponlo a mano');},
+        {timeout:10000,maximumAge:600000});
+      break;}
+    case 'nota-add':{
+      const t=document.getElementById('ntNueva');
+      const r=addNota(t?t.value:(ui.notaNueva||''),el.dataset.hoy?iso(new Date()):'');
+      flash(r.msg);
+      if(r.ok){ui.notaNueva='';render();}
+      break;}
+    case 'nota-add-dia':{
+      const r=addNota('Nota nueva',el.dataset.key);
+      if(!r.ok){flash(r.msg);break;}
+      ui.notaSel=r.id;ui.tab='notas';render();window.scrollTo(0,0);
+      setTimeout(function(){const t=document.getElementById('ntTxt');
+        if(t){t.focus();t.select();}},80);
+      break;}
+    case 'nota-abrir':{ui.notaSel=el.dataset.id;ui.tab='notas';render();window.scrollTo(0,0);break;}
+    case 'nota-cerrar':{ui.notaSel='';render();window.scrollTo(0,0);break;}
+    case 'nota-filtro':{ui.notaFiltro=el.dataset.f||'';render();break;}
+    case 'nota-hecha':{flash(toggleNotaHecha(el.dataset.id));render();break;}
+    case 'nota-hoy':{setNota(el.dataset.id,'fecha',iso(new Date()));render();flash('puesta para hoy');break;}
+    case 'nota-sin-dia':{
+      const x=notaById(el.dataset.id);
+      if(x&&x.evId){flash('primero quítala del calendario: su evento tiene fecha');break;}
+      setNota(el.dataset.id,'fecha','');render();flash('sin día: se queda solo en la libreta');break;}
+    case 'nota-del':{
+      confirmar('¿Borrar esta nota?','Sí, borrarla').then(function(ok){
+        if(!ok)return;
+        const x=notaById(el.dataset.id);
+        if(x&&x.evId)desenlazaNota(el.dataset.id);
+        flash(delNota(el.dataset.id));ui.notaSel='';render();});
+      break;}
+    case 'nota-ev-aviso':{ui.notaEvAviso=!ui.notaEvAviso;render();break;}
+    case 'nota-ev-cuenta':{ui.notaEvCuenta=!ui.notaEvCuenta;render();break;}
+    case 'nota-al-calendario':{
+      const tit=document.getElementById('ntEvTit'),hr=document.getElementById('ntEvHora');
+      const r=notaAEvento(el.dataset.id,{titulo:tit?tit.value:'',hora:hr?hr.value:'',
+        recordatorio:!!ui.notaEvAviso,cuentaAtras:!!ui.notaEvCuenta});
+      flash(r.msg);render();break;}
+    case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
+    case 'ir-eventos':{ui.tab='ajustes';render();
+      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="eventos"]');
+        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
+        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
+      break;}
+    case 'ir-semana-cfg':{ui.tab='cfg';render();
+      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="semana"]');
+        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
+        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
+      break;}
+    case 'ir-sol':{ui.tab='ajustes';render();
+      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="sol"]');
         if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
         cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
       break;}
@@ -7259,6 +7775,8 @@ document.addEventListener('input',e=>{
     return;}
   if(a==='lector-f'){if(!store.lector)store.lector={proxy:''};
     store.lector.proxy=String(el.value||'').trim().slice(0,300);save();return;}   /* crudo mientras escribe */
+  if(a==='nota-txt'){ui.notaNueva=el.value||'';return;}   /* sin render: desmontaría el campo */
+  if(a==='nota-f'&&el.dataset.k==='txt'){setNota(el.dataset.id,'txt',el.value);return;}
   if(a==='usda-f'){if(!store.usda)store.usda={key:''};
     store.usda.key=String(el.value||'').trim().slice(0,120);save();return;}   /* sin re-render: desmontaría el campo */
   if(a==='imp-f'){
@@ -7370,6 +7888,10 @@ document.addEventListener('change',e=>{
       if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
       store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
+    case 'nota-f':{
+      const k=el.dataset.k;
+      if(k==='txt'){setNota(el.dataset.id,'txt',el.value);break;}
+      setNota(el.dataset.id,k,el.value);render();break;}
     case 'alim-g-f':{ui.alimG=Math.max(1,Math.min(2000,Math.round(+el.value||100)));render();break;}
     case 'plato-f':{
       if(!ui.plato)ui.plato=platoVacio();
@@ -7558,6 +8080,33 @@ function vigilarVersion(){
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden)mirarVersion();});
   window.addEventListener('focus',function(){mirarVersion();});}
+let _diaVigilado=null,_relojDia=null;
+function vigilarElDia(){
+  /* «que vaya acorde a la hora de mi teléfono»: si dejas la app abierta y pasa la medianoche, el día
+     marcado como hoy se quedaba clavado en el de ayer hasta recargar. Esto lo mueve solo.
+     Se programa para el minuto siguiente a las 00:00 en vez de hacer un temporizador cada minuto:
+     el móvil suspende la pestaña y un intervalo corto solo gastaría batería. */
+  if(typeof document==='undefined')return;
+  _diaVigilado=iso(new Date());
+  const alSiguienteDia=function(){
+    if(_relojDia)clearTimeout(_relojDia);
+    const n=new Date(),manana=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,5);
+    /* setTimeout no aguanta más de 24.8 días y el móvil puede dormirse: se recorta a una hora y se
+       vuelve a programar, que además cubre los cambios de hora */
+    const espera=Math.min(3600000,Math.max(1000,manana-n));
+    _relojDia=setTimeout(function(){comprobarCambioDeDia();alSiguienteDia();},espera);};
+  const comprobarCambioDeDia=function(){
+    const hoy=iso(new Date());
+    if(hoy===_diaVigilado)return false;
+    _diaVigilado=hoy;
+    /* solo se repinta lo que enseña días; en Ajustes o en Compra no hace falta molestar */
+    if(CAL_SET.has(ui.tab)||ui.tab==='food'||ui.tab==='notas')render();
+    return true;};
+  alSiguienteDia();
+  /* y al volver a la app desde segundo plano, que es cuando de verdad ha pasado la noche */
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&comprobarCambioDeDia())alSiguienteDia();});
+  window.addEventListener('focus',function(){if(comprobarCambioDeDia())alSiguienteDia();});}
 function registrarSW(){
   /* hace falta para poder instalar la app y que TikTok la ofrezca al compartir. Donde no se puede
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
@@ -7593,6 +8142,11 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   FOOD_CATALOGO,foodImportCatalogo,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
+  semanaConfigHTML,resumenSemana,vigilarElDia,
+  notasS,notaById,notasDeFecha,addNota,setNota,delNota,toggleNotaHecha,notaAEvento,desenlazaNota,
+  eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,NOTA_PURGA_DIAS,renderNotas,notasDelDiaHTML,
+  SITIOS_FIJOS,sitiosS,sitioActual,setSitio,addSitio,delSitio,solDe,solTxt,luzTxt,horaLocal,horaDecimal,
+  tzDelMovil,tzCuadra,arcoSolHTML,solHoyHTML,solPiesHTML,
   alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,
   microTotales,microPct,microCortos,alimRicosEn,
   neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,
@@ -7616,3 +8170,6 @@ pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espaci
 claudeBuscar();
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
+vigilarElDia();     /* y que «hoy» siga siendo hoy aunque la app pase la noche abierta */
+migraNotasDia();    /* lo que hubiera en notasDia pasa a la libreta, una vez y sin duplicar */
+purgaNotas();       /* y las notas hechas hace más de 2 días se van solas */
