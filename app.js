@@ -74,6 +74,7 @@ function DEFAULTS(){return {
   franja:{horas:24,colores:{}},
   lector:{proxy:'',publico:false},
   impPendiente:null,   /* lo último compartido desde otra app, hasta que se use o se limpie */
+  notasDia:{},         /* una nota libre por día: {'2026-09-17':'llevar el informático'} */
   eventos:[],
   listas:[
     {id:'ls-siempre',nombre:'La compra de siempre',fija:true,
@@ -261,7 +262,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
-  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,
+  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,
   imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
@@ -328,6 +329,10 @@ function normalize(o){
       ts:+o.impPendiente.ts||0,abierto:!!o.impPendiente.abierto};
     if(!o.impPendiente.txt&&!o.impPendiente.url)o.impPendiente=null;
   }else o.impPendiente=null;
+  if(!o.notasDia||typeof o.notasDia!=='object'||Array.isArray(o.notasDia))o.notasDia={};
+  Object.keys(o.notasDia).forEach(function(k){
+    const t=String(o.notasDia[k]||'').slice(0,400);
+    if(t.trim())o.notasDia[k]=t;else delete o.notasDia[k];});
   if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
   o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
   o.lector.publico=!!o.lector.publico;   /* usar intermediarios públicos: solo si lo has aceptado */
@@ -485,6 +490,14 @@ function resolveCode(c){
   const s=shiftByCode(c);
   return s?s.id:null;
 }
+function notaDia(key){return String((store.notasDia||{})[key]||'');}
+function setNotaDia(key,txt){
+  /* se guarda al vuelo mientras escribes: sin botón de guardar que se pueda olvidar. No se
+     repinta aquí —eso desmontaría el propio campo—; el mes se refresca al cerrar el día. */
+  if(!store.notasDia)store.notasDia={};
+  const t=String(txt||'').slice(0,400);
+  if(t.trim())store.notasDia[key]=t;else delete store.notasDia[key];
+  save();}
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
 function setDayOverride(dateStr,shiftId,guard){
@@ -1317,7 +1330,18 @@ function dayPanelHTML(dateStr){
     daySleepLineHTML(key,inf)+
     (eventosDeFecha(key).length?('<div class="row" style="margin-top:6px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(key))+'</div>'):'')+
     '<div style="margin-top:6px">'+mealRowsHTML(key,sh)+'</div>'+
-    '<details class="dtip" style="margin-top:9px"><summary class="mini">cambiar qué día es ▾</summary>'+
+    /* lo que pedía el usuario: poder meter cosas suyas en un día concreto y que se queden.
+       La nota se guarda tecleando; el evento se crea aquí sin ir a otra pestaña a escribir la fecha. */
+    '<label class="fld" style="margin-top:10px">nota de este día'+
+      '<textarea rows="2" id="notaDia-'+key+'" data-a="dia-nota" data-key="'+key+'" maxlength="400" '+
+      'placeholder="lo que sea: llevar el portátil, cumple de mi madre, cambiar la guardia con Ana…">'+esc(notaDia(key))+'</textarea></label>'+
+    '<div class="row" style="margin-top:8px;gap:6px">'+
+      '<label class="fld" style="flex:2 1 150px">añadir un evento este día'+
+        '<input id="evDia-'+key+'" data-a="dia-ev-tit" placeholder="Sesión clínica" maxlength="70"></label>'+
+      '<label class="fld" style="flex:0 0 96px">hora<input type="time" id="evDiaH-'+key+'" value="09:00"></label>'+
+      '<label class="fld" style="flex:0 0 auto;justify-content:flex-end">'+
+        '<button class="btn s" data-a="dia-ev-add" data-key="'+key+'">+ añadir</button></label></div>'+
+    '<details class="dtip" style="margin-top:9px"'+(ui.diaEditor?' open':'')+'><summary class="mini">cambiar qué día es ▾</summary>'+
       '<div class="row" style="margin-top:8px">'+opts+'</div>'+
       '<div class="row" style="margin-top:8px;gap:8px">'+guardBtn+'</div>'+
       '<div class="row" style="margin-top:8px">'+
@@ -1617,6 +1641,8 @@ function renderMonth(){
       lineas.push('<span class="dline evt" title="'+esc(ev.hora+' '+ev.titulo)+'">'+
         '<i style="background:'+esc(ev.color||tlColor('evt'))+'"></i>'+esc(ev.titulo)+'</span>');});
     if(evsDia.length>3)lineas.push('<span class="dline evt">+'+(evsDia.length-3)+' más</span>');
+    const nt=d.key?notaDia(d.key):'';
+    if(nt)lineas.push('<span class="dline nota" title="'+esc(nt)+'">📝 '+esc(nt)+'</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+'</span>'+
@@ -1643,6 +1669,9 @@ function renderMonth(){
         <span class="sp"></span>
         <button class="btn s" data-a="mon-auto">repartir ${svc.guardias} guardias</button>
         <button class="btn s" data-a="mon-clear">vaciar mes</button></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn p" data-a="dia-editar">✏️ editar un día</button>
+        <span class="mini">o toca cualquier casilla del calendario</span></div>
       <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
@@ -4846,7 +4875,25 @@ function act(a,el){
         save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
     case 'mon-sync':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
       flash(syncToRotation(y,m));break;}
+    case 'dia-ev-add':{
+      const key=el.dataset.key;
+      const t=((document.getElementById('evDia-'+key)||{}).value||'').trim();
+      const h=(document.getElementById('evDiaH-'+key)||{}).value||'09:00';
+      if(!t){flash('ponle un t\u00edtulo al evento');break;}
+      eventosS().push({id:uid('ev'),titulo:t.slice(0,70),hora:h,modo:'fecha',fecha:key,dow:[],
+        recordatorio:false,cuentaAtras:false,color:tlColor('evt'),on:true});
+      save();render();flash('a\u00f1adido el '+fechaCorta(key)+': '+t);break;}
+    case 'dia-editar':{
+      /* «un bot\u00f3n para elegir un d\u00eda y cambiar cosas»: abre el d\u00eda que est\u00e9 elegido —o el de hoy— con
+         el editor ya desplegado, y baja hasta \u00e9l. Antes hab\u00eda que saber que se pod\u00eda tocar la casilla. */
+      ui.diaEditor=true;
+      if(!ui.monSel)ui.monSel=iso(new Date());
+      render();
+      setTimeout(function(){const c=document.querySelector('#main .daydetail');
+        if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},60);
+      break;}
     case 'mon-day':{
+      ui.diaEditor=false;   /* tocando una casilla el editor va plegado; solo el botón lo abre */
       /* antes abría renderDayModal() como ventana aparte; ahora despliega el panel inline debajo
          del calendario (informe "reformular Mes/Semana/Hoy", decisión A) — si se llama desde fuera
          de Mes (p. ej. "cambiar qué día es" en Semana), entra en Mes con ese día ya seleccionado */
@@ -6182,6 +6229,7 @@ document.addEventListener('input',e=>{
     else if(f==='kcal'||f==='prot')r[f]=Math.max(0,Math.round(+el.value||0));
     else r[f]=String(el.value||'').slice(0,70);
     return;}
+  if(a==='dia-nota'){setNotaDia(el.dataset.key,el.value);return;}
   if(a==='food-cant'){
     /* la previsión se reescribe a mano en su sitio: un render() aquí desmontaría el campo que estás
        tecleando (el mismo motivo por el que «buscar» va con retardo y vuelve a enfocar) */
@@ -6441,7 +6489,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
-  eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
+  notaDia,setNotaDia,eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();

@@ -1875,6 +1875,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== Meter cosas en un día concreto =====================
+  {
+    // «un botón para elegir un día y cambiar o meter cosas, y que se queden guardados»: antes había
+    // que adivinar que la casilla del calendario se podía tocar, y no había dónde escribir nada
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-a="dia-editar"]');
+    await page.waitForTimeout(400);
+    const abierto = await page.evaluate(() => ({
+      dia: window.PG.ui.monSel,
+      panel: !!document.querySelector('.daydetail'),
+      editorDesplegado: !!document.querySelector('.daydetail details[open]'),
+    }));
+    const hoyKeyDia = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+    check('el botón «editar un día» elige el día de hoy y abre su editor ya desplegado',
+      abierto.dia === hoyKeyDia && abierto.panel && abierto.editorDesplegado, JSON.stringify(abierto));
+
+    // la nota se guarda tecleando, sin botón de guardar, y sobrevive a cerrar la app
+    await page.fill('#notaDia-' + hoyKeyDia, 'Llevar el informe de la sesión');
+    await page.waitForTimeout(300);
+    await page.reload();
+    await page.waitForTimeout(700);
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(300);
+    const notaTrasRecargar = await page.evaluate((k) => ({
+      enDisco: window.PG.store.notasDia[k] || '',
+      enLaCasilla: document.querySelectorAll('.dline.nota').length,
+    }), hoyKeyDia);
+    check('la nota de un día se guarda al escribirla, sobrevive a recargar y se ve en su casilla',
+      notaTrasRecargar.enDisco === 'Llevar el informe de la sesión' && notaTrasRecargar.enLaCasilla === 1,
+      JSON.stringify(notaTrasRecargar));
+
+    // y un evento se crea desde el propio día, sin ir a otra pestaña a escribir la fecha a mano
+    await page.click('[data-a="dia-editar"]');
+    await page.waitForTimeout(400);
+    await page.fill('#evDia-' + hoyKeyDia, 'Sesión clínica');
+    await page.fill('#evDiaH-' + hoyKeyDia, '08:30');
+    await page.click('[data-a="dia-ev-add"]');
+    await page.waitForTimeout(500);
+    const evDesdeElDia = await page.evaluate((k) => ({
+      creados: window.PG.eventosS().filter((e) => e.fecha === k).map((e) => e.titulo + ' ' + e.hora),
+      enLaAgenda: document.querySelectorAll('.agrow').length,
+    }), hoyKeyDia);
+    check('un evento se crea desde el día y aparece en la agenda del mes',
+      evDesdeElDia.creados.length === 1 && evDesdeElDia.creados[0] === 'Sesión clínica 08:30' &&
+      evDesdeElDia.enLaAgenda >= 1, JSON.stringify(evDesdeElDia));
+
+    // vaciar la nota la borra, no deja una entrada vacía criando polvo
+    await page.fill('#notaDia-' + hoyKeyDia, '');
+    await page.waitForTimeout(300);
+    check('vaciar la nota la borra del todo',
+      await page.evaluate((k) => !(k in window.PG.store.notasDia), hoyKeyDia), '');
+
+    await page.evaluate(() => {
+      window.PG.eventosS().length = 0;
+      window.PG.store.notasDia = {};
+      window.PG.ui.monSel = '';
+      window.PG.save();
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
+
   // ===================== El muñeco de la rutina =====================
   {
     // Los músculos salían SOLO de los campos de la biblioteca de openGym, y addRutina los rellena
