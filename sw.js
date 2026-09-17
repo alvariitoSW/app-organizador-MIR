@@ -44,6 +44,12 @@ self.addEventListener('fetch',function(e){
        quedaría en blanco con el HTML pintado y sin nada que lo mueva. */
     conLimite(pedirFresco(req,url),LIMITE_RED,null).then(function(res){
       if(!res)return Promise.reject(new Error('la red no contestó a tiempo'));
+      /* Un 404 o un 500 NO son una respuesta válida para app.js: si el servidor está a medio
+         desplegar, o el fichero no está todavía, el navegador se traga el error, la página se queda
+         con la cabecera pintada y nada más, y parece que la app «se ha quedado pillada». Teniendo
+         una copia buena guardada, servir el error es lo peor que se puede hacer. */
+      if(!res.ok)return caches.match(req,{ignoreSearch:true}).then(function(hit){return hit||res;})
+        .catch(function(){return res;});
       /* no se guarda la navegación de un «compartir»: su URL lleva la receta en la query, así que
          cada vídeo compartido dejaría una copia distinta engordando la caché para siempre */
       if(res&&res.ok&&!(navegacion&&url.search)){
@@ -107,7 +113,8 @@ function navegacionSellada(req,url){
   ]).then(function(r){
     const res=r[0],sello=r[1];
     if(!res)return portadaGuardada();   /* la red no contestó a tiempo: se abre con lo guardado */
-    if(!res.ok||!sello)return res;
+    if(!res.ok)return portadaGuardada();   /* 404/500: mejor la portada guardada que un error */
+    if(!sello)return res;
     const ct=res.headers.get('content-type')||'';
     if(!/text\/html/i.test(ct))return res;
     return res.text().then(function(html){

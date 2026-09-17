@@ -31,6 +31,8 @@ let peticiones = 0;
 // ficheros que el servidor acepta y luego NO contesta nunca: la wifi que no falla, se queda.
 // Es el caso que dejaba la app en blanco para siempre, y no hace falta estar sin cobertura.
 const colgados = new Set();
+// ficheros que el servidor da por perdidos: un despliegue a medias, o Pages todavía publicando
+const rotos = new Set();
 function serveComoGitHubPages() {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
@@ -38,6 +40,7 @@ function serveComoGitHubPages() {
       if (u.indexOf(SUB) !== 0) { res.writeHead(404); res.end('fuera'); return; }
       const p = path.join(raiz, u.slice(SUB.length));
       if (colgados.has(path.basename(p))) return;   // ni responde ni cierra: se queda ahí
+      if (rotos.has(path.basename(p))) { res.writeHead(404); res.end('no está'); return; }
       fs.readFile(p, (err, data) => {
         if (err) { res.writeHead(404); res.end('not found'); return; }
         peticiones++;
@@ -178,6 +181,57 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
       conAppColgada.vivo.main > 500 &&
       normal.ok && normal.vivo && normal.vivo.pg === 'object',
       JSON.stringify({ conSelloColgado, conAppColgada, normal }));
+  }
+
+  // 8) un 404 en app.js (Pages a medio desplegar) no puede dejar la app muerta: hay copia guardada
+  {
+    rotos.add('app.js');
+    await page.reload({ timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    const con404 = await page.evaluate(() => ({
+      pg: typeof window.PG,
+      main: document.querySelector('#main') ? document.querySelector('#main').innerHTML.length : 0,
+    })).catch(() => ({ pg: 'sin respuesta', main: 0 }));
+    rotos.clear();
+    check('si app.js da 404, se sirve la copia guardada en vez de dejar la app muerta',
+      con404.pg === 'object' && con404.main > 500, JSON.stringify(con404));
+  }
+
+  // 9) y si no hay copia guardada, la pantalla de rescate: el HTML lleva su propio salvavidas
+  //    en línea, así que aparece aunque app.js no llegue nunca. Sin esto el usuario se queda
+  //    mirando una cabecera, sin error y sin nada que tocar.
+  {
+    rotos.add('app.js');
+    const limpio = await browser.newContext();   // móvil nuevo: ni service worker ni caché
+    const p2 = await limpio.newPage();
+    await p2.goto(base + 'index.html', { timeout: 20000 }).catch(() => {});
+    await p2.waitForTimeout(10500);
+    const rescate = await p2.evaluate(() => {
+      const d = document.getElementById('rescate');
+      return d ? { sale: true, boton: !!document.getElementById('rescateBtn'),
+        info: (document.getElementById('rescateInfo') || {}).textContent || '' } : { sale: false };
+    }).catch(() => ({ sale: false }));
+
+    rotos.clear();
+    let reparado = { pg: 'no se intentó' };
+    if (rescate.sale) {
+      await p2.click('#rescateBtn');
+      await p2.waitForTimeout(5000);
+      reparado = await p2.evaluate(() => ({ pg: typeof window.PG,
+        main: document.querySelector('#main') ? document.querySelector('#main').innerHTML.length : 0 })).catch(() => ({ pg: 'sin respuesta' }));
+    }
+
+    // y con la app sana, el rescate NO puede aparecer
+    const p3 = await limpio.newPage();
+    await p3.goto(base + 'index.html', { timeout: 20000 });
+    await p3.waitForTimeout(10500);
+    const falsaAlarma = await p3.evaluate(() => !!document.getElementById('rescate'));
+    await limpio.close();
+
+    check('sin copia guardada y sin app.js, sale la pantalla de rescate, repara, y no salta en falso',
+      rescate.sale && rescate.boton && /app\.js cargó: undefined/.test(rescate.info) &&
+      reparado.pg === 'object' && reparado.main > 500 && falsaAlarma === false,
+      JSON.stringify({ rescate, reparado, falsaAlarma }));
   }
 
   check('sin errores de JavaScript durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

@@ -41,5 +41,58 @@
 <div id="drawerScrim" class="no-print"></div>
 <nav id="drawer" aria-label="Más secciones" aria-hidden="true" tabindex="-1"></nav>
 <script src="app.js"></script>
+<script>
+/* Red de seguridad, en línea a propósito: esto va DENTRO del HTML, así que se ejecuta aunque
+   app.js no llegue nunca (404, service worker atascado, red que acepta y no contesta). Sin esto,
+   el usuario se queda mirando una cabecera y nada más, sin error, sin botón y sin saber qué hacer:
+   «la app se queda pillada». Ahora, a los 8 segundos sin app, aparece un botón que borra la caché
+   y el service worker —nada de sus datos— y recarga. */
+(function(){
+  var AVISO=8000;
+  function arrancada(){return !!(window.PG&&document.getElementById('main')&&document.getElementById('main').innerHTML.length>50);}
+  function rescate(){
+    if(arrancada())return;
+    var d=document.createElement('div');
+    d.id='rescate';
+    d.setAttribute('style','position:fixed;inset:0;z-index:9999;background:#070b14;color:#e9f2ff;'+
+      'font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;'+
+      'padding:26px 20px;overflow:auto');
+    d.innerHTML='<h1 style="font-size:19px;margin:0 0 10px">La app no ha terminado de cargar</h1>'+
+      '<p style="color:#8fa6c6;margin:0 0 14px">Casi siempre es la copia guardada en el móvil, que se ha quedado a medias. '+
+      'El botón la borra y vuelve a bajar la app.</p>'+
+      '<p style="color:#8fa6c6;margin:0 0 18px"><b style="color:#e9f2ff">Tus guardias, rutinas, comidas y notas no se tocan</b>: '+
+      'viven en otro sitio y siguen ahí.</p>'+
+      '<button id="rescateBtn" style="appearance:none;font:inherit;font-weight:800;font-size:15px;padding:13px 18px;'+
+      'border-radius:12px;border:0;background:linear-gradient(94deg,#38e1ff,#7c5cff);color:#04121c;cursor:pointer;width:100%">'+
+      'Reparar y volver a abrir</button>'+
+      '<p id="rescateEst" style="color:#8fa6c6;font-size:12.5px;margin:14px 0 0"></p>'+
+      '<p style="color:#8fa6c6;font-size:12.5px;margin:18px 0 0">Si aun así no abre, dile a Claude qué pone aquí abajo.</p>'+
+      '<pre id="rescateInfo" style="color:#8fa6c6;font-size:11px;white-space:pre-wrap;word-break:break-all;margin:6px 0 0"></pre>';
+    document.body.appendChild(d);
+    var est=document.getElementById('rescateEst'),info=document.getElementById('rescateInfo');
+    var datos=[];
+    datos.push('versión del HTML: '+(document.querySelector('script[src*="app.js"]')||{}).src);
+    datos.push('service worker: '+('serviceWorker' in navigator?(navigator.serviceWorker.controller?'activo':'registrado sin control'):'no soportado'));
+    datos.push('app.js cargó: '+(typeof window.PG));
+    if(window.__errorArranque)datos.push('error: '+window.__errorArranque);
+    info.textContent=datos.join('\n');
+    document.getElementById('rescateBtn').onclick=function(){
+      est.textContent='Borrando la copia guardada…';
+      var tareas=[];
+      try{if(window.caches&&caches.keys)tareas.push(caches.keys().then(function(ks){
+        return Promise.all(ks.map(function(k){return caches.delete(k);}));}));}catch(e){}
+      try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)
+        tareas.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+          return Promise.all(rs.map(function(r){return r.unregister();}));}));}catch(e){}
+      var fin=function(){location.replace(location.pathname+'?limpio='+Date.now());};
+      Promise.all(tareas).then(fin,fin);
+      setTimeout(fin,4000);   /* pase lo que pase, recarga */
+    };
+  }
+  window.addEventListener('error',function(e){
+    if(e&&e.filename&&e.filename.indexOf('app.js')>=0)window.__errorArranque=String(e.message||'').slice(0,200);},true);
+  setTimeout(rescate,AVISO);
+})();
+</script>
 </body>
 </html>
