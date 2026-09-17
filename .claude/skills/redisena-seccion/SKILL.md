@@ -1,12 +1,29 @@
 ---
 name: redisena-seccion
-description: Rediseñar una sección de la app para el móvil. Úsala cuando el usuario diga «rediseña X», «esto se puede optimizar», «se podría aprovechar mejor la pantalla», «alargar las casillas», «la parte de X está muy cargada» o mande una captura del móvil señalando una pantalla. NO la uses para arreglar un fallo funcional.
+description: Rediseñar una sección de la app para el móvil. Úsala cuando el usuario diga «rediseña X», «esto se puede optimizar», «se podría aprovechar mejor la pantalla», «alargar las casillas», «la parte de X está muy cargada», «esta parte habría que diseñarla de otra manera» o mande una captura del móvil señalando una pantalla. Si algo se ve vacío, gris o apagado cuando debería tener datos, comprueba PRIMERO que no sea un fallo: el usuario lo cuenta como problema de diseño y a veces no lo es. NO la uses para arreglar un fallo ya identificado como tal.
 ---
 
 # Rediseñar una sección para el móvil
 
 El patrón que ha funcionado en Cardio, Entreno, Comida, Días y menús y Mes.
 No te saltes el paso 1: sin números, el rediseño es opinión.
+
+## 0. ¿Seguro que es diseño?
+
+**Si algo se ve vacío, gris o apagado cuando debería tener datos, comprueba
+primero que no sea un fallo.** El usuario lo cuenta como problema de diseño
+—lo vive así— y a veces no lo es.
+
+Pasó con el muñeco de las rutinas: «no se ve qué músculos haces, esta parte
+habría que diseñarla de otra manera». Con tres ejercicios puestos el muñeco
+seguía gris porque los músculos solo salían de la biblioteca de openGym, que
+está en inglés y solo casa con nombre exacto. Ninguna maqueta lo habría
+arreglado.
+
+Regla práctica: antes de medir nada, mete datos de verdad en esa pantalla y
+mira si se comporta. Si con datos sigue vacía, es un fallo — arréglalo primero y
+vuelve a mirar: puede que la queja de diseño se caiga sola. Dile al usuario cuál
+de las dos cosas era.
 
 ## 1. Medir ANTES de tocar nada
 
