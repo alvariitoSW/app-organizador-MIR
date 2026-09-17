@@ -1880,6 +1880,115 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== La caja de importar el planning =====================
+  {
+    // El usuario escribió ahí sus sesiones semanales y se topó con «no he encontrado días» y, peor,
+    // con «undefined guardia(s)» y «media NaN» en pantalla: count nacía vacío.
+    await gotoTab('data');
+    await page.waitForTimeout(300);
+    const TEXTO = 'Todos los martes tengo sesión en umi de 8:00 a 8:30 y todos los jueves ' +
+      'tengo sesión general de 8:00 a 8:30 en docencia';
+    await page.fill('#pasteBox', TEXTO);
+    await page.click('[data-a="draft"]');
+    await page.waitForTimeout(500);
+    const aviso = await page.evaluate(() => ({
+      texto: document.getElementById('draftOut').textContent,
+      boton: (() => { const b = document.getElementById('semBtn'); return b && !b.hidden ? b.textContent : ''; })(),
+    }));
+    check('un texto que no es un cuadrante no saca «undefined» ni «NaN», explica qué esperaba',
+      !/undefined|NaN/.test(aviso.texto) && /No he reconocido ning[úu]n d[íi]a/.test(aviso.texto) &&
+      /1 ago/.test(aviso.texto), aviso.texto.slice(0, 120));
+    check('reconoce que son sesiones semanales y ofrece crearlas como eventos',
+      /se repiten cada semana/.test(aviso.texto) && /los martes/.test(aviso.texto) &&
+      !/martess/.test(aviso.texto) && /crear 2 eventos semanales/.test(aviso.boton),
+      JSON.stringify({ boton: aviso.boton }));
+
+    await page.evaluate(() => { window.PG.eventosS().length = 0; window.PG.save(); });
+    await page.click('[data-a="draft-semanales"]');
+    await page.waitForTimeout(500);
+    const creados = await page.evaluate(() => window.PG.eventosS()
+      .map((e) => ({ t: e.titulo, dow: (e.dow || []).join(''), h: e.hora, modo: e.modo })));
+    check('el botón crea los eventos semanales con su día y su hora',
+      creados.length === 2 && creados[0].dow === '2' && creados[0].h === '08:00' &&
+      creados[0].modo === 'semanal' && /umi/i.test(creados[0].t) && creados[1].dow === '4',
+      JSON.stringify(creados));
+
+    // y darle dos veces no los duplica
+    await page.fill('#pasteBox', TEXTO);
+    await page.click('[data-a="draft"]');
+    await page.waitForTimeout(400);
+    await page.click('[data-a="draft-semanales"]');
+    await page.waitForTimeout(500);
+    check('darle otra vez no duplica los eventos',
+      (await page.evaluate(() => window.PG.eventosS().length)) === 2, '');
+
+    await page.evaluate(() => { window.PG.eventosS().length = 0; window.PG.save(); });
+  }
+
+  // ===================== Varios periodos de vacaciones =====================
+  {
+    // Varios periodos SIEMPRE se pudieron: store.rotation.vacaciones es una lista. Lo que fallaba
+    // era encontrarlo: la tarjeta iba la 4ª de 4, a 1.846 px —dos pantallas de scroll—, escrita en
+    // singular («marca el rango», «marcar»), y el camino natural desde el calendario (tocar el día
+    // → 🏖️ Vacaciones) marca UN día suelto, no un periodo. Parecía que solo cabía uno.
+    await page.setViewportSize({ width: 412, height: 915 });
+
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(300);
+    const y = new Date().getFullYear(), m = new Date().getMonth();
+    const clave = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+    await page.evaluate(() => { window.PG.store.rotation.vacaciones = []; window.PG.save(); window.PG.render(); });
+    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'Semana Santa'); }, [clave(new Date(y, m, 3)), clave(new Date(y, m, 7))]);
+    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'verano'); }, [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))]);
+    await page.waitForTimeout(300);
+
+    const dos = await page.evaluate(() => {
+      const c = document.querySelector('.card[data-cfg="vac"]');
+      const cards = [...document.querySelectorAll('#main .card')];
+      return {
+        guardados: window.PG.store.rotation.vacaciones.length,
+        filas: c ? c.querySelectorAll('[data-a="vac-del"]').length : 0,
+        diasEnElCalendario: [...document.querySelectorAll('.dbox')].filter((x) => /Vacacion/.test(x.innerText)).length,
+        enPlural: c ? /todos los periodos que quieras/i.test(c.innerText) : false,
+        cuenta: c ? /2 periodos/.test(c.innerText) : false,
+        posicion: c ? cards.indexOf(c) + 1 : 0,
+        total: cards.length,
+      };
+    });
+    check('se pueden apuntar varios periodos de vacaciones, y la tarjeta lo dice en plural',
+      dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === 15 &&
+      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify(dos));
+
+    // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta
+    const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
+    await page.evaluate((k) => { window.PG.ui.monSel = k; window.PG.ui.diaEditor = true; window.PG.render(); }, desde);
+    await page.waitForTimeout(400);
+    await page.fill('#vacHasta-' + desde, hasta);
+    await page.click('[data-a="vac-desde"]');
+    await page.waitForTimeout(400);
+    const tercero = await page.evaluate(() => window.PG.store.rotation.vacaciones.map((v) => v.start + '→' + v.end));
+    check('desde el panel de un día se marca un periodo entero, no solo ese día',
+      tercero.length === 3 && tercero[2] === desde + '→' + hasta, JSON.stringify(tercero));
+
+    // quitar uno deja los otros en pie
+    await page.evaluate(() => { window.PG.ui.monSel = ''; window.PG.render(); });
+    await page.waitForTimeout(300);
+    await page.click('.card[data-cfg="vac"] [data-a="vac-del"]');
+    await page.waitForTimeout(300);
+    // con más de un periodo, quitar pregunta por el diálogo propio de la app: hay que contestarlo,
+    // o su capa se queda encima y se come los clics de todo lo que venga después
+    await page.click('#modal [data-a="confirm-yes"]');
+    await page.waitForTimeout(400);
+    const trasQuitar = await page.evaluate(() => window.PG.store.rotation.vacaciones.map((v) => v.label || v.start));
+    check('quitar un periodo no se lleva por delante los demás',
+      trasQuitar.length === 2 && trasQuitar[0] === 'verano', JSON.stringify(trasQuitar));
+
+    await page.evaluate(() => { window.PG.store.rotation.vacaciones = []; window.PG.save(); });
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
+
   // ===================== Meter cosas en un día concreto =====================
   {
     // «un botón para elegir un día y cambiar o meter cosas, y que se queden guardados»: antes había

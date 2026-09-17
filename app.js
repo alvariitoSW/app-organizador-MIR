@@ -1348,6 +1348,15 @@ function dayPanelHTML(dateStr){
       '<div class="row" style="margin-top:8px">'+
         '<button class="btn s" data-a="day-set" data-key="'+key+'" data-sid="" data-guard="">quitar lo puesto</button>'+
         '<button class="btn s '+(diaSegundo(key).on?'g':'')+'" data-a="gym-seg-hoy" data-key="'+key+'">'+(diaSegundo(key).on?'✓':'○')+' 🏊 segundo entreno</button>'+
+      '</div>'+
+      /* El botón «Vacaciones» de arriba marca ESTE día y ya. Para unas vacaciones de verdad hacía
+         falta bajar dos pantallas hasta la tarjeta; desde aquí se marca el periodo entero de una. */
+      '<div class="row" style="margin-top:8px;gap:6px;align-items:flex-end">'+
+        '<span class="mini" style="flex:0 0 auto">🏖️ vacaciones desde este día</span>'+
+        '<label class="fld" style="flex:0 0 150px">hasta<input type="date" id="vacHasta-'+key+'" min="'+key+'" value="'+key+'"></label>'+
+        '<button class="btn s" data-a="vac-desde" data-key="'+key+'">marcar periodo</button>'+
+      '</div>'+
+      '<div class="row" style="margin-top:8px">'+
         '<span class="sp"></span><button class="btn s" data-a="day-rhythm" data-key="'+key+'">editar horas 🛌⏰</button>'+
       '</div></details>'+
     '</div>';
@@ -1534,14 +1543,19 @@ function vacCardMonth(y,mo,list){
   const toc=vs.filter(function(v){const a=parseDate(v.start),b=parseDate(v.end);
     return a&&b&&a<=new Date(y,mo+1,0,12)&&b>=new Date(y,mo,1,12);}).length;
   const first=new Date(y,mo,1,12),last=new Date(y,mo,Math.min(new Date(y,mo+1,0).getDate(),7),12);
-  return '<div class="card" data-cfg="vac"><h2>🏖️ Vacaciones</h2>'+
-    '<p class="note">Marca el rango: esos días no cuentan jornada ni guardias. Lo que pongas a mano en un día concreto manda sobre el rango.</p>'+
+  /* Se podían meter varios periodos desde el principio —es una lista— pero todo estaba escrito en
+     singular («marca el rango», «marcar») y la lista quedaba dos pantallas más abajo, así que daba
+     la impresión de que solo cabía uno y que el segundo pisaba al primero. */
+  return '<div class="card" data-cfg="vac"><h2>🏖️ Tus vacaciones'+
+      (vs.length?' <span class="tag b2">'+vs.length+' periodo'+(vs.length===1?'':'s')+'</span>':'')+'</h2>'+
+    '<p class="note">Puedes apuntar <b>todos los periodos que quieras</b> —Semana Santa, verano, unos días sueltos— '+
+    'y se van sumando a la lista. Esos días no cuentan jornada ni guardias. Lo que pongas a mano en un día concreto manda sobre el periodo.</p>'+
+    (vs.length?'<div style="margin-bottom:10px">'+vs.map(vacRangeRow).join('')+'</div>'
+      :'<div class="empty" style="margin-bottom:10px">Sin vacaciones apuntadas todavía.</div>')+
     '<div class="row" style="margin-top:6px"><label class="fld">Desde<input type="date" id="vacA" value="'+iso(first)+'"></label>'+
     '<label class="fld">Hasta<input type="date" id="vacB" value="'+iso(last)+'"></label>'+
-    '<label class="fld" style="flex:1">Nombre<input id="vacL" placeholder="agosto, verano, con los niños…"></label>'+
-    '<button class="btn p" data-a="vac-add">marcar</button></div>'+
-    (vs.length?'<div style="margin-top:8px">'+vs.map(vacRangeRow).join('')+'</div>'
-      :'<div class="empty" style="margin-top:8px">Sin vacaciones apuntadas todavía.</div>')+
+    '<label class="fld" style="flex:1">Nombre<input id="vacL" placeholder="verano, Semana Santa, puente de mayo…"></label>'+
+    '<button class="btn p" data-a="vac-add">+ añadir '+(vs.length?'otro periodo':'periodo')+'</button></div>'+
     '<div class="row" style="margin-top:8px"><span class="mini">en '+MONTH_FULL[mo]+': '+toc+' rango(s) que caen aquí · '+
       (list||[]).filter(function(d){return d.vac;}).length+' día(s) marcados</span></div></div>';}
 function jornadaCard(){
@@ -1687,6 +1701,7 @@ function renderMonth(){
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
+    ${vacCardMonth(y,mo,list)}
     <div class="card">
       <div class="row" style="margin-top:10px">
         <span class="mini">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo · ':''}${!svc.set&&!store.rotation.monthService
@@ -1730,7 +1745,6 @@ function renderMonth(){
       </details>
     </div>
     ${serviciosCard()}
-    ${vacCardMonth(y,mo,list)}
   </div>`;}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
@@ -4258,6 +4272,7 @@ function renderData(){
       <textarea id="pasteBox" rows="12" placeholder="1 ago · G 24h 08:00-08:00 guardia destino Sur&#10;2 ago · S 09:00-13:00 saliente&#10;3 ago · L libre&#10;4 ago · F fuerza 18:00&#10;5 ago · L asuntos propios&#10;6 ago · G 24h 08:00-08:00&#10;7 ago · S 09:00-13:00"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="draft">Analizar</button>
       <button class="btn" data-a="draft-apply" disabled id="applyBtn">Aplicar al planning</button>
+      <button class="btn g" data-a="draft-semanales" hidden id="semBtn">+ crear esos eventos semanales</button>
       <span class="mini" id="draftMsg"></span></div>
       <div id="draftOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:none;white-space:pre-wrap"></div>
       <label class="fld" style="margin-top:8px">Letras de tus días — añade una si te falta alguna (p. ej. <i>V=Noche en el cuarto</i>)
@@ -4374,7 +4389,24 @@ function mapCodes(v){
 }
 function showDraft(info){
   const out=$('#draftOut');out.style.display='block';
+  const sb=$('#semBtn');
+  if(sb){const n=(info.semanales||[]).length;sb.hidden=!n;
+    if(n)sb.textContent='+ crear '+n+' evento'+(n===1?'':'s')+' semanal'+(n===1?'':'es');}
   const pat=info.weeks.map((w,i)=>i+': '+w.join(' ')+'  →  '+w.join('·')).join('\n');
+  if(!info.dias){
+    /* sin un solo día reconocido, el resumen de semanas no dice nada útil: mejor explicar qué
+       espera esta caja y, si lo que han escrito es una sesión semanal, mandarles a su sitio */
+    const sem=info.semanales&&info.semanales.length;
+    out.textContent='No he reconocido ningún día de turno en ese texto.\n\n'+
+      'Esta caja espera el cuadrante del mes, una línea por día, así:\n'+
+      '  1 ago · G 08:00-08:00\n  2 ago · S 09:00-13:00\n  3 ago · L\n\n'+
+      (sem?('Lo que has escrito son sesiones que se repiten cada semana, y eso va en Eventos, no aquí.\n'+
+        'He entendido '+sem+':\n'+info.semanales.map(function(e){
+          /* «martes» ya es plural: DOWN0[dow]+'s' daba «martess» */
+          return '  · los '+DOWN0[e.dow]+', '+e.hora+(e.fin?('–'+e.fin):'')+' — '+e.titulo;}).join('\n')+
+        '\n\nDale al botón de abajo y te los dejo puestos.')
+        :'Si lo que quieres es una sesión que se repite cada semana, eso va en «Eventos» (menú «☰ Más»).');
+    return;}
   out.textContent=
 `Leídas ${info.leidas} líneas · ${info.dias} días con tipo de día (${info.skipped} sin reconocer, se ignoran).
 Por semana: ${info.count.G} guardia(s), ${info.count.S} saliente(s), ${info.count.F} fuerza, ${info.count.L} libre(s) en ${info.weeks.length} semana(s) → media ${info.gPerWeek} guardia(s)/semana.
@@ -4823,6 +4855,22 @@ function act(a,el){
       const dd=+el.dataset.day,at=j.workdays.indexOf(dd);
       if(at>=0)j.workdays.splice(at,1);else j.workdays.push(dd);
       j.workdays.sort(function(a,b){return a-b;});save();render();break;}
+    case 'draft-semanales':{
+      const info=window._draftInfo,list=(info&&info.semanales)||[];
+      if(!list.length){flash('no he visto sesiones semanales en ese texto');break;}
+      const colores=['#a855f7','#38e1ff','#34d399','#fbbf24','#fb7185'];
+      let n=0;
+      list.forEach(function(e,ix){
+        const ya=eventosS().some(function(x){return x.modo!=='fecha'&&x.titulo===e.titulo&&(x.dow||[]).indexOf(e.dow)>=0;});
+        if(ya)return;
+        eventosS().push({id:uid('ev'),titulo:e.titulo,hora:e.hora,modo:'semanal',dow:[e.dow],
+          fecha:'',recordatorio:false,cuentaAtras:false,color:colores[ix%colores.length],on:true});
+        n++;});
+      save();render();
+      flash(n?('creados '+n+' evento(s) semanal(es)'):'esos eventos ya estaban puestos');break;}
+    case 'vac-desde':{const key=el.dataset.key;
+      const h=(document.getElementById('vacHasta-'+key)||{}).value||key;
+      flash(addVacation(key,h,''));break;}
     case 'vac-add':case 'vac-add2':{if(el.tagName!=='BUTTON')break;const pre=(el.dataset.a==='vac-add2')?'2':'';
       const A=$('#vacA'+pre),B=$('#vacB'+pre),L=$('#vacL'+pre);
       if(!A||!A.value||!B||!B.value){flash('necesito el día de inicio y el de fin');break;}
@@ -5391,6 +5439,40 @@ function dayClasses(extra){
     .map(function(e){return [new RegExp(String(e.name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),e.code];});
   return base.concat(syn).concat([[/\bG\b/i,'G'],[/\bS\b/i,'S'],[/\bF\b/i,'F'],[/\bL\b/i,'L']]);
 }
+const DOW_TXT=[
+  [/\bdomingos?\b/i,0],[/\blunes\b/i,1],[/\bmartes\b/i,2],[/\bmi[eé]rcoles\b/i,3],
+  [/\bjueves\b/i,4],[/\bviernes\b/i,5],[/\bs[aá]bados?\b/i,6]];
+function parseSemanales(txt){
+  /* «Todos los martes tengo sesión en UMI de 8:00 a 8:30 y todos los jueves sesión general de 8:00
+     a 8:30 en docencia»: eso no es un cuadrante, son eventos que se repiten cada semana. El usuario
+     lo escribió en la caja de importar el planning y se topó con «no he encontrado días». */
+  const t=String(txt||'');
+  if(!/todos los|cada\s|todas las/i.test(t))return [];
+  /* se parte por cada «todos los / cada» para no mezclar dos sesiones en una */
+  const trozos=t.split(/(?=todos los|todas las|cada\s)/i).map(function(x){return x.trim();}).filter(Boolean);
+  const out=[];
+  trozos.forEach(function(tr){
+    let dow=null;
+    for(let i=0;i<DOW_TXT.length;i++)if(DOW_TXT[i][0].test(tr)){dow=DOW_TXT[i][1];break;}
+    if(dow==null)return;
+    const h=tr.match(/(\d{1,2})[:.](\d{2})\s*(?:a|-|–|hasta)\s*(\d{1,2})[:.](\d{2})/);
+    const h1=tr.match(/(?:a las|de)\s*(\d{1,2})[:.](\d{2})/);
+    const hora=h?(h[1].padStart(2,'0')+':'+h[2]):(h1?(h1[1].padStart(2,'0')+':'+h1[2]):'');
+    const fin=h?(h[3].padStart(2,'0')+':'+h[4]):'';
+    if(!hora)return;
+    /* el título: lo que quede al quitar el «todos los martes», las horas y las muletillas */
+    let tit=tr.replace(/todos los|todas las|cada\s/ig,'')
+      .replace(DOW_TXT[dow][0],'')
+      /* se lleva por delante el «de» que precede al horario: sin eso quedaba «Sesión en umi de» */
+      .replace(/\b(?:de|desde)\s+(\d{1,2})[:.](\d{2})\s*(?:a|-|–|hasta)\s*(\d{1,2})[:.](\d{2})/ig,'')
+      .replace(/(\d{1,2})[:.](\d{2})\s*(?:a|-|–|hasta)\s*(\d{1,2})[:.](\d{2})/g,'')
+      .replace(/(?:a las|de)\s*\d{1,2}[:.]\d{2}/g,'')
+      .replace(/\btengo\b|\bhay\b|\by\b\s*$/ig,'')
+      .replace(/\s+de\s*$/i,'')
+      .replace(/\s{2,}/g,' ').replace(/^[\s,.;:—-]+|[\s,.;:—-]+$/g,'').trim();
+    if(!tit)tit='Sesión';
+    out.push({dow:dow,hora:hora,fin:fin,titulo:tit.charAt(0).toUpperCase()+tit.slice(1)});});
+  return out;}
 function parsePlanning(txt,extra){
   const re=/(\d{1,2})\s*(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-z]*\b/ig;
   const hits=[];let m;
@@ -5422,8 +5504,11 @@ function parsePlanning(txt,extra){
   if(!weeks.length)weeks.push(new Array(7).fill(''));
   const nW=Math.max(weeks.length,1);
   const dias=weeks.reduce(function(a,w){return a+w.filter(Boolean).length;},0);
-  return {weeks:weeks,count:count,times:times,dias:dias,lineas:lineas,skipped:skipped,
-    gPerWeek:Math.round(count.G/nW*10)/10,leidas:lineas,
+  /* count nace vacío, así que sin días reconocidos el resumen salía con «undefined guardia(s)» y
+     «media NaN» en pantalla. Se rellenan los cuatro a cero y la media se acota. */
+  ['G','S','F','L'].forEach(function(k){if(typeof count[k]!=='number')count[k]=0;});
+  return {weeks:weeks,semanales:parseSemanales(txt),count:count,times:times,dias:dias,lineas:lineas,skipped:skipped,
+    gPerWeek:dias?Math.round(count.G/nW*10)/10:0,leidas:lineas,
     aviso:base==null?'no he visto fechas (tipo "3 ago"): agrupo de 7 en 7 según el orden del texto':''};
 }
 
@@ -6518,7 +6603,7 @@ function registrarSW(){
 window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,
-  parsePlanning,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
+  parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,staplesFor,schedLine,dayLine,RKEYS,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
