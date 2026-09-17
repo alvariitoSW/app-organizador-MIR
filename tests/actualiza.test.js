@@ -28,12 +28,16 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 let raiz = '';
 let peticiones = 0;
 
+// ficheros que el servidor acepta y luego NO contesta nunca: la wifi que no falla, se queda.
+// Es el caso que dejaba la app en blanco para siempre, y no hace falta estar sin cobertura.
+const colgados = new Set();
 function serveComoGitHubPages() {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const u = decodeURIComponent(req.url.split('?')[0]);
       if (u.indexOf(SUB) !== 0) { res.writeHead(404); res.end('fuera'); return; }
       const p = path.join(raiz, u.slice(SUB.length));
+      if (colgados.has(path.basename(p))) return;   // ni responde ni cierra: se queda ahí
       fs.readFile(p, (err, data) => {
         if (err) { res.writeHead(404); res.end('not found'); return; }
         peticiones++;
@@ -140,6 +144,41 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   await context.setOffline(false);
   check('sin conexión, comprobar la versión no rompe la app',
     !sinRed.reventó && sinRed.vivo, JSON.stringify(sinRed));
+
+  // 7) una red que acepta y no contesta (wifi de hospital, portal cautivo, Pages a medio desplegar)
+  //    no puede dejar la app colgada: un fetch así NO falla, se queda esperando, y respondWith()
+  //    con una promesa que nunca se resuelve es una pantalla en blanco para siempre.
+  {
+    const abre = async (etiqueta) => {
+      const t = Date.now();
+      const ok = await page.reload({ timeout: 15000 }).then(() => true).catch(() => false);
+      await page.waitForTimeout(1200);
+      const vivo = await Promise.race([
+        page.evaluate(() => ({ pg: typeof window.PG,
+          main: document.querySelector('#main') ? document.querySelector('#main').innerHTML.length : 0 })),
+        new Promise((r) => setTimeout(() => r(null), 5000)),
+      ]).catch(() => null);
+      return { etiqueta, ok, ms: Date.now() - t, vivo };
+    };
+
+    colgados.add('version.json');
+    const conSelloColgado = await abre('version.json no contesta');
+    colgados.clear();
+
+    colgados.add('app.js');
+    const conAppColgada = await abre('app.js no contesta');
+    colgados.clear();
+
+    const normal = await abre('red normal');
+
+    check('si la red acepta y no contesta, la app abre igual en vez de quedarse en blanco',
+      conSelloColgado.ok && conSelloColgado.vivo && conSelloColgado.vivo.pg === 'object' &&
+      conSelloColgado.vivo.main > 500 && conSelloColgado.ms < 12000 &&
+      conAppColgada.ok && conAppColgada.vivo && conAppColgada.vivo.pg === 'object' &&
+      conAppColgada.vivo.main > 500 &&
+      normal.ok && normal.vivo && normal.vivo.pg === 'object',
+      JSON.stringify({ conSelloColgado, conAppColgada, normal }));
+  }
 
   check('sin errores de JavaScript durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

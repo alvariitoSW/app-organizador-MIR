@@ -3,7 +3,7 @@
    2. de paso da modo sin conexión.
    Estrategia: red primero y caché de reserva. Al revés (caché primero) se quedaría servida una versión
    vieja de app.js después de cada despliegue. */
-const CACHE='guardias-v4';
+const CACHE='guardias-v5';
 /* Absolutas y contra el ámbito del registro. En GitHub Pages la app no cuelga de la raíz sino de
    /app-organizador-MIR/, y una ruta relativa suelta no siempre cae donde uno cree. */
 const RAIZ=new URL('./',self.registration?self.registration.scope:self.location.href);
@@ -39,8 +39,11 @@ self.addEventListener('fetch',function(e){
     /* «red primero» NO se cumple con un fetch() a secas: por encima del service worker está la
        caché HTTP del navegador, y GitHub Pages sirve con Cache-Control: max-age=600. Medido: tras
        desplegar una versión nueva y reabrir la app, llegaban CERO peticiones al servidor y se
-       seguía viendo la versión vieja. Con no-store la petición sale de verdad a la red. */
-    pedirFresco(req,url).then(function(res){
+       seguía viendo la versión vieja. Con no-store la petición sale de verdad a la red.
+       Y con reloj: si la red acepta pero no contesta, app.js no llegaría nunca y la página se
+       quedaría en blanco con el HTML pintado y sin nada que lo mueva. */
+    conLimite(pedirFresco(req,url),LIMITE_RED,null).then(function(res){
+      if(!res)return Promise.reject(new Error('la red no contestó a tiempo'));
       /* no se guarda la navegación de un «compartir»: su URL lleva la receta en la query, así que
          cada vídeo compartido dejaría una copia distinta engordando la caché para siempre */
       if(res&&res.ok&&!(navegacion&&url.search)){
@@ -63,12 +66,30 @@ self.addEventListener('fetch',function(e){
   );
 });
 
+/* Una promesa que NUNCA se resuelve cuelga respondWith() para siempre y el usuario se queda
+   mirando una pantalla en blanco, sin error y sin nada que tocar. No hace falta estar sin cobertura:
+   basta una wifi que acepta la conexión y luego no contesta —la del hospital, un portal cautivo, o
+   GitHub Pages a mitad de despliegue—. Un fetch así no falla: se queda ahí. Por eso todo lo que
+   entra en respondWith() lleva reloj y una alternativa. */
+function conLimite(promesa,ms,alternativa){
+  return new Promise(function(res){
+    let listo=false;
+    const dar=function(v){if(listo)return;listo=true;clearTimeout(t);res(v);};
+    const t=setTimeout(function(){dar(typeof alternativa==='function'?alternativa():alternativa);},ms);
+    promesa.then(dar,function(){dar(typeof alternativa==='function'?alternativa():alternativa);});
+  });}
+const LIMITE_SELLO=1500;    /* la marca de versión es un adorno: si tarda, se sigue sin ella */
+const LIMITE_RED=5000;      /* pasado esto, tiramos de la copia guardada y la app abre igual */
 const VERSION_URL=new URL('version.json',RAIZ).href;
 function leerSello(){
-  /* la marca del despliegue. Se pide sin caché y es un archivo de dos líneas. */
-  return fetch(VERSION_URL,{cache:'no-store'}).then(function(r){
-    return r.ok?r.json():null;}).then(function(d){
-    return (d&&d.v)?String(d.v).replace(/[^0-9A-Za-z-]/g,''):'';}).catch(function(){return '';});}
+  /* la marca del despliegue. Se pide sin caché y es un archivo de dos líneas. Con reloj: sin marca
+     se sirve el HTML tal cual —lo peor que pasa es que tardes un rato en ver la versión nueva—,
+     que es infinitamente mejor que no abrir la app. */
+  return conLimite(
+    fetch(VERSION_URL,{cache:'no-store'}).then(function(r){
+      return r.ok?r.json():null;}).then(function(d){
+      return (d&&d.v)?String(d.v).replace(/[^0-9A-Za-z-]/g,''):'';}),
+    LIMITE_SELLO,'');}
 function navegacionSellada(req,url){
   /* EL problema de verdad para que se actualice una app instalada: la caché EN MEMORIA del
      navegador sirve app.js y styles.css sin pasar siquiera por el service worker, así que da igual
@@ -77,9 +98,16 @@ function navegacionSellada(req,url){
      es que la URL cambie, así que el propio service worker le pega la marca de la versión al
      enlace de app.js y styles.css antes de entregar el HTML. Cuando despliego, la marca cambia,
      la URL cambia y no hay caché que valga. */
-  return Promise.all([pedirFresco(req,url),leerSello()]).then(function(r){
+  const portadaGuardada=function(){
+    return caches.match(INDEX).then(function(p){return p||respuestaSinRed();})
+      .catch(function(){return respuestaSinRed();});};
+  return Promise.all([
+    conLimite(pedirFresco(req,url),LIMITE_RED,null),
+    leerSello()
+  ]).then(function(r){
     const res=r[0],sello=r[1];
-    if(!res||!res.ok||!sello)return res;
+    if(!res)return portadaGuardada();   /* la red no contestó a tiempo: se abre con lo guardado */
+    if(!res.ok||!sello)return res;
     const ct=res.headers.get('content-type')||'';
     if(!/text\/html/i.test(ct))return res;
     return res.text().then(function(html){
@@ -89,7 +117,7 @@ function navegacionSellada(req,url){
       return new Response(sellado,{status:res.status,statusText:res.statusText,headers:h});});
   }).catch(function(){
     /* sin red: la portada guardada, que apunta a app.js sin marca — y esa sí está en la caché */
-    return caches.match(INDEX).then(function(p){return p||respuestaSinRed();});});}
+    return portadaGuardada();});}
 function pedirFresco(req,url){
   /* no se puede reutilizar un Request de navegación cambiándole el modo de caché, así que se pide
      por URL. Si el navegador no admite la opción, se cae al fetch de siempre en vez de romper. */
