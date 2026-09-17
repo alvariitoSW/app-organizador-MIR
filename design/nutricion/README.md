@@ -21,13 +21,29 @@ Seis pantallas. **Son maquetas, no la app.**
 3. **La nevera propone también combinaciones nuevas**, no solo platos guardados,
    con reglas locales (sin red).
 
-## Lo que NO está decidido y hay que mirar al construir
+## Lo que se construyó (y en qué se separó de la maqueta)
 
-- Cuántos micros se siguen. En las maquetas van 6 en el día y 6 por alimento
-  (hierro, calcio, potasio, magnesio, vit. C, D, B12, B6, folato). Hay que
-  cerrar la lista antes de escribir la tabla.
-- Las ingestas de referencia son de adulto genérico. No es una pauta médica y la
-  app tiene que decirlo donde se vean los porcentajes.
+Construido en `app.js` + `styles.css`. Lo que cambió al bajarlo a la app:
+
+- **Nueve micronutrientes, no seis**: hierro, calcio, potasio, magnesio, vit. C,
+  vit. D, B12, B6 y folato. En la maqueta se enseñaban seis por hueco; en la app
+  caben los nueve en la rejilla de dos columnas.
+- **Las ingestas de referencia** son las VRN del etiquetado europeo, de adulto
+  genérico. No es una pauta médica y la app lo dice en la ficha y en el día.
+- **La tabla son 86 alimentos** con valores de referencia aproximados. Cada ficha
+  lleva el sello de dónde sale el dato (`≈ tabla de la app`, `✓ USDA`, `✎ tuyo`).
+  Con la clave de FoodData Central puesta en Ajustes, el alimento se corrige y se
+  guarda corregido.
+- **Las combinaciones apuntan a UNA comida**, no al hueco entero del día: con
+  2 300 kcal por delante no se propone un plato de 2 300 kcal.
+- **Los condimentos** (ajo, cebolla, puerro, caldo, aceite…) no entran como pieza
+  principal: nadie se come una guarnición de 150 g de ajo.
+- **Las cantidades por defecto** salen del tipo de alimento: 10 g de aceite,
+  80 g de cereal o legumbre en crudo, 150 g de carne o verdura, 200 ml de lácteo.
+- **Micros solo donde los hay**: un producto de código de barras trae macros y
+  poco más, y la app lo dice en vez de sumar ceros.
+
+Fijado en `tests/regression.test.js` (pruebas 55–64).
 
 ## Cómo se regeneran
 

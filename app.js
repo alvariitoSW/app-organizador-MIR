@@ -73,6 +73,7 @@ function DEFAULTS(){return {
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
   lector:{proxy:'',publico:false},
+  usda:{key:''},
   impPendiente:null,   /* lo último compartido desde otra app, hasta que se use o se limpie */
   notasDia:{},         /* una nota libre por día: {'2026-09-17':'llevar el informático'} */
   eventos:[],
@@ -262,7 +263,9 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
-  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,
+  cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
+  alimQ:'',alimGrupo:'',alimSel:'',alimG:100,neveraQ:'',microAbierto:'',
+  plato:null,platoQ:'',ideasCache:null,alimNuevo:null,
   imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
@@ -336,6 +339,8 @@ function normalize(o){
   if(!o.lector||typeof o.lector!=='object')o.lector={proxy:''};
   o.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(String(o.lector.proxy||'').trim())?String(o.lector.proxy).trim().slice(0,300):'';
   o.lector.publico=!!o.lector.publico;   /* usar intermediarios públicos: solo si lo has aceptado */
+  if(!o.usda||typeof o.usda!=='object')o.usda={key:''};
+  o.usda.key=String(o.usda.key||'').trim().slice(0,120);   /* clave de FoodData Central: tuya, se queda en el móvil */
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
   Object.keys(o.franja.colores).forEach(function(k){
     if(TLKEYS.indexOf(k)<0||!/^#[0-9a-fA-F]{6}$/.test(o.franja.colores[k]||''))delete o.franja.colores[k];});
@@ -994,6 +999,125 @@ function quickBreakfast(shiftId,dateStr){
    generaron sin acceso de red a esos dominios — ver data/food-catalogo.json, que guarda el
    mismo contenido en un fichero aparte por si se quiere regenerar/ampliar con datos reales). */
 const FOOD_CATALOGO=[{"ean":"cat-mercadona-001","nombre":"Leche entera","marca":"Mercadona","kcal":65,"prot":3.2,"carb":4.8,"gresa":3.6,"azucar":4.8,"fibra":0,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-002","nombre":"Leche semidesnatada","marca":"Mercadona","kcal":47,"prot":3.2,"carb":4.8,"gresa":1.6,"azucar":4.8,"fibra":0,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-003","nombre":"Leche desnatada","marca":"Mercadona","kcal":35,"prot":3.3,"carb":4.9,"gresa":0.3,"azucar":4.9,"fibra":0,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-004","nombre":"Yogur natural","marca":"Mercadona","kcal":61,"prot":3.8,"carb":4.7,"gresa":3.2,"azucar":4.7,"fibra":0,"sal":0.13,"envase":"pack 4x125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-005","nombre":"Yogur natural azucarado","marca":"Mercadona","kcal":87,"prot":3.4,"carb":12.6,"gresa":2.7,"azucar":12.6,"fibra":0,"sal":0.13,"envase":"pack 4x125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-006","nombre":"Yogur desnatado natural","marca":"Mercadona","kcal":45,"prot":4.3,"carb":5.8,"gresa":0.2,"azucar":5.8,"fibra":0,"sal":0.14,"envase":"pack 4x125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-007","nombre":"Yogur griego","marca":"Mercadona","kcal":121,"prot":4.5,"carb":5.9,"gresa":9,"azucar":5.9,"fibra":0,"sal":0.1,"envase":"pack 4x125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-008","nombre":"Yogur de fresa","marca":"Mercadona","kcal":98,"prot":3.3,"carb":15.6,"gresa":2.6,"azucar":14,"fibra":0.2,"sal":0.13,"envase":"pack 4x125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-009","nombre":"Cuajada","marca":"Mercadona","kcal":90,"prot":4,"carb":4.6,"gresa":6.4,"azucar":4.6,"fibra":0,"sal":0.12,"envase":"pack 2x150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-010","nombre":"Requesón","marca":"Mercadona","kcal":98,"prot":13,"carb":3,"gresa":4.3,"azucar":3,"fibra":0,"sal":0.5,"envase":"250 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-011","nombre":"Queso fresco batido 0%","marca":"Mercadona","kcal":47,"prot":8,"carb":4,"gresa":0.2,"azucar":4,"fibra":0,"sal":0.35,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-012","nombre":"Huevos frescos categoría M","marca":"Mercadona","kcal":148,"prot":12.6,"carb":0.8,"gresa":10.6,"azucar":0.6,"fibra":0,"sal":0.36,"envase":"docena","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-013","nombre":"Queso curado mezcla","marca":"Mercadona","kcal":402,"prot":26,"carb":0.5,"gresa":33,"azucar":0.5,"fibra":0,"sal":1.8,"envase":"250 g cuña","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-014","nombre":"Queso semicurado","marca":"Mercadona","kcal":375,"prot":24,"carb":0.6,"gresa":30,"azucar":0.6,"fibra":0,"sal":1.7,"envase":"300 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-015","nombre":"Queso fresco para untar","marca":"Mercadona","kcal":245,"prot":5.8,"carb":4,"gresa":23,"azucar":3.5,"fibra":0,"sal":0.9,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-016","nombre":"Queso en lonchas sándwich","marca":"Mercadona","kcal":300,"prot":18,"carb":2,"gresa":24,"azucar":1,"fibra":0,"sal":2.2,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-017","nombre":"Mozzarella","marca":"Mercadona","kcal":280,"prot":18,"carb":1,"gresa":22,"azucar":1,"fibra":0,"sal":0.6,"envase":"125 g bola","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-018","nombre":"Queso rallado gratinar","marca":"Mercadona","kcal":350,"prot":27,"carb":2,"gresa":26,"azucar":1,"fibra":0,"sal":1.9,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-019","nombre":"Pechuga de pollo fileteada","marca":"Mercadona","kcal":110,"prot":23,"carb":0,"gresa":1.5,"azucar":0,"fibra":0,"sal":0.15,"envase":"500 g bandeja","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-020","nombre":"Contramuslo de pollo","marca":"Mercadona","kcal":180,"prot":18,"carb":0,"gresa":12,"azucar":0,"fibra":0,"sal":0.15,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-021","nombre":"Filete de pavo fileteado","marca":"Mercadona","kcal":104,"prot":24,"carb":0,"gresa":1,"azucar":0,"fibra":0,"sal":0.2,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-022","nombre":"Solomillo de cerdo","marca":"Mercadona","kcal":143,"prot":21,"carb":0,"gresa":6,"azucar":0,"fibra":0,"sal":0.1,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-023","nombre":"Carne picada mixta","marca":"Mercadona","kcal":215,"prot":18,"carb":0,"gresa":16,"azucar":0,"fibra":0,"sal":0.15,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-024","nombre":"Jamón cocido extra","marca":"Mercadona","kcal":105,"prot":18,"carb":1,"gresa":3.5,"azucar":0.5,"fibra":0,"sal":2.1,"envase":"150 g sobres","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-025","nombre":"Pechuga de pavo cocida","marca":"Mercadona","kcal":95,"prot":20,"carb":1,"gresa":1,"azucar":0.5,"fibra":0,"sal":2,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-026","nombre":"Jamón serrano loncheado","marca":"Mercadona","kcal":195,"prot":31,"carb":0,"gresa":8,"azucar":0,"fibra":0,"sal":4.8,"envase":"100 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-027","nombre":"Chorizo loncheado","marca":"Mercadona","kcal":380,"prot":22,"carb":1,"gresa":32,"azucar":0.5,"fibra":0,"sal":3.2,"envase":"100 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-028","nombre":"Salchichón loncheado","marca":"Mercadona","kcal":400,"prot":24,"carb":1,"gresa":34,"azucar":0.5,"fibra":0,"sal":3,"envase":"100 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-029","nombre":"Bacon lonchas","marca":"Mercadona","kcal":350,"prot":25,"carb":0.5,"gresa":27,"azucar":0.5,"fibra":0,"sal":2.8,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-030","nombre":"Salchichas frankfurt","marca":"Mercadona","kcal":260,"prot":12,"carb":2,"gresa":22,"azucar":1,"fibra":0,"sal":2,"envase":"6 uds. 250 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-031","nombre":"Chóped","marca":"Mercadona","kcal":160,"prot":14,"carb":3,"gresa":10,"azucar":1,"fibra":0,"sal":2.5,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-032","nombre":"Alitas de pollo adobadas","marca":"Mercadona","kcal":210,"prot":17,"carb":2,"gresa":15,"azucar":0.5,"fibra":0,"sal":1,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-033","nombre":"Atún claro en aceite de oliva","marca":"Mercadona","kcal":200,"prot":25,"carb":0,"gresa":11,"azucar":0,"fibra":0,"sal":0.9,"envase":"pack 3x52 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-034","nombre":"Atún claro al natural","marca":"Mercadona","kcal":105,"prot":24,"carb":0,"gresa":0.8,"azucar":0,"fibra":0,"sal":0.6,"envase":"pack 3x52 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-035","nombre":"Salmón ahumado","marca":"Mercadona","kcal":155,"prot":22,"carb":0,"gresa":8,"azucar":0,"fibra":0,"sal":3.5,"envase":"80 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-036","nombre":"Bacalao desalado","marca":"Mercadona","kcal":82,"prot":18,"carb":0,"gresa":0.7,"azucar":0,"fibra":0,"sal":0.6,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-037","nombre":"Palitos de mar (surimi)","marca":"Mercadona","kcal":95,"prot":10,"carb":10,"gresa":0.5,"azucar":3,"fibra":0,"sal":1.5,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-038","nombre":"Sardinas en aceite de oliva","marca":"Mercadona","kcal":210,"prot":20,"carb":0,"gresa":14,"azucar":0,"fibra":0,"sal":1,"envase":"lata 120 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-039","nombre":"Mejillones en escabeche","marca":"Mercadona","kcal":175,"prot":16,"carb":4,"gresa":10,"azucar":0.5,"fibra":0,"sal":1.4,"envase":"lata 111 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-040","nombre":"Gambas peladas cocidas congeladas","marca":"Mercadona","kcal":90,"prot":20,"carb":0.5,"gresa":0.8,"azucar":0,"fibra":0,"sal":1,"envase":"300 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-041","nombre":"Garbanzos cocidos (bote)","marca":"Mercadona","kcal":130,"prot":7.5,"carb":18,"gresa":2.5,"azucar":1.5,"fibra":6,"sal":0.7,"envase":"bote 400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-042","nombre":"Lentejas cocidas (bote)","marca":"Mercadona","kcal":105,"prot":7.5,"carb":15,"gresa":0.5,"azucar":1,"fibra":6.5,"sal":0.6,"envase":"bote 400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-043","nombre":"Alubias blancas cocidas (bote)","marca":"Mercadona","kcal":120,"prot":8,"carb":17,"gresa":0.5,"azucar":0.5,"fibra":6,"sal":0.6,"envase":"bote 400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-044","nombre":"Arroz blanco redondo","marca":"Mercadona","kcal":349,"prot":7,"carb":79,"gresa":0.6,"azucar":0.1,"fibra":1.3,"sal":0.01,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-045","nombre":"Arroz integral","marca":"Mercadona","kcal":340,"prot":7.5,"carb":71,"gresa":2.5,"azucar":0.5,"fibra":3.5,"sal":0.01,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-046","nombre":"Pasta macarrones","marca":"Mercadona","kcal":353,"prot":12,"carb":71,"gresa":1.5,"azucar":3,"fibra":3,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-047","nombre":"Espaguetis","marca":"Mercadona","kcal":355,"prot":12.5,"carb":72,"gresa":1.6,"azucar":3,"fibra":3,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-048","nombre":"Pasta integral","marca":"Mercadona","kcal":340,"prot":13,"carb":63,"gresa":2.5,"azucar":2.5,"fibra":8,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-049","nombre":"Cuscús","marca":"Mercadona","kcal":376,"prot":12.8,"carb":77,"gresa":0.6,"azucar":0,"fibra":5,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-050","nombre":"Quinoa","marca":"Mercadona","kcal":368,"prot":14,"carb":64,"gresa":6,"azucar":1,"fibra":7,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-051","nombre":"Pan de molde blanco","marca":"Mercadona","kcal":250,"prot":8,"carb":47,"gresa":3,"azucar":4,"fibra":3,"sal":1.1,"envase":"460 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-052","nombre":"Pan de molde integral","marca":"Mercadona","kcal":230,"prot":9,"carb":40,"gresa":3.5,"azucar":3,"fibra":6.5,"sal":1.1,"envase":"460 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-053","nombre":"Pan de hamburguesa","marca":"Mercadona","kcal":270,"prot":9,"carb":48,"gresa":4,"azucar":5,"fibra":3,"sal":1.2,"envase":"6 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-054","nombre":"Pan de pita","marca":"Mercadona","kcal":275,"prot":9,"carb":55,"gresa":1.5,"azucar":2,"fibra":2.5,"sal":1.3,"envase":"6 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-055","nombre":"Tostadas integrales","marca":"Mercadona","kcal":415,"prot":11,"carb":70,"gresa":8,"azucar":3,"fibra":7,"sal":1.4,"envase":"270 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-056","nombre":"Croissant","marca":"Mercadona","kcal":420,"prot":8,"carb":45,"gresa":22,"azucar":10,"fibra":2,"sal":0.8,"envase":"6 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-057","nombre":"Magdalenas","marca":"Mercadona","kcal":400,"prot":6,"carb":55,"gresa":17,"azucar":25,"fibra":1.5,"sal":0.5,"envase":"12 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-058","nombre":"Palmeras de chocolate","marca":"Mercadona","kcal":480,"prot":6,"carb":48,"gresa":29,"azucar":20,"fibra":2,"sal":0.4,"envase":"4 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-059","nombre":"Donuts","marca":"Mercadona","kcal":410,"prot":6,"carb":50,"gresa":20,"azucar":22,"fibra":2,"sal":0.6,"envase":"6 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-060","nombre":"Galletas María","marca":"Mercadona","kcal":430,"prot":7,"carb":75,"gresa":11,"azucar":22,"fibra":2.5,"sal":0.7,"envase":"800 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-061","nombre":"Copos de avena","marca":"Mercadona","kcal":375,"prot":13,"carb":60,"gresa":7,"azucar":1,"fibra":10,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-062","nombre":"Cereales de chocolate","marca":"Mercadona","kcal":390,"prot":6,"carb":78,"gresa":8,"azucar":32,"fibra":4,"sal":0.7,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-063","nombre":"Muesli con frutos secos","marca":"Mercadona","kcal":420,"prot":10,"carb":60,"gresa":13,"azucar":20,"fibra":8,"sal":0.1,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-064","nombre":"Barritas de cereales","marca":"Mercadona","kcal":410,"prot":6,"carb":65,"gresa":14,"azucar":30,"fibra":4,"sal":0.3,"envase":"6 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-065","nombre":"Cacao soluble","marca":"Mercadona","kcal":385,"prot":5,"carb":82,"gresa":3,"azucar":70,"fibra":6,"sal":0.3,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-066","nombre":"Mermelada de fresa","marca":"Mercadona","kcal":250,"prot":0.3,"carb":62,"gresa":0.1,"azucar":60,"fibra":1,"sal":0.02,"envase":"410 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-067","nombre":"Aceite de oliva virgen extra","marca":"Mercadona","kcal":900,"prot":0,"carb":0,"gresa":100,"azucar":0,"fibra":0,"sal":0,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-068","nombre":"Aceite de girasol","marca":"Mercadona","kcal":900,"prot":0,"carb":0,"gresa":100,"azucar":0,"fibra":0,"sal":0,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-069","nombre":"Tomate frito","marca":"Mercadona","kcal":85,"prot":1.5,"carb":10,"gresa":4,"azucar":8,"fibra":1.5,"sal":1,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-070","nombre":"Tomate triturado natural","marca":"Mercadona","kcal":25,"prot":1.2,"carb":4,"gresa":0.2,"azucar":3.5,"fibra":1.2,"sal":0.1,"envase":"390 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-071","nombre":"Mayonesa","marca":"Mercadona","kcal":680,"prot":1,"carb":3,"gresa":75,"azucar":2,"fibra":0,"sal":1.2,"envase":"450 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-072","nombre":"Ketchup","marca":"Mercadona","kcal":105,"prot":1.2,"carb":24,"gresa":22,"azucar":1,"fibra":0.7,"sal":2.1,"envase":"560 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-073","nombre":"Mostaza","marca":"Mercadona","kcal":110,"prot":5,"carb":8,"gresa":5,"azucar":3,"fibra":3,"sal":3.5,"envase":"225 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-074","nombre":"Vinagre de manzana","marca":"Mercadona","kcal":21,"prot":0,"carb":0.9,"gresa":0,"azucar":0.9,"fibra":0,"sal":0.02,"envase":"750 ml","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-075","nombre":"Ensalada de lechugas variadas (bolsa)","marca":"Mercadona","kcal":15,"prot":1.3,"carb":2,"gresa":0.2,"azucar":1.5,"fibra":1.6,"sal":0.02,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-076","nombre":"Tomate frito casero congelado","marca":"Mercadona","kcal":60,"prot":1.5,"carb":8,"gresa":2.5,"azucar":6,"fibra":1.5,"sal":0.8,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-077","nombre":"Guisantes congelados","marca":"Mercadona","kcal":70,"prot":5.4,"carb":10,"gresa":0.5,"azucar":3.5,"fibra":5,"sal":0.05,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-078","nombre":"Judías verdes congeladas","marca":"Mercadona","kcal":30,"prot":1.8,"carb":5,"gresa":0.2,"azucar":2,"fibra":3,"sal":0.02,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-079","nombre":"Brócoli congelado","marca":"Mercadona","kcal":34,"prot":2.8,"carb":4,"gresa":0.4,"azucar":1.5,"fibra":3,"sal":0.02,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-080","nombre":"Espinacas congeladas","marca":"Mercadona","kcal":26,"prot":2.6,"carb":1.5,"gresa":0.5,"azucar":0.5,"fibra":3,"sal":0.1,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-081","nombre":"Macedonia de frutas en almíbar","marca":"Mercadona","kcal":65,"prot":0.5,"carb":15,"gresa":0.1,"azucar":14,"fibra":1,"sal":0.01,"envase":"480 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-082","nombre":"Aceitunas verdes rellenas de anchoa","marca":"Mercadona","kcal":145,"prot":1,"carb":3,"gresa":14,"azucar":0.5,"fibra":3,"sal":3.5,"envase":"350 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-083","nombre":"Frutos secos mix","marca":"Mercadona","kcal":600,"prot":18,"carb":15,"gresa":52,"azucar":5,"fibra":8,"sal":0.1,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-084","nombre":"Pasas","marca":"Mercadona","kcal":300,"prot":3,"carb":70,"gresa":0.5,"azucar":60,"fibra":4,"sal":0.02,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-085","nombre":"Pizza fresca margarita","marca":"Mercadona","kcal":240,"prot":10,"carb":30,"gresa":8,"azucar":3,"fibra":2,"sal":1.3,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-086","nombre":"Croquetas de jamón congeladas","marca":"Mercadona","kcal":260,"prot":6,"carb":22,"gresa":16,"azucar":2,"fibra":1.5,"sal":1.1,"envase":"600 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-087","nombre":"Croquetas de pollo congeladas","marca":"Mercadona","kcal":230,"prot":6,"carb":22,"gresa":13,"azucar":2,"fibra":1.5,"sal":1,"envase":"600 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-088","nombre":"Empanadillas de atún","marca":"Mercadona","kcal":290,"prot":8,"carb":28,"gresa":16,"azucar":2,"fibra":2,"sal":1.2,"envase":"10 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-089","nombre":"Lasaña de carne preparada","marca":"Mercadona","kcal":140,"prot":7,"carb":13,"gresa":6.5,"azucar":3,"fibra":1,"sal":0.6,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-090","nombre":"Canelones de carne preparados","marca":"Mercadona","kcal":150,"prot":6.5,"carb":15,"gresa":7,"azucar":2.5,"fibra":1,"sal":0.6,"envase":"500 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-091","nombre":"Patatas fritas congeladas para horno","marca":"Mercadona","kcal":165,"prot":3,"carb":26,"gresa":5,"azucar":0.5,"fibra":2.5,"sal":0.4,"envase":"1 kg","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-092","nombre":"Nuggets de pollo congelados","marca":"Mercadona","kcal":250,"prot":14,"carb":15,"gresa":15,"azucar":1,"fibra":1,"sal":1.2,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-093","nombre":"Ensaladilla rusa preparada","marca":"Mercadona","kcal":160,"prot":3,"carb":10,"gresa":12,"azucar":2,"fibra":1.5,"sal":0.8,"envase":"400 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-094","nombre":"Paella de marisco preparada","marca":"Mercadona","kcal":130,"prot":6,"carb":18,"gresa":3.5,"azucar":1,"fibra":1,"sal":0.9,"envase":"600 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-095","nombre":"Patatas fritas de bolsa","marca":"Mercadona","kcal":540,"prot":6,"carb":50,"gresa":35,"azucar":0.5,"fibra":4,"sal":1.4,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-096","nombre":"Palomitas microondas","marca":"Mercadona","kcal":480,"prot":8,"carb":55,"gresa":25,"azucar":1,"fibra":10,"sal":1.3,"envase":"3 uds.","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-097","nombre":"Frutos secos fritos con sal","marca":"Mercadona","kcal":610,"prot":20,"carb":12,"gresa":54,"azucar":2,"fibra":8,"sal":1.5,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-098","nombre":"Chocolate con leche tableta","marca":"Mercadona","kcal":535,"prot":7,"carb":57,"gresa":31,"azucar":55,"fibra":2.5,"sal":0.2,"envase":"125 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-099","nombre":"Chocolate negro 70%","marca":"Mercadona","kcal":570,"prot":8,"carb":35,"gresa":42,"azucar":24,"fibra":11,"sal":0.02,"envase":"100 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-100","nombre":"Galletas rellenas de chocolate","marca":"Mercadona","kcal":480,"prot":5,"carb":65,"gresa":22,"azucar":35,"fibra":2,"sal":0.5,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-101","nombre":"Helado de vainilla tarrina","marca":"Mercadona","kcal":210,"prot":3.5,"carb":24,"gresa":11,"azucar":21,"fibra":0,"sal":0.15,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-102","nombre":"Gominolas","marca":"Mercadona","kcal":340,"prot":5,"carb":78,"gresa":0,"azucar":55,"fibra":0,"sal":0.1,"envase":"250 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-103","nombre":"Agua mineral","marca":"Mercadona","kcal":0,"prot":0,"carb":0,"gresa":0,"azucar":0,"fibra":0,"sal":0.001,"envase":"1.5 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-104","nombre":"Refresco de cola","marca":"Mercadona","kcal":42,"prot":0,"carb":10.6,"gresa":0,"azucar":10.6,"fibra":0,"sal":0.01,"envase":"2 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-105","nombre":"Refresco de cola zero","marca":"Mercadona","kcal":0.3,"prot":0,"carb":0,"gresa":0,"azucar":0,"fibra":0,"sal":0.02,"envase":"2 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-106","nombre":"Zumo de naranja exprimido","marca":"Mercadona","kcal":45,"prot":0.7,"carb":10,"gresa":0.2,"azucar":8.5,"fibra":0.3,"sal":0.01,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-107","nombre":"Bebida de soja","marca":"Mercadona","kcal":42,"prot":3.3,"carb":2.5,"gresa":2,"azucar":1,"fibra":0.5,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-108","nombre":"Horchata","marca":"Mercadona","kcal":90,"prot":0.5,"carb":18,"gresa":2,"azucar":15,"fibra":0,"sal":0.05,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-109","nombre":"Cerveza sin alcohol","marca":"Mercadona","kcal":21,"prot":0.3,"carb":4.3,"gresa":0,"azucar":4,"fibra":0,"sal":0.01,"envase":"6x330 ml","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-110","nombre":"Café soluble","marca":"Mercadona","kcal":12,"prot":0.6,"carb":2,"gresa":0.1,"azucar":0,"fibra":0,"sal":0.02,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-111","nombre":"Té frío de limón","marca":"Mercadona","kcal":32,"prot":0,"carb":8,"gresa":0,"azucar":8,"fibra":0,"sal":0.02,"envase":"1.5 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-112","nombre":"Isotónica sabor limón","marca":"Mercadona","kcal":25,"prot":0,"carb":6,"gresa":0,"azucar":6,"fibra":0,"sal":0.15,"envase":"1.5 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-113","nombre":"Hummus natural","marca":"Mercadona","kcal":250,"prot":7,"carb":12,"gresa":20,"azucar":1,"fibra":5,"sal":1,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-114","nombre":"Guacamole","marca":"Mercadona","kcal":150,"prot":1.5,"carb":6,"gresa":13,"azucar":1,"fibra":4,"sal":0.9,"envase":"150 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-115","nombre":"Aceitunas negras","marca":"Mercadona","kcal":130,"prot":1,"carb":2,"gresa":13,"azucar":0.5,"fibra":3,"sal":3,"envase":"200 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-116","nombre":"Patatas chips sabor jamón","marca":"Mercadona","kcal":530,"prot":5,"carb":52,"gresa":34,"azucar":1,"fibra":4,"sal":1.6,"envase":"160 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-117","nombre":"Tortitas de arroz","marca":"Mercadona","kcal":385,"prot":8,"carb":80,"gresa":3,"azucar":0.5,"fibra":3,"sal":0.02,"envase":"130 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-118","nombre":"Barritas proteicas de chocolate","marca":"Mercadona","kcal":370,"prot":30,"carb":35,"gresa":12,"azucar":15,"fibra":4,"sal":0.5,"envase":"5x40 g","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-119","nombre":"Batido proteico de chocolate listo para beber","marca":"Mercadona","kcal":75,"prot":8,"carb":6,"gresa":2,"azucar":4,"fibra":0.5,"sal":0.15,"envase":"500 ml","fuente":"Catálogo local · Mercadona"},{"ean":"cat-mercadona-120","nombre":"Leche de avena","marca":"Mercadona","kcal":47,"prot":0.5,"carb":8,"gresa":1.5,"azucar":4,"fibra":0.8,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Mercadona"},{"ean":"cat-carrefour-001","nombre":"Leche entera","marca":"Carrefour","kcal":64,"prot":3.1,"carb":4.7,"gresa":3.5,"azucar":4.7,"fibra":0,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-002","nombre":"Leche semidesnatada","marca":"Carrefour","kcal":46,"prot":3.1,"carb":4.8,"gresa":1.5,"azucar":4.8,"fibra":0,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-003","nombre":"Yogur natural","marca":"Carrefour","kcal":60,"prot":3.7,"carb":4.6,"gresa":3.1,"azucar":4.6,"fibra":0,"sal":0.13,"envase":"pack 4x125 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-004","nombre":"Yogur griego","marca":"Carrefour","kcal":125,"prot":4.4,"carb":6,"gresa":9.3,"azucar":6,"fibra":0,"sal":0.1,"envase":"pack 4x125 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-005","nombre":"Queso curado","marca":"Carrefour","kcal":398,"prot":25,"carb":0.6,"gresa":32,"azucar":0.6,"fibra":0,"sal":1.8,"envase":"250 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-006","nombre":"Queso en lonchas","marca":"Carrefour","kcal":295,"prot":17,"carb":2,"gresa":24,"azucar":1,"fibra":0,"sal":2.1,"envase":"200 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-007","nombre":"Pechuga de pollo fileteada","marca":"Carrefour","kcal":108,"prot":23,"carb":0,"gresa":1.3,"azucar":0,"fibra":0,"sal":0.15,"envase":"500 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-008","nombre":"Jamón cocido extra","marca":"Carrefour","kcal":100,"prot":18,"carb":1,"gresa":3,"azucar":0.5,"fibra":0,"sal":2,"envase":"150 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-009","nombre":"Jamón serrano loncheado","marca":"Carrefour","kcal":190,"prot":30,"carb":0,"gresa":8,"azucar":0,"fibra":0,"sal":4.6,"envase":"100 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-010","nombre":"Chorizo loncheado","marca":"Carrefour","kcal":375,"prot":22,"carb":1,"gresa":31,"azucar":0.5,"fibra":0,"sal":3.1,"envase":"100 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-011","nombre":"Atún claro en aceite de oliva","marca":"Carrefour","kcal":195,"prot":25,"carb":0,"gresa":10.5,"azucar":0,"fibra":0,"sal":0.9,"envase":"pack 3x52 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-012","nombre":"Salmón ahumado","marca":"Carrefour","kcal":150,"prot":22,"carb":0,"gresa":7.5,"azucar":0,"fibra":0,"sal":3.4,"envase":"80 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-013","nombre":"Sardinas en aceite de oliva","marca":"Carrefour","kcal":205,"prot":19,"carb":0,"gresa":13.5,"azucar":0,"fibra":0,"sal":1,"envase":"120 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-014","nombre":"Garbanzos cocidos (bote)","marca":"Carrefour","kcal":128,"prot":7.4,"carb":17.5,"gresa":2.4,"azucar":1.4,"fibra":6,"sal":0.7,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-015","nombre":"Lentejas cocidas (bote)","marca":"Carrefour","kcal":103,"prot":7.4,"carb":14.5,"gresa":0.5,"azucar":1,"fibra":6.4,"sal":0.6,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-016","nombre":"Arroz blanco","marca":"Carrefour","kcal":348,"prot":7,"carb":78.5,"gresa":0.6,"azucar":0.1,"fibra":1.3,"sal":0.01,"envase":"1 kg","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-017","nombre":"Espaguetis","marca":"Carrefour","kcal":352,"prot":12.3,"carb":71.5,"gresa":1.6,"azucar":3,"fibra":3,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-018","nombre":"Pan de molde blanco","marca":"Carrefour","kcal":245,"prot":7.8,"carb":46.5,"gresa":3,"azucar":4,"fibra":3,"sal":1.1,"envase":"460 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-019","nombre":"Pan de hamburguesa","marca":"Carrefour","kcal":265,"prot":8.8,"carb":47.5,"gresa":3.8,"azucar":4.8,"fibra":3,"sal":1.2,"envase":"6 uds.","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-020","nombre":"Croissant","marca":"Carrefour","kcal":415,"prot":7.8,"carb":44.5,"gresa":21.5,"azucar":9.8,"fibra":2,"sal":0.8,"envase":"6 uds.","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-021","nombre":"Galletas María","marca":"Carrefour","kcal":425,"prot":6.8,"carb":74.5,"gresa":10.8,"azucar":21.5,"fibra":2.5,"sal":0.7,"envase":"800 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-022","nombre":"Copos de avena","marca":"Carrefour","kcal":372,"prot":12.8,"carb":59.5,"gresa":6.8,"azucar":1,"fibra":10,"sal":0.01,"envase":"500 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-023","nombre":"Cereales de chocolate","marca":"Carrefour","kcal":385,"prot":5.8,"carb":77,"gresa":7.8,"azucar":31,"fibra":4,"sal":0.7,"envase":"500 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-024","nombre":"Aceite de oliva virgen extra","marca":"Carrefour","kcal":900,"prot":0,"carb":0,"gresa":100,"azucar":0,"fibra":0,"sal":0,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-025","nombre":"Tomate frito","marca":"Carrefour","kcal":82,"prot":1.4,"carb":9.5,"gresa":3.8,"azucar":7.5,"fibra":1.5,"sal":1,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-026","nombre":"Mayonesa","marca":"Carrefour","kcal":675,"prot":1,"carb":3,"gresa":74.5,"azucar":2,"fibra":0,"sal":1.2,"envase":"450 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-027","nombre":"Ketchup","marca":"Carrefour","kcal":102,"prot":1.1,"carb":23.5,"gresa":21.5,"azucar":1,"fibra":0.7,"sal":2.1,"envase":"560 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-028","nombre":"Guisantes congelados","marca":"Carrefour","kcal":68,"prot":5.3,"carb":9.8,"gresa":0.5,"azucar":3.4,"fibra":5,"sal":0.05,"envase":"1 kg","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-029","nombre":"Judías verdes congeladas","marca":"Carrefour","kcal":29,"prot":1.7,"carb":4.8,"gresa":0.2,"azucar":2,"fibra":3,"sal":0.02,"envase":"1 kg","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-030","nombre":"Brócoli congelado","marca":"Carrefour","kcal":33,"prot":2.7,"carb":3.8,"gresa":0.4,"azucar":1.4,"fibra":3,"sal":0.02,"envase":"1 kg","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-031","nombre":"Pizza fresca cuatro quesos","marca":"Carrefour","kcal":260,"prot":12,"carb":28,"gresa":11,"azucar":3,"fibra":2,"sal":1.4,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-032","nombre":"Croquetas de jamón congeladas","marca":"Carrefour","kcal":255,"prot":5.8,"carb":21.5,"gresa":15.5,"azucar":2,"fibra":1.5,"sal":1.1,"envase":"600 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-033","nombre":"Nuggets de pollo congelados","marca":"Carrefour","kcal":245,"prot":13.8,"carb":14.5,"gresa":14.5,"azucar":1,"fibra":1,"sal":1.2,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-034","nombre":"Lasaña de carne preparada","marca":"Carrefour","kcal":138,"prot":6.8,"carb":12.8,"gresa":6.3,"azucar":3,"fibra":1,"sal":0.6,"envase":"400 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-035","nombre":"Patatas fritas congeladas para horno","marca":"Carrefour","kcal":160,"prot":2.8,"carb":25.5,"gresa":4.8,"azucar":0.5,"fibra":2.5,"sal":0.4,"envase":"1 kg","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-036","nombre":"Patatas fritas de bolsa","marca":"Carrefour","kcal":535,"prot":5.8,"carb":49.5,"gresa":34.5,"azucar":0.5,"fibra":4,"sal":1.4,"envase":"150 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-037","nombre":"Chocolate con leche tableta","marca":"Carrefour","kcal":530,"prot":6.8,"carb":56.5,"gresa":30.5,"azucar":54,"fibra":2.5,"sal":0.2,"envase":"125 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-038","nombre":"Chocolate negro 70%","marca":"Carrefour","kcal":565,"prot":7.8,"carb":34.5,"gresa":41.5,"azucar":23.5,"fibra":11,"sal":0.02,"envase":"100 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-039","nombre":"Helado de vainilla tarrina","marca":"Carrefour","kcal":205,"prot":3.4,"carb":23.5,"gresa":10.8,"azucar":20.5,"fibra":0,"sal":0.15,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-040","nombre":"Agua mineral","marca":"Carrefour","kcal":0,"prot":0,"carb":0,"gresa":0,"azucar":0,"fibra":0,"sal":0.001,"envase":"1.5 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-041","nombre":"Refresco de cola","marca":"Carrefour","kcal":41,"prot":0,"carb":10.4,"gresa":0,"azucar":10.4,"fibra":0,"sal":0.01,"envase":"2 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-042","nombre":"Zumo de naranja","marca":"Carrefour","kcal":44,"prot":0.7,"carb":9.8,"gresa":0.2,"azucar":8.3,"fibra":0.3,"sal":0.01,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-043","nombre":"Bebida de soja","marca":"Carrefour","kcal":41,"prot":3.2,"carb":2.4,"gresa":1.9,"azucar":1,"fibra":0.5,"sal":0.1,"envase":"1 L","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-044","nombre":"Hummus natural","marca":"Carrefour","kcal":245,"prot":6.8,"carb":11.5,"gresa":19.5,"azucar":1,"fibra":5,"sal":1,"envase":"200 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-carrefour-045","nombre":"Aceitunas verdes rellenas de anchoa","marca":"Carrefour","kcal":142,"prot":1,"carb":2.8,"gresa":13.8,"azucar":0.5,"fibra":3,"sal":3.5,"envase":"350 g","fuente":"Catálogo local · Carrefour"},{"ean":"cat-100montaditos-001","nombre":"Montadito de jamón serrano","marca":"100 Montaditos","kcal":260,"prot":12,"carb":30,"gresa":9,"azucar":2,"fibra":1.5,"sal":1.8,"envase":"1 ud. ≈ 60 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-002","nombre":"Montadito de jamón y queso","marca":"100 Montaditos","kcal":270,"prot":13,"carb":29,"gresa":11,"azucar":2,"fibra":1.3,"sal":1.9,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-003","nombre":"Montadito de lomo","marca":"100 Montaditos","kcal":250,"prot":14,"carb":28,"gresa":8.5,"azucar":2,"fibra":1.3,"sal":1.6,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-004","nombre":"Montadito de chorizo","marca":"100 Montaditos","kcal":290,"prot":12,"carb":27,"gresa":15,"azucar":2,"fibra":1.3,"sal":2.1,"envase":"1 ud. ≈ 60 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-005","nombre":"Montadito de tortilla española","marca":"100 Montaditos","kcal":230,"prot":8,"carb":26,"gresa":10,"azucar":1.5,"fibra":1.2,"sal":1,"envase":"1 ud. ≈ 70 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-006","nombre":"Montadito de pollo","marca":"100 Montaditos","kcal":235,"prot":13,"carb":27,"gresa":8,"azucar":2,"fibra":1.3,"sal":1.4,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-007","nombre":"Montadito de atún","marca":"100 Montaditos","kcal":225,"prot":12,"carb":27,"gresa":7,"azucar":2,"fibra":1.3,"sal":1.3,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-008","nombre":"Montadito vegetal","marca":"100 Montaditos","kcal":190,"prot":6,"carb":28,"gresa":6,"azucar":3,"fibra":2,"sal":0.9,"envase":"1 ud. ≈ 70 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-009","nombre":"Montadito de chóped","marca":"100 Montaditos","kcal":240,"prot":10,"carb":29,"gresa":9,"azucar":2,"fibra":1.3,"sal":1.9,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-010","nombre":"Montadito de sobrasada","marca":"100 Montaditos","kcal":300,"prot":9,"carb":27,"gresa":18,"azucar":2,"fibra":1.3,"sal":2,"envase":"1 ud. ≈ 60 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-011","nombre":"Montadito de queso","marca":"100 Montaditos","kcal":265,"prot":11,"carb":27,"gresa":12,"azucar":2,"fibra":1.3,"sal":1.7,"envase":"1 ud. ≈ 65 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-012","nombre":"Montadito de bacon","marca":"100 Montaditos","kcal":275,"prot":12,"carb":26,"gresa":14,"azucar":2,"fibra":1.3,"sal":2,"envase":"1 ud. ≈ 60 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-013","nombre":"Montadito de huevo","marca":"100 Montaditos","kcal":220,"prot":10,"carb":26,"gresa":8,"azucar":2,"fibra":1.3,"sal":1.2,"envase":"1 ud. ≈ 70 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-014","nombre":"Flauta de jamón y queso","marca":"100 Montaditos","kcal":260,"prot":12,"carb":32,"gresa":9,"azucar":2,"fibra":1.6,"sal":1.8,"envase":"1 ud. ≈ 140 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-015","nombre":"Flauta vegetal","marca":"100 Montaditos","kcal":200,"prot":6,"carb":30,"gresa":6,"azucar":3,"fibra":2.2,"sal":0.9,"envase":"1 ud. ≈ 150 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-016","nombre":"Patatas bravas","marca":"100 Montaditos","kcal":175,"prot":2.5,"carb":20,"gresa":9,"azucar":1,"fibra":1.8,"sal":1,"envase":"ración ≈ 250 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-017","nombre":"Croquetas de jamón (ración)","marca":"100 Montaditos","kcal":260,"prot":6,"carb":22,"gresa":16,"azucar":2,"fibra":1.5,"sal":1.1,"envase":"ración 8 uds. ≈ 200 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-018","nombre":"Ensaladilla rusa (ración)","marca":"100 Montaditos","kcal":160,"prot":3,"carb":10,"gresa":12,"azucar":2,"fibra":1.5,"sal":0.8,"envase":"ración ≈ 200 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-019","nombre":"Nachos con queso","marca":"100 Montaditos","kcal":320,"prot":8,"carb":34,"gresa":17,"azucar":2,"fibra":2.5,"sal":1.4,"envase":"ración ≈ 200 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-020","nombre":"Alitas de pollo (ración)","marca":"100 Montaditos","kcal":260,"prot":20,"carb":5,"gresa":18,"azucar":1,"fibra":0.5,"sal":1.5,"envase":"ración 6 uds. ≈ 250 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-021","nombre":"Ensalada César","marca":"100 Montaditos","kcal":140,"prot":8,"carb":6,"gresa":9,"azucar":2,"fibra":1.5,"sal":0.9,"envase":"ración ≈ 300 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-022","nombre":"Tarta de queso","marca":"100 Montaditos","kcal":320,"prot":6,"carb":28,"gresa":20,"azucar":22,"fibra":0.5,"sal":0.4,"envase":"ración ≈ 120 g","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-023","nombre":"Cerveza de barril (caña)","marca":"100 Montaditos","kcal":42,"prot":0.4,"carb":3.5,"gresa":0,"azucar":0,"fibra":0,"sal":0.01,"envase":"caña ≈ 200 ml","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-024","nombre":"Refresco de cola (vaso)","marca":"100 Montaditos","kcal":42,"prot":0,"carb":10.6,"gresa":0,"azucar":10.6,"fibra":0,"sal":0.01,"envase":"vaso ≈ 300 ml","fuente":"Catálogo local · 100 Montaditos (restaurante)"},{"ean":"cat-100montaditos-025","nombre":"Tinto de verano","marca":"100 Montaditos","kcal":35,"prot":0.1,"carb":4,"gresa":0,"azucar":4,"fibra":0,"sal":0.01,"envase":"vaso ≈ 250 ml","fuente":"Catálogo local · 100 Montaditos (restaurante)"}];
+/* ===================== alimentos: la tabla de nutrición =====================
+   Alimentos a peso (no productos de marca: eso es FOOD_CATALOGO). Todo por 100 g de la forma en
+   que se compra —crudo salvo que diga otra cosa— porque es como se pesa al cocinar.
+
+   ⚠ Estos valores los he escrito yo a partir de tablas de composición publicadas: son de
+   REFERENCIA y aproximados, no de una base oficial. La app lo dice en cada ficha. Con una clave
+   de USDA FoodData Central puesta en Ajustes, cada alimento que consultes se corrige con el dato
+   oficial y se guarda ya corregido.
+
+   Campos: n nombre · e emoji · g grupo · kcal · pr proteína · ch carbohidrato · az azúcares
+   fi fibra · gr grasa · sa sal — y los micros: fe hierro(mg) ca calcio(mg) k potasio(mg)
+   mg magnesio(mg) vc vit.C(mg) vd vit.D(µg) b12(µg) b6(mg) fo folato(µg). */
+const ALIM_MICROS=['fe','ca','k','mg','vc','vd','b12','b6','fo'];
+const ALIM_LABEL={fe:'Hierro',ca:'Calcio',k:'Potasio',mg:'Magnesio',vc:'Vitamina C',
+  vd:'Vitamina D',b12:'Vitamina B12',b6:'Vitamina B6',fo:'Folato'};
+const ALIM_UNIDAD={fe:'mg',ca:'mg',k:'mg',mg:'mg',vc:'mg',vd:'µg',b12:'µg',b6:'mg',fo:'µg'};
+/* ingesta de referencia de un adulto (VRN del reglamento europeo de etiquetado). NO es una pauta
+   médica personalizada: es la referencia que se usa en los envases. */
+const ALIM_VRN={fe:14,ca:800,k:2000,mg:375,vc:80,vd:5,b12:2.5,b6:1.4,fo:200};
+const ALIM_GRUPOS=[['fruta','🍎 Fruta'],['verdura','🥦 Verdura'],['carne','🍗 Carne y huevo'],
+  ['pescado','🐟 Pescado'],['legumbre','🫘 Legumbre'],['cereal','🌾 Cereal y pan'],
+  ['lacteo','🥛 Lácteo'],['graso','🥑 Grasas y frutos secos'],['otro','🧂 Otros']];
+const ALIMENTOS=[
+/* --- fruta --- */
+{n:'Manzana',e:'🍎',g:'fruta',kcal:52,pr:0.3,ch:14,az:10,fi:2.4,gr:0.2,fe:0.1,ca:6,k:107,mg:5,vc:4.6,b6:0.04,fo:3},
+{n:'Plátano',e:'🍌',g:'fruta',kcal:89,pr:1.1,ch:23,az:12,fi:2.6,gr:0.3,fe:0.3,ca:5,k:358,mg:27,vc:8.7,b6:0.37,fo:20},
+{n:'Naranja',e:'🍊',g:'fruta',kcal:47,pr:0.9,ch:12,az:9,fi:2.4,gr:0.1,fe:0.1,ca:40,k:181,mg:10,vc:53,b6:0.06,fo:30},
+{n:'Mandarina',e:'🍊',g:'fruta',kcal:53,pr:0.8,ch:13,az:11,fi:1.8,gr:0.3,fe:0.15,ca:37,k:166,mg:12,vc:27,b6:0.08,fo:16},
+{n:'Fresa',e:'🍓',g:'fruta',kcal:32,pr:0.7,ch:7.7,az:4.9,fi:2,gr:0.3,fe:0.4,ca:16,k:153,mg:13,vc:59,b6:0.05,fo:24},
+{n:'Kiwi',e:'🥝',g:'fruta',kcal:61,pr:1.1,ch:15,az:9,fi:3,gr:0.5,fe:0.3,ca:34,k:312,mg:17,vc:93,b6:0.06,fo:25},
+{n:'Uva',e:'🍇',g:'fruta',kcal:69,pr:0.7,ch:18,az:16,fi:0.9,gr:0.2,fe:0.4,ca:10,k:191,mg:7,vc:3.2,b6:0.09,fo:2},
+{n:'Pera',e:'🍐',g:'fruta',kcal:57,pr:0.4,ch:15,az:10,fi:3.1,gr:0.1,fe:0.2,ca:9,k:116,mg:7,vc:4.3,b6:0.03,fo:7},
+{n:'Melocotón',e:'🍑',g:'fruta',kcal:39,pr:0.9,ch:10,az:8.4,fi:1.5,gr:0.3,fe:0.25,ca:6,k:190,mg:9,vc:6.6,b6:0.03,fo:4},
+{n:'Sandía',e:'🍉',g:'fruta',kcal:30,pr:0.6,ch:7.6,az:6.2,fi:0.4,gr:0.2,fe:0.24,ca:7,k:112,mg:10,vc:8.1,b6:0.05,fo:3},
+{n:'Melón',e:'🍈',g:'fruta',kcal:34,pr:0.8,ch:8.2,az:7.9,fi:0.9,gr:0.2,fe:0.21,ca:9,k:267,mg:12,vc:37,b6:0.07,fo:21},
+{n:'Piña',e:'🍍',g:'fruta',kcal:50,pr:0.5,ch:13,az:9.9,fi:1.4,gr:0.1,fe:0.29,ca:13,k:109,mg:12,vc:48,b6:0.11,fo:18},
+{n:'Aguacate',e:'🥑',g:'fruta',kcal:160,pr:2,ch:8.5,az:0.7,fi:6.7,gr:15,fe:0.55,ca:12,k:485,mg:29,vc:10,b6:0.26,fo:81},
+{n:'Arándano',e:'🫐',g:'fruta',kcal:57,pr:0.7,ch:14,az:10,fi:2.4,gr:0.3,fe:0.28,ca:6,k:77,mg:6,vc:9.7,b6:0.05,fo:6},
+{n:'Limón',e:'🍋',g:'fruta',kcal:29,pr:1.1,ch:9.3,az:2.5,fi:2.8,gr:0.3,fe:0.6,ca:26,k:138,mg:8,vc:53,b6:0.08,fo:11},
+{n:'Ciruela',e:'🍑',g:'fruta',kcal:46,pr:0.7,ch:11,az:10,fi:1.4,gr:0.3,fe:0.17,ca:6,k:157,mg:7,vc:9.5,b6:0.03,fo:5},
+/* --- verdura --- */
+{n:'Brócoli',e:'🥦',g:'verdura',kcal:34,pr:2.8,ch:6.6,az:1.7,fi:2.6,gr:0.4,fe:0.73,ca:47,k:316,mg:21,vc:89,b6:0.18,fo:63},
+{n:'Espinaca',e:'🥬',g:'verdura',kcal:23,pr:2.9,ch:3.6,az:0.4,fi:2.2,gr:0.4,fe:2.7,ca:99,k:558,mg:79,vc:28,b6:0.2,fo:194},
+{n:'Tomate',e:'🍅',g:'verdura',kcal:18,pr:0.9,ch:3.9,az:2.6,fi:1.2,gr:0.2,fe:0.27,ca:10,k:237,mg:11,vc:14,b6:0.08,fo:15},
+{n:'Cebolla',e:'🧅',g:'verdura',kcal:40,pr:1.1,ch:9.3,az:4.2,fi:1.7,gr:0.1,fe:0.21,ca:23,k:146,mg:10,vc:7.4,b6:0.12,fo:19},
+{n:'Zanahoria',e:'🥕',g:'verdura',kcal:41,pr:0.9,ch:9.6,az:4.7,fi:2.8,gr:0.2,fe:0.3,ca:33,k:320,mg:12,vc:5.9,b6:0.14,fo:19},
+{n:'Pimiento rojo',e:'🫑',g:'verdura',kcal:31,pr:1,ch:6,az:4.2,fi:2.1,gr:0.3,fe:0.43,ca:7,k:211,mg:12,vc:128,b6:0.29,fo:46},
+{n:'Calabacín',e:'🥒',g:'verdura',kcal:17,pr:1.2,ch:3.1,az:2.5,fi:1,gr:0.3,fe:0.37,ca:16,k:261,mg:18,vc:18,b6:0.16,fo:24},
+{n:'Berenjena',e:'🍆',g:'verdura',kcal:25,pr:1,ch:5.9,az:3.5,fi:3,gr:0.2,fe:0.23,ca:9,k:229,mg:14,vc:2.2,b6:0.08,fo:22},
+{n:'Patata',e:'🥔',g:'verdura',kcal:77,pr:2,ch:17,az:0.8,fi:2.2,gr:0.1,fe:0.81,ca:12,k:425,mg:23,vc:19.7,b6:0.3,fo:15},
+{n:'Boniato',e:'🍠',g:'verdura',kcal:86,pr:1.6,ch:20,az:4.2,fi:3,gr:0.1,fe:0.61,ca:30,k:337,mg:25,vc:2.4,b6:0.21,fo:11},
+{n:'Lechuga',e:'🥬',g:'verdura',kcal:15,pr:1.4,ch:2.9,az:0.8,fi:1.3,gr:0.2,fe:0.86,ca:36,k:194,mg:13,vc:9.2,b6:0.09,fo:38},
+{n:'Ajo',e:'🧄',g:'verdura',kcal:149,pr:6.4,ch:33,az:1,fi:2.1,gr:0.5,fe:1.7,ca:181,k:401,mg:25,vc:31,b6:1.24,fo:3},
+{n:'Champiñón',e:'🍄',g:'verdura',kcal:22,pr:3.1,ch:3.3,az:2,fi:1,gr:0.3,fe:0.5,ca:3,k:318,mg:9,vc:2.1,vd:0.2,b6:0.1,fo:17},
+{n:'Judía verde',e:'🫛',g:'verdura',kcal:31,pr:1.8,ch:7,az:3.3,fi:2.7,gr:0.2,fe:1.03,ca:37,k:211,mg:25,vc:12.2,b6:0.14,fo:33},
+{n:'Guisante',e:'🫛',g:'verdura',kcal:81,pr:5.4,ch:14,az:5.7,fi:5.7,gr:0.4,fe:1.47,ca:25,k:244,mg:33,vc:40,b6:0.17,fo:65},
+{n:'Pepino',e:'🥒',g:'verdura',kcal:15,pr:0.7,ch:3.6,az:1.7,fi:0.5,gr:0.1,fe:0.28,ca:16,k:147,mg:13,vc:2.8,b6:0.04,fo:7},
+{n:'Coliflor',e:'🥬',g:'verdura',kcal:25,pr:1.9,ch:5,az:1.9,fi:2,gr:0.3,fe:0.42,ca:22,k:299,mg:15,vc:48,b6:0.18,fo:57},
+{n:'Espárrago',e:'🥬',g:'verdura',kcal:20,pr:2.2,ch:3.9,az:1.9,fi:2.1,gr:0.1,fe:2.14,ca:24,k:202,mg:14,vc:5.6,b6:0.09,fo:52},
+{n:'Puerro',e:'🧅',g:'verdura',kcal:61,pr:1.5,ch:14,az:3.9,fi:1.8,gr:0.3,fe:2.1,ca:59,k:180,mg:28,vc:12,b6:0.23,fo:64},
+{n:'Calabaza',e:'🎃',g:'verdura',kcal:26,pr:1,ch:6.5,az:2.8,fi:0.5,gr:0.1,fe:0.8,ca:21,k:340,mg:12,vc:9,b6:0.06,fo:16},
+{n:'Pimiento verde',e:'🫑',g:'verdura',kcal:20,pr:0.9,ch:4.6,az:2.4,fi:1.7,gr:0.2,fe:0.34,ca:10,k:175,mg:10,vc:80,b6:0.22,fo:10},
+/* --- carne y huevo --- */
+{n:'Pechuga de pollo',e:'🍗',g:'carne',nota:'cruda, sin piel',kcal:120,pr:22.5,ch:0,az:0,fi:0,gr:2.6,fe:0.7,ca:11,k:334,mg:27,b12:0.2,b6:0.55,fo:4},
+{n:'Muslo de pollo',e:'🍗',g:'carne',nota:'crudo, sin piel',kcal:119,pr:19.7,ch:0,az:0,fi:0,gr:3.9,fe:0.9,ca:8,k:243,mg:23,b12:0.5,b6:0.35,fo:7},
+{n:'Pechuga de pavo',e:'🦃',g:'carne',nota:'cruda',kcal:111,pr:24,ch:0,az:0,fi:0,gr:1.5,fe:0.8,ca:8,k:300,mg:28,b12:0.4,b6:0.7,fo:6},
+{n:'Ternera magra',e:'🥩',g:'carne',nota:'cruda',kcal:131,pr:21.5,ch:0,az:0,fi:0,gr:4.6,fe:2.1,ca:12,k:330,mg:22,b12:1.6,b6:0.5,fo:9},
+{n:'Lomo de cerdo',e:'🥩',g:'carne',nota:'crudo',kcal:143,pr:21.4,ch:0,az:0,fi:0,gr:5.9,fe:0.8,ca:14,k:373,mg:25,b12:0.6,b6:0.5,fo:2},
+{n:'Huevo',e:'🥚',g:'carne',nota:'entero, crudo',kcal:143,pr:12.6,ch:0.7,az:0.4,fi:0,gr:9.5,fe:1.75,ca:56,k:138,mg:12,vd:2,b12:0.89,b6:0.17,fo:47},
+{n:'Jamón serrano',e:'🍖',g:'carne',kcal:241,pr:31,ch:0.3,az:0,fi:0,gr:12.6,sa:4.9,fe:1.4,ca:12,k:480,mg:25,b12:1.2,b6:0.4,fo:3},
+{n:'Jamón cocido',e:'🍖',g:'carne',kcal:107,pr:18,ch:1.5,az:1,fi:0,gr:3.3,sa:2.3,fe:0.9,ca:9,k:290,mg:18,b12:0.7,b6:0.3,fo:3},
+{n:'Chorizo',e:'🌭',g:'carne',kcal:455,pr:24,ch:1.9,az:0.5,fi:0,gr:38,sa:4.6,fe:1.4,ca:10,k:340,mg:18,b12:1.4,b6:0.3,fo:2},
+/* --- pescado --- */
+{n:'Salmón',e:'🐟',g:'pescado',nota:'crudo',kcal:208,pr:20,ch:0,az:0,fi:0,gr:13,fe:0.34,ca:9,k:363,mg:27,vd:11,b12:3.2,b6:0.6,fo:26},
+{n:'Merluza',e:'🐟',g:'pescado',nota:'cruda',kcal:86,pr:17,ch:0,az:0,fi:0,gr:1.8,fe:0.4,ca:25,k:300,mg:30,vd:1.5,b12:1,b6:0.2,fo:8},
+{n:'Atún en lata al natural',e:'🐟',g:'pescado',kcal:116,pr:26,ch:0,az:0,fi:0,gr:1,sa:0.8,fe:1,ca:11,k:237,mg:33,vd:2,b12:2.2,b6:0.32,fo:4},
+{n:'Sardina',e:'🐟',g:'pescado',nota:'cruda',kcal:208,pr:25,ch:0,az:0,fi:0,gr:11,fe:2.9,ca:382,k:397,mg:39,vd:4.8,b12:8.9,b6:0.17,fo:10},
+{n:'Bacalao',e:'🐟',g:'pescado',nota:'fresco',kcal:82,pr:18,ch:0,az:0,fi:0,gr:0.7,fe:0.4,ca:16,k:413,mg:32,vd:0.9,b12:0.9,b6:0.24,fo:7},
+{n:'Gamba',e:'🦐',g:'pescado',nota:'cruda',kcal:85,pr:20,ch:0,az:0,fi:0,gr:0.5,sa:0.5,fe:0.5,ca:64,k:185,mg:37,vd:0.1,b12:1.1,b6:0.1,fo:19},
+{n:'Boquerón',e:'🐟',g:'pescado',nota:'crudo',kcal:131,pr:20,ch:0,az:0,fi:0,gr:4.8,fe:3.3,ca:147,k:383,mg:41,vd:11,b12:0.6,b6:0.14,fo:9},
+/* --- legumbre --- */
+{n:'Lenteja',e:'🫘',g:'legumbre',nota:'cruda',kcal:352,pr:25,ch:63,az:2,fi:11,gr:1.1,fe:7.5,ca:56,k:955,mg:122,vc:4.5,b6:0.54,fo:479},
+{n:'Lenteja cocida',e:'🫘',g:'legumbre',kcal:116,pr:9,ch:20,az:1.8,fi:7.9,gr:0.4,fe:3.3,ca:19,k:369,mg:36,vc:1.5,b6:0.18,fo:181},
+{n:'Garbanzo',e:'🫘',g:'legumbre',nota:'crudo',kcal:364,pr:19,ch:61,az:11,fi:17,gr:6,fe:6.2,ca:105,k:875,mg:115,vc:4,b6:0.54,fo:557},
+{n:'Garbanzo de bote',e:'🫘',g:'legumbre',nota:'cocido y escurrido',kcal:139,pr:7.3,ch:22,az:3.6,fi:6.4,gr:2.6,sa:0.4,fe:1.6,ca:38,k:173,mg:30,vc:1,b6:0.11,fo:54},
+{n:'Alubia blanca',e:'🫘',g:'legumbre',nota:'cruda',kcal:333,pr:23,ch:60,az:2,fi:15,gr:0.8,fe:5.5,ca:240,k:1400,mg:190,vc:0,b6:0.4,fo:388},
+{n:'Tofu',e:'🧈',g:'legumbre',kcal:76,pr:8,ch:1.9,az:0.6,fi:0.3,gr:4.8,fe:5.4,ca:350,k:121,mg:30,vc:0.1,b6:0.05,fo:15},
+/* --- cereal y pan --- */
+{n:'Arroz blanco',e:'🍚',g:'cereal',nota:'crudo',kcal:360,pr:6.6,ch:79,az:0.1,fi:1.3,gr:0.6,fe:0.8,ca:9,k:86,mg:25,b6:0.16,fo:8},
+{n:'Arroz integral',e:'🍚',g:'cereal',nota:'crudo',kcal:370,pr:7.9,ch:77,az:0.7,fi:3.5,gr:2.9,fe:1.5,ca:23,k:223,mg:143,b6:0.51,fo:20},
+{n:'Pasta',e:'🍝',g:'cereal',nota:'cruda',kcal:371,pr:13,ch:75,az:2.7,fi:3.2,gr:1.5,fe:1.3,ca:21,k:223,mg:53,b6:0.14,fo:18},
+{n:'Pan integral',e:'🍞',g:'cereal',kcal:247,pr:13,ch:41,az:4.3,fi:7,gr:3.4,sa:1.2,fe:2.5,ca:107,k:254,mg:82,b6:0.2,fo:42},
+{n:'Pan blanco',e:'🍞',g:'cereal',kcal:265,pr:9,ch:49,az:5,fi:2.7,gr:3.2,sa:1.2,fe:3.6,ca:151,k:126,mg:25,b6:0.1,fo:85},
+{n:'Copos de avena',e:'🥣',g:'cereal',kcal:389,pr:17,ch:66,az:1,fi:11,gr:7,fe:4.7,ca:54,k:429,mg:177,b6:0.12,fo:56},
+{n:'Quinoa',e:'🌾',g:'cereal',nota:'cruda',kcal:368,pr:14,ch:64,az:0,fi:7,gr:6,fe:4.6,ca:47,k:563,mg:197,b6:0.49,fo:184},
+{n:'Harina de trigo',e:'🌾',g:'cereal',kcal:364,pr:10,ch:76,az:0.3,fi:2.7,gr:1,fe:1.2,ca:15,k:107,mg:22,b6:0.04,fo:26},
+/* --- lácteo --- */
+{n:'Leche entera',e:'🥛',g:'lacteo',kcal:61,pr:3.2,ch:4.8,az:4.8,fi:0,gr:3.3,sa:0.1,fe:0,ca:113,k:143,mg:10,vd:1.1,b12:0.45,b6:0.04,fo:5},
+{n:'Leche desnatada',e:'🥛',g:'lacteo',kcal:34,pr:3.4,ch:5,az:5,fi:0,gr:0.1,sa:0.1,fe:0,ca:122,k:156,mg:11,vd:1.1,b12:0.5,b6:0.04,fo:5},
+{n:'Yogur natural',e:'🥛',g:'lacteo',kcal:61,pr:3.5,ch:4.7,az:4.7,fi:0,gr:3.3,sa:0.1,fe:0.1,ca:121,k:155,mg:12,vd:0.1,b12:0.37,b6:0.03,fo:7},
+{n:'Yogur griego',e:'🥛',g:'lacteo',kcal:97,pr:9,ch:3.6,az:3.6,fi:0,gr:5,sa:0.1,fe:0.1,ca:100,k:141,mg:11,vd:0.1,b12:0.75,b6:0.06,fo:7},
+{n:'Queso fresco',e:'🧀',g:'lacteo',kcal:98,pr:11,ch:3.4,az:3.4,fi:0,gr:4.3,sa:0.9,fe:0.1,ca:111,k:122,mg:11,vd:0.1,b12:0.4,b6:0.05,fo:12},
+{n:'Queso curado',e:'🧀',g:'lacteo',kcal:393,pr:26,ch:1,az:0.5,fi:0,gr:32,sa:1.8,fe:0.3,ca:750,k:100,mg:30,vd:0.5,b12:1.5,b6:0.07,fo:18},
+{n:'Mantequilla',e:'🧈',g:'lacteo',kcal:717,pr:0.9,ch:0.1,az:0.1,fi:0,gr:81,sa:0.1,fe:0,ca:24,k:24,mg:2,vd:1.5,b12:0.17,b6:0,fo:3},
+/* --- grasas y frutos secos --- */
+{n:'Aceite de oliva',e:'🫒',g:'graso',kcal:884,pr:0,ch:0,az:0,fi:0,gr:100,fe:0.6,ca:1,k:1,mg:0,vc:0,fo:0},
+{n:'Nuez',e:'🌰',g:'graso',kcal:654,pr:15,ch:14,az:2.6,fi:6.7,gr:65,fe:2.9,ca:98,k:441,mg:158,vc:1.3,b6:0.54,fo:98},
+{n:'Almendra',e:'🌰',g:'graso',kcal:579,pr:21,ch:22,az:4.4,fi:12.5,gr:50,fe:3.7,ca:269,k:733,mg:270,vc:0,b6:0.14,fo:44},
+{n:'Cacahuete',e:'🥜',g:'graso',kcal:567,pr:26,ch:16,az:4.7,fi:8.5,gr:49,fe:4.6,ca:92,k:705,mg:168,vc:0,b6:0.35,fo:240},
+{n:'Semilla de chía',e:'🌱',g:'graso',kcal:486,pr:17,ch:42,az:0,fi:34,gr:31,fe:7.7,ca:631,k:407,mg:335,vc:1.6,b6:0.09,fo:49},
+{n:'Aceituna',e:'🫒',g:'graso',kcal:145,pr:1,ch:3.8,az:0.5,fi:3.3,gr:15,sa:3.3,fe:3.3,ca:88,k:8,mg:4,vc:0.9,b6:0.03,fo:3},
+/* --- otros --- */
+{n:'Miel',e:'🍯',g:'otro',kcal:304,pr:0.3,ch:82,az:82,fi:0.2,gr:0,fe:0.42,ca:6,k:52,mg:2,vc:0.5,b6:0.02,fo:2},
+{n:'Chocolate negro 70%',e:'🍫',g:'otro',kcal:598,pr:7.8,ch:46,az:24,fi:11,gr:43,fe:11.9,ca:73,k:715,mg:228,vc:0,b6:0.04,fo:12},
+{n:'Tomate triturado',e:'🥫',g:'otro',kcal:32,pr:1.6,ch:7,az:4.4,fi:1.9,gr:0.3,sa:0.3,fe:0.9,ca:14,k:293,mg:15,vc:14,b6:0.1,fo:13},
+{n:'Leche de coco',e:'🥥',g:'otro',kcal:197,pr:2,ch:2.8,az:2.8,fi:0,gr:21,fe:1.6,ca:16,k:220,mg:37,vc:1,b6:0.03,fo:16},
+{n:'Caldo de pollo',e:'🍲',g:'otro',kcal:15,pr:1.2,ch:0.9,az:0.3,fi:0,gr:0.6,sa:0.9,fe:0.1,ca:5,k:40,mg:2,vc:0,b6:0.01,fo:1},
+{n:'Proteína whey',e:'🥤',g:'otro',nota:'en polvo',kcal:380,pr:80,ch:7,az:4,fi:0.5,gr:5,sa:0.5,fe:1,ca:400,k:300,mg:60,vc:0,b12:1.5,b6:0.3,fo:20}
+];
 /* ===================== comida: productos, escáner y cuenta de calorías ===================== */
 function food(){
   if(!store.food||typeof store.food!=='object')store.food={objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]};
@@ -1002,7 +1126,11 @@ function food(){
   if(!f.log||typeof f.log!=='object')f.log={};
   if(!Array.isArray(f.fav))f.fav=[];
   if(!f.objetivo||typeof f.objetivo!=='object')f.objetivo={kcal:0,prot:0};
+  ['kcal','prot','carb','gresa'].forEach(function(k){if(typeof f.objetivo[k]!=='number')f.objetivo[k]=0;});
   if(typeof f.catalogoFuente!=='string')f.catalogoFuente='';
+  if(!Array.isArray(f.alimentos))f.alimentos=[];   /* alimentos tuyos, los que no están en la tabla */
+  if(!f.usda||typeof f.usda!=='object')f.usda={};  /* correcciones traídas de FoodData Central, por id */
+  if(!Array.isArray(f.nevera))f.nevera=[];         /* lo que tienes en casa ahora mismo */
   return f;}
 function offNum(v){const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?Math.round(n*10)/10:0;}
 function mapOffProduct(p){
@@ -1055,6 +1183,225 @@ function porcionDe(p,g){
   ['kcal','prot','carb','gresa','azucar','fibra','sal'].forEach(function(k){const v=(+p[k]||0)*q;
     o[k]=(k==='kcal')?Math.round(v):Math.round(v*10)/10;});
   return o;}
+/* ===================== alimentos: el modelo =====================
+   Un "alimento" es comida a peso (un plátano, 100 g de lentejas). Un "producto" —lo de food().eans—
+   es un envase con código de barras. Los dos se apuntan igual en el día; lo que cambia es de dónde
+   sale el dato: el producto lo trae su etiqueta y el alimento, la tabla de abajo o USDA. */
+function alimTxt(s){return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function alimSlug(n){return 'al-'+alimTxt(n).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28);}
+function alimBase(){
+  /* la tabla que viene con la app, ya con id */
+  if(!alimBase._c)alimBase._c=ALIMENTOS.map(function(a){
+    return Object.assign({},a,{id:alimSlug(a.n),fuente:'tabla'});});
+  return alimBase._c;}
+function alimTodos(){
+  /* tabla + los tuyos, y encima la corrección de USDA si la hay. El orden importa: lo tuyo pisa la
+     tabla (si te has molestado en escribirlo, es porque el tuyo es distinto) y USDA pisa la tabla
+     pero nunca lo que has escrito tú a mano. */
+  const f=food(),mapa={};
+  alimBase().forEach(function(a){
+    const u=f.usda[a.id];
+    mapa[a.id]=u?Object.assign({},a,u,{id:a.id,n:a.n,e:a.e,g:a.g,fuente:'usda'}):a;});
+  f.alimentos.forEach(function(a){
+    if(!a||!a.id)return;
+    mapa[a.id]=Object.assign({},a,{fuente:'tuyo'});});
+  return Object.keys(mapa).map(function(k){return mapa[k];});}
+function alimById(id){
+  if(!id)return null;
+  const todos=alimTodos();
+  for(let i=0;i<todos.length;i++)if(todos[i].id===id)return todos[i];
+  return null;}
+function alimBuscar(q,grupo){
+  const t=alimTxt(q).trim();
+  return alimTodos().filter(function(a){
+    if(grupo&&a.g!==grupo)return false;
+    if(!t)return true;
+    return alimTxt(a.n+' '+(a.nota||'')+' '+(a.g||'')).indexOf(t)>=0;
+  }).sort(function(a,b){
+    /* lo que empieza por lo tecleado va primero: buscando "pl" quieres el plátano, no la "coliflor" */
+    if(t){const ia=alimTxt(a.n).indexOf(t)===0?0:1,ib=alimTxt(b.n).indexOf(t)===0?0:1;if(ia!==ib)return ia-ib;}
+    return String(a.n).localeCompare(String(b.n),'es');});}
+const ALIM_MACROS=['kcal','pr','ch','az','fi','gr','sa'];
+function alimPorcion(a,g){
+  /* la tabla va por 100 g, así que todo se escala. kcal enteras, el resto al décimo: es como se lee
+     una etiqueta y como se puede pesar en casa. */
+  const q=Math.max(0,+g||0)/100,o={mi:{}};
+  ALIM_MACROS.forEach(function(k){const v=(+a[k]||0)*q;
+    o[k]=(k==='kcal')?Math.round(v):Math.round(v*10)/10;});
+  ALIM_MICROS.forEach(function(k){
+    if(typeof a[k]!=='number')return;
+    const v=a[k]*q;
+    o.mi[k]=Math.round(v*100)/100;});
+  return o;}
+function alimEntrada(a,g){
+  /* de alimento a toma del día: los nombres de campo son los del registro (prot/carb/gresa...) */
+  const p=alimPorcion(a,g);
+  return {kcal:p.kcal,prot:p.pr,carb:p.ch,gresa:p.gr,azucar:p.az,fibra:p.fi,sal:p.sa,mi:p.mi};}
+function alimFuenteTxt(a){
+  if(!a)return '';
+  if(a.fuente==='tuyo')return 'lo has puesto tú';
+  if(a.fuente==='usda')return 'USDA FoodData Central';
+  return 'tabla de la app · aproximado';}
+function addAlimPropio(o){
+  /* mismo listón que un producto: sin kcal ni proteína no se guarda a medias */
+  const n=String((o&&o.n)||'').trim();
+  if(!n)return {ok:false,msg:'ponle un nombre al alimento'};
+  if(!(+o.kcal||+o.pr))return {ok:false,msg:'sin kcal ni proteína por 100 g no lo guardo: son el dato que luego se suma'};
+  const f=food(),id=alimSlug(n);
+  const a={id:id,n:n,e:String(o.e||'🍽').slice(0,4),g:String(o.g||'otro'),nota:String(o.nota||'').slice(0,40)};
+  ALIM_MACROS.forEach(function(k){if(o[k]!=null&&o[k]!=='')a[k]=Math.round((+o[k]||0)*10)/10;});
+  a.kcal=Math.round(+o.kcal||0);
+  ALIM_MICROS.forEach(function(k){if(o[k]!=null&&o[k]!=='')a[k]=Math.round((+o[k]||0)*100)/100;});
+  const i=f.alimentos.findIndex(function(x){return x.id===id;});
+  if(i>=0)f.alimentos[i]=a;else f.alimentos.push(a);
+  save();
+  return {ok:true,id:id,msg:(i>=0?'actualizado: ':'guardado: ')+n+' · '+a.kcal+' kcal /100 g'};}
+function delAlimPropio(id){
+  const f=food(),i=f.alimentos.findIndex(function(x){return x.id===id;});
+  if(i<0)return 'ese alimento no lo habías puesto tú: los de la tabla no se borran';
+  const nm=f.alimentos[i].n;f.alimentos.splice(i,1);
+  f.nevera=f.nevera.filter(function(x){return x!==id;});
+  save();return 'quitado '+nm;}
+/* Término en inglés con el que se busca cada alimento en USDA FoodData Central: buscar «Plátano»
+   en una base americana no devuelve nada útil. Solo se usa si pones la clave en Ajustes. */
+const ALIM_EN={
+'al-manzana':'apple, raw','al-platano':'bananas, raw','al-naranja':'oranges, raw','al-mandarina':'tangerines, raw',
+'al-fresa':'strawberries, raw','al-kiwi':'kiwifruit, raw','al-uva':'grapes, raw','al-pera':'pears, raw',
+'al-melocoton':'peaches, raw','al-sandia':'watermelon, raw','al-melon':'melons, cantaloupe, raw','al-pina':'pineapple, raw',
+'al-aguacate':'avocados, raw','al-arandano':'blueberries, raw','al-limon':'lemons, raw','al-ciruela':'plums, raw',
+'al-brocoli':'broccoli, raw','al-espinaca':'spinach, raw','al-tomate':'tomatoes, red, ripe, raw','al-cebolla':'onions, raw',
+'al-zanahoria':'carrots, raw','al-pimiento-rojo':'peppers, sweet, red, raw','al-calabacin':'squash, summer, zucchini, raw',
+'al-berenjena':'eggplant, raw','al-patata':'potatoes, flesh and skin, raw','al-boniato':'sweet potato, raw, unprepared',
+'al-lechuga':'lettuce, cos or romaine, raw','al-ajo':'garlic, raw','al-champinon':'mushrooms, white, raw',
+'al-judia-verde':'beans, snap, green, raw','al-guisante':'peas, green, raw','al-pepino':'cucumber, with peel, raw',
+'al-coliflor':'cauliflower, raw','al-esparrago':'asparagus, raw','al-puerro':'leeks, raw','al-calabaza':'pumpkin, raw',
+'al-pimiento-verde':'peppers, sweet, green, raw',
+'al-pechuga-de-pollo':'chicken, broilers or fryers, breast, meat only, raw',
+'al-muslo-de-pollo':'chicken, broilers or fryers, thigh, meat only, raw',
+'al-pechuga-de-pavo':'turkey, breast, meat only, raw','al-ternera-magra':'beef, round, top round, raw',
+'al-lomo-de-cerdo':'pork, loin, raw','al-huevo':'egg, whole, raw, fresh','al-jamon-serrano':'ham, dry-cured',
+'al-jamon-cocido':'ham, sliced, extra lean','al-chorizo':'sausage, chorizo, pork and beef',
+'al-salmon':'fish, salmon, atlantic, raw','al-merluza':'fish, hake, raw','al-atun-en-lata-al-natural':'fish, tuna, light, canned in water',
+'al-sardina':'fish, sardine, atlantic, raw','al-bacalao':'fish, cod, atlantic, raw','al-gamba':'crustaceans, shrimp, raw',
+'al-boqueron':'fish, anchovy, european, raw',
+'al-lenteja':'lentils, raw','al-lenteja-cocida':'lentils, cooked, boiled','al-garbanzo':'chickpeas, mature seeds, raw',
+'al-garbanzo-de-bote':'chickpeas, canned, drained','al-alubia-blanca':'beans, white, mature seeds, raw','al-tofu':'tofu, raw, firm',
+'al-arroz-blanco':'rice, white, long-grain, regular, raw','al-arroz-integral':'rice, brown, long-grain, raw',
+'al-pasta':'pasta, dry, enriched','al-pan-integral':'bread, whole-wheat','al-pan-blanco':'bread, white',
+'al-copos-de-avena':'oats, whole grain, rolled','al-quinoa':'quinoa, uncooked','al-harina-de-trigo':'wheat flour, white, all-purpose',
+'al-leche-entera':'milk, whole, 3.25% milkfat','al-leche-desnatada':'milk, nonfat, fluid','al-yogur-natural':'yogurt, plain, whole milk',
+'al-yogur-griego':'yogurt, greek, plain, whole milk','al-queso-fresco':'cheese, queso fresco','al-queso-curado':'cheese, cheddar',
+'al-mantequilla':'butter, without salt',
+'al-aceite-de-oliva':'oil, olive, salad or cooking','al-nuez':'nuts, walnuts, english','al-almendra':'nuts, almonds',
+'al-cacahuete':'peanuts, all types, raw','al-semilla-de-chia':'seeds, chia seeds, dried','al-aceituna':'olives, ripe, canned',
+'al-miel':'honey','al-chocolate-negro-70':'chocolate, dark, 70-85% cacao solids','al-tomate-triturado':'tomatoes, crushed, canned',
+'al-leche-de-coco':'nuts, coconut milk, canned','al-caldo-de-pollo':'soup, chicken broth, canned, prepared',
+'al-proteina-whey':'whey protein powder isolate'};
+/* de número de nutriente de FoodData Central a nuestro campo. Todo lo que devuelve Foundation y
+   SR Legacy viene ya por 100 g, que es como está nuestra tabla. */
+const USDA_NUM={1008:'kcal',1003:'pr',1005:'ch',2000:'az',1079:'fi',1004:'gr',
+  1089:'fe',1087:'ca',1092:'k',1090:'mg',1162:'vc',1114:'vd',1178:'b12',1175:'b6',1177:'fo'};
+const USDA_SODIO=1093;
+function usdaKey(){return String((store.usda||{}).key||'').trim();}
+function usdaOn(){return usdaKey().length>=10;}
+function mapUsdaFood(fd){
+  /* de la ficha de FoodData Central a nuestro alimento. Si no trae ni kcal ni proteína no vale:
+     mejor quedarse con el valor aproximado de la tabla que pisarlo con un hueco. */
+  if(!fd||!Array.isArray(fd.foodNutrients))return null;
+  const o={};
+  fd.foodNutrients.forEach(function(n){
+    const id=+(n.nutrientId!=null?n.nutrientId:(n.nutrient&&n.nutrient.id));
+    const v=+(n.value!=null?n.value:n.amount);
+    if(!isFinite(v))return;
+    if(id===USDA_SODIO){o.sa=Math.round(v*2.5)/1000;return;}   /* sodio mg → sal g */
+    const k=USDA_NUM[id];if(!k)return;
+    o[k]=(k==='kcal')?Math.round(v):Math.round(v*100)/100;});
+  if(!o.kcal&&!o.pr)return null;
+  o.usdaDesc=String(fd.description||'').slice(0,80);
+  o.usdaId=fd.fdcId||0;
+  o.ts=Date.now();
+  return o;}
+function usdaBuscar(id){
+  /* consulta un alimento concreto y guarda el resultado: a partir de ahí ya está corregido y no se
+     vuelve a salir a la red por él. Lo único que sale del móvil es el nombre del alimento en inglés. */
+  const a=alimById(id);
+  if(!a)return Promise.resolve({ok:false,msg:'ese alimento no está'});
+  if(a.fuente==='tuyo')return Promise.resolve({ok:false,msg:'este alimento lo has escrito tú: USDA no lo va a conocer'});
+  if(!usdaOn())return Promise.resolve({ok:false,msg:'te falta la clave de FoodData Central: se pone en Ajustes'});
+  if(typeof fetch!=='function')return Promise.resolve({ok:false,msg:'este navegador no sale a la red'});
+  const q=ALIM_EN[id]||a.n;
+  const url='https://api.nal.usda.gov/fdc/v1/foods/search?api_key='+encodeURIComponent(usdaKey())+
+    '&query='+encodeURIComponent(q)+'&dataType=Foundation,SR%20Legacy&pageSize=1';
+  return fetch(url)
+    .then(function(r){
+      if(r.status===403)throw new Error('la clave no vale o se ha pasado del límite diario');
+      if(!r.ok)throw new Error('FoodData Central ha contestado '+r.status);
+      return r.json();})
+    .then(function(j){
+      const fd=j&&j.foods&&j.foods[0];
+      const o=mapUsdaFood(fd);
+      if(!o)return {ok:false,msg:'FoodData Central no tiene datos completos de «'+q+'»: se queda el valor de la tabla'};
+      const f=food();f.usda[id]=o;save();
+      return {ok:true,o:o,msg:'corregido con USDA: '+(o.usdaDesc||q)};})
+    .catch(function(e){return {ok:false,msg:'no he podido consultar ('+((e&&e.message)||'sin red')+')'};});}
+function usdaProbar(){
+  /* se prueba con el plátano: si la clave vale, vuelve con datos y el usuario lo ve al momento */
+  if(!usdaOn()){flash('pega primero la clave: la que te llega por correo tiene unas 40 letras');return;}
+  flash('probando la clave…');
+  usdaBuscar('al-platano').then(function(r){
+    render();
+    flash(r.ok?('la clave funciona · '+r.msg):r.msg);});}
+function usdaOlvidar(id){
+  const f=food();if(!f.usda[id])return 'ese alimento no estaba corregido';
+  delete f.usda[id];save();return 'vuelve al valor aproximado de la tabla';}
+/* --- micronutrientes del día --- */
+function microTotales(dateStr){
+  const o={};
+  foodLog(foodKey(dateStr)).forEach(function(x){
+    const mi=x.mi;if(!mi)return;
+    ALIM_MICROS.forEach(function(k){if(typeof mi[k]==='number')o[k]=(o[k]||0)+mi[k];});});
+  ALIM_MICROS.forEach(function(k){if(o[k]!=null)o[k]=Math.round(o[k]*100)/100;});
+  return o;}
+function microPct(k,v){const r=+ALIM_VRN[k]||0;return r?Math.round((+v||0)/r*100):0;}
+function microCortos(dateStr){
+  /* «vas corto de» solo tiene sentido si has apuntado algo: con el día vacío todo está a cero y la
+     app te diría que te falta de todo, que no es información */
+  const t=microTotales(dateStr);
+  if(!Object.keys(t).length)return [];
+  return ALIM_MICROS.filter(function(k){return microPct(k,t[k]||0)<50;})
+    .sort(function(a,b){return microPct(a,t[a]||0)-microPct(b,t[b]||0);});}
+function alimRicosEn(k,n){
+  /* los alimentos que más traen de ese micro por 100 g: es lo que se ofrece cuando vas corto */
+  return alimTodos().filter(function(a){return typeof a[k]==='number'&&a[k]>0;})
+    .sort(function(a,b){return b[k]-a[k];}).slice(0,n||6);}
+/* --- mi nevera --- */
+function neveraIds(){return food().nevera.slice();}
+function neveraAlimentos(){return neveraIds().map(alimById).filter(Boolean);}
+function neveraToggle(id){
+  const f=food(),i=f.nevera.indexOf(id);
+  if(i>=0)f.nevera.splice(i,1);else f.nevera.push(id);
+  save();
+  const a=alimById(id);
+  return (i>=0?'fuera de la nevera: ':'a la nevera: ')+((a&&a.n)||id);}
+function neveraVaciar(){const f=food();const n=f.nevera.length;f.nevera=[];save();
+  return n?('vaciada: '+n+' cosa(s) fuera'):'la nevera ya estaba vacía';}
+function neveraDesdeCompra(){
+  /* lo que hay en tus listas de la compra, pasado a la nevera: lo normal es que si lo compras, lo
+     tengas. Solo entra lo que la tabla sabe reconocer por nombre. */
+  const nombres=[];
+  (store.listas||[]).forEach(function(L){(L.items||[]).forEach(function(it){
+    nombres.push(String(it&&it.txt!=null?it.txt:it));});});
+  const f=food();let n=0;
+  nombres.forEach(function(txt){
+    const p=parseIng(txt),cual=alimTxt(p.item||txt).trim();
+    if(!cual)return;
+    const hit=alimTodos().filter(function(a){
+      const an=alimTxt(a.n);return an===cual||cual.indexOf(an)>=0||an.indexOf(cual)>=0;})
+      .sort(function(a,b){return a.n.length-b.n.length;})[0];
+    if(hit&&f.nevera.indexOf(hit.id)<0){f.nevera.push(hit.id);n++;}});
+  save();
+  return n?(n+' cosa(s) de tu compra puestas en la nevera'):
+    (nombres.length?'no he reconocido nada de tu compra en la tabla de alimentos':'no tienes nada en las listas de la compra');}
 function foodKey(dateStr){const d=parseDate(dateStr);return d?iso(d):'';}
 function foodLog(dateStr){const f=food(),k=foodKey(dateStr);
   if(!k)return [];
@@ -1082,6 +1429,12 @@ function addFoodEntry(dateStr,opt){
     list.push({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:p.nombre,marca:p.marca,ean:p.ean,g:g,
       kcal:pc.kcal,prot:pc.prot,carb:pc.carb,gresa:pc.gresa,azucar:pc.azucar,fibra:pc.fibra,sal:pc.sal,ts:Date.now()});
     save();return 'añadido: '+p.nombre+' · '+g+' g · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
+  if(opt.alim){
+    const a=alimById(opt.alim);if(!a)return 'ese alimento ya no está en la tabla';
+    const g=Math.max(1,+opt.grams||100),pc=alimEntrada(a,g);
+    list.push(Object.assign({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:a.n,marca:a.nota||'',
+      alim:a.id,emoji:a.e||'',g:g,ts:Date.now()},pc));
+    save();return 'añadido: '+a.n+' · '+g+' g · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
   if(opt.dishId){
     const d=dishById(opt.dishId);if(!d)return 'ese plato ya no está en el catálogo';
     const rac=Math.max(0.1,Math.round((+opt.rac||1)*4)/4);
@@ -1095,7 +1448,9 @@ function delFoodEntry(dateStr,id){const list=foodLog(foodKey(dateStr));
 function bumpFoodEntry(dateStr,id,delta){
   const e=foodLog(foodKey(dateStr)).filter(function(x){return x.id===id;})[0];
   if(!e)return 'no encuentro esa toma';
-  if(e.ean){const p=food().eans[e.ean]||e;const g=Math.max(5,(+e.g||0)+(+delta||0));
+  if(e.alim){const a=alimById(e.alim);const g=Math.max(5,(+e.g||0)+(+delta||0));
+    if(a){const pc=alimEntrada(a,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}}
+  else if(e.ean){const p=food().eans[e.ean]||e;const g=Math.max(5,(+e.g||0)+(+delta||0));
     const pc=porcionDe(p,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}
   else{const d=dishById(e.dishId)||e;const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);
     e.rac=rac;e.kcal=Math.round((+d.kcal||0)*rac);e.prot=Math.round((+d.prot||0)*rac*10)/10;}
@@ -2227,6 +2582,108 @@ function kcalRingHTML(val,obj){
    Antes esta pestaña pintaba de una sentada el resumen del día, el registro, el formulario de
    apuntar, los cuatro modos de añadir productos y la semana. Se parte igual que Entreno y que
    Días y menús: una portada que se lee de un vistazo y pantallas propias con botón de volver. */
+/* ===================== ideas: qué sale con lo que hay en casa =====================
+   Nada de esto sale a la red ni se inventa nutrición: las combinaciones se arman con alimentos de
+   tu nevera y las cantidades se calculan con la misma tabla que usa el resto de la app. */
+function objetivoMacros(){
+  /* la proteína la pones tú. El carbohidrato y la grasa, si no los has puesto, salen de repartir a
+     partes iguales las kcal que quedan después de la proteína: es una referencia, no una pauta. */
+  const ob=food().objetivo||{},k=+ob.kcal||0,p=+ob.prot||0;
+  let c=+ob.carb||0,g=+ob.gresa||0,derivado=false;
+  if(k>0&&(!c||!g)){
+    const resto=Math.max(0,k-4*p);
+    if(!c)c=Math.round(resto*0.5/4);
+    if(!g)g=Math.round(resto*0.5/9);
+    derivado=true;}
+  return {kcal:k,prot:p,carb:c,gresa:g,derivado:derivado};}
+/* condimentos: están en la tabla y pueden estar en tu nevera, pero nadie se come 150 g de ajo ni
+   una guarnición de cebolla. No entran como pieza principal de una combinación; dan sabor y ya. */
+const ALIM_CONDIMENTO=['al-ajo','al-cebolla','al-puerro','al-limon','al-tomate-triturado',
+  'al-caldo-de-pollo','al-miel','al-aceite-de-oliva','al-leche-de-coco'];
+function esCondimento(a){return ALIM_CONDIMENTO.indexOf(a.id)>=0;}
+function esProte(a){return (+a.pr||0)>=10&&['carne','pescado','legumbre'].indexOf(a.g)>=0||
+  (a.g==='lacteo'&&(+a.pr||0)>=8)||(a.g==='otro'&&(+a.pr||0)>=20);}
+function esCarb(a){return (+a.ch||0)>=15&&['cereal','legumbre','verdura','otro'].indexOf(a.g)>=0;}
+function esVerdura(a){return a.g==='verdura'&&(+a.ch||0)<15;}
+function esGrasa(a){return (+a.gr||0)>=30;}
+function sumaAlimentos(partes){
+  /* partes: [{a:alimento,g:gramos}] → un total con los mismos campos que una toma del día */
+  const t={kcal:0,pr:0,ch:0,az:0,fi:0,gr:0,sa:0,mi:{}};
+  partes.forEach(function(x){
+    const p=alimPorcion(x.a,x.g);
+    ALIM_MACROS.forEach(function(k){t[k]+=+p[k]||0;});
+    Object.keys(p.mi).forEach(function(k){t.mi[k]=(t.mi[k]||0)+p.mi[k];});});
+  ALIM_MACROS.forEach(function(k){t[k]=(k==='kcal')?Math.round(t[k]):Math.round(t[k]*10)/10;});
+  Object.keys(t.mi).forEach(function(k){t.mi[k]=Math.round(t.mi[k]*100)/100;});
+  return t;}
+function redondeaG(g){return g<40?Math.round(g/5)*5:Math.round(g/10)*10;}
+function metaDePlato(huecoK,huecoP){
+  /* una combinación es UN plato, no el día entero: si te quedan 2 300 kcal por delante no se te
+     propone un plato de 2 300 kcal. Con el hueco ya pequeño (media tarde) se apunta al hueco. */
+  const k=huecoK>0?Math.max(350,Math.min(850,huecoK>1200?Math.round(huecoK*0.4):huecoK)):650;
+  const p=huecoP>0?Math.max(20,Math.min(55,huecoP>70?Math.round(huecoP*0.4):huecoP)):35;
+  return {kcal:k,prot:p};}
+function topeRacion(a){
+  /* los cereales y las legumbres de la tabla van en crudo: 300 g de lenteja cruda no es una ración,
+     son tres. Lo que se pesa ya cocinado o es verdura aguanta raciones mucho mayores. */
+  if(/crud|seco/i.test(a.nota||''))return 110;
+  if(a.g==='cereal'||a.g==='legumbre')return 120;
+  return 320;}
+function combinaciones(huecoK,huecoP){
+  /* arma platos de tres o cuatro piezas con lo que tengas y ajusta las cantidades. Sin nevera no hay
+     nada que proponer: la app no va a sugerir que compres. */
+  const n=neveraAlimentos();
+  const util=n.filter(function(a){return !esCondimento(a);});
+  const prot=util.filter(esProte),carb=util.filter(esCarb),verd=util.filter(esVerdura),
+        gras=n.filter(esGrasa);   /* la grasa sí puede ser un condimento: van 10 ml de aceite */
+  if(!prot.length||(!carb.length&&!verd.length))return [];
+  const meta=metaDePlato(huecoK,huecoP);
+  const out=[];
+  prot.forEach(function(P){
+    (carb.length?carb:[null]).forEach(function(C){
+      if(C&&C.id===P.id)return;   /* «lenteja con lenteja» no es una idea */
+      (verd.length?verd:[null]).forEach(function(V){
+        if(V&&(V.id===P.id||(C&&V.id===C.id)))return;
+        const partes=[];
+        /* 1) la proteína cubre el objetivo de proteína del plato, con tope de ración */
+        const gP=Math.min(topeRacion(P),Math.max(60,redondeaG(meta.prot*100/Math.max(1,+P.pr||1))));
+        partes.push({a:P,g:gP});
+        /* 2) la verdura va fija: es guarnición, no se estira para cuadrar números */
+        if(V)partes.push({a:V,g:150});
+        /* 3) la grasa de cocinar, antes de rellenar: 10 ml de aceite son 88 kcal y si se suman
+              después, el carbohidrato ya se ha comido ese hueco y el plato se va por encima */
+        if(gras.length&&gras[0].id!==P.id)partes.push({a:gras[0],g:10});
+        /* 4) el carbohidrato rellena las kcal que falten, sin pasarse de ración */
+        if(C){
+          const hasta=sumaAlimentos(partes).kcal;
+          const gC=Math.min(topeRacion(C),Math.max(30,redondeaG((meta.kcal-hasta)*100/Math.max(1,+C.kcal||1))));
+          if(gC>=25)partes.push({a:C,g:gC});}
+        const t=sumaAlimentos(partes);
+        /* el nombre se lee como un plato: proteína, carbohidrato y verdura, en ese orden */
+        const orden=[P,C,V].filter(Boolean).map(function(x){return String(x.n).toLowerCase();});
+        out.push({
+          id:partes.map(function(x){return x.a.id;}).join('+'),
+          nombre:orden[0].charAt(0).toUpperCase()+orden[0].slice(1)+
+            (orden[1]?(' con '+orden[1]):'')+(orden[2]?(' y '+orden[2]):''),
+          partes:partes,t:t,meta:meta,
+          crudo:partes.some(function(x){return /crud/i.test(x.a.nota||'');}),
+          /* se ordenan por lo cerca que quedan del objetivo del plato, contando doble la proteína:
+             pasarse de kcal molesta menos que quedarse corto de proteína */
+          err:Math.abs(t.kcal-meta.kcal)/meta.kcal+2*Math.abs(t.pr-meta.prot)/meta.prot});});});});
+  out.sort(function(a,b){return a.err-b.err;});
+  const vistos={},res=[];
+  out.forEach(function(x){if(res.length>=3)return;const k=x.partes[0].a.id;
+    if(vistos[k])return;vistos[k]=1;res.push(x);});
+  return res;}
+function guardarCombinacion(idx){
+  const c=(ui.ideasCache||[])[idx];
+  if(!c)return 'esa idea ya no está: vuelve a entrar en Ideas';
+  const d={id:uid('d'),name:c.nombre,icon:'🍲',portions:1,
+    kcal:c.t.kcal,prot:c.t.pr,
+    ingredients:c.partes.map(function(x){return x.g+' g '+String(x.a.n).toLowerCase();}),
+    steps:[],nota:'idea armada con lo que tenías en la nevera'};
+  store.dishes.push(d);save();
+  return 'guardado como plato: '+d.name;}
 const FOOD_POS=['desayuno','media','comida','merienda','cena','post-entreno'];
 function foodCtx(){
   const f=food(),hoy=iso(new Date());
@@ -2246,12 +2703,13 @@ function posOptions(seleccion){
     return '<option value="'+x+'"'+(x===(seleccion||'comida')?' selected':'')+'>'+x+'</option>';}).join('');}
 function renderFoodDia(){
   const c=foodCtx(),f=c.f,sel=c.sel,ft=c.ft,pl=c.pl,ob=c.ob,d=c.d;
-  const objK=+ob.kcal||0,objP=+ob.prot||0;
+  const objK=+ob.kcal||0,objP=+ob.prot||0,obm=objetivoMacros();
+  const mt=microTotales(sel),cortos=microCortos(sel);
   const gruposHtml=c.lista.length?FOOD_POS.map(function(g){
     const xs=c.lista.filter(function(x){return (x.p||'comida')===g;});if(!xs.length)return '';
     return '<div class="moment">'+g+'</div>'+xs.map(function(x){
-      const peso=x.ean?(' · '+x.g+' g'):(' · '+rac(x.rac));
-      return '<div class="logrow"><span class="nm"><b>'+esc(x.nombre)+'</b><span>'+esc(x.marca||'')+peso+'</span></span>'+
+      const peso=(x.ean||x.alim)?(' · '+x.g+' g'):(' · '+rac(x.rac));
+      return '<div class="logrow"><span class="nm"><b>'+esc(x.emoji?(x.emoji+' '):'')+esc(x.nombre)+'</b><span>'+esc(x.marca||'')+peso+'</span></span>'+
         '<span class="kc">'+(x.kcal||0)+' kcal</span>'+
         '<span class="row" style="gap:2px">'+
         '<button class="btn s" style="padding:3px 7px" data-a="fe-less" data-key="'+sel+'" data-id="'+x.id+'" title="quitar un poco">−</button>'+
@@ -2280,8 +2738,11 @@ function renderFoodDia(){
       '<div class="kcalhero">'+
         kcalRingHTML(ft.kcal,objK)+
         '<div class="heroside">'+
-          '<div><div class="protrow"><span>proteína</span><b>'+ft.prot+' / '+objP+' g</b></div>'+
-          '<div class="fbar" style="margin-top:4px"><i style="width:'+(objP>0?Math.min(100,Math.round(ft.prot/objP*100)):0)+'%"></i></div></div>'+
+          '<div class="macros">'+
+            macroHTML('proteína',ft.prot,obm.prot,'p')+
+            macroHTML('carbohidratos',ft.carb,obm.carb,'c')+
+            macroHTML('grasa',ft.gresa,obm.gresa,'g')+
+          '</div>'+
           /* cifras, no barras: «te quedan» y «cocinado» no son progreso hacia nada */
           '<div class="dosdatos">'+
             '<div><b>'+(restan==null?'—':(restan>=0?restan:('+'+(-restan))))+'</b><span>'+(restan==null?'sin objetivo':(restan>=0?'te quedan':'te has pasado'))+'</span></div>'+
@@ -2290,12 +2751,41 @@ function renderFoodDia(){
           '<button class="btn s" style="align-self:flex-start" data-a="food-obj-toggle">'+(ui.foodObjOpen?'▴ objetivo':'✎ objetivo')+'</button>'+
         '</div>'+
       '</div>'+
+      (obm.derivado&&objK?('<p class="mini" style="margin:6px 0 0">El carbohidrato y la grasa salen de repartir a partes iguales '+
+        'las kcal que quedan tras la proteína. Si sigues otro reparto, ponlos tú en «objetivo».</p>'):'')+
       (ui.foodObjOpen?('<div class="row" style="margin-top:2px;border-top:1px solid var(--line);padding-top:10px">'+
         '<label class="fld" style="flex:0 0 110px">kcal/día<input type="number" min="0" max="6000" step="50" value="'+objK+'" data-a="food-ob" data-k="kcal"></label>'+
-        '<label class="fld" style="flex:0 0 120px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+objP+'" data-a="food-ob" data-k="prot"></label>'+
+        '<label class="fld" style="flex:0 0 110px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+objP+'" data-a="food-ob" data-k="prot"></label>'+
+        '<label class="fld" style="flex:0 0 110px">carbohidr. (g)<input type="number" min="0" max="800" step="10" value="'+(+ob.carb||0)+'" data-a="food-ob" data-k="carb" placeholder="'+obm.carb+'"></label>'+
+        '<label class="fld" style="flex:0 0 100px">grasa (g)<input type="number" min="0" max="300" step="5" value="'+(+ob.gresa||0)+'" data-a="food-ob" data-k="gresa" placeholder="'+obm.gresa+'"></label>'+
         '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'):'')+
       '<button class="btn p gbig" style="margin-top:13px" data-a="food-vista" data-v="add">'+gymIco('mas','gico sm')+' apuntar comida</button>'+
     '</div>'+
+    /* micronutrientes: solo salen de las tomas apuntadas desde Alimentos. Un producto de código de
+       barras trae macros y poco más, así que la tarjeta lo dice en vez de fingir un cero. */
+    (function(){
+      const conMi=c.lista.filter(function(x){return x.mi&&Object.keys(x.mi).length;}).length;
+      if(!conMi)return c.lista.length?('<div class="card"><h2>Micronutrientes de hoy</h2>'+
+        '<div class="empty">De lo apuntado hoy no tengo micronutrientes: los traen los alimentos de la tabla, '+
+        'no los productos de código de barras ni los platos sueltos.</div>'+
+        '<button class="btn s" data-a="food-vista" data-v="alimentos">'+gymIco('manzana','gico sm')+
+        ' apuntar desde Alimentos</button></div>'):'';
+      return '<div class="card"><h2>Micronutrientes de hoy</h2>'+
+        '<p class="note" style="margin-bottom:0">Sobre la ingesta de referencia de un adulto (la de las etiquetas). '+
+        'Toca uno para ver con qué lo cubres. Salen de '+conMi+' de tus '+c.lista.length+' tomas.</p>'+
+        '<div class="micros">'+ALIM_MICROS.map(function(k){
+          return micHTML(k,mt[k]||0,+ALIM_VRN[k]||0,' data-a="micro-abrir" data-k="'+k+'"');}).join('')+'</div>'+
+        (ui.microAbierto?(function(){
+          const k=ui.microAbierto,ricos=alimRicosEn(k,6);
+          return '<p class="note" style="margin:11px 0 4px">Lo que más '+esc(String(ALIM_LABEL[k]||k).toLowerCase())+
+            ' trae, por 100 g:</p><div class="chips">'+ricos.map(function(a){
+            return '<button class="chipx" data-a="alim-pick" data-id="'+esc(a.id)+'">'+esc(a.e||'')+' '+esc(a.n)+
+              ' <b>'+fmt(a[k])+' '+esc(ALIM_UNIDAD[k]||'')+'</b></button>';}).join('')+'</div>';})():'')+
+        (cortos.length?('<p class="note" style="margin:11px 0 6px"><b>Hoy vas corto de:</b></p>'+
+          '<div class="falta">'+cortos.slice(0,4).map(function(k){
+            return '<button class="tag" data-a="micro-abrir" data-k="'+k+'">'+esc(ALIM_LABEL[k]||k)+'</button>';}).join('')+'</div>'):
+          '<p class="mini" style="margin:11px 0 0">De lo que sigo, hoy no te falta nada por debajo de la mitad de la referencia.</p>')+
+        '</div>';})()+
     (favs.length?('<div class="card"><h2>Favoritos <span class="mini">a un toque</span></h2><div class="pick">'+favs.map(function(x){
       return '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'">+'+esc(x.nombre)+' <small>'+
         (x.kcal||0)+'/100 g</small></button>';}).join('')+'</div></div>'):'')+
@@ -2312,12 +2802,16 @@ function renderFoodDia(){
          (objK?(' · objetivo '+objK):' · sin objetivo puesto')):
         'esta semana no has apuntado nada todavía')+'</p></div>'+
     '<div class="gtiles">'+
+      '<button class="gtile" data-a="food-vista" data-v="alimentos">'+gymIco('manzana')+
+        '<b>Alimentos</b><span class="n">'+alimTodos().length+'</span><span class="s">kcal y micros</span></button>'+
+      '<button class="gtile" data-a="food-vista" data-v="nevera">'+gymIco('nevera')+
+        '<b>Mi nevera</b><span class="n">'+f.nevera.length+'</span><span class="s">cosas en casa</span></button>'+
+      '<button class="gtile" data-a="food-vista" data-v="ideas">'+gymIco('chispa')+
+        '<b>Ideas</b><span class="n">'+platosCocinables().listos.length+'</span><span class="s">con lo que tienes</span></button>'+
       '<button class="gtile" data-a="food-vista" data-v="cocinar">'+gymIco('olla')+
-        '<b>Qué cocino</b><span class="n">'+platosCocinables().listos.length+'</span><span class="s">salen enteros</span></button>'+
+        '<b>Qué cocino</b><span class="n">'+store.dishes.length+'</span><span class="s">platos tuyos</span></button>'+
       '<button class="gtile" data-a="food-vista" data-v="add" data-p="productos">'+gymIco('caja')+
-        '<b>Mis productos</b><span class="n">'+Object.keys(f.eans).length+'</span><span class="s">guardados</span></button>'+
-      '<button class="gtile" data-a="tab" data-t="types">'+gymIco('libro')+
-        '<b>Días y menús</b><span class="n">'+store.dishes.length+'</span><span class="s">platos</span></button>'+
+        '<b>Mis productos</b><span class="n">'+Object.keys(f.eans).length+'</span><span class="s">de código de barras</span></button>'+
       '<button class="gtile" data-a="tab" data-t="import">'+gymIco('importar')+
         '<b>Importar</b><span class="n">·</span><span class="s">receta de un vídeo</span></button>'+
     '</div></div>';
@@ -2326,11 +2820,14 @@ function foodBuscables(){
   /* todo lo que se puede apuntar, en una sola lista: los productos que has guardado y tus platos */
   const f=food(),out=[];
   Object.keys(f.eans).forEach(function(k){const x=f.eans[k];
-    out.push({v:'ean:'+x.ean,nombre:x.nombre||'',sub:x.marca||'',busca:(x.nombre+' '+(x.marca||'')+' '+x.ean).toLowerCase(),
-      kcal:+x.kcal||0,prot:+x.prot||0,base:100,unidad:'/100 g',etiqueta:'producto'});});
+    out.push({v:'ean:'+x.ean,nombre:x.nombre||'',sub:x.marca||'',busca:alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean),
+      kcal:+x.kcal||0,prot:+x.prot||0,base:100,porDefecto:150,unidad:'/100 g',etiqueta:'producto'});});
   (store.dishes||[]).forEach(function(d){
-    out.push({v:'dish:'+d.id,nombre:d.name||'',sub:(d.icon||'')+' '+rac(d.portions),busca:String(d.name||'').toLowerCase(),
-      kcal:+d.kcal||0,prot:+d.prot||0,base:1,unidad:'/ración',etiqueta:'plato tuyo'});});
+    out.push({v:'dish:'+d.id,nombre:d.name||'',sub:(d.icon||'')+' '+rac(d.portions),busca:alimTxt(d.name||''),
+      kcal:+d.kcal||0,prot:+d.prot||0,base:1,porDefecto:1,unidad:'/ración',etiqueta:'plato tuyo'});});
+  alimTodos().forEach(function(a){
+    out.push({v:'alim:'+a.id,nombre:a.n||'',sub:(a.e||'')+' '+alimSubtexto(a),busca:alimTxt(a.n+' '+(a.nota||'')),
+      kcal:+a.kcal||0,prot:+a.pr||0,base:100,porDefecto:gramosPorDefecto(a),unidad:'/100 g',etiqueta:'alimento'});});
   return out;}
 function renderFoodAdd(){
   const c=foodCtx(),f=c.f,sel=c.sel;
@@ -2346,7 +2843,7 @@ function renderFoodAdd(){
       gymIco(m[1],'gico sm')+'<span>'+m[2]+'</span></button>';}).join('')+'</div>';
   let cuerpo='';
   if(modo==='buscar'){
-    const q=(ui.foodBusca||'').trim().toLowerCase();
+    const q=alimTxt(ui.foodBusca||'').trim();   /* sin tildes a los dos lados: «platano» encuentra «Plátano» */
     const todo=foodBuscables();
     /* sin nada escrito se enseña una muestra corta: volcar el catálogo entero hacía una pantalla
        de kilómetro y medio antes de que el usuario hubiera tecleado una sola letra */
@@ -2370,13 +2867,14 @@ function renderFoodAdd(){
         '<div class="row">'+
           '<label class="fld" style="flex:1 1 92px">'+(elegido.base===1?'raciones':'gramos')+
             '<input id="feG" type="number" min="'+(elegido.base===1?'0.25':'1')+'" step="'+(elegido.base===1?'0.25':'5')+
-            '" value="'+(elegido.base===1?1:150)+'" data-a="food-cant" data-base="'+elegido.base+
+            '" value="'+(elegido.porDefecto||(elegido.base===1?1:150))+'" data-a="food-cant" data-base="'+elegido.base+
+            '" data-def="'+(elegido.porDefecto||(elegido.base===1?1:150))+
             '" data-kcal="'+elegido.kcal+'" data-prot="'+elegido.prot+'"></label>'+
           '<label class="fld" style="flex:1 1 130px">en qué momento<select id="fePos">'+posOptions(momentoAhora())+'</select></label>'+
         '</div>'+
         '<div class="row" style="margin-top:9px">'+
-          '<span class="tag b2" id="fePrevK">'+Math.round(elegido.kcal*(elegido.base===1?1:150)/elegido.base)+' kcal</span>'+
-          '<span class="tag b3" id="fePrevP">'+(Math.round(elegido.prot*(elegido.base===1?1:150)/elegido.base*10)/10)+' g proteína</span></div>'+
+          '<span class="tag b2" id="fePrevK">'+Math.round(elegido.kcal*(elegido.porDefecto||(elegido.base===1?1:150))/elegido.base)+' kcal</span>'+
+          '<span class="tag b3" id="fePrevP">'+(Math.round(elegido.prot*(elegido.porDefecto||(elegido.base===1?1:150))/elegido.base*10)/10)+' g proteína</span></div>'+
         '<button class="btn p gbig" style="margin-top:11px" data-a="fe-add" data-key="'+sel+'">apuntar</button></div>'):'');
   }else if(modo==='scan'){
     cuerpo='<div class="card" style="margin-top:11px">'+
@@ -2443,6 +2941,7 @@ function renderFoodCocinar(){
       '</span></div>';};
   $('#main').innerHTML='<div class="grid">'+
     foodSubcab('Qué puedo cocinar','<span class="tag b3">'+c.listos.length+'</span>')+
+    '<button class="btn p gbig" data-a="plato-nuevo">'+gymIco('mas','gico sm')+' plato nuevo con ingredientes</button>'+
     '<p class="note" style="margin:0">Con lo que llevas en las listas de rutina y en la compra de esta semana. Lo verde te sale entero.</p>'+
     '<div class="card"><div class="row" style="justify-content:space-between">'+
       '<b style="font-size:13.5px">Te sale entero</b><span class="tag b3">'+c.listos.length+' plato'+(c.listos.length===1?'':'s')+'</span></div>'+
@@ -2511,11 +3010,352 @@ function renderFoodCocina(){
       '<div class="card"><div class="empty">Este plato no tiene pasos escritos. Edítalo en «Días y menús → Catálogo» para tenerlos aquí.</div></div>')+
     '</div>';
 }
+/* ===================== nutrición: trozos de pantalla que se repiten ===================== */
+function macroHTML(nm,val,obj,cls){
+  const pct=obj>0?Math.min(100,Math.round(val/obj*100)):0;
+  return '<div class="macro"><div class="mt"><span>'+esc(nm)+'</span><b>'+fmt(val)+' / '+(obj>0?fmt(obj):'—')+' g</b></div>'+
+    '<div class="mbar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';}
+function micHTML(k,val,obj,extra){
+  /* la barra es el % de la ingesta de referencia: por encima del 100 % cambia de color en vez de
+     desbordarse, que era la única forma de ver de un vistazo lo que ya está cubierto */
+  const pct=obj>0?Math.round((+val||0)/obj*100):0;
+  const cls=pct<50?'bajo':(pct>=100?'alto':'');
+  const u=ALIM_UNIDAD[k]||'';
+  return '<'+(extra?'button':'div')+' class="mic'+(ui.microAbierto===k?' on':'')+'"'+(extra||'')+'>'+
+    '<span class="mn">'+esc(ALIM_LABEL[k]||k)+'</span>'+
+    '<span class="mv">'+fmt(Math.round((+val||0)*10)/10)+(obj>0?(' / '+fmt(obj)):'')+' '+u+'</span>'+
+    '<span class="micbar"><i class="'+cls+'" style="width:'+Math.min(100,pct)+'%"></i></span>'+
+    '</'+(extra?'button':'div')+'>';}
+function fuenteHTML(a){
+  if(!a)return '';
+  if(a.fuente==='tuyo')return '<span class="fuente tuyo">✎ lo has puesto tú</span>';
+  if(a.fuente==='usda')return '<span class="fuente usda">✓ USDA FoodData Central</span>';
+  return '<span class="fuente" title="valor de referencia aproximado escrito para la app">≈ tabla de la app</span>';}
+function grupoNombre(g){
+  const x=ALIM_GRUPOS.filter(function(p){return p[0]===g;})[0];
+  return x?x[1].replace(/^\S+\s/,''):g;}
+function alimSubtexto(a){
+  const p=[grupoNombre(a.g)];
+  if(a.nota)p.push(a.nota);
+  return p.join(' · ');}
+/* ---------- Alimentos: el buscador ---------- */
+function renderAlimentos(){
+  const q=ui.alimQ||'',gr=ui.alimGrupo||'';
+  const todos=alimTodos(),res=alimBuscar(q,gr);
+  const ver=q?res.slice(0,40):res.slice(0,12);   /* sin nada escrito, una muestra: 86 seguidos es un scroll inútil */
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Alimentos','<span class="tag b2">'+todos.length+'</span>')+
+    '<p class="note" style="margin:0">Comida a peso, no productos de marca: eso está en «mis productos». '+
+    'Cada uno con sus kcal, sus macros y sus micronutrientes por 100 g.</p>'+
+    '<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="alQ" value="'+esc(q)+'" data-a="alim-busca" placeholder="plátano, lentejas, salmón…"></div>'+
+    '<div class="chips">'+
+      '<button class="chipx'+(gr?'':' on')+'" data-a="alim-grupo" data-g="">todo</button>'+
+      ALIM_GRUPOS.map(function(p){
+        return '<button class="chipx'+(gr===p[0]?' on':'')+'" data-a="alim-grupo" data-g="'+p[0]+'">'+esc(p[1])+'</button>';}).join('')+
+    '</div>'+
+    '<div class="card">'+
+      (ver.length?ver.map(function(a){
+        return '<button class="alim" data-a="alim-pick" data-id="'+esc(a.id)+'">'+
+          '<span class="em">'+esc(a.e||'🍽')+'</span>'+
+          '<span class="nm"><b>'+esc(a.n)+'</b><span class="mini">'+esc(alimSubtexto(a))+'</span></span>'+
+          '<span class="kc">'+(a.kcal||0)+' kcal</span>'+gymIco('chevron','gico sm')+'</button>';}).join(''):
+        '<div class="empty">Nada se llama así. Puedes añadirlo tú abajo con sus kcal.</div>')+
+      (res.length>ver.length?('<p class="mini" style="margin:9px 0 0">y '+(res.length-ver.length)+
+        ' más: afina la búsqueda para verlos</p>'):'')+
+    '</div>'+
+    '<div class="row">'+
+      '<button class="btn s" data-a="alim-nuevo">'+gymIco('mas','gico sm')+' añadir un alimento mío</button>'+
+      '<button class="btn s" data-a="food-vista" data-v="add" data-p="scan">'+gymIco('camara','gico sm')+' escanear un producto</button>'+
+    '</div>'+
+    (usdaOn()?'':('<p class="mini" style="margin:2px 0 0">Los valores de la tabla son aproximados. '+
+      '<button class="btn s" style="padding:3px 9px" data-a="ir-usda">corregirlos con USDA (gratis)</button></p>'))+
+    '</div>';
+}
+/* ---------- Ficha de un alimento ---------- */
+function renderAlimFicha(){
+  const a=alimById(ui.alimSel);
+  if(!a){ui.foodVista='alimentos';return renderAlimentos();}
+  const g=Math.max(1,+ui.alimG||100);
+  const p=alimPorcion(a,g);
+  const enNevera=food().nevera.indexOf(a.id)>=0;
+  const cual=alimTxt(a.n);
+  const platos=(store.dishes||[]).filter(function(d){
+    return (d.ingredients||[]).some(function(l){return alimTxt(l).indexOf(cual)>=0;});});
+  const micros=ALIM_MICROS.filter(function(k){return typeof a[k]==='number';});
+  const raciones=[30,100,150,200];   /* las cuatro de siempre; para otra cosa está el campo «otra» */
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="alimentos">'+gymIco('atras','gico sm')+' Alimentos</button>'+
+      '<h2 class="subtit">'+esc(a.e||'')+' '+esc(a.n)+'</h2></div>'+
+    '<div class="card">'+
+      '<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">'+
+        '<div><div style="font-size:40px;line-height:1">'+esc(a.e||'🍽')+'</div>'+
+          '<p class="mini" style="margin:4px 0 0">'+esc(alimSubtexto(a))+'</p></div>'+
+        fuenteHTML(a)+'</div>'+
+      '<div class="chips">'+raciones.map(function(v){
+        return '<button class="chipx'+(v===g?' on':'')+'" data-a="alim-g" data-n="'+v+'">'+v+' g</button>';}).join('')+
+        '<label class="chipx" style="gap:4px">otra<input type="number" min="1" max="2000" step="5" value="'+g+
+          '" data-a="alim-g-f" style="width:58px;padding:2px 4px;font-size:12px"></label>'+
+      '</div>'+
+      '<div class="tot">'+
+        '<div><b>'+p.kcal+'</b><span>kcal</span></div>'+
+        '<div><b>'+fmt(p.pr)+'</b><span>prot. g</span></div>'+
+        '<div><b>'+fmt(p.ch)+'</b><span>carb. g</span></div>'+
+        '<div><b>'+fmt(p.gr)+'</b><span>grasa g</span></div></div>'+
+      '<p class="mini" style="margin:9px 0 0">de los '+fmt(p.ch)+' g de carbohidrato, '+fmt(p.az)+' g son azúcares y '+
+        fmt(p.fi)+' g fibra'+(p.sa?(' · '+fmt(p.sa)+' g de sal'):'')+'</p>'+
+    '</div>'+
+    (micros.length?('<div class="card"><h2>Micronutrientes <span class="mini">en '+g+' g</span></h2>'+
+      '<div class="micros">'+micros.map(function(k){
+        return micHTML(k,p.mi[k],+ALIM_VRN[k]||0,'');}).join('')+'</div>'+
+      '<p class="mini" style="margin:10px 0 0">La barra es el % de la ingesta de referencia diaria de un adulto '+
+      '(la de las etiquetas europeas). No es una pauta médica ni está calculada para ti.</p></div>'):'')+
+    '<div class="card"><h2>De dónde sale el dato</h2>'+
+      '<p class="note" style="margin-bottom:8px">'+esc(alimFuenteTxt(a))+
+        (a.usdaDesc?(' · «'+esc(a.usdaDesc)+'»'):'')+'</p>'+
+      (a.fuente==='tuyo'?
+        ('<div class="row"><button class="btn s" data-a="alim-editar" data-id="'+esc(a.id)+'">'+gymIco('lapiz','gico sm')+' editarlo</button>'+
+         '<button class="btn d s" data-a="alim-del" data-id="'+esc(a.id)+'">quitarlo</button></div>'):
+        (usdaOn()?
+          ('<div class="row"><button class="btn s" data-a="alim-usda" data-id="'+esc(a.id)+'">'+
+            (a.fuente==='usda'?'volver a consultar USDA':'corregirlo con USDA')+'</button>'+
+           (a.fuente==='usda'?('<button class="btn s" data-a="alim-usda-off" data-id="'+esc(a.id)+'">volver a la tabla</button>'):'')+'</div>'):
+          ('<div class="row"><button class="btn s" data-a="ir-usda">poner la clave de USDA (gratis, 2 min)</button></div>')))+
+    '</div>'+
+    (platos.length?('<div class="card"><h2>Dónde lo usas <span class="mini">'+platos.length+' plato'+(platos.length===1?'':'s')+'</span></h2>'+
+      '<div class="chips">'+platos.slice(0,8).map(function(d){
+        return '<button class="chipx" data-a="dish-edit" data-id="'+esc(d.id)+'">'+esc(d.icon||'🍽')+' '+esc(d.name)+'</button>';}).join('')+
+      '</div></div>'):'')+
+    '<div class="row">'+
+      '<label class="fld" style="flex:0 0 116px">en qué momento<select id="alPos">'+posOptions(momentoAhora())+'</select></label>'+
+      '<button class="btn p" style="flex:1;min-height:46px" data-a="alim-apuntar" data-id="'+esc(a.id)+'">'+
+        gymIco('mas','gico sm')+' apuntar '+g+' g</button></div>'+
+    '<button class="btn s gbig" data-a="alim-nevera" data-id="'+esc(a.id)+'">'+gymIco('nevera','gico sm')+' '+
+      (enNevera?'quitar de la nevera':'a la nevera')+'</button>'+
+    '</div>';
+}
+/* ---------- Mi nevera ---------- */
+function renderNevera(){
+  const dentro=neveraAlimentos();
+  const q=ui.neveraQ||'';
+  const sug=q?alimBuscar(q,'').filter(function(a){return food().nevera.indexOf(a.id)<0;}).slice(0,8):[];
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Mi nevera','<span class="tag b2">'+dentro.length+'</span>')+
+    '<p class="note" style="margin:0">Lo que tienes en casa ahora mismo. Con esto la app te dice qué te sale entero y te propone combinaciones.</p>'+
+    '<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="nvQ" value="'+esc(q)+'" data-a="nevera-busca" placeholder="añadir algo que tengas…"></div>'+
+    (sug.length?('<div class="card">'+sug.map(function(a){
+      return '<button class="alim" data-a="nevera-add" data-id="'+esc(a.id)+'">'+
+        '<span class="em">'+esc(a.e||'🍽')+'</span>'+
+        '<span class="nm"><b>'+esc(a.n)+'</b><span class="mini">'+esc(alimSubtexto(a))+'</span></span>'+
+        gymIco('mas','gico sm')+'</button>';}).join('')+'</div>'):
+      (q?'<div class="card"><div class="empty">Nada se llama así en la tabla de alimentos.</div></div>':''))+
+    '<div class="card"><h2>En casa</h2>'+
+      (dentro.length?('<div class="chips">'+dentro.map(function(a){
+        return '<span class="chipx">'+esc(a.e||'🍽')+' '+esc(a.n)+
+          '<button class="x" data-a="nevera-del" data-id="'+esc(a.id)+'" title="quitar" aria-label="quitar '+esc(a.n)+'">×</button></span>';}).join('')+'</div>'):
+        '<div class="empty">Vacía. Busca arriba lo que tengas, o tráelo de tu lista de la compra.</div>')+
+      '<div class="row" style="margin-top:11px">'+
+        '<button class="btn s" data-a="nevera-compra">'+gymIco('lista','gico sm')+' de mi lista de la compra</button>'+
+        (dentro.length?'<button class="btn s" data-a="nevera-vaciar">vaciar</button>':'')+'</div>'+
+    '</div>'+
+    (dentro.length?('<button class="btn p gbig" data-a="food-vista" data-v="ideas">'+gymIco('chispa','gico sm')+
+      ' dame ideas con esto</button>'):'')+
+    '</div>';
+}
+/* ---------- Ideas con lo que hay ---------- */
+function renderIdeas(){
+  const c=foodCtx(),ob=objetivoMacros();
+  const huecoK=ob.kcal?Math.max(0,ob.kcal-c.ft.kcal):0;
+  const huecoP=ob.prot?Math.max(0,ob.prot-c.ft.prot):0;
+  const dentro=neveraAlimentos();
+  const combis=combinaciones(huecoK,huecoP);
+  ui.ideasCache=combis;
+  const pc=platosCocinables();
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Ideas con lo que tienes')+
+    '<p class="note" style="margin:0">'+(dentro.length?
+      ('Con las '+dentro.length+' cosas de tu nevera.'+(huecoK||huecoP?
+        (' Hoy te quedan <b>'+huecoK+' kcal</b> y <b>'+Math.round(huecoP)+' g de proteína</b>: las combinaciones '+
+         'apuntan a una comida de ese hueco, no a taparlo entero.'):
+        ' Ponte un objetivo en «Comida» y además te las cuadro con lo que te queda del día.')):
+      'Tu nevera está vacía: apunta lo que tengas en casa y aquí salen las combinaciones.')+'</p>'+
+    (dentro.length?'':('<button class="btn p gbig" data-a="food-vista" data-v="nevera">'+gymIco('nevera','gico sm')+
+      ' llenar la nevera</button>'))+
+    (combis.length?('<div class="card"><h2>Combinaciones nuevas '+gymIco('chispa','gico sm')+'</h2>'+
+      '<p class="note" style="margin-bottom:4px">Armadas con lo que tienes: no son platos guardados. Si te gusta una, la guardas. '+
+        'Son para <b>una comida</b>, no para el día entero.</p>'+
+      combis.map(function(x,ix){
+        const bien=Math.abs(x.t.kcal-x.meta.kcal)<=x.meta.kcal*0.2&&x.t.pr>=x.meta.prot*0.8;
+        return '<div class="idea'+(bien?' buena':'')+'">'+
+          '<h4>'+esc(x.nombre)+'</h4>'+
+          '<p class="por">'+x.t.kcal+' kcal · '+fmt(x.t.pr)+' g P · '+fmt(x.t.ch)+' g C · '+fmt(x.t.gr)+' g G'+
+            (bien?' · cuadra con lo que te queda':'')+'</p>'+
+          x.partes.map(function(pt){
+            return '<div class="ingr"><span>'+esc(pt.a.e||'')+' '+esc(String(pt.a.n).toLowerCase())+
+              (/crud/i.test(pt.a.nota||'')?' <span class="mini">(en crudo)</span>':'')+'</span><b>'+pt.g+' g</b></div>';}).join('')+
+          '<div class="row" style="margin-top:9px">'+
+            '<button class="btn s" data-a="idea-guardar" data-ix="'+ix+'">guardar como plato</button>'+
+            '<button class="btn s" data-a="idea-apuntar" data-ix="'+ix+'" data-key="'+c.sel+'">apuntarlo ya</button></div>'+
+        '</div>';}).join('')+'</div>'):'')+
+    '<div class="card"><h2>Tus platos, enteros</h2>'+
+      (pc.listos.length?pc.listos.slice(0,6).map(function(x){
+        const d=x.dish;
+        return '<div class="idea buena"><h4>'+esc(d.icon||'🍽')+' '+esc(d.name)+' <span class="tag b3">sale entero</span></h4>'+
+          '<p class="por">'+rac(d.portions)+' · '+(d.kcal||0)+' kcal y '+fmt(d.prot||0)+' g P por ración</p>'+
+          '<div class="row" style="margin-top:9px"><button class="btn s" data-a="food-cocina" data-id="'+d.id+'">'+
+            gymIco('olla','gico sm')+' cocinar</button></div></div>';}).join(''):
+        '<div class="empty">Ninguno todavía: esto se llena con lo que haya en tus listas de la compra.</div>')+
+    '</div>'+
+    (pc.casi.length?('<div class="card"><h2>Te falta poco</h2>'+pc.casi.slice(0,4).map(function(x){
+      const d=x.dish;
+      return '<div class="idea"><h4>'+esc(d.icon||'🍽')+' '+esc(d.name)+'</h4>'+
+        '<p class="por">te falta: '+esc(x.faltan.slice(0,3).join(', '))+'</p>'+
+        '<div class="row" style="margin-top:9px"><button class="btn s" data-a="cocinar-compra" data-id="'+d.id+'">'+
+          gymIco('mas','gico sm')+' a la compra</button></div></div>';}).join('')+'</div>'):'')+
+    '</div>';
+}
+/* ---------- Crear un plato con ingredientes de la tabla ----------
+   La gracia es que aquí no se teclea ni un número de nutrición: se eligen alimentos y gramos, y las
+   kcal, los macros y los micros salen solos. El plato guarda qué alimentos lleva (dish.alims) para
+   poder recalcularlo si mañana corriges uno con USDA. */
+function platoVacio(){return {id:'',name:'',icon:'🍲',portions:2,alims:[],steps:[]};}
+function gramosPorDefecto(a){
+  /* 100 g de todo era absurdo para el aceite: un plato no lleva 100 g de aceite de oliva.
+     Estos son puntos de partida; el gramaje se edita al lado del ingrediente. */
+  if(!a)return 100;
+  if(esCondimento(a)||a.g==='graso')return 10;
+  if(a.g==='cereal'||a.g==='legumbre')return 80;
+  if(a.g==='verdura'||a.g==='fruta')return 150;
+  if(a.g==='lacteo')return 200;
+  return 150;}
+function platoTotales(pl){
+  const partes=(pl.alims||[]).map(function(x){const a=alimById(x.id);return a?{a:a,g:Math.max(0,+x.g||0)}:null;}).filter(Boolean);
+  const t=sumaAlimentos(partes);
+  const n=Math.max(1,+pl.portions||1),porRacion={mi:{}};
+  ALIM_MACROS.forEach(function(k){porRacion[k]=(k==='kcal')?Math.round(t[k]/n):Math.round(t[k]/n*10)/10;});
+  Object.keys(t.mi).forEach(function(k){porRacion.mi[k]=Math.round(t.mi[k]/n*100)/100;});
+  return {total:t,racion:porRacion,partes:partes};}
+function guardarPlato(){
+  const pl=ui.plato;
+  if(!pl)return 'no hay ningún plato abierto';
+  const nombre=String(pl.name||'').trim();
+  if(!nombre)return 'ponle un nombre al plato';
+  if(!(pl.alims||[]).length)return 'un plato sin ingredientes no tiene nutrición que calcular: añade al menos uno';
+  const r=platoTotales(pl).racion;
+  const d=pl.id?dishById(pl.id):null;
+  const datos={name:nombre.slice(0,70),icon:String(pl.icon||'🍲').slice(0,4),
+    portions:Math.max(1,Math.min(20,+pl.portions||1)),
+    kcal:r.kcal,prot:r.pr,
+    alims:pl.alims.map(function(x){return {id:x.id,g:Math.max(1,+x.g||0)};}),
+    ingredients:pl.alims.map(function(x){const a=alimById(x.id);
+      return x.g+' g '+String((a&&a.n)||'').toLowerCase();}),
+    steps:(pl.steps||[]).filter(Boolean)};
+  if(d){Object.assign(d,datos);save();return 'guardado: '+datos.name;}
+  const nuevo=Object.assign({id:uid('d')},datos);
+  store.dishes.push(nuevo);ui.plato.id=nuevo.id;save();
+  return 'plato creado: '+datos.name+' · '+r.kcal+' kcal por ración';}
+function renderPlatoNuevo(){
+  const pl=ui.plato||(ui.plato=platoVacio());
+  const tt=platoTotales(pl);
+  const q=(ui.platoQ||'').trim();
+  const sug=q?alimBuscar(q,'').slice(0,8):[];
+  const micros=ALIM_MICROS.filter(function(k){return typeof tt.racion.mi[k]==='number'&&tt.racion.mi[k]>0;}).slice(0,6);
+  const fuentes={};tt.partes.forEach(function(x){fuentes[x.a.fuente]=(fuentes[x.a.fuente]||0)+1;});
+  const fuenteTxt=Object.keys(fuentes).map(function(k){
+    return fuentes[k]+' de '+(k==='usda'?'USDA':(k==='tuyo'?'los tuyos':'la tabla de la app'));}).join(' · ');
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comida</button>'+
+      '<h2 class="subtit">'+(pl.id?'Editar plato':'Plato nuevo')+'</h2></div>'+
+    '<div class="card"><div class="row">'+
+      '<label class="fld" style="flex:0 0 60px">icono<input id="plIcon" value="'+esc(pl.icon||'🍲')+'" data-a="plato-f" data-k="icon" maxlength="4"></label>'+
+      '<label class="fld" style="flex:1 1 110px">nombre<input id="plName" value="'+esc(pl.name||'')+'" data-a="plato-f" data-k="name" placeholder="Pollo con arroz y brócoli"></label>'+
+      '<label class="fld" style="flex:0 0 84px">raciones<input id="plPor" type="number" min="1" max="20" step="1" value="'+(+pl.portions||2)+'" data-a="plato-f" data-k="portions"></label>'+
+    '</div></div>'+
+    '<div class="card"><h2>Ingredientes <span class="mini">'+tt.partes.length+'</span></h2>'+
+      '<p class="note" style="margin-bottom:6px">Búscalos en la tabla y las kcal, los macros y los micros salen solos. No hay que teclear ningún número de nutrición.</p>'+
+      (tt.partes.length?tt.partes.map(function(x,ix){
+        return '<div class="ingr"><span>'+esc(x.a.e||'')+' '+esc(String(x.a.n).toLowerCase())+'</span>'+
+          '<span class="row" style="gap:6px;flex:0 0 auto">'+
+          '<input type="number" min="1" max="3000" step="5" value="'+x.g+'" data-a="plato-ing-g" data-ix="'+ix+'" style="width:72px;text-align:right">'+
+          '<span class="mini">g</span>'+
+          '<button class="btn d s" style="padding:3px 8px" data-a="plato-ing-del" data-ix="'+ix+'" title="quitar">×</button></span></div>';}).join(''):
+        '<div class="empty">Todavía no lleva nada.</div>')+
+      '<div class="buscador" style="margin-top:10px">'+gymIco('lupa','gico sm')+
+        '<input id="plQ" value="'+esc(ui.platoQ||'')+'" data-a="plato-busca" placeholder="añadir un ingrediente…"></div>'+
+      (sug.length?('<div style="margin-top:4px">'+sug.map(function(a){
+        return '<button class="alim" data-a="plato-ing-add" data-id="'+esc(a.id)+'">'+
+          '<span class="em">'+esc(a.e||'🍽')+'</span>'+
+          '<span class="nm"><b>'+esc(a.n)+'</b><span class="mini">'+esc(alimSubtexto(a))+'</span></span>'+
+          '<span class="kc">'+(a.kcal||0)+' kcal</span>'+gymIco('mas','gico sm')+'</button>';}).join('')+'</div>'):'')+
+    '</div>'+
+    '<div class="card"><h2>Sale a <span class="mini">por ración</span></h2>'+
+      '<div class="tot">'+
+        '<div><b>'+tt.racion.kcal+'</b><span>kcal</span></div>'+
+        '<div><b>'+fmt(tt.racion.pr)+'</b><span>prot. g</span></div>'+
+        '<div><b>'+fmt(tt.racion.ch)+'</b><span>carb. g</span></div>'+
+        '<div><b>'+fmt(tt.racion.gr)+'</b><span>grasa g</span></div></div>'+
+      (micros.length?('<div class="micros">'+micros.map(function(k){
+        return micHTML(k,tt.racion.mi[k],+ALIM_VRN[k]||0,'');}).join('')+'</div>'):'')+
+      '<p class="mini" style="margin:10px 0 0">'+(tt.partes.length?
+        ('Calculado con '+tt.partes.length+' ingrediente'+(tt.partes.length===1?'':'s')+'. <span class="fuente">'+esc(fuenteTxt)+'</span>'):
+        'Añade ingredientes y esto se rellena solo.')+'</p>'+
+    '</div>'+
+    '<div class="card"><h2>Pasos <span class="mini">opcional</span></h2>'+
+      '<p class="note" style="margin-bottom:6px">Si los escribes, tendrás el modo cocina paso a paso con las cantidades escaladas. Uno por línea.</p>'+
+      '<textarea id="plSteps" rows="4" data-a="plato-f" data-k="steps" placeholder="Cuece el arroz 12 min.&#10;Saltea el pollo…">'+
+        esc((pl.steps||[]).join('\n'))+'</textarea></div>'+
+    '<button class="btn p gbig" data-a="plato-guardar">'+(pl.id?'guardar los cambios':'guardar el plato')+'</button>'+
+    '</div>';
+}
+/* ---------- Un alimento tuyo ----------
+   Para lo que no está en la tabla. Los micros son opcionales: si no los pones, ese alimento
+   simplemente no suma en la tarjeta de micronutrientes, que es más honesto que poner ceros. */
+function renderAlimNuevo(){
+  const a=ui.alimNuevo||(ui.alimNuevo={});
+  const campo=function(k,etq,ph,tipo,paso){
+    return '<label class="fld">'+esc(etq)+'<input '+(tipo?('type="'+tipo+'" min="0" step="'+(paso||'0.1')+'"'):'')+
+      ' value="'+esc(a[k]==null?'':a[k])+'" data-a="alim-f" data-k="'+k+'" placeholder="'+esc(ph||'')+'"></label>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="alimentos">'+gymIco('atras','gico sm')+' Alimentos</button>'+
+      '<h2 class="subtit">'+(a.id?'Editar alimento':'Alimento nuevo')+'</h2></div>'+
+    '<div class="card">'+
+      '<p class="note">Todo por 100 g, como en las tablas y en las etiquetas. Con las kcal y la proteína ya vale; lo demás, si lo sabes.</p>'+
+      '<div class="fgrid c3">'+
+        campo('n','nombre','Lentejas de mi madre')+
+        campo('e','emoji','🍲')+
+        '<label class="fld">grupo<select data-a="alim-f" data-k="g">'+ALIM_GRUPOS.map(function(p){
+          return '<option value="'+p[0]+'"'+((a.g||'otro')===p[0]?' selected':'')+'>'+esc(p[1])+'</option>';}).join('')+'</select></label>'+
+        campo('nota','apunte (opcional)','crudo, sin piel')+
+        campo('kcal','kcal /100 g','','number','1')+
+        campo('pr','proteína g','','number')+
+        campo('ch','carbohidrato g','','number')+
+        campo('gr','grasa g','','number')+
+        campo('az','azúcares g','','number')+
+        campo('fi','fibra g','','number')+
+        campo('sa','sal g','','number','0.01')+
+      '</div></div>'+
+    '<div class="card"><h2>Micronutrientes <span class="mini">opcional</span></h2>'+
+      '<p class="note">Si no los pones, este alimento no cuenta en la tarjeta de micros del día. Prefiero eso a rellenarlo con ceros que no son verdad.</p>'+
+      '<div class="fgrid c3">'+ALIM_MICROS.map(function(k){
+        return campo(k,ALIM_LABEL[k]+' ('+ALIM_UNIDAD[k]+')','','number','0.01');}).join('')+'</div></div>'+
+    '<button class="btn p gbig" data-a="alim-guardar">'+(a.id?'guardar los cambios':'guardar el alimento')+'</button>'+
+    '</div>';
+}
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='add')return renderFoodAdd();
   if(v==='cocinar')return renderFoodCocinar();
   if(v==='cocina')return renderFoodCocina();
+  if(v==='alimentos')return renderAlimentos();
+  if(v==='ficha')return renderAlimFicha();
+  if(v==='nevera')return renderNevera();
+  if(v==='ideas')return renderIdeas();
+  if(v==='plato')return renderPlatoNuevo();
+  if(v==='alimnuevo')return renderAlimNuevo();
   return renderFoodDia();
 }
 
@@ -2713,7 +3553,11 @@ const GYM_ICO={
   lupa:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
   camara:'<path d="M3 8.5A2 2 0 0 1 5 6.5h2l1.5-2h7L17 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>',
   lapiz:'<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/>',
-  reloj:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+  reloj:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  manzana:'<path d="M12 8.2c-1.3-1.4-3-1.9-4.4-1.2C5.6 7.9 5 10.6 6 13.6c.9 2.7 2.6 4.9 4 4.9.7 0 1.3-.4 2-.4s1.3.4 2 .4c1.4 0 3.1-2.2 4-4.9 1-3 .4-5.7-1.6-6.6-1.4-.7-3.1-.2-4.4 1.2z"/><path d="M12 8.2V5.6c0-1 .8-1.9 1.9-2.1"/>',
+  nevera:'<rect x="5.5" y="2.8" width="13" height="18.4" rx="2.5"/><path d="M5.5 10h13M9 6v2M9 13v2.5"/>',
+  chispa:'<path d="M12 3l1.9 4.9L19 9.8l-4.4 3.1.6 5.3-3.2-2.6-3.2 2.6.6-5.3L5 9.8l5.1-1.9z"/>',
+  balanza:'<path d="M12 4v16M7 8h10"/><path d="M4 14a3 3 0 0 0 6 0l-3-6z"/><path d="M14 14a3 3 0 0 0 6 0l-3-6z"/>'
 };
 function gymIco(n,cls){return '<svg class="'+(cls||'gico')+'" viewBox="0 0 24 24" aria-hidden="true">'+(GYM_ICO[n]||'')+'</svg>';}
 function gymSubcab(titulo,extra){
@@ -3622,8 +4466,11 @@ function renderTypesDishes(){
         '<span class="mini">'+rac(d.portions)+' · '+d.kcal+' kcal · '+d.prot+' g P</span>'+
         (b&&isBatch(d.batchId)?'<span class="tag '+tagFor(d.batchId)+'" style="margin-top:5px">'+esc(b.label)+'</span>':'')+
         '</div>';}).join('')||'<div class="empty">Nada con ese nombre.</div>')+'</div>'+
-    '<div class="row" style="margin-top:12px"><button class="btn p" data-a="dish-new">+ Nuevo plato</button>'+
-    '<button class="btn s" data-a="tab" data-t="import">📥 importar de un vídeo</button></div></div>';}
+    '<div class="row" style="margin-top:12px"><button class="btn p" data-a="plato-nuevo">+ Plato con ingredientes</button>'+
+    '<button class="btn s" data-a="dish-new">+ a mano</button>'+
+    '<button class="btn s" data-a="tab" data-t="import">📥 importar de un vídeo</button></div>'+
+    '<p class="mini" style="margin:8px 0 0">«Con ingredientes» calcula solo las kcal, los macros y los micros desde la tabla de alimentos. '+
+    '«A mano» es el editor de siempre, para cuando ya te sabes los números.</p></div>';}
 function renderTypes(){
   const v=ui.typesVista||'';
   if(v==='meals')return renderTypesMeals();
@@ -4234,6 +5081,27 @@ function renderAjustes(){
         '<li>Copia la dirección que te da (acaba en <code>.workers.dev</code>) y pégala aquí arriba. Dale a «probar».</li>' +
         '</ol><p class="mini" style="margin:8px 0 0">El Worker solo acepta enlaces de TikTok, YouTube e Instagram: no es un proxy abierto. ' +
         'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}
+    </div>
+
+    <div class="card" data-cfg="usda"><h2>Datos de los alimentos</h2>
+      <p class="note">La tabla de alimentos que trae la app son <b>${ALIMENTOS.length} valores de referencia aproximados</b>,
+      escritos a partir de tablas de composición publicadas. Sirven para hacerte una idea, no son una base oficial.
+      Con una clave gratuita de USDA FoodData Central, cada alimento que abras se corrige con el dato oficial y se guarda ya corregido.</p>
+      <label class="fld">tu clave de FoodData Central
+        <input type="text" inputmode="latin" autocomplete="off" value="${esc((store.usda||{}).key||'')}" data-a="usda-f" placeholder="pégala aquí"></label>
+      <div class="row" style="margin-top:9px">
+        <button class="btn s" data-a="usda-probar">probar</button>
+        <button class="btn s" data-a="usda-guia">${ui.usdaGuia ? '▴ ocultar los pasos' : '▾ cómo sacarla (2 min, gratis)'}</button>
+        <span class="sp"></span>
+        <span class="mini">${Object.keys(food().usda).length} alimento(s) ya corregidos</span></div>
+      ${ui.usdaGuia ? ('<ol class="mini" style="margin:11px 0 0;padding-left:20px;line-height:1.7">' +
+        '<li>Entra en <a href="https://fdc.nal.usda.gov/api-key-signup.html" target="_blank" rel="noopener">fdc.nal.usda.gov</a> y pide una clave con tu correo.</li>' +
+        '<li>Te llega al momento por email. Cópiala y pégala aquí arriba.</li>' +
+        '<li>Listo: al abrir la ficha de un alimento verás el sello verde de USDA en vez de «aproximado».</li>' +
+        '</ol><p class="mini" style="margin:8px 0 0">La clave se queda en tu móvil. Lo único que sale hacia USDA es ' +
+        '<b>el nombre del alimento en inglés</b> —«bananas, raw»—: ni lo que comes, ni tus menús, ni nada tuyo. ' +
+        'Eso sí: se guarda junto al resto de tus datos, así que si le pasas a alguien tu copia de seguridad en JSON, la clave va dentro.</p>') : ''}
+      ${Object.keys(food().usda).length ? ('<div class="row" style="margin-top:10px"><button class="btn d s" data-a="usda-olvidar-todo">volver todo a la tabla aproximada</button></div>') : ''}
     </div>
 
     <div class="card" data-cfg="franja"><h2>La franja del día</h2>
@@ -4994,12 +5862,14 @@ function act(a,el){
     case 'food-obj-toggle':ui.foodObjOpen=!ui.foodObjOpen;render();break;
     case 'fe-add':{const pick=(document.getElementById('feSel')||{}).value||'';
       const when=(document.getElementById('fePos')||{}).value||'comida';
-      const m=/^(ean|dish):(.+)$/.exec(pick);if(!m){flash('elige primero qué producto o qué plato es');break;}
-      /* el hueco por defecto depende de la unidad: 150 g de un producto, 1 ración de un plato.
+      const m=/^(ean|dish|alim):(.+)$/.exec(pick);if(!m){flash('elige primero qué alimento, producto o plato es');break;}
+      /* el hueco por defecto depende de la unidad: 150 g de algo que se pesa, 1 ración de un plato.
          Con el viejo «||150» un campo vacío apuntaba ciento cincuenta raciones de lentejas. */
-      const porDefecto=(m[1]==='ean')?150:1;
-      const g=Math.max(0.01,num((document.getElementById('feG')||{}).value,porDefecto)||porDefecto);
-      const opt=(m[1]==='ean')?{ean:m[2],grams:g,pos:when,when:when}:{dishId:m[2],rac:g,pos:when,when:when};
+      const campoG=document.getElementById('feG');
+      const porDefecto=Math.max(0.01,+(campoG&&campoG.dataset.def)||((m[1]==='dish')?1:150));
+      const g=Math.max(0.01,num(campoG?campoG.value:'',porDefecto)||porDefecto);
+      const opt=(m[1]==='ean')?{ean:m[2],grams:g,pos:when,when:when}:
+        ((m[1]==='alim')?{alim:m[2],grams:g,pos:when,when:when}:{dishId:m[2],rac:g,pos:when,when:when});
       flash(addFoodEntry(el.dataset.key,opt));
       ui.foodSel='';   /* apuntado: la ficha se cierra y el buscador queda listo para lo siguiente */
       render();break;}
@@ -5129,6 +5999,67 @@ function act(a,el){
       render();window.scrollTo(0,0);break;}
     case 'imp-traer':impTraerEnlace();break;
     case 'lector-probar':lectorProbar();break;
+    case 'alim-pick':{ui.alimSel=el.dataset.id||'';ui.alimG=100;ui.foodVista='ficha';
+      if(ui.tab!=='food')ui.tab='food';
+      render();window.scrollTo(0,0);break;}
+    case 'alim-grupo':{ui.alimGrupo=el.dataset.g||'';render();break;}
+    case 'alim-g':{ui.alimG=Math.max(1,+el.dataset.n||100);render();break;}
+    case 'alim-apuntar':{
+      const sel=(ui.foodDate&&foodKey(ui.foodDate))?foodKey(ui.foodDate):iso(new Date());
+      const pos=document.getElementById('alPos');
+      flash(addFoodEntry(sel,{alim:el.dataset.id,grams:Math.max(1,+ui.alimG||100),pos:pos?pos.value:momentoAhora()}));
+      render();break;}
+    case 'alim-nevera':{flash(neveraToggle(el.dataset.id));render();break;}
+    case 'alim-usda':{flash('consultando USDA…');
+      usdaBuscar(el.dataset.id).then(function(r){render();flash(r.msg);});break;}
+    case 'alim-usda-off':{flash(usdaOlvidar(el.dataset.id));render();break;}
+    case 'alim-nuevo':{ui.alimNuevo={};ui.foodVista='alimnuevo';render();window.scrollTo(0,0);break;}
+    case 'alim-editar':{const a=alimById(el.dataset.id);
+      if(a){ui.alimNuevo=Object.assign({},a);ui.foodVista='alimnuevo';render();window.scrollTo(0,0);}break;}
+    case 'alim-del':{const a=alimById(el.dataset.id);
+      confirmar('¿Quitar «'+((a&&a.n)||'este alimento')+'»? Las tomas que ya apuntaste se quedan como están.','Sí, quitarlo')
+        .then(function(ok){if(!ok)return;flash(delAlimPropio(el.dataset.id));ui.foodVista='alimentos';render();});
+      break;}
+    case 'alim-guardar':{
+      const r=addAlimPropio(ui.alimNuevo||{});
+      flash(r.msg);
+      if(r.ok){ui.alimSel=r.id;ui.alimG=100;ui.foodVista='ficha';ui.alimNuevo=null;render();window.scrollTo(0,0);}
+      break;}
+    case 'micro-abrir':{ui.microAbierto=(ui.microAbierto===el.dataset.k)?'':(el.dataset.k||'');render();break;}
+    case 'nevera-add':{flash(neveraToggle(el.dataset.id));ui.neveraQ='';render();break;}
+    case 'nevera-del':{flash(neveraToggle(el.dataset.id));render();break;}
+    case 'nevera-vaciar':{confirmar('¿Vaciar la nevera entera?','Sí, vaciarla').then(function(ok){
+      if(!ok)return;flash(neveraVaciar());render();});break;}
+    case 'nevera-compra':{flash(neveraDesdeCompra());render();break;}
+    case 'idea-guardar':{flash(guardarCombinacion(+el.dataset.ix));render();break;}
+    case 'idea-apuntar':{
+      const c=(ui.ideasCache||[])[+el.dataset.ix];
+      if(!c){flash('esa idea ya no está');break;}
+      const key=el.dataset.key,pos=momentoAhora();
+      c.partes.forEach(function(pt){addFoodEntry(key,{alim:pt.a.id,grams:pt.g,pos:pos});});
+      flash('apuntado: '+c.nombre+' · '+c.t.kcal+' kcal');render();break;}
+    case 'plato-nuevo':{ui.plato=platoVacio();ui.platoQ='';ui.foodVista='plato';render();window.scrollTo(0,0);break;}
+    case 'plato-ing-add':{
+      if(!ui.plato)ui.plato=platoVacio();
+      const id=el.dataset.id;
+      if(ui.plato.alims.some(function(x){return x.id===id;})){flash('ya lo lleva');break;}
+      ui.plato.alims.push({id:id,g:gramosPorDefecto(alimById(id))});ui.platoQ='';render();break;}
+    case 'plato-ing-del':{if(ui.plato)ui.plato.alims.splice(+el.dataset.ix,1);render();break;}
+    case 'plato-guardar':{const m=guardarPlato();flash(m);render();break;}
+    case 'ir-usda':{ui.tab='ajustes';ui.usdaGuia=true;render();
+      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="usda"]');
+        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
+        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
+      break;}
+    case 'usda-probar':usdaProbar();break;
+    case 'usda-guia':ui.usdaGuia=!ui.usdaGuia;render();break;
+    case 'usda-olvidar-todo':{
+      const n=Object.keys(food().usda).length;
+      if(!n){flash('no hay nada corregido todavía');break;}
+      confirmar('¿Volver los '+n+' alimento(s) al valor aproximado de la tabla?','Sí, volver a la tabla').then(function(ok){
+        if(!ok)return;
+        food().usda={};save();render();flash('listo: todo vuelve a la tabla de la app');});
+      break;}
     case 'app-actualizar':{flash('actualizando…');
       /* recarga saltándose la caché: el service worker ya pide con no-store, pero la propia
          navegación también tiene que salir a la red */
@@ -6328,6 +7259,8 @@ document.addEventListener('input',e=>{
     return;}
   if(a==='lector-f'){if(!store.lector)store.lector={proxy:''};
     store.lector.proxy=String(el.value||'').trim().slice(0,300);save();return;}   /* crudo mientras escribe */
+  if(a==='usda-f'){if(!store.usda)store.usda={key:''};
+    store.usda.key=String(el.value||'').trim().slice(0,120);save();return;}   /* sin re-render: desmontaría el campo */
   if(a==='imp-f'){
     const f=el.dataset.f;
     if(f==='destinoLote'||f==='destinoDia'){ui.imp[f]=el.value||'';return;}
@@ -6345,6 +7278,15 @@ document.addEventListener('input',e=>{
     const k=document.getElementById('fePrevK'),p=document.getElementById('fePrevP');
     if(k)k.textContent=Math.round((+el.dataset.kcal||0)*n/base)+' kcal';
     if(p)p.textContent=(Math.round((+el.dataset.prot||0)*n/base*10)/10)+' g proteína';
+    return;}
+  if(a==='alim-busca'||a==='nevera-busca'||a==='plato-busca'){
+    /* mismo patrón que la búsqueda de comida: se re-renderiza con retraso y se devuelve el foco al
+       campo, porque render() reescribe #main entero y desmontaría el cursor a cada letra */
+    ui[a==='alim-busca'?'alimQ':(a==='nevera-busca'?'neveraQ':'platoQ')]=el.value||'';
+    clearTimeout(searchDebounce);
+    searchDebounce=setTimeout(function(){const f=document.activeElement&&document.activeElement.id;
+      render();if(f){const nx=document.getElementById(f);if(nx){nx.focus();
+        try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}}},160);
     return;}
   if(a==='food-busca'){ui.foodBusca=el.value||'';
     clearTimeout(searchDebounce);
@@ -6428,6 +7370,27 @@ document.addEventListener('change',e=>{
       if(!Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses=[];
       store.rotation.svcMeses[ix]=Math.max(1,Math.min(6,+el.value||1));save();render();break;}
     case 'lista-nombre':{const l=listaById(el.dataset.id);if(l){l.nombre=String(el.value||'').slice(0,60);save();}break;}
+    case 'alim-g-f':{ui.alimG=Math.max(1,Math.min(2000,Math.round(+el.value||100)));render();break;}
+    case 'plato-f':{
+      if(!ui.plato)ui.plato=platoVacio();
+      const k=el.dataset.k;
+      if(k==='steps')ui.plato.steps=String(el.value||'').split('\n').map(function(x){return x.trim();}).filter(Boolean);
+      else if(k==='portions')ui.plato.portions=Math.max(1,Math.min(20,Math.round(+el.value||1)));
+      else ui.plato[k]=String(el.value||'').slice(0,k==='icon'?4:70);
+      render();break;}
+    case 'plato-ing-g':{
+      if(!ui.plato)break;
+      const x=ui.plato.alims[+el.dataset.ix];
+      if(x)x.g=Math.max(1,Math.min(3000,Math.round(+el.value||0)));
+      render();break;}
+    case 'alim-f':{
+      if(!ui.alimNuevo)ui.alimNuevo={};
+      const k=el.dataset.k;
+      ui.alimNuevo[k]=(k==='n'||k==='e'||k==='g'||k==='nota')?String(el.value||''):el.value;
+      break;}
+    case 'usda-f':{
+      if(!store.usda)store.usda={key:''};
+      store.usda.key=String(el.value||'').trim().slice(0,120);save();render();break;}
     case 'lector-f':{
       /* al salir del campo se completa el https:// que falte: guardarlo tal cual lo dejaba inservible
          (fetch lo resolvía contra la propia web) y además normalize() lo borraba al recargar */
@@ -6629,6 +7592,13 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   food,foodKey,offNum,mapOffProduct,addEanProduct,delEanProduct,toggleFavEan,porcionDe,foodLog,addFoodEntry,delFoodEntry,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   FOOD_CATALOGO,foodImportCatalogo,
+  ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
+  alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,
+  microTotales,microPct,microCortos,alimRicosEn,
+  neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,
+  usdaKey,usdaOn,mapUsdaFood,usdaBuscar,usdaOlvidar,USDA_NUM,
+  objetivoMacros,sumaAlimentos,combinaciones,metaDePlato,topeRacion,esCondimento,ALIM_CONDIMENTO,guardarCombinacion,platoVacio,platoTotales,guardarPlato,gramosPorDefecto,
+  renderAlimentos,renderAlimFicha,renderNevera,renderIdeas,renderPlatoNuevo,renderAlimNuevo,
   esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,loQueHay,escalaIng,parseIng,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,

@@ -822,16 +822,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // ===================== Rediseño de Comida y Entreno =====================
 
-  // 36) Comida: el resumen del día es un anillo de kcal + barra de proteína (no tres barras y cuatro KPI)
+  // 36) Comida: el resumen del día es un anillo de kcal + los tres macros (no cuatro KPI sueltos).
+  // Antes solo había barra de proteína; desde la app de nutrición van proteína, carbohidrato y grasa.
   await gotoFood('');
   await page.waitForTimeout(150);
   const comidaHero = await page.evaluate(() => ({
     ring: !!document.querySelector('#main .ringFill'),
-    protBar: !!document.querySelector('#main .protrow'),
+    macros: document.querySelectorAll('#main .macros .macro').length,
+    etiquetas: [...document.querySelectorAll('#main .macros .mt span')].map(x => x.textContent.trim()),
     noOldKpis: !document.querySelector('#main .kpis'),
   }));
-  check('Comida resume el día con un anillo de kcal y una barra de proteína, sin los cuatro KPI de antes',
-    comidaHero.ring && comidaHero.protBar && comidaHero.noOldKpis, JSON.stringify(comidaHero));
+  check('Comida resume el día con un anillo de kcal y los tres macros, sin los cuatro KPI de antes',
+    comidaHero.ring && comidaHero.macros === 3 && comidaHero.noOldKpis &&
+    comidaHero.etiquetas.join('|') === 'proteína|carbohidratos|grasa', JSON.stringify(comidaHero));
 
   // 37) Comida: escanear / a mano / mis productos ya no viven en la portada, sino como modos de
   // «apuntar comida»; la portada no enseña ninguno de sus formularios
@@ -2349,7 +2352,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoFood('');
   const portadaComida = await page.evaluate(() => ({
     ring: !!document.querySelector('#main .ringFill'),
-    protBar: !!document.querySelector('#main .protrow'),
+    macros: document.querySelectorAll('#main .macros .macro').length,
     cifras: document.querySelectorAll('#main .dosdatos b').length,
     // "te quedan" y "cocinado hoy" NO pueden ser barras: no son progreso hacia nada
     cifrasSinBarra: !document.querySelector('#main .dosdatos .fbar'),
@@ -2359,8 +2362,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     sinFormulario: !document.getElementById('feSel') && !document.getElementById('foodNewNombre'),
   }));
   check('la portada de Comida es anillo + cifras + semana + fichas, sin el formulario de apuntar',
-    portadaComida.ring && portadaComida.protBar && portadaComida.cifras === 2 &&
-    portadaComida.cifrasSinBarra && portadaComida.semana === 7 && portadaComida.fichas === 4 &&
+    portadaComida.ring && portadaComida.macros === 3 && portadaComida.cifras === 2 &&
+    portadaComida.cifrasSinBarra && portadaComida.semana === 7 && portadaComida.fichas === 6 &&
     portadaComida.apuntar && portadaComida.sinFormulario, JSON.stringify(portadaComida));
 
   // 46) secuencia completa de apuntar: buscar → elegir → la previaFe sigue lo que tecleas sin perder
@@ -2516,6 +2519,195 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('"hecho" apunta una ración de lo cocinado y te devuelve a la portada de Comida',
     trasHecho.kcal === kcalAntesHecho + racionDeCm && trasHecho.vista === '',
     JSON.stringify({ kcalAntesHecho, ...trasHecho, racionDeCm }));
+
+  // ===================== la app de nutrición: alimentos, micros, nevera, ideas y platos =====================
+  // 55) la tabla de alimentos se busca sin tildes y filtra por grupo
+  {
+    await gotoFood('alimentos');
+    const tabla = await page.evaluate(() => ({
+      total: window.PG.alimTodos().length,
+      conTilde: window.PG.alimBuscar('plátano', '').map((a) => a.n),
+      sinTilde: window.PG.alimBuscar('platano', '').map((a) => a.n),
+      soloFruta: window.PG.alimBuscar('', 'fruta').every((a) => a.g === 'fruta'),
+      // cada alimento tiene que cuadrar por dentro: kcal ≈ 4·prot + 4·carb + 9·grasa
+      descuadres: window.PG.ALIMENTOS.filter((a) => {
+        const teo = 4 * (a.pr || 0) + 4 * ((a.ch || 0) - (a.fi || 0)) + 2 * (a.fi || 0) + 9 * (a.gr || 0);
+        return Math.abs(a.kcal - teo) > 12 && Math.abs(a.kcal - teo) / Math.max(1, a.kcal) > 0.18;
+      }).map((a) => a.n),
+    }));
+    check('la tabla de alimentos se busca con y sin tildes, filtra por grupo y sus kcal cuadran con sus macros',
+      tabla.total >= 80 && tabla.conTilde[0] === 'Plátano' && tabla.sinTilde[0] === 'Plátano' &&
+      tabla.soloFruta && tabla.descuadres.length === 0, JSON.stringify(tabla));
+  }
+
+  // 56) la ficha: macros, micros sobre la ingesta de referencia y de dónde sale el dato
+  {
+    await page.evaluate(() => { window.PG.ui.alimSel = 'al-platano'; window.PG.ui.alimG = 100; window.PG.ui.foodVista = 'ficha'; window.PG.render(); });
+    await page.waitForTimeout(150);
+    const ficha = await page.evaluate(() => ({
+      titulo: document.querySelector('#main .subtit').textContent.trim(),
+      totales: [...document.querySelectorAll('#main .tot b')].map((x) => x.textContent.trim()),
+      micros: document.querySelectorAll('#main .mic').length,
+      // el potasio del plátano son 358 mg sobre una referencia de 2000: la barra NO puede ir al 100 %
+      potasio: (() => {
+        const t = [...document.querySelectorAll('#main .mic')].find((x) => /potasio/i.test(x.textContent));
+        return t ? { txt: t.querySelector('.mv').textContent.trim(), ancho: t.querySelector('.micbar i').style.width } : null;
+      })(),
+      fuente: (document.querySelector('#main .fuente') || {}).textContent || '',
+      sinClaveUsda: !!document.querySelector('#main [data-a="ir-usda"]'),
+    }));
+    check('la ficha de un alimento da macros, micros sobre la referencia diaria y dice que el dato es aproximado',
+      /Plátano/.test(ficha.titulo) && ficha.totales[0] === '89' && ficha.micros >= 5 &&
+      ficha.potasio && ficha.potasio.ancho === '18%' && /tabla de la app/.test(ficha.fuente) && ficha.sinClaveUsda,
+      JSON.stringify(ficha));
+  }
+
+  // 57) apuntar desde la ficha suma micronutrientes al día; un producto de código de barras no los trae
+  {
+    const hoyMic = isoDate(new Date());
+    await page.evaluate((k) => { window.PG.food().log[k] = []; window.PG.save(); }, hoyMic);
+    await page.evaluate(() => { window.PG.ui.alimSel = 'al-espinaca'; window.PG.ui.alimG = 100; window.PG.ui.foodVista = 'ficha'; window.PG.render(); });
+    await page.waitForTimeout(150);
+    await page.click('[data-a="alim-apuntar"]');
+    await page.waitForTimeout(250);
+    const conMicros = await page.evaluate((k) => ({
+      tomas: window.PG.foodLog(k).length,
+      mi: window.PG.microTotales(k),
+      // «vas corto de» va ordenado del que peor está al que menos: con 100 g de espinaca y nada más,
+      // la vitamina D (que la espinaca no tiene) va la primera y el folato (194 de 200 µg) no sale
+      cortos: window.PG.microCortos(k),
+      pctFolato: window.PG.microPct('fo', window.PG.microTotales(k).fo || 0),
+    }), hoyMic);
+    check('apuntar un alimento desde su ficha suma sus micronutrientes al día y ordena lo que falta',
+      conMicros.tomas === 1 && conMicros.mi.fe > 2 && conMicros.mi.vc > 20 && conMicros.pctFolato > 90 &&
+      conMicros.cortos[0] === 'vd' && conMicros.cortos.indexOf('fo') < 0, JSON.stringify(conMicros));
+  }
+
+  // 58) el día enseña los tres macros y la tarjeta de micros, con «hoy vas corto de»
+  {
+    await gotoFood('');
+    const diaMic = await page.evaluate(() => ({
+      macros: [...document.querySelectorAll('#main .macros .mt span')].map((x) => x.textContent.trim()),
+      micros: document.querySelectorAll('#main .micros .mic').length,
+      cortos: document.querySelectorAll('#main .falta .tag').length,
+      fichas: [...document.querySelectorAll('#main .gtile b')].map((x) => x.textContent.trim()),
+    }));
+    check('la portada del día lleva los tres macros, la tarjeta de micros y las fichas de la app de comida',
+      diaMic.macros.join('|') === 'proteína|carbohidratos|grasa' && diaMic.micros === 9 && diaMic.cortos > 0 &&
+      diaMic.fichas.indexOf('Alimentos') >= 0 && diaMic.fichas.indexOf('Mi nevera') >= 0 &&
+      diaMic.fichas.indexOf('Ideas') >= 0, JSON.stringify(diaMic));
+  }
+
+  // 59) tocar un micronutriente enseña con qué alimentos se cubre
+  {
+    await page.click('#main .micros .mic');
+    await page.waitForTimeout(200);
+    const abierto = await page.evaluate(() => ({
+      k: window.PG.ui.microAbierto,
+      sugeridos: [...document.querySelectorAll('#main .chips .chipx[data-a="alim-pick"]')].map((x) => x.textContent.trim()),
+    }));
+    check('tocar un micronutriente propone los alimentos que más lo traen',
+      !!abierto.k && abierto.sugeridos.length >= 3, JSON.stringify(abierto));
+  }
+
+  // 60) la nevera guarda, e Ideas propone combinaciones de UNA comida, sin repetir alimento
+  //     ni proponer guarniciones de ajo (los condimentos no son pieza principal de un plato)
+  {
+    await page.evaluate(() => {
+      const f = window.PG.food();
+      f.nevera = ['al-pechuga-de-pollo', 'al-huevo', 'al-arroz-blanco', 'al-lenteja', 'al-brocoli',
+        'al-cebolla', 'al-ajo', 'al-aceite-de-oliva'];
+      f.objetivo = { kcal: 2400, prot: 150, carb: 0, gresa: 0 };
+      window.PG.save();
+    });
+    await gotoFood('nevera');
+    const nev = await page.evaluate(() => document.querySelectorAll('#main .chipx .x').length);
+    await gotoFood('ideas');
+    const ideas = await page.evaluate(() => (window.PG.ui.ideasCache || []).map((c) => ({
+      nombre: c.nombre,
+      kcal: c.t.kcal,
+      ids: c.partes.map((p) => p.a.id),
+      // ningún plato puede llevar 150 g de ajo o de cebolla como guarnición
+      condimentoGrande: c.partes.some((p) => window.PG.esCondimento(p.a) && p.g > 20),
+      repetido: new Set(c.partes.map((p) => p.a.id)).size !== c.partes.length,
+    })));
+    check('la nevera alimenta Ideas: combinaciones de una comida, sin repetir alimento ni servir 150 g de ajo',
+      nev === 8 && ideas.length === 3 &&
+      ideas.every((i) => i.kcal >= 350 && i.kcal <= 950) &&
+      ideas.every((i) => !i.condimentoGrande && !i.repetido), JSON.stringify({ nev, ideas }));
+  }
+
+  // 61) «apuntarlo ya» mete la combinación entera en el día, ingrediente a ingrediente
+  {
+    const hoyIdea = isoDate(new Date());
+    const antesIdea = await page.evaluate((k) => window.PG.foodLog(k).length, hoyIdea);
+    const piezas = await page.evaluate(() => window.PG.ui.ideasCache[0].partes.length);
+    await page.click('#main [data-a="idea-apuntar"]');
+    await page.waitForTimeout(300);
+    const trasIdea = await page.evaluate((k) => ({
+      tomas: window.PG.foodLog(k).length,
+      conMicros: window.PG.foodLog(k).filter((x) => x.mi && Object.keys(x.mi).length).length,
+    }), hoyIdea);
+    check('«apuntarlo ya» apunta la combinación entera, cada ingrediente con sus micros',
+      trasIdea.tomas === antesIdea + piezas && trasIdea.conMicros >= piezas,
+      JSON.stringify({ antesIdea, piezas, ...trasIdea }));
+  }
+
+  // 62) crear un plato con ingredientes: la nutrición se calcula sola, sin teclear ni un número
+  {
+    await gotoFood('ideas');
+    await page.evaluate(() => { window.PG.ui.plato = window.PG.platoVacio(); window.PG.ui.platoQ = ''; window.PG.ui.foodVista = 'plato'; window.PG.render(); });
+    await page.waitForTimeout(150);
+    for (const ing of ['pechuga de pollo', 'arroz blanco', 'brocoli', 'aceite de oliva']) {
+      await page.fill('#plQ', ing);
+      await page.waitForTimeout(320);
+      await page.click('#main .alim');
+      await page.waitForTimeout(220);
+    }
+    // el aceite NO puede entrar con 100 g por defecto: un plato no lleva 100 g de aceite
+    const puesto = await page.evaluate(() => window.PG.ui.plato.alims.map((x) => x.id + ':' + x.g));
+    await page.click('#plName');
+    await page.keyboard.type('Pollo con arroz y brócoli');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    const antesPl = await page.evaluate(() => window.PG.store.dishes.length);
+    await page.click('[data-a="plato-guardar"]');
+    await page.waitForTimeout(300);
+    const platoNuevo = await page.evaluate(() => {
+      const d = window.PG.store.dishes[window.PG.store.dishes.length - 1];
+      return { n: window.PG.store.dishes.length, name: d.name, kcal: d.kcal, prot: d.prot, ing: d.ingredients, alims: (d.alims || []).length };
+    });
+    check('un plato creado con ingredientes sale con sus kcal y su proteína por ración, sin teclear números',
+      puesto.indexOf('al-aceite-de-oliva:10') >= 0 && platoNuevo.n === antesPl + 1 &&
+      platoNuevo.name === 'Pollo con arroz y brócoli' && platoNuevo.kcal > 150 && platoNuevo.kcal < 600 &&
+      platoNuevo.prot > 15 && platoNuevo.alims === 4 && platoNuevo.ing.length === 4,
+      JSON.stringify({ puesto, antesPl, ...platoNuevo }));
+  }
+
+  // 63) un alimento tuyo se guarda y manda sobre la tabla; sin micros, no cuenta en la tarjeta de micros
+  {
+    const guardado = await page.evaluate(() => {
+      const r = window.PG.addAlimPropio({ n: 'Lentejas de mi madre', e: '🍲', g: 'legumbre', kcal: 120, pr: 8, ch: 16, gr: 2 });
+      const a = window.PG.alimById(r.id);
+      return { ok: r.ok, id: r.id, fuente: a && a.fuente, micros: window.PG.ALIM_MICROS.filter((k) => typeof a[k] === 'number') };
+    });
+    const sinDatos = await page.evaluate(() => window.PG.addAlimPropio({ n: 'Algo', kcal: 0, pr: 0 }));
+    check('un alimento tuyo se guarda como tuyo y sin kcal ni proteína no se guarda a medias',
+      guardado.ok && guardado.fuente === 'tuyo' && guardado.micros.length === 0 && !sinDatos.ok,
+      JSON.stringify({ guardado, sinDatos }));
+  }
+
+  // 64) sin clave de USDA la app lo dice: no finge que el valor aproximado es oficial
+  {
+    const usda = await page.evaluate(async () => ({
+      on: window.PG.usdaOn(),
+      intento: await window.PG.usdaBuscar('al-platano'),
+      fuenteDelPlatano: window.PG.alimById('al-platano').fuente,
+    }));
+    check('sin clave de FoodData Central la app lo dice y deja el valor aproximado de la tabla',
+      !usda.on && !usda.intento.ok && /clave/.test(usda.intento.msg) && usda.fuenteDelPlatano === 'tabla',
+      JSON.stringify(usda));
+  }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

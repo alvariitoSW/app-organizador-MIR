@@ -625,3 +625,65 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
   .card,.day,.session,.drow{border:1px solid #bbb}
   .meal .md,.meal,.dayfoot,.mini{color:#333}
 }
+
+/* ============ nutrición: alimentos, micros, nevera e ideas ============
+   Va al final a propósito: el bloque @media(max-width:560px) de arriba está por encima de las
+   reglas base, así que lo que se escriba aquí gana en el móvil sin pelearse por especificidad. */
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:var(--ink2)}
+.macro .mt b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,var(--ink2) 16%,transparent);
+  border:1px solid var(--line);overflow:hidden}
+.mbar i{display:block;height:100%;border-radius:999px;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.mbar i.p{background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.mbar i.c{background:linear-gradient(90deg,var(--warn),#f59e0b)}
+.mbar i.g{background:linear-gradient(90deg,var(--ok),var(--accent))}
+.micros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+@media(min-width:620px){.micros{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.mic{border:1px solid var(--line);border-radius:10px;padding:7px 9px;text-align:left;font:inherit;color:var(--ink);
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));cursor:pointer;min-width:0}
+.mic.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.mic .mn{display:block;font-size:10px;color:var(--ink2);font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mic .mv{display:block;color:var(--ink);font-size:12.5px;font-weight:800;white-space:nowrap;margin-top:1px;
+  font-variant-numeric:tabular-nums}
+.micbar{display:block;width:100%;height:5px;border-radius:999px;background:color-mix(in srgb,var(--ink2) 16%,transparent);
+  border:1px solid var(--line);overflow:hidden;margin-top:6px}
+.micbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--accent))}
+.micbar i.bajo{background:linear-gradient(90deg,var(--warn),var(--bad))}
+.micbar i.alto{background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.falta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.falta .tag{background:color-mix(in srgb,var(--warn) 16%,transparent);
+  color:color-mix(in srgb,var(--warn) 85%,var(--ink));border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.alim{display:flex;align-items:center;gap:10px;padding:10px 0;width:100%;text-align:left;min-height:52px;
+  border:0;border-top:1px dashed var(--line);background:none;color:var(--ink);font:inherit;cursor:pointer}
+.alim:first-of-type{border-top:0}
+.alim .em{font-size:22px;flex:none;line-height:1}
+.alim .nm{flex:1;min-width:0}
+.alim .nm b{display:block;font-size:13.5px}
+.alim .nm .mini{display:block}
+.alim .kc{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.alim:hover .nm b{color:color-mix(in srgb,var(--brand) 60%,var(--ink))}
+.fuente{font-size:10px;color:var(--ink2);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.fuente.usda{border-color:color-mix(in srgb,var(--ok) 40%,var(--line));color:color-mix(in srgb,var(--ok) 80%,var(--ink))}
+.fuente.tuyo{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:color-mix(in srgb,var(--brand) 80%,var(--ink))}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chipx{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);
+  font-family:inherit;cursor:pointer;min-height:36px}
+.chipx.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.chipx .x{background:none;border:0;color:var(--ink2);font:inherit;cursor:pointer;padding:0 0 0 2px;line-height:1}
+.chipx .x:hover{color:var(--bad)}
+.idea{border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin-top:9px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.idea.buena{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));background:color-mix(in srgb,var(--ok) 8%,var(--card))}
+.idea h4{margin:0 0 3px;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.idea .por{font-size:11.5px;color:var(--ink2);margin:0}
+.tot{display:flex;gap:8px;margin-top:10px}
+.tot div{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:7px 6px;text-align:center;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.tot b{display:block;font-size:16px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tot span{font-size:8.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
