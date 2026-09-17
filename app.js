@@ -268,7 +268,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
   alimQ:'',alimGrupo:'',alimSel:'',alimG:100,neveraQ:'',microAbierto:'',
   plato:null,platoQ:'',ideasCache:null,alimNuevo:null,sitioNuevo:false,
-  notaSel:'',notaFiltro:'',notaNueva:'',notaEvAviso:false,notaEvCuenta:false,
+  notaSel:'',notaFiltro:'',notaNueva:'',
   imp:{txt:'',url:'',receta:null,estado:'',msg:'',destinoLote:'',destinoDia:'',via:'',imagenes:null}};
 const allOpen=()=>{const ds=weekDays();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
@@ -335,6 +335,10 @@ function normalize(o){
       ts:+o.impPendiente.ts||0,abierto:!!o.impPendiente.abierto};
     if(!o.impPendiente.txt&&!o.impPendiente.url)o.impPendiente=null;
   }else o.impPendiente=null;
+  migraNotasDia(o);   /* mismo sitio que migrarRutinas: normalize() es el embudo por el que pasa
+                         TODO almacén —arranque, importar una copia, restaurar—, así que una copia
+                         vieja traída por cualquiera de esas vías se migra igual */
+  purgaNotas(o);
   if(!Array.isArray(o.notas))o.notas=[];
   o.notas=o.notas.map(function(x){return (x&&typeof x==='object')?{
     id:String(x.id||uid('nt')),txt:String(x.txt||'').slice(0,600),
@@ -520,14 +524,16 @@ const NOTA_PURGA_DIAS=2;
 function notasS(){
   if(!Array.isArray(store.notas))store.notas=[];
   return store.notas;}
-function migraNotasDia(){
+function migraNotasDia(o){
   /* lo que ya tenías en store.notasDia era UNA nota por día, texto suelto. Pasa a la lista sin
      perder nada y sin crear duplicados si la migración ya se hizo. */
-  const viejo=store.notasDia;
+  const S=o||store;
+  const viejo=S.notasDia;
   if(!viejo||typeof viejo!=='object')return 0;
   const ks=Object.keys(viejo);
   if(!ks.length)return 0;
-  const lista=notasS();
+  if(!Array.isArray(S.notas))S.notas=[];
+  const lista=S.notas;
   let n=0;
   ks.forEach(function(k){
     const txt=String(viejo[k]||'').trim();
@@ -535,23 +541,38 @@ function migraNotasDia(){
     if(lista.some(function(x){return x.fecha===k&&x.txt===txt;}))return;
     lista.push({id:uid('nt'),txt:txt,fecha:k,hecha:0,color:'',evId:'',ts:Date.now()});
     n++;});
-  store.notasDia={};   /* ya vive en store.notas: dejarlo duplicado acabaría en dos verdades */
-  if(n)save();
+  S.notasDia={};   /* ya vive en store.notas: dejarlo duplicado acabaría en dos verdades */
+  if(n){olvidaNotas();if(S===store)save();}
   return n;}
-function purgaNotas(){
+function purgaNotas(o){
   /* «que se borre a los 2 días»: una nota marcada como hecha se queda a la vista dos días —por si te
-     arrepientes— y luego se va sola. Se mira al arrancar y al entrar en Notas. */
-  const lista=notasS(),limite=Date.now()-NOTA_PURGA_DIAS*86400000;
+     arrepientes— y luego se va sola. Se mira al cargar el almacén y al entrar en Notas. */
+  const S=o||store;
+  if(!Array.isArray(S.notas))S.notas=[];
+  const lista=S.notas,limite=Date.now()-NOTA_PURGA_DIAS*86400000;
   let n=0;
   for(let i=lista.length-1;i>=0;i--){
     const x=lista[i];
     if(x.hecha&&x.hecha<limite){lista.splice(i,1);n++;}}
-  if(n)save();
+  if(n){olvidaNotas();if(S===store)save();}
   return n;}
 function notaById(id){return notasS().filter(function(x){return x.id===id;})[0]||null;}
-function notasDeFecha(key){
-  return notasS().filter(function(x){return x.fecha===key;})
-    .sort(function(a,b){return (a.hecha?1:0)-(b.hecha?1:0)||a.ts-b.ts;});}
+let _notasIdx=null,_notasTick=-1;
+function olvidaNotas(){_notasIdx=null;_notasTick=-1;}
+function notasPorFecha(){
+  /* La cuadrícula del mes preguntaba por las notas de cada una de sus 31 casillas, y cada pregunta
+     barría la lista entera y la ordenaba: 31·N. Un índice por pintado lo deja en 1·N. Se rehace
+     cuando cambia el pintado, igual que hace monthDays(). */
+  if(_notasTick!==_renderTick||!_notasIdx){
+    _notasIdx={};
+    notasS().forEach(function(x){
+      if(!x.fecha)return;
+      (_notasIdx[x.fecha]||(_notasIdx[x.fecha]=[])).push(x);});
+    Object.keys(_notasIdx).forEach(function(k){
+      _notasIdx[k].sort(function(a,b){return (a.hecha?1:0)-(b.hecha?1:0)||a.ts-b.ts;});});
+    _notasTick=_renderTick;}
+  return _notasIdx;}
+function notasDeFecha(key){return notasPorFecha()[key]||[];}
 function notaDia(key){
   /* se queda por compatibilidad: las notas de un día, en una sola cadena */
   return notasDeFecha(key).map(function(x){return x.txt;}).join('\n');}
@@ -560,31 +581,22 @@ function addNota(txt,fecha){
   if(!t)return {ok:false,msg:'escribe algo primero'};
   const f=fecha?(foodKey(fecha)||''):'';
   const nota={id:uid('nt'),txt:t,fecha:f,hecha:0,color:'',evId:'',ts:Date.now()};
-  notasS().push(nota);save();
+  notasS().push(nota);olvidaNotas();save();
   return {ok:true,id:nota.id,msg:'apuntado'+(f?(' para el '+fechaCorta(f)):'')};}
 function setNota(id,campo,valor){
   const x=notaById(id);if(!x)return 'esa nota ya no está';
   if(campo==='txt')x.txt=String(valor||'').slice(0,600);
   else if(campo==='fecha')x.fecha=valor?(foodKey(valor)||''):'';
   else if(campo==='color')x.color=/^#[0-9a-fA-F]{6}$/.test(valor||'')?valor:'';
-  save();return '';}
-function setNotaDia(key,txt){
-  /* la usaba el editor de un día del Mes: ahora escribe sobre la primera nota de ese día, o crea
-     una si no hay ninguna. Así el campo de siempre sigue funcionando. */
-  const k=foodKey(key);if(!k)return '';
-  const t=String(txt||'').slice(0,600);
-  const suyas=notasDeFecha(k);
-  if(!suyas.length){if(t.trim())addNota(t,k);return '';}
-  if(!t.trim()&&suyas.length===1){delNota(suyas[0].id);return '';}
-  suyas[0].txt=t;save();return '';}
+  olvidaNotas();save();return '';}
 function toggleNotaHecha(id){
   const x=notaById(id);if(!x)return 'esa nota ya no está';
-  x.hecha=x.hecha?0:Date.now();save();
+  x.hecha=x.hecha?0:Date.now();olvidaNotas();save();
   return x.hecha?('hecha · se borra sola dentro de '+NOTA_PURGA_DIAS+' días'):'vuelve a estar pendiente';}
 function delNota(id){
   const lista=notasS(),i=lista.findIndex(function(x){return x.id===id;});
   if(i<0)return 'esa nota ya no estaba';
-  lista.splice(i,1);save();return 'nota borrada';}
+  lista.splice(i,1);olvidaNotas();save();return 'nota borrada';}
 function notaAEvento(id,opts){
   /* de nota a evento del calendario. La nota NO se copia: se queda enlazada por evId, así que si
      cambias la hora en un sitio es la misma en el otro. */
@@ -598,7 +610,7 @@ function notaAEvento(id,opts){
     hora:String(opts.hora||'').slice(0,5),color:x.color||tlColor('evt'),on:true,
     recordatorio:!!opts.recordatorio,cuentaAtras:!!opts.cuentaAtras,notaId:x.id};
   eventosS().push(ev);
-  x.fecha=fecha;x.evId=ev.id;save();
+  x.fecha=fecha;x.evId=ev.id;olvidaNotas();save();
   return {ok:true,ev:ev,msg:'en el calendario: '+titulo+' · '+fechaCorta(fecha)};}
 function desenlazaNota(id){
   const x=notaById(id);if(!x)return 'esa nota ya no está';
@@ -611,10 +623,10 @@ function eventoDeNota(x){
   if(!x||!x.evId)return null;
   return eventosS().filter(function(e){return e.id===x.evId;})[0]||null;}
 function notasCuenta(){
-  const l=notasS();
-  return {total:l.length,sinDia:l.filter(function(x){return !x.fecha&&!x.hecha;}).length,
-    conDia:l.filter(function(x){return x.fecha&&!x.hecha;}).length,
-    hechas:l.filter(function(x){return !!x.hecha;}).length};}
+  const c={total:0,sinDia:0,conDia:0,hechas:0};
+  notasS().forEach(function(x){c.total++;
+    if(x.hecha)c.hechas++;else if(x.fecha)c.conDia++;else c.sinDia++;});
+  return c;}
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
 function setDayOverride(dateStr,shiftId,guard){
@@ -1677,16 +1689,23 @@ const SOL_RAD=Math.PI/180;
 const SITIOS_FIJOS=[
   {id:'lpa',nombre:'Las Palmas de Gran Canaria',lat:28.1235,lon:-15.4363,tz:'Atlantic/Canary'},
   {id:'mad',nombre:'Madrid',lat:40.4168,lon:-3.7038,tz:'Europe/Madrid'}];
+let _sitiosCache=null,_sitioCache=null;
+function olvidaSitios(){_sitiosCache=null;_sitioCache=null;}
 function sitiosS(){
-  /* los dos de fábrica más los que añadas tú, que se guardan igual que el resto de tus datos */
+  /* los dos de fábrica más los que añadas tú, que se guardan igual que el resto de tus datos.
+     Memorizado porque solDe() lo llamaba en cada día de la semana: eran 28 arrays de usar y tirar
+     por pintado. Se olvida al tocar la lista o al cargar otro almacén. */
   if(!Array.isArray(store.sitios))store.sitios=[];
-  return SITIOS_FIJOS.concat(store.sitios);}
+  if(!_sitiosCache)_sitiosCache=SITIOS_FIJOS.concat(store.sitios);
+  return _sitiosCache;}
 function sitioActual(){
+  if(_sitioCache)return _sitioCache;
   const id=(store.sitio||'')||SITIOS_FIJOS[0].id;
-  return sitiosS().filter(function(s){return s.id===id;})[0]||SITIOS_FIJOS[0];}
+  _sitioCache=sitiosS().filter(function(s){return s.id===id;})[0]||SITIOS_FIJOS[0];
+  return _sitioCache;}
 function setSitio(id){
   if(!sitiosS().some(function(s){return s.id===id;}))return 'ese sitio ya no está';
-  store.sitio=id;save();render();
+  store.sitio=id;olvidaSitios();save();render();
   return 'ahora el sol se calcula para '+sitioActual().nombre;}
 function addSitio(nombre,lat,lon){
   const n=String(nombre||'').trim().slice(0,48);
@@ -1695,9 +1714,9 @@ function addSitio(nombre,lat,lon){
   if(!isFinite(la)||la<-90||la>90)return {ok:false,msg:'la latitud va de -90 a 90 (Las Palmas es 28.12)'};
   if(!isFinite(lo)||lo<-180||lo>180)return {ok:false,msg:'la longitud va de -180 a 180 (Las Palmas es -15.44)'};
   if(!Array.isArray(store.sitios))store.sitios=[];
-  const id='st-'+Math.random().toString(36).slice(2,7);
+  const id=uid('st');
   store.sitios.push({id:id,nombre:n,lat:Math.round(la*1e4)/1e4,lon:Math.round(lo*1e4)/1e4,tz:''});
-  store.sitio=id;save();
+  store.sitio=id;olvidaSitios();save();
   return {ok:true,id:id,msg:'guardado: '+n};}
 function delSitio(id){
   if(SITIOS_FIJOS.some(function(s){return s.id===id;}))return 'Las Palmas y Madrid vienen con la app: esos no se quitan';
@@ -1706,8 +1725,21 @@ function delSitio(id){
   if(i<0)return 'ese sitio ya no estaba';
   const nm=store.sitios[i].nombre;store.sitios.splice(i,1);
   if(store.sitio===id)store.sitio=SITIOS_FIJOS[0].id;
-  save();return 'quitado '+nm;}
+  olvidaSitios();save();return 'quitado '+nm;}
+let _solCache={},_solTick=-1;
 function solDe(fecha,sitio){
+  /* Memoria por pintado: renderWeek pedía el sol dos veces por día (una para la franja y otra para
+     las horas de debajo), 14 llamadas de las que 7 eran idénticas. _renderTick la invalida igual
+     que hace weekDays(), y el sitio entra en la clave porque cambiarlo cambia el resultado. */
+  const k=(fecha instanceof Date)?iso(fecha):String(fecha||'');
+  /* la clave va por coordenadas, no por id: un sitio puede llegar suelto —{lat,lon} sin id— y
+     entonces todos compartirían la entrada del sitio elegido y devolverían el sol de otro sitio */
+  const st=sitio||sitioActual();
+  const cl=k+'|'+st.lat+','+st.lon;
+  if(_solTick!==_renderTick){_solCache={};_solTick=_renderTick;}
+  if(_solCache[cl])return _solCache[cl];
+  return (_solCache[cl]=solCalcula(fecha,st));}
+function solCalcula(fecha,sitio){
   /* fecha: Date o 'YYYY-MM-DD'. Devuelve las horas de salida y puesta como Date, o marca el caso
      polar en vez de inventarse una hora que no existe. */
   const d=(fecha instanceof Date)?fecha:parseDate(fecha);
@@ -1733,10 +1765,8 @@ function solDe(fecha,sitio){
   return {sale:sale,pone:pone,luzMin:Math.round((pone-sale)/60000)};}
 function horaLocal(d){
   /* la hora del teléfono, que es lo que el usuario mira en la pantalla de bloqueo */
-  if(!d)return '';
-  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+  return d?hm(d.getHours()*60+d.getMinutes()):'';}
 function horaDecimal(d){return d?(d.getHours()+d.getMinutes()/60+d.getSeconds()/3600):0;}
-function solDeKey(key,sitio){return solDe(key,sitio);}
 function solTxt(key){
   const s=solDe(key);
   if(s.polar==='dia')return 'no se pone';
@@ -1808,7 +1838,27 @@ function solPiesHTML(key){
   if(s.sinDatos)return '';
   if(s.polar)return '<span class="pie sol">'+(s.polar==='dia'?'☀️ no se pone':'🌙 no amanece')+'</span>';
   return '<span class="pie sol">🌅 '+horaLocal(s.sale)+'</span><span class="pie sol">🌇 '+horaLocal(s.pone)+'</span>';}
-function isToday(key){return !!key&&key===iso(new Date());}
+function irACard(tab,cfg,espera){
+  /* «llévame a la tarjeta donde se cambia esto» y enciéndela un momento para que se vea cuál es.
+     Estaba escrito SIETE veces con las mismas constantes de 60 ms y 1600 ms repartidas por el
+     fichero; ahora el tiempo, el color y el caso de «la tarjeta no está» viven en un sitio. */
+  if(tab&&ui.tab!==tab){ui.tab=tab;if(CAL_SET.has(tab))ui.calMode=tab;}
+  render();
+  setTimeout(function(){
+    const c=document.querySelector('#main [data-cfg="'+cfg+'"]');
+    if(!c)return;
+    if(c.tagName==='DETAILS')c.open=true;
+    c.scrollIntoView({behavior:'smooth',block:'center'});
+    c.style.outline='2px solid var(--brand)';
+    setTimeout(function(){c.style.outline='';},1600);
+  },espera||60);}
+let _hoyKey='',_hoyTick=-1;
+function hoyKey(){
+  /* iso(new Date()) se llamaba por fila de semana y por nota pintada. Una vez por pintado basta:
+     el cambio de día lo fuerza vigilarElDia(), que repinta. */
+  if(_hoyTick!==_renderTick){_hoyKey=iso(new Date());_hoyTick=_renderTick;}
+  return _hoyKey;}
+function isToday(key){return !!key&&key===hoyKey();}
 function modoAvisoHTML(){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
@@ -2063,7 +2113,7 @@ function semanaConfigHTML(){
     '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
   '</div>';}
 function renderWeek(){
-  const r=store.rotation, days=weekDays();
+  const days=weekDays();   /* la rotación ya no se toca aquí: vive en semanaConfigHTML() */
   const sleepStats=(function(){const c=suenoCfg();return function(){
     let n=0,t=0,low=0;const min=c.min;
     days.forEach(function(d){if(!d.date)return;const sl=sleepOf(d.key);
@@ -2128,13 +2178,11 @@ function renderWeek(){
       (open?det:'')+'</div>';}).join('');
     const pb=planBatches(days), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
-  const sessions=used.reduce((a,b)=>a+b.items.filter(i=>i.runs>0).length,0);
-  const portions=used.reduce((a,b)=>a+b.portions,0);
-  const tot=days.reduce((a,d)=>{const t=dayTotals(d.shiftId);a.k+=t.kcal;a.p+=t.prot;return a;},{k:0,p:0});
+  const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
   $('#main').innerHTML=`<div class="grid">
     <div class="daylist">${rows}</div>
     <div class="card"><h2>La semana en números</h2>
-      <div class="res3">
+      <div class="tot">
         <div><b>${g}</b><span>guardia${g===1?'':'s'}</span></div>
         <div><b>${used.length}</b><span>sesiones de cocina</span></div>
         <div><b>${anyDate&&ss.avg!=null?ss.avg+' h':(g?Math.round(tot.k/7):0)}</b><span>${anyDate&&ss.avg!=null?'sueño de media':'kcal/día de media'}</span></div>
@@ -3671,18 +3719,15 @@ function renderNotas(){
   const c=notasCuenta(),filtro=ui.notaFiltro||'';
   const todas=notasS().slice().sort(function(a,b){
     return (a.hecha?1:0)-(b.hecha?1:0)||(a.fecha&&b.fecha?a.fecha.localeCompare(b.fecha):(a.fecha?-1:(b.fecha?1:0)))||b.ts-a.ts;});
-  const ver=todas.filter(function(x){
-    if(filtro==='sin')return !x.fecha&&!x.hecha;
-    if(filtro==='con')return !!x.fecha&&!x.hecha;
-    if(filtro==='hechas')return !!x.hecha;
-    return true;});
-  const conDia=ver.filter(function(x){return x.fecha&&!x.hecha;});
-  const sinDia=ver.filter(function(x){return !x.fecha&&!x.hecha;});
-  const hechas=ver.filter(function(x){return !!x.hecha;});
-  const bloque=function(titulo,lista){
-    if(!lista.length)return '';
+  /* una sola partición: los tres montones y los tres filtros son la misma pregunta, y tenerla
+     escrita dos veces obligaba a cambiar dos sitios para añadir un filtro */
+  const conDia=[],sinDia=[],hechas=[];
+  todas.forEach(function(x){(x.hecha?hechas:(x.fecha?conDia:sinDia)).push(x);});
+  const bloque=function(titulo,cual,lista){
+    if(!lista.length||(filtro&&filtro!==cual))return '';
     return '<div class="card"><h2>'+esc(titulo)+' <span class="mini">'+lista.length+'</span></h2>'+
       lista.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';};
+  const cuerpo=bloque('Con día','con',conDia)+bloque('Sin día','sin',sinDia)+bloque('Hechas','hechas',hechas);
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><h2 class="subtit">📝 Notas</h2><span class="tag b2">'+c.total+'</span></div>'+
     '<div class="captura">'+
@@ -3698,10 +3743,9 @@ function renderNotas(){
           return '<button class="chipx'+(filtro===f[0]?' on':'')+'" data-a="nota-filtro" data-f="'+f[0]+'">'+
             esc(f[1])+' <b>'+f[2]+'</b></button>';}).join('')+
     '</div>'+
-    (todas.length?
-      (bloque('Con día',conDia)+bloque('Sin día',sinDia)+bloque('Hechas',hechas)||
-        '<div class="card"><div class="empty">Nada en este filtro.</div></div>'):
-      '<div class="card"><div class="empty">Todavía no has apuntado nada. Escribe arriba: lo que no tenga día se queda aquí y no molesta en el calendario.</div></div>')+
+    (cuerpo||('<div class="card"><div class="empty">'+(todas.length?'Nada en este filtro.':
+      'Todavía no has apuntado nada. Escribe arriba: lo que no tenga día se queda aquí y no molesta en el calendario.')+
+      '</div></div>'))+
     '</div>';
 }
 function renderNotaAbierta(){
@@ -3737,9 +3781,12 @@ function renderNotaAbierta(){
         '<div class="row">'+
           '<label class="fld" style="flex:1 1 140px">título<input id="ntEvTit" value="'+esc(x.txt.split('\n')[0].slice(0,60))+'"></label>'+
           '<label class="fld" style="flex:0 0 106px">hora (opcional)<input id="ntEvHora" type="time" value=""></label></div>'+
+        /* casillas de verdad, leídas al enviar igual que el título y la hora: antes eran dos
+           banderas en ui que repintaban la app entera en cada toque y se quedaban puestas de una
+           nota a la siguiente */
         '<div class="chips">'+
-          '<button class="chipx'+(ui.notaEvAviso?' on':'')+'" data-a="nota-ev-aviso">🔔 avisarme</button>'+
-          '<button class="chipx'+(ui.notaEvCuenta?' on':'')+'" data-a="nota-ev-cuenta">cuenta atrás</button></div>'+
+          '<label class="chipx"><input type="checkbox" id="ntEvAviso" style="width:auto;margin:0"> 🔔 avisarme</label>'+
+          '<label class="chipx"><input type="checkbox" id="ntEvCuenta" style="width:auto;margin:0"> cuenta atrás</label></div>'+
         '<button class="btn p gbig" style="margin-top:11px" data-a="nota-al-calendario" data-id="'+x.id+'">crear el evento</button></div>'):'')
     )+
     '<div class="row">'+
@@ -6410,24 +6457,10 @@ function act(a,el){
     case 'mes-cfg':{
       /* el número por sí solo no se puede tocar: el KPI lleva al sitio donde se cambia (315fd543) */
       const to=el.dataset.to;
-      if(to==='jornada'){ui.tab='types';render();}
-      const buscar=function(){const c=document.querySelector('#main [data-cfg="'+to+'"]');
-        if(!c)return;
-        if(c.tagName==='DETAILS')c.open=true;
-        c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);};
-      setTimeout(buscar,to==='jornada'?80:0);
+      irACard(to==='jornada'?'types':'',to,to==='jornada'?80:0);
       break;}
-    case 'ir-servicios':{ui.tab='month';ui.calMode='month';render();
-      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="servicios"]');
-        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
-      break;}
-    case 'franja-cfg':{ui.tab='ajustes';render();
-      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="franja"]');
-        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
-      break;}
+    case 'ir-servicios':irACard('month','servicios');break;
+    case 'franja-cfg':irACard('ajustes','franja');break;
     case 'types-vista':{ui.typesVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'food-vista':{ui.foodVista=el.dataset.v||'';
       if(el.dataset.p)ui.foodPanel=el.dataset.p;
@@ -6487,11 +6520,7 @@ function act(a,el){
       ui.plato.alims.push({id:id,g:gramosPorDefecto(alimById(id))});ui.platoQ='';render();break;}
     case 'plato-ing-del':{if(ui.plato)ui.plato.alims.splice(+el.dataset.ix,1);render();break;}
     case 'plato-guardar':{const m=guardarPlato();flash(m);render();break;}
-    case 'ir-usda':{ui.tab='ajustes';ui.usdaGuia=true;render();
-      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="usda"]');
-        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
-        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
-      break;}
+    case 'ir-usda':ui.usdaGuia=true;irACard('ajustes','usda');break;
     case 'sitio-set':flash(setSitio(el.dataset.id));break;
     case 'sitio-nuevo':{ui.sitioNuevo=!ui.sitioNuevo;render();break;}
     case 'sitio-add':{
@@ -6544,29 +6573,16 @@ function act(a,el){
         if(x&&x.evId)desenlazaNota(el.dataset.id);
         flash(delNota(el.dataset.id));ui.notaSel='';render();});
       break;}
-    case 'nota-ev-aviso':{ui.notaEvAviso=!ui.notaEvAviso;render();break;}
-    case 'nota-ev-cuenta':{ui.notaEvCuenta=!ui.notaEvCuenta;render();break;}
     case 'nota-al-calendario':{
       const tit=document.getElementById('ntEvTit'),hr=document.getElementById('ntEvHora');
+      const av=document.getElementById('ntEvAviso'),ca=document.getElementById('ntEvCuenta');
       const r=notaAEvento(el.dataset.id,{titulo:tit?tit.value:'',hora:hr?hr.value:'',
-        recordatorio:!!ui.notaEvAviso,cuentaAtras:!!ui.notaEvCuenta});
+        recordatorio:!!(av&&av.checked),cuentaAtras:!!(ca&&ca.checked)});
       flash(r.msg);render();break;}
     case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
-    case 'ir-eventos':{ui.tab='ajustes';render();
-      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="eventos"]');
-        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
-        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
-      break;}
-    case 'ir-semana-cfg':{ui.tab='cfg';render();
-      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="semana"]');
-        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
-        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
-      break;}
-    case 'ir-sol':{ui.tab='ajustes';render();
-      setTimeout(function(){const cc=document.querySelector('#main .card[data-cfg="sol"]');
-        if(!cc)return;cc.scrollIntoView({behavior:'smooth',block:'center'});
-        cc.style.outline='2px solid var(--brand)';setTimeout(function(){cc.style.outline='';},1600);},60);
-      break;}
+    case 'ir-eventos':irACard('ajustes','eventos');break;
+    case 'ir-semana-cfg':irACard('cfg','semana');break;
+    case 'ir-sol':irACard('ajustes','sol');break;
     case 'usda-probar':usdaProbar();break;
     case 'usda-guia':ui.usdaGuia=!ui.usdaGuia;render();break;
     case 'usda-olvidar-todo':{
@@ -6581,11 +6597,7 @@ function act(a,el){
          navegación también tiene que salir a la red */
       setTimeout(function(){location.reload();},120);break;}
     case 'lector-guia':ui.lectorGuia=!ui.lectorGuia;render();break;
-    case 'ir-lector':{ui.tab='ajustes';ui.lectorGuia=true;render();
-      setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="lector"]');
-        if(!c)return;c.scrollIntoView({behavior:'smooth',block:'center'});
-        c.style.outline='2px solid var(--brand)';setTimeout(function(){c.style.outline='';},1600);},60);
-      break;}
+    case 'ir-lector':ui.lectorGuia=true;irACard('ajustes','lector');break;
     case 'imp-claude':impConClaude();break;
     case 'imp-local':impLocal();break;
     case 'imp-clear':{ui.imp.txt='';ui.imp.url='';ui.imp.imagenes=null;ui.imp.estado='';ui.imp.msg='';ui.imp.ofrecer=false;
@@ -7788,7 +7800,6 @@ document.addEventListener('input',e=>{
     else if(f==='kcal'||f==='prot')r[f]=Math.max(0,Math.round(+el.value||0));
     else r[f]=String(el.value||'').slice(0,70);
     return;}
-  if(a==='dia-nota'){setNotaDia(el.dataset.key,el.value);return;}
   if(a==='food-cant'){
     /* la previsión se reescribe a mano en su sitio: un render() aquí desmontaría el campo que estás
        tecleando (el mismo motivo por el que «buscar» va con retardo y vuelve a enfocar) */
@@ -8142,11 +8153,9 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   FOOD_CATALOGO,foodImportCatalogo,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
-  semanaConfigHTML,resumenSemana,vigilarElDia,
-  notasS,notaById,notasDeFecha,addNota,setNota,delNota,toggleNotaHecha,notaAEvento,desenlazaNota,
-  eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,NOTA_PURGA_DIAS,renderNotas,notasDelDiaHTML,
-  SITIOS_FIJOS,sitiosS,sitioActual,setSitio,addSitio,delSitio,solDe,solTxt,luzTxt,horaLocal,horaDecimal,
-  tzDelMovil,tzCuadra,arcoSolHTML,solHoyHTML,solPiesHTML,
+  notasS,notaById,notasDeFecha,addNota,toggleNotaHecha,notaAEvento,desenlazaNota,
+  eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
+  SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,
   alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,
   microTotales,microPct,microCortos,alimRicosEn,
   neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,
@@ -8157,7 +8166,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
-  notaDia,setNotaDia,eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
+  notaDia,eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
@@ -8171,5 +8180,5 @@ claudeBuscar();
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
 vigilarElDia();     /* y que «hoy» siga siendo hoy aunque la app pase la noche abierta */
-migraNotasDia();    /* lo que hubiera en notasDia pasa a la libreta, una vez y sin duplicar */
-purgaNotas();       /* y las notas hechas hace más de 2 días se van solas */
+/* la bandera que mira el salvavidas de index.html: si esta línea no se ejecuta, la app no arrancó */
+window.__arrancada=true;

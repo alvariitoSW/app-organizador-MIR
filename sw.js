@@ -34,43 +34,45 @@ self.addEventListener('fetch',function(e){
   try{url=new URL(req.url);}catch(err){return;}
   if(url.origin!==location.origin)return;   /* nada de tocar peticiones a otros sitios */
   const navegacion=req.mode==='navigate';
-  if(navegacion&&!url.search){e.respondWith(navegacionSellada(req,url));return;}
-  e.respondWith(
-    /* «red primero» NO se cumple con un fetch() a secas: por encima del service worker está la
-       caché HTTP del navegador, y GitHub Pages sirve con Cache-Control: max-age=600. Medido: tras
-       desplegar una versión nueva y reabrir la app, llegaban CERO peticiones al servidor y se
-       seguía viendo la versión vieja. Con no-store la petición sale de verdad a la red.
-       Y con reloj: si la red acepta pero no contesta, app.js no llegaría nunca y la página se
-       quedaría en blanco con el HTML pintado y sin nada que lo mueva. */
-    conLimite(pedirFresco(req,url),LIMITE_RED,null).then(function(res){
-      if(!res)return Promise.reject(new Error('la red no contestó a tiempo'));
-      /* Un 404 o un 500 NO son una respuesta válida para app.js: si el servidor está a medio
-         desplegar, o el fichero no está todavía, el navegador se traga el error, la página se queda
-         con la cabecera pintada y nada más, y parece que la app «se ha quedado pillada». Teniendo
-         una copia buena guardada, servir el error es lo peor que se puede hacer. */
-      if(!res.ok)return caches.match(req,{ignoreSearch:true}).then(function(hit){return hit||res;})
-        .catch(function(){return res;});
-      /* no se guarda la navegación de un «compartir»: su URL lleva la receta en la query, así que
-         cada vídeo compartido dejaría una copia distinta engordando la caché para siempre */
-      if(res&&res.ok&&!(navegacion&&url.search)){
-        const copia=res.clone();
-        caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});
-      }
-      return res;
-    }).catch(function(){
-      return caches.match(req,{ignoreSearch:true}).then(function(hit){
-        if(hit)return hit;
-        /* Compartir desde TikTok entra por index.html?title=…&text=…&url=…, que como URL no está en
-           la caché: sin esto la app ni se abría —error de red en seco— justo cuando más falta hace,
-           que es con la app instalada y la cobertura del hospital. Se sirve la portada guardada y
-           la propia página se encarga de leer la query. */
-        if(navegacion)return caches.match(INDEX).then(function(portada){
-          return portada||respuestaSinRed();});
-        return respuestaSinRed();
-      }).catch(function(){return respuestaSinRed();});
-    })
-  );
+  const responder=(navegacion&&!url.search)?navegacionSellada(req,url):desdeLaRed(req,url,navegacion);
+  /* El reloj va AQUÍ, en la frontera, y no alrededor de cada fetch. Es la diferencia que importa:
+     fetch() resuelve en cuanto llegan las CABECERAS, así que un servidor que contesta «200, es
+     HTML» y luego se calla pasaba el filtro y se colgaba después, al leer el cuerpo. Con el límite
+     en respondWith() queda cubierto todo lo que hay detrás —leer el cuerpo, buscar en la caché— y
+     también lo que se añada mañana. */
+  e.respondWith(conLimite(responder,LIMITE_TOTAL,function(){
+    return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});}));
 });
+function desdeLaRed(req,url,navegacion){
+  /* «red primero» NO se cumple con un fetch() a secas: por encima del service worker está la caché
+     HTTP del navegador, y GitHub Pages sirve con Cache-Control: max-age=600. Medido: tras desplegar
+     una versión nueva y reabrir la app, llegaban CERO peticiones al servidor y se seguía viendo la
+     versión vieja. Con no-store la petición sale de verdad a la red. */
+  return pedirFresco(req,url).then(function(res){
+    /* Un 404 o un 500 NO son una respuesta válida para app.js: si el servidor está a medio
+       desplegar, el navegador se traga el error, la página se queda con la cabecera pintada y nada
+       más, y parece que la app «se ha quedado pillada». Teniendo copia buena, servir el error es lo
+       peor que se puede hacer. */
+    if(!res.ok)return reserva(req,navegacion).then(function(r){return r||res;});
+    /* no se guarda la navegación de un «compartir»: su URL lleva la receta en la query, así que
+       cada vídeo compartido dejaría una copia distinta engordando la caché para siempre */
+    if(!(navegacion&&url.search)){
+      const copia=res.clone();
+      caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});
+    }
+    return res;
+  }).catch(function(){
+    return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});});}
+function reserva(req,navegacion){
+  /* La mejor respuesta guardada para esta petición, o null si no hay ninguna. Antes esto estaba
+     escrito tres veces con tres respuestas distintas para el mismo caso; ahora la decisión vive en
+     un sitio. Compartir desde TikTok entra por index.html?title=…&text=…&url=…, que como URL no
+     está en la caché: por eso una navegación cae a la portada guardada y la propia página se
+     encarga de leer la query. */
+  return caches.match(req,{ignoreSearch:true}).then(function(hit){
+    if(hit)return hit;
+    return navegacion?caches.match(INDEX):null;
+  }).catch(function(){return null;});}
 
 /* Una promesa que NUNCA se resuelve cuelga respondWith() para siempre y el usuario se queda
    mirando una pantalla en blanco, sin error y sin nada que tocar. No hace falta estar sin cobertura:
@@ -85,7 +87,8 @@ function conLimite(promesa,ms,alternativa){
     promesa.then(dar,function(){dar(typeof alternativa==='function'?alternativa():alternativa);});
   });}
 const LIMITE_SELLO=1500;    /* la marca de versión es un adorno: si tarda, se sigue sin ella */
-const LIMITE_RED=5000;      /* pasado esto, tiramos de la copia guardada y la app abre igual */
+const LIMITE_TOTAL=7000;    /* tope de TODA la respuesta. index.html espera algo más que esto antes
+                               de sacar su pantalla de rescate: si se toca uno, hay que tocar el otro */
 const VERSION_URL=new URL('version.json',RAIZ).href;
 function leerSello(){
   /* la marca del despliegue. Se pide sin caché y es un archivo de dos líneas. Con reloj: sin marca
@@ -104,16 +107,13 @@ function navegacionSellada(req,url){
      es que la URL cambie, así que el propio service worker le pega la marca de la versión al
      enlace de app.js y styles.css antes de entregar el HTML. Cuando despliego, la marca cambia,
      la URL cambia y no hay caché que valga. */
-  const portadaGuardada=function(){
-    return caches.match(INDEX).then(function(p){return p||respuestaSinRed();})
-      .catch(function(){return respuestaSinRed();});};
-  return Promise.all([
-    conLimite(pedirFresco(req,url),LIMITE_RED,null),
-    leerSello()
-  ]).then(function(r){
+  const guardada=function(){
+    return reserva(req,true).then(function(r){return r||respuestaSinRed();});};
+  /* solo leerSello lleva reloj propio: si la marca tarda pero el HTML ya está, servir el HTML sin
+     marca es mucho mejor que esperar. Del resto se encarga el límite de la frontera. */
+  return Promise.all([pedirFresco(req,url),leerSello()]).then(function(r){
     const res=r[0],sello=r[1];
-    if(!res)return portadaGuardada();   /* la red no contestó a tiempo: se abre con lo guardado */
-    if(!res.ok)return portadaGuardada();   /* 404/500: mejor la portada guardada que un error */
+    if(!res.ok)return guardada();   /* 404/500: mejor la portada guardada que un error */
     if(!sello)return res;
     const ct=res.headers.get('content-type')||'';
     if(!/text\/html/i.test(ct))return res;
@@ -124,7 +124,7 @@ function navegacionSellada(req,url){
       return new Response(sellado,{status:res.status,statusText:res.statusText,headers:h});});
   }).catch(function(){
     /* sin red: la portada guardada, que apunta a app.js sin marca — y esa sí está en la caché */
-    return portadaGuardada();});}
+    return guardada();});}
 function pedirFresco(req,url){
   /* no se puede reutilizar un Request de navegación cambiándole el modo de caché, así que se pide
      por URL. Si el navegador no admite la opción, se cae al fetch de siempre en vez de romper. */

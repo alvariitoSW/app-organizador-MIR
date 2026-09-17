@@ -33,6 +33,8 @@ let peticiones = 0;
 const colgados = new Set();
 // ficheros que el servidor da por perdidos: un despliegue a medias, o Pages todavía publicando
 const rotos = new Set();
+// ficheros que se sirven a medias: cabeceras sí, cuerpo nunca
+const aMedias = new Set();
 function serveComoGitHubPages() {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
@@ -41,6 +43,13 @@ function serveComoGitHubPages() {
       const p = path.join(raiz, u.slice(SUB.length));
       if (colgados.has(path.basename(p))) return;   // ni responde ni cierra: se queda ahí
       if (rotos.has(path.basename(p))) { res.writeHead(404); res.end('no está'); return; }
+      // cabeceras correctas y luego silencio: fetch() RESUELVE al llegar las cabeceras, así que
+      // este caso pasa cualquier reloj puesto alrededor del fetch y se cuelga al leer el cuerpo.
+      if (aMedias.has(path.basename(p))) {
+        res.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'text/html' });
+        res.write('<!doctype html><!-- y aquí se queda ');
+        return;   // ni end() ni más datos
+      }
       fs.readFile(p, (err, data) => {
         if (err) { res.writeHead(404); res.end('not found'); return; }
         peticiones++;
@@ -205,7 +214,7 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     const limpio = await browser.newContext();   // móvil nuevo: ni service worker ni caché
     const p2 = await limpio.newPage();
     await p2.goto(base + 'index.html', { timeout: 20000 }).catch(() => {});
-    await p2.waitForTimeout(10500);
+    await p2.waitForTimeout(12000);
     const rescate = await p2.evaluate(() => {
       const d = document.getElementById('rescate');
       return d ? { sale: true, boton: !!document.getElementById('rescateBtn'),
@@ -224,14 +233,33 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     // y con la app sana, el rescate NO puede aparecer
     const p3 = await limpio.newPage();
     await p3.goto(base + 'index.html', { timeout: 20000 });
-    await p3.waitForTimeout(10500);
+    await p3.waitForTimeout(12000);
     const falsaAlarma = await p3.evaluate(() => !!document.getElementById('rescate'));
     await limpio.close();
 
     check('sin copia guardada y sin app.js, sale la pantalla de rescate, repara, y no salta en falso',
-      rescate.sale && rescate.boton && /app\.js cargó: undefined/.test(rescate.info) &&
+      rescate.sale && rescate.boton && /app.js arrancó: no/.test(rescate.info) &&
       reparado.pg === 'object' && reparado.main > 500 && falsaAlarma === false,
       JSON.stringify({ rescate, reparado, falsaAlarma }));
+  }
+
+  // 10) el caso que se escapaba: el servidor manda las cabeceras y luego se calla. fetch() ya ha
+  //     resuelto, así que un reloj alrededor del fetch no sirve de nada: hay que ponerlo en la
+  //     frontera, alrededor de TODA la respuesta, porque lo que se cuelga es leer el cuerpo.
+  {
+    aMedias.add('index.html');
+    const t = Date.now();
+    const ok = await page.reload({ timeout: 20000 }).then(() => true).catch(() => false);
+    await page.waitForTimeout(1500);
+    const vivo = await Promise.race([
+      page.evaluate(() => ({ pg: typeof window.PG,
+        main: document.querySelector('#main') ? document.querySelector('#main').innerHTML.length : 0 })),
+      new Promise((r) => setTimeout(() => r(null), 5000)),
+    ]).catch(() => null);
+    aMedias.clear();
+    check('si el servidor manda las cabeceras y luego se calla, la app abre con la copia guardada',
+      ok && vivo && vivo.pg === 'object' && vivo.main > 500 && Date.now() - t < 18000,
+      JSON.stringify({ ok, vivo, ms: Date.now() - t }));
   }
 
   check('sin errores de JavaScript durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

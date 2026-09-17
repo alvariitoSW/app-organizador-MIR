@@ -2797,7 +2797,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const otra = filas.find((f) => !f.classList.contains('today'));
       return {
         antesDelPrimerDia: r0 ? Math.round(r0.top + window.scrollY - main.getBoundingClientRect().top) : -1,
-        kpis: main.querySelectorAll('.res3 div').length,
+        kpis: main.querySelectorAll('.tot div').length,
         // la configuración se fue a «Turno y rotación»: aquí ya no está
         sinConfig: !main.querySelector('[data-a="autofill"]') && !main.querySelector('[data-a="rot-anchor"]'),
         irACfg: !!main.querySelector('[data-a="ir-semana-cfg"]'),

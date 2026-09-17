@@ -218,7 +218,9 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .drow{background:color-mix(in srgb,var(--card) 86%,transparent);border:1px solid var(--line);border-left:3px solid color-mix(in srgb,var(--brand) 30%,var(--line));
   border-radius:12px;padding:7px 11px;box-shadow:var(--shadow);transition:border-color .18s,background .18s}
 .drow.open{border-left-color:var(--brand);background:color-mix(in srgb,var(--card) 96%,transparent);box-shadow:var(--glow)}
-.drow.today{border-left-color:var(--brand)}
+.drow.today{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));border-left-color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 10%,var(--card));
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 26%,transparent),0 14px 34px -20px color-mix(in srgb,var(--brand) 60%,transparent)}
 .drmain{display:flex;gap:9px;align-items:center;flex-wrap:wrap;cursor:pointer;padding:7px 0;border-radius:6px}
 .drmain:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .drday{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);min-width:76px}
@@ -700,29 +702,23 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
    valía, porque los bloques de dormir y de trabajo tapaban justo la franja iluminada. */
 .tl-noche{position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;
   background:color-mix(in srgb,#000 52%,transparent)}
+/* el resplandor del amanecer y del ocaso va en el propio fondo, no en un box-shadow: eran 14
+   sombras borrosas por pintado de Semana, cada una con su pasada de blend */
 .tl-noche.alba{border-right:1px solid color-mix(in srgb,var(--warn) 75%,transparent);
-  box-shadow:1px 0 6px -1px color-mix(in srgb,var(--warn) 55%,transparent)}
+  background:linear-gradient(90deg,color-mix(in srgb,#000 52%,transparent) 88%,color-mix(in srgb,var(--warn) 22%,transparent))}
 .tl-noche.ocaso{border-left:1px solid color-mix(in srgb,var(--bad) 75%,transparent);
-  box-shadow:-1px 0 6px -1px color-mix(in srgb,var(--bad) 55%,transparent)}
+  background:linear-gradient(90deg,color-mix(in srgb,var(--bad) 22%,transparent),color-mix(in srgb,#000 52%,transparent) 12%)}
 .tl-seg{z-index:1}
 .tl-dot{z-index:3}
 .tl-now{z-index:4}
-/* tres cifras, no siete: el resumen de la semana */
-.res3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
-.res3 div{display:flex;flex-direction:column;justify-content:center;min-width:0;
-  border:1px solid var(--line);border-radius:11px;padding:8px 9px;
-  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
-.res3 b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
-.res3 span{display:block;font-size:8.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em;line-height:1.25}
+/* tres cifras, no siete: el resumen de la semana. Usa .tot, que ya es esta misma tarjeta. */
+.tot span{line-height:1.25}
 /* ============ la señal de «hoy» ============
    Antes .drow.today solo aclaraba el borde izquierdo, que es justo lo que hace .drow.open: la marca
    estaba, pero no se veía. Ahora lleva borde encendido, fondo y etiqueta. */
 .hoychip{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;
   background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 70%,var(--brand)));
   color:#04121c;flex:none;align-self:center}
-.drow.today{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));border-left-color:var(--brand);
-  background:color-mix(in srgb,var(--brand) 10%,var(--card));
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 26%,transparent),0 14px 34px -20px color-mix(in srgb,var(--brand) 60%,transparent)}
 .drsol{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .drsol .pie{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;white-space:nowrap;
   color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
@@ -730,7 +726,7 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 /* ============ notas ============ */
 .captura{border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:14px;padding:11px 12px;
   background:color-mix(in srgb,var(--brand) 7%,var(--card));position:relative;z-index:1}
-.captura textarea{width:100%;resize:vertical;min-height:52px;font:inherit;font-size:13.5px;line-height:1.45}
+.captura textarea{min-height:52px;font-size:13.5px}
 .nota{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--line)}
 .nota:first-of-type{border-top:0}
 .nota .tick{width:26px;height:26px;flex:none;border-radius:8px;border:1.5px solid var(--line);margin-top:1px;
@@ -750,6 +746,9 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 .nota .pie.dia{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:color-mix(in srgb,var(--brand) 80%,var(--ink))}
 .nota .pie.hoy{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:color-mix(in srgb,var(--warn) 85%,var(--ink))}
 .nota .pie.ev{border-color:color-mix(in srgb,var(--ok) 40%,var(--line));color:color-mix(in srgb,var(--ok) 80%,var(--ink))}
-textarea.editor{width:100%;border:1px solid var(--line);border-radius:13px;padding:12px;
+/* el textarea global va en monoespaciado (styles.css:111) porque es para pegar JSON; el de una
+   nota y el de la captura son prosa, así que los dos comparten esta vuelta a la letra normal */
+.captura textarea,textarea.editor{width:100%;resize:vertical;font-family:inherit;line-height:1.5}
+textarea.editor{border:1px solid var(--line);border-radius:13px;padding:12px;
   background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);
-  font-family:inherit;font-size:14.5px;line-height:1.55;min-height:120px;resize:vertical}
+  font-size:14.5px;min-height:120px}

@@ -48,8 +48,12 @@
    «la app se queda pillada». Ahora, a los 8 segundos sin app, aparece un botón que borra la caché
    y el service worker —nada de sus datos— y recarga. */
 (function(){
-  var AVISO=8000;
-  function arrancada(){return !!(window.PG&&document.getElementById('main')&&document.getElementById('main').innerHTML.length>50);}
+  /* Por encima del tope del service worker (LIMITE_TOTAL=7000 en sw.js): si se toca uno, hay que
+     tocar el otro, o esta pantalla saldría mientras la app todavía está llegando. */
+  var AVISO=9500;
+  /* app.js pone esta bandera en su última línea. Antes se olfateaban dos síntomas del arranque
+     (window.PG y el tamaño de #main), que es adivinar en vez de preguntar. */
+  function arrancada(){return window.__arrancada===true;}
   function rescate(){
     if(arrancada())return;
     var d=document.createElement('div');
@@ -73,7 +77,7 @@
     var datos=[];
     datos.push('versión del HTML: '+(document.querySelector('script[src*="app.js"]')||{}).src);
     datos.push('service worker: '+('serviceWorker' in navigator?(navigator.serviceWorker.controller?'activo':'registrado sin control'):'no soportado'));
-    datos.push('app.js cargó: '+(typeof window.PG));
+    datos.push('app.js arrancó: '+(window.__arrancada===true?'sí':'no')+' · PG: '+(typeof window.PG));
     if(window.__errorArranque)datos.push('error: '+window.__errorArranque);
     info.textContent=datos.join('\n');
     document.getElementById('rescateBtn').onclick=function(){
