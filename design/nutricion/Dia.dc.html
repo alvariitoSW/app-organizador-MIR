@@ -1,0 +1,296 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#e9f2ff;
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+a{color:#38e1ff;text-decoration:none}
+a:hover{color:#7c5cff}
+.bgfx{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,#38e1ff 22%,transparent),transparent 70%),
+   radial-gradient(900px 500px at 92% 4%,color-mix(in srgb,#7c5cff 18%,transparent),transparent 72%),
+   linear-gradient(#070b14,#0b1120 60%,#070b14)}
+.gridfx{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px),
+   linear-gradient(90deg,color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%)}
+.scr{position:relative;z-index:1;min-height:844px;display:flex;flex-direction:column}
+header{position:relative;background:color-mix(in srgb,#070b14 82%,transparent);border-bottom:1px solid #1e2b44;
+  backdrop-filter:blur(14px) saturate(1.4)}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,#38e1ff 70%,transparent),color-mix(in srgb,#7c5cff 70%,transparent),transparent)}
+.hwrap{padding:12px 14px 0}
+h1{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:9px;font-weight:800;text-transform:uppercase;
+  background:linear-gradient(92deg,#e9f2ff,color-mix(in srgb,#38e1ff 85%,#e9f2ff) 55%,color-mix(in srgb,#7c5cff 85%,#e9f2ff));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:4px;padding:10px 0 8px}
+nav button{appearance:none;border:1px solid transparent;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12.5px;
+  color:#8fa6c6;border-radius:999px;cursor:pointer;white-space:nowrap;letter-spacing:.02em}
+nav button.on{color:#04121c;background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 70%,#38e1ff));
+  border-color:color-mix(in srgb,#38e1ff 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,#38e1ff 85%,transparent)}
+main{padding:14px 8px;position:relative;z-index:1;flex:1}
+.grid{display:grid;gap:13px}
+.card{position:relative;min-width:0;background:color-mix(in srgb,#111a2b 88%,transparent);border:1px solid #1e2b44;border-radius:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.9);padding:14px 9px}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,color-mix(in srgb,#38e1ff 9%,transparent),transparent 42%)}
+.card>h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.card>h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
+  background:linear-gradient(#38e1ff,#7c5cff);box-shadow:0 0 12px color-mix(in srgb,#38e1ff 70%,transparent)}
+.note{color:#8fa6c6;font-size:12.5px;margin:0 0 12px}
+.mini{font-size:11.5px;color:#8fa6c6}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:13px;padding:7px 13px;border-radius:11px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff;cursor:pointer}
+.btn.p{background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 80%,#38e1ff));border-color:transparent;color:#051018;font-weight:800;
+  box-shadow:0 10px 26px -14px color-mix(in srgb,#38e1ff 90%,transparent)}
+.btn.s{padding:5px 9px;font-size:12px;border-radius:9px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:color-mix(in srgb,#8fa6c6 16%,transparent);color:#8fa6c6;white-space:nowrap;border:1px solid transparent}
+.tag.b2{background:color-mix(in srgb,#38e1ff 18%,transparent);color:color-mix(in srgb,#38e1ff 75%,#e9f2ff);border-color:color-mix(in srgb,#38e1ff 30%,transparent)}
+.tag.b3{background:color-mix(in srgb,#34d399 18%,transparent);color:color-mix(in srgb,#34d399 75%,#e9f2ff);border-color:color-mix(in srgb,#34d399 30%,transparent)}
+.tag.b4{background:color-mix(in srgb,#fbbf24 18%,transparent);color:color-mix(in srgb,#fbbf24 80%,#e9f2ff);border-color:color-mix(in srgb,#fbbf24 30%,transparent)}
+.ico{width:26px;height:26px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:18px;height:18px}
+/* --- comida --- */
+.subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.volver{display:inline-flex;align-items:center;gap:5px;flex:none}
+.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:#e9f2ff;
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:96px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tile .ico{color:#8fa6c6;margin-bottom:4px}
+.tile b{font-size:13.5px;line-height:1.2}
+.tile .n{font-size:13px;font-weight:800;color:#38e1ff}
+.tile .s{font-size:10.5px;color:#8fa6c6}
+/* anillo de kcal */
+.ringrow{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.ringnum b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ringnum span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.06em}
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:#8fa6c6}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden}
+.mbar i{display:block;height:100%}
+.mbar i.p{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.mbar i.g{background:linear-gradient(90deg,#34d399,#a3e635)}
+.mbar i.w{background:linear-gradient(90deg,#fbbf24,#fb7185)}
+/* registro del día */
+.logrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed #1e2b44}
+.logrow:first-child{border-top:none}
+.logrow .h{font-size:11px;font-weight:800;color:#8fa6c6;width:38px;flex:none}
+.logrow .nm{flex:1;min-width:0}
+.logrow .nm b{display:block;font-size:13px}
+.logrow .kc{font-size:12px;font-weight:800;flex:none}
+/* tira semanal */
+.wk{display:flex;gap:5px;margin-top:10px;align-items:flex-end}
+.wkd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wkb{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;
+  display:flex;align-items:flex-end;overflow:hidden}
+.wkb i{display:block;width:100%;background:linear-gradient(180deg,#38e1ff,#7c5cff)}
+.wkb.over i{background:linear-gradient(180deg,#fbbf24,#fb7185)}
+.wkd span{font-size:9.5px;font-weight:800;color:#8fa6c6}
+.wkd.hoy span{color:#38e1ff}
+/* buscador y resultados */
+.buscador{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);color:#8fa6c6;font-size:13.5px}
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.modo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;font:inherit;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;cursor:pointer;min-height:62px}
+.modo.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#e9f2ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.modo span{font-size:10px;font-weight:700}
+.res{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed #1e2b44}
+.res:first-child{border-top:none}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-size:13px}
+/* platos */
+.platos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:10px 10px;border-radius:12px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.plato .pic{font-size:26px;line-height:1.15}
+.plato b{font-size:12.5px;line-height:1.2}
+.plato .mini{font-size:10.5px}
+.cocinable{border-color:color-mix(in srgb,#34d399 45%,#1e2b44);background:color-mix(in srgb,#34d399 8%,#111a2b)}
+/* modo cocina */
+.paso{font-size:19px;line-height:1.45;font-weight:600;margin:14px 0}
+.pasonum{display:flex;align-items:center;gap:9px}
+.pasopunto{width:8px;height:8px;border-radius:999px;background:#1e2b44}
+.pasopunto.on{background:#38e1ff;box-shadow:0 0 10px color-mix(in srgb,#38e1ff 80%,transparent)}
+.ingr{display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed #1e2b44;font-size:13px}
+.ingr:first-child{border-top:none}
+.ingr b{font-weight:800}
+.navpaso{margin-top:auto;position:relative;z-index:1;padding:11px 9px 14px;border-top:1px solid #1e2b44;display:flex;gap:8px;
+  background:color-mix(in srgb,#070b14 92%,transparent)}
+.chip{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:9px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff}
+.chip.on{border-color:color-mix(in srgb,#38e1ff 45%,#1e2b44);color:#38e1ff}
+/* solo lleva barra lo que de verdad es progreso; lo demás, cifra y ya */
+.dosdatos{display:flex;gap:8px}
+.dosdatos div{flex:1;min-width:0;border:1px solid #1e2b44;border-radius:10px;padding:6px 9px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.dosdatos b{display:block;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:-.02em}
+.dosdatos span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.05em}
+
+/* --- nutrición --- */
+.micros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.mic{border:1px solid #1e2b44;border-radius:10px;padding:7px 9px;background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.mic .mn{display:block;font-size:10px;color:#8fa6c6;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mic .mv{display:block;color:#e9f2ff;font-size:12.5px;font-weight:800;white-space:nowrap;margin-top:1px}
+.micbar{height:5px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden;margin-top:5px}
+.micbar i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#a3e635)}
+.micbar i.bajo{background:linear-gradient(90deg,#fbbf24,#fb7185)}
+.micbar i.alto{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.falta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.falta .tag{background:color-mix(in srgb,#fbbf24 16%,transparent);color:color-mix(in srgb,#fbbf24 85%,#e9f2ff);border-color:color-mix(in srgb,#fbbf24 30%,transparent)}
+.alim{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed #1e2b44;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:#e9f2ff;font:inherit;cursor:pointer}
+.alim:first-of-type{border-top:0}
+.alim .em{font-size:22px;flex:none;line-height:1}
+.alim .nm{flex:1;min-width:0}
+.alim .nm b{display:block;font-size:13.5px}
+.alim .kc{font-size:12px;font-weight:800;color:#8fa6c6;white-space:nowrap}
+.fuente{font-size:10px;color:#8fa6c6;display:inline-flex;align-items:center;gap:4px;
+  border:1px solid #1e2b44;border-radius:999px;padding:2px 8px}
+.fuente.usda{border-color:color-mix(in srgb,#34d399 40%,#1e2b44);color:color-mix(in srgb,#34d399 80%,#e9f2ff)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chipx{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#e9f2ff}
+.chipx button{background:none;border:0;color:#8fa6c6;font:inherit;cursor:pointer;padding:0 0 0 2px}
+.idea{border:1px solid #1e2b44;border-radius:13px;padding:11px 12px;margin-top:9px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.idea.buena{border-color:color-mix(in srgb,#34d399 45%,#1e2b44);background:color-mix(in srgb,#34d399 8%,#111a2b)}
+.idea h4{margin:0 0 3px;font-size:14px;display:flex;align-items:center;gap:7px}
+.idea .por{font-size:11.5px;color:#8fa6c6;margin:0}
+.ingr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px dashed #1e2b44;font-size:13px}
+.ingr:first-of-type{border-top:0}
+.ingr b{font-weight:800;white-space:nowrap}
+.tot{display:flex;gap:8px;margin-top:10px}
+.tot div{flex:1;min-width:0;border:1px solid #1e2b44;border-radius:10px;padding:6px 8px;text-align:center;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tot b{display:block;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.tot span{font-size:8.5px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.04em}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:#e9f2ff;
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:92px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tile .ico{color:#8fa6c6;margin-bottom:4px}
+.tile b{font-size:13.5px;line-height:1.2}
+.tile .n{font-size:13px;font-weight:800;color:#38e1ff}
+.tile .s{font-size:10.5px;color:#8fa6c6}
+.ringrow{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringnum b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ringnum span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.06em}
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:#8fa6c6}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden}
+.mbar i{display:block;height:100%}
+.mbar i.p{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.mbar i.c{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.mbar i.g{background:linear-gradient(90deg,#34d399,#a3e635)}
+.buscador{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);color:#8fa6c6;font-size:13.5px;margin-top:11px}
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.modo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;font:inherit;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;cursor:pointer;min-height:60px}
+.modo.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#e9f2ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.modo span{font-size:10px;font-weight:700;text-align:center;line-height:1.15}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+  </style>
+</helmet>
+<div class="scr">
+  <div class="bgfx"></div>
+  <div class="gridfx"></div>
+
+<header>
+  <div class="hwrap">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="#38e1ff" stroke-width="2" stroke-linecap="round" style="width:22px;height:22px;flex:none"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>Guardias · rotación y cocina</h1>
+    <nav><button class="">Calendario</button><button class="">Entreno</button><button class="">Compra</button><button class="on">☰ Más</button></nav>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:11px">
+      <div class="row" style="gap:6px"><button class="btn s">‹</button><b style="font-size:13.5px">jue 17 sep</b><button class="btn s">›</button></div>
+      <span class="tag b2">🩺 Guardia</span>
+    </div>
+    <div class="ringrow">
+      <div class="ring">
+    <svg width="104" height="104" viewBox="0 0 104 104">
+      <circle cx="52" cy="52" r="46" fill="none" stroke="#1e2b44" stroke-width="9"/>
+      <circle cx="52" cy="52" r="46" fill="none" stroke="url(#g)" stroke-width="9" stroke-linecap="round"
+        stroke-dasharray="289.0" stroke-dashoffset="98.3"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#38e1ff"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs>
+    </svg>
+    <div class="ringnum"><b>1 350</b><span>de 2 040</span></div>
+  </div>
+      <div class="macros">
+        <div class="macro"><div class="mt"><span>proteína</span><b>96 / 150 g</b></div>
+  <div class="mbar"><i class="p" style="width:64%"></i></div></div>
+        <div class="macro"><div class="mt"><span>carbohidratos</span><b>142 / 230 g</b></div>
+  <div class="mbar"><i class="c" style="width:62%"></i></div></div>
+        <div class="macro"><div class="mt"><span>grasa</span><b>48 / 68 g</b></div>
+  <div class="mbar"><i class="g" style="width:70%"></i></div></div>
+      </div>
+    </div>
+    <button class="btn p big" style="margin-top:13px"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> apuntar comida</button>
+  </div>
+
+  <div class="card">
+    <h2>Micronutrientes de hoy</h2>
+    <p class="note" style="margin-bottom:0">Sobre la ingesta de referencia para un adulto. Toca uno para ver de qué alimento sale.</p>
+    <div class="micros">
+      <div class="mic"><span class="mn">Hierro</span><span class="mv">8,2 / 11 mg</span>
+  <div class="micbar"><i class="" style="width:75%"></i></div></div><div class="mic"><span class="mn">Calcio</span><span class="mv">640 / 1000 mg</span>
+  <div class="micbar"><i class="" style="width:64%"></i></div></div>
+      <div class="mic"><span class="mn">Vit. C</span><span class="mv">88 / 80 mg</span>
+  <div class="micbar"><i class="alto" style="width:100%"></i></div></div><div class="mic"><span class="mn">Vit. D</span><span class="mv">1,2 / 15 µg</span>
+  <div class="micbar"><i class="bajo" style="width:8%"></i></div></div>
+      <div class="mic"><span class="mn">Potasio</span><span class="mv">2 100 / 3 500 mg</span>
+  <div class="micbar"><i class="" style="width:60%"></i></div></div><div class="mic"><span class="mn">Vit. B12</span><span class="mv">3,1 / 4 µg</span>
+  <div class="micbar"><i class="" style="width:78%"></i></div></div>
+    </div>
+    <p class="note" style="margin:11px 0 6px"><b>Hoy vas corto de:</b></p>
+    <div class="falta"><span class="tag">Vitamina D</span><span class="tag">Potasio</span><span class="tag">Calcio</span></div>
+    <button class="btn s" style="margin-top:10px"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg> qué comer para cubrirlo</button>
+  </div>
+
+  <div class="card">
+    <h2>Lo de hoy <span class="mini">4 tomas</span></h2>
+    <div class="alim"><span class="kc" style="width:38px">08:10</span>
+      <span class="nm"><b>Porridge overnight</b><span class="mini">avena, yogur griego, plátano</span></span><span class="kc">430</span></div><div class="alim"><span class="kc" style="width:38px">11:00</span>
+      <span class="nm"><b>Café con leche</b></span><span class="kc">90</span></div><div class="alim"><span class="kc" style="width:38px">14:30</span>
+      <span class="nm"><b>Pollo al curry con boniato</b><span class="mini">táper del domingo</span></span><span class="kc">620</span></div><div class="alim"><span class="kc" style="width:38px">17:00</span>
+      <span class="nm"><b>Manzana y nueces</b></span><span class="kc">210</span></div>
+  </div>
+
+  <div class="tiles">
+    <button class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5c2-3 6-2.5 7 .5 1.5 4.5-2 12-4.5 12-1.2 0-1.6-.7-2.5-.7s-1.3.7-2.5.7C7 20 3.5 12.5 5 8c1-3 5-3.5 7-.5z"/><path d="M12 7.5V4.5M12 4.5c1.5 0 2.5-1 2.5-2"/></svg><b>Alimentos</b><span class="n">184</span><span class="s">kcal y micros</span></button>
+    <button class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M6 9.5h12M9.2 5.5v2M9.2 12v2.5"/></svg><b>Mi nevera</b><span class="n">12</span><span class="s">cosas en casa</span></button>
+    <button class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg><b>Ideas</b><span class="n">5</span><span class="s">con lo que tienes</span></button>
+    <button class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v14H6.5A2.5 2.5 0 0 0 4 19.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H19v4H6.5A2.5 2.5 0 0 1 4 19.5z"/></svg><b>Mis platos</b><span class="n">16</span><span class="s">crear y editar</span></button>
+  </div>
+</main>
+</div>
+</x-dc>
+</body>
+</html>

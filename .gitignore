@@ -4,3 +4,5 @@ node_modules/
 # el lienzo sellado: 2,5 MB de editor, se regenera desde design/entreno/*
 design/entreno/entreno-rediseno.html
 design/comida/comida-y-menus.html
+design/nutricion/*.html
+!design/nutricion/*.dc.html
