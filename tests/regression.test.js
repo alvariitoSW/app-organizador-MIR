@@ -1875,6 +1875,63 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== Mes: la cuadrícula llena la pantalla y los eventos se ven =====================
+  {
+    // las casillas medían 96 px con 28 de contenido: 68 px muertos por día, y la cuadrícula se
+    // quedaba en poco más de la mitad del alto útil del móvil
+    await page.setViewportSize({ width: 412, height: 915 });
+    const hoyMes = new Date();
+    const claveDe = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    await page.evaluate((claves) => {
+      const ev = window.PG.eventosS();
+      ev.length = 0;
+      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: claves[0], color: '#a855f7', dow: [] });
+      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: claves[1], color: '#38e1ff', dow: [] });
+      window.PG.save();
+    }, [claveDe(new Date(hoyMes.getFullYear(), hoyMes.getMonth(), 9)),
+        claveDe(new Date(hoyMes.getFullYear(), hoyMes.getMonth(), 25))]);
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(400);
+    const rejilla = await page.evaluate(() => {
+      const cal = document.querySelector('.cal');
+      const celda = [...document.querySelectorAll('.dbox')].find((x) => !x.classList.contains('blank'));
+      const r = celda.getBoundingClientRect();
+      return {
+        alturaCelda: Math.round(r.height),
+        alturaCal: Math.round(cal.getBoundingClientRect().height),
+        ventana: window.innerHeight,
+        cabeceraNoEstirada: Math.round(document.querySelector('.cal .wd').getBoundingClientRect().height) < 40,
+      };
+    });
+    check('en el móvil la cuadrícula del mes se estira para llenar la pantalla',
+      rejilla.alturaCelda > 96 && rejilla.alturaCal > rejilla.ventana * 0.55 && rejilla.cabeceraNoEstirada,
+      JSON.stringify(rejilla));
+
+    // los eventos del mes se ven en su casilla Y en una lista con el nombre entero, porque en una
+    // casilla de 53 px de ancho el título siempre sale cortado
+    const agenda = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /^Eventos de/m.test(x.innerText));
+      return {
+        enCasilla: document.querySelectorAll('.dline.evt').length,
+        filas: c ? c.querySelectorAll('.agrow').length : 0,
+        nombreEntero: c ? /Congreso SEMES/.test(c.innerText) : false,
+      };
+    });
+    check('los eventos del mes salen en su casilla y listados enteros debajo del calendario',
+      agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
+
+    // y tocar uno de la lista te lleva a ese día
+    await page.click('.agrow');
+    await page.waitForTimeout(300);
+    const saltó = await page.evaluate(() => window.PG.ui.monSel);
+    check('tocar un evento de la lista abre ese día en el calendario',
+      /^\d{4}-\d{2}-09$/.test(saltó || ''), 'monSel: ' + saltó);
+
+    await page.evaluate(() => { window.PG.eventosS().length = 0; window.PG.save(); window.PG.ui.monSel = ''; });
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
+
   // ===================== Dónde se guardan los datos =====================
   {
     // sin pedirlo, lo guardado en el navegador es «de usar y tirar»: Android puede borrarlo cuando

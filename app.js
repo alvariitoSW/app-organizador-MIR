@@ -1612,10 +1612,11 @@ function renderMonth(){
     if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
     if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
       '🏊 '+esc(seg.hora||'')+'</span>');
-    evsDia.slice(0,2).forEach(function(ev){
+    /* tres en vez de dos: la casilla ahora se estira con la pantalla y hay sitio de sobra */
+    evsDia.slice(0,3).forEach(function(ev){
       lineas.push('<span class="dline evt" title="'+esc(ev.hora+' '+ev.titulo)+'">'+
         '<i style="background:'+esc(ev.color||tlColor('evt'))+'"></i>'+esc(ev.titulo)+'</span>');});
-    if(evsDia.length>2)lineas.push('<span class="dline evt">+'+(evsDia.length-2)+' más</span>');
+    if(evsDia.length>3)lineas.push('<span class="dline evt">+'+(evsDia.length-3)+' más</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+'</span>'+
@@ -1644,6 +1645,9 @@ function renderMonth(){
         <button class="btn s" data-a="mon-clear">vaciar mes</button></div>
       <div class="cal">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
+    </div>
+    ${agendaMesHTML(y,mo)}
+    <div class="card">
       <div class="row" style="margin-top:10px">
         <span class="mini">${(g.por&&g.por.sin)?g.por.sin+' guardia(s) sin tipo · ':''}${!svc.set&&!store.rotation.monthService
           ?'sin servicio puesto'
@@ -3913,6 +3917,36 @@ function eventosPuntualesDe(key){return eventosS().filter(function(e){return e.o
 function eventosDeFecha(key){const d=parseDate(key);if(!d)return [];
   return eventosDelDia(d.getDay()).concat(eventosPuntualesDe(key))
     .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});}
+function eventosDelMes(y,mo){
+  /* los eventos con fecha que caen en el mes que estás viendo, en orden. Los que se repiten cada
+     semana no se listan uno a uno —serían veinte líneas iguales—: van resumidos al final. */
+  const ini=iso(new Date(y,mo,1)),fin=iso(new Date(y,mo+1,0));
+  return eventosS().filter(function(e){
+    return e.on!==false&&e.modo==='fecha'&&e.fecha>=ini&&e.fecha<=fin;})
+    .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});}
+function agendaMesHTML(y,mo){
+  /* «que pueda ver los eventos del mes para no perderlos»: la cuadrícula enseña lo que cabe en la
+     casilla, y esto es la lista entera, con su día y su hora, sin tener que ir tocando día por día */
+  const evs=eventosDelMes(y,mo);
+  const fijos=eventosS().filter(function(e){return e.on!==false&&e.modo!=='fecha'&&(e.dow||[]).length;});
+  if(!evs.length&&!fijos.length)return '';
+  const hoy=iso(new Date());
+  const filas=evs.map(function(ev){
+    const d=parseDate(ev.fecha),pasado=ev.fecha<hoy;
+    return '<button class="agrow'+(pasado?' ya':'')+(ev.fecha===hoy?' hoy':'')+'" data-a="mon-day" data-key="'+esc(ev.fecha)+'"'+
+      ' title="ver ese día">'+
+      '<span class="agdot" style="background:'+esc(ev.color||tlColor('evt'))+'"></span>'+
+      '<span class="agd"><b>'+(d?d.getDate():'?')+'</b><span>'+(d?DAYSH[(d.getDay()+6)%7].toLowerCase():'')+'</span></span>'+
+      '<span class="agnm"><b>'+esc(ev.titulo||'(sin título)')+'</b>'+
+        (ev.cuentaAtras&&!pasado?'<span class="mini">'+esc(cuentaAtrasTxt(ev.fecha))+'</span>':'')+'</span>'+
+      '<span class="aghr">'+esc(ev.hora||'')+'</span></button>';}).join('');
+  return '<div class="card" style="margin-top:12px"><h2>Eventos de '+MONTH_FULL[mo]+
+      (evs.length?' <span class="tag b2">'+evs.length+'</span>':'')+'</h2>'+
+    (filas||'<p class="mini" style="margin:0">Ninguno con fecha este mes.</p>')+
+    (fijos.length?('<p class="mini" style="margin:9px 0 0">Además, todas las semanas: '+
+      fijos.map(function(e){return esc(e.titulo||'(sin título)')+' <span style="opacity:.7">('+diasCorta(e.dow)+')</span>';}).join(' · ')+'</p>'):'')+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="habitos">+ añadir o quitar eventos</button></div>'+
+    '</div>';}
 function eventosPuntualesProximos(){const hoy=iso(new Date());
   return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha>=hoy;})
     .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});}
@@ -6336,7 +6370,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
-  eventosS,eventosDelDia,eventosDeFecha,diasCorta,eventoRowHTML,eventosTagsHTML,
+  eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
