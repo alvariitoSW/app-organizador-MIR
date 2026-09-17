@@ -1938,16 +1938,76 @@ const MUSCLE_MAP=[
   [/glute|glúteo|gluteo/,'gluteos'],
   [/calf|calves|gastroc|soleus|lower leg|gemelo/,'gemelos'],
   [/\babs\b|abdomin|oblique|waist|\bcore\b|abductor|adductor/,'core']];
+/* Los músculos salían SOLO de los campos de la biblioteca de openGym (tg/msc/c), y addRutina esos
+   campos solo los rellena cuando el nombre coincide EXACTO con la biblioteca... que está en inglés.
+   Escribiendo «Dominadas» o «Sentadilla» el muñeco no se podía pintar nunca: salían tres ejercicios
+   en la tabla y debajo «añade ejercicios para ver qué trabajas». Esta tabla traduce el nombre que
+   escribes —en español o en inglés— a grupos musculares, sin depender de ninguna biblioteca.
+   El orden importa: lo específico va antes que lo genérico, y los casos que comparten palabra
+   («curl» de bíceps contra «curl femoral») se separan mirando el resto del nombre. */
+const EJERCICIOS_NOMBRE=[
+  /* pierna */
+  [/sentadilla|squat|goblet|hack\b/,['cuadriceps','gluteos','core']],
+  [/prensa|leg press/,['cuadriceps','gluteos']],
+  [/zancada|estocada|lunge|b[úu]lgara|split squat/,['cuadriceps','gluteos']],
+  [/extensi[óo]n(es)?\s*(de\s*)?(cu[áa]dric|pierna|rodilla)|leg extension/,['cuadriceps']],
+  [/peso muerto rumano|rdl\b|buenos d[íi]as|good morning/,['isquiotibiales','gluteos','espalda']],
+  [/peso muerto|deadlift/,['isquiotibiales','gluteos','espalda','core']],
+  [/(curl|flexi[óo]n)\s*(de\s*)?(femoral|pierna|isquio)|leg curl|femoral/,['isquiotibiales']],
+  [/hip thrust|empuje de cadera|puente de gl[úu]teo|patada de gl[úu]teo|abductor/,['gluteos','isquiotibiales']],
+  [/gemelo|elevaci[óo]n(es)?\s*(de\s*)?talon|calf raise|s[óo]leo/,['gemelos']],
+  /* empuje: pecho y hombro */
+  [/press (de )?banca|bench press|press plano|press inclinado|press declinado/,['pecho','triceps','hombros']],
+  [/apertura|fly\b|pec deck|contractora|cruce de polea/,['pecho']],
+  [/fondo|dips?\b/,['pecho','triceps']],
+  [/flexion(es)?\b|push ?up|lagartija/,['pecho','triceps','core']],
+  [/press militar|press (de )?hombro|overhead press|press arnold|push press/,['hombros','triceps']],
+  [/elevaci[óo]n(es)?\s*(lateral|frontal)|lateral raise|front raise/,['hombros']],
+  [/p[áa]jaro|deltoide posterior|rear delt|face pull/,['hombros','espalda']],
+  /* tirón: espalda y bíceps */
+  [/dominada|pull ?up|chin ?up/,['espalda','biceps']],
+  [/jal[óo]n|lat pulldown|polea al pecho/,['espalda','biceps']],
+  [/remo\b|row\b/,['espalda','biceps']],
+  [/pull ?over/,['espalda','pecho']],
+  [/encogimiento|shrug|trapecio/,['espalda']],
+  [/hiperextensi[óo]n|lumbar|back extension/,['espalda','gluteos']],
+  /* brazo */
+  [/(curl|martillo|hammer|predicador|concentrado)(?!.*(femoral|pierna|isquio))/,['biceps']],
+  [/tr[íi]ceps|press franc[ée]s|skull ?crusher|copa|patada de tr[íi]ceps|jal[óo]n de tr/,['triceps']],
+  /* core */
+  [/plancha|plank|hollow/,['core']],
+  [/abdominal|crunch|encogimiento abdominal|elevaci[óo]n(es)?\s*(de\s*)?pierna|rueda abdominal|ab wheel/,['core']],
+  [/oblicuo|russian twist|giro ruso|leñador|pallof/,['core']],
+  /* mixtos */
+  [/burpee/,['pecho','cuadriceps','core']],
+  [/thruster|clean|arrancada|cargada|snatch/,['cuadriceps','hombros','espalda','core']]
+];
+function regionesDeNombre(nombre){
+  const t=String(nombre||'').toLowerCase().trim(),out=new Set();
+  if(!t)return out;
+  for(let i=0;i<EJERCICIOS_NOMBRE.length;i++){
+    if(EJERCICIOS_NOMBRE[i][0].test(t))EJERCICIOS_NOMBRE[i][1].forEach(function(r){out.add(r);});}
+  return out;}
 function regionesDeTexto(txt){
   const t=String(txt||'').toLowerCase(),out=new Set();
   MUSCLE_MAP.forEach(function(p){if(p[0].test(t))out.add(p[1]);});
   return out;}
 function regionesDeEjercicio(ej){
   const out=new Set();
+  /* la biblioteca manda cuando la hay: trae el músculo objetivo, que es más preciso que el nombre */
   regionesDeTexto(ej&&ej.tg).forEach(function(r){out.add(r);});
   regionesDeTexto(ej&&ej.msc).forEach(function(r){out.add(r);});
+  /* y si no la hay —el caso normal escribiendo el ejercicio a mano—, se saca del propio nombre */
+  if(!out.size)regionesDeNombre(ej&&ej.ex).forEach(function(r){out.add(r);});
+  if(!out.size)regionesDeTexto(ej&&ej.ex).forEach(function(r){out.add(r);});
   if(!out.size)regionesDeTexto(ej&&ej.c).forEach(function(r){out.add(r);});
   return out;}
+function ejerciciosSinMusculo(rid){
+  /* los que no se han sabido traducir: mejor decirlo que dejar el muñeco a medias sin explicación */
+  const g=gymS(),rt=g.rutinas.find(function(r){return r.id===rid;});
+  if(!rt)return [];
+  return rt.ejercicios.filter(function(ej){return !regionesDeEjercicio(ej).size;})
+    .map(function(ej){return ej.ex;});}
 function tipoDeEjercicio(ej){
   /* la biblioteca de openGym no trae "tipo": se saca del equipo — sin equipo (o "body weight") es calistenia,
      cualquier otro equipo (barra, mancuerna, máquina, polea…) es gimnasio */
@@ -2424,15 +2484,26 @@ function renderRutinaCard(rt,selDate){
         '<button class="btn s" style="padding:2px 5px" data-a="rt-down" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix>=rt.ejercicios.length-1?'disabled':'')+' title="bajar">↓</button>'+
         '<button class="btn d s" data-a="rt-del" data-id="'+rt.id+'" data-ix="'+ix+'" title="quitar de la rutina">×</button></td></tr>';}).join('');
   const regiones=regionesDeRutina(rt.id);
-  const leyenda=regiones.size?Array.from(regiones).map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')
-    :'<span class="mini">añade ejercicios de la biblioteca para que se rellene</span>';
+  const sinMusc=ejerciciosSinMusculo(rt.id);
+  /* «no se ve qué músculos haces y cuáles no»: se enseñan los dos lados. Los trabajados en verde y,
+     debajo, los que se quedan fuera apagados — que es justo lo que hay que mirar para decidir si a
+     la rutina le falta algo. */
+  const sinTocar=MREGIONES.filter(function(r){return !regiones.has(r);});
+  const leyenda=regiones.size
+    ?(Array.from(regiones).map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')+
+      (sinTocar.length?('<div class="msin"><b>Sin tocar:</b> '+
+        sinTocar.map(function(r){return '<span class="tag">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')+'</div>'):''))
+    :'<span class="mini">añade ejercicios abajo y el muñeco se pinta solo</span>';
   return '<div class="card">'+
     '<h2>📋 <input value="'+esc(rt.nombre)+'" data-a="rt-nombre" data-id="'+rt.id+'" placeholder="nombre de la rutina" '+
       'style="font:inherit;font-weight:800;border:1px solid transparent;background:transparent;padding:2px 4px;max-width:210px"></h2>'+
     '<div class="row"><label class="fld" style="flex:1 1 220px">notas (cuándo la haces)'+
       '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+rt.id+'" placeholder="martes y viernes"></label></div>'+
     '<div class="mdiagram" style="margin-top:10px">'+svgCuerpo(regiones)+'<div class="mlegend"><b>Trabaja:</b>'+leyenda+
-      '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regiones))+'</p></div></div>'+
+      '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regiones))+'</p>'+
+      (sinMusc.length?('<p class="mini" style="margin-top:4px;color:var(--warn)">No sé qué músculos trabaja: '+
+        esc(sinMusc.join(', '))+'. Se cuenta igual en la rutina, solo que no pinta el muñeco.</p>'):'')+
+      '</div></div>'+
     (rt.ejercicios.length?('<div style="overflow-x:auto;margin-top:8px"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap">'+
       '<th style="min-width:120px">Ejercicio</th><th>series</th>'+
       '<th>reps</th><th>peso obj.</th><th>descanso</th><th style="min-width:130px">nota</th><th>último</th><th>tu marca</th><th></th></tr></thead>'+
@@ -6360,7 +6431,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   tipoDeEjercicio,recomendacionRutina,entrenoHeatmapCard,kcalRingHTML,
   addSet,delSet,setsDe,volumenDe,prDe,
   ejercicioUltimo,empezarRutina,terminarSesion,descartarSesion,duracionTipica,historialRutina,sesionesRecientes,
-  addCardio,delCardio,libMatch,regionesDeTexto,regionesDeEjercicio,regionesDeRutina,regionesDeSesion,svgCuerpo,
+  addCardio,delCardio,libMatch,regionesDeTexto,regionesDeNombre,ejerciciosSinMusculo,EJERCICIOS_NOMBRE,regionesDeEjercicio,regionesDeRutina,regionesDeSesion,svgCuerpo,
   MREGIONES,MREG_LABEL,GYM_SITIO,GYM_URL,
   diaSegundo,toggleSegundo,setSegundoCampo,toggleSegundoDia,resumenGym,volumenSemana,gymLine,
   food,foodKey,offNum,mapOffProduct,addEanProduct,delEanProduct,toggleFavEan,porcionDe,foodLog,addFoodEntry,delFoodEntry,

@@ -442,6 +442,8 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .mreg.on{fill:var(--brand);stroke:color-mix(in srgb,var(--brand) 70%,var(--line))}
 .mlegend{flex:1 1 160px;font-size:12px;color:var(--ink2);min-width:140px}
 .mlegend b{color:var(--ink);display:block;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.msin{margin-top:8px}
+.msin .tag{opacity:.55}
 .mreg{cursor:pointer}
 /* comida: resumen del día en un anillo de kcal + una barra de proteína, en vez de tres barras y cuatro KPI */
 .kcalhero{display:flex;align-items:center;gap:18px;margin:4px 0 6px;flex-wrap:wrap}

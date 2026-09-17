@@ -1875,6 +1875,73 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
     JSON.stringify(compartido2));
 
+  // ===================== El muñeco de la rutina =====================
+  {
+    // Los músculos salían SOLO de los campos de la biblioteca de openGym, y addRutina los rellena
+    // únicamente si el nombre coincide EXACTO con ella, que está en inglés. Escribiendo «Dominadas»
+    // el muñeco no se pintaba nunca: tres ejercicios en la tabla y debajo «añade ejercicios».
+    await gotoGym('rutinas');
+    await page.waitForTimeout(200);
+    const traduce = await page.evaluate(() => {
+      const r = (n) => [...window.PG.regionesDeNombre(n)].sort().join(',');
+      return {
+        dominadas: r('Dominadas'),
+        pressMilitar: r('Press militar'),
+        sentadilla: r('Sentadilla'),
+        // «curl» a secas es de bíceps, pero «curl femoral» es de isquios: comparten palabra
+        curlBiceps: r('Curl de bíceps'),
+        curlFemoral: r('Curl femoral'),
+        // con \b dentro de la expresión regular, que es justo lo que se corrompió al escribirlo
+        remo: r('Remo con barra'),
+        fondos: r('Fondos'),
+        // el cardio no tiene grupo muscular y no pasa nada
+        bici: r('Bicicleta estática'),
+      };
+    });
+    check('los nombres en español se traducen a músculos sin depender de la biblioteca',
+      traduce.dominadas === 'biceps,espalda' &&
+      traduce.pressMilitar === 'hombros,triceps' &&
+      traduce.sentadilla === 'core,cuadriceps,gluteos' &&
+      traduce.curlBiceps === 'biceps' && traduce.curlFemoral === 'isquiotibiales' &&
+      traduce.remo === 'biceps,espalda' && traduce.fondos === 'pecho,triceps' &&
+      traduce.bici === '', JSON.stringify(traduce));
+
+    // la secuencia de verdad: creo la rutina del usuario, añado los tres y miro el muñeco
+    const munieco = await page.evaluate(() => {
+      const g = window.PG.gymS();
+      g.rutinas.length = 0;
+      g.rutinas.push({ id: 'rt-mun', nombre: 'Rutina 1', notas: '', ejercicios: [] });
+      ['Dominadas', 'Press militar', 'Sentadilla'].forEach((n) => window.PG.addRutina('rt-mun', n, {}));
+      window.PG.ui.gymPanel = 'rutinas';
+      window.PG.render();
+      const leyenda = document.querySelector('.mlegend');
+      return {
+        pintadas: document.querySelectorAll('.mreg.on').length,
+        leyenda: leyenda ? leyenda.innerText : '',
+        sinTraducir: window.PG.ejerciciosSinMusculo('rt-mun').length,
+      };
+    });
+    check('añadir ejercicios a mano pinta el muñeco y dice qué trabaja y qué no',
+      munieco.pintadas > 0 && munieco.sinTraducir === 0 &&
+      /Espalda/.test(munieco.leyenda) && /Sin tocar/i.test(munieco.leyenda) &&
+      /Pecho/.test(munieco.leyenda) && !/añade ejercicios/i.test(munieco.leyenda),
+      JSON.stringify(munieco));
+
+    // un ejercicio inventado no se traduce: se dice, en vez de dejar el muñeco a medias sin explicar
+    const raro = await page.evaluate(() => {
+      window.PG.addRutina('rt-mun', 'Chuchurrío lateral', {});
+      window.PG.render();
+      return {
+        sinTraducir: window.PG.ejerciciosSinMusculo('rt-mun'),
+        loDice: /No sé qué músculos trabaja/.test(document.querySelector('.mlegend').innerText),
+      };
+    });
+    check('un ejercicio que no se sabe traducir se avisa, no se calla',
+      raro.sinTraducir.length === 1 && raro.loDice, JSON.stringify(raro));
+
+    await page.evaluate(() => { window.PG.gymS().rutinas.length = 0; window.PG.save(); });
+  }
+
   // ===================== Mes: la cuadrícula llena la pantalla y los eventos se ven =====================
   {
     // las casillas medían 96 px con 28 de contenido: 68 px muertos por día, y la cuadrícula se
