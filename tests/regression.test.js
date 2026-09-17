@@ -1052,9 +1052,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await gotoTab('month');
   await page.waitForTimeout(150);
-  const mesConEvento = await page.evaluate(() =>
-    [...document.querySelectorAll('#main .dbox .dline.evt')].some((l) => /Entreno con Marta/.test(l.textContent)));
-  check('"Mes" dice en la propia casilla cómo se llama el evento, sin tener que pinchar el día', mesConEvento, '');
+  // el nombre ya no se escribe dentro de la casilla —53 px daban «Entreno c»— sino que el día
+  // queda marcado con un punto de su color, y el nombre entero vive en la lista de eventos del mes
+  const mesConEvento = await page.evaluate(() => ({
+    marcado: [...document.querySelectorAll('#main .dbox .dpt')].some((l) => /Entreno con Marta/.test(l.title)),
+    sinTextoRecortado: !/Entreno con/.test(document.querySelector('#main .cal').innerText),
+  }));
+  check('"Mes" marca el día del evento con su color, sin recortar el nombre en la casilla',
+    mesConEvento.marcado && mesConEvento.sinTextoRecortado, JSON.stringify(mesConEvento));
 
   // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
   // mapa de calor de 6 semanas, y borrarlo (con confirmación)
@@ -1905,7 +1910,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     const notaTrasRecargar = await page.evaluate((k) => ({
       enDisco: window.PG.store.notasDia[k] || '',
-      enLaCasilla: document.querySelectorAll('.dline.nota').length,
+      enLaCasilla: document.querySelectorAll('.dnota').length,
     }), hoyKeyDia);
     check('la nota de un día se guarda al escribirla, sobrevive a recargar y se ve en su casilla',
       notaTrasRecargar.enDisco === 'Llevar el informe de la sesión' && notaTrasRecargar.enLaCasilla === 1,
@@ -2046,13 +2051,80 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const agenda = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#main .card')].find((x) => /^Eventos de/m.test(x.innerText));
       return {
-        enCasilla: document.querySelectorAll('.dline.evt').length,
+        enCasilla: document.querySelectorAll('.dpt').length,
         filas: c ? c.querySelectorAll('.agrow').length : 0,
         nombreEntero: c ? /Congreso SEMES/.test(c.innerText) : false,
       };
     });
-    check('los eventos del mes salen en su casilla y listados enteros debajo del calendario',
+    check('los eventos del mes salen marcados en su casilla y listados enteros debajo',
       agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
+
+    // Con el título del evento dentro de la casilla se leía «Llegar a», «Vuelo de»: la casilla mide
+    // 53 px de ancho, ahí caben ocho caracteres. Y cada evento gastaba una línea entera, así que con
+    // cuatro la casilla reventaba. Un punto por evento cabe siempre y el nombre está en la lista.
+    const aprieto = await page.evaluate(() => {
+      const y = new Date().getFullYear(), m = new Date().getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const dia = iso(new Date(y, m, 9));
+      const ev = window.PG.eventosS();
+      ev.length = 0;
+      for (let i = 0; i < 10; i++) {
+        ev.push({ id: 'ap' + i, titulo: 'Un evento de título larguísimo ' + i, hora: '0' + (i % 10) + ':00',
+          modo: 'fecha', fecha: dia, dow: [], color: '#38e1ff', on: true });
+      }
+      window.PG.store.notasDia[dia] = 'una nota que tampoco cabría';
+      window.PG.save();
+      window.PG.render();
+      const celda = [...document.querySelectorAll('.dbox')].find((x) => x.querySelector('.dpt'));
+      const alto = [...celda.children].reduce((a, h) => a + h.getBoundingClientRect().height, 0);
+      return {
+        anchoCelda: Math.round(celda.getBoundingClientRect().width),
+        altoCelda: Math.round(celda.getBoundingClientRect().height),
+        contenido: Math.round(alto),
+        puntos: celda.querySelectorAll('.dpt').length,
+        masN: (celda.querySelector('.dmas') || {}).textContent || '',
+        nota: !!celda.querySelector('.dnota'),
+        desborda: celda.scrollHeight > celda.clientHeight,
+        // nada de texto de evento recortado dentro de la casilla
+        sinTituloRecortado: !/Un evento de/.test(celda.innerText),
+      };
+    });
+    check('con diez eventos en un día, la casilla los marca sin desbordarse ni recortar títulos',
+      aprieto.puntos === 6 && aprieto.masN === '+4' && aprieto.nota &&
+      !aprieto.desborda && aprieto.contenido < aprieto.altoCelda && aprieto.sinTituloRecortado,
+      JSON.stringify(aprieto));
+
+    // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
+    const etiquetas = await page.evaluate(() => {
+      const y = new Date().getFullYear(), m = new Date().getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const g = window.PG.store.shifts.filter((x) => window.PG.isGuardia(x))[0];
+      window.PG.store.rotation.daySet[iso(new Date(y, m, 14))] = { shift: g.id, guard: 'umi' };
+      window.PG.save();
+      window.PG.render();
+      const f = document.querySelector('.dline.gflag');
+      if (!f) return { hay: false };
+      const r = f.getBoundingClientRect();
+      return { hay: true, texto: f.textContent, alto: Math.round(r.height), ancho: Math.round(r.width) };
+    });
+    check('el tipo de guardia se lee en una línea, no partido en vertical',
+      etiquetas.hay && etiquetas.texto === 'UMI' && etiquetas.alto < 20,
+      JSON.stringify(etiquetas));
+
+    // se deja el mes como estaba antes de este aprieto: la prueba siguiente cuenta con esos dos
+    await page.evaluate(() => {
+      const y = new Date().getFullYear(), m = new Date().getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const ev = window.PG.eventosS();
+      ev.length = 0;
+      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: iso(new Date(y, m, 9)), color: '#a855f7', dow: [], on: true });
+      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: iso(new Date(y, m, 25)), color: '#38e1ff', dow: [], on: true });
+      window.PG.store.notasDia = {};
+      window.PG.store.rotation.daySet = {};
+      window.PG.save();
+      window.PG.render();
+    });
+    await page.waitForTimeout(300);
 
     // y tocar uno de la lista te lleva a ese día
     await page.click('.agrow');

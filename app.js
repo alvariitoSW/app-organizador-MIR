@@ -890,7 +890,8 @@ function schedLine(shiftId,dateStr){
 function fmtTimeOut(t){const m=toMin(t);if(m==null)return '';const h=Math.floor(m/60),mi=m%60;
   return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');}
 function nombreCorto(n){
-  /* en la casilla del mes «Día de trabajo» no cabe: el «Día de» sobra, el icono ya dice que es un día */
+  /* en la casilla del mes «Día de trabajo» no cabe: el «Día de» sobra, el icono ya dice que es un día.
+     «Vacaciones» sí se parte en dos líneas, y se deja: cabe, y acortarlo salía peor. */
   return String(n||'').replace(/^d[íi]a\s+(de\s+|del\s+)?/i,'').trim()||String(n||'');}
 function hCorta(t){/* en la casilla del mes no cabe «08:00»: las horas en punto van sin :00 */
   const m=toMin(t);if(m==null)return '';
@@ -1636,21 +1637,31 @@ function renderMonth(){
     if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
     if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
       '🏊 '+esc(seg.hora||'')+'</span>');
-    /* tres en vez de dos: la casilla ahora se estira con la pantalla y hay sitio de sobra */
-    evsDia.slice(0,3).forEach(function(ev){
-      lineas.push('<span class="dline evt" title="'+esc(ev.hora+' '+ev.titulo)+'">'+
-        '<i style="background:'+esc(ev.color||tlColor('evt'))+'"></i>'+esc(ev.titulo)+'</span>');});
-    if(evsDia.length>3)lineas.push('<span class="dline evt">+'+(evsDia.length-3)+' más</span>');
+    /* La casilla mide 53 px de ancho: ahí caben ocho caracteres. Poner el título del evento daba
+       «Llegar a», «Vuelo de» —texto que aparenta informar y no informa— y además cada uno se comía
+       una línea entera, así que con cuatro eventos la casilla reventaba. Un punto de color por
+       evento dice cuántos hay y de qué son, cabe siempre, y el nombre entero está dos sitios más
+       abajo: en la lista de eventos del mes y al tocar el día. */
     const nt=d.key?notaDia(d.key):'';
-    if(nt)lineas.push('<span class="dline nota" title="'+esc(nt)+'">📝 '+esc(nt)+'</span>');
+    const marcas=[];
+    evsDia.slice(0,6).forEach(function(ev){
+      marcas.push('<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+
+        esc((ev.hora?ev.hora+' ':'')+ev.titulo)+'"></i>');});
+    if(evsDia.length>6)marcas.push('<b class="dmas">+'+(evsDia.length-6)+'</b>');
+    if(nt)marcas.push('<b class="dnota" title="'+esc(nt)+'">📝</b>');
+    if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+'</span>'+
         (d.shiftId?'<span class="dic">'+esc(d.icon)+'</span>':'')+
-        (d.guard?'<span class="dflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+esc(String(d.guard).toUpperCase().slice(0,3))+'</span>':'')+
-        (d.vac?'<span class="dflag vac">VAC</span>':'')+
+        (d.vac?'':'')+
         (manual?'<span class="dman" title="puesto a mano">✎</span>':'')+'</span>'+
       '<span class="dnm">'+(d.shiftId?esc(nombreCorto(d.name)):'·')+'</span>'+
+      /* El tipo de guardia ya no va apretado en la fila del número —ahí «UMI» salía partido letra a
+         letra, o cortado— sino en su propia línea. La etiqueta «VAC» se ha quitado: el 🏖️ y la
+         palabra debajo ya dicen que son vacaciones, y ocupaba un tercio del ancho de la casilla. */
+      (d.guard?'<span class="dline gflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+
+        esc(String(d.guard).toUpperCase().slice(0,4))+'</span>':'')+
       lineas.join('')+
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<(store.sueno?store.sueno.min:8)?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<(store.sueno?store.sueno.min:8)?' ⚠':'')+'</span>':'')+

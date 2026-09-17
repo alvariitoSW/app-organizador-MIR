@@ -377,6 +377,9 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
   margin:14px 0 4px;padding-top:9px;border-top:1px solid var(--line)}
 .tl-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--brand);box-shadow:0 0 6px color-mix(in srgb,var(--brand) 80%,transparent)}
 .dtop{display:flex;align-items:center;gap:3px;min-width:0}
+/* «VAC» y «UMI» se partían en tres líneas verticales dentro de 12 px de ancho: 41 px de alto
+   tirados en cada día de vacaciones, y diez días así en un mes */
+.dflag{white-space:nowrap}
 .dnum{font-size:11px;font-weight:800;color:var(--ink2);flex:none}
 .dman{font-size:9px;color:var(--ink2);margin-left:auto;flex:none}
 .dic{font-size:11px;line-height:1;flex:none}
@@ -425,7 +428,12 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .dline>i{width:5px;height:5px;border-radius:99px;flex:none}
 .dline.gym{color:var(--accent)}
 .dline.evt{color:var(--ink)}
-.dline.nota{color:var(--warn)}
+.dline.gflag{font-size:8.5px;font-weight:800;letter-spacing:.05em;color:var(--brand);
+  white-space:nowrap;line-height:1.2}
+.dline.marcas{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:2px;min-height:9px}
+.dpt{width:7px;height:7px;border-radius:99px;flex:none;display:block}
+.dmas{font-size:9px;font-weight:800;color:var(--ink2);line-height:1}
+.dnota{font-size:9px;line-height:1}
 /* aviso de versión nueva: arriba de todo, en cualquier pantalla */
 .avisoVer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;
   padding:10px 12px;border-radius:12px;font-size:13px;font-weight:700;
