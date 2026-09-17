@@ -4322,6 +4322,8 @@ function renderData(){
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
       se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
       ni yo ni nadie puede verlo. La contrapartida es que <b>nadie puede devolvértelo si lo pierdes</b>.</p>
+      <p class="mini" style="margin:0 0 10px">Versión instalada: <b>${esc(versionActual()||'comprobando…')}</b>${
+        hayVersionNueva() ? ' · <b style="color:var(--brand)">hay una más nueva</b>' : ''}</p>
       <div class="dosdatos" style="margin-bottom:11px">
         <div><b>${_almacen.estado === 'si' ? '✓' : (_almacen.estado === 'no' ? '⚠' : '…')}</b><span>${
           _almacen.estado === 'si' ? 'protegido' : (_almacen.estado === 'no' ? 'sin proteger' : 'comprobando')}</span></div>
@@ -4461,6 +4463,12 @@ function renderNow(){
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
   ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
+     que importa en ese momento y no puede depender de en qué pestaña estés */
+  if(hayVersionNueva()){const mn=$('#main');
+    if(mn&&!mn.querySelector('.avisoVer'))mn.insertAdjacentHTML('afterbegin',
+      '<div class="avisoVer"><span>Hay una versi\u00f3n nueva de la app.</span>'+
+      '<button class="btn p s" data-a="app-actualizar">actualizar</button></div>');}
   $('#foot').textContent='Estructura editable: cambia horarios, patrones, platos y tandas; la semana, la cocina y la compra se recalculan solas.';
   mejoraAccesibilidad($('#main'));
 }
@@ -5062,6 +5070,10 @@ function act(a,el){
       render();window.scrollTo(0,0);break;}
     case 'imp-traer':impTraerEnlace();break;
     case 'lector-probar':lectorProbar();break;
+    case 'app-actualizar':{flash('actualizando…');
+      /* recarga saltándose la caché: el service worker ya pide con no-store, pero la propia
+         navegación también tiene que salir a la red */
+      setTimeout(function(){location.reload();},120);break;}
     case 'lector-guia':ui.lectorGuia=!ui.lectorGuia;render();break;
     case 'ir-lector':{ui.tab='ajustes';ui.lectorGuia=true;render();
       setTimeout(function(){const c=document.querySelector('#main .card[data-cfg="lector"]');
@@ -6451,6 +6463,42 @@ function compartidoPendiente(){
   ui.imp.txt=pen.txt;ui.imp.url=pen.url;
   if(!pen.abierto){ui.tab='import';pen.abierto=true;save();}}
 function impOlvidaPendiente(){if(store.impPendiente){store.impPendiente=null;save();}}
+/* ===== ¿hay una versión nueva? =====
+   El caso que se nos escapaba: en Android, al volver a la app desde las recientes NO hay ninguna
+   navegación —la página sigue ahí tal cual, con el JavaScript viejo cargado— así que puede pasar
+   días sin enterarse de nada por mucho que el servidor tenga otra cosa. Esto lo comprueba cada vez
+   que la app vuelve a primer plano: lee version.json saltándose la caché y, si la marca ha
+   cambiado desde que arrancó, avisa. No recarga a traición: te lo ofrece. */
+let _versionArranque=null,_versionNueva=false,_versionMirando=false;
+function versionURL(){return new URL('version.json',location.href).href;}
+function leerVersion(){
+  return fetch(versionURL(),{cache:'no-store'}).then(function(r){
+    if(!r.ok)throw new Error('no');return r.json();
+  }).then(function(d){return String((d&&d.v)||'');});}
+function versionActual(){return _versionArranque;}
+function hayVersionNueva(){return _versionNueva;}
+function mirarVersion(){
+  if(_versionMirando||_versionNueva)return Promise.resolve();
+  _versionMirando=true;
+  return leerVersion().then(function(v){
+    if(!v)return;
+    if(_versionArranque===null){_versionArranque=v;return;}
+    if(v!==_versionArranque){
+      _versionNueva=true;
+      /* también se le dice al service worker que se mire a sí mismo, para que la recarga traiga
+         ya el código nuevo y no otra vuelta de lo mismo */
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){
+        navigator.serviceWorker.getRegistration().then(function(reg){if(reg)reg.update();}).catch(function(){});}
+      render();
+      flash('Hay una versión nueva de la app: dale a «actualizar» arriba',6000);}
+  }).catch(function(){/* sin red: ya se mirará la próxima vez */})
+   .then(function(){_versionMirando=false;});}
+function vigilarVersion(){
+  if(typeof document==='undefined'||!/^https?:$/.test(location.protocol))return;
+  mirarVersion();
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden)mirarVersion();});
+  window.addEventListener('focus',function(){mirarVersion();});}
 function registrarSW(){
   /* hace falta para poder instalar la app y que TikTok la ofrezca al compartir. Donde no se puede
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
@@ -6470,7 +6518,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
-  enArtifact,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
+  enArtifact,versionActual,hayVersionNueva,mirarVersion,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gTipos,gTipo,gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
   icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
@@ -6501,3 +6549,4 @@ avisarBackupSiToca();
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 registrarSW();
+vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
