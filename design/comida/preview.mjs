@@ -1,8 +1,7 @@
-/* Las maquetas son estáticas (sin holes ni lógica), así que el contenido de <x-dc> es HTML plano:
-   se puede mirar sin el runtime del editor. Solo para comprobar encaje y alturas. */
 import {readFileSync, writeFileSync} from 'node:fs';
 import {chromium} from '/home/user/app-organizador-MIR/node_modules/playwright/index.mjs';
-const files=['Main','Anadir','DiasMenus','MenuDia','QueCocino','ModoCocina','Inventar','Catalogo'];
+const files=['Dia','Buscar','BuscarEscribiendo','Cantidad','Cocina','Productos','Micros'];
+const OUT='/tmp/claude-0/-home-user-app-organizador-MIR/04570ec0-ed89-58d2-8ae8-39a350c9b3cb/scratchpad/';
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
 for(const f of files){
   const src=readFileSync(f+'.dc.html','utf8');
@@ -14,8 +13,8 @@ for(const f of files){
   await p.waitForTimeout(250);
   const m=await p.evaluate(()=>({alto:document.querySelector('.scr').scrollHeight,
     desborde:document.documentElement.scrollWidth>document.documentElement.clientWidth}));
-  console.log(f.padEnd(11), 'alto', String(m.alto).padStart(4), m.alto>844?'⚠ pasa de 844':'cabe', m.desborde?'⚠ DESBORDE HORIZONTAL':'');
-  await p.screenshot({path:'/tmp/claude-0/-home-user-app-organizador-MIR/04570ec0-ed89-58d2-8ae8-39a350c9b3cb/scratchpad/mkc-'+f+'.png',fullPage:true});
+  console.log(f.padEnd(11),'alto',String(m.alto).padStart(4),'·',(m.alto/844).toFixed(1)+' pantallas',m.desborde?'⚠ DESBORDE HORIZONTAL':'');
+  await p.screenshot({path:OUT+'com-'+f+'.png',fullPage:true});
   await p.close();
 }
 await b.close();

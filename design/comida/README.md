@@ -1,48 +1,89 @@
-# Maquetas: rediseño de Comida y Días y menús
+# Maquetas: Comida, rehecha
 
-Ocho pantallas propuestas. **Son maquetas, no la app.**
+Siete pantallas. **Son maquetas, no la app.**
 
-| archivo | pantalla |
-|---|---|
-| `Main.dc.html` | Comida: el día (anillo, proteína, registro, semana) |
-| `Anadir.dc.html` | apuntar comida: buscar / escanear / mis productos / a mano |
-| `DiasMenus.dc.html` | Días y menús: los seis tipos de día como lista |
-| `MenuDia.dc.html` | el menú de un tipo de día |
-| `QueCocino.dc.html` | qué puedo cocinar con lo que hay |
-| `ModoCocina.dc.html` | paso a paso, con los ingredientes escalados |
-| `Inventar.dc.html` | que Claude proponga una receta (solo en el Artifact) |
-| `Catalogo.dc.html` | catálogo de platos |
+| archivo | pantalla | alto |
+|---|---|---|
+| `Dia.dc.html` | Comida: el día, y una sola puerta | 1.2 pantallas |
+| `Buscar.dc.html` | el buscador, sin escribir nada | 1.0 |
+| `BuscarEscribiendo.dc.html` | escribiendo «pollo»: todo junto, agrupado | 1.0 |
+| `Cantidad.dc.html` | la hoja de cantidad, con la previa en vivo | 1.0 |
+| `Cocina.dc.html` | qué hago hoy + nevera + lote, en una | 1.0 |
+| `Productos.dc.html` | mis productos, rescatados de las 27 pantallas | 1.1 |
+| `Micros.dc.html` | micronutrientes, fuera de la portada | 1.2 |
 
-## Lo que hay que arreglar en la app cuando se construya
+## Medido en el móvil, 412×915, con el catálogo importado y comida apuntada
 
-En «Objetivo, semana a semana» (`renderFood`) la barra se fuerza al 100 % cuando no hay
-objetivo puesto, se haya comido lo que se haya comido:
+| pantalla | alto | botones | campos |
+|---|---|---|---|
+| **Apuntar → mis productos** | **24 882 px = 27,19 pantallas** | **570** | **189** |
+| Ideas | 2 260 px (2,47) | 15 | 0 |
+| Comida, portada | 1 971 px (2,15) | 43 | 1 |
+| Alimentos | 1 245 px (1,36) | 26 | 1 |
+| Qué cocino | 1 102 px (1,20) | 13 | 0 |
+| Ficha de un alimento | 1 114 px (1,22) | 9 | 2 |
+| Apuntar → a mano | 909 px (0,99) | 6 | 10 |
+| Apuntar → buscar | 769 px (0,84) | 5 | 1 |
+| Mi nevera | 548 px (0,60) | 14 | 1 |
+| Apuntar → escanear | 543 px (0,59) | 9 | 3 |
 
-```js
-width: x.ob ? (x.lg/x.ob*100) : (x.pl ? 100 : 0)
+**La «lista infinita» es «mis productos».** Con el catálogo local importado son 188
+productos, y la pantalla los pinta **todos**, cada uno con su campo numérico y sus
+tres botones, dentro de una tabla con scroll lateral. Una captura entera de esa
+pantalla mide 50 000 píxeles de alto.
+
+No es un fallo de rendimiento: pintarla cuesta 3,6 ms. Es de diseño.
+
+## Lo que falla de verdad, y no es solo el largo
+
+**Hay 290 cosas que puedes apuntar, repartidas en tres pantallas distintas**:
+86 alimentos en «Alimentos», 188 productos en «Mis productos» y 16 platos en
+«Días y menús». Antes de buscar nada tienes que acertar en cuál de los tres
+mundos vive lo que quieres. Eso es lo que hay que rehacer.
+
+Y en la portada hay **seis puertas** (Alimentos, Mi nevera, Ideas, Qué cocino,
+Mis productos, Importar), más la tarjeta de micronutrientes, que son nueve
+casillas y ocupa el 25 % de la página con información que se consulta, no se usa.
+
+## Lo que se conserva porque funciona
+
+- El anillo de kcal y los tres macros.
+- «Lo de hoy», agrupado por momento.
+- La tira de la semana.
+- Apuntar un plátano cuesta **4 toques** hoy, y eso está bien: la maqueta no lo
+  empeora (3 con el `+`, 4 si quieres cambiar la cantidad).
+
+## Lo que cambia
+
+1. **Una sola puerta: el buscador.** Una barra grande en la portada. Dentro, un
+   campo y una lista con **todo** —alimentos, productos y platos— agrupado por
+   tipo y filtrable por chips. Sin escribir nada no sale una lista: salen **seis**
+   cosas, las que más apuntas.
+2. **Cada resultado tiene dos gestos**: el `+` lo apunta con la cantidad de
+   siempre (3 toques en total); tocar el nombre abre la hoja de cantidad.
+3. **La hoja de cantidad** trae raciones de verdad («1 filete · 120 g»), la previa
+   de kcal y macros en vivo, el momento del día y, en el propio botón, lo que te
+   quedará después.
+4. **Mis productos pasa de 27 pantallas a 1**: buscador primero, ocho filas, y
+   nada de campos numéricos por fila.
+5. **Micronutrientes sale de la portada** a su pantalla, y en la portada deja una
+   línea con nueve puntos de color y «4 por debajo de la mitad».
+6. **Cocina absorbe Nevera, Ideas y Qué cocino** en una pantalla con pestañas: de
+   tres destinos a uno.
+7. **Seis puertas pasan a tres**: Cocina, Mis platos, Alimentos.
+
+## Decisiones que hay que confirmar antes de construir
+
+1. **Las tres puertas de abajo**: ¿Cocina / Mis platos / Alimentos, o prefieres
+   otra terna?
+2. **El `+` que apunta directo** con la cantidad por defecto: ¿te vale, o
+   prefieres que siempre pase por la hoja de cantidad?
+3. **«Importar receta de un vídeo»** ya no tiene puerta propia en la portada.
+   Puede vivir dentro de «Mis platos». ¿De acuerdo?
+
+## Cómo se regeneran
+
 ```
-
-Lo suyo es medir lo comido contra el plan del día (`x.lg / x.pl`), que es lo que hacen estas
-maquetas.
-
-## Cómo se tocan
-
-Los `.dc.html` **los genera `build.mjs`**: si editas uno a mano, el siguiente `node build.mjs`
-se lo lleva por delante. Edita `build.mjs` (contenido) o `_base.css` (piel).
-
-```bash
-node build.mjs      # regenera los .dc.html y canvas.json
-node preview.mjs    # los abre a 390px y avisa si algo se sale del marco
+node pantallas.mjs   # escribe los .dc.html desde build.mjs
+node preview.mjs     # los mira a 390×844 y avisa de desbordes
 ```
-
-Dos trampas que costaron una vuelta y están resueltas en `_base.css`:
-
-- una barra pegada abajo necesita `position:relative;z-index:1`, o el fondo decorativo
-  (`.bgfx`, que es `position:absolute`) la tapa y parece que no se ha pintado;
-- solo lleva barra de progreso lo que de verdad es progreso. Una barra al 100 % que no mide
-  nada es justo el fallo que se arregla aquí.
-
-`_base.css` es una copia de los tokens de `../../styles.css`. Si cambian los de la app,
-cópialos aquí o las maquetas dejarán de parecerse.
-
-El `.html` sellado que se publica no se versiona (2,5 MB y sale de estos archivos).
