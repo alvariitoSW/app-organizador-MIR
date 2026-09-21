@@ -945,3 +945,34 @@ ul.slots{list-style:none;margin:0;padding:0}
 .tanda .fila .nm{flex:1;min-width:0}
 .tanda .fila .nm b{display:block;font-size:12.5px}
 .tanda .fila .nm span{font-size:10px;color:var(--ink2)}
+
+/* ===================== dinero ===================== */
+.gfila{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);min-height:46px}
+.gfila:first-of-type{border-top:0}
+.gfila .em{font-size:19px;flex:none;width:24px;text-align:center}
+.gfila .tick{width:24px;height:24px;flex:none;border-radius:8px;border:1.5px solid color-mix(in srgb,var(--ink2) 55%,var(--line));
+  background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.gfila.ok .tick{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.gfila.ok .tick::after{content:'✓';font-size:14px;font-weight:800;line-height:1}
+.gfila .tx{flex:1;min-width:0}
+.gfila .tx b{display:block;font-size:13px;line-height:1.25}
+.gfila .tx span{display:block;font-size:10.5px;color:var(--ink2);margin-top:1px}
+.gfila.ok .tx b{color:var(--ink2)}
+.gfila.tarde .tx span{color:var(--warn)}
+.gfila .im{font-size:13.5px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gfila.ok .im{color:var(--ink2)}
+.card.avisa{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 9%,var(--card)),var(--card))}
+.prog .bar i.mal{background:linear-gradient(90deg,var(--warn),var(--bad))}
+/* el editor de los fijos: una fila por gasto, que quepa en 412 px */
+.gedit{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.gedit:first-of-type{border-top:0}
+.gedit .gn{flex:1 1 130px;min-width:0;font-size:13px;padding:6px 8px}
+.gedit .gi{width:80px;flex:none;font-size:13px;padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums}
+.gedit .gd{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink2);font-weight:800;
+  text-transform:uppercase;letter-spacing:.04em;flex:none}
+.gedit .gd input{width:52px;font-size:13px;padding:6px 4px;text-align:center}
+.gedit .gc{flex:1 1 120px;min-width:0;font-size:12px;padding:6px 6px}
+/* el punto del gasto en la casilla del Mes */
+.dbox .dgasto{font-size:9px;font-weight:800;color:var(--ink2);line-height:1}
+.dbox .dgasto.pend{color:var(--warn)}

@@ -264,7 +264,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -2072,6 +2072,7 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
     proximosPuntualesHTML()+
+    pagosHoyHTML(hoy)+
     habitosHoyHTML()+
     '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
 }
@@ -2362,6 +2363,11 @@ function renderMonth(){
         esc((ev.hora?ev.hora+' ':'')+ev.titulo)+'"></i>');});
     if(evsDia.length>6)marcas.push('<b class="dmas">+'+(evsDia.length-6)+'</b>');
     if(nt)marcas.push('<b class="dnota" title="'+esc(nt)+'">📝</b>');
+    /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */
+    const gsDia=d.key?gastosDeFecha(d.key):[];
+    if(gsDia.length){const n2=new Date(),pend=gsDia.filter(function(g){return !gastoPagado(g,n2.getFullYear(),n2.getMonth());});
+      marcas.push('<b class="dgasto'+(pend.length?' pend':'')+'" title="'+
+        esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
@@ -5616,6 +5622,10 @@ function renderShop(){
       '<button class="btn s" data-a="print">imprimir</button>'+
       '<span class="sp"></span>'+
       '<button class="btn s" data-a="compra-listas">mis listas <span class="mini">('+listasS().length+')</span></button>'+
+    '</div>'+
+    /* la compra es el gasto más repetido de vivir solo: se apunta desde aquí, sin ir a buscarlo */
+    '<div class="row">'+
+      '<button class="btn s" data-a="dinero-compra">'+gymIco('mas','gico sm')+' apuntar lo que me he gastado</button>'+
     '</div></div>';
 }
 function renderShopListas(){
@@ -5765,6 +5775,194 @@ function renderCfg(){
 
 /* ===================== render: ajustes ===================== */
 /* ===================== eventos que se repiten cada semana ===================== */
+/* ===================== dinero =====================
+   Lo mínimo que hace falta para vivir solo, y nada más: lo que pagas todos los meses el mismo día,
+   lo que te has gastado de verdad, y lo que llevas. No estima precios ni se inventa nada: los
+   números salen de lo que tú apuntas. */
+const DIN_CAT=[['casa','🏠','casa y facturas'],['compra','🛒','compra'],['transporte','🚌','transporte'],
+  ['estudio','📚','estudio'],['salud','💊','salud'],['ocio','🍻','ocio'],['otros','💳','otros']];
+function dinCatIco(k){const c=DIN_CAT.filter(function(x){return x[0]===k;})[0];return c?c[1]:'💳';}
+function dinCatTxt(k){const c=DIN_CAT.filter(function(x){return x[0]===k;})[0];return c?c[2]:'otros';}
+function numEuro(v){
+  /* «41,30» es como se escribe un importe en España, y un <input type="number"> lo rechaza en
+     silencio: el campo se queda vacío y el gasto se pierde. Los importes van en campos de texto con
+     teclado numérico, y se leen aceptando coma o punto. */
+  const t=String(v==null?'':v).trim().replace(/[\s€]/g,'').replace(',','.');
+  const n=parseFloat(t);
+  return (isFinite(n)&&n>0)?Math.round(n*100)/100:0;}
+function eur(n){
+  const v=Math.round((+n||0)*100)/100;
+  return (Math.abs(v%1)<0.005?String(Math.round(v)):v.toFixed(2).replace('.',','))+' €';}
+function dineroS(){
+  if(!store.dinero||typeof store.dinero!=='object')store.dinero={};
+  const d=store.dinero;
+  if(!Array.isArray(d.gastos))d.gastos=[];
+  if(!Array.isArray(d.pagos))d.pagos=[];
+  if(typeof d.presupuesto!=='number')d.presupuesto=0;
+  return d;}
+function gastosFijos(){
+  return dineroS().gastos.filter(function(g){return g.on!==false;})
+    .sort(function(a,b){return (a.dia||0)-(b.dia||0);});}
+function diaDelMes(g,y,m){
+  /* un recibo del 31 en un mes de 30 se cobra el último día: no se salta el mes */
+  const ultimo=new Date(y,m+1,0).getDate();
+  return Math.max(1,Math.min(ultimo,+g.dia||1));}
+function fechaDeGasto(g,y,m){return iso(new Date(y,m,diaDelMes(g,y,m)));}
+function pagosDelMes(y,m){
+  const ini=iso(new Date(y,m,1)),fin=iso(new Date(y,m+1,0));
+  return dineroS().pagos.filter(function(p){return p.fecha>=ini&&p.fecha<=fin;})
+    .sort(function(a,b){return b.fecha.localeCompare(a.fecha)||b.ts-a.ts;});}
+function gastoPagado(g,y,m){
+  const ini=iso(new Date(y,m,1)),fin=iso(new Date(y,m+1,0));
+  return dineroS().pagos.filter(function(p){
+    return p.gastoId===g.id&&p.fecha>=ini&&p.fecha<=fin;})[0]||null;}
+function mesDinero(y,m){
+  const fijos=gastosFijos(),pagos=pagosDelMes(y,m);
+  let pend=0,fijoTotal=0;
+  fijos.forEach(function(g){fijoTotal+=+g.importe||0;if(!gastoPagado(g,y,m))pend+=+g.importe||0;});
+  const pagado=pagos.reduce(function(a,p){return a+(+p.importe||0);},0);
+  const porCat={};
+  pagos.forEach(function(p){porCat[p.cat||'otros']=(porCat[p.cat||'otros']||0)+(+p.importe||0);});
+  const pres=+dineroS().presupuesto||0;
+  return {fijos:fijos,fijoTotal:fijoTotal,pend:pend,pagos:pagos,pagado:pagado,porCat:porCat,
+    pres:pres,previsto:pagado+pend,queda:pres?(pres-pagado-pend):null};}
+function gastosDeFecha(key){
+  /* los fijos que tocan ese día: lo usan el Mes y Hoy */
+  const d=parseDate(key);if(!d)return [];
+  const y=d.getFullYear(),m=d.getMonth();
+  return gastosFijos().filter(function(g){return diaDelMes(g,y,m)===d.getDate();});}
+function addGasto(o){
+  const d=dineroS();
+  const g={id:uid('gt'),nombre:String((o&&o.nombre)||'').trim().slice(0,50)||'Gasto',
+    importe:numEuro(o&&o.importe),
+    dia:Math.max(1,Math.min(31,+(o&&o.dia)||1)),cat:(o&&o.cat)||'casa',on:true};
+  if(!g.importe)return 'ponle un importe';
+  d.gastos.push(g);save();
+  return g.nombre+' · '+eur(g.importe)+' el día '+g.dia+' de cada mes';}
+function delGasto(id){
+  const d=dineroS(),i=d.gastos.findIndex(function(g){return g.id===id;});
+  if(i<0)return 'ese gasto ya no está';
+  const n=d.gastos[i].nombre;d.gastos.splice(i,1);
+  /* los pagos ya hechos se quedan: son historia, y borrarlos cambiaría meses cerrados */
+  d.pagos.forEach(function(p){if(p.gastoId===id)p.gastoId='';});
+  save();return 'quitado «'+n+'» de los fijos (lo ya pagado se queda apuntado)';}
+function addPago(o){
+  const d=dineroS();
+  const p={id:uid('pg'),fecha:(o&&o.fecha)||iso(new Date()),
+    nombre:String((o&&o.nombre)||'').trim().slice(0,50)||'Gasto',
+    importe:numEuro(o&&o.importe),
+    cat:(o&&o.cat)||'otros',gastoId:(o&&o.gastoId)||'',ts:Date.now()};
+  if(!p.importe)return 'ponle un importe';
+  d.pagos.push(p);save();
+  return 'apuntado: '+p.nombre+' · '+eur(p.importe);}
+function delPago(id){
+  const d=dineroS(),i=d.pagos.findIndex(function(p){return p.id===id;});
+  if(i<0)return 'ese gasto ya no está';
+  const p=d.pagos[i];d.pagos.splice(i,1);save();
+  return 'quitado '+p.nombre+' ('+eur(p.importe)+')';}
+function pagarGasto(id,y,m){
+  const g=dineroS().gastos.filter(function(x){return x.id===id;})[0];
+  if(!g)return 'ese gasto ya no está';
+  const ya=gastoPagado(g,y,m);
+  if(ya){delPago(ya.id);return g.nombre+': lo he desmarcado';}
+  return addPago({fecha:fechaDeGasto(g,y,m),nombre:g.nombre,importe:g.importe,cat:g.cat,gastoId:g.id});}
+
+function pagosHoyHTML(key){
+  /* «hoy toca pagar el alquiler» es de las cosas que más se olvidan viviendo solo, y hasta ahora la
+     app no lo sabía. Sale en Hoy, junto a los hábitos y los eventos. */
+  const d=parseDate(key);if(!d)return '';
+  const y=d.getFullYear(),m=d.getMonth();
+  const hay=gastosDeFecha(key).filter(function(g){return !gastoPagado(g,y,m);});
+  if(!hay.length)return '';
+  const total=hay.reduce(function(a2,g){return a2+(+g.importe||0);},0);
+  return '<div class="card avisa"><h2>Hoy toca pagar <span class="mini">'+esc(eur(total))+'</span></h2>'+
+    hay.map(function(g){
+      return '<div class="gfila">'+
+        '<button class="tick" data-a="dinero-pagar" data-id="'+esc(g.id)+'" aria-label="marcar como pagado '+esc(g.nombre)+'"></button>'+
+        '<span class="tx"><b>'+esc(dinCatIco(g.cat))+' '+esc(g.nombre)+'</b><span>'+esc(dinCatTxt(g.cat))+'</span></span>'+
+        '<span class="im">'+esc(eur(g.importe))+'</span></div>';}).join('')+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="dinero">ver el mes entero →</button></div>'+
+  '</div>';}
+function renderDinero(){
+  const v=ui.dineroVista||'';
+  if(v==='fijos')return renderDineroFijos();
+  return renderDineroMes();}
+function dinSubcab(titulo,extra){
+  return '<div class="subcab">'+
+    '<button class="btn s volver" data-a="dinero-vista" data-v="">'+gymIco('atras','gico sm')+' Dinero</button>'+
+    '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
+function renderDineroMes(){
+  const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth();
+  const d=mesDinero(y,m),hk=iso(hoy);
+  const hoyToca=gastosDeFecha(hk).filter(function(g){return !gastoPagado(g,y,m);});
+  const pct=d.pres?Math.min(100,Math.round((d.pagado+d.pend)/d.pres*100)):0;
+  const filaFijo=function(g){
+    const pg=gastoPagado(g,y,m),f=fechaDeGasto(g,y,m),vencido=!pg&&f<hk;
+    return '<div class="gfila'+(pg?' ok':'')+(vencido?' tarde':'')+'">'+
+      '<button class="tick" data-a="dinero-pagar" data-id="'+esc(g.id)+'" aria-pressed="'+(pg?'true':'false')+'" '+
+        'aria-label="'+(pg?'desmarcar':'marcar como pagado')+' '+esc(g.nombre)+'"></button>'+
+      '<span class="tx"><b>'+esc(dinCatIco(g.cat))+' '+esc(g.nombre)+'</b>'+
+        '<span>día '+diaDelMes(g,y,m)+(pg?' · pagado':(vencido?' · pendiente, ya ha pasado':' · pendiente'))+'</span></span>'+
+      '<span class="im">'+esc(eur(g.importe))+'</span></div>';};
+  const cats=Object.keys(d.porCat).sort(function(a,b){return d.porCat[b]-d.porCat[a];});
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card">'+
+      '<div class="row" style="justify-content:space-between;margin-bottom:10px">'+
+        '<b style="font-size:15px">'+esc(MONTH_FULL[m])+'</b>'+
+        '<button class="btn s" data-a="dinero-pres">'+(d.pres?('✎ tope '+eur(d.pres)):'✎ poner un tope')+'</button></div>'+
+      (d.pres?('<div class="prog"><span class="bar"><i class="'+(d.queda<0?'mal':'')+'" style="width:'+pct+'%"></i></span>'+
+        '<b>'+esc(eur(Math.max(0,d.queda||0)))+'</b></div>'+
+        '<p class="mini" style="margin:0 0 8px">'+(d.queda<0?('te has pasado '+eur(-d.queda)):('te quedan para el mes, contando lo que falta por pagar'))+'</p>'):'')+
+      '<div class="dosdatos">'+
+        '<div><b>'+esc(eur(d.pagado))+'</b><span>llevas gastado</span></div>'+
+        '<div><b>'+esc(eur(d.pend))+'</b><span>falta por pagar</span></div>'+
+      '</div>'+
+      (cats.length?('<div class="chips" style="margin-top:11px">'+cats.map(function(k){
+        return '<span class="chipx">'+esc(dinCatIco(k))+' '+esc(dinCatTxt(k))+' <b>'+esc(eur(d.porCat[k]))+'</b></span>';}).join('')+'</div>'):'')+
+    '</div>'+
+    '<button class="btn p gbig" data-a="dinero-apuntar">'+gymIco('mas','gico sm')+' apuntar un gasto</button>'+
+    (hoyToca.length?('<div class="card avisa"><h2>Hoy toca pagar</h2>'+
+      hoyToca.map(filaFijo).join('')+'</div>'):'')+
+    '<div class="card"><h2>Todos los meses <span class="mini">'+esc(eur(d.fijoTotal))+'</span></h2>'+
+      (d.fijos.length?d.fijos.filter(function(g){
+        return !hoyToca.some(function(x){return x.id===g.id;});}).map(filaFijo).join(''):
+        '<div class="empty">Apunta aquí el alquiler, la luz, el móvil, el gimnasio… y la app te dice cada mes qué falta por pagar.</div>')+
+      '<div class="row" style="margin-top:11px"><button class="btn s" data-a="dinero-vista" data-v="fijos">'+
+        gymIco('lapiz','gico sm')+' gastos fijos</button></div></div>'+
+    '<div class="card"><h2>Lo de este mes <span class="mini">'+d.pagos.length+'</span></h2>'+
+      (d.pagos.length?d.pagos.slice(0,12).map(function(p){
+        return '<div class="gfila"><span class="em">'+esc(dinCatIco(p.cat))+'</span>'+
+          '<span class="tx"><b>'+esc(p.nombre)+'</b><span>'+esc(fechaCorta(p.fecha))+' · '+esc(dinCatTxt(p.cat))+'</span></span>'+
+          '<span class="im">'+esc(eur(p.importe))+'</span>'+
+          '<button class="mini2 d" data-a="dinero-del-pago" data-id="'+esc(p.id)+'" aria-label="quitar">×</button></div>';}).join('')+
+        (d.pagos.length>12?('<p class="mini" style="margin:9px 0 0">y '+(d.pagos.length-12)+' más este mes</p>'):''):
+        '<div class="empty">Nada apuntado este mes.</div>')+
+    '</div></div>';}
+function renderDineroFijos(){
+  const g=dineroS().gastos;
+  const opts=function(sel){return DIN_CAT.map(function(c){
+    return '<option value="'+c[0]+'"'+(c[0]===sel?' selected':'')+'>'+c[1]+' '+c[2]+'</option>';}).join('');};
+  $('#main').innerHTML='<div class="grid">'+
+    dinSubcab('Gastos fijos','<span class="tag b2">'+g.length+'</span>')+
+    '<p class="note" style="margin:0">Lo que pagas todos los meses el mismo día. Sale en el Mes, en Hoy y en el resumen de arriba.</p>'+
+    '<div class="card">'+(g.length?g.map(function(x){
+      return '<div class="gedit" data-gasto="'+esc(x.id)+'">'+
+        '<input class="gn" value="'+esc(x.nombre)+'" data-a="dinero-f" data-k="nombre" data-id="'+esc(x.id)+'" placeholder="alquiler" aria-label="nombre">'+
+        '<input class="gi" type="text" inputmode="decimal" value="'+esc(fmt(+x.importe||0))+'" data-a="dinero-f" data-k="importe" data-id="'+esc(x.id)+'" aria-label="importe en euros">'+
+        '<label class="gd">día<input type="number" min="1" max="31" value="'+(+x.dia||1)+'" data-a="dinero-f" data-k="dia" data-id="'+esc(x.id)+'"></label>'+
+        '<select class="gc" data-a="dinero-f" data-k="cat" data-id="'+esc(x.id)+'" aria-label="categoría">'+opts(x.cat)+'</select>'+
+        '<button class="mini2 d" data-a="dinero-del" data-id="'+esc(x.id)+'" aria-label="quitar '+esc(x.nombre)+'">×</button>'+
+      '</div>';}).join(''):'<div class="empty">Todavía no tienes ninguno.</div>')+
+    '</div>'+
+    '<div class="card"><h2>Añadir uno</h2>'+
+      '<div class="row" style="gap:6px">'+
+        '<input id="gnNombre" placeholder="alquiler, luz, móvil, gimnasio…" style="flex:1 1 150px">'+
+        '<input id="gnImporte" type="text" inputmode="decimal" placeholder="€" style="width:86px" aria-label="importe en euros">'+
+        '<label class="fld" style="flex:0 0 78px">día<input id="gnDia" type="number" min="1" max="31" value="1"></label>'+
+        '<select id="gnCat" style="flex:0 0 130px">'+opts('casa')+'</select>'+
+        '<button class="btn p" data-a="dinero-add">+ añadir</button></div>'+
+    '</div></div>';}
+
 function eventosS(){if(!Array.isArray(store.eventos))store.eventos=[];return store.eventos;}
 function diasCorta(dow){
   const DS=['D','L','M','X','J','V','S'];
@@ -6230,7 +6428,7 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 /* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
@@ -6250,7 +6448,7 @@ function comerModosHTML(){
   return b('dia','Hoy','food-vista','')+b('menu','Menú','tab','types')+
     b('cocina','Cocina','food-vista','cocina-panel')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -6306,7 +6504,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -6553,6 +6751,47 @@ function act(a,el){
       if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
+    case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
+    case 'dinero-del':{const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
+      const gid=el.dataset.id;
+      confirmar('¿Quitar «'+((g&&g.nombre)||'ese gasto')+'» de los fijos?','Sí, quitar').then(function(ok){
+        if(!ok)return;flash(delGasto(gid));render();});break;}
+    case 'dinero-del-pago':{flash(delPago(el.dataset.id));render();break;}
+    case 'dinero-add':{const g=function(id){return (document.getElementById(id)||{}).value||'';};
+      flash(addGasto({nombre:g('gnNombre'),importe:g('gnImporte'),dia:g('gnDia'),cat:g('gnCat')}));
+      render();break;}
+    case 'dinero-pres':{
+      openModal('Tope del mes',
+        '<label class="fld">cuánto quieres gastar como mucho al mes (0 = sin tope)'+
+        '<input id="mPres" type="number" min="0" step="10" value="'+(+dineroS().presupuesto||0)+'"></label>'+
+        '<p class="note">Solo sirve para que la app te diga cuánto te queda. No bloquea nada.</p>',
+        function(){dineroS().presupuesto=Math.max(0,+((document.getElementById('mPres')||{}).value)||0);
+          save();render();return true;});break;}
+    case 'dinero-apuntar':{
+      const hoyK=iso(new Date());
+      const cats=DIN_CAT.map(function(c){return '<option value="'+c[0]+'">'+c[1]+' '+c[2]+'</option>';}).join('');
+      openModal('Apuntar un gasto',
+        '<div class="fgrid c3">'+
+          '<label class="fld">en qué<input id="mPgNombre" placeholder="compra del súper" value="'+esc(ui.pagoNombre||'')+'"></label>'+
+          '<label class="fld">cuánto (€)<input id="mPgImporte" type="text" inputmode="decimal" placeholder="41,30"></label>'+
+          '<label class="fld">qué día<input id="mPgFecha" type="date" value="'+hoyK+'"></label>'+
+          '<label class="fld">de qué<select id="mPgCat">'+cats+'</select></label>'+
+        '</div>',
+        function(){const g=function(id){return (document.getElementById(id)||{}).value||'';};
+          const r=addPago({nombre:g('mPgNombre'),importe:g('mPgImporte'),fecha:g('mPgFecha'),cat:g('mPgCat')});
+          if(/ponle un importe/.test(r)){flash(r);return false;}
+          ui.pagoNombre='';flash(r);render();return true;});
+      setTimeout(function(){const c=document.getElementById('mPgCat');
+        if(c&&ui.pagoCat)c.value=ui.pagoCat;ui.pagoCat='';
+        const i=document.getElementById('mPgImporte');if(i)i.focus();},60);
+      break;}
+    case 'dinero-compra':{
+      /* desde la lista de la compra: se abre ya con el nombre y la categoría puestos */
+      ui.pagoNombre='Compra del súper';ui.pagoCat='compra';
+      ui.tab='dinero';ui.dineroVista='';render();
+      setTimeout(function(){const b2=document.querySelector('[data-a="dinero-apuntar"]');if(b2)b2.click();},80);
+      break;}
     case 'compra-listas':{ui.shopVista='listas';render();window.scrollTo(0,0);break;}
     case 'compra-volver':{ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'nav-cal':ui.tab=ui.calMode||'month';render();window.scrollTo(0,0);break;
@@ -8287,6 +8526,16 @@ document.addEventListener('input',e=>{
       render();if(f){const nx=document.getElementById(f);if(nx){nx.focus();
         try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}}},160);
     return;}
+  if(a==='dinero-f'){
+    const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
+    if(!g)return;
+    const k=el.dataset.k;
+    if(k==='importe')g.importe=numEuro(el.value);
+    else if(k==='dia')g.dia=Math.max(1,Math.min(31,+el.value||1));
+    else if(k==='cat')g.cat=el.value||'otros';
+    else g.nombre=String(el.value||'').trim().slice(0,50)||'Gasto';
+    save();render();
+    return;}
   if(a==='food-q'||a==='gym-q'){
     const v=(el.value||'').trim();
     const campo=a==='food-q'?'foodQ':'gymQ';
@@ -8594,6 +8843,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,schedLine,dayLine,RKEYS,necesidadSemana,
+  dineroS,gastosFijos,gastosDeFecha,gastoPagado,mesDinero,addGasto,delGasto,addPago,delPago,pagarGasto,eur,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,

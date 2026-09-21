@@ -58,7 +58,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
   const COMER_TABS = new Set(['food', 'shop', 'types', 'batches', 'import']);
-  const DRAWER_TABS = new Set(['notas', 'habitos', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
@@ -3436,6 +3436,109 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.store.notas.length = 0;
       window.PG.save();
     });
+  }
+
+  // ===================== Dinero =====================
+  // 75) el mes cuadra: se dan de alta dos gastos fijos por la interfaz, se mira el resumen, se marca
+  // uno como pagado y se comprueba que lo pendiente baja y lo pagado sube. Encadenado a propósito:
+  // el fallo que se busca es el del estado que queda de un gesto al siguiente.
+  {
+    await gotoTab('dinero');
+    await page.waitForTimeout(200);
+    await page.click('[data-a="dinero-vista"][data-v="fijos"]');
+    await page.waitForTimeout(250);
+    const alta = async (n, imp, dia, cat) => {
+      await page.fill('#gnNombre', n);
+      await page.fill('#gnImporte', imp);
+      await page.fill('#gnDia', String(dia));
+      await page.selectOption('#gnCat', cat);
+      await page.click('[data-a="dinero-add"]');
+      await page.waitForTimeout(220);
+    };
+    await alta('Alquiler', '650', 1, 'casa');
+    await alta('Gimnasio', '32,50', 3, 'salud');
+    await page.click('.subcab [data-a="dinero-vista"]');
+    await page.waitForTimeout(250);
+    const mes0 = await page.evaluate(() => {
+      const n = new Date(), d = window.PG.mesDinero(n.getFullYear(), n.getMonth());
+      return { fijoTotal: d.fijoTotal, pend: d.pend, pagado: d.pagado,
+        filas: document.querySelectorAll('#main .gfila').length };
+    });
+    await page.click('#main .gfila .tick');
+    await page.waitForTimeout(300);
+    const mes1 = await page.evaluate(() => {
+      const n = new Date(), d = window.PG.mesDinero(n.getFullYear(), n.getMonth());
+      return { pend: d.pend, pagado: d.pagado, pagos: d.pagos.length,
+        marcada: document.querySelectorAll('#main .gfila.ok').length };
+    });
+    // y desmarcarlo lo deshace, sin dejar el pago suelto por ahí
+    await page.click('#main .gfila.ok .tick');
+    await page.waitForTimeout(300);
+    const mes2 = await page.evaluate(() => {
+      const n = new Date(), d = window.PG.mesDinero(n.getFullYear(), n.getMonth());
+      return { pend: d.pend, pagado: d.pagado, pagos: d.pagos.length };
+    });
+    check('los gastos fijos: el mes suma, marcar uno pagado baja lo pendiente y desmarcarlo lo deshace',
+      mes0.fijoTotal === 682.5 && mes0.pend === 682.5 && mes0.pagado === 0 &&
+      mes1.pagado === 650 && mes1.pend === 32.5 && mes1.pagos === 1 && mes1.marcada === 1 &&
+      mes2.pagado === 0 && mes2.pend === 682.5 && mes2.pagos === 0,
+      JSON.stringify({ mes0, mes1, mes2 }));
+  }
+
+  // 76) un importe se escribe «41,30», que es como se escribe aquí. Con un <input type="number"> el
+  // navegador rechaza la coma EN SILENCIO: el campo se queda vacío y el gasto se pierde sin decir
+  // nada. Se conduce el modal de verdad, tecleando la coma.
+  {
+    const antesP = await page.evaluate(() => window.PG.dineroS().pagos.length);
+    await page.click('[data-a="dinero-apuntar"]');
+    await page.waitForTimeout(280);
+    await page.fill('#mPgNombre', 'Compra del súper');
+    await page.fill('#mPgImporte', '41,30');
+    await page.selectOption('#mPgCat', 'compra');
+    await page.click('[data-a="m-save"]');
+    await page.waitForTimeout(350);
+    const conComa = await page.evaluate((n) => {
+      const d = window.PG.dineroS();
+      const p = d.pagos[d.pagos.length - 1];
+      const m = window.PG.mesDinero(new Date().getFullYear(), new Date().getMonth());
+      return { nuevos: d.pagos.length - n, importe: p && p.importe, cat: p && p.cat,
+        enPantalla: /41,30/.test(document.getElementById('main').textContent),
+        porCat: m.porCat.compra };
+    }, antesP);
+    check('un importe con coma («41,30») se guarda como 41,30 y no se pierde por el camino',
+      conComa.nuevos === 1 && conComa.importe === 41.3 && conComa.cat === 'compra' &&
+      conComa.enPantalla && conComa.porCat === 41.3, JSON.stringify(conComa));
+  }
+
+  // 77) el dinero se cruza con el calendario: un gasto que cae hoy avisa en «Hoy» y se marca desde
+  // ahí, y el día aparece marcado en el Mes. Antes no había ni una línea de dinero en la app.
+  {
+    await page.evaluate(() => {
+      window.PG.addGasto({ nombre: 'Seguro del coche', importe: '58,90',
+        dia: new Date().getDate(), cat: 'transporte' });
+    });
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const enHoy = await page.evaluate(() => {
+      const c = document.querySelector('#main .card.avisa');
+      return { hay: !!c, dice: c ? /Seguro del coche/.test(c.textContent) : false,
+        importe: c ? /58,90/.test(c.textContent) : false };
+    });
+    // si el aviso no está, esta prueba tiene que FALLAR, no tumbar la suite con un timeout de 30 s
+    const tick = await page.$('#main .card.avisa .tick');
+    if (tick) { await tick.click(); await page.waitForTimeout(300); }
+    const trasPagar = await page.evaluate(() => ({
+      avisa: !!document.querySelector('#main .card.avisa'),
+      pagado: window.PG.mesDinero(new Date().getFullYear(), new Date().getMonth()).pagado,
+    }));
+    await gotoTab('month');
+    await page.waitForTimeout(300);
+    const enMes = await page.evaluate(() => document.querySelectorAll('#main .dbox .dgasto').length);
+    check('un gasto que cae hoy avisa en «Hoy», se marca desde ahí y el día sale marcado en el Mes',
+      enHoy.hay && enHoy.dice && enHoy.importe && !trasPagar.avisa &&
+      trasPagar.pagado === 58.9 + 41.3 && enMes >= 2,
+      JSON.stringify({ enHoy, trasPagar, enMes }));
+    await page.evaluate(() => { window.PG.store.dinero = { gastos: [], pagos: [], presupuesto: 0 }; window.PG.save(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
