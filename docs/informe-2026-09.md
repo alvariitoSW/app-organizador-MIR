@@ -1,0 +1,162 @@
+# Informe de la app · septiembre de 2026
+
+Escrito después de conducir la app entera a 412×915 (tu móvil) con datos de
+verdad: el catálogo importado, la nevera llena, objetivo puesto y comida
+apuntada. **29 pantallas medidas, 44 104 px = 48,2 pantallas de móvil, cero
+errores de JavaScript en todo el recorrido.** Las pruebas: 204 + 6 + 7 + 10 + 13,
+todas en verde.
+
+El informe está escrito desde el uso que me pediste: alguien que acaba de
+mudarse solo, paga alquiler, trabaja a turnos, hace la compra, estudia, entrena,
+tiene eventos y proyectos, y quiere **una sola app**.
+
+---
+
+## 1. El fallo que hay que arreglar antes que nada
+
+**La lista de la compra se deja fuera todo lo que no sea «de tanda», y no avisa.**
+
+Comprobado midiendo: metí en el menú de un tipo de día un plato nuevo («Tostada
+de aguacate», con pan de centeno y aguacate) **sin asignarlo a una sesión de
+cocina**. Resultado:
+
+| | líneas en la compra | ¿aparece el aguacate? |
+|---|---|---|
+| plato del menú **sin tanda** | 39 | **no** |
+| el mismo plato **con tanda** | 41 | sí |
+
+Un plato que te comes cada semana pero que no cocinas en lote —una tostada, unos
+huevos, un yogur, una ensalada— **no aporta ni un ingrediente a la compra**. Y el
+único parche que existe es un `staplesFor()` que rescata cosas por nombre con una
+expresión regular: `whey|prote|Caf|fruta`. Si tu desayuno no se llama así, no
+entra.
+
+Por qué es el más caro de todos: te vas al supermercado con una lista
+**incompleta y sin ninguna señal de que falte nada**. Y además contradice lo que
+la app acaba de prometer en la portada de Comer («el menú manda en la compra»).
+
+**Qué hacer**: que la compra se calcule del menú entero —lo de tanda por
+sesiones, y lo que no es de tanda por raciones de la semana— y que cada línea
+siga diciendo de dónde sale. Lo de «básicos del desayuno» con regex se cae solo.
+
+---
+
+## 2. Lo que está sobredimensionado · rediseñar
+
+Medido a 412×915, ordenado por lo que ocupa:
+
+| pantalla | alto | campos | qué pasa |
+|---|---|---|---|
+| **Turno y rotación** | **7 005 px (7,7 pantallas)** | **126** | la peor de la app, con diferencia |
+| **Ajustes** | 4 864 px (5,3) | 44 | 13 tarjetas sin relación entre ellas |
+| **Datos** | 4 317 px (4,7) | 15 | copias, Google, ejemplos, todo junto |
+| Comidas armadas | 2 299 px (2,5) | 0 | cada comida, con su lista entera |
+| Compra | 2 154 px (2,3) | 0 | 39 frescos: aquí el largo ya es la lista |
+| Mes | 2 043 px (2,2) | 28 | el calendario + tres tarjetas de config |
+| Semana | 2 117 px (2,3) | 0 | siete días con su franja |
+
+**Turno y rotación** es lo primero que tocas al llegar a una ciudad nueva
+(«¿cuándo trabajo?») y es una sola pantalla de casi ocho, con 126 campos
+seguidos: las piezas del día, las horas de levantarse y acostarse, la estructura
+semanal, la rotación por fecha y las notas del planning. Merece el mismo trato
+que le dimos a Comida: una portada que se lee de un vistazo y una pantalla por
+tarea.
+
+**Ajustes** es un cajón de sastre: sueño, eventos, Google Calendar, lector de
+enlaces, el sol, datos de alimentos, la franja del día, apariencia, copias de
+seguridad y rotaciones. Y ahí dentro, **escondidos entre todo eso, están los
+eventos** —«Presentación en rayos», el día que te toca pagar algo—, que es de lo
+que más se usa y de lo que menos se encuentra.
+
+---
+
+## 3. Lo que está flaco · mejorar
+
+| pantalla | alto | botones |
+|---|---|---|
+| Entreno · portada | **445 px (0,49 pantallas)** | 5 |
+| Entreno · cardio | 414 px | 5 |
+| Entreno · biblioteca | 282 px | 8 |
+| Notas | 377 px | 6 |
+| Hábitos | 471 px | 8 |
+
+**Entreno está a medio hacer comparado con Comer.** Comer tiene doce pantallas
+trabajadas; Entreno tiene una portada de media pantalla. Para que entrenar sea un
+pilar de verdad le falta: la rutina de hoy en la portada (como Comer enseña lo
+que llevas comido), la progresión de cada ejercicio a la vista, y que el entreno
+salga en el calendario igual que sale la comida.
+
+**Notas es una libreta plana.** Para «apuntar cosas, proyectos, cosas que hacer»
+no llega: una nota solo puede estar suelta, con día, o hecha. No hay tarea con
+estado, ni proyecto que agrupe, ni prioridad, ni nada que te diga «esto es para
+esta semana».
+
+---
+
+## 4. Lo que no existe y esa vida necesita
+
+Comprobado en el almacén: **no hay ni una línea de dinero, ni de tareas, ni de
+estudio**. `store` tiene `rhythm, meta, patterns, rotation, tema, listas, franja,
+notas, habitos, eventos, dishes, meals, menu, batches, shifts, food`.
+
+1. **Dinero.** Alquiler, facturas, la compra. Cero. Es el primer estrés de vivir
+   solo y la app no lo toca, aunque ya sabe casi todo: tiene tu lista de la
+   compra y un catálogo de 188 productos de Mercadona, Carrefour y 100
+   Montaditos. Con un precio por producto, la compra te diría **lo que te va a
+   costar** antes de ir, y el mes te diría en qué se te va.
+   *No hay ningún campo de precio en toda la app: `grep precio app.js` → 0.*
+2. **Tareas y proyectos.** Nada. «Llamar a la gestoría», «pedir cita», «preparar
+   la sesión del jueves» no tienen sitio salvo como nota suelta.
+3. **Estudio.** Para un residente es media vida —sesiones, presentaciones,
+   lecturas, cursos— y no hay nada: ni un registro de horas, ni temario, ni
+   repaso.
+4. **Una portada de «mi día».** Hoy, Comer, Entreno y Notas van cada uno por su
+   lado. No existe la pantalla que conteste de una vez: *qué tengo hoy, qué como,
+   qué entreno, qué tengo que hacer y qué tengo que pagar*.
+5. **Avisos.** La app no avisa de nada: ni una notificación en todo el código
+   (`Notification` → 0 apariciones en `app.js` y en `sw.js`). Para pagar el
+   alquiler el día 1, o para acordarte de sacar el táper del congelador, hace
+   falta.
+
+---
+
+## 5. Plan, por orden de lo que más cambia tu día
+
+**Primero — que la compra no mienta** (§1). Es un fallo, no una mejora, y es el
+que te deja tirado en el supermercado.
+
+**Segundo — dinero, en pequeño.** No una app de finanzas: tres cosas. Gastos
+fijos con su día del mes (alquiler, luz, móvil, gimnasio) que salgan en el Mes y
+avisen; un precio opcional por producto para que la compra sume; y un «lo que
+llevas este mes». Con eso, la app ya cubre el primer estrés de vivir solo.
+
+**Tercero — tareas de verdad, dentro de Notas.** Una nota pasa a poder ser tarea:
+estado, día, y opcionalmente proyecto. Y las de hoy salen en «Hoy».
+
+**Cuarto — Turno y rotación, rediseñado** (§2). Siete pantallas y 126 campos es
+lo que más pesa de toda la app, y es la puerta de entrada cuando cambias de
+destino o de rotación.
+
+**Quinto — Entreno al nivel de Comer** (§3): la rutina de hoy en la portada, la
+progresión visible y el entreno en el calendario.
+
+**Sexto — «Mi día» como pantalla de arranque**: lo de hoy de las cinco patas en
+una sola pantalla.
+
+**Séptimo — avisos** (alquiler, eventos, sacar el táper). Lo último porque
+depende de que existan las cosas de las que avisar.
+
+---
+
+## 6. Lo que está bien y conviene no romper
+
+- **Todo funciona sin red.** El sol se calcula en el móvil, el catálogo de
+  alimentos es local, la nutrición no llama a ningún servicio. En una guardia sin
+  cobertura la app entera sigue funcionando.
+- **Cero errores de JavaScript** en las 29 pantallas, incluidas todas con el
+  almacén vacío: cada pantalla vacía dice qué hacer en vez de quedarse en blanco.
+- **La cadena de Comer** (menú → cocina → compra) es el patrón que le falta al
+  resto de la app: enseñar que una cosa manda en la otra, con sus cifras.
+- **Las pruebas.** 240 en total, y la costumbre de validar cada una revirtiendo
+  el arreglo. Es lo que ha ido cazando los fallos de verdad (el arco del sol, el
+  desborde del menú, el cuelgue del service worker).

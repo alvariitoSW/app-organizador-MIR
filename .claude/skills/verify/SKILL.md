@@ -22,23 +22,39 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 
 ## Navigating the real UI
 
-Navigation was restructured into: a merged "Calendario" tab (Mes/Semana/Hoy modes),
-fixed "Entreno"/"Compra" tabs, and a "☰ Más" side drawer for the rest (Comida, Días y
-menús, Cocina en lote, Turno y rotación, Datos). To reach a tab from a cold load:
+La barra son **tres grupos** y un cajón: «Calendario» (modos Mes/Semana/Hoy),
+«Entreno», «Comer» (modos Hoy/Menú/Cocina/Compra) y «☰ Más» para lo que no es
+ninguna de las tres. La segunda fila (`#calModes`) sirve a los dos grupos que
+tienen modos, y se oculta en Entreno y en el cajón.
 
 ```js
-// Calendario modes (hoy/week/month):
+// Calendario (hoy/week/month):
 await page.click('[data-a="nav-cal"]');
-await page.click('#calModes button[data-t="week"]'); // or "month" / "hoy"
+await page.click('#calModes button[data-t="week"]'); // o "month" / "hoy"
 
-// Fixed tabs:
-await page.click('[data-a="tab"][data-t="gym"]');   // Entreno
-await page.click('[data-a="tab"][data-t="shop"]');  // Compra
+// Entreno:
+await page.click('[data-a="tab"][data-t="gym"]');
 
-// Drawer tabs:
+// Comer (food/types/shop/batches/import son pestañas internas del mismo grupo):
+await page.click('[data-a="nav-comer"]');              // portada: el día
+await page.click('#calModes button[data-t="types"]');  // Menú
+await page.click('#calModes button[data-v="cocina-panel"]'); // Cocina
+await page.click('#calModes button[data-t="shop"]');   // Compra
+await page.click('[data-a="cocina-tab"][data-t="lote"]');    // Cocina → Tandas
+
+// El cajón, que ya solo lleva lo que no es calendario, entreno ni comida:
 await page.click('[data-a="drawer-toggle"]');
-await page.click('[data-a="drawer-nav"][data-t="data"]'); // food/types/batches/cfg/data
+await page.click('[data-a="drawer-nav"][data-t="data"]'); // notas/habitos/cfg/data/ajustes
 ```
+
+Vistas dentro de Comer, por `ui.foodVista`: `''` (el día), `buscar`, `cantidad`,
+`productos`, `micros`, `platos`, `alimentos`, `ficha`, `cocina-panel`, `plato`,
+`alimnuevo`, `add`, `cocina`. Y `ui.cocinaTab` (`''`/`nevera`/`lote`),
+`ui.platosTab` (`''`/`antojo`/`importar`), `ui.shopVista` (`''`/`listas`).
+
+**Trampa al sembrar menús**: un plato dentro de una toma solo cuenta si lleva
+`kind:'dish'` — `dishQty()` filtra por ahí, así que `{id,portions}` a secas no
+suma kcal ni entra en las tandas ni en la compra, y no da ningún error.
 
 `window.PG` exposes most internals for seeding fixture state before driving the UI
 (e.g. `window.PG.setDayOverride(dateStr, shiftId, guard)`, `window.PG.addVacation(...)`,
