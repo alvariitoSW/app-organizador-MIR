@@ -2097,6 +2097,7 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
+    tocaEntrenarHTML(hoy)+
     tareasHoyHTML()+
     proximosPuntualesHTML()+
     pagosHoyHTML(hoy)+
@@ -2378,6 +2379,8 @@ function renderMonth(){
     if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
     if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
       '🏊 '+esc(seg.hora||'')+'</span>');
+    const rtDia=d.key?rutinaDeFecha(d.key):null;
+    if(rtDia)lineas.push('<span class="dline gym" title="entreno: '+esc(rtDia.nombre)+'">🏋 '+esc(nombreCorto(rtDia.nombre))+'</span>');
     /* La casilla mide 53 px de ancho: ahí caben ocho caracteres. Poner el título del evento daba
        «Llegar a», «Vuelo de» —texto que aparenta informar y no informa— y además cada uno se comía
        una línea entera, así que con cuatro eventos la casilla reventaba. Un punto de color por
@@ -2634,6 +2637,52 @@ function prDe(nombre){
 function ejercicioUltimo(nombre){
   const xs=gymIdx().byEx[nombre]||[];
   return xs.length?xs[xs.length-1]:null;}
+/* ===================== qué rutina toca cada día =====================
+   Los menús van pegados al TIPO de día desde el principio; el entreno no, y por eso la app nunca
+   sabía qué te tocaba hoy. Mismo modelo: una rutina se asigna a uno o varios tipos de día. */
+function rutinaDias(rt){if(!Array.isArray(rt.dias))rt.dias=[];return rt.dias;}
+function toggleRutinaDia(rid,shiftId){
+  const g=gymS(),rt=g.rutinas.filter(function(r){return r.id===rid;})[0];
+  if(!rt)return 'esa rutina ya no existe';
+  const d=rutinaDias(rt),i=d.indexOf(shiftId);
+  if(i>=0)d.splice(i,1);
+  else{
+    /* dos rutinas el mismo tipo de día serían dos entrenos a la vez: la nueva manda */
+    g.rutinas.forEach(function(o){
+      if(o.id===rid)return;
+      const od=rutinaDias(o),j=od.indexOf(shiftId);
+      if(j>=0)od.splice(j,1);});
+    d.push(shiftId);}
+  save();
+  const sh=shiftById(shiftId);
+  return rt.nombre+(i>=0?' ya no toca':' toca')+' en «'+((sh&&sh.name)||'ese día')+'»';}
+function rutinaDeFecha(key){
+  /* la rutina que toca ese día, según el tipo de día que sea */
+  const inf=dayInfo(key);
+  if(!inf.shiftId)return null;
+  return gymS().rutinas.filter(function(r){return rutinaDias(r).indexOf(inf.shiftId)>=0;})[0]||null;}
+function rutinaPlanHTML(rt,key){
+  /* los ejercicios con el peso que usaste la última vez: la progresión donde hace falta, que es
+     justo antes de levantar */
+  return rt.ejercicios.slice(0,6).map(function(ej){
+    const u=ejercicioUltimo(ej.ex);
+    return '<div class="exrow"><span class="nm">'+esc(ej.ex)+'</span>'+
+      '<span class="mini">'+(+ej.series||3)+'×'+(+ej.reps||8)+
+        (u?(' · '+(+u.kg>0?('<b style="color:var(--ink)">'+fmt(u.kg)+' kg</b> la última vez')
+          :'<b style="color:var(--ink)">con tu peso</b> la última vez')):' · primera vez')+'</span></div>';}).join('')+
+    (rt.ejercicios.length>6?('<p class="mini" style="margin:7px 0 0">y '+(rt.ejercicios.length-6)+' más</p>'):'');}
+function tocaEntrenarHTML(key){
+  const rt=rutinaDeFecha(key);
+  if(!rt||ui.gymSesionActiva)return '';
+  const g=gymS();
+  const yaHoy=g.sesiones.filter(function(s){return s.fecha===key&&s.rutinaId===rt.id;}).length;
+  return '<div class="card"><h2>Hoy toca entrenar <span class="mini">'+esc(rt.nombre)+'</span></h2>'+
+    (yaHoy?('<p class="note" style="margin:0">Ya la hiciste hoy. Si quieres repetir, empiézala otra vez.</p>'):'')+
+    '<div class="exlist" style="margin-top:8px">'+rutinaPlanHTML(rt,key)+'</div>'+
+    '<div class="row" style="margin-top:11px">'+
+      '<button class="btn p" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(key)+'">'+
+        gymIco('pesa','gico sm')+' empezar «'+esc(rt.nombre)+'»</button>'+
+      '<button class="btn s" data-a="tab" data-t="gym">ver Entreno →</button></div></div>';}
 /* ===================== empezar/terminar una rutina = una sesión ===================== */
 function empezarRutina(rid,fecha){
   /* monta las series de esa rutina con el último peso que usaste en cada ejercicio (misma idea que
@@ -4292,6 +4341,13 @@ function renderRutinaCard(rt,selDate){
       'style="font:inherit;font-weight:800;border:1px solid transparent;background:transparent;padding:2px 4px;max-width:210px"></h2>'+
     '<div class="row"><label class="fld" style="flex:1 1 220px">notas (cuándo la haces)'+
       '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+rt.id+'" placeholder="martes y viernes"></label></div>'+
+    /* pegar la rutina a un tipo de día es lo que hace que la app sepa qué te toca hoy, igual que
+       los menús: sin esto, «hoy toca entrenar» no lo puede decir nadie */
+    '<p class="mini" style="margin:10px 0 4px">Qué días toca</p>'+
+    '<div class="chips">'+store.shifts.map(function(sh){
+      const on=rutinaDias(rt).indexOf(sh.id)>=0;
+      return '<button class="chipx'+(on?' on':'')+'" data-a="rt-dia" data-id="'+rt.id+'" data-sh="'+esc(sh.id)+'">'+
+        esc(sh.icon||'')+' '+esc(sh.name)+'</button>';}).join('')+'</div>'+
     '<div class="mdiagram" style="margin-top:10px">'+svgCuerpo(regiones)+'<div class="mlegend"><b>Trabaja:</b>'+leyenda+
       '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regiones))+'</p>'+
       (sinMusc.length?('<p class="mini" style="margin-top:4px;color:var(--warn)">No sé qué músculos trabaja: '+
@@ -4533,6 +4589,7 @@ function renderGymPortada(){
     filas='<div class="empty" style="padding:4px 0">Apunta la primera serie y aquí verás cómo va el día.</div>';
   }
   $('#main').innerHTML='<div class="grid">'+
+    tocaEntrenarHTML(c.sel)+
     '<div class="ghero">'+
       '<div class="ghero-top">'+gymIco('pesa')+
         '<div><div class="ghero-tit">Entrenar</div><div class="ghero-sub">'+esc(sub)+'</div></div>'+
@@ -6873,6 +6930,7 @@ function act(a,el){
       if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
+    case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
     case 'cfg-vista':{ui.cfgVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
     case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}

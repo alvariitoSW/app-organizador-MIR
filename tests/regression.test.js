@@ -3438,6 +3438,61 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================== Entreno: qué toca hoy =====================
+  // 82) los menús van pegados al TIPO de día desde el principio; el entreno no, y por eso la app
+  // nunca sabía qué te tocaba hoy: la portada de Entreno eran 445 px y cuatro fichas. Mismo modelo
+  // que los menús: la rutina se asigna a tipos de día, y entonces «hoy toca» puede decirse en
+  // Entreno, en Hoy y en el Mes. Se conduce entero: asignar, ver, empezar.
+  {
+    await page.evaluate(() => {
+      const P = window.PG, g = P.gymS();
+      g.rutinas.length = 0;
+      g.rutinas.push({ id: 'rt-test', nombre: 'Empuje A', notas: '', dias: [],
+        ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Press militar', series: 3, reps: 10 }] });
+      // historial, para que la progresión tenga algo que enseñar
+      const k = P.iso(new Date(Date.now() - 7 * 86400000));
+      g.registro.push({ id: 'gx1', fecha: k, ex: 'Press banca', kg: 62.5, reps: 8, rpe: null, nota: '', ts: Date.now() });
+      P.save();
+    });
+    await gotoTab('gym');
+    await page.waitForTimeout(200);
+    await page.click('[data-a="gym-panel"][data-p="rutinas"]');
+    await page.waitForTimeout(300);
+    const chips = await page.evaluate(() => document.querySelectorAll('[data-a="rt-dia"]').length);
+    const shHoy = await page.evaluate(() => window.PG.dayInfo(window.PG.iso(new Date())).shiftId);
+    await page.click(`[data-a="rt-dia"][data-sh="${shHoy}"]`);
+    await page.waitForTimeout(320);
+    await page.click('.subcab [data-a="gym-panel"]');
+    await page.waitForTimeout(320);
+    const enEntreno = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /toca entrenar/.test(x.textContent));
+      return { hay: !!c, rutina: c ? /Empuje A/.test(c.textContent) : false,
+        // la progresión donde hace falta: justo antes de levantar
+        ultimoPeso: c ? /62[.,]5 kg/.test(c.textContent) : false,
+        empezar: c ? !!c.querySelector('[data-a="ses-empezar"]') : false };
+    });
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const enHoyG = await page.evaluate(() =>
+      [...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)));
+    // y empezarla desde «Hoy» monta las series y quita el aviso
+    const bot = await page.$('#main [data-a="ses-empezar"]');
+    if (bot) { await bot.click(); await page.waitForTimeout(400); }
+    const trasG = await page.evaluate(() => ({
+      sesion: !!window.PG.ui.gymSesionActiva,
+      series: window.PG.gymS().registro.filter((x) => x.sesionId).length,
+      yaNoAvisa: ![...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)),
+    }));
+    check('una rutina se pega a un tipo de día, y entonces «hoy toca entrenar» sale en Entreno y en Hoy',
+      chips >= 3 && enEntreno.hay && enEntreno.rutina && enEntreno.ultimoPeso && enEntreno.empezar &&
+      enHoyG && trasG.sesion && trasG.series >= 7 && trasG.yaNoAvisa,
+      JSON.stringify({ chips, enEntreno, enHoyG, trasG }));
+    await page.evaluate(() => {
+      const P = window.PG; P.ui.gymSesionActiva = null;
+      const g = P.gymS(); g.rutinas.length = 0; g.registro.length = 0; g.sesiones.length = 0; P.save();
+    });
+  }
+
   // ===================== Turno y rotación =====================
   // 80) era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos, y es lo
   // primero que tocas al llegar a un destino nuevo. Ahora es una portada que dice cómo estás
