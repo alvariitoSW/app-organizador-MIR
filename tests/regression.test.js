@@ -164,10 +164,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.goto(base + 'index.html');
   await page.waitForTimeout(300);
 
-  // 0) propuesta de navegación: al entrar, el calendario en modo "Mes" es la pantalla principal
+  // 0) al abrir la app lo que quieres saber es qué tienes HOY, no planificar el mes: arranca en
+  // «Hoy», que es donde están el turno, lo que toca entrenar, las tareas, lo que hay que pagar y
+  // las comidas del día. El mes sigue a un toque.
   const defaultTab = await page.evaluate(() => window.PG.ui.tab);
-  const monthVisible = await page.evaluate(() => document.querySelectorAll('#main .cal .dbox').length > 0);
-  check('la app arranca en el calendario, en modo "Mes"', defaultTab === 'month' && monthVisible, 'tab=' + defaultTab);
+  const arranque = await page.evaluate(() => ({
+    hoyVisible: /Hoy ·/.test(document.getElementById('main').textContent),
+    franja: !!document.querySelector('#main .tl-bar'),
+    mesAUnToque: !!document.querySelector('#calModes button[data-t="month"]'),
+  }));
+  check('la app arranca en «Hoy», con el día a la vista y el mes a un toque',
+    defaultTab === 'hoy' && arranque.hoyVisible && arranque.franja && arranque.mesAUnToque,
+    'tab=' + defaultTab + ' ' + JSON.stringify(arranque));
 
   // 0b) la barra son tres grupos: Calendario, Entreno y Comer. Comer se comió a Compra, a Comida,
   // a Días y menús, a Cocina en lote y a Importar receta, que eran cinco destinos para la misma
@@ -3435,6 +3443,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.eventosS().length = 0;
       window.PG.store.notas.length = 0;
       window.PG.save();
+    });
+  }
+
+  // ===================== «Mi día» =====================
+  // 83) las cinco patas de la app —el turno, el entreno, las tareas, el dinero y la comida— se leen
+  // de una sentada en «Hoy», y EN ESE ORDEN: primero el día, luego lo que hay que HACER, y al final
+  // lo de consulta. Antes el sol y los botones de navegar se colaban en medio de la lista.
+  {
+    await page.evaluate(() => {
+      const P = window.PG, hoy = P.iso(new Date()), g = P.gymS();
+      g.rutinas.length = 0;
+      g.rutinas.push({ id: 'rt-d', nombre: 'Empuje A', notas: '', dias: [P.dayInfo(hoy).shiftId],
+        ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] });
+      P.addGasto({ nombre: 'Alquiler', importe: 650, dia: new Date().getDate(), cat: 'casa' });
+      const r = P.addNota('Empadronamiento', hoy); P.setNota(r.id, 'proy', 'Papeleo');
+      P.save();
+    });
+    await gotoTab('hoy');
+    await page.waitForTimeout(400);
+    const dia = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('#main .card')];
+      const tit = (c) => { const h = c.querySelector('h2'); return h ? h.textContent.replace(/\s+/g, ' ').trim() : ''; };
+      const orden = cards.map(tit);
+      const pos = (re) => orden.findIndex((t) => re.test(t));
+      return {
+        alto: document.querySelector('#main').scrollHeight,
+        ancho: document.documentElement.scrollWidth,
+        dia: pos(/Hoy ·/), entrenar: pos(/toca entrenar/), tareas: pos(/Para hoy/),
+        pagar: pos(/toca pagar/), comidas: pos(/Comidas de hoy/), sol: pos(/El sol hoy/),
+      };
+    });
+    check('«Hoy» junta las cinco patas del día y las ordena: el día, lo que hay que hacer y, al final, lo de consulta',
+      dia.dia === 0 && dia.entrenar === 1 && dia.tareas === 2 && dia.pagar === 3 &&
+      dia.comidas > dia.pagar && dia.sol > dia.comidas &&
+      dia.alto < 2300 && dia.ancho <= 412, JSON.stringify(dia));
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 };
+      P.store.notas.length = 0;
+      P.gymS().rutinas.length = 0;
+      P.save();
     });
   }
 

@@ -260,7 +260,7 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
+let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
@@ -2085,24 +2085,26 @@ function renderHoy(){
     '</div>'+
     (eventosDeFecha(hoy).length?('<div class="row" style="margin-top:8px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(hoy))+'</div>'):'')+
     '</div>'+
-    /* el sol: cuánta luz queda es lo que de verdad usas para decidir si sales a correr o no */
+    /* el orden manda: primero el día, luego LO QUE HAY QUE HACER —entrenar, las tareas, lo que
+       toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
+       quieres es la lista, no el atardecer. */
+    tocaEntrenarHTML(hoy)+
+    tareasHoyHTML()+
+    pagosHoyHTML(hoy)+
+    habitosHoyHTML()+
+    proximosPuntualesHTML()+
+    '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div>'+
+    /* el sol: cuánta luz queda es lo que usas para decidir si sales a correr. Es de consulta, así
+       que va después de lo que hay que hacer. */
     '<div class="card"><h2>El sol hoy</h2>'+solHoyHTML(hoy)+
       '<div class="row" style="margin-top:10px">'+
         '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
-        '<span class="mini">se calcula en el móvil, sin internet</span></div>'+
-    '</div>'+
-    '<div class="card">'+
-    '<div class="row" style="margin-top:10px">'+
-      '<button class="btn s" data-a="tab" data-t="food">🍽 apuntar comida</button>'+
+        '<span class="mini">se calcula en el móvil, sin internet</span></div></div>'+
+    '<div class="row">'+
+      '<button class="btn s" data-a="nav-comer">🍽 apuntar comida</button>'+
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
-    '</div></div>'+
-    tocaEntrenarHTML(hoy)+
-    tareasHoyHTML()+
-    proximosPuntualesHTML()+
-    pagosHoyHTML(hoy)+
-    habitosHoyHTML()+
-    '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div></div>';
+    '</div></div>';
 }
 /* ===================== render: semana ===================== */
 function resumenSemana(){
