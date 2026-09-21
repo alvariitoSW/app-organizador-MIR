@@ -3438,6 +3438,62 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================== Turno y rotación =====================
+  // 80) era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos, y es lo
+  // primero que tocas al llegar a un destino nuevo. Ahora es una portada que dice cómo estás
+  // montado y una pantalla por tarea, como Comida.
+  {
+    await gotoTab('cfg');
+    await page.waitForTimeout(300);
+    const portada = await page.evaluate(() => ({
+      alto: document.querySelector('#main').scrollHeight,
+      campos: document.querySelectorAll('#main input,#main select,#main textarea').length,
+      puertas: [...document.querySelectorAll('#main .puerta b')].map((x) => x.textContent),
+      // el estado de un vistazo: cuántos tipos de día y cómo se arma la semana
+      cifras: [...document.querySelectorAll('#main .dosdatos b')].map((x) => x.textContent),
+    }));
+    // y cada puerta abre lo suyo y vuelve
+    const visitas = [];
+    for (const v of ['dias', 'horas', 'semana', 'rotacion', 'notas']) {
+      // sin portada no hay puertas: esta prueba tiene que FALLAR, no tumbar la suite con un timeout
+      const b = await page.$(`[data-a="cfg-vista"][data-v="${v}"]`);
+      if (!b) { visitas.push({ v: '(sin puerta)', campos: 0, ancho: 0 }); continue; }
+      await b.click();
+      await page.waitForTimeout(250);
+      visitas.push(await page.evaluate(() => ({
+        v: window.PG.ui.cfgVista,
+        tit: (document.querySelector('#main .subtit') || {}).textContent,
+        campos: document.querySelectorAll('#main input,#main select,#main textarea').length,
+        ancho: document.documentElement.scrollWidth,
+      })));
+      const volver = await page.$('.subcab [data-a="cfg-vista"][data-v=""]');
+      if (volver) { await volver.click(); await page.waitForTimeout(200); }
+    }
+    check('Turno y rotación es una portada de media pantalla y una pantalla por tarea',
+      portada.alto < 700 && portada.campos === 0 && portada.puertas.length === 6 &&
+      portada.cifras.length === 2 &&
+      visitas.length === 5 && visitas.every((x) => x.campos > 0 && x.ancho <= 412) &&
+      visitas.map((x) => x.v).join('|') === 'dias|horas|semana|rotacion|notas',
+      JSON.stringify({ portada, visitas }));
+  }
+
+  // 81) y el atajo «patrón y rotación» de Semana sigue llevando a su tarjeta, que ahora vive dentro
+  // de una de esas pantallas: al partirla, un atajo que apunta a una tarjeta se queda sin destino
+  // y no da ningún error — simplemente no pasa nada.
+  {
+    await gotoTab('week');
+    await page.waitForTimeout(250);
+    await page.click('#main [data-a="ir-semana-cfg"]');
+    await page.waitForTimeout(600);
+    const atajo = await page.evaluate(() => ({
+      tab: window.PG.ui.tab, vista: window.PG.ui.cfgVista,
+      tarjeta: !!document.querySelector('#main .card[data-cfg="semana"]'),
+    }));
+    check('el atajo «patrón y rotación» de Semana abre la pantalla que ahora contiene esa tarjeta',
+      atajo.tab === 'cfg' && atajo.vista === 'semana' && atajo.tarjeta, JSON.stringify(atajo));
+    await page.evaluate(() => { window.PG.ui.cfgVista = ''; window.PG.render(); });
+  }
+
   // ===================== Notas: tareas y proyectos =====================
   // 78) la libreta se ordena por CUÁNDO toca, no por si la nota tiene día o no: lo que se te pasó,
   // lo de hoy, lo de esta semana, lo de más adelante y lo que no tiene día. Y el proyecto agrupa

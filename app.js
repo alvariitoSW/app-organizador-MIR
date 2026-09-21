@@ -264,7 +264,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -4456,7 +4456,11 @@ const GYM_ICO={
   manzana:'<path d="M12 8.2c-1.3-1.4-3-1.9-4.4-1.2C5.6 7.9 5 10.6 6 13.6c.9 2.7 2.6 4.9 4 4.9.7 0 1.3-.4 2-.4s1.3.4 2 .4c1.4 0 3.1-2.2 4-4.9 1-3 .4-5.7-1.6-6.6-1.4-.7-3.1-.2-4.4 1.2z"/><path d="M12 8.2V5.6c0-1 .8-1.9 1.9-2.1"/>',
   nevera:'<rect x="5.5" y="2.8" width="13" height="18.4" rx="2.5"/><path d="M5.5 10h13M9 6v2M9 13v2.5"/>',
   chispa:'<path d="M12 3l1.9 4.9L19 9.8l-4.4 3.1.6 5.3-3.2-2.6-3.2 2.6.6-5.3L5 9.8l5.1-1.9z"/>',
-  balanza:'<path d="M12 4v16M7 8h10"/><path d="M4 14a3 3 0 0 0 6 0l-3-6z"/><path d="M14 14a3 3 0 0 0 6 0l-3-6z"/>'
+  balanza:'<path d="M12 4v16M7 8h10"/><path d="M4 14a3 3 0 0 0 6 0l-3-6z"/><path d="M14 14a3 3 0 0 0 6 0l-3-6z"/>',
+  cama:'<path d="M3 18v-7h18v7"/><path d="M3 11V7M21 18v2M3 18v2"/><circle cx="7.5" cy="9" r="1.8"/><path d="M10.5 11V9h8"/>',
+  calendario:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  repetir:'<path d="M4 9a5 5 0 0 1 5-5h9"/><path d="M15 1l3 3-3 3"/><path d="M20 15a5 5 0 0 1-5 5H6"/><path d="M9 23l-3-3 3-3"/>',
+  ajustes:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>'
 };
 function gymIco(n,cls){return '<svg class="'+(cls||'gico')+'" viewBox="0 0 24 24" aria-hidden="true">'+(GYM_ICO[n]||'')+'</svg>';}
 function gymSubcab(titulo,extra){
@@ -5796,39 +5800,85 @@ function renderCfg(){
       '</div>'+
       (rec?'<p class="mini" style="margin-top:8px">sugerido: 🛌 '+esc(rec)+' · 🍽 cena '+(ven?esc(ven.from)+'–'+esc(ven.to):'—')+'</p>':'')+
       '</div>';}).join('');
-  $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>1 · Mi turno, las piezas del día</h2><p class="note">Los horarios reales de tu destino, un bloque por tipo de día. Con el horario y la carga, la app ya sabe qué menú y qué tanda tocan.</p>
-      ${shifts}
-      <div class="row" style="margin-top:10px"><button class="btn s" data-a="shift-new">+ Añadir tipo de día</button></div></div>
-    <div class="card"><h2>3 · Estructura semanal genérica</h2><p class="note">Una tarjeta = una semana tipo. Ten una para <b>1 guardia</b> y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica y todo se recalcula.</p>
-      ${pats}
-      <div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ Semana tipo</button>
-      <button class="btn s" data-a="autofill">Autocompletar 1 y 2 guardias desde mi turno</button></div></div>
-    <div class="card"><h2>4 · Rotación por fecha</h2><p class="note">Si tu calendario es un ciclo de semanas (p. ej. <i>1G·S → 2G·S·S → libre</i>), ordena arriba las semanas del ciclo y pon la fecha de un lunes que sepas qué semana era. La app repite el ciclo sola y cada día de la vista «Semana» lleva el menú que corresponde; y si un día se tuerce, lo cambias en esa misma vista sin romper la rotación.</p>
-      <div class="row">
-        <label class="fld">Lunes de una semana con 1 guardia<input type="date" value="${esc(r.anchor||'')}" data-a="rot-anchor"></label>
-        <label class="fld">Semana del ciclo (auto)<input type="number" value="${r.index||0}" disabled></label>
-        <label class="fld">&nbsp;<span class="mini" style="text-transform:none;font-weight:400;letter-spacing:0">Modo activo: <b>${r.mode==='date'?'rotación por fecha':'plantilla'}</b></span></label>
-      </div>
-      <div class="row" style="margin-top:8px"><button class="btn s" data-a="mode-date">Activar rotación por fecha</button>
-      <button class="btn s" data-a="mode-template">Volver a plantilla</button>
-      <button class="btn s" data-a="clear-overrides">Quitar mis cambios a mano en los días</button></div></div>
-    <div class="card"><h2>2 · A qué horas te levantas y te acuestas</h2>
-      <p class="note">Se aplica por tipo de día; si un día concreto cambia, lo ajustas en el calendario («Mes» → toca el día → <i>editar horas</i>) sin romper la plantilla. Con estas horas la app cuenta tus horas de sueño y te avisa cuando un día te quedas por debajo de 6,5 h.</p>
-      ${rhythmRows}
-      <div class="row" style="margin-top:9px">
-        <button class="btn s" data-a="bf-defaults">poner el desayuno rápido de diario en los días de trabajar</button>
-        <button class="btn s" data-a="mon-autopos">${store.rotation.autoPos?'✓':'○'} post-guardia automático</button>
-        <span class="sp"></span><span class="mini">💡 si sales de guardia a las 08:00, el día siguiente no madruges: el cuerpo pide 8 h y media</span></div>
-    </div>
-    ${jornadaCard()}
-    ${suenoCard()}
-    ${semanaConfigHTML()}
-
-    <div class="card"><h2>5 · Notas del planning</h2><p class="note">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>
-      <textarea rows="4" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">${esc(store.meta.notes||'')}</textarea></div>
-  </div>`;
+  /* Esto era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos: los seis
+     tipos de día con sus ocho campos, la tabla de horas de levantarse y acostarse, la estructura
+     semanal, la rotación por fecha y las notas. Y es lo primero que tocas al llegar a un destino
+     nuevo. Mismo patrón que Comida: una portada que se lee de un vistazo y una pantalla por tarea. */
+  const v=ui.cfgVista||'';
+  if(v==='dias')return cfgPantalla('Mis tipos de día',
+    '<div class="card"><p class="note" style="margin:0 0 10px">Los horarios reales de tu destino, un bloque por tipo de día. '+
+      'Con el horario y la carga, la app ya sabe qué menú y qué tanda tocan.</p>'+shifts+
+      '<div class="row" style="margin-top:10px"><button class="btn s" data-a="shift-new">+ añadir tipo de día</button></div></div>',
+    store.shifts.length+' tipos');
+  if(v==='horas')return cfgPantalla('A qué horas',
+    '<div class="card"><p class="note" style="margin:0 0 10px">Se aplica por tipo de día; si un día concreto cambia, lo ajustas '+
+      'en el calendario sin romper la plantilla. Con estas horas la app cuenta tus horas de sueño.</p>'+rhythmRows+
+      '<div class="row" style="margin-top:9px">'+
+        '<button class="btn s" data-a="bf-defaults">poner el desayuno rápido en los días de trabajar</button>'+
+        '<button class="btn s" data-a="mon-autopos">'+(store.rotation.autoPos?'✓':'○')+' post-guardia automático</button></div>'+
+      '<p class="mini" style="margin:9px 0 0">💡 si sales de guardia a las 08:00, el día siguiente no madrugues: el cuerpo pide 8 h y media</p>'+
+    '</div>'+jornadaCard()+suenoCard());
+  if(v==='semana')return cfgPantalla('Cómo se arma tu semana',
+    semanaConfigHTML()+
+    '<div class="card"><h2>Semanas tipo</h2><p class="note">Una tarjeta = una semana tipo. Ten una para <b>1 guardia</b> '+
+      'y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica y todo se recalcula.</p>'+pats+
+      '<div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ semana tipo</button>'+
+      '<button class="btn s" data-a="autofill">autocompletar desde mi turno</button></div></div>',
+    store.patterns.length+' semanas');
+  if(v==='rotacion')return cfgPantalla('Rotación por fecha',
+    '<div class="card"><p class="note" style="margin:0 0 10px">Si tu calendario es un ciclo de semanas (1G·S → 2G·S·S → libre), '+
+      'ordena las semanas del ciclo en «Cómo se arma tu semana» y pon aquí la fecha de un lunes que sepas qué semana era. '+
+      'La app repite el ciclo sola; y si un día se tuerce, lo cambias en «Semana» sin romper la rotación.</p>'+
+      '<div class="row">'+
+        '<label class="fld">lunes de una semana con 1 guardia<input type="date" value="'+esc(r.anchor||'')+'" data-a="rot-anchor"></label>'+
+        '<label class="fld" style="flex:0 0 130px">semana del ciclo<input type="number" value="'+(r.index||0)+'" disabled></label>'+
+      '</div>'+
+      '<p class="mini" style="margin:9px 0 0">modo activo: <b style="color:var(--ink)">'+(r.mode==='date'?'rotación por fecha':'plantilla')+'</b></p>'+
+      '<div class="row" style="margin-top:9px"><button class="btn s" data-a="mode-date">activar rotación por fecha</button>'+
+      '<button class="btn s" data-a="mode-template">volver a plantilla</button>'+
+      '<button class="btn s" data-a="clear-overrides">quitar mis cambios a mano</button></div></div>');
+  if(v==='notas')return cfgPantalla('Notas del planning',
+    '<div class="card"><p class="note" style="margin:0 0 10px">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>'+
+      '<textarea rows="8" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">'+esc(store.meta.notes||'')+'</textarea></div>');
+  /* la portada: en qué estado está tu turno, y una puerta por tarea */
+  const pat=store.patterns[r.pattern];
+  const conHoras=store.shifts.filter(function(x){return x.start||x.end;}).length;
+  const puerta=function(vista,ico,tit,sub){
+    return '<button class="puerta" data-a="cfg-vista" data-v="'+vista+'">'+gymIco(ico)+
+      '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">🕐 Turno y rotación</h2></div>'+
+    '<div class="card"><h2>Cómo estás montado ahora</h2>'+
+      '<div class="dosdatos">'+
+        '<div><b>'+store.shifts.length+'</b><span>tipos de día</span></div>'+
+        '<div><b>'+(r.mode==='date'?'por fecha':'plantilla')+'</b><span>cómo se arma la semana</span></div>'+
+      '</div>'+
+      '<p class="mini" style="margin:10px 0 0">'+
+        (r.mode==='date'
+          ?('Ciclo de '+store.patterns.length+' semana'+(store.patterns.length===1?'':'s')+
+            (r.anchor?(', anclado al lunes '+esc(fechaCorta(r.anchor))):', <b style="color:var(--warn)">sin anclar todavía</b>'))
+          :('Se repite la semana tipo «'+esc((pat&&pat.name)||'—')+'» todas las semanas.'))+
+        ' · '+conHoras+' de '+store.shifts.length+' tipos con horario puesto.</p>'+
+      '<div class="row" style="margin-top:11px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
+    '</div>'+
+    '<div class="puertas">'+
+      puerta('dias','reloj','Mis días',store.shifts.length+' tipos')+
+      puerta('horas','cama','A qué horas','levantarse y dormir')+
+      puerta('semana','calendario','Mi semana',r.mode==='date'?'ciclo de '+store.patterns.length:'plantilla')+
+    '</div>'+
+    '<div class="puertas">'+
+      puerta('rotacion','repetir','Rotación','por fecha')+
+      puerta('notas','lapiz','Notas','del planning')+
+      '<button class="puerta" data-a="tab" data-t="ajustes">'+gymIco('ajustes')+
+        '<b>Servicios</b><span class="s">y mis rotaciones</span></button>'+
+    '</div></div>';
 }
+function cfgPantalla(titulo,cuerpo,extra){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="cfg-vista" data-v="">'+gymIco('atras','gico sm')+' Turno</button>'+
+      '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
+    cuerpo+'</div>';}
 
 /* ===================== render: ajustes ===================== */
 /* ===================== eventos que se repiten cada semana ===================== */
@@ -6813,12 +6863,17 @@ function curShiftId(el){const n=el&&el.closest?el.closest('[data-shift]'):null;i
 function act(a,el){
   const id=el.dataset.id;
   switch(a){
-    case 'tab':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;render();window.scrollTo(0,0);break;
+    case 'tab':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;
+      /* entrar en «Turno y rotación» te deja en su portada, no en la última pantalla que abriste
+         hace tres días: es configuración, no un sitio donde se continúa algo */
+      if(ui.tab==='cfg')ui.cfgVista='';
+      render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
       if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
+    case 'cfg-vista':{ui.cfgVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
     case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
@@ -6866,7 +6921,9 @@ function act(a,el){
     case 'nav-cal':ui.tab=ui.calMode||'month';render();window.scrollTo(0,0);break;
     case 'drawer-toggle':if(ui.drawerOpen)closeDrawer();else openDrawer();break;
     case 'drawer-close':closeDrawer();break;
-    case 'drawer-nav':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;closeDrawer();render();window.scrollTo(0,0);break;
+    case 'drawer-nav':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;
+      if(ui.tab==='cfg')ui.cfgVista='';
+      closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':{document.documentElement.classList.toggle('dark');
       const osc=document.documentElement.classList.contains('dark');
       try{localStorage.setItem(TKEY,osc?'dark':'light');}catch(e){}
@@ -7363,7 +7420,10 @@ function act(a,el){
       flash(r.msg);render();break;}
     case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
     case 'ir-eventos':irACard('ajustes','eventos');break;
-    case 'ir-semana-cfg':irACard('cfg','semana');break;
+    case 'ir-semana-cfg':
+      /* Turno y rotación ya no es una pantalla única: la tarjeta de la semana vive en su vista, así
+         que el atajo tiene que abrirla antes de ir a buscarla */
+      ui.cfgVista='semana';irACard('cfg','semana');break;
     case 'ir-sol':irACard('ajustes','sol');break;
     case 'usda-probar':usdaProbar();break;
     case 'usda-guia':ui.usdaGuia=!ui.usdaGuia;render();break;
