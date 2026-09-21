@@ -95,6 +95,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       await page.click('.subcab [data-a="food-vista"]');
       await page.waitForTimeout(120);
     }
+    // Comida se reorganizó alrededor del buscador: «apuntar» ya no es una vista con cuatro modos,
+    // sino el buscador, y escanear / a mano / mis productos cuelgan de él.
+    if (vista === 'add') {
+      await page.click('[data-a="food-vista"][data-v="buscar"]');
+      await page.waitForTimeout(150);
+      if (modo && modo !== 'buscar') {
+        const sel = modo === 'productos'
+          ? '[data-a="food-vista"][data-v="productos"]'
+          : `[data-a="food-panel2"][data-k="${modo}"]`;
+        await page.click(sel);
+        await page.waitForTimeout(150);
+      }
+      return;
+    }
+    // «Qué cocino», «Mi nevera» e «Ideas» ya no son tres pantallas: son las tres pestañas de Cocina
+    if (vista === 'cocinar' || vista === 'nevera' || vista === 'ideas') {
+      await page.click('[data-a="food-vista"][data-v="cocina-panel"]');
+      await page.waitForTimeout(150);
+      await page.click(`[data-a="cocina-tab"][data-t="${vista === 'nevera' ? 'nevera' : ''}"]`);
+      await page.waitForTimeout(150);
+      return;
+    }
     if (vista) {
       await page.click(`[data-a="food-vista"][data-v="${vista}"]`);
       await page.waitForTimeout(150);
@@ -570,8 +592,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const catalogo = await page.evaluate(() => {
     const r = window.PG.foodImportCatalogo();
     window.PG.ui.foodQ = 'yogur griego';
-    window.PG.ui.foodVista = 'add';
-    window.PG.ui.foodPanel = 'productos';
+    window.PG.ui.foodVista = 'productos';
     window.PG.render();
     const encontrado = document.getElementById('main').innerText.toLowerCase().includes('yogur griego');
     window.PG.ui.foodQ = '';
@@ -602,14 +623,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const hoyKeyManual = new Date().toISOString().slice(0, 10);
   const kcalAntesManual = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKeyManual);
   // el camino real: buscar por nombre, tocar el resultado y apuntar la cantidad
-  await page.click('[data-a="food-panel"][data-k="buscar"]');
-  await page.waitForTimeout(150);
-  await page.fill('#feQ', 'Lentejas de la abuela');
+  await gotoFood('add', 'buscar');
+  await page.fill('#fbQ', 'Lentejas de la abuela');
   await page.waitForTimeout(350);
-  await page.click(`[data-a="food-pick"][data-v="ean:${altaManual.ean}"]`);
+  await page.click(`[data-a="food-abrir"][data-v="ean:${altaManual.ean}"]`);
   await page.waitForTimeout(200);
-  await page.fill('#feG', '200');
-  await page.click('[data-a="fe-add"]');
+  await page.click('[data-a="food-cant-set"][data-n="200"]');
+  await page.waitForTimeout(150);
+  await page.click('[data-a="food-apuntar"]');
   await page.waitForTimeout(250);
   const kcalDespuesManual = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKeyManual);
   check('el alimento añadido a mano se registra igual que uno escaneado',
@@ -841,12 +862,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const portadaLimpia = await page.evaluate(() => ({
     sinMano: !document.getElementById('foodNewNombre'),
     sinEscaner: !document.getElementById('scanBox'),
-    conBotonApuntar: !!document.querySelector('[data-a="food-vista"][data-v="add"]'),
+    conBotonApuntar: !!document.querySelector('#main .buscaz[data-a="food-vista"][data-v="buscar"]'),
   }));
   await gotoFood('add', 'mano');
   const modoMano = await page.evaluate(() => !!document.getElementById('foodNewNombre'));
   await gotoFood('');
-  check('en Comida, los formularios de añadir viven en «apuntar comida», no en la portada',
+  check('en Comida, los formularios de añadir cuelgan del buscador, no de la portada',
     portadaLimpia.sinMano && portadaLimpia.sinEscaner && portadaLimpia.conBotonApuntar && modoMano,
     JSON.stringify({ portadaLimpia, modoMano }));
 
@@ -1304,18 +1325,29 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     ['sleep', 'work', 'guard', 'meal', 'gym', 'evt'].every(k => franjaCard.colores.includes(k)),
     JSON.stringify(franjaCard));
 
-  // cambiar el color de "trabajo" en Ajustes tiene que verse en la franja de "Hoy"
-  await page.evaluate(() => {
-    const i = document.querySelector('#main input[data-a="franja-color"][data-k="work"]');
-    i.value = '#ff00aa';
-    i.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  await page.waitForTimeout(200);
+  // los colores que eliges en Ajustes tienen que verse en la franja de "Hoy".
+  // Se cambian los seis, no solo el de "trabajo": qué categorías salen depende del día que sea hoy
+  // (en un día de guardia no hay ni un tramo de trabajo que pintar), y esta prueba no puede depender
+  // de la fecha en la que se ejecute.
+  const PALETA = { sleep: '#ff00aa', work: '#00ff88', guard: '#0088ff', meal: '#ffaa00', gym: '#aa00ff', evt: '#00ffff' };
+  await page.evaluate((pal) => {
+    Object.keys(pal).forEach((k) => {
+      const i = document.querySelector(`#main input[data-a="franja-color"][data-k="${k}"]`);
+      if (!i) return;
+      i.value = pal[k];
+      i.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }, PALETA);
+  await page.waitForTimeout(250);
   await gotoTab('hoy');
   await page.waitForTimeout(200);
-  const usaColorPropio = await page.evaluate(() =>
-    [...document.querySelectorAll('#main .tl-seg')].some(s => /255,\s*0,\s*170/.test(getComputedStyle(s).backgroundColor)));
-  check('el color de "trabajo" que eliges en Ajustes se aplica a la franja de "Hoy"', usaColorPropio, '');
+  const franjaHoy = await page.evaluate(() => [...document.querySelectorAll('#main .tl-seg')]
+    .map((s) => ({ t: s.title, bg: getComputedStyle(s).backgroundColor })));
+  const aRgb = (h) => `rgb(${parseInt(h.slice(1, 3), 16)}, ${parseInt(h.slice(3, 5), 16)}, ${parseInt(h.slice(5, 7), 16)})`;
+  const elegidos = Object.values(PALETA).map(aRgb);
+  check('los colores que eliges en Ajustes se aplican a la franja de "Hoy"',
+    franjaHoy.length >= 2 && franjaHoy.every((s) => elegidos.indexOf(s.bg) >= 0),
+    JSON.stringify(franjaHoy));
 
   // la leyenda dice qué es cada color y lleva de vuelta a Ajustes
   const leyenda = await page.evaluate(() => {
@@ -2370,8 +2402,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Estas pruebas encadenan gestos a propósito. La auditoría anterior dejó seis fallos con la suite
   // en verde porque cada prueba partía de cero y tocaba un solo camino; aquí se navega de verdad.
 
-  // 45) la portada de Comida: anillo, cifras (no barras) para lo que no es progreso, tira de la
-  // semana y fichas — y el formulario de apuntar ya no vive aquí
+  // 45) la portada de Comida: anillo, cifras (no barras) para lo que no es progreso, la línea de
+  // micros, la barra de buscar como acción principal y TRES puertas — ni formulario ni seis fichas
   await gotoFood('');
   const portadaComida = await page.evaluate(() => ({
     ring: !!document.querySelector('#main .ringFill'),
@@ -2380,73 +2412,194 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // "te quedan" y "cocinado hoy" NO pueden ser barras: no son progreso hacia nada
     cifrasSinBarra: !document.querySelector('#main .dosdatos .fbar'),
     semana: document.querySelectorAll('#main .semd').length,
-    fichas: document.querySelectorAll('#main .gtile').length,
-    apuntar: !!document.querySelector('#main [data-a="food-vista"][data-v="add"]'),
-    sinFormulario: !document.getElementById('feSel') && !document.getElementById('foodNewNombre'),
+    buscaz: document.querySelectorAll('#main .buscaz').length,
+    puertas: document.querySelectorAll('#main .puerta').length,
+    micros: document.querySelectorAll('#main .microlinea .pts i').length,
+    // los micros ya no ocupan nueve casillas en la portada, y apuntar no vive aquí
+    sinCasillasMicro: !document.querySelector('#main .micros .mic'),
+    sinFormulario: !document.getElementById('fbQ') && !document.getElementById('foodNewNombre'),
+    botones: document.querySelectorAll('#main button').length,
   }));
-  check('la portada de Comida es anillo + cifras + semana + fichas, sin el formulario de apuntar',
+  check('la portada de Comida es anillo + cifras + micros en una línea + buscar + tres puertas',
     portadaComida.ring && portadaComida.macros === 3 && portadaComida.cifras === 2 &&
-    portadaComida.cifrasSinBarra && portadaComida.semana === 7 && portadaComida.fichas === 6 &&
-    portadaComida.apuntar && portadaComida.sinFormulario, JSON.stringify(portadaComida));
+    portadaComida.cifrasSinBarra && portadaComida.semana === 7 && portadaComida.buscaz === 1 &&
+    portadaComida.puertas === 3 && portadaComida.micros === 9 && portadaComida.sinCasillasMicro &&
+    portadaComida.sinFormulario && portadaComida.botones < 35, JSON.stringify(portadaComida));
 
-  // 46) secuencia completa de apuntar: buscar → elegir → la previaFe sigue lo que tecleas sin perder
-  // el foco → apuntar. La previaFe a mano (sin render) es lo que evita que el campo se desmonte.
+  // 46) el buscador es LA puerta: sin escribir no hay lista larga, se escribe y sale agrupado por
+  // tipo; tocar el nombre abre la hoja de cantidad, se cambia la ración y la toma entra con ella
   await gotoFood('add', 'buscar');
-  await page.fill('#feQ', 'tortilla');
+  const buscadorVacio = await page.evaluate(() => ({
+    filas: document.querySelectorAll('#main .hit').length,
+    grupos: document.querySelectorAll('#main .grp').length,
+    campo: !!document.getElementById('fbQ'),
+    chips: document.querySelectorAll('#main [data-a="food-tipo"]').length,
+  }));
+  check('el buscador abre con lo que más apuntas (seis filas), no con la lista entera',
+    buscadorVacio.campo && buscadorVacio.filas === 6 && buscadorVacio.grupos === 0 &&
+    buscadorVacio.chips === 4, JSON.stringify(buscadorVacio));
+
+  await page.fill('#fbQ', 'tortilla');
   await page.waitForTimeout(350);
-  // el catálogo local ya está importado a estas alturas y «tortilla» también casa con un producto
-  // suyo: aquí interesa un PLATO, que es el que se apunta por raciones y no por gramos
+  // «tortilla» casa con un producto y con un plato: aquí interesa el PLATO, que se apunta por
+  // raciones y no por gramos
   const primerPlatoCm = await page.evaluate(() => {
-    const r = Array.prototype.filter.call(document.querySelectorAll('[data-a="food-pick"]'),
+    const r = Array.prototype.filter.call(document.querySelectorAll('[data-a="food-abrir"]'),
       (x) => x.dataset.v.indexOf('dish:') === 0)[0];
     return r ? r.dataset.v : null;
   });
-  await page.click(`[data-a="food-pick"][data-v="${primerPlatoCm}"]`);
+  const agrupado = await page.evaluate(() => ({
+    grupos: Array.prototype.map.call(document.querySelectorAll('#main .grp'), (x) => x.textContent),
+    filas: document.querySelectorAll('#main .hit').length,
+    foco: document.activeElement.id,
+  }));
+  check('al escribir, los resultados salen agrupados por tipo y el campo no pierde el foco',
+    agrupado.grupos.length >= 2 && agrupado.filas > 0 && agrupado.foco === 'fbQ' && !!primerPlatoCm,
+    JSON.stringify(agrupado));
+
+  await page.click(`[data-a="food-abrir"][data-v="${primerPlatoCm}"]`);
+  await page.waitForTimeout(250);
+  const hojaUna = await page.evaluate(() => ({
+    val: (document.getElementById('fcVal') || {}).textContent,
+    kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
+    raciones: Array.prototype.map.call(document.querySelectorAll('#main .racb'), (x) => x.textContent),
+  }));
+  await page.click('[data-a="food-cant-set"][data-n="2"]');
   await page.waitForTimeout(200);
-  await page.fill('#feG', '2');
-  await page.waitForTimeout(120);
-  const previaFe = await page.evaluate(() => ({
-    sel: (document.getElementById('feSel') || {}).value,
-    kcal: (document.getElementById('fePrevK') || {}).textContent,
-    focoSigueEnElCampo: document.activeElement.id === 'feG',
+  const hojaDos = await page.evaluate(() => ({
+    val: (document.getElementById('fcVal') || {}).textContent,
+    kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
   }));
   const hoyKCm = new Date().toISOString().slice(0, 10);
   const kcalPreviasCm = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
-  await page.click('[data-a="fe-add"]');
+  await page.click('[data-a="food-apuntar"]');
   await page.waitForTimeout(250);
   const trasApuntarCm = await page.evaluate((k) => ({
     kcal: window.PG.foodTotals(k).kcal,
-    fichaCerrada: !document.getElementById('feSel'),
+    vuelve: window.PG.ui.foodVista,
   }), hoyKCm);
-  const dosRacionesCm = await page.evaluate((v) => {
+  const unaRacionCm = await page.evaluate((v) => {
     const d = window.PG.dishById(v.slice(5));
-    return d ? d.kcal * 2 : 0;
+    return d ? d.kcal : 0;
   }, primerPlatoCm);
-  check('buscar → elegir → teclear → apuntar: la previaFe sigue al campo y la toma entra con su cantidad',
-    previaFe.sel === primerPlatoCm && previaFe.kcal === dosRacionesCm + ' kcal' && previaFe.focoSigueEnElCampo &&
-    trasApuntarCm.kcal === kcalPreviasCm + dosRacionesCm && trasApuntarCm.fichaCerrada,
-    JSON.stringify({ previaFe, kcalPreviasCm, trasApuntarCm, dosRacionesCm }));
+  check('la hoja de cantidad: un plato abre en 1 ración, las raciones cambian la previa y la toma entra con esa cantidad',
+    hojaUna.val === '1' && hojaUna.kcal === String(unaRacionCm) && hojaUna.raciones.length === 4 &&
+    hojaDos.val === '2' && hojaDos.kcal === String(unaRacionCm * 2) &&
+    trasApuntarCm.kcal === kcalPreviasCm + unaRacionCm * 2 && !trasApuntarCm.vuelve,
+    JSON.stringify({ hojaUna, hojaDos, kcalPreviasCm, trasApuntarCm, unaRacionCm }));
 
-  // 47) con la cantidad borrada, un plato se apunta como UNA ración, no como 150 (el hueco por
-  // defecto tiene que depender de la unidad: gramos en un producto, raciones en un plato)
-  await page.click(`[data-a="food-pick"][data-v="${primerPlatoCm}"]`);
-  await page.waitForTimeout(200);
-  await page.fill('#feG', '');
-  const kcalAntesVacio = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
-  await page.click('[data-a="fe-add"]');
+  // 47) el + de cada fila apunta con la cantidad de siempre sin abrir nada: tres toques desde la
+  // portada (buscar → escribir → +), y un plato entra como UNA ración, no como 150 gramos
+  await gotoFood('add', 'buscar');
+  await page.fill('#fbQ', 'tortilla');
+  await page.waitForTimeout(350);
+  const kcalAntesRapido = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
+  await page.click(`[data-a="food-rapido"][data-v="${primerPlatoCm}"]`);
   await page.waitForTimeout(250);
-  const kcalTrasVacio = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
-  check('con la cantidad en blanco, un plato se apunta como una ración (no como 150)',
-    kcalTrasVacio - kcalAntesVacio === dosRacionesCm / 2,
-    JSON.stringify({ kcalAntesVacio, kcalTrasVacio, unaRacion: dosRacionesCm / 2 }));
+  const trasRapido = await page.evaluate((k) => ({
+    kcal: window.PG.foodTotals(k).kcal,
+    sigueEnElBuscador: window.PG.ui.foodVista === 'buscar' && !!document.getElementById('fbQ'),
+  }), hoyKCm);
+  check('el + apunta una ración del plato sin salir del buscador (tres toques en total)',
+    trasRapido.kcal === kcalAntesRapido + unaRacionCm && trasRapido.sigueEnElBuscador,
+    JSON.stringify({ kcalAntesRapido, ...trasRapido, unaRacionCm }));
+
+  // 47b) «mis productos» ya no vuelca los 188 con un campo y tres botones cada uno: ocho filas,
+  // un solo campo (el de buscar) y el resto detrás de la búsqueda — pero ★ y × siguen estando
+  await gotoFood('add', 'productos');
+  // la queja era de altura, así que se mide en el móvil de verdad, no en la ventana de escritorio
+  const vpProd = page.viewportSize();
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.waitForTimeout(200);
+  const productos = await page.evaluate(() => ({
+    filas: document.querySelectorAll('#main .hit').length,
+    campos: document.querySelectorAll('#main input').length,
+    total: +(document.querySelector('#main .subcab .tag') || {}).textContent,
+    hayMas: /y \d+ más/.test(document.getElementById('main').innerText),
+    fav: document.querySelectorAll('#main [data-a="ean-fav"]').length,
+    borrar: document.querySelectorAll('#main [data-a="ean-del"]').length,
+    alto: document.getElementById('main').scrollHeight,
+  }));
+  // y buscar dentro acota de verdad
+  await page.fill('#fdQ', 'yogur');
+  await page.waitForTimeout(300);
+  const filtrado = await page.evaluate(() => ({
+    filas: document.querySelectorAll('#main .hit').length,
+    todosCasan: Array.prototype.every.call(document.querySelectorAll('#main .hit .nm b'),
+      (x) => x.textContent.toLowerCase().includes('yogur')),
+    foco: document.activeElement.id,
+  }));
+  check('«mis productos» son ocho filas y un campo, no la lista entera con 570 botones',
+    productos.filas === 8 && productos.campos === 1 && productos.total > 100 && productos.hayMas &&
+    productos.fav === 8 && productos.borrar === 8 && productos.alto < 1000 &&
+    filtrado.filas > 0 && filtrado.todosCasan && filtrado.foco === 'fdQ',
+    JSON.stringify({ productos, filtrado }));
+  if (vpProd) await page.setViewportSize(vpProd);
+  await page.waitForTimeout(150);
+
+  // 47c) ★ y × siguen funcionando desde la fila (eran lo único que el armario viejo hacía y esta
+  // pantalla no podía perder)
+  const eanFila = await page.evaluate(() => document.querySelector('#main [data-a="ean-fav"]').dataset.ean);
+  await page.click(`#main [data-a="ean-fav"][data-ean="${eanFila}"]`);
+  await page.waitForTimeout(200);
+  const trasFav = await page.evaluate((e) => window.PG.food().fav.indexOf(e) >= 0, eanFila);
+  await page.click(`#main [data-a="ean-fav"][data-ean="${eanFila}"]`);
+  await page.waitForTimeout(200);
+  const antesDel = await page.evaluate(() => Object.keys(window.PG.food().eans).length);
+  await page.click(`#main [data-a="ean-del"][data-ean="${eanFila}"]`);
+  await page.waitForTimeout(250);
+  const trasDel = await page.evaluate((e) => ({
+    n: Object.keys(window.PG.food().eans).length,
+    sigue: !!window.PG.food().eans[e],
+  }), eanFila);
+  check('desde la fila de un producto se marca favorito y se borra, sin volver al armario viejo',
+    trasFav && trasDel.n === antesDel - 1 && !trasDel.sigue,
+    JSON.stringify({ trasFav, antesDel, trasDel }));
+
+  // 47d) «qué me apetece»: filtra tus platos por ingrediente y por macros aproximados, y el + de
+  // cada resultado lo apunta como una ración
+  await gotoFood('platos');
+  await page.click('[data-a="platos-tab"][data-t="antojo"]');
+  await page.waitForTimeout(200);
+  const antojoTodos = await page.evaluate(() => document.querySelectorAll('#main .hit').length);
+  await page.click('[data-a="antojo-prot"][data-v="alto"]');
+  await page.waitForTimeout(200);
+  const antojoProt = await page.evaluate(() => ({
+    filas: document.querySelectorAll('#main .hit').length,
+    // lo que se enseña tiene que cumplir el filtro: 30 g o más por ración
+    cumplen: Array.prototype.map.call(document.querySelectorAll('#main .hit .nm span'),
+      (x) => parseFloat(String(x.textContent).split('·')[1])),
+  }));
+  const kcalAntesAntojo = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
+  const platoAntojo = await page.evaluate(() => {
+    const b = document.querySelector('#main .hit [data-a="food-rapido"]');
+    return b ? b.dataset.v : null;
+  });
+  if (platoAntojo) {
+    await page.click(`#main [data-a="food-rapido"][data-v="${platoAntojo}"]`);
+    await page.waitForTimeout(250);
+  }
+  const trasAntojo = await page.evaluate((v) => ({
+    kcal: window.PG.foodTotals(v.k).kcal,
+    unaRacion: v.p ? (window.PG.dishById(v.p.slice(5)) || {}).kcal : 0,
+  }), { k: hoyKCm, p: platoAntojo });
+  await page.click('[data-a="antojo-limpiar"]');
+  await page.waitForTimeout(200);
+  const antojoLimpio = await page.evaluate(() => document.querySelectorAll('#main .hit').length);
+  check('«qué me apetece» filtra tus platos por macros y el + apunta una ración del que elijas',
+    antojoTodos > 0 && antojoProt.filas > 0 && antojoProt.filas <= antojoTodos &&
+    antojoProt.cumplen.every((p) => p >= 30) && antojoLimpio === antojoTodos &&
+    (!platoAntojo || trasAntojo.kcal === kcalAntesAntojo + trasAntojo.unaRacion),
+    JSON.stringify({ antojoTodos, antojoProt, antojoLimpio, kcalAntesAntojo, trasAntojo }));
 
   // 48) "qué puedo cocinar": separa lo que sale entero de lo que casi, y "a la compra" mete lo que
   // falta en una lista de verdad (secuencia: se mira la lista antes y después del toque)
   await gotoFood('cocinar');
   const platosQueSalen = await page.evaluate(() => ({
-    listos: document.querySelectorAll('#main .plato.listo').length,
-    total: document.querySelectorAll('#main .plato').length,
+    listos: document.querySelectorAll('#main .idea [data-a="food-cocina"]').length,
+    total: document.querySelectorAll('#main .idea').length,
     aLaCompra: document.querySelectorAll('#main [data-a="cocinar-compra"]').length,
+    pestanas: document.querySelectorAll('#main .pestb').length,
   }));
   let compraDeltaCm = null;
   if (platosQueSalen.aLaCompra > 0) {
@@ -2456,7 +2609,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const despuesCompra = await page.evaluate(() => window.PG.listasS().reduce((a, l) => a + l.items.length, 0));
     compraDeltaCm = despuesCompra - antesCompra;
   }
-  check('"qué cocino" separa lo que sale entero de lo que casi, y "a la compra" apunta lo que falta',
+  check('"qué hago hoy" separa lo que sale entero de lo que casi (en Cocina, con sus tres pestañas), y "a la compra" apunta lo que falta',
+    platosQueSalen.pestanas === 3 &&
     platosQueSalen.total > 0 && platosQueSalen.listos > 0 && platosQueSalen.listos <= platosQueSalen.total &&
     (platosQueSalen.aLaCompra === 0 || compraDeltaCm > 0),
     JSON.stringify({ ...platosQueSalen, compraDeltaCm }));
@@ -2465,7 +2619,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // pueden comprar (nada de "933,33 g de patata"), y los pasos se recorren de uno en uno
   await gotoFood('cocinar');
   const platoCocinaCm = await page.evaluate(() => {
-    const b = document.querySelector('#main .plato.listo [data-a="food-cocina"]');
+    const b = document.querySelector('#main .idea [data-a="food-cocina"]');
     return b ? b.dataset.id : null;
   });
   await page.click(`[data-a="food-cocina"][data-id="${platoCocinaCm}"]`);
@@ -2508,7 +2662,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 50) secuencia: si sales de una receta larga por el paso 2 y abres otra más corta, el paso no se
   // queda fuera de rango enseñando una pantalla en blanco
-  await page.click('.subcab [data-a="food-vista"][data-v="cocinar"]');
+  await page.click('.subcab [data-a="food-vista"][data-v="cocina-panel"]');
   await page.waitForTimeout(200);
   const otroPlatoCm = await page.evaluate((evitar) => {
     const b = Array.prototype.filter.call(
@@ -2606,31 +2760,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       conMicros.cortos[0] === 'vd' && conMicros.cortos.indexOf('fo') < 0, JSON.stringify(conMicros));
   }
 
-  // 58) el día enseña los tres macros y la tarjeta de micros, con «hoy vas corto de»
+  // 58) el día lleva los tres macros y los micros en UNA línea de nueve puntos (ya no nueve
+  // casillas en la portada), y las tres puertas de la app de comida
   {
     await gotoFood('');
     const diaMic = await page.evaluate(() => ({
       macros: [...document.querySelectorAll('#main .macros .mt span')].map((x) => x.textContent.trim()),
-      micros: document.querySelectorAll('#main .micros .mic').length,
-      cortos: document.querySelectorAll('#main .falta .tag').length,
-      fichas: [...document.querySelectorAll('#main .gtile b')].map((x) => x.textContent.trim()),
+      puntos: document.querySelectorAll('#main .microlinea .pts i').length,
+      casillas: document.querySelectorAll('#main .micros .mic').length,
+      linea: (document.querySelector('#main .microlinea .tx small') || {}).textContent || '',
+      puertas: [...document.querySelectorAll('#main .puerta b')].map((x) => x.textContent.trim()),
     }));
-    check('la portada del día lleva los tres macros, la tarjeta de micros y las fichas de la app de comida',
-      diaMic.macros.join('|') === 'proteína|carbohidratos|grasa' && diaMic.micros === 9 && diaMic.cortos > 0 &&
-      diaMic.fichas.indexOf('Alimentos') >= 0 && diaMic.fichas.indexOf('Mi nevera') >= 0 &&
-      diaMic.fichas.indexOf('Ideas') >= 0, JSON.stringify(diaMic));
+    check('la portada del día lleva los tres macros, los micros en una línea y las tres puertas',
+      diaMic.macros.join('|') === 'proteína|carbohidratos|grasa' && diaMic.puntos === 9 &&
+      diaMic.casillas === 0 && /corto|por debajo|mitad/.test(diaMic.linea) &&
+      diaMic.puertas.join('|') === 'Cocina|Mis platos|Alimentos', JSON.stringify(diaMic));
   }
 
-  // 59) tocar un micronutriente enseña con qué alimentos se cubre
+  // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre
   {
+    await page.click('#main .microlinea');
+    await page.waitForTimeout(250);
+    const pantallaMicros = await page.evaluate(() => ({
+      vista: window.PG.ui.foodVista,
+      casillas: document.querySelectorAll('#main .micros .mic').length,
+      cubrir: document.querySelectorAll('#main .hit [data-a="alim-pick"]').length,
+    }));
     await page.click('#main .micros .mic');
     await page.waitForTimeout(200);
     const abierto = await page.evaluate(() => ({
       k: window.PG.ui.microAbierto,
       sugeridos: [...document.querySelectorAll('#main .chips .chipx[data-a="alim-pick"]')].map((x) => x.textContent.trim()),
     }));
-    check('tocar un micronutriente propone los alimentos que más lo traen',
-      !!abierto.k && abierto.sugeridos.length >= 3, JSON.stringify(abierto));
+    check('la línea de micros abre su pantalla y ahí cada micronutriente propone los alimentos que más lo traen',
+      pantallaMicros.vista === 'micros' && pantallaMicros.casillas === 9 && pantallaMicros.cubrir > 0 &&
+      !!abierto.k && abierto.sugeridos.length >= 3, JSON.stringify({ pantallaMicros, abierto }));
   }
 
   // 60) la nevera guarda, e Ideas propone combinaciones de UNA comida, sin repetir alimento

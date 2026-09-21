@@ -752,3 +752,84 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 textarea.editor{border:1px solid var(--line);border-radius:13px;padding:12px;
   background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);
   font-size:14.5px;min-height:120px}
+
+/* ============ Comida: el buscador como puerta única ============ */
+.buscaz{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:14px;width:100%;
+  border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));background:color-mix(in srgb,var(--brand) 9%,var(--card));
+  color:var(--ink2);font:inherit;font-size:14.5px;font-weight:600;min-height:52px;cursor:pointer;text-align:left;
+  position:relative;z-index:1}
+.buscaz .gico{color:var(--brand);flex:none}
+.buscaz b{color:var(--ink);font-weight:800}
+.buscaz .kbd{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--ink2);border:1px solid var(--line);
+  border-radius:7px;padding:3px 7px;white-space:nowrap}
+.grp{font-size:9.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em;
+  margin:13px 0 2px;display:flex;align-items:center;gap:7px}
+.grp:first-child{margin-top:0}
+.grp::after{content:'';flex:1;height:1px;background:var(--line)}
+.hit{display:flex;align-items:center;gap:8px;border-top:1px dashed var(--line)}
+.hit:first-of-type{border-top:0}
+.hitnom{display:flex;align-items:center;gap:11px;padding:10px 0;flex:1;min-width:0;text-align:left;
+  background:none;border:0;color:var(--ink);font:inherit;cursor:pointer;min-height:56px}
+.hitnom .em{font-size:23px;flex:none;line-height:1;width:26px;text-align:center}
+.hitnom .nm{flex:1;min-width:0}
+.hitnom .nm b{display:block;font-size:14px;line-height:1.25}
+.hitnom .nm span{display:block;font-size:11px;color:var(--ink2)}
+.hitnom .kc{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;text-align:right;
+  font-variant-numeric:tabular-nums}
+.hitnom .kc small{display:block;font-size:9.5px;font-weight:700;opacity:.8}
+.hitnom:hover .nm b{color:color-mix(in srgb,var(--brand) 60%,var(--ink))}
+.hit .add{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));
+  background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--brand);cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.hit .add:hover{background:color-mix(in srgb,var(--brand) 24%,transparent)}
+/* --- la hoja de cantidad --- */
+.hoja{position:relative;z-index:1;border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:18px;
+  padding:15px 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 10%,var(--card)),var(--card))}
+.pasos{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0 4px}
+.pasos button{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 45%,var(--card));color:var(--ink);font:inherit;font-size:22px;font-weight:800;
+  line-height:1;cursor:pointer}
+.pasos .val{min-width:104px;text-align:center}
+.pasos .val b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.pasos .val span{font-size:10.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.rac{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.racb{font:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);min-height:36px;cursor:pointer}
+.racb.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.previa{display:flex;gap:8px;margin-top:13px}
+.previa div{flex:1;min-width:0;border:1px solid var(--line);border-radius:11px;padding:8px 6px;text-align:center;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.previa b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.previa span{font-size:8.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+/* --- la línea de micros de la portada --- */
+.microlinea{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));margin-top:11px;width:100%;text-align:left;color:var(--ink);
+  font:inherit;cursor:pointer}
+.microlinea:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.microlinea .pts{display:flex;gap:3px;flex:none}
+.microlinea .pts i{width:7px;height:7px;border-radius:99px;display:block}
+.microlinea .tx{flex:1;min-width:0;font-size:12.5px;font-weight:700}
+.microlinea .tx small{display:block;font-size:10.5px;font-weight:400;color:var(--ink2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* --- tres puertas --- */
+.puertas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.puerta{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;
+  color:var(--ink);padding:12px 10px;border-radius:14px;min-height:88px;border:1px solid var(--line);cursor:pointer;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.puerta:hover{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.puerta .gico{color:var(--ink2);margin-bottom:4px}
+.puerta>b{font-size:12.5px;line-height:1.2}
+.puerta .s{font-size:10px;color:var(--ink2)}
+/* --- pestañas dentro de una pantalla --- */
+.pest{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:9px}
+.pestb{font:inherit;font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--line);
+  color:var(--ink2);background:color-mix(in srgb,var(--bg) 42%,var(--card));min-height:36px;cursor:pointer}
+.pestb.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+
+/* favorito y borrar dentro de una fila de «mis productos»: el armario viejo tenía una tabla con
+   tres botones y un campo por producto; aquí caben en la propia fila sin añadir altura */
+.hit .mini-acc{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink2);font-size:13px;line-height:1;cursor:pointer}
+.hit .mini-acc.on{color:#e0a325;border-color:#e0a32555;background:#e0a3251a}

@@ -263,7 +263,8 @@ function avisarBackupSiToca(){
 let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
-  foodPanel:'',foodObjOpen:false,gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
+  foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
+  gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
   alimQ:'',alimGrupo:'',alimSel:'',alimG:100,neveraQ:'',microAbierto:'',
@@ -2892,26 +2893,6 @@ function gymUndoWipe(){
   return {ok:true,msg:'restaurado: '+g.registro.length+' serie(s), '+g.rutinas.length+' rutina(s)'+
     (g.biblioteca.length?' y la biblioteca de '+g.biblioteca.length+' ejercicios':'')};}
 /* ===================== comida: la vista (día, escáner, armario y objetivo) ===================== */
-function armarioHtml(f,prods,ver,sel){
-  /* el armario de productos: filtro, tabla y acciones, sin liarse con paréntesis anidados */
-  if(!prods.length)return '<div class="empty">Aún no has guardado ningún producto: escanea el primero arriba y de ahí sale todo lo demás.</div>';
-  const filtro='<div class="row" style="margin-bottom:4px"><label class="fld" style="flex:1 1 200px">filtrar'+
-    '<input id="fdQ" value="'+esc(ui.foodQ||'')+'" data-a="food-q" placeholder="nombre, marca o código"></label></div>';
-  if(!ver.length)return filtro+'<div class="empty">Nada encaja con ese filtro.</div>';
-  const filas=ver.map(function(x){
-    const cab='<tr><td><b>'+esc(x.nombre)+'</b><br><span class="mini">'+esc(x.marca||'')+
-      (x.ean?(' · '+x.ean):'')+(x.fuente?(' · '+esc(x.fuente)):'')+'</span></td>';
-    const mac='<td class="chipnum">'+(x.kcal||0)+' kcal</td><td class="chipnum">'+(x.prot||0)+' g</td>';
-    const pon='<td><span class="row" style="gap:4px"><input class="g" id="gq-'+x.ean+'" type="number" min="1" step="5" value="150">'+
-      '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'" data-gq="gq-'+x.ean+'">apuntar</button></span></td>';
-    const est='<td><span class="row" style="gap:3px;justify-content:flex-end">'+
-      '<button class="btn s '+(f.fav.indexOf(x.ean)>=0?'g':'')+'" data-a="ean-fav" data-ean="'+x.ean+'" title="favorito" aria-pressed="'+(f.fav.indexOf(x.ean)>=0?'true':'false')+'">'+
-      (f.fav.indexOf(x.ean)>=0?'★':'☆')+'</button>'+
-      '<button class="btn d s" data-a="ean-del" data-ean="'+x.ean+'" title="quitar del armario">×</button></span></td></tr>';
-    return cab+mac+pon+est;}).join('');
-  return filtro+'<div style="overflow-x:auto"><table class="ptable"><thead><tr><th>Producto</th><th>por 100 g</th>'+
-    '<th>proteína</th><th>apuntar</th><th></th></tr></thead><tbody>'+filas+'</tbody></table></div>';
-}
 function kcalRingHTML(val,obj){
   /* el resumen del día (informe: rediseño de Comida) en un anillo, en vez de tres barras y cuatro KPI */
   const r=52,circ=2*Math.PI*r;
@@ -3095,41 +3076,22 @@ function renderFoodDia(){
           '<button class="btn s" style="align-self:flex-start" data-a="food-obj-toggle">'+(ui.foodObjOpen?'▴ objetivo':'✎ objetivo')+'</button>'+
         '</div>'+
       '</div>'+
-      (obm.derivado&&objK?('<p class="mini" style="margin:6px 0 0">El carbohidrato y la grasa salen de repartir a partes iguales '+
-        'las kcal que quedan tras la proteína. Si sigues otro reparto, ponlos tú en «objetivo».</p>'):'')+
+
       (ui.foodObjOpen?('<div class="row" style="margin-top:2px;border-top:1px solid var(--line);padding-top:10px">'+
         '<label class="fld" style="flex:0 0 110px">kcal/día<input type="number" min="0" max="6000" step="50" value="'+objK+'" data-a="food-ob" data-k="kcal"></label>'+
         '<label class="fld" style="flex:0 0 110px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+objP+'" data-a="food-ob" data-k="prot"></label>'+
         '<label class="fld" style="flex:0 0 110px">carbohidr. (g)<input type="number" min="0" max="800" step="10" value="'+(+ob.carb||0)+'" data-a="food-ob" data-k="carb" placeholder="'+obm.carb+'"></label>'+
         '<label class="fld" style="flex:0 0 100px">grasa (g)<input type="number" min="0" max="300" step="5" value="'+(+ob.gresa||0)+'" data-a="food-ob" data-k="gresa" placeholder="'+obm.gresa+'"></label>'+
-        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'):'')+
-      '<button class="btn p gbig" style="margin-top:13px" data-a="food-vista" data-v="add">'+gymIco('mas','gico sm')+' apuntar comida</button>'+
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'+
+        (obm.derivado&&objK?('<p class="mini" style="margin:6px 0 0">El carbohidrato y la grasa salen de repartir a partes '+
+          'iguales las kcal que quedan tras la proteína. Si sigues otro reparto, ponlos aquí.</p>'):'')):'')+
+      microLineaHTML(sel)+
     '</div>'+
-    /* micronutrientes: solo salen de las tomas apuntadas desde Alimentos. Un producto de código de
-       barras trae macros y poco más, así que la tarjeta lo dice en vez de fingir un cero. */
-    (function(){
-      const conMi=c.lista.filter(function(x){return x.mi&&Object.keys(x.mi).length;}).length;
-      if(!conMi)return c.lista.length?('<div class="card"><h2>Micronutrientes de hoy</h2>'+
-        '<div class="empty">De lo apuntado hoy no tengo micronutrientes: los traen los alimentos de la tabla, '+
-        'no los productos de código de barras ni los platos sueltos.</div>'+
-        '<button class="btn s" data-a="food-vista" data-v="alimentos">'+gymIco('manzana','gico sm')+
-        ' apuntar desde Alimentos</button></div>'):'';
-      return '<div class="card"><h2>Micronutrientes de hoy</h2>'+
-        '<p class="note" style="margin-bottom:0">Sobre la ingesta de referencia de un adulto (la de las etiquetas). '+
-        'Toca uno para ver con qué lo cubres. Salen de '+conMi+' de tus '+c.lista.length+' tomas.</p>'+
-        '<div class="micros">'+ALIM_MICROS.map(function(k){
-          return micHTML(k,mt[k]||0,+ALIM_VRN[k]||0,' data-a="micro-abrir" data-k="'+k+'"');}).join('')+'</div>'+
-        (ui.microAbierto?(function(){
-          const k=ui.microAbierto,ricos=alimRicosEn(k,6);
-          return '<p class="note" style="margin:11px 0 4px">Lo que más '+esc(String(ALIM_LABEL[k]||k).toLowerCase())+
-            ' trae, por 100 g:</p><div class="chips">'+ricos.map(function(a){
-            return '<button class="chipx" data-a="alim-pick" data-id="'+esc(a.id)+'">'+esc(a.e||'')+' '+esc(a.n)+
-              ' <b>'+fmt(a[k])+' '+esc(ALIM_UNIDAD[k]||'')+'</b></button>';}).join('')+'</div>';})():'')+
-        (cortos.length?('<p class="note" style="margin:11px 0 6px"><b>Hoy vas corto de:</b></p>'+
-          '<div class="falta">'+cortos.slice(0,4).map(function(k){
-            return '<button class="tag" data-a="micro-abrir" data-k="'+k+'">'+esc(ALIM_LABEL[k]||k)+'</button>';}).join('')+'</div>'):
-          '<p class="mini" style="margin:11px 0 0">De lo que sigo, hoy no te falta nada por debajo de la mitad de la referencia.</p>')+
-        '</div>';})()+
+    /* la barra de buscar es LA acción de esta pantalla, y va suelta para que se lea como una puerta */
+    '<button class="buscaz" data-a="food-vista" data-v="buscar">'+gymIco('lupa','gico')+
+      '<b>Apuntar algo</b> · busca entre todo<span class="kbd">'+foodBuscables().length+'</span></button>'+
+    /* Micronutrientes eran nueve casillas que se llevaban el 25 % de la portada con información de
+       consulta. Ahora es una línea de nueve puntos con su pantalla detrás. */
     (favs.length?('<div class="card"><h2>Favoritos <span class="mini">a un toque</span></h2><div class="pick">'+favs.map(function(x){
       return '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'">+'+esc(x.nombre)+' <small>'+
         (x.kcal||0)+'/100 g</small></button>';}).join('')+'</div></div>'):'')+
@@ -3145,82 +3107,524 @@ function renderFoodDia(){
         ('media de lo apuntado: <b style="color:var(--ink)">'+Math.round(conDato.reduce(function(a,x){return a+x.lg;},0)/conDato.length)+' kcal</b>'+
          (objK?(' · objetivo '+objK):' · sin objetivo puesto')):
         'esta semana no has apuntado nada todavía')+'</p></div>'+
-    '<div class="gtiles">'+
-      '<button class="gtile" data-a="food-vista" data-v="alimentos">'+gymIco('manzana')+
-        '<b>Alimentos</b><span class="n">'+alimTodos().length+'</span><span class="s">kcal y micros</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="nevera">'+gymIco('nevera')+
-        '<b>Mi nevera</b><span class="n">'+f.nevera.length+'</span><span class="s">cosas en casa</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="ideas">'+gymIco('chispa')+
-        '<b>Ideas</b><span class="n">'+platosCocinables().listos.length+'</span><span class="s">con lo que tienes</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="cocinar">'+gymIco('olla')+
-        '<b>Qué cocino</b><span class="n">'+store.dishes.length+'</span><span class="s">platos tuyos</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="add" data-p="productos">'+gymIco('caja')+
-        '<b>Mis productos</b><span class="n">'+Object.keys(f.eans).length+'</span><span class="s">de código de barras</span></button>'+
-      '<button class="gtile" data-a="tab" data-t="import">'+gymIco('importar')+
-        '<b>Importar</b><span class="n">·</span><span class="s">receta de un vídeo</span></button>'+
+    /* seis puertas eran demasiadas para una portada: Nevera, Ideas y Qué cocino son la misma
+       pregunta y ahora viven en Cocina; Importar vive dentro de Mis platos. */
+    '<div class="puertas">'+
+      '<button class="puerta" data-a="food-vista" data-v="cocina-panel">'+gymIco('olla')+
+        '<b>Cocina</b><span class="s">qué hago hoy</span></button>'+
+      '<button class="puerta" data-a="food-vista" data-v="platos">'+gymIco('libro')+
+        '<b>Mis platos</b><span class="s">'+store.dishes.length+' guardados</span></button>'+
+      '<button class="puerta" data-a="food-vista" data-v="alimentos">'+gymIco('manzana')+
+        '<b>Alimentos</b><span class="s">'+alimTodos().length+' con micros</span></button>'+
     '</div></div>';
 }
 function foodBuscables(){
   /* todo lo que se puede apuntar, en una sola lista: los productos que has guardado y tus platos */
   const f=food(),out=[];
   Object.keys(f.eans).forEach(function(k){const x=f.eans[k];
-    out.push({v:'ean:'+x.ean,nombre:x.nombre||'',sub:x.marca||'',busca:alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean),
-      kcal:+x.kcal||0,prot:+x.prot||0,base:100,porDefecto:150,unidad:'/100 g',etiqueta:'producto'});});
+    out.push({v:'ean:'+x.ean,nombre:x.nombre||'',busca:alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean),
+      kcal:+x.kcal||0,prot:+x.prot||0,base:100,porDefecto:150,unidad:'/100 g',etiqueta:'producto',
+      tipo:'ean',em:'📦',sub:(x.marca||'')+(x.envase?(' · '+x.envase):'')});});
   (store.dishes||[]).forEach(function(d){
-    out.push({v:'dish:'+d.id,nombre:d.name||'',sub:(d.icon||'')+' '+rac(d.portions),busca:alimTxt(d.name||''),
-      kcal:+d.kcal||0,prot:+d.prot||0,base:1,porDefecto:1,unidad:'/ración',etiqueta:'plato tuyo'});});
+    out.push({v:'dish:'+d.id,nombre:d.name||'',busca:alimTxt(d.name||''),
+      kcal:+d.kcal||0,prot:+d.prot||0,base:1,porDefecto:1,unidad:'/ración',etiqueta:'plato tuyo',
+      tipo:'dish',em:d.icon||'🍽',sub:rac(d.portions)+(d.prot?(' · '+fmt(d.prot)+' g P'):'')});});
   alimTodos().forEach(function(a){
-    out.push({v:'alim:'+a.id,nombre:a.n||'',sub:(a.e||'')+' '+alimSubtexto(a),busca:alimTxt(a.n+' '+(a.nota||'')),
-      kcal:+a.kcal||0,prot:+a.pr||0,base:100,porDefecto:gramosPorDefecto(a),unidad:'/100 g',etiqueta:'alimento'});});
+    out.push({v:'alim:'+a.id,nombre:a.n||'',busca:alimTxt(a.n+' '+(a.nota||'')),
+      kcal:+a.kcal||0,prot:+a.pr||0,base:100,porDefecto:gramosPorDefecto(a),unidad:'/100 g',etiqueta:'alimento',
+      tipo:'alim',em:a.e||'🍽',sub:alimSubtexto(a)});});
   return out;}
+/* ===================== comida: el buscador, que es LA puerta =====================
+   Antes había tres listas separadas —86 alimentos, 188 productos, 16 platos— y antes de buscar
+   había que acertar en cuál de los tres mundos vivía lo que querías. Ahora hay un campo y una
+   lista. Y sin escribir no se vuelca nada: salen las seis cosas que más apuntas. */
+const FOOD_TIPOS=[['','todo'],['alim','alimentos'],['ean','productos'],['dish','mis platos']];
+function foodEmoji(x){
+  if(x.em)return x.em;
+  if(x.tipo==='dish')return '🍽';
+  return '📦';}
+function frecuentes(n){
+  /* lo que más apuntas, contado de tu propio historial: nada que configurar y se adapta solo */
+  const f=food(),cuenta={};
+  Object.keys(f.log).forEach(function(k){
+    (f.log[k]||[]).forEach(function(t){
+      const v=t.alim?('alim:'+t.alim):(t.ean?('ean:'+t.ean):(t.dishId?('dish:'+t.dishId):''));
+      if(v)cuenta[v]=(cuenta[v]||0)+1;});});
+  const todo=foodBuscables(),porV={};
+  todo.forEach(function(x){porV[x.v]=x;});
+  const orden=Object.keys(cuenta).filter(function(v){return porV[v];})
+    .sort(function(a,b){return cuenta[b]-cuenta[a];});
+  const out=orden.slice(0,n||6).map(function(v){return porV[v];});
+  /* si todavía no has apuntado casi nada, se completa con lo que la app trae: mejor eso que un
+     hueco en blanco la primera vez que se abre */
+  if(out.length<(n||6)){
+    const ya={};out.forEach(function(x){ya[x.v]=1;});
+    ['alim:al-platano','alim:al-huevo','alim:al-pechuga-de-pollo','alim:al-copos-de-avena',
+     'alim:al-yogur-natural','alim:al-arroz-blanco'].forEach(function(v){
+      if(out.length>=(n||6)||ya[v]||!porV[v])return;out.push(porV[v]);ya[v]=1;});}
+  return out;}
+function foodBuscar(q,tipo){
+  const t=alimTxt(q).trim();
+  return foodBuscables().filter(function(x){
+    if(tipo&&x.tipo!==tipo)return false;
+    if(!t)return true;
+    return x.busca.indexOf(t)>=0;
+  }).sort(function(a,b){
+    if(t){const ia=alimTxt(a.nombre).indexOf(t)===0?0:1,ib=alimTxt(b.nombre).indexOf(t)===0?0:1;
+      if(ia!==ib)return ia-ib;}
+    return String(a.nombre).localeCompare(String(b.nombre),'es');});}
+function hitHTML(x,sel){
+  /* dos gestos en la misma fila: el + apunta con la cantidad de siempre, y tocar el nombre abre la
+     hoja para cambiarla. Es lo que el usuario eligió. */
+  return '<div class="hit">'+
+    '<button class="hitnom" data-a="food-abrir" data-v="'+esc(x.v)+'">'+
+      '<span class="em">'+esc(foodEmoji(x))+'</span>'+
+      '<span class="nm"><b>'+esc(x.nombre)+'</b><span>'+esc(x.sub||'')+'</span></span>'+
+      '<span class="kc">'+(x.kcal||0)+'<small>'+esc(x.unidad)+'</small></span></button>'+
+    '<button class="add" data-a="food-rapido" data-v="'+esc(x.v)+'" data-key="'+esc(sel)+'" '+
+      'title="apuntar '+esc(x.porDefecto+(x.base===1?' ración':' g'))+'" aria-label="apuntar '+esc(x.nombre)+'">'+
+      gymIco('mas','gico sm')+'</button></div>';}
+function apuntaBuscable(key,x,cant,pos){
+  /* del buscable al registro del día, sea lo que sea: así el + y la hoja hacen exactamente lo mismo */
+  const m=/^(alim|ean|dish):(.+)$/.exec(x.v);
+  if(!m)return 'no sé qué es eso';
+  const opt=(m[1]==='dish')?{dishId:m[2],rac:cant,pos:pos,when:pos}:
+    (m[1]==='ean'?{ean:m[2],grams:cant,pos:pos,when:pos}:{alim:m[2],grams:cant,pos:pos,when:pos});
+  return addFoodEntry(key,opt);}
+function renderFoodBuscar(){
+  const c=foodCtx(),sel=c.sel;
+  const q=ui.foodBusca||'',tipo=ui.foodTipo||'';
+  const hay=q.trim().length>0;
+  const res=hay?foodBuscar(q,tipo):[];
+  const porTipo=function(t){return foodBuscar(q,t).length;};
+  const grupos=[['alim','Alimentos'],['dish','Mis platos'],['ean','Mis productos']];
+  let cuerpo='';
+  if(!hay){
+    const fr=frecuentes(6);
+    cuerpo='<div class="card"><h2>Lo que más apuntas</h2>'+
+      fr.map(function(x){return hitHTML(x,sel);}).join('')+
+      '<p class="mini" style="margin:11px 0 0">Escribe arriba para buscar entre las <b style="color:var(--ink)">'+
+        foodBuscables().length+'</b> cosas que tienes. Ya no hay ninguna lista larga que recorrer.</p></div>';
+  }else if(!res.length){
+    cuerpo='<div class="card"><div class="empty">Nada se llama así. Puedes escanearlo, apuntarlo a mano o '+
+      'añadirlo como alimento tuyo.</div></div>';
+  }else{
+    const trozos=grupos.map(function(g){
+      const l=res.filter(function(x){return x.tipo===g[0];});
+      if(!l.length)return '';
+      return '<div class="grp">'+esc(g[1])+'</div>'+l.slice(0,12).map(function(x){return hitHTML(x,sel);}).join('')+
+        (l.length>12?('<p class="mini" style="margin:7px 0 0">y '+(l.length-12)+' más de este tipo: afina la búsqueda</p>'):'');
+    }).filter(Boolean).join('');
+    cuerpo='<div class="card">'+trozos+'</div>';}
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Apuntar','<span class="tag b2">'+c.ft.kcal+' kcal</span>')+
+    '<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="fbQ" value="'+esc(q)+'" data-a="food-busca" placeholder="pollo, yogur, lentejas…" '+
+      'autocomplete="off" autocapitalize="none">'+
+      (q?('<button class="btn s" data-a="food-busca-clear" style="margin-right:6px" aria-label="borrar">×</button>'):'')+
+    '</div>'+
+    '<div class="chips">'+FOOD_TIPOS.map(function(t){
+      const n=hay?porTipo(t[0]):(t[0]?foodBuscar('',t[0]).length:foodBuscables().length);
+      return '<button class="chipx'+(tipo===t[0]?' on':'')+'" data-a="food-tipo" data-t="'+t[0]+'">'+
+        esc(t[1])+' <b>'+n+'</b></button>';}).join('')+'</div>'+
+    cuerpo+
+    '<div class="row">'+
+      '<button class="btn s" data-a="food-panel2" data-k="scan">'+gymIco('camara','gico sm')+' escanear</button>'+
+      '<button class="btn s" data-a="food-panel2" data-k="mano">'+gymIco('lapiz','gico sm')+' a mano</button>'+
+      '<button class="btn s" data-a="food-vista" data-v="productos">'+gymIco('caja','gico sm')+' mis productos</button>'+
+    '</div></div>';
+}
+/* ---------- la hoja de cantidad ----------
+   Un toque en el nombre trae aquí. Raciones de verdad en vez de un número pelado, la previa de kcal
+   y macros mientras tocas, y en el propio botón lo que te va a quedar del día. */
+function buscableDe(v){
+  const todo=foodBuscables();
+  for(let i=0;i<todo.length;i++)if(todo[i].v===v)return todo[i];
+  return null;}
+function racionesDe(x){
+  /* cantidades que una persona usa de verdad, no «100 g» a secas */
+  if(!x)return [];
+  if(x.base===1)return [[0.5,'media ración'],[1,'1 ración'],[1.5,'1 ración y media'],[2,'2 raciones']];
+  const m=/^alim:(.+)$/.exec(x.v),a=m?alimById(m[1]):null;
+  const g=a?a.g:'';
+  if(g==='fruta')return [[1,'1 pieza',120],[80,'80 g'],[120,'120 g'],[200,'200 g']];
+  if(g==='carne'||g==='pescado')return [[120,'1 filete · 120 g'],[150,'150 g'],[180,'180 g'],[250,'1 pieza · 250 g']];
+  if(g==='cereal'||g==='legumbre')return [[60,'60 g en crudo'],[80,'80 g'],[100,'100 g'],[150,'150 g']];
+  if(g==='lacteo')return [[125,'1 yogur · 125 g'],[200,'1 vaso · 200 ml'],[250,'250 ml'],[100,'100 g']];
+  if(g==='graso')return [[10,'1 cucharada · 10 g'],[15,'15 g'],[30,'30 g'],[5,'5 g']];
+  if(g==='verdura')return [[100,'100 g'],[150,'150 g'],[200,'200 g'],[250,'1 plato · 250 g']];
+  return [[100,'100 g'],[150,'150 g'],[200,'200 g'],[50,'50 g']];}
+function previaDe(x,cant){
+  const q=cant/(x.base||100);
+  return {kcal:Math.round((x.kcal||0)*q),prot:Math.round((x.prot||0)*q*10)/10};}
+function previaMacrosDe(x,cant){
+  /* los cuatro números de la previa. Los macros completos solo los tienen los alimentos y los
+     productos; un plato guarda kcal y proteína, así que ahí se dicen dos y no se inventan cuatro. */
+  const m=/^(alim|ean|dish):(.+)$/.exec(x.v);
+  if(!m)return null;
+  if(m[1]==='alim'){const a=alimById(m[2]);if(!a)return null;
+    const p=alimPorcion(a,cant);return {kcal:p.kcal,prot:p.pr,carb:p.ch,gresa:p.gr};}
+  if(m[1]==='ean'){const pr=food().eans[m[2]];if(!pr)return null;
+    const p=porcionDe(pr,cant);return {kcal:p.kcal,prot:p.prot,carb:p.carb,gresa:p.gresa};}
+  const b=previaDe(x,cant);return {kcal:b.kcal,prot:b.prot};}
+function renderFoodCantidad(){
+  const x=buscableDe(ui.foodSel||'');
+  if(!x){ui.foodVista='buscar';return renderFoodBuscar();}
+  const c=foodCtx(),sel=c.sel,ob=objetivoMacros();
+  const cant=+ui.foodCant||x.porDefecto;
+  const mac=previaMacrosDe(x,cant)||{kcal:0,prot:0};
+  const paso=x.base===1?0.25:(cant<30?5:10);
+  const restan=ob.kcal?(ob.kcal-c.ft.kcal-mac.kcal):null;
+  const pctProt=ob.prot?Math.round(mac.prot/ob.prot*100):0;
+  const cajas=[['kcal',mac.kcal],['prot. g',fmt(mac.prot)]]
+    .concat(mac.carb!=null?[['carb. g',fmt(mac.carb)],['grasa g',fmt(mac.gresa)]]:[]);
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="buscar">'+gymIco('atras','gico sm')+' Apuntar</button>'+
+      '<h2 class="subtit">'+esc(x.nombre)+'</h2></div>'+
+    '<div class="hoja">'+
+      '<div class="row" style="align-items:flex-start;gap:11px">'+
+        '<span style="font-size:34px;line-height:1">'+esc(foodEmoji(x))+'</span>'+
+        '<span style="flex:1;min-width:0"><b style="font-size:16px;display:block">'+esc(x.nombre)+'</b>'+
+        '<span class="mini">'+esc(x.etiqueta)+(x.sub?(' · '+esc(x.sub)):'')+' · '+(x.kcal||0)+' kcal '+esc(x.unidad)+'</span></span>'+
+      '</div>'+
+      '<div class="pasos">'+
+        '<button data-a="food-cant-paso" data-d="-'+paso+'" aria-label="menos">−</button>'+
+        '<span class="val"><b id="fcVal">'+fmt(cant)+'</b><span>'+(x.base===1?'raciones':'gramos')+'</span></span>'+
+        '<button data-a="food-cant-paso" data-d="'+paso+'" aria-label="más">+</button>'+
+      '</div>'+
+      '<div class="rac">'+racionesDe(x).map(function(r){
+        const v=(r.length>2)?r[2]:r[0];
+        return '<button class="racb'+(Math.abs(v-cant)<0.001?' on':'')+'" data-a="food-cant-set" data-n="'+v+'">'+
+          esc(r[1])+'</button>';}).join('')+'</div>'+
+      '<div class="previa" id="fcPrevia">'+cajas.map(function(k){
+        return '<div><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('')+'</div>'+
+      '<div class="chips" style="margin-top:12px">'+FOOD_POS.slice(0,3).concat(['otro']).map(function(p){
+        const act=(ui.foodPos||momentoAhora());
+        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:12px">'+
+          posOptions(act)+'</select></label>';
+        return '<button class="chipx'+(act===p?' on':'')+'" data-a="food-pos-b" data-p="'+p+'">'+esc(p)+'</button>';}).join('')+
+      '</div>'+
+      '<button class="btn p gbig" style="margin-top:13px" data-a="food-apuntar" data-key="'+esc(sel)+'">'+
+        gymIco('mas','gico sm')+' apuntar'+(restan!=null?(' · te quedarán '+Math.max(0,restan)+' kcal'):'')+'</button>'+
+      (pctProt?('<p class="mini" style="text-align:center;margin:9px 0 0">Aporta el <b style="color:var(--ink)">'+
+        pctProt+' %</b> de tu proteína del día.</p>'):'')+
+    '</div></div>';
+}
+/* ===================== Cocina: tres destinos en una pantalla =====================
+   «Qué cocino», «Mi nevera» e «Ideas» eran tres puertas distintas para la misma pregunta: qué hago
+   de comer. Ahora son tres pestañas de la misma. */
+const COCINA_TABS=[['','Qué hago hoy'],['nevera','Mi nevera'],['lote','En lote']];
+function renderCocinaPanel(){
+  const tab=ui.cocinaTab||'';
+  const dentro=neveraAlimentos();
+  const cab='<div class="pest">'+COCINA_TABS.map(function(t){
+    const n=(t[0]==='nevera'&&dentro.length)?(' '+dentro.length):'';
+    return '<button class="pestb'+(tab===t[0]?' on':'')+'" data-a="cocina-tab" data-t="'+t[0]+'">'+
+      esc(t[1])+n+'</button>';}).join('')+'</div>';
+  let cuerpo='';
+  if(tab==='nevera')cuerpo=neveraCuerpoHTML();
+  else if(tab==='lote')cuerpo=loteCuerpoHTML();
+  else cuerpo=queHagoHTML();
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Cocina')+cab+cuerpo+'</div>';
+}
+function queHagoHTML(){
+  const c=foodCtx(),ob=objetivoMacros();
+  const huecoK=ob.kcal?Math.max(0,ob.kcal-c.ft.kcal):0;
+  const huecoP=ob.prot?Math.max(0,ob.prot-c.ft.prot):0;
+  const dentro=neveraAlimentos();
+  const combis=combinaciones(huecoK,huecoP);
+  ui.ideasCache=combis;
+  const pc=platosCocinables();
+  const tarjeta=function(x,listo){
+    const d=x.dish;
+    return '<div class="idea'+(listo?' buena':'')+'">'+
+      '<h4>'+esc(d.icon||'🍽')+' '+esc(d.name)+(listo?' <span class="tag b3">tienes todo</span>':'')+'</h4>'+
+      '<p class="por">'+(listo?(rac(d.portions)+' · '+(d.kcal||0)+' kcal y '+fmt(d.prot||0)+' g P por ración'):
+        ('te falta: '+esc(x.faltan.slice(0,3).join(', '))))+'</p>'+
+      '<div class="row" style="margin-top:9px">'+
+        (listo?('<button class="btn s" data-a="food-cocina" data-id="'+d.id+'">'+gymIco('olla','gico sm')+' cocinar</button>'):
+          ('<button class="btn s" data-a="cocinar-compra" data-id="'+d.id+'">'+gymIco('mas','gico sm')+' a la compra</button>'))+
+      '</div></div>';};
+  return '<p class="note" style="margin:0">'+(dentro.length?
+      ('Con las '+dentro.length+' cosas de tu nevera'+(huecoK?(', y cuadrado con las <b>'+huecoK+' kcal</b> y los <b>'+
+        Math.round(huecoP)+' g de proteína</b> que te quedan hoy'):'')+'.'):
+      'Apunta lo que tienes en casa en «Mi nevera» y esto se llena solo.')+'</p>'+
+    '<div class="card"><h2>Te sale entero <span class="mini">'+pc.listos.length+'</span></h2>'+
+      (pc.listos.length?pc.listos.slice(0,6).map(function(x){return tarjeta(x,true);}).join(''):
+        '<div class="empty">Ninguno con lo que hay apuntado ahora mismo.</div>')+'</div>'+
+    (combis.length?('<div class="card"><h2>Combinaciones '+gymIco('chispa','gico sm')+'</h2>'+
+      '<p class="note" style="margin-bottom:2px">Armadas con lo que tienes. Para una comida, no para el día entero.</p>'+
+      combis.slice(0,2).map(function(x,ix){
+        const bien=Math.abs(x.t.kcal-x.meta.kcal)<=x.meta.kcal*0.2&&x.t.pr>=x.meta.prot*0.8;
+        return '<div class="idea'+(bien?' buena':'')+'">'+
+          '<h4>'+esc(x.nombre)+'</h4>'+
+          '<p class="por">'+x.t.kcal+' kcal · '+fmt(x.t.pr)+' g P · '+fmt(x.t.ch)+' g C · '+fmt(x.t.gr)+' g G'+
+            (bien?' · cuadra con lo que te queda':'')+'</p>'+
+          x.partes.map(function(pt){
+            return '<div class="ingr"><span>'+esc(pt.a.e||'')+' '+esc(String(pt.a.n).toLowerCase())+
+              (/crud/i.test(pt.a.nota||'')?' <span class="mini">(en crudo)</span>':'')+'</span><b>'+pt.g+' g</b></div>';}).join('')+
+          '<div class="row" style="margin-top:9px">'+
+            '<button class="btn s" data-a="idea-guardar" data-ix="'+ix+'">guardar como plato</button>'+
+            '<button class="btn s" data-a="idea-apuntar" data-ix="'+ix+'" data-key="'+c.sel+'">apuntarlo ya</button></div>'+
+        '</div>';}).join('')+'</div>'):'')+
+    (pc.casi.length?('<div class="card"><h2>Te falta poco <span class="mini">'+pc.casi.length+'</span></h2>'+
+      pc.casi.slice(0,2).map(function(x){return tarjeta(x,false);}).join('')+'</div>'):'');}
+function neveraCuerpoHTML(){
+  const dentro=neveraAlimentos(),q=ui.neveraQ||'';
+  const sug=q?alimBuscar(q,'').filter(function(a){return food().nevera.indexOf(a.id)<0;}).slice(0,8):[];
+  return '<p class="note" style="margin:0">Lo que tienes en casa ahora mismo.</p>'+
+    '<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="nvQ" value="'+esc(q)+'" data-a="nevera-busca" placeholder="añadir algo que tengas…"></div>'+
+    (sug.length?('<div class="card">'+sug.map(function(a){
+      return '<div class="hit"><button class="hitnom" data-a="nevera-add" data-id="'+esc(a.id)+'">'+
+        '<span class="em">'+esc(a.e||'🍽')+'</span>'+
+        '<span class="nm"><b>'+esc(a.n)+'</b><span>'+esc(alimSubtexto(a))+'</span></span></button>'+
+        '<button class="add" data-a="nevera-add" data-id="'+esc(a.id)+'" aria-label="a la nevera">'+
+        gymIco('mas','gico sm')+'</button></div>';}).join('')+'</div>'):
+      (q?'<div class="card"><div class="empty">Nada se llama así en la tabla de alimentos.</div></div>':''))+
+    '<div class="card"><h2>En casa <span class="mini">'+dentro.length+'</span></h2>'+
+      (dentro.length?('<div class="chips">'+dentro.map(function(a){
+        return '<span class="chipx">'+esc(a.e||'🍽')+' '+esc(a.n)+
+          '<button class="x" data-a="nevera-del" data-id="'+esc(a.id)+'" aria-label="quitar '+esc(a.n)+'">×</button></span>';}).join('')+'</div>'):
+        '<div class="empty">Vacía. Busca arriba lo que tengas, o tráelo de tu lista de la compra.</div>')+
+      '<div class="row" style="margin-top:11px">'+
+        '<button class="btn s" data-a="nevera-compra">'+gymIco('lista','gico sm')+' de mi lista de la compra</button>'+
+        (dentro.length?'<button class="btn s" data-a="nevera-vaciar">vaciar</button>':'')+'</div></div>'+
+    (dentro.length?('<button class="btn p gbig" data-a="cocina-tab" data-t="">'+gymIco('chispa','gico sm')+
+      ' qué hago con esto</button>'):'');}
+function loteCuerpoHTML(){
+  const pb=planBatches(weekDays()),usadas=Object.keys(pb).map(function(k){return pb[k];}).filter(function(b){return b.hasNeed;});
+  return '<p class="note" style="margin:0">Las sesiones de cocina de esta semana: qué pones al fuego cada día y cuántos tápers salen.</p>'+
+    (usadas.length?usadas.map(function(b){
+      return '<div class="card"><div class="row" style="justify-content:space-between">'+
+        '<b style="font-size:13.5px">'+esc(b.label)+'</b><span class="tag b2">'+b.portions+' raciones</span></div>'+
+        '<p class="mini" style="margin:4px 0 0">'+esc(b.when||'')+'</p>'+
+        '<div class="platos acc">'+b.items.filter(function(i){return i.runs>0;}).map(function(i){
+          return '<div class="plato"><span class="pic">'+esc(i.dish.icon||'🍽')+'</span><b>'+esc(i.dish.name)+'</b>'+
+            '<span class="mini">'+rac(i.cooked)+'</span>'+
+            '<button class="btn s" style="margin-top:6px" data-a="food-cocina" data-id="'+i.dish.id+'">cocinar</button></div>';}).join('')+
+        '</div></div>';}).join(''):
+      '<div class="card"><div class="empty">Esta semana no hay ninguna sesión de cocina planificada.</div></div>')+
+    '<div class="row"><button class="btn s" data-a="tab" data-t="batches">abrir cocina en lote →</button></div>';}
+/* ===================== Mis platos ===================== */
+const PLATOS_TABS=[['','Mis platos'],['antojo','Qué me apetece'],['importar','Importar']];
+const ANTOJO_ING=[['pollo','🍗 pollo'],['pescado','🐟 pescado'],['huevo','🥚 huevo'],['ternera','🥩 carne'],
+  ['lenteja garbanzo alubia','🫘 legumbre'],['arroz','🍚 arroz'],['pasta','🍝 pasta'],['patata boniato','🥔 patata'],
+  ['verdura brocoli espinaca','🥦 verdura'],['queso yogur leche','🥛 lácteo']];
+const ANTOJO_KCAL=[['','cualquiera'],['bajo','ligero · hasta 400'],['medio','medio · 400-700'],['alto','fuerte · más de 700']];
+const ANTOJO_PROT=[['','cualquiera'],['alto','alta · 30 g o más'],['medio','media · 15-30 g'],['bajo','baja']];
+function antojoS(){
+  if(!ui.antojo)ui.antojo={ing:[],kcal:'',prot:''};
+  if(!Array.isArray(ui.antojo.ing))ui.antojo.ing=[];
+  return ui.antojo;}
+function platosPorAntojo(){
+  /* «qué quiero comer» + los macros aproximados. Busca en tus platos por el ingrediente y por los
+     números que ya guarda cada plato; si no llega ninguno, propone combinaciones con la nevera. */
+  const a=antojoS();
+  const cae=function(v,rango){
+    if(!rango)return true;
+    if(rango==='bajo')return v<=400;
+    if(rango==='medio')return v>400&&v<=700;
+    return v>700;};
+  const caeP=function(v,rango){
+    if(!rango)return true;
+    if(rango==='alto')return v>=30;
+    if(rango==='medio')return v>=15&&v<30;
+    return v<15;};
+  return (store.dishes||[]).filter(function(d){
+    if(!cae(+d.kcal||0,a.kcal))return false;
+    if(!caeP(+d.prot||0,a.prot))return false;
+    if(!a.ing.length)return true;
+    const txt=alimTxt(d.name+' '+((d.ingredients||[]).join(' ')));
+    return a.ing.some(function(g){
+      return g.split(' ').some(function(p){return txt.indexOf(alimTxt(p))>=0;});});
+  }).sort(function(x,y){return (+y.prot||0)-(+x.prot||0);});}
+function renderMisPlatos(){
+  const tab=ui.platosTab||'';
+  const cab='<div class="pest">'+PLATOS_TABS.map(function(t){
+    return '<button class="pestb'+(tab===t[0]?' on':'')+'" data-a="platos-tab" data-t="'+t[0]+'">'+
+      esc(t[1])+'</button>';}).join('')+'</div>';
+  let cuerpo='';
+  if(tab==='antojo')cuerpo=antojoHTML();
+  else if(tab==='importar')cuerpo=
+    '<p class="note" style="margin:0">Pega el enlace de un vídeo de TikTok o su descripción y la app saca la receta, '+
+    'con sus ingredientes y sus pasos.</p>'+
+    '<div class="row"><button class="btn p gbig" data-a="tab" data-t="import">'+gymIco('importar','gico sm')+
+      ' abrir el importador</button></div>'+
+    '<p class="mini" style="margin:0">También puedes compartir el vídeo desde TikTok directamente a «Guardias».</p>';
+  else{
+    const q=(ui.dishQ||'').toLowerCase();
+    const ds=(store.dishes||[]).filter(function(d){return !q||String(d.name||'').toLowerCase().indexOf(q)>=0;});
+    cuerpo='<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="mpQ" value="'+esc(ui.dishQ||'')+'" data-a="dish-q" placeholder="buscar entre tus platos…"></div>'+
+      '<div class="card">'+(ds.length?ds.map(function(d){
+        return '<div class="hit"><button class="hitnom" data-a="dish-edit" data-id="'+d.id+'">'+
+          '<span class="em">'+esc(d.icon||'🍽')+'</span>'+
+          '<span class="nm"><b>'+esc(d.name)+'</b><span>'+rac(d.portions)+' · '+fmt(d.prot||0)+' g P</span></span>'+
+          '<span class="kc">'+(d.kcal||0)+'<small>/ración</small></span></button>'+
+          '<button class="add" data-a="food-cocina" data-id="'+d.id+'" aria-label="cocinar '+esc(d.name)+'">'+
+          gymIco('olla','gico sm')+'</button></div>';}).join(''):
+        '<div class="empty">Ningún plato con ese nombre.</div>')+'</div>'+
+      '<div class="row"><button class="btn p" data-a="plato-nuevo">'+gymIco('mas','gico sm')+' plato con ingredientes</button>'+
+      '<button class="btn s" data-a="dish-new">a mano</button></div>';}
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Mis platos','<span class="tag b2">'+(store.dishes||[]).length+'</span>')+cab+cuerpo+'</div>';
+}
+function antojoHTML(){
+  const a=antojoS(),res=platosPorAntojo();
+  const c=foodCtx(),ob=objetivoMacros();
+  const huecoK=ob.kcal?Math.max(0,ob.kcal-c.ft.kcal):0;
+  const chip=function(act,val,txt,accion,extra){
+    return '<button class="chipx'+(act?' on':'')+'" data-a="'+accion+'" data-v="'+esc(val)+'"'+(extra||'')+'>'+esc(txt)+'</button>';};
+  return '<p class="note" style="margin:0">Dime qué te apetece y más o menos cuánto, y te digo qué platos tuyos encajan.'+
+    (huecoK?(' Hoy te quedan <b>'+huecoK+' kcal</b>.'):'')+'</p>'+
+    '<div class="card"><h2>Con qué</h2>'+
+      '<div class="chips">'+ANTOJO_ING.map(function(g){
+        return chip(a.ing.indexOf(g[0])>=0,g[0],g[1],'antojo-ing');}).join('')+'</div>'+
+      '<h2 style="margin-top:14px">Cuántas kcal por ración</h2>'+
+      '<div class="chips">'+ANTOJO_KCAL.map(function(k){
+        return chip(a.kcal===k[0],k[0],k[1],'antojo-kcal');}).join('')+'</div>'+
+      '<h2 style="margin-top:14px">Cuánta proteína</h2>'+
+      '<div class="chips">'+ANTOJO_PROT.map(function(k){
+        return chip(a.prot===k[0],k[0],k[1],'antojo-prot');}).join('')+'</div>'+
+      ((a.ing.length||a.kcal||a.prot)?('<div class="row" style="margin-top:11px">'+
+        '<button class="btn s" data-a="antojo-limpiar">quitar los filtros</button></div>'):'')+
+    '</div>'+
+    '<div class="card"><h2>Te encajan <span class="mini">'+res.length+'</span></h2>'+
+      (res.length?res.slice(0,10).map(function(d){
+        return '<div class="hit"><button class="hitnom" data-a="dish-edit" data-id="'+d.id+'">'+
+          '<span class="em">'+esc(d.icon||'🍽')+'</span>'+
+          '<span class="nm"><b>'+esc(d.name)+'</b><span>'+rac(d.portions)+' · '+fmt(d.prot||0)+' g proteína</span></span>'+
+          '<span class="kc">'+(d.kcal||0)+'<small>/ración</small></span></button>'+
+          '<button class="add" data-a="food-rapido" data-v="dish:'+d.id+'" data-key="'+c.sel+'" '+
+            'aria-label="apuntar una ración">'+gymIco('mas','gico sm')+'</button></div>';}).join(''):
+        '<div class="empty">Ningún plato tuyo encaja con eso. Prueba a soltar un filtro, o mira las combinaciones '+
+        'que salen con lo que tienes en la nevera.</div>')+
+      '<div class="row" style="margin-top:10px">'+
+        '<button class="btn s" data-a="food-vista" data-v="cocina-panel">'+gymIco('chispa','gico sm')+
+        ' combinaciones con mi nevera</button></div>'+
+    '</div>';}
+/* ---------- micronutrientes: una línea en la portada, su pantalla aparte ---------- */
+function microColor(p){return p<50?'var(--bad)':(p<80?'var(--warn)':(p>=100?'var(--brand)':'var(--ok)'));}
+function microLineaHTML(key){
+  const mt=microTotales(key),cortos=microCortos(key);
+  const conDato=Object.keys(mt).length>0;
+  const pts=ALIM_MICROS.map(function(k){
+    const p=conDato?microPct(k,mt[k]||0):0;
+    return '<i style="background:'+(conDato?microColor(p):'var(--line)')+'"></i>';}).join('');
+  const txt=conDato
+    ?(cortos.length?(cortos.length+' por debajo de la mitad · '+cortos.slice(0,3).map(function(k){
+        return String(ALIM_LABEL[k]||k).toLowerCase();}).join(', ')):'todo por encima de la mitad de la referencia')
+    :'los traen los alimentos de la tabla, no los productos de código de barras';
+  return '<button class="microlinea" data-a="food-vista" data-v="micros">'+
+    '<span class="pts">'+pts+'</span>'+
+    '<span class="tx">Micronutrientes<small>'+esc(txt)+'</small></span>'+
+    gymIco('chevron','gico sm')+'</button>';}
+function renderFoodMicros(){
+  const c=foodCtx(),sel=c.sel;
+  const mt=microTotales(sel),cortos=microCortos(sel);
+  const conDato=c.lista.filter(function(x){return x.mi&&Object.keys(x.mi).length;}).length;
+  const cubrir=cortos.slice(0,3).map(function(k){
+    const ricos=alimRicosEn(k,1)[0];
+    if(!ricos)return '';
+    return '<div class="hit"><button class="hitnom" data-a="alim-pick" data-id="'+esc(ricos.id)+'">'+
+      '<span class="em">'+esc(ricos.e||'🍽')+'</span>'+
+      '<span class="nm"><b>'+esc(ricos.n)+'</b><span>'+esc(String(ALIM_LABEL[k]||k).toLowerCase())+' · '+
+        fmt(ricos[k])+' '+esc(ALIM_UNIDAD[k]||'')+' /100 g</span></span>'+
+      '<span class="kc">'+(ricos.kcal||0)+'<small>/100 g</small></span></button>'+
+      '<button class="add" data-a="food-rapido" data-v="alim:'+esc(ricos.id)+'" data-key="'+esc(sel)+'" '+
+        'aria-label="apuntar '+esc(ricos.n)+'">'+gymIco('mas','gico sm')+'</button></div>';}).join('');
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Micronutrientes',cortos.length?('<span class="tag b4">'+cortos.length+' cortos</span>'):'')+
+    '<p class="note" style="margin:0">Sobre la ingesta de referencia de un adulto, la de las etiquetas. '+
+      (conDato?('Salen de '+conDato+' de tus '+c.lista.length+' tomas de hoy.'):
+        'Hoy no tengo ninguno: los traen los alimentos de la tabla, no los productos de código de barras.')+'</p>'+
+    (cortos.length?('<div class="card"><h2>Hoy vas corto de</h2>'+
+      '<div class="chips">'+cortos.map(function(k){
+        const p=microPct(k,mt[k]||0);
+        return '<span class="chipx" style="border-color:color-mix(in srgb,'+microColor(p)+' 45%,var(--line));color:'+
+          microColor(p)+'">'+esc(ALIM_LABEL[k]||k)+' '+p+' %</span>';}).join('')+'</div>'+
+      (cubrir?('<p class="note" style="margin:12px 0 4px"><b>Con esto lo cubres:</b></p>'+cubrir):'')+
+      '</div>'):'')+
+    '<div class="card"><h2>Todos <span class="mini">'+ALIM_MICROS.length+'</span></h2>'+
+      '<div class="micros">'+ALIM_MICROS.map(function(k){
+        return micHTML(k,mt[k]||0,+ALIM_VRN[k]||0,' data-a="micro-abrir" data-k="'+k+'"');}).join('')+'</div>'+
+      (ui.microAbierto?(function(){
+        const k=ui.microAbierto;
+        return '<p class="note" style="margin:12px 0 4px">Lo que más '+esc(String(ALIM_LABEL[k]||k).toLowerCase())+
+          ' trae, por 100 g:</p><div class="chips">'+alimRicosEn(k,6).map(function(a){
+          return '<button class="chipx" data-a="alim-pick" data-id="'+esc(a.id)+'">'+esc(a.e||'')+' '+esc(a.n)+
+            ' <b>'+fmt(a[k])+' '+esc(ALIM_UNIDAD[k]||'')+'</b></button>';}).join('')+'</div>';})():'')+
+      '<p class="mini" style="margin:11px 0 0">No es una pauta médica: es la referencia genérica de un adulto.</p>'+
+    '</div></div>';
+}
+/* ---------- mis productos, de 27 pantallas a una ---------- */
+function renderFoodProductos(){
+  const c=foodCtx(),f=c.f,sel=c.sel;
+  const q=alimTxt(ui.foodQ||'').trim(),marca=ui.prodMarca||'';
+  const todos=Object.keys(f.eans).map(function(k){return f.eans[k];});
+  const marcas={};
+  todos.forEach(function(x){const m=(x.marca||'').trim();if(m)marcas[m]=(marcas[m]||0)+1;});
+  const topMarcas=Object.keys(marcas).sort(function(a,b){return marcas[b]-marcas[a];}).slice(0,3);
+  const ver=todos.filter(function(x){
+    if(marca==='fav')return f.fav.indexOf(x.ean)>=0;
+    if(marca&&(x.marca||'').trim()!==marca)return false;
+    if(!q)return true;
+    return alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean).indexOf(q)>=0;
+  }).sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');});
+  /* ocho filas y a buscar: antes se pintaban los 188 con un campo numérico y tres botones cada uno,
+     24 882 px de una sentada. La lista deja de ser el sitio donde se elige; el buscador lo es. */
+  const muestra=ver.slice(0,8);
+  $('#main').innerHTML='<div class="grid">'+
+    foodSubcab('Mis productos','<span class="tag b2">'+todos.length+'</span>')+
+    (todos.length?(
+      '<div class="buscador">'+gymIco('lupa','gico sm')+
+        '<input id="fdQ" value="'+esc(ui.foodQ||'')+'" data-a="food-q" placeholder="nombre, marca o código…"></div>'+
+      '<div class="chips">'+
+        '<button class="chipx'+(marca?'':' on')+'" data-a="prod-marca" data-m="">todos <b>'+todos.length+'</b></button>'+
+        (f.fav.length?('<button class="chipx'+(marca==='fav'?' on':'')+'" data-a="prod-marca" data-m="fav">★ favoritos <b>'+
+          f.fav.length+'</b></button>'):'')+
+        topMarcas.map(function(m){
+          return '<button class="chipx'+(marca===m?' on':'')+'" data-a="prod-marca" data-m="'+esc(m)+'">'+
+            esc(m)+' <b>'+marcas[m]+'</b></button>';}).join('')+
+      '</div>'+
+      '<div class="card">'+(muestra.length?muestra.map(function(x){
+        const favo=f.fav.indexOf(x.ean)>=0;
+        return '<div class="hit"><button class="hitnom" data-a="food-abrir" data-v="ean:'+esc(x.ean)+'">'+
+          '<span class="em">📦</span>'+
+          '<span class="nm"><b>'+esc(x.nombre)+'</b><span>'+esc(x.marca||'')+(x.envase?(' · '+esc(x.envase)):'')+
+            (favo?' · ★':'')+'</span></span>'+
+          '<span class="kc">'+(x.kcal||0)+'<small>/100 g</small></span></button>'+
+          '<button class="mini-acc'+(favo?' on':'')+'" data-a="ean-fav" data-ean="'+esc(x.ean)+'" '+
+            'aria-pressed="'+(favo?'true':'false')+'" aria-label="favorito">'+(favo?'★':'☆')+'</button>'+
+          '<button class="mini-acc" data-a="ean-del" data-ean="'+esc(x.ean)+'" aria-label="quitar '+esc(x.nombre)+'">×</button>'+
+          '<button class="add" data-a="food-rapido" data-v="ean:'+esc(x.ean)+'" data-key="'+esc(sel)+'" '+
+            'aria-label="apuntar '+esc(x.nombre)+'">'+gymIco('mas','gico sm')+'</button></div>';}).join(''):
+        '<div class="empty">Nada encaja con eso.</div>')+
+        (ver.length>muestra.length?('<p class="mini" style="margin:11px 0 0">y '+(ver.length-muestra.length)+
+          ' más: escribe arriba para encontrarlo.</p>'):'')+
+      '</div>'):
+      '<div class="card"><div class="empty">Aún no has guardado ningún producto. Escanea el primero o importa el catálogo local.</div></div>')+
+    '<div class="row">'+
+      '<button class="btn s" data-a="food-panel2" data-k="scan">'+gymIco('camara','gico sm')+' escanear uno nuevo</button>'+
+      '<button class="btn s" data-a="food-catalogo-import">'+(f.catalogoFuente?'repasar el catálogo':'importar el catálogo local')+'</button>'+
+    '</div>'+
+    (f.catalogoFuente?('<p class="mini" style="margin:0">'+esc(f.catalogoFuente)+'</p>'):'')+
+    '</div>';
+}
 function renderFoodAdd(){
   const c=foodCtx(),f=c.f,sel=c.sel;
-  const prods=Object.keys(f.eans).map(function(k){return f.eans[k];}).sort(function(a,b){
-    return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');});
-  const qq=(ui.foodQ||'').toLowerCase();
-  const ver=qq?prods.filter(function(x){return (x.nombre+' '+(x.marca||'')+' '+x.ean).toLowerCase().indexOf(qq)>=0;}):prods;
-  const modo=ui.foodPanel||'buscar';
-  const modos=[['buscar','lupa','buscar'],['scan','camara','escanear'],
-               ['productos','caja','mis productos'],['mano','lapiz','a mano']];
+  /* buscar y «mis productos» tienen ya su propia pantalla (el buscador y renderFoodProductos):
+     aquí solo quedan las dos formas de meter algo que la app todavía no conoce */
+  const modo=(ui.foodPanel==='mano')?'mano':'scan';
+  const modos=[['scan','camara','escanear'],['mano','lapiz','a mano']];
   const tira='<div class="modos">'+modos.map(function(m){
     return '<button class="modo'+(modo===m[0]?' on':'')+'" data-a="food-panel" data-k="'+m[0]+'">'+
       gymIco(m[1],'gico sm')+'<span>'+m[2]+'</span></button>';}).join('')+'</div>';
   let cuerpo='';
-  if(modo==='buscar'){
-    const q=alimTxt(ui.foodBusca||'').trim();   /* sin tildes a los dos lados: «platano» encuentra «Plátano» */
-    const todo=foodBuscables();
-    /* sin nada escrito se enseña una muestra corta: volcar el catálogo entero hacía una pantalla
-       de kilómetro y medio antes de que el usuario hubiera tecleado una sola letra */
-    const res=q?todo.filter(function(x){return x.busca.indexOf(q)>=0;}).slice(0,30):todo.slice(0,8);
-    const elegido=ui.foodSel?todo.filter(function(x){return x.v===ui.foodSel;})[0]:null;
-    cuerpo='<div class="buscador" style="margin-top:11px">'+gymIco('lupa','gico sm')+
-      '<input id="feQ" value="'+esc(ui.foodBusca||'')+'" data-a="food-busca" placeholder="pollo, yogur, lentejas…"></div>'+
-      '<div class="card" style="margin-top:11px">'+
-      (todo.length?(res.map(function(x){
-        return '<div class="res'+(ui.foodSel===x.v?' sel':'')+'" data-a="food-pick" data-v="'+esc(x.v)+'" style="cursor:pointer">'+
-          '<span class="nm"><b>'+esc(x.nombre)+'</b><span class="mini">'+x.kcal+' kcal · '+x.prot+' g P '+x.unidad+
-          (x.sub?(' · '+esc(x.sub)):'')+'</span></span>'+
-          '<span class="tag">'+x.etiqueta+'</span>'+gymIco('mas','gico sm')+'</div>';}).join('')||
-        '<div class="empty">Nada se llama así. Prueba a escanearlo o a apuntarlo a mano.</div>')+
-        (!q&&todo.length>res.length?('<p class="mini" style="margin:9px 0 0">y '+(todo.length-res.length)+
-          ' más: escribe arriba para encontrarlo</p>'):''):
-        '<div class="empty">Todavía no hay nada que buscar: escanea un producto o crea un plato en «Días y menús».</div>')+
-      '</div>'+
-      (elegido?('<div class="card" style="margin-top:11px"><h2>'+esc(elegido.nombre)+'</h2>'+
-        '<select id="feSel" style="display:none"><option value="'+esc(elegido.v)+'" selected></option></select>'+
-        '<div class="row">'+
-          '<label class="fld" style="flex:1 1 92px">'+(elegido.base===1?'raciones':'gramos')+
-            '<input id="feG" type="number" min="'+(elegido.base===1?'0.25':'1')+'" step="'+(elegido.base===1?'0.25':'5')+
-            '" value="'+(elegido.porDefecto||(elegido.base===1?1:150))+'" data-a="food-cant" data-base="'+elegido.base+
-            '" data-def="'+(elegido.porDefecto||(elegido.base===1?1:150))+
-            '" data-kcal="'+elegido.kcal+'" data-prot="'+elegido.prot+'"></label>'+
-          '<label class="fld" style="flex:1 1 130px">en qué momento<select id="fePos">'+posOptions(momentoAhora())+'</select></label>'+
-        '</div>'+
-        '<div class="row" style="margin-top:9px">'+
-          '<span class="tag b2" id="fePrevK">'+Math.round(elegido.kcal*(elegido.porDefecto||(elegido.base===1?1:150))/elegido.base)+' kcal</span>'+
-          '<span class="tag b3" id="fePrevP">'+(Math.round(elegido.prot*(elegido.porDefecto||(elegido.base===1?1:150))/elegido.base*10)/10)+' g proteína</span></div>'+
-        '<button class="btn p gbig" style="margin-top:11px" data-a="fe-add" data-key="'+sel+'">apuntar</button></div>'):'');
-  }else if(modo==='scan'){
+  if(modo==='scan'){
     cuerpo='<div class="card" style="margin-top:11px">'+
       '<p class="note">Enfoca el código de barras: se busca en Open Food Facts y se guarda con sus kcal y proteína. '+
       'Solo el código (no tu nombre ni nada tuyo) sale hacia ese servicio externo.</p>'+
@@ -3244,12 +3648,6 @@ function renderFoodAdd(){
           '<span class="row" style="gap:4px"><button class="btn s" data-a="scan-save" data-ix="'+ix+'" data-key="'+sel+'">guardar</button>'+
           '<button class="btn s" data-a="scan-today" data-ix="'+ix+'" data-key="'+sel+'">apuntar 100 g hoy</button></span></div>';}).join('')+'</div>'):'')+
       '</div>';
-  }else if(modo==='productos'){
-    cuerpo='<div class="card" style="margin-top:11px">'+armarioHtml(f,prods,ver,sel)+'</div>'+
-      '<div class="card" style="margin-top:11px"><h2>Catálogo local</h2>'+
-      '<p class="note">'+FOOD_CATALOGO.length+' productos de Mercadona, Carrefour y 100 Montaditos, con kcal y proteína. Se importa una vez y funciona sin red.</p>'+
-      '<div class="row"><button class="btn s" data-a="food-catalogo-import">'+(f.catalogoFuente?'completar/repasar el catálogo':'importar el catálogo local')+'</button>'+
-      '<span class="sp"></span><span class="mini">'+esc(f.catalogoFuente||'todavía no lo has importado')+'</span></div></div>';
   }else{
     cuerpo='<div class="card" style="margin-top:11px">'+
       '<p class="note">Para lo que no tiene código de barras: ponle sus kcal y proteína por 100 g y se guarda igual que un escaneado.</p>'+
@@ -3268,34 +3666,10 @@ function renderFoodAdd(){
       '</div></div>';
   }
   $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Apuntar comida','<span class="tag b2">'+c.ft.kcal+' kcal</span>')+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="buscar">'+gymIco('atras','gico sm')+' Apuntar</button>'+
+      '<h2 class="subtit">Algo nuevo</h2><span class="tag b2">'+c.ft.kcal+' kcal</span></div>'+
     tira+cuerpo+'</div>';
-}
-function renderFoodCocinar(){
-  const c=platosCocinables();
-  const tarj=function(x,listo){
-    const d=x.dish;
-    return '<div class="plato'+(listo?' listo':'')+'">'+
-      '<span class="pic">'+esc(d.icon||'🍽')+'</span><b>'+esc(d.name)+'</b>'+
-      '<span class="mini">'+(listo?(rac(d.portions)+' · '+(d.kcal||0)+' kcal'):
-        ('te falta: '+esc(x.faltan.slice(0,3).join(', '))))+'</span>'+
-      '<span class="row" style="gap:5px;margin-top:7px">'+
-        '<button class="btn s'+(listo?' p':'')+'" data-a="food-cocina" data-id="'+d.id+'">'+gymIco('olla','gico sm')+' cocinar</button>'+
-        (listo?'':'<button class="btn s" data-a="cocinar-compra" data-id="'+d.id+'">'+gymIco('mas','gico sm')+' a la compra</button>')+
-      '</span></div>';};
-  $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Qué puedo cocinar','<span class="tag b3">'+c.listos.length+'</span>')+
-    '<button class="btn p gbig" data-a="plato-nuevo">'+gymIco('mas','gico sm')+' plato nuevo con ingredientes</button>'+
-    '<p class="note" style="margin:0">Con lo que llevas en las listas de rutina y en la compra de esta semana. Lo verde te sale entero.</p>'+
-    '<div class="card"><div class="row" style="justify-content:space-between">'+
-      '<b style="font-size:13.5px">Te sale entero</b><span class="tag b3">'+c.listos.length+' plato'+(c.listos.length===1?'':'s')+'</span></div>'+
-      (c.listos.length?('<div class="platos acc">'+c.listos.map(function(x){return tarj(x,true);}).join('')+'</div>'):
-        '<div class="empty">Ninguno todavía: añade lo que compras siempre en «Compra → mis listas» y esto se llena solo.</div>')+
-    '</div>'+
-    (c.casi.length?('<div class="card"><div class="row" style="justify-content:space-between">'+
-      '<b style="font-size:13.5px">Casi</b><span class="tag b4">te falta poco</span></div>'+
-      '<div class="platos acc">'+c.casi.map(function(x){return tarj(x,false);}).join('')+'</div></div>'):'')+
-    '</div>';
 }
 const ING_CONTINUA=['g','kg','ml','l','litro','litros'];
 function escalaIng(linea,factor){
@@ -3311,7 +3685,7 @@ function escalaIng(linea,factor){
   return {q:(fmt(n)+(p.unit?' '+p.unit:'')).trim(),item:p.item};}
 function renderFoodCocina(){
   const d=dishById(ui.cocinaPlato);
-  if(!d){ui.foodVista='cocinar';return renderFoodCocinar();}
+  if(!d){ui.foodVista='cocina-panel';return renderCocinaPanel();}
   const base=Math.max(1,+d.portions||1);
   const objetivo=Math.max(1,+ui.cocinaRac||base);
   const factor=objetivo/base;
@@ -3326,7 +3700,7 @@ function renderFoodCocina(){
     /* aquí el botón de volver va sin texto y el paso va en su tira de puntos: con el nombre de un
        plato largo, tres cosas en la misma fila dejaban el título partido en tres renglones */
     '<div class="subcab">'+
-      '<button class="btn s volver" data-a="food-vista" data-v="cocinar" title="Qué cocino" aria-label="volver a Qué cocino">'+
+      '<button class="btn s volver" data-a="food-vista" data-v="cocina-panel" title="Cocina" aria-label="volver a Cocina">'+
         gymIco('atras','gico sm')+'</button>'+
       '<h2 class="subtit">'+esc(d.icon||'')+' '+esc(d.name)+'</h2></div>'+
     '<div class="card">'+
@@ -3480,86 +3854,6 @@ function renderAlimFicha(){
     '</div>';
 }
 /* ---------- Mi nevera ---------- */
-function renderNevera(){
-  const dentro=neveraAlimentos();
-  const q=ui.neveraQ||'';
-  const sug=q?alimBuscar(q,'').filter(function(a){return food().nevera.indexOf(a.id)<0;}).slice(0,8):[];
-  $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Mi nevera','<span class="tag b2">'+dentro.length+'</span>')+
-    '<p class="note" style="margin:0">Lo que tienes en casa ahora mismo. Con esto la app te dice qué te sale entero y te propone combinaciones.</p>'+
-    '<div class="buscador">'+gymIco('lupa','gico sm')+
-      '<input id="nvQ" value="'+esc(q)+'" data-a="nevera-busca" placeholder="añadir algo que tengas…"></div>'+
-    (sug.length?('<div class="card">'+sug.map(function(a){
-      return '<button class="alim" data-a="nevera-add" data-id="'+esc(a.id)+'">'+
-        '<span class="em">'+esc(a.e||'🍽')+'</span>'+
-        '<span class="nm"><b>'+esc(a.n)+'</b><span class="mini">'+esc(alimSubtexto(a))+'</span></span>'+
-        gymIco('mas','gico sm')+'</button>';}).join('')+'</div>'):
-      (q?'<div class="card"><div class="empty">Nada se llama así en la tabla de alimentos.</div></div>':''))+
-    '<div class="card"><h2>En casa</h2>'+
-      (dentro.length?('<div class="chips">'+dentro.map(function(a){
-        return '<span class="chipx">'+esc(a.e||'🍽')+' '+esc(a.n)+
-          '<button class="x" data-a="nevera-del" data-id="'+esc(a.id)+'" title="quitar" aria-label="quitar '+esc(a.n)+'">×</button></span>';}).join('')+'</div>'):
-        '<div class="empty">Vacía. Busca arriba lo que tengas, o tráelo de tu lista de la compra.</div>')+
-      '<div class="row" style="margin-top:11px">'+
-        '<button class="btn s" data-a="nevera-compra">'+gymIco('lista','gico sm')+' de mi lista de la compra</button>'+
-        (dentro.length?'<button class="btn s" data-a="nevera-vaciar">vaciar</button>':'')+'</div>'+
-    '</div>'+
-    (dentro.length?('<button class="btn p gbig" data-a="food-vista" data-v="ideas">'+gymIco('chispa','gico sm')+
-      ' dame ideas con esto</button>'):'')+
-    '</div>';
-}
-/* ---------- Ideas con lo que hay ---------- */
-function renderIdeas(){
-  const c=foodCtx(),ob=objetivoMacros();
-  const huecoK=ob.kcal?Math.max(0,ob.kcal-c.ft.kcal):0;
-  const huecoP=ob.prot?Math.max(0,ob.prot-c.ft.prot):0;
-  const dentro=neveraAlimentos();
-  const combis=combinaciones(huecoK,huecoP);
-  ui.ideasCache=combis;
-  const pc=platosCocinables();
-  $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Ideas con lo que tienes')+
-    '<p class="note" style="margin:0">'+(dentro.length?
-      ('Con las '+dentro.length+' cosas de tu nevera.'+(huecoK||huecoP?
-        (' Hoy te quedan <b>'+huecoK+' kcal</b> y <b>'+Math.round(huecoP)+' g de proteína</b>: las combinaciones '+
-         'apuntan a una comida de ese hueco, no a taparlo entero.'):
-        ' Ponte un objetivo en «Comida» y además te las cuadro con lo que te queda del día.')):
-      'Tu nevera está vacía: apunta lo que tengas en casa y aquí salen las combinaciones.')+'</p>'+
-    (dentro.length?'':('<button class="btn p gbig" data-a="food-vista" data-v="nevera">'+gymIco('nevera','gico sm')+
-      ' llenar la nevera</button>'))+
-    (combis.length?('<div class="card"><h2>Combinaciones nuevas '+gymIco('chispa','gico sm')+'</h2>'+
-      '<p class="note" style="margin-bottom:4px">Armadas con lo que tienes: no son platos guardados. Si te gusta una, la guardas. '+
-        'Son para <b>una comida</b>, no para el día entero.</p>'+
-      combis.map(function(x,ix){
-        const bien=Math.abs(x.t.kcal-x.meta.kcal)<=x.meta.kcal*0.2&&x.t.pr>=x.meta.prot*0.8;
-        return '<div class="idea'+(bien?' buena':'')+'">'+
-          '<h4>'+esc(x.nombre)+'</h4>'+
-          '<p class="por">'+x.t.kcal+' kcal · '+fmt(x.t.pr)+' g P · '+fmt(x.t.ch)+' g C · '+fmt(x.t.gr)+' g G'+
-            (bien?' · cuadra con lo que te queda':'')+'</p>'+
-          x.partes.map(function(pt){
-            return '<div class="ingr"><span>'+esc(pt.a.e||'')+' '+esc(String(pt.a.n).toLowerCase())+
-              (/crud/i.test(pt.a.nota||'')?' <span class="mini">(en crudo)</span>':'')+'</span><b>'+pt.g+' g</b></div>';}).join('')+
-          '<div class="row" style="margin-top:9px">'+
-            '<button class="btn s" data-a="idea-guardar" data-ix="'+ix+'">guardar como plato</button>'+
-            '<button class="btn s" data-a="idea-apuntar" data-ix="'+ix+'" data-key="'+c.sel+'">apuntarlo ya</button></div>'+
-        '</div>';}).join('')+'</div>'):'')+
-    '<div class="card"><h2>Tus platos, enteros</h2>'+
-      (pc.listos.length?pc.listos.slice(0,6).map(function(x){
-        const d=x.dish;
-        return '<div class="idea buena"><h4>'+esc(d.icon||'🍽')+' '+esc(d.name)+' <span class="tag b3">sale entero</span></h4>'+
-          '<p class="por">'+rac(d.portions)+' · '+(d.kcal||0)+' kcal y '+fmt(d.prot||0)+' g P por ración</p>'+
-          '<div class="row" style="margin-top:9px"><button class="btn s" data-a="food-cocina" data-id="'+d.id+'">'+
-            gymIco('olla','gico sm')+' cocinar</button></div></div>';}).join(''):
-        '<div class="empty">Ninguno todavía: esto se llena con lo que haya en tus listas de la compra.</div>')+
-    '</div>'+
-    (pc.casi.length?('<div class="card"><h2>Te falta poco</h2>'+pc.casi.slice(0,4).map(function(x){
-      const d=x.dish;
-      return '<div class="idea"><h4>'+esc(d.icon||'🍽')+' '+esc(d.name)+'</h4>'+
-        '<p class="por">te falta: '+esc(x.faltan.slice(0,3).join(', '))+'</p>'+
-        '<div class="row" style="margin-top:9px"><button class="btn s" data-a="cocinar-compra" data-id="'+d.id+'">'+
-          gymIco('mas','gico sm')+' a la compra</button></div></div>';}).join('')+'</div>'):'')+
-    '</div>';
-}
 /* ---------- Crear un plato con ingredientes de la tabla ----------
    La gracia es que aquí no se teclea ni un número de nutrición: se eligen alimentos y gramos, y las
    kcal, los macros y los micros salen solos. El plato guarda qué alimentos lleva (dish.alims) para
@@ -3807,13 +4101,21 @@ function notasDelDiaHTML(key){
       '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}
 function renderFood(){
   const v=ui.foodVista||'';
+  if(v==='buscar')return renderFoodBuscar();
+  if(v==='cantidad')return renderFoodCantidad();
+  if(v==='micros')return renderFoodMicros();
+  if(v==='productos')return renderFoodProductos();
+  if(v==='cocina-panel')return renderCocinaPanel();
+  if(v==='platos')return renderMisPlatos();
   if(v==='add')return renderFoodAdd();
-  if(v==='cocinar')return renderFoodCocinar();
+  /* «Qué cocino», «Mi nevera» e «Ideas» eran tres pantallas para la misma pregunta: ahora son las
+     tres pestañas de Cocina. Los nombres viejos siguen llevando a su pestaña y no a una pared. */
+  if(v==='cocinar'||v==='ideas'||v==='nevera'){
+    ui.cocinaTab=(v==='nevera')?'nevera':'';
+    ui.foodVista='cocina-panel';return renderCocinaPanel();}
   if(v==='cocina')return renderFoodCocina();
   if(v==='alimentos')return renderAlimentos();
   if(v==='ficha')return renderAlimFicha();
-  if(v==='nevera')return renderNevera();
-  if(v==='ideas')return renderIdeas();
   if(v==='plato')return renderPlatoNuevo();
   if(v==='alimnuevo')return renderAlimNuevo();
   return renderFoodDia();
@@ -4874,7 +5176,7 @@ function renderTypesLista(){
         '<b>Comidas armadas</b><span class="n">'+store.meals.length+'</span><span class="s">bloques reutilizables</span></button>'+
       '<button class="gtile" data-a="types-vista" data-v="dishes">'+gymIco('libro')+
         '<b>Catálogo</b><span class="n">'+store.dishes.length+'</span><span class="s">platos</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="cocinar">'+gymIco('olla')+
+      '<button class="gtile" data-a="food-vista" data-v="cocina-panel">'+gymIco('olla')+
         '<b>Qué cocino</b><span class="n">'+platosCocinables().listos.length+'</span><span class="s">salen enteros</span></button>'+
       '<button class="gtile" data-a="tab" data-t="import">'+gymIco('importar')+
         '<b>Importar</b><span class="n">·</span><span class="s">receta de un vídeo</span></button>'+
@@ -6328,8 +6630,7 @@ function act(a,el){
       const dd=parseDate(cur)||new Date();ui.foodDate=iso(addDays(dd,a==='food-next'?1:-1));render();break;}
     case 'food-today':ui.foodDate=iso(new Date());render();break;
     case 'food-jump':{const k=foodKey(el.dataset.key);if(k)ui.foodDate=k;render();break;}
-    case 'food-panel':ui.foodPanel=el.dataset.k||'buscar';ui.foodSel='';render();window.scrollTo(0,0);break;
-    case 'food-pick':ui.foodSel=(ui.foodSel===el.dataset.v)?'':(el.dataset.v||'');render();break;
+    case 'food-panel':ui.foodPanel=el.dataset.k||'scan';ui.foodSel='';render();window.scrollTo(0,0);break;
     case 'food-cocina':{ui.cocinaPlato=el.dataset.id||'';ui.cocinaPaso=0;ui.cocinaRac=0;
       ui.foodVista='cocina';ui.tab='food';render();window.scrollTo(0,0);break;}
     case 'cocina-paso':{const d=dishById(ui.cocinaPlato),n=(d&&(d.steps||[]).filter(Boolean).length)||0;
@@ -6348,19 +6649,6 @@ function act(a,el){
       flash(n?('a «'+l.nombre+'»: '+n+' cosa'+(n===1?'':'s')):('ya estaba todo en «'+l.nombre+'»'));
       break;}
     case 'food-obj-toggle':ui.foodObjOpen=!ui.foodObjOpen;render();break;
-    case 'fe-add':{const pick=(document.getElementById('feSel')||{}).value||'';
-      const when=(document.getElementById('fePos')||{}).value||'comida';
-      const m=/^(ean|dish|alim):(.+)$/.exec(pick);if(!m){flash('elige primero qué alimento, producto o plato es');break;}
-      /* el hueco por defecto depende de la unidad: 150 g de algo que se pesa, 1 ración de un plato.
-         Con el viejo «||150» un campo vacío apuntaba ciento cincuenta raciones de lentejas. */
-      const campoG=document.getElementById('feG');
-      const porDefecto=Math.max(0.01,+(campoG&&campoG.dataset.def)||((m[1]==='dish')?1:150));
-      const g=Math.max(0.01,num(campoG?campoG.value:'',porDefecto)||porDefecto);
-      const opt=(m[1]==='ean')?{ean:m[2],grams:g,pos:when,when:when}:
-        ((m[1]==='alim')?{alim:m[2],grams:g,pos:when,when:when}:{dishId:m[2],rac:g,pos:when,when:when});
-      flash(addFoodEntry(el.dataset.key,opt));
-      ui.foodSel='';   /* apuntado: la ficha se cierra y el buscador queda listo para lo siguiente */
-      render();break;}
     case 'fe-quick':{const gg=el.dataset.gq?(+(document.getElementById(el.dataset.gq)||{}).value||150):150;
       flash(addFoodEntry(el.dataset.key,{ean:el.dataset.ean,grams:gg,pos:'comida'}));render();break;}
     case 'fe-more':case 'fe-less':{const e=foodLog(el.dataset.key).filter(function(x){return x.id===el.dataset.id;})[0]||{};
@@ -6473,6 +6761,42 @@ function act(a,el){
       render();window.scrollTo(0,0);break;}
     case 'imp-traer':impTraerEnlace();break;
     case 'lector-probar':lectorProbar();break;
+    case 'food-abrir':{
+      ui.foodSel=el.dataset.v||'';
+      const x=buscableDe(ui.foodSel);
+      ui.foodCant=x?x.porDefecto:0;
+      ui.foodPos=ui.foodPos||momentoAhora();
+      ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
+    case 'food-rapido':{
+      /* el + apunta con la cantidad de siempre, sin abrir nada: es el camino de tres toques */
+      const x=buscableDe(el.dataset.v||'');
+      if(!x){flash('eso ya no está');break;}
+      flash(apuntaBuscable(el.dataset.key,x,x.porDefecto,ui.foodPos||momentoAhora()));
+      render();break;}
+    case 'food-apuntar':{
+      const x=buscableDe(ui.foodSel||'');
+      if(!x){flash('eso ya no está');break;}
+      flash(apuntaBuscable(el.dataset.key,x,+ui.foodCant||x.porDefecto,ui.foodPos||momentoAhora()));
+      ui.foodSel='';ui.foodVista='';render();window.scrollTo(0,0);break;}
+    case 'food-cant-paso':{
+      const x=buscableDe(ui.foodSel||'');if(!x)break;
+      const d=+el.dataset.d||0,min=x.base===1?0.25:5;
+      ui.foodCant=Math.max(min,Math.round(((+ui.foodCant||x.porDefecto)+d)*100)/100);
+      render();break;}
+    case 'food-cant-set':{ui.foodCant=+el.dataset.n||0;render();break;}
+    case 'food-pos-b':{ui.foodPos=el.dataset.p||'';render();break;}
+    case 'food-tipo':{ui.foodTipo=el.dataset.t||'';render();break;}
+    case 'food-busca-clear':{ui.foodBusca='';render();
+      setTimeout(function(){const i=document.getElementById('fbQ');if(i)i.focus();},40);break;}
+    case 'food-panel2':{ui.foodPanel=el.dataset.k||'scan';ui.foodVista='add';render();window.scrollTo(0,0);break;}
+    case 'cocina-tab':{ui.cocinaTab=el.dataset.t||'';render();window.scrollTo(0,0);break;}
+    case 'platos-tab':{ui.platosTab=el.dataset.t||'';render();window.scrollTo(0,0);break;}
+    case 'prod-marca':{ui.prodMarca=el.dataset.m||'';render();break;}
+    case 'antojo-ing':{const a=antojoS(),v=el.dataset.v,i=a.ing.indexOf(v);
+      if(i>=0)a.ing.splice(i,1);else a.ing.push(v);render();break;}
+    case 'antojo-kcal':{antojoS().kcal=el.dataset.v||'';render();break;}
+    case 'antojo-prot':{antojoS().prot=el.dataset.v||'';render();break;}
+    case 'antojo-limpiar':{ui.antojo={ing:[],kcal:'',prot:''};render();break;}
     case 'alim-pick':{ui.alimSel=el.dataset.id||'';ui.alimG=100;ui.foodVista='ficha';
       if(ui.tab!=='food')ui.tab='food';
       render();window.scrollTo(0,0);break;}
@@ -7800,24 +8124,10 @@ document.addEventListener('input',e=>{
     else if(f==='kcal'||f==='prot')r[f]=Math.max(0,Math.round(+el.value||0));
     else r[f]=String(el.value||'').slice(0,70);
     return;}
-  if(a==='food-cant'){
-    /* la previsión se reescribe a mano en su sitio: un render() aquí desmontaría el campo que estás
-       tecleando (el mismo motivo por el que «buscar» va con retardo y vuelve a enfocar) */
-    const n=Math.max(0,num(el.value,0)),base=+el.dataset.base||1;
-    const k=document.getElementById('fePrevK'),p=document.getElementById('fePrevP');
-    if(k)k.textContent=Math.round((+el.dataset.kcal||0)*n/base)+' kcal';
-    if(p)p.textContent=(Math.round((+el.dataset.prot||0)*n/base*10)/10)+' g proteína';
-    return;}
-  if(a==='alim-busca'||a==='nevera-busca'||a==='plato-busca'){
+  if(a==='alim-busca'||a==='nevera-busca'||a==='plato-busca'||a==='food-busca'){
     /* mismo patrón que la búsqueda de comida: se re-renderiza con retraso y se devuelve el foco al
        campo, porque render() reescribe #main entero y desmontaría el cursor a cada letra */
-    ui[a==='alim-busca'?'alimQ':(a==='nevera-busca'?'neveraQ':'platoQ')]=el.value||'';
-    clearTimeout(searchDebounce);
-    searchDebounce=setTimeout(function(){const f=document.activeElement&&document.activeElement.id;
-      render();if(f){const nx=document.getElementById(f);if(nx){nx.focus();
-        try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}}},160);
-    return;}
-  if(a==='food-busca'){ui.foodBusca=el.value||'';
+    ui[a==='alim-busca'?'alimQ':(a==='nevera-busca'?'neveraQ':(a==='food-busca'?'foodBusca':'platoQ'))]=el.value||'';
     clearTimeout(searchDebounce);
     searchDebounce=setTimeout(function(){const f=document.activeElement&&document.activeElement.id;
       render();if(f){const nx=document.getElementById(f);if(nx){nx.focus();
@@ -7903,6 +8213,7 @@ document.addEventListener('change',e=>{
       const k=el.dataset.k;
       if(k==='txt'){setNota(el.dataset.id,'txt',el.value);break;}
       setNota(el.dataset.id,k,el.value);render();break;}
+    case 'food-pos':{ui.foodPos=el.value||'';render();break;}
     case 'alim-g-f':{ui.alimG=Math.max(1,Math.min(2000,Math.round(+el.value||100)));render();break;}
     case 'plato-f':{
       if(!ui.plato)ui.plato=platoVacio();
@@ -8161,7 +8472,10 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,
   usdaKey,usdaOn,mapUsdaFood,usdaBuscar,usdaOlvidar,USDA_NUM,
   objetivoMacros,sumaAlimentos,combinaciones,metaDePlato,topeRacion,esCondimento,ALIM_CONDIMENTO,guardarCombinacion,platoVacio,platoTotales,guardarPlato,gramosPorDefecto,
-  renderAlimentos,renderAlimFicha,renderNevera,renderIdeas,renderPlatoNuevo,renderAlimNuevo,
+  renderAlimentos,renderAlimFicha,renderCocinaPanel,renderPlatoNuevo,renderAlimNuevo,
+  foodBuscar,frecuentes,buscableDe,racionesDe,previaMacrosDe,apuntaBuscable,FOOD_TIPOS,
+  renderFoodBuscar,renderFoodCantidad,renderFoodMicros,renderFoodProductos,renderCocinaPanel,renderMisPlatos,
+  platosPorAntojo,antojoS,microLineaHTML,
   esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,loQueHay,escalaIng,parseIng,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
