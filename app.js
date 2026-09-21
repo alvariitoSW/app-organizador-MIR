@@ -264,6 +264,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -1879,7 +1880,7 @@ function daySleepLineHTML(dateStr,inf){
 function mealRowsHTML(dateStr,sh){
   if(!sh)return '<div class="empty">Sin tipo de día asignado: ponlo en «Mes» o «Turno y rotación».</div>';
   const slots=slotsFor(sh.id);
-  if(!slots.length)return '<div class="empty">Este tipo de día no tiene comidas montadas todavía: abre «Días y menús».</div>';
+  if(!slots.length)return '<div class="empty">Este tipo de día no tiene comidas montadas todavía: abre «Comer → Menú».</div>';
   const today=isToday(dateStr),now=new Date();
   const nowHM=today?(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')):'';
   let nextIdx=-1;if(today)slots.forEach(function(s,i){if(nextIdx<0&&(s.time||'')>=nowHM)nextIdx=i;});
@@ -3020,7 +3021,7 @@ function foodCtx(){
           d:parseDate(sel)||new Date(),lista:foodLog(sel)};}
 function foodSubcab(titulo,extra){
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comida</button>'+
+    '<button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comer</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function momentoAhora(){
   /* a las 14:30 lo normal es que apuntes la comida, no el desayuno: el selector ya viene puesto */
@@ -3044,7 +3045,6 @@ function renderFoodDia(){
         '<button class="btn s" style="padding:3px 7px" data-a="fe-more" data-key="'+sel+'" data-id="'+x.id+'" title="añadir un poco">+</button>'+
         '<button class="btn d s" style="padding:3px 7px" data-a="fe-del" data-key="'+sel+'" data-id="'+x.id+'" title="quitar la toma">×</button></span></div>';}).join('');
     }).join(''):'<p class="empty">Nada apuntado todavía este día.</p>';
-  const favs=f.fav.map(function(k){return f.eans[k];}).filter(Boolean);
   const sem=(function(){
     const ini=mondayOf(d),out=[];
     for(let i=0;i<7;i++){const dd=addDays(ini,i),k=iso(dd);
@@ -3093,11 +3093,11 @@ function renderFoodDia(){
     /* la barra de buscar es LA acción de esta pantalla, y va suelta para que se lea como una puerta */
     '<button class="buscaz" data-a="food-vista" data-v="buscar">'+gymIco('lupa','gico')+
       '<b>Apuntar algo</b> · busca entre todo<span class="kbd">'+foodBuscables().length+'</span></button>'+
+    cadenaHTML()+
     /* Micronutrientes eran nueve casillas que se llevaban el 25 % de la portada con información de
        consulta. Ahora es una línea de nueve puntos con su pantalla detrás. */
-    (favs.length?('<div class="card"><h2>Favoritos <span class="mini">a un toque</span></h2><div class="pick">'+favs.map(function(x){
-      return '<button class="btn s" data-a="fe-quick" data-key="'+sel+'" data-ean="'+x.ean+'">+'+esc(x.nombre)+' <small>'+
-        (x.kcal||0)+'/100 g</small></button>';}).join('')+'</div></div>'):'')+
+    /* los favoritos eran otra lista de accesos rápidos en la portada, y el buscador ya abre con lo
+       que más apuntas —contado de tu historial, sin tener que marcar nada—. El ★ sigue en Mis productos. */
     '<div class="card"><h2>Lo de este día <span class="mini">'+c.lista.length+' toma'+(c.lista.length===1?'':'s')+'</span></h2>'+
       '<div class="foodlog">'+gruposHtml+'</div></div>'+
     '<div class="card"><h2>La semana</h2>'+
@@ -3110,17 +3110,54 @@ function renderFoodDia(){
         ('media de lo apuntado: <b style="color:var(--ink)">'+Math.round(conDato.reduce(function(a,x){return a+x.lg;},0)/conDato.length)+' kcal</b>'+
          (objK?(' · objetivo '+objK):' · sin objetivo puesto')):
         'esta semana no has apuntado nada todavía')+'</p></div>'+
-    /* seis puertas eran demasiadas para una portada: Nevera, Ideas y Qué cocino son la misma
-       pregunta y ahora viven en Cocina; Importar vive dentro de Mis platos. */
+    /* Menú, Cocina y Compra ya están en la cadena de arriba: repetirlos aquí abajo como fichas era
+       tener dos veces la misma puerta en la misma pantalla. Aquí quedan las tres despensas. */
     '<div class="puertas">'+
-      '<button class="puerta" data-a="food-vista" data-v="cocina-panel">'+gymIco('olla')+
-        '<b>Cocina</b><span class="s">qué hago hoy</span></button>'+
       '<button class="puerta" data-a="food-vista" data-v="platos">'+gymIco('libro')+
         '<b>Mis platos</b><span class="s">'+store.dishes.length+' guardados</span></button>'+
+      '<button class="puerta" data-a="food-vista" data-v="nevera">'+gymIco('nevera')+
+        '<b>Mi nevera</b><span class="s">'+neveraAlimentos().length+' cosas</span></button>'+
       '<button class="puerta" data-a="food-vista" data-v="alimentos">'+gymIco('manzana')+
         '<b>Alimentos</b><span class="s">'+alimTodos().length+' con micros</span></button>'+
     '</div></div>';
 }
+function cadenaHTML(){
+  /* la cadena: el menú manda en las tandas y las tandas mandan en la compra. Hasta ahora eran tres
+     destinos distintos que no se nombraban entre ellos, aunque el código ya los encadenaba así. */
+  const days=weekDays(),pb=planBatches(days);
+  let sesiones=0,raciones=0;
+  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;sesiones++;raciones+=b.portions||0;});
+  const plan=days.map(function(d){
+    return d.key?planTotalsOf(d.key).kcal:(d.shiftId?dayTotals(d.shiftId).kcal:0);
+  }).filter(function(x){return x>0;});
+  const media=plan.length?Math.round(plan.reduce(function(a,x){return a+x;},0)/plan.length):0;
+  const listos=platosCocinables().listos.length;
+  const c=compraDatos();
+  const esl=function(cls,ico,tit,txt,accion){
+    return '<button class="eslabon '+cls+'" '+accion+'>'+
+      '<span class="pto">'+gymIco(ico)+'</span>'+
+      '<span class="tx"><b>'+tit+'</b><span>'+txt+'</span></span>'+
+      gymIco('chevron','gico sm ch')+'</button>';};
+  const n=function(v){return '<em>'+v+'</em>';};
+  return '<div class="card"><h2>Esta semana <span class="mini">'+esc(rangoSemanaTxt())+'</span></h2>'+
+    '<p class="note" style="margin:0 0 2px">El menú manda en las tandas, y las tandas en la compra.</p>'+
+    '<div class="cadena">'+
+      esl('m','libro','Menú',n(store.shifts.length)+' tipos de día'+
+        (media?(' · '+n(media)+' kcal/día planificadas'):' · sin menús puestos'),
+        'data-a="tab" data-t="types"')+
+      esl('c','olla','Cocina',n(sesiones)+' tanda'+(sesiones===1?'':'s')+' · '+n(raciones)+' raciones · '+
+        n(listos)+' plato'+(listos===1?'':'s')+' te sale'+(listos===1?'':'n')+' hoy',
+        'data-a="food-vista" data-v="cocina-panel"')+
+      esl('k','lista','Compra',n(c.total)+' cosa'+(c.total===1?'':'s')+' · '+n(c.marcados)+' ya las tienes',
+        'data-a="tab" data-t="shop"')+
+    '</div></div>';}
+function rangoSemanaTxt(){
+  /* en modo plantilla la semana no tiene fechas: se dice el patrón, que es lo que la define */
+  const d=weekDays();
+  if(!d.length)return '';
+  const a=parseDate(d[0].key),b=parseDate(d[d.length-1].key);
+  if(!a||!b){const pt=store.patterns[store.rotation.pattern];return pt?('plantilla · '+pt.name):'plantilla';}
+  return 'del '+a.getDate()+' al '+b.getDate()+' de '+MON[b.getMonth()];}
 function foodBuscables(){
   /* todo lo que se puede apuntar, en una sola lista: los productos que has guardado y tus platos */
   const f=food(),out=[];
@@ -3355,11 +3392,13 @@ function queHagoHTML(){
         Math.round(huecoP)+' g de proteína</b> que te quedan hoy'):'')+'.'):
       'Apunta lo que tienes en casa en «Mi nevera» y esto se llena solo.')+'</p>'+
     '<div class="card"><h2>Te sale entero <span class="mini">'+pc.listos.length+'</span></h2>'+
-      (pc.listos.length?pc.listos.slice(0,6).map(function(x){return tarjeta(x,true);}).join(''):
-        '<div class="empty">Ninguno con lo que hay apuntado ahora mismo.</div>')+'</div>'+
+      (pc.listos.length?pc.listos.slice(0,3).map(function(x){return tarjeta(x,true);}).join(''):
+        '<div class="empty">Ninguno con lo que hay apuntado ahora mismo.</div>')+
+      (pc.listos.length>3?('<button class="btn s" style="margin-top:9px" data-a="food-vista" data-v="platos">'+
+        'y '+(pc.listos.length-3)+' más en Mis platos</button>'):'')+'</div>'+
     (combis.length?('<div class="card"><h2>Combinaciones '+gymIco('chispa','gico sm')+'</h2>'+
       '<p class="note" style="margin-bottom:2px">Armadas con lo que tienes. Para una comida, no para el día entero.</p>'+
-      combis.slice(0,2).map(function(x,ix){
+      combis.slice(0,1).map(function(x,ix){
         const bien=Math.abs(x.t.kcal-x.meta.kcal)<=x.meta.kcal*0.2&&x.t.pr>=x.meta.prot*0.8;
         return '<div class="idea'+(bien?' buena':'')+'">'+
           '<h4>'+esc(x.nombre)+'</h4>'+
@@ -3398,19 +3437,52 @@ function neveraCuerpoHTML(){
     (dentro.length?('<button class="btn p gbig" data-a="cocina-tab" data-t="">'+gymIco('chispa','gico sm')+
       ' qué hago con esto</button>'):'');}
 function loteCuerpoHTML(){
-  const pb=planBatches(weekDays()),usadas=Object.keys(pb).map(function(k){return pb[k];}).filter(function(b){return b.hasNeed;});
-  return '<p class="note" style="margin:0">Las sesiones de cocina de esta semana: qué pones al fuego cada día y cuántos tápers salen.</p>'+
-    (usadas.length?usadas.map(function(b){
-      return '<div class="card"><div class="row" style="justify-content:space-between">'+
-        '<b style="font-size:13.5px">'+esc(b.label)+'</b><span class="tag b2">'+b.portions+' raciones</span></div>'+
-        '<p class="mini" style="margin:4px 0 0">'+esc(b.when||'')+'</p>'+
-        '<div class="platos acc">'+b.items.filter(function(i){return i.runs>0;}).map(function(i){
-          return '<div class="plato"><span class="pic">'+esc(i.dish.icon||'🍽')+'</span><b>'+esc(i.dish.name)+'</b>'+
-            '<span class="mini">'+rac(i.cooked)+'</span>'+
-            '<button class="btn s" style="margin-top:6px" data-a="food-cocina" data-id="'+i.dish.id+'">cocinar</button></div>';}).join('')+
-        '</div></div>';}).join(''):
+  /* «Cocina en lote» era una pantalla aparte de 5 356 px —casi seis pantallas de móvil— porque
+     repetía, de cada plato de cada sesión, los pasos enteros. Los pasos se siguen en el modo cocina,
+     que es donde se cocina; aquí hace falta saber qué sesiones hay, qué sale de cada una y qué
+     ingredientes pide, con una abierta cada vez. */
+  const pb=planBatches(weekDays());
+  const usadas=Object.keys(pb).map(function(k){return pb[k];}).filter(function(b){return b.hasNeed;});
+  const otras=Object.keys(pb).map(function(k){return pb[k];}).filter(function(b){return !b.hasNeed;});
+  if(!usadas.length&&!otras.length)
+    return '<div class="card"><div class="empty">No hay ninguna sesión de cocina montada. Se crean marcando '+
+      'un plato como «de tanda» en Mis platos.</div></div>';
+  const abierta=ui.tandaAbierta||(usadas[0]&&usadas[0].id)||'';
+  const tarjeta=function(b,activa){
+    const list=b.items.filter(function(i){return i.runs>0;});
+    const abierto=(b.id===abierta);
+    const ing=abierto&&activa?ingredientsFor(list):[];
+    const sobra=Math.round(list.reduce(function(a,i){return a+Math.max(0,(i.cooked||0)-(i.needPort||0));},0)*10)/10;
+    return '<div class="tanda'+(abierto?' on':'')+'">'+
+      '<button class="th" data-a="tanda-abrir" data-id="'+esc(b.id)+'" aria-expanded="'+(abierto?'true':'false')+'">'+
+        '<span class="nm"><span class="dia">'+esc(b.label)+'</span>'+
+        '<span class="sub">'+(activa?(list.length+' plato'+(list.length===1?'':'s')):'no entra esta semana')+
+          (b.when?(' · '+esc(b.when)):'')+'</span></span>'+
+        (activa?('<span class="rac">'+b.portions+' raciones</span>'):'')+
+        gymIco('chevron','gico sm ch'+(abierto?' abajo':''))+'</button>'+
+      (abierto?('<div class="tb">'+
+        (activa?list.map(function(i){
+          return '<div class="fila"><span class="em">'+esc(i.dish.icon||'🍽')+'</span>'+
+            '<span class="nm"><b>'+esc(i.dish.name)+'</b><span>'+rac(i.cooked)+' · '+(i.dish.kcal||0)+' kcal'+
+            (i.needPort?(' · tocan '+fmt(i.needPort)):'')+'</span></span>'+
+            '<button class="mini2" data-a="food-cocina" data-id="'+i.dish.id+'">cocinar</button></div>';}).join(''):
+          '<p class="mini" style="margin:9px 0 0">Ningún plato de esta sesión entra en el menú de esta semana.</p>')+
+        (ing.length?('<p class="mini" style="margin:11px 0 3px"><b style="color:var(--ink)">Para toda la sesión</b> '+
+          '· cantidades ya escaladas a estas tandas</p><div class="chips">'+
+          ing.map(function(x){return '<span class="chipx">'+esc((x.q?x.q+' ':'')+x.item)+'</span>';}).join('')+'</div>'):'')+
+        (sobra>0?('<p class="mini" style="margin:9px 0 0">Sobran '+fmt(sobra)+' raciones: al congelador.</p>'):'')+
+        '<div class="row" style="margin-top:10px">'+
+          '<button class="btn s" data-a="batch-edit" data-id="'+esc(b.id)+'">editar la sesión</button>'+
+          '<span class="sp"></span><button class="btn s" data-a="print">imprimir</button></div>'+
+      '</div>'):'')+
+    '</div>';};
+  return '<p class="note" style="margin:0">Las sesiones de cocina de esta semana: qué pones al fuego cada día y '+
+      'cuántos tápers salen. Salen del menú, así que si cambias lo que come un tipo de día, esto y la compra '+
+      'se recalculan solos.</p>'+
+    (usadas.length?usadas.map(function(b){return tarjeta(b,true);}).join(''):
       '<div class="card"><div class="empty">Esta semana no hay ninguna sesión de cocina planificada.</div></div>')+
-    '<div class="row"><button class="btn s" data-a="tab" data-t="batches">abrir cocina en lote →</button></div>';}
+    (otras.length?('<p class="mini" style="margin:12px 0 0">Otras sesiones tuyas, que esta semana no tocan:</p>'+
+      otras.map(function(b){return tarjeta(b,false);}).join('')):'');}
 /* ===================== Mis platos ===================== */
 const PLATOS_TABS=[['','Mis platos'],['antojo','Qué me apetece'],['importar','Importar']];
 const ANTOJO_ING=[['pollo','🍗 pollo'],['pescado','🐟 pescado'],['huevo','🥚 huevo'],['ternera','🥩 carne'],
@@ -3463,9 +3535,13 @@ function renderMisPlatos(){
     cuerpo='<div class="buscador">'+gymIco('lupa','gico sm')+
       '<input id="mpQ" value="'+esc(ui.dishQ||'')+'" data-a="dish-q" placeholder="buscar entre tus platos…"></div>'+
       '<div class="card">'+(ds.length?ds.map(function(d){
+        /* la etiqueta de la tanda venía del «Catálogo de platos», que era la otra pantalla que
+           pintaba estos mismos platos: al fundirlas no se pierde */
+        const b=isBatch(d.batchId)?batchById(d.batchId):null;
         return '<div class="hit"><button class="hitnom" data-a="dish-edit" data-id="'+d.id+'">'+
           '<span class="em">'+esc(d.icon||'🍽')+'</span>'+
-          '<span class="nm"><b>'+esc(d.name)+'</b><span>'+rac(d.portions)+' · '+fmt(d.prot||0)+' g P</span></span>'+
+          '<span class="nm"><b>'+esc(d.name)+'</b><span>'+rac(d.portions)+' · '+fmt(d.prot||0)+' g P'+
+            (b?(' · '+esc(b.label)):'')+'</span></span>'+
           '<span class="kc">'+(d.kcal||0)+'<small>/ración</small></span></button>'+
           '<button class="add" data-a="food-cocina" data-id="'+d.id+'" aria-label="cocinar '+esc(d.name)+'">'+
           gymIco('olla','gico sm')+'</button></div>';}).join(''):
@@ -3728,7 +3804,7 @@ function renderFoodCocina(){
           ('<button class="btn p" style="min-height:46px;flex:1" data-a="cocina-paso" data-n="'+(i+1)+'">siguiente paso</button>'):
           ('<button class="btn p" style="min-height:46px;flex:1" data-a="cocina-hecho" data-id="'+d.id+'">✓ hecho · apuntar una ración</button>'))+
       '</div>'):
-      '<div class="card"><div class="empty">Este plato no tiene pasos escritos. Edítalo en «Días y menús → Catálogo» para tenerlos aquí.</div></div>')+
+      '<div class="card"><div class="empty">Este plato no tiene pasos escritos. Edítalo en «Comer → Mis platos» para tenerlos aquí.</div></div>')+
     '</div>';
 }
 /* ===================== nutrición: trozos de pantalla que se repiten ===================== */
@@ -3908,7 +3984,7 @@ function renderPlatoNuevo(){
     return fuentes[k]+' de '+(k==='usda'?'USDA':(k==='tuyo'?'los tuyos':'la tabla de la app'));}).join(' · ');
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
-      '<button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comida</button>'+
+      '<button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comer</button>'+
       '<h2 class="subtit">'+(pl.id?'Editar plato':'Plato nuevo')+'</h2></div>'+
     '<div class="card"><div class="row">'+
       '<label class="fld" style="flex:0 0 60px">icono<input id="plIcon" value="'+esc(pl.icon||'🍲')+'" data-a="plato-f" data-k="icon" maxlength="4"></label>'+
@@ -5136,13 +5212,13 @@ function renderImport(){
     '</div>'+
   '</div>';
 }
-/* ===================== Días y menús: lista de tipos de día y pantallas propias =====================
+/* ===================== Menú: los tipos de día y sus comidas =====================
    Antes esta vista pintaba los SEIS editores de tipo de día a la vez, más las comidas armadas y el
    catálogo: 9.912 px —11 pantallas—, 202 botones y 64 campos de una sentada. Para cambiar la cena
    del día libre te tragabas los otros cinco días enteros. */
 function menuSubcab(titulo,volver,extra){
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="types-vista" data-v="'+esc(volver.v||'')+'">'+gymIco('atras','gico sm')+' '+esc(volver.t||'Días y menús')+'</button>'+
+    '<button class="btn s volver" data-a="types-vista" data-v="'+esc(volver.v||'')+'">'+gymIco('atras','gico sm')+' '+esc(volver.t||'Menú')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function loQueHay(){
   /* lo que se da por disponible: las listas marcadas «de rutina» más lo fresco que piden las
@@ -5163,33 +5239,44 @@ function platosCocinables(){
   return {listos:todo.filter(function(x){return !x.faltan.length;}),
           casi:todo.filter(function(x){return x.faltan.length&&x.faltan.length<=3;})};}
 function renderTypesLista(){
+  /* la tira de la semana primero: el menú va pegado al TIPO de día, y sin ver qué tipo te toca cada
+     día no se sabe qué vas a comer. Antes había que ir al Calendario a mirarlo. */
+  const dias=weekDays();
+  const tira='<div class="tirasem">'+dias.map(function(d){
+    const sh=d.shiftId?shiftById(d.shiftId):null;
+    const hoy=d.key&&isToday(d.key);
+    return '<button class="'+(hoy?'hoy':'')+'"'+(sh?(' data-a="types-vista" data-v="'+esc(sh.id)+'"'):'')+'>'+
+      '<span>'+esc(d.short)+'</span><em>'+esc(sh?(sh.icon||'🍽'):'·')+'</em>'+
+      '<b>'+esc(sh?sh.name:'—')+'</b></button>';}).join('')+'</div>';
   const filas=store.shifts.map(function(sh){
     const t=dayTotals(sh.id),n=slotsFor(sh.id).length;
     const horas=(sh.start||sh.end)?((sh.start||'—')+'–'+(sh.end||'—')):'sin jornada';
-    return '<div class="res" data-a="types-vista" data-v="'+sh.id+'" style="cursor:pointer">'+
-      '<span style="font-size:20px;flex:none">'+esc(sh.icon)+'</span>'+
-      '<span class="nm"><b>'+esc(sh.name)+'</b><span class="mini">'+esc(horas)+' · '+n+' toma'+(n===1?'':'s')+'</span></span>'+
-      '<span class="tag b2">'+t.kcal+'</span>'+gymIco('chevron','gico sm')+'</div>';}).join('');
+    return '<div class="hit"><button class="hitnom" data-a="types-vista" data-v="'+esc(sh.id)+'">'+
+      '<span class="em">'+esc(sh.icon||'🍽')+'</span>'+
+      '<span class="nm"><b>'+esc(sh.name)+'</b><span>'+esc(horas)+' · '+n+' toma'+(n===1?'':'s')+'</span></span>'+
+      '<span class="kc">'+t.kcal+'<small>kcal/día</small></span></button>'+
+      gymIco('chevron','gico sm')+'</div>';}).join('');
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="subcab"><h2 class="subtit" style="font-size:19px">Días y menús</h2></div>'+
-    '<p class="note" style="margin:0">Qué se come en cada tipo de día. Toca uno para ver y cambiar sus comidas.</p>'+
-    '<div class="card">'+(filas||'<div class="empty">No hay tipos de día: créalos en «Turno y rotación».</div>')+'</div>'+
-    '<div class="gtiles">'+
-      '<button class="gtile" data-a="types-vista" data-v="meals">'+gymIco('caja')+
-        '<b>Comidas armadas</b><span class="n">'+store.meals.length+'</span><span class="s">bloques reutilizables</span></button>'+
-      '<button class="gtile" data-a="types-vista" data-v="dishes">'+gymIco('libro')+
-        '<b>Catálogo</b><span class="n">'+store.dishes.length+'</span><span class="s">platos</span></button>'+
-      '<button class="gtile" data-a="food-vista" data-v="cocina-panel">'+gymIco('olla')+
-        '<b>Qué cocino</b><span class="n">'+platosCocinables().listos.length+'</span><span class="s">salen enteros</span></button>'+
-      '<button class="gtile" data-a="tab" data-t="import">'+gymIco('importar')+
-        '<b>Importar</b><span class="n">·</span><span class="s">receta de un vídeo</span></button>'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="nav-comer">'+gymIco('atras','gico sm')+' Comer</button>'+
+      '<h2 class="subtit">Menú</h2><span class="tag b2">'+store.shifts.length+' tipos</span></div>'+
+    '<div class="card"><h2>Qué te toca comer esta semana <span class="mini">'+esc(rangoSemanaTxt())+'</span></h2>'+
+      tira+
+      '<p class="mini" style="margin:9px 0 0">Sale de tu rotación: el menú va pegado al tipo de día, no a la fecha.</p></div>'+
+    '<div class="card"><h2>Tus tipos de día <span class="mini">toca uno para cambiar sus comidas</span></h2>'+
+      (filas||'<div class="empty">No hay tipos de día: créalos en «Turno y rotación».</div>')+'</div>'+
+    '<div class="row">'+
+      '<button class="btn s" data-a="types-vista" data-v="meals">'+gymIco('caja','gico sm')+
+        ' comidas armadas <span class="mini">('+store.meals.length+')</span></button>'+
+      '<button class="btn s" data-a="food-vista" data-v="platos">'+gymIco('libro','gico sm')+
+        ' mis platos <span class="mini">('+store.dishes.length+')</span></button>'+
     '</div></div>';}
 function renderTypesDia(shiftId){
   const sh=shiftById(shiftId);
   if(!sh){ui.typesVista='';return renderTypesLista();}
   const t=dayTotals(sh.id),slots=slotsFor(sh.id);
   $('#main').innerHTML='<div class="grid">'+
-    menuSubcab(sh.icon+' '+sh.name,{v:'',t:'Días y menús'},'<span class="tag b2">'+t.kcal+' kcal</span>')+
+    menuSubcab(sh.icon+' '+sh.name,{v:'',t:'Menú'},'<span class="tag b2">'+t.kcal+' kcal</span>')+
     '<div class="card"><div class="row" style="justify-content:space-between">'+
       '<span class="mini">'+esc((sh.start||sh.end)?((sh.start||'—')+'–'+(sh.end||'—')):'sin jornada')+' · carga '+esc(sh.intensity||'—')+'</span>'+
       '<span class="row" style="gap:6px"><span class="tag b3">'+t.prot+' g P</span><span class="tag">'+t.parts+' rac./día</span></span></div>'+
@@ -5209,7 +5296,7 @@ function renderTypesDia(shiftId){
     '</div></div>';}
 function renderTypesMeals(){
   $('#main').innerHTML='<div class="grid">'+
-    menuSubcab('Comidas armadas',{v:'',t:'Días y menús'},'<span class="tag b2">'+store.meals.length+'</span>')+
+    menuSubcab('Comidas armadas',{v:'',t:'Menú'},'<span class="tag b2">'+store.meals.length+'</span>')+
     '<div class="card"><p class="note">Bloques reutilizables (el táper de guardia, el brunch del saliente…). Un cambio aquí actualiza todos los días que las usen.</p>'+
     (store.meals.map(function(m){const t=totals(m.items);
       return '<div class="res"><span class="nm"><b>'+esc(m.name)+'</b><span class="mini">'+
@@ -5219,95 +5306,63 @@ function renderTypesMeals(){
         '<span class="row" style="gap:4px"><button class="btn s" data-a="meal-edit" data-id="'+m.id+'">editar</button>'+
         '<button class="btn d s" data-a="meal-del" data-id="'+m.id+'">×</button></span></div>';}).join('')||'<div class="empty">Ninguna todavía.</div>')+
     '<div class="row" style="margin-top:11px"><button class="btn p" data-a="meal-new">+ Crear comida</button></div></div></div>';}
-function renderTypesDishes(){
-  const q=(ui.dishQ||'').toLowerCase();
-  const lista=store.dishes.filter(function(d){return !q||(d.name||'').toLowerCase().indexOf(q)>=0;});
-  $('#main').innerHTML='<div class="grid">'+
-    menuSubcab('Catálogo de platos',{v:'',t:'Días y menús'},'<span class="tag b2">'+store.dishes.length+'</span>')+
-    '<div class="buscador"><input id="dishQ" value="'+esc(ui.dishQ||'')+'" data-a="dish-q" placeholder="buscar un plato…"></div>'+
-    '<div class="platos">'+(lista.map(function(d){const b=batchById(d.batchId);
-      return '<div class="plato" data-a="dish-edit" data-id="'+d.id+'" style="cursor:pointer">'+
-        '<span class="pic">'+esc(d.icon||'🍽')+'</span><b>'+esc(d.name)+'</b>'+
-        '<span class="mini">'+rac(d.portions)+' · '+d.kcal+' kcal · '+d.prot+' g P</span>'+
-        (b&&isBatch(d.batchId)?'<span class="tag '+tagFor(d.batchId)+'" style="margin-top:5px">'+esc(b.label)+'</span>':'')+
-        '</div>';}).join('')||'<div class="empty">Nada con ese nombre.</div>')+'</div>'+
-    '<div class="row" style="margin-top:12px"><button class="btn p" data-a="plato-nuevo">+ Plato con ingredientes</button>'+
-    '<button class="btn s" data-a="dish-new">+ a mano</button>'+
-    '<button class="btn s" data-a="tab" data-t="import">📥 importar de un vídeo</button></div>'+
-    '<p class="mini" style="margin:8px 0 0">«Con ingredientes» calcula solo las kcal, los macros y los micros desde la tabla de alimentos. '+
-    '«A mano» es el editor de siempre, para cuando ya te sabes los números.</p></div>';}
+/* «Catálogo de platos» y «Mis platos» pintaban los mismos store.dishes en dos pantallas, cada una
+   con su buscador y sus botones de crear e importar. Ahora hay una, y el nombre viejo lleva a ella. */
 function renderTypes(){
   const v=ui.typesVista||'';
   if(v==='meals')return renderTypesMeals();
-  if(v==='dishes')return renderTypesDishes();
+  if(v==='dishes'){ui.typesVista='';ui.tab='food';ui.foodVista='platos';ui.platosTab='';return renderFood();}
   if(v&&shiftById(v))return renderTypesDia(v);
   return renderTypesLista();}
 function slotRow(shiftId,s,i,count){
+  /* cada toma es una TARJETA, no una fila de tabla. La fila metía hora, etiqueta, selector, kcal,
+     tres botones y los platos en un grid de una línea: con un nombre de plato largo se salía de la
+     pantalla (medido: 415 px de ancho en un móvil de 412). */
   const inf=slotItems(shiftId,s);
-  const mealOpt=`<option value="">platos sueltos</option>${store.meals.map(m=>`<option value="${m.id}" ${s.mealId===m.id?'selected':''}>🍱 ${esc(m.name)}</option>`).join('')}`;
-  const dishOpt=id=>store.dishes.map(d=>`<option value="${d.id}" ${d.id===id?'selected':''}>${esc(d.icon)} ${esc(d.name)}${isBatch(d.batchId)?' · '+esc((batchById(d.batchId)||{}).label||''):''}</option>`).join('');
   const t=totals(inf.items);
-  const sub=inf.items.map((it,j)=>`<span class="tag"><select style="border:0;background:transparent;font-size:11px;padding:0;max-width:170px" data-a="it-dish" data-i="${i}" data-j="${j}" data-shift="${shiftId}">${dishOpt(it.id)}</select>
-     <input type="number" step="0.5" min="0.5" style="width:44px;border:0;background:transparent;font-size:11px;padding:0" value="${fmt(num(it.portions,1))}" data-a="it-port" data-i="${i}" data-j="${j}" data-shift="${shiftId}">
-     <button class="btn d" style="padding:0 2px" data-a="it-del" data-i="${i}" data-j="${j}" data-shift="${shiftId}">×</button></span>`).join('');
-  return `<li class="slot" data-slot="${s.id}" data-shift="${shiftId}">
-    <input class="st" value="${esc(s.time||'')}" placeholder="14:00" data-a="slot-time" data-i="${i}" data-shift="${shiftId}">
-    <input class="sl" value="${esc(s.label||'')}" placeholder="etiqueta de la comida" data-a="slot-label" data-i="${i}" data-shift="${shiftId}">
-    <select class="sm" data-a="slot-meal" data-i="${i}" data-shift="${shiftId}">${mealOpt}</select>
-    <span class="sk mini">${t.kcal}k</span>
-    <span class="sx no-print">
-      <button class="btn s" style="padding:0 4px;font-size:10px" data-a="slot-up" data-i="${i}" data-shift="${shiftId}" ${i===0?'disabled':''} title="subir">↑</button>
-      <button class="btn s" style="padding:0 4px;font-size:10px" data-a="slot-down" data-i="${i}" data-shift="${shiftId}" ${i>=count-1?'disabled':''} title="bajar">↓</button>
-      <button class="btn d" style="padding:0 4px;font-size:10px" data-a="slot-del" data-i="${i}" data-shift="${shiftId}" title="quitar del día">×</button></span>
-    <span class="sd">${inf.meal?`<span class="tag b2">🍱 ${esc(inf.name)}${t.parts?' · '+rac(t.parts)+' · '+t.prot+' g P':''}</span>`
-      :(sub||'<span class="mini">sin plato')}${inf.meal
-        ?' <button class="btn s" data-a="slot-meal-edit" data-i="'+i+'" data-shift="'+shiftId+'" title="edita la comida armada: se cambia en todos los días que la usen">editar comida</button>'
-          +' <button class="btn s" data-a="slot-loose" data-i="'+i+'" data-shift="'+shiftId+'" title="desmonta la comida solo en este día y deja los platos sueltos para tunearlos">montar suelto</button>'
-        :' <button class="btn s" data-a="it-add" data-i="'+i+'" data-shift="'+shiftId+'">+ plato</button>'
-          +(inf.items.length?' <button class="btn s" data-a="slot-tomeal" data-i="'+i+'" data-shift="'+shiftId+'" title="convierte estos platos en una comida reutilizable para otros días">guardar como comida</button>':'')}</span>
-  </li>`;
+  const mealOpt='<option value="">platos sueltos</option>'+store.meals.map(function(m){
+    return '<option value="'+m.id+'"'+(s.mealId===m.id?' selected':'')+'>🍱 '+esc(m.name)+'</option>';}).join('');
+  const dishOpt=function(id){return store.dishes.map(function(d){
+    return '<option value="'+d.id+'"'+(d.id===id?' selected':'')+'>'+esc(d.icon)+' '+esc(d.name)+
+      (isBatch(d.batchId)?' · '+esc((batchById(d.batchId)||{}).label||''):'')+'</option>';}).join('');};
+  const cuerpo=inf.meal
+    ? '<span class="pl arm">🍱 '+esc(inf.name)+(t.parts?(' <b>'+rac(t.parts)+'</b>'):'')+'</span>'
+    : (inf.items.map(function(it,j){
+        return '<span class="pl"><select data-a="it-dish" data-i="'+i+'" data-j="'+j+'" data-shift="'+shiftId+'">'+
+          dishOpt(it.id)+'</select>'+
+          '<input type="number" step="0.5" min="0.5" value="'+fmt(num(it.portions,1))+'" '+
+            'data-a="it-port" data-i="'+i+'" data-j="'+j+'" data-shift="'+shiftId+'" aria-label="raciones">'+
+          '<button class="x" data-a="it-del" data-i="'+i+'" data-j="'+j+'" data-shift="'+shiftId+'" aria-label="quitar el plato">×</button></span>';
+      }).join('')||'<span class="mini">sin plato todavía</span>');
+  const acciones=inf.meal
+    ? '<button class="mini2" data-a="slot-meal-edit" data-i="'+i+'" data-shift="'+shiftId+'" title="se cambia en todos los días que la usen">editar la comida armada</button>'+
+      '<button class="mini2" data-a="slot-loose" data-i="'+i+'" data-shift="'+shiftId+'" title="desmonta la comida solo en este día">montar suelto</button>'
+    : '<button class="mini2" data-a="it-add" data-i="'+i+'" data-shift="'+shiftId+'">+ plato</button>'+
+      (inf.items.length?('<button class="mini2" data-a="slot-tomeal" data-i="'+i+'" data-shift="'+shiftId+'" title="conviértela en una comida reutilizable">guardar como comida</button>'):'');
+  return '<li class="toma2" data-slot="'+s.id+'" data-shift="'+shiftId+'">'+
+    '<div class="cab">'+
+      '<input class="st" value="'+esc(s.time||'')+'" placeholder="14:00" data-a="slot-time" data-i="'+i+'" data-shift="'+shiftId+'" aria-label="hora">'+
+      '<input class="sl" value="'+esc(s.label||'')+'" placeholder="etiqueta de la comida" data-a="slot-label" data-i="'+i+'" data-shift="'+shiftId+'" aria-label="etiqueta">'+
+      '<span class="kc">'+t.kcal+' kcal</span>'+
+    '</div>'+
+    '<div class="cuerpo">'+cuerpo+'</div>'+
+    '<div class="acc">'+
+      '<select class="sm" data-a="slot-meal" data-i="'+i+'" data-shift="'+shiftId+'" aria-label="comida armada">'+mealOpt+'</select>'+
+      acciones+
+      '<span class="sp"></span>'+
+      '<button class="mini2 no-print" data-a="slot-up" data-i="'+i+'" data-shift="'+shiftId+'"'+(i===0?' disabled':'')+' title="subir" aria-label="subir">↑</button>'+
+      '<button class="mini2 no-print" data-a="slot-down" data-i="'+i+'" data-shift="'+shiftId+'"'+(i>=count-1?' disabled':'')+' title="bajar" aria-label="bajar">↓</button>'+
+      '<button class="mini2 d no-print" data-a="slot-del" data-i="'+i+'" data-shift="'+shiftId+'" title="quitar del día" aria-label="quitar la toma">×</button>'+
+    '</div></li>';
 }
 
 /* ===================== render: cocina ===================== */
 function renderBatches(){
-  const days=weekDays(), pb=planBatches(days);
-  const html=store.batches.map(b=>{
-    const items=store.dishes.filter(d=>d.batchId===b.id);
-    if(!items.length)return '';
-    const u=pb[b.id]||{items:[],portions:0,hasNeed:false};
-    const list=u.hasNeed?u.items.filter(i=>i.runs>0):items.map(d=>({dish:d,needPort:0,runs:1,cooked:d.portions||1}));
-    const ingUse=ingredientsFor(list);
-    const extra=Math.round(list.reduce((a,i)=>a+Math.max(0,(i.cooked||0)-(i.needPort||0)),0)*10)/10;
-    return `<div class="session">
-      <h3>${b.id==='bn'?'🍳 '+esc(b.label):'🔥 '+esc(b.label)}
-        ${b.when?`<span class="tag">${esc(b.when)}</span>`:''}<span class="sp"></span>
-        ${u.hasNeed?`<span class="tag b2">${u.portions} rac. · ${list.length} receta(s)</span>`:'<span class="tag">no se usa esta semana</span>'}
-        ${u.hasNeed&&extra>0?`<span class="tag b3">${extra} rac. de sobra → congelador</span>`:''}</h3>
-      <p class="mini" style="margin:0 0 8px">${esc(b.note||'')}</p>
-      <div class="cols">
-        <div><b class="mini">TANDAS A HACER</b><ul>
-          ${items.map(d=>{const x=u.items.find(i=>i.dish.id===d.id)||{needPort:0,runs:0,cooked:0};
-            return `<li>${esc(d.icon)} <b>${esc(d.name)}</b><br><span class="mini">${x.needPort?`tocan ${x.needPort} rac. → <b>${x.runs} tanda${x.runs>1?'s':''}</b> (${x.cooked} rac.)`:'no entra esta semana'}${x.cooked>x.needPort&&x.needPort?` · sobran ${Math.round((x.cooked-x.needPort)*10)/10} para congelar`:''}</span></li>`}).join('')}
-        </ul></div>
-        <div><b class="mini">PASOS</b><ul>
-          ${items.map(d=>`<li><b>${esc(d.name)}</b><ul>${(d.steps||[]).map(s=>`<li class="mini">${esc(s)}</li>`).join('')}</ul></li>`).join('')}
-        </ul></div>
-        <div><b class="mini">INGREDIENTES · ${list.length} receta(s) · ${u.portions||0} raciones</b>
-          <div class="mini" style="font-weight:400;margin:-2px 0 6px">${u.hasNeed?'cantidades ya escaladas a las tandas de esta semana':'una tanda de cada (aún no está asignada a ningún día)'}</div>
-          <ul>
-          ${ingUse.map(i=>`<li class="mini">${esc(i.q?i.q+' ':'')}${esc(i.item)}${i.also?' <span class="mini">· '+esc(i.also)+'</span>':''}</li>`).join('')}
-        </ul>
-        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="batch-edit" data-id="${b.id}">Editar sesión</button></div>
-        </div>
-      </div></div>`}).join('');
-  $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>Cocinar en lote</h2><p class="note">Una o dos sesiones por semana y táperes para todos los tipos de día. Las cantidades dependen de la semana que estés viendo en «Semana» (nº de guardias, salientes, fuerza, libres): cambia allí y esto se recalcula.</p>
-      <div class="row"><button class="btn s" data-a="batch-new">+ Nueva sesión</button>
-      <button class="btn s" data-a="tab" data-t="shop">Ver lista de la compra</button>
-      <span class="sp"></span><button class="btn s" data-a="print">Imprimir (semana + cocina + compra)</button></div></div>
-    ${html||'<div class="card empty">No hay sesiones de cocina: crea una y asígnale platos.</div>'}
-  </div>`;
-}
+  /* «Cocina en lote» ya no es una pantalla aparte: es la pestaña «En lote» de Cocina */
+  ui.tab='food';ui.foodVista='cocina-panel';ui.cocinaTab='lote';
+  return renderCocinaPanel();}
+
+/* ---------- ingredientes y listas de la compra ---------- */
 function parseIng(line){
   const raw=String(line).trim();
   if(!raw)return {q:'',unit:'',num:null,item:''};
@@ -5448,63 +5503,107 @@ function listaTarjHTML(l){
         :'<div class="empty">Con esta lista no sale ninguna receta entera todavía. Añade más cosas.</div>')+
       '</div>'):'')+
     '</div>';}
-function renderShop(){
+
+/* ===================== la compra =====================
+   La lista era 59 casillas seguidas, sin agrupar y sin decir de dónde sale cada cosa, y con la
+   tarjeta «Mis listas» por encima de la propia lista —que es lo que miras en el supermercado—.
+   Ahora los datos se calculan una vez (compraDatos) y los usan la lista Y la cadena de la portada. */
+function compraDatos(){
   const days=weekDays(), pb=planBatches(days);
-  /* se usa la misma cuenta que la tarjeta de cocina: tandas completas de cada receta */
-  const agg={},order=[];let recipes=0;
-  Object.keys(pb).forEach(k=>{const b=pb[k];if(!b.hasNeed)return;
-    const list=b.items.filter(i=>i.runs>0);recipes+=list.length;
-    ingredientsFor(list).forEach(i=>{
+  const agg={},order=[];let recetas=0;
+  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;
+    const list=b.items.filter(function(i){return i.runs>0;});recetas+=list.length;
+    ingredientsFor(list).forEach(function(i){
       const key=i.item.toLowerCase()+'|'+(i.unit||'');
       const n=parseFloat(String(i.q).replace(',','.'));
       if(!agg[key]){agg[key]={item:i.item,unit:i.unit,num:(isNaN(n)?null:n),hasNum:!isNaN(n),notes:new Set()};order.push(key);}
       else{const g=agg[key];if(!isNaN(n)&&g.hasNum)g.num+=n;else if(i.also)g.notes.add(i.also);}
       if(i.also)agg[key].notes.add(i.also);});});
-  const rows=order.map(k=>{const m=agg[k];
+  const fresco=order.map(function(k){const m=agg[k];
     const q=m.hasNum?fmt(roundNice(m.num))+(m.unit?' '+m.unit:''):'al gusto';
     /* «3 recetas, 2 recetas» no dice nada: si todas las notas son recuentos, se queda el mayor */
     const notas=Array.from(m.notes);
     const cuentas=notas.map(function(x){const mm=/^(\d+) recetas$/.exec(x);return mm?+mm[1]:null;});
-    const from=cuentas.every(function(c){return c!=null;})&&notas.length
+    const de=cuentas.every(function(c){return c!=null;})&&notas.length
       ? Math.max.apply(Math,cuentas)+' recetas' : notas.join(', ');
-    return {sort:m.item,label:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),from:from};});
-  rows.sort((a,b)=>a.sort.localeCompare(b.sort,'es'));
+    return {sort:m.item,texto:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),de:de};});
+  fresco.sort(function(a,b){return a.sort.localeCompare(b.sort,'es');});
   const key=(store.rotation.mode==='date'?iso(weekDate):'tpl'+store.rotation.pattern);
-  const chk=function(id,texto,nota){const on=ui.marks.has(id);
-    /* el «·» solo si de verdad hay una nota: antes salía «25 g curry ·» a secas */
-    return '<li class="chk '+(on?'done':'')+'" data-a="mark" data-id="'+esc(id)+'">'+
-      '<input type="checkbox" '+(on?'checked':'')+'><span>'+esc(texto)+
-      (nota?' <span class="mini">· '+esc(nota)+'</span>':'')+'</span></li>';};
-  const rutina=itemsDeRutina();
   /* la lista de origen solo se nombra si hay más de una «de rutina»: con una sola era repetir el
      mismo nombre en cada línea */
   const variasFijas=listasS().filter(function(l){return l.fija;}).length>1;
-  const htmlRutina=rutina.map(function(r){return chk('fija#'+r.texto,r.texto,variasFijas?r.lista:'');}).join('');
-  const htmlFresco=rows.map(function(r){return chk(key+'#'+r.sort,r.label,r.from);}).join('');
-  /* los desayunos rápidos no son tanda de cocina pero se gastan cada día: se reponen igual, así que
-     van en la misma lista en vez de en una tarjeta aparte */
-  const basicos=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);});
-  const htmlBasicos=basicos.map(function(x){
-    return chk('base#'+x.d.id,fmt(x.q)+'× '+x.d.icon+' '+x.d.name,x.viaMeal?'viene en comida armada':'');}).join('');
-  const listas=listasS().map(listaTarjHTML).join('');
-  $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>La compra de esta semana</h2>
-      <p class="note">Lo que compras siempre (tus listas «de rutina») más lo fresco que piden las tandas de la semana vista. Marca lo que ya tengas.</p>
-      <div class="row"><button class="btn s" data-a="mark-clear">Limpiar marcados</button><button class="btn s" data-a="print">Imprimir</button>
-      <span class="sp"></span><span class="mini">${rutina.length} de rutina · ${basicos.length} básicos · ${rows.length} frescos (${recipes} receta(s))</span></div>
-      ${rutina.length?`<h3 class="subh">De rutina</h3><ul>${htmlRutina}</ul>`:''}
-      ${basicos.length?`<h3 class="subh">Básicos del desayuno de diario</h3><ul>${htmlBasicos}</ul>`:''}
-      ${rows.length?`<h3 class="subh">Fresco de esta semana</h3><ul>${htmlFresco}</ul>`
-        :'<div class="empty" style="margin-top:10px">Sin tandas esta semana: nada que comprar fresco.</div>'}
-    </div>
-    <div class="card"><h2>Mis listas</h2>
-      <p class="note">Las listas que haces siempre. Márcalas «de rutina» y entran solas arriba; y con «qué platos salen» ves qué recetas puedes hacer con lo que llevas.</p>
-      ${listas||'<div class="empty">Todavía no tienes ninguna lista.</div>'}
-      <div class="row" style="margin-top:10px;gap:6px">
-        <input id="lsNueva" placeholder="nombre de la lista nueva…" style="flex:1 1 180px">
-        <button class="btn p" data-a="lista-add">+ Crear lista</button></div>
-    </div>
-  </div>`;
+  const rutina=itemsDeRutina().map(function(r){
+    return {id:'fija#'+r.texto,texto:r.texto,de:variasFijas?r.lista:''};});
+  /* los desayunos rápidos no son tanda de cocina pero se gastan cada día: se reponen igual */
+  const basicos=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);})
+    .map(function(x){return {id:'base#'+x.d.id,texto:fmt(x.q)+'× '+x.d.icon+' '+x.d.name,
+      de:x.viaMeal?'viene en comida armada':''};});
+  const grupos=[
+    ['fresco','Fresco de esta semana',fresco.map(function(r){return {id:key+'#'+r.sort,texto:r.texto,de:r.de};})],
+    ['rutina','De rutina',rutina],
+    ['basicos','Básicos del desayuno',basicos]];
+  let total=0,marcados=0;
+  grupos.forEach(function(g){g[2].forEach(function(x){total++;if(ui.marks.has(x.id))marcados++;});});
+  return {grupos:grupos,total:total,marcados:marcados,recetas:recetas};}
+function compraLineaHTML(x){
+  const on=ui.marks.has(x.id);
+  return '<li class="linea'+(on?' ok':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
+    '<span class="box" role="checkbox" aria-checked="'+(on?'true':'false')+'"></span>'+
+    '<span class="tx"><b>'+esc(x.texto)+'</b>'+
+    (x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):'')+'</span></li>';}
+let _compraUlt={total:0,marcados:0};
+function compraPinta(){
+  /* en el supermercado se tocan veinte cosas seguidas: se actualiza la barra y la cifra a mano en
+     vez de repintar la pantalla entera (que además cerraría el teclado y movería el scroll) */
+  const bar=document.querySelector('#main .prog .bar i'),num=document.querySelector('#main .prog b'),
+        tag=document.querySelector('#main .subcab .tag');
+  if(!bar)return;
+  const t=_compraUlt.total,m=Math.max(0,Math.min(t,_compraUlt.marcados));
+  bar.style.width=(t?Math.round(m/t*100):0)+'%';
+  if(num)num.textContent=m+' de '+t;
+  if(tag)tag.textContent=m+' / '+t;}
+function renderShop(){
+  if(ui.shopVista==='listas')return renderShopListas();
+  const d=compraDatos(),pct=d.total?Math.round(d.marcados/d.total*100):0;
+  _compraUlt={total:d.total,marcados:d.marcados};
+  const cuerpo=d.grupos.map(function(g){
+    if(!g[2].length)return '';
+    const abierto=!ui.compraCerradas||!ui.compraCerradas.has(g[0]);
+    return '<button class="seccion" data-a="compra-sec" data-k="'+g[0]+'" aria-expanded="'+(abierto?'true':'false')+'">'+
+      '<b>'+esc(g[1])+'</b><span class="n">'+g[2].length+'</span>'+
+      gymIco('chevron','gico sm ch'+(abierto?' abajo':''))+'</button>'+
+      (abierto?('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>'):'');}).join('');
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="nav-comer">'+gymIco('atras','gico sm')+' Comer</button>'+
+      '<h2 class="subtit">Compra</h2><span class="tag b2">'+d.marcados+' / '+d.total+'</span></div>'+
+    '<div class="card">'+
+      /* esto SÍ es progreso: cuántas cosas de la lista llevas ya en el carro */
+      '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+d.marcados+' de '+d.total+'</b></div>'+
+      '<p class="note" style="margin:0">Lo fresco sale de las tandas de esta semana ('+d.recetas+' receta'+
+        (d.recetas===1?'':'s')+'); lo de rutina, de tus listas. Marca lo que eches al carro.</p>'+
+      (d.total?cuerpo:'<div class="empty">Sin tandas esta semana y sin listas «de rutina»: nada que comprar.</div>')+
+    '</div>'+
+    '<div class="row">'+
+      '<button class="btn s" data-a="mark-clear">limpiar marcados</button>'+
+      '<button class="btn s" data-a="print">imprimir</button>'+
+      '<span class="sp"></span>'+
+      '<button class="btn s" data-a="compra-listas">mis listas <span class="mini">('+listasS().length+')</span></button>'+
+    '</div></div>';
+}
+function renderShopListas(){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="compra-volver">'+gymIco('atras','gico sm')+' Compra</button>'+
+      '<h2 class="subtit">Mis listas</h2><span class="tag b2">'+listasS().length+'</span></div>'+
+    '<div class="card">'+
+      '<p class="note">Las listas que haces siempre. Márcalas «de rutina» y entran solas en la compra de la '+
+      'semana; y con «qué platos salen» ves qué recetas puedes hacer con lo que llevas.</p>'+
+      (listasS().map(listaTarjHTML).join('')||'<div class="empty">Todavía no tienes ninguna lista.</div>')+
+      '<div class="row" style="margin-top:10px;gap:6px">'+
+        '<input id="lsNueva" placeholder="nombre de la lista nueva…" style="flex:1 1 180px">'+
+        '<button class="btn p" data-a="lista-add">+ Crear lista</button></div>'+
+    '</div></div>';
 }
 
 /* ===================== render: turno y rotación ===================== */
@@ -6104,13 +6203,27 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comida'],['habitos','Hábitos'],['types','Días y menús'],['batches','Cocina en lote'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
+/* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
+   se nombraban entre ellos, aunque el código ya los encadena (el menú manda en las tandas y las
+   tandas mandan en la compra). Son una sola sección con cuatro modos, como Calendario. */
+const COMER_SET=new Set(['food','shop','types','batches','import']);
+function comerModo(){
+  if(ui.tab==='shop')return 'compra';
+  if(ui.tab==='types')return 'menu';
+  if(ui.tab==='batches')return 'cocina';
+  if(ui.tab==='food'&&ui.foodVista==='cocina-panel')return 'cocina';
+  return 'dia';}
+function comerModosHTML(){
+  const m=comerModo(),b=function(k,txt,a,v){
+    return '<button class="'+(m===k?'on':'')+'" data-a="'+a+'" data-'+(a==='tab'?'t':'v')+'="'+v+'"'+
+      (m===k?' aria-current="true"':'')+'>'+txt+'</button>';};
+  return b('dia','Hoy','food-vista','')+b('menu','Menú','tab','types')+
+    b('cocina','Cocina','food-vista','cocina-panel')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Comida',[['food','🍽 Comida']]],
   ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos']]],
-  ['Cocina',[['types','📖 Días y menús'],['batches','🧊 Cocina en lote'],['import','📥 Importar receta']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -6128,16 +6241,16 @@ function renderNow(){
   if(ui.scanStream&&ui.tab!=='food')pararEscaner();   /* solo si de verdad se sale de Comida: un render de paso (p. ej. al filtrar) no debe apagar la cámara */
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
-  const inCal=CAL_SET.has(ui.tab);
+  const inCal=CAL_SET.has(ui.tab),inComer=COMER_SET.has(ui.tab);
   $('#tabs').innerHTML=
     `<button class="${inCal?'on':''}" data-a="nav-cal"${inCal?' aria-current="true"':''}>Calendario</button>`+
     `<button class="${ui.tab==='gym'?'on':''}" data-a="tab" data-t="gym"${ui.tab==='gym'?' aria-current="true"':''}>Entreno${BADGE.gym?'<span class="tb">'+BADGE.gym+'</span>':''}</button>`+
-    `<button class="${ui.tab==='shop'?'on':''}" data-a="tab" data-t="shop"${ui.tab==='shop'?' aria-current="true"':''}>Compra</button>`+
-    (function(){const masLbl='Más'+(BADGE.food?' — hay comida apuntada hoy sin revisar':'');
-      return `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer" title="${esc(masLbl)}" aria-label="${esc(masLbl)}">☰ Más${BADGE.food?'<span class="tb" aria-hidden="true">●</span>':''}</button>`;})();
+    `<button class="${inComer?'on':''}" data-a="nav-comer"${inComer?' aria-current="true"':''}>Comer</button>`+
+    `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer" title="Más" aria-label="Más">☰ Más</button>`;
   const cm=$('#calModes');
-  if(cm){cm.hidden=!inCal;
-    cm.innerHTML=inCal?CAL_MODES.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${(t[0]==='month'&&BADGE.month)?'<span class="tb">'+BADGE.month+'</span>':''}</button>`).join(''):'';}
+  if(cm){cm.hidden=!inCal&&!inComer;
+    cm.innerHTML=inCal?CAL_MODES.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${(t[0]==='month'&&BADGE.month)?'<span class="tb">'+BADGE.month+'</span>':''}</button>`).join(''):
+      (inComer?comerModosHTML():'');}
   const dr=$('#drawer');
   if(dr)dr.innerHTML='<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
     DRAWER_GROUPS.map(g=>'<div class="drawer-group"><h4>'+g[0]+'</h4>'+
@@ -6408,6 +6521,13 @@ function act(a,el){
   const id=el.dataset.id;
   switch(a){
     case 'tab':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;render();window.scrollTo(0,0);break;
+    case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
+    case 'compra-sec':{const k=el.dataset.k||'';
+      if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
+      render();break;}
+    case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
+    case 'compra-listas':{ui.shopVista='listas';render();window.scrollTo(0,0);break;}
+    case 'compra-volver':{ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'nav-cal':ui.tab=ui.calMode||'month';render();window.scrollTo(0,0);break;
     case 'drawer-toggle':if(ui.drawerOpen)closeDrawer();else openDrawer();break;
     case 'drawer-close':closeDrawer();break;
@@ -7076,7 +7196,7 @@ function act(a,el){
     case 'rules':editRules();break;
     case 'txt':$('#txtOut').value=toText();break;
     case 'txtcopy':copy($('#txtOut').value||toText());break;
-    case 'day-edit':{if(!id)break;ui.tab='types';render();
+    case 'day-edit':{if(!id)break;ui.tab='types';ui.typesVista=id;render();
       setTimeout(function(){const c=$('#main .card[data-shift="'+id+'"]');
         if(c){c.style.outline='2px solid var(--brand)';c.scrollIntoView({behavior:'smooth',block:'start'});
           setTimeout(function(){c.style.outline='';},1400);}},60);break;}
@@ -7126,7 +7246,11 @@ function act(a,el){
       store.dishes.forEach(d=>{if(d.batchId===id)d.batchId='bn';});
       store.batches=store.batches.filter(x=>x.id!==id);save();render();});break;}
     case 'mark':{const on=!ui.marks.has(id);if(on)ui.marks.add(id);else ui.marks.delete(id);
-      el.classList.toggle('done',on);const cb=el.querySelector('input');if(cb)cb.checked=on;saveMarks();break;}
+      el.classList.toggle('done',on);el.classList.toggle('ok',on);
+      const cb=el.querySelector('input');if(cb)cb.checked=on;
+      const bx=el.querySelector('.box');if(bx)bx.setAttribute('aria-checked',on?'true':'false');
+      _compraUlt.marcados+=on?1:-1;compraPinta();
+      saveMarks();break;}
     case 'mark-clear':ui.marks=new Set();saveMarks();render();break;
     case 'pat-use':store.rotation.pattern=store.patterns.findIndex(p=>p.id===id);store.rotation.mode='template';save();render();break;
     case 'pat-new':{store.patterns.push({id:uid('pat'),name:'Semana nueva',days:['G','','','','','',''],note:''});save();render();break;}
@@ -7358,7 +7482,7 @@ function applyParse(info,opt){
 
   save();render();
   return 'Aplicado: '+g.patterns.length+' semana(s) tipo · '+created+' turno(s) nuevo(s) · '+timed+' horario(s) actualizado(s).'
-    +(avisos.length?' · '+avisos.join(' · '):'')+' Repasa «Turno y rotación» y «Días y menús».';
+    +(avisos.length?' · '+avisos.join(' · '):'')+' Repasa «Turno y rotación» y «Comer → Menú».';
 }
 /* --- dieta pegada → sugerencias sobre el catálogo existente --- */
 const ING_STOP=new Set(['g','kg','ml','l','litro','litros','cda','cdta','lata','latas','diente','dientes','rebanada','rebanadas','rodaja','rodajas','pieza','piezas','bote','botes','puñad','puñado','chorro','chorros','sal','aceite','de','oliva','virgen','extra','unidad','unidades','una','uno','el','la','los','las','al','gusto','y','o','con','sin','medio','media','natural','fresco','fresca','cocido','cocida','merienda']);
@@ -8439,7 +8563,7 @@ function registrarSW(){
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
 window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
-  shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,
+  shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,staplesFor,schedLine,dayLine,RKEYS,

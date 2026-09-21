@@ -54,15 +54,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
 
-  // navegación: Calendario (Hoy/Semana/Mes) agrupa 3 modos; Entreno/Compra son pestañas fijas;
-  // el resto vive en el menú lateral (☰ Más)
+  // navegación: la barra tiene tres grupos —Calendario (Hoy/Semana/Mes), Entreno y Comer
+  // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
-  const DRAWER_TABS = new Set(['food', 'notas', 'habitos', 'types', 'batches', 'import', 'cfg', 'data', 'ajustes']);
+  const COMER_TABS = new Set(['food', 'shop', 'types', 'batches', 'import']);
+  const DRAWER_TABS = new Set(['notas', 'habitos', 'cfg', 'data', 'ajustes']);
   async function gotoTab(tab) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
       await page.waitForTimeout(80);
       await page.click(`#calModes button[data-t="${tab}"]`);
+    } else if (COMER_TABS.has(tab)) {
+      // se entra por «Comer» y de ahí a su modo; los que no tienen modo propio (import) se piden
+      // por la vista que los contiene
+      await page.click('[data-a="nav-comer"]');
+      await page.waitForTimeout(100);
+      if (tab === 'types') await page.click('#calModes button[data-t="types"]');
+      else if (tab === 'shop') await page.click('#calModes button[data-t="shop"]');
+      else if (tab === 'batches') {
+        await page.click('#calModes button[data-v="cocina-panel"]');
+        await page.waitForTimeout(100);
+        await page.click('[data-a="cocina-tab"][data-t="lote"]');
+      } else if (tab === 'import') {
+        await page.evaluate(() => { window.PG.ui.tab = 'import'; window.PG.render(); });
+      }
     } else if (DRAWER_TABS.has(tab)) {
       await page.click('[data-a="drawer-toggle"]');
       await page.waitForTimeout(80);
@@ -73,12 +88,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150);
   }
 
-  // Días y menús ya no es una sola pantalla: lista de tipos de día + una pantalla por sección
+  // «Días y menús» es ahora el modo «Menú» de Comer: lista de tipos de día + una pantalla por
+  // sección. El catálogo de platos se fundió con «Mis platos», que vive en Comer.
   async function gotoTypes(vista) {
+    if (vista === 'dishes') {
+      await gotoFood('platos');
+      return;
+    }
     await gotoTab('types');
     await page.waitForTimeout(120);
     if (await page.evaluate(() => !!window.PG.ui.typesVista)) {
-      await page.click('[data-a="types-vista"][data-v=""]');
+      await page.click('.subcab [data-a="types-vista"][data-v=""]');
       await page.waitForTimeout(120);
     }
     if (vista) {
@@ -149,15 +169,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const monthVisible = await page.evaluate(() => document.querySelectorAll('#main .cal .dbox').length > 0);
   check('la app arranca en el calendario, en modo "Mes"', defaultTab === 'month' && monthVisible, 'tab=' + defaultTab);
 
-  // 0b) Entreno y Compra son pestañas fijas (fuera del menú); el resto vive en el menú lateral
+  // 0b) la barra son tres grupos: Calendario, Entreno y Comer. Comer se comió a Compra, a Comida,
+  // a Días y menús, a Cocina en lote y a Importar receta, que eran cinco destinos para la misma
+  // pregunta; lo que queda en el cajón es lo que no es ni calendario ni entreno ni comida.
   const navShape = await page.evaluate(() => ({
-    gymEnTabs: !!document.querySelector('#tabs [data-a="tab"][data-t="gym"]'),
-    shopEnTabs: !!document.querySelector('#tabs [data-a="tab"][data-t="shop"]'),
-    foodFueraDeTabs: !document.querySelector('#tabs [data-a="tab"][data-t="food"]'),
-    foodEnCajon: !!document.querySelector('#drawer [data-a="drawer-nav"][data-t="food"]'),
+    barra: [...document.querySelectorAll('#tabs button')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()),
+    modos: (() => { document.querySelector('[data-a="nav-comer"]').click();
+      return [...document.querySelectorAll('#calModes button')].map((b) => b.textContent.trim()); })(),
+    cajon: [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].map((b) => b.dataset.t),
   }));
-  check('Entreno y Compra quedan fijos fuera del menú; el resto (p. ej. Comida) va al cajón lateral',
-    navShape.gymEnTabs && navShape.shopEnTabs && navShape.foodFueraDeTabs && navShape.foodEnCajon,
+  check('la barra son tres grupos y «Comer» agrupa el día, el menú, la cocina y la compra',
+    navShape.barra.join('|') === 'Calendario|Entreno|Comer|☰ Más' &&
+    navShape.modos.join('|') === 'Hoy|Menú|Cocina|Compra' &&
+    ['food', 'shop', 'types', 'batches', 'import'].every((t) => navShape.cajon.indexOf(t) < 0),
     JSON.stringify(navShape));
 
   // 0c) el menú lateral (☰ Más) es accesible: atrapa el foco y Esc lo cierra devolviendo el foco al botón
@@ -430,12 +454,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     wkNavEnHoy === 'none' && wkNavEnSemanaPlantilla === 'none' && wkNavEnSemanaPorFecha !== 'none',
     JSON.stringify({ wkNavEnHoy, wkNavEnSemanaPlantilla, wkNavEnSemanaPorFecha }));
 
-  // 16) el aviso de "☰ Más" tiene un texto accesible que explica el punto, no solo un carácter suelto
-  // (ya hay comida apuntada hoy desde la prueba 13, así que BADGE.food está activo)
-  const masLabelInfo = await page.evaluate(() => document.querySelector('[data-a="drawer-toggle"]').getAttribute('aria-label'));
-  check('"☰ Más" lleva un aria-label que explica el punto de aviso (no solo "●")',
-    typeof masLabelInfo === 'string' && masLabelInfo.length > 'Más'.length,
-    'aria-label=' + JSON.stringify(masLabelInfo));
+  // 16) el punto de aviso de "☰ Más" existía porque Comida vivía escondida en el cajón: avisaba de
+  // que había comida apuntada sin revisar. Ahora Comer está en la barra con sus kcal a la vista,
+  // así que el punto sobra — y con él, la etiqueta que había que ponerle para que fuera accesible.
+  const masInfo = await page.evaluate(() => {
+    const b = document.querySelector('[data-a="drawer-toggle"]');
+    return { label: b.getAttribute('aria-label'), punto: !!b.querySelector('.tb'),
+      comerEnBarra: !!document.querySelector('#tabs [data-a="nav-comer"]') };
+  });
+  check('el punto de aviso de "☰ Más" se va con Comida: ya no está escondida, está en la barra',
+    masInfo.label === 'Más' && !masInfo.punto && masInfo.comerEnBarra, JSON.stringify(masInfo));
 
   // ===================== Entreno: rutinas, sesiones, músculos y cardio =====================
 
@@ -1370,23 +1398,31 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
 
   // 99-103) Compra: fuera "Para el carro"; ahora manda lo que el usuario compra de rutina, en listas
-  // suyas, y desde cada lista se ve qué platos salen con ella
+  // suyas, y desde cada lista se ve qué platos salen con ella. La compra vive dentro de «Comer»,
+  // agrupada por secciones, y «Mis listas» está detrás de su botón: en el supermercado lo que
+  // quieres ver es la lista, no la pantalla de administrarlas.
   await gotoTab('shop');
   await page.waitForTimeout(250);
   const compra = await page.evaluate(() => ({
     carro: /Para el carro/.test(document.getElementById('main').textContent),
-    listas: document.querySelectorAll('#main .tarj[data-lista]').length,
-    rutina: [...document.querySelectorAll('#main .chk')].some((l) => /Pechuga de pollo/.test(l.textContent)),
-    crear: !!document.querySelector('[data-a="lista-add"]'),
+    secciones: [...document.querySelectorAll('#main .seccion b')].map((x) => x.textContent),
+    rutina: [...document.querySelectorAll('#main .linea')].some((l) => /Pechuga de pollo/.test(l.textContent)),
+    // esto SÍ es progreso: cuántas cosas llevas ya en el carro
+    progreso: !!document.querySelector('#main .prog .bar i'),
+    sinListasAqui: !document.querySelector('#main .tarj[data-lista]'),
+    aListas: !!document.querySelector('[data-a="compra-listas"]'),
   }));
-  check('Compra: ya no hay "Para el carro"; hay listas propias y lo de rutina sale en la compra',
-    !compra.carro && compra.listas >= 1 && compra.rutina && compra.crear, JSON.stringify(compra));
+  check('Compra: ya no hay "Para el carro"; va por secciones, con barra de lo marcado y «mis listas» aparte',
+    !compra.carro && compra.secciones.length >= 2 && compra.progreso &&
+    compra.sinListasAqui && compra.aListas, JSON.stringify(compra));
 
   // el "·" de la nota solo sale si de verdad hay nota (antes se veía "25 g curry ·" a secas)
   const puntoSuelto = await page.evaluate(() =>
-    [...document.querySelectorAll('#main .chk span')].some((s) => /·\s*$/.test(s.textContent)));
+    [...document.querySelectorAll('#main .linea .tx')].some((s) => /·\s*$/.test(s.textContent)));
   check('ninguna línea de la compra acaba en un "·" suelto sin nota detrás', !puntoSuelto, '');
 
+  await page.click('[data-a="compra-listas"]');
+  await page.waitForTimeout(250);
   await page.fill('#lsNueva', 'Fin de semana');
   await page.click('[data-a="lista-add"]');
   await page.waitForTimeout(250);
@@ -1401,15 +1437,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('se puede crear una lista propia, añadirle cosas y el campo sigue enfocado para la siguiente',
     conItem.items.includes('Cerveza sin alcohol') && conItem.foco === 'lsNew-' + nueva.id, JSON.stringify(conItem));
 
-  // marcarla "de rutina" la mete en la compra de la semana; desmarcarla la saca
+  // marcarla "de rutina" la mete en la compra de la semana; desmarcarla la saca. Se comprueba
+  // volviendo a la lista de verdad y abriendo la sección «de rutina», que viene plegada.
+  const enLaCompra = async () => {
+    await page.click('[data-a="compra-volver"]');
+    await page.waitForTimeout(250);
+    const abierta = await page.evaluate(() => !!document.querySelector('#main [data-a="compra-sec"][data-k="rutina"][aria-expanded="true"]'));
+    if (!abierta && await page.$('[data-a="compra-sec"][data-k="rutina"]')) {
+      await page.click('[data-a="compra-sec"][data-k="rutina"]');
+      await page.waitForTimeout(200);
+    }
+    const hay = await page.evaluate(() =>
+      [...document.querySelectorAll('#main .linea')].some((l) => /Cerveza sin alcohol/.test(l.textContent)));
+    await page.click('[data-a="compra-listas"]');
+    await page.waitForTimeout(250);
+    return hay;
+  };
   await page.click(`[data-a="lista-fija"][data-id="${nueva.id}"]`);
   await page.waitForTimeout(250);
-  const enCompra = await page.evaluate(() =>
-    [...document.querySelectorAll('#main .chk')].some((l) => /Cerveza sin alcohol/.test(l.textContent)));
+  const enCompra = await enLaCompra();
   await page.click(`[data-a="lista-fija"][data-id="${nueva.id}"]`);
   await page.waitForTimeout(250);
-  const fueraDeCompra = await page.evaluate(() =>
-    [...document.querySelectorAll('#main .chk')].some((l) => /Cerveza sin alcohol/.test(l.textContent)));
+  const fueraDeCompra = await enLaCompra();
   check('marcar una lista "de rutina" la mete en la compra de la semana, y desmarcarla la saca',
     enCompra && !fueraDeCompra, JSON.stringify({ enCompra, fueraDeCompra }));
 
@@ -2592,6 +2641,155 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     (!platoAntojo || trasAntojo.kcal === kcalAntesAntojo + trasAntojo.unaRacion),
     JSON.stringify({ antojoTodos, antojoProt, antojoLimpio, kcalAntesAntojo, trasAntojo }));
 
+  // 47e) la cadena de la portada: Compra, Menú y Comida eran tres destinos que no se nombraban
+  // entre ellos, aunque el código ya los encadenaba (la compra sale de las tandas y las tandas del
+  // menú de cada tipo de día). Ahora eso se ve, con sus cifras, y cada eslabón es una puerta.
+  {
+    await gotoFood('');
+    const cadena = await page.evaluate(() => {
+      const esl = [...document.querySelectorAll('#main .cadena .eslabon')];
+      return {
+        n: esl.length,
+        titulos: esl.map((e) => e.querySelector('b').textContent),
+        // cada eslabón lleva cifras de verdad, no una etiqueta suelta
+        cifras: esl.map((e) => [...e.querySelectorAll('em')].map((x) => x.textContent)),
+      };
+    });
+    // y llevan donde dicen, uno por uno, volviendo a la portada entre medias
+    const adonde = [];
+    for (const cls of ['m', 'c', 'k']) {
+      // si la cadena no está, esta prueba tiene que FALLAR, no tumbar la suite entera con un
+      // timeout de 30 s que impide ver el resto
+      const b = await page.$(`#main .cadena .eslabon.${cls}`);
+      if (!b) { adonde.push('(no está)'); continue; }
+      await b.click();
+      await page.waitForTimeout(280);
+      adonde.push(await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.foodVista || '')));
+      await page.click('.subcab [data-a="nav-comer"], .subcab [data-a="food-vista"][data-v=""]');
+      await page.waitForTimeout(220);
+    }
+    check('la portada encadena menú → cocina → compra, con cifras, y cada eslabón lleva a su pantalla',
+      cadena.n === 3 && cadena.titulos.join('|') === 'Menú|Cocina|Compra' &&
+      cadena.cifras.every((c) => c.length >= 2 && c.every((x) => /\d/.test(x))) &&
+      adonde.join('|') === 'types/|food/cocina-panel|shop/',
+      JSON.stringify({ cadena, adonde }));
+  }
+
+  // 47f) la compra: por secciones, con el origen de cada cosa, y marcar actualiza la barra sin
+  // repintar la pantalla (en el supermercado se tocan veinte seguidas). Lo de rutina y los básicos
+  // vienen plegados: se repiten cada semana y lo que miras es lo fresco.
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(250);
+    const antes = await page.evaluate(() => ({
+      secciones: [...document.querySelectorAll('#main .seccion')].map((x) =>
+        x.querySelector('b').textContent + ':' + x.getAttribute('aria-expanded')),
+      lineas: document.querySelectorAll('#main .linea').length,
+      conOrigen: document.querySelectorAll('#main .linea .de').length,
+      barra: document.querySelector('#main .prog .bar i').style.width,
+      texto: document.querySelector('#main .prog b').textContent,
+    }));
+    const primera = await page.evaluate(() => document.querySelector('#main .linea').dataset.id);
+    await page.click('#main .linea');
+    await page.waitForTimeout(200);
+    const despues = await page.evaluate((id) => ({
+      marcada: document.querySelector('.linea[data-id="' + CSS.escape(id) + '"]').classList.contains('ok'),
+      enElAlmacen: window.PG.ui.marks.has(id),
+      texto: document.querySelector('#main .prog b').textContent,
+      barra: document.querySelector('#main .prog .bar i').style.width,
+    }), primera);
+    // y la sección plegada se abre al tocarla
+    await page.click('[data-a="compra-sec"][data-k="rutina"]');
+    await page.waitForTimeout(200);
+    const abierta = await page.evaluate(() =>
+      document.querySelector('[data-a="compra-sec"][data-k="rutina"]').getAttribute('aria-expanded'));
+    check('la compra va por secciones, dice de dónde sale cada cosa y marcar mueve la barra al instante',
+      antes.secciones[0].indexOf('Fresco') === 0 && /:true$/.test(antes.secciones[0]) &&
+      antes.secciones.slice(1).every((x) => /:false$/.test(x)) &&
+      antes.conOrigen > 0 && despues.marcada && despues.enElAlmacen &&
+      despues.texto !== antes.texto && despues.barra !== antes.barra && abierta === 'true',
+      JSON.stringify({ antes, despues, abierta }));
+  }
+
+  // 47g) el menú de un tipo de día no se sale de la pantalla. Fallo real medido antes del rediseño:
+  // 415 px de ancho en un móvil de 412, porque hora, etiqueta, selector, kcal, tres botones y los
+  // platos iban en una sola fila de tabla. Ahora cada toma es una tarjeta.
+  {
+    const vpMenu = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    // el desborde solo salía con un nombre largo de verdad: sin esto, la medida del ancho pasa
+    // igual con la fila-tabla de antes y la prueba no valdría para nada
+    const primerTipoM = await page.evaluate(() => {
+      const P = window.PG, sh = P.store.shifts[0];
+      const d = P.store.dishes[0];
+      d.name = 'Lentejas estofadas de la abuela con chorizo y morcilla';
+      const sl = P.slotsFor(sh.id)[0];
+      if (sl) { sl.mealId = ''; sl.items = [{ id: d.id, portions: 1 }]; }
+      P.save();
+      return sh.id;
+    });
+    await gotoTypes(primerTipoM);
+    await page.waitForTimeout(250);
+    const menuDia = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+      tomas: document.querySelectorAll('#main .toma2').length,
+      // lo que hacía falta seguir teniendo: hora, etiqueta, comida armada y los platos
+      campos: document.querySelectorAll('#main .toma2 .st, #main .toma2 .sl').length,
+      armadas: document.querySelectorAll('#main .toma2 .sm').length,
+      sinFilaTabla: !document.querySelector('#main li.slot'),
+    }));
+    if (vpMenu) await page.setViewportSize(vpMenu);
+    await page.waitForTimeout(150);
+    check('el menú de un día son tarjetas por toma y ya no se sale de la pantalla a lo ancho',
+      menuDia.scrollWidth <= menuDia.clientWidth && menuDia.tomas > 0 && menuDia.sinFilaTabla &&
+      menuDia.campos === menuDia.tomas * 2 && menuDia.armadas === menuDia.tomas,
+      JSON.stringify(menuDia));
+  }
+
+  // 47h) «Cocina en lote» era una pantalla aparte de casi seis pantallas de móvil porque repetía
+  // los pasos de cada plato de cada sesión. Ahora es la pestaña «En lote» de Cocina, con las
+  // sesiones plegadas, y los pasos se siguen en el modo cocina, que es donde se cocina.
+  {
+    await gotoFood('cocinar');
+    await page.waitForTimeout(150);
+    await page.click('[data-a="cocina-tab"][data-t="lote"]');
+    await page.waitForTimeout(250);
+    const lote = await page.evaluate(() => ({
+      sesiones: document.querySelectorAll('#main .tanda').length,
+      abiertas: document.querySelectorAll('#main .tanda .tb').length,
+      // ya no es un enlace a otra pantalla: los platos están aquí
+      cocinar: document.querySelectorAll('#main .tanda [data-a="food-cocina"]').length,
+      sinEnlaceFuera: !document.querySelector('#main [data-a="tab"][data-t="batches"]'),
+      alto: document.getElementById('main').scrollHeight,
+    }));
+    // y la pestaña vieja lleva al mismo sitio en vez de a la pantalla de antes
+    const laVieja = await page.evaluate(() => {
+      window.PG.ui.tab = 'batches'; window.PG.render();
+      return { tab: window.PG.ui.tab, vista: window.PG.ui.foodVista, pest: window.PG.ui.cocinaTab };
+    });
+    check('las tandas viven dentro de Cocina, con una sesión abierta y sin duplicar la pantalla vieja',
+      lote.sesiones > 0 && lote.abiertas === 1 && lote.cocinar > 0 && lote.sinEnlaceFuera &&
+      lote.alto < 2400 && laVieja.tab === 'food' && laVieja.vista === 'cocina-panel' && laVieja.pest === 'lote',
+      JSON.stringify({ lote, laVieja }));
+  }
+
+  // 47i) un solo catálogo de platos: «Catálogo de platos» y «Mis platos» pintaban los mismos
+  // store.dishes en dos pantallas, cada una con su buscador y sus botones de crear e importar
+  {
+    const unoSolo = await page.evaluate(() => {
+      const P = window.PG;
+      P.ui.tab = 'types'; P.ui.typesVista = 'dishes'; P.render();
+      return { tab: P.ui.tab, vista: P.ui.foodVista,
+        platos: document.querySelectorAll('#main .hit').length,
+        enElAlmacen: P.store.dishes.length,
+        buscadores: document.querySelectorAll('#main .buscador input').length };
+    });
+    check('el catálogo de platos y «mis platos» son la misma pantalla, con un solo buscador',
+      unoSolo.tab === 'food' && unoSolo.vista === 'platos' && unoSolo.buscadores === 1 &&
+      unoSolo.platos > 0 && unoSolo.platos <= unoSolo.enElAlmacen, JSON.stringify(unoSolo));
+  }
+
   // 48) "qué puedo cocinar": separa lo que sale entero de lo que casi, y "a la compra" mete lo que
   // falta en una lista de verdad (secuencia: se mira la lista antes y después del toque)
   await gotoFood('cocinar');
@@ -2771,10 +2969,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       linea: (document.querySelector('#main .microlinea .tx small') || {}).textContent || '',
       puertas: [...document.querySelectorAll('#main .puerta b')].map((x) => x.textContent.trim()),
     }));
-    check('la portada del día lleva los tres macros, los micros en una línea y las tres puertas',
+    check('la portada del día lleva los tres macros, los micros en una línea y las tres despensas',
       diaMic.macros.join('|') === 'proteína|carbohidratos|grasa' && diaMic.puntos === 9 &&
       diaMic.casillas === 0 && /corto|por debajo|mitad/.test(diaMic.linea) &&
-      diaMic.puertas.join('|') === 'Cocina|Mis platos|Alimentos', JSON.stringify(diaMic));
+      diaMic.puertas.join('|') === 'Mis platos|Mi nevera|Alimentos', JSON.stringify(diaMic));
   }
 
   // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre

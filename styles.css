@@ -833,3 +833,115 @@ textarea.editor{border:1px solid var(--line);border-radius:13px;padding:12px;
 .hit .mini-acc{flex:0 0 auto;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);
   background:var(--card);color:var(--ink2);font-size:13px;line-height:1;cursor:pointer}
 .hit .mini-acc.on{color:#e0a325;border-color:#e0a32555;background:#e0a3251a}
+
+/* ===================== Comer: la cadena de la portada =====================
+   Menú manda en las tandas y las tandas mandan en la compra. La línea de la izquierda es eso:
+   tres destinos que hasta ahora no se nombraban entre ellos. */
+.cadena{position:relative;margin-top:2px}
+.cadena::before{content:'';position:absolute;left:19px;top:28px;bottom:28px;width:2px;border-radius:99px;
+  background:linear-gradient(180deg,var(--brand),var(--brand2),var(--ok));opacity:.45}
+.eslabon{display:flex;align-items:center;gap:11px;padding:10px 0;width:100%;text-align:left;
+  background:none;border:0;border-top:1px dashed var(--line);color:var(--ink);font:inherit;min-height:62px;cursor:pointer}
+.eslabon:first-of-type{border-top:0}
+.eslabon .pto{width:40px;height:40px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);background:var(--card);position:relative;z-index:1}
+.eslabon .pto .gico{width:20px;height:20px}
+.eslabon.m .pto{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));background:color-mix(in srgb,var(--brand) 13%,var(--card))}
+.eslabon.m .pto .gico{color:var(--brand)}
+.eslabon.c .pto{border-color:color-mix(in srgb,var(--brand2) 55%,var(--line));background:color-mix(in srgb,var(--brand2) 13%,var(--card))}
+.eslabon.c .pto .gico{color:var(--brand2)}
+.eslabon.k .pto{border-color:color-mix(in srgb,var(--ok) 55%,var(--line));background:color-mix(in srgb,var(--ok) 13%,var(--card))}
+.eslabon.k .pto .gico{color:var(--ok)}
+.eslabon .tx{flex:1;min-width:0}
+.eslabon .tx b{display:block;font-size:13.5px;line-height:1.2}
+.eslabon .tx span{display:block;font-size:11px;color:var(--ink2);margin-top:2px}
+.eslabon .tx span em{font-style:normal;color:var(--ink);font-weight:700}
+.eslabon .ch{color:var(--ink2);flex:none}
+
+/* ===================== la compra ===================== */
+.prog{display:flex;align-items:center;gap:9px;margin:2px 0 8px}
+.prog .bar{flex:1;height:8px;border-radius:999px;background:color-mix(in srgb,var(--card) 60%,var(--bg));
+  border:1px solid var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--brand3,#a3e635));transition:width .18s}
+.prog b{font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.seccion{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;
+  color:var(--ink);font:inherit;padding:11px 0 8px;border-top:1px solid var(--line);min-height:44px;cursor:pointer}
+.seccion b{font-size:13px}
+.seccion .n{font-size:10.5px;font-weight:800;color:var(--ink2);border:1px solid var(--line);border-radius:7px;padding:2px 7px}
+.seccion .ch{margin-left:auto;color:var(--ink2);transition:transform .15s}
+.seccion .ch.abajo{transform:rotate(90deg)}
+ul.lcompra{list-style:none;margin:0;padding:0}
+.linea{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-top:1px dashed var(--line);
+  min-height:40px;cursor:pointer}
+.linea .box{width:21px;height:21px;flex:none;border-radius:7px;border:1.5px solid color-mix(in srgb,var(--ink2) 55%,var(--line));
+  margin-top:0;display:flex;align-items:center;justify-content:center}
+.linea.ok .box{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.linea.ok .box::after{content:'✓';font-size:13px;font-weight:800;line-height:1}
+.linea .tx{flex:1;min-width:0}
+.linea .tx b{font-size:13px;font-weight:600;line-height:1.25;display:block}
+.linea.ok .tx b{color:var(--ink2);text-decoration:line-through}
+.linea .de{font-size:10px;color:var(--ink2);margin-top:2px;display:inline-flex;align-items:center;gap:4px}
+.linea .de i{width:5px;height:5px;border-radius:99px;background:var(--brand2);display:inline-block;flex:none}
+
+/* la tira de la semana del Menú: qué tipo de día te toca cada día */
+.tirasem{display:flex;gap:5px;margin-top:4px}
+.tirasem button{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:7px 2px;text-align:center;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);font:inherit;cursor:pointer}
+.tirasem button.hoy{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.tirasem span{display:block;font-size:9px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+.tirasem em{display:block;font-size:17px;font-style:normal;line-height:1.3;margin-top:2px}
+.tirasem b{display:block;font-size:9px;font-weight:800;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tirasem button.hoy b{color:var(--brand)}
+
+/* ===================== el menú de un día: cada toma, una tarjeta =====================
+   La fila-tabla metía hora, etiqueta, selector, kcal, tres botones y los platos en una sola línea:
+   con un nombre largo se salía de la pantalla (415 px medidos en un móvil de 412). */
+ul.slots{list-style:none;margin:0;padding:0}
+.toma2{border:1px solid var(--line);border-radius:13px;padding:10px 11px;margin-top:8px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.toma2 .cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toma2 .cab .st{width:62px;flex:none;font-size:13px;font-weight:800;text-align:center;padding:5px 4px;
+  font-variant-numeric:tabular-nums}
+.toma2 .cab .sl{flex:1 1 110px;min-width:0;font-size:12px;padding:5px 8px}
+.toma2 .cab .kc{margin-left:auto;font-size:11px;font-weight:800;color:var(--ink2);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.toma2 .cuerpo{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.toma2 .pl{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:4px 8px;
+  border-radius:999px;border:1px solid var(--line);background:var(--card);min-height:32px;max-width:100%;min-width:0}
+.toma2 .pl select{border:0;background:transparent;font-size:11.5px;padding:0;max-width:150px;min-width:0;color:var(--ink)}
+.toma2 .pl input{width:42px;border:0;background:transparent;font-size:11px;padding:0;text-align:right;color:var(--ink2)}
+.toma2 .pl .x{border:0;background:transparent;color:var(--bad);font:inherit;font-size:14px;line-height:1;
+  padding:0 2px;cursor:pointer}
+.toma2 .pl.arm{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 10%,var(--card))}
+.toma2 .pl.arm b{font-weight:800;font-size:10.5px;opacity:.85}
+.toma2 .acc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.toma2 .acc .sm{flex:0 1 auto;max-width:170px;font-size:11px;padding:4px 6px}
+.mini2{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink2);min-height:30px;display:inline-flex;align-items:center;gap:5px;
+  font-family:inherit;cursor:pointer}
+.mini2[disabled]{opacity:.35;cursor:default}
+.mini2.d{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,var(--line))}
+
+/* ===================== las tandas, dentro de Cocina ===================== */
+.tanda{position:relative;z-index:1;border:1px solid var(--line);border-radius:14px;margin-top:9px;overflow:hidden;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.tanda.on{border-color:color-mix(in srgb,var(--brand2) 40%,var(--line))}
+.tanda .th{display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;background:none;
+  border:0;color:var(--ink);font:inherit;min-height:56px;cursor:pointer}
+.tanda .th .nm{flex:1;min-width:0}
+.tanda .th .dia{font-size:13.5px;font-weight:800;display:block}
+.tanda .th .sub{font-size:10.5px;color:var(--ink2);display:block;margin-top:2px;font-weight:400}
+.tanda .th .rac{font-size:10.5px;font-weight:800;color:var(--brand2);white-space:nowrap;
+  border:1px solid color-mix(in srgb,var(--brand2) 45%,var(--line));border-radius:999px;padding:3px 9px;
+  background:color-mix(in srgb,var(--brand2) 12%,transparent)}
+.tanda .th .ch{color:var(--ink2);flex:none;transition:transform .15s}
+.tanda .th .ch.abajo{transform:rotate(90deg)}
+.tanda .tb{padding:2px 12px 12px;border-top:1px dashed var(--line)}
+.tanda .fila{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
+.tanda .fila:first-of-type{border-top:0}
+.tanda .fila .em{font-size:19px;flex:none}
+.tanda .fila .nm{flex:1;min-width:0}
+.tanda .fila .nm b{display:block;font-size:12.5px}
+.tanda .fila .nm span{font-size:10px;color:var(--ink2)}
