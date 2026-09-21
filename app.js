@@ -264,7 +264,7 @@ let store, ui={tab:'month',calMode:'month',drawerOpen:false,monSel:'',marks:new 
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -582,7 +582,7 @@ function addNota(txt,fecha){
   const t=String(txt||'').trim().slice(0,600);
   if(!t)return {ok:false,msg:'escribe algo primero'};
   const f=fecha?(foodKey(fecha)||''):'';
-  const nota={id:uid('nt'),txt:t,fecha:f,hecha:0,color:'',evId:'',ts:Date.now()};
+  const nota={id:uid('nt'),txt:t,fecha:f,hecha:0,color:'',evId:'',proy:'',ts:Date.now()};
   notasS().push(nota);olvidaNotas();save();
   return {ok:true,id:nota.id,msg:'apuntado'+(f?(' para el '+fechaCorta(f)):'')};}
 function setNota(id,campo,valor){
@@ -590,7 +590,27 @@ function setNota(id,campo,valor){
   if(campo==='txt')x.txt=String(valor||'').slice(0,600);
   else if(campo==='fecha')x.fecha=valor?(foodKey(valor)||''):'';
   else if(campo==='color')x.color=/^#[0-9a-fA-F]{6}$/.test(valor||'')?valor:'';
+  else if(campo==='proy')x.proy=String(valor||'').trim().slice(0,40);
   olvidaNotas();save();return '';}
+function proyectos(){
+  /* los proyectos no se crean en ningún sitio: son el nombre que le pones a una nota, y la lista
+     sale de las que ya tienes. Una cosa menos que administrar. */
+  const c={};
+  notasS().forEach(function(x){const p=(x.proy||'').trim();if(!p)return;
+    if(!c[p])c[p]={nombre:p,total:0,pend:0};
+    c[p].total++;if(!x.hecha)c[p].pend++;});
+  return Object.keys(c).map(function(k){return c[k];})
+    .sort(function(a,b){return b.pend-a.pend||a.nombre.localeCompare(b.nombre,'es');});}
+function notasDeHoy(){
+  /* lo que toca hoy y lo que se te pasó: es lo que convierte la libreta en una lista de tareas */
+  const hoy=iso(new Date());
+  const pend=notasS().filter(function(x){return !x.hecha&&x.fecha;});
+  return {hoy:pend.filter(function(x){return x.fecha===hoy;}),
+    tarde:pend.filter(function(x){return x.fecha<hoy;})
+      .sort(function(a,b){return a.fecha.localeCompare(b.fecha);})};}
+function notasDeLaSemana(){
+  const hoy=new Date(),ini=iso(hoy),fin=iso(addDays(hoy,7));
+  return notasS().filter(function(x){return !x.hecha&&x.fecha&&x.fecha>=ini&&x.fecha<=fin;});}
 function toggleNotaHecha(id){
   const x=notaById(id);if(!x)return 'esa nota ya no está';
   x.hecha=x.hecha?0:Date.now();olvidaNotas();save();
@@ -625,9 +645,15 @@ function eventoDeNota(x){
   if(!x||!x.evId)return null;
   return eventosS().filter(function(e){return e.id===x.evId;})[0]||null;}
 function notasCuenta(){
-  const c={total:0,sinDia:0,conDia:0,hechas:0};
+  const c={total:0,sinDia:0,conDia:0,hechas:0,hoy:0,tarde:0,semana:0};
+  const hoy=iso(new Date()),fin=iso(addDays(new Date(),7));
   notasS().forEach(function(x){c.total++;
-    if(x.hecha)c.hechas++;else if(x.fecha)c.conDia++;else c.sinDia++;});
+    if(x.hecha){c.hechas++;return;}
+    if(x.fecha){c.conDia++;
+      if(x.fecha===hoy)c.hoy++;
+      else if(x.fecha<hoy)c.tarde++;
+      if(x.fecha>=hoy&&x.fecha<=fin)c.semana++;}
+    else c.sinDia++;});
   return c;}
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
@@ -2071,6 +2097,7 @@ function renderHoy(){
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
       '<button class="btn s" data-a="tab" data-t="month">ver el mes</button>'+
     '</div></div>'+
+    tareasHoyHTML()+
     proximosPuntualesHTML()+
     pagosHoyHTML(hoy)+
     habitosHoyHTML()+
@@ -4072,6 +4099,8 @@ function notaPiesHTML(x){
     const cls=x.fecha===hoy?'dia hoy':'dia';
     out.push('<span class="pie '+cls+'">📅 '+esc(x.fecha===hoy?('hoy, '+fechaCorta(x.fecha)):fechaCorta(x.fecha))+'</span>');
   }else out.push('<span class="pie">sin día</span>');
+  if(x.proy)out.push('<span class="pie proy">◆ '+esc(x.proy)+'</span>');
+  if(!x.hecha&&x.fecha&&x.fecha<iso(new Date()))out.push('<span class="pie tarde">se te pasó</span>');
   const ev=eventoDeNota(x);
   if(ev)out.push('<span class="pie ev">🔔 '+esc(ev.hora||'en el calendario')+'</span>');
   if(x.hecha){
@@ -4095,13 +4124,28 @@ function renderNotas(){
     return (a.hecha?1:0)-(b.hecha?1:0)||(a.fecha&&b.fecha?a.fecha.localeCompare(b.fecha):(a.fecha?-1:(b.fecha?1:0)))||b.ts-a.ts;});
   /* una sola partición: los tres montones y los tres filtros son la misma pregunta, y tenerla
      escrita dos veces obligaba a cambiar dos sitios para añadir un filtro */
-  const conDia=[],sinDia=[],hechas=[];
-  todas.forEach(function(x){(x.hecha?hechas:(x.fecha?conDia:sinDia)).push(x);});
-  const bloque=function(titulo,cual,lista){
+  /* los montones van por CUÁNDO toca, no por si tienen día o no: «se te pasó», «hoy», «esta
+     semana», «más adelante», «sin día». Una libreta ordenada por fecha de creación no dice qué
+     hacer ahora; esto sí. */
+  const hoyK=iso(new Date()),finK=iso(addDays(new Date(),7));
+  const proy=ui.notaProy||'';
+  const enProy=function(x){return !proy||(x.proy||'')===proy;};
+  const tarde=[],hoyL=[],semana=[],luego=[],sinDia=[],hechas=[];
+  todas.filter(enProy).forEach(function(x){
+    if(x.hecha){hechas.push(x);return;}
+    if(!x.fecha){sinDia.push(x);return;}
+    if(x.fecha<hoyK)tarde.push(x);
+    else if(x.fecha===hoyK)hoyL.push(x);
+    else if(x.fecha<=finK)semana.push(x);
+    else luego.push(x);});
+  const bloque=function(titulo,cual,lista,cls){
     if(!lista.length||(filtro&&filtro!==cual))return '';
-    return '<div class="card"><h2>'+esc(titulo)+' <span class="mini">'+lista.length+'</span></h2>'+
+    return '<div class="card'+(cls?(' '+cls):'')+'"><h2>'+esc(titulo)+' <span class="mini">'+lista.length+'</span></h2>'+
       lista.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';};
-  const cuerpo=bloque('Con día','con',conDia)+bloque('Sin día','sin',sinDia)+bloque('Hechas','hechas',hechas);
+  const cuerpo=bloque('Se te pasó','con',tarde,'avisa')+bloque('Hoy','con',hoyL)+
+    bloque('Esta semana','con',semana)+bloque('Más adelante','con',luego)+
+    bloque('Sin día','sin',sinDia)+bloque('Hechas','hechas',hechas);
+  const proys=proyectos();
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><h2 class="subtit">📝 Notas</h2><span class="tag b2">'+c.total+'</span></div>'+
     '<div class="captura">'+
@@ -4117,6 +4161,11 @@ function renderNotas(){
           return '<button class="chipx'+(filtro===f[0]?' on':'')+'" data-a="nota-filtro" data-f="'+f[0]+'">'+
             esc(f[1])+' <b>'+f[2]+'</b></button>';}).join('')+
     '</div>'+
+    (proys.length?('<div class="chips">'+
+      '<button class="chipx'+(proy?'':' on')+'" data-a="nota-proy-f" data-p="">todos</button>'+
+      proys.map(function(p){
+        return '<button class="chipx'+(proy===p.nombre?' on':'')+'" data-a="nota-proy-f" data-p="'+esc(p.nombre)+'">'+
+          '◆ '+esc(p.nombre)+' <b>'+p.pend+'</b></button>';}).join('')+'</div>'):'')+
     (cuerpo||('<div class="card"><div class="empty">'+(todas.length?'Nada en este filtro.':
       'Todavía no has apuntado nada. Escribe arriba: lo que no tenga día se queda aquí y no molesta en el calendario.')+
       '</div></div>'))+
@@ -4139,6 +4188,14 @@ function renderNotaAbierta(){
         '<input type="color" value="'+esc(x.color||'#38e1ff')+'" data-a="nota-f" data-id="'+x.id+'" data-k="color" style="height:38px;padding:3px"></label>'+
       (x.fecha?'':'<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="nota-hoy" data-id="'+x.id+'">ponerle hoy</button></label>')+
     '</div>'+
+    '<div class="row">'+
+      '<label class="fld" style="flex:1 1 200px">proyecto (opcional)'+
+        '<input list="proyLista" value="'+esc(x.proy||'')+'" data-a="nota-f" data-id="'+x.id+'" data-k="proy" '+
+        'placeholder="mudanza, papeleo, sesión del jueves…"></label>'+
+      '<datalist id="proyLista">'+proyectos().map(function(p){
+        return '<option value="'+esc(p.nombre)+'">';}).join('')+'</datalist>'+
+    '</div>'+
+    '<p class="mini" style="margin:0">El proyecto agrupa varias notas bajo un mismo nombre. No hay que crearlo: lo escribes y ya está.</p>'+
     '<p class="mini" style="margin:0">'+(x.fecha?
       ('Con día puesto sale en el calendario: en la casilla del '+fechaCorta(x.fecha)+' y al abrir ese día.'):
       'Sin día vive solo aquí. Ponle uno y saldrá en el calendario.')+'</p>'+
@@ -5867,6 +5924,17 @@ function pagarGasto(id,y,m){
   if(ya){delPago(ya.id);return g.nombre+': lo he desmarcado';}
   return addPago({fecha:fechaDeGasto(g,y,m),nombre:g.nombre,importe:g.importe,cat:g.cat,gastoId:g.id});}
 
+function tareasHoyHTML(){
+  /* lo que toca hoy y lo que se te pasó, en «Hoy». Sin esto, una nota con día era algo que solo
+     veías si te acordabas de entrar en la libreta. */
+  const t=notasDeHoy();
+  if(!t.hoy.length&&!t.tarde.length)return '';
+  const n=t.hoy.length+t.tarde.length;
+  return '<div class="card'+(t.tarde.length?' avisa':'')+'"><h2>Para hoy <span class="mini">'+n+'</span></h2>'+
+    t.tarde.map(function(x){return notaFilaHTML(x);}).join('')+
+    t.hoy.map(function(x){return notaFilaHTML(x);}).join('')+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="notas">abrir la libreta →</button></div>'+
+  '</div>';}
 function pagosHoyHTML(key){
   /* «hoy toca pagar el alquiler» es de las cosas que más se olvidan viviendo solo, y hasta ahora la
      app no lo sabía. Sale en Hoy, junto a los hábitos y los eventos. */
@@ -6751,6 +6819,7 @@ function act(a,el){
       if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
+    case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
     case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
     case 'dinero-del':{const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
@@ -8868,7 +8937,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   bumpFoodEntry,foodTotals,planTotalsOf,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   FOOD_CATALOGO,foodImportCatalogo,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
-  notasS,notaById,notasDeFecha,addNota,toggleNotaHecha,notaAEvento,desenlazaNota,
+  notasS,notaById,notasDeFecha,addNota,setNota,delNota,proyectos,notasDeHoy,notasDeLaSemana,toggleNotaHecha,notaAEvento,desenlazaNota,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
   SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,
   alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,

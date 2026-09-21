@@ -976,3 +976,7 @@ ul.slots{list-style:none;margin:0;padding:0}
 /* el punto del gasto en la casilla del Mes */
 .dbox .dgasto{font-size:9px;font-weight:800;color:var(--ink2);line-height:1}
 .dbox .dgasto.pend{color:var(--warn)}
+
+/* notas: el proyecto y lo que se te pasó */
+.nota .pie.proy{color:var(--brand2);border-color:color-mix(in srgb,var(--brand2) 35%,var(--line))}
+.nota .pie.tarde{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}

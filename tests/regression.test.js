@@ -3438,6 +3438,75 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================== Notas: tareas y proyectos =====================
+  // 78) la libreta se ordena por CUÁNDO toca, no por si la nota tiene día o no: lo que se te pasó,
+  // lo de hoy, lo de esta semana, lo de más adelante y lo que no tiene día. Y el proyecto agrupa
+  // varias notas sin tener que crearlo en ningún sitio: se escribe y ya está.
+  {
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.notas.length = 0;
+      const d = (n) => P.iso(new Date(Date.now() + n * 86400000));
+      [['Pagar la fianza al casero', d(-3), 'Mudanza'],
+       ['Llamar a la luz', d(-1), 'Mudanza'],
+       ['Empadronamiento', d(0), 'Papeleo'],
+       ['Preparar la sesión', d(0), 'Sesión'],
+       ['Comprar una lámpara', d(2), 'Mudanza'],
+       ['Cambiar la dirección del banco', d(20), 'Papeleo'],
+       ['Leer el capítulo de tórax', '', 'Sesión']].forEach((t) => {
+        const r = P.addNota(t[0], t[1]); P.setNota(r.id, 'proy', t[2]);
+      });
+      P.save();
+    });
+    await gotoTab('notas');
+    await page.waitForTimeout(300);
+    const montones = await page.evaluate(() => ({
+      bloques: [...document.querySelectorAll('#main .card h2')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()),
+      // lo que se te pasó se avisa, no se mezcla con el resto
+      avisa: !!document.querySelector('#main .card.avisa'),
+      proys: [...document.querySelectorAll('[data-a="nota-proy-f"]')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()),
+      tardes: document.querySelectorAll('#main .nota .pie.tarde').length,
+    }));
+    await page.click('[data-a="nota-proy-f"][data-p="Mudanza"]');
+    await page.waitForTimeout(250);
+    const filtrado = await page.evaluate(() => ({
+      n: document.querySelectorAll('#main .nota').length,
+      todas: [...document.querySelectorAll('#main .nota .pie.proy')].every((x) => /Mudanza/.test(x.textContent)),
+    }));
+    await page.click('[data-a="nota-proy-f"][data-p=""]');
+    await page.waitForTimeout(220);
+    check('la libreta se ordena por cuándo toca y el proyecto agrupa y filtra',
+      montones.bloques.join('|') === 'Se te pasó 2|Hoy 2|Esta semana 1|Más adelante 1|Sin día 1' &&
+      montones.avisa && montones.tardes === 2 &&
+      montones.proys.join('|') === 'todos|◆ Mudanza 3|◆ Papeleo 2|◆ Sesión 2' &&
+      filtrado.n === 3 && filtrado.todas, JSON.stringify({ montones, filtrado }));
+  }
+
+  // 79) y lo que toca hoy sale en «Hoy», que es lo que convierte la libreta en una lista de tareas:
+  // antes, una nota con día solo la veías si te acordabas de entrar en la libreta. Se marca desde
+  // ahí y desaparece del aviso.
+  {
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const enHoy = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /Para hoy/.test(x.textContent));
+      return { hay: !!c, n: c ? c.querySelectorAll('.nota').length : 0,
+        // las dos atrasadas van primero, que son las que urgen
+        primera: c ? (c.querySelector('.nota .t') || {}).textContent : '' };
+    });
+    const tick = await page.$('#main .card .nota .tick');
+    if (tick) { await tick.click(); await page.waitForTimeout(320); }
+    const tras = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /Para hoy/.test(x.textContent));
+      return { quedan: c ? c.querySelectorAll('.nota').length : 0,
+        hechas: window.PG.store.notas.filter((n) => n.hecha).length };
+    });
+    check('lo que toca hoy y lo que se te pasó salen en «Hoy», y se marcan desde ahí',
+      enHoy.hay && enHoy.n === 4 && /fianza/.test(enHoy.primera) &&
+      tras.quedan === 3 && tras.hechas === 1, JSON.stringify({ enHoy, tras }));
+    await page.evaluate(() => { window.PG.store.notas.length = 0; window.PG.save(); });
+  }
+
   // ===================== Dinero =====================
   // 75) el mes cuadra: se dan de alta dos gastos fijos por la interfaz, se mira el resumen, se marca
   // uno como pagado y se comprueba que lo pendiente baja y lo pagado sube. Encadenado a propósito:
