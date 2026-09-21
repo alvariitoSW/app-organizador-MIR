@@ -921,11 +921,17 @@ function dayTotals(shiftId){const sh=shiftById(shiftId);if(!sh)return {kcal:0,pr
   const items=[];slotsFor(shiftId).forEach(s=>items.push.apply(items,slotItems(shiftId,s).items));return totals(items);}
 
 /* cuántas raciones toca de cada plato, y en qué tandas se convierten */
-function planBatches(days){
+function necesidadSemana(days){
+  /* cuántas raciones de cada plato pide el menú de la semana. Lo usan las tandas Y la compra: la
+     compra miraba SOLO las tandas, así que un plato del menú sin sesión de cocina asignada no
+     aportaba ni un ingrediente a la lista, y encima sin avisar. */
   const need={};
-  days.forEach(d=>{if(!d.shiftId)return;
-    slotsFor(d.shiftId).forEach(s=>{const q=dishQty(slotItems(d.shiftId,s).items);
-      Object.keys(q).forEach(id=>{need[id]=(need[id]||0)+q[id];});});});
+  (days||[]).forEach(function(d){if(!d.shiftId)return;
+    slotsFor(d.shiftId).forEach(function(s){const q=dishQty(slotItems(d.shiftId,s).items);
+      Object.keys(q).forEach(function(id){need[id]=(need[id]||0)+q[id];});});});
+  return need;}
+function planBatches(days){
+  const need=necesidadSemana(days);
   const batches={};
   store.dishes.forEach(d=>{if(!isBatch(d.batchId))return;
     const b=batchById(d.batchId);if(!b)return;
@@ -1043,17 +1049,6 @@ function dayLine(d){
   const gl=d.key?gymLine(d.key):'';if(gl)t.push(gl);
   const gs=d.key?resumenGym(d.key):'';if(gs)t.push('🏋️ '+gs);
   return t.join(' · ')||esc(sh.name);}
-function staplesFor(days){
-  /* los básicos del desayuno rápido: no son tanda, pero hay que comprarlos */
-  const need={},items=[];
-  days.forEach(function(d){const sh=shiftById(d.shiftId);if(!sh)return;
-    slotsFor(sh.id).forEach(function(sl){
-      const inf=slotItems(sh.id,sl);
-      (inf.items||[]).forEach(function(it){const dd=dishById(it.id);if(!dd||isBatch(dd.batchId))return;
-        const q=num(it.portions,1);items.push({d:dd,q:q,batch:!!(inf.name&&inf.meal)});});});});
-  items.forEach(function(x){need[x.d.id]=need[x.d.id]||{d:x.d,q:0,viaMeal:false};
-    need[x.d.id].q+=x.q;if(x.viaMeal)need[x.d.id].viaMeal=true;});
-  return Object.keys(need).map(k=>need[k]).sort((a,b)=>a.d.name.localeCompare(b.d.name,'es'));}
 function distributeGuardias(y,m,replace){
   /* el mes: las guardias del cupo (6 por defecto), cada una con su saliente automático del día siguiente */
   const svc=monthService(y,m),G=(store.shifts.filter(isGuardia)[0])||store.shifts[0];
@@ -5388,13 +5383,17 @@ function parseIng(line){
   if(num==null&&!unit)return {q:'',unit:'',num:null,item:item||raw};
   return {num:num,unit:unit,q:(fmt(num)+(unit?' '+unit:'')).trim(),item:item||raw};
 }
-function ingredientsFor(list){
-  /* suma los ingredientes de todas las recetas del lote, escalados a la tanda que se cocina */
+function ingredientsFor(list,exacto){
+  /* suma los ingredientes de todas las recetas, escalados a lo que se cocina.
+     En una tanda se cocina la receta ENTERA (no existe media tanda), así que se redondea hacia
+     arriba. Lo que no es de tanda —la tostada del desayuno, la ensalada— se hace por raciones
+     sueltas, y ahí redondear a receta entera multiplicaría la compra: con `exacto` se escala tal
+     cual y el redondeo de la cantidad ya lo hace roundNice() al pintarla. */
   const map={};
   list.forEach(it=>{const d=it&&it.dish;if(!d)return;
     const per=d.portions||1;
     const raciones=(it.cooked&&isFinite(it.cooked)&&it.cooked>0)?it.cooked:per;
-    const mm=Math.max(1,Math.ceil(raciones/per));   // tandas enteras: la compra es la receta completa
+    const mm=exacto?(raciones/per):Math.max(1,Math.ceil(raciones/per));
     (d.ingredients||[]).forEach(line=>{const p=parseIng(line);if(!p.item)return;
       const key=p.item.toLowerCase()+'|'+(p.unit||'');
       if(!map[key])map[key]={item:p.item,unit:p.unit,num:0,hasNum:false,notes:new Set(),from:new Set()};
@@ -5404,7 +5403,10 @@ function ingredientsFor(list){
   });
   return Object.keys(map).map(k=>{const m=map[k];
     const q=m.hasNum?fmt(roundNice(m.num))+(m.unit?' '+m.unit:''):'';
-    const also=m.notes.size?Array.from(m.notes).join('/'):(m.from.size>1?m.from.size+' recetas':'');
+    /* el origen SIEMPRE dice de dónde sale: con un plato, su nombre; con dos, los dos; con más,
+       la cuenta. Antes, una línea que venía de una sola receta se quedaba sin origen. */
+    const de=m.from.size>2?(m.from.size+' recetas'):Array.from(m.from).join(' + ');
+    const also=m.notes.size?(Array.from(m.notes).join('/')+(de?' · '+de:'')):de;
     return {q:q,unit:m.unit,num:m.hasNum?m.num:null,item:m.item,also:also};})
     .sort((a,b)=>a.item.localeCompare(b.item,'es'));
 }
@@ -5509,23 +5511,44 @@ function listaTarjHTML(l){
    tarjeta «Mis listas» por encima de la propia lista —que es lo que miras en el supermercado—.
    Ahora los datos se calculan una vez (compraDatos) y los usan la lista Y la cadena de la portada. */
 function compraDatos(){
-  const days=weekDays(), pb=planBatches(days);
-  const agg={},order=[];let recetas=0;
-  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;
-    const list=b.items.filter(function(i){return i.runs>0;});recetas+=list.length;
-    ingredientsFor(list).forEach(function(i){
+  const days=weekDays(), pb=planBatches(days), need=necesidadSemana(days);
+  const agg={},order=[];let recetas=0,sueltas=0;
+  /* un solo embudo para los dos orígenes: lo que se cocina en tanda y lo que no */
+  const mete=function(ings){
+    ings.forEach(function(i){
       const key=i.item.toLowerCase()+'|'+(i.unit||'');
       const n=parseFloat(String(i.q).replace(',','.'));
       if(!agg[key]){agg[key]={item:i.item,unit:i.unit,num:(isNaN(n)?null:n),hasNum:!isNaN(n),notes:new Set()};order.push(key);}
       else{const g=agg[key];if(!isNaN(n)&&g.hasNum)g.num+=n;else if(i.also)g.notes.add(i.also);}
-      if(i.also)agg[key].notes.add(i.also);});});
+      if(i.also)agg[key].notes.add(i.also);});};
+  /* 1 · lo que se cocina en tandas: la receta entera, que no existe media tanda */
+  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;
+    const list=b.items.filter(function(i){return i.runs>0;});recetas+=list.length;
+    mete(ingredientsFor(list));});
+  /* 2 · lo que está en el menú y NO se cocina en tanda: por raciones sueltas. Esto es lo que
+     faltaba: un plato del menú sin sesión de cocina no aportaba nada a la compra. */
+  const sueltos=[],sinReceta=[];
+  Object.keys(need).forEach(function(id){
+    const d=dishById(id);if(!d||isBatch(d.batchId)||!(need[id]>0))return;
+    if((d.ingredients||[]).length)sueltos.push({dish:d,cooked:need[id]});
+    else sinReceta.push({d:d,q:need[id]});});
+  if(sueltos.length){sueltas=sueltos.length;mete(ingredientsFor(sueltos,true));}
   const fresco=order.map(function(k){const m=agg[k];
-    const q=m.hasNum?fmt(roundNice(m.num))+(m.unit?' '+m.unit:''):'al gusto';
-    /* «3 recetas, 2 recetas» no dice nada: si todas las notas son recuentos, se queda el mayor */
-    const notas=Array.from(m.notes);
-    const cuentas=notas.map(function(x){const mm=/^(\d+) recetas$/.exec(x);return mm?+mm[1]:null;});
-    const de=cuentas.every(function(c){return c!=null;})&&notas.length
-      ? Math.max.apply(Math,cuentas)+' recetas' : notas.join(', ');
+    /* lo que se pesa se redondea a algo que se pueda comprar; lo que se CUENTA —aguacates, huevos,
+       limones— sube a pieza entera: «0,5 aguacate» no existe en la frutería */
+    const cant=m.hasNum?(m.unit?roundNice(m.num):Math.max(1,Math.ceil(m.num))):0;
+    const q=m.hasNum?fmt(cant)+(m.unit?' '+m.unit:''):'al gusto';
+    /* de dónde sale la línea. Con uno o dos platos se dicen sus nombres, que es lo útil en el
+       supermercado («500 g lentejas · Lentejas estofadas»); con más, la cuenta, porque pegar cinco
+       nombres hace una línea de tres renglones y la lista entera se va de largo. */
+    const piezas=[];
+    Array.from(m.notes).forEach(function(x){
+      String(x).split(/\s*(?:·|\+|,)\s*/).forEach(function(t){
+        t=t.trim();if(t&&piezas.indexOf(t)<0)piezas.push(t);});});
+    const cuentas=piezas.map(function(x){const mm=/^(\d+) recetas$/.exec(x);return mm?+mm[1]:null;});
+    const soloCuentas=piezas.length&&cuentas.every(function(c){return c!=null;});
+    const de=soloCuentas?(Math.max.apply(Math,cuentas)+' recetas')
+      :(piezas.length>2?(piezas.length+' recetas'):piezas.join(' + '));
     return {sort:m.item,texto:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),de:de};});
   fresco.sort(function(a,b){return a.sort.localeCompare(b.sort,'es');});
   const key=(store.rotation.mode==='date'?iso(weekDate):'tpl'+store.rotation.pattern);
@@ -5534,17 +5557,20 @@ function compraDatos(){
   const variasFijas=listasS().filter(function(l){return l.fija;}).length>1;
   const rutina=itemsDeRutina().map(function(r){
     return {id:'fija#'+r.texto,texto:r.texto,de:variasFijas?r.lista:''};});
-  /* los desayunos rápidos no son tanda de cocina pero se gastan cada día: se reponen igual */
-  const basicos=staplesFor(days).filter(function(x){return /whey|prote/i.test(x.d.name)||/Caf|fruta/i.test(x.d.name);})
-    .map(function(x){return {id:'base#'+x.d.id,texto:fmt(x.q)+'× '+x.d.icon+' '+x.d.name,
-      de:x.viaMeal?'viene en comida armada':''};});
+  /* 3 · lo del menú que no tiene receta escrita (el café, la fruta del desayuno, un yogur): se
+     compra tal cual. Antes esto se filtraba con una expresión regular —whey|prote|Caf|fruta—, así
+     que cualquier otra cosa que te comieras a diario no llegaba nunca a la lista. */
+  sinReceta.sort(function(a,b){return String(a.d.name).localeCompare(String(b.d.name),'es');});
+  const talCual=sinReceta.map(function(x){
+    return {id:'base#'+x.d.id,texto:fmt(x.q)+'× '+(x.d.icon?x.d.icon+' ':'')+x.d.name,
+      de:'del menú de la semana'};});
   const grupos=[
     ['fresco','Fresco de esta semana',fresco.map(function(r){return {id:key+'#'+r.sort,texto:r.texto,de:r.de};})],
     ['rutina','De rutina',rutina],
-    ['basicos','Básicos del desayuno',basicos]];
+    ['basicos','Del menú, sin receta',talCual]];
   let total=0,marcados=0;
   grupos.forEach(function(g){g[2].forEach(function(x){total++;if(ui.marks.has(x.id))marcados++;});});
-  return {grupos:grupos,total:total,marcados:marcados,recetas:recetas};}
+  return {grupos:grupos,total:total,marcados:marcados,recetas:recetas,sueltas:sueltas};}
 function compraLineaHTML(x){
   const on=ui.marks.has(x.id);
   return '<li class="linea'+(on?' ok':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
@@ -5580,8 +5606,9 @@ function renderShop(){
     '<div class="card">'+
       /* esto SÍ es progreso: cuántas cosas de la lista llevas ya en el carro */
       '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+d.marcados+' de '+d.total+'</b></div>'+
-      '<p class="note" style="margin:0">Lo fresco sale de las tandas de esta semana ('+d.recetas+' receta'+
-        (d.recetas===1?'':'s')+'); lo de rutina, de tus listas. Marca lo que eches al carro.</p>'+
+      '<p class="note" style="margin:0">Lo fresco sale del menú de esta semana: '+d.recetas+' receta'+
+        (d.recetas===1?'':'s')+' de tanda'+(d.sueltas?(' y '+d.sueltas+' plato'+(d.sueltas===1?'':'s')+' suelto'+(d.sueltas===1?'':'s')):'')+
+        '. Lo de rutina sale de tus listas. Marca lo que eches al carro.</p>'+
       (d.total?cuerpo:'<div class="empty">Sin tandas esta semana y sin listas «de rutina»: nada que comprar.</div>')+
     '</div>'+
     '<div class="row">'+
@@ -8566,7 +8593,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
-  guardCount,distributeGuardias,syncToRotation,quickBreakfast,staplesFor,schedLine,dayLine,RKEYS,
+  guardCount,distributeGuardias,syncToRotation,quickBreakfast,schedLine,dayLine,RKEYS,necesidadSemana,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,

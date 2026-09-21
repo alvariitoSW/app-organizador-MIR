@@ -2711,6 +2711,73 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ antes, despues, abierta }));
   }
 
+  // 47f-bis) la compra tiene que salir del MENÚ ENTERO, no solo de las tandas. Fallo real: un plato
+  // que está en el menú de un tipo de día pero no está asignado a una sesión de cocina no aportaba
+  // NI UN ingrediente a la lista, y sin ningún aviso — te ibas al supermercado con la lista
+  // incompleta. El único parche era un `staplesFor()` que rescataba cosas por nombre con la
+  // expresión regular /whey|prote/ o /Caf|fruta/: si tu desayuno no se llamaba así, no entraba.
+  // Se encadena de verdad: se mira la lista, se mete el plato desde el menú y se vuelve a mirar.
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(250);
+    const antesC = await page.evaluate(() => ({
+      lineas: document.querySelectorAll('#main .linea').length,
+      txt: document.getElementById('main').textContent,
+    }));
+    // un plato de verdad, con ingredientes inconfundibles y SIN sesión de cocina
+    await page.evaluate(() => {
+      const P = window.PG;
+      const shId = P.weekDays().map((d) => d.shiftId).filter(Boolean)[0];
+      P.store.dishes.push({ id: 'd-tost', name: 'Tostada de aguacate', icon: '🥑', portions: 2,
+        kcal: 300, prot: 8, batchId: '', ingredients: ['2 rebanadas pan de centeno', '1 aguacate hass'] });
+      const sl = P.slotsFor(shId)[0];
+      sl.mealId = ''; sl.items = [{ kind: 'dish', id: 'd-tost', portions: 1 }];
+      P.save();
+    });
+    await gotoTab('shop');
+    await page.waitForTimeout(300);
+    const despuesC = await page.evaluate(() => {
+      const lin = [...document.querySelectorAll('#main .linea')];
+      const suyas = lin.filter((l) => /aguacate|centeno/i.test(l.textContent))
+        .map((l) => l.textContent.replace(/\s+/g, ' ').trim());
+      return {
+        lineas: lin.length,
+        suyas,
+        // y cada línea de lo fresco dice de dónde sale, que antes se quedaba en blanco cuando
+        // venía de una sola receta (las de rutina solo nombran la lista si tienes más de una)
+        fresco: [...document.querySelectorAll('#main .lcompra')][0].querySelectorAll('.linea').length,
+        frescoConOrigen: [...document.querySelectorAll('#main .lcompra')][0].querySelectorAll('.linea .de').length,
+        // lo que se cuenta por piezas sube a pieza entera: «0,5 aguacate» no se compra
+        sinMediasPiezas: !suyas.some((t) => /^0[.,]\d+\s+\D/.test(t)),
+      };
+    });
+    // y el plato del que no hay receta escrita (un café, una fruta) también tiene que salir
+    await page.evaluate(() => {
+      const P = window.PG;
+      const shId = P.weekDays().map((d) => d.shiftId).filter(Boolean)[0];
+      const d = P.store.dishes.find((x) => x.id === 'd-tost');
+      d.ingredients = [];
+      d.name = 'Yogur griego del súper';
+      P.save();
+    });
+    await gotoTab('shop');
+    await page.waitForTimeout(300);
+    const sinReceta = await page.evaluate(() => {
+      const sec = [...document.querySelectorAll('#main .seccion')].find((x) => /sin receta/i.test(x.textContent));
+      if (sec && sec.getAttribute('aria-expanded') === 'false') sec.click();
+      return new Promise((r) => setTimeout(() => r({
+        haySeccion: !!sec,
+        sale: [...document.querySelectorAll('#main .linea')]
+          .some((l) => /Yogur griego del súper/.test(l.textContent)),
+      }), 120));
+    });
+    check('la compra sale del menú entero: un plato sin tanda también pide sus ingredientes',
+      despuesC.suyas.length === 2 && despuesC.lineas === antesC.lineas + 2 &&
+      !/aguacate/i.test(antesC.txt) && despuesC.frescoConOrigen === despuesC.fresco &&
+      despuesC.sinMediasPiezas && sinReceta.haySeccion && sinReceta.sale,
+      JSON.stringify({ antes: antesC.lineas, despuesC, sinReceta }));
+  }
+
   // 47g) el menú de un tipo de día no se sale de la pantalla. Fallo real medido antes del rediseño:
   // 415 px de ancho en un móvil de 412, porque hora, etiqueta, selector, kcal, tres botones y los
   // platos iban en una sola fila de tabla. Ahora cada toma es una tarjeta.
