@@ -1797,14 +1797,17 @@ function arcoSolHTML(s,ahora){
   const R=62,cx=70,cy=66;
   const ang=Math.PI*(1-t);
   const px=cx+R*Math.cos(ang),py=cy-R*Math.sin(ang);
-  const grande=t>0.5?1:0;
-  const rec=(t<=0)?'':('<path d="M8 66 A'+R+' '+R+' 0 '+grande+' 1 '+px.toFixed(1)+' '+py.toFixed(1)+
+  /* large-arc-flag SIEMPRE a 0: del amanecer al punto de ahora se barre como mucho media vuelta
+     (t·180°). Con el flag a 1 el navegador no dibuja «el mismo arco pero más largo», sino el de la
+     OTRA circunferencia que pasa por esos dos puntos: el trazo se despegaba de la guía y se salía
+     del dibujo por arriba. Era lo que se veía roto de mediodía en adelante. */
+  const rec=(t<=0)?'':('<path d="M8 66 A'+R+' '+R+' 0 0 1 '+px.toFixed(1)+' '+py.toFixed(1)+
     '" stroke="url(#solg)" stroke-width="3" stroke-linecap="round"/>');
   const dia=(ahora>=h0&&ahora<=h1);
   return '<div class="arco"><svg viewBox="0 0 140 78" width="140" height="78" fill="none">'+
     '<path d="M8 66 A'+R+' '+R+' 0 0 1 132 66" stroke="var(--line)" stroke-width="2.5" stroke-linecap="round"/>'+
     rec+
-    '<defs><linearGradient id="solg" x1="0" y1="1" x2="1" y2="0">'+
+    '<defs><linearGradient id="solg" gradientUnits="userSpaceOnUse" x1="8" y1="66" x2="132" y2="66">'+
       '<stop offset="0" stop-color="var(--bad)"/><stop offset="1" stop-color="var(--warn)"/></linearGradient></defs>'+
     (dia?('<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="12" fill="var(--warn)" opacity=".2"/>'+
           '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="7" fill="var(--warn)"/>'):'')+
@@ -8466,7 +8469,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
   notasS,notaById,notasDeFecha,addNota,toggleNotaHecha,notaAEvento,desenlazaNota,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
-  SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,
+  SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,
   alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,
   microTotales,microPct,microCortos,alimRicosEn,
   neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,

@@ -2948,6 +2948,71 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sitios.sitioTrasBorrar === 'lpa' && sitios.total === 2, JSON.stringify(sitios));
   }
 
+  // 66b) el arco del sol: el tramo recorrido tiene que ir SOBRE la guía, no por su cuenta.
+  // Fallo real, visible en el móvil del usuario a las 19:11: a partir del mediodía el arco llevaba
+  // el large-arc-flag a 1, y con ese flag el navegador no dibuja «el mismo arco pero más largo»,
+  // sino el arco de la OTRA circunferencia que pasa por esos dos puntos: el trazo se despegaba de
+  // la guía, se salía del dibujo por arriba (llegaba a y=-27 en un viewBox que empieza en 0) y
+  // aparecía cortado. La suite no lo veía porque se ejecuta de mañana (t < 0,5), que era justo el
+  // único tramo del día en el que el dibujo salía bien.
+  {
+    // el recorrido va sobre la circunferencia de la guía: centro (70,66) y radio 62 del viewBox
+    const sobreLaGuia = `(path) => {
+      const L = path.getTotalLength();
+      let peor = 0;
+      for (let i = 0; i <= 24; i++) {
+        const p = path.getPointAtLength(L * i / 24);
+        const d = Math.hypot(p.x - 70, p.y - 66);
+        peor = Math.max(peor, Math.abs(d - 62));
+      }
+      return +peor.toFixed(2);
+    }`;
+    // primero, en la pantalla de verdad: se entra en Hoy y se mide lo que hay pintado
+    await gotoTab('hoy');
+    await page.waitForTimeout(250);
+    const enPantalla = await page.evaluate((src) => {
+      const mide = new Function('return ' + src)();
+      const card = [...document.querySelectorAll('#main .card')].find((c) => /El sol hoy/.test(c.textContent));
+      if (!card) return { sinTarjeta: true };
+      const rec = card.querySelectorAll('.arco svg path')[1];
+      if (!rec) return { sinTrazo: true };
+      const b = rec.getBBox();
+      return { desvio: mide(rec), arriba: +b.y.toFixed(1), abajo: +(b.y + b.height).toFixed(1) };
+    }, sobreLaGuia);
+    // y después, sin recargar, el día entero hora a hora: que salga bien depende de la hora a la
+    // que se ejecute la suite, y eso es precisamente lo que dejó pasar el fallo
+    const elDiaEntero = await page.evaluate((src) => {
+      const P = window.PG;
+      const mide = new Function('return ' + src)();
+      const mk = (hh) => { const d = new Date(); d.setHours(hh, 0, 0, 0); return d; };
+      const s = { sale: mk(8), pone: mk(20), polar: '', sinDatos: false };
+      const caja = document.createElement('div');
+      document.body.appendChild(caja);
+      const malas = [];
+      let conSol = 0;
+      for (let h = 0; h <= 23; h++) {
+        caja.innerHTML = P.arcoSolHTML(s, h);
+        const rec = caja.querySelectorAll('path')[1];
+        if (rec) {
+          const b = rec.getBBox();
+          const desvio = mide(rec);
+          // fuera de la guía, o fuera del propio dibujo (el viewBox es 0 0 140 78)
+          if (desvio > 1 || b.y < -0.5 || b.y + b.height > 66.5) {
+            malas.push({ h, desvio, arriba: +b.y.toFixed(1), abajo: +(b.y + b.height).toFixed(1) });
+          }
+        }
+        if (caja.querySelector('circle')) conSol++;
+      }
+      caja.remove();
+      return { malas, conSol };
+    }, sobreLaGuia);
+    check('el arco del sol pinta el recorrido sobre su guía y dentro del dibujo a cualquier hora del día',
+      !enPantalla.sinTarjeta && !enPantalla.sinTrazo && enPantalla.desvio <= 1 &&
+      enPantalla.arriba >= -0.5 && enPantalla.abajo <= 66.5 &&
+      elDiaEntero.malas.length === 0 && elDiaEntero.conSol >= 11,
+      JSON.stringify({ enPantalla, elDiaEntero }));
+  }
+
   // 67) Semana: los días van primero y hoy se ve de verdad, no solo un borde
   {
     await gotoTab('week');
