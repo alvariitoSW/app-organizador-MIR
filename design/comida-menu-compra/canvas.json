@@ -1,0 +1,20 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",    "x": 0,    "y": 0,    "w": 390, "h": 1109, "title": "Comida · la portada" },
+    { "file": "Menu.dc.html",    "x": 470,  "y": 0,    "w": 390, "h": 844,  "title": "Menú · la semana" },
+    { "file": "MenuDia.dc.html", "x": 940,  "y": 0,    "w": 390, "h": 844,  "title": "Menú · un tipo de día" },
+    { "file": "Cocina.dc.html",  "x": 1410, "y": 0,    "w": 390, "h": 938,  "title": "Cocina · qué hago hoy" },
+    { "file": "Tandas.dc.html",  "x": 0,    "y": 1280, "w": 390, "h": 844,  "title": "Cocina · tandas" },
+    { "file": "Compra.dc.html",  "x": 470,  "y": 1280, "w": 390, "h": 1156, "title": "Compra" },
+    { "file": "Platos.dc.html",  "x": 940,  "y": 1280, "w": 390, "h": 844,  "title": "Mis platos" }
+  ],
+  "annotations": [
+    { "id": "brief", "x": -380, "y": 0, "w": 300,
+      "text": "Compra + Menú + Comida, en una\n\nHoy son 12 pantallas repartidas en 3 destinos: 21 076 px (23 pantallas de móvil), 238 botones y 80 campos. Se entra por tres sitios distintos y ninguno nombra a los otros dos, aunque el código ya los encadena: menú -> tandas -> compra.\n\nArriba: el día y el plan. Abajo: cocinar y comprar." },
+    { "id": "cadena", "x": 0, "y": 1150, "w": 390,
+      "text": "La cadena de la portada es lo que hace que esto sea UNA sección y no tres carpetas: menú manda en tandas, y tandas manda en compra. Cada eslabón es una puerta y lleva su cifra." },
+    { "id": "dup", "x": 940, "y": 2156, "w": 390,
+      "text": "«Catálogo de platos» (Días y menús) y «Mis platos» (Comida) pintan hoy los MISMOS 16 platos en dos pantallas, cada una con su buscador y sus botones de crear e importar. Aquí es una." }
+  ],
+  "launch": { "view": "canvas" }
+}
