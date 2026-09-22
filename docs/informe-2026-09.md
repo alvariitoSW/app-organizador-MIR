@@ -226,3 +226,49 @@ completa. Antes era más corta porque le faltaban cosas.
 - **Las pruebas.** 240 en total, y la costumbre de validar cada una revirtiendo
   el arreglo. Es lo que ha ido cazando los fallos de verdad (el arco del sol, el
   desborde del menú, el cuelgue del service worker).
+
+---
+
+## 8. El primer arranque
+
+`grep -i 'bienvenida|onboarding|asistente'` daba **cero**. La app abría con el
+planning de ejemplo —«Pollo al curry», la semana «1 guardia · repartida»—
+presentado como si ya fuera tuyo, y hacerla tuya era encontrar «Datos → importar
+tu planning» o editar 126 campos a mano.
+
+Ahora, en una instalación nueva, cuatro preguntas cortas —tu jornada, tus
+guardias, a qué hora te levantas y te acuestas, y dónde vives— y queda montada a
+tu nombre. Todo lo que se pregunta lo usa la app de verdad: el horario va al tipo
+de día y a la jornada, las horas alimentan el cálculo del sueño y la ventana de
+la cena, y el sitio, las horas de sol. Los menús y los platos de ejemplo se
+quedan: son contenido, no configuración.
+
+Quien ya tiene sus datos no lo ve nunca, ni al actualizar ni al restaurar una
+copia. Y si entras **compartiendo una receta** desde TikTok, el asistente se
+aparta: venías a otra cosa.
+
+## 9. Estudio, con el temario en tu otra app
+
+El temario **no vive aquí**, y es la decisión de diseño de esta sección:
+mantener dos listas de temas es la manera más rápida de que se desincronicen.
+Esta app se queda con lo que la del temario no puede saber.
+
+El cruce es un JSON de dos direcciones, documentado en
+`docs/CONTRATO-TEMARIO.md`, que entra por fichero, pegado o URL —el mismo camino
+que ya usa el `.ics`— y **se casa por `id`**: puedes renombrar, reordenar y
+añadir temas en la otra app y volver a traerlos aquí sin perder nada.
+
+Lo que aporta esta app sobre un temario suelto:
+
+- **Repaso espaciado**: 1 → 3 → 7 → 21 → 60 días. Cada «lo he repasado» aleja el
+  siguiente; «no me acordaba» lo acerca.
+- **«Hoy»**: lo que toca repasar sale en la pantalla del día, junto a lo que
+  tienes que hacer y lo que te toca pagar.
+- **El calendario del móvil**: los repasos entran en el `.ics` con su alarma,
+  categoría `ESTUDIO`, una cita por día. Los atrasados entran el primer día del
+  rango — si no, un repaso que se te pasó no aparecería nunca.
+- **Las horas**: cuánto has estudiado de verdad, por semana y por tema.
+
+**Lo que sigue pendiente**: el precio por producto, para que la compra diga lo
+que va a costar. `grep precio app.js` sigue dando una sola aparición, y es una
+frase que dice que no estima precios.

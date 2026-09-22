@@ -58,11 +58,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
   const COMER_TABS = new Set(['food', 'shop', 'types', 'batches', 'import']);
-  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'eventos', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'eventos', 'estudio', 'cfg', 'data', 'ajustes']);
   // «Turno y rotación», «Ajustes» y «Datos» son ahora portada + una pantalla por tarea, igual que
   // Comer: para llegar a una tarjeta hay que abrir su puerta. El segundo argumento es esa puerta.
   const PUERTA = { cfg: 'cfg-vista', ajustes: 'aju-vista', data: 'datos-vista' };
   async function gotoTab(tab, vista) {
+    // el cajón, si se quedó abierto, tapa TODA la pantalla con su scrim y cualquier clic siguiente
+    // se queda esperando 30 s a un botón que está debajo. Cerrarlo antes hace la suite determinista.
+    await page.evaluate(() => {
+      // un modal abierto (o el cajón) tapa la pantalla entera con su scrim: cualquier clic de
+      // navegación se queda esperando 30 s a un botón que está debajo
+      const ov = document.getElementById('overlay');
+      if (ov && ov.classList.contains('on')) {
+        const c = document.querySelector('#modal [data-a="m-cancel"]');
+        if (c) c.click(); else ov.classList.remove('on');
+      }
+      const d = document.getElementById('drawer');
+      if (d && d.classList.contains('on')) {
+        const c = document.querySelector('[data-a="drawer-close"]');
+        if (c) c.click();
+      }
+    });
+    await page.waitForTimeout(300);   /* el cajón tiene transición: sin esperarla, el botón de dentro nunca está «estable» */
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
       await page.waitForTimeout(80);
@@ -83,7 +100,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       }
     } else if (DRAWER_TABS.has(tab)) {
       await page.click('[data-a="drawer-toggle"]');
-      await page.waitForTimeout(80);
+      await page.waitForTimeout(260);
       await page.click(`[data-a="drawer-nav"][data-t="${tab}"]`);
     } else {
       await page.click(`[data-a="tab"][data-t="${tab}"]`);
@@ -175,6 +192,68 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await page.goto(base + 'index.html');
   await page.waitForTimeout(300);
+
+  // 0pre) en una instalación nueva, antes de nada, la app pregunta cuatro cosas y queda montada a
+  // tu nombre. Antes abría con el planning de ejemplo —«Pollo al curry», la semana «1 guardia ·
+  // repartida»— presentado como si ya fuera tuyo, y hacerla tuya era encontrar «Datos → importar»
+  // o editar 126 campos. Esta prueba también es la que deja la suite en un estado normal: sin
+  // saltarlo, TODO lo de abajo arrancaría dentro del asistente.
+  {
+    const primera = await page.evaluate(() => ({
+      asistente: /montarla a tu nombre/.test(document.getElementById('main').innerText),
+      sinBarra: document.getElementById('tabs').innerHTML.trim() === '',
+    }));
+    check('en una instalación nueva la app se presenta y se monta a tu nombre',
+      primera.asistente && primera.sinBarra, JSON.stringify(primera));
+
+    // si el asistente no está, conducirlo daría un timeout de 30 s y tumbaría la suite entera en
+    // vez de dejar un FAIL con su motivo: se avisa y se sigue
+    if (!(await page.$('#arrJEntra'))) {
+      check('el asistente se puede rellenar', false, 'no hay campos que rellenar');
+      await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.ui.arranque = null;
+        window.PG.save(); window.PG.render(); });
+      await page.waitForTimeout(200);
+    } else {
+    // se conduce entero, que es como lo vive el usuario
+    await page.fill('#arrJEntra', '08:30');
+    await page.fill('#arrJSale', '16:00');
+    await page.click('[data-a="arr-paso"][data-p="1"]');
+    await page.waitForTimeout(180);
+    await page.fill('#arrGMes', '5');
+    await page.click('[data-a="arr-paso"][data-p="2"]');
+    await page.waitForTimeout(180);
+    await page.fill('#arrDespierta', '07:15');
+    await page.click('[data-a="arr-paso"][data-p="3"]');
+    await page.waitForTimeout(180);
+    await page.click('[data-a="arr-paso"][data-p="4"]');
+    await page.waitForTimeout(220);
+    await page.click('[data-a="arr-fin"]');
+    await page.waitForTimeout(300);
+    const montada = await page.evaluate(() => {
+      const S = window.PG.store, t = S.shifts.filter((x) => x.id === 'sh-t')[0];
+      return { trabajo: t.start + '-' + t.end, jornada: (S.rotation.jornada || {}).from,
+        gMes: S.rotation.guardiasMes, wake: S.rhythm['sh-t'].wake, montada: S.meta.montada,
+        tab: window.PG.ui.tab };
+    });
+    check('lo que contestas en el asistente queda puesto de verdad en el planning',
+      montada.trabajo === '08:30-16:00' && montada.jornada === '08:30' && montada.gMes === 5 &&
+      montada.wake === '07:15' && montada.montada === true && montada.tab === 'hoy',
+      JSON.stringify(montada));
+
+    await page.reload();
+    await page.waitForTimeout(400);
+    check('al volver a abrirla el asistente no vuelve a salir',
+      !(await page.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText))), '');
+
+    // y quien ya tenía sus datos no lo ve nunca, ni aunque le falte la marca
+    await page.evaluate(() => { window.PG.store.meta.montada = false; window.PG.save(); });
+    await page.reload();
+    await page.waitForTimeout(400);
+    check('con datos ya guardados no sale el asistente aunque falte la marca',
+      !(await page.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText))), '');
+    await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.save(); });
+    }
+  }
 
   // 0) al abrir la app lo que quieres saber es qué tienes HOY, no planificar el mes: arranca en
   // «Hoy», que es donde están el turno, lo que toca entrenar, las tareas, lo que hay que pagar y
@@ -3610,6 +3689,110 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
     check('cada atajo sigue llevando a su tarjeta después de partir Ajustes, Datos y Turno',
       llegadas.every((x) => x.llega && x.marcada), JSON.stringify(llegadas));
+  }
+
+  // ===================== Estudio: el temario vive en otra app =====================
+  {
+    // Esta app no lleva el temario —serían dos listas desincronizándose— sino el plan: qué toca
+    // repasar contra tu turno, cuándo volver a cada tema y cuánto has estudiado. El cruce es un
+    // JSON que se casa por `id`, y eso es lo que hay que proteger: si el progreso se borrara al
+    // volver a traer el temario, el contrato no valdría para nada.
+    const TEMARIO = { nombre: 'Temario de prueba', url: 'https://ejemplo.test/t/', temas: [
+      { id: 'c1', bloque: 'Cardio', nombre: 'Insuficiencia cardiaca', url: 'https://ejemplo.test/t/#c1' },
+      { id: 'c2', bloque: 'Cardio', nombre: 'Fibrilación auricular' },
+      { id: 'n1', bloque: 'Neumo', nombre: 'EPOC' },
+      { id: '', nombre: 'sin id' },
+      { id: 'x', nombre: 'url no https', url: 'javascript:alert(1)' } ] };
+    await gotoTab('estudio');
+    await page.waitForTimeout(200);
+    await page.click('[data-a="est-vista"][data-v="conectar"]');
+    await page.waitForTimeout(250);
+    await page.fill('#estBox', JSON.stringify(TEMARIO));
+    await page.click('[data-a="est-importar"]');
+    await page.waitForTimeout(350);
+    const traido = await page.evaluate(() => {
+      const e = window.PG.estS();
+      return { n: e.temas.length, ids: e.temas.map((t) => t.id).join(','), urlMala: e.temas[3].url };
+    });
+    check('el temario entra por JSON, descartando lo que no vale y las urls que no son https',
+      traido.n === 4 && traido.ids === 'c1,c2,n1,x' && traido.urlMala === '', JSON.stringify(traido));
+
+    // el repaso espaciado: cada vuelta aleja la siguiente
+    const escalones = await page.evaluate(() => {
+      const P = window.PG, out = [];
+      for (let i = 0; i < 4; i++) { P.estSubir('c1'); out.push({ n: P.estEstado('c1').nivel, p: P.estProxima('c1') }); }
+      return out;
+    });
+    const dias = escalones.map((x) => {
+      const d = new Date(x.p + 'T00:00:00'), h = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00');
+      return Math.round((d - h) / 86400000);
+    });
+    check('cada repaso aleja el siguiente: 3, 7, 21 y 60 días',
+      dias.join(',') === '3,7,21,60', JSON.stringify({ escalones, dias }));
+
+    // lo que se te pasó tiene que llegar al calendario del móvil: si solo avisara el día exacto,
+    // un repaso atrasado no aparecería NUNCA, que es justo cuando hace falta
+    const atrasado = await page.evaluate(() => {
+      const P = window.PG, x = P.estEstado('n1');
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      x.visto = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+      x.nivel = 1; P.save();
+      const k = P.iso(new Date());
+      const evs = P.calEventos(k, P.iso(new Date(Date.now() + 6 * 864e5))).filter((e) => e.cat === 'ESTUDIO');
+      return { n: evs.length, primero: evs[0] && evs[0].summ, toca: P.estTocaHoy(k).length };
+    });
+    check('un repaso atrasado sale en «Hoy» y entra en el .ics el primer día del rango',
+      atrasado.toca >= 1 && atrasado.n >= 1 && /repasar/.test(atrasado.primero || ''), JSON.stringify(atrasado));
+
+    // y sale en la pantalla del día, junto a las tareas y los recibos
+    await gotoTab('hoy');
+    await page.waitForTimeout(250);
+    check('«Hoy» dice lo que toca repasar',
+      /Toca repasar/.test(await page.evaluate(() => document.getElementById('main').innerText)), '');
+
+    // EL contrato: volver a traer el temario renombrado y reordenado no borra tu progreso
+    await gotoTab('estudio');
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { window.PG.ui.estVista = 'conectar'; window.PG.render(); });
+    await page.waitForTimeout(250);
+    await page.fill('#estBox', JSON.stringify({ temas: [
+      { id: 'n1', bloque: 'Neumología', nombre: 'EPOC y sus agudizaciones' },
+      { id: 'c1', bloque: 'Cardiología', nombre: 'Insuficiencia cardiaca crónica' },
+      { id: 'd1', bloque: 'Digestivo', nombre: 'Cirrosis' } ] }));
+    await page.click('[data-a="est-importar"]');
+    await page.waitForTimeout(350);
+    const tras = await page.evaluate(() => {
+      const P = window.PG, e = P.estS();
+      return { n: e.temas.length, nombre: e.temas[1].nombre, nivelC1: P.estEstado('c1').nivel,
+        nivelD1: P.estEstado('d1').nivel };
+    });
+    check('traer el temario otra vez no borra el progreso: se casa por id, no por nombre ni por orden',
+      tras.n === 3 && /crónica/i.test(tras.nombre) && tras.nivelC1 === 4 && tras.nivelD1 === 0,
+      JSON.stringify(tras));
+
+    // el progreso que se devuelve, con el formato del contrato
+    const prog = await page.evaluate(() => JSON.parse(window.PG.estProgresoJSON()));
+    // ojo con leer prog.progreso.c1.nivel a pelo: si el progreso se perdiera, esto lanzaría y
+    // tumbaría la suite entera en vez de dar un FAIL con su motivo
+    check('el progreso que sale lleva app, version y el nivel de cada tema',
+      prog.app === 'organizador-mir' && prog.version === 1 &&
+      !!(prog.progreso && prog.progreso.c1) && prog.progreso.c1.nivel === 4,
+      JSON.stringify(prog).slice(0, 160));
+
+    // un JSON roto no puede llevarse por delante lo que ya tienes
+    await page.evaluate(() => { window.PG.ui.estVista = 'conectar'; window.PG.render(); });
+    await page.waitForTimeout(200);
+    await page.fill('#estBox', '{esto no es json');
+    await page.click('[data-a="est-importar"]');
+    await page.waitForTimeout(300);
+    check('un JSON roto lo dice y deja el temario como estaba',
+      (await page.evaluate(() => window.PG.estS().temas.length)) === 3 &&
+      /no es un JSON/.test(await page.evaluate(() => document.getElementById('main').innerText)), '');
+
+    await page.evaluate(() => {
+      window.PG.store.estudio = { fuente: { nombre: '', url: '', cuando: '' }, temas: [], estado: {}, sesiones: [] };
+      window.PG.save();
+    });
   }
 
   // ===================== Los avisos =====================

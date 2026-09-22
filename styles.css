@@ -1041,3 +1041,33 @@ ul.slots{list-style:none;margin:0;padding:0}
 .plegable>summary::before{content:'▾';font-size:10px;transition:transform .15s}
 .plegable[open]>summary::before{transform:rotate(180deg)}
 .plegable>summary:hover{color:var(--brand)}
+
+/* ===================== el primer arranque =====================
+   Se come la pantalla entera (sin barra de pestañas), así que centra el contenido y deja aire. */
+.arranque{max-width:520px;margin:0 auto}
+.arrpasos{display:flex;gap:6px;margin-top:11px}
+.arrpasos i{flex:1;height:4px;border-radius:99px;background:var(--line);display:block}
+.arrpasos i.on{background:var(--brand)}
+.arrpasos i.ok{background:color-mix(in srgb,var(--brand) 45%,var(--line))}
+/* lo que solo tiene sentido con la app ya en marcha */
+.en-arranque .appsolo{display:none}
+
+/* ===================== Estudio =====================
+   El temario vive en otra app; aquí se ve el nivel de cada tema y cuándo toca volver a él. */
+.estfila{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px dashed var(--line);
+  width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;
+  color:var(--ink);font:inherit;min-height:54px;cursor:pointer}
+.estfila:first-of-type{border-top:0}
+.estfila .niv{flex:none;width:28px;height:28px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:800;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink2)}
+.estfila .niv.n1{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:var(--warn)}
+.estfila .niv.n2{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));color:var(--brand)}
+.estfila .niv.n3{border-color:color-mix(in srgb,var(--brand2) 50%,var(--line));color:var(--brand2)}
+.estfila .niv.n4{border-color:color-mix(in srgb,var(--ok) 55%,var(--line));color:var(--ok);
+  background:color-mix(in srgb,var(--ok) 12%,var(--card))}
+.estfila .tx{flex:1;min-width:0}
+.estfila .tx b{display:block;font-size:13.5px;line-height:1.25}
+.estfila .tx span{display:block;font-size:10.5px;color:var(--ink2);margin-top:2px}
+.estfila.toca .tx b{color:var(--brand)}
+.estfila .fuera{flex:none;font-size:12px;color:var(--ink2)}

@@ -65,6 +65,23 @@ botón **no hace nada y no da ningún error**. Por eso existe `CFG_DONDE`, que d
 en qué vista vive cada `data-cfg` enlazable. Si mueves una tarjeta con
 `data-cfg` a otra pantalla y no la das de alta ahí, rompes el atajo en silencio.
 
+**Trampa del primer arranque**: con `localStorage` vacío —que es como arranca
+cualquier contexto nuevo de Playwright— la app abre el **asistente** y
+`renderNow()` vuelve antes de pintar la barra, el cajón y todo lo demás. Una
+prueba que dé por hecho que arranca en «Hoy» se queda esperando a botones que no
+existen. Al abrir un contexto nuevo, o se conduce el asistente, o se salta:
+
+```js
+await page.evaluate(() => { window.PG.store.meta.montada = true;
+  window.PG.ui.arranque = null; window.PG.save(); window.PG.render(); });
+```
+
+**Trampa de `drawer-nav` fuera del cajón**: `[data-a="drawer-nav"]` tiene que
+existir **solo** dentro de `#drawer`. Un botón con esa acción en `#main` hace que
+`page.click('[data-a="drawer-nav"][data-t="x"]')` coja ese, que queda debajo del
+scrim del cajón, y el clic se pasa 30 s reintentando. Para saltar de sección
+desde dentro de una pantalla está `data-a="ir-tab"`, que hace lo mismo.
+
 **Trampa de `normalize()`**: el `map` de `o.eventos` (y los de al lado)
 **descarta cualquier campo que no esté en su lista**. Un campo nuevo que no se dé
 de alta ahí se pierde en la siguiente carga sin ningún aviso — y una prueba que

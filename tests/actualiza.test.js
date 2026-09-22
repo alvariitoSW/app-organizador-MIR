@@ -119,6 +119,16 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   fs.writeFileSync(path.join(raiz, 'version.json'),
     JSON.stringify({ v: '2099-06-06T00:00:00Z', commit: 'otro' }) + '\n');
 
+  // en una instalación nueva la app abre con el asistente del primer arranque, que se come la
+  // pantalla entera —y con razón: recién instalada ya tienes la última versión, el aviso sobra—.
+  // Aquí lo que se prueba es el aviso de una app YA montada, así que se da por montada.
+  await page.evaluate(() => {
+    if (window.PG.ui.arranque) {
+      window.PG.store.meta.montada = true; window.PG.ui.arranque = null;
+      window.PG.save(); window.PG.render();
+    }
+  });
+  await page.waitForTimeout(200);
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
     document.dispatchEvent(new Event('visibilitychange'));

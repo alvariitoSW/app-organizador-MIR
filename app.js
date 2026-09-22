@@ -38,7 +38,9 @@ function monthOf(s){const d=parseDate(s);return d?d.getFullYear()+'-'+String(d.g
 
 /* ===================== datos por defecto ===================== */
 function DEFAULTS(){return {
-  meta:{owner:'',notes:'',backupAvisoD:13},
+  meta:{owner:'',notes:'',backupAvisoD:13,montada:false},
+  /* el temario vive en otra app: aquí solo su copia, tu progreso y tus ratos */
+  estudio:{fuente:{nombre:'',url:'',cuando:''},temas:[],estado:{},sesiones:[]},
   shifts:[
     {id:'sh-g',code:'G',name:'Guardia',icon:'🩺',start:'08:00',end:'08:00',intensity:'alto',
       desc:'Turno de 24 h en destino: no se cocina, todo viene de táper.',color:'#ef4444'},
@@ -265,7 +267,7 @@ let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
   shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
-  evVista:'',evForm:null,ajuVista:'',datosVista:'',
+  evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estTxt:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -284,6 +286,10 @@ function load(){
   if(!ok){store=DEFAULTS();
     if(habiaAlgo)setTimeout(function(){flash('⚠ no se ha podido leer tu planning guardado (datos dañados o de un formato antiguo): se ha cargado el ejemplo. No hemos borrado nada — tus datos anteriores siguen tal cual en el navegador',7000);},0);}
   normalize(store);
+  /* primer arranque: no hab\u00eda NADA guardado y no viene de una copia ya montada. Quien ya tiene
+     sus datos no ve el asistente nunca, ni aunque actualice la app. */
+  if(!habiaAlgo&&!(store.meta&&store.meta.montada))ui.arranque={paso:0,jEntra:'08:00',jSale:'15:00',
+    gEntra:'08:00',gSale:'08:00',gMes:4,despierta:'06:50',acuesta:'22:40',sitio:SITIOS_FIJOS[0].id};
   try{const m=JSON.parse(localStorage.getItem(MKEY)||'[]');if(Array.isArray(m))ui.marks=new Set(m);}catch(e){}
   try{if(localStorage.getItem(TKEY)!=='light')document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}
   aplicarTema();
@@ -298,6 +304,8 @@ function aplicarTema(){
 }
 function normalize(o){
   const d=DEFAULTS();
+  if(!o.meta||typeof o.meta!=='object')o.meta={};
+  o.meta.montada=!!o.meta.montada;   /* si no, el asistente volver\u00eda a salir tras restaurar una copia */
   if(!o||!Array.isArray(o.shifts)||!o.menu)return o;
   ['meta','shifts','rotation','patterns','batches','dishes','meals','menu','rules','rhythm'].forEach(k=>{if(o[k]==null)o[k]=d[k];});
   if(!o.rhythm||typeof o.rhythm!=='object')o.rhythm={};
@@ -408,6 +416,25 @@ function normalize(o){
   if(!Array.isArray(o.rotation.jornada.workdays)||!o.rotation.jornada.workdays.length)o.rotation.jornada.workdays=[1,2,3,4,5];
   o.rotation.jornada.workdays=o.rotation.jornada.workdays.map(function(x){return +x;})
     .filter(function(x){return x>=0&&x<=6;}).sort(function(a,b){return a-b;});
+  if(!o.estudio||typeof o.estudio!=='object')o.estudio={};
+  {const e=o.estudio;
+   if(!e.fuente||typeof e.fuente!=='object')e.fuente={nombre:'',url:'',cuando:''};
+   e.fuente={nombre:String(e.fuente.nombre||'').slice(0,80),
+     url:/^https:\/\//.test(e.fuente.url||'')?String(e.fuente.url).slice(0,400):'',
+     cuando:/^\d{4}-\d{2}-\d{2}$/.test(e.fuente.cuando||'')?e.fuente.cuando:''};
+   e.temas=(Array.isArray(e.temas)?e.temas:[]).filter(function(t){return t&&t.id&&t.nombre;})
+     .map(function(t){return {id:String(t.id).slice(0,64),nombre:String(t.nombre).slice(0,120),
+       bloque:String(t.bloque||'').slice(0,60),peso:Math.max(0,Math.min(9,+t.peso||0)),
+       url:/^https:\/\//.test(t.url||'')?String(t.url).slice(0,400):''};});
+   if(!e.estado||typeof e.estado!=='object')e.estado={};
+   Object.keys(e.estado).forEach(function(k){const x=e.estado[k]||{};
+     e.estado[k]={nivel:Math.max(0,Math.min(4,+x.nivel||0)),
+       visto:/^\d{4}-\d{2}-\d{2}$/.test(x.visto||'')?x.visto:'',
+       repasos:(Array.isArray(x.repasos)?x.repasos:[]).filter(function(f){return /^\d{4}-\d{2}-\d{2}$/.test(f);}).slice(-12),
+       min:Math.max(0,+x.min||0)};});
+   e.sesiones=(Array.isArray(e.sesiones)?e.sesiones:[]).filter(function(x){return x&&x.id&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');})
+     .map(function(x){return {id:String(x.id).slice(0,40),fecha:x.fecha,min:Math.max(0,Math.min(600,+x.min||0)),
+       temas:(Array.isArray(x.temas)?x.temas:[]).map(String).slice(0,20)};});}
   if(!Array.isArray(o.eventos))o.eventos=[];
   o.eventos=o.eventos.filter(function(e){return e&&e.id;}).map(function(e){
     const modo=e.modo==='fecha'?'fecha':'semanal';
@@ -2132,6 +2159,7 @@ function renderHoy(){
     tocaEntrenarHTML(hoy)+
     tareasHoyHTML()+
     pagosHoyHTML(hoy)+
+    repasoHoyHTML(hoy)+
     habitosHoyHTML()+
     proximosPuntualesHTML()+
     '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div>'+
@@ -6125,6 +6153,18 @@ function pagarGasto(id,y,m){
   if(ya){delPago(ya.id);return g.nombre+': lo he desmarcado';}
   return addPago({fecha:fechaDeGasto(g,y,m),nombre:g.nombre,importe:g.importe,cat:g.cat,gastoId:g.id});}
 
+function repasoHoyHTML(key){
+  /* lo que esta app aporta sobre un temario suelto: que el repaso te salga en el día, al lado de
+     lo que tienes que hacer y de lo que te toca pagar, y no solo si te acuerdas de entrar */
+  if(!store.estudio||!estS().temas.length)return '';
+  const t=estTocaHoy(key);
+  if(!t.length)return '';
+  const hoy=iso(new Date()),tarde=t.filter(function(x){const p=estProxima(x.id);return p&&p<hoy;}).length;
+  return '<div class="card'+(tarde?' avisa':'')+'"><h2>Toca repasar <span class="mini">'+t.length+'</span></h2>'+
+    t.slice(0,4).map(function(x){return estFilaHTML(x,true);}).join('')+
+    (t.length>4?('<p class="mini" style="margin:9px 0 0">y '+(t.length-4)+' más.</p>'):'')+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-tab" data-t="estudio">ver Estudio →</button></div>'+
+  '</div>';}
 function tareasHoyHTML(){
   /* lo que toca hoy y lo que se te pasó, en «Hoy». Sin esto, una nota con día era algo que solo
      veías si te acordabas de entrar en la libreta. */
@@ -6316,6 +6356,417 @@ function eventoRowHTML(ev){
       '<input type="checkbox" data-a="ev-toggle" data-id="'+ev.id+'" style="width:auto" '+(ev.on!==false?'checked':'')+'> activo</label>'+
     '<button class="btn d" data-a="ev-del" data-id="'+ev.id+'" title="quitar este evento">×</button></div>';
 }
+/* ===================== Estudio =====================
+   El temario NO vive aquí: vive en tu otra app. Esta no intenta ser un temario —sería mantener dos
+   listas que se desincronizan— sino aportar lo que la otra no puede saber: qué toca hoy contra tu
+   turno, cuándo te toca repasar cada tema y cuánto has estudiado de verdad.
+
+   El cruce es un contrato JSON de dos direcciones, el mismo camino que ya usa el .ics: entra por
+   fichero, pegado o URL pública, y sale igual. Está escrito en docs/CONTRATO-TEMARIO.md.
+       entra:  {app:'temario', version:1, nombre, url, temas:[{id,bloque,nombre,peso,url}]}
+       sale:   {app:'organizador-mir', version:1, progreso:{<id>:{nivel,visto,repasos,min}}}
+   La clave del cruce es `id`: mientras no cambie, el progreso de aquí sigue casando con los temas
+   de allí aunque se renombren, se reordenen o se añadan. */
+const EST_NIVELES=[
+  {n:0,dias:1,  txt:'sin ver',    cls:''},
+  {n:1,dias:3,  txt:'visto',      cls:'n1'},
+  {n:2,dias:7,  txt:'1 repaso',   cls:'n2'},
+  {n:3,dias:21, txt:'2 repasos',  cls:'n3'},
+  {n:4,dias:60, txt:'sabido',     cls:'n4'}
+];
+function estS(){
+  const e=store.estudio||(store.estudio={});
+  if(!e.fuente||typeof e.fuente!=='object')e.fuente={nombre:'',url:'',cuando:''};
+  if(!Array.isArray(e.temas))e.temas=[];
+  if(!e.estado||typeof e.estado!=='object')e.estado={};
+  if(!Array.isArray(e.sesiones))e.sesiones=[];
+  return e;}
+function estTema(id){return estS().temas.filter(function(t){return t.id===id;})[0]||null;}
+function estEstado(id){
+  const e=estS();
+  if(!e.estado[id])e.estado[id]={nivel:0,visto:'',repasos:[],min:0};
+  const x=e.estado[id];
+  if(!Array.isArray(x.repasos))x.repasos=[];
+  x.nivel=Math.max(0,Math.min(4,+x.nivel||0));
+  x.min=Math.max(0,+x.min||0);
+  return x;}
+function estProxima(id){
+  /* cuándo toca el siguiente repaso: el último día que lo tocaste más los días de su nivel.
+     Un tema sin ver no «toca» nunca por sí solo — toca estudiarlo, que es otra cosa. */
+  const x=estEstado(id);
+  if(!x.visto||!x.nivel)return '';
+  const d=parseDate(x.visto);if(!d)return '';
+  return iso(addDays(d,EST_NIVELES[x.nivel].dias));}
+function estTocaHoy(key){
+  key=key||iso(new Date());
+  return estS().temas.filter(function(t){
+    const p=estProxima(t.id);return p&&p<=key;})
+    .sort(function(a,b){return (estProxima(a.id)||'').localeCompare(estProxima(b.id)||'');});}
+function estBloques(){
+  const por={},orden=[];
+  estS().temas.forEach(function(t){
+    const b=t.bloque||'Sin bloque';
+    if(!por[b]){por[b]=[];orden.push(b);}
+    por[b].push(t);});
+  return orden.map(function(b){return {nombre:b,temas:por[b]};});}
+function estCuenta(){
+  const t=estS().temas,n={total:t.length,sinVer:0,enMarcha:0,sabidos:0};
+  t.forEach(function(x){const nv=estEstado(x.id).nivel;
+    if(!nv)n.sinVer++;else if(nv>=4)n.sabidos++;else n.enMarcha++;});
+  return n;}
+function estMinSemana(key){
+  const hoy=parseDate(key||iso(new Date()))||new Date();
+  const lun=mondayOf(hoy),dom=iso(addDays(lun,6)),ini=iso(lun);
+  return estS().sesiones.filter(function(s){return s.fecha>=ini&&s.fecha<=dom;})
+    .reduce(function(a,s){return a+(+s.min||0);},0);}
+function estSubir(id){
+  /* «me lo he estudiado / lo he repasado»: sube un nivel y reinicia la cuenta atrás del repaso */
+  const t=estTema(id);if(!t)return 'ese tema ya no está';
+  const x=estEstado(id),hoy=iso(new Date());
+  x.nivel=Math.min(4,x.nivel+1);
+  if(x.visto&&x.visto!==hoy)x.repasos.push(hoy);
+  x.visto=hoy;
+  save();
+  const p=estProxima(id);
+  return x.nivel>=4?('«'+t.nombre+'» sabido'):('hecho — el siguiente repaso, el '+fechaCorta(p));}
+function estBajar(id){
+  const t=estTema(id);if(!t)return 'ese tema ya no está';
+  const x=estEstado(id);
+  x.nivel=Math.max(0,x.nivel-1);
+  if(!x.nivel)x.visto='';
+  save();return 'bajado a «'+EST_NIVELES[x.nivel].txt+'»';}
+function estOlvidar(id){
+  const t=estTema(id);if(!t)return 'ese tema ya no está';
+  delete estS().estado[id];save();return 'borrado lo que tenías de «'+t.nombre+'»';}
+function estAddSesion(min,temas){
+  min=Math.max(1,Math.min(600,Math.round(+min||0)));
+  if(!min)return 'dime cuántos minutos';
+  const hoy=iso(new Date());
+  estS().sesiones.push({id:uid('est'),fecha:hoy,min:min,temas:(temas||[]).slice(0,20)});
+  (temas||[]).forEach(function(id){const x=estEstado(id);x.min+=Math.round(min/Math.max(1,temas.length));});
+  save();return fmtHM(min)+' apuntados';}
+function estDelSesion(id){
+  const e=estS(),i=e.sesiones.findIndex(function(s){return s.id===id;});
+  if(i<0)return 'esa sesión ya no está';
+  e.sesiones.splice(i,1);save();return 'quitada';}
+/* ---- el contrato con la otra app ---- */
+function estImportar(txt){
+  let o=null;
+  try{o=JSON.parse(String(txt||''));}catch(e){return {ok:false,msg:'eso no es un JSON válido'};}
+  if(!o||typeof o!=='object')return {ok:false,msg:'eso no es un JSON válido'};
+  const temas=Array.isArray(o.temas)?o.temas:(Array.isArray(o)?o:null);
+  if(!temas)return {ok:false,msg:'no veo una lista «temas» dentro'};
+  const limpios=[],vistos={};
+  temas.forEach(function(t){
+    if(!t||typeof t!=='object')return;
+    const id=String(t.id||t.slug||'').trim().slice(0,64);
+    const nombre=String(t.nombre||t.titulo||t.title||'').trim().slice(0,120);
+    if(!id||!nombre||vistos[id])return;
+    vistos[id]=1;
+    limpios.push({id:id,nombre:nombre,
+      bloque:String(t.bloque||t.tema||t.grupo||'').trim().slice(0,60),
+      peso:Math.max(0,Math.min(9,+t.peso||0)),
+      url:/^https:\/\//.test(t.url||'')?String(t.url).slice(0,400):''});});
+  if(!limpios.length)return {ok:false,msg:'la lista venía vacía o sin id y nombre en cada tema'};
+  const e=estS(),antes=e.temas.length;
+  /* el progreso se respeta: la clave es el id, así que renombrar o reordenar allí no borra nada
+     de aquí. Lo que ya no está en el temario nuevo deja de listarse, pero su estado se guarda por
+     si vuelve. */
+  e.temas=limpios;
+  e.fuente={nombre:String(o.nombre||o.titulo||'Temario').slice(0,80),
+    url:/^https:\/\//.test(o.url||'')?String(o.url).slice(0,400):'',
+    cuando:iso(new Date())};
+  save();
+  const conEstado=limpios.filter(function(t){const x=e.estado[t.id];return x&&x.nivel;}).length;
+  return {ok:true,n:limpios.length,antes:antes,conEstado:conEstado,
+    msg:limpios.length+' temas'+(conEstado?(' · '+conEstado+' con tu progreso ya puesto'):'')};}
+function estProgresoJSON(){
+  const e=estS(),prog={};
+  e.temas.forEach(function(t){
+    const x=e.estado[t.id];
+    if(x&&(x.nivel||x.min))prog[t.id]={nivel:x.nivel,visto:x.visto||'',repasos:x.repasos.slice(-8),min:x.min};});
+  return JSON.stringify({app:'organizador-mir',version:1,cuando:iso(new Date()),
+    temario:e.fuente.nombre||'',progreso:prog},null,1);}
+/* ---- Estudio: portada y una pantalla por tarea ---- */
+function estPantalla(titulo,cuerpo,extra){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="est-vista" data-v="">'+gymIco('atras','gico sm')+' Estudio</button>'+
+      '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
+    cuerpo+'</div>';}
+function estFilaHTML(t,conBloque){
+  const x=estEstado(t.id),nv=EST_NIVELES[x.nivel],p=estProxima(t.id);
+  const hoy=iso(new Date());
+  const tarde=p&&p<hoy,toca=p&&p<=hoy;
+  return '<button class="estfila'+(toca?' toca':'')+'" data-a="est-tema" data-id="'+esc(t.id)+'">'+
+    '<span class="niv '+nv.cls+'" title="'+esc(nv.txt)+'">'+x.nivel+'</span>'+
+    '<span class="tx"><b>'+esc(t.nombre)+'</b><span>'+
+      (conBloque&&t.bloque?(esc(t.bloque)+' · '):'')+esc(nv.txt)+
+      (p?(' · '+(tarde?'te pasaste el '+fechaCorta(p):(toca?'toca hoy':'repaso el '+fechaCorta(p)))):'')+
+    '</span></span>'+
+    (t.url?('<span class="fuera" title="está en tu temario">↗</span>'):'')+
+  '</button>';}
+function renderEstudio(){
+  const e=estS(),v=ui.estVista||'';
+  if(v==='conectar')return estPantalla('🔌 Conectar con tu temario',estConectarHTML());
+  if(v==='sesiones')return estPantalla('⏱ Mis sesiones',estSesionesHTML(),fmtHM(estMinSemana())+' esta semana');
+  if(v==='temario'){
+    if(!e.temas.length)return estPantalla('📚 El temario',estVacioHTML());
+    return estPantalla('📚 El temario',
+      estBloques().map(function(b){
+        const n=b.temas.filter(function(t){return estEstado(t.id).nivel>=4;}).length;
+        return '<div class="card"><h2>'+esc(b.nombre)+
+          '<span class="mini" style="margin-left:auto;font-weight:400">'+n+' de '+b.temas.length+'</span></h2>'+
+          b.temas.map(function(t){return estFilaHTML(t,false);}).join('')+'</div>';}).join(''),
+      e.temas.length+' temas');}
+  if(v&&v.indexOf('t:')===0){
+    const t=estTema(v.slice(2));
+    if(!t){ui.estVista='temario';return renderEstudio();}
+    const x=estEstado(t.id),nv=EST_NIVELES[x.nivel],p=estProxima(t.id);
+    return estPantalla(t.nombre,
+      '<div class="card">'+
+        '<div class="dosdatos">'+
+          '<div><b>'+esc(nv.txt)+'</b><span>cómo lo llevas</span></div>'+
+          '<div><b>'+(p?esc(fechaCorta(p)):'—')+'</b><span>siguiente repaso</span></div>'+
+        '</div>'+
+        (x.min?('<p class="mini" style="margin:10px 0 0">Le has echado <b style="color:var(--ink)">'+fmtHM(x.min)+'</b>.</p>'):'')+
+        (x.repasos.length?('<p class="mini" style="margin:6px 0 0">Repasos: '+
+          x.repasos.slice(-5).map(function(f){return esc(fechaCorta(f));}).join(' · ')+'</p>'):'')+
+        '<div class="row" style="margin-top:12px">'+
+          '<button class="btn p" data-a="est-sube" data-id="'+esc(t.id)+'">'+
+            (x.nivel?'✓ lo he repasado':'✓ me lo he estudiado')+'</button>'+
+          (x.nivel?('<button class="btn s" data-a="est-baja" data-id="'+esc(t.id)+'">no me acordaba</button>'):'')+
+        '</div>'+
+        (t.url?('<div class="row" style="margin-top:9px">'+
+          '<a class="btn s" href="'+esc(t.url)+'" target="_blank" rel="noopener">abrir en tu temario ↗</a></div>'):
+          (e.fuente.url?('<div class="row" style="margin-top:9px">'+
+            '<a class="btn s" href="'+esc(e.fuente.url)+'" target="_blank" rel="noopener">abrir tu temario ↗</a></div>'):''))+
+      '</div>'+
+      '<div class="card"><h2>Cómo funciona el repaso</h2>'+
+        '<p class="note" style="margin:0">Cada vez que le das a «lo he repasado», el siguiente se aleja: '+
+        EST_NIVELES.slice(0,4).map(function(n){return n.dias+' d';}).join(' → ')+' → '+EST_NIVELES[4].dias+' d. '+
+        'Si un día no te acordabas, baja un escalón y vuelve antes.</p>'+
+        '<div class="row" style="margin-top:11px"><button class="btn d s" data-a="est-olvida" data-id="'+esc(t.id)+'">empezar este tema de cero</button></div>'+
+      '</div>',
+      t.bloque||'');}
+  /* la portada */
+  if(!e.temas.length){$('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">📚 Estudio</h2></div>'+estVacioHTML()+'</div>';return;}
+  const toca=estTocaHoy(),c=estCuenta(),min=estMinSemana();
+  const pct=c.total?Math.round(c.sabidos/c.total*100):0;
+  const puerta=function(vista,ico,tit,sub){
+    return '<button class="puerta" data-a="est-vista" data-v="'+vista+'">'+gymIco(ico)+
+      '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">📚 Estudio</h2>'+
+      '<span class="tag b2">'+esc(e.fuente.nombre||'temario')+'</span></div>'+
+    (toca.length?('<div class="card avisa"><h2>Hoy toca repasar<span class="mini" style="margin-left:auto;font-weight:400">'+
+      toca.length+'</span></h2>'+toca.slice(0,6).map(function(t){return estFilaHTML(t,true);}).join('')+
+      (toca.length>6?('<p class="mini" style="margin:9px 0 0">y '+(toca.length-6)+' más.</p>'):'')+'</div>')
+      :('<div class="card"><h2>Hoy no toca repasar nada</h2>'+
+        '<p class="note" style="margin:0">Todo al día. Si quieres adelantar, entra en el temario y dale a un tema sin ver.</p></div>'))+
+    '<div class="card"><h2>Cómo vas</h2>'+
+      '<div class="prog"><div class="bar"><i style="width:'+pct+'%"></i></div><b>'+c.sabidos+' de '+c.total+'</b></div>'+
+      '<div class="dosdatos" style="margin-top:10px">'+
+        '<div><b>'+c.enMarcha+'</b><span>en marcha</span></div>'+
+        '<div><b>'+(min?fmtHM(min):'0h00')+'</b><span>esta semana</span></div>'+
+      '</div>'+
+      '<div class="row" style="margin-top:11px"><button class="btn p" data-a="est-vista" data-v="sesiones">+ apuntar un rato</button></div>'+
+    '</div>'+
+    '<div class="puertas">'+
+      puerta('temario','libro','El temario',c.total+' temas')+
+      puerta('sesiones','reloj','Sesiones',min?fmtHM(min)+' esta semana':'sin apuntar')+
+      puerta('conectar','enlace','Conectar',e.fuente.url?'enlazado':'sin enlazar')+
+    '</div>'+
+  '</div>';}
+function estVacioHTML(){
+  return '<div class="card"><h2>Tu temario no vive aquí</h2>'+
+    '<p class="note">Y está bien que no viva aquí: mantener dos listas de temas es garantía de que se '+
+    'desincronicen. Trae el temario de tu otra app y esta se encarga de lo que aquella no puede saber: '+
+    '<b>qué toca repasar hoy contra tu turno</b>, cuánto llevas y cuándo te toca volver a cada tema.</p>'+
+    '<div class="row" style="margin-top:11px">'+
+      '<button class="btn p" data-a="est-vista" data-v="conectar">traer mi temario</button></div>'+
+    '<p class="mini" style="margin:11px 0 0">El formato está en <code>docs/CONTRATO-TEMARIO.md</code>: una lista de '+
+    '<code>{id, nombre, bloque, url}</code>. Nada más.</p>'+
+  '</div>';}
+function estConectarHTML(){
+  const e=estS(),pr=ui.estPrev;
+  return '<div class="card"><h2>Traer el temario</h2>'+
+    '<p class="note">Un JSON con la lista de temas. Sube el fichero, pégalo o dame su dirección: '+
+    'se lee <b>aquí, en el móvil</b>, y no sale nada a ninguna parte.</p>'+
+    (e.fuente.nombre?('<div class="estado"><span class="em">📚</span><span class="tx"><b>'+esc(e.fuente.nombre)+'</b></span>'+
+      '<span class="vl">'+e.temas.length+' temas · '+esc(fechaCorta(e.fuente.cuando))+'</span></div>'):'')+
+    '<div class="row" style="margin-top:10px">'+
+      '<label class="fld" style="flex:0 0 auto">fichero .json<input type="file" id="estFile" data-a="est-file" accept="application/json,.json"></label>'+
+    '</div>'+
+    '<textarea id="estBox" rows="6" style="margin-top:8px" placeholder=\'{"nombre":"Temario MIR","url":"https://…","temas":[{"id":"card-01","bloque":"Cardiología","nombre":"Insuficiencia cardiaca","url":"https://…"}]}\'>'+esc(ui.estTxt||'')+'</textarea>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<button class="btn p" data-a="est-importar">traer estos temas</button>'+
+      '<span class="sp"></span>'+
+      '<label class="fld" style="flex:1 1 200px">o desde una dirección<input type="url" inputmode="url" id="estUrl" value="'+esc(e.fuente.url||'')+'" placeholder="https://…/temario.json"></label>'+
+      '<button class="btn s" data-a="est-url">traerlo de ahí</button>'+
+    '</div>'+
+    (pr?('<p class="mini" style="margin:9px 0 0;color:var(--'+(pr.ok?'ok':'warn')+')">'+esc(pr.msg)+'</p>'):'')+
+    '<p class="mini" style="margin:9px 0 0">Traer el temario otra vez <b>no borra tu progreso</b>: se casa por '+
+    '<code>id</code>, así que puedes renombrar, reordenar y añadir temas allí sin perder nada aquí.</p>'+
+  '</div>'+
+  '<div class="card"><h2>Devolver tu progreso</h2>'+
+    '<p class="note">Para que tu temario sepa por dónde vas: un JSON con el nivel de cada tema, cuándo lo '+
+    'viste y cuánto le has echado.</p>'+
+    '<div class="row"><button class="btn s" data-a="est-exportar">descargar mi progreso</button>'+
+      '<button class="btn s" data-a="est-copiar">copiarlo</button></div>'+
+    '<p class="mini" style="margin:9px 0 0">El formato de ida y el de vuelta están escritos en '+
+    '<code>docs/CONTRATO-TEMARIO.md</code> del repositorio, para poder implementarlos en la otra app.</p>'+
+  '</div>';}
+function estSesionesHTML(){
+  const e=estS(),hoy=iso(new Date());
+  const ult=e.sesiones.slice(-14).reverse();
+  const deHoy=e.sesiones.filter(function(s){return s.fecha===hoy;}).reduce(function(a,s){return a+s.min;},0);
+  return '<div class="card"><h2>Apuntar un rato</h2>'+
+    '<div class="row">'+
+      '<label class="fld" style="flex:0 0 120px">minutos<input type="number" id="estMin" min="1" max="600" value="45"></label>'+
+      '<label class="fld" style="flex:1 1 180px">sobre qué tema (opcional)<select id="estTema">'+
+        '<option value="">— sin tema —</option>'+
+        estS().temas.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.nombre)+'</option>';}).join('')+
+      '</select></label>'+
+    '</div>'+
+    '<div class="row" style="margin-top:9px"><button class="btn p" data-a="est-sesion">apuntar</button>'+
+      '<span class="mini">hoy llevas <b style="color:var(--ink)">'+(deHoy?fmtHM(deHoy):'0h00')+'</b></span></div>'+
+  '</div>'+
+  '<div class="card"><h2>Lo apuntado</h2>'+
+    (ult.length?ult.map(function(s){
+      const nms=(s.temas||[]).map(function(id){const t=estTema(id);return t?t.nombre:'';}).filter(Boolean);
+      return '<div class="logrow"><span class="nm"><b>'+fmtHM(s.min)+'</b><span>'+esc(fechaCorta(s.fecha))+
+        (nms.length?(' · '+esc(nms.join(', '))):'')+'</span></span>'+
+        '<button class="btn d" data-a="est-del-sesion" data-id="'+esc(s.id)+'" title="quitar">×</button></div>';}).join('')
+      :'<div class="empty">Nada apuntado todavía.</div>')+
+  '</div>';}
+/* ===================== el primer arranque =====================
+   Hasta ahora la app abría con el planning de ejemplo —«Pollo al curry», la semana «1 guardia ·
+   repartida»— presentado como si ya fuera tuyo, y hacerla tuya era encontrar «Datos → importar tu
+   planning» o editar 126 campos a mano. `grep -i bienvenida|onboarding|asistente app.js` daba cero.
+   Esto son cuatro preguntas cortas, todas de cosas que la app usa de verdad: con ellas queda
+   montada a tu nombre. Los menús y los platos de ejemplo se quedan: son contenido útil, no
+   configuración, y se cambian en Comer cuando quieras. */
+const ARR_PASOS=[
+  {id:'jornada',t:'Tu jornada',s:'Un día normal de trabajo'},
+  {id:'guardias',t:'Tus guardias',s:'Cuántas y a qué hora'},
+  {id:'sueno',t:'Tus horas',s:'Cuándo te levantas y te acuestas'},
+  {id:'sitio',t:'Dónde vives',s:'Para las horas de sol'}
+];
+function arrS(){
+  if(!ui.arranque)ui.arranque={paso:0,jEntra:'08:00',jSale:'15:00',gEntra:'08:00',gSale:'08:00',
+    gMes:4,despierta:'06:50',acuesta:'22:40',sitio:(sitioActual()||{}).id||''};
+  return ui.arranque;}
+function arrLee(){
+  /* se relee del DOM antes de cada paso: el formulario se repinta entero y lo tecleado se perdería */
+  const a=arrS(),v=function(id){const e=$('#'+id);return e?e.value:null;};
+  [['arrJEntra','jEntra'],['arrJSale','jSale'],['arrGEntra','gEntra'],['arrGSale','gSale'],
+   ['arrDespierta','despierta'],['arrAcuesta','acuesta'],['arrSitio','sitio']].forEach(function(p){
+    const x=v(p[0]);if(x!=null&&x!=='')a[p[1]]=x;});
+  const g=v('arrGMes');if(g!=null&&g!=='')a.gMes=Math.max(0,Math.min(15,+g||0));
+  return a;}
+function arrAplica(){
+  const a=arrLee();
+  /* la jornada y el día de trabajo */
+  const t=shiftById('sh-t');if(t){t.start=a.jEntra;t.end=a.jSale;}
+  const f=shiftById('sh-f');if(f)f.end=a.jSale;   /* el día de fuerza entrena antes y luego trabaja igual */
+  if(!store.rotation.jornada)store.rotation.jornada={};
+  store.rotation.jornada.from=a.jEntra;store.rotation.jornada.to=a.jSale;
+  /* las guardias */
+  const g=shiftById('sh-g');if(g){g.start=a.gEntra;g.end=a.gSale;}
+  store.rotation.guardiasMes=a.gMes;
+  /* las horas: se aplican al día de trabajo y al de fuerza, que son los que siguen un horario fijo */
+  ['sh-t','sh-f'].forEach(function(id){
+    if(!store.rhythm[id])store.rhythm[id]={};
+    store.rhythm[id].wake=a.despierta;store.rhythm[id].sleep=a.acuesta;});
+  /* dónde vives */
+  if(a.sitio){store.sitio=a.sitio;olvidaSitios();}   /* hay caché: sin esto el sol sigue en el sitio viejo */
+  store.meta.montada=true;
+  save();}
+function arrCampo(id,etiqueta,valor,tipo,extra){
+  return '<label class="fld" style="flex:1 1 130px">'+esc(etiqueta)+
+    '<input type="'+(tipo||'time')+'" id="'+id+'" value="'+esc(valor)+'"'+(extra||'')+'></label>';}
+function renderArranque(){
+  const a=arrS(),n=ARR_PASOS.length;
+  /* la barra de arriba no pinta nada aquí: todavía no hay nada que navegar */
+  const tb=$('#tabs');if(tb)tb.innerHTML='';
+  const cm=$('#calModes');if(cm)cm.hidden=true;
+  /* «Imprimir» y «JSON» son de una app que ya tiene datos: aquí todavía no hay nada que imprimir */
+  document.documentElement.classList.add('en-arranque');
+  const wn=$('#wkNav');if(wn)wn.hidden=true;
+  const wl=$('#wkLabel');if(wl)wl.textContent='';
+  if(a.paso>=n){
+    /* el resumen: qué ha quedado montado, con las cifras de verdad */
+    const sit=sitiosS().filter(function(s){return s.id===a.sitio;})[0]||sitioActual();
+    const horas=sleepHours(a.acuesta,a.despierta);
+    $('#main').innerHTML='<div class="grid arranque">'+
+      '<div class="card"><h2>✓ Listo</h2>'+
+        '<p class="note" style="margin:0 0 10px">Esto es lo que te he montado. Todo se cambia luego en '+
+        '«Turno y rotación» sin romper nada.</p>'+
+        '<div class="estado"><span class="em">💼</span><span class="tx"><b>Tu jornada</b></span>'+
+          '<span class="vl">'+esc(a.jEntra)+' – '+esc(a.jSale)+'</span></div>'+
+        '<div class="estado"><span class="em">🩺</span><span class="tx"><b>Guardias</b></span>'+
+          '<span class="vl">'+a.gMes+' al mes · '+esc(a.gEntra)+'</span></div>'+
+        '<div class="estado"><span class="em">🛌</span><span class="tx"><b>Duermes</b></span>'+
+          '<span class="vl">'+(horas!=null?fmtHM(horas*60):'—')+'</span></div>'+
+        '<div class="estado"><span class="em">☀️</span><span class="tx"><b>Dónde</b></span>'+
+          '<span class="vl">'+esc((sit&&sit.nombre)||'—')+'</span></div>'+
+      '</div>'+
+      '<div class="card"><h2>Lo que traes de fábrica</h2>'+
+        '<p class="note" style="margin:0">Los menús, los platos y las semanas tipo que ves son un '+
+        '<b>ejemplo</b> para que la app haga algo desde el primer día. Cámbialos cuando quieras en '+
+        '«Comer» y en «Turno y rotación», o pega tu planning de verdad en «Datos».</p>'+
+      '</div>'+
+      '<div class="row">'+
+        '<button class="btn p" data-a="arr-fin">empezar</button>'+
+        '<button class="btn s" data-a="arr-fin" data-t="data">pegar mi planning →</button>'+
+        '<span class="sp"></span>'+
+        '<button class="btn s" data-a="arr-paso" data-p="0">volver atrás</button>'+
+      '</div>'+
+    '</div>';
+    return;}
+  const p=ARR_PASOS[a.paso];
+  let cuerpo='';
+  if(p.id==='jornada')cuerpo=
+    '<p class="note" style="margin:0 0 10px">Un día de trabajo normal, el que más se repite. Con esto '+
+    'la app sabe cuándo estás fuera de casa y coloca las comidas y el entreno alrededor.</p>'+
+    '<div class="row">'+arrCampo('arrJEntra','entras',a.jEntra)+arrCampo('arrJSale','sales',a.jSale)+'</div>';
+  else if(p.id==='guardias')cuerpo=
+    '<p class="note" style="margin:0 0 10px">Si no haces guardias, deja el número en 0 y sigue: el resto '+
+    'de la app funciona igual.</p>'+
+    '<div class="row">'+arrCampo('arrGEntra','entras',a.gEntra)+arrCampo('arrGSale','sales',a.gSale)+
+      arrCampo('arrGMes','al mes',String(a.gMes),'number',' min="0" max="15"')+'</div>'+
+    '<p class="mini" style="margin:9px 0 0">Una guardia que entra y sale a la misma hora se entiende como '+
+    'de 24 h, y el día siguiente queda como saliente.</p>';
+  else if(p.id==='sueno')cuerpo=
+    '<p class="note" style="margin:0 0 10px">Entre semana. La app cuenta tus horas, te dice a qué hora '+
+    'tocaría acostarse y encaja la cena para no dormir con la digestión a medias.</p>'+
+    '<div class="row">'+arrCampo('arrDespierta','te levantas',a.despierta)+arrCampo('arrAcuesta','te acuestas',a.acuesta)+'</div>'+
+    (function(){const h=sleepHours(a.acuesta,a.despierta);
+      return h!=null?('<p class="mini" style="margin:9px 0 0">Son <b style="color:var(--ink)">'+fmtHM(h*60)+'</b> de sueño.</p>'):'';})();
+  else cuerpo=
+    '<p class="note" style="margin:0 0 10px">Solo para las horas de sol, que se calculan aquí en el móvil '+
+    'sin conexión. No sale nada a internet.</p>'+
+    '<label class="fld" style="max-width:280px">tu sitio<select id="arrSitio">'+
+      sitiosS().map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===a.sitio?' selected':'')+'>'+esc(s.nombre)+'</option>';}).join('')+
+    '</select></label>';
+  $('#main').innerHTML='<div class="grid arranque">'+
+    '<div class="card"><h2>👋 Vamos a montarla a tu nombre</h2>'+
+      '<p class="note" style="margin:0">Cuatro preguntas cortas. Todo esto se cambia luego, y si prefieres '+
+      'saltarlas, la app arranca igual con un ejemplo.</p>'+
+      '<div class="arrpasos">'+ARR_PASOS.map(function(x,i){
+        return '<i class="'+(i<a.paso?'ok':(i===a.paso?'on':''))+'"></i>';}).join('')+'</div>'+
+    '</div>'+
+    '<div class="card"><h2>'+esc(p.t)+'<span class="mini" style="margin-left:auto;font-weight:400">'+
+      (a.paso+1)+' de '+n+'</span></h2>'+cuerpo+'</div>'+
+    '<div class="row">'+
+      (a.paso?'<button class="btn s" data-a="arr-paso" data-p="'+(a.paso-1)+'">‹ atrás</button>':'')+
+      '<button class="btn p" data-a="arr-paso" data-p="'+(a.paso+1)+'">'+(a.paso===n-1?'ver lo que queda':'siguiente ›')+'</button>'+
+      '<span class="sp"></span>'+
+      '<button class="btn s" data-a="arr-saltar">saltar</button>'+
+    '</div>'+
+  '</div>';}
 /* ===================== Eventos: sección propia =====================
    Estaban dentro de Ajustes, tarjeta 4 de 13, entre el lector de enlaces y las copias de
    seguridad: lo que más se usa, en lo que menos se encuentra. Aquí son una sección del cajón,
@@ -6445,7 +6896,8 @@ function proximosPuntualesHTML(){
    del calendario de Google en dos secciones. Mismo patrón que «Turno y rotación»: una portada que
    se lee de un vistazo y una pantalla por tarea. */
 const ICS_CAT=[['GUARDIA','\ud83e\ude7a','guardias'],['TRABAJO','\ud83d\udcbc','trabajo'],['ENTRENO','\ud83d\udcaa','entrenos'],
-  ['DINERO','\ud83d\udcb6','recibos'],['TAREA','\ud83d\udcdd','tareas con d\u00eda'],['EVENTO','\ud83d\udccc','eventos']];
+  ['DINERO','\ud83d\udcb6','recibos'],['TAREA','\ud83d\udcdd','tareas con d\u00eda'],['EVENTO','\ud83d\udccc','eventos'],
+  ['ESTUDIO','\ud83d\udcda','repasos']];
 function icsResumen(desde,hasta){
   /* qué se lleva de verdad el calendario del móvil, contado. La tarjeta vieja decía que iban «solo
      tres cosas» y se quedó caduca cuando los avisos empezaron a llevar también recibos, tareas y
@@ -6848,7 +7300,7 @@ function comerModosHTML(){
   return b('dia','Hoy','food-vista','')+b('menu','Menú','tab','types')+
     b('cocina','Cocina','food-vista','cocina-panel')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['eventos','📌 Eventos']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['eventos','📌 Eventos'],['estudio','📚 Estudio']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -6863,6 +7315,8 @@ function render(){
 }
 function renderNow(){
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
+  /* el asistente del primer arranque se come la pantalla entera: todavía no hay nada que navegar */
+  if(ui.arranque)return renderArranque();
   if(ui.scanStream&&ui.tab!=='food')pararEscaner();   /* solo si de verdad se sale de Comida: un render de paso (p. ej. al filtrar) no debe apagar la cámara */
   const hk=iso(new Date()),ft=foodTotals(hk),gn=setsDe(hk).length,gc=guardCount(monthDate.getFullYear(),monthDate.getMonth());
   const BADGE={food:ft.kcal?ft.kcal+' kcal':'',gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
@@ -6904,7 +7358,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,eventos:renderEventos,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -7152,6 +7606,7 @@ function act(a,el){
       if(ui.tab==='ajustes')ui.ajuVista='';
       if(ui.tab==='data')ui.datosVista='';
       if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
+      if(ui.tab==='estudio')ui.estVista='';
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
@@ -7160,6 +7615,62 @@ function act(a,el){
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
     case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
     case 'cfg-vista':{ui.cfgVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'arr-paso':{
+      /* leer SIEMPRE antes de repintar: el formulario se reemplaza entero y lo tecleado se perdería */
+      const a=arrLee(),n=ARR_PASOS.length,to=Math.max(0,Math.min(n,+el.dataset.p||0));
+      a.paso=to;
+      if(to>=n)arrAplica();     /* al llegar al resumen ya queda guardado: si cierra la app, no lo pierde */
+      render();window.scrollTo(0,0);break;}
+    case 'arr-saltar':{
+      confirmar('¿Saltar las preguntas? La app arranca con un ejemplo y lo cambias luego en «Turno y rotación».',
+        'Sí, saltar').then(function(ok){
+        if(!ok)return;
+        store.meta.montada=true;save();
+        ui.arranque=null;document.documentElement.classList.remove('en-arranque');render();window.scrollTo(0,0);
+        flash('montada con el ejemplo — cámbialo en «Turno y rotación» cuando quieras',4500);});
+      break;}
+    case 'arr-fin':{
+      arrAplica();
+      ui.arranque=null;document.documentElement.classList.remove('en-arranque');
+      if(el.dataset.t){ui.tab=el.dataset.t;ui.datosVista='planning';}
+      render();window.scrollTo(0,0);
+      flash('lista: tu jornada, tus guardias y tus horas ya están puestas',4000);break;}
+    case 'est-vista':{ui.estVista=el.dataset.v||'';ui.estPrev=null;render();window.scrollTo(0,0);break;}
+    case 'est-tema':{ui.estVista='t:'+el.dataset.id;render();window.scrollTo(0,0);break;}
+    case 'est-sube':{flash(estSubir(el.dataset.id));render();break;}
+    case 'est-baja':{flash(estBajar(el.dataset.id));render();break;}
+    case 'est-olvida':{const id=el.dataset.id;
+      confirmar('¿Empezar este tema de cero? Se borra su nivel y sus repasos.','Sí, de cero').then(function(ok){
+        if(!ok)return;flash(estOlvidar(id));render();});
+      break;}
+    case 'est-importar':{
+      const box=$('#estBox');
+      const r=estImportar(box?box.value:'');
+      ui.estPrev=r;
+      if(r.ok){ui.estTxt='';ui.estVista='temario';}
+      flash(r.msg);render();window.scrollTo(0,0);break;}
+    case 'est-url':{
+      const u=($('#estUrl')||{}).value||'';
+      if(!/^https:\/\//.test(u)){flash('la dirección tiene que empezar por https://');break;}
+      ui.estPrev={ok:true,msg:'trayendo…'};render();
+      /* lo pide el navegador directamente, sin ningún servidor por medio: si ese sitio no deja
+         leerlo desde fuera (CORS), no se puede, y se dice en vez de dejarlo colgado */
+      fetch(u,{cache:'no-store'}).then(function(res){
+        if(!res.ok)throw new Error('ha contestado '+res.status);
+        return res.text();}).then(function(txt){
+        const r=estImportar(txt);ui.estPrev=r;
+        if(r.ok){estS().fuente.url=u;save();ui.estVista='temario';}
+        flash(r.msg);render();}).catch(function(err){
+        ui.estPrev={ok:false,msg:'no he podido traerlo ('+String(err.message||err).slice(0,60)+
+          '). Si es tu propia app, tiene que permitir leerla desde fuera; mientras tanto, baja el fichero y súbelo aquí.'};
+        render();});
+      break;}
+    case 'est-exportar':{dlTxt(estProgresoJSON(),'progreso-estudio.json','application/json;charset=utf-8');break;}
+    case 'est-copiar':{copy(estProgresoJSON());break;}
+    case 'est-sesion':{
+      const min=($('#estMin')||{}).value||'',t=($('#estTema')||{}).value||'';
+      flash(estAddSesion(min,t?[t]:[]));render();break;}
+    case 'est-del-sesion':{flash(estDelSesion(el.dataset.id));render();break;}
     case 'aju-vista':{ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'ir-sueno':irACard('cfg','sueno');break;
     case 'aju-ir':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
@@ -7217,6 +7728,7 @@ function act(a,el){
       if(ui.tab==='ajustes')ui.ajuVista='';
       if(ui.tab==='data')ui.datosVista='';
       if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
+      if(ui.tab==='estudio')ui.estVista='';
       closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':{document.documentElement.classList.toggle('dark');
       const osc=document.documentElement.classList.contains('dark');
@@ -8708,6 +9220,22 @@ function calEventos(desde,hasta){
     const t=String(x.txt||'').split('\n')[0].slice(0,60);
     out.push({allDay:true,fecha:icsNum(x.fecha),isoKey:x.fecha,uid:icsUID('nota|'+x.id),
       summ:'📝 '+t,desc:(x.proy?('Proyecto: '+x.proy+'. '):'')+'Apuntado en la libreta.',cat:'TAREA'});});
+  /* los repasos que vencen dentro del rango: una línea por día, no una por tema, para no llenar
+     el calendario de veinte citas idénticas */
+  if(store.estudio&&estS().temas.length){
+    const primero=iso(i0);
+    for(let d=new Date(i0);d<=i1;d=addDays(d,1)){
+      const k=iso(d);
+      /* cada repaso avisa el día que vence, y no todos los días a partir de ahí. La excepción es
+         el primer día del rango: ahí entran también los que ya se te pasaron, porque si no, un
+         atrasado no aparecería NUNCA en el calendario — y es justo cuando hace falta el aviso. */
+      const hoyMismo=estS().temas.filter(function(x){
+        const p=estProxima(x.id);
+        return p&&(p===k||(k===primero&&p<k));});
+      if(!hoyMismo.length)continue;
+      out.push({allDay:true,fecha:icsNum(k),isoKey:k,uid:icsUID('repaso|'+k),
+        summ:'📚 repasar '+hoyMismo.length+' tema'+(hoyMismo.length===1?'':'s'),
+        desc:hoyMismo.map(function(x){return x.nombre;}).slice(0,12).join(', '),cat:'ESTUDIO'});}}
   eventosS().forEach(function(ev){
     if(ev.on===false||ev.modo!=='fecha'||!ev.fecha)return;
     const dd=parseDate(ev.fecha);
@@ -9053,6 +9581,14 @@ document.addEventListener('change',e=>{
     case 'wk-set':{const d=parseDate(el.value);if(d){weekDate=mondayOf(d);render();}break;}
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
     case 'rot-anchor':{if(el.value){store.rotation.anchor=el.value;store.rotation.anchorSet=true;save();render();}break;}
+    case 'est-file':{const f=el.files&&el.files[0];if(!f)break;
+      /* ojo: los ficheros y los <select> se manejan en ESTE switch (change), no en act(): un case
+         puesto en el otro no se dispara nunca y no da ningún error */
+      const rd=new FileReader();
+      rd.onload=function(){const r=estImportar(String(rd.result||''));
+        ui.estPrev=r;if(r.ok)ui.estVista='temario';flash(r.msg);render();window.scrollTo(0,0);};
+      rd.onerror=function(){flash('no he podido leer ese archivo: pégalo a mano en la caja de abajo');};
+      rd.readAsText(f);break;}
     case 'ics-file':{const f=el.files&&el.files[0];if(!f)break;
       const rd=new FileReader();
       rd.onload=function(){ui.icsTxt=String(rd.result||'');
@@ -9365,6 +9901,9 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
   notasS,notaById,notasDeFecha,addNota,setNota,delNota,proyectos,notasDeHoy,notasDeLaSemana,toggleNotaHecha,notaAEvento,desenlazaNota,
   eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
+  estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
+  estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,
+  arrS,arrLee,arrAplica,ARR_PASOS,
   rutinaDias,toggleRutinaDia,rutinaDeFecha,CFG_DONDE,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
   SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,
@@ -9387,6 +9926,11 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
 load();
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
+/* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del
+   primer arranque no puede comerse el compartido. Se guarda para la próxima vez que abras la app
+   por tu cuenta. (Pasó: en una instalación nueva, compartir desde TikTok abría el asistente y la
+   receta se perdía de vista.) */
+if(ui.arranque&&ui.imp&&(ui.imp.txt||ui.imp.url))ui.arranque=null;
 impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
