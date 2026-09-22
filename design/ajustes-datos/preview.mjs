@@ -1,6 +1,6 @@
 import {readFileSync, writeFileSync} from 'node:fs';
 import {chromium} from '/home/user/app-organizador-MIR/node_modules/playwright/index.mjs';
-const files=['Main','Calendario','Eventos','Datos','Aspecto','Copia'];
+const files=['Main','Calendario','Eventos','EventoNuevo','Datos','Aspecto','Copia'];
 const OUT='/tmp/shots/';
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
 for(const f of files){

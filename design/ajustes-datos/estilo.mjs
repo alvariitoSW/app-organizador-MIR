@@ -8,6 +8,8 @@ input,select,textarea{font:inherit;font-size:13px;padding:6px 9px;border:1px sol
 label.fld{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;color:#8fa6c6;text-transform:uppercase;
   letter-spacing:.05em;flex:1 1 160px}
 label.fld>input,label.fld>select,label.fld>textarea{font-weight:400;text-transform:none;letter-spacing:0}
+label.fld{min-width:0}
+label.fld>input,label.fld>select{width:100%}
 /* --- las puertas: el patrón que ya usa «Turno y rotación» --- */
 .puertas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .puerta{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;
@@ -41,6 +43,20 @@ label.fld>input,label.fld>select,label.fld>textarea{font-weight:400;text-transfo
 .ev .tx b{display:block;font-size:13.5px;line-height:1.25}
 .ev .tx span{display:block;font-size:10.5px;color:#8fa6c6;margin-top:2px}
 .ev .x{flex:none;width:28px;height:28px;border-radius:9px;border:1px solid #1e2b44;background:#111a2b;color:#8fa6c6;font-size:13px}
+/* --- la franja del día: un evento que dura es una BANDA, no un punto --- */
+.franja{position:relative;height:26px;border-radius:9px;overflow:hidden;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);margin-top:9px}
+.franja i{position:absolute;top:0;bottom:0;display:block}
+.franja .pt{width:3px;border-radius:99px;top:5px;bottom:5px}
+.franja .hrs{position:absolute;inset:0;display:flex;pointer-events:none}
+.franja .hrs span{flex:1;border-left:1px solid color-mix(in srgb,#1e2b44 60%,transparent);
+  font-size:8px;font-weight:800;color:#5d7290;padding:1px 0 0 3px}
+/* --- chips de «cuánto dura» --- */
+.duras{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.duras button{font:inherit;font-size:11.5px;font-weight:700;border:1px solid #1e2b44;border-radius:999px;
+  padding:6px 11px;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;min-height:34px;cursor:pointer}
+.duras button.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#38e1ff;
+  background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
 /* --- el bloque de «dónde se guarda»: cifras en vez de 210 palabras --- */
 .guarda{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
 .guarda div{border:1px solid #1e2b44;border-radius:11px;padding:8px 9px;background:color-mix(in srgb,#070b14 42%,#111a2b)}

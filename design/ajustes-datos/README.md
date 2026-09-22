@@ -33,7 +33,8 @@ entre el lector de enlaces y las copias de seguridad.
 |---|---|---|
 | `Main` | **Ajustes**: qué tienes encendido + 6 puertas | 535 px (0,63) |
 | `Calendario` | las **tres** tarjetas de Google, fundidas en una | 893 px (1,06) |
-| `Eventos` | sección propia en el cajón, fuera de Ajustes | 668 px (0,79) |
+| `Eventos` | sección propia en el cajón, fuera de Ajustes | 710 px (0,84) |
+| `EventoNuevo` | un evento con **desde y hasta**, y la franja del día | 689 px (0,82) |
 | `Datos` | **Datos**: tu copia + 6 puertas | 436 px (0,52) |
 | `Aspecto` | apariencia y la franja del día, juntas | 535 px (0,63) |
 | `Copia` | copias + «dónde se guarda», en cifras y no en 210 palabras | 516 px (0,61) |
@@ -53,6 +54,26 @@ Medido a 390×844, que es el ancho de maqueta; la app se mide a 412.
 - Las **dos tarjetas de Google de Datos** → a Ajustes → Calendario.
 - La tarjeta de cabecera de Ajustes (48 palabras de mapa) → se cae: la portada
   es el mapa.
+
+## Los eventos, con cuánto duran
+
+Hoy un evento solo tiene `hora`. Consecuencias medidas en el código:
+
+- en el `.ics`, **todos duran 60 minutos** (`calEventos()`, `dur:60` fijo): una
+  presentación de dos horas y media te reserva una hora en el calendario;
+- en la franja del día es **un punto** (`evDots`, un `.tl-dot` colocado en
+  `mins(ev.hora)`), dure lo que dure;
+- y en «Mes», «Semana» y la lista solo se lee la hora de empezar.
+
+`EventoNuevo` propone **desde / hasta**, con chips rápidos para no teclear
+(`sin hora de fin`, `1 h`, `2 h 30`, `3 h`, `toda la mañana`, `todo el día`), y
+enseña el efecto: el evento pasa de punto a **banda** en la franja.
+
+Detalles del modelo: `fin` nuevo en el evento, y ojo con `normalize()` (línea
+~413), que **descarta cualquier campo que no esté en su lista** — por eso
+`notaId`, que `notaAEvento()` escribe, no sobrevive a una recarga (campo muerto:
+nadie lo lee). Si `fin <= desde` se entiende que cruza la medianoche, igual que
+ya hace la jornada de trabajo (`if(m2<=m1)m2=1440`).
 
 ## Un texto que se quedó caduco
 

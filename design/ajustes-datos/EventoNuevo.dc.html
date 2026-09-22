@@ -339,29 +339,53 @@ label.fld>input,label.fld>select{width:100%}
   </div>
 </header>
 <main>
-  <div class="subcab"><h2 class="subtit">📤 Datos</h2></div>
+  
+<div class="subcab">
+  <button class="btn s volver"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg> Eventos</button>
+  <h2 class="subtit">Presentación en rayos</h2>
+</div>
 
   <div class="card">
-    <h2>Tu copia de seguridad</h2>
-    <div class="dosdatos">
-      <div><b>hace 3 días</b><span>última copia</span></div>
-      <div><b>612 KB</b><span>ocupa la app</span></div>
+    <h2>Cuándo es</h2>
+    <div class="row">
+      <label class="fld" style="flex:0 0 150px">qué día<input value="24/09/2026"></label>
+      <label class="fld" style="flex:0 0 54px">color<input value="#a78bfa" style="height:30px"></label>
     </div>
-    <div class="row" style="margin-top:11px">
-      <button class="btn p"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M17.5 12.5 12 18l-5.5-5.5"/><path d="M4 20.5h16"/></svg> guardar una copia</button>
-      <button class="btn s">restaurar</button>
+    <div class="row" style="margin-top:8px">
+      <label class="fld" style="flex:1 1 110px">desde<input value="08:30"></label>
+      <label class="fld" style="flex:1 1 110px">hasta<input value="11:00"></label>
     </div>
+    <div class="duras">
+      <button>sin hora de fin</button><button>1 h</button><button class="on">2 h 30</button>
+      <button>3 h</button><button>toda la mañana</button><button>todo el día</button>
+    </div>
+    <p class="mini" style="margin:9px 0 0">Con la hora de fin puesta, el calendario del móvil te <b style="color:#e9f2ff">reserva el hueco</b>
+    en vez de meter una cita suelta de una hora.</p>
   </div>
 
-  <div class="puertas">
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10M15 9.5v10"/></svg><b>Mi planning</b><span class="s">pegar la tabla</span></button>
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg><b>Mi dieta</b><span class="s">pegarla tal cual</span></button>
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Horas</b><span class="s">servicios y vacaciones</span></button>
+  <div class="card">
+    <h2>Cómo te queda el jueves</h2>
+    <div class="franja">
+      <i style="left:0;width:5.6%;background:#4c5b7a"></i>
+      <i style="left:11.1%;width:38.9%;background:#38e1ff;opacity:.8"></i>
+      <i class="pt" style="left:27.8%;background:#34d399"></i>
+      <i class="pt" style="left:47.2%;background:#34d399"></i>
+      <i class="pt" style="left:83.3%;background:#34d399"></i>
+      <i style="left:94.4%;width:5.6%;background:#4c5b7a"></i>
+      <i style="left:13.9%;width:13.9%;background:#a78bfa;border-radius:5px;top:3px;bottom:3px;box-shadow:0 0 0 1.5px #0b1220"></i>
+      <div class="hrs"><span>6</span><span>9</span><span>12</span><span>15</span><span>18</span><span>21</span></div>
+    </div>
+    <div class="cats">
+      <span><i style="background:#a78bfa"></i>📌 la presentación · 08:30–11:00</span><span><i style="background:#38e1ff"></i>💼 trabajo</span><span><i style="background:#4c5b7a"></i>dormir</span>
+    </div>
+    <p class="mini" style="margin:9px 0 0">Hoy un evento es <b style="color:#e9f2ff">un punto</b> en la franja, dure lo que dure.
+    Con la hora de fin pasa a ser una banda: se ve de un vistazo el rato que te come.</p>
   </div>
-  <div class="puertas" style="margin-top:9px">
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M8 3.5v6h8v-6M8 20.5v-5h8v5"/></svg><b>Copias</b><span class="s">y dónde se guarda</span></button>
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5z"/><path d="M14 3.5V8h4.5M8 13h8M8 17h5"/></svg><b>Texto</b><span class="s">para imprimir</span></button>
-    <button class="puerta"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b>Calendario</b><span class="s">está en Ajustes →</span></button>
+
+  <div class="card">
+    <h2>Avisos</h2>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8fa6c6"><input type="checkbox" checked style="width:auto"> 🔔 avisarme (sale en «Hoy» y en «Próximos»)</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8fa6c6;margin-top:8px"><input type="checkbox" style="width:auto"> ⏳ mostrar cuenta atrás</label>
   </div>
 </main>
 </div>

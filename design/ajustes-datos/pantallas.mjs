@@ -14,6 +14,7 @@ const cabecera = () => `
   </div>
 </header>`;
 
+const cat = (c, t) => `<span><i style="background:${c}"></i>${t}</span>`;
 const puerta = (i, tit, sub2) =>
   `<button class="puerta">${ico(i,'gico')}<b>${tit}</b><span class="s">${sub2}</span></button>`;
 
@@ -46,7 +47,6 @@ writeFileSync('Main.dc.html', P(`${cabecera()}
 </main>`));
 
 /* ===================== 2. Calendario del móvil: las tres tarjetas, fundidas ===================== */
-const cat = (c, t) => `<span><i style="background:${c}"></i>${t}</span>`;
 writeFileSync('Calendario.dc.html', P(`${cabecera()}
 <main>
   ${sub('📅 Calendario del móvil','Ajustes')}
@@ -93,18 +93,18 @@ writeFileSync('Calendario.dc.html', P(`${cabecera()}
   </div>
 </main>`));
 
-/* ===================== 3. Eventos: sección propia, fuera del cajón de Ajustes ===================== */
-const ev = (d, m, t, s) => `<div class="ev"><div class="fch"><em>${d}</em><span>${m}</span></div>
-  <div class="tx"><b>${t}</b><span>${s}</span></div><button class="x">✕</button></div>`;
+/* ===================== 3. Eventos: sección propia, y con cuánto dura ===================== */
+const ev = (d, m, t, s2, dur='') => `<div class="ev"><div class="fch"><em>${d}</em><span>${m}</span></div>
+  <div class="tx"><b>${t}</b><span>${s2}</span></div>${dur?`<span class="vl" style="font-size:11px;font-weight:800;color:#8fa6c6;white-space:nowrap">${dur}</span>`:''}<button class="x">✕</button></div>`;
 writeFileSync('Eventos.dc.html', P(`${cabecera()}
 <main>
   <div class="subcab"><h2 class="subtit">📌 Eventos</h2><span class="tag b2">6 apuntados</span></div>
 
   <div class="card">
     <h2>Lo que viene</h2>
-    ${ev('24','sep','Presentación en rayos','jue · 08:30 · va al calendario del móvil')}
+    ${ev('24','sep','Presentación en rayos','jue · <b style="color:#e9f2ff">08:30 – 11:00</b>','2 h 30')}
     ${ev('01','oct','Pagar el alquiler','todos los meses · 520 €')}
-    ${ev('09','oct','Curso de ecografía','vie · 16:00')}
+    ${ev('09','oct','Curso de ecografía','vie · <b style="color:#e9f2ff">16:00 – 20:00</b>','4 h')}
     ${ev('17','oct','Cumple de Marta','sáb · todo el día')}
     <div class="row" style="margin-top:11px"><button class="btn p">+ añadir un evento</button></div>
   </div>
@@ -112,13 +112,62 @@ writeFileSync('Eventos.dc.html', P(`${cabecera()}
   <div class="card">
     <h2>Todas las semanas</h2>
     <p class="note" style="margin:0 0 9px">Lo que se repite sin fecha: la sesión de los jueves, el grupo de guardia.</p>
-    <div class="estado"><span class="em">📚</span><span class="tx"><b>Sesión clínica</b></span><span class="vl">jueves · 08:15</span></div>
+    <div class="estado"><span class="em">📚</span><span class="tx"><b>Sesión clínica</b></span><span class="vl">jue · 08:15 – 09:00</span></div>
     <div class="estado"><span class="em">🧺</span><span class="tx"><b>Lavadora</b></span><span class="vl">domingos</span></div>
     <div class="row" style="margin-top:11px"><button class="btn s">+ uno semanal</button></div>
   </div>
 
   <p class="mini" style="margin:13px 0 0">Todo lo de aquí sale en <b style="color:#e9f2ff">Mes</b>, en <b style="color:#e9f2ff">Hoy</b>
-  y en el <b style="color:#e9f2ff">.ics</b> con su alarma.</p>
+  y en el <b style="color:#e9f2ff">.ics</b> con su alarma y con el rato que ocupa.</p>
+</main>`));
+
+/* ===================== 3b. Un evento: desde, hasta y cuánto ocupa el día ===================== */
+writeFileSync('EventoNuevo.dc.html', P(`${cabecera()}
+<main>
+  ${sub('Presentación en rayos','Eventos')}
+
+  <div class="card">
+    <h2>Cuándo es</h2>
+    <div class="row">
+      <label class="fld" style="flex:0 0 150px">qué día<input value="24/09/2026"></label>
+      <label class="fld" style="flex:0 0 54px">color<input value="#a78bfa" style="height:30px"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="fld" style="flex:1 1 110px">desde<input value="08:30"></label>
+      <label class="fld" style="flex:1 1 110px">hasta<input value="11:00"></label>
+    </div>
+    <div class="duras">
+      <button>sin hora de fin</button><button>1 h</button><button class="on">2 h 30</button>
+      <button>3 h</button><button>toda la mañana</button><button>todo el día</button>
+    </div>
+    <p class="mini" style="margin:9px 0 0">Con la hora de fin puesta, el calendario del móvil te <b style="color:#e9f2ff">reserva el hueco</b>
+    en vez de meter una cita suelta de una hora.</p>
+  </div>
+
+  <div class="card">
+    <h2>Cómo te queda el jueves</h2>
+    <div class="franja">
+      <i style="left:0;width:5.6%;background:#4c5b7a"></i>
+      <i style="left:11.1%;width:38.9%;background:#38e1ff;opacity:.8"></i>
+      <i class="pt" style="left:27.8%;background:#34d399"></i>
+      <i class="pt" style="left:47.2%;background:#34d399"></i>
+      <i class="pt" style="left:83.3%;background:#34d399"></i>
+      <i style="left:94.4%;width:5.6%;background:#4c5b7a"></i>
+      <i style="left:13.9%;width:13.9%;background:#a78bfa;border-radius:5px;top:3px;bottom:3px;box-shadow:0 0 0 1.5px #0b1220"></i>
+      <div class="hrs"><span>6</span><span>9</span><span>12</span><span>15</span><span>18</span><span>21</span></div>
+    </div>
+    <div class="cats">
+      ${cat('#a78bfa','📌 la presentación · 08:30–11:00')}${cat('#38e1ff','💼 trabajo')}${cat('#4c5b7a','dormir')}
+    </div>
+    <p class="mini" style="margin:9px 0 0">Hoy un evento es <b style="color:#e9f2ff">un punto</b> en la franja, dure lo que dure.
+    Con la hora de fin pasa a ser una banda: se ve de un vistazo el rato que te come.</p>
+  </div>
+
+  <div class="card">
+    <h2>Avisos</h2>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8fa6c6"><input type="checkbox" checked style="width:auto"> 🔔 avisarme (sale en «Hoy» y en «Próximos»)</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8fa6c6;margin-top:8px"><input type="checkbox" style="width:auto"> ⏳ mostrar cuenta atrás</label>
+  </div>
 </main>`));
 
 /* ===================== 4. Datos: la portada ===================== */
