@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0,    "w": 390, "h": 844 },
+    { "file": "Calendario.dc.html", "x": 510,  "y": 0,    "w": 390, "h": 940 },
+    { "file": "Eventos.dc.html",    "x": 1020, "y": 0,    "w": 390, "h": 844 },
+    { "file": "Datos.dc.html",      "x": 0,    "y": 1080, "w": 390, "h": 844 },
+    { "file": "Aspecto.dc.html",    "x": 510,  "y": 1080, "w": 390, "h": 844 },
+    { "file": "Copia.dc.html",      "x": 1020, "y": 1080, "w": 390, "h": 844 }
+  ],
+  "launch": { "view": "canvas" }
+}
