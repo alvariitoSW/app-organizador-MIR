@@ -122,6 +122,10 @@ notas, habitos, eventos, dishes, meals, menu, batches, shifts, food`.
 
 ## 5. Plan, por orden de lo que más cambia tu día
 
+> **Estado, 22 de septiembre: los siete puntos están hechos.** Lo que hay debajo
+> es el plan tal y como se escribió; al final de cada uno, lo que acabó siendo.
+
+
 **Primero — que la compra no mienta** (§1). Es un fallo, no una mejora, y es el
 que te deja tirado en el supermercado.
 
@@ -145,6 +149,26 @@ una sola pantalla.
 
 **Séptimo — avisos** (alquiler, eventos, sacar el táper). Lo último porque
 depende de que existan las cosas de las que avisar.
+
+---
+
+### Lo que acabó siendo cada punto
+
+| # | hecho | resultado medido |
+|---|---|---|
+| 1 | la compra sale del menú entero | 54 → 62 cosas: 8 platos sueltos que no pedían nada |
+| 2 | Dinero: fijos, lo apuntado y el mes | pantalla nueva, 0,66 pantallas · y un fallo: `type="number"` rechaza la coma |
+| 3 | Notas por cuándo toca, con proyectos | cinco montones y las de hoy en «Hoy» |
+| 4 | Turno y rotación partido | 7 005 px → portada de **472 px (0,52)** + 5 pantallas |
+| 5 | Entreno sabe qué toca hoy | la rutina se pega al tipo de día, como los menús |
+| 6 | «Mi día» | arranca en Hoy, y Hoy se lee de arriba abajo |
+| 7 | Avisos | no hay push sin servidor: avisa el calendario del móvil desde el `.ics` |
+
+**Lo que sigue pendiente de §2**: Ajustes (5 045 px, 5,5 pantallas, 13 tarjetas
+sin relación) y Datos (4 317 px). Son el mismo trabajo que se le hizo a Turno.
+
+**Y la compra ahora mide 3 468 px (3,8 pantallas)**: es larga porque está
+completa. Antes era más corta porque le faltaban cosas.
 
 ---
 
