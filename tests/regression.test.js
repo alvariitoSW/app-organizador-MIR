@@ -3691,6 +3691,81 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       llegadas.every((x) => x.llega && x.marcada), JSON.stringify(llegadas));
   }
 
+  // ===================== Las dos horas del sueño, siempre a la vista =====================
+  {
+    // Antes: en «Hoy» solo salía la hora RECOMENDADA de acostarse (un KPI que decía «a la cama»)
+    // y la de levantarse no salía en ninguna parte; en «Semana» las dos horas solo aparecían
+    // abriendo el día, y en modo plantilla ni eso —`sl` y `nt` se calculaban en la fila y no se
+    // usaban en ningún sitio—. Ahora van juntas debajo de la franja, siempre, en las dos pantallas.
+    await gotoTab('hoy');
+    await page.waitForTimeout(250);
+    const hoySueno = await page.evaluate(() => {
+      const P = window.PG, k = P.iso(new Date()), sl = P.sleepOf(k);
+      const tira = document.querySelector('#main .drsol');
+      return { bed: sl.bed, wake: sl.wake, txt: tira ? tira.innerText : '' };
+    });
+    check('«Hoy» enseña las dos horas del sueño sin tocar nada',
+      !!hoySueno.bed && !!hoySueno.wake &&
+      hoySueno.txt.includes('🛌 ' + hoySueno.bed) && hoySueno.txt.includes('⏰ ' + hoySueno.wake),
+      JSON.stringify(hoySueno));
+
+    await gotoTab('week');
+    await page.waitForTimeout(300);
+    // se prueban LOS DOS modos: en plantilla no hay fecha, y era justo ahí donde «Semana» no
+    // enseñaba ni una de las dos horas (las del sueño salen del tipo de día, no de la fecha)
+    const semSueno = await page.evaluate(async () => {
+      const P = window.PG, modoAntes = P.store.rotation.mode;
+      const mide = () => {
+        const filas = [...document.querySelectorAll('.drow')];
+        return { dias: filas.length,
+          abiertos: filas.filter((f) => f.classList.contains('open')).length,
+          conLasDos: filas.filter((f) => {
+            const t = f.querySelector('.drsol');
+            return t && /🛌/.test(t.innerText) && /⏰/.test(t.innerText);
+          }).length };
+      };
+      P.store.rotation.mode = 'date'; P.save(); P.render();
+      const porFecha = mide();
+      P.store.rotation.mode = 'template'; P.save(); P.render();
+      const enPlantilla = mide();
+      P.store.rotation.mode = modoAntes; P.save(); P.render();
+      return { porFecha, enPlantilla };
+    });
+    check('los siete días de «Semana» enseñan sus dos horas sin abrirlos, por fecha y en plantilla',
+      semSueno.porFecha.dias === 7 && semSueno.porFecha.conLasDos === 7 && semSueno.porFecha.abiertos === 0 &&
+      semSueno.enPlantilla.dias === 7 && semSueno.enPlantilla.conLasDos === 7,
+      JSON.stringify(semSueno));
+
+    // y si acostándote a esa hora no llegas a tu mínimo, lo dice y calcula la hora que tocaría
+    const corto = await page.evaluate(() => {
+      const P = window.PG;
+      const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      P.store.rhythm['sh-t'].sleep = '01:30';
+      P.store.rhythm['sh-t'].wake = '06:50';
+      P.save(); P.render();
+      const f = [...document.querySelectorAll('.drow')].find((x) => x.querySelector('.pie.sue.corto'));
+      const txt = f ? f.querySelector('.drsol').innerText : '';
+      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      return txt;
+    });
+    check('dormir menos de tu mínimo se marca y dice a qué hora tocaría acostarse',
+      /te faltan/.test(corto) && /a la cama a las/.test(corto), corto);
+
+    // y sin horas puestas no se queda en blanco: dice qué falta
+    const vacio = await page.evaluate(() => {
+      const P = window.PG;
+      const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      P.store.rhythm['sh-t'].sleep = ''; P.store.rhythm['sh-t'].wake = '';
+      P.save(); P.render();
+      const f = [...document.querySelectorAll('.drow')].find((x) => x.querySelector('.pie.sue.falta'));
+      const txt = f ? f.querySelector('.drsol').innerText : '';
+      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      return txt;
+    });
+    check('un tipo de día sin horas puestas dice qué falta en vez de dejar el hueco vacío',
+      /sin horas puestas/.test(vacio), vacio);
+  }
+
   // ===================== Estudio: el temario vive en otra app =====================
   {
     // Esta app no lleva el temario —serían dos listas desincronizándose— sino el plan: qué toca

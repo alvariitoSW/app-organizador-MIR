@@ -1071,3 +1071,13 @@ ul.slots{list-style:none;margin:0;padding:0}
 .estfila .tx span{display:block;font-size:10.5px;color:var(--ink2);margin-top:2px}
 .estfila.toca .tx b{color:var(--brand)}
 .estfila .fuera{flex:none;font-size:12px;color:var(--ink2)}
+
+/* ===================== las dos horas del sueño, siempre a la vista =====================
+   Van al lado de las dos del sol, con la misma forma pero en el color de «dormir» de la franja,
+   para que se lean como lo que son: las horas del día, no un aviso. */
+.drsol .pie.sue{color:color-mix(in srgb,var(--brand2) 75%,var(--ink))}
+.drsol .pie.sue.corto{color:var(--warn)}
+.drsol .pie.sue.rec{color:var(--ink2);font-weight:600}
+.drsol .pie.sue.falta{color:var(--ink2);font-weight:600;cursor:pointer;text-decoration:underline;
+  text-underline-offset:2px}
+.drsol .pie.sue.falta:hover{color:var(--brand)}

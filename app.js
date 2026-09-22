@@ -1102,12 +1102,13 @@ function dayLine(d){
   const g=isGuardia(sh),rh=rhythmOf(sh.id,d.key);
   const jo=d.key?jornadaOf(d.key):jornadaEn((((d.idx||0)+1)%7),d.shiftId,false);
   const t=[];
-  if(rh.wake)t.push('⏰ '+fmtTimeOut(rh.wake));
+  /* las horas de dormir y de levantarse NO van aquí: desde que se enseñan siempre debajo de la
+     franja (horasSuenoHTML), ponerlas también en esta línea era decirlas dos veces en la misma
+     fila. Aquí se queda lo del trabajo, que es lo otro que define el día. */
   if(sh.start)t.push((g?'🩺 ':'💼 ')+fmtTimeOut(sh.start)+(sh.end?'–'+fmtTimeOut(sh.end):'')+
     (jo&&sh.start!==jo.start?(' · jornada '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end)):''));
   else if(jo)t.push('💼 '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end));
   else if(rh.leave)t.push('🚌 '+fmtTimeOut(rh.leave));
-  if(rh.sleep)t.push('🛌 '+fmtTimeOut(rh.sleep));
   const gl=d.key?gymLine(d.key):'';if(gl)t.push(gl);
   const gs=d.key?resumenGym(d.key):'';if(gs)t.push('🏋️ '+gs);
   return t.join(' · ')||esc(sh.name);}
@@ -1894,6 +1895,35 @@ function solHoyHTML(key){
     '</div></div>'+
     '<p class="mini" style="margin:9px 0 0">'+esc(sit.nombre)+
       (delta!=null&&delta!==0?(' · '+Math.abs(delta)+' min '+(delta>0?'más':'menos')+' de luz que ayer'):'')+'</p>';}
+function horasSuenoHTML(key,inf,shiftId){
+  /* Las dos horas del sueño, SIEMPRE a la vista, igual que las dos del sol. Antes solo se veían
+     abriendo el día en «Semana» (y en «Hoy» había una sola: la de acostarse). La de levantarse no
+     salía en ninguna de las dos pantallas.
+       🛌 22:40  = la hora a la que TE ACUESTAS ese tipo de día
+       ⏰ 06:50  = a la que te levantas
+       8h00      = lo que sale de ahí
+     Y si acostándote a esa hora no llegas a tu mínimo, se dice a qué hora habría que hacerlo: eso
+     es lo que la app sabe y tú no quieres calcular a las once de la noche. */
+  /* con fecha, las horas de ese día; sin fecha (modo plantilla) las del tipo de día, que es de
+     donde salen igualmente. Antes esto solo se pintaba con fecha real y en plantilla «Semana» no
+     enseñaba ni una de las dos horas. */
+  let sl;
+  if(key)sl=sleepOf(key,inf);
+  else{const rh=shiftId?(rhythmOf(shiftId)||{}):{};
+    sl={bed:rh.sleep||'',wake:rh.wake||'',h:(rh.sleep&&rh.wake)?sleepHours(rh.sleep,rh.wake):null};}
+  const nt=nightOf(key||'',sl),c=suenoCfg();
+  if(!sl.bed&&!sl.wake){
+    /* que no se quede en blanco: sin horas puestas, lo que hace falta es saber dónde se ponen */
+    return '<span class="pie sue falta" data-a="ir-sueno" role="button" tabindex="0">'+
+      '\ud83d\udecc sin horas puestas \u2014 ponlas</span>';}
+  const corto=sl.h!=null&&sl.h<c.min;
+  const tarde=nt.rec&&sl.bed&&mins(sl.bed)!=null&&mins(nt.rec)!=null&&
+    ((mins(sl.bed)-mins(nt.rec)+1440)%1440)>10&&((mins(sl.bed)-mins(nt.rec)+1440)%1440)<12*60;
+  return '<span class="pie sue'+(corto?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
+    '<span class="pie sue">\u23f0 '+esc(sl.wake||'\u2014')+'</span>'+
+    (sl.h!=null?('<span class="pie sue'+(corto?' corto':'')+'">'+fmtHM(sl.h*60)+
+      (corto?(' \u00b7 te faltan '+fmtHM(nt.falta)):'')+'</span>'):'')+
+    ((corto||tarde)&&nt.rec?('<span class="pie sue rec">para tus '+c.min+' h, a la cama a las '+esc(nt.rec)+'</span>'):'');}
 function solPiesHTML(key){
   /* las dos horas en una línea, para la fila de un día en Semana */
   const s=solDe(key);
@@ -2128,7 +2158,6 @@ function dayPanelHTML(dateStr){
 /* ===================== render: hoy (pantalla de inicio) ===================== */
 function renderHoy(){
   const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
-  const sl=sleepOf(hoy,inf),nt=nightOf(hoy,sl);
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
   const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
   const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
@@ -2141,11 +2170,14 @@ function renderHoy(){
     '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
     (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
     timelineBar(hoy,inf)+franjaLeyendaHTML()+
+    '<div class="drsol" style="margin-top:8px">'+horasSuenoHTML(hoy,inf)+solPiesHTML(hoy)+'</div>'+
+    /* los dos KPI del sueño se han caído: las horas ya están completas en la línea de arriba, y
+       además se pisaban entre ellas —«a la cama» era la hora RECOMENDADA y el 🛌 de la línea la
+       que de verdad te acuestas: dos números distintos con nombres parecidos, en la misma tarjeta.
+       Y con cuatro, el cuarto se quedaba solo en una segunda fila. */
     '<div class="kpis" style="margin-top:10px">'+
       '<div><b>'+ft.kcal+'</b><span>kcal hoy</span></div>'+
       '<div><b>'+(pl.kcal||'—')+'</b><span>kcal plan</span></div>'+
-      '<div><b>'+(sl.h!=null?fmtHM(sl.h*60):'—')+'</b><span>dormido</span></div>'+
-      '<div><b>'+(nt.rec||'—')+'</b><span>a la cama</span></div>'+
     '</div>'+
     '<div class="row" style="margin-top:6px">'+
       '<button class="btn s" data-a="hoy-food-obj">✎ objetivo de kcal →</button>'+
@@ -2252,7 +2284,7 @@ function renderWeek(){
       '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+
         (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' · '+esc(d.guard):''):'sin asignar')+'</span>'+
       (!d.key&&sh?'<span class="drsch">'+esc(dayLine(d))+'</span>':'')+
-      (!anyDate&&sh&&rh.sleep?'<span class="drsleep">🛌 '+esc(schedLine(sh.id,null).replace(/^🛌 /,''))+'</span>':'')+
+      /* las horas del sueño ya no van aquí a medias: van completas y siempre, debajo de la franja */
       (d.key?eventosTagsHTML(eventosDeFecha(d.key)):'')+
       (isToday(d.key)?'<span class="hoychip">hoy</span>':'')+
       '<span class="sp"></span>'+
@@ -2273,8 +2305,10 @@ function renderWeek(){
       '<div class="drmain" data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'" role="button" tabindex="0" '+
       'aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
       (d.key&&sh?timelineBar(d.key,d.inf):'')+
-      /* el sol de ese día: las dos horas, debajo de la franja que ya las pinta */
-      (d.key?('<div class="drsol">'+solPiesHTML(d.key)+'</div>'):'')+
+      /* las dos horas del sueño y las dos del sol, debajo de la franja que ya las pinta.
+         Antes las del sueño solo salían abriendo el día, y la de levantarse ni eso. */
+      ((d.key||sh)?('<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+
+        (d.key?solPiesHTML(d.key):'')+'</div>'):'')+
       (open?det:'')+'</div>';}).join('');
     const pb=planBatches(days), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
