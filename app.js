@@ -7776,7 +7776,7 @@ function act(a,el){
       else{weekDate=addDays(weekDate,a==='wk-next'?7:-7);}
       render();break;}
     case 'today':weekDate=mondayOf(new Date());render();break;
-    case 'print':window.print();break;
+    case 'print':imprimir();break;
     case 'mode-template':store.rotation.mode='template';save();render();break;
     case 'mode-date':store.rotation.mode='date';save();render();break;
     case 'clear-overrides':store.rotation.shiftByDay={};store.rotation.daySet={};store.rotation.dayRhythm={};
@@ -8559,6 +8559,33 @@ function dl(){
     ta.remove();
   }
 }
+let _imprimiendo=null;
+function imprimir(){
+  /* En papel no se puede desplegar nada: lo que esté plegado sencillamente NO SALE. Y eso no es
+     cosmético — la compra se imprimía sin las 10 cosas «de rutina» (plegadas de fábrica) y la
+     semana sin una sola comida, porque los siete días están cerrados por defecto. Así que antes de
+     imprimir se abre todo, y al terminar se deja exactamente como estaba. */
+  if(_imprimiendo)return;
+  _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
+    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[]};
+  try{ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
+  ui.compraCerradas=new Set();
+  render();
+  /* los <details> se abren sobre el DOM ya pintado: no dependen de `ui` */
+  Array.prototype.forEach.call(document.querySelectorAll('#main details:not([open])'),function(d){
+    _imprimiendo.detalles.push(d);d.open=true;});
+  const restaurar=function(){
+    const a=_imprimiendo;if(!a)return;_imprimiendo=null;
+    a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
+    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;
+    ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
+    window.removeEventListener('afterprint',restaurar);
+    render();};
+  window.addEventListener('afterprint',restaurar);
+  try{window.print();}catch(e){}
+  /* Safari en iOS no siempre dispara «afterprint»: red de seguridad para no dejar la app abierta
+     del todo para siempre */
+  setTimeout(restaurar,4000);}
 function dlTxt(txt,name,mime){
   try{const blob=new Blob([txt],{type:mime||'text/calendar;charset=utf-8'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
@@ -9934,6 +9961,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   FOOD_CATALOGO,foodImportCatalogo,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
   notasS,notaById,notasDeFecha,addNota,setNota,delNota,proyectos,notasDeHoy,notasDeLaSemana,toggleNotaHecha,notaAEvento,desenlazaNota,
+  imprimir,
   eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
   estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,

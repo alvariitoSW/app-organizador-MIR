@@ -3691,6 +3691,93 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       llegadas.every((x) => x.llega && x.marcada), JSON.stringify(llegadas));
   }
 
+  // ===================== Imprimir =====================
+  {
+    // Tres cosas distintas iban mal, y las tres se veían en el papel:
+    //  1. `#main button{display:none}` borraba CONTENIDO: las 30 casillas del mes eran <button>,
+    //     así que imprimir «Mes» daba una cuadrícula VACÍA. También las secciones de la compra.
+    //  2. la paleta seguía en modo noche: cajas negras con letra negra, y texto casi blanco sobre
+    //     blanco (los KPI, las horas del sol, las rotaciones).
+    //  3. lo plegado no sale en papel, y en papel no se puede desplegar: la compra se imprimía sin
+    //     las 10 cosas «de rutina» y la semana sin una sola comida.
+    await gotoTab('month');
+    await page.waitForTimeout(300);
+    await page.emulateMedia({ media: 'print' });
+    await page.waitForTimeout(200);
+    const mesImpreso = await page.evaluate(() => {
+      const celdas = [...document.querySelectorAll('#main .dbox')];
+      const vis = celdas.filter((c) => getComputedStyle(c).display !== 'none');
+      const kpi = document.querySelector('#main .kpis div, #main .tot div, #main .dosdatos div');
+      const cs = kpi ? getComputedStyle(kpi) : null;
+      return { celdas: celdas.length, visibles: vis.length,
+        conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
+        kpiFondo: cs ? cs.backgroundColor : '', kpiTexto: cs ? cs.color : '',
+        bodyFondo: getComputedStyle(document.body).backgroundColor };
+    });
+    await page.emulateMedia({ media: 'screen' });
+    check('al imprimir «Mes» salen las casillas del mes, no una cuadrícula vacía',
+      mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas && mesImpreso.conTexto >= 28,
+      JSON.stringify(mesImpreso));
+    // el fondo de una caja tiene que ser claro: antes era la tarjeta oscura con la letra en negro
+    const claro = (c) => {
+      const m = /rgba?\((\d+), ?(\d+), ?(\d+)/.exec(c || '');
+      return m ? (+m[1] + +m[2] + +m[3]) / 3 > 200 : false;
+    };
+    const oscuro = (c) => {
+      const m = /rgba?\((\d+), ?(\d+), ?(\d+)/.exec(c || '');
+      return m ? (+m[1] + +m[2] + +m[3]) / 3 < 120 : false;
+    };
+    check('al imprimir, las cajas son claras con la letra oscura (y no al revés)',
+      claro(mesImpreso.bodyFondo) && claro(mesImpreso.kpiFondo) && oscuro(mesImpreso.kpiTexto),
+      JSON.stringify(mesImpreso));
+
+    // lo plegado se despliega para imprimir, y se vuelve a plegar al terminar
+    await page.evaluate(() => { window.__print = 0; window.print = function () { window.__print++; }; });
+    await gotoTab('shop');
+    await page.waitForTimeout(350);
+    const compra = await page.evaluate(() => {
+      const P = window.PG;
+      // se parte del estado de fábrica a propósito: si una prueba anterior dejó las secciones
+      // abiertas, esto comprobaría el mecanismo sobre nada y pasaría con el fallo dentro
+      P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.render();
+      const antes = { cerradas: [...P.ui.compraCerradas].sort().join(),
+        lineas: document.querySelectorAll('#main .lcompra li').length };
+      P.imprimir();
+      const durante = { print: window.__print, cerradas: [...P.ui.compraCerradas].length,
+        lineas: document.querySelectorAll('#main .lcompra li').length };
+      window.dispatchEvent(new Event('afterprint'));
+      const despues = { cerradas: [...P.ui.compraCerradas].sort().join(),
+        lineas: document.querySelectorAll('#main .lcompra li').length };
+      return { antes, durante, despues };
+    });
+    check('imprimir la compra despliega las secciones plegadas: irías al súper sin ellas',
+      compra.antes.cerradas.length > 0 && compra.durante.cerradas === 0 &&
+      compra.durante.lineas > compra.antes.lineas && compra.durante.print === 1,
+      JSON.stringify(compra));
+    check('y al terminar de imprimir la pantalla queda como estaba',
+      compra.despues.cerradas === compra.antes.cerradas && compra.despues.lineas === compra.antes.lineas,
+      JSON.stringify(compra));
+
+    await gotoTab('week');
+    await page.waitForTimeout(350);
+    const semana = await page.evaluate(() => {
+      const P = window.PG;
+      const antes = { abiertos: document.querySelectorAll('.drow.open').length,
+        comidas: document.querySelectorAll('#main .meal').length };
+      P.imprimir();
+      const durante = { abiertos: document.querySelectorAll('.drow.open').length,
+        comidas: document.querySelectorAll('#main .meal').length };
+      window.dispatchEvent(new Event('afterprint'));
+      const despues = { abiertos: document.querySelectorAll('.drow.open').length };
+      return { antes, durante, despues };
+    });
+    check('imprimir la semana saca las comidas de los siete días, no solo los encabezados',
+      semana.durante.abiertos === 7 && semana.durante.comidas > semana.antes.comidas &&
+      semana.despues.abiertos === semana.antes.abiertos,
+      JSON.stringify(semana));
+  }
+
   // ===================== Las dos horas del sueño, siempre a la vista =====================
   {
     // Antes: en «Hoy» solo salía la hora RECOMENDADA de acostarse (un KPI que decía «a la cama»)

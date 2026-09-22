@@ -613,19 +613,68 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
   background:color-mix(in srgb,var(--card) 60%,var(--bg));color:var(--ink2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{
-  body{font-size:11px;background:#fff;color:#000}
-  body::before,body::after,#flash{display:none!important}
-  header{position:static;backdrop-filter:none;background:#fff}
+  /* ============ imprimir ============
+     Tres cosas iban mal y se veían las tres en el papel:
+
+     1. `#main button{display:none}` borraba CONTENIDO. Cuando se escribió, los botones eran
+        controles; hoy media app son botones: las 30 casillas del mes, las secciones de la compra,
+        las filas de Estudio y de Eventos. Imprimir «Mes» daba una cuadrícula VACÍA. Ahora se
+        esconde lo que de verdad es un control (.btn y compañía), no todo lo que sea <button>.
+     2. La paleta seguía en modo noche: --card, --ink2 y --bg conservaban los valores oscuros, así
+        que salían cajas negras con letra negra (los KPI, las rotaciones) y texto casi blanco sobre
+        blanco (las horas del sol). Aquí se fuerzan los valores del tema claro.
+     3. Los fondos de color no se imprimen salvo que se pidan: la franja del día, las barras y los
+        puntos de color son INFORMACIÓN, no decoración, así que llevan print-color-adjust:exact. */
+
+  /* 1 · la paleta del papel: los mismos tokens del tema claro, gane o no el .dark del html */
+  html,html.dark,:root{
+    --bg:#ffffff; --bg2:#ffffff; --card:#ffffff; --ink:#111827; --ink2:#4b5563; --line:#c9cfda;
+    --brand:#1d4ed8; --brand2:#6d28d9; --accent:#15803d; --ok:#15803d; --warn:#b45309; --bad:#be123c;
+    --shadow:none; --glow:none; color-scheme:light;
+  }
+  body{font-size:11px;background:#fff;color:var(--ink)}
+  body::before,body::after,#flash,#overlay{display:none!important}
+  header{position:static;backdrop-filter:none;background:#fff;border-bottom:1px solid #999}
   header::after{display:none}
-  h1{color:#000;background:none;-webkit-text-fill-color:#000}
-  nav,.no-print,#topBtns,#daystrip,#calModes,#drawer,#drawerScrim{display:none!important}
+  h1{color:#000;background:none;-webkit-text-fill-color:#000;font-size:14px}
+  nav,.no-print,#topBtns,#daystrip,#calModes,#drawer,#drawerScrim,.volver,.subcab .tag{display:none!important}
   main{padding:0;max-width:none}
-  .card,.day,.session,.drow{box-shadow:none;break-inside:avoid;page-break-inside:avoid;background:#fff}
+  @page{margin:12mm}
+
+  /* 2 · fuera los controles, DENTRO el contenido aunque sea un <button> */
+  #main input,#main select,#main textarea,
+  #main .btn,#main .kpi-go,#main .pestb,#main .chipx,#main .dura,#main .mini-acc,
+  #main .lnk,#main .x,#main summary{display:none!important}
+  #main button{cursor:default}
+  #main button:not(.dbox):not(.puerta):not(.eslabon){background:none}
+  #main details{display:block}
+  #main details>*:not(summary){display:revert}
+
+  /* 3 · nada de sombras, brillos ni desenfoques: en papel son tinta gris y nada más */
+  *{box-shadow:none!important;text-shadow:none!important;filter:none!important}
+
+  /* 4 · lo que se imprime en color porque el color ES el dato */
+  .tl-bar,.tl-bar *,.dbox,.prog .bar,.prog .bar i,.fbar,.fbar i,.mbar,.mbar i,.micbar,.micbar i,
+  .evdot,.agdot,.estfila .niv,.cats span i,.tirasem div,.svcchip,.tag,.linea .box,.ring,.arco,
+  .arco *,.tl-seg,.tl-dot{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* la noche de la franja era casi negra: en papel, una banda gris que deja leer lo de debajo */
+  .tl-noche{background:rgba(0,0,0,.14)!important;box-shadow:none!important}
+  .tl-bar{background:#fff;border:1px solid #999}
+
+  /* 5 · cajas legibles: blancas con borde, no la tarjeta oscura con letra oscura */
+  .card,.day,.session,.drow,.tarj,.dbox{break-inside:avoid;page-break-inside:avoid;background:#fff}
+  .card,.day,.session,.drow,.tarj{border:1px solid #bbb}
+  .kpis div,.dosdatos div,.tot div,.guarda div{background:#fff;border:1px solid #bbb}
+  .kpis div b,.dosdatos div b,.tot div b{color:#000}
   .daylist{grid-template-columns:repeat(2,1fr)}
-  .dbox{cursor:default;min-height:52px;background:#fff}
-  #main input,#main select,#main textarea,#main button{display:none!important}
-  .card,.day,.session,.drow{border:1px solid #bbb}
+  .dbox{cursor:default;min-height:52px;outline-color:#bbb;border-top-color:#999}
   .meal .md,.meal,.dayfoot,.mini{color:#333}
+  /* las comidas ya pasadas se atenúan en pantalla para que se vea cuál toca ahora; en papel eso
+     solo las deja medio ilegibles: en una hoja impresa las tres comidas del día valen igual */
+  .meal.past{opacity:1}
+  .meal .mt{color:#334155}
+  .meal.next{background:none;border:1px dashed #999;border-radius:8px}
 }
 
 /* ============ nutrición: alimentos, micros, nevera e ideas ============
