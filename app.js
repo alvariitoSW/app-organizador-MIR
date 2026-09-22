@@ -6305,8 +6305,13 @@ function renderAjustes(){
         <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
     </div>
 
-    <div class="card"><h2>Calendario de Google</h2>
+    <div class="card"><h2>Calendario de Google · y los avisos</h2>
       <p class="note">Afecta al <code>.ics</code> que generas en «Datos». El nombre y la etiqueta son los mismos que ves allí: cambiarlos aquí o allí es lo mismo.</p>
+      <p class="note"><b>Los avisos salen por aquí.</b> Esta app vive en tu móvil y no tiene ningún servidor detrás,
+      así que no puede mandarte una notificación con el teléfono bloqueado: para eso hace falta un servidor de push.
+      Lo que sí hace es meter en el <code>.ics</code> —además de las guardias y los entrenos— <b>los recibos que te
+      vencen, las tareas con día y los eventos</b>, cada uno con su alarma. De avisarte se encarga el calendario del
+      teléfono, que para eso está hecho y funciona con la app cerrada.</p>
       <label class="fld" style="max-width:260px">Minutos de aviso antes de cada evento exportado
         <input type="number" min="0" max="180" value="${+store.rotation.icsAvisoMin||30}" data-a="ics-aviso-min"></label>
       <div class="row" style="margin-top:10px">
@@ -8415,6 +8420,35 @@ function calEventos(desde,hasta){
     if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:60,
       summ:'🏊 '+(g2.tipo||'entreno'),desc:'Segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+'.',cat:'ENTRENO'});
   }
+  /* Y lo que hay que ACORDARSE de hacer: los recibos que vencen, las tareas con día y los eventos
+     que has apuntado. Una PWA estática no puede avisarte con el móvil bloqueado —para eso hace
+     falta un servidor de push—, pero el calendario del teléfono sí: aquí salen como eventos de
+     todo el día con su alarma, y de eso ya se encarga él aunque la app esté cerrada. */
+  gastosFijos().forEach(function(g){
+    /* se recorren los MESES del rango, no los días: si el rango empieza a mitad de mes, ese mes
+       tiene que entrar igual */
+    for(let m=new Date(i0.getFullYear(),i0.getMonth(),1);m<=i1;m=new Date(m.getFullYear(),m.getMonth()+1,1)){
+      const y=m.getFullYear(),mo=m.getMonth();
+      const k=fechaDeGasto(g,y,mo),dd=parseDate(k);
+      if(!dd||dd<i0||dd>i1)continue;
+      if(gastoPagado(g,y,mo))continue;
+      out.push({allDay:true,fecha:icsNum(k),isoKey:k,uid:icsUID('gasto|'+g.id+'|'+k),
+        summ:'💶 '+g.nombre+' · '+eur(g.importe),
+        desc:'Gasto fijo del día '+g.dia+' de cada mes.',cat:'DINERO'});}});
+  notasS().forEach(function(x){
+    if(x.hecha||!x.fecha)return;
+    const dd=parseDate(x.fecha);
+    if(!dd||dd<i0||dd>i1)return;
+    const t=String(x.txt||'').split('\n')[0].slice(0,60);
+    out.push({allDay:true,fecha:icsNum(x.fecha),isoKey:x.fecha,uid:icsUID('nota|'+x.id),
+      summ:'📝 '+t,desc:(x.proy?('Proyecto: '+x.proy+'. '):'')+'Apuntado en la libreta.',cat:'TAREA'});});
+  eventosS().forEach(function(ev){
+    if(ev.on===false||ev.modo!=='fecha'||!ev.fecha)return;
+    const dd=parseDate(ev.fecha);
+    if(!dd||dd<i0||dd>i1)return;
+    out.push({allDay:!ev.hora,fecha:icsNum(ev.fecha),isoKey:ev.fecha,hora:icsHM(ev.hora||''),dur:60,
+      uid:icsUID('evento|'+ev.id),summ:'📌 '+String(ev.titulo||'Evento').slice(0,60),
+      desc:'Evento apuntado en la app.',cat:'EVENTO'});});
   return out;}
 function icsTexto(desde,hasta,opt){
   /* el .ics que Google entiende: cabecera de cuaderno, eventos con UID estable y su VALARM */

@@ -3446,6 +3446,56 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================== Los avisos =====================
+  // 84) una PWA estática no puede avisarte con el móvil bloqueado: no hay servidor de push, y no
+  // hay ni una llamada a Notification en toda la app. Lo que sí funciona con la app cerrada es el
+  // calendario del teléfono, así que el .ics lleva —además de guardias y entrenos— los recibos que
+  // vencen, las tareas con día y los eventos, cada uno con su alarma.
+  {
+    const ics = await page.evaluate(() => {
+      const P = window.PG, hoy = new Date(), iso = P.iso;
+      P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 };
+      P.store.notas.length = 0;
+      P.eventosS().length = 0;
+      P.addGasto({ nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa' });
+      const r = P.addNota('Llamar a la gestoría', iso(new Date(hoy.getTime() + 3 * 86400000)));
+      P.setNota(r.id, 'proy', 'Papeleo');
+      P.eventosS().push({ id: 'ev-ics', titulo: 'Presentación en rayos', modo: 'fecha',
+        fecha: iso(new Date(hoy.getTime() + 10 * 86400000)), hora: '08:00', on: true, color: '' });
+      P.save();
+      const desde = iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+      const hasta = iso(new Date(hoy.getFullYear(), hoy.getMonth() + 2, 0));
+      const t = P.icsTexto(desde, hasta);
+      return {
+        alquiler: /SUMMARY:💶 Alquiler · 650 €/.test(t),
+        // dos meses en el rango: el recibo tiene que salir en los dos
+        vecesAlquiler: (t.match(/SUMMARY:💶 Alquiler/g) || []).length,
+        tarea: /SUMMARY:📝 Llamar a la gestoría/.test(t),
+        evento: /SUMMARY:📌 Presentación en rayos/.test(t),
+        cats: ['DINERO', 'TAREA', 'EVENTO'].every((c) => t.indexOf('CATEGORIES:' + c) >= 0),
+        // cada evento con su alarma: de avisar se encarga el teléfono
+        eventos: (t.match(/BEGIN:VEVENT/g) || []).length,
+        alarmas: (t.match(/BEGIN:VALARM/g) || []).length,
+        // y un recibo ya pagado no vuelve a avisar
+        sinPagados: (() => {
+          const g = P.dineroS().gastos[0];
+          P.pagarGasto(g.id, hoy.getFullYear(), hoy.getMonth());
+          const t2 = P.icsTexto(desde, hasta);
+          return (t2.match(/SUMMARY:💶 Alquiler/g) || []).length;
+        })(),
+      };
+    });
+    check('el .ics lleva los recibos, las tareas y los eventos con su alarma, y lo pagado deja de avisar',
+      ics.alquiler && ics.vecesAlquiler === 2 && ics.tarea && ics.evento && ics.cats &&
+      ics.eventos > 3 && ics.alarmas === ics.eventos && ics.sinPagados === 1,
+      JSON.stringify(ics));
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 };
+      P.store.notas.length = 0; P.eventosS().length = 0; P.save();
+    });
+  }
+
   // ===================== «Mi día» =====================
   // 83) las cinco patas de la app —el turno, el entreno, las tareas, el dinero y la comida— se leen
   // de una sentada en «Hoy», y EN ESE ORDEN: primero el día, luego lo que hay que HACER, y al final
