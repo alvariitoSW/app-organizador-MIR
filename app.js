@@ -265,6 +265,7 @@ let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
   shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
+  evVista:'',evForm:null,ajuVista:'',datosVista:'',
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -411,10 +412,17 @@ function normalize(o){
   o.eventos=o.eventos.filter(function(e){return e&&e.id;}).map(function(e){
     const modo=e.modo==='fecha'?'fecha':'semanal';
     return {id:e.id,titulo:String(e.titulo||''),hora:/^\d{2}:\d{2}$/.test(e.hora||'')?e.hora:'09:00',
+      /* hasta qué hora dura. Vacío = como siempre: la app no sabe cuánto ocupa y lo trata como una
+         cita suelta. OJO: este map DESCARTA cualquier campo que no esté aquí, así que un campo nuevo
+         que no se dé de alta en esta lista se pierde en la siguiente carga sin dar ningún error. */
+      fin:/^\d{2}:\d{2}$/.test(e.fin||'')?e.fin:'',
       modo:modo,
       dow:Array.isArray(e.dow)?e.dow.map(Number).filter(function(x){return x>=0&&x<=6;}):[],
       fecha:/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||'')?e.fecha:'',
       recordatorio:!!e.recordatorio,cuentaAtras:!!e.cuentaAtras,
+      /* el enlace de vuelta a la nota que creó este evento. Estaba escrito en notaAEvento() pero
+         no en esta lista, así que se perdía en la siguiente carga sin que nadie se enterara. */
+      notaId:String(e.notaId||''),
       color:/^#[0-9a-fA-F]{6}$/.test(e.color||'')?e.color:'#38e1ff',on:e.on!==false};})
     .filter(function(e){return e.modo==='semanal'?e.dow.length>0:!!e.fecha;});
   if(!o.habitos||typeof o.habitos!=='object')o.habitos={items:[],registro:{}};
@@ -629,7 +637,8 @@ function notaAEvento(id,opts){
   const titulo=String(opts.titulo||x.txt.split('\n')[0]||'').trim().slice(0,60);
   if(!titulo)return {ok:false,msg:'la nota está vacía: no sé cómo llamar al evento'};
   const ev={id:uid('ev'),titulo:titulo,modo:'fecha',fecha:fecha,
-    hora:String(opts.hora||'').slice(0,5),color:x.color||tlColor('evt'),on:true,
+    hora:String(opts.hora||'').slice(0,5),fin:String(opts.fin||'').slice(0,5),
+    color:x.color||tlColor('evt'),on:true,
     recordatorio:!!opts.recordatorio,cuentaAtras:!!opts.cuentaAtras,notaId:x.id};
   eventosS().push(ev);
   x.fecha=fecha;x.evId=ev.id;olvidaNotas();save();
@@ -1864,7 +1873,27 @@ function solPiesHTML(key){
   if(s.sinDatos)return '';
   if(s.polar)return '<span class="pie sol">'+(s.polar==='dia'?'☀️ no se pone':'🌙 no amanece')+'</span>';
   return '<span class="pie sol">🌅 '+horaLocal(s.sale)+'</span><span class="pie sol">🌇 '+horaLocal(s.pone)+'</span>';}
+/* dónde vive ahora cada tarjeta que se puede enlazar desde otra pantalla. Sin esto, irACard()
+   hace `if(!c)return;` y el botón no hace NADA y no da ningún error: justo el fallo mudo que este
+   repositorio se come una y otra vez. Cada vez que una tarjeta con data-cfg se mueva a una vista,
+   tiene que aparecer aquí. */
+const CFG_DONDE={
+  sol:      {tab:'ajustes',v:'sol'},
+  lector:   {tab:'ajustes',v:'lector'},
+  usda:     {tab:'ajustes',v:'comida'},
+  franja:   {tab:'ajustes',v:'aspecto'},
+  sueno:    {tab:'cfg',    v:'horas'},
+  copias:   {tab:'data',   v:'copia'},
+  rotaciones:{tab:'cfg',   v:'rotacion'}
+};
 function irACard(tab,cfg,espera){
+  const d=CFG_DONDE[cfg];
+  if(d){
+    tab=tab||d.tab;
+    if(d.tab==='ajustes')ui.ajuVista=d.v;
+    else if(d.tab==='data')ui.datosVista=d.v;
+    else if(d.tab==='cfg')ui.cfgVista=d.v;
+  }
   /* «llévame a la tarjeta donde se cambia esto» y enciéndela un momento para que se vea cuál es.
      Estaba escrito SIETE veces con las mismas constantes de 60 ms y 1600 ms repartidas por el
      fichero; ahora el tiempo, el color y el caso de «la tarjeta no está» viven en un sitio. */
@@ -1970,7 +1999,19 @@ function timelineBar(dateStr,inf){
   const gymDot=(seg2&&seg2.on&&dentro(mins(seg2.hora)))?
     ('<i class="tl-dot gym" style="left:'+pct(mins(seg2.hora)).toFixed(1)+'%;background:'+esc(tlColor('gym'))+
       '" title="🏊 segundo entreno · '+esc(seg2.hora)+'"></i>'):'';
-  const evDots=evs.map(function(ev){const m=mins(ev.hora);if(!dentro(m))return '';
+  /* un evento con hora de fin ocupa un RATO, así que se pinta como banda y no como punto: eso es lo
+     que deja ver de un vistazo que la presentación te come toda la mañana. Sin fin sigue siendo un
+     punto, como siempre. La banda se corta a medianoche igual que la jornada de trabajo. */
+  const evDots=evs.map(function(ev){
+    const m=mins(ev.hora);if(m==null)return '';
+    const dur=evDura(ev);
+    if(dur){
+      const a=Math.max(m,V.from),b=Math.min(m+dur,1440,V.to);
+      if(b<=a)return '';
+      const t='📅 '+evHoraTxt(ev)+' '+(ev.titulo||'')+(evDuraTxt(ev)?(' ('+evDuraTxt(ev)+')'):'');
+      return '<i class="tl-seg evt" style="left:'+pct(a).toFixed(1)+'%;width:'+((b-a)/span*100).toFixed(1)+
+        '%;background:'+esc(ev.color||tlColor('evt'))+'" title="'+esc(t)+'"></i>';}
+    if(!dentro(m))return '';
     return '<i class="tl-dot evt" style="left:'+pct(m).toFixed(1)+'%;background:'+esc(ev.color||tlColor('evt'))+
       '" title="📅 '+esc(ev.hora)+' '+esc(ev.titulo)+'"></i>';}).join('');
   /* la noche, por ENCIMA de todo lo demás: se oscurecen las horas sin sol en vez de iluminar las que
@@ -2392,7 +2433,7 @@ function renderMonth(){
     const marcas=[];
     evsDia.slice(0,6).forEach(function(ev){
       marcas.push('<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+
-        esc((ev.hora?ev.hora+' ':'')+ev.titulo)+'"></i>');});
+        esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo)+'"></i>');});
     if(evsDia.length>6)marcas.push('<b class="dmas">+'+(evsDia.length-6)+'</b>');
     if(nt)marcas.push('<b class="dnota" title="'+esc(nt)+'">📝</b>');
     /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */
@@ -4153,7 +4194,7 @@ function notaPiesHTML(x){
   if(x.proy)out.push('<span class="pie proy">◆ '+esc(x.proy)+'</span>');
   if(!x.hecha&&x.fecha&&x.fecha<iso(new Date()))out.push('<span class="pie tarde">se te pasó</span>');
   const ev=eventoDeNota(x);
-  if(ev)out.push('<span class="pie ev">🔔 '+esc(ev.hora||'en el calendario')+'</span>');
+  if(ev)out.push('<span class="pie ev">🔔 '+esc(ev.hora?evHoraTxt(ev):'en el calendario')+'</span>');
   if(x.hecha){
     const quedan=Math.max(0,Math.ceil((x.hecha+NOTA_PURGA_DIAS*86400000-Date.now())/86400000));
     out.push('<span class="pie">se borra en '+quedan+' día'+(quedan===1?'':'s')+'</span>');}
@@ -4252,7 +4293,7 @@ function renderNotaAbierta(){
       'Sin día vive solo aquí. Ponle uno y saldrá en el calendario.')+'</p>'+
     (ev?('<div class="card"><h2>📅 En el calendario</h2>'+
       '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color||tlColor('evt'))+'"></span>'+
-      '<span class="nm"><b>'+esc(ev.titulo)+'</b><span>'+esc(fechaCorta(ev.fecha))+(ev.hora?(' · '+esc(ev.hora)):' · todo el día')+'</span></span></div>'+
+      '<span class="nm"><b>'+esc(ev.titulo)+'</b><span>'+esc(fechaCorta(ev.fecha))+' · '+esc(evHoraTxt(ev))+'</span></span></div>'+
       '<p class="mini" style="margin:8px 0 0">Creado desde esta nota: es el mismo evento, no una copia.</p>'+
       '<div class="row" style="margin-top:9px">'+
         '<button class="btn s" data-a="mon-day" data-key="'+esc(ev.fecha)+'">ver ese día en el mes</button>'+
@@ -4518,7 +4559,16 @@ const GYM_ICO={
   cama:'<path d="M3 18v-7h18v7"/><path d="M3 11V7M21 18v2M3 18v2"/><circle cx="7.5" cy="9" r="1.8"/><path d="M10.5 11V9h8"/>',
   calendario:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   repetir:'<path d="M4 9a5 5 0 0 1 5-5h9"/><path d="M15 1l3 3-3 3"/><path d="M20 15a5 5 0 0 1-5 5H6"/><path d="M9 23l-3-3 3-3"/>',
-  ajustes:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>'
+  ajustes:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>',
+  /* las puertas de Ajustes y de Datos */
+  sol:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
+  pincel:'<path d="M4 20c0-2.2 1.3-3 2.5-3S9 17.8 9 20c0 1.1-1.1 1.6-2.5 1.6S4 21.1 4 20z"/><path d="M8.5 16.5 19 6a2.1 2.1 0 0 0-3-3L5.5 13.5"/>',
+  enlace:'<path d="M10 13.5a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11.5 6.3"/><path d="M14 10.5a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.3-1.3"/>',
+  disco:'<rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M8 3.5v6h8v-6M8 20.5v-5h8v5"/>',
+  tabla:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10M15 9.5v10"/>',
+  plato:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/>',
+  hoja:'<path d="M6 3.5h8l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5z"/><path d="M14 3.5V8h4.5M8 13h8M8 17h5"/>',
+  chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>'
 };
 function gymIco(n,cls){return '<svg class="'+(cls||'gico')+'" viewBox="0 0 24 24" aria-hidden="true">'+(GYM_ICO[n]||'')+'</svg>';}
 function gymSubcab(titulo,extra){
@@ -5768,11 +5818,15 @@ function suenoCard(){
   const c=suenoCfg(),base=despertarBase(),rec=acostarsePara(base),ven=ventanaCena(rec);
   const dias=(store.rotation.jornada&&store.rotation.jornada.workdays)||[1,2,3,4,5];
   const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  return '<div class="card"><h2>2c · Dormir '+c.min+' h, sin excepciones</h2>'+
+  return '<div class="card" data-cfg="sueno"><h2>2c · Dormir '+c.min+' h, sin excepciones</h2>'+
     '<p class="note">De lunes a viernes te levantas a las <b>'+esc(base)+'</b>, así que para tener tus '+c.min+' h hay que estar en la cama a las '
     +'<b>'+esc(rec)+'</b> (contando '+c.latencia+' min de quedarte dormido). La cena, entre '+(ven?ven.from+' y '+ven.to:'—')+
     ': de 3 h a 1,5 h antes de dormir, para no acostarse con la digestión a medias. Los días '+dias.map(function(x){return DN[x];}).join(', ')+'.</p>'+
+    /* la latencia estaba en una tarjeta aparte, en Ajustes, que además avisaba de que «la ventana de
+       la cena sigue en Turno y rotación → 2c»: eran dos editores a medias del mismo asunto. Aquí
+       están los cuatro números del sueño juntos. */
     '<div class="fgrid c3"><label class="fld">Horas mínimas<input type="number" min="6" max="10" step="0.25" value="'+c.min+'" data-a="sueno-f" data-k="min"></label>'+
+    '<label class="fld">Tardas en dormirte (min)<input type="number" min="0" max="60" value="'+c.latencia+'" data-a="sueno-f" data-k="latencia"></label>'+
     '<label class="fld">Cena antes (h)<input type="number" min="60" max="240" step="15" value="'+c.cenaMax+'" data-a="sueno-f" data-k="cenaMax"></label>'+
     '<label class="fld">Cena como pronto (h)<input type="number" min="30" max="120" step="15" value="'+c.cenaMin+'" data-a="sueno-f" data-k="cenaMin"></label></div>'+
     '<div class="row" style="margin-top:10px"><button class="btn p" data-a="sueno-fix">poner la cama a '+esc(rec)+' en los días de diario</button>'+
@@ -5824,6 +5878,12 @@ function renderCfg(){
       <label class="fld">sale<input value="${esc(s.end)}" placeholder="15:00" data-a="sh-f" data-id="${s.id}" data-f="end"></label>
       <label class="fld">carga<select data-a="sh-f" data-id="${s.id}" data-f="intensity">${['bajo','medio','alto'].map(x=>`<option ${s.intensity===x?'selected':''}>${x}</option>`).join('')}</select></label>
       <label class="fld" style="grid-column:1/-1">notas<input value="${esc(s.desc)}" data-a="sh-f" data-id="${s.id}" data-f="desc" placeholder="opcional"></label>
+    </div>
+    <!-- los dos atajos que vivían en una tarjeta aparte de 548 px en Ajustes, donde solo repetían
+         lo que ya hay aquí: en su sitio son dos botones, no una pantalla -->
+    <div class="row" style="margin-top:9px">
+      <button class="btn s" data-a="day-rhythm-shift" data-id="${s.id}">🕐 sus horas →</button>
+      <button class="btn s" data-a="day-edit" data-id="${s.id}">🍽 sus comidas →</button>
     </div></div>`).join('');
   const DSEM=['L','M','X','J','V','S','D'];
   const pats=store.patterns.map((p,pi)=>{
@@ -5884,7 +5944,20 @@ function renderCfg(){
       '<div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ semana tipo</button>'+
       '<button class="btn s" data-a="autofill">autocompletar desde mi turno</button></div></div>',
     store.patterns.length+' semanas');
-  if(v==='rotacion')return cfgPantalla('Rotación por fecha',
+  if(v==='rotacion'){
+    /* «Guardias y rotación» y «Mis rotaciones» vivían en Ajustes, y la propia tarjeta admitía que
+       era «lo mismo que ves dentro de Mes → configurar este mes». Son de aquí: el ciclo, cuántas
+       guardias tocan y por dónde rotas se deciden en el mismo sitio. */
+    const sd=saltoDia(),tipos=gTipos();
+    const cap=function(x){return x.charAt(0).toUpperCase()+x.slice(1);};
+    const diaOpts=function(sel){return DOWN0.map(function(n,i){
+      return '<option value="'+i+'" '+(i===sel?'selected':'')+'>'+cap(n)+'</option>';}).join('');};
+    const tipoRows=tipos.map(function(t){
+      return '<div class="row" style="margin-top:6px">'+
+        '<label class="fld" style="flex:1 1 160px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
+        '<label class="fld" style="flex:0 0 110px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
+      '</div>';}).join('');
+    return cfgPantalla('Rotación por fecha',
     '<div class="card"><p class="note" style="margin:0 0 10px">Si tu calendario es un ciclo de semanas (1G·S → 2G·S·S → libre), '+
       'ordena las semanas del ciclo en «Cómo se arma tu semana» y pon aquí la fecha de un lunes que sepas qué semana era. '+
       'La app repite el ciclo sola; y si un día se tuerce, lo cambias en «Semana» sin romper la rotación.</p>'+
@@ -5895,7 +5968,26 @@ function renderCfg(){
       '<p class="mini" style="margin:9px 0 0">modo activo: <b style="color:var(--ink)">'+(r.mode==='date'?'rotación por fecha':'plantilla')+'</b></p>'+
       '<div class="row" style="margin-top:9px"><button class="btn s" data-a="mode-date">activar rotación por fecha</button>'+
       '<button class="btn s" data-a="mode-template">volver a plantilla</button>'+
-      '<button class="btn s" data-a="clear-overrides">quitar mis cambios a mano</button></div></div>');
+      '<button class="btn s" data-a="clear-overrides">quitar mis cambios a mano</button></div></div>'+
+    `<div class="card"><h2>Guardias y rotación</h2>
+      <p class="note">De fábrica: si la guardia cae en sábado, el saliente se pasa al lunes y el día de por medio queda libre. Si tu rotación descansa otro día, cámbialo aquí.</p>
+      <div class="row">
+        <label class="fld">Si la guardia cae en<select data-a="salto-from">${diaOpts(sd.from)}</select></label>
+        <label class="fld">el saliente se pasa al<select data-a="salto-to">${diaOpts(sd.to)}</select></label>
+      </div>
+      <p class="mini" style="margin-top:8px">Ahora mismo: ${saltoDiaTxt()}.</p>
+      <label class="fld" style="max-width:220px;margin-top:10px">Guardias por mes, por defecto (para un mes que no hayas tocado)
+        <input type="number" min="0" max="15" value="${store.rotation.guardiasMes!=null?store.rotation.guardiasMes:6}" data-a="guard-default"></label>
+      <p class="mini" style="margin-top:10px">Tipos de guardia y cuántas de cada uno tocan al mes (esto es lo mismo que ves dentro de «Mes → configurar este mes»; aquí queda a mano sin tener que entrar cada vez):</p>
+      ${tipoRows}
+      <div class="row" style="margin-top:8px">
+        <label class="fld" style="flex:0 0 200px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
+      </div></div>
+    <div class="card" data-cfg="rotaciones"><h2>Mis rotaciones</h2>
+      <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
+      ${serviciosEditorHTML()}
+      <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div></div>`);}
   if(v==='notas')return cfgPantalla('Notas del planning',
     '<div class="card"><p class="note" style="margin:0 0 10px">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>'+
       '<textarea rows="8" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">'+esc(store.meta.notes||'')+'</textarea></div>');
@@ -5926,10 +6018,10 @@ function renderCfg(){
       puerta('semana','calendario','Mi semana',r.mode==='date'?'ciclo de '+store.patterns.length:'plantilla')+
     '</div>'+
     '<div class="puertas">'+
-      puerta('rotacion','repetir','Rotación','por fecha')+
+      puerta('rotacion','repetir','Rotación','servicios y guardias')+
       puerta('notas','lapiz','Notas','del planning')+
-      '<button class="puerta" data-a="tab" data-t="ajustes">'+gymIco('ajustes')+
-        '<b>Servicios</b><span class="s">y mis rotaciones</span></button>'+
+      '<button class="puerta" data-a="tab" data-t="month">'+gymIco('calendario')+
+        '<b>El año</b><span class="s">repartido por meses</span></button>'+
     '</div></div>';
 }
 function cfgPantalla(titulo,cuerpo,extra){
@@ -6141,6 +6233,28 @@ function renderDineroFijos(){
     '</div></div>';}
 
 function eventosS(){if(!Array.isArray(store.eventos))store.eventos=[];return store.eventos;}
+/* ---- cuánto dura un evento ----
+   Hasta ahora un evento solo tenía hora de empezar, y eso salía caro en tres sitios: el .ics le
+   ponía 60 minutos fijos a todo (una presentación de dos horas y media te reservaba una hora), la
+   franja del día lo pintaba como un punto dure lo que dure, y en Mes y Semana solo se leía la hora
+   de empezar. Con `fin` puesto, el rato es de verdad. Sin `fin`, todo sigue como antes. */
+function evMin(ev){return mins(ev&&ev.hora);}
+function evDura(ev){
+  /* minutos que ocupa, o null si no lo sabemos. Si el fin es igual o anterior al principio se
+     entiende que cruza la medianoche, que es la misma regla que ya usa la jornada de trabajo. */
+  const a=evMin(ev),b=mins(ev&&ev.fin);
+  if(a==null||b==null)return null;
+  return b>a?(b-a):(b+1440-a);}
+function evDuraTxt(ev){
+  const d=evDura(ev);if(d==null)return '';
+  if(d>=1440)return 'todo el día';
+  const h=Math.floor(d/60),m=d%60;
+  return h?(h+' h'+(m?' '+String(m).padStart(2,'0'):'')):(m+' min');}
+function evHoraTxt(ev){
+  /* lo que se lee en una fila: «08:30 – 11:00» si sabemos el fin, «08:30» si no, «todo el día» si
+     ni siquiera hay hora de empezar */
+  if(!ev||!ev.hora)return 'todo el día';
+  return ev.fin?(ev.hora+' – '+ev.fin):ev.hora;}
 function diasCorta(dow){
   const DS=['D','L','M','X','J','V','S'];
   if(!dow||!dow.length)return '—';
@@ -6179,7 +6293,7 @@ function agendaMesHTML(y,mo){
       '<span class="agd"><b>'+(d?d.getDate():'?')+'</b><span>'+(d?DAYSH[(d.getDay()+6)%7].toLowerCase():'')+'</span></span>'+
       '<span class="agnm"><b>'+esc(ev.titulo||'(sin título)')+'</b>'+
         (ev.cuentaAtras&&!pasado?'<span class="mini">'+esc(cuentaAtrasTxt(ev.fecha))+'</span>':'')+'</span>'+
-      '<span class="aghr">'+esc(ev.hora||'')+'</span></button>';}).join('');
+      '<span class="aghr">'+esc(evHoraTxt(ev))+'</span></button>';}).join('');
   return '<div class="card" style="margin-top:12px"><h2>Eventos de '+MONTH_FULL[mo]+
       (evs.length?' <span class="tag b2">'+evs.length+'</span>':'')+'</h2>'+
     (filas||'<p class="mini" style="margin:0">Ninguno con fecha este mes.</p>')+
@@ -6191,8 +6305,10 @@ function eventosPuntualesProximos(){const hoy=iso(new Date());
   return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha>=hoy;})
     .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});}
 function eventoRowHTML(ev){
-  const sub=ev.modo==='fecha'?(fechaCorta(ev.fecha)+' · '+esc(ev.hora)+(ev.cuentaAtras?' · '+cuentaAtrasTxt(ev.fecha):'')):
-    (diasCorta(ev.dow)+' · '+esc(ev.hora));
+  const dur=evDuraTxt(ev);
+  const cuando=esc(evHoraTxt(ev))+(dur?(' <span style="opacity:.75">('+esc(dur)+')</span>'):'');
+  const sub=ev.modo==='fecha'?(fechaCorta(ev.fecha)+' · '+cuando+(ev.cuentaAtras?' · '+cuentaAtrasTxt(ev.fecha):'')):
+    (diasCorta(ev.dow)+' · '+cuando);
   return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
     '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+(ev.modo==='fecha'?' <span class="tag b2" style="font-size:9px;vertical-align:middle">puntual</span>':'')+'</b>'+
     '<span>'+sub+(ev.recordatorio?' · 🔔':'')+'</span></span>'+
@@ -6200,136 +6316,266 @@ function eventoRowHTML(ev){
       '<input type="checkbox" data-a="ev-toggle" data-id="'+ev.id+'" style="width:auto" '+(ev.on!==false?'checked':'')+'> activo</label>'+
     '<button class="btn d" data-a="ev-del" data-id="'+ev.id+'" title="quitar este evento">×</button></div>';
 }
+/* ===================== Eventos: sección propia =====================
+   Estaban dentro de Ajustes, tarjeta 4 de 13, entre el lector de enlaces y las copias de
+   seguridad: lo que más se usa, en lo que menos se encuentra. Aquí son una sección del cajón,
+   al lado de Notas, Hábitos y Dinero, con una pantalla por evento donde se dice cuánto dura. */
+function evById(id){return eventosS().filter(function(e){return e.id===id;})[0]||null;}
+const EV_DOWL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const EV_DURAS=[['sin hora de fin',0],['30 min',30],['1 h',60],['1 h 30',90],['2 h',120],['3 h',180],['toda la mañana',-1],['todo el día',-2]];
+function evFormDefecto(ev){
+  return ev?{modo:ev.modo==='fecha'?'fecha':'semanal',dow:(ev.dow||[]).slice(),fecha:ev.fecha||''}
+           :{modo:'fecha',dow:[],fecha:iso(new Date())};}
+function evPantalla(titulo,cuerpo,extra){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="ev-vista" data-v="">'+gymIco('atras','gico sm')+' Eventos</button>'+
+      '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
+    cuerpo+'</div>';}
+function evFormHTML(ev){
+  const f=ui.evForm||(ui.evForm=evFormDefecto(ev));
+  const hora=ev?(ev.hora||''):'18:00',fin=ev?(ev.fin||''):'';
+  const dActual=ev?evDura(ev):null;
+  const chips=EV_DURAS.map(function(d){
+    const on=(d[1]===0&&!fin)||(d[1]>0&&dActual===d[1])||(d[1]===-1&&dActual===240)||(d[1]===-2&&!hora);
+    return '<button class="dura'+(on?' on':'')+'" data-a="ev-dura" data-min="'+d[1]+'">'+esc(d[0])+'</button>';}).join('');
+  return '<div class="card"><h2>Cuándo es</h2>'+
+    '<div class="row">'+
+      '<button class="btn s '+(f.modo!=='fecha'?'p':'')+'" data-a="ev-modo" data-modo="semanal">se repite cada semana</button>'+
+      '<button class="btn s '+(f.modo==='fecha'?'p':'')+'" data-a="ev-modo" data-modo="fecha">un día en concreto</button>'+
+    '</div>'+
+    '<div class="row" style="margin-top:9px">'+
+      '<label class="fld" style="flex:1 1 180px">título<input id="evTitulo" value="'+esc(ev?(ev.titulo||''):'')+
+        '" placeholder="'+(f.modo==='fecha'?'p. ej. Presentación en rayos':'p. ej. Sesión clínica')+'"></label>'+
+      '<label class="fld" style="flex:0 0 54px">color<input type="color" id="evColor" value="'+
+        esc(ev?(ev.color||'#38e1ff'):'#38e1ff')+'" style="height:30px;padding:2px"></label>'+
+    '</div>'+
+    (f.modo==='fecha'
+      ?('<div class="row" style="margin-top:8px"><label class="fld" style="flex:0 0 172px">qué día'+
+        '<input type="date" id="evFecha" value="'+esc(f.fecha||iso(new Date()))+'"></label></div>')
+      :('<div class="row" style="margin-top:8px"><span class="mini" style="flex:0 0 100%">qué días:</span>'+
+        EV_DOWL.map(function(nm,ix){return '<button class="btn s '+(f.dow.indexOf(ix)>=0?'p':'')+
+          '" data-a="ev-dia" data-day="'+ix+'">'+nm+'</button>';}).join('')+'</div>'))+
+    '<div class="row" style="margin-top:9px">'+
+      '<label class="fld" style="flex:1 1 120px">desde<input type="time" id="evHora" value="'+esc(hora)+'"></label>'+
+      '<label class="fld" style="flex:1 1 120px">hasta<input type="time" id="evFin" value="'+esc(fin)+'"></label>'+
+    '</div>'+
+    '<div class="duras">'+chips+'</div>'+
+    '<p class="mini" style="margin:9px 0 0">Con la hora de fin puesta, el calendario del móvil te '+
+      '<b style="color:var(--ink)">reserva el hueco</b> en vez de meter una cita suelta de una hora. '+
+      'Si pones una hora de fin anterior a la de empezar, se entiende que acaba al día siguiente.</p>'+
+  '</div>'+
+  (f.modo==='fecha'?('<div class="card"><h2>Avisos</h2>'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)">'+
+      '<input type="checkbox" id="evRec" style="width:auto" '+((ev&&ev.recordatorio)?'checked':'')+'> '+
+      '🔔 avisarme (sale en «Hoy» y en «Próximos»)</label>'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);margin-top:9px">'+
+      '<input type="checkbox" id="evCuenta" style="width:auto" '+((ev&&ev.cuentaAtras)?'checked':'')+'> '+
+      '⏳ mostrar cuenta atrás</label></div>'):'')+
+  '<div class="row" style="margin-top:2px">'+
+    '<button class="btn p" data-a="ev-guardar" data-id="'+esc(ev?ev.id:'')+'">'+(ev?'guardar los cambios':'+ añadir el evento')+'</button>'+
+    (ev?('<span class="sp"></span><button class="btn d" data-a="ev-del" data-id="'+esc(ev.id)+'">quitar</button>'):'')+
+  '</div>';}
+function evFilaHTML(ev){
+  const d=ev.modo==='fecha'?parseDate(ev.fecha):null;
+  const dur=evDuraTxt(ev);
+  const cuando=ev.modo==='fecha'
+    ?(DAYSH[(d?(d.getDay()+6)%7:0)].toLowerCase()+' · '+evHoraTxt(ev)+(ev.cuentaAtras?(' · '+cuentaAtrasTxt(ev.fecha)):''))
+    :(diasCorta(ev.dow)+' · '+evHoraTxt(ev));
+  return '<button class="evfila'+(ev.on===false?' off':'')+'" data-a="ev-abrir" data-id="'+esc(ev.id)+'">'+
+    (d?('<span class="fch"><em>'+d.getDate()+'</em><span>'+MON[d.getMonth()]+'</span></span>')
+       :('<span class="fch sem"><em>'+diasCorta(ev.dow)+'</em><span>cada sem</span></span>'))+
+    '<span class="tx"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+esc(cuando)+
+      (ev.recordatorio?' · 🔔':'')+(ev.on===false?' · apagado':'')+'</span></span>'+
+    (dur?('<span class="dur">'+esc(dur)+'</span>'):'')+
+    '<span class="evdot" style="background:'+esc(ev.color||'#38e1ff')+'"></span></button>';}
+function renderEventos(){
+  const v=ui.evVista||'';
+  if(v==='nuevo')return evPantalla('Un evento nuevo',evFormHTML(null));
+  if(v){const ev=evById(v);
+    if(ev)return evPantalla(ev.titulo||'Evento',evFormHTML(ev),ev.modo==='fecha'?fechaCorta(ev.fecha):diasCorta(ev.dow));
+    ui.evVista='';}
+  const hoy=iso(new Date());
+  const puntuales=eventosS().filter(function(e){return e.modo==='fecha';})
+    .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});
+  const proximos=puntuales.filter(function(e){return e.fecha>=hoy;});
+  const pasados=puntuales.filter(function(e){return e.fecha<hoy;});
+  const semanales=eventosS().filter(function(e){return e.modo!=='fecha';})
+    .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">📌 Eventos</h2>'+
+      (eventosS().length?('<span class="tag b2">'+eventosS().length+' apuntado'+(eventosS().length===1?'':'s')+'</span>'):'')+'</div>'+
+    '<div class="card"><h2>Lo que viene</h2>'+
+      (proximos.length?proximos.map(evFilaHTML).join('')
+        :'<div class="empty">Nada por delante. Añade una cita, un curso o el día que pagas algo.</div>')+
+      '<div class="row" style="margin-top:11px"><button class="btn p" data-a="ev-nuevo">+ añadir un evento</button></div>'+
+    '</div>'+
+    '<div class="card"><h2>Todas las semanas</h2>'+
+      '<p class="note" style="margin:0 0 9px">Lo que se repite sin fecha: la sesión de los jueves, el fisio, la lavadora.</p>'+
+      (semanales.length?semanales.map(evFilaHTML).join(''):'<div class="empty">Ninguno todavía.</div>')+
+      '<div class="row" style="margin-top:11px"><button class="btn s" data-a="ev-nuevo" data-modo="semanal">+ uno semanal</button></div>'+
+    '</div>'+
+    (pasados.length?('<div class="card"><h2>Ya pasaron<span class="mini" style="margin-left:auto;font-weight:400">'+
+      pasados.length+'</span></h2>'+pasados.slice(-6).reverse().map(evFilaHTML).join('')+'</div>'):'')+
+    '<p class="mini" style="margin:2px 0 0">Todo lo de aquí sale en <b style="color:var(--ink)">Mes</b>, '+
+      'en <b style="color:var(--ink)">Hoy</b> y en el <b style="color:var(--ink)">.ics</b> del calendario del móvil, '+
+      'con su alarma y con el rato que ocupa.</p>'+
+  '</div>';}
 function eventosTagsHTML(list){
   if(!list||!list.length)return '';
   return list.map(function(ev){return '<span class="tag" style="border:1px solid '+esc(ev.color)+';color:'+esc(ev.color)+'">'+
-    esc(ev.hora)+' '+esc(ev.titulo)+'</span>';}).join('');
+    esc(evHoraTxt(ev))+' '+esc(ev.titulo)+'</span>';}).join('');
 }
 function proximosPuntualesHTML(){
   const prox=eventosPuntualesProximos();
   if(!prox.length)return '';
   return '<div class="card"><h2>📌 Próximos<span class="mini" style="margin-left:auto;font-weight:400">'+prox.length+'</span></h2>'+
-    '<p class="note">Eventos puntuales que has apuntado — se editan en «Ajustes».</p>'+
+    '<p class="note">Eventos puntuales que has apuntado — se editan en «Eventos».</p>'+
     prox.slice(0,6).map(function(ev){
       return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
-        '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+fechaCorta(ev.fecha)+' · '+esc(ev.hora)+
+        '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+fechaCorta(ev.fecha)+' · '+esc(evHoraTxt(ev))+
         (ev.recordatorio?' · 🔔 recordatorio':'')+'</span></span>'+
         (ev.cuentaAtras?'<span class="tag b2">'+cuentaAtrasTxt(ev.fecha)+'</span>':'')+
         '</div>';}).join('')+
     '</div>';
 }
+/* ===================== Ajustes: portada y una pantalla por tarea =====================
+   Eran 13 tarjetas sin relación entre ellas, 5 150 px y 1 176 palabras —la pantalla con más texto
+   de toda la app—, con los eventos enterrados en el puesto 4 y tres tarjetas distintas hablando
+   del calendario de Google en dos secciones. Mismo patrón que «Turno y rotación»: una portada que
+   se lee de un vistazo y una pantalla por tarea. */
+const ICS_CAT=[['GUARDIA','\ud83e\ude7a','guardias'],['TRABAJO','\ud83d\udcbc','trabajo'],['ENTRENO','\ud83d\udcaa','entrenos'],
+  ['DINERO','\ud83d\udcb6','recibos'],['TAREA','\ud83d\udcdd','tareas con d\u00eda'],['EVENTO','\ud83d\udccc','eventos']];
+function icsResumen(desde,hasta){
+  /* qué se lleva de verdad el calendario del móvil, contado. La tarjeta vieja decía que iban «solo
+     tres cosas» y se quedó caduca cuando los avisos empezaron a llevar también recibos, tareas y
+     eventos: ahora la cuenta sale del mismo sitio que el .ics, así que no puede desfasarse. */
+  let evs=[];
+  try{evs=calEventos(desde,hasta);}catch(e){evs=[];}
+  const n={};evs.forEach(function(e){n[e.cat]=(n[e.cat]||0)+1;});
+  return {total:evs.length,n:n};}
+function icsCatsHTML(desde,hasta){
+  const r=icsResumen(desde,hasta);
+  return '<div class="cats">'+ICS_CAT.map(function(c){
+      const k=r.n[c[0]]||0;
+      return '<span'+(k?'':' class="off"')+'><i style="background:'+esc(tlColor(
+        c[0]==='GUARDIA'?'guard':c[0]==='TRABAJO'?'work':c[0]==='ENTRENO'?'gym':'evt'))+'"></i>'+
+        c[1]+' '+esc(c[2])+(k?(' <b>'+k+'</b>'):'')+'</span>';}).join('')+'</div>'+
+    '<p class="mini" style="margin:9px 0 0"><b style="color:var(--ink)">'+r.total+' cita'+(r.total===1?'':'s')+
+      '</b> en ese rango. Vacaciones, salientes y d\u00edas libres <b style="color:var(--ink)">no</b> salen: se quedan en la app.</p>';}
+function ajuPantalla(titulo,cuerpo,extra){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="aju-vista" data-v="">'+gymIco('atras','gico sm')+' Ajustes</button>'+
+      '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
+    cuerpo+'</div>';}
 function renderAjustes(){
-  const sd=saltoDia(),tm=store.tema||{},tipos=gTipos(),DOWL=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
-  const diaOpts=sel=>DOWN0.map(function(n,i){return '<option value="'+i+'" '+(i===sel?'selected':'')+'>'+cap(n)+'</option>';}).join('');
-  const tipoRows=tipos.map(function(t){
-    return '<div class="row" style="margin-top:6px">'+
-      '<label class="fld" style="flex:1 1 160px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
-      '<label class="fld" style="flex:0 0 110px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
-    '</div>';}).join('');
-  $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>⚙️ Ajustes</h2><p class="note">Números, horas y reglas sueltas que antes solo se cambiaban programando. Lo que ya tiene su propio sitio —horarios de cada tipo de día, ritmo de sueño, jornada, objetivo de comida— sigue en «Turno y rotación» y «Comida»; aquí tienes un atajo directo a cada uno.</p></div>
-
-    <div class="card"><h2>🕐 Horarios de cada tipo de día</h2>
-      <p class="note">Entrada/salida y cuándo te levantas, desayunas y te acuestas de cada tipo de día — un botón te lleva directo a cambiarlo, sin buscar por el menú.</p>
-      ${store.shifts.map(function(s){
-        const rh=(store.rhythm&&store.rhythm[s.id])||{};
-        return '<div class="logrow"><span class="evdot" style="background:'+esc(s.color||'#38e1ff')+'"></span>'+
-          '<span class="nm"><b>'+esc(s.icon)+' '+esc(s.name)+'</b><span>'+
-            (s.start?esc(s.start)+'–'+esc(s.end||''):'sin hora fija')+
-            (rh.wake?' · 🛌 '+esc(rh.sleep||'—')+' → ⏰ '+esc(rh.wake):'')+'</span></span>'+
-          '<button class="btn s" data-a="day-rhythm-shift" data-id="'+s.id+'">horas →</button>'+
-          '<button class="btn s" data-a="day-edit" data-id="'+s.id+'">comidas →</button>'+
-          '</div>';}).join('')}
-    </div>
-
-    <div class="card"><h2>Sueño</h2>
-      <p class="note">La ventana de la cena sigue en «Turno y rotación → 2c»; el mínimo de horas y cuánto tardas en dormirte están aquí.</p>
-      <div class="row">
-        <label class="fld" style="max-width:160px">Horas mínimas
-          <input type="number" min="6" max="10" step="0.25" value="${suenoCfg().min}" data-a="sueno-f" data-k="min"></label>
-        <label class="fld" style="max-width:260px">Minutos que tardas en dormirte
-          <input type="number" min="0" max="60" value="${suenoCfg().latencia}" data-a="sueno-f" data-k="latencia"></label>
-      </div>
-      <p class="mini" style="margin-top:8px">Con ${suenoCfg().min} h mínimas, tocaría acostarse a las <b>${acostarsePara(despertarBase())}</b> en tus días de diario.</p>
-    </div>
-
-    <div class="card" data-cfg="eventos"><h2>📅 Eventos<span class="mini" style="margin-left:auto;font-weight:400">${eventosS().length} en total</span></h2>
-      <p class="note">Los que se repiten cada semana (fisio, entreno con alguien…) o los puntuales (una presentación, una cita) — ambos se añaden solos a «Semana» y «Mes» el día que toque.</p>
-      ${eventosS().length?eventosS().map(eventoRowHTML).join(''):'<div class="empty">Nada apuntado todavía.</div>'}
-      <div class="row" style="margin-top:${eventosS().length?'12':'6'}px;${eventosS().length?'padding-top:10px;border-top:1px solid var(--line)':''}">
-        <button class="btn s ${ui.evNuevo.modo!=='fecha'?'p':''}" data-a="ev-modo" data-modo="semanal">se repite cada semana</button>
-        <button class="btn s ${ui.evNuevo.modo==='fecha'?'p':''}" data-a="ev-modo" data-modo="fecha">un día en concreto</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <label class="fld" style="flex:1 1 180px">título<input id="evNuevoTitulo" placeholder="${ui.evNuevo.modo==='fecha'?'p. ej. Presentación':'p. ej. Fisioterapia'}"></label>
-        <label class="fld" style="flex:0 0 100px">hora<input type="time" id="evNuevaHora" value="18:00"></label>
-        <label class="fld" style="flex:0 0 54px">color<input type="color" id="evNuevoColor" value="#38e1ff" style="height:30px;padding:2px"></label>
-      </div>
-      ${ui.evNuevo.modo==='fecha'?(
-        '<div class="row" style="margin-top:6px"><label class="fld" style="flex:0 0 170px">qué día<input type="date" id="evNuevaFecha" value="'+esc(ui.evNuevo.fecha||iso(new Date()))+'"></label></div>'+
-        '<div class="row" style="margin-top:8px">'+
-          '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)"><input type="checkbox" id="evNuevoRecordatorio" style="width:auto"> 🔔 avisarme (queda en «Hoy» y en «Próximos»)</label>'+
-          '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)"><input type="checkbox" id="evNuevoCuenta" style="width:auto"> ⏳ mostrar cuenta atrás</label>'+
-        '</div>'
-      ):(
-        '<div class="row" style="margin-top:6px"><span class="mini">qué días:</span>'+
-        DOWL.map(function(nm,ix){return '<button class="btn s '+(ui.evNuevo.dow.indexOf(ix)>=0?'p':'')+'" data-a="ev-dia" data-day="'+ix+'">'+nm+'</button>';}).join('')+
-        '</div>'
-      )}
-      <div class="row" style="margin-top:8px"><button class="btn p" data-a="ev-add">+ añadir evento</button></div>
-    </div>
-
-    ${proximosPuntualesHTML()}
-
-    <div class="card"><h2>Guardias y rotación</h2>
-      <p class="note">De fábrica: si la guardia cae en sábado, el saliente se pasa al lunes y el día de por medio queda libre. Si tu rotación descansa otro día, cámbialo aquí.</p>
-      <div class="row">
-        <label class="fld">Si la guardia cae en<select data-a="salto-from">${diaOpts(sd.from)}</select></label>
-        <label class="fld">el saliente se pasa al<select data-a="salto-to">${diaOpts(sd.to)}</select></label>
-      </div>
-      <p class="mini" style="margin-top:8px">Ahora mismo: ${saltoDiaTxt()}.</p>
-      <label class="fld" style="max-width:220px;margin-top:10px">Guardias por mes, por defecto (para un mes que no hayas tocado)
-        <input type="number" min="0" max="15" value="${store.rotation.guardiasMes!=null?store.rotation.guardiasMes:6}" data-a="guard-default"></label>
-      <p class="mini" style="margin-top:10px">Tipos de guardia y cuántas de cada uno tocan al mes (esto es lo mismo que ves dentro de «Mes → configurar este mes»; aquí queda a mano sin tener que entrar cada vez):</p>
-      ${tipoRows}
-      <div class="row" style="margin-top:8px">
-        <label class="fld" style="flex:0 0 200px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
-      </div>
-    </div>
-
-    <div class="card"><h2>Copias de seguridad</h2>
-      <p class="note">El aviso de «Datos» de que te toca otra copia salta pasados estos días desde la última.</p>
-      <label class="fld" style="max-width:220px">Avisar a partir de (días sin copia)
-        <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-    </div>
-
-    <div class="card"><h2>Calendario de Google · y los avisos</h2>
-      <p class="note">Afecta al <code>.ics</code> que generas en «Datos». El nombre y la etiqueta son los mismos que ves allí: cambiarlos aquí o allí es lo mismo.</p>
-      <p class="note"><b>Los avisos salen por aquí.</b> Esta app vive en tu móvil y no tiene ningún servidor detrás,
-      así que no puede mandarte una notificación con el teléfono bloqueado: para eso hace falta un servidor de push.
-      Lo que sí hace es meter en el <code>.ics</code> —además de las guardias y los entrenos— <b>los recibos que te
-      vencen, las tareas con día y los eventos</b>, cada uno con su alarma. De avisarte se encarga el calendario del
-      teléfono, que para eso está hecho y funciona con la app cerrada.</p>
-      <label class="fld" style="max-width:260px">Minutos de aviso antes de cada evento exportado
+  const tm=store.tema||{};
+  const v=ui.ajuVista||'';
+  if(v==='calendario')return ajuPantalla('\ud83d\udcc5 Calendario del m\u00f3vil',`<div class="card"><h2>Qu\u00e9 se manda, y c\u00f3mo te avisa</h2>
+      <p class="note" style="margin:0">Esta app no tiene ning\u00fan servidor detr\u00e1s, as\u00ed que no puede darte un toque
+      con el m\u00f3vil bloqueado. Lo que hace es meter cada cosa en el calendario del tel\u00e9fono <b>con su alarma</b>:
+      de avisarte se encarga \u00e9l, que para eso est\u00e1 hecho y funciona con la app cerrada.</p>
+      ${icsCatsHTML(ui.calDesde||calRango().desde,ui.calHasta||calRango().hasta)}
+      <label class="fld" style="max-width:260px;margin-top:11px">Avisar antes de cada cosa (minutos)
         <input type="number" min="0" max="180" value="${+store.rotation.icsAvisoMin||30}" data-a="ics-aviso-min"></label>
-      <div class="row" style="margin-top:10px">
-        <label class="fld" style="flex:1 1 220px">nombre del cuaderno<input id="calNombre" value="${esc(store.rotation.calNombre||'')}" placeholder="${esc(calNombreTxt(calRangoUI().desde))}"></label>
+    </div>
+    <div class="card"><h2>Llevarlo al calendario</h2>
+      <p class="note">Elige el rango y desc\u00e1rgalo. Abajo tienes los pasos para dejarlo sincronizado en Google.</p>
+      <div class="row">
+        <label class="fld">desde<input type="date" id="calDesde" data-a="cal-desde" value="${esc(ui.calDesde||calRango().desde)}"></label>
+        <label class="fld">hasta<input type="date" id="calHasta" data-a="cal-hasta" value="${esc(ui.calHasta||calRango().hasta)}" min="${esc(ui.calDesde||calRango().desde)}"></label>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <button class="btn p" data-a="cal-descargar">descargar .ics</button>
+        <button class="btn s" data-a="cal-copiar">copiar el .ics</button>
+        <button class="btn ${ui.calView?'':'p'} s" data-a="cal-ver">${ui.calView?'ocultar la lista':'ver la lista'}</button></div>
+      <div id="txtIcs" class="mini" style="${ui.calView?'margin-top:8px':'display:none;margin-top:8px'};background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;max-height:200px;overflow:auto;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px">${esc(ui.calTxt||'')}</div>
+      <div class="row" style="margin-top:11px">
+        <label class="fld" style="flex:1 1 200px">nombre del cuaderno<input id="calNombre" value="${esc(store.rotation.calNombre||'')}" placeholder="${esc(calNombreTxt(calRangoUI().desde))}"></label>
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="cal-nombre">poner el nombre</button></label>
       </div>
       <label class="fld" style="margin-top:8px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">
         <input type="checkbox" id="calOculto" data-a="cal-oculto" style="width:auto" ${store.rotation.calOculto!==false?'checked':''}>
         <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></label>
-    </div>
-
-    <div class="card" data-cfg="rotaciones"><h2>Mis rotaciones</h2>
-      <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
-      ${serviciosEditorHTML()}
-      <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div>
-    </div>
-
-    <div class="card" data-cfg="lector"><h2>Lector de enlaces</h2>
+      ${ui.calView?`<p class="mini" style="margin:9px 0 0">la caja de arriba es el <code>.ics</code> tal cual: si tu editor no lo parte en l\u00edneas de 75, Google no lo traga \u2014 por eso el <i>descargar</i> es el camino normal, y esto solo para copiar y pegar</p>`:''}
+      ${calNotas()}</div>
+    <div class="card"><h2>Traer un calendario de fuera</h2>
+      <p class="note">Exporta tu calendario de Google a <code>.ics</code> (⚙ → Importar y exportar → Exportar calendario),
+      sube aquí ese archivo (o pégalo a mano abajo) y la app reconoce tus días. Antes de escribir nada te enseña
+      <b>lo que va a hacer y lo que deja como está</b>, con el título de cada evento y su hora.</p>
+      <div class="row" style="margin-top:8px;align-items:center">
+        <label class="fld" style="flex:0 0 auto">archivo .ics<input type="file" id="icsFile" data-a="ics-file" accept=".ics,text/calendar"></label>
+        <span class="mini">se lee aquí mismo, en tu navegador — no se sube a ningún sitio</span></div>
+      <textarea id="icsBox" rows="7" data-a="ics-in" style="margin-top:8px" placeholder="BEGIN:VCALENDAR&#10;BEGIN:VEVENT&#10;DTSTART;VALUE=DATE:20260911&#10;SUMMARY:Guardia Urgencias&#10;END:VEVENT&#10;END:VCALENDAR">${esc(ui.icsTxt||'')}</textarea>
+      <div class="row" style="margin-top:8px">
+        <label class="fld">empezar a mirar desde<input type="date" id="icsDesde" data-a="cal-ics-desde" value="${esc(ui.icsDesde||calIniMes(iso(monthDate)))}"></label>
+        <label class="fld">y hasta<input type="date" id="icsHasta" data-a="cal-ics-hasta" value="${esc(ui.icsHasta||calFinMes(iso(monthDate)))}"></label>
+        <span class="sp"></span>
+        <button class="btn s" data-a="cal-analizar">Analizar el .ics</button>
+        <button class="btn p" data-a="cal-aplicar" id="calApply" ${ui.icsPrev&&ui.icsPrev.ok?'':'disabled'}>Marcar esos días</button>
+        <label class="fld" style="flex:0 0 auto;font-size:11px;text-transform:none"><span class="row" style="gap:5px">
+          <input type="checkbox" id="calEncima" data-a="cal-encima" style="width:auto" ${ui.icsEncima?'checked':''}><span>pisar lo que yo puse a mano</span></span></label></div>
+      ${ui.icsPrev?icsPreviewHTML(ui.icsPrev):'<div id="calOut" style="display:none"></div>'}
+      <details class="plegable" style="margin-top:10px"><summary>traerlo de una URL pública</summary>
+        <div class="row" style="margin-top:8px">
+          <label class="fld" style="flex:1 1 240px">la dirección del .ics<input id="icsUrl" data-a="cal-url-in" value="${esc(ui.calUrl||'')}" placeholder="https://…/mi-calendario.ics"></label>
+          <button class="btn s" data-a="cal-url">leer la URL</button></div>
+        <p class="mini" style="margin-top:6px">Sólo <code>https://</code> y sólo si ese servidor deja leer desde fuera
+        (en Google, «disponible para cualquier persona» + la URL pública del calendario). Si falla, no toca nada:
+        pega el fichero a mano. <b>Ojo:</b> es tu navegador el que pide esa URL directamente, sin pasar por ningún
+        servidor nuestro — quien aloje ese calendario puede ver que alguien lo ha leído, como al abrir cualquier enlace.</p>
+        <p class="mini" style="margin-top:6px">La app no se conecta a Google por su cuenta (harían falta claves y un
+        servidor): lee y escribe ficheros <code>.ics</code>, que es el idioma común de los calendarios. El
+        <code>IMPORT_TAG</code> y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p>
+      </details></div>`);
+  if(v==='sol')return ajuPantalla('\u2600\ufe0f El sol y d\u00f3nde estoy',`<div class="card" data-cfg="sol">
+      <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy» y en «Semana». Se calcula aquí,
+      en el móvil, con la latitud y la longitud: no sale nada a internet y funciona sin cobertura. Las horas salen
+      en el reloj de tu móvil y la precisión es de unos minutos.</p>
+      ${solHoyHTML()}
+      <div class="chips" style="margin-top:11px">${sitiosS().map(function(s){
+        const mio=!SITIOS_FIJOS.some(function(f){return f.id===s.id;});
+        return '<button class="chipx'+(s.id===sitioActual().id?' on':'')+'" data-a="sitio-set" data-id="'+esc(s.id)+'">'+
+          esc(s.nombre)+(mio?('<b class="x" data-a="sitio-del" data-id="'+esc(s.id)+'" title="quitar este sitio">×</b>'):'')+'</button>';}).join('')+
+        '<button class="chipx" data-a="sitio-nuevo">'+(ui.sitioNuevo?'▴ cancelar':'+ añadir un sitio')+'</button>'}</div>
+      ${ui.sitioNuevo?`<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
+        <label class="fld" style="flex:1 1 150px">nombre<input id="stNombre" placeholder="Valencia"></label>
+        <label class="fld" style="flex:0 0 108px">latitud<input id="stLat" type="number" step="0.0001" min="-90" max="90" placeholder="39.4699"></label>
+        <label class="fld" style="flex:0 0 108px">longitud<input id="stLon" type="number" step="0.0001" min="-180" max="180" placeholder="-0.3763"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn p" data-a="sitio-add">guardar el sitio</button></label>
+        </div>
+        <p class="mini" style="margin:8px 0 0">La longitud es <b>negativa al oeste</b>: Las Palmas es −15.44 y Barcelona +2.17.
+        O deja que lo ponga el móvil: <button class="btn s" style="padding:3px 9px" data-a="sitio-gps">usar mi ubicación</button></p>`:''}
+      ${(function(){const t=tzCuadra();
+        if(t.ok)return '';
+        return '<p class="note" style="margin:11px 0 0;color:var(--warn)">⚠ Tu móvil está en <b>'+esc(t.movil)+
+          '</b> y «'+esc(sitioActual().nombre)+'» va por <b>'+esc(t.sitio)+'</b>. Las horas se enseñan siempre en el '+
+          '<b>reloj de tu móvil</b>, así que verás el sol de '+esc(sitioActual().nombre)+' puesto en tu hora: no es la hora '+
+          'a la que allí amanece. Cambia el sitio, o la zona horaria del móvil.</p>';})()}</div>`,sitioActual().nombre);
+  if(v==='aspecto')return ajuPantalla('\ud83c\udfa8 C\u00f3mo se ve',`<div class="card" data-cfg="franja"><h2>La franja del d\u00eda</h2>
+      <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
+      <label class="fld" style="max-width:260px">Cuántas horas se ven
+        <select data-a="franja-horas">${[[24,'24 h · el día entero'],[18,'18 h'],[12,'12 h · centrada en tu día']].map(function(o){
+          return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
+      <div class="colgrid">${TLCAT.map(function(c){
+        return '<label class="fld">'+esc(c[1])+
+          '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
+          '</label>';}).join('')}</div>
+      <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
+      <div style="margin-top:12px">${timelineBar(iso(new Date()))}</div></div>
+    <div class="card"><h2>Apariencia</h2>
+      <div class="row">
+        <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color del texto<input type="color" value="${esc(tm.ink||'#e9f2ff')}" data-a="tema-f" data-k="ink" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
+      </div>
+      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
+      <label class="fld" style="max-width:220px;margin-top:12px">Primer día de la semana en «Mes»
+        <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
+          <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label></div>`);
+  if(v==='lector')return ajuPantalla('\ud83d\udd17 Lector de enlaces',`<div class="card" data-cfg="lector">
       <p class="note">Para que al mandarle un enlace de TikTok la app traiga sola la descripción y la convierta en receta.
       Primero lo intenta directamente con la plataforma; esto es para cuando el navegador no la deja.</p>
 
@@ -6353,36 +6599,8 @@ function renderAjustes(){
         '<li><b>Edit code</b>: borra lo que haya y pega el contenido de <code>tools/worker-recetas.js</code> del repositorio de la app. <b>Deploy</b> otra vez.</li>' +
         '<li>Copia la dirección que te da (acaba en <code>.workers.dev</code>) y pégala aquí arriba. Dale a «probar».</li>' +
         '</ol><p class="mini" style="margin:8px 0 0">El Worker solo acepta enlaces de TikTok, YouTube e Instagram: no es un proxy abierto. ' +
-        'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}
-    </div>
-
-    <div class="card" data-cfg="sol"><h2>☀️ El sol y dónde estoy</h2>
-      <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy» y en «Semana». Se calcula aquí,
-      en el móvil, con la latitud y la longitud: no sale nada a internet y funciona sin cobertura. Las horas salen
-      en el reloj de tu móvil y la precisión es de unos minutos.</p>
-      ${solHoyHTML()}
-      <div class="chips" style="margin-top:11px">${sitiosS().map(function(s){
-        const mio=!SITIOS_FIJOS.some(function(f){return f.id===s.id;});
-        return '<button class="chipx'+(s.id===sitioActual().id?' on':'')+'" data-a="sitio-set" data-id="'+esc(s.id)+'">'+
-          esc(s.nombre)+(mio?('<b class="x" data-a="sitio-del" data-id="'+esc(s.id)+'" title="quitar este sitio">×</b>'):'')+'</button>';}).join('')+
-        '<button class="chipx" data-a="sitio-nuevo">'+(ui.sitioNuevo?'▴ cancelar':'+ añadir un sitio')+'</button>'}</div>
-      ${ui.sitioNuevo?`<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
-        <label class="fld" style="flex:1 1 150px">nombre<input id="stNombre" placeholder="Valencia"></label>
-        <label class="fld" style="flex:0 0 108px">latitud<input id="stLat" type="number" step="0.0001" min="-90" max="90" placeholder="39.4699"></label>
-        <label class="fld" style="flex:0 0 108px">longitud<input id="stLon" type="number" step="0.0001" min="-180" max="180" placeholder="-0.3763"></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn p" data-a="sitio-add">guardar el sitio</button></label>
-        </div>
-        <p class="mini" style="margin:8px 0 0">La longitud es <b>negativa al oeste</b>: Las Palmas es −15.44 y Barcelona +2.17.
-        O deja que lo ponga el móvil: <button class="btn s" style="padding:3px 9px" data-a="sitio-gps">usar mi ubicación</button></p>`:''}
-      ${(function(){const t=tzCuadra();
-        if(t.ok)return '';
-        return '<p class="note" style="margin:11px 0 0;color:var(--warn)">⚠ Tu móvil está en <b>'+esc(t.movil)+
-          '</b> y «'+esc(sitioActual().nombre)+'» va por <b>'+esc(t.sitio)+'</b>. Las horas se enseñan siempre en el '+
-          '<b>reloj de tu móvil</b>, así que verás el sol de '+esc(sitioActual().nombre)+' puesto en tu hora: no es la hora '+
-          'a la que allí amanece. Cambia el sitio, o la zona horaria del móvil.</p>';})()}
-    </div>
-
-    <div class="card" data-cfg="usda"><h2>Datos de los alimentos</h2>
+        'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}</div>`,lectorPublicoOn()?'p\u00fablicos on':( (store.lector||{}).proxy?'el tuyo':'apagado'));
+  if(v==='comida')return ajuPantalla('\ud83e\udd57 Datos de los alimentos',`<div class="card" data-cfg="usda">
       <p class="note">La tabla de alimentos que trae la app son <b>${ALIMENTOS.length} valores de referencia aproximados</b>,
       escritos a partir de tablas de composición publicadas. Sirven para hacerte una idea, no son una base oficial.
       Con una clave gratuita de USDA FoodData Central, cada alimento que abras se corrige con el dato oficial y se guarda ya corregido.</p>
@@ -6400,41 +6618,56 @@ function renderAjustes(){
         '</ol><p class="mini" style="margin:8px 0 0">La clave se queda en tu móvil. Lo único que sale hacia USDA es ' +
         '<b>el nombre del alimento en inglés</b> —«bananas, raw»—: ni lo que comes, ni tus menús, ni nada tuyo. ' +
         'Eso sí: se guarda junto al resto de tus datos, así que si le pasas a alguien tu copia de seguridad en JSON, la clave va dentro.</p>') : ''}
-      ${Object.keys(food().usda).length ? ('<div class="row" style="margin-top:10px"><button class="btn d s" data-a="usda-olvidar-todo">volver todo a la tabla aproximada</button></div>') : ''}
-    </div>
-
-    <div class="card" data-cfg="franja"><h2>La franja del día</h2>
-      <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
-      <label class="fld" style="max-width:260px">Cuántas horas se ven
-        <select data-a="franja-horas">${[[24,'24 h · el día entero'],[18,'18 h'],[12,'12 h · centrada en tu día']].map(function(o){
-          return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
-      <div class="colgrid">${TLCAT.map(function(c){
-        return '<label class="fld">'+esc(c[1])+
-          '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
-          '</label>';}).join('')}</div>
-      <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
-      <div style="margin-top:12px">${timelineBar(iso(new Date()))}</div>
-    </div>
-
-    <div class="card"><h2>Apariencia</h2>
-      <div class="row">
-        <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto">Color del texto<input type="color" value="${esc(tm.ink||'#e9f2ff')}" data-a="tema-f" data-k="ink" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
-      </div>
-      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
-      <label class="fld" style="max-width:220px;margin-top:12px">Primer día de la semana en «Mes»
-        <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
-          <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label>
-    </div>
-  </div>`;
+      ${Object.keys(food().usda).length ? ('<div class="row" style="margin-top:10px"><button class="btn d s" data-a="usda-olvidar-todo">volver todo a la tabla aproximada</button></div>') : ''}</div>`,usdaOn()?'USDA':'tabla local');
+  /* la portada: qu\u00e9 tienes encendido, y una puerta por tarea */
+  const linea=function(em,tit,val,off){
+    return '<div class="estado"><span class="em">'+em+'</span><span class="tx"><b>'+esc(tit)+'</b></span>'+
+      '<span class="vl'+(off?' off':'')+'">'+esc(val)+'</span></div>';};
+  const puerta=function(vista,ico,tit,sub){
+    return '<button class="puerta" data-a="aju-vista" data-v="'+vista+'">'+gymIco(ico)+
+      '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  const lec=(store.lector||{}).proxy?'el tuyo':(lectorPublicoOn()?'p\u00fablicos':'apagado');
+  const sc=suenoCfg();
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">\u2699\ufe0f Ajustes</h2></div>'+
+    '<div class="card"><h2>Qu\u00e9 tienes encendido</h2>'+
+      linea('\ud83d\udcc5','Calendario del m\u00f3vil','aviso '+(+store.rotation.icsAvisoMin||30)+' min antes')+
+      linea('\u2600\ufe0f','D\u00f3nde estoy',sitioActual().nombre)+
+      linea('\ud83d\udecc','Sue\u00f1o','m\u00ednimo '+sc.min+' h')+
+      linea('\ud83e\udd57','Datos de los alimentos',usdaOn()?'USDA oficial':'tabla aproximada',!usdaOn())+
+      linea('\ud83d\udd17','Lector de enlaces',lec,lec==='apagado')+
+    '</div>'+
+    '<div class="puertas">'+
+      puerta('calendario','calendario','Calendario','y los avisos')+
+      puerta('sol','sol','El sol',sitioActual().nombre)+
+      puerta('aspecto','pincel','C\u00f3mo se ve',(store.tema&&store.tema.brand?'a tu color':'oscuro')+' \u00b7 la franja')+
+    '</div>'+
+    '<div class="puertas" style="margin-top:9px">'+
+      puerta('lector','enlace','Lector',lec)+
+      puerta('comida','manzana','Alimentos',usdaOn()?'USDA':'tabla local')+
+      '<button class="puerta" data-a="ir-sueno">'+gymIco('cama')+
+        '<b>Sue\u00f1o</b><span class="s">est\u00e1 en Turno \u2192</span></button>'+
+    '</div>'+
+    '<p class="mini" style="margin:13px 0 0">Los horarios de cada tipo de d\u00eda, las guardias y tus rotaciones est\u00e1n en '+
+      '<button class="lnk" data-a="ir-tab" data-t="cfg">Turno y rotaci\u00f3n</button>. '+
+      'Importar y sacar datos, en <button class="lnk" data-a="ir-tab" data-t="data">Datos</button>. '+
+      'Y tus citas, en <button class="lnk" data-a="ir-tab" data-t="eventos">Eventos</button>.</p>'+
+  '</div>';
 }
 
-/* ===================== render: datos ===================== */
+/* ===================== render: datos =====================
+   Eran 7 tarjetas y 4 317 px, con el calendario de Google partido en dos (y una tercera copia en
+   Ajustes) y 210 palabras explicando d\u00f3nde se guarda todo. Ahora: portada con tu copia arriba
+   \u2014que es lo \u00fanico urgente de esta pantalla\u2014 y una pantalla por tarea. */
+function datosPantalla(titulo,cuerpo,extra){
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="datos-vista" data-v="">'+gymIco('atras','gico sm')+' Datos</button>'+
+      '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
+    cuerpo+'</div>';}
 function renderData(){
-  $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>Importar tu planning (pegando la tabla)</h2>
+  const v=ui.datosVista||'';
+  if(v==='planning'){datosPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
       <p class="note">Pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
       <textarea id="pasteBox" rows="12" placeholder="1 ago · G 24h 08:00-08:00 guardia destino Sur&#10;2 ago · S 09:00-13:00 saliente&#10;3 ago · L libre&#10;4 ago · F fuerza 18:00&#10;5 ago · L asuntos propios&#10;6 ago · G 24h 08:00-08:00&#10;7 ago · S 09:00-13:00"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="draft">Analizar</button>
@@ -6444,14 +6677,16 @@ function renderData(){
       <div id="draftOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:none;white-space:pre-wrap"></div>
       <label class="fld" style="margin-top:8px">Letras de tus días — añade una si te falta alguna (p. ej. <i>V=Noche en el cuarto</i>)
         <input id="codeMap" value="G=Guardia 24 h,S=Saliente,F=Fuerza,L=Libre" title="formato: LETRA=Nombre del día. Las cuatro de siempre están reconocidas; si añades V=Noche en el cuarto, las líneas que digan «noche en el cuarto» se cuentan como V y se crea ese tipo de día con su horario."></label>
-      <p class="mini" style="margin-top:6px">Los días que no aparezcan en tu texto se rellenan como día libre para cerrar la semana: luego los cambias en «Turno y rotación».</p></div>
-    <div class="card"><h2>Pega tu dieta actual</h2>
+      <p class="mini" style="margin-top:6px">Los días que no aparezcan en tu texto se rellenan como día libre para cerrar la semana: luego los cambias en «Turno y rotación».</p></div>`);
+    if(window._draftInfo)showDraft(window._draftInfo);return;}
+  if(v==='dieta'){datosPantalla('\ud83c\udf7d Mi dieta',`<div class="card">
       <p class="note">Pon un encabezado por día (<i>GUARDIA</i>, <i>SALIENTE</i>, <i>LIBRE</i>, <i>DIAS DE FUERZA</i>) y debajo <i>desayuno: …</i>, <i>comida: …</i>, <i>cena: …</i>. Cada plato se busca contra tu catálogo por las palabras de su nombre; lo que no se reconozca se lista para que lo añadas como plato nuevo.</p>
       <textarea id="dietBox" rows="8" placeholder="GUARDIA&#10;desayuno: café con leche y tostada integral&#10;comida: arroz con pollo y verduras + fruta&#10;cena: bocadillo de atún&#10;SALIENTE&#10;comida: lentejas con arroz"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn" data-a="diet">Relacionar con mis platos</button>
       <button class="btn g" data-a="diet-apply" disabled id="dietApply">Guardar como menús sugeridos</button></div>
-      <div id="dietOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:none;white-space:pre-wrap"></div></div>
-    <div class="card"><h2>Tus horas, el servicio de cada mes y tus vacaciones</h2>
+      <div id="dietOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:none;white-space:pre-wrap"></div></div>`);
+    if(window._dietInfo)showDiet(window._dietInfo);return;}
+  if(v==='horas')return datosPantalla('\ud83d\udd50 Horas, servicios y vacaciones',`<div class="card">
       <p class="note">Tres cosas a la vez: el horario fijo del día (levantarse, desayuno, salir, llegar, acostarse, trabajar), qué servicio rotas cada mes con su cupo de guardias y tus rangos de vacaciones. Se puede pegar tal cual, en plan nota.</p>
       <textarea id="rhythmBox" rows="7" placeholder="entre semana: me levanto 6:45-6:55, desayuno normal (café, fruta y nueces, whey y leche de proteínas), salgo de casa 7:30, llego 7:45, trabajo 8:00-15:00, me acuesto 23:00&#10;guardia: me acuesto 22:30&#10;libre: me levanto 8:30, duermo 23:45&#10;septiembre: urgencias (4+2) · octubre: umi · noviembre: urgencias 4+2&#10;vacaciones del 24/08 al 2/09"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="rhythm">Analizar horas, meses y vacaciones</button>
@@ -6460,58 +6695,8 @@ function renderData(){
       <div id="rhythmOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:none;white-space:pre-wrap"></div>
       <label class="fld" style="margin-top:8px">Año en el que aplico los meses
         <input type="number" id="rhythmYear" value="${new Date().getFullYear()}" min="2000" max="2100" style="max-width:110px"></label>
-      <p class="mini" style="margin-top:6px">Lo que no se entienda se ignora y se dice: no se toca ningún horario que no hayas mencionado y no se reparte ninguna guardia ni se da por hecho ningún servicio de mes si tú no lo escribes.</p></div>
-    <div class="card"><h2>📅 Tu calendario de Google · 1 · para fuera</h2>
-      <p class="note">Se genera un <code>.ics</code> del rango que elijas con solo tres cosas, cada una con su hora de
-      inicio y fin: <b>guardias</b> (con su tipo), <b>trabajo</b> (tu jornada u otro día con horas propias) y
-      <b>entrenos</b> (fuerza y el segundo entreno) — en un cuaderno con el nombre que tú pongas. <b>Nada de vacaciones,
-      salientes ni días libres</b>: eso se queda solo en la app. Dale a <b>ver la lista</b> y abajo tienes los cuatro
-      pasos para dejarlo sincronizado en Google.</p>
-      <div class="row">
-        <label class="fld">desde<input type="date" id="calDesde" data-a="cal-desde" value="${esc(ui.calDesde||calRango().desde)}"></label>
-        <label class="fld">hasta<input type="date" id="calHasta" data-a="cal-hasta" value="${esc(ui.calHasta||calRango().hasta)}" min="${esc(ui.calDesde||calRango().desde)}"></label>
-        <span class="sp"></span>
-        <button class="btn p" data-a="cal-descargar">descargar .ics</button>
-        <button class="btn s" data-a="cal-copiar">copiar el .ics</button>
-        <button class="btn ${ui.calView?'':'p'} s" data-a="cal-ver">${ui.calView?'ocultar la lista':'ver la lista'}</button></div>
-      <div id="txtIcs" class="mini" style="${ui.calView?'margin-top:8px':'display:none;margin-top:8px'};background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;max-height:200px;overflow:auto;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px">${esc(ui.calTxt||'')}</div>
-      ${ui.calView?`<div class="row wrap" style="gap:8px;align-items:flex-end;margin-top:10px">
-        <label class="fld" style="flex:1 1 220px">nombre del cuaderno<input id="calNombre" value="${esc(store.rotation.calNombre||'')}" placeholder="${esc(calNombreTxt(calRangoUI().desde))}"></label>
-        <button class="btn s" data-a="cal-nombre">poner el nombre</button>
-        <label class="fld" style="flex:0 0 auto;font-size:11px;text-transform:none"><span class="row" style="gap:5px">
-          <input type="checkbox" id="calOculto" data-a="cal-oculto" style="width:auto" ${store.rotation.calOculto!==false?'checked':''}>
-          <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></span></label>
-        <button class="btn s" data-a="cal-copiar">copia estas 4 líneas de Google</button></div>
-        <div class="row" style="margin-top:6px"><span class="mini">la caja de arriba es el <code>.ics</code> tal cual: si tu editor no lo parte en líneas de 75, Google no lo traga — por eso el <i>descargar</i> es el camino normal, y esto solo para copiar y pegar</span></div>`:''}
-      ${calNotas()}</div>
-    <div class="card"><h2>📅 Tu calendario de Google · 2 · para dentro</h2>
-      <p class="note">Exporta tu calendario de Google a <code>.ics</code> (⚙ → Importar y exportar → Exportar calendario),
-      sube aquí ese archivo (o pégalo a mano abajo) y la app reconoce tus días. Antes de escribir nada te enseña
-      <b>lo que va a hacer y lo que deja como está</b>, con el título de cada evento y su hora.</p>
-      <div class="row" style="margin-top:8px;align-items:center">
-        <label class="fld" style="flex:0 0 auto">archivo .ics<input type="file" id="icsFile" data-a="ics-file" accept=".ics,text/calendar"></label>
-        <span class="mini">se lee aquí mismo, en tu navegador — no se sube a ningún sitio</span></div>
-      <textarea id="icsBox" rows="7" data-a="ics-in" style="margin-top:8px" placeholder="BEGIN:VCALENDAR&#10;BEGIN:VEVENT&#10;DTSTART;VALUE=DATE:20260911&#10;SUMMARY:Guardia Urgencias&#10;END:VEVENT&#10;END:VCALENDAR">${esc(ui.icsTxt||'')}</textarea>
-      <div class="row" style="margin-top:8px">
-        <label class="fld">empezar a mirar desde<input type="date" id="icsDesde" data-a="cal-ics-desde" value="${esc(ui.icsDesde||calIniMes(iso(monthDate)))}"></label>
-        <label class="fld">y hasta<input type="date" id="icsHasta" data-a="cal-ics-hasta" value="${esc(ui.icsHasta||calFinMes(iso(monthDate)))}"></label>
-        <span class="sp"></span>
-        <button class="btn s" data-a="cal-analizar">Analizar el .ics</button>
-        <button class="btn p" data-a="cal-aplicar" id="calApply" ${ui.icsPrev&&ui.icsPrev.ok?'':'disabled'}>Marcar esos días</button>
-        <label class="fld" style="flex:0 0 auto;font-size:11px;text-transform:none"><span class="row" style="gap:5px">
-          <input type="checkbox" id="calEncima" data-a="cal-encima" style="width:auto" ${ui.icsEncima?'checked':''}><span>pisar lo que yo puse a mano</span></span></label></div>
-      ${ui.icsPrev?icsPreviewHTML(ui.icsPrev):'<div id="calOut" style="display:none"></div>'}
-      <div class="row" style="margin-top:8px">
-        <label class="fld" style="flex:1 1 240px">o si lo tienes colgado en una URL pública, tráelo de ahí<input id="icsUrl" data-a="cal-url-in" value="${esc(ui.calUrl||'')}" placeholder="https://…/mi-calendario.ics"></label>
-        <button class="btn s" data-a="cal-url">leer la URL</button></div>
-      <p class="mini" style="margin-top:4px">Sólo <code>https://</code> y sólo si ese servidor deja leer desde fuera
-      (en Google, «disponible para cualquier persona» + la URL pública del calendario). Si falla, no toca nada:
-      pega el fichero a mano. <b>Ojo:</b> es tu navegador el que pide esa URL directamente, sin pasar por ningún
-      servidor nuestro — quien aloje ese calendario puede ver que alguien lo ha leído, como al abrir cualquier enlace.</p>
-      <p class="mini" style="margin-top:6px">la app no se conecta a Google por su cuenta (harían falta claves y un servidor):
-      lee y escribe ficheros <code>.ics</code>, que es el idioma común de los calendarios. El <code>IMPORT_TAG</code>
-      y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p></div>
-    <div class="card"><h2>Dónde se guarda todo esto</h2>
+      <p class="mini" style="margin-top:6px">Lo que no se entienda se ignora y se dice: no se toca ningún horario que no hayas mencionado y no se reparte ninguna guardia ni se da por hecho ningún servicio de mes si tú no lo escribes.</p></div>`);
+  if(v==='copia')return datosPantalla('\ud83d\udcbe Copias de seguridad',`<div class="card" data-cfg="copias"><h2>Dónde se guarda todo esto</h2>
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
       se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
       ni yo ni nadie puede verlo. La contrapartida es que <b>nadie puede devolvértelo si lo pierdes</b>.</p>
@@ -6539,15 +6724,48 @@ function renderData(){
       <div class="row" style="margin-top:6px"><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div></div>
-    <div class="card"><h2>Texto para el móvil o para imprimir</h2>
+      <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div>
+      <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
+        <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
+          <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
+      </div></div>`);
+  if(v==='texto')return datosPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
       <div class="row"><button class="btn" data-a="txt">Generar</button><button class="btn" data-a="txtcopy">Copiar</button></div>
-      <textarea id="txtOut" rows="16" readonly style="margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"></textarea></div>
-  </div>`;
-  if(window._draftInfo)showDraft(window._draftInfo);
-  if(window._dietInfo)showDiet(window._dietInfo);
+      <textarea id="txtOut" rows="16" readonly style="margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"></textarea></div>`);
+  /* la portada: tu copia arriba, y una puerta por tarea */
+  const puerta=function(vista,ico,tit,sub){
+    return '<button class="puerta" data-a="datos-vista" data-v="'+vista+'">'+gymIco(ico)+
+      '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  const d=diasDesdeBackup(),toca=(d===null||d>avisoBackupD());
+  const cuando=d===null?'nunca':(d===0?'hoy':('hace '+d+' d\u00eda'+(d===1?'':'s')));
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><h2 class="subtit">\ud83d\udce4 Datos</h2></div>'+
+    '<div class="card'+(toca?' avisa':'')+'"><h2>Tu copia de seguridad</h2>'+
+      '<div class="dosdatos">'+
+        '<div><b>'+esc(cuando)+'</b><span>\u00faltima copia</span></div>'+
+        '<div><b>'+esc(_almacen.usado!=null?tamanoLegible(_almacen.usado):'\u2014')+'</b><span>ocupa la app</span></div>'+
+      '</div>'+
+      (toca?('<p class="mini" style="margin:10px 0 0;color:var(--warn)">\u26a0 Te toca otra copia: todo esto vive solo en este m\u00f3vil, y nadie puede devolv\u00e9rtelo si lo pierdes.</p>'):'')+
+      '<div class="row" style="margin-top:11px">'+
+        '<button class="btn p" data-a="export">guardar una copia</button>'+
+        '<button class="btn s" data-a="datos-vista" data-v="copia">restaurar o ver d\u00f3nde se guarda</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="puertas">'+
+      puerta('planning','tabla','Mi planning','pegar la tabla')+
+      puerta('dieta','plato','Mi dieta','pegarla tal cual')+
+      puerta('horas','reloj','Horas','servicios y vacaciones')+
+    '</div>'+
+    '<div class="puertas" style="margin-top:9px">'+
+      puerta('copia','disco','Copias','y d\u00f3nde se guarda')+
+      puerta('texto','hoja','Texto','para imprimir')+
+      '<button class="puerta" data-a="aju-ir" data-v="calendario">'+gymIco('calendario')+
+        '<b>Calendario</b><span class="s">est\u00e1 en Ajustes \u2192</span></button>'+
+    '</div>'+
+  '</div>';
 }
+
 function mapCodes(v){
   return String(v||'').split(/[,\n]/).map(function(x){
     const m=x.split('=');if(m.length<2)return null;
@@ -6630,7 +6848,7 @@ function comerModosHTML(){
   return b('dia','Hoy','food-vista','')+b('menu','Menú','tab','types')+
     b('cocina','Cocina','food-vista','cocina-panel')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['eventos','📌 Eventos']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -6686,7 +6904,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,eventos:renderEventos,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -6931,6 +7149,9 @@ function act(a,el){
       /* entrar en «Turno y rotación» te deja en su portada, no en la última pantalla que abriste
          hace tres días: es configuración, no un sitio donde se continúa algo */
       if(ui.tab==='cfg')ui.cfgVista='';
+      if(ui.tab==='ajustes')ui.ajuVista='';
+      if(ui.tab==='data')ui.datosVista='';
+      if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
@@ -6939,6 +7160,10 @@ function act(a,el){
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
     case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
     case 'cfg-vista':{ui.cfgVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'aju-vista':{ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'ir-sueno':irACard('cfg','sueno');break;
+    case 'aju-ir':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'datos-vista':{ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
     case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
@@ -6986,8 +7211,12 @@ function act(a,el){
     case 'nav-cal':ui.tab=ui.calMode||'month';render();window.scrollTo(0,0);break;
     case 'drawer-toggle':if(ui.drawerOpen)closeDrawer();else openDrawer();break;
     case 'drawer-close':closeDrawer();break;
+    case 'ir-tab':          /* el mismo salto, pero desde un enlace dentro de un texto */
     case 'drawer-nav':ui.tab=el.dataset.t;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;
       if(ui.tab==='cfg')ui.cfgVista='';
+      if(ui.tab==='ajustes')ui.ajuVista='';
+      if(ui.tab==='data')ui.datosVista='';
+      if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
       closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':{document.documentElement.classList.toggle('dark');
       const osc=document.documentElement.classList.contains('dark');
@@ -7122,32 +7351,69 @@ function act(a,el){
       if(n>1){confirmar('¿Quitar estas vacaciones?').then(function(ok){if(ok)flash(delVacation(el.dataset.ix));});break;}
       flash(delVacation(el.dataset.ix));break;}
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
-    case 'ev-modo':{if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
-      ui.evNuevo.modo=el.dataset.modo==='fecha'?'fecha':'semanal';render();break;}
-    case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evNuevo)ui.evNuevo={dow:[],modo:'semanal',fecha:''};
-      const at=ui.evNuevo.dow.indexOf(ix);
-      if(at>=0){ui.evNuevo.dow.splice(at,1);el.classList.remove('p');}
-      else{ui.evNuevo.dow.push(ix);el.classList.add('p');}
+    case 'ev-vista':{ui.evVista=el.dataset.v||'';ui.evForm=null;render();window.scrollTo(0,0);break;}
+    case 'ev-abrir':{const ev=evById(el.dataset.id);if(!ev)break;
+      ui.evVista=ev.id;ui.evForm=evFormDefecto(ev);render();window.scrollTo(0,0);break;}
+    case 'ev-nuevo':{ui.evVista='nuevo';
+      ui.evForm=evFormDefecto(null);
+      if(el.dataset.modo==='semanal'){ui.evForm.modo='semanal';ui.evForm.fecha='';}
+      render();window.scrollTo(0,0);break;}
+    case 'ev-modo':{if(!ui.evForm)ui.evForm=evFormDefecto(null);
+      /* el modo cambia qué campos hay (un día concreto o unos días de la semana), así que aquí sí
+         toca repintar; lo tecleado se relee del DOM antes para no perderlo */
+      ui.evForm.modo=el.dataset.modo==='fecha'?'fecha':'semanal';
+      const t=$('#evTitulo');if(t)ui.evForm.titulo=t.value;
+      render();break;}
+    case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evForm)ui.evForm=evFormDefecto(null);
+      const at=ui.evForm.dow.indexOf(ix);
+      /* sin render: repintar aquí desmontaría el título a medio escribir */
+      if(at>=0){ui.evForm.dow.splice(at,1);el.classList.remove('p');}
+      else{ui.evForm.dow.push(ix);el.classList.add('p');}
       break;}
-    case 'ev-add':{const t=($('#evNuevoTitulo')||{}).value||'',h=($('#evNuevaHora')||{}).value||'18:00',
-        c=($('#evNuevoColor')||{}).value||'#38e1ff',modo=(ui.evNuevo&&ui.evNuevo.modo)==='fecha'?'fecha':'semanal';
-      if(!t.trim()){flash('ponle un título');break;}
-      if(modo==='fecha'){
-        const fecha=($('#evNuevaFecha')||{}).value||'';
-        if(!fecha){flash('elige un día');break;}
-        const rec=!!($('#evNuevoRecordatorio')||{}).checked,cuenta=!!($('#evNuevoCuenta')||{}).checked;
-        eventosS().push({id:uid('ev'),titulo:t.trim(),hora:h,modo:'fecha',fecha:fecha,dow:[],
-          recordatorio:rec,cuentaAtras:cuenta,color:c,on:true});
-      }else{
-        const dow=(ui.evNuevo&&ui.evNuevo.dow||[]).slice();
-        if(!dow.length){flash('marca al menos un día');break;}
-        eventosS().push({id:uid('ev'),titulo:t.trim(),hora:h,modo:'semanal',dow:dow.sort(function(a,b){return a-b;}),
-          fecha:'',recordatorio:false,cuentaAtras:false,color:c,on:true});
+    case 'ev-dura':{
+      /* los atajos de cuánto dura: escriben en el campo «hasta» a mano, sin repintar, porque un
+         render se llevaría por delante el título que se está escribiendo */
+      const min=+el.dataset.min,H=$('#evHora'),F=$('#evFin');
+      if(!F)break;
+      if(min===-2){if(H)H.value='';F.value='';}           /* todo el día: ni empieza ni acaba */
+      else if(min===0)F.value='';                          /* sin hora de fin */
+      else{
+        if(min===-1){if(H)H.value='09:00';F.value='14:00';} /* toda la mañana */
+        else{const a=mins((H&&H.value)||'');if(a==null){flash('ponle primero la hora de empezar');break;}
+          F.value=hm(a+min);}
       }
-      ui.evNuevo={dow:[],modo:modo,fecha:''};save();render();flash('evento añadido');break;}
+      const cont=el.parentNode;
+      if(cont)Array.prototype.forEach.call(cont.children,function(b){b.classList.toggle('on',b===el);});
+      break;}
+    case 'ev-guardar':{
+      const id=el.dataset.id||'',ev=id?evById(id):null,f=ui.evForm||evFormDefecto(ev);
+      const t=(($('#evTitulo')||{}).value||'').trim();
+      if(!t){flash('ponle un título');break;}
+      const hora=($('#evHora')||{}).value||'',fin=($('#evFin')||{}).value||'',
+        color=($('#evColor')||{}).value||'#38e1ff';
+      if(fin&&!hora){flash('si pones hora de fin, dime también a qué hora empieza');break;}
+      const modo=f.modo==='fecha'?'fecha':'semanal';
+      let fecha='',dow=[];
+      if(modo==='fecha'){fecha=($('#evFecha')||{}).value||f.fecha||'';
+        if(!fecha){flash('elige un día');break;}}
+      else{dow=(f.dow||[]).slice().sort(function(a,b){return a-b;});
+        if(!dow.length){flash('marca al menos un día');break;}}
+      const rec=!!($('#evRec')||{}).checked,cuenta=!!($('#evCuenta')||{}).checked;
+      const datos={titulo:t,hora:hora,fin:fin,modo:modo,fecha:fecha,dow:dow,color:color,
+        recordatorio:modo==='fecha'&&rec,cuentaAtras:modo==='fecha'&&cuenta};
+      if(ev){Object.keys(datos).forEach(function(k){ev[k]=datos[k];});}
+      else eventosS().push(Object.assign({id:uid('ev'),on:true},datos));
+      save();ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);
+      flash(ev?'guardado':('apuntado: '+t+(evDuraTxt(datos)?(' · '+evDuraTxt(datos)):'')));break;}
     case 'ev-del':{if(el.tagName!=='BUTTON')break;
-      store.eventos=eventosS().filter(function(e){return e.id!==el.dataset.id;});
-      save();render();break;}
+      const id=el.dataset.id;
+      confirmar('¿Quitar este evento?').then(function(ok){
+        if(!ok)return;
+        store.eventos=eventosS().filter(function(e){return e.id!==id;});
+        /* si lo estabas mirando, no te dejes en una pantalla de un evento que ya no existe */
+        if(ui.evVista===id){ui.evVista='';ui.evForm=null;}
+        save();render();flash('quitado');});
+      break;}
     case 'hab-dia':{const ix=+el.dataset.day;if(!ui.habNuevo)ui.habNuevo={dow:[]};
       const at=ui.habNuevo.dow.indexOf(ix);
       if(at>=0){ui.habNuevo.dow.splice(at,1);el.classList.remove('p');}
@@ -7484,7 +7750,7 @@ function act(a,el){
         recordatorio:!!(av&&av.checked),cuentaAtras:!!(ca&&ca.checked)});
       flash(r.msg);render();break;}
     case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
-    case 'ir-eventos':irACard('ajustes','eventos');break;
+    case 'ir-eventos':ui.tab='eventos';ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);break;
     case 'ir-semana-cfg':
       /* Turno y rotación ya no es una pantalla única: la tarjeta de la semana vive en su vista, así
          que el atajo tiene que abrirla antes de ir a buscarla */
@@ -8446,9 +8712,15 @@ function calEventos(desde,hasta){
     if(ev.on===false||ev.modo!=='fecha'||!ev.fecha)return;
     const dd=parseDate(ev.fecha);
     if(!dd||dd<i0||dd>i1)return;
-    out.push({allDay:!ev.hora,fecha:icsNum(ev.fecha),isoKey:ev.fecha,hora:icsHM(ev.hora||''),dur:60,
+    /* el rato de verdad: `horaFin` cuando acaba el mismo día, y `dur` para el que cruza la
+       medianoche (ahí horaFin es menor que la hora de empezar y el escritor del VEVENT la
+       descarta, pero con los minutos sabe pasar al día siguiente solo). Antes esto era `dur:60`
+       fijo: una presentación de dos horas y media te reservaba una hora en el calendario. */
+    const dur=evDura(ev);
+    out.push({allDay:!ev.hora,fecha:icsNum(ev.fecha),isoKey:ev.fecha,hora:icsHM(ev.hora||''),
+      horaFin:ev.fin||'',dur:dur||60,
       uid:icsUID('evento|'+ev.id),summ:'📌 '+String(ev.titulo||'Evento').slice(0,60),
-      desc:'Evento apuntado en la app.',cat:'EVENTO'});});
+      desc:'Evento apuntado en la app'+(dur?(' · dura '+evDuraTxt(ev)):'')+'.',cat:'EVENTO'});});
   return out;}
 function icsTexto(desde,hasta,opt){
   /* el .ics que Google entiende: cabecera de cuaderno, eventos con UID estable y su VALARM */
@@ -9092,6 +9364,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   FOOD_CATALOGO,foodImportCatalogo,
   ALIMENTOS,ALIM_MICROS,ALIM_LABEL,ALIM_UNIDAD,ALIM_VRN,ALIM_GRUPOS,ALIM_EN,
   notasS,notaById,notasDeFecha,addNota,setNota,delNota,proyectos,notasDeHoy,notasDeLaSemana,toggleNotaHecha,notaAEvento,desenlazaNota,
+  eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
+  rutinaDias,toggleRutinaDia,rutinaDeFecha,CFG_DONDE,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
   SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,
   alimTxt,alimSlug,alimTodos,alimById,alimBuscar,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,

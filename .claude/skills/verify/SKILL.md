@@ -44,8 +44,32 @@ await page.click('[data-a="cocina-tab"][data-t="lote"]');    // Cocina → Tanda
 
 // El cajón, que ya solo lleva lo que no es calendario, entreno ni comida:
 await page.click('[data-a="drawer-toggle"]');
-await page.click('[data-a="drawer-nav"][data-t="data"]'); // notas/habitos/cfg/data/ajustes
+await page.click('[data-a="drawer-nav"][data-t="data"]'); // notas/habitos/dinero/eventos/cfg/data/ajustes
 ```
+
+**Turno y rotación, Ajustes y Datos son portada + una pantalla por tarea.** Para
+llegar a una tarjeta hay que abrir su puerta:
+
+```js
+await page.click('[data-a="cfg-vista"][data-v="rotacion"]');    // dias|horas|semana|rotacion|notas
+await page.click('[data-a="aju-vista"][data-v="calendario"]');  // calendario|sol|aspecto|lector|comida
+await page.click('[data-a="datos-vista"][data-v="copia"]');     // planning|dieta|horas|copia|texto
+```
+
+Y «Eventos» ya no es una tarjeta de Ajustes: es su propia sección del cajón, con
+una pantalla por evento (`ui.evVista` = `''` | `'nuevo'` | el id del evento).
+
+**Trampa de los enlaces profundos**: `irACard(tab,cfg)` hace `if(!c)return;`, así
+que si la tarjeta que busca está dentro de una vista que no está abierta, el
+botón **no hace nada y no da ningún error**. Por eso existe `CFG_DONDE`, que dice
+en qué vista vive cada `data-cfg` enlazable. Si mueves una tarjeta con
+`data-cfg` a otra pantalla y no la das de alta ahí, rompes el atajo en silencio.
+
+**Trampa de `normalize()`**: el `map` de `o.eventos` (y los de al lado)
+**descarta cualquier campo que no esté en su lista**. Un campo nuevo que no se dé
+de alta ahí se pierde en la siguiente carga sin ningún aviso — y una prueba que
+lo lea justo después de guardarlo pasará igual. Para probarlo de verdad hay que
+dar la vuelta completa: `PG.store = JSON.parse(JSON.stringify(PG.store))`.
 
 Vistas dentro de Comer, por `ui.foodVista`: `''` (el día), `buscar`, `cantidad`,
 `productos`, `micros`, `platos`, `alimentos`, `ficha`, `cocina-panel`, `plato`,

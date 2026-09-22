@@ -164,8 +164,50 @@ depende de que existan las cosas de las que avisar.
 | 6 | «Mi día» | arranca en Hoy, y Hoy se lee de arriba abajo |
 | 7 | Avisos | no hay push sin servidor: avisa el calendario del móvil desde el `.ics` |
 
-**Lo que sigue pendiente de §2**: Ajustes (5 045 px, 5,5 pantallas, 13 tarjetas
-sin relación) y Datos (4 317 px). Son el mismo trabajo que se le hizo a Turno.
+**Y el §2, terminado.** Ajustes y Datos han recibido el mismo trato que Turno,
+medido a 412×915 con datos de verdad:
+
+| | antes | después |
+|---|---|---|
+| **Ajustes** | 5 150 px · 13 tarjetas · 1 176 palabras, todo del tirón | portada de **643 px** (0,70 pantallas) + 5 pantallas de 366 a 1 475 px |
+| **Datos** | 4 317 px · 7 tarjetas · 870 palabras | portada de **539 px** (0,59) + 5 pantallas de 455 a 1 040 px |
+| **Eventos** | la tarjeta 4 de 13, enterrada | **sección propia** de 467 px en el cajón |
+
+Entre las dos pantallas de configuración pasan de **2 046 a 1 455 palabras**
+(−29 %), y de ser el 32 % del texto de la app al 24 %.
+
+Lo que se movió de sitio, y por qué:
+
+- **Guardias y rotación** (544 px) y **Mis rotaciones** (495 px) vuelven a «Turno
+  y rotación». La propia tarjeta admitía que era «lo mismo que ves dentro de Mes
+  → configurar este mes».
+- **El calendario de Google**, que ocupaba **tres tarjetas en dos secciones**
+  (1 756 px, 522 palabras), es una sola pantalla de 1 475 px y 292 palabras. De
+  paso se arregló un texto caduco: decía que el `.ics` llevaba «solo tres cosas»
+  cuando desde el punto 7 exporta seis categorías. Ahora la lista de categorías
+  **se cuenta desde el propio `.ics`**, así que no puede volver a desfasarse.
+- **«Horarios de cada tipo de día»** (548 px) se cae: eran atajos a Turno. Los
+  dos que servían («sus horas», «sus comidas») son ahora dos botones dentro de
+  cada tipo de día, donde les toca.
+- **«Sueño»** era un segundo editor a medias del mismo asunto —lo decía él
+  mismo: «la ventana de la cena sigue en Turno y rotación → 2c»—. Fundido: los
+  cuatro números del sueño están juntos, en Turno.
+- **Copias de seguridad** baja de Ajustes a Datos, con el resto del guardado.
+
+## 7. Los eventos, con cuánto duran
+
+Un evento solo tenía hora de empezar. Consecuencias medidas:
+
+- en el `.ics` **todos duraban 60 minutos** (`dur:60` fijo), así que una
+  presentación de dos horas y media te reservaba una hora en el calendario;
+- en la franja del día era **un punto**, durase lo que durase;
+- en Mes, Semana y las listas solo se leía la hora de empezar.
+
+Ahora un evento tiene `fin`, con atajos para no teclear en el móvil (`1 h`,
+`2 h 30`, `toda la mañana`, `todo el día`). El `.ics` reserva el hueco de
+verdad, la franja lo pinta como una banda y las listas dicen «08:30 – 11:00 ·
+2 h 30». Si la hora de fin es anterior a la de empezar, se entiende que cruza la
+medianoche — la misma regla que ya usaba la jornada de trabajo.
 
 **Y la compra ahora mide 3 468 px (3,8 pantallas)**: es larga porque está
 completa. Antes era más corta porque le faltaban cosas.

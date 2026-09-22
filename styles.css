@@ -980,3 +980,64 @@ ul.slots{list-style:none;margin:0;padding:0}
 /* notas: el proyecto y lo que se te pasó */
 .nota .pie.proy{color:var(--brand2);border-color:color-mix(in srgb,var(--brand2) 35%,var(--line))}
 .nota .pie.tarde{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+
+/* ===================== un evento que dura, en la franja del día =====================
+   Un evento con hora de fin ocupa un rato de verdad, así que se pinta como banda y no como punto.
+   Va por encima de dormir/trabajo (z-index 2, entre el tramo y los puntos de las comidas) y se
+   recorta un poco por arriba y por abajo para que se lea COMO un evento y no como otro tramo más. */
+.tl-seg.evt{z-index:2;top:3px;bottom:3px;border-radius:5px;opacity:.95;
+  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--bg) 85%,transparent)}
+
+/* ===================== Ajustes y Datos: portada de puertas =====================
+   Las dos eran un cajón de tarjetas sin relación (5 150 y 4 317 px). Ahora son una portada que
+   dice en qué estado está cada cosa y una pantalla por tarea, como «Turno y rotación». */
+.estado{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);min-height:42px}
+.estado:first-of-type{border-top:0;padding-top:2px}
+.estado .em{font-size:16px;width:22px;text-align:center;flex:none;line-height:1}
+.estado .tx{flex:1;min-width:0;font-size:12.5px}
+.estado .tx b{font-weight:600}
+.estado .vl{font-size:11px;font-weight:800;color:var(--ink);white-space:nowrap}
+.estado .vl.off{color:var(--ink2);font-weight:600}
+/* un enlace dentro de un párrafo que en realidad es un botón de navegación */
+.lnk{font:inherit;font-weight:700;color:var(--brand);background:none;border:0;padding:0;cursor:pointer;
+  text-decoration:underline;text-underline-offset:2px}
+/* qué categorías se lleva el .ics, con su cuenta de verdad */
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.cats span{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+  border:1px solid var(--line);border-radius:999px;padding:5px 9px;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.cats span.off{opacity:.45}
+.cats span i{width:6px;height:6px;border-radius:99px;flex:none;display:inline-block}
+.cats span b{font-weight:800;color:var(--ink)}
+
+/* ===================== Eventos: la lista y los atajos de cuánto dura ===================== */
+.evfila{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px dashed var(--line);
+  width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;
+  color:var(--ink);font:inherit;min-height:56px;cursor:pointer}
+.evfila:first-of-type{border-top:0}
+.evfila.off{opacity:.5}
+.evfila .fch{flex:none;width:46px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:4px 0;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card))}
+.evfila .fch em{display:block;font-style:normal;font-size:15px;font-weight:800;line-height:1.1}
+.evfila .fch.sem em{font-size:11px;letter-spacing:.02em}
+.evfila .fch span{display:block;font-size:8.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+.evfila .tx{flex:1;min-width:0}
+.evfila .tx b{display:block;font-size:13.5px;line-height:1.25}
+.evfila .tx span{display:block;font-size:10.5px;color:var(--ink2);margin-top:2px}
+.evfila .dur{font-size:11px;font-weight:800;color:var(--ink2);white-space:nowrap}
+.evfila .evdot{width:8px;height:8px;border-radius:99px;flex:none}
+.duras{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.duras .dura{font:inherit;font-size:11.5px;font-weight:700;border:1px solid var(--line);border-radius:999px;
+  padding:6px 11px;background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink2);
+  min-height:34px;cursor:pointer}
+.duras .dura.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);
+  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+
+/* un bloque que se despliega: lo raro no ocupa sitio hasta que lo pides */
+.plegable{border-top:1px solid var(--line);padding-top:9px}
+.plegable>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--ink2);list-style:none;
+  display:flex;align-items:center;gap:6px;min-height:32px}
+.plegable>summary::-webkit-details-marker{display:none}
+.plegable>summary::before{content:'▾';font-size:10px;transition:transform .15s}
+.plegable[open]>summary::before{transform:rotate(180deg)}
+.plegable>summary:hover{color:var(--brand)}

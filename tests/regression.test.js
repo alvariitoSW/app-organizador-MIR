@@ -58,8 +58,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
   const COMER_TABS = new Set(['food', 'shop', 'types', 'batches', 'import']);
-  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'cfg', 'data', 'ajustes']);
-  async function gotoTab(tab) {
+  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'eventos', 'cfg', 'data', 'ajustes']);
+  // «Turno y rotación», «Ajustes» y «Datos» son ahora portada + una pantalla por tarea, igual que
+  // Comer: para llegar a una tarjeta hay que abrir su puerta. El segundo argumento es esa puerta.
+  const PUERTA = { cfg: 'cfg-vista', ajustes: 'aju-vista', data: 'datos-vista' };
+  async function gotoTab(tab, vista) {
     if (CAL_TABS.has(tab)) {
       await page.click('[data-a="nav-cal"]');
       await page.waitForTimeout(80);
@@ -86,6 +89,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       await page.click(`[data-a="tab"][data-t="${tab}"]`);
     }
     await page.waitForTimeout(150);
+    if (vista && PUERTA[tab]) {
+      const sel = `[data-a="${PUERTA[tab]}"][data-v="${vista}"]`;
+      const b = await page.$(sel);
+      // si la puerta no está, que CAIGA la prueba que la pidió en vez de tumbar la suite entera
+      // con un timeout de 30 s buscando un botón que ya no existe
+      if (!b) { check(`la puerta «${tab} → ${vista}» existe`, false, sel); return; }
+      await b.click();
+      await page.waitForTimeout(200);
+    }
   }
 
   // «Días y menús» es ahora el modo «Menú» de Comer: lista de tipos de día + una pantalla por
@@ -267,7 +279,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     xss.imgInjected === 0, 'imágenes inyectadas: ' + xss.imgInjected);
 
   // 5) importar JSON pide confirmación (antes: sustituía todo sin preguntar)
-  await gotoTab('data');
+  await gotoTab('data', 'copia');
   await page.waitForTimeout(200);
   await page.fill('#importBox', JSON.stringify({ shifts: [], menu: {}, dishes: [] }));
   await page.click('[data-a="import"]');
@@ -278,6 +290,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
 
   // 5b) subir un .ics con el selector de archivo lo lee y lo analiza solo (sin copiar/pegar a mano)
+  // las tres tarjetas de Google (para fuera, para dentro y los avisos) están fundidas en una sola
+  // pantalla, en Ajustes → Calendario, en vez de repartidas entre Ajustes y Datos
+  await gotoTab('ajustes', 'calendario');
+  await page.waitForTimeout(200);
   const icsFixture = path.join(require('os').tmpdir(), 'regression-test.ics');
   fs.writeFileSync(icsFixture,
     'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20260915\r\nSUMMARY:Guardia Urgencias\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n');
@@ -796,22 +812,38 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // ===================== "⚙️ Ajustes" (informe: pequeños cambios sin programar) =====================
 
-  // 30) existe en el cajón y trae los campos nuevos
-  await gotoTab('ajustes');
-  await page.waitForTimeout(150);
-  const ajustesUI = await page.evaluate(() => ({
-    saltoFrom: !!document.querySelector('[data-a="salto-from"]'),
-    saltoTo: !!document.querySelector('[data-a="salto-to"]'),
-    latencia: !!document.querySelector('[data-a="sueno-f"][data-k="latencia"]'),
-    guardDefault: !!document.querySelector('[data-a="guard-default"]'),
-    backup: !!document.querySelector('[data-a="backup-aviso-d"]'),
-    icsMin: !!document.querySelector('[data-a="ics-aviso-min"]'),
-    temaBrand: !!document.querySelector('[data-a="tema-f"][data-k="brand"]'),
-    weekStart: !!document.querySelector('[data-a="cal-weekstart"]'),
-    enDrawer: !!document.querySelector('[data-a="drawer-nav"][data-t="ajustes"]'),
-  }));
-  check('la pestaña "Ajustes" existe en el cajón lateral y trae los campos del informe',
+  // 30) los campos sueltos que antes estaban amontonados en una sola pantalla de Ajustes siguen
+  // existiendo, cada uno donde le toca: el salto de guardia y el cupo con las rotaciones, la
+  // latencia con el resto del sueño, el aviso de copia con las copias, y los minutos de aviso con
+  // el calendario. Si uno se pierde al mover una tarjeta, esta prueba lo canta.
+  const campoEn = async (tab, vista, sel) => {
+    await gotoTab(tab, vista);
+    await page.waitForTimeout(180);
+    return page.evaluate((q) => !!document.querySelector('#main ' + q), sel);
+  };
+  const ajustesUI = {
+    saltoFrom:    await campoEn('cfg', 'rotacion', '[data-a="salto-from"]'),
+    saltoTo:      await campoEn('cfg', 'rotacion', '[data-a="salto-to"]'),
+    guardDefault: await campoEn('cfg', 'rotacion', '[data-a="guard-default"]'),
+    latencia:     await campoEn('cfg', 'horas',    '[data-a="sueno-f"][data-k="latencia"]'),
+    backup:       await campoEn('data', 'copia',   '[data-a="backup-aviso-d"]'),
+    icsMin:       await campoEn('ajustes', 'calendario', '[data-a="ics-aviso-min"]'),
+    temaBrand:    await campoEn('ajustes', 'aspecto',    '[data-a="tema-f"][data-k="brand"]'),
+    weekStart:    await campoEn('ajustes', 'aspecto',    '[data-a="cal-weekstart"]'),
+    enDrawer:     await page.evaluate(() => !!document.querySelector('[data-a="drawer-nav"][data-t="ajustes"]')),
+  };
+  check('los campos de Ajustes siguen todos ahí, cada uno en la pantalla que le toca',
     Object.values(ajustesUI).every(Boolean), JSON.stringify(ajustesUI));
+
+  // 30b) y Ajustes ya no es un cajón de 13 tarjetas: es una portada que cabe en una pantalla
+  await gotoTab('ajustes');
+  await page.waitForTimeout(200);
+  const portadaAjustes = await page.evaluate(() => ({
+    alto: document.getElementById('main').scrollHeight,
+    puertas: document.querySelectorAll('#main [data-a="aju-vista"]').length,
+  }));
+  check('la portada de Ajustes cabe en una pantalla y es una puerta por tarea',
+    portadaAjustes.alto < 1100 && portadaAjustes.puertas >= 5, JSON.stringify(portadaAjustes));
 
   // 31) qué día "absorbe" el saliente es configurable (antes, sábado→lunes fijo en el código)
   const saltoTest = await page.evaluate(() => {
@@ -1017,7 +1049,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 44) Ajustes: el mínimo de horas de sueño (antes solo en "Turno y rotación") también se puede
   // tocar aquí, junto al resto de números de sueño
-  await gotoTab('ajustes');
+  await gotoTab('cfg', 'horas');
   await page.waitForTimeout(150);
   const suenoAjustes = await page.evaluate(() => ({
     claves: Array.from(document.querySelectorAll('#main input[data-a="sueno-f"]')).map((i) => i.dataset.k),
@@ -1025,41 +1057,86 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('en Ajustes, el mínimo de horas de sueño se puede editar junto al resto de números de sueño',
     suenoAjustes.claves.includes('min') && suenoAjustes.claves.includes('latencia'), JSON.stringify(suenoAjustes));
 
-  // 45) Ajustes: se puede crear un evento que se repite cada semana (título, hora, color, días),
-  // desactivarlo sin borrarlo y borrarlo
-  await page.fill('#evNuevoTitulo', 'Fisioterapia de prueba');
-  await page.fill('#evNuevaHora', '19:30');
+  // 45) Los eventos ya no son la tarjeta 4 de 13 dentro de Ajustes: son su propia sección en el
+  // cajón, con una pantalla por evento. Se crea uno semanal (título, hora, color, días), se apaga
+  // sin borrarlo y se borra.
+  await gotoTab('eventos');
+  await page.waitForTimeout(200);
+  const hayLista = await page.evaluate(() => /Lo que viene/.test(document.getElementById('main').innerText));
+  check('«Eventos» es una sección propia con su lista', hayLista, '');
+
+  await page.click('[data-a="ev-nuevo"][data-modo="semanal"]');
+  await page.waitForTimeout(250);
+  await page.fill('#evTitulo', 'Fisioterapia de prueba');
+  await page.fill('#evHora', '19:30');
   await page.click('[data-a="ev-dia"][data-day="1"]');
-  await page.click('[data-a="ev-add"]');
-  await page.waitForTimeout(150);
+  await page.click('[data-a="ev-guardar"]');
+  await page.waitForTimeout(250);
   const evCreado = await page.evaluate(() => {
     const list = window.PG.eventosS();
     return { n: list.length, titulo: list[0] && list[0].titulo, dow: list[0] && list[0].dow, on: list[0] && list[0].on };
   });
-  check('Ajustes: se puede crear un evento semanal recurrente (título, hora y día)',
+  check('Eventos: se puede crear un evento semanal recurrente (título, hora y día)',
     evCreado.n === 1 && evCreado.titulo === 'Fisioterapia de prueba' && evCreado.dow.includes(1) && evCreado.on === true,
     JSON.stringify(evCreado));
 
-  await page.click('input[data-a="ev-toggle"]');
-  await page.waitForTimeout(150);
-  const evApagado = await page.evaluate(() => window.PG.eventosS()[0].on);
-  check('Ajustes: el evento se puede desactivar sin borrarlo', evApagado === false, String(evApagado));
-
-  await page.click('[data-a="ev-del"]');
-  await page.waitForTimeout(150);
-  const evTrasBorrar = await page.evaluate(() => window.PG.eventosS().length);
-  check('Ajustes: el evento se puede borrar', evTrasBorrar === 0, String(evTrasBorrar));
-
-  // 45b) Ajustes: además de los que se repiten cada semana, se puede añadir un evento puntual (un día
-  // en concreto, no una recurrencia) con recordatorio y cuenta atrás opcionales — esto es lo que
-  // faltaba: antes solo se podían marcar días de la semana, no una fecha suelta como "una presentación"
-  await page.click('[data-a="ev-modo"][data-modo="fecha"]');
+  // 45a) la hora de fin: antes un evento solo tenía hora de empezar, el .ics le ponía 60 minutos
+  // fijos a todo y la franja del día lo pintaba como un punto durase lo que durase
+  await page.click('[data-a="ev-abrir"]');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="ev-dura"][data-min="90"]');
   await page.waitForTimeout(120);
+  const finPuesto = await page.inputValue('#evFin');
+  check('el atajo de «1 h 30» rellena la hora de fin a partir de la de empezar', finPuesto === '21:00', finPuesto);
+  const tituloIntacto = await page.inputValue('#evTitulo');
+  check('el atajo de duración no desmonta el formulario a medio rellenar',
+    tituloIntacto === 'Fisioterapia de prueba', tituloIntacto);
+  await page.click('[data-a="ev-guardar"]');
+  await page.waitForTimeout(250);
+  const conFin = await page.evaluate(() => {
+    const P = window.PG;
+    // el viaje de ida y vuelta por normalize() es el que importa: ese map DESCARTA todo campo que
+    // no esté en su lista, así que un campo nuevo que no se dé de alta ahí se pierde al recargar
+    // sin dar ningún error. Leer ev.fin justo después de guardarlo no prueba nada.
+    const copia = JSON.parse(JSON.stringify(P.store));
+    P.store = copia;
+    const ev = P.eventosS()[0];
+    return { fin: ev.fin, dura: P.evDura(ev), txt: P.evHoraTxt(ev),
+      lista: document.getElementById('main').innerText };
+  });
+  check('la hora de fin sobrevive a normalize() (el map que descarta los campos que no lista)',
+    conFin.fin === '21:00' && conFin.dura === 90 && conFin.txt === '19:30 – 21:00', JSON.stringify(conFin));
+  check('la lista dice de cuándo a cuándo es, y cuánto dura',
+    /19:30 – 21:00/.test(conFin.lista) && /1 h 30/.test(conFin.lista), conFin.lista.slice(0, 160));
+
+  // guardar ya devuelve a la lista, así que aquí no hay botón de volver que pulsar
+  await page.evaluate(() => { window.PG.eventosS()[0].on = false; window.PG.save(); window.PG.render(); });
+  await page.waitForTimeout(200);
+  const evApagado = await page.evaluate(() => window.PG.eventosS()[0].on);
+  check('un evento se puede dejar apagado sin borrarlo', evApagado === false, String(evApagado));
+  await page.evaluate(() => { window.PG.eventosS()[0].on = true; window.PG.save(); });
+
+  await gotoTab('eventos');
+  await page.waitForTimeout(200);
+  await page.click('[data-a="ev-abrir"]');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="ev-del"]');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="confirm-yes"]');
+  await page.waitForTimeout(300);
+  const evTrasBorrar = await page.evaluate(() => window.PG.eventosS().length);
+  check('un evento se puede borrar', evTrasBorrar === 0, String(evTrasBorrar));
+
+  // 45b) un evento puntual: una fecha suelta, con recordatorio y cuenta atrás
+  await gotoTab('eventos');
+  await page.waitForTimeout(200);
+  await page.click('[data-a="ev-nuevo"]');
+  await page.waitForTimeout(250);
   const soloFecha = await page.evaluate(() => ({
-    hayFecha: !!document.getElementById('evNuevaFecha'),
+    hayFecha: !!document.getElementById('evFecha'),
     hayDias: !!document.querySelector('[data-a="ev-dia"]'),
   }));
-  check('Ajustes: al elegir "un día en concreto" aparece un selector de fecha (y no los días de la semana)',
+  check('«un día en concreto» enseña un selector de fecha, y no los días de la semana',
     soloFecha.hayFecha && !soloFecha.hayDias, JSON.stringify(soloFecha));
 
   const enDiez = await page.evaluate(() => {
@@ -1067,25 +1144,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const x = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
     return x.toISOString().slice(0, 10);
   });
-  await page.fill('#evNuevoTitulo', 'Presentación de prueba');
-  await page.fill('#evNuevaFecha', enDiez);
-  await page.check('#evNuevoRecordatorio');
-  await page.check('#evNuevoCuenta');
-  await page.click('[data-a="ev-add"]');
-  await page.waitForTimeout(150);
+  await page.fill('#evTitulo', 'Presentación de prueba');
+  await page.fill('#evFecha', enDiez);
+  await page.check('#evRec');
+  await page.check('#evCuenta');
+  await page.click('[data-a="ev-guardar"]');
+  await page.waitForTimeout(250);
   const puntualCreado = await page.evaluate(() => {
     const ev = window.PG.eventosS()[0];
     return ev && { titulo: ev.titulo, modo: ev.modo, fecha: ev.fecha, recordatorio: ev.recordatorio, cuentaAtras: ev.cuentaAtras };
   });
-  check('Ajustes: se puede crear un evento puntual en una fecha concreta, con recordatorio y cuenta atrás',
+  check('se puede crear un evento puntual en una fecha concreta, con recordatorio y cuenta atrás',
     puntualCreado && puntualCreado.titulo === 'Presentación de prueba' && puntualCreado.modo === 'fecha' &&
     puntualCreado.fecha === enDiez && puntualCreado.recordatorio === true && puntualCreado.cuentaAtras === true,
     JSON.stringify(puntualCreado));
 
-  const proximosAjustes = await page.evaluate(() => document.getElementById('main').innerText);
-  check('Ajustes: el evento puntual aparece en la tarjeta "Próximos" con su cuenta atrás',
-    /Próximos/.test(proximosAjustes) && /Presentación de prueba/.test(proximosAjustes) && /faltan 10 días/.test(proximosAjustes),
-    '');
+  const listaEventos = await page.evaluate(() => document.getElementById('main').innerText);
+  check('el evento puntual sale en «Lo que viene» con su cuenta atrás',
+    /Presentación de prueba/.test(listaEventos) && /faltan 10 días/.test(listaEventos), listaEventos.slice(0, 200));
 
   await gotoTab('hoy');
   await page.waitForTimeout(150);
@@ -1250,7 +1326,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 49) Ajustes: además del arreglo de arriba, hay un color de texto configurable a mano (por si algún
   // móvil concreto sigue sin verse bien)
-  await gotoTab('ajustes');
+  await gotoTab('ajustes', 'aspecto');
   await page.waitForTimeout(150);
   const inkPicker = await page.evaluate(() => !!document.querySelector('#main input[data-a="tema-f"][data-k="ink"]'));
   check('Ajustes: el color del texto se puede fijar a mano, además del principal y el secundario', inkPicker, '');
@@ -1328,7 +1404,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 54) Ajustes: hay un atajo directo a las horas y a las comidas de cada tipo de día, sin tener que
   // buscarlo por el menú — "horas" abre el modal de horario y "comidas" lleva a su tarjeta en "Días y menús"
-  await gotoTab('ajustes');
+  await gotoTab('cfg', 'dias');
   await page.waitForTimeout(150);
   const firstShiftId = await page.evaluate(() => window.PG.store.shifts[0].id);
   await page.click(`[data-a="day-rhythm-shift"][data-id="${firstShiftId}"]`);
@@ -1345,7 +1421,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 92-95) la franja del día: un color fijo por categoría (no por tipo de día), cambiable en Ajustes,
   // y la opción de ver menos de 24 h centradas en lo que pasa ese día
-  await gotoTab('ajustes');
+  await gotoTab('ajustes', 'aspecto');
   await page.waitForTimeout(200);
   const franjaCard = await page.evaluate(() => {
     const c = document.querySelector('#main .card[data-cfg="franja"]');
@@ -1513,7 +1589,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     cicloDur[0] === 'Rayos' && cicloDur[1] === 'Rayos' && cicloDur[2] === 'Cardiología' && cicloDur[3] === 'Medicina Interna',
     JSON.stringify(cicloDur));
 
-  await gotoTab('ajustes');
+  await gotoTab('cfg', 'rotacion');
   await page.waitForTimeout(250);
   const enAjustes = await page.evaluate(() => {
     const c = document.querySelector('#main .card[data-cfg="rotaciones"]');
@@ -1553,17 +1629,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('el atajo de la leyenda de la franja abre Ajustes y marca su tarjeta',
     aFranja.tab === 'ajustes' && aFranja.marcada, JSON.stringify(aFranja));
 
+  // «ver el año repartido» está con las rotaciones, que ya no viven en Ajustes sino en Turno
+  await gotoTab('cfg', 'rotacion');
+  await page.waitForTimeout(250);
   await page.click('#main [data-a="ir-servicios"]');
   await page.waitForTimeout(350);
   const aServicios = await page.evaluate(() => {
     const c = document.querySelector('#main .card[data-cfg="servicios"]');
     return { tab: window.PG.ui.tab, marcada: !!c && /brand/.test(c.style.outline) };
   });
-  check('desde Ajustes, "ver el año repartido" lleva a la tira de rotaciones del mes',
+  check('desde las rotaciones, "ver el año repartido" lleva a la tira del mes',
     aServicios.tab === 'month' && aServicios.marcada, JSON.stringify(aServicios));
 
   // cambiar la duración de una rotación es un <select>: se dispara con "change", no con un clic
-  await gotoTab('ajustes');
+  await gotoTab('cfg', 'rotacion');
   await page.waitForTimeout(250);
   await page.selectOption('#main [data-cfg="rotaciones"] [data-a="svc-meses"][data-ix="0"]', '3');
   await page.waitForTimeout(250);
@@ -1925,7 +2004,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     !/no permite CORS/.test(avisoFormato) && /formato|JSON/i.test(avisoFormato), avisoFormato.slice(0, 90));
 
   // el lector sin https:// se completa al salir del campo, en vez de guardarse muerto
-  await gotoTab('ajustes');
+  await gotoTab('ajustes', 'lector');
   await page.waitForTimeout(250);
   await page.fill('[data-a="lector-f"]', 'recetas.ejemplo.workers.dev');
   await page.keyboard.press('Tab');   // fill() no dispara «change»; salir del campo sí
@@ -1976,7 +2055,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     // El usuario escribió ahí sus sesiones semanales y se topó con «no he encontrado días» y, peor,
     // con «undefined guardia(s)» y «media NaN» en pantalla: count nacía vacío.
-    await gotoTab('data');
+    await gotoTab('data', 'planning');
     await page.waitForTimeout(300);
     const TEXTO = 'Todos los martes tengo sesión en umi de 8:00 a 8:30 y todos los jueves ' +
       'tengo sesión general de 8:00 a 8:30 en docencia';
@@ -2374,7 +2453,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         persistido: await navigator.storage.persisted(),
       };
     });
-    await gotoTab('data');
+    await gotoTab('data', 'copia');
     await page.waitForTimeout(400);
     const tarjeta = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#main .card')].find((x) => /Dónde se guarda/.test(x.textContent));
@@ -3433,17 +3512,104 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(600);
     const tras = await page.evaluate(() => ({
       tab: window.PG.ui.tab,
-      editor: !!document.querySelector('#main .card[data-cfg="eventos"]'),
-      puedeAnadir: !!document.querySelector('#main .card[data-cfg="eventos"] [data-a="ev-add"]'),
+      editor: /Lo que viene/.test(document.getElementById('main').innerText),
+      puedeAnadir: !!document.querySelector('#main [data-a="ev-nuevo"]'),
     }));
-    check('«añadir o quitar eventos» del Mes lleva al editor de eventos, no a Hábitos',
-      antesDelClic && tras.tab === 'ajustes' && tras.editor && tras.puedeAnadir,
+    check('«añadir o quitar eventos» del Mes lleva a la sección Eventos, no a Hábitos',
+      antesDelClic && tras.tab === 'eventos' && tras.editor && tras.puedeAnadir,
       JSON.stringify({ antesDelClic, ...tras }));
     await page.evaluate(() => {
       window.PG.eventosS().length = 0;
       window.PG.store.notas.length = 0;
       window.PG.save();
     });
+  }
+
+  // ===================== Lo que dura un evento, y los enlaces que se quedaron mudos =====================
+  {
+    // Antes: el .ics le ponía `dur:60` fijo a TODOS los eventos, así que una presentación de dos
+    // horas y media te reservaba una hora en el calendario del móvil; y la franja del día lo
+    // pintaba como un punto durase lo que durase.
+    await page.evaluate(() => {
+      window.PG.eventosS().length = 0;
+      window.PG.eventosS().push({ id: 'ev-dura', titulo: 'Presentación en rayos', modo: 'fecha',
+        fecha: window.PG.iso(new Date()), hora: '08:30', fin: '11:00', color: '#a78bfa', on: true, dow: [] });
+      window.PG.save();
+    });
+    const elIcs = await page.evaluate(() => {
+      const P = window.PG, k = P.iso(new Date());
+      const e = P.calEventos(k, k).filter((x) => x.cat === 'EVENTO')[0];
+      const lineas = P.icsTexto(k, k, {}).split(/\r?\n/);
+      const i = lineas.findIndex((l) => /SUMMARY:📌 Presentación/.test(l));
+      const bloque = lineas.slice(Math.max(0, i - 6), i + 1).join('|');
+      return { dur: e && e.dur, horaFin: e && e.horaFin, bloque };
+    });
+    check('el .ics reserva el hueco de verdad y no 60 minutos fijos',
+      elIcs.dur === 150 && elIcs.horaFin === '11:00' &&
+      /DTSTART:\d{8}T083000/.test(elIcs.bloque) && /DTEND:\d{8}T110000/.test(elIcs.bloque),
+      JSON.stringify(elIcs));
+
+    const enLaFranja = await page.evaluate(() => {
+      const d = document.createElement('div');
+      d.innerHTML = window.PG.timelineBar(window.PG.iso(new Date()));
+      const banda = d.querySelector('.tl-seg.evt');
+      return { bandas: d.querySelectorAll('.tl-seg.evt').length,
+        puntos: d.querySelectorAll('.tl-dot.evt').length,
+        ancho: banda ? banda.style.width : '' };
+    });
+    check('un evento que dura se pinta como banda en la franja del día, no como un punto',
+      enLaFranja.bandas === 1 && enLaFranja.puntos === 0 && parseFloat(enLaFranja.ancho) > 5,
+      JSON.stringify(enLaFranja));
+
+    // y uno sin hora de fin se sigue comportando como siempre
+    await page.evaluate(() => { window.PG.eventosS()[0].fin = ''; window.PG.save(); });
+    const sinFin = await page.evaluate(() => {
+      const d = document.createElement('div');
+      d.innerHTML = window.PG.timelineBar(window.PG.iso(new Date()));
+      const P = window.PG, k = P.iso(new Date());
+      return { puntos: d.querySelectorAll('.tl-dot.evt').length,
+        bandas: d.querySelectorAll('.tl-seg.evt').length,
+        dur: P.calEventos(k, k).filter((x) => x.cat === 'EVENTO')[0].dur };
+    });
+    check('un evento sin hora de fin sigue siendo un punto y una cita de una hora',
+      sinFin.puntos === 1 && sinFin.bandas === 0 && sinFin.dur === 60, JSON.stringify(sinFin));
+
+    // el que cruza la medianoche: la regla es la misma que ya usaba la jornada de trabajo
+    await page.evaluate(() => { const e = window.PG.eventosS()[0]; e.hora = '22:00'; e.fin = '02:00'; window.PG.save(); });
+    const cruza = await page.evaluate(() => {
+      const P = window.PG, k = P.iso(new Date());
+      const e = P.calEventos(k, k).filter((x) => x.cat === 'EVENTO')[0];
+      const l = P.icsTexto(k, k, {}).split(/\r?\n/).filter((x) => /DTEND/.test(x));
+      return { dur: e.dur, dtend: l[l.length - 1] };
+    });
+    check('un evento que cruza la medianoche acaba al día siguiente, no a las 23:59',
+      cruza.dur === 240 && /T020000/.test(cruza.dtend), JSON.stringify(cruza));
+    await page.evaluate(() => { window.PG.eventosS().length = 0; window.PG.save(); });
+
+    // Los enlaces profundos: irACard() hace `if(!c)return;`, así que si la tarjeta se mudó a otra
+    // vista el botón no hace NADA y no da ningún error. Con Ajustes, Datos y Turno partidos en
+    // pantallas, esto es exactamente el fallo mudo que hay que vigilar.
+    const destinos = [
+      ['ir-sol', 'sol'], ['ir-lector', 'lector'], ['ir-usda', 'usda'],
+      ['franja-cfg', 'franja'], ['ir-sueno', 'sueno'],
+    ];
+    const llegadas = [];
+    for (const [accion, cfg] of destinos) {
+      await gotoTab('hoy');
+      await page.waitForTimeout(150);
+      await page.evaluate((a) => {
+        document.getElementById('main').insertAdjacentHTML('beforeend',
+          '<button id="__ir" data-a="' + a + '"></button>');
+      }, accion);
+      await page.click('#__ir');
+      await page.waitForTimeout(400);
+      llegadas.push(await page.evaluate((q) => {
+        const c = document.querySelector('#main [data-cfg="' + q + '"]');
+        return { cfg: q, llega: !!c, marcada: !!c && /brand/.test(c.style.outline) };
+      }, cfg));
+    }
+    check('cada atajo sigue llevando a su tarjeta después de partir Ajustes, Datos y Turno',
+      llegadas.every((x) => x.llega && x.marcada), JSON.stringify(llegadas));
   }
 
   // ===================== Los avisos =====================
