@@ -269,6 +269,37 @@ Lo que aporta esta app sobre un temario suelto:
   rango — si no, un repaso que se te pasó no aparecería nunca.
 - **Las horas**: cuánto has estudiado de verdad, por semana y por tema.
 
+## 10. Imprimir: la hoja en blanco
+
+Al imprimir el mes desde el móvil salía **una sola casilla** —la de hoy— y el
+resto del papel en blanco, con los recuadros de las tarjetas dibujados y vacíos
+por dentro.
+
+La causa no estaba en el calendario. `.card::before` es una capa absoluta que
+cubre la tarjeta entera con un degradado casi transparente: en pantalla es un
+brillo. Al imprimir **sin gráficos de fondo** —la casilla que Chrome trae
+marcada por defecto— esa capa se pinta como un rectángulo blanco opaco y tapa
+todo lo que hay debajo. Sobrevivía solo la casilla de hoy, que lleva `z-index` y
+queda por encima de la capa. Con los gráficos de fondo activados el fallo no
+aparecía nunca, que es por lo que costó tanto cazarlo.
+
+Arreglo: en `@media print`, esas capas de adorno se esconden.
+
+Lo medido, contando píxeles no blancos de la hoja del mes (Carta, sin fondos):
+
+| | píxeles con tinta |
+|---|---|
+| antes | 21 230 (bordes de tarjeta + una casilla) |
+| después | 64 780 (el mes entero) |
+
+**Y una lección sobre cómo se prueba esto.** Las pruebas anteriores usaban
+`emulateMedia({media:'print'})` y miraban el DOM: decían que las 30 casillas
+estaban, visibles y con texto —y era verdad—. Tampoco servía contar el texto del
+PDF: los glifos estaban ahí, tapados, y la cuenta daba **exactamente el mismo
+número** con el fallo y sin él. La única prueba que distingue «está en el papel»
+de «está en el PDF» es imprimir de verdad con `page.pdf({printBackground:false})`
+y contar píxeles. Eso es lo que hace ahora la prueba de regresión.
+
 **Lo que sigue pendiente**: el precio por producto, para que la compra diga lo
 que va a costar. `grep precio app.js` sigue dando una sola aparición, y es una
 frase que dice que no estima precios.

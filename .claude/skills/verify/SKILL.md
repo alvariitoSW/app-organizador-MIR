@@ -116,6 +116,27 @@ click through the real UI for the actual check.
 - `.claude/worktrees/` is gitignored (scratch copies for background agents); the
   rest of `.claude/` (this skill included) is tracked.
 
+## Imprimir NO se prueba con capturas
+
+`page.emulateMedia({media:'print'})` + captura de pantalla **no es imprimir**: compone al
+ancho de la ventana, pinta todos los fondos y no pagina. Con eso la suite daba verde
+mientras en el móvil del usuario salía una hoja casi en blanco.
+
+Lo que sí prueba el papel es `page.pdf({format:'Letter', printBackground:false})` —el
+`printBackground:false` importa: es lo que viene marcado por defecto en el diálogo de
+Chrome, y hay fallos que solo salen así.
+
+Y para mirarlo hay que contar **píxeles**, no texto: el fallo de septiembre tenía las 30
+casillas en el PDF, con su texto y en su sitio, tapadas por una capa blanca. Contar
+glifos daba el mismo número con el fallo y sin él. La suite abre el PDF en el propio
+Chromium (`file://…#toolbar=0&zoom=page-fit`), lo captura y cuenta los píxeles que no son
+blancos.
+
+Trampa de la que salió: **cualquier `::before`/`::after` absoluto que cubra a su padre**
+(`position:absolute;inset:0`) se pinta como un rectángulo blanco opaco al imprimir sin
+gráficos de fondo, y se lleva por delante todo lo que haya debajo. Si añades una capa así
+de adorno, escóndela en `@media print`.
+
 ## Probar secuencias, no caminos sueltos
 
 La suite llegó a 133 pruebas en verde con seis fallos reales vivos en la pantalla de

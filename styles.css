@@ -671,7 +671,14 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
   .tl-noche{background:rgba(0,0,0,.14)!important;box-shadow:none!important}
   .tl-bar{background:#fff;border:1px solid #999}
 
-  /* 5 · cajas legibles: blancas con borde, no la tarjeta oscura con letra oscura */
+  /* 5 · los velos de color que van POR ENCIMA del contenido.
+     `.card::before` es una capa absoluta que cubre la tarjeta entera con un degradado casi
+     transparente: en pantalla es un brillo, pero al imprimir Chrome la pinta opaca y tapa todo
+     lo que hay debajo. Así se perdía el mes entero —las 30 casillas— menos la de hoy, que lleva
+     z-index y quedaba por encima del velo. Era exactamente lo que se veía en el móvil. */
+  .card::before,.scanbox::before,.scanbox::after{display:none!important}
+
+  /* 6 · cajas legibles: blancas con borde, no la tarjeta oscura con letra oscura */
   .card,.day,.session,.drow,.tarj,.dbox{break-inside:avoid;page-break-inside:avoid;background:#fff}
   .card,.day,.session,.drow,.tarj{border:1px solid #bbb}
   .kpis div,.dosdatos div,.tot div,.guarda div{background:#fff;border:1px solid #bbb}

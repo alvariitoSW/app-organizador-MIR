@@ -3796,6 +3796,45 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       semana.durante.abiertos === 7 && semana.durante.comidas > semana.antes.comidas &&
       semana.despues.abiertos === semana.antes.abiertos,
       JSON.stringify(semana));
+
+    // ---- y ahora el papel de verdad, no el DOM ----
+    // Todo lo de arriba mira el DOM con `emulateMedia({media:'print'})`, y con eso NO se caza el
+    // fallo que el usuario veía en el móvil: las 30 casillas estaban ahí, medían lo que tenían
+    // que medir y su texto seguía dentro del PDF… tapado. `.card::before` es una capa absoluta
+    // que cubre la tarjeta entera con un degradado casi transparente; al imprimir SIN gráficos de
+    // fondo (lo que viene marcado por defecto) Chrome la pinta como un rectángulo blanco opaco y
+    // se lleva por delante lo que hay debajo. Solo sobrevivía la casilla de hoy, que lleva
+    // z-index y queda por encima de la capa. Por eso esta prueba imprime de verdad —page.pdf()—
+    // y cuenta PÍXELES: es lo único que distingue «está en el papel» de «está en el PDF».
+    const pdfPath = path.join(require('os').tmpdir(), 'organizador-mes-' + process.pid + '.pdf');
+    // OJO: `emulateMedia({media:'screen'})` de las comprobaciones de arriba sigue puesto, y ese
+    // forzado también manda dentro de page.pdf(): sin quitarlo, el PDF sale con los estilos de
+    // PANTALLA y esta prueba mide otra cosa. Pasó con el fallo dentro por esto exactamente.
+    await page.emulateMedia({ media: null });
+    await gotoTab('month');
+    await page.waitForTimeout(350);
+    await page.pdf({ path: pdfPath, format: 'Letter', printBackground: false });
+    const visor = await browser.newPage({ viewport: { width: 700, height: 900 } });
+    await visor.goto('file://' + pdfPath + '#toolbar=0&navpanes=0&zoom=page-fit', { waitUntil: 'load' });
+    await visor.waitForTimeout(2500);
+    const hoja = await visor.screenshot();
+    await visor.close();
+    const lienzo = await browser.newPage();
+    const tinta = await lienzo.evaluate(async (b64) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] < 225 || d[i + 1] < 225 || d[i + 2] < 225) n++;
+      return n;
+    }, hoja.toString('base64'));
+    await lienzo.close();
+    try { fs.unlinkSync(pdfPath); } catch (e) { /* da igual */ }
+    // medido: con el velo delante, 21 230 píxeles (los bordes de las tarjetas y una sola casilla);
+    // con el velo fuera, 64 780. El listón va en medio y bien lejos de los dos.
+    check('el mes impreso llega al papel entero, no solo la casilla de hoy',
+      tinta > 40000, JSON.stringify({ tinta, listón: 40000 }));
   }
 
   // ===================== Las dos horas del sueño, siempre a la vista =====================
