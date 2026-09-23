@@ -3714,7 +3714,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         kpiFondo: cs ? cs.backgroundColor : '', kpiTexto: cs ? cs.color : '',
         bodyFondo: getComputedStyle(document.body).backgroundColor };
     });
-    await page.emulateMedia({ media: 'screen' });
     check('al imprimir «Mes» salen las casillas del mes, no una cuadrícula vacía',
       mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas && mesImpreso.conTexto >= 28,
       JSON.stringify(mesImpreso));
@@ -3730,6 +3729,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('al imprimir, las cajas son claras con la letra oscura (y no al revés)',
       claro(mesImpreso.bodyFondo) && claro(mesImpreso.kpiFondo) && oscuro(mesImpreso.kpiTexto),
       JSON.stringify(mesImpreso));
+
+    // …y da igual el tema que tengas puesto. En modo claro `html:not(.dark)` (0,1,1) le ganaba a
+    // `html` (0,0,1) y el papel se quedaba con los tokens de PANTALLA: fondo gris en vez de blanco.
+    const enLosDosTemas = await page.evaluate(async () => {
+      const mide = () => {
+        const cs = getComputedStyle(document.documentElement);
+        return { ink: cs.getPropertyValue('--ink').trim(), bg: cs.getPropertyValue('--bg').trim(),
+          card: cs.getPropertyValue('--card').trim() };
+      };
+      const eraOscuro = document.documentElement.classList.contains('dark');
+      document.documentElement.classList.add('dark');
+      const oscuro = mide();
+      document.documentElement.classList.remove('dark');
+      const claro = mide();
+      if (eraOscuro) document.documentElement.classList.add('dark');
+      return { oscuro, claro };
+    });
+    await page.emulateMedia({ media: 'screen' });
+    const papel = (t) => t.bg === '#ffffff' && t.card === '#ffffff' && t.ink === '#111827';
+    check('la hoja impresa sale igual con el tema oscuro y con el claro',
+      papel(enLosDosTemas.oscuro) && papel(enLosDosTemas.claro), JSON.stringify(enLosDosTemas));
 
     // lo plegado se despliega para imprimir, y se vuelve a plegar al terminar
     await page.evaluate(() => { window.__print = 0; window.print = function () { window.__print++; }; });
