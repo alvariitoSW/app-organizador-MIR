@@ -3896,7 +3896,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rhythm['sh-t'].sleep = '01:30';
       P.store.rhythm['sh-t'].wake = '06:50';
       P.save(); P.render();
-      const f = [...document.querySelectorAll('.drow')].find((x) => x.querySelector('.pie.sue.corto'));
+      // el día de saliente TAMBIÉN puede marcarse corto (por la noche, que tiene su propio mínimo),
+      // así que hay que buscar el día que esta prueba ha tocado —el de trabajo— y no «el primero
+      // que esté marcado»: si no, se comprueba el texto de otro día y por otro motivo
+      const f = [...document.querySelectorAll('.drow')].find((x) => {
+        const tag = x.querySelector('.drtag');
+        return x.querySelector('.pie.sue.corto') && tag && /Día de trabajo/i.test(tag.innerText || '');
+      });
       const txt = f ? f.querySelector('.drsol').innerText : '';
       P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
       return txt;
@@ -4566,6 +4572,136 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ tarjetas, paginas, visibles }));
     check('y al terminar de imprimir el Mes la pantalla vuelve a estar entera',
       limpio === false, JSON.stringify({ limpio }));
+  }
+
+  // ===================== «Semana» se mueve de semana desde la pantalla =====================
+  {
+    // Mes y Hoy se mueven desde la propia pantalla («‹ septiembre 2026 › mes actual», «‹ jue ·
+    // volver a hoy · sáb ›»); «Semana» solo tenía las flechas de la barra de arriba, y solo en modo
+    // «por fecha». Si no mirabas ahí, no había manera de ver la semana que viene.
+    await gotoTab('week');
+    await page.waitForTimeout(320);
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click();
+      await page.waitForTimeout(300); return !!el; };
+    const lee = () => page.evaluate(() => {
+      const nav = document.querySelector('#main .semnav');
+      const lun = window.PG.mondayOf(window.PG.weekDays()[0].date || new Date());
+      return { hay: !!nav, txt: nav ? nav.innerText.replace(/\n/g, ' | ') : '',
+        modo: window.PG.store.rotation.mode,
+        lunes: window.PG.store.rotation.mode === 'date' && window.PG.weekDays()[0].key ? window.PG.weekDays()[0].key : '' };
+    });
+    // en plantilla no hay fechas, así que no hay semana anterior ni siguiente: lo que ofrece es
+    // pasarse a «por fecha», que es justo lo que hace falta para poder moverse
+    await page.evaluate(() => { window.PG.store.rotation.mode = 'template'; window.PG.save(); window.PG.render(); });
+    await page.waitForTimeout(300);
+    const enPlantilla = await lee();
+    const hubo = [];
+    hubo.push(await toca('#main .semnav [data-a="mode-date"]'));
+    const pasos = [await lee()];
+    hubo.push(await toca('#main .semnav [data-a="wk-next"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="wk-next"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="today"]'));   pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="wk-prev"]')); pasos.push(await lee());
+    const dia = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDate(d); };
+    const base = pasos[0].lunes;
+    check('«Semana» se mueve de semana desde la propia pantalla, y vuelve a esta semana',
+      enPlantilla.hay && /plantilla/i.test(enPlantilla.txt) &&
+      hubo.every(Boolean) && pasos[0].modo === 'date' && !!base &&
+      pasos[1].lunes === dia(base, 7) && pasos[2].lunes === dia(base, 14) &&
+      pasos[3].lunes === base && pasos[4].lunes === dia(base, -7),
+      JSON.stringify({ enPlantilla, hubo, pasos }));
+  }
+
+  // ============ La comida principal no está a una hora fija, y «Semana» dice qué vas a hacer ============
+  {
+    // La hora de comer no la manda el tipo de día: la manda lo que haces ese día. Si entrenas cae
+    // después del entreno (18:00–18:30), si no al salir de la jornada (14:00–15:00), y el día que
+    // sales de guardia, al despertar de la siesta — una hora que depende de cuándo te relevaron.
+    // Antes era una lista fija por tipo de día y el mismo «Día de trabajo» decía 14:30 entrenaras o no.
+    // los días se ponen A MANO: dejar que los traiga el patrón hace que la prueba dependa de lo que
+    // haya dejado puesto otra anterior, y ya pasó — la semana salió sin ningún saliente
+    const horas = await page.evaluate(() => {
+      const P = window.PG;
+      P.store.rotation.mode = 'date';
+      const k = (x) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+      const lun = P.mondayOf(new Date());
+      const d = (n) => k(P.addDays(lun, n));
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      const S = P.store.shifts.filter((x) => /saliente/i.test(x.name || ''))[0];
+      const F = P.store.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
+      const L = P.store.shifts.filter((x) => /libre/i.test(x.name || ''))[0];
+      P.setDayOverride(d(0), G.id, 'umi');   // lunes de guardia
+      P.setDayOverride(d(1), S.id);          // martes saliente: viene de la guardia del lunes
+      P.setDayOverride(d(2), F.id);          // miércoles de fuerza
+      P.setDayOverride(d(3), L.id);          // jueves libre
+      // una rutina colgada del día de fuerza: eso es «ese día entrenas»
+      P.store.gym.rutinas = [{ id: 'r-test', nombre: 'Torso A', dias: ['sh-f'], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }];
+      P.save(); P.render();
+      const mide = (n) => { const key = d(n), cp = P.comidaPrincipalDe(key); return cp ? { de: cp.de, a: cp.a, por: cp.por } : null; };
+      return { guardia: mide(0), saliente: mide(1), fuerza: mide(2), libre: mide(3), lunes: d(0) };
+    });
+    const conEntreno = horas.fuerza, saliente = horas.saliente, libre = horas.libre;
+    check('la comida principal se mueve con el día: tras el entreno, tras la jornada o al despertar de la siesta',
+      !!conEntreno && conEntreno.de === '18:00' && conEntreno.a === '18:30' && conEntreno.por === 'entreno' &&
+      !!libre && libre.de === '14:00' && libre.a === '15:00' &&
+      !!saliente && saliente.por === 'siesta' && saliente.de > '12:00',
+      JSON.stringify(horas));
+
+    // un día de fuerza es entreno Y jornada: antes la franja pintaba solo el entreno de 6:30 a 8:00
+    // y el resto del día salía vacío, como si no trabajaras
+    const bloques = await page.evaluate((lunes) => {
+      const P = window.PG;
+      const mie = P.addDays(P.parseDate(lunes), 2);
+      const key = mie.getFullYear() + '-' + String(mie.getMonth() + 1).padStart(2, '0') + '-' + String(mie.getDate()).padStart(2, '0');
+      return P.bloquesTrabajo(key).map((b) => b.txt);
+    }, horas.lunes);
+    check('un día de entreno pinta el entreno Y la jornada, no solo el entreno',
+      bloques.length >= 2 && bloques.some((t) => /entreno/.test(t)) && bloques.some((t) => /jornada/.test(t)),
+      JSON.stringify(bloques));
+
+    // «Semana» enseña lo que vas a HACER ese día, no solo la franja y las comidas
+    await gotoTab('week');
+    await page.waitForTimeout(350);
+    const plan = await page.evaluate(() => {
+      const filas = [...document.querySelectorAll('#main .drow')];
+      return { dias: filas.length,
+        conPlan: filas.filter((f) => f.querySelector('.drplan')).length,
+        conTrabajo: filas.filter((f) => f.querySelector('.drplan .pl.trab')).length,
+        conComida: filas.filter((f) => f.querySelector('.drplan .pl.com')).length,
+        conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length };
+    });
+    check('cada día de «Semana» dice lo que vas a hacer: horas de trabajo, entreno y cuándo comes',
+      plan.dias === 7 && plan.conPlan === 7 && plan.conComida === 7 && plan.conTrabajo >= 5 && plan.conGym >= 1,
+      JSON.stringify(plan));
+
+    // …y la hora se cambia desde la pantalla y sobrevive a recargar (normalize() tira lo que no conoce)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'horas'; P.render(); });
+    await page.waitForTimeout(350);
+    const campo = await page.$('[data-a="com-h"][data-k="conEntreno"][data-w="de"]');
+    if (campo) { await campo.fill('19:15'); await page.keyboard.press('Tab'); await page.waitForTimeout(320); }
+    const tras = await page.evaluate((lunes) => {
+      const P = window.PG;
+      const mie = P.addDays(P.parseDate(lunes), 2);
+      const key = mie.getFullYear() + '-' + String(mie.getMonth() + 1).padStart(2, '0') + '-' + String(mie.getDate()).padStart(2, '0');
+      // sin paréntesis de seguridad, un null aquí TUMBA la suite entera en vez de hacer fallar esta
+      // prueba: pasó al revertir el arreglo, que es justo cuando hace falta que falle y lo diga
+      const h = (k2) => (P.comidaPrincipalDe(k2) || {}).de || '';
+      const antes = h(key);
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje de ida y vuelta por normalize()
+      return { antes: antes, guardado: (P.comidasCfg().conEntreno || {}).de || '', trasRecargar: h(key) };
+    }, horas.lunes);
+    check('cambiar la hora de comer desde la pantalla recalcula la semana, y se guarda al recargar',
+      !!campo && tras.antes === '19:15' && tras.guardado === '19:15' && tras.trasRecargar === '19:15',
+      JSON.stringify({ campo: !!campo, tras }));
+    await page.evaluate((lunes) => {
+      const P = window.PG;
+      P.store.comidas.conEntreno.de = '18:00';
+      P.store.gym.rutinas = [];
+      const lun = P.parseDate(lunes);
+      for (let i = 0; i < 4; i++) { const x = P.addDays(lun, i);
+        P.setDayOverride(x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'), null); }
+      P.save(); P.render();
+    }, horas.lunes);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

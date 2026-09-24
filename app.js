@@ -72,7 +72,9 @@ function DEFAULTS(){return {
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
              svcMeses:[1,1,1,1,1,1,1],
              jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
-  sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10},
+  sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360},
+  /* la comida principal va cuando toca según el día, no a una hora fija del tipo de día */
+  comidas:{conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30},
   tema:{brand:'',brand2:'',ink:''},
   franja:{horas:24,colores:{}},
   lector:{proxy:'',publico:false},
@@ -410,8 +412,21 @@ function normalize(o){
   if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=[2,5];
   if(!o.sueno||typeof o.sueno!=='object')o.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o.sueno[k]!=='number')o.sueno[k]={min:8,cenaMin:90,cenaMax:180,latencia:10}[k];});
-  /* la siesta del saliente: puede ser 0, así que se comprueba el rango y no el «si es verdadero» */
-  if(typeof o.sueno.siesta!=='number'||o.sueno.siesta<0||o.sueno.siesta>480)o.sueno.siesta=180;
+  /* la siesta del saliente: puede ser 0, así que se comprueba el rango y no el «si es verdadero».
+     De fábrica son 6 h: el día que sales de guardia lo que hace falta es llegar a dormir 6 h por la
+     mañana y 8 por la noche. Antes puse 3 h por mi cuenta y estaba mal; a quien tuviera guardado
+     ese valor exacto se le sube, y a quien haya puesto otro no se le toca. */
+  if(o.sueno.siesta===180&&o.sueno.siestaMia!==true)o.sueno.siesta=360;
+  if(typeof o.sueno.siesta!=='number'||o.sueno.siesta<0||o.sueno.siesta>480)o.sueno.siesta=360;
+  /* a qué hora se come, que depende de si ese día entrenas y no del tipo de día */
+  if(!o.comidas||typeof o.comidas!=='object')o.comidas={};
+  const hhx=/^\d{1,2}:\d{2}$/;
+  [['conEntreno','18:00','18:30'],['sinEntreno','14:00','15:00']].forEach(function(f){
+    const v=o.comidas[f[0]];
+    if(!v||typeof v!=='object'||!hhx.test(String(v.de||''))||!hhx.test(String(v.a||'')))
+      o.comidas[f[0]]={de:f[1],a:f[2]};
+    else o.comidas[f[0]]={de:String(v.de),a:String(v.a)};});
+  if(typeof o.comidas.trasSiesta!=='number'||o.comidas.trasSiesta<0||o.comidas.trasSiesta>180)o.comidas.trasSiesta=30;
   /* las horas de cada tipo de guardia. Sin esto, normalize() las tiraba al recargar y la app volvía
      a creer que todas las guardias duran de 8:00 a 8:00 pasara lo que pasara. */
   if(Array.isArray(o.rotation.guardiaTipos))o.rotation.guardiaTipos=o.rotation.guardiaTipos
@@ -837,7 +852,7 @@ function sleepOf(dateStr,infOpt){
   const tot=(o.noche||0)+(o.siesta?o.siesta.min/60:0);
   o.h=tot>0?Math.round(tot*10)/10:null;
   return o;}
-function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:180};const o=store.sueno||{};
+function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360};const o=store.sueno||{};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o[k]==='number'&&o[k]>0)d[k]=o[k];});
   /* la siesta del saliente puede ser 0 (hay quien aguanta del tirón), así que no vale el >0 */
   if(typeof o.siesta==='number'&&o.siesta>=0&&o.siesta<=480)d.siesta=o.siesta;
@@ -1066,6 +1081,56 @@ function salidaDeGuardia(dateStr){
   _salidaCache[dateStr]=out;
   return out;}
 function esSaliente(sh){return !!sh&&/saliente|post ?-?guardia/i.test(String(sh.name||''));}
+/* ===================== la comida principal no está a una hora fija =====================
+   La hora de comer no la manda el tipo de día: la manda lo que haces ese día.
+     · Si entrenas, la comida principal cae después del entreno: 18:00–18:30.
+     · Si no entrenas, al acabar la jornada de 8 a 15: 14:00–15:00.
+     · Y el día que sales de guardia, cuando te despiertas de la siesta — no a una hora del reloj,
+       porque esa hora depende de a qué hora te relevaron.
+   Antes era una lista de horas fijas por tipo de día, y por eso el mismo «Día de trabajo» decía
+   siempre 14:30 entrenaras o no. Los valores se cambian en Ajustes; estos son los de fábrica. */
+function comidasCfg(){
+  const d={conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30};
+  const o=store.comidas||{},hh=/^\d{1,2}:\d{2}$/;
+  ['conEntreno','sinEntreno'].forEach(function(k){
+    if(o[k]&&hh.test(String(o[k].de||''))&&hh.test(String(o[k].a||'')))d[k]={de:o[k].de,a:o[k].a};});
+  if(typeof o.trasSiesta==='number'&&o.trasSiesta>=0&&o.trasSiesta<=180)d.trasSiesta=o.trasSiesta;
+  return d;}
+function hayEntrenoEn(dateStr,infOpt){
+  /* cuenta como entreno la rutina que toca ese día, el segundo entreno (piscina y demás) y que el
+     propio tipo de día sea de fuerza */
+  if(!dateStr)return false;
+  const inf=infOpt||dayInfo(dateStr);
+  if(rutinaDeFecha(dateStr))return true;
+  const s2=diaSegundo(dateStr,inf);if(s2&&s2.on)return true;
+  const sh=shiftById(inf.shiftId);
+  return !!(sh&&/fuerza|entreno|gym/i.test(sh.name||''));}
+function comidaPrincipalDe(dateStr,infOpt){
+  if(!dateStr)return null;
+  const inf=infOpt||dayInfo(dateStr),c=comidasCfg();
+  const sal=salidaDeGuardia(dateStr);
+  if(sal){const sl=sleepOf(dateStr,inf);
+    if(sl&&sl.siesta){const m=mins(sl.siesta.a);
+      if(m!=null)return {de:hm(m+c.trasSiesta),a:hm(m+c.trasSiesta+60),por:'siesta'};}}
+  if(hayEntrenoEn(dateStr,inf))return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};
+  /* un día libre no tiene jornada de la que salir: la hora es la misma, pero no se inventa el motivo */
+  return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:jornadaOf(dateStr,inf)?'jornada':'normal'};}
+function comidaPorqueTxt(por){
+  return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':
+    por==='jornada'?'al salir de la jornada':'';}
+function comidaPrincipalTxt(cp){
+  if(!cp)return '';
+  const q=comidaPorqueTxt(cp.por);
+  return fmtTimeOut(cp.de)+'–'+fmtTimeOut(cp.a)+(q?(' · '+q):'');}
+function esComidaPrincipal(slot){
+  /* cuál de las tomas del día es «la comida»: la que se llama así, y no la media mañana */
+  const l=String((slot&&slot.label)||'');
+  return /comida/i.test(l)&&!/media\s*ma/i.test(l);}
+function horaDeToma(dateStr,slot,cpOpt){
+  /* la hora que hay que ENSEÑAR de esa toma: la de la lista, salvo que sea la comida principal y
+     ese día tenga una hora propia */
+  const cp=cpOpt!==undefined?cpOpt:(dateStr?comidaPrincipalDe(dateStr):null);
+  return (cp&&esComidaPrincipal(slot))?cp.de:((slot&&slot.time)||'');}
 function trayectoMin(){
   /* lo que tardas del hospital a casa: sale de tus propias horas de guardia (salir → llegar) */
   const rh=(store.rhythm&&store.rhythm['sh-g'])||{};
@@ -1098,10 +1163,16 @@ function bloquesTrabajo(dateStr,inf){
   }else if(!(sal&&esSaliente(sh))){
     /* el saliente ya tiene sus horas de verdad arriba: las suyas propias sobran y estorban */
     const jor=jornadaOf(dateStr,inf);
-    const w=(sh&&sh.start)?{start:sh.start,end:sh.end}:jor;
-    if(w&&w.start){const a=mins(w.start);let b=mins(w.end);
-      if(a!=null&&b!=null){if(b<=a)b=1440;
-        out.push({de:a,a:b,tipo:'work',txt:'trabajo '+w.start+'–'+w.end});}}}
+    const propio=(sh&&sh.start)?{start:sh.start,end:sh.end}:null;
+    const mete=function(w,txt){if(!w||!w.start)return;
+      const a=mins(w.start);let b=mins(w.end);
+      if(a==null||b==null)return;if(b<=a)b=1440;
+      out.push({de:a,a:b,tipo:'work',txt:txt+' '+w.start+'–'+w.end});};
+    /* un «Día de fuerza» es entreno DE 6:30 A 8:00 *Y* jornada de 8 a 15: antes solo salía lo
+       primero y el resto del día se pintaba vacío, como si no trabajaras */
+    mete(propio,'entreno');
+    if(jor&&(!propio||propio.start!==jor.start||propio.end!==jor.end))mete(jor,'jornada');
+    if(!propio&&!jor&&false)return out;}
   return out;}
 function horasDelDiaTxt(dateStr,inf){
   /* la misma lista, en una línea: «8:00–15:00 · guardia 15:00→09:15» */
@@ -1114,8 +1185,8 @@ function horasDelDiaTxt(dateStr,inf){
     if(g)return (g.desde!==g.guardia?(fmtTimeOut(g.desde)+'–'+fmtTimeOut(g.guardia)+' · '):'')+
       'guardia '+fmtTimeOut(g.guardia)+'→'+fmtTimeOut(g.sale);}
   if(sal&&sh&&esSaliente(sh))return 'sales a las '+fmtTimeOut(sal.sale);
-  const b=bs[bs.length-1];
-  return fmtTimeOut(hm(b.de))+'–'+fmtTimeOut(hm(b.a>=1440?0:b.a));}
+  return bs.map(function(b){
+    return fmtTimeOut(hm(b.de))+'–'+fmtTimeOut(hm(b.a>=1440?0:b.a));}).join(' · ');}
 function guardCount(y,m){
   /* las guardias van por TIPO (Urgencias / UMI, o lo que tú hayas puesto), no por el servicio del mes */
   const n={any:0,por:{},urg:0,umi:0};
@@ -2052,6 +2123,32 @@ function solHoyHTML(key){
     '</div></div>'+
     '<p class="mini" style="margin:9px 0 0">'+esc(sit.nombre)+
       (delta!=null&&delta!==0?(' · '+Math.abs(delta)+' min '+(delta>0?'más':'menos')+' de luz que ayer'):'')+'</p>';}
+function planDiaHTML(d){
+  /* LO QUE VAS A HACER ese día, que es a lo que se entra a «Semana». Antes la fila solo llevaba la
+     franja y las horas de dormir, y el detalle del día eran las comidas: había que abrirlo para
+     saber si ese día entrenabas o a qué hora entrabas. Aquí va todo lo que ocupa el día —jornada o
+     guardia con sus horas de verdad, entreno, eventos, repasos— y las comidas se quedan en una
+     línea con la principal. */
+  if(!d)return '';
+  const sh=shiftById(d.shiftId),bits=[];
+  const hd=d.key?horasDelDiaTxt(d.key,d.inf):'';
+  const deGuardia=!!(sh&&isGuardia(sh))||!!(d.key&&salidaDeGuardia(d.key));
+  if(hd)bits.push('<span class="pl trab">'+(deGuardia?'\ud83e\ude7a':'\ud83d\udcbc')+' '+esc(hd)+'</span>');
+  if(d.key){
+    const rt=rutinaDeFecha(d.key);
+    if(rt)bits.push('<span class="pl gym">\ud83c\udfcb\ufe0f '+esc(nombreCorto(rt.nombre))+'</span>');
+    const s2=diaSegundo(d.key,d.inf);
+    if(s2&&s2.on)bits.push('<span class="pl gym">\ud83c\udfca '+esc(s2.hora||'')+'</span>');
+    const evs=eventosDeFecha(d.key);
+    evs.slice(0,2).forEach(function(ev){
+      bits.push('<span class="pl evt">\ud83d\udcc5 '+esc(evHoraTxt(ev))+' '+esc(nombreCorto(ev.titulo||''))+'</span>');});
+    if(evs.length>2)bits.push('<span class="pl evt">+'+(evs.length-2)+'</span>');
+    try{const n=estTocaHoy(d.key);
+      if(n&&n.length)bits.push('<span class="pl est">\ud83d\udcda '+n.length+' repaso'+(n.length===1?'':'s')+'</span>');}catch(e){}
+    const cp=comidaPrincipalDe(d.key,d.inf);
+    if(cp)bits.push('<span class="pl com">\ud83c\udf7d\ufe0f '+esc(comidaPrincipalTxt(cp))+'</span>');
+  }
+  return bits.length?('<div class="drplan">'+bits.join('')+'</div>'):'';}
 function horasSuenoHTML(key,inf,shiftId){
   /* Las dos horas del sueño, SIEMPRE a la vista, igual que las dos del sol. Antes solo se veían
      abriendo el día en «Semana» (y en «Hoy» había una sola: la de acostarse). La de levantarse no
@@ -2078,10 +2175,18 @@ function horasSuenoHTML(key,inf,shiftId){
      la noche el sueño normal. Enseñar solo «⏰ 08:30» ahí era mentira: a esa hora estabas saliendo
      de trabajar. */
   if(sl.siesta){
-    return '<span class="pie sue">\ud83d\ude34 siesta '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+'</span>'+
-      '<span class="pie sue">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
-      (sl.h!=null?('<span class="pie sue'+(corto?' corto':'')+'">'+fmtHM(sl.h*60)+' en total'+
-        (corto?(' \u00b7 te faltan '+fmtHM(Math.round((c.min-sl.h)*60))):'')+'</span>'):'');}
+    /* el día de saliente se mide por partida doble: la siesta tiene su propio mínimo (6 h) y la
+       noche el de siempre (8 h). Sumarlas y comparar con 8 daba por bueno dormir 6 de siesta y 2
+       de noche, que no es lo mismo ni de lejos. */
+    const minSiesta=c.siesta,cortaSiesta=sl.siesta.min<minSiesta;
+    const cortaNoche=sl.noche!=null&&sl.noche<c.min;
+    return '<span class="pie sue'+(cortaSiesta?' corto':'')+'">\ud83d\ude34 siesta '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+
+      ' ('+fmtHM(sl.siesta.min)+')</span>'+
+      '<span class="pie sue'+(cortaNoche?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+
+      (sl.noche!=null?(' \u00b7 '+fmtHM(Math.round(sl.noche*60))):'')+'</span>'+
+      (sl.h!=null?('<span class="pie sue">'+fmtHM(sl.h*60)+' en total</span>'):'')+
+      (cortaNoche?('<span class="pie sue rec">la noche se queda corta: para tus '+c.min+' h, a la cama a las '+
+        esc(acostarsePara(sl.wakeSig||'')||'\u2014')+'</span>'):'');}
   const tarde=nt.rec&&sl.bed&&mins(sl.bed)!=null&&mins(nt.rec)!=null&&
     ((mins(sl.bed)-mins(nt.rec)+1440)%1440)>10&&((mins(sl.bed)-mins(nt.rec)+1440)%1440)<12*60;
   return '<span class="pie sue'+(corto?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
@@ -2155,15 +2260,21 @@ function mealRowsHTML(dateStr,sh){
   if(!slots.length)return '<div class="empty">Este tipo de día no tiene comidas montadas todavía: abre «Comer → Menú».</div>';
   const today=isToday(dateStr),now=new Date();
   const nowHM=today?(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')):'';
-  let nextIdx=-1;if(today)slots.forEach(function(s,i){if(nextIdx<0&&(s.time||'')>=nowHM)nextIdx=i;});
+  /* la comida principal no está a la hora de la lista: depende de si ese día entrenas o vienes de
+     guardia. Se calcula una vez y manda sobre el `time` del hueco. */
+  const cp=dateStr?comidaPrincipalDe(dateStr):null;
+  const hDe=function(x){return horaDeToma(dateStr,x,cp);};
+  let nextIdx=-1;if(today)slots.forEach(function(s,i){if(nextIdx<0&&hDe(s)>=nowHM)nextIdx=i;});
   return slots.map(function(s,i){
     const info=slotItems(sh.id,s),t=totals(info.items);
+    const hora=hDe(s),principal=!!(cp&&esComidaPrincipal(s));
     const dishTxt=info.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
       return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
-    const pasada=today&&(s.time||'')&&(s.time||'')<nowHM&&i!==nextIdx;
-    return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(s.time||'·')+'</span><span>'+
+    const pasada=today&&hora&&hora<nowHM&&i!==nextIdx;
+    return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(hora||'·')+'</span><span>'+
       '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
       '<span class="mn">'+dishTxt+'</span>'+
+      (principal?'<span class="md">hasta las '+esc(cp.a)+' · '+esc(comidaPorqueTxt(cp.por))+'</span>':'')+
       (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
       (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓ ya me la he comido</button>':'')+
       '</span></div>';}).join('');
@@ -2192,7 +2303,9 @@ function timelineBar(dateStr,inf){
   /* el trabajo del día ya no es una sola pareja de horas: una guardia entre semana es jornada y
      luego guardia, y el día siguiente empieza trabajando hasta el relevo */
   const bloq=bloquesTrabajo(dateStr,inf);
-  const comidas=(sh?slotsFor(sh.id):[]);
+  const cpF=dateStr?comidaPrincipalDe(dateStr,inf):null;
+  const comidas=(sh?slotsFor(sh.id).map(function(x){
+    return {time:horaDeToma(dateStr,x,cpF),label:x.label};}):[]);
   const seg2=diaSegundo(dateStr,inf);
   const evs=eventosDeFecha(dateStr);
   const V=franjaVentana([mins(sl.wake),mins(sl.bed),
@@ -2437,6 +2550,29 @@ function semanaConfigHTML(){
     (store.patterns.length>1?rotationStrip():'')+
     '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
   '</div>';}
+function semanaNavHTML(){
+  /* La misma navegación que ya tienen Mes («‹ septiembre 2026 › mes actual») y Hoy («‹ jue · volver
+     a hoy · sáb ›»), pero dentro de la pantalla. En «Semana» las flechas vivían SOLO en la barra de
+     arriba: si no mirabas ahí, no había manera de ver la semana que viene.
+     En modo plantilla los días no llevan fecha, así que no hay semana anterior ni siguiente: ahí lo
+     que se ofrece es pasarse a «por fecha», que es lo que hace falta para poder moverse. */
+  /* Va como TIRA FINA, no como tarjeta: «Semana empieza por los días» es una decisión tomada y hay
+     una prueba que la fija (menos de 60 px por delante del primer día). Una tarjeta con su relleno
+     metía 106 px y empujaba los siete días fuera de la primera pantalla. El rango del día no se
+     repite aquí: ya está en el rótulo de la barra de arriba. */
+  if(store.rotation.mode!=='date')
+    return '<div class="semnav">'+
+      '<span class="mini">Modo <b style="color:var(--ink)">plantilla</b>: los días no llevan fecha.</span>'+
+      '<span class="sp"></span>'+
+      '<button class="btn p s" data-a="mode-date">ver mi semana real</button></div>';
+  const lun=mondayOf(weekDate);
+  const esta=iso(mondayOf(new Date()))===iso(lun);
+  return '<div class="semnav">'+
+    '<button class="btn s" data-a="wk-prev" title="semana anterior" aria-label="semana anterior">‹</button>'+
+    '<input type="date" value="'+esc(iso(lun))+'" data-a="wk-set" aria-label="ir a la semana de esta fecha">'+
+    '<button class="btn s" data-a="wk-next" title="semana siguiente" aria-label="semana siguiente">›</button>'+
+    (esta?'<span class="mini">esta semana</span>':'<button class="btn s" data-a="today">esta semana</button>')+
+    '</div>';}
 function renderWeek(){
   const days=weekDays();   /* la rotación ya no se toca aquí: vive en semanaConfigHTML() */
   const sleepStats=(function(){const c=suenoCfg();return function(){
@@ -2498,6 +2634,8 @@ function renderWeek(){
       '<div class="drmain" data-a="day-open" data-key="'+(d.key||('tpl'+d.idx))+'" role="button" tabindex="0" '+
       'aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
       (d.key&&sh?timelineBar(d.key,d.inf):'')+
+      /* lo que vas a HACER ese día, antes que nada de comer: es a lo que se entra aquí */
+      planDiaHTML(d)+
       /* las dos horas del sueño y las dos del sol, debajo de la franja que ya las pinta.
          Antes las del sueño solo salían abriendo el día, y la de levantarse ni eso. */
       ((d.key||sh)?('<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+
@@ -2507,6 +2645,7 @@ function renderWeek(){
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
   const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
   $('#main').innerHTML=`<div class="grid">
+    ${semanaNavHTML()}
     <div class="daylist">${rows}</div>
     <div class="card"><h2>La semana en números</h2>
       <div class="tot">
@@ -6100,7 +6239,18 @@ function suenoCard(){
     /* el día de después de una guardia se duerme dos veces: la siesta al llegar y la noche. Sin
        este número la app daba por dormidas las horas que estabas saliendo del hospital. */
     '<label class="fld">Siesta del saliente (min)<input type="number" min="0" max="480" step="15" value="'+c.siesta+'" data-a="sueno-f" data-k="siesta"></label></div>'+
-    '<p class="mini" style="margin:8px 0 0">El día de después de una guardia no cuenta como una noche: de 00:00 hasta que te relevan sigues trabajando, luego duermes '+fmtHM(c.siesta)+' al llegar a casa y por la noche lo de siempre. Las dos salen en «Hoy» y en «Semana», y las dos suman.</p>'+
+    '<p class="mini" style="margin:8px 0 0">El día de después de una guardia no cuenta como una noche: de 00:00 hasta que te relevan sigues trabajando, luego duermes '+fmtHM(c.siesta)+' al llegar a casa y por la noche lo de siempre. Las dos salen en «Hoy» y en «Semana», con su propio mínimo cada una.</p>'+
+    /* la comida principal no está a una hora fija: la manda lo que haces ese día */
+    (function(){const cm=comidasCfg();
+      return '<h3 style="font-size:13px;margin:14px 0 4px">A qué hora comes</h3>'+
+      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija: si ese día entrenas cae después del entreno, si no al salir de la jornada, y el día que sales de guardia, al despertar de la siesta.</p>'+
+      '<div class="fgrid c3">'+
+      '<label class="fld">Si entrenas, desde<input type="time" value="'+esc(cm.conEntreno.de)+'" data-a="com-h" data-k="conEntreno" data-w="de"></label>'+
+      '<label class="fld">hasta<input type="time" value="'+esc(cm.conEntreno.a)+'" data-a="com-h" data-k="conEntreno" data-w="a"></label>'+
+      '<label class="fld">Si no entrenas, desde<input type="time" value="'+esc(cm.sinEntreno.de)+'" data-a="com-h" data-k="sinEntreno" data-w="de"></label>'+
+      '<label class="fld">hasta<input type="time" value="'+esc(cm.sinEntreno.a)+'" data-a="com-h" data-k="sinEntreno" data-w="a"></label>'+
+      '<label class="fld">De saliente, tras la siesta (min)<input type="number" min="0" max="180" step="5" value="'+cm.trasSiesta+'" data-a="com-tras"></label>'+
+      '</div>';})()+
     '<div class="row" style="margin-top:10px"><button class="btn p" data-a="sueno-fix">poner la cama a '+esc(rec)+' en los días de diario</button>'+
     '<button class="btn s" data-a="sueno-cenas">encajar la hora de la cena en los menús</button>'+
     '<span class="sp"></span><span class="mini">el acostarse se calcula a partir de tu despertador; si lo cambias arriba, vuelve a darle</span></div></div>';}
@@ -9940,6 +10090,15 @@ document.addEventListener('change',e=>{
     case 'gym-seg-hora':{const gg=gymS();gg.segundo.hora=el.value;
       const k2=foodKey(ui.gymDate||iso(new Date()));if(gg.marks[k2])gg.marks[k2].hora=el.value;
       save();render();break;}
+    case 'com-h':{if(!store.comidas)store.comidas={};
+      const k=el.dataset.k,w=el.dataset.w;
+      if(!store.comidas[k]||typeof store.comidas[k]!=='object')store.comidas[k]={de:'14:00',a:'15:00'};
+      if(/^\d{1,2}:\d{2}$/.test(el.value||''))store.comidas[k][w]=el.value;
+      save();render();break;}
+    case 'com-tras':{if(!store.comidas)store.comidas={};
+      const v=Math.round(+el.value||0);
+      if(v>=0&&v<=180)store.comidas.trasSiesta=v;
+      save();render();break;}
     case 'sueno-f':{if(!store.sueno)store.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
       /* la siesta SÍ puede ser 0 —hay quien aguanta del tirón—, así que no vale el mismo v>0 que
          para las demás: con el filtro de antes, poner 0 no se guardaba y no pasaba nada */
@@ -10201,6 +10360,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
+  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,

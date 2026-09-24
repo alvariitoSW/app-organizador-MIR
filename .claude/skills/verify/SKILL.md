@@ -137,6 +137,20 @@ Trampa de la que salió: **cualquier `::before`/`::after` absoluto que cubra a s
 gráficos de fondo, y se lleva por delante todo lo que haya debajo. Si añades una capa así
 de adorno, escóndela en `@media print`.
 
+## Una prueba que TUMBA la suite no es una prueba que falla
+
+Ha pasado **tres veces** en este repositorio, y siempre al revertir el arreglo para validar —que es
+justo cuando hace falta que la prueba hable—:
+
+- `page.click('[data-a="…"]')` sobre un botón que sin el arreglo no existe: 30 s de espera y la
+  suite entera abortada, sin decir qué se ha roto. Guarda el clic:
+  `const el=await page.$(sel); if(el) await el.click();` y mete ese booleano en el `check`.
+- `P.loQueSea(x).campo` cuando sin el arreglo `loQueSea()` devuelve `null`: excepción y suite
+  abortada. Lee siempre con red: `(P.loQueSea(x)||{}).campo`.
+
+Regla: **en una prueba, todo lo que el arreglo crea puede no existir**. Si no existe, la prueba
+tiene que FALLAR y enseñar qué faltaba, no reventar la corrida.
+
 ## Probar secuencias, no caminos sueltos
 
 La suite llegó a 133 pruebas en verde con seis fallos reales vivos en la pantalla de

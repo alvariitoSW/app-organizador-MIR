@@ -1177,3 +1177,27 @@ ul.slots{list-style:none;margin:0;padding:0}
   html.imp-mes .dnm{font-size:11px}
   html.imp-mes .dline{font-size:10px}
 }
+
+/* ============ «Semana»: moverse de semana desde la propia pantalla ============
+   Igual que la fila de Mes y la de Hoy, pero SIN tarjeta: «Semana empieza por los días» está
+   decidido y medido (menos de 60 px por delante del primer día). Con el relleno de una .card eran
+   106 px y los siete días se salían de la primera pantalla. */
+.semnav{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0;margin-bottom:-6px}
+.semnav .btn{min-height:34px;padding:4px 10px;flex:none}
+.semnav input[type=date]{flex:1 1 auto;min-width:0;height:34px;padding:2px 8px;font-size:13px}
+.semnav .mini{flex:none;white-space:nowrap}
+
+/* ============ «Semana»: lo que vas a hacer ese día ============
+   Una línea de etiquetas debajo de la franja, antes que nada de comer. Cada cosa con su color, el
+   mismo que ya usa la franja de 24 h: trabajo ámbar, guardia rojo, entreno cian, eventos violeta.
+   Se entra a «Semana» a ver qué toca, no a leer el menú. */
+.drplan{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.drplan .pl{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+  padding:2px 8px;border-radius:999px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink2);white-space:nowrap;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis}
+.drplan .pl.trab{color:var(--ink);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.drplan .pl.gym{color:var(--brand);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.drplan .pl.evt{color:var(--brand2);border-color:color-mix(in srgb,var(--brand2) 40%,var(--line))}
+.drplan .pl.est{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.drplan .pl.com{color:var(--ink2)}
