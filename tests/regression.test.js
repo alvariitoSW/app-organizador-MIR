@@ -3867,7 +3867,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
           abiertos: filas.filter((f) => f.classList.contains('open')).length,
           conLasDos: filas.filter((f) => {
             const t = f.querySelector('.drsol');
-            return t && /🛌/.test(t.innerText) && /⏰/.test(t.innerText);
+            if (!t) return false;
+            const x = t.innerText;
+            // el día de después de una guardia se duerme DOS veces y no hay hora de levantarse: esa
+            // mañana vienes de trabajar. Ahí las dos horas son la siesta y la cama, no ⏰ y 🛌.
+            return (/🛌/.test(x) && /⏰/.test(x)) || (/😴/.test(x) && /🛌/.test(x));
           }).length };
       };
       P.store.rotation.mode = 'date'; P.save(); P.render();
@@ -4388,6 +4392,86 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       trasPagar.pagado === 58.9 + 41.3 && enMes >= 2,
       JSON.stringify({ enHoy, trasPagar, enMes }));
     await page.evaluate(() => { window.PG.store.dinero = { gastos: [], pagos: [], presupuesto: 0 }; window.PG.save(); });
+  }
+
+  // ===================== Las horas de la guardia y del saliente =====================
+  {
+    // Una guardia no dura lo mismo según el día en que cae ni según de qué sea, y la app las daba
+    // TODAS por 08:00–08:00: el tipo de día traía una sola pareja de horas. Lo real es
+    //   · entre semana entras a tu jornada (8:00) y la guardia empieza al acabarla (15:00);
+    //   · el sábado y el domingo entras a la hora del relevo (9:00 urgencias, 10:00 UMI);
+    //   · sales a la hora del relevo DEL DÍA EN QUE SALES, no del día en que entraste;
+    //   · y en UMI hay pase de guardia, así que sales más tarde.
+    // Y el día siguiente no empieza en casa: de 00:00 hasta que te relevan sigues trabajando, y
+    // luego se duerme DOS veces (la siesta al llegar y por la noche lo de siempre).
+    const casos = await page.evaluate(() => {
+      const P = window.PG;
+      P.store.rotation.mode = 'date';
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      // octubre de 2026: el 6 es martes, el 2 viernes, el 3 sábado y el 4 domingo
+      const dias = { martes: '2026-10-06', viernes: '2026-10-02', sabado: '2026-10-03', domingo: '2026-10-04' };
+      const out = {};
+      ['urg', 'umi'].forEach((tipo) => {
+        Object.keys(dias).forEach((nm) => {
+          const k = dias[nm];
+          P.setDayOverride(k, G.id, tipo); P.render();
+          const g = P.guardiaHoras(k, tipo);
+          const sig = P.addDays(P.parseDate(k), 1);
+          const k2 = sig.getFullYear() + '-' + String(sig.getMonth() + 1).padStart(2, '0') + '-' + String(sig.getDate()).padStart(2, '0');
+          const sal = P.salidaDeGuardia(k2), sl = P.sleepOf(k2);
+          out[tipo + ' ' + nm] = { entra: g.desde, guardia: g.guardia, sale: g.sale,
+            salienteHasta: sal ? sal.sale : null, siesta: sl.siesta ? sl.siesta.de + '–' + sl.siesta.a : null };
+          P.setDayOverride(k, null); P.render();
+        });
+      });
+      return out;
+    });
+    const esperado = {
+      'urg martes':  { entra: '08:00', guardia: '15:00', sale: '08:00' },
+      'urg viernes': { entra: '08:00', guardia: '15:00', sale: '09:00' },
+      'urg sabado':  { entra: '09:00', guardia: '09:00', sale: '09:00' },
+      'urg domingo': { entra: '09:00', guardia: '09:00', sale: '08:00' },
+      'umi martes':  { entra: '08:00', guardia: '15:00', sale: '09:15' },
+      'umi viernes': { entra: '08:00', guardia: '15:00', sale: '11:15' },
+      'umi sabado':  { entra: '10:00', guardia: '10:00', sale: '11:15' },
+      'umi domingo': { entra: '10:00', guardia: '10:00', sale: '09:15' },
+    };
+    const fallan = Object.keys(esperado).filter((k) => {
+      const a = casos[k] || {}, b = esperado[k];
+      return a.entra !== b.entra || a.guardia !== b.guardia || a.sale !== b.sale;
+    });
+    check('la guardia entra y sale a su hora según el día y el tipo, con el pase de UMI incluido',
+      fallan.length === 0, JSON.stringify({ fallan, casos }));
+    // el día de después: sigues trabajando hasta el relevo, y ahí empieza la siesta
+    const salienteOk = Object.keys(esperado).every((k) => casos[k] && casos[k].salienteHasta === esperado[k].sale) &&
+      Object.keys(esperado).every((k) => casos[k] && !!casos[k].siesta);
+    check('el día de después de la guardia trabaja hasta el relevo y luego duerme la siesta',
+      salienteOk, JSON.stringify(casos));
+
+    // …y ahora la cadena: cambiar la hora DESDE LA PANTALLA y que el mes se entere. El campo vive
+    // en el switch de `change`, así que hay que salir del campo: con page.fill() a secas no salta.
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'rotacion'; P.render(); });
+    await page.waitForTimeout(350);
+    const campo = await page.$('[data-a="gtipo-finde"][data-code="umi"]');
+    if (campo) { await campo.fill('11:30'); await page.keyboard.press('Tab'); await page.waitForTimeout(300); }
+    const trasCambio = await page.evaluate(() => {
+      const P = window.PG;
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      P.setDayOverride('2026-10-03', G.id, 'umi'); P.render();
+      const g = P.guardiaHoras('2026-10-03', 'umi');
+      // y que la hora sobreviva a recargar: normalize() tira todo campo que no conozca
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const tras = P.gTipo('umi');
+      const g2 = P.guardiaHoras('2026-10-03', 'umi');
+      P.setDayOverride('2026-10-03', null); P.render();
+      return { entra: g.desde, sale: g.sale, guardadoFinde: tras.relevoFinde, guardadoPase: tras.pase, saleTrasRecargar: g2.sale };
+    });
+    check('cambiar la hora del relevo desde la pantalla recalcula la guardia, y la hora se guarda',
+      trasCambio.entra === '11:30' && trasCambio.sale === '12:45' &&
+      trasCambio.guardadoFinde === '11:30' && trasCambio.guardadoPase === 75 &&
+      trasCambio.saleTrasRecargar === '12:45',
+      JSON.stringify(trasCambio));
+    await page.evaluate(() => { window.PG.setHorasTipo('umi', 'relevoFinde', '10:00'); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

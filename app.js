@@ -409,6 +409,18 @@ function normalize(o){
   if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=[2,5];
   if(!o.sueno||typeof o.sueno!=='object')o.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o.sueno[k]!=='number')o.sueno[k]={min:8,cenaMin:90,cenaMax:180,latencia:10}[k];});
+  /* la siesta del saliente: puede ser 0, así que se comprueba el rango y no el «si es verdadero» */
+  if(typeof o.sueno.siesta!=='number'||o.sueno.siesta<0||o.sueno.siesta>480)o.sueno.siesta=180;
+  /* las horas de cada tipo de guardia. Sin esto, normalize() las tiraba al recargar y la app volvía
+     a creer que todas las guardias duran de 8:00 a 8:00 pasara lo que pasara. */
+  if(Array.isArray(o.rotation.guardiaTipos))o.rotation.guardiaTipos=o.rotation.guardiaTipos
+    .filter(function(t){return t&&t.code;})
+    .map(function(t){const h=function(v,d){const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||'').trim());
+        return m&&+m[1]<24&&+m[2]<60?(String(+m[1]).padStart(2,'0')+':'+m[2]):d;};
+      return {code:String(t.code).slice(0,8),label:String(t.label||'').slice(0,22),
+        relevoSem:h(t.relevoSem,'08:00'),
+        relevoFinde:h(t.relevoFinde,String(t.code)==='umi'?'10:00':'09:00'),
+        pase:Math.max(0,Math.min(480,Math.round(+t.pase||0)))};});
   if(!Array.isArray(o.rotation.vacaciones))o.rotation.vacaciones=[];
   o.rotation.vacaciones=o.rotation.vacaciones.filter(function(v){return v&&v.start&&v.end;})
     .map(function(v){return {label:String(v.label||''),start:String(v.start),end:String(v.end)};});
@@ -807,9 +819,27 @@ function dayInfo(dateStr){
           guard:ov&&ov.guard?ov.guard:'',vac:vac,rhythm:rhythmOf(shiftId,dateStr)};}
 function sleepOf(dateStr,infOpt){
   const inf=infOpt||dayInfo(dateStr);const rh=inf.rhythm||{};
-  return {bed:rh.sleep||'',wake:rh.wake||'',h:(rh.sleep&&rh.wake)?sleepHours(rh.sleep,rh.wake):null};}
-function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10};const o=store.sueno||{};
+  const o={bed:rh.sleep||'',wake:rh.wake||'',h:(rh.sleep&&rh.wake)?sleepHours(rh.sleep,rh.wake):null};
+  const sal=dateStr?salidaDeGuardia(dateStr):null;
+  if(!sal)return o;
+  /* El día de después de una guardia esa mañana no vienes de dormir: vienes de trabajar. Lo que
+     hay son DOS sueños —la siesta al llegar a casa y, por la noche, el de siempre para el día
+     siguiente—, y la app contaba como sueño las horas que estabas en el hospital. */
+  const c=suenoCfg(),s0=mins(sal.sale);
+  if(s0!=null&&c.siesta>0){const de=s0+trayectoMin();
+    o.siesta={de:hm(de),a:hm(de+c.siesta),min:c.siesta};
+    o.wake=o.siesta.a;}
+  else o.wake='';
+  const sig=nextIso(dateStr);
+  o.wakeSig=sig?((rhythmOf(dayInfo(sig).shiftId,sig)||{}).wake||''):'';
+  o.noche=(o.bed&&o.wakeSig)?sleepHours(o.bed,o.wakeSig):null;
+  const tot=(o.noche||0)+(o.siesta?o.siesta.min/60:0);
+  o.h=tot>0?Math.round(tot*10)/10:null;
+  return o;}
+function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:180};const o=store.sueno||{};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o[k]==='number'&&o[k]>0)d[k]=o[k];});
+  /* la siesta del saliente puede ser 0 (hay quien aguanta del tirón), así que no vale el >0 */
+  if(typeof o.siesta==='number'&&o.siesta>=0&&o.siesta<=480)d.siesta=o.siesta;
   return d;}
 function mins(t){const m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim());return m?(+m[1])*60+(+m[2]):null;}
 function hm(m){const x=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');}
@@ -899,10 +929,19 @@ function setMonthService(y,m,svc,quota){
 function gTipos(){
   /* la lista de tipos de guardia es tuya; por defecto las dos que haces */
   const r=store.rotation;
+  const hora=function(v,pordef){const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||'').trim());
+    return m&&+m[1]<24&&+m[2]<60?(String(+m[1]).padStart(2,'0')+':'+m[2]):pordef;};
   const sane=function(t){const lab=String((t&&t.label)||'').trim().slice(0,22);
     let code=String((t&&t.code)||lab).trim().toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);
     if(!code)code='g'+Math.random().toString(36).slice(2,5);
-    return {code:code,label:lab||code.toUpperCase()};};
+    /* cada tipo de guardia trae SUS horas: a qué hora es el relevo entre semana, a qué hora el fin
+       de semana y cuánto se alarga la salida por el pase de guardia. Sin esto todas las guardias
+       duraban 08:00–08:00 pasara lo que pasara. */
+    const jd=(store.rotation&&store.rotation.jornada)||{};
+    return {code:code,label:lab||code.toUpperCase(),
+      relevoSem:hora(t&&t.relevoSem,hora(jd.start,'08:00')),
+      relevoFinde:hora(t&&t.relevoFinde,code==='umi'?'10:00':'09:00'),
+      pase:Math.max(0,Math.min(480,+((t&&t.pase)!=null?t.pase:(code==='umi'?75:0))||0))};};
   if(!Array.isArray(r.guardiaTipos)||!r.guardiaTipos.length)
     r.guardiaTipos=[{code:'urg',label:'Urgencias'},{code:'umi',label:'UMI'}];
   r.guardiaTipos=r.guardiaTipos.map(sane);
@@ -944,6 +983,18 @@ function setGuardiaTipo(dateStr,code){
   return {ok:true,msg:'guardia de '+t.label+' el '+k.slice(8)+' '+MON[+k.slice(5,7)-1]+
     (store.rotation.autoPos!==false?(' · el '+(cae?DOWN0[sd.to]:'día siguiente')+' queda saliente solo')
       :' · el post-guardia automático está apagado: lo pones tú')};}
+function setHorasTipo(code,campo,valor){
+  /* las horas de cada tipo de guardia: el relevo entre semana, el del fin de semana y el pase */
+  const t=gTipos().filter(function(x){return x.code===code;})[0];
+  if(!t)return 'ese tipo de guardia no existe';
+  if(campo==='pase'){t.pase=Math.max(0,Math.min(480,Math.round(+valor||0)));
+    save();render();
+    return t.label+': '+(t.pase?('sales '+fmtHM(t.pase)+' más tarde por el pase de guardia'):'sin pase de guardia');}
+  const m=/^(\d{1,2}):(\d{2})$/.exec(String(valor||'').trim());
+  if(!m||+m[1]>23||+m[2]>59)return 'pon la hora como 09:00';
+  t[campo]=String(+m[1]).padStart(2,'0')+':'+m[2];
+  save();render();
+  return t.label+': relevo '+(campo==='relevoSem'?'de lunes a viernes':'de sábado y domingo')+' a las '+t[campo];}
 function renombraTipo(code,label){
   const l=gTipos(),t=l.filter(function(x){return x.code===code;})[0];
   if(!t)return 'ese tipo no existe';
@@ -963,6 +1014,107 @@ function addGuardiaTipo(nombre){
   store.rotation.cupoTipos[code]=0;
   save();render();
   return {ok:true,msg:'añadido «'+n.slice(0,22)+'» (se llama '+code+'): ponle cuántas tocan y sale en cada día'};}
+/* ===================== a qué hora se entra y se sale de guardia =====================
+   Una guardia no dura lo mismo según el día en que cae ni según de qué sea, y de ahí salía el
+   error que se veía en pantalla: el turno decía 08:00–08:00 siempre, cuando en realidad
+
+     · entre semana entras a las 8:00 a tu JORNADA normal y a las 15:00 empieza la guardia;
+     · el sábado y el domingo entras directamente a la hora del relevo (9:00 en urgencias,
+       10:00 en UMI), sin jornada previa;
+     · y SALES a la hora del relevo DEL DÍA EN QUE SALES —no del día en que entraste—, porque esa
+       es la hora a la que entra el siguiente: 8:00 si es laborable, 9:00/10:00 si es finde;
+     · en UMI, además, hay pase de guardia: se sale un rato más tarde.
+
+   Con esa única regla salen todos los casos: viernes → sábado a las 9:00 (urgencias) o 10:00
+   (UMI), sábado → domingo a la misma hora, domingo → lunes a las 8:00 en los dos. */
+function esDiaDeJornada(d){
+  const j=store.rotation&&store.rotation.jornada;
+  if(!j||!j.start||!j.end)return false;
+  const wd=(j.workdays&&j.workdays.length)?j.workdays:[1,2,3,4,5];
+  return wd.indexOf(d.getDay())>=0;}
+function horaRelevo(t,d){
+  /* a qué hora se hace el cambio de guardia ESE día */
+  const j=store.rotation&&store.rotation.jornada;
+  return esDiaDeJornada(d)?(t.relevoSem||(j&&j.start)||'08:00'):(t.relevoFinde||'09:00');}
+function guardiaHoras(dateStr,tipoCode){
+  /* desde: cuándo pisas el hospital · guardia: cuándo empieza la guardia propiamente
+     sale:  cuándo te vas al día siguiente, con el pase ya sumado */
+  const d=parseDate(dateStr);if(!d)return null;
+  const t=gTipo(tipoCode),j=store.rotation&&store.rotation.jornada;
+  const conJornada=esDiaDeJornada(d);
+  const rel=mins(horaRelevo(t,addDays(d,1)));
+  const pase=Math.max(0,Math.min(480,+t.pase||0));
+  return {tipo:t,code:t.code,
+    desde:conJornada?j.start:horaRelevo(t,d),
+    guardia:conJornada?j.end:horaRelevo(t,d),
+    relevo:rel==null?'':hm(rel),
+    sale:rel==null?'':hm(rel+pase),
+    pase:pase};}
+let _salidaCache={},_salidaTick=-1;
+function salidaDeGuardia(dateStr){
+  /* el día DESPUÉS de una guardia no empieza en casa: de 00:00 hasta que te relevan sigues
+     trabajando. Vale aunque ese día no esté marcado como saliente —si la guardia cae en sábado el
+     saliente se pasa al lunes, pero el domingo por la mañana sales del hospital igual—. */
+  if(!dateStr)return null;
+  if(_salidaTick!==_renderTick){_salidaCache={};_salidaTick=_renderTick;}
+  if(Object.prototype.hasOwnProperty.call(_salidaCache,dateStr))return _salidaCache[dateStr];
+  let out=null;
+  const d=parseDate(dateStr);
+  if(d){const ant=iso(addDays(d,-1)),inf=dayInfo(ant),sh=shiftById(inf.shiftId);
+    if(sh&&isGuardia(sh))out=guardiaHoras(ant,inf.guard);}
+  _salidaCache[dateStr]=out;
+  return out;}
+function esSaliente(sh){return !!sh&&/saliente|post ?-?guardia/i.test(String(sh.name||''));}
+function trayectoMin(){
+  /* lo que tardas del hospital a casa: sale de tus propias horas de guardia (salir → llegar) */
+  const rh=(store.rhythm&&store.rhythm['sh-g'])||{};
+  const a=mins(rh.leave),b=mins(rh.arrive);
+  const t=(a!=null&&b!=null)?((b-a+1440)%1440):15;
+  return (t>0&&t<=120)?t:15;}
+function bloquesTrabajo(dateStr,inf){
+  /* Todo lo que se trabaja ESE día, ya partido por la medianoche y en minutos. Es una LISTA porque
+     un día puede tener dos cosas: la jornada y luego la guardia encima, o la salida de la guardia
+     de ayer y nada más. Antes esto era una sola pareja de horas sacada del tipo de día, y por eso
+     el saliente salía como si trabajaras de 9 a 13 cuando lo que hay es trabajo hasta el relevo. */
+  const out=[];
+  if(!dateStr){
+    const sh0=shiftById(inf&&inf.shiftId);
+    if(sh0&&sh0.start){const a=mins(sh0.start);let b=mins(sh0.end);
+      if(a!=null&&b!=null){if(b<=a)b=1440;
+        out.push({de:a,a:b,tipo:isGuardia(sh0)?'guard':'work',txt:(isGuardia(sh0)?'guardia ':'trabajo ')+sh0.start+'–'+sh0.end});}}
+    return out;}
+  inf=inf||dayInfo(dateStr);
+  const sh=shiftById(inf.shiftId);
+  const sal=salidaDeGuardia(dateStr);
+  if(sal&&mins(sal.sale)!=null&&mins(sal.sale)>0)
+    out.push({de:0,a:mins(sal.sale),tipo:'guard',
+      txt:'guardia de ayer hasta el relevo de las '+sal.sale+(sal.pase?(' (con pase de '+fmtHM(sal.pase)+')'):'')});
+  if(sh&&isGuardia(sh)){
+    const g=guardiaHoras(dateStr,inf.guard);
+    if(g){const d0=mins(g.desde),g0=mins(g.guardia);
+      if(d0!=null&&g0!=null&&g0>d0)out.push({de:d0,a:g0,tipo:'work',txt:'jornada '+g.desde+'–'+g.guardia});
+      if(g0!=null)out.push({de:g0,a:1440,tipo:'guard',txt:'guardia desde las '+g.guardia+', sales a las '+g.sale});}
+  }else if(!(sal&&esSaliente(sh))){
+    /* el saliente ya tiene sus horas de verdad arriba: las suyas propias sobran y estorban */
+    const jor=jornadaOf(dateStr,inf);
+    const w=(sh&&sh.start)?{start:sh.start,end:sh.end}:jor;
+    if(w&&w.start){const a=mins(w.start);let b=mins(w.end);
+      if(a!=null&&b!=null){if(b<=a)b=1440;
+        out.push({de:a,a:b,tipo:'work',txt:'trabajo '+w.start+'–'+w.end});}}}
+  return out;}
+function horasDelDiaTxt(dateStr,inf){
+  /* la misma lista, en una línea: «8:00–15:00 · guardia 15:00→09:15» */
+  const bs=bloquesTrabajo(dateStr,inf);
+  if(!bs.length)return '';
+  const sal=dateStr?salidaDeGuardia(dateStr):null;
+  const sh=shiftById((inf||dayInfo(dateStr||'')).shiftId);
+  if(sh&&isGuardia(sh)&&dateStr){
+    const g=guardiaHoras(dateStr,(inf||dayInfo(dateStr)).guard);
+    if(g)return (g.desde!==g.guardia?(fmtTimeOut(g.desde)+'–'+fmtTimeOut(g.guardia)+' · '):'')+
+      'guardia '+fmtTimeOut(g.guardia)+'→'+fmtTimeOut(g.sale);}
+  if(sal&&sh&&esSaliente(sh))return 'sales a las '+fmtTimeOut(sal.sale);
+  const b=bs[bs.length-1];
+  return fmtTimeOut(hm(b.de))+'–'+fmtTimeOut(hm(b.a>=1440?0:b.a));}
 function guardCount(y,m){
   /* las guardias van por TIPO (Urgencias / UMI, o lo que tú hayas puesto), no por el servicio del mes */
   const n={any:0,por:{},urg:0,umi:0};
@@ -1105,7 +1257,11 @@ function dayLine(d){
   /* las horas de dormir y de levantarse NO van aquí: desde que se enseñan siempre debajo de la
      franja (horasSuenoHTML), ponerlas también en esta línea era decirlas dos veces en la misma
      fila. Aquí se queda lo del trabajo, que es lo otro que define el día. */
-  if(sh.start)t.push((g?'🩺 ':'💼 ')+fmtTimeOut(sh.start)+(sh.end?'–'+fmtTimeOut(sh.end):'')+
+  /* con fecha, las horas DE VERDAD de ese día: una guardia de sábado no entra a la misma hora que
+     una de martes, y el saliente trabaja hasta que le relevan */
+  const hd=d.key?horasDelDiaTxt(d.key,d.inf):'';
+  if(hd)t.push((g?'🩺 ':'💼 ')+hd);
+  else if(sh.start)t.push((g?'🩺 ':'💼 ')+fmtTimeOut(sh.start)+(sh.end?'–'+fmtTimeOut(sh.end):'')+
     (jo&&sh.start!==jo.start?(' · jornada '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end)):''));
   else if(jo)t.push('💼 '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end));
   else if(rh.leave)t.push('🚌 '+fmtTimeOut(rh.leave));
@@ -1917,6 +2073,14 @@ function horasSuenoHTML(key,inf,shiftId){
     return '<span class="pie sue falta" data-a="ir-sueno" role="button" tabindex="0">'+
       '\ud83d\udecc sin horas puestas \u2014 ponlas</span>';}
   const corto=sl.h!=null&&sl.h<c.min;
+  /* el día de después de una guardia se duerme DOS veces: la siesta al llegar del hospital y por
+     la noche el sueño normal. Enseñar solo «⏰ 08:30» ahí era mentira: a esa hora estabas saliendo
+     de trabajar. */
+  if(sl.siesta){
+    return '<span class="pie sue">\ud83d\ude34 siesta '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+'</span>'+
+      '<span class="pie sue">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
+      (sl.h!=null?('<span class="pie sue'+(corto?' corto':'')+'">'+fmtHM(sl.h*60)+' en total'+
+        (corto?(' \u00b7 te faltan '+fmtHM(Math.round((c.min-sl.h)*60))):'')+'</span>'):'');}
   const tarde=nt.rec&&sl.bed&&mins(sl.bed)!=null&&mins(nt.rec)!=null&&
     ((mins(sl.bed)-mins(nt.rec)+1440)%1440)>10&&((mins(sl.bed)-mins(nt.rec)+1440)%1440)<12*60;
   return '<span class="pie sue'+(corto?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
@@ -2023,15 +2187,18 @@ function timelineBar(dateStr,inf){
      Cada categoría lleva su color fijo (tlColor), configurable en Ajustes. */
   if(!dateStr)return '';
   inf=inf||dayInfo(dateStr);
-  const sh=shiftById(inf.shiftId),sl=sleepOf(dateStr,inf),jor=jornadaOf(dateStr,inf);
-  const guardia=!!(sh&&isGuardia(sh));
-  const work=(sh&&sh.start)?{start:sh.start,end:sh.end}:jor;
+  const sh=shiftById(inf.shiftId),sl=sleepOf(dateStr,inf);
+  /* el trabajo del día ya no es una sola pareja de horas: una guardia entre semana es jornada y
+     luego guardia, y el día siguiente empieza trabajando hasta el relevo */
+  const bloq=bloquesTrabajo(dateStr,inf);
   const comidas=(sh?slotsFor(sh.id):[]);
   const seg2=diaSegundo(dateStr,inf);
   const evs=eventosDeFecha(dateStr);
   const V=franjaVentana([mins(sl.wake),mins(sl.bed),
-    work&&mins(work.start),work&&mins(work.end),
+    sl.siesta?mins(sl.siesta.de):null,sl.siesta?mins(sl.siesta.a):null,
     (seg2&&seg2.on)?mins(seg2.hora):null]
+    .concat(bloq.map(function(b){return b.de;}))
+    .concat(bloq.map(function(b){return b.a>=1440?1439:b.a;}))
     .concat(comidas.map(function(c){return mins(c.time);}))
     .concat(evs.map(function(e){return mins(e.hora);})));
   const span=V.to-V.from;
@@ -2044,12 +2211,12 @@ function timelineBar(dateStr,inf){
     return '<i class="tl-seg" style="left:'+pct(a).toFixed(1)+'%;width:'+((b-a)/span*100).toFixed(1)+
       '%;background:'+esc(color)+'" title="'+esc(titulo||'')+'"></i>';};
   const segs=[];
-  if(sl.wake)segs.push(seg(0,mins(sl.wake),tlColor('sleep'),'durmiendo hasta las '+sl.wake));
+  /* saliente: la mañana no es sueño, es trabajo; el sueño de la mañana es la siesta de después */
+  if(sl.siesta)segs.push(seg(mins(sl.siesta.de),mins(sl.siesta.a),tlColor('sleep'),
+    'siesta al llegar de la guardia · '+sl.siesta.de+'–'+sl.siesta.a));
+  else if(sl.wake)segs.push(seg(0,mins(sl.wake),tlColor('sleep'),'durmiendo hasta las '+sl.wake));
   if(sl.bed)segs.push(seg(mins(sl.bed),1440,tlColor('sleep'),'a la cama a las '+sl.bed));
-  if(work&&work.start){
-    let m1=mins(work.start),m2=mins(work.end);
-    if(m1!=null&&m2!=null){if(m2<=m1)m2=1440;
-      segs.push(seg(m1,m2,tlColor(guardia?'guard':'work'),(guardia?'guardia ':'trabajo ')+work.start+'–'+work.end));}}
+  bloq.forEach(function(b){segs.push(seg(b.de,b.a,tlColor(b.tipo),b.txt||''));});
   const dots=comidas.map(function(c){const m=mins(c.time);if(!dentro(m))return '';
     return '<i class="tl-dot" style="left:'+pct(m).toFixed(1)+'%;background:'+esc(tlColor('meal'))+
       '" title="'+esc(c.time||'')+' · '+esc(c.label||'')+'"></i>';}).join('');
@@ -2161,7 +2328,9 @@ function renderHoy(){
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
   const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
   const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
-    (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(inf.guard):'')+(sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):'')):'sin día asignado');
+    (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(gTipo(inf.guard).label):'')+
+      (horasDelDiaTxt(hoy,inf)?(' · '+esc(horasDelDiaTxt(hoy,inf))):
+        (sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):''))):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
   $('#main').innerHTML='<div class="grid">'+
     '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'<span class="hoychip">hoy</span>'+
@@ -2282,7 +2451,7 @@ function renderWeek(){
        mantiene la línea de texto dayLine() de siempre */
     const head='<span class="drday">'+d.short+(d.sub?' '+d.sub:'')+'</span>'+
       '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+
-        (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' · '+esc(d.guard):''):'sin asignar')+'</span>'+
+        (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' · '+esc(gTipo(d.guard).label):''):'sin asignar')+'</span>'+
       (!d.key&&sh?'<span class="drsch">'+esc(dayLine(d))+'</span>':'')+
       /* las horas del sueño ya no van aquí a medias: van completas y siempre, debajo de la franja */
       (d.key?eventosTagsHTML(eventosDeFecha(d.key)):'')+
@@ -2482,6 +2651,19 @@ function renderMonth(){
        día van una línea por cosa (jornada, entreno, eventos), cortas y con su color */
     const lineas=[];
     if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
+    /* en la casilla caben ocho caracteres, así que la guardia va como «15→8» (empieza → sales) y el
+       día de después como «→9:15» (hasta esa hora sigues trabajando). Antes no salía ninguna hora:
+       jornadaOf() devuelve null en las guardias y la casilla se quedaba muda justo el día que más
+       importa saber a qué hora entras. */
+    if(d.key){
+      const shD=shiftById(d.shiftId);
+      if(shD&&isGuardia(shD)){const g=guardiaHoras(d.key,d.guard);
+        if(g)lineas.push('<span class="dline hr" title="entras a las '+esc(g.desde)+
+          (g.desde!==g.guardia?(', guardia desde las '+esc(g.guardia)):'')+' y sales a las '+esc(g.sale)+'">'+
+          hCorta(g.guardia)+'→'+hCorta(g.sale)+'</span>');}
+      else{const sal=salidaDeGuardia(d.key);
+        if(sal)lineas.push('<span class="dline hr" title="vienes de guardia: trabajas hasta las '+esc(sal.sale)+'">→'+
+          hCorta(sal.sale)+'</span>');}}
     if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
       '🏊 '+esc(seg.hora||'')+'</span>');
     const rtDia=d.key?rutinaDeFecha(d.key):null;
@@ -5890,7 +6072,11 @@ function suenoCard(){
     '<div class="fgrid c3"><label class="fld">Horas mínimas<input type="number" min="6" max="10" step="0.25" value="'+c.min+'" data-a="sueno-f" data-k="min"></label>'+
     '<label class="fld">Tardas en dormirte (min)<input type="number" min="0" max="60" value="'+c.latencia+'" data-a="sueno-f" data-k="latencia"></label>'+
     '<label class="fld">Cena antes (h)<input type="number" min="60" max="240" step="15" value="'+c.cenaMax+'" data-a="sueno-f" data-k="cenaMax"></label>'+
-    '<label class="fld">Cena como pronto (h)<input type="number" min="30" max="120" step="15" value="'+c.cenaMin+'" data-a="sueno-f" data-k="cenaMin"></label></div>'+
+    '<label class="fld">Cena como pronto (h)<input type="number" min="30" max="120" step="15" value="'+c.cenaMin+'" data-a="sueno-f" data-k="cenaMin"></label>'+
+    /* el día de después de una guardia se duerme dos veces: la siesta al llegar y la noche. Sin
+       este número la app daba por dormidas las horas que estabas saliendo del hospital. */
+    '<label class="fld">Siesta del saliente (min)<input type="number" min="0" max="480" step="15" value="'+c.siesta+'" data-a="sueno-f" data-k="siesta"></label></div>'+
+    '<p class="mini" style="margin:8px 0 0">El día de después de una guardia no cuenta como una noche: de 00:00 hasta que te relevan sigues trabajando, luego duermes '+fmtHM(c.siesta)+' al llegar a casa y por la noche lo de siempre. Las dos salen en «Hoy» y en «Semana», y las dos suman.</p>'+
     '<div class="row" style="margin-top:10px"><button class="btn p" data-a="sueno-fix">poner la cama a '+esc(rec)+' en los días de diario</button>'+
     '<button class="btn s" data-a="sueno-cenas">encajar la hora de la cena en los menús</button>'+
     '<span class="sp"></span><span class="mini">el acostarse se calcula a partir de tu despertador; si lo cambias arriba, vuelve a darle</span></div></div>';}
@@ -6014,10 +6200,27 @@ function renderCfg(){
     const cap=function(x){return x.charAt(0).toUpperCase()+x.slice(1);};
     const diaOpts=function(sel){return DOWN0.map(function(n,i){
       return '<option value="'+i+'" '+(i===sel?'selected':'')+'>'+cap(n)+'</option>';}).join('');};
+    const jd=store.rotation.jornada||{};
+    const ejemplo=function(t){
+      /* un ejemplo de verdad, con las horas puestas, para no tener que fiarse de la explicación */
+      const rs=t.relevoSem||jd.start||'08:00',rf=t.relevoFinde||'09:00';
+      const sale=function(h){const m=mins(h);return m==null?h:hm(m+(+t.pase||0));};
+      return 'martes: '+(jd.start||'08:00')+' jornada \u2192 guardia desde '+(jd.end||'15:00')+
+        ', sales el miércoles a las '+sale(rs)+
+        ' \u00b7 sábado: entras a las '+rf+' y sales el domingo a las '+sale(rf)+
+        ' \u00b7 domingo: entras a las '+rf+' y sales el lunes a las '+sale(rs);};
     const tipoRows=tipos.map(function(t){
-      return '<div class="row" style="margin-top:6px">'+
-        '<label class="fld" style="flex:1 1 160px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
-        '<label class="fld" style="flex:0 0 110px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
+      return '<div class="tarj" style="margin-top:8px">'+
+        '<div class="row">'+
+        '<label class="fld" style="flex:1 1 150px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
+        '<label class="fld" style="flex:0 0 108px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
+        '</div>'+
+        '<div class="row" style="margin-top:6px">'+
+        '<label class="fld" style="flex:0 0 132px">relevo L\u2013V<input type="time" value="'+esc(t.relevoSem||jd.start||'08:00')+'" data-a="gtipo-sem" data-code="'+t.code+'"></label>'+
+        '<label class="fld" style="flex:0 0 142px">relevo sáb. y dom.<input type="time" value="'+esc(t.relevoFinde||'09:00')+'" data-a="gtipo-finde" data-code="'+t.code+'"></label>'+
+        '<label class="fld" style="flex:0 0 132px">pase de guardia (min)<input type="number" min="0" max="480" step="5" value="'+(+t.pase||0)+'" data-a="gtipo-pase" data-code="'+t.code+'"></label>'+
+        '</div>'+
+        '<p class="mini" style="margin:7px 0 0">'+esc(ejemplo(t))+'</p>'+
       '</div>';}).join('');
     return cfgPantalla('Rotación por fecha',
     '<div class="card"><p class="note" style="margin:0 0 10px">Si tu calendario es un ciclo de semanas (1G·S → 2G·S·S → libre), '+
@@ -6040,7 +6243,7 @@ function renderCfg(){
       <p class="mini" style="margin-top:8px">Ahora mismo: ${saltoDiaTxt()}.</p>
       <label class="fld" style="max-width:220px;margin-top:10px">Guardias por mes, por defecto (para un mes que no hayas tocado)
         <input type="number" min="0" max="15" value="${store.rotation.guardiasMes!=null?store.rotation.guardiasMes:6}" data-a="guard-default"></label>
-      <p class="mini" style="margin-top:10px">Tipos de guardia y cuántas de cada uno tocan al mes (esto es lo mismo que ves dentro de «Mes → configurar este mes»; aquí queda a mano sin tener que entrar cada vez):</p>
+      <p class="mini" style="margin-top:10px">Tipos de guardia, cuántas tocan al mes y <b>a qué hora se entra y se sale</b>. La regla es una sola: <b>sales a la hora del relevo del día en que sales</b>, porque es cuando entra el siguiente. Entre semana entras a tu jornada y la guardia empieza al acabarla; el fin de semana entras directamente a la hora del relevo. El pase de guardia son los minutos que te quedas de más al salir.</p>
       ${tipoRows}
       <div class="row" style="margin-top:8px">
         <label class="fld" style="flex:0 0 200px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
@@ -9243,10 +9446,19 @@ function calEventos(desde,hasta){
     const nm=sh.name||'',st=icsHM(sh.start||''),en=sh.end?icsHM(sh.end):'',conHoras=!!sh.start;
     if(isGuardia(sh)){
       const tipo=inf.guard?gTipo(inf.guard).label:'sin tipo';
-      out.push({allDay:!conHoras,fecha:icsNum(k),isoKey:k,hora:st,horaFin:(en&&en>st)?en:'',
-        dur:(en&&en>st)?0:24*60,
+      /* al calendario va el rato entero que estás fuera de casa —desde que entras hasta que te
+         relevan al día siguiente, con el pase incluido—, no un bloque fijo de 24 h desde las 8:00:
+         una guardia de sábado no empieza a la misma hora que una de martes. */
+      const g=guardiaHoras(k,inf.guard);
+      const d0=g?mins(g.desde):null,d1=g?mins(g.sale):null;
+      const dur=(d0!=null&&d1!=null)?((d1+1440)-d0):24*60;
+      out.push({allDay:!g&&!conHoras,fecha:icsNum(k),isoKey:k,hora:g?icsHM(g.desde):st,horaFin:'',
+        dur:dur,
         summ:'🩺 Guardia · '+tipo+(inf.guard?(' ['+inf.guard+']'):''),
-        desc:'Guardia de '+tipo+'.',cat:'GUARDIA'});continue;}
+        desc:'Guardia de '+tipo+(g?('. Entras a las '+g.desde+
+          (g.desde!==g.guardia?(' (jornada hasta las '+g.guardia+')'):'')+
+          ' y sales a las '+g.sale+' del día siguiente'+(g.pase?(', pase de guardia incluido'):'')+'.'):'.'),
+        cat:'GUARDIA'});continue;}
     if(/saliente|libre|vacacion|festiv/i.test(nm))continue;   /* fuera, a propósito: no se manda */
     if(!conHoras)continue;   /* sin horas propias no hay «inicio y fin» que mandar */
     if(/fuerza|entreno/i.test(nm))
@@ -9687,7 +9899,11 @@ document.addEventListener('change',e=>{
       const k2=foodKey(ui.gymDate||iso(new Date()));if(gg.marks[k2])gg.marks[k2].hora=el.value;
       save();render();break;}
     case 'sueno-f':{if(!store.sueno)store.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
-      const k=el.dataset.k,v=+el.value;if(v>0)store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
+      /* la siesta SÍ puede ser 0 —hay quien aguanta del tirón—, así que no vale el mismo v>0 que
+         para las demás: con el filtro de antes, poner 0 no se guardaba y no pasaba nada */
+      const k=el.dataset.k,v=+el.value;
+      if(k==='siesta'){if(v>=0&&v<=480)store.sueno.siesta=Math.round(v);}
+      else if(v>0)store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
       save();render();break;}
     case 'ev-toggle':{const ev=eventosS().find(function(e){return e.id===el.dataset.id;});
       if(ev){ev.on=!!el.checked;save();render();}break;}
@@ -9762,6 +9978,8 @@ document.addEventListener('change',e=>{
       setMonthService(monthDate.getFullYear(),monthDate.getMonth(),null,suma);save();render();
       flash('cupo por tipo: '+suma+' guardias este mes');break;}
     case 'gtipo-lbl':{flash(renombraTipo(el.dataset.code,el.value));break;}
+    case 'gtipo-sem':case 'gtipo-finde':case 'gtipo-pase':{
+      flash(setHorasTipo(el.dataset.code,a==='gtipo-sem'?'relevoSem':a==='gtipo-finde'?'relevoFinde':'pase',el.value));break;}
     case 'cal-desde':{ui.calDesde=el.value||'';
       if(ui.calHasta&&ui.calHasta<ui.calDesde)ui.calHasta=ui.calDesde;
       calRefresca();render();break;}
@@ -9939,6 +10157,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
+  gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
