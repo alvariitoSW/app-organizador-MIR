@@ -1146,3 +1146,34 @@ ul.slots{list-style:none;margin:0;padding:0}
 .drsol .pie.sue.falta{color:var(--ink2);font-weight:600;cursor:pointer;text-decoration:underline;
   text-underline-offset:2px}
 .drsol .pie.sue.falta:hover{color:var(--brand)}
+
+/* ============ «Hoy», moviéndose por días ============
+   La pantalla ya no es solo hoy: con las flechas se ve mañana o el sábado que viene. El distintivo
+   cambia de color cuando NO es hoy, para que no te creas que estás mirando el día de hoy. */
+.hoychip.otro{background:none;border:1px solid var(--line);color:var(--ink2)}
+.diasnav{margin-top:8px;gap:6px;align-items:center}
+.diasnav .btn{min-width:64px;justify-content:center;text-transform:capitalize}
+.diasnav .btn.p{text-transform:none}
+
+/* ============ imprimir el Mes para la pared ============
+   Imprimir desde «Mes» es para colgar el calendario, así que sale la cuadrícula SOLA y a toda la
+   hoja: fuera las otras tarjetas, los botones, el panel del día y los pies de cada casilla. Sin
+   esto salían tres páginas con el calendario pequeño arriba del todo. */
+@media print{
+  html.imp-mes #main>.grid>*:not(.calmes){display:none!important}
+  html.imp-mes .calmes{border:0!important;padding:0!important;break-inside:auto;page-break-inside:auto}
+  html.imp-mes .calmes .row,html.imp-mes .calmes .dpanel,
+  html.imp-mes .calmes details,html.imp-mes .calmes .note,html.imp-mes .calmes .mini{display:none!important}
+  html.imp-mes .calmes>h2{font-size:15px;margin:0 0 6px}
+  html.imp-mes #foot{display:none!important}   /* el pie de la app no pinta nada colgado en la pared */
+  /* la cuadrícula ocupa el alto de la hoja. Nada de break-inside:avoid aquí: con la altura justa,
+     Chrome decidía que no cabía y empujaba el calendario ENTERO a la página siguiente —salían tres
+     hojas con la primera vacía—. */
+  html.imp-mes .cal{margin-top:0;height:86vh;break-inside:auto;page-break-inside:auto;
+    grid-auto-rows:minmax(0,1fr)}
+  html.imp-mes .dbox{min-height:0;overflow:hidden}
+  html.imp-mes .dbox .dsl{display:none}   /* las horas de sueño no se cuelgan en la pared */
+  html.imp-mes .dnum{font-size:12px}
+  html.imp-mes .dnm{font-size:11px}
+  html.imp-mes .dline{font-size:10px}
+}

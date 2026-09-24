@@ -12,6 +12,7 @@ const MON=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DAYN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const DAYSH=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWN0=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];   /* indexado como Date#getDay() */
+const DIA3=['dom','lun','mar','mié','jue','vie','sáb'];   /* también como Date#getDay() */
 /* franja de 24 h: un color fijo por categoría (no por tipo de día), configurable en Ajustes */
 const TLCAT=[['sleep','Dormir','#7c5cff'],['work','Trabajo','#f59e0b'],['guard','Guardia','#ef4444'],
              ['meal','Comidas','#10b981'],['gym','Gimnasio','#22d3ee'],['evt','Eventos','#a855f7']];
@@ -2323,18 +2324,39 @@ function dayPanelHTML(dateStr){
     '</div>';
 }
 /* ===================== render: hoy (pantalla de inicio) ===================== */
+/* «Hoy» enseñaba hoy y solo hoy: para ver qué te toca mañana —o qué hiciste ayer— había que ir a
+   «Semana» y abrir el día. Ahora la pantalla se mueve por días con las mismas flechas ‹ › de
+   arriba que ya mueven el mes y la semana, y se vuelve al día de hoy pulsando «Hoy» en la barra. */
+function fechaHoy(){return ui.diaHoy||iso(new Date());}
+function esHoyDeVerdad(k){return k===iso(new Date());}
+function moverDiaHoy(n){
+  const d=parseDate(fechaHoy());if(!d)return;
+  const k=iso(addDays(d,n));
+  ui.diaHoy=esHoyDeVerdad(k)?'':k;}
 function renderHoy(){
-  const now=new Date(),hoy=iso(now),inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
+  const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
+  const esHoy=esHoyDeVerdad(hoy);
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
-  const fecha=DAYN[(now.getDay()+6)%7]+' '+now.getDate()+' de '+MONTH_FULL[now.getMonth()];
+  const fecha=DAYN[(dref.getDay()+6)%7]+' '+dref.getDate()+' de '+MONTH_FULL[dref.getMonth()];
+  const dist=Math.round((Date.UTC(dref.getFullYear(),dref.getMonth(),dref.getDate())
+    -Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);
+  const chip=dist===0?'hoy':dist===1?'mañana':dist===-1?'ayer':
+    (dist>0?('en '+dist+' días'):('hace '+(-dist)+' días'));
   const estado=inf.vac?('🏖️ Vacaciones'+(inf.vac.label?' · '+esc(inf.vac.label):'')):
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' · '+esc(gTipo(inf.guard).label):'')+
       (horasDelDiaTxt(hoy,inf)?(' · '+esc(horasDelDiaTxt(hoy,inf))):
         (sh.start?' · '+esc(sh.start)+(sh.end?'–'+esc(sh.end):''):''))):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="card"><h2>☀️ Hoy · '+esc(fecha)+'<span class="hoychip">hoy</span>'+
-      '<span class="mini" style="margin-left:auto;font-weight:700">son las '+horaLocal(now)+'</span></h2>'+
+    '<div class="card"><h2>'+(esHoy?'☀️ Hoy · ':'🗓️ ')+esc(fecha)+'<span class="hoychip'+(esHoy?'':' otro')+'">'+esc(chip)+'</span>'+
+      (esHoy?('<span class="mini" style="margin-left:auto;font-weight:700">son las '+horaLocal(now)+'</span>'):'')+'</h2>'+
+    /* moverse por días sin salir de la pantalla: la víspera de una guardia quieres ver el día de
+       mañana, no el de hoy. Las flechas ‹ › de la barra de arriba hacen lo mismo. */
+    '<div class="row diasnav">'+
+      '<button class="btn s" data-a="dia-prev" title="día anterior">‹ '+esc(DIA3[addDays(dref,-1).getDay()])+'</button>'+
+      (esHoy?'':'<button class="btn p s" data-a="dia-hoy">volver a hoy</button>')+
+      '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
+    '</div>'+
     modoAvisoHTML()+
     '<div class="row" style="align-items:baseline"><b style="font-size:17px">'+estado+'</b>'+
     (guardiaHoy?'<span class="tag b1">de guardia</span>':'')+'</div>'+
@@ -2345,7 +2367,7 @@ function renderHoy(){
        que de verdad te acuestas: dos números distintos con nombres parecidos, en la misma tarjeta.
        Y con cuatro, el cuarto se quedaba solo en una segunda fila. */
     '<div class="kpis" style="margin-top:10px">'+
-      '<div><b>'+ft.kcal+'</b><span>kcal hoy</span></div>'+
+      '<div><b>'+ft.kcal+'</b><span>kcal '+(esHoy?'hoy':'ese día')+'</span></div>'+
       '<div><b>'+(pl.kcal||'—')+'</b><span>kcal plan</span></div>'+
     '</div>'+
     '<div class="row" style="margin-top:6px">'+
@@ -2358,15 +2380,17 @@ function renderHoy(){
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
        quieres es la lista, no el atardecer. */
     tocaEntrenarHTML(hoy)+
-    tareasHoyHTML()+
+    /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
+       mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
+    (esHoy?tareasHoyHTML():'')+
     pagosHoyHTML(hoy)+
     repasoHoyHTML(hoy)+
-    habitosHoyHTML()+
-    proximosPuntualesHTML()+
-    '<div class="card"><h2>Comidas de hoy'+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div>'+
+    (esHoy?habitosHoyHTML():'')+
+    (esHoy?proximosPuntualesHTML():'')+
+    '<div class="card"><h2>Comidas '+(esHoy?'de hoy':'del '+esc(DIA3[dref.getDay()])+' '+dref.getDate())+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div>'+
     /* el sol: cuánta luz queda es lo que usas para decidir si sales a correr. Es de consulta, así
        que va después de lo que hay que hacer. */
-    '<div class="card"><h2>El sol hoy</h2>'+solHoyHTML(hoy)+
+    '<div class="card"><h2>El sol '+(esHoy?'hoy':'ese día')+'</h2>'+solHoyHTML(hoy)+
       '<div class="row" style="margin-top:10px">'+
         '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
         '<span class="mini">se calcula en el móvil, sin internet</span></div></div>'+
@@ -2706,7 +2730,7 @@ function renderMonth(){
   const conSueño=list.filter(function(d){return d.sleepH!=null;});
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
   $('#main').innerHTML=`<div class="grid">
-    <div class="card"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
+    <div class="card calmes"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
       ${modoAvisoHTML()}
       <div class="row" style="margin-top:8px">
         <button class="btn s" data-a="mon-prev">‹</button>
@@ -7578,13 +7602,15 @@ function renderNow(){
     ? `${weekDate.getDate()} ${MON[weekDate.getMonth()]} – ${d.getDate()} ${MON[d.getMonth()]}`
     : `plantilla · ${esc(store.patterns[store.rotation.pattern]?store.patterns[store.rotation.pattern].name:'—')}`;
   if(ui.tab==='month')$('#wkLabel').textContent=mlbl;
+  if(ui.tab==='hoy'){const dh=parseDate(fechaHoy())||new Date();
+    $('#wkLabel').textContent=DIA3[dh.getDay()]+' '+dh.getDate()+' '+MON[dh.getMonth()]+(ui.diaHoy?'':' · hoy');}
   /* las flechas ‹ › solo tienen un efecto real en Mes (mueven el mes) o en Semana+«por fecha» (mueven la semana);
      en cualquier otro caso (Hoy, Semana en plantilla, Entreno, Compra, cajón) se ocultan para no cambiar una fecha oculta sin avisar */
   const wkNav=$('#wkNav');
   if(wkNav){
     const modoFecha=store.rotation.mode==='date';
-    wkNav.hidden=!(ui.tab==='month'||(ui.tab==='week'&&modoFecha));
-    const lbl=ui.tab==='month'?'mes':'semana';
+    wkNav.hidden=!(ui.tab==='month'||ui.tab==='hoy'||(ui.tab==='week'&&modoFecha));
+    const lbl=ui.tab==='month'?'mes':ui.tab==='hoy'?'día':'semana';
     const bPrev=document.querySelector('[data-a="wk-prev"]'),bNext=document.querySelector('[data-a="wk-next"]');
     if(bPrev){bPrev.title=lbl+' anterior';bPrev.setAttribute('aria-label',bPrev.title);}
     if(bNext){bNext.title=lbl+' siguiente';bNext.setAttribute('aria-label',bNext.title);}
@@ -7844,6 +7870,9 @@ function act(a,el){
       if(ui.tab==='data')ui.datosVista='';
       if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
       if(ui.tab==='estudio')ui.estVista='';
+      /* pulsar «Hoy» en la barra vuelve al día de hoy, aunque te hubieras ido con las flechas a
+         mirar el sábado que viene: si no, «Hoy» no llevaba a hoy, que es lo único que promete */
+      if(ui.tab==='hoy')ui.diaHoy='';
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
@@ -7966,6 +7995,9 @@ function act(a,el){
       if(ui.tab==='data')ui.datosVista='';
       if(ui.tab==='eventos'){ui.evVista='';ui.evForm=null;}
       if(ui.tab==='estudio')ui.estVista='';
+      /* pulsar «Hoy» en la barra vuelve al día de hoy, aunque te hubieras ido con las flechas a
+         mirar el sábado que viene: si no, «Hoy» no llevaba a hoy, que es lo único que promete */
+      if(ui.tab==='hoy')ui.diaHoy='';
       closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':{document.documentElement.classList.toggle('dark');
       const osc=document.documentElement.classList.contains('dark');
@@ -7974,10 +8006,14 @@ function act(a,el){
       if(bt){bt.textContent=osc?'☀️':'🌙';bt.title=osc?'Modo día':'Modo noche HUD';}
       break;}
     case 'wk-prev':case 'wk-next':{
-      /* en Mes, estas flechas mueven el mes (monthDate); en cualquier otro sitio donde sigan visibles (Semana+por fecha), la semana */
+      /* en Mes mueven el mes, en «Hoy» el día y en Semana+por fecha la semana */
       if(ui.tab==='month'){monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+(a==='wk-next'?1:-1),1,12,0,0,0);}
+      else if(ui.tab==='hoy'){moverDiaHoy(a==='wk-next'?1:-1);}
       else{weekDate=addDays(weekDate,a==='wk-next'?7:-7);}
       render();break;}
+    case 'dia-prev':moverDiaHoy(-1);render();break;
+    case 'dia-next':moverDiaHoy(1);render();break;
+    case 'dia-hoy':ui.diaHoy='';render();break;
     case 'today':weekDate=mondayOf(new Date());render();break;
     case 'print':imprimir();break;
     case 'mode-template':store.rotation.mode='template';save();render();break;
@@ -8770,7 +8806,12 @@ function imprimir(){
      imprimir se abre todo, y al terminar se deja exactamente como estaba. */
   if(_imprimiendo)return;
   _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
-    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[]};
+    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
+  /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
+     una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
+  if(ui.tab==='month'){_imprimiendo.soloMes=true;
+    ui.monSel=null;   /* el panel del día abierto se colaba en medio del calendario */
+    document.documentElement.classList.add('imp-mes');}
   try{ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
   render();
@@ -8782,6 +8823,7 @@ function imprimir(){
     a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
     ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
+    if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
     window.removeEventListener('afterprint',restaurar);
     render();};
   window.addEventListener('afterprint',restaurar);
@@ -10157,6 +10199,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
+  fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,

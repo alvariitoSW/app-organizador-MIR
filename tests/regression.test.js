@@ -535,8 +535,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click('[data-a="mon-today"]'); // deja monthDate como estaba, para no afectar a pruebas siguientes
   await page.waitForTimeout(150);
 
-  // 15) las flechas de semana se ocultan donde no aplican (Hoy, Semana en plantilla) y siguen visibles en Semana + "por fecha"
-  // — se comprueba el estilo calculado (display), no solo el atributo hidden: un display:flex propio puede anularlo en silencio
+  // 15) las flechas ‹ › se ocultan donde no mueven nada y se ven donde sí: en Mes mueven el mes, en
+  // «Hoy» el día —eso es nuevo: antes en «Hoy» no había nada que mover y por eso se escondían— y en
+  // Semana solo cuando está «por fecha», porque en plantilla los días no llevan fecha.
+  // Se comprueba el estilo calculado (display), no solo el atributo hidden: un display:flex propio
+  // puede anularlo en silencio.
   const wkNavDisplay = () => document.getElementById('wkNav').offsetParent === null
     ? 'none' : getComputedStyle(document.getElementById('wkNav')).display;
   await gotoTab('hoy');
@@ -553,8 +556,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.render();
     return d;
   });
-  check('las flechas de semana se ocultan de verdad (display:none) en Hoy y en Semana-plantilla, y aparecen en Semana + "por fecha"',
-    wkNavEnHoy === 'none' && wkNavEnSemanaPlantilla === 'none' && wkNavEnSemanaPorFecha !== 'none',
+  check('las flechas ‹ › se ven donde mueven algo (Hoy, Semana por fecha) y no en Semana-plantilla',
+    wkNavEnHoy !== 'none' && wkNavEnSemanaPlantilla === 'none' && wkNavEnSemanaPorFecha !== 'none',
     JSON.stringify({ wkNavEnHoy, wkNavEnSemanaPlantilla, wkNavEnSemanaPorFecha }));
 
   // 16) el punto de aviso de "☰ Más" existía porque Comida vivía escondida en el cajón: avisaba de
@@ -4472,6 +4475,97 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       trasCambio.saleTrasRecargar === '12:45',
       JSON.stringify(trasCambio));
     await page.evaluate(() => { window.PG.setHorasTipo('umi', 'relevoFinde', '10:00'); });
+  }
+
+  // ===================== «Hoy» se mueve por días =====================
+  {
+    // «Hoy» enseñaba hoy y solo hoy: para ver qué tocaba mañana había que ir a «Semana» y abrir el
+    // día. Ahora se mueve con las flechas de la propia tarjeta y con las ‹ › de la barra de arriba,
+    // y pulsar «Hoy» en la barra de modos vuelve al día de hoy (si no, «Hoy» no llevaba a hoy).
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const lee = () => page.evaluate(() => ({
+      titulo: ((document.querySelector('#main .card h2') || {}).innerText || '').replace(/\n/g, ' | '),
+      rotulo: (document.getElementById('wkLabel') || {}).textContent || '',
+      flechas: !document.getElementById('wkNav').hidden,
+      dia: window.PG.ui.diaHoy || '',
+    }));
+    // si un botón no está, la prueba tiene que FALLAR, no tumbar la suite con un timeout de 30 s:
+    // ya pasó dos veces en este repositorio, y una suite abortada no dice qué se ha roto
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click();
+      await page.waitForTimeout(280); return !!el; };
+    const pasos = []; const hubo = [];
+    pasos.push(await lee());                                            // 0 · al entrar
+    hubo.push(await toca('[data-a="dia-next"]')); pasos.push(await lee());   // 1 · mañana
+    hubo.push(await toca('[data-a="wk-next"]')); pasos.push(await lee());    // 2 · flecha de arriba
+    hubo.push(await toca('[data-a="dia-hoy"]')); pasos.push(await lee());    // 3 · volver a hoy
+    hubo.push(await toca('[data-a="dia-prev"]')); pasos.push(await lee());   // 4 · ayer
+    hubo.push(await toca('#calModes button[data-t="hoy"]')); pasos.push(await lee());  // 5 · «Hoy»
+    const hoyIso = isoDate(new Date());
+    const mas = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDate(d); };
+    check('«Hoy» se mueve por días con sus flechas y con las de la barra, y vuelve a hoy',
+      hubo.every(Boolean) &&
+      pasos[0].dia === '' && /Hoy ·/.test(pasos[0].titulo) && pasos[0].flechas &&
+      pasos[1].dia === mas(1) && /MAÑANA/i.test(pasos[1].titulo) &&
+      pasos[2].dia === mas(2) &&
+      pasos[3].dia === '' && /Hoy ·/.test(pasos[3].titulo) &&
+      pasos[4].dia === mas(-1) && /AYER/i.test(pasos[4].titulo) &&
+      pasos[5].dia === '' && pasos[5].rotulo.indexOf('hoy') >= 0,
+      JSON.stringify({ hubo, pasos }));
+    // y lo que se ve es el día al que has ido, no el de hoy: el tipo de día tiene que cambiar
+    const otroDia = await page.evaluate(() => {
+      const P = window.PG;
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      const d = new Date(); d.setDate(d.getDate() + 3);
+      const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      P.setDayOverride(k, G.id, 'umi');
+      P.ui.diaHoy = k; P.render();
+      const txt = (document.querySelector('#main .card h2') || {}).innerText || '';
+      const cuerpo = (document.querySelector('#main .card') || {}).innerText || '';
+      P.setDayOverride(k, null); P.ui.diaHoy = ''; P.render();
+      return { txt: txt, guardia: /Guardia/.test(cuerpo), umi: /UMI/.test(cuerpo) };
+    });
+    check('el día al que te mueves enseña SU turno, no el de hoy',
+      otroDia.guardia && otroDia.umi, JSON.stringify(otroDia));
+  }
+
+  // ===================== Imprimir el Mes: solo el calendario, a una cara =====================
+  {
+    // Imprimir desde «Mes» es para colgarlo en la pared, así que tiene que salir la cuadrícula SOLA
+    // y en UNA hoja. Antes salían tres páginas: el calendario pequeño arriba del todo y detrás los
+    // KPI, las vacaciones, la agenda y los desplegables de configuración.
+    // Se mide con page.pdf() y contando páginas: con emulateMedia el DOM decía lo mismo con y sin
+    // el arreglo, porque el fallo estaba en cuántas hojas salen, no en qué hay en el DOM.
+    await gotoTab('month');
+    await page.waitForTimeout(350);
+    await page.emulateMedia({ media: null });
+    const tarjetas = await page.evaluate(() => {
+      const P = window.PG;
+      const antes = window.print; window.print = function () {};
+      P.imprimir();
+      const html = document.documentElement.classList.contains('imp-mes');
+      window.print = antes;
+      return { html: html, monSel: P.ui.monSel };
+    });
+    const pdf = await page.pdf({ format: 'Letter', printBackground: false });
+    const paginas = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+    const visibles = await page.evaluate(() => {
+      // con la clase puesta, en papel solo queda la tarjeta del calendario y sus 30 casillas
+      return new Promise((res) => {
+        const vis = (el) => getComputedStyle(el).display !== 'none';
+        res({ cards: [...document.querySelectorAll('#main .card')].filter(vis).length,
+          calmes: [...document.querySelectorAll('#main .card.calmes')].filter(vis).length,
+          celdas: [...document.querySelectorAll('#main .dbox')].filter(vis).length });
+      });
+    });
+    await page.evaluate(() => { window.dispatchEvent(new Event('afterprint')); });
+    await page.waitForTimeout(300);
+    const limpio = await page.evaluate(() => document.documentElement.classList.contains('imp-mes'));
+    check('imprimir el Mes saca solo el calendario y en una sola hoja',
+      tarjetas.html === true && paginas === 1 && visibles.calmes === 1 && visibles.celdas >= 28,
+      JSON.stringify({ tarjetas, paginas, visibles }));
+    check('y al terminar de imprimir el Mes la pantalla vuelve a estar entera',
+      limpio === false, JSON.stringify({ limpio }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
