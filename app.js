@@ -418,6 +418,18 @@ function normalize(o){
   if(!o.food.eans||typeof o.food.eans!=='object')o.food.eans={};
   if(!o.food.log||typeof o.food.log!=='object')o.food.log={};
   if(!Array.isArray(o.food.fav))o.food.fav=[];
+  /* la despensa con cantidades: sin registrarla aquí se perdería al recargar */
+  o.food.despensa=Array.isArray(o.food.despensa)?o.food.despensa
+    .filter(function(x){return x&&typeof x==='object'&&String(x.k||'').trim();})
+    .map(function(x){return {k:String(x.k).slice(0,60),nom:String(x.nom||x.k).slice(0,80),
+      q:Math.max(0,Math.min(100000,+x.q||0)),uni:(['g','ml',''].indexOf(x.uni)>=0?x.uni:''),
+      ts:+x.ts||Date.now(),sec:String(x.sec||'otros').slice(0,16)};})
+    .slice(0,400):[];
+  /* lo que has metido en la nevera a mano: ids de la tabla de alimentos, no objetos */
+  o.food.neveraMano=Array.isArray(o.food.neveraMano)
+    ?o.food.neveraMano.filter(function(x){return typeof x==='string'&&x&&x.length<60;}).slice(0,300):[];
+  o.food.ultimaCompra=/^\d{4}-\d{2}-\d{2}$/.test(String(o.food.ultimaCompra))?o.food.ultimaCompra:'';
+  o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
   if(!o.gym||typeof o.gym!=='object')o.gym=JSON.parse(JSON.stringify(d.gym||{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],
     segundo:{on:true,dias:[2,5],tipo:'piscina',hora:'15:30'}}));
   ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(o.gym[k]))o.gym[k]=[];});
@@ -1703,6 +1715,8 @@ function food(){
   if(!Array.isArray(f.alimentos))f.alimentos=[];   /* alimentos tuyos, los que no están en la tabla */
   if(!f.usda||typeof f.usda!=='object')f.usda={};  /* correcciones traídas de FoodData Central, por id */
   if(!Array.isArray(f.nevera))f.nevera=[];         /* lo que tienes en casa ahora mismo */
+  if(!Array.isArray(f.despensa))f.despensa=[];     /* …y cuánto hay de cada cosa */
+  if(!Array.isArray(f.neveraMano))f.neveraMano=[];
   return f;}
 function offNum(v){const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?Math.round(n*10)/10:0;}
 function mapOffProduct(p){
@@ -1947,15 +1961,169 @@ function alimRicosEn(k,n){
   return alimTodos().filter(function(a){return typeof a[k]==='number'&&a[k]>0;})
     .sort(function(a,b){return b[k]-a[k];}).slice(0,n||6);}
 /* --- mi nevera --- */
+/* ===================== la despensa: lo que HAY y cuánto =====================
+   «Mi nevera» era una lista de nombres: sabía que tenías lentejas, no cuántas. Y sin cantidad no
+   se puede gastar, así que nunca se acababa nada y nunca volvía solo a la lista de la compra.
+   Aquí va el inventario de verdad. La nevera de siempre se queda y se mantiene sola a partir de
+   esto, para que «qué puedo cocinar» y las ideas sigan funcionando igual. */
+function despensaS(){const f=food();if(!Array.isArray(f.despensa))f.despensa=[];return f.despensa;}
+function despClave(nom){
+  /* la clave para que «500 g lenteja pardina» y «lentejas pardinas» sean lo mismo */
+  let t=alimTxt(String(nom||'')).replace(/^[\d.,\/\s]+/,'').trim();
+  t=t.replace(/^(g|kg|ml|l|ud|uds|unidad(es)?|lata|latas|brick|briks|bote|botes|paquete|paquetes|rebanada|rebanadas|lonchas?|dientes?|piezas?)\b\s*/,'');
+  t=t.replace(/\b(de|del|la|el|los|las|un|una)\b\s*/g,' ');
+  t=t.replace(/s\b/g,'').replace(/\s+/g,' ').trim();   /* plural fuera, a lo bruto pero estable */
+  return t;}
+function despUnidad(uni,item){
+  const u=String(uni||'').toLowerCase();
+  if(/^(g|gr|gramos?)$/.test(u))return 'g';
+  if(/^(kg|kilos?)$/.test(u))return 'kg';
+  if(/^(ml|mililitros?)$/.test(u))return 'ml';
+  if(/^(l|litros?)$/.test(u))return 'l';
+  return '';}
+function despensaAdd(texto,qOpt,uniOpt){
+  /* entra algo en casa: si ya estaba, se suma */
+  const l=despensaS(),p=parseIng(String(texto||''));
+  const nom=(p.item||String(texto||'')).trim();
+  const k=despClave(nom);
+  if(!k)return '';
+  let q=(qOpt!=null&&qOpt!=='')?(+qOpt||0):(p.num!=null?p.num:0);
+  let uni=uniOpt!=null?despUnidad(uniOpt):despUnidad(p.unit);
+  if(uni==='kg'){q=q*1000;uni='g';}
+  if(uni==='l'){q=q*1000;uni='ml';}
+  const hay=l.filter(function(x){return x.k===k;})[0];
+  if(hay){
+    if(uni&&hay.uni&&uni!==hay.uni)hay.q=Math.max(hay.q,q);   /* unidades distintas: no se suman peras con litros */
+    else {hay.q=(+hay.q||0)+q;if(uni)hay.uni=uni;}
+    hay.ts=Date.now();}
+  else l.push({k:k,nom:nom,q:q,uni:uni,ts:Date.now(),sec:seccionDeCompra(nom)});
+  neveraSync();
+  return k;}
+function despensaGasta(texto,qOpt){
+  /* se usa algo: se descuenta, y cuando llega a cero deja de estar y vuelve a hacer falta */
+  const l=despensaS(),p=parseIng(String(texto||''));
+  const k=despClave(p.item||texto);
+  const hay=l.filter(function(x){return x.k===k;})[0];
+  if(!hay)return '';
+  const q=(qOpt!=null&&qOpt!=='')?(+qOpt||0):(p.num!=null?p.num:0);
+  if(!q||!hay.q){                       /* sin cantidad conocida, gastar es acabarlo */
+    despensaQuitar(k);return 'acabado';}
+  hay.q=Math.round((hay.q-q)*100)/100;
+  if(hay.q<=0){despensaQuitar(k);return 'acabado';}
+  neveraSync();
+  return 'queda '+fmt(hay.q)+(hay.uni?(' '+hay.uni):'');}
+function despensaQuitar(k){
+  const f=food();
+  f.despensa=despensaS().filter(function(x){return x.k!==k;});
+  neveraSync();
+  return 'fuera de la despensa';}
+function despensaVaciar(){const f=food();const n=despensaS().length;f.despensa=[];neveraSync();
+  return n?('despensa vacía: '+n+' cosa(s) fuera'):'ya estaba vacía';}
+function neveraSync(){
+  /* la nevera de siempre —la lista de ids de la tabla de alimentos— se calcula a partir de la
+     despensa, para que «qué puedo cocinar» y las ideas sigan funcionando sin tocarlas */
+  const f=food(),l=despensaS(),ids={};
+  l.forEach(function(x){
+    const cual=alimTxt(x.nom).trim();if(!cual)return;
+    const hit=alimTodos().filter(function(a){
+      const an=alimTxt(a.n);return an===cual||cual.indexOf(an)>=0||an.indexOf(cual)>=0;})
+      .sort(function(a,b){return a.n.length-b.n.length;})[0];
+    if(hit)ids[hit.id]=1;});
+  /* lo que pusiste tú a mano en la nevera y no está en la despensa se respeta */
+  (f.neveraMano||[]).forEach(function(id){ids[id]=1;});
+  f.nevera=Object.keys(ids);
+  save();}
+function hacerCompra(soloMarcados){
+  /* «He hecho esta compra»: lo que has echado al carro entra en casa. Es el gesto que une la lista
+     con la nevera, y sin él la nevera había que rellenarla a mano una por una. */
+  const d=compraDatos();let n=0,nm=0;
+  d.grupos.forEach(function(g){
+    g[2].forEach(function(x){
+      const marcado=ui.marks.has(x.id);
+      if(soloMarcados&&!marcado)return;
+      if(marcado)nm++;
+      if(despensaAdd(x.texto))n++;});});
+  if(!n)return 'no había nada que meter en casa';
+  /* lo comprado deja de estar marcado: la lista se queda limpia para la próxima */
+  d.grupos.forEach(function(g){g[2].forEach(function(x){ui.marks.delete(x.id);});});
+  const f=food();f.ultimaCompra=iso(new Date());
+  save();render();
+  return n+' cosa'+(n===1?'':'s')+' a la despensa'+(soloMarcados?(' (las '+nm+' que marcaste)'):'')+
+    '. La lista queda limpia.';}
+function listaAMano(texto){
+  /* una lista escrita o pegada: cada línea, una cosa. Va a una lista tuya, no al menú, porque
+     esto es «lo que quiero comprar» y no «lo que toca cocinar». */
+  const lineas=String(texto||'').split(/[\n;]+/).map(function(x){return x.trim();})
+    .filter(function(x){return x&&x.length<80;});
+  if(!lineas.length)return 'no he leído nada: una cosa por línea';
+  let l=listasS().filter(function(x){return x.nombre==='A mano';})[0];
+  if(!l){addLista('A mano');l=listasS().filter(function(x){return x.nombre==='A mano';})[0];}
+  if(!l)return 'no he podido crear la lista';
+  let n=0;
+  lineas.forEach(function(t){if(addItemLista(l.id,t))n++;});
+  l.fija=true;   /* entra sola en la compra de la semana */
+  /* «De rutina» arranca plegado, así que lo pegado entraba en la lista sin que se viera nada y
+     parecía que el botón no hacía nada. Se abre para que lo veas llegar. */
+  if(ui.compraCerradas)ui.compraCerradas.delete('rutina');
+  save();render();
+  return n+' cosa'+(n===1?'':'s')+' a tu lista «A mano», que ya entra en la compra';}
+function compraCada(){
+  /* cada cuántos días toca ir. Por defecto 4: dos veces por semana, que es como dijo que la hace.
+     Se cambia desde la propia pantalla de la compra. */
+  const v=+food().compraCada;
+  return (v>=1&&v<=14)?v:4;}
+function tocaComprar(){
+  /* LA COMPRA ES UNA TAREA DE LA SEMANA, no un sitio al que entrar por si acaso. Sale en «Hoy»
+     como sale entrenar. En el calendario de Google NO entra: eso lo dijo él. */
+  const d=diasDesdeCompra();
+  if(d==null)return {toca:true,dias:null,faltan:0,primera:true};
+  const c=compraCada();
+  return {toca:d>=c,dias:d,faltan:Math.max(0,c-d),primera:false};}
+function compraTocaHTML(){
+  const t=tocaComprar();
+  if(!t.toca)return '';
+  const d=compraDatos();
+  const pend=d.total;
+  if(!pend)return '';
+  const sup=compraCuenta(d,'super').total,fru=compraCuenta(d,'fruteria').total;
+  return '<div class="card tarea-compra"><h2>🛒 Toca hacer la compra</h2>'+
+    '<p class="note" style="margin:0">'+
+      (t.primera?'Todavía no has apuntado ninguna compra.'
+        :('Hace <b>'+t.dias+' día'+(t.dias===1?'':'s')+'</b> de la última, y tú la haces cada '+compraCada()+' días.'))+
+      ' Quedan <b>'+pend+'</b> cosa'+(pend===1?'':'s')+' por coger'+
+      ((sup&&fru)?(': '+sup+' en el súper y '+fru+' en la frutería'):'')+'.</p>'+
+    '<div class="row" style="margin-top:10px">'+
+      '<button class="btn p" data-a="tab" data-t="shop">abrir la lista</button>'+
+      (fru?'<button class="btn s" data-a="ir-fruteria">solo la frutería</button>':'')+
+      '</div></div>';}
+function diasDesdeCompra(){
+  const f=food(),u=f.ultimaCompra;
+  if(!u)return null;
+  const d=parseDate(u);if(!d)return null;
+  return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000));}
+/* la frutería: la verdura y la fruta se compran en otro sitio y en otro momento */
+function salidaDe(sec){return sec==='verdura'?'fruteria':'super';}
+const SALIDAS=[['todo','Todo'],['super','Súper'],['fruteria','Frutería']];
 function neveraIds(){return food().nevera.slice();}
 function neveraAlimentos(){return neveraIds().map(alimById).filter(Boolean);}
 function neveraToggle(id){
-  const f=food(),i=f.nevera.indexOf(id);
-  if(i>=0)f.nevera.splice(i,1);else f.nevera.push(id);
-  save();
+  /* lo que marcas a mano vive aparte: neveraSync() recalcula la nevera desde la despensa y si esto
+     escribiera en f.nevera directamente se borraría al primer recálculo */
+  const f=food();
+  if(!Array.isArray(f.neveraMano))f.neveraMano=[];
+  const i=f.neveraMano.indexOf(id),estaba=f.nevera.indexOf(id)>=0;
+  if(i>=0)f.neveraMano.splice(i,1);
+  else if(!estaba)f.neveraMano.push(id);
+  else{/* está por la despensa: quitarlo de la nevera es sacarlo de la despensa */
+    const x=despensaS().filter(function(y){
+      const cual=alimTxt(y.nom).trim(),a2=alimById(id);
+      return a2&&(cual.indexOf(alimTxt(a2.n))>=0||alimTxt(a2.n).indexOf(cual)>=0);})[0];
+    if(x)despensaQuitar(x.k);}
+  neveraSync();
   const a=alimById(id);
-  return (i>=0?'fuera de la nevera: ':'a la nevera: ')+((a&&a.n)||id);}
-function neveraVaciar(){const f=food();const n=f.nevera.length;f.nevera=[];save();
+  return ((i>=0||estaba)?'fuera de la nevera: ':'a la nevera: ')+((a&&a.n)||id);}
+function neveraVaciar(){const f=food();const n=f.nevera.length;
+  f.neveraMano=[];f.despensa=[];f.nevera=[];save();
   return n?('vaciada: '+n+' cosa(s) fuera'):'la nevera ya estaba vacía';}
 function neveraDesdeCompra(){
   /* lo que hay en tus listas de la compra, pasado a la nevera: lo normal es que si lo compras, lo
@@ -2656,6 +2824,9 @@ function renderHoy(){
     /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
        mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
     (esHoy?tareasHoyHTML():'')+
+    /* la compra es una tarea más de la semana: sale aquí cuando toca, igual que entrenar. Al
+       calendario de Google no va —eso se queda en la app— */
+    (esHoy?compraTocaHTML():'')+
     pagosHoyHTML(hoy)+
     repasoHoyHTML(hoy)+
     (esHoy?habitosHoyHTML():'')+
@@ -4148,10 +4319,43 @@ function queHagoHTML(){
         '</div>';}).join('')+'</div>'):'')+
     (pc.casi.length?('<div class="card"><h2>Te falta poco <span class="mini">'+pc.casi.length+'</span></h2>'+
       pc.casi.slice(0,2).map(function(x){return tarjeta(x,false);}).join('')+'</div>'):'');}
+function despensaCardHTML(){
+  /* LO QUE HAY Y CUÁNTO. Con cantidad se puede gastar, y lo que se gasta vuelve solo a la lista de
+     la compra: es lo que cierra el círculo comprar → cocinar → comprar. */
+  const l=despensaS().slice().sort(function(a,b){
+    const sa=COMPRA_SECS.map(function(x){return x[0];});
+    const da=sa.indexOf(a.sec||'otros'),db=sa.indexOf(b.sec||'otros');
+    if(da!==db)return da-db;
+    return String(a.nom).localeCompare(String(b.nom),'es');});
+  const filas=l.map(function(x){
+    const sc=COMPRA_SECS.filter(function(y){return y[0]===x.sec;})[0];
+    const glu=esCeliaco()?glutenChipHTML(glutenDe(x.nom),true):'';
+    return '<div class="dfila">'+
+      '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'\ud83d\uded2')+'</span>'+
+      '<span class="n">'+esc(x.nom)+glu+'</span>'+
+      '<span class="q">'+(x.q?(fmt(x.q)+(x.uni?(' '+x.uni):'')):'—')+'</span>'+
+      '<button class="btn s" data-a="desp-gasta" data-k="'+esc(x.k)+'" title="he gastado algo">gastar</button>'+
+      '<button class="btn d s" data-a="desp-quitar" data-k="'+esc(x.k)+'" aria-label="quitar">×</button>'+
+      '</div>';}).join('');
+  return '<div class="card"><h2>La despensa</h2>'+
+    '<p class="note">Lo que hay en casa Y cuánto. Al gastarlo baja, y cuando se acaba vuelve solo a la '+
+    'lista de la compra. Entra sola al pulsar «he hecho esta compra».</p>'+
+    (l.length?('<div class="dlista">'+filas+'</div>')
+      :'<div class="empty">Vacía. Haz la compra y pulsa «he hecho esta compra», o mete algo aquí abajo.</div>')+
+    '<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
+      '<label class="fld" style="flex:1 1 200px">he metido en casa'+
+      '<input id="despAdd" placeholder="500 g lenteja pardina"></label>'+
+      '<button class="btn p" data-a="desp-add">a la despensa</button></div>'+
+    '</div>';}
 function neveraCuerpoHTML(){
   const dentro=neveraAlimentos(),q=ui.neveraQ||'';
   const sug=q?alimBuscar(q,'').filter(function(a){return food().nevera.indexOf(a.id)<0;}).slice(0,8):[];
-  return '<p class="note" style="margin:0">Lo que tienes en casa ahora mismo.</p>'+
+  return despensaCardHTML()+
+    /* la lista de abajo son los alimentos de la tabla, que es lo que hace falta para las ideas de
+       cocina; la de arriba es lo que hay y cuánto. Se dice, porque si no parecen la misma lista
+       dos veces. */
+    '<p class="note" style="margin:0">Y esto es lo que la app reconoce de ahí para darte ideas: lo de '+
+    'la despensa entra solo, y aquí puedes añadir lo que se le haya escapado.</p>'+
     '<div class="buscador">'+gymIco('lupa','gico sm')+
       '<input id="nvQ" value="'+esc(q)+'" data-a="nevera-busca" placeholder="añadir algo que tengas…"></div>'+
     (sug.length?('<div class="card">'+sug.map(function(a){
@@ -7290,9 +7494,36 @@ function compraDatos(){
     ['fresco','Fresco de esta semana',fresco.map(function(r){return {id:key+'#'+r.sort,texto:r.texto,de:r.de};})],
     ['rutina','De rutina',rutina],
     ['basicos','Del menú, sin receta',talCual]];
+  /* EL CÍRCULO SE CIERRA AQUÍ. Lo que ya tienes en casa no hay que volver a comprarlo, así que
+     sale de la cuenta y se pinta apagado; y en cuanto lo gastas y desaparece de la despensa,
+     vuelve a la lista él solo. Sin esto, «la despensa baja al gastarla» no servía de nada: la
+     lista seguía pidiendo lo mismo estuviera la nevera llena o vacía. */
+  const desp=despensaS();
+  grupos.forEach(function(g){g[2].forEach(function(x){
+    const t=tengoEnCasa(x.texto,desp);
+    if(t){x.tengo=t.txt;x.falta=t.falta;}});});
   let total=0,marcados=0;
-  grupos.forEach(function(g){g[2].forEach(function(x){total++;if(ui.marks.has(x.id))marcados++;});});
+  grupos.forEach(function(g){g[2].forEach(function(x){
+    if(x.tengo&&!x.falta)return;        /* cubierto: no cuenta ni como pendiente ni como marcado */
+    total++;if(ui.marks.has(x.id))marcados++;});});
   return {grupos:grupos,total:total,marcados:marcados,recetas:recetas,sueltas:sueltas};}
+function tengoEnCasa(texto,despOpt){
+  /* ¿esta línea de la compra ya está en casa? Devuelve null si no, y si sí, qué decir y si aun así
+     falta algo. Compara cantidades cuando las dos las tienen y en la misma unidad; si no, tener
+     algo cuenta como tenerlo. */
+  const desp=despOpt||despensaS(),pi=parseIng(String(texto||''));
+  const k=despClave(pi.item||texto);
+  if(!k)return null;
+  const hay=desp.filter(function(x){return x.k===k;})[0];
+  if(!hay)return null;
+  let uni=despUnidad(pi.unit),q=(pi.num!=null?pi.num:0);
+  if(uni==='kg'){q=q*1000;uni='g';}
+  if(uni==='l'){q=q*1000;uni='ml';}
+  const enCasa=+hay.q||0;
+  if(q>0&&enCasa>0&&uni&&hay.uni&&uni===hay.uni&&enCasa<q){
+    const f=Math.round((q-enCasa)*100)/100;
+    return {txt:'en casa '+fmt(enCasa)+' '+hay.uni+' · faltan '+fmt(f)+' '+hay.uni,falta:f};}
+  return {txt:'ya en casa'+(enCasa?(': '+fmt(enCasa)+(hay.uni?(' '+hay.uni):'')):''),falta:0};}
 /* ===================== por dónde pasas en el súper =====================
    La lista salía ordenada alfabéticamente: 52 artículos seguidos, del aceite al yogur, que con el
    carro en la mano son 52 viajes de un pasillo a otro. Agrupada por sección se recorre la tienda
@@ -7348,11 +7579,15 @@ function porSeccion(items){
       return {k:sc[0],nom:sc[1],ico:sc[2],items:l};});}
 function compraLineaHTML(x){
   const on=ui.marks.has(x.id);
-  return '<li class="linea'+(on?' ok':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
+  /* lo que ya está en la despensa se pinta apagado y con su cantidad: sigue en la lista para que
+     veas que el menú lo pide, pero ya no te lo hace comprar */
+  const ten=x.tengo&&!x.falta;
+  return '<li class="linea'+(on?' ok':'')+(ten?' tengo':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
     '<span class="box" role="checkbox" aria-checked="'+(on?'true':'false')+'"></span>'+
     '<span class="tx"><b>'+esc(x.texto)+'</b>'+
-    (x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):'')+'</span></li>';}
-let _compraUlt={total:0,marcados:0};
+    (x.tengo?('<span class="de ten"><i></i>'+esc(x.tengo)+'</span>')
+      :(x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):''))+'</span></li>';}
+let _compraUlt={total:0,marcados:0,cola:''};
 function compraPinta(){
   /* en el supermercado se tocan veinte cosas seguidas: se actualiza la barra y la cifra a mano en
      vez de repintar la pantalla entera (que además cerraría el teclado y movería el scroll) */
@@ -7361,22 +7596,45 @@ function compraPinta(){
   if(!bar)return;
   const t=_compraUlt.total,m=Math.max(0,Math.min(t,_compraUlt.marcados));
   bar.style.width=(t?Math.round(m/t*100):0)+'%';
-  if(num)num.textContent=m+' de '+t;
+  if(num)num.textContent=m+' de '+t+(_compraUlt.cola||'');
   if(tag)tag.textContent=m+' / '+t;}
+function compraCuenta(d,salida){
+  /* lo que queda por coger EN ESTA SALIDA: sin el filtro es la lista entera, y con él solo su
+     mitad. Lo que ya está en casa no cuenta en ninguna de las dos. */
+  let total=0,marcados=0;
+  d.grupos.forEach(function(g){g[2].forEach(function(x){
+    if(x.tengo&&!x.falta)return;
+    if(salida&&salida!=='todo'&&salidaDe(seccionDeCompra(x.texto))!==salida)return;
+    total++;if(ui.marks.has(x.id))marcados++;});});
+  return {total:total,marcados:marcados};}
 function renderShop(){
   if(ui.shopVista==='listas')return renderShopListas();
-  const d=compraDatos(),pct=d.total?Math.round(d.marcados/d.total*100):0;
-  _compraUlt={total:d.total,marcados:d.marcados};
+  const d=compraDatos();
+  const dias=diasDesdeCompra(),salida=ui.compraSalida||'todo';
+  /* la cuenta es la de ESTA salida: en «Frutería» la barra tiene que ir de 0 a 18, no de 0 a 60,
+     que si no nunca se llena y no dice nada de lo que llevas cogido en la frutería */
+  const cnt=compraCuenta(d,salida);
+  const pct=cnt.total?Math.round(cnt.marcados/cnt.total*100):0;
+  const cola=(salida==='todo'?'':(' en la '+(salida==='fruteria'?'frutería':'compra del súper')));
+  _compraUlt={total:cnt.total,marcados:cnt.marcados,cola:cola};
   const cuerpo=d.grupos.map(function(g){
     if(!g[2].length)return '';
     const abierto=!ui.compraCerradas||!ui.compraCerradas.has(g[0]);
     /* dentro de cada grupo, por pasillo: con 52 artículos en orden alfabético hacías el súper
        en zigzag. Cada pasillo se pliega solo cuando lo has terminado. */
-    const secs=porSeccion(g[2]);
-    const dentro=(secs.length>1)
+    /* la frutería se hace en otro momento y en otro sitio: la fruta y la verdura por un lado y el
+       súper por otro, para no llevar dos listas mezcladas en la mano */
+    const secs=porSeccion(g[2]).filter(function(sc){
+      return salida==='todo'||salidaDe(sc.k)===salida;});
+    if(!secs.length)return '';
+    /* con el filtro puesto queda un solo pasillo, y su cabecera sigue siendo útil: es la que lleva
+       el 0/18 de lo que llevas cogido en la frutería */
+    const dentro=(secs.length>1||salida!=='todo')
       ? secs.map(function(sc){
           const k2=g[0]+':'+sc.k;
-          const hechos=sc.items.filter(function(x){return ui.marks.has(x.id);}).length;
+          /* lo que ya está en casa cuenta como hecho: si no, un pasillo con tres cosas que ya
+             tienes no se plegaba nunca y te lo hacía recorrer igual */
+          const hechos=sc.items.filter(function(x){return ui.marks.has(x.id)||(x.tengo&&!x.falta);}).length;
           /* un pasillo que ya has terminado se pliega SOLO: la lista se va acortando según llenas
              el carro, que es lo contrario de lo que hacía —52 líneas fijas de principio a fin—.
              Se puede volver a abrir tocándolo, y entonces manda lo que tú digas. */
@@ -7389,24 +7647,50 @@ function renderShop(){
             '<span class="n">'+hechos+'/'+sc.items.length+'</span>'+
             gymIco('chevron','gico sm ch'+(ab2?' abajo':''))+'</button>'+
             (ab2?('<ul class="lcompra">'+sc.items.map(compraLineaHTML).join('')+'</ul>'):'');}).join('')
-      : ('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>');
+      /* OJO: las líneas salen de `secs` y no de `g[2]`. Con el filtro en «Frutería» queda un solo
+         pasillo, y pintar el grupo entero devolvía la lista completa del súper: 52 líneas en la
+         pantalla que abres delante del puesto de fruta. */
+      : ('<ul class="lcompra">'+secs[0].items.map(compraLineaHTML).join('')+'</ul>');
     return '<button class="seccion" data-a="compra-sec" data-k="'+g[0]+'" aria-expanded="'+(abierto?'true':'false')+'">'+
-      '<b>'+esc(g[1])+'</b><span class="n">'+g[2].length+'</span>'+
+      /* la cifra del grupo también es de esta salida: decía 52 con 18 debajo */
+      '<b>'+esc(g[1])+'</b><span class="n">'+secs.reduce(function(a,sc){return a+sc.items.length;},0)+'</span>'+
       gymIco('chevron','gico sm ch'+(abierto?' abajo':''))+'</button>'+
       (abierto?dentro:'');}).join('');
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
       '<button class="btn s volver" data-a="nav-comer">'+gymIco('atras','gico sm')+' Comer</button>'+
-      '<h2 class="subtit">Compra</h2><span class="tag b2">'+d.marcados+' / '+d.total+'</span></div>'+
+      '<h2 class="subtit">Compra</h2><span class="tag b2">'+cnt.marcados+' / '+cnt.total+'</span></div>'+
     '<div class="card">'+
       /* esto SÍ es progreso: cuántas cosas de la lista llevas ya en el carro */
-      '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+d.marcados+' de '+d.total+'</b></div>'+
+      '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+cnt.marcados+' de '+cnt.total+
+        cola+'</b></div>'+
       /* tres renglones fijos de explicación en la pantalla que miras de pie con el carro: la
          misma información cabe en uno */
       '<p class="note" style="margin:0">Por pasillos, en el orden del súper. '+
         d.recetas+' receta'+(d.recetas===1?'':'s')+' de tanda'+
         (d.sueltas?(' y '+d.sueltas+' suelto'+(d.sueltas===1?'':'s')):'')+'.</p>'+
+      '<div class="row" style="margin-top:9px">'+SALIDAS.map(function(x){
+        return '<button class="btn s '+(salida===x[0]?'p':'')+'" data-a="compra-salida" data-v="'+x[0]+'">'+
+          esc(x[1])+'</button>';}).join('')+'</div>'+
       (d.total?cuerpo:'<div class="empty">Sin tandas esta semana y sin listas «de rutina»: nada que comprar.</div>')+
+    '</div>'+
+    /* EL GESTO QUE UNE LA LISTA CON LA CASA. Sin esto la nevera había que rellenarla a mano una
+       por una, así que nunca estaba al día y el menú no podía contar con ella. */
+    '<div class="card">'+
+      '<button class="btn p gbig" data-a="compra-hecha" data-solo="1">'+gymIco('ok','gico sm')+
+        ' he hecho esta compra'+(cnt.marcados?(' ('+cnt.marcados+' marcadas)'):'')+'</button>'+
+      '<p class="mini" style="margin:8px 0 0">Lo que marcaste pasa a la despensa con su cantidad, y la '+
+      'lista se queda limpia. Lo que no marcaste sigue pendiente.'+
+      (cnt.marcados?'':' <b>Marca antes lo que hayas echado al carro.</b>')+'</p>'+
+      (dias!=null?('<p class="mini" style="margin:6px 0 0;color:var(--ink2)">Última compra hace '+dias+' día'+
+        (dias===1?'':'s')+(dias>=compraCada()?' · toca':'')+'.</p>'):'')+
+      /* cada cuánto la haces: con esto «Hoy» sabe cuándo avisarte, sin meterla en el calendario */
+      '<div class="row" style="margin-top:9px;align-items:center">'+
+        '<span class="mini">la hago cada</span>'+
+        '<select data-a="compra-cada" style="width:auto">'+
+          [['3','3 días'],['4','4 días (2 veces por semana)'],['7','7 días (1 vez por semana)']]
+            .map(function(o){return '<option value="'+o[0]+'"'+(compraCada()===+o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
+        '</select></div>'+
     '</div>'+
     '<div class="row">'+
       '<button class="btn s" data-a="mark-clear">limpiar marcados</button>'+
@@ -7419,6 +7703,14 @@ function renderShop(){
       '<button class="btn s" data-a="dinero-compra">'+gymIco('mas','gico sm')+' apuntar lo que me he gastado</button>'+
     '</div></div>';
 }
+function listaManoCardHTML(){
+  return '<div class="card"><h2>Pegar una lista</h2>'+
+    '<p class="note">Una cosa por línea. Va a tu lista «A mano», que entra sola en la compra de la '+
+    'semana. Sirve para lo que no sale de ningún menú: papel, bolsas, lo que te pidan en casa.</p>'+
+    '<label class="fld">tu lista<textarea id="compraMano" rows="4" '+
+      'placeholder="2 rollos de papel\n1 gel de ducha\n500 g arroz"></textarea></label>'+
+    '<div class="row" style="margin-top:9px"><button class="btn p" data-a="compra-mano">añadir a la compra</button></div>'+
+    '</div>';}
 function renderShopListas(){
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
@@ -7431,7 +7723,9 @@ function renderShopListas(){
       '<div class="row" style="margin-top:10px;gap:6px">'+
         '<input id="lsNueva" placeholder="nombre de la lista nueva…" style="flex:1 1 180px">'+
         '<button class="btn p" data-a="lista-add">+ Crear lista</button></div>'+
-    '</div></div>';
+    '</div>'+
+    listaManoCardHTML()+
+    '</div>';
 }
 
 /* ===================== render: turno y rotación ===================== */
@@ -9246,6 +9540,19 @@ function act(a,el){
       if(ui.tab==='hoy')ui.diaHoy='';
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
+    case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
+    case 'ir-fruteria':ui.compraSalida='fruteria';ui.tab='shop';ui.shopVista='';render();window.scrollTo(0,0);break;
+    case 'compra-hecha':flash(hacerCompra(el.dataset.solo==='1'));break;
+    case 'compra-mano':{const t=document.getElementById('compraMano');
+      flash(listaAMano(t?t.value:''));if(t)t.value='';break;}
+    case 'desp-quitar':flash(despensaQuitar(el.dataset.k)||'fuera');render();break;
+    case 'desp-gasta':{const x=despensaS().filter(function(y){return y.k===el.dataset.k;})[0];
+      flash(x?(despensaGasta(x.nom,x.q?Math.max(1,Math.round(x.q*0.25)):0)||'acabado'):'ya no está');
+      render();break;}
+    case 'desp-add':{const t=document.getElementById('despAdd');
+      const v2=t?t.value:'';
+      if(!String(v2).trim()){flash('escribe qué has metido, con su cantidad si la sabes');break;}
+      despensaAdd(v2);if(t)t.value='';render();flash('a la despensa: '+v2);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
       /* se mira lo que hay en pantalla y no un único conjunto: un pasillo terminado se pinta
          plegado por su cuenta, así que «cerrarlo» otra vez no haría nada visible */
@@ -10236,7 +10543,7 @@ function imprimir(){
      imprimir se abre todo, y al terminar se deja exactamente como estaba. */
   if(_imprimiendo)return;
   _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
-    compraAbiertas:new Set(ui.compraAbiertas||[]),
+    compraAbiertas:new Set(ui.compraAbiertas||[]),compraSalida:ui.compraSalida,
     tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
   /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
      una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
@@ -10245,6 +10552,9 @@ function imprimir(){
     document.documentElement.classList.add('imp-mes');}
   try{ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
+  /* y la lista entera de las DOS salidas: si te la llevas en papel, la del súper y la de la
+     frutería van en la misma hoja */
+  ui.compraSalida='todo';
   /* al imprimir sale la lista ENTERA, pasillos terminados incluidos: el papel no se pliega */
   ui.compraAbiertas=new Set(['fresco:verdura','fresco:carne','fresco:pescado','fresco:lacteos',
     'fresco:pan','fresco:despensa','fresco:congelado','fresco:bebida','fresco:otros',
@@ -10258,6 +10568,7 @@ function imprimir(){
     const a=_imprimiendo;if(!a)return;_imprimiendo=null;
     a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
     ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
+    ui.compraSalida=a.compraSalida;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
     if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
     window.removeEventListener('afterprint',restaurar);
@@ -11330,6 +11641,8 @@ document.addEventListener('change',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   switch(a){
     case 'wk-set':{const d=parseDate(el.value);if(d){weekDate=mondayOf(d);render();}break;}
+    /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
+    case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
     case 'rot-anchor':{if(el.value){store.rotation.anchor=el.value;store.rotation.anchorSet=true;save();render();}break;}
     case 'est-file':{const f=el.files&&el.files[0];if(!f)break;
@@ -11660,6 +11973,9 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,
+  despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
+  hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
+  compraCada,tocaComprar,compraCuenta,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,

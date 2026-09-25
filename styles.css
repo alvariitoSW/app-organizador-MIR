@@ -1450,3 +1450,22 @@ ul.slots{list-style:none;margin:0;padding:0}
 .glufila.si .n b{color:var(--bad)}
 .glufila.dep .n b{color:var(--warn)}
 .glufila .btn{flex-shrink:0}
+
+/* ===== la despensa con cantidades (fase 2 de Comer) ===== */
+/* la lista de lo que hay en casa: el nombre manda, la cantidad se lee de un vistazo a la derecha
+   y los dos botones no roban ancho al nombre. */
+.dlista{display:flex;flex-direction:column;gap:5px;margin-top:9px}
+.dfila{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--line);
+  border-radius:11px;background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.dfila .i{font-size:15px;flex-shrink:0;line-height:1}
+.dfila .n{flex:1 1 auto;min-width:0;font-size:13px;font-weight:700;display:flex;align-items:center;
+  gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dfila .q{flex-shrink:0;font-size:11.5px;font-weight:800;color:var(--ink2);font-variant-numeric:tabular-nums;
+  padding:2px 7px;border-radius:999px;background:var(--bg)}
+.dfila .btn{flex-shrink:0;padding:4px 8px;font-size:11px}
+.dfila .btn.d{padding:4px 7px}
+/* lo que ya está en la despensa sigue en la lista, pero apagado: el menú lo pide y ya lo tienes */
+.lcompra .linea.tengo{opacity:.52}
+.lcompra .linea.tengo .tx b{text-decoration:none;font-weight:600}
+.lcompra .de.ten{color:var(--ok);font-weight:700}
+.lcompra .de.ten i{background:var(--ok)}

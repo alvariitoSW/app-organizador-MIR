@@ -5299,6 +5299,164 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.perfil.pesos = []; P.ui.foodVista = ''; P.save(); P.render(); });
   }
 
+  // ===================================================================================
+  // La cesta como centro de Comer (fase 2). Cuatro gestos encadenados, que es donde
+  // estaban los fallos: marcar → «he hecho esta compra» → la despensa con cantidades →
+  // gastar hasta que se acaba → y la lista lo vuelve a pedir. Más la frutería aparte
+  // del súper y la lista pegada a mano.
+  // ===================================================================================
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(400);
+    await page.evaluate(() => { const P = window.PG;
+      P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = [];
+      delete P.food().ultimaCompra;
+      P.ui.marks = new Set(); P.ui.compraSalida = 'todo';
+      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.save(); P.render(); });
+    await page.waitForTimeout(250);
+
+    // 1 · la frutería es otra salida y otra lista: en «Frutería» solo puede quedar la
+    // fruta y la verdura. Con un único pasillo el render caía a pintar el GRUPO entero,
+    // así que delante del puesto de fruta salían las 52 líneas del súper.
+    const salidas = {};
+    for (const v of ['fruteria', 'super', 'todo']) {
+      const b = await page.$(`[data-a="compra-salida"][data-v="${v}"]`);
+      if (!b) { salidas[v] = null; continue; }
+      await b.click();
+      await page.waitForTimeout(220);
+      salidas[v] = await page.evaluate(() => ({
+        pasillos: [...document.querySelectorAll('#main .pasillo b')].map((e) => e.textContent),
+        lineas: document.querySelectorAll('#main .lcompra .linea').length }));
+    }
+    check('la frutería se hace aparte del súper y no arrastra la lista entera',
+      salidas.fruteria && salidas.super && salidas.todo &&
+      salidas.fruteria.pasillos.length === 1 && /Fruta y verdura/.test(salidas.fruteria.pasillos[0]) &&
+      salidas.super.pasillos.indexOf('Fruta y verdura') < 0 &&
+      salidas.fruteria.lineas > 0 && salidas.fruteria.lineas < salidas.todo.lineas &&
+      salidas.fruteria.lineas + salidas.super.lineas === salidas.todo.lineas,
+      JSON.stringify(salidas));
+
+    // 2 · marcar tres cosas y decir «he hecho esta compra»: entran en casa CON su
+    // cantidad y la lista se queda limpia. Este es el gesto que une la lista con la
+    // nevera; sin él había que rellenarla a mano una por una.
+    const compra = await page.evaluate(() => {
+      const P = window.PG;
+      const lin = [...document.querySelectorAll('#main .lcompra .linea')].slice(0, 3);
+      const textos = lin.map((l) => l.querySelector('b').textContent);
+      lin.forEach((l) => l.click());
+      return textos;
+    });
+    await page.waitForTimeout(250);
+    await page.click('[data-a="compra-hecha"]');
+    await page.waitForTimeout(400);
+    const trasCompra = await page.evaluate(() => { const P = window.PG;
+      return { desp: P.despensaS().map((x) => ({ nom: x.nom, q: x.q, uni: x.uni, sec: x.sec })),
+        marcas: P.ui.marks.size, dias: P.diasDesdeCompra(),
+        nevera: P.food().nevera.length }; });
+    check('«he hecho esta compra» lleva lo marcado a la despensa con su cantidad y limpia la lista',
+      compra.length === 3 && trasCompra.desp.length === 3 && trasCompra.marcas === 0 &&
+      trasCompra.dias === 0 && trasCompra.desp.every((x) => x.sec) &&
+      trasCompra.desp.some((x) => x.q > 0),
+      JSON.stringify({ compra, trasCompra }));
+
+    // 3 · lo que ya está en casa sale de la cuenta de la compra. Sin esto, «la despensa
+    // baja al gastarla» no servía de nada: la lista pedía lo mismo con la nevera llena.
+    const cuenta = await page.evaluate(() => { const P = window.PG;
+      const d = P.compraDatos();
+      const todas = d.grupos.reduce((a, g) => a + g[2].length, 0);
+      const tengo = d.grupos.reduce((a, g) => a + g[2].filter((x) => x.tengo && !x.falta).length, 0);
+      return { total: d.total, todas: todas, tengo: tengo }; });
+    check('lo que ya tienes en casa no se cuenta como pendiente en la compra',
+      cuenta.tengo === 3 && cuenta.total === cuenta.todas - cuenta.tengo,
+      JSON.stringify(cuenta));
+
+    // 4 · gastarlo hasta el final: desaparece de la despensa y la compra lo vuelve a pedir
+    const gastado = await page.evaluate(async () => { const P = window.PG;
+      const x = P.despensaS()[0]; const k = x.k, nom = x.nom;
+      for (let i = 0; i < 20 && P.despensaS().some((y) => y.k === k); i++) {
+        const y = P.despensaS().filter((z) => z.k === k)[0];
+        P.despensaGasta(y.nom, y.q ? Math.max(1, Math.round(y.q * 0.25)) : 0);
+      }
+      P.save();
+      const d = P.compraDatos();
+      const vuelve = d.grupos.some((g) => g[2].some((it) => !it.tengo &&
+        P.despClave(it.texto) === k));
+      return { k: k, nom: nom, sigue: P.despensaS().some((y) => y.k === k),
+        vuelve: vuelve, total: d.total }; });
+    check('lo que se gasta desaparece de la despensa y la compra lo vuelve a pedir',
+      gastado.sigue === false && gastado.vuelve === true &&
+      gastado.total === cuenta.total + 1,
+      JSON.stringify(gastado));
+
+    // 5 · una lista pegada a mano: lo que no sale de ningún menú (papel, bolsas). Va a
+    // «A mano», que ya entra sola en la compra, y el grupo se abre para que la veas.
+    await page.click('[data-a="compra-listas"]');
+    await page.waitForTimeout(300);
+    await page.fill('#compraMano', '2 rollos de papel\n1 gel de ducha');
+    await page.click('[data-a="compra-mano"]');
+    await page.waitForTimeout(400);
+    await page.click('[data-a="compra-volver"]');
+    await page.waitForTimeout(350);
+    const mano = await page.evaluate(() => { const P = window.PG;
+      const l = P.listasS().filter((x) => x.nombre === 'A mano')[0];
+      const txt = document.getElementById('main').innerText;
+      return { hay: !!l, n: l ? (l.items || []).length : 0, fija: !!(l && l.fija),
+        enPantalla: /rollos de papel/.test(txt) && /gel de ducha/.test(txt),
+        cerrado: !!(P.ui.compraCerradas && P.ui.compraCerradas.has('rutina')) }; });
+    check('una lista pegada a mano entra en la compra de la semana y se ve al volver',
+      mano.hay && mano.n === 2 && mano.fija && mano.enPantalla && mano.cerrado === false,
+      JSON.stringify(mano));
+
+    // 6 · la compra es una tarea de la semana y sale en «Hoy» cuando toca. En el calendario de
+    // Google NO entra: eso lo dijo él, y aquí se fija para que no se cuele luego.
+    const tarea = await page.evaluate(() => { const P = window.PG;
+      const mira = () => { P.ui.tab = 'hoy'; P.render();
+        return /Toca hacer la compra/.test(document.getElementById('main').innerText); };
+      P.food().compraCada = 4;
+      delete P.food().ultimaCompra; P.save();
+      const sinComprar = mira();
+      P.food().ultimaCompra = P.iso(new Date()); P.save();
+      const reciEn = mira();
+      P.food().ultimaCompra = P.iso(P.addDays(new Date(), -4)); P.save();
+      const pasados = mira();
+      const t = P.tocaComprar();
+      // y en el .ics no aparece por ningún lado
+      let ics = '';
+      try { ics = P.calEventos(P.iso(P.addDays(new Date(), -7)), P.iso(P.addDays(new Date(), 21)))
+        .map((e) => e.title || '').join(' | '); } catch (e) { ics = 'ERR'; }
+      P.ui.tab = 'shop'; P.render();
+      return { sinComprar, reciEn, pasados, dias: t.dias, toca: t.toca,
+        enCalendario: /compra/i.test(ics) }; });
+    check('la compra sale en «Hoy» cuando toca, cada 4 días, y no entra en el calendario de Google',
+      tarea.sinComprar === true && tarea.reciEn === false && tarea.pasados === true &&
+      tarea.dias === 4 && tarea.toca === true && tarea.enCalendario === false,
+      JSON.stringify(tarea));
+
+    // 7 · y todo esto sobrevive a recargar: normalize() tira cualquier campo que no
+    // conozca, así que una despensa sin registrar se perdía en silencio.
+    const guarda = await page.evaluate(() => { const P = window.PG;
+      P.despensaAdd('500 g lenteja pardina');
+      P.save();
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const f = P.food();
+      const l = P.despensaS().filter((x) => /lenteja/.test(x.nom))[0];
+      return { n: P.despensaS().length, q: l ? l.q : null, uni: l ? l.uni : null,
+        ultima: f.ultimaCompra || null, mano: (f.neveraMano || []).length }; });
+    check('la despensa y la fecha de la última compra sobreviven a recargar',
+      guarda.q === 500 && guarda.uni === 'g' && /^\d{4}-\d{2}-\d{2}$/.test(guarda.ultima || ''),
+      JSON.stringify(guarda));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = [];
+      delete P.food().ultimaCompra;
+      P.store.listas = (P.store.listas || []).filter((l) => l.nombre !== 'A mano');
+      P.ui.marks = new Set(); P.ui.compraSalida = 'todo'; P.ui.shopVista = '';
+      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.save(); P.render(); });
+    await page.waitForTimeout(250);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
