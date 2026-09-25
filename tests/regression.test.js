@@ -1614,9 +1614,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const a = mide(24), b = mide(12);
     P.store.franja = { horas: 24, colores: {} }; P.render();
     return { h24: a, h12: b }; });
-  check('eligiendo 12 h el carril se ve más holgado, sin que la portada crezca',
-    zoom.h12.hora > zoom.h24.hora * 1.5 && zoom.h24.caja === zoom.h12.caja &&
-    zoom.h24.hora >= 16,
+  // la caja tiene un TECHO (no un alto fijo): a 24 h el carril entero cabe en menos y no se deja
+  // media caja vacía, pero nunca puede pasar de ese techo, que es lo que impide que elegir 12 h
+  // alargue la portada
+  check('eligiendo 12 h el carril se ve más holgado, y la caja nunca pasa de su techo',
+    zoom.h12.hora > zoom.h24.hora * 1.5 && zoom.h24.hora >= 16 &&
+    zoom.h12.caja <= 400 && zoom.h24.caja <= 400 && zoom.h24.caja <= zoom.h12.caja,
     JSON.stringify(zoom));
   await page.evaluate(() => { window.PG.store.franja = { horas: 24, colores: {} }; window.PG.render(); });
   await page.waitForTimeout(150);

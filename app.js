@@ -3411,7 +3411,9 @@ function renderHoy(){
        que la duración y el hueco entre dos se ven sin leer nada. Y al tocar un bloque se va a
        cambiarlo, que era lo que la lista no hacía. */
     hoyAhoraHTML(hoy,inf,esHoy)+
-    carrilHTML(hoy,{px:44})+
+    /* sin px: lo calcula el propio carril desde el ajuste de 12/18/24 h. Pasarlo aquí dejaba ese
+       ajuste sin efecto, que es lo que pasó al quitar la barra horizontal. */
+    carrilHTML(hoy,{caja:400})+
     leyendaPlegadaHTML('hoyley')+
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     '<div class="hoypie">'+
