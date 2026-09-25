@@ -4156,8 +4156,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         pagar: pos(/toca pagar/), comidas: pos(/Comidas de hoy/), sol: pos(/El sol hoy/),
       };
     });
+    // el orden se comprueba por posiciones RELATIVAS, no por el número de tarjeta: entre «lo que
+    // hay que hacer» caben más cosas con el tiempo (la compra, por ejemplo) y eso no rompe nada
     check('«Hoy» junta las cinco patas del día y las ordena: el día, lo que hay que hacer y, al final, lo de consulta',
-      dia.dia === 0 && dia.entrenar === 1 && dia.tareas === 2 && dia.pagar === 3 &&
+      dia.dia === 0 && dia.entrenar === 1 && dia.tareas === 2 && dia.pagar > dia.tareas &&
       dia.comidas > dia.pagar && dia.sol > dia.comidas &&
       dia.alto < 2300 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
@@ -5372,20 +5374,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(cuenta));
 
     // 4 · gastarlo hasta el final: desaparece de la despensa y la compra lo vuelve a pedir
-    const gastado = await page.evaluate(async () => { const P = window.PG;
-      const x = P.despensaS()[0]; const k = x.k, nom = x.nom;
-      for (let i = 0; i < 20 && P.despensaS().some((y) => y.k === k); i++) {
+    const gastado = await page.evaluate(() => { const P = window.PG;
+      const x = P.despensaS()[0]; const k = x.k, nom = x.nom, q0 = x.q;
+      // un toque de «gastar» es un cuarto de lo que compraste, así que en CUATRO se acaba. Con el
+      // 25 % de lo que queda no se acababa nunca: 600 g tras veinte toques seguían siendo 4 g.
+      let toques = 0;
+      while (toques < 8 && P.despensaS().some((y) => y.k === k)) {
         const y = P.despensaS().filter((z) => z.k === k)[0];
-        P.despensaGasta(y.nom, y.q ? Math.max(1, Math.round(y.q * 0.25)) : 0);
+        P.despensaGasta(y.nom, P.pasoDeGasto(y));
+        toques++;
       }
       P.save();
       const d = P.compraDatos();
       const vuelve = d.grupos.some((g) => g[2].some((it) => !it.tengo &&
         P.despClave(it.texto) === k));
-      return { k: k, nom: nom, sigue: P.despensaS().some((y) => y.k === k),
+      return { k: k, nom: nom, q0: q0, toques: toques,
+        sigue: P.despensaS().some((y) => y.k === k),
         vuelve: vuelve, total: d.total }; });
-    check('lo que se gasta desaparece de la despensa y la compra lo vuelve a pedir',
-      gastado.sigue === false && gastado.vuelve === true &&
+    check('lo que se gasta desaparece de la despensa en cuatro toques y la compra lo vuelve a pedir',
+      gastado.sigue === false && gastado.vuelve === true && gastado.toques <= 4 &&
       gastado.total === cuenta.total + 1,
       JSON.stringify(gastado));
 

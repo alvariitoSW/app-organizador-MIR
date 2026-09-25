@@ -423,6 +423,7 @@ function normalize(o){
     .filter(function(x){return x&&typeof x==='object'&&String(x.k||'').trim();})
     .map(function(x){return {k:String(x.k).slice(0,60),nom:String(x.nom||x.k).slice(0,80),
       q:Math.max(0,Math.min(100000,+x.q||0)),uni:(['g','ml',''].indexOf(x.uni)>=0?x.uni:''),
+      q0:Math.max(0,Math.min(100000,+x.q0||+x.q||0)),
       ts:+x.ts||Date.now(),sec:String(x.sec||'otros').slice(0,16)};})
     .slice(0,400):[];
   /* lo que has metido en la nevera a mano: ids de la tabla de alimentos, no objetos */
@@ -1995,10 +1996,17 @@ function despensaAdd(texto,qOpt,uniOpt){
   if(hay){
     if(uni&&hay.uni&&uni!==hay.uni)hay.q=Math.max(hay.q,q);   /* unidades distintas: no se suman peras con litros */
     else {hay.q=(+hay.q||0)+q;if(uni)hay.uni=uni;}
+    hay.q0=Math.max(+hay.q0||0,hay.q);
     hay.ts=Date.now();}
-  else l.push({k:k,nom:nom,q:q,uni:uni,ts:Date.now(),sec:seccionDeCompra(nom)});
+  else l.push({k:k,nom:nom,q:q,q0:q,uni:uni,ts:Date.now(),sec:seccionDeCompra(nom)});
   neveraSync();
   return k;}
+function pasoDeGasto(x){
+  /* un toque de «gastar» es un cuarto de LO QUE COMPRASTE, no de lo que queda. Con el 25 % de lo
+     que queda no se acababa nunca: 600 g tras veinte toques seguían siendo 4 g. */
+  const q0=Math.max(+x.q0||0,+x.q||0);
+  if(!q0)return 0;
+  return Math.max(x.uni?1:0.25,Math.round(q0/4*100)/100);}
 function despensaGasta(texto,qOpt){
   /* se usa algo: se descuenta, y cuando llega a cero deja de estar y vuelve a hacer falta */
   const l=despensaS(),p=parseIng(String(texto||''));
@@ -2009,7 +2017,9 @@ function despensaGasta(texto,qOpt){
   if(!q||!hay.q){                       /* sin cantidad conocida, gastar es acabarlo */
     despensaQuitar(k);return 'acabado';}
   hay.q=Math.round((hay.q-q)*100)/100;
-  if(hay.q<=0){despensaQuitar(k);return 'acabado';}
+  /* si lo que queda no da ni para otro toque, es que se ha acabado: si no, se quedaban migajas
+     eternas en la despensa y la compra nunca volvía a pedirlo */
+  if(hay.q<=0||hay.q<pasoDeGasto(hay)*0.5){despensaQuitar(k);return 'acabado';}
   neveraSync();
   return 'queda '+fmt(hay.q)+(hay.uni?(' '+hay.uni):'');}
 function despensaQuitar(k){
@@ -4334,7 +4344,8 @@ function despensaCardHTML(){
       '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'\ud83d\uded2')+'</span>'+
       '<span class="n">'+esc(x.nom)+glu+'</span>'+
       '<span class="q">'+(x.q?(fmt(x.q)+(x.uni?(' '+x.uni):'')):'—')+'</span>'+
-      '<button class="btn s" data-a="desp-gasta" data-k="'+esc(x.k)+'" title="he gastado algo">gastar</button>'+
+      '<button class="btn s" data-a="desp-gasta" data-k="'+esc(x.k)+'" title="he gastado un poco">'+
+        (x.q&&pasoDeGasto(x)?('−'+fmt(pasoDeGasto(x))+(x.uni||'')):'gastar')+'</button>'+
       '<button class="btn d s" data-a="desp-quitar" data-k="'+esc(x.k)+'" aria-label="quitar">×</button>'+
       '</div>';}).join('');
   return '<div class="card"><h2>La despensa</h2>'+
@@ -9547,7 +9558,7 @@ function act(a,el){
       flash(listaAMano(t?t.value:''));if(t)t.value='';break;}
     case 'desp-quitar':flash(despensaQuitar(el.dataset.k)||'fuera');render();break;
     case 'desp-gasta':{const x=despensaS().filter(function(y){return y.k===el.dataset.k;})[0];
-      flash(x?(despensaGasta(x.nom,x.q?Math.max(1,Math.round(x.q*0.25)):0)||'acabado'):'ya no está');
+      flash(x?(despensaGasta(x.nom,pasoDeGasto(x))||'acabado'):'ya no está');
       render();break;}
     case 'desp-add':{const t=document.getElementById('despAdd');
       const v2=t?t.value:'';
@@ -11975,7 +11986,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   seccionDeCompra,porSeccion,COMPRA_SECS,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
-  compraCada,tocaComprar,compraCuenta,
+  compraCada,tocaComprar,compraCuenta,pasoDeGasto,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
