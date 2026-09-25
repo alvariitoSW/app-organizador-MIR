@@ -1380,3 +1380,85 @@ ul.slots{list-style:none;margin:0;padding:0}
 .tmues b{flex:1 0 100%;height:8px;border-radius:3px}
 .tnom{font-size:12.5px;font-weight:800}
 .tmodo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+/* ============ «Semana» por días (maqueta aprobada) ============
+   Desde hoy los días que elijas (5/7/10/14), ayer plegado encima, el eje y la leyenda una sola vez,
+   la franja más alta con el nombre dentro de cada bloque, y debajo el sueño, las comidas con su hora
+   y lo que tiene hora de empezar y acabar. */
+.semrango{position:relative;flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:800;font-size:13px;
+  white-space:nowrap;overflow:hidden;cursor:pointer}
+.semrango span{overflow:hidden;text-overflow:ellipsis}
+.semrango input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.semopc{display:flex;gap:5px;align-items:center;margin-top:6px}
+.semopc .btn{min-width:40px;justify-content:center}
+.semeje{margin:8px 12px 0}
+.semley{margin:2px 2px 4px}
+.semley summary{cursor:pointer}
+.dayer{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;
+  background:color-mix(in srgb,var(--card) 70%,transparent);border:1px solid var(--line);border-left:3px solid var(--line);
+  border-radius:12px;padding:7px 10px;opacity:.7;margin-bottom:8px}
+.dayer .mini{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.drow .drh{font-weight:800}
+.drcom{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:6px}
+.drcom .pl.com{background:none;border:0;padding:0;font-size:12.5px;color:var(--ink2);font-weight:700}
+.drcom .pl.com b{color:var(--ink);font-variant-numeric:tabular-nums}
+.drev{display:flex;gap:8px;align-items:center;margin-top:5px;font-size:12.5px;min-width:0}
+.drev>i{width:3px;align-self:stretch;min-height:16px;border-radius:2px;flex:none}
+.drev .h{font-weight:800;font-variant-numeric:tabular-nums;min-width:78px;flex:none}
+.drev .pl{background:none;border:0;padding:0;font-size:12.5px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.drplan{display:block}
+/* la franja grande: más alta, con el nombre dentro, comidas como rayas y eventos como tira de abajo */
+.tl-wrap.grande .tl-bar{height:26px;border-radius:7px}
+.tl-wrap.grande .tl-seg{display:flex;align-items:center;overflow:hidden}
+.tl-wrap.grande .tl-seg b{font-size:9.5px;font-weight:800;color:rgba(0,0,0,.78);padding-left:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:clip;font-style:italic;position:relative;z-index:4}
+.tl-wrap.grande .tl-seg.evt{top:auto;bottom:0;height:6px;opacity:1;z-index:3}
+.tl-wrap.grande .tl-dot.meal{top:0;bottom:0;height:auto;width:3px;border:0;border-radius:0;transform:translateX(-1px)}
+.tl-wrap.grande .tl-dot.evt{top:auto;bottom:0}
+.drsol{margin-top:6px}
+.semcab{display:flex;flex-direction:column;gap:0;min-width:0}
+.semcab .semnav{margin-bottom:0}
+.semley summary{list-style:none}
+.semley summary::-webkit-details-marker{display:none}
+.drev .pl.pl{color:var(--ink)}
+.tl-wrap.grande .tl-dot.meal{width:2px;opacity:.85}
+.drow .drsol{row-gap:2px;column-gap:10px}
+.daylist .dayer{margin-bottom:0}
+
+/* ============ «Hoy» (maqueta aprobada): ahora/siguiente y la agenda del día por horas ============ */
+.hoyest{font-size:16px;font-weight:800;margin-top:6px;line-height:1.25}
+.hoyley{margin-top:4px}
+.hoyahora{display:flex;gap:10px;justify-content:space-between;align-items:flex-end;margin-top:10px;padding:9px 11px;
+  border-radius:12px;background:color-mix(in srgb,var(--brand) 13%,transparent)}
+.hoyahora>div{display:flex;flex-direction:column;min-width:0}
+.hoyahora .sig{text-align:right;align-items:flex-end}
+.hoyahora .e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.hoyahora b{font-size:14px}
+.hoyag{margin-top:8px}
+.agf{display:flex;gap:9px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);min-height:36px}
+.agf:first-child{border-top:0}
+.agf .h{min-width:40px;text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.agf>i{width:4px;height:22px;border-radius:2px;flex:none}
+.agf .ico{font-size:15px;width:20px;text-align:center;flex:none}
+.agf .t{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.25}
+.agf .t .mini{font-weight:600}
+.agf.ya{opacity:.45}
+.agf.ahora{background:color-mix(in srgb,var(--brand) 9%,transparent);border-radius:8px;margin:0 -6px;padding-left:6px;padding-right:6px}
+.agf .btn{padding:3px 9px;flex:none}
+.hoypie{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.hoypie .drsol{margin-top:0}
+.hoykcal{font-size:12px;color:var(--ink2);font-weight:700}
+.hoykcal b{color:var(--ink)}
+.agf .h{white-space:nowrap;min-width:44px}
+.agf .t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.leyfila{display:flex;align-items:flex-start;gap:8px;margin:4px 2px}
+.leyfila details{flex:1 1 auto;min-width:0;margin-top:3px}
+.leyfila .leyatajo{flex:none;padding:2px 9px;font-size:10.5px}
+.leyfila .leyatajo{order:2}
+.semley{align-items:center;flex-wrap:wrap;margin:6px 2px 0}
+.semley details{flex:1 1 auto}
+.semley details[open]{flex-basis:100%;order:3}
+.semley .semopc{margin-top:0;flex:none;gap:4px}
+.semley .semopc .btn{min-width:34px;padding:4px 6px}
+.semeje{margin:6px 12px 0}

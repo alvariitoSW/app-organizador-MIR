@@ -3489,8 +3489,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         noche: main.querySelectorAll('.tl-noche').length,
       };
     });
+    // la maqueta aprobada pone encima del primer día el rango, el «ver 5·7·10·14», el eje y la
+    // leyenda plegada, y ayer en una línea: el primer día (hoy) sigue en la primera pantalla
     check('Semana empieza por los días, con hoy marcado de verdad y el sol en cada uno',
-      sem.antesDelPrimerDia < 60 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
+      sem.antesDelPrimerDia < 170 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
       sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.noche >= 7, JSON.stringify(sem));
   }
 
@@ -3912,6 +3914,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const corto = await page.evaluate(() => {
       const P = window.PG;
       const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      // «Semana» ya no es de lunes a domingo: empieza HOY. Se pone hoy como día de trabajo para
+      // no depender de lo que otras pruebas hayan dejado en los días que vienen
+      const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = '01:30';
       P.store.rhythm['sh-t'].wake = '06:50';
       P.save(); P.render();
@@ -3923,7 +3929,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         return x.querySelector('.pie.sue.corto') && tag && /Día de trabajo/i.test(tag.innerText || '');
       });
       const txt = f ? f.querySelector('.drsol').innerText : '';
-      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      P.store.rhythm['sh-t'] = guardado;
+      P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.save(); P.render();
       return txt;
     });
     check('dormir menos de tu mínimo se marca y dice a qué hora tocaría acostarse',
@@ -3933,11 +3941,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const vacio = await page.evaluate(() => {
       const P = window.PG;
       const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = ''; P.store.rhythm['sh-t'].wake = '';
       P.save(); P.render();
       const f = [...document.querySelectorAll('.drow')].find((x) => x.querySelector('.pie.sue.falta'));
       const txt = f ? f.querySelector('.drsol').innerText : '';
-      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      P.store.rhythm['sh-t'] = guardado;
+      P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.save(); P.render();
       return txt;
     });
     check('un tipo de día sin horas puestas dice qué falta en vez de dejar el hueco vacío',
@@ -4683,20 +4695,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       bloques.length >= 2 && bloques.some((t) => /entreno/.test(t)) && bloques.some((t) => /jornada/.test(t)),
       JSON.stringify(bloques));
 
-    // «Semana» enseña lo que vas a HACER ese día, no solo la franja y las comidas
+    // «Semana» enseña lo que vas a HACER ese día, no solo la franja y las comidas. Semana ya no va de
+    // lunes a domingo sino desde hoy: se pone a empezar en el lunes que esta prueba ha preparado
     await gotoTab('week');
+    await page.evaluate((l) => { window.PG.ui.semDesde = l; window.PG.render(); }, horas.lunes);
     await page.waitForTimeout(350);
     const plan = await page.evaluate(() => {
       const filas = [...document.querySelectorAll('#main .drow')];
       return { dias: filas.length,
         conPlan: filas.filter((f) => f.querySelector('.drplan')).length,
-        conTrabajo: filas.filter((f) => f.querySelector('.drplan .pl.trab')).length,
+        // las horas de trabajo van ahora junto al nombre del día («Día de trabajo · 8–15»)
+        conTrabajo: filas.filter((f) => f.querySelector('.drtag .drh')).length,
         conComida: filas.filter((f) => f.querySelector('.drplan .pl.com')).length,
-        conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length };
+        conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length,
+        tags: filas.map((f) => ((f.querySelector('.drday') || {}).innerText || '') + ' ' + ((f.querySelector('.drtag') || {}).innerText || '').replace(/\s+/g, ' ')) };
     });
     check('cada día de «Semana» dice lo que vas a hacer: horas de trabajo, entreno y cuándo comes',
-      plan.dias === 7 && plan.conPlan === 7 && plan.conComida === 7 && plan.conTrabajo >= 5 && plan.conGym >= 1,
+      // todos los días en que se trabaja (no los libres) llevan sus horas junto al nombre
+      plan.dias === 7 && plan.conPlan === 7 && plan.conComida === 7 && plan.conGym >= 1 && plan.conTrabajo >= 4 &&
+      plan.conTrabajo === plan.tags.filter((t) => !/libre|vacaci/i.test(t)).length,
       JSON.stringify(plan));
+    await page.evaluate(() => { window.PG.ui.semDesde = ''; window.PG.render(); });
 
     // …y la hora se cambia desde la pantalla y sobrevive a recargar (normalize() tira lo que no conoce)
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'horas'; P.render(); });
@@ -5080,6 +5099,77 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       g.enTrabajo.some((x) => /Sesión UMI/.test(x)) && g.enTrabajo.some((x) => /Trabajo · UMI/.test(x)) &&
       !g.enVac.some((x) => /Sesión UMI/.test(x)) &&
       g.rot.length === 1 && /Rotación · UMI 2027-06-07→2027-06-16/.test(g.rot[0]) && g.ics, JSON.stringify(g));
+  }
+
+  // ===================== «Semana» por días: desde hoy, 5/7/10/14, con ayer plegado =====================
+  {
+    // «que se mueva según el día, que el día en el que estamos se vea el primero y puedas ver el de
+    // ayer y los 7 siguientes o 10 o 14 según lo pongas»
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.semDesde = ''; P.ui.semAyer = false; P.save(); });
+    await gotoTab('week');
+    await page.waitForTimeout(300);
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(250); return !!el; };
+    const lee = () => page.evaluate(() => {
+      const f = [...document.querySelectorAll('#main .drow')];
+      return { n: f.length, hoyPrimero: !!(f[0] && f[0].classList.contains('today')),
+        primero: f[0] ? f[0].querySelector('[data-a="day-open"]').dataset.key : '',
+        ayer: !!document.querySelector('#main .dayer'), dias: window.PG.store.rotation.semanaDias };
+    });
+    const hoyK = isoDate(new Date());
+    const mas = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDate(d); };
+    const pasos = [await lee()], hubo = [];
+    hubo.push(await toca('#main [data-a="sem-dias"][data-n="14"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="wk-next"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="today"]')); pasos.push(await lee());
+    hubo.push(await toca('#main [data-a="sem-ayer"]'));
+    const ayerAbierto = await page.evaluate(() => document.querySelectorAll('#main .drow.ayer').length);
+    hubo.push(await toca('#main [data-a="sem-ayer"]'));
+    const persiste = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.rotation.semanaDias; });
+    hubo.push(await toca('#main [data-a="sem-dias"][data-n="7"]')); pasos.push(await lee());
+    check('«Semana» empieza hoy, con ayer plegado, y enseña 7, 10, 14 o 5 días que se guardan',
+      hubo.every(Boolean) && pasos[0].n === 7 && pasos[0].hoyPrimero && pasos[0].primero === hoyK && pasos[0].ayer &&
+      pasos[1].n === 14 && pasos[1].primero === hoyK && pasos[2].primero === mas(14) && !pasos[2].hoyPrimero &&
+      pasos[3].primero === hoyK && ayerAbierto === 1 && persiste === 14 && pasos[4].n === 7,
+      JSON.stringify({ hubo, pasos, ayerAbierto, persiste }));
+    // la leyenda va UNA vez y plegada, y cada día lleva sus comidas con hora
+    const una = await page.evaluate(() => ({
+      leyendas: document.querySelectorAll('#main .tlleg').length,
+      plegada: !!document.querySelector('#main .semley details:not([open]) .tlleg'),
+      ejes: document.querySelectorAll('#main .drow .tl-axis').length,
+      comidasConHora: [...document.querySelectorAll('#main .drow')].filter((f) => /\d:\d\d/.test((f.querySelector('.drcom') || {}).innerText || '')).length,
+      rotulos: [...document.querySelectorAll('#main .drow .tl-seg b')].map((b) => b.textContent).slice(0, 6) }));
+    check('en «Semana» la leyenda sale una vez y plegada, sin un eje por día, y las comidas llevan su hora',
+      una.leyendas === 1 && una.plegada && una.ejes === 0 && una.comidasConHora === 7 &&
+      una.rotulos.some((t) => /trabajo|guardia/.test(t)), JSON.stringify(una));
+  }
+
+  // ===================== «Hoy»: ahora / siguiente y la agenda por horas =====================
+  {
+    const k = await page.evaluate(() => {
+      const P = window.PG, k = P.iso(new Date());
+      P.setDayOverride(k, 'sh-t', '');
+      P.store.eventos.push({ id: 'ev-ag', titulo: 'Sesión de prueba', hora: '08:00', fin: '08:39', modo: 'fecha', fecha: k, dow: [], color: '#f472b6', on: true });
+      P.save(); return k;
+    });
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const ag = await page.evaluate(() => {
+      const filas = [...document.querySelectorAll('#main .hoyag .agf')];
+      const horas = filas.map((f) => f.querySelector('.h').textContent);
+      const aMin = (t) => { const m = /(\d+):(\d+)/.exec(t); return m ? +m[1] * 60 + +m[2] : -1; };
+      const ordenadas = horas.every((h, i) => i === 0 || aMin(h) >= aMin(horas[i - 1]) || /cama/i.test(filas[i].innerText));
+      const ses = filas.find((f) => /Sesión de prueba/.test(f.innerText));
+      return { n: filas.length, ordenadas,
+        sesion: ses ? ses.innerText.replace(/\s+/g, ' ') : '',
+        trabajo: filas.some((f) => /Trabajo/.test(f.innerText) && /hasta 15:00/.test(f.innerText)),
+        comidas: filas.filter((f) => f.classList.contains('meal')).length,
+        cama: filas.some((f) => /A la cama/.test(f.innerText)),
+        caja: !!document.querySelector('#main .hoyahora') };
+    });
+    check('«Hoy» lista el día por horas —trabajo, sesión con su fin, comidas y cama— con ahora/siguiente arriba',
+      ag.n >= 5 && ag.ordenadas && /8:00/.test(ag.sesion) && /hasta 8:39/.test(ag.sesion) && ag.trabajo &&
+      ag.comidas >= 3 && ag.cama, JSON.stringify(ag));
+    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.save(); P.render(); }, k);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
