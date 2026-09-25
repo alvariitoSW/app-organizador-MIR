@@ -1307,14 +1307,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await gotoTab('month');
   await page.waitForTimeout(150);
-  // el nombre ya no se escribe dentro de la casilla —53 px daban «Entreno c»— sino que el día
-  // queda marcado con un punto de su color, y el nombre entero vive en la lista de eventos del mes
-  const mesConEvento = await page.evaluate(() => ({
-    marcado: [...document.querySelectorAll('#main .dbox .dpt')].some((l) => /Entreno con Marta/.test(l.title)),
-    sinTextoRecortado: !/Entreno con/.test(document.querySelector('#main .cal').innerText),
-  }));
-  check('"Mes" marca el día del evento con su color, sin recortar el nombre en la casilla',
-    mesConEvento.marcado && mesConEvento.sinTextoRecortado, JSON.stringify(mesConEvento));
+  // «que quepan aunque sea en pequeño los eventos del día»: con las casillas ya altas (siete filas
+  // que llenan la pantalla), el evento lleva su punto de color Y su nombre, partido por palabras en
+  // hasta dos líneas (tres si es el único del día), con la hora detrás
+  const mesConEvento = await page.evaluate(() => {
+    const ev = [...document.querySelectorAll('#main .dbox .dev')].find((l) => /Entreno con Marta/.test(l.title));
+    return { marcado: !!(ev && ev.querySelector('.dpt')),
+      conNombre: ev ? /Entreno con/.test(ev.innerText) : false,
+      conHora: ev ? /\b8\b/.test(ev.innerText) : false };
+  });
+  check('"Mes" enseña el evento en su casilla con su color, su nombre y su hora',
+    mesConEvento.marcado && mesConEvento.conNombre && mesConEvento.conHora, JSON.stringify(mesConEvento));
 
   // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
   // mapa de calor de 6 semanas, y borrarlo (con confirmación)
@@ -2234,6 +2237,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'verano'); }, [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))]);
     await page.waitForTimeout(300);
 
+    // el mes en el que estás empieza dos semanas antes de la de hoy: puede que los primeros días del
+    // mes ya no salgan. Se cuentan los días de vacaciones QUE SE VEN en la cuadrícula.
+    const r1 = [clave(new Date(y, m, 3)), clave(new Date(y, m, 7))], r2 = [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))];
+    const esperados = await page.evaluate((rr) => [...document.querySelectorAll('.dbox')]
+      .filter((x) => rr.some((r) => x.dataset.key >= r[0] && x.dataset.key <= r[1])).length, [r1, r2]);
     const dos = await page.evaluate(() => {
       const c = document.querySelector('.card[data-cfg="vac"]');
       const cards = [...document.querySelectorAll('#main .card')];
@@ -2248,8 +2256,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       };
     });
     check('se pueden apuntar varios periodos de vacaciones, y la tarjeta lo dice en plural',
-      dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === 15 &&
-      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify(dos));
+      dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === esperados && esperados >= 10 &&
+      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify({ dos, esperados }));
 
     // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta
     const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
@@ -2483,9 +2491,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('los eventos del mes salen marcados en su casilla y listados enteros debajo',
       agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
 
-    // Con el título del evento dentro de la casilla se leía «Llegar a», «Vuelo de»: la casilla mide
-    // 53 px de ancho, ahí caben ocho caracteres. Y cada evento gastaba una línea entera, así que con
-    // cuatro la casilla reventaba. Un punto por evento cabe siempre y el nombre está en la lista.
+    // Con diez eventos en un día la casilla no puede reventar: caben tres con su nombre (en dos
+    // líneas como mucho, partido por palabras) y el resto va como «+N». El nombre entero sigue en
+    // la lista del mes y al tocar el día.
     const aprieto = await page.evaluate(() => {
       const y = new Date().getFullYear(), m = new Date().getMonth();
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -2509,13 +2517,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         masN: (celda.querySelector('.dmas') || {}).textContent || '',
         nota: !!celda.querySelector('.dnota'),
         desborda: celda.scrollHeight > celda.clientHeight,
-        // nada de texto de evento recortado dentro de la casilla
-        sinTituloRecortado: !/Un evento de/.test(celda.innerText),
+        // los tres que caben llevan su nombre, y ninguno pasa de dos líneas
+        titulos: [...celda.querySelectorAll('.dev')].filter((x) => /Un evento de/.test(x.innerText)).length,
+        maxLineas: Math.max(...[...celda.querySelectorAll('.dev')].map((x) =>
+          Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)))),
       };
     });
-    check('con diez eventos en un día, la casilla los marca sin desbordarse ni recortar títulos',
-      aprieto.puntos === 6 && aprieto.masN === '+4' && aprieto.nota &&
-      !aprieto.desborda && aprieto.contenido < aprieto.altoCelda && aprieto.sinTituloRecortado,
+    check('con diez eventos en un día, la casilla enseña tres con nombre y «+7», sin desbordarse',
+      aprieto.puntos === 3 && aprieto.masN === '+7' && aprieto.nota && aprieto.titulos === 3 &&
+      aprieto.maxLineas <= 2 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
       JSON.stringify(aprieto));
 
     // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
@@ -3519,8 +3529,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         noche: main.querySelectorAll('.tl-noche').length,
       };
     });
+    // la maqueta aprobada pone encima del primer día el rango, el «ver 5·7·10·14», el eje y la
+    // leyenda plegada, y ayer en una línea: el primer día (hoy) sigue en la primera pantalla
     check('Semana empieza por los días, con hoy marcado de verdad y el sol en cada uno',
-      sem.antesDelPrimerDia < 60 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
+      sem.antesDelPrimerDia < 170 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
       sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.noche >= 7, JSON.stringify(sem));
   }
 
@@ -3764,10 +3776,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { celdas: celdas.length, visibles: vis.length,
         conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
         kpiFondo: cs ? cs.backgroundColor : '', kpiTexto: cs ? cs.color : '',
+        previas: celdas.filter((c) => c.classList.contains('semprev')).length,
         bodyFondo: getComputedStyle(document.body).backgroundColor };
     });
     check('al imprimir «Mes» salen las casillas del mes, no una cuadrícula vacía',
-      mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas && mesImpreso.conTexto >= 28,
+      // todas menos las dos semanas ya pasadas del mes en el que estás, que no se imprimen
+      mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas - mesImpreso.previas && mesImpreso.conTexto >= 28,
       JSON.stringify(mesImpreso));
     // el fondo de una caja tiene que ser claro: antes era la tarjeta oscura con la letra en negro
     const claro = (c) => {
@@ -3942,6 +3956,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const corto = await page.evaluate(() => {
       const P = window.PG;
       const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      // «Semana» ya no es de lunes a domingo: empieza HOY. Se pone hoy como día de trabajo para
+      // no depender de lo que otras pruebas hayan dejado en los días que vienen
+      const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = '01:30';
       P.store.rhythm['sh-t'].wake = '06:50';
       P.save(); P.render();
@@ -3953,7 +3971,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         return x.querySelector('.pie.sue.corto') && tag && /Día de trabajo/i.test(tag.innerText || '');
       });
       const txt = f ? f.querySelector('.drsol').innerText : '';
-      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      P.store.rhythm['sh-t'] = guardado;
+      P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.save(); P.render();
       return txt;
     });
     check('dormir menos de tu mínimo se marca y dice a qué hora tocaría acostarse',
@@ -3963,11 +3983,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const vacio = await page.evaluate(() => {
       const P = window.PG;
       const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
+      const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = ''; P.store.rhythm['sh-t'].wake = '';
       P.save(); P.render();
       const f = [...document.querySelectorAll('.drow')].find((x) => x.querySelector('.pie.sue.falta'));
       const txt = f ? f.querySelector('.drsol').innerText : '';
-      P.store.rhythm['sh-t'] = guardado; P.save(); P.render();
+      P.store.rhythm['sh-t'] = guardado;
+      P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.save(); P.render();
       return txt;
     });
     check('un tipo de día sin horas puestas dice qué falta en vez de dejar el hueco vacío',
@@ -4720,20 +4744,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       bloques.length >= 2 && bloques.some((t) => /entreno/.test(t)) && bloques.some((t) => /jornada/.test(t)),
       JSON.stringify(bloques));
 
-    // «Semana» enseña lo que vas a HACER ese día, no solo la franja y las comidas
+    // «Semana» enseña lo que vas a HACER ese día, no solo la franja y las comidas. Semana ya no va de
+    // lunes a domingo sino desde hoy: se pone a empezar en el lunes que esta prueba ha preparado
     await gotoTab('week');
+    await page.evaluate((l) => { window.PG.ui.semDesde = l; window.PG.render(); }, horas.lunes);
     await page.waitForTimeout(350);
     const plan = await page.evaluate(() => {
       const filas = [...document.querySelectorAll('#main .drow')];
       return { dias: filas.length,
         conPlan: filas.filter((f) => f.querySelector('.drplan')).length,
-        conTrabajo: filas.filter((f) => f.querySelector('.drplan .pl.trab')).length,
+        // las horas de trabajo van ahora junto al nombre del día («Día de trabajo · 8–15»)
+        conTrabajo: filas.filter((f) => f.querySelector('.drtag .drh')).length,
         conComida: filas.filter((f) => f.querySelector('.drplan .pl.com')).length,
-        conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length };
+        conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length,
+        tags: filas.map((f) => ((f.querySelector('.drday') || {}).innerText || '') + ' ' + ((f.querySelector('.drtag') || {}).innerText || '').replace(/\s+/g, ' ')) };
     });
     check('cada día de «Semana» dice lo que vas a hacer: horas de trabajo, entreno y cuándo comes',
-      plan.dias === 7 && plan.conPlan === 7 && plan.conComida === 7 && plan.conTrabajo >= 5 && plan.conGym >= 1,
+      // todos los días en que se trabaja (no los libres) llevan sus horas junto al nombre
+      plan.dias === 7 && plan.conPlan === 7 && plan.conComida === 7 && plan.conGym >= 1 && plan.conTrabajo >= 4 &&
+      plan.conTrabajo === plan.tags.filter((t) => !/libre|vacaci/i.test(t)).length,
       JSON.stringify(plan));
+    await page.evaluate(() => { window.PG.ui.semDesde = ''; window.PG.render(); });
 
     // …y la hora se cambia desde la pantalla y sobrevive a recargar (normalize() tira lo que no conoce)
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'horas'; P.render(); });
@@ -4994,6 +5025,227 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymSesionActiva = null; P.ui.gymVivo = null; P.ui.gymDesc = null;
       P.save(); P.render();
     });
+  }
+
+  // ===================== Mes: el mes en el que estás corre con la semana =====================
+  {
+    // «que el calendario se mueva según las semanas, que solo vea 2 semanas anteriores a la que estoy
+    // y la mayoría delante»: en el mes actual, dos semanas antes de la de hoy, la de hoy y cuatro más.
+    // Los otros meses siguen enteros, con una semana de margen a cada lado.
+    await gotoTab('month');
+    const mb = await page.$('#main [data-a="mon-today"]');
+    if (mb) await mb.click();
+    await page.waitForTimeout(300);
+    const rej = await page.evaluate(() => {
+      const celdas = [...document.querySelectorAll('#main .cal .dbox')];
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const h = new Date(); h.setHours(12, 0, 0, 0);
+      const lun = new Date(h); lun.setDate(h.getDate() - ((h.getDay() + 6) % 7));
+      const menos14 = new Date(lun); menos14.setDate(lun.getDate() - 14);
+      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(menos14),
+        previas: celdas.filter((c) => c.classList.contains('semprev')).length,
+        hoyEnFila3: celdas.findIndex((c) => c.classList.contains('today')) >= 14 && celdas.findIndex((c) => c.classList.contains('today')) < 21,
+        huecos: [...document.querySelectorAll('#main .cal > span:not(.wd)')].length };
+    });
+    check('en el mes actual Mes enseña 2 semanas antes de la de hoy, la de hoy y 4 más',
+      mb && rej.n === 49 && rej.primero === rej.esperado && rej.previas === 14 && rej.hoyEnFila3 && rej.huecos === 0,
+      JSON.stringify(rej));
+    // al imprimir, el papel empieza en la semana en la que estás
+    await page.emulateMedia({ media: 'print' });
+    const papel = await page.evaluate(() => {
+      const vis = [...document.querySelectorAll('#main .cal .dbox')].filter((c) => getComputedStyle(c).display !== 'none');
+      return { visibles: vis.length, previasVisibles: vis.filter((c) => c.classList.contains('semprev')).length };
+    });
+    await page.emulateMedia({ media: null });
+    check('al imprimir el Mes no salen las semanas anteriores a la tuya',
+      papel.visibles === 35 && papel.previasVisibles === 0, JSON.stringify(papel));
+    // otro mes (con ›): entero, con la semana de antes y la de después, apagadas
+    const nx = await page.$('#main [data-a="mon-next"]');
+    if (nx) await nx.click();
+    await page.waitForTimeout(250);
+    const otro = await page.evaluate(() => {
+      const celdas = [...document.querySelectorAll('#main .cal .dbox')];
+      const claves = celdas.map((c) => c.dataset.key);
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth() + 1;
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const i1 = claves.indexOf(iso(new Date(y, m, 1))), iu = claves.indexOf(iso(new Date(y, m + 1, 0)));
+      return { n: celdas.length, antes: i1, despues: claves.length - 1 - iu, previas: celdas.filter((c) => c.classList.contains('semprev')).length,
+        fueraBien: celdas.every((c, i) => c.classList.contains('fuera') === (i < i1 || i > iu)) };
+    });
+    check('los otros meses se ven enteros, con una semana de margen a cada lado',
+      !!nx && otro.antes >= 7 && otro.antes <= 13 && otro.despues >= 7 && otro.despues <= 13 && otro.previas === 0 && otro.fueraBien,
+      JSON.stringify(otro));
+    const vt = await page.$('#main [data-a="mon-today"]');
+    if (vt) await vt.click();
+    await page.waitForTimeout(250);
+    // y se estira hasta el alto de la pantalla: con siete u ocho filas, cada casilla sigue alta
+    const alto = await page.evaluate(() => {
+      const cal = document.querySelector('#main .cal'), c = document.querySelector('#main .cal .dbox');
+      return { cal: Math.round(cal.getBoundingClientRect().height), celda: Math.round(c.getBoundingClientRect().height), vh: innerHeight };
+    });
+    check('la cuadrícula del mes ocupa casi toda la pantalla', alto.cal >= alto.vh * 0.85 && alto.celda >= 90,
+      JSON.stringify(alto));
+  }
+
+  // ===================== Acostarse a medianoche no pinta el día entero de sueño =====================
+  {
+    // En vacaciones, con la cama a las 00:00, la franja pintaba sueño de 0:00 a 24:00: la barra era un
+    // solo bloque y no se veía nada más. Acostarse a las 00:00 es la noche siguiente.
+    const franja = await page.evaluate(() => {
+      const P = window.PG;
+      const k = '2027-03-10';
+      P.store.rotation.vacaciones = (P.store.rotation.vacaciones || []).filter((v) => v.label !== 'medianoche');
+      P.addVacation(k, k, 'medianoche');
+      const sh = P.dayInfo(k).shiftId;
+      const r = P.store.rhythm[sh]; const antes = r.sleep; r.sleep = '00:00';
+      const box = document.createElement('div'); box.innerHTML = P.timelineBar(k);
+      r.sleep = antes;
+      const col = P.tlColor('sleep');
+      const tramos = [...box.querySelectorAll('.tl-seg')].map((x) => ({ w: parseFloat(x.style.width), l: parseFloat(x.style.left), t: x.title }));
+      return { tramos, masAncho: Math.max(0, ...tramos.map((t) => t.w)) };
+    });
+    check('con la cama a las 00:00 la franja no pinta el día entero de sueño',
+      franja.tramos.length >= 1 && franja.masAncho < 60 && !franja.tramos.some((t) => /a la cama/.test(t.t)),
+      JSON.stringify(franja));
+  }
+
+  // ===================== Cinco temas de color en Ajustes =====================
+  {
+    await gotoTab('ajustes', 'aspecto');
+    await page.waitForTimeout(250);
+    const nBot = await page.$$eval('#main [data-a="tema-pre"]', (x) => x.length);
+    const lee = () => page.evaluate(() => ({ dark: document.documentElement.classList.contains('dark'),
+      bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+      sueno: window.PG.tlColor('sleep'), trabajo: window.PG.tlColor('work'), pre: window.PG.store.tema.preset }));
+    const bm = await page.$('#main [data-a="tema-pre"][data-id="magenta"]');
+    if (bm) await bm.click();
+    await page.waitForTimeout(150);
+    const mag = await lee();
+    const bp = await page.$('#main [data-a="tema-pre"][data-id="papel"]');
+    if (bp) await bp.click();
+    await page.waitForTimeout(150);
+    const pap = await lee();
+    check('Ajustes trae cinco temas y cada uno pone fondo, modo y colores de la franja',
+      nBot === 5 && !!bm && mag.dark && mag.bg === '#12081a' && mag.pre === 'magenta' && mag.sueno !== mag.trabajo &&
+      !!bp && !pap.dark && pap.pre === 'papel', JSON.stringify({ nBot, mag, pap }));
+    // el tema sobrevive a recargar (normalize() no se lo come)
+    const vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.tema.preset; });
+    // un texto negro sobre fondo oscuro no se aplica: dejaba la app ilegible
+    const tinta = await page.evaluate(() => {
+      const P = window.PG; P.ponerTema('hud'); P.store.tema.ink = '#000000'; P.aplicarTema();
+      const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+      P.store.tema.ink = ''; P.aplicarTema();
+      return { ink, legible: P.tintaLegible('#000000') };
+    });
+    check('el tema aguanta la recarga y un color de texto ilegible no se aplica',
+      vuelta === 'papel' && tinta.ink !== '#000000' && tinta.legible === false, JSON.stringify({ vuelta, tinta }));
+    await page.evaluate(() => { window.PG.ponerTema('hud'); });
+  }
+
+  // ===================== Google: sesiones fijas, rotación y entreno =====================
+  {
+    const g = await page.evaluate(() => {
+      const P = window.PG;
+      // tus datos de siempre (sin la marca) reciben las dos sesiones UNA vez; una instalación nueva no
+      const viejo = JSON.parse(JSON.stringify(P.store)); delete viejo.meta.sesionesFijas;
+      viejo.eventos = viejo.eventos.filter((e) => !/^Sesi[oó]n (UMI|general)/.test(e.titulo));
+      P.store = viejo;
+      const ses = P.store.eventos.filter((e) => /^Sesi[oó]n (UMI|general)/.test(e.titulo));
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const ses2 = P.store.eventos.filter((e) => /^Sesi[oó]n (UMI|general)/.test(e.titulo)).length;
+      // un martes de trabajo y otro de vacaciones
+      const trab = '2027-06-08', vac = '2027-06-15';
+      P.setDayOverride(trab, 'sh-t', '');
+      P.addVacation(vac, vac, 'test-ses');
+      P.setMonthService(2027, 5, 'UMI', 5);
+      const evs = P.calEventos('2027-06-07', '2027-06-16');
+      const de = (k) => evs.filter((e) => e.isoKey === k).map((e) => e.summ);
+      const umi = ses.filter((e) => /UMI/.test(e.titulo))[0] || {};
+      const gen = ses.filter((e) => /general/.test(e.titulo))[0] || {};
+      return { n: ses.length, n2: ses2,
+        umi: umi.dow + ' ' + umi.hora + '-' + umi.fin + ' ' + umi.soloTrabajo,
+        gen: gen.dow + ' ' + gen.hora + '-' + gen.fin,
+        enTrabajo: de(trab), enVac: de(vac),
+        rot: evs.filter((e) => e.cat === 'ROTACION').map((e) => e.summ + ' ' + e.isoKey + '→' + e.hastaIso),
+        ics: /DTEND;VALUE=DATE:20270617/.test(P.icsTexto('2027-06-07', '2027-06-16')) };
+    });
+    check('las sesiones de la UMI (martes 8:00–8:39) y la general (jueves 8:00–8:30) entran una vez',
+      g.n === 2 && g.n2 === 2 && g.umi === '2 08:00-08:39 true' && g.gen === '4 08:00-08:30', JSON.stringify(g));
+    check('a Google van la sesión de los martes que trabajas (no en vacaciones), el trabajo con su rotación y la rotación',
+      g.enTrabajo.some((x) => /Sesión UMI/.test(x)) && g.enTrabajo.some((x) => /Trabajo · UMI/.test(x)) &&
+      !g.enVac.some((x) => /Sesión UMI/.test(x)) &&
+      g.rot.length === 1 && /Rotación · UMI 2027-06-07→2027-06-16/.test(g.rot[0]) && g.ics, JSON.stringify(g));
+  }
+
+  // ===================== «Semana» por días: desde hoy, 5/7/10/14, con ayer plegado =====================
+  {
+    // «que se mueva según el día, que el día en el que estamos se vea el primero y puedas ver el de
+    // ayer y los 7 siguientes o 10 o 14 según lo pongas»
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.semDesde = ''; P.ui.semAyer = false; P.save(); });
+    await gotoTab('week');
+    await page.waitForTimeout(300);
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(250); return !!el; };
+    const lee = () => page.evaluate(() => {
+      const f = [...document.querySelectorAll('#main .drow')];
+      return { n: f.length, hoyPrimero: !!(f[0] && f[0].classList.contains('today')),
+        primero: f[0] ? f[0].querySelector('[data-a="day-open"]').dataset.key : '',
+        ayer: !!document.querySelector('#main .dayer'), dias: window.PG.store.rotation.semanaDias };
+    });
+    const hoyK = isoDate(new Date());
+    const mas = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDate(d); };
+    const pasos = [await lee()], hubo = [];
+    hubo.push(await toca('#main [data-a="sem-dias"][data-n="14"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="wk-next"]')); pasos.push(await lee());
+    hubo.push(await toca('#main .semnav [data-a="today"]')); pasos.push(await lee());
+    hubo.push(await toca('#main [data-a="sem-ayer"]'));
+    const ayerAbierto = await page.evaluate(() => document.querySelectorAll('#main .drow.ayer').length);
+    hubo.push(await toca('#main [data-a="sem-ayer"]'));
+    const persiste = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.rotation.semanaDias; });
+    hubo.push(await toca('#main [data-a="sem-dias"][data-n="7"]')); pasos.push(await lee());
+    check('«Semana» empieza hoy, con ayer plegado, y enseña 7, 10, 14 o 5 días que se guardan',
+      hubo.every(Boolean) && pasos[0].n === 7 && pasos[0].hoyPrimero && pasos[0].primero === hoyK && pasos[0].ayer &&
+      pasos[1].n === 14 && pasos[1].primero === hoyK && pasos[2].primero === mas(14) && !pasos[2].hoyPrimero &&
+      pasos[3].primero === hoyK && ayerAbierto === 1 && persiste === 14 && pasos[4].n === 7,
+      JSON.stringify({ hubo, pasos, ayerAbierto, persiste }));
+    // la leyenda va UNA vez y plegada, y cada día lleva sus comidas con hora
+    const una = await page.evaluate(() => ({
+      leyendas: document.querySelectorAll('#main .tlleg').length,
+      plegada: !!document.querySelector('#main .semley details:not([open]) .tlleg'),
+      ejes: document.querySelectorAll('#main .drow .tl-axis').length,
+      comidasConHora: [...document.querySelectorAll('#main .drow')].filter((f) => /\d:\d\d/.test((f.querySelector('.drcom') || {}).innerText || '')).length,
+      rotulos: [...document.querySelectorAll('#main .drow .tl-seg b')].map((b) => b.textContent).slice(0, 6) }));
+    check('en «Semana» la leyenda sale una vez y plegada, sin un eje por día, y las comidas llevan su hora',
+      una.leyendas === 1 && una.plegada && una.ejes === 0 && una.comidasConHora === 7 &&
+      una.rotulos.some((t) => /trabajo|guardia/.test(t)), JSON.stringify(una));
+  }
+
+  // ===================== «Hoy»: ahora / siguiente y la agenda por horas =====================
+  {
+    const k = await page.evaluate(() => {
+      const P = window.PG, k = P.iso(new Date());
+      P.setDayOverride(k, 'sh-t', '');
+      P.store.eventos.push({ id: 'ev-ag', titulo: 'Sesión de prueba', hora: '08:00', fin: '08:39', modo: 'fecha', fecha: k, dow: [], color: '#f472b6', on: true });
+      P.save(); return k;
+    });
+    await gotoTab('hoy');
+    await page.waitForTimeout(300);
+    const ag = await page.evaluate(() => {
+      const filas = [...document.querySelectorAll('#main .hoyag .agf')];
+      const horas = filas.map((f) => f.querySelector('.h').textContent);
+      const aMin = (t) => { const m = /(\d+):(\d+)/.exec(t); return m ? +m[1] * 60 + +m[2] : -1; };
+      const ordenadas = horas.every((h, i) => i === 0 || aMin(h) >= aMin(horas[i - 1]) || /cama/i.test(filas[i].innerText));
+      const ses = filas.find((f) => /Sesión de prueba/.test(f.innerText));
+      return { n: filas.length, ordenadas,
+        sesion: ses ? ses.innerText.replace(/\s+/g, ' ') : '',
+        trabajo: filas.some((f) => /Trabajo/.test(f.innerText) && /hasta 15:00/.test(f.innerText)),
+        comidas: filas.filter((f) => f.classList.contains('meal')).length,
+        cama: filas.some((f) => /A la cama/.test(f.innerText)),
+        caja: !!document.querySelector('#main .hoyahora') };
+    });
+    check('«Hoy» lista el día por horas —trabajo, sesión con su fin, comidas y cama— con ahora/siguiente arriba',
+      ag.n >= 5 && ag.ordenadas && /8:00/.test(ag.sesion) && /hasta 8:39/.test(ag.sesion) && ag.trabajo &&
+      ag.comidas >= 3 && ag.cama, JSON.stringify(ag));
+    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.save(); P.render(); }, k);
   }
 
   // ===================================================================================

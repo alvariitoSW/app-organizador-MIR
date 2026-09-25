@@ -1,0 +1,36 @@
+:root{--bg:#12081a;--bg2:#1a0c24;--card:#1f1230;--ink:#f7eefe;--ink2:#b7a3c9;--line:#35224a;--brand:#f050c8;--brand2:#8b5cf6;--accent:#fbbf24;
+ --sleep:#6d5dfc;--work:#f59e0b;--guard:#f43f5e;--meal:#34d399;--gym:#38bdf8;--evt:#f050c8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;width:390px}
+.wrap{padding:10px 10px 30px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.mini{font-size:11px;color:var(--ink2)}
+.btn{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 10px;font:inherit;font-size:12.5px;font-weight:700}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#12081a}
+.nav{display:flex;gap:6px;align-items:center;margin-bottom:8px}.nav .f{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:700}
+/* eje y leyenda, UNA vez */
+.eje{position:relative;height:13px;font-size:9.5px;color:var(--ink2);margin:0 2px}
+.eje span{position:absolute;transform:translateX(-50%)}.eje span:first-child{transform:none}.eje span:last-child{transform:translateX(-100%)}
+details.ley{margin:4px 0 8px}details.ley summary{list-style:none;font-size:11px;color:var(--ink2);font-weight:700;cursor:pointer}
+.leyc{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px}.leyc span{display:flex;gap:5px;align-items:center;font-size:11px;color:var(--ink2);font-weight:700}.leyc i{width:10px;height:10px;border-radius:3px}
+/* la franja nueva */
+.bar{position:relative;height:26px;border-radius:7px;background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);overflow:hidden}
+.bar .s{position:absolute;top:0;bottom:0;display:flex;align-items:center;padding-left:4px;font-size:9.5px;font-weight:800;color:#12081a;white-space:nowrap;overflow:hidden}
+.bar .n{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.32)}
+.bar .m{position:absolute;top:0;bottom:0;width:3px;background:var(--meal)}
+.bar .e{position:absolute;bottom:0;height:6px;background:var(--evt)}
+.bar .now{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;box-shadow:0 0 6px #fff}
+.dia{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:14px;padding:9px 10px 10px;margin-bottom:8px}
+.dia.hoy{border-color:var(--brand);border-left-color:var(--brand);box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 30%,transparent)}
+.cab{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.dn{font-size:12px;font-weight:900;letter-spacing:.06em;min-width:54px}.tp{font-size:13px;font-weight:800}
+.chip{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px;background:var(--brand);color:#12081a}
+.sp{flex:1}
+.lin{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;font-size:12px;font-weight:700}
+.lin b{font-variant-numeric:tabular-nums}
+.su{color:var(--sleep)}.su b{color:var(--ink)}
+.co span{display:inline-flex;gap:4px;align-items:center;color:var(--ink2)}.co b{color:var(--ink)}
+.ev{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12.5px}
+.ev i{width:3px;align-self:stretch;border-radius:2px;background:var(--evt)}
+.ev .h{font-weight:800;font-variant-numeric:tabular-nums;min-width:86px}
+.mas{font-size:11px;color:var(--ink2);font-weight:700}
+h1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:0 0 10px}
