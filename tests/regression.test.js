@@ -182,9 +182,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(120);
     // el informe de fin de sesión tapa la portada aunque gymPanel esté vacío
     await page.evaluate(() => { if (window.PG.ui.gymInforme) { window.PG.ui.gymInforme = ''; window.PG.render(); } });
-    if (await page.evaluate(() => !!window.PG.ui.gymPanel)) {
-      await page.click('[data-a="gym-panel"][data-p=""]');
-      await page.waitForTimeout(150);
+    // Entreno tiene pantallas anidadas (el constructor cuelga de «Rutinas»), así que el botón de
+    // atrás no siempre lleva a la portada de un salto: se pulsa hasta llegar. Con page.$ y no
+    // page.click, para que un botón que falte no cuelgue 30 s y tumbe la suite entera.
+    for (let i = 0; i < 4; i++) {
+      if (!(await page.evaluate(() => !!window.PG.ui.gymPanel))) break;
+      const atras = await page.$('#main .volver[data-a="gym-panel"]');
+      if (!atras) break;
+      await atras.click();
+      await page.waitForTimeout(160);
     }
     if (panel) {
       // con page.click, una puerta que no existe cuelga 30 s y TUMBA la suite entera en vez de
@@ -602,7 +608,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await page.evaluate(() => window.PG.render());
   await gotoGym('rutinas');
-  const migradaEnUI = await page.evaluate(() => document.getElementById('main').innerText);
+  // la lista es una tarjeta por rutina (nombre, cuántos ejercicios, qué músculos); los ejercicios
+  // uno a uno se ven al abrirla con «editar», que es donde se tocan
+  const migradaEnUI = await page.evaluate(() => {
+    const P = window.PG;
+    const rt = P.gymS().rutinas.filter((r) => r.nombre === 'Mi rutina')[0];
+    const lista = document.getElementById('main').innerText;
+    if (rt) { P.ui.gymRutSel = rt.id; P.ui.gymPanel = 'rutedit'; P.render(); }
+    const dentro = document.getElementById('main').innerText;
+    if (rt) { P.ui.gymPanel = 'rutinas'; P.render(); }
+    return lista + '\n' + dentro;
+  });
   check('la rutina migrada se ve en la UI con su nombre y sus ejercicios',
     migradaEnUI.includes('Mi rutina') && migradaEnUI.includes('Peso muerto') && migradaEnUI.includes('Remo con barra'),
     migradaEnUI.slice(0, 300));
@@ -612,9 +628,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click('[data-a="rt-nueva"]');
   await page.waitForTimeout(200);
   const ridUI = await page.evaluate(() => window.PG.gymS().rutinas.find((r) => r.nombre === 'Rutina UI').id);
+  // los ejercicios se añaden ahora dentro de «editar»: la lista es una tarjeta por rutina que se
+  // lee de un vistazo, no una tabla de nueve columnas por ejercicio
+  await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(250);
   await page.fill('#rtNew-' + ridUI, 'Curl bíceps');
   await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
+  await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
+  await page.waitForTimeout(250);
   await page.click('[data-a="ses-empezar"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
   await gotoGym('sesion');   // el formulario de apuntar vive en «Entrenar»
@@ -642,6 +664,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // desmontada y sin foco — sin refocarla, un segundo toque en "añadir" con el teclado ya cerrado
   // no añade nada y parece que "solo deja meter un ejercicio")
   await gotoGym('rutinas');   // los ejercicios de una rutina se añaden en «Rutinas», no en «Entrenar»
+  await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');   // …y dentro de «editar»
+  await page.waitForTimeout(250);
   await page.fill('#rtNew-' + ridUI, 'Press militar');
   await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(150);
@@ -666,7 +690,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.render();
   }, ridUI);
   await gotoGym('rutinas');
-  const regionesResaltadas = await page.evaluate(() => document.querySelectorAll('.mreg.on').length);
+  const regionesResaltadas = await page.evaluate((rid) => {
+    const P = window.PG;
+    P.ui.gymRutSel = rid; P.ui.gymPanel = 'rutedit'; P.render();   // el muñeco está en «editar»
+    const n = document.querySelectorAll('.mreg.on').length;
+    P.ui.gymPanel = 'rutinas'; P.render();
+    return n;
+  }, ridUI);
   check('el diagrama de músculos resalta al menos una región para una sesión de prueba',
     regionesResaltadas >= 1, 'regiones resaltadas: ' + regionesResaltadas);
 
@@ -1084,7 +1114,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const rutinaDiag = await page.evaluate(() => {
     const g = window.PG.gymS();
     g.rutinas = [{ id: 'rt-test', nombre: 'Rutina de prueba', notas: '', ejercicios: [] }];
-    window.PG.ui.gymPanel = 'rutinas';   // las tarjetas de rutina viven en su propia pantalla
+    // el muñeco y la recomendación viven donde se montan los ejercicios: en «editar»
+    window.PG.ui.gymRutSel = 'rt-test';
+    window.PG.ui.gymPanel = 'rutedit';
     window.PG.render();
     const vacia = document.getElementById('main').innerText;
     window.PG.addRutina('rt-test', 'Press banca de prueba', {});
@@ -2372,7 +2404,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       g.rutinas.length = 0;
       g.rutinas.push({ id: 'rt-mun', nombre: 'Rutina 1', notas: '', ejercicios: [] });
       ['Dominadas', 'Press militar', 'Sentadilla'].forEach((n) => window.PG.addRutina('rt-mun', n, {}));
-      window.PG.ui.gymPanel = 'rutinas';
+      // el muñeco y su leyenda viven ahora en «editar», que es donde montas la rutina y donde
+      // sirve de algo saber qué te dejas sin tocar
+      window.PG.ui.gymRutSel = 'rt-mun';
+      window.PG.ui.gymPanel = 'rutedit';
       window.PG.render();
       const leyenda = document.querySelector('.mlegend');
       return {
@@ -4154,11 +4189,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     await page.click('[data-a="gym-panel"][data-p="rutinas"]');
     await page.waitForTimeout(300);
+    // pegar la rutina a un tipo de día se hace dentro de «editar», junto al resto de la rutina
+    await page.click('[data-a="rt-editar"][data-id="rt-test"]');
+    await page.waitForTimeout(280);
     const chips = await page.evaluate(() => document.querySelectorAll('[data-a="rt-dia"]').length);
     const shHoy = await page.evaluate(() => window.PG.dayInfo(window.PG.iso(new Date())).shiftId);
     await page.click(`[data-a="rt-dia"][data-sh="${shHoy}"]`);
     await page.waitForTimeout(320);
-    await page.click('.subcab [data-a="gym-panel"]');
+    await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
+    await page.waitForTimeout(280);
+    await page.click('.subcab [data-a="gym-panel"][data-p=""]');
     await page.waitForTimeout(320);
     const enEntreno = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#main .card')].find((x) => /toca entrenar/.test(x.textContent));
@@ -4951,6 +4991,71 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.gym.rutinas = []; P.store.gym.registro = []; P.store.gym.sesiones = [];
       P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymSesionActiva = null; P.ui.gymVivo = null; P.ui.gymDesc = null;
       P.save(); P.render();
+    });
+  }
+
+  // ===================================================================================
+  // Fase 2 · Montar la rutina: la lista pasa de una tabla de nueve columnas por ejercicio
+  // (3 256 px, 68 botones, 68 campos) a una tarjeta por rutina, y el constructor vive
+  // detrás de «editar», con buscador y series con −/+. Sin «peso objetivo» ni «descanso».
+  // ===================================================================================
+  {
+    await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      S.gym.rutinas = [
+        { id: 'q1', nombre: 'Torso Q', notas: 'martes y viernes', dias: [],
+          ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 },
+                       { ex: 'Press militar', series: 3, reps: 10 }] },
+        { id: 'q2', nombre: 'Pierna Q', notas: '', dias: [],
+          ejercicios: [{ ex: 'Sentadilla', series: 4, reps: 8 }] }];
+      S.gym.biblioteca = [{ id: 'bq1', n: 'Prensa de piernas', c: 'upper legs', tg: 'quads', eq: 'machine' }];
+      S.gym.registro = []; S.gym.sesiones = [];
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.gymQ = ''; P.save();
+    });
+    await gotoGym('rutinas');
+    await page.waitForTimeout(320);
+    const lista = await page.evaluate(() => {
+      const m = document.querySelector('#main');
+      return { alto: Math.round(m.scrollHeight), tarjetas: m.querySelectorAll('.rcard').length,
+        tablas: m.querySelectorAll('table').length,
+        campos: m.querySelectorAll('input,select,textarea').length,
+        resumen: (m.querySelector('.rcard .rsub') || { textContent: '' }).textContent.trim(),
+        musculos: m.querySelectorAll('.rcard .rmus').length,
+        empezar: m.querySelectorAll('.rcard [data-a="ses-empezar"]').length };
+    });
+    check('«Rutinas» es una tarjeta por rutina que se lee de un vistazo, no una tabla por ejercicio',
+      lista.tarjetas === 2 && lista.tablas === 0 && lista.campos <= 4 && lista.empezar === 2 &&
+      /3 ejercicios · 11 series/.test(lista.resumen) && lista.musculos >= 3 && lista.alto < 2000,
+      JSON.stringify(lista));
+
+    // el constructor: series con −/+, buscador que añade de un toque, y el análisis debajo
+    const edt = await page.$('#main [data-a="rt-editar"][data-id="q1"]');
+    if (edt) { await edt.click(); await page.waitForTimeout(320); }
+    const mas = await page.$('#main [data-a="rt-ser"][data-id="q1"][data-ix="0"][data-d="1"]');
+    if (mas) { await mas.click(); await page.waitForTimeout(260); }
+    const sug = await page.$('#main .resug');
+    if (sug) { await sug.click(); await page.waitForTimeout(300); }
+    const editor = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      const rt = P.gymS().rutinas.filter((r) => r.id === 'q1')[0] || { ejercicios: [] };
+      return { panel: P.ui.gymPanel, filas: m.querySelectorAll('.refila').length,
+        series0: rt.ejercicios[0] ? rt.ejercicios[0].series : null,
+        nEj: rt.ejercicios.length, ultimo: rt.ejercicios.length ? rt.ejercicios[rt.ejercicios.length - 1].ex : '',
+        diaChips: m.querySelectorAll('[data-a="rt-dia"]').length,
+        analisis: (m.querySelector('.mlegend') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
+        // los dos campos que no usas no pueden volver por la puerta de atrás
+        sobra: /pesoObjetivo|descansoSeg/.test(m.innerHTML) };
+    });
+    check('el constructor sube series con −/+, añade del buscador de un toque y dice cómo queda la rutina',
+      !!edt && !!mas && !!sug && editor.panel === 'rutedit' && editor.series0 === 5 &&
+      editor.nEj === 4 && editor.ultimo === 'Prensa de piernas' && editor.filas === 4 &&
+      editor.diaChips >= 3 && /falta|equilibrada/.test(editor.analisis) && !editor.sobra,
+      JSON.stringify(editor));
+
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.gym.rutinas = []; P.store.gym.biblioteca = []; P.store.gym.registro = [];
+      P.ui.gymPanel = ''; P.ui.gymRutSel = ''; P.ui.gymQ = ''; P.save(); P.render();
     });
   }
 

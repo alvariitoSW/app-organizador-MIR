@@ -1341,3 +1341,37 @@ ul.slots{list-style:none;margin:0;padding:0}
 .gvfint b{display:block;font-size:17px;font-weight:800}
 .gvfint span{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:1px}
 .gvfin{border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+
+/* ===== Entreno · rutinas: una tarjeta por rutina, y el constructor ============================ */
+.rcard{display:flex;flex-direction:column;gap:8px}
+.rcard.hoy{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.rcab{display:flex;align-items:center;gap:8px;min-width:0}
+.rcab b{flex-grow:1;min-width:0;font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsub{font-size:12px;font-weight:600;color:var(--ink2)}
+.rmusr{display:flex;gap:5px;flex-wrap:wrap}
+.rmus{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;
+  background:color-mix(in srgb,var(--bg) 55%,var(--card));border:1px solid var(--line);color:var(--ink2)}
+.rmus.on{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));
+  background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent)}
+.rbot{display:flex;gap:8px}
+.rbot .btn{min-height:44px;justify-content:center}
+.rbot .btn.p{flex-grow:1}
+.rpie{font-size:11px;font-weight:600;color:var(--ink2)}
+.relist{padding:0}
+.refila{display:flex;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid var(--line)}
+.refila:first-child{border-top:0}
+.refila .n{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.refila .n b{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.refila .n span{font-size:10.5px;font-weight:700;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.refila .ser{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.refila .ser .btn{width:32px;height:32px;padding:0;justify-content:center;font-size:16px;font-weight:700;border-radius:9px}
+.refila .ser .v{width:52px;text-align:center;font-size:13px;font-weight:800}
+.refila .rex{width:30px;height:30px;padding:0;justify-content:center;flex-shrink:0}
+.resugs{display:flex;flex-direction:column;margin-top:9px}
+.resug{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font:inherit;color:var(--ink);
+  cursor:pointer;padding:9px 2px;border:0;border-top:1px dashed var(--line);background:none}
+.resug .n{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.resug .n b{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resug .n span{font-size:10.5px;font-weight:700;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resug .mas{flex-shrink:0;font-size:18px;font-weight:700;color:var(--brand)}
+.raviso{margin-top:9px;font-size:11.5px;font-weight:700;color:var(--warn)}
