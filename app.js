@@ -94,6 +94,8 @@ function DEFAULTS(){return {
             'Tápers de cristal (mín. 8), film, papel de hornear']}],
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
+  /* quién eres, que es lo que decide cuántas kcal necesitas y qué puedes comer */
+  perfil:{celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
   patterns:[
@@ -398,6 +400,21 @@ function normalize(o){
   if(o.rotation.jornada.aplicaLibres===undefined)o.rotation.jornada.aplicaLibres=true;
   if(!o.food||typeof o.food!=='object')o.food=JSON.parse(JSON.stringify(d.food||{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]}));
   if(!o.food.objetivo||typeof o.food.objetivo!=='object')o.food.objetivo={kcal:0,prot:0};
+  /* el perfil: sin registrarlo aquí se perdería al recargar, como todo lo que normalize() no conoce */
+  if(!o.perfil||typeof o.perfil!=='object')o.perfil={};
+  o.perfil.celiaco=!!o.perfil.celiaco;
+  o.perfil.alturaCm=(+o.perfil.alturaCm>=100&&+o.perfil.alturaCm<=250)?+o.perfil.alturaCm:0;
+  o.perfil.pesoKg=(+o.perfil.pesoKg>=30&&+o.perfil.pesoKg<=300)?+o.perfil.pesoKg:0;
+  o.perfil.sexo=(o.perfil.sexo==='m')?'m':'h';
+  o.perfil.nacido=(+o.perfil.nacido>=1900&&+o.perfil.nacido<=2100)?+o.perfil.nacido:0;
+  o.perfil.actividad=(+o.perfil.actividad>=1.2&&+o.perfil.actividad<=2.2)?+o.perfil.actividad:1.5;
+  o.perfil.meta=(['perder','mantener','ganar'].indexOf(o.perfil.meta)>=0)?o.perfil.meta:'mantener';
+  /* el peso, uno por día: lo que de verdad se puede seguir. La masa muscular NO se calcula de los
+     menús —eso sería inventarla—; lo que se sigue es el peso y su tendencia. */
+  o.perfil.pesos=Array.isArray(o.perfil.pesos)?o.perfil.pesos
+    .filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.k))&&+x.kg>=30&&+x.kg<=300;})
+    .map(function(x){return {k:x.k,kg:Math.round(+x.kg*10)/10};})
+    .sort(function(a,b){return a.k.localeCompare(b.k);}).slice(-400):[];
   if(!o.food.eans||typeof o.food.eans!=='object')o.food.eans={};
   if(!o.food.log||typeof o.food.log!=='object')o.food.log={};
   if(!Array.isArray(o.food.fav))o.food.fav=[];
@@ -1450,6 +1467,132 @@ const ALIM_VRN={fe:14,ca:800,k:2000,mg:375,vc:80,vd:5,b12:2.5,b6:1.4,fo:200};
 const ALIM_GRUPOS=[['fruta','🍎 Fruta'],['verdura','🥦 Verdura'],['carne','🍗 Carne y huevo'],
   ['pescado','🐟 Pescado'],['legumbre','🫘 Legumbre'],['cereal','🌾 Cereal y pan'],
   ['lacteo','🥛 Lácteo'],['graso','🥑 Grasas y frutos secos'],['otro','🧂 Otros']];
+/* ===================== gluten =====================
+   Eres celíaco, así que esto no es una etiqueta más: es lo que decide si puedes comer un plato.
+   La app AVISA, NO GARANTIZA. Un nombre no dice lo que lleva un producto —el chorizo de una marca
+   lleva gluten y el de otra no—, así que hay tres estados y el tercero es de verdad «no lo sé»:
+
+     no       alimento de toda la vida sin gluten: carne, pescado, huevo, fruta, verdura, arroz…
+     sí       trigo, cebada, centeno, espelta y lo hecho con ellos
+     depende  la marca manda: avena (contaminación cruzada), embutidos, caldos, salsas, rebozados,
+              suplementos, conservas preparadas… aquí hay que mirar la etiqueta
+
+   La regla de oro está escrita en la pantalla: lo que manda es el envase, no esta app. */
+const GLUTEN_SI=[
+  /trigo|wheat|espelta|kamut|cebada|barley|centeno|rye|malta|s[ée]mola|cuscus|cusc[úu]s|bulgur/i,
+  /\bpan\b|panecillo|panko|biscote|tostada|bollo|croissant|magdalena|galleta|bizcocho|masa madre/i,
+  /pasta|macarr|espagueti|espagueti|tallarin|fideo|lasa[ñn]a|canel[óo]n|noodle|ramen/i,
+  /harina(?! de (arroz|ma[íi]z|garbanzo|almendra|trigo sarraceno))/i,
+  /rebozad|empanad|croqueta|empanadilla|pizza|tortilla de trigo|wrap de trigo|cerveza/i,
+  /cus?c[úu]s|seit[áa]n|cerveza|obleas/i];
+const GLUTEN_DEPENDE=[
+  /avena|oat/i,                                   /* contaminación cruzada: hace falta certificada */
+  /chorizo|salchich|embutido|morcilla|fiambre|jam[óo]n cocido|pav[oa] cocid|surimi|patatas? fritas de bolsa/i,
+  /caldo|fumet|pastilla de|sopa de sobre|salsa|soja|teriyaki|ketchup|mostaza|mayonesa/i,
+  /curry|especias? mezcl|sazonador|colorante alimentario|levadura/i,
+  /prote[íi]na|whey|caseina|case[íi]na|barrita|suplement|batido de/i,
+  /yogur de sabores|postre l[áa]cteo|helado|chocolate|cacao soluble|colacao/i,
+  /conserva|de bote|precocinad|congelad[oa]s? preparad|ensalada completa|hamburguesa|alb[óo]ndiga/i,
+  /at[úu]n en aceite|paté|patés|foie/i,
+  /* envasados que NO son de trigo pero pasan por fábrica: las tortitas de arroz llevan malta de
+     cebada en más marcas de las que uno esperaría */
+  /tortita|nacho|snack|palomitas|cereales de desayuno|muesli|gran ?ola|granola/i];
+function glutenDe(nombre){
+  const t=String(nombre||'').toLowerCase();
+  if(!t.trim())return 'no';
+  /* lo que pone el envase manda: si dice «sin gluten», es sin gluten */
+  if(/sin gluten|gluten ?free|libre de gluten|sin tacc/.test(t))return 'no';
+  let est='no';
+  for(let i=0;i<GLUTEN_SI.length;i++)if(GLUTEN_SI[i].test(t)){est='si';break;}
+  if(est!=='si')for(let j=0;j<GLUTEN_DEPENDE.length;j++)if(GLUTEN_DEPENDE[j].test(t)){est='depende';break;}
+  /* Un cereal alternativo NO hace seguro un producto: el pan de maíz del súper suele llevar trigo
+     también. Baja el aviso a «mira la etiqueta», nunca a «sin gluten». Para un celíaco el error
+     barato es mirar una etiqueta de más; el caro es el otro. */
+  if(est==='si'&&/de ma[íi]z|de arroz|de trigo sarraceno|de garbanzo|de quinoa|de almendra|de avena/.test(t))
+    est='depende';
+  return est;}
+const GLUTEN_ETQ={si:{t:'lleva gluten',c:'mal'},depende:{t:'mira la etiqueta',c:'duda'},no:{t:'sin gluten',c:'ok'}};
+function glutenDePlato(d){
+  /* un plato es lo peor de sus ingredientes: si uno lleva gluten, el plato lleva gluten */
+  if(!d)return {est:'no',porQue:[]};
+  if(d.gluten==='si'||d.gluten==='no'||d.gluten==='depende')return {est:d.gluten,porQue:[]};
+  const ing=[].concat(d.ingredients||[]);
+  let peor='no';const porQue=[];
+  ing.forEach(function(x){
+    const g=glutenDe(x);
+    if(g==='si'){peor='si';porQue.push({x:x,g:g});}
+    else if(g==='depende'){if(peor!=='si')peor='depende';porQue.push({x:x,g:g});}});
+  if(peor==='no'){const gn=glutenDe(d.name);if(gn!=='no'){peor=gn;porQue.push({x:d.name,g:gn});}}
+  return {est:peor,porQue:porQue};}
+function esCeliaco(){return !!(store.perfil&&store.perfil.celiaco);}
+function glutenChipHTML(est,corto){
+  if(!esCeliaco()||!est||est==='no')return '';
+  const e=GLUTEN_ETQ[est]||GLUTEN_ETQ.depende;
+  return '<span class="glu '+e.c+'" title="'+esc(e.t)+'">'+(est==='si'?'⚠ gluten':(corto?'? etiqueta':'? mira la etiqueta'))+'</span>';}
+function perfilS(){
+  if(!store.perfil||typeof store.perfil!=='object')
+    store.perfil={celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]};
+  if(!Array.isArray(store.perfil.pesos))store.perfil.pesos=[];
+  return store.perfil;}
+function setPerfil(campo,valor){
+  const p=perfilS();
+  if(campo==='celiaco')p.celiaco=!p.celiaco;
+  else if(campo==='meta')p.meta=(['perder','mantener','ganar'].indexOf(valor)>=0)?valor:'mantener';
+  else if(campo==='alturaCm')p.alturaCm=Math.max(0,Math.min(250,Math.round(+valor||0)));
+  else if(campo==='pesoKg')p.pesoKg=Math.max(0,Math.min(300,Math.round((+valor||0)*10)/10));
+  else if(campo==='nacido')p.nacido=Math.max(0,Math.round(+valor||0));
+  else if(campo==='actividad')p.actividad=Math.max(1.2,Math.min(2.2,+valor||1.5));
+  save();render();
+  return campo==='celiaco'?(p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
+    :'aviso de gluten apagado'):'perfil guardado';}
+function apuntarPeso(kg,key){
+  const p=perfilS(),k=foodKey(key)||iso(new Date()),v=Math.round((+kg||0)*10)/10;
+  if(!(v>=30&&v<=300))return 'ese peso no puede ser';
+  p.pesos=p.pesos.filter(function(x){return x.k!==k;});
+  p.pesos.push({k:k,kg:v});
+  p.pesos.sort(function(a,b){return a.k.localeCompare(b.k);});
+  p.pesoKg=v;
+  save();render();
+  return 'apuntado: '+fmtKg(v)+' kg el '+fechaCortaTxt(k);}
+function tendenciaPeso(n){
+  /* media móvil de 7 días: el peso del día sube y baja con la sal, el agua y la hora. Lo que dice
+     algo es la tendencia, no la báscula de esta mañana. */
+  const p=perfilS(),l=p.pesos.slice(-(n||90));
+  if(l.length<2)return null;
+  const media=function(hasta){
+    const desde=iso(addDays(parseDate(hasta),-6));
+    const t=l.filter(function(x){return x.k>=desde&&x.k<=hasta;});
+    return t.length?t.reduce(function(a,x){return a+x.kg;},0)/t.length:null;};
+  const ult=l[l.length-1],pri=l[0];
+  const mUlt=media(ult.k),mPri=media(pri.k);
+  const dias=Math.max(1,Math.round((parseDate(ult.k)-parseDate(pri.k))/86400000));
+  const dif=(mUlt!=null&&mPri!=null)?Math.round((mUlt-mPri)*10)/10:null;
+  return {hoy:ult.kg,fecha:ult.k,n:l.length,media:mUlt!=null?Math.round(mUlt*10)/10:null,
+    dif:dif,dias:dias,porSemana:(dif!=null&&dias>=7)?Math.round(dif/dias*7*100)/100:null};}
+function platosConGluten(){
+  /* los platos que hay que cambiar, y los que dependen de qué marca compres */
+  const out={si:[],depende:[]};
+  (store.dishes||[]).forEach(function(d){
+    const g=glutenDePlato(d);
+    if(g.est==='si')out.si.push({d:d,porQue:g.porQue});
+    else if(g.est==='depende')out.depende.push({d:d,porQue:g.porQue});});
+  return out;}
+/* el sustituto sin gluten de cada plato que lo lleva: se propone, no se cambia solo */
+const GLUTEN_CAMBIOS={
+  'd-pan-aceite':{name:'Tostada de maíz con tomate y aceite',
+    ing:['2 tostada de maíz sin gluten','1 tomate','8 ml aceite de oliva','2 g sal'],
+    nota:'el pan de trigo por tortitas o pan de maíz sin gluten'},
+  'd-sandwich':{name:'Tortitas de maíz con atún y pimiento asado',
+    ing:['2 tortita de maíz sin gluten','1 lata atún','30 g pimiento asado','5 ml aceite de oliva'],
+    nota:'el bocadillo por tortitas de maíz certificadas'}};
+function cambiarPlatoSinGluten(id){
+  const d=(store.dishes||[]).filter(function(x){return x.id===id;})[0];
+  if(!d)return 'ese plato ya no está';
+  const c=GLUTEN_CAMBIOS[id];
+  if(!c)return 'ese plato no tiene un cambio preparado: edítalo a mano';
+  d.name=c.name;d.ingredients=c.ing.slice();d.gluten='no';
+  save();render();
+  return 'cambiado por «'+c.name+'»: '+c.nota;}
 const ALIMENTOS=[
 /* --- fruta --- */
 {n:'Manzana',e:'🍎',g:'fruta',kcal:52,pr:0.3,ch:14,az:10,fi:2.4,gr:0.2,fe:0.1,ca:6,k:107,mg:5,vc:4.6,b6:0.04,fo:3},
@@ -3858,6 +4001,7 @@ function renderFoodBuscar(){
       '<button class="btn s" data-a="food-panel2" data-k="scan">'+gymIco('camara','gico sm')+' escanear</button>'+
       '<button class="btn s" data-a="food-panel2" data-k="mano">'+gymIco('lapiz','gico sm')+' a mano</button>'+
       '<button class="btn s" data-a="food-vista" data-v="productos">'+gymIco('caja','gico sm')+' mis productos</button>'+
+      '<button class="btn s" data-a="food-vista" data-v="perfil">'+gymIco('balanza','gico sm')+' tú</button>'+
     '</div></div>';
 }
 /* ---------- la hoja de cantidad ----------
@@ -4794,6 +4938,83 @@ function notasDelDiaHTML(key){
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota para este día</button>'+
       '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}
+function renderFoodPerfil(){
+  /* Quién eres: es lo que decide cuántas kcal necesitas y qué puedes comer. El peso se sigue por
+     TENDENCIA y no por la báscula de esta mañana, y la masa muscular no se calcula aquí: de los
+     menús no sale, y ponerla sería inventártela. */
+  const p=perfilS(),t=tendenciaPeso(90);
+  const METAS=[['perder','perder grasa'],['mantener','mantenerme'],['ganar','ganar músculo']];
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="">'+
+      gymIco('atras','gico sm')+' Comer</button><h2 class="subtit">Tú</h2></div>'+
+    '<div class="card"><h2>Tus datos</h2>'+
+      '<div class="fgrid c3 tight">'+
+        '<label class="fld">altura (cm)<input type="number" min="100" max="250" value="'+(p.alturaCm||'')+'" data-a="perf-n" data-f="alturaCm"></label>'+
+        '<label class="fld">peso de hoy (kg)<input type="number" min="30" max="300" step="0.1" id="perfPeso" value="'+(p.pesoKg||'')+'"></label>'+
+        '<label class="fld" style="justify-content:flex-end"><button class="btn p" data-a="perf-peso">apuntar peso</button></label>'+
+      '</div>'+
+      '<p class="mini" style="margin:10px 0 4px">Hacia dónde vas</p>'+
+      '<div class="row">'+METAS.map(function(m){
+        return '<button class="btn s '+(p.meta===m[0]?'p':'')+'" data-a="perf-meta" data-v="'+m[0]+'">'+m[1]+'</button>';}).join('')+'</div>'+
+      '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">'+
+        '<button class="btn s '+(p.celiaco?'g':'')+'" data-a="perf-celiaco">'+(p.celiaco?'✓':'○')+' soy celíaco</button>'+
+        (p.celiaco?'<button class="btn s" data-a="food-vista" data-v="gluten">revisar mis platos →</button>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="card"><h2>Tu peso</h2>'+
+      (t?('<div class="kpis compact">'+
+          '<div><b>'+fmtKg(t.hoy)+'</b><span>último ('+esc(fechaCortaTxt(t.fecha))+')</span></div>'+
+          '<div><b>'+(t.media!=null?fmtKg(t.media):'—')+'</b><span>media de 7 días</span></div>'+
+          '<div><b>'+(t.porSemana!=null?((t.porSemana>0?'+':'')+fmtKg(t.porSemana)):'—')+'</b><span>kg por semana</span></div>'+
+        '</div>'+pesoCurvaHTML()+
+        '<p class="mini" style="margin-top:8px">La báscula de un día sube y baja con la sal, el agua y la hora. '+
+        'Lo que dice algo es la media de siete días: son '+t.n+' pesadas en '+t.dias+' días.</p>')
+        :'<div class="empty">Apunta tu peso unos días y aquí sale la tendencia. Con una sola pesada no hay nada que decir.</div>')+
+      '<p class="mini" style="margin-top:8px;color:var(--ink2)">La masa muscular no se puede sacar de lo que comes: '+
+      'eso habría que inventárselo. Aquí va el peso y su tendencia, cruzados con lo que comes y lo que levantas.</p>'+
+    '</div></div>';}
+function pesoCurvaHTML(){
+  const p=perfilS(),l=p.pesos.slice(-60);
+  if(l.length<3)return '';
+  const max=l.reduce(function(a,x){return Math.max(a,x.kg);},0);
+  const min=l.reduce(function(a,x){return Math.min(a,x.kg);},max);
+  const rango=Math.max(0.5,max-min),W=280,H=64;
+  const pts=l.map(function(x,i){
+    return {x:4+(l.length<2?0:i*(W-8)/(l.length-1)),y:H-6-((x.kg-min)/rango)*(H-14)};});
+  const d=pts.map(function(q,i){return (i?'L':'M')+q.x.toFixed(1)+' '+q.y.toFixed(1);}).join(' ');
+  return '<svg class="curva" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="tu peso">'+
+    '<path d="'+d+'" class="cl"></path></svg>'+
+    '<div class="curvapie"><span>'+fmtKg(l[0].kg)+' kg</span>'+
+    '<b class="'+(l[l.length-1].kg<l[0].kg?'sube':'')+'">'+fmtKg(Math.round((l[l.length-1].kg-l[0].kg)*10)/10)+' kg</b>'+
+    '<span>'+fmtKg(l[l.length-1].kg)+' kg</span></div>';}
+function renderFoodGluten(){
+  /* LO QUE HAY QUE CAMBIAR. La app avisa, no garantiza: lo que manda es el envase. */
+  const g=platosConGluten();
+  const fila=function(o,tipo){
+    const c=GLUTEN_CAMBIOS[o.d.id];
+    return '<div class="glufila '+tipo+'">'+
+      '<div class="n"><b>'+esc(o.d.name)+'</b>'+
+        '<span>'+esc(o.porQue.map(function(x){return x.x;}).slice(0,3).join(' · ')||'por el nombre')+'</span></div>'+
+      (tipo==='si'&&c?('<button class="btn p s" data-a="glu-cambiar" data-id="'+esc(o.d.id)+'">cambiar</button>'):'')+
+      '</div>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="perfil">'+
+      gymIco('atras','gico sm')+' Tú</button><h2 class="subtit">Gluten</h2></div>'+
+    '<div class="card gluaviso">'+gymIco('aviso','gico')+
+      '<div><b>La app avisa, no garantiza.</b> Un nombre no dice lo que lleva un producto: el chorizo '+
+      'de una marca lleva gluten y el de otra no. Lo que manda es la etiqueta del envase.</div></div>'+
+    '<div class="card"><h2>Llevan gluten</h2>'+
+      (g.si.length?(g.si.map(function(o){return fila(o,'si');}).join('')+
+        '<p class="mini" style="margin-top:9px">«Cambiar» te deja el mismo plato con la versión sin gluten. '+
+        'No se cambia nada sin que lo toques.</p>')
+        :'<div class="empty">Ninguno de tus platos lleva gluten.</div>')+
+    '</div>'+
+    '<div class="card"><h2>Depende de la marca</h2>'+
+      (g.depende.length?(g.depende.map(function(o){return fila(o,'dep');}).join('')+
+        '<p class="mini" style="margin-top:9px">Estos pueden ser sin gluten o no según lo que compres: '+
+        'avena certificada, embutidos, caldos, salsas y suplementos. Mira la etiqueta una vez y ya lo sabes.</p>')
+        :'<div class="empty">Nada dudoso.</div>')+
+    '</div></div>';}
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='buscar')return renderFoodBuscar();
@@ -4803,6 +5024,8 @@ function renderFood(){
   if(v==='cocina-panel')return renderCocinaPanel();
   if(v==='platos')return renderMisPlatos();
   if(v==='add')return renderFoodAdd();
+  if(v==='perfil')return renderFoodPerfil();
+  if(v==='gluten')return renderFoodGluten();
   /* «Qué cocino», «Mi nevera» e «Ideas» eran tres pantallas para la misma pregunta: ahora son las
      tres pestañas de Cocina. Los nombres viejos siguen llevando a su pestaña y no a una pared. */
   if(v==='cocinar'||v==='ideas'||v==='nevera'){
@@ -9530,6 +9753,11 @@ function act(a,el){
     case 'obj-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
       flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta')));break;}
     case 'obj-del':flash(delObjetivo(el.dataset.id));break;
+    case 'perf-celiaco':flash(setPerfil('celiaco'));break;
+    case 'perf-meta':flash(setPerfil('meta',el.dataset.v));break;
+    case 'perf-peso':{const c=document.getElementById('perfPeso');
+      flash(apuntarPeso(c?c.value:0));break;}
+    case 'glu-cambiar':flash(cambiarPlatoSinGluten(el.dataset.id));break;
     case 'obj-ex':{ui.objEx=el.dataset.n||'';render();window.scrollTo(0,0);break;}
     case 'rt-nueva-rapida':{flash(nuevaRutina(''));
       const g3=gymS(),ult=g3.rutinas[g3.rutinas.length-1];
@@ -11122,6 +11350,7 @@ document.addEventListener('change',e=>{
     case 'food-ob':{const fb=food(),v=Math.max(0,Math.round(+el.value||0));
       if(!fb.objetivo)fb.objetivo={kcal:0,prot:0};fb.objetivo[el.dataset.k]=v;save();render();break;}
     case 'gym-day':{const k=foodKey(el.value);if(k)ui.gymDate=k;render();break;}
+    case 'perf-n':setPerfil(el.dataset.f,el.value);break;   /* los campos van en el switch de change, no en el de click */
     case 'rt-n':setRutina(el.dataset.id,+el.dataset.ix,el.dataset.f,el.value);render();break;
     case 'rt-nota':setRutina(el.dataset.id,+el.dataset.ix,'nota',el.value);break;
     case 'rt-nombre':{const rt=gymS().rutinas.find(function(r){return r.id===el.dataset.id;});
@@ -11418,6 +11647,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,
+  glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
+  perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
   enArtifact,versionActual,hayVersionNueva,mirarVersion,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,

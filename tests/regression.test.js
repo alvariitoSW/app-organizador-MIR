@@ -5223,6 +5223,82 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.compraCerradas = new Set(['rutina', 'basicos']); P.save(); P.render(); });
   }
 
+  // ===================================================================================
+  // Celiaquía: el usuario es celíaco y sus menús llevaban pan de trigo. La app AVISA,
+  // no garantiza: hay tres estados y el tercero es de verdad «no lo sé», porque el
+  // chorizo de una marca lleva gluten y el de otra no.
+  // ===================================================================================
+  {
+    const g = await page.evaluate(() => {
+      const P = window.PG;
+      if (!P.esCeliaco()) P.setPerfil('celiaco');
+      const c = (n) => P.glutenDe(n);
+      const pl = P.platosConGluten();
+      return {
+        si: [c('2 rebanada pan integral masa madre'), c('1 pan bocadillo integral'),
+             c('1 cerveza'), c('tortilla de trigo')],
+        no: [c('280 g arroz basmati'), c('700 g muslo de pollo'), c('300 g tomate'),
+             c('2 tostada de maíz sin gluten'), c('harina de arroz')],
+        depende: [c('320 g copos de avena'), c('200 g chorizo'), c('600 ml caldo de pollo'),
+                  c('60 g proteína whey'), c('25 g curry'),
+                  // un cereal alternativo NO hace seguro un producto: el pan de maíz del súper
+                  // suele llevar trigo también, así que baja a «mira la etiqueta», no a «sin gluten»
+                  c('pan de maíz'), c('tortita de arroz')],
+        platosSi: pl.si.map((o) => o.d.id),
+        // y dice POR QUÉ, que es lo que te deja decidir
+        porQue: pl.si.length ? pl.si[0].porQue.map((x) => x.x) : [],
+        celiaco: P.esCeliaco(),
+      };
+    });
+    check('la app marca el gluten en tres estados y dice por qué, sin jurar lo que no sabe',
+      g.celiaco === true &&
+      g.si.every((x) => x === 'si') && g.no.every((x) => x === 'no') &&
+      g.depende.every((x) => x === 'depende') &&
+      g.platosSi.indexOf('d-pan-aceite') >= 0 && g.platosSi.indexOf('d-sandwich') >= 0 &&
+      g.porQue.some((x) => /pan/i.test(x)),
+      JSON.stringify(g));
+
+    // el cambio se propone, no se hace solo: hasta que no tocas «cambiar» tu plato sigue igual
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'gluten'; P.render(); });
+    await page.waitForTimeout(320);
+    const antes = await page.evaluate(() => {
+      const d = window.PG.store.dishes.filter((x) => x.id === 'd-pan-aceite')[0];
+      return { n: d ? d.name : '', botones: document.querySelectorAll('#main [data-a="glu-cambiar"]').length,
+        aviso: !!document.querySelector('#main .gluaviso') }; });
+    const bot = await page.$('#main [data-a="glu-cambiar"][data-id="d-pan-aceite"]');
+    if (bot) { await bot.click(); await page.waitForTimeout(320); }
+    const tras = await page.evaluate(() => {
+      const P = window.PG;
+      const d = P.store.dishes.filter((x) => x.id === 'd-pan-aceite')[0];
+      return { n: d ? d.name : '', gluten: d ? P.glutenDePlato(d).est : '',
+        trigo: d ? d.ingredients.join(' ') : '', quedan: P.platosConGluten().si.length }; });
+    check('cambiar un plato con gluten lo deja sin gluten, y solo cuando lo tocas tú',
+      !!bot && antes.aviso && antes.botones === 2 && /Pan integral/.test(antes.n) &&
+      /ma[íi]z/i.test(tras.n) && tras.gluten === 'no' && !/pan integral/i.test(tras.trigo) &&
+      tras.quedan === 1,
+      JSON.stringify({ antes, tras }));
+
+    // el peso se sigue por TENDENCIA, y el perfil sobrevive a recargar
+    const peso = await page.evaluate(() => {
+      const P = window.PG;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      [95.4, 95.1, 94.9, 95.2, 94.6, 94.4, 94.1, 93.9].forEach((kg, i) =>
+        P.apuntarPeso(kg, iso(P.addDays(new Date(), -(21 - i * 3)))));
+      P.setPerfil('alturaCm', 179);
+      const t = P.tendenciaPeso(90);
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      return { t: t, pesadas: P.store.perfil.pesos.length, altura: P.store.perfil.alturaCm,
+        celiaco: P.store.perfil.celiaco };
+    });
+    check('el peso se sigue por tendencia de 7 días y el perfil sobrevive a recargar',
+      peso.t && peso.t.n === 8 && peso.t.media > 93 && peso.t.media < 95 &&
+      peso.t.porSemana < 0 && peso.pesadas === 8 && peso.altura === 179 && peso.celiaco === true,
+      JSON.stringify(peso));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.store.perfil.pesos = []; P.ui.foodVista = ''; P.save(); P.render(); });
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
