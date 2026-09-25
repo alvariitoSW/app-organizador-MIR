@@ -3814,7 +3814,12 @@ function renderFoodDia(){
         '<label class="fld" style="flex:0 0 110px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+objP+'" data-a="food-ob" data-k="prot"></label>'+
         '<label class="fld" style="flex:0 0 110px">carbohidr. (g)<input type="number" min="0" max="800" step="10" value="'+(+ob.carb||0)+'" data-a="food-ob" data-k="carb" placeholder="'+obm.carb+'"></label>'+
         '<label class="fld" style="flex:0 0 100px">grasa (g)<input type="number" min="0" max="300" step="5" value="'+(+ob.gresa||0)+'" data-a="food-ob" data-k="gresa" placeholder="'+obm.gresa+'"></label>'+
-        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'+
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label>'+
+        /* la puerta a TU perfil va aquí, que es donde se miran las kcal: tu altura, tu peso y si
+           eres celíaco son justo lo que decide estos números. La tenía metida dentro de «apuntar
+           algo» y ahí no la encuentra nadie. */
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-vista" data-v="perfil">'+
+          gymIco('balanza','gico sm')+' tú: peso, altura y gluten</button></label></div>'+
         (obm.derivado&&objK?('<p class="mini" style="margin:6px 0 0">El carbohidrato y la grasa salen de repartir a partes '+
           'iguales las kcal que quedan tras la proteína. Si sigues otro reparto, ponlos aquí.</p>'):'')):'')+
       microLineaHTML(sel)+
@@ -8706,6 +8711,7 @@ function renderAjustes(){
       linea('\ud83d\udcc5','Calendario del m\u00f3vil','aviso '+(+store.rotation.icsAvisoMin||30)+' min antes')+
       linea('\u2600\ufe0f','D\u00f3nde estoy',sitioActual().nombre)+
       linea('\ud83d\udecc','Sue\u00f1o','m\u00ednimo '+sc.min+' h')+
+      linea('\ud83c\udf5e','Gluten',esCeliaco()?'te aviso':'apagado',!esCeliaco())+
       linea('\ud83e\udd57','Datos de los alimentos',usdaOn()?'USDA oficial':'tabla aproximada',!usdaOn())+
       linea('\ud83d\udd17','Lector de enlaces',lec,lec==='apagado')+
     '</div>'+
@@ -8713,6 +8719,12 @@ function renderAjustes(){
       puerta('calendario','calendario','Calendario','y los avisos')+
       puerta('sol','sol','El sol',sitioActual().nombre)+
       puerta('aspecto','pincel','C\u00f3mo se ve',(store.tema&&store.tema.brand?'a tu color':'oscuro')+' \u00b7 la franja')+
+      /* el perfil vive en Comer porque es lo que decide las kcal, pero la puerta también va aquí:
+         «tú» es de las cosas que se buscan en Ajustes */
+      '<button class="puerta" data-a="ir-perfil">'+gymIco('balanza')+
+        '<b>T\u00fa</b><span class="s">'+(perfilS().alturaCm?(fmt(perfilS().alturaCm/100)+' m'):'altura')+
+        ' \u00b7 '+(perfilS().pesoKg?(fmtKg(perfilS().pesoKg)+' kg'):'peso')+
+        (esCeliaco()?' \u00b7 cel\u00edaco':'')+'</span></button>'+
     '</div>'+
     '<div class="puertas" style="margin-top:9px">'+
       puerta('lector','enlace','Lector',lec)+
@@ -9302,6 +9314,7 @@ function act(a,el){
       flash(estAddSesion(min,t?[t]:[]));render();break;}
     case 'est-del-sesion':{flash(estDelSesion(el.dataset.id));render();break;}
     case 'aju-vista':{ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'ir-perfil':{ui.tab='food';ui.foodVista='perfil';ui.ajuVista='';render();window.scrollTo(0,0);break;}
     case 'ir-sueno':irACard('cfg','sueno');break;
     case 'aju-ir':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'datos-vista':{ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
