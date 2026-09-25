@@ -3409,7 +3409,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const card = [...document.querySelectorAll('#main .card')].find((c) => /El sol hoy/.test(c.textContent));
       if (!card) return { sinTarjeta: true };
       const rec = card.querySelectorAll('.arco svg path')[1];
-      if (!rec) return { sinTrazo: true };
+      // el círculo del sol solo está cuando el sol está arriba: es el mismo aviso que usa el
+      // barrido de abajo para contar las horas con sol
+      const haySol = !!card.querySelector('.arco svg circle');
+      if (!rec) return { sinTrazo: true, haySol: haySol };
       const b = rec.getBBox();
       return { desvio: mide(rec), arriba: +b.y.toFixed(1), abajo: +(b.y + b.height).toFixed(1) };
     }, sobreLaGuia);
@@ -3440,9 +3443,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       caja.remove();
       return { malas, conSol };
     }, sobreLaGuia);
+    // La mitad de pantalla solo puede exigir un tramo recorrido si el sol está arriba AHORA: de
+    // madrugada no hay nada que pintar y eso es lo correcto, no un fallo. La suite corría en rojo
+    // por eso, sin que la app tuviera nada malo. El barrido de las 24 horas de arriba es el que
+    // fija de verdad el fallo del large-arc-flag, y ese no depende de la hora: se exige entero.
     check('el arco del sol pinta el recorrido sobre su guía y dentro del dibujo a cualquier hora del día',
-      !enPantalla.sinTarjeta && !enPantalla.sinTrazo && enPantalla.desvio <= 1 &&
-      enPantalla.arriba >= -0.5 && enPantalla.abajo <= 66.5 &&
+      !enPantalla.sinTarjeta &&
+      (enPantalla.sinTrazo
+        ? enPantalla.haySol === false
+        : (enPantalla.desvio <= 1 && enPantalla.arriba >= -0.5 && enPantalla.abajo <= 66.5)) &&
       elDiaEntero.malas.length === 0 && elDiaEntero.conSol >= 11,
       JSON.stringify({ enPantalla, elDiaEntero }));
   }
@@ -4702,6 +4711,113 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.setDayOverride(x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'), null); }
       P.save(); P.render();
     }, horas.lunes);
+  }
+
+  // ===================================================================================
+  // Entreno: la portada que hace cosas (la tira de la semana, el descanso por grupo y
+  // el aviso con botón). Encadena gestos de verdad: se monta el choque, se toca el
+  // botón que lo arregla y se comprueba que sigue arreglado al recargar.
+  // ===================================================================================
+  {
+    const mont = await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const lun = P.mondayOf(new Date());
+      const dia = (n) => iso(P.addDays(lun, n));
+      const guardia = S.shifts.filter((x) => /guardia/i.test(x.name))[0];
+      const trabajo = S.shifts.filter((x) => x.id === 'sh-t')[0] || S.shifts.filter((x) => /trabajo/i.test(x.name))[0];
+      // la semana entera de trabajo y una guardia el jueves: el VIERNES sales de ella, así que
+      // ese día la rutina «toca» pero no vas a entrenar. Es el caso real que el aviso resuelve.
+      for (let i = 0; i < 7; i++) P.setDayOverride(dia(i), trabajo.id);
+      P.setDayOverride(dia(3), guardia.id, 'umi');
+      S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id],
+        ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 }] }];
+      S.gym.registro = [
+        { id: 'gp1', fecha: dia(0), ex: 'Press banca', kg: 60, reps: 8, ts: Date.now() },
+        { id: 'gp2', fecha: dia(1), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
+      S.gym.sesiones = []; S.gym.cardio = []; S.gym.cambios = {};
+      P.ui.gymDate = dia(4); P.ui.gymPanel = '';
+      P.save();
+      return { lunes: dia(0), jueves: dia(3), viernes: dia(4) };
+    });
+    await gotoTab('gym');
+    await page.waitForTimeout(350);
+
+    // 1 · la tira: siete días con su estado, y el viernes marcado como choque
+    const tira = await page.evaluate(() => {
+      const dd = [...document.querySelectorAll('#main .gday')];
+      return { n: dd.length,
+        estados: dd.map((e) => e.className.replace('gday', '').trim().split(' ')[0]),
+        pie: (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim() };
+    });
+    check('«Entreno» abre con la semana delante y el día de choque marcado en rojo',
+      tira.n === 7 && tira.estados.filter((x) => x === 'choque').length >= 1 && /saliente|guardia/i.test(tira.pie),
+      JSON.stringify(tira));
+
+    // 2 · tocar otro día cambia la línea que lo explica (la tira no es decoración)
+    const antesPie = tira.pie;
+    const botLun = await page.$('#main .gday[data-key="' + mont.lunes + '"]');
+    if (botLun) { await botLun.click(); await page.waitForTimeout(300); }
+    const piel = await page.evaluate(() => (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim());
+    check('tocar un día de la tira cuenta lo que hay ese día, no solo lo selecciona',
+      !!botLun && piel !== antesPie && piel.length > 3, JSON.stringify({ antes: antesPie, ahora: piel }));
+
+    // 3 · el descanso por grupo muscular: lo que justifica que hoy toque torso y no pierna
+    const desc = await page.evaluate(() => {
+      const P = window.PG;
+      const chips = [...document.querySelectorAll('#main .gm')].map((e) => ({
+        txt: e.textContent.replace(/\s+/g, ' ').trim(), cl: e.className.replace('gm', '').trim() }));
+      return { chips: chips, calc: (P.gymDescanso() || []).map((x) => x.reg + ':' + x.txt) };
+    });
+    check('la portada dice qué grupos tienes descansados y cuántos días llevan',
+      desc.chips.length === 5 && desc.chips.some((c) => /\d/.test(c.txt)) && desc.chips.some((c) => c.cl === 'listo'),
+      JSON.stringify(desc));
+
+    // 4 · el aviso ya no solo avisa: trae el botón, se toca, y el cambio sobrevive a recargar.
+    //     Todo lo que crea el arreglo puede no existir sin él: se lee con paréntesis de seguridad
+    //     para que la prueba FALLE en vez de tumbar la suite entera.
+    await page.evaluate((v) => { const P = window.PG; P.ui.gymDate = v; P.render(); }, mont.viernes);
+    await page.waitForTimeout(300);
+    const bot = await page.$('#main [data-a="gym-mover"]');
+    let movido = { hubo: !!bot };
+    if (bot) {
+      await bot.click();
+      await page.waitForTimeout(350);
+      movido = await page.evaluate((v) => {
+        const P = window.PG;
+        const guardado = JSON.stringify(P.store.gym.cambios || {});
+        const av = (document.querySelector('#main .gaviso.ok') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
+        // el viaje de ida y vuelta por normalize(): un campo que no esté registrado se pierde
+        P.store = JSON.parse(JSON.stringify(P.store));
+        return { hubo: true, guardado: guardado, aviso: av,
+          deshacer: !!document.querySelector('#main [data-a="gym-deshacer"]'),
+          trasRecargar: JSON.stringify(P.store.gym.cambios || {}),
+          rutinaEseDia: ((P.rutinaDeFecha(v) || {}).nombre) || null,
+          sigueSonando: !!P.gymChoque(v) };
+      }, mont.viernes);
+    }
+    check('el entreno que cae en una guardia se mueve desde el propio aviso, y sigue movido al recargar',
+      movido.hubo && movido.guardado !== '{}' && movido.guardado === movido.trasRecargar &&
+      movido.rutinaEseDia === null && movido.deshacer && !movido.sigueSonando,
+      JSON.stringify(movido));
+
+    // 5 · empezar otra rutina o montar una nueva sin salir a buscarlas
+    const nueva = await page.$('#main [data-a="gym-nueva"]');
+    if (nueva) { await nueva.click(); await page.waitForTimeout(350); }
+    const enRutinas = await page.evaluate(() => ({
+      panel: window.PG.ui.gymPanel,
+      campo: !!document.getElementById('rtNombreNueva'),
+      foco: document.activeElement && document.activeElement.id === 'rtNombreNueva' }));
+    check('desde la portada se puede montar una rutina nueva sin ir a buscarla',
+      !!nueva && enRutinas.panel === 'rutinas' && enRutinas.campo && enRutinas.foco, JSON.stringify(enRutinas));
+
+    // se deja el estado como estaba para no contaminar lo que venga detrás
+    await page.evaluate((m) => {
+      const P = window.PG;
+      P.store.gym.rutinas = []; P.store.gym.registro = []; P.store.gym.cambios = {};
+      for (let i = 0; i < 7; i++) P.setDayOverride(P.iso(P.addDays(P.parseDate(m.lunes), i)), null);
+      P.ui.gymPanel = ''; P.ui.gymDate = ''; P.save(); P.render();
+    }, mont);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

@@ -410,6 +410,15 @@ function normalize(o){
   if(!o.gym.segundo||typeof o.gym.segundo!=='object')
     o.gym.segundo={on:true,dias:[2,5],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=[2,5];
+  /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
+     aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
+     Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
+  if(!o.gym.cambios||typeof o.gym.cambios!=='object'||Array.isArray(o.gym.cambios))o.gym.cambios={};
+  else{const lim=iso(addDays(new Date(),-60)),lim2=iso(addDays(new Date(),400));
+    Object.keys(o.gym.cambios).forEach(function(k){
+      const v=o.gym.cambios[k];
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!/^\d{4}-\d{2}-\d{2}$/.test(String(v))||k<lim||v<lim||v>lim2||v===k)
+        delete o.gym.cambios[k];});}
   if(!o.sueno||typeof o.sueno!=='object')o.sueno={min:8,cenaMin:90,cenaMax:180,latencia:10};
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o.sueno[k]!=='number')o.sueno[k]={min:8,cenaMin:90,cenaMax:180,latencia:10}[k];});
   /* la siesta del saliente: puede ser 0, así que se comprueba el rango y no el «si es verdadero».
@@ -2948,6 +2957,7 @@ function gymS(){
   if(!g.segundo||typeof g.segundo!=='object')g.segundo={on:true,dias:[3],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(g.segundo.dias))g.segundo.dias=[3];
   if(!g.marks||typeof g.marks!=='object')g.marks={};
+  if(!g.cambios||typeof g.cambios!=='object'||Array.isArray(g.cambios))g.cambios={};
   return g;}
 function migrarRutinas(g){
   /* gym.rutina (única, sin nombre) -> gym.rutinas[] (varias, con nombre): la rutina que hubiera se
@@ -3106,11 +3116,43 @@ function toggleRutinaDia(rid,shiftId){
   save();
   const sh=shiftById(shiftId);
   return rt.nombre+(i>=0?' ya no toca':' toca')+' en «'+((sh&&sh.name)||'ese día')+'»';}
-function rutinaDeFecha(key){
-  /* la rutina que toca ese día, según el tipo de día que sea */
+function gymCambios(){
+  /* los cambios de día sueltos: {díaQueTocaba: díaAlQueSeMueve}. Las rutinas se asignan a TIPOS de
+     día, no a fechas, así que sin esto un entreno que cae en una guardia no se puede mover: o lo
+     pierdes o cambias la rutina entera. */
+  const g=gymS();
+  if(!g.cambios||typeof g.cambios!=='object')g.cambios={};
+  return g.cambios;}
+function rutinaDelDia(key){
+  /* la rutina que toca ese día por el tipo de día que es, sin mirar los cambios sueltos */
   const inf=dayInfo(key);
   if(!inf.shiftId)return null;
   return gymS().rutinas.filter(function(r){return rutinaDias(r).indexOf(inf.shiftId)>=0;})[0]||null;}
+function rutinaDeFecha(key){
+  /* la que toca de verdad: la del tipo de día, salvo que la hayas movido a otro (o que venga
+     movida de otro). Va aquí y no solo en la portada para que el cambio valga en todas partes:
+     «Semana», «Hoy», el aviso de entrenar y hasta la hora de comer, que depende de si entrenas. */
+  const k=foodKey(key)||key,c=gymCambios();
+  if(c[k])return null;
+  for(const o in c){if(c[o]===k)return rutinaDelDia(o);}
+  return rutinaDelDia(k);}
+function moverEntreno(deKey,aKey){
+  const de=foodKey(deKey),a=foodKey(aKey);
+  if(!de||!a)return 'esas fechas no valen';
+  const rt=rutinaDeFecha(de);
+  if(!rt)return 'ese día no tienes entreno que mover';
+  gymCambios()[de]=a;
+  save();render();
+  return '«'+rt.nombre+'» pasa al '+fechaCortaTxt(a);}
+function deshacerMovido(deKey){
+  const de=foodKey(deKey),c=gymCambios();
+  if(!c[de])return 'ese día no estaba movido';
+  delete c[de];
+  save();render();
+  return 'el entreno vuelve al '+fechaCortaTxt(de);}
+function fechaCortaTxt(key){
+  const d=parseDate(key);
+  return d?(DAYN[(d.getDay()+6)%7].toLowerCase()+' '+d.getDate()):key;}
 function rutinaPlanHTML(rt,key){
   /* los ejercicios con el peso que usaste la última vez: la progresión donde hace falta, que es
      justo antes de levantar */
@@ -4975,7 +5017,9 @@ const GYM_ICO={
   tabla:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10M15 9.5v10"/>',
   plato:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/>',
   hoja:'<path d="M6 3.5h8l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5z"/><path d="M14 3.5V8h4.5M8 13h8M8 17h5"/>',
-  chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>'
+  chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>',
+  ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  aviso:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.4"/>'
 };
 function gymIco(n,cls){return '<svg class="'+(cls||'gico')+'" viewBox="0 0 24 24" aria-hidden="true">'+(GYM_ICO[n]||'')+'</svg>';}
 function gymSubcab(titulo,extra){
@@ -5019,6 +5063,118 @@ function gymCardioSemana(){
 function gymFicha(p,ico,titulo,n,sub){
   return '<button class="gtile" data-a="gym-panel" data-p="'+p+'">'+gymIco(ico)+
     '<b>'+esc(titulo)+'</b><span class="n">'+esc(n)+'</span><span class="s">'+esc(sub)+'</span></button>';}
+function gymDiaMalo(key,infOpt){
+  /* un día en el que no vas a entrenar aunque el calendario diga que toca: guardia o saliente */
+  const inf=infOpt||dayInfo(key),sh=shiftById(inf.shiftId);
+  if(sh&&isGuardia(sh))return 'guardia';
+  if(esSaliente(sh))return 'saliente';
+  if(salidaDeGuardia(key))return 'saliente';
+  return '';}
+function gymHechoEn(key){
+  /* ¿hiciste algo ese día? series apuntadas, sesión cerrada o cardio */
+  const g=gymS();
+  if(setsDe(key).length)return true;
+  if(g.sesiones.some(function(s){return s.fecha===key;}))return true;
+  return g.cardio.some(function(x){return x.fecha===key;});}
+function gymDiaEstado(key){
+  /* el estado de un día para la tira de la semana, y la línea que lo explica al tocarlo */
+  const inf=dayInfo(key),sh=shiftById(inf.shiftId),hoy=iso(new Date());
+  const rt=rutinaDeFecha(key),malo=gymDiaMalo(key,inf),hecho=gymHechoEn(key);
+  let est='libre';
+  if(hecho)est='hecho';
+  else if(rt&&malo)est='choque';
+  else if(key===hoy)est='hoy';
+  else if(malo)est='guardia';
+  else if(rt)est='plan';
+  const partes=[];
+  const hd=horasDelDiaTxt(key,inf);
+  if(hd)partes.push(hd);
+  if(hecho){
+    const n=setsDe(key).length;
+    if(n)partes.push(n+' serie'+(n===1?'':'s')+' apuntada'+(n===1?'':'s'));
+    const cd=gymS().cardio.filter(function(x){return x.fecha===key;});
+    if(cd.length)partes.push(cd.length+' de cardio');
+  }else if(rt&&malo)partes.push('«'+rt.nombre+'» puesto aquí, pero estás de '+malo);
+  else if(rt)partes.push('toca «'+rt.nombre+'»');
+  else if(malo)partes.push('de '+malo+', sin entreno');
+  else if(!hd)partes.push('sin nada puesto');
+  return {key:key,est:est,rt:rt,malo:malo,hecho:hecho,sh:sh,txt:partes.join(' · ')};}
+const GYM_EST_NOM={hecho:'hecho',hoy:'hoy',plan:'planeado',guardia:'guardia',choque:'choca con la guardia',libre:'libre'};
+function gymTiraHTML(sel){
+  /* L a D con lo que hay cada día. Tocas uno y la línea de abajo lo cuenta: la portada de Entreno
+     no decía en qué punto de la semana estabas ni qué días te quedan libres. */
+  const d0=parseDate(sel)||new Date(),lun=mondayOf(d0),hoy=iso(new Date());
+  const celdas=[];let selTxt='',selEst='libre';
+  for(let i=0;i<7;i++){
+    const k=iso(addDays(lun,i)),e=gymDiaEstado(k),dd=parseDate(k);
+    const marca=(k===sel);
+    if(marca){selTxt=DAYSH[i]+' '+dd.getDate()+' · '+e.txt;selEst=e.est;}
+    celdas.push('<button class="gday '+e.est+(marca?' sel':'')+(k===hoy?' esHoy':'')+'" data-a="gym-dia" data-key="'+k+'"'+
+      ' aria-label="'+esc(DAYN[i]+' '+dd.getDate()+', '+GYM_EST_NOM[e.est])+'"'+(marca?' aria-current="true"':'')+'>'+
+      '<span class="l">'+DAYSH[i].charAt(0)+'</span><span class="n">'+dd.getDate()+'</span><span class="b"></span></button>');}
+  return '<div class="gtira">'+celdas.join('')+'</div>'+
+    '<div class="gtiraq"><span class="pt '+selEst+'"></span><span>'+esc(selTxt)+'</span></div>';}
+const GYM_DESC_GRUPOS=['pecho','espalda','hombros','cuadriceps','core'];
+function gymDescanso(){
+  /* cuántos días llevas sin tocar cada grupo grande. Es lo que justifica que hoy toque torso y no
+     pierna, y hasta ahora no se veía en ninguna pantalla. */
+  const g=gymS(),hoy=parseDate(iso(new Date())),ult={};
+  g.registro.forEach(function(s){
+    const f=parseDate(s.fecha);if(!f)return;
+    regionesDeEjercicio(s).forEach(function(r){
+      if(!ult[r]||f.getTime()>ult[r])ult[r]=f.getTime();});});
+  return GYM_DESC_GRUPOS.map(function(r){
+    if(!ult[r])return {reg:r,dias:null,cl:'nunca',txt:'—'};
+    const dias=Math.max(0,Math.round((hoy.getTime()-ult[r])/86400000));
+    return {reg:r,dias:dias,
+      cl:dias<=1?'cansado':(dias===2?'casi':'listo'),
+      txt:dias===0?'hoy':(dias===1?'ayer':(dias>=7?'7+ d':dias+' d'))};});}
+function gymDescansoHTML(){
+  const l=gymDescanso();
+  if(!l.some(function(x){return x.dias!==null;}))return '';
+  return '<div class="gdesc"><div class="gdesch"><span>QUÉ TIENES DESCANSADO</span>'+
+    '<span class="mini">desde que lo entrenaste</span></div><div class="gdescr">'+
+    l.map(function(x){
+      return '<div class="gm '+x.cl+'"><span class="g">'+esc((MREG_LABEL[x.reg]||x.reg).split(' ')[0])+'</span>'+
+        '<span class="v">'+esc(x.txt)+'</span></div>';}).join('')+'</div></div>';}
+function gymChoque(desde){
+  /* el primer entreno de los próximos 7 días que cae en un día en el que no vas a entrenar, y el
+     primer hueco de verdad al que se puede mover */
+  const d0=parseDate(desde);if(!d0)return null;
+  for(let i=0;i<7;i++){
+    const k=iso(addDays(d0,i)),inf=dayInfo(k);
+    if(gymHechoEn(k))continue;
+    const rt=rutinaDeFecha(k);if(!rt)continue;
+    const malo=gymDiaMalo(k,inf);if(!malo)continue;
+    let a='';
+    for(let j=1;j<=7;j++){
+      const k2=iso(addDays(parseDate(k),j));
+      if(gymDiaMalo(k2))continue;
+      if(rutinaDeFecha(k2))continue;
+      if(gymHechoEn(k2))continue;
+      a=k2;break;}
+    return {key:k,rt:rt,malo:malo,a:a};}
+  return null;}
+function gymAvisoHTML(sel){
+  /* El aviso ya no solo cuenta que tienes guardia: trae el botón que lo arregla.
+     El choque manda sobre la confirmación: si no, al mover uno el «hecho» verde se quedaba una
+     semana entera tapando el siguiente. */
+  const ch=gymChoque(sel);
+  if(!ch){
+    /* la confirmación, solo mientras el día de origen siga en la semana que se está mirando */
+    const c=gymCambios(),lun=iso(mondayOf(parseDate(sel)||new Date())),dom=iso(addDays(parseDate(lun),6));
+    const movidos=Object.keys(c).filter(function(k){return k>=lun&&k<=dom;}).sort();
+    if(!movidos.length)return '';
+    const de=movidos[0],a=c[de],rt=rutinaDeFecha(a);
+    return '<div class="gaviso ok"><div class="t">'+gymIco('ok','gico sm')+
+      '<span><b>'+esc((rt?rt.nombre:'El entreno'))+' pasa al '+esc(fechaCortaTxt(a))+'.</b> '+
+      'Lo tenías el '+esc(fechaCortaTxt(de))+', que no te dejaba entrenar.</span></div>'+
+      '<button class="btn s" data-a="gym-deshacer" data-key="'+esc(de)+'">deshacer</button></div>';}
+  return '<div class="gaviso mal"><div class="t">'+gymIco('aviso','gico sm')+
+    '<span>El <b>'+esc(fechaCortaTxt(ch.key))+'</b> toca <b>'+esc(ch.rt.nombre)+'</b> y estás de '+esc(ch.malo)+': '+
+    (ch.a?('el '+esc(fechaCortaTxt(ch.a))+' lo tienes libre.'):'no hay ningún hueco libre esta semana.')+'</span></div>'+
+    (ch.a?('<button class="btn s" data-a="gym-mover" data-key="'+esc(ch.key)+'" data-to="'+esc(ch.a)+'">mover «'+
+      esc(ch.rt.nombre)+'» al '+esc(fechaCortaTxt(ch.a))+'</button>'):'')+'</div>';}
 function renderGymPortada(){
   const c=gymCtx(),g=c.g,sa=ui.gymSesionActiva;
   const rt=sa?g.rutinas.filter(function(r){return r.id===sa.rutinaId;})[0]:null;
@@ -5048,6 +5204,10 @@ function renderGymPortada(){
     filas='<div class="empty" style="padding:4px 0">Apunta la primera serie y aquí verás cómo va el día.</div>';
   }
   $('#main').innerHTML='<div class="grid">'+
+    gymTiraHTML(c.sel)+
+    /* el aviso va ANTES de «hoy toca entrenar»: si ese día no vas a poder, leerlo después de una
+       tarjeta que te invita a empezar la sesión es leerlo tarde */
+    gymAvisoHTML(c.sel)+
     tocaEntrenarHTML(c.sel)+
     '<div class="ghero">'+
       '<div class="ghero-top">'+gymIco('pesa')+
@@ -5055,12 +5215,18 @@ function renderGymPortada(){
         (pie?'<span class="sp"></span><span class="tag b2">'+esc(pie)+'</span>':'')+'</div>'+
       '<div class="exlist">'+filas+'</div>'+
       '<button class="btn p gbig" data-a="gym-panel" data-p="sesion">'+gymIco('mas','gico sm')+' apuntar serie</button>'+
+      /* antes desde aquí solo se podía seguir la de hoy: para empezar otra o montar una nueva
+         había que salir a buscarla */
+      '<div class="growtras">'+
+        '<button class="btn s" data-a="gym-panel" data-p="rutinas">'+gymIco('lista','gico sm')+' empezar otra</button>'+
+        '<button class="btn s" data-a="gym-nueva">'+gymIco('mas','gico sm')+' montar una nueva</button>'+
+      '</div>'+
     '</div>'+
-    '<div class="gtiles">'+
-      gymFicha('rutinas','lista','Rutinas',g.rutinas.length||'—',g.rutinas.length?'montadas':'sin rutinas')+
+    gymDescansoHTML()+
+    '<div class="gtiles tres">'+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
-      gymFicha('biblioteca','libro','Biblioteca',c.hay?g.biblioteca.length.toLocaleString('es-ES'):'—',c.hay?'ejercicios':'sin importar')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
+      gymFicha('biblioteca','libro','Biblioteca',c.hay?g.biblioteca.length.toLocaleString('es-ES'):'—',c.hay?'ejercicios':'sin importar')+
     '</div></div>';}
 function renderGymSesion(){
   const c=gymCtx(),d=c.d,sel=c.sel;
@@ -8480,6 +8646,13 @@ function act(a,el){
     case 'gym-prev':case 'gym-next':{const gd=parseDate(foodKey(ui.gymDate||iso(new Date()))||iso(new Date()))||new Date();
       ui.gymDate=iso(addDays(gd,a==='gym-next'?1:-1));render();break;}
     case 'gym-today':ui.gymDate=iso(new Date());render();break;
+    case 'gym-dia':ui.gymDate=el.dataset.key||iso(new Date());render();break;
+    case 'gym-mover':flash(moverEntreno(el.dataset.key,el.dataset.to));break;
+    case 'gym-deshacer':flash(deshacerMovido(el.dataset.key));break;
+    case 'gym-nueva':{ui.gymPanel='rutinas';render();window.scrollTo(0,0);
+      /* render() ha reemplazado #main entero: la caja del nombre es nueva, hay que enfocarla ahora */
+      const nn=document.getElementById('rtNombreNueva');if(nn)nn.focus();
+      break;}
     case 'gym-fetch':flash('bajando la biblioteca de openGym: pesan unos 17 MB, en el móvil mejor con wifi');
       gymImportUrl().then(function(r){flash((r&&r.msg)||'nada más');});break;
     case 'gym-paste':{const ta=document.getElementById('gymJson');const r=gymImportText(ta?ta.value:'');
@@ -10361,6 +10534,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
   comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
+  gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
+  gymDescanso,gymChoque,fechaCortaTxt,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,

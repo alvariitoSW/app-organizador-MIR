@@ -1201,3 +1201,73 @@ ul.slots{list-style:none;margin:0;padding:0}
 .drplan .pl.evt{color:var(--brand2);border-color:color-mix(in srgb,var(--brand2) 40%,var(--line))}
 .drplan .pl.est{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 .drplan .pl.com{color:var(--ink2)}
+
+/* ===== Entreno · la portada que hace cosas =====================================================
+   La tira de la semana, el descanso por grupo muscular y el aviso con botón. Va al final del
+   fichero a propósito: el bloque @media(max-width:560px) está ENCIMA de las reglas base, así que
+   lo que se añade aquí es lo que gana en el móvil. */
+.gtira{display:flex;gap:5px;margin-bottom:5px}
+.gday{flex:1 1 0;min-width:0;height:52px;padding:6px 0 5px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font:inherit;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink2)}
+.gday .l{font-size:9.5px;font-weight:800;letter-spacing:.06em;opacity:.8}
+.gday .n{font-size:13.5px;font-weight:800;letter-spacing:-.01em;color:inherit}
+.gday .b{display:block;width:15px;height:3px;border-radius:2px;margin-top:2px;background:transparent}
+.gday.hecho{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
+  background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent)}
+.gday.hecho .b{background:var(--accent)}
+.gday.hoy{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 16%,var(--bg));color:var(--ink)}
+.gday.hoy .b{background:var(--brand)}
+.gday.plan{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));color:var(--ink)}
+.gday.plan .b{background:var(--brand)}
+.gday.guardia{border-color:color-mix(in srgb,var(--warn) 50%,var(--line));
+  background:color-mix(in srgb,var(--warn) 10%,var(--bg));color:color-mix(in srgb,var(--warn) 70%,var(--ink))}
+.gday.guardia .b{background:var(--warn)}
+.gday.choque{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));
+  background:color-mix(in srgb,var(--bad) 12%,var(--bg));color:var(--bad)}
+.gday.choque .b{background:var(--bad)}
+.gday.sel{box-shadow:0 0 0 2px var(--brand)}
+.gtiraq{display:flex;align-items:flex-start;gap:7px;min-height:28px;margin:0 2px 2px;
+  font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35}
+.gtiraq .pt{flex-shrink:0;display:block;width:7px;height:7px;border-radius:999px;margin-top:5px;
+  border:1px solid var(--line);background:transparent}
+.gtiraq .pt.hecho{background:var(--accent);border-color:transparent}
+.gtiraq .pt.hoy,.gtiraq .pt.plan{background:var(--brand);border-color:transparent}
+.gtiraq .pt.guardia{background:var(--warn);border-color:transparent}
+.gtiraq .pt.choque{background:var(--bad);border-color:transparent}
+.growtras{display:flex;gap:8px;margin-top:8px}
+.growtras .btn{flex:1 1 0;min-width:0;justify-content:center}
+.gdesc{display:flex;flex-direction:column;gap:5px}
+.gdesch{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.gdesch .mini{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:0;text-transform:none;opacity:.75}
+.gdescr{display:flex;gap:6px}
+.gm{flex:1 1 0;min-width:0;height:40px;border-radius:11px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink2)}
+.gm .g{font-size:9.5px;font-weight:800;letter-spacing:.03em;opacity:.85;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm .v{font-size:12.5px;font-weight:800}
+.gm.listo{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
+  background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent)}
+.gm.casi{border-color:color-mix(in srgb,var(--warn) 50%,var(--line));
+  background:color-mix(in srgb,var(--warn) 10%,var(--bg));color:color-mix(in srgb,var(--warn) 78%,var(--ink))}
+.gm.cansado{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));
+  background:color-mix(in srgb,var(--bad) 12%,var(--bg));color:var(--bad)}
+.gaviso{border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.gaviso .t{display:flex;gap:9px;align-items:flex-start;font-size:12px;font-weight:600;line-height:1.4}
+.gaviso .t svg{flex-shrink:0;margin-top:2px}
+.gaviso .btn{width:100%;justify-content:center}
+.gaviso.mal{border:1px dashed color-mix(in srgb,var(--bad) 55%,var(--line));
+  background:color-mix(in srgb,var(--bad) 9%,var(--bg));color:color-mix(in srgb,var(--bad) 55%,var(--ink))}
+.gaviso.mal .t svg{stroke:var(--bad)}
+.gaviso.mal b{color:var(--ink)}
+.gaviso.ok{border:1px solid color-mix(in srgb,var(--accent) 50%,var(--line));
+  background:color-mix(in srgb,var(--accent) 9%,var(--bg));color:color-mix(in srgb,var(--accent) 50%,var(--ink))}
+.gaviso.ok .t svg{stroke:var(--accent)}
+.gaviso.ok b{color:var(--ink)}
+/* tres puertas en una fila: con cuatro baldosas la cuadrícula de 2 salía a dos filas, y con tres
+   se quedaba una sola abajo */
+.gtiles.tres{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gtiles.tres .gtile{padding:11px 9px;min-height:96px}
+.gtiles.tres .gtile>b{font-size:12.5px}
+.gtiles.tres .gtile .s{font-size:10px;line-height:1.25}
