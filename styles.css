@@ -1662,3 +1662,22 @@ ul.slots{list-style:none;margin:0;padding:0}
 .finfila.ok .m{color:var(--ok)}
 .finfila.duda input{border-color:var(--warn)}
 .finfila.duda .m{color:var(--warn)}
+/* los días que se salen del plan: los tres botones no deben pesar más que lo apuntado */
+.card.diaesp{padding:11px 13px}
+.card.diaesp h2{font-size:13.5px}
+.card.diaesp .row .btn{padding:6px 10px;font-size:11.5px}
+
+/* ===== la propuesta del menú automático (fase 5) ===== */
+/* cada línea dice la hora, el plato y POR QUÉ ese: sin el porqué esto es una caja negra */
+.alista{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.afila{display:flex;align-items:flex-start;gap:9px;padding:8px 9px;border:1px solid var(--line);
+  border-radius:11px;background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.afila.no{opacity:.55}
+.afila .h{flex:0 0 40px;font-size:11.5px;font-weight:800;color:var(--ink2);
+  font-variant-numeric:tabular-nums;padding-top:2px}
+.afila .n{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.afila .n b{font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.afila .n span{font-size:10.5px;font-weight:600;color:var(--ink2)}
+.afila .k{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--ink2);
+  font-variant-numeric:tabular-nums;padding-top:2px}
+.afila .k::after{content:' kcal';font-size:9px;font-weight:700;opacity:.7}

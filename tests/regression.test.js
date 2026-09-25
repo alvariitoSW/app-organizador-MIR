@@ -6032,6 +6032,210 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
+  // ===================================================================================
+  // Las kcal que le tocan y los días que se salen del plan (fase 4). La fórmula es
+  // Mifflin-St Jeor y el resultado se comprueba A MANO aquí abajo: si alguien toca el
+  // cálculo, esta prueba dice en qué número se ha desviado, no solo que falla.
+  // ===================================================================================
+  {
+    const calc = await page.evaluate(() => { const P = window.PG;
+      P.setPerfil('alturaCm', 179); P.setPerfil('pesoKg', 95);
+      P.setPerfil('nacidoF', '1998-10-06'); P.setPerfil('actividad', 1.55);
+      P.setPerfil('meta', 'perder');
+      const perder = { b: P.metabolismoBasal(), g: P.gastoDiario(),
+        k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'mantener');
+      const mantener = { k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'ganar');
+      const ganar = { k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'perder');
+      // sin fecha de nacimiento no se inventa nada: se dice lo que falta
+      P.setPerfil('nacidoF', '');
+      const sinEdad = { b: P.metabolismoBasal(), k: P.kcalSugeridas(), falta: P.kcalFaltaTxt() };
+      P.setPerfil('nacidoF', '1998-10-06');
+      return { edad: P.edadHoy(), perder, mantener, ganar, sinEdad }; });
+    // 10·95 + 6,25·179 − 5·27 + 5 = 1938,75 → 1939;  ×1,55 = 3005;  −18 % = 2464 → 2460
+    const basalManual = Math.round(10 * 95 + 6.25 * 179 - 5 * 27 + 5);
+    const gastoManual = Math.round(basalManual * 1.55);
+    check('las kcal salen de Mifflin-St Jeor y cuadran con la cuenta hecha a mano',
+      calc.edad === 27 && calc.perder.b === basalManual && calc.perder.g === gastoManual &&
+      calc.perder.k === Math.round(gastoManual * 0.82 / 10) * 10 && calc.perder.pr === 190 &&
+      calc.mantener.k === Math.round(gastoManual / 10) * 10 && calc.mantener.pr === 150 &&
+      calc.ganar.k > calc.mantener.k && calc.ganar.pr === 170 &&
+      // nunca por debajo del metabolismo basal, y sin datos se dice qué falta en vez de un cero
+      calc.perder.k > calc.perder.b &&
+      calc.sinEdad.b === 0 && calc.sinEdad.k === 0 && /fecha de nacimiento/.test(calc.sinEdad.falta),
+      JSON.stringify({ calc, basalManual, gastoManual }));
+
+    // el botón deja el objetivo puesto, y entonces la tarjeta lo dice en vez de volver a ofrecerlo
+    await gotoTab('food');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { window.PG.ui.foodVista = 'perfil'; window.PG.render(); });
+    await page.waitForTimeout(300);
+    await page.click('[data-a="kcal-poner"]');
+    await page.waitForTimeout(350);
+    const puesto = await page.evaluate(() => ({ ob: window.PG.food().objetivo,
+      dicho: /es lo que tienes puesto/.test(document.getElementById('main').innerText) }));
+    check('«poner como mi objetivo» deja las kcal y la proteína puestas, y la tarjeta lo dice',
+      puesto.ob.kcal === calc.perder.k && puesto.ob.prot === 190 && puesto.dicho === true,
+      JSON.stringify(puesto));
+
+    // los tres tipos de día. El del hospital NO inventa kcal: él lo pidió así.
+    await page.evaluate(() => { const P = window.PG;
+      P.food().diasEsp = {}; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const kcal0 = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    await page.click('[data-a="dia-esp"][data-t="moncheo"]');
+    await page.waitForTimeout(350);
+    const conMoncheo = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    // la estimación es editable: es mía, no una medida
+    await page.fill('[data-a="dia-esp-kcal"]', '300');
+    await page.evaluate(() => { const i = document.querySelector('[data-a="dia-esp-kcal"]');
+      i.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.waitForTimeout(400);
+    const editado = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    // y la vista NO se rompe al editar un campo y repintar (ver la prueba del blur, abajo)
+    const viva = await page.evaluate(() => !/Se ha roto esta vista/.test(document.getElementById('main').innerText));
+    await page.click('[data-a="dia-esp"][data-t="hospital"]');
+    await page.waitForTimeout(350);
+    const hosp = await page.evaluate(() => { const P = window.PG;
+      const k = P.diaComer();
+      return { kcal: P.foodTotals(k).kcal, plan: P.planTotalsOf(k).kcal,
+        esp: P.diaEspDe(k), persiste: (P.store = JSON.parse(JSON.stringify(P.store)),
+          P.diaEspDe(k)) }; });
+    // se compara la DIFERENCIA y no el número absoluto: este día ya trae apuntada la comida de
+    // las pruebas de más arriba, y encadenar es justo lo que se quiere probar
+    check('el moncheo suma kcal estimadas y editables; el menú del hospital no inventa ninguna',
+      conMoncheo - kcal0 === 600 && editado - kcal0 === 300 && viva === true &&
+      hosp.kcal === kcal0 && hosp.plan === 0 && hosp.esp.tipo === 'hospital' &&
+      hosp.persiste && hosp.persiste.tipo === 'hospital',
+      JSON.stringify({ kcal0, conMoncheo, editado, viva, hosp }));
+
+    // el fallo que sacó todo esto: escribir en un campo y que el repintado lo desmonte
+    // mientras tiene el foco tiraba la vista entera con «Se ha roto esta vista». Le pasaba
+    // a cualquier campo que guarde y repinte desde el listener de change, no solo a este.
+    const foco = await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodObjOpen = true; P.render();
+      const i = document.querySelector('[data-a="food-ob"][data-k="kcal"]');
+      if (!i) return { hay: false };
+      i.focus(); i.value = '2300';
+      i.dispatchEvent(new Event('change', { bubbles: true }));
+      return { hay: true, roto: /Se ha roto esta vista/.test(document.getElementById('main').innerText),
+        kcal: P.food().objetivo.kcal }; });
+    check('editar un campo y repintar no tira la vista, aunque el campo tuviera el foco',
+      foco.hay === true && foco.roto === false && foco.kcal === 2300,
+      JSON.stringify(foco));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.food().diasEsp = {}; P.food().objetivo = { kcal: 0, prot: 0 };
+      P.store.perfil.pesos = []; P.setPerfil('nacidoF', ''); P.setPerfil('meta', 'mantener');
+      P.ui.foodVista = ''; P.ui.foodObjOpen = false; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+  }
+
+  // ===================================================================================
+  // Montar la semana sola (fase 5). El modo automático vive AL LADO del manual, no en
+  // su lugar. Tres reglas que no se saltan: con gluten no entra, gana lo que ya está
+  // en casa, y el día tiene que acercarse a sus kcal.
+  // ===================================================================================
+  {
+    await page.evaluate(() => { const P = window.PG;
+      if (!P.esCeliaco()) P.setPerfil('celiaco');
+      P.setPerfil('alturaCm', 179); P.setPerfil('pesoKg', 95);
+      P.setPerfil('nacidoF', '1998-10-06'); P.setPerfil('actividad', 1.55);
+      P.setPerfil('meta', 'perder');
+      P.food().objetivo = { kcal: 2460, prot: 190 };
+      P.food().despensa = []; P.food().nevera = []; P.food().neveraMano = [];
+      P.save(); });
+
+    // 1 · los candidatos de cada toma salen de SUS menús, no de una tabla de fuera
+    const clases = await page.evaluate(() => { const P = window.PG;
+      const c = P.platosDeClase();
+      return { desayuno: Object.keys(c.desayuno || {}).length,
+        comida: Object.keys(c.comida || {}).length,
+        cena: Object.keys(c.cena || {}).length,
+        // y la etiqueta de la toma se clasifica bien
+        etq: [P.claseDeToma('Desayuno pre-entreno'), P.claseDeToma('Comida en destino'),
+          P.claseDeToma('Cena de fuerza'), P.claseDeToma('Media mañana'),
+          P.claseDeToma('Snack nocturno (opcional)')] }; });
+    check('los platos candidatos de cada toma salen de tus propios menús, no de una tabla',
+      clases.desayuno >= 3 && clases.comida >= 3 && clases.cena >= 2 &&
+      clases.etq.join(',') === 'desayuno,comida,cena,media,media',
+      JSON.stringify(clases));
+
+    // 2 · el día llega cerca de sus kcal y NO repite plato. Con un plato por toma se
+    // quedaba en 1500 de 2460, que no es un menú sino media dieta.
+    const sinDesp = await page.evaluate(() => { const P = window.PG;
+      return P.menuAutoSemana().map((pl) => {
+        const ids = [];
+        pl.props.forEach((pr) => (pr.dishes || []).forEach((d) => ids.push(d.id)));
+        return { dia: P.shiftById(pl.shiftId).name, kcal: pl.kcal, prot: pl.prot,
+          repes: ids.length - new Set(ids).size,
+          conGluten: ids.filter((id) => P.glutenDePlato(P.dishById(id)).est === 'si').length }; }); });
+    check('cada día se acerca a tus kcal, sin repetir plato y sin colar ninguno con gluten',
+      sinDesp.length >= 4 &&
+      sinDesp.every((d) => d.kcal > 2460 * 0.85 && d.kcal < 2460 * 1.15) &&
+      sinDesp.every((d) => d.repes === 0) &&
+      sinDesp.every((d) => d.conGluten === 0) &&
+      sinDesp.every((d) => d.prot > 120),
+      JSON.stringify(sinDesp));
+
+    // 3 · lo que YA está en casa gana: es lo que cierra el círculo con la compra
+    const conDesp = await page.evaluate(() => { const P = window.PG;
+      const antes = P.menuAutoSemana();
+      const porQueAntes = antes.map((pl) => pl.props.map((pr) => pr.porQue).join(' | ')).join(' || ');
+      // entra en casa justo lo del porridge
+      ['320 g yogur griego natural', '160 g copos de avena', '400 ml leche',
+        '4 plátano', '100 g miel'].forEach((t) => P.despensaAdd(t));
+      P.save();
+      const cub = P.platoCubierto(P.dishById('d-porridge'));
+      const tras = P.menuAutoSemana();
+      const porQueTras = tras.map((pl) => pl.props.map((pr) => pr.porQue).join(' | ')).join(' || ');
+      // ¿sale el porridge en más días que antes?
+      const cuenta = (planes) => planes.filter((pl) => pl.props.some((pr) =>
+        (pr.dishes || []).some((d) => d.id === 'd-porridge'))).length;
+      return { cubPct: cub.pct, cubN: cub.n, cubTotal: cub.total,
+        antesEnCasa: /lo tienes en casa/.test(porQueAntes),
+        trasEnCasa: /lo tienes en casa/.test(porQueTras),
+        diasAntes: cuenta(antes), diasTras: cuenta(tras) }; });
+    check('lo que ya tienes en casa pesa en la elección y se dice por qué está ahí',
+      conDesp.cubPct === 100 && conDesp.cubN === 5 && conDesp.cubTotal === 5 &&
+      conDesp.antesEnCasa === false && conDesp.trasEnCasa === true &&
+      conDesp.diasTras >= conDesp.diasAntes,
+      JSON.stringify(conDesp));
+
+    // 4 · aplicar lo escribe de verdad: una toma con «comida» guardada apunta a un
+    // mealId, y si no se suelta ese enlace seguiría mandando la comida vieja
+    await gotoTab('types');
+    await page.waitForTimeout(350);
+    await page.click('[data-a="types-vista"][data-v="auto"]');
+    await page.waitForTimeout(450);
+    const antesAplicar = await page.evaluate(() => window.PG.slotsFor('sh-f')
+      .map((s) => ({ meal: s.mealId, n: (s.items || []).length })));
+    await page.click('[data-a="auto-aplicar"]');
+    await page.waitForTimeout(350);
+    const hayConfirm = await page.$('#modal [data-a="confirm-yes"]');
+    if (hayConfirm) { await hayConfirm.click(); await page.waitForTimeout(500); }
+    const trasAplicar = await page.evaluate(() => { const P = window.PG;
+      return { slots: P.slotsFor('sh-f').map((s) => ({ meal: s.mealId, n: (s.items || []).length })),
+        kcal: P.dayTotals('sh-f').kcal, vista: P.ui.typesVista }; });
+    check('«poner esto en mis menús» escribe las tomas y suelta la comida guardada que las mandaba',
+      !!hayConfirm &&
+      antesAplicar.some((s) => s.meal) &&
+      trasAplicar.slots.every((s) => !s.meal) &&
+      trasAplicar.slots.every((s) => s.n >= 1) &&
+      trasAplicar.kcal > 2460 * 0.85 && trasAplicar.kcal < 2460 * 1.15 &&
+      trasAplicar.vista === '',
+      JSON.stringify({ antesAplicar, trasAplicar }));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.food().despensa = []; P.food().nevera = []; P.food().neveraMano = [];
+      P.food().objetivo = { kcal: 0, prot: 0 };
+      P.setPerfil('nacidoF', ''); P.setPerfil('meta', 'mantener');
+      P.ui.menuAuto = null; P.ui.typesVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
