@@ -579,6 +579,7 @@ function normalize(o){
    e.sesiones=(Array.isArray(e.sesiones)?e.sesiones:[]).filter(function(x){return x&&x.id&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');})
      .map(function(x){return {id:String(x.id).slice(0,40),fecha:x.fecha,min:Math.max(0,Math.min(600,+x.min||0)),
        temas:(Array.isArray(x.temas)?x.temas:[]).map(String).slice(0,20)};});}
+  ahorroLimpia(o);
   if(!Array.isArray(o.eventos))o.eventos=[];
   o.eventos=o.eventos.filter(function(e){return e&&e.id;}).map(function(e){
     const modo=e.modo==='fecha'?'fecha':'semanal';
@@ -9202,12 +9203,20 @@ function pagosHoyHTML(key){
     '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="dinero">ver el mes entero →</button></div>'+
   '</div>';}
 function renderDinero(){
+  /* Dinero es AHORRO: la portada es cuánto cobras este mes, cuánto apartas y en qué huchas. Los
+     gastos los lleva otra app; aquí solo quedan los recibos (salen en el calendario y en Google) y
+     los «este mes intento gastar menos en…». */
   const v=ui.dineroVista||'';
   if(v==='fijos')return renderDineroFijos();
-  return renderDineroMes();}
-function dinSubcab(titulo,extra){
+  if(v==='recibos')return renderDineroMes();
+  if(v==='nomina')return renderAhorroNomina();
+  if(v==='huchas')return renderAhorroHuchas();
+  if(v==='fintonic')return renderFintonic();
+  return renderAhorro();}
+function dinSubcab(titulo,extra,volver){
+  const vv=volver==null?'':volver;
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="dinero-vista" data-v="">'+gymIco('atras','gico sm')+' Dinero</button>'+
+    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+(vv==='recibos'?'Recibos':'Ahorro')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function renderDineroMes(){
   const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth();
@@ -9224,6 +9233,7 @@ function renderDineroMes(){
       '<span class="im">'+esc(eur(g.importe))+'</span></div>';};
   const cats=Object.keys(d.porCat).sort(function(a,b){return d.porCat[b]-d.porCat[a];});
   $('#main').innerHTML='<div class="grid">'+
+    dinSubcab('Recibos del mes')+
     '<div class="card">'+
       '<div class="row" style="justify-content:space-between;margin-bottom:10px">'+
         '<b style="font-size:15px">'+esc(MONTH_FULL[m])+'</b>'+
@@ -9261,7 +9271,7 @@ function renderDineroFijos(){
   const opts=function(sel){return DIN_CAT.map(function(c){
     return '<option value="'+c[0]+'"'+(c[0]===sel?' selected':'')+'>'+c[1]+' '+c[2]+'</option>';}).join('');};
   $('#main').innerHTML='<div class="grid">'+
-    dinSubcab('Gastos fijos','<span class="tag b2">'+g.length+'</span>')+
+    dinSubcab('Gastos fijos','<span class="tag b2">'+g.length+'</span>','recibos')+
     '<p class="note" style="margin:0">Lo que pagas todos los meses el mismo día. Sale en el Mes, en Hoy y en el resumen de arriba.</p>'+
     '<div class="card">'+(g.length?g.map(function(x){
       return '<div class="gedit" data-gasto="'+esc(x.id)+'">'+
@@ -9280,6 +9290,545 @@ function renderDineroFijos(){
         '<select id="gnCat" style="flex:0 0 130px">'+opts('casa')+'</select>'+
         '<button class="btn p" data-a="dinero-add">+ añadir</button></div>'+
     '</div></div>';}
+
+/* ===================== ahorro =====================
+   Lo que pedía el usuario: «no me interesa llevar la cuenta de gastos, sino una ayuda para ahorrar:
+   si este mes cobro tanto, cuánto quiero apartar, y dentro de eso qué es para no tocar, qué para
+   viajes, qué para algún capricho».
+   · la NÓMINA se estima sola: la app ya sabe cuántas guardias tienes y cuáles caen en finde (sábado,
+     domingo o festivo), y cada «época» (R1 con IRPF 2 %, desde enero con ~20 %, R2…) dice cuánto se
+     cobra con una de finde y cuánto suma cada una de más. Cuando llega la nómina se apunta lo
+     cobrado de verdad y manda eso.
+   · lo que APARTAS se reparte en HUCHAS por porcentaje; «ya lo he apartado» lo suma a cada una.
+   · los RETOS («este mes intento gastar menos en salir») son lo único de gastos: si lo cumples, la
+     diferencia va a una hucha.
+   Todo se edita desde la app —épocas, pagas, festivos, huchas—, sin tocar código. */
+const AHO_FESTIVOS=['2026-10-12','2026-12-08','2026-12-25','2027-01-01','2027-01-06','2027-03-25','2027-03-26',
+  '2027-10-12','2027-11-01','2027-12-06','2027-12-08','2027-12-25'];
+function ahorroS(){
+  /* OJO: aquí solo se rellena lo que falte. La limpieza (el map de cada época y cada hucha) va en
+     ahorroLimpia(), que corre al cargar: si se hiciera aquí, cada llamada crearía objetos nuevos y
+     lo que se cambia en mitad de un bucle —el saldo de una hucha al repartir— se perdería */
+  if(!store.ahorro||typeof store.ahorro!=='object')store.ahorro={};
+  const a=store.ahorro;
+  if(!Array.isArray(a.epocas)||!a.epocas.length)a.epocas=[
+    {id:'ep-r1',nombre:'R1 · IRPF 2 %',desde:'2026-05',neto:2766,finde:300,pagaJun:0,pagaDic:733},
+    {id:'ep-r1b',nombre:'R1 · IRPF ~20 %',desde:'2027-01',neto:2066,finde:100,pagaJun:733,pagaDic:733}];
+  if(!a.cobrado||typeof a.cobrado!=='object'||Array.isArray(a.cobrado))a.cobrado={};
+  if(!Array.isArray(a.festivos))a.festivos=AHO_FESTIVOS.slice();
+  if(!Array.isArray(a.huchas))a.huchas=[
+    {id:'hu-colchon',nombre:'Colchón',ico:'🔒',color:'#8b5cf6',pct:50,objetivo:0,meta:'no se toca',saldo:0},
+    {id:'hu-viajes',nombre:'Viajes',ico:'✈️',color:'#38bdf8',pct:30,objetivo:0,meta:'',saldo:0},
+    {id:'hu-caprichos',nombre:'Caprichos',ico:'🎁',color:'#fbbf24',pct:20,objetivo:0,meta:'para gastar sin culpa',saldo:0}];
+  if(!a.meses||typeof a.meses!=='object'||Array.isArray(a.meses))a.meses={};
+  if(!Array.isArray(a.movs))a.movs=[];
+  if(typeof a.vivirMin!=='number')a.vivirMin=1000;
+  return a;}
+function ahorroLimpia(o){
+  /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
+  if(!o.ahorro||typeof o.ahorro!=='object')return;
+  const a=o.ahorro;
+  if(Array.isArray(a.epocas))a.epocas=a.epocas.filter(function(e){return e&&e.id;}).map(function(e){return {id:String(e.id),
+    nombre:String(e.nombre||'Época').slice(0,40),desde:/^\d{4}-\d{2}$/.test(e.desde||'')?e.desde:'2026-01',
+    neto:Math.max(0,+e.neto||0),finde:+e.finde||0,pagaJun:Math.max(0,+e.pagaJun||0),pagaDic:Math.max(0,+e.pagaDic||0)};});
+  if(Array.isArray(a.festivos))a.festivos=a.festivos.filter(function(f){return /^\d{4}-\d{2}-\d{2}$/.test(f);});
+  if(Array.isArray(a.huchas))a.huchas=a.huchas.filter(function(h){return h&&h.id;}).map(function(h){return {id:String(h.id),
+    nombre:String(h.nombre||'Hucha').slice(0,30),ico:String(h.ico||'🐷').slice(0,4),
+    color:/^#[0-9a-fA-F]{6}$/.test(h.color||'')?h.color:'#8b5cf6',pct:Math.max(0,Math.min(100,+h.pct||0)),
+    objetivo:Math.max(0,+h.objetivo||0),meta:String(h.meta||'').slice(0,60),saldo:Math.round((+h.saldo||0)*100)/100};});
+  if(Array.isArray(a.movs))a.movs=a.movs.filter(function(m){return m&&m.hucha;}).slice(0,200);
+  if(typeof a.vivirMin!=='number'||!(a.vivirMin>=0))a.vivirMin=1000;
+  if(Array.isArray(a.real))a.real=a.real.filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,36).map(function(x){
+    const cats={};if(x.cats&&typeof x.cats==='object')Object.keys(x.cats).slice(0,40).forEach(function(k){const v=+x.cats[k];if(v>=0)cats[String(k).slice(0,40)]=v;});
+    const n=function(v){return (v==null||v==='')?null:(isFinite(+v)?+v:null);};
+    return {fecha:x.fecha,hora:/^\d{2}:\d{2}$/.test(x.hora||'')?x.hora:'',mes:/^\d{4}-\d{2}$/.test(x.mes||'')?x.mes:x.fecha.slice(0,7),
+      banco:n(x.banco),ingresos:n(x.ingresos),gastos:n(x.gastos),cats:cats};});}
+function ahoMk(y,m){return y+'-'+String(m+1).padStart(2,'0');}
+function ahoYm(mk){const x=/^(\d{4})-(\d{2})$/.exec(mk||'');return x?{y:+x[1],m:+x[2]-1}:null;}
+function ahoMesTxt(mk){const t=ahoYm(mk);return t?MONTH_FULL[t.m]:'';}
+function epocaDe(mk){
+  const ep=ahorroS().epocas.slice().sort(function(a,b){return a.desde.localeCompare(b.desde);});
+  let r=ep[0]||null;ep.forEach(function(e){if(e.desde<=mk)r=e;});
+  return r;}
+function esFestivo(k){return ahorroS().festivos.indexOf(k)>=0;}
+function guardiasDelMes(y,m){
+  /* las de finde: sábado o domingo, y cualquier festivo (el viernes no, salvo que sea festivo) */
+  const out={total:0,finde:0,dias:[]};
+  monthDays(y,m).forEach(function(d){
+    if(!d.shiftId||!isGuardia(shiftById(d.shiftId)))return;
+    out.total++;
+    const dw=d.date.getDay();
+    if(dw===0||dw===6||esFestivo(d.key)){out.finde++;out.dias.push(d.key);}});
+  return out;}
+function nominaMes(y,m){
+  const a=ahorroS(),mk=ahoMk(y,m),ep=epocaDe(mk),g=guardiasDelMes(y,m);
+  /* un mes aún sin guardias puestas se estima como uno normal (con una de finde): contar cero
+     guardias daría un sueldo que no vas a cobrar */
+  const finde=g.total?g.finde:1;
+  const base=ep?Math.max(0,ep.neto+(finde-1)*ep.finde):0;
+  const paga=ep?(m===5?ep.pagaJun:(m===11?ep.pagaDic:0)):0;
+  const est=Math.round(base+paga);
+  const real=(typeof a.cobrado[mk]==='number')?a.cobrado[mk]:null;
+  return {mk:mk,ep:ep,g:g,finde:finde,supuesto:!g.total,paga:paga,est:est,real:real,neto:real!=null?real:est};}
+function recibosMes(y,m){return gastosFijos().reduce(function(t,g){return t+(+g.importe||0);},0);}
+function redondea50(n){return Math.max(0,Math.floor((+n||0)/50)*50);}
+function ahorroMes(mk,crear){
+  const a=ahorroS();
+  if(!a.meses[mk]&&crear){
+    /* lo que apartas un mes nuevo: lo del anterior, o un 20 % de lo que cobras */
+    const ant=Object.keys(a.meses).filter(function(k){return k<mk;}).sort().pop();
+    const t=ahoYm(mk),nm=nominaMes(t.y,t.m);
+    a.meses[mk]={aparto:ant?(+a.meses[ant].aparto||0):redondea50(nm.neto*0.2),hecho:false,reparto:{},retos:[]};}
+  const x=a.meses[mk]||{aparto:0,hecho:false,reparto:{},retos:[]};
+  if(!Array.isArray(x.retos))x.retos=[];
+  if(!x.reparto||typeof x.reparto!=='object')x.reparto={};
+  return x;}
+function repartoDe(importe){
+  /* por porcentaje, en euros enteros; lo que sobra del redondeo va a la primera hucha */
+  const hs=ahorroS().huchas,tot=hs.reduce(function(t,h){return t+h.pct;},0)||1,out={};
+  let usado=0;
+  hs.forEach(function(h){const v=Math.floor(importe*h.pct/tot);out[h.id]=v;usado+=v;});
+  if(hs.length)out[hs[0].id]+=Math.round(importe-usado);
+  return out;}
+function ahoMov(hucha,importe,txt){ahorroS().movs.unshift({fecha:iso(new Date()),hucha:hucha,importe:Math.round(importe*100)/100,txt:String(txt||'').slice(0,60)});
+  ahorroS().movs=ahorroS().movs.slice(0,200);}
+function apartarMes(mk){
+  const x=ahorroMes(mk,true);
+  if(x.hecho)return 'este mes ya estaba apartado';
+  if(!(x.aparto>0))return 'pon primero cuánto apartas';
+  const r=repartoDe(x.aparto);
+  ahorroS().huchas.forEach(function(h){if(r[h.id]){h.saldo=Math.round((h.saldo+r[h.id])*100)/100;ahoMov(h.id,r[h.id],'apartado de '+ahoMesTxt(mk));}});
+  x.reparto=r;x.hecho=true;save();render();
+  return eur(x.aparto)+' repartidos en tus huchas';}
+function deshacerApartado(mk){
+  const x=ahorroMes(mk,false);
+  if(!x.hecho)return 'no había nada apartado';
+  ahorroS().huchas.forEach(function(h){const v=+x.reparto[h.id]||0;if(v){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,'deshecho '+ahoMesTxt(mk));}});
+  x.reparto={};x.hecho=false;save();render();
+  return 'deshecho: el dinero vuelve a estar sin apartar';}
+function retoAhorro(r){return Math.max(0,(+r.antes||0)-(+r.max||0));}
+function cerrarReto(mk,id,ok){
+  const x=ahorroMes(mk,true),r=x.retos.filter(function(q){return q.id===id;})[0];
+  if(!r)return 'ese reto ya no está';
+  if(r.cerrado)return 'ya estaba cerrado';
+  r.cerrado=true;r.ok=!!ok;
+  if(ok){const v=+r.real>=0&&r.real!==''&&r.real!=null?Math.max(0,(+r.antes||0)-(+r.real||0)):retoAhorro(r);
+    const h=ahorroS().huchas.filter(function(q){return q.id===r.hucha;})[0]||ahorroS().huchas[0];
+    if(h&&v>0){h.saldo=Math.round((h.saldo+v)*100)/100;ahoMov(h.id,v,'reto: '+r.nombre);r.ganado=v;}}
+  save();render();
+  return ok?('¡bien! '+(r.ganado?eur(r.ganado)+' a la hucha':'reto cumplido')):'no pasa nada: el mes que viene';}
+function sacarHucha(id,importe,txt,meter){
+  /* sacar para el viaje, o meter a mano lo que ya tenías ahorrado de antes */
+  const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];
+  if(!h)return 'esa hucha no existe';
+  const v=numEuro(importe);if(!v)return meter?'pon cuánto metes':'pon cuánto sacas';
+  const d=meter?v:-v;
+  h.saldo=Math.round((h.saldo+d)*100)/100;ahoMov(h.id,d,txt||(meter?'metido a mano':'sacado'));save();render();
+  return eur(v)+(meter?' metidos en ':' sacados de ')+h.nombre;}
+function proyeccionAhorro(n){
+  /* los meses que vienen: lo que cobrarías, lo que apartarías y, si no te deja lo mínimo para
+     vivir (con los recibos pagados), lo que la app te propone */
+  const hoy=new Date(),a=ahorroS(),out=[];
+  const actual=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),false);
+  const fijos=recibosMes();
+  for(let i=0;i<n;i++){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1,12),y=d.getFullYear(),m=d.getMonth(),mk=ahoMk(y,m);
+    const nm=nominaMes(y,m),x=a.meses[mk];
+    const plan=x?(+x.aparto||0):(+actual.aparto||0);
+    const vivir=nm.neto-plan-fijos;
+    const sug=vivir<a.vivirMin?redondea50(nm.neto-fijos-a.vivirMin):plan;
+    out.push({mk:mk,m:m,y:y,nm:nm,plan:plan,sug:Math.min(plan,sug),vivir:vivir,hecho:!!(x&&x.hecho),aviso:vivir<a.vivirMin});}
+  return out;}
+function renderAhorro(){
+  const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth(),mk=ahoMk(y,m);
+  const a=ahorroS(),nm=nominaMes(y,m),x=ahorroMes(mk,true),fijos=recibosMes();
+  const pct=nm.neto?Math.round(x.aparto/nm.neto*100):0;
+  const queda=nm.neto-x.aparto,vivir=queda-fijos;
+  const r=x.hecho?x.reparto:repartoDe(x.aparto);
+  const total=a.huchas.reduce(function(t,h){return t+h.saldo;},0);
+  const diasF=nm.g.dias.map(function(k){const d=parseDate(k);return DIA3[d.getDay()]+' '+d.getDate();}).join(' · ');
+  const expl=nm.real!=null?('lo cobrado de verdad'+(nm.est!==nm.real?(' · estimabas '+eur(nm.est)):'')):
+    ((nm.supuesto?'sin guardias puestas: se cuenta 1 de finde':(nm.g.finde+' guardia'+(nm.g.finde===1?'':'s')+' de finde'+(diasF?' ('+diasF+')':'')+
+      ' + '+(nm.g.total-nm.g.finde)+' entre semana'))+(nm.ep?' · '+nm.ep.nombre:'')+(nm.paga?' · paga extra '+eur(nm.paga):'')+' · estimado');
+  const hucha=function(h){
+    const pr=h.objetivo?Math.min(100,Math.round(h.saldo/h.objetivo*100)):0;
+    return '<div class="ahhu"><span class="ic" style="background:color-mix(in srgb,'+h.color+' 25%,transparent)">'+esc(h.ico)+'</span>'+
+      '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+
+        esc([h.meta,h.objetivo?(eur(h.saldo)+' de '+eur(h.objetivo)):'',h.pct+' % de lo que apartas'].filter(Boolean).join(' · '))+'</span>'+
+        (h.objetivo?'<span class="prog"><i style="width:'+pr+'%;background:'+h.color+'"></i></span>':'')+'</span>'+
+      '<span class="n"><b>'+esc(eur(h.saldo))+'</b>'+(r[h.id]?'<span class="'+(x.hecho?'ok':'')+'">'+(x.hecho?'+':'→ +')+esc(eur(r[h.id]))+'</span>':'')+'</span></div>';};
+  const retos=x.retos.map(function(q){
+    /* con el gasto de verdad (de Fintonic) ya no se promete: se dice cómo vas */
+    const conReal=q.real!=null&&q.real!=='';
+    const v=conReal?Math.max(0,(+q.antes||0)-(+q.real||0)):retoAhorro(q);
+    const pasa=conReal&&(+q.real>+q.max);
+    return '<div class="ahreto'+(q.cerrado?' cerrado':'')+'"><span class="ic">'+esc(q.ico||'🎯')+'</span>'+
+      '<span class="t"><b>'+esc(q.nombre)+'</b><span>'+(conReal?('<b style="display:inline;font-size:11px;color:'+(pasa?'var(--warn)':'var(--ok)')+'">llevas '+esc(eur(q.real))+'</b> · '):'')+
+        'máx '+esc(eur(q.max))+(q.antes?' · antes '+esc(eur(q.antes)):'')+
+        ' · a '+esc(((a.huchas.filter(function(h){return h.id===q.hucha;})[0])||a.huchas[0]||{}).nombre||'—')+'</span></span>'+
+      (q.cerrado?('<b class="'+(q.ok?'ok':'mini')+'">'+(q.ok?('✓ '+(q.ganado?'+'+eur(q.ganado):'')):'✗')+'</b>'):
+        ((v&&!pasa?'<b class="ok">+'+esc(eur(v))+'</b>':'')+
+        '<button class="btn s" data-a="aho-reto-ok" data-id="'+esc(q.id)+'" title="lo he cumplido">✓</button>'+
+        '<button class="btn s" data-a="aho-reto-no" data-id="'+esc(q.id)+'" title="no lo he cumplido">✗</button>'))+
+      '</div>';}).join('');
+  const pr=proyeccionAhorro(6);
+  const maxB=Math.max.apply(Math,pr.map(function(p){return p.sug;}).concat([1]));
+  const avisos=pr.filter(function(p){return p.aviso;});
+  const ult=pr[pr.length-1];
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card ahhero">'+
+      '<div class="row"><span class="ahe">'+esc(MONTH_FULL[m].toUpperCase())+' · NÓMINA</span><span class="sp"></span>'+
+        '<button class="btn s" data-a="dinero-vista" data-v="nomina">✎ '+(nm.real!=null?'cobrado':'lo cobrado')+'</button></div>'+
+      '<div class="ahbig">'+(nm.real!=null?'':'≈ ')+esc(eur(nm.neto))+'</div>'+
+      '<div class="mini">'+esc(expl)+'</div>'+
+      '<div class="ahapar"><span class="ahe">ESTE MES APARTO</span>'+
+        '<div class="ahpm">'+(x.hecho?'':'<button class="btn s" data-a="aho-menos" aria-label="apartar 50 € menos">−</button>')+
+          '<span class="ahbig" style="font-size:30px">'+esc(eur(x.aparto))+'</span>'+
+          (x.hecho?'':'<button class="btn s" data-a="aho-mas" aria-label="apartar 50 € más">+</button>')+
+          '<span class="sp"></span><span class="mini" style="text-align:right">'+pct+' %<br>del sueldo</span></div>'+
+        '<div class="ahsplit">'+a.huchas.map(function(h){return r[h.id]?'<i style="flex:'+r[h.id]+';background:'+h.color+'" title="'+esc(h.nombre)+'"></i>':'';}).join('')+'</div>'+
+        '<div class="mini" style="margin-top:8px">Te quedan <b>'+esc(eur(queda))+'</b>'+(fijos?' · menos '+esc(eur(fijos))+' de recibos = <b>'+esc(eur(vivir))+' para vivir</b>':'')+'</div>'+
+        (vivir<a.vivirMin?'<div class="mini" style="color:var(--warn);margin-top:4px">⚠ por debajo de tu mínimo para vivir ('+esc(eur(a.vivirMin))+')</div>':'')+
+      '</div>'+
+      (x.hecho?('<div class="row" style="margin-top:12px"><span class="ok" style="font-weight:800">✓ apartado este mes</span><span class="sp"></span>'+
+          '<button class="btn s" data-a="aho-deshacer">deshacer</button></div>'):
+        '<button class="btn p gbig" style="margin-top:12px" data-a="aho-apartar">✓ ya lo he apartado</button>')+
+    '</div>'+
+    finRealHTML()+
+    '<div class="card"><h2>Huchas <span class="mini">· '+esc(eur(total))+' en total</span></h2>'+
+      (a.huchas.length?a.huchas.map(hucha).join(''):'<div class="empty">Sin huchas: crea una en «huchas y reparto».</div>')+
+      '<div class="row" style="margin-top:8px"><button class="btn s" data-a="dinero-vista" data-v="huchas">✎ huchas y reparto</button></div></div>'+
+    '<div class="card"><h2>Este mes intento gastar menos en…</h2>'+
+      (retos||'<p class="mini" style="margin:0">Nada todavía. Por ejemplo: salir, máx 150 € (antes 220): si lo cumples, 70 € a la hucha.</p>')+
+      (ui.ahoRetoNuevo?('<div class="ahform">'+
+          '<input id="ahRtIco" value="🍻" maxlength="4" aria-label="icono" style="width:52px">'+
+          '<input id="ahRtNom" placeholder="salir, pedir comida…" maxlength="40" style="flex:1 1 140px">'+
+          '<input id="ahRtMax" inputmode="decimal" placeholder="máx €" style="width:78px" aria-label="máximo este mes">'+
+          '<input id="ahRtAnt" inputmode="decimal" placeholder="antes €" style="width:80px" aria-label="lo que solías gastar">'+
+          '<select id="ahRtHu" aria-label="hucha">'+a.huchas.map(function(h){return '<option value="'+esc(h.id)+'">'+esc(h.ico+' '+h.nombre)+'</option>';}).join('')+'</select>'+
+          '<button class="btn p s" data-a="aho-reto-add">añadir</button></div>'):
+        '<button class="btn s" style="margin-top:8px" data-a="aho-reto-nuevo">+ otro</button>')+
+    '</div>'+
+    '<div class="card"><h2>Lo que viene</h2>'+
+      '<div class="ahmes">'+pr.map(function(p,i){
+        return '<div class="'+(i===0?'ya':'')+(p.aviso?' aviso':'')+'"><i style="height:'+Math.max(6,Math.round(p.sug/maxB*60))+'px"></i>'+
+          esc(MON[p.m])+'<br>'+esc(fmt(p.sug))+'</div>';}).join('')+'</div>'+
+      (avisos.length?avisos.slice(0,1).map(function(p){
+        return '<p class="mini" style="margin:8px 0 0">⚠ En <b>'+esc(MONTH_FULL[p.m])+'</b> cobrarías ~'+esc(eur(p.nm.neto))+
+          (p.nm.ep?' ('+esc(p.nm.ep.nombre)+')':'')+'. Apartar '+esc(eur(p.plan))+' te dejaría '+esc(eur(p.vivir))+
+          ' para vivir: la app te propone <b>'+esc(eur(p.sug))+'</b>'+(avisos.length>2?' (y lo mismo los '+(avisos.length-1)+' meses siguientes)':(avisos.length===2?' (y lo mismo el mes siguiente)':''))+'.</p>';}).join(''):'')+
+      '<p class="mini" style="margin:6px 0 0">A este ritmo, en '+esc(MONTH_FULL[ult.m])+': '+a.huchas.map(function(h){
+        const fut=h.saldo+pr.reduce(function(t,p,i){return t+((i===0&&x.hecho)?0:(repartoDe(p.sug)[h.id]||0));},0);
+        return esc(h.nombre.toLowerCase())+' '+esc(eur(fut))+(h.objetivo&&fut>=h.objetivo?' ✓':'');}).join(' · ')+'</p>'+
+    '</div>'+
+    '<button class="card ahpuerta" data-a="dinero-vista" data-v="recibos"><span>🧾</span><span class="t"><b>Recibos del mes</b>'+
+      '<span class="mini">'+esc(eur(fijos))+' · salen en el calendario</span></span><span class="mini">›</span></button>'+
+    '<button class="card ahpuerta" data-a="dinero-vista" data-v="nomina"><span>💶</span><span class="t"><b>Tu nómina</b>'+
+      '<span class="mini">'+esc(a.epocas.map(function(e){return e.nombre;}).join(' → '))+'</span></span><span class="mini">›</span></button>'+
+  '</div>';}
+function renderAhorroNomina(){
+  const a=ahorroS(),hoy=new Date();
+  const ep=a.epocas.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);});
+  const fila=function(e){
+    const f=function(k,txt,val,tipo){return '<label class="fld">'+txt+'<input '+(tipo==='month'?'type="month"':'inputmode="decimal"')+
+      ' value="'+esc(val)+'" data-a="aho-ep" data-id="'+esc(e.id)+'" data-k="'+k+'"></label>';};
+    return '<div class="card ahep"><div class="row"><input class="ahepnom" value="'+esc(e.nombre)+'" data-a="aho-ep" data-id="'+esc(e.id)+'" data-k="nombre" aria-label="nombre de la época">'+
+      '<button class="mini2 d" data-a="aho-ep-del" data-id="'+esc(e.id)+'" aria-label="quitar esta época">×</button></div>'+
+      '<div class="fgrid c2 tight" style="margin-top:8px">'+f('desde','desde',e.desde,'month')+f('neto','neto con 1 finde',fmt(e.neto))+
+        f('finde','cada finde de más',fmt(e.finde))+'<span></span>'+f('pagaJun','paga extra junio',fmt(e.pagaJun))+f('pagaDic','paga extra diciembre',fmt(e.pagaDic))+'</div></div>';};
+  const meses=[];for(let i=-3;i<=1;i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1,12);meses.push(nominaMes(d.getFullYear(),d.getMonth()));}
+  $('#main').innerHTML='<div class="grid">'+dinSubcab('Tu nómina')+
+    '<p class="note" style="margin:0">Tu sueldo depende de las guardias, y la app ya sabe cuántas tienes y cuáles caen en finde (sábado, domingo o festivo). Cada época dice cuánto cobras con una de finde y cuánto suma cada una de más; la de cada mes es la última que haya empezado. Cuando llegue la nómina, apunta lo cobrado y manda eso.</p>'+
+    ep.map(fila).join('')+
+    '<button class="btn s" data-a="aho-ep-add">+ otra época (R2, cambio de IRPF…)</button>'+
+    '<div class="card"><h2>Lo cobrado de verdad</h2>'+meses.map(function(n){
+      return '<div class="ahcob"><span class="t">'+esc(ahoMesTxt(n.mk))+'<span class="mini"> · estimado '+esc(eur(n.est))+'</span></span>'+
+        '<input inputmode="decimal" placeholder="—" value="'+(n.real!=null?esc(fmt(n.real)):'')+'" data-a="aho-cobrado" data-mk="'+n.mk+'" aria-label="cobrado en '+esc(ahoMesTxt(n.mk))+'"></div>';}).join('')+'</div>'+
+    '<div class="card"><h2>Cuándo llega</h2><p class="mini" style="margin:0 0 8px">Se transfiere ese día y tarda esos días hábiles: sábados, domingos y festivos no cuentan.</p>'+
+      '<div class="row" style="gap:8px"><label class="fld" style="flex:1">se transfiere el día<input inputmode="numeric" value="'+nominaCfg().dia+'" data-a="nom-dia"></label>'+
+      '<label class="fld" style="flex:1">días hábiles hasta que llega<input inputmode="numeric" value="'+nominaCfg().habiles+'" data-a="nom-habiles"></label></div>'+
+      '<p class="mini" style="margin:8px 0 0">Las próximas: '+[0,1,2].map(function(i){const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1,12);
+        const L=llegadaNomina(d.getFullYear(),d.getMonth());return esc(MON[d.getMonth()])+' → '+esc(DIA3[L.llega.getDay()]+' '+L.llega.getDate());}).join(' · ')+'</p></div>'+
+    '<div class="card"><h2>Lo mínimo para vivir</h2><p class="mini" style="margin:0 0 8px">Después de apartar y de pagar los recibos. Si un mes no llega, la app te propone apartar menos.</p>'+
+      '<input inputmode="decimal" value="'+esc(fmt(a.vivirMin))+'" data-a="aho-vivir" aria-label="mínimo para vivir" style="width:120px"></div>'+
+    '<div class="card"><h2>Festivos <span class="mini">cuentan como guardia de finde</span></h2>'+
+      '<div class="chips">'+a.festivos.slice().sort().map(function(f){const d=parseDate(f);
+        return '<span class="chipx">'+esc(DIA3[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2))+
+          ' <button class="mini2 d" data-a="aho-fest-del" data-f="'+f+'" aria-label="quitar">×</button></span>';}).join('')+'</div>'+
+      '<div class="row" style="margin-top:8px"><input type="date" id="ahFest"><button class="btn s" data-a="aho-fest-add">+ festivo</button></div>'+
+      '<p class="mini" style="margin:6px 0 0">Vienen los nacionales; añade los de tu comunidad y tu ciudad.</p></div>'+
+  '</div>';}
+function renderAhorroHuchas(){
+  const a=ahorroS(),tot=a.huchas.reduce(function(t,h){return t+h.pct;},0);
+  $('#main').innerHTML='<div class="grid">'+dinSubcab('Huchas y reparto')+
+    (tot!==100?'<p class="note" style="margin:0;color:var(--warn)">El reparto suma '+tot+' %: se reparte en proporción, pero lo normal es que sume 100.</p>':'')+
+    a.huchas.map(function(h){
+      const f=function(k,txt,val,w){return '<label class="fld"'+(w?' style="flex:'+w+'"':'')+'>'+txt+'<input '+(k==='nombre'||k==='meta'||k==='ico'?'':'inputmode="decimal" ')+
+        'value="'+esc(val)+'" data-a="aho-hu" data-id="'+esc(h.id)+'" data-k="'+k+'"'+(k==='ico'?' maxlength="4"':'')+'></label>';};
+      return '<div class="card ahhued" style="border-left:3px solid '+h.color+'">'+
+        '<div class="row" style="gap:6px">'+f('ico','icono',h.ico,'0 0 62px')+f('nombre','nombre',h.nombre,'1 1 120px')+
+          '<label class="fld" style="flex:0 0 52px">color<input type="color" value="'+esc(h.color)+'" data-a="aho-hu" data-id="'+esc(h.id)+'" data-k="color"></label></div>'+
+        '<div class="row" style="gap:6px;margin-top:6px">'+f('pct','% de lo que apartas',h.pct,'1')+f('objetivo','meta (€, opcional)',h.objetivo?fmt(h.objetivo):'','1')+'</div>'+
+        '<div class="row" style="gap:6px;margin-top:6px">'+f('meta','para qué','' +h.meta,'1')+'</div>'+
+        '<div class="row" style="gap:6px;margin-top:8px;align-items:flex-end"><b style="font-size:15px">'+esc(eur(h.saldo))+'</b><span class="sp"></span>'+
+          '<input id="ahSac-'+esc(h.id)+'" inputmode="decimal" placeholder="€" style="width:80px" aria-label="cuánto sacas">'+
+          '<button class="btn s" data-a="aho-sacar" data-id="'+esc(h.id)+'">sacar</button>'+
+          '<button class="btn s" data-a="aho-meter" data-id="'+esc(h.id)+'">meter</button>'+
+          '<button class="mini2 d" data-a="aho-hu-del" data-id="'+esc(h.id)+'" aria-label="quitar la hucha">×</button></div></div>';}).join('')+
+    '<button class="btn s" data-a="aho-hu-add">+ hucha</button>'+
+    (a.movs.length?('<div class="card"><h2>Movimientos</h2>'+a.movs.slice(0,15).map(function(mv){
+      const h=a.huchas.filter(function(q){return q.id===mv.hucha;})[0];
+      return '<div class="ahcob"><span class="t">'+esc((h?h.ico+' ':'')+mv.txt)+'<span class="mini"> · '+esc(fechaCorta(mv.fecha))+'</span></span>'+
+        '<b class="'+(mv.importe>=0?'ok':'')+'">'+(mv.importe>=0?'+':'')+esc(eur(mv.importe))+'</b></div>';}).join('')+'</div>'):'')+
+  '</div>';}
+
+/* ===================== lo real: capturas de Fintonic =====================
+   «Mandar capturas de Fintonic para que se ajuste el dinero con los gastos reales y el dinero real
+   que hay.» Se leen EN EL MÓVIL con Tesseract (vendor/ocr, ~6 MB que se bajan la primera vez y luego
+   se quedan): nada sale del teléfono. Claude no sirve aquí: solo existe dentro de claude.ai.
+   Medido con sus capturas: la pantalla de Inicio (Bancos 582 €, Gastos 1.578 €) se lee bien; la de
+   categorías, con la letra fina de Fintonic, confunde la mitad de los importes (7→/, 6→0, la coma se
+   pierde). Por eso lo leído NO se guarda solo: pasa por una pantalla de revisar, con lo dudoso
+   marcado, y lo que cuadra con otra cifra (suma de categorías = gastos del mes) se da por bueno. */
+const FIN_MESES={ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,sept:8,oct:9,nov:10,dic:11};
+function finNum(tok,dec){
+  /* un importe tal como lo deja el lector → {v, ok}. ok solo si tiene la forma exacta de Fintonic
+     (1.578,40 € en Análisis y categorías; 1.578 € en Inicio) y no ha hecho falta cambiar letras */
+  let t=String(tok||'').replace(/\s+/g,'').replace(/[€>»]/g,'');
+  const neg=/^[-–]/.test(t);t=t.replace(/^[-–]+/,'');
+  const cambiado=/[OoIl|]/.test(t);
+  t=t.replace(/[Oo]/g,'0').replace(/[Il|]/g,'1');
+  /* Fintonic nunca pone un cero delante («03,00» es un 63,00 mal leído): eso ya es dudoso */
+  const exacto=dec?/^(0|[1-9]\d{0,2}(\.\d{3})*),\d{2}$/.test(t):/^(0|[1-9]\d{0,2}(\.\d{3})*)$/.test(t);
+  let v;
+  if(exacto)v=dec?+t.replace(/\./g,'').replace(',','.'):+t.replace(/\./g,'');
+  else{const dg=t.replace(/\D/g,'');if(!dg)return null;
+    v=dec&&dg.length>=3?(+dg)/100:+dg;}
+  v=Math.round(v*100)/100;
+  return {v:neg?-v:v,ok:exacto&&!cambiado};}
+function finEtiqueta(txt){
+  /* delante del nombre el lector deja basura de los iconos («e», «Ax», «EA», «+»): el nombre empieza
+     en la primera palabra con mayúscula seguida de minúsculas */
+  const ws=String(txt||'').trim().split(/\s+/);
+  let i=0;while(i<ws.length&&!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñü]{2,}/.test(ws[i]))i++;
+  return ws.slice(i).join(' ').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñü ,.y-]/g,'').trim();}
+function finParse(texto){
+  const out={banco:null,ingresos:null,gastos:null,neto:null,cats:[],mes:'',pantallas:[]};
+  const lin=String(texto||'').split(/\n+/).map(function(l){return l.trim();}).filter(Boolean);
+  const todo=lin.join('\n');
+  const per=/(\d{1,2})\s*([a-zA-Z]{3,4})\.?\s*[-–]\s*(\d{1,2})\s*([a-zA-Z]{3,4})\.?\s*(\d{4})/.exec(todo);
+  if(per&&FIN_MESES[per[4].toLowerCase()]!=null)out.mes=per[5]+'-'+String(FIN_MESES[per[4].toLowerCase()]+1).padStart(2,'0');
+  /* Inicio: «Bancos 582€» y «Ingresos ↑ 11€ Gastos ↓ 1.578€», en euros enteros */
+  const bn=/Bancos\s+([\dOoIl.]+)\s*€/.exec(todo);
+  if(bn){out.banco=finNum(bn[1],false);out.pantallas.push('inicio');}
+  const ig=/Ingresos\D{0,6}?([\dOoIl.]+)\s*€\s*Gastos\D{0,6}?([\dOoIl.]+)\s*€/.exec(todo);
+  if(ig){out.ingresos=finNum(ig[1],false);out.gastos=finNum(ig[2],false);}
+  /* Análisis: una cifra por línea y con céntimos */
+  const an=function(re){const m=re.exec(todo);return m?finNum(m[1],true):null;};
+  if(/An[aá]lisis|\bNeto\b/.test(todo)){
+    out.pantallas.push('analisis');
+    const i2=an(/Ingresos\s+(-?[\dOoIl.,\/ ]+?)\s*€/),g2=an(/Gastos\s+(-?[\dOoIl.,\/ ]+?)\s*€/),n2=an(/Neto\s+(-?[\dOoIl.,\/ ]+?)\s*€/);
+    if(i2)out.ingresosAn=i2;
+    if(g2)out.gastosAn={v:Math.abs(g2.v),ok:g2.ok};
+    if(n2)out.neto=n2;}
+  /* categorías: «Supermercado 283,06€ >» (las líneas «26 movimientos de 300€» son el presupuesto) */
+  lin.forEach(function(l){
+    if(/movimient|previstos|Ingresos|Gastos|Neto|Bancos|de\s*\d+\s*€/i.test(l))return;
+    const m=/^(.*?[A-Za-záéíóúñ].*?)\s+(-?\d[\dOoIl.,\/ ]{0,12}?)\s*€/.exec(l);
+    if(!m)return;
+    const nom=finEtiqueta(m[1]);
+    if(!nom||nom.length<3)return;
+    const n=finNum(m[2],true);if(!n)return;
+    out.cats.push({nombre:nom.slice(0,40),v:Math.abs(n.v),ok:n.ok});});
+  if(out.cats.length&&out.pantallas.indexOf('categorias')<0)out.pantallas.push('categorias');
+  return out;}
+function finJunta(lista){
+  /* varias capturas → una lectura: lo seguro gana a lo dudoso, y una categoría repetida en dos
+     capturas (Efectivo sale en las dos listas) cuenta una vez */
+  const r={banco:null,ingresos:null,gastos:null,neto:null,cats:[],mes:'',pantallas:[]};
+  const mejor=function(a,b){if(!a)return b;if(!b)return a;return (b.ok&&!a.ok)?b:a;};
+  const an={ingresos:null,gastos:null};
+  lista.forEach(function(x){
+    r.banco=mejor(r.banco,x.banco);r.neto=mejor(r.neto,x.neto);
+    r.ingresos=mejor(r.ingresos,x.ingresos);r.gastos=mejor(r.gastos,x.gastos);
+    an.ingresos=mejor(an.ingresos,x.ingresosAn);an.gastos=mejor(an.gastos,x.gastosAn);
+    if(x.mes)r.mes=x.mes;
+    x.pantallas.forEach(function(p){if(r.pantallas.indexOf(p)<0)r.pantallas.push(p);});
+    x.cats.forEach(function(c){
+      const k=c.nombre.toLowerCase(),y=r.cats.filter(function(q){return q.nombre.toLowerCase()===k;})[0];
+      if(!y){r.cats.push(Object.assign({},c));return;}
+      /* la misma categoría en dos capturas con dos cifras distintas: una de las dos está mal leída */
+      if(Math.abs(y.v-c.v)>=0.01){y.ok=false;y.otra=c.v;}
+      else if(c.ok)y.ok=true;});});
+  /* Inicio (en euros enteros) y Análisis (con céntimos) dicen lo mismo dos veces: si cuadran, las
+     dos son buenas y manda la de céntimos; si no, se enseña la que parezca buena marcada para
+     revisar. Pasó con sus capturas: el «11 €» de Inicio se leyó «1 €» con toda la pinta de bueno. */
+  ['ingresos','gastos'].forEach(function(k){
+    const a=r[k],b=an[k];
+    if(a&&b){if(Math.abs(a.v-b.v)<1)r[k]={v:b.v,ok:true};
+      else r[k]={v:(b.ok?b.v:a.v),ok:false,otra:(b.ok?a.v:b.v)};}
+    else if(b)r[k]=b;});
+  /* la suma de las categorías tiene que dar el gasto del mes. Si da, todas son buenas; si no, alguna
+     está mal leída aunque tenga buena pinta («603,00» por 63,00) y hay que mirarlas todas */
+  if(r.gastos&&r.cats.length){const sum=Math.round(r.cats.reduce(function(t,c){return t+c.v;},0)*100)/100;
+    r.suma=sum;
+    if(Math.abs(sum-r.gastos.v)<0.5)r.cats.forEach(function(c){c.ok=true;});
+    else{r.descuadre=Math.round((sum-r.gastos.v)*100)/100;r.cats.forEach(function(c){c.ok=false;});}}
+  return r;}
+/* --- cuándo llega la nómina: se transfiere el día 25 y tarda 2 días hábiles; sábados, domingos y
+   festivos no cuentan, así que si el 25 cae en viernes o en fin de semana llega más tarde --- */
+function nominaCfg(){const a=ahorroS();if(!a.nomina||typeof a.nomina!=='object')a.nomina={dia:25,habiles:2};
+  a.nomina.dia=Math.max(1,Math.min(28,+a.nomina.dia||25));a.nomina.habiles=Math.max(0,Math.min(10,+a.nomina.habiles||0));return a.nomina;}
+function esHabil(d){const w=d.getDay();return w!==0&&w!==6&&!esFestivo(iso(d));}
+function llegadaNomina(y,m){
+  const c=nominaCfg();let d=new Date(y,m,c.dia,12),n=0;
+  while(n<c.habiles){d=addDays(d,1);if(esHabil(d))n++;}
+  return {transfiere:new Date(y,m,c.dia,12),llega:d};}
+function proximaNomina(desde){
+  const d=parseDate(desde)||new Date();
+  let L=llegadaNomina(d.getFullYear(),d.getMonth());
+  if(iso(L.llega)<iso(d))L=llegadaNomina(d.getFullYear(),d.getMonth()+1);
+  return L;}
+function finUltima(){return (ahorroS().real||[])[0]||null;}
+function finRetosDe(real){
+  /* los retos del mes que se llaman como una categoría de Fintonic: «Restaurante» con «Restaurante» */
+  if(!real||!real.cats)return [];
+  const sa=function(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');};
+  const x=ahorroMes(real.mes||ahoMk(new Date().getFullYear(),new Date().getMonth()),false);
+  return x.retos.map(function(r){
+    const k=Object.keys(real.cats).filter(function(c){return sa(c).indexOf(sa(r.nombre))>=0||sa(r.nombre).indexOf(sa(c))>=0;})[0];
+    return k?{reto:r,cat:k,v:real.cats[k]}:null;}).filter(Boolean);}
+function finRealHTML(){
+  const u=finUltima(),hoy=iso(new Date());
+  const L=proximaNomina(hoy),dias=Math.max(0,Math.round((parseDate(iso(L.llega))-parseDate(hoy))/86400000));
+  const fch=function(d){return DIA3[d.getDay()]+' '+d.getDate();};
+  const nom='<div class="finnom"><span>💶</span><span class="t"><b>'+(dias===0?'La nómina llega hoy':('La nómina llega el '+DOWN0[L.llega.getDay()]+' '+L.llega.getDate()))+'</b>'+
+    '<span class="mini">se transfiere el '+esc(fch(L.transfiere))+' · '+nominaCfg().habiles+' días hábiles, sin fines de semana ni festivos</span></span>'+
+    (dias?'<b>en '+dias+' día'+(dias===1?'':'s')+'</b>':'')+'</div>';
+  const boton='<label class="btn s" style="cursor:pointer">📷 capturas<input type="file" accept="image/*" multiple data-a="fin-fotos" style="display:none"></label>';
+  if(!u)return '<div class="card finreal"><div class="row"><span class="ahe">LO REAL · FINTONIC</span><span class="sp"></span>'+boton+'</div>'+
+    '<p class="mini" style="margin:8px 0 0">Sube capturas de Fintonic —Inicio, Análisis y las categorías del mes— y aquí sale lo que tienes de verdad en el banco y lo que llevas gastado. Se leen en tu móvil; no sale nada de él.</p>'+nom+'</div>';
+  const fu=parseDate(u.fecha),antesDeCobrar=u.fecha<=iso(L.llega)&&dias>0;
+  const porDia=(u.banco!=null&&antesDeCobrar)?(u.banco/Math.max(1,dias)):null;
+  const rt=finRetosDe(u);
+  return '<div class="card finreal"><div class="row"><span class="ahe">LO REAL · FINTONIC · '+esc((fu?(fu.getDate()+' '+MON[fu.getMonth()]):'').toUpperCase())+
+      (u.hora?' '+esc(u.hora):'')+'</span><span class="sp"></span>'+boton+'</div>'+
+    '<div class="row" style="margin-top:8px;align-items:flex-end">'+
+      (u.banco!=null?'<div><div class="ahbig" style="font-size:30px">'+esc(eur(u.banco))+'</div><div class="mini">en el banco</div></div>':'')+
+      '<span class="sp"></span>'+
+      (u.gastos!=null?'<div style="text-align:right"><b style="font-size:18px">'+esc(eur(u.gastos))+'</b><div class="mini">gastado en '+esc((ahoMesTxt(u.mes)||'el mes').slice(0,4))+'</div></div>':'')+'</div>'+
+    nom+
+    (porDia!=null?'<div class="mini" style="margin-top:6px">Hasta entonces: <b style="color:var(--ink)">'+esc(eur(u.banco))+' → '+esc(eur(Math.floor(porDia)))+' al día</b>'+
+      (u.fecha<hoy?' <span style="color:var(--warn)">(saldo del '+esc(fechaCorta(u.fecha))+')</span>':'')+'</div>':'')+
+    (rt.length?'<div class="mini" style="margin-top:6px">Tus retos: '+rt.map(function(x){const pasa=x.v>x.reto.max;
+      return '<b style="color:var(--ink)">'+esc(x.reto.nombre)+'</b> '+esc(fmt(x.v))+' de '+esc(fmt(x.reto.max))+' €'+(pasa?' ⚠':' ✓');}).join(' · ')+'</div>':'')+
+  '</div>';}
+let _ocrCarga=null;
+function ocrListo(){
+  /* el lector se carga la primera vez que hace falta, no al abrir la app */
+  if(_ocrCarga)return _ocrCarga;
+  _ocrCarga=new Promise(function(ok,ko){
+    if(window.Tesseract)return ok(window.Tesseract);
+    const sc=document.createElement('script');sc.src=new URL('vendor/ocr/tesseract.min.js',location.href).href;
+    sc.onload=function(){ok(window.Tesseract);};sc.onerror=function(){_ocrCarga=null;ko(new Error('no se ha podido cargar el lector'));};
+    document.head.appendChild(sc);});
+  return _ocrCarga;}
+function ocrPrepara(file){
+  /* ampliar ×2, a blanco y negro y engordar el trazo un píxel: la letra de Fintonic es muy fina y,
+     tal cual, el lector se come las comas. Medido con sus capturas: así se leen bien las de Inicio */
+  return new Promise(function(ok,ko){
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=function(){URL.revokeObjectURL(url);
+      const k=Math.min(2,2400/Math.max(1,img.width));
+      const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(img,0,0,c.width,c.height);
+      const d=x.getImageData(0,0,c.width,c.height),a=d.data,W=c.width,H=c.height;
+      const g=new Uint8Array(W*H);
+      for(let i=0,j=0;i<a.length;i+=4,j++)g[j]=(.299*a[i]+.587*a[i+1]+.114*a[i+2])<200?0:255;
+      for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++){let m=255;
+        for(let dy=-1;dy<=1&&m;dy++){const y2=yy+dy;if(y2<0||y2>=H)continue;
+          for(let dx=-1;dx<=1;dx++){const x2=xx+dx;if(x2<0||x2>=W)continue;if(!g[y2*W+x2]){m=0;break;}}}
+        const i=(yy*W+xx)*4;a[i]=a[i+1]=a[i+2]=m;a[i+3]=255;}
+      x.putImageData(d,0,0);ok(c);};
+    img.onerror=function(){URL.revokeObjectURL(url);ko(new Error('esa imagen no se puede abrir'));};
+    img.src=url;});}
+function finLeer(files){
+  const fs=Array.prototype.slice.call(files||[]).filter(function(f){return /^image\//.test(f.type||'image/');}).slice(0,8);
+  if(!fs.length){flash('elige alguna captura');return Promise.resolve();}
+  /* la fecha de la captura es la del archivo: la del día en que la hiciste, no la de hoy */
+  const ult=fs.reduce(function(t,f){return Math.max(t,+f.lastModified||0);},0)||Date.now();
+  const cuando=new Date(ult);
+  ui.fin={estado:'leyendo',hechas:0,total:fs.length,res:null,msg:'',fecha:iso(cuando),
+    hora:String(cuando.getHours()).padStart(2,'0')+':'+String(cuando.getMinutes()).padStart(2,'0')};
+  ui.dineroVista='fintonic';render();window.scrollTo(0,0);
+  const base=new URL('vendor/ocr/',location.href).href;
+  let worker=null;const lecturas=[];
+  return ocrListo().then(function(T){
+    return T.createWorker('spa',1,{workerPath:base+'worker.min.js',corePath:base+'tesseract-core-lstm.wasm.js',
+      langPath:base.replace(/\/$/,''),gzip:true});
+  }).then(function(w){worker=w;
+    return fs.reduce(function(p,f){return p.then(function(){
+      return ocrPrepara(f).then(function(c){return worker.recognize(c);}).then(function(r){
+        lecturas.push(finParse(r.data.text||''));
+        if(ui.fin){ui.fin.hechas++;if(ui.dineroVista==='fintonic')render();}});});},Promise.resolve());
+  }).then(function(){
+    const r=finJunta(lecturas);
+    if(!r.mes)r.mes=ui.fin.fecha.slice(0,7);
+    ui.fin.res=r;ui.fin.estado=(r.banco||r.gastos||r.cats.length)?'listo':'nada';
+    if(ui.fin.estado==='nada')ui.fin.msg='No he encontrado cifras de Fintonic en esas capturas. ¿Son de Inicio, de Análisis o de las categorías?';
+  }).catch(function(e){ui.fin.estado='error';ui.fin.msg=(e&&e.message)||'no se ha podido leer';
+  }).then(function(){if(worker)worker.terminate().catch(function(){});render();});}
+function finGuardar(){
+  const f=ui.fin;if(!f||!f.res)return 'no hay nada leído';
+  const r=f.res,a=ahorroS();
+  if(!Array.isArray(a.real))a.real=[];
+  const cats={};r.cats.forEach(function(c){if(c.v>0)cats[c.nombre]=c.v;});
+  const reg={fecha:f.fecha,hora:f.hora||'',mes:r.mes,banco:r.banco?r.banco.v:null,ingresos:r.ingresos?r.ingresos.v:null,
+    gastos:r.gastos?r.gastos.v:null,cats:cats};
+  a.real=[reg].concat(a.real.filter(function(x){return !(x.fecha===reg.fecha&&x.hora===reg.hora);}))
+    .sort(function(p,q){return (q.fecha+q.hora).localeCompare(p.fecha+p.hora);}).slice(0,36);
+  /* los retos de ese mes que se llaman como una categoría se quedan con el gasto de verdad */
+  finRetosDe(reg).forEach(function(x){x.reto.real=x.v;});
+  ui.fin=null;ui.dineroVista='';save();render();window.scrollTo(0,0);
+  return 'guardado lo del '+fechaCorta(reg.fecha);}
+function renderFintonic(){
+  const f=ui.fin;
+  const cab=dinSubcab('Revisa lo leído');
+  if(!f){$('#main').innerHTML='<div class="grid">'+cab+'<div class="card"><div class="empty">No hay capturas leyéndose.</div></div></div>';return;}
+  if(f.estado==='leyendo'){$('#main').innerHTML='<div class="grid">'+cab+
+    '<div class="card"><h2>Leyendo '+(f.hechas+1>f.total?f.total:f.hechas+1)+' de '+f.total+'…</h2>'+
+    '<div class="prog"><span class="bar"><i style="width:'+Math.round(f.hechas/Math.max(1,f.total)*100)+'%"></i></span></div>'+
+    '<p class="mini" style="margin:8px 0 0">La primera vez se descarga el lector (unos 6 MB); después funciona sin internet. Las capturas se leen aquí, en tu móvil.</p></div></div>';return;}
+  if(f.estado!=='listo'){$('#main').innerHTML='<div class="grid">'+cab+'<div class="card"><div class="empty">'+esc(f.msg||'no se ha podido leer')+'</div>'+
+    '<label class="btn s" style="cursor:pointer;margin-top:10px">📷 probar con otras<input type="file" accept="image/*" multiple data-a="fin-fotos" style="display:none"></label></div></div>';return;}
+  const r=f.res;
+  const campo=function(k,txt,o,dec){
+    if(!o)return '';
+    return '<div class="finfila'+(o.ok?' ok':' duda')+'"><span class="t">'+esc(txt)+
+        (o.otra!=null&&!o.ok?'<span class="mini"> · en otra captura: '+esc(String(o.otra.toFixed(2)).replace('.',','))+'</span>':'')+'</span>'+
+      '<input inputmode="decimal" value="'+esc((dec||o.v%1)?String(o.v.toFixed(2)).replace('.',','):fmt(o.v))+'" data-a="fin-v" data-k="'+k+'" aria-label="'+esc(txt)+'">'+
+      '<span class="m">'+(o.ok?'✓':'⚠')+'</span></div>';};
+  const sum=r.cats.reduce(function(t,c){return t+c.v;},0);
+  const dudas=[r.banco,r.ingresos,r.gastos].concat(r.cats).filter(function(o){return o&&!o.ok;}).length;
+  $('#main').innerHTML='<div class="grid">'+cab+
+    '<p class="note" style="margin:0">He leído '+f.total+' captura'+(f.total===1?'':'s')+' del <b>'+esc(fechaCorta(f.fecha))+'</b>. '+
+      (dudas?('La letra de Fintonic es fina y a veces confundo cifras: <b style="color:var(--warn)">'+dudas+' con ⚠</b>, revísalas y corrígelas. '):'Todo cuadra. ')+
+      'Nada se guarda hasta que pulses «guardar».</p>'+
+    '<div class="card"><h2>La captura</h2><div class="row" style="gap:8px">'+
+      '<label class="fld" style="flex:1">día<input type="date" value="'+esc(f.fecha)+'" data-a="fin-fecha"></label>'+
+      '<label class="fld" style="flex:1">mes de Fintonic<input type="month" value="'+esc(r.mes)+'" data-a="fin-mes"></label></div></div>'+
+    ((r.banco||r.ingresos||r.gastos)?('<div class="card"><h2>Lo del mes</h2>'+
+      campo('banco','En el banco',r.banco,false)+campo('ingresos','Ingresos del mes',r.ingresos,false)+campo('gastos','Gastos del mes',r.gastos,false)+
+      (r.ingresos&&r.ingresos.v>=1000?('<p class="mini" style="margin:8px 0 0">¿Es la nómina? <button class="btn s" data-a="fin-cobrado">apuntar '+esc(eur(r.ingresos.v))+' como lo cobrado de '+esc(ahoMesTxt(r.mes))+'</button></p>'):'')+
+      '</div>'):'')+
+    (r.cats.length?('<div class="card"><h2>Categorías <span class="mini">· suman '+esc(eur(sum))+(r.gastos?' de '+esc(eur(r.gastos.v)):'')+'</span></h2>'+
+      ((r.gastos&&Math.abs(sum-r.gastos.v)>=0.5)?('<p class="mini" style="margin:0 0 8px;color:var(--warn)">⚠ No cuadran: '+
+        (sum>r.gastos.v?'sobran ':'faltan ')+esc(eur(Math.abs(sum-r.gastos.v)))+'. Alguna cifra está mal leída aunque parezca buena: compáralas con Fintonic. '+
+        'Si falta alguna categoría, no pasa nada: se guarda lo que haya.</p>'):'')+
+      r.cats.map(function(c,i){return campo('cat:'+i,c.nombre,c,true);}).join('')+'</div>'):'')+
+    '<button class="btn p gbig" data-a="fin-guardar">✓ guardar lo del '+esc(fechaCorta(f.fecha))+'</button>'+
+    '<button class="btn s" data-a="fin-descartar">descartar</button>'+
+  '</div>';}
 
 function eventosS(){if(!Array.isArray(store.eventos))store.eventos=[];return store.eventos;}
 /* ---- cuánto dura un evento ----
@@ -10850,6 +11399,42 @@ function act(a,el){
     case 'datos-vista':{ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
     case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'fin-guardar':flash(finGuardar());break;
+    case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
+    case 'fin-cobrado':{const f=ui.fin;if(!f||!f.res||!f.res.ingresos)break;
+      ahorroS().cobrado[f.res.mes]=f.res.ingresos.v;save();flash(eur(f.res.ingresos.v)+' apuntados como lo cobrado de '+ahoMesTxt(f.res.mes));render();break;}
+    case 'aho-mas':case 'aho-menos':{const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),true);
+      if(x.hecho)break;x.aparto=Math.max(0,(+x.aparto||0)+(a==='aho-mas'?50:-50));save();render();break;}
+    case 'aho-apartar':{const hoy=new Date();flash(apartarMes(ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
+    case 'aho-deshacer':{const hoy=new Date();flash(deshacerApartado(ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
+    case 'aho-reto-nuevo':ui.ahoRetoNuevo=true;render();{const f=document.getElementById('ahRtNom');if(f)f.focus();}break;
+    case 'aho-reto-add':{const g=function(id){return (document.getElementById(id)||{}).value||'';};
+      const nom=g('ahRtNom').trim(),mx=num(g('ahRtMax'),NaN);
+      if(!nom){flash('ponle un nombre: salir, pedir comida…');break;}
+      if(!(mx>=0)){flash('pon el máximo que quieres gastar');break;}
+      const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),true);
+      x.retos.push({id:uid('rt'),ico:g('ahRtIco').trim()||'🎯',nombre:nom.slice(0,40),max:mx,antes:num(g('ahRtAnt'),0)||0,hucha:g('ahRtHu')});
+      ui.ahoRetoNuevo=false;save();render();flash('reto puesto: '+nom+' máx '+eur(mx));break;}
+    case 'aho-reto-ok':case 'aho-reto-no':{const hoy=new Date();
+      flash(cerrarReto(ahoMk(hoy.getFullYear(),hoy.getMonth()),el.dataset.id,a==='aho-reto-ok'));break;}
+    case 'aho-ep-add':{const eps=ahorroS().epocas,ult=eps.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);}).pop()||{};
+      const d=ahoYm(ult.desde||ahoMk(new Date().getFullYear(),new Date().getMonth()));
+      eps.push({id:uid('ep'),nombre:'Nueva época',desde:ahoMk(d.y+1,d.m),neto:ult.neto||0,finde:ult.finde||0,pagaJun:ult.pagaJun||0,pagaDic:ult.pagaDic||0});
+      save();render();break;}
+    case 'aho-ep-del':{const a2=ahorroS();if(a2.epocas.length<=1){flash('tiene que quedar al menos una época');break;}
+      a2.epocas=a2.epocas.filter(function(e){return e.id!==el.dataset.id;});save();render();break;}
+    case 'aho-fest-add':{const v=(document.getElementById('ahFest')||{}).value||'';
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){flash('elige el día');break;}
+      if(ahorroS().festivos.indexOf(v)<0)ahorroS().festivos.push(v);save();render();break;}
+    case 'aho-fest-del':{const a2=ahorroS();a2.festivos=a2.festivos.filter(function(f){return f!==el.dataset.f;});save();render();break;}
+    case 'aho-hu-add':{const cols=['#f472b6','#34d399','#fb923c','#60a5fa','#a78bfa'];
+      ahorroS().huchas.push({id:uid('hu'),nombre:'Nueva hucha',ico:'🐷',color:cols[ahorroS().huchas.length%cols.length],pct:0,objetivo:0,meta:'',saldo:0});
+      save();render();break;}
+    case 'aho-hu-del':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
+      confirmar('¿Quitar la hucha «'+h.nombre+'»?'+(h.saldo?' Tiene '+eur(h.saldo)+': ese dinero deja de contarse aquí.':'')).then(function(ok){
+        if(!ok)return;const a2=ahorroS();a2.huchas=a2.huchas.filter(function(q){return q.id!==h.id;});save();render();});break;}
+    case 'aho-sacar':case 'aho-meter':{const inp=document.getElementById('ahSac-'+el.dataset.id);const v=inp?inp.value:'';
+      flash(sacarHucha(el.dataset.id,v,'',a==='aho-meter'));break;}
     case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
     case 'dinero-del':{const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
       const gid=el.dataset.id;
@@ -12925,6 +13510,37 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   switch(a){
+    case 'fin-fotos':{const fs=el.files;if(fs&&fs.length)finLeer(fs);break;}
+    case 'fin-fecha':{if(ui.fin&&/^\d{4}-\d{2}-\d{2}$/.test(el.value||''))ui.fin.fecha=el.value;render();break;}
+    case 'fin-mes':{if(ui.fin&&ui.fin.res&&/^\d{4}-\d{2}$/.test(el.value||''))ui.fin.res.mes=el.value;render();break;}
+    case 'fin-v':{const f=ui.fin;if(!f||!f.res)break;const k=el.dataset.k,v=num(String(el.value).replace(/\./g,'').replace(/[^\d,.-]/g,''),NaN);
+      if(!(v>=0))break;
+      let o=null;if(/^cat:/.test(k))o=f.res.cats[+k.slice(4)];else o=f.res[k];
+      if(o){o.v=Math.round(v*100)/100;o.ok=true;}
+      render();break;}
+    case 'nom-dia':{nominaCfg().dia=Math.max(1,Math.min(28,Math.round(num(el.value,25))));save();render();break;}
+    case 'nom-habiles':{nominaCfg().habiles=Math.max(0,Math.min(10,Math.round(num(el.value,2))));save();render();break;}
+    /* los ajustes del ahorro son <input>: van en ESTE switch, el de change */
+    case 'aho-ep':{const e2=ahorroS().epocas.filter(function(x){return x.id===el.dataset.id;})[0];if(!e2)break;
+      const k=el.dataset.k;
+      if(k==='nombre')e2.nombre=String(el.value||'').trim().slice(0,40)||'Época';
+      else if(k==='desde'){if(/^\d{4}-\d{2}$/.test(el.value||''))e2.desde=el.value;}
+      else if(k==='finde')e2.finde=num(el.value,0);
+      else e2[k]=Math.max(0,num(el.value,0));
+      save();render();break;}
+    case 'aho-cobrado':{const c=ahorroS().cobrado,v=String(el.value||'').trim();
+      if(!v)delete c[el.dataset.mk];else{const n=numEuro(v);if(n)c[el.dataset.mk]=n;}
+      save();render();break;}
+    case 'aho-vivir':{ahorroS().vivirMin=Math.max(0,num(el.value,0));save();render();break;}
+    case 'aho-hu':{const h=ahorroS().huchas.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+      const k=el.dataset.k;
+      if(k==='pct')h.pct=Math.max(0,Math.min(100,Math.round(num(el.value,0))));
+      else if(k==='objetivo')h.objetivo=Math.max(0,num(el.value,0));
+      else if(k==='color'){if(/^#[0-9a-fA-F]{6}$/.test(el.value))h.color=el.value;}
+      else if(k==='ico')h.ico=String(el.value||'').trim().slice(0,4)||'🐷';
+      else if(k==='nombre')h.nombre=String(el.value||'').trim().slice(0,30)||'Hucha';
+      else h.meta=String(el.value||'').trim().slice(0,60);
+      save();render();break;}
     case 'wk-set':{const d=parseDate(el.value);if(d){weekDate=mondayOf(d);
       ui.semDesde=iso(d)===iso(new Date())?'':iso(d);render();}break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
@@ -13305,6 +13921,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   imprimir,
   eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
   TEMAS,temaById,ponerTema,tintaLegible,eventoAplica,mesRejilla,
+  finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
+  ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,repartoDe,cerrarReto,sacarHucha,proyeccionAhorro,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
   estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,
   arrS,arrLee,arrAplica,ARR_PASOS,

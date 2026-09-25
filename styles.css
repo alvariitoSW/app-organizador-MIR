@@ -1602,6 +1602,66 @@ ul.slots{list-style:none;margin:0;padding:0}
 .card.tcompra p.mini b{color:var(--ink)}
 .card.tcompra .row{margin-top:9px}
 .card.tcompra .row .btn{padding:6px 11px;font-size:12px}
+
+/* ============ Dinero → Ahorro (maqueta aprobada) ============ */
+.ahhero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 20%,var(--card)),var(--card));
+  border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.ahe{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.ahbig{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.ahhero .mini b{color:var(--ink)}
+.ahapar{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.ahpm{display:flex;align-items:center;gap:10px;margin-top:6px}
+.ahpm .btn{width:44px;height:40px;font-size:20px;padding:0;justify-content:center}
+.ahsplit{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px;background:var(--line)}
+.ahhu{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.ahhu:first-of-type{border-top:0}
+.ahhu .ic,.ahreto .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
+.ahhu .t,.ahreto .t,.ahpuerta .t,.ahcob .t{flex:1;min-width:0}
+.ahhu .t b,.ahreto .t b,.ahpuerta .t b{display:block;font-size:14px}
+.ahhu .t>span,.ahreto .t>span{font-size:11px;color:var(--ink2)}
+.ahhu .prog{display:block;height:5px;border-radius:3px;background:var(--line);margin-top:5px;overflow:hidden}
+.ahhu .prog i{display:block;height:100%}
+.ahhu .n{text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.ahhu .n b{display:block;font-size:15px}
+.ahhu .n span{font-size:11px;font-weight:800;color:var(--ink2)}
+.ok{color:var(--ok)}
+.ahhu .n span.ok{color:var(--ok)}
+.ahreto{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+.ahreto:first-of-type{border-top:0}
+.ahreto .ic{background:color-mix(in srgb,var(--brand2) 18%,transparent)}
+.ahreto .btn{padding:4px 10px;flex:none}
+.ahreto.cerrado{opacity:.6}
+.ahform{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.ahform input,.ahform select{min-width:0}
+.ahmes{display:flex;gap:6px;align-items:flex-end;height:84px;margin-top:10px}
+.ahmes div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--ink2);font-weight:700;text-align:center}
+.ahmes i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--brand2)}
+.ahmes .ya i{background:var(--brand)}
+.ahmes .aviso i{background:var(--warn)}
+.ahpuerta{display:flex;align-items:center;gap:10px;padding:11px 12px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.ahpuerta .mini{display:block}
+.ahcob{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
+.ahcob:first-of-type{border-top:0}
+.ahcob input{width:110px}
+.ahepnom{flex:1;font-weight:800;font-size:14px;min-width:0}
+.ahep .fld input{width:100%;min-width:0}
+.ahhued .fld input{width:100%;min-width:0}
+
+/* ============ Dinero → lo real (capturas de Fintonic) ============ */
+.finreal{border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.finnom{display:flex;gap:10px;align-items:center;margin-top:10px;padding:9px 10px;border-radius:12px;
+  background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.finnom .t{flex:1;min-width:0}
+.finnom .t b{display:block;font-size:14px}
+.finnom .t .mini{display:block}
+.finfila{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
+.finfila:first-of-type{border-top:0}
+.finfila .t{flex:1;min-width:0;font-size:14px}
+.finfila input{width:104px;text-align:right;font-weight:700}
+.finfila .m{width:16px;text-align:center;font-weight:800}
+.finfila.ok .m{color:var(--ok)}
+.finfila.duda input{border-color:var(--warn)}
+.finfila.duda .m{color:var(--warn)}
 /* los días que se salen del plan: los tres botones no deben pesar más que lo apuntado */
 .card.diaesp{padding:11px 13px}
 .card.diaesp h2{font-size:13.5px}

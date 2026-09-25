@@ -1,0 +1,77 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.pm{display:flex;align-items:center;gap:10px;margin-top:6px}
+.pm .btn{width:44px;height:40px;font-size:20px;padding:0}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px}
+.hu{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.hu:first-of-type{border-top:0}
+.hu .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.hu .t{flex:1;min-width:0}.hu .t b{display:block;font-size:14px}.hu .t span{font-size:11px;color:var(--ink2)}
+.hu .n{text-align:right;font-variant-numeric:tabular-nums}.hu .n b{display:block;font-size:15px}.hu .n span{font-size:11px;color:var(--ok,#34d399);font-weight:800}
+.prog{height:5px;border-radius:3px;background:var(--line);margin-top:5px;overflow:hidden}.prog i{display:block;height:100%}
+.reto{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}
+.reto:first-of-type{border-top:0}
+.mes{display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px}
+.mes div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink2);font-weight:700}
+.mes i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--brand2)}
+.mes .ya i{background:var(--brand)}
+.ok{color:#34d399}
+.door{display:flex;align-items:center;gap:10px;padding:11px 12px}
+h3{margin:0 0 8px;font-size:14px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--ink2);flex:1}
+.fld input,.fld select{width:100%;min-width:0;box-sizing:border-box;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 10px;font:inherit;font-size:14px;font-weight:700}
+.per{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+</style><body>
+<div class="wrap" id="portada">
+<div class="card hero">
+ <div class="row"><span class="e">OCTUBRE · NÓMINA</span><span class="sp"></span><button class="btn">✎ lo cobrado</button></div>
+ <div class="big" style="margin-top:4px">≈ 3 066 €</div>
+ <div class="mini">2 guardias de finde (sáb 10 · dom 25) + 3 entre semana · IRPF 2 % · <b style="color:var(--ink)">estimado</b></div>
+ <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px">
+  <span class="e">ESTE MES APARTO</span>
+  <div class="pm"><button class="btn">−</button><span class="big" style="font-size:30px">800 €</span><button class="btn">+</button><span class="sp"></span><span class="mini" style="text-align:right">26 %<br>del sueldo</span></div>
+  <div class="split"><i style="flex:400;background:#8b5cf6"></i><i style="flex:250;background:#38bdf8"></i><i style="flex:150;background:#fbbf24"></i></div>
+  <div class="mini" style="margin-top:8px">Te quedan <b style="color:var(--ink)">2 266 €</b> · menos 749 € de recibos = <b style="color:var(--ink)">1 517 € para vivir</b></div>
+ </div>
+ <button class="btn p" style="width:100%;margin-top:12px;padding:11px">✓ ya lo he apartado</button>
+</div>
+<div class="card" style="margin-top:8px"><h3>Huchas <span class="mini">· 5 670 € en total</span></h3>
+ <div class="hu"><span class="ic" style="background:color-mix(in srgb,#8b5cf6 25%,transparent)">🔒</span><span class="t"><b>Colchón</b><span>no se toca · 50 % de lo que apartas</span></span><span class="n"><b>4 200 €</b><span>+400</span></span></div>
+ <div class="hu"><span class="ic" style="background:color-mix(in srgb,#38bdf8 25%,transparent)">✈️</span><span class="t"><b>Viajes</b><span>Japón · 1 150 de 3 000 € · 30 %</span><div class="prog"><i style="width:38%;background:#38bdf8"></i></div></span><span class="n"><b>1 150 €</b><span>+250</span></span></div>
+ <div class="hu"><span class="ic" style="background:color-mix(in srgb,#fbbf24 25%,transparent)">🎁</span><span class="t"><b>Caprichos</b><span>para gastar sin culpa · 20 %</span></span><span class="n"><b>320 €</b><span>+150</span></span></div>
+ <div class="row" style="margin-top:8px"><button class="btn">+ hucha</button><button class="btn">cambiar el reparto</button></div>
+</div>
+<div class="card" style="margin-top:8px"><h3>Este mes intento gastar menos en…</h3>
+ <div class="reto"><span>🍻</span><span style="flex:1"><b>Salir</b><br><span class="mini">máx 150 € · en septiembre fueron 220</span></span><b class="ok">+70 €</b></div>
+ <div class="reto"><span>🛵</span><span style="flex:1"><b>Pedir comida</b><br><span class="mini">máx 40 €</span></span><b class="ok">+45 €</b></div>
+ <div class="mini" style="margin-top:6px">Si lo cumples, a fin de mes esos 115 € van a la hucha que elijas.</div>
+ <button class="btn" style="margin-top:8px">+ otro</button>
+</div>
+<div class="card" style="margin-top:8px"><h3>Lo que viene</h3>
+ <div class="mes"><div class="ya"><i style="height:44px"></i>sep<br>700</div><div><i style="height:50px"></i>oct<br>800</div><div><i style="height:44px"></i>nov<br>700</div><div><i style="height:60px"></i>dic<br>950</div><div><i style="height:28px;background:var(--warn,#fbbf24)"></i>ene<br>450</div><div><i style="height:28px;background:var(--warn,#fbbf24)"></i>feb<br>450</div></div>
+ <div class="mini" style="margin-top:8px">⚠ En <b style="color:var(--ink)">enero</b> sube el IRPF al 20 %: cobrarás ~2 066 €. Con los mismos recibos, apartar 800 te dejaría 517 € para vivir: la app te propone <b style="color:var(--ink)">450</b>.</div>
+ <div class="mini" style="margin-top:6px">A este ritmo, en junio: colchón 6 900 € · viajes 2 600 € (Japón en agosto ✓)</div>
+</div>
+<div class="card door" style="margin-top:8px"><span>🧾</span><span style="flex:1"><b>Recibos del mes</b><br><span class="mini">749 € · 2 pendientes · salen en el calendario</span></span><span class="mini">›</span></div>
+<div class="card door" style="margin-top:8px"><span>💶</span><span style="flex:1"><b>Tu nómina</b><br><span class="mini">R1 · 2 766 € + 300 por finde · IRPF 2 % → 20 % en enero</span></span><span class="mini">›</span></div>
+</div>
+
+<div class="wrap" id="nomina" style="margin-top:30px">
+<div class="row" style="margin-bottom:10px"><button class="btn">‹ Ahorro</button><b style="font-size:17px">Tu nómina</b></div>
+<p class="mini" style="margin:0 0 8px">Tu sueldo depende de las guardias, y la app ya sabe cuántas tienes y cuáles caen en finde. Con dos números por época calcula cada mes. Cuando llegue la nómina, apunta lo cobrado y manda eso.</p>
+<div class="per"><div class="row"><b>Hasta diciembre 2026</b><span class="sp"></span><span class="mini">IRPF 2 %</span></div>
+ <div class="row" style="margin-top:8px"><label class="fld">NETO CON 1 FINDE<input value="2 766 €"></label><label class="fld">CADA FINDE DE MÁS<input value="+300 €"></label></div></div>
+<div class="per"><div class="row"><b>Desde enero 2027</b><span class="sp"></span><span class="mini">IRPF 18–22 %</span></div>
+ <div class="row" style="margin-top:8px"><label class="fld">NETO CON 1 FINDE<input value="2 066 €"></label><label class="fld">CADA FINDE DE MÁS<input value="+100 €"></label></div></div>
+<button class="btn" style="margin-top:8px">+ otra época (R2, cambio de IRPF…)</button>
+<div class="card" style="margin-top:10px"><h3>Lo cobrado de verdad</h3>
+ <div class="reto"><span style="flex:1">agosto</span><span class="mini">estimado 2 766</span><b>2 771 €</b></div>
+ <div class="reto"><span style="flex:1">septiembre</span><span class="mini">estimado 2 766</span><b>2 766 €</b></div>
+ <div class="reto"><span style="flex:1">octubre</span><span class="mini">estimado 3 066</span><button class="btn">apuntar</button></div>
+</div>
+<div class="card" style="margin-top:8px"><h3>Pagas extra</h3><div class="row"><label class="fld">JUNIO<input value="—"></label><label class="fld">DICIEMBRE<input value="—"></label></div><p class="mini" style="margin:8px 0 0">Si van prorrateadas en la nómina, déjalas vacías.</p></div>
+</div>

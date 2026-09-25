@@ -1,0 +1,58 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.pm{display:flex;align-items:center;gap:10px;margin-top:6px}
+.pm .btn{width:44px;height:40px;font-size:20px;padding:0}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px}
+.hu{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.hu:first-of-type{border-top:0}
+.hu .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.hu .t{flex:1;min-width:0}.hu .t b{display:block;font-size:14px}.hu .t span{font-size:11px;color:var(--ink2)}
+.hu .n{text-align:right;font-variant-numeric:tabular-nums}.hu .n b{display:block;font-size:15px}.hu .n span{font-size:11px;color:var(--ok,#34d399);font-weight:800}
+.prog{height:5px;border-radius:3px;background:var(--line);margin-top:5px;overflow:hidden}.prog i{display:block;height:100%}
+.reto{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}
+.reto:first-of-type{border-top:0}
+.mes{display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px}
+.mes div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink2);font-weight:700}
+.mes i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--brand2)}
+.mes .ya i{background:var(--brand)}
+.ok{color:#34d399}
+.door{display:flex;align-items:center;gap:10px;padding:11px 12px}
+h3{margin:0 0 8px;font-size:14px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--ink2);flex:1}
+.fld input,.fld select{width:100%;min-width:0;box-sizing:border-box;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 10px;font:inherit;font-size:14px;font-weight:700}
+.per{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+</style><body>
+<div class="wrap" id="real">
+<div class="card" style="border-color:color-mix(in srgb,#34d399 45%,var(--line))">
+ <div class="row"><span class="e">LO REAL · FINTONIC · 25 SEP 15:33</span><span class="sp"></span><button class="btn">📷 capturas</button></div>
+ <div class="row" style="margin-top:8px;align-items:flex-end"><div><div class="big" style="font-size:30px">582 €</div><div class="mini">en el banco</div></div><span class="sp"></span>
+  <div style="text-align:right"><b style="font-size:18px">1 578 €</b><div class="mini">gastado en sept</div></div></div>
+ <div style="margin-top:10px;padding:9px 10px;border-radius:12px;background:color-mix(in srgb,var(--brand) 12%,transparent)">
+  <div class="row"><span>💶</span><span style="flex:1"><b>La nómina llega el martes 29</b><br><span class="mini">se transfiere el vie 25 · 2 días hábiles, sin el finde</span></span><b>en 4 días</b></div>
+  <div class="mini" style="margin-top:6px">Hasta entonces: <b style="color:var(--ink)">582 € → 145 € al día</b></div></div>
+ <div class="mini" style="margin-top:8px">⚠ Tus retos: <b style="color:var(--ink)">Restaurante</b> llevas 63 de 60 € · <b style="color:var(--ink)">Supermercado</b> 283 de 300 € ✓</div>
+</div>
+</div>
+<div class="wrap" id="revisar" style="margin-top:30px">
+<div class="row" style="margin-bottom:10px"><button class="btn">‹ Ahorro</button><b style="font-size:17px">Revisa lo leído</b></div>
+<p class="mini" style="margin:0 0 8px">He leído 4 capturas del <b style="color:var(--ink)">25 sep</b>. La letra de Fintonic es fina y a veces confundo cifras: los que tienen <b style="color:var(--warn,#fbbf24)">⚠</b> revísalos (toca y corrige). Nada se guarda hasta que pulses «guardar».</p>
+<div class="card"><h3>Inicio</h3>
+ <div class="reto"><span style="flex:1">En el banco</span><b>582 €</b><span class="ok">✓</span></div>
+ <div class="reto"><span style="flex:1">Ingresos del mes</span><b>11 €</b><span class="ok">✓</span></div>
+ <div class="reto"><span style="flex:1">Gastos del mes</span><b>1 578 €</b><span class="ok">✓</span></div>
+</div>
+<div class="card" style="margin-top:8px"><h3>Categorías de septiembre <span class="mini">· suman 1 571 de 1 578</span></h3>
+ <div class="reto"><span style="flex:1">Alquiler y compra</span><input value="600,00" style="width:84px;background:var(--bg2);border:1px solid #fbbf24;border-radius:8px;color:var(--ink);padding:5px 7px;font:inherit"><span style="color:#fbbf24">⚠</span></div>
+ <div class="reto"><span style="flex:1">Supermercado</span><b>283,06 €</b><span class="ok">✓</span></div>
+ <div class="reto"><span style="flex:1">Transportes</span><input value="227,28" style="width:84px;background:var(--bg2);border:1px solid #fbbf24;border-radius:8px;color:var(--ink);padding:5px 7px;font:inherit"><span style="color:#fbbf24">⚠</span></div>
+ <div class="reto"><span style="flex:1">Restaurante</span><input value="63,00" style="width:84px;background:var(--bg2);border:1px solid #fbbf24;border-radius:8px;color:var(--ink);padding:5px 7px;font:inherit"><span style="color:#fbbf24">⚠</span></div>
+ <div class="reto"><span style="flex:1">Transferencias</span><b>103,35 €</b><span class="ok">✓</span></div>
+ <div class="mini" style="margin-top:6px">… y 11 más</div>
+</div>
+<button class="btn p" style="width:100%;margin-top:10px;padding:11px">✓ guardar lo del 25 sep</button>
+<p class="mini" style="margin-top:8px">Las capturas se leen en tu móvil y no salen de él. La primera vez se descarga el lector (unos 6 MB); después funciona sin internet.</p>
+</div>

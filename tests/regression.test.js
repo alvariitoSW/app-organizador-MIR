@@ -15,7 +15,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const ROOT = path.join(__dirname, '..');
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.gz': 'application/gzip',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 function serveStatic() {
@@ -4421,6 +4421,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await gotoTab('dinero');
     await page.waitForTimeout(200);
+    // Dinero es ahora ahorro: los recibos viven en su propia pantalla, y los fijos se editan desde ahí
+    await page.click('#main [data-a="dinero-vista"][data-v="recibos"]');
+    await page.waitForTimeout(200);
     await page.click('[data-a="dinero-vista"][data-v="fijos"]');
     await page.waitForTimeout(250);
     const alta = async (n, imp, dia, cat) => {
@@ -5899,6 +5902,172 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.dineroS().pagos.length = 0;
       P.ui.ticket = null; P.ui.shopVista = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
+  }
+
+  // ===================== Dinero → ahorro =====================
+  {
+    // «no me interesa llevar la cuenta de gastos sino una ayuda para ahorrar»: la nómina sale de las
+    // guardias (las de finde, sábado/domingo o festivo, suman más), lo que apartas se reparte en
+    // huchas, y un reto cumplido va a la hucha que elijas. Encadenado: apartar → deshacer → apartar →
+    // reto → sacar → recargar, que es donde se pierde el estado.
+    const base = await page.evaluate(() => {
+      const P = window.PG;
+      delete P.store.ahorro;
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      // este mes: dos guardias de sábado/domingo y una de miércoles (se quitan las que hubiera)
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      P.monthDays(y, m).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, 'sh-t', ''); });
+      const dias = P.monthDays(y, m).map((d) => d.date);
+      const sab = dias.filter((d) => d.getDay() === 6)[0], dom = dias.filter((d) => d.getDay() === 0)[1] || dias.filter((d) => d.getDay() === 0)[0];
+      const mie = dias.filter((d) => d.getDay() === 3)[1];
+      [sab, dom, mie].forEach((d) => P.setDayOverride(iso(d), G.id, 'urg'));
+      P.save(); P.render();
+      const a = P.ahorroS(), mk = y + '-' + String(m + 1).padStart(2, '0');
+      a.epocas = [{ id: 'e1', nombre: 'prueba', desde: '2000-01', neto: 2766, finde: 300, pagaJun: 0, pagaDic: 0 }];
+      a.huchas.forEach((h) => { h.saldo = 0; });
+      a.meses = {}; a.meses[mk] = { aparto: 700, hecho: false, reparto: {}, retos: [] };
+      P.ui.dineroVista = ''; P.ui.ahoRetoNuevo = false;   // otra prueba dejó Dinero en «recibos»
+      P.save();
+      const n = P.nominaMes(y, m);
+      return { finde: n.g.finde, total: n.g.total, est: n.est, mk };
+    });
+    await gotoTab('dinero');
+    await page.waitForTimeout(250);
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(200); return !!el; };
+    const hubo = [];
+    const hero = await page.evaluate(() => (document.querySelector('#main .ahhero') || {}).innerText || '');
+    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
+    hubo.push(await toca('#main [data-a="aho-menos"]')); // 700
+    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
+    hubo.push(await toca('#main [data-a="aho-apartar"]'));
+    const saldos1 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
+    hubo.push(await toca('#main [data-a="aho-deshacer"]'));
+    const saldos0 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
+    hubo.push(await toca('#main [data-a="aho-apartar"]'));
+    hubo.push(await toca('#main [data-a="aho-reto-nuevo"]'));
+    // si el formulario no sale, la prueba FALLA (hubo[]), no se cuelga 30 s en un fill
+    const form = await page.$('#ahRtNom');
+    hubo.push(!!form);
+    if (form) {
+      await page.fill('#ahRtNom', 'Salir'); await page.fill('#ahRtMax', '150'); await page.fill('#ahRtAnt', '220');
+      const hu2 = await page.evaluate(() => window.PG.ahorroS().huchas[1].id);
+      await page.selectOption('#ahRtHu', hu2);
+    }
+    hubo.push(await toca('#main [data-a="aho-reto-add"]'));
+    hubo.push(await toca('#main [data-a="aho-reto-ok"]'));
+    const trasReto = await page.evaluate(() => window.PG.ahorroS().huchas[1].saldo);
+    const vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store));
+      return P.ahorroS().huchas.map((h) => h.saldo); });
+    check('Dinero estima la nómina con las guardias de finde y reparte lo que apartas en las huchas',
+      base.finde === 2 && base.total === 3 && base.est === 3066 && /3066/.test(hero.replace(/\D/g, '')) &&
+      hubo.every(Boolean) && saldos1.join() === '375,225,150' && saldos0.join() === '0,0,0' &&
+      trasReto === 295 && vuelta.join() === '375,295,150',
+      JSON.stringify({ base, hero: hero.slice(0, 120), hubo, saldos1, saldos0, trasReto, vuelta }));
+    // un festivo entre semana cuenta como guardia de finde; el viernes normal, no
+    const fest = await page.evaluate(() => {
+      const P = window.PG, a = P.ahorroS();
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const mie = P.monthDays(y, m).map((d) => d.date).filter((d) => d.getDay() === 3)[1];
+      const antes = P.guardiasDelMes(y, m).finde;
+      a.festivos.push(iso(mie)); P.render();
+      const despues = P.guardiasDelMes(y, m).finde;
+      a.festivos.pop();
+      return { antes, despues };
+    });
+    check('un festivo entre semana cuenta como guardia de finde', fest.antes === 2 && fest.despues === 3, JSON.stringify(fest));
+    // la nómina se edita desde la app: una época nueva y lo cobrado de verdad manda sobre lo estimado
+    await toca('#main [data-a="dinero-vista"][data-v="nomina"]');
+    const hayCampo = await page.$('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]');
+    if (hayCampo) { await page.fill('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]', '3001,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
+    const ep0 = await page.evaluate(() => window.PG.ahorroS().epocas.length);
+    await toca('#main [data-a="aho-ep-add"]');
+    const nom = await page.evaluate((mk) => { const P = window.PG, t = mk.split('-');
+      return { cob: P.ahorroS().cobrado[mk], neto: P.nominaMes(+t[0], +t[1] - 1).neto, epocas: P.ahorroS().epocas.length }; }, base.mk);
+    check('lo cobrado de verdad manda sobre lo estimado, y las épocas se añaden desde la app',
+      !!hayCampo && nom.cob === 3001.5 && nom.neto === 3001.5 && nom.epocas === ep0 + 1, JSON.stringify({ nom, ep0 }));
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro;
+      const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
+      P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
+      P.ui.dineroVista = ''; P.save(); P.render(); });
+  }
+
+  // ===================== Dinero → lo real: capturas de Fintonic =====================
+  {
+    // El lector que corre en el móvil confunde cifras con la letra fina de Fintonic. Con las capturas
+    // del usuario: «11 €» leído «1 €», «63,00» leído «603,00» y «03,00», el 7 leído «/». La regla es que
+    // nada dudoso pase por bueno: lo que cuadra con otra cifra es bueno, y lo demás se marca.
+    const fin = await page.evaluate(() => {
+      const P = window.PG;
+      const inicio = 'Bancos    582€ -\nIngresos T 1€ Gastos y 1.578€';
+      const analisis = 'Análisis\n1 sept - 30 sept 2026\nIngresos    10,91€\nGastos   -1.578,40€\nNeto   -1.567,49€';
+      const catMal = '1 sept - 30 sept 2026\nAx Alquiler y compra   600,00€ >\nSupermercado   283,06€ >\n' +
+        '26 movimientos de 300€\nRestaurante   03,00€ >\nTransportes   22/28€ »';
+      const catBien = '1 sept - 30 sept 2026\nAlquiler y compra  1.000,00€ >\nSupermercado  578,40€ >';
+      const j1 = P.finJunta([inicio, analisis, catMal].map(P.finParse));
+      const j2 = P.finJunta([analisis, catBien].map(P.finParse));
+      const n = (t, d) => P.finNum(t, d);
+      return {
+        banco: j1.banco, ing: j1.ingresos, gas: j1.gastos, mes: j1.mes,
+        cats1: j1.cats.map((c) => c.nombre + '=' + c.v + (c.ok ? '' : '?')), descuadre: j1.descuadre,
+        cats2: j2.cats.map((c) => c.nombre + '=' + c.v + (c.ok ? '' : '?')),
+        ceroDelante: n('03,00', true), letra: n('6O,00', true), barra: n('1.5/8,40', true), bueno: n('1.578,40', true),
+        llega: [[2026, 8], [2026, 9], [2026, 10], [2027, 1]].map((x) => P.iso(P.llegadaNomina(x[0], x[1]).llega)),
+      };
+    });
+    check('las capturas de Fintonic: lo que cuadra es bueno y lo dudoso se marca, nunca pasa por bueno',
+      fin.banco && fin.banco.v === 582 && fin.banco.ok && fin.mes === '2026-09' &&
+      // Inicio dice 1 y Análisis 10,91: no cuadran, manda Análisis y queda para revisar
+      fin.ing.v === 10.91 && fin.ing.ok === false &&
+      // Inicio 1.578 y Análisis 1.578,40 cuadran: bueno y con céntimos
+      fin.gas.v === 1578.4 && fin.gas.ok === true &&
+      // las categorías no suman el gasto: todas a revisar, aunque alguna tenga buena pinta
+      fin.cats1.length === 4 && fin.cats1.every((c) => /\?$/.test(c)) && fin.descuadre != null &&
+      // y cuando suman justo el gasto del mes, todas son buenas
+      fin.cats2.join() === 'Alquiler y compra=1000,Supermercado=578.4' &&
+      !fin.ceroDelante.ok && !fin.letra.ok && !fin.barra.ok && fin.bueno.ok && fin.bueno.v === 1578.4,
+      JSON.stringify(fin));
+    // la nómina se transfiere el 25 y tarda dos días hábiles: si el 25 cae en viernes o en fin de
+    // semana llega más tarde. vie 25 sep → mar 29; dom 25 oct → mar 27; mié 25 nov → vie 27;
+    // jue 25 feb 2027 → lun 1 mar
+    check('la nómina llega dos días hábiles después del 25, saltando fines de semana',
+      fin.llega.join() === '2026-09-29,2026-10-27,2026-11-27,2027-03-01', JSON.stringify(fin.llega));
+
+    // y de punta a punta, con el lector de verdad (vendor/ocr) sobre una captura que se dibuja aquí
+    // mismo, al estilo de la pantalla de Inicio de Fintonic: subirla, revisar, guardar, verla en Dinero
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); });
+    await gotoTab('dinero');
+    await page.waitForTimeout(250);
+    const png = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 900; c.height = 700;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 700);
+      x.fillStyle = '#1f2a55'; x.font = '44px sans-serif';
+      x.fillText('Bancos', 60, 160); x.fillText('1.234€', 640, 160);
+      x.font = '40px sans-serif'; x.fillStyle = '#556';
+      x.fillText('Ingresos  25€     Gastos  987€', 60, 330);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    const input = await page.$('#main input[data-a="fin-fotos"]');
+    let leido = null, tarjeta = '';
+    if (input) {
+      await input.setInputFiles({ name: 'captura.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      try {
+        await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado !== 'leyendo', null, { timeout: 120000 });
+      } catch (e) { /* si no acaba, la prueba falla abajo con lo que haya */ }
+      leido = await page.evaluate(() => { const f = window.PG.ui.fin || {}; const r = f.res || {};
+        return { estado: f.estado, msg: f.msg, banco: r.banco, gastos: r.gastos, ingresos: r.ingresos,
+          pantalla: !!document.querySelector('#main [data-a="fin-guardar"]') }; });
+      const g = await page.$('#main [data-a="fin-guardar"]');
+      if (g) { await g.click(); await page.waitForTimeout(300); }
+      tarjeta = await page.evaluate(() => ((document.querySelector('#main .finreal') || {}).innerText || '').replace(/\s+/g, ' '));
+    }
+    const guardado = await page.evaluate(() => (window.PG.ahorroS().real || [])[0] || null);
+    check('una captura se lee en el móvil, se revisa y al guardarla sale en Dinero con cuándo llega la nómina',
+      !!input && leido && leido.estado === 'listo' && leido.pantalla && leido.banco && leido.banco.v === 1234 &&
+      guardado && guardado.banco === 1234 && /1234 €/.test(tarjeta) && /nómina llega/.test(tarjeta),
+      JSON.stringify({ leido, guardado, tarjeta: tarjeta.slice(0, 160) }));
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
   // ===================================================================================

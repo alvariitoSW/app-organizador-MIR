@@ -33,6 +33,10 @@ self.addEventListener('fetch',function(e){
   let url;
   try{url=new URL(req.url);}catch(err){return;}
   if(url.origin!==location.origin)return;   /* nada de tocar peticiones a otros sitios */
+  /* vendor/ (el lector de capturas: ~6 MB) es inmutable: caché primero y SIN el límite de 7 s. Con
+     «red primero» se bajaría entero en cada uso, y con datos móviles 4 MB no caben en 7 segundos:
+     el límite servía la reserva, que la primera vez está vacía, y el lector no arrancaba nunca. */
+  if(url.pathname.indexOf('/vendor/')>=0){e.respondWith(cachePrimero(req));return;}
   const navegacion=req.mode==='navigate';
   const responder=(navegacion&&!url.search)?navegacionSellada(req,url):desdeLaRed(req,url,navegacion);
   /* El reloj va AQUÍ, en la frontera, y no alrededor de cada fetch. Es la diferencia que importa:
@@ -142,3 +146,12 @@ function respuestaSinRed(){
     'a partir de ahí funcionará también sin conexión.</p>',
     {status:503,headers:{'Content-Type':'text/html; charset=utf-8'}});
 }
+
+function cachePrimero(req){
+  return caches.match(req).then(function(hit){
+    if(hit)return hit;
+    return fetch(req).then(function(res){
+      if(res.ok){const copia=res.clone();
+        caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});}
+      return res;});
+  }).catch(function(){return fetch(req);});}
