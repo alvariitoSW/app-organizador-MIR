@@ -271,7 +271,7 @@ let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
+  menuAuto:null,shopVista:'',compraCerradas:new Set(['rutina','basicos']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
   evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estTxt:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
@@ -1366,6 +1366,127 @@ function planBatches(days){
   return batches;
 }
 
+/* ===================== montar la semana sola =====================
+   Fase 5. «Que según lo que compre pueda montar automáticamente las comidas de la semana y no
+   tener que ir una a una». El modo manual se queda: esto es el otro.
+
+   Tres reglas, y ninguna se salta:
+     1 · Si eres celíaco, un plato con gluten NO entra. Ni aunque cuadre de maravilla.
+     2 · Gana lo que ya tienes en casa. La despensa es lo que manda, que para eso se hace la compra.
+     3 · El día tiene que acercarse a tus kcal y a tu proteína.
+   Y una que no es regla sino respeto: los platos candidatos de cada toma son LOS QUE TÚ YA PONES
+   en esa toma. La app no opina de nutrición: mira lo que comes y lo recoloca. */
+const TOMA_CLASES=[
+  ['desayuno',/desayun|antes de entrar|pre-?entreno/i],
+  ['media',/media\s?ma|snack|picoteo|nocturn/i],
+  ['comida',/comida|almuerzo|t[áa]per|destino|post-?guardia/i],
+  ['merienda',/merienda|post-?entreno/i],
+  ['cena',/cena/i]];
+function claseDeToma(label){
+  const t=String(label||'');
+  for(let i=0;i<TOMA_CLASES.length;i++)if(TOMA_CLASES[i][1].test(t))return TOMA_CLASES[i][0];
+  return 'comida';}
+function platosDeClase(){
+  /* qué platos pones TÚ en cada tipo de toma, sacado de tus propios menús. Sin esto habría que
+     inventarse que el porridge es de desayuno, y eso es opinión: aquí es un dato tuyo. */
+  const por={};
+  Object.keys(store.menu||{}).forEach(function(sid){
+    (store.menu[sid]||[]).forEach(function(sl){
+      const c=claseDeToma(sl.label);
+      const it=slotItems(sid,sl).items||[];
+      it.forEach(function(x){
+        if(!x||x.kind!=='dish'||!x.id)return;
+        (por[c]||(por[c]={}))[x.id]=(por[c][x.id]||0)+1;});});});
+  return por;}
+function platoCubierto(d){
+  /* cuánto de este plato ya está en casa: de sus ingredientes, cuántos hay en la despensa */
+  const ing=(d&&d.ingredients)||[];
+  if(!ing.length)return {n:0,total:0,pct:0};
+  const desp=despensaS();
+  let n=0;
+  ing.forEach(function(l){
+    const k=despClave(parseIng(l).item||l);
+    if(k&&desp.some(function(x){return x.k===k;}))n++;});
+  return {n:n,total:ing.length,pct:Math.round(n/ing.length*100)};}
+function platoApto(d){
+  /* con gluten no entra, y punto. «Depende» sí entra: es un aviso, no una prohibición. */
+  if(!esCeliaco())return true;
+  return glutenDePlato(d).est!=='si';}
+function pesoDeTomas(shiftId){
+  /* cuánto pesa cada toma EN TU menú de ahora: el desayuno no es un quinto del día, y repartir a
+     partes iguales daría cenas de 500 kcal y desayunos de 500. Si la toma está vacía, se le da un
+     peso medio para que no se quede en cero para siempre. */
+  const slots=slotsFor(shiftId);
+  const k=slots.map(function(sl){return totals(slotItems(shiftId,sl).items||[]).kcal||0;});
+  const suma=k.reduce(function(a,b){return a+b;},0);
+  if(suma>0)return k.map(function(x){return x>0?x/suma:0.05;});
+  return k.map(function(){return 1/Math.max(1,slots.length);});}
+function menuAutoDia(shiftId){
+  /* la propuesta para UN tipo de día. Cada toma se llena hasta SU hueco de kcal, que puede pedir
+     más de un plato: una comida suya es plato principal + algo, no un plato solo. Con un plato por
+     toma el día se quedaba en 1500 de 2460, y eso no es un menú, es media dieta. */
+  const slots=slotsFor(shiftId);
+  if(!slots.length)return null;
+  const porClase=platosDeClase();
+  const obj=food().objetivo||{};
+  const metaK=+obj.kcal||kcalSugeridas()||0,metaP=+obj.prot||proteinaSugerida()||0;
+  const pesos=pesoDeTomas(shiftId);
+  const props=[],usados={};
+  slots.forEach(function(sl,i){
+    const clase=claseDeToma(sl.label);
+    const cand=Object.keys(porClase[clase]||{}).map(dishById).filter(Boolean).filter(platoApto);
+    const hueco=Math.round(metaK*(pesos[i]||0));
+    const elegidos=[],razones=[];
+    let dentro=0;
+    /* hasta 3 platos por toma, y se para cuando lo que falta ya no da ni para medio plato */
+    for(let paso=0;paso<3;paso++){
+      const falta=hueco-dentro;
+      if(paso>0&&falta<150)break;
+      let mejor=null,mejorP=-1e9;
+      cand.forEach(function(d){
+        /* NUNCA dos veces el mismo plato en el mismo día: se comía dos yogures con avena */
+        if(usados[d.id])return;
+        const cub=platoCubierto(d);
+        let pts=cub.pct;                                   /* lo que hay en casa manda */
+        pts+=Math.max(0,60-Math.abs((d.kcal||0)-falta)/10); /* lo que cuadra con el hueco */
+        if((d.kcal||0)>falta+250)pts-=30;                   /* pasarse mucho penaliza */
+        if(metaP>0&&(d.prot||0)>0)pts+=Math.min(40,(d.prot||0)/metaP*100);
+        pts+=Math.min(10,(porClase[clase][d.id]||0)*2);     /* a igualdad, el que más pones ahí */
+        if(pts>mejorP){mejorP=pts;mejor=d;}});
+      if(!mejor)break;
+      usados[mejor.id]=1;
+      elegidos.push(mejor);dentro+=(mejor.kcal||0);
+      const cub=platoCubierto(mejor);
+      razones.push(cub.pct>=80?'lo tienes en casa'
+        :(cub.pct>0?('tienes '+cub.n+' de sus '+cub.total):'hay que comprarlo'));}
+    if(!elegidos.length){
+      props.push({slot:sl,dishes:[],porQue:'no tienes ningún plato'+(esCeliaco()?' sin gluten':'')+' puesto en esta toma'});
+      return;}
+    props.push({slot:sl,dishes:elegidos,porQue:razones.join(' · '),hueco:hueco,kcal:dentro});});
+  const k=props.reduce(function(a,x){return a+(x.dishes||[]).reduce(function(b,d){return b+(d.kcal||0);},0);},0);
+  const pr=props.reduce(function(a,x){return a+(x.dishes||[]).reduce(function(b,d){return b+(d.prot||0);},0);},0);
+  return {shiftId:shiftId,props:props,kcal:Math.round(k),prot:Math.round(pr),metaK:metaK,metaP:metaP};}
+function menuAutoSemana(){
+  /* una propuesta por tipo de día que tenga tomas puestas */
+  return (store.shifts||[]).map(function(sh){return menuAutoDia(sh.id);})
+    .filter(function(x){return x&&x.props.length;});}
+function aplicarMenuAuto(planes){
+  /* escribe la propuesta en los menús. Solo cuando lo pides: no se toca nada solo. */
+  let n=0;
+  (planes||[]).forEach(function(pl){
+    const slots=slotsFor(pl.shiftId);
+    pl.props.forEach(function(pr){
+      if(!pr.dishes||!pr.dishes.length)return;
+      const sl=slots.filter(function(x){return x.id===pr.slot.id;})[0];
+      if(!sl)return;
+      /* una toma con «comida» guardada apunta a un mealId; al ponerle platos sueltos hay que
+         soltar ese enlace o seguiría mandando la comida vieja y no se vería ningún cambio */
+      sl.mealId='';
+      sl.items=pr.dishes.map(function(d){return {kind:'dish',id:d.id,portions:1};});
+      n++;});});
+  if(!n)return 'no he podido montar ninguna toma';
+  save();
+  return n+' toma'+(n===1?'':'s')+' puestas. La cocina y la compra se recalculan solas.';}
 /* hora orientativa según la etiqueta de la toma (palabras sueltas, para no
    pescar "comida" dentro de "comida favorita" ni "patata" dentro de una cena) */
 const TIME_HINT=[[/^\b(desayun|breakfast)|\bantes de entrar\b/,'07:30'],
@@ -1654,8 +1775,11 @@ function setPerfil(campo,valor){
   else if(campo==='nacido')p.nacido=Math.max(0,Math.round(+valor||0));
   else if(campo==='nacidoF'){
     const v=String(valor||'').trim();
+    /* al borrar la fecha hay que borrar TAMBIÉN el año: si no, edadHoy() se cae al año suelto y la
+       app sigue calculando con una edad que tú creías haber quitado —y encima con un año de más
+       hasta tu cumpleaños, que es por donde se coló: 27 en la fecha, 28 en el año. */
     if(/^\d{4}-\d{2}-\d{2}$/.test(v)){p.nacidoF=v;p.nacido=+v.slice(0,4);}
-    else p.nacidoF='';}
+    else {p.nacidoF='';p.nacido=0;}}
   else if(campo==='actividad')p.actividad=Math.max(1.2,Math.min(2.2,+valor||1.5));
   save();render();
   if(campo==='celiaco')return p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
@@ -7807,11 +7931,84 @@ function renderTypesLista(){
       '<p class="mini" style="margin:9px 0 0">Sale de tu rotación: el menú va pegado al tipo de día, no a la fecha.</p></div>'+
     '<div class="card"><h2>Tus tipos de día <span class="mini">toca uno para cambiar sus comidas</span></h2>'+
       (filas||'<div class="empty">No hay tipos de día: créalos en «Turno y rotación».</div>')+'</div>'+
+    /* EL MODO AUTOMÁTICO, al lado del manual y no en su lugar: él pidió «tener este modo a parte
+       del manual». Se enseña la propuesta antes de tocar nada. */
+    '<div class="row">'+
+      '<button class="btn p gbig" data-a="types-vista" data-v="auto">'+gymIco('chispa','gico sm')+
+        ' montar la semana sola</button>'+
+    '</div>'+
     '<div class="row">'+
       '<button class="btn s" data-a="types-vista" data-v="meals">'+gymIco('caja','gico sm')+
         ' comidas armadas <span class="mini">('+store.meals.length+')</span></button>'+
       '<button class="btn s" data-a="food-vista" data-v="platos">'+gymIco('libro','gico sm')+
         ' mis platos <span class="mini">('+store.dishes.length+')</span></button>'+
+    '</div></div>';}
+function renderTypesAuto(){
+  /* LA PROPUESTA, antes de tocar nada. Cada línea dice por qué está ahí: sin el porqué esto es una
+     caja negra que te cambia la comida de la semana y no sabes por qué. */
+  /* la propuesta se congela mientras la miras: si se recalculara en cada repintado, cambiaría
+     bajo tus pies al tocar cualquier cosa y no sabrías qué estás aceptando */
+  if(!ui.menuAuto)ui.menuAuto=menuAutoSemana();
+  const planes=ui.menuAuto;
+  const desp=despensaS().length;
+  const ob=food().objetivo||{};
+  const cuerpo=planes.map(function(pl){
+    const sh=shiftById(pl.shiftId);
+    if(!sh)return '';
+    const dK=pl.metaK?Math.round((pl.kcal-pl.metaK)/pl.metaK*100):0;
+    const filas=pl.props.map(function(pr){
+      const ds=pr.dishes||[];
+      const k=ds.reduce(function(a,d){return a+(d.kcal||0);},0);
+      /* el chip del gluten en CADA plato llenaba la pantalla de ámbar y se dejaba de leer: casi
+         todo lleva caldo, conserva o especias. Se cuenta una vez por día, abajo. */
+      const nombres=ds.length
+        ?ds.map(function(d){return '<b>'+esc((d.icon?d.icon+' ':'')+d.name)+'</b>';}).join('')
+        :'<b>—</b>';
+      return '<div class="afila'+(ds.length?'':' no')+'">'+
+        '<span class="h">'+esc((pr.slot.time||'').slice(0,5))+'</span>'+
+        '<span class="n">'+nombres+'<span>'+esc(pr.porQue)+'</span></span>'+
+        '<span class="k">'+k+'</span></div>';}).join('');
+    return '<div class="card"><h2>'+esc(sh.icon||'🍽')+' '+esc(sh.name)+
+      '<span class="mini" style="margin-left:auto">'+pl.kcal+' kcal · '+pl.prot+' g</span></h2>'+
+      '<div class="alista">'+filas+'</div>'+
+      (function(){
+        if(!esCeliaco())return '';
+        const dep=[];
+        pl.props.forEach(function(pr){(pr.dishes||[]).forEach(function(d){
+          if(glutenDePlato(d).est==='depende'&&dep.indexOf(d.name)<0)dep.push(d.name);});});
+        if(!dep.length)return '<p class="mini" style="margin:8px 0 0;color:var(--ok)">Ninguno de estos pide mirar la etiqueta.</p>';
+        return '<p class="mini" style="margin:8px 0 0;color:var(--warn)">'+dep.length+
+          ' pide'+(dep.length===1?'':'n')+' mirar la etiqueta antes de cocinar: '+esc(dep.join(', '))+
+          '. Suele ser el caldo, la conserva o las especias.</p>';})()+
+      (pl.metaK?('<p class="mini" style="margin:8px 0 0'+(Math.abs(dK)>15?';color:var(--warn)':'')+'">'+
+        (Math.abs(dK)<=5?'Te cuadra con tus '+pl.metaK+' kcal.'
+          :((dK>0?'Se pasa ':'Se queda ')+Math.abs(dK)+' % de tus '+pl.metaK+' kcal'+
+            (Math.abs(dK)>15?': con lo que tienes puesto en esas tomas no da para más. Añade platos en «Mis platos».':'.')))+
+        ' Proteína: '+pl.prot+' de '+pl.metaP+' g.</p>'):'')+
+      '</div>';}).join('');
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="types-vista" data-v="">'+gymIco('atras','gico sm')+' Menú</button>'+
+      '<h2 class="subtit">Montar la semana sola</h2></div>'+
+    '<div class="card"><h2>Cómo la monta</h2>'+
+      '<p class="note">De cada toma coge <b>los platos que tú ya pones ahí</b> —la app no opina de '+
+      'nutrición, mira lo que comes y lo recoloca— y entre esos elige el que <b>ya tienes en casa</b> '+
+      'y el que mejor te cuadra las kcal y la proteína.'+
+      (esCeliaco()?' Un plato con gluten no entra, aunque cuadre.':'')+'</p>'+
+      '<p class="mini" style="margin:8px 0 0">'+
+        (desp?('En la despensa tienes <b>'+desp+'</b> cosas, y eso es lo que más pesa en la elección.')
+          :'<b>La despensa está vacía</b>, así que ahora mismo solo puede mirar las kcal. Haz la compra o pega un ticket y vuelve: la propuesta cambia.')+
+        (ob.kcal?(' Tu objetivo son '+ob.kcal+' kcal y '+(+ob.prot||0)+' g de proteína.')
+          :' <b>No tienes objetivo de kcal puesto</b>: ponlo en «Tú» y esto afinará mucho más.')+'</p>'+
+    '</div>'+
+    (cuerpo||'<div class="card"><div class="empty">No hay tipos de día con tomas puestas.</div></div>')+
+    (planes.length?('<div class="card">'+
+      '<button class="btn p gbig" data-a="auto-aplicar">'+gymIco('ok','gico sm')+' poner esto en mis menús</button>'+
+      '<p class="mini" style="margin:8px 0 0">Se cambian las tomas de arriba y nada más. La cocina y '+
+      'la compra se recalculan solas. Puedes volver a editarlas a mano cuando quieras.</p></div>'):'')+
+    '<div class="row">'+
+      '<button class="btn s" data-a="auto-otra">probar otra vez</button>'+
+      '<button class="btn s" data-a="types-vista" data-v="">dejarlo como está</button>'+
     '</div></div>';}
 function renderTypesDia(shiftId){
   const sh=shiftById(shiftId);
@@ -7853,6 +8050,7 @@ function renderTypesMeals(){
 function renderTypes(){
   const v=ui.typesVista||'';
   if(v==='meals')return renderTypesMeals();
+  if(v==='auto')return renderTypesAuto();
   if(v==='dishes'){ui.typesVista='';ui.tab='food';ui.foodVista='platos';ui.platosTab='';return renderFood();}
   if(v&&shiftById(v))return renderTypesDia(v);
   return renderTypesLista();}
@@ -10279,6 +10477,15 @@ function act(a,el){
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'auto-otra':ui.menuAuto=null;render();window.scrollTo(0,0);break;
+    case 'auto-aplicar':{
+      const planes=ui.menuAuto||menuAutoSemana();
+      confirmar('Con esto cambian las comidas de todos tus tipos de día. ¿Sigo?','Sí, montarla')
+        .then(function(ok){
+          if(!ok)return;
+          flash(aplicarMenuAuto(planes));
+          ui.menuAuto=null;ui.typesVista='';render();window.scrollTo(0,0);});
+      break;}
     case 'dia-esp':flash(marcarDiaEsp(diaComer(),el.dataset.t));render();break;
     case 'kcal-poner':{const f=food();
       f.objetivo.kcal=kcalSugeridas();f.objetivo.prot=proteinaSugerida();
@@ -12812,6 +13019,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
   diasEspS,diaEspDe,marcarDiaEsp,setDiaEspKcal,kcalExtraDe,DIA_TIPOS,diaComer,
+  claseDeToma,platosDeClase,platoCubierto,platoApto,menuAutoDia,menuAutoSemana,aplicarMenuAuto,pesoDeTomas,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
