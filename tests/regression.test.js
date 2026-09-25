@@ -5741,6 +5741,128 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
   }
 
+  // ===================================================================================
+  // El ticket de la compra (fase 3). La foto la lee Claude, pero Claude SOLO existe
+  // dentro del Artifact de claude.ai: en el móvil, que es donde se hace la compra,
+  // window.claude no está. Así que lo que se prueba aquí —y lo que sirve a diario— es
+  // pegar el ticket y que lo entienda la app, sin conexión y sin que nada salga.
+  // ===================================================================================
+  {
+    const TICKET = [
+      'MERCADONA, S.A.',
+      'C/ VALENCIA, 12',
+      'NIF: A-46103834',
+      '25/09/2026 12:41 OP: 1234567',
+      'Descripcion                P. Unit  Importe',
+      '1 BOLSA PLASTICO                       0,15',
+      '2 LECHE SEMI               0,89        1,78',
+      '1 ACEITE OLIVA SUAVE                   5,95',
+      '3 YOG NAT                  0,45        1,35',
+      '1 PECHUGA POLLO                        4,32',
+      '0,894 kg TOMATE RAMA       2,19        1,96',
+      '1,250 kg PLATANO           1,49        1,86',
+      '2 LENTEJA PARDINA          1,15        2,30',
+      '1 PAN SIN GLUTEN                       2,45',
+      '6 HUEVO L                  0,29        1,74',
+      'TOTAL (€)                             25,86',
+      'TARJETA BANCARIA                      25,86',
+    ].join('\n');
+
+    await gotoTab('shop');
+    await page.waitForTimeout(350);
+    await page.evaluate(() => { const P = window.PG;
+      P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = [];
+      delete P.food().ultimaCompra;
+      P.dineroS().pagos.length = 0;
+      P.ui.ticket = null; P.ui.shopVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+
+    // 1 · el parser: saca las diez líneas de producto y el total, y NO se traga la
+    // cabecera de la tienda ni la forma de pago
+    const lee = await page.evaluate((t) => { const P = window.PG;
+      const l = P.ticketLeer(t);
+      return { n: l.items.length, total: l.total, sueltas: l.sueltas,
+        // el peso llega entero: 0,894 kg son 894 g, no 890
+        tomate: l.items.filter((x) => /tomate/.test(x.nom))[0],
+        // y las abreviaturas del ticket se desarrollan
+        leche: l.items.filter((x) => /leche/.test(x.nom))[0],
+        yogur: l.items.filter((x) => /yogur/.test(x.nom))[0],
+        // cada cosa a su pasillo, aunque el ticket venga en mayúsculas y sin tildes
+        pasillos: l.items.map((x) => x.nom + '=' + P.seccionDeCompra(x.nom)) }; }, TICKET);
+    check('el ticket pegado se lee entero: cantidades, pesos, abreviaturas y total',
+      lee.n === 10 && lee.total === 25.86 && lee.sueltas.length === 0 &&
+      lee.tomate && lee.tomate.q === 0.894 && lee.tomate.uni === 'kg' &&
+      /leche semidesnatada/.test(lee.leche.nom) && /yogur natural/.test(lee.yogur.nom) &&
+      lee.pasillos.indexOf('platano=verdura') >= 0 &&
+      lee.pasillos.indexOf('leche semidesnatada=lacteos') >= 0,
+      JSON.stringify(lee));
+
+    // «PLATANO» sin tilde caía en el pasillo de las conservas porque la regla «lata»
+    // no tenía frontera de palabra y casaba con el trozo «p-LATA-no»
+    const tildes = await page.evaluate(() => { const P = window.PG;
+      const c = (t) => P.seccionDeCompra(t);
+      return { platano: c('platano'), platanoTilde: c('plátano'), lata: c('1 lata atún'),
+        enLata: c('atún en lata'), ajo: c('6 diente ajo'), ajoMolido: c('ajo molido'),
+        canonigo: c('300 g canonigos y tomate') }; });
+    check('los pasillos entienden el texto sin tildes del ticket, y «lata» no se come al plátano',
+      tildes.platano === 'verdura' && tildes.platanoTilde === 'verdura' &&
+      tildes.lata === 'despensa' && tildes.enLata === 'despensa' &&
+      tildes.ajo === 'verdura' && tildes.ajoMolido === 'despensa' &&
+      tildes.canonigo === 'verdura',
+      JSON.stringify(tildes));
+
+    // 2 · la pantalla: pegar → leer → quitar una línea → a la despensa
+    await page.click('[data-a="compra-ticket"]');
+    await page.waitForTimeout(300);
+    const sinClaude = await page.evaluate(() =>
+      /Claude solo está cuando abres la app/.test(document.getElementById('main').innerText));
+    await page.fill('#tkTxt', TICKET);
+    await page.click('[data-a="tk-leer"]');
+    await page.waitForTimeout(400);
+    const pintado = await page.evaluate(() => document.querySelectorAll('#main .dfila').length);
+    // la bolsa de plástico no es comida: se quita antes de meterla en casa
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('#main .dfila')].filter((d) => /bolsa/.test(d.innerText))[0];
+      if (b) b.querySelector('[data-a="tk-quitar"]').click(); });
+    await page.waitForTimeout(250);
+    const trasQuitar = await page.evaluate(() => document.querySelectorAll('#main .dfila').length);
+    await page.click('[data-a="tk-aplicar"]');
+    await page.waitForTimeout(450);
+    const casa = await page.evaluate(() => { const P = window.PG;
+      const d = P.despensaS();
+      return { n: d.length, dias: P.diasDesdeCompra(), vista: P.ui.shopVista,
+        tomate: (d.filter((x) => /tomate/.test(x.nom))[0] || {}).q,
+        uniTomate: (d.filter((x) => /tomate/.test(x.nom))[0] || {}).uni,
+        bolsa: d.some((x) => /bolsa/.test(x.nom)) }; });
+    check('el ticket entra en la despensa con sus cantidades, y lo que quitas no entra',
+      sinClaude === true && pintado === 10 && trasQuitar === 9 &&
+      casa.n === 9 && casa.bolsa === false && casa.dias === 0 && casa.vista === '' &&
+      casa.tomate === 894 && casa.uniTomate === 'g',
+      JSON.stringify({ sinClaude, pintado, trasQuitar, casa }));
+
+    // 3 · lo que devuelva Claude es de fuera: se valida antes de pintarlo o guardarlo
+    const sano = await page.evaluate(() => { const P = window.PG;
+      return {
+        basura: P.ticketSano({ items: [{ nom: '', q: 1 }, { nom: '   ', q: 2 }] }),
+        noEsObjeto: P.ticketSano('lo que sea'),
+        sinItems: P.ticketSano({ total: 30 }),
+        bien: P.ticketSano({ items: [{ q: 2, uni: 'kg', nom: 'TOMATE RAMA', eur: 3.5 },
+          { q: 99999999, uni: 'barriles', nom: 'aceite', eur: -5 }], total: 12.5 }) }; });
+    check('lo que devuelve Claude se valida: unidades raras, números imposibles y líneas vacías fuera',
+      sano.basura === null && sano.noEsObjeto === null && sano.sinItems === null &&
+      sano.bien && sano.bien.items.length === 2 && sano.bien.items[0].nom === 'tomate rama' &&
+      sano.bien.items[1].uni === '' && sano.bien.items[1].eur === 0 &&
+      sano.bien.items[1].q === 10000 && sano.bien.total === 12.5,
+      JSON.stringify(sano));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = [];
+      delete P.food().ultimaCompra;
+      P.dineroS().pagos.length = 0;
+      P.ui.ticket = null; P.ui.shopVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

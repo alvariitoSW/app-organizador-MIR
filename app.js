@@ -2166,6 +2166,124 @@ function listaAMano(texto){
   if(ui.compraCerradas)ui.compraCerradas.delete('rutina');
   save();render();
   return n+' cosa'+(n===1?'':'s')+' a tu lista «A mano», que ya entra en la compra';}
+/* ===================== el ticket de la compra =====================
+   Fase 3. La foto la lee Claude, pero Claude SOLO existe dentro del Artifact de claude.ai: en el
+   móvil, que es donde de verdad se hace la compra, window.claude no está. Así que el camino de
+   todos los días es el de aquí: pegar el ticket —el electrónico de Mercadona es texto— y que lo
+   entienda la app, sin conexión y sin que nada salga del teléfono. */
+/* lo que NO es un artículo: cabecera de la tienda, datos fiscales y forma de pago. Va por
+   PRINCIPIO de línea, no por línea entera: «MERCADONA, S.A.» y «NIF: A-46103834» llevan cola. */
+const TICKET_FUERA=/^\s*(mercadona|carrefour|lidl|aldi|dia\b|alcampo|eroski|consum|s\.?a\.?\b|s\.?l\.?\b|c\/|avda|avenida|calle|plaza|pol[íi]gono|\d{5}\s|tel[ée]fono|tel[:.]|nif|cif|factura|descripci[óo]n|p\.? ?unit|importe|total|entrega|tarjeta|efectivo|contactless|cambio|iva\b|base imponible|cuota|gracias|su compra|op[:.]|aut[:.]|fecha|hora|caja|ticket|n\.? ?factura|simplificada|www\.|https?:|[-=*_]{3,})/i;
+const TICKET_FIN=/^total\b|^total ?\(/i;
+function ticketNum(x){const n=parseFloat(String(x||'').replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
+function ticketLinea(raw){
+  /* una línea de ticket: cantidad, nombre y uno o dos importes al final. Los formatos que se ven
+     de verdad en un Mercadona:
+       «1 ACEITE OLIVA SUAVE            5,95»      → unidad suelta
+       «2 LECHE SEMIDESNATADA   0,89    1,78»      → varias, con precio unitario
+       «0,894 kg TOMATE RAMA    2,19    1,96»      → a peso
+     y lo mismo de cualquier otro súper, que es la misma forma. */
+  const t=String(raw||'').replace(/\s+/g,' ').trim();
+  if(!t||t.length>90)return null;
+  if(TICKET_FUERA.test(t))return null;
+  /* a peso: la cantidad lleva unidad pegada */
+  let m=t.match(/^([\d.,]+)\s*(kg|g|l|ml)\s+(.+?)(?:\s+([\d.,]+))?\s+([\d.,]+)$/i);
+  if(m){const q=ticketNum(m[1]);
+    if(q==null||!m[3].trim())return null;
+    return {q:q,uni:m[2].toLowerCase(),nom:ticketNombre(m[3]),eur:ticketNum(m[5])};}
+  /* por unidades: número al principio, importes al final */
+  m=t.match(/^(\d+)\s+(.+?)(?:\s+([\d.,]+))?\s+([\d.,]+)$/);
+  if(m){const q=+m[1],nom=ticketNombre(m[2]);
+    if(!nom||!/[a-záéíóúñ]/i.test(nom))return null;
+    return {q:q,uni:'',nom:nom,eur:ticketNum(m[4])};}
+  return null;}
+function ticketNombre(x){
+  /* los tickets vienen en mayúsculas y con abreviaturas del súper. Se pasa a algo que la app sepa
+     clasificar por pasillos y buscar en la tabla de alimentos. */
+  let n=String(x||'').trim().toLowerCase();
+  n=n.replace(/\b(bolsa pl[aá]stico|bolsa de pl[aá]stico|bolsa)\b/g,'bolsa');
+  n=n.replace(/\bsemi\b/g,'semidesnatada').replace(/\bdesn\b/g,'desnatada')
+     .replace(/\bnat\b/g,'natural').replace(/\bcong\b/g,'congelado')
+     .replace(/\bac\.? ?oliva\b/g,'aceite de oliva').replace(/\bac\b/g,'aceite')
+     .replace(/\bp\.? ?pollo\b/g,'pechuga de pollo').replace(/\byog\b/g,'yogur')
+     .replace(/\bfrut\b/g,'fruta').replace(/\bverd\b/g,'verdura');
+  n=n.replace(/\s+/g,' ').trim();
+  return n.slice(0,60);}
+function ticketLeer(texto){
+  /* devuelve lo que ha entendido Y lo que no: una línea que no se entiende se enseña, no se tira
+     en silencio. Así se ve de un vistazo si el ticket ha entrado entero. */
+  const lineas=String(texto||'').split(/\n+/);
+  const items=[],sueltas=[];let total=null,fin=false;
+  lineas.forEach(function(l){
+    const t=l.replace(/\s+/g,' ').trim();
+    if(!t)return;
+    if(TICKET_FIN.test(t)){
+      const m=t.match(/([\d.,]+)\s*€?$/);
+      if(m&&total==null)total=ticketNum(m[1]);
+      fin=true;return;}
+    if(fin)return;                       /* lo de después del total es forma de pago y datos fiscales */
+    const it=ticketLinea(t);
+    if(it)items.push(it);
+    else if(!TICKET_FUERA.test(t)&&/[a-záéíóúñ]{3}/i.test(t)&&t.length<90)sueltas.push(t);});
+  return {items:items,sueltas:sueltas,total:total};}
+function ticketAplicar(items){
+  /* el ticket entra en casa: cada línea a la despensa con su cantidad, y la fecha de la compra
+     queda puesta, que es lo que apaga el aviso de «toca hacer la compra» */
+  let n=0;
+  (items||[]).forEach(function(x){
+    /* la cantidad va COMO NÚMERO, no metida en el texto: al pasarla por fmt() para escribirla,
+       «0,894 kg» de tomate se quedaba en 0,89 kg y entraban 890 g en vez de 894. */
+    if(despensaAdd(x.nom,x.q,x.uni))n++;});
+  if(!n)return 'no he metido nada: revisa las líneas';
+  const f=food();f.ultimaCompra=iso(new Date());
+  save();
+  return n+' cosa'+(n===1?'':'s')+' del ticket a la despensa';}
+function ticketPrompt(){
+  return 'Te paso la foto de un ticket de la compra de un supermercado español. Sácame lo que se '+
+    'compró.\n\n'+
+    'Responde SOLO con un objeto JSON con esta forma exacta:\n'+
+    '{"items":[{"q":1,"uni":"","nom":"","eur":0}],"total":0}\n\n'+
+    '- q: cuántas unidades, o el peso si va a peso.\n'+
+    '- uni: "" si son unidades sueltas, o "kg", "g", "l", "ml" si va a peso o volumen.\n'+
+    '- nom: el nombre del producto en minúsculas y en español normal, desarrollando las '+
+    'abreviaturas del ticket ("LECHE SEMI" → "leche semidesnatada", "P. POLLO" → "pechuga de pollo").\n'+
+    '- eur: lo que costó esa línea, en euros.\n'+
+    '- total: el total del ticket.\n\n'+
+    'No inventes líneas que no se lean. Si la foto no es un ticket, responde {"error":"no es un ticket"}.';}
+function ticketSano(data){
+  /* lo que venga de fuera se valida aquí: ni se guarda ni se pinta nada sin pasar por esto */
+  if(!data||typeof data!=='object'||!Array.isArray(data.items))return null;
+  const items=data.items.map(function(x){
+    if(!x||typeof x!=='object')return null;
+    const nom=ticketNombre(String(x.nom||''));
+    if(!nom||!/[a-záéíóúñ]/i.test(nom))return null;
+    const q=Math.max(0,Math.min(10000,+x.q||0));
+    const uni=(['g','kg','ml','l',''].indexOf(String(x.uni||''))>=0)?String(x.uni||''):'';
+    const eur=Math.max(0,Math.min(100000,+x.eur||0));
+    return {q:q,uni:uni,nom:nom,eur:eur};}).filter(Boolean).slice(0,200);
+  if(!items.length)return null;
+  const total=(+data.total>0&&+data.total<100000)?+data.total:null;
+  return {items:items,sueltas:[],total:total};}
+function ticketConClaude(){
+  const t=ui.ticket||(ui.ticket={txt:'',leido:null,msg:''});
+  if(!_sampleFn){t.msg='Claude no está disponible en esta ventana.';render();return;}
+  const imgs=t.imagenes||null;
+  if(!imgs||!imgs.length){t.msg='Elige antes la foto del ticket.';render();return;}
+  t.estado='pensando';t.msg='';render();
+  _sampleFn.json(ticketPrompt(),{modelTier:'default',images:imgs}).then(function(data){
+    t.estado='';
+    if(data&&data.error){t.msg='Claude no ha visto un ticket en esa foto.';render();return;}
+    const l=ticketSano(data);
+    if(!l){t.msg='La respuesta no traía una lista reconocible. Prueba con otra foto.';render();return;}
+    t.leido=l;t.msg='';render();
+    flash('Ticket leído por Claude: '+l.items.length+' línea(s)');
+  }).catch(function(e){
+    const code=(e&&e.code)||'upstream_error';
+    t.estado='';
+    if(code==='cancelled'){render();return;}
+    t.msg=IMP_ERRORES[code]||('No ha salido («'+code+'»). Pega el texto del ticket aquí arriba.');
+    if(code==='not_granted'||code==='sampling_disabled'||code==='not_declared'||code==='capability_disabled')_sampleEstado='no';
+    render();});}
 function compraCada(){
   /* cada cuántos días toca ir. Por defecto 4: dos veces por semana, que es como dijo que la hace.
      Se cambia desde la propia pantalla de la compra. */
@@ -4656,7 +4774,7 @@ function despensaCardHTML(){
     return '<div class="dfila">'+
       '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'\ud83d\uded2')+'</span>'+
       '<span class="n">'+esc(x.nom)+glu+'</span>'+
-      '<span class="q">'+(x.q?(fmt(x.q)+(x.uni?(' '+x.uni):'')):'—')+'</span>'+
+      '<span class="q">'+(x.q?(fmtKg(x.q)+(x.uni?(' '+x.uni):'')):'—')+'</span>'+
       '<button class="btn s" data-a="desp-gasta" data-k="'+esc(x.k)+'" title="he gastado un poco">'+
         (x.q&&pasoDeGasto(x)?('−'+fmt(pasoDeGasto(x))+(x.uni||'')):'gastar')+'</button>'+
       '<button class="btn d s" data-a="desp-quitar" data-k="'+esc(x.k)+'" aria-label="quitar">×</button>'+
@@ -7878,8 +7996,10 @@ const COMPRA_REGLAS=[
   [/caldo|fumet/i,'despensa'],
   [/tomate (triturado|frito|natural|pelado)|salsa de tomate/i,'despensa'],
   [/pimiento (asado|del piquillo|en conserva)/i,'despensa'],
-  [/(jengibre|ajo|cebolla|pimiento|perejil|oregano|or[ée]gano) (molid|en polvo|seco)/i,'despensa'],
-  [/(en |de )?lata|conserva|bote de|tarro/i,'despensa'],
+  [/(jengibre|\bajo\b|cebolla|pimiento|perejil|oregano|or[ée]gano) (molid|en polvo|seco)/i,'despensa'],
+  /* OJO con las palabras cortas sin frontera: «lata» suelta casa con el trozo «p-LATA-no», así que
+     el plátano acababa en el pasillo de las conservas. Lo mismo valdría para cualquier otra. */
+  [/\b(en |de )?latas?\b|conserva|bote de|tarro/i,'despensa'],
   [/leche de (coco|almendra|avena|soja|arroz)/i,'despensa'],
   [/caf[ée]|infusi[óo]n|\bt[ée]\b|cacao|colacao/i,'despensa'],
   /* la leche de proteínas está en el frigorífico de lácteos, no en el pasillo de suplementos:
@@ -7893,10 +8013,20 @@ const COMPRA_REGLAS=[
   [/pan\b|panecillo|bollo|tortilla de (trigo|ma[íi]z)|wrap|masa madre|biscote|tostada/i,'pan'],
   [/agua|refresco|zumo|cerveza|vino|bebida/i,'bebida'],
   [/arroz|pasta|macarr|espagueti|fideo|lenteja|garbanzo|alubia|jud[íi]a blanca|avena|quinoa|cuscus|cusc[úu]s|harina|az[úu]car|miel|aceite|vinagre|\bsal\b|pimienta|piment[óo]n|curry|comino|canela|especia|frutos secos|almendra|nuez|nueces|anacardo|cacahuete|semilla|chia|ch[íi]a|levadura|caldo|galleta|cereal|mermelada|chocolate|at[úu]n/i,'despensa'],
-  [/patata|boniato|cebolla|ajo|tomate|lechuga|canonigo|can[óo]nigo|espinaca|r[úu]cula|zanahoria|calabac[íi]n|calabaza|berenjena|pimiento|br[óo]coli|coliflor|jud[íi]a verde|guisante|esp[áa]rrago|champi[ñn][óo]n|seta|puerro|apio|pepino|aguacate|lim[óo]n|lima|naranja|mandarina|manzana|pl[áa]tano|banana|pera|fresa|ar[áa]ndano|frambuesa|kiwi|mango|pi[ñn]a|melon|mel[óo]n|sand[íi]a|uva|melocot[óo]n|nectarina|ciruela|higo|fruta|verdura|hortaliza|jengibre|perejil|cilantro|albahaca|hierbabuena|menta/i,'verdura']];
+  [/patata|boniato|cebolla|\bajos?\b|tomate|lechuga|canonigo|can[óo]nigo|espinaca|r[úu]cula|zanahoria|calabac[íi]n|calabaza|berenjena|pimiento|br[óo]coli|coliflor|jud[íi]a verde|guisante|esp[áa]rrago|champi[ñn][óo]n|seta|puerro|apio|pepino|aguacate|lim[óo]n|lima|naranja|mandarina|manzana|pl[áa]tano|banana|pera|fresa|ar[áa]ndano|frambuesa|kiwi|mango|pi[ñn]a|melon|mel[óo]n|sand[íi]a|uva|melocot[óo]n|nectarina|ciruela|higo|fruta|verdura|hortaliza|jengibre|perejil|cilantro|albahaca|hierbabuena|menta/i,'verdura']];
+function reglasSinTildes(){
+  /* las mismas reglas, con las tildes quitadas también del PATRÓN. Un ticket de súper viene en
+     mayúsculas y sin tildes («PLATANO»), así que /plátano/ no casaba y el plátano acababa en el
+     pasillo de la despensa. Se construye una vez. */
+  if(!reglasSinTildes._c)reglasSinTildes._c=COMPRA_REGLAS.map(function(r){
+    return [new RegExp(r[0].source.normalize('NFD').replace(/[̀-ͯ]/g,''),r[0].flags),r[1]];});
+  return reglasSinTildes._c;}
 function seccionDeCompra(texto){
   const t=String(texto||'').toLowerCase();
   for(let i=0;i<COMPRA_REGLAS.length;i++)if(COMPRA_REGLAS[i][0].test(t))return COMPRA_REGLAS[i][1];
+  /* segundo intento sin tildes, por lo que venga del ticket o escrito a la carrera */
+  const t2=alimTxt(texto),rr=reglasSinTildes();
+  for(let j=0;j<rr.length;j++)if(rr[j][0].test(t2))return rr[j][1];
   return 'otros';}
 function porSeccion(items){
   /* los artículos repartidos por pasillo, en el orden en el que se recorre la tienda */
@@ -7941,6 +8071,7 @@ function compraCuenta(d,salida){
   return {total:total,marcados:marcados};}
 function renderShop(){
   if(ui.shopVista==='listas')return renderShopListas();
+  if(ui.shopVista==='ticket')return renderShopTicket();
   const d=compraDatos();
   const dias=diasDesdeCompra(),salida=ui.compraSalida||'todo';
   /* la cuenta es la de ESTA salida: en «Frutería» la barra tiene que ir de 0 a 18, no de 0 a 60,
@@ -8030,6 +8161,10 @@ function renderShop(){
       '<span class="sp"></span>'+
       '<button class="btn s" data-a="compra-listas">mis listas <span class="mini">('+listasS().length+')</span></button>'+
     '</div>'+
+    /* el otro camino de meter la compra en casa: el ticket, que no depende de haber hecho la lista */
+    '<div class="row">'+
+      '<button class="btn s" data-a="compra-ticket">🧾 tengo el ticket →</button>'+
+    '</div>'+
     /* la compra es el gasto más repetido de vivir solo: se apunta desde aquí, sin ir a buscarlo */
     '<div class="row">'+
       '<button class="btn s" data-a="dinero-compra">'+gymIco('mas','gico sm')+' apuntar lo que me he gastado</button>'+
@@ -8042,6 +8177,69 @@ function listaManoCardHTML(){
     '<label class="fld">tu lista<textarea id="compraMano" rows="4" '+
       'placeholder="2 rollos de papel\n1 gel de ducha\n500 g arroz"></textarea></label>'+
     '<div class="row" style="margin-top:9px"><button class="btn p" data-a="compra-mano">añadir a la compra</button></div>'+
+    '</div>';}
+function renderShopTicket(){
+  /* EL TICKET. Dos caminos, y el que sirve todos los días es el de pegar el texto: Claude solo
+     existe dentro del Artifact de claude.ai, y la compra se hace con el móvil. */
+  const t=ui.ticket||(ui.ticket={txt:'',leido:null,msg:''});
+  const l=t.leido;
+  const hayClaude=_sampleEstado==='si'&&!!_sampleFn;
+  const puedeImagen=hayClaude&&!!(_sampleLim&&_sampleLim.images);
+  const nImg=(t.imagenes&&t.imagenes.length)||0;
+  const filas=l?l.items.map(function(x,i){
+    const sc=COMPRA_SECS.filter(function(y){return y[0]===seccionDeCompra(x.nom);})[0];
+    const glu=esCeliaco()?glutenChipHTML(glutenDe(x.nom),true):'';
+    return '<div class="dfila">'+
+      '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'🛒')+'</span>'+
+      '<span class="n">'+esc(x.nom)+glu+'</span>'+
+      '<span class="q">'+fmtKg(x.q)+(x.uni?(' '+x.uni):'')+'</span>'+
+      '<button class="btn d s" data-a="tk-quitar" data-i="'+i+'" aria-label="quitar">×</button>'+
+      '</div>';}).join(''):'';
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab">'+
+      '<button class="btn s volver" data-a="compra-volver">'+gymIco('atras','gico sm')+' Compra</button>'+
+      '<h2 class="subtit">El ticket</h2></div>'+
+    '<div class="card"><h2>Pega el ticket</h2>'+
+      '<p class="note">El ticket electrónico de Mercadona (el de su app o el del correo) es texto: '+
+      'pégalo aquí y entra la compra entera en la despensa. Esto funciona <b>sin conexión</b> y '+
+      '<b>sin que nada salga del móvil</b>.</p>'+
+      '<label class="fld">el ticket<textarea id="tkTxt" rows="6" placeholder="1 ACEITE OLIVA SUAVE     5,95&#10;2 LECHE SEMI      0,89     1,78&#10;0,894 kg TOMATE RAMA   2,19   1,96">'+esc(t.txt||'')+'</textarea></label>'+
+      '<div class="row" style="margin-top:9px">'+
+        '<button class="btn p" data-a="tk-leer">leerlo</button>'+
+        '<button class="btn s" data-a="tk-pegar" title="pegar lo que tengas copiado">📋 pegar</button>'+
+        (t.txt||l?'<button class="btn s" data-a="tk-limpiar">limpiar</button>':'')+
+      '</div>'+
+    '</div>'+
+    /* la foto: se ofrece solo donde de verdad funciona, y diciendo que la foto sale del móvil */
+    '<div class="card"><h2>📷 Una foto del ticket</h2>'+
+      (puedeImagen
+        ?('<p class="note">Le paso la foto a Claude y él saca la lista. <b>Ojo: la foto sale de tu '+
+          'móvil</b> y viaja a Claude para que pueda leerla. Si prefieres que no salga nada, usa la caja de arriba.</p>'+
+          '<div class="row">'+
+            '<label class="btn s" style="cursor:pointer">elegir la foto'+
+              '<input type="file" accept="'+esc((_sampleLim.images.mediaTypes||[]).join(','))+'" data-a="tk-foto" style="display:none">'+
+            '</label>'+
+            (nImg?('<span class="mini">'+nImg+' foto'+(nImg===1?'':'s')+' puesta'+(nImg===1?'':'s')+'</span>'+
+              '<button class="btn p" data-a="tk-claude"'+(t.estado==='pensando'?' disabled':'')+'>'+
+              (t.estado==='pensando'?'leyendo…':'que lo lea Claude')+'</button>'):'')+
+          '</div>')
+        :('<p class="note">Aquí no se puede: leer una foto necesita a Claude, y Claude solo está cuando '+
+          'abres la app <b>dentro de claude.ai</b>. En el móvil, con la app instalada, no existe. '+
+          'Por eso el camino de todos los días es pegar el texto del ticket, aquí arriba.</p>'))+
+    '</div>'+
+    (t.msg?('<div class="card"><div class="empty">'+esc(t.msg)+'</div></div>'):'')+
+    (l?('<div class="card"><h2>Lo que he leído <span class="mini">'+l.items.length+'</span></h2>'+
+      (l.total!=null?('<p class="mini" style="margin:0 0 8px">Total del ticket: <b>'+eur(l.total)+'</b>.</p>'):'')+
+      (l.items.length?('<div class="dlista">'+filas+'</div>')
+        :'<div class="empty">No he sacado ninguna línea. ¿Seguro que has pegado el detalle de los artículos?</div>')+
+      (l.sueltas.length?('<p class="mini" style="margin:9px 0 0;color:var(--warn)">'+l.sueltas.length+
+        ' línea'+(l.sueltas.length===1?'':'s')+' que no he entendido: '+esc(l.sueltas.slice(0,4).join(' / '))+
+        (l.sueltas.length>4?'…':'')+'</p>'):'')+
+      (l.items.length?('<div class="row" style="margin-top:11px">'+
+        '<button class="btn p gbig" data-a="tk-aplicar">'+gymIco('ok','gico sm')+' a la despensa</button></div>'+
+        (l.total!=null?('<div class="row" style="margin-top:7px">'+
+          '<button class="btn s" data-a="tk-gasto">apuntar los '+eur(l.total)+' en Dinero</button></div>'):'')):'')+
+      '</div>'):'')+
     '</div>';}
 function renderShopListas(){
   $('#main').innerHTML='<div class="grid">'+
@@ -9898,6 +10096,36 @@ function act(a,el){
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
+    case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'tk-leer':{const ta=document.getElementById('tkTxt');
+      const t=ui.ticket||(ui.ticket={});
+      t.txt=ta?ta.value:(t.txt||'');
+      if(!String(t.txt).trim()){flash('pega antes el ticket');break;}
+      t.leido=ticketLeer(t.txt);t.msg='';
+      render();
+      flash(t.leido.items.length?(t.leido.items.length+' línea(s) leídas'):'no he sacado ninguna línea');
+      break;}
+    case 'tk-pegar':{
+      if(!navigator.clipboard||!navigator.clipboard.readText){flash('tu navegador no me deja leer lo copiado: pégalo a mano');break;}
+      navigator.clipboard.readText().then(function(txt){
+        const t=ui.ticket||(ui.ticket={});t.txt=String(txt||'');t.leido=ticketLeer(t.txt);t.msg='';
+        render();flash(t.leido.items.length+' línea(s) leídas');})
+        .catch(function(){flash('no he podido leer lo copiado: pégalo a mano');});
+      break;}
+    case 'tk-limpiar':{ui.ticket={txt:'',leido:null,msg:''};render();break;}
+    case 'tk-quitar':{const t=ui.ticket;if(!t||!t.leido)break;
+      t.leido.items.splice(+el.dataset.i,1);render();break;}
+    case 'tk-aplicar':{const t=ui.ticket;if(!t||!t.leido)break;
+      flash(ticketAplicar(t.leido.items));
+      ui.ticket={txt:'',leido:null,msg:''};ui.shopVista='';render();window.scrollTo(0,0);break;}
+    case 'tk-gasto':{const t=ui.ticket;
+      if(!t||!t.leido||t.leido.total==null){flash('el ticket no traía total');break;}
+      /* la compra es un gasto del día, no un fijo mensual: va a lo apuntado, con el total del
+         propio ticket, que es el número que menos se equivoca */
+      flash(addPago({nombre:'Compra del súper',importe:String(t.leido.total).replace('.',','),
+        fecha:iso(new Date()),cat:'compra'}));
+      break;}
+    case 'tk-claude':ticketConClaude();break;
     case 'ir-fruteria':ui.compraSalida='fruteria';ui.tab='shop';ui.shopVista='';render();window.scrollTo(0,0);break;
     case 'compra-hecha':flash(hacerCompra(el.dataset.solo==='1'));break;
     case 'compra-mano':{const t=document.getElementById('compraMano');
@@ -12164,6 +12392,11 @@ document.addEventListener('change',e=>{
       store.lector.proxy=/^https:\/\/[^\s"'<>]+$/.test(v)?v:'';
       if(v&&!store.lector.proxy)flash('Esa dirección no vale: tiene que ser una URL https');
       save();render();break;}
+    case 'tk-foto':{const fs=el.files;
+      /* un <input type=file> vive en ESTE switch (change): puesto en act() no se dispara nunca */
+      const t=ui.ticket||(ui.ticket={txt:'',leido:null,msg:''});
+      t.imagenes=(fs&&fs.length)?Array.prototype.slice.call(fs):null;
+      render();break;}
     case 'imp-img':{const fs=el.files;
       ui.imp.imagenes=(fs&&fs.length)?Array.prototype.slice.call(fs):null;
       ui.imp.estado='';ui.imp.msg='';render();break;}
@@ -12384,7 +12617,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   seccionDeCompra,porSeccion,COMPRA_SECS,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
-  compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,
+  compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
+  ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
