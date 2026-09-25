@@ -5280,6 +5280,29 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       tras.quedan === 1,
       JSON.stringify({ antes, tras }));
 
+    // la avena NO lleva gluten: lo que la hace dudosa es que se cultiva y se muele con trigo. La
+    // suya es certificada, así que para él no lo es — pero eso lo dice su perfil, no una lista
+    // fija, porque el día que compre otra marca tiene que volver a avisar.
+    const avena = await page.evaluate(() => { const P = window.PG;
+      const c = (n) => P.glutenDe(n);
+      const dep = () => P.platosConGluten().depende.map((x) => x.d.name).join(' | ');
+      const con = { avena: c('160 g copos de avena'), muesli: c('muesli de avena'),
+        granola: c('granola'), barrita: c('barrita de avena'), pan: c('pan de avena'),
+        porridge: /Porridge/.test(dep()), yogur: /Yogur griego con avena/.test(dep()) };
+      P.setPerfil('avena');                       // se apaga: vuelve a ser dudosa
+      const sin = { avena: c('160 g copos de avena'), porridge: /Porridge/.test(dep()) };
+      P.setPerfil('avena');                       // y se vuelve a encender
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      return { con, sin, persiste: P.perfilS().avenaSinGluten,
+        trasRecargar: c('160 g copos de avena') }; });
+    check('con la avena certificada el porridge deja de avisar, pero el muesli y la granola siguen en ámbar',
+      avena.con.avena === 'no' && avena.con.porridge === false && avena.con.yogur === false &&
+      avena.con.muesli === 'depende' && avena.con.granola === 'depende' &&
+      avena.con.barrita === 'depende' && avena.con.pan === 'depende' &&
+      avena.sin.avena === 'depende' && avena.sin.porridge === true &&
+      avena.persiste === true && avena.trasRecargar === 'no',
+      JSON.stringify(avena));
+
     // el peso se sigue por TENDENCIA, y el perfil sobrevive a recargar
     const peso = await page.evaluate(() => {
       const P = window.PG;

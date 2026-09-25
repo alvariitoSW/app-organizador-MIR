@@ -95,7 +95,7 @@ function DEFAULTS(){return {
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
   /* quién eres, que es lo que decide cuántas kcal necesitas y qué puedes comer */
-  perfil:{celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]},
+  perfil:{celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
   patterns:[
@@ -403,6 +403,8 @@ function normalize(o){
   /* el perfil: sin registrarlo aquí se perdería al recargar, como todo lo que normalize() no conoce */
   if(!o.perfil||typeof o.perfil!=='object')o.perfil={};
   o.perfil.celiaco=!!o.perfil.celiaco;
+  /* la avena certificada: por defecto sí, que es lo que compra él */
+  o.perfil.avenaSinGluten=o.perfil.avenaSinGluten!==false;
   o.perfil.alturaCm=(+o.perfil.alturaCm>=100&&+o.perfil.alturaCm<=250)?+o.perfil.alturaCm:0;
   o.perfil.pesoKg=(+o.perfil.pesoKg>=30&&+o.perfil.pesoKg<=300)?+o.perfil.pesoKg:0;
   o.perfil.sexo=(o.perfil.sexo==='m')?'m':'h';
@@ -1499,7 +1501,10 @@ const GLUTEN_SI=[
   /rebozad|empanad|croqueta|empanadilla|pizza|tortilla de trigo|wrap de trigo|cerveza/i,
   /cus?c[úu]s|seit[áa]n|cerveza|obleas/i];
 const GLUTEN_DEPENDE=[
-  /avena|oat/i,                                   /* contaminación cruzada: hace falta certificada */
+  /* la avena NO lleva gluten, pero se cultiva y se muele con trigo: la contaminación cruzada es lo
+     que la hace dudosa. Si la tuya es certificada sin gluten, deja de serlo — y eso lo dice tu
+     perfil, no una lista fija, porque el día que compres otra marca vuelve a avisar. */
+  /avena|oat/i,
   /chorizo|salchich|embutido|morcilla|fiambre|jam[óo]n cocido|pav[oa] cocid|surimi|patatas? fritas de bolsa/i,
   /caldo|fumet|pastilla de|sopa de sobre|salsa|soja|teriyaki|ketchup|mostaza|mayonesa/i,
   /curry|especias? mezcl|sazonador|colorante alimentario|levadura/i,
@@ -1510,11 +1515,20 @@ const GLUTEN_DEPENDE=[
   /* envasados que NO son de trigo pero pasan por fábrica: las tortitas de arroz llevan malta de
      cebada en más marcas de las que uno esperaría */
   /tortita|nacho|snack|palomitas|cereales de desayuno|muesli|gran ?ola|granola/i];
+function avenaSegura(){
+  /* por defecto SÍ: lo dijo él, compra avena certificada sin gluten. Se apaga desde «Tú» el día que
+     compre otra, y entonces el porridge y el yogur con avena vuelven a salir en ámbar. */
+  const p=perfilS();
+  return p.avenaSinGluten!==false;}
 function glutenDe(nombre){
   const t=String(nombre||'').toLowerCase();
   if(!t.trim())return 'no';
   /* lo que pone el envase manda: si dice «sin gluten», es sin gluten */
   if(/sin gluten|gluten ?free|libre de gluten|sin tacc/.test(t))return 'no';
+  /* tu avena es certificada sin gluten, así que para ti la avena sola no es «depende». Lo que la
+     lleva mezclada —muesli, granola, cereales de caja— sigue siéndolo: eso no lo arregla la avena. */
+  if(avenaSegura()&&/avena|oat/i.test(t)&&!/muesli|gran ?ola|granola|cereales|barrita|galleta|bizcocho|pan\b|bar-?bar/i.test(t))
+    return 'no';
   let est='no';
   for(let i=0;i<GLUTEN_SI.length;i++)if(GLUTEN_SI[i].test(t)){est='si';break;}
   if(est!=='si')for(let j=0;j<GLUTEN_DEPENDE.length;j++)if(GLUTEN_DEPENDE[j].test(t)){est='depende';break;}
@@ -1544,20 +1558,24 @@ function glutenChipHTML(est,corto){
   return '<span class="glu '+e.c+'" title="'+esc(e.t)+'">'+(est==='si'?'⚠ gluten':(corto?'? etiqueta':'? mira la etiqueta'))+'</span>';}
 function perfilS(){
   if(!store.perfil||typeof store.perfil!=='object')
-    store.perfil={celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]};
+    store.perfil={celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]};
   if(!Array.isArray(store.perfil.pesos))store.perfil.pesos=[];
   return store.perfil;}
 function setPerfil(campo,valor){
   const p=perfilS();
   if(campo==='celiaco')p.celiaco=!p.celiaco;
+  else if(campo==='avena')p.avenaSinGluten=(p.avenaSinGluten===false);
   else if(campo==='meta')p.meta=(['perder','mantener','ganar'].indexOf(valor)>=0)?valor:'mantener';
   else if(campo==='alturaCm')p.alturaCm=Math.max(0,Math.min(250,Math.round(+valor||0)));
   else if(campo==='pesoKg')p.pesoKg=Math.max(0,Math.min(300,Math.round((+valor||0)*10)/10));
   else if(campo==='nacido')p.nacido=Math.max(0,Math.round(+valor||0));
   else if(campo==='actividad')p.actividad=Math.max(1.2,Math.min(2.2,+valor||1.5));
   save();render();
-  return campo==='celiaco'?(p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
-    :'aviso de gluten apagado'):'perfil guardado';}
+  if(campo==='celiaco')return p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
+    :'aviso de gluten apagado';
+  if(campo==='avena')return p.avenaSinGluten?'avena certificada: el porridge y el yogur con avena dejan de avisar'
+    :'avena sin certificar: vuelven a salir en ámbar por contaminación cruzada';
+  return 'perfil guardado';}
 function apuntarPeso(kg,key){
   const p=perfilS(),k=foodKey(key)||iso(new Date()),v=Math.round((+kg||0)*10)/10;
   if(!(v>=30&&v<=300))return 'ese peso no puede ser';
@@ -5180,6 +5198,14 @@ function renderFoodPerfil(){
         '<button class="btn s '+(p.celiaco?'g':'')+'" data-a="perf-celiaco">'+(p.celiaco?'✓':'○')+' soy celíaco</button>'+
         (p.celiaco?'<button class="btn s" data-a="food-vista" data-v="gluten">revisar mis platos →</button>':'')+
       '</div>'+
+      /* la avena no lleva gluten: lo que la hace dudosa es que se muele con trigo. Si la tuya es
+         certificada, el porridge y el yogur con avena dejan de salir en ámbar. */
+      (p.celiaco?('<div class="row" style="margin-top:9px">'+
+        '<button class="btn s '+(avenaSegura()?'g':'')+'" data-a="perf-avena">'+(avenaSegura()?'✓':'○')+
+          ' mi avena es sin gluten certificada</button></div>'+
+        '<p class="mini" style="margin:7px 0 0">'+(avenaSegura()
+          ?'Así que el porridge y el yogur con avena cuentan como sin gluten. Cámbialo el día que compres otra marca.'
+          :'Mientras no lo sea, la avena sale en ámbar: se cultiva y se muele con trigo.')+'</p>'):'')+
     '</div>'+
     '<div class="card"><h2>Tu peso</h2>'+
       (t?('<div class="kpis compact">'+
@@ -10085,6 +10111,7 @@ function act(a,el){
       flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta')));break;}
     case 'obj-del':flash(delObjetivo(el.dataset.id));break;
     case 'perf-celiaco':flash(setPerfil('celiaco'));break;
+    case 'perf-avena':flash(setPerfil('avena'));break;
     case 'perf-meta':flash(setPerfil('meta',el.dataset.v));break;
     case 'perf-peso':{const c=document.getElementById('perfPeso');
       flash(apuntarPeso(c?c.value:0));break;}
@@ -11986,7 +12013,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   seccionDeCompra,porSeccion,COMPRA_SECS,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
-  compraCada,tocaComprar,compraCuenta,pasoDeGasto,
+  compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
