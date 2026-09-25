@@ -1593,3 +1593,12 @@ ul.slots{list-style:none;margin:0;padding:0}
 @media print{
   .cal .dbox.semprev{display:none!important}
 }
+/* la compra en «Hoy»: una tira compacta, que la portada ya lleva siete bloques */
+.card.tcompra{padding:11px 13px}
+.card.tcompra .tcab{display:flex;align-items:baseline;gap:8px}
+.card.tcompra .tcab b{font-size:13.5px;font-weight:800}
+.card.tcompra .tcab .mini{margin-left:auto;color:var(--ink2);white-space:nowrap}
+.card.tcompra p.mini{margin:5px 0 0;color:var(--ink2)}
+.card.tcompra p.mini b{color:var(--ink)}
+.card.tcompra .row{margin-top:9px}
+.card.tcompra .row .btn{padding:6px 11px;font-size:12px}

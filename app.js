@@ -2185,13 +2185,15 @@ function compraTocaHTML(){
   const pend=d.total;
   if(!pend)return '';
   const sup=compraCuenta(d,'super').total,fru=compraCuenta(d,'fruteria').total;
-  return '<div class="card tarea-compra"><h2>🛒 Toca hacer la compra</h2>'+
-    '<p class="note" style="margin:0">'+
-      (t.primera?'Todavía no has apuntado ninguna compra.'
-        :('Hace <b>'+t.dias+' día'+(t.dias===1?'':'s')+'</b> de la última, y tú la haces cada '+compraCada()+' días.'))+
-      ' Quedan <b>'+pend+'</b> cosa'+(pend===1?'':'s')+' por coger'+
-      ((sup&&fru)?(': '+sup+' en el súper y '+fru+' en la frutería'):'')+'.</p>'+
-    '<div class="row" style="margin-top:10px">'+
+  /* una tira, no una tarjeta con título: «Hoy» ya tiene siete bloques y cada uno que se añade se
+     come pantalla. Todo lo que hace falta saber cabe en un renglón y dos botones. */
+  return '<div class="card tcompra">'+
+    '<div class="tcab"><b>🛒 Toca hacer la compra</b>'+
+      '<span class="mini">'+(t.primera?'la primera':('hace '+t.dias+' d'))+'</span></div>'+
+    '<p class="mini">Quedan <b>'+pend+'</b> por coger'+
+      ((sup&&fru)?(': '+sup+' en el súper y '+fru+' en la frutería'):'')+
+      (t.primera?'':' · la haces cada '+compraCada()+' días')+'.</p>'+
+    '<div class="row">'+
       '<button class="btn p" data-a="tab" data-t="shop">abrir la lista</button>'+
       (fru?'<button class="btn s" data-a="ir-fruteria">solo la frutería</button>':'')+
       '</div></div>';}
