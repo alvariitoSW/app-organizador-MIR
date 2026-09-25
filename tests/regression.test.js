@@ -2722,11 +2722,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     filas: document.querySelectorAll('#main .hit').length,
     grupos: document.querySelectorAll('#main .grp').length,
     campo: !!document.getElementById('fbQ'),
-    chips: document.querySelectorAll('#main [data-a="food-tipo"]').length,
+    tabs: document.querySelectorAll('#main [data-a="food-tab"]').length,
   }));
   check('el buscador abre con lo que más apuntas (seis filas), no con la lista entera',
     buscadorVacio.campo && buscadorVacio.filas === 6 && buscadorVacio.grupos === 0 &&
-    buscadorVacio.chips === 4, JSON.stringify(buscadorVacio));
+    buscadorVacio.tabs === 3, JSON.stringify(buscadorVacio));
 
   await page.fill('#fbQ', 'tortilla');
   await page.waitForTimeout(350);
@@ -3854,7 +3854,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG;
       // se parte del estado de fábrica a propósito: si una prueba anterior dejó las secciones
       // abiertas, esto comprobaría el mecanismo sobre nada y pasaría con el fallo dentro
-      P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.ui.compraCerradas = new Set(['rutina', 'basicos', 'casa']);
       P.render();
       const antes = { cerradas: [...P.ui.compraCerradas].sort().join(),
         lineas: document.querySelectorAll('#main .lcompra li').length };
@@ -5515,7 +5515,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     await page.evaluate(() => { const P = window.PG;
       P.ui.marks = new Set(); P.ui.compraAbiertas = new Set();
-      P.ui.compraCerradas = new Set(['rutina', 'basicos']); P.save(); P.render(); });
+      P.ui.compraCerradas = new Set(['rutina', 'basicos', 'casa']); P.save(); P.render(); });
   }
 
   // ===================================================================================
@@ -5632,7 +5632,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = [];
       delete P.food().ultimaCompra;
       P.ui.marks = new Set(); P.ui.compraSalida = 'todo';
-      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos', 'casa']);
       P.save(); P.render(); });
     await page.waitForTimeout(250);
 
@@ -5685,10 +5685,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const cuenta = await page.evaluate(() => { const P = window.PG;
       const d = P.compraDatos();
       const todas = d.grupos.reduce((a, g) => a + g[2].length, 0);
-      const tengo = d.grupos.reduce((a, g) => a + g[2].filter((x) => x.tengo && !x.falta).length, 0);
-      return { total: d.total, todas: todas, tengo: tengo }; });
+      const tengo = d.grupos.reduce((a, g) => a + g[2].filter((x) => x.tengo && !x.falta && !x.basico).length, 0);
+      const basicos = d.grupos.reduce((a, g) => a + g[2].filter((x) => x.basico).length, 0);
+      return { total: d.total, todas: todas, tengo: tengo, basicos: basicos }; });
     check('lo que ya tienes en casa no se cuenta como pendiente en la compra',
-      cuenta.tengo === 3 && cuenta.total === cuenta.todas - cuenta.tengo,
+      cuenta.tengo === 3 && cuenta.total === cuenta.todas - cuenta.tengo - cuenta.basicos,
       JSON.stringify(cuenta));
 
     // 4 · gastarlo hasta el final: desaparece de la despensa y la compra lo vuelve a pedir
@@ -5777,7 +5778,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       delete P.food().ultimaCompra;
       P.store.listas = (P.store.listas || []).filter((l) => l.nombre !== 'A mano');
       P.ui.marks = new Set(); P.ui.compraSalida = 'todo'; P.ui.shopVista = '';
-      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos']);
+      P.ui.compraAbiertas = new Set(); P.ui.compraCerradas = new Set(['rutina', 'basicos', 'casa']);
       P.save(); P.render(); });
     await page.waitForTimeout(250);
   }
@@ -6272,6 +6273,80 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.setPerfil('nacidoF', ''); P.setPerfil('meta', 'mantener');
       P.ui.menuAuto = null; P.ui.typesVista = ''; P.save(); P.render(); });
     await page.waitForTimeout(250);
+  }
+
+  // 200) COCINA: el buscador de nutrición, los platos por alimento y la compra por alimento
+  {
+    const cocina = await page.evaluate(() => {
+      const P = window.PG;
+      const m = (t) => { const a = P.alimDeTexto(t); return a ? a.n : null; };
+      const plato = { id: 'd-t200', name: 'Prueba 200', icon: '🍗', portions: 2, batchId: '',
+        ingredients: ['300 g pechuga de pollo', '2 patata', '1 cda aceite de oliva', 'un chorrito de salsa rara'], steps: [] };
+      P.migrarPlato(plato);
+      const todos = P.alimTodos().length;
+      return {
+        todos,
+        pollo: m('pechuga de pollo'), lent: m('lentejas'), rara: m('salsa rara'),
+        alims: plato.alims.length, sin: plato.sinCasar,
+        kcalSinTocar: plato.kcal === undefined,
+        porDefecto: P.store.dishes.filter((d) => d.alimsV && !(d.sinCasar || []).length).length,
+        platos: P.store.dishes.length,
+      };
+    });
+    check('la base de alimentos pasa de 86 a más de 300 y casa lo que se escribe en una receta',
+      cocina.todos > 300 && /pechuga de pollo/i.test(cocina.pollo || '') && /lenteja/i.test(cocina.lent || '') &&
+      cocina.rara === null, JSON.stringify(cocina));
+    check('un plato de texto pasa a alimentos con gramos; lo que no se reconoce queda para elegir y no inventa kcal',
+      cocina.alims === 3 && cocina.sin.length === 1 && cocina.kcalSinTocar, JSON.stringify(cocina));
+
+    await gotoFood('add', 'buscar');
+    await page.fill('#fbQ', 'pollo');
+    await page.waitForTimeout(400);
+    const bus = await page.evaluate(() => ({
+      filas: document.querySelectorAll('#main .hit').length,
+      grupos: Array.from(document.querySelectorAll('#main .grp')).map((g) => g.textContent),
+      racion: !!document.querySelector('#main .kc.rac b'),
+      off: !!document.querySelector('#main [data-a="off-buscar"]'),
+    }));
+    check('buscar «pollo» saca genéricos con su ración, Mercadona aparte y Open Food Facts a un toque',
+      bus.filas >= 15 && bus.grupos.some((g) => /Mercadona/.test(g)) && bus.racion && bus.off, JSON.stringify(bus));
+
+    const hit = await page.$('#main .hit [data-a="food-abrir"]');
+    if (hit) await hit.click();
+    await page.waitForTimeout(200);
+    const fav = await page.$('[data-a="food-fav"]');
+    if (fav) await fav.click();
+    const nev = await page.$('[data-a="food-dest"][data-d="nevera"]');
+    if (nev) await nev.click();
+    await page.waitForTimeout(150);
+    const ap = await page.$('[data-a="food-apuntar"]');
+    if (ap) await ap.click();
+    await page.waitForTimeout(200);
+    const dest = await page.evaluate(() => {
+      const P = window.PG;
+      return { fav: (P.food().favV || []).length, nevera: (P.food().despensa || []).length,
+        hoy: (P.food().log || []).length };
+    });
+    check('la hoja de cantidad guarda en favoritos y manda a la nevera en vez de a la comida de hoy',
+      dest.fav >= 1 && dest.nevera >= 1, JSON.stringify(dest));
+    await page.evaluate(() => { const P = window.PG; P.ui.foodTab = 'fav'; P.ui.foodBusca = ''; P.ui.foodVista = 'buscar'; P.render(); });
+    await page.waitForTimeout(150);
+    const nfav = await page.evaluate(() => document.querySelectorAll('#main .hit').length);
+    check('la pestaña Favoritos enseña lo marcado con ♡', nfav >= 1, String(nfav));
+    await page.evaluate(() => { const P = window.PG; P.ui.foodTab = ''; P.food().despensa = []; P.food().favV = []; P.save(); P.render(); });
+
+    const compra = await page.evaluate(() => {
+      const d = window.PG.compraDatos();
+      const fresco = d.grupos.filter((g) => g[0] === 'fresco')[0][2].map((x) => x.texto);
+      const casa = d.grupos.filter((g) => g[0] === 'casa')[0][2].map((x) => x.texto);
+      const dup = fresco.map((t) => t.replace(/^[\d.,]+\s*k?g\s+/, '')).filter((t, i, a) => a.indexOf(t) !== i);
+      return { fresco: fresco.length, casa, dup, kcalDia: d.kcalDia,
+        platano: fresco.filter((t) => /Plátano/.test(t)) };
+    });
+    check('la compra suma por alimento (sin repetidos), pliega sal/aceite y dice las kcal/día del menú',
+      compra.dup.length === 0 && compra.casa.some((t) => /Sal|Aceite/.test(t)) && compra.kcalDia > 0,
+      JSON.stringify(compra));
+    await page.evaluate(() => { const P = window.PG; P.store.dishes = P.store.dishes.filter((d) => d.id !== 'd-t200'); P.save(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
