@@ -1341,3 +1341,42 @@ ul.slots{list-style:none;margin:0;padding:0}
 .gvfint b{display:block;font-size:17px;font-weight:800}
 .gvfint span{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:1px}
 .gvfin{border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+
+/* ============ «Mes» con una semana de antes y otra de después ============
+   La cuadrícula son siete filas (la semana anterior, las del mes y la siguiente) y se estira hasta
+   el alto de la pantalla: al bajar hasta ella, el mes ocupa el móvil entero. Encima solo queda una
+   fila de navegación; «repartir» y «vaciar» bajan a la tarjeta de cuentas del mes. */
+.mesnav{display:flex;gap:6px;align-items:center;margin-top:8px;min-width:0}
+.mesnav input[type=month]{flex:1 1 auto;min-width:0;width:auto}
+.mesnav .btn{flex:0 0 auto}
+.cal.ext{grid-auto-rows:minmax(92px,1fr);min-height:calc(100svh - 96px)}
+.dbox.fuera{opacity:.5;background:color-mix(in srgb,var(--card) 40%,var(--bg))}
+.dbox.fuera.today,.dbox.fuera.sel{opacity:1}
+/* un evento en la casilla: punto de su color, hora en negrita y el nombre, hasta dos líneas */
+.dbox .dev{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  font-size:8.5px;font-weight:600;line-height:1.18;color:var(--ink);overflow-wrap:anywhere;margin-top:1px}
+.dbox .dev .dpt{display:inline-block;width:6px;height:6px;margin-right:2px;vertical-align:1px}
+.dbox .dev b{font-weight:800;color:var(--ink2)}
+@media(max-width:560px){
+  .cal.ext{min-height:calc(100svh - 70px);grid-auto-rows:minmax(92px,1fr)}
+  .calmes>h2{margin-bottom:0}
+}
+@media print{
+  /* en papel NO hay alto de pantalla que llenar: con el min-height de 100svh la tarjeta del mes
+     no cabía en la hoja, el break-inside:avoid la mandaba entera a la segunda y la primera salía
+     en blanco */
+  .cal.ext{min-height:0!important;grid-auto-rows:minmax(52px,auto)}
+  html.imp-mes .dbox.fuera{opacity:.45}
+}
+.dbox .dev.solo{-webkit-line-clamp:3}
+
+/* ============ Ajustes → Cómo se ve: los cinco temas ============ */
+.temas{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:6px}
+.tema{display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:8px;border:2px solid;border-radius:12px;
+  cursor:pointer;font:inherit;text-align:left;min-height:96px}
+.tema.on{box-shadow:0 0 0 2px color-mix(in srgb,currentColor 25%,transparent)}
+.tmues{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border-radius:8px;padding:6px}
+.tmues i{width:14px;height:14px;border-radius:99px}
+.tmues b{flex:1 0 100%;height:8px;border-radius:3px}
+.tnom{font-size:12.5px;font-weight:800}
+.tmodo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}

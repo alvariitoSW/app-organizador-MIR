@@ -116,6 +116,15 @@ click through the real UI for the actual check.
 - `.claude/worktrees/` is gitignored (scratch copies for background agents); the
   rest of `.claude/` (this skill included) is tracked.
 
+**Mes lleva la semana de antes y la de después**: la cuadrícula ya no empieza en el día 1 con huecos
+vacíos. Los días de fuera del mes son `.dbox.fuera`, clicables igual. Para contar «las casillas del
+mes» filtra `:not(.fuera)`. Y `.cal.ext` tiene `min-height:100svh`: en `@media print` se anula,
+porque si no la tarjeta no cabe en la hoja y la primera página sale en blanco.
+
+**Temas**: `PG.ponerTema(id)` (`hud|magenta|bosque|papel|arena`) cambia el modo claro/oscuro, las
+variables de color y los colores de la franja de golpe. Si una prueba deja uno puesto, las
+siguientes ven otro fondo: vuelve a `ponerTema('hud')` al terminar.
+
 ## Imprimir NO se prueba con capturas
 
 `page.emulateMedia({media:'print'})` + captura de pantalla **no es imprimir**: compone al

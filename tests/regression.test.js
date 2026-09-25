@@ -1275,14 +1275,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await gotoTab('month');
   await page.waitForTimeout(150);
-  // el nombre ya no se escribe dentro de la casilla —53 px daban «Entreno c»— sino que el día
-  // queda marcado con un punto de su color, y el nombre entero vive en la lista de eventos del mes
-  const mesConEvento = await page.evaluate(() => ({
-    marcado: [...document.querySelectorAll('#main .dbox .dpt')].some((l) => /Entreno con Marta/.test(l.title)),
-    sinTextoRecortado: !/Entreno con/.test(document.querySelector('#main .cal').innerText),
-  }));
-  check('"Mes" marca el día del evento con su color, sin recortar el nombre en la casilla',
-    mesConEvento.marcado && mesConEvento.sinTextoRecortado, JSON.stringify(mesConEvento));
+  // «que quepan aunque sea en pequeño los eventos del día»: con las casillas ya altas (siete filas
+  // que llenan la pantalla), el evento lleva su punto de color Y su nombre, partido por palabras en
+  // hasta dos líneas (tres si es el único del día), con la hora detrás
+  const mesConEvento = await page.evaluate(() => {
+    const ev = [...document.querySelectorAll('#main .dbox .dev')].find((l) => /Entreno con Marta/.test(l.title));
+    return { marcado: !!(ev && ev.querySelector('.dpt')),
+      conNombre: ev ? /Entreno con/.test(ev.innerText) : false,
+      conHora: ev ? /\b8\b/.test(ev.innerText) : false };
+  });
+  check('"Mes" enseña el evento en su casilla con su color, su nombre y su hora',
+    mesConEvento.marcado && mesConEvento.conNombre && mesConEvento.conHora, JSON.stringify(mesConEvento));
 
   // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
   // mapa de calor de 6 semanas, y borrarlo (con confirmación)
@@ -2448,9 +2451,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('los eventos del mes salen marcados en su casilla y listados enteros debajo',
       agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
 
-    // Con el título del evento dentro de la casilla se leía «Llegar a», «Vuelo de»: la casilla mide
-    // 53 px de ancho, ahí caben ocho caracteres. Y cada evento gastaba una línea entera, así que con
-    // cuatro la casilla reventaba. Un punto por evento cabe siempre y el nombre está en la lista.
+    // Con diez eventos en un día la casilla no puede reventar: caben tres con su nombre (en dos
+    // líneas como mucho, partido por palabras) y el resto va como «+N». El nombre entero sigue en
+    // la lista del mes y al tocar el día.
     const aprieto = await page.evaluate(() => {
       const y = new Date().getFullYear(), m = new Date().getMonth();
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -2474,13 +2477,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         masN: (celda.querySelector('.dmas') || {}).textContent || '',
         nota: !!celda.querySelector('.dnota'),
         desborda: celda.scrollHeight > celda.clientHeight,
-        // nada de texto de evento recortado dentro de la casilla
-        sinTituloRecortado: !/Un evento de/.test(celda.innerText),
+        // los tres que caben llevan su nombre, y ninguno pasa de dos líneas
+        titulos: [...celda.querySelectorAll('.dev')].filter((x) => /Un evento de/.test(x.innerText)).length,
+        maxLineas: Math.max(...[...celda.querySelectorAll('.dev')].map((x) =>
+          Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)))),
       };
     });
-    check('con diez eventos en un día, la casilla los marca sin desbordarse ni recortar títulos',
-      aprieto.puntos === 6 && aprieto.masN === '+4' && aprieto.nota &&
-      !aprieto.desborda && aprieto.contenido < aprieto.altoCelda && aprieto.sinTituloRecortado,
+    check('con diez eventos en un día, la casilla enseña tres con nombre y «+7», sin desbordarse',
+      aprieto.puntos === 3 && aprieto.masN === '+7' && aprieto.nota && aprieto.titulos === 3 &&
+      aprieto.maxLineas <= 2 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
       JSON.stringify(aprieto));
 
     // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
@@ -4952,6 +4957,129 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymSesionActiva = null; P.ui.gymVivo = null; P.ui.gymDesc = null;
       P.save(); P.render();
     });
+  }
+
+  // ===================== Mes con una semana de antes y otra de después =====================
+  {
+    // «quiero ver dos semanas más, una del mes anterior y otra del siguiente»: la cuadrícula empieza
+    // la semana de antes del día 1 y acaba la de después del último, sin casillas vacías.
+    await gotoTab('month');
+    const mb = await page.$('#main [data-a="mon-today"]');
+    if (mb) await mb.click();
+    await page.waitForTimeout(300);
+    const rej = await page.evaluate(() => {
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      const celdas = [...document.querySelectorAll('#main .cal .dbox')];
+      const huecos = [...document.querySelectorAll('#main .cal > span:not(.wd)')].length;
+      const claves = celdas.map((c) => c.dataset.key);
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const dia1 = iso(new Date(y, m, 1)), ult = iso(new Date(y, m + 1, 0));
+      const i1 = claves.indexOf(dia1), iu = claves.indexOf(ult);
+      return { n: celdas.length, filas: celdas.length / 7, huecos,
+        antes: i1, despues: claves.length - 1 - iu,
+        fuera: celdas.filter((c) => c.classList.contains('fuera')).length,
+        fueraBien: celdas.every((c, i) => c.classList.contains('fuera') === (i < i1 || i > iu)) };
+    });
+    check('Mes enseña la semana de antes y la de después, apagadas, sin huecos vacíos',
+      rej.huecos === 0 && rej.n % 7 === 0 && rej.antes >= 7 && rej.antes <= 13 &&
+      rej.despues >= 7 && rej.despues <= 13 && rej.fueraBien, JSON.stringify(rej));
+    // y se estira hasta el alto de la pantalla: con siete u ocho filas, cada casilla sigue alta
+    const alto = await page.evaluate(() => {
+      const cal = document.querySelector('#main .cal'), c = document.querySelector('#main .cal .dbox');
+      return { cal: Math.round(cal.getBoundingClientRect().height), celda: Math.round(c.getBoundingClientRect().height), vh: innerHeight };
+    });
+    check('la cuadrícula del mes ocupa casi toda la pantalla', alto.cal >= alto.vh * 0.85 && alto.celda >= 90,
+      JSON.stringify(alto));
+  }
+
+  // ===================== Acostarse a medianoche no pinta el día entero de sueño =====================
+  {
+    // En vacaciones, con la cama a las 00:00, la franja pintaba sueño de 0:00 a 24:00: la barra era un
+    // solo bloque y no se veía nada más. Acostarse a las 00:00 es la noche siguiente.
+    const franja = await page.evaluate(() => {
+      const P = window.PG;
+      const k = '2027-03-10';
+      P.store.rotation.vacaciones = (P.store.rotation.vacaciones || []).filter((v) => v.label !== 'medianoche');
+      P.addVacation(k, k, 'medianoche');
+      const sh = P.dayInfo(k).shiftId;
+      const r = P.store.rhythm[sh]; const antes = r.sleep; r.sleep = '00:00';
+      const box = document.createElement('div'); box.innerHTML = P.timelineBar(k);
+      r.sleep = antes;
+      const col = P.tlColor('sleep');
+      const tramos = [...box.querySelectorAll('.tl-seg')].map((x) => ({ w: parseFloat(x.style.width), l: parseFloat(x.style.left), t: x.title }));
+      return { tramos, masAncho: Math.max(0, ...tramos.map((t) => t.w)) };
+    });
+    check('con la cama a las 00:00 la franja no pinta el día entero de sueño',
+      franja.tramos.length >= 1 && franja.masAncho < 60 && !franja.tramos.some((t) => /a la cama/.test(t.t)),
+      JSON.stringify(franja));
+  }
+
+  // ===================== Cinco temas de color en Ajustes =====================
+  {
+    await gotoTab('ajustes', 'aspecto');
+    await page.waitForTimeout(250);
+    const nBot = await page.$$eval('#main [data-a="tema-pre"]', (x) => x.length);
+    const lee = () => page.evaluate(() => ({ dark: document.documentElement.classList.contains('dark'),
+      bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+      sueno: window.PG.tlColor('sleep'), trabajo: window.PG.tlColor('work'), pre: window.PG.store.tema.preset }));
+    const bm = await page.$('#main [data-a="tema-pre"][data-id="magenta"]');
+    if (bm) await bm.click();
+    await page.waitForTimeout(150);
+    const mag = await lee();
+    const bp = await page.$('#main [data-a="tema-pre"][data-id="papel"]');
+    if (bp) await bp.click();
+    await page.waitForTimeout(150);
+    const pap = await lee();
+    check('Ajustes trae cinco temas y cada uno pone fondo, modo y colores de la franja',
+      nBot === 5 && !!bm && mag.dark && mag.bg === '#12081a' && mag.pre === 'magenta' && mag.sueno !== mag.trabajo &&
+      !!bp && !pap.dark && pap.pre === 'papel', JSON.stringify({ nBot, mag, pap }));
+    // el tema sobrevive a recargar (normalize() no se lo come)
+    const vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.tema.preset; });
+    // un texto negro sobre fondo oscuro no se aplica: dejaba la app ilegible
+    const tinta = await page.evaluate(() => {
+      const P = window.PG; P.ponerTema('hud'); P.store.tema.ink = '#000000'; P.aplicarTema();
+      const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+      P.store.tema.ink = ''; P.aplicarTema();
+      return { ink, legible: P.tintaLegible('#000000') };
+    });
+    check('el tema aguanta la recarga y un color de texto ilegible no se aplica',
+      vuelta === 'papel' && tinta.ink !== '#000000' && tinta.legible === false, JSON.stringify({ vuelta, tinta }));
+    await page.evaluate(() => { window.PG.ponerTema('hud'); });
+  }
+
+  // ===================== Google: sesiones fijas, rotación y entreno =====================
+  {
+    const g = await page.evaluate(() => {
+      const P = window.PG;
+      // tus datos de siempre (sin la marca) reciben las dos sesiones UNA vez; una instalación nueva no
+      const viejo = JSON.parse(JSON.stringify(P.store)); delete viejo.meta.sesionesFijas;
+      viejo.eventos = viejo.eventos.filter((e) => !/^Sesi[oó]n (UMI|general)/.test(e.titulo));
+      P.store = viejo;
+      const ses = P.store.eventos.filter((e) => /^Sesi[oó]n (UMI|general)/.test(e.titulo));
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const ses2 = P.store.eventos.filter((e) => /^Sesi[oó]n (UMI|general)/.test(e.titulo)).length;
+      // un martes de trabajo y otro de vacaciones
+      const trab = '2027-06-08', vac = '2027-06-15';
+      P.setDayOverride(trab, 'sh-t', '');
+      P.addVacation(vac, vac, 'test-ses');
+      P.setMonthService(2027, 5, 'UMI', 5);
+      const evs = P.calEventos('2027-06-07', '2027-06-16');
+      const de = (k) => evs.filter((e) => e.isoKey === k).map((e) => e.summ);
+      const umi = ses.filter((e) => /UMI/.test(e.titulo))[0] || {};
+      const gen = ses.filter((e) => /general/.test(e.titulo))[0] || {};
+      return { n: ses.length, n2: ses2,
+        umi: umi.dow + ' ' + umi.hora + '-' + umi.fin + ' ' + umi.soloTrabajo,
+        gen: gen.dow + ' ' + gen.hora + '-' + gen.fin,
+        enTrabajo: de(trab), enVac: de(vac),
+        rot: evs.filter((e) => e.cat === 'ROTACION').map((e) => e.summ + ' ' + e.isoKey + '→' + e.hastaIso),
+        ics: /DTEND;VALUE=DATE:20270617/.test(P.icsTexto('2027-06-07', '2027-06-16')) };
+    });
+    check('las sesiones de la UMI (martes 8:00–8:39) y la general (jueves 8:00–8:30) entran una vez',
+      g.n === 2 && g.n2 === 2 && g.umi === '2 08:00-08:39 true' && g.gen === '4 08:00-08:30', JSON.stringify(g));
+    check('a Google van la sesión de los martes que trabajas (no en vacaciones), el trabajo con su rotación y la rotación',
+      g.enTrabajo.some((x) => /Sesión UMI/.test(x)) && g.enTrabajo.some((x) => /Trabajo · UMI/.test(x)) &&
+      !g.enVac.some((x) => /Sesión UMI/.test(x)) &&
+      g.rot.length === 1 && /Rotación · UMI 2027-06-07→2027-06-16/.test(g.rot[0]) && g.ics, JSON.stringify(g));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
