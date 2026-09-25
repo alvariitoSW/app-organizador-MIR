@@ -1769,3 +1769,12 @@ ul.slots{list-style:none;margin:0;padding:0}
 .icsgf .n b{font-size:12.5px;font-weight:700}
 .icsgf .n span{font-size:10.5px;font-weight:700;color:var(--ink2)}
 .icsgf .btn{flex:0 0 auto}
+/* la cocina en Semana: solo cuándo toca ponerse. El detalle —pasos, tápers, lo que sobra— vive
+   entero en Comer → Cocina, y repetirlo aquí costaba 999 px de la vista de la semana */
+.cocmini{display:flex;flex-direction:column;gap:6px}
+.cocm{display:flex;align-items:baseline;gap:9px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:11px;background:color-mix(in srgb,var(--bg2) 55%,transparent);cursor:pointer;
+  color:var(--ink);font:inherit;text-align:left;width:100%}
+.cocm:hover{border-color:var(--brand)}
+.cocm b{font-size:13px;font-weight:700}
+.cocm span{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap}

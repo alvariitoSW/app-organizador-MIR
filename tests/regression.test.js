@@ -6274,6 +6274,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
   }
 
+  // ===================================================================================
+  // Ir y volver del trabajo. La app decía «al salir de la jornada» y usaba una hora
+  // FIJA: con jornada de 8 a 15 te ponía a comer EN CASA a las 14:00, que es imposible
+  // —a esa hora estás en el hospital—. Y no contaba el rato de llegar a ningún lado.
+  // ===================================================================================
+  {
+    const k = await page.evaluate(() => { const P = window.PG;
+      P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true;
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      // un día de jornada 8–15, sin entreno
+      const k = P.iso(new Date());
+      P.setDayOverride(k, 'sh-t', '');
+      P.save(); return k; });
+
+    const viaje = await page.evaluate((k) => { const P = window.PG;
+      const jor = P.jornadaOf(k);
+      const cp = P.comidaPrincipalDe(k);
+      const bl = P.bloquesDelDia(k);
+      const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+      const finJor = jor && jor.end ? (+jor.end.slice(0, 2) * 60 + +jor.end.slice(3, 5)) : null;
+      const comida = bl.filter((b) => /Comida/i.test(b.tit))[0];
+      return { jornada: jor ? (jor.start + '-' + jor.end) : '—',
+        comidaDe: cp ? cp.de : '', por: cp ? cp.por : '',
+        llegas: P.llegasACasa(k) != null ? hm(P.llegasACasa(k)) : '',
+        salirTxt: P.salirDeCasaTxt(),
+        // el bloque de la comida en el carril tiene que ir DESPUÉS de la jornada
+        comidaTrasJornada: !!(comida && finJor != null && comida.de >= finJor),
+        salirDeCasa: bl.filter((b) => /Salir de casa/.test(b.tit))[0] || null,
+        aCasa: bl.filter((b) => /A casa/.test(b.tit))[0] || null }; }, k);
+    check('con jornada de 8 a 15 la comida cae al llegar a casa, no a las 14:00 en el hospital',
+      viaje.jornada === '08:00-15:00' && viaje.comidaDe === '15:20' && viaje.por === 'llegar' &&
+      viaje.llegas === '15:20' && viaje.comidaTrasJornada === true,
+      JSON.stringify(viaje));
+    // salir de casa sale del bus y de los minutos que quieres estar antes en la parada
+    check('el carril enseña a qué hora salir de casa para el bus, y cuándo llegas de vuelta',
+      /salir de casa 07:31 · bus 07:35/.test(viaje.salirTxt) &&
+      viaje.salirDeCasa && viaje.salirDeCasa.de === 7 * 60 + 31 && viaje.salirDeCasa.fino === true &&
+      viaje.aCasa && viaje.aCasa.a === 15 * 60 + 20,
+      JSON.stringify(viaje));
+
+    // al calendario va UNA línea corta antes de entrar, y nada más del desplazamiento
+    const ics = await page.evaluate((k) => { const P = window.PG;
+      const evs = P.calEventos(k, k);
+      const v = evs.filter((e) => /Salir de casa/.test(e.summ));
+      return { n: v.length, summ: v[0] ? v[0].summ : '', cat: v[0] ? v[0].cat : '',
+        total: evs.length }; }, k);
+    check('al calendario de Google va una sola línea del viaje: salir de casa y el bus',
+      ics.n === 1 && /Salir de casa 07:31 · bus 07:35/.test(ics.summ) && ics.cat === 'TRABAJO',
+      JSON.stringify(ics));
+
+    // y se puede apagar sin tocar código: es un ajuste, no una constante
+    const off = await page.evaluate((k) => { const P = window.PG;
+      P.store.rotation.viaje.on = false; P.save();
+      const bl = P.bloquesDelDia(k);
+      const cp = P.comidaPrincipalDe(k);
+      P.store.rotation.viaje.on = true; P.save();
+      return { salir: bl.some((b) => /Salir de casa/.test(b.tit)),
+        comidaDe: cp.de }; }, k);
+    check('el viaje se apaga desde Ajustes, y entonces la comida vuelve a la hora de salir',
+      off.salir === false && off.comidaDe === '15:00',
+      JSON.stringify(off));
+
+    await page.evaluate((k) => { const P = window.PG; P.setDayOverride(k, null); P.save(); P.render(); }, k);
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

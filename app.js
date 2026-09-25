@@ -71,7 +71,11 @@ function DEFAULTS(){return {
              saltoDia:{from:6,to:1},
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
              svcMeses:[1,1,1,1,1,1,1],
-             jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
+             jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[],
+             /* ir y volver del trabajo: sin esto la app te ponía a comer en casa a las 14:00 un
+                día que trabajas hasta las 15:00, y te hacía aparecer en el hospital a la hora de
+                entrar sin contar el rato de llegar */
+             viaje:{min:20,bus:'07:35',antes:4,on:true}},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360},
   /* la comida principal va cuando toca según el día, no a una hora fija del tipo de día */
   comidas:{conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30},
@@ -457,6 +461,14 @@ function normalize(o){
   if(!o.food.objetivo||typeof o.food.objetivo!=='object')o.food.objetivo={kcal:0,prot:0};
   /* el perfil: sin registrarlo aquí se perdería al recargar, como todo lo que normalize() no conoce */
   if(!o.perfil||typeof o.perfil!=='object')o.perfil={};
+  /* ir y volver del trabajo */
+  if(!o.rotation.viaje||typeof o.rotation.viaje!=='object')
+    o.rotation.viaje=JSON.parse(JSON.stringify((d.rotation&&d.rotation.viaje)||{min:20,bus:'07:35',antes:4,on:true}));
+  {const v=o.rotation.viaje;
+   v.min=(+v.min>=0&&+v.min<=180)?Math.round(+v.min):20;
+   v.bus=/^\d{1,2}:\d{2}$/.test(String(v.bus||''))?v.bus:'';
+   v.antes=(+v.antes>=0&&+v.antes<=30)?Math.round(+v.antes):4;
+   v.on=v.on!==false;}
   o.perfil.celiaco=!!o.perfil.celiaco;
   /* la avena certificada: por defecto sí, que es lo que compra él */
   o.perfil.avenaSinGluten=o.perfil.avenaSinGluten!==false;
@@ -1220,6 +1232,29 @@ function esSaliente(sh){return !!sh&&/saliente|post ?-?guardia/i.test(String(sh.
        porque esa hora depende de a qué hora te relevaron.
    Antes era una lista de horas fijas por tipo de día, y por eso el mismo «Día de trabajo» decía
    siempre 14:30 entrenaras o no. Los valores se cambian en Ajustes; estos son los de fábrica. */
+function viajeCfg(){
+  /* IR Y VOLVER. `min` es lo que tardas de casa al trabajo (y al revés); `bus` la hora del
+     transporte que sueles coger, y `antes` los minutos que quieres estar en la parada antes de que
+     pase. De ahí sale a qué hora tienes que salir de casa y a qué hora llegas de vuelta. */
+  const d={min:20,bus:'07:35',antes:4,on:true},o=(store.rotation&&store.rotation.viaje)||{};
+  if(+o.min>=0&&+o.min<=180)d.min=Math.round(+o.min);
+  if(/^\d{1,2}:\d{2}$/.test(String(o.bus||'')))d.bus=o.bus; else if(o.bus==='')d.bus='';
+  if(+o.antes>=0&&+o.antes<=30)d.antes=Math.round(+o.antes);
+  if(o.on===false)d.on=false;
+  return d;}
+function salirDeCasaTxt(){
+  /* «salir de casa 7:30 · bus 7:35», que es exactamente lo que pidió y nada más */
+  const v=viajeCfg();
+  if(!v.on||!v.bus)return '';
+  const b=mins(v.bus);if(b==null)return '';
+  return 'salir de casa '+hm(b-v.antes)+' · bus '+fmtTimeOut(v.bus);}
+function llegasACasa(dateStr,infOpt){
+  /* a qué hora estás de vuelta: el fin de la jornada más el viaje */
+  const jor=jornadaOf(dateStr,infOpt);
+  if(!jor||!jor.end)return null;
+  const f=mins(jor.end);if(f==null)return null;
+  const v=viajeCfg();
+  return f+(v.on?v.min:0);}
 function comidasCfg(){
   const d={conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30};
   const o=store.comidas||{},hh=/^\d{1,2}:\d{2}$/;
@@ -1244,10 +1279,23 @@ function comidaPrincipalDe(dateStr,infOpt){
     if(sl&&sl.siesta){const m=mins(sl.siesta.a);
       if(m!=null)return {de:hm(m+c.trasSiesta),a:hm(m+c.trasSiesta+60),por:'siesta'};}}
   if(hayEntrenoEn(dateStr,inf))return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};
+  /* LA COMIDA NO PUEDE CAER DENTRO DE LA JORNADA. Esto decía «al salir de la jornada» y usaba una
+     hora FIJA: con jornada de 8 a 15 te ponía a comer en casa a las 14:00, que es imposible —a esa
+     hora estás en el hospital—. Ahora la hora de la lista es lo PRONTO que comerías, y si la
+     jornada acaba más tarde manda la jornada: fin + lo que tardas en llegar a casa. */
+  const jor=jornadaOf(dateStr,inf);
+  if(jor&&jor.end){
+    const enCasa=llegasACasa(dateStr,inf);
+    const puesta=mins(c.sinEntreno.de);
+    if(enCasa!=null&&puesta!=null&&enCasa>puesta){
+      const dur=Math.max(30,(mins(c.sinEntreno.a)||(puesta+60))-puesta);
+      return {de:hm(enCasa),a:hm(enCasa+dur),por:'llegar'};}
+    return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'jornada'};}
   /* un día libre no tiene jornada de la que salir: la hora es la misma, pero no se inventa el motivo */
-  return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:jornadaOf(dateStr,inf)?'jornada':'normal'};}
+  return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'normal'};}
 function comidaPorqueTxt(por){
   return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':
+    por==='llegar'?'al llegar a casa del trabajo':
     por==='jornada'?'al salir de la jornada':'';}
 function comidaPrincipalTxt(cp){
   if(!cp)return '';
@@ -3234,6 +3282,25 @@ function bloquesDelDia(key){
     else if(sh.start&&!/fuerza|entreno/i.test(sh.name||'')){
       add({de:bloqDeMin(sh.start),a:bloqDeMin(sh.end),cat:'work',
         tit:(sh.icon||'💼')+' '+sh.name,sub:sh.start+'–'+(sh.end||''),ir:'ir-cfg'});}}
+  /* IR Y VOLVER. Dos rayas finas: la de salir de casa (con la hora del bus) y la de volver. No es
+     un bloque gordo porque no es una tarea, es el borde de la jornada — pero sin ellas la app te
+     hacía aparecer en el hospital a la hora de entrar y comer en casa antes de haber salido. */
+  (function(){
+    const v=viajeCfg();
+    if(!v.on)return;
+    const jor=jornadaOf(key,inf);
+    if(!jor||!jor.start||isGuardia(sh))return;
+    const ent=mins(jor.start);
+    if(ent!=null){
+      const b=v.bus?mins(v.bus):null;
+      const sale=(b!=null)?(b-v.antes):(ent-v.min);
+      add({de:sale,a:ent,cat:'work',fino:true,
+        tit:'🚌 Salir de casa',
+        sub:(b!=null)?(hm(sale)+' · bus '+fmtTimeOut(v.bus)):(v.min+' min hasta allí'),
+        ir:'ir-viaje'});}
+    const casa=llegasACasa(key,inf);
+    if(casa!=null&&v.min>0)add({de:casa-v.min,a:casa,cat:'work',fino:true,
+      tit:'🏠 A casa',sub:'llegas '+hm(casa),ir:'ir-viaje'});})();
   /* el entreno de fuerza: la rutina que toca, con las horas del propio tipo de día */
   const rt=rutinaDeFecha(key),esF=/fuerza|entreno/i.test(sh.name||'');
   if(esF||rt){
@@ -3254,7 +3321,9 @@ function bloquesDelDia(key){
   /* las comidas: finas y a un lado, que son marcas de hora y no ocupan la mañana entera */
   const cp=comidaPrincipalDe(key,inf);
   slotsFor(sh.id).forEach(function(sl){
-    const h=(cp&&cp.slotId===sl.id&&cp.hora)?cp.hora:sl.time;
+    /* horaDeToma() ya sabe cuál de las tomas es «la comida» y le pone la hora del día; mirar un
+       cp.slotId que no existe dejaba la comida en su hora de lista —dentro de la jornada— */
+    const h=horaDeToma(key,sl,cp);
     const t=totals(slotItems(sh.id,sl).items||[]);
     add({de:bloqDeMin(h),dur:30,cat:'meal',tit:'🍽 '+sl.label,
       sub:t.kcal?(t.kcal+' kcal · '+t.prot+' g'):'sin platos',
@@ -3661,12 +3730,21 @@ function semanaFilaHTML(d,i,anyDate){
         (sh&&d.key?'<button class="btn s" data-a="day-quickbf" data-id="'+sh.id+'">desayuno rápido de diario</button>':'')+
         (sh&&d.key?'<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar las horas de dormir</button>':'')+
       '</div></div>';
+  /* CERRADO ES UNA LÍNEA. La rejilla de arriba ya enseña la semana entera con sus horas, así que
+     repetir aquí la franja, el sueño y las comidas de los siete días costaba 129 px POR DÍA con la
+     tarjeta cerrada: 900 px de repetición y tres pantallas de scroll para ver la semana. Lo de
+     dentro se ve al abrir el día, que es cuando lo estás mirando. */
   return '<div class="drow'+(open?' open':'')+(isToday(d.key)?' today':'')+'" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
     '<div class="drmain" data-a="day-open" data-key="'+kk+'" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
-    (d.key&&sh?timelineBar(d.key,d.inf,{grande:true,sinEje:tlHoras()>=24}):'')+
-    '<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+(d.key?solPiesHTML(d.key):'')+'</div>'+
-    ((comidas||evs||est)?('<div class="drplan">'+comidas+evs+est+'</div>'):'')+
-    (open?det:'')+'</div>';}
+    (open?(
+      (d.key&&sh?timelineBar(d.key,d.inf,{grande:true,sinEje:tlHoras()>=24}):'')+
+      '<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+(d.key?solPiesHTML(d.key):'')+'</div>'+
+      ((comidas||evs||est)?('<div class="drplan">'+comidas+evs+est+'</div>'):'')+
+      det)
+      /* cerrado, solo una pista de lo que hay: los eventos y el repaso, que es lo que no se ve en
+         la rejilla por falta de sitio */
+      :((evs||est)?('<div class="drplan">'+evs+est+'</div>'):''))+
+    '</div>';}
 function hCortaHM(t){/* «6:55», «15:30», «21:00»: sin el cero delante, que es lo que más se lee */
   const m=mins(t);if(m==null)return t||'';return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function mealRowsCompactHTML(d,sh){
@@ -3730,28 +3808,11 @@ function renderWeek(){
       </div>
     </div>
     <div class="grid g2">
-      <div class="card"><h2>Lo que hay que cocinar esta semana</h2>
-        <p class="note">Un bloque por sesión de cocina: qué pones al fuego ese día y cuántos tápers salen de cada cosa. Lo que sobre de una tanda va al congelador.</p>
-        ${used.length?used.map(b=>`<div class="cocblq">
-          <div class="tarj-top">
-            <b style="font-size:13.5px">${esc(b.label)}</b>
-            <span class="sp"></span>
-            <span class="tag b2">${b.portions} raciones</span></div>
-          <div class="row" style="margin-top:3px">
-            <span class="mini">${esc(b.when||'')}</span>
-            <span class="sp"></span>
-            <button class="btn s" data-a="tab" data-t="batches">abrir →</button></div>
-          <div class="platos">${b.items.filter(i=>i.runs>0).map(function(i){
-            const sobra=i.cooked>i.needPort?Math.round((i.cooked-i.needPort)*10)/10:0;
-            return '<div class="plato" title="'+esc(i.dish.name)+'">'+
-              '<span class="pic">'+esc(i.dish.icon||'🍽')+'</span>'+
-              '<b>'+esc(i.dish.name)+'</b>'+
-              '<span class="mini">'+fmt(i.cooked)+' rac.</span>'+
-              (sobra?'<span class="tag b4">sobran '+fmt(sobra)+' 🧊</span>':'')+
-              '</div>';}).join('')}</div>
-          </div>`).join('')
-        :'<div class="empty">Nada en lote esta semana.</div>'}
-      </div>
+      ${used.length?`<div class="card"><h2>La cocina de la semana<span class="mini" style="margin-left:auto">${used.length} sesion${used.length===1?'':'es'}</span></h2>
+        <p class="note" style="margin:0 0 8px">Esto vive entero en <b>Comer → Cocina</b>, con sus pasos y sus tápers. Aquí solo va cuándo toca ponerse.</p>
+        <div class="cocmini">${used.map(b=>`<button class="cocm" data-a="tab" data-t="batches">
+          <b>${esc(b.label)}</b><span>${esc(b.when||'')} · ${b.portions} rac.</span></button>`).join('')}</div>
+      </div>`:''}
       <div class="card"><h2>Reglas de oro</h2><p class="note">Lo que sostiene el planning cuando la semana se tuerce.</p>
         <details class="dtip"><summary class="mini">ver las ${store.rules.length} reglas</summary>
         <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>
@@ -9026,6 +9087,29 @@ function renderCfg(){
       <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
       ${serviciosEditorHTML()}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div></div>`);}
+  if(v==='viaje'){
+    /* IR Y VOLVER, en Ajustes y no en el código: es lo que cambia cuando cambias de destino o de
+       línea de bus, y no tiene por qué pasar por una versión nueva de la app. */
+    const vj=viajeCfg(),b=vj.bus?mins(vj.bus):null;
+    return cfgPantalla('Ir y volver del trabajo',
+      '<div class="card"><p class="note" style="margin:0 0 10px">Con esto la app sabe a qué hora tienes '+
+        'que <b>salir de casa</b> y a qué hora <b>llegas de vuelta</b>. Y lo importante: deja de ponerte '+
+        'a comer en casa a una hora en la que todavía estás en el hospital.</p>'+
+        '<div class="fgrid c3 tight">'+
+          '<label class="fld">hora del bus<input type="time" value="'+esc(vj.bus||'')+'" data-a="viaje-f" data-f="bus"></label>'+
+          '<label class="fld">llegar a la parada (min antes)<input type="number" min="0" max="30" value="'+vj.antes+'" data-a="viaje-f" data-f="antes"></label>'+
+          '<label class="fld">tardas en llegar (min)<input type="number" min="0" max="180" step="5" value="'+vj.min+'" data-a="viaje-f" data-f="min"></label>'+
+        '</div>'+
+        '<div class="row" style="margin-top:10px">'+
+          '<button class="btn s '+(vj.on?'g':'')+'" data-a="viaje-on">'+(vj.on?'✓':'○')+' tenerlo en cuenta</button>'+
+        '</div>'+
+        (b!=null?('<p class="mini" style="margin:10px 0 0">Los días de jornada saldrás de casa a las <b>'+
+          hm(b-vj.antes)+'</b> para el bus de las <b>'+esc(fmtTimeOut(vj.bus))+'</b>, y estarás de vuelta '+
+          vj.min+' min después de salir del trabajo.</p>')
+          :'<p class="mini" style="margin:10px 0 0">Sin hora de bus, solo se usan los minutos que tardas.</p>')+
+        '<p class="mini" style="margin:7px 0 0;color:var(--ink2)">Al calendario de Google va solo una línea corta '+
+        'antes de entrar («salir de casa · bus»), nada más.</p>'+
+      '</div>');}
   if(v==='notas')return cfgPantalla('Notas del planning',
     '<div class="card"><p class="note" style="margin:0 0 10px">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>'+
       '<textarea rows="8" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">'+esc(store.meta.notes||'')+'</textarea></div>');
@@ -9035,6 +9119,7 @@ function renderCfg(){
   const puerta=function(vista,ico,tit,sub){
     return '<button class="puerta" data-a="cfg-vista" data-v="'+vista+'">'+gymIco(ico)+
       '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  const vj0=viajeCfg();
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><h2 class="subtit">🕐 Turno y rotación</h2></div>'+
     '<div class="card"><h2>Cómo estás montado ahora</h2>'+
@@ -9057,6 +9142,8 @@ function renderCfg(){
     '</div>'+
     '<div class="puertas">'+
       puerta('rotacion','repetir','Rotación','servicios y guardias')+
+      puerta('viaje','reloj','Ir y volver',
+        vj0.on?((vj0.bus?('bus '+fmtTimeOut(vj0.bus)+' · '):'')+vj0.min+' min de viaje'):'sin tenerlo en cuenta')+
       puerta('notas','lapiz','Notas','del planning')+
       '<button class="puerta" data-a="tab" data-t="month">'+gymIco('calendario')+
         '<b>El año</b><span class="s">repartido por meses</span></button>'+
@@ -10614,17 +10701,20 @@ function renderAjustes(){
             '<b style="background:linear-gradient(90deg,'+t.f.sleep+' 0 30%,'+t.f.work+' 30% 62%,'+t.f.meal+' 62% 70%,'+t.f.gym+' 70% 82%,'+t.f.evt+' 82%)"></b></span>'+
           '<span class="tnom">'+esc(t.nombre)+(on?' ✓':'')+'</span>'+
           '<span class="tmodo" style="color:'+t.v.ink2+'">'+(t.modo==='dark'?'oscuro':'claro')+'</span></button>';}).join('')}</div></div>
-    <div class="card" data-cfg="franja"><h2>La franja del d\u00eda</h2>
-      <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
-      <label class="fld" style="max-width:260px">Cuántas horas se ven
-        <select data-a="franja-horas">${[[24,'24 h · el día entero'],[18,'18 h'],[12,'12 h · centrada en tu día']].map(function(o){
+    <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
+      <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
+        sea cual sea el tipo de día, y aquí se cambian.</p>
+      <label class="fld" style="max-width:280px">Cuántas horas se ven de una vez
+        <select data-a="franja-horas">${[[24,'24 h · apretado'],[18,'18 h'],[12,'12 h · holgado']].map(function(o){
           return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
-      <div class="colgrid">${TLCAT.map(function(c){
+      <p class="mini" style="margin:6px 0 0">El carril siempre ocupa lo mismo en la pantalla; lo que cambia es
+        lo alta que es una hora. A 12 h se lee holgado, a 24 cabe el día entero.</p>
+      <div class="colgrid" style="margin-top:10px">${TLCAT.map(function(c){
         return '<label class="fld">'+esc(c[1])+
           '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
           '</label>';}).join('')}</div>
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
-      <div style="margin-top:12px">${timelineBar(iso(new Date()))}</div></div>
+      <div style="margin-top:12px">${carrilHTML(iso(new Date()),{caja:220})}</div></div>
     <div class="card"><h2>Apariencia</h2>
       <div class="row">
         <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
@@ -11245,6 +11335,10 @@ function act(a,el){
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'ir-viaje':ui.tab='cfg';ui.cfgVista='viaje';render();window.scrollTo(0,0);break;
+    case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
+      store.rotation.viaje.on=!viajeCfg().on;save();render();
+      flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
     case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
       render();window.scrollTo(0,0);break;}
     case 'dia-add':{
@@ -13101,6 +13195,17 @@ function calEventos(desde,hasta){
         uid:icsUID('trabajo|'+k),
         summ:'💼 Trabajo'+(rot?(' · '+rot):''),
         desc:'Jornada de '+a+(b?(' a '+b):'')+'.'+(rot?(' Rotación: '+rot+'.'):''),cat:'TRABAJO'});}
+    /* «si acaso salir de casa 7:30-33 bus 7:35»: eso y nada más. Un aviso corto antes de entrar,
+       para no perder el bus; el resto del desplazamiento no va al calendario. */
+    (function(){
+      const v=viajeCfg(),jor2=jornadaOf(k,inf);
+      if(!v.on||!v.bus||!jor2||!jor2.start||isGuardia(sh))return;
+      const b=mins(v.bus);if(b==null)return;
+      const sale=b-v.antes;
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(hm(sale)),horaFin:icsHM(v.bus),dur:0,
+        uid:icsUID('viaje|'+k),
+        summ:'🚌 Salir de casa '+hm(sale)+' · bus '+fmtTimeOut(v.bus),
+        desc:'Para llegar a la parada '+v.antes+' min antes.',cat:'TRABAJO'});})();
     const g2=diaSegundo(k,inf);
     if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:60,
       summ:'🏊 '+(g2.tipo||'entreno'),desc:'Segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+'.',cat:'ENTRENO'});
@@ -13545,6 +13650,13 @@ document.addEventListener('change',e=>{
       ui.semDesde=iso(d)===iso(new Date())?'':iso(d);render();}break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
     case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
+    case 'viaje-f':{
+      if(!store.rotation.viaje)store.rotation.viaje={};
+      const f=el.dataset.f,vv=el.value;
+      if(f==='bus')store.rotation.viaje.bus=/^\d{1,2}:\d{2}$/.test(vv)?vv:'';
+      else if(f==='antes')store.rotation.viaje.antes=Math.max(0,Math.min(30,Math.round(+vv||0)));
+      else if(f==='min')store.rotation.viaje.min=Math.max(0,Math.min(180,Math.round(+vv||0)));
+      save();render();break;}
     /* los tres de abajo son <input>/<select>: puestos en act() no se disparan nunca */
     case 'dia-esp-kcal':flash(setDiaEspKcal(diaComer(),el.value));render();break;
     case 'perf-nacido':flash(setPerfil('nacidoF',el.value));break;
@@ -13891,7 +14003,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
-  bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,
+  bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
