@@ -5412,16 +5412,34 @@ function frecuentes(n){
      'alim:al-yogur-natural','alim:al-arroz-blanco'].forEach(function(v){
       if(out.length>=(n||6)||ya[v]||!porV[v])return;out.push(porV[v]);ya[v]=1;});}
   return out;}
+/* cómo lo dice la gente → cómo se llama en la base. Solo para BUSCAR: «coca cola» no es un
+   alimento, pero quien la busca quiere el refresco de cola */
+const BUSCA_ALIAS={'coca cola':'refresco de cola','cocacola':'refresco de cola','coca':'refresco de cola',
+  'pepsi':'refresco de cola','fanta':'refresco de naranja','cana':'cerveza','birra':'cerveza','tinto':'vino tinto',
+  'chuches':'gominola','tortilla espanola':'tortilla de patata','bocata':'bocadillo','hamburguesa':'burger',
+  'papas':'patata'};
+function buscaToks(t){return alimTxt(t).replace(/[^a-z0-9ñ ]/g,' ').split(/\s+/)
+  .filter(function(w){return w&&!ALIM_VACIAS[w];}).map(alimRaiz);}
 function foodBuscar(q,tipo){
+  /* antes era «el texto tal cual, seguido»: «tortilla de patatas» no daba con «Tortilla de patata»
+     ni «pollo asado» con «asado de pollo». Ahora cada palabra por su raíz, en cualquier orden, y
+     la última puede estar a medio escribir */
   const t=alimTxt(q).trim();
-  return foodBuscables().filter(function(x){
-    if(tipo&&x.tipo!==tipo)return false;
-    if(!t)return true;
-    return x.busca.indexOf(t)>=0;
-  }).sort(function(a,b){
-    if(t){const ia=alimTxt(a.nombre).indexOf(t)===0?0:1,ib=alimTxt(b.nombre).indexOf(t)===0?0:1;
-      if(ia!==ib)return ia-ib;}
-    return String(a.nombre).localeCompare(String(b.nombre),'es');});}
+  let alias='';Object.keys(BUSCA_ALIAS).forEach(function(k){if(!alias&&(' '+t+' ').indexOf(' '+k+' ')>=0)alias=t.replace(k,BUSCA_ALIAS[k]);});
+  const qs=[buscaToks(t)].concat(alias?[buscaToks(alias)]:[]).filter(function(x){return x.length;});
+  const casa=function(x){
+    if(!t)return 1;
+    if(x.busca.indexOf(t)>=0)return 3;
+    const it=x._toks||(x._toks=buscaToks(x.busca));
+    return qs.some(function(qq){return qq.every(function(w){return it.some(function(i){return i.indexOf(w)===0;});});})?1:0;};
+  return foodBuscables().map(function(x){return {x:x,s:(tipo&&x.tipo!==tipo)?0:casa(x)};})
+    .filter(function(o){return o.s>0;})
+    .sort(function(A,B){const a=A.x,b=B.x;
+      if(A.s!==B.s)return B.s-A.s;
+      if(t){const ia=alimTxt(a.nombre).indexOf(t)===0?0:1,ib=alimTxt(b.nombre).indexOf(t)===0?0:1;
+        if(ia!==ib)return ia-ib;}
+      return String(a.nombre).localeCompare(String(b.nombre),'es');})
+    .map(function(o){return o.x;});}
 function hitKcHTML(x){
   /* a la derecha, la ración con la que se piensa y lo que suma: «1 filete (120 g) · 144 kcal», no
      «120 /100 g» */
