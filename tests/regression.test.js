@@ -5143,6 +5143,86 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================================================================================
+  // Compra: la lista salía alfabética —del aceite al yogur— y con el carro en la mano
+  // eso son 52 viajes de un pasillo a otro. Ahora va por secciones del súper, y el
+  // pasillo que terminas se pliega solo: la lista se acorta según llenas el carro.
+  // ===================================================================================
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(400);
+    const clasifica = await page.evaluate(() => {
+      const P = window.PG;
+      const c = (t) => P.seccionDeCompra(t);
+      return {
+        // lo específico manda sobre lo general, que es donde estaba la trampa
+        tomate: c('300 g tomate'), triturado: c('800 g tomate triturado'),
+        pollo: c('700 g muslo de pollo'), caldo: c('600 ml caldo de pollo'),
+        salmon: c('6 lomo salmón'), lomo: c('200 g lomo'),
+        pimientoRojo: c('1 pimiento rojo'), pimientoAsado: c('30 g pimiento asado'),
+        jengibre: c('6 g jengibre molido'),
+        huevo: c('8 huevo'), pan: c('1 pan bocadillo integral'), agua: c('1500 ml agua'),
+        arroz: c('280 g arroz basmati'), whey: c('60 g proteína whey'),
+        // el brik de leche de proteínas está en el frigorífico, no en el pasillo de suplementos
+        lecheProte: c('2 brick 250 ml leche de proteínas (Mercadona)'),
+      };
+    });
+    check('cada cosa cae en su pasillo, y lo específico manda sobre lo general',
+      clasifica.tomate === 'verdura' && clasifica.triturado === 'despensa' &&
+      clasifica.pollo === 'carne' && clasifica.caldo === 'despensa' &&
+      clasifica.salmon === 'pescado' && clasifica.lomo === 'carne' &&
+      clasifica.pimientoRojo === 'verdura' && clasifica.pimientoAsado === 'despensa' &&
+      clasifica.jengibre === 'despensa' && clasifica.huevo === 'lacteos' &&
+      clasifica.pan === 'pan' && clasifica.agua === 'bebida' &&
+      clasifica.arroz === 'despensa' && clasifica.whey === 'despensa' &&
+      clasifica.lecheProte === 'lacteos',
+      JSON.stringify(clasifica));
+
+    const antes = await page.evaluate(() => ({
+      alto: Math.round(document.getElementById('main').scrollHeight),
+      pasillos: document.querySelectorAll('#main .pasillo').length,
+      // nada debería caer en «Otros»: si cae, es que al mapa le falta una regla
+      otros: [...document.querySelectorAll('#main .pasillo')].filter((e) => /Otros/.test(e.textContent)).length }));
+
+    // se termina el primer pasillo entero y la lista se acorta sola
+    const marcadas = await page.evaluate(() => {
+      const P = window.PG;
+      const pas = [...document.querySelectorAll('#main .pasillo')][0];
+      const ul = pas && pas.nextElementSibling;
+      const lineas = ul ? [...ul.querySelectorAll('.linea')] : [];
+      lineas.forEach((l) => P.ui.marks.add(l.dataset.id));
+      P.save(); P.render();
+      return lineas.length;
+    });
+    await page.waitForTimeout(300);
+    const tras = await page.evaluate(() => ({
+      alto: Math.round(document.getElementById('main').scrollHeight),
+      primero: (() => { const p = document.querySelectorAll('#main .pasillo')[0];
+        return p ? { abierto: p.getAttribute('aria-expanded'), ok: /\bok\b/.test(p.className) } : null; })() }));
+
+    // …y se vuelve a abrir si lo tocas, que si no se pierde lo que ya has marcado
+    const reabre = await page.evaluate(() => {
+      const p = document.querySelectorAll('#main .pasillo')[0];
+      if (!p) return null;
+      p.click();
+      return null;
+    });
+    await page.waitForTimeout(280);
+    const abierto2 = await page.evaluate(() => {
+      const p = document.querySelectorAll('#main .pasillo')[0];
+      return p ? p.getAttribute('aria-expanded') : '';
+    });
+    check('la compra va por pasillos del súper y el que terminas se pliega solo, pero se puede reabrir',
+      antes.pasillos >= 4 && antes.otros === 0 && marcadas >= 3 &&
+      tras.primero && tras.primero.abierto === 'false' && tras.primero.ok === true &&
+      tras.alto < antes.alto && abierto2 === 'true',
+      JSON.stringify({ antes, marcadas, tras, abierto2, reabre }));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.marks = new Set(); P.ui.compraAbiertas = new Set();
+      P.ui.compraCerradas = new Set(['rutina', 'basicos']); P.save(); P.render(); });
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

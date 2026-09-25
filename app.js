@@ -269,7 +269,7 @@ let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
   evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estTxt:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
@@ -7065,6 +7065,59 @@ function compraDatos(){
   let total=0,marcados=0;
   grupos.forEach(function(g){g[2].forEach(function(x){total++;if(ui.marks.has(x.id))marcados++;});});
   return {grupos:grupos,total:total,marcados:marcados,recetas:recetas,sueltas:sueltas};}
+/* ===================== por dónde pasas en el súper =====================
+   La lista salía ordenada alfabéticamente: 52 artículos seguidos, del aceite al yogur, que con el
+   carro en la mano son 52 viajes de un pasillo a otro. Agrupada por sección se recorre la tienda
+   una vez. El orden es el de un supermercado normal: entras por la fruta y sales por la caja.
+   OJO al orden de las reglas: lo específico va ANTES que lo general —«tomate triturado» es una
+   conserva y «tomate» es fruta; «caldo de pollo» es un brik y «pollo» es carne—. */
+const COMPRA_SECS=[
+  ['verdura','Fruta y verdura','🥬'],
+  ['carne','Carne','🍗'],
+  ['pescado','Pescado','🐟'],
+  ['lacteos','Huevos y lácteos','🧀'],
+  ['pan','Panadería','🥖'],
+  ['despensa','Despensa','🥫'],
+  ['congelado','Congelados','❄️'],
+  ['bebida','Bebidas','🧃'],
+  ['otros','Otros','🛒']];
+const COMPRA_REGLAS=[
+  /* lo específico primero */
+  [/congelad|helado/i,'congelado'],
+  [/caldo|fumet/i,'despensa'],
+  [/tomate (triturado|frito|natural|pelado)|salsa de tomate/i,'despensa'],
+  [/pimiento (asado|del piquillo|en conserva)/i,'despensa'],
+  [/(jengibre|ajo|cebolla|pimiento|perejil|oregano|or[ée]gano) (molid|en polvo|seco)/i,'despensa'],
+  [/(en |de )?lata|conserva|bote de|tarro/i,'despensa'],
+  [/leche de (coco|almendra|avena|soja|arroz)/i,'despensa'],
+  [/caf[ée]|infusi[óo]n|\bt[ée]\b|cacao|colacao/i,'despensa'],
+  /* la leche de proteínas está en el frigorífico de lácteos, no en el pasillo de suplementos:
+     sin esta regla la pillaba la de «proteína» y mandaba a la despensa un brik refrigerado */
+  [/(leche|batido|yogur|queso|skyr) (de |con )?prote/i,'lacteos'],
+  [/prote[íi]na|whey|caseina|case[íi]na|creatina|suplement/i,'despensa'],
+  [/lomo de (salm[óo]n|at[úu]n|bacalao)|salm[óo]n|merluza|bacalao|at[úu]n fresco|gamba|langostino|marisco|pescad|boquer[óo]n|sardina|lubina|dorada/i,'pescado'],
+  /* generales */
+  [/pollo|pavo|pechuga|muslo|ternera|cerdo|lomo|chorizo|jam[óo]n|bacon|panceta|carne|solomillo|costilla|salchich|albóndiga|alb[óo]ndiga/i,'carne'],
+  [/huevo|leche|yogur|queso|mantequilla|nata|k[ée]fir|reques[óo]n|cuajada|batido/i,'lacteos'],
+  [/pan\b|panecillo|bollo|tortilla de (trigo|ma[íi]z)|wrap|masa madre|biscote|tostada/i,'pan'],
+  [/agua|refresco|zumo|cerveza|vino|bebida/i,'bebida'],
+  [/arroz|pasta|macarr|espagueti|fideo|lenteja|garbanzo|alubia|jud[íi]a blanca|avena|quinoa|cuscus|cusc[úu]s|harina|az[úu]car|miel|aceite|vinagre|\bsal\b|pimienta|piment[óo]n|curry|comino|canela|especia|frutos secos|almendra|nuez|nueces|anacardo|cacahuete|semilla|chia|ch[íi]a|levadura|caldo|galleta|cereal|mermelada|chocolate|at[úu]n/i,'despensa'],
+  [/patata|boniato|cebolla|ajo|tomate|lechuga|canonigo|can[óo]nigo|espinaca|r[úu]cula|zanahoria|calabac[íi]n|calabaza|berenjena|pimiento|br[óo]coli|coliflor|jud[íi]a verde|guisante|esp[áa]rrago|champi[ñn][óo]n|seta|puerro|apio|pepino|aguacate|lim[óo]n|lima|naranja|mandarina|manzana|pl[áa]tano|banana|pera|fresa|ar[áa]ndano|frambuesa|kiwi|mango|pi[ñn]a|melon|mel[óo]n|sand[íi]a|uva|melocot[óo]n|nectarina|ciruela|higo|fruta|verdura|hortaliza|jengibre|perejil|cilantro|albahaca|hierbabuena|menta/i,'verdura']];
+function seccionDeCompra(texto){
+  const t=String(texto||'').toLowerCase();
+  for(let i=0;i<COMPRA_REGLAS.length;i++)if(COMPRA_REGLAS[i][0].test(t))return COMPRA_REGLAS[i][1];
+  return 'otros';}
+function porSeccion(items){
+  /* los artículos repartidos por pasillo, en el orden en el que se recorre la tienda */
+  const por={};
+  items.forEach(function(x){
+    const k=seccionDeCompra(x.texto);
+    (por[k]||(por[k]=[])).push(x);});
+  return COMPRA_SECS.filter(function(sc){return (por[sc[0]]||[]).length;})
+    .map(function(sc){
+      const l=por[sc[0]].slice().sort(function(a,b){
+        return String(a.texto).localeCompare(String(b.texto),'es');});
+      return {k:sc[0],nom:sc[1],ico:sc[2],items:l};});}
 function compraLineaHTML(x){
   const on=ui.marks.has(x.id);
   return '<li class="linea'+(on?' ok':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
@@ -7089,10 +7142,30 @@ function renderShop(){
   const cuerpo=d.grupos.map(function(g){
     if(!g[2].length)return '';
     const abierto=!ui.compraCerradas||!ui.compraCerradas.has(g[0]);
+    /* dentro de cada grupo, por pasillo: con 52 artículos en orden alfabético hacías el súper
+       en zigzag. Cada pasillo se pliega solo cuando lo has terminado. */
+    const secs=porSeccion(g[2]);
+    const dentro=(secs.length>1)
+      ? secs.map(function(sc){
+          const k2=g[0]+':'+sc.k;
+          const hechos=sc.items.filter(function(x){return ui.marks.has(x.id);}).length;
+          /* un pasillo que ya has terminado se pliega SOLO: la lista se va acortando según llenas
+             el carro, que es lo contrario de lo que hacía —52 líneas fijas de principio a fin—.
+             Se puede volver a abrir tocándolo, y entonces manda lo que tú digas. */
+          const listo=sc.items.length>0&&hechos===sc.items.length;
+          const ab2=(ui.compraAbiertas&&ui.compraAbiertas.has(k2))?true
+            :((ui.compraCerradas&&ui.compraCerradas.has(k2))?false:!listo);
+          return '<button class="pasillo'+(hechos===sc.items.length?' ok':'')+'" data-a="compra-sec" data-k="'+esc(k2)+'"'+
+            ' aria-expanded="'+(ab2?'true':'false')+'">'+
+            '<span class="i" aria-hidden="true">'+sc.ico+'</span><b>'+esc(sc.nom)+'</b>'+
+            '<span class="n">'+hechos+'/'+sc.items.length+'</span>'+
+            gymIco('chevron','gico sm ch'+(ab2?' abajo':''))+'</button>'+
+            (ab2?('<ul class="lcompra">'+sc.items.map(compraLineaHTML).join('')+'</ul>'):'');}).join('')
+      : ('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>');
     return '<button class="seccion" data-a="compra-sec" data-k="'+g[0]+'" aria-expanded="'+(abierto?'true':'false')+'">'+
       '<b>'+esc(g[1])+'</b><span class="n">'+g[2].length+'</span>'+
       gymIco('chevron','gico sm ch'+(abierto?' abajo':''))+'</button>'+
-      (abierto?('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>'):'');}).join('');
+      (abierto?dentro:'');}).join('');
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
       '<button class="btn s volver" data-a="nav-comer">'+gymIco('atras','gico sm')+' Comer</button>'+
@@ -7100,9 +7173,11 @@ function renderShop(){
     '<div class="card">'+
       /* esto SÍ es progreso: cuántas cosas de la lista llevas ya en el carro */
       '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+d.marcados+' de '+d.total+'</b></div>'+
-      '<p class="note" style="margin:0">Lo fresco sale del menú de esta semana: '+d.recetas+' receta'+
-        (d.recetas===1?'':'s')+' de tanda'+(d.sueltas?(' y '+d.sueltas+' plato'+(d.sueltas===1?'':'s')+' suelto'+(d.sueltas===1?'':'s')):'')+
-        '. Lo de rutina sale de tus listas. Marca lo que eches al carro.</p>'+
+      /* tres renglones fijos de explicación en la pantalla que miras de pie con el carro: la
+         misma información cabe en uno */
+      '<p class="note" style="margin:0">Por pasillos, en el orden del súper. '+
+        d.recetas+' receta'+(d.recetas===1?'':'s')+' de tanda'+
+        (d.sueltas?(' y '+d.sueltas+' suelto'+(d.sueltas===1?'':'s')):'')+'.</p>'+
       (d.total?cuerpo:'<div class="empty">Sin tandas esta semana y sin listas «de rutina»: nada que comprar.</div>')+
     '</div>'+
     '<div class="row">'+
@@ -8937,7 +9012,12 @@ function act(a,el){
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
-      if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
+      /* se mira lo que hay en pantalla y no un único conjunto: un pasillo terminado se pinta
+         plegado por su cuenta, así que «cerrarlo» otra vez no haría nada visible */
+      if(!ui.compraAbiertas)ui.compraAbiertas=new Set();
+      const abierto=el.getAttribute('aria-expanded')==='true';
+      if(abierto){ui.compraAbiertas.delete(k);ui.compraCerradas.add(k);}
+      else{ui.compraCerradas.delete(k);ui.compraAbiertas.add(k);}
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
     case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
@@ -9915,6 +9995,7 @@ function imprimir(){
      imprimir se abre todo, y al terminar se deja exactamente como estaba. */
   if(_imprimiendo)return;
   _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
+    compraAbiertas:new Set(ui.compraAbiertas||[]),
     tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
   /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
      una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
@@ -9923,6 +10004,11 @@ function imprimir(){
     document.documentElement.classList.add('imp-mes');}
   try{ui.openDays=new Set(weekDays().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
+  /* al imprimir sale la lista ENTERA, pasillos terminados incluidos: el papel no se pliega */
+  ui.compraAbiertas=new Set(['fresco:verdura','fresco:carne','fresco:pescado','fresco:lacteos',
+    'fresco:pan','fresco:despensa','fresco:congelado','fresco:bebida','fresco:otros',
+    'rutina:verdura','rutina:carne','rutina:pescado','rutina:lacteos','rutina:pan','rutina:despensa',
+    'rutina:congelado','rutina:bebida','rutina:otros']);
   render();
   /* los <details> se abren sobre el DOM ya pintado: no dependen de `ui` */
   Array.prototype.forEach.call(document.querySelectorAll('#main details:not([open])'),function(d){
@@ -9930,7 +10016,7 @@ function imprimir(){
   const restaurar=function(){
     const a=_imprimiendo;if(!a)return;_imprimiendo=null;
     a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
-    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;
+    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
     if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
     window.removeEventListener('afterprint',restaurar);
@@ -11331,6 +11417,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
+  seccionDeCompra,porSeccion,COMPRA_SECS,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
   enArtifact,versionActual,hayVersionNueva,mirarVersion,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
