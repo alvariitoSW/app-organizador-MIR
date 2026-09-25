@@ -15,7 +15,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const ROOT = path.join(__dirname, '..');
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.gz': 'application/gzip',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 function serveStatic() {
@@ -5953,6 +5953,83 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
       P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
       P.ui.dineroVista = ''; P.save(); P.render(); });
+  }
+
+  // ===================== Dinero → lo real: capturas de Fintonic =====================
+  {
+    // El lector que corre en el móvil confunde cifras con la letra fina de Fintonic. Con las capturas
+    // del usuario: «11 €» leído «1 €», «63,00» leído «603,00» y «03,00», el 7 leído «/». La regla es que
+    // nada dudoso pase por bueno: lo que cuadra con otra cifra es bueno, y lo demás se marca.
+    const fin = await page.evaluate(() => {
+      const P = window.PG;
+      const inicio = 'Bancos    582€ -\nIngresos T 1€ Gastos y 1.578€';
+      const analisis = 'Análisis\n1 sept - 30 sept 2026\nIngresos    10,91€\nGastos   -1.578,40€\nNeto   -1.567,49€';
+      const catMal = '1 sept - 30 sept 2026\nAx Alquiler y compra   600,00€ >\nSupermercado   283,06€ >\n' +
+        '26 movimientos de 300€\nRestaurante   03,00€ >\nTransportes   22/28€ »';
+      const catBien = '1 sept - 30 sept 2026\nAlquiler y compra  1.000,00€ >\nSupermercado  578,40€ >';
+      const j1 = P.finJunta([inicio, analisis, catMal].map(P.finParse));
+      const j2 = P.finJunta([analisis, catBien].map(P.finParse));
+      const n = (t, d) => P.finNum(t, d);
+      return {
+        banco: j1.banco, ing: j1.ingresos, gas: j1.gastos, mes: j1.mes,
+        cats1: j1.cats.map((c) => c.nombre + '=' + c.v + (c.ok ? '' : '?')), descuadre: j1.descuadre,
+        cats2: j2.cats.map((c) => c.nombre + '=' + c.v + (c.ok ? '' : '?')),
+        ceroDelante: n('03,00', true), letra: n('6O,00', true), barra: n('1.5/8,40', true), bueno: n('1.578,40', true),
+        llega: [[2026, 8], [2026, 9], [2026, 10], [2027, 1]].map((x) => P.iso(P.llegadaNomina(x[0], x[1]).llega)),
+      };
+    });
+    check('las capturas de Fintonic: lo que cuadra es bueno y lo dudoso se marca, nunca pasa por bueno',
+      fin.banco && fin.banco.v === 582 && fin.banco.ok && fin.mes === '2026-09' &&
+      // Inicio dice 1 y Análisis 10,91: no cuadran, manda Análisis y queda para revisar
+      fin.ing.v === 10.91 && fin.ing.ok === false &&
+      // Inicio 1.578 y Análisis 1.578,40 cuadran: bueno y con céntimos
+      fin.gas.v === 1578.4 && fin.gas.ok === true &&
+      // las categorías no suman el gasto: todas a revisar, aunque alguna tenga buena pinta
+      fin.cats1.length === 4 && fin.cats1.every((c) => /\?$/.test(c)) && fin.descuadre != null &&
+      // y cuando suman justo el gasto del mes, todas son buenas
+      fin.cats2.join() === 'Alquiler y compra=1000,Supermercado=578.4' &&
+      !fin.ceroDelante.ok && !fin.letra.ok && !fin.barra.ok && fin.bueno.ok && fin.bueno.v === 1578.4,
+      JSON.stringify(fin));
+    // la nómina se transfiere el 25 y tarda dos días hábiles: si el 25 cae en viernes o en fin de
+    // semana llega más tarde. vie 25 sep → mar 29; dom 25 oct → mar 27; mié 25 nov → vie 27;
+    // jue 25 feb 2027 → lun 1 mar
+    check('la nómina llega dos días hábiles después del 25, saltando fines de semana',
+      fin.llega.join() === '2026-09-29,2026-10-27,2026-11-27,2027-03-01', JSON.stringify(fin.llega));
+
+    // y de punta a punta, con el lector de verdad (vendor/ocr) sobre una captura que se dibuja aquí
+    // mismo, al estilo de la pantalla de Inicio de Fintonic: subirla, revisar, guardar, verla en Dinero
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); });
+    await gotoTab('dinero');
+    await page.waitForTimeout(250);
+    const png = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 900; c.height = 700;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 700);
+      x.fillStyle = '#1f2a55'; x.font = '44px sans-serif';
+      x.fillText('Bancos', 60, 160); x.fillText('1.234€', 640, 160);
+      x.font = '40px sans-serif'; x.fillStyle = '#556';
+      x.fillText('Ingresos  25€     Gastos  987€', 60, 330);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    const input = await page.$('#main input[data-a="fin-fotos"]');
+    let leido = null, tarjeta = '';
+    if (input) {
+      await input.setInputFiles({ name: 'captura.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      try {
+        await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado !== 'leyendo', null, { timeout: 120000 });
+      } catch (e) { /* si no acaba, la prueba falla abajo con lo que haya */ }
+      leido = await page.evaluate(() => { const f = window.PG.ui.fin || {}; const r = f.res || {};
+        return { estado: f.estado, msg: f.msg, banco: r.banco, gastos: r.gastos, ingresos: r.ingresos,
+          pantalla: !!document.querySelector('#main [data-a="fin-guardar"]') }; });
+      const g = await page.$('#main [data-a="fin-guardar"]');
+      if (g) { await g.click(); await page.waitForTimeout(300); }
+      tarjeta = await page.evaluate(() => ((document.querySelector('#main .finreal') || {}).innerText || '').replace(/\s+/g, ' '));
+    }
+    const guardado = await page.evaluate(() => (window.PG.ahorroS().real || [])[0] || null);
+    check('una captura se lee en el móvil, se revisa y al guardarla sale en Dinero con cuándo llega la nómina',
+      !!input && leido && leido.estado === 'listo' && leido.pantalla && leido.banco && leido.banco.v === 1234 &&
+      guardado && guardado.banco === 1234 && /1234 €/.test(tarjeta) && /nómina llega/.test(tarjeta),
+      JSON.stringify({ leido, guardado, tarjeta: tarjeta.slice(0, 160) }));
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

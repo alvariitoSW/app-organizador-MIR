@@ -1646,3 +1646,19 @@ ul.slots{list-style:none;margin:0;padding:0}
 .ahepnom{flex:1;font-weight:800;font-size:14px;min-width:0}
 .ahep .fld input{width:100%;min-width:0}
 .ahhued .fld input{width:100%;min-width:0}
+
+/* ============ Dinero → lo real (capturas de Fintonic) ============ */
+.finreal{border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.finnom{display:flex;gap:10px;align-items:center;margin-top:10px;padding:9px 10px;border-radius:12px;
+  background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.finnom .t{flex:1;min-width:0}
+.finnom .t b{display:block;font-size:14px}
+.finnom .t .mini{display:block}
+.finfila{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
+.finfila:first-of-type{border-top:0}
+.finfila .t{flex:1;min-width:0;font-size:14px}
+.finfila input{width:104px;text-align:right;font-weight:700}
+.finfila .m{width:16px;text-align:center;font-weight:800}
+.finfila.ok .m{color:var(--ok)}
+.finfila.duda input{border-color:var(--warn)}
+.finfila.duda .m{color:var(--warn)}
