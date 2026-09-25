@@ -5241,8 +5241,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
              c('1 cerveza'), c('tortilla de trigo')],
         no: [c('280 g arroz basmati'), c('700 g muslo de pollo'), c('300 g tomate'),
              c('2 tostada de maíz sin gluten'), c('harina de arroz')],
-        depende: [c('320 g copos de avena'), c('200 g chorizo'), c('600 ml caldo de pollo'),
-                  c('60 g proteína whey'), c('25 g curry'),
+        // la avena ya no está aquí: su estado lo decide el perfil (avena certificada), y eso lo
+        // fija su propia prueba más abajo
+        depende: [c('200 g chorizo'), c('600 ml caldo de pollo'),
+                  c('60 g proteína whey'), c('25 g curry'), c('muesli de avena'),
                   // un cereal alternativo NO hace seguro un producto: el pan de maíz del súper
                   // suele llevar trigo también, así que baja a «mira la etiqueta», no a «sin gluten»
                   c('pan de maíz'), c('tortita de arroz')],
