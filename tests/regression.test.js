@@ -182,9 +182,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(120);
     // el informe de fin de sesión tapa la portada aunque gymPanel esté vacío
     await page.evaluate(() => { if (window.PG.ui.gymInforme) { window.PG.ui.gymInforme = ''; window.PG.render(); } });
-    if (await page.evaluate(() => !!window.PG.ui.gymPanel)) {
-      await page.click('[data-a="gym-panel"][data-p=""]');
-      await page.waitForTimeout(150);
+    // Entreno tiene pantallas anidadas (el constructor cuelga de «Rutinas»), así que el botón de
+    // atrás no siempre lleva a la portada de un salto: se pulsa hasta llegar. Con page.$ y no
+    // page.click, para que un botón que falte no cuelgue 30 s y tumbe la suite entera.
+    for (let i = 0; i < 4; i++) {
+      if (!(await page.evaluate(() => !!window.PG.ui.gymPanel))) break;
+      const atras = await page.$('#main .volver[data-a="gym-panel"]');
+      if (!atras) break;
+      await atras.click();
+      await page.waitForTimeout(160);
     }
     if (panel) {
       // con page.click, una puerta que no existe cuelga 30 s y TUMBA la suite entera en vez de
@@ -602,7 +608,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await page.evaluate(() => window.PG.render());
   await gotoGym('rutinas');
-  const migradaEnUI = await page.evaluate(() => document.getElementById('main').innerText);
+  // la lista es una tarjeta por rutina (nombre, cuántos ejercicios, qué músculos); los ejercicios
+  // uno a uno se ven al abrirla con «editar», que es donde se tocan
+  const migradaEnUI = await page.evaluate(() => {
+    const P = window.PG;
+    const rt = P.gymS().rutinas.filter((r) => r.nombre === 'Mi rutina')[0];
+    const lista = document.getElementById('main').innerText;
+    if (rt) { P.ui.gymRutSel = rt.id; P.ui.gymPanel = 'rutedit'; P.render(); }
+    const dentro = document.getElementById('main').innerText;
+    if (rt) { P.ui.gymPanel = 'rutinas'; P.render(); }
+    return lista + '\n' + dentro;
+  });
   check('la rutina migrada se ve en la UI con su nombre y sus ejercicios',
     migradaEnUI.includes('Mi rutina') && migradaEnUI.includes('Peso muerto') && migradaEnUI.includes('Remo con barra'),
     migradaEnUI.slice(0, 300));
@@ -612,9 +628,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click('[data-a="rt-nueva"]');
   await page.waitForTimeout(200);
   const ridUI = await page.evaluate(() => window.PG.gymS().rutinas.find((r) => r.nombre === 'Rutina UI').id);
+  // los ejercicios se añaden ahora dentro de «editar»: la lista es una tarjeta por rutina que se
+  // lee de un vistazo, no una tabla de nueve columnas por ejercicio
+  await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(250);
   await page.fill('#rtNew-' + ridUI, 'Curl bíceps');
   await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
+  await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
+  await page.waitForTimeout(250);
   await page.click('[data-a="ses-empezar"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
   await gotoGym('sesion');   // el formulario de apuntar vive en «Entrenar»
@@ -642,6 +664,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // desmontada y sin foco — sin refocarla, un segundo toque en "añadir" con el teclado ya cerrado
   // no añade nada y parece que "solo deja meter un ejercicio")
   await gotoGym('rutinas');   // los ejercicios de una rutina se añaden en «Rutinas», no en «Entrenar»
+  await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');   // …y dentro de «editar»
+  await page.waitForTimeout(250);
   await page.fill('#rtNew-' + ridUI, 'Press militar');
   await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(150);
@@ -666,7 +690,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.render();
   }, ridUI);
   await gotoGym('rutinas');
-  const regionesResaltadas = await page.evaluate(() => document.querySelectorAll('.mreg.on').length);
+  const regionesResaltadas = await page.evaluate((rid) => {
+    const P = window.PG;
+    P.ui.gymRutSel = rid; P.ui.gymPanel = 'rutedit'; P.render();   // el muñeco está en «editar»
+    const n = document.querySelectorAll('.mreg.on').length;
+    P.ui.gymPanel = 'rutinas'; P.render();
+    return n;
+  }, ridUI);
   check('el diagrama de músculos resalta al menos una región para una sesión de prueba',
     regionesResaltadas >= 1, 'regiones resaltadas: ' + regionesResaltadas);
 
@@ -1084,7 +1114,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const rutinaDiag = await page.evaluate(() => {
     const g = window.PG.gymS();
     g.rutinas = [{ id: 'rt-test', nombre: 'Rutina de prueba', notas: '', ejercicios: [] }];
-    window.PG.ui.gymPanel = 'rutinas';   // las tarjetas de rutina viven en su propia pantalla
+    // el muñeco y la recomendación viven donde se montan los ejercicios: en «editar»
+    window.PG.ui.gymRutSel = 'rt-test';
+    window.PG.ui.gymPanel = 'rutedit';
     window.PG.render();
     const vacia = document.getElementById('main').innerText;
     window.PG.addRutina('rt-test', 'Press banca de prueba', {});
@@ -2375,7 +2407,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       g.rutinas.length = 0;
       g.rutinas.push({ id: 'rt-mun', nombre: 'Rutina 1', notas: '', ejercicios: [] });
       ['Dominadas', 'Press militar', 'Sentadilla'].forEach((n) => window.PG.addRutina('rt-mun', n, {}));
-      window.PG.ui.gymPanel = 'rutinas';
+      // el muñeco y su leyenda viven ahora en «editar», que es donde montas la rutina y donde
+      // sirve de algo saber qué te dejas sin tocar
+      window.PG.ui.gymRutSel = 'rt-mun';
+      window.PG.ui.gymPanel = 'rutedit';
       window.PG.render();
       const leyenda = document.querySelector('.mlegend');
       return {
@@ -4171,11 +4206,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     await page.click('[data-a="gym-panel"][data-p="rutinas"]');
     await page.waitForTimeout(300);
+    // pegar la rutina a un tipo de día se hace dentro de «editar», junto al resto de la rutina
+    await page.click('[data-a="rt-editar"][data-id="rt-test"]');
+    await page.waitForTimeout(280);
     const chips = await page.evaluate(() => document.querySelectorAll('[data-a="rt-dia"]').length);
     const shHoy = await page.evaluate(() => window.PG.dayInfo(window.PG.iso(new Date())).shiftId);
     await page.click(`[data-a="rt-dia"][data-sh="${shHoy}"]`);
     await page.waitForTimeout(320);
-    await page.click('.subcab [data-a="gym-panel"]');
+    await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
+    await page.waitForTimeout(280);
+    await page.click('.subcab [data-a="gym-panel"][data-p=""]');
     await page.waitForTimeout(320);
     const enEntreno = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#main .card')].find((x) => /toca entrenar/.test(x.textContent));
@@ -5170,6 +5210,311 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ag.n >= 5 && ag.ordenadas && /8:00/.test(ag.sesion) && /hasta 8:39/.test(ag.sesion) && ag.trabajo &&
       ag.comidas >= 3 && ag.cama, JSON.stringify(ag));
     await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.save(); P.render(); }, k);
+  }
+
+  // ===================================================================================
+  // Fase 2 · Montar la rutina: la lista pasa de una tabla de nueve columnas por ejercicio
+  // (3 256 px, 68 botones, 68 campos) a una tarjeta por rutina, y el constructor vive
+  // detrás de «editar», con buscador y series con −/+. Sin «peso objetivo» ni «descanso».
+  // ===================================================================================
+  {
+    await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      S.gym.rutinas = [
+        { id: 'q1', nombre: 'Torso Q', notas: 'martes y viernes', dias: [],
+          ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 },
+                       { ex: 'Press militar', series: 3, reps: 10 }] },
+        { id: 'q2', nombre: 'Pierna Q', notas: '', dias: [],
+          ejercicios: [{ ex: 'Sentadilla', series: 4, reps: 8 }] }];
+      S.gym.biblioteca = [{ id: 'bq1', n: 'Prensa de piernas', c: 'upper legs', tg: 'quads', eq: 'machine' }];
+      S.gym.registro = []; S.gym.sesiones = [];
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.gymQ = ''; P.save();
+    });
+    await gotoGym('rutinas');
+    await page.waitForTimeout(320);
+    const lista = await page.evaluate(() => {
+      const m = document.querySelector('#main');
+      return { alto: Math.round(m.scrollHeight), tarjetas: m.querySelectorAll('.rcard').length,
+        tablas: m.querySelectorAll('table').length,
+        campos: m.querySelectorAll('input,select,textarea').length,
+        resumen: (m.querySelector('.rcard .rsub') || { textContent: '' }).textContent.trim(),
+        musculos: m.querySelectorAll('.rcard .rmus').length,
+        empezar: m.querySelectorAll('.rcard [data-a="ses-empezar"]').length };
+    });
+    check('«Rutinas» es una tarjeta por rutina que se lee de un vistazo, no una tabla por ejercicio',
+      lista.tarjetas === 2 && lista.tablas === 0 && lista.campos <= 4 && lista.empezar === 2 &&
+      /3 ejercicios · 11 series/.test(lista.resumen) && lista.musculos >= 3 && lista.alto < 2000,
+      JSON.stringify(lista));
+
+    // el constructor: series con −/+, buscador que añade de un toque, y el análisis debajo
+    const edt = await page.$('#main [data-a="rt-editar"][data-id="q1"]');
+    if (edt) { await edt.click(); await page.waitForTimeout(320); }
+    const mas = await page.$('#main [data-a="rt-ser"][data-id="q1"][data-ix="0"][data-d="1"]');
+    if (mas) { await mas.click(); await page.waitForTimeout(260); }
+    const sug = await page.$('#main .resug');
+    if (sug) { await sug.click(); await page.waitForTimeout(300); }
+    const editor = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      const rt = P.gymS().rutinas.filter((r) => r.id === 'q1')[0] || { ejercicios: [] };
+      return { panel: P.ui.gymPanel, filas: m.querySelectorAll('.refila').length,
+        series0: rt.ejercicios[0] ? rt.ejercicios[0].series : null,
+        nEj: rt.ejercicios.length, ultimo: rt.ejercicios.length ? rt.ejercicios[rt.ejercicios.length - 1].ex : '',
+        diaChips: m.querySelectorAll('[data-a="rt-dia"]').length,
+        analisis: (m.querySelector('.mlegend') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
+        // los dos campos que no usas no pueden volver por la puerta de atrás
+        sobra: /pesoObjetivo|descansoSeg/.test(m.innerHTML) };
+    });
+    check('el constructor sube series con −/+, añade del buscador de un toque y dice cómo queda la rutina',
+      !!edt && !!mas && !!sug && editor.panel === 'rutedit' && editor.series0 === 5 &&
+      editor.nEj === 4 && editor.ultimo === 'Prensa de piernas' && editor.filas === 4 &&
+      editor.diaChips >= 3 && /falta|equilibrada/.test(editor.analisis) && !editor.sobra,
+      JSON.stringify(editor));
+
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.gym.rutinas = []; P.store.gym.biblioteca = []; P.store.gym.registro = [];
+      P.ui.gymPanel = ''; P.ui.gymRutSel = ''; P.ui.gymQ = ''; P.save(); P.render();
+    });
+  }
+
+  // ===================================================================================
+  // Fases 3 y 4 · Objetivos con su camino, y evolución. Un objetivo sin camino es un
+  // cartel: cada uno dice dónde estás, a qué ritmo vas y para cuándo llegas A TU RITMO.
+  // Y la evolución cruza con lo que solo sabe esta app: guardias, sueño y proteína.
+  // ===================================================================================
+  {
+    const mont = await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const lun = (n) => iso(P.addDays(P.mondayOf(new Date()), -7 * n));
+      const g = S.gym;
+      g.rutinas = []; g.sesiones = []; g.cardio = []; g.objetivos = []; g.registro = [];
+      g.biblioteca = [{ id: 'z1', n: 'Press inclinado con mancuernas', c: 'chest', tg: 'pectorals', eq: 'dumbbell' }];
+      // press banca clavado tres sesiones en 70 kg -> estancado, y con alternativa en la biblioteca
+      [1, 2, 3].forEach((w) => { for (let j = 0; j < 3; j++)
+        g.registro.push({ id: 'z' + w + j, fecha: iso(P.addDays(P.parseDate(lun(w)), 3)),
+          ex: 'Press banca', kg: 70, reps: 6, rpe: 9, ts: 1 }); });
+      // tres carreras de 10 km mejorando
+      g.cardio = [{ id: 'k1', tipo: 'carrera', fecha: lun(8), distanciaKm: 10, duracionMin: 58 },
+                  { id: 'k2', tipo: 'carrera', fecha: lun(4), distanciaKm: 10, duracionMin: 55 },
+                  { id: 'k3', tipo: 'carrera', fecha: lun(1), distanciaKm: 10, duracionMin: 53 }];
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.save();
+      return { antes: g.objetivos.length };
+    });
+
+    // los tres objetivos se ponen desde la pantalla, no a mano en el almacén
+    await gotoGym('objetivos');
+    await page.waitForTimeout(300);
+    const bFuerza = await page.$('#main [data-a="obj-tipo"][data-t="fuerza"]');
+    if (bFuerza) { await bFuerza.click(); await page.waitForTimeout(220); }
+    const campoEx = await page.$('#objEx');
+    if (campoEx) { await campoEx.fill('Press banca'); }
+    const campoMeta = await page.$('#objMeta');
+    if (campoMeta) { await campoMeta.fill('100'); }
+    const poner = await page.$('#main [data-a="obj-add"]');
+    if (poner) { await poner.click(); await page.waitForTimeout(320); }
+
+    const obj = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      const o = (P.store.gym.objetivos || [])[0] || null;
+      const e = o ? P.objetivoEstado(o) : null;
+      return { n: (P.store.gym.objetivos || []).length, tipo: o ? o.tipo : '', meta: o ? o.meta : 0,
+        // el objetivo de fuerza mide el PESO DE VERDAD, no el 1RM estimado: con 70×6 el
+        // estimado da 84 y diría «84 de 100» sin haber puesto nunca más de 70 en la barra
+        hoy: e ? e.hoy : null, rm: e ? e.rm : null,
+        cifra: (m.querySelector('.obj .objnum b') || { textContent: '' }).textContent.trim(),
+        camino: (m.querySelector('.obj .objvia') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
+        // y sobrevive a recargar: sin registrarlo en normalize() se perdería
+        trasRecargar: (function () { P.store = JSON.parse(JSON.stringify(P.store));
+          return (P.store.gym.objetivos || []).length; })() };
+    });
+    check('un objetivo de fuerza mide el peso que pones en la barra, dice el camino y sobrevive a recargar',
+      obj.n === 1 && obj.tipo === 'fuerza' && obj.meta === 100 && obj.hoy === 70 &&
+      obj.rm > 80 && obj.cifra === '70' && obj.camino.length > 10 && obj.trasRecargar === 1,
+      JSON.stringify(obj));
+
+    // fase 4: estancamiento con cambio sugerido, y el cruce con las guardias
+    await gotoGym('progreso');
+    await page.waitForTimeout(400);
+    const evo = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      return { avisos: [...m.querySelectorAll('.ev')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
+        barras: m.querySelectorAll('.fb2c').length,
+        curva: !!m.querySelector('.curva'),
+        volMusculo: m.querySelectorAll('.fb').length,
+        estancados: P.estancados().map((x) => x.ex),
+        cambio: P.cambioSugerido('Press banca'),
+        cruce: P.cruceEntreno().length,
+        alto: Math.round(m.scrollHeight) };
+    });
+    check('Progreso ve venir el estancamiento, propone el cambio y cruza con tus guardias',
+      evo.estancados.indexOf('Press banca') >= 0 &&
+      evo.cambio === 'Press inclinado con mancuernas' &&
+      evo.avisos.some((a) => /clavado en 70 kg/.test(a) && /Press inclinado/.test(a)) &&
+      evo.barras >= 8 && evo.curva && evo.volMusculo >= 1 && evo.alto < 2600,
+      JSON.stringify(evo));
+
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.gym.objetivos = []; P.store.gym.registro = []; P.store.gym.cardio = [];
+      P.store.gym.biblioteca = []; P.ui.gymPanel = ''; P.save(); P.render();
+    });
+  }
+
+  // ===================================================================================
+  // Compra: la lista salía alfabética —del aceite al yogur— y con el carro en la mano
+  // eso son 52 viajes de un pasillo a otro. Ahora va por secciones del súper, y el
+  // pasillo que terminas se pliega solo: la lista se acorta según llenas el carro.
+  // ===================================================================================
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(400);
+    const clasifica = await page.evaluate(() => {
+      const P = window.PG;
+      const c = (t) => P.seccionDeCompra(t);
+      return {
+        // lo específico manda sobre lo general, que es donde estaba la trampa
+        tomate: c('300 g tomate'), triturado: c('800 g tomate triturado'),
+        pollo: c('700 g muslo de pollo'), caldo: c('600 ml caldo de pollo'),
+        salmon: c('6 lomo salmón'), lomo: c('200 g lomo'),
+        pimientoRojo: c('1 pimiento rojo'), pimientoAsado: c('30 g pimiento asado'),
+        jengibre: c('6 g jengibre molido'),
+        huevo: c('8 huevo'), pan: c('1 pan bocadillo integral'), agua: c('1500 ml agua'),
+        arroz: c('280 g arroz basmati'), whey: c('60 g proteína whey'),
+        // el brik de leche de proteínas está en el frigorífico, no en el pasillo de suplementos
+        lecheProte: c('2 brick 250 ml leche de proteínas (Mercadona)'),
+      };
+    });
+    check('cada cosa cae en su pasillo, y lo específico manda sobre lo general',
+      clasifica.tomate === 'verdura' && clasifica.triturado === 'despensa' &&
+      clasifica.pollo === 'carne' && clasifica.caldo === 'despensa' &&
+      clasifica.salmon === 'pescado' && clasifica.lomo === 'carne' &&
+      clasifica.pimientoRojo === 'verdura' && clasifica.pimientoAsado === 'despensa' &&
+      clasifica.jengibre === 'despensa' && clasifica.huevo === 'lacteos' &&
+      clasifica.pan === 'pan' && clasifica.agua === 'bebida' &&
+      clasifica.arroz === 'despensa' && clasifica.whey === 'despensa' &&
+      clasifica.lecheProte === 'lacteos',
+      JSON.stringify(clasifica));
+
+    const antes = await page.evaluate(() => ({
+      alto: Math.round(document.getElementById('main').scrollHeight),
+      pasillos: document.querySelectorAll('#main .pasillo').length,
+      // nada debería caer en «Otros»: si cae, es que al mapa le falta una regla
+      otros: [...document.querySelectorAll('#main .pasillo')].filter((e) => /Otros/.test(e.textContent)).length }));
+
+    // se termina el primer pasillo entero y la lista se acorta sola
+    const marcadas = await page.evaluate(() => {
+      const P = window.PG;
+      const pas = [...document.querySelectorAll('#main .pasillo')][0];
+      const ul = pas && pas.nextElementSibling;
+      const lineas = ul ? [...ul.querySelectorAll('.linea')] : [];
+      lineas.forEach((l) => P.ui.marks.add(l.dataset.id));
+      P.save(); P.render();
+      return lineas.length;
+    });
+    await page.waitForTimeout(300);
+    const tras = await page.evaluate(() => ({
+      alto: Math.round(document.getElementById('main').scrollHeight),
+      primero: (() => { const p = document.querySelectorAll('#main .pasillo')[0];
+        return p ? { abierto: p.getAttribute('aria-expanded'), ok: /\bok\b/.test(p.className) } : null; })() }));
+
+    // …y se vuelve a abrir si lo tocas, que si no se pierde lo que ya has marcado
+    const reabre = await page.evaluate(() => {
+      const p = document.querySelectorAll('#main .pasillo')[0];
+      if (!p) return null;
+      p.click();
+      return null;
+    });
+    await page.waitForTimeout(280);
+    const abierto2 = await page.evaluate(() => {
+      const p = document.querySelectorAll('#main .pasillo')[0];
+      return p ? p.getAttribute('aria-expanded') : '';
+    });
+    check('la compra va por pasillos del súper y el que terminas se pliega solo, pero se puede reabrir',
+      antes.pasillos >= 4 && antes.otros === 0 && marcadas >= 3 &&
+      tras.primero && tras.primero.abierto === 'false' && tras.primero.ok === true &&
+      tras.alto < antes.alto && abierto2 === 'true',
+      JSON.stringify({ antes, marcadas, tras, abierto2, reabre }));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.marks = new Set(); P.ui.compraAbiertas = new Set();
+      P.ui.compraCerradas = new Set(['rutina', 'basicos']); P.save(); P.render(); });
+  }
+
+  // ===================================================================================
+  // Celiaquía: el usuario es celíaco y sus menús llevaban pan de trigo. La app AVISA,
+  // no garantiza: hay tres estados y el tercero es de verdad «no lo sé», porque el
+  // chorizo de una marca lleva gluten y el de otra no.
+  // ===================================================================================
+  {
+    const g = await page.evaluate(() => {
+      const P = window.PG;
+      if (!P.esCeliaco()) P.setPerfil('celiaco');
+      const c = (n) => P.glutenDe(n);
+      const pl = P.platosConGluten();
+      return {
+        si: [c('2 rebanada pan integral masa madre'), c('1 pan bocadillo integral'),
+             c('1 cerveza'), c('tortilla de trigo')],
+        no: [c('280 g arroz basmati'), c('700 g muslo de pollo'), c('300 g tomate'),
+             c('2 tostada de maíz sin gluten'), c('harina de arroz')],
+        depende: [c('320 g copos de avena'), c('200 g chorizo'), c('600 ml caldo de pollo'),
+                  c('60 g proteína whey'), c('25 g curry'),
+                  // un cereal alternativo NO hace seguro un producto: el pan de maíz del súper
+                  // suele llevar trigo también, así que baja a «mira la etiqueta», no a «sin gluten»
+                  c('pan de maíz'), c('tortita de arroz')],
+        platosSi: pl.si.map((o) => o.d.id),
+        // y dice POR QUÉ, que es lo que te deja decidir
+        porQue: pl.si.length ? pl.si[0].porQue.map((x) => x.x) : [],
+        celiaco: P.esCeliaco(),
+      };
+    });
+    check('la app marca el gluten en tres estados y dice por qué, sin jurar lo que no sabe',
+      g.celiaco === true &&
+      g.si.every((x) => x === 'si') && g.no.every((x) => x === 'no') &&
+      g.depende.every((x) => x === 'depende') &&
+      g.platosSi.indexOf('d-pan-aceite') >= 0 && g.platosSi.indexOf('d-sandwich') >= 0 &&
+      g.porQue.some((x) => /pan/i.test(x)),
+      JSON.stringify(g));
+
+    // el cambio se propone, no se hace solo: hasta que no tocas «cambiar» tu plato sigue igual
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'gluten'; P.render(); });
+    await page.waitForTimeout(320);
+    const antes = await page.evaluate(() => {
+      const d = window.PG.store.dishes.filter((x) => x.id === 'd-pan-aceite')[0];
+      return { n: d ? d.name : '', botones: document.querySelectorAll('#main [data-a="glu-cambiar"]').length,
+        aviso: !!document.querySelector('#main .gluaviso') }; });
+    const bot = await page.$('#main [data-a="glu-cambiar"][data-id="d-pan-aceite"]');
+    if (bot) { await bot.click(); await page.waitForTimeout(320); }
+    const tras = await page.evaluate(() => {
+      const P = window.PG;
+      const d = P.store.dishes.filter((x) => x.id === 'd-pan-aceite')[0];
+      return { n: d ? d.name : '', gluten: d ? P.glutenDePlato(d).est : '',
+        trigo: d ? d.ingredients.join(' ') : '', quedan: P.platosConGluten().si.length }; });
+    check('cambiar un plato con gluten lo deja sin gluten, y solo cuando lo tocas tú',
+      !!bot && antes.aviso && antes.botones === 2 && /Pan integral/.test(antes.n) &&
+      /ma[íi]z/i.test(tras.n) && tras.gluten === 'no' && !/pan integral/i.test(tras.trigo) &&
+      tras.quedan === 1,
+      JSON.stringify({ antes, tras }));
+
+    // el peso se sigue por TENDENCIA, y el perfil sobrevive a recargar
+    const peso = await page.evaluate(() => {
+      const P = window.PG;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      [95.4, 95.1, 94.9, 95.2, 94.6, 94.4, 94.1, 93.9].forEach((kg, i) =>
+        P.apuntarPeso(kg, iso(P.addDays(new Date(), -(21 - i * 3)))));
+      P.setPerfil('alturaCm', 179);
+      const t = P.tendenciaPeso(90);
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      return { t: t, pesadas: P.store.perfil.pesos.length, altura: P.store.perfil.alturaCm,
+        celiaco: P.store.perfil.celiaco };
+    });
+    check('el peso se sigue por tendencia de 7 días y el perfil sobrevive a recargar',
+      peso.t && peso.t.n === 8 && peso.t.media > 93 && peso.t.media < 95 &&
+      peso.t.porSemana < 0 && peso.pesadas === 8 && peso.altura === 179 && peso.celiaco === true,
+      JSON.stringify(peso));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.store.perfil.pesos = []; P.ui.foodVista = ''; P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

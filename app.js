@@ -94,6 +94,8 @@ function DEFAULTS(){return {
             'Tápers de cristal (mín. 8), film, papel de hornear']}],
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
+  /* quién eres, que es lo que decide cuántas kcal necesitas y qué puedes comer */
+  perfil:{celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
   patterns:[
@@ -269,7 +271,7 @@ let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
-  shopVista:'',compraCerradas:new Set(['rutina','basicos']),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
+  shopVista:'',compraCerradas:new Set(['rutina','basicos']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
   evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estTxt:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habNuevo:{dow:[]},habDetalle:'',cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
@@ -453,6 +455,21 @@ function normalize(o){
   if(o.rotation.jornada.aplicaLibres===undefined)o.rotation.jornada.aplicaLibres=true;
   if(!o.food||typeof o.food!=='object')o.food=JSON.parse(JSON.stringify(d.food||{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]}));
   if(!o.food.objetivo||typeof o.food.objetivo!=='object')o.food.objetivo={kcal:0,prot:0};
+  /* el perfil: sin registrarlo aquí se perdería al recargar, como todo lo que normalize() no conoce */
+  if(!o.perfil||typeof o.perfil!=='object')o.perfil={};
+  o.perfil.celiaco=!!o.perfil.celiaco;
+  o.perfil.alturaCm=(+o.perfil.alturaCm>=100&&+o.perfil.alturaCm<=250)?+o.perfil.alturaCm:0;
+  o.perfil.pesoKg=(+o.perfil.pesoKg>=30&&+o.perfil.pesoKg<=300)?+o.perfil.pesoKg:0;
+  o.perfil.sexo=(o.perfil.sexo==='m')?'m':'h';
+  o.perfil.nacido=(+o.perfil.nacido>=1900&&+o.perfil.nacido<=2100)?+o.perfil.nacido:0;
+  o.perfil.actividad=(+o.perfil.actividad>=1.2&&+o.perfil.actividad<=2.2)?+o.perfil.actividad:1.5;
+  o.perfil.meta=(['perder','mantener','ganar'].indexOf(o.perfil.meta)>=0)?o.perfil.meta:'mantener';
+  /* el peso, uno por día: lo que de verdad se puede seguir. La masa muscular NO se calcula de los
+     menús —eso sería inventarla—; lo que se sigue es el peso y su tendencia. */
+  o.perfil.pesos=Array.isArray(o.perfil.pesos)?o.perfil.pesos
+    .filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.k))&&+x.kg>=30&&+x.kg<=300;})
+    .map(function(x){return {k:x.k,kg:Math.round(+x.kg*10)/10};})
+    .sort(function(a,b){return a.k.localeCompare(b.k);}).slice(-400):[];
   if(!o.food.eans||typeof o.food.eans!=='object')o.food.eans={};
   if(!o.food.log||typeof o.food.log!=='object')o.food.log={};
   if(!Array.isArray(o.food.fav))o.food.fav=[];
@@ -468,6 +485,14 @@ function normalize(o){
   /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
      aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
      Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
+  /* los objetivos: sin registrarlos aquí se perderían al recargar, como todo lo que normalize()
+     no conoce. Se valida el tipo y el número, y se tira lo que no cuadre. */
+  if(!Array.isArray(o.gym.objetivos))o.gym.objetivos=[];
+  else o.gym.objetivos=o.gym.objetivos.filter(function(x){
+    return x&&typeof x==='object'&&['fuerza','constancia','tiempo'].indexOf(x.tipo)>=0&&+x.meta>0;})
+    .slice(0,12).map(function(x){
+      return {id:String(x.id||uid('obj')),tipo:x.tipo,ex:String(x.ex||'').slice(0,60),
+        meta:Math.min(1000,Math.max(0.5,+x.meta)),desde:/^\d{4}-\d{2}-\d{2}$/.test(String(x.desde))?x.desde:iso(new Date())};});
   if(!o.gym.cambios||typeof o.gym.cambios!=='object'||Array.isArray(o.gym.cambios))o.gym.cambios={};
   else{const lim=iso(addDays(new Date(),-60)),lim2=iso(addDays(new Date(),400));
     Object.keys(o.gym.cambios).forEach(function(k){
@@ -1513,6 +1538,132 @@ const ALIM_VRN={fe:14,ca:800,k:2000,mg:375,vc:80,vd:5,b12:2.5,b6:1.4,fo:200};
 const ALIM_GRUPOS=[['fruta','🍎 Fruta'],['verdura','🥦 Verdura'],['carne','🍗 Carne y huevo'],
   ['pescado','🐟 Pescado'],['legumbre','🫘 Legumbre'],['cereal','🌾 Cereal y pan'],
   ['lacteo','🥛 Lácteo'],['graso','🥑 Grasas y frutos secos'],['otro','🧂 Otros']];
+/* ===================== gluten =====================
+   Eres celíaco, así que esto no es una etiqueta más: es lo que decide si puedes comer un plato.
+   La app AVISA, NO GARANTIZA. Un nombre no dice lo que lleva un producto —el chorizo de una marca
+   lleva gluten y el de otra no—, así que hay tres estados y el tercero es de verdad «no lo sé»:
+
+     no       alimento de toda la vida sin gluten: carne, pescado, huevo, fruta, verdura, arroz…
+     sí       trigo, cebada, centeno, espelta y lo hecho con ellos
+     depende  la marca manda: avena (contaminación cruzada), embutidos, caldos, salsas, rebozados,
+              suplementos, conservas preparadas… aquí hay que mirar la etiqueta
+
+   La regla de oro está escrita en la pantalla: lo que manda es el envase, no esta app. */
+const GLUTEN_SI=[
+  /trigo|wheat|espelta|kamut|cebada|barley|centeno|rye|malta|s[ée]mola|cuscus|cusc[úu]s|bulgur/i,
+  /\bpan\b|panecillo|panko|biscote|tostada|bollo|croissant|magdalena|galleta|bizcocho|masa madre/i,
+  /pasta|macarr|espagueti|espagueti|tallarin|fideo|lasa[ñn]a|canel[óo]n|noodle|ramen/i,
+  /harina(?! de (arroz|ma[íi]z|garbanzo|almendra|trigo sarraceno))/i,
+  /rebozad|empanad|croqueta|empanadilla|pizza|tortilla de trigo|wrap de trigo|cerveza/i,
+  /cus?c[úu]s|seit[áa]n|cerveza|obleas/i];
+const GLUTEN_DEPENDE=[
+  /avena|oat/i,                                   /* contaminación cruzada: hace falta certificada */
+  /chorizo|salchich|embutido|morcilla|fiambre|jam[óo]n cocido|pav[oa] cocid|surimi|patatas? fritas de bolsa/i,
+  /caldo|fumet|pastilla de|sopa de sobre|salsa|soja|teriyaki|ketchup|mostaza|mayonesa/i,
+  /curry|especias? mezcl|sazonador|colorante alimentario|levadura/i,
+  /prote[íi]na|whey|caseina|case[íi]na|barrita|suplement|batido de/i,
+  /yogur de sabores|postre l[áa]cteo|helado|chocolate|cacao soluble|colacao/i,
+  /conserva|de bote|precocinad|congelad[oa]s? preparad|ensalada completa|hamburguesa|alb[óo]ndiga/i,
+  /at[úu]n en aceite|paté|patés|foie/i,
+  /* envasados que NO son de trigo pero pasan por fábrica: las tortitas de arroz llevan malta de
+     cebada en más marcas de las que uno esperaría */
+  /tortita|nacho|snack|palomitas|cereales de desayuno|muesli|gran ?ola|granola/i];
+function glutenDe(nombre){
+  const t=String(nombre||'').toLowerCase();
+  if(!t.trim())return 'no';
+  /* lo que pone el envase manda: si dice «sin gluten», es sin gluten */
+  if(/sin gluten|gluten ?free|libre de gluten|sin tacc/.test(t))return 'no';
+  let est='no';
+  for(let i=0;i<GLUTEN_SI.length;i++)if(GLUTEN_SI[i].test(t)){est='si';break;}
+  if(est!=='si')for(let j=0;j<GLUTEN_DEPENDE.length;j++)if(GLUTEN_DEPENDE[j].test(t)){est='depende';break;}
+  /* Un cereal alternativo NO hace seguro un producto: el pan de maíz del súper suele llevar trigo
+     también. Baja el aviso a «mira la etiqueta», nunca a «sin gluten». Para un celíaco el error
+     barato es mirar una etiqueta de más; el caro es el otro. */
+  if(est==='si'&&/de ma[íi]z|de arroz|de trigo sarraceno|de garbanzo|de quinoa|de almendra|de avena/.test(t))
+    est='depende';
+  return est;}
+const GLUTEN_ETQ={si:{t:'lleva gluten',c:'mal'},depende:{t:'mira la etiqueta',c:'duda'},no:{t:'sin gluten',c:'ok'}};
+function glutenDePlato(d){
+  /* un plato es lo peor de sus ingredientes: si uno lleva gluten, el plato lleva gluten */
+  if(!d)return {est:'no',porQue:[]};
+  if(d.gluten==='si'||d.gluten==='no'||d.gluten==='depende')return {est:d.gluten,porQue:[]};
+  const ing=[].concat(d.ingredients||[]);
+  let peor='no';const porQue=[];
+  ing.forEach(function(x){
+    const g=glutenDe(x);
+    if(g==='si'){peor='si';porQue.push({x:x,g:g});}
+    else if(g==='depende'){if(peor!=='si')peor='depende';porQue.push({x:x,g:g});}});
+  if(peor==='no'){const gn=glutenDe(d.name);if(gn!=='no'){peor=gn;porQue.push({x:d.name,g:gn});}}
+  return {est:peor,porQue:porQue};}
+function esCeliaco(){return !!(store.perfil&&store.perfil.celiaco);}
+function glutenChipHTML(est,corto){
+  if(!esCeliaco()||!est||est==='no')return '';
+  const e=GLUTEN_ETQ[est]||GLUTEN_ETQ.depende;
+  return '<span class="glu '+e.c+'" title="'+esc(e.t)+'">'+(est==='si'?'⚠ gluten':(corto?'? etiqueta':'? mira la etiqueta'))+'</span>';}
+function perfilS(){
+  if(!store.perfil||typeof store.perfil!=='object')
+    store.perfil={celiaco:false,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]};
+  if(!Array.isArray(store.perfil.pesos))store.perfil.pesos=[];
+  return store.perfil;}
+function setPerfil(campo,valor){
+  const p=perfilS();
+  if(campo==='celiaco')p.celiaco=!p.celiaco;
+  else if(campo==='meta')p.meta=(['perder','mantener','ganar'].indexOf(valor)>=0)?valor:'mantener';
+  else if(campo==='alturaCm')p.alturaCm=Math.max(0,Math.min(250,Math.round(+valor||0)));
+  else if(campo==='pesoKg')p.pesoKg=Math.max(0,Math.min(300,Math.round((+valor||0)*10)/10));
+  else if(campo==='nacido')p.nacido=Math.max(0,Math.round(+valor||0));
+  else if(campo==='actividad')p.actividad=Math.max(1.2,Math.min(2.2,+valor||1.5));
+  save();render();
+  return campo==='celiaco'?(p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
+    :'aviso de gluten apagado'):'perfil guardado';}
+function apuntarPeso(kg,key){
+  const p=perfilS(),k=foodKey(key)||iso(new Date()),v=Math.round((+kg||0)*10)/10;
+  if(!(v>=30&&v<=300))return 'ese peso no puede ser';
+  p.pesos=p.pesos.filter(function(x){return x.k!==k;});
+  p.pesos.push({k:k,kg:v});
+  p.pesos.sort(function(a,b){return a.k.localeCompare(b.k);});
+  p.pesoKg=v;
+  save();render();
+  return 'apuntado: '+fmtKg(v)+' kg el '+fechaCortaTxt(k);}
+function tendenciaPeso(n){
+  /* media móvil de 7 días: el peso del día sube y baja con la sal, el agua y la hora. Lo que dice
+     algo es la tendencia, no la báscula de esta mañana. */
+  const p=perfilS(),l=p.pesos.slice(-(n||90));
+  if(l.length<2)return null;
+  const media=function(hasta){
+    const desde=iso(addDays(parseDate(hasta),-6));
+    const t=l.filter(function(x){return x.k>=desde&&x.k<=hasta;});
+    return t.length?t.reduce(function(a,x){return a+x.kg;},0)/t.length:null;};
+  const ult=l[l.length-1],pri=l[0];
+  const mUlt=media(ult.k),mPri=media(pri.k);
+  const dias=Math.max(1,Math.round((parseDate(ult.k)-parseDate(pri.k))/86400000));
+  const dif=(mUlt!=null&&mPri!=null)?Math.round((mUlt-mPri)*10)/10:null;
+  return {hoy:ult.kg,fecha:ult.k,n:l.length,media:mUlt!=null?Math.round(mUlt*10)/10:null,
+    dif:dif,dias:dias,porSemana:(dif!=null&&dias>=7)?Math.round(dif/dias*7*100)/100:null};}
+function platosConGluten(){
+  /* los platos que hay que cambiar, y los que dependen de qué marca compres */
+  const out={si:[],depende:[]};
+  (store.dishes||[]).forEach(function(d){
+    const g=glutenDePlato(d);
+    if(g.est==='si')out.si.push({d:d,porQue:g.porQue});
+    else if(g.est==='depende')out.depende.push({d:d,porQue:g.porQue});});
+  return out;}
+/* el sustituto sin gluten de cada plato que lo lleva: se propone, no se cambia solo */
+const GLUTEN_CAMBIOS={
+  'd-pan-aceite':{name:'Tostada de maíz con tomate y aceite',
+    ing:['2 tostada de maíz sin gluten','1 tomate','8 ml aceite de oliva','2 g sal'],
+    nota:'el pan de trigo por tortitas o pan de maíz sin gluten'},
+  'd-sandwich':{name:'Tortitas de maíz con atún y pimiento asado',
+    ing:['2 tortita de maíz sin gluten','1 lata atún','30 g pimiento asado','5 ml aceite de oliva'],
+    nota:'el bocadillo por tortitas de maíz certificadas'}};
+function cambiarPlatoSinGluten(id){
+  const d=(store.dishes||[]).filter(function(x){return x.id===id;})[0];
+  if(!d)return 'ese plato ya no está';
+  const c=GLUTEN_CAMBIOS[id];
+  if(!c)return 'ese plato no tiene un cambio preparado: edítalo a mano';
+  d.name=c.name;d.ingredients=c.ing.slice();d.gluten='no';
+  save();render();
+  return 'cambiado por «'+c.name+'»: '+c.nota;}
 const ALIMENTOS=[
 /* --- fruta --- */
 {n:'Manzana',e:'🍎',g:'fruta',kcal:52,pr:0.3,ch:14,az:10,fi:2.4,gr:0.2,fe:0.1,ca:6,k:107,mg:5,vc:4.6,b6:0.04,fo:3},
@@ -3233,6 +3384,7 @@ function gymS(){
   if(!g.segundo||typeof g.segundo!=='object')g.segundo={on:true,dias:[3],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(g.segundo.dias))g.segundo.dias=[3];
   if(!g.marks||typeof g.marks!=='object')g.marks={};
+  if(!Array.isArray(g.objetivos))g.objetivos=[];
   if(!g.cambios||typeof g.cambios!=='object'||Array.isArray(g.cambios))g.cambios={};
   return g;}
 function migrarRutinas(g){
@@ -3938,7 +4090,12 @@ function renderFoodDia(){
         '<label class="fld" style="flex:0 0 110px">proteína (g)<input type="number" min="0" max="400" step="5" value="'+objP+'" data-a="food-ob" data-k="prot"></label>'+
         '<label class="fld" style="flex:0 0 110px">carbohidr. (g)<input type="number" min="0" max="800" step="10" value="'+(+ob.carb||0)+'" data-a="food-ob" data-k="carb" placeholder="'+obm.carb+'"></label>'+
         '<label class="fld" style="flex:0 0 100px">grasa (g)<input type="number" min="0" max="300" step="5" value="'+(+ob.gresa||0)+'" data-a="food-ob" data-k="gresa" placeholder="'+obm.gresa+'"></label>'+
-        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label></div>'+
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button></label>'+
+        /* la puerta a TU perfil va aquí, que es donde se miran las kcal: tu altura, tu peso y si
+           eres celíaco son justo lo que decide estos números. La tenía metida dentro de «apuntar
+           algo» y ahí no la encuentra nadie. */
+        '<label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="food-vista" data-v="perfil">'+
+          gymIco('balanza','gico sm')+' tú: peso, altura y gluten</button></label></div>'+
         (obm.derivado&&objK?('<p class="mini" style="margin:6px 0 0">El carbohidrato y la grasa salen de repartir a partes '+
           'iguales las kcal que quedan tras la proteína. Si sigues otro reparto, ponlos aquí.</p>'):'')):'')+
       microLineaHTML(sel)+
@@ -4125,6 +4282,7 @@ function renderFoodBuscar(){
       '<button class="btn s" data-a="food-panel2" data-k="scan">'+gymIco('camara','gico sm')+' escanear</button>'+
       '<button class="btn s" data-a="food-panel2" data-k="mano">'+gymIco('lapiz','gico sm')+' a mano</button>'+
       '<button class="btn s" data-a="food-vista" data-v="productos">'+gymIco('caja','gico sm')+' mis productos</button>'+
+      '<button class="btn s" data-a="food-vista" data-v="perfil">'+gymIco('balanza','gico sm')+' tú</button>'+
     '</div></div>';
 }
 /* ---------- la hoja de cantidad ----------
@@ -5061,6 +5219,83 @@ function notasDelDiaHTML(key){
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota para este día</button>'+
       '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}
+function renderFoodPerfil(){
+  /* Quién eres: es lo que decide cuántas kcal necesitas y qué puedes comer. El peso se sigue por
+     TENDENCIA y no por la báscula de esta mañana, y la masa muscular no se calcula aquí: de los
+     menús no sale, y ponerla sería inventártela. */
+  const p=perfilS(),t=tendenciaPeso(90);
+  const METAS=[['perder','perder grasa'],['mantener','mantenerme'],['ganar','ganar músculo']];
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="">'+
+      gymIco('atras','gico sm')+' Comer</button><h2 class="subtit">Tú</h2></div>'+
+    '<div class="card"><h2>Tus datos</h2>'+
+      '<div class="fgrid c3 tight">'+
+        '<label class="fld">altura (cm)<input type="number" min="100" max="250" value="'+(p.alturaCm||'')+'" data-a="perf-n" data-f="alturaCm"></label>'+
+        '<label class="fld">peso de hoy (kg)<input type="number" min="30" max="300" step="0.1" id="perfPeso" value="'+(p.pesoKg||'')+'"></label>'+
+        '<label class="fld" style="justify-content:flex-end"><button class="btn p" data-a="perf-peso">apuntar peso</button></label>'+
+      '</div>'+
+      '<p class="mini" style="margin:10px 0 4px">Hacia dónde vas</p>'+
+      '<div class="row">'+METAS.map(function(m){
+        return '<button class="btn s '+(p.meta===m[0]?'p':'')+'" data-a="perf-meta" data-v="'+m[0]+'">'+m[1]+'</button>';}).join('')+'</div>'+
+      '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">'+
+        '<button class="btn s '+(p.celiaco?'g':'')+'" data-a="perf-celiaco">'+(p.celiaco?'✓':'○')+' soy celíaco</button>'+
+        (p.celiaco?'<button class="btn s" data-a="food-vista" data-v="gluten">revisar mis platos →</button>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="card"><h2>Tu peso</h2>'+
+      (t?('<div class="kpis compact">'+
+          '<div><b>'+fmtKg(t.hoy)+'</b><span>último ('+esc(fechaCortaTxt(t.fecha))+')</span></div>'+
+          '<div><b>'+(t.media!=null?fmtKg(t.media):'—')+'</b><span>media de 7 días</span></div>'+
+          '<div><b>'+(t.porSemana!=null?((t.porSemana>0?'+':'')+fmtKg(t.porSemana)):'—')+'</b><span>kg por semana</span></div>'+
+        '</div>'+pesoCurvaHTML()+
+        '<p class="mini" style="margin-top:8px">La báscula de un día sube y baja con la sal, el agua y la hora. '+
+        'Lo que dice algo es la media de siete días: son '+t.n+' pesadas en '+t.dias+' días.</p>')
+        :'<div class="empty">Apunta tu peso unos días y aquí sale la tendencia. Con una sola pesada no hay nada que decir.</div>')+
+      '<p class="mini" style="margin-top:8px;color:var(--ink2)">La masa muscular no se puede sacar de lo que comes: '+
+      'eso habría que inventárselo. Aquí va el peso y su tendencia, cruzados con lo que comes y lo que levantas.</p>'+
+    '</div></div>';}
+function pesoCurvaHTML(){
+  const p=perfilS(),l=p.pesos.slice(-60);
+  if(l.length<3)return '';
+  const max=l.reduce(function(a,x){return Math.max(a,x.kg);},0);
+  const min=l.reduce(function(a,x){return Math.min(a,x.kg);},max);
+  const rango=Math.max(0.5,max-min),W=280,H=64;
+  const pts=l.map(function(x,i){
+    return {x:4+(l.length<2?0:i*(W-8)/(l.length-1)),y:H-6-((x.kg-min)/rango)*(H-14)};});
+  const d=pts.map(function(q,i){return (i?'L':'M')+q.x.toFixed(1)+' '+q.y.toFixed(1);}).join(' ');
+  return '<svg class="curva" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="tu peso">'+
+    '<path d="'+d+'" class="cl"></path></svg>'+
+    '<div class="curvapie"><span>'+fmtKg(l[0].kg)+' kg</span>'+
+    '<b class="'+(l[l.length-1].kg<l[0].kg?'sube':'')+'">'+fmtKg(Math.round((l[l.length-1].kg-l[0].kg)*10)/10)+' kg</b>'+
+    '<span>'+fmtKg(l[l.length-1].kg)+' kg</span></div>';}
+function renderFoodGluten(){
+  /* LO QUE HAY QUE CAMBIAR. La app avisa, no garantiza: lo que manda es el envase. */
+  const g=platosConGluten();
+  const fila=function(o,tipo){
+    const c=GLUTEN_CAMBIOS[o.d.id];
+    return '<div class="glufila '+tipo+'">'+
+      '<div class="n"><b>'+esc(o.d.name)+'</b>'+
+        '<span>'+esc(o.porQue.map(function(x){return x.x;}).slice(0,3).join(' · ')||'por el nombre')+'</span></div>'+
+      (tipo==='si'&&c?('<button class="btn p s" data-a="glu-cambiar" data-id="'+esc(o.d.id)+'">cambiar</button>'):'')+
+      '</div>';};
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="perfil">'+
+      gymIco('atras','gico sm')+' Tú</button><h2 class="subtit">Gluten</h2></div>'+
+    '<div class="card gluaviso">'+gymIco('aviso','gico')+
+      '<div><b>La app avisa, no garantiza.</b> Un nombre no dice lo que lleva un producto: el chorizo '+
+      'de una marca lleva gluten y el de otra no. Lo que manda es la etiqueta del envase.</div></div>'+
+    '<div class="card"><h2>Llevan gluten</h2>'+
+      (g.si.length?(g.si.map(function(o){return fila(o,'si');}).join('')+
+        '<p class="mini" style="margin-top:9px">«Cambiar» te deja el mismo plato con la versión sin gluten. '+
+        'No se cambia nada sin que lo toques.</p>')
+        :'<div class="empty">Ninguno de tus platos lleva gluten.</div>')+
+    '</div>'+
+    '<div class="card"><h2>Depende de la marca</h2>'+
+      (g.depende.length?(g.depende.map(function(o){return fila(o,'dep');}).join('')+
+        '<p class="mini" style="margin-top:9px">Estos pueden ser sin gluten o no según lo que compres: '+
+        'avena certificada, embutidos, caldos, salsas y suplementos. Mira la etiqueta una vez y ya lo sabes.</p>')
+        :'<div class="empty">Nada dudoso.</div>')+
+    '</div></div>';}
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='buscar')return renderFoodBuscar();
@@ -5070,6 +5305,8 @@ function renderFood(){
   if(v==='cocina-panel')return renderCocinaPanel();
   if(v==='platos')return renderMisPlatos();
   if(v==='add')return renderFoodAdd();
+  if(v==='perfil')return renderFoodPerfil();
+  if(v==='gluten')return renderFoodGluten();
   /* «Qué cocino», «Mi nevera» e «Ideas» eran tres pantallas para la misma pregunta: ahora son las
      tres pestañas de Cocina. Los nombres viejos siguen llevando a su pestaña y no a una pared. */
   if(v==='cocinar'||v==='ideas'||v==='nevera'){
@@ -5084,69 +5321,6 @@ function renderFood(){
 }
 
 /* ===================== entreno: la vista ===================== */
-function renderRutinaCard(rt,selDate){
-  const g=gymS(),hist=historialRutina(rt.id);
-  const filas=rt.ejercicios.map(function(ej,ix){
-    const ult=ejercicioUltimo(ej.ex),p=prDe(ej.ex),lib=libMatch(ej.ex);
-    return '<tr><td><b>'+esc(ej.ex)+'</b>'+(ej.eq?'<br><span class="mini">'+esc(ej.eq)+'</span>':'')+
-      (lib?'<br><a class="mini" href="'+GYM_SITIO+'" target="_blank" rel="noopener">🔗 ver en openGym</a>':'')+'</td>'+
-      '<td style="width:56px"><input type="number" min="1" max="12" value="'+(ej.series||3)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="series"></td>'+
-      '<td style="width:68px"><input type="number" min="1" max="30" value="'+(ej.reps||8)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="reps"></td>'+
-      '<td style="width:80px"><input type="number" min="0" step="2.5" value="'+(ej.pesoObjetivo||0)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="pesoObjetivo"></td>'+
-      '<td style="width:76px"><input type="number" min="0" max="600" step="15" value="'+(ej.descansoSeg||90)+'" data-a="rt-n" data-id="'+rt.id+'" data-ix="'+ix+'" data-f="descansoSeg"></td>'+
-      '<td style="min-width:120px"><input value="'+esc(ej.nota||'')+'" data-a="rt-nota" data-id="'+rt.id+'" data-ix="'+ix+'" placeholder="pausa 1s abajo…"></td>'+
-      '<td class="mini chipnum">'+(ult?(ult.kg+'×'+ult.reps):'—')+'</td>'+
-      '<td class="mini chipnum">'+(p?('1RM ~'+p.rm+' kg'):'—')+'</td>'+
-      '<td style="text-align:right;white-space:nowrap">'+
-        '<button class="btn s" style="padding:2px 5px" data-a="rt-up" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix===0?'disabled':'')+' title="subir">↑</button>'+
-        '<button class="btn s" style="padding:2px 5px" data-a="rt-down" data-id="'+rt.id+'" data-ix="'+ix+'" '+(ix>=rt.ejercicios.length-1?'disabled':'')+' title="bajar">↓</button>'+
-        '<button class="btn d s" data-a="rt-del" data-id="'+rt.id+'" data-ix="'+ix+'" title="quitar de la rutina">×</button></td></tr>';}).join('');
-  const regiones=regionesDeRutina(rt.id);
-  const sinMusc=ejerciciosSinMusculo(rt.id);
-  /* «no se ve qué músculos haces y cuáles no»: se enseñan los dos lados. Los trabajados en verde y,
-     debajo, los que se quedan fuera apagados — que es justo lo que hay que mirar para decidir si a
-     la rutina le falta algo. */
-  const sinTocar=MREGIONES.filter(function(r){return !regiones.has(r);});
-  const leyenda=regiones.size
-    ?(Array.from(regiones).map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')+
-      (sinTocar.length?('<div class="msin"><b>Sin tocar:</b> '+
-        sinTocar.map(function(r){return '<span class="tag">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')+'</div>'):''))
-    :'<span class="mini">añade ejercicios abajo y el muñeco se pinta solo</span>';
-  return '<div class="card">'+
-    '<h2>📋 <input value="'+esc(rt.nombre)+'" data-a="rt-nombre" data-id="'+rt.id+'" placeholder="nombre de la rutina" '+
-      'style="font:inherit;font-weight:800;border:1px solid transparent;background:transparent;padding:2px 4px;max-width:210px"></h2>'+
-    '<div class="row"><label class="fld" style="flex:1 1 220px">notas (cuándo la haces)'+
-      '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+rt.id+'" placeholder="martes y viernes"></label></div>'+
-    /* pegar la rutina a un tipo de día es lo que hace que la app sepa qué te toca hoy, igual que
-       los menús: sin esto, «hoy toca entrenar» no lo puede decir nadie */
-    '<p class="mini" style="margin:10px 0 4px">Qué días toca</p>'+
-    '<div class="chips">'+store.shifts.map(function(sh){
-      const on=rutinaDias(rt).indexOf(sh.id)>=0;
-      return '<button class="chipx'+(on?' on':'')+'" data-a="rt-dia" data-id="'+rt.id+'" data-sh="'+esc(sh.id)+'">'+
-        esc(sh.icon||'')+' '+esc(sh.name)+'</button>';}).join('')+'</div>'+
-    '<div class="mdiagram" style="margin-top:10px">'+svgCuerpo(regiones)+'<div class="mlegend"><b>Trabaja:</b>'+leyenda+
-      '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regiones))+'</p>'+
-      (sinMusc.length?('<p class="mini" style="margin-top:4px;color:var(--warn)">No sé qué músculos trabaja: '+
-        esc(sinMusc.join(', '))+'. Se cuenta igual en la rutina, solo que no pinta el muñeco.</p>'):'')+
-      '</div></div>'+
-    (rt.ejercicios.length?('<div style="overflow-x:auto;margin-top:8px"><table style="width:auto;min-width:100%"><thead><tr style="white-space:nowrap">'+
-      '<th style="min-width:120px">Ejercicio</th><th>series</th>'+
-      '<th>reps</th><th>peso obj.</th><th>descanso</th><th style="min-width:130px">nota</th><th>último</th><th>tu marca</th><th></th></tr></thead>'+
-      '<tbody>'+filas+'</tbody></table></div>')
-      :'<div class="empty">Sin ejercicios todavía: añade uno abajo, o busca en la biblioteca de arriba y dale a «a la rutina».</div>')+
-    '<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
-      '<label class="fld" style="flex:1 1 160px">añadir ejercicio<input id="rtNew-'+rt.id+'" list="gymLista" placeholder="Press banca"></label>'+
-      '<label class="fld" style="flex:0 0 70px">series<input id="rtNs-'+rt.id+'" type="number" min="1" max="12" value="3"></label>'+
-      '<label class="fld" style="flex:0 0 70px">reps<input id="rtNr-'+rt.id+'" type="number" min="1" max="30" value="8"></label>'+
-      '<button class="btn s" data-a="rt-add" data-id="'+rt.id+'">añadir</button></div>'+
-    '<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'+
-      '<button class="btn p" data-a="ses-empezar" data-id="'+rt.id+'" data-key="'+selDate+'" '+
-        (!rt.ejercicios.length||ui.gymSesionActiva?'disabled':'')+'>▶ empezar '+esc(rt.nombre)+'</button>'+
-      '<span class="sp"></span><button class="btn d s" data-a="rt-borrar" data-id="'+rt.id+'">eliminar rutina</button></div>'+
-    '<p class="mini" style="margin-top:8px">'+(hist.n?('hecha '+hist.esteMes+' '+(hist.esteMes===1?'vez':'veces')+' este mes · '+
-      'media '+hist.media+' min · última vez '+(hist.diasDesde===0?'hoy':('hace '+hist.diasDesde+' día'+(hist.diasDesde===1?'':'s'))))
-      :'todavía no la has empezado ninguna vez')+'</p>'+
-    '</div>';}
 function renderSesionActiva(){
   const sa=ui.gymSesionActiva;if(!sa)return '';
   const g=gymS(),rt=g.rutinas.find(function(r){return r.id===sa.rutinaId;});
@@ -5459,6 +5633,7 @@ const GYM_ICO={
   chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>',
   ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   subir:'<path d="M6 14l6-6 6 6"/>',
+  flecha:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   bajar:'<path d="M6 10l6 6 6-6"/>',
   aviso:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.4"/>'
 };
@@ -5829,9 +6004,9 @@ function renderGymPortada(){
     '</div>'+
     gymDescansoHTML()+
     '<div class="gtiles tres">'+
-      gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
+      gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
-      gymFicha('biblioteca','libro','Biblioteca',c.hay?g.biblioteca.length.toLocaleString('es-ES'):'—',c.hay?'ejercicios':'sin importar')+
+      gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
     '</div></div>';}
 function renderGymSesion(){
   const c=gymCtx(),d=c.d,sel=c.sel;
@@ -5867,16 +6042,159 @@ function renderGymSesion(){
     '</div>'+
     '<div class="row" style="margin-top:11px"><button class="btn p gbig" data-a="gym-set" data-key="'+sel+'">apuntar serie</button></div>'+
     '</div></div>';}
+/* ===================== objetivos: el número Y EL CAMINO =====================
+   Hasta ahora no existía el concepto: ni «100 kg en banca» ni «tres días por semana». Y un objetivo
+   sin camino es un cartel: cada uno dice dónde estás, cuánto falta, a qué ritmo vas y qué toca esta
+   semana. La fecha sale de TU ritmo de las últimas 8 semanas, y lo dice: no es una promesa. */
+const OBJ_TIPOS=['fuerza','constancia','tiempo'];
+function objetivosS(){
+  const g=gymS();
+  if(!Array.isArray(g.objetivos))g.objetivos=[];
+  return g.objetivos;}
+function nuevoObjetivo(tipo,ex,meta){
+  const t=OBJ_TIPOS.indexOf(tipo)>=0?tipo:'fuerza';
+  const o={id:uid('obj'),tipo:t,ex:String(ex||'').slice(0,60),meta:+meta||0,desde:iso(new Date())};
+  if(t==='fuerza'&&!o.ex)return 'dile de qué ejercicio es el objetivo';
+  if(!(o.meta>0))return 'pon un número al objetivo';
+  objetivosS().push(o);save();render();
+  return 'objetivo puesto: '+objetivoTitulo(o);}
+function delObjetivo(id){
+  const l=objetivosS(),i=l.findIndex(function(x){return x.id===id;});
+  if(i<0)return 'ese objetivo ya no está';
+  const nm=objetivoTitulo(l[i]);l.splice(i,1);save();render();
+  return 'objetivo quitado: '+nm;}
+function objetivoTitulo(o){
+  if(o.tipo==='fuerza')return o.ex+' · '+fmtKg(o.meta)+' kg';
+  if(o.tipo==='constancia')return 'Entrenar '+o.meta+' día'+(o.meta===1?'':'s')+' por semana';
+  return '10 km por debajo de '+Math.floor(o.meta)+' min';}
+function semanasAtras(n){
+  const l=mondayOf(new Date());
+  return iso(addDays(l,-7*n));}
+function pesoMaximo(nombre,hasta){
+  /* el peso de verdad que has puesto en la barra, que es lo que mide un objetivo de fuerza */
+  const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){return !hasta||x.fecha<=hasta;});
+  return xs.reduce(function(a,x){return Math.max(a,+x.kg||0);},0);}
+function fuerzaEstimada(nombre,desde,hasta){
+  /* la mejor serie estimada (Epley) del tramo: no hace falta probar un máximo */
+  const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){
+    return (!desde||x.fecha>=desde)&&(!hasta||x.fecha<=hasta);});
+  let mejor=0;
+  xs.forEach(function(x){const r=Math.round((+x.kg||0)*(1+(+x.reps||0)/30)*10)/10;if(r>mejor)mejor=r;});
+  return mejor;}
+function diasEntrenadosSemana(lunKey){
+  const g=gymS(),dias={};
+  for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lunKey),i));
+    if(setsDe(k).length||g.cardio.some(function(x){return x.fecha===k;}))dias[k]=1;}
+  return Object.keys(dias);}
+function rachaConstancia(meta){
+  /* semanas seguidas, hacia atrás desde la anterior, en las que llegaste a tu número */
+  let n=0;
+  for(let i=1;i<=52;i++){
+    const lun=semanasAtras(i);
+    if(diasEntrenadosSemana(lun).length>=meta)n++;else break;}
+  return n;}
+function mejorCarrera(desde){
+  /* el mejor ritmo (min/km) de las carreras de al menos 3 km */
+  const g=gymS();
+  let mejor=null;
+  g.cardio.forEach(function(x){
+    if(desde&&x.fecha<desde)return;
+    if(!/carrera|corr/i.test(x.tipo||''))return;
+    const km=+x.distanciaKm||0,min=+x.duracionMin||0;
+    if(km<3||min<=0)return;
+    const r=min/km;
+    if(!mejor||r<mejor.ritmo)mejor={ritmo:r,km:km,min:min,fecha:x.fecha};});
+  return mejor;}
+function ritmoTxt(minPorKm){
+  if(!minPorKm)return '—';
+  const m=Math.floor(minPorKm),sg=Math.round((minPorKm-m)*60);
+  return m+':'+String(sg).padStart(2,'0');}
+function objetivoEstado(o){
+  /* dónde estás, cuánto falta, a qué ritmo vas y para cuándo llegas A TU RITMO */
+  const hace8=semanasAtras(8);
+  if(o.tipo==='fuerza'){
+    /* «Banca 100 kg» es poner 100 kg en la barra, no un 1RM estimado. Contra el estimado la app
+       diría «104,5 de 100, conseguido» sin que hayas puesto nunca más de 82,5: mentira. El
+       estimado se enseña al lado, que para eso sirve, y la curva de Progreso sí va con él. */
+    const hoy=pesoMaximo(o.ex),antes=pesoMaximo(o.ex,hace8);
+    const av=(hoy&&antes)?Math.round((hoy-antes)*10)/10:0;
+    const falta=Math.round((o.meta-hoy)*10)/10;
+    return {tipo:'fuerza',hoy:hoy,meta:o.meta,pct:o.meta>0?Math.max(0,Math.min(1,hoy/o.meta)):0,
+      av:av,falta:falta,sem:(av>0&&falta>0)?Math.ceil(falta/(av/8)):null,
+      rm:fuerzaEstimada(o.ex),uni:'kg',hayDatos:hoy>0};}
+  if(o.tipo==='constancia'){
+    const lun=iso(mondayOf(new Date())),hechos=diasEntrenadosSemana(lun).length;
+    return {tipo:'constancia',hoy:hechos,meta:o.meta,pct:o.meta>0?Math.max(0,Math.min(1,hechos/o.meta)):0,
+      racha:rachaConstancia(o.meta),falta:Math.max(0,o.meta-hechos),hayDatos:true};}
+  const hoy=mejorCarrera(),antes=mejorCarrera(hace8);
+  const minAhora=hoy?hoy.ritmo*10:0;                      /* 10 km al ritmo actual */
+  const av=(hoy&&antes&&antes.ritmo>hoy.ritmo)?Math.round((antes.ritmo-hoy.ritmo)*10*10)/10:0;
+  const falta=minAhora?Math.round((minAhora-o.meta)*10)/10:0;
+  return {tipo:'tiempo',hoy:minAhora,meta:o.meta,ritmo:hoy?hoy.ritmo:0,
+    pct:minAhora>0?Math.max(0,Math.min(1,o.meta/minAhora)):0,
+    av:av,falta:falta,sem:(av>0&&falta>0)?Math.ceil(falta/(av/8)):null,hayDatos:!!hoy};}
+function cuandoLlegasTxt(sem){
+  if(sem==null)return '';
+  if(sem<=0)return 'ya lo tienes';
+  const d=addDays(new Date(),sem*7);
+  const q=d.getDate()<=10?'principios':(d.getDate()<=20?'mediados':'finales');
+  return 'a '+q+' de '+MONTH_FULL[d.getMonth()];}
+function objetivoConsejoTxt(o,e){
+  if(o.tipo==='fuerza'){
+    if(!e.hayDatos)return 'Apunta alguna serie de «'+o.ex+'» y aquí saldrá a qué ritmo vas.';
+    if(e.falta<=0)return '¡Conseguido! Ponle un número nuevo.';
+    const pr=progresionDe(o.ex,0,8,iso(new Date()));
+    return (e.sem!=null?('A este ritmo llegas '+cuandoLlegasTxt(e.sem)+'. '):'Todavía no hay ritmo que medir: sigue apuntando. ')+
+      (pr.cl!=='nuevo'?('Esta semana toca '+fmtKg(pr.kg)+' kg.'):'');}
+  if(o.tipo==='constancia'){
+    if(e.falta<=0)return 'Semana cerrada. Racha de '+e.racha+' semana'+(e.racha===1?'':'s')+'.';
+    const ch=gymChoque(iso(new Date()));
+    return 'Te queda'+(e.falta===1?'':'n')+' '+e.falta+'. '+
+      (ch&&ch.a?('El '+fechaCortaTxt(ch.a)+' es tu mejor hueco: el '+fechaCortaTxt(ch.key)+' tienes '+ch.malo+'.')
+        :'Mira la tira de la semana para elegir el hueco.');}
+  if(!e.hayDatos)return 'Apunta una carrera de 3 km o más y aquí saldrá tu ritmo.';
+  if(e.falta<=0)return '¡Conseguido! Ponle un tiempo nuevo.';
+  return 'Vas a '+ritmoTxt(e.ritmo)+' /km, que son '+fmt(Math.round(e.hoy))+' min en 10 km. '+
+    (e.sem!=null?('A este ritmo llegas '+cuandoLlegasTxt(e.sem)+'.'):'Corre alguna más y podré decirte para cuándo.');}
+function rutinaResumen(rt){
+  const n=rt.ejercicios.length,ser=rt.ejercicios.reduce(function(a,e){return a+Math.max(1,+e.series||3);},0);
+  return n+' ejercicio'+(n===1?'':'s')+' · '+ser+' serie'+(ser===1?'':'s');}
+function rutinaDiasTxt(rt){
+  const d=rutinaDias(rt);
+  if(!d.length)return rt.notas?esc(rt.notas):'sin días asignados';
+  return d.map(function(id){const sh=shiftById(id);return esc((sh&&sh.name)||'');}).filter(Boolean).join(', ');}
 function renderGymRutinas(){
-  const c=gymCtx(),g=c.g,d=c.d;
+  /* Una tarjeta por rutina que se lee de un vistazo, y editar detrás de «editar». Antes esto era
+     3 256 px —3,56 pantallas— con 68 botones y 68 campos: una tabla de nueve columnas por
+     ejercicio, con «peso objetivo» y «descanso» incluidos, que no se usan. */
+  const c=gymCtx(),g=c.g,hoyRt=rutinaDeFecha(c.sel);
+  const tarjetas=g.rutinas.map(function(rt){
+    const h=historialRutina(rt.id),regs=regionesDeRutina(rt.id);
+    const chips=Array.from(regs).slice(0,5).map(function(r){
+      return '<span class="rmus">'+esc(MREG_LABEL[r]||r)+'</span>';}).join('');
+    const cuando=h.ultima?('última vez hace '+h.diasDesde+' día'+(h.diasDesde===1?'':'s')):'nunca la has hecho';
+    return '<div class="card rcard'+(hoyRt&&hoyRt.id===rt.id?' hoy':'')+'">'+
+      '<div class="rcab"><b>'+esc(rt.nombre)+'</b>'+
+        (hoyRt&&hoyRt.id===rt.id?'<span class="tag b2">HOY</span>':'')+'</div>'+
+      '<div class="rsub">'+rutinaResumen(rt)+' · '+rutinaDiasTxt(rt)+'</div>'+
+      (chips?('<div class="rmusr">'+chips+'</div>'):'<div class="rmusr"><span class="mini">añade ejercicios para ver qué trabaja</span></div>')+
+      '<div class="rbot">'+
+        '<button class="btn p" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(c.sel)+'">empezar</button>'+
+        '<button class="btn s" data-a="rt-editar" data-id="'+esc(rt.id)+'">editar</button>'+
+      '</div>'+
+      '<div class="rpie">'+esc(cuando)+(h.esteMes?(' · '+h.esteMes+' este mes'):'')+'</div>'+
+      '</div>';}).join('');
   $('#main').innerHTML='<div class="grid">'+
-    gymSubcab('Rutinas')+
-    g.rutinas.map(function(rt){return renderRutinaCard(rt,c.sel);}).join('')+
+    gymSubcab('Rutinas','<button class="btn s" data-a="rt-nueva-rapida">+ nueva</button>')+
+    (g.rutinas.length?tarjetas:'<div class="card"><div class="empty">Todavía no tienes ninguna rutina. Crea una y añádele ejercicios.</div></div>')+
     '<div class="card"><h2>+ Nueva rutina</h2>'+
-    '<p class="note">Una tarjeta por rutina (Empuje, Tirón, Pierna…), cada una con sus propios ejercicios.</p>'+
     '<div class="row"><label class="fld" style="flex:1 1 200px">nombre<input id="rtNombreNueva" placeholder="Empuje, Tirón, Pierna…"></label>'+
     '<button class="btn p" data-a="rt-nueva">crear rutina</button></div></div>'+
-    '<div class="card"><h2>🏊 Segundo entreno</h2>'+
+    renderSegundoCard(c,g)+
+    '</div>';}
+function renderSegundoCard(c,g){
+  const d=c.d;
+  return '<div class="card"><h2>🏊 Segundo entreno</h2>'+
     '<p class="note">Junto al día de fuerza, un segundo día para piscina o entreno normal. '+
     'Se marca solo en los días que elijas; en guardias, salientes y vacaciones nunca se pone.</p>'+
     '<div class="row"><span class="mini">entre semana, qué días:</span>'+
@@ -5893,20 +6211,341 @@ function renderGymRutinas(){
     '<p class="mini" style="margin-top:9px">para el '+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+': '+
       (c.sg.on?('sí, '+(c.sg.tipo||'entreno')+' a las '+(c.sg.hora||'—')):(c.sg.porSemana?'ese día toca otra cosa':'sin segundo entreno'))+
       ' <button class="btn s" data-a="gym-seg-hoy" data-key="'+c.sel+'">cambiar</button></p>'+
+    '</div>';}
+/* ===================== evolución: lo que se nota al tercer mes =====================
+   Volumen semana a semana, descarga cuando toca, estancamiento por ejercicio con un cambio
+   sugerido, y el cruce con lo que la app ya sabe: guardias, sueño y proteína. */
+function volumenSemanal(n){
+  const out=[];
+  for(let i=(n||8)-1;i>=0;i--){
+    const lun=semanasAtras(i),dom=iso(addDays(parseDate(lun),6));
+    let vol=0,series=0;
+    gymS().registro.forEach(function(x){
+      if(x.fecha<lun||x.fecha>dom)return;
+      vol+=(+x.kg||0)*(+x.reps||0);series++;});
+    out.push({lun:lun,sem:i,vol:Math.round(vol),series:series});}
+  return out;}
+function tocaDescarga(){
+  /* tres semanas seguidas subiendo volumen y sin bajar: toca aflojar una. No es una regla sagrada,
+     es lo que hace todo el mundo que lleva años: cada 4-6 semanas una semana suave. */
+  const v=volumenSemanal(6).filter(function(x){return x.sem>0;});   /* sin la semana en curso */
+  if(v.length<4)return null;
+  const u=v.slice(-4);
+  const subiendo=u[1].vol>u[0].vol&&u[2].vol>u[1].vol&&u[3].vol>u[2].vol;
+  if(!subiendo||!u[3].vol)return null;
+  return {semanas:4,vol:u[3].vol,sug:Math.round(u[3].vol*0.6)};}
+function estancados(){
+  /* un ejercicio está atascado si llevas 3 sesiones o más sin subir de peso ni de repeticiones */
+  const g=gymS(),out=[];
+  Object.keys(gymIdx().byEx).forEach(function(ex){
+    const dias=diasDeEjercicio(ex);
+    if(dias.length<3)return;
+    const tres=dias.slice(0,3).map(function(f){
+      const d=seriesDeDia(ex,f);
+      return {kg:d.reduce(function(a,x){return Math.max(a,+x.kg||0);},0),
+        reps:d.reduce(function(a,x){return Math.max(a,+x.reps||0);},0)};});
+    const igual=tres.every(function(t){return t.kg===tres[0].kg;});
+    const sinReps=tres.every(function(t){return t.reps<=tres[0].reps;});
+    if(igual&&sinReps&&tres[0].kg>0)out.push({ex:ex,kg:tres[0].kg,veces:3,desde:dias[2]});});
+  return out;}
+function cambioSugerido(ex){
+  /* otro ejercicio de tu biblioteca que toque los mismos músculos: cambiar el estímulo suele
+     desatascar más rápido que insistir con el mismo movimiento */
+  const g=gymS(),regs=regionesDeEjercicio({ex:ex});
+  if(!regs.size||!g.biblioteca.length)return '';
+  let mejor='',mejorN=0;
+  g.biblioteca.forEach(function(x){
+    if(x.n===ex)return;
+    const r2=regionesDeEjercicio({ex:x.n,tg:x.tg,msc:x.msc,c:x.c});
+    let n=0;r2.forEach(function(r){if(regs.has(r))n++;});
+    /* con que comparta un grupo grande vale: pedir dos dejaba fuera el press inclinado como
+       alternativa al press banca, que es justo el cambio que uno haría */
+    if(n>mejorN&&n>=1){mejorN=n;mejor=x.n;}});
+  return mejor;}
+function cruceEntreno(){
+  /* lo que solo puede decir ESTA app: cómo van las guardias, el sueño y la proteína alrededor
+     de lo que entrenas. Nada de esto lo sabe una app de gimnasio. */
+  const hoy=iso(new Date()),lun=iso(mondayOf(new Date())),out=[];
+  /* guardias de la semana que viene, que es lo que decide cuándo puedes entrenar */
+  let guardias=0,libres=0;
+  for(let i=0;i<7;i++){
+    const k=iso(addDays(parseDate(lun),7+i));
+    if(gymDiaMalo(k))guardias++;else libres++;}
+  if(guardias)out.push({cl:'aviso',txt:'La semana que viene tienes '+guardias+' día'+(guardias===1?'':'s')+
+    ' de guardia o saliente: te quedan '+libres+' huecos para entrenar.'});
+  /* sueño: entrenar con menos de tu mínimo dos días seguidos es pedir peras al olmo */
+  try{
+    let cortos=0;
+    for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lun),i));
+      if(k>hoy)break;
+      const sl=sleepOf(k);
+      if(sl&&sl.h!=null&&sl.h<suenoCfg().min-0.5)cortos++;}
+    if(cortos>=3)out.push({cl:'aviso',txt:'Llevas '+cortos+' días esta semana durmiendo menos de tu mínimo. '+
+      'Si una sesión sale floja, empieza por ahí antes que por el peso.'});
+  }catch(e){}
+  /* proteína: sin ella el entreno no cuaja */
+  try{
+    const ob=(store.food&&store.food.objetivo)||{};
+    if(ob.prot>0){
+      let dias=0,ok=0;
+      for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lun),i));
+        if(k>hoy)break;
+        const t=foodTotals(k);
+        if(t&&t.kcal>0){dias++;if(t.prot>=ob.prot*0.9)ok++;}}
+      if(dias>=3&&ok<Math.ceil(dias*0.6))
+        out.push({cl:'aviso',txt:'Solo '+ok+' de '+dias+' días has llegado a tu proteína. '+
+          'El músculo se hace con lo que comes, no solo con lo que levantas.'});}
+  }catch(e){}
+  return out;}
+function evolucionHTML(){
+  const v=volumenSemanal(8),max=v.reduce(function(a,x){return Math.max(a,x.vol);},1);
+  const desc=tocaDescarga(),est=estancados(),cru=cruceEntreno();
+  const barras='<div class="fb2">'+v.map(function(x){
+      const alt=Math.max(4,Math.round(x.vol/max*100));
+      return '<div class="fb2c" title="'+esc(x.lun)+' · '+x.vol.toLocaleString('es-ES')+' kg">'+
+        '<i style="height:'+alt+'%"'+(x.sem===0?' class="ahora"':'')+'></i>'+
+        '<span>'+(x.sem===0?'esta':('−'+x.sem))+'</span></div>';}).join('')+'</div>';
+  const avisos=[];
+  if(desc)avisos.push({cl:'aviso',txt:'Llevas '+desc.semanas+' semanas subiendo volumen sin aflojar. '+
+    'Toca una semana de descarga: unos '+desc.sug.toLocaleString('es-ES')+' kg, un 60 % de la última.'});
+  est.slice(0,2).forEach(function(x){
+    const sug=cambioSugerido(x.ex);
+    avisos.push({cl:'aviso',txt:'«'+x.ex+'» lleva 3 sesiones clavado en '+fmtKg(x.kg)+' kg. '+
+      (sug?('Prueba a cambiarlo por «'+sug+'» unas semanas: mismo músculo, otro estímulo.')
+          :'Baja un 10 % y vuelve a subir, o cámbialo por otro del mismo músculo.')});});
+  cru.forEach(function(x){avisos.push(x);});
+  return barras+
+    '<div class="curvapie"><span>8 semanas</span><b>'+v[v.length-1].vol.toLocaleString('es-ES')+' kg</b>'+
+    '<span>esta semana</span></div>'+
+    (avisos.length?('<div class="evav">'+avisos.map(function(a){
+      return '<div class="ev"><span class="p"></span><span>'+esc(a.txt)+'</span></div>';}).join('')+'</div>')
+      :'<p class="mini" style="margin-top:8px">Nada que avisar: el volumen sube sin dispararse y no hay ejercicios atascados.</p>');}
+function objetivoCardHTML(o){
+  const e=objetivoEstado(o),pct=Math.round(e.pct*100);
+  const consejo=objetivoConsejoTxt(o,e);
+  let cifra='',sub='',lado='';
+  if(o.tipo==='fuerza'){
+    cifra=fmtKg(e.hoy||0);
+    sub='de '+fmtKg(o.meta)+' kg'+(e.rm?(' · 1RM ~'+fmtKg(e.rm)):'');
+    lado=e.av>0?('+'+fmtKg(e.av)+' en 8 sem.'):(e.hayDatos?'sin cambio en 8 sem.':'');}
+  else if(o.tipo==='constancia'){
+    cifra=e.hoy+' de '+o.meta;sub='esta semana';
+    lado=e.racha?('racha de '+e.racha+' sem.'):'';}
+  else{
+    cifra=e.hayDatos?ritmoTxt(e.ritmo):'—';sub=e.hayDatos?('/km · '+fmt(Math.round(e.hoy))+' min en 10 km'):'sin carreras';
+    lado=e.av>0?('−'+fmt(e.av)+' min en 8 sem.'):'';}
+  return '<div class="card obj '+o.tipo+(e.falta<=0&&e.hayDatos?' hecho':'')+'">'+
+    '<div class="objcab"><b>'+esc(objetivoTitulo(o))+'</b>'+
+      '<span class="e">'+(o.tipo==='fuerza'?'EN LA BARRA':(o.tipo==='constancia'?'DÍAS':'CARRERA'))+'</span>'+
+      '<button class="btn d s" data-a="obj-del" data-id="'+esc(o.id)+'" aria-label="quitar objetivo">×</button></div>'+
+    '<div class="objnum"><b>'+esc(cifra)+'</b><span>'+esc(sub)+'</span>'+
+      (lado?('<i>'+esc(lado)+'</i>'):'')+'</div>'+
+    '<div class="objbar"><i style="width:'+pct+'%"></i></div>'+
+    (consejo?('<div class="objvia">'+gymIco('flecha','gico sm')+'<span>'+esc(consejo)+'</span></div>'):'')+
+    '</div>';}
+function volumenPorMusculo(desde,hasta){
+  /* el volumen repartido por grupo grande: es lo que enseña si llevas semanas descuidando la
+     pierna sin darte cuenta. Una serie que toca dos grupos suma en los dos: no se reparte, porque
+     no sabemos cuánto va a cada uno y repartir a medias sería inventárselo. */
+  const g=gymS(),out={};
+  MREGIONES.forEach(function(r){out[r]=0;});
+  g.registro.forEach(function(x){
+    if(desde&&x.fecha<desde)return;
+    if(hasta&&x.fecha>hasta)return;
+    const v=(+x.kg||0)*(+x.reps||0);
+    if(!v)return;
+    regionesDeEjercicio(x).forEach(function(r){if(out[r]!=null)out[r]+=v;});});
+  return out;}
+function volumenMusculoHTML(){
+  const desde=semanasAtras(4);
+  const v=volumenPorMusculo(desde,null);
+  const filas=MREGIONES.map(function(r){return {r:r,v:Math.round(v[r])};})
+    .filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;});
+  if(!filas.length)return '<div class="empty">Apunta unas cuantas series y aquí se ve cómo se reparte el trabajo.</div>';
+  const max=filas[0].v;
+  const flojos=MREGIONES.filter(function(r){return !v[r];}).map(function(r){return MREG_LABEL[r]||r;});
+  return filas.map(function(x){
+    return '<div class="fb"><div class="fbt"><span>'+esc(MREG_LABEL[x.r]||x.r)+'</span>'+
+      '<b>'+x.v.toLocaleString('es-ES')+' kg</b></div>'+
+      '<div class="fbar"><i style="width:'+Math.round(x.v/max*100)+'%"></i></div></div>';}).join('')+
+    (flojos.length?('<p class="mini" style="margin-top:7px;color:var(--warn)">En cuatro semanas no has tocado: '+
+      esc(flojos.join(', '))+'.</p>'):'<p class="mini" style="margin-top:7px">En cuatro semanas has tocado los diez grupos.</p>');}
+function cardioProgresoHTML(){
+  /* el cardio con ritmo y mejoría, que es donde se ve de verdad si vas a mejor */
+  const g=gymS();
+  const carreras=g.cardio.filter(function(x){return /carrera|corr/i.test(x.tipo||'')&&(+x.distanciaKm||0)>=1&&(+x.duracionMin||0)>0;})
+    .sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
+  if(carreras.length<2)return '<div class="empty">Con dos carreras apuntadas (km y minutos) aquí sale tu ritmo y si mejoras.</div>';
+  const ritmos=carreras.map(function(x){return {k:x.fecha,r:(+x.duracionMin)/(+x.distanciaKm),km:+x.distanciaKm};});
+  const mejor=ritmos.reduce(function(a,x){return x.r<a.r?x:a;},ritmos[0]);
+  const peor=ritmos.reduce(function(a,x){return x.r>a.r?x:a;},ritmos[0]);
+  const pri=ritmos[0],ult=ritmos[ritmos.length-1];
+  const dif=Math.round((pri.r-ult.r)*60);
+  const rango=Math.max(0.1,peor.r-mejor.r);
+  return '<div class="fb2">'+ritmos.slice(-12).map(function(x){
+      const alt=Math.max(8,Math.round((peor.r-x.r)/rango*100));
+      return '<div class="fb2c" title="'+esc(x.k)+' · '+ritmoTxt(x.r)+' /km">'+
+        '<i style="height:'+alt+'%"></i><span>'+esc(x.k.slice(8))+'</span></div>';}).join('')+'</div>'+
+    '<div class="curvapie"><span>mejor '+ritmoTxt(mejor.r)+' /km</span>'+
+    '<b class="'+(dif>0?'sube':(dif<0?'baja':''))+'">'+(dif>0?('−'+dif+' s/km'):(dif<0?('+'+(-dif)+' s/km'):'igual'))+'</b>'+
+    '<span>ahora '+ritmoTxt(ult.r)+' /km</span></div>'+
+    '<p class="mini" style="margin-top:6px">barra más alta = más rápido. '+carreras.length+' carrera'+(carreras.length===1?'':'s')+' apuntadas.</p>';}
+function renderGymObjetivos(){
+  /* LOS OBJETIVOS CON SU CAMINO. Un número solo es un cartel: aquí cada uno dice dónde estás,
+     cuánto falta, a qué ritmo vas y para cuándo llegas A TU RITMO —el de tus últimas 8 semanas—,
+     dicho como estimación y no como promesa. */
+  const l=objetivosS();
+  const tipo=ui.objTipo||'fuerza';
+  const exs=Object.keys(gymIdx().byEx).sort();
+  $('#main').innerHTML='<div class="grid">'+
+    gymSubcab('Objetivos')+
+    (l.length?l.map(objetivoCardHTML).join('')
+      :'<div class="card"><div class="empty">Todavía no tienes objetivos. Ponte uno abajo: un número y la app te dice el camino.</div></div>')+
+    '<div class="card"><h2>+ Nuevo objetivo</h2>'+
+    '<div class="row">'+
+      OBJ_TIPOS.map(function(t){
+        return '<button class="btn s '+(tipo===t?'p':'')+'" data-a="obj-tipo" data-t="'+t+'">'+
+          (t==='fuerza'?'fuerza':(t==='constancia'?'constancia':'tiempo'))+'</button>';}).join('')+
+    '</div>'+
+    '<div class="fgrid c3 tight" style="margin-top:10px">'+
+      (tipo==='fuerza'?('<label class="fld" style="grid-column:1/-1">ejercicio'+
+        '<input id="objEx" list="objLista" placeholder="Press banca">'+
+        '<datalist id="objLista">'+exs.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('')+'</datalist></label>'):'')+
+      '<label class="fld">'+(tipo==='fuerza'?'kg a levantar':(tipo==='constancia'?'días por semana':'minutos en 10 km'))+
+        '<input id="objMeta" type="number" min="1" max="'+(tipo==='constancia'?'7':'500')+'" step="'+(tipo==='fuerza'?'2.5':'1')+'"></label>'+
+      '<label class="fld" style="justify-content:flex-end">'+
+        '<button class="btn p" data-a="obj-add" data-t="'+tipo+'">poner objetivo</button></label>'+
+    '</div>'+
+    '<p class="mini" style="margin-top:8px">La fecha que te diga sale de tu ritmo de las últimas 8 semanas. '+
+      'Es una estimación con lo que llevas hecho, no una promesa.</p>'+
     '</div></div>';}
+function curvaFuerzaHTML(nombre){
+  /* la curva de fuerza estimada (Epley) semana a semana: no hace falta probar un máximo */
+  const puntos=[];
+  for(let i=11;i>=0;i--){
+    const lun=semanasAtras(i),dom=iso(addDays(parseDate(lun),6));
+    puntos.push({k:lun,v:fuerzaEstimada(nombre,lun,dom)});}
+  const con=puntos.filter(function(p){return p.v>0;});
+  if(con.length<2)return '<div class="empty">Apunta '+esc(nombre)+' un par de semanas y aquí sale la curva.</div>';
+  const max=con.reduce(function(a,p){return Math.max(a,p.v);},0);
+  const min=con.reduce(function(a,p){return Math.min(a,p.v);},max);
+  const rango=Math.max(1,max-min);
+  const W=280,H=68;
+  const xs=puntos.map(function(p,i){return 4+i*(W-8)/11;});
+  const ys=puntos.map(function(p){return p.v>0?(H-6-((p.v-min)/rango)*(H-16)):null;});
+  let d='',prev=false;
+  puntos.forEach(function(p,i){
+    if(ys[i]==null){prev=false;return;}
+    d+=(prev?' L':' M')+xs[i].toFixed(1)+' '+ys[i].toFixed(1);prev=true;});
+  const bolas=puntos.map(function(p,i){
+    return ys[i]==null?'':('<circle cx="'+xs[i].toFixed(1)+'" cy="'+ys[i].toFixed(1)+'" r="2.6" class="cp"></circle>');}).join('');
+  const ult=con[con.length-1],pri=con[0];
+  const dif=Math.round((ult.v-pri.v)*10)/10;
+  return '<svg class="curva" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="fuerza estimada de '+esc(nombre)+'">'+
+    '<path d="'+d.trim()+'" class="cl"></path>'+bolas+'</svg>'+
+    '<div class="curvapie"><span>'+fmtKg(pri.v)+' kg hace '+(11)+' semanas</span>'+
+    '<b class="'+(dif>0?'sube':(dif<0?'baja':''))+'">'+(dif>0?'+':'')+fmtKg(dif)+' kg</b>'+
+    '<span>'+fmtKg(ult.v)+' kg ahora</span></div>';}
+function renderGymRutEdit(){
+  /* EL CONSTRUCTOR: buscador sobre tu biblioteca, series con −/+ sin teclado, y «cómo queda»
+     debajo mientras la montas. Sin «peso objetivo» ni «descanso», que no los usas. */
+  const c=gymCtx(),g=c.g;
+  const rt=g.rutinas.filter(function(r){return r.id===ui.gymRutSel;})[0];
+  if(!rt){ui.gymPanel='rutinas';return renderGymRutinas();}
+  const regs=regionesDeRutina(rt.id);
+  const sinTocar=MREGIONES.filter(function(r){return !regs.has(r);});
+  const sinMusc=ejerciciosSinMusculo(rt.id);
+  const filas=rt.ejercicios.length?rt.ejercicios.map(function(ej,ix){
+    const m=Array.from(regionesDeEjercicio(ej)).map(function(r){return MREG_LABEL[r]||r;}).join(' · ');
+    return '<div class="refila">'+
+      '<div class="n"><b>'+esc(ej.ex)+'</b><span>'+esc(m||'sin músculo reconocido')+'</span></div>'+
+      '<div class="ser">'+
+        '<button class="btn s" data-a="rt-ser" data-id="'+esc(rt.id)+'" data-ix="'+ix+'" data-d="-1" aria-label="menos series">−</button>'+
+        '<span class="v">'+(+ej.series||3)+'×'+(+ej.reps||8)+'</span>'+
+        '<button class="btn s" data-a="rt-ser" data-id="'+esc(rt.id)+'" data-ix="'+ix+'" data-d="1" aria-label="más series">+</button>'+
+      '</div>'+
+      '<button class="btn d s rex" data-a="rt-del" data-id="'+esc(rt.id)+'" data-ix="'+ix+'" aria-label="quitar '+esc(ej.ex)+'">×</button>'+
+      '</div>';}).join('')
+    :'<div class="empty" style="padding:14px 12px">Sin ejercicios todavía. Búscalos abajo y añádelos de un toque.</div>';
+  const res=c.hay?c.res.slice(0,8):[];
+  const sug=res.map(function(x){
+    const m=Array.from(regionesDeEjercicio({ex:x.n,tg:x.tg,msc:x.msc,c:x.c})).map(function(r){return MREG_LABEL[r]||r;}).join(' · ');
+    return '<button class="resug" data-a="rt-add-lib" data-id="'+esc(rt.id)+'" data-n="'+esc(x.n)+'">'+
+      '<span class="n"><b>'+esc(x.n)+'</b><span>'+esc(m||x.c||'')+'</span></span><span class="mas">+</span></button>';}).join('');
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="gym-panel" data-p="rutinas">'+
+      gymIco('atras','gico sm')+' Rutinas</button>'+
+      '<h2 class="subtit">'+esc(rt.nombre)+'</h2>'+
+      '<span class="mini">'+rutinaResumen(rt)+'</span></div>'+
+    '<div class="card">'+
+      '<div class="row"><label class="fld" style="flex:1 1 180px">nombre'+
+        '<input value="'+esc(rt.nombre)+'" data-a="rt-nombre" data-id="'+esc(rt.id)+'"></label>'+
+        '<label class="fld" style="flex:1 1 180px">notas'+
+        '<input value="'+esc(rt.notas||'')+'" data-a="rt-notas" data-id="'+esc(rt.id)+'" placeholder="martes y viernes"></label></div>'+
+      '<p class="mini" style="margin:10px 0 4px">Qué días toca</p>'+
+      '<div class="chips">'+store.shifts.map(function(sh){
+        const on=rutinaDias(rt).indexOf(sh.id)>=0;
+        return '<button class="chipx'+(on?' on':'')+'" data-a="rt-dia" data-id="'+esc(rt.id)+'" data-sh="'+esc(sh.id)+'">'+
+          esc(sh.icon||'')+' '+esc(sh.name)+'</button>';}).join('')+'</div>'+
+    '</div>'+
+    '<div class="card relist">'+filas+'</div>'+
+    '<div class="card">'+
+      '<div class="row"><label class="fld" style="flex:1 1 220px">'+
+        (c.hay?('buscar en tus '+g.biblioteca.length.toLocaleString('es-ES')+' ejercicios'):'escribe el ejercicio')+
+        '<input id="rtNew-'+esc(rt.id)+'" value="'+esc(c.q)+'" data-a="gym-q" placeholder="sentadilla, press, remo…"></label>'+
+        '<button class="btn p" data-a="rt-add" data-id="'+esc(rt.id)+'">añadir</button></div>'+
+      /* la biblioteca se llega desde aquí, que es el único sitio donde se usa: para buscar
+         ejercicios mientras montas la rutina */
+      '<div class="row" style="margin-top:6px"><button class="btn s" data-a="gym-panel" data-p="biblioteca">'+
+        gymIco('libro','gico sm')+(c.hay?(' biblioteca · '+g.biblioteca.length.toLocaleString('es-ES')):' importar biblioteca')+'</button></div>'+
+      (c.hay?('<div class="row" style="margin-top:7px"><span class="mini">parte del cuerpo:</span>'+
+        MREGIONES.map(function(r){
+          return '<button class="btn s '+(c.filtroRegion===r?'p':'')+'" data-a="gym-filtro-region" data-r="'+r+'">'+
+            esc(MREG_LABEL[r]||r)+'</button>';}).join('')+'</div>'):'')+
+      (sug?('<div class="resugs">'+sug+'</div>')
+        :(c.hay?'<div class="mini" style="margin-top:9px">Sin resultados: prueba otra palabra.</div>'
+              :'<div class="mini" style="margin-top:9px">No tienes la biblioteca importada: escribe el nombre a mano y dale a «añadir».</div>'))+
+    '</div>'+
+    /* «Cómo queda»: lo que trabajas Y lo que te dejas, que es lo que hay que mirar para decidir si
+       a la rutina le falta algo. El muñeco se queda: con datos se ve de un vistazo. */
+    '<div class="card">'+
+      '<div class="gvh"><span>CÓMO QUEDA</span></div>'+
+      '<div class="mdiagram" style="margin-top:9px">'+svgCuerpo(regs)+
+        '<div class="mlegend"><b>Trabaja:</b>'+
+        (regs.size?Array.from(regs).map(function(r){return '<span class="tag b3">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')
+          :'<span class="mini">añade ejercicios abajo y el muñeco se pinta solo</span>')+
+        (sinTocar.length&&regs.size?('<div class="msin"><b>Sin tocar:</b> '+
+          sinTocar.map(function(r){return '<span class="tag">'+esc(MREG_LABEL[r]||r)+'</span>';}).join(' ')+'</div>'):'')+
+        '<p class="mini" style="margin-top:8px">'+esc(recomendacionRutina(regs))+'</p>'+
+        (sinMusc.length?('<p class="mini" style="margin-top:4px;color:var(--warn)">No sé qué músculos trabaja: '+
+          esc(sinMusc.join(', '))+'. Se cuenta igual en la rutina, solo que no pinta el muñeco.</p>'):'')+
+        '</div></div>'+
+    '</div>'+
+    '<div class="row"><button class="btn d" data-a="rt-borrar" data-id="'+esc(rt.id)+'">eliminar rutina</button>'+
+      '<span class="sp"></span>'+
+      '<button class="btn p" data-a="gym-panel" data-p="rutinas">listo</button></div>'+
+    '</div>';}
 function renderGymCardio(){
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Cardio')+renderCardioCard()+'</div>';}
 function renderGymProgreso(){
   const c=gymCtx();
+  const exs=Object.keys(gymIdx().byEx).sort();
+  const sel=(exs.indexOf(ui.objEx)>=0)?ui.objEx:(exs[0]||'');
   $('#main').innerHTML='<div class="grid">'+
     gymSubcab('Progreso')+
+    (exs.length?('<div class="card"><h2>Fuerza estimada</h2>'+
+      '<p class="note">De tu mejor serie de cada semana (Epley). No hace falta probar un máximo.</p>'+
+      '<div class="chips">'+exs.slice(0,12).map(function(n){
+        return '<button class="chipx'+(n===sel?' on':'')+'" data-a="obj-ex" data-n="'+esc(n)+'">'+esc(nombreCorto(n))+'</button>';}).join('')+'</div>'+
+      '<div style="margin-top:10px">'+curvaFuerzaHTML(sel)+'</div></div>'):'')+
+    '<div class="card"><h2>Cómo evoluciona</h2>'+
+    '<p class="note">Volumen semana a semana, y lo que la app ve venir cruzando tus guardias, tu sueño y lo que comes.</p>'+
+    evolucionHTML()+'</div>'+
+    '<div class="card"><h2>Dónde va el trabajo</h2>'+
+    '<p class="note">Volumen de las últimas cuatro semanas repartido por grupo muscular.</p>'+
+    volumenMusculoHTML()+'</div>'+
+    '<div class="card"><h2>Ritmo de carrera</h2>'+cardioProgresoHTML()+'</div>'+
     entrenoHeatmapCard()+
-    '<div class="card"><h2>📊 Volumen de la semana</h2>'+
-    '<div style="margin-top:6px">'+c.sem.map(function(x){
-      return '<div class="fb"><div class="fbt"><span>'+x.nm+'</span><b>'+x.vol.toLocaleString('es-ES')+' kg</b>'+
-        '<span class="mini">'+x.sets+' series</span></div>'+
-        '<div class="fbar'+(x.k===c.sel?' plan':'')+'"><i style="width:'+Math.round(x.vol/c.maxvol*100)+'%"></i></div></div>';}).join('')+'</div>'+
-    '<p class="mini" style="margin-top:6px">el volumen es kg × repeticiones de lo que apuntas: sírvete de él para comparar semanas, no para castigarte</p></div>'+
     renderHistorialCard()+
     '<div class="card"><h2>🏆 Tus marcas</h2>'+
     (c.prs.length?('<div style="overflow-x:auto"><table><thead><tr><th>Ejercicio</th><th>más peso</th><th>1RM estimado</th>'+
@@ -5969,6 +6608,8 @@ function renderGym(){
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
   if(p==='sesion')return renderGymSesion();
+  if(p==='objetivos')return renderGymObjetivos();
+  if(p==='rutedit')return renderGymRutEdit();
   if(p==='rutinas')return renderGymRutinas();
   if(p==='cardio')return renderGymCardio();
   if(p==='progreso')return renderGymProgreso();
@@ -6928,6 +7569,59 @@ function compraDatos(){
   let total=0,marcados=0;
   grupos.forEach(function(g){g[2].forEach(function(x){total++;if(ui.marks.has(x.id))marcados++;});});
   return {grupos:grupos,total:total,marcados:marcados,recetas:recetas,sueltas:sueltas};}
+/* ===================== por dónde pasas en el súper =====================
+   La lista salía ordenada alfabéticamente: 52 artículos seguidos, del aceite al yogur, que con el
+   carro en la mano son 52 viajes de un pasillo a otro. Agrupada por sección se recorre la tienda
+   una vez. El orden es el de un supermercado normal: entras por la fruta y sales por la caja.
+   OJO al orden de las reglas: lo específico va ANTES que lo general —«tomate triturado» es una
+   conserva y «tomate» es fruta; «caldo de pollo» es un brik y «pollo» es carne—. */
+const COMPRA_SECS=[
+  ['verdura','Fruta y verdura','🥬'],
+  ['carne','Carne','🍗'],
+  ['pescado','Pescado','🐟'],
+  ['lacteos','Huevos y lácteos','🧀'],
+  ['pan','Panadería','🥖'],
+  ['despensa','Despensa','🥫'],
+  ['congelado','Congelados','❄️'],
+  ['bebida','Bebidas','🧃'],
+  ['otros','Otros','🛒']];
+const COMPRA_REGLAS=[
+  /* lo específico primero */
+  [/congelad|helado/i,'congelado'],
+  [/caldo|fumet/i,'despensa'],
+  [/tomate (triturado|frito|natural|pelado)|salsa de tomate/i,'despensa'],
+  [/pimiento (asado|del piquillo|en conserva)/i,'despensa'],
+  [/(jengibre|ajo|cebolla|pimiento|perejil|oregano|or[ée]gano) (molid|en polvo|seco)/i,'despensa'],
+  [/(en |de )?lata|conserva|bote de|tarro/i,'despensa'],
+  [/leche de (coco|almendra|avena|soja|arroz)/i,'despensa'],
+  [/caf[ée]|infusi[óo]n|\bt[ée]\b|cacao|colacao/i,'despensa'],
+  /* la leche de proteínas está en el frigorífico de lácteos, no en el pasillo de suplementos:
+     sin esta regla la pillaba la de «proteína» y mandaba a la despensa un brik refrigerado */
+  [/(leche|batido|yogur|queso|skyr) (de |con )?prote/i,'lacteos'],
+  [/prote[íi]na|whey|caseina|case[íi]na|creatina|suplement/i,'despensa'],
+  [/lomo de (salm[óo]n|at[úu]n|bacalao)|salm[óo]n|merluza|bacalao|at[úu]n fresco|gamba|langostino|marisco|pescad|boquer[óo]n|sardina|lubina|dorada/i,'pescado'],
+  /* generales */
+  [/pollo|pavo|pechuga|muslo|ternera|cerdo|lomo|chorizo|jam[óo]n|bacon|panceta|carne|solomillo|costilla|salchich|albóndiga|alb[óo]ndiga/i,'carne'],
+  [/huevo|leche|yogur|queso|mantequilla|nata|k[ée]fir|reques[óo]n|cuajada|batido/i,'lacteos'],
+  [/pan\b|panecillo|bollo|tortilla de (trigo|ma[íi]z)|wrap|masa madre|biscote|tostada/i,'pan'],
+  [/agua|refresco|zumo|cerveza|vino|bebida/i,'bebida'],
+  [/arroz|pasta|macarr|espagueti|fideo|lenteja|garbanzo|alubia|jud[íi]a blanca|avena|quinoa|cuscus|cusc[úu]s|harina|az[úu]car|miel|aceite|vinagre|\bsal\b|pimienta|piment[óo]n|curry|comino|canela|especia|frutos secos|almendra|nuez|nueces|anacardo|cacahuete|semilla|chia|ch[íi]a|levadura|caldo|galleta|cereal|mermelada|chocolate|at[úu]n/i,'despensa'],
+  [/patata|boniato|cebolla|ajo|tomate|lechuga|canonigo|can[óo]nigo|espinaca|r[úu]cula|zanahoria|calabac[íi]n|calabaza|berenjena|pimiento|br[óo]coli|coliflor|jud[íi]a verde|guisante|esp[áa]rrago|champi[ñn][óo]n|seta|puerro|apio|pepino|aguacate|lim[óo]n|lima|naranja|mandarina|manzana|pl[áa]tano|banana|pera|fresa|ar[áa]ndano|frambuesa|kiwi|mango|pi[ñn]a|melon|mel[óo]n|sand[íi]a|uva|melocot[óo]n|nectarina|ciruela|higo|fruta|verdura|hortaliza|jengibre|perejil|cilantro|albahaca|hierbabuena|menta/i,'verdura']];
+function seccionDeCompra(texto){
+  const t=String(texto||'').toLowerCase();
+  for(let i=0;i<COMPRA_REGLAS.length;i++)if(COMPRA_REGLAS[i][0].test(t))return COMPRA_REGLAS[i][1];
+  return 'otros';}
+function porSeccion(items){
+  /* los artículos repartidos por pasillo, en el orden en el que se recorre la tienda */
+  const por={};
+  items.forEach(function(x){
+    const k=seccionDeCompra(x.texto);
+    (por[k]||(por[k]=[])).push(x);});
+  return COMPRA_SECS.filter(function(sc){return (por[sc[0]]||[]).length;})
+    .map(function(sc){
+      const l=por[sc[0]].slice().sort(function(a,b){
+        return String(a.texto).localeCompare(String(b.texto),'es');});
+      return {k:sc[0],nom:sc[1],ico:sc[2],items:l};});}
 function compraLineaHTML(x){
   const on=ui.marks.has(x.id);
   return '<li class="linea'+(on?' ok':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
@@ -6952,10 +7646,30 @@ function renderShop(){
   const cuerpo=d.grupos.map(function(g){
     if(!g[2].length)return '';
     const abierto=!ui.compraCerradas||!ui.compraCerradas.has(g[0]);
+    /* dentro de cada grupo, por pasillo: con 52 artículos en orden alfabético hacías el súper
+       en zigzag. Cada pasillo se pliega solo cuando lo has terminado. */
+    const secs=porSeccion(g[2]);
+    const dentro=(secs.length>1)
+      ? secs.map(function(sc){
+          const k2=g[0]+':'+sc.k;
+          const hechos=sc.items.filter(function(x){return ui.marks.has(x.id);}).length;
+          /* un pasillo que ya has terminado se pliega SOLO: la lista se va acortando según llenas
+             el carro, que es lo contrario de lo que hacía —52 líneas fijas de principio a fin—.
+             Se puede volver a abrir tocándolo, y entonces manda lo que tú digas. */
+          const listo=sc.items.length>0&&hechos===sc.items.length;
+          const ab2=(ui.compraAbiertas&&ui.compraAbiertas.has(k2))?true
+            :((ui.compraCerradas&&ui.compraCerradas.has(k2))?false:!listo);
+          return '<button class="pasillo'+(hechos===sc.items.length?' ok':'')+'" data-a="compra-sec" data-k="'+esc(k2)+'"'+
+            ' aria-expanded="'+(ab2?'true':'false')+'">'+
+            '<span class="i" aria-hidden="true">'+sc.ico+'</span><b>'+esc(sc.nom)+'</b>'+
+            '<span class="n">'+hechos+'/'+sc.items.length+'</span>'+
+            gymIco('chevron','gico sm ch'+(ab2?' abajo':''))+'</button>'+
+            (ab2?('<ul class="lcompra">'+sc.items.map(compraLineaHTML).join('')+'</ul>'):'');}).join('')
+      : ('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>');
     return '<button class="seccion" data-a="compra-sec" data-k="'+g[0]+'" aria-expanded="'+(abierto?'true':'false')+'">'+
       '<b>'+esc(g[1])+'</b><span class="n">'+g[2].length+'</span>'+
       gymIco('chevron','gico sm ch'+(abierto?' abajo':''))+'</button>'+
-      (abierto?('<ul class="lcompra">'+g[2].map(compraLineaHTML).join('')+'</ul>'):'');}).join('');
+      (abierto?dentro:'');}).join('');
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
       '<button class="btn s volver" data-a="nav-comer">'+gymIco('atras','gico sm')+' Comer</button>'+
@@ -6963,9 +7677,11 @@ function renderShop(){
     '<div class="card">'+
       /* esto SÍ es progreso: cuántas cosas de la lista llevas ya en el carro */
       '<div class="prog"><span class="bar"><i style="width:'+pct+'%"></i></span><b>'+d.marcados+' de '+d.total+'</b></div>'+
-      '<p class="note" style="margin:0">Lo fresco sale del menú de esta semana: '+d.recetas+' receta'+
-        (d.recetas===1?'':'s')+' de tanda'+(d.sueltas?(' y '+d.sueltas+' plato'+(d.sueltas===1?'':'s')+' suelto'+(d.sueltas===1?'':'s')):'')+
-        '. Lo de rutina sale de tus listas. Marca lo que eches al carro.</p>'+
+      /* tres renglones fijos de explicación en la pantalla que miras de pie con el carro: la
+         misma información cabe en uno */
+      '<p class="note" style="margin:0">Por pasillos, en el orden del súper. '+
+        d.recetas+' receta'+(d.recetas===1?'':'s')+' de tanda'+
+        (d.sueltas?(' y '+d.sueltas+' suelto'+(d.sueltas===1?'':'s')):'')+'.</p>'+
       (d.total?cuerpo:'<div class="empty">Sin tandas esta semana y sin listas «de rutina»: nada que comprar.</div>')+
     '</div>'+
     '<div class="row">'+
@@ -8294,6 +9010,7 @@ function renderAjustes(){
       linea('\ud83d\udcc5','Calendario del m\u00f3vil','aviso '+(+store.rotation.icsAvisoMin||30)+' min antes')+
       linea('\u2600\ufe0f','D\u00f3nde estoy',sitioActual().nombre)+
       linea('\ud83d\udecc','Sue\u00f1o','m\u00ednimo '+sc.min+' h')+
+      linea('\ud83c\udf5e','Gluten',esCeliaco()?'te aviso':'apagado',!esCeliaco())+
       linea('\ud83e\udd57','Datos de los alimentos',usdaOn()?'USDA oficial':'tabla aproximada',!usdaOn())+
       linea('\ud83d\udd17','Lector de enlaces',lec,lec==='apagado')+
     '</div>'+
@@ -8301,6 +9018,12 @@ function renderAjustes(){
       puerta('calendario','calendario','Calendario','y los avisos')+
       puerta('sol','sol','El sol',sitioActual().nombre)+
       puerta('aspecto','pincel','C\u00f3mo se ve',(store.tema&&store.tema.brand?'a tu color':'oscuro')+' \u00b7 la franja')+
+      /* el perfil vive en Comer porque es lo que decide las kcal, pero la puerta también va aquí:
+         «tú» es de las cosas que se buscan en Ajustes */
+      '<button class="puerta" data-a="ir-perfil">'+gymIco('balanza')+
+        '<b>T\u00fa</b><span class="s">'+(perfilS().alturaCm?(fmt(perfilS().alturaCm/100)+' m'):'altura')+
+        ' \u00b7 '+(perfilS().pesoKg?(fmtKg(perfilS().pesoKg)+' kg'):'peso')+
+        (esCeliaco()?' \u00b7 cel\u00edaco':'')+'</span></button>'+
     '</div>'+
     '<div class="puertas" style="margin-top:9px">'+
       puerta('lector','enlace','Lector',lec)+
@@ -8825,7 +9548,12 @@ function act(a,el){
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-sec':{const k=el.dataset.k||'';
-      if(ui.compraCerradas.has(k))ui.compraCerradas.delete(k);else ui.compraCerradas.add(k);
+      /* se mira lo que hay en pantalla y no un único conjunto: un pasillo terminado se pinta
+         plegado por su cuenta, así que «cerrarlo» otra vez no haría nada visible */
+      if(!ui.compraAbiertas)ui.compraAbiertas=new Set();
+      const abierto=el.getAttribute('aria-expanded')==='true';
+      if(abierto){ui.compraAbiertas.delete(k);ui.compraCerradas.add(k);}
+      else{ui.compraCerradas.delete(k);ui.compraAbiertas.add(k);}
       render();break;}
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
     case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
@@ -8887,6 +9615,7 @@ function act(a,el){
       flash(estAddSesion(min,t?[t]:[]));render();break;}
     case 'est-del-sesion':{flash(estDelSesion(el.dataset.id));render();break;}
     case 'aju-vista':{ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'ir-perfil':{ui.tab='food';ui.foodVista='perfil';ui.ajuVista='';render();window.scrollTo(0,0);break;}
     case 'ir-sueno':irACard('cfg','sueno');break;
     case 'aju-ir':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'datos-vista':{ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
@@ -9308,6 +10037,7 @@ function act(a,el){
     case 'rt-nueva':{const inp=document.getElementById('rtNombreNueva');
       flash(nuevaRutina(inp?inp.value:''));if(inp)inp.value='';break;}
     case 'rt-add':{const rid=el.dataset.id,n=document.getElementById('rtNew-'+rid);
+      ui.gymQ='';   /* añadido: la caja se vacía para el siguiente, no se queda el texto pegado */
       const r=addRutina(rid,n?n.value:'',
         {series:(document.getElementById('rtNs-'+rid)||{}).value,reps:(document.getElementById('rtNr-'+rid)||{}).value});
       flash(r);
@@ -9330,6 +10060,28 @@ function act(a,el){
     case 'gv-ir':{const sa=ui.gymSesionActiva;if(!sa)break;
       sa.ix=+el.dataset.ix||0;ui.gymVivo=null;ui.gymPanel='vivo';render();window.scrollTo(0,0);break;}
     case 'gv-cambiar':ui.gymPanel='cambiar';render();window.scrollTo(0,0);break;
+    case 'rt-editar':{ui.gymRutSel=el.dataset.id||'';ui.gymPanel='rutedit';ui.gymQ='';ui.gymFiltroRegion='';
+      render();window.scrollTo(0,0);break;}
+    case 'rt-ser':{const g2=gymS(),rt2=g2.rutinas.filter(function(r){return r.id===el.dataset.id;})[0];
+      if(!rt2)break;
+      const ej=rt2.ejercicios[+el.dataset.ix];if(!ej)break;
+      ej.series=Math.max(1,Math.min(12,(+ej.series||3)+(+el.dataset.d||0)));
+      save();render();break;}
+    case 'rt-add-lib':{ui.gymQ='';flash(addRutina(el.dataset.id,el.dataset.n));break;}
+    case 'obj-tipo':ui.objTipo=el.dataset.t||'fuerza';render();break;
+    case 'obj-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
+      flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta')));break;}
+    case 'obj-del':flash(delObjetivo(el.dataset.id));break;
+    case 'perf-celiaco':flash(setPerfil('celiaco'));break;
+    case 'perf-meta':flash(setPerfil('meta',el.dataset.v));break;
+    case 'perf-peso':{const c=document.getElementById('perfPeso');
+      flash(apuntarPeso(c?c.value:0));break;}
+    case 'glu-cambiar':flash(cambiarPlatoSinGluten(el.dataset.id));break;
+    case 'obj-ex':{ui.objEx=el.dataset.n||'';render();window.scrollTo(0,0);break;}
+    case 'rt-nueva-rapida':{flash(nuevaRutina(''));
+      const g3=gymS(),ult=g3.rutinas[g3.rutinas.length-1];
+      if(ult){ui.gymRutSel=ult.id;ui.gymPanel='rutedit';render();window.scrollTo(0,0);}
+      break;}
     case 'gv-mas15':{if(!ui.gymDesc)break;
       ui.gymDesc.fin+=15000;ui.gymDesc.total+=15;pintaDescanso();break;}
     case 'gv-saltar':ui.gymDesc=null;render();break;
@@ -9791,6 +10543,7 @@ function imprimir(){
      imprimir se abre todo, y al terminar se deja exactamente como estaba. */
   if(_imprimiendo)return;
   _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
+    compraAbiertas:new Set(ui.compraAbiertas||[]),
     tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
   /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
      una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
@@ -9799,6 +10552,11 @@ function imprimir(){
     document.documentElement.classList.add('imp-mes');}
   try{ui.openDays=new Set(semanaVentana().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
+  /* al imprimir sale la lista ENTERA, pasillos terminados incluidos: el papel no se pliega */
+  ui.compraAbiertas=new Set(['fresco:verdura','fresco:carne','fresco:pescado','fresco:lacteos',
+    'fresco:pan','fresco:despensa','fresco:congelado','fresco:bebida','fresco:otros',
+    'rutina:verdura','rutina:carne','rutina:pescado','rutina:lacteos','rutina:pan','rutina:despensa',
+    'rutina:congelado','rutina:bebida','rutina:otros']);
   render();
   /* los <details> se abren sobre el DOM ya pintado: no dependen de `ui` */
   Array.prototype.forEach.call(document.querySelectorAll('#main details:not([open])'),function(d){
@@ -9806,7 +10564,7 @@ function imprimir(){
   const restaurar=function(){
     const a=_imprimiendo;if(!a)return;_imprimiendo=null;
     a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
-    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;
+    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
     if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
     window.removeEventListener('afterprint',restaurar);
@@ -10953,6 +11711,7 @@ document.addEventListener('change',e=>{
     case 'food-ob':{const fb=food(),v=Math.max(0,Math.round(+el.value||0));
       if(!fb.objetivo)fb.objetivo={kcal:0,prot:0};fb.objetivo[el.dataset.k]=v;save();render();break;}
     case 'gym-day':{const k=foodKey(el.value);if(k)ui.gymDate=k;render();break;}
+    case 'perf-n':setPerfil(el.dataset.f,el.value);break;   /* los campos van en el switch de change, no en el de click */
     case 'rt-n':setRutina(el.dataset.id,+el.dataset.ix,el.dataset.f,el.value);render();break;
     case 'rt-nota':setRutina(el.dataset.id,+el.dataset.ix,'nota',el.value);break;
     case 'rt-nombre':{const rt=gymS().rutinas.find(function(r){return r.id===el.dataset.id;});
@@ -11243,11 +12002,18 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
+  objetivosS,nuevoObjetivo,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
+  pesoMaximo,volumenSemanal,tocaDescarga,estancados,cambioSugerido,cruceEntreno,
+  fuerzaEstimada,diasEntrenadosSemana,rachaConstancia,mejorCarrera,ritmoTxt,cuandoLlegasTxt,
+  volumenPorMusculo,rutinaResumen,semanasAtras,fmtKg,
   progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
   informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
+  seccionDeCompra,porSeccion,COMPRA_SECS,
+  glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
+  perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
   parseReceta,recetaSana,recetaIcono,recetaLineas,impGuardar,impLocal,renderImport,
   enArtifact,versionActual,hayVersionNueva,mirarVersion,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
