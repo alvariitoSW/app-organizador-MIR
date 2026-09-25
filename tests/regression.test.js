@@ -180,13 +180,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   async function gotoGym(panel) {
     await gotoTab('gym');
     await page.waitForTimeout(120);
+    // el informe de fin de sesión tapa la portada aunque gymPanel esté vacío
+    await page.evaluate(() => { if (window.PG.ui.gymInforme) { window.PG.ui.gymInforme = ''; window.PG.render(); } });
     if (await page.evaluate(() => !!window.PG.ui.gymPanel)) {
       await page.click('[data-a="gym-panel"][data-p=""]');
       await page.waitForTimeout(150);
     }
     if (panel) {
-      await page.click(`[data-a="gym-panel"][data-p="${panel}"]`);
-      await page.waitForTimeout(200);
+      // con page.click, una puerta que no existe cuelga 30 s y TUMBA la suite entera en vez de
+      // hacer fallar la prueba que la necesita. Es la cuarta vez que pasa en este repositorio.
+      const puerta = await page.$(`[data-a="gym-panel"][data-p="${panel}"]`);
+      if (puerta) { await puerta.click(); await page.waitForTimeout(200); }
+      else console.log('  (aviso: no hay puerta a «' + panel + '» en Entreno)');
     }
   }
 
@@ -4166,18 +4171,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     const enHoyG = await page.evaluate(() =>
       [...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)));
-    // y empezarla desde «Hoy» monta las series y quita el aviso
+    // y empezarla desde «Hoy» abre la sesión, quita el aviso y te deja ENTRENANDO.
+    // Antes esta prueba exigía que al empezar aparecieran ya las 7 series en el registro; eso era
+    // el fallo, no la intención: ui.gymSesionActiva no se guarda, así que cerrar la app a medias
+    // dejaba en el historial series que no habías hecho. Ahora cada serie entra al apuntarla.
+    const seriesAntes = await page.evaluate(() => window.PG.gymS().registro.filter((x) => x.sesionId).length);
     const bot = await page.$('#main [data-a="ses-empezar"]');
     if (bot) { await bot.click(); await page.waitForTimeout(400); }
     const trasG = await page.evaluate(() => ({
       sesion: !!window.PG.ui.gymSesionActiva,
       series: window.PG.gymS().registro.filter((x) => x.sesionId).length,
+      entrenando: window.PG.ui.gymPanel === 'vivo' && !!document.querySelector('#main .gvhero'),
       yaNoAvisa: ![...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)),
     }));
     check('una rutina se pega a un tipo de día, y entonces «hoy toca entrenar» sale en Entreno y en Hoy',
       chips >= 3 && enEntreno.hay && enEntreno.rutina && enEntreno.ultimoPeso && enEntreno.empezar &&
-      enHoyG && trasG.sesion && trasG.series >= 7 && trasG.yaNoAvisa,
-      JSON.stringify({ chips, enEntreno, enHoyG, trasG }));
+      enHoyG && trasG.sesion && trasG.entrenando && trasG.series === seriesAntes && trasG.yaNoAvisa,
+      JSON.stringify({ chips, enEntreno, enHoyG, seriesAntes, trasG }));
     await page.evaluate(() => {
       const P = window.PG; P.ui.gymSesionActiva = null;
       const g = P.gymS(); g.rutinas.length = 0; g.registro.length = 0; g.sesiones.length = 0; P.save();
@@ -4818,6 +4828,130 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       for (let i = 0; i < 7; i++) P.setDayOverride(P.iso(P.addDays(P.parseDate(m.lunes), i)), null);
       P.ui.gymPanel = ''; P.ui.gymDate = ''; P.save(); P.render();
     }, mont);
+  }
+
+  // ===================================================================================
+  // Entrenar en vivo (fase 1 del informe): el peso propuesto CON SU PORQUÉ, −/+ sin
+  // teclado, el esfuerzo en palabras, el récord marcado y el informe al terminar.
+  // Encadena la sesión entera por la interfaz: empezar → apuntar → pasar → terminar.
+  // ===================================================================================
+  {
+    const mont = await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const hace = (n) => iso(P.addDays(new Date(), -n));
+      S.gym.rutinas = [{ id: 'rtV', nombre: 'Torso V', notas: '', dias: [],
+        ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }, { ex: 'Sentadilla', series: 3, reps: 8 }] }];
+      // historial de verdad: press banca sacado entero a 60 (toca SUBIR) y sentadilla
+      // atascada dos veces en 100 sin cerrarla (toca BAJAR un 10 %)
+      S.gym.registro = [
+        { id: 'w1', fecha: hace(7), ex: 'Press banca', kg: 60, reps: 8, rpe: 8, ts: 1 },
+        { id: 'w2', fecha: hace(7), ex: 'Press banca', kg: 60, reps: 8, rpe: 8, ts: 2 },
+        { id: 'w3', fecha: hace(7), ex: 'Press banca', kg: 60, reps: 8, rpe: 8, ts: 3 },
+        { id: 'w4', fecha: hace(14), ex: 'Sentadilla', kg: 100, reps: 5, rpe: 10, ts: 4 },
+        { id: 'w5', fecha: hace(14), ex: 'Sentadilla', kg: 100, reps: 5, rpe: 10, ts: 5 },
+        { id: 'w6', fecha: hace(14), ex: 'Sentadilla', kg: 100, reps: 5, rpe: 10, ts: 6 },
+        { id: 'w7', fecha: hace(7), ex: 'Sentadilla', kg: 100, reps: 6, rpe: 10, ts: 7 },
+        { id: 'w8', fecha: hace(7), ex: 'Sentadilla', kg: 100, reps: 6, rpe: 10, ts: 8 },
+        { id: 'w9', fecha: hace(7), ex: 'Sentadilla', kg: 100, reps: 6, rpe: 10, ts: 9 }];
+      S.gym.sesiones = []; S.gym.cardio = []; S.gym.cambios = {};
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.gymPanel = 'rutinas';
+      P.save(); P.render();
+      return { antes: S.gym.registro.length };
+    });
+    await page.waitForTimeout(300);
+
+    // 1 · empezar ya no monta las series por adelantado. Antes metía las 6 de golpe en el
+    //     registro con el peso de la última vez; como ui.gymSesionActiva NO se guarda, cerrar
+    //     la app a medias dejaba en el historial series que no habías hecho.
+    const emp = await page.$('#main [data-a="ses-empezar"][data-id="rtV"]');
+    if (emp) { await emp.click(); await page.waitForTimeout(400); }
+    const arranque = await page.evaluate(() => ({
+      panel: window.PG.ui.gymPanel,
+      registro: window.PG.store.gym.registro.length,
+      hayPantalla: !!document.querySelector('#main .gvhero') }));
+    check('empezar una rutina te deja entrenando y no mete en tu historial series que no has hecho',
+      !!emp && arranque.panel === 'vivo' && arranque.hayPantalla && arranque.registro === mont.antes,
+      JSON.stringify({ emp: !!emp, arranque, antes: mont.antes }));
+
+    // 2 · el peso propuesto Y SU PORQUÉ: sube donde la cerraste, baja donde llevas dos atascado
+    const porque = await page.evaluate(() => {
+      const P = window.PG;
+      const hoy = P.iso(new Date());
+      const v = document.querySelector('#main .gvpor');
+      return { enPantalla: v ? v.textContent.replace(/\s+/g, ' ').trim() : '',
+        clase: v ? v.className : '',
+        kg: (document.querySelectorAll('#main .gvnum .v')[0] || { textContent: '' }).textContent.trim(),
+        banca: P.progresionDe('Press banca', 3, 8, hoy),
+        sent: P.progresionDe('Sentadilla', 3, 8, hoy) };
+    });
+    check('la pantalla de entrenar dice qué peso toca y por qué: sube donde la cerraste, baja donde te atascaste',
+      porque.banca.cl === 'sube' && porque.banca.kg === 62.5 &&
+      porque.sent.cl === 'baja' && porque.sent.kg === 90 &&
+      /clase/.test('clase') && porque.clase.indexOf('sube') >= 0 &&
+      porque.kg === '62,5' && /Sube a 62,5/.test(porque.enPantalla),
+      JSON.stringify(porque));
+
+    // 3 · el esfuerzo va en palabras, y −/+ mueven el peso sin teclado
+    const masKg = await page.$('#main [data-a="gv-kg"][data-d="2.5"]');
+    if (masKg) { await masKg.click(); await page.waitForTimeout(200); }
+    const duro = await page.$('#main [data-a="gv-rpe"][data-d="9"]');
+    if (duro) { await duro.click(); await page.waitForTimeout(200); }
+    const mandos = await page.evaluate(() => ({
+      kg: (document.querySelectorAll('#main .gvnum .v')[0] || { textContent: '' }).textContent.trim(),
+      palabras: [...document.querySelectorAll('#main .gvesf .btn')].map((e) => e.textContent.trim()),
+      marcado: (document.querySelector('#main .gvesf .btn.on') || { textContent: '' }).textContent.trim() }));
+    check('el peso se mueve con −/+ sin teclado y el esfuerzo se dice en palabras, no en números',
+      !!masKg && !!duro && mandos.kg === '65' &&
+      mandos.palabras.join('/') === 'fácil/justo/duro/al fallo' && mandos.marcado === 'duro',
+      JSON.stringify(mandos));
+
+    // 4 · apuntar añade UNA serie, marca el récord y al acabar el ejercicio pasa solo al siguiente
+    for (let i = 0; i < 3; i++) {
+      const b = await page.$('#main [data-a="gv-apuntar"]');
+      if (b) { await b.click(); await page.waitForTimeout(260); }
+    }
+    const tras = await page.evaluate(() => {
+      const P = window.PG;
+      const ses = P.store.gym.registro.filter((x) => x.sesionId === (P.ui.gymSesionActiva || {}).id);
+      return { nuevas: ses.length,
+        rpe: ses.length ? ses[0].rpe : null,
+        kg: ses.length ? ses[0].kg : null,
+        ejercicioAhora: (document.querySelector('#main .gvex b') || { textContent: '' }).textContent.trim(),
+        anillo: (document.querySelector('#main .gvanillo text') || { textContent: '' }).textContent.trim(),
+        estrellas: [...document.querySelectorAll('#main .gvchip.pr')].length };
+    });
+    check('apuntar añade una serie sola, guarda el esfuerzo y al acabar el ejercicio pasa al siguiente',
+      tras.nuevas === 3 && tras.rpe === 9 && tras.kg === 65 &&
+      tras.ejercicioAhora === 'Sentadilla' && tras.anillo === '3',
+      JSON.stringify(tras));
+
+    // 5 · el informe al terminar: volumen, comparación y récords
+    const fin = await page.$('#main [data-a="gv-terminar"]');
+    if (fin) { await fin.click(); await page.waitForTimeout(450); }
+    const informe = await page.evaluate(() => {
+      const P = window.PG;
+      const ses = P.store.gym.sesiones[P.store.gym.sesiones.length - 1] || null;
+      return { hay: !!document.querySelector('#main .gvfin'),
+        tit: (document.querySelector('#main .gvfint') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
+        kpis: [...document.querySelectorAll('#main .gvfin .kpis div')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
+        recs: [...document.querySelectorAll('#main .gvrecs .gvchip')].map((e) => e.textContent.trim()),
+        plan: ses ? ses.plan : null, completo: ses ? ses.completo : null,
+        abierta: !!P.ui.gymSesionActiva };
+    });
+    check('al terminar sale el informe con el volumen, las series planeadas y los récords',
+      !!fin && informe.hay && !informe.abierta && informe.plan === 6 && informe.completo === false &&
+      /a medias/.test(informe.tit) && /2 de 6|3 de 6/.test(informe.tit) &&
+      informe.kpis.some((k) => /kg movidos/.test(k)) && informe.recs.length >= 1 &&
+      /Press banca/.test(informe.recs.join(' ')),
+      JSON.stringify(informe));
+
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.gym.rutinas = []; P.store.gym.registro = []; P.store.gym.sesiones = [];
+      P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymSesionActiva = null; P.ui.gymVivo = null; P.ui.gymDesc = null;
+      P.save(); P.render();
+    });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

@@ -1271,3 +1271,73 @@ ul.slots{list-style:none;margin:0;padding:0}
 .gtiles.tres .gtile{padding:11px 9px;min-height:96px}
 .gtiles.tres .gtile>b{font-size:12.5px}
 .gtiles.tres .gtile .s{font-size:10px;line-height:1.25}
+
+/* ===== Entreno · la pantalla de entrenar en vivo ============================================== */
+.gvcab{display:flex;align-items:center;gap:11px;min-width:0}
+.gvcab .volver{width:38px;padding:0;justify-content:center;flex-shrink:0}
+.gvtit{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.gvtit b{font-size:15px;font-weight:800;letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gvtit span{font-size:10.5px;font-weight:700;color:var(--ink2);letter-spacing:.04em}
+.gvanillo{flex-shrink:0}
+.gvhero{border-color:color-mix(in srgb,var(--brand) 32%,var(--line))}
+.gvex{display:flex;align-items:baseline;gap:8px;min-width:0}
+.gvex b{flex-grow:1;min-width:0;font-size:21px;font-weight:800;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gvex span{flex-shrink:0;font-size:12px;font-weight:800;color:var(--brand)}
+.gvpor{display:flex;gap:9px;align-items:flex-start;margin-top:10px;padding:9px 11px;border-radius:12px;
+  font-size:12px;font-weight:600;line-height:1.35;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink2)}
+.gvpor svg{flex-shrink:0;margin-top:1px}
+.gvpor.sube{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));
+  background:color-mix(in srgb,var(--accent) 10%,var(--bg));color:color-mix(in srgb,var(--accent) 55%,var(--ink))}
+.gvpor.sube svg{stroke:var(--accent)}
+.gvpor.baja{border-color:color-mix(in srgb,var(--warn) 50%,var(--line));
+  background:color-mix(in srgb,var(--warn) 9%,var(--bg));color:color-mix(in srgb,var(--warn) 65%,var(--ink))}
+.gvpor.baja svg{stroke:var(--warn)}
+.gvmandos{display:flex;gap:9px;margin-top:10px}
+.gvnum{flex:1 1 0;min-width:0;border:1px solid var(--line);border-radius:14px;
+  background:color-mix(in srgb,var(--bg) 55%,var(--card));padding:7px 7px 8px}
+.gvnum .e{font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--ink2);text-align:center}
+.gvnum .m{display:flex;align-items:center;gap:3px;margin-top:3px}
+.gvnum .m .btn{width:46px;height:46px;flex-shrink:0;padding:0;justify-content:center;
+  font-size:21px;font-weight:700;border-radius:12px}
+.gvnum .v{flex-grow:1;text-align:center;font-size:27px;font-weight:800;letter-spacing:-.02em}
+.gvesf{display:flex;gap:6px;align-items:center;margin-top:10px}
+.gvesf .e{flex-shrink:0;font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--ink2)}
+.gvesf .btn{flex:1 1 0;min-width:0;height:34px;padding:0;justify-content:center;font-size:11.5px;font-weight:800}
+.gvesf .btn.on{background:var(--brand);border-color:transparent;color:#04121c}
+.gvhero .gbig{margin-top:11px;width:100%}
+.gvdesc{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--ok) 42%,var(--line));background:color-mix(in srgb,var(--ok) 9%,var(--bg))}
+.gvdesc .r{font-size:30px;font-weight:800;color:var(--ok);letter-spacing:-.02em;min-width:74px}
+.gvdesc .b{flex-grow:1;min-width:0}
+.gvdesc .e{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.gvdesc .ba{display:block;height:4px;border-radius:999px;background:var(--line);margin-top:5px;overflow:hidden}
+.gvdesc .ba i{display:block;height:100%;background:var(--ok);transition:width .9s linear}
+.gvdesc.fin{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 9%,var(--bg))}
+.gvdesc.fin .r{color:var(--brand)}
+.gvh{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.gvh .pr{margin-left:auto;color:var(--accent);letter-spacing:.06em}
+.gvchips,.gvrecs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.gvchip{height:32px;display:inline-flex;align-items:center;padding:0 11px;border-radius:10px;
+  font-size:12.5px;font-weight:700;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 55%,var(--card));color:var(--ink)}
+.gvchip.pr{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
+  background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent)}
+.gvsig{display:flex;align-items:center;gap:10px}
+.gvsig>div{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gvsig .e{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.gvsig b{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gvpie{display:flex;gap:8px}
+.gvpie .btn{flex:1 1 0;min-width:0;min-height:44px;justify-content:center}
+.gvfila{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font:inherit;color:var(--ink);
+  cursor:pointer;padding:10px 4px;background:none;border:0;border-top:1px dashed var(--line)}
+.gvfila:first-child{border-top:0}
+.gvfila .n{flex-grow:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gvfila .ok{color:var(--accent);font-weight:800}
+.gvfila.on{color:var(--brand)}
+.gvfint{display:flex;align-items:center;gap:11px}
+.gvfint svg{flex-shrink:0;stroke:var(--accent)}
+.gvfint b{display:block;font-size:17px;font-weight:800}
+.gvfint span{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:1px}
+.gvfin{border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}

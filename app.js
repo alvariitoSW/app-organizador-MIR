@@ -3185,14 +3185,19 @@ function empezarRutina(rid,fecha){
   if(!rt.ejercicios.length)return '«'+rt.nombre+'» no tiene ejercicios todavía: añade alguno primero';
   if(ui.gymSesionActiva)return 'ya tienes una sesión en curso: termínala o descártala antes de empezar otra';
   const k=foodKey(fecha)||iso(new Date());
-  const sid=uid('gses');let n=0;
-  rt.ejercicios.forEach(function(ej){
-    const ult=ejercicioUltimo(ej.ex),kg=ult?ult.kg:(+ej.pesoObjetivo||0);
-    for(let i=0;i<Math.max(1,+ej.series||3);i++){
-      g.registro.push({id:uid('gs'),fecha:k,ex:ej.ex,kg:kg,reps:+ej.reps||8,rpe:null,nota:'',ts:Date.now(),sesionId:sid});n++;}});
-  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n};
-  save();render();
-  return n+' series montadas de «'+rt.nombre+'» con el último peso que usaste — apúntalas abajo y dale a «he terminado» cuando acabes';}
+  const sid=uid('gses');
+  /* NO se montan las series por adelantado. Antes se metían las 17 de golpe en el registro con el
+     peso de la última vez; como ui.gymSesionActiva no se guarda, cerrar la app a mitad dejaba en tu
+     historial 17 series que no habías hecho. Ahora cada serie entra cuando la apuntas. */
+  const n=rt.ejercicios.reduce(function(a,ej){return a+Math.max(1,+ej.series||3);},0);
+  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now()};
+  ui.gymVivo=null;ui.gymDesc=null;ui.gymInforme='';
+  /* empezar una rutina te deja DENTRO del entreno, no en un formulario — y también cuando le das
+     desde «Hoy», que es donde sale el aviso de que hoy toca: sin cambiar de pestaña, pulsabas
+     «empezar» y no pasaba nada a la vista */
+  ui.tab='gym';ui.gymPanel='vivo';
+  save();render();window.scrollTo(0,0);
+  return '«'+rt.nombre+'»: '+n+' series por delante. Apunta cada una según la hagas.';}
 function duracionTipica(rid){
   const g=gymS(),ss=g.sesiones.filter(function(s){return s.rutinaId===rid;});
   if(!ss.length)return 45;
@@ -3205,6 +3210,7 @@ function terminarSesion(minutos,completo,nota){
   const dur=Math.max(1,Math.min(600,Math.round(+minutos||duracionTipica(sa.rutinaId))));
   const comp=(typeof completo==='boolean')?completo:(seriesIds.length>=sa.plan);
   g.sesiones.push({id:sa.id,rutinaId:sa.rutinaId,fecha:sa.fecha,duracionMin:dur,seriesIds:seriesIds,
+    plan:+sa.plan||seriesIds.length,   /* cuántas había planeadas: el informe dice «3 de 6», no «3 de 3» */
     completo:comp,nota:String(nota||'').slice(0,140)});
   ui.gymSesionActiva=null;
   save();render();
@@ -3213,9 +3219,11 @@ function descartarSesion(){
   const g=gymS();
   if(!ui.gymSesionActiva)return 'no hay ninguna sesión en curso';
   const sid=ui.gymSesionActiva.id;
+  const n=g.registro.filter(function(x){return x.sesionId===sid;}).length;
   g.registro=g.registro.filter(function(x){return x.sesionId!==sid;});
-  ui.gymSesionActiva=null;save();render();
-  return 'sesión descartada: las series que había montado se han quitado del registro';}
+  ui.gymSesionActiva=null;ui.gymVivo=null;ui.gymDesc=null;ui.gymPanel='';
+  save();render();
+  return n?('sesión descartada: se han quitado las '+n+' series que llevabas'):'sesión descartada';}
 function historialRutina(rid){
   const g=gymS(),hoy=new Date(),mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
   const ss=g.sesiones.filter(function(s){return s.rutinaId===rid;});
@@ -4881,6 +4889,161 @@ function renderSesionActiva(){
       '<button class="btn p" data-a="ses-terminar">✓ he terminado</button>'+
       '<button class="btn s" data-a="ses-descartar">descartar sesión</button></div>'+
     '</div>';}
+function renderGymVivo(){
+  /* LA PANTALLA DE ENTRENAR, la que se usa con el móvil en la mano entre serie y serie:
+     ejercicio actual arriba, el peso propuesto CON SU PORQUÉ, −/+ sin teclado, el esfuerzo en
+     palabras y no en números, la cuenta atrás y el récord marcado. */
+  const sa=ui.gymSesionActiva;
+  if(!sa)return renderGymPortada();
+  const g=gymS(),rt=g.rutinas.filter(function(r){return r.id===sa.rutinaId;})[0];
+  const c=vivoCampos(sa);
+  const hechas=g.registro.filter(function(x){return x.sesionId===sa.id;});
+  const vol=Math.round(hechas.reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0));
+  const min=Math.max(0,Math.round((Date.now()-(+sa.ts||Date.now()))/60000));
+  const pct=Math.min(1,hechas.length/Math.max(1,sa.plan));
+  const R=17,C=2*Math.PI*R;
+  const anillo='<svg class="gvanillo" width="42" height="42" viewBox="0 0 42 42" role="img" aria-label="'+
+    hechas.length+' de '+sa.plan+' series">'+
+    '<circle cx="21" cy="21" r="'+R+'" fill="none" stroke="var(--line)" stroke-width="5"></circle>'+
+    '<circle cx="21" cy="21" r="'+R+'" fill="none" stroke="var(--brand)" stroke-width="5" stroke-linecap="round"'+
+    ' stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+(C*(1-pct)).toFixed(1)+'" transform="rotate(-90 21 21)"></circle>'+
+    '<text x="21" y="25" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="800">'+hechas.length+'</text></svg>';
+
+  const cab='<div class="gvcab">'+
+    '<button class="btn s volver" data-a="gym-panel" data-p="">'+gymIco('atras','gico sm')+'</button>'+
+    '<div class="gvtit"><b>'+esc(rt?rt.nombre:'Entreno')+'</b>'+
+      '<span>'+min+' MIN · '+vol.toLocaleString('es-ES')+' KG MOVIDOS</span></div>'+anillo+'</div>';
+
+  if(!c)return ($('#main').innerHTML='<div class="grid">'+cab+
+    '<div class="card"><div class="empty">Esta rutina no tiene ejercicios. Añádeselos desde «Rutinas» y vuelve.</div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="gym-panel" data-p="rutinas">ir a Rutinas</button>'+
+    '<button class="btn d s" data-a="ses-descartar">descartar sesión</button></div></div></div>');
+
+  const ej=c.ej,pr=c.pr;
+  const serieN=Math.min(ej.series,ej.hechas+1);
+  const hoyEx=seriesDeDia(ej.ex,sa.fecha).filter(function(x){return x.sesionId===sa.id;});
+  const mejor=prDe(ej.ex);
+  const sig=c.plan.map(function(p,i){return {p:p,i:i};})
+    .filter(function(o){return o.i!==c.ix&&o.p.hechas<o.p.series;})[0];
+
+  const paso=esEjercicioDeAbajo(ej.ex)?5:2.5;
+  const mando=function(campo,etq,val,dm,dp,uni){
+    return '<div class="gvnum"><div class="e">'+etq+'</div><div class="m">'+
+      '<button class="btn s" data-a="gv-'+campo+'" data-d="'+dm+'" aria-label="menos '+etq.toLowerCase()+'">−</button>'+
+      '<div class="v">'+esc(val)+(uni?'<i>'+uni+'</i>':'')+'</div>'+
+      '<button class="btn s" data-a="gv-'+campo+'" data-d="'+dp+'" aria-label="más '+etq.toLowerCase()+'">+</button>'+
+      '</div></div>';};
+
+  const esfuerzo='<div class="gvesf"><span class="e">ESFUERZO</span>'+
+    RPE_PAL.map(function(r){
+      return '<button class="btn s'+(c.rpe===r.n?' on':'')+'" data-a="gv-rpe" data-d="'+r.n+'"'+
+        (c.rpe===r.n?' aria-pressed="true"':'')+'>'+r.txt+'</button>';}).join('')+'</div>';
+
+  const chips=hoyEx.length?('<div class="gvchips">'+hoyEx.map(function(x){
+      const rec=esRecord(x.ex,x.kg,x.reps,x.id);
+      return '<span class="gvchip'+(rec?' pr':'')+'">'+fmtKg(x.kg)+' × '+x.reps+(rec?' ★':'')+'</span>';}).join('')+'</div>')
+    :'<div class="mini" style="margin-top:7px;color:var(--ink2)">Todavía no has apuntado ninguna serie de este ejercicio hoy.</div>';
+
+  const desc=ui.gymDesc?('<div class="gvdesc" id="gvDesc">'+
+    '<div class="r" id="gvReloj">–</div>'+
+    '<div class="b"><span class="e">DESCANSO</span><span class="ba"><i id="gvBarra" style="width:100%"></i></span></div>'+
+    '<button class="btn s" data-a="gv-mas15">+15s</button>'+
+    '<button class="btn s" data-a="gv-saltar">saltar</button></div>'):'';
+
+  $('#main').innerHTML='<div class="grid">'+cab+
+    '<div class="card gvhero">'+
+      '<div class="gvex"><b>'+esc(ej.ex)+'</b><span>serie '+serieN+'/'+ej.series+'</span></div>'+
+      '<div class="gvpor '+pr.cl+'">'+gymIco(pr.cl==='sube'?'subir':(pr.cl==='baja'?'bajar':'chispa'),'gico sm')+
+        '<span>'+esc(pr.txt)+'</span></div>'+
+      '<div class="gvmandos">'+mando('kg','KG',fmtKg(c.kg),-paso,paso,'')+mando('reps','REPS',c.reps,-1,1,'')+'</div>'+
+      esfuerzo+
+      '<button class="btn p gbig" data-a="gv-apuntar">apuntar serie</button>'+
+    '</div>'+
+    desc+
+    '<div class="card"><div class="gvh"><span>SERIES DE HOY</span>'+
+      (mejor?('<span class="pr">tu mejor marca: '+fmtKg(mejor.rmKg)+' × '+mejor.rmReps+'</span>'):'')+'</div>'+
+      chips+'</div>'+
+    (sig?('<div class="card gvsig"><div><span class="e">DESPUÉS</span>'+
+      '<b>'+esc(sig.p.ex)+' · '+sig.p.series+'×'+sig.p.reps+'</b></div>'+
+      '<button class="btn s" data-a="gv-ir" data-ix="'+sig.i+'">pasar ›</button></div>'):'')+
+    '<div class="gvpie">'+
+      '<button class="btn s" data-a="gv-cambiar">cambiar ejercicio</button>'+
+      '<button class="btn g" data-a="gv-terminar">terminar</button></div>'+
+    '</div>';
+  cuentaAtras();}
+function renderGymCambiar(){
+  /* elegir a mano en qué ejercicio estás: la rutina no siempre se hace en orden */
+  const sa=ui.gymSesionActiva;
+  if(!sa)return renderGymPortada();
+  const plan=sesionPlan(sa),act=sesionIx(sa);
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="gym-panel" data-p="vivo">'+
+      gymIco('atras','gico sm')+' Entrenando</button><h2 class="subtit">¿Cuál toca?</h2></div>'+
+    '<div class="card">'+plan.map(function(p,i){
+      return '<button class="gvfila'+(i===act?' on':'')+'" data-a="gv-ir" data-ix="'+i+'">'+
+        '<span class="n">'+esc(p.ex)+'</span>'+
+        '<span class="mini chipnum">'+p.hechas+'/'+p.series+'</span>'+
+        (p.hechas>=p.series?'<span class="mini ok">✓</span>':'<span class="mini">'+p.series+'×'+p.reps+'</span>')+
+        '</button>';}).join('')+'</div></div>';}
+function informeSesion(sid){
+  /* EL INFORME AL TERMINAR: qué has hecho, cómo ha ido frente a la vez anterior y qué récords hay */
+  const g=gymS(),ses=g.sesiones.filter(function(s){return s.id===sid;})[0];
+  if(!ses)return null;
+  const rt=g.rutinas.filter(function(r){return r.id===ses.rutinaId;})[0];
+  const series=g.registro.filter(function(x){return x.sesionId===sid;});
+  const vol=Math.round(series.reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0));
+  /* los récords: se comparan contra todo lo anterior A ESTA sesión */
+  const previos={};
+  g.registro.forEach(function(x){
+    if(x.sesionId===sid)return;
+    const rm=Math.round((+x.kg||0)*(1+(+x.reps||0)/30)*10)/10;
+    if(!previos[x.ex]||rm>previos[x.ex])previos[x.ex]=rm;});
+  const records=[];
+  const mejorPorEx={};
+  series.forEach(function(x){
+    const rm=Math.round((+x.kg||0)*(1+(+x.reps||0)/30)*10)/10;
+    if(!mejorPorEx[x.ex]||rm>mejorPorEx[x.ex].rm)mejorPorEx[x.ex]={rm:rm,kg:x.kg,reps:x.reps};});
+  Object.keys(mejorPorEx).forEach(function(ex){
+    if(mejorPorEx[ex].rm>(previos[ex]||0))records.push({ex:ex,kg:mejorPorEx[ex].kg,reps:mejorPorEx[ex].reps});});
+  /* la vez anterior con la misma rutina */
+  const antes=g.sesiones.filter(function(s){return s.rutinaId===ses.rutinaId&&s.id!==sid;})
+    .sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');})[0];
+  let volAntes=null;
+  if(antes){const sa2=g.registro.filter(function(x){return x.sesionId===antes.id;});
+    volAntes=Math.round(sa2.reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0));}
+  const regs=new Set();
+  series.forEach(function(x){regionesDeEjercicio(x).forEach(function(r){regs.add(r);});});
+  return {ses:ses,rt:rt,series:series,vol:vol,records:records,antes:antes,volAntes:volAntes,regs:regs,
+    esfuerzo:series.filter(function(x){return +x.rpe>=9;}).length};}
+function renderGymInforme(){
+  const inf=informeSesion(ui.gymInforme);
+  if(!inf){ui.gymInforme='';return renderGymPortada();}
+  const dif=(inf.volAntes!=null&&inf.volAntes>0)?Math.round((inf.vol-inf.volAntes)/inf.volAntes*100):null;
+  const porEx={};
+  inf.series.forEach(function(x){(porEx[x.ex]=porEx[x.ex]||[]).push(x);});
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card gvfin">'+
+      '<div class="gvfint">'+gymIco('ok','gico')+'<div><b>'+esc(inf.rt?inf.rt.nombre:'Sesión')+(inf.ses.completo?' hecha':', a medias')+'</b>'+
+        '<span>'+inf.series.length+' de '+(+inf.ses.plan||inf.series.length)+' series · '+
+        inf.ses.duracionMin+' min'+(inf.ses.completo?' · entera':'')+'</span></div></div>'+
+      '<div class="kpis compact" style="margin-top:10px">'+
+        '<div><b>'+inf.vol.toLocaleString('es-ES')+'</b><span>kg movidos</span></div>'+
+        '<div><b>'+(dif==null?'—':((dif>0?'+':'')+dif+'%')) +'</b><span>'+(inf.antes?'frente a la anterior':'primera vez')+'</span></div>'+
+        '<div><b>'+inf.records.length+'</b><span>récord'+(inf.records.length===1?'':'s')+'</span></div>'+
+      '</div>'+
+      (inf.records.length?('<div class="gvrecs">'+inf.records.map(function(r){
+        return '<span class="gvchip pr">★ '+esc(r.ex)+' · '+fmtKg(r.kg)+' × '+r.reps+'</span>';}).join('')+'</div>'):'')+
+    '</div>'+
+    '<div class="card"><h2>Lo que has hecho</h2>'+
+      Object.keys(porEx).map(function(ex){
+        const xs=porEx[ex];
+        return '<div class="frow"><span class="fn">'+esc(ex)+'</span>'+
+          '<span class="mini">'+xs.map(function(x){return fmtKg(x.kg)+'×'+x.reps;}).join(' · ')+'</span></div>';}).join('')+
+      diagramaHTML(inf.regs,'músculos de esta sesión')+
+    '</div>'+
+    '<div class="row"><button class="btn p" data-a="gym-informe-cerrar">listo</button>'+
+      '<button class="btn s" data-a="gym-panel" data-p="progreso">ver progreso</button></div>'+
+    '</div>';}
 function renderHistorialCard(){
   const g=gymS();
   if(!g.rutinas.length)return '';
@@ -5019,6 +5182,8 @@ const GYM_ICO={
   hoja:'<path d="M6 3.5h8l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5z"/><path d="M14 3.5V8h4.5M8 13h8M8 17h5"/>',
   chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>',
   ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  subir:'<path d="M6 14l6-6 6 6"/>',
+  bajar:'<path d="M6 10l6 6 6-6"/>',
   aviso:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.4"/>'
 };
 function gymIco(n,cls){return '<svg class="'+(cls||'gico')+'" viewBox="0 0 24 24" aria-hidden="true">'+(GYM_ICO[n]||'')+'</svg>';}
@@ -5063,6 +5228,160 @@ function gymCardioSemana(){
 function gymFicha(p,ico,titulo,n,sub){
   return '<button class="gtile" data-a="gym-panel" data-p="'+p+'">'+gymIco(ico)+
     '<b>'+esc(titulo)+'</b><span class="n">'+esc(n)+'</span><span class="s">'+esc(sub)+'</span></button>';}
+/* ===================== entrenar en vivo =====================
+   Hasta ahora «empezar una rutina» montaba las 17 series de golpe en el registro con el peso de la
+   última vez y luego había que ir corrigiéndolas en un formulario. Dos problemas: el formulario no
+   es una pantalla para usar con el móvil en la mano entre serie y serie, y —peor— ui.gymSesionActiva
+   NO se guarda: si cerrabas la app a medias, la sesión desaparecía y las 17 series se quedaban en tu
+   historial como si las hubieras hecho. Ahora la serie se apunta cuando la haces, y solo esa. */
+const RPE_PAL=[{n:7,txt:'fácil'},{n:8,txt:'justo'},{n:9,txt:'duro'},{n:10,txt:'al fallo'}];
+function fmtKg(n){return fmt(n).replace('.',',');}   /* 62,5 y no 62.5: es el número más grande de la pantalla */
+function esfuerzoTxt(rpe){
+  const n=+rpe||0;if(!n)return '';
+  let mejor=RPE_PAL[0];
+  RPE_PAL.forEach(function(r){if(n>=r.n)mejor=r;});
+  return mejor.txt;}
+const MREG_ABAJO={cuadriceps:1,isquiotibiales:1,gluteos:1,gemelos:1};
+function esEjercicioDeAbajo(nombre){
+  /* el salto de peso no es el mismo arriba que abajo: 2,5 kg en un press, 5 en una sentadilla */
+  const regs=regionesDeEjercicio({ex:nombre});
+  let abajo=false;
+  regs.forEach(function(r){if(MREG_ABAJO[r])abajo=true;});
+  return abajo;}
+function redondeaKg(x){return Math.max(0,Math.round((+x||0)/2.5)*2.5);}
+function diasDeEjercicio(nombre){
+  /* las fechas en las que has hecho ese ejercicio, de la más nueva a la más vieja */
+  const xs=gymIdx().byEx[nombre]||[],f={};
+  xs.forEach(function(x){if(x.fecha)f[x.fecha]=1;});
+  return Object.keys(f).sort().reverse();}
+function seriesDeDia(nombre,fecha){
+  return (gymIdx().byEx[nombre]||[]).filter(function(x){return x.fecha===fecha;});}
+function diaCumplido(dia,nser,tope){
+  /* «la sacaste entera»: todas las series planeadas, al tope de repeticiones y sin pasar de «justo» */
+  if(!dia.length)return false;
+  if(nser&&dia.length<nser)return false;
+  if(dia.some(function(x){return (+x.reps||0)<tope;}))return false;
+  return !dia.some(function(x){return (+x.rpe||0)>=9;});}
+function progresionDe(nombre,nser,tope,hoyKey){
+  /* EL PESO DE HOY Y SU PORQUÉ. La regla, tal cual quedó en el diseño:
+       · sacas todas las series al tope de reps con esfuerzo «justo» o menos  -> subes
+         (2,5 kg arriba, 5 abajo)
+       · te cuesta «duro» o «al fallo», o te quedas corto de reps            -> repites peso
+       · dos veces seguidas atascado en el mismo peso                        -> bajas un 10 %
+     Nunca mira el día de hoy: lo que interesa es de dónde vienes. */
+  const reps=+tope||8,ns=+nser||0;
+  const dias=diasDeEjercicio(nombre).filter(function(f){return f!==hoyKey;});
+  if(!dias.length)
+    return {kg:0,cl:'nuevo',txt:'Primera vez con este ejercicio. Empieza cómodo y apunta lo que hagas: a partir de ahí la app te dice el peso.'};
+  const dia=seriesDeDia(nombre,dias[0]);
+  const kg=redondeaKg(dia.reduce(function(a,x){return Math.max(a,+x.kg||0);},0));
+  const hechas=dia.length,peorReps=dia.reduce(function(a,x){return Math.min(a,+x.reps||0);},99);
+  const dur=dia.filter(function(x){return (+x.rpe||0)>=9;}).length;
+  if(diaCumplido(dia,ns,reps)){
+    const paso=esEjercicioDeAbajo(nombre)?5:2.5;
+    return {kg:redondeaKg(kg+paso),cl:'sube',
+      txt:'Sube a '+fmtKg(kg+paso)+' kg. La última vez hiciste '+hechas+'×'+peorReps+' a '+fmtKg(kg)+
+        ' sin pasar de «justo».'};}
+  /* ¿atascado? dos días seguidos con el mismo peso sin sacarla */
+  if(dias.length>=2){
+    const ant=seriesDeDia(nombre,dias[1]);
+    const kgAnt=redondeaKg(ant.reduce(function(a,x){return Math.max(a,+x.kg||0);},0));
+    if(kgAnt===kg&&!diaCumplido(ant,ns,reps)){
+      const baja=redondeaKg(kg*0.9);
+      if(baja>0&&baja<kg)
+        return {kg:baja,cl:'baja',
+          txt:'Baja a '+fmtKg(baja)+' kg. Llevas dos sesiones atascado en '+fmtKg(kg)+
+            ': bajar un 10 % y volver a subir es más rápido que seguir peleándolo.'};}}
+  return {kg:kg,cl:'mantiene',
+    txt:'Repite '+fmtKg(kg)+' kg. La última vez '+(dur?('te costó «'+esfuerzoTxt(9)+'» o más'):('te quedaste en '+peorReps+' repeticiones'))+
+      ', así que toca cerrarla antes de subir.'};}
+function esRecord(nombre,kg,reps,excluirId){
+  /* récord = mejor serie estimada (Epley) por encima de todo lo anterior de ese ejercicio */
+  const rm=Math.round((+kg||0)*(1+(+reps||0)/30)*10)/10;
+  if(!rm)return false;
+  const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){return x.id!==excluirId;});
+  let mejor=0;
+  xs.forEach(function(x){const r=Math.round((+x.kg||0)*(1+(+x.reps||0)/30)*10)/10;if(r>mejor)mejor=r;});
+  return rm>mejor;}
+function sesionPlan(sa){
+  /* los ejercicios de la rutina con lo planeado y lo que llevas hecho en ESTA sesión */
+  const g=gymS(),rt=g.rutinas.filter(function(r){return r.id===(sa&&sa.rutinaId);})[0];
+  if(!rt)return [];
+  const hechas={};
+  g.registro.forEach(function(x){if(x.sesionId===sa.id)hechas[x.ex]=(hechas[x.ex]||0)+1;});
+  return rt.ejercicios.map(function(ej){
+    return {ex:ej.ex,series:Math.max(1,+ej.series||3),reps:Math.max(1,+ej.reps||8),hechas:hechas[ej.ex]||0};});}
+function sesionIx(sa){
+  /* en qué ejercicio estás: el que tú hayas elegido, y si no, el primero que no esté acabado */
+  const plan=sesionPlan(sa);
+  if(!plan.length)return 0;
+  const n=+(sa&&sa.ix);
+  if(n>=0&&n<plan.length)return n;
+  for(let i=0;i<plan.length;i++)if(plan[i].hechas<plan[i].series)return i;
+  return plan.length-1;}
+function vivoCampos(sa){
+  /* el peso y las reps que se ven en la pantalla: lo que hayas tocado tú, y si no, la propuesta */
+  const plan=sesionPlan(sa),i=sesionIx(sa),ej=plan[i];
+  if(!ej)return null;
+  const pr=progresionDe(ej.ex,ej.series,ej.reps,sa.fecha);
+  const tocado=ui.gymVivo&&ui.gymVivo.ex===ej.ex;
+  return {ej:ej,ix:i,plan:plan,pr:pr,
+    kg:tocado?ui.gymVivo.kg:pr.kg,
+    reps:tocado?ui.gymVivo.reps:ej.reps,
+    rpe:tocado?(ui.gymVivo.rpe||0):0};}
+function vivoSet(campo,delta){
+  const sa=ui.gymSesionActiva;if(!sa)return;
+  const c=vivoCampos(sa);if(!c)return;
+  const base={ex:c.ej.ex,kg:c.kg,reps:c.reps,rpe:c.rpe};
+  if(campo==='kg')base.kg=Math.max(0,Math.round((base.kg+delta)*10)/10);
+  else if(campo==='reps')base.reps=Math.max(1,Math.min(99,base.reps+delta));
+  else if(campo==='rpe')base.rpe=(base.rpe===delta)?0:delta;
+  ui.gymVivo=base;render();}
+function vivoApuntar(){
+  const sa=ui.gymSesionActiva;if(!sa)return 'no hay ninguna sesión en curso';
+  const c=vivoCampos(sa);if(!c)return 'esta rutina no tiene ejercicios';
+  const g=gymS(),id=uid('gs');
+  const record=esRecord(c.ej.ex,c.kg,c.reps,id);
+  g.registro.push({id:id,fecha:sa.fecha,ex:c.ej.ex,kg:c.kg,reps:c.reps,
+    rpe:c.rpe||null,nota:'',ts:Date.now(),sesionId:sa.id});
+  ui.gymVivo={ex:c.ej.ex,kg:c.kg,reps:c.reps,rpe:0};
+  /* si con esta se acaba el ejercicio, se pasa solo al siguiente que quede */
+  if(c.ej.hechas+1>=c.ej.series){
+    const sig=c.plan.map(function(p,i){return {p:p,i:i};})
+      .filter(function(o){return o.i!==c.ix&&o.p.hechas<o.p.series;})[0];
+    if(sig){sa.ix=sig.i;ui.gymVivo=null;}}
+  arrancaDescanso();
+  save();render();
+  return record?('¡récord! '+c.ej.ex+' '+fmtKg(c.kg)+' kg × '+c.reps)
+    :(c.ej.ex+' '+fmtKg(c.kg)+' kg × '+c.reps+' apuntada');}
+function descansoCfg(){
+  const n=+((store.gym||{}).descansoSeg);
+  return (n>=0&&n<=600)?n:90;}
+function arrancaDescanso(){
+  const seg=descansoCfg();
+  if(!seg){ui.gymDesc=null;return;}
+  ui.gymDesc={fin:Date.now()+seg*1000,total:seg};}
+let _gvTick=null;
+function pintaDescanso(){
+  /* el reloj se escribe A MANO en su nodo: render() reemplaza #main entero, y repintarlo cada
+     segundo tiraría lo que estés tocando además de ser un derroche */
+  const n=document.getElementById('gvReloj');
+  if(!n){if(_gvTick){clearInterval(_gvTick);_gvTick=null;}return;}
+  const d=ui.gymDesc;
+  if(!d){if(_gvTick){clearInterval(_gvTick);_gvTick=null;}return;}
+  const queda=Math.max(0,Math.round((d.fin-Date.now())/1000));
+  n.textContent=Math.floor(queda/60)+':'+String(queda%60).padStart(2,'0');
+  const b=document.getElementById('gvBarra');
+  if(b)b.style.width=Math.round(queda/Math.max(1,d.total)*100)+'%';
+  if(queda<=0){ui.gymDesc=null;if(_gvTick){clearInterval(_gvTick);_gvTick=null;}
+    const caja=document.getElementById('gvDesc');
+    if(caja)caja.classList.add('fin');
+    n.textContent='ya';}}
+function cuentaAtras(){
+  if(_gvTick){clearInterval(_gvTick);_gvTick=null;}
+  if(!ui.gymDesc||!document.getElementById('gvReloj'))return;
+  pintaDescanso();
+  _gvTick=setInterval(pintaDescanso,1000);}
 function gymDiaMalo(key,infOpt){
   /* un día en el que no vas a entrenar aunque el calendario diga que toca: guardia o saliente */
   const inf=infOpt||dayInfo(key),sh=shiftById(inf.shiftId);
@@ -5214,12 +5533,22 @@ function renderGymPortada(){
         '<div><div class="ghero-tit">Entrenar</div><div class="ghero-sub">'+esc(sub)+'</div></div>'+
         (pie?'<span class="sp"></span><span class="tag b2">'+esc(pie)+'</span>':'')+'</div>'+
       '<div class="exlist">'+filas+'</div>'+
-      '<button class="btn p gbig" data-a="gym-panel" data-p="sesion">'+gymIco('mas','gico sm')+' apuntar serie</button>'+
+      (sa
+        ? ('<button class="btn p gbig" data-a="gym-panel" data-p="vivo">'+gymIco('pesa','gico sm')+' seguir'+
+            (function(){const cc=vivoCampos(sa);
+              return cc?(' · '+esc(cc.ej.ex)+' serie '+Math.min(cc.ej.series,cc.ej.hechas+1)):'';})()+'</button>')
+        : ('<button class="btn p gbig" data-a="gym-panel" data-p="sesion">'+gymIco('mas','gico sm')+' apuntar serie</button>'))+
       /* antes desde aquí solo se podía seguir la de hoy: para empezar otra o montar una nueva
          había que salir a buscarla */
+      /* Las dos puertas de debajo cambian con la sesión, pero SIEMPRE dejan llegar a todas las
+         pantallas: con una sesión abierta no se puede empezar otra rutina, y en cambio hacen falta
+         «el día» (para corregir una serie o apuntar algo fuera de la rutina) y «Rutinas». */
       '<div class="growtras">'+
-        '<button class="btn s" data-a="gym-panel" data-p="rutinas">'+gymIco('lista','gico sm')+' empezar otra</button>'+
-        '<button class="btn s" data-a="gym-nueva">'+gymIco('mas','gico sm')+' montar una nueva</button>'+
+        (sa
+          ? ('<button class="btn s" data-a="gym-panel" data-p="sesion">'+gymIco('lapiz','gico sm')+' apuntar a mano</button>'+
+             '<button class="btn s" data-a="gym-panel" data-p="rutinas">'+gymIco('lista','gico sm')+' tus rutinas</button>')
+          : ('<button class="btn s" data-a="gym-panel" data-p="rutinas">'+gymIco('lista','gico sm')+' empezar otra</button>'+
+             '<button class="btn s" data-a="gym-nueva">'+gymIco('mas','gico sm')+' montar una nueva</button>'))+
       '</div>'+
     '</div>'+
     gymDescansoHTML()+
@@ -5360,6 +5689,9 @@ function renderGymBiblioteca(){
     '</div>';}
 function renderGym(){
   const p=ui.gymPanel||'';
+  if(ui.gymInforme)return renderGymInforme();
+  if(p==='vivo')return renderGymVivo();
+  if(p==='cambiar')return renderGymCambiar();
   if(p==='sesion')return renderGymSesion();
   if(p==='rutinas')return renderGymRutinas();
   if(p==='cardio')return renderGymCardio();
@@ -8685,9 +9017,31 @@ function act(a,el){
       confirmar('¿Eliminar la rutina «'+nm+'» entera? Las sesiones ya guardadas con ella se quedan en el historial.').then(function(ok){
         if(!ok)return;flash(delRutinaCard(el.dataset.id));});break;}
     case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key));break;
+    case 'gv-kg':vivoSet('kg',+el.dataset.d||0);break;
+    case 'gv-reps':vivoSet('reps',+el.dataset.d||0);break;
+    case 'gv-rpe':vivoSet('rpe',+el.dataset.d||0);break;
+    case 'gv-apuntar':flash(vivoApuntar());break;
+    case 'gv-ir':{const sa=ui.gymSesionActiva;if(!sa)break;
+      sa.ix=+el.dataset.ix||0;ui.gymVivo=null;ui.gymPanel='vivo';render();window.scrollTo(0,0);break;}
+    case 'gv-cambiar':ui.gymPanel='cambiar';render();window.scrollTo(0,0);break;
+    case 'gv-mas15':{if(!ui.gymDesc)break;
+      ui.gymDesc.fin+=15000;ui.gymDesc.total+=15;pintaDescanso();break;}
+    case 'gv-saltar':ui.gymDesc=null;render();break;
+    case 'gv-terminar':{const sa=ui.gymSesionActiva;if(!sa)break;
+      const min=Math.max(1,Math.round((Date.now()-(+sa.ts||Date.now()))/60000))||duracionTipica(sa.rutinaId);
+      const sid=sa.id;
+      flash(terminarSesion(min,undefined,''));
+      /* el informe: lo que has hecho, cómo ha ido frente a la vez anterior y los récords */
+      ui.gymInforme=sid;ui.gymPanel='';render();window.scrollTo(0,0);break;}
+    case 'gym-informe-cerrar':ui.gymInforme='';ui.gymPanel='';render();window.scrollTo(0,0);break;
     case 'ses-terminar':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
       const chk=document.getElementById('sesCompleto');
-      flash(terminarSesion(gv('sesMinutos'),chk?!!chk.checked:undefined,gv('sesNota')));break;}
+      const sid=(ui.gymSesionActiva||{}).id||'';
+      flash(terminarSesion(gv('sesMinutos'),chk?!!chk.checked:undefined,gv('sesNota')));
+      /* el informe sale se termine por donde se termine */
+      if(sid&&gymS().sesiones.some(function(x){return x.id===sid;})){
+        ui.gymInforme=sid;ui.gymPanel='';render();window.scrollTo(0,0);}
+      break;}
     case 'ses-descartar':{confirmar('¿Descartar esta sesión? Las series que has montado se quitan del registro.').then(function(ok){
         if(!ok)return;flash(descartarSesion());});break;}
     case 'cardio-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
@@ -8711,6 +9065,7 @@ function act(a,el){
       if(ui.tab!=='food'){ui.tab='food';}
       render();window.scrollTo(0,0);break;}
     case 'gym-panel':{ui.gymPanel=el.dataset.p||'';
+      ui.gymInforme='';   /* el informe tapa cualquier panel: salir de él es cerrarlo */
       if(!ui.gymPanel)ui.cardioAbierto='';   /* al volver a la portada, Cardio empieza en sus fichas */
       render();window.scrollTo(0,0);break;}
     case 'imp-traer':impTraerEnlace();break;
@@ -10536,6 +10891,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
+  progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
+  informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
