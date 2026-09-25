@@ -2207,6 +2207,372 @@ const ALIMENTOS_MAS=[
 const RACIONES_BASE={'Manzana': [['1 manzana', 180]], 'Plátano': [['1 plátano', 120]], 'Naranja': [['1 naranja', 200]], 'Mandarina': [['1 mandarina', 80]], 'Fresa': [['1 puñado (8)', 100]], 'Kiwi': [['1 kiwi', 75]], 'Uva': [['1 racimo pequeño', 100]], 'Pera': [['1 pera', 170]], 'Melocotón': [['1 melocotón', 150]], 'Sandía': [['1 tajada', 250]], 'Melón': [['1 tajada', 200]], 'Piña': [['1 rodaja', 100]], 'Aguacate': [['1 aguacate', 150], ['medio', 75]], 'Arándano': [['1 puñado', 60]], 'Limón': [['1 limón', 100], ['zumo de medio', 20]], 'Ciruela': [['1 ciruela', 60]], 'Brócoli': [['1 ración', 200]], 'Espinaca': [['1 ración', 150], ['1 bolsa', 300]], 'Tomate': [['1 tomate', 150]], 'Cebolla': [['1 cebolla', 150]], 'Zanahoria': [['1 zanahoria', 80]], 'Pimiento rojo': [['1 pimiento', 180]], 'Calabacín': [['1 calabacín', 250]], 'Berenjena': [['1 berenjena', 300]], 'Patata': [['1 patata mediana', 200], ['1 patata pequeña', 120]], 'Boniato': [['1 boniato', 250]], 'Lechuga': [['1 ración', 80]], 'Ajo': [['1 diente', 5], ['1 cabeza', 50]], 'Champiñón': [['1 bandeja', 250], ['1 ración', 150]], 'Judía verde': [['1 ración', 200]], 'Guisante': [['1 ración', 100]], 'Pepino': [['1 pepino', 200]], 'Coliflor': [['1 ración', 200]], 'Espárrago': [['1 manojo', 250], ['1 ración', 150]], 'Puerro': [['1 puerro', 150]], 'Calabaza': [['1 ración', 200]], 'Pimiento verde': [['1 pimiento', 150]], 'Pechuga de pollo': [['1 filete', 120], ['1 pechuga', 250], ['1 bandeja', 500]], 'Muslo de pollo': [['1 muslo', 110]], 'Pechuga de pavo': [['1 filete', 120]], 'Ternera magra': [['1 filete', 150]], 'Lomo de cerdo': [['1 filete', 100], ['1 ración', 150]], 'Huevo': [['1 huevo', 60], ['2 huevos', 120]], 'Jamón serrano': [['1 loncha', 15], ['1 ración', 50]], 'Jamón cocido': [['1 loncha', 20]], 'Chorizo': [['1 ración', 40]], 'Salmón': [['1 lomo', 150]], 'Merluza': [['1 filete', 150]], 'Atún en lata al natural': [['1 lata', 56], ['1 lata grande', 120]], 'Sardina': [['1 ración', 150]], 'Bacalao': [['1 lomo', 150]], 'Gamba': [['1 ración', 100]], 'Boquerón': [['1 ración', 150]], 'Lenteja': [['1 ración (seco)', 70]], 'Lenteja cocida': [['1 bote', 400], ['1 ración', 200]], 'Garbanzo': [['1 ración (seco)', 70]], 'Garbanzo de bote': [['1 bote', 400], ['1 ración', 200]], 'Alubia blanca': [['1 ración (seco)', 70]], 'Tofu': [['1 bloque', 250], ['1 ración', 125]], 'Arroz blanco': [['1 ración (seco)', 80]], 'Arroz integral': [['1 ración (seco)', 80]], 'Pasta': [['1 ración (seco)', 80]], 'Pan integral': [['1 rebanada', 30], ['1 bocadillo', 80]], 'Pan blanco': [['1 rebanada', 30], ['1 bocadillo', 80]], 'Copos de avena': [['1 ración', 40]], 'Quinoa': [['1 ración (seco)', 70]], 'Harina de trigo': [['1 cucharada', 10]], 'Leche entera': [['1 vaso', 250]], 'Leche desnatada': [['1 vaso', 250]], 'Yogur natural': [['1 yogur', 125]], 'Yogur griego': [['1 yogur', 125]], 'Queso fresco': [['1 tarrina', 100]], 'Queso curado': [['1 cuña', 40], ['1 loncha', 20]], 'Mantequilla': [['1 porción', 10]], 'Aceite de oliva': [['1 cucharada', 10], ['1 chorrito', 5]], 'Nuez': [['1 puñado', 25]], 'Almendra': [['1 puñado', 25]], 'Cacahuete': [['1 puñado', 25]], 'Semilla de chía': [['1 cucharada', 10]], 'Aceituna': [['10 aceitunas', 40]], 'Miel': [['1 cucharada', 20]], 'Chocolate negro 70%': [['1 onza', 10]], 'Tomate triturado': [['1 bote', 400]], 'Leche de coco': [['1 lata', 400]], 'Caldo de pollo': [['1 vaso', 250], ['1 brick', 1000]], 'Proteína whey': [['1 cazo', 30]]};
 /* cómo se escribe en una receta → qué alimento es (sin tildes, en minúsculas) */
 const ALIM_SINONIMOS={'pollo desmechado': 'Pollo desmenuzado', 'pollo': 'Pechuga de pollo', 'pechuga': 'Pechuga de pollo', 'atun': 'Atún en lata al natural', 'atun en lata': 'Atún en lata al natural', 'arroz': 'Arroz blanco', 'pan': 'Pan de barra', 'pan bocadillo': 'Pan de barra', 'pan bocadillo integral': 'Pan integral', 'pan de pueblo': 'Pan de barra', 'barra de pan': 'Pan de barra', 'queso': 'Queso semicurado', 'huevos': 'Huevo', 'huevo': 'Huevo', 'leche': 'Leche semidesnatada', 'yogur': 'Yogur natural', 'leche de proteinas': 'Leche de proteínas', 'brick leche de proteinas': 'Leche de proteínas', 'whey': 'Proteína whey', 'proteina whey': 'Proteína whey', 'proteina': 'Proteína whey', 'fruta': 'Manzana', 'mezcla frutos secos': 'Mezcla de frutos secos', 'frutos secos': 'Mezcla de frutos secos', 'aceite': 'Aceite de oliva', 'aove': 'Aceite de oliva virgen extra', 'pimienta': 'Pimienta negra', 'curry': 'Curry en polvo', 'jengibre molido': 'Jengibre', 'agua o leche': 'Leche semidesnatada', 'lentejas': 'Lenteja', 'garbanzos': 'Garbanzo de bote', 'garbanzos cocidos': 'Garbanzo de bote', 'alubias': 'Alubia cocida', 'judias': 'Judía verde', 'patatas': 'Patata', 'patata nueva': 'Patata', 'tomates': 'Tomate', 'cebollas': 'Cebolla', 'zanahorias': 'Zanahoria', 'espinacas': 'Espinaca', 'champinones': 'Champiñón', 'pavo': 'Pechuga de pavo', 'pavo en lonchas': 'Pechuga de pavo en lonchas', 'jamon': 'Jamón cocido', 'york': 'Jamón cocido', 'salmon': 'Salmón', 'merluza congelada': 'Merluza congelada', 'macarrones': 'Macarrones', 'espaguetis': 'Espaguetis', 'fideos': 'Pasta', 'avena': 'Copos de avena', 'copos de avena': 'Copos de avena', 'nueces': 'Nuez', 'almendras': 'Almendra', 'platano': 'Plátano', 'platanos': 'Plátano', 'manzanas': 'Manzana', 'naranjas': 'Naranja', 'fresas': 'Fresa', 'arandanos': 'Arándano', 'yogur de proteinas': 'Yogur de proteínas', 'yogur arandanos': 'Yogur de sabores', 'proteina de cacahuete': 'Crema de cacahuete', 'queso fresco batido': 'Queso fresco batido', 'tomate natural': 'Tomate natural triturado', 'caldo': 'Caldo de pollo', 'cafe': 'Café solo', 'cafe o infusion': 'Café solo', 'te': 'Infusión', 'lomo': 'Lomo de cerdo', 'lomo de cerdo': 'Lomo de cerdo', 'ternera': 'Ternera magra', 'carne picada': 'Carne picada mixta', 'pimiento': 'Pimiento rojo', 'pimientos': 'Pimiento rojo', 'calabacines': 'Calabacín', 'boniatos': 'Boniato', 'brocoli': 'Brócoli'};
+/* ===================== comer fuera: cadenas y «a ojo» =====================
+   Antes buscar «Big Mac», «Whopper» o «KFC» daba cero: solo había súper. Estos datos salen de la
+   información nutricional que publica cada cadena en España, REDONDEADOS y aproximados (cambian
+   con las recetas y el tamaño); por eso cualquiera se corrige desde la hoja y se queda tu versión.
+   Cada producto: [id, nombre, emoji, kcal, prot, HC, grasa, unidad, pestaña].
+   Un menú: [id, nombre, emoji, principal, lado por defecto, bebida por defecto]; el lado y la bebida
+   se eligen entre los de `lados` y `bebidas` de la cadena. */
+const FUERA_BEB_STD=[['beb-cola','Coca-Cola mediana','🥤',170,0,42,0,'400 ml','Bebidas'],
+  ['beb-zero','Coca-Cola Zero mediana','🥤',2,0,0,0,'400 ml','Bebidas'],
+  ['beb-agua','Agua','💧',0,0,0,0,'500 ml','Bebidas'],
+  ['beb-cerveza','Cerveza mediana','🍺',160,1,12,0,'400 ml','Bebidas'],
+  ['beb-nestea','Nestea mediano','🧃',110,0,27,0,'400 ml','Bebidas'],
+  ['beb-fanta','Fanta naranja mediana','🥤',150,0,36,0,'400 ml','Bebidas']];
+const FUERA_CADENAS=[
+ {id:'mcd',n:"McDonald's",l:'M',c:'#da291c',cats:['Menús','Burgers','Pollo','Patatas y más','Bebidas','Postres','Desayunos'],
+  items:[
+   ['bigmac','Big Mac','🍔',508,26,42,25,'1 unidad','Burgers'],['bigmac2','Big Mac doble','🍔',700,41,43,40,'1 unidad','Burgers'],
+   ['mcroyal','McRoyal Deluxe','🍔',540,30,37,30,'1 unidad','Burgers'],['cuarto','Cuarto de Libra con queso','🍔',520,30,38,27,'1 unidad','Burgers'],
+   ['cuarto2','Doble Cuarto de Libra','🍔',760,48,39,45,'1 unidad','Burgers'],['cbo','CBO','🥓',640,35,50,33,'1 unidad','Burgers'],
+   ['grandmc','Grand McExtreme Bacon','🍔',900,50,42,58,'1 unidad','Burgers'],['hamb','Hamburguesa','🍔',250,13,30,8,'1 unidad','Burgers'],
+   ['cheese','Hamburguesa con queso','🍔',300,16,31,12,'1 unidad','Burgers'],['cheese2','Doble con queso','🍔',440,26,32,23,'1 unidad','Burgers'],
+   ['mcpollo','McPollo','🐔',450,17,44,22,'1 unidad','Pollo'],['mccrispy','McCrispy','🐔',560,28,50,27,'1 unidad','Pollo'],
+   ['nug6','McNuggets 6 uds','🍗',260,15,16,15,'6 piezas','Pollo'],['nug9','McNuggets 9 uds','🍗',390,22,24,23,'9 piezas','Pollo'],
+   ['nug20','McNuggets 20 uds','🍗',865,49,53,51,'20 piezas','Pollo'],['selects','Chicken Selects 3 uds','🍗',330,24,22,16,'3 piezas','Pollo'],
+   ['wrap','McWrap Crispy','🌯',520,25,48,25,'1 unidad','Pollo'],['cesar','Ensalada César con pollo','🥗',345,31,15,18,'1 ensalada','Pollo'],
+   ['patp','Patatas pequeñas','🍟',230,3,30,11,'pequeñas','Patatas y más'],['patm','Patatas medianas','🍟',330,4,42,16,'medianas','Patatas y más'],
+   ['patg','Patatas grandes','🍟',440,5,56,21,'grandes','Patatas y más'],['deluxe','Deluxe Potatoes medianas','🥔',330,5,38,17,'medianas','Patatas y más'],
+   ['ensp','Ensalada pequeña','🥗',20,1,3,0,'1 unidad','Patatas y más'],['salsa','Salsa (1 sobre)','🥫',60,0,8,3,'1 sobre','Patatas y más'],
+   ['mcfo','McFlurry Oreo','🍨',340,8,52,11,'1 unidad','Postres'],['mcfk','McFlurry KitKat','🍨',360,8,52,13,'1 unidad','Postres'],
+   ['sundae','Sundae chocolate','🍨',330,7,53,10,'1 unidad','Postres'],['cono','Cono de helado','🍦',160,4,25,5,'1 unidad','Postres'],
+   ['tarta','Tarta de manzana','🥧',250,3,30,13,'1 unidad','Postres'],
+   ['muffin','McMuffin huevo y bacon','🥯',300,17,27,13,'1 unidad','Desayunos'],['cafel','Café con leche','☕',90,5,8,4,'1 taza','Desayunos']],
+  lados:['patp','patm','patg','deluxe','ensp'],bebidas:['beb-cola','beb-zero','beb-agua','beb-cerveza','beb-nestea'],
+  menus:[['m-bigmac','Menú Big Mac','🍔','bigmac','patm','beb-cola'],['m-mcroyal','Menú McRoyal Deluxe','🍔','mcroyal','patm','beb-cola'],
+   ['m-cuarto','Menú Cuarto de Libra','🍔','cuarto','patm','beb-cola'],['m-cbo','Menú CBO','🥓','cbo','patm','beb-cola'],
+   ['m-nug9','Menú McNuggets 9','🍗','nug9','patm','beb-cola'],['m-mcpollo','Menú McPollo','🐔','mcpollo','patm','beb-cola'],
+   ['m-mccrispy','Menú McCrispy','🐔','mccrispy','patm','beb-cola'],['m-wrap','Menú McWrap Crispy','🌯','wrap','patm','beb-cola']]},
+ {id:'bk',n:'Burger King',l:'BK',c:'#f5821f',cats:['Menús','Burgers','Pollo','Patatas y más','Bebidas','Postres'],
+  items:[
+   ['whopper','Whopper','🍔',636,29,51,35,'1 unidad','Burgers'],['whopper2','Whopper doble','🍔',900,48,51,56,'1 unidad','Burgers'],
+   ['whopperq','Whopper con queso','🍔',720,33,52,42,'1 unidad','Burgers'],['bigking','Big King','🍔',530,28,37,30,'1 unidad','Burgers'],
+   ['steak','Steakhouse','🍔',900,44,60,53,'1 unidad','Burgers'],['hamb','Hamburguesa','🍔',260,13,29,10,'1 unidad','Burgers'],
+   ['cheese','Cheeseburger','🍔',300,15,30,13,'1 unidad','Burgers'],
+   ['long','Long Chicken','🐔',600,21,53,33,'1 unidad','Pollo'],['crispy','Crispy Chicken','🐔',520,20,48,27,'1 unidad','Pollo'],
+   ['nug6','King Nuggets 6 uds','🍗',270,14,18,16,'6 piezas','Pollo'],['nug9','King Nuggets 9 uds','🍗',400,21,27,24,'9 piezas','Pollo'],
+   ['patp','Patatas pequeñas','🍟',240,3,31,11,'pequeñas','Patatas y más'],['patm','Patatas medianas','🍟',340,4,44,16,'medianas','Patatas y más'],
+   ['patg','Patatas grandes','🍟',450,5,58,22,'grandes','Patatas y más'],['aros','Aros de cebolla 6 uds','🧅',250,3,29,13,'6 piezas','Patatas y más'],
+   ['ens','Ensalada pequeña','🥗',25,1,3,0,'1 unidad','Patatas y más'],
+   ['sundae','Sundae','🍨',250,5,40,8,'1 unidad','Postres'],['kitkat','KitKat Fusion','🍨',400,8,58,15,'1 unidad','Postres']],
+  lados:['patp','patm','patg','aros','ens'],bebidas:['beb-cola','beb-zero','beb-agua','beb-cerveza','beb-fanta'],
+  menus:[['m-whopper','Menú Whopper','🍔','whopper','patm','beb-cola'],['m-whopper2','Menú Whopper doble','🍔','whopper2','patm','beb-cola'],
+   ['m-bigking','Menú Big King','🍔','bigking','patm','beb-cola'],['m-long','Menú Long Chicken','🐔','long','patm','beb-cola'],
+   ['m-crispy','Menú Crispy Chicken','🐔','crispy','patm','beb-cola'],['m-steak','Menú Steakhouse','🍔','steak','patm','beb-cola'],
+   ['m-nug9','Menú King Nuggets 9','🍗','nug9','patm','beb-cola']]},
+ {id:'kfc',n:'KFC',l:'KFC',c:'#a3080c',cats:['Menús','Pollo','Burgers','Patatas y más','Bebidas','Postres'],
+  items:[
+   ['pieza','Pieza de pollo original','🍗',250,20,8,15,'1 pieza','Pollo'],['tiras3','Tiras crujientes 3 uds','🍗',300,25,18,14,'3 tiras','Pollo'],
+   ['alitas4','Alitas picantes 4 uds','🍗',330,24,10,22,'4 alitas','Pollo'],['boneless6','Boneless 6 uds','🍗',330,22,20,18,'6 piezas','Pollo'],
+   ['bucket8','Bucket 8 piezas (para compartir)','🪣',2000,160,64,120,'1 cubo','Pollo'],
+   ['zinger','Zinger Burger','🍔',470,27,42,21,'1 unidad','Burgers'],['tower','Tower Burger','🍔',610,31,52,30,'1 unidad','Burgers'],
+   ['twister','Twister','🌯',500,22,45,25,'1 unidad','Burgers'],
+   ['patp','Patatas pequeñas','🍟',230,3,29,11,'pequeñas','Patatas y más'],['patm','Patatas medianas','🍟',320,4,40,15,'medianas','Patatas y más'],
+   ['patg','Patatas grandes','🍟',430,5,54,21,'grandes','Patatas y más'],['col','Ensalada de col','🥗',150,1,13,10,'1 tarrina','Patatas y más'],
+   ['maiz','Mazorca de maíz','🌽',90,3,18,1,'1 unidad','Patatas y más'],['krusher','Krushers','🥤',350,5,55,12,'1 vaso','Postres']],
+  lados:['patp','patm','patg','col','maiz'],bebidas:['beb-cola','beb-zero','beb-agua','beb-cerveza'],
+  menus:[['m-zinger','Menú Zinger','🍔','zinger','patm','beb-cola'],['m-tower','Menú Tower','🍔','tower','patm','beb-cola'],
+   ['m-tiras','Menú Tiras 3','🍗','tiras3','patm','beb-cola'],['m-twister','Menú Twister','🌯','twister','patm','beb-cola'],
+   ['m-boneless','Menú Boneless','🍗','boneless6','patm','beb-cola']]},
+ {id:'tele',n:'Telepizza',l:'T',c:'#e31837',cats:['Pizzas','Entrantes','Bebidas'],
+  items:[
+   ['barb','Pizza Barbacoa (porción mediana)','🍕',200,9,24,7,'1 porción','Pizzas'],['carbo','Pizza Carbonara (porción mediana)','🍕',210,9,23,9,'1 porción','Pizzas'],
+   ['4q','Pizza Cuatro Quesos (porción mediana)','🍕',220,10,23,10,'1 porción','Pizzas'],['pepp','Pizza Pepperoni (porción mediana)','🍕',210,9,23,9,'1 porción','Pizzas'],
+   ['haw','Pizza Hawaiana (porción mediana)','🍕',190,9,24,6,'1 porción','Pizzas'],['marg','Pizza Margarita (porción mediana)','🍕',180,8,24,6,'1 porción','Pizzas'],
+   ['barbent','Pizza Barbacoa mediana entera','🍕',1600,72,192,56,'8 porciones','Pizzas'],
+   ['panajo','Pan de ajo 4 uds','🥖',300,7,38,13,'4 piezas','Entrantes'],['alitas','Alitas 6 uds','🍗',350,28,4,25,'6 alitas','Entrantes'],
+   ['patatas','Patatas gajo','🥔',300,4,40,14,'1 ración','Entrantes']]},
+ {id:'domi',n:"Domino's",l:'D',c:'#006491',cats:['Pizzas','Entrantes','Bebidas'],
+  items:[
+   ['pepp','Pizza Pepperoni (porción mediana)','🍕',220,9,24,10,'1 porción','Pizzas'],['barb','Pizza Barbacoa (porción mediana)','🍕',230,10,27,9,'1 porción','Pizzas'],
+   ['4q','Pizza Cuatro Quesos (porción mediana)','🍕',230,10,24,10,'1 porción','Pizzas'],['carbo','Pizza Carbonara (porción mediana)','🍕',220,9,23,10,'1 porción','Pizzas'],
+   ['haw','Pizza Hawaiana (porción mediana)','🍕',190,9,25,6,'1 porción','Pizzas'],['marg','Pizza Margarita (porción mediana)','🍕',185,8,25,6,'1 porción','Pizzas'],
+   ['panajo','Pan de ajo','🥖',320,8,40,14,'1 ración','Entrantes'],['alitas','Alitas 6 uds','🍗',360,28,6,25,'6 alitas','Entrantes'],
+   ['cookies','Cookies 2 uds','🍪',300,4,40,14,'2 piezas','Entrantes']]},
+ {id:'five',n:'Five Guys',l:'5G',c:'#c8102e',cats:['Burgers','Patatas y más','Bebidas'],
+  items:[
+   ['hamb','Hamburguesa','🍔',840,47,39,55,'1 unidad','Burgers'],['little','Little Hamburguesa','🍔',540,26,39,30,'1 unidad','Burgers'],
+   ['cheese','Cheeseburger','🍔',980,55,40,67,'1 unidad','Burgers'],['bacon','Bacon Cheeseburger','🥓',1060,61,40,74,'1 unidad','Burgers'],
+   ['hotdog','Hot dog','🌭',520,18,40,35,'1 unidad','Burgers'],
+   ['patl','Patatas Little','🍟',530,7,72,23,'little','Patatas y más'],['patr','Patatas Regular','🍟',950,13,131,41,'regular','Patatas y más'],
+   ['batido','Batido','🥤',670,13,80,33,'1 vaso','Patatas y más']]},
+ {id:'goiko',n:'Goiko',l:'G',c:'#111111',cats:['Burgers','Entrantes','Bebidas'],
+  items:[
+   ['kevin','Kevin Bacon','🥓',900,50,40,60,'1 unidad','Burgers'],['pigma','Pigma','🍔',1000,55,45,65,'1 unidad','Burgers'],
+   ['m30','M-30','🍔',800,45,42,50,'1 unidad','Burgers'],['chicken','Chicken burger','🐔',700,40,50,35,'1 unidad','Burgers'],
+   ['patatas','Patatas fritas','🍟',400,5,50,20,'1 ración','Entrantes'],['bcfries','Bacon cheese fries','🍟',700,20,55,45,'1 ración','Entrantes'],
+   ['tenders','Chicken tenders','🍗',450,30,30,22,'1 ración','Entrantes']]},
+ {id:'star',n:'Starbucks',l:'★',c:'#00704a',cats:['Cafés','Frías','Dulces'],
+  items:[
+   ['latte','Caffè Latte grande','☕',190,13,19,7,'grande','Cafés'],['capu','Cappuccino grande','☕',120,8,12,4,'grande','Cafés'],
+   ['amer','Americano grande','☕',15,1,2,0,'grande','Cafés'],['chai','Chai Tea Latte grande','🍵',240,7,42,5,'grande','Cafés'],
+   ['frapcar','Frappuccino caramelo grande','🥤',380,5,60,14,'grande','Frías'],['frapmoc','Frappuccino mocha grande','🥤',370,5,58,14,'grande','Frías'],
+   ['muffin','Muffin de arándanos','🧁',420,5,55,20,'1 unidad','Dulces'],['cookie','Cookie de chocolate','🍪',380,5,50,18,'1 unidad','Dulces'],
+   ['croiss','Croissant','🥐',280,6,30,15,'1 unidad','Dulces'],['brownie','Brownie','🍫',420,5,50,22,'1 unidad','Dulces']]},
+ {id:'taco',n:'Taco Bell',l:'T',c:'#702082',cats:['Menús','Tacos y burritos','Entrantes','Bebidas'],
+  items:[
+   ['crunchy','Taco crujiente','🌮',170,8,13,9,'1 unidad','Tacos y burritos'],['soft','Taco blando','🌮',190,9,18,9,'1 unidad','Tacos y burritos'],
+   ['burrito','Burrito Supreme','🌯',390,16,51,14,'1 unidad','Tacos y burritos'],['crunchwrap','Crunchwrap Supreme','🌯',530,16,71,21,'1 unidad','Tacos y burritos'],
+   ['quesa','Quesadilla de pollo','🧀',510,27,37,27,'1 unidad','Tacos y burritos'],
+   ['nachos','Nachos BellGrande','🧀',740,17,80,38,'1 ración','Entrantes'],['patatas','Patatas fritas','🍟',330,4,42,16,'medianas','Entrantes']],
+  lados:['patatas','nachos'],bebidas:['beb-cola','beb-zero','beb-agua','beb-cerveza'],
+  menus:[['m-burrito','Menú Burrito Supreme','🌯','burrito','patatas','beb-cola'],['m-crunch','Menú Crunchwrap','🌯','crunchwrap','patatas','beb-cola']]},
+ {id:'vips',n:'VIPS',l:'V',c:'#e4002b',cats:['Platos','Dulces'],
+  items:[
+   ['club','Club sándwich','🥪',750,40,50,42,'1 unidad','Platos'],['burger','Hamburguesa VIPS','🍔',800,40,50,45,'1 unidad','Platos'],
+   ['cesar','Ensalada César','🥗',550,30,20,38,'1 ensalada','Platos'],['nachos','Nachos','🧀',900,25,80,52,'1 ración','Platos'],
+   ['carbo','Pasta carbonara','🍝',900,30,90,45,'1 plato','Platos'],['tortitas','Tortitas con sirope','🥞',600,10,100,15,'1 ración','Dulces'],
+   ['tarta','Tarta de queso','🍰',450,8,35,30,'1 porción','Dulces']]},
+ {id:'foster',n:"Foster's Hollywood",l:'F',c:'#8b0000',cats:['Platos','Entrantes'],
+  items:[
+   ['director','Hamburguesa Director\'s','🍔',1000,55,55,60,'1 unidad','Platos'],['costillas','Costillas BBQ (media)','🍖',900,60,30,60,'½ costillar','Platos'],
+   ['pollo','Pechuga a la parrilla con guarnición','🍗',650,50,50,25,'1 plato','Platos'],
+   ['patatas','Patatas Foster\'s','🍟',600,10,55,38,'1 ración','Entrantes'],['alitas','Alitas de pollo','🍗',700,50,10,50,'1 ración','Entrantes']]},
+ {id:'sub',n:'Subway',l:'S',c:'#008c15',cats:['Sándwiches','Dulces'],
+  items:[
+   ['teri','Sub pollo teriyaki 15 cm','🥖',370,26,52,5,'15 cm','Sándwiches'],['pavo','Sub pavo 15 cm','🥖',280,18,46,4,'15 cm','Sándwiches'],
+   ['bmt','Sub Italian B.M.T. 15 cm','🥖',410,19,46,16,'15 cm','Sándwiches'],['atun','Sub atún 15 cm','🥖',480,20,44,25,'15 cm','Sándwiches'],
+   ['cookie','Cookie','🍪',210,2,30,10,'1 unidad','Dulces']]},
+ {id:'popeyes',n:'Popeyes',l:'P',c:'#f47d20',cats:['Menús','Pollo','Patatas y más'],
+  items:[
+   ['tiras3','Tiras de pollo 3 uds','🍗',440,35,25,22,'3 tiras','Pollo'],['sandwich','Chicken sandwich','🍔',700,28,50,42,'1 unidad','Pollo'],
+   ['patm','Patatas medianas','🍟',350,4,44,17,'medianas','Patatas y más']],
+  lados:['patm'],bebidas:['beb-cola','beb-zero','beb-agua'],
+  menus:[['m-sandwich','Menú Chicken sandwich','🍔','sandwich','patm','beb-cola'],['m-tiras','Menú Tiras 3','🍗','tiras3','patm','beb-cola']]},
+ {id:'rodilla',n:'Rodilla',l:'R',c:'#b5121b',cats:['Sándwiches'],
+  items:[
+   ['vegetal','Sándwich vegetal','🥪',250,8,25,13,'1 unidad','Sándwiches'],['mixto','Sándwich mixto','🥪',300,15,28,14,'1 unidad','Sándwiches'],
+   ['ensaladilla','Sándwich de ensaladilla','🥪',280,7,26,16,'1 unidad','Sándwiches'],['pollo','Sándwich de pollo','🥪',290,15,26,13,'1 unidad','Sándwiches']]},
+ {id:'dunkin',n:"Dunkin'",l:'D',c:'#ff671f',cats:['Dulces','Cafés'],
+  items:[
+   ['glaseado','Donut glaseado','🍩',230,4,30,11,'1 unidad','Dulces'],['choco','Donut de chocolate','🍩',300,4,35,16,'1 unidad','Dulces'],
+   ['relleno','Donut relleno','🍩',320,4,40,16,'1 unidad','Dulces'],['latte','Café latte','☕',150,8,14,6,'1 vaso','Cafés']]}];
+/* «a ojo»: el bar, el menú del día, la cena en casa de alguien. La unidad es una ración normal y
+   en la hoja se elige pequeño · normal · grande */
+const FUERA_OJO=[
+ {id:'ojo-dia',n:'Menú del día',e:'🍽',sub:'primero + segundo + postre + pan',cats:['Primeros','Segundos','Postres','Pan y bebida'],
+  items:[
+   ['ensmix','Ensalada mixta','🥗',250,8,12,18,'1 plato','Primeros'],['lentejas','Lentejas','🍲',450,24,55,14,'1 plato','Primeros'],
+   ['macarrones','Macarrones con tomate','🍝',550,18,80,16,'1 plato','Primeros'],['sopa','Sopa','🍜',200,10,20,8,'1 plato','Primeros'],
+   ['paella','Paella','🥘',600,25,80,18,'1 plato','Primeros'],['gazpacho','Gazpacho','🍅',150,2,12,10,'1 cuenco','Primeros'],
+   ['judias','Judías verdes con patata','🥔',250,6,30,11,'1 plato','Primeros'],
+   ['filete','Filete con patatas','🥩',700,40,45,40,'1 plato','Segundos'],['polloas','Pollo asado con patatas','🍗',750,45,45,42,'1 plato','Segundos'],
+   ['pescado','Pescado a la plancha con ensalada','🐟',400,40,8,22,'1 plato','Segundos'],['merluza','Merluza rebozada','🐟',550,30,35,32,'1 plato','Segundos'],
+   ['albondigas','Albóndigas en salsa','🍖',650,32,30,44,'1 plato','Segundos'],['lomo','Lomo con pimientos','🥩',550,38,15,38,'1 plato','Segundos'],
+   ['flan','Flan','🍮',180,5,28,5,'1 unidad','Postres'],['fruta','Fruta','🍎',80,1,19,0,'1 pieza','Postres'],
+   ['natillas','Natillas','🍮',200,5,30,6,'1 unidad','Postres'],['tarta','Tarta','🍰',400,6,45,22,'1 porción','Postres'],
+   ['cafe','Café solo','☕',5,0,1,0,'1 taza','Postres'],
+   ['pan','Pan (1 trozo)','🥖',130,4,26,1,'1 trozo','Pan y bebida'],['vino','Copa de vino','🍷',120,0,4,0,'1 copa','Pan y bebida'],
+   ['gaseosa','Gaseosa / agua','💧',0,0,0,0,'1 vaso','Pan y bebida']],
+  menus:[['m-dia','Menú del día','🍽',[['Primero','Primeros','lentejas'],['Segundo','Segundos','polloas'],['Postre','Postres','flan'],['Pan y bebida','Pan y bebida','pan']]]]},
+ {id:'ojo-tapas',n:'Tapas y raciones',e:'🍤',sub:'bravas, croquetas, calamares, ensaladilla…',cats:['Raciones','Pinchos'],
+  items:[
+   ['bravas','Patatas bravas (ración)','🥔',550,6,50,35,'1 ración','Raciones'],['croquetas','Croquetas 6 uds','🧆',450,14,36,28,'6 piezas','Raciones'],
+   ['calamares','Calamares a la romana (ración)','🦑',500,25,35,28,'1 ración','Raciones'],['ensaladilla','Ensaladilla rusa (ración)','🥗',450,10,25,34,'1 ración','Raciones'],
+   ['alioli','Patatas alioli (ración)','🥔',600,6,40,46,'1 ración','Raciones'],['padron','Pimientos de Padrón','🫑',200,3,10,16,'1 ración','Raciones'],
+   ['jamon','Jamón serrano (ración)','🍖',350,35,0,22,'1 ración','Raciones'],['gambas','Gambas al ajillo','🦐',350,25,3,26,'1 cazuela','Raciones'],
+   ['boquerones','Boquerones fritos','🐟',500,30,20,33,'1 ración','Raciones'],['pulpo','Pulpo a la gallega','🐙',400,35,20,20,'1 ración','Raciones'],
+   ['huevosrotos','Huevos rotos con jamón','🍳',750,28,50,48,'1 ración','Raciones'],['queso','Queso manchego (ración)','🧀',400,26,0,33,'1 ración','Raciones'],
+   ['tortilla','Pincho de tortilla','🥔',250,8,18,16,'1 pincho','Pinchos'],['pincho','Pincho / montadito','🥖',200,8,20,9,'1 unidad','Pinchos'],
+   ['aceitunas','Aceitunas','🫒',60,0,1,6,'1 platito','Pinchos'],['patatillas','Patatas de bolsa (platito)','🥔',150,2,15,10,'1 platito','Pinchos']]},
+ {id:'ojo-boca',n:'Bocadillos',e:'🥖',sub:'calamares, lomo, tortilla, jamón…',cats:['Bocadillos'],
+  items:[
+   ['calamares','Bocadillo de calamares','🦑',650,25,80,25,'1 bocadillo','Bocadillos'],['lomoqueso','Bocadillo de lomo con queso','🥖',700,40,65,30,'1 bocadillo','Bocadillos'],
+   ['tortilla','Bocadillo de tortilla','🥖',600,18,75,24,'1 bocadillo','Bocadillos'],['jamon','Bocadillo de jamón serrano','🥖',550,30,60,20,'1 bocadillo','Bocadillos'],
+   ['pepito','Pepito de ternera','🥖',650,35,65,26,'1 bocadillo','Bocadillos'],['baconqueso','Bocadillo de bacon y queso','🥓',750,30,65,40,'1 bocadillo','Bocadillos'],
+   ['atun','Bocadillo de atún','🥖',500,25,60,16,'1 bocadillo','Bocadillos'],['vegetal','Bocadillo vegetal','🥖',450,15,60,16,'1 bocadillo','Bocadillos'],
+   ['sandmixto','Sándwich mixto','🥪',350,18,30,17,'1 unidad','Bocadillos']]},
+ {id:'ojo-inter',n:'Kebab, pizza, sushi, chino',e:'🌯',sub:'por tamaño: pequeño · normal · grande',cats:['Kebab','Pizza','Asiático','Otros'],
+  items:[
+   ['kebab','Kebab (pan pita)','🥙',700,35,60,35,'1 unidad','Kebab'],['durum','Dürum','🌯',800,40,70,40,'1 unidad','Kebab'],
+   ['kebabplato','Plato kebab con patatas','🍛',1100,50,90,60,'1 plato','Kebab'],['lahmacun','Lahmacun','🫓',450,20,55,15,'1 unidad','Kebab'],
+   ['pizzaind','Pizza individual','🍕',900,38,105,36,'1 pizza','Pizza'],['pizzapor','Porción de pizza','🍕',280,12,32,11,'1 porción','Pizza'],
+   ['sushi8','Sushi 8 piezas','🍣',350,14,55,8,'8 piezas','Asiático'],['sushi16','Sushi 16 piezas','🍣',700,28,110,16,'16 piezas','Asiático'],
+   ['tresdel','Arroz tres delicias','🍚',600,15,90,18,'1 plato','Asiático'],['pollolimon','Pollo al limón','🍗',500,25,45,24,'1 plato','Asiático'],
+   ['rollitos','Rollitos de primavera 2 uds','🥟',300,6,34,15,'2 piezas','Asiático'],['ramen','Ramen','🍜',600,25,70,22,'1 cuenco','Asiático'],
+   ['poke','Poke bowl','🥗',600,30,70,20,'1 bol','Asiático'],['burrito','Burrito','🌯',800,35,90,32,'1 unidad','Otros'],
+   ['tacos3','Tacos 3 uds','🌮',550,25,45,28,'3 tacos','Otros'],['hamburguesa','Hamburguesa de bar','🍔',560,28,40,30,'1 unidad','Otros'],
+   ['perrito','Perrito caliente','🌭',350,12,30,20,'1 unidad','Otros']]},
+ {id:'ojo-beb',n:'Bebidas y copas',e:'🍺',sub:'caña, tinto, refresco, cubata',cats:['Bebidas'],
+  items:[
+   ['cana','Caña','🍺',90,1,7,0,'200 ml','Bebidas'],['tercio','Tercio','🍺',150,1,12,0,'330 ml','Bebidas'],
+   ['pinta','Pinta','🍺',230,2,18,0,'500 ml','Bebidas'],['clara','Clara','🍺',90,0,12,0,'200 ml','Bebidas'],
+   ['vino','Copa de vino','🍷',120,0,4,0,'150 ml','Bebidas'],['tintov','Tinto de verano','🍷',120,0,15,0,'1 vaso','Bebidas'],
+   ['refresco','Refresco (lata)','🥤',140,0,35,0,'330 ml','Bebidas'],['zero','Refresco zero (lata)','🥤',1,0,0,0,'330 ml','Bebidas'],
+   ['cubata','Cubata (ron o whisky con cola)','🥃',250,0,25,0,'1 copa','Bebidas'],['gintonic','Gin tonic','🍸',200,0,15,0,'1 copa','Bebidas'],
+   ['sangria','Sangría','🍷',160,0,18,0,'1 vaso','Bebidas'],['cafeleche','Café con leche','☕',90,5,8,4,'1 taza','Bebidas'],
+   ['zumo','Zumo de naranja','🍊',110,2,24,0,'1 vaso','Bebidas'],['colacao','Cola Cao','🥛',200,8,28,6,'1 taza','Bebidas']]}];
+function fueraTodas(){return FUERA_CADENAS.concat(FUERA_OJO);}
+function fueraCad(id){const l=fueraTodas();for(let i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null;}
+function fueraEsOjo(c){return !!c&&String(c.id).indexOf('ojo-')===0;}
+function fueraItemsDe(c){
+  /* las cadenas de comida rápida venden los mismos refrescos: se ponen una vez y valen para todas */
+  if(!c)return [];
+  if(fueraEsOjo(c))return c.items;
+  return c.items.concat(FUERA_BEB_STD.filter(function(b){return !c.items.some(function(i){return i[0]===b[0];});}));}
+function fueraMio(){const f=food();if(!f.fueraMio||typeof f.fueraMio!=='object')f.fueraMio={};return f.fueraMio;}
+function fueraGuard(){const f=food();if(!Array.isArray(f.fueraGuard))f.fueraGuard=[];return f.fueraGuard;}
+function fueraItem(cid,iid){
+  const c=fueraCad(cid);if(!c)return null;
+  const t=fueraItemsDe(c).filter(function(i){return i[0]===iid;})[0];if(!t)return null;
+  const fix=fueraMio()[cid+':'+iid]||null;
+  const k=function(n,i){return fix&&fix[n]!=null?+fix[n]:t[i];};
+  return {cid:cid,id:iid,v:'fuera:'+cid+':'+iid,n:t[1],e:t[2],kcal:k('kcal',3),pr:k('pr',4),ch:k('ch',5),gr:k('gr',6),
+    u:t[7],cat:t[8],cad:c,ojo:fueraEsOjo(c),corregido:!!fix};}
+function fueraMenuSlots(c,m){
+  /* un menú son huecos: el principal y lo que lo acompaña. En el menú del día, primero, segundo,
+     postre y pan; y ahí el postre o el pan pueden ser «nada» */
+  if(Array.isArray(m[3]))return m[3].map(function(s,i){
+    const opts=c.items.filter(function(it){return it[8]===s[1];}).map(function(it){return it[0];});
+    return {label:s[0],opts:i>=2?opts.concat(['']):opts,def:s[2]};});
+  return [{label:'principal',opts:[m[3]],def:m[3]},
+    {label:'acompañamiento',opts:c.lados||[m[4]],def:m[4]},
+    {label:'bebida',opts:c.bebidas||[m[5]],def:m[5]}];}
+function fueraMenu(cid,mid){const c=fueraCad(cid);if(!c)return null;
+  const m=(c.menus||[]).filter(function(x){return x[0]===mid;})[0];return m?{c:c,m:m}:null;}
+function fueraMenuCalc(cid,mid,sel,extra,n){
+  const fm=fueraMenu(cid,mid);if(!fm)return null;
+  const partes=fueraMenuSlots(fm.c,fm.m).map(function(s,i){
+    const id=(sel&&sel[i]!=null)?sel[i]:s.def;return id?fueraItem(cid,id):null;})
+    .concat((extra||[]).map(function(id){return fueraItem(cid,id);})).filter(Boolean);
+  const t={kcal:0,prot:0,carb:0,gresa:0};
+  partes.forEach(function(p){t.kcal+=p.kcal;t.prot+=p.pr;t.carb+=p.ch;t.gresa+=p.gr;});
+  Object.keys(t).forEach(function(k){t[k]=Math.round(t[k]*10)/10;});t.kcal=Math.round(t.kcal);
+  const resto=partes.slice(1).map(function(p){return p.n;});
+  return {c:fm.c,m:fm.m,partes:partes,t:t,n:Math.max(1,+n||1),
+    nombre:fm.m[1]+(resto.length?(' · '+resto.join(' · ')):'')};}
+function fueraBuscables(){
+  const out=[];
+  fueraTodas().forEach(function(c){
+    const ojo=fueraEsOjo(c);
+    (c.menus||[]).forEach(function(m){const r=fueraMenuCalc(c.id,m[0]);if(!r)return;
+      out.push({v:'fuera:'+c.id+':'+m[0],nombre:m[1],busca:alimTxt(m[1]+' '+c.n+' menu'),kcal:r.t.kcal,prot:r.t.prot,
+        carb:r.t.carb,gresa:r.t.gresa,base:1,porDefecto:1,unidad:'/menú',etiqueta:ojo?'a ojo':'comer fuera',tipo:'fuera',
+        em:m[2],cad:c.n,cid:c.id,u:'1 menú',menu:true,ojo:ojo,cat:'Menús',ord:out.length,
+        sub:r.partes.slice(1).map(function(p){return p.n;}).join(' + ')});});
+    fueraItemsDe(c).forEach(function(t){const it=fueraItem(c.id,t[0]);
+      out.push({v:it.v,nombre:it.n,busca:alimTxt(it.n+' '+c.n+(ojo?' bar':'')),kcal:it.kcal,prot:it.pr,carb:it.ch,gresa:it.gr,
+        base:1,porDefecto:1,unidad:'/'+it.u,etiqueta:ojo?'a ojo':'comer fuera',tipo:'fuera',em:it.e,cad:c.n,cid:c.id,
+        u:it.u,ojo:ojo,cat:it.cat,ord:out.length,sub:c.n+(it.corregido?' · tu versión':'')});});});
+  return out;}
+function fueraLogo(c,big){
+  if(fueraEsOjo(c))return '<span class="flogo'+(big?' big':'')+' ojo">'+esc(c.e)+'</span>';
+  return '<span class="flogo'+(big?' big':'')+'" style="background:'+esc(c.c)+'">'+esc(c.l)+'</span>';}
+function fueraUltimos(n){
+  /* lo último que pediste fuera, sin repetir: la próxima vez es un toque */
+  const f=food(),l=[];
+  Object.keys(f.log).forEach(function(k){(f.log[k]||[]).forEach(function(t){if(t.fuera&&t.k1)l.push(t);});});
+  l.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+  const ya={},out=[];
+  fueraGuard().forEach(function(t){if(!ya[t.nombre]){ya[t.nombre]=1;out.push(Object.assign({guardado:true},t));}});
+  l.forEach(function(t){if(out.length<(n||5)+fueraGuard().length&&!ya[t.nombre]){ya[t.nombre]=1;out.push(t);}});
+  return out;}
+function fueraHace(ts){if(!ts)return '';const d=Math.floor((Date.now()-ts)/864e5);
+  return d<=0?'hoy':(d===1?'ayer':('hace '+d+' días'));}
+function renderFuera(){
+  const c=foodCtx(),sel=c.sel,ult=fueraUltimos(4);
+  const montaditos=Object.keys(food().eans).some(function(k){return /100 montaditos/i.test(food().eans[k].marca||'');});
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="buscar">'+gymIco('atras','gico sm')+' Añadir</button>'+
+      '<h2 class="subtit">Comer fuera</h2></div>'+
+    (ult.length?('<div class="card"><div class="sec">'+(fueraGuard().length?'TUS MENÚS Y LO ÚLTIMO FUERA':'LO ÚLTIMO QUE PEDISTE FUERA')+'</div>'+
+      ult.map(function(t,i){
+        return '<div class="hit"><span class="hitnom" style="cursor:default"><span class="em">'+esc(t.emoji||'🍽')+'</span>'+
+          '<span class="nm"><b>'+esc(t.nombre)+'</b><span>'+esc((t.marca||'')+(t.guardado?' · ♥ guardado':(' · '+fueraHace(t.ts))))+'</span></span>'+
+          '<span class="kc rac"><b>'+(t.rac>1?('×'+fmt(t.rac)):'repetir')+'</b>'+Math.round((t.k1.kcal||0)*(t.rac||1))+' kcal</span></span>'+
+          '<button class="add" data-a="fuera-repetir" data-i="'+i+'" data-key="'+esc(sel)+'" aria-label="repetir '+esc(t.nombre)+'">'+gymIco('mas','gico sm')+'</button></div>';}).join('')+
+      '</div>'):'')+
+    '<div class="card"><h3 style="margin:0 0 8px">Cadenas</h3><div class="cadg">'+
+      FUERA_CADENAS.map(function(k){
+        return '<button data-a="fuera-cad" data-c="'+esc(k.id)+'">'+fueraLogo(k,true)+'<span>'+esc(k.n)+'</span></button>';}).join('')+
+      (montaditos?('<button data-a="fuera-cad" data-c="ean-100m"><span class="flogo big" style="background:#b8860b">100</span><span>100 Montaditos</span></button>'):'')+
+    '</div></div>'+
+    '<div class="card"><h3 style="margin:0 0 4px">A ojo · bar, restaurante, casa de alguien</h3>'+
+      FUERA_OJO.map(function(k){
+        return '<button class="fojo" data-a="fuera-cad" data-c="'+esc(k.id)+'"><span class="em">'+esc(k.e)+'</span>'+
+          '<span class="nm"><b>'+esc(k.n)+'</b><span>'+esc(k.sub)+'</span></span><span class="btn s">elegir</span></button>';}).join('')+
+    '</div>'+
+    '<p class="mini" style="margin:0 4px">Datos aproximados de la información nutricional que publica cada cadena en España. '+
+      'Si ves uno mal, ábrelo y corrígelo: se queda tu versión.</p>'+
+  '</div>';}
+function renderFueraCad(){
+  const c=foodCtx(),sel=c.sel,cid=ui.fueraCad||'';
+  if(cid==='ean-100m'){
+    const l=foodBuscables().filter(function(x){return x.tipo==='ean'&&/100 montaditos/i.test(x.sub||'');});
+    $('#main').innerHTML='<div class="grid"><div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="fuera">'+
+      gymIco('atras','gico sm')+' Fuera</button><span class="flogo" style="background:#b8860b">100</span><h2 class="subtit">100 Montaditos</h2></div>'+
+      '<div class="card">'+l.map(function(x){return hitHTML(x,sel);}).join('')+'</div></div>';return;}
+  const k=fueraCad(cid);if(!k){ui.foodVista='fuera';return renderFuera();}
+  const todos=fueraBuscables().filter(function(x){return x.cid===k.id;});
+  const tabs=((k.menus&&k.menus.length)?['Menús']:[]).concat(k.cats.filter(function(t){return t!=='Menús';}));
+  const tab=tabs.indexOf(ui.fueraCat)>=0?ui.fueraCat:tabs[0];
+  const l=todos.filter(function(x){return tab==='Menús'?x.menu:(!x.menu&&x.cat===tab);});
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="fuera">'+gymIco('atras','gico sm')+' Fuera</button>'+
+      fueraLogo(k)+'<h2 class="subtit">'+esc(k.n)+'</h2><span class="mini" style="margin-left:auto">'+todos.length+' cosas</span></div>'+
+    '<div class="ftabs fscroll">'+tabs.map(function(t){
+      return '<button class="ftab'+(t===tab?' on':'')+'" data-a="fuera-cat" data-t="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>'+
+    '<div class="card">'+(l.length?l.map(function(x){return hitHTML(x,sel);}).join(''):'<div class="empty">Nada en esta pestaña.</div>')+'</div>'+
+    (tab==='Menús'?'<p class="mini" style="margin:0 4px">Un menú se arma: toca el nombre y eliges acompañamiento y bebida; las kcal cambian solas. El + lo apunta tal cual.</p>':
+      (k.id==='ojo-dia'||fueraEsOjo(k)?'<p class="mini" style="margin:0 4px">Raciones normales de bar. Al abrir una eliges pequeño, normal o grande.</p>':''))+
+  '</div>';}
+function renderFueraMenu(){
+  const c=foodCtx(),sel=c.sel,st=ui.fueraMenu||{},ob=objetivoMacros();
+  const r=fueraMenuCalc(st.cid,st.mid,st.sel,st.extra,st.n);
+  if(!r){ui.foodVista='fuera';return renderFuera();}
+  const n=r.n,t=r.t,slots=fueraMenuSlots(r.c,r.m);
+  const tot={kcal:Math.round(t.kcal*n),prot:Math.round(t.prot*n),carb:Math.round(t.carb*n),gresa:Math.round(t.gresa*n)};
+  const quedan=ob.kcal?(ob.kcal-c.ft.kcal-tot.kcal):null;
+  const postres=fueraItemsDe(r.c).filter(function(i){return /^(Postres|Dulces)$/.test(i[8]);}).map(function(i){return i[0];});
+  const extra=st.extra||[];
+  const pos=ui.foodPos||momentoAhora();
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="subcab"><button class="btn s volver" data-a="fuera-cad" data-c="'+esc(r.c.id)+'">'+gymIco('atras','gico sm')+' '+esc(r.c.n)+'</button>'+
+      '<h2 class="subtit">'+esc(r.m[1])+'</h2></div>'+
+    '<div class="hoja">'+
+      '<div class="platomac"><div><b>'+tot.kcal+'</b><span>KCAL</span></div><div><b>'+tot.prot+'</b><span>PROT</span></div>'+
+        '<div><b>'+tot.carb+'</b><span>HC</span></div><div><b>'+tot.gresa+'</b><span>GRASA</span></div></div>'+
+      (quedan!=null?('<p class="mini" style="margin:6px 0 0">'+(quedan>=0?('te quedan <b style="color:var(--ink)">'+quedan+' kcal</b> hoy'):
+        ('te pasas <b style="color:var(--ink)">'+(-quedan)+' kcal</b> hoy'))+
+        (ob.prot?(' · '+Math.max(0,Math.round(ob.prot-c.ft.prot-tot.prot))+' g de proteína por llegar'):'')+'</p>'):'')+
+      slots.map(function(s,i){
+        const id=(st.sel&&st.sel[i]!=null)?st.sel[i]:s.def,it=id?fueraItem(r.c.id,id):null;
+        return '<div class="fslot"><div class="row"><span class="em">'+esc(it?it.e:'∅')+'</span>'+
+          '<span class="nm"><b>'+esc(it?it.n:'nada')+'</b><span>'+esc(s.label+(it?' · '+it.u:''))+'</span></span>'+
+          '<b class="k">'+(it?it.kcal:0)+'</b></div>'+
+          (s.opts.length>1?('<div class="fseg">'+s.opts.map(function(o){const oi=o?fueraItem(r.c.id,o):null;
+            return '<button class="'+(o===(id||'')?'on':'')+'" data-a="fuera-slot" data-s="'+i+'" data-o="'+esc(o)+'">'+
+              esc(oi?fueraCorto(oi.n,s.label):'nada')+'</button>';}).join('')+'</div>'):'')+'</div>';}).join('')+
+      extra.map(function(id,j){const it=fueraItem(r.c.id,id);if(!it)return '';
+        return '<div class="fslot"><div class="row"><span class="em">'+esc(it.e)+'</span><span class="nm"><b>'+esc(it.n)+'</b><span>extra</span></span>'+
+          '<b class="k">'+it.kcal+'</b><button class="btn s" data-a="fuera-extra-del" data-j="'+j+'" aria-label="quitar">×</button></div></div>';}).join('')+
+      '<div class="chips" style="margin-top:10px">'+
+        (postres.length?('<label class="chipx" style="gap:4px">+ postre<select data-a="fuera-extra" style="width:110px;padding:2px 4px;font-size:12px">'+
+          '<option value="">elige…</option>'+postres.map(function(p){const it=fueraItem(r.c.id,p);return '<option value="'+esc(p)+'">'+esc(it.n)+' · '+it.kcal+'</option>';}).join('')+'</select></label>'):'')+
+        (fueraItem(r.c.id,'salsa')?'<button class="chipx" data-a="fuera-extra-b" data-o="salsa">+ salsa</button>':'')+
+        '<button class="chipx'+(n===2?' on':'')+'" data-a="fuera-n">'+(n===2?'2 menús ✓':'2 menús')+'</button></div>'+
+      '<div class="chips" style="margin-top:8px">'+FOOD_POS.slice(0,3).concat(['otro']).map(function(p){
+        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:12px">'+posOptions(pos)+'</select></label>';
+        return '<button class="chipx'+(pos===p?' on':'')+'" data-a="food-pos-b" data-p="'+p+'">'+esc(p)+'</button>';}).join('')+'</div>'+
+      '<button class="btn p gbig" style="margin-top:13px" data-a="fuera-menu-apuntar" data-key="'+esc(sel)+'">apuntar '+(n===2?'2 menús':'menú')+' · '+tot.kcal+' kcal</button>'+
+      '<button class="btn s" style="margin-top:8px" data-a="fuera-guardar">♡ guardar este menú tal cual</button>'+
+    '</div></div>';}
+function fueraCorto(n,label){
+  /* en los botones del hueco, lo que distingue: «medianas», «Zero», no el nombre entero */
+  let t=String(n);
+  if(/acompa/.test(label))t=t.replace(/^Patatas\s*/i,'').replace(/ \d+ uds$/,'');
+  if(/bebida/.test(label))t=t.replace(/ mediana?o?$/i,'').replace(/^Coca-Cola Zero/,'Zero').replace(/ naranja$/,'');
+  return t.length>22?t.slice(0,21)+'…':t;}
+function fueraApuntar(key,v,rac,pos,macro){
+  /* un producto de cadena o un plato «a ojo» al día: la ración vale como unidad */
+  const m=/^fuera:([^:]+):(.+)$/.exec(v||'');if(!m)return 'no sé qué es eso';
+  let base=macro;
+  if(!base){const it=fueraItem(m[1],m[2]);
+    if(it)base={nombre:it.n,marca:it.cad.n,emoji:it.e,kcal:it.kcal,prot:it.pr,carb:it.ch,gresa:it.gr};
+    else{const r=fueraMenuCalc(m[1],m[2]);if(!r)return 'eso ya no está';
+      base={nombre:r.nombre,marca:r.c.n,emoji:r.m[2],kcal:r.t.kcal,prot:r.t.prot,carb:r.t.carb,gresa:r.t.gresa};}}
+  return addFoodEntry(key,{fuera:v,rac:rac,pos:pos,when:pos,macro:base});}
 /* ===================== comida: productos, escáner y cuenta de calorías ===================== */
 function food(){
   if(!store.food||typeof store.food!=='object')store.food={objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]};
@@ -2894,6 +3260,15 @@ function addFoodEntry(dateStr,opt){
   opt=opt||{};
   const k=foodKey(dateStr);if(!k)return 'ese día no tiene pinta de fecha (falta el calendario o la rotación por fecha)';
   const f=food(),list=foodLog(k);
+  if(opt.macro){
+    /* comer fuera: la toma lleva sus macros por unidad (k1), así «×2» y los −/+ recalculan sin
+       depender de que la cadena siga en la tabla */
+    const b=opt.macro,rac=Math.max(0.1,Math.round((+opt.rac||1)*100)/100);
+    const k1={kcal:+b.kcal||0,prot:+b.prot||0,carb:+b.carb||0,gresa:+b.gresa||0};
+    list.push({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:String(b.nombre||'').slice(0,90),marca:b.marca||'',
+      emoji:b.emoji||'',fuera:opt.fuera||'',k1:k1,rac:rac,kcal:Math.round(k1.kcal*rac),prot:Math.round(k1.prot*rac*10)/10,
+      carb:Math.round(k1.carb*rac*10)/10,gresa:Math.round(k1.gresa*rac*10)/10,ts:Date.now()});
+    save();return 'añadido: '+b.nombre+(rac!==1?(' ×'+fmt(rac)):'')+' · '+Math.round(k1.kcal*rac)+' kcal';}
   if(opt.ean){
     const p=f.eans[opt.ean];if(!p)return 'ese código no está en tus productos: escanéalo o búscalo primero';
     const g=Math.max(1,+opt.grams||100),pc=porcionDe(p,g);
@@ -2923,6 +3298,8 @@ function bumpFoodEntry(dateStr,id,delta){
     if(a){const pc=alimEntrada(a,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}}
   else if(e.ean){const p=food().eans[e.ean]||e;const g=Math.max(5,(+e.g||0)+(+delta||0));
     const pc=porcionDe(p,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}
+  else if(e.k1){const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);e.rac=rac;
+    ['kcal','prot','carb','gresa'].forEach(function(q){e[q]=q==='kcal'?Math.round((+e.k1[q]||0)*rac):Math.round((+e.k1[q]||0)*rac*10)/10;});}
   else{const d=dishById(e.dishId)||e;const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);
     e.rac=rac;e.kcal=Math.round((+d.kcal||0)*rac);e.prot=Math.round((+d.prot||0)*rac*10)/10;}
   save();return 'rectificado: '+e.nombre;}
@@ -5380,7 +5757,7 @@ function foodBuscables(){
       kcal:+a.kcal||0,prot:+a.pr||0,base:100,porDefecto:r0?r0[1]:gramosPorDefecto(a),unidad:'/100 g',etiqueta:'alimento',
       tipo:'alim',em:a.e||'🍽',creado:a.fuente==='tuyo',rac:r0,
       sub:(a.fuente==='tuyo'?'Tuyo':'Genérico')+(a.nota?(' · '+a.nota):'')});});
-  return out;}
+  return out.concat(fueraBuscables());}
 function favV(){const f=food();if(!Array.isArray(f.favV))f.favV=[];return f.favV;}
 function esFav(v){return favV().indexOf(v)>=0||(/^ean:/.test(v)&&food().fav.indexOf(v.slice(4))>=0);}
 /* ===================== comida: el buscador, que es LA puerta =====================
@@ -5397,7 +5774,7 @@ function frecuentes(n){
   const f=food(),cuenta={};
   Object.keys(f.log).forEach(function(k){
     (f.log[k]||[]).forEach(function(t){
-      const v=t.alim?('alim:'+t.alim):(t.ean?('ean:'+t.ean):(t.dishId?('dish:'+t.dishId):''));
+      const v=t.alim?('alim:'+t.alim):(t.ean?('ean:'+t.ean):(t.dishId?('dish:'+t.dishId):(t.fuera||'')));
       if(v)cuenta[v]=(cuenta[v]||0)+1;});});
   const todo=foodBuscables(),porV={};
   todo.forEach(function(x){porV[x.v]=x;});
@@ -5438,11 +5815,15 @@ function foodBuscar(q,tipo){
       if(A.s!==B.s)return B.s-A.s;
       if(t){const ia=alimTxt(a.nombre).indexOf(t)===0?0:1,ib=alimTxt(b.nombre).indexOf(t)===0?0:1;
         if(ia!==ib)return ia-ib;}
+      /* dentro de una misma cadena, el orden de su carta (menús, lo principal, las bebidas al final),
+         no el alfabeto: «kfc» empezaba por «Agua» */
+      if(a.tipo==='fuera'&&b.tipo==='fuera'&&a.cid===b.cid)return a.ord-b.ord;
       return String(a.nombre).localeCompare(String(b.nombre),'es');})
     .map(function(o){return o.x;});}
 function hitKcHTML(x){
   /* a la derecha, la ración con la que se piensa y lo que suma: «1 filete (120 g) · 144 kcal», no
      «120 /100 g» */
+  if(x.tipo==='fuera')return '<span class="kc rac"><b>'+esc(x.u)+'</b>'+(x.kcal||0)+' kcal</span>';
   if(x.base===1)return '<span class="kc rac"><b>1 ración</b>'+(x.kcal||0)+' kcal</span>';
   if(x.rac)return '<span class="kc rac"><b>'+esc(x.rac[0])+' ('+x.rac[1]+' g)</b>'+Math.round((x.kcal||0)*x.rac[1]/100)+' kcal</span>';
   return '<span class="kc rac"><b>100 g</b>'+(x.kcal||0)+' kcal</span>';}
@@ -5459,6 +5840,7 @@ function hitHTML(x,sel){
       gymIco('mas','gico sm')+'</button></div>';}
 function apuntaBuscable(key,x,cant,pos){
   /* del buscable al registro del día, sea lo que sea: así el + y la hoja hacen exactamente lo mismo */
+  if(x.tipo==='fuera')return fueraApuntar(key,x.v,cant,pos);
   const m=/^(alim|ean|dish):(.+)$/.exec(x.v);
   if(!m)return 'no sé qué es eso';
   const opt=(m[1]==='dish')?{dishId:m[2],rac:cant,pos:pos,when:pos}:
@@ -5515,14 +5897,17 @@ function renderFoodBuscar(){
       '<p class="mini" style="margin:11px 0 0">Escribe arriba para buscar entre <b style="color:var(--ink)">'+
         foodBuscables().length+'</b> alimentos, platos y productos.</p></div>';
   }else{
-    const grupos=[['alim','Base de datos',function(x){return x.tipo==='alim';}],
+    /* lo de fuera, una cabecera por cadena: «big mac» tiene que decir McDonald's */
+    const cadsQ=[];todos.forEach(function(x){if(x.tipo==='fuera'&&cadsQ.indexOf(x.cid)<0)cadsQ.push(x.cid);});
+    const grupos=[['alim','Base de datos',function(x){return x.tipo==='alim';}]].concat(cadsQ.map(function(cid){const k=fueraCad(cid);
+      return ['fuera',(fueraEsOjo(k)?'A ojo · ':'')+k.n,function(x){return x.tipo==='fuera'&&x.cid===cid;},k];})).concat([
       ['dish','Mis platos',function(x){return x.tipo==='dish';}],
       ['merca','Mercadona',function(x){return x.tipo==='ean'&&x.merca;}],
-      ['ean','Otros productos',function(x){return x.tipo==='ean'&&!x.merca;}]];
+      ['ean','Otros productos',function(x){return x.tipo==='ean'&&!x.merca;}]]);
     const trozos=grupos.map(function(g){
       const l=todos.filter(g[2]);
       if(!l.length)return '';
-      return '<div class="grp">'+esc(g[1])+(g[0]==='merca'?' <span class="vmerc">HACENDADO</span>':'')+' · '+l.length+'</div>'+
+      return '<div class="grp">'+(g[3]?fueraLogo(g[3])+' ':'')+esc(g[1])+(g[0]==='merca'?' <span class="vmerc">HACENDADO</span>':'')+' · '+l.length+'</div>'+
         l.slice(0,12).map(function(x){return hitHTML(x,sel);}).join('')+
         (l.length>12?('<p class="mini" style="margin:7px 0 0">y '+(l.length-12)+' más: afina la búsqueda</p>'):'');
     }).filter(Boolean).join('');
@@ -5538,6 +5923,7 @@ function renderFoodBuscar(){
     '</div>'+
     '<div class="chips">'+
       '<button class="chipx" data-a="food-panel2" data-k="scan">📷 escanear</button>'+
+      '<button class="chipx" data-a="food-vista" data-v="fuera">🍔 comer fuera</button>'+
       '<button class="chipx" data-a="food-vista" data-v="alimnuevo">🥕 crear alimento</button>'+
       '<button class="chipx" data-a="plato-nuevo">🍲 crear plato</button>'+
       '<button class="chipx" data-a="food-panel2" data-k="mano">✏️ a mano</button></div>'+
@@ -5575,6 +5961,8 @@ function buscableDe(v){
 function racionesDe(x){
   /* cantidades que una persona usa de verdad, no «100 g» a secas */
   if(!x)return [];
+  if(x.tipo==='fuera')return x.ojo?[[0.7,'pequeño'],[1,'normal'],[1.4,'grande'],[2,'2 raciones']]:
+    [[0.5,'la mitad'],[1,'1 · '+x.u],[2,'2'],[3,'3']];
   if(x.base===1)return [[0.5,'media ración'],[1,'1 ración'],[1.5,'1 ración y media'],[2,'2 raciones']];
   const m=/^alim:(.+)$/.exec(x.v),a=m?alimById(m[1]):null;
   /* las raciones propias del alimento («1 filete · 120 g», «bandeja · 500 g»), y 100 g al final */
@@ -5592,6 +5980,8 @@ function previaDe(x,cant){
   const q=cant/(x.base||100);
   return {kcal:Math.round((x.kcal||0)*q),prot:Math.round((x.prot||0)*q*10)/10};}
 function previaMacrosDe(x,cant){
+  if(x&&x.tipo==='fuera')return {kcal:Math.round((x.kcal||0)*cant),prot:Math.round((x.prot||0)*cant*10)/10,
+    carb:Math.round((x.carb||0)*cant*10)/10,gresa:Math.round((x.gresa||0)*cant*10)/10};
   /* los cuatro números de la previa. Los macros completos solo los tienen los alimentos y los
      productos; un plato guarda kcal y proteína, así que ahí se dicen dos y no se inventan cuatro. */
   const m=/^(alim|ean|dish):(.+)$/.exec(x.v);
@@ -5624,7 +6014,7 @@ function renderFoodCantidad(){
       '</div>'+
       '<div class="pasos">'+
         '<button data-a="food-cant-paso" data-d="-'+paso+'" aria-label="menos">−</button>'+
-        '<span class="val"><b id="fcVal">'+fmt(cant)+'</b><span>'+(x.base===1?'raciones':'gramos')+'</span></span>'+
+        '<span class="val"><b id="fcVal">'+fmt(cant)+'</b><span>'+(x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':'gramos'))+'</span></span>'+
         '<button data-a="food-cant-paso" data-d="'+paso+'" aria-label="más">+</button>'+
       '</div>'+
       '<div class="rac">'+racionesDe(x).map(function(r){
@@ -5635,7 +6025,7 @@ function renderFoodCantidad(){
         return '<div><b>'+k[1]+'</b><span>'+k[0]+'</span></div>';}).join('')+'</div>'+
       /* a dónde va: la comida de hoy (lo de siempre), un plato, la compra o la nevera */
       '<div class="dests">'+FOOD_DESTS.map(function(d){const on=(ui.foodDest||'hoy')===d[0];
-        const puede=d[0]!=='plato'||/^(alim|ean):/.test(x.v);
+        const puede=x.tipo==='fuera'?d[0]==='hoy':(d[0]!=='plato'||/^(alim|ean):/.test(x.v));
         return puede?('<button class="chipx'+(on?' on':'')+'" data-a="food-dest" data-d="'+d[0]+'">'+esc(d[1])+'</button>'):'';}).join('')+'</div>'+
       ((ui.foodDest||'hoy')==='plato'?('<label class="fld" style="margin-top:8px">¿a qué plato?<select data-a="food-dest-plato">'+
         (ui.plato?'<option value="__abierto">el que estás editando'+(ui.plato.name?' · '+esc(ui.plato.name):'')+'</option>':'')+
@@ -5653,8 +6043,18 @@ function renderFoodCantidad(){
       '<button class="btn s" style="margin-top:8px" data-a="food-fav" data-v="'+esc(x.v)+'">'+(esFav(x.v)?'♥ en favoritos':'♡ favorito')+'</button>'+
       (pctProt?('<p class="mini" style="text-align:center;margin:9px 0 0">Aporta el <b style="color:var(--ink)">'+
         pctProt+' %</b> de tu proteína del día.</p>'):'')+
+      fueraFixHTML(x)+
     '</div></div>';
 }
+function fueraFixHTML(x){
+  /* los datos de las cadenas son aproximados: si tienes el de verdad, se corrige aquí y se queda */
+  if(!x||x.tipo!=='fuera'||x.menu)return '';
+  const m=/^fuera:([^:]+):(.+)$/.exec(x.v),it=m?fueraItem(m[1],m[2]):null;if(!it)return '';
+  return '<details class="ffix"'+(ui.fueraFixAbierto?' open':'')+'><summary>'+(it.corregido?'✎ tu versión · corregir':'✎ ¿dato mal? corrígelo')+'</summary>'+
+    '<div class="row" style="gap:6px;margin-top:8px">'+[['kcal','kcal',it.kcal],['pr','prot',it.pr],['ch','HC',it.ch],['gr','grasa',it.gr]].map(function(q){
+      return '<label class="fld" style="flex:1;min-width:0">'+q[1]+'<input inputmode="decimal" data-a="fuera-fix" data-k="'+q[0]+'" data-v="'+esc(x.v)+'" value="'+fmt(q[2])+'"></label>';}).join('')+'</div>'+
+    '<p class="mini" style="margin:6px 0 0">por '+esc(it.u)+(it.corregido?' · <button class="btn s" data-a="fuera-fix-reset" data-v="'+esc(x.v)+'">volver al de la cadena</button>':
+      ' · aproximado de '+esc(it.cad.n))+'</p></details>';}
 /* ===================== Cocina: tres destinos en una pantalla =====================
    «Qué cocino», «Mi nevera» e «Ideas» eran tres puertas distintas para la misma pregunta: qué hago
    de comer. Ahora son tres pestañas de la misma. */
@@ -6662,6 +7062,9 @@ function renderFoodGluten(){
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='buscar')return renderFoodBuscar();
+  if(v==='fuera')return renderFuera();
+  if(v==='fueracad')return renderFueraCad();
+  if(v==='fueramenu')return renderFueraMenu();
   if(v==='cantidad')return renderFoodCantidad();
   if(v==='micros')return renderFoodMicros();
   if(v==='productos')return renderFoodProductos();
@@ -12486,7 +12889,11 @@ function act(a,el){
     case 'food-abrir':{
       ui.foodSel=el.dataset.v||'';
       if(!ui.foodDestFijo)ui.foodDest='';
+      ui.fueraFixAbierto=false;
       const x=buscableDe(ui.foodSel);
+      if(x&&x.menu){const mm=/^fuera:([^:]+):(.+)$/.exec(x.v);
+        ui.fueraMenu={cid:mm[1],mid:mm[2],sel:{},extra:[],n:1};ui.foodPos=ui.foodPos||momentoAhora();
+        ui.foodVista='fueramenu';render();window.scrollTo(0,0);break;}
       ui.foodCant=x?x.porDefecto:0;
       ui.foodPos=ui.foodPos||momentoAhora();
       ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
@@ -12513,6 +12920,28 @@ function act(a,el){
     case 'food-cant-set':{ui.foodCant=+el.dataset.n||0;render();break;}
     case 'food-pos-b':{ui.foodPos=el.dataset.p||'';render();break;}
     case 'food-tipo':{ui.foodTipo=el.dataset.t||'';render();break;}
+    case 'fuera-cad':{ui.fueraCad=el.dataset.c||'';ui.fueraCat='';ui.foodVista='fueracad';render();window.scrollTo(0,0);break;}
+    case 'fuera-cat':{ui.fueraCat=el.dataset.t||'';render();break;}
+    case 'fuera-slot':{if(!ui.fueraMenu)break;ui.fueraMenu.sel=ui.fueraMenu.sel||{};ui.fueraMenu.sel[+el.dataset.s]=el.dataset.o||'';render();break;}
+    case 'fuera-extra-b':{if(!ui.fueraMenu)break;(ui.fueraMenu.extra=ui.fueraMenu.extra||[]).push(el.dataset.o||'');render();break;}
+    case 'fuera-extra-del':{if(ui.fueraMenu&&ui.fueraMenu.extra)ui.fueraMenu.extra.splice(+el.dataset.j,1);render();break;}
+    case 'fuera-n':{if(ui.fueraMenu)ui.fueraMenu.n=ui.fueraMenu.n===2?1:2;render();break;}
+    case 'fuera-menu-apuntar':{const st=ui.fueraMenu||{},r=fueraMenuCalc(st.cid,st.mid,st.sel,st.extra,st.n);
+      if(!r){flash('ese menú ya no está');break;}
+      const pos=ui.foodPos||momentoAhora();
+      flash(fueraApuntar(el.dataset.key,'fuera:'+st.cid+':'+st.mid,r.n,pos,
+        {nombre:r.nombre,marca:r.c.n,emoji:r.m[2],kcal:r.t.kcal,prot:r.t.prot,carb:r.t.carb,gresa:r.t.gresa}));
+      ui.fueraMenu=null;ui.foodVista='';render();window.scrollTo(0,0);break;}
+    case 'fuera-guardar':{const st=ui.fueraMenu||{},r=fueraMenuCalc(st.cid,st.mid,st.sel,st.extra,st.n);if(!r)break;
+      const g=fueraGuard().filter(function(t){return t.nombre!==r.nombre;});
+      g.unshift({nombre:r.nombre,marca:r.c.n,emoji:r.m[2],fuera:'fuera:'+st.cid+':'+st.mid,rac:r.n,
+        k1:{kcal:r.t.kcal,prot:r.t.prot,carb:r.t.carb,gresa:r.t.gresa},ts:Date.now()});
+      food().fueraGuard=g.slice(0,12);save();flash('guardado: lo tienes arriba del todo en «Comer fuera»');render();break;}
+    case 'fuera-repetir':{const t=fueraUltimos(4)[+el.dataset.i];if(!t){flash('eso ya no está');break;}
+      flash(fueraApuntar(el.dataset.key,t.fuera,t.rac||1,ui.foodPos||momentoAhora(),
+        {nombre:t.nombre,marca:t.marca,emoji:t.emoji,kcal:t.k1.kcal,prot:t.k1.prot,carb:t.k1.carb,gresa:t.k1.gresa}));
+      render();break;}
+    case 'fuera-fix-reset':{delete fueraMio()[String(el.dataset.v||'').replace(/^fuera:/,'')];save();flash('vuelve el dato de la cadena');render();break;}
     case 'food-tab':{ui.foodTab=el.dataset.t||'';render();break;}
     case 'food-dest':{ui.foodDest=el.dataset.d||'hoy';if(ui.foodDest==='plato'&&!ui.foodDestPlato)ui.foodDestPlato=ui.plato?'__abierto':((store.dishes[0]||{}).id||'');render();break;}
     case 'food-fav':{const v=el.dataset.v||'',l=favV(),k=l.indexOf(v);
@@ -14231,6 +14660,12 @@ document.addEventListener('change',e=>{
       if(x)x.g=Math.max(1,Math.min(3000,Math.round(num(el.value,0))));
       render();break;}
     case 'plato-lote':{if(ui.plato)ui.plato.batchId=el.value||'';render();break;}
+    case 'fuera-extra':{if(ui.fueraMenu&&el.value)(ui.fueraMenu.extra=ui.fueraMenu.extra||[]).push(el.value);render();break;}
+    case 'fuera-fix':{const k=String(el.dataset.v||'').replace(/^fuera:/,''),mm=/^([^:]+):(.+)$/.exec(k);
+      const it=mm?fueraItem(mm[1],mm[2]):null;if(!it)break;
+      const o=fueraMio()[k]||{kcal:it.kcal,pr:it.pr,ch:it.ch,gr:it.gr};
+      const n=num(el.value,NaN);if(!isFinite(n)||n<0){render();break;}
+      o[el.dataset.k]=Math.round(n*10)/10;fueraMio()[k]=o;ui.fueraFixAbierto=true;save();flash('corregido: se queda tu versión');render();break;}
     case 'food-dest-plato':{ui.foodDestPlato=el.value||'';render();break;}
     case 'alim-f':{
       if(!ui.alimNuevo)ui.alimNuevo={};
@@ -14507,6 +14942,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
   TEMAS,temaById,ponerTema,tintaLegible,eventoAplica,mesRejilla,
   alimDeTexto,gramosDeIng,ingAlim,migrarPlato,migrarPlatos,platoMacrosDe,alimTodos,alimBuscar,alimById,
+  FUERA_CADENAS,FUERA_OJO,fueraBuscables,fueraItem,fueraMenuCalc,fueraApuntar,fueraUltimos,
   finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,repartoDe,cerrarReto,sacarHucha,proyeccionAhorro,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,

@@ -6349,6 +6349,75 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store.dishes = P.store.dishes.filter((d) => d.id !== 'd-t200'); P.save(); });
   }
 
+  // 201) COMER FUERA: cadenas y «a ojo» en el buscador, menú armable, repetir y corregir
+  {
+    const bq = await page.evaluate(() => {
+      const P = window.PG;
+      const c = (t) => P.foodBuscar(t, '').filter((x) => x.tipo === 'fuera').map((x) => x.nombre + '|' + x.cad);
+      return { bigmac: c('big mac'), whopper: c('whopper'), kfc: c('kfc').slice(0, 2), cana: c('caña'),
+        tortilla: P.foodBuscar('tortilla de patatas', '').length, coca: P.foodBuscar('coca cola', '').length };
+    });
+    check('el buscador encuentra comida de cadenas y de bar, y las palabras en cualquier forma',
+      bq.bigmac.some((x) => /^Big Mac\|McDonald/.test(x)) && bq.whopper.length >= 2 &&
+      /^Menú/.test(bq.kfc[0] || '') && bq.cana.length >= 1 && bq.tortilla >= 1 && bq.coca >= 1, JSON.stringify(bq));
+
+    await gotoFood('add', 'buscar');
+    await page.click('[data-a="food-vista"][data-v="fuera"]');
+    await page.waitForTimeout(200);
+    const portada = await page.evaluate(() => ({
+      cadenas: document.querySelectorAll('#main .cadg button').length,
+      ojo: document.querySelectorAll('#main .fojo').length }));
+    check('«Comer fuera» enseña las cadenas y los apartados a ojo', portada.cadenas >= 15 && portada.ojo === 5, JSON.stringify(portada));
+
+    await page.click('[data-a="fuera-cad"][data-c="mcd"]');
+    await page.waitForTimeout(200);
+    const abrir = await page.$('#main .hit [data-a="food-abrir"]');
+    if (abrir) await abrir.click();
+    await page.waitForTimeout(200);
+    const kc = async () => page.evaluate(() => { const b = document.querySelector('.platomac b'); return b ? +b.textContent : null; });
+    const k0 = await kc();
+    const zero = await page.$('[data-a="fuera-slot"][data-o="beb-zero"]');
+    if (zero) await zero.click();
+    await page.waitForTimeout(150);
+    const k1 = await kc();
+    check('armar un menú: cambiar la bebida a Zero baja las kcal del total', k0 > 800 && k1 < k0 && k0 - k1 > 150, JSON.stringify({ k0, k1 }));
+
+    const antes = await page.evaluate(() => Object.values(window.PG.food().log).reduce((a, l) => a + l.length, 0));
+    const ap = await page.$('[data-a="fuera-menu-apuntar"]');
+    if (ap) await ap.click();
+    await page.waitForTimeout(250);
+    const tras = await page.evaluate(() => {
+      const todas = [].concat(...Object.values(window.PG.food().log));
+      const t = todas.filter((x) => x.fuera).sort((a, b) => b.ts - a.ts)[0];
+      return { n: todas.length, t: t ? { nombre: t.nombre, kcal: t.kcal, k1: !!t.k1 } : null };
+    });
+    check('el menú armado se apunta con su nombre, sus kcal y sus macros por unidad',
+      tras.n === antes + 1 && tras.t && /Menú Big Mac/.test(tras.t.nombre) && /Zero/.test(tras.t.nombre) && tras.t.kcal === k1 && tras.t.k1,
+      JSON.stringify(tras));
+
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'fuera'; P.render(); });
+    await page.waitForTimeout(150);
+    const rep = await page.$('[data-a="fuera-repetir"]');
+    if (rep) await rep.click();
+    await page.waitForTimeout(200);
+    const repetido = await page.evaluate(() => [].concat(...Object.values(window.PG.food().log)).filter((x) => /Menú Big Mac/.test(x.nombre)).length);
+    check('«lo último que pediste fuera» se repite a un toque', repetido >= 2, String(repetido));
+
+    const fix = await page.evaluate(() => {
+      const P = window.PG;
+      P.food().fueraMio['ojo-tapas:bravas'] = { kcal: 600, pr: 6, ch: 50, gr: 35 };
+      const x = P.foodBuscar('patatas bravas', '').filter((y) => y.v === 'fuera:ojo-tapas:bravas')[0];
+      const r = P.fueraApuntar(P.iso ? P.iso(new Date()) : '', 'fuera:ojo-tapas:bravas', 1.4, 'cena');
+      delete P.food().fueraMio['ojo-tapas:bravas'];
+      return { kcal: x && x.kcal, r };
+    });
+    check('un dato de cadena corregido se queda como tu versión y se usa al apuntar',
+      fix.kcal === 600 && /840 kcal/.test(fix.r || ''), JSON.stringify(fix));
+    await page.evaluate(() => { const P = window.PG;
+      Object.keys(P.food().log).forEach((k) => { P.food().log[k] = P.food().log[k].filter((x) => !x.fuera); });
+      P.food().fueraGuard = []; P.ui.foodVista = ''; P.save(); P.render(); });
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

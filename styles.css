@@ -1793,3 +1793,31 @@ ul.slots{list-style:none;margin:0;padding:0}
 .hitnom .kc.rac{font-weight:800;white-space:normal;max-width:112px;flex:none}
 .hitnom .kc.rac b{display:block;font-size:10px;font-weight:700;opacity:.8;line-height:1.25}
 .dests{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+/* ============ comer fuera: cadenas, carta y menú armable ============ */
+.flogo{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:6px;color:#fff;
+  font-size:10px;font-weight:900;letter-spacing:-.02em;vertical-align:middle}
+.flogo.big{width:40px;height:40px;border-radius:11px;font-size:15px}
+.flogo.ojo{background:var(--bg2);font-size:13px}
+.cadg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cadg button{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;background:var(--bg2);border:1px solid var(--line);
+  border-radius:14px;padding:10px 3px 8px;color:var(--ink);font:inherit;font-size:11px;font-weight:800;line-height:1.15;cursor:pointer}
+.cadg button span:last-child{max-width:100%;overflow-wrap:anywhere;text-align:center}
+.fojo{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-top:1px dashed var(--line);
+  padding:10px 0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fojo:first-of-type{border-top:0}
+.fojo .em,.fslot .em{font-size:22px;width:30px;text-align:center;flex:none}
+.fojo .nm,.fslot .nm{flex:1;min-width:0}
+.fojo .nm b,.fslot .nm b{display:block;font-size:14px}
+.fojo .nm span,.fslot .nm span{font-size:11.5px;color:var(--ink2)}
+.fslot{padding:10px 0;border-bottom:1px dashed var(--line)}
+.fslot .row{display:flex;align-items:center;gap:10px}
+.fslot .k{font-size:14px;font-variant-numeric:tabular-nums}
+.fseg{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.fseg button{flex:1 1 auto;min-width:64px;background:none;border:1px solid var(--line);border-radius:9px;padding:6px 6px;
+  color:var(--ink2);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+.fseg button.on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.ftabs.fscroll{overflow-x:auto;scrollbar-width:none}
+.ftabs.fscroll .ftab{flex:0 0 auto;padding:9px 10px}
+.ffix{margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
+.ffix summary{font-size:12px;font-weight:800;color:var(--ink2);cursor:pointer}
+.grp .flogo{width:18px;height:18px;font-size:8.5px;border-radius:5px}
