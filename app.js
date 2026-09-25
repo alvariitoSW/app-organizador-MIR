@@ -3195,6 +3195,185 @@ function hoyAgendaHTML(key,inf,esHoy){
       (x.tipo==='meal'&&x.conPlatos?('<button class="btn s" data-a="hoy-log-slot" data-shift="'+esc(x.sh.id)+'" data-slot="'+esc(x.slot.id)+
         '" data-key="'+esc(key)+'" title="ya me la he comido">✓</button>'):'')+
     '</div>';}).join('')+'</div>';}
+/* ===================== el carril de horas =====================
+   El calendario pasa de listas de texto a rejilla: un bloque ocupa el rato que ocupa de verdad, y
+   así se ve de un vistazo cuánto dura cada cosa y qué hueco queda entre dos. Es lo que hace el
+   widget del móvil, y por eso se entiende sin leerlo.
+
+   Un solo sitio arma los bloques de un día; lo usan Hoy, la Semana y el Mes. */
+function bloqDeMin(t){const m=mins(t);return m==null?null:m;}
+function bloquesDelDia(key){
+  /* todo lo que pasa ese día con su hora de inicio y su duración. Cada bloque dice a dónde lleva
+     al tocarlo: sin eso la rejilla es un cuadro bonito y nada más. */
+  const out=[],inf=dayInfo(key),sh=inf.shiftId?shiftById(inf.shiftId):null;
+  const add=function(o){
+    if(o.de==null)return;
+    const a=Math.max(0,o.de),b=Math.min(1440,o.a!=null?o.a:(a+(o.dur||60)));
+    out.push({de:a,a:Math.max(a+15,b),cat:o.cat,tit:o.tit,sub:o.sub||'',
+      ir:o.ir||'',irV:o.irV||'',fino:!!o.fino});};
+  if(inf.vac){
+    add({de:0,a:1440,cat:'evt',tit:'🏖️ Vacaciones'+(inf.vac.label?(' · '+inf.vac.label):''),
+      sub:'todo el día',ir:'ir-cfg',fino:false});
+    return out;}
+  if(!sh)return out;
+  /* la guardia: el rato entero fuera de casa, con su pase */
+  if(isGuardia(sh)){
+    const g=guardiaHoras(key,inf.guard);
+    const de=bloqDeMin(g?g.desde:(sh.start||'08:00'));
+    add({de:de,a:1440,cat:'guard',
+      tit:(sh.icon||'🩺')+' '+sh.name+(inf.guard?(' · '+gTipo(inf.guard).label):''),
+      sub:g?('entras '+g.desde+' · sales '+g.sale+' del día siguiente'):'',
+      ir:'ir-cfg'});}
+  else{
+    const jor=jornadaOf(key,inf);
+    if(jor&&jor.start){
+      const rot=monthService(+key.slice(0,4),+key.slice(5,7)-1).service;
+      add({de:bloqDeMin(jor.start),a:bloqDeMin(jor.end),cat:'work',
+        tit:'💼 Trabajo'+(rot?(' · '+rot):''),sub:jor.start+'–'+(jor.end||''),ir:'ir-cfg'});}
+    else if(sh.start&&!/fuerza|entreno/i.test(sh.name||'')){
+      add({de:bloqDeMin(sh.start),a:bloqDeMin(sh.end),cat:'work',
+        tit:(sh.icon||'💼')+' '+sh.name,sub:sh.start+'–'+(sh.end||''),ir:'ir-cfg'});}}
+  /* el entreno de fuerza: la rutina que toca, con las horas del propio tipo de día */
+  const rt=rutinaDeFecha(key),esF=/fuerza|entreno/i.test(sh.name||'');
+  if(esF||rt){
+    const jor=jornadaOf(key,inf);
+    const propias=sh.start&&!(jor&&jor.start===sh.start);
+    const hi=propias?sh.start:(gymS().hora||'');
+    if(hi){
+      const hf=propias&&sh.end&&sh.end>sh.start?sh.end:'';
+      add({de:bloqDeMin(hi),a:hf?bloqDeMin(hf):null,dur:+gymS().duracion||75,cat:'gym',
+        tit:'💪 Entreno'+(rt?(' · '+rt.nombre):''),
+        sub:rt?(rt.ejercicios.length+' ejercicios'):'sin rutina puesta',
+        ir:'tab',irV:'gym'});}}
+  /* el segundo entreno: natación o lo que sea */
+  const g2=diaSegundo(key,inf);
+  if(g2.on)add({de:bloqDeMin(g2.hora||'15:30'),dur:60,cat:'gym',
+    tit:'🏊 '+(g2.tipo||'entreno'),sub:g2.auto?'regla de la semana':'puesto por ti',
+    ir:'tab',irV:'gym'});
+  /* las comidas: finas y a un lado, que son marcas de hora y no ocupan la mañana entera */
+  const cp=comidaPrincipalDe(key,inf);
+  slotsFor(sh.id).forEach(function(sl){
+    const h=(cp&&cp.slotId===sl.id&&cp.hora)?cp.hora:sl.time;
+    const t=totals(slotItems(sh.id,sl).items||[]);
+    add({de:bloqDeMin(h),dur:30,cat:'meal',tit:'🍽 '+sl.label,
+      sub:t.kcal?(t.kcal+' kcal · '+t.prot+' g'):'sin platos',
+      ir:'tab',irV:'food',fino:true});});
+  /* los eventos puntuales que has apuntado */
+  eventosDeFecha(key).forEach(function(ev){
+    const de=bloqDeMin(ev.hora||'');
+    if(de==null)return;          /* un evento sin hora no tiene sitio en el carril: sale arriba */
+    const a=bloqDeMin(ev.fin||'');
+    add({de:de,a:(a!=null&&a>de)?a:null,dur:60,cat:'evt',
+      tit:'📌 '+(ev.titulo||'evento'),sub:ev.hora+(ev.fin?('–'+ev.fin):''),
+      ir:'tab',irV:'eventos'});});
+  out.sort(function(a,b){return a.de-b.de||a.a-b.a;});
+  return out;}
+function rangoCarril(bloques){
+  /* de qué hora a qué hora se pinta: lo que haya ese día, con una hora de aire a cada lado y un
+     mínimo de 06 a 23. Sin esto, un día con una sola cosa a las 15:00 pintaba 24 carriles vacíos. */
+  const bs=bloques||[];
+  if(!bs.length)return {de:7*60,a:23*60};
+  /* el rango sale de LO QUE HAY, no de un suelo fijo: con un suelo de 23:00 un día que acaba a las
+     21:30 pintaba dos horas y media de carril vacío abajo. */
+  let de=1440,a=0;
+  bs.forEach(function(b){if(b.de<de)de=b.de;if(b.a>a)a=b.a;});
+  de=Math.max(0,Math.floor(de/60)*60-60);
+  a=Math.min(1440,Math.ceil(a/60)*60+60);
+  if(a-de<8*60){                       /* un día casi vacío tampoco se queda en dos carriles */
+    a=Math.min(1440,de+8*60);
+    if(a-de<8*60)de=Math.max(0,a-8*60);}
+  return {de:de,a:a};}
+function carrilHTML(key,opt){
+  /* el carril de UN día. `px` es lo que mide una hora: 44 en Hoy, 40 en la semana. */
+  opt=opt||{};
+  const bl=bloquesDelDia(key),r=rangoCarril(bl);
+  /* el ajuste de 12/18/24 h manda en CUÁNTAS HORAS VES DE UNA VEZ, que es lo que mandaba en la
+     barra horizontal que había antes. La caja mide lo mismo siempre —si no, la portada crecía al
+     elegir 24 h— y lo que cambia es lo alta que es una hora: a 12 h se ve holgado, a 24 apretado. */
+  const caja0=Math.max(180,+opt.caja||430);
+  const px=+opt.px||Math.max(16,Math.round(caja0/Math.max(6,tlHoras())));
+  const alto=Math.round((r.a-r.de)/60*px);
+  const y=function(m){return Math.round((m-r.de)/60*px);};
+  const horas=[];
+  for(let m=r.de;m<r.a;m+=60)
+    horas.push('<div class="ch" style="top:'+y(m)+'px;height:'+px+'px"><span>'+
+      String(Math.floor(m/60)%24).padStart(2,'0')+'</span></div>');
+  const cuerpo=bl.map(function(b,i){
+    const h=Math.max(opt.fino?20:26,y(b.a)-y(b.de));
+    const est='top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat);
+    const dat=b.ir?(' data-a="'+esc(b.ir)+'"'+(b.irV?(' data-t="'+esc(b.irV)+'" data-v="'+esc(b.irV)+'"'):'')):'';
+    /* el texto va pegado al borde de arriba del bloque: un bloque largo (la jornada, la guardia)
+       empieza fuera de la caja al abrirse por donde estás, y el nombre se quedaba sin verse
+       arriba del scroll. Así siempre se lee de qué es el bloque. */
+    return '<button class="cb'+(b.fino?' fino':'')+'" style="'+est+'"'+dat+'>'+
+      '<span class="cbt"><b>'+esc(b.tit)+'</b>'+
+      (b.sub&&h>=34?('<span>'+esc(b.sub)+'</span>'):'')+'</span></button>';}).join('');
+  const hoy=isToday(key),ahora=new Date();
+  const nm=hoy?(ahora.getHours()*60+ahora.getMinutes()):null;
+  const linea=(nm!=null&&nm>=r.de&&nm<=r.a)
+    ?('<div class="cnow" style="top:'+y(nm)+'px"><i>'+hm(nm)+'</i></div>'):'';
+  /* la caja tiene alto FIJO y el carril se desplaza dentro, como el widget del móvil: si no, un
+     día de 17 h se come 750 px de la portada y hay que hacer scroll a la página entera para ver
+     la cena. Se abre por donde estás ahora. */
+  const caja=Math.min(caja0,alto);   /* un día corto no deja media caja vacía */
+  const scrollY=Math.max(0,(nm!=null?y(nm):y(bl.length?bl[0].de:r.de))-Math.round(caja*0.35));
+  return '<div class="carrilbox"'+(caja?(' style="height:'+caja+'px"'):'')+' data-scroll="'+scrollY+'">'+
+    '<div class="carril" style="height:'+alto+'px">'+horas.join('')+
+    '<div class="cbs">'+cuerpo+'</div>'+linea+'</div></div>';}
+function carrilSemanaHTML(days,opt){
+  /* LA SEMANA EN REJILLA: los 7 días en columnas y las horas como carriles. Es lo que deja ver de
+     un golpe dónde está el hueco de la semana —qué tarde tienes libre, cuándo cae la guardia—, y
+     eso una lista de siete tarjetas no lo enseña por muchos renglones que tenga. */
+  opt=opt||{};
+  const px=+opt.px||40;                 /* píxeles por hora */
+  const conFecha=days.filter(function(d){return !!d.key;});
+  if(!conFecha.length)return '';
+  const porDia=conFecha.map(function(d){return {d:d,bl:bloquesDelDia(d.key)};});
+  /* un rango común para las 7 columnas: si cada una tuviera el suyo, las horas no cuadrarían y la
+     rejilla dejaría de servir para comparar días, que es justo para lo que está */
+  let de=1440,a=0;
+  porDia.forEach(function(x){const r=rangoCarril(x.bl);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
+  if(a<=de){de=7*60;a=23*60;}
+  const alto=Math.round((a-de)/60*px);
+  const y=function(m){return Math.round((m-de)/60*px);};
+  const horas=[];
+  for(let m=de;m<a;m+=60)
+    horas.push('<div class="ch" style="top:'+y(m)+'px;height:'+px+'px"><span>'+
+      String(Math.floor(m/60)%24).padStart(2,'0')+'</span></div>');
+  const cols=porDia.map(function(x){
+    const hoy=isToday(x.d.key);
+    const cuerpo=x.bl.filter(function(b){return !b.fino;}).map(function(b){
+      const h=Math.max(20,y(b.a)-y(b.de));
+      return '<button class="sb" style="top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat)+'"'+
+        ' data-a="sem-dia" data-k="'+esc(x.d.key)+'" title="'+esc(b.tit)+'">'+
+        '<span class="sbt">'+esc(b.tit.replace(/^[^\s]+\s/,'').slice(0,11))+'</span></button>';}).join('');
+    /* las comidas, como puntos en el margen: en una columna de 45 px un bloque de comida tapa el
+       turno y no cabe su nombre, pero saber que a esa hora comes sí importa */
+    const pts=x.bl.filter(function(b){return b.fino;}).map(function(b){
+      return '<i class="sp2" style="top:'+y(b.de)+'px"></i>';}).join('');
+    return '<div class="scol'+(hoy?' hoy':'')+'">'+cuerpo+pts+'</div>';}).join('');
+  const cab=porDia.map(function(x){
+    const sh=x.d.shiftId?shiftById(x.d.shiftId):null;
+    const hoy=isToday(x.d.key);
+    return '<button class="sch'+(hoy?' hoy':'')+'" data-a="sem-dia" data-k="'+esc(x.d.key)+'">'+
+      '<span class="d">'+esc((x.d.short||'').toUpperCase())+'</span>'+
+      '<span class="n">'+(x.d.date?x.d.date.getDate():'')+'</span>'+
+      '<span class="e">'+esc(sh?(sh.icon||'🍽'):'·')+'</span></button>';}).join('');
+  const ahora=new Date(),nm=conFecha.some(function(d){return isToday(d.key);})
+    ?(ahora.getHours()*60+ahora.getMinutes()):null;
+  const linea=(nm!=null&&nm>=de&&nm<=a)?('<div class="cnow" style="top:'+y(nm)+'px"></div>'):'';
+  const caja=Math.max(200,+opt.caja||360);
+  const scrollY=Math.max(0,(nm!=null?y(nm):0)-Math.round(caja*0.35));
+  return '<div class="semrej">'+
+    '<div class="srcab"><span class="hcol"></span>'+cab+'</div>'+
+    '<div class="carrilbox" style="height:'+caja+'px" data-scroll="'+scrollY+'">'+
+      '<div class="carril srbody" style="height:'+alto+'px">'+horas.join('')+
+      '<div class="scols">'+cols+'</div>'+linea+'</div></div>'+
+    '</div>';}
+function carrilScroll(){
+  /* el scroll se pone después de pintar: en el HTML no se puede */
+  document.querySelectorAll('.carrilbox[data-scroll]').forEach(function(b){
+    const v=+b.dataset.scroll||0;if(v>0)b.scrollTop=v;});}
 function renderHoy(){
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
   const esHoy=esHoyDeVerdad(hoy);
@@ -3221,14 +3400,19 @@ function renderHoy(){
       '<button class="btn s" data-a="dia-prev" title="día anterior">‹ '+esc(DIA3[addDays(dref,-1).getDay()])+'</button>'+
       (esHoy?'':'<button class="btn p s" data-a="dia-hoy">volver a hoy</button>')+
       '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
+      '<span class="sp"></span>'+
+      '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
     modoAvisoHTML()+
     '<div class="hoyest" style="color:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
     (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div>'+
-    timelineBar(hoy,inf,{grande:true})+
-    leyendaPlegadaHTML('hoyley')+
+    /* EL DÍA COMO CARRIL, en el sitio donde estaban la barra horizontal y la lista de horas. Es
+       las dos cosas a la vez y mejor que ninguna: cada cosa ocupa el rato que ocupa de verdad, así
+       que la duración y el hueco entre dos se ven sin leer nada. Y al tocar un bloque se va a
+       cambiarlo, que era lo que la lista no hacía. */
     hoyAhoraHTML(hoy,inf,esHoy)+
-    hoyAgendaHTML(hoy,inf,esHoy)+
+    carrilHTML(hoy,{px:44})+
+    leyendaPlegadaHTML('hoyley')+
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     '<div class="hoypie">'+
       '<div class="drsol">'+horasSuenoHTML(hoy,inf)+solPiesHTML(hoy)+'</div>'+
@@ -3524,6 +3708,7 @@ function renderWeek(){
   const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
   $('#main').innerHTML=`<div class="grid">
     <div class="semcab">${semanaNavHTML()}${anyDate?semanaCabeceraHTML():''}</div>
+    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="mini" style="margin-left:auto">toca un día</span></h2>${carrilSemanaHTML(days,{px:40,caja:360})}</div>`:''}
     <div class="daylist">${semanaAyerHTML()}${rows}</div>
     <div class="card"><h2>La semana en números</h2>
       <div class="tot">
@@ -3792,7 +3977,11 @@ function renderMonth(){
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
   $('#main').innerHTML=`<div class="grid">
     <div class="card calmes"><h2>🗓️ ${rejilla.movil&&rejilla.length&&rejilla[rejilla.length-1].date.getMonth()!==mo
-      ?MONTH_FULL[mo]+' – '+MONTH_FULL[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo]} de ${y}</h2>
+      ?MONTH_FULL[mo]+' – '+MONTH_FULL[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo]} de ${y}${
+      /* el servicio del mes: es lo primero que se mira para saber «dónde estoy este mes», y estaba
+         tres pantallas más abajo. En la casilla no cabe y además sería la misma palabra 30 veces. */
+      (function(){const sv=monthService(y,mo).service;
+        return sv?('<span class="mini" style="margin-left:auto">'+esc(sv)+'</span>'):'';})()}</h2>
       ${modoAvisoHTML()}
       <div class="mesnav">
         <button class="btn s" data-a="mon-prev" aria-label="mes anterior">‹</button>
@@ -9731,6 +9920,27 @@ function icsResumen(desde,hasta){
   try{evs=calEventos(desde,hasta);}catch(e){evs=[];}
   const n={};evs.forEach(function(e){n[e.cat]=(n[e.cat]||0)+1;});
   return {total:evs.length,n:n};}
+/* los ficheros que se ofrecen, con el color de la app y el nombre del color de Google que más se
+   le parece. La paleta de Google es fija (once colores con nombre), así que esto es «el más
+   parecido», no el mismo hex: decir lo contrario sería mentir. */
+const ICS_GRUPOS=[
+  ['guardias','🩺 Guardias',['GUARDIA'],'guard','Tomate'],
+  ['trabajo','💼 Trabajo',['TRABAJO'],'work','Mandarina'],
+  ['entrenos','💪 Entrenos',['ENTRENO'],'gym','Pavo real'],
+  ['avisos','📌 Eventos, recibos y tareas',['EVENTO','DINERO','TAREA','ESTUDIO'],'evt','Uva']];
+function icsGrupoDe(k){return ICS_GRUPOS.filter(function(g){return g[0]===k;})[0]||null;}
+function icsCuentaGrupo(desde,hasta,k){
+  const g=icsGrupoDe(k);if(!g)return 0;
+  let evs=[];try{evs=calEventos(desde,hasta);}catch(e){return 0;}
+  return evs.filter(function(e){return g[2].indexOf(e.cat)>=0;}).length;}
+function icsGruposHTML(desde,hasta){
+  return '<div class="icsg">'+ICS_GRUPOS.map(function(g){
+    const n=icsCuentaGrupo(desde,hasta,g[0]);
+    return '<div class="icsgf"'+(n?'':' data-vacio="1"')+'>'+
+      '<i style="background:'+esc(tlColor(g[3]))+'"></i>'+
+      '<span class="n"><b>'+esc(g[1])+'</b><span>'+(n?(n+' cita'+(n===1?'':'s')+' · en Google, «'+esc(g[4])+'»'):'nada en este rango')+'</span></span>'+
+      (n?('<button class="btn s" data-a="cal-dl-grupo" data-g="'+esc(g[0])+'">.ics</button>'):'')+
+      '</div>';}).join('')+'</div>';}
 function icsCatsHTML(desde,hasta){
   const r=icsResumen(desde,hasta);
   return '<div class="cats">'+ICS_CAT.map(function(c){
@@ -9769,8 +9979,15 @@ function renderAjustes(){
         <label class="fld">desde<input type="date" id="calDesde" data-a="cal-desde" value="${esc(ui.calDesde||calRango().desde)}"></label>
         <label class="fld">hasta<input type="date" id="calHasta" data-a="cal-hasta" value="${esc(ui.calHasta||calRango().hasta)}" min="${esc(ui.calDesde||calRango().desde)}"></label>
       </div>
-      <div class="row" style="margin-top:9px">
-        <button class="btn p" data-a="cal-descargar">descargar .ics</button>
+      ${`<div style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">
+        <p class="mini" style="margin:0 0 4px"><b style="color:var(--ink)">Un fichero por color.</b>
+        Google importa cada <code>.ics</code> en UN calendario y le pone UN color: con todo junto, el
+        widget del móvil lo pinta todo igual. Bájate estos cuatro, mete cada uno en su propio
+        calendario de Google y ponle ahí el color que dice — así el widget se ve como la app.</p>
+        ${icsGruposHTML(ui.calDesde||calRango().desde,ui.calHasta||calRango().hasta)}
+      </div>`}
+      <div class="row" style="margin-top:11px">
+        <button class="btn s" data-a="cal-descargar">todo junto, en un fichero</button>
         <button class="btn s" data-a="cal-copiar">copiar el .ics</button>
         <button class="btn ${ui.calView?'':'p'} s" data-a="cal-ver">${ui.calView?'ocultar la lista':'ver la lista'}</button></div>
       <div id="txtIcs" class="mini" style="${ui.calView?'margin-top:8px':'display:none;margin-top:8px'};background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;max-height:200px;overflow:auto;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px">${esc(ui.calTxt||'')}</div>
@@ -10164,7 +10381,7 @@ function render(){
     const m=$('#main');
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
-  try{renderNow();}catch(e){
+  try{renderNow();try{carrilScroll();}catch(e2){}}catch(e){
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -10477,6 +10694,31 @@ function act(a,el){
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
+      render();window.scrollTo(0,0);break;}
+    case 'dia-add':{
+      /* «añadir algo a este día»: se pregunta QUÉ, y cada respuesta lleva a su sitio con la fecha
+         puesta. Meter aquí un formulario propio sería un tercer editor de eventos. */
+      const k=el.dataset.k||fechaHoy();
+      openModal('Añadir al '+fechaCortaTxt(k),
+        '<div class="row wrap" style="gap:8px">'+
+          '<button class="btn s" data-a="dia-add-ir" data-t="eventos" data-k="'+esc(k)+'">📌 un evento</button>'+
+          '<button class="btn s" data-a="dia-add-ir" data-t="notas" data-k="'+esc(k)+'">📝 una tarea</button>'+
+          '<button class="btn s" data-a="dia-add-ir" data-t="food" data-k="'+esc(k)+'">🍽 una comida</button>'+
+          '<button class="btn s" data-a="dia-add-ir" data-t="gym" data-k="'+esc(k)+'">💪 un entreno</button>'+
+          '<button class="btn s" data-a="dia-add-ir" data-t="cfg" data-k="'+esc(k)+'">🕐 cambiar el turno</button>'+
+        '</div>');
+      break;}
+    case 'dia-add-ir':{
+      const k=el.dataset.k||fechaHoy(),t=el.dataset.t||'';
+      closeModal();
+      if(t==='eventos'){ui.tab='eventos';ui.evVista='nuevo';ui.evForm=evFormDefecto(null);
+        if(ui.evForm){ui.evForm.modo='fecha';ui.evForm.fecha=k;}}
+      else if(t==='notas'){ui.tab='notas';}   /* la libreta pone la fecha al guardar */
+      else if(t==='food'){ui.tab='food';ui.foodDate=k;ui.foodVista='';}
+      else if(t==='gym'){ui.tab='gym';ui.gymDate=k;ui.gymPanel='';}
+      else if(t==='cfg'){ui.tab='month';ui.monSel=k;}
+      render();window.scrollTo(0,0);break;}
     case 'auto-otra':ui.menuAuto=null;render();window.scrollTo(0,0);break;
     case 'auto-aplicar':{
       const planes=ui.menuAuto||menuAutoSemana();
@@ -11359,6 +11601,16 @@ function act(a,el){
       ui.calTxt=tx;ui.calView=true;ui.calFile=calFileTxt(rr.desde,rr.hasta);
       dlTxt(tx,ui.calFile,'text/calendar;charset=utf-8');render();
       flash('descargado: cópialo a la carpeta que sincronices y pega en Google el bloque de las cuatro líneas');break;}
+    case 'cal-dl-grupo':{
+      const g=icsGrupoDe(el.dataset.g||'');
+      if(!g){flash('ese grupo ya no está');break;}
+      const rr=calRangoUI();
+      const tx=icsTexto(rr.desde,rr.hasta,{cats:g[2],import:g[1].replace(/^\S+\s/,'')});
+      if(!tx||tx.indexOf('BEGIN:VEVENT')<0){flash('no hay nada de eso en el rango');break;}
+      const nom=(g[0]+'-'+rr.desde+'-a-'+rr.hasta+'.ics');
+      dlTxt(tx,nom,'text/calendar;charset=utf-8');
+      flash(g[1]+': descargado. En Google, calendario nuevo con el color «'+g[4]+'» e importa ahí este fichero.');
+      break;}
     case 'cal-copiar':{const rr2=calRangoUI();
       copy(icsTexto(rr2.desde,rr2.hasta,{import:calNombreTxt(rr2.desde)}));break;}
     case 'cal-ver':{const rr3=calRangoUI();
@@ -12341,7 +12593,12 @@ function calEventos(desde,hasta){
 function icsTexto(desde,hasta,opt){
   /* el .ics que Google entiende: cabecera de cuaderno, eventos con UID estable y su VALARM */
   opt=opt||{};
-  const evs=calEventos(desde,hasta),stamp=icsStampUTC();
+  let evs=calEventos(desde,hasta);
+  /* un fichero por categoría: Google importa cada .ics en UN calendario y le pone UN color, así que
+     con todo junto el widget del móvil lo pinta todo del mismo color. Separado, cada calendario
+     lleva el suyo y el widget se ve como la app. */
+  if(opt.cats&&opt.cats.length)evs=evs.filter(function(e){return opt.cats.indexOf(e.cat)>=0;});
+  const stamp=icsStampUTC();
   /* la casilla «etiquetarlos» manda: sin ella no salen ni el IMPORT-FLAG ni el ENABLE */
   const etq=(opt.etiqueta===undefined)?(store.rotation.calOculto!==false):!!opt.etiqueta;
   const nomTxt=String(opt.import!==undefined&&opt.import!==''?opt.import:calNombreTxt(desde)).trim().slice(0,40);
@@ -13016,6 +13273,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
+  bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,
+  ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
   diasEspS,diaEspDe,marcarDiaEsp,setDiaEspKcal,kcalExtraDe,DIA_TIPOS,diaComer,

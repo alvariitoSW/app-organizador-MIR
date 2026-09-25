@@ -1621,3 +1621,91 @@ ul.slots{list-style:none;margin:0;padding:0}
 .afila .k{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--ink2);
   font-variant-numeric:tabular-nums;padding-top:2px}
 .afila .k::after{content:' kcal';font-size:9px;font-weight:700;opacity:.7}
+
+/* ===================== el carril de horas ===================== */
+/* El calendario deja de ser una lista de texto: un bloque ocupa el rato que ocupa de verdad, así
+   que la duración y el hueco entre dos cosas se ven sin leer nada. */
+/* sin overflow aquí tampoco: cualquier ancestro que recorte entre el texto y la caja del carril
+   mata el position:sticky. Quien recorta es .carrilbox. */
+.carril{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  margin-top:9px}
+.carril .ch{position:absolute;left:0;right:0;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.carril .ch span{position:absolute;left:7px;top:-7px;font-size:10.5px;font-weight:700;color:var(--ink2);
+  font-variant-numeric:tabular-nums;background:var(--bg2);padding:0 2px}
+.carril .cbs{position:absolute;left:34px;right:7px;top:0;bottom:0}
+/* OJO: nada de overflow:hidden aquí. Convierte el bloque en su propio contenedor de scroll y el
+   position:sticky del texto deja de mirar a la caja del carril, así que un bloque largo volvía a
+   salir como un rectángulo de color sin nombre. El recorte se hace en el texto. */
+.carril .cb{position:absolute;left:0;right:0;border:0;border-left:3px solid var(--c);
+  border-radius:9px;background:color-mix(in srgb,var(--c) 17%,transparent);
+  text-align:left;display:flex;flex-direction:column;gap:1px;
+  cursor:pointer;color:var(--ink);font:inherit}
+.carril .cb:hover{background:color-mix(in srgb,var(--c) 26%,transparent)}
+/* el texto se queda pegado arriba del bloque: uno largo empieza fuera de la caja y el nombre se
+   perdía por encima del scroll —la jornada salía como un rectángulo de color y nada más— */
+.carril .cb{padding:0;align-items:stretch}
+.carril .cb .cbt{position:sticky;top:0;display:flex;flex-direction:column;gap:1px;
+  padding:4px 9px;min-width:0}
+.carril .cb b{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-align:left}
+.carril .cb .cbt span{font-size:10.5px;font-weight:700;color:var(--c);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:left}
+/* las comidas son marcas de hora, no bloques que se coman la mañana: van finas y a la derecha */
+.carril .cb.fino{left:auto;width:58%;border-radius:7px}
+.carril .cb.fino .cbt{padding:3px 8px}
+.carril .cb.fino b{font-size:11px}
+/* dónde estás ahora mismo */
+.carril .cnow{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--bad);z-index:4;
+  pointer-events:none}
+.carril .cnow i{position:absolute;left:3px;top:-9px;background:var(--bad);color:var(--bg);
+  font-size:9.5px;font-weight:800;font-style:normal;border-radius:5px;padding:1px 4px;
+  font-variant-numeric:tabular-nums}
+/* la caja del carril: alto fijo y scroll dentro, como el widget del móvil. Un día de 17 h se
+   comía 750 px de la portada y había que mover la página entera para ver la cena. */
+.carrilbox{position:relative;overflow-y:auto;overflow-x:hidden;margin-top:9px;
+  border:1px solid var(--line);border-radius:12px;background:var(--bg2);
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.carrilbox .carril{margin-top:0;border:0;border-radius:0;background:transparent}
+
+/* ===== la semana en rejilla: 7 columnas y las horas como carriles ===== */
+.semrej{margin-top:9px}
+.srcab{display:flex;border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;
+  background:var(--card);overflow:hidden}
+.srcab .hcol{flex:0 0 26px}
+.sch{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;
+  padding:5px 0 4px;display:flex;flex-direction:column;align-items:center;gap:0;cursor:pointer}
+.sch:hover{background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.sch.hoy{background:color-mix(in srgb,var(--brand) 13%,transparent)}
+.sch .d{font-size:9.5px;font-weight:800;color:var(--ink2);letter-spacing:.04em}
+.sch.hoy .d,.sch.hoy .n{color:var(--brand)}
+.sch .n{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.sch .e{font-size:10px;line-height:1.1}
+.semrej .carrilbox{margin-top:0;border-radius:0 0 12px 12px}
+.srbody .ch span{background:transparent}
+.scols{position:absolute;left:26px;right:0;top:0;bottom:0;display:flex}
+.scol{flex:1 1 0;min-width:0;position:relative;border-right:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
+.scol:last-child{border-right:0}
+.scol.hoy{background:color-mix(in srgb,var(--brand) 6%,transparent)}
+/* sin overflow: rompe el sticky del nombre, igual que en el carril de un día */
+.sb{position:absolute;left:1px;right:1px;border:0;border-left:2px solid var(--c);border-radius:5px;
+  background:color-mix(in srgb,var(--c) 20%,transparent);padding:0;cursor:pointer;
+  display:flex;align-items:flex-start}
+.sb:hover{background:color-mix(in srgb,var(--c) 30%,transparent)}
+.sbt{position:sticky;top:0;font-size:8.5px;font-weight:800;color:var(--c);line-height:1.15;
+  padding:3px 3px;display:block;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:100%}
+/* las comidas, como puntos en el margen: en 45 px de ancho un bloque tapa el turno */
+.sp2{position:absolute;left:2px;width:5px;height:5px;border-radius:50%;background:var(--ok);
+  margin-top:-2px;opacity:.85}
+
+/* un fichero .ics por color: Google importa cada uno en su calendario y le pone su color, que es
+   lo único que hace que el widget del móvil se vea como la app */
+.icsg{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.icsgf{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--line);
+  border-radius:11px;background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.icsgf[data-vacio]{opacity:.5}
+.icsgf>i{flex:0 0 auto;width:10px;height:10px;border-radius:3px}
+.icsgf .n{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+.icsgf .n b{font-size:12.5px;font-weight:700}
+.icsgf .n span{font-size:10.5px;font-weight:700;color:var(--ink2)}
+.icsgf .btn{flex:0 0 auto}
