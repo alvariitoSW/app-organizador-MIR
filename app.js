@@ -3214,11 +3214,24 @@ function mesRejilla(y,mo,lead){
   /* los días que pinta la cuadrícula de Mes: la semana entera de antes del día 1, el mes, y la
      semana entera de después del último. Cada día sale de monthDays() de SU mes, así que trae lo
      mismo que los del mes (tipo de día, guardia, jornada, sueño). */
-  const ini=new Date(y,mo,1-lead-7,12,0,0,0);
+  let ini=new Date(y,mo,1-lead-7,12,0,0,0);
   const ult=new Date(y,mo+1,0,12,0,0,0);
   const cola=6-((lead+ult.getDate()-1)%7);
-  const fin=new Date(y,mo+1,cola+7,12,0,0,0);
+  let fin=new Date(y,mo+1,cola+7,12,0,0,0);
+  /* el mes en el que ESTÁS no va del día 1 al 30: va con la semana. «Que se mueva según las semanas,
+     que solo vea 2 anteriores a la que estoy y la mayoría delante»: dos semanas antes de la de hoy,
+     la de hoy y cuatro más. Al pasar el lunes, la cuadrícula corre sola una fila. Los otros meses
+     (con ‹ ›) siguen enseñándose enteros, con una semana de margen a cada lado. */
+  const hoy=new Date(),movil=(y===hoy.getFullYear()&&mo===hoy.getMonth());
+  let semHoy='';
+  if(movil){
+    const domFirst=store.rotation.calWeekStart==='dom';
+    const h=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12,0,0,0);
+    const inicio=addDays(h,-(domFirst?h.getDay():(h.getDay()+6)%7));
+    semHoy=iso(inicio);
+    ini=addDays(inicio,-14);fin=addDays(inicio,5*7-1);}
   const out=[];
+  out.movil=movil;out.semHoy=semHoy;
   for(let d=new Date(ini.getTime());d<=fin;d=addDays(d,1)){
     const m=d.getMonth(),yy=d.getFullYear(),k=iso(d);
     const x=monthDays(yy,m).filter(function(o){return o.key===k;})[0];
@@ -3236,7 +3249,10 @@ function renderMonth(){
      igual. Las cuentas del mes (guardias, vacaciones, sueño) siguen saliendo de `list`, solo del mes. */
   const rejilla=mesRejilla(y,mo,lead);
   rejilla.forEach(function(d){
-    const fuera=d.date.getMonth()!==mo;
+    /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
+       no salen al imprimir: el papel empieza en la semana en la que estás) */
+    const previa=rejilla.movil&&d.key<rejilla.semHoy;
+    const fuera=rejilla.movil?previa:d.date.getMonth()!==mo;
     const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
     const evsDia=d.key?eventosDeFecha(d.key):[];
@@ -3287,9 +3303,9 @@ function renderMonth(){
         esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
     if(evLineas)lineas.push(evLineas);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
-    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
+    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
-      '<span class="dtop"><span class="dnum">'+d.date.getDate()+(fuera&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
+      '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
         (d.shiftId?'<span class="dic">'+esc(d.icon)+'</span>':'')+
         (d.vac?'':'')+
         (manual?'<span class="dman" title="puesto a mano">✎</span>':'')+'</span>'+
@@ -3307,7 +3323,8 @@ function renderMonth(){
   const conSueño=list.filter(function(d){return d.sleepH!=null;});
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
   $('#main').innerHTML=`<div class="grid">
-    <div class="card calmes"><h2>🗓️ ${MONTH_FULL[mo]} de ${y}</h2>
+    <div class="card calmes"><h2>🗓️ ${rejilla.movil&&rejilla.length&&rejilla[rejilla.length-1].date.getMonth()!==mo
+      ?MONTH_FULL[mo]+' – '+MONTH_FULL[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo]} de ${y}</h2>
       ${modoAvisoHTML()}
       <div class="mesnav">
         <button class="btn s" data-a="mon-prev" aria-label="mes anterior">‹</button>

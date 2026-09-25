@@ -2237,6 +2237,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'verano'); }, [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))]);
     await page.waitForTimeout(300);
 
+    // el mes en el que estás empieza dos semanas antes de la de hoy: puede que los primeros días del
+    // mes ya no salgan. Se cuentan los días de vacaciones QUE SE VEN en la cuadrícula.
+    const r1 = [clave(new Date(y, m, 3)), clave(new Date(y, m, 7))], r2 = [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))];
+    const esperados = await page.evaluate((rr) => [...document.querySelectorAll('.dbox')]
+      .filter((x) => rr.some((r) => x.dataset.key >= r[0] && x.dataset.key <= r[1])).length, [r1, r2]);
     const dos = await page.evaluate(() => {
       const c = document.querySelector('.card[data-cfg="vac"]');
       const cards = [...document.querySelectorAll('#main .card')];
@@ -2251,8 +2256,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       };
     });
     check('se pueden apuntar varios periodos de vacaciones, y la tarjeta lo dice en plural',
-      dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === 15 &&
-      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify(dos));
+      dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === esperados && esperados >= 10 &&
+      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify({ dos, esperados }));
 
     // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta
     const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
@@ -3771,10 +3776,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { celdas: celdas.length, visibles: vis.length,
         conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
         kpiFondo: cs ? cs.backgroundColor : '', kpiTexto: cs ? cs.color : '',
+        previas: celdas.filter((c) => c.classList.contains('semprev')).length,
         bodyFondo: getComputedStyle(document.body).backgroundColor };
     });
     check('al imprimir «Mes» salen las casillas del mes, no una cuadrícula vacía',
-      mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas && mesImpreso.conTexto >= 28,
+      // todas menos las dos semanas ya pasadas del mes en el que estás, que no se imprimen
+      mesImpreso.celdas >= 28 && mesImpreso.visibles === mesImpreso.celdas - mesImpreso.previas && mesImpreso.conTexto >= 28,
       JSON.stringify(mesImpreso));
     // el fondo de una caja tiene que ser claro: antes era la tarjeta oscura con la letra en negro
     const claro = (c) => {
@@ -5018,30 +5025,57 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
-  // ===================== Mes con una semana de antes y otra de después =====================
+  // ===================== Mes: el mes en el que estás corre con la semana =====================
   {
-    // «quiero ver dos semanas más, una del mes anterior y otra del siguiente»: la cuadrícula empieza
-    // la semana de antes del día 1 y acaba la de después del último, sin casillas vacías.
+    // «que el calendario se mueva según las semanas, que solo vea 2 semanas anteriores a la que estoy
+    // y la mayoría delante»: en el mes actual, dos semanas antes de la de hoy, la de hoy y cuatro más.
+    // Los otros meses siguen enteros, con una semana de margen a cada lado.
     await gotoTab('month');
     const mb = await page.$('#main [data-a="mon-today"]');
     if (mb) await mb.click();
     await page.waitForTimeout(300);
     const rej = await page.evaluate(() => {
-      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
       const celdas = [...document.querySelectorAll('#main .cal .dbox')];
-      const huecos = [...document.querySelectorAll('#main .cal > span:not(.wd)')].length;
-      const claves = celdas.map((c) => c.dataset.key);
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      const dia1 = iso(new Date(y, m, 1)), ult = iso(new Date(y, m + 1, 0));
-      const i1 = claves.indexOf(dia1), iu = claves.indexOf(ult);
-      return { n: celdas.length, filas: celdas.length / 7, huecos,
-        antes: i1, despues: claves.length - 1 - iu,
-        fuera: celdas.filter((c) => c.classList.contains('fuera')).length,
+      const h = new Date(); h.setHours(12, 0, 0, 0);
+      const lun = new Date(h); lun.setDate(h.getDate() - ((h.getDay() + 6) % 7));
+      const menos14 = new Date(lun); menos14.setDate(lun.getDate() - 14);
+      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(menos14),
+        previas: celdas.filter((c) => c.classList.contains('semprev')).length,
+        hoyEnFila3: celdas.findIndex((c) => c.classList.contains('today')) >= 14 && celdas.findIndex((c) => c.classList.contains('today')) < 21,
+        huecos: [...document.querySelectorAll('#main .cal > span:not(.wd)')].length };
+    });
+    check('en el mes actual Mes enseña 2 semanas antes de la de hoy, la de hoy y 4 más',
+      mb && rej.n === 49 && rej.primero === rej.esperado && rej.previas === 14 && rej.hoyEnFila3 && rej.huecos === 0,
+      JSON.stringify(rej));
+    // al imprimir, el papel empieza en la semana en la que estás
+    await page.emulateMedia({ media: 'print' });
+    const papel = await page.evaluate(() => {
+      const vis = [...document.querySelectorAll('#main .cal .dbox')].filter((c) => getComputedStyle(c).display !== 'none');
+      return { visibles: vis.length, previasVisibles: vis.filter((c) => c.classList.contains('semprev')).length };
+    });
+    await page.emulateMedia({ media: null });
+    check('al imprimir el Mes no salen las semanas anteriores a la tuya',
+      papel.visibles === 35 && papel.previasVisibles === 0, JSON.stringify(papel));
+    // otro mes (con ›): entero, con la semana de antes y la de después, apagadas
+    const nx = await page.$('#main [data-a="mon-next"]');
+    if (nx) await nx.click();
+    await page.waitForTimeout(250);
+    const otro = await page.evaluate(() => {
+      const celdas = [...document.querySelectorAll('#main .cal .dbox')];
+      const claves = celdas.map((c) => c.dataset.key);
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth() + 1;
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const i1 = claves.indexOf(iso(new Date(y, m, 1))), iu = claves.indexOf(iso(new Date(y, m + 1, 0)));
+      return { n: celdas.length, antes: i1, despues: claves.length - 1 - iu, previas: celdas.filter((c) => c.classList.contains('semprev')).length,
         fueraBien: celdas.every((c, i) => c.classList.contains('fuera') === (i < i1 || i > iu)) };
     });
-    check('Mes enseña la semana de antes y la de después, apagadas, sin huecos vacíos',
-      rej.huecos === 0 && rej.n % 7 === 0 && rej.antes >= 7 && rej.antes <= 13 &&
-      rej.despues >= 7 && rej.despues <= 13 && rej.fueraBien, JSON.stringify(rej));
+    check('los otros meses se ven enteros, con una semana de margen a cada lado',
+      !!nx && otro.antes >= 7 && otro.antes <= 13 && otro.despues >= 7 && otro.despues <= 13 && otro.previas === 0 && otro.fueraBien,
+      JSON.stringify(otro));
+    const vt = await page.$('#main [data-a="mon-today"]');
+    if (vt) await vt.click();
+    await page.waitForTimeout(250);
     // y se estira hasta el alto de la pantalla: con siete u ocho filas, cada casilla sigue alta
     const alto = await page.evaluate(() => {
       const cal = document.querySelector('#main .cal'), c = document.querySelector('#main .cal .dbox');
