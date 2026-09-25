@@ -5059,6 +5059,90 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
   }
 
+  // ===================================================================================
+  // Fases 3 y 4 · Objetivos con su camino, y evolución. Un objetivo sin camino es un
+  // cartel: cada uno dice dónde estás, a qué ritmo vas y para cuándo llegas A TU RITMO.
+  // Y la evolución cruza con lo que solo sabe esta app: guardias, sueño y proteína.
+  // ===================================================================================
+  {
+    const mont = await page.evaluate(() => {
+      const P = window.PG, S = P.store;
+      const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const lun = (n) => iso(P.addDays(P.mondayOf(new Date()), -7 * n));
+      const g = S.gym;
+      g.rutinas = []; g.sesiones = []; g.cardio = []; g.objetivos = []; g.registro = [];
+      g.biblioteca = [{ id: 'z1', n: 'Press inclinado con mancuernas', c: 'chest', tg: 'pectorals', eq: 'dumbbell' }];
+      // press banca clavado tres sesiones en 70 kg -> estancado, y con alternativa en la biblioteca
+      [1, 2, 3].forEach((w) => { for (let j = 0; j < 3; j++)
+        g.registro.push({ id: 'z' + w + j, fecha: iso(P.addDays(P.parseDate(lun(w)), 3)),
+          ex: 'Press banca', kg: 70, reps: 6, rpe: 9, ts: 1 }); });
+      // tres carreras de 10 km mejorando
+      g.cardio = [{ id: 'k1', tipo: 'carrera', fecha: lun(8), distanciaKm: 10, duracionMin: 58 },
+                  { id: 'k2', tipo: 'carrera', fecha: lun(4), distanciaKm: 10, duracionMin: 55 },
+                  { id: 'k3', tipo: 'carrera', fecha: lun(1), distanciaKm: 10, duracionMin: 53 }];
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.save();
+      return { antes: g.objetivos.length };
+    });
+
+    // los tres objetivos se ponen desde la pantalla, no a mano en el almacén
+    await gotoGym('objetivos');
+    await page.waitForTimeout(300);
+    const bFuerza = await page.$('#main [data-a="obj-tipo"][data-t="fuerza"]');
+    if (bFuerza) { await bFuerza.click(); await page.waitForTimeout(220); }
+    const campoEx = await page.$('#objEx');
+    if (campoEx) { await campoEx.fill('Press banca'); }
+    const campoMeta = await page.$('#objMeta');
+    if (campoMeta) { await campoMeta.fill('100'); }
+    const poner = await page.$('#main [data-a="obj-add"]');
+    if (poner) { await poner.click(); await page.waitForTimeout(320); }
+
+    const obj = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      const o = (P.store.gym.objetivos || [])[0] || null;
+      const e = o ? P.objetivoEstado(o) : null;
+      return { n: (P.store.gym.objetivos || []).length, tipo: o ? o.tipo : '', meta: o ? o.meta : 0,
+        // el objetivo de fuerza mide el PESO DE VERDAD, no el 1RM estimado: con 70×6 el
+        // estimado da 84 y diría «84 de 100» sin haber puesto nunca más de 70 en la barra
+        hoy: e ? e.hoy : null, rm: e ? e.rm : null,
+        cifra: (m.querySelector('.obj .objnum b') || { textContent: '' }).textContent.trim(),
+        camino: (m.querySelector('.obj .objvia') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
+        // y sobrevive a recargar: sin registrarlo en normalize() se perdería
+        trasRecargar: (function () { P.store = JSON.parse(JSON.stringify(P.store));
+          return (P.store.gym.objetivos || []).length; })() };
+    });
+    check('un objetivo de fuerza mide el peso que pones en la barra, dice el camino y sobrevive a recargar',
+      obj.n === 1 && obj.tipo === 'fuerza' && obj.meta === 100 && obj.hoy === 70 &&
+      obj.rm > 80 && obj.cifra === '70' && obj.camino.length > 10 && obj.trasRecargar === 1,
+      JSON.stringify(obj));
+
+    // fase 4: estancamiento con cambio sugerido, y el cruce con las guardias
+    await gotoGym('progreso');
+    await page.waitForTimeout(400);
+    const evo = await page.evaluate(() => {
+      const P = window.PG, m = document.querySelector('#main');
+      return { avisos: [...m.querySelectorAll('.ev')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
+        barras: m.querySelectorAll('.fb2c').length,
+        curva: !!m.querySelector('.curva'),
+        volMusculo: m.querySelectorAll('.fb').length,
+        estancados: P.estancados().map((x) => x.ex),
+        cambio: P.cambioSugerido('Press banca'),
+        cruce: P.cruceEntreno().length,
+        alto: Math.round(m.scrollHeight) };
+    });
+    check('Progreso ve venir el estancamiento, propone el cambio y cruza con tus guardias',
+      evo.estancados.indexOf('Press banca') >= 0 &&
+      evo.cambio === 'Press inclinado con mancuernas' &&
+      evo.avisos.some((a) => /clavado en 70 kg/.test(a) && /Press inclinado/.test(a)) &&
+      evo.barras >= 8 && evo.curva && evo.volMusculo >= 1 && evo.alto < 2600,
+      JSON.stringify(evo));
+
+    await page.evaluate(() => {
+      const P = window.PG;
+      P.store.gym.objetivos = []; P.store.gym.registro = []; P.store.gym.cardio = [];
+      P.store.gym.biblioteca = []; P.ui.gymPanel = ''; P.save(); P.render();
+    });
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

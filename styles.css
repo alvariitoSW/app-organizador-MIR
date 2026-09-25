@@ -1375,3 +1375,41 @@ ul.slots{list-style:none;margin:0;padding:0}
 .resug .n span{font-size:10.5px;font-weight:700;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .resug .mas{flex-shrink:0;font-size:18px;font-weight:700;color:var(--brand)}
 .raviso{margin-top:9px;font-size:11.5px;font-weight:700;color:var(--warn)}
+
+/* ===== Entreno · objetivos y progreso ======================================================== */
+.obj{display:flex;flex-direction:column;gap:9px}
+.obj.fuerza{border-color:color-mix(in srgb,var(--brand) 32%,var(--line))}
+.obj.hecho{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.objcab{display:flex;align-items:center;gap:8px;min-width:0}
+.objcab b{flex-grow:1;min-width:0;font-size:15.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.objcab .e{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--ink2)}
+.objcab .btn{flex-shrink:0;width:28px;height:28px;padding:0;justify-content:center}
+.objnum{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap}
+.objnum b{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.objnum span{font-size:12.5px;font-weight:700;color:var(--ink2);padding-bottom:3px}
+.objnum i{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);font-style:normal;padding-bottom:3px}
+.objbar{height:9px;border-radius:999px;background:color-mix(in srgb,var(--bg) 60%,var(--card));
+  border:1px solid var(--line);overflow:hidden}
+.objbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--brand))}
+.objvia{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:12px;
+  background:color-mix(in srgb,var(--bg) 55%,var(--card));border:1px solid var(--line);
+  font-size:12px;font-weight:600;color:var(--ink2);line-height:1.4}
+.objvia svg{flex-shrink:0;margin-top:1px;stroke:var(--brand)}
+.curva{width:100%;height:auto;display:block}
+.curva .cl{fill:none;stroke:var(--brand);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.curva .cp{fill:var(--brand)}
+.curvapie{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:11px;font-weight:700;color:var(--ink2)}
+.curvapie b{margin:0 auto;font-size:13px;font-weight:800;color:var(--ink)}
+.curvapie b.sube{color:var(--accent)}
+.curvapie b.baja{color:var(--warn)}
+.fb2{display:flex;align-items:flex-end;gap:5px;height:88px;margin-top:4px}
+.fb2c{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.fb2c i{display:block;width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--brand),var(--brand2))}
+.fb2c span{font-size:9px;font-weight:700;color:var(--ink2)}
+.fb2c i.ahora{background:linear-gradient(180deg,var(--accent),var(--brand))}
+.evav{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.ev{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:12px;
+  border:1px dashed color-mix(in srgb,var(--warn) 45%,var(--line));
+  background:color-mix(in srgb,var(--warn) 8%,var(--bg));
+  font-size:12px;font-weight:600;line-height:1.4;color:color-mix(in srgb,var(--warn) 55%,var(--ink))}
+.ev .p{flex-shrink:0;display:block;width:7px;height:7px;border-radius:999px;margin-top:5px;background:var(--warn)}

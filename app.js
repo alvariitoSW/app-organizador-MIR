@@ -413,6 +413,14 @@ function normalize(o){
   /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
      aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
      Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
+  /* los objetivos: sin registrarlos aquí se perderían al recargar, como todo lo que normalize()
+     no conoce. Se valida el tipo y el número, y se tira lo que no cuadre. */
+  if(!Array.isArray(o.gym.objetivos))o.gym.objetivos=[];
+  else o.gym.objetivos=o.gym.objetivos.filter(function(x){
+    return x&&typeof x==='object'&&['fuerza','constancia','tiempo'].indexOf(x.tipo)>=0&&+x.meta>0;})
+    .slice(0,12).map(function(x){
+      return {id:String(x.id||uid('obj')),tipo:x.tipo,ex:String(x.ex||'').slice(0,60),
+        meta:Math.min(1000,Math.max(0.5,+x.meta)),desde:/^\d{4}-\d{2}-\d{2}$/.test(String(x.desde))?x.desde:iso(new Date())};});
   if(!o.gym.cambios||typeof o.gym.cambios!=='object'||Array.isArray(o.gym.cambios))o.gym.cambios={};
   else{const lim=iso(addDays(new Date(),-60)),lim2=iso(addDays(new Date(),400));
     Object.keys(o.gym.cambios).forEach(function(k){
@@ -2957,6 +2965,7 @@ function gymS(){
   if(!g.segundo||typeof g.segundo!=='object')g.segundo={on:true,dias:[3],tipo:'piscina',hora:'15:30'};
   if(!Array.isArray(g.segundo.dias))g.segundo.dias=[3];
   if(!g.marks||typeof g.marks!=='object')g.marks={};
+  if(!Array.isArray(g.objetivos))g.objetivos=[];
   if(!g.cambios||typeof g.cambios!=='object'||Array.isArray(g.cambios))g.cambios={};
   return g;}
 function migrarRutinas(g){
@@ -5120,6 +5129,7 @@ const GYM_ICO={
   chincheta:'<path d="M9 3.5h6l-1 5 3.5 3v2H6.5v-2l3.5-3z"/><path d="M12 13.5V21"/>',
   ok:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   subir:'<path d="M6 14l6-6 6 6"/>',
+  flecha:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   bajar:'<path d="M6 10l6 6 6-6"/>',
   aviso:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.2v.4"/>'
 };
@@ -5490,9 +5500,9 @@ function renderGymPortada(){
     '</div>'+
     gymDescansoHTML()+
     '<div class="gtiles tres">'+
-      gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
+      gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
-      gymFicha('biblioteca','libro','Biblioteca',c.hay?g.biblioteca.length.toLocaleString('es-ES'):'—',c.hay?'ejercicios':'sin importar')+
+      gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
     '</div></div>';}
 function renderGymSesion(){
   const c=gymCtx(),d=c.d,sel=c.sel;
@@ -5556,6 +5566,10 @@ function objetivoTitulo(o){
 function semanasAtras(n){
   const l=mondayOf(new Date());
   return iso(addDays(l,-7*n));}
+function pesoMaximo(nombre,hasta){
+  /* el peso de verdad que has puesto en la barra, que es lo que mide un objetivo de fuerza */
+  const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){return !hasta||x.fecha<=hasta;});
+  return xs.reduce(function(a,x){return Math.max(a,+x.kg||0);},0);}
 function fuerzaEstimada(nombre,desde,hasta){
   /* la mejor serie estimada (Epley) del tramo: no hace falta probar un máximo */
   const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){
@@ -5595,13 +5609,15 @@ function objetivoEstado(o){
   /* dónde estás, cuánto falta, a qué ritmo vas y para cuándo llegas A TU RITMO */
   const hace8=semanasAtras(8);
   if(o.tipo==='fuerza'){
-    const hoy=fuerzaEstimada(o.ex),antes=fuerzaEstimada(o.ex,null,hace8);
-    const av=hoy&&antes?Math.round((hoy-antes)*10)/10:0;
+    /* «Banca 100 kg» es poner 100 kg en la barra, no un 1RM estimado. Contra el estimado la app
+       diría «104,5 de 100, conseguido» sin que hayas puesto nunca más de 82,5: mentira. El
+       estimado se enseña al lado, que para eso sirve, y la curva de Progreso sí va con él. */
+    const hoy=pesoMaximo(o.ex),antes=pesoMaximo(o.ex,hace8);
+    const av=(hoy&&antes)?Math.round((hoy-antes)*10)/10:0;
     const falta=Math.round((o.meta-hoy)*10)/10;
-    const sem=av>0?(falta/(av/8)):0;   /* av es la mejora de 8 semanas */
     return {tipo:'fuerza',hoy:hoy,meta:o.meta,pct:o.meta>0?Math.max(0,Math.min(1,hoy/o.meta)):0,
-      av:av,falta:falta,sem:(av>0&&falta>0)?Math.ceil(sem):null,
-      uni:'kg',hayDatos:hoy>0};}
+      av:av,falta:falta,sem:(av>0&&falta>0)?Math.ceil(falta/(av/8)):null,
+      rm:fuerzaEstimada(o.ex),uni:'kg',hayDatos:hoy>0};}
   if(o.tipo==='constancia'){
     const lun=iso(mondayOf(new Date())),hechos=diasEntrenadosSemana(lun).length;
     return {tipo:'constancia',hoy:hechos,meta:o.meta,pct:o.meta>0?Math.max(0,Math.min(1,hechos/o.meta)):0,
@@ -5692,6 +5708,240 @@ function renderSegundoCard(c,g){
       (c.sg.on?('sí, '+(c.sg.tipo||'entreno')+' a las '+(c.sg.hora||'—')):(c.sg.porSemana?'ese día toca otra cosa':'sin segundo entreno'))+
       ' <button class="btn s" data-a="gym-seg-hoy" data-key="'+c.sel+'">cambiar</button></p>'+
     '</div>';}
+/* ===================== evolución: lo que se nota al tercer mes =====================
+   Volumen semana a semana, descarga cuando toca, estancamiento por ejercicio con un cambio
+   sugerido, y el cruce con lo que la app ya sabe: guardias, sueño y proteína. */
+function volumenSemanal(n){
+  const out=[];
+  for(let i=(n||8)-1;i>=0;i--){
+    const lun=semanasAtras(i),dom=iso(addDays(parseDate(lun),6));
+    let vol=0,series=0;
+    gymS().registro.forEach(function(x){
+      if(x.fecha<lun||x.fecha>dom)return;
+      vol+=(+x.kg||0)*(+x.reps||0);series++;});
+    out.push({lun:lun,sem:i,vol:Math.round(vol),series:series});}
+  return out;}
+function tocaDescarga(){
+  /* tres semanas seguidas subiendo volumen y sin bajar: toca aflojar una. No es una regla sagrada,
+     es lo que hace todo el mundo que lleva años: cada 4-6 semanas una semana suave. */
+  const v=volumenSemanal(6).filter(function(x){return x.sem>0;});   /* sin la semana en curso */
+  if(v.length<4)return null;
+  const u=v.slice(-4);
+  const subiendo=u[1].vol>u[0].vol&&u[2].vol>u[1].vol&&u[3].vol>u[2].vol;
+  if(!subiendo||!u[3].vol)return null;
+  return {semanas:4,vol:u[3].vol,sug:Math.round(u[3].vol*0.6)};}
+function estancados(){
+  /* un ejercicio está atascado si llevas 3 sesiones o más sin subir de peso ni de repeticiones */
+  const g=gymS(),out=[];
+  Object.keys(gymIdx().byEx).forEach(function(ex){
+    const dias=diasDeEjercicio(ex);
+    if(dias.length<3)return;
+    const tres=dias.slice(0,3).map(function(f){
+      const d=seriesDeDia(ex,f);
+      return {kg:d.reduce(function(a,x){return Math.max(a,+x.kg||0);},0),
+        reps:d.reduce(function(a,x){return Math.max(a,+x.reps||0);},0)};});
+    const igual=tres.every(function(t){return t.kg===tres[0].kg;});
+    const sinReps=tres.every(function(t){return t.reps<=tres[0].reps;});
+    if(igual&&sinReps&&tres[0].kg>0)out.push({ex:ex,kg:tres[0].kg,veces:3,desde:dias[2]});});
+  return out;}
+function cambioSugerido(ex){
+  /* otro ejercicio de tu biblioteca que toque los mismos músculos: cambiar el estímulo suele
+     desatascar más rápido que insistir con el mismo movimiento */
+  const g=gymS(),regs=regionesDeEjercicio({ex:ex});
+  if(!regs.size||!g.biblioteca.length)return '';
+  let mejor='',mejorN=0;
+  g.biblioteca.forEach(function(x){
+    if(x.n===ex)return;
+    const r2=regionesDeEjercicio({ex:x.n,tg:x.tg,msc:x.msc,c:x.c});
+    let n=0;r2.forEach(function(r){if(regs.has(r))n++;});
+    /* con que comparta un grupo grande vale: pedir dos dejaba fuera el press inclinado como
+       alternativa al press banca, que es justo el cambio que uno haría */
+    if(n>mejorN&&n>=1){mejorN=n;mejor=x.n;}});
+  return mejor;}
+function cruceEntreno(){
+  /* lo que solo puede decir ESTA app: cómo van las guardias, el sueño y la proteína alrededor
+     de lo que entrenas. Nada de esto lo sabe una app de gimnasio. */
+  const hoy=iso(new Date()),lun=iso(mondayOf(new Date())),out=[];
+  /* guardias de la semana que viene, que es lo que decide cuándo puedes entrenar */
+  let guardias=0,libres=0;
+  for(let i=0;i<7;i++){
+    const k=iso(addDays(parseDate(lun),7+i));
+    if(gymDiaMalo(k))guardias++;else libres++;}
+  if(guardias)out.push({cl:'aviso',txt:'La semana que viene tienes '+guardias+' día'+(guardias===1?'':'s')+
+    ' de guardia o saliente: te quedan '+libres+' huecos para entrenar.'});
+  /* sueño: entrenar con menos de tu mínimo dos días seguidos es pedir peras al olmo */
+  try{
+    let cortos=0;
+    for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lun),i));
+      if(k>hoy)break;
+      const sl=sleepOf(k);
+      if(sl&&sl.h!=null&&sl.h<suenoCfg().min-0.5)cortos++;}
+    if(cortos>=3)out.push({cl:'aviso',txt:'Llevas '+cortos+' días esta semana durmiendo menos de tu mínimo. '+
+      'Si una sesión sale floja, empieza por ahí antes que por el peso.'});
+  }catch(e){}
+  /* proteína: sin ella el entreno no cuaja */
+  try{
+    const ob=(store.food&&store.food.objetivo)||{};
+    if(ob.prot>0){
+      let dias=0,ok=0;
+      for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lun),i));
+        if(k>hoy)break;
+        const t=foodTotals(k);
+        if(t&&t.kcal>0){dias++;if(t.prot>=ob.prot*0.9)ok++;}}
+      if(dias>=3&&ok<Math.ceil(dias*0.6))
+        out.push({cl:'aviso',txt:'Solo '+ok+' de '+dias+' días has llegado a tu proteína. '+
+          'El músculo se hace con lo que comes, no solo con lo que levantas.'});}
+  }catch(e){}
+  return out;}
+function evolucionHTML(){
+  const v=volumenSemanal(8),max=v.reduce(function(a,x){return Math.max(a,x.vol);},1);
+  const desc=tocaDescarga(),est=estancados(),cru=cruceEntreno();
+  const barras='<div class="fb2">'+v.map(function(x){
+      const alt=Math.max(4,Math.round(x.vol/max*100));
+      return '<div class="fb2c" title="'+esc(x.lun)+' · '+x.vol.toLocaleString('es-ES')+' kg">'+
+        '<i style="height:'+alt+'%"'+(x.sem===0?' class="ahora"':'')+'></i>'+
+        '<span>'+(x.sem===0?'esta':('−'+x.sem))+'</span></div>';}).join('')+'</div>';
+  const avisos=[];
+  if(desc)avisos.push({cl:'aviso',txt:'Llevas '+desc.semanas+' semanas subiendo volumen sin aflojar. '+
+    'Toca una semana de descarga: unos '+desc.sug.toLocaleString('es-ES')+' kg, un 60 % de la última.'});
+  est.slice(0,2).forEach(function(x){
+    const sug=cambioSugerido(x.ex);
+    avisos.push({cl:'aviso',txt:'«'+x.ex+'» lleva 3 sesiones clavado en '+fmtKg(x.kg)+' kg. '+
+      (sug?('Prueba a cambiarlo por «'+sug+'» unas semanas: mismo músculo, otro estímulo.')
+          :'Baja un 10 % y vuelve a subir, o cámbialo por otro del mismo músculo.')});});
+  cru.forEach(function(x){avisos.push(x);});
+  return barras+
+    '<div class="curvapie"><span>8 semanas</span><b>'+v[v.length-1].vol.toLocaleString('es-ES')+' kg</b>'+
+    '<span>esta semana</span></div>'+
+    (avisos.length?('<div class="evav">'+avisos.map(function(a){
+      return '<div class="ev"><span class="p"></span><span>'+esc(a.txt)+'</span></div>';}).join('')+'</div>')
+      :'<p class="mini" style="margin-top:8px">Nada que avisar: el volumen sube sin dispararse y no hay ejercicios atascados.</p>');}
+function objetivoCardHTML(o){
+  const e=objetivoEstado(o),pct=Math.round(e.pct*100);
+  const consejo=objetivoConsejoTxt(o,e);
+  let cifra='',sub='',lado='';
+  if(o.tipo==='fuerza'){
+    cifra=fmtKg(e.hoy||0);
+    sub='de '+fmtKg(o.meta)+' kg'+(e.rm?(' · 1RM ~'+fmtKg(e.rm)):'');
+    lado=e.av>0?('+'+fmtKg(e.av)+' en 8 sem.'):(e.hayDatos?'sin cambio en 8 sem.':'');}
+  else if(o.tipo==='constancia'){
+    cifra=e.hoy+' de '+o.meta;sub='esta semana';
+    lado=e.racha?('racha de '+e.racha+' sem.'):'';}
+  else{
+    cifra=e.hayDatos?ritmoTxt(e.ritmo):'—';sub=e.hayDatos?('/km · '+fmt(Math.round(e.hoy))+' min en 10 km'):'sin carreras';
+    lado=e.av>0?('−'+fmt(e.av)+' min en 8 sem.'):'';}
+  return '<div class="card obj '+o.tipo+(e.falta<=0&&e.hayDatos?' hecho':'')+'">'+
+    '<div class="objcab"><b>'+esc(objetivoTitulo(o))+'</b>'+
+      '<span class="e">'+(o.tipo==='fuerza'?'EN LA BARRA':(o.tipo==='constancia'?'DÍAS':'CARRERA'))+'</span>'+
+      '<button class="btn d s" data-a="obj-del" data-id="'+esc(o.id)+'" aria-label="quitar objetivo">×</button></div>'+
+    '<div class="objnum"><b>'+esc(cifra)+'</b><span>'+esc(sub)+'</span>'+
+      (lado?('<i>'+esc(lado)+'</i>'):'')+'</div>'+
+    '<div class="objbar"><i style="width:'+pct+'%"></i></div>'+
+    (consejo?('<div class="objvia">'+gymIco('flecha','gico sm')+'<span>'+esc(consejo)+'</span></div>'):'')+
+    '</div>';}
+function volumenPorMusculo(desde,hasta){
+  /* el volumen repartido por grupo grande: es lo que enseña si llevas semanas descuidando la
+     pierna sin darte cuenta. Una serie que toca dos grupos suma en los dos: no se reparte, porque
+     no sabemos cuánto va a cada uno y repartir a medias sería inventárselo. */
+  const g=gymS(),out={};
+  MREGIONES.forEach(function(r){out[r]=0;});
+  g.registro.forEach(function(x){
+    if(desde&&x.fecha<desde)return;
+    if(hasta&&x.fecha>hasta)return;
+    const v=(+x.kg||0)*(+x.reps||0);
+    if(!v)return;
+    regionesDeEjercicio(x).forEach(function(r){if(out[r]!=null)out[r]+=v;});});
+  return out;}
+function volumenMusculoHTML(){
+  const desde=semanasAtras(4);
+  const v=volumenPorMusculo(desde,null);
+  const filas=MREGIONES.map(function(r){return {r:r,v:Math.round(v[r])};})
+    .filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;});
+  if(!filas.length)return '<div class="empty">Apunta unas cuantas series y aquí se ve cómo se reparte el trabajo.</div>';
+  const max=filas[0].v;
+  const flojos=MREGIONES.filter(function(r){return !v[r];}).map(function(r){return MREG_LABEL[r]||r;});
+  return filas.map(function(x){
+    return '<div class="fb"><div class="fbt"><span>'+esc(MREG_LABEL[x.r]||x.r)+'</span>'+
+      '<b>'+x.v.toLocaleString('es-ES')+' kg</b></div>'+
+      '<div class="fbar"><i style="width:'+Math.round(x.v/max*100)+'%"></i></div></div>';}).join('')+
+    (flojos.length?('<p class="mini" style="margin-top:7px;color:var(--warn)">En cuatro semanas no has tocado: '+
+      esc(flojos.join(', '))+'.</p>'):'<p class="mini" style="margin-top:7px">En cuatro semanas has tocado los diez grupos.</p>');}
+function cardioProgresoHTML(){
+  /* el cardio con ritmo y mejoría, que es donde se ve de verdad si vas a mejor */
+  const g=gymS();
+  const carreras=g.cardio.filter(function(x){return /carrera|corr/i.test(x.tipo||'')&&(+x.distanciaKm||0)>=1&&(+x.duracionMin||0)>0;})
+    .sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
+  if(carreras.length<2)return '<div class="empty">Con dos carreras apuntadas (km y minutos) aquí sale tu ritmo y si mejoras.</div>';
+  const ritmos=carreras.map(function(x){return {k:x.fecha,r:(+x.duracionMin)/(+x.distanciaKm),km:+x.distanciaKm};});
+  const mejor=ritmos.reduce(function(a,x){return x.r<a.r?x:a;},ritmos[0]);
+  const peor=ritmos.reduce(function(a,x){return x.r>a.r?x:a;},ritmos[0]);
+  const pri=ritmos[0],ult=ritmos[ritmos.length-1];
+  const dif=Math.round((pri.r-ult.r)*60);
+  const rango=Math.max(0.1,peor.r-mejor.r);
+  return '<div class="fb2">'+ritmos.slice(-12).map(function(x){
+      const alt=Math.max(8,Math.round((peor.r-x.r)/rango*100));
+      return '<div class="fb2c" title="'+esc(x.k)+' · '+ritmoTxt(x.r)+' /km">'+
+        '<i style="height:'+alt+'%"></i><span>'+esc(x.k.slice(8))+'</span></div>';}).join('')+'</div>'+
+    '<div class="curvapie"><span>mejor '+ritmoTxt(mejor.r)+' /km</span>'+
+    '<b class="'+(dif>0?'sube':(dif<0?'baja':''))+'">'+(dif>0?('−'+dif+' s/km'):(dif<0?('+'+(-dif)+' s/km'):'igual'))+'</b>'+
+    '<span>ahora '+ritmoTxt(ult.r)+' /km</span></div>'+
+    '<p class="mini" style="margin-top:6px">barra más alta = más rápido. '+carreras.length+' carrera'+(carreras.length===1?'':'s')+' apuntadas.</p>';}
+function renderGymObjetivos(){
+  /* LOS OBJETIVOS CON SU CAMINO. Un número solo es un cartel: aquí cada uno dice dónde estás,
+     cuánto falta, a qué ritmo vas y para cuándo llegas A TU RITMO —el de tus últimas 8 semanas—,
+     dicho como estimación y no como promesa. */
+  const l=objetivosS();
+  const tipo=ui.objTipo||'fuerza';
+  const exs=Object.keys(gymIdx().byEx).sort();
+  $('#main').innerHTML='<div class="grid">'+
+    gymSubcab('Objetivos')+
+    (l.length?l.map(objetivoCardHTML).join('')
+      :'<div class="card"><div class="empty">Todavía no tienes objetivos. Ponte uno abajo: un número y la app te dice el camino.</div></div>')+
+    '<div class="card"><h2>+ Nuevo objetivo</h2>'+
+    '<div class="row">'+
+      OBJ_TIPOS.map(function(t){
+        return '<button class="btn s '+(tipo===t?'p':'')+'" data-a="obj-tipo" data-t="'+t+'">'+
+          (t==='fuerza'?'fuerza':(t==='constancia'?'constancia':'tiempo'))+'</button>';}).join('')+
+    '</div>'+
+    '<div class="fgrid c3 tight" style="margin-top:10px">'+
+      (tipo==='fuerza'?('<label class="fld" style="grid-column:1/-1">ejercicio'+
+        '<input id="objEx" list="objLista" placeholder="Press banca">'+
+        '<datalist id="objLista">'+exs.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('')+'</datalist></label>'):'')+
+      '<label class="fld">'+(tipo==='fuerza'?'kg a levantar':(tipo==='constancia'?'días por semana':'minutos en 10 km'))+
+        '<input id="objMeta" type="number" min="1" max="'+(tipo==='constancia'?'7':'500')+'" step="'+(tipo==='fuerza'?'2.5':'1')+'"></label>'+
+      '<label class="fld" style="justify-content:flex-end">'+
+        '<button class="btn p" data-a="obj-add" data-t="'+tipo+'">poner objetivo</button></label>'+
+    '</div>'+
+    '<p class="mini" style="margin-top:8px">La fecha que te diga sale de tu ritmo de las últimas 8 semanas. '+
+      'Es una estimación con lo que llevas hecho, no una promesa.</p>'+
+    '</div></div>';}
+function curvaFuerzaHTML(nombre){
+  /* la curva de fuerza estimada (Epley) semana a semana: no hace falta probar un máximo */
+  const puntos=[];
+  for(let i=11;i>=0;i--){
+    const lun=semanasAtras(i),dom=iso(addDays(parseDate(lun),6));
+    puntos.push({k:lun,v:fuerzaEstimada(nombre,lun,dom)});}
+  const con=puntos.filter(function(p){return p.v>0;});
+  if(con.length<2)return '<div class="empty">Apunta '+esc(nombre)+' un par de semanas y aquí sale la curva.</div>';
+  const max=con.reduce(function(a,p){return Math.max(a,p.v);},0);
+  const min=con.reduce(function(a,p){return Math.min(a,p.v);},max);
+  const rango=Math.max(1,max-min);
+  const W=280,H=68;
+  const xs=puntos.map(function(p,i){return 4+i*(W-8)/11;});
+  const ys=puntos.map(function(p){return p.v>0?(H-6-((p.v-min)/rango)*(H-16)):null;});
+  let d='',prev=false;
+  puntos.forEach(function(p,i){
+    if(ys[i]==null){prev=false;return;}
+    d+=(prev?' L':' M')+xs[i].toFixed(1)+' '+ys[i].toFixed(1);prev=true;});
+  const bolas=puntos.map(function(p,i){
+    return ys[i]==null?'':('<circle cx="'+xs[i].toFixed(1)+'" cy="'+ys[i].toFixed(1)+'" r="2.6" class="cp"></circle>');}).join('');
+  const ult=con[con.length-1],pri=con[0];
+  const dif=Math.round((ult.v-pri.v)*10)/10;
+  return '<svg class="curva" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="fuerza estimada de '+esc(nombre)+'">'+
+    '<path d="'+d.trim()+'" class="cl"></path>'+bolas+'</svg>'+
+    '<div class="curvapie"><span>'+fmtKg(pri.v)+' kg hace '+(11)+' semanas</span>'+
+    '<b class="'+(dif>0?'sube':(dif<0?'baja':''))+'">'+(dif>0?'+':'')+fmtKg(dif)+' kg</b>'+
+    '<span>'+fmtKg(ult.v)+' kg ahora</span></div>';}
 function renderGymRutEdit(){
   /* EL CONSTRUCTOR: buscador sobre tu biblioteca, series con −/+ sin teclado, y «cómo queda»
      debajo mientras la montas. Sin «peso objetivo» ni «descanso», que no los usas. */
@@ -5740,6 +5990,10 @@ function renderGymRutEdit(){
         (c.hay?('buscar en tus '+g.biblioteca.length.toLocaleString('es-ES')+' ejercicios'):'escribe el ejercicio')+
         '<input id="rtNew-'+esc(rt.id)+'" value="'+esc(c.q)+'" data-a="gym-q" placeholder="sentadilla, press, remo…"></label>'+
         '<button class="btn p" data-a="rt-add" data-id="'+esc(rt.id)+'">añadir</button></div>'+
+      /* la biblioteca se llega desde aquí, que es el único sitio donde se usa: para buscar
+         ejercicios mientras montas la rutina */
+      '<div class="row" style="margin-top:6px"><button class="btn s" data-a="gym-panel" data-p="biblioteca">'+
+        gymIco('libro','gico sm')+(c.hay?(' biblioteca · '+g.biblioteca.length.toLocaleString('es-ES')):' importar biblioteca')+'</button></div>'+
       (c.hay?('<div class="row" style="margin-top:7px"><span class="mini">parte del cuerpo:</span>'+
         MREGIONES.map(function(r){
           return '<button class="btn s '+(c.filtroRegion===r?'p':'')+'" data-a="gym-filtro-region" data-r="'+r+'">'+
@@ -5771,15 +6025,23 @@ function renderGymCardio(){
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Cardio')+renderCardioCard()+'</div>';}
 function renderGymProgreso(){
   const c=gymCtx();
+  const exs=Object.keys(gymIdx().byEx).sort();
+  const sel=(exs.indexOf(ui.objEx)>=0)?ui.objEx:(exs[0]||'');
   $('#main').innerHTML='<div class="grid">'+
     gymSubcab('Progreso')+
+    (exs.length?('<div class="card"><h2>Fuerza estimada</h2>'+
+      '<p class="note">De tu mejor serie de cada semana (Epley). No hace falta probar un máximo.</p>'+
+      '<div class="chips">'+exs.slice(0,12).map(function(n){
+        return '<button class="chipx'+(n===sel?' on':'')+'" data-a="obj-ex" data-n="'+esc(n)+'">'+esc(nombreCorto(n))+'</button>';}).join('')+'</div>'+
+      '<div style="margin-top:10px">'+curvaFuerzaHTML(sel)+'</div></div>'):'')+
+    '<div class="card"><h2>Cómo evoluciona</h2>'+
+    '<p class="note">Volumen semana a semana, y lo que la app ve venir cruzando tus guardias, tu sueño y lo que comes.</p>'+
+    evolucionHTML()+'</div>'+
+    '<div class="card"><h2>Dónde va el trabajo</h2>'+
+    '<p class="note">Volumen de las últimas cuatro semanas repartido por grupo muscular.</p>'+
+    volumenMusculoHTML()+'</div>'+
+    '<div class="card"><h2>Ritmo de carrera</h2>'+cardioProgresoHTML()+'</div>'+
     entrenoHeatmapCard()+
-    '<div class="card"><h2>📊 Volumen de la semana</h2>'+
-    '<div style="margin-top:6px">'+c.sem.map(function(x){
-      return '<div class="fb"><div class="fbt"><span>'+x.nm+'</span><b>'+x.vol.toLocaleString('es-ES')+' kg</b>'+
-        '<span class="mini">'+x.sets+' series</span></div>'+
-        '<div class="fbar'+(x.k===c.sel?' plan':'')+'"><i style="width:'+Math.round(x.vol/c.maxvol*100)+'%"></i></div></div>';}).join('')+'</div>'+
-    '<p class="mini" style="margin-top:6px">el volumen es kg × repeticiones de lo que apuntas: sírvete de él para comparar semanas, no para castigarte</p></div>'+
     renderHistorialCard()+
     '<div class="card"><h2>🏆 Tus marcas</h2>'+
     (c.prs.length?('<div style="overflow-x:auto"><table><thead><tr><th>Ejercicio</th><th>más peso</th><th>1RM estimado</th>'+
@@ -5842,6 +6104,7 @@ function renderGym(){
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
   if(p==='sesion')return renderGymSesion();
+  if(p==='objetivos')return renderGymObjetivos();
   if(p==='rutedit')return renderGymRutEdit();
   if(p==='rutinas')return renderGymRutinas();
   if(p==='cardio')return renderGymCardio();
@@ -9183,6 +9446,11 @@ function act(a,el){
       ej.series=Math.max(1,Math.min(12,(+ej.series||3)+(+el.dataset.d||0)));
       save();render();break;}
     case 'rt-add-lib':{ui.gymQ='';flash(addRutina(el.dataset.id,el.dataset.n));break;}
+    case 'obj-tipo':ui.objTipo=el.dataset.t||'fuerza';render();break;
+    case 'obj-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
+      flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta')));break;}
+    case 'obj-del':flash(delObjetivo(el.dataset.id));break;
+    case 'obj-ex':{ui.objEx=el.dataset.n||'';render();window.scrollTo(0,0);break;}
     case 'rt-nueva-rapida':{flash(nuevaRutina(''));
       const g3=gymS(),ult=g3.rutinas[g3.rutinas.length-1];
       if(ult){ui.gymRutSel=ult.id;ui.gymPanel='rutedit';render();window.scrollTo(0,0);}
@@ -11054,6 +11322,10 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
+  objetivosS,nuevoObjetivo,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
+  pesoMaximo,volumenSemanal,tocaDescarga,estancados,cambioSugerido,cruceEntreno,
+  fuerzaEstimada,diasEntrenadosSemana,rachaConstancia,mejorCarrera,ritmoTxt,cuandoLlegasTxt,
+  volumenPorMusculo,rutinaResumen,semanasAtras,fmtKg,
   progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
   informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
