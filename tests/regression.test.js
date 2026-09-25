@@ -272,7 +272,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const defaultTab = await page.evaluate(() => window.PG.ui.tab);
   const arranque = await page.evaluate(() => ({
     hoyVisible: /Hoy ·/.test(document.getElementById('main').textContent),
-    franja: !!document.querySelector('#main .tl-bar'),
+    // el calendario dejó de ser una barra horizontal + lista de horas: ahora es un carril
+    // vertical donde cada cosa ocupa el rato que ocupa. Lo que se comprueba es que el día se vea,
+    // no cómo se dibujaba antes.
+    franja: !!document.querySelector('#main .carrilbox .carril'),
     mesAUnToque: !!document.querySelector('#calModes button[data-t="month"]'),
   }));
   check('la app arranca en «Hoy», con el día a la vista y el mes a un toque',
@@ -849,14 +852,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('la configuración del mes (servicio, tipos de guardia, cupo) empieza plegada',
     configPlegada === false, 'open=' + configPlegada);
 
-  // 25) "Hoy" muestra la agenda de 24h con la marca de "ahora"
+  // 25) "Hoy" enseña el día como CARRIL de horas, con la línea de dónde estás ahora
   await gotoTab('hoy');
   await page.waitForTimeout(200);
   const hoyBarra = await page.evaluate(() => ({
-    barra: !!document.querySelector('#main .tl-bar'),
-    ahora: !!document.querySelector('#main .tl-now'),
+    barra: !!document.querySelector('#main .carrilbox .carril'),
+    ahora: !!document.querySelector('#main .carril .cnow'),
   }));
-  check('"Hoy" muestra la agenda de 24h con la marca de "ahora"',
+  check('"Hoy" enseña el día como carril de horas, con la línea de ahora',
     hoyBarra.barra && hoyBarra.ahora, JSON.stringify(hoyBarra));
 
   // 26) en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h
@@ -1420,11 +1423,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }, hoyKeyTl);
   await gotoTab('hoy');
   await page.waitForTimeout(150);
-  const marcasTimeline = await page.evaluate(() => ({
-    gym: !!document.querySelector('#main .tl-dot.gym'),
-    evt: !!document.querySelector('#main .tl-dot.evt'),
-  }));
-  check('la franja de 24h muestra marcas de color propio para el segundo entreno y los eventos del día',
+  // el segundo entreno y los eventos ya no son puntos en una barra: son bloques del carril, con
+  // su color y su hora, y se tocan para ir a cambiarlos
+  const marcasTimeline = await page.evaluate(() => { const P = window.PG;
+    const col = (c) => P.tlColor(c);
+    const bs = [...document.querySelectorAll('#main .carril .cb')]
+      .map((b) => b.style.getPropertyValue('--c').trim());
+    return { gym: bs.indexOf(col('gym')) >= 0, evt: bs.indexOf(col('evt')) >= 0,
+      bloques: bs.length }; });
+  check('el carril pinta el segundo entreno y los eventos del día con su color propio',
     marcasTimeline.gym && marcasTimeline.evt, JSON.stringify(marcasTimeline));
   await page.evaluate((key) => {
     window.PG.store.eventos = window.PG.store.eventos.filter((e) => e.id !== 'ev-tl-test');
@@ -1575,13 +1582,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(250);
   await gotoTab('hoy');
   await page.waitForTimeout(200);
-  const franjaHoy = await page.evaluate(() => [...document.querySelectorAll('#main .tl-seg')]
-    .map((s) => ({ t: s.title, bg: getComputedStyle(s).backgroundColor })));
-  const aRgb = (h) => `rgb(${parseInt(h.slice(1, 3), 16)}, ${parseInt(h.slice(3, 5), 16)}, ${parseInt(h.slice(5, 7), 16)})`;
-  const elegidos = Object.values(PALETA).map(aRgb);
-  check('los colores que eliges en Ajustes se aplican a la franja de "Hoy"',
-    franjaHoy.length >= 2 && franjaHoy.every((s) => elegidos.indexOf(s.bg) >= 0),
-    JSON.stringify(franjaHoy));
+  // los colores mandan ahora sobre el CARRIL: al quitar la barra horizontal, ese ajuste tenía que
+  // seguir sirviendo para algo o sobraba de Ajustes
+  const franjaHoy = await page.evaluate(() => [...document.querySelectorAll('#main .carril .cb')]
+    .map((s) => s.style.getPropertyValue('--c').trim()));
+  const elegidos = Object.values(PALETA).map((h) => h.toLowerCase());
+  check('los colores que eliges en Ajustes se aplican al carril de "Hoy"',
+    franjaHoy.length >= 2 && franjaHoy.some((c) => elegidos.indexOf(c.toLowerCase()) >= 0),
+    JSON.stringify({ franjaHoy, elegidos }));
 
   // la leyenda dice qué es cada color y lleva de vuelta a Ajustes
   const leyenda = await page.evaluate(() => {
@@ -1591,15 +1599,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('"Hoy" explica con una leyenda qué es cada color de la franja y lleva a cambiarlos',
     leyenda && leyenda.n === 6 && leyenda.atajo, JSON.stringify(leyenda));
 
-  // a 12 h la franja deja de empezar en 0h: se centra en la parte del día que tiene algo
-  const ejes24 = await page.evaluate(() => [...document.querySelectorAll('#main .tl-axis span')].map(s => s.textContent));
-  await page.evaluate(() => { window.PG.store.franja = { horas: 12, colores: {} }; window.PG.render(); });
-  await page.waitForTimeout(200);
-  const ejes12 = await page.evaluate(() => [...document.querySelectorAll('#main .tl-axis span')].map(s => s.textContent));
-  check('eligiendo 12 h la franja se centra en tu día en vez de mostrar las 24 h enteras',
-    ejes24[0] === '0h' && ejes24[ejes24.length - 1] === '24h' &&
-    ejes12[0] !== '0h' && (parseInt(ejes12[ejes12.length - 1], 10) - parseInt(ejes12[0], 10)) === 12,
-    JSON.stringify([ejes24, ejes12]));
+  // el ajuste de 12/18/24 h manda ahora en CUÁNTAS HORAS VES DE UNA VEZ en el carril: la caja mide
+  // lo mismo siempre —si creciera, la portada crecería al elegir 24 h— y lo que cambia es lo alta
+  // que es una hora. A 12 h se ve holgado, a 24 apretado. Sin esto, ese ajuste se habría quedado
+  // sin mandar en nada al quitar la barra horizontal.
+  const zoom = await page.evaluate(() => { const P = window.PG;
+    const mide = (h) => { P.store.franja = { horas: h, colores: {} }; P.render();
+      const box = document.querySelector('#main .carrilbox');
+      const car = document.querySelector('#main .carril');
+      const hs = document.querySelectorAll('#main .carril .ch');
+      return { caja: Math.round(box.getBoundingClientRect().height),
+        hora: hs.length ? Math.round(hs[0].getBoundingClientRect().height) : 0 };
+    };
+    const a = mide(24), b = mide(12);
+    P.store.franja = { horas: 24, colores: {} }; P.render();
+    return { h24: a, h12: b }; });
+  // la caja tiene un TECHO (no un alto fijo): a 24 h el carril entero cabe en menos y no se deja
+  // media caja vacía, pero nunca puede pasar de ese techo, que es lo que impide que elegir 12 h
+  // alargue la portada
+  check('eligiendo 12 h el carril se ve más holgado, y la caja nunca pasa de su techo',
+    zoom.h12.hora > zoom.h24.hora * 1.5 && zoom.h24.hora >= 16 &&
+    zoom.h12.caja <= 400 && zoom.h24.caja <= 400 && zoom.h24.caja <= zoom.h12.caja,
+    JSON.stringify(zoom));
   await page.evaluate(() => { window.PG.store.franja = { horas: 24, colores: {} }; window.PG.render(); });
   await page.waitForTimeout(150);
 
@@ -3519,6 +3540,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const otra = filas.find((f) => !f.classList.contains('today'));
       return {
         antesDelPrimerDia: r0 ? Math.round(r0.top + window.scrollY - main.getBoundingClientRect().top) : -1,
+        // la semana empieza por la REJILLA de los siete días: es la vista de un vistazo, y lo que
+        // había antes —siete tarjetas de texto— no dejaba ver dónde estaba el hueco de la semana
+        rejilla: (function(){ const g = main.querySelector('.semrej');
+          return g ? Math.round(g.getBoundingClientRect().top + window.scrollY - main.getBoundingClientRect().top) : -1; })(),
+        colsRejilla: main.querySelectorAll('.semrej .scol').length,
         kpis: main.querySelectorAll('.tot div').length,
         // la configuración se fue a «Turno y rotación»: aquí ya no está
         sinConfig: !main.querySelector('[data-a="autofill"]') && !main.querySelector('[data-a="rot-anchor"]'),
@@ -3529,10 +3555,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         noche: main.querySelectorAll('.tl-noche').length,
       };
     });
-    // la maqueta aprobada pone encima del primer día el rango, el «ver 5·7·10·14», el eje y la
-    // leyenda plegada, y ayer en una línea: el primer día (hoy) sigue en la primera pantalla
-    check('Semana empieza por los días, con hoy marcado de verdad y el sol en cada uno',
-      sem.antesDelPrimerDia < 170 && sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
+    // La semana empieza por la SEMANA, no por la configuración: primero la rejilla de los siete
+    // días en la primera pantalla, y debajo el detalle día a día. Lo que no puede pasar —y es lo
+    // que fijaba esta prueba— es que lo primero sea un muro de ajustes.
+    check('Semana empieza por la rejilla de los siete días, con hoy marcado y el sol en cada uno',
+      sem.rejilla >= 0 && sem.rejilla < 170 && sem.colsRejilla === 7 &&
+      sem.rejilla < sem.antesDelPrimerDia &&
+      sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
       sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.noche >= 7, JSON.stringify(sem));
   }
 
@@ -5232,22 +5261,31 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await gotoTab('hoy');
     await page.waitForTimeout(300);
-    const ag = await page.evaluate(() => {
-      const filas = [...document.querySelectorAll('#main .hoyag .agf')];
-      const horas = filas.map((f) => f.querySelector('.h').textContent);
-      const aMin = (t) => { const m = /(\d+):(\d+)/.exec(t); return m ? +m[1] * 60 + +m[2] : -1; };
-      const ordenadas = horas.every((h, i) => i === 0 || aMin(h) >= aMin(horas[i - 1]) || /cama/i.test(filas[i].innerText));
-      const ses = filas.find((f) => /Sesión de prueba/.test(f.innerText));
-      return { n: filas.length, ordenadas,
-        sesion: ses ? ses.innerText.replace(/\s+/g, ' ') : '',
-        trabajo: filas.some((f) => /Trabajo/.test(f.innerText) && /hasta 15:00/.test(f.innerText)),
-        comidas: filas.filter((f) => f.classList.contains('meal')).length,
-        cama: filas.some((f) => /A la cama/.test(f.innerText)),
+    // el día ya no es una LISTA de horas sino un CARRIL: cada cosa ocupa el rato que ocupa, así
+    // que lo que se comprueba es que esté todo, en orden, con su duración real, y que cada bloque
+    // lleve a dónde se cambia —que es lo que la lista no hacía—.
+    const ag = await page.evaluate(() => { const P = window.PG;
+      const k = P.fechaHoy();
+      const bl = P.bloquesDelDia(k);
+      const cbs = [...document.querySelectorAll('#main .carril .cb')];
+      const ses = bl.filter((b) => /Sesión de prueba/.test(b.tit))[0];
+      const trab = bl.filter((b) => /Trabajo/.test(b.tit))[0];
+      return { n: bl.length,
+        ordenadas: bl.every((b, i) => i === 0 || b.de >= bl[i - 1].de),
+        // el evento dura lo que dura: 08:00–08:39 son 39 minutos, no una fila de altura fija
+        sesion: ses ? (ses.de + '-' + ses.a) : '',
+        // y la jornada ocupa sus siete horas
+        trabajo: !!trab && trab.de === 8 * 60 && trab.a === 15 * 60,
+        comidas: bl.filter((b) => b.fino).length,
+        // cada bloque pintado es un botón que lleva a su sitio
+        pintados: cbs.length,
+        conDestino: cbs.filter((b) => b.dataset.a).length,
         caja: !!document.querySelector('#main .hoyahora') };
     });
-    check('«Hoy» lista el día por horas —trabajo, sesión con su fin, comidas y cama— con ahora/siguiente arriba',
-      ag.n >= 5 && ag.ordenadas && /8:00/.test(ag.sesion) && /hasta 8:39/.test(ag.sesion) && ag.trabajo &&
-      ag.comidas >= 3 && ag.cama, JSON.stringify(ag));
+    check('«Hoy» enseña el día como carril: cada cosa con su duración real y tocable para cambiarla',
+      ag.n >= 5 && ag.ordenadas && ag.sesion === (8 * 60) + '-' + (8 * 60 + 39) && ag.trabajo &&
+      ag.comidas >= 3 && ag.pintados >= 3 && ag.conDestino === ag.pintados && ag.caja,
+      JSON.stringify(ag));
     await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.save(); P.render(); }, k);
   }
 
