@@ -4392,6 +4392,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await gotoTab('dinero');
     await page.waitForTimeout(200);
+    // Dinero es ahora ahorro: los recibos viven en su propia pantalla, y los fijos se editan desde ahí
+    await page.click('#main [data-a="dinero-vista"][data-v="recibos"]');
+    await page.waitForTimeout(200);
     await page.click('[data-a="dinero-vista"][data-v="fijos"]');
     await page.waitForTimeout(250);
     const alta = async (n, imp, dia, cat) => {
@@ -5861,6 +5864,95 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.dineroS().pagos.length = 0;
       P.ui.ticket = null; P.ui.shopVista = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
+  }
+
+  // ===================== Dinero → ahorro =====================
+  {
+    // «no me interesa llevar la cuenta de gastos sino una ayuda para ahorrar»: la nómina sale de las
+    // guardias (las de finde, sábado/domingo o festivo, suman más), lo que apartas se reparte en
+    // huchas, y un reto cumplido va a la hucha que elijas. Encadenado: apartar → deshacer → apartar →
+    // reto → sacar → recargar, que es donde se pierde el estado.
+    const base = await page.evaluate(() => {
+      const P = window.PG;
+      delete P.store.ahorro;
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      // este mes: dos guardias de sábado/domingo y una de miércoles (se quitan las que hubiera)
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      P.monthDays(y, m).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, 'sh-t', ''); });
+      const dias = P.monthDays(y, m).map((d) => d.date);
+      const sab = dias.filter((d) => d.getDay() === 6)[0], dom = dias.filter((d) => d.getDay() === 0)[1] || dias.filter((d) => d.getDay() === 0)[0];
+      const mie = dias.filter((d) => d.getDay() === 3)[1];
+      [sab, dom, mie].forEach((d) => P.setDayOverride(iso(d), G.id, 'urg'));
+      P.save(); P.render();
+      const a = P.ahorroS(), mk = y + '-' + String(m + 1).padStart(2, '0');
+      a.epocas = [{ id: 'e1', nombre: 'prueba', desde: '2000-01', neto: 2766, finde: 300, pagaJun: 0, pagaDic: 0 }];
+      a.huchas.forEach((h) => { h.saldo = 0; });
+      a.meses = {}; a.meses[mk] = { aparto: 700, hecho: false, reparto: {}, retos: [] };
+      P.ui.dineroVista = ''; P.ui.ahoRetoNuevo = false;   // otra prueba dejó Dinero en «recibos»
+      P.save();
+      const n = P.nominaMes(y, m);
+      return { finde: n.g.finde, total: n.g.total, est: n.est, mk };
+    });
+    await gotoTab('dinero');
+    await page.waitForTimeout(250);
+    const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(200); return !!el; };
+    const hubo = [];
+    const hero = await page.evaluate(() => (document.querySelector('#main .ahhero') || {}).innerText || '');
+    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
+    hubo.push(await toca('#main [data-a="aho-menos"]')); // 700
+    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
+    hubo.push(await toca('#main [data-a="aho-apartar"]'));
+    const saldos1 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
+    hubo.push(await toca('#main [data-a="aho-deshacer"]'));
+    const saldos0 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
+    hubo.push(await toca('#main [data-a="aho-apartar"]'));
+    hubo.push(await toca('#main [data-a="aho-reto-nuevo"]'));
+    // si el formulario no sale, la prueba FALLA (hubo[]), no se cuelga 30 s en un fill
+    const form = await page.$('#ahRtNom');
+    hubo.push(!!form);
+    if (form) {
+      await page.fill('#ahRtNom', 'Salir'); await page.fill('#ahRtMax', '150'); await page.fill('#ahRtAnt', '220');
+      const hu2 = await page.evaluate(() => window.PG.ahorroS().huchas[1].id);
+      await page.selectOption('#ahRtHu', hu2);
+    }
+    hubo.push(await toca('#main [data-a="aho-reto-add"]'));
+    hubo.push(await toca('#main [data-a="aho-reto-ok"]'));
+    const trasReto = await page.evaluate(() => window.PG.ahorroS().huchas[1].saldo);
+    const vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store));
+      return P.ahorroS().huchas.map((h) => h.saldo); });
+    check('Dinero estima la nómina con las guardias de finde y reparte lo que apartas en las huchas',
+      base.finde === 2 && base.total === 3 && base.est === 3066 && /3066/.test(hero.replace(/\D/g, '')) &&
+      hubo.every(Boolean) && saldos1.join() === '375,225,150' && saldos0.join() === '0,0,0' &&
+      trasReto === 295 && vuelta.join() === '375,295,150',
+      JSON.stringify({ base, hero: hero.slice(0, 120), hubo, saldos1, saldos0, trasReto, vuelta }));
+    // un festivo entre semana cuenta como guardia de finde; el viernes normal, no
+    const fest = await page.evaluate(() => {
+      const P = window.PG, a = P.ahorroS();
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const mie = P.monthDays(y, m).map((d) => d.date).filter((d) => d.getDay() === 3)[1];
+      const antes = P.guardiasDelMes(y, m).finde;
+      a.festivos.push(iso(mie)); P.render();
+      const despues = P.guardiasDelMes(y, m).finde;
+      a.festivos.pop();
+      return { antes, despues };
+    });
+    check('un festivo entre semana cuenta como guardia de finde', fest.antes === 2 && fest.despues === 3, JSON.stringify(fest));
+    // la nómina se edita desde la app: una época nueva y lo cobrado de verdad manda sobre lo estimado
+    await toca('#main [data-a="dinero-vista"][data-v="nomina"]');
+    const hayCampo = await page.$('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]');
+    if (hayCampo) { await page.fill('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]', '3001,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
+    const ep0 = await page.evaluate(() => window.PG.ahorroS().epocas.length);
+    await toca('#main [data-a="aho-ep-add"]');
+    const nom = await page.evaluate((mk) => { const P = window.PG, t = mk.split('-');
+      return { cob: P.ahorroS().cobrado[mk], neto: P.nominaMes(+t[0], +t[1] - 1).neto, epocas: P.ahorroS().epocas.length }; }, base.mk);
+    check('lo cobrado de verdad manda sobre lo estimado, y las épocas se añaden desde la app',
+      !!hayCampo && nom.cob === 3001.5 && nom.neto === 3001.5 && nom.epocas === ep0 + 1, JSON.stringify({ nom, ep0 }));
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro;
+      const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
+      P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
+      P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
