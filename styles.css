@@ -1602,3 +1602,7 @@ ul.slots{list-style:none;margin:0;padding:0}
 .card.tcompra p.mini b{color:var(--ink)}
 .card.tcompra .row{margin-top:9px}
 .card.tcompra .row .btn{padding:6px 11px;font-size:12px}
+/* los días que se salen del plan: los tres botones no deben pesar más que lo apuntado */
+.card.diaesp{padding:11px 13px}
+.card.diaesp h2{font-size:13.5px}
+.card.diaesp .row .btn{padding:6px 10px;font-size:11.5px}

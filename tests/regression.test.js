@@ -5863,6 +5863,105 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+  // ===================================================================================
+  // Las kcal que le tocan y los días que se salen del plan (fase 4). La fórmula es
+  // Mifflin-St Jeor y el resultado se comprueba A MANO aquí abajo: si alguien toca el
+  // cálculo, esta prueba dice en qué número se ha desviado, no solo que falla.
+  // ===================================================================================
+  {
+    const calc = await page.evaluate(() => { const P = window.PG;
+      P.setPerfil('alturaCm', 179); P.setPerfil('pesoKg', 95);
+      P.setPerfil('nacidoF', '1998-10-06'); P.setPerfil('actividad', 1.55);
+      P.setPerfil('meta', 'perder');
+      const perder = { b: P.metabolismoBasal(), g: P.gastoDiario(),
+        k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'mantener');
+      const mantener = { k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'ganar');
+      const ganar = { k: P.kcalSugeridas(), pr: P.proteinaSugerida() };
+      P.setPerfil('meta', 'perder');
+      // sin fecha de nacimiento no se inventa nada: se dice lo que falta
+      P.setPerfil('nacidoF', '');
+      const sinEdad = { b: P.metabolismoBasal(), k: P.kcalSugeridas(), falta: P.kcalFaltaTxt() };
+      P.setPerfil('nacidoF', '1998-10-06');
+      return { edad: P.edadHoy(), perder, mantener, ganar, sinEdad }; });
+    // 10·95 + 6,25·179 − 5·27 + 5 = 1938,75 → 1939;  ×1,55 = 3005;  −18 % = 2464 → 2460
+    const basalManual = Math.round(10 * 95 + 6.25 * 179 - 5 * 27 + 5);
+    const gastoManual = Math.round(basalManual * 1.55);
+    check('las kcal salen de Mifflin-St Jeor y cuadran con la cuenta hecha a mano',
+      calc.edad === 27 && calc.perder.b === basalManual && calc.perder.g === gastoManual &&
+      calc.perder.k === Math.round(gastoManual * 0.82 / 10) * 10 && calc.perder.pr === 190 &&
+      calc.mantener.k === Math.round(gastoManual / 10) * 10 && calc.mantener.pr === 150 &&
+      calc.ganar.k > calc.mantener.k && calc.ganar.pr === 170 &&
+      // nunca por debajo del metabolismo basal, y sin datos se dice qué falta en vez de un cero
+      calc.perder.k > calc.perder.b &&
+      calc.sinEdad.b === 0 && calc.sinEdad.k === 0 && /fecha de nacimiento/.test(calc.sinEdad.falta),
+      JSON.stringify({ calc, basalManual, gastoManual }));
+
+    // el botón deja el objetivo puesto, y entonces la tarjeta lo dice en vez de volver a ofrecerlo
+    await gotoTab('food');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { window.PG.ui.foodVista = 'perfil'; window.PG.render(); });
+    await page.waitForTimeout(300);
+    await page.click('[data-a="kcal-poner"]');
+    await page.waitForTimeout(350);
+    const puesto = await page.evaluate(() => ({ ob: window.PG.food().objetivo,
+      dicho: /es lo que tienes puesto/.test(document.getElementById('main').innerText) }));
+    check('«poner como mi objetivo» deja las kcal y la proteína puestas, y la tarjeta lo dice',
+      puesto.ob.kcal === calc.perder.k && puesto.ob.prot === 190 && puesto.dicho === true,
+      JSON.stringify(puesto));
+
+    // los tres tipos de día. El del hospital NO inventa kcal: él lo pidió así.
+    await page.evaluate(() => { const P = window.PG;
+      P.food().diasEsp = {}; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const kcal0 = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    await page.click('[data-a="dia-esp"][data-t="moncheo"]');
+    await page.waitForTimeout(350);
+    const conMoncheo = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    // la estimación es editable: es mía, no una medida
+    await page.fill('[data-a="dia-esp-kcal"]', '300');
+    await page.evaluate(() => { const i = document.querySelector('[data-a="dia-esp-kcal"]');
+      i.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.waitForTimeout(400);
+    const editado = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    // y la vista NO se rompe al editar un campo y repintar (ver la prueba del blur, abajo)
+    const viva = await page.evaluate(() => !/Se ha roto esta vista/.test(document.getElementById('main').innerText));
+    await page.click('[data-a="dia-esp"][data-t="hospital"]');
+    await page.waitForTimeout(350);
+    const hosp = await page.evaluate(() => { const P = window.PG;
+      const k = P.diaComer();
+      return { kcal: P.foodTotals(k).kcal, plan: P.planTotalsOf(k).kcal,
+        esp: P.diaEspDe(k), persiste: (P.store = JSON.parse(JSON.stringify(P.store)),
+          P.diaEspDe(k)) }; });
+    check('el moncheo suma kcal estimadas y editables; el menú del hospital no inventa ninguna',
+      kcal0 === 0 && conMoncheo === 600 && editado === 300 && viva === true &&
+      hosp.kcal === 0 && hosp.plan === 0 && hosp.esp.tipo === 'hospital' &&
+      hosp.persiste && hosp.persiste.tipo === 'hospital',
+      JSON.stringify({ kcal0, conMoncheo, editado, viva, hosp }));
+
+    // el fallo que sacó todo esto: escribir en un campo y que el repintado lo desmonte
+    // mientras tiene el foco tiraba la vista entera con «Se ha roto esta vista». Le pasaba
+    // a cualquier campo que guarde y repinte desde el listener de change, no solo a este.
+    const foco = await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodObjOpen = true; P.render();
+      const i = document.querySelector('[data-a="food-ob"][data-k="kcal"]');
+      if (!i) return { hay: false };
+      i.focus(); i.value = '2300';
+      i.dispatchEvent(new Event('change', { bubbles: true }));
+      return { hay: true, roto: /Se ha roto esta vista/.test(document.getElementById('main').innerText),
+        kcal: P.food().objetivo.kcal }; });
+    check('editar un campo y repintar no tira la vista, aunque el campo tuviera el foco',
+      foco.hay === true && foco.roto === false && foco.kcal === 2300,
+      JSON.stringify(foco));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.food().diasEsp = {}; P.food().objetivo = { kcal: 0, prot: 0 };
+      P.store.perfil.pesos = []; P.setPerfil('nacidoF', ''); P.setPerfil('meta', 'mantener');
+      P.ui.foodVista = ''; P.ui.foodObjOpen = false; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

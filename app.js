@@ -95,7 +95,7 @@ function DEFAULTS(){return {
   habitos:{items:[],registro:{}},
   food:{objetivo:{kcal:0,prot:0},eans:{},log:{},fav:[]},
   /* quién eres, que es lo que decide cuántas kcal necesitas y qué puedes comer */
-  perfil:{celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]},
+  perfil:{celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,nacidoF:'',actividad:1.5,meta:'mantener',pesos:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
     segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
   patterns:[
@@ -464,6 +464,9 @@ function normalize(o){
   o.perfil.pesoKg=(+o.perfil.pesoKg>=30&&+o.perfil.pesoKg<=300)?+o.perfil.pesoKg:0;
   o.perfil.sexo=(o.perfil.sexo==='m')?'m':'h';
   o.perfil.nacido=(+o.perfil.nacido>=1900&&+o.perfil.nacido<=2100)?+o.perfil.nacido:0;
+  /* la fecha exacta, si la tienes: la edad en la fórmula es un número entero de años, y con solo
+     el año te equivocas en uno durante media vida */
+  o.perfil.nacidoF=/^\d{4}-\d{2}-\d{2}$/.test(String(o.perfil.nacidoF))?o.perfil.nacidoF:'';
   o.perfil.actividad=(+o.perfil.actividad>=1.2&&+o.perfil.actividad<=2.2)?+o.perfil.actividad:1.5;
   o.perfil.meta=(['perder','mantener','ganar'].indexOf(o.perfil.meta)>=0)?o.perfil.meta:'mantener';
   /* el peso, uno por día: lo que de verdad se puede seguir. La masa muscular NO se calcula de los
@@ -488,6 +491,15 @@ function normalize(o){
     ?o.food.neveraMano.filter(function(x){return typeof x==='string'&&x&&x.length<60;}).slice(0,300):[];
   o.food.ultimaCompra=/^\d{4}-\d{2}-\d{2}$/.test(String(o.food.ultimaCompra))?o.food.ultimaCompra:'';
   o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
+  /* los días que se salen del plan: {YYYY-MM-DD:{tipo,kcal}}. Sin registrarlo aquí se pierde al
+     recargar, como todo lo que normalize() no conoce. */
+  if(!o.food.diasEsp||typeof o.food.diasEsp!=='object')o.food.diasEsp={};
+  else{const lim={};Object.keys(o.food.diasEsp).slice(0,800).forEach(function(k){
+    const v=o.food.diasEsp[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=='object')return;
+    if(['hospital','fuera','moncheo'].indexOf(v.tipo)<0)return;
+    lim[k]={tipo:v.tipo,kcal:Math.max(0,Math.min(6000,Math.round(+v.kcal||0)))};});
+    o.food.diasEsp=lim;}
   if(!o.gym||typeof o.gym!=='object')o.gym=JSON.parse(JSON.stringify(d.gym||{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],
     segundo:{on:true,dias:[2,5],tipo:'piscina',hora:'15:30'}}));
   ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(o.gym[k]))o.gym[k]=[];});
@@ -1629,7 +1641,7 @@ function glutenChipHTML(est,corto){
   return '<span class="glu '+e.c+'" title="'+esc(e.t)+'">'+(est==='si'?'⚠ gluten':(corto?'? etiqueta':'? mira la etiqueta'))+'</span>';}
 function perfilS(){
   if(!store.perfil||typeof store.perfil!=='object')
-    store.perfil={celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,actividad:1.5,meta:'mantener',pesos:[]};
+    store.perfil={celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,nacidoF:'',actividad:1.5,meta:'mantener',pesos:[]};
   if(!Array.isArray(store.perfil.pesos))store.perfil.pesos=[];
   return store.perfil;}
 function setPerfil(campo,valor){
@@ -1640,6 +1652,10 @@ function setPerfil(campo,valor){
   else if(campo==='alturaCm')p.alturaCm=Math.max(0,Math.min(250,Math.round(+valor||0)));
   else if(campo==='pesoKg')p.pesoKg=Math.max(0,Math.min(300,Math.round((+valor||0)*10)/10));
   else if(campo==='nacido')p.nacido=Math.max(0,Math.round(+valor||0));
+  else if(campo==='nacidoF'){
+    const v=String(valor||'').trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(v)){p.nacidoF=v;p.nacido=+v.slice(0,4);}
+    else p.nacidoF='';}
   else if(campo==='actividad')p.actividad=Math.max(1.2,Math.min(2.2,+valor||1.5));
   save();render();
   if(campo==='celiaco')return p.celiaco?'celíaco: la app te avisa del gluten en la compra y en los platos'
@@ -2417,9 +2433,18 @@ function bumpFoodEntry(dateStr,id,delta){
 function foodTotals(dateStr){
   const o={kcal:0,prot:0,carb:0,gresa:0,azucar:0,fibra:0,sal:0};
   foodLog(foodKey(dateStr)).forEach(function(x){Object.keys(o).forEach(function(k){o[k]+=+x[k]||0;});});
+  /* el día que comes fuera o que monchas: esas kcal cuentan aunque no las hayas apuntado plato a
+     plato. Si no, la semana salía bien en la app y mal en la báscula. El menú del hospital no suma
+     nada aquí: ese lo apunta él cuando sabe qué había. */
+  const ex=kcalExtraDe(dateStr);
+  if(ex){o.kcal+=ex;o.extra=ex;}
   Object.keys(o).forEach(function(k){o[k]=Math.round(o[k]*10)/10;});return o;}
 function planTotalsOf(dateStr){
   /* lo que ya está montado en los menús de ese día: el plan contra lo que registras */
+  /* si el día está marcado como menú del hospital o comida fuera, el plan NO es lo que vas a
+     comer: enseñarlo como objetivo del día sería pedirte que cumplas algo que ya no va a pasar */
+  const e=diaEspDe(dateStr);
+  if(e&&(e.tipo==='hospital'||e.tipo==='fuera'))return {kcal:0,prot:0,parts:0,shiftId:null,fuera:e.tipo};
   const inf=dayInfo(dateStr);if(!inf.shiftId)return {kcal:0,prot:0,parts:0,shiftId:null};
   const items=[];slotsFor(inf.shiftId).forEach(function(sl){items.push.apply(items,slotItems(inf.shiftId,sl).items);});
   const t=totals(items);t.shiftId=inf.shiftId;return t;}
@@ -4255,6 +4280,148 @@ function kcalRingHTML(val,obj){
 /* ===================== ideas: qué sale con lo que hay en casa =====================
    Nada de esto sale a la red ni se inventa nutrición: las combinaciones se arman con alimentos de
    tu nevera y las cantidades se calculan con la misma tabla que usa el resto de la app. */
+/* ===================== las kcal que te tocan =====================
+   Fase 4. Mifflin-St Jeor (1990), que es la que menos se equivoca de las que se calculan a mano:
+     hombre:  10·kg + 6,25·cm − 5·edad + 5
+     mujer:   10·kg + 6,25·cm − 5·edad − 161
+   Es una ESTIMACIÓN, y la app lo dice con esas palabras: el gasto real de una persona se mide, no
+   se calcula. Lo que la corrige de verdad es tu peso semana a semana, que ya se sigue. */
+function edadHoy(){
+  const p=perfilS();
+  if(p.nacidoF){
+    const d=parseDate(p.nacidoF);
+    if(d){const h=new Date();
+      let a=h.getFullYear()-d.getFullYear();
+      const m=h.getMonth()-d.getMonth();
+      if(m<0||(m===0&&h.getDate()<d.getDate()))a--;
+      if(a>=10&&a<=110)return a;}}
+  if(p.nacido>=1900){const a=new Date().getFullYear()-p.nacido;if(a>=10&&a<=110)return a;}
+  return 0;}
+function metabolismoBasal(){
+  /* lo que gastas tumbado sin hacer nada */
+  const p=perfilS(),kg=+p.pesoKg||0,cm=+p.alturaCm||0,e=edadHoy();
+  if(!kg||!cm||!e)return 0;
+  const base=10*kg+6.25*cm-5*e;
+  return Math.round(base+(p.sexo==='m'?-161:5));}
+const ACTIVIDADES=[[1.2,'sentado casi todo el día'],[1.375,'algo de movimiento'],
+  [1.55,'de pie y entrenando'],[1.725,'mucha actividad'],[1.9,'trabajo físico duro']];
+function gastoDiario(){
+  const b=metabolismoBasal();
+  if(!b)return 0;
+  const a=Math.max(1.2,Math.min(2.2,+perfilS().actividad||1.5));
+  return Math.round(b*a);}
+/* cuánto se quita o se pone según a dónde vas. Perder grasa manteniendo músculo es un déficit
+   MODERADO: con uno agresivo se pierde también músculo, que es justo lo que no quiere. */
+const META_AJUSTE={perder:-0.18,mantener:0,ganar:0.10};
+/* proteína por kilo de peso. Para perder grasa sin perder músculo el rango con respaldo es
+   1,6–2,2 g/kg; se coge 2,0, que es donde cae la mayoría de la evidencia en déficit. */
+const META_PROT={perder:2.0,mantener:1.6,ganar:1.8};
+function kcalSugeridas(){
+  const g=gastoDiario();
+  if(!g)return 0;
+  const m=perfilS().meta||'mantener';
+  const k=Math.round(g*(1+(META_AJUSTE[m]||0))/10)*10;
+  /* nunca por debajo del metabolismo basal: comer menos de lo que gastas en reposo no es un plan */
+  return Math.max(metabolismoBasal(),k);}
+function proteinaSugerida(){
+  const p=perfilS(),kg=+p.pesoKg||0;
+  if(!kg)return 0;
+  return Math.round(kg*(META_PROT[p.meta||'mantener']||1.6)/5)*5;}
+/* ===================== los días que se salen del plan =====================
+   Un día de guardia se come el menú del hospital y no se sabe qué será; otro día se come fuera; y
+   otro se moncha. Sin esto, la app daba por comido el menú planeado y la cuenta de la semana era
+   mentira. Cada tipo dice lo suyo:
+     hospital → NO se inventan kcal. Se marca y se apunta después, cuando se sepa. Él lo pidió así.
+     fuera    → un menú del día en un sitio normal, estimado y editable.
+     moncheo  → lo que se va ENCIMA de lo del día, estimado y editable. */
+const DIA_TIPOS=[
+  ['hospital','🏥','menú del hospital','No cuento kcal: lo apuntas tú cuando sepas qué había.',0],
+  ['fuera','🍽️','he comido fuera','Un menú del día, estimado. Cámbialo si no cuadra.',950],
+  ['moncheo','🍫','día de moncheo','Lo que se va ENCIMA de lo del día. Estimado.',600]];
+function diaComer(){
+  /* el día que estás mirando en Comer: el mismo criterio que usa su portada */
+  return (ui.foodDate&&foodKey(ui.foodDate))?foodKey(ui.foodDate):fechaHoy();}
+function diasEspS(){const f=food();if(!f.diasEsp||typeof f.diasEsp!=='object')f.diasEsp={};return f.diasEsp;}
+function diaEspDe(key){const k=foodKey(key)||key;return diasEspS()[k]||null;}
+function diaEspTipo(t){return DIA_TIPOS.filter(function(x){return x[0]===t;})[0]||null;}
+function marcarDiaEsp(key,tipo){
+  const k=foodKey(key)||key,d=diasEspS(),t=diaEspTipo(tipo);
+  if(!t){delete d[k];save();return 'día normal otra vez';}
+  if(d[k]&&d[k].tipo===tipo){delete d[k];save();return 'quitado: '+t[2];}
+  d[k]={tipo:tipo,kcal:t[4],prot:0};
+  save();
+  return t[1]+' '+t[2]+(t[4]?(' · +'+t[4]+' kcal estimadas'):' · lo apuntas tú');}
+function setDiaEspKcal(key,kcal){
+  const k=foodKey(key)||key,d=diasEspS();
+  if(!d[k])return 'ese día no está marcado';
+  d[k].kcal=Math.max(0,Math.min(6000,Math.round(+kcal||0)));
+  save();return d[k].kcal?('puestas '+d[k].kcal+' kcal'):'sin kcal';}
+function kcalExtraDe(key){const e=diaEspDe(key);return e?(+e.kcal||0):0;}
+function diaEspCardHTML(sel){
+  /* la fila de los tres botones, en Comer → Hoy. Y si ese día es guardia, se dice, que es cuando
+     de verdad hace falta. */
+  const e=diaEspDe(sel),inf=dayInfo(sel),sh=inf&&inf.shiftId?shiftById(inf.shiftId):null;
+  const esGuardia=!!(sh&&isGuardia(sh));
+  const t=e?diaEspTipo(e.tipo):null;
+  return '<div class="card diaesp"><h2>¿Este día se sale del plan?</h2>'+
+    (esGuardia&&!e
+      ?'<p class="mini" style="margin:0 0 8px;color:var(--warn)">Ese día tienes guardia: si comes del menú del hospital, márcalo aquí y la cuenta del día deja de dar por comido lo que había planeado.</p>'
+      :'')+
+    '<div class="row">'+DIA_TIPOS.map(function(x){
+      const on=!!(e&&e.tipo===x[0]);
+      return '<button class="btn s'+(on?' p':'')+'" data-a="dia-esp" data-t="'+x[0]+'">'+x[1]+' '+esc(x[2])+'</button>';}).join('')+
+    '</div>'+
+    (t?('<p class="mini" style="margin:9px 0 0">'+esc(t[3])+'</p>'+
+      (t[4]?('<div class="row" style="margin-top:8px;align-items:flex-end">'+
+        '<label class="fld" style="flex:0 0 130px">kcal de ese día'+
+          '<input type="number" min="0" max="6000" step="50" value="'+(+e.kcal||0)+'" data-a="dia-esp-kcal"></label>'+
+        '<span class="mini">es una estimación mía, no una medida</span></div>'):''))
+      :'')+
+    '</div>';}
+function actividadTxt(){
+  const a=+perfilS().actividad||1.5;
+  for(let i=0;i<ACTIVIDADES.length;i++)if(Math.abs(ACTIVIDADES[i][0]-a)<0.05)return ACTIVIDADES[i][1];
+  return 'actividad media';}
+function kcalFaltaTxt(){
+  /* qué le falta al perfil para poder calcular. Decirlo es mejor que enseñar un cero. */
+  const p=perfilS(),falta=[];
+  if(!(+p.pesoKg))falta.push('tu peso');
+  if(!(+p.alturaCm))falta.push('tu altura');
+  if(!edadHoy())falta.push('tu fecha de nacimiento');
+  return falta.length?('Me falta '+falta.join(', ')+' para calcularlo.'):'';}
+function kcalCardHTML(){
+  const falta=kcalFaltaTxt();
+  const b=metabolismoBasal(),g=gastoDiario(),k=kcalSugeridas(),pr=proteinaSugerida();
+  const p=perfilS(),ob=food().objetivo||{};
+  const puesto=(+ob.kcal===k&&+ob.prot===pr&&k>0);
+  const META_TXT={perder:'perder grasa manteniendo músculo',mantener:'mantenerte',ganar:'ganar músculo'};
+  return '<div class="card"><h2>Las kcal que te tocan</h2>'+
+    (falta
+      ?('<div class="empty">'+esc(falta)+'</div>')
+      :('<div class="kpis compact">'+
+          '<div><b>'+b+'</b><span>en reposo</span></div>'+
+          '<div><b>'+g+'</b><span>gastas al día</span></div>'+
+          '<div><b>'+k+'</b><span>para '+esc((META_TXT[p.meta]||'mantenerte').split(' ')[0])+'</span></div>'+
+        '</div>'+
+        '<p class="mini" style="margin:9px 0 0">Con '+fmtKg(p.pesoKg)+' kg, '+p.alturaCm+' cm y '+edadHoy()+
+          ' años gastas unas <b>'+g+' kcal</b> al día ('+esc(actividadTxt())+
+          '). Para '+esc(META_TXT[p.meta]||'mantenerte')+', <b>'+k+' kcal</b> y <b>'+pr+' g</b> de proteína.</p>'+
+        '<p class="mini" style="margin:6px 0 0;color:var(--ink2)">Sale de la fórmula de '+
+          'Mifflin-St Jeor. Es una <b>estimación</b>: el gasto de verdad no se calcula, se mide. '+
+          'Lo que la corrige es tu peso semana a semana, ahí abajo.</p>'+
+        '<div class="row" style="margin-top:10px">'+
+          (puesto
+            ?'<span class="mini" style="color:var(--ok);font-weight:700">✓ es lo que tienes puesto como objetivo</span>'
+            :'<button class="btn p" data-a="kcal-poner">poner '+k+' kcal y '+pr+' g como mi objetivo</button>')+
+        '</div>'))+
+    '<div class="row" style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">'+
+      '<label class="fld" style="flex:1 1 150px">naciste el'+
+        '<input type="date" value="'+esc(p.nacidoF||'')+'" data-a="perf-nacido"></label>'+
+      '<label class="fld" style="flex:1 1 170px">cómo te mueves'+
+        '<select data-a="perf-act">'+ACTIVIDADES.map(function(a){
+          return '<option value="'+a[0]+'"'+(Math.abs(a[0]-(+p.actividad||1.5))<0.01?' selected':'')+'>'+esc(a[1])+'</option>';}).join('')+
+        '</select></label>'+
+    '</div></div>';}
 function objetivoMacros(){
   /* la proteína la pones tú. El carbohidrato y la grasa, si no los has puesto, salen de repartir a
      partes iguales las kcal que quedan después de la proteína: es una referencia, no una pauta. */
@@ -4444,6 +4611,9 @@ function renderFoodDia(){
        consulta. Ahora es una línea de nueve puntos con su pantalla detrás. */
     /* los favoritos eran otra lista de accesos rápidos en la portada, y el buscador ya abre con lo
        que más apuntas —contado de tu historial, sin tener que marcar nada—. El ★ sigue en Mis productos. */
+    /* los días que se salen del plan: va JUSTO ANTES de lo apuntado, porque es lo primero que
+       explica por qué ese día no cuadra con el menú */
+    diaEspCardHTML(sel)+
     '<div class="card"><h2>Lo de este día <span class="mini">'+c.lista.length+' toma'+(c.lista.length===1?'':'s')+'</span></h2>'+
       '<div class="foodlog">'+gruposHtml+'</div></div>'+
     '<div class="card"><h2>La semana</h2>'+
@@ -5620,6 +5790,7 @@ function renderFoodPerfil(){
           ?'Así que el porridge y el yogur con avena cuentan como sin gluten. Cámbialo el día que compres otra marca.'
           :'Mientras no lo sea, la avena sale en ámbar: se cultiva y se muele con trigo.')+'</p>'):'')+
     '</div>'+
+    kcalCardHTML()+
     '<div class="card"><h2>Tu peso</h2>'+
       (t?('<div class="kpis compact">'+
           '<div><b>'+fmtKg(t.hoy)+'</b><span>último ('+esc(fechaCortaTxt(t.fecha))+')</span></div>'+
@@ -9784,6 +9955,17 @@ const DRAWER_GROUPS=[
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function render(){
+  /* EL CAMPO QUE SE ESTÁ EDITANDO HAY QUE SOLTARLO ANTES. renderNow() reemplaza #main.innerHTML
+     entero; si dentro hay un <input> con el foco, el navegador dispara su blur EN MEDIO del
+     reemplazo, ese blur vuelve a entrar aquí, y la segunda pasada se encuentra con un nodo que ya
+     no cuelga de donde colgaba: «NotFoundError … The node to be removed is no longer a child».
+     El usuario ve «Se ha roto esta vista» por haber escrito un número y pulsar fuera. Pasaba con
+     cualquier campo que guarde y repinte desde el listener de change. */
+  try{
+    const a=document.activeElement;
+    const m=$('#main');
+    if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
+  }catch(e0){}
   try{renderNow();}catch(e){
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
@@ -10097,6 +10279,11 @@ function act(a,el){
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'dia-esp':flash(marcarDiaEsp(diaComer(),el.dataset.t));render();break;
+    case 'kcal-poner':{const f=food();
+      f.objetivo.kcal=kcalSugeridas();f.objetivo.prot=proteinaSugerida();
+      save();render();
+      flash('objetivo: '+f.objetivo.kcal+' kcal y '+f.objetivo.prot+' g de proteína');break;}
     case 'tk-leer':{const ta=document.getElementById('tkTxt');
       const t=ui.ticket||(ui.ticket={});
       t.txt=ta?ta.value:(t.txt||'');
@@ -12276,6 +12463,10 @@ document.addEventListener('change',e=>{
       ui.semDesde=iso(d)===iso(new Date())?'':iso(d);render();}break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
     case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
+    /* los tres de abajo son <input>/<select>: puestos en act() no se disparan nunca */
+    case 'dia-esp-kcal':flash(setDiaEspKcal(diaComer(),el.value));render();break;
+    case 'perf-nacido':flash(setPerfil('nacidoF',el.value));break;
+    case 'perf-act':flash(setPerfil('actividad',el.value));break;
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
     case 'rot-anchor':{if(el.value){store.rotation.anchor=el.value;store.rotation.anchorSet=true;save();render();}break;}
     case 'est-file':{const f=el.files&&el.files[0];if(!f)break;
@@ -12619,6 +12810,8 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
+  edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
+  diasEspS,diaEspDe,marcarDiaEsp,setDiaEspKcal,kcalExtraDe,DIA_TIPOS,diaComer,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,
   nombreCorto,hCorta,
