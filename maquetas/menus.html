@@ -1,0 +1,122 @@
+<!doctype html><html lang="es"><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.row{display:flex;gap:8px;align-items:center}
+h3{margin:0 0 6px;font-size:14px}
+.tit{font-size:10px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 0 8px}
+.s1{--s:#3987e5}.s2{--s:#d95926}.s3{--s:#199e70}
+.chipx{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;margin:4px 3px 0 0}
+.chipx.on{background:var(--brand);color:#12081a;border-color:var(--brand)}
+/* rejilla semana base */
+.sb{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:8px}
+.sb .bw{height:70px;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;position:relative}
+.sb .bw i{display:block;background:var(--brand2);border-radius:4px 4px 0 0}
+.sb .bw b{font-size:8.5px;text-align:center;color:var(--ink);margin-bottom:2px}
+.sb .obj{grid-column:1/-1;height:0;border-top:1.5px dashed var(--ink2);opacity:.7;margin-top:-52px;margin-bottom:50px;position:relative}
+.sb .obj span{position:absolute;left:0;top:-12px;font-size:8.5px;color:var(--ink2);font-weight:800}
+.sb .m.k{font-size:8px}
+.sb .h{font-size:9.5px;font-weight:800;color:var(--ink2);text-align:center;padding:3px 0}
+.sb .h.hoy{color:var(--ink)}
+.sb .m{grid-column:1/-1;font-size:9px;font-weight:800;color:var(--ink2);letter-spacing:.1em;margin-top:4px}
+.sb .c{background:var(--bg2);border-radius:6px;border-left:3px solid var(--s);padding:4px 2px 4px 3px;min-height:46px;font-size:8.5px;hyphens:auto;-webkit-hyphens:auto;line-height:1.15;font-weight:700;color:var(--ink)}
+.sb .c i{display:block;font-style:normal;font-size:15px;margin-bottom:2px}
+.sb .c.vacio{border-left-color:var(--line);color:var(--ink2);display:grid;place-items:center;font-size:14px}
+.ley{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--ink2);font-weight:700}
+.ley span{display:flex;gap:5px;align-items:center}.ley i{width:10px;height:10px;border-radius:3px;background:var(--s)}
+.kc{font-size:11px;color:var(--ink2)}
+/* timeline de cocina */
+.tl{display:grid;grid-template-columns:104px repeat(7,1fr);gap:0;margin-top:6px;font-size:10px}
+.tl .h{font-size:9.5px;font-weight:800;color:var(--ink2);text-align:center;padding-bottom:4px}
+.tl .n{font-weight:700;font-size:11px;padding:6px 4px 6px 0;border-top:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .d{border-top:1px dashed var(--line);position:relative;height:30px}
+.tl .d .bar{position:absolute;top:12px;height:6px;left:0;right:0;background:color-mix(in srgb,var(--s) 45%,transparent)}
+.tl .d .bar.ini{left:50%;border-radius:3px 0 0 3px}.tl .d .bar.fin{right:50%;border-radius:0 3px 3px 0}
+.tl .d .ck{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:18px;height:18px;border-radius:5px;background:var(--s);display:grid;place-items:center;font-size:10px;box-shadow:0 0 0 2px var(--card)}
+.tl .d .eat{position:absolute;left:50%;top:9px;transform:translateX(-50%);min-width:13px;height:13px;border-radius:7px;background:var(--card);border:2px solid var(--s);font-size:8.5px;font-weight:900;display:grid;place-items:center;padding:0 2px}
+.tl .d .eat.mal{border-color:#fb7185;color:#fb7185}
+.ses{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+.ses:first-of-type{border-top:0}.ses .sq{width:30px;height:30px;border-radius:9px;background:var(--s);display:grid;place-items:center;font-size:15px}
+.ses .t{flex:1}.ses .t b{display:block;font-size:13.5px}.ses .t span{font-size:11px;color:var(--ink2)}
+.aviso{font-size:11.5px;border-left:3px solid #fb7185;padding:3px 0 3px 8px;margin-top:8px;color:var(--ink)}
+/* selector */
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 0 0;padding:12px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.srch{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:14px}
+.op{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.op .e{font-size:22px;width:30px;text-align:center}.op .t{flex:1;min-width:0}.op .t b{display:block;font-size:14px}
+.op .t span{display:block;font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op .k{text-align:right;font-size:11px;color:var(--ink2)}.op .k b{display:block;font-size:13.5px;color:var(--ink)}
+.cabe{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:6px;background:#34d39922;color:#34d399;border:1px solid #34d39955}
+.op.on{background:color-mix(in srgb,var(--brand) 12%,transparent);border-radius:10px;padding-left:6px;padding-right:6px}
+.cub{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden;display:flex;margin-top:8px}
+.cub i{display:block;height:100%}
+</style><body>
+
+<div class="wrap" id="semana">
+<div class="tit">1 · SEMANA BASE · LO QUE COMES DE NORMAL</div>
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Comer</button><b style="font-size:17px">Semana base</b><span class="sp"></span><span class="mini">L–D</span></div>
+<div class="card">
+<div class="row"><b style="font-size:13px">kcal por día</b><span class="sp"></span><span class="kc">objetivo 2 100 · media <b style="color:var(--ink)">2 040</b></span></div>
+
+<div class="sb">
+ <span class="bw"><b></b><i style="height:47px"></i></span><span class="bw"><b></b><i style="height:48px"></i></span><span class="bw"><b></b><i style="height:46px"></i></span><span class="bw"><b></b><i style="height:49px"></i></span><span class="bw"><b></b><i style="height:45px"></i></span><span class="bw"><b>2 410</b><i style="height:58px"></i></span><span class="bw"><b></b><i style="height:48px"></i></span><span class="obj"><span>objetivo 2 100</span></span>
+ <span class="h hoy">LUN</span><span class="h">MAR</span><span class="h">MIÉ</span><span class="h">JUE</span><span class="h">VIE</span><span class="h">SÁB</span><span class="h">DOM</span>
+ <span class="m">DESAYUNO</span>
+ <span class="c s3"><i>🥣</i>Porridge</span><span class="c s3"><i>🥣</i>Porridge</span><span class="c s3"><i>🍳</i>Tostada huevo</span><span class="c s3"><i>🥣</i>Porridge</span><span class="c s3"><i>🍳</i>Tostada huevo</span><span class="c s3"><i>🥞</i>Tortitas</span><span class="c s3"><i>🥞</i>Tortitas</span>
+ <span class="m">COMIDA</span>
+ <span class="c s1"><i>🍲</i>Lentejas</span><span class="c s1"><i>🍛</i>Pollo curry</span><span class="c s1"><i>🍲</i>Lentejas</span><span class="c s2"><i>🍚</i>Arroz caldoso</span><span class="c s1"><i>🍛</i>Pollo curry</span><span class="c vacio">+</span><span class="c s3"><i>🥘</i>Paella</span>
+ <span class="m">CENA</span>
+ <span class="c s3"><i>🐟</i>Salmón horno</span><span class="c s3"><i>🥗</i>Ensalada</span><span class="c s2"><i>🍚</i>Arroz caldoso</span><span class="c s3"><i>🍳</i>Tortilla</span><span class="c s2"><i>🍚</i>Arroz caldoso</span><span class="c s3"><i>🍔</i>Fuera</span><span class="c s3"><i>🥗</i>Ensalada</span>
+</div>
+<div class="ley"><span class="s1"><i></i>tanda del domingo</span><span class="s2"><i></i>tanda del miércoles</span><span class="s3"><i></i>se hace al momento</span></div>
+</div>
+<p class="mini" style="margin:8px 2px 0">Toca una casilla para cambiar el plato (buscador con kcal). El tipo de día —guardia, trabajo, libre— solo mueve la <b style="color:var(--ink)">hora</b> y si va en táper; <b style="color:var(--ink)">qué</b> comes sale de aquí.</p>
+<div class="row" style="margin-top:8px"><span class="chipx on">🛒 lo que falta, a la compra (12)</span><span class="chipx">🔪 cuándo cocinar</span><span class="chipx">✨ rellenar huecos</span></div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="cocinar">
+<div class="tit">2 · CUÁNDO COCINAR · SALE DE LA SEMANA BASE</div>
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Semana base</button><b style="font-size:17px">Cuándo cocinar</b></div>
+<div class="card">
+<div class="ses s1"><span class="sq">🔪</span><span class="t"><b>Domingo 18:00 · 1 h 40</b><span>Lentejas ×4 · Pollo al curry ×4 · 8 táperes</span></span></div>
+<div class="ses s2"><span class="sq">🔪</span><span class="t"><b>Miércoles 19:00 · 45 min</b><span>Arroz caldoso ×3 · 3 táperes</span></span></div>
+</div>
+<div class="card" style="margin-top:8px"><h3>De la olla al plato</h3>
+<div class="tl">
+ <span></span><span class="h">D</span><span class="h">L</span><span class="h">M</span><span class="h">X</span><span class="h">J</span><span class="h">V</span><span class="h">S</span>
+ <span class="n s1">🍲 Lentejas</span><span class="d s1"><span class="bar ini"></span><span class="ck">🔪</span></span><span class="d s1"><span class="bar"></span><span class="eat">1</span></span><span class="d s1"><span class="bar"></span></span><span class="d s1"><span class="bar fin"></span><span class="eat">1</span></span><span class="d"></span><span class="d"></span><span class="d"></span>
+ <span class="n s1">🍛 Pollo curry</span><span class="d s1"><span class="bar ini"></span><span class="ck">🔪</span></span><span class="d s1"><span class="bar"></span></span><span class="d s1"><span class="bar"></span><span class="eat">1</span></span><span class="d s1"><span class="bar"></span></span><span class="d s1"><span class="bar"></span></span><span class="d s1"><span class="bar fin"></span><span class="eat mal">1</span></span><span class="d"></span>
+ <span class="n s2">🍚 Arroz caldoso</span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d s2"><span class="bar ini"></span><span class="ck">🔪</span><span class="eat" style="left:78%">1</span></span><span class="d s2"><span class="bar"></span><span class="eat">1</span></span><span class="d s2"><span class="bar fin"></span><span class="eat">1</span></span><span class="d"></span>
+</div>
+<div class="ley"><span><b style="font-size:11px">🔪</b>se cocina</span><span><span class="eat" style="position:static;transform:none;width:13px;height:13px;border:2px solid var(--ink2);border-radius:7px;display:inline-block"></span>se come (raciones)</span><span style="color:#fb7185">● más de 4 días en la nevera</span></div>
+<div class="aviso">El pollo al curry del viernes lleva <b>5 días</b> en la nevera. <b style="color:var(--brand)">Congela 1 táper el domingo</b> o muévelo al miércoles.</div>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="selector">
+<div class="tit">3 · ELEGIR LA COMIDA DE UNA TOMA (SUSTITUYE A LA LISTA NATIVA)</div>
+<div class="sheet">
+<div class="grab"></div>
+<div class="row"><b style="font-size:15px">Desayuno antes de salir</b><span class="sp"></span><span class="mini">07:00 · hueco <b style="color:var(--ink)">700 kcal</b></span></div>
+<div class="srch" style="margin-top:8px">🔍 <span class="mini" style="font-size:14px">busca comida o plato…</span></div>
+<div><span class="chipx on">Desayunos · 5</span><span class="chipx">Comidas</span><span class="chipx">Cenas</span><span class="chipx">Todo</span><span class="chipx">Platos sueltos</span></div>
+<div class="op on"><span class="e">🍱</span><span class="t"><b>Desayuno rápido de diario</b><span>café + fruta y frutos secos + whey + leche de proteínas</span></span><span class="k"><b>703</b>58 g P</span><span class="cabe">✓</span></div>
+<div class="op"><span class="e">🍱</span><span class="t"><b>Desayuno tranquilo</b><span>tostada con huevo + yogur griego + café</span></span><span class="k"><b>540</b>32 g P</span><span class="cabe">cabe</span></div>
+<div class="op"><span class="e">🍱</span><span class="t"><b>Desayuno pre-entreno</b><span>porridge + plátano + café</span></span><span class="k"><b>620</b>28 g P</span><span class="cabe">cabe</span></div>
+<div class="op"><span class="e">🍱</span><span class="t"><b>Desayuno de guardia</b><span>sin cocinar · bocadillo + batido</span></span><span class="k"><b>780</b>45 g P</span><span class="mini">+80</span></div>
+<div class="op" style="border:0"><span class="e">➕</span><span class="t"><b>Crear comida nueva</b><span>eliges platos con el buscador y se guarda para reutilizarla</span></span></div>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="compra">
+<div class="tit">4 · COMPRA ⇄ MENÚ</div>
+<div class="card">
+<h3>¿Qué semana sale de lo que tienes?</h3>
+<div class="mini">nevera + lo marcado en la lista de la compra</div>
+<div class="cub" aria-label="17 de 21 comidas cubiertas"><i style="width:81%;background:var(--brand2)"></i></div>
+<div class="row" style="margin-top:6px"><b style="font-size:20px">17</b><span class="mini">de 21 comidas de la semana base ya tienen todo · faltan 4</span></div>
+<div class="op"><span class="e">🍚</span><span class="t"><b>Arroz caldoso</b><span>falta: muslo de pollo 700 g, caldo 1 brick</span></span><span class="chipx" style="margin:0">+ compra</span></div>
+<div class="op" style="border:0"><span class="e">🥘</span><span class="t"><b>Paella</b><span>falta: gambas 300 g</span></span><span class="chipx" style="margin:0">cambiar plato</span></div>
+<button class="btn p" style="width:100%;margin-top:10px;padding:10px">🗓 montar la semana con lo que tengo</button>
+<p class="mini" style="margin:8px 0 0">Y al revés: en la semana base, «lo que falta, a la compra» mete solo lo que no tienes, sumado por alimento.</p>
+</div>
+</div>

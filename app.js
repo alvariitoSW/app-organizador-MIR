@@ -21,7 +21,7 @@ function tlColor(k){const c=((store.franja||{}).colores||{})[k];
   if(c)return c;
   for(let i=0;i<TLCAT.length;i++)if(TLCAT[i][0]===k)return TLCAT[i][2];
   return '#888888';}
-function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf(h)>=0?h:24;}
+function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf(h)>=0?h:12;}
 /* CUÁNTO OCUPA EL CARRIL EN LA PANTALLA. Estaba a pelo en el código (430 px en «Hoy», 360 en la
    rejilla de la semana) y era justo lo que había que tocar para que la semana no pidiera tres
    pantallas de scroll. Ahora se elige en Ajustes → Cómo se ve. */
@@ -87,7 +87,7 @@ function DEFAULTS(){return {
   /* la comida principal va cuando toca según el día, no a una hora fija del tipo de día */
   comidas:{conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30},
   tema:{brand:'',brand2:'',ink:''},
-  franja:{horas:24,alto:'medio',colores:{}},
+  franja:{horas:12,alto:'medio',colores:{}},
   lector:{proxy:'',publico:false},
   usda:{key:''},
   sitio:'lpa',sitios:[],
@@ -278,7 +278,8 @@ function avisarBackupSiToca(){
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
-let store, ui={tab:'hoy',calMode:'hoy',drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
+let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que quiere ver al entrar */
+  drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
@@ -364,7 +365,7 @@ function aplicarTema(){
 function ponerTema(id){
   const pre=temaById(id);if(!pre)return 'ese tema no existe';
   store.tema={brand:'',brand2:'',ink:'',preset:pre.id};
-  if(!store.franja)store.franja={horas:24};
+  if(!store.franja)store.franja={horas:12};
   store.franja.colores=Object.assign({},pre.f);
   const osc=pre.modo==='dark';
   document.documentElement.classList.toggle('dark',osc);
@@ -408,7 +409,12 @@ function normalize(o){
     items:(Array.isArray(l.items)?l.items:[]).map(function(x){return String(x||'').trim().slice(0,90);}).filter(Boolean)}:null;})
     .filter(Boolean);
   if(!o.franja||typeof o.franja!=='object')o.franja={};
-  o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
+  o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:12;
+  /* DOCE HORAS A LA VISTA. Con 24 en la caja cada hora medía ~18 px: todo apretado, y una marca de
+     media hora («salir de casa») se desplazaba casi una hora para no pisar la de arriba. Las 24 se
+     ponían solas por defecto, así que se pasa a 12 UNA vez; si lo eliges tú en Ajustes, se respeta. */
+  if(!o.franja.elegido&&o.franja.horas===24&&!o.franja.horasV)o.franja.horas=12;
+  o.franja.horasV=1;o.franja.elegido=!!o.franja.elegido;
   /* sin esta línea el alto elegido se perdía al recargar: normalize() tira lo que no reconoce */
   o.franja.alto=['bajo','medio','alto'].indexOf(String(o.franja.alto))>=0?String(o.franja.alto):'medio';
   /* el «lector de enlaces»: una función propia que va a buscar la descripción de un vídeo.
@@ -4214,17 +4220,29 @@ function carrilHTML(key,opt){
      15:20— se pintaban una encima de otra y solo se leía la de arriba. Cuando eso pasa, la de abajo
      baja lo justo para no taparla: pierde un par de minutos de sitio y se gana poder leerla. */
   let finoFin=-1e6;
+  /* DOS BLOQUES LARGOS A LA VEZ (la sesión UMI de 8:00 a 8:39 dentro de la jornada de 8 a 15):
+     los dos ocupaban todo el ancho y el que se pintaba después tapaba al otro, que no se podía
+     tocar. El más corto se va a la columna de la derecha, por encima, como las marcas finas. */
+  const encima=bl.map(function(b,i){
+    if(b.fino)return false;
+    return bl.some(function(o,j){
+      if(o===b||o.fino||!(o.de<b.a&&b.de<o.a))return false;
+      const lb=b.a-b.de,lo=o.a-o.de;
+      return lo>lb||(lo===lb&&j<i);});});
   const cuerpo=bl.map(function(b,i){
     const h=Math.max(b.fino?20:26,y(b.a)-y(b.de));
     let top=y(b.de);
-    if(b.fino){if(top<finoFin+2)top=finoFin+2;finoFin=top+h;}
+    /* la columna derecha la comparten las marcas finas y los bloques «encima»: ninguno pisa al de arriba */
+    if(b.fino||encima[i]){if(top<finoFin+2)top=finoFin+2;finoFin=top+h;}
     const est='top:'+top+'px;height:'+h+'px;--c:'+tlColor(b.cat);
     const dat=b.ir?(' data-a="'+esc(b.ir)+'"'+(b.irV?(' data-t="'+esc(b.irV)+'" data-v="'+esc(b.irV)+'"'):'')):'';
     /* el texto va pegado al borde de arriba del bloque: un bloque largo (la jornada, la guardia)
        empieza fuera de la caja al abrirse por donde estás, y el nombre se quedaba sin verse
        arriba del scroll. Así siempre se lee de qué es el bloque. */
-    return '<button class="cb'+(b.fino?' fino':'')+'" style="'+est+'"'+dat+'>'+
-      '<span class="cbt"><b>'+esc(b.tit)+'</b>'+
+    /* las marcas finas dicen SU hora: para no pisarse pueden bajar un poco, y sin la hora escrita
+       «salir de casa» parecía ser a las 08:10 */
+    return '<button class="cb'+(b.fino?' fino':'')+(encima[i]?' encima':'')+'" style="'+est+'"'+dat+'>'+
+      '<span class="cbt"><b>'+((b.fino||encima[i])?('<i class="cbh">'+hm(b.de)+'</i> '):'')+esc(b.tit)+'</b>'+
       (b.sub&&h>=34?('<span>'+esc(b.sub)+'</span>'):'')+'</span></button>';}).join('');
   const hoy=isToday(key),ahora=new Date();
   const nm=hoy?(ahora.getHours()*60+ahora.getMinutes()):null;
@@ -15047,7 +15065,7 @@ document.addEventListener('change',e=>{
       ui.imp.imagenes=(fs&&fs.length)?Array.prototype.slice.call(fs):null;
       ui.imp.estado='';ui.imp.msg='';render();break;}
     case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
-      store.franja.horas=+el.value||24;save();render();break;}
+      store.franja.horas=+el.value||12;store.franja.elegido=true;save();render();break;}
     case 'franja-alto':{if(!store.franja)store.franja={colores:{}};
       store.franja.alto=el.value||'medio';save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};

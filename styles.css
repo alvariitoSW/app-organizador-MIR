@@ -1712,6 +1712,14 @@ ul.slots{list-style:none;margin:0;padding:0}
   text-overflow:ellipsis;white-space:nowrap;text-align:left}
 /* las comidas son marcas de hora, no bloques que se coman la mañana: van finas y a la derecha */
 .carril .cb.fino{left:auto;width:58%;border-radius:7px}
+/* LAS MARCAS FINAS VAN ENCIMA. La jornada (08–15) ocupa todo el ancho y se pintaba DESPUÉS que
+   «salir de casa» (07:30), así que la tapaba y el toque se lo llevaba el trabajo: no había forma de
+   abrir «salir de casa». Las marcas quedan por encima, con fondo opaco para que se lean sobre el
+   bloque largo, y el nombre del bloque largo se queda en su franja izquierda, que es la que se
+   ve y se toca. */
+.carril .cb.fino{z-index:2;background:color-mix(in srgb,var(--c) 22%,var(--bg2))}
+.carril .cb.fino:hover{background:color-mix(in srgb,var(--c) 32%,var(--bg2))}
+.carril .cb:not(.fino) .cbt{max-width:42%}
 .carril .cb.fino .cbt{padding:3px 8px}
 .carril .cb.fino b{font-size:11px}
 /* dónde estás ahora mismo */
@@ -1900,3 +1908,10 @@ details.cocm[open]>summary.cocmh::after{content:'▴'}
 .lcompra .secpick{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 10px;list-style:none;
   border-top:1px dashed var(--line)}
 .lcompra .secpick .btn{font-size:11.5px;padding:5px 9px}
+/* la hora de cada marca fina, delante de su nombre */
+.carril .cb .cbh{font-style:normal;font-variant-numeric:tabular-nums;color:var(--c);font-weight:800;margin-right:2px}
+/* la primera hora del carril salía cortada por arriba («06» se leía «00») */
+.carril .ch:first-child span{top:1px}
+/* el bloque largo más corto de dos que se solapan: a la derecha y por encima, como una marca fina */
+.carril .cb.encima{left:auto;width:58%;z-index:2;background:color-mix(in srgb,var(--c) 22%,var(--bg2))}
+.carril .cb.encima .cbt{max-width:none}
