@@ -855,12 +855,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 25) "Hoy" enseña el día como CARRIL de horas, con la línea de dónde estás ahora
   await gotoTab('hoy');
   await page.waitForTimeout(200);
-  const hoyBarra = await page.evaluate(() => ({
-    barra: !!document.querySelector('#main .carrilbox .carril'),
-    ahora: !!document.querySelector('#main .carril .cnow'),
-  }));
-  check('"Hoy" enseña el día como carril de horas, con la línea de ahora',
-    hoyBarra.barra && hoyBarra.ahora, JSON.stringify(hoyBarra));
+  // la línea de «ahora» solo se pinta dentro del rango del carril: pasada la última cosa del día
+  // (de noche) no hay línea, y la prueba fallaba según a qué hora se pasara. Se compara con lo que
+  // TOCA a esta hora, calculado aparte.
+  const hoyBarra = await page.evaluate(() => { const P = window.PG, k = P.fechaHoy(), d = new Date();
+    const n = d.getHours() * 60 + d.getMinutes(), r = P.rangoCarril(P.bloquesDelDia(k));
+    return { barra: !!document.querySelector('#main .carrilbox .carril'),
+      ahora: !!document.querySelector('#main .carril .cnow'), toca: n >= r.de && n <= r.a }; });
+  check('"Hoy" enseña el día como carril de horas, con la línea de ahora cuando cae dentro del día',
+    hoyBarra.barra && hoyBarra.ahora === hoyBarra.toca, JSON.stringify(hoyBarra));
 
   // 26) en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h
   // sustituye a la línea de texto densa que había antes
@@ -5303,7 +5306,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const bl = P.bloquesDelDia(k);
       const cbs = [...document.querySelectorAll('#main .carril .cb')];
       const ses = bl.filter((b) => /Sesión de prueba/.test(b.tit))[0];
-      const trab = bl.filter((b) => /Trabajo/.test(b.tit))[0];
+      // sin distinguir mayúsculas: entre semana sale de la jornada («Trabajo · rotación») y en fin
+      // de semana del tipo de día («Día de trabajo»), y con /Trabajo/ la prueba fallaba en sábado
+      const trab = bl.filter((b) => /trabajo/i.test(b.tit))[0];
       return { n: bl.length,
         ordenadas: bl.every((b, i) => i === 0 || b.de >= bl[i - 1].de),
         // el evento dura lo que dura: 08:00–08:39 son 39 minutos, no una fila de altura fija
@@ -6189,6 +6194,32 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       hosp.kcal === kcal0 && hosp.plan === 0 && hosp.esp.tipo === 'hospital' &&
       hosp.persiste && hosp.persiste.tipo === 'hospital',
       JSON.stringify({ kcal0, conMoncheo, editado, viva, hosp }));
+
+    // «he comido fuera» (950 kcal estimadas) y DESPUÉS apuntar lo que fue de verdad: el día
+    // contaba las dos cosas, 950 inventadas + el menú apuntado. La estimación tiene que dejar
+    // de sumar en cuanto hay algo de «comer fuera» apuntado ese día.
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+    await page.waitForTimeout(250);
+    await page.click('[data-a="dia-esp"][data-t="fuera"]');
+    await page.waitForTimeout(300);
+    const conFuera = await page.evaluate(() => window.PG.foodTotals(window.PG.diaComer()).kcal);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'buscar'; P.render(); });
+    await page.fill('#fbQ', 'big mac');
+    await page.waitForTimeout(500);
+    const bigmac = await page.$('#main .hit [data-a="food-rapido"][data-v="fuera:mcd:bigmac"]');
+    if (bigmac) await bigmac.click();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.foodBusca = ''; P.render(); });
+    await page.waitForTimeout(250);
+    const trasApuntar = await page.evaluate(() => ({
+      kcal: window.PG.foodTotals(window.PG.diaComer()).kcal,
+      dice: /la estimación ya no suma/.test(document.getElementById('main').innerText) }));
+    check('marcar «he comido fuera» y luego apuntar lo que comiste no cuenta las kcal dos veces',
+      !!bigmac && conFuera - kcal0 === 950 && trasApuntar.kcal - kcal0 === 508 && trasApuntar.dice,
+      JSON.stringify({ kcal0, conFuera, trasApuntar, bigmac: !!bigmac }));
+    await page.evaluate(() => { const P = window.PG;
+      Object.keys(P.food().log).forEach((k) => { P.food().log[k] = P.food().log[k].filter((x) => !x.fuera); });
+      P.food().diasEsp = {}; P.save(); P.render(); });
 
     // el fallo que sacó todo esto: escribir en un campo y que el repintado lo desmonte
     // mientras tiene el foco tiraba la vista entera con «Se ha roto esta vista». Le pasaba

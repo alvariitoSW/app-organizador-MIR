@@ -5681,7 +5681,16 @@ function setDiaEspKcal(key,kcal){
   if(!d[k])return 'ese día no está marcado';
   d[k].kcal=Math.max(0,Math.min(6000,Math.round(+kcal||0)));
   save();return d[k].kcal?('puestas '+d[k].kcal+' kcal'):'sin kcal';}
-function kcalExtraDe(key){const e=diaEspDe(key);return e?(+e.kcal||0):0;}
+function fueraApuntadoKcal(key){
+  /* lo que ya has apuntado de «comer fuera» ese día (una cadena, una tapa, un menú del día) */
+  return foodLog(foodKey(key)||key).reduce(function(a,t){return a+(t&&t.fuera?(+t.kcal||0):0);},0);}
+function kcalExtraDe(key){
+  const e=diaEspDe(key);if(!e)return 0;
+  /* «he comido fuera» es una ESTIMACIÓN para cuando no apuntas qué fue. En cuanto apuntas lo que
+     comiste de verdad (el menú de McDonald's, las bravas), la estimación deja de sumar: si no, ese
+     día contaba 950 kcal inventadas MÁS lo apuntado */
+  if(e.tipo==='fuera'&&fueraApuntadoKcal(key)>0)return 0;
+  return +e.kcal||0;}
 function diaEspCardHTML(sel){
   /* la fila de los tres botones, en Comer → Hoy. Y si ese día es guardia, se dice, que es cuando
      de verdad hace falta. */
@@ -5697,7 +5706,9 @@ function diaEspCardHTML(sel){
       return '<button class="btn s'+(on?' p':'')+'" data-a="dia-esp" data-t="'+x[0]+'">'+x[1]+' '+esc(x[2])+'</button>';}).join('')+
     '</div>'+
     (t?('<p class="mini" style="margin:9px 0 0">'+esc(t[3])+'</p>'+
-      (t[4]?('<div class="row" style="margin-top:8px;align-items:flex-end">'+
+      (t[4]&&e.tipo==='fuera'&&fueraApuntadoKcal(sel)>0?('<p class="mini" style="margin:6px 0 0">Ya has apuntado '+
+        Math.round(fueraApuntadoKcal(sel))+' kcal de lo que comiste fuera: la estimación ya no suma.</p>'):
+      t[4]?('<div class="row" style="margin-top:8px;align-items:flex-end">'+
         '<label class="fld" style="flex:0 0 130px">kcal de ese día'+
           '<input type="number" min="0" max="6000" step="50" value="'+(+e.kcal||0)+'" data-a="dia-esp-kcal"></label>'+
         /* LO QUE SUELE SER PARA TI. Antes el número de partida (950 el menú del día, 600 el
