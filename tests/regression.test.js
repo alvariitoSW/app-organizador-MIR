@@ -7041,6 +7041,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // Había DOS números para «lo que tardas del trabajo a casa»: trayectoMin(), que salía
+  // de las horas salir→llegar del tipo de día de guardia, y viaje.min de Ajustes → Ir y
+  // volver. Cambiabas uno y el otro seguía igual, y la siesta del saliente se calculaba
+  // con el primero: tocar el de Ajustes no la movía.
+  // ===================================================================================
+  {
+    const uno = await page.evaluate(() => { const P = window.PG, S = P.store;
+      const vGuard = JSON.parse(JSON.stringify(S.rotation.viaje || {}));
+      const rhGuard = JSON.parse(JSON.stringify(S.rhythm['sh-g'] || {}));
+      S.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      // las horas del tipo de día de guardia dicen OTRA cosa (45 min), a propósito
+      S.rhythm['sh-g'] = Object.assign({}, S.rhythm['sh-g'], { leave: '08:00', arrive: '08:45' });
+      S.rotation.mode = 'date'; S.rotation.anchorSet = true;
+      const G = S.shifts.filter(P.isGuardia)[0];
+      // un día de guardia y el siguiente, que es el saliente: ahí es donde se ve la siesta
+      const k = P.diaLaborableCerca();
+      P.setDayOverride(k, G.id, 'umi');
+      const sig = P.nextIso(k);
+      P.save();
+      const conAjuste = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      // apagado, se vuelve a las horas del tipo de día (45 min): la reserva sigue ahí
+      S.rotation.viaje.on = false; P.save();
+      const apagado = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      // y cambiar el de Ajustes SÍ mueve la siesta, que es lo que antes no pasaba
+      S.rotation.viaje.on = true; S.rotation.viaje.min = 50; P.save();
+      const cambiado = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      S.rotation.viaje = vGuard; S.rhythm['sh-g'] = rhGuard;
+      P.setDayOverride(k, null); P.save(); P.render();
+      return { conAjuste, apagado, cambiado }; });
+    check('lo que tardas del trabajo a casa sale de un solo sitio, y mueve la siesta del saliente',
+      uno.conAjuste.trayecto === 20 && uno.apagado.trayecto === 45 &&
+      uno.cambiado.trayecto === 50 &&
+      !!uno.conAjuste.siesta && uno.cambiado.siesta !== uno.conAjuste.siesta &&
+      uno.apagado.siesta !== uno.conAjuste.siesta,
+      JSON.stringify(uno));
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

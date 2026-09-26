@@ -97,7 +97,8 @@ Lo que decide las horas, y que no hay que programar:
 
 - **Ir y volver** (*Ajustes → Ir y volver*): a qué hora pasa el bus, cuántos minutos quieres estar
   antes en la parada y lo que tardas. De ahí sale «salir de casa 07:31 · bus 07:35» y la hora a la
-  que llegas de vuelta.
+  que llegas de vuelta. Esos minutos valen **también para volver de la guardia**: la siesta del
+  saliente empieza al llegar a casa. Es un solo número, no dos.
 - **La comida no cae dentro de la jornada.** Con jornada de 8 a 15 la comida es al llegar a casa
   (15:20), no a las 14:00. Y la **comida post-entreno** solo manda si el entreno acaba después de tu
   hora normal de comer: entrenando a las 6:30 la comida vuelve a ser al salir del trabajo.
