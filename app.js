@@ -563,6 +563,8 @@ function normalize(o){
   /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
      aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
      Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
+  /* el descanso entre series: lo mismo. 0 es válido —apaga el cronómetro—, así que no vale el >0 */
+  o.gym.descansoSeg=(+o.gym.descansoSeg>=0&&+o.gym.descansoSeg<=600)?Math.round(+o.gym.descansoSeg):90;
   /* los objetivos: sin registrarlos aquí se perderían al recargar, como todo lo que normalize()
      no conoce. Se valida el tipo y el número, y se tira lo que no cuadre. */
   if(!Array.isArray(o.gym.objetivos))o.gym.objetivos=[];
@@ -8301,6 +8303,15 @@ function renderSegundoCard(c,g){
     '<p class="mini" style="margin-top:9px">para el '+DAYN[(d.getDay()+6)%7]+' '+d.getDate()+': '+
       (c.sg.on?('sí, '+(c.sg.tipo||'entreno')+' a las '+(c.sg.hora||'—')):(c.sg.porSemana?'ese día toca otra cosa':'sin segundo entreno'))+
       ' <button class="btn s" data-a="gym-seg-hoy" data-key="'+c.sel+'">cambiar</button></p>'+
+    /* EL CRONÓMETRO DEL DESCANSO ARRANCABA SIEMPRE A 90 s. descansoCfg() leía
+       store.gym.descansoSeg, que no lo escribía nadie: el ajuste existía en el código y no había
+       forma de llegar a él. Aquí está. 0 apaga el cronómetro. */
+    '<div class="row" style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">'+
+      '<label class="fld" style="flex:0 0 190px">descanso entre series (s)'+
+        '<input type="number" min="0" max="600" step="15" value="'+descansoCfg()+'" data-a="gym-descanso"></label>'+
+      '<span class="mini" style="flex:1 1 200px">Es el que sale al apuntar una serie en la sesión, con su «+15 s» y su «saltar». '+
+        (descansoCfg()?'':'Ahora mismo está en 0: no sale cronómetro.')+'</span>'+
+    '</div>'+
     '</div>';}
 /* ===================== evolución: lo que se nota al tercer mes =====================
    Volumen semana a semana, descarga cuando toca, estancamiento por ejercicio con un cambio
@@ -15071,6 +15082,9 @@ document.addEventListener('change',e=>{
     case 'salto-to':{if(!store.rotation.saltoDia)store.rotation.saltoDia={from:6,to:1};
       store.rotation.saltoDia.to=Math.max(0,Math.min(6,+el.value));save();render();break;}
     case 'gym-hora':{gymS().hora=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';save();render();break;}
+    /* lo que le faltaba a descansoCfg(): alguien que escriba store.gym.descansoSeg */
+    case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
+      save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
     case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
     case 'ics-aviso-min':{store.rotation.icsAvisoMin=Math.max(0,Math.min(180,+el.value||30));save();render();break;}
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
@@ -15344,7 +15358,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   fuerzaEstimada,diasEntrenadosSemana,rachaConstancia,mejorCarrera,ritmoTxt,cuandoLlegasTxt,
   volumenPorMusculo,rutinaResumen,semanasAtras,fmtKg,
   progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
-  informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
+  informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,arrancaDescanso,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
