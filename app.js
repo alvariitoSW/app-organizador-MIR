@@ -22,6 +22,13 @@ function tlColor(k){const c=((store.franja||{}).colores||{})[k];
   for(let i=0;i<TLCAT.length;i++)if(TLCAT[i][0]===k)return TLCAT[i][2];
   return '#888888';}
 function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf(h)>=0?h:24;}
+/* CUÁNTO OCUPA EL CARRIL EN LA PANTALLA. Estaba a pelo en el código (430 px en «Hoy», 360 en la
+   rejilla de la semana) y era justo lo que había que tocar para que la semana no pidiera tres
+   pantallas de scroll. Ahora se elige en Ajustes → Cómo se ve. */
+const FRANJA_ALTOS={bajo:290,medio:370,alto:460};
+function franjaAlto(){const k=String((store.franja||{}).alto||'medio');
+  return FRANJA_ALTOS[k]||FRANJA_ALTOS.medio;}
+function franjaAltoSem(){return Math.max(220,franjaAlto()-40);}
 function mondayOf(d){const x=new Date(d.getTime());x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
 function addDays(d,n){const x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
 function iso(d){const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10);}
@@ -71,12 +78,16 @@ function DEFAULTS(){return {
              saltoDia:{from:6,to:1},
              servicios:['Rayos','Cardiología','Medicina Interna','Infecciosas','Neumología','UCRI','Neurología'],
              svcMeses:[1,1,1,1,1,1,1],
-             jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[]},
+             jornada:{start:'08:00',end:'15:00',workdays:[1,2,3,4,5],aplicaLibres:true},vacaciones:[],
+             /* ir y volver del trabajo: sin esto la app te ponía a comer en casa a las 14:00 un
+                día que trabajas hasta las 15:00, y te hacía aparecer en el hospital a la hora de
+                entrar sin contar el rato de llegar */
+             viaje:{min:20,bus:'07:35',antes:4,on:true}},
   sueno:{min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360},
   /* la comida principal va cuando toca según el día, no a una hora fija del tipo de día */
   comidas:{conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30},
   tema:{brand:'',brand2:'',ink:''},
-  franja:{horas:24,colores:{}},
+  franja:{horas:24,alto:'medio',colores:{}},
   lector:{proxy:'',publico:false},
   usda:{key:''},
   sitio:'lpa',sitios:[],
@@ -398,6 +409,8 @@ function normalize(o){
     .filter(Boolean);
   if(!o.franja||typeof o.franja!=='object')o.franja={};
   o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
+  /* sin esta línea el alto elegido se perdía al recargar: normalize() tira lo que no reconoce */
+  o.franja.alto=['bajo','medio','alto'].indexOf(String(o.franja.alto))>=0?String(o.franja.alto):'medio';
   /* el «lector de enlaces»: una función propia que va a buscar la descripción de un vídeo.
      Solo https, y solo lo que el usuario haya escrito a mano en Ajustes. */
   if(o.impPendiente&&typeof o.impPendiente==='object'){
@@ -457,6 +470,14 @@ function normalize(o){
   if(!o.food.objetivo||typeof o.food.objetivo!=='object')o.food.objetivo={kcal:0,prot:0};
   /* el perfil: sin registrarlo aquí se perdería al recargar, como todo lo que normalize() no conoce */
   if(!o.perfil||typeof o.perfil!=='object')o.perfil={};
+  /* ir y volver del trabajo */
+  if(!o.rotation.viaje||typeof o.rotation.viaje!=='object')
+    o.rotation.viaje=JSON.parse(JSON.stringify((d.rotation&&d.rotation.viaje)||{min:20,bus:'07:35',antes:4,on:true}));
+  {const v=o.rotation.viaje;
+   v.min=(+v.min>=0&&+v.min<=180)?Math.round(+v.min):20;
+   v.bus=/^\d{1,2}:\d{2}$/.test(String(v.bus||''))?v.bus:'';
+   v.antes=(+v.antes>=0&&+v.antes<=30)?Math.round(+v.antes):4;
+   v.on=v.on!==false;}
   o.perfil.celiaco=!!o.perfil.celiaco;
   /* la avena certificada: por defecto sí, que es lo que compra él */
   o.perfil.avenaSinGluten=o.perfil.avenaSinGluten!==false;
@@ -491,8 +512,23 @@ function normalize(o){
     ?o.food.neveraMano.filter(function(x){return typeof x==='string'&&x&&x.length<60;}).slice(0,300):[];
   o.food.ultimaCompra=/^\d{4}-\d{2}-\d{2}$/.test(String(o.food.ultimaCompra))?o.food.ultimaCompra:'';
   o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
+  /* EL PASILLO QUE LE HAS PUESTO TÚ A UN PRODUCTO. Sin esta línea se pierde al recargar:
+     normalize() tira todo lo que no reconoce. Solo se guardan claves de pasillo que existen. */
+  if(!o.food.pasillos||typeof o.food.pasillos!=='object')o.food.pasillos={};
+  else{const lim={},ok=COMPRA_SECS.map(function(x){return x[0];});
+    Object.keys(o.food.pasillos).slice(0,600).forEach(function(k){
+      const v=String(o.food.pasillos[k]||'');
+      if(k&&k.length<60&&ok.indexOf(v)>=0)lim[k]=v;});
+    o.food.pasillos=lim;}
   /* los días que se salen del plan: {YYYY-MM-DD:{tipo,kcal}}. Sin registrarlo aquí se pierde al
      recargar, como todo lo que normalize() no conoce. */
+  /* las kcal que SUELE tener para ti cada tipo de día raro. Sin registrarlas aquí se pierden al
+     recargar, como todo lo que normalize() no conoce. */
+  if(!o.food.kcalTipo||typeof o.food.kcalTipo!=='object')o.food.kcalTipo={};
+  else{const kt={};DIA_TIPOS.forEach(function(x){
+    const v=o.food.kcalTipo[x[0]];
+    if(typeof v==='number'&&v>=0&&v<=6000)kt[x[0]]=Math.round(v);});
+    o.food.kcalTipo=kt;}
   if(!o.food.diasEsp||typeof o.food.diasEsp!=='object')o.food.diasEsp={};
   else{const lim={};Object.keys(o.food.diasEsp).slice(0,800).forEach(function(k){
     const v=o.food.diasEsp[k];
@@ -950,6 +986,15 @@ function jornadaOf(dateStr,infOpt){
   const d=parseDate(dateStr);if(!d)return null;
   const inf=infOpt||dayInfo(dateStr);
   return jornadaEn(d.getDay(),inf.shiftId,!!dayOverride(dateStr));}
+function diaLaborableCerca(desdeOpt){
+  /* el primer día, de hoy en adelante, que es laborable de TU jornada. Lo usan las pruebas —y
+     cualquier cosa que necesite «un día con jornada»— para no depender de qué día se ejecuten:
+     en sábado no hay jornada de la que salir y media prueba del viaje caía por eso. */
+  const j=(store.rotation&&store.rotation.jornada)||{};
+  const wd=(j.workdays&&j.workdays.length)?j.workdays:[1,2,3,4,5];
+  let d=parseDate(desdeOpt||'')||new Date();
+  for(let i=0;i<8;i++){const x=addDays(d,i);if(wd.indexOf(x.getDay())>=0)return iso(x);}
+  return iso(d);}
 function baseWorkday(dateStr){
   /* si el hueco está vacío y es un laborable de tu jornada, el día es «Día de trabajo» con sus horas */
   const j=store.rotation&&store.rotation.jornada;if(!j||!j.start||!j.end)return null;
@@ -1220,6 +1265,29 @@ function esSaliente(sh){return !!sh&&/saliente|post ?-?guardia/i.test(String(sh.
        porque esa hora depende de a qué hora te relevaron.
    Antes era una lista de horas fijas por tipo de día, y por eso el mismo «Día de trabajo» decía
    siempre 14:30 entrenaras o no. Los valores se cambian en Ajustes; estos son los de fábrica. */
+function viajeCfg(){
+  /* IR Y VOLVER. `min` es lo que tardas de casa al trabajo (y al revés); `bus` la hora del
+     transporte que sueles coger, y `antes` los minutos que quieres estar en la parada antes de que
+     pase. De ahí sale a qué hora tienes que salir de casa y a qué hora llegas de vuelta. */
+  const d={min:20,bus:'07:35',antes:4,on:true},o=(store.rotation&&store.rotation.viaje)||{};
+  if(+o.min>=0&&+o.min<=180)d.min=Math.round(+o.min);
+  if(/^\d{1,2}:\d{2}$/.test(String(o.bus||'')))d.bus=o.bus; else if(o.bus==='')d.bus='';
+  if(+o.antes>=0&&+o.antes<=30)d.antes=Math.round(+o.antes);
+  if(o.on===false)d.on=false;
+  return d;}
+function salirDeCasaTxt(){
+  /* «salir de casa 7:30 · bus 7:35», que es exactamente lo que pidió y nada más */
+  const v=viajeCfg();
+  if(!v.on||!v.bus)return '';
+  const b=mins(v.bus);if(b==null)return '';
+  return 'salir de casa '+hm(b-v.antes)+' · bus '+fmtTimeOut(v.bus);}
+function llegasACasa(dateStr,infOpt){
+  /* a qué hora estás de vuelta: el fin de la jornada más el viaje */
+  const jor=jornadaOf(dateStr,infOpt);
+  if(!jor||!jor.end)return null;
+  const f=mins(jor.end);if(f==null)return null;
+  const v=viajeCfg();
+  return f+(v.on?v.min:0);}
 function comidasCfg(){
   const d={conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30};
   const o=store.comidas||{},hh=/^\d{1,2}:\d{2}$/;
@@ -1236,6 +1304,26 @@ function hayEntrenoEn(dateStr,infOpt){
   const s2=diaSegundo(dateStr,inf);if(s2&&s2.on)return true;
   const sh=shiftById(inf.shiftId);
   return !!(sh&&/fuerza|entreno|gym/i.test(sh.name||''));}
+function finEntrenoDe(dateStr,infOpt){
+  /* A QUÉ HORA ACABAS DE ENTRENAR ese día (el más tardío de los dos entrenos). Las mismas horas que
+     usa el carril, para que la comida y el bloque pintado no se contradigan. */
+  if(!dateStr)return null;
+  const inf=infOpt||dayInfo(dateStr),sh=shiftById(inf.shiftId);
+  if(!sh)return null;
+  let fin=null;
+  const jor=jornadaOf(dateStr,inf);
+  const esF=/fuerza|entreno|gym/i.test(sh.name||'')||!!rutinaDeFecha(dateStr);
+  if(esF){
+    const propias=sh.start&&!(jor&&jor.start===sh.start);
+    const hi=propias?sh.start:((gymS()||{}).hora||'');
+    const m=mins(hi);
+    if(m!=null){
+      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+(+(gymS()||{}).duracion||75));
+      if(f!=null&&(fin==null||f>fin))fin=f;}}
+  const g2=diaSegundo(dateStr,inf);
+  if(g2&&g2.on){const m=mins(g2.hora||'15:30');
+    if(m!=null&&(fin==null||m+60>fin))fin=m+60;}
+  return fin;}
 function comidaPrincipalDe(dateStr,infOpt){
   if(!dateStr)return null;
   const inf=infOpt||dayInfo(dateStr),c=comidasCfg();
@@ -1243,11 +1331,31 @@ function comidaPrincipalDe(dateStr,infOpt){
   if(sal){const sl=sleepOf(dateStr,inf);
     if(sl&&sl.siesta){const m=mins(sl.siesta.a);
       if(m!=null)return {de:hm(m+c.trasSiesta),a:hm(m+c.trasSiesta+60),por:'siesta'};}}
-  if(hayEntrenoEn(dateStr,inf))return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};
+  /* LA COMIDA POST-ENTRENO SOLO MANDA SI EL ENTRENO ES EL QUE LA EMPUJA. Con un entreno de fuerza a
+     las 6:30 de la mañana la app ponía «comida post-entreno · 18:00»: el entreno había acabado a
+     las ocho y la comida caía cuatro horas tarde. Si el entreno acaba antes de tu hora normal de
+     comer, no cuenta: manda la jornada. */
+  if(hayEntrenoEn(dateStr,inf)){
+    const finG=finEntrenoDe(dateStr,inf),puesta0=mins(c.sinEntreno.de);
+    if(finG==null||puesta0==null||finG>puesta0)
+      return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};}
+  /* LA COMIDA NO PUEDE CAER DENTRO DE LA JORNADA. Esto decía «al salir de la jornada» y usaba una
+     hora FIJA: con jornada de 8 a 15 te ponía a comer en casa a las 14:00, que es imposible —a esa
+     hora estás en el hospital—. Ahora la hora de la lista es lo PRONTO que comerías, y si la
+     jornada acaba más tarde manda la jornada: fin + lo que tardas en llegar a casa. */
+  const jor=jornadaOf(dateStr,inf);
+  if(jor&&jor.end){
+    const enCasa=llegasACasa(dateStr,inf);
+    const puesta=mins(c.sinEntreno.de);
+    if(enCasa!=null&&puesta!=null&&enCasa>puesta){
+      const dur=Math.max(30,(mins(c.sinEntreno.a)||(puesta+60))-puesta);
+      return {de:hm(enCasa),a:hm(enCasa+dur),por:'llegar'};}
+    return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'jornada'};}
   /* un día libre no tiene jornada de la que salir: la hora es la misma, pero no se inventa el motivo */
-  return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:jornadaOf(dateStr,inf)?'jornada':'normal'};}
+  return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'normal'};}
 function comidaPorqueTxt(por){
   return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':
+    por==='llegar'?'al llegar a casa del trabajo':
     por==='jornada'?'al salir de la jornada':'';}
 function comidaPrincipalTxt(cp){
   if(!cp)return '';
@@ -3594,7 +3702,7 @@ function planDiaHTML(d){
     if(cp)bits.push('<span class="pl com">\ud83c\udf7d\ufe0f '+esc(comidaPrincipalTxt(cp))+'</span>');
   }
   return bits.length?('<div class="drplan">'+bits.join('')+'</div>'):'';}
-function horasSuenoHTML(key,inf,shiftId){
+function horasSuenoHTML(key,inf,shiftId,comp){
   /* Las dos horas del sueño, SIEMPRE a la vista, igual que las dos del sol. Antes solo se veían
      abriendo el día en «Semana» (y en «Hoy» había una sola: la de acostarse). La de levantarse no
      salía en ninguna de las dos pantallas.
@@ -3625,6 +3733,14 @@ function horasSuenoHTML(key,inf,shiftId){
        de noche, que no es lo mismo ni de lejos. */
     const minSiesta=c.siesta,cortaSiesta=sl.siesta.min<minSiesta;
     const cortaNoche=sl.noche!=null&&sl.noche<c.min;
+    /* COMPACTO: las tres piezas en una pastilla. En «Semana» el saliente se comía cuatro
+       renglones —siesta, noche, total y el aviso— y con siete días eso eran 90 px de un solo día. */
+    if(comp)return '<span class="pie sue'+((cortaSiesta||cortaNoche)?' corto':'')+'">'+
+      '\ud83d\ude34 '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+' ('+fmtHM(sl.siesta.min)+')'+
+      ' \u00b7 \ud83d\udecc '+esc(sl.bed||'\u2014')+(sl.noche!=null?(' ('+fmtHM(Math.round(sl.noche*60))+')'):'')+
+      (sl.h!=null?(' \u00b7 '+fmtHM(sl.h*60)):'')+'</span>'+
+      (cortaNoche?('<span class="pie sue rec">la noche se queda corta: a la cama a las '+
+        esc(acostarsePara(sl.wakeSig||'')||'\u2014')+'</span>'):'');
     return '<span class="pie sue'+(cortaSiesta?' corto':'')+'">\ud83d\ude34 siesta '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+
       ' ('+fmtHM(sl.siesta.min)+')</span>'+
       '<span class="pie sue'+(cortaNoche?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+
@@ -3634,6 +3750,12 @@ function horasSuenoHTML(key,inf,shiftId){
         esc(acostarsePara(sl.wakeSig||'')||'\u2014')+'</span>'):'');}
   const tarde=nt.rec&&sl.bed&&mins(sl.bed)!=null&&mins(nt.rec)!=null&&
     ((mins(sl.bed)-mins(nt.rec)+1440)%1440)>10&&((mins(sl.bed)-mins(nt.rec)+1440)%1440)<12*60;
+  /* COMPACTO: «\ud83d\udecc 22:40 \u2192 \u23f0 6:50 \u00b7 8h12» en UNA pastilla. Son los mismos datos: tres
+     pastillas sueltas por siete días hacían que la fila de cada día envolviera a dos renglones. */
+  if(comp)return '<span class="pie sue'+(corto?' corto':'')+'">'+
+      '\ud83d\udecc '+esc(hCortaHM(sl.bed)||'\u2014')+' \u23f0 '+esc(hCortaHM(sl.wake)||'\u2014')+
+      (sl.h!=null?(' \u00b7 '+fmtHM(sl.h*60)+(corto?(' \u00b7 te faltan '+fmtHM(nt.falta)):'')):'')+'</span>'+
+    ((corto||tarde)&&nt.rec?('<span class="pie sue rec">a la cama a las '+esc(nt.rec)+'</span>'):'');
   return '<span class="pie sue'+(corto?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
     '<span class="pie sue">\u23f0 '+esc(sl.wake||'\u2014')+'</span>'+
     (sl.h!=null?('<span class="pie sue'+(corto?' corto':'')+'">'+fmtHM(sl.h*60)+
@@ -3716,13 +3838,17 @@ function mealRowsHTML(dateStr,sh){
     const dishTxt=info.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
       return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
     const pasada=today&&hora&&hora<nowHM&&i!==nextIdx;
+    /* el ✓ va a la derecha de la hora, no en un botón de ancho completo debajo de cada toma: cuatro
+       botones de esos costaban 140 px de «Hoy» y empujaban la cena fuera de la pantalla */
     return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(hora||'·')+'</span><span>'+
       '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
       '<span class="mn">'+dishTxt+'</span>'+
       (principal?'<span class="md">hasta las '+esc(cp.a)+' · '+esc(comidaPorqueTxt(cp.por))+'</span>':'')+
       (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
-      (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓ ya me la he comido</button>':'')+
-      '</span></div>';}).join('');
+      '</span>'+
+      (info.items.length?('<button class="mok" title="ya me la he comido" aria-label="apuntar '+esc(s.label||'')+
+        ' como comida" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓</button>'):'')+
+      '</div>';}).join('');
 }
 function franjaVentana(marcas){
   /* cuántas horas de la franja se ven (Ajustes → «Franja de 24 h»). Si son menos de 24,
@@ -3920,10 +4046,19 @@ function hoyAhoraHTML(key,inf,esHoy){
   const dura=ag.filter(function(x){return x.fin&&x.m2<=n&&n<finMin(x)&&x.tipo!=='meal';});
   const ahora=dura.length?dura[dura.length-1]:null;
   const sig=ag.filter(function(x){return x.m2>n;})[0]||null;
-  if(!ahora&&!sig)return '';
-  const ahoraTxt=ahora?('<b>'+esc(ahora.txt)+'</b> <span class="mini">hasta las '+esc(hCortaHM(ahora.fin))+'</span>'):'<b>Nada en marcha</b>';
+  /* A LAS ONCE DE LA NOCHE LA TARJETA DESAPARECÍA. Ya no queda nada hoy ni hay «siguiente», así que
+     se devolvía cadena vacía justo cuando lo que quieres saber es a qué hora suena el despertador.
+     Sin nada por delante, lo siguiente es lo primero de mañana. */
+  let man=null;
+  if(!sig){const k2=iso(addDays(parseDate(key)||new Date(),1));
+    try{man=agendaDia(k2,dayInfo(k2))[0]||null;}catch(e){man=null;}}
+  const ahoraTxt=ahora?('<b>'+esc(ahora.txt)+'</b> <span class="mini">hasta las '+esc(hCortaHM(ahora.fin))+'</span>')
+    :'<b>Nada en marcha</b>';
+  const sigTxt=sig?('<b>'+sig.ico+' '+esc(sig.txt)+' '+esc(hCortaHM(sig.hora))+'</b>')
+    :(man?('<b>'+man.ico+' '+esc(man.txt)+'</b> <span class="mini">mañana '+esc(hCortaHM(man.hora))+'</span>')
+      :'<b>Nada más por hoy</b>');
   return '<div class="hoyahora"><div><span class="e">AHORA</span>'+ahoraTxt+'</div>'+
-    (sig?('<div class="sig"><span class="e">SIGUIENTE</span><b>'+sig.ico+' '+esc(sig.txt)+' '+esc(hCortaHM(sig.hora))+'</b></div>'):'')+'</div>';}
+    '<div class="sig"><span class="e">SIGUIENTE</span>'+sigTxt+'</div></div>';}
 function hoyAgendaHTML(key,inf,esHoy){
   /* el día entero como lista por horas: cada cosa con su hora, su color y, las comidas, sus platos
      y el ✓ para apuntarla. Lo que ya ha pasado se apaga. */
@@ -3982,6 +4117,25 @@ function bloquesDelDia(key){
     else if(sh.start&&!/fuerza|entreno/i.test(sh.name||'')){
       add({de:bloqDeMin(sh.start),a:bloqDeMin(sh.end),cat:'work',
         tit:(sh.icon||'💼')+' '+sh.name,sub:sh.start+'–'+(sh.end||''),ir:'ir-cfg'});}}
+  /* IR Y VOLVER. Dos rayas finas: la de salir de casa (con la hora del bus) y la de volver. No es
+     un bloque gordo porque no es una tarea, es el borde de la jornada — pero sin ellas la app te
+     hacía aparecer en el hospital a la hora de entrar y comer en casa antes de haber salido. */
+  (function(){
+    const v=viajeCfg();
+    if(!v.on)return;
+    const jor=jornadaOf(key,inf);
+    if(!jor||!jor.start||isGuardia(sh))return;
+    const ent=mins(jor.start);
+    if(ent!=null){
+      const b=v.bus?mins(v.bus):null;
+      const sale=(b!=null)?(b-v.antes):(ent-v.min);
+      add({de:sale,a:ent,cat:'work',fino:true,
+        tit:'🚌 Salir de casa',
+        sub:(b!=null)?(hm(sale)+' · bus '+fmtTimeOut(v.bus)):(v.min+' min hasta allí'),
+        ir:'ir-viaje'});}
+    const casa=llegasACasa(key,inf);
+    if(casa!=null&&v.min>0)add({de:casa-v.min,a:casa,cat:'work',fino:true,
+      tit:'🏠 A casa',sub:'llegas '+hm(casa),ir:'ir-viaje'});})();
   /* el entreno de fuerza: la rutina que toca, con las horas del propio tipo de día */
   const rt=rutinaDeFecha(key),esF=/fuerza|entreno/i.test(sh.name||'');
   if(esF||rt){
@@ -4002,7 +4156,9 @@ function bloquesDelDia(key){
   /* las comidas: finas y a un lado, que son marcas de hora y no ocupan la mañana entera */
   const cp=comidaPrincipalDe(key,inf);
   slotsFor(sh.id).forEach(function(sl){
-    const h=(cp&&cp.slotId===sl.id&&cp.hora)?cp.hora:sl.time;
+    /* horaDeToma() ya sabe cuál de las tomas es «la comida» y le pone la hora del día; mirar un
+       cp.slotId que no existe dejaba la comida en su hora de lista —dentro de la jornada— */
+    const h=horaDeToma(key,sl,cp);
     const t=totals(slotItems(sh.id,sl).items||[]);
     add({de:bloqDeMin(h),dur:30,cat:'meal',tit:'🍽 '+sl.label,
       sub:t.kcal?(t.kcal+' kcal · '+t.prot+' g'):'sin platos',
@@ -4017,7 +4173,7 @@ function bloquesDelDia(key){
       ir:'tab',irV:'eventos'});});
   out.sort(function(a,b){return a.de-b.de||a.a-b.a;});
   return out;}
-function rangoCarril(bloques){
+function rangoCarril(bloques,keyOpt){
   /* de qué hora a qué hora se pinta: lo que haya ese día, con una hora de aire a cada lado y un
      mínimo de 06 a 23. Sin esto, un día con una sola cosa a las 15:00 pintaba 24 carriles vacíos. */
   const bs=bloques||[];
@@ -4026,6 +4182,12 @@ function rangoCarril(bloques){
      21:30 pintaba dos horas y media de carril vacío abajo. */
   let de=1440,a=0;
   bs.forEach(function(b){if(b.de<de)de=b.de;if(b.a>a)a=b.a;});
+  /* si es hoy, la hora actual entra SIEMPRE: a las 23:21 el día acababa a las 22:00 y la línea de
+     «ahora» se quedaba fuera del carril, justo cuando miras para ver qué te queda */
+  if(keyOpt&&isToday(keyOpt)){
+    const n=new Date(),nm=n.getHours()*60+n.getMinutes();
+    if(nm<de)de=nm;
+    if(nm>a)a=nm;}
   de=Math.max(0,Math.floor(de/60)*60-60);
   a=Math.min(1440,Math.ceil(a/60)*60+60);
   if(a-de<8*60){                       /* un día casi vacío tampoco se queda en dos carriles */
@@ -4035,7 +4197,7 @@ function rangoCarril(bloques){
 function carrilHTML(key,opt){
   /* el carril de UN día. `px` es lo que mide una hora: 44 en Hoy, 40 en la semana. */
   opt=opt||{};
-  const bl=bloquesDelDia(key),r=rangoCarril(bl);
+  const bl=bloquesDelDia(key),r=rangoCarril(bl,key);
   /* el ajuste de 12/18/24 h manda en CUÁNTAS HORAS VES DE UNA VEZ, que es lo que mandaba en la
      barra horizontal que había antes. La caja mide lo mismo siempre —si no, la portada crecía al
      elegir 24 h— y lo que cambia es lo alta que es una hora: a 12 h se ve holgado, a 24 apretado. */
@@ -4047,9 +4209,16 @@ function carrilHTML(key,opt){
   for(let m=r.de;m<r.a;m+=60)
     horas.push('<div class="ch" style="top:'+y(m)+'px;height:'+px+'px"><span>'+
       String(Math.floor(m/60)%24).padStart(2,'0')+'</span></div>');
+  /* LAS MARCAS FINAS NO SE PISAN. Una comida dura 30 min, pero por debajo de 20 px no se lee su
+     nombre, así que a 15 px por hora dos marcas seguidas —«a casa» a las 15:00 y la comida a las
+     15:20— se pintaban una encima de otra y solo se leía la de arriba. Cuando eso pasa, la de abajo
+     baja lo justo para no taparla: pierde un par de minutos de sitio y se gana poder leerla. */
+  let finoFin=-1e6;
   const cuerpo=bl.map(function(b,i){
-    const h=Math.max(opt.fino?20:26,y(b.a)-y(b.de));
-    const est='top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat);
+    const h=Math.max(b.fino?20:26,y(b.a)-y(b.de));
+    let top=y(b.de);
+    if(b.fino){if(top<finoFin+2)top=finoFin+2;finoFin=top+h;}
+    const est='top:'+top+'px;height:'+h+'px;--c:'+tlColor(b.cat);
     const dat=b.ir?(' data-a="'+esc(b.ir)+'"'+(b.irV?(' data-t="'+esc(b.irV)+'" data-v="'+esc(b.irV)+'"'):'')):'';
     /* el texto va pegado al borde de arriba del bloque: un bloque largo (la jornada, la guardia)
        empieza fuera de la caja al abrirse por donde estás, y el nombre se quedaba sin verse
@@ -4081,7 +4250,7 @@ function carrilSemanaHTML(days,opt){
   /* un rango común para las 7 columnas: si cada una tuviera el suyo, las horas no cuadrarían y la
      rejilla dejaría de servir para comparar días, que es justo para lo que está */
   let de=1440,a=0;
-  porDia.forEach(function(x){const r=rangoCarril(x.bl);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
+  porDia.forEach(function(x){const r=rangoCarril(x.bl,x.d.key);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
   if(a<=de){de=7*60;a=23*60;}
   const alto=Math.round((a-de)/60*px);
   const y=function(m){return Math.round((m-de)/60*px);};
@@ -4100,7 +4269,25 @@ function carrilSemanaHTML(days,opt){
        turno y no cabe su nombre, pero saber que a esa hora comes sí importa */
     const pts=x.bl.filter(function(b){return b.fino;}).map(function(b){
       return '<i class="sp2" style="top:'+y(b.de)+'px"></i>';}).join('');
-    return '<div class="scol'+(hoy?' hoy':'')+'">'+cuerpo+pts+'</div>';}).join('');
+    /* LAS HORAS QUE DUERMES, sombreadas en la columna. Es lo que deja ver de un golpe qué noche se
+       queda corta y dónde muerde la guardia, y es la única franja del día que no es un bloque con
+       nombre: pintarla como bloque taparía el turno. Se recorta al rango visible de la rejilla. */
+    const noche=(function(){
+      const band=function(p,q){
+        const u=Math.max(de,p),v=Math.min(a,q);
+        if(v<=u)return '';
+        return '<i class="tl-noche" style="top:'+y(u)+'px;height:'+(y(v)-y(u))+
+          'px;--c:'+tlColor('sleep')+'"></i>';};
+      let sl;try{sl=sleepOf(x.d.key,x.d.inf);}catch(e){sl=null;}
+      if(!sl)return '';
+      let out='';
+      if(sl.siesta){const ds=mins(sl.siesta.de),as=mins(sl.siesta.a);
+        if(ds!=null&&as!=null)out+=band(ds,as>ds?as:1440);}
+      const b=mins(sl.bed),w=mins(sl.wake);
+      if(w!=null&&!sl.siesta)out+=band(0,w);
+      if(b!=null)out+=band(b,1440);
+      return out;})();
+    return '<div class="scol'+(hoy?' hoy':'')+'">'+noche+cuerpo+pts+'</div>';}).join('');
   const cab=porDia.map(function(x){
     const sh=x.d.shiftId?shiftById(x.d.shiftId):null;
     const hoy=isToday(x.d.key);
@@ -4162,7 +4349,7 @@ function renderHoy(){
     hoyAhoraHTML(hoy,inf,esHoy)+
     /* sin px: lo calcula el propio carril desde el ajuste de 12/18/24 h. Pasarlo aquí dejaba ese
        ajuste sin efecto, que es lo que pasó al quitar la barra horizontal. */
-    carrilHTML(hoy,{caja:400})+
+    carrilHTML(hoy,{caja:franjaAlto()})+
     leyendaPlegadaHTML('hoyley')+
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     '<div class="hoypie">'+
@@ -4360,13 +4547,28 @@ function semOpcHTML(){
     return '<button class="btn s'+(x===n?' p':'')+'" data-a="sem-dias" data-n="'+x+'" aria-pressed="'+(x===n)+'">'+x+'</button>';}).join('')+
     '<span class="mini">días</span></div>';}
 function semanaCabeceraHTML(){
-  /* el eje de horas y qué es cada color, UNA vez para todos los días (y la leyenda plegada): antes
-     cada día repetía su eje, y la leyenda no estaba en ninguna parte */
-  const eje=tlHoras()>=24?('<div class="tl-axis semeje">'+[0,6,12,18,24].map(function(h,i){
-    return '<span style="'+(i===0?'left:0;transform:none':(i===4?'right:0;left:auto;transform:none':'left:'+(h/24*100)+'%'))+'">'+h+'</span>';}).join('')+'</div>'):'';
-  /* en una fila: la leyenda plegada a la izquierda y cuántos días ver a la derecha; debajo, el eje */
-  return '<div class="leyfila semley"><details class="dtip"><summary class="mini">ⓘ colores</summary>'+franjaLeyendaHTML()+'</details>'+
-    semOpcHTML()+'</div>'+eje;}
+  /* qué es cada color y cuántos días ver, en UNA fila.
+     EL EJE 0·6·12·18·24 YA NO VA AQUÍ: era el eje de la barra horizontal que llevaba cada día, y
+     esa barra solo se pinta al abrir un día. Dejaba veinte píxeles de números sueltos encima de la
+     rejilla —que ya trae sus propias horas a la izquierda— y empujaba la rejilla fuera de la
+     primera pantalla. El día que se abre pinta ahora su propio eje. */
+  return '<div class="leyfila semley">'+
+    '<details class="dtip"><summary class="mini">ⓘ colores</summary>'+franjaLeyendaHTML()+'</details>'+
+    semOpcHTML()+'</div>';}
+function solSemanaHTML(){
+  /* «🌅 6:51–6:54 · 🌇 18:55–18:48»: el rango de la ventana que se está viendo. Si los siete días
+     caen a la misma hora se enseña una sola. */
+  const ds=semanaVentana().filter(function(d){return !!d.key;});
+  if(!ds.length)return '';
+  const ss=ds.map(function(d){return solDe(d.key);}).filter(function(s){return s&&!s.sinDatos&&!s.polar;});
+  if(!ss.length)return '';
+  const rango=function(pick){
+    const hs=ss.map(function(s){return horaLocal(pick(s));}).filter(Boolean).sort()
+      .map(function(h){return hCortaHM(h);});
+    const a=hs[0],b=hs[hs.length-1];
+    return a===b?a:(a+'–'+b);};
+  return '<span class="solsem"><span class="pie sol">🌅 '+rango(function(s){return s.sale;})+'</span>'+
+    '<span class="pie sol">🌇 '+rango(function(s){return s.pone;})+'</span></span>';}
 function leyendaPlegadaHTML(cls){
   /* la leyenda plegada, con el atajo a cambiar los colores A LA VISTA al lado: plegado dentro no
      se podía pulsar sin abrirla antes */
@@ -4409,11 +4611,27 @@ function semanaFilaHTML(d,i,anyDate){
         (sh&&d.key?'<button class="btn s" data-a="day-quickbf" data-id="'+sh.id+'">desayuno rápido de diario</button>':'')+
         (sh&&d.key?'<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar las horas de dormir</button>':'')+
       '</div></div>';
+  /* CERRADO ES UNA LÍNEA. La rejilla de arriba ya enseña la semana entera con sus horas, así que
+     repetir aquí la franja, el sueño y las comidas de los siete días costaba 129 px POR DÍA con la
+     tarjeta cerrada: 900 px de repetición y tres pantallas de scroll para ver la semana. Lo de
+     dentro se ve al abrir el día, que es cuando lo estás mirando. */
   return '<div class="drow'+(open?' open':'')+(isToday(d.key)?' today':'')+'" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
     '<div class="drmain" data-a="day-open" data-key="'+kk+'" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
-    (d.key&&sh?timelineBar(d.key,d.inf,{grande:true,sinEje:tlHoras()>=24}):'')+
-    '<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+(d.key?solPiesHTML(d.key):'')+'</div>'+
-    ((comidas||evs||est)?('<div class="drplan">'+comidas+evs+est+'</div>'):'')+
+    /* la barra horizontal SOLO al abrir: es lo único que la rejilla de arriba ya enseña. El sueño,
+       el sol y las horas de comer se quedan siempre, que eso NO está en la rejilla y es justo lo
+       que se mira de un día sin abrirlo. */
+    (open&&d.key&&sh?timelineBar(d.key,d.inf,{grande:true}):'')+
+    /* el sueño, el sol y las comidas en UNA fila que envuelve, no en tres: es la misma
+       información en la mitad de alto, y con la rejilla arriba la semana cabe en pantalla y media
+       en vez de en tres. */
+    /* el sueño en UNA pastilla y las horas de comer al lado: una sola línea por día. El sol se
+       fue a la cabecera de la semana —cambia cuatro minutos de lunes a domingo, así que repetirlo
+       siete veces costaba un renglón por día y no decía nada nuevo. */
+    '<div class="drlinea">'+
+      '<span class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId,true)+'</span>'+
+      (comidas||'')+
+    '</div>'+
+    ((evs||est)?('<div class="drplan">'+evs+est+'</div>'):'')+
     (open?det:'')+'</div>';}
 function hCortaHM(t){/* «6:55», «15:30», «21:00»: sin el cero delante, que es lo que más se lee */
   const m=mins(t);if(m==null)return t||'';return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
@@ -4459,7 +4677,7 @@ function renderWeek(){
   const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
   $('#main').innerHTML=`<div class="grid">
     <div class="semcab">${semanaNavHTML()}${anyDate?semanaCabeceraHTML():''}</div>
-    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="mini" style="margin-left:auto">toca un día</span></h2>${carrilSemanaHTML(days,{px:40,caja:360})}</div>`:''}
+    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="sp"></span>${solSemanaHTML()}</h2>${carrilSemanaHTML(days,{px:40,caja:franjaAltoSem()})}</div>`:''}
     <div class="daylist">${semanaAyerHTML()}${rows}</div>
     <div class="card"><h2>La semana en números</h2>
       <div class="tot">
@@ -4478,32 +4696,24 @@ function renderWeek(){
       </div>
     </div>
     <div class="grid g2">
-      <div class="card"><h2>Lo que hay que cocinar esta semana</h2>
-        <p class="note">Un bloque por sesión de cocina: qué pones al fuego ese día y cuántos tápers salen de cada cosa. Lo que sobre de una tanda va al congelador.</p>
-        ${used.length?used.map(b=>`<div class="cocblq">
-          <div class="tarj-top">
-            <b style="font-size:13.5px">${esc(b.label)}</b>
-            <span class="sp"></span>
-            <span class="tag b2">${b.portions} raciones</span></div>
-          <div class="row" style="margin-top:3px">
-            <span class="mini">${esc(b.when||'')}</span>
-            <span class="sp"></span>
-            <button class="btn s" data-a="tab" data-t="batches">abrir →</button></div>
+      ${used.length?`<div class="card"><h2>La cocina de la semana<span class="mini" style="margin-left:auto">${used.length} sesion${used.length===1?'':'es'}</span></h2>
+        <div class="cocmini">${used.map(b=>`<details class="cocblq cocm">
+          <summary class="cocmh"><b>${esc(b.label)}</b><span>${esc(b.when||'')} · ${b.portions} rac.</span></summary>
           <div class="platos">${b.items.filter(i=>i.runs>0).map(function(i){
             const sobra=i.cooked>i.needPort?Math.round((i.cooked-i.needPort)*10)/10:0;
-            return '<div class="plato" title="'+esc(i.dish.name)+'">'+
+            return '<span class="plato" title="'+esc(i.dish.name)+'">'+
               '<span class="pic">'+esc(i.dish.icon||'🍽')+'</span>'+
-              '<b>'+esc(i.dish.name)+'</b>'+
+              '<b>'+esc(nombreCorto(i.dish.name))+'</b>'+
               '<span class="mini">'+fmt(i.cooked)+' rac.</span>'+
-              (sobra?'<span class="tag b4">sobran '+fmt(sobra)+' 🧊</span>':'')+
-              '</div>';}).join('')}</div>
-          </div>`).join('')
-        :'<div class="empty">Nada en lote esta semana.</div>'}
-      </div>
-      <div class="card"><h2>Reglas de oro</h2><p class="note">Lo que sostiene el planning cuando la semana se tuerce.</p>
-        <details class="dtip"><summary class="mini">ver las ${store.rules.length} reglas</summary>
-        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>
-        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></div>
+              (sobra?'<span class="tag b4">🧊 '+fmt(sobra)+'</span>':'')+
+              '</span>';}).join('')}</div>
+          <button class="btn s" data-a="tab" data-t="batches" style="margin-top:8px">abrir en Cocina →</button>
+          </details>`).join('')}</div>
+      </div>`:''}
+      <div class="card"><h2>Reglas de oro</h2>
+        <details class="dtip"><summary class="mini">las ${store.rules.length} reglas que sostienen la semana cuando se tuerce</summary>
+        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></details></div>
     </div></div>`;
 }
 
@@ -5408,13 +5618,31 @@ function diaComer(){
 function diasEspS(){const f=food();if(!f.diasEsp||typeof f.diasEsp!=='object')f.diasEsp={};return f.diasEsp;}
 function diaEspDe(key){const k=foodKey(key)||key;return diasEspS()[k]||null;}
 function diaEspTipo(t){return DIA_TIPOS.filter(function(x){return x[0]===t;})[0]||null;}
+function kcalTipoDia(t){
+  /* LAS KCAL DE PARTIDA DE UN DÍA RARO SON TUYAS. Estaban a pelo en DIA_TIPOS (950 el menú del día
+     de fuera, 600 el moncheo): podías corregir el día concreto, pero el número de partida era
+     código, así que si tu menú del día son 1 200 lo estabas corrigiendo cada vez. */
+  const d=diaEspTipo(t);
+  if(!d)return 0;
+  if(!d[4])return 0;                       /* el menú del hospital no estima nada, y sigue sin hacerlo */
+  const mio=(food().kcalTipo||{})[t];
+  return (typeof mio==='number'&&mio>=0&&mio<=6000)?mio:d[4];}
 function marcarDiaEsp(key,tipo){
   const k=foodKey(key)||key,d=diasEspS(),t=diaEspTipo(tipo);
   if(!t){delete d[k];save();return 'día normal otra vez';}
   if(d[k]&&d[k].tipo===tipo){delete d[k];save();return 'quitado: '+t[2];}
-  d[k]={tipo:tipo,kcal:t[4],prot:0};
+  const k0=kcalTipoDia(tipo);
+  d[k]={tipo:tipo,kcal:k0,prot:0};
   save();
-  return t[1]+' '+t[2]+(t[4]?(' · +'+t[4]+' kcal estimadas'):' · lo apuntas tú');}
+  return t[1]+' '+t[2]+(k0?(' · +'+k0+' kcal estimadas'):' · lo apuntas tú');}
+function setKcalTipo(t,kcal){
+  /* lo que SUELE ser para ti ese tipo de día. Cambia lo que se pone por defecto de aquí en
+     adelante; los días ya marcados se quedan con lo que tuvieran. */
+  const f=food();
+  if(!f.kcalTipo||typeof f.kcalTipo!=='object')f.kcalTipo={};
+  if(!diaEspTipo(t))return '';
+  f.kcalTipo[t]=Math.max(0,Math.min(6000,Math.round(+kcal||0)));
+  save();return 'a partir de ahora, '+f.kcalTipo[t]+' kcal';}
 function setDiaEspKcal(key,kcal){
   const k=foodKey(key)||key,d=diasEspS();
   if(!d[k])return 'ese día no está marcado';
@@ -5450,7 +5678,13 @@ function diaEspCardHTML(sel){
       t[4]?('<div class="row" style="margin-top:8px;align-items:flex-end">'+
         '<label class="fld" style="flex:0 0 130px">kcal de ese día'+
           '<input type="number" min="0" max="6000" step="50" value="'+(+e.kcal||0)+'" data-a="dia-esp-kcal"></label>'+
-        '<span class="mini">es una estimación mía, no una medida</span></div>'):''))
+        /* LO QUE SUELE SER PARA TI. Antes el número de partida (950 el menú del día, 600 el
+           moncheo) estaba en el código: podías corregir ESTE día, pero al siguiente volvía a salir
+           el mismo, así que si tu menú del día son 1 200 lo corregías cada vez. */
+        '<label class="fld" style="flex:0 0 140px">y de normal, para ti'+
+          '<input type="number" min="0" max="6000" step="50" value="'+kcalTipoDia(e.tipo)+'" '+
+          'data-a="dia-esp-normal" data-t="'+esc(e.tipo)+'"></label>'+
+        '<span class="mini">la primera cifra es solo de este día; la segunda es la que se pondrá sola a partir de ahora</span></div>'):''))
       :'')+
     '</div>';}
 function actividadTxt(){
@@ -9525,7 +9759,28 @@ function reglasSinTildes(){
   if(!reglasSinTildes._c)reglasSinTildes._c=COMPRA_REGLAS.map(function(r){
     return [new RegExp(r[0].source.normalize('NFD').replace(/[̀-ͯ]/g,''),r[0].flags),r[1]];});
   return reglasSinTildes._c;}
+function pasillosS(){
+  /* el pasillo que le has puesto TÚ a un producto, por su clave de despensa (la misma que hace que
+     «500 g lenteja pardina» y «lentejas pardinas» sean lo mismo). */
+  const f=food();
+  if(!f.pasillos||typeof f.pasillos!=='object')f.pasillos={};
+  return f.pasillos;}
+function pasilloTuyo(texto){
+  const k=despClave(texto);
+  return (k&&pasillosS()[k])||'';}
+function setPasillo(texto,sec){
+  /* poner el pasillo a mano, o quitarlo para volver a lo que diga la app */
+  const k=despClave(texto);
+  if(!k)return;
+  if(!sec)delete pasillosS()[k];
+  else if(COMPRA_SECS.some(function(x){return x[0]===sec;}))pasillosS()[k]=sec;
+  save();}
 function seccionDeCompra(texto){
+  /* LO QUE TÚ HAYAS DICHO MANDA. Las reglas de abajo son treinta expresiones en el código y se
+     equivocan: el plátano acabó en conservas porque «lata» casa dentro de «pLATAno». Corregir un
+     pasillo era tocar código; ahora es un dato tuyo y gana siempre. */
+  const mio=pasilloTuyo(texto);
+  if(mio)return mio;
   const t=String(texto||'').toLowerCase();
   for(let i=0;i<COMPRA_REGLAS.length;i++)if(COMPRA_REGLAS[i][0].test(t))return COMPRA_REGLAS[i][1];
   /* segundo intento sin tildes, por lo que venga del ticket o escrito a la carrera */
@@ -9548,11 +9803,28 @@ function compraLineaHTML(x){
   /* lo que ya está en la despensa se pinta apagado y con su cantidad: sigue en la lista para que
      veas que el menú lo pide, pero ya no te lo hace comprar */
   const ten=x.tengo&&!x.falta;
+  /* EL PASILLO SE CORRIGE AQUÍ, delante del lineal. El botoncito de la derecha abre los pasillos y
+     lo que elijas se guarda para ese producto: antes, un artículo mal colocado solo se arreglaba
+     tocando las reglas del código. El despachador usa closest('[data-a]'), así que pulsar el
+     botón NO marca la línea. */
+  const k=despClave(x.texto),mio=pasilloTuyo(x.texto);
+  const abierto=ui.compraPasillo===k;
+  const sel=abierto?('<li class="secpick">'+
+      COMPRA_SECS.map(function(sc){
+        const act=seccionDeCompra(x.texto)===sc[0];
+        return '<button class="btn s'+(act?' p':'')+'" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="'+sc[0]+'">'+
+          sc[2]+' '+esc(sc[1])+'</button>';}).join('')+
+      (mio?('<button class="btn s" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="">↺ como lo pone la app</button>'):'')+
+    '</li>'):'';
   return '<li class="linea'+(on?' ok':'')+(ten?' tengo':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
     '<span class="box" role="checkbox" aria-checked="'+(on?'true':'false')+'"></span>'+
     '<span class="tx"><b>'+esc(x.texto)+'</b>'+
     (x.tengo?('<span class="de ten"><i></i>'+esc(x.tengo)+'</span>')
-      :(x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):''))+'</span></li>';}
+      :(x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):''))+'</span>'+
+    '<button class="secmv'+(mio?' mio':'')+'" data-a="compra-pasillo" data-k="'+esc(k)+'"'+
+      ' title="cambiar de pasillo" aria-label="cambiar «'+esc(x.texto)+'» de pasillo">'+
+      esc((COMPRA_SECS.filter(function(sc){return sc[0]===seccionDeCompra(x.texto);})[0]||['','','🛒'])[2])+'</button>'+
+    '</li>'+sel;}
 let _compraUlt={total:0,marcados:0,cola:''};
 function compraPinta(){
   /* en el supermercado se tocan veinte cosas seguidas: se actualiza la barra y la cifra a mano en
@@ -9787,7 +10059,10 @@ function suenoCard(){
     /* la comida principal no está a una hora fija: la manda lo que haces ese día */
     (function(){const cm=comidasCfg();
       return '<h3 style="font-size:13px;margin:14px 0 4px">A qué hora comes</h3>'+
-      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija: si ese día entrenas cae después del entreno, si no al salir de la jornada, y el día que sales de guardia, al despertar de la siesta.</p>'+
+      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija. El día que sales de guardia cae al despertar de la siesta. '+
+      'Si entrenas <b>por la tarde</b>, en la ventana de aquí abajo. Y si no —o si el entreno es de mañana— <b>al llegar a casa del trabajo</b>: '+
+      'Con jornada de 8 a 15 no te va a poner a comer a las 14:00 en el hospital. '+
+      'La hora de aquí es lo <b>más pronto</b> que comerías; si la jornada acaba más tarde, manda la jornada.</p>'+
       '<div class="fgrid c3">'+
       '<label class="fld">Si entrenas, desde<input type="time" value="'+esc(cm.conEntreno.de)+'" data-a="com-h" data-k="conEntreno" data-w="de"></label>'+
       '<label class="fld">hasta<input type="time" value="'+esc(cm.conEntreno.a)+'" data-a="com-h" data-k="conEntreno" data-w="a"></label>'+
@@ -9971,6 +10246,29 @@ function renderCfg(){
       <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
       ${serviciosEditorHTML()}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div></div>`);}
+  if(v==='viaje'){
+    /* IR Y VOLVER, en Ajustes y no en el código: es lo que cambia cuando cambias de destino o de
+       línea de bus, y no tiene por qué pasar por una versión nueva de la app. */
+    const vj=viajeCfg(),b=vj.bus?mins(vj.bus):null;
+    return cfgPantalla('Ir y volver del trabajo',
+      '<div class="card"><p class="note" style="margin:0 0 10px">Con esto la app sabe a qué hora tienes '+
+        'que <b>salir de casa</b> y a qué hora <b>llegas de vuelta</b>. Y lo importante: deja de ponerte '+
+        'a comer en casa a una hora en la que todavía estás en el hospital.</p>'+
+        '<div class="fgrid c3 tight">'+
+          '<label class="fld">hora del bus<input type="time" value="'+esc(vj.bus||'')+'" data-a="viaje-f" data-f="bus"></label>'+
+          '<label class="fld">llegar a la parada (min antes)<input type="number" min="0" max="30" value="'+vj.antes+'" data-a="viaje-f" data-f="antes"></label>'+
+          '<label class="fld">tardas en llegar (min)<input type="number" min="0" max="180" step="5" value="'+vj.min+'" data-a="viaje-f" data-f="min"></label>'+
+        '</div>'+
+        '<div class="row" style="margin-top:10px">'+
+          '<button class="btn s '+(vj.on?'g':'')+'" data-a="viaje-on">'+(vj.on?'✓':'○')+' tenerlo en cuenta</button>'+
+        '</div>'+
+        (b!=null?('<p class="mini" style="margin:10px 0 0">Los días de jornada saldrás de casa a las <b>'+
+          hm(b-vj.antes)+'</b> para el bus de las <b>'+esc(fmtTimeOut(vj.bus))+'</b>, y estarás de vuelta '+
+          vj.min+' min después de salir del trabajo.</p>')
+          :'<p class="mini" style="margin:10px 0 0">Sin hora de bus, solo se usan los minutos que tardas.</p>')+
+        '<p class="mini" style="margin:7px 0 0;color:var(--ink2)">Al calendario de Google va solo una línea corta '+
+        'antes de entrar («salir de casa · bus»), nada más.</p>'+
+      '</div>');}
   if(v==='notas')return cfgPantalla('Notas del planning',
     '<div class="card"><p class="note" style="margin:0 0 10px">Vacaciones, permisos, cursos, «esta semana cambio con Antonio».</p>'+
       '<textarea rows="8" data-a="meta-notes" placeholder="Vacaciones 3-17 de octubre; el 22 curso en academia…">'+esc(store.meta.notes||'')+'</textarea></div>');
@@ -9980,6 +10278,7 @@ function renderCfg(){
   const puerta=function(vista,ico,tit,sub){
     return '<button class="puerta" data-a="cfg-vista" data-v="'+vista+'">'+gymIco(ico)+
       '<b>'+esc(tit)+'</b><span class="s">'+esc(sub)+'</span></button>';};
+  const vj0=viajeCfg();
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><h2 class="subtit">🕐 Turno y rotación</h2></div>'+
     '<div class="card"><h2>Cómo estás montado ahora</h2>'+
@@ -10002,6 +10301,8 @@ function renderCfg(){
     '</div>'+
     '<div class="puertas">'+
       puerta('rotacion','repetir','Rotación','servicios y guardias')+
+      puerta('viaje','reloj','Ir y volver',
+        vj0.on?((vj0.bus?('bus '+fmtTimeOut(vj0.bus)+' · '):'')+vj0.min+' min de viaje'):'sin tenerlo en cuenta')+
       puerta('notas','lapiz','Notas','del planning')+
       '<button class="puerta" data-a="tab" data-t="month">'+gymIco('calendario')+
         '<b>El año</b><span class="s">repartido por meses</span></button>'+
@@ -11559,17 +11860,25 @@ function renderAjustes(){
             '<b style="background:linear-gradient(90deg,'+t.f.sleep+' 0 30%,'+t.f.work+' 30% 62%,'+t.f.meal+' 62% 70%,'+t.f.gym+' 70% 82%,'+t.f.evt+' 82%)"></b></span>'+
           '<span class="tnom">'+esc(t.nombre)+(on?' ✓':'')+'</span>'+
           '<span class="tmodo" style="color:'+t.v.ink2+'">'+(t.modo==='dark'?'oscuro':'claro')+'</span></button>';}).join('')}</div></div>
-    <div class="card" data-cfg="franja"><h2>La franja del d\u00eda</h2>
-      <p class="note">La barra que aparece en «Hoy», «Semana» y al abrir un día. Cada cosa lleva su color fijo, sea cual sea el tipo de día.</p>
-      <label class="fld" style="max-width:260px">Cuántas horas se ven
-        <select data-a="franja-horas">${[[24,'24 h · el día entero'],[18,'18 h'],[12,'12 h · centrada en tu día']].map(function(o){
+    <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
+      <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
+        sea cual sea el tipo de día, y aquí se cambian.</p>
+      <label class="fld" style="max-width:280px">Cuántas horas se ven de una vez
+        <select data-a="franja-horas">${[[24,'24 h · apretado'],[18,'18 h'],[12,'12 h · holgado']].map(function(o){
           return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
-      <div class="colgrid">${TLCAT.map(function(c){
+      <p class="mini" style="margin:6px 0 0">El carril siempre ocupa lo mismo en la pantalla; lo que cambia es
+        lo alta que es una hora. A 12 h se lee holgado, a 24 cabe el día entero.</p>
+      <label class="fld" style="max-width:280px;margin-top:8px">Cuánta pantalla ocupa el carril
+        <select data-a="franja-alto">${[['bajo','Bajo · menos scroll'],['medio','Normal'],['alto','Alto · se lee mejor']].map(function(o){
+          return '<option value="'+o[0]+'" '+(String((store.franja||{}).alto||'medio')===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
+      <p class="mini" style="margin:6px 0 0">Manda en «Hoy» y en la rejilla de la semana. En bajo la semana
+        entra en menos de dos pantallas; en alto se lee cada bloque sin apretar.</p>
+      <div class="colgrid" style="margin-top:10px">${TLCAT.map(function(c){
         return '<label class="fld">'+esc(c[1])+
           '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
           '</label>';}).join('')}</div>
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
-      <div style="margin-top:12px">${timelineBar(iso(new Date()))}</div></div>
+      <div style="margin-top:12px">${carrilHTML(iso(new Date()),{caja:220})}</div></div>
     <div class="card"><h2>Apariencia</h2>
       <div class="row">
         <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
@@ -12197,7 +12506,20 @@ function act(a,el){
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
+    /* el pasillo de un producto: abrir la lista y elegir. Van en el switch de CLICKS —son botones—,
+       que es donde tienen que estar: un `case` en el de `change` no se dispararía nunca. */
+    case 'compra-pasillo':{const k=el.dataset.k||'';
+      ui.compraPasillo=(ui.compraPasillo===k)?'':k;render();break;}
+    case 'compra-pasillo-set':{
+      setPasillo(el.dataset.t||'',el.dataset.v||'');
+      ui.compraPasillo='';render();
+      flash(el.dataset.v?('a partir de ahora, en '+((COMPRA_SECS.filter(function(x){return x[0]===el.dataset.v;})[0]||['','ese pasillo'])[1])):'vuelve a decidirlo la app');
+      break;}
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
+    case 'ir-viaje':ui.tab='cfg';ui.cfgVista='viaje';render();window.scrollTo(0,0);break;
+    case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
+      store.rotation.viaje.on=!viajeCfg().on;save();render();
+      flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
     case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
       render();window.scrollTo(0,0);break;}
     case 'dia-add':{
@@ -14124,6 +14446,17 @@ function calEventos(desde,hasta){
         uid:icsUID('trabajo|'+k),
         summ:'💼 Trabajo'+(rot?(' · '+rot):''),
         desc:'Jornada de '+a+(b?(' a '+b):'')+'.'+(rot?(' Rotación: '+rot+'.'):''),cat:'TRABAJO'});}
+    /* «si acaso salir de casa 7:30-33 bus 7:35»: eso y nada más. Un aviso corto antes de entrar,
+       para no perder el bus; el resto del desplazamiento no va al calendario. */
+    (function(){
+      const v=viajeCfg(),jor2=jornadaOf(k,inf);
+      if(!v.on||!v.bus||!jor2||!jor2.start||isGuardia(sh))return;
+      const b=mins(v.bus);if(b==null)return;
+      const sale=b-v.antes;
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(hm(sale)),horaFin:icsHM(v.bus),dur:0,
+        uid:icsUID('viaje|'+k),
+        summ:'🚌 Salir de casa '+hm(sale)+' · bus '+fmtTimeOut(v.bus),
+        desc:'Para llegar a la parada '+v.antes+' min antes.',cat:'TRABAJO'});})();
     const g2=diaSegundo(k,inf);
     if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:60,
       summ:'🏊 '+(g2.tipo||'entreno'),desc:'Segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+'.',cat:'ENTRENO'});
@@ -14568,8 +14901,17 @@ document.addEventListener('change',e=>{
       ui.semDesde=iso(d)===iso(new Date())?'':iso(d);render();}break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
     case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
+    case 'viaje-f':{
+      if(!store.rotation.viaje)store.rotation.viaje={};
+      const f=el.dataset.f,vv=el.value;
+      if(f==='bus')store.rotation.viaje.bus=/^\d{1,2}:\d{2}$/.test(vv)?vv:'';
+      else if(f==='antes')store.rotation.viaje.antes=Math.max(0,Math.min(30,Math.round(+vv||0)));
+      else if(f==='min')store.rotation.viaje.min=Math.max(0,Math.min(180,Math.round(+vv||0)));
+      save();render();break;}
     /* los tres de abajo son <input>/<select>: puestos en act() no se disparan nunca */
     case 'dia-esp-kcal':flash(setDiaEspKcal(diaComer(),el.value));render();break;
+    /* lo que SUELE ser ese tipo de día para ti: cambia lo que se pondrá solo de aquí en adelante */
+    case 'dia-esp-normal':flash(setKcalTipo(el.dataset.t||'',el.value));render();break;
     case 'perf-nacido':flash(setPerfil('nacidoF',el.value));break;
     case 'perf-act':flash(setPerfil('actividad',el.value));break;
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
@@ -14706,6 +15048,8 @@ document.addEventListener('change',e=>{
       ui.imp.estado='';ui.imp.msg='';render();break;}
     case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
       store.franja.horas=+el.value||24;save();render();break;}
+    case 'franja-alto':{if(!store.franja)store.franja={colores:{}};
+      store.franja.alto=el.value||'medio';save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};
       if(!store.franja.colores)store.franja.colores={};
       store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
@@ -14898,7 +15242,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
-  sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
+  sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,diaLaborableCerca,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,schedLine,dayLine,RKEYS,necesidadSemana,
   dineroS,gastosFijos,gastosDeFecha,gastoPagado,mesDinero,addGasto,delGasto,addPago,delPago,pagarGasto,eur,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
@@ -14906,7 +15250,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
-  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
+  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyAhoraHTML,planDiaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
   objetivosS,nuevoObjetivo,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
@@ -14916,17 +15260,17 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
   informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
-  TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
+  TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
-  seccionDeCompra,porSeccion,COMPRA_SECS,
+  seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
-  bloquesDelDia,agendaDia,finMin,rangoCarril,carrilHTML,carrilSemanaHTML,
+  bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
-  diasEspS,diaEspDe,marcarDiaEsp,setDiaEspKcal,kcalExtraDe,DIA_TIPOS,diaComer,
+  diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,
   claseDeToma,platosDeClase,platoCubierto,platoApto,menuAutoDia,menuAutoSemana,aplicarMenuAuto,pesoDeTomas,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,

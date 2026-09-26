@@ -1769,6 +1769,73 @@ ul.slots{list-style:none;margin:0;padding:0}
 .icsgf .n b{font-size:12.5px;font-weight:700}
 .icsgf .n span{font-size:10.5px;font-weight:700;color:var(--ink2)}
 .icsgf .btn{flex:0 0 auto}
+/* la cocina en Semana: solo cuándo toca ponerse. El detalle —pasos, tápers, lo que sobra— vive
+   entero en Comer → Cocina, y repetirlo aquí costaba 999 px de la vista de la semana */
+.cocmini{display:flex;flex-direction:column;gap:6px}
+.cocm{padding:8px 10px;border:1px solid var(--line);border-radius:11px;
+  background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.cocmh{display:flex;align-items:baseline;gap:9px;border:0;background:transparent;cursor:pointer;
+  color:var(--ink);font:inherit;text-align:left;width:100%;padding:0}
+.cocmh:hover b{color:var(--brand)}
+.cocmh b{font-size:13px;font-weight:700}
+.cocmh span{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap}
+/* los platos, como fichas en una línea que envuelve: se ve QUÉ se cocina sin las tarjetas de
+   antes, que costaban 999 px en la vista de la semana */
+.cocm .platos{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.cocm .plato{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;
+  background:var(--bg);border:1px solid var(--line);max-width:100%}
+.cocm .plato .pic{font-size:12px;line-height:1}
+.cocm .plato b{font-size:10.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cocm .plato .mini{font-size:9.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.cocm .plato .tag{font-size:9px;padding:1px 4px}
+/* el sueño, el sol y las comidas de un día de la semana, en una sola fila que envuelve: era la
+   misma información en tres renglones, y con siete días eso son tres pantallas de scroll */
+.drlinea{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;padding:4px 10px 6px}
+.drlinea .drsol{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:0}
+.drlinea .drcom{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;padding:0;margin:0}
+
+/* ============ la semana, en pantalla y pico ============ */
+/* LAS HORAS DE DORMIR, sombreadas en la columna de cada día de la rejilla. `.tl-noche` nació para
+   la barra horizontal (top/bottom fijos, ancho por estilo); en el carril es lo contrario: ancho
+   completo y el alto por estilo. Sin esto el sombreado se comía la columna entera. */
+.scol .tl-noche{top:auto;bottom:auto;left:0;right:0;z-index:0;
+  background:color-mix(in srgb,var(--c,#7c5cff) 17%,transparent);
+  border-top:1px solid color-mix(in srgb,var(--c,#7c5cff) 34%,transparent)}
+/* el sol de la semana, UNA vez en la cabecera: sale y se pone casi a la misma hora los siete días,
+   así que repetirlo en cada fila costaba un renglón por día y no decía nada nuevo */
+.solsem{display:inline-flex;align-items:center;gap:9px;flex:0 0 auto;margin-left:auto}
+.solsem .pie{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+  white-space:nowrap;color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
+/* las sesiones de cocina, plegadas: cuándo toca ponerse siempre a la vista y los platos al abrir.
+   Las fichas de los platos de las tres sesiones costaban 512 px de la vista de la semana, y el
+   detalle —pasos, tápers, lo que sobra— vive entero en Comer → Cocina. */
+details.cocm>summary.cocmh{list-style:none;display:flex;align-items:baseline;gap:9px;cursor:pointer}
+details.cocm>summary.cocmh::-webkit-details-marker{display:none}
+details.cocm>summary.cocmh::after{content:'▾';font-size:10px;color:var(--ink2);margin-left:4px}
+details.cocm[open]>summary.cocmh::after{content:'▴'}
+/* el sueño de un día de la semana va en UNA pastilla, así que la fila entra en un renglón */
+.drlinea .drsol .pie.sue{white-space:nowrap}
+.drlinea .drsol .pie.sue.rec{white-space:normal}
+/* la fila de un día tiene que entrar en UN renglón a 412 px: con el sueño en una pastilla, las
+   cuatro horas de comer sumaban 382 px en una caja de 370 y envolvía. Un punto menos de letra en
+   las horas de comer y menos hueco entre pastillas y cabe, que es lo que ahorra 23 px por día. */
+.drlinea .drcom .pl.com{font-size:11.5px}
+.drlinea{column-gap:4px;padding-left:8px;padding-right:8px}
+.drlinea .drcom{gap:4px}
+/* el ✓ de apuntar una toma, a la derecha de la fila: cuatro botones de ancho completo debajo de
+   cada comida costaban 140 px de «Hoy» y dejaban la cena fuera de la primera pantalla */
+.meal{grid-template-columns:46px 1fr auto}
+.meal .mok{align-self:center;width:34px;height:34px;border-radius:11px;
+  border:1px solid color-mix(in srgb,var(--ok,#34d399) 45%,var(--line));
+  background:color-mix(in srgb,var(--ok,#34d399) 12%,transparent);
+  color:color-mix(in srgb,var(--ok,#34d399) 85%,var(--ink));
+  font-size:15px;font-weight:800;cursor:pointer;line-height:1}
+.meal .mok:hover{background:color-mix(in srgb,var(--ok,#34d399) 24%,transparent)}
+.meal.past .mok{opacity:.55}
+/* el sol de la semana va en el título de la propia rejilla: si envuelve a un segundo renglón
+   empuja la rejilla fuera de la primera pantalla, que es justo lo que se estaba arreglando */
+.card h2 .solsem{gap:7px}
+.card h2 .solsem .pie{font-size:10px;line-height:1.1}
 
 /* ============ Cocina: el plato con alimentos (maqueta aprobada) ============ */
 .platomac{display:flex;gap:6px}
@@ -1821,3 +1888,15 @@ ul.slots{list-style:none;margin:0;padding:0}
 .ffix{margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
 .ffix summary{font-size:12px;font-weight:800;color:var(--ink2);cursor:pointer}
 .grp .flogo{width:18px;height:18px;font-size:8.5px;border-radius:5px}
+/* ============ el pasillo de un producto, corregible delante del lineal ============ */
+/* Las reglas que reparten la compra por pasillos son treinta expresiones en el código y se
+   equivocan (el plátano acabó en conservas porque «lata» casa dentro de «pLATAno»). Este botón
+   deja corregirlo ahí mismo, y lo que elijas manda sobre la regla. */
+.lcompra .linea .secmv{flex:0 0 auto;width:30px;height:30px;border-radius:9px;
+  border:1px solid transparent;background:transparent;cursor:pointer;
+  font-size:14px;line-height:1;opacity:.45}
+.lcompra .linea .secmv:hover{opacity:1;border-color:var(--line);background:var(--bg2)}
+.lcompra .linea .secmv.mio{opacity:.9;border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.lcompra .secpick{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 10px;list-style:none;
+  border-top:1px dashed var(--line)}
+.lcompra .secpick .btn{font-size:11.5px;padding:5px 9px}
