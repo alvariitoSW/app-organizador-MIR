@@ -392,6 +392,13 @@ function normalize(o){
   if(!o.rotation.quota||typeof o.rotation.quota!=='object')o.rotation.quota={urg:4,umi:2};
   ['urg','umi'].forEach(function(k){if(typeof o.rotation.quota[k]!=='number')o.rotation.quota[k]=(k==='urg'?4:2);});
   if(o.rotation.autoPos===undefined)o.rotation.autoPos=true;
+  /* el color que tienes puesto en Google para cada calendario. Sin registrarlo aquí se pierde al
+     recargar; solo se guardan grupos y colores que existan de verdad. */
+  if(!o.rotation.icsColores||typeof o.rotation.icsColores!=='object')o.rotation.icsColores={};
+  else{const ic={};ICS_GRUPOS.forEach(function(g){
+    const v=o.rotation.icsColores[g[0]];
+    if(ICS_COLORES.indexOf(v)>=0)ic[g[0]]=v;});
+    o.rotation.icsColores=ic;}
   if(!o.rotation.saltoDia||typeof o.rotation.saltoDia!=='object')o.rotation.saltoDia={from:6,to:1};
   o.rotation.saltoDia.from=Math.max(0,Math.min(6,+o.rotation.saltoDia.from));
   o.rotation.saltoDia.to=Math.max(0,Math.min(6,+o.rotation.saltoDia.to));
@@ -12243,6 +12250,22 @@ const ICS_GRUPOS=[
   ['trabajo','💼 Trabajo',['TRABAJO'],'work','Mandarina'],
   ['entrenos','💪 Entrenos',['ENTRENO'],'gym','Pavo real'],
   ['avisos','📌 Eventos, recibos y tareas',['EVENTO','DINERO','TAREA','ESTUDIO'],'evt','Uva']];
+/* los once colores que tiene Google Calendar, con el nombre que les pone él */
+const ICS_COLORES=['Tomate','Mandarina','Plátano','Albahaca','Salvia','Pavo real','Arándano',
+  'Lavanda','Uva','Flamenco','Grafito'];
+function icsColorGrupo(k){
+  /* QUÉ COLOR LE HAS PUESTO TÚ EN GOOGLE a ese calendario. La app te dice cuál poner para que se
+     vea como aquí, pero el nombre estaba en el código: si usabas otro, el texto mentía. */
+  const g=icsGrupoDe(k);
+  if(!g)return '';
+  const mio=((store.rotation||{}).icsColores||{})[k];
+  return (ICS_COLORES.indexOf(mio)>=0)?mio:g[4];}
+function setIcsColor(k,color){
+  if(!icsGrupoDe(k))return '';
+  const r=store.rotation;
+  if(!r.icsColores||typeof r.icsColores!=='object')r.icsColores={};
+  if(ICS_COLORES.indexOf(color)>=0)r.icsColores[k]=color; else delete r.icsColores[k];
+  save();return 'anotado: en Google lo tienes en «'+icsColorGrupo(k)+'»';}
 function icsGrupoDe(k){return ICS_GRUPOS.filter(function(g){return g[0]===k;})[0]||null;}
 function icsCuentaGrupo(desde,hasta,k){
   const g=icsGrupoDe(k);if(!g)return 0;
@@ -12251,9 +12274,15 @@ function icsCuentaGrupo(desde,hasta,k){
 function icsGruposHTML(desde,hasta){
   return '<div class="icsg">'+ICS_GRUPOS.map(function(g){
     const n=icsCuentaGrupo(desde,hasta,g[0]);
+    /* el color se ELIGE: la app decía «ponlo en Tomate» y si usabas otro el texto mentía */
     return '<div class="icsgf"'+(n?'':' data-vacio="1"')+'>'+
       '<i style="background:'+esc(tlColor(g[3]))+'"></i>'+
-      '<span class="n"><b>'+esc(g[1])+'</b><span>'+(n?(n+' cita'+(n===1?'':'s')+' · en Google, «'+esc(g[4])+'»'):'nada en este rango')+'</span></span>'+
+      '<span class="n"><b>'+esc(g[1])+'</b><span>'+(n?(n+' cita'+(n===1?'':'s')):'nada en este rango')+
+        ' · en Google</span></span>'+
+      '<select class="icscol" data-a="ics-color" data-g="'+esc(g[0])+'" aria-label="color de '+esc(g[1])+' en Google">'+
+        ICS_COLORES.map(function(c){
+          return '<option value="'+esc(c)+'"'+(icsColorGrupo(g[0])===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')+
+      '</select>'+
       (n?('<button class="btn s" data-a="cal-dl-grupo" data-g="'+esc(g[0])+'">.ics</button>'):'')+
       '</div>';}).join('')+'</div>';}
 function icsCatsHTML(desde,hasta){
@@ -15573,6 +15602,8 @@ document.addEventListener('change',e=>{
     /* lo que le faltaba a descansoCfg(): alguien que escriba store.gym.descansoSeg */
     /* los días de cada escalón del repaso: <input>, así que aquí y no en act() */
     case 'est-dias':{flash(setEstDias(el.dataset.n,el.value));render();break;}
+    /* el color que tienes puesto en Google para cada calendario: <select>, así que aquí */
+    case 'ics-color':{flash(setIcsColor(el.dataset.g||'',el.value));render();break;}
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
     case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
@@ -15859,7 +15890,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
-  ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
+  ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,ajusteMeta,protPorKg,setMetaNum,kcalFaltaTxt,
   diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,

@@ -7181,6 +7181,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // La app te DICE qué color ponerle en Google a cada calendario para que se vea como
+  // aquí («en Google, Tomate»), y ese nombre estaba en el código: si usabas otro, el
+  // texto mentía y no había forma de corregirlo.
+  // ===================================================================================
+  {
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'ajustes'; P.ui.ajuVista = 'calendario'; P.render(); });
+    await page.waitForTimeout(400);
+    const antes = await page.evaluate(() => { const P = window.PG;
+      return { sel: document.querySelectorAll('#main [data-a="ics-color"]').length,
+        opciones: (document.querySelector('#main [data-a="ics-color"]') || {}).length,
+        guardias: P.icsColorGrupo('guardias') }; });
+    // es un <select>: selectOption sí dispara `change`
+    const hay = antes.sel > 0;
+    if (hay) { await page.selectOption('#main [data-a="ics-color"][data-g="guardias"]', 'Lavanda');
+      await page.waitForTimeout(350); }
+    const tras = await page.evaluate(() => { const P = window.PG;
+      const r = { guardias: P.icsColorGrupo('guardias'),
+        // los otros grupos no se tocan
+        trabajo: P.icsColorGrupo('trabajo'),
+        enPantalla: (document.querySelector('#main [data-a="ics-color"][data-g="guardias"]') || {}).value };
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      r.trasRecargar = P.icsColorGrupo('guardias');
+      // un color que no existe en Google no se guarda: vuelve al de fábrica
+      P.setIcsColor('guardias', 'Turquesa inventado');
+      r.inventado = P.icsColorGrupo('guardias');
+      return r; });
+    check('el color de cada calendario en Google se elige, y la app deja de decirte uno que no usas',
+      hay && antes.guardias === 'Tomate' && antes.opciones === 11 &&
+      tras.guardias === 'Lavanda' && tras.enPantalla === 'Lavanda' &&
+      tras.trabajo === 'Mandarina' && tras.trasRecargar === 'Lavanda' &&
+      tras.inventado === 'Tomate',
+      JSON.stringify({ antes, tras }));
+    await page.evaluate(() => { const P = window.PG;
+      P.store.rotation.icsColores = {}; P.ui.ajuVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

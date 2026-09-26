@@ -106,8 +106,9 @@ Lo que decide las horas, y que no hay que programar:
   (*Ajustes → Cómo se ve → El carril del día*), con los colores de cada categoría y una vista previa.
 
 **Al widget que ya usas** se llega exportando a Google Calendar: un `.ics` por categoría (guardias,
-trabajo, entrenos, avisos) para que cada uno entre en su calendario con su color. La compra no se
-exporta.
+trabajo, entrenos, avisos) para que cada uno entre en su calendario con su color. El color de cada
+uno lo eliges tú de los once de Google, para que lo que dice la app sea lo que tienes puesto. La
+compra no se exporta.
 
 ## Estructura
 
