@@ -7057,6 +7057,51 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.typesVista = ''; P.render(); });
   }
 
+  // ===================================================================================
+  // El cronómetro del descanso arrancaba SIEMPRE a 90 s. descansoCfg() leía
+  // store.gym.descansoSeg y no lo escribía nadie: el ajuste existía en el código y no
+  // había forma de llegar a él. (El descanso POR EJERCICIO se quitó a propósito en el
+  // rediseño de las rutinas —«sin peso objetivo ni descanso, que no los usas»— y sigue
+  // fuera: esto es el de toda la sesión.)
+  // ===================================================================================
+  {
+    // la tarjeta del segundo entreno —donde vive ahora el descanso— está en Entreno → Rutinas
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'gym'; P.ui.gymPanel = 'rutinas'; P.render(); });
+    await page.waitForTimeout(400);
+    const hay = await page.evaluate(() => !!document.querySelector('#main [data-a="gym-descanso"]'));
+    const antes = await page.evaluate(() => window.PG.descansoCfg());
+    // es un <input>: page.fill() no dispara `change` por sí solo, hace falta el Tab
+    const campo = hay ? await page.$('#main [data-a="gym-descanso"]') : null;
+    if (campo) { await campo.fill('150'); await page.keyboard.press('Tab'); await page.waitForTimeout(400); }
+    const tras = await page.evaluate(() => { const P = window.PG;
+      const r = { seg: P.descansoCfg(), guardado: P.store.gym.descansoSeg };
+      // y el cronómetro arranca con ESE número, no con 90
+      P.ui.gymDesc = null;
+      P.arrancaDescanso();
+      r.total = P.ui.gymDesc ? P.ui.gymDesc.total : null;
+      P.ui.gymDesc = null;
+      // aguanta recargar: normalize() tira todo lo que no reconoce
+      P.store = JSON.parse(JSON.stringify(P.store));
+      r.trasRecargar = P.descansoCfg();
+      return r; });
+    // y 0 es válido: apaga el cronómetro en vez de volver a los 90 de fábrica
+    const cero = await page.evaluate(() => { const P = window.PG;
+      P.store.gym.descansoSeg = 0; P.save();
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const seg = P.descansoCfg();
+      P.ui.gymDesc = null; P.arrancaDescanso();
+      const caja = !!P.ui.gymDesc;
+      P.store.gym.descansoSeg = 90; P.save(); P.render();
+      return { seg, caja }; });
+    check('el descanso entre series se cambia desde Entreno y el cronómetro arranca con él',
+      hay && !!campo && antes === 90 && tras.seg === 150 && tras.guardado === 150 &&
+      tras.total === 150 && tras.trasRecargar === 150 &&
+      cero.seg === 0 && cero.caja === false,
+      JSON.stringify({ hay, antes, tras, cero }));
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
