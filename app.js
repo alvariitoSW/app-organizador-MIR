@@ -522,6 +522,13 @@ function normalize(o){
     o.food.pasillos=lim;}
   /* los días que se salen del plan: {YYYY-MM-DD:{tipo,kcal}}. Sin registrarlo aquí se pierde al
      recargar, como todo lo que normalize() no conoce. */
+  /* las kcal que SUELE tener para ti cada tipo de día raro. Sin registrarlas aquí se pierden al
+     recargar, como todo lo que normalize() no conoce. */
+  if(!o.food.kcalTipo||typeof o.food.kcalTipo!=='object')o.food.kcalTipo={};
+  else{const kt={};DIA_TIPOS.forEach(function(x){
+    const v=o.food.kcalTipo[x[0]];
+    if(typeof v==='number'&&v>=0&&v<=6000)kt[x[0]]=Math.round(v);});
+    o.food.kcalTipo=kt;}
   if(!o.food.diasEsp||typeof o.food.diasEsp!=='object')o.food.diasEsp={};
   else{const lim={};Object.keys(o.food.diasEsp).slice(0,800).forEach(function(k){
     const v=o.food.diasEsp[k];
@@ -5611,13 +5618,31 @@ function diaComer(){
 function diasEspS(){const f=food();if(!f.diasEsp||typeof f.diasEsp!=='object')f.diasEsp={};return f.diasEsp;}
 function diaEspDe(key){const k=foodKey(key)||key;return diasEspS()[k]||null;}
 function diaEspTipo(t){return DIA_TIPOS.filter(function(x){return x[0]===t;})[0]||null;}
+function kcalTipoDia(t){
+  /* LAS KCAL DE PARTIDA DE UN DÍA RARO SON TUYAS. Estaban a pelo en DIA_TIPOS (950 el menú del día
+     de fuera, 600 el moncheo): podías corregir el día concreto, pero el número de partida era
+     código, así que si tu menú del día son 1 200 lo estabas corrigiendo cada vez. */
+  const d=diaEspTipo(t);
+  if(!d)return 0;
+  if(!d[4])return 0;                       /* el menú del hospital no estima nada, y sigue sin hacerlo */
+  const mio=(food().kcalTipo||{})[t];
+  return (typeof mio==='number'&&mio>=0&&mio<=6000)?mio:d[4];}
 function marcarDiaEsp(key,tipo){
   const k=foodKey(key)||key,d=diasEspS(),t=diaEspTipo(tipo);
   if(!t){delete d[k];save();return 'día normal otra vez';}
   if(d[k]&&d[k].tipo===tipo){delete d[k];save();return 'quitado: '+t[2];}
-  d[k]={tipo:tipo,kcal:t[4],prot:0};
+  const k0=kcalTipoDia(tipo);
+  d[k]={tipo:tipo,kcal:k0,prot:0};
   save();
-  return t[1]+' '+t[2]+(t[4]?(' · +'+t[4]+' kcal estimadas'):' · lo apuntas tú');}
+  return t[1]+' '+t[2]+(k0?(' · +'+k0+' kcal estimadas'):' · lo apuntas tú');}
+function setKcalTipo(t,kcal){
+  /* lo que SUELE ser para ti ese tipo de día. Cambia lo que se pone por defecto de aquí en
+     adelante; los días ya marcados se quedan con lo que tuvieran. */
+  const f=food();
+  if(!f.kcalTipo||typeof f.kcalTipo!=='object')f.kcalTipo={};
+  if(!diaEspTipo(t))return '';
+  f.kcalTipo[t]=Math.max(0,Math.min(6000,Math.round(+kcal||0)));
+  save();return 'a partir de ahora, '+f.kcalTipo[t]+' kcal';}
 function setDiaEspKcal(key,kcal){
   const k=foodKey(key)||key,d=diasEspS();
   if(!d[k])return 'ese día no está marcado';
@@ -5642,7 +5667,13 @@ function diaEspCardHTML(sel){
       (t[4]?('<div class="row" style="margin-top:8px;align-items:flex-end">'+
         '<label class="fld" style="flex:0 0 130px">kcal de ese día'+
           '<input type="number" min="0" max="6000" step="50" value="'+(+e.kcal||0)+'" data-a="dia-esp-kcal"></label>'+
-        '<span class="mini">es una estimación mía, no una medida</span></div>'):''))
+        /* LO QUE SUELE SER PARA TI. Antes el número de partida (950 el menú del día, 600 el
+           moncheo) estaba en el código: podías corregir ESTE día, pero al siguiente volvía a salir
+           el mismo, así que si tu menú del día son 1 200 lo corregías cada vez. */
+        '<label class="fld" style="flex:0 0 140px">y de normal, para ti'+
+          '<input type="number" min="0" max="6000" step="50" value="'+kcalTipoDia(e.tipo)+'" '+
+          'data-a="dia-esp-normal" data-t="'+esc(e.tipo)+'"></label>'+
+        '<span class="mini">la primera cifra es solo de este día; la segunda es la que se pondrá sola a partir de ahora</span></div>'):''))
       :'')+
     '</div>';}
 function actividadTxt(){
@@ -14868,6 +14899,8 @@ document.addEventListener('change',e=>{
       save();render();break;}
     /* los tres de abajo son <input>/<select>: puestos en act() no se disparan nunca */
     case 'dia-esp-kcal':flash(setDiaEspKcal(diaComer(),el.value));render();break;
+    /* lo que SUELE ser ese tipo de día para ti: cambia lo que se pondrá solo de aquí en adelante */
+    case 'dia-esp-normal':flash(setKcalTipo(el.dataset.t||'',el.value));render();break;
     case 'perf-nacido':flash(setPerfil('nacidoF',el.value));break;
     case 'perf-act':flash(setPerfil('actividad',el.value));break;
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
@@ -15226,7 +15259,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
-  diasEspS,diaEspDe,marcarDiaEsp,setDiaEspKcal,kcalExtraDe,DIA_TIPOS,diaComer,
+  diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,
   claseDeToma,platosDeClase,platoCubierto,platoApto,menuAutoDia,menuAutoSemana,aplicarMenuAuto,pesoDeTomas,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
   perfilS,setPerfil,apuntarPeso,tendenciaPeso,

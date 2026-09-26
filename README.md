@@ -72,7 +72,9 @@ Los días que se salen del plan, en **Comer → Hoy**:
 
 - 🏥 **menú del hospital** — no inventa kcal: las apuntas tú cuando sabes qué había. El plan del
   día deja de contar, porque ya no te lo vas a comer.
-- 🍽️ **he comido fuera** y 🍫 **día de moncheo** — suman una estimación editable.
+- 🍽️ **he comido fuera** y 🍫 **día de moncheo** — suman una estimación editable, con **dos**
+  cifras: la de ese día y la que suele ser para ti, que es la que se pondrá sola a partir de
+  entonces (de fábrica, 950 y 600).
 
 ### Celiaquía
 

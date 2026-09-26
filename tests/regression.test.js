@@ -6710,6 +6710,54 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
   }
 
+
+  // ===================================================================================
+  // Las kcal de partida de «he comido fuera» y «día de moncheo» eran constantes del
+  // código (950 y 600): podías corregir ESE día, pero al siguiente volvía a salir el
+  // mismo número, así que con un menú del día de 1 200 lo corregías cada vez.
+  // ===================================================================================
+  {
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
+    await page.waitForTimeout(350);
+    const k = await page.evaluate(() => window.PG.diaComer());
+    // se marca «he comido fuera» tocando el botón de verdad, no llamando a la API
+    const btn = await page.$('#main [data-a="dia-esp"][data-t="fuera"]');
+    if (btn) { await btn.click(); await page.waitForTimeout(350); }
+    const puesto = await page.evaluate((k) => { const P = window.PG;
+      const e = P.diaEspDe(k);
+      return { tipo: e && e.tipo, kcal: e && e.kcal,
+        campoDia: !!document.querySelector('#main [data-a="dia-esp-kcal"]'),
+        campoNormal: !!document.querySelector('#main [data-a="dia-esp-normal"]'),
+        valorNormal: (document.querySelector('#main [data-a="dia-esp-normal"]') || {}).value }; }, k);
+
+    // se cambia «lo que suele ser para ti» por el campo, que vive en el listener de CHANGE:
+    // page.fill() no lo dispara solo, hace falta el Tab
+    const campo = await page.$('#main [data-a="dia-esp-normal"]');
+    if (campo) { await campo.fill('1200'); await page.keyboard.press('Tab'); await page.waitForTimeout(400); }
+    // ENCADENADO: se quita la marca y se vuelve a poner — ahora tiene que salir 1 200, no 950
+    await page.evaluate((k) => { const P = window.PG; P.marcarDiaEsp(k, 'fuera'); P.render(); }, k);
+    await page.waitForTimeout(200);
+    const otra = await page.evaluate((k) => { const P = window.PG;
+      P.marcarDiaEsp(k, 'fuera');
+      const e = P.diaEspDe(k);
+      // y aguanta recargar: normalize() tira todo lo que no reconoce
+      P.store = JSON.parse(JSON.stringify(P.store));
+      return { kcal: e && e.kcal, porDefecto: P.kcalTipoDia('fuera'),
+        trasRecargar: P.kcalTipoDia('fuera'),
+        // el menú del hospital no estima nada, y eso no cambia
+        hospital: P.kcalTipoDia('hospital') }; }, k);
+    check('las kcal de un día de «comí fuera» se ponen a tu medida y valen para los siguientes',
+      puesto.tipo === 'fuera' && puesto.campoDia && puesto.campoNormal && puesto.valorNormal === '950' &&
+      !!campo && otra.kcal === 1200 && otra.porDefecto === 1200 && otra.trasRecargar === 1200 &&
+      otra.hospital === 0,
+      JSON.stringify({ puesto, otra }));
+
+    await page.evaluate((k) => { const P = window.PG;
+      P.marcarDiaEsp(k, ''); delete P.food().kcalTipo.fuera; P.save(); P.render(); }, k);
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
