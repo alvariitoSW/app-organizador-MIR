@@ -6758,6 +6758,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // El déficit (−18 %) y la proteína por kilo (2,0 g/kg en déficit) decidían las kcal y
+  // la proteína del objetivo desde el código: podías sobrescribir la cifra final a mano,
+  // pero no la regla, así que volvía a salir la misma al cambiar de peso.
+  // ===================================================================================
+  {
+    const prep = await page.evaluate(() => { const P = window.PG;
+      const guardado = JSON.parse(JSON.stringify(P.store.perfil));
+      P.setPerfil('alturaCm', 179); P.setPerfil('pesoKg', 95);
+      P.setPerfil('nacidoF', '1998-10-06'); P.setPerfil('meta', 'perder');
+      P.setPerfil('actividad', 1.55); P.save();
+      // la tarjeta de las kcal vive en «Comer → Tú», no en la portada de Comer
+      P.ui.tab = 'food'; P.ui.foodVista = 'perfil'; P.render();
+      return { guardado, gasto: P.gastoDiario(),
+        ajuste: P.ajusteMeta(), prot: P.protPorKg(),
+        kcal: P.kcalSugeridas(), gProt: P.proteinaSugerida() }; });
+    await page.waitForTimeout(350);
+    // los dos campos van A LA VISTA, no dentro de una puerta: cada cambio repinta la pantalla y
+    // una puerta se cerraría justo mientras la estás usando (y la prueba se quedaba esperando a un
+    // campo escondido hasta agotar los 30 s de Playwright)
+    const puerta = await page.evaluate(() => ({
+      hay: !!document.querySelector('#main [data-a="meta-ajuste"]') &&
+           !!document.querySelector('#main [data-a="meta-prot"]'),
+      visible: !!(document.querySelector('#main [data-a="meta-ajuste"]') || {}).offsetParent }));
+    // se conducen los dos campos de verdad: viven en el listener de CHANGE, hace falta el Tab
+    const cAj = await page.$('#main [data-a="meta-ajuste"]');
+    if (cAj) { await cAj.fill('-25'); await page.keyboard.press('Tab'); await page.waitForTimeout(400); }
+    const cPr = await page.$('#main [data-a="meta-prot"]');
+    if (cPr) { await cPr.fill('2.4'); await page.keyboard.press('Tab'); await page.waitForTimeout(400); }
+    const tras = await page.evaluate(() => { const P = window.PG;
+      const r = { ajuste: P.ajusteMeta(), prot: P.protPorKg(),
+        kcal: P.kcalSugeridas(), gProt: P.proteinaSugerida() };
+      // la otra meta NO se toca: lo que cambias es de la meta que tienes puesta
+      r.otraMeta = P.ajusteMeta('mantener');
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      r.trasRecargar = P.ajusteMeta(); r.protTrasRecargar = P.protPorKg();
+      return r; });
+    check('el déficit y la proteína por kilo se cambian desde «Tú» y recalculan el objetivo',
+      prep.ajuste === -0.18 && prep.prot === 2 && puerta.hay && puerta.visible && !!cAj && !!cPr &&
+      Math.round(tras.ajuste * 100) === -25 && tras.prot === 2.4 &&
+      // 95 kg × 2,4 = 228 → redondeado a múltiplo de 5 = 230
+      tras.gProt === 230 && tras.kcal < prep.kcal &&
+      tras.kcal === Math.round(prep.gasto * 0.75 / 10) * 10 &&
+      tras.otraMeta === 0 &&
+      Math.round(tras.trasRecargar * 100) === -25 && tras.protTrasRecargar === 2.4,
+      JSON.stringify({ prep: { ajuste: prep.ajuste, prot: prep.prot, kcal: prep.kcal }, puerta, tras }));
+
+    await page.evaluate((g) => { const P = window.PG;
+      P.store.perfil = g; P.save(); P.render(); }, prep.guardado);
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

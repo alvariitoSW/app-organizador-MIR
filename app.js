@@ -490,6 +490,15 @@ function normalize(o){
   o.perfil.nacidoF=/^\d{4}-\d{2}-\d{2}$/.test(String(o.perfil.nacidoF))?o.perfil.nacidoF:'';
   o.perfil.actividad=(+o.perfil.actividad>=1.2&&+o.perfil.actividad<=2.2)?+o.perfil.actividad:1.5;
   o.perfil.meta=(['perder','mantener','ganar'].indexOf(o.perfil.meta)>=0)?o.perfil.meta:'mantener';
+  /* el déficit y la proteína por kilo que has puesto TÚ, por meta. Sin registrarlos aquí se
+     pierden al recargar. Los límites son de seguridad: ±40 % y 0,5-4 g/kg. */
+  ['metaAjuste','metaProt'].forEach(function(campo){
+    const lim=campo==='metaAjuste'?[-0.4,0.4]:[0.5,4];
+    if(!o.perfil[campo]||typeof o.perfil[campo]!=='object'){o.perfil[campo]={};return;}
+    const li={};['perder','mantener','ganar'].forEach(function(m){
+      const v=o.perfil[campo][m];
+      if(typeof v==='number'&&v>=lim[0]&&v<=lim[1])li[m]=v;});
+    o.perfil[campo]=li;});
   /* el peso, uno por día: lo que de verdad se puede seguir. La masa muscular NO se calcula de los
      menús —eso sería inventarla—; lo que se sigue es el peso y su tendencia. */
   o.perfil.pesos=Array.isArray(o.perfil.pesos)?o.perfil.pesos
@@ -5590,17 +5599,41 @@ const META_AJUSTE={perder:-0.18,mantener:0,ganar:0.10};
 /* proteína por kilo de peso. Para perder grasa sin perder músculo el rango con respaldo es
    1,6–2,2 g/kg; se coge 2,0, que es donde cae la mayoría de la evidencia en déficit. */
 const META_PROT={perder:2.0,mantener:1.6,ganar:1.8};
+function ajusteMeta(metaOpt){
+  /* CUÁNTO SE QUITA O SE PONE, en tanto por uno. Era una constante del código (−18 % para perder,
+     +10 % para ganar): decidía tus kcal y no había forma de tocarla sin programar. Se guarda por
+     meta, que es como se usa —la de ahora es la que manda—, y de fábrica sale lo de siempre. */
+  const m=metaOpt||perfilS().meta||'mantener';
+  const mio=(perfilS().metaAjuste||{})[m];
+  return (typeof mio==='number'&&mio>=-0.4&&mio<=0.4)?mio:(META_AJUSTE[m]||0);}
+function protPorKg(metaOpt){
+  /* gramos de proteína por kilo. Igual: 2,0 en déficit y 1,6 manteniendo estaban en el código. */
+  const m=metaOpt||perfilS().meta||'mantener';
+  const mio=(perfilS().metaProt||{})[m];
+  return (typeof mio==='number'&&mio>=0.5&&mio<=4)?mio:(META_PROT[m]||1.6);}
+function setMetaNum(campo,val){
+  const p=perfilS(),m=p.meta||'mantener';
+  if(campo==='ajuste'){
+    const n=Math.max(-40,Math.min(40,Math.round(+val||0)));
+    if(!p.metaAjuste||typeof p.metaAjuste!=='object')p.metaAjuste={};
+    p.metaAjuste[m]=n/100;save();
+    return n===0?'ni déficit ni superávit':((n>0?'+':'')+n+' % sobre lo que gastas');}
+  if(campo==='prot'){
+    const n=Math.max(0.5,Math.min(4,Math.round((+val||0)*10)/10));
+    if(!p.metaProt||typeof p.metaProt!=='object')p.metaProt={};
+    p.metaProt[m]=n;save();
+    return fmt(n)+' g de proteína por kilo';}
+  return '';}
 function kcalSugeridas(){
   const g=gastoDiario();
   if(!g)return 0;
-  const m=perfilS().meta||'mantener';
-  const k=Math.round(g*(1+(META_AJUSTE[m]||0))/10)*10;
+  const k=Math.round(g*(1+ajusteMeta())/10)*10;
   /* nunca por debajo del metabolismo basal: comer menos de lo que gastas en reposo no es un plan */
   return Math.max(metabolismoBasal(),k);}
 function proteinaSugerida(){
-  const p=perfilS(),kg=+p.pesoKg||0;
+  const kg=+perfilS().pesoKg||0;
   if(!kg)return 0;
-  return Math.round(kg*(META_PROT[p.meta||'mantener']||1.6)/5)*5;}
+  return Math.round(kg*protPorKg()/5)*5;}
 /* ===================== los días que se salen del plan =====================
    Un día de guardia se come el menú del hospital y no se sabe qué será; otro día se come fuera; y
    otro se moncha. Sin esto, la app daba por comido el menú planeado y la cuenta de la semana era
@@ -5719,7 +5752,23 @@ function kcalCardHTML(){
         '<select data-a="perf-act">'+ACTIVIDADES.map(function(a){
           return '<option value="'+a[0]+'"'+(Math.abs(a[0]-(+p.actividad||1.5))<0.01?' selected':'')+'>'+esc(a[1])+'</option>';}).join('')+
         '</select></label>'+
-    '</div></div>';}
+    '</div>'+
+    /* LAS DOS REGLAS QUE DECIDEN LA CIFRA, a la vista y no dentro de una puerta. Estaban en el
+       código (−18 % para perder, 2,0 g/kg de proteína): podías sobrescribir el objetivo final a
+       mano, pero no la regla, así que volvía a salir la misma cada vez que cambiaba tu peso.
+       A la vista y no plegadas porque cada cambio repinta la pantalla, y una puerta se cerraría
+       justo mientras la estás usando. */
+    '<div class="row" style="margin-top:9px">'+
+      '<label class="fld" style="flex:1 1 150px">déficit o superávit (%)'+
+        '<input type="number" min="-40" max="40" step="1" value="'+Math.round(ajusteMeta()*100)+'" data-a="meta-ajuste"></label>'+
+      '<label class="fld" style="flex:1 1 150px">proteína (g por kilo)'+
+        '<input type="number" min="0.5" max="4" step="0.1" value="'+fmt(protPorKg())+'" data-a="meta-prot"></label>'+
+    '</div>'+
+    '<p class="mini" style="margin:7px 0 0;color:var(--ink2)">Son de la meta que tienes puesta ('+
+      esc(META_TXT[p.meta]||'mantenerte')+'); cambiarlas no toca las otras. De fábrica, para perder grasa: '+
+      '−18 % (un déficit moderado se lleva la grasa y no el músculo; uno agresivo se lleva los dos) '+
+      'y 2,0 g/kg, que es donde cae la mayoría de la evidencia dentro del rango con respaldo de 1,6–2,2.</p>'+
+    '</div>';}
 function objetivoMacros(){
   /* la proteína la pones tú. El carbohidrato y la grasa, si no los has puesto, salen de repartir a
      partes iguales las kcal que quedan después de la proteína: es una referencia, no una pauta. */
@@ -14902,6 +14951,9 @@ document.addEventListener('change',e=>{
     /* lo que SUELE ser ese tipo de día para ti: cambia lo que se pondrá solo de aquí en adelante */
     case 'dia-esp-normal':flash(setKcalTipo(el.dataset.t||'',el.value));render();break;
     case 'perf-nacido':flash(setPerfil('nacidoF',el.value));break;
+    /* el déficit y la proteína por kilo de la meta que tengas puesta */
+    case 'meta-ajuste':flash(setMetaNum('ajuste',el.value));render();break;
+    case 'meta-prot':flash(setMetaNum('prot',el.value));render();break;
     case 'perf-act':flash(setPerfil('actividad',el.value));break;
     case 'pat-sel':{const i=store.patterns.findIndex(p=>p.id===el.value);if(i>=0){store.rotation.pattern=i;store.rotation.mode='template';save();render();}break;}
     case 'rot-anchor':{if(el.value){store.rotation.anchor=el.value;store.rotation.anchorSet=true;save();render();}break;}
@@ -15258,7 +15310,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,icsGrupoDe,icsCuentaGrupo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
-  edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,kcalFaltaTxt,
+  edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,ajusteMeta,protPorKg,setMetaNum,kcalFaltaTxt,
   diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,
   claseDeToma,platosDeClase,platoCubierto,platoApto,menuAutoDia,menuAutoSemana,aplicarMenuAuto,pesoDeTomas,
   glutenDe,glutenDePlato,platosConGluten,cambiarPlatoSinGluten,esCeliaco,GLUTEN_CAMBIOS,
