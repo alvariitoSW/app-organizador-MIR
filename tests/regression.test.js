@@ -248,7 +248,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     check('lo que contestas en el asistente queda puesto de verdad en el planning',
       montada.trabajo === '08:30-16:00' && montada.jornada === '08:30' && montada.gMes === 5 &&
-      montada.wake === '07:15' && montada.montada === true && montada.tab === 'hoy',
+      montada.wake === '07:15' && montada.montada === true && montada.tab === 'month',
       JSON.stringify(montada));
 
     await page.reload();
@@ -266,20 +266,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
   }
 
-  // 0) al abrir la app lo que quieres saber es qué tienes HOY, no planificar el mes: arranca en
-  // «Hoy», que es donde están el turno, lo que toca entrenar, las tareas, lo que hay que pagar y
-  // las comidas del día. El mes sigue a un toque.
+  // 0) al abrir la app se ve el MES: lo pidió así (antes arrancaba en «Hoy», que queda a un toque).
+  // Se mira que se pinte la rejilla del mes de verdad, no solo que la variable diga «month».
   const defaultTab = await page.evaluate(() => window.PG.ui.tab);
   const arranque = await page.evaluate(() => ({
-    hoyVisible: /Hoy ·/.test(document.getElementById('main').textContent),
-    // el calendario dejó de ser una barra horizontal + lista de horas: ahora es un carril
-    // vertical donde cada cosa ocupa el rato que ocupa. Lo que se comprueba es que el día se vea,
-    // no cómo se dibujaba antes.
-    franja: !!document.querySelector('#main .carrilbox .carril'),
-    mesAUnToque: !!document.querySelector('#calModes button[data-t="month"]'),
+    mes: document.querySelectorAll('#main .cal .dbox').length,
+    hoyAUnToque: !!document.querySelector('#calModes button[data-t="hoy"]'),
+    mesMarcado: !!document.querySelector('#calModes button[data-t="month"].on'),
   }));
-  check('la app arranca en «Hoy», con el día a la vista y el mes a un toque',
-    defaultTab === 'hoy' && arranque.hoyVisible && arranque.franja && arranque.mesAUnToque,
+  check('la app arranca en el mes, con la rejilla pintada y «Hoy» a un toque',
+    defaultTab === 'month' && arranque.mes >= 28 && arranque.hoyAUnToque && arranque.mesMarcado,
     'tab=' + defaultTab + ' ' + JSON.stringify(arranque));
 
   // 0b) la barra son tres grupos: Calendario, Entreno y Comer. Comer se comió a Compra, a Comida,
@@ -3735,8 +3731,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(elIcs));
 
     const enLaFranja = await page.evaluate(() => {
-      const d = document.createElement('div');
+      const d = document.createElement('div'), fr = window.PG.store.franja, h0 = fr.horas;
+      fr.horas = 24;   /* la forma del evento, no la ventana de horas (ver abajo) */
       d.innerHTML = window.PG.timelineBar(window.PG.iso(new Date()));
+      fr.horas = h0;
       const banda = d.querySelector('.tl-seg.evt');
       return { bandas: d.querySelectorAll('.tl-seg.evt').length,
         puntos: d.querySelectorAll('.tl-dot.evt').length,
@@ -3748,9 +3746,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // y uno sin hora de fin se sigue comportando como siempre
     await page.evaluate(() => { window.PG.eventosS()[0].fin = ''; window.PG.save(); });
+    // con 24 h a la vista: con 12 la ventana se centra en la hora actual y el evento de las 08:30
+    // se quedaba fuera según a qué hora se pasara la prueba. Aquí se mira la FORMA, no la ventana.
     const sinFin = await page.evaluate(() => {
-      const d = document.createElement('div');
+      const d = document.createElement('div'), fr = window.PG.store.franja, h0 = fr.horas;
+      fr.horas = 24;
       d.innerHTML = window.PG.timelineBar(window.PG.iso(new Date()));
+      fr.horas = h0;
       const P = window.PG, k = P.iso(new Date());
       return { puntos: d.querySelectorAll('.tl-dot.evt').length,
         bandas: d.querySelectorAll('.tl-seg.evt').length,
@@ -5324,6 +5326,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ag.n >= 5 && ag.ordenadas && ag.sesion === (8 * 60) + '-' + (8 * 60 + 39) && ag.trabajo &&
       ag.comidas >= 3 && ag.pintados >= 3 && ag.conDestino === ag.pintados,
       JSON.stringify(ag));
+    // «salir de casa» (07:30) quedaba DEBAJO del bloque de trabajo (08–15), que ocupa todo el ancho
+    // y se pintaba después: el toque se lo llevaba el trabajo. Cada marca fina tiene que ser lo que
+    // hay encima en su propio centro, y el bloque largo tocable por su franja izquierda.
+    const tocables = await page.evaluate(() => [...document.querySelectorAll('#main .carril .cb')].map((el) => {
+      el.scrollIntoView({ block: 'center' });
+      const r = el.getBoundingClientRect(), fino = el.classList.contains('fino') || el.classList.contains('encima');
+      const x = fino ? r.left + r.width / 2 : r.left + 12, y = r.top + Math.min(10, r.height / 2);
+      const top = document.elementFromPoint(x, y);
+      return { t: el.innerText.split('\n')[0], ok: !!top && top.closest('.cb') === el };
+    }));
+    check('en el carril del día cada bloque se puede tocar: las marcas finas no quedan tapadas por la jornada',
+      tocables.length >= 4 && tocables.every((x) => x.ok), JSON.stringify(tocables));
     await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.ui.diaHoy = ''; P.save(); P.render(); }, k);
     await page.waitForTimeout(250);
     // la tarjeta de «ahora / siguiente» solo tiene sentido en el día de HOY, no en el laborable que
