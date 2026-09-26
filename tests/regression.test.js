@@ -5241,8 +5241,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     check('las sesiones de la UMI (martes 8:00–8:39) y la general (jueves 8:00–8:30) entran una vez',
       g.n === 2 && g.n2 === 2 && g.umi === '2 08:00-08:39 true' && g.gen === '4 08:00-08:30', JSON.stringify(g));
+    // el trabajo va con el nombre CORTO de la rotación («💼 UMI», «💼 Cardio»): cabe en la columna de Google
     check('a Google van la sesión de los martes que trabajas (no en vacaciones), el trabajo con su rotación y la rotación',
-      g.enTrabajo.some((x) => /Sesión UMI/.test(x)) && g.enTrabajo.some((x) => /Trabajo · UMI/.test(x)) &&
+      g.enTrabajo.some((x) => /Sesión UMI/.test(x)) && g.enTrabajo.some((x) => /💼 UMI/.test(x)) &&
       !g.enVac.some((x) => /Sesión UMI/.test(x)) &&
       g.rot.length === 1 && /Rotación · UMI 2027-06-07→2027-06-16/.test(g.rot[0]) && g.ics, JSON.stringify(g));
   }
@@ -6407,14 +6408,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       viaje.aCasa && viaje.aCasa.a === 15 * 60 + 20,
       JSON.stringify(viaje));
 
-    // al calendario va UNA línea corta antes de entrar, y nada más del desplazamiento
+    // el viaje ya NO va al calendario de Google: sirve para cuadrar el día en la app (lo pidió así)
     const ics = await page.evaluate((k) => { const P = window.PG;
       const evs = P.calEventos(k, k);
       const v = evs.filter((e) => /Salir de casa/.test(e.summ));
       return { n: v.length, summ: v[0] ? v[0].summ : '', cat: v[0] ? v[0].cat : '',
         total: evs.length }; }, k);
-    check('al calendario de Google va una sola línea del viaje: salir de casa y el bus',
-      ics.n === 1 && /Salir de casa 07:31 · bus 07:35/.test(ics.summ) && ics.cat === 'TRABAJO',
+    check('«salir de casa» se queda en la app y no se manda al calendario de Google',
+      ics.n === 0 && ics.total >= 1,
       JSON.stringify(ics));
 
     // y se puede apagar sin tocar código: es un ajuste, no una constante
@@ -7270,6 +7271,70 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((g) => { const P = window.PG;
       P.store.estudio = g; P.ui.estVista = ''; P.save(); P.render(); }, est.guardado);
     await page.waitForTimeout(200);
+  }
+
+  // 205) GOOGLE SIN BORRAR EL MES PASADO · MÍNIMO DE ENTRENOS · GYM Y COCINA EN EL DÍA · LLORETAZO
+  {
+    // el fichero de un mes lleva también los 3 anteriores, sin el viaje, con el trabajo en corto y con COLOR
+    const ics = await page.evaluate(() => { const P = window.PG;
+      const rr = P.calRangoExport({ desde: '2027-06-01', hasta: '2027-06-30' });
+      const t = P.icsTexto(rr.desde, rr.hasta, {});
+      return { desde: rr.desde, marzo: /DTSTART(;VALUE=DATE)?:202703/.test(t), viaje: /Salir de casa/.test(t),
+        color: /\r\nCOLOR:/.test(t), corto: ['Radiología', 'Cardiología', 'Neumología'].map((x) => P.servicioCorto(x)).join(',') }; });
+    check('exportar un mes no deja fuera los anteriores (lleva 3 meses atrás), sin el viaje, con color y el trabajo en corto',
+      ics.desde === '2027-03-01' && ics.marzo && !ics.viaje && ics.color && ics.corto === 'Rayos,Cardio,Neumo', JSON.stringify(ics));
+
+    // mínimo de entrenos: se completa solo, se quita uno a mano y la app pone otro; guardias fuera
+    await page.evaluate(() => { const P = window.PG, g = P.gymS();
+      g.rutinas = g.rutinas.filter((r) => r.id !== 'rt-205');
+      g.rutinas.push({ id: 'rt-205', nombre: 'Prueba 205', notas: '', dias: [], ejercicios: [{ ex: 'Sentadilla', series: 3, reps: 5 }] });
+      g.minSemana = 0; g.forzar = {}; P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    for (let i = 0; i < 3; i++) { const b = await page.$('[data-a="ent-min"][data-d="1"]'); if (b) await b.click(); await page.waitForTimeout(120); }
+    const s1 = await page.evaluate(() => { const P = window.PG, s = P.entrenoSemana(P.iso(new Date()));
+      return { min: s.min, total: s.total, faltan: s.faltan, auto: s.auto.length,
+        enGuardia: s.dias.some((d) => d.auto && d.motivo === 'guardia'),
+        rt: s.auto.length ? !!P.rutinaDeFecha(s.auto[0]) : null, aptos: s.dias.filter((d) => d.apto).length }; });
+    const autoB = await page.$('.entdias button.auto');
+    if (autoB) await autoB.click();
+    await page.waitForTimeout(200);
+    const s2 = await page.evaluate(() => { const P = window.PG, s = P.entrenoSemana(P.iso(new Date()));
+      return { total: s.total, quitados: Object.keys(P.gymForzar()).filter((k) => P.gymForzar()[k] === false).length }; });
+    check('el mínimo de entrenos por semana se completa en días libres, y al quitar uno a mano la app busca otro',
+      s1.min === 3 && !s1.enGuardia && (s1.aptos >= 3 ? (s1.faltan === 0 && s1.rt) : s1.faltan > 0) &&
+      s2.quitados === 1 && (s1.aptos >= 4 ? s2.total === 3 : true), JSON.stringify({ s1, s2 }));
+
+    // en el día: al gym → entreno → a casa, y la cocina de la semana en su hora
+    const dia = await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.hora = '18:00'; g.ida = 15; g.vuelta = 20;
+      const s = P.entrenoSemana(P.iso(new Date())), k = s.dias.filter((d) => d.auto || d.base)[0];
+      if (!k) return null;
+      const bl = P.bloquesDelDia(k.k);
+      const ent = bl.filter((b) => /Entreno/.test(b.tit))[0], ida = bl.filter((b) => /Al gym/.test(b.tit))[0], vu = bl.filter((b) => /Del gym/.test(b.tit))[0];
+      return { ent: ent && ent.de, ida: ida && (ida.de + '-' + ida.a), vuelta: vu && (vu.a - vu.de),
+        cocina: P.cocinaDelDia ? 'ok' : 'no', icsSinCocina: !/Cocinar/.test(P.icsTexto(k.k, k.k, {})) }; });
+    check('el día cuenta ir al gym y volver (solo en la app), y la cocina no va a Google',
+      dia && dia.ida === (dia.ent - 15) + '-' + dia.ent && dia.vuelta === 20 && dia.icsSinCocina, JSON.stringify(dia));
+
+    // Lloretazo: un toque, 2 h 10 por la noche, y con otro toque se quita
+    await page.evaluate(() => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => !e.lloret);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const ll = await page.$('[data-a="lloret"]');
+    if (ll) await ll.click();
+    await page.waitForTimeout(200);
+    const l1 = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), e = P.lloretDe(k), pl = P.lloretPlan(k);
+      const bm = P.mins(pl.bed), fin = e ? P.mins(e.fin) : null;
+      return { e: e ? (e.hora + '-' + e.fin) : null, dur: e ? ((fin - P.mins(e.hora) + 1440) % 1440) : 0,
+        cabe: bm == null || fin == null ? null : (((bm < 720 ? bm + 1440 : bm) - (fin < 720 ? fin + 1440 : fin)) >= 15),
+        carril: P.bloquesDelDia(k).some((b) => /Lloretazo/.test(b.tit)), persiste: (P.store = JSON.parse(JSON.stringify(P.store)), !!P.lloretDe(k)) }; });
+    const ll2 = await page.$('[data-a="lloret"]');
+    if (ll2) await ll2.click();
+    await page.waitForTimeout(200);
+    const l2 = await page.evaluate(() => !!window.PG.lloretDe(window.PG.iso(new Date())));
+    check('el Lloretazo se pone con un toque (2 h 10, vuelves con tiempo para dormir tus horas) y se quita con otro',
+      !!l1.e && l1.dur === 130 && l1.cabe !== false && l1.carril && l1.persiste && l2 === false, JSON.stringify({ l1, l2 }));
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.minSemana = 0; g.forzar = {};
+      g.rutinas = g.rutinas.filter((r) => r.id !== 'rt-205'); P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
