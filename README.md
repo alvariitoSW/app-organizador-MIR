@@ -49,6 +49,10 @@ lista.
 La compra sale en **Hoy** cuando toca, como una tarea más (cada 3, 4 o 7 días, tú eliges). **No se
 mete en el calendario de Google**: se queda en la app.
 
+**Si algo cae en el pasillo equivocado**, se corrige delante del lineal: el botoncito de la derecha
+de cada línea abre los pasillos y lo que elijas manda sobre las reglas de la app para ese producto,
+también la próxima semana. El ↺ lo devuelve a lo que decida ella.
+
 ### La foto del ticket
 
 Igual que con las recetas: **leer una imagen necesita a Claude, y Claude solo existe dentro del

@@ -6634,6 +6634,82 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.food().fueraGuard = []; P.ui.foodVista = ''; P.save(); P.render(); });
   }
 
+
+  // ===================================================================================
+  // El pasillo de un producto se corrige DELANTE DEL LINEAL. Las reglas que reparten la
+  // compra son treinta expresiones regulares en el código y se equivocan: el plátano
+  // acabó en conservas porque «lata» casa dentro de «pLATAno». Hasta ahora arreglarlo
+  // era tocar código.
+  // ===================================================================================
+  {
+    await gotoTab('shop');
+    await page.waitForTimeout(350);
+    // se abren los pasillos que se hayan plegado solos, que si no no hay líneas que tocar
+    await page.evaluate(() => {
+      document.querySelectorAll('#main .pasillo').forEach((b) => {
+        if (b.getAttribute('aria-expanded') === 'false') b.click(); });
+    });
+    await page.waitForTimeout(350);
+    const conLinea = await page.evaluate(() => {
+      const l = document.querySelector('#main .lcompra .linea');
+      return l ? { texto: (l.querySelector('.tx b') || {}).textContent || '',
+        tieneBoton: !!l.querySelector('.secmv') } : null; });
+    // se conduce la INTERFAZ, no la API: el botón vive en el switch de clicks y es justo
+    // donde se esconden los fallos mudos de este repositorio
+    if (conLinea && conLinea.tieneBoton) {
+      await page.evaluate(() => document.querySelector('#main .lcompra .linea .secmv').click());
+      await page.waitForTimeout(300);
+      const pick = await page.evaluate(() => ({
+        abierto: !!document.querySelector('#main .secpick'),
+        opciones: document.querySelectorAll('#main .secpick .btn').length,
+        // el pasillo en el que está ahora sale marcado
+        marcada: !!document.querySelector('#main .secpick .btn.p') }));
+      await page.click('#main .secpick [data-v="bebida"]');
+      await page.waitForTimeout(350);
+      const tras = await page.evaluate((txt) => { const P = window.PG;
+        return { seccion: P.seccionDeCompra(txt),
+          cerrado: !document.querySelector('#main .secpick'),
+          // y sobrevive a recargar: normalize() tira todo lo que no reconoce
+          trasRecargar: (function () { P.store = JSON.parse(JSON.stringify(P.store));
+            return P.seccionDeCompra(txt); })() }; }, conLinea.texto);
+      check('el pasillo de un producto se cambia desde la lista y aguanta recargar',
+        conLinea.tieneBoton && pick.abierto && pick.opciones >= 8 && pick.marcada &&
+        tras.seccion === 'bebida' && tras.cerrado && tras.trasRecargar === 'bebida',
+        JSON.stringify({ conLinea, pick, tras }));
+
+      // ENCADENADO: quitar la corrección devuelve el producto a lo que digan las reglas, y
+      // marcar la línea sigue funcionando (el botón no puede robarle el clic a la línea)
+      await page.evaluate(() => { const P = window.PG; P.ui.tab = 'shop'; P.render(); });
+      await page.waitForTimeout(300);
+      await page.evaluate(() => {
+        document.querySelectorAll('#main .pasillo').forEach((b) => {
+          if (b.getAttribute('aria-expanded') === 'false') b.click(); });
+      });
+      await page.waitForTimeout(300);
+      const vuelta = await page.evaluate((txt) => { const P = window.PG;
+        const reglas = (function () { const g = P.food().pasillos[P.despClave(txt)];
+          delete P.food().pasillos[P.despClave(txt)];
+          const r = P.seccionDeCompra(txt);
+          P.food().pasillos[P.despClave(txt)] = g; return r; })();
+        const marcasAntes = P.ui.marks.size;
+        const li = [...document.querySelectorAll('#main .lcompra .linea')]
+          .find((l) => ((l.querySelector('.tx b') || {}).textContent || '') === txt);
+        if (li) li.click();
+        return { reglas, marcasAntes, marcasTras: P.ui.marks.size, hallada: !!li }; }, conLinea.texto);
+      check('quitar la corrección devuelve el pasillo a las reglas, y marcar la línea sigue yendo',
+        vuelta.hallada && vuelta.reglas !== 'bebida' && vuelta.marcasTras !== vuelta.marcasAntes,
+        JSON.stringify(vuelta));
+
+      await page.evaluate((txt) => { const P = window.PG;
+        delete P.food().pasillos[P.despClave(txt)];
+        P.ui.marks = new Set(); P.ui.compraPasillo = ''; P.save(); P.render(); }, conLinea.texto);
+      await page.waitForTimeout(200);
+    } else {
+      check('el pasillo de un producto se cambia desde la lista y aguanta recargar',
+        false, 'no había ninguna línea de compra a la vista');
+    }
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

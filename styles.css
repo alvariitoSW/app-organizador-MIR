@@ -1888,3 +1888,15 @@ details.cocm[open]>summary.cocmh::after{content:'▴'}
 .ffix{margin-top:12px;border-top:1px dashed var(--line);padding-top:9px}
 .ffix summary{font-size:12px;font-weight:800;color:var(--ink2);cursor:pointer}
 .grp .flogo{width:18px;height:18px;font-size:8.5px;border-radius:5px}
+/* ============ el pasillo de un producto, corregible delante del lineal ============ */
+/* Las reglas que reparten la compra por pasillos son treinta expresiones en el código y se
+   equivocan (el plátano acabó en conservas porque «lata» casa dentro de «pLATAno»). Este botón
+   deja corregirlo ahí mismo, y lo que elijas manda sobre la regla. */
+.lcompra .linea .secmv{flex:0 0 auto;width:30px;height:30px;border-radius:9px;
+  border:1px solid transparent;background:transparent;cursor:pointer;
+  font-size:14px;line-height:1;opacity:.45}
+.lcompra .linea .secmv:hover{opacity:1;border-color:var(--line);background:var(--bg2)}
+.lcompra .linea .secmv.mio{opacity:.9;border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.lcompra .secpick{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 10px;list-style:none;
+  border-top:1px dashed var(--line)}
+.lcompra .secpick .btn{font-size:11.5px;padding:5px 9px}

@@ -512,6 +512,14 @@ function normalize(o){
     ?o.food.neveraMano.filter(function(x){return typeof x==='string'&&x&&x.length<60;}).slice(0,300):[];
   o.food.ultimaCompra=/^\d{4}-\d{2}-\d{2}$/.test(String(o.food.ultimaCompra))?o.food.ultimaCompra:'';
   o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
+  /* EL PASILLO QUE LE HAS PUESTO TÚ A UN PRODUCTO. Sin esta línea se pierde al recargar:
+     normalize() tira todo lo que no reconoce. Solo se guardan claves de pasillo que existen. */
+  if(!o.food.pasillos||typeof o.food.pasillos!=='object')o.food.pasillos={};
+  else{const lim={},ok=COMPRA_SECS.map(function(x){return x[0];});
+    Object.keys(o.food.pasillos).slice(0,600).forEach(function(k){
+      const v=String(o.food.pasillos[k]||'');
+      if(k&&k.length<60&&ok.indexOf(v)>=0)lim[k]=v;});
+    o.food.pasillos=lim;}
   /* los días que se salen del plan: {YYYY-MM-DD:{tipo,kcal}}. Sin registrarlo aquí se pierde al
      recargar, como todo lo que normalize() no conoce. */
   if(!o.food.diasEsp||typeof o.food.diasEsp!=='object')o.food.diasEsp={};
@@ -9709,7 +9717,28 @@ function reglasSinTildes(){
   if(!reglasSinTildes._c)reglasSinTildes._c=COMPRA_REGLAS.map(function(r){
     return [new RegExp(r[0].source.normalize('NFD').replace(/[̀-ͯ]/g,''),r[0].flags),r[1]];});
   return reglasSinTildes._c;}
+function pasillosS(){
+  /* el pasillo que le has puesto TÚ a un producto, por su clave de despensa (la misma que hace que
+     «500 g lenteja pardina» y «lentejas pardinas» sean lo mismo). */
+  const f=food();
+  if(!f.pasillos||typeof f.pasillos!=='object')f.pasillos={};
+  return f.pasillos;}
+function pasilloTuyo(texto){
+  const k=despClave(texto);
+  return (k&&pasillosS()[k])||'';}
+function setPasillo(texto,sec){
+  /* poner el pasillo a mano, o quitarlo para volver a lo que diga la app */
+  const k=despClave(texto);
+  if(!k)return;
+  if(!sec)delete pasillosS()[k];
+  else if(COMPRA_SECS.some(function(x){return x[0]===sec;}))pasillosS()[k]=sec;
+  save();}
 function seccionDeCompra(texto){
+  /* LO QUE TÚ HAYAS DICHO MANDA. Las reglas de abajo son treinta expresiones en el código y se
+     equivocan: el plátano acabó en conservas porque «lata» casa dentro de «pLATAno». Corregir un
+     pasillo era tocar código; ahora es un dato tuyo y gana siempre. */
+  const mio=pasilloTuyo(texto);
+  if(mio)return mio;
   const t=String(texto||'').toLowerCase();
   for(let i=0;i<COMPRA_REGLAS.length;i++)if(COMPRA_REGLAS[i][0].test(t))return COMPRA_REGLAS[i][1];
   /* segundo intento sin tildes, por lo que venga del ticket o escrito a la carrera */
@@ -9732,11 +9761,28 @@ function compraLineaHTML(x){
   /* lo que ya está en la despensa se pinta apagado y con su cantidad: sigue en la lista para que
      veas que el menú lo pide, pero ya no te lo hace comprar */
   const ten=x.tengo&&!x.falta;
+  /* EL PASILLO SE CORRIGE AQUÍ, delante del lineal. El botoncito de la derecha abre los pasillos y
+     lo que elijas se guarda para ese producto: antes, un artículo mal colocado solo se arreglaba
+     tocando las reglas del código. El despachador usa closest('[data-a]'), así que pulsar el
+     botón NO marca la línea. */
+  const k=despClave(x.texto),mio=pasilloTuyo(x.texto);
+  const abierto=ui.compraPasillo===k;
+  const sel=abierto?('<li class="secpick">'+
+      COMPRA_SECS.map(function(sc){
+        const act=seccionDeCompra(x.texto)===sc[0];
+        return '<button class="btn s'+(act?' p':'')+'" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="'+sc[0]+'">'+
+          sc[2]+' '+esc(sc[1])+'</button>';}).join('')+
+      (mio?('<button class="btn s" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="">↺ como lo pone la app</button>'):'')+
+    '</li>'):'';
   return '<li class="linea'+(on?' ok':'')+(ten?' tengo':'')+'" data-a="mark" data-id="'+esc(x.id)+'">'+
     '<span class="box" role="checkbox" aria-checked="'+(on?'true':'false')+'"></span>'+
     '<span class="tx"><b>'+esc(x.texto)+'</b>'+
     (x.tengo?('<span class="de ten"><i></i>'+esc(x.tengo)+'</span>')
-      :(x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):''))+'</span></li>';}
+      :(x.de?('<span class="de"><i></i>'+esc(x.de)+'</span>'):''))+'</span>'+
+    '<button class="secmv'+(mio?' mio':'')+'" data-a="compra-pasillo" data-k="'+esc(k)+'"'+
+      ' title="cambiar de pasillo" aria-label="cambiar «'+esc(x.texto)+'» de pasillo">'+
+      esc((COMPRA_SECS.filter(function(sc){return sc[0]===seccionDeCompra(x.texto);})[0]||['','','🛒'])[2])+'</button>'+
+    '</li>'+sel;}
 let _compraUlt={total:0,marcados:0,cola:''};
 function compraPinta(){
   /* en el supermercado se tocan veinte cosas seguidas: se actualiza la barra y la cifra a mano en
@@ -12418,6 +12464,15 @@ function act(a,el){
       render();window.scrollTo(0,0);break;
     case 'nav-comer':{ui.tab='food';ui.foodVista='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
+    /* el pasillo de un producto: abrir la lista y elegir. Van en el switch de CLICKS —son botones—,
+       que es donde tienen que estar: un `case` en el de `change` no se dispararía nunca. */
+    case 'compra-pasillo':{const k=el.dataset.k||'';
+      ui.compraPasillo=(ui.compraPasillo===k)?'':k;render();break;}
+    case 'compra-pasillo-set':{
+      setPasillo(el.dataset.t||'',el.dataset.v||'');
+      ui.compraPasillo='';render();
+      flash(el.dataset.v?('a partir de ahora, en '+((COMPRA_SECS.filter(function(x){return x[0]===el.dataset.v;})[0]||['','ese pasillo'])[1])):'vuelve a decidirlo la app');
+      break;}
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
     case 'ir-viaje':ui.tab='cfg';ui.cfgVista='viaje';render();window.scrollTo(0,0);break;
     case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
@@ -15163,7 +15218,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
-  seccionDeCompra,porSeccion,COMPRA_SECS,
+  seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
