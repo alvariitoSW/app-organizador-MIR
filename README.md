@@ -68,6 +68,10 @@ Mifflin-St Jeor y la proteína por kilo, con un botón para dejarlas puestas com
 **estimación** y la app lo dice: el gasto real se mide, no se calcula, y lo que la corrige es el
 peso semana a semana.
 
+Las **dos reglas que dan esa cifra** —el déficit o superávit en % y los gramos de proteína por
+kilo— se cambian ahí mismo y son de la meta que tengas puesta. De fábrica, para perder grasa:
+−18 % y 2,0 g/kg (rango con respaldo: 1,6–2,2); manteniendo 0 % y 1,6; ganando +10 % y 1,8.
+
 Los días que se salen del plan, en **Comer → Hoy**:
 
 - 🏥 **menú del hospital** — no inventa kcal: las apuntas tú cuando sabes qué había. El plan del
