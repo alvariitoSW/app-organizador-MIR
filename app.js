@@ -22,6 +22,13 @@ function tlColor(k){const c=((store.franja||{}).colores||{})[k];
   for(let i=0;i<TLCAT.length;i++)if(TLCAT[i][0]===k)return TLCAT[i][2];
   return '#888888';}
 function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf(h)>=0?h:24;}
+/* CUÁNTO OCUPA EL CARRIL EN LA PANTALLA. Estaba a pelo en el código (430 px en «Hoy», 360 en la
+   rejilla de la semana) y era justo lo que había que tocar para que la semana no pidiera tres
+   pantallas de scroll. Ahora se elige en Ajustes → Cómo se ve. */
+const FRANJA_ALTOS={bajo:290,medio:370,alto:460};
+function franjaAlto(){const k=String((store.franja||{}).alto||'medio');
+  return FRANJA_ALTOS[k]||FRANJA_ALTOS.medio;}
+function franjaAltoSem(){return Math.max(220,franjaAlto()-40);}
 function mondayOf(d){const x=new Date(d.getTime());x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
 function addDays(d,n){const x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
 function iso(d){const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10);}
@@ -80,7 +87,7 @@ function DEFAULTS(){return {
   /* la comida principal va cuando toca según el día, no a una hora fija del tipo de día */
   comidas:{conEntreno:{de:'18:00',a:'18:30'},sinEntreno:{de:'14:00',a:'15:00'},trasSiesta:30},
   tema:{brand:'',brand2:'',ink:''},
-  franja:{horas:24,colores:{}},
+  franja:{horas:24,alto:'medio',colores:{}},
   lector:{proxy:'',publico:false},
   usda:{key:''},
   sitio:'lpa',sitios:[],
@@ -402,6 +409,8 @@ function normalize(o){
     .filter(Boolean);
   if(!o.franja||typeof o.franja!=='object')o.franja={};
   o.franja.horas=[12,18,24].indexOf(+o.franja.horas)>=0?+o.franja.horas:24;
+  /* sin esta línea el alto elegido se perdía al recargar: normalize() tira lo que no reconoce */
+  o.franja.alto=['bajo','medio','alto'].indexOf(String(o.franja.alto))>=0?String(o.franja.alto):'medio';
   /* el «lector de enlaces»: una función propia que va a buscar la descripción de un vídeo.
      Solo https, y solo lo que el usuario haya escrito a mano en Ajustes. */
   if(o.impPendiente&&typeof o.impPendiente==='object'){
@@ -962,6 +971,15 @@ function jornadaOf(dateStr,infOpt){
   const d=parseDate(dateStr);if(!d)return null;
   const inf=infOpt||dayInfo(dateStr);
   return jornadaEn(d.getDay(),inf.shiftId,!!dayOverride(dateStr));}
+function diaLaborableCerca(desdeOpt){
+  /* el primer día, de hoy en adelante, que es laborable de TU jornada. Lo usan las pruebas —y
+     cualquier cosa que necesite «un día con jornada»— para no depender de qué día se ejecuten:
+     en sábado no hay jornada de la que salir y media prueba del viaje caía por eso. */
+  const j=(store.rotation&&store.rotation.jornada)||{};
+  const wd=(j.workdays&&j.workdays.length)?j.workdays:[1,2,3,4,5];
+  let d=parseDate(desdeOpt||'')||new Date();
+  for(let i=0;i<8;i++){const x=addDays(d,i);if(wd.indexOf(x.getDay())>=0)return iso(x);}
+  return iso(d);}
 function baseWorkday(dateStr){
   /* si el hueco está vacío y es un laborable de tu jornada, el día es «Día de trabajo» con sus horas */
   const j=store.rotation&&store.rotation.jornada;if(!j||!j.start||!j.end)return null;
@@ -1271,6 +1289,26 @@ function hayEntrenoEn(dateStr,infOpt){
   const s2=diaSegundo(dateStr,inf);if(s2&&s2.on)return true;
   const sh=shiftById(inf.shiftId);
   return !!(sh&&/fuerza|entreno|gym/i.test(sh.name||''));}
+function finEntrenoDe(dateStr,infOpt){
+  /* A QUÉ HORA ACABAS DE ENTRENAR ese día (el más tardío de los dos entrenos). Las mismas horas que
+     usa el carril, para que la comida y el bloque pintado no se contradigan. */
+  if(!dateStr)return null;
+  const inf=infOpt||dayInfo(dateStr),sh=shiftById(inf.shiftId);
+  if(!sh)return null;
+  let fin=null;
+  const jor=jornadaOf(dateStr,inf);
+  const esF=/fuerza|entreno|gym/i.test(sh.name||'')||!!rutinaDeFecha(dateStr);
+  if(esF){
+    const propias=sh.start&&!(jor&&jor.start===sh.start);
+    const hi=propias?sh.start:((gymS()||{}).hora||'');
+    const m=mins(hi);
+    if(m!=null){
+      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+(+(gymS()||{}).duracion||75));
+      if(f!=null&&(fin==null||f>fin))fin=f;}}
+  const g2=diaSegundo(dateStr,inf);
+  if(g2&&g2.on){const m=mins(g2.hora||'15:30');
+    if(m!=null&&(fin==null||m+60>fin))fin=m+60;}
+  return fin;}
 function comidaPrincipalDe(dateStr,infOpt){
   if(!dateStr)return null;
   const inf=infOpt||dayInfo(dateStr),c=comidasCfg();
@@ -1278,7 +1316,14 @@ function comidaPrincipalDe(dateStr,infOpt){
   if(sal){const sl=sleepOf(dateStr,inf);
     if(sl&&sl.siesta){const m=mins(sl.siesta.a);
       if(m!=null)return {de:hm(m+c.trasSiesta),a:hm(m+c.trasSiesta+60),por:'siesta'};}}
-  if(hayEntrenoEn(dateStr,inf))return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};
+  /* LA COMIDA POST-ENTRENO SOLO MANDA SI EL ENTRENO ES EL QUE LA EMPUJA. Con un entreno de fuerza a
+     las 6:30 de la mañana la app ponía «comida post-entreno · 18:00»: el entreno había acabado a
+     las ocho y la comida caía cuatro horas tarde. Si el entreno acaba antes de tu hora normal de
+     comer, no cuenta: manda la jornada. */
+  if(hayEntrenoEn(dateStr,inf)){
+    const finG=finEntrenoDe(dateStr,inf),puesta0=mins(c.sinEntreno.de);
+    if(finG==null||puesta0==null||finG>puesta0)
+      return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};}
   /* LA COMIDA NO PUEDE CAER DENTRO DE LA JORNADA. Esto decía «al salir de la jornada» y usaba una
      hora FIJA: con jornada de 8 a 15 te ponía a comer en casa a las 14:00, que es imposible —a esa
      hora estás en el hospital—. Ahora la hora de la lista es lo PRONTO que comerías, y si la
@@ -2894,7 +2939,7 @@ function planDiaHTML(d){
     if(cp)bits.push('<span class="pl com">\ud83c\udf7d\ufe0f '+esc(comidaPrincipalTxt(cp))+'</span>');
   }
   return bits.length?('<div class="drplan">'+bits.join('')+'</div>'):'';}
-function horasSuenoHTML(key,inf,shiftId){
+function horasSuenoHTML(key,inf,shiftId,comp){
   /* Las dos horas del sueño, SIEMPRE a la vista, igual que las dos del sol. Antes solo se veían
      abriendo el día en «Semana» (y en «Hoy» había una sola: la de acostarse). La de levantarse no
      salía en ninguna de las dos pantallas.
@@ -2925,6 +2970,14 @@ function horasSuenoHTML(key,inf,shiftId){
        de noche, que no es lo mismo ni de lejos. */
     const minSiesta=c.siesta,cortaSiesta=sl.siesta.min<minSiesta;
     const cortaNoche=sl.noche!=null&&sl.noche<c.min;
+    /* COMPACTO: las tres piezas en una pastilla. En «Semana» el saliente se comía cuatro
+       renglones —siesta, noche, total y el aviso— y con siete días eso eran 90 px de un solo día. */
+    if(comp)return '<span class="pie sue'+((cortaSiesta||cortaNoche)?' corto':'')+'">'+
+      '\ud83d\ude34 '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+' ('+fmtHM(sl.siesta.min)+')'+
+      ' \u00b7 \ud83d\udecc '+esc(sl.bed||'\u2014')+(sl.noche!=null?(' ('+fmtHM(Math.round(sl.noche*60))+')'):'')+
+      (sl.h!=null?(' \u00b7 '+fmtHM(sl.h*60)):'')+'</span>'+
+      (cortaNoche?('<span class="pie sue rec">la noche se queda corta: a la cama a las '+
+        esc(acostarsePara(sl.wakeSig||'')||'\u2014')+'</span>'):'');
     return '<span class="pie sue'+(cortaSiesta?' corto':'')+'">\ud83d\ude34 siesta '+esc(sl.siesta.de)+'\u2013'+esc(sl.siesta.a)+
       ' ('+fmtHM(sl.siesta.min)+')</span>'+
       '<span class="pie sue'+(cortaNoche?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+
@@ -2934,6 +2987,12 @@ function horasSuenoHTML(key,inf,shiftId){
         esc(acostarsePara(sl.wakeSig||'')||'\u2014')+'</span>'):'');}
   const tarde=nt.rec&&sl.bed&&mins(sl.bed)!=null&&mins(nt.rec)!=null&&
     ((mins(sl.bed)-mins(nt.rec)+1440)%1440)>10&&((mins(sl.bed)-mins(nt.rec)+1440)%1440)<12*60;
+  /* COMPACTO: «\ud83d\udecc 22:40 \u2192 \u23f0 6:50 \u00b7 8h12» en UNA pastilla. Son los mismos datos: tres
+     pastillas sueltas por siete días hacían que la fila de cada día envolviera a dos renglones. */
+  if(comp)return '<span class="pie sue'+(corto?' corto':'')+'">'+
+      '\ud83d\udecc '+esc(hCortaHM(sl.bed)||'\u2014')+' \u23f0 '+esc(hCortaHM(sl.wake)||'\u2014')+
+      (sl.h!=null?(' \u00b7 '+fmtHM(sl.h*60)+(corto?(' \u00b7 te faltan '+fmtHM(nt.falta)):'')):'')+'</span>'+
+    ((corto||tarde)&&nt.rec?('<span class="pie sue rec">a la cama a las '+esc(nt.rec)+'</span>'):'');
   return '<span class="pie sue'+(corto?' corto':'')+'">\ud83d\udecc '+esc(sl.bed||'\u2014')+'</span>'+
     '<span class="pie sue">\u23f0 '+esc(sl.wake||'\u2014')+'</span>'+
     (sl.h!=null?('<span class="pie sue'+(corto?' corto':'')+'">'+fmtHM(sl.h*60)+
@@ -3016,13 +3075,17 @@ function mealRowsHTML(dateStr,sh){
     const dishTxt=info.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
       return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
     const pasada=today&&hora&&hora<nowHM&&i!==nextIdx;
+    /* el ✓ va a la derecha de la hora, no en un botón de ancho completo debajo de cada toma: cuatro
+       botones de esos costaban 140 px de «Hoy» y empujaban la cena fuera de la pantalla */
     return '<div class="meal'+(i===nextIdx?' next':'')+(pasada?' past':'')+'"><span class="mt">'+esc(hora||'·')+'</span><span>'+
       '<span class="ml">'+esc(s.label||'')+(i===nextIdx?' <span class="tag b2">siguiente</span>':'')+'</span>'+
       '<span class="mn">'+dishTxt+'</span>'+
       (principal?'<span class="md">hasta las '+esc(cp.a)+' · '+esc(comidaPorqueTxt(cp.por))+'</span>':'')+
       (t.kcal?'<span class="md">'+t.kcal+' kcal · '+t.prot+' g P'+(info.name?' · 🍱 '+esc(info.name):'')+'</span>':'')+
-      (info.items.length?'<button class="btn s" style="margin-top:5px" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓ ya me la he comido</button>':'')+
-      '</span></div>';}).join('');
+      '</span>'+
+      (info.items.length?('<button class="mok" title="ya me la he comido" aria-label="apuntar '+esc(s.label||'')+
+        ' como comida" data-a="hoy-log-slot" data-shift="'+sh.id+'" data-slot="'+s.id+'" data-key="'+dateStr+'">✓</button>'):'')+
+      '</div>';}).join('');
 }
 function franjaVentana(marcas){
   /* cuántas horas de la franja se ven (Ajustes → «Franja de 24 h»). Si son menos de 24,
@@ -3220,10 +3283,19 @@ function hoyAhoraHTML(key,inf,esHoy){
   const dura=ag.filter(function(x){return x.fin&&x.m2<=n&&n<finMin(x)&&x.tipo!=='meal';});
   const ahora=dura.length?dura[dura.length-1]:null;
   const sig=ag.filter(function(x){return x.m2>n;})[0]||null;
-  if(!ahora&&!sig)return '';
-  const ahoraTxt=ahora?('<b>'+esc(ahora.txt)+'</b> <span class="mini">hasta las '+esc(hCortaHM(ahora.fin))+'</span>'):'<b>Nada en marcha</b>';
+  /* A LAS ONCE DE LA NOCHE LA TARJETA DESAPARECÍA. Ya no queda nada hoy ni hay «siguiente», así que
+     se devolvía cadena vacía justo cuando lo que quieres saber es a qué hora suena el despertador.
+     Sin nada por delante, lo siguiente es lo primero de mañana. */
+  let man=null;
+  if(!sig){const k2=iso(addDays(parseDate(key)||new Date(),1));
+    try{man=agendaDia(k2,dayInfo(k2))[0]||null;}catch(e){man=null;}}
+  const ahoraTxt=ahora?('<b>'+esc(ahora.txt)+'</b> <span class="mini">hasta las '+esc(hCortaHM(ahora.fin))+'</span>')
+    :'<b>Nada en marcha</b>';
+  const sigTxt=sig?('<b>'+sig.ico+' '+esc(sig.txt)+' '+esc(hCortaHM(sig.hora))+'</b>')
+    :(man?('<b>'+man.ico+' '+esc(man.txt)+'</b> <span class="mini">mañana '+esc(hCortaHM(man.hora))+'</span>')
+      :'<b>Nada más por hoy</b>');
   return '<div class="hoyahora"><div><span class="e">AHORA</span>'+ahoraTxt+'</div>'+
-    (sig?('<div class="sig"><span class="e">SIGUIENTE</span><b>'+sig.ico+' '+esc(sig.txt)+' '+esc(hCortaHM(sig.hora))+'</b></div>'):'')+'</div>';}
+    '<div class="sig"><span class="e">SIGUIENTE</span>'+sigTxt+'</div></div>';}
 function hoyAgendaHTML(key,inf,esHoy){
   /* el día entero como lista por horas: cada cosa con su hora, su color y, las comidas, sus platos
      y el ✓ para apuntarla. Lo que ya ha pasado se apaga. */
@@ -3338,7 +3410,7 @@ function bloquesDelDia(key){
       ir:'tab',irV:'eventos'});});
   out.sort(function(a,b){return a.de-b.de||a.a-b.a;});
   return out;}
-function rangoCarril(bloques){
+function rangoCarril(bloques,keyOpt){
   /* de qué hora a qué hora se pinta: lo que haya ese día, con una hora de aire a cada lado y un
      mínimo de 06 a 23. Sin esto, un día con una sola cosa a las 15:00 pintaba 24 carriles vacíos. */
   const bs=bloques||[];
@@ -3347,6 +3419,12 @@ function rangoCarril(bloques){
      21:30 pintaba dos horas y media de carril vacío abajo. */
   let de=1440,a=0;
   bs.forEach(function(b){if(b.de<de)de=b.de;if(b.a>a)a=b.a;});
+  /* si es hoy, la hora actual entra SIEMPRE: a las 23:21 el día acababa a las 22:00 y la línea de
+     «ahora» se quedaba fuera del carril, justo cuando miras para ver qué te queda */
+  if(keyOpt&&isToday(keyOpt)){
+    const n=new Date(),nm=n.getHours()*60+n.getMinutes();
+    if(nm<de)de=nm;
+    if(nm>a)a=nm;}
   de=Math.max(0,Math.floor(de/60)*60-60);
   a=Math.min(1440,Math.ceil(a/60)*60+60);
   if(a-de<8*60){                       /* un día casi vacío tampoco se queda en dos carriles */
@@ -3356,7 +3434,7 @@ function rangoCarril(bloques){
 function carrilHTML(key,opt){
   /* el carril de UN día. `px` es lo que mide una hora: 44 en Hoy, 40 en la semana. */
   opt=opt||{};
-  const bl=bloquesDelDia(key),r=rangoCarril(bl);
+  const bl=bloquesDelDia(key),r=rangoCarril(bl,key);
   /* el ajuste de 12/18/24 h manda en CUÁNTAS HORAS VES DE UNA VEZ, que es lo que mandaba en la
      barra horizontal que había antes. La caja mide lo mismo siempre —si no, la portada crecía al
      elegir 24 h— y lo que cambia es lo alta que es una hora: a 12 h se ve holgado, a 24 apretado. */
@@ -3368,9 +3446,16 @@ function carrilHTML(key,opt){
   for(let m=r.de;m<r.a;m+=60)
     horas.push('<div class="ch" style="top:'+y(m)+'px;height:'+px+'px"><span>'+
       String(Math.floor(m/60)%24).padStart(2,'0')+'</span></div>');
+  /* LAS MARCAS FINAS NO SE PISAN. Una comida dura 30 min, pero por debajo de 20 px no se lee su
+     nombre, así que a 15 px por hora dos marcas seguidas —«a casa» a las 15:00 y la comida a las
+     15:20— se pintaban una encima de otra y solo se leía la de arriba. Cuando eso pasa, la de abajo
+     baja lo justo para no taparla: pierde un par de minutos de sitio y se gana poder leerla. */
+  let finoFin=-1e6;
   const cuerpo=bl.map(function(b,i){
-    const h=Math.max(opt.fino?20:26,y(b.a)-y(b.de));
-    const est='top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat);
+    const h=Math.max(b.fino?20:26,y(b.a)-y(b.de));
+    let top=y(b.de);
+    if(b.fino){if(top<finoFin+2)top=finoFin+2;finoFin=top+h;}
+    const est='top:'+top+'px;height:'+h+'px;--c:'+tlColor(b.cat);
     const dat=b.ir?(' data-a="'+esc(b.ir)+'"'+(b.irV?(' data-t="'+esc(b.irV)+'" data-v="'+esc(b.irV)+'"'):'')):'';
     /* el texto va pegado al borde de arriba del bloque: un bloque largo (la jornada, la guardia)
        empieza fuera de la caja al abrirse por donde estás, y el nombre se quedaba sin verse
@@ -3402,7 +3487,7 @@ function carrilSemanaHTML(days,opt){
   /* un rango común para las 7 columnas: si cada una tuviera el suyo, las horas no cuadrarían y la
      rejilla dejaría de servir para comparar días, que es justo para lo que está */
   let de=1440,a=0;
-  porDia.forEach(function(x){const r=rangoCarril(x.bl);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
+  porDia.forEach(function(x){const r=rangoCarril(x.bl,x.d.key);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
   if(a<=de){de=7*60;a=23*60;}
   const alto=Math.round((a-de)/60*px);
   const y=function(m){return Math.round((m-de)/60*px);};
@@ -3421,7 +3506,25 @@ function carrilSemanaHTML(days,opt){
        turno y no cabe su nombre, pero saber que a esa hora comes sí importa */
     const pts=x.bl.filter(function(b){return b.fino;}).map(function(b){
       return '<i class="sp2" style="top:'+y(b.de)+'px"></i>';}).join('');
-    return '<div class="scol'+(hoy?' hoy':'')+'">'+cuerpo+pts+'</div>';}).join('');
+    /* LAS HORAS QUE DUERMES, sombreadas en la columna. Es lo que deja ver de un golpe qué noche se
+       queda corta y dónde muerde la guardia, y es la única franja del día que no es un bloque con
+       nombre: pintarla como bloque taparía el turno. Se recorta al rango visible de la rejilla. */
+    const noche=(function(){
+      const band=function(p,q){
+        const u=Math.max(de,p),v=Math.min(a,q);
+        if(v<=u)return '';
+        return '<i class="tl-noche" style="top:'+y(u)+'px;height:'+(y(v)-y(u))+
+          'px;--c:'+tlColor('sleep')+'"></i>';};
+      let sl;try{sl=sleepOf(x.d.key,x.d.inf);}catch(e){sl=null;}
+      if(!sl)return '';
+      let out='';
+      if(sl.siesta){const ds=mins(sl.siesta.de),as=mins(sl.siesta.a);
+        if(ds!=null&&as!=null)out+=band(ds,as>ds?as:1440);}
+      const b=mins(sl.bed),w=mins(sl.wake);
+      if(w!=null&&!sl.siesta)out+=band(0,w);
+      if(b!=null)out+=band(b,1440);
+      return out;})();
+    return '<div class="scol'+(hoy?' hoy':'')+'">'+noche+cuerpo+pts+'</div>';}).join('');
   const cab=porDia.map(function(x){
     const sh=x.d.shiftId?shiftById(x.d.shiftId):null;
     const hoy=isToday(x.d.key);
@@ -3483,7 +3586,7 @@ function renderHoy(){
     hoyAhoraHTML(hoy,inf,esHoy)+
     /* sin px: lo calcula el propio carril desde el ajuste de 12/18/24 h. Pasarlo aquí dejaba ese
        ajuste sin efecto, que es lo que pasó al quitar la barra horizontal. */
-    carrilHTML(hoy,{caja:400})+
+    carrilHTML(hoy,{caja:franjaAlto()})+
     leyendaPlegadaHTML('hoyley')+
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     '<div class="hoypie">'+
@@ -3681,13 +3784,28 @@ function semOpcHTML(){
     return '<button class="btn s'+(x===n?' p':'')+'" data-a="sem-dias" data-n="'+x+'" aria-pressed="'+(x===n)+'">'+x+'</button>';}).join('')+
     '<span class="mini">días</span></div>';}
 function semanaCabeceraHTML(){
-  /* el eje de horas y qué es cada color, UNA vez para todos los días (y la leyenda plegada): antes
-     cada día repetía su eje, y la leyenda no estaba en ninguna parte */
-  const eje=tlHoras()>=24?('<div class="tl-axis semeje">'+[0,6,12,18,24].map(function(h,i){
-    return '<span style="'+(i===0?'left:0;transform:none':(i===4?'right:0;left:auto;transform:none':'left:'+(h/24*100)+'%'))+'">'+h+'</span>';}).join('')+'</div>'):'';
-  /* en una fila: la leyenda plegada a la izquierda y cuántos días ver a la derecha; debajo, el eje */
-  return '<div class="leyfila semley"><details class="dtip"><summary class="mini">ⓘ colores</summary>'+franjaLeyendaHTML()+'</details>'+
-    semOpcHTML()+'</div>'+eje;}
+  /* qué es cada color y cuántos días ver, en UNA fila.
+     EL EJE 0·6·12·18·24 YA NO VA AQUÍ: era el eje de la barra horizontal que llevaba cada día, y
+     esa barra solo se pinta al abrir un día. Dejaba veinte píxeles de números sueltos encima de la
+     rejilla —que ya trae sus propias horas a la izquierda— y empujaba la rejilla fuera de la
+     primera pantalla. El día que se abre pinta ahora su propio eje. */
+  return '<div class="leyfila semley">'+
+    '<details class="dtip"><summary class="mini">ⓘ colores</summary>'+franjaLeyendaHTML()+'</details>'+
+    semOpcHTML()+'</div>';}
+function solSemanaHTML(){
+  /* «🌅 6:51–6:54 · 🌇 18:55–18:48»: el rango de la ventana que se está viendo. Si los siete días
+     caen a la misma hora se enseña una sola. */
+  const ds=semanaVentana().filter(function(d){return !!d.key;});
+  if(!ds.length)return '';
+  const ss=ds.map(function(d){return solDe(d.key);}).filter(function(s){return s&&!s.sinDatos&&!s.polar;});
+  if(!ss.length)return '';
+  const rango=function(pick){
+    const hs=ss.map(function(s){return horaLocal(pick(s));}).filter(Boolean).sort()
+      .map(function(h){return hCortaHM(h);});
+    const a=hs[0],b=hs[hs.length-1];
+    return a===b?a:(a+'–'+b);};
+  return '<span class="solsem"><span class="pie sol">🌅 '+rango(function(s){return s.sale;})+'</span>'+
+    '<span class="pie sol">🌇 '+rango(function(s){return s.pone;})+'</span></span>';}
 function leyendaPlegadaHTML(cls){
   /* la leyenda plegada, con el atajo a cambiar los colores A LA VISTA al lado: plegado dentro no
      se podía pulsar sin abrirla antes */
@@ -3736,15 +3854,22 @@ function semanaFilaHTML(d,i,anyDate){
      dentro se ve al abrir el día, que es cuando lo estás mirando. */
   return '<div class="drow'+(open?' open':'')+(isToday(d.key)?' today':'')+'" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
     '<div class="drmain" data-a="day-open" data-key="'+kk+'" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
-    (open?(
-      (d.key&&sh?timelineBar(d.key,d.inf,{grande:true,sinEje:tlHoras()>=24}):'')+
-      '<div class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId)+(d.key?solPiesHTML(d.key):'')+'</div>'+
-      ((comidas||evs||est)?('<div class="drplan">'+comidas+evs+est+'</div>'):'')+
-      det)
-      /* cerrado, solo una pista de lo que hay: los eventos y el repaso, que es lo que no se ve en
-         la rejilla por falta de sitio */
-      :((evs||est)?('<div class="drplan">'+evs+est+'</div>'):''))+
-    '</div>';}
+    /* la barra horizontal SOLO al abrir: es lo único que la rejilla de arriba ya enseña. El sueño,
+       el sol y las horas de comer se quedan siempre, que eso NO está en la rejilla y es justo lo
+       que se mira de un día sin abrirlo. */
+    (open&&d.key&&sh?timelineBar(d.key,d.inf,{grande:true}):'')+
+    /* el sueño, el sol y las comidas en UNA fila que envuelve, no en tres: es la misma
+       información en la mitad de alto, y con la rejilla arriba la semana cabe en pantalla y media
+       en vez de en tres. */
+    /* el sueño en UNA pastilla y las horas de comer al lado: una sola línea por día. El sol se
+       fue a la cabecera de la semana —cambia cuatro minutos de lunes a domingo, así que repetirlo
+       siete veces costaba un renglón por día y no decía nada nuevo. */
+    '<div class="drlinea">'+
+      '<span class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId,true)+'</span>'+
+      (comidas||'')+
+    '</div>'+
+    ((evs||est)?('<div class="drplan">'+evs+est+'</div>'):'')+
+    (open?det:'')+'</div>';}
 function hCortaHM(t){/* «6:55», «15:30», «21:00»: sin el cero delante, que es lo que más se lee */
   const m=mins(t);if(m==null)return t||'';return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function mealRowsCompactHTML(d,sh){
@@ -3789,7 +3914,7 @@ function renderWeek(){
   const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
   $('#main').innerHTML=`<div class="grid">
     <div class="semcab">${semanaNavHTML()}${anyDate?semanaCabeceraHTML():''}</div>
-    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="mini" style="margin-left:auto">toca un día</span></h2>${carrilSemanaHTML(days,{px:40,caja:360})}</div>`:''}
+    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="sp"></span>${solSemanaHTML()}</h2>${carrilSemanaHTML(days,{px:40,caja:franjaAltoSem()})}</div>`:''}
     <div class="daylist">${semanaAyerHTML()}${rows}</div>
     <div class="card"><h2>La semana en números</h2>
       <div class="tot">
@@ -3809,14 +3934,23 @@ function renderWeek(){
     </div>
     <div class="grid g2">
       ${used.length?`<div class="card"><h2>La cocina de la semana<span class="mini" style="margin-left:auto">${used.length} sesion${used.length===1?'':'es'}</span></h2>
-        <p class="note" style="margin:0 0 8px">Esto vive entero en <b>Comer → Cocina</b>, con sus pasos y sus tápers. Aquí solo va cuándo toca ponerse.</p>
-        <div class="cocmini">${used.map(b=>`<button class="cocm" data-a="tab" data-t="batches">
-          <b>${esc(b.label)}</b><span>${esc(b.when||'')} · ${b.portions} rac.</span></button>`).join('')}</div>
+        <div class="cocmini">${used.map(b=>`<details class="cocblq cocm">
+          <summary class="cocmh"><b>${esc(b.label)}</b><span>${esc(b.when||'')} · ${b.portions} rac.</span></summary>
+          <div class="platos">${b.items.filter(i=>i.runs>0).map(function(i){
+            const sobra=i.cooked>i.needPort?Math.round((i.cooked-i.needPort)*10)/10:0;
+            return '<span class="plato" title="'+esc(i.dish.name)+'">'+
+              '<span class="pic">'+esc(i.dish.icon||'🍽')+'</span>'+
+              '<b>'+esc(nombreCorto(i.dish.name))+'</b>'+
+              '<span class="mini">'+fmt(i.cooked)+' rac.</span>'+
+              (sobra?'<span class="tag b4">🧊 '+fmt(sobra)+'</span>':'')+
+              '</span>';}).join('')}</div>
+          <button class="btn s" data-a="tab" data-t="batches" style="margin-top:8px">abrir en Cocina →</button>
+          </details>`).join('')}</div>
       </div>`:''}
-      <div class="card"><h2>Reglas de oro</h2><p class="note">Lo que sostiene el planning cuando la semana se tuerce.</p>
-        <details class="dtip"><summary class="mini">ver las ${store.rules.length} reglas</summary>
-        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>
-        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></div>
+      <div class="card"><h2>Reglas de oro</h2>
+        <details class="dtip"><summary class="mini">las ${store.rules.length} reglas que sostienen la semana cuando se tuerce</summary>
+        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></details></div>
     </div></div>`;
 }
 
@@ -8903,7 +9037,10 @@ function suenoCard(){
     /* la comida principal no está a una hora fija: la manda lo que haces ese día */
     (function(){const cm=comidasCfg();
       return '<h3 style="font-size:13px;margin:14px 0 4px">A qué hora comes</h3>'+
-      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija: si ese día entrenas cae después del entreno, si no al salir de la jornada, y el día que sales de guardia, al despertar de la siesta.</p>'+
+      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija. El día que sales de guardia cae al despertar de la siesta. '+
+      'Si entrenas <b>por la tarde</b>, en la ventana de aquí abajo. Y si no —o si el entreno es de mañana— <b>al llegar a casa del trabajo</b>: '+
+      'Con jornada de 8 a 15 no te va a poner a comer a las 14:00 en el hospital. '+
+      'La hora de aquí es lo <b>más pronto</b> que comerías; si la jornada acaba más tarde, manda la jornada.</p>'+
       '<div class="fgrid c3">'+
       '<label class="fld">Si entrenas, desde<input type="time" value="'+esc(cm.conEntreno.de)+'" data-a="com-h" data-k="conEntreno" data-w="de"></label>'+
       '<label class="fld">hasta<input type="time" value="'+esc(cm.conEntreno.a)+'" data-a="com-h" data-k="conEntreno" data-w="a"></label>'+
@@ -10709,6 +10846,11 @@ function renderAjustes(){
           return '<option value="'+o[0]+'" '+(tlHoras()===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
       <p class="mini" style="margin:6px 0 0">El carril siempre ocupa lo mismo en la pantalla; lo que cambia es
         lo alta que es una hora. A 12 h se lee holgado, a 24 cabe el día entero.</p>
+      <label class="fld" style="max-width:280px;margin-top:8px">Cuánta pantalla ocupa el carril
+        <select data-a="franja-alto">${[['bajo','Bajo · menos scroll'],['medio','Normal'],['alto','Alto · se lee mejor']].map(function(o){
+          return '<option value="'+o[0]+'" '+(String((store.franja||{}).alto||'medio')===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')}</select></label>
+      <p class="mini" style="margin:6px 0 0">Manda en «Hoy» y en la rejilla de la semana. En bajo la semana
+        entra en menos de dos pantallas; en alto se lee cada bloque sin apretar.</p>
       <div class="colgrid" style="margin-top:10px">${TLCAT.map(function(c){
         return '<label class="fld">'+esc(c[1])+
           '<input type="color" value="'+esc(tlColor(c[0]))+'" data-a="franja-color" data-k="'+c[0]+'" style="height:30px;padding:2px">'+
@@ -13787,6 +13929,8 @@ document.addEventListener('change',e=>{
       ui.imp.estado='';ui.imp.msg='';render();break;}
     case 'franja-horas':{if(!store.franja)store.franja={colores:{}};
       store.franja.horas=+el.value||24;save();render();break;}
+    case 'franja-alto':{if(!store.franja)store.franja={colores:{}};
+      store.franja.alto=el.value||'medio';save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};
       if(!store.franja.colores)store.franja.colores={};
       store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
@@ -13979,7 +14123,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
-  sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,monthDays,monthService,setMonthService,
+  sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,diaLaborableCerca,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,schedLine,dayLine,RKEYS,necesidadSemana,
   dineroS,gastosFijos,gastosDeFecha,gastoPagado,mesDinero,addGasto,delGasto,addPago,delPago,pagarGasto,eur,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
@@ -13987,7 +14131,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   suenoCfg,mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
-  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,esComidaPrincipal,horaDeToma,planDiaHTML,
+  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyAhoraHTML,planDiaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
   objetivosS,nuevoObjetivo,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
@@ -13997,7 +14141,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   progresionDe,esEjercicioDeAbajo,esRecord,sesionPlan,sesionIx,vivoCampos,vivoApuntar,vivoSet,
   informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
-  TLCAT,TLKEYS,tlColor,tlHoras,franjaVentana,timelineBar,franjaLeyendaHTML,
+  TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,

@@ -77,6 +77,27 @@ de verdad «no lo sé»: el chorizo de una marca lleva y el de otra no. La avena
 propio en «Tú», porque no lleva gluten pero se muele con trigo: si la tuya es certificada, deja de
 avisar (los productos que la llevan mezclada siguen avisando igual).
 
+## El calendario: el carril de horas
+
+**Hoy** y **Semana** se leen como el widget del móvil: un carril con las horas a la izquierda y cada
+cosa en su sitio, del alto que dura. La semana son las siete columnas con las horas de dormir
+sombreadas, para ver de un golpe dónde está el hueco. Cada bloque lleva a donde se cambia.
+
+Lo que decide las horas, y que no hay que programar:
+
+- **Ir y volver** (*Ajustes → Ir y volver*): a qué hora pasa el bus, cuántos minutos quieres estar
+  antes en la parada y lo que tardas. De ahí sale «salir de casa 07:31 · bus 07:35» y la hora a la
+  que llegas de vuelta.
+- **La comida no cae dentro de la jornada.** Con jornada de 8 a 15 la comida es al llegar a casa
+  (15:20), no a las 14:00. Y la **comida post-entreno** solo manda si el entreno acaba después de tu
+  hora normal de comer: entrenando a las 6:30 la comida vuelve a ser al salir del trabajo.
+- **Cuánta pantalla ocupa el carril** y **cuántas horas se ven de una vez**
+  (*Ajustes → Cómo se ve → El carril del día*), con los colores de cada categoría y una vista previa.
+
+**Al widget que ya usas** se llega exportando a Google Calendar: un `.ics` por categoría (guardias,
+trabajo, entrenos, avisos) para que cada uno entre en su calendario con su color. La compra no se
+exporta.
+
 ## Estructura
 
 - `index.html`, `app.js`, `styles.css` — la app entera.

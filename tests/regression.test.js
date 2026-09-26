@@ -873,12 +873,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   });
   await gotoTab('week');
   await page.waitForTimeout(200);
+  // la barra de 24 h que llevaba CADA fila se sustituyó por la rejilla de los siete días de arriba:
+  // repetir la misma franja siete veces costaba 900 px y tres pantallas de scroll. Lo que se fija
+  // aquí es que hoy sigue señalado en las dos: la fila lleva su marca y la rejilla su columna.
   const semanaEstado = await page.evaluate(() => {
     const row = document.querySelector('.drow.today');
-    return { filaHoy: !!row, tieneBarra: row ? !!row.querySelector('.tl-bar') : false };
+    return { filaHoy: !!row, columnaHoy: !!document.querySelector('#main .semrej .scol.hoy'),
+      cabHoy: !!document.querySelector('#main .semrej .sch.hoy') };
   });
-  check('en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h',
-    semanaEstado.filaHoy && semanaEstado.tieneBarra, JSON.stringify(semanaEstado));
+  check('en Semana + "por fecha", hoy va marcado en su fila y en su columna de la rejilla',
+    semanaEstado.filaHoy && semanaEstado.columnaHoy && semanaEstado.cabHoy, JSON.stringify(semanaEstado));
 
   // 27) aviso de modo compartido (decisión B del informe): si "Semana" está en plantilla (sin fechas
   // reales), Mes y Hoy —que siempre usan la fecha real— lo avisan para que el cambio no sorprenda
@@ -1558,7 +1562,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     return {
       horas: !!c.querySelector('select[data-a="franja-horas"]'),
       colores: [...c.querySelectorAll('input[data-a="franja-color"]')].map(i => i.dataset.k),
-      preview: !!c.querySelector('.tl-bar'),
+      // la previsualización es ahora el carril, no la barra horizontal que se quitó
+      preview: !!c.querySelector('.carril'),
     };
   });
   check('Ajustes: la franja del día tiene un color por categoría y un selector de cuántas horas se ven',
@@ -1798,7 +1803,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(250);
   const cocina = await page.evaluate(() => {
     const card = [...document.querySelectorAll('#main .card')]
-      .find((c) => /cocinar esta semana/i.test((c.querySelector('h2') || {}).textContent || ''));
+      .find((c) => /cocina de la semana/i.test((c.querySelector('h2') || {}).textContent || ''));
     if (!card) return null;
     const p = card.querySelector('.plato');
     return {
@@ -3552,17 +3557,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         chipHoy: !!(hoy && hoy.querySelector('.hoychip')),
         fondoDistinto: !!(hoy && otra && getComputedStyle(hoy).backgroundColor !== getComputedStyle(otra).backgroundColor),
         sol: main.querySelectorAll('.drsol').length,
+        // el sol se fue a la cabecera: en la semana sale y se pone con cuatro minutos de
+        // diferencia de punta a punta, así que repetirlo en los siete días era un renglón por día
+        solCab: !!main.querySelector('.card .solsem'),
+        // y las horas de dormir se sombrean en la columna de cada día de la rejilla, que es donde
+        // se ve de un golpe qué noche se queda corta (antes iban en la barra horizontal de cada fila)
         noche: main.querySelectorAll('.tl-noche').length,
       };
     });
     // La semana empieza por la SEMANA, no por la configuración: primero la rejilla de los siete
     // días en la primera pantalla, y debajo el detalle día a día. Lo que no puede pasar —y es lo
     // que fijaba esta prueba— es que lo primero sea un muro de ajustes.
-    check('Semana empieza por la rejilla de los siete días, con hoy marcado y el sol en cada uno',
+    check('Semana empieza por la rejilla de los siete días, con hoy marcado, el sueño de cada uno y el sol arriba',
       sem.rejilla >= 0 && sem.rejilla < 170 && sem.colsRejilla === 7 &&
       sem.rejilla < sem.antesDelPrimerDia &&
       sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
-      sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.noche >= 7, JSON.stringify(sem));
+      sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.solCab && sem.noche >= 7, JSON.stringify(sem));
   }
 
   // 68) la configuración de la semana vive ahora en «Turno y rotación»
@@ -4320,8 +4330,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const volver = await page.$('.subcab [data-a="cfg-vista"][data-v=""]');
       if (volver) { await volver.click(); await page.waitForTimeout(200); }
     }
+    // el número de puertas no está congelado: lo que importa es que la portada NO tenga campos
+    // —que era el problema: 7,7 pantallas de formulario— y que cada tarea tenga la suya. «Ir y
+    // volver» es una más, y tiene que estar: es lo que decide a qué hora sales de casa y comes.
     check('Turno y rotación es una portada de media pantalla y una pantalla por tarea',
-      portada.alto < 700 && portada.campos === 0 && portada.puertas.length === 6 &&
+      portada.alto < 700 && portada.campos === 0 && portada.puertas.length >= 6 &&
+      portada.puertas.indexOf('Ir y volver') >= 0 &&
       portada.cifras.length === 2 &&
       visitas.length === 5 && visitas.every((x) => x.campos > 0 && x.ancho <= 412) &&
       visitas.map((x) => x.v).join('|') === 'dias|horas|semana|rotacion|notas',
@@ -4758,8 +4772,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { guardia: mide(0), saliente: mide(1), fuerza: mide(2), libre: mide(3), lunes: d(0) };
     });
     const conEntreno = horas.fuerza, saliente = horas.saliente, libre = horas.libre;
-    check('la comida principal se mueve con el día: tras el entreno, tras la jornada o al despertar de la siesta',
-      !!conEntreno && conEntreno.de === '18:00' && conEntreno.a === '18:30' && conEntreno.por === 'entreno' &&
+    // El día de fuerza entrena de 6:30 a 8:00 y trabaja de 8 a 15: la ventana de «post-entreno»
+    // (18:00) NO manda ahí —el entreno acabó a las ocho de la mañana—, manda la jornada, y la
+    // comida cae al llegar a casa. La post-entreno vuelve a mandar con un entreno de tarde, que es
+    // lo que se comprueba en el bloque de «menos scroll» del final.
+    check('la comida principal se mueve con el día: al llegar del trabajo, tras el entreno de tarde o tras la siesta',
+      !!conEntreno && conEntreno.por === 'llegar' && conEntreno.de > '15:00' &&
       !!libre && libre.de === '14:00' && libre.a === '15:00' &&
       !!saliente && saliente.por === 'siesta' && saliente.de > '12:00',
       JSON.stringify(horas));
@@ -4784,10 +4802,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const plan = await page.evaluate(() => {
       const filas = [...document.querySelectorAll('#main .drow')];
       return { dias: filas.length,
-        conPlan: filas.filter((f) => f.querySelector('.drplan')).length,
+        conPlan: filas.filter((f) => f.querySelector('.drplan, .drlinea')).length,
         // las horas de trabajo van ahora junto al nombre del día («Día de trabajo · 8–15»)
         conTrabajo: filas.filter((f) => f.querySelector('.drtag .drh')).length,
-        conComida: filas.filter((f) => f.querySelector('.drplan .pl.com')).length,
+        // el sueño y las horas de comer van ahora en UNA fila propia (.drlinea), no dentro de .drplan
+        conComida: filas.filter((f) => f.querySelector('.drlinea .pl.com')).length,
         conGym: filas.filter((f) => f.querySelector('.drplan .pl.gym')).length,
         tags: filas.map((f) => ((f.querySelector('.drday') || {}).innerText || '') + ' ' + ((f.querySelector('.drtag') || {}).innerText || '').replace(/\s+/g, ' ')) };
     });
@@ -4810,6 +4829,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // sin paréntesis de seguridad, un null aquí TUMBA la suite entera en vez de hacer fallar esta
       // prueba: pasó al revertir el arreglo, que es justo cuando hace falta que falle y lo diga
       const h = (k2) => (P.comidaPrincipalDe(k2) || {}).de || '';
+      // la ventana de post-entreno solo manda si el entreno acaba DESPUÉS de tu hora de comer, así
+      // que para probar el ajuste el entreno de ese día se pasa a la tarde
+      const F = P.store.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
+      F.start = '17:00'; F.end = '18:15'; P.save();
       const antes = h(key);
       P.store = JSON.parse(JSON.stringify(P.store));   // el viaje de ida y vuelta por normalize()
       return { antes: antes, guardado: (P.comidasCfg().conEntreno || {}).de || '', trasRecargar: h(key) };
@@ -4820,6 +4843,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((lunes) => {
       const P = window.PG;
       P.store.comidas.conEntreno.de = '18:00';
+      // el entreno de ese día se había pasado a la tarde para probar el ajuste: se devuelve, o
+      // entrena a las 17:00 el resto de la suite y cambia la hora de comer de otras pruebas
+      const F2 = P.store.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
+      if (F2) { F2.start = '06:30'; F2.end = '08:00'; }
       P.store.gym.rutinas = [];
       const lun = P.parseDate(lunes);
       for (let i = 0; i < 4; i++) { const x = P.addDays(lun, i);
@@ -5245,21 +5272,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       plegada: !!document.querySelector('#main .semley details:not([open]) .tlleg'),
       ejes: document.querySelectorAll('#main .drow .tl-axis').length,
       comidasConHora: [...document.querySelectorAll('#main .drow')].filter((f) => /\d:\d\d/.test((f.querySelector('.drcom') || {}).innerText || '')).length,
-      rotulos: [...document.querySelectorAll('#main .drow .tl-seg b')].map((b) => b.textContent).slice(0, 6) }));
+      // lo que dice qué es cada bloque ya no es la barra de cada fila: es la rejilla de arriba
+      rotulos: [...document.querySelectorAll('#main .semrej .sb .sbt')].map((b) => b.textContent).slice(0, 8) }));
     check('en «Semana» la leyenda sale una vez y plegada, sin un eje por día, y las comidas llevan su hora',
       una.leyendas === 1 && una.plegada && una.ejes === 0 && una.comidasConHora === 7 &&
-      una.rotulos.some((t) => /trabajo|guardia/.test(t)), JSON.stringify(una));
+      una.rotulos.some((t) => /[Tt]rabajo|[Gg]uardia/.test(t)), JSON.stringify(una));
   }
 
   // ===================== «Hoy»: ahora / siguiente y la agenda por horas =====================
   {
     const k = await page.evaluate(() => {
-      const P = window.PG, k = P.iso(new Date());
+      const P = window.PG;
+      // un LABORABLE, no «hoy»: la jornada de 8 a 15 sale de los días de trabajo de tu jornada, así
+      // que en sábado no hay ninguna y esta prueba caía por el día en que se ejecutara
+      const k = P.diaLaborableCerca();
       P.setDayOverride(k, 'sh-t', '');
       P.store.eventos.push({ id: 'ev-ag', titulo: 'Sesión de prueba', hora: '08:00', fin: '08:39', modo: 'fecha', fecha: k, dow: [], color: '#f472b6', on: true });
       P.save(); return k;
     });
     await gotoTab('hoy');
+    // pulsar «Hoy» en la barra devuelve la pantalla al día de hoy, así que el día laborable se pone
+    // DESPUÉS de navegar: si no, se mide un sábado sin jornada y sin el evento de la prueba
+    await page.evaluate((k) => { window.PG.ui.diaHoy = k; window.PG.render(); }, k);
     await page.waitForTimeout(300);
     // el día ya no es una LISTA de horas sino un CARRIL: cada cosa ocupa el rato que ocupa, así
     // que lo que se comprueba es que esté todo, en orden, con su duración real, y que cada bloque
@@ -5279,14 +5313,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         comidas: bl.filter((b) => b.fino).length,
         // cada bloque pintado es un botón que lleva a su sitio
         pintados: cbs.length,
-        conDestino: cbs.filter((b) => b.dataset.a).length,
-        caja: !!document.querySelector('#main .hoyahora') };
+        conDestino: cbs.filter((b) => b.dataset.a).length };
     });
     check('«Hoy» enseña el día como carril: cada cosa con su duración real y tocable para cambiarla',
       ag.n >= 5 && ag.ordenadas && ag.sesion === (8 * 60) + '-' + (8 * 60 + 39) && ag.trabajo &&
-      ag.comidas >= 3 && ag.pintados >= 3 && ag.conDestino === ag.pintados && ag.caja,
+      ag.comidas >= 3 && ag.pintados >= 3 && ag.conDestino === ag.pintados,
       JSON.stringify(ag));
-    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.save(); P.render(); }, k);
+    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.ui.diaHoy = ''; P.save(); P.render(); }, k);
+    await page.waitForTimeout(250);
+    // la tarjeta de «ahora / siguiente» solo tiene sentido en el día de HOY, no en el laborable que
+    // se estaba mirando con las flechas: se comprueba al volver, y a cualquier hora —a las once de
+    // la noche ya no queda nada por hoy y aun así tiene que decir qué es lo siguiente
+    const cajaAhora = await page.evaluate(() => !!document.querySelector('#main .hoyahora'));
+    check('«Hoy» lleva siempre la tarjeta de ahora y lo siguiente, a cualquier hora del día',
+      cajaAhora, String(cajaAhora));
   }
 
   // ===================================================================================
@@ -6283,8 +6323,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const k = await page.evaluate(() => { const P = window.PG;
       P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true;
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
-      // un día de jornada 8–15, sin entreno
-      const k = P.iso(new Date());
+      // un día de jornada 8–15, sin entreno. Tiene que ser LABORABLE: en sábado no hay jornada de
+      // la que salir y la prueba caía por el día en que se ejecutara, no por el código
+      const k = P.diaLaborableCerca();
       P.setDayOverride(k, 'sh-t', '');
       P.save(); return k; });
 
@@ -6337,6 +6378,115 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(off));
 
     await page.evaluate((k) => { const P = window.PG; P.setDayOverride(k, null); P.save(); P.render(); }, k);
+    await page.waitForTimeout(200);
+  }
+
+
+  // ===================================================================================
+  // La semana y el día pedían tres pantallas de scroll, y la comida post-entreno caía a
+  // las 18:00 aunque el entreno fuera a las 6:30 de la mañana. Lo que se puede tocar sin
+  // programar —cuánta pantalla ocupa el carril— sale a Ajustes.
+  // ===================================================================================
+  {
+    // 1) UN ENTRENO DE MAÑANA NO MUEVE LA COMIDA A LAS 18:00. El día de fuerza entrena a las
+    // 6:30 y tiene jornada de 8 a 15: la comida es al llegar a casa, no «post-entreno · 18:00».
+    const ent = await page.evaluate(() => { const P = window.PG, S = P.store;
+      S.rotation.mode = 'date'; S.rotation.anchorSet = true;
+      S.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      const k = P.iso(new Date());
+      const sh = S.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
+      if (!sh) return { sinDiaDeFuerza: true };
+      const antes = { start: sh.start, end: sh.end };
+      sh.start = '06:30'; sh.end = '08:00';
+      P.setDayOverride(k, sh.id, ''); P.save();
+      const manana = { fin: P.finEntrenoDe(k), cp: P.comidaPrincipalDe(k) };
+      // y por la tarde SÍ manda: entrenando de 17:00 a 18:15 la comida es la post-entreno
+      sh.start = '17:00'; sh.end = '18:15'; P.save();
+      const tarde = { fin: P.finEntrenoDe(k), cp: P.comidaPrincipalDe(k) };
+      sh.start = antes.start; sh.end = antes.end; P.setDayOverride(k, null); P.save(); P.render();
+      return { manana, tarde }; });
+    check('entrenando a las 6:30 la comida es al llegar del trabajo, no «post-entreno» a las 18:00',
+      ent.sinDiaDeFuerza ? false : (
+        ent.manana.fin === 8 * 60 && ent.manana.cp.por !== 'entreno' && ent.manana.cp.de !== '18:00' &&
+        ent.tarde.fin === 18 * 60 + 15 && ent.tarde.cp.por === 'entreno' && ent.tarde.cp.de === '18:00'),
+      JSON.stringify(ent));
+
+    // 2) CUÁNTA PANTALLA OCUPA EL CARRIL se elige en Ajustes, no se codifica. Se conduce el
+    // <select> de verdad: vive en el listener de `change`, y un `case` en el switch de clicks
+    // no se dispararía nunca.
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'ajustes'; P.ui.cfgVista = 'aspecto'; P.render(); });
+    await page.waitForTimeout(350);
+    const altoUI = await page.evaluate(() => ({
+      hay: !!document.querySelector('#main [data-a="franja-alto"]'),
+      valor: (document.querySelector('#main [data-a="franja-alto"]') || {}).value }));
+    await page.selectOption('#main [data-a="franja-alto"]', 'bajo');
+    await page.waitForTimeout(300);
+    const bajo = await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'hoy'; P.render(); const h = document.querySelector('#main .carrilbox');
+      const hoy = h ? Math.round(h.getBoundingClientRect().height) : -1;
+      P.ui.tab = 'week'; P.render(); const w = document.querySelector('#main .semrej .carrilbox');
+      return { hoy, sem: w ? Math.round(w.getBoundingClientRect().height) : -1,
+        guardado: P.store.franja.alto }; });
+    // y el ajuste SOBREVIVE a recargar: normalize() tira los campos que no reconoce
+    const traNormalize = await page.evaluate(() => { const P = window.PG;
+      P.store = JSON.parse(JSON.stringify(P.store)); P.save(); return P.store.franja.alto; });
+    await page.evaluate(() => { const P = window.PG; P.store.franja.alto = 'medio'; P.save();
+      P.ui.tab = 'week'; P.render(); });
+    await page.waitForTimeout(250);
+    check('el alto del carril se cambia en Ajustes, manda en Hoy y en la semana, y aguanta recargar',
+      altoUI.hay && altoUI.valor === 'medio' && bajo.guardado === 'bajo' &&
+      bajo.hoy > 0 && bajo.hoy <= 300 && bajo.sem > 0 && bajo.sem <= 260 && traNormalize === 'bajo',
+      JSON.stringify({ altoUI, bajo, traNormalize }));
+
+    // 3) LA SEMANA, EN UNA LÍNEA POR DÍA. El sueño va en UNA pastilla y el sol se fue a la
+    // cabecera: repetirlo en los siete días costaba un renglón por día y no decía nada nuevo
+    // (sale y se pone con cuatro minutos de diferencia de punta a punta de la semana).
+    const sem2 = await page.evaluate(() => { const main = document.querySelector('#main');
+      const filas = [...main.querySelectorAll('.drow')];
+      return { pant: +(main.scrollHeight / 915).toFixed(2),
+        // el sol, UNA vez arriba y ninguna en las filas
+        solCabecera: !!main.querySelector('.card .solsem'),
+        solEnFilas: filas.filter((f) => f.querySelector('.pie.sol')).length,
+        // las horas de dormir, sombreadas en la columna de cada día de la rejilla
+        nocheRejilla: main.querySelectorAll('.semrej .scol .tl-noche').length,
+        dias: filas.length,
+        // y la mayoría de los días cerrados caben en un renglón. No todos: un día con cinco tomas
+        // y la pastilla del sueño no entra en 370 px y envuelve a dos, que es el comportamiento
+        // correcto —lo que no puede volver a pasar es que envuelvan TODOS, que era lo de antes
+        lineasAltas: filas.filter((f) => { const l = f.querySelector('.drlinea');
+          return !!l && l.getBoundingClientRect().height > 40 &&
+            !/😴/.test(l.innerText); }).length }; });
+    check('la semana entra en poco más de dos pantallas: el sol una vez arriba y un renglón por día',
+      sem2.pant <= 2.3 && sem2.solCabecera && sem2.solEnFilas === 0 &&
+      sem2.nocheRejilla >= 7 && sem2.lineasAltas < sem2.dias / 2,
+      JSON.stringify(sem2));
+
+    // 4) las sesiones de cocina, plegadas: cuándo toca ponerse a la vista y los platos al abrir
+    const coc2 = await page.evaluate(() => { const main = document.querySelector('#main');
+      const d = main.querySelector('details.cocm');
+      if (!d) return { sinCocina: true };
+      const cerrado = Math.round(d.getBoundingClientRect().height);
+      d.open = true;
+      return { cerrado, abierto: Math.round(d.getBoundingClientRect().height),
+        platos: d.querySelectorAll('.plato').length,
+        aCocina: !!d.querySelector('[data-a="tab"][data-t="batches"]') }; });
+    check('las sesiones de cocina de la semana van plegadas, con sus platos dentro',
+      coc2.sinCocina ? false : (coc2.cerrado <= 60 && coc2.abierto >= coc2.cerrado * 2.5 &&
+        coc2.platos >= 1 && coc2.aCocina),
+      JSON.stringify(coc2));
+
+    // 5) A LAS ONCE DE LA NOCHE LA TARJETA DE «AHORA» DESAPARECÍA: ya no queda nada hoy y no hay
+    // «siguiente», así que devolvía cadena vacía justo cuando quieres saber a qué hora suena el
+    // despertador. Se comprueba a una hora cualquiera del día, sin depender del reloj real.
+    const ahora = await page.evaluate(() => { const P = window.PG;
+      const k = P.iso(new Date());
+      const html = P.hoyAhoraHTML(k, P.dayInfo(k), true);
+      return { hay: /hoyahora/.test(html), sig: /SIGUIENTE/.test(html),
+        vacio: html === '' }; });
+    check('«Hoy» siempre dice qué es lo siguiente, aunque ya no quede nada por hoy',
+      ahora.hay && ahora.sig && !ahora.vacio, JSON.stringify(ahora));
+
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); });
     await page.waitForTimeout(200);
   }
 
