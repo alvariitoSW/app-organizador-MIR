@@ -6842,6 +6842,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // «Un día libre de la plantilla, ¿se trabaja?» El campo jornada.aplicaLibres existía,
+  // se guardaba y se normalizaba desde el principio... y no había ni un botón para
+  // tocarlo: era un booleano que solo se cambiaba editando el código.
+  // ===================================================================================
+  {
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'cfg'; P.ui.cfgVista = 'dias'; P.render(); });
+    await page.waitForTimeout(400);
+    const hay = await page.evaluate(() => !!document.querySelector('#main [data-a="jor-libres"]'));
+    if (!hay) { // la tarjeta de la jornada puede vivir en otra puerta según el modo
+      await page.evaluate(() => { const P = window.PG; P.ui.cfgVista = 'horas'; P.render(); });
+      await page.waitForTimeout(400);
+    }
+    const libres = await page.evaluate(async () => { const P = window.PG;
+      const guardado = P.store.rotation.jornada.aplicaLibres;
+      const L = P.store.shifts.filter((x) => /libre/i.test(x.name || ''))[0];
+      // un día LABORABLE que la plantilla llama «libre»: es el caso que decide este ajuste
+      const k = P.diaLaborableCerca();
+      const d = P.parseDate(k);
+      const conPlantilla = () => P.jornadaEn(d.getDay(), L.id, false);
+      const b = document.querySelector('#main [data-a="jor-libres"]');
+      const antes = { puesto: P.store.rotation.jornada.aplicaLibres, jornada: !!conPlantilla() };
+      if (b) b.click();
+      const tras = { puesto: P.store.rotation.jornada.aplicaLibres, jornada: !!conPlantilla() };
+      // y aguanta recargar
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const recarga = P.store.rotation.jornada.aplicaLibres;
+      // el día que pones TÚ a mano no lleva jornada en ningún caso, y eso no lo cambia el botón
+      const aMano = !!P.jornadaEn(d.getDay(), L.id, true);
+      P.store.rotation.jornada.aplicaLibres = guardado; P.save(); P.render();
+      return { hayBoton: !!b, antes, tras, recarga, aMano }; });
+    check('el botón decide si un día «libre» de la plantilla lleva jornada, y aguanta recargar',
+      libres.hayBoton && libres.antes.puesto === true && libres.antes.jornada === true &&
+      libres.tras.puesto === false && libres.tras.jornada === false &&
+      libres.recarga === false && libres.aMano === false,
+      JSON.stringify(libres));
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

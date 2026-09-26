@@ -4767,6 +4767,18 @@ function jornadaCard(){
     '<span class="sp"></span><span class="mini">días con jornada:</span>'+DN.map(function(nm,ix){
       const on=(j.workdays||[]).indexOf(ix)>=0;
       return '<button class="btn s '+(on?'p':'')+'" data-a="jor-day" data-day="'+ix+'">'+nm+'</button>';}).join('')+'</div>'+
+    /* UN DÍA LIBRE QUE SOLO DICE LA PLANTILLA. El campo existía y se guardaba, pero no había forma
+       de tocarlo: era un booleano en el código. Decide si un día que la plantilla llama «libre»
+       —pero que cae en uno de tus días con jornada— lleva jornada o no. El que pones TÚ a mano no
+       la lleva nunca, y eso no cambia. */
+    '<div class="row" style="margin-top:9px">'+
+      '<button class="btn s '+(j.aplicaLibres!==false?'g':'')+'" data-a="jor-libres">'+
+        (j.aplicaLibres!==false?'✓':'○')+' un día «libre» de la plantilla sí trabaja</button>'+
+      '<span class="mini" style="flex:1 1 220px">'+
+        (j.aplicaLibres!==false
+          ?'Si la plantilla pone «libre» en un día con jornada, se trabaja igual: la plantilla es un boceto y la jornada manda.'
+          :'Si la plantilla pone «libre», ese día no se trabaja aunque sea laborable.')+
+      '</span></div>'+
     '<p class="mini" style="margin-top:8px">🏖️ <b>Vacaciones</b> (lo mismo está en «Mes», con el calendario delante):</p>'+
     '<div class="row" style="margin-top:4px"><label class="fld">Desde<input type="date" id="vacA2"></label>'+
     '<label class="fld">Hasta<input type="date" id="vacB2"></label>'+
@@ -12923,6 +12935,10 @@ function act(a,el){
           +(loose?(' · '+loose+' línea(s) que no reconocí (suenan a plato de tu casa: añádelas al catálogo)'):''))
         :'nada que guardar (revisa que las líneas digan desayuno/comida/cena)');break;}
     case 'mon-prev':case 'mon-next':{monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+(a==='mon-next'?1:-1),1,12,0,0,0);render();break;}
+    case 'jor-libres':{const j=store.rotation.jornada||(store.rotation.jornada={start:'',end:'',workdays:[1,2,3,4,5]});
+      j.aplicaLibres=(j.aplicaLibres===false);save();render();
+      flash(j.aplicaLibres?'un día «libre» de la plantilla se trabaja igual':'un día «libre» de la plantilla ya no lleva jornada');
+      break;}
     case 'jor-day':{const j=store.rotation.jornada||(store.rotation.jornada={start:'',end:'',workdays:[1,2,3,4,5]});
       if(!Array.isArray(j.workdays))j.workdays=[1,2,3,4,5];
       const dd=+el.dataset.day,at=j.workdays.indexOf(dd);
