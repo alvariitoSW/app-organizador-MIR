@@ -580,6 +580,13 @@ function normalize(o){
     .slice(0,12).map(function(x){
       return {id:String(x.id||uid('obj')),tipo:x.tipo,ex:String(x.ex||'').slice(0,60),
         meta:Math.min(1000,Math.max(0.5,+x.meta)),desde:/^\d{4}-\d{2}-\d{2}$/.test(String(x.desde))?x.desde:iso(new Date())};});
+  /* el mínimo semanal, los trayectos y lo puesto/quitado a mano: sin esto se perdería al recargar */
+  o.gym.minSemana=Math.max(0,Math.min(7,Math.round(+o.gym.minSemana||0)));
+  if(o.gym.ida!=null)o.gym.ida=Math.max(0,Math.min(120,Math.round(+o.gym.ida||0)));
+  if(o.gym.vuelta!=null)o.gym.vuelta=Math.max(0,Math.min(120,Math.round(+o.gym.vuelta||0)));
+  if(!o.gym.forzar||typeof o.gym.forzar!=='object'||Array.isArray(o.gym.forzar))o.gym.forzar={};
+  else{const fz={},lim=iso(addDays(new Date(),-60));Object.keys(o.gym.forzar).forEach(function(k){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&k>=lim&&typeof o.gym.forzar[k]==='boolean')fz[k]=o.gym.forzar[k];});o.gym.forzar=fz;}
   if(!o.gym.cambios||typeof o.gym.cambios!=='object'||Array.isArray(o.gym.cambios))o.gym.cambios={};
   else{const lim=iso(addDays(new Date(),-60)),lim2=iso(addDays(new Date(),400));
     Object.keys(o.gym.cambios).forEach(function(k){
@@ -674,6 +681,8 @@ function normalize(o){
       notaId:String(e.notaId||''),
       /* semanal que solo existe los días que trabajas (no en vacaciones ni libres) */
       soloTrabajo:!!e.soloTrabajo,
+      /* el Lloretazo puesto con su botón: se reconoce para poder quitarlo con el mismo botón */
+      lloret:!!e.lloret,
       color:/^#[0-9a-fA-F]{6}$/.test(e.color||'')?e.color:'#38e1ff',on:e.on!==false};})
     .filter(function(e){return e.modo==='semanal'?e.dow.length>0:!!e.fecha;});
   /* las dos sesiones fijas del hospital: la de la UMI los martes (8:00–8:39) y la general del
@@ -4470,7 +4479,16 @@ function bloquesDelDia(key){
       add({de:bloqDeMin(hi),a:hf?bloqDeMin(hf):null,dur:+gymS().duracion||75,cat:'gym',
         tit:'💪 Entreno'+(rt?(' · '+rt.nombre):''),
         sub:rt?(rt.ejercicios.length+' ejercicios'):'sin rutina puesta',
-        ir:'tab',irV:'gym'});}}
+        ir:'tab',irV:'gym'});
+      /* ir y volver del gym: el entreno no empieza en la puerta de casa ni acaba en el sofá. Solo en
+         la app —no va a Google—, para que el día cuadre de verdad */
+      const ec=entrenoCfg(),i0=bloqDeMin(hi),f0=hf?bloqDeMin(hf):i0+(+gymS().duracion||75);
+      if(ec.ida>0)add({de:i0-ec.ida,a:i0,cat:'gym',fino:true,tit:'🚶 Al gym',sub:ec.ida+' min',ir:'tab',irV:'gym'});
+      if(ec.vuelta>0)add({de:f0,a:f0+ec.vuelta,cat:'gym',fino:true,tit:'🏠 Del gym a casa',sub:'llegas '+hm(f0+ec.vuelta),ir:'tab',irV:'gym'});}}
+  /* la sesión de cocina de esa semana, en su día y su hora, si esa semana hay algo que cocinar en
+     ella. Solo en la app: sirve para cuadrar las horas, no es una cita */
+  cocinaDelDia(key).forEach(function(c){
+    add({de:c.de,a:c.a,cat:'meal',tit:'🔪 Cocinar · '+c.label,sub:c.platos,ir:'menu-ir',irV:'cocinar'});});
   /* el segundo entreno: natación o lo que sea */
   const g2=diaSegundo(key,inf);
   if(g2.on)add({de:bloqDeMin(g2.hora||'15:30'),dur:60,cat:'gym',
@@ -4919,6 +4937,39 @@ function estudioHudHTML(){
       (libres.length>3?('<button class="btn s" style="margin-top:6px" data-a="hud-todos">'+(verTodos?'ver menos':'ver los '+libres.length)+'</button>'):'')):'')+
     '<p class="mini" style="margin:8px 0 0">Se lee del HUD en tu móvil (misma web): nada sale del teléfono. Repositorio: <a href="'+HUD_REPO+'" target="_blank" rel="noopener">fiebres-neutropenias ↗</a></p>'+
   '</div>';}
+/* ===================== el LLORETAZO =====================
+   Un toque y ese día queda puesto: 35 min de ida, una hora allí y 35 de vuelta (2 h 10 en total), por
+   la noche, sobre las 20:00. Cuadrado con dormir: si volviendo a las 22:10 no te da para tus horas de
+   sueño antes de levantarte al día siguiente, se adelanta lo justo y te lo dice. */
+function lloretCfg(){const l=store.lloret||{};
+  return {ida:(+l.ida>0?+l.ida:35),estancia:(+l.estancia>0?+l.estancia:60),hora:/^\d{2}:\d{2}$/.test(l.hora||'')?l.hora:'20:00',margen:15};}
+function lloretPlan(key){
+  const c=lloretCfg(),tot=c.ida*2+c.estancia;
+  const sig=nextIso(key),wake=(rhythmOf(dayInfo(sig).shiftId,sig)||{}).wake||'';
+  const bed=acostarsePara(wake);                    /* la cama para tu mínimo de sueño */
+  const b=mins(bed),pref=mins(c.hora);
+  /* lo más tarde que se puede salir: volver, prepararse (margen) y a la cama a su hora */
+  const tope=b!=null?((b<12*60?b+1440:b)-c.margen-tot):null;
+  let de=pref,ajustado=false;
+  if(tope!=null&&pref>tope){de=tope;ajustado=true;}
+  return {de:de,a:de+tot,vuelta:de+tot,bed:bed,wake:wake,tot:tot,ajustado:ajustado,cfg:c,
+    justo:tope!=null?tope-de:null,pronto:de<18*60};}
+function lloretDe(key){return (store.eventos||[]).filter(function(e){return e.modo==='fecha'&&e.fecha===key&&e.lloret;})[0]||null;}
+function lloretPoner(key){
+  const ya=lloretDe(key);
+  if(ya){store.eventos=store.eventos.filter(function(e){return e!==ya;});save();return 'Lloretazo quitado de ese día';}
+  const p=lloretPlan(key);
+  store.eventos.push({id:uid('ll'),titulo:'🌊 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],
+    color:'#38bdf8',on:true,lloret:true});
+  save();
+  /* la cena: si cae en medio, se dice (la hora de la cena no se mueve sola) */
+  let cena='';
+  try{const inf=dayInfo(key),sh=shiftById(inf.shiftId);if(sh){const cp=comidaPrincipalDe(key,inf);
+    slotsFor(sh.id).forEach(function(sl){if(!/cena/i.test(sl.label||''))return;const h=mins(horaDeToma(key,sl,cp));
+      if(h!=null&&h>=p.de-20&&h<p.a)cena=' · la cena ('+hm(h)+') cae en medio: cena antes de salir';});}}catch(e){}
+  return 'Lloretazo '+hm(p.de)+'–'+hm(p.a)+' ('+p.cfg.ida+' min de ida, '+p.cfg.estancia+' allí, '+p.cfg.ida+' de vuelta)'+
+    (p.bed?(' · a la cama a las '+p.bed+' para tus '+fmt(suenoCfg().min)+' h'):'')+
+    (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena;}
 function renderHoy(){
   if(ui.hoyVista==='informe')return renderInforme();
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
@@ -4947,6 +4998,8 @@ function renderHoy(){
       (esHoy?'':'<button class="btn p s" data-a="dia-hoy">volver a hoy</button>')+
       '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
       '<span class="sp"></span>'+
+      '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="Lloretazo: '+
+        esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌊'+(lloretDe(hoy)?' ✓':'')+'</button>'+
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
     modoAvisoHTML()+
@@ -4974,7 +5027,7 @@ function renderHoy(){
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
        quieres es la lista, no el atardecer. */
     /* el sueño de verdad, a primera hora: lo que el plan no puede saber. Y los lunes, la semana */
-    (esHoy?informeTocaHTML()+suenoHoyHTML(hoy):'')+
+    (esHoy?informeTocaHTML()+suenoHoyHTML(hoy)+entrenoSemanaHTML(hoy,true):'')+
     tocaEntrenarHTML(hoy)+
     /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
        mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
@@ -5816,6 +5869,109 @@ function rutinaDelDia(key){
   if(!inf.shiftId)return null;
   return gymS().rutinas.filter(function(r){return rutinaDias(r).indexOf(inf.shiftId)>=0;})[0]||null;}
 function rutinaDeFecha(key){
+  /* la del día con el mínimo semanal encima: lo que quitas a mano no está, lo de siempre sí, y lo
+     que pones tú o completa la app para llegar al mínimo lleva la rutina que menos has hecho */
+  const k=foodKey(key)||key,f=gymForzar()[k];
+  if(f===false)return null;
+  const b=rutinaDeFechaBase(k);if(b)return b;
+  if(f===true)return rutinaAuto(k);
+  if(entrenoCfg().min){const s=entrenoSemana(k);if(s&&s.auto.indexOf(k)>=0)return rutinaAuto(k);}
+  return null;}
+/* ===================== el mínimo de entrenos por semana =====================
+   «Que cada semana se cuente el mínimo de días que quiero entrenar y se ajuste a esos días; y la
+   semana que no se pueda, un mensaje pequeño y cambiarla a mano.» Las rutinas van por TIPO de día:
+   una semana con dos guardias se quedaba en un entreno sin que nadie lo dijera. Ahora, si faltan,
+   la app los completa sola en los mejores días libres (ni guardia, ni saliente, ni vacaciones, y
+   separados de los que ya hay); y si no caben, lo dice. A mano manda lo tuyo: forzar o quitar. */
+function entrenoCfg(){const g=gymS();
+  return {min:Math.max(0,Math.min(7,Math.round(+g.minSemana||0))),ida:(+g.ida>=0?+g.ida:15),vuelta:(+g.vuelta>=0?+g.vuelta:15)};}
+function gymForzar(){const g=gymS();if(!g.forzar||typeof g.forzar!=='object'||Array.isArray(g.forzar))g.forzar={};return g.forzar;}
+let _entSemTick=-1,_entSemCache={};
+function entrenoSemana(key){
+  const d0=parseDate(key);if(!d0)return null;
+  const lun=mondayOf(d0),lk=iso(lun),cfg=entrenoCfg(),fz=gymForzar();
+  const firma=lk+'|'+cfg.min+'|'+JSON.stringify(fz)+'|'+JSON.stringify(gymCambios());
+  if(_entSemTick!==_renderTick){_entSemCache={};_entSemTick=_renderTick;}
+  if(_entSemCache[firma])return _entSemCache[firma];
+  const hayRut=gymS().rutinas.length>0;
+  const dias=[];
+  for(let i=0;i<7;i++){const k=iso(addDays(lun,i)),inf=dayInfo(k),sh=shiftById(inf.shiftId);
+    const base=rutinaDeFechaBase(k),f=fz[k];
+    const apto=!!sh&&!isGuardia(sh)&&!inf.vac&&!salidaDeGuardia(k)&&!/vacacion/i.test(sh.name||'');
+    dias.push({k:k,i:i,base:!!base&&f!==false,forz:f===true,quitado:f===false,apto:apto,
+      motivo:!sh?'sin tipo de día':(isGuardia(sh)?'guardia':(salidaDeGuardia(k)?'saliente':(inf.vac?'vacaciones':'')))});}
+  const tiene=function(x){return x.base||x.forz;};
+  let total=dias.filter(tiene).length;
+  const auto=[];
+  if(hayRut&&cfg.min>total){
+    /* los más separados de los que ya hay: el que más lejos queda del entreno más cercano */
+    const cand=dias.filter(function(x){return x.apto&&!tiene(x)&&!x.quitado;});
+    while(total+auto.length<cfg.min&&cand.length){
+      const ya=dias.filter(tiene).map(function(x){return x.i;}).concat(auto.map(function(x){return x.i;}));
+      /* un día con sesión de cocina cuenta como si estuviera más cerca: se evita salvo que no haya otro */
+      const coc=function(x){return cocinaDelDia(x.k).length?3:0;};
+      cand.sort(function(a,b){
+        const da=(ya.length?Math.min.apply(null,ya.map(function(j){return Math.abs(a.i-j);})):7)-coc(a);
+        const db=(ya.length?Math.min.apply(null,ya.map(function(j){return Math.abs(b.i-j);})):7)-coc(b);
+        if(da!==db)return db-da;
+        const la=/libre/i.test((shiftById(dayInfo(a.k).shiftId)||{}).name||'')?0:1,lb=/libre/i.test((shiftById(dayInfo(b.k).shiftId)||{}).name||'')?0:1;
+        return la-lb||a.i-b.i;});
+      auto.push(cand.shift());}}
+  auto.forEach(function(x){x.auto=true;});
+  const n=total+auto.length;
+  const r={lun:lk,dias:dias,total:n,min:cfg.min,faltan:Math.max(0,cfg.min-n),auto:auto.map(function(x){return x.k;}),hayRut:hayRut};
+  _entSemCache[firma]=r;return r;}
+function rutinaAuto(key){
+  /* la rutina de un día puesto por la app (o a mano): la que menos se ha hecho esa semana */
+  const rs=gymS().rutinas;if(!rs.length)return null;
+  const s=entrenoSemana(key);if(!s)return rs[0];
+  const usadas={};s.dias.forEach(function(x){const r=x.base?rutinaDeFechaBase(x.k):null;if(r)usadas[r.id]=(usadas[r.id]||0)+1;});
+  const extra=s.dias.filter(function(x){return (x.auto||x.forz)&&!x.base;}).map(function(x){return x.k;});
+  const libres=rs.slice().sort(function(a,b){return (usadas[a.id]||0)-(usadas[b.id]||0);});
+  return libres[Math.max(0,extra.indexOf(key))%libres.length];}
+function entrenoSemanaHTML(key,compacto){
+  const s=entrenoSemana(key),cfg=entrenoCfg();if(!s)return '';
+  if(compacto){
+    if(!s.faltan||!s.min)return '';
+    return '<button class="card entaviso" data-a="tab" data-t="gym"><b>💪 Esta semana solo caben '+s.total+' de tus '+s.min+' entrenos</b>'+
+      '<span class="mini">'+(s.dias.filter(function(x){return !x.apto;}).length)+' días sin hueco (guardias, salientes…). Toca para elegir otro día a mano ›</span></button>';}
+  const DL=['L','M','X','J','V','S','D'];
+  return '<div class="card"><div class="row"><h2 style="margin:0">Entrenos de la semana</h2><span class="sp"></span>'+
+      '<span class="mini">mínimo</span><div class="hrst" style="margin-left:6px"><button class="btn s" data-a="ent-min" data-d="-1" aria-label="uno menos">−</button>'+
+      '<b style="font-size:18px;min-width:26px">'+cfg.min+'</b><button class="btn s" data-a="ent-min" data-d="1" aria-label="uno más">+</button></div></div>'+
+    (cfg.min?('<div class="entdias">'+s.dias.map(function(x){
+      const on=x.base||x.forz||x.auto;
+      const cls=on?(x.auto?'auto':(x.forz?'forz':'on')):(x.apto?'':'no');
+      const tit=DL[x.i]+' '+parseDate(x.k).getDate()+': '+(x.base?'entreno de siempre':x.forz?'puesto a mano':x.auto?'puesto por la app':x.quitado?'quitado a mano':(x.motivo||'libre'));
+      return '<button class="'+cls+'" data-a="ent-dia" data-k="'+x.k+'" title="'+esc(tit)+'" aria-label="'+esc(tit)+'">'+
+        '<span>'+DL[x.i]+'</span><b>'+(x.base?'💪':x.forz?'✋':x.auto?'✨':(x.apto?'·':(x.motivo==='guardia'?'🩺':'—')))+'</b></button>';}).join('')+'</div>'+
+      '<p class="mini" style="margin:8px 0 0">'+(s.faltan?('<span style="color:var(--warn)">⚠ Solo caben '+s.total+' de '+s.min+'.</span> '):('<b style="color:var(--ink)">'+s.total+' de '+s.min+'</b> · '))+
+        '💪 de siempre · ✨ puesto por la app · ✋ a mano. Toca un día para ponerlo o quitarlo.</p>'+
+      (!s.hayRut?'<p class="mini" style="margin:4px 0 0">Crea una rutina para que la app pueda ponerla en esos días.</p>':'')):
+      '<p class="mini" style="margin:8px 0 0">Pon cuántos días quieres entrenar como mínimo cada semana: la app los reparte en tus días libres y te avisa si una semana no caben.</p>')+
+    '<div class="row" style="gap:8px;margin-top:10px"><label class="fld" style="flex:1;min-width:0">al gym (min)<input inputmode="numeric" value="'+cfg.ida+'" data-a="ent-tray" data-k="ida"></label>'+
+      '<label class="fld" style="flex:1;min-width:0">del gym a casa (min)<input inputmode="numeric" value="'+cfg.vuelta+'" data-a="ent-tray" data-k="vuelta"></label></div>'+
+  '</div>';}
+let _cocTick=-1,_cocCache={};
+function cocinaDelDia(key){
+  /* «dom · 17:00–19:00», «mié · 20:00 (25 min)»: el día y las horas de cada sesión de cocina */
+  const d=parseDate(key);if(!d)return [];
+  if(_cocTick!==_renderTick){_cocCache={};_cocTick=_renderTick;}
+  const lk=iso(mondayOf(d));
+  if(!_cocCache[lk]){
+    const dias=[];for(let i=0;i<7;i++){const k=iso(addDays(mondayOf(d),i));dias.push({key:k,shiftId:dayInfo(k).shiftId});}
+    let need={};try{need=necesidadSemana(dias);}catch(e){need={};}
+    _cocCache[lk]=store.batches.filter(function(b){return isBatch(b.id)&&b.when;}).map(function(b){
+      const platos=store.dishes.filter(function(x){return x.batchId===b.id&&need[x.id]>0;});
+      if(!platos.length)return null;
+      const t=String(b.when),m2=/(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})/.exec(t),m1=/(\d{1,2}:\d{2})/.exec(t),mm=/(\d+)\s*min/.exec(t);
+      if(!m1)return null;
+      const de=mins(m1[1]),a=m2?mins(m2[2]):de+(mm?+mm[1]:60);
+      return {dia:diaDeTexto(t),de:de,a:a>de?a:de+60,label:b.label.replace(/^cocina\s+(del\s+)?/i,''),
+        platos:platos.map(function(x){return nomCorto(x.name);}).join(' · ')};}).filter(Boolean);}
+  const w=(d.getDay()+6)%7;
+  return _cocCache[lk].filter(function(c){return c.dia===w;});}
+function rutinaDeFechaBase(key){
   /* la que toca de verdad: la del tipo de día, salvo que la hayas movido a otro (o que venga
      movida de otro). Va aquí y no solo en la portada para que el cambio valga en todas partes:
      «Semana», «Hoy», el aviso de entrenar y hasta la hora de comer, que depende de si entrenas. */
@@ -8650,6 +8806,7 @@ function renderGymPortada(){
   }
   $('#main').innerHTML='<div class="grid">'+
     gymTiraHTML(c.sel)+
+    entrenoSemanaHTML(c.sel||iso(new Date()))+
     /* el aviso va ANTES de «hoy toca entrenar»: si ese día no vas a poder, leerlo después de una
        tarjeta que te invita a empezar la sesión es leerlo tarde */
     gymAvisoHTML(c.sel)+
@@ -12658,7 +12815,7 @@ function icsResumen(desde,hasta){
    parecido», no el mismo hex: decir lo contrario sería mentir. */
 const ICS_GRUPOS=[
   ['guardias','🩺 Guardias',['GUARDIA'],'guard','Tomate'],
-  ['trabajo','💼 Trabajo',['TRABAJO'],'work','Mandarina'],
+  ['trabajo','💼 Trabajo y rotación',['TRABAJO','ROTACION'],'work','Mandarina'],
   ['entrenos','💪 Entrenos',['ENTRENO'],'gym','Pavo real'],
   ['avisos','📌 Eventos, recibos y tareas',['EVENTO','DINERO','TAREA','ESTUDIO'],'evt','Uva']];
 /* los once colores que tiene Google Calendar, con el nombre que les pone él */
@@ -12740,6 +12897,8 @@ function renderAjustes(){
         widget del móvil lo pinta todo igual. Bájate estos cuatro, mete cada uno en su propio
         calendario de Google y ponle ahí el color que dice — así el widget se ve como la app.</p>
         ${icsGruposHTML(ui.calDesde||calRango().desde,ui.calHasta||calRango().hasta)}
+        <div class="row" style="margin-top:8px"><button class="btn p s" data-a="cal-dl-todos">descargar los ${ICS_GRUPOS.length} de una vez</button></div>
+        <p class="mini" style="margin:6px 0 0">Cada fichero lleva también los 3 meses anteriores: al importar octubre no se borra septiembre, y lo que ya estaba se actualiza en vez de duplicarse.</p>
       </div>`}
       <div class="row" style="margin-top:11px">
         <button class="btn s" data-a="cal-descargar">todo junto, en un fichero</button>
@@ -14206,6 +14365,16 @@ function act(a,el){
     case 'libro-del':{const b=libroById(el.dataset.id);if(!b)break;
       confirmar('¿Quitar «'+b.titulo+'» de tus objetivos?').then(function(ok){if(!ok)return;
         estS().libros=librosS().filter(function(x){return x.id!==b.id;});save();render();});break;}
+    case 'lloret':{const k=el.dataset.k||fechaHoy();flash(lloretPoner(k),6000);render();break;}
+    case 'ent-min':{const g=gymS();g.minSemana=Math.max(0,Math.min(7,entrenoCfg().min+(+el.dataset.d||0)));save();render();
+      const s=entrenoSemana(iso(new Date()));flash(g.minSemana?('mínimo '+g.minSemana+' por semana'+(s&&s.faltan?(' · esta semana solo caben '+s.total):'')):'sin mínimo semanal');break;}
+    case 'ent-dia':{const k=el.dataset.k,fz=gymForzar(),s=entrenoSemana(k),x=s?s.dias.filter(function(y){return y.k===k;})[0]:null;if(!x)break;
+      /* el ciclo de un toque: si hay entreno se quita; si no hay, se pone; y lo puesto o quitado a
+         mano, con otro toque, vuelve a lo automático */
+      if(k in fz)delete fz[k];
+      else if(x.base||x.auto)fz[k]=false;
+      else fz[k]=true;
+      save();render();flash(k in fz?(fz[k]?'entreno puesto a mano ese día':'entreno quitado ese día'):'vuelve a lo automático');break;}
     case 'hr-abrir':{const i=el.dataset.id||'';ui.hrAbierto=ui.hrAbierto===i?'':i;render();break;}
     case 'hr-cama':{const sh=el.dataset.id,rh=(store.rhythm||{})[sh];if(!rh)break;const rec=acostarsePara(rh.wake);if(!rec)break;
       rh.sleep=rec;save();render();flash('a la cama a las '+rec+' ese tipo de día');break;}
@@ -14552,23 +14721,33 @@ function act(a,el){
       confirmar(txts[el.dataset.what]||'¿Limpiar esa parte del entreno?').then(function(ok){
         if(!ok)return;const rw=gymWipe(el.dataset.what);flash(rw.msg);});break;}
     case 'gym-undo':{const ru=gymUndoWipe();flash(ru.msg);break;}
-    case 'cal-descargar':{const rr=calRangoUI();
+    case 'cal-descargar':{const rr=calRangoExport(calRangoUI());
       const tx=icsTexto(rr.desde,rr.hasta,{import:calNombreTxt(rr.desde)});
       if(!tx||tx.indexOf('BEGIN:VCALENDAR')<0){flash('no hay nada que exportar en ese rango');break;}
       ui.calTxt=tx;ui.calView=true;ui.calFile=calFileTxt(rr.desde,rr.hasta);
       dlTxt(tx,ui.calFile,'text/calendar;charset=utf-8');render();
       flash('descargado: cópialo a la carpeta que sincronices y pega en Google el bloque de las cuatro líneas');break;}
+    case 'cal-dl-todos':{
+      /* los cuatro ficheros de color de una vez, uno detrás de otro (el navegador pide permiso la
+         primera vez para descargar varios) */
+      const rr=calRangoExport(calRangoUI());let n=0;
+      ICS_GRUPOS.forEach(function(g,i){
+        const tx=icsTexto(rr.desde,rr.hasta,{cats:g[2],import:g[1].replace(/^\S+\s/,'')});
+        if(!tx||tx.indexOf('BEGIN:VEVENT')<0)return;n++;
+        setTimeout(function(){dlTxt(tx,g[0]+'-'+rr.pedido+'-a-'+rr.hasta+'.ics','text/calendar;charset=utf-8');},i*400);});
+      flash(n?(n+' ficheros: en Google, un calendario por cada uno con su color, e importa cada fichero en el suyo'):'no hay nada que exportar en ese rango');
+      break;}
     case 'cal-dl-grupo':{
       const g=icsGrupoDe(el.dataset.g||'');
       if(!g){flash('ese grupo ya no está');break;}
-      const rr=calRangoUI();
+      const rr=calRangoExport(calRangoUI());
       const tx=icsTexto(rr.desde,rr.hasta,{cats:g[2],import:g[1].replace(/^\S+\s/,'')});
       if(!tx||tx.indexOf('BEGIN:VEVENT')<0){flash('no hay nada de eso en el rango');break;}
       const nom=(g[0]+'-'+rr.desde+'-a-'+rr.hasta+'.ics');
       dlTxt(tx,nom,'text/calendar;charset=utf-8');
       flash(g[1]+': descargado. En Google, calendario nuevo con el color «'+g[4]+'» e importa ahí este fichero.');
       break;}
-    case 'cal-copiar':{const rr2=calRangoUI();
+    case 'cal-copiar':{const rr2=calRangoExport(calRangoUI());
       copy(icsTexto(rr2.desde,rr2.hasta,{import:calNombreTxt(rr2.desde)}));break;}
     case 'cal-ver':{const rr3=calRangoUI();
       if(ui.calView){ui.calView=false;render();flash('lista ocultada (el texto sigue ahí para copiar)');break;}
@@ -15350,6 +15529,13 @@ function calNombreTxt(desde){
   if(n)return n.slice(0,40);
   const d=parseDate(desde||calRango().desde)||new Date();
   return 'Guardias · '+(MONTH_FULL[d.getMonth()]||'')+' '+d.getFullYear();}
+function calRangoExport(rr){
+  /* LO DEL MES PASADO NO SE BORRA. Si el calendario de Google se sincroniza con el fichero (por URL
+     o con una app de suscripción), el calendario ES el fichero: con solo octubre dentro, septiembre
+     desaparecía. Por eso el fichero lleva siempre los 3 meses anteriores; como los UID son estables
+     por día, reimportarlos actualiza lo que ya estaba en vez de duplicarlo. */
+  const d=parseDate(rr.desde)||new Date(),ini=new Date(d.getFullYear(),d.getMonth()-3,1,12);
+  return {desde:iso(ini),hasta:rr.hasta,pedido:rr.desde};}
 function calRangoUI(){
   /* el rango que hay en la pantalla, con el desde mandando sobre el hasta */
   const R=calRango();const d0=(ui.calDesde||'')||R.desde;let h0=(ui.calHasta||'')||R.hasta;
@@ -15397,8 +15583,8 @@ function calNotas(){
 function calRefresca(){
   /* si la lista está abierta, que siempre sea el fichero de verdad: ni nombre viejo ni rango viejo */
   if(!ui.calView)return;
-  const rr=calRangoUI();
-  ui.calTxt=icsTexto(rr.desde,rr.hasta,{import:calNombreTxt(rr.desde)});
+  const rr=calRangoExport(calRangoUI());
+  ui.calTxt=icsTexto(rr.desde,rr.hasta,{import:calNombreTxt(rr.pedido)});
   ui.calFile=calFileTxt(rr.desde,rr.hasta);}
 function icsAnalizar(){
   /* se queda con la vista en memoria: la lista y el botón de marcar trabajan sobre lo mismo */
@@ -15447,6 +15633,17 @@ function calRango(desdeStr){
   const ini=iso(new Date(base.getFullYear(),base.getMonth(),1,12));
   const hasta=calFinMes(iso(new Date(base.getFullYear(),base.getMonth()+1,1,12)));
   return {desde:ini,hasta:hasta};}
+/* «Radiología» → «Rayos», «Cardiología» → «Cardio»… lo que cabe en una columna de 7 días */
+const SERV_CORTO=[[/radio|rayos|imagen/i,'Rayos'],[/cardio/i,'Cardio'],[/neumo/i,'Neumo'],[/urgenc/i,'Urgencias'],
+  [/\bumi\b|intensiv|\buci\b/i,'UMI'],[/interna/i,'Interna'],[/digest/i,'Digestivo'],[/nefro/i,'Nefro'],[/hemato/i,'Hemato'],
+  [/onco/i,'Onco'],[/neuro/i,'Neuro'],[/infecc/i,'Infecciosas'],[/endocr/i,'Endocrino'],[/reuma/i,'Reuma'],[/geria/i,'Geriatría'],
+  [/primaria|centro de salud|\bcs\b/i,'Primaria'],[/pediat/i,'Pediatría'],[/gine|obstet/i,'Gine'],[/derma/i,'Derma'],
+  [/psiqui/i,'Psiquiatría'],[/trauma/i,'Trauma'],[/cirug/i,'Cirugía'],[/anest/i,'Anestesia'],[/uro/i,'Uro'],[/oftal/i,'Oftalmo'],
+  [/otorrin|\borl\b/i,'ORL'],[/paliat/i,'Paliativos'],[/hospitaliz|planta/i,'Planta']];
+function servicioCorto(sv){
+  const t=String(sv||'').trim();if(!t)return '';
+  for(let i=0;i<SERV_CORTO.length;i++)if(SERV_CORTO[i][0].test(t))return SERV_CORTO[i][1];
+  const w=t.split(/\s+/)[0];return w.length>12?w.slice(0,11)+'.':w;}
 function calEventos(desde,hasta){
   /* a Google solo le mandamos tres cosas, y siempre con su hora de inicio y fin: guardias, trabajo
      y entrenos. Nada de vacaciones, salientes ni días libres — eso se queda solo en la app. */
@@ -15497,11 +15694,16 @@ function calEventos(desde,hasta){
       const rot=monthService(+k.slice(0,4),+k.slice(5,7)-1).service;
       out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:a,horaFin:(b&&b>a)?b:'',dur:(b&&b>a)?0:7*60,
         uid:icsUID('trabajo|'+k),
-        summ:'💼 Trabajo'+(rot?(' · '+rot):''),
+        /* el nombre corto de la rotación del mes («Cardio», «Rayos», «Neumo»): cabe en la columna
+           de la semana de Google y se entiende de un vistazo. Sin rotación puesta, «Trabajo» */
+        summ:'💼 '+(rot?servicioCorto(rot):'Trabajo'),
         desc:'Jornada de '+a+(b?(' a '+b):'')+'.'+(rot?(' Rotación: '+rot+'.'):''),cat:'TRABAJO'});}
     /* «si acaso salir de casa 7:30-33 bus 7:35»: eso y nada más. Un aviso corto antes de entrar,
        para no perder el bus; el resto del desplazamiento no va al calendario. */
+    /* «salir de casa» NO va a Google: es para cuadrar el día en la app, no una cita (lo pidió así).
+       Se deja el cálculo por si un día se quiere volver a mandar con opt.viaje */
     (function(){
+      if(!calEventos.conViaje)return;
       const v=viajeCfg(),jor2=jornadaOf(k,inf);
       if(!v.on||!v.bus||!jor2||!jor2.start||isGuardia(sh))return;
       const b=mins(v.bus);if(b==null)return;
@@ -15621,6 +15823,11 @@ function icsTexto(desde,hasta,opt){
       const cruza=fn>=1440;
       cuerpo.push('DTSTART:'+e.fecha+'T'+icsCompacta(hm(hi)),
         'DTEND:'+icsNum(cruza?nextIso(kISO):e.fecha)+'T'+icsCompacta(hm(fn)));}
+    /* COLOR (RFC 7986): un nombre de color CSS por tipo. Google lo ignora —allí manda el color del
+       calendario, por eso hay un fichero por color—, pero otras apps de calendario sí lo pintan */
+    const colorCss={GUARDIA:'tomato',TRABAJO:'orange',ENTRENO:'deepskyblue',EVENTO:'mediumorchid',ROTACION:'slategray',
+      DINERO:'mediumseagreen',TAREA:'gold',ESTUDIO:'mediumpurple'}[e.cat||''];
+    if(colorCss)cuerpo.push('COLOR:'+colorCss);
     cuerpo.push('SUMMARY:'+icsEscTxt(e.summ),'DESCRIPTION:'+icsEscTxt(e.desc||''),
       'CATEGORIES:'+icsEscTxt(e.cat||'OTRO'),'STATUS:CONFIRMED','SEQUENCE:0');
     if(store.rotation.calAlarm!==false){
@@ -16094,6 +16301,7 @@ document.addEventListener('change',e=>{
       const o=fueraMio()[k]||{kcal:it.kcal,pr:it.pr,ch:it.ch,gr:it.gr};
       const n=num(el.value,NaN);if(!isFinite(n)||n<0){render();break;}
       o[el.dataset.k]=Math.round(n*10)/10;fueraMio()[k]=o;ui.fueraFixAbierto=true;save();flash('corregido: se queda tu versión');render();break;}
+    case 'ent-tray':{const g=gymS(),v=Math.max(0,Math.min(120,Math.round(num(el.value,15))));if(el.dataset.k==='vuelta')g.vuelta=v;else g.ida=v;save();render();break;}
     case 'sn-t':{const d=ui.sd;if(!d)break;d[el.dataset.k]=el.value||'';suenoRecalc(d);render();break;}
     case 'sn-mal':{const d=ui.sd;if(!d)break;d.mal=!!el.checked;suenoRecalc(d);render();break;}
     case 'sn-ratos':{const d=ui.sd;if(d)d.ratos=!!el.checked;render();break;}
@@ -16386,7 +16594,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   TEMAS,temaById,ponerTema,tintaLegible,eventoAplica,mesRejilla,
   alimDeTexto,gramosDeIng,ingAlim,migrarPlato,migrarPlatos,platoMacrosDe,alimTodos,alimBuscar,alimById,
   suenoRealS,suenoReal,suenoGuardar,suenoSemana,informeDatos,librosS,libroNuevo,libroPag,libroCalc,hudLeer,HUD_LIBROS,
-  metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,
+  lloretPlan,lloretPoner,lloretDe,cocinaDelDia,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,
   FUERA_CADENAS,FUERA_OJO,fueraBuscables,fueraItem,fueraMenuCalc,fueraApuntar,fueraUltimos,
   finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,repartoDe,cerrarReto,sacarHucha,proyeccionAhorro,epocaDe,

@@ -2053,3 +2053,14 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
 .lbhud .t{flex:1;min-width:0}.lbhud .t b{display:block;font-size:13px}
 
 .lbed .row .fld,.lbnuevo .row .fld{flex:1;min-width:0}
+/* ============ entrenos de la semana ============ */
+.entdias{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.entdias button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--ink2);font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.entdias button b{font-size:15px}
+.entdias button.on{border-color:color-mix(in srgb,var(--gym,#38bdf8) 60%,transparent);color:var(--ink)}
+.entdias button.auto{border-style:dashed;border-color:var(--gym,#38bdf8);color:var(--ink)}
+.entdias button.forz{border-color:var(--brand);color:var(--ink)}
+.entdias button.no{opacity:.55}
+.entaviso{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;color:var(--ink);font:inherit;cursor:pointer;
+  border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
