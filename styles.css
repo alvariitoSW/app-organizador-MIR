@@ -1974,3 +1974,8 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
   color:var(--ok,#34d399);border:1px solid color-mix(in srgb,var(--ok,#34d399) 40%,transparent)}
 .cub{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden;margin-top:6px}
 .cub i{display:block;height:100%;background:var(--brand2)}
+/* comidas armadas: dónde se usa cada una, y las raciones de cada plato con − / + */
+.elop .nm .usos{font-size:10.5px;color:var(--ink2);opacity:.85}
+.racst{display:flex;align-items:center;gap:4px;flex:none}
+.racst button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:16px;font-weight:800;cursor:pointer}
+.racst b{min-width:26px;text-align:center;font-variant-numeric:tabular-nums}
