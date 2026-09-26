@@ -1,0 +1,179 @@
+<!doctype html><html lang="es"><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+h3{margin:0 0 6px;font-size:14px}
+.tit{font-size:10px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 0 8px}
+.e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.big{font-size:32px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.chipx{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;margin:4px 3px 0 0}
+.chipx.on{background:var(--brand);color:#12081a;border-color:var(--brand)}
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.bar{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden}.bar i{display:block;height:100%;background:var(--brand2)}
+.ok{color:#34d399}.warn{color:#fbbf24}.bad{color:#fb7185}
+.hu{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.hu:first-of-type{border-top:0}.hu .ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:16px}
+.hu .t{flex:1;min-width:0}.hu .t b{display:block;font-size:14px}.hu .t span{font-size:11px;color:var(--ink2)}
+.hu .n{text-align:right;font-variant-numeric:tabular-nums}.hu .n b{display:block;font-size:14px}.hu .n span{font-size:10.5px;color:var(--ink2)}
+.mb{height:4px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden}.mb i{display:block;height:100%}
+/* barras por mes / noche */
+.bars{display:flex;gap:6px;align-items:flex-end;height:86px;position:relative;margin-top:8px}
+.bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink2);font-weight:700}
+.bars i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--brand2)}
+.bars .fut i{background:transparent;border:1.5px dashed var(--line);border-bottom:0}
+.bars .poco i{background:#fb7185}
+.bars b{font-size:9px;color:var(--ink)}
+.obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.8}
+.obj span{position:absolute;right:0;top:-13px;font-size:9px;font-weight:800;color:var(--ink2);background:var(--card);padding:0 3px}
+/* horarios */
+.ht{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.ht:first-of-type{border-top:0}.ht .ic{font-size:20px;width:28px;text-align:center}
+.ht .t{flex:1;min-width:0}.ht .t b{display:block;font-size:14px}.ht .t span{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.pill{font-size:11px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid}
+.pill.ok{border-color:#34d39966;background:#34d3991a}.pill.warn{border-color:#fbbf2466;background:#fbbf241a}.pill.g{border-color:var(--line);color:var(--ink2)}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--ink2);flex:1;min-width:0}
+.fld span.v{background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 10px;font-size:15px;font-weight:800;letter-spacing:0}
+.st{display:flex;gap:6px;align-items:center}.st .btn{width:36px;height:34px;font-size:18px;padding:0}
+.seg{display:flex;gap:4px;margin-top:6px}.seg span{flex:1;text-align:center;border:1px solid var(--line);border-radius:9px;padding:8px 0;font-size:13px;font-weight:800;color:var(--ink2)}
+.seg .on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.sw{display:flex;gap:9px;align-items:center;font-size:13px;margin-top:10px}.sw i{width:34px;height:20px;border-radius:10px;background:var(--brand);position:relative;flex:none}
+.sw i:after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:8px;background:#fff}
+/* informe */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.tile .k{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.tile .v{font-size:22px;font-weight:900;margin-top:2px;font-variant-numeric:tabular-nums}.tile .v small{font-size:12px;color:var(--ink2);font-weight:700}
+.tile .s{font-size:11px;color:var(--ink2);margin-top:2px}
+.li{font-size:12.5px;padding:6px 0;border-top:1px dashed var(--line)}.li:first-of-type{border-top:0}
+/* estudio */
+.bk{padding:10px 0;border-top:1px dashed var(--line)}.bk:first-of-type{border-top:0}
+.bk .t b{font-size:14px}.bk .t span{font-size:11px;color:var(--ink2)}
+.caps{display:flex;gap:3px;margin-top:6px}.caps i{flex:1;height:8px;border-radius:3px;background:var(--line)}.caps i.y{background:var(--brand2)}.caps i.m{background:color-mix(in srgb,var(--brand2) 45%,var(--line))}
+</style><body>
+
+<div class="wrap" id="dinero">
+<div class="tit">1 · AHORRO · OBJETIVO A LARGO PLAZO → CUÁNTO AL MES</div>
+<div class="card hero">
+ <div class="row"><span class="e">TU OBJETIVO</span><span class="sp"></span><span class="btn">✎</span></div>
+ <div class="row" style="align-items:baseline;margin-top:4px"><span class="big">10 000 €</span><span class="mini">para dic 2027 · 15 meses</span></div>
+ <div class="bar" style="margin-top:8px"><i style="width:14%"></i></div>
+ <div class="row mini" style="margin-top:4px"><span>llevas <b style="color:var(--ink)">1 350 €</b></span><span class="sp"></span><span>faltan 8 650 €</span></div>
+ <div class="card" style="margin-top:10px;background:var(--bg2)">
+  <div class="e">PARA LLEGAR, APARTA</div>
+  <div class="row" style="align-items:baseline"><span class="big" style="font-size:26px">577 €/mes</span><span class="sp"></span><span class="mini">23 % del sueldo</span></div>
+  <div class="mini">Ahora apartas 450 €: <b class="warn">con eso llegas en abr 2029</b> (16 meses tarde).</div>
+  <div><span class="chipx on">apartar 577 € al mes</span><span class="chipx">mover la fecha</span></div>
+ </div>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="row"><h3 style="margin:0">Mes a mes</h3><span class="sp"></span><span class="mini">2026 · <b style="color:var(--ink)">3 150</b> de 6 900 €</span></div>
+ <div class="bars">
+  <span class="obj" style="bottom:52px"><span>577 €/mes</span></span>
+  <div><b>400</b><i style="height:37px"></i>abr</div><div><b>450</b><i style="height:42px"></i>may</div><div><b>600</b><i style="height:55px"></i>jun</div>
+  <div class="poco"><b>250</b><i style="height:23px"></i>jul</div><div><b>450</b><i style="height:42px"></i>ago</div><div><b>450</b><i style="height:42px"></i>sep</div>
+  <div class="fut"><b></b><i style="height:52px"></i>oct</div><div class="fut"><b></b><i style="height:52px"></i>nov</div></div>
+ <p class="mini" style="margin:8px 0 0">Julio se quedó corto (vacaciones). El año va al 46 %: en diciembre, con la paga extra, vuelves al ritmo.</p>
+</div>
+<div class="card" style="margin-top:8px"><div class="row"><h3 style="margin:0">Huchas</h3><span class="sp"></span><span class="mini">toca una para cambiarla</span></div>
+ <div class="hu"><span class="ic" style="background:#8b5cf633">🔒</span><span class="t"><b>Colchón</b><span>50 % · no se toca</span><div class="mb"><i style="width:45%;background:#8b5cf6"></i></div></span><span class="n"><b>900 €</b><span>de 2 000</span></span></div>
+ <div class="hu"><span class="ic" style="background:#38bdf833">✈️</span><span class="t"><b>Viajes</b><span>30 % · Japón 2027</span><div class="mb"><i style="width:18%;background:#38bdf8"></i></div></span><span class="n"><b>270 €</b><span>de 1 500</span></span></div>
+ <div class="hu"><span class="ic" style="background:#fbbf2433">🪷</span><span class="t"><b>Caprichos</b><span>20 %</span><div class="mb"><i style="width:90%;background:#fbbf24"></i></div></span><span class="n"><b>180 €</b><span>de 200</span></span></div>
+ <p class="mini" style="margin:6px 0 0">El reparto suma 100 %. <span style="color:var(--brand)">+ hucha</span></p>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="horas">
+<div class="tit">2 · HORARIOS · UNA LÍNEA POR TIPO DE DÍA</div>
+<div class="row" style="margin-bottom:8px"><span class="btn">‹ Ajustes</span><b style="font-size:17px">Horas y sueño</b></div>
+<div class="card">
+ <div class="row"><span class="e">TU OBJETIVO</span></div>
+ <div class="row" style="margin-top:6px"><div class="st"><span class="btn">−</span><b style="font-size:22px">8 h</b><span class="btn">+</span></div><span class="sp"></span><span class="mini" style="text-align:right">cena 3–1,5 h antes<br>de acostarte</span></div>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="ht"><span class="ic">💼</span><span class="t"><b>Trabajo · Fuerza</b><span>⏰ 6:50 · 🚪 7:30 · 🛏 22:40</span></span><span class="pill ok">8h12</span></div>
+ <div class="ht"><span class="ic">🩺</span><span class="t"><b>Guardia</b><span>⏰ 6:45 · 🚪 7:30 · 24 h de trabajo</span></span><span class="pill g">se apunta</span></div>
+ <div class="ht"><span class="ic">🚪</span><span class="t"><b>Saliente</b><span>siesta al llegar · 🛏 22:15</span></span><span class="pill ok">6h + 8h</span></div>
+ <div class="ht"><span class="ic">🌿</span><span class="t"><b>Libre</b><span>⏰ 10:30 · 🛏 0:45</span></span><span class="pill ok">9h48</span></div>
+ <div class="ht"><span class="ic">🏖️</span><span class="t"><b>Vacaciones</b><span>⏰ 8:45 · 🛏 0:00</span></span><span class="pill ok">8h48</span></div>
+</div>
+<div class="card" style="margin-top:8px;border-style:dashed">
+ <div class="row"><b style="font-size:13px">💼 Trabajo · Fuerza</b><span class="sp"></span><span class="mini">al tocar la fila</span></div>
+ <div class="row" style="margin-top:8px"><label class="fld">LEVANTARSE<span class="v">6:50</span></label><label class="fld">SALIR<span class="v">7:30</span></label><label class="fld">ACOSTARSE<span class="v">22:40</span></label></div>
+ <p class="mini" style="margin:8px 0 0">Desayuno y llegada salen solos. Para 8 h: cama a las <b style="color:var(--ink)">22:40</b> ✓ · cena 19:40–21:10</p>
+</div>
+<p class="mini" style="margin:8px 4px 0">▸ a qué hora comes (entreno de tarde, saliente) · ▸ minutos en dormirte · ▸ siesta del saliente</p>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="sueno">
+<div class="tit">3 · ¿CÓMO HAS DORMIDO? (EN HOY, POR LA MAÑANA)</div>
+<div class="card">
+ <div class="row"><b style="font-size:15px">🛏 Anoche</b><span class="sp"></span><span class="mini">plan 22:40 → 6:50</span></div>
+ <div class="mini" style="margin-top:8px">Horas que dormiste de verdad</div>
+ <div class="seg"><span>5</span><span>6</span><span class="on">6,5</span><span>7</span><span>8</span><span>9</span></div>
+ <div class="row" style="margin-top:10px"><label class="fld">TE ACOSTASTE<span class="v">23:30</span></label><label class="fld">TE DESPERTASTE<span class="v">6:50</span></label></div>
+ <div class="sw"><i></i><b>Dormí mal</b></div>
+ <div class="row" style="margin-top:6px"><label class="fld">ME DESVELÉ DE<span class="v">3:00</span></label><label class="fld">A<span class="v">4:00</span></label></div>
+ <button class="btn p" style="width:100%;margin-top:12px;padding:10px">guardar · 6 h 20 de sueño</button>
+</div>
+<div class="card" style="margin-top:10px;border-color:#f43f5e66">
+ <div class="row"><b style="font-size:15px">🩺 Saliente de guardia</b><span class="sp"></span><span class="mini">ayer 8:00 → hoy 8:00</span></div>
+ <div class="mini" style="margin-top:8px">¿Cuánto pudiste dormir en la guardia?</div>
+ <div class="seg"><span>0</span><span>1</span><span class="on">2</span><span>3</span><span>4 h</span></div>
+ <div class="sw" style="margin-top:8px"><i></i><b>A ratos</b><span class="mini">· te despertaron</span></div>
+ <div class="mini" style="margin-top:10px">Y la siesta al llegar</div>
+ <div class="seg"><span>no</span><span>2</span><span>3</span><span class="on">4</span><span>5</span><span>6 h</span></div>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="semana">
+<div class="tit">4 · SUEÑO DE LA SEMANA (LO REAL, NO EL PLAN)</div>
+<div class="card">
+ <div class="row" style="align-items:baseline"><span class="big" style="font-size:28px">44 h</span><span class="mini">de 56 · media 6 h 17</span><span class="sp"></span><span class="pill warn">−12 h</span></div>
+ <div class="bars" style="height:96px">
+  <span class="obj" style="bottom:66px"><span style="right:auto;left:0">objetivo 8 h</span></span>
+  <div class="poco"><b>6,3</b><i style="height:50px"></i>L</div><div class="poco"><b>2</b><i style="height:16px"></i>M 🩺</div><div><b>6+4</b><i style="height:80px;background:linear-gradient(#8b5cf699 40%,var(--brand2) 40%)"></i>X</div>
+  <div><b>7,5</b><i style="height:60px"></i>J</div><div><b>7</b><i style="height:56px"></i>V</div><div><b>9</b><i style="height:72px"></i>S</div><div><b>8,2</b><i style="height:66px"></i>D</div></div>
+ <p class="mini" style="margin:8px 0 0">La guardia del martes cuenta lo que apuntaste (2 h a ratos). El miércoles suma siesta (más claro) + noche. <span class="bad">⚠ 2 noches por debajo de 7 h</span> (en rojo).</p>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="informe">
+<div class="tit">5 · INFORME DE LA SEMANA (EL LUNES, EN HOY)</div>
+<div class="card">
+ <div class="row"><b style="font-size:16px">Semana 21–27 sep</b><span class="sp"></span><span class="mini">‹ ›</span></div>
+ <div class="tiles" style="margin-top:8px">
+  <div class="tile"><div class="k">🛏 SUEÑO</div><div class="v">44 <small>/ 56 h</small></div><div class="s">media 6 h 17 · 3 noches cortas</div></div>
+  <div class="tile"><div class="k">🍽 DIETA</div><div class="v">5 <small>/ 7 días</small></div><div class="s">en objetivo · 132 g P de media</div></div>
+  <div class="tile"><div class="k">✅ HÁBITOS</div><div class="v">72 <small>%</small></div><div class="s">agua 7/7 · lectura 3/7</div></div>
+  <div class="tile"><div class="k">📚 ESTUDIO</div><div class="v">6 h <small>30</small></div><div class="s">14 🍅 · 96 págs · Libro Azul</div></div>
+  <div class="tile"><div class="k">💪 ENTRENO</div><div class="v">3 <small>/ 4</small></div><div class="s">faltó el jueves</div></div>
+  <div class="tile"><div class="k">💰 AHORRO</div><div class="v">450 <small>€</small></div><div class="s">objetivo 577 €/mes</div></div>
+ </div>
+ <div class="li">👍 Estudio: vas 2 días por delante con el Libro Azul.</div>
+ <div class="li">👎 Sueño: el día de la guardia y el viernes, menos de 7 h.</div>
+</div>
+</div>
+
+<div style="height:24px"></div><div class="wrap" id="estudio">
+<div class="tit">6 · ESTUDIO · OBJETIVOS DE LIBRO + TU HUD</div>
+<div class="card">
+ <h3>Lo que estás estudiando</h3>
+ <div class="bk"><div class="row t"><b>📘 Libro Azul · Hematología y hemostasia</b></div>
+  <div class="row mini" style="margin-top:3px"><span>pág <b style="color:var(--ink)">34</b> de 86 · cap. 3 de 6</span><span class="sp"></span><span>1 h/día · 12 págs/h</span></div>
+  <div class="caps"><i class="y"></i><i class="y"></i><i class="m"></i><i></i><i></i><i></i></div>
+  <div class="row mini" style="margin-top:5px"><span>hoy: <b style="color:var(--ink)">págs 35–46</b></span><span class="sp"></span><span class="ok">terminas el 1 oct · 2 días por delante</span></div></div>
+ <div class="bk"><div class="row t"><b>📗 Marik · Shock (caps 14–17)</b></div>
+  <div class="row mini" style="margin-top:3px"><span>pág 0 de 70 · 4 capítulos</span><span class="sp"></span><span>30 min/día</span></div>
+  <div class="caps"><i></i><i></i><i></i><i></i></div>
+  <div class="row mini" style="margin-top:5px"><span>empieza el 2 oct</span><span class="sp"></span><span>terminas el 25 oct</span></div></div>
+ <span class="chipx on">+ nuevo objetivo</span>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="row"><h3 style="margin:0">🩺 Tu HUD · fiebres-neutropenias</h3><span class="sp"></span><span class="btn">abrir ↗</span></div>
+ <div class="row mini" style="margin-top:6px"><span><b style="color:var(--ink)">23</b> 🍅 hechos</span><span>· <b style="color:var(--ink)">7</b> fichas empezadas</span><span>· quiz <b style="color:var(--ink)">78 %</b></span></div>
+ <div class="mini" style="margin-top:8px">Libros de tu HUD que aún no son objetivo:</div>
+ <div class="hu"><span class="t"><b>SEIMC-SEHH · Neutropenia febril</b><span>148 págs</span></span><span class="chipx">+ objetivo</span></div>
+ <div class="hu"><span class="t"><b>Libro Azul · Cardiovascular (1)</b><span>100 págs</span></span><span class="chipx">+ objetivo</span></div>
+ <div class="hu"><span class="t"><b>ESC 2026 · Insuficiencia cardiaca (1)</b><span>56 págs</span></span><span class="chipx">+ objetivo</span></div>
+ <p class="mini" style="margin:6px 0 0">Los pomodoros y el quiz se leen del HUD en tu móvil (misma web, alvariitosw.github.io): nada sale del teléfono.</p>
+</div>
+</div>

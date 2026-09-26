@@ -4222,15 +4222,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         alto: document.querySelector('#main').scrollHeight,
         ancho: document.documentElement.scrollWidth,
         dia: pos(/Hoy ·/), entrenar: pos(/toca entrenar/), tareas: pos(/Para hoy/),
+        sueno: cards.findIndex((c) => c.classList.contains('sncard')),
         pagar: pos(/toca pagar/), comidas: pos(/Comidas de hoy/), sol: pos(/El sol hoy/),
       };
     });
     // el orden se comprueba por posiciones RELATIVAS, no por el número de tarjeta: entre «lo que
     // hay que hacer» caben más cosas con el tiempo (la compra, por ejemplo) y eso no rompe nada
     check('«Hoy» junta las cinco patas del día y las ordena: el día, lo que hay que hacer y, al final, lo de consulta',
-      dia.dia === 0 && dia.entrenar === 1 && dia.tareas === 2 && dia.pagar > dia.tareas &&
+      // entre el día y «toca entrenar» va ahora «¿cómo has dormido?» (lo real de la noche, lo primero
+      // que se apunta por la mañana): por eso entrenar ya no es la 1 y el alto sube lo que mide ella
+      dia.dia === 0 && dia.sueno === 1 && dia.entrenar === 2 && dia.tareas === 3 && dia.pagar > dia.tareas &&
       dia.comidas > dia.pagar && dia.sol > dia.comidas &&
-      dia.alto < 2300 && dia.ancho <= 412, JSON.stringify(dia));
+      dia.alto < 2700 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
       const P = window.PG;
       P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 };
@@ -4826,6 +4829,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // …y la hora se cambia desde la pantalla y sobrevive a recargar (normalize() tira lo que no conoce)
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'horas'; P.render(); });
     await page.waitForTimeout(350);
+    // «a qué hora comes» vive ahora en un plegable de «Horas y sueño»: se abre antes de escribir
+    await page.evaluate(() => { document.querySelectorAll('#main details.hradv').forEach((d) => { d.open = true; }); });
     const campo = await page.$('[data-a="com-h"][data-k="conEntreno"][data-w="de"]');
     if (campo) { await campo.fill('19:15'); await page.keyboard.press('Tab'); await page.waitForTimeout(320); }
     const tras = await page.evaluate((lunes) => {
@@ -7102,6 +7107,92 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+  // 204) AHORRO CON OBJETIVO → SUEÑO DE VERDAD → INFORME → ESTUDIO, encadenados por la interfaz
+  {
+    // ahorro: poner una meta y aplicar lo que recomienda
+    await page.evaluate(() => { const P = window.PG; const a = P.store.ahorro; delete a.meta;
+      P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.ahoMetaEd = false; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    await page.fill('#ahMetaImp', '10000');
+    await page.fill('#ahMetaFec', (new Date().getFullYear() + 1) + '-12');
+    await page.click('[data-a="aho-meta-ok"]');
+    await page.waitForTimeout(200);
+    const m0 = await page.evaluate(() => { const c = window.PG.metaCalc(); return c && { rec: c.rec, falta: c.falta, meses: c.meses }; });
+    const ap = await page.$('[data-a="aho-meta-aplicar"]');
+    if (ap) await ap.click();
+    await page.waitForTimeout(200);
+    const m1 = await page.evaluate(() => { const c = window.PG.metaCalc(); return c && { ritmo: c.ritmo, rec: c.rec, tarde: c.tarde }; });
+    check('ahorro: con una meta y una fecha, la app dice cuánto apartar al mes y lo aplica con un toque',
+      m0 && m0.rec > 0 && Math.abs(m0.rec * m0.meses - m0.falta) < m0.meses * 10 + 1 && m1 && m1.ritmo === m1.rec && !(m1.tarde > 0),
+      JSON.stringify({ m0, m1 }));
+    const hu = await page.$('[data-a="aho-hu-abrir"]');
+    if (hu) await hu.click();
+    await page.waitForTimeout(200);
+    const campos = await page.evaluate(() => document.querySelectorAll('#main input').length);
+    check('huchas: se abre una cada vez (antes 21 campos a la vez)', campos > 0 && campos <= 8, String(campos));
+
+    // sueño de verdad, en Hoy: dormí mal y se desveló una hora
+    await page.evaluate(() => { const P = window.PG; P.suenoRealS()[P.iso(new Date())] = undefined; delete P.suenoRealS()[P.iso(new Date())];
+      P.ui.sd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForTimeout(250);
+    const hayCard = await page.evaluate(() => !!document.querySelector('.sncard [data-a="sn-guardar"]'));
+    await page.evaluate(() => { const d = window.PG.ui.sd; if (d && d.guardia) { const b = document.querySelector('[data-a="sn-modo"]'); if (b) b.click(); } });
+    await page.waitForTimeout(150);
+    await page.fill('[data-a="sn-t"][data-k="acostar"]', '23:30');
+    await page.keyboard.press('Tab');
+    await page.fill('[data-a="sn-t"][data-k="desp"]', '06:50');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(150);
+    // al marcarla se repinta la tarjeta (salen los campos del desvelo): se pulsa desde la página
+    await page.evaluate(() => { const c = document.querySelector('[data-a="sn-mal"]'); if (c && !c.checked) c.click(); });
+    await page.waitForTimeout(150);
+    await page.fill('[data-a="sn-t"][data-k="dde"]', '03:00');
+    await page.keyboard.press('Tab');
+    await page.fill('[data-a="sn-t"][data-k="da"]', '04:00');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(150);
+    const g = await page.$('[data-a="sn-guardar"]');
+    if (g) await g.click();
+    await page.waitForTimeout(200);
+    const sn = await page.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())));
+    check('«¿cómo has dormido?»: con la hora de acostarte, la de despertar y el desvelo, las horas salen solas',
+      hayCard && !!sn && Math.abs(sn.h - 6.25) < 0.01 && sn.mal && sn.dde === '03:00', JSON.stringify({ hayCard, sn }));
+
+    // la guardia de ayer: 2 h a ratos + 4 de siesta, y el informe lo cuenta
+    const inf = await page.evaluate(() => { const P = window.PG, ayer = P.iso(new Date(Date.now() - 864e5));
+      P.suenoRealS()[ayer] = { h: 2, guardia: true, ratos: true, siesta: 4 }; P.save();
+      const s = P.suenoSemana(ayer); const d = s.dias.filter((x) => x.k === ayer)[0];
+      return { total: d.t, guardia: d.r.guardia }; });
+    const bInf = await page.$('.sncard [data-a="hoy-informe"]');
+    if (bInf) await bInf.click();
+    await page.waitForTimeout(250);
+    const tiles = await page.evaluate(() => document.querySelectorAll('#main .inftile').length);
+    check('la guardia cuenta lo que dormiste en ella más la siesta, y el informe tiene sus seis bloques',
+      inf.total === 6 && inf.guardia && tiles === 6, JSON.stringify({ inf, tiles }));
+    const volver = await page.$('[data-a="hoy-informe-cerrar"]');
+    if (volver) await volver.click();
+
+    // estudio: un libro del HUD como objetivo, página actual y cuándo terminas; el HUD se lee
+    await page.evaluate(() => { localStorage.setItem('hud-pomodoros-completados', '23');
+      const P = window.PG; P.estS().libros = []; P.ui.tab = 'estudio'; P.ui.estVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const hudTxt = await page.evaluate(() => /23/.test((document.querySelector('#main') || {}).innerText || ''));
+    const lh = await page.$('[data-a="libro-hud"]');
+    if (lh) await lh.click();
+    await page.waitForTimeout(200);
+    const la = await page.$('[data-a="libro-abrir"]');
+    if (la) await la.click();
+    await page.waitForTimeout(200);
+    await page.fill('[data-a="libro-pag"]', '24');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    const lb = await page.evaluate(() => { const P = window.PG, b = P.librosS()[0]; if (!b) return null; const c = P.libroCalc(b);
+      return { pag: b.pag, dias: c.dias, fin: c.fin, hoy: c.hoyDe, leido: (b.log[0] || {}).p, recarga: (P.store = JSON.parse(JSON.stringify(P.store)), P.librosS()[0].pag) }; });
+    check('estudio: un libro de tu HUD se pone de objetivo, dice qué toca hoy y cuándo terminas, y sobrevive a recargar',
+      hudTxt && lb && lb.pag === 24 && lb.hoy === 25 && lb.leido === 24 && lb.dias > 0 && lb.recarga === 24, JSON.stringify({ hudTxt, lb }));
+    await page.evaluate(() => { const P = window.PG; localStorage.removeItem('hud-pomodoros-completados'); P.estS().libros = [];
+      delete P.store.ahorro.meta; P.store.suenoReal = {}; P.ui.tab = 'hoy'; P.save(); P.render(); });
+  }
 
   // ===================================================================================
   // Había DOS números para «lo que tardas del trabajo a casa»: trayectoMin(), que salía
