@@ -49,6 +49,9 @@ lista.
 La compra sale en **Hoy** cuando toca, como una tarea más (cada 3, 4 o 7 días, tú eliges). **No se
 mete en el calendario de Google**: se queda en la app.
 
+**El orden de los pasillos** lo pones tú en *Compra → Mis listas*: la lista se pinta en ese orden,
+así que se hace el súper del tirón en vez de en zigzag.
+
 **Si algo cae en el pasillo equivocado**, se corrige delante del lineal: el botoncito de la derecha
 de cada línea abre los pasillos y lo que elijas manda sobre las reglas de la app para ese producto,
 también la próxima semana. El ↺ lo devuelve a lo que decida ella.

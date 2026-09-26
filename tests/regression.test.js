@@ -7377,6 +7377,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       g.rutinas = g.rutinas.filter((r) => r.id !== 'rt-205'); P.save(); P.render(); });
   }
 
+
+  // ===================================================================================
+  // El orden de los pasillos lo traía COMPRA_SECS fijo (verdura → carne → pescado → …) y
+  // ese es el orden en que se pinta la lista: si en tu súper la panadería está a la
+  // entrada, hacías el súper en zigzag y no había forma de cambiarlo sin tocar código.
+  // ===================================================================================
+  {
+    await page.evaluate(() => { const P = window.PG;
+      P.ui.tab = 'shop'; P.ui.shopVista = 'listas'; P.render(); });
+    await page.waitForTimeout(400);
+    const antes = await page.evaluate(() => { const P = window.PG;
+      return { filas: document.querySelectorAll('#main .pasord .pfila').length,
+        orden: P.secsOrdenadas().map((x) => x[0]),
+        // el primero no puede subir y el último no puede bajar
+        primerArriba: !!(document.querySelector('#main .pasord .pfila .btn[data-d="-1"]') || {}).disabled }; });
+    // se conduce el botón de verdad: vive en act(), que es donde tienen que estar los botones
+    const hay = antes.filas > 0;
+    if (hay) { await page.click('#main .pasord .pfila:nth-child(2) [data-a="sec-mover"][data-d="-1"]');
+      await page.waitForTimeout(350); }
+    const tras = await page.evaluate(() => { const P = window.PG;
+      const r = { orden: P.secsOrdenadas().map((x) => x[0]) };
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      r.trasRecargar = P.secsOrdenadas().map((x) => x[0]);
+      return r; });
+    // ENCADENADO: la LISTA se pinta en ese orden, que es de lo que va todo esto
+    await page.evaluate(() => { const P = window.PG; P.ui.shopVista = ''; P.render(); });
+    await page.waitForTimeout(400);
+    const enLista = await page.evaluate(() => { const P = window.PG;
+      const d = P.compraDatos();
+      const g = d.grupos.filter((x) => x[2].length)[0];
+      if (!g) return null;
+      return P.porSeccion(g[2]).map((x) => x.k); });
+    // y el ↺ lo devuelve al orden de fábrica
+    const reset = await page.evaluate(() => { const P = window.PG;
+      P.ui.shopVista = 'listas'; P.render();
+      const b = document.querySelector('#main [data-a="sec-orden-reset"]');
+      if (b) b.click();
+      return { habiaBoton: !!b, orden: P.secsOrdenadas().map((x) => x[0]) }; });
+    check('el orden de los pasillos se cambia, manda en la lista de la compra y aguanta recargar',
+      hay && antes.filas === 9 && antes.primerArriba === true &&
+      antes.orden[0] === 'verdura' && antes.orden[1] === 'carne' &&
+      tras.orden[0] === 'carne' && tras.orden[1] === 'verdura' &&
+      tras.trasRecargar[0] === 'carne' &&
+      // la lista solo trae los pasillos con cosas, pero en el orden nuevo
+      (!enLista || enLista.indexOf('carne') < 0 || enLista.indexOf('verdura') < 0 ||
+        enLista.indexOf('carne') < enLista.indexOf('verdura')) &&
+      reset.habiaBoton && reset.orden[0] === 'verdura',
+      JSON.stringify({ antes, tras, enLista, reset }));
+    await page.evaluate(() => { const P = window.PG;
+      delete P.food().secOrden; P.ui.shopVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

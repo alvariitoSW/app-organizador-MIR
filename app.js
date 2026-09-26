@@ -536,6 +536,13 @@ function normalize(o){
   o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
   /* EL PASILLO QUE LE HAS PUESTO TÚ A UN PRODUCTO. Sin esta línea se pierde al recargar:
      normalize() tira todo lo que no reconoce. Solo se guardan claves de pasillo que existen. */
+  /* el orden en que recorres el súper: sin registrarlo aquí se pierde al recargar. Solo claves de
+     pasillo que existan y sin repetidos; lo que falte lo completa secsOrdenadas(). */
+  if(!Array.isArray(o.food.secOrden))delete o.food.secOrden;
+  else{const ok=COMPRA_SECS.map(function(x){return x[0];}),vis={},li=[];
+    o.food.secOrden.forEach(function(k){
+      if(ok.indexOf(k)>=0&&!vis[k]){vis[k]=1;li.push(k);}});
+    if(li.length)o.food.secOrden=li; else delete o.food.secOrden;}
   if(!o.food.pasillos||typeof o.food.pasillos!=='object')o.food.pasillos={};
   else{const lim={},ok=COMPRA_SECS.map(function(x){return x[0];});
     Object.keys(o.food.pasillos).slice(0,600).forEach(function(k){
@@ -10726,13 +10733,33 @@ function seccionDeCompra(texto){
   const t2=alimTxt(texto),rr=reglasSinTildes();
   for(let j=0;j<rr.length;j++)if(rr[j][0].test(t2))return rr[j][1];
   return 'otros';}
+function secsOrdenadas(){
+  /* EL ORDEN EN QUE RECORRES EL SÚPER. COMPRA_SECS lo traía fijo (verdura → carne → pescado → …) y
+     ese es el orden en que se pinta la lista: si en tu súper la panadería está a la entrada, ibas
+     en zigzag. Lo que falte o sobre en lo tuyo se completa con el de fábrica. */
+  const mio=food().secOrden;
+  if(!Array.isArray(mio)||!mio.length)return COMPRA_SECS.slice();
+  const out=[],vistos={};
+  mio.forEach(function(k){
+    const sc=COMPRA_SECS.filter(function(x){return x[0]===k;})[0];
+    if(sc&&!vistos[k]){vistos[k]=1;out.push(sc);}});
+  COMPRA_SECS.forEach(function(sc){if(!vistos[sc[0]])out.push(sc);});
+  return out;}
+function moverSeccion(k,dir){
+  const l=secsOrdenadas().map(function(x){return x[0];});
+  const i=l.indexOf(k),j=i+(+dir||0);
+  if(i<0||j<0||j>=l.length)return '';
+  const t=l[i];l[i]=l[j];l[j]=t;
+  food().secOrden=l;save();
+  const sc=COMPRA_SECS.filter(function(x){return x[0]===k;})[0];
+  return (sc?sc[1]:'ese pasillo')+', el '+(j+1)+'.º de '+l.length;}
 function porSeccion(items){
   /* los artículos repartidos por pasillo, en el orden en el que se recorre la tienda */
   const por={};
   items.forEach(function(x){
     const k=seccionDeCompra(x.texto);
     (por[k]||(por[k]=[])).push(x);});
-  return COMPRA_SECS.filter(function(sc){return (por[sc[0]]||[]).length;})
+  return secsOrdenadas().filter(function(sc){return (por[sc[0]]||[]).length;})
     .map(function(sc){
       const l=por[sc[0]].slice().sort(function(a,b){
         return String(a.texto).localeCompare(String(b.texto),'es');});
@@ -10976,8 +11003,29 @@ function renderShopListas(){
         '<button class="btn p" data-a="lista-add">+ Crear lista</button></div>'+
     '</div>'+
     listaManoCardHTML()+
+    ordenPasillosCardHTML()+
     '</div>';
 }
+function ordenPasillosCardHTML(){
+  /* el orden en que recorres TU súper. La lista se pinta en este orden, así que esto es lo que
+     decide si haces el súper del tirón o en zigzag. */
+  const l=secsOrdenadas();
+  return '<div class="card"><h2>El orden de los pasillos</h2>'+
+    '<p class="note">La lista de la compra se pinta en este orden. Ponlo como está tu súper y lo '+
+    'haces del tirón.</p>'+
+    '<div class="pasord">'+l.map(function(sc,i){
+      return '<div class="pfila">'+
+        '<span class="i" aria-hidden="true">'+sc[2]+'</span>'+
+        '<b>'+esc(sc[1])+'</b>'+
+        '<span class="n">'+(i+1)+'</span>'+
+        '<button class="btn s" data-a="sec-mover" data-k="'+esc(sc[0])+'" data-d="-1"'+
+          (i===0?' disabled':'')+' aria-label="subir '+esc(sc[1])+'">↑</button>'+
+        '<button class="btn s" data-a="sec-mover" data-k="'+esc(sc[0])+'" data-d="1"'+
+          (i===l.length-1?' disabled':'')+' aria-label="bajar '+esc(sc[1])+'">↓</button>'+
+      '</div>';}).join('')+'</div>'+
+    (Array.isArray(food().secOrden)&&food().secOrden.length
+      ?'<div class="row" style="margin-top:9px"><button class="btn s" data-a="sec-orden-reset">↺ volver al orden de fábrica</button></div>':'')+
+    '</div>';}
 
 /* ===================== render: turno y rotación ===================== */
 /* ===================== horas y sueño, simplificado =====================
@@ -13625,6 +13673,10 @@ function act(a,el){
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     /* el pasillo de un producto: abrir la lista y elegir. Van en el switch de CLICKS —son botones—,
        que es donde tienen que estar: un `case` en el de `change` no se dispararía nunca. */
+    /* el orden de los pasillos: son BOTONES, así que van aquí y no en el switch de `change` */
+    case 'sec-mover':{const m=moverSeccion(el.dataset.k||'',+el.dataset.d||0);
+      if(m)flash(m);render();break;}
+    case 'sec-orden-reset':{delete food().secOrden;save();render();flash('orden de fábrica');break;}
     case 'compra-pasillo':{const k=el.dataset.k||'';
       ui.compraPasillo=(ui.compraPasillo===k)?'':k;render();break;}
     case 'compra-pasillo-set':{
@@ -16558,7 +16610,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
   TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
-  seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,
+  seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,secsOrdenadas,moverSeccion,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
