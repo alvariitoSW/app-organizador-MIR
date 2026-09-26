@@ -6995,6 +6995,68 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+  // 203) COMIDAS ARMADAS: la lista agrupada con buscador → editar una (raciones con −/+, añadir un
+  // plato con el selector) → guardar; y crear una desde el selector de una toma, que queda puesta
+  // en esa toma. Antes: 18 filas sin agrupar y un editor en ventana con una lista nativa por plato.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = 'meals'; P.ui.mealsQ = ''; P.ui.mealsF = ''; P.render(); });
+    await page.waitForTimeout(200);
+    const lista = await page.evaluate(() => ({ grupos: document.querySelectorAll('#main .grp').length,
+      filas: document.querySelectorAll('#main [data-a="meal-abrir"]').length, total: window.PG.store.meals.length }));
+    const ab = await page.$('#main [data-a="meal-abrir"]');
+    const mid = ab ? await ab.evaluate((b) => b.dataset.id) : '';
+    if (ab) await ab.click();
+    await page.waitForTimeout(200);
+    const k0 = await page.evaluate(() => +((document.querySelector('.platomac b') || {}).textContent || 0));
+    const mas = await page.$('[data-a="meal-rac"][data-d="0.5"]');
+    if (mas) await mas.click();
+    await page.waitForTimeout(150);
+    const k1 = await page.evaluate(() => +((document.querySelector('.platomac b') || {}).textContent || 0));
+    const add = await page.$('[data-a="meal-add"]');
+    if (add) await add.click();
+    await page.waitForTimeout(200);
+    const pl = await page.$('[data-a="elegir-plato"]');
+    if (pl) await pl.click();
+    await page.waitForTimeout(200);
+    const n0 = await page.evaluate((id) => (window.PG.store.meals.find((m) => m.id === id) || { items: [] }).items.length, mid);
+    const g = await page.$('[data-a="meal-guardar"]');
+    if (g) await g.click();
+    await page.waitForTimeout(250);
+    const guardada = await page.evaluate((id) => ({ n: (window.PG.store.meals.find((m) => m.id === id) || { items: [] }).items.length,
+      vista: window.PG.ui.typesVista }), mid);
+    check('comidas armadas: agrupadas, y el editor cambia raciones y añade platos con el selector hasta guardar',
+      lista.grupos >= 2 && lista.filas === lista.total && k1 > k0 && guardada.n === n0 + 1 && guardada.vista === 'meals',
+      JSON.stringify({ lista, k0, k1, n0, guardada }));
+
+    // crear una desde el selector de una toma: nace con su momento y queda puesta en esa toma
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'sh-t'; P.render(); });
+    await page.waitForTimeout(200);
+    const eb = await page.$('[data-a="elegir-abrir"]');
+    if (eb) await eb.click();
+    await page.waitForTimeout(200);
+    const nw = await page.$('[data-a="meal-new"]');
+    if (nw) await nw.click();
+    await page.waitForTimeout(200);
+    const cls = await page.evaluate(() => window.PG.ui.mealEd && window.PG.ui.mealEd.o.cls);
+    await page.fill('[data-a="meal-f"][data-k="name"]', 'Desayuno de prueba 203');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    const a2 = await page.$('[data-a="meal-add"]');
+    if (a2) await a2.click();
+    await page.waitForTimeout(200);
+    const p2 = await page.$('[data-a="elegir-plato"]');
+    if (p2) await p2.click();
+    await page.waitForTimeout(200);
+    const g2 = await page.$('[data-a="meal-guardar"]');
+    if (g2) await g2.click();
+    await page.waitForTimeout(250);
+    const puesta = await page.evaluate(() => { const P = window.PG, s = P.store.menu['sh-t'][0];
+      const m = P.store.meals.find((x) => x.id === s.mealId); return { vista: P.ui.typesVista, nombre: m && m.name }; });
+    check('una comida creada desde el selector de una toma nace con su momento y queda puesta en esa toma',
+      cls === 'desayuno' && puesta.vista === 'sh-t' && puesta.nombre === 'Desayuno de prueba 203', JSON.stringify({ cls, puesta }));
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.typesVista = ''; P.render(); });
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
