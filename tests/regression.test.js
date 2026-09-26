@@ -7194,6 +7194,84 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       delete P.store.ahorro.meta; P.store.suenoReal = {}; P.ui.tab = 'hoy'; P.save(); P.render(); });
   }
 
+  // ===================================================================================
+  // Había DOS números para «lo que tardas del trabajo a casa»: trayectoMin(), que salía
+  // de las horas salir→llegar del tipo de día de guardia, y viaje.min de Ajustes → Ir y
+  // volver. Cambiabas uno y el otro seguía igual, y la siesta del saliente se calculaba
+  // con el primero: tocar el de Ajustes no la movía.
+  // ===================================================================================
+  {
+    const uno = await page.evaluate(() => { const P = window.PG, S = P.store;
+      const vGuard = JSON.parse(JSON.stringify(S.rotation.viaje || {}));
+      const rhGuard = JSON.parse(JSON.stringify(S.rhythm['sh-g'] || {}));
+      S.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      // las horas del tipo de día de guardia dicen OTRA cosa (45 min), a propósito
+      S.rhythm['sh-g'] = Object.assign({}, S.rhythm['sh-g'], { leave: '08:00', arrive: '08:45' });
+      S.rotation.mode = 'date'; S.rotation.anchorSet = true;
+      const G = S.shifts.filter(P.isGuardia)[0];
+      // un día de guardia y el siguiente, que es el saliente: ahí es donde se ve la siesta
+      const k = P.diaLaborableCerca();
+      P.setDayOverride(k, G.id, 'umi');
+      const sig = P.nextIso(k);
+      P.save();
+      const conAjuste = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      // apagado, se vuelve a las horas del tipo de día (45 min): la reserva sigue ahí
+      S.rotation.viaje.on = false; P.save();
+      const apagado = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      // y cambiar el de Ajustes SÍ mueve la siesta, que es lo que antes no pasaba
+      S.rotation.viaje.on = true; S.rotation.viaje.min = 50; P.save();
+      const cambiado = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
+      S.rotation.viaje = vGuard; S.rhythm['sh-g'] = rhGuard;
+      P.setDayOverride(k, null); P.save(); P.render();
+      return { conAjuste, apagado, cambiado }; });
+    check('lo que tardas del trabajo a casa sale de un solo sitio, y mueve la siesta del saliente',
+      uno.conAjuste.trayecto === 20 && uno.apagado.trayecto === 45 &&
+      uno.cambiado.trayecto === 50 &&
+      !!uno.conAjuste.siesta && uno.cambiado.siesta !== uno.conAjuste.siesta &&
+      uno.apagado.siesta !== uno.conAjuste.siesta,
+      JSON.stringify(uno));
+    await page.waitForTimeout(200);
+  }
+
+
+  // ===================================================================================
+  // La curva de repaso espaciado (3 → 7 → 21 → 60 días) estaba en el código. Es la que
+  // decide cuándo te sale «hoy toca repasar», y ajustarla era programar.
+  // ===================================================================================
+  {
+    const est = await page.evaluate(() => { const P = window.PG, e = P.estS();
+      const guardado = JSON.parse(JSON.stringify(P.store.estudio));
+      if (!e.temas.length) e.temas = [{ id: 't-rep', nombre: 'Tema de prueba', bloque: '', peso: 0, url: '' }];
+      const t = e.temas[0];
+      // un tema visto HOY, en el escalón 1: el siguiente repaso sale de los días de ese escalón
+      e.estado[t.id] = { nivel: 1, visto: P.iso(new Date()), repasos: [], min: 0 };
+      P.save();
+      P.ui.tab = 'estudio'; P.ui.estVista = 't:' + t.id; P.render();
+      return { id: t.id, guardado, antesDias: P.estDias(1), antesProxima: P.estProxima(t.id) }; });
+    await page.waitForTimeout(400);
+    const campo = await page.$('#main [data-a="est-dias"][data-n="1"]');
+    // es un <input>: page.fill() no dispara `change` por sí solo
+    if (campo) { await campo.fill('10'); await page.keyboard.press('Tab'); await page.waitForTimeout(400); }
+    const tras = await page.evaluate((id) => { const P = window.PG;
+      const r = { dias: P.estDias(1), proxima: P.estProxima(id),
+        // los otros escalones no se tocan
+        otro: P.estDias(2) };
+      P.store = JSON.parse(JSON.stringify(P.store));   // el viaje por normalize()
+      r.trasRecargar = P.estDias(1);
+      return r; }, est.id);
+    // 10 días desde hoy, no 3
+    const esperada = await page.evaluate(() => { const P = window.PG;
+      return P.iso(P.addDays(new Date(), 10)); });
+    check('los días de cada escalón del repaso se cambian desde Estudio y mueven el siguiente repaso',
+      !!campo && est.antesDias === 3 && tras.dias === 10 && tras.otro === 7 &&
+      tras.proxima === esperada && tras.proxima !== est.antesProxima && tras.trasRecargar === 10,
+      JSON.stringify({ est: { antesDias: est.antesDias, antesProxima: est.antesProxima }, tras, esperada }));
+
+    await page.evaluate((g) => { const P = window.PG;
+      P.store.estudio = g; P.ui.estVista = ''; P.save(); P.render(); }, est.guardado);
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

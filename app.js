@@ -631,7 +631,12 @@ function normalize(o){
        min:Math.max(0,+x.min||0)};});
    e.sesiones=(Array.isArray(e.sesiones)?e.sesiones:[]).filter(function(x){return x&&x.id&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');})
      .map(function(x){return {id:String(x.id).slice(0,40),fecha:x.fecha,min:Math.max(0,Math.min(600,+x.min||0)),
-       temas:(Array.isArray(x.temas)?x.temas:[]).map(String).slice(0,20)};});}
+       temas:(Array.isArray(x.temas)?x.temas:[]).map(String).slice(0,20)};});
+   /* los días de cada escalón del repaso: sin registrarlos aquí se pierden al recargar. Se guarda
+      la lista entera (cinco posiciones) y cada una se valida contra 1-365 días. */
+   if(!Array.isArray(e.dias))delete e.dias;
+   else e.dias=EST_NIVELES.map(function(n,i){
+     const v=+e.dias[i];return (v>=1&&v<=365)?Math.round(v):n.dias;});}
   ahorroLimpia(o);
   /* el sueño de verdad y los libros: sin registrarlos aquí se perderían al recargar */
   if(!o.suenoReal||typeof o.suenoReal!=='object')o.suenoReal={};
@@ -1409,7 +1414,13 @@ function horaDeToma(dateStr,slot,cpOpt){
   const cp=cpOpt!==undefined?cpOpt:(dateStr?comidaPrincipalDe(dateStr):null);
   return (cp&&esComidaPrincipal(slot))?cp.de:((slot&&slot.time)||'');}
 function trayectoMin(){
-  /* lo que tardas del hospital a casa: sale de tus propias horas de guardia (salir → llegar) */
+  /* LO QUE TARDAS DEL TRABAJO A CASA, DE UN SOLO SITIO. Había dos números para lo mismo: este, que
+     salía de las horas «salir→llegar» del tipo de día de guardia, y el de Ajustes → Ir y volver.
+     Cambiabas uno y el otro seguía como estaba, y la siesta del saliente se calculaba con este,
+     así que tocar el de Ajustes no la movía. Manda el de Ajustes, que es el que se ve y se toca.
+     Las horas del tipo de día se quedan de reserva para cuando lo tengas apagado. */
+  const v=viajeCfg();
+  if(v.on&&v.min>0)return v.min;
   const rh=(store.rhythm&&store.rhythm['sh-g'])||{};
   const a=mins(rh.leave),b=mins(rh.arrive);
   const t=(a!=null&&b!=null)?((b-a+1440)%1440):15;
@@ -11068,6 +11079,12 @@ function renderCfg(){
           hm(b-vj.antes)+'</b> para el bus de las <b>'+esc(fmtTimeOut(vj.bus))+'</b>, y estarás de vuelta '+
           vj.min+' min después de salir del trabajo.</p>')
           :'<p class="mini" style="margin:10px 0 0">Sin hora de bus, solo se usan los minutos que tardas.</p>')+
+        /* ese número hace DOS cosas, y conviene decirlo: también es el que decide cuándo empieza la
+           siesta del saliente. Antes eso salía de otro sitio (las horas del tipo de día de guardia)
+           y tocar aquí no lo movía. */
+        '<p class="mini" style="margin:7px 0 0">Los <b>'+vj.min+' min</b> valen también para volver de la '+
+        'guardia: la siesta del saliente empieza al llegar a casa, '+vj.min+' min después del relevo'+
+        (vj.on?'':' —ahora mismo está apagado, así que se usan las horas «salir → llegar» del tipo de día de guardia—')+'.</p>'+
         '<p class="mini" style="margin:7px 0 0;color:var(--ink2)">Al calendario de Google va solo una línea corta '+
         'antes de entrar («salir de casa · bus»), nada más.</p>'+
       '</div>');}
@@ -12081,6 +12098,19 @@ function estS(){
   if(!e.estado||typeof e.estado!=='object')e.estado={};
   if(!Array.isArray(e.sesiones))e.sesiones=[];
   return e;}
+function estDias(n){
+  /* CADA CUÁNTO VUELVE UN TEMA. La curva de repaso espaciado (3 → 7 → 21 → 60 días) estaba en el
+     código: es la que decide cuándo te sale «hoy toca repasar», y cambiarla era programar. */
+  const i=Math.max(0,Math.min(4,+n||0));
+  const mios=estS().dias;
+  const v=Array.isArray(mios)?+mios[i]:NaN;
+  return (v>=1&&v<=365)?Math.round(v):EST_NIVELES[i].dias;}
+function setEstDias(n,val){
+  const i=Math.max(1,Math.min(4,+n||0));
+  const e=estS();
+  if(!Array.isArray(e.dias))e.dias=EST_NIVELES.map(function(x){return x.dias;});
+  e.dias[i]=Math.max(1,Math.min(365,Math.round(+val||0)));
+  save();return '«'+EST_NIVELES[i].txt+'» vuelve a los '+e.dias[i]+' días';}
 function estTema(id){return estS().temas.filter(function(t){return t.id===id;})[0]||null;}
 function estEstado(id){
   const e=estS();
@@ -12096,7 +12126,7 @@ function estProxima(id){
   const x=estEstado(id);
   if(!x.visto||!x.nivel)return '';
   const d=parseDate(x.visto);if(!d)return '';
-  return iso(addDays(d,EST_NIVELES[x.nivel].dias));}
+  return iso(addDays(d,estDias(x.nivel)));}
 function estTocaHoy(key){
   key=key||iso(new Date());
   return estS().temas.filter(function(t){
@@ -12243,9 +12273,18 @@ function renderEstudio(){
             '<a class="btn s" href="'+esc(e.fuente.url)+'" target="_blank" rel="noopener">abrir tu temario ↗</a></div>'):''))+
       '</div>'+
       '<div class="card"><h2>Cómo funciona el repaso</h2>'+
-        '<p class="note" style="margin:0">Cada vez que le das a «lo he repasado», el siguiente se aleja: '+
-        EST_NIVELES.slice(0,4).map(function(n){return n.dias+' d';}).join(' → ')+' → '+EST_NIVELES[4].dias+' d. '+
+        '<p class="note" style="margin:0">Cada vez que le das a «lo he repasado», el siguiente se aleja. '+
         'Si un día no te acordabas, baja un escalón y vuelve antes.</p>'+
+        /* LOS DÍAS DE CADA ESCALÓN, editables donde ya se leían. Era la curva de repaso espaciado
+           metida en el código, y es de las cosas que cada uno ajusta a cómo le funciona la cabeza. */
+        '<div class="fgrid c3 tight" style="margin-top:9px">'+
+          [1,2,3,4].map(function(n){
+            return '<label class="fld">'+esc(EST_NIVELES[n].txt)+' · vuelve a los'+
+              '<input type="number" min="1" max="365" value="'+estDias(n)+'" data-a="est-dias" data-n="'+n+'"></label>';}).join('')+
+        '</div>'+
+        '<p class="mini" style="margin:7px 0 0;color:var(--ink2)">Ahora mismo: '+
+          [1,2,3,4].map(function(n){return estDias(n)+' d';}).join(' → ')+'. De fábrica, '+
+          EST_NIVELES.slice(1,5).map(function(x){return x.dias+' d';}).join(' → ')+'.</p>'+
         '<div class="row" style="margin-top:11px"><button class="btn d s" data-a="est-olvida" data-id="'+esc(t.id)+'">empezar este tema de cero</button></div>'+
       '</div>',
       t.bloque||'');}
@@ -15986,6 +16025,8 @@ document.addEventListener('change',e=>{
       store.rotation.saltoDia.to=Math.max(0,Math.min(6,+el.value));save();render();break;}
     case 'gym-hora':{gymS().hora=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';save();render();break;}
     /* lo que le faltaba a descansoCfg(): alguien que escriba store.gym.descansoSeg */
+    /* los días de cada escalón del repaso: <input>, así que aquí y no en act() */
+    case 'est-dias':{flash(setEstDias(el.dataset.n,el.value));render();break;}
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
     case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
@@ -16319,7 +16360,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,repartoDe,cerrarReto,sacarHucha,proyeccionAhorro,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
-  estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,
+  estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,estDias,setEstDias,
   arrS,arrLee,arrAplica,ARR_PASOS,
   rutinaDias,toggleRutinaDia,rutinaDeFecha,CFG_DONDE,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
@@ -16334,7 +16375,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   renderFoodBuscar,renderFoodCantidad,renderFoodMicros,renderFoodProductos,renderCocinaPanel,renderMisPlatos,
   platosPorAntojo,antojoS,microLineaHTML,
   esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,loQueHay,escalaIng,parseIng,
-  get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,
+  get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,trayectoMin,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,mealRowsHTML,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
   notaDia,eventosS,eventosDelDia,eventosDeFecha,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
