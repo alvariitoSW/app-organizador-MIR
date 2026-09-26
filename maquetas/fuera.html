@@ -1,0 +1,102 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.row{display:flex;gap:8px;align-items:center}
+h3{margin:0 0 8px;font-size:14px}
+.srch{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:15px}
+.chipx{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:6px 11px;font-size:12px;font-weight:700;margin:4px 3px 0 0}
+.chipx.on{background:var(--brand);color:#12081a;border-color:var(--brand)}
+.grp{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2);margin:14px 2px 4px;display:flex;gap:6px;align-items:center}
+.al{display:flex;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px dashed var(--line)}
+.al .e{font-size:22px;width:30px;text-align:center}.al .t{flex:1;min-width:0}.al .t b{display:block;font-size:14.5px}.al .t span{font-size:11.5px;color:var(--ink2)}
+.al .r{text-align:right;font-size:11px;color:var(--ink2);max-width:110px}.al .r b{display:block;color:var(--ink);font-size:13.5px}
+.add{width:36px;height:36px;border-radius:11px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));display:grid;place-items:center;color:var(--brand);font-weight:900;font-size:18px}
+.logo{width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;font-size:12px;font-weight:900;color:#fff}
+.cad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.cad div{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 4px 8px;text-align:center;font-size:11px;font-weight:800}
+.cad div i{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;margin:0 auto 6px;font-style:normal;font-size:18px;font-weight:900;color:#fff}
+.ojo{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.ojo:first-of-type{border-top:0}.ojo .t{flex:1}.ojo .t b{display:block;font-size:14px}.ojo .t span{font-size:11px;color:var(--ink2)}
+.tabs{display:flex;gap:16px;margin:10px 2px 4px;border-bottom:1px solid var(--line);overflow:hidden}
+.tabs span{padding:8px 0;font-weight:800;font-size:12.5px;color:var(--ink2);white-space:nowrap}.tabs .on{color:var(--ink);border-bottom:3px solid var(--brand)}
+.mac{display:flex;gap:6px;margin-top:10px}.mac div{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px;text-align:center}
+.mac b{display:block;font-size:16px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.pz{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.pz .e{font-size:22px}.pz .t{flex:1}.pz .t b{display:block;font-size:14px}.pz .t span{font-size:11px;color:var(--ink2)}
+.pz .k{font-weight:800;font-size:13px}
+.seg{display:flex;gap:4px;margin-top:6px}.seg span{flex:1;text-align:center;border:1px solid var(--line);border-radius:9px;padding:6px 0;font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg .on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.aviso{font-size:11px;color:var(--ink2);border-left:3px solid var(--accent);padding:2px 0 2px 8px;margin-top:10px}
+.tit{font-size:10px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 0 8px}
+</style><body>
+
+<div class="wrap" id="buscar">
+<div class="tit">1 · BUSCAR «BIG MAC» (DESDE EL MISMO BUSCADOR)</div>
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Comer</button><b style="font-size:17px">Añadir</b><span class="sp"></span><span class="chip">1 240 / 2 100 kcal</span></div>
+<div class="srch">🔍 <b>big mac</b><span class="sp"></span>×</div>
+<div><span class="chipx">📷 escanear</span><span class="chipx on">🍔 comer fuera</span><span class="chipx">🥕 crear</span><span class="chipx">✏️ a mano</span></div>
+<div class="card" style="margin-top:10px;padding:6px 12px">
+<div class="grp"><span class="logo" style="background:#da291c">M</span> MCDONALD'S · 3</div>
+<div class="al"><span class="e">🍔</span><span class="t"><b>Big Mac</b><span>McDonald's</span></span><span class="r"><b>508 kcal</b>1 unidad · 26 g P</span><span class="add">+</span></div>
+<div class="al"><span class="e">🍟</span><span class="t"><b>Menú Big Mac</b><span>patatas medianas + refresco</span></span><span class="r"><b>1 008 kcal</b>1 menú · armable</span><span class="add">+</span></div>
+<div class="al"><span class="e">🍔</span><span class="t"><b>Big Mac doble</b><span>McDonald's</span></span><span class="r"><b>700 kcal</b>1 unidad · 41 g P</span><span class="add">+</span></div>
+<div class="grp">PARECIDOS EN OTRAS CADENAS</div>
+<div class="al"><span class="e">🍔</span><span class="t"><b>Whopper</b><span>Burger King</span></span><span class="r"><b>636 kcal</b>1 unidad · 29 g P</span><span class="add">+</span></div>
+<div class="al"><span class="e">🍔</span><span class="t"><b>Hamburguesa completa</b><span>Genérico · de bar</span></span><span class="r"><b>560 kcal</b>1 unidad · 28 g P</span><span class="add">+</span></div>
+</div>
+<div class="aviso">Datos de la información nutricional publicada por cada cadena en España, redondeados. Si ves uno mal, tócalo y corrígelo: se queda tu versión.</div>
+</div>
+
+<div style="height:26px"></div><div class="wrap" id="cadenas">
+<div class="tit">2 · COMER FUERA</div>
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Añadir</button><b style="font-size:17px">Comer fuera</b></div>
+<div class="card">
+<div class="grp" style="margin-top:0">LO ÚLTIMO QUE PEDISTE FUERA</div>
+<div class="al" style="border:0"><span class="e">🍔</span><span class="t"><b>Menú Big Mac · Coca-Cola Zero</b><span>McDonald's · hace 9 días</span></span><span class="r"><b>840 kcal</b>repetir</span><span class="add">+</span></div>
+</div>
+<div class="card" style="margin-top:8px"><h3>Cadenas</h3>
+<div class="cad">
+<div><i style="background:#da291c">M</i>McDonald's</div><div><i style="background:#f5821f">BK</i>Burger King</div><div><i style="background:#a3080c">KFC</i>KFC</div><div><i style="background:#e31837">T</i>Telepizza</div>
+<div><i style="background:#006491">D</i>Domino's</div><div><i style="background:#c8102e">5G</i>Five Guys</div><div><i style="background:#111">G</i>Goiko</div><div><i style="background:#b8860b">100</i>100 Montaditos</div>
+<div><i style="background:#00704a">★</i>Starbucks</div><div><i style="background:#702082">T</i>Taco Bell</div><div><i style="background:#e4002b">V</i>VIPS</div><div><i style="background:#555">+8</i>más</div>
+</div></div>
+<div class="card" style="margin-top:8px"><h3>A ojo · bar, restaurante, casa de alguien</h3>
+<div class="ojo"><span style="font-size:22px">🍽</span><span class="t"><b>Menú del día</b><span>primero + segundo + postre + pan</span></span><span class="btn">elegir</span></div>
+<div class="ojo"><span style="font-size:22px">🍤</span><span class="t"><b>Tapas y raciones</b><span>bravas, croquetas, calamares, ensaladilla…</span></span><span class="btn">elegir</span></div>
+<div class="ojo"><span style="font-size:22px">🥖</span><span class="t"><b>Bocadillos</b><span>calamares, lomo, tortilla, jamón…</span></span><span class="btn">elegir</span></div>
+<div class="ojo"><span style="font-size:22px">🌯</span><span class="t"><b>Kebab, pizza, sushi, chino</b><span>por tamaño: pequeño · normal · grande</span></span><span class="btn">elegir</span></div>
+<div class="ojo"><span style="font-size:22px">🍺</span><span class="t"><b>Bebidas y copas</b><span>caña, tinto, refresco, cubata</span></span><span class="btn">elegir</span></div>
+</div>
+</div>
+
+<div style="height:26px"></div><div class="wrap" id="carta">
+<div class="tit">3 · LA CARTA DE UNA CADENA</div>
+<div class="row" style="margin-bottom:6px"><button class="btn">‹ Fuera</button><span class="logo" style="background:#da291c">M</span><b style="font-size:17px">McDonald's</b><span class="sp"></span><span class="mini">46 productos</span></div>
+<div class="srch" style="padding:8px 12px;font-size:13px">🔍 <span class="mini" style="font-size:13px">buscar en McDonald's</span></div>
+<div class="tabs"><span class="on">Menús</span><span>Burgers</span><span>Pollo</span><span>Patatas</span><span>Bebidas</span><span>Postres</span></div>
+<div class="card" style="padding:4px 12px">
+<div class="al"><span class="e">🍔</span><span class="t"><b>Menú Big Mac</b><span>mediano · patatas + refresco</span></span><span class="r"><b>1 008 kcal</b>armar</span><span class="add">›</span></div>
+<div class="al"><span class="e">🍗</span><span class="t"><b>Menú McNuggets 9</b><span>mediano · patatas + refresco</span></span><span class="r"><b>889 kcal</b>armar</span><span class="add">›</span></div>
+<div class="al"><span class="e">🥓</span><span class="t"><b>Menú McRoyal Deluxe</b><span>mediano</span></span><span class="r"><b>1 045 kcal</b>armar</span><span class="add">›</span></div>
+<div class="al"><span class="e">🌯</span><span class="t"><b>Menú McWrap Crispy</b><span>mediano</span></span><span class="r"><b>950 kcal</b>armar</span><span class="add">›</span></div>
+<div class="al" style="border:0"><span class="e">🥗</span><span class="t"><b>Ensalada César con pollo</b><span>sin menú</span></span><span class="r"><b>345 kcal</b>31 g P</span><span class="add">+</span></div>
+</div>
+<p class="mini" style="margin:8px 2px">Un menú se «arma»: eliges tamaño, acompañamiento y bebida, y las kcal cambian solas.</p>
+</div>
+
+<div style="height:26px"></div><div class="wrap" id="menu">
+<div class="tit">4 · ARMAR EL MENÚ</div>
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ McDonald's</button><b style="font-size:17px">Menú Big Mac</b></div>
+<div class="card">
+<div class="mac" style="margin-top:0"><div><b>840</b><span>KCAL</span></div><div><b>30</b><span>PROT</span></div><div><b>88</b><span>HC</span></div><div><b>41</b><span>GRASA</span></div></div>
+<div class="mini" style="margin-top:6px">te quedan <b style="color:var(--ink)">20 kcal</b> hoy · 60 g de proteína por llegar</div>
+<div class="pz"><span class="e">🍔</span><span class="t"><b>Big Mac</b><span>principal</span></span><span class="k">508</span></div>
+<div class="pz" style="display:block"><div class="row"><span class="e">🍟</span><span class="t" style="flex:1"><b>Patatas</b><span>acompañamiento</span></span><span class="k">330</span></div>
+ <div class="seg"><span>pequeñas</span><span class="on">medianas</span><span>grandes</span><span>ensalada</span></div></div>
+<div class="pz" style="display:block;border:0"><div class="row"><span class="e">🥤</span><span class="t" style="flex:1"><b>Coca-Cola Zero</b><span>bebida · mediana 400 ml</span></span><span class="k">2</span></div>
+ <div class="seg"><span>Coca-Cola</span><span class="on">Zero</span><span>agua</span><span>cerveza</span></div></div>
+<div class="row" style="margin-top:6px"><span class="chipx">+ postre</span><span class="chipx">+ salsa</span><span class="chipx">2 unidades</span></div>
+<div style="margin-top:8px"><span class="chipx on">Comida</span><span class="chipx">Cena</span><span class="chipx">Merienda</span><span class="chipx">otro</span></div>
+<button class="btn p" style="width:100%;margin-top:12px;padding:11px">apuntar menú · 840 kcal</button>
+<div class="mini" style="margin-top:8px">♡ guardar este menú tal cual · la próxima vez, a un toque</div>
+</div>
+</div>

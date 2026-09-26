@@ -1,0 +1,104 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.pm{display:flex;align-items:center;gap:10px;margin-top:6px}
+.pm .btn{width:44px;height:40px;font-size:20px;padding:0}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px}
+.hu{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.hu:first-of-type{border-top:0}
+.hu .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.hu .t{flex:1;min-width:0}.hu .t b{display:block;font-size:14px}.hu .t span{font-size:11px;color:var(--ink2)}
+.hu .n{text-align:right;font-variant-numeric:tabular-nums}.hu .n b{display:block;font-size:15px}.hu .n span{font-size:11px;color:var(--ok,#34d399);font-weight:800}
+.prog{height:5px;border-radius:3px;background:var(--line);margin-top:5px;overflow:hidden}.prog i{display:block;height:100%}
+.reto{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}
+.reto:first-of-type{border-top:0}
+.mes{display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px}
+.mes div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink2);font-weight:700}
+.mes i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--brand2)}
+.mes .ya i{background:var(--brand)}
+.ok{color:#34d399}
+.door{display:flex;align-items:center;gap:10px;padding:11px 12px}
+h3{margin:0 0 8px;font-size:14px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--ink2);flex:1}
+.fld input,.fld select{width:100%;min-width:0;box-sizing:border-box;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:9px 10px;font:inherit;font-size:14px;font-weight:700}
+.per{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+</style><body><style>
+.srch{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:15px}
+.tabs{display:flex;gap:18px;margin:12px 2px 8px;border-bottom:1px solid var(--line)}
+.tabs span{padding:8px 0;font-weight:800;font-size:13px;color:var(--ink2)}.tabs .on{color:var(--ink);border-bottom:3px solid var(--brand)}
+.sec{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2);margin:14px 2px 4px}
+.al{display:flex;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px dashed var(--line)}
+.al .e{font-size:22px;width:30px;text-align:center}.al .t{flex:1;min-width:0}.al .t b{display:block;font-size:14.5px}.al .t span{font-size:11.5px;color:var(--ink2)}
+.al .r{text-align:right;font-size:12px;color:var(--ink2)}.al .r b{display:block;color:var(--ink);font-size:13px}
+.v{display:inline-block;font-size:9px;font-weight:900;padding:1px 5px;border-radius:5px;background:#16a34a;color:#fff;margin-left:4px;vertical-align:2px}
+.mer{background:#0e7a3a}
+.chipx{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;margin:3px 3px 0 0}
+.chipx.on{background:var(--brand);color:#12081a;border-color:var(--brand)}
+.mac{display:flex;gap:6px;margin-top:10px}.mac div{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px;text-align:center}
+.mac b{display:block;font-size:16px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.ing{display:flex;gap:8px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.ing .t{flex:1;min-width:0}.ing .t b{display:block;font-size:14px}.ing .t span{font-size:11px;color:var(--ink2)}
+.ing input{width:64px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:6px;text-align:right;font:inherit;font-weight:700}
+.warn{border-color:#fbbf24!important}
+.it{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.it .ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none}
+.it .t{flex:1;min-width:0}.it .t b{display:block;font-size:14px}.it .t span{font-size:11px;color:var(--ink2)}
+.it .q{text-align:right;font-size:13px;font-weight:800}.it .q span{display:block;font-size:10.5px;color:var(--ink2);font-weight:700}
+.it.casa{opacity:.5}
+.pas{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:800;font-size:13px}
+</style><div class="wrap" id="buscar">
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Comer</button><b style="font-size:17px">Añadir a la comida</b><span class="sp"></span><span class="mini">640 / 2100 kcal</span></div>
+<div class="srch">🔍 <span style="flex:1">pollo</span><span>✕</span></div>
+<div class="row" style="margin-top:8px;gap:6px"><span class="chipx">📷 escanear</span><span class="chipx">✏️ crear alimento</span><span class="chipx">🍲 crear plato</span></div>
+<div class="tabs"><span class="on">Base de datos</span><span>Favoritos ♥</span><span>Creados</span></div>
+<div class="sec">RECIENTES</div>
+<div class="al"><span class="e">🍗</span><span class="t"><b>Pechuga de pollo</b><span>Genérico · cruda</span></span><span class="r"><b>250 g</b>299 kcal</span></div>
+<div class="sec">BASE DE DATOS · 14</div>
+<div class="al"><span class="e">🍗</span><span class="t"><b>Pollo, filete</b><span>Genérico</span></span><span class="r"><b>1 filete (120 g)</b>144 kcal</span></div>
+<div class="al"><span class="e">🍗</span><span class="t"><b>Muslo de pollo</b><span>Genérico · sin piel</span></span><span class="r"><b>1 muslo (110 g)</b>131 kcal</span></div>
+<div class="al"><span class="e">🍗</span><span class="t"><b>Pollo asado</b><span>Genérico · con piel</span></span><span class="r"><b>1 ración (150 g)</b>327 kcal</span></div>
+<div class="al"><span class="e">🥣</span><span class="t"><b>Pollo desmenuzado</b><span>Genérico · cocido</span></span><span class="r"><b>1 taza (150 g)</b>240 kcal</span></div>
+<div class="sec">MERCADONA <span class="v mer">HACENDADO</span></div>
+<div class="al"><span class="e">🛒</span><span class="t"><b>Pechuga de pollo fileteada</b><span>Hacendado · bandeja 500 g</span></span><span class="r"><b>100 g</b>110 kcal</span></div>
+<div class="al"><span class="e">🛒</span><span class="t"><b>Pechuga de pavo en lonchas</b><span>Hacendado · 90 % carne</span></span><span class="r"><b>4 lonchas (40 g)</b>38 kcal</span></div>
+<div class="al"><span class="e">🛒</span><span class="t"><b>Alitas de pollo adobadas</b><span>Hacendado</span></span><span class="r"><b>100 g</b>215 kcal</span></div>
+<div class="mini" style="margin-top:8px">🌐 +23 en Open Food Facts · <b style="color:var(--ink)">ver más</b></div>
+</div><div style="height:30px"></div><div class="wrap" id="cant">
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Buscar</button><b style="font-size:17px">Pechuga de pollo</b></div>
+<div class="card"><div class="mini">Genérico · cruda, sin piel</div>
+<div style="margin-top:8px"><span class="chipx">1 filete · 120 g</span><span class="chipx on">150 g</span><span class="chipx">bandeja · 500 g</span><span class="chipx">100 g</span></div>
+<div class="row" style="margin-top:10px"><button class="btn" style="width:44px;height:40px">−</button><b style="font-size:28px">150 g</b><button class="btn" style="width:44px;height:40px">+</button></div>
+<div class="mac"><div><b>180</b><span>KCAL</span></div><div><b>33,8</b><span>PROT</span></div><div><b>0</b><span>HC</span></div><div><b>3,9</b><span>GRASA</span></div></div>
+<div class="mini" style="margin-top:10px">Añadir a:</div>
+<div style="margin-top:4px"><span class="chipx on">🍽 Comida de hoy</span><span class="chipx">🍲 un plato</span><span class="chipx">🛒 la compra</span><span class="chipx">🧊 la nevera</span></div>
+<button class="btn p" style="width:100%;margin-top:12px;padding:11px">añadir 150 g</button>
+<div class="mini" style="margin-top:8px">♡ favorito · lo tendrás arriba del todo</div></div></div><div style="height:30px"></div><div class="wrap" id="plato">
+<div class="row" style="margin-bottom:8px"><button class="btn">‹ Platos</button><b style="font-size:17px">Lomo con queso</b><span class="sp"></span><span class="mini">🥪 · 1 ración</span></div>
+<div class="card"><div class="mac" style="margin-top:0"><div><b>672</b><span>KCAL</span></div><div><b>47,6</b><span>PROT</span></div><div><b>40,2</b><span>HC</span></div><div><b>34,9</b><span>GRASA</span></div></div>
+<div class="mini" style="margin-top:6px">por ración · sale solo de los ingredientes</div></div>
+<div class="card" style="margin-top:8px"><h3>Ingredientes</h3>
+<div class="ing"><span style="font-size:20px">🍞</span><span class="t"><b>Pan de barra</b><span>265 kcal/100 g · ⚠ lleva gluten</span></span><input value="80"><span class="mini">g</span><span style="color:#fb7185">×</span></div>
+<div class="ing"><span style="font-size:20px">🥩</span><span class="t"><b>Lomo de cerdo</b><span>152 kcal/100 g</span></span><input value="90"><span class="mini">g</span><span style="color:#fb7185">×</span></div>
+<div class="ing"><span style="font-size:20px">🧀</span><span class="t"><b>Queso curado</b><span>401 kcal/100 g</span></span><input value="80"><span class="mini">g</span><span style="color:#fb7185">×</span></div>
+<div class="ing"><span style="font-size:20px">❓</span><span class="t"><b>«un chorrito de salsa brava»</b><span style="color:#fbbf24">no lo reconozco · elige qué es</span></span><button class="btn">elegir</button></div>
+<button class="btn" style="margin-top:10px">+ añadir ingrediente</button>
+<p class="mini" style="margin:8px 0 0">¿Cambiar por <b style="color:var(--ink)">pan sin gluten</b>? Misma cantidad, −12 kcal · <b style="color:var(--ink)">cambiar</b></p></div></div><div style="height:30px"></div><div class="wrap" id="compra">
+<div class="row" style="margin-bottom:8px"><b style="font-size:17px">La compra</b><span class="sp"></span><span class="mini">sáb 26 → vie 2 · 7 días</span></div>
+<div class="card"><div class="row"><div><b style="font-size:22px">24</b> <span class="mini">que comprar</span></div><span class="sp"></span><div class="mini" style="text-align:right">9 ya los tienes en la nevera</div></div>
+<div class="mini" style="margin-top:8px">Sale de tus menús de la semana (14 comidas · 1 980 kcal/día de media, tu objetivo 2 100).</div>
+<div style="margin-top:6px"><span class="chipx on">Todo</span><span class="chipx">Súper</span><span class="chipx">Frutería</span><span class="chipx">+ añadir</span></div></div>
+<div class="pas">🥩 Carne y pescado <span class="mini">3</span></div>
+<div class="it"><span class="ck"></span><span class="t"><b>Pechuga de pollo</b><span>4 platos · 🛒 fileteada Hacendado 500 g</span></span><span class="q">1,6 kg<span>4 bandejas</span></span></div>
+<div class="it"><span class="ck"></span><span class="t"><b>Lomo de cerdo</b><span>Lomo con queso ×3</span></span><span class="q">270 g<span>1 bandeja</span></span></div>
+<div class="it casa"><span class="ck"></span><span class="t"><b>Salmón</b><span>tienes 2 lomos en la nevera</span></span><span class="q">✓<span>en casa</span></span></div>
+<div class="pas">🥔 Fruta y verdura <span class="mini">6 · frutería</span></div>
+<div class="it"><span class="ck"></span><span class="t"><b>Patata</b><span>3 platos</span></span><span class="q">2,4 kg<span>1 malla 3 kg</span></span></div>
+<div class="it"><span class="ck"></span><span class="t"><b>Ajo</b><span>4 platos</span></span><span class="q">7 dientes<span>1 cabeza</span></span></div>
+<div class="pas">🍞 Panadería <span class="mini">1</span></div>
+<div class="it"><span class="ck"></span><span class="t"><b>Pan sin gluten</b><span>Lomo con queso ×3 · 🌾 sustituye al pan blanco</span></span><span class="q">240 g<span>1 paquete</span></span></div>
+<div class="pas" style="opacity:.6">🧂 Básicos que ya tienes <span class="mini">sal, pimienta, aceite, pimentón · 7</span><span class="sp"></span><span class="mini">▸</span></div>
+<button class="btn p" style="width:100%;margin-top:12px;padding:11px">✓ he hecho la compra → a la nevera</button>
+</div>
