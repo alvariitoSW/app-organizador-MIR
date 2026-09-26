@@ -3047,7 +3047,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       tomas: document.querySelectorAll('#main .toma2').length,
       // lo que hacía falta seguir teniendo: hora, etiqueta, comida armada y los platos
       campos: document.querySelectorAll('#main .toma2 .st, #main .toma2 .sl').length,
-      armadas: document.querySelectorAll('#main .toma2 .sm').length,
+      // la comida armada ya no es una lista nativa: es el botón que abre el selector con buscador
+      armadas: document.querySelectorAll('#main .toma2 [data-a="elegir-abrir"]').length,
       sinFilaTabla: !document.querySelector('#main li.slot'),
     }));
     if (vpMenu) await page.setViewportSize(vpMenu);
@@ -6854,6 +6855,104 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((g) => { const P = window.PG;
       P.store.perfil = g; P.save(); P.render(); }, prep.guardado);
     await page.waitForTimeout(200);
+  }
+
+  // 202) SEMANA BASE, CUÁNDO COCINAR, SELECTOR DE COMIDAS Y COMPRA ⇄ MENÚ, encadenados por la interfaz:
+  // entrar desde Menú → copiar lo que ya comes → cambiar una casilla con el buscador → que eso sea lo
+  // que comes ESE día de la semana (y lo que pide la compra) → selector nuevo en el tipo de día → la
+  // compra dice qué semana sale de lo que hay en casa. La lista nativa de 19 nombres sin kcal se va.
+  {
+    await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} };
+      P.ui.tab = 'types'; P.ui.typesVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const puerta = await page.$('.sbpuerta');
+    if (puerta) await puerta.click();
+    await page.waitForTimeout(200);
+    const cop = await page.$('[data-a="sb-copiar"]');
+    if (cop) await cop.click();
+    await page.waitForTimeout(250);
+    const llenas = await page.evaluate(() => [...document.querySelectorAll('#main .sbc')].filter((c) => !c.classList.contains('vacio')).length);
+    // el jueves en la cena: buscar «salmon» y quedarse con el primer plato que salga
+    const jue = await page.$('.sbc[data-w="3"][data-c="cena"]');
+    if (jue) await jue.click();
+    await page.waitForTimeout(200);
+    const fPl = await page.$('[data-a="elegir-f"][data-f="platos"]');
+    if (fPl) await fPl.click();
+    await page.waitForTimeout(150);
+    await page.fill('#elQ', 'salmon');
+    await page.waitForTimeout(450);
+    const trasBuscar = await page.evaluate(() => ({
+      foco: document.activeElement && document.activeElement.id,
+      platos: [...document.querySelectorAll('[data-a="elegir-plato"]')].map((b) => b.dataset.id) }));
+    // se vacía antes lo que hubiera, para que el jueves cene SOLO el plato elegido
+    await page.evaluate(() => { const c = window.PG.sbCelda(3, 'cena'); if (c) { c.items = []; c.meal = ''; } });
+    const pl = await page.$('[data-a="elegir-plato"]');
+    if (pl) await pl.click();
+    await page.waitForTimeout(250);
+    const efecto = await page.evaluate(() => {
+      const P = window.PG;
+      // el próximo jueves de verdad
+      const d = new Date(); d.setDate(d.getDate() + ((4 - d.getDay() + 7) % 7 || 7));
+      const k = P.iso(d), inf = P.dayInfo(k);
+      const sh = inf.shiftId, slots = (P.store.menu[sh] || []);
+      const cena = slots.filter((s) => P.claseDeToma(s.label) === 'cena')[0];
+      const hoy = cena ? P.slotItems(sh, cena, k).items.map((x) => x.id) : null;
+      const sinFecha = cena ? P.slotItems(sh, cena).items.map((x) => x.id) : null;
+      return { celda: (P.sbCelda(3, 'cena') || {}).items, hoy, sinFecha, tieneCena: !!cena };
+    });
+    const elegido = trasBuscar.platos[0];
+    check('semana base: copiar llena las casillas y el buscador del selector mantiene el foco al escribir',
+      llenas >= 10 && trasBuscar.foco === 'elQ' && !!elegido, JSON.stringify({ llenas, trasBuscar }));
+    check('lo que pones en la semana base es lo que se come ESE día; el menú del tipo de día sigue igual sin fecha',
+      efecto.celda && efecto.celda.length === 1 && efecto.celda[0].id === elegido &&
+      (!efecto.tieneCena || (efecto.hoy.length === 1 && efecto.hoy[0] === elegido)),
+      JSON.stringify({ elegido, efecto }));
+
+    // apagarla devuelve el mando al tipo de día
+    const apagada = await page.evaluate(() => { const P = window.PG; P.store.semBase.on = false;
+      const d = new Date(); d.setDate(d.getDate() + ((4 - d.getDay() + 7) % 7 || 7));
+      const k = P.iso(d), sh = P.dayInfo(k).shiftId, cena = (P.store.menu[sh] || []).filter((s) => P.claseDeToma(s.label) === 'cena')[0];
+      const r = cena ? P.slotItems(sh, cena, k).base : undefined; P.store.semBase.on = true; return r; });
+    check('con la semana base apagada manda otra vez el menú del tipo de día', apagada !== true, String(apagada));
+
+    // cuándo cocinar: sesiones y los días en la nevera
+    // al añadir un plato el selector se queda abierto (para añadir más): se vuelve con su botón
+    const volver = await page.$('#main .volver[data-v="semana"]');
+    if (volver) await volver.click();
+    await page.waitForTimeout(200);
+    const aCoc = await page.$('[data-a="types-vista"][data-v="cocinar"]');
+    if (aCoc) await aCoc.click();
+    await page.waitForTimeout(200);
+    const coc = await page.evaluate(() => ({ ses: document.querySelectorAll('#main .cses').length,
+      filas: document.querySelectorAll('#main .ctl .fila').length, datos: window.PG.cocinarDatos().ses.length }));
+    check('«cuándo cocinar» enseña las sesiones y de la olla al plato de cada plato de tanda',
+      coc.ses >= 1 && coc.ses === coc.datos && coc.filas >= 1, JSON.stringify(coc));
+
+    // el selector nuevo en el tipo de día, filtrado por el momento de la toma
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'sh-t'; P.render(); });
+    await page.waitForTimeout(200);
+    const nativa = await page.evaluate(() => !!document.querySelector('select[data-a="slot-meal"]'));
+    const ab = await page.$('[data-a="elegir-abrir"]');
+    if (ab) await ab.click();
+    await page.waitForTimeout(200);
+    const sel = await page.evaluate(() => ({ f: window.PG.ui.elegir && window.PG.ui.elegir.f,
+      filas: document.querySelectorAll('.elop[data-a="elegir-meal"]').length,
+      conKcal: [...document.querySelectorAll('.elop[data-a="elegir-meal"] .kc b')].every((b) => +b.textContent > 0) }));
+    check('elegir la comida de una toma: sin lista nativa, con filtro del momento y las kcal de cada opción',
+      !nativa && sel.f === 'desayuno' && sel.filas >= 1 && sel.filas < 19 && sel.conKcal, JSON.stringify({ nativa, sel }));
+
+    // compra ⇄ menú
+    await page.evaluate(() => { const P = window.PG; P.ui.elegir = null; P.ui.typesVista = ''; P.ui.tab = 'shop'; P.render(); });
+    await page.waitForTimeout(250);
+    const compra = await page.evaluate(() => ({ card: /Qué semana sale de lo que tienes/.test(document.getElementById('main').innerText),
+      boton: !!document.querySelector('[data-a="menu-ir"][data-v="auto"]') }));
+    check('la compra dice qué semana sale de lo que hay en casa y deja montarla desde ahí', compra.card && compra.boton, JSON.stringify(compra));
+
+    // y viaja por normalize (si no, se perdería al recargar)
+    const persiste = await page.evaluate(() => { const P = window.PG;
+      P.store = JSON.parse(JSON.stringify(P.store)); return (P.store.semBase.d['3'] || {}).cena; });
+    check('la semana base sobrevive a normalize()', !!persiste && persiste.items.length === 1, JSON.stringify(persiste));
+    await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} }; P.ui.tab = 'hoy'; P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

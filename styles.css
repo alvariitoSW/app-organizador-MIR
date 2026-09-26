@@ -1915,3 +1915,62 @@ details.cocm[open]>summary.cocmh::after{content:'▴'}
 /* el bloque largo más corto de dos que se solapan: a la derecha y por encima, como una marca fina */
 .carril .cb.encima{left:auto;width:58%;z-index:2;background:color-mix(in srgb,var(--c) 22%,var(--bg2))}
 .carril .cb.encima .cbt{max-width:none}
+/* ============ semana base, cuándo cocinar, selector de comidas ============ */
+/* un color por SESIÓN de cocina, en orden fijo, validados (claro y oscuro); «al momento» en gris */
+:root{--ses1:#2a78d6;--ses2:#eb6834;--ses3:#1baf7a}
+html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
+.sbpuerta{display:flex;align-items:center;gap:11px;width:100%;text-align:left;color:var(--ink);font:inherit;cursor:pointer;
+  border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.sbpuerta .em{font-size:26px}.sbpuerta .nm{flex:1;min-width:0}.sbpuerta .nm b{display:block;font-size:15px}
+.sbpuerta .nm span{font-size:12px;color:var(--ink2)}
+.sbg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:8px}
+.sbbar{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;position:relative;height:80px;align-items:end}
+.sbw{display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.sbw b{font-size:9px;text-align:center;color:var(--ink);font-variant-numeric:tabular-nums;min-height:12px}
+.sbw i{display:block;background:var(--brand2);border-radius:4px 4px 0 0}
+.sbobj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.8;pointer-events:none}
+.sbobj em{position:absolute;right:0;top:-13px;background:var(--card);padding:0 3px;font-style:normal;font-size:9px;font-weight:800;color:var(--ink2)}
+.sbh{font-size:9.5px;font-weight:800;color:var(--ink2);text-align:center;padding:3px 0}
+.sbh.hoy{color:var(--ink)}
+.sbm{grid-column:1/-1;font-size:9px;font-weight:800;color:var(--ink2);letter-spacing:.1em;margin-top:4px}
+.sbc{background:var(--bg2);border:0;border-left:3px solid var(--s,var(--line));border-radius:6px;padding:4px 2px 4px 3px;
+  min-height:48px;min-width:0;font:inherit;font-size:8px;letter-spacing:-.15px;line-height:1.15;font-weight:700;color:var(--ink);text-align:left;
+  hyphens:auto;-webkit-hyphens:auto;overflow:hidden;cursor:pointer}
+.sbc i{display:block;font-style:normal;font-size:15px;margin-bottom:2px}
+.sbc small{color:var(--ink2);font-size:8px}
+.sbc.vacio{color:var(--ink2);text-align:center;font-size:15px;border-left-color:var(--line)}
+.sbley{display:flex;gap:6px 12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--ink2);font-weight:700}
+.sbley span{display:flex;gap:5px;align-items:center}.sbley i{width:10px;height:10px;border-radius:3px}
+.sbley i.o{background:none;border:2px solid var(--ink2);border-radius:6px}
+.sbon{display:flex;gap:9px;align-items:flex-start;padding:2px 4px;font-size:13px;cursor:pointer}
+.sbon input{margin-top:3px;accent-color:var(--brand)}
+.cses{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+.cses:first-child{border-top:0}
+.cses .sq{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:15px;flex:none}
+.cses .t{flex:1;min-width:0}.cses .t b{display:block;font-size:13.5px}.cses .t span{font-size:11.5px;color:var(--ink2)}
+.ctl{display:grid;grid-template-columns:96px 1fr;row-gap:0;font-size:10px}
+.ctl .n{font-weight:700;font-size:11px;padding:7px 4px 7px 0;border-top:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl .fila{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px dashed var(--line)}
+.ctl .d{position:relative;height:30px}
+.ctl .d .bar{position:absolute;top:12px;height:6px;left:0;right:0;background:color-mix(in srgb,var(--c) 45%,transparent)}
+.ctl .d .bar.ini{left:50%;border-radius:3px 0 0 3px}.ctl .d .bar.fin{right:50%;border-radius:0 3px 3px 0}
+.ctl .d .bar.ini.fin{display:none}
+.ctl .d .ck{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:18px;height:18px;border-radius:5px;background:var(--c);
+  display:grid;place-items:center;font-size:10px;box-shadow:0 0 0 2px var(--card);z-index:1}
+.ctl .d .eat{position:absolute;left:50%;top:8px;transform:translateX(-50%);min-width:14px;height:14px;border-radius:7px;background:var(--card);
+  border:2px solid var(--c);font-size:8.5px;font-weight:900;display:grid;place-items:center;padding:0 2px;z-index:2;color:var(--ink);white-space:nowrap}
+.ctl .d .ck+.eat{left:78%}
+.ctl .d .eat.mal{border-color:var(--bad);color:var(--bad)}
+.ctlh{display:grid;grid-template-columns:96px repeat(7,1fr);font-size:9.5px;font-weight:800;color:var(--ink2);text-align:center}
+.caviso{font-size:12px;border-left:3px solid var(--bad);padding:3px 0 3px 8px;margin-top:9px}
+.elop,.elahora{display:flex;gap:10px;align-items:center;width:100%;padding:9px 0;border:0;border-bottom:1px dashed var(--line);
+  background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.elahora{cursor:default}
+.elop .em,.elahora .em{font-size:21px;width:28px;text-align:center;flex:none}
+.elop .nm,.elahora .nm{flex:1;min-width:0}.elop .nm b,.elahora .nm b{display:block;font-size:14px}
+.elop .nm span,.elahora .nm span{display:block;font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.elop .kc{text-align:right;font-size:11px;color:var(--ink2);white-space:nowrap}.elop .kc b{display:block;font-size:13.5px;color:var(--ink)}
+.cabe{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--ok,#34d399) 15%,transparent);
+  color:var(--ok,#34d399);border:1px solid color-mix(in srgb,var(--ok,#34d399) 40%,transparent)}
+.cub{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden;margin-top:6px}
+.cub i{display:block;height:100%;background:var(--brand2)}
