@@ -5162,7 +5162,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('al imprimir el Mes no sale la semana anterior a la tuya',
       papel.visibles === 35 && papel.previasVisibles === 0, JSON.stringify(papel));
     // otro mes (con ›): entero, con la semana de antes y la de después, apagadas
-    const nx = await page.$('#main [data-a="mon-next"]');
+    /* las flechas de mes viven solo en la barra de arriba: dentro de la tarjeta eran la segunda
+       pareja de ‹ › de la misma pantalla */
+    const nx = await page.$('[data-a="wk-next"]');
     if (nx) await nx.click();
     await page.waitForTimeout(250);
     const otro = await page.evaluate(() => {
@@ -8025,6 +8027,52 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el sol plegado no es el sol escondido: al abrirlo está el arco y el sitio',
       solAbierto.abierto && solAbierto.conArco && solAbierto.conSitio, JSON.stringify(solAbierto));
     await page.waitForTimeout(150);
+  }
+
+
+  // ===================================================================================
+  // LA CABECERA OCUPABA 166 px PEGADOS ARRIBA EN LAS 20 PANTALLAS DE LA APP —el 18 % del móvil—
+  // y de eso una fila entera era el nombre de la app, que es la app en la que ya estás. Y llevaba
+  // «Imprimir» y «JSON», que ya estaban en Ajustes → Datos y en la vista que se imprime: repetir
+  // la misma función en tres sitios es lo que le hace perderse.
+  // ===================================================================================
+  {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('month');
+    await page.waitForTimeout(300);
+    const cab = await page.evaluate(() => { const h = document.querySelector('header');
+      return { alto: Math.round(h.getBoundingClientRect().height),
+        pct: Math.round(h.getBoundingClientRect().height / window.innerHeight * 100),
+        botones: h.querySelectorAll('button').length,
+        imprimirArriba: !!h.querySelector('[data-a="print"]'),
+        jsonArriba: !!h.querySelector('[data-a="export"]'),
+        // el nombre sigue en el HTML (lo lee un lector de pantalla), solo que no se pinta
+        nombreEnElHtml: /Guardias/.test(h.innerHTML),
+        nombreVisible: (h.querySelector('h1 .hname') || {}).offsetWidth > 0,
+        // las flechas de la barra siguen moviendo el mes
+        flechas: !!h.querySelector('[data-a="wk-prev"]') && !!h.querySelector('[data-a="wk-next"]') }; });
+    check('la cabecera cabe en 130 px y ya no lleva «Imprimir» ni «JSON», que están en su sitio',
+      cab.alto <= 130 && cab.pct <= 15 && !cab.imprimirArriba && !cab.jsonArriba &&
+      cab.nombreEnElHtml && !cab.nombreVisible && cab.flechas, JSON.stringify(cab));
+
+    // imprimir no se ha perdido: está donde se imprime (Mes, para colgarlo en la pared)
+    const donde = await page.evaluate(() => ({
+      enElMes: !!document.querySelector('#main .mesnav [data-a="print"]'),
+      // y las flechas de mes ya no se repiten dentro de la tarjeta
+      flechasRepetidas: !!document.querySelector('#main [data-a="mon-prev"]'),
+      saltarAOtroMes: !!document.querySelector('#main [data-a="mon-set"]') }));
+    check('imprimir vive en el Mes, que es lo que se imprime, y las flechas no salen dos veces',
+      donde.enElMes && !donde.flechasRepetidas && donde.saltarAOtroMes, JSON.stringify(donde));
+
+    // y el JSON sigue entero en Ajustes → Datos: quitarlo de arriba no es quitarlo
+    await gotoTab('data', 'copia');
+    await page.waitForTimeout(300);
+    const datos = await page.evaluate(() => ({
+      descargar: !!document.querySelector('#main [data-a="export"]'),
+      copiar: !!document.querySelector('#main [data-a="copy"]'),
+      importar: !!document.querySelector('#main [data-a="import"]') }));
+    check('el JSON sigue entero en Datos: bajarlo, copiarlo e importarlo',
+      datos.descargar && datos.copiar && datos.importar, JSON.stringify(datos));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
