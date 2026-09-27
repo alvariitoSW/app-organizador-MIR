@@ -8432,6 +8432,33 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
   }
 
+  // 211) SALTOS DE PESO SEGÚN EL EJERCICIO, CARGA REAL DE LA CALISTENIA, SECUNDARIOS A MEDIAS Y 44 px PARA EL DEDO
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const hoy = P.iso(new Date()), hace = (n) => P.iso(P.addDays(new Date(), -n));
+      P.store.perfil.pesoKg = 72;
+      g.registro = [];
+      [0, 1, 2].forEach((i) => g.registro.push({ id: 'l' + i, fecha: hace(3), ex: 'Elevaciones laterales', kg: 8, reps: 12, ts: i }));
+      [0, 1, 2].forEach((i) => g.registro.push({ id: 'b' + i, fecha: hoy, ex: 'Press banca (barra)', kg: 70, reps: 8, ts: 10 + i }));
+      const lat = P.progresionDe('Elevaciones laterales', 3, 12, hoy);
+      const dom = P.cargaSerie({ ex: 'Dominadas', kg: 5, reps: 8 }), flex = P.volSerie({ ex: 'Flexiones', kg: 0, reps: 10 });
+      const sm = P.seriesMusculo(P.iso(P.mondayOf(new Date())));
+      // 44 px: la pantalla de entrenar y el editor
+      g.rutinas = [{ id: 'r211', nombre: 'R211', dias: [], ejercicios: [{ ex: 'Sentadilla (barra)', series: 3, reps: 8 }, { ex: 'Dominadas', series: 3, reps: 6 }] }];
+      P.ui.gymSesionActiva = null; P.ui.tab = 'gym'; P.empezarRutina('r211');
+      const peq = (sel) => [...document.querySelectorAll(sel)].filter((e) => { const b = e.getBoundingClientRect(); return b.width && b.height && (b.height < 43.5 || b.width < 43.5); }).length;
+      const vivo = peq('#main button, #main input');
+      P.ui.gymSesionActiva = null; P.ui.gymRutSel = 'r211'; P.ui.gymPanel = 'rutedit'; P.ui.rtAbierto = 0; P.render();
+      const editor = peq('#main button, #main input');
+      P.store = copia; P.save(); P.ui.gymPanel = ''; P.render();
+      return { lat: lat.kg, dom, flex, pecho: sm.pecho, triceps: sm.triceps, vivo, editor }; });
+    check('los ejercicios de aislamiento suben 1 kg (no 2,5) y la calistenia cuenta tu peso',
+      r.lat === 9 && r.dom === 77 && r.flex > 0, JSON.stringify(r));
+    check('en las series por músculo el principal cuenta 1 y los que ayudan 0,5',
+      r.pecho === 3 && r.triceps === 1.5, JSON.stringify(r));
+    check('entrenando y en el editor todo lo que se toca mide al menos 44 px', r.vivo === 0 && r.editor === 0, JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

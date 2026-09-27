@@ -2397,3 +2397,34 @@ details.solplg>summary .mini{color:var(--ink2);font-weight:700}
   line-height:1;padding:2px 5px;border-radius:8px;cursor:pointer;opacity:.6}
 .tema>.tborra:hover{opacity:1;background:color-mix(in srgb,currentColor 16%,transparent)}
 .tema{position:relative}
+
+/* ============ EL DEDO MANDA: 44 px mínimo en lo que se toca entrenando o montando la rutina ============
+   Con 51 de 63 controles del editor por debajo de 44 px, y el ✓ en 40×36, con las manos sudadas
+   se fallaba el toque. 44 px es el mínimo de las guías de accesibilidad (Apple HIG, WCAG 2.5.5). */
+.gck{width:48px;height:44px}
+.gtb input{min-height:44px;font-size:16px}
+.gtb td{padding:3px 3px}
+.gpasos button,.grir button,.gseg button,.gsegin,.gsegin input{min-height:44px}
+.gedpie button,.gedpie label{min-height:44px;padding:0 12px}
+.gmv{flex-direction:row;gap:4px}
+.gmv button{width:40px;height:44px;font-size:13px;padding:0}
+.gx{width:44px;height:44px}
+button.gsn{min-width:44px;height:44px}
+.gobjin input,.grango input{min-height:44px}
+.grango input{width:54px}
+.gvcab2 .btn,.gfin{min-height:44px;min-width:44px}
+#main .subcab .volver{min-height:44px;min-width:44px}
+.grtm{width:44px;height:44px;top:4px;right:4px}
+.gsec .btn{min-height:44px}
+.glnk button{min-height:44px;padding:0 8px}
+.ged .chipx,.gtpl+.card .chipx,.card .chips .chipx[data-a="rt-dia"],.chips .chipx[data-a="plan-mat"]{min-height:44px}
+.ged input[data-a="rt-nombre"],.card input[data-a="rt-nombre"]{min-height:44px}
+.gsemcfg{min-height:44px}
+.gchips button{min-height:40px}
+.gsuph button{min-height:44px}
+
+.gedab,button.gfs.gedab{min-height:44px}
+#rtQ{min-height:44px}
+.subcab .btn,.gbusca input{min-height:44px}
+.gmv button{width:44px}
+[data-a="rt-borrar"],.btn[data-a="gym-rutv"],.gsec .btn{min-height:44px}
