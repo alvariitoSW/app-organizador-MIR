@@ -8325,6 +8325,113 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.tec === 8 && r.reg === '50/55' && r.lloret && r.pisc >= 1, JSON.stringify(r));
   }
 
+
+  // ===================================================================================
+  // 1 · UN TEMA AL AZAR, GUARDABLE (MÁXIMO 5) Y BORRABLE. Al azar no es a lo loco: un tema que no
+  // se lee no es un tema, así que el generador COMPRUEBA el contraste con la misma función que ya
+  // usa la app. Y como el que sale no está guardado, darle otra vez al dado lo pierde: por eso hay
+  // «guárdalo». Se conduce la pantalla, no las funciones.
+  // ===================================================================================
+  {
+    // 1) el generador: 40 tiradas y ninguna se cae por debajo del contraste
+    const gen = await page.evaluate(() => { const P = window.PG;
+      let n = 0, peorTexto = 99, peorApagado = 99, peorAcento = 99, claros = 0, fallos = 0;
+      for (let i = 0; i < 40; i++) {
+        const t = P.temaAzar();
+        if (!t) { fallos++; continue; }
+        n++;
+        if (t.modo === 'light') claros++;
+        peorTexto = Math.min(peorTexto, P.contraste(t.v.ink, t.v.bg));
+        peorApagado = Math.min(peorApagado, P.contraste(t.v.ink2, t.v.bg));
+        ['brand', 'brand2', 'accent'].forEach((k) => { peorAcento = Math.min(peorAcento, P.contraste(t.v[k], t.v.bg)); });
+        ['sleep', 'work', 'guard', 'meal', 'gym', 'evt'].forEach((k) => { peorAcento = Math.min(peorAcento, P.contraste(t.f[k], t.v.bg)); });
+      }
+      return { n, fallos, peorTexto: Math.round(peorTexto * 10) / 10,
+        peorApagado: Math.round(peorApagado * 10) / 10, peorAcento: Math.round(peorAcento * 10) / 10, claros }; });
+    check('un tema al azar siempre se lee: 40 tiradas y ninguna baja del contraste mínimo',
+      gen.n >= 38 && gen.peorTexto >= 7 && gen.peorApagado >= 4.5 && gen.peorAcento >= 3 &&
+      gen.claros >= 1 && gen.claros < gen.n,
+      JSON.stringify(gen));
+
+    // 2) la cadena entera desde la pantalla: dado → guardar → dado otra vez → volver al guardado
+    await gotoTab('ajustes', 'aspecto');
+    await page.waitForTimeout(300);
+    await page.click('#main [data-a="tema-azar"]');
+    await page.waitForTimeout(350);
+    const tras1 = await page.evaluate(() => ({
+      propio: !!(window.PG.store.tema || {}).propio,
+      preset: (window.PG.store.tema || {}).preset,
+      fondo: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+      avisa: /no est\u00e1 guardado/.test(document.querySelector('#main').innerText),
+      botonGuardar: !!document.querySelector('#main [data-a="tema-guardar"]') }));
+    check('el dado pone un tema nuevo, cambia el fondo de verdad y avisa de que no está guardado',
+      tras1.propio && !tras1.preset && /^#[0-9a-f]{6}$/i.test(tras1.fondo) &&
+      tras1.avisa && tras1.botonGuardar, JSON.stringify(tras1));
+
+    // se guarda, y el fondo NO cambia por guardarlo
+    const antesDeGuardar = tras1.fondo;
+    await page.click('#main [data-a="tema-guardar"]');
+    await page.waitForTimeout(250);
+    await page.fill('#temaNom', 'El morado');
+    await page.click('#modal [data-a="m-save"]');
+    await page.waitForTimeout(400);
+    const guardado = await page.evaluate(() => ({
+      cuantos: ((window.PG.store.tema || {}).guardados || []).length,
+      nombre: (((window.PG.store.tema || {}).guardados || [])[0] || {}).nombre,
+      esElPuesto: (window.PG.store.tema || {}).preset === (((window.PG.store.tema || {}).guardados || [])[0] || {}).id,
+      fondo: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+      // aguanta recargar: normalize() tira lo que no reconoce
+      trasRecargar: (function () { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store));
+        return ((P.store.tema || {}).guardados || []).length; })() }));
+    check('«guárdalo» lo mete en tus temas sin cambiar el aspecto, y aguanta recargar',
+      guardado.cuantos === 1 && guardado.nombre === 'El morado' && guardado.esElPuesto &&
+      guardado.fondo === antesDeGuardar && guardado.trasRecargar === 1, JSON.stringify(guardado));
+
+    // 3) el tope de 5: el sexto se rechaza diciendo por qué, sin perder ninguno
+    const tope = await page.evaluate(() => { const P = window.PG;
+      const msgs = [];
+      for (let i = 0; i < 6; i++) { P.ponerTemaPropio(P.temaAzar()); msgs.push(P.guardarTemaActual('T' + i)); }
+      return { cuantos: (P.store.tema.guardados || []).length, ultimo: msgs[msgs.length - 1] }; });
+    check('caben 5 temas tuyos; el sexto se rechaza diciendo por qué y no borra ninguno',
+      tope.cuantos === 5 && /5/.test(tope.ultimo) && /borra/.test(tope.ultimo), JSON.stringify(tope));
+
+    // 4) borrar uno, desde la pantalla, con su confirmación
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(300);
+    const antesBorrar = await page.evaluate(() => ({
+      cuantos: window.PG.store.tema.guardados.length,
+      fichas: document.querySelectorAll('#main [data-a="tema-borrar"]').length,
+      // la × no puede estar encima del botón de ponerlo: tocarlo para probarlo lo borraría
+      separados: document.querySelectorAll('#main .tema > .tmio').length }));
+    await page.click('#main [data-a="tema-borrar"]');
+    await page.waitForTimeout(250);
+    await page.click('#modal [data-a="confirm-yes"]');
+    await page.waitForTimeout(400);
+    const trasBorrar = await page.evaluate(() => ({
+      cuantos: window.PG.store.tema.guardados.length,
+      fondo: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() }));
+    check('se borra un tema guardado, con confirmación, y los cinco tienen su × aparte del botón',
+      antesBorrar.cuantos === 5 && antesBorrar.fichas === 5 && antesBorrar.separados === 5 &&
+      trasBorrar.cuantos === 4 && /^#[0-9a-f]{6}$/i.test(trasBorrar.fondo),
+      JSON.stringify({ antesBorrar, trasBorrar }));
+
+    // y los cinco de la app siguen funcionando después de todo esto
+    await page.click('#main [data-a="tema-pre"][data-id="papel"]');
+    await page.waitForTimeout(350);
+    const vuelta = await page.evaluate(() => ({ preset: window.PG.store.tema.preset,
+      propio: !!window.PG.store.tema.propio,
+      claro: !document.documentElement.classList.contains('dark'),
+      guardados: window.PG.store.tema.guardados.length }));
+    check('los cinco temas de la app siguen yendo, y los tuyos no se pierden al cambiar de tema',
+      vuelta.preset === 'papel' && !vuelta.propio && vuelta.claro && vuelta.guardados === 4,
+      JSON.stringify(vuelta));
+
+    await page.evaluate(() => { const P = window.PG;
+      P.store.tema = { brand: '', brand2: '', ink: '', preset: 'hud', propio: null, guardados: [] };
+      P.aplicarTema ? P.aplicarTema() : P.ponerTema('hud'); P.save(); P.render(); });
+    await page.waitForTimeout(250);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

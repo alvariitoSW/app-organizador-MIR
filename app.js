@@ -339,7 +339,68 @@ const TEMAS=[
     v:{bg:'#f5efe4',bg2:'#ede5d6',card:'#fffcf6',ink:'#2a2118',ink2:'#76685a',line:'#e4d9c6',brand:'#c2410c',brand2:'#0f766e',accent:'#4d7c0f'},
     f:{sleep:'#4f46e5',work:'#ea580c',guard:'#b91c1c',meal:'#15803d',gym:'#0e7490',evt:'#a21caf'}}];
 const TEMA_VARS=['bg','bg2','card','ink','ink2','line','brand','brand2','accent'];
-function temaById(id){return TEMAS.filter(function(t){return t.id===id;})[0]||null;}
+const TEMA_MAX=5;   /* cuántos temas tuyos caben guardados */
+function temasMios(){const t=store.tema||{};
+  return Array.isArray(t.guardados)?t.guardados:[];}
+function temaById(id){
+  /* los cinco de la app Y los que te hayas guardado tú */
+  return TEMAS.filter(function(t){return t.id===id;})[0]||
+    temasMios().filter(function(t){return t.id===id;})[0]||null;}
+function temaActivo(){
+  const t=store.tema||{};
+  return temaById(t.preset)||((t.propio&&t.propio.v)?t.propio:null);}
+/* ===================== UN TEMA AL AZAR =====================
+   Al azar NO es a lo loco: un tema que no se lee no es un tema. Se elige un tono, se derivan de
+   él todos los colores y después se COMPRUEBA el contraste con la misma función que ya usa la
+   app (texto sobre fondo ≥ 7, texto apagado ≥ 4,5, acento ≥ 3). Si no pasa, se aclara o se
+   oscurece y se vuelve a mirar; si aún así no sale, se prueba con otro tono. */
+function hsl(h,sat,luz){
+  h=((h%360)+360)%360;sat=Math.max(0,Math.min(100,sat))/100;luz=Math.max(0,Math.min(100,luz))/100;
+  const c=(1-Math.abs(2*luz-1))*sat,x=c*(1-Math.abs((h/60)%2-1)),m=luz-c/2;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}
+  else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+  const q=function(v){return Math.round((v+m)*255).toString(16).padStart(2,'0');};
+  return '#'+q(r)+q(g)+q(b);}
+function temaAzar(){
+  const az=function(a,b2){return a+Math.random()*(b2-a);};
+  for(let intento=0;intento<40;intento++){
+    const h=Math.floor(Math.random()*360),osc=Math.random()<0.6;
+    /* el desvío entre el tono del fondo y el del acento: por debajo de 120º el acento se
+       confunde con el fondo y la app se queda de un solo color */
+    const d1=az(140,220),d2=d1+az(40,80),d3=d1-az(80,130);
+    const sub=intento*(osc?1.5:-1.5);   /* si no pasa, se separa más del fondo en cada vuelta */
+    const v=osc?{
+      bg:hsl(h,az(30,55),Math.max(3,5-intento*0.1)),bg2:hsl(h,az(28,50),8),card:hsl(h,az(24,44),12),
+      ink:hsl(h,az(15,35),Math.min(98,94+sub*0.3)),ink2:hsl(h,az(12,26),Math.min(88,66+sub)),
+      line:hsl(h,az(20,38),22),
+      brand:hsl(h+d1,az(70,92),Math.min(80,60+sub*0.5)),
+      brand2:hsl(h+d2,az(62,86),Math.min(82,64+sub*0.5)),
+      accent:hsl(h+d3,az(58,80),Math.min(78,58+sub*0.5))}:{
+      bg:hsl(h,az(22,42),Math.min(97,95)),bg2:hsl(h,az(20,38),92),card:hsl(h,az(25,45),99),
+      ink:hsl(h,az(28,50),Math.max(6,12+sub*0.3)),ink2:hsl(h,az(14,28),Math.max(24,42+sub)),
+      line:hsl(h,az(16,32),86),
+      brand:hsl(h+d1,az(58,82),Math.max(22,42+sub*0.5)),
+      brand2:hsl(h+d2,az(52,76),Math.max(24,46+sub*0.5)),
+      accent:hsl(h+d3,az(48,72),Math.max(20,34+sub*0.5))};
+    if(contraste(v.ink,v.bg)<7)continue;
+    if(contraste(v.ink2,v.bg)<4.5)continue;
+    if(contraste(v.brand,v.bg)<3)continue;
+    if(contraste(v.brand2,v.bg)<3)continue;
+    if(contraste(v.accent,v.bg)<3)continue;
+    if(contraste(v.ink,v.card)<7)continue;
+    /* los seis de la franja: repartidos por la rueda para que no se parezcan entre ellos, y con
+       el mismo contraste mínimo que los demás sobre el fondo */
+    const base=h+az(20,60),paso=360/6,f={};
+    const nombres=['sleep','work','guard','meal','gym','evt'];
+    let malo=false;
+    nombres.forEach(function(n,i){
+      const c=hsl(base+paso*i+az(-14,14),osc?az(62,84):az(52,74),osc?az(58,70):az(30,44));
+      f[n]=c;if(contraste(c,v.bg)<3)malo=true;});
+    if(malo)continue;
+    return {id:'azar-'+Math.random().toString(36).slice(2,8),nombre:'Al azar',
+      modo:osc?'dark':'light',v:v,f:f};}
+  return null;}
 function luminancia(hex){
   const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex||''));if(!m)return null;
   const c=[m[1],m[2],m[3]].map(function(x){const v=parseInt(x,16)/255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});
@@ -347,7 +408,7 @@ function luminancia(hex){
 function contraste(a,b){const la=luminancia(a),lb=luminancia(b);if(la==null||lb==null)return 21;
   return (Math.max(la,lb)+.05)/(Math.min(la,lb)+.05);}
 function fondoActual(){
-  const t=temaById((store.tema||{}).preset),osc=document.documentElement.classList.contains('dark');
+  const t=temaActivo(),osc=document.documentElement.classList.contains('dark');
   if(t&&(t.modo==='dark')===osc)return t.v.bg;
   return osc?'#070b14':'#eef2f9';}
 function tintaLegible(ink){
@@ -359,7 +420,7 @@ function aplicarTema(){
      acento que hayas puesto a mano; vacío = el de la app */
   const t=(store.tema)||{},root=document.documentElement.style;
   const ok=v=>/^#[0-9a-fA-F]{6}$/.test(v||'');
-  const pre=temaById(t.preset),osc=document.documentElement.classList.contains('dark');
+  const pre=temaActivo(),osc=document.documentElement.classList.contains('dark');
   const usaPre=!!(pre&&(pre.modo==='dark')===osc);
   TEMA_VARS.forEach(function(k){if(usaPre)root.setProperty('--'+k,pre.v[k]);else root.removeProperty('--'+k);});
   if(ok(t.brand))root.setProperty('--brand',t.brand);
@@ -368,9 +429,49 @@ function aplicarTema(){
   const mt=document.querySelector('meta[name="theme-color"]');
   if(mt)mt.setAttribute('content',usaPre?pre.v.bg:(osc?'#070b14':'#eef2f9'));
 }
+function ponerTemaPropio(t){
+  /* un tema que no está en el catálogo: el que ha salido al azar. Vive en store.tema.propio hasta
+     que lo guardes; si sale otro encima, éste se pierde —por eso hay «guárdalo»—. */
+  if(!t||!t.v)return 'no ha salido ningún tema: prueba otra vez';
+  const g=temasMios();
+  store.tema={brand:'',brand2:'',ink:'',preset:'',propio:t,guardados:g};
+  if(!store.franja)store.franja={horas:12};
+  store.franja.colores=Object.assign({},t.f);
+  const osc=t.modo==='dark';
+  document.documentElement.classList.toggle('dark',osc);
+  try{localStorage.setItem(TKEY,osc?'dark':'light');}catch(e){}
+  aplicarTema();save();render();
+  return 'tema nuevo puesto · si te gusta, guárdalo';}
+function guardarTemaActual(nombre){
+  const t=temaActivo();
+  if(!t)return 'no hay ningún tema que guardar';
+  const g=temasMios();
+  if(g.some(function(x){return x.id===t.id;}))return 'ese ya lo tienes guardado';
+  if(g.length>=TEMA_MAX)return 'ya tienes '+TEMA_MAX+' guardados: borra uno antes';
+  const nuevo={id:'mio-'+Math.random().toString(36).slice(2,8),
+    nombre:String(nombre||'').trim().slice(0,24)||('Mi tema '+(g.length+1)),
+    modo:t.modo,v:Object.assign({},t.v),f:Object.assign({},t.f)};
+  g.push(nuevo);
+  if(!store.tema)store.tema={};
+  store.tema.guardados=g;store.tema.preset=nuevo.id;store.tema.propio=null;
+  save();render();
+  return 'guardado como «'+nuevo.nombre+'» ('+g.length+' de '+TEMA_MAX+')';}
+function borrarTemaMio(id){
+  const g=temasMios(),i=g.map(function(x){return x.id;}).indexOf(id);
+  if(i<0)return 'ese tema ya no está';
+  const borrado=g[i],n=borrado.nombre;g.splice(i,1);
+  store.tema.guardados=g;
+  /* si era el que tenías puesto, la app NO cambia de aspecto de golpe por borrar una entrada de
+     una lista: el tema se queda aplicado, solo que ya sin sitio en la lista (pasa a «propio») */
+  if(store.tema.preset===id){store.tema.preset='';
+    store.tema.propio={id:'propio',nombre:n,modo:borrado.modo,
+      v:Object.assign({},borrado.v),f:Object.assign({},borrado.f)};}
+  aplicarTema();save();render();
+  return 'borrado «'+n+'»';}
 function ponerTema(id){
   const pre=temaById(id);if(!pre)return 'ese tema no existe';
-  store.tema={brand:'',brand2:'',ink:'',preset:pre.id};
+  const g=temasMios();
+  store.tema={brand:'',brand2:'',ink:'',preset:pre.id,propio:null,guardados:g};
   if(!store.franja)store.franja={horas:12};
   store.franja.colores=Object.assign({},pre.f);
   const osc=pre.modo==='dark';
@@ -428,7 +529,24 @@ function normalize(o){
   if([5,7,10,14].indexOf(+o.rotation.semanaDias)<0)o.rotation.semanaDias=7;
   if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:'',ink:''};
   ['brand','brand2','ink'].forEach(function(k){if(!/^#[0-9a-fA-F]{6}$/.test(o.tema[k]||''))o.tema[k]='';});
-  if(!TEMAS.some(function(t){return t.id===o.tema.preset;}))o.tema.preset='';
+  /* LOS TEMAS TUYOS. Sin registrarlos aquí se perderían al recargar: normalize() tira todo lo
+     que no reconoce. Máximo 5, y cada uno con sus nueve variables y sus seis colores de franja
+     comprobados; uno a medias dejaría la app sin fondo. */
+  const colOK=function(x){return /^#[0-9a-fA-F]{6}$/.test(String(x||''))?String(x):'';};
+  const temaSano=function(t){
+    if(!t||typeof t!=='object'||!t.v||!t.f)return null;
+    const v={},f={};
+    for(let i=0;i<TEMA_VARS.length;i++){const c=colOK(t.v[TEMA_VARS[i]]);if(!c)return null;v[TEMA_VARS[i]]=c;}
+    const FN=['sleep','work','guard','meal','gym','evt'];
+    for(let i=0;i<FN.length;i++){const c=colOK(t.f[FN[i]]);if(!c)return null;f[FN[i]]=c;}
+    return {id:String(t.id||'mio-'+Math.random().toString(36).slice(2,8)).slice(0,32),
+      nombre:String(t.nombre||'Mi tema').slice(0,24),
+      modo:t.modo==='light'?'light':'dark',v:v,f:f};};
+  o.tema.guardados=(Array.isArray(o.tema.guardados)?o.tema.guardados:[])
+    .map(temaSano).filter(Boolean).slice(0,TEMA_MAX);
+  o.tema.propio=temaSano(o.tema.propio);
+  if(!TEMAS.some(function(t){return t.id===o.tema.preset;})&&
+     !o.tema.guardados.some(function(t){return t.id===o.tema.preset;}))o.tema.preset='';
   if(!Array.isArray(o.listas))o.listas=[];
   o.listas=o.listas.map(function(l){return l&&typeof l==='object'?{
     id:String(l.id||uid('ls')),nombre:String(l.nombre||'Lista').slice(0,60),fija:!!l.fija,
@@ -14183,7 +14301,33 @@ function renderAjustes(){
             '<i style="background:'+t.v.brand+'"></i><i style="background:'+t.v.brand2+'"></i>'+
             '<b style="background:linear-gradient(90deg,'+t.f.sleep+' 0 30%,'+t.f.work+' 30% 62%,'+t.f.meal+' 62% 70%,'+t.f.gym+' 70% 82%,'+t.f.evt+' 82%)"></b></span>'+
           '<span class="tnom">'+esc(t.nombre)+(on?' ✓':'')+'</span>'+
-          '<span class="tmodo" style="color:'+t.v.ink2+'">'+(t.modo==='dark'?'oscuro':'claro')+'</span></button>';}).join('')}</div></div>
+          '<span class="tmodo" style="color:'+t.v.ink2+'">'+(t.modo==='dark'?'oscuro':'claro')+'</span></button>';}).join('')}</div>
+      ${(function(){
+        /* AL AZAR Y LOS TUYOS. Los cinco de arriba son los que trae la app; aquí sale uno nuevo
+           cada vez que le das al dado —comprobando que se lee: texto sobre fondo ≥ 7 de
+           contraste— y, si te gusta, se guarda. Caben ${TEMA_MAX}. */
+        const mios=temasMios(),act=temaActivo(),sinGuardar=!!(store.tema||{}).propio;
+        return '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'+
+          '<div class="row">'+
+            '<button class="btn p" data-a="tema-azar">🎲 otro al azar</button>'+
+            (sinGuardar?'<button class="btn g" data-a="tema-guardar">guárdalo</button>':'')+
+            '<span class="mini">'+(sinGuardar?'este no está guardado: si le das otra vez al dado, se pierde':
+              ('tienes '+mios.length+' de '+TEMA_MAX+' guardados'))+'</span>'+
+          '</div>'+
+          (mios.length?('<div class="temas" style="margin-top:9px">'+mios.map(function(t){
+            const on=act&&act.id===t.id;
+            return '<div class="tema'+(on?' on':'')+'" style="background:'+esc(t.v.bg)+';color:'+esc(t.v.ink)+
+              ';border-color:'+esc(on?t.v.brand:t.v.line)+'">'+
+              '<button class="tmio" data-a="tema-mio" data-id="'+esc(t.id)+'" aria-label="poner «'+esc(t.nombre)+'»">'+
+                '<span class="tmues" style="background:'+esc(t.v.card)+'">'+
+                  '<i style="background:'+esc(t.v.brand)+'"></i><i style="background:'+esc(t.v.brand2)+'"></i>'+
+                  '<b style="background:linear-gradient(90deg,'+esc(t.f.sleep)+' 0 30%,'+esc(t.f.work)+' 30% 62%,'+
+                    esc(t.f.meal)+' 62% 70%,'+esc(t.f.gym)+' 70% 82%,'+esc(t.f.evt)+' 82%)"></b></span>'+
+                '<span class="tnom">'+esc(t.nombre)+(on?' ✓':'')+'</span></button>'+
+              '<button class="tborra" data-a="tema-borrar" data-id="'+esc(t.id)+'" title="borrar este tema" '+
+                'aria-label="borrar «'+esc(t.nombre)+'»" style="color:'+esc(t.v.ink2)+'">×</button>'+
+            '</div>';}).join('')+'</div>'):'')+
+        '</div>';})()}</div>
     <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
       <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
         sea cual sea el tipo de día, y aquí se cambian.</p>
@@ -15619,7 +15763,19 @@ function act(a,el){
       const tipoNuevo=gv('cardioTipo')||ui.cardioAbierto||'otro';ui.cardioAbierto=tipoNuevo;
       flash(addCardio({tipo:tipoNuevo,fecha:gv('cardioFecha'),duracionMin:gv('cardioMin'),
         distanciaKm:gv('cardioKm'),nota:gv('cardioNota')}));break;}
-    case 'tema-pre':flash(ponerTema(el.dataset.id));break;
+    case 'tema-pre':case 'tema-mio':flash(ponerTema(el.dataset.id));break;
+    /* el dado, guardar y borrar: botones, o sea act() y no el switch de `change` */
+    case 'tema-azar':flash(ponerTemaPropio(temaAzar()));break;
+    case 'tema-guardar':{
+      openModal('Guardar este tema',
+        '<label class="fld">¿Cómo lo llamas?<input id="temaNom" maxlength="24" value="'+
+          esc('Mi tema '+(temasMios().length+1))+'"></label>',
+        function(){flash(guardarTemaActual((document.getElementById('temaNom')||{}).value));});
+      break;}
+    case 'tema-borrar':{const id=el.dataset.id,t=temaById(id);
+      confirmar('Se borra «'+((t&&t.nombre)||'este tema')+'» de tus guardados. Si es el que tienes puesto, la app se queda como está.','Sí, borrarlo')
+        .then(function(si){if(si)flash(borrarTemaMio(id));});
+      break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};
       store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
     case 'mes-cfg':{
@@ -18027,7 +18183,7 @@ window.PG={planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHo
   notasS,notaById,notasDeFecha,addNota,setNota,delNota,proyectos,notasDeHoy,notasDeLaSemana,toggleNotaHecha,notaAEvento,desenlazaNota,
   imprimir,
   eventosS,evById,evDura,evDuraTxt,evHoraTxt,eventosDeFecha,icsResumen,
-  TEMAS,temaById,ponerTema,tintaLegible,eventoAplica,mesRejilla,
+  TEMAS,temaById,ponerTema,ponerTemaPropio,temaAzar,temasMios,guardarTemaActual,borrarTemaMio,contraste,aplicarTema,tintaLegible,eventoAplica,mesRejilla,
   alimDeTexto,gramosDeIng,ingAlim,migrarPlato,migrarPlatos,platoMacrosDe,alimTodos,alimBuscar,alimById,
   suenoRealS,suenoReal,suenoGuardar,suenoSemana,informeDatos,librosS,libroNuevo,libroPag,libroCalc,hudLeer,HUD_LIBROS,
   lloretPlan,lloretPoner,lloretDe,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,

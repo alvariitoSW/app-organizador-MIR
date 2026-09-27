@@ -2387,3 +2387,13 @@ details.solplg>summary .mini{color:var(--ink2);font-weight:700}
 .gcfg input{width:58px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-weight:800;text-align:center}
 .gcfgn{display:flex;gap:4px}.gcfgn input{width:40px}
 .gr100{display:block;font-size:10px;color:var(--ink2);font-weight:700}
+
+/* ====== TUS TEMAS: el que salió al azar y los que te has guardado ======
+   La ficha de un tema tuyo es la misma que la de los cinco de la app, más la × de borrar. La ×
+   va DENTRO de la ficha y no encima del botón de ponerlo: si no, tocar para probarlo lo borra. */
+.tema>.tmio{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:stretch;
+  background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.tema>.tborra{position:absolute;top:4px;right:5px;background:none;border:0;font:inherit;font-size:16px;
+  line-height:1;padding:2px 5px;border-radius:8px;cursor:pointer;opacity:.6}
+.tema>.tborra:hover{opacity:1;background:color-mix(in srgb,currentColor 16%,transparent)}
+.tema{position:relative}
