@@ -68,6 +68,22 @@ html:not(.dark) .calmodes button.on{color:#fff}
   .navrow nav{flex:0 1 auto}
   .navrow .calmodes{flex:0 0 auto;width:min(360px,42vw);padding-bottom:8px;margin-bottom:0}
 }
+/* LA CABECERA, MÁS PEQUEÑA. Medía 166 px pegados arriba en TODAS las pantallas —el 18 % del móvil—
+   y de eso, una fila entera era el nombre de la app, que es la app en la que ya estás. En el móvil
+   se queda su reloj, que cabe al lado de la fecha, y todo entra en una fila. «Imprimir» y «JSON»
+   salieron del HTML: el JSON ya estaba en Ajustes → Datos e imprimir, donde se imprime. */
+@media(max-width:560px){
+  .hwrap{padding:7px 10px 0}
+  .hrow{align-items:center;gap:8px;flex-wrap:nowrap}
+  h1{font-size:0;gap:0}            /* el texto fuera; el svg tiene su propio tamaño */
+  h1 .hname{display:none}
+  h1 svg{width:26px;height:26px}
+  #topBtns{flex:1 1 auto;justify-content:flex-end;min-width:0}
+  .wknav{flex:1 1 auto;min-width:0;justify-content:flex-end}
+  #wkLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  nav{padding-bottom:5px}
+  .calmodes{padding-bottom:7px}
+}
 main{max-width:1220px;margin:0 auto;padding:14px;position:relative;z-index:1}
 main.in{animation:viewIn .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}

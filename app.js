@@ -5698,12 +5698,16 @@ function renderMonth(){
       (function(){const sv=monthService(y,mo).service;
         return sv?('<span class="mini" style="margin-left:auto">'+esc(sv)+'</span>'):'';})()}</h2>
       ${modoAvisoHTML()}
+      <!-- las flechas de mes YA están en la barra de arriba, que en Mes mueven el mes: aquí eran
+           la segunda pareja de ‹ › de la misma pantalla. Se queda el selector, que es lo único
+           que esas flechas no hacen: saltar a un mes cualquiera. -->
       <div class="mesnav">
-        <button class="btn s" data-a="mon-prev" aria-label="mes anterior">‹</button>
         <input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" aria-label="ir a un mes">
-        <button class="btn s" data-a="mon-next" aria-label="mes siguiente">›</button>
         <button class="btn s" data-a="mon-today">hoy</button>
-        <button class="btn p s" data-a="dia-editar" title="abrir un día con el editor desplegado (o toca cualquier casilla)">✏️ editar</button></div>
+        <button class="btn p s" data-a="dia-editar" title="abrir un día con el editor desplegado (o toca cualquier casilla)">✏️ editar</button>
+        <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
+             cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
+        <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button></div>
       <div class="cal ext${rejilla.movil?' conprev':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
