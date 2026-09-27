@@ -1,0 +1,178 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.row{display:flex;gap:8px;align-items:center}
+.tit{font-size:11px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 2px 10px}
+.hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}.hd b{font-size:19px}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.sem div{font-size:10.5px;font-weight:800;color:var(--ink2)}
+.sem i{display:grid;place-items:center;width:34px;height:34px;margin:4px auto 0;border-radius:50%;border:2px solid var(--line);font-style:normal;font-size:14px}
+.sem .ok i{background:var(--gym);border-color:var(--gym);color:#12081a}
+.sem .plan i{border-color:var(--gym);color:var(--gym)}
+.sem .pis i{border-color:var(--sleep);color:var(--sleep)}
+.sem .no i{border-style:dashed;opacity:.5}
+.sem .hoy div{color:var(--brand)}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.kpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center}
+.kpi b{display:block;font-size:19px}.kpi span{font-size:10px;color:var(--ink2);font-weight:700}
+.hero{margin-top:10px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:18px;padding:14px}
+.hero .k{font-size:10.5px;font-weight:900;letter-spacing:.12em;color:var(--brand)}
+.hero h2{margin:3px 0 2px;font-size:22px}
+.hero .m{font-size:12px;color:var(--ink2)}
+.big{display:block;width:100%;margin-top:12px;padding:15px;border-radius:14px;border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#12081a;font-weight:900;font-size:16px;text-align:center}
+.lnk{display:flex;gap:14px;justify-content:center;margin-top:9px;font-size:12px;font-weight:700;color:var(--ink2)}
+.rts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.rt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px}
+.rt .h{display:flex;align-items:center;gap:6px}.rt .h b{font-size:15.5px;flex:1}
+.rt .dots{width:30px;height:24px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--ink2)}
+.rt ul{list-style:none;margin:7px 0 0;padding:0;font-size:12px}.rt li{display:flex;justify-content:space-between;padding:1.5px 0;color:var(--ink)}.rt li span{color:var(--ink2);font-variant-numeric:tabular-nums}
+.rt .ty{font-size:9.5px;font-weight:900;letter-spacing:.1em;color:var(--gym)}
+.sec{display:flex;align-items:center;margin:16px 2px 0}.sec b{font-size:11px;letter-spacing:.12em;color:var(--ink2)}
+.tabs3{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:10px}
+.tabs3 span{flex:1;text-align:center;padding:7px 0;border-radius:99px;font-size:12.5px;font-weight:800;color:var(--ink2)}.tabs3 .on{background:var(--brand);color:#12081a}
+.ex{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.ex .h{display:flex;gap:10px;align-items:center}
+.ex .ic{width:40px;height:40px;border-radius:11px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;font-size:19px;flex:none}
+.ex .h b{font-size:15px;display:block}.ex .h small{font-size:11px;color:var(--ink2)}
+.obj{font-size:11.5px;color:var(--accent);font-weight:700;margin:7px 0 2px}
+.tb{width:100%;border-collapse:collapse;margin-top:4px;font-variant-numeric:tabular-nums}
+.tb th{font-size:10px;color:var(--ink2);text-align:left;font-weight:800;padding:3px 4px;letter-spacing:.06em}
+.tb td{padding:4px;font-size:13.5px;font-weight:700}
+.sn{display:inline-grid;place-items:center;width:26px;height:24px;border-radius:7px;background:var(--bg2);border:1px solid var(--line);font-size:12px}
+.sn.w{color:var(--accent)}
+.ck{display:inline-grid;place-items:center;width:28px;height:26px;border-radius:8px;border:1px solid var(--line);color:var(--ink2);font-size:13px}
+.ck.on{background:var(--meal);border-color:var(--meal);color:#12081a}
+tr.hecha td{opacity:.9}tr.act td{background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.inp{display:inline-block;min-width:54px;padding:4px 6px;border-radius:8px;background:var(--bg2);border:1px solid var(--line)}
+.ss{display:flex;align-items:center;gap:6px;margin:-2px 0 6px 14px;font-size:10.5px;font-weight:900;letter-spacing:.1em;color:var(--brand2)}
+.ss:before,.ss:after{content:"";flex:1;border-top:1px dotted var(--brand2)}
+.grp2{border-left:3px solid var(--brand2);padding-left:6px;margin-left:-2px}
+.pill{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink2);margin:6px 4px 0 0}
+.pill.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,transparent)}
+.sticky{position:sticky;bottom:0;padding-top:8px;background:linear-gradient(transparent,var(--bg) 30%)}
+.fld{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2);margin-top:9px}
+.fld .v{display:block;margin-top:4px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;color:var(--ink);letter-spacing:0;font-weight:600}
+.seg{display:flex;gap:5px;margin-top:5px}.seg span{flex:1;text-align:center;padding:8px 0;border-radius:10px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}.seg .on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 15%,transparent)}
+.mv{display:flex;flex-direction:column;gap:2px;margin-left:auto}.mv i{font-style:normal;font-size:10px;color:var(--ink2);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+.timer{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--gym) 14%,var(--card));border:1px solid var(--gym);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.timer b{font-size:24px;font-variant-numeric:tabular-nums}.timer .bar2{flex:1;height:6px;border-radius:9px;background:var(--line);overflow:hidden}.timer .bar2 i{display:block;height:100%;width:62%;background:var(--gym)}
+.chart{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px;border-bottom:1px solid var(--line);padding:0 2px}
+.chart div{flex:1;background:var(--gym);border-radius:5px 5px 0 0;position:relative}
+.chart div span{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:9.5px;color:var(--ink2);font-weight:700}
+.xl{display:flex;gap:6px;padding:3px 2px 0;font-size:9.5px;color:var(--ink2)}.xl span{flex:1;text-align:center}
+.pr{display:flex;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}.pr:first-child{border-top:0}.pr b{flex:1}.pr span{color:var(--ink2);font-size:11.5px;margin-left:8px}.pr .up{color:var(--meal);font-weight:800}
+.hs{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}.hs:first-child{border-top:0}
+.hs .d{width:42px;text-align:center;font-weight:900;font-size:16px;line-height:1}.hs .d small{display:block;font-size:9.5px;color:var(--ink2);font-weight:800}
+.hs .t{flex:1;font-size:12px;color:var(--ink2)}.hs .t b{display:block;color:var(--ink);font-size:13.5px}
+</style><body>
+
+<!-- 1 · PORTADA -->
+<div class="wrap" id="portada">
+<div class="tit">1 · ENTRENO — ABRES Y EMPIEZAS</div>
+<div class="card">
+ <div class="row" style="margin-bottom:6px"><b style="font-size:13px">Esta semana</b><span class="sp"></span><span class="mini"><b style="color:var(--ink);font-size:14px">2 / 4</b> entrenos · ⚙</span></div>
+ <div class="sem">
+  <div class="ok">lun<i>✓</i></div><div class="no">mar<i>🩺</i></div><div class="ok">mié<i>✓</i></div>
+  <div class="plan hoy">jue<i>💪</i></div><div class="pis">vie<i>🏊</i></div><div>sáb<i></i></div><div>dom<i></i></div>
+ </div>
+ <div class="kpi"><div><b>🔥 3</b><span>semanas seguidas</span></div><div><b>9</b><span>este mes</span></div><div><b>71′</b><span>de media</span></div><div><b>+4%</b><span>volumen</span></div></div>
+</div>
+<div class="hero">
+ <div class="k">HOY TOCA · 17:15</div>
+ <h2>Fuerza</h2>
+ <div class="m">11 ejercicios · 38 series · ~75 min · la última, hace 2 días</div>
+ <div class="big">▶ Empezar Fuerza</div>
+ <div class="lnk"><span>otra rutina</span><span>·</span><span>entreno vacío</span><span>·</span><span>apuntar a mano</span></div>
+</div>
+<div class="sec"><b>TUS RUTINAS</b><span class="sp"></span><span class="btn">＋ nueva</span></div>
+<div class="rts">
+ <div class="rt"><div class="ty">FUERZA</div><div class="h"><b>Fuerza</b><span class="dots">•••</span></div>
+  <ul><li>Dominadas<span>×1</span></li><li>Dom. supinadas<span>×1</span></li><li>Press militar<span>×4</span></li><li>Sentadilla<span>×5</span></li><li>Peso muerto<span>×4</span></li><li>Fondos · Flexiones<span>×6</span></li><li class="mini">+4 más</li></ul></div>
+ <div class="rt"><div class="ty" style="color:var(--sleep)">PISCINA</div><div class="h"><b>Piscina</b><span class="dots">•••</span></div>
+  <ul><li>Natación<span>×1</span></li><li class="mini">1 500 m · ~45 min</li></ul>
+  <div class="mini" style="margin-top:8px">el saliente, 20:00</div></div>
+</div>
+<div class="kpi" style="grid-template-columns:repeat(3,1fr)"><div><b>1</b><span>objetivos</span></div><div><b>📈</b><span>progreso</span></div><div><b>0</b><span>cardio</span></div></div>
+</div>
+
+<!-- 2 · DETALLE DE RUTINA -->
+<div class="wrap" id="rutina">
+<div class="tit">2 · LA RUTINA — LO QUE VAS A HACER, SERIE A SERIE</div>
+<div class="hd"><span class="btn">‹</span><b>Fuerza</b><span class="sp"></span><span class="btn">editar</span></div>
+<div class="tabs3"><span class="on">Info</span><span>Estadísticas</span><span>Historia</span></div>
+<div class="row mini" style="margin:-2px 2px 8px;gap:12px"><span>⏱ descanso 2:00</span><span>🏋️ 38 series</span><span>~75 min</span></div>
+<div class="ex"><div class="h"><span class="ic">🧗</span><div><b>Dominadas</b><small>calistenia · +kg lastre</small></div></div>
+ <div class="obj">🎯 8×5 · subir a 10×5</div>
+ <table class="tb"><tr><th>SERIE</th><th>+KG</th><th>REPS</th></tr><tr><td><span class="sn">1</span></td><td>—</td><td>× 40 total</td></tr></table></div>
+<div class="ex"><div class="h"><span class="ic">🏋️</span><div><b>Sentadilla (barra)</b><small>la última vez: 96 kg × 10</small></div></div>
+ <div class="obj">🎯 subir a 100 kg</div>
+ <table class="tb"><tr><th>SERIE</th><th>KG</th><th>REPS</th></tr>
+ <tr><td><span class="sn">1</span></td><td>96</td><td>× 10</td></tr><tr><td><span class="sn">2</span></td><td>96</td><td>× 10</td></tr><tr><td><span class="sn">3</span></td><td>96</td><td>× 10</td></tr><tr><td><span class="sn">4</span></td><td>96</td><td>× 10</td></tr><tr><td><span class="sn">5</span></td><td>96</td><td>× 10</td></tr></table></div>
+<div class="grp2">
+<div class="ex"><div class="h"><span class="ic">🤸</span><div><b>Flexiones</b><small>solo reps</small></div></div>
+ <table class="tb"><tr><th>SERIE</th><th></th><th>REPS</th></tr><tr><td><span class="sn">1–5</span></td><td></td><td>× 12</td></tr></table></div>
+<div class="ss">SUPERSERIE</div>
+<div class="ex"><div class="h"><span class="ic">💪</span><div><b>Curl de bíceps (barra)</b><small>descanso tras el par: 1:30</small></div></div>
+ <table class="tb"><tr><th>SERIE</th><th>KG</th><th>REPS</th></tr><tr><td><span class="sn">1</span></td><td>25</td><td>× 10</td></tr><tr><td><span class="sn">2</span></td><td>25</td><td>× 8</td></tr><tr><td><span class="sn">3</span></td><td>25</td><td>× 8</td></tr><tr><td><span class="sn">4</span></td><td>25</td><td>× 6</td></tr></table></div>
+</div>
+<div class="sticky"><div class="big" style="margin:0">▶ Iniciar entrenamiento</div></div>
+</div>
+
+<!-- 3 · EDITOR -->
+<div class="wrap" id="editor">
+<div class="tit">3 · MONTAR LA RUTINA — TIPO, DESCANSO Y CADA SERIE</div>
+<div class="hd"><span class="btn">‹</span><b>Editar · Fuerza</b><span class="sp"></span><span class="btn p">guardar</span></div>
+<div class="card">
+ <label class="fld">NOMBRE<span class="v">Fuerza</span></label>
+ <label class="fld">TIPO</label><div class="seg"><span class="on">🏋️ Fuerza</span><span>🤸 Calistenia</span><span>🏊 Cardio / piscina</span></div>
+ <label class="fld">DESCANSO ENTRE SERIES</label><div class="seg"><span>1:00</span><span>1:30</span><span class="on">2:00</span><span>3:00</span><span>otro</span></div>
+ <label class="fld">QUÉ DÍAS</label><div><span class="pill on">💪 fuerza</span><span class="pill on">🌿 libre</span><span class="pill">💼 trabajo</span><span class="pill">🚪 saliente</span></div>
+</div>
+<div class="sec" style="margin-bottom:8px"><b>EJERCICIOS · 11</b></div>
+<div class="ex"><div class="h"><span class="ic">🏋️</span><div><b>Sentadilla (barra)</b><small>kg × reps · descanso 2:00</small></div><span class="mv"><i>▲</i><i>▼</i></span></div>
+ <div class="obj">🎯 <span class="inp" style="color:var(--accent)">subir a 100 kg</span></div>
+ <table class="tb"><tr><th>SERIE</th><th>KG</th><th>REPS</th><th></th></tr>
+ <tr><td><span class="sn w">C</span></td><td><span class="inp">60</span></td><td><span class="inp">× 8</span></td><td class="mini">calent.</td></tr>
+ <tr><td><span class="sn">1</span></td><td><span class="inp">96</span></td><td><span class="inp">× 10</span></td><td class="mini">×</td></tr>
+ <tr><td><span class="sn">2</span></td><td><span class="inp">96</span></td><td><span class="inp">× 10</span></td><td class="mini">×</td></tr>
+ <tr><td colspan=4 class="mini" style="padding-top:6px">＋ serie (copia la anterior) · ⏱ descanso propio · 🔗 superserie con el siguiente</td></tr></table></div>
+<div class="ex"><div class="h"><span class="ic">🧗</span><div><b>Dominadas</b><small>¿cómo se mide?</small></div><span class="mv"><i>▲</i><i>▼</i></span></div>
+ <div class="seg"><span>kg</span><span class="on">+kg lastre</span><span>solo reps</span><span>tiempo</span></div></div>
+<div class="card" style="margin-top:4px"><div class="row"><span style="font-size:16px">🔍</span><span class="mini" style="font-size:13px">buscar ejercicio: «remo», «press», «dominada»…</span></div>
+ <div class="mini" style="margin-top:6px">en español · con sus músculos · o créalo con su nombre</div></div>
+</div>
+
+<!-- 4 · ENTRENANDO -->
+<div class="wrap" id="vivo">
+<div class="tit">4 · ENTRENANDO — TODAS LAS SERIES DEL EJERCICIO A LA VISTA</div>
+<div class="hd"><span class="btn">‹</span><div><b style="font-size:16px">Fuerza</b><div class="mini">32 min · 6 240 kg · 14/38 series</div></div><span class="sp"></span><span class="btn" style="border-color:var(--meal);color:var(--meal)">terminar</span></div>
+<div class="timer"><span>⏱</span><b>1:14</b><div class="bar2"><i></i></div><span class="btn">−15</span><span class="btn">+15</span><span class="btn">saltar</span></div>
+<div class="ex" style="border-color:var(--brand)"><div class="h"><span class="ic">🏋️</span><div><b>Sentadilla (barra)</b><small>🎯 subir a 100 kg · la última: 96×10</small></div></div>
+ <table class="tb"><tr><th>SERIE</th><th>ANTES</th><th>KG</th><th>REPS</th><th></th></tr>
+ <tr class="hecha"><td><span class="sn">1</span></td><td class="mini">96×10</td><td>98</td><td>10</td><td><span class="ck on">✓</span></td></tr>
+ <tr class="hecha"><td><span class="sn">2</span></td><td class="mini">96×10</td><td>98</td><td>9</td><td><span class="ck on">✓</span></td></tr>
+ <tr class="act"><td><span class="sn">3</span></td><td class="mini">96×10</td><td><span class="inp">98</span></td><td><span class="inp">10</span></td><td><span class="ck">✓</span></td></tr>
+ <tr><td><span class="sn">4</span></td><td class="mini">96×10</td><td>98</td><td>10</td><td><span class="ck">✓</span></td></tr>
+ <tr><td><span class="sn">5</span></td><td class="mini">96×10</td><td>98</td><td>10</td><td><span class="ck">✓</span></td></tr></table>
+ <div class="mini" style="margin-top:6px">＋ serie · nota · cambiar ejercicio</div></div>
+<div class="ex" style="opacity:.8"><div class="h"><span class="ic">🏋️</span><div><b>Peso muerto (barra)</b><small>4 series · 110×9 la última</small></div><span class="sp"></span><span class="mini">después ›</span></div></div>
+<div class="ex" style="opacity:.6"><div class="h"><span class="ic">💪</span><div><b>Curl bíceps + Face pull</b><small>superserie · 4 + 3 series</small></div></div></div>
+</div>
+
+<!-- 5 · ESTADÍSTICAS / HISTORIA -->
+<div class="wrap" id="stats">
+<div class="tit">5 · ESTADÍSTICAS E HISTORIA DE LA RUTINA</div>
+<div class="hd"><span class="btn">‹</span><b>Fuerza</b></div>
+<div class="tabs3"><span>Info</span><span class="on">Estadísticas</span><span>Historia</span></div>
+<div class="card"><div class="row"><b style="font-size:13px">Volumen por sesión</b><span class="sp"></span><span class="mini">kg · últimas 8</span></div>
+ <div class="chart"><div style="height:52%"><span>5,1k</span></div><div style="height:58%"><span>5,6k</span></div><div style="height:55%"><span>5,4k</span></div><div style="height:63%"><span>6,1k</span></div><div style="height:61%"><span>5,9k</span></div><div style="height:68%"><span>6,6k</span></div><div style="height:72%"><span>7,0k</span></div><div style="height:78%;background:var(--brand)"><span>7,6k</span></div></div>
+ <div class="xl"><span>4/8</span><span>11/8</span><span>18/8</span><span>25/8</span><span>1/9</span><span>8/9</span><span>15/9</span><span>hoy</span></div></div>
+<div class="card" style="margin-top:8px"><b style="font-size:13px">Mejores marcas</b>
+ <div class="pr"><b>Sentadilla</b><span>98 × 10</span><span class="up">▲ 2 kg</span></div>
+ <div class="pr"><b>Peso muerto</b><span>110 × 9</span><span>=</span></div>
+ <div class="pr"><b>Dominadas</b><span>+0 × 40</span><span class="up">▲ 5 reps</span></div>
+ <div class="pr"><b>Remo bajo</b><span>70 × 6</span><span>=</span></div></div>
+<div class="tabs3" style="margin-top:12px"><span>Info</span><span>Estadísticas</span><span class="on">Historia</span></div>
+<div class="card"><div class="hs"><div class="d">25<small>SEP</small></div><div class="t"><b>Fuerza · 74 min</b>38/38 series · 7 620 kg · 🏆 2 récords</div></div>
+ <div class="hs"><div class="d">18<small>SEP</small></div><div class="t"><b>Fuerza · 69 min</b>35/38 series · 7 010 kg</div></div>
+ <div class="hs"><div class="d">15<small>SEP</small></div><div class="t"><b>Fuerza · 81 min</b>38/38 series · 6 590 kg</div></div></div>
+</div>
