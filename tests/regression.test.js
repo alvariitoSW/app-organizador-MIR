@@ -631,11 +631,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // lee de un vistazo, no una tabla de nueve columnas por ejercicio
   await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(250);
-  await page.fill('#rtNew-' + ridUI, 'Curl bíceps');
-  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.fill('#rtQ', 'Curl bíceps');
+  await page.waitForTimeout(400);
+  await page.click('[data-a="rt-add2"][data-n="Curl bíceps"]');
   await page.waitForTimeout(200);
-  await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
-  await page.waitForTimeout(250);
+  await gotoGym('rutinas');
   await page.click('[data-a="ses-empezar"][data-id="' + ridUI + '"]');
   await page.waitForTimeout(200);
   await gotoGym('sesion');   // el formulario de apuntar vive en «Entrenar»
@@ -665,12 +665,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoGym('rutinas');   // los ejercicios de una rutina se añaden en «Rutinas», no en «Entrenar»
   await page.click('[data-a="rt-editar"][data-id="' + ridUI + '"]');   // …y dentro de «editar»
   await page.waitForTimeout(250);
-  await page.fill('#rtNew-' + ridUI, 'Press militar');
-  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.fill('#rtQ', 'Press militar');
+  await page.waitForTimeout(400);
+  await page.click('[data-a="rt-add2"][data-n="Press militar"]');
   await page.waitForTimeout(150);
-  const focoTrasAnadir = await page.evaluate((rid) => document.activeElement && document.activeElement.id === 'rtNew-' + rid, ridUI);
+  const focoTrasAnadir = await page.evaluate(() => document.activeElement && document.activeElement.id === 'rtQ');
   await page.keyboard.type('Sentadilla');
-  await page.click('[data-a="rt-add"][data-id="' + ridUI + '"]');
+  await page.waitForTimeout(400);
+  await page.click('[data-a="rt-add2"][data-n="Sentadilla"]');
   await page.waitForTimeout(150);
   const ejerciciosTrasVarios = await page.evaluate(
     (rid) => window.PG.gymS().rutinas.find((r) => r.id === rid).ejercicios.map((e) => e.ex),
@@ -4278,12 +4280,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const shHoy = await page.evaluate(() => window.PG.dayInfo(window.PG.iso(new Date())).shiftId);
     await page.click(`[data-a="rt-dia"][data-sh="${shHoy}"]`);
     await page.waitForTimeout(320);
-    await page.click('.subcab [data-a="gym-panel"][data-p="rutinas"]');
-    await page.waitForTimeout(280);
-    await page.click('.subcab [data-a="gym-panel"][data-p=""]');
-    await page.waitForTimeout(320);
+    await gotoGym('');
+    await page.waitForTimeout(200);
+    // en Entreno, el «hoy toca» es la tarjeta grande de arriba, con ▶ Empezar y el peso que toca
     const enEntreno = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('#main .card')].find((x) => /toca entrenar/.test(x.textContent));
+      const c = document.querySelector('#main .ghero2');
       return { hay: !!c, rutina: c ? /Empuje A/.test(c.textContent) : false,
         // la progresión donde hace falta: justo antes de levantar
         ultimoPeso: c ? /62[.,]5 kg/.test(c.textContent) : false,
@@ -4303,7 +4304,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const trasG = await page.evaluate(() => ({
       sesion: !!window.PG.ui.gymSesionActiva,
       series: window.PG.gymS().registro.filter((x) => x.sesionId).length,
-      entrenando: window.PG.ui.gymPanel === 'vivo' && !!document.querySelector('#main .gvhero'),
+      entrenando: window.PG.ui.gymPanel === 'vivo' && !!document.querySelector('#main .gvact'),
       yaNoAvisa: ![...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)),
     }));
     check('una rutina se pega a un tipo de día, y entonces «hoy toca entrenar» sale en Entreno y en Hoy',
@@ -4906,9 +4907,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // 1 · la tira: siete días con su estado, y el viernes marcado como choque
     const tira = await page.evaluate(() => {
-      const dd = [...document.querySelectorAll('#main .gday')];
+      const dd = [...document.querySelectorAll('#main .gsc')];
       return { n: dd.length,
-        estados: dd.map((e) => e.className.replace('gday', '').trim().split(' ')[0]),
+        estados: dd.map((e) => e.className.replace('gsc', '').trim().split(' ')[0]),
         pie: (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim() };
     });
     check('«Entreno» abre con la semana delante y el día de choque marcado en rojo',
@@ -4917,18 +4918,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // 2 · tocar otro día cambia la línea que lo explica (la tira no es decoración)
     const antesPie = tira.pie;
-    const botLun = await page.$('#main .gday[data-key="' + mont.lunes + '"]');
+    const botLun = await page.$('#main .gsc[data-key="' + mont.lunes + '"]');
     if (botLun) { await botLun.click(); await page.waitForTimeout(300); }
     const piel = await page.evaluate(() => (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim());
     check('tocar un día de la tira cuenta lo que hay ese día, no solo lo selecciona',
       !!botLun && piel !== antesPie && piel.length > 3, JSON.stringify({ antes: antesPie, ahora: piel }));
 
-    // 3 · el descanso por grupo muscular: lo que justifica que hoy toque torso y no pierna
+    // 3 · el descanso por grupo muscular: lo que justifica que hoy toque torso y no pierna (vive en «Progreso»)
     const desc = await page.evaluate(() => {
       const P = window.PG;
+      P.ui.gymPanel = 'progreso'; P.render();
       const chips = [...document.querySelectorAll('#main .gm')].map((e) => ({
         txt: e.textContent.replace(/\s+/g, ' ').trim(), cl: e.className.replace('gm', '').trim() }));
-      return { chips: chips, calc: (P.gymDescanso() || []).map((x) => x.reg + ':' + x.txt) };
+      const out = { chips: chips, calc: (P.gymDescanso() || []).map((x) => x.reg + ':' + x.txt) };
+      P.ui.gymPanel = ''; P.render();
+      return out;
     });
     check('la portada dice qué grupos tienes descansados y cuántos días llevan',
       desc.chips.length === 5 && desc.chips.some((c) => /\d/.test(c.txt)) && desc.chips.some((c) => c.cl === 'listo'),
@@ -4963,14 +4967,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(movido));
 
     // 5 · empezar otra rutina o montar una nueva sin salir a buscarlas
-    const nueva = await page.$('#main [data-a="gym-nueva"]');
+    const antesN = await page.evaluate(() => window.PG.gymS().rutinas.length);
+    const nueva = await page.$('#main [data-a="rt-nueva-rapida"]');
     if (nueva) { await nueva.click(); await page.waitForTimeout(350); }
-    const enRutinas = await page.evaluate(() => ({
-      panel: window.PG.ui.gymPanel,
-      campo: !!document.getElementById('rtNombreNueva'),
-      foco: document.activeElement && document.activeElement.id === 'rtNombreNueva' }));
-    check('desde la portada se puede montar una rutina nueva sin ir a buscarla',
-      !!nueva && enRutinas.panel === 'rutinas' && enRutinas.campo && enRutinas.foco, JSON.stringify(enRutinas));
+    const enRutinas = await page.evaluate((n0) => ({
+      panel: window.PG.ui.gymPanel, creada: window.PG.gymS().rutinas.length === n0 + 1,
+      campo: !!document.querySelector('#main input[data-a="rt-nombre"]'),
+      foco: !!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.a === 'rt-nombre') }), antesN);
+    check('desde la portada se monta una rutina nueva de un toque, con el nombre listo para escribir',
+      !!nueva && enRutinas.panel === 'rutedit' && enRutinas.creada && enRutinas.campo && enRutinas.foco, JSON.stringify(enRutinas));
 
     // se deja el estado como estaba para no contaminar lo que venga detrás
     await page.evaluate((m) => {
@@ -5012,74 +5017,66 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await page.waitForTimeout(300);
 
-    // 1 · empezar ya no monta las series por adelantado. Antes metía las 6 de golpe en el
-    //     registro con el peso de la última vez; como ui.gymSesionActiva NO se guarda, cerrar
-    //     la app a medias dejaba en el historial series que no habías hecho.
+    // 1 · empezar te deja entrenando y no mete series que no has hecho
     const emp = await page.$('#main [data-a="ses-empezar"][data-id="rtV"]');
     if (emp) { await emp.click(); await page.waitForTimeout(400); }
     const arranque = await page.evaluate(() => ({
       panel: window.PG.ui.gymPanel,
       registro: window.PG.store.gym.registro.length,
-      hayPantalla: !!document.querySelector('#main .gvhero') }));
+      hayPantalla: !!document.querySelector('#main .gvact') }));
     check('empezar una rutina te deja entrenando y no mete en tu historial series que no has hecho',
       !!emp && arranque.panel === 'vivo' && arranque.hayPantalla && arranque.registro === mont.antes,
       JSON.stringify({ emp: !!emp, arranque, antes: mont.antes }));
 
-    // 2 · el peso propuesto Y SU PORQUÉ: sube donde la cerraste, baja donde llevas dos atascado
+    // 2 · el peso propuesto Y SU PORQUÉ, ya puesto en la fila que toca
     const porque = await page.evaluate(() => {
-      const P = window.PG;
-      const hoy = P.iso(new Date());
-      const v = document.querySelector('#main .gvpor');
-      return { enPantalla: v ? v.textContent.replace(/\s+/g, ' ').trim() : '',
-        clase: v ? v.className : '',
-        kg: (document.querySelectorAll('#main .gvnum .v')[0] || { textContent: '' }).textContent.trim(),
-        banca: P.progresionDe('Press banca', 3, 8, hoy),
-        sent: P.progresionDe('Sentadilla', 3, 8, hoy) };
+      const P = window.PG, hoy = P.iso(new Date()), v = document.querySelector('#main .gsug');
+      return { enPantalla: v ? v.textContent.replace(/\s+/g, ' ').trim() : '', clase: v ? v.className : '',
+        kg: (document.querySelector('#main tr.act input[data-k="kg"]') || { value: '' }).value,
+        banca: P.progresionDe('Press banca', 3, 8, hoy), sent: P.progresionDe('Sentadilla', 3, 8, hoy) };
     });
     check('la pantalla de entrenar dice qué peso toca y por qué: sube donde la cerraste, baja donde te atascaste',
-      porque.banca.cl === 'sube' && porque.banca.kg === 62.5 &&
-      porque.sent.cl === 'baja' && porque.sent.kg === 90 &&
-      /clase/.test('clase') && porque.clase.indexOf('sube') >= 0 &&
-      porque.kg === '62,5' && /Sube a 62,5/.test(porque.enPantalla),
+      porque.banca.cl === 'sube' && porque.banca.kg === 62.5 && porque.sent.cl === 'baja' && porque.sent.kg === 90 &&
+      porque.clase.indexOf('sube') >= 0 && porque.kg === '62,5' && /Sube a 62,5/.test(porque.enPantalla),
       JSON.stringify(porque));
 
-    // 3 · el esfuerzo va en palabras, y −/+ mueven el peso sin teclado
-    const masKg = await page.$('#main [data-a="gv-kg"][data-d="2.5"]');
+    // 3 · −/+ mueven el peso sin teclado (y arrastran a las series de detrás); lo que te quedaba, en palabras
+    const masKg = await page.$('#main [data-a="gv-paso"][data-k="kg"][data-d="2.5"]');
     if (masKg) { await masKg.click(); await page.waitForTimeout(200); }
-    const duro = await page.$('#main [data-a="gv-rpe"][data-d="9"]');
-    if (duro) { await duro.click(); await page.waitForTimeout(200); }
+    const fallo = await page.$('#main [data-a="gv-rir"][data-d="0"]');
+    if (fallo) { await fallo.click(); await page.waitForTimeout(200); }
     const mandos = await page.evaluate(() => ({
-      kg: (document.querySelectorAll('#main .gvnum .v')[0] || { textContent: '' }).textContent.trim(),
-      palabras: [...document.querySelectorAll('#main .gvesf .btn')].map((e) => e.textContent.trim()),
-      marcado: (document.querySelector('#main .gvesf .btn.on') || { textContent: '' }).textContent.trim() }));
-    check('el peso se mueve con −/+ sin teclado y el esfuerzo se dice en palabras, no en números',
-      !!masKg && !!duro && mandos.kg === '65' &&
-      mandos.palabras.join('/') === 'fácil/justo/duro/al fallo' && mandos.marcado === 'duro',
+      kg: (document.querySelector('#main tr.act input[data-k="kg"]') || { value: '' }).value,
+      resto: [...document.querySelectorAll('#main .gtb.vivo tr')].slice(2).map((r) => (r.children[2] || { textContent: '' }).textContent.trim()),
+      palabras: [...document.querySelectorAll('#main .grir button')].map((e) => e.textContent.replace(/\d|–|\+/g, '').trim()),
+      marcado: (document.querySelector('#main .grir button.on') || { textContent: '' }).textContent.trim() }));
+    check('el peso se mueve con −/+ sin teclado y lo que te quedaba se dice en palabras',
+      !!masKg && !!fallo && mandos.kg === '65' && mandos.resto.every((x) => x === '65') &&
+      mandos.palabras.join('/') === 'fallo/justo/sobrado' && /fallo/.test(mandos.marcado),
       JSON.stringify(mandos));
 
-    // 4 · apuntar añade UNA serie, marca el récord y al acabar el ejercicio pasa solo al siguiente
+    // 4 · ✓ en cada fila: una serie cada vez, con lo que te quedaba, y al acabar pasa al siguiente ejercicio
     for (let i = 0; i < 3; i++) {
-      const b = await page.$('#main [data-a="gv-apuntar"]');
+      const b = await page.$('#main tr.act [data-a="gv-ok"]');
       if (b) { await b.click(); await page.waitForTimeout(260); }
     }
     const tras = await page.evaluate(() => {
       const P = window.PG;
       const ses = P.store.gym.registro.filter((x) => x.sesionId === (P.ui.gymSesionActiva || {}).id);
-      return { nuevas: ses.length,
-        rpe: ses.length ? ses[0].rpe : null,
-        kg: ses.length ? ses[0].kg : null,
-        ejercicioAhora: (document.querySelector('#main .gvex b') || { textContent: '' }).textContent.trim(),
-        anillo: (document.querySelector('#main .gvanillo text') || { textContent: '' }).textContent.trim(),
-        estrellas: [...document.querySelectorAll('#main .gvchip.pr')].length };
+      return { nuevas: ses.length, rir: ses.length ? ses[0].rir : null, kg: ses.length ? ses[0].kg : null,
+        ejercicioAhora: (document.querySelector('#main .gvact .h b') || { textContent: '' }).textContent.trim(),
+        cuenta: (document.querySelector('#main .gvcab2 .t span') || { textContent: '' }).textContent,
+        descanso: !!document.querySelector('#main #gvReloj') };
     });
-    check('apuntar añade una serie sola, guarda el esfuerzo y al acabar el ejercicio pasa al siguiente',
-      tras.nuevas === 3 && tras.rpe === 9 && tras.kg === 65 &&
-      tras.ejercicioAhora === 'Sentadilla' && tras.anillo === '3',
-      JSON.stringify(tras));
+    check('cada ✓ apunta una serie, guarda lo que te quedaba y al acabar el ejercicio pasa al siguiente',
+      tras.nuevas === 3 && tras.rir === 0 && tras.kg === 65 && tras.ejercicioAhora === 'Sentadilla' &&
+      /3\/6 series/.test(tras.cuenta) && tras.descanso, JSON.stringify(tras));
 
-    // 5 · el informe al terminar: volumen, comparación y récords
+    // 5 · terminar pregunta qué tal de dura (la carga) y luego sale el resumen con récords y la próxima vez
     const fin = await page.$('#main [data-a="gv-terminar"]');
-    if (fin) { await fin.click(); await page.waitForTimeout(450); }
+    if (fin) { await fin.click(); await page.waitForTimeout(300); }
+    const siete = await page.$('#main [data-a="gv-rpe-fin"][data-d="7"]');
+    if (siete) { await siete.click(); await page.waitForTimeout(450); }
     const informe = await page.evaluate(() => {
       const P = window.PG;
       const ses = P.store.gym.sesiones[P.store.gym.sesiones.length - 1] || null;
@@ -5087,13 +5084,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         tit: (document.querySelector('#main .gvfint') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim(),
         kpis: [...document.querySelectorAll('#main .gvfin .kpis div')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
         recs: [...document.querySelectorAll('#main .gvrecs .gvchip')].map((e) => e.textContent.trim()),
-        plan: ses ? ses.plan : null, completo: ses ? ses.completo : null,
+        proxima: /La próxima vez/.test(document.getElementById('main').innerText),
+        plan: ses ? ses.plan : null, completo: ses ? ses.completo : null, rpe: ses ? ses.rpe : null, carga: ses ? ses.carga : null,
         abierta: !!P.ui.gymSesionActiva };
     });
-    check('al terminar sale el informe con el volumen, las series planeadas y los récords',
-      !!fin && informe.hay && !informe.abierta && informe.plan === 6 && informe.completo === false &&
-      /a medias/.test(informe.tit) && /2 de 6|3 de 6/.test(informe.tit) &&
-      informe.kpis.some((k) => /kg movidos/.test(k)) && informe.recs.length >= 1 &&
+    check('al terminar pregunta el esfuerzo y sale el resumen con el volumen, las series planeadas, los récords y la próxima vez',
+      !!fin && !!siete && informe.hay && !informe.abierta && informe.plan === 6 && informe.completo === false &&
+      informe.rpe === 7 && informe.carga > 0 && /a medias/.test(informe.tit) && /3 de 6/.test(informe.tit) &&
+      informe.kpis.some((k) => /kg movidos/.test(k)) && informe.recs.length >= 1 && informe.proxima &&
       /Press banca/.test(informe.recs.join(' ')),
       JSON.stringify(informe));
 
@@ -5400,14 +5398,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // el constructor: series con −/+, buscador que añade de un toque, y el análisis debajo
     const edt = await page.$('#main [data-a="rt-editar"][data-id="q1"]');
     if (edt) { await edt.click(); await page.waitForTimeout(320); }
-    const mas = await page.$('#main [data-a="rt-ser"][data-id="q1"][data-ix="0"][data-d="1"]');
+    // el ejercicio se abre de un toque y «＋ serie» copia la anterior (las tarjetas van plegadas)
+    const abre = await page.$('#main [data-a="rt-abrir"][data-ix="0"]');
+    if (abre) { await abre.click(); await page.waitForTimeout(260); }
+    const mas = await page.$('#main [data-a="rt-fila-mas"][data-id="q1"][data-ix="0"]');
     if (mas) { await mas.click(); await page.waitForTimeout(260); }
-    const sug = await page.$('#main .resug');
+    await page.fill('#rtQ', 'prensa'); await page.waitForTimeout(400);
+    const sug = await page.$('#main .gres [data-a="rt-add2"][data-n="Prensa de piernas"]');
     if (sug) { await sug.click(); await page.waitForTimeout(300); }
     const editor = await page.evaluate(() => {
       const P = window.PG, m = document.querySelector('#main');
       const rt = P.gymS().rutinas.filter((r) => r.id === 'q1')[0] || { ejercicios: [] };
-      return { panel: P.ui.gymPanel, filas: m.querySelectorAll('.refila').length,
+      return { panel: P.ui.gymPanel, filas: m.querySelectorAll('.ged').length,
         series0: rt.ejercicios[0] ? rt.ejercicios[0].series : null,
         nEj: rt.ejercicios.length, ultimo: rt.ejercicios.length ? rt.ejercicios[rt.ejercicios.length - 1].ex : '',
         diaChips: m.querySelectorAll('[data-a="rt-dia"]').length,
@@ -7338,7 +7340,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG, g = P.gymS();
       g.rutinas = g.rutinas.filter((r) => r.id !== 'rt-205');
       g.rutinas.push({ id: 'rt-205', nombre: 'Prueba 205', notas: '', dias: [], ejercicios: [{ ex: 'Sentadilla', series: 3, reps: 5 }] });
-      g.minSemana = 0; g.forzar = {}; P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); });
+      g.minSemana = 0; g.forzar = {}; P.ui.tab = 'gym'; P.ui.gymPanel = 'plan'; P.save(); P.render(); });   // el mínimo vive en «⚙ tu semana»
     await page.waitForTimeout(200);
     for (let i = 0; i < 3; i++) { const b = await page.$('[data-a="ent-min"][data-d="1"]'); if (b) await b.click(); await page.waitForTimeout(120); }
     const s1 = await page.evaluate(() => { const P = window.PG, s = P.entrenoSemana(P.iso(new Date()));
@@ -7861,6 +7863,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.icsAvisoMin = 30;
       P.store.rotation.calSync = g; P.save(); P.render(); }, guardado);
     await page.waitForTimeout(250);
+  }
+
+  // 207) ENTRENO DE VERDAD: series una a una, superserie sin descanso, la sesión sobrevive a recargar,
+  //      se cierra sola si te olvidas (con la hora real) y los discos por lado
+  {
+    await page.evaluate(() => { const P = window.PG, g = P.gymS();
+      g.rutinas = [{ id: 'r207', nombre: 'Fuerza 207', notas: '', dias: [], descanso: 120, ejercicios: [
+        { ex: 'Sentadilla (barra)', series: 2, reps: 5 },
+        { ex: 'Curl de bíceps (barra)', series: 2, reps: 10, ss: true }, { ex: 'Face pull', series: 2, reps: 12 }] }];
+      g.registro = []; g.sesiones = []; P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.tab = 'gym'; P.ui.gymPanel = '';
+      P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const emp = await page.$('#main .ghero2 [data-a="ses-empezar"], #main [data-a="gym-rutv"][data-id="r207"]');
+    if (emp) { await emp.click(); await page.waitForTimeout(250); }
+    const ini = await page.$('#main [data-a="ses-empezar"][data-id="r207"]');
+    if (ini) { await ini.click(); await page.waitForTimeout(250); }
+    // superserie: curl → face pull SIN descanso; face pull → vuelta al curl CON descanso
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva.ix = 1; P.render(); });
+    const ok1 = await page.$('#main [data-a="gv-ok"][data-x="1"][data-i="0"]');
+    if (ok1) { await ok1.click(); await page.waitForTimeout(220); }
+    const trasCurl = await page.evaluate(() => ({ ix: window.PG.ui.gymSesionActiva.ix, desc: !!window.PG.ui.gymDesc }));
+    const ok2 = await page.$('#main [data-a="gv-ok"][data-x="2"][data-i="0"]');
+    if (ok2) { await ok2.click(); await page.waitForTimeout(220); }
+    const trasFace = await page.evaluate(() => ({ ix: window.PG.ui.gymSesionActiva.ix, desc: !!window.PG.ui.gymDesc,
+      segs: window.PG.ui.gymDesc ? window.PG.ui.gymDesc.total : 0 }));
+    // recargar: la sesión sigue (vive en tus datos, no en memoria)
+    const persiste = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store));
+      return !!P.ui.gymSesionActiva && P.ui.gymSesionActiva.rutinaId === 'r207'; });
+    check('superserie: el compañero va sin descanso y al cerrar la vuelta descansas lo de la rutina; la sesión sobrevive a recargar',
+      !!ok1 && !!ok2 && trasCurl.ix === 2 && !trasCurl.desc && trasFace.ix === 1 && trasFace.desc && trasFace.segs === 120 && persiste,
+      JSON.stringify({ trasCurl, trasFace, persiste }));
+    // se olvida abierta: 45 min sin apuntar → se cierra sola con última serie + descanso, no con el reloj
+    const auto = await page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva;
+      P.store.gym.registro.filter((x) => x.sesionId === sa.id).forEach((x, i) => { x.ts = Date.now() - (60 - i) * 60000; });
+      sa.ts = Date.now() - 70 * 60000; sa.ult = Date.now() - 45 * 60000; P.ui.gymPanel = ''; P.render();
+      const s = P.store.gym.sesiones.filter((x) => x.rutinaId === 'r207')[0];
+      return { cerrada: !P.ui.gymSesionActiva, auto: s && s.auto, min: s && s.duracionMin, aviso: /Se cerró sola/.test(document.getElementById('main').innerText) }; });
+    check('si te olvidas de terminar, la sesión se cierra sola con la hora de verdad y te lo dice',
+      auto.cerrada && auto.auto && auto.min === 13 && auto.aviso, JSON.stringify(auto));
+    // discos: 98 kg con barra de 20 → 25 + 10 + 2,5 + 1,25 por lado
+    const discos = await page.evaluate(() => { const p = window.PG.discosPorLado(98); return p.pone.join('+') + '|' + p.sobra; });
+    check('los discos por lado cuadran con la barra y los discos del gym', discos === '25+10+2.5+1.25|0.25', discos);
+    // editor: series una a una; cambiar la primera arrastra a las iguales, y calentamiento con un toque
+    const ed = await page.evaluate(() => { const P = window.PG; P.ui.gymRutSel = 'r207'; P.ui.gymPanel = 'rutedit'; P.ui.rtAbierto = 0; P.render(); return true; });
+    const kg0 = await page.$('#main input[data-a="rt-fila"][data-ix="0"][data-i="0"][data-k="kg"]');
+    if (kg0) { await kg0.fill('100'); await kg0.dispatchEvent('change'); await page.waitForTimeout(250); }
+    const cal = await page.$('#main [data-a="rt-fila-t"][data-ix="0"][data-i="0"]');
+    if (cal) { await cal.click(); await page.waitForTimeout(250); }
+    const sets = await page.evaluate(() => JSON.stringify(window.PG.gymS().rutinas[0].ejercicios[0].sets.map((s) => (s.t === 'c' ? 'C' : 'n') + s.kg)));
+    check('en el editor cada serie tiene su peso: cambiar la primera arrastra a las iguales y el calentamiento se marca de un toque',
+      ed && !!kg0 && !!cal && sets === '["C100","n100"]', sets);
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.rutinas = []; g.registro = []; g.sesiones = [];
+      P.ui.gymSesionActiva = null; P.ui.gymCerrada = null; P.ui.gymPanel = ''; P.save(); P.render(); });
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
