@@ -7306,10 +7306,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // en el día: al gym → entreno → a casa, y la cocina de la semana en su hora
     const dia = await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.hora = '18:00'; g.ida = 15; g.vuelta = 20;
-      const s = P.entrenoSemana(P.iso(new Date())), k = s.dias.filter((d) => d.auto || d.base)[0];
+      const s = P.entrenoSemana(P.iso(new Date())), k = s.dias.filter((d) => (d.auto || d.base) && d.tipo === 'fuerza')[0];
       if (!k) return null;
       const bl = P.bloquesDelDia(k.k);
-      const ent = bl.filter((b) => /Entreno/.test(b.tit))[0], ida = bl.filter((b) => /Al gym/.test(b.tit))[0], vu = bl.filter((b) => /Del gym/.test(b.tit))[0];
+      const ent = bl.filter((b) => /Entreno/.test(b.tit))[0], ida = bl.filter((b) => /Al gym/.test(b.tit))[0], vu = bl.filter((b) => b.cat === 'gym' && /A casa/.test(b.tit))[0];
       return { ent: ent && ent.de, ida: ida && (ida.de + '-' + ida.a), vuelta: vu && (vu.a - vu.de),
         cocina: P.cocinaDelDia ? 'ok' : 'no', icsSinCocina: !/Cocinar/.test(P.icsTexto(k.k, k.k, {})) }; });
     check('el día cuenta ir al gym y volver (solo en la app), y la cocina no va a Google',
@@ -7335,6 +7335,50 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!l1.e && l1.dur === 130 && l1.cabe !== false && l1.carril && l1.persiste && l2 === false, JSON.stringify({ l1, l2 }));
     await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.minSemana = 0; g.forzar = {};
       g.rutinas = g.rutinas.filter((r) => r.id !== 'rt-205'); P.save(); P.render(); });
+  }
+
+  // 206) LA SEMANA DE ENTRENOS: fuerza + piscina del saliente, eventos que chocan, aviso con el porqué,
+  //      eventos visibles en vacaciones y en la rejilla de la semana
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const lun = P.mondayOf(new Date(2027, 4, 5)), k = (i) => P.iso(P.addDays(lun, i));
+      g.rutinas = g.rutinas.filter((x) => !/^rt-206/.test(x.id));
+      g.rutinas.push({ id: 'rt-206a', nombre: 'A206', notas: '', dias: [], ejercicios: [{ ex: 'Sentadilla', series: 3, reps: 5 }] });
+      g.rutinas.push({ id: 'rt-206b', nombre: 'B206', notas: '', dias: [], ejercicios: [{ ex: 'Press', series: 3, reps: 5 }] });
+      g.minSemana = 4; g.fuerzaMin = 2; g.forzar = {}; g.hora = ''; g.segundo.on = false; g.cambios = {};
+      const ds = ['sh-t', 'sh-g', 'sh-s', 'sh-t', 'sh-t', 'sh-l', 'sh-l'];
+      ds.forEach((sh, i) => P.setDayOverride(k(i), sh, ''));
+      P.store.eventos = P.store.eventos.filter((e) => !/^ev-206/.test(e.id));
+      P.store.eventos.push({ id: 'ev-206', titulo: 'Cena 206', hora: '15:00', fin: '19:30', modo: 'fecha', fecha: k(3), on: true });
+      P.render();
+      const s = P.entrenoSemana(k(0)), d = s.dias;
+      const a = { total: s.total, conflicto: s.conflicto, pisc: d[2].auto && d[2].tipo === 'pisc', jue: !d[3].auto && !!d[3].choca,
+        guardia: d[1].auto, fuerza: s.fuerza, orden: d.filter((x) => x.auto && x.tipo === 'fuerza').map((x) => s.asig[x.k].nombre).join(','),
+        piscBloque: P.bloquesDelDia(k(2)).some((b) => /Piscina/.test(b.tit) && b.de === 20 * 60 && b.a === 21 * 60 + 30),
+        gymBloque: d.filter((x) => x.auto && x.tipo === 'fuerza').every((x) => P.bloquesDelDia(x.k).some((b) => /Entreno/.test(b.tit))) };
+      // tres guardias: no llega y dice por qué
+      P.setDayOverride(k(3), 'sh-g', ''); P.setDayOverride(k(4), 'sh-s', ''); P.setDayOverride(k(5), 'sh-g', ''); P.setDayOverride(k(6), 'sh-s', '');
+      P.render();
+      const s2 = P.entrenoSemana(k(0));
+      const b = { conflicto: s2.conflicto, guardias: s2.guardias, porque: P.entrenoPorQue(s2), aviso: P.entrenoSemanaHTML(k(0), true) };
+      // vacaciones con evento: el evento sale con su hora, no un bloque de «todo el día»
+      delete P.store.rotation.daySet[k(6)];
+      P.addVacation(k(6), k(6), 'Canarias');
+      P.store.eventos.push({ id: 'ev-206v', titulo: 'Vuelo 206', hora: '12:00', fin: '13:55', modo: 'fecha', fecha: k(6), on: true });
+      P.render();
+      const bl = P.bloquesDelDia(k(6));
+      const days = []; for (let i = 0; i < 7; i++) days.push({ key: k(i), date: P.addDays(lun, i), short: 'x', shiftId: P.dayInfo(k(i)).shiftId, inf: P.dayInfo(k(i)) });
+      const rej = P.carrilSemanaHTML(days, {});
+      const c = { vuelo: bl.some((x) => /Vuelo 206/.test(x.tit) && x.de === 720 && x.a === 13 * 60 + 55), todoDia: bl.some((x) => /todo el día/.test(x.sub)),
+        rejilla: /Vuelo 206/.test(rej), puntos: /class="sp2"/.test(rej), leyenda: /srley/.test(rej) };
+      P.store = copia; P.save(); P.render();
+      return { a, b, c }; });
+    check('la semana se completa con 2 de fuerza (en tu orden) + piscina del saliente a las 20:00, sin tocar la guardia ni el día con evento',
+      r.a.total === 4 && !r.a.conflicto && r.a.pisc && r.a.jue && !r.a.guardia && r.a.fuerza >= 2 && /^A206,B206/.test(r.a.orden) && r.a.piscBloque && r.a.gymBloque, JSON.stringify(r.a));
+    check('con más de 2 guardias la semana avisa de que no llega y dice por qué',
+      r.b.conflicto && r.b.guardias === 3 && /3 guardias/.test(r.b.porque) && /solo cabe/i.test(r.b.aviso), JSON.stringify(r.b));
+    check('en vacaciones los eventos salen con su franja (y en la rejilla de la semana), sin puntos sueltos y con leyenda',
+      r.c.vuelo && !r.c.todoDia && r.c.rejilla && !r.c.puntos && r.c.leyenda, JSON.stringify(r.c));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
