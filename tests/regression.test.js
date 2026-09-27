@@ -8112,6 +8112,77 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.l.v < 60 && r.l.rec === 'corta' && r.pecho >= 1, JSON.stringify(r));
   }
 
+  // ===================================================================================
+  // EL MENÚ DE EJEMPLO, FUERA. La app arrancaba con un menú entero puesto —porridge, lentejas,
+  // salmón AL HORNO— presentado como si fuera suyo. Y no tiene horno. O sea que le planificaba la
+  // semana, la compra y las tandas de cocina con comida que no puede hacer, y eso salía repetido
+  // en Mes, Semana, Hoy, Cocina y Compra: cinco pantallas diciendo lo mismo, y lo mismo era falso.
+  // ===================================================================================
+  {
+    // 1) la migración: unos datos guardados SIN la marca se vacían al cargarlos, una vez
+    const migra = await page.evaluate(() => { const P = window.PG;
+      const guardado = JSON.stringify(P.store);
+      const o = JSON.parse(JSON.stringify(P.store));
+      delete o.meta.menuVaciado;
+      // se le devuelve el ejemplo y se le añade un plato SUYO, que no se puede tocar
+      const D = P.DEFAULTS();
+      o.dishes = JSON.parse(JSON.stringify(D.dishes));
+      o.meals = JSON.parse(JSON.stringify(D.meals));
+      o.menu = JSON.parse(JSON.stringify(D.menu));
+      o.dishes.push({ id: 'd-mio123', name: 'Lo que yo me hago', icon: '🍝', batchId: '', kcal: 500, prot: 30, portions: 1, ingredients: [], steps: [] });
+      const antes = { platos: o.dishes.length, menus: o.meals.length,
+        tomasConAlgo: Object.keys(o.menu).reduce((a, k) => a + o.menu[k].filter((s2) => s2.mealId || (s2.items || []).length).length, 0) };
+      P.normalize(o);
+      const tras = { marca: o.meta.menuVaciado === true, platos: o.dishes.length, menus: o.meals.length,
+        tomas: Object.keys(o.menu).reduce((a, k) => a + o.menu[k].length, 0),
+        tomasConAlgo: Object.keys(o.menu).reduce((a, k) => a + o.menu[k].filter((s2) => s2.mealId || (s2.items || []).length).length, 0),
+        // las HORAS de cada toma son suyas y se quedan
+        horas: Object.keys(o.menu).reduce((a, k) => a + o.menu[k].filter((s2) => !!s2.time).length, 0),
+        mioSigue: o.dishes.some((d) => d.id === 'd-mio123'),
+        salmonFuera: !o.dishes.some((d) => /al horno/i.test(d.name)) };
+      // y no se vuelve a vaciar: la marca ya está
+      o.dishes.push({ id: 'd-mio456', name: 'Otro mío', icon: '🍲', batchId: '', kcal: 1, prot: 1, portions: 1, ingredients: [], steps: [] });
+      o.menu[Object.keys(o.menu)[0]][0].items = [{ kind: 'dish', id: 'd-mio456', portions: 1 }];
+      P.normalize(o);
+      const segunda = { platos: o.dishes.length,
+        siguePuesto: (o.menu[Object.keys(o.menu)[0]][0].items || []).length === 1 };
+      P.store = JSON.parse(guardado);
+      return { antes, tras, segunda }; });
+    check('unos datos con el menú de ejemplo se vacían UNA vez al cargarlos, sin tocar lo tuyo',
+      migra.antes.tomasConAlgo > 0 && migra.tras.marca && migra.tras.tomasConAlgo === 0 &&
+      migra.tras.tomas === migra.tras.horas && migra.tras.tomas > 0 &&
+      migra.tras.mioSigue && migra.tras.salmonFuera && migra.tras.platos === 1 && migra.tras.menus === 0,
+      JSON.stringify(migra));
+    check('con la marca puesta ya no se vuelve a vaciar nada',
+      migra.segunda.platos === 2 && migra.segunda.siguePuesto, JSON.stringify(migra.segunda));
+
+    // 2) y se puede volver a vaciar a mano desde «Menú», conduciendo la pantalla
+    await gotoTab('types');
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { const P = window.PG, D = P.DEFAULTS();
+      P.store.dishes = JSON.parse(JSON.stringify(D.dishes));
+      P.store.meals = JSON.parse(JSON.stringify(D.meals));
+      P.store.menu = JSON.parse(JSON.stringify(D.menu));
+      P.store.dishes.push({ id: 'd-mio789', name: 'Mío de verdad', icon: '🥗', batchId: '', kcal: 1, prot: 1, portions: 1, ingredients: [], steps: [] });
+      P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    await page.click('#main [data-a="menu-vaciar"]');
+    await page.waitForTimeout(250);
+    await page.click('#modal [data-a="confirm-yes"]');
+    await page.waitForTimeout(350);
+    const aMano = await page.evaluate(() => { const P = window.PG;
+      return { platos: P.store.dishes.length, mioSigue: P.store.dishes.some((d) => d.id === 'd-mio789'),
+        conAlgo: Object.keys(P.store.menu).reduce((a, k) => a + P.store.menu[k].filter((s2) => s2.mealId || (s2.items || []).length).length, 0),
+        // y aguanta recargar: normalize() tira lo que no reconoce
+        trasRecargar: (function(){ P.store = JSON.parse(JSON.stringify(P.store));
+          return Object.keys(P.store.menu).reduce((a, k) => a + P.store.menu[k].filter((s2) => s2.mealId || (s2.items || []).length).length, 0); })() }; });
+    check('«vaciar el menú» deja las tomas sin nada puesto y respeta los platos que creaste tú',
+      aMano.conAlgo === 0 && aMano.trasRecargar === 0 && aMano.platos === 1 && aMano.mioSigue,
+      JSON.stringify(aMano));
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
