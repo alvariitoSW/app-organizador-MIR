@@ -5528,7 +5528,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG, m = document.querySelector('#main');
       return { avisos: [...m.querySelectorAll('.ev')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
         barras: m.querySelectorAll('.fb2c').length,
-        curva: !!m.querySelector('.curva'),
+        curva: !!m.querySelector('.gline polyline'),
         volMusculo: m.querySelectorAll('.fb').length,
         estancados: P.estancados().map((x) => x.ex),
         cambio: P.cambioSugerido('Press banca'),
@@ -8073,6 +8073,43 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       importar: !!document.querySelector('#main [data-a="import"]') }));
     check('el JSON sigue entero en Datos: bajarlo, copiarlo e importarlo',
       datos.descargar && datos.copiar && datos.importar, JSON.stringify(datos));
+  }
+
+  // 208) LA CIENCIA: rango de reps (doble progresión), semana de descarga, listo del día y series por músculo
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const hace = (n) => P.iso(P.addDays(new Date(), -n)), hoy = P.iso(new Date());
+      g.rutinas = [{ id: 'r208', nombre: 'T208', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8, rmax: 12 }] }];
+      g.registro = [0, 1, 2].map((i) => ({ id: 'b' + i, fecha: hace(3), ex: 'Press banca (barra)', kg: 70, reps: 10, rir: 2, ts: i }));
+      g.sesiones = []; P.ui.gymSesionActiva = null;
+      // 10 reps en un rango 8–12: repite peso (no sube hasta hacer 12 en todas)
+      const a = P.progresionDe('Press banca (barra)', 3, 12, hoy);
+      g.registro.forEach((x) => { x.reps = 12; });
+      const b = P.progresionDe('Press banca (barra)', 3, 12, hoy);
+      g.registro.forEach((x) => { x.rir = 0; });
+      const c = P.progresionDe('Press banca (barra)', 3, 12, hoy);
+      // descarga: mitad de series y −10 %
+      g.registro.forEach((x) => { x.rir = 2; });
+      g.bloqueDesde = P.iso(P.addDays(P.mondayOf(new Date()), -28)); g.descargaCada = 5;
+      const bq = P.bloqueDe(hoy);
+      P.empezarRutina('r208'); const f = P.sesionFilas(P.ui.gymSesionActiva)[0];
+      const desc = { filas: f.filas.length, kg: f.filas[0].kg };
+      P.ui.gymSesionActiva = null;
+      // listo: 4 h de sueño
+      P.suenoRealS()[hoy] = { h: 4, guardia: false };
+      const l = P.listoDe(hoy);
+      // series por músculo de la semana
+      g.registro.push({ id: 'z1', fecha: hoy, ex: 'Press banca (barra)', kg: 70, reps: 8, ts: 9 }, { id: 'z2', fecha: hoy, ex: 'Press banca (barra)', kg: 70, reps: 8, ts: 10, t: 'c' });
+      const sm = P.seriesMusculo(P.iso(P.mondayOf(new Date())));
+      P.store = copia; P.save(); P.render();
+      return { a: a.cl + a.kg, b: b.cl + b.kg, c: c.cl + c.kg, bq, desc, l: { v: l.v, rec: l.rec }, pecho: sm.pecho };
+    });
+    check('doble progresión: en el rango repite peso, al tope sin fallo sube, y al fallo no sube',
+      r.a === 'mantiene70' && r.b === 'sube72.5' && r.c !== 'sube72.5', JSON.stringify(r));
+    check('la semana de descarga propone la mitad de series y un 10 % menos',
+      r.bq.descarga && r.desc.filas === 2 && r.desc.kg === 65, JSON.stringify(r));
+    check('dormir 4 h baja el «listo» y pide versión corta; las series de calentamiento no cuentan por músculo',
+      r.l.v < 60 && r.l.rec === 'corta' && r.pecho >= 1, JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
