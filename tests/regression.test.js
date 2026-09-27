@@ -7297,7 +7297,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         guardias: P.icsColorGrupo('guardias') }; });
     // es un <select>: selectOption sí dispara `change`
     const hay = antes.sel > 0;
-    if (hay) { await page.selectOption('#main [data-a="ics-color"][data-g="guardias"]', 'Lavanda');
+    if (hay) { await page.selectOption('#main [data-a="ics-color"][data-g="guardias"]', 'Albahaca');
       await page.waitForTimeout(350); }
     const tras = await page.evaluate(() => { const P = window.PG;
       const r = { guardias: P.icsColorGrupo('guardias'),
@@ -7312,8 +7312,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return r; });
     check('el color de cada calendario en Google se elige, y la app deja de decirte uno que no usas',
       hay && antes.guardias === 'Tomate' && antes.opciones === 11 &&
-      tras.guardias === 'Lavanda' && tras.enPantalla === 'Lavanda' &&
-      tras.trabajo === 'Mandarina' && tras.trasRecargar === 'Lavanda' &&
+      tras.guardias === 'Albahaca' && tras.enPantalla === 'Albahaca' &&
+      // el de fábrica de «trabajo» pasó de Mandarina a Pavo real: Tomate y Mandarina son el
+      // mismo rojo medido (ΔE 11,1 en visión normal) y guardias y trabajo no se distinguían
+      tras.trabajo === 'Pavo real' && tras.trasRecargar === 'Albahaca' &&
       tras.inventado === 'Tomate',
       JSON.stringify({ antes, tras }));
     await page.evaluate(() => { const P = window.PG;
@@ -7561,6 +7563,113 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la dirección del buzón solo se guarda si es https, y aguanta recargar',
       seguro.httpFuera === '' && seguro.httpsQueda === 'https://cal.example.workers.dev' && seguro.buzonQueda,
       JSON.stringify(seguro));
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(200);
+  }
+
+
+  // ===================================================================================
+  // QUE SE SUBA SOLO. Lo que pidió: cambiar algo y que aparezca en Google sin descargar,
+  // importar ni exportar nada. save() solo PIDE la subida y un temporizador la agrupa:
+  // sin eso, escribir el nombre de un evento dispararía una subida por cada tecla.
+  // ===================================================================================
+  {
+    const auto = await page.evaluate(async () => { const P = window.PG;
+      const guardado = JSON.parse(JSON.stringify(P.store.rotation.calSync || {}));
+      let subidas = 0;
+      const fetchReal = window.fetch;
+      window.fetch = async () => { subidas++; return new Response('ok', { status: 200 }); };
+      const c = P.calSyncCfg();
+      c.url = 'https://cal.example.workers.dev'; c.token = 's'; c.buzon = P.buzonNuevo(); c.auto = true;
+      // 20 guardados seguidos, como al escribir el nombre de un evento
+      for (let i = 0; i < 20; i++) P.save();
+      const traslas20 = subidas;
+      // el temporizador no ha saltado: se pide la subida, no se hace
+      const pendiente = P.calSyncPendiente();
+      // se fuerza el momento en que salta
+      await P.calSyncAhoraSiToca();
+      await new Promise((r) => setTimeout(r, 300));
+      const trasElTemporizador = subidas;
+      // y al no haber cambiado nada más, no vuelve a subir
+      await P.calSyncAhoraSiToca();
+      await new Promise((r) => setTimeout(r, 200));
+      const sinCambios = subidas;
+      // apagado, no sube aunque cambies cosas
+      c.auto = false; P.save();
+      const apagado = P.calSyncAuto();
+      window.fetch = fetchReal;
+      P.store.rotation.calSync = guardado; P.save();
+      return { traslas20, pendiente, trasElTemporizador, sinCambios, apagado }; });
+    check('veinte guardados seguidos no suben nada; el temporizador sube UNA vez los cuatro',
+      auto.traslas20 === 0 && auto.pendiente === true &&
+      auto.trasElTemporizador === 4 && auto.sinCambios === 4 && auto.apagado === false,
+      JSON.stringify(auto));
+
+    // el aviso de colores que se confunden: es lo que le pasó con Tomate y Mandarina
+    const choca = await page.evaluate(() => { const P = window.PG;
+      const g = JSON.parse(JSON.stringify(P.store.rotation.icsColores || {}));
+      const deFabrica = P.icsColorChoca();
+      // a mano, los dos que a él le salieron iguales
+      P.setIcsColor('guardias', 'Tomate'); P.setIcsColor('trabajo', 'Mandarina');
+      const malo = P.icsColorChoca();
+      // y el mismo color en dos sitios
+      P.setIcsColor('trabajo', 'Tomate');
+      const igual = P.icsColorChoca();
+      P.store.rotation.icsColores = g; P.save();
+      return { deFabrica: deFabrica.length, malo: malo.length, igual: igual.length,
+        textoMalo: malo[0] || '', textoIgual: igual[0] || '' }; });
+    check('los colores de fábrica no se confunden, y si eliges dos que sí, la app lo dice',
+      choca.deFabrica === 0 && choca.malo >= 1 && choca.igual >= 1 &&
+      /Tomate y Mandarina|Mandarina y Tomate/.test(choca.textoMalo) &&
+      /mismo color/.test(choca.textoIgual),
+      JSON.stringify(choca));
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(200);
+  }
+
+
+  // ===================================================================================
+  // «QUE VENGA BIEN INDICADO LO DE CADA DÍA». En la columna de la semana de Google caben
+  // unos 12 caracteres: «🩺 Guardia · Urgencias [urg]» se leía «🩺 Guardia ·…», o sea que
+  // lo único que distingue una guardia de otra quedaba fuera, y el [urg] era el código
+  // interno de la app. Lo que distingue va primero; el emoji ya dice de qué se trata.
+  // ===================================================================================
+  {
+    const tit = await page.evaluate(() => { const P = window.PG, S = P.store;
+      const guardado = { mode: S.rotation.mode, anchor: S.rotation.anchorSet };
+      S.rotation.mode = 'date'; S.rotation.anchorSet = true; P.save();
+      const k = '2026-10-19', G = S.shifts.filter(P.isGuardia)[0];
+      const ovAntes = P.dayOverride(k);
+      const svAntes = P.monthService(2026, 9).service;
+      P.setDayOverride(k, G.id, 'urg'); P.setMonthService(2026, 9, 'Urgencias', null); P.save();
+      const de = (cat, desde, hasta) => (P.calEventos(desde || k, hasta || k)
+        .filter((e) => e.cat === cat)[0] || {}).summ || '';
+      const urg = de('GUARDIA');
+      P.setDayOverride(k, G.id, 'umi'); P.save();
+      const umi = de('GUARDIA');
+      // el saliente y la siesta son del día siguiente a la guardia
+      const k2 = P.iso(P.addDays(P.parseDate(k), 1));
+      const evs2 = P.calEventos(k2, k2);
+      const sal = (evs2.filter((e) => /Saliente/.test(e.summ || ''))[0] || {}).summ || '';
+      const sie = (evs2.filter((e) => /Siesta/.test(e.summ || ''))[0] || {}).summ || '';
+      // un día de trabajo cualquiera de ese mes, con la rotación puesta
+      let trab = '';
+      for (let i = 1; i <= 25 && !trab; i++) trab = de('TRABAJO', '2026-10-' + String(i).padStart(2, '0'));
+      P.setDayOverride(k, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.setMonthService(2026, 9, svAntes, null);
+      S.rotation.mode = guardado.mode; S.rotation.anchorSet = guardado.anchor; P.save();
+      const largo = (t) => [...t].length;
+      return { urg, umi, sal, sie, trab,
+        largos: [urg, umi, sal, sie, trab].map(largo) }; });
+    check('en Google, el título de cada día dice QUÉ es antes de que Google lo corte',
+      tit.urg === '🩺 Urgencias' && tit.umi === '🩺 UMI' &&
+      /^🚪 Saliente \d{1,2}:\d{2}$/.test(tit.sal) && tit.sie === '😴 Siesta' &&
+      tit.trab === '💼 Urgencias' &&
+      // y ninguno pasa de 16 caracteres, que es lo que se lee de un vistazo
+      tit.largos.every((n) => n > 0 && n <= 16),
+      JSON.stringify(tit));
+    check('el código interno de la guardia ya no se le enseña a nadie',
+      !/\[urg\]|\[umi\]/.test(tit.urg + tit.umi), JSON.stringify(tit));
     await page.evaluate(() => window.PG.render());
     await page.waitForTimeout(200);
   }

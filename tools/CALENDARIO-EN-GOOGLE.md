@@ -58,6 +58,10 @@ En la app: **Ajustes → Calendario del móvil**, abajo, «O que se actualice so
 
 Dale a **subir los cambios**. Si sale «token», es que no coincide con el del Worker.
 
+Con los dos campos puestos queda encendido **subir solo al cambiar algo**: a partir de ahí no tienes
+que darle a nada. La app agrupa lo que cambies y sube unos segundos después; si no hay cobertura,
+sube al volver, y si no ha cambiado nada no sube. Se puede apagar con ese mismo botón.
+
 ## 4. Suscribir los cuatro calendarios en Google
 
 Esto hay que hacerlo **desde el ordenador**: la app de Android no sabe suscribirse a una URL.
@@ -73,8 +77,8 @@ mira el color que trae el fichero. Todo en uno = todo del mismo color, que es lo
 
 ## A partir de aquí
 
-Cambias algo en la app → **subir los cambios** → Google se entera solo en unas horas. La app te
-dice si hay algo sin subir y cuándo fue la última vez.
+Cambias algo en la app → se sube solo → Google se entera en unas horas. La app te dice si hay algo
+sin subir y cuándo fue la última vez, y «subir ya» está ahí para forzarlo.
 
 ## Si algo va mal
 

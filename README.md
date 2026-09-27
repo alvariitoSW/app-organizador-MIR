@@ -126,6 +126,18 @@ cambia y **quita**. La guía, en `tools/CALENDARIO-EN-GOOGLE.md`. Ojo: quien ten
 completa ve tus turnos —es el mismo trato que la «dirección secreta en formato iCal» de Google—,
 y desde la app se puede cambiar cuando quieras.
 
+Con eso puesto **no hay que darle a nada**: cambias una guardia o añades un evento y la app lo sube
+sola unos segundos después (agrupado, no una subida por tecla; si no hay cobertura, al volver). Si
+nada ha cambiado no sube nada, y el automático se puede apagar para subir a mano. Los colores de
+fábrica —Tomate, Pavo real, Salvia y Uva— están **medidos** para distinguirse incluso con
+daltonismo (el peor par, ΔE 14,4); si eliges dos que se confunden, la app te lo dice donde los
+eliges.
+
+Los títulos están escritos para **la columna estrecha de la semana de Google**, donde caben unos 12
+caracteres: lo que distingue el día va primero («🩺 Urgencias», «💼 Cardio», «💪 Torso A»,
+«🚪 Saliente 9:15») y el emoji dice de qué se trata. Antes se leía «🩺 Guardia ·…» y lo único que
+importaba quedaba fuera.
+
 El **saliente** sí va: el bloque desde las 00:00 hasta el relevo —esa mañana sigues en el
 hospital— y la siesta al llegar a casa. Los días libres y las vacaciones se quedan en la app.
 

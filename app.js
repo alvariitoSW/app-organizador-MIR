@@ -404,6 +404,8 @@ function normalize(o){
       token:String(cs.token||'').slice(0,200),
       buzon:/^[a-z0-9]{24,64}$/.test(String(cs.buzon||''))?String(cs.buzon):'',
       ultima:(+cs.ultima>0)?+cs.ultima:0,
+      /* subir solo: encendido salvo que lo apagues a mano */
+      auto:cs.auto!==false,
       firma:String(cs.firma||'').slice(0,80)};}
   if(!o.rotation.icsColores||typeof o.rotation.icsColores!=='object')o.rotation.icsColores={};
   else{const ic={};ICS_GRUPOS.forEach(function(g){
@@ -746,7 +748,10 @@ function normalize(o){
 }
 let saveFailWarned=false;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(store));saveFailWarned=false;}catch(e){console.warn('no se pudo guardar',e);
-  if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}}
+  if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}
+  /* y si tienes el calendario enchufado, que se suba solo. No aquí mismo: save() se llama en cada
+     tecla y subir cuatro ficheros en cada una sería absurdo. Se pide, y el temporizador decide. */
+  try{calSyncPide();}catch(e){}}
 function saveMarks(){try{localStorage.setItem(MKEY,JSON.stringify(Array.from(ui.marks)));}catch(e){}}
 const shiftById=id=>store.shifts.find(s=>s.id===id);
 const shiftByCode=c=>store.shifts.find(s=>s.code===c)||(c&&store.shifts.find(s=>s.name.toLowerCase()===String(c).toLowerCase()));
@@ -12872,11 +12877,32 @@ function icsResumen(desde,hasta){
 /* los ficheros que se ofrecen, con el color de la app y el nombre del color de Google que más se
    le parece. La paleta de Google es fija (once colores con nombre), así que esto es «el más
    parecido», no el mismo hex: decir lo contrario sería mentir. */
+/* EL COLOR QUE SE PROPONE PARA CADA UNO EN GOOGLE. Tomate y Mandarina —lo que había— son el mismo
+   rojo a ojo, y medido también: ΔE 11,1 en visión normal, por debajo del 15 que hace falta para
+   distinguir dos colores de un vistazo. Guardias y trabajo no se separaban ni con vista perfecta.
+   Tomate · Pavo real · Salvia · Uva pasa las seis comprobaciones: el peor par queda en ΔE 14,4
+   con daltonismo y 19,8 en visión normal. */
 const ICS_GRUPOS=[
   ['guardias','🩺 Guardias',['GUARDIA'],'guard','Tomate'],
-  ['trabajo','💼 Trabajo y rotación',['TRABAJO','ROTACION'],'work','Mandarina'],
-  ['entrenos','💪 Entrenos',['ENTRENO'],'gym','Pavo real'],
+  ['trabajo','💼 Trabajo y rotación',['TRABAJO','ROTACION'],'work','Pavo real'],
+  ['entrenos','💪 Entrenos',['ENTRENO'],'gym','Salvia'],
   ['avisos','📌 Eventos, recibos y tareas',['EVENTO','DINERO','TAREA','ESTUDIO'],'evt','Uva']];
+/* los pares de los once de Google que NO se distinguen, medidos dos a dos con el validador de
+   paletas (ΔE por debajo de 15 en visión normal). No es opinión: es lo que sale de medirlos. */
+const ICS_COLOR_CHOCAN=[['Tomate','Mandarina'],['Tomate','Flamenco'],['Mandarina','Flamenco'],
+  ['Salvia','Albahaca'],['Lavanda','Arándano'],['Uva','Arándano'],['Lavanda','Pavo real'],
+  ['Plátano','Salvia']];
+function icsColorChoca(){
+  /* qué grupos han acabado con colores que no se distinguen. Se dice en pantalla, en vez de dejar
+     que lo descubra mirando el móvil en un pasillo. */
+  const a=ICS_GRUPOS.map(function(g){return {n:g[1],c:icsColorGrupo(g[0])};});
+  const malos=[];
+  for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){
+    if(a[i].c===a[j].c){malos.push(a[i].n+' y '+a[j].n+': el mismo color');continue;}
+    if(ICS_COLOR_CHOCAN.some(function(p){
+      return (p[0]===a[i].c&&p[1]===a[j].c)||(p[1]===a[i].c&&p[0]===a[j].c);}))
+      malos.push(a[i].n+' y '+a[j].n+': '+a[i].c+' y '+a[j].c+' se parecen demasiado');}
+  return malos;}
 /* los once colores que tiene Google Calendar, con el nombre que les pone él */
 const ICS_COLORES=['Tomate','Mandarina','Plátano','Albahaca','Salvia','Pavo real','Arándano',
   'Lavanda','Uva','Flamenco','Grafito'];
@@ -12902,7 +12928,7 @@ function setIcsColor(k,color){
    Cloudflare (tools/worker-calendario.js): la app le sube el .ics y él lo sirve. */
 function calSyncCfg(){
   const r=store.rotation;
-  if(!r.calSync||typeof r.calSync!=='object')r.calSync={url:'',token:'',buzon:'',ultima:0,firma:''};
+  if(!r.calSync||typeof r.calSync!=='object')r.calSync={url:'',token:'',buzon:'',ultima:0,auto:true,firma:''};
   return r.calSync;}
 function buzonNuevo(){
   /* la parte secreta de la URL: 24 caracteres de azar del propio navegador. Es el mismo trato
@@ -12917,20 +12943,44 @@ function calSyncURL(grupo){
   if(!c.url||!c.buzon)return '';
   return String(c.url).replace(/\/+$/,'')+'/cal/'+c.buzon+'/'+grupo+'.ics';}
 function calSyncFirma(){
-  /* de qué se hizo la última subida: si no ha cambiado nada, no hace falta volver a subir. Se
-     mira el TEXTO de los cuatro ficheros, que es exactamente lo que vería Google. */
+  /* de qué se hizo la última subida: si no ha cambiado nada, no hace falta volver a subir.
+     SE QUITA EL DTSTAMP, que lleva la hora de generación y cambia CADA SEGUNDO. Con él dentro, la
+     firma nunca coincidía con la anterior: la app se creía que siempre había cambios y, con el
+     automático encendido, habría estado subiendo los cuatro ficheros cada nueve segundos para
+     siempre. Lo que se compara es lo que de verdad vería Google. */
   const r=calRangoExport(calRango());
-  return ICS_GRUPOS.map(function(g){
-    try{return icsTexto(r.desde,r.hasta,{cats:g[2]}).length;}catch(e){return 0;}}).join('-')+
-    '|'+(function(){let h=0;try{const t=icsTexto(r.desde,r.hasta,{});
-      for(let i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))>>>0;}}catch(e){}
-      return h.toString(36);})();}
+  const limpia=function(t){return String(t||'').replace(/^DTSTAMP:.*$/gm,'');};
+  let h=0;
+  const largos=ICS_GRUPOS.map(function(g){
+    let t='';try{t=limpia(icsTexto(r.desde,r.hasta,{cats:g[2]}));}catch(e){t='';}
+    for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
+    return t.length;});
+  return largos.join('-')+'|'+h.toString(36);}
 function calSyncPendiente(){
   const c=calSyncCfg();
   if(!c.url||!c.token||!c.buzon)return false;
   if(!c.ultima)return true;
   try{return calSyncFirma()!==c.firma;}catch(e){return true;}}
-async function calSyncSubir(){
+/* ===== QUE SE SUBA SOLO =====
+   Lo que pidió: cambiar algo y que aparezca en Google sin descargar, importar ni exportar nada.
+   save() solo PIDE la subida; el temporizador la agrupa. Sin esto, escribir el nombre de un evento
+   dispararía una subida por tecla. */
+let _syncTimer=null,_syncEnCurso=false;
+function calSyncAuto(){const c=calSyncCfg();return !!(c.url&&c.token&&c.buzon&&c.auto!==false);}
+function calSyncPide(){
+  if(!calSyncAuto())return;
+  if(_syncTimer)clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(function(){_syncTimer=null;calSyncAhoraSiToca();},9000);}
+function calSyncAhoraSiToca(){
+  /* tres razones para no hacer nada, y ninguna es un error que haya que contarle: no está
+     configurado, no hay red, o no ha cambiado nada desde la última vez. */
+  if(!calSyncAuto()||_syncEnCurso)return;
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return;
+  let toca=false;try{toca=calSyncPendiente();}catch(e){toca=false;}
+  if(!toca)return;
+  _syncEnCurso=true;
+  calSyncSubir(true).then(function(){_syncEnCurso=false;}).catch(function(){_syncEnCurso=false;});}
+async function calSyncSubir(callado){
   /* sube los CUATRO ficheros, uno por calendario de Google. Si alguno falla se dice cuál: subir
      tres de cuatro y callarlo dejaría un calendario desfasado sin que se notara. */
   const c=calSyncCfg();
@@ -12947,10 +12997,19 @@ async function calSyncSubir(){
         body:icsTexto(r.desde,r.hasta,{cats:g[2]})});
       if(!resp.ok)malas.push(g[1]+' ('+resp.status+(resp.status===401?': token':'')+')');
     }catch(e){malas.push(g[1]+' (no se ha podido llegar al Worker)');}}
-  if(malas.length===ICS_GRUPOS.length)return 'no se ha subido nada: '+malas[0];
+  if(malas.length===ICS_GRUPOS.length){
+    /* callado es callado, pero un fallo del token no se traga: si no, te crees que está
+       sincronizando y llevas un mes sin subir nada */
+    if(callado&&/401|token/.test(malas[0]))flash('el calendario no se está subiendo: '+malas[0],6000);
+    return 'no se ha subido nada: '+malas[0];}
   c.ultima=Date.now();
   try{c.firma=calSyncFirma();}catch(e){c.firma='';}
-  save();render();
+  /* OJO: save() pide otra subida, y ésta viene DE una subida. Se apaga un momento el automático
+     para no entrar en bucle. */
+  const antes=c.auto;c.auto=false;save();c.auto=antes;
+  try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}
+  if(!callado)render();
+  else if(ui.tab==='ajustes'&&ui.ajuVista==='calendario')render();
   return malas.length?('subido, menos '+malas.join(', ')):'subido: Google lo verá en unas horas';}
 function calSyncCardHTML(){
   /* SUSCRIBIRSE ES LO QUE NO DUPLICA. Importar es una foto: lo que borres luego se queda en
@@ -12975,12 +13034,17 @@ function calSyncCardHTML(){
     '</div>'+
     (listo
       ?('<div class="row" style="margin-top:9px">'+
-          '<button class="btn '+(pend?'p':'s')+'" data-a="calsync-subir">'+(pend?'subir los cambios':'volver a subir')+'</button>'+
+          '<button class="btn s '+(c.auto!==false?'g':'')+'" data-a="calsync-auto">'+(c.auto!==false?'✓':'○')+
+            ' subir solo al cambiar algo</button>'+
+          '<button class="btn '+(pend?'p':'s')+'" data-a="calsync-subir">'+(pend?'subir ya':'volver a subir')+'</button>'+
           '<button class="btn s" data-a="calsync-direcciones">ver las 4 direcciones</button>'+
           '<button class="btn s" data-a="calsync-nuevo">cambiar la dirección</button>'+
         '</div>'+
         '<p class="mini" style="margin:7px 0 0">'+
-          (c.ultima?('Última subida: <b style="color:var(--ink)">'+esc(cuando)+'</b>. '):'Todavía no has subido nada. ')+
+          (c.auto!==false
+            ?'<b style="color:var(--ink)">No tienes que hacer nada.</b> Cambias algo y se sube solo unos segundos después; si te quedas sin cobertura, al volver. '
+            :'<b style="color:var(--warn)">Automático apagado:</b> tienes que darle a «subir ya» tú. ')+
+          (c.ultima?('Última subida: <b style="color:var(--ink)">'+esc(cuando)+'</b>. '):'Todavía no se ha subido nada. ')+
           (pend?'<b style="color:var(--warn)">Hay cambios sin subir.</b>':'Al día.')+
           ' Google relee cada 8-24 h: eso lo manda él, no se puede acelerar.</p>'+
         (ui.calSyncVer
@@ -13001,7 +13065,12 @@ function icsCuentaGrupo(desde,hasta,k){
   let evs=[];try{evs=calEventos(desde,hasta);}catch(e){return 0;}
   return evs.filter(function(e){return g[2].indexOf(e.cat)>=0;}).length;}
 function icsGruposHTML(desde,hasta){
-  return '<div class="icsg">'+ICS_GRUPOS.map(function(g){
+  /* si dos grupos han acabado con colores que no se distinguen, se dice AQUÍ, que es donde se
+     eligen: descubrirlo mirando el móvil en un pasillo no es descubrirlo a tiempo */
+  const chocan=icsColorChoca();
+  return (chocan.length?('<p class="mini" style="margin:0 0 8px;color:var(--warn)">⚠ '+
+    esc(chocan.join(' · '))+'. En el móvil no vas a poder distinguirlos.</p>'):'')+
+    '<div class="icsg">'+ICS_GRUPOS.map(function(g){
     const n=icsCuentaGrupo(desde,hasta,g[0]);
     /* el color se ELIGE: la app decía «ponlo en Tomate» y si usabas otro el texto mentía */
     return '<div class="icsgf"'+(n?'':' data-vacio="1"')+'>'+
@@ -13795,6 +13864,9 @@ function act(a,el){
       calSyncSubir().then(function(m){flash(m);}).catch(function(e){flash('no se ha podido subir: '+String(e&&e.message||e).slice(0,90));});
       break;}
     case 'calsync-direcciones':{ui.calSyncVer=!ui.calSyncVer;render();break;}
+    case 'calsync-auto':{const c=calSyncCfg();c.auto=(c.auto===false);save();render();
+      flash(c.auto?'se subirá solo cada vez que cambies algo':'ahora tienes que subirlo tú');
+      break;}
     case 'calsync-copiar':{const u=calSyncURL(el.dataset.g||'');
       if(u)copy(u);break;}
     case 'calsync-nuevo':{
@@ -14825,7 +14897,10 @@ function act(a,el){
     case 'app-actualizar':{flash('actualizando…');
       /* recarga saltándose la caché: el service worker ya pide con no-store, pero la propia
          navegación también tiene que salir a la red */
-      setTimeout(function(){location.reload();},120);break;}
+      setTimeout(function(){location.reload();
+/* al arrancar, si quedó algo sin subir del calendario. Con retardo: primero que pinte la app, que
+   es lo que él está esperando ver. */
+try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){}},120);break;}
     case 'lector-guia':ui.lectorGuia=!ui.lectorGuia;render();break;
     case 'ir-lector':ui.lectorGuia=true;irACard('ajustes','lector');break;
     case 'imp-claude':impConClaude();break;
@@ -15847,7 +15922,11 @@ function calEventos(desde,hasta){
         /* el UID sale del DÍA y de qué es, no del título: si el título cambia (otro tipo de
            guardia, otra rotación) Google lo veía como un evento nuevo y dejaba el viejo al lado */
         uid:icsUID('guardia|'+k),
-        summ:'🩺 Guardia · '+tipo+(inf.guard?(' ['+inf.guard+']'):''),
+        /* En la columna de la semana de Google caben ~12 caracteres: «🩺 Guardia · Urgencias [urg]»
+           se leía «🩺 Guardia ·…» y lo único que distingue una guardia de otra —de qué es— quedaba
+           fuera. El emoji ya dice que es una guardia; el texto dice CUÁL. Y el [urg] era el código
+           interno de la app: ruido en la pantalla de alguien. */
+        summ:'🩺 '+(tipo==='sin tipo'?'Guardia':tipo),
         desc:'Guardia de '+tipo+(g?('. Entras a las '+g.desde+
           (g.desde!==g.guardia?(' (jornada hasta las '+g.guardia+')'):'')+
           ' y sales a las '+g.sale+' del día siguiente'+(g.pase?(', pase de guardia incluido'):'')+'.'):'.'),
@@ -15863,10 +15942,11 @@ function calEventos(desde,hasta){
       const propias=sh.start&&!(jor&&jor.start===sh.start&&jor.end===sh.end);
       const hG=gymS().hora||'';
       const hIni=propias?st:(hG?icsHM(hG):''),hFin=propias?((en&&en>st)?en:''):'';
-      const qu=rtDia?(' · '+rtDia.nombre):'';
       out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:(+gymS().duracion||75),
         uid:icsUID('entreno|'+k),
-        summ:'💪 Entreno'+qu,
+        /* con rutina puesta, el nombre de la rutina ES lo que quieres leer: «💪 Torso A», no
+           «💪 Entreno · Torso A» cortado en «💪 Entreno ·…» */
+        summ:'💪 '+(rtDia?rtDia.nombre:'Entreno'),
         desc:(rtDia?('Rutina «'+rtDia.nombre+'»: '+rtDia.ejercicios.length+' ejercicios. '):'')+
           (hIni?'':'Sin hora puesta: ponla en Entreno o en las horas del «Día de fuerza».'),cat:'ENTRENO'});}
     /* EL SALIENTE SÍ VA. Esa mañana no estás en casa: de 00:00 hasta que te relevan sigues
@@ -15879,7 +15959,7 @@ function calEventos(desde,hasta){
       if(fin==null||fin<=0)return;
       out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:'00:00',horaFin:icsHM(hm(fin)),dur:0,
         uid:icsUID('saliente|'+k),
-        summ:'🚪 Saliente · hasta '+hm(fin),
+        summ:'🚪 Saliente '+hCortaHM(hm(fin)),
         desc:'Vienes de la guardia de ayer: sigues en el hospital hasta el relevo de las '+hm(fin)+'.',
         cat:'GUARDIA'});
       /* y la siesta, que es lo que explica por qué esa tarde no estás para nada */
@@ -15887,7 +15967,7 @@ function calEventos(desde,hasta){
       if(sl&&sl.siesta&&sl.siesta.de&&sl.siesta.a){
         out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(sl.siesta.de),horaFin:icsHM(sl.siesta.a),dur:0,
           uid:icsUID('siesta|'+k),
-          summ:'😴 Siesta del saliente',
+          summ:'😴 Siesta',
           desc:'Al llegar a casa, '+fmtHM(sl.siesta.min)+' de siesta. Sale de tus horas y de lo que tardas en llegar.',
           cat:'GUARDIA'});}})();
     if(/saliente|libre|vacacion|festiv/i.test(nm)&&!jor)continue;   /* los libres y las vacaciones sí se quedan en la app */
@@ -16621,7 +16701,14 @@ document.addEventListener('visibilitychange',function(){
     const msg='cámara parada al pasar a segundo plano: vuelve a abrirla cuando quieras seguir';
     ui.scanMsg=msg;const o=document.getElementById('scanOut');if(o)o.textContent=msg;
   }
+  /* al volver a primer plano, si quedó algo del calendario sin subir —te quedaste sin cobertura,
+     o cerraste la app antes de los nueve segundos— se sube ahora. Es lo que hace que no dependa de
+     que te acuerdes de darle a un botón. */
+  if(!document.hidden){try{calSyncAhoraSiToca();}catch(e){}}
 });
+/* y cuando vuelve la red: sin esto, un cambio hecho en el metro se quedaba sin subir hasta que
+   tocaras otra cosa */
+try{window.addEventListener('online',function(){try{calSyncAhoraSiToca();}catch(e){}});}catch(e){}
 /* cabecera que se esconde al bajar y vuelve al subir: en pantallas pequeñas, más sitio para ver
    el calendario en vez de tenerla siempre fija ocupando espacio.
    El scroll táctil no es monótono (rebotes de inercia de unos pocos px hacia arriba en pleno
@@ -16783,7 +16870,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,
-  calSyncCfg,calSyncURL,calSyncPendiente,calSyncSubir,buzonNuevo,
+  calSyncCfg,calSyncURL,calSyncPendiente,calSyncSubir,buzonNuevo,calSyncAuto,calSyncPide,calSyncAhoraSiToca,icsColorChoca,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,ajusteMeta,protPorKg,setMetaNum,kcalFaltaTxt,
   diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,
