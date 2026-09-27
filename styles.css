@@ -234,7 +234,10 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .meal.next{background:color-mix(in srgb,var(--brand) 8%,transparent);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
 .meal.past{opacity:.5}
 /* sin huecos entre columnas: las casillas comparten borde y se gana ancho para el texto */
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-top:10px;
+/* SÁBADO Y DOMINGO, MÁS ESTRECHOS. En un fin de semana pone «libre» y poco más; en un martes hay
+   turno, horas y dos eventos. Quitándoles un 18 % del ancho, los cinco días de diario pasan de 55
+   a 58 px y esos 3 px son medio carácter más de nombre en cada línea. */
+.cal{display:grid;grid-template-columns:repeat(5,1.05fr) repeat(2,.875fr);gap:0;margin-top:10px;
   border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--line);
   /* la fila de cabecera se queda de su tamaño; las semanas se reparten a partes iguales lo que
      sobre, así el mes llena la pantalla en vez de dejar 68 px muertos en cada casilla */
@@ -259,11 +262,16 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
      aviso, dos filas de botones) dejaba la cuadrícula en poco más de la mitad del alto útil,
      con casillas de 96 px de las que solo 28 llevaban algo escrito */
   .cal{gap:0;min-height:clamp(430px,calc(100svh - 330px),660px);grid-auto-rows:minmax(86px,1fr)}
-  .dbox{min-height:86px;padding:4px 3px;gap:1px}
-  .dbox .dnum{font-size:11.5px}
-  .dbox .dic{font-size:10.5px}
-  .dbox .dnm{font-size:9.5px;font-weight:800;-webkit-line-clamp:2}
-  .dbox .dline{font-size:8.5px}
+  .dbox{min-height:86px;padding:4px 2px;gap:1px}
+  /* Con la semana pasada encogida, las casillas que quedan pasaron de 118 a 155 px de alto y solo
+     llevaban 53 px escritos: un tercio. Lo que sobra se gasta en LETRA MÁS GRANDE, que es de lo
+     que sirve el sitio en un móvil — no en dejar la casilla medio vacía con letra de 8,5 px. */
+  .dbox .dnum{font-size:13px}
+  .dbox .dic{font-size:12px}
+  .dbox .dnm{font-size:11px;font-weight:800}
+  .dbox .dline{font-size:10px}
+  .dbox .dev{font-size:9.5px;letter-spacing:-.01em}
+  .dbox .dline.gflag{font-size:9.5px}
   .dbox .dsl{display:none}
   .dbox .dflag{font-size:9px}
 }
@@ -421,9 +429,11 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 /* importar receta: el enlace y su botón en la misma fila, con el botón alineado abajo */
 .enlacefila{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
 .enlacefila .fld>input{width:100%}
-/* hasta dos líneas: un nombre de tipo de día largo se parte en vez de cortarse en «Salie…» */
-.dnm{font-size:11.5px;font-weight:700;line-height:1.15;overflow:hidden;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+/* UNA LÍNEA. Partido, «Vacaciones» salía como «Vacacion / es» y se llevaba dos renglones de una
+   casilla en la que cada renglón vale. Recortado con puntos suspensivos ocupa uno, y el nombre
+   entero está en el title y al tocar el día. */
+.dnm{font-size:11.5px;font-weight:700;line-height:1.2;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis}
 /* una línea por cosa del día: jornada, entreno, evento… cortas y con su color */
 .dline{display:flex;align-items:center;gap:3px;min-width:0;font-size:9.5px;font-weight:700;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
@@ -1183,8 +1193,18 @@ ul.slots{list-style:none;margin:0;padding:0}
    decidido y medido (menos de 60 px por delante del primer día). Con el relleno de una .card eran
    106 px y los siete días se salían de la primera pantalla. */
 .semnav{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0;margin-bottom:-6px}
+/* «ver 5 7 10 14 días» comparte fila con el rango; en el móvil cae a la segunda, pero sin la
+   tarjeta de leyenda que había debajo son ~60 px menos antes de la semana */
+select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weight:700;
+  border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.semlupa{flex:none}
+.semlupa>summary{list-style:none;cursor:pointer;padding:0 4px}
+.semlupa>summary::-webkit-details-marker{display:none}
 .semnav .btn{min-height:34px;padding:4px 10px;flex:none}
 .semnav input[type=date]{flex:1 1 auto;min-width:0;height:34px;padding:2px 8px;font-size:13px}
+/* la pastilla del rango medía 70 px de alto para repetir lo que ya pone la barra de arriba */
+.semnav .semrango{min-height:34px;padding:4px 8px}
+.semnav .semrango>span{font-size:12.5px}
 .semnav .mini{flex:none;white-space:nowrap}
 
 /* ============ «Semana»: lo que vas a hacer ese día ============
@@ -1350,16 +1370,37 @@ ul.slots{list-style:none;margin:0;padding:0}
 .mesnav input[type=month]{flex:1 1 auto;min-width:0;width:auto}
 .mesnav .btn{flex:0 0 auto}
 .cal.ext{grid-auto-rows:minmax(92px,1fr);min-height:calc(100svh - 96px)}
+/* LA SEMANA PASADA, ENCOGIDA. Fila 1 = los nombres de los días, fila 2 = la semana que ya pasó
+   (que se sigue viendo, pero no vale lo mismo que las que tienes por delante), y de la 3 en
+   adelante las que importan, repartiéndose todo lo que sobra. */
+.cal.ext.conprev{grid-template-rows:auto 56px}
+.cal.ext.conprev .dbox.semprev{min-height:0;padding:2px 3px;gap:0}
+.cal.ext.conprev .dbox.semprev .dev,
+.cal.ext.conprev .dbox.semprev .dline.marcas,
+.cal.ext.conprev .dbox.semprev .dline.gym,
+.cal.ext.conprev .dbox.semprev .dsl{display:none}
+.cal.ext.conprev .dbox.semprev .dnm{font-size:8.5px;line-height:1.1}
+.cal.ext.conprev .dbox.semprev .dline{font-size:8px;line-height:1.1}
 .dbox.fuera{opacity:.5;background:color-mix(in srgb,var(--card) 40%,var(--bg))}
 .dbox.fuera.today,.dbox.fuera.sel{opacity:1}
-/* un evento en la casilla: punto de su color, hora en negrita y el nombre, hasta dos líneas */
-.dbox .dev{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
-  font-size:8.5px;font-weight:600;line-height:1.18;color:var(--ink);overflow-wrap:anywhere;margin-top:1px}
-.dbox .dev .dpt{display:inline-block;width:6px;height:6px;margin-right:2px;vertical-align:1px}
-.dbox .dev b{font-weight:800;color:var(--ink2)}
+/* UN EVENTO, UNA LÍNEA. Partido en dos o tres renglones, «Sesión general · auditorio» se comía la
+   casilla entera y encima no decía nada que no dijera el primer renglón. Fila: punto de color (no
+   se encoge), nombre recortado con puntos suspensivos, y la hora al final, que es lo único que no
+   se puede adivinar. El nombre entero sigue en la lista del mes y al tocar el día. */
+.dbox .dev{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden;white-space:nowrap;
+  font-size:8.5px;font-weight:600;line-height:1.35;color:var(--ink);margin-top:0}
+.dbox .dev .dpt{flex:none;width:6px;height:6px}
+.dbox .dev .n{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbox .dev b{flex:none;font-weight:800;color:var(--ink2);margin-left:1px}
 @media(max-width:560px){
   .cal.ext{min-height:calc(100svh - 70px);grid-auto-rows:minmax(92px,1fr)}
   .calmes>h2{margin-bottom:0}
+  /* UN PELÍN MÁS ANCHAS. La rejilla ocupaba 376 px de los 412 de su móvil: 36 se iban en márgenes
+     a los lados, casi el ancho de media casilla. La tarjeta del mes pega la cuadrícula al borde
+     —el resto de tarjetas no cambia— y cada casilla gana ~2 px de los 53 que medía. */
+  .card.calmes{padding-left:3px;padding-right:3px}
+  .card.calmes>h2,.card.calmes .mesnav{padding-left:6px;padding-right:6px}
+  .cal.ext.conprev{grid-template-rows:auto 52px}
 }
 @media print{
   /* en papel NO hay alto de pantalla que llenar: con el min-height de 100svh la tarjeta del mes
@@ -1368,7 +1409,6 @@ ul.slots{list-style:none;margin:0;padding:0}
   .cal.ext{min-height:0!important;grid-auto-rows:minmax(52px,auto)}
   html.imp-mes .dbox.fuera{opacity:.45}
 }
-.dbox .dev.solo{-webkit-line-clamp:3}
 
 /* ============ Ajustes → Cómo se ve: los cinco temas ============ */
 .temas{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:6px}
@@ -1759,9 +1799,16 @@ ul.slots{list-style:none;margin:0;padding:0}
   background:color-mix(in srgb,var(--c) 20%,transparent);padding:0;cursor:pointer;
   display:flex;align-items:flex-start}
 .sb:hover{background:color-mix(in srgb,var(--c) 30%,transparent)}
-.sbt{position:sticky;top:0;font-size:8.5px;font-weight:800;color:var(--c);line-height:1.15;
-  padding:3px 3px;display:block;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  max-width:100%}
+/* El nombre se parte en las líneas que hagan falta: un bloque de guardia mide 300 px de alto y
+   tenía el nombre cortado en «Trabajo…» con todo ese hueco debajo. El .sb de al lado recorta lo
+   que sobre, así que no hay riesgo de que se salga. */
+.sbt{position:sticky;top:0;font-size:8.5px;font-weight:800;color:var(--c);line-height:1.2;
+  padding:3px 3px;display:block;text-align:left;overflow:hidden;max-width:100%;
+  /* parte por los espacios primero; solo rompe una palabra si por sí sola no cabe */
+  word-break:normal;overflow-wrap:break-word}
+/* en un bloque bajo no cabe más de un renglón: ahí sí se recorta */
+.sb.baja .sbt{white-space:nowrap;text-overflow:ellipsis}
+.sb{overflow:hidden}
 /* las comidas, como puntos en el margen: en 45 px de ancho un bloque tapa el turno */
 .sp2{position:absolute;left:2px;width:5px;height:5px;border-radius:50%;background:var(--ok);
   margin-top:-2px;opacity:.85}
@@ -2230,3 +2277,21 @@ button.gfs.gedab{display:flex;width:100%}
 .gedpie .ok{border-color:var(--ok);color:var(--ok);margin-left:auto}
 .gex.ged.abierto{border-color:var(--brand)}
 .gbig2.sec{background:none;border:1px solid var(--brand);color:var(--ink)}
+/* ====== «Hoy», más lacónico ====== */
+/* Próximos: una línea por evento. Nombre a la izquierda, fecha y hora a la derecha; si el nombre
+   no cabe, se recorta él —la fecha es corta y siempre tiene que verse. */
+.proxl{display:flex;flex-direction:column;gap:1px;margin-top:6px}
+.proxf{display:flex;align-items:center;gap:6px;min-width:0;padding:6px 2px;
+  border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.proxf:last-child{border-bottom:0}
+.proxf>b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:13px;font-weight:700}
+.proxf .cd{flex:none;font-size:11.5px;color:var(--ink2);font-weight:700;white-space:nowrap}
+.proxf .evdot{flex:none}
+/* El sol, plegado: el renglón lleva las tres cifras, así que abrirlo es opcional */
+details.solplg>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none}
+details.solplg>summary::-webkit-details-marker{display:none}
+details.solplg>summary::after{content:'\25be';margin-left:auto;color:var(--ink2);font-size:12px}
+details.solplg[open]>summary::after{content:'\25b4'}
+details.solplg>summary>b{font-size:15px}
+details.solplg>summary .mini{color:var(--ink2);font-weight:700}

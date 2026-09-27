@@ -4014,6 +4014,16 @@ function arcoSolHTML(s,ahora){
           '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="7" fill="var(--warn)"/>'):'')+
     '<line x1="4" y1="66" x2="136" y2="66" stroke="var(--line)" stroke-width="1.5"/>'+
     '</svg></div>';}
+function solResumenTxt(key,esHoy){
+  /* las tres cifras del sol, seguidas, para el renglón plegado: «06:52 → 18:53 · quedan 2 h 47» */
+  const k=key||iso(new Date());
+  let s;try{s=solDe(k);}catch(e){return '';}
+  if(!s||s.sinDatos)return '';
+  if(s.polar)return s.polar==='dia'?'no se pone':'no amanece';
+  const ahora=esHoy?horaDecimal(new Date()):12;
+  const queda=esHoy?Math.round((horaDecimal(s.pone)-ahora)*60):null;
+  return esc(horaLocal(s.sale))+' → '+esc(horaLocal(s.pone))+
+    (queda!=null&&queda>0?(' · quedan '+esc(luzTxt(queda))):'');}
 function solHoyHTML(key){
   const k=key||iso(new Date());
   const s=solDe(k),sit=sitioActual();
@@ -4657,9 +4667,14 @@ function carrilSemanaHTML(days,opt){
     const cuerpo=x.bl.filter(function(b){return !b.fino||b.cat==='gym';}).map(function(b){
       const h=Math.max(b.fino?4:20,y(b.a)-y(b.de));
       const med=!b.fino&&gord.some(function(o){return o!==b&&o.de<b.a&&b.de<o.a&&((o.a-o.de)>(b.a-b.de)||((o.a-o.de)===(b.a-b.de)&&gord.indexOf(o)<gord.indexOf(b)));});
-      return '<button class="sb'+(b.fino?' fino':'')+(med?' med':'')+'" style="top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat)+'"'+
+      /* EL NOMBRE DEL BLOQUE. Se cortaba a 11 caracteres a pelo y encima en una sola línea: en una
+         columna de 52 px salía «Trabajo…», «Curso …», «Cocina…» —texto que parece que informa y
+         no informa— en bloques de 300 px de alto con todo el sitio del mundo debajo. Ahora se
+         abrevia como en el Mes y se deja partir en las líneas que quepan: manda lo alto que sea el
+         bloque, no un número fijo. En uno bajito (menos de 34 px) sigue en una línea. */
+      return '<button class="sb'+(b.fino?' fino':'')+(med?' med':'')+(!b.fino&&h<34?' baja':'')+'" style="top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat)+'"'+
         ' data-a="sem-dia" data-k="'+esc(x.d.key)+'" title="'+esc(hm(b.de)+'–'+hm(b.a)+' '+b.tit)+'" aria-label="'+esc(hm(b.de)+' '+b.tit)+'">'+
-        (b.fino?'':'<span class="sbt">'+esc(b.tit.replace(/^[^\s]+\s/,'').slice(0,11))+'</span>')+'</button>';}).join('');
+        (b.fino?'':'<span class="sbt">'+esc(tituloCasilla(b.tit.replace(/^[^\s]+\s/,'')))+'</span>')+'</button>';}).join('');
     const pts='';
     /* LAS HORAS QUE DUERMES, sombreadas en la columna. Es lo que deja ver de un golpe qué noche se
        queda corta y dónde muerde la guardia, y es la única franja del día que no es un bloque con
@@ -5081,12 +5096,15 @@ function renderHoy(){
     (esHoy?habitosHoyHTML():'')+
     (esHoy?proximosPuntualesHTML():'')+
     '<div class="card"><h2>Comidas '+(esHoy?'de hoy':'del '+esc(DIA3[dref.getDay()])+' '+dref.getDate())+(sh?'<span class="mini" style="margin-left:auto"><button class="btn s" data-a="day-edit" data-id="'+sh.id+'">✎ cambiar horas/platos →</button></span>':'')+'</h2>'+mealRowsHTML(hoy,sh)+'</div>'+
-    /* el sol: cuánta luz queda es lo que usas para decidir si sales a correr. Es de consulta, así
-       que va después de lo que hay que hacer. */
-    '<div class="card"><h2>El sol '+(esHoy?'hoy':'ese día')+'</h2>'+solHoyHTML(hoy)+
-      '<div class="row" style="margin-top:10px">'+
-        '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
-        '<span class="mini">se calcula en el móvil, sin internet</span></div></div>'+
+    /* EL SOL, EN UNA LÍNEA. Cuánta luz queda es lo que usas para decidir si sales a correr: eso
+       son tres números, y ocupaban una tarjeta de 330 px con su arco. Los tres números se leen
+       ahora en el resumen y el arco sigue ahí, a un toque, para quien quiera mirarlo. */
+    (function(){const sr=solResumenTxt(hoy,esHoy);
+      return '<details class="card solplg"><summary><b>☀️ El sol '+(esHoy?'hoy':'ese día')+'</b>'+
+        (sr?'<span class="mini">'+sr+'</span>':'')+'</summary>'+solHoyHTML(hoy)+
+        '<div class="row" style="margin-top:10px">'+
+          '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
+          '<span class="mini">se calcula en el móvil, sin internet</span></div></details>';})()+
     '<div class="row">'+
       '<button class="btn s" data-a="nav-comer">🍽 apuntar comida</button>'+
       '<button class="btn s" data-a="tab" data-t="week">ver toda la semana</button>'+
@@ -5222,7 +5240,7 @@ function semanaConfigHTML(){
     (store.patterns.length>1?rotationStrip():'')+
     '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
   '</div>';}
-function semanaNavHTML(){
+function semanaNavHTML(conFecha){
   /* La misma navegación que ya tienen Mes («‹ septiembre 2026 › mes actual») y Hoy («‹ jue · volver
      a hoy · sáb ›»), pero dentro de la pantalla. En «Semana» las flechas vivían SOLO en la barra de
      arriba: si no mirabas ahí, no había manera de ver la semana que viene.
@@ -5246,12 +5264,19 @@ function semanaNavHTML(){
       '<input type="date" value="'+esc(iso(semDesde()))+'" data-a="wk-set" aria-label="empezar en otra fecha"></label>'+
     '<button class="btn s" data-a="wk-next" title="'+n+' días después" aria-label="'+n+' días después">›</button>'+
     (esHoy?'':'<button class="btn s" data-a="today">hoy</button>')+
+    /* cuántos días ver y la leyenda, en ESTA misma fila: eran una fila entera para sí solos */
+    (conFecha?semOpcHTML()+'<details class="dtip semlupa"><summary class="mini">ⓘ</summary>'+
+      franjaLeyendaHTML()+'</details>':'')+
     '</div>';}
 function semOpcHTML(){
+  /* CUATRO BOTONES Y DOS PALABRAS → UN DESPLEGABLE. «ver 5 7 10 14 días» ocupaba una fila entera
+     de las dos que había antes de la semana, y es algo que se toca una vez cada mucho. En un
+     desplegable cabe al lado del rango y la semana sube esos ~60 px. */
   const n=semDias();
-  return '<div class="semopc"><span class="mini">ver</span>'+SEM_DIAS.map(function(x){
-    return '<button class="btn s'+(x===n?' p':'')+'" data-a="sem-dias" data-n="'+x+'" aria-pressed="'+(x===n)+'">'+x+'</button>';}).join('')+
-    '<span class="mini">días</span></div>';}
+  return '<select class="semopc" data-a="sem-dias-sel" aria-label="cuántos días ver">'+
+    SEM_DIAS.map(function(x){
+      return '<option value="'+x+'"'+(x===n?' selected':'')+'>'+x+' días</option>';}).join('')+
+    '</select>';}
 function semanaCabeceraHTML(){
   /* qué es cada color y cuántos días ver, en UNA fila.
      EL EJE 0·6·12·18·24 YA NO VA AQUÍ: era el eje de la barra horizontal que llevaba cada día, y
@@ -5385,8 +5410,11 @@ function renderWeek(){
     const pb=planBatches(weekDays()), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
   const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
   const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
+  /* LA NAVEGACIÓN Y LAS OPCIONES, EN UNA FILA. Eran dos: el rango con sus flechas, y debajo otra
+     entera con «ver 5 7 10 14 días» y la leyenda de colores. Entre las dos se comían 140 px antes
+     de que empezara la semana —y el rango ya estaba, además, en el rótulo de la barra de arriba—. */
   $('#main').innerHTML=`<div class="grid">
-    <div class="semcab">${semanaNavHTML()}${anyDate?semanaCabeceraHTML():''}</div>
+    <div class="semcab">${semanaNavHTML(anyDate)}</div>
     ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="sp"></span>${solSemanaHTML()}</h2>${entrenoContadorHTML(semanaKeyEntreno(days))}${carrilSemanaHTML(days,{px:40,caja:franjaAltoSem()})}</div>`:''}
     <div class="daylist">${semanaAyerHTML()}${rows}</div>
     <div class="card"><h2>La semana en números</h2>
@@ -5557,7 +5585,11 @@ function mesRejilla(y,mo,lead){
   /* el mes en el que ESTÁS no va del día 1 al 30: va con la semana. «Que se mueva según las semanas,
      que solo vea 2 anteriores a la que estoy y la mayoría delante»: dos semanas antes de la de hoy,
      la de hoy y cuatro más. Al pasar el lunes, la cuadrícula corre sola una fila. Los otros meses
-     (con ‹ ›) siguen enseñándose enteros, con una semana de margen a cada lado. */
+     (con ‹ ›) siguen enseñándose enteros, con una semana de margen a cada lado. */
+  /* UNA SOLA SEMANA DETRÁS, Y ENCOGIDA. Con dos semanas pasadas delante, lo que ya no puedes
+     cambiar se comía 237 px —dos filas de siete— de los 845 de la rejilla: el 28 % de la pantalla
+     para mirar hacia atrás. Con una sola fila, y encogida por CSS, las cinco que quedan pasan de
+     118 a ~158 px de alto cada una. Se sigue viendo la semana pasada, que es para lo que está. */
   const hoy=new Date(),movil=(y===hoy.getFullYear()&&mo===hoy.getMonth());
   let semHoy='';
   if(movil){
@@ -5565,7 +5597,7 @@ function mesRejilla(y,mo,lead){
     const h=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12,0,0,0);
     const inicio=addDays(h,-(domFirst?h.getDay():(h.getDay()+6)%7));
     semHoy=iso(inicio);
-    ini=addDays(inicio,-14);fin=addDays(inicio,5*7-1);}
+    ini=addDays(inicio,-7);fin=addDays(inicio,5*7-1);}
   const out=[];
   out.movil=movil;out.semHoy=semHoy;
   for(let d=new Date(ini.getTime());d<=fin;d=addDays(d,1)){
@@ -5624,12 +5656,18 @@ function renderMonth(){
        lleva su nombre en letra pequeña —hasta dos líneas, partido por palabras— y la hora DETRÁS:
        delante se comía la primera línea y el nombre se quedaba en «Sesión…». Caben tres; el resto va como «+N» y está entero en la
        lista del mes y al tocar el día. */
-    const EVMAX=3;
+    /* UNA LÍNEA POR EVENTO, NI UNA MÁS. Partido en dos líneas, «Sesión general · auditorio» ocupaba
+       tres renglones y dejaba la casilla sin sitio para el resto; y de las tres líneas, dos decían
+       lo mismo. Ahora: punto de color y el nombre, con TODO el ancho de la casilla para él.
+       La hora también salió de aquí: se llevaba 18 de los 49 px útiles y dejaba el nombre en
+       «S. ge…». Está en la agenda del mes, justo debajo, y al tocar el día —y las horas que
+       de verdad mandan, las del turno, siguen en su propia línea («8-15», «15→8»). */
+    const EVMAX=4;
     const evLineas=evsDia.slice(0,EVMAX).map(function(ev){
-      return '<span class="dev'+(evsDia.length===1?' solo':'')+'" title="'+esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo)+'">'+
-        '<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+
-          esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo)+'"></i>'+
-        esc(ev.titulo||'evento')+(ev.hora?' <b>'+esc(hCorta(ev.hora))+'</b>':'')+'</span>';}).join('');
+      const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo);
+      return '<span class="dev" title="'+tit+'">'+
+        '<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+tit+'"></i>'+
+        '<span class="n">'+esc(tituloCasilla(ev.titulo))+'</span></span>';}).join('');
     if(evsDia.length>EVMAX)marcas.push('<b class="dmas">+'+(evsDia.length-EVMAX)+'</b>');
     if(nt)marcas.push('<b class="dnota" title="'+esc(nt)+'">📝</b>');
     /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */
@@ -5672,7 +5710,7 @@ function renderMonth(){
         <button class="btn s" data-a="mon-next" aria-label="mes siguiente">›</button>
         <button class="btn s" data-a="mon-today">hoy</button>
         <button class="btn p s" data-a="dia-editar" title="abrir un día con el editor desplegado (o toca cualquier casilla)">✏️ editar</button></div>
-      <div class="cal ext">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
+      <div class="cal ext${rejilla.movil?' conprev':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
@@ -13331,14 +13369,17 @@ function eventosTagsHTML(list){
 function proximosPuntualesHTML(){
   const prox=eventosPuntualesProximos();
   if(!prox.length)return '';
+  /* UNA LÍNEA POR EVENTO. Eran dos —nombre arriba, fecha y hora debajo— más un renglón que decía
+     «eventos puntuales que has apuntado», que es lo que ya dice el título. Seis eventos ocupaban
+     250 px para decir cinco fechas. */
   return '<div class="card"><h2>📌 Próximos<span class="mini" style="margin-left:auto;font-weight:400">'+prox.length+'</span></h2>'+
-    '<p class="note">Eventos puntuales que has apuntado — se editan en «Eventos».</p>'+
-    prox.slice(0,6).map(function(ev){
-      return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
-        '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+fechaCorta(ev.fecha)+' · '+esc(evHoraTxt(ev))+
-        (ev.recordatorio?' · 🔔 recordatorio':'')+'</span></span>'+
+    '<div class="proxl">'+prox.slice(0,6).map(function(ev){
+      return '<div class="proxf"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
+        '<b>'+esc(ev.titulo||'(sin título)')+'</b>'+
+        '<span class="cd">'+esc(fechaCorta(ev.fecha))+' '+esc(evHoraTxt(ev))+
+        (ev.recordatorio?' 🔔':'')+'</span>'+
         (ev.cuentaAtras?'<span class="tag b2">'+cuentaAtrasTxt(ev.fecha)+'</span>':'')+
-        '</div>';}).join('')+
+        '</div>';}).join('')+'</div>'+
     '</div>';
 }
 /* ===================== Ajustes: portada y una pantalla por tarea =====================
@@ -16425,6 +16466,22 @@ function servicioCorto(sv){
   const t=String(sv||'').trim();if(!t)return '';
   for(let i=0;i<SERV_CORTO.length;i++)if(SERV_CORTO[i][0].test(t))return SERV_CORTO[i][1];
   const w=t.split(/\s+/)[0];return w.length>12?w.slice(0,11)+'.':w;}
+/* EL NOMBRE DE UN EVENTO EN UNA CASILLA DE 55 px. Recortar a secas dejaba «Sesi… 8»: puntos
+   suspensivos donde debería estar la información. Antes de recortar se quita lo que sobra:
+   – lo que va detrás de un «·» es el detalle («Sesión general · auditorio» → el sitio se sabe),
+   – las palabras de relleno con las que empiezan casi todos («Sesión», «Curso», «Reunión»…),
+     que se quedan en su inicial con punto y le devuelven seis caracteres al nombre de verdad.
+   Así «Sesión general · auditorio» se lee «S. general» y «Curso bioestadística», «C. bioestadística».
+   Lo que NO se abrevia es un nombre que ya es corto: «Curso rcp» abreviado quedaba en «C. r…»,
+   que es peor que no abreviar nada. El nombre entero sigue en el title, en la agenda del mes y al
+   tocar el día. */
+const EV_RELLENO=/^(sesión|sesion|curso|charla|reunión|reunion|clase|taller|seminario|jornada|cita|consulta|visita)\s+/i;
+function tituloCasilla(t){
+  let x=String(t||'evento').trim();
+  const p=x.split('·')[0].trim();if(p)x=p;
+  const m=EV_RELLENO.exec(x);
+  if(m&&x.length-m[0].length>=6)x=m[0].trim().charAt(0).toUpperCase()+'. '+x.slice(m[0].length);
+  return x;}
 function calEventos(desde,hasta){
   /* a Google solo le mandamos tres cosas, y siempre con su hora de inicio y fin: guardias, trabajo
      y entrenos. Nada de vacaciones, salientes ni días libres — eso se queda solo en la app. */
@@ -17086,6 +17143,10 @@ document.addEventListener('change',e=>{
     case 'est-dias':{flash(setEstDias(el.dataset.n,el.value));render();break;}
     /* el color que tienes puesto en Google para cada calendario: <select>, así que aquí */
     case 'ics-color':{flash(setIcsColor(el.dataset.g||'',el.value));render();break;}
+    /* cuántos días enseña «Semana»: es un <select>, así que va AQUÍ. En act() no se dispararía */
+    case 'sem-dias-sel':{const v=+el.value||7;
+      if(SEM_DIAS.indexOf(v)>=0){store.rotation.semanaDias=v;save();render();}
+      break;}
     /* la dirección y el token del buzón de calendario: <input>, así que aquí */
     case 'calsync-f':{const c=calSyncCfg(),f=el.dataset.f;
       if(f==='url'){const u=String(el.value||'').trim();
@@ -17397,7 +17458,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
+window.PG={tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
