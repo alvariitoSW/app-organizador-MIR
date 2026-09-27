@@ -15715,6 +15715,9 @@ function calEventos(desde,hasta){
       const dur=(d0!=null&&d1!=null)?((d1+1440)-d0):24*60;
       out.push({allDay:!g&&!conHoras,fecha:icsNum(k),isoKey:k,hora:g?icsHM(g.desde):st,horaFin:'',
         dur:dur,
+        /* el UID sale del DÍA y de qué es, no del título: si el título cambia (otro tipo de
+           guardia, otra rotación) Google lo veía como un evento nuevo y dejaba el viejo al lado */
+        uid:icsUID('guardia|'+k),
         summ:'🩺 Guardia · '+tipo+(inf.guard?(' ['+inf.guard+']'):''),
         desc:'Guardia de '+tipo+(g?('. Entras a las '+g.desde+
           (g.desde!==g.guardia?(' (jornada hasta las '+g.guardia+')'):'')+
@@ -15737,7 +15740,28 @@ function calEventos(desde,hasta){
         summ:'💪 Entreno'+qu,
         desc:(rtDia?('Rutina «'+rtDia.nombre+'»: '+rtDia.ejercicios.length+' ejercicios. '):'')+
           (hIni?'':'Sin hora puesta: ponla en Entreno o en las horas del «Día de fuerza».'),cat:'ENTRENO'});}
-    if(/saliente|libre|vacacion|festiv/i.test(nm)&&!jor)continue;   /* fuera, a propósito: no se manda */
+    /* EL SALIENTE SÍ VA. Esa mañana no estás en casa: de 00:00 hasta que te relevan sigues
+       trabajando, y al llegar duermes. Sin esto, en Google un saliente y un día libre se veían
+       exactamente igual —en blanco— y no había forma de distinguirlos. */
+    (function(){
+      const sal=salidaDeGuardia(k);
+      if(!sal||!sal.sale)return;
+      const fin=mins(sal.sale);
+      if(fin==null||fin<=0)return;
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:'00:00',horaFin:icsHM(hm(fin)),dur:0,
+        uid:icsUID('saliente|'+k),
+        summ:'🚪 Saliente · hasta '+hm(fin),
+        desc:'Vienes de la guardia de ayer: sigues en el hospital hasta el relevo de las '+hm(fin)+'.',
+        cat:'GUARDIA'});
+      /* y la siesta, que es lo que explica por qué esa tarde no estás para nada */
+      let sl=null;try{sl=sleepOf(k,inf);}catch(e){}
+      if(sl&&sl.siesta&&sl.siesta.de&&sl.siesta.a){
+        out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(sl.siesta.de),horaFin:icsHM(sl.siesta.a),dur:0,
+          uid:icsUID('siesta|'+k),
+          summ:'😴 Siesta del saliente',
+          desc:'Al llegar a casa, '+fmtHM(sl.siesta.min)+' de siesta. Sale de tus horas y de lo que tardas en llegar.',
+          cat:'GUARDIA'});}})();
+    if(/saliente|libre|vacacion|festiv/i.test(nm)&&!jor)continue;   /* los libres y las vacaciones sí se quedan en la app */
     /* la jornada: la de diario (8–15) si ese día la hay; si no, las horas del propio tipo de día —
        salvo en el de fuerza, cuyas horas propias son las del entreno y ya han salido arriba— */
     const trab=jor?{start:jor.start,end:jor.end}:((conHoras&&!esFuerza)?{start:sh.start,end:sh.end}:null);
@@ -15766,6 +15790,7 @@ function calEventos(desde,hasta){
         desc:'Para llegar a la parada '+v.antes+' min antes.',cat:'TRABAJO'});})();
     const g2=diaSegundo(k,inf);
     if(g2.on)out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(g2.hora||'15:30'),dur:60,
+      uid:icsUID('gym2|'+k),
       summ:'🏊 '+(g2.tipo||'entreno'),desc:'Segundo entreno'+(g2.auto?' (regla de la semana)':' (puesto tú)')+'.',cat:'ENTRENO'});
   }
   /* Y lo que hay que ACORDARSE de hacer: los recibos que vencen, las tareas con día y los eventos
@@ -15887,7 +15912,11 @@ function icsTexto(desde,hasta,opt){
       cuerpo.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEscTxt(e.summ),
         'TRIGGER;VALUE=DURATION:-PT'+av+'M','END:VALARM');}
     const bloque=cuerpo.join('\r\n');
-    L.push('BEGIN:VEVENT','UID:'+(e.uid||icsUID(e.fecha+'|'+(e.allDay?'D':'T')+kISO+'|'+(e.summ||''))));
+    /* EL UID NO PUEDE SALIR DEL TÍTULO. Si lo hace, cambiar el texto de un evento (otra rotación,
+       otro tipo de guardia) le cambia el UID: Google no lo reconoce, crea uno nuevo y deja el viejo
+       donde estaba. Eso es lo que iba acumulando copias importación tras importación. El UID sale
+       de la identidad del evento: qué día es y de qué es. */
+    L.push('BEGIN:VEVENT','UID:'+(e.uid||icsUID(kISO+'|'+(e.cat||'OTRO')+'|'+(e.allDay?'D':'T'))));
     L.push('DTSTAMP:'+stamp);
     cuerpo.forEach(function(x){L.push(x);});
     L.push('END:VEVENT');});

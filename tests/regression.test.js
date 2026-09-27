@@ -897,12 +897,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // ===================== Exportar a Google: solo guardias, trabajo y entrenos, con sus horas =====================
 
-  // 28) calEventos() manda solo guardia/trabajo/entreno, cada uno con hora de inicio y fin real —
-  // nunca saliente, día libre ni vacaciones (a petición explícita del usuario)
+  // 28) calEventos() manda guardia/saliente/trabajo/entreno, cada uno con hora de inicio y fin
+  // real. EL SALIENTE SÍ VA, y eso cambió a petición explícita suya: en Google un saliente y un
+  // día libre se veían exactamente igual —en blanco— y no había forma de distinguirlos. Esa
+  // mañana no estás en casa: sigues en el hospital hasta el relevo, y luego duermes. Los días
+  // LIBRES y las VACACIONES siguen fuera, que eso no ha cambiado.
   const calScope = await page.evaluate(() => {
     const base = '2027-04';
     window.PG.setDayOverride(base + '-05', 'sh-g', 'urg'); // guardia
-    window.PG.setDayOverride(base + '-06', 'sh-s', '');    // saliente (debe quedar fuera)
+    window.PG.setDayOverride(base + '-06', 'sh-s', '');    // saliente: bloque hasta el relevo + siesta
     window.PG.setDayOverride(base + '-07', 'sh-t', '');    // trabajo
     window.PG.setDayOverride(base + '-08', 'sh-f', '');    // entreno de fuerza
     window.PG.setDayOverride(base + '-09', 'sh-l', '');    // día libre (debe quedar fuera)
@@ -912,9 +915,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     evs.forEach((e) => { (porFecha[e.isoKey] = porFecha[e.isoKey] || []).push(e); });
     return porFecha;
   });
-  check('a Google solo se manda guardia, trabajo y entreno de fuerza — nunca saliente, libre ni vacaciones',
-    !!calScope['2027-04-05'] && !calScope['2027-04-06'] && !!calScope['2027-04-07'] &&
-    !!calScope['2027-04-08'] && !calScope['2027-04-09'] && !calScope['2027-04-10'] && !calScope['2027-04-11'],
+  check('a Google va guardia, saliente, trabajo y entreno — nunca un día libre ni vacaciones',
+    !!calScope['2027-04-05'] && !!calScope['2027-04-06'] && !!calScope['2027-04-07'] &&
+    !!calScope['2027-04-08'] && !calScope['2027-04-09'] && !calScope['2027-04-10'] && !calScope['2027-04-11'] &&
+    // el día del saliente lleva DOS cosas: el bloque hasta el relevo y la siesta al llegar
+    (calScope['2027-04-06'] || []).length === 2 &&
+    /Saliente/.test((calScope['2027-04-06'][0] || {}).summ || '') &&
+    calScope['2027-04-06'][0].hora === '00:00' &&
+    /Siesta/.test((calScope['2027-04-06'][1] || {}).summ || ''),
     JSON.stringify(calScope));
 
   const guardiaEv = (calScope['2027-04-05'] || [])[0];
@@ -7427,6 +7435,66 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ antes, tras, enLista, reset }));
     await page.evaluate(() => { const P = window.PG;
       delete P.food().secOrden; P.ui.shopVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+  }
+
+
+  // ===================================================================================
+  // GOOGLE DUPLICABA EN CADA IMPORTACIÓN. El UID de un evento salía de su TÍTULO, así que
+  // cambiar el tipo de una guardia o la rotación del mes le cambiaba el UID: Google no lo
+  // reconocía, creaba uno nuevo y dejaba el viejo al lado. Importación tras importación se
+  // iban apilando copias. Y el saliente no se mandaba, así que en Google un saliente y un
+  // día libre se veían igual: en blanco.
+  // ===================================================================================
+  {
+    const cal = await page.evaluate(() => { const P = window.PG, S = P.store;
+      const guardado = { mode: S.rotation.mode, anchor: S.rotation.anchorSet };
+      S.rotation.mode = 'date'; S.rotation.anchorSet = true; P.save();
+      const desde = '2026-10-19', hasta = '2026-10-25';
+      const uids = (t) => [...t.matchAll(/^UID:(.+)$/gm)].map((m) => m[1].trim()).sort();
+      const cmp = (a, c) => ({ nuevos: c.filter((x) => a.indexOf(x) < 0).length,
+        huerfanos: a.filter((x) => c.indexOf(x) < 0).length });
+      const base = uids(P.icsTexto(desde, hasta, {}));
+      const G = S.shifts.filter(P.isGuardia)[0];
+      const ovAntes = P.dayOverride('2026-10-19');
+      P.setDayOverride('2026-10-19', G.id, 'urg'); P.save();
+      const conUrg = uids(P.icsTexto(desde, hasta, {}));
+      // se cambia el TIPO de la guardia: el título cambia, el evento es el mismo
+      P.setDayOverride('2026-10-19', G.id, 'umi'); P.save();
+      const trasTipo = cmp(conUrg, uids(P.icsTexto(desde, hasta, {})));
+      // y la rotación del mes, que va dentro del título de «Trabajo»
+      const sv = P.monthService(2026, 9).service;
+      P.setMonthService(2026, 9, 'Neumología', null);
+      const trasRot = cmp(conUrg, uids(P.icsTexto(desde, hasta, {})));
+      P.setMonthService(2026, 9, sv, null);
+      // el saliente del día siguiente a la guardia: bloque hasta el relevo Y la siesta
+      const evs = P.calEventos(desde, hasta);
+      const sal = evs.filter((e) => /Saliente/.test(e.summ || ''))[0] || null;
+      const sie = evs.filter((e) => /Siesta/.test(e.summ || ''))[0] || null;
+      // los cuatro ficheros por categoría cubren todo y no se solapan: es lo que hace que
+      // cada uno entre en su calendario de Google con su color
+      const todos = [];
+      P.ICS_GRUPOS.forEach((g) => uids(P.icsTexto(desde, hasta, { cats: g[2] })).forEach((u) => todos.push(u)));
+      const base2 = uids(P.icsTexto(desde, hasta, {}));
+      P.setDayOverride('2026-10-19', ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      S.rotation.mode = guardado.mode; S.rotation.anchorSet = guardado.anchor; P.save();
+      return { trasTipo, trasRot,
+        sal: sal ? { hora: sal.hora, fin: sal.horaFin, cat: sal.cat } : null,
+        sie: sie ? { hora: sie.hora, cat: sie.cat } : null,
+        solapes: todos.length - new Set(todos).size,
+        cubreTodo: new Set(todos).size === base2.length,
+        nBase: base.length }; });
+    check('cambiar el tipo de una guardia o la rotación no duplica el evento en Google',
+      cal.trasTipo.huerfanos === 0 && cal.trasTipo.nuevos === 0 &&
+      cal.trasRot.huerfanos === 0,
+      JSON.stringify({ trasTipo: cal.trasTipo, trasRot: cal.trasRot }));
+    check('el saliente va a Google con su bloque hasta el relevo y con la siesta',
+      !!cal.sal && cal.sal.hora === '00:00' && cal.sal.fin > '00:00' && cal.sal.cat === 'GUARDIA' &&
+      !!cal.sie && cal.sie.cat === 'GUARDIA',
+      JSON.stringify({ sal: cal.sal, sie: cal.sie }));
+    check('los cuatro ficheros por categoría cubren todo el calendario y no se pisan',
+      cal.solapes === 0 && cal.cubreTodo, JSON.stringify({ solapes: cal.solapes, cubreTodo: cal.cubreTodo }));
+    await page.evaluate(() => window.PG.render());
     await page.waitForTimeout(200);
   }
 

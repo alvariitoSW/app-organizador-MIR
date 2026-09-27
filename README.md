@@ -109,9 +109,18 @@ Lo que decide las horas, y que no hay que programar:
   (*Ajustes → Cómo se ve → El carril del día*), con los colores de cada categoría y una vista previa.
 
 **Al widget que ya usas** se llega exportando a Google Calendar: un `.ics` por categoría (guardias,
-trabajo, entrenos, avisos) para que cada uno entre en su calendario con su color. El color de cada
-uno lo eliges tú de los once de Google, para que lo que dice la app sea lo que tienes puesto. La
-compra no se exporta.
+trabajo, entrenos, avisos). **Cada fichero va a un calendario DISTINTO de Google**: Google le pone a
+cada calendario un color y no mira el color que trae el fichero, así que importarlos todos al mismo
+sitio deja todo del mismo color. El color de cada uno lo eliges tú de los once de Google. La compra
+no se exporta.
+
+Cada evento lleva un **UID estable** que sale del día y de qué es, no de su título: por eso
+reimportar el mismo fichero actualiza lo que haya cambiado en vez de dejar una copia al lado.
+Antes el UID salía del título, así que cambiar el tipo de una guardia o la rotación del mes creaba
+un evento nuevo y dejaba el viejo, y las copias se iban apilando en cada importación.
+
+El **saliente** sí va: el bloque desde las 00:00 hasta el relevo —esa mañana sigues en el
+hospital— y la siesta al llegar a casa. Los días libres y las vacaciones se quedan en la app.
 
 ## Estructura
 
