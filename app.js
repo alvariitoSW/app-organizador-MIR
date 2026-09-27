@@ -394,6 +394,17 @@ function normalize(o){
   if(o.rotation.autoPos===undefined)o.rotation.autoPos=true;
   /* el color que tienes puesto en Google para cada calendario. Sin registrarlo aquí se pierde al
      recargar; solo se guardan grupos y colores que existan de verdad. */
+  /* el buzón de calendario: dirección del Worker, token, la parte secreta de la URL y cuándo se
+     subió por última vez. Sin registrarlo aquí se pierde al recargar. La dirección solo se guarda
+     si es https: el token viaja en una cabecera y por http lo lee cualquiera del wifi. */
+  if(!o.rotation.calSync||typeof o.rotation.calSync!=='object')o.rotation.calSync={url:'',token:'',buzon:'',ultima:0,firma:''};
+  else{const cs=o.rotation.calSync;
+    o.rotation.calSync={
+      url:/^https:\/\//i.test(String(cs.url||''))?String(cs.url).replace(/\/+$/,'').slice(0,200):'',
+      token:String(cs.token||'').slice(0,200),
+      buzon:/^[a-z0-9]{24,64}$/.test(String(cs.buzon||''))?String(cs.buzon):'',
+      ultima:(+cs.ultima>0)?+cs.ultima:0,
+      firma:String(cs.firma||'').slice(0,80)};}
   if(!o.rotation.icsColores||typeof o.rotation.icsColores!=='object')o.rotation.icsColores={};
   else{const ic={};ICS_GRUPOS.forEach(function(g){
     const v=o.rotation.icsColores[g[0]];
@@ -12882,6 +12893,108 @@ function setIcsColor(k,color){
   if(!r.icsColores||typeof r.icsColores!=='object')r.icsColores={};
   if(ICS_COLORES.indexOf(color)>=0)r.icsColores[k]=color; else delete r.icsColores[k];
   save();return 'anotado: en Google lo tienes en «'+icsColorGrupo(k)+'»';}
+/* ===================== sincronizar con Google por URL =====================
+   Importar un .ics es una foto: Google se queda con lo que había ese día y lo que borres
+   después se queda ahí para siempre. Suscribirse a una URL es otra cosa: Google la relee cada
+   pocas horas y deja el calendario IGUAL que el fichero —añade, cambia y quita—, así que no se
+   acumula nada y no hay que volver a importar nunca.
+   Lo que falta para eso es una URL, porque la app es un HTML en tu móvil. La pone tu Worker de
+   Cloudflare (tools/worker-calendario.js): la app le sube el .ics y él lo sirve. */
+function calSyncCfg(){
+  const r=store.rotation;
+  if(!r.calSync||typeof r.calSync!=='object')r.calSync={url:'',token:'',buzon:'',ultima:0,firma:''};
+  return r.calSync;}
+function buzonNuevo(){
+  /* la parte secreta de la URL: 24 caracteres de azar del propio navegador. Es el mismo trato
+     que hace Google con su «dirección secreta en formato iCal» —quien tenga la dirección entra—,
+     así que se genera larga para que no se saque probando. */
+  const a=new Uint8Array(16);
+  (self.crypto||window.crypto).getRandomValues(a);
+  let t='';for(let i=0;i<a.length;i++)t+=a[i].toString(36);
+  return t.replace(/[^a-z0-9]/g,'').slice(0,24).padEnd(24,'0');}
+function calSyncURL(grupo){
+  const c=calSyncCfg();
+  if(!c.url||!c.buzon)return '';
+  return String(c.url).replace(/\/+$/,'')+'/cal/'+c.buzon+'/'+grupo+'.ics';}
+function calSyncFirma(){
+  /* de qué se hizo la última subida: si no ha cambiado nada, no hace falta volver a subir. Se
+     mira el TEXTO de los cuatro ficheros, que es exactamente lo que vería Google. */
+  const r=calRangoExport(calRango());
+  return ICS_GRUPOS.map(function(g){
+    try{return icsTexto(r.desde,r.hasta,{cats:g[2]}).length;}catch(e){return 0;}}).join('-')+
+    '|'+(function(){let h=0;try{const t=icsTexto(r.desde,r.hasta,{});
+      for(let i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))>>>0;}}catch(e){}
+      return h.toString(36);})();}
+function calSyncPendiente(){
+  const c=calSyncCfg();
+  if(!c.url||!c.token||!c.buzon)return false;
+  if(!c.ultima)return true;
+  try{return calSyncFirma()!==c.firma;}catch(e){return true;}}
+async function calSyncSubir(){
+  /* sube los CUATRO ficheros, uno por calendario de Google. Si alguno falla se dice cuál: subir
+     tres de cuatro y callarlo dejaría un calendario desfasado sin que se notara. */
+  const c=calSyncCfg();
+  if(!c.url)return 'pon primero la dirección de tu Worker';
+  if(!c.token)return 'pon primero el token del Worker';
+  if(!c.buzon){c.buzon=buzonNuevo();save();}
+  const r=calRangoExport(calRango());
+  const malas=[];
+  for(let i=0;i<ICS_GRUPOS.length;i++){
+    const g=ICS_GRUPOS[i];
+    try{
+      const resp=await fetch(calSyncURL(g[0]),{method:'PUT',
+        headers:{'authorization':'Bearer '+c.token,'content-type':'text/calendar; charset=utf-8'},
+        body:icsTexto(r.desde,r.hasta,{cats:g[2]})});
+      if(!resp.ok)malas.push(g[1]+' ('+resp.status+(resp.status===401?': token':'')+')');
+    }catch(e){malas.push(g[1]+' (no se ha podido llegar al Worker)');}}
+  if(malas.length===ICS_GRUPOS.length)return 'no se ha subido nada: '+malas[0];
+  c.ultima=Date.now();
+  try{c.firma=calSyncFirma();}catch(e){c.firma='';}
+  save();render();
+  return malas.length?('subido, menos '+malas.join(', ')):'subido: Google lo verá en unas horas';}
+function calSyncCardHTML(){
+  /* SUSCRIBIRSE ES LO QUE NO DUPLICA. Importar es una foto: lo que borres luego se queda en
+     Google para siempre. Suscrito a una URL, Google deja el calendario igual que el fichero. */
+  const c=calSyncCfg(),listo=!!(c.url&&c.token&&c.buzon);
+  const pend=listo&&calSyncPendiente();
+  const cuando=c.ultima?(function(){const d=new Date(c.ultima);
+    return fechaCortaTxt(iso(d))+' a las '+hm(d.getHours()*60+d.getMinutes());})():'';
+  return '<div style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">'+
+    '<p class="mini" style="margin:0 0 6px"><b style="color:var(--ink)">O que se actualice solo.</b> '+
+    'Importar un <code>.ics</code> es una foto: lo que borres después se queda en Google para siempre. '+
+    'Si en vez de importarlo Google se <b>suscribe a una dirección</b>, la relee cada pocas horas y deja '+
+    'el calendario igual que la app —añade, cambia y quita— y no vuelves a importar nunca.</p>'+
+    '<p class="mini" style="margin:0 0 8px;color:var(--ink2)">Hace falta tu Worker de Cloudflare '+
+    '(<code>tools/worker-calendario.js</code>, 5 min). Ojo: <b>quien tenga la dirección ve tus turnos</b> '+
+    '—es como la «dirección secreta en formato iCal» de Google—, así que no la pegues en ningún sitio público.</p>'+
+    '<div class="row">'+
+      '<label class="fld" style="flex:1 1 220px">dirección de tu Worker'+
+        '<input value="'+esc(c.url||'')+'" data-a="calsync-f" data-f="url" placeholder="https://calendario.tu-cuenta.workers.dev"></label>'+
+      '<label class="fld" style="flex:1 1 150px">token'+
+        '<input type="password" value="'+esc(c.token||'')+'" data-a="calsync-f" data-f="token" placeholder="el secreto del Worker"></label>'+
+    '</div>'+
+    (listo
+      ?('<div class="row" style="margin-top:9px">'+
+          '<button class="btn '+(pend?'p':'s')+'" data-a="calsync-subir">'+(pend?'subir los cambios':'volver a subir')+'</button>'+
+          '<button class="btn s" data-a="calsync-direcciones">ver las 4 direcciones</button>'+
+          '<button class="btn s" data-a="calsync-nuevo">cambiar la dirección</button>'+
+        '</div>'+
+        '<p class="mini" style="margin:7px 0 0">'+
+          (c.ultima?('Última subida: <b style="color:var(--ink)">'+esc(cuando)+'</b>. '):'Todavía no has subido nada. ')+
+          (pend?'<b style="color:var(--warn)">Hay cambios sin subir.</b>':'Al día.')+
+          ' Google relee cada 8-24 h: eso lo manda él, no se puede acelerar.</p>'+
+        (ui.calSyncVer
+          ?('<div class="icsg" style="margin-top:9px">'+ICS_GRUPOS.map(function(g){
+              return '<div class="icsgf"><i style="background:'+esc(tlColor(g[3]))+'"></i>'+
+                '<span class="n"><b>'+esc(g[1])+'</b><span style="word-break:break-all;text-transform:none">'+
+                esc(calSyncURL(g[0]))+'</span></span>'+
+                '<button class="btn s" data-a="calsync-copiar" data-g="'+esc(g[0])+'">copiar</button></div>';}).join('')+
+            '</div>'+
+            '<p class="mini" style="margin:7px 0 0">En Google Calendar (desde el ordenador): '+
+            '<b style="color:var(--ink)">Otros calendarios → + → Suscribirse con URL</b>, una por una. '+
+            'Cada una entra en su propio calendario, y a cada calendario le pones ahí su color.</p>'):''))
+      :'<p class="mini" style="margin:8px 0 0;color:var(--ink2)">Rellena los dos campos y aparecerán las cuatro direcciones para pegar en Google.</p>')+
+  '</div>';}
 function icsGrupoDe(k){return ICS_GRUPOS.filter(function(g){return g[0]===k;})[0]||null;}
 function icsCuentaGrupo(desde,hasta,k){
   const g=icsGrupoDe(k);if(!g)return 0;
@@ -12909,7 +13022,9 @@ function icsCatsHTML(desde,hasta){
         c[0]==='GUARDIA'?'guard':c[0]==='TRABAJO'?'work':c[0]==='ENTRENO'?'gym':'evt'))+'"></i>'+
         c[1]+' '+esc(c[2])+(k?(' <b>'+k+'</b>'):'')+'</span>';}).join('')+'</div>'+
     '<p class="mini" style="margin:9px 0 0"><b style="color:var(--ink)">'+r.total+' cita'+(r.total===1?'':'s')+
-      '</b> en ese rango. Vacaciones, salientes y d\u00edas libres <b style="color:var(--ink)">no</b> salen: se quedan en la app.</p>';}
+      '</b> en ese rango. El <b style="color:var(--ink)">saliente</b> va con su bloque hasta el relevo y su siesta \u2014en Google, si no, '+
+      'un saliente y un d\u00eda libre se ven igual\u2014. Las vacaciones y los d\u00edas libres '+
+      '<b style="color:var(--ink)">no</b> salen: se quedan en la app.</p>';}
 function ajuPantalla(titulo,cuerpo,extra){
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab">'+
@@ -12948,6 +13063,7 @@ function renderAjustes(){
         <div class="row" style="margin-top:8px"><button class="btn p s" data-a="cal-dl-todos">descargar los ${ICS_GRUPOS.length} de una vez</button></div>
         <p class="mini" style="margin:6px 0 0">Cada fichero lleva también los 3 meses anteriores: al importar octubre no se borra septiembre, y lo que ya estaba se actualiza en vez de duplicarse.</p>
       </div>`}
+      ${calSyncCardHTML()}
       <div class="row" style="margin-top:11px">
         <button class="btn s" data-a="cal-descargar">todo junto, en un fichero</button>
         <button class="btn s" data-a="cal-copiar">copiar el .ics</button>
@@ -13674,6 +13790,19 @@ function act(a,el){
     /* el pasillo de un producto: abrir la lista y elegir. Van en el switch de CLICKS —son botones—,
        que es donde tienen que estar: un `case` en el de `change` no se dispararía nunca. */
     /* el orden de los pasillos: son BOTONES, así que van aquí y no en el switch de `change` */
+    /* subir el calendario al buzón, ver las direcciones y cambiar la dirección: son botones */
+    case 'calsync-subir':{flash('subiendo…');
+      calSyncSubir().then(function(m){flash(m);}).catch(function(e){flash('no se ha podido subir: '+String(e&&e.message||e).slice(0,90));});
+      break;}
+    case 'calsync-direcciones':{ui.calSyncVer=!ui.calSyncVer;render();break;}
+    case 'calsync-copiar':{const u=calSyncURL(el.dataset.g||'');
+      if(u)copy(u);break;}
+    case 'calsync-nuevo':{
+      confirmar('Las cuatro direcciones de ahora dejan de funcionar y tendrás que volver a suscribir los cuatro calendarios en Google. Hazlo si crees que alguien más las tiene.','Sí, cambiarla')
+        .then(function(si){if(!si)return;
+          const c=calSyncCfg();c.buzon=buzonNuevo();c.ultima=0;c.firma='';save();render();
+          flash('dirección nueva: vuelve a subir y a suscribir los cuatro');});
+      break;}
     case 'sec-mover':{const m=moverSeccion(el.dataset.k||'',+el.dataset.d||0);
       if(m)flash(m);render();break;}
     case 'sec-orden-reset':{delete food().secOrden;save();render();flash('orden de fábrica');break;}
@@ -16346,6 +16475,15 @@ document.addEventListener('change',e=>{
     case 'est-dias':{flash(setEstDias(el.dataset.n,el.value));render();break;}
     /* el color que tienes puesto en Google para cada calendario: <select>, así que aquí */
     case 'ics-color':{flash(setIcsColor(el.dataset.g||'',el.value));render();break;}
+    /* la dirección y el token del buzón de calendario: <input>, así que aquí */
+    case 'calsync-f':{const c=calSyncCfg(),f=el.dataset.f;
+      if(f==='url'){const u=String(el.value||'').trim();
+        /* solo https: el token viaja en la cabecera y por http lo lee cualquiera del wifi */
+        c.url=(!u||/^https:\/\//i.test(u))?u.replace(/\/+$/,''):'';
+        if(u&&!c.url)flash('la dirección tiene que empezar por https://');}
+      else if(f==='token')c.token=String(el.value||'').trim().slice(0,200);
+      if(c.url&&c.token&&!c.buzon)c.buzon=buzonNuevo();
+      save();render();break;}
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
     case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
@@ -16645,6 +16783,7 @@ window.PG={parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,
+  calSyncCfg,calSyncURL,calSyncPendiente,calSyncSubir,buzonNuevo,
   ticketLeer,ticketLinea,ticketNombre,ticketAplicar,ticketSano,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,ajusteMeta,protPorKg,setMetaNum,kcalFaltaTxt,
   diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,

@@ -119,6 +119,13 @@ reimportar el mismo fichero actualiza lo que haya cambiado en vez de dejar una c
 Antes el UID salía del título, así que cambiar el tipo de una guardia o la rotación del mes creaba
 un evento nuevo y dejaba el viejo, y las copias se iban apilando en cada importación.
 
+**Para que Google se actualice solo** en vez de importar a mano: la app le sube el `.ics` a un
+Worker de Cloudflare tuyo (`tools/worker-calendario.js`) y Google se **suscribe** a esas cuatro
+direcciones. Suscrito, Google relee cada 8-24 h y deja el calendario igual que la app: añade,
+cambia y **quita**. La guía, en `tools/CALENDARIO-EN-GOOGLE.md`. Ojo: quien tenga la dirección
+completa ve tus turnos —es el mismo trato que la «dirección secreta en formato iCal» de Google—,
+y desde la app se puede cambiar cuando quieras.
+
 El **saliente** sí va: el bloque desde las 00:00 hasta el relevo —esa mañana sigues en el
 hospital— y la siesta al llegar a casa. Los días libres y las vacaciones se quedan en la app.
 

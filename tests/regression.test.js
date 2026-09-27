@@ -7498,6 +7498,73 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // SINCRONIZAR EN VEZ DE IMPORTAR. Importar un .ics es una foto: lo que borres después se
+  // queda en Google para siempre y hay que volver a importar a mano. Suscrito a una URL,
+  // Google la relee y deja el calendario igual que la app. La URL la pone su Worker.
+  // ===================================================================================
+  {
+    // un buzón de mentira dentro de la propia página: el mismo contrato que el Worker
+    const sync = await page.evaluate(async () => { const P = window.PG;
+      const guardado = JSON.parse(JSON.stringify(P.store.rotation.calSync || {}));
+      const subidas = [];
+      const fetchReal = window.fetch;
+      window.fetch = async (u, o) => {
+        subidas.push({ url: String(u), metodo: (o || {}).method,
+          auth: ((o || {}).headers || {})['authorization'],
+          ics: /^BEGIN:VCALENDAR/.test(String((o || {}).body || '')) });
+        return new Response('ok', { status: 200 });
+      };
+      const c = P.calSyncCfg();
+      c.url = 'https://cal.example.workers.dev'; c.token = 'secreto'; c.buzon = P.buzonNuevo();
+      P.save();
+      const antes = P.calSyncPendiente();
+      const msg = await P.calSyncSubir();
+      const despues = P.calSyncPendiente();
+      // se cambia algo del planning: tiene que volver a quedar pendiente
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      const k = P.iso(P.addDays(new Date(), 3));
+      const ovAntes = P.dayOverride(k);
+      P.setDayOverride(k, G.id, 'umi'); P.save();
+      const trasCambiar = P.calSyncPendiente();
+      P.setDayOverride(k, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      const urls = P.ICS_GRUPOS.map((g) => P.calSyncURL(g[0]));
+      window.fetch = fetchReal;
+      P.store.rotation.calSync = guardado; P.save();
+      return { antes, msg, despues, trasCambiar, subidas, urls, buzon: c.buzon }; });
+    check('la app sube los cuatro calendarios al buzón, con el token en la cabecera y no en la URL',
+      sync.subidas.length === 4 &&
+      sync.subidas.every((x) => x.metodo === 'PUT' && x.auth === 'Bearer secreto' && x.ics) &&
+      // el token NUNCA en la URL: las direcciones se quedan en los registros de medio mundo
+      sync.subidas.every((x) => x.url.indexOf('secreto') < 0) &&
+      sync.urls.length === 4 && sync.urls.every((u) => /^https:\/\/.+\/cal\/[a-z0-9]{24,}\/\w+\.ics$/.test(u)),
+      JSON.stringify({ subidas: sync.subidas, urls: sync.urls }));
+    check('«hay cambios sin subir» se enciende al cambiar el planning y se apaga al subir',
+      sync.antes === true && sync.despues === false && sync.trasCambiar === true && /subido/.test(sync.msg),
+      JSON.stringify({ antes: sync.antes, msg: sync.msg, despues: sync.despues, trasCambiar: sync.trasCambiar }));
+
+    // la dirección tiene que ser https y sobrevivir a recargar: el token viaja en una cabecera
+    // y por http lo lee cualquiera del wifi
+    const seguro = await page.evaluate(() => { const P = window.PG;
+      const g = JSON.parse(JSON.stringify(P.store.rotation.calSync || {}));
+      const c = P.calSyncCfg();
+      c.url = 'http://cal.example.com'; c.token = 't'; c.buzon = P.buzonNuevo(); P.save();
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const httpFuera = P.calSyncCfg().url;
+      P.calSyncCfg().url = 'https://cal.example.workers.dev'; P.save();
+      P.store = JSON.parse(JSON.stringify(P.store));
+      const httpsQueda = P.calSyncCfg().url;
+      const buzonQueda = /^[a-z0-9]{24,64}$/.test(P.calSyncCfg().buzon);
+      P.store.rotation.calSync = g; P.save();
+      return { httpFuera, httpsQueda, buzonQueda }; });
+    check('la dirección del buzón solo se guarda si es https, y aguanta recargar',
+      seguro.httpFuera === '' && seguro.httpsQueda === 'https://cal.example.workers.dev' && seguro.buzonQueda,
+      JSON.stringify(seguro));
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(200);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
