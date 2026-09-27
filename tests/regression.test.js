@@ -842,13 +842,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const panelCerrado = await page.evaluate(() => !document.querySelector('.daydetail'));
   check('tocar el mismo día otra vez cierra el panel', panelCerrado);
 
-  // 24) la configuración pesada de Mes (servicio, tipos de guardia, cupo) empieza plegada
-  const configPlegada = await page.evaluate(() => {
-    const d = Array.from(document.querySelectorAll('.dtip')).find((x) => /configurar este mes/.test(x.textContent));
-    return d ? d.open : null;
+  // 24) EN MES, SOLO LO DE ESTE MES. Había un desplegable con los nombres de los tipos de guardia,
+  // sus cupos y el post-guardia automático: eso no cambia de un mes a otro y ya estaba en Turno y
+  // rotación → Rotación. De este mes son dos cosas, y van a la vista sin desplegar nada.
+  const configMes = await page.evaluate(() => {
+    const c = document.querySelector('#main [data-cfg="mescfg"]');
+    return { hay: !!c,
+      servicio: !!(c && c.querySelector('[data-a="mon-svc"]')),
+      guardias: !!(c && c.querySelector('[data-a="mon-guard"]')),
+      // lo global ya no se repite aquí
+      tiposDeGuardia: !!document.querySelector('#main [data-a="gtipo-lbl"]'),
+      postGuardia: !!document.querySelector('#main [data-a="mon-autopos"]'),
+      atajo: !!document.querySelector('#main [data-a="ir-rotacion"]') };
   });
-  check('la configuración del mes (servicio, tipos de guardia, cupo) empieza plegada',
-    configPlegada === false, 'open=' + configPlegada);
+  check('en Mes solo se configura lo de ESTE mes: servicio y guardias, con atajo a lo demás',
+    configMes.hay && configMes.servicio && configMes.guardias &&
+    !configMes.tiposDeGuardia && !configMes.postGuardia && configMes.atajo,
+    JSON.stringify(configMes));
 
   // 25) "Hoy" enseña el día como CARRIL de horas, con la línea de dónde estás ahora
   await gotoTab('hoy');
@@ -1175,12 +1185,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const summaries = Array.from(document.querySelectorAll('#main details > summary'));
     return {
       kpisVisibles: kpis ? kpis.children.length : 0,
-      explicacionPlegada: summaries.some((s) => /cómo se calcula/i.test(s.textContent) && !s.parentElement.open),
+      // el párrafo de 120 palabras explicando «cómo se calcula este mes» ya no está: el mes no se
+      // calcula, lo marcas tú, y lo que decía se ve haciendo
+      sinExplicacion: !summaries.some((s) => /cómo se calcula/i.test(s.textContent)),
       masNumerosPlegado: summaries.some((s) => /ver más números/i.test(s.textContent) && !s.parentElement.open),
     };
   });
-  check('en "Mes", la explicación larga y los KPI secundarios quedan plegados por defecto',
-    mesSimple.kpisVisibles <= 4 && mesSimple.explicacionPlegada && mesSimple.masNumerosPlegado, JSON.stringify(mesSimple));
+  check('en "Mes" no hay explicación larga y los KPI secundarios quedan plegados por defecto',
+    mesSimple.kpisVisibles <= 4 && mesSimple.sinExplicacion && mesSimple.masNumerosPlegado, JSON.stringify(mesSimple));
 
   // 44) Ajustes: el mínimo de horas de sueño (antes solo en "Turno y rotación") también se puede
   // tocar aquí, junto al resto de números de sueño
@@ -1484,12 +1496,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
   const ordenOk = await page.evaluate(() => {
     const cal = document.querySelector('#main .cal');
-    const detalle = Array.from(document.querySelectorAll('#main details.dtip summary'))
-      .find((s) => /cómo se calcula/i.test(s.textContent));
-    if (!cal || !detalle) return false;
-    return !!(cal.compareDocumentPosition(detalle) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const numeros = document.querySelector('#main .kpis');
+    if (!cal || !numeros) return false;
+    return !!(cal.compareDocumentPosition(numeros) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
-  check('"Mes": la cuadrícula del calendario aparece antes que las explicaciones y los números', ordenOk, '');
+  check('"Mes": la cuadrícula del calendario aparece antes que los números', ordenOk, '');
 
   // 51) "Mes" en móvil: cada casilla tiene una línea por dato (sin horario/sueño de más, eso se ve
   // al tocar el día) y un tamaño cómodo de tocar, ni la tira gigante de antes ni una miniatura
@@ -1725,8 +1736,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.store.rotation.svcMeses = [2, 1, 1];
     window.PG.save();
   });
-  await gotoTab('month');
-  await page.waitForTimeout(250);
+  /* «Tus rotaciones» colé´gaba debajo del calendario del mes, donde no se cambia nada: vive con
+     el resto de la rotación, que es donde se decide por dónde pasas el año. */
+  await gotoTab('cfg', 'rotacion');
+  await page.waitForTimeout(300);
   const tira = await page.evaluate(() => {
     const c = document.querySelector('#main .card[data-cfg="servicios"]');
     if (!c) return null;
@@ -1775,10 +1788,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click('[data-a="mes-cfg"][data-to="mescfg"]');
   await page.waitForTimeout(250);
   const abreCupo = await page.evaluate(() => {
-    const d = document.querySelector('#main details[data-cfg="mescfg"]');
-    return !!d && d.open && /repartir el mes desde cero/i.test(d.textContent);
+    const d = document.querySelector('#main [data-cfg="mescfg"]');
+    return !!d && !!d.querySelector('[data-a="mon-guard"]');
   });
-  check('el KPI de guardias abre la configuración del mes, que ya incluye "repartir desde cero"', abreCupo, '');
+  check('el KPI de guardias lleva a donde se cambia el cupo de este mes', abreCupo, '');
 
   await gotoTab('hoy');
   await page.waitForTimeout(250);
@@ -1791,17 +1804,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('el atajo de la leyenda de la franja abre Ajustes y marca su tarjeta',
     aFranja.tab === 'ajustes' && aFranja.marcada, JSON.stringify(aFranja));
 
-  // «ver el año repartido» está con las rotaciones, que ya no viven en Ajustes sino en Turno
+  // EL AÑO REPARTIDO YA NO ESTÁ EN MES. «Tus rotaciones» colé´gaba debajo del calendario, y desde
+  // Rotación había un botón para ir a verlo allí: dos pantallas para una cosa. Ahora vive en
+  // Rotación, que es donde se cambia, y en Mes queda el atajo de vuelta.
   await gotoTab('cfg', 'rotacion');
-  await page.waitForTimeout(250);
-  await page.click('#main [data-a="ir-servicios"]');
-  await page.waitForTimeout(350);
-  const aServicios = await page.evaluate(() => {
-    const c = document.querySelector('#main .card[data-cfg="servicios"]');
-    return { tab: window.PG.ui.tab, marcada: !!c && /brand/.test(c.style.outline) };
-  });
-  check('desde las rotaciones, "ver el año repartido" lleva a la tira del mes',
-    aServicios.tab === 'month' && aServicios.marcada, JSON.stringify(aServicios));
+  await page.waitForTimeout(300);
+  const aServicios = await page.evaluate(() => ({
+    aqui: !!document.querySelector('#main .card[data-cfg="servicios"]'),
+    conElAño: !!document.querySelector('#main [data-cfg="servicios"] .anyosvc, #main [data-cfg="servicios"] .svcanyo'),
+    yaNoManda: !document.querySelector('#main [data-a="ir-servicios"]') }));
+  check('el año repartido vive con las rotaciones, no debajo del calendario',
+    aServicios.aqui && aServicios.yaNoManda, JSON.stringify(aServicios));
 
   // cambiar la duración de una rotación es un <select>: se dispara con "change", no con un clic
   await gotoTab('cfg', 'rotacion');

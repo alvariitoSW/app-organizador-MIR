@@ -5747,27 +5747,22 @@ function renderMonth(){
       <div class="row" style="margin-top:8px">
         <button class="btn s" data-a="mon-auto">repartir ${svc.guardias} guardias</button>
         <button class="btn s" data-a="mon-clear">vaciar mes</button></div>
-      <details class="dtip" style="margin-top:12px"><summary class="mini">ⓘ cómo se calcula este mes ▾</summary>
-      <p class="note" style="margin-top:6px"><b>Primero, lo que trabajas:</b> de ${esc((store.rotation.jornada||{}).start||'08:00')} a ${esc((store.rotation.jornada||{}).end||'15:00')} los ${((store.rotation.jornada||{}).workdays||[1,2,3,4,5]).length} días laborables de la semana, en <b>todos</b> los meses, aunque la plantilla no diga nada. Encima van tus guardias (toca un día y márcalo: el día siguiente se queda como saliente solo; ${saltoDiaTxt()}) y tus vacaciones. Cada guardia lleva su <b>tipo</b> —Urgencias o UMI—: <b>no</b> es del servicio del mes, eso es otra cosa y se marca aparte. Lo que marques a mano manda sobre la plantilla y luego lo vuelcas a «Semana».</p>
-      </details>
-      <details class="dtip" data-cfg="mescfg" style="margin-top:6px"><summary class="mini">configurar este mes (servicio, tipos de guardia, cupo) ▾</summary>
-      <div class="row" style="margin-top:8px">
-        <button class="btn s" data-a="mon-auto-rep">repartir el mes desde cero</button>
-        <span class="mini">tira lo que hayas puesto a mano y vuelve a repartir las ${svc.guardias} guardias según tu plantilla (${saltoDiaTxt()})</span></div>
-      <div class="row" style="margin-top:8px">
-        <label class="fld">Servicio que rotas este mes<select data-a="mon-svc">
-          <option value="" ${svc.set&&svc.service?'':'selected'}>· sin poner: lo marcas tú ·</option>
+      <!-- AQUÍ SOLO LO DE ESTE MES. Había un párrafo de 120 palabras explicando cómo se calcula el
+           mes —que no se calcula: lo marcas tú— y un desplegable con los nombres de los tipos de
+           guardia, sus cupos y el post-guardia automático, que no cambian de un mes a otro y ya
+           estaban en Turno y rotación → Rotación. De este mes son dos cosas: qué servicio rotas y
+           cuántas guardias te tocan. -->
+      <div class="row" data-cfg="mescfg" style="margin-top:10px;gap:8px">
+        <label class="fld" style="flex:1 1 170px">servicio de este mes<select data-a="mon-svc">
+          <option value="" ${svc.set&&svc.service?'':'selected'}>· sin poner ·</option>
           ${(store.rotation.servicios||[]).map(function(x){
-            return '<option value="'+esc(x)+'" '+(svc.service===x?'selected':'')+'>'+esc(x)+' (guardias de 24 h)</option>';}).join('')}
+            return '<option value="'+esc(x)+'" '+(svc.service===x?'selected':'')+'>'+esc(x)+'</option>';}).join('')}
           </select></label>
-        <label class="fld">Guardias este mes<input type="number" min="0" max="15" value="${svc.guardias}" data-a="mon-guard"></label>
-        ${gTipos().map(function(t){return '<label class="fld" style="flex:0 0 168px">tipo de guardia · nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'" placeholder="Urgencias"></label>'+
-          '<label class="fld" style="flex:0 0 110px">cuántas de ésas<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>';}).join('')}
-        <label class="fld" style="flex:0 0 168px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s ${store.rotation.autoPos?'g':''}" data-a="mon-autopos">
-          ${store.rotation.autoPos?'✓':'○'} post-guardia automático</button></label></div>
-      </details>
+        <label class="fld" style="flex:0 0 110px">guardias<input type="number" min="0" max="15" value="${svc.guardias}" data-a="mon-guard"></label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn s" data-a="mon-auto-rep">repartir desde cero</button>
+        <button class="btn s" data-a="ir-rotacion">tipos de guardia y ciclo →</button></div>
       <div class="kpis compact" style="margin-top:8px">
         <button class="kpi-go" data-a="mes-cfg" data-to="mescfg" title="cambiar el cupo de guardias de este mes"><b>${g.any}/${svc.guardias}</b><span>guardias · ${esc(gTiposTxt(g))} ✎</span></button>
         <div><b>${list.filter(function(d){return /saliente/i.test(d.name);}).length}</b><span>días salientes</span></div>
@@ -5783,7 +5778,6 @@ function renderMonth(){
       </div>
       </details>
     </div>
-    ${serviciosCard()}
   </div>`;}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
@@ -12259,7 +12253,7 @@ function renderCfg(){
     <div class="card" data-cfg="rotaciones"><h2>Mis rotaciones</h2>
       <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
       ${serviciosEditorHTML()}
-      <div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-servicios">ver el año repartido ▸</button></div></div>`);}
+      </div>`+serviciosCard());}
   if(v==='viaje'){
     /* IR Y VOLVER, en Ajustes y no en el código: es lo que cambia cuando cambias de destino o de
        línea de bus, y no tiene por qué pasar por una versión nueva de la app. */
@@ -15633,7 +15627,8 @@ function act(a,el){
       const to=el.dataset.to;
       irACard(to==='jornada'?'types':'',to,to==='jornada'?80:0);
       break;}
-    case 'ir-servicios':irACard('month','servicios');break;
+    /* de Mes a donde se configuran los tipos de guardia y el ciclo, que ya no se repiten en Mes */
+    case 'ir-rotacion':irACard('cfg','rotaciones');break;
     case 'franja-cfg':irACard('ajustes','franja');break;
     case 'sn-h':{const d=ui.sd;if(d){d.h=+el.dataset.v||0;}render();break;}
     case 'sn-siesta':{const d=ui.sd;if(d){d.siesta=+el.dataset.v||0;}render();break;}
