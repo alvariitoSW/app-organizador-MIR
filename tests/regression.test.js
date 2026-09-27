@@ -8277,6 +8277,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+  // 210) PLAN DESDE LA ROTACIÓN, PISCINA POR SERIES y el LLORETAZO como sesión de agua
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = []; g.registro = []; g.sesiones = []; g.minSemana = 0; P.ui.gymSesionActiva = null;
+      P.ui.tab = 'gym'; P.ui.gymPanel = 'plannuevo'; P.ui.planN = null; P.render();
+      const hayTpl = document.querySelectorAll('#main [data-a="plan-tpl"]').length;
+      const mat = document.querySelector('[data-a="plan-mat"][data-v="barra"]'); if (mat) mat.click();
+      const tp = document.querySelector('[data-a="plan-tpl"][data-v="tp"]'); if (tp) tp.click();
+      const crear = document.querySelector('[data-a="plan-crear"]'); if (crear) crear.click();
+      const nombres = g.rutinas.map((x) => x.nombre).join(',');
+      const sinBarra = !g.rutinas.some((x) => x.ejercicios.some((e) => /\(barra\)/.test(e.ex)));
+      const rango = g.rutinas[0] && g.rutinas[0].ejercicios[0] ? g.rutinas[0].ejercicios[0].reps + '-' + g.rutinas[0].ejercicios[0].rmax : '';
+      // piscina: tiempo por serie y ritmo por 100 m
+      const agua = P.planAgua(); P.empezarRutina(agua.id);
+      P.cerrarSesionCore; const sa = P.ui.gymSesionActiva;
+      const plan = P.sesionFilas(sa); const tec = plan[1];
+      sa.ix = 1; P.render();
+      const inp = document.querySelector('tr.act input[data-k="seg"]'); if (inp) { inp.value = '55'; inp.dispatchEvent(new Event('change', { bubbles: true })); }
+      const ok = document.querySelector('tr.act [data-a="gv-ok"]'); if (ok) ok.click();
+      const reg = P.store.gym.registro.filter((x) => x.sesionId === sa.id)[0] || {};
+      P.ui.gymSesionActiva = null;
+      // Lloretazo: ese día cuenta como agua en la semana
+      const k = P.iso(P.addDays(P.mondayOf(new Date()), 5));
+      P.store.eventos.push({ id: 'll210', titulo: '🌊 Lloretazo', hora: '20:00', fin: '22:10', modo: 'fecha', fecha: k, on: true, lloret: true });
+      P.render();
+      const s = P.entrenoSemana(k), d = s.dias.filter((x) => x.k === k)[0];
+      const out = { hayTpl, nombres, sinBarra, rango, tec: tec ? tec.total : 0, reg: reg.m + '/' + reg.seg, lloret: !!(d && d.lloret), pisc: s.pisc };
+      P.store = copia; P.save(); P.ui.gymPanel = ''; P.render();
+      return out; });
+    check('un plan se crea desde tus días reales: plantillas, material (sin barra → mancuernas) y rango de reps del objetivo',
+      r.hayTpl === 4 && r.nombres === 'Torso A,Pierna A,Torso B,Pierna B' && r.sinBarra && r.rango === '8-12', JSON.stringify(r));
+    check('la piscina va por series con metros y tiempo, y el Lloretazo cuenta como sesión de agua de la semana',
+      r.tec === 8 && r.reg === '50/55' && r.lloret && r.pisc >= 1, JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
