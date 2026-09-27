@@ -1321,17 +1321,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   await gotoTab('month');
   await page.waitForTimeout(150);
-  // «que quepan aunque sea en pequeño los eventos del día»: con las casillas ya altas (siete filas
-  // que llenan la pantalla), el evento lleva su punto de color Y su nombre, partido por palabras en
-  // hasta dos líneas (tres si es el único del día), con la hora detrás
+  // El evento en la casilla: punto de color y nombre, en UNA sola línea. La hora ya NO va aquí —en
+  // 55 px se llevaba 18 y dejaba el nombre en «S. ge…»—: está en el title, en la agenda del mes y
+  // al tocar el día. Lo que sí se comprueba es que siga estando en alguno de esos sitios.
   const mesConEvento = await page.evaluate(() => {
     const ev = [...document.querySelectorAll('#main .dbox .dev')].find((l) => /Entreno con Marta/.test(l.title));
+    const cs = ev ? getComputedStyle(ev) : null;
     return { marcado: !!(ev && ev.querySelector('.dpt')),
       conNombre: ev ? /Entreno con/.test(ev.innerText) : false,
-      conHora: ev ? /\b8\b/.test(ev.innerText) : false };
+      unaLinea: ev ? ev.getBoundingClientRect().height <= parseFloat(cs.fontSize) * 1.7 : false,
+      nombreSinPartir: ev ? getComputedStyle(ev.querySelector('.n')).whiteSpace === 'nowrap' : false,
+      horaEnElTitle: ev ? /\b8\b/.test(ev.title) : false,
+      horaEnLaAgenda: /Entreno con Marta[^\n]*/.test(document.getElementById('main').innerText) };
   });
-  check('"Mes" enseña el evento en su casilla con su color, su nombre y su hora',
-    mesConEvento.marcado && mesConEvento.conNombre && mesConEvento.conHora, JSON.stringify(mesConEvento));
+  check('"Mes" enseña el evento en su casilla, con su color y su nombre, en UNA línea',
+    mesConEvento.marcado && mesConEvento.conNombre && mesConEvento.unaLinea &&
+    mesConEvento.nombreSinPartir, JSON.stringify(mesConEvento));
 
   // 47) Hábitos: pestaña nueva, se puede crear un hábito, marcar el día de hoy, ver la racha y el
   // mapa de calor de 6 semanas, y borrarlo (con confirmación)
@@ -2483,22 +2488,29 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // las casillas medían 96 px con 28 de contenido: 68 px muertos por día, y la cuadrícula se
     // quedaba en poco más de la mitad del alto útil del móvil
     await page.setViewportSize({ width: 412, height: 915 });
-    const hoyMes = new Date();
-    const claveDe = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    await page.evaluate((claves) => {
-      const ev = window.PG.eventosS();
-      ev.length = 0;
-      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: claves[0], color: '#a855f7', dow: [] });
-      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: claves[1], color: '#38e1ff', dow: [] });
-      window.PG.save();
-    }, [claveDe(new Date(hoyMes.getFullYear(), hoyMes.getMonth(), 9)),
-        claveDe(new Date(hoyMes.getFullYear(), hoyMes.getMonth(), 25))]);
     await gotoTab('month');
     await page.click('[data-a="mon-today"]');
     await page.waitForTimeout(400);
+    /* los dos días se cogen de la rejilla que se está pintando: desde que solo se enseña UNA semana
+       pasada, un día fijo del mes (el 9) puede caer fuera y entonces no hay punto que contar.
+       Tienen que ser además del mes que se está viendo, para que salgan en «Eventos de …». */
+    await page.evaluate(() => {
+      const mes = (window.PG.ui.monSel || '').slice(0, 7) ||
+        [...document.querySelectorAll('.dbox')].filter((x) => !x.classList.contains('fuera'))[0].dataset.key.slice(0, 7);
+      const vis = [...document.querySelectorAll('.dbox')]
+        .map((x) => x.dataset.key).filter((k) => k && k.slice(0, 7) === mes);
+      const ev = window.PG.eventosS();
+      ev.length = 0;
+      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: vis[0], color: '#a855f7', dow: [] });
+      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: vis[vis.length - 1], color: '#38e1ff', dow: [] });
+      window.PG.save(); window.PG.render();
+    });
+    await page.waitForTimeout(400);
     const rejilla = await page.evaluate(() => {
       const cal = document.querySelector('.cal');
-      const celda = [...document.querySelectorAll('.dbox')].find((x) => !x.classList.contains('blank'));
+      /* la semana pasada va encogida a propósito (52 px): se mide una de las que tienes por delante */
+      const celda = [...document.querySelectorAll('.dbox')]
+        .find((x) => !x.classList.contains('blank') && !x.classList.contains('semprev'));
       const r = celda.getBoundingClientRect();
       return {
         alturaCelda: Math.round(r.height),
@@ -2524,13 +2536,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('los eventos del mes salen marcados en su casilla y listados enteros debajo',
       agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
 
-    // Con diez eventos en un día la casilla no puede reventar: caben tres con su nombre (en dos
-    // líneas como mucho, partido por palabras) y el resto va como «+N». El nombre entero sigue en
-    // la lista del mes y al tocar el día.
+    // Con diez eventos en un día la casilla no puede reventar: caben CUATRO, cada uno en UNA sola
+    // línea (lo pidió así: «los eventos y nombres y todo que no ocupe nada más de una línea»), y el
+    // resto va como «+N». El nombre entero sigue en la lista del mes y al tocar el día.
+    // El día se coge de una casilla que la rejilla esté pintando de verdad: desde que solo se
+    // enseña UNA semana pasada, un día fijo del mes puede caer fuera y `celda` salía undefined.
     const aprieto = await page.evaluate(() => {
-      const y = new Date().getFullYear(), m = new Date().getMonth();
-      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      const dia = iso(new Date(y, m, 9));
+      const visible = [...document.querySelectorAll('.dbox')]
+        .filter((x) => !x.classList.contains('semprev') && x.dataset.key);
+      const dia = (visible[Math.min(3, visible.length - 1)] || {}).dataset.key;
       const ev = window.PG.eventosS();
       ev.length = 0;
       for (let i = 0; i < 10; i++) {
@@ -2550,15 +2564,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         masN: (celda.querySelector('.dmas') || {}).textContent || '',
         nota: !!celda.querySelector('.dnota'),
         desborda: celda.scrollHeight > celda.clientHeight,
-        // los tres que caben llevan su nombre, y ninguno pasa de dos líneas
+        // los que caben llevan su nombre, y NINGUNO pasa de una línea
         titulos: [...celda.querySelectorAll('.dev')].filter((x) => /Un evento de/.test(x.innerText)).length,
         maxLineas: Math.max(...[...celda.querySelectorAll('.dev')].map((x) =>
           Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)))),
       };
     });
-    check('con diez eventos en un día, la casilla enseña tres con nombre y «+7», sin desbordarse',
-      aprieto.puntos === 3 && aprieto.masN === '+7' && aprieto.nota && aprieto.titulos === 3 &&
-      aprieto.maxLineas <= 2 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
+    check('con diez eventos en un día, la casilla enseña cuatro de UNA línea y «+6», sin desbordarse',
+      aprieto.puntos === 4 && aprieto.masN === '+6' && aprieto.nota && aprieto.titulos === 4 &&
+      aprieto.maxLineas === 1 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
       JSON.stringify(aprieto));
 
     // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
@@ -2566,7 +2580,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const y = new Date().getFullYear(), m = new Date().getMonth();
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       const g = window.PG.store.shifts.filter((x) => window.PG.isGuardia(x))[0];
-      window.PG.store.rotation.daySet[iso(new Date(y, m, 14))] = { shift: g.id, guard: 'umi' };
+      const vis = [...document.querySelectorAll('.dbox')].filter((x) => x.dataset.key);
+      const k14 = (vis[Math.min(8, vis.length - 1)] || {}).dataset.key || iso(new Date(y, m, 14));
+      window.PG.store.rotation.daySet[k14] = { shift: g.id, guard: 'umi' };
       window.PG.save();
       window.PG.render();
       const f = document.querySelector('.dline.gflag');
@@ -4223,7 +4239,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(400);
     const dia = await page.evaluate(() => {
       const cards = [...document.querySelectorAll('#main .card')];
-      const tit = (c) => { const h = c.querySelector('h2'); return h ? h.textContent.replace(/\s+/g, ' ').trim() : ''; };
+      /* el sol pasó a ser una tarjeta PLEGADA: su título vive en el <summary>, no en un <h2>, así
+         que buscarlo solo por h2 lo dejaba en -1 */
+      const tit = (c) => { const h = c.querySelector('h2') || c.querySelector(':scope>summary');
+        return h ? h.textContent.replace(/\s+/g, ' ').trim() : ''; };
       const orden = cards.map(tit);
       const pos = (re) => orden.findIndex((t) => re.test(t));
       return {
@@ -5107,8 +5126,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // ===================== Mes: el mes en el que estás corre con la semana =====================
   {
-    // «que el calendario se mueva según las semanas, que solo vea 2 semanas anteriores a la que estoy
-    // y la mayoría delante»: en el mes actual, dos semanas antes de la de hoy, la de hoy y cuatro más.
+    // «disminuir el tamaño de la semana pasada pero que se siga viendo, y solo 1 semana anterior»:
+    // en el mes actual, UNA semana antes de la de hoy (encogida por CSS), la de hoy y cuatro más.
+    // Con las dos que había, lo que ya no puedes cambiar se comía 237 px de los 845 de la rejilla.
     // Los otros meses siguen enteros, con una semana de margen a cada lado.
     await gotoTab('month');
     const mb = await page.$('#main [data-a="mon-today"]');
@@ -5119,14 +5139,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       const h = new Date(); h.setHours(12, 0, 0, 0);
       const lun = new Date(h); lun.setDate(h.getDate() - ((h.getDay() + 6) % 7));
-      const menos14 = new Date(lun); menos14.setDate(lun.getDate() - 14);
-      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(menos14),
-        previas: celdas.filter((c) => c.classList.contains('semprev')).length,
-        hoyEnFila3: celdas.findIndex((c) => c.classList.contains('today')) >= 14 && celdas.findIndex((c) => c.classList.contains('today')) < 21,
+      const menos7 = new Date(lun); menos7.setDate(lun.getDate() - 7);
+      const prev = celdas.filter((c) => c.classList.contains('semprev'));
+      const otra = celdas.find((c) => !c.classList.contains('semprev'));
+      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(menos7),
+        previas: prev.length,
+        hoyEnFila2: celdas.findIndex((c) => c.classList.contains('today')) >= 7 && celdas.findIndex((c) => c.classList.contains('today')) < 14,
+        // y la semana pasada se sigue VIENDO, solo que encogida a menos de la mitad
+        altoPrev: prev[0] ? Math.round(prev[0].getBoundingClientRect().height) : 0,
+        altoNormal: otra ? Math.round(otra.getBoundingClientRect().height) : 0,
         huecos: [...document.querySelectorAll('#main .cal > span:not(.wd)')].length };
     });
-    check('en el mes actual Mes enseña 2 semanas antes de la de hoy, la de hoy y 4 más',
-      mb && rej.n === 49 && rej.primero === rej.esperado && rej.previas === 14 && rej.hoyEnFila3 && rej.huecos === 0,
+    check('en el mes actual Mes enseña UNA semana antes —encogida, pero visible—, la de hoy y 4 más',
+      mb && rej.n === 42 && rej.primero === rej.esperado && rej.previas === 7 && rej.hoyEnFila2 &&
+      rej.altoPrev > 30 && rej.altoPrev < rej.altoNormal * 0.55 && rej.huecos === 0,
       JSON.stringify(rej));
     // al imprimir, el papel empieza en la semana en la que estás
     await page.emulateMedia({ media: 'print' });
@@ -5135,7 +5161,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { visibles: vis.length, previasVisibles: vis.filter((c) => c.classList.contains('semprev')).length };
     });
     await page.emulateMedia({ media: null });
-    check('al imprimir el Mes no salen las semanas anteriores a la tuya',
+    check('al imprimir el Mes no sale la semana anterior a la tuya',
       papel.visibles === 35 && papel.previasVisibles === 0, JSON.stringify(papel));
     // otro mes (con ›): entero, con la semana de antes y la de después, apagadas
     const nx = await page.$('#main [data-a="mon-next"]');
@@ -5158,7 +5184,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
     // y se estira hasta el alto de la pantalla: con siete u ocho filas, cada casilla sigue alta
     const alto = await page.evaluate(() => {
-      const cal = document.querySelector('#main .cal'), c = document.querySelector('#main .cal .dbox');
+      const cal = document.querySelector('#main .cal');
+      const c = [...document.querySelectorAll('#main .cal .dbox')].find((x) => !x.classList.contains('semprev'));
       return { cal: Math.round(cal.getBoundingClientRect().height), celda: Math.round(c.getBoundingClientRect().height), vh: innerHeight };
     });
     check('la cuadrícula del mes ocupa casi toda la pantalla', alto.cal >= alto.vh * 0.85 && alto.celda >= 90,
@@ -5264,6 +5291,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('week');
     await page.waitForTimeout(300);
     const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(250); return !!el; };
+    /* «ver 5 7 10 14 días» dejó de ser cuatro botones y es un <select> que va en la misma fila que
+       el rango: los cuatro botones ocupaban una fila entera delante de la semana. Al ser <select>,
+       su acción vive en el switch de `change`, no en act(). */
+    const pon = async (n) => { const el = await page.$('#main .semnav [data-a="sem-dias-sel"]');
+      if (el) await page.selectOption('#main .semnav [data-a="sem-dias-sel"]', String(n));
+      await page.waitForTimeout(250); return !!el; };
     const lee = () => page.evaluate(() => {
       const f = [...document.querySelectorAll('#main .drow')];
       return { n: f.length, hoyPrimero: !!(f[0] && f[0].classList.contains('today')),
@@ -5273,14 +5306,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hoyK = isoDate(new Date());
     const mas = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return isoDate(d); };
     const pasos = [await lee()], hubo = [];
-    hubo.push(await toca('#main [data-a="sem-dias"][data-n="14"]')); pasos.push(await lee());
+    hubo.push(await pon(14)); pasos.push(await lee());
     hubo.push(await toca('#main .semnav [data-a="wk-next"]')); pasos.push(await lee());
     hubo.push(await toca('#main .semnav [data-a="today"]')); pasos.push(await lee());
     hubo.push(await toca('#main [data-a="sem-ayer"]'));
     const ayerAbierto = await page.evaluate(() => document.querySelectorAll('#main .drow.ayer').length);
     hubo.push(await toca('#main [data-a="sem-ayer"]'));
     const persiste = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.rotation.semanaDias; });
-    hubo.push(await toca('#main [data-a="sem-dias"][data-n="7"]')); pasos.push(await lee());
+    hubo.push(await pon(7)); pasos.push(await lee());
     check('«Semana» empieza hoy, con ayer plegado, y enseña 7, 10, 14 o 5 días que se guardan',
       hubo.every(Boolean) && pasos[0].n === 7 && pasos[0].hoyPrimero && pasos[0].primero === hoyK && pasos[0].ayer &&
       pasos[1].n === 14 && pasos[1].primero === hoyK && pasos[2].primero === mas(14) && !pasos[2].hoyPrimero &&
@@ -5289,7 +5322,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la leyenda va UNA vez y plegada, y cada día lleva sus comidas con hora
     const una = await page.evaluate(() => ({
       leyendas: document.querySelectorAll('#main .tlleg').length,
-      plegada: !!document.querySelector('#main .semley details:not([open]) .tlleg'),
+      plegada: !!document.querySelector('#main .semnav details:not([open]) .tlleg'),
       ejes: document.querySelectorAll('#main .drow .tl-axis').length,
       comidasConHora: [...document.querySelectorAll('#main .drow')].filter((f) => /\d:\d\d/.test((f.querySelector('.drcom') || {}).innerText || '')).length,
       // lo que dice qué es cada bloque ya no es la barra de cada fila: es la rejilla de arriba
@@ -7818,6 +7851,83 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.icsAvisoMin = 30;
       P.store.rotation.calSync = g; P.save(); P.render(); }, guardado);
     await page.waitForTimeout(250);
+  }
+
+
+  // ===================================================================================
+  // «QUE NO OCUPE NADA MÁS DE UNA LÍNEA». En la captura de su móvil, «Vacaciones» salía partido en
+  // «Vacacion / es» y «Sesión general · auditorio» se llevaba tres renglones de una casilla de
+  // 55 px. Y en «Hoy», «Próximos» gastaba dos líneas por evento más un renglón que explicaba lo
+  // que ya dice el título, y el sol ocupaba una tarjeta de 330 px para decir tres horas.
+  // ===================================================================================
+  {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(400);
+    const unaLinea = await page.evaluate(() => {
+      const alt = (el) => el.getBoundingClientRect().height;
+      const fs = (el) => parseFloat(getComputedStyle(el).fontSize);
+      const nombres = [...document.querySelectorAll('.dbox .dnm')].filter((x) => x.textContent.trim().length > 2);
+      const evs = [...document.querySelectorAll('.dbox .dev')];
+      return {
+        nombres: nombres.length,
+        nombresDeDosLineas: nombres.filter((x) => alt(x) > fs(x) * 1.7).length,
+        eventos: evs.length,
+        eventosDeDosLineas: evs.filter((x) => alt(x) > fs(x) * 1.7).length,
+        // y el nombre entero sigue estando: en el title, para no perderlo al recortar
+        conTitle: nombres.filter((x) => (x.closest('.dbox').title || '').length > 0).length === nombres.length,
+      };
+    });
+    check('en el Mes ni el tipo de día ni un evento pasan de UNA línea, y el nombre entero sigue en el title',
+      unaLinea.nombres >= 10 && unaLinea.nombresDeDosLineas === 0 &&
+      unaLinea.eventosDeDosLineas === 0 && unaLinea.conTitle,
+      JSON.stringify(unaLinea));
+
+    // antes de recortar se quita lo que sobra: si no, «Sesión general» quedaba en «Sesi…»
+    const corto = await page.evaluate(() => { const T = window.PG.tituloCasilla;
+      return { conPunto: T('Sesión general · auditorio'), relleno: T('Curso bioestadística'),
+        yaCorto: T('Curso rcp'), pelado: T('Lloretazo'), vacio: T('') }; });
+    check('el nombre de un evento se acorta antes de recortarlo, y lo que ya es corto no se toca',
+      corto.conPunto === 'S. general' && corto.relleno === 'C. bioestadística' &&
+      corto.yaCorto === 'Curso rcp' && corto.pelado === 'Lloretazo' && corto.vacio === 'evento',
+      JSON.stringify(corto));
+
+    // «Hoy»: Próximos a una línea por evento, y el sol plegado con sus horas en el propio renglón
+    await page.evaluate(() => { const P = window.PG;
+      const d = new Date(); d.setDate(d.getDate() + 4);
+      const k = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const ev = P.eventosS(); ev.length = 0;
+      ev.push({ id: 'px1', titulo: 'Un evento con un nombre bastante largo', hora: '15:00',
+        modo: 'fecha', fecha: k, dow: [], color: '#38e1ff', on: true });
+      P.save(); });
+    await gotoTab('hoy');
+    await page.waitForTimeout(400);
+    const hoyCorto = await page.evaluate(() => {
+      const filas = [...document.querySelectorAll('#main .proxf')];
+      const sol = document.querySelector('#main details.solplg');
+      const res = sol ? (sol.querySelector('summary .mini') || {}).textContent || '' : '';
+      return { filas: filas.length,
+        deDosLineas: filas.filter((f) => f.getBoundingClientRect().height > 34).length,
+        sinElRelleno: !/Eventos puntuales que has apuntado/.test(document.getElementById('main').innerText),
+        solPlegado: !!(sol && !sol.open),
+        solConHoras: /\d{1,2}:\d{2}\s*→\s*\d{1,2}:\d{2}/.test(res) };
+    });
+    check('en «Hoy», cada evento de «Próximos» ocupa una línea y el sol cabe en su propio renglón',
+      hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno &&
+      hoyCorto.solPlegado && hoyCorto.solConHoras, JSON.stringify(hoyCorto));
+
+    // y el sol sigue entero al abrirlo: plegarlo no es esconderlo
+    await page.click('#main details.solplg > summary');
+    await page.waitForTimeout(250);
+    const solAbierto = await page.evaluate(() => {
+      const sol = document.querySelector('#main details.solplg');
+      return { abierto: !!(sol && sol.open), conArco: !!sol.querySelector('.solhero svg'),
+        conSitio: !!sol.querySelector('[data-a="ir-sol"]') };
+    });
+    check('el sol plegado no es el sol escondido: al abrirlo está el arco y el sitio',
+      solAbierto.abierto && solAbierto.conArco && solAbierto.conSitio, JSON.stringify(solAbierto));
+    await page.waitForTimeout(150);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
