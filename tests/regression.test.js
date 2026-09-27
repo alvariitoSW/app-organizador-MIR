@@ -7674,6 +7674,152 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+
+  // ===================================================================================
+  // LA CADENA ENTERA DEL CALENDARIO QUE SE SUBE SOLO, CONDUCIENDO LA PANTALLA. Las pruebas
+  // de arriba llaman a calSyncCfg() y a calSyncSubir() a mano: eso pasa por encima de los
+  // dos switches de acciones y del render, que es donde se esconden los fallos mudos.
+  // Aquí se teclea en los campos, se pulsan los botones y se lee lo que pone la tarjeta.
+  //
+  // Y ENCADENANDO SE VE EL FALLO: subir → que falle UNO de los cuatro → la tarjeta decía
+  // «Al día». La firma se guardaba aunque hubiera fallado un fichero, así que un calendario
+  // de Google se quedaba congelado y el automático no volvía a intentarlo hasta el cambio
+  // siguiente. El aviso salía una vez en un flash y desaparecía.
+  // ===================================================================================
+  {
+    await gotoTab('ajustes', 'calendario');
+    const guardado = await page.evaluate(() => { const P = window.PG;
+      const g = JSON.parse(JSON.stringify(P.store.rotation.calSync || {}));
+      // un buzón de mentira dentro de la página, con el mismo contrato que el Worker. window.fallan
+      // dice qué grupos tienen que fallar, para simular que se cae uno de los cuatro.
+      window.__subidas = []; window.__fallan = [];
+      window.__fetchReal = window.fetch;
+      window.fetch = async (u, o) => {
+        const url = String(u), grupo = (url.match(/\/([a-z]+)\.ics$/) || [])[1] || '';
+        window.__subidas.push({ url, metodo: (o || {}).method,
+          auth: ((o || {}).headers || {})['authorization'] || '',
+          bytes: String((o || {}).body || '').length });
+        if (window.__fallan.indexOf(grupo) >= 0) return new Response('no', { status: 500 });
+        return new Response('ok', { status: 200 });
+      };
+      return g; });
+
+    // GESTO 1: teclear la dirección y el token. Van en el switch de `change`, así que hace falta
+    // el Tab: un fill() a secas no dispara nada y la prueba pasaría sin que la app se enterara.
+    await page.fill('[data-a="calsync-f"][data-f="url"]', 'https://cal.midominio.workers.dev');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    await page.fill('[data-a="calsync-f"][data-f="token"]', 'un-secreto-largo');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    const salieronBotones = await page.evaluate(() => ({
+      subir: !!document.querySelector('[data-a="calsync-subir"]'),
+      auto: (document.querySelector('[data-a="calsync-auto"]') || {}).textContent || '',
+      pend: /sin subir/.test(document.querySelector('#main').textContent) }));
+    check('al poner dirección y token aparecen los botones, el automático ya encendido y avisa de que hay cambios sin subir',
+      salieronBotones.subir && /✓/.test(salieronBotones.auto) && salieronBotones.pend,
+      JSON.stringify(salieronBotones));
+
+    // GESTO 2: ver las cuatro direcciones, que es lo que hay que pegar en Google
+    await page.click('[data-a="calsync-direcciones"]');
+    await page.waitForTimeout(250);
+    const dirs = await page.evaluate(() => { const P = window.PG;
+      const t = document.querySelector('#main').textContent;
+      const b = P.calSyncCfg().buzon;
+      return { cuantas: P.ICS_GRUPOS.filter((g) => t.indexOf('/cal/' + b + '/' + g[0] + '.ics') >= 0).length,
+        buzonLargo: b.length }; });
+    check('las cuatro direcciones que hay que pegar en Google salen en pantalla, una por calendario',
+      dirs.cuantas === 4 && dirs.buzonLargo >= 24, JSON.stringify(dirs));
+
+    // GESTO 3: subir. Los cuatro con PUT, el token en la CABECERA y nunca en la dirección
+    await page.click('[data-a="calsync-subir"]');
+    await page.waitForTimeout(700);
+    const sub1 = await page.evaluate(() => ({
+      n: window.__subidas.length,
+      puts: window.__subidas.filter((s) => s.metodo === 'PUT').length,
+      conToken: window.__subidas.filter((s) => /^Bearer un-secreto-largo$/.test(s.auth)).length,
+      tokenEnURL: window.__subidas.filter((s) => /secreto/.test(s.url)).length,
+      vacios: window.__subidas.filter((s) => s.bytes < 40).length,
+      alDia: /Al día/.test(document.querySelector('#main').textContent) }));
+    check('«subir ya» sube los cuatro con el token en la cabecera y la tarjeta pasa a «Al día»',
+      sub1.n === 4 && sub1.puts === 4 && sub1.conToken === 4 && sub1.tokenEnURL === 0 &&
+      sub1.vacios === 0 && sub1.alDia === true, JSON.stringify(sub1));
+
+    // GESTO 4, ENCADENADO SIN RESETEAR NADA: cambiar algo de verdad en la misma pantalla —los
+    // minutos de aviso van dentro de los cuatro ficheros— y que UNO de los cuatro falle al subir.
+    await page.evaluate(() => { window.__subidas = []; window.__fallan = ['entrenos']; });
+    await page.fill('[data-a="ics-aviso-min"]', '45');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    const trasCambiar = await page.evaluate(() => ({
+      pend: /sin subir/.test(document.querySelector('#main').textContent),
+      subidasDeMomento: window.__subidas.length }));
+    await page.click('[data-a="calsync-subir"]');
+    await page.waitForTimeout(700);
+    const sub2 = await page.evaluate(() => ({
+      n: window.__subidas.length,
+      texto: document.querySelector('#main').textContent,
+      pend: window.PG.calSyncPendiente() }));
+    check('cambiar los minutos de aviso marca los cuatro ficheros como pendientes, sin subir nada todavía',
+      trasCambiar.pend === true && trasCambiar.subidasDeMomento === 0, JSON.stringify(trasCambiar));
+    check('si falla uno de los cuatro, la app NO dice «Al día»: sigue pendiente y lo reintentará',
+      sub2.n === 4 && sub2.pend === true && !/Al día/.test(sub2.texto) &&
+      /sin subir/.test(sub2.texto), JSON.stringify({ n: sub2.n, pend: sub2.pend,
+        alDia: /Al día/.test(sub2.texto), avisa: /sin subir/.test(sub2.texto) }));
+
+    // GESTO 5: el Worker vuelve, se guarda cualquier cosa y el automático lo arregla solo —sin
+    // volver a tocar «subir ya»—, que es lo que se le prometió: no tener que hacer nada.
+    await page.evaluate(async () => { window.__subidas = []; window.__fallan = [];
+      window.PG.save(); await window.PG.calSyncAhoraSiToca();
+      await new Promise((r) => setTimeout(r, 300)); });
+    await page.waitForTimeout(300);
+    const sub3 = await page.evaluate(() => ({ n: window.__subidas.length,
+      pend: window.PG.calSyncPendiente(),
+      alDia: /Al día/.test(document.querySelector('#main').textContent) }));
+    check('cuando el Worker vuelve, el automático sube los cuatro sin que le des a nada y queda al día',
+      sub3.n === 4 && sub3.pend === false && sub3.alDia === true, JSON.stringify(sub3));
+
+    // GESTO 6: apagar el automático y cambiar algo: no sube nada hasta que le des tú
+    await page.click('[data-a="calsync-auto"]');
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { window.__subidas = []; });
+    await page.fill('[data-a="ics-aviso-min"]', '20');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(250);
+    const apagado = await page.evaluate(async () => { const P = window.PG;
+      await P.calSyncAhoraSiToca();
+      await new Promise((r) => setTimeout(r, 200));
+      return { subidas: window.__subidas.length,
+        avisa: /Automático apagado/.test(document.querySelector('#main').textContent),
+        pend: P.calSyncPendiente() }; });
+    check('con el automático apagado no sube nada solo, y la tarjeta lo dice en vez de callarlo',
+      apagado.subidas === 0 && apagado.avisa === true && apagado.pend === true,
+      JSON.stringify(apagado));
+
+    // GESTO 7: «cambiar la dirección» invalida las de Google, así que vuelve a estar pendiente
+    // aunque el contenido no haya cambiado: si no, el calendario nuevo se quedaría vacío.
+    const antesBuzon = await page.evaluate(() => window.PG.calSyncCfg().buzon);
+    await page.click('[data-a="calsync-auto"]');   // se vuelve a encender
+    await page.waitForTimeout(200);
+    await page.evaluate(async () => { window.__subidas = [];
+      await window.PG.calSyncAhoraSiToca(); await new Promise((r) => setTimeout(r, 300)); });
+    await page.click('[data-a="calsync-nuevo"]');
+    await page.waitForTimeout(250);
+    await page.click('#modal [data-a="confirm-yes"]');
+    await page.waitForTimeout(350);
+    const nuevo = await page.evaluate(() => { const P = window.PG;
+      return { buzon: P.calSyncCfg().buzon, pend: P.calSyncPendiente() }; });
+    check('cambiar la dirección da un buzón nuevo y vuelve a marcar pendiente: el calendario nuevo no puede quedarse vacío',
+      nuevo.buzon !== antesBuzon && nuevo.buzon.length >= 24 && nuevo.pend === true,
+      JSON.stringify({ cambia: nuevo.buzon !== antesBuzon, pend: nuevo.pend }));
+
+    await page.evaluate((g) => { const P = window.PG;
+      window.fetch = window.__fetchReal; delete window.__subidas; delete window.__fallan;
+      P.store.rotation.icsAvisoMin = 30;
+      P.store.rotation.calSync = g; P.save(); P.render(); }, guardado);
+    await page.waitForTimeout(250);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -13003,7 +13003,11 @@ async function calSyncSubir(callado){
     if(callado&&/401|token/.test(malas[0]))flash('el calendario no se está subiendo: '+malas[0],6000);
     return 'no se ha subido nada: '+malas[0];}
   c.ultima=Date.now();
-  try{c.firma=calSyncFirma();}catch(e){c.firma='';}
+  /* «AL DÍA» SOLO SI HAN SUBIDO LOS CUATRO. Antes la firma se guardaba aunque uno hubiera fallado:
+     la app decía «Al día» con un calendario de Google congelado, y el automático no volvía a
+     intentarlo hasta el siguiente cambio. Un aviso que se lee una vez no es un estado. Dejando la
+     firma vieja, sigue diciendo «hay cambios sin subir» y se arregla solo en el próximo guardado. */
+  if(!malas.length){try{c.firma=calSyncFirma();}catch(e){c.firma='';}}
   /* OJO: save() pide otra subida, y ésta viene DE una subida. Se apaga un momento el automático
      para no entrar en bucle. */
   const antes=c.auto;c.auto=false;save();c.auto=antes;
