@@ -2111,6 +2111,21 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
 .entdias button.no{opacity:.55}
 .entaviso{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;color:var(--ink);font:inherit;cursor:pointer;
   border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+
+/* la semana: lo que se pisa va a la mitad derecha; el ir y volver del gym, claro; leyenda */
+.sb.med{left:50%}
+.sb.fino{border-left:0;border-radius:2px;background:color-mix(in srgb,var(--c) 22%,transparent);left:30%;right:30%;z-index:0;opacity:.8}
+.srley{display:flex;flex-wrap:wrap;gap:4px 10px;padding:7px 2px 0;font-size:11px;color:var(--ink2)}
+.srley span{display:inline-flex;align-items:center;gap:4px}
+.srley i{width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--c) 35%,transparent);border-left:2px solid var(--c)}
+/* el contador de entrenos, a la vista en Hoy y en Semana */
+.entcont{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer;margin:6px 0 2px;max-width:100%}
+.entcont b{font-size:14px;white-space:nowrap}
+.entcont span{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.entcont.mal{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--card))}
+.entcont.mal span{color:var(--warn)}
+.entdias button i{display:block;font-style:normal;font-size:9px;color:var(--ink2);overflow:hidden;white-space:nowrap}
 /* el orden en que recorres el súper: la lista se pinta así, y con el orden fijo del código
    hacías el súper en zigzag */
 .pasord{display:flex;flex-direction:column;gap:4px;margin-top:8px}
