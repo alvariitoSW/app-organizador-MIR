@@ -1,0 +1,208 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=comun.css>
+<style>
+.row{display:flex;gap:8px;align-items:center}
+.tit{font-size:11px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 2px 10px}
+.hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}.hd b{font-size:19px}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.sem div{font-size:10.5px;font-weight:800;color:var(--ink2)}
+.sem i{display:grid;place-items:center;width:34px;height:34px;margin:4px auto 0;border-radius:50%;border:2px solid var(--line);font-style:normal;font-size:14px}
+.sem .ok i{background:var(--gym);border-color:var(--gym);color:#12081a}
+.sem .plan i{border-color:var(--gym);color:var(--gym)}
+.sem .pis i{border-color:var(--sleep);color:var(--sleep)}
+.sem .no i{border-style:dashed;opacity:.5}
+.sem .hoy div{color:var(--brand)}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.kpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center}
+.kpi b{display:block;font-size:19px}.kpi span{font-size:10px;color:var(--ink2);font-weight:700}
+.hero{margin-top:10px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:18px;padding:14px}
+.hero .k{font-size:10.5px;font-weight:900;letter-spacing:.12em;color:var(--brand)}
+.hero h2{margin:3px 0 2px;font-size:22px}
+.hero .m{font-size:12px;color:var(--ink2)}
+.big{display:block;width:100%;margin-top:12px;padding:15px;border-radius:14px;border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#12081a;font-weight:900;font-size:16px;text-align:center}
+.lnk{display:flex;gap:14px;justify-content:center;margin-top:9px;font-size:12px;font-weight:700;color:var(--ink2)}
+.rts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.rt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px}
+.rt .h{display:flex;align-items:center;gap:6px}.rt .h b{font-size:15.5px;flex:1}
+.rt .dots{width:30px;height:24px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--ink2)}
+.rt ul{list-style:none;margin:7px 0 0;padding:0;font-size:12px}.rt li{display:flex;justify-content:space-between;padding:1.5px 0;color:var(--ink)}.rt li span{color:var(--ink2);font-variant-numeric:tabular-nums}
+.rt .ty{font-size:9.5px;font-weight:900;letter-spacing:.1em;color:var(--gym)}
+.sec{display:flex;align-items:center;margin:16px 2px 0}.sec b{font-size:11px;letter-spacing:.12em;color:var(--ink2)}
+.tabs3{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:10px}
+.tabs3 span{flex:1;text-align:center;padding:7px 0;border-radius:99px;font-size:12.5px;font-weight:800;color:var(--ink2)}.tabs3 .on{background:var(--brand);color:#12081a}
+.ex{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.ex .h{display:flex;gap:10px;align-items:center}
+.ex .ic{width:40px;height:40px;border-radius:11px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;font-size:19px;flex:none}
+.ex .h b{font-size:15px;display:block}.ex .h small{font-size:11px;color:var(--ink2)}
+.obj{font-size:11.5px;color:var(--accent);font-weight:700;margin:7px 0 2px}
+.tb{width:100%;border-collapse:collapse;margin-top:4px;font-variant-numeric:tabular-nums}
+.tb th{font-size:10px;color:var(--ink2);text-align:left;font-weight:800;padding:3px 4px;letter-spacing:.06em}
+.tb td{padding:4px;font-size:13.5px;font-weight:700}
+.sn{display:inline-grid;place-items:center;width:26px;height:24px;border-radius:7px;background:var(--bg2);border:1px solid var(--line);font-size:12px}
+.sn.w{color:var(--accent)}
+.ck{display:inline-grid;place-items:center;width:28px;height:26px;border-radius:8px;border:1px solid var(--line);color:var(--ink2);font-size:13px}
+.ck.on{background:var(--meal);border-color:var(--meal);color:#12081a}
+tr.hecha td{opacity:.9}tr.act td{background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.inp{display:inline-block;min-width:54px;padding:4px 6px;border-radius:8px;background:var(--bg2);border:1px solid var(--line)}
+.ss{display:flex;align-items:center;gap:6px;margin:-2px 0 6px 14px;font-size:10.5px;font-weight:900;letter-spacing:.1em;color:var(--brand2)}
+.ss:before,.ss:after{content:"";flex:1;border-top:1px dotted var(--brand2)}
+.grp2{border-left:3px solid var(--brand2);padding-left:6px;margin-left:-2px}
+.pill{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;color:var(--ink2);margin:6px 4px 0 0}
+.pill.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,transparent)}
+.sticky{position:sticky;bottom:0;padding-top:8px;background:linear-gradient(transparent,var(--bg) 30%)}
+.fld{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2);margin-top:9px}
+.fld .v{display:block;margin-top:4px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;color:var(--ink);letter-spacing:0;font-weight:600}
+.seg{display:flex;gap:5px;margin-top:5px}.seg span{flex:1;text-align:center;padding:8px 0;border-radius:10px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}.seg .on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 15%,transparent)}
+.mv{display:flex;flex-direction:column;gap:2px;margin-left:auto}.mv i{font-style:normal;font-size:10px;color:var(--ink2);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+.timer{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--gym) 14%,var(--card));border:1px solid var(--gym);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.timer b{font-size:24px;font-variant-numeric:tabular-nums}.timer .bar2{flex:1;height:6px;border-radius:9px;background:var(--line);overflow:hidden}.timer .bar2 i{display:block;height:100%;width:62%;background:var(--gym)}
+.chart{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px;border-bottom:1px solid var(--line);padding:0 2px}
+.chart div{flex:1;background:var(--gym);border-radius:5px 5px 0 0;position:relative}
+.chart div span{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:9.5px;color:var(--ink2);font-weight:700}
+.xl{display:flex;gap:6px;padding:3px 2px 0;font-size:9.5px;color:var(--ink2)}.xl span{flex:1;text-align:center}
+.pr{display:flex;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}.pr:first-child{border-top:0}.pr b{flex:1}.pr span{color:var(--ink2);font-size:11.5px;margin-left:8px}.pr .up{color:var(--meal);font-weight:800}
+.hs{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}.hs:first-child{border-top:0}
+.hs .d{width:42px;text-align:center;font-weight:900;font-size:16px;line-height:1}.hs .d small{display:block;font-size:9.5px;color:var(--ink2);font-weight:800}
+.hs .t{flex:1;font-size:12px;color:var(--ink2)}.hs .t b{display:block;color:var(--ink);font-size:13.5px}
+</style><style>
+.ready{display:flex;gap:10px;align-items:center;background:color-mix(in srgb,var(--accent) 12%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 55%,var(--line));border-radius:14px;padding:10px 12px;margin-top:10px}
+.ready .g{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:15px;background:conic-gradient(var(--accent) 0 62%,var(--line) 62%);position:relative}
+.ready .g:after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card)}.ready .g b{position:relative;z-index:1}
+.ready .t{flex:1;font-size:12px;color:var(--ink2)}.ready .t b{display:block;color:var(--ink);font-size:13.5px}
+.mus{margin-top:6px}.mus .r{display:grid;grid-template-columns:78px 1fr 40px;gap:8px;align-items:center;font-size:11.5px;padding:3px 0}
+.mus .tr{position:relative;height:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--line)}
+.mus .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--gym)}
+.mus .tr u{position:absolute;top:-3px;bottom:-3px;border-left:1px dashed var(--ink2);border-right:1px dashed var(--ink2);background:color-mix(in srgb,var(--meal) 12%,transparent)}
+.mus .n{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}.mus .lo{color:var(--accent)}.mus .ok{color:var(--meal)}
+.plate{display:flex;align-items:center;gap:3px;margin-top:8px;padding:8px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+.plate .bar{height:8px;width:60px;background:#9aa3ad;border-radius:3px}
+.plate i{display:block;width:10px;border-radius:3px}
+.plate span{font-size:11px;color:var(--ink2);margin-left:8px}
+.rir{display:flex;gap:5px;margin-top:8px}.rir span{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--ink2)}.rir span b{display:block;font-size:14px;color:var(--ink)}.rir .on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 15%,transparent)}
+.sug{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;color:var(--ink2);background:color-mix(in srgb,var(--meal) 10%,var(--card));border:1px solid color-mix(in srgb,var(--meal) 45%,var(--line));border-radius:12px;padding:8px 10px;margin-top:8px}.sug b{color:var(--ink)}
+.tpl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.tpl div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}.tpl div b{display:block;font-size:14px}.tpl div span{font-size:11px;color:var(--ink2)}.tpl .on{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.tpl .tg{display:table;margin-top:6px;font-size:9.5px;font-weight:900;letter-spacing:.08em;padding:2px 6px;border-radius:99px;background:var(--meal);color:#12081a}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.big3 div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center}.big3 b{display:block;font-size:20px}.big3 span{font-size:10px;color:var(--ink2);font-weight:700}
+.trof{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}.trof:first-child{border-top:0}.trof .e{font-size:20px}.trof b{flex:1}.trof span{font-size:11.5px;color:var(--meal);font-weight:800}
+.line{position:relative;height:120px;margin-top:10px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
+.line svg{position:absolute;inset:0;width:100%;height:100%}
+.swim{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}.swim:first-child{border-top:0}
+.swim .k{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:900;background:var(--bg2);border:1px solid var(--line)}
+.swim small{display:block;font-size:11px;color:var(--ink2)}.swim .p{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}.swim .p small{text-align:right}
+</style><body>
+<!-- A · PORTADA -->
+<div class="wrap" id="v2-portada">
+<div class="tit">A · HOY — LA APP SABE CÓMO LLEGAS</div>
+<div class="card">
+ <div class="row" style="margin-bottom:6px"><b style="font-size:13px">Semana 39 · bloque 2 de 4</b><span class="sp"></span><span class="mini"><b style="color:var(--ink);font-size:14px">2 / 4</b> · ⚙</span></div>
+ <div class="sem">
+  <div class="ok">lun<i>✓</i></div><div class="no">mar<i>🩺</i></div><div class="ok">mié<i>✓</i></div>
+  <div class="plan hoy">jue<i>💪</i></div><div class="pis">vie<i>🏊</i></div><div>sáb<i>💪</i></div><div>dom<i></i></div>
+ </div>
+</div>
+<div class="ready"><div class="g"><b>62</b></div><div class="t"><b>Listo al 62 %</b>dormiste 5 h 10 (saliente ayer) · pierna aún cargada del lunes. <b style="display:inline;color:var(--accent)">Hoy: versión corta, −10 % de peso.</b></div></div>
+<div class="hero">
+ <div class="k">HOY TOCA · 17:15 → EN CASA 18:55</div>
+ <h2>Torso A <span style="font-size:13px;color:var(--ink2);font-weight:700">· versión 45′</span></h2>
+ <div class="m">6 ejercicios · 18 series · press banca 72,5 kg (+2,5) · dominadas +5 kg</div>
+ <div class="big">▶ Empezar Torso A</div>
+ <div class="lnk"><span>versión completa 70′</span><span>·</span><span>otra rutina</span><span>·</span><span>vacío</span></div>
+</div>
+<div class="card" style="margin-top:10px">
+ <div class="row"><b style="font-size:13px">Series por músculo · esta semana</b><span class="sp"></span><span class="mini">objetivo 10–20</span></div>
+ <div class="mus">
+  <div class="r"><span>Pecho</span><div class="tr"><u style="left:33%;right:33%"></u><i style="width:40%"></i></div><span class="n ok">12</span></div>
+  <div class="r"><span>Espalda</span><div class="tr"><u style="left:33%;right:33%"></u><i style="width:47%"></i></div><span class="n ok">14</span></div>
+  <div class="r"><span>Hombros</span><div class="tr"><u style="left:33%;right:33%"></u><i style="width:20%"></i></div><span class="n lo">6</span></div>
+  <div class="r"><span>Cuádriceps</span><div class="tr"><u style="left:33%;right:33%"></u><i style="width:30%"></i></div><span class="n lo">9</span></div>
+  <div class="r"><span>Isquios</span><div class="tr"><u style="left:33%;right:33%"></u><i style="width:13%"></i></div><span class="n lo">4</span></div>
+ </div>
+ <div class="mini" style="margin-top:6px">Faltan hombros e isquios: el sábado la app mete <b style="color:var(--ink)">+3 elevaciones laterales</b> y <b style="color:var(--ink)">+3 curl femoral</b>.</div>
+</div>
+</div>
+
+<!-- B · PLANTILLAS -->
+<div class="wrap" id="v2-plan">
+<div class="tit">B · CREAR — DESDE TUS DÍAS REALES, NO DESDE CERO</div>
+<div class="hd"><span class="btn">‹</span><b>Nuevo plan</b></div>
+<div class="card">
+ <div class="mini">Con tu rotación caben de media <b style="color:var(--ink)">3,2 días de fuerza</b> por semana (1–2 guardias). Objetivo:</div>
+ <div class="seg"><span class="on">💪 Fuerza</span><span>📈 Músculo</span><span>🤸 Calistenia</span><span>⚖️ Mixto</span></div>
+ <div class="mini" style="margin-top:8px">Material</div>
+ <div><span class="pill on">barra</span><span class="pill on">mancuernas</span><span class="pill on">poleas</span><span class="pill on">barra dominadas</span><span class="pill">solo cuerpo</span></div>
+</div>
+<div class="tpl">
+ <div class="on"><b>Torso / Pierna</b><span>A-B-A-B · 45–70′ · se adapta a 2, 3 o 4 días</span><div class="tg">ENCAJA CON GUARDIAS</div></div>
+ <div><b>Full body A/B</b><span>2–3 días · 60′ · ideal semanas de 3 guardias</span><div class="tg" style="background:var(--gym)">PLAN B AUTOMÁTICO</div></div>
+ <div><b>Push / Pull / Legs</b><span>6 días · 80′</span><div class="tg" style="background:var(--guard)">NO TE CABE</div></div>
+ <div><b>Calistenia</b><span>dominadas lastradas, fondos, pistol · 3 días</span></div>
+</div>
+<div class="card" style="margin-top:8px"><b style="font-size:13px">Cómo progresa</b>
+ <div class="seg"><span class="on">doble progresión</span><span>lineal</span><span>RIR</span><span>5/3/1</span></div>
+ <div class="mini" style="margin-top:6px">Rango 8–12: cuando hagas 12 en todas las series, la próxima vez sube <b style="color:var(--ink)">2,5 kg</b> (1 kg en aislamiento) y vuelves a 8. Cada 5 semanas, <b style="color:var(--ink)">descarga</b> al 60 %.</div>
+</div>
+<div class="sticky"><div class="big" style="margin:0">Crear Torso / Pierna · 4 rutinas</div></div>
+</div>
+
+<!-- C · ENTRENANDO -->
+<div class="wrap" id="v2-vivo">
+<div class="tit">C · ENTRENANDO — PESO, DISCOS Y ESFUERZO</div>
+<div class="hd"><span class="btn">‹</span><div><b style="font-size:16px">Torso A</b><div class="mini">21 min · 3 180 kg · 7/18 series</div></div><span class="sp"></span><span class="btn" style="border-color:var(--meal);color:var(--meal)">terminar</span></div>
+<div class="timer"><span>⏱</span><b>1:48</b><div class="bar2"><i></i></div><span class="btn">+15</span><span class="btn">saltar</span></div>
+<div class="ex" style="border-color:var(--brand)"><div class="h"><span class="ic">🏋️</span><div><b>Press banca</b><small>🎯 8–12 reps · RIR 2 · e1RM 91 kg</small></div></div>
+ <table class="tb"><tr><th>SERIE</th><th>ANTES</th><th>KG</th><th>REPS</th><th></th></tr>
+ <tr><td><span class="sn w">C</span></td><td class="mini">—</td><td>40</td><td>10</td><td><span class="ck on">✓</span></td></tr>
+ <tr class="hecha"><td><span class="sn">1</span></td><td class="mini">70×12</td><td>72,5</td><td>10</td><td><span class="ck on">✓</span></td></tr>
+ <tr class="act"><td><span class="sn">2</span></td><td class="mini">70×12</td><td><span class="inp">72,5</span></td><td><span class="inp">10</span></td><td><span class="ck">✓</span></td></tr>
+ <tr><td><span class="sn">3</span></td><td class="mini">70×11</td><td>72,5</td><td>10</td><td><span class="ck">✓</span></td></tr></table>
+ <div class="plate"><div class="bar"></div><i style="height:34px;background:#e53935"></i><i style="height:26px;background:#43a047;width:7px"></i><i style="height:18px;background:#9e9e9e;width:5px"></i><span>por lado: <b style="color:var(--ink)">25 + 1,25</b> · barra 20</span></div>
+ <div class="rir"><span>¿cuántas te quedaban?</span><span><b>0</b>fallo</span><span class="on"><b>1–2</b>justo</span><span><b>3+</b>sobrado</span></div>
+ <div class="sug">💡 <span>Serie 1 con 10 a 72,5 kg y te quedaban 2: <b>sigue igual</b>. Si llegas a 12 en las 3, el jueves que viene <b>75 kg</b>.</span></div>
+</div>
+<div class="ex" style="opacity:.8"><div class="h"><span class="ic">🧗</span><div><b>Dominadas lastradas</b><small>3 × 6–8 · +5 kg · después ›</small></div></div></div>
+</div>
+
+<!-- D · RESUMEN -->
+<div class="wrap" id="v2-fin">
+<div class="tit">D · AL TERMINAR — LO QUE HAS GANADO</div>
+<div class="card" style="text-align:center;padding:16px"><div style="font-size:34px">🏆</div><b style="font-size:20px">Torso A hecho</b><div class="mini">jueves 1 oct · 17:14–18:02</div>
+ <div class="big3"><div><b>48′</b><span>duración</span></div><div><b>7 420</b><span>kg (+6 %)</span></div><div><b>18/18</b><span>series</span></div></div></div>
+<div class="card" style="margin-top:8px"><b style="font-size:13px">Récords de hoy</b>
+ <div class="trof"><span class="e">🥇</span><b>Press banca</b><span>72,5 × 12 · e1RM 101</span></div>
+ <div class="trof"><span class="e">🥈</span><b>Dominadas</b><span>+5 kg × 8 (antes × 6)</span></div></div>
+<div class="card" style="margin-top:8px"><b style="font-size:13px">La próxima vez (sábado)</b>
+ <div class="pr"><b>Press banca</b><span>72,5 → </span><span class="up">75 kg</span></div>
+ <div class="pr"><b>Remo con barra</b><span>60 × 10 · </span><span>repite</span></div>
+ <div class="pr"><b>Press militar</b><span>se quedó en 7 · </span><span style="color:var(--accent);font-weight:800">baja a 40</span></div></div>
+<div class="card" style="margin-top:8px"><div class="row"><b style="font-size:13px">¿Cómo ha ido?</b><span class="sp"></span><span>😫</span><span>😐</span><span style="font-size:20px">💪</span><span>🔥</span></div>
+ <div class="mini" style="margin-top:6px">Ahora toca: 🍽 comida post-entreno 18:30 (40 g proteína) · 🌙 a la cama 23:00 para tus 8 h</div></div>
+</div>
+
+<!-- E · PROGRESO -->
+<div class="wrap" id="v2-prog">
+<div class="tit">E · PROGRESO — FUERZA REAL, NO SOLO KILOS MOVIDOS</div>
+<div class="hd"><span class="btn">‹</span><b>Progreso</b><span class="sp"></span><span class="pill on" style="margin:0">Press banca ▾</span></div>
+<div class="card"><div class="row"><b style="font-size:13px">1RM estimado</b><span class="sp"></span><span class="mini">12 semanas · <b style="color:var(--meal)">+9 %</b></span></div>
+ <div class="line"><svg viewBox="0 0 300 120" preserveAspectRatio="none"><polyline fill="none" stroke="var(--brand)" stroke-width="3" points="0,95 30,90 60,88 90,80 120,82 150,72 180,66 210,70 240,55 270,48 300,38"/><line x1="208" x2="208" y1="0" y2="120" stroke="var(--guard)" stroke-dasharray="3 3"/><text x="212" y="14" fill="var(--guard)" font-size="10">3 guardias</text></svg></div>
+ <div class="xl"><span>jul</span><span>ago</span><span>sep</span><span>hoy</span></div></div>
+<div class="card" style="margin-top:8px"><b style="font-size:13px">Tus básicos</b>
+ <div class="pr"><b>Sentadilla</b><span>e1RM 128</span><span class="up">▲ 6</span></div>
+ <div class="pr"><b>Peso muerto</b><span>e1RM 139</span><span class="up">▲ 4</span></div>
+ <div class="pr"><b>Press banca</b><span>e1RM 101</span><span class="up">▲ 8</span></div>
+ <div class="pr"><b>Dominadas</b><span>+5 × 8</span><span class="up">▲ 2 reps</span></div></div>
+<div class="sug" style="background:color-mix(in srgb,var(--accent) 10%,var(--card));border-color:var(--accent)">📉 <span><b>Semana 5 de 5:</b> la próxima es de descarga (60 %, mismas series). Encaja con tu semana de 2 guardias.</span></div>
+</div>
+
+<!-- F · PISCINA -->
+<div class="wrap" id="v2-pisc">
+<div class="tit">F · PISCINA — SERIES DE AGUA, NO «NATACIÓN ×1»</div>
+<div class="hd"><span class="btn">‹</span><b>Piscina · saliente</b><span class="sp"></span><span class="mini">20:00 · 90′</span></div>
+<div class="card">
+ <div class="swim"><span class="k">1</span><div>Calentamiento<small>200 m libre suave</small></div><div class="p">4:10<small>2:05/100</small></div></div>
+ <div class="swim"><span class="k">2</span><div>8 × 50 m técnica<small>descanso 20″ · pull-buoy</small></div><div class="p">400 m</div></div>
+ <div class="swim"><span class="k" style="border-color:var(--brand)">3</span><div><b>6 × 100 m a ritmo</b><small>objetivo 1:55/100 · descanso 30″</small></div><div class="p" style="color:var(--brand)">4/6<small>1:53 media</small></div></div>
+ <div class="swim"><span class="k">4</span><div>Vuelta a la calma<small>200 m espalda</small></div><div class="p">200 m</div></div>
+</div>
+<div class="big3"><div><b>1 400</b><span>metros hoy</span></div><div><b>3 900</b><span>esta semana</span></div><div><b>1:53</b><span>ritmo /100 m</span></div></div>
+<div class="sug">🌊 <span>El sábado hay <b>Lloretazo</b>: la app cuenta tu nado en el mar como sesión de piscina y no te mete otra.</span></div>
+<div class="sticky"><div class="big" style="margin:0">✓ Serie 5 hecha · 1:54</div></div>
+</div>
