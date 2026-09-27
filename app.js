@@ -46,7 +46,7 @@ function monthOf(s){const d=parseDate(s);return d?d.getFullYear()+'-'+String(d.g
 
 /* ===================== datos por defecto ===================== */
 function DEFAULTS(){return {
-  meta:{owner:'',notes:'',backupAvisoD:13,montada:false,sesionesFijas:true},
+  meta:{owner:'',notes:'',backupAvisoD:13,montada:false,sesionesFijas:true,menuVaciado:true},
   /* el temario vive en otra app: aquí solo su copia, tu progreso y tus ratos */
   estudio:{fuente:{nombre:'',url:'',cuando:''},temas:[],estado:{},sesiones:[]},
   shifts:[
@@ -723,6 +723,13 @@ function normalize(o){
     if(!o.eventos.some(function(e){return /sesi[oó]n general/i.test(e.titulo);}))
       o.eventos.push({id:'ev-ses-gen',titulo:'Sesión general · auditorio',hora:'08:00',fin:'08:30',modo:'semanal',dow:[4],fecha:'',
         recordatorio:false,cuentaAtras:false,notaId:'',soloTrabajo:true,color:'#38e1ff',on:true});}
+  /* EL MENÚ DE EJEMPLO, FUERA. La app arrancaba con un menú entero puesto —porridge, lentejas,
+     salmón AL HORNO— presentado como si fuera el tuyo, y él no tiene horno: la app le planificaba
+     la semana, la compra y las tandas con comida que no puede hacer, repetida en cinco pantallas.
+     Se vacía UNA vez y queda la marca; lo que hayas creado tú no se toca (se comparan los ids con
+     los de DEFAULTS). Una instalación nueva ya viene marcada: así «restaurar el ejemplo» sigue
+     restaurando el ejemplo. */
+  if(!o.meta.menuVaciado){o.meta.menuVaciado=true;try{vaciarMenus(o);}catch(e){}}
   if(!o.habitos||typeof o.habitos!=='object')o.habitos={items:[],registro:{}};
   if(!Array.isArray(o.habitos.items))o.habitos.items=[];
   o.habitos.items=o.habitos.items.filter(function(h){return h&&h.id;}).map(function(h){
@@ -10664,6 +10671,12 @@ function renderTypesLista(){
         ' comidas armadas <span class="mini">('+store.meals.length+')</span></button>'+
       '<button class="btn s" data-a="food-vista" data-v="platos">'+gymIco('libro','gico sm')+
         ' mis platos <span class="mini">('+store.dishes.length+')</span></button>'+
+    '</div>'+
+    /* Por si vuelve a quedarse con un menú que no come: vaciarlo a mano, sin tocar nada de lo
+       suyo. Va abajo del todo porque es de las que se usan una vez. */
+    '<div class="row" style="margin-top:6px">'+
+      '<button class="btn s" data-a="menu-vaciar">vaciar el menú</button>'+
+      '<span class="mini">quita lo que hay puesto en cada toma y deja las horas. Tus platos no se tocan.</span>'+
     '</div></div>';}
 function renderTypesAuto(){
   /* LA PROPUESTA, antes de tocar nada. Cada línea dice por qué está ahí: sin el porqué esto es una
@@ -14410,6 +14423,13 @@ function act(a,el){
     case 'sec-mover':{const m=moverSeccion(el.dataset.k||'',+el.dataset.d||0);
       if(m)flash(m);render();break;}
     case 'sec-orden-reset':{delete food().secOrden;save();render();flash('orden de fábrica');break;}
+    /* vaciar el menú: es un BOTÓN, así que va en act() y no en el switch de `change` */
+    case 'menu-vaciar':{
+      confirmar('Se queda cada toma con su hora pero sin nada puesto, y desaparecen los platos y las comidas que trajo la app de ejemplo. Lo que hayas creado tú no se toca.','Sí, vaciarlo')
+        .then(function(si){if(!si)return;
+          const r=vaciarMenus();save();render();
+          flash(r.quitados?('vaciadas '+r.tomas+' tomas · fuera '+r.platos+' platos y '+r.menus+' comidas de ejemplo'):'ya estaba vacío');});
+      break;}
     case 'compra-pasillo':{const k=el.dataset.k||'';
       ui.compraPasillo=(ui.compraPasillo===k)?'':k;render();break;}
     case 'compra-pasillo-set':{
@@ -16486,6 +16506,38 @@ function tituloCasilla(t){
   const m=EV_RELLENO.exec(x);
   if(m&&x.length-m[0].length>=6)x=m[0].trim().charAt(0).toUpperCase()+'. '+x.slice(m[0].length);
   return x;}
+/* ===================== VACIAR EL MENÚA =====================
+   La app arrancaba con un menú entero puesto —porridge, lentejas, salmón AL HORNO— presentado
+   como si fuera el tuyo. Y él no tiene horno. Así que la app le estaba planificando la semana, la
+   compra y las tandas de cocina con comida que no puede hacer, y eso se repetía en Mes, Semana,
+   Hoy, Cocina y Compra: cinco sitios diciendo lo mismo, y lo mismo era mentira.
+
+   Vaciarlo deja las HORAS de cada toma —esas sí son suyas: desayuno a las 7, comida a las 14:15—
+   y quita lo que va dentro. Lo que hayas creado tú NO se toca: se borran solo los platos y los
+   menús que vienen en DEFAULTS(), comparando id a id. */
+function esDeEjemplo(){
+  let D=null;try{D=DEFAULTS();}catch(e){return {platos:new Set(),menus:new Set()};}
+  return {platos:new Set((D.dishes||[]).map(function(x){return x.id;})),
+    menus:new Set((D.meals||[]).map(function(x){return x.id;}))};}
+function vaciarMenus(o){
+  o=o||store;
+  const ej=esDeEjemplo();
+  let tomas=0,quitados=0;
+  Object.keys(o.menu||{}).forEach(function(k){
+    (o.menu[k]||[]).forEach(function(sl){
+      tomas++;
+      if(sl.mealId){sl.mealId='';quitados++;}
+      if(Array.isArray(sl.items)&&sl.items.length){quitados+=sl.items.length;sl.items=[];}});});
+  /* la semana base (qué comes cada día de la semana) sale del mismo sitio */
+  if(o.semBase&&o.semBase.d)Object.keys(o.semBase.d).forEach(function(w){
+    ['desayuno','comida','cena'].forEach(function(c){
+      const x=(o.semBase.d[w]||{})[c];
+      if(x&&Array.isArray(x.items)&&x.items.length){quitados+=x.items.length;x.items=[];}});});
+  const platos0=(o.dishes||[]).length,menus0=(o.meals||[]).length;
+  o.dishes=(o.dishes||[]).filter(function(x){return !ej.platos.has(x.id);});
+  o.meals=(o.meals||[]).filter(function(x){return !ej.menus.has(x.id);});
+  return {tomas:tomas,quitados:quitados,
+    platos:platos0-o.dishes.length,menus:menus0-o.meals.length};}
 function calEventos(desde,hasta){
   /* a Google solo le mandamos tres cosas, y siempre con su hora de inicio y fin: guardias, trabajo
      y entrenos. Nada de vacaciones, salientes ni días libres — eso se queda solo en la app. */
@@ -17462,7 +17514,8 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
+window.PG={tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+  vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,parseDietText,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
