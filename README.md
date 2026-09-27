@@ -49,6 +49,9 @@ lista.
 La compra sale en **Hoy** cuando toca, como una tarea más (cada 3, 4 o 7 días, tú eliges). **No se
 mete en el calendario de Google**: se queda en la app.
 
+**El orden de los pasillos** lo pones tú en *Compra → Mis listas*: la lista se pinta en ese orden,
+así que se hace el súper del tirón en vez de en zigzag.
+
 **Si algo cae en el pasillo equivocado**, se corrige delante del lineal: el botoncito de la derecha
 de cada línea abre los pasillos y lo que elijas manda sobre las reglas de la app para ese producto,
 también la próxima semana. El ↺ lo devuelve a lo que decida ella.
@@ -106,8 +109,37 @@ Lo que decide las horas, y que no hay que programar:
   (*Ajustes → Cómo se ve → El carril del día*), con los colores de cada categoría y una vista previa.
 
 **Al widget que ya usas** se llega exportando a Google Calendar: un `.ics` por categoría (guardias,
-trabajo, entrenos, avisos) para que cada uno entre en su calendario con su color. La compra no se
-exporta.
+trabajo, entrenos, avisos). **Cada fichero va a un calendario DISTINTO de Google**: Google le pone a
+cada calendario un color y no mira el color que trae el fichero, así que importarlos todos al mismo
+sitio deja todo del mismo color. El color de cada uno lo eliges tú de los once de Google. La compra
+no se exporta.
+
+Cada evento lleva un **UID estable** que sale del día y de qué es, no de su título: por eso
+reimportar el mismo fichero actualiza lo que haya cambiado en vez de dejar una copia al lado.
+Antes el UID salía del título, así que cambiar el tipo de una guardia o la rotación del mes creaba
+un evento nuevo y dejaba el viejo, y las copias se iban apilando en cada importación.
+
+**Para que Google se actualice solo** en vez de importar a mano: la app le sube el `.ics` a un
+Worker de Cloudflare tuyo (`tools/worker-calendario.js`) y Google se **suscribe** a esas cuatro
+direcciones. Suscrito, Google relee cada 8-24 h y deja el calendario igual que la app: añade,
+cambia y **quita**. La guía, en `tools/CALENDARIO-EN-GOOGLE.md`. Ojo: quien tenga la dirección
+completa ve tus turnos —es el mismo trato que la «dirección secreta en formato iCal» de Google—,
+y desde la app se puede cambiar cuando quieras.
+
+Con eso puesto **no hay que darle a nada**: cambias una guardia o añades un evento y la app lo sube
+sola unos segundos después (agrupado, no una subida por tecla; si no hay cobertura, al volver). Si
+nada ha cambiado no sube nada, y el automático se puede apagar para subir a mano. Los colores de
+fábrica —Tomate, Pavo real, Salvia y Uva— están **medidos** para distinguirse incluso con
+daltonismo (el peor par, ΔE 14,4); si eliges dos que se confunden, la app te lo dice donde los
+eliges.
+
+Los títulos están escritos para **la columna estrecha de la semana de Google**, donde caben unos 12
+caracteres: lo que distingue el día va primero («🩺 Urgencias», «💼 Cardio», «💪 Torso A»,
+«🚪 Saliente 9:15») y el emoji dice de qué se trata. Antes se leía «🩺 Guardia ·…» y lo único que
+importaba quedaba fuera.
+
+El **saliente** sí va: el bloque desde las 00:00 hasta el relevo —esa mañana sigues en el
+hospital— y la siesta al llegar a casa. Los días libres y las vacaciones se quedan en la app.
 
 ## Estructura
 
