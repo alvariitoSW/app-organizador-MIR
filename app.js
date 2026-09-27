@@ -4352,6 +4352,28 @@ function franjaLeyendaHTML(){
     return '<span><i style="background:'+esc(tlColor(c[0]))+'"></i>'+esc(c[1])+'</span>';}).join('')+
     '<span class="sp"></span><button class="btn s" data-a="franja-cfg" style="padding:2px 8px;font-size:10.5px">colores y horas ▸</button></div>';
 }
+/* ===================== EL DÍA SE CUENTA EN UN SITIO =====================
+   El mismo día se leía entero en tres pantallas: al tocarlo en Mes, al desplegarlo en Semana y en
+   «Hoy» —y cada una lo pintaba con su propio código, con las tres comidas, sus kcal, sus gramos de
+   proteína, el menú del que salen y la tanda de cocina. Tres veces lo mismo, y ninguna era «el»
+   sitio. «Hoy» YA es la pantalla del día y sabe moverse a cualquier fecha (ui.diaHoy), así que
+   Mes y Semana dejan de repetirla: dan la línea de resumen y la puerta. */
+function resumenDiaHTML(key,sh){
+  if(!key)return '';
+  let tomas=[];try{tomas=tomasDelDia(key,dayInfo(key),(sh||{}).id);}catch(e){tomas=[];}
+  let kcal=0;try{if(sh)kcal=totals((function(){const out=[];
+    slotsFor(sh.id).forEach(function(sl){out.push.apply(out,slotItems(sh.id,sl,key).items);});
+    return out;})()).kcal;}catch(e){kcal=0;}
+  let apunt=0;try{apunt=foodTotals(key).kcal;}catch(e){apunt=0;}
+  const horas=tomas.filter(function(t){return !!t.hora;})
+    .map(function(t){return t.ico+' '+esc(hCortaHM(t.hora));}).join('  ');
+  const cifras=[];
+  if(kcal)cifras.push(kcal+' kcal en el plan');
+  if(apunt)cifras.push(apunt+' apuntadas');
+  return '<div class="diares">'+
+    '<span class="h">'+(horas||'<i>sin comidas puestas</i>')+'</span>'+
+    (cifras.length?'<span class="c">'+esc(cifras.join(' · '))+'</span>':'')+
+    '<button class="btn s" data-a="sem-dia" data-k="'+esc(key)+'">ver el día entero →</button></div>';}
 function dayPanelHTML(dateStr){
   /* panel inline de un día (informe, decisión A: recomendada) — lo que antes abría renderDayModal()
      como ventana aparte, ahora se pinta bajo la propia cuadrícula de Mes: se ve el detalle (sueño,
@@ -4376,7 +4398,10 @@ function dayPanelHTML(dateStr){
     timelineBar(key,inf)+
     daySleepLineHTML(key,inf)+
     (eventosDeFecha(key).length?('<div class="row" style="margin-top:6px;flex-wrap:wrap">'+eventosTagsHTML(eventosDeFecha(key))+'</div>'):'')+
-    '<div style="margin-top:6px">'+mealRowsHTML(key,sh)+'</div>'+
+    /* aquí iban las tres comidas enteras —con kcal, gramos de proteína, el menú del que salen y
+       la tanda—, que es exactamente lo que enseña «Hoy». Ahora: a qué horas se come, las cifras
+       y la puerta. Lo demás se lee donde se lee. */
+    '<div style="margin-top:6px">'+resumenDiaHTML(key,sh)+'</div>'+
     /* lo que pedía el usuario: poder meter cosas suyas en un día concreto y que se queden.
        Antes era UNA nota por día en un textarea; ahora son las notas de la libreta que caen en este
        día, con su propio hueco, y el evento se crea aquí sin ir a otra pestaña a escribir la fecha. */
@@ -5336,18 +5361,17 @@ function semanaFilaHTML(d,i,anyDate){
     return '<div class="drev"><i style="background:'+esc(x.color)+'"></i>'+
       '<span class="h">'+esc(hCortaHM(x.hora))+(x.fin?'–'+esc(hCortaHM(x.fin)):'')+'</span>'+
       '<span class="pl '+(x.tipo==='gym'?'gym':'evt')+'">'+x.ico+' '+esc(x.txt)+'</span></div>';}).join('');
-  const t=sh?totals((function(){const out=[];slotsFor(sh.id).forEach(function(sl){out.push.apply(out,slotItems(sh.id,sl,d.key).items);});return out;})()):null;
+  /* Al desplegar un día salían las tres comidas ENTERAS —nombre largo, el menú del que salen, las
+     kcal, los gramos de proteína y la pastilla de la tanda— más cuatro botones. Lo mismo que
+     enseña «Hoy» y lo mismo que salía en Mes al tocar el día. Aquí se queda lo que es de la
+     SEMANA: a qué horas comes, las cifras y qué día es; el resto, en su pantalla. */
   const det='<div class="drdet">'+
-      (sh?'<p class="mini" style="margin:0 0 6px">'+t.kcal+' kcal · '+t.parts+' rac.'+
-        (d.key&&foodLog(d.key).length?(' · 🍽 '+foodTotals(d.key).kcal+' kcal apuntadas'):'')+'</p>':'')+
-      (sh?mealRowsCompactHTML(d,sh):'<div class="empty">Día sin asignar: elige qué es (y si toca guardia, de qué).</div>')+
+      (sh?resumenDiaHTML(d.key,sh):'<div class="empty">Día sin asignar: elige qué es (y si toca guardia, de qué).</div>')+
       '<div class="row" style="margin-top:9px">'+
-        (sh?'<button class="btn s" data-a="day-edit" data-id="'+sh.id+'">abrir menús de este tipo de día</button>':'')+
         (anyDate&&d.key?'<button class="btn s" data-a="mon-day" data-key="'+d.key+'">cambiar qué día es</button>':
           ('<select data-a="day-pick" data-i="'+i+'" onchange="PG.render()" style="max-width:190px">'+
             '<option value="">— sin día —</option>'+store.shifts.map(function(x){
               return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>'))+
-        (sh&&d.key?'<button class="btn s" data-a="day-quickbf" data-id="'+sh.id+'">desayuno rápido de diario</button>':'')+
         (sh&&d.key?'<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar las horas de dormir</button>':'')+
       '</div></div>';
   /* CERRADO ES UNA LÍNEA. La rejilla de arriba ya enseña la semana entera con sus horas, así que
@@ -5374,19 +5398,6 @@ function semanaFilaHTML(d,i,anyDate){
     (open?det:'')+'</div>';}
 function hCortaHM(t){/* «6:55», «15:30», «21:00»: sin el cero delante, que es lo que más se lee */
   const m=mins(t);if(m==null)return t||'';return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
-function mealRowsCompactHTML(d,sh){
-  return slotsFor(sh.id).map(function(x){
-    const inf=slotItems(sh.id,x,d.key),tt=totals(inf.items),bs=[];
-    Object.keys(dishQty(inf.items)).forEach(function(idx){const dd=dishById(idx);
-      if(dd&&isBatch(dd.batchId)&&bs.indexOf(dd.batchId)<0)bs.push(dd.batchId);});
-    const dishTxt=inf.items.map(function(it){const dd=dishById(it.id);if(!dd)return '';const q=num(it.portions,1);
-      return esc(dd.icon)+' '+esc(dd.name)+(q!==1?' ('+rac(q)+')':'');}).filter(Boolean).join(' + ')||'<i>sin asignar</i>';
-    const hora=d.key?horaDeToma(d.key,x):(x.time||'');
-    return '<div class="meal compact"><span class="mt">'+esc(hora||'·')+'</span><span>'+
-      '<span class="ml">'+esc(x.label||'')+'</span><span class="mn">'+dishTxt+'</span>'+
-      '<span class="md">'+esc(inf.name?('🍱 '+inf.name+' · '):'')+esc(tt.kcal?(tt.kcal+' kcal · '+tt.prot+' g P'):'')+
-      bs.map(function(b){return ' <span class="tag '+tagFor(b)+'">'+esc((batchById(b)||{}).label||'')+'</span>';}).join('')+
-      '</span></span></div>';}).join('');}
 function semanaAyerHTML(){
   /* el día de antes de la ventana, plegado en una línea: para mirar qué hiciste sin que empuje hoy
      hacia abajo. Tocarlo lo abre entero. */
@@ -8215,11 +8226,15 @@ function renderNotaAbierta(){
     '</div>';
 }
 function notasDelDiaHTML(key){
-  /* el cruce con el calendario: las notas de ese día, al abrirlo en el Mes */
+  /* el cruce con el calendario: las notas de ese día, al abrirlo en el Mes.
+     SIN NOTAS ES UNA LÍNEA. Con el renglón de «Ninguna. Apunta lo que no quieras que se te
+     olvide» más dos botones, no tener notas ocupaba 190 px: más que tenerlas. */
   const ns=notasDeFecha(key);
+  if(!ns.length)return '<div class="row" style="align-items:center;gap:8px">'+
+    '<span class="mini">📝 sin notas este día</span><span class="sp"></span>'+
+    '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota</button></div>';
   return '<div class="card"><h2>📝 Notas de este día <span class="mini">'+ns.length+'</span></h2>'+
-    (ns.length?ns.map(function(x){return notaFilaHTML(x);}).join(''):
-      '<div class="empty">Ninguna. Apunta lo que no quieras que se te olvide ese día.</div>')+
+    ns.map(function(x){return notaFilaHTML(x);}).join('')+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota para este día</button>'+
       '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}

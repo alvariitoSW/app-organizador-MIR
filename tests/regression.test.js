@@ -2348,15 +2348,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       abierto.dia === hoyKeyDia && abierto.panel && abierto.editorDesplegado, JSON.stringify(abierto));
 
     // el día ya no tiene UNA nota en un textarea: tiene las notas de la libreta que caen en él.
-    // «+ nota para este día» crea una y la abre para escribirla.
-    const panelNotas = await page.evaluate(() => ({
-      titulo: [...document.querySelectorAll('.daydetail h2')].map((h) => h.textContent.trim())
-        .find((t) => /Notas de este día/.test(t)) || '',
-      botonAdd: !!document.querySelector('[data-a="nota-add-dia"]'),
-      textareaViejo: !!document.querySelector('[id^="notaDia-"]'),
-    }));
-    check('el día enseña sus notas de la libreta, no un único campo de texto',
-      /Notas de este día/.test(panelNotas.titulo) && panelNotas.botonAdd && !panelNotas.textareaViejo,
+    // «+ nota» crea una y la abre para escribirla. SIN NOTAS es una línea: el «Ninguna. Apunta lo
+    // que no quieras que se te olvide» más dos botones costaba 190 px para decir que no hay nada.
+    const panelNotas = await page.evaluate(() => { const p = document.querySelector('.daydetail');
+      return {
+        tarjetaVacia: !!(p && [...p.querySelectorAll('h2')].some((h) => /Notas de este día/.test(h.textContent))),
+        botonAdd: !!document.querySelector('[data-a="nota-add-dia"]'),
+        textareaViejo: !!document.querySelector('[id^="notaDia-"]'),
+        loDice: /sin notas este día/.test(p ? p.innerText : '') }; });
+    check('un día sin notas lo dice en una línea, con su botón, y no en una tarjeta entera',
+      !panelNotas.tarjetaVacia && panelNotas.loDice && panelNotas.botonAdd && !panelNotas.textareaViejo,
       JSON.stringify(panelNotas));
 
     await page.click('[data-a="nota-add-dia"]');
@@ -8214,6 +8215,66 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.creatina && r.tomado, JSON.stringify(r));
     check('el informe de la semana trae el entreno: carga, músculos y qué cambiar la semana que viene',
       r.informe && r.carga && r.recs >= 1, JSON.stringify(r));
+  }
+
+  // ===================================================================================
+  // EL DÍA SE CUENTA EN UN SITIO. El mismo día se leía ENTERO en tres pantallas: al tocarlo en Mes,
+  // al desplegarlo en Semana y en «Hoy» —cada una con su propio código, con las tres comidas, sus
+  // kcal, sus gramos de proteína, el menú del que salen y la tanda de cocina—. «Hoy» ya es la
+  // pantalla del día y sabe ir a cualquier fecha, así que Mes y Semana dan la línea y la puerta.
+  // ===================================================================================
+  {
+    await page.setViewportSize({ width: 412, height: 915 });
+    // con el menú de ejemplo puesto, que es cuando el día tiene comidas que contar
+    await page.evaluate(() => { const P = window.PG, D = P.DEFAULTS();
+      P.store.dishes = JSON.parse(JSON.stringify(D.dishes));
+      P.store.meals = JSON.parse(JSON.stringify(D.meals));
+      P.store.menu = JSON.parse(JSON.stringify(D.menu));
+      P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true; P.save(); });
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(350);
+    await page.click('#main .dbox:not(.semprev)');
+    await page.waitForTimeout(400);
+    const mes = await page.evaluate(() => { const p = document.querySelector('.daydetail');
+      return { hay: !!p, alto: p ? Math.round(p.getBoundingClientRect().height) : 0,
+        // las tres comidas enteras ya NO se repiten aquí
+        // ojo: «.meal» también lo llevan los puntitos de la franja (<i class="tl-dot meal">);
+        // la fila de una comida es un <div class="meal">
+        comidasEnteras: p ? p.querySelectorAll('div.meal').length : -1,
+        resumen: !!(p && p.querySelector('.diares')),
+        // pero las horas a las que comes sí se ven, que es lo del día que se mira en el mes
+        conHoras: p ? /\d{1,2}:\d{2}/.test((p.querySelector('.diares .h') || {}).innerText || '') : false,
+        puerta: !!(p && p.querySelector('.diares [data-a="sem-dia"]')) }; });
+    check('el Mes ya no repinta las tres comidas del día: da las horas, las cifras y la puerta',
+      mes.hay && mes.comidasEnteras === 0 && mes.resumen && mes.conHoras && mes.puerta && mes.alto < 520,
+      JSON.stringify(mes));
+
+    // y la puerta lleva de verdad a «Hoy» en ESE día
+    const destino = await page.evaluate(() => (document.querySelector('.diares [data-a="sem-dia"]') || {}).dataset.k);
+    await page.click('.diares [data-a="sem-dia"]');
+    await page.waitForTimeout(450);
+    const llega = await page.evaluate(() => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy,
+      comidas: document.querySelectorAll('#main div.meal').length }));
+    check('«ver el día entero» lleva a «Hoy» en ese día, que es donde las comidas se cuentan enteras',
+      llega.tab === 'hoy' && (llega.dia === destino || (!llega.dia && destino)) && llega.comidas >= 1,
+      JSON.stringify({ destino, llega }));
+
+    // lo mismo en Semana: abrir un día no vuelve a pintar las comidas
+    await gotoTab('week');
+    await page.waitForTimeout(350);
+    await page.click('#main .drow .drmain');
+    await page.waitForTimeout(400);
+    const sem = await page.evaluate(() => { const p = document.querySelector('#main .drow.open');
+      return { hay: !!p, alto: p ? Math.round(p.getBoundingClientRect().height) : 0,
+        comidasEnteras: p ? p.querySelectorAll('div.meal').length : -1,
+        resumen: !!(p && p.querySelector('.diares')),
+        botones: p ? p.querySelectorAll('.drdet button').length : -1 }; });
+    check('en Semana, abrir un día tampoco repinta las comidas: la línea, la puerta y qué día es',
+      sem.hay && sem.comidasEnteras === 0 && sem.resumen && sem.alto < 400 && sem.botones <= 3,
+      JSON.stringify(sem));
+    await page.evaluate(() => window.PG.render());
+    await page.waitForTimeout(200);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

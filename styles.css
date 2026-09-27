@@ -2358,3 +2358,19 @@ details.solplg>summary .mini{color:var(--ink2);font-weight:700}
 .infrec .rec>span{display:grid;place-items:center;flex:none;width:20px;height:20px;border-radius:6px;background:var(--brand);color:#0b1020;font-weight:900;font-size:11px}
 .infrec .rec .btn{margin-top:4px}
 .objvia .st{white-space:nowrap;flex:none}
+
+/* ====== EL RESUMEN DEL DÍA: una línea y la puerta ======
+   Sustituye a las tres comidas enteras que Mes y Semana pintaban cada una por su cuenta, iguales
+   a las de «Hoy». Aquí: a qué horas se come, las cifras y el botón a la pantalla que las manda. */
+.diares{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:11px;padding:8px 10px;
+  background:color-mix(in srgb,var(--card) 55%,var(--bg))}
+.diares .h{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap}
+.diares .h i{font-weight:600;color:var(--ink2)}
+.diares .c{font-size:11.5px;color:var(--ink2);font-weight:700}
+.diares .btn{margin-left:auto;flex:none}
+@media(max-width:560px){
+  .diares{gap:6px;padding:7px 8px}
+  .diares .h{font-size:12.5px}
+  .diares .btn{margin-left:auto}
+}
