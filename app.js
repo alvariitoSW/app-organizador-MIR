@@ -4864,6 +4864,7 @@ function renderInforme(){
       (cats.length?('<div class="infli">👍 Lo mejor: '+esc(cats[0][2]+' '+cats[0][0])+' ('+Math.round(cats[0][1]*100)+' %)</div>'+
         (cats.length>1?('<div class="infli">👎 A mejorar: '+esc(cats[cats.length-1][2]+' '+cats[cats.length-1][0])+' ('+Math.round(cats[cats.length-1][1]*100)+' %)</div>'):'')):'')+
     '</div>'+
+    informeEntrenoHTML(lk)+
     suenoSemanaHTML(lk)+
   '</div>';}
 function informeTocaHTML(){
@@ -5090,7 +5091,7 @@ function renderHoy(){
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
        quieres es la lista, no el atardecer. */
     /* el sueño de verdad, a primera hora: lo que el plan no puede saber. Y los lunes, la semana */
-    (esHoy?informeTocaHTML()+suenoHoyHTML(hoy)+entrenoSemanaHTML(hoy,true):'')+
+    (esHoy?informeTocaHTML()+suenoHoyHTML(hoy)+entrenoSemanaHTML(hoy,true)+supHoyHTML(hoy):'')+
     tocaEntrenarHTML(hoy)+
     /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
        mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
@@ -8934,14 +8935,15 @@ function renderGymSesion(){
    Hasta ahora no existía el concepto: ni «100 kg en banca» ni «tres días por semana». Y un objetivo
    sin camino es un cartel: cada uno dice dónde estás, cuánto falta, a qué ritmo vas y qué toca esta
    semana. La fecha sale de TU ritmo de las últimas 8 semanas, y lo dice: no es una promesa. */
-const OBJ_TIPOS=['fuerza','constancia','tiempo'];
+const OBJ_TIPOS=['fuerza','constancia','minutos','agua','tiempo'];
 function objetivosS(){
   const g=gymS();
   if(!Array.isArray(g.objetivos))g.objetivos=[];
   return g.objetivos;}
-function nuevoObjetivo(tipo,ex,meta){
+function nuevoObjetivo(tipo,ex,meta,fecha){
   const t=OBJ_TIPOS.indexOf(tipo)>=0?tipo:'fuerza';
   const o={id:uid('obj'),tipo:t,ex:String(ex||'').slice(0,60),meta:+meta||0,desde:iso(new Date())};
+  if(t==='fuerza'&&/^\d{4}-\d{2}-\d{2}$/.test(fecha||''))o.fecha=fecha;
   if(t==='fuerza'&&!o.ex)return 'dile de qué ejercicio es el objetivo';
   if(!(o.meta>0))return 'pon un número al objetivo';
   objetivosS().push(o);save();render();
@@ -8952,7 +8954,9 @@ function delObjetivo(id){
   const nm=objetivoTitulo(l[i]);l.splice(i,1);save();render();
   return 'objetivo quitado: '+nm;}
 function objetivoTitulo(o){
-  if(o.tipo==='fuerza')return o.ex+' · '+fmtKg(o.meta)+' kg';
+  if(o.tipo==='fuerza')return o.ex+' · '+fmtKg(o.meta)+' kg'+(o.fecha?(' para el '+fechaCortaTxt(o.fecha)):'');
+  if(o.tipo==='minutos')return o.meta+' min de entreno por semana';
+  if(o.tipo==='agua')return (+o.meta).toLocaleString('es-ES')+' m de agua al mes';
   if(o.tipo==='constancia')return 'Entrenar '+o.meta+' día'+(o.meta===1?'':'s')+' por semana';
   return '10 km por debajo de '+Math.floor(o.meta)+' min';}
 function semanasAtras(n){
@@ -9039,7 +9043,7 @@ function objetivoConsejoTxt(o,e){
     const ch=gymChoque(iso(new Date()));
     return 'Te queda'+(e.falta===1?'':'n')+' '+e.falta+'. '+
       (ch&&ch.a?('El '+fechaCortaTxt(ch.a)+' es tu mejor hueco: el '+fechaCortaTxt(ch.key)+' tienes '+ch.malo+'.')
-        :'Mira la tira de la semana para elegir el hueco.');}
+        :'Mira los círculos de la semana para elegir el hueco.');}
   if(!e.hayDatos)return 'Apunta una carrera de 3 km o más y aquí saldrá tu ritmo.';
   if(e.falta<=0)return '¡Conseguido! Ponle un tiempo nuevo.';
   return 'Vas a '+ritmoTxt(e.ritmo)+' /km, que son '+fmt(Math.round(e.hoy))+' min en 10 km. '+
@@ -9217,8 +9221,21 @@ function evolucionHTML(){
     (avisos.length?('<div class="evav">'+avisos.map(function(a){
       return '<div class="ev"><span class="p"></span><span>'+esc(a.txt)+'</span></div>';}).join('')+'</div>')
       :'<p class="mini" style="margin-top:8px">Nada que avisar: el volumen sube sin dispararse y no hay ejercicios atascados.</p>');}
+function pendienteKg(ex,n){
+  /* kg por semana de tu mejor serie, por mínimos cuadrados sobre las semanas CON datos. Comparar
+     con la semana de hace 8 exacta daba «sin cambio» si ese día justo no entrenaste */
+  const hoy=mondayOf(new Date()),xs=(gymIdx().byEx[ex]||[]).filter(function(x){return x.t!=='c'&&+x.kg>0;}),pts=[];
+  for(let w=(n||8)-1;w>=0;w--){const l=addDays(hoy,-7*w),f=addDays(l,7);let b=0;
+    xs.forEach(function(x){const d=parseDate(x.fecha);if(d>=l&&d<f&&+x.kg>b)b=+x.kg;});
+    if(b)pts.push([-w,b]);}
+  if(pts.length<3)return null;
+  const mx=pts.reduce(function(a,p){return a+p[0];},0)/pts.length,my=pts.reduce(function(a,p){return a+p[1];},0)/pts.length;
+  let nu=0,de=0;pts.forEach(function(p){nu+=(p[0]-mx)*(p[1]-my);de+=(p[0]-mx)*(p[0]-mx);});
+  return de?nu/de:null;}
 function objetivoCardHTML(o){
+  if(o.tipo==='minutos'||o.tipo==='agua')return objetivoNuevoCardHTML(o);
   const e=objetivoEstado(o),pct=Math.round(e.pct*100);
+  if(o.tipo==='fuerza'){const sl=pendienteKg(o.ex,8);if(sl!=null){e.av=Math.round(sl*8*10)/10;e.ritmoSem=sl;e.sem=(sl>0&&e.falta>0)?Math.ceil(e.falta/sl):null;}}
   const consejo=objetivoConsejoTxt(o,e);
   let cifra='',sub='',lado='';
   if(o.tipo==='fuerza'){
@@ -9239,6 +9256,7 @@ function objetivoCardHTML(o){
       (lado?('<i>'+esc(lado)+'</i>'):'')+'</div>'+
     '<div class="objbar"><i style="width:'+pct+'%"></i></div>'+
     (consejo?('<div class="objvia">'+gymIco('flecha','gico sm')+'<span>'+esc(consejo)+'</span></div>'):'')+
+    objetivoExtraHTML(o,e)+
     '</div>';}
 function volumenPorMusculo(desde,hasta){
   /* el volumen repartido por grupo grande: es lo que enseña si llevas semanas descuidando la
@@ -9302,14 +9320,15 @@ function renderGymObjetivos(){
     '<div class="row">'+
       OBJ_TIPOS.map(function(t){
         return '<button class="btn s '+(tipo===t?'p':'')+'" data-a="obj-tipo" data-t="'+t+'">'+
-          (t==='fuerza'?'fuerza':(t==='constancia'?'constancia':'tiempo'))+'</button>';}).join('')+
+          ({fuerza:'fuerza',constancia:'días/semana',minutos:'minutos/semana',agua:'agua/mes',tiempo:'10 km'})[t]+'</button>';}).join('')+
     '</div>'+
     '<div class="fgrid c3 tight" style="margin-top:10px">'+
       (tipo==='fuerza'?('<label class="fld" style="grid-column:1/-1">ejercicio'+
         '<input id="objEx" list="objLista" placeholder="Press banca">'+
         '<datalist id="objLista">'+exs.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('')+'</datalist></label>'):'')+
-      '<label class="fld">'+(tipo==='fuerza'?'kg a levantar':(tipo==='constancia'?'días por semana':'minutos en 10 km'))+
-        '<input id="objMeta" type="number" min="1" max="'+(tipo==='constancia'?'7':'500')+'" step="'+(tipo==='fuerza'?'2.5':'1')+'"></label>'+
+      '<label class="fld">'+({fuerza:'kg a levantar',constancia:'días por semana',minutos:'minutos por semana',agua:'metros al mes',tiempo:'minutos en 10 km'})[tipo]+
+        '<input id="objMeta" type="number" min="1" max="'+(tipo==='constancia'?'7':(tipo==='agua'?'100000':'2000'))+'" step="'+(tipo==='fuerza'?'2.5':'1')+'"></label>'+
+      (tipo==='fuerza'?'<label class="fld">para cuándo (opcional)<input id="objFecha" type="date"></label>':'')+
       '<label class="fld" style="justify-content:flex-end">'+
         '<button class="btn p" data-a="obj-add" data-t="'+tipo+'">poner objetivo</button></label>'+
     '</div>'+
@@ -9693,11 +9712,14 @@ function renderGymPortada(){
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
     (g.rutinas.length?('<div class="grts">'+g.rutinas.map(rutinaTarjetaHTML).join('')+'</div>'):'')+
     musculosHTML(c.sel)+
-    '<div class="gtiles tres">'+
+    '<div class="gtiles">'+
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
-    '</div></div>';
+      gymFicha('sup','chispa','Suplementos',supsS().length?(supsS().filter(function(x){return supTomado(x.id,iso(new Date()));}).length+'/'+supsS().filter(function(x){return x.p!=='proteina'&&supTocaHoy(x,iso(new Date()));}).length):'—',supsS().length?'hoy':'con evidencia')+
+    '</div>'+
+    '<button class="card infpuerta" data-a="hoy-informe" data-sem="pasada"><span>📊</span><span class="t"><b>Informe de la semana</b><span class="mini">carga, descanso, músculos y qué cambiar</span></span><span class="mini">›</span></button>'+
+    '</div>';
   if(ui.gymSesionActiva)relojGym();}
 function renderGymPlan(){
   /* lo que antes ocupaba la portada: el mínimo de la semana, fuerza/piscina y los trayectos */
@@ -10065,6 +10087,148 @@ function progresoE1rmHTML(){
         ('Cada '+bq.de+' semanas, una de descarga (mitad de series, −10 %). La próxima empieza en '+(bq.de-bq.sem)+' semana'+(bq.de-bq.sem===1?'':'s')+'.'))+'</p>'+
       '<div class="row" style="margin-top:8px;gap:8px"><label class="mini">descarga cada <input inputmode="numeric" style="width:48px" value="'+bq.de+'" data-a="gym-descarga"> semanas</label>'+
         '<span class="sp"></span><button class="btn s" data-a="gym-bloque-hoy">empezar bloque hoy</button></div></div>';}
+/* ===================== OBJETIVOS: minutos, agua y fecha límite ===================== */
+function minutosSemana(lunKey){
+  const l=parseDate(lunKey),ks={};for(let i=0;i<7;i++)ks[iso(addDays(l,i))]=1;const g=gymS();let m=0;
+  g.sesiones.forEach(function(s){if(ks[s.fecha])m+=+s.duracionMin||0;});
+  g.cardio.forEach(function(x){if(ks[x.fecha])m+=+x.duracionMin||0;});
+  return m;}
+function aguaMes(ym){
+  /* metros de agua del mes: series de metros, cardio de natación y los Lloretazos (sin metros: se cuentan aparte) */
+  const g=gymS();let m=0;
+  g.registro.forEach(function(x){if(String(x.fecha||'').slice(0,7)===ym&&+x.m>0)m+=+x.m;});
+  g.cardio.forEach(function(x){if(String(x.fecha||'').slice(0,7)===ym&&/nata|piscina|agua/i.test(x.tipo||''))m+=Math.round((+x.distanciaKm||0)*1000);});
+  const ll=eventosS().filter(function(e){return e.lloret&&e.on!==false&&String(e.fecha||'').slice(0,7)===ym;}).length;
+  return {m:m,lloret:ll};}
+function semanasConstancia(meta,n){
+  const out=[],lun=mondayOf(new Date());
+  for(let w=n;w>=1;w--){const l=addDays(lun,-7*w);let d=0,gu=0;
+    for(let i=0;i<7;i++){const k=iso(addDays(l,i));if(gymHechoEn(k))d++;const sh=shiftById(dayInfo(k).shiftId);if(sh&&isGuardia(sh))gu++;}
+    out.push({l:iso(l),d:d,ok:d>=meta,gu:gu});}
+  return out;}
+function objetivoExtraHTML(o,e){
+  if(o.tipo==='fuerza'&&o.fecha){
+    const sem=Math.max(0.1,(parseDate(o.fecha)-new Date())/(7*86400000)),ritmo=e.ritmoSem!=null?e.ritmoSem:(e.av||0)/8,nec=Math.max(0,(e.falta||0))/sem;
+    const eta=ritmo>0&&(e.falta||0)>0?addDays(new Date(),Math.ceil((e.falta||0)/ritmo*7)):null;
+    const ok=(e.falta||0)<=0||ritmo>=nec;
+    return '<div class="objvia"><span class="st '+(ok?'ok':'no')+'">'+(ok?'EN RITMO':'LENTO')+'</span><span>para el '+esc(fechaCortaTxt(o.fecha))+
+      ': necesitas +'+fmtKg(Math.round(nec*10)/10)+' kg/sem · llevas '+(ritmo>=0?'+':'')+fmtKg(Math.round(ritmo*10)/10)+
+      (eta?(' · a este ritmo, el '+esc(fechaCortaTxt(iso(eta)))):'')+'</span></div>';}
+  if(o.tipo==='constancia'){
+    const s=semanasConstancia(+o.meta||1,12),ok=s.filter(function(x){return x.ok;}).length,mal=s.filter(function(x){return !x.ok;});
+    const porG=mal.filter(function(x){return x.gu>=2;}).length;
+    return '<div class="objsem">'+s.map(function(x){return '<i class="'+(x.ok?'on':'')+'" title="'+esc(fechaCortaTxt(x.l)+': '+x.d+' días')+'"></i>';}).join('')+'</div>'+
+      '<div class="mini">'+ok+' de 12 semanas cumplidas'+(mal.length?(' · de las que no, '+porG+' tenían 2+ guardias'):'')+'</div>';}
+  return '';}
+function objetivoNuevoCardHTML(o){
+  /* los tipos nuevos: minutos por semana y agua al mes */
+  let hoy=0,meta=+o.meta||1,sub='',lado='';
+  if(o.tipo==='minutos'){hoy=minutosSemana(iso(mondayOf(new Date())));
+    let t=0;for(let w=1;w<=8;w++)t+=minutosSemana(iso(addDays(mondayOf(new Date()),-7*w)));
+    sub='min esta semana';lado='media 8 sem: '+Math.round(t/8)+'′';}
+  else{const a=aguaMes(iso(new Date()).slice(0,7));hoy=a.m;sub='m este mes';lado=a.lloret?(a.lloret+' Lloretazo'+(a.lloret===1?'':'s')):'';}
+  const pct=Math.min(100,Math.round(hoy/meta*100));
+  return '<div class="card obj '+o.tipo+(hoy>=meta?' hecho':'')+'">'+
+    '<div class="objcab"><b>'+esc(objetivoTitulo(o))+'</b><span class="e">'+(o.tipo==='minutos'?'TIEMPO':'AGUA')+'</span>'+
+      '<button class="btn d s" data-a="obj-del" data-id="'+esc(o.id)+'" aria-label="quitar objetivo">×</button></div>'+
+    '<div class="objnum"><b>'+hoy.toLocaleString('es-ES')+'</b><span>de '+meta.toLocaleString('es-ES')+' '+sub+'</span>'+(lado?('<i>'+esc(lado)+'</i>'):'')+'</div>'+
+    '<div class="objbar"><i style="width:'+pct+'%"></i></div>'+
+    (hoy<meta?'<div class="objvia"><span>faltan '+(meta-hoy).toLocaleString('es-ES')+(o.tipo==='minutos'?' min esta semana':' m este mes')+'</span></div>':'')+'</div>';}
+/* ===================== SUPLEMENTOS: solo lo que tiene evidencia ===================== */
+const SUP_PRESETS=[
+  {p:'creatina',n:'Creatina monohidrato',d:'5 g',ev:'A',nota:'a diario, da igual la hora: funciona por acumulación'},
+  {p:'cafeina',n:'Cafeína',d:'3 mg/kg',ev:'A',nota:'30–60 min antes de entrenar; nada en las 8 h antes de dormir'},
+  {p:'proteina',n:'Proteína en polvo',d:'25–40 g',ev:'A',nota:'solo si con la comida no llegas a 1,6 g/kg'},
+  {p:'vitd',n:'Vitamina D',d:'1 000–2 000 UI',ev:'B',nota:'solo si tu nivel está bajo'},
+  {p:'betaalanina',n:'Beta-alanina',d:'3–6 g',ev:'B',nota:'esfuerzos de 1–4 min; el hormigueo es normal'},
+  {p:'nitratos',n:'Nitratos (remolacha)',d:'≈ 8 mmol',ev:'B',nota:'2–3 h antes; sobre todo resistencia'},
+  {p:'omega3',n:'Omega-3',d:'1–2 g EPA+DHA',ev:'C',nota:'poca evidencia en rendimiento'},
+  {p:'magnesio',n:'Magnesio',d:'',ev:'C',nota:'solo si hay déficit'}];
+function supsS(){const g=gymS();if(!Array.isArray(g.sups))g.sups=[];if(!g.supLog||typeof g.supLog!=='object'||Array.isArray(g.supLog))g.supLog={};return g.sups;}
+function supPreset(s){return SUP_PRESETS.filter(function(x){return x.p===s.p;})[0]||null;}
+function supTocaHoy(s,key){const d=parseDate(key);return !Array.isArray(s.dias)||!s.dias.length||(d&&s.dias.indexOf(d.getDay())>=0);}
+function supTomado(id,key){const l=gymS().supLog[key];return Array.isArray(l)&&l.indexOf(id)>=0;}
+function supToggle(id,key){supsS();const g=gymS(),l=Array.isArray(g.supLog[key])?g.supLog[key]:[];
+  const i=l.indexOf(id);if(i>=0)l.splice(i,1);else l.push(id);
+  if(l.length)g.supLog[key]=l;else delete g.supLog[key];save();}
+function supAdherencia(id,lunKey){const l=parseDate(lunKey);let n=0,de=0;const s=supsS().filter(function(x){return x.id===id;})[0];
+  for(let i=0;i<7;i++){const k=iso(addDays(l,i));if(k>iso(new Date()))break;if(s&&!supTocaHoy(s,k))continue;de++;if(supTomado(id,k))n++;}
+  return {n:n,de:de};}
+function cafeinaHoy(key){
+  /* corte de cafeína: 8 h antes de tu hora de acostarte (vida media ≈ 5 h). Se cruza con la hora de entrenar */
+  let bed=null;try{bed=mins(sleepOf(iso(addDays(parseDate(key),1))).bed);}catch(e){}
+  if(bed==null)return null;
+  const corte=bed-8*60,e=entrenoDe(key),hi=e&&e.hora?mins(e.hora):null;
+  return {corte:hm(corte),bed:hm(bed),hi:hi!=null?hm(hi):'',vale:hi==null||hi-45<=corte};}
+function supLineaTxt(s,key){
+  const pr=supPreset(s),peso=+perfilS().pesoKg||0;
+  if(s.p==='cafeina'){const c=cafeinaHoy(key);const mg=peso?(Math.round(peso*3/25)*25+' mg'):'3 mg/kg';
+    if(!c)return mg+' · 30–60 min antes';
+    return c.vale?(mg+' · vale hasta las '+c.corte+(c.hi?(' (entrenas '+c.hi+')'):'')):('hoy no: entrenas '+c.hi+' y a la cama '+c.bed+' → corte a las '+c.corte);}
+  if(s.p==='proteina'){const t=foodTotals(key),obj=peso?Math.round(peso*1.6):0;
+    return obj?(Math.round(t.prot||0)+' / '+obj+' g de proteína hoy (1,6 g/kg)'+((t.prot||0)>=obj?' · ya llegas':' · faltan '+(obj-Math.round(t.prot||0))+' g')):'pon tu peso en el perfil para calcularlo';}
+  return (s.d||(pr&&pr.d)||'')+(pr&&pr.nota?(' · '+pr.nota):'');}
+function supHoyHTML(key){
+  const l=supsS().filter(function(s){return supTocaHoy(s,key)&&s.p!=='proteina';});
+  if(!l.length)return '';
+  return '<div class="card gsuph"><span class="mini">💊 hoy</span>'+l.map(function(s){const on=supTomado(s.id,key);
+    return '<button class="'+(on?'on':'')+'" data-a="sup-tomar" data-id="'+esc(s.id)+'" data-k="'+esc(key)+'" aria-pressed="'+(on?'true':'false')+'">'+(on?'✓ ':'')+esc(s.n)+'</button>';}).join('')+'</div>';}
+function renderGymSup(){
+  const k=iso(new Date()),l=supsS(),lun=iso(mondayOf(new Date()));
+  const ya={};l.forEach(function(s){ya[s.p]=1;});
+  $('#main').innerHTML='<div class="grid">'+gymSubcab('Suplementos')+
+    '<div class="card">'+(l.length?l.map(function(s){const pr=supPreset(s),on=supTomado(s.id,k),ad=supAdherencia(s.id,lun),es=s.p==='proteina';
+      const caf=s.p==='cafeina'?cafeinaHoy(k):null;
+      return '<div class="gsup"><button class="ck2'+(on?' on':'')+'" data-a="sup-tomar" data-id="'+esc(s.id)+'" data-k="'+k+'"'+(es?' disabled':'')+' aria-label="tomado hoy">'+(on?'✓':(es?'🥛':'·'))+'</button>'+
+        '<div><b>'+esc(s.n)+(s.d?(' · '+esc(s.d)):'')+'</b><small'+(caf&&!caf.vale?' style="color:var(--warn)"':'')+'>'+esc(supLineaTxt(s,k))+(es?'':(' · '+ad.n+'/'+ad.de+' esta semana'))+'</small></div>'+
+        '<span class="ev ev'+(pr?pr.ev:'C')+'">'+(pr?pr.ev:'?')+'</span><button class="gx" data-a="sup-del" data-id="'+esc(s.id)+'" aria-label="quitar">×</button></div>';}).join(''):
+      '<div class="empty">Sin suplementos. Añade abajo solo lo que tomes: la app te lo recuerda en «Hoy» y lo cuenta en el informe.</div>')+'</div>'+
+    '<div class="card"><b>Añadir</b><div class="gchips" style="flex-wrap:wrap">'+SUP_PRESETS.filter(function(x){return !ya[x.p];}).map(function(x){
+      return '<button data-a="sup-add" data-p="'+x.p+'">'+esc(x.n)+' <b style="color:var(--'+(x.ev==='A'?'ok':(x.ev==='B'?'warn':'ink2'))+')">'+x.ev+'</b></button>';}).join('')+'</div>'+
+      '<div class="row" style="margin-top:8px;gap:6px"><input id="supOtro" placeholder="otro: nombre y dosis" style="flex:1;min-width:0"><button class="btn s" data-a="sup-add" data-p="">añadir</button></div>'+
+      '<p class="mini" style="margin:8px 0 0">A: evidencia fuerte en rendimiento (posicionamientos de la ISSN y el AIS). B: útil en casos concretos. C: poca evidencia. '+
+      'Si tomas medicación o tienes una condición, confírmalo antes: esto es información general, no una pauta.</p></div></div>';}
+/* ===================== INFORME DEL LUNES: la parte de entreno ===================== */
+function guardiasSemana(lunKey){const l=parseDate(lunKey);let n=0;for(let i=0;i<7;i++){const sh=shiftById(dayInfo(iso(addDays(l,i))).shiftId);if(sh&&isGuardia(sh))n++;}return n;}
+function informeEntrenoHTML(lk){
+  const l=parseDate(lk),fin=iso(addDays(l,6)),g=gymS();
+  const sem=[3,2,1,0].map(function(w){const lw=iso(addDays(l,-7*w));return {l:lw,c:cargaSemana(lw),g:guardiasSemana(lw)};});
+  const mx=Math.max(1,sem.reduce(function(a,x){return Math.max(a,x.c);},0));
+  const ac=acwrDe(fin);
+  const ks={};for(let i=0;i<7;i++)ks[iso(addDays(l,i))]=1;
+  const ses=g.sesiones.filter(function(s){return ks[s.fecha];});
+  const reg=g.registro.filter(function(x){return ks[x.fecha]&&x.t!=='c';});
+  const ton=Math.round(reg.reduce(function(a,x){return a+(+x.kg||0)*(+x.reps||0);},0)/100)/10;
+  const agua=reg.reduce(function(a,x){return a+(+x.m||0);},0)+g.cardio.filter(function(x){return ks[x.fecha]&&/nata|piscina/i.test(x.tipo||'');}).reduce(function(a,x){return a+Math.round((+x.distanciaKm||0)*1000);},0);
+  const ll=eventosS().filter(function(e){return e.lloret&&ks[e.fecha];}).length;
+  const sm=seriesMusculo(lk),regs=MREGIONES.filter(function(r){return sm[r]>0;});
+  const bajos=['pecho','espalda','hombros','cuadriceps','isquiotibiales'].filter(function(r){return sm[r]<MUSC_OBJ.mev;}),altos=regs.filter(function(r){return sm[r]>MUSC_OBJ.mrv;});
+  const sups=supsS().filter(function(s){return s.p!=='proteina';});
+  /* la semana que viene */
+  const sig=iso(addDays(l,7)),gSig=guardiasSemana(sig),rSig=entrenoSemana(sig);
+  const sigRut=(function(){if(!rSig)return null;const x=rSig.dias.filter(function(d){return d.tipo==='fuerza'&&(d.base||d.auto||d.forz);})[0];return x?(rSig.asig[x.k]||null):null;})()||g.rutinas.filter(function(r){return rutTipo(r)!=='agua';})[0]||null;
+  const recs=[];
+  if(gSig>=3)recs.push('<b>Plan B:</b> '+gSig+' guardias. Dos días de fuerza de cuerpo entero y piscina en el saliente; no persigas el mínimo.');
+  bajos.slice(0,2).forEach(function(r){const ej=MUSC_SUG[r],cap=ej.charAt(0).toUpperCase()+ej.slice(1),ya=sigRut&&sigRut.ejercicios.some(function(e){return normEj(e.ex)===normEj(cap);});
+    recs.push('<b>+3 series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b> ('+sm[r]+' esta semana): '+esc(ej)+'.'+(sigRut&&!ya?(' <button class="btn s" data-a="rt-add2" data-id="'+esc(sigRut.id)+'" data-n="'+esc(cap)+'">añadir a '+esc(sigRut.nombre)+'</button>'):''));});
+  altos.forEach(function(r){recs.push('<b>−20 % de series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b>: '+sm[r]+' pasa de lo que se recupera bien (~'+MUSC_OBJ.mrv+').');});
+  if(ac&&ac.r>1.3)recs.push('<b>No subas más la carga</b>: esta semana fue '+String(ac.r).replace('.',',')+' veces tu media del mes. Repite volumen.');
+  else if(ac&&ac.r<0.8)recs.push('<b>Puedes subir</b>: vas por debajo de tu media del mes ('+String(ac.r).replace('.',',')+').');
+  if(bloqueDe(sig).descarga)recs.push('<b>Semana de descarga</b>: mitad de series y −10 %. La app ya lo aplica sola.');
+  if(!recs.length)recs.push('Semana equilibrada: sigue igual.');
+  const pos=ac?Math.max(0,Math.min(100,(ac.r-0.4)/1.4*100)):null;
+  return '<div class="card infent"><h2>💪 Entreno</h2>'+
+    '<div class="row"><b style="font-size:13px">Carga</b><span class="sp"></span><span class="mini">esfuerzo × minutos</span></div>'+
+    '<div class="gbars" style="height:70px">'+sem.map(function(x,i){return '<div class="'+(x.g>=3?'gu':'')+'" style="height:'+Math.max(4,Math.round(x.c/mx*100))+'%'+(i===3?';background:var(--brand2);opacity:1':'')+'"><span>'+x.c+'</span></div>';}).join('')+'</div>'+
+    '<div class="gbarsx">'+sem.map(function(x,i){return '<span>'+(i===3?'esta':('−'+(3-i)))+(x.g?(' · '+x.g+'G'):'')+'</span>';}).join('')+'</div>'+
+    (ac?('<div class="gacwr"><i style="left:'+pos+'%"></i></div><div class="gacwrx"><span>poco</span><span>0,8–1,3 seguro</span><span>1,5 riesgo</span></div>'+
+      '<p class="mini" style="margin:4px 0 0"><b style="color:var(--ink)">'+String(ac.r).replace('.',',')+'</b> esta semana frente a tu media del mes.</p>'):'<p class="mini">Con un mes de sesiones con esfuerzo apuntado sale si subes la carga demasiado rápido.</p>')+
+    '<div class="ginfk"><div><b>'+ses.length+'</b><span>sesiones</span></div><div><b>'+reg.length+'</b><span>series</span></div><div><b>'+String(ton).replace('.',',')+' t</b><span>levantadas</span></div><div><b>'+(agua?(agua.toLocaleString('es-ES')+' m'):(ll?'🌊':'—'))+'</b><span>agua'+(ll?(' · '+ll+' Lloret'):'')+'</span></div></div>'+
+    (regs.length?('<div class="ml">'+regs.sort(function(a,b){return sm[b]-sm[a];}).map(function(r){const n=sm[r],c=n>MUSC_OBJ.mrv?'hi':(n<MUSC_OBJ.mev?'lo':'ok');
+      return '<span class="'+c+'">'+(c==='hi'?'▲ ':c==='lo'?'▼ ':'✓ ')+esc(MREG_LABEL[r]||r)+' '+n+'</span>';}).join('')+'</div>'):'')+
+    (sups.length?('<p class="mini" style="margin:8px 0 0">💊 '+sups.map(function(s){const a=supAdherencia(s.id,lk);return esc(s.n)+' '+a.n+'/'+a.de;}).join(' · ')+'</p>'):'')+
+    '<div class="infrec"><b>La semana que viene'+(gSig?(' ('+gSig+' guardia'+(gSig===1?'':'s')+')'):'')+'</b>'+recs.map(function(r,i){return '<div class="rec"><span>'+(i+1)+'</span><div>'+r+'</div></div>';}).join('')+'</div>'+
+  '</div>';}
 function renderGymCardio(){
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Cardio')+renderCardioCard()+'</div>';}
 function renderGymProgreso(){
@@ -10145,6 +10309,7 @@ function renderGym(){
   if(p==='rpe'&&ui.gymSesionActiva)return renderGymRpe();
   if(p==='rut')return renderGymRutina();
   if(p==='plan')return renderGymPlan();
+  if(p==='sup')return renderGymSup();
   if(ui.gymInforme)return renderGymInforme();
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
@@ -15245,7 +15410,7 @@ function act(a,el){
     case 'rt-add-lib':{ui.gymQ='';flash(addRutina(el.dataset.id,el.dataset.n));break;}
     case 'obj-tipo':ui.objTipo=el.dataset.t||'fuerza';render();break;
     case 'obj-add':{const gv=function(id){return (document.getElementById(id)||{}).value||'';};
-      flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta')));break;}
+      flash(nuevoObjetivo(el.dataset.t,gv('objEx'),gv('objMeta'),gv('objFecha')));break;}
     case 'obj-del':flash(delObjetivo(el.dataset.id));break;
     case 'perf-celiaco':flash(setPerfil('celiaco'));break;
     case 'perf-avena':flash(setPerfil('avena'));break;
@@ -15277,6 +15442,13 @@ function act(a,el){
     case 'gv-serie-mas':{const sa=ui.gymSesionActiva;if(!sa)break;const x=+el.dataset.x;
       if(!sa.extra||typeof sa.extra!=='object')sa.extra={};sa.extra[x]=(+sa.extra[x]||0)+1;sa.ult=Date.now();save();render();break;}
     case 'gym-rutv':{ui.gymRutSel=el.dataset.id||'';ui.gymRutTab='info';ui.gymPanel='rut';render();window.scrollTo(0,0);break;}
+    case 'sup-tomar':{supToggle(el.dataset.id,el.dataset.k||iso(new Date()));render();break;}
+    case 'sup-del':{const g=gymS();supsS();g.sups=g.sups.filter(function(x){return x.id!==el.dataset.id;});save();render();break;}
+    case 'sup-add':{supsS();const pr=SUP_PRESETS.filter(function(x){return x.p===el.dataset.p;})[0];
+      if(pr)gymS().sups.push({id:uid('sup'),p:pr.p,n:pr.n,d:pr.d});
+      else{const i=document.getElementById('supOtro'),v=String(i?i.value:'').trim();if(!v){flash('escribe el nombre');break;}
+        gymS().sups.push({id:uid('sup'),p:'',n:v.slice(0,40),d:''});}
+      save();render();flash('añadido: sale en «Hoy» para marcarlo');break;}
     case 'prog-ex':ui.progEx=el.dataset.n||'';render();break;
     case 'gym-bloque-hoy':gymS().bloqueDesde=iso(mondayOf(new Date()));save();render();flash('bloque nuevo desde este lunes: la descarga toca dentro de '+(descargaCada()-1)+' semanas');break;
     case 'rt-abrir':{const i=+el.dataset.ix;ui.rtAbierto=(ui.rtAbierto===i||i<0)?-1:i;render();break;}
@@ -17667,7 +17839,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

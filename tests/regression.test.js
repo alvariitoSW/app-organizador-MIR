@@ -8183,6 +8183,39 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
   }
 
+  // 209) OBJETIVOS con ritmo y fecha, SUPLEMENTOS que se marcan en Hoy y el ENTRENO en el informe del lunes
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const hace = (n) => P.iso(P.addDays(new Date(), -n)), hoy = P.iso(new Date());
+      g.rutinas = [{ id: 'r209', nombre: 'T209', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8 }] }];
+      g.registro = []; g.sesiones = []; g.objetivos = []; g.sups = []; g.supLog = {};
+      for (let w = 7; w >= 1; w--) { const f = hace(w * 7); g.registro.push({ id: 'o' + w, fecha: f, ex: 'Press banca (barra)', kg: 60 + (7 - w) * 2.5, reps: 8, ts: w });
+        g.sesiones.push({ id: 's' + w, rutinaId: 'r209', fecha: f, duracionMin: 60, rpe: 7, carga: 420 }); }
+      P.nuevoObjetivo('fuerza', 'Press banca (barra)', 100, P.iso(P.addDays(new Date(), 14)));
+      P.nuevoObjetivo('minutos', '', 150);
+      P.ui.tab = 'gym'; P.ui.gymPanel = 'objetivos'; P.render();
+      const txt = document.getElementById('main').innerText;
+      // suplementos: se añaden, salen en Hoy y se marcan
+      P.ui.gymPanel = 'sup'; P.render();
+      const bot = document.querySelector('[data-a="sup-add"][data-p="creatina"]'); if (bot) bot.click();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render();
+      const enHoy = document.querySelector('.gsuph [data-a="sup-tomar"]'); if (enHoy) enHoy.click();
+      const tomado = g.supLog[hoy] && g.supLog[hoy].length === 1;
+      // informe de la semana pasada con la parte de entreno
+      P.ui.hoyVista = 'informe'; P.ui.infLun = ''; P.render();
+      const inf = document.querySelector('.infent');
+      const out = { lento: /LENTO/.test(txt), ritmo: /\+2,5 kg\/sem|llevas \+2,5/.test(txt), minutos: /150 min de entreno por semana/.test(txt),
+        creatina: !!bot && !!enHoy, tomado, informe: !!inf, recs: inf ? inf.querySelectorAll('.rec').length : 0, carga: inf ? /Carga/.test(inf.innerText) : false };
+      P.store = copia; P.save(); P.ui.hoyVista = ''; P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.render();
+      return out; });
+    check('los objetivos dicen tu ritmo real y si llegas a la fecha; hay objetivo de minutos por semana',
+      r.lento && r.ritmo && r.minutos, JSON.stringify(r));
+    check('un suplemento se añade con un toque, sale en Hoy y se marca como tomado',
+      r.creatina && r.tomado, JSON.stringify(r));
+    check('el informe de la semana trae el entreno: carga, músculos y qué cambiar la semana que viene',
+      r.informe && r.carga && r.recs >= 1, JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

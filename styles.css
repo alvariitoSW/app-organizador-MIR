@@ -2330,3 +2330,31 @@ details.solplg>summary .mini{color:var(--ink2);font-weight:700}
 .gline{width:100%;height:120px;margin-top:8px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
 .grango{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:8px;font-size:12.5px;color:var(--ink2)}
 .grango input{width:46px;padding:5px 6px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-weight:800;text-align:center}
+/* objetivos, suplementos, informe de entreno */
+.objvia .st{font-size:9.5px;font-weight:900;letter-spacing:.08em;padding:2px 7px;border-radius:99px;margin-right:6px}
+.objvia .st.ok{background:var(--ok);color:#0b1020}.objvia .st.no{background:var(--bad);color:#fff}
+.objsem{display:flex;gap:3px;margin:8px 0 4px}.objsem i{width:14px;height:14px;border-radius:4px;background:var(--line)}.objsem i.on{background:var(--ok)}
+.gsuph{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:9px 12px}
+.gsuph button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:99px;padding:6px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.gsuph button.on{background:var(--ok);border-color:var(--ok);color:#0b1020}
+.gsup{display:grid;grid-template-columns:40px 1fr auto auto;gap:9px;align-items:center;padding:9px 0;border-top:1px dashed var(--line)}
+.gsup:first-child{border-top:0}
+.gsup .ck2{width:40px;height:40px;border-radius:12px;border:2px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:16px;cursor:pointer}
+.gsup .ck2.on{background:var(--ok);border-color:var(--ok);color:#0b1020}
+.gsup b{display:block;font-size:14px}.gsup small{font-size:11.5px;color:var(--ink2)}
+.gsup .ev{font-size:10px;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid var(--line)}
+.gsup .evA{color:var(--ok)}.gsup .evB{color:var(--warn)}.gsup .evC{color:var(--ink2)}
+.infent .gbars div.gu{background:repeating-linear-gradient(45deg,var(--bad) 0 4px,transparent 4px 8px);border:1px solid var(--bad);opacity:1}
+.gacwr{position:relative;height:14px;border-radius:8px;margin:10px 0 3px;background:linear-gradient(90deg,var(--brand) 0 29%,var(--ok) 29% 64%,var(--warn) 64% 79%,var(--bad) 79%)}
+.gacwr i{position:absolute;top:-4px;width:4px;height:22px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px var(--card)}
+.gacwrx{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink2)}
+.ginfk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.ginfk div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center}
+.ginfk b{display:block;font-size:15px}.ginfk span{font-size:10px;color:var(--ink2)}
+.infent .ml{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.infent .ml span{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:99px;border:1px solid}
+.infent .ml .hi{color:var(--bad);border-color:var(--bad)}.infent .ml .lo{color:var(--warn);border-color:var(--warn)}.infent .ml .ok{color:var(--ok);border-color:var(--ok)}
+.infrec{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.infrec .rec{display:flex;gap:8px;padding:6px 0;font-size:12.5px;color:var(--ink2)}.infrec .rec b{color:var(--ink)}
+.infrec .rec>span{display:grid;place-items:center;flex:none;width:20px;height:20px;border-radius:6px;background:var(--brand);color:#0b1020;font-weight:900;font-size:11px}
+.infrec .rec .btn{margin-top:4px}
+.objvia .st{white-space:nowrap;flex:none}
