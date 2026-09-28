@@ -887,7 +887,7 @@ function save(){
   /* lo guardado cambia los datos: las memorias «por pintado» (¿vengo de guardia?, la semana de
      entrenos, la cocina…) ya no valen. Sin esto, poner una guardia y exportar sin repintar mandaba
      el saliente del día siguiente con el dato viejo —o no lo mandaba— */
-  try{_renderTick++;}catch(e0){}
+  if(!_pintando)_renderTick++;
   try{localStorage.setItem(KEY,JSON.stringify(store));saveFailWarned=false;}catch(e){console.warn('no se pudo guardar',e);
   if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}
   /* y si tienes el calendario enchufado, que se suba solo. No aquí mismo: save() se llama en cada
@@ -924,7 +924,7 @@ const tagFor=id=>{const i=store.batches.findIndex(b=>b.id===id);return 'b'+((i<0
 
 /* ===================== semana ===================== */
 let weekDate=mondayOf(new Date());
-let _renderTick=0;
+let _renderTick=0,_pintando=false;   /* _pintando: dentro de un pintado, guardar no tira lo memorizado */
 let _weekDaysCache=null,_weekDaysTick=-1;
 function weekDays(){
   if(_weekDaysTick===_renderTick&&_weekDaysCache)return _weekDaysCache;
@@ -1112,7 +1112,7 @@ function notasCuenta(){
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
 function setDayOverride(dateStr,shiftId,guard){
-  _renderTick++;   /* cambia el tipo de un día: lo memorizado de este pintado ya no vale */
+  if(!_pintando)_renderTick++;   /* cambia el tipo de un día: lo memorizado ya no vale */
   if(!store.rotation.daySet)store.rotation.daySet={};
   if(shiftId===null){delete store.rotation.daySet[dateStr];limpiarSalientesAuto(dateStr);return;}
   store.rotation.daySet[dateStr]=(guard&&shiftId)?{shift:shiftId,guard:guard}:{shift:shiftId||''};
@@ -6052,8 +6052,7 @@ function gymIdx(){
   return {byFecha:byFecha,byEx:byEx};}
 function setsDe(fecha){const k=foodKey(fecha);return gymIdx().byFecha[k]||[];}
 function volumenDe(fecha){const k=foodKey(fecha);
-  return Math.round((gymIdx().byFecha[k]||[])
-    .reduce(function(a,x){return a+volSerie(x);},0));}
+  return Math.round(volDe(gymIdx().byFecha[k]||[]));}
 function prDe(nombre){
   /* mejor serie estimada (Epley) y el máximo peso que has movido, sacado de tu propio registro */
   const xs=gymIdx().byEx[nombre]||[];
@@ -6163,18 +6162,17 @@ function entrenoSemana(key){
     const f=fz[k],guard=!!sh&&isGuardia(sh),vac=!!inf.vac||/vacacion/i.test((sh&&sh.name)||'');
     const sal=!guard&&(!!salidaDeGuardia(k)||esSaliente(sh));
     if(guard)guardias++;
-    const tipo=guard||vac||!sh?'':(sal?'pisc':'fuerza');
+    /* una rutina pegada A PROPÓSITO al tipo «Saliente» hace de ese día fuerza, no piscina */
+    const b=rutinaDeFechaBase(k),conRut=!!b&&f!==false;
+    const tipo=guard||vac||!sh?'':(sal&&!conRut?'pisc':'fuerza');
     const x={k:k,i:i,tipo:tipo,forz:f===true,quitado:f===false,base:false,seg:false,auto:false,choca:null,
       motivo:!sh?'sin tipo de día':guard?'guardia':vac?'vacaciones':sal?'saliente':''};
     if(tipo){const v=ventanaEntreno(k,tipo,inf);x.hora=v.hora;x.dur=v.dur;x.choca=eventoQueChoca(k,v);}
-    const b=rutinaDeFechaBase(k);
-    /* una rutina pegada A PROPÓSITO al tipo «Saliente» es fuerza ese día, no piscina: la puso el usuario */
-    if(b&&f!==false&&x.tipo==='pisc'){x.tipo='fuerza';const v2=ventanaEntreno(k,'fuerza',inf);x.hora=v2.hora;x.dur=v2.dur;x.choca=eventoQueChoca(k,v2);}
-    if(b&&f!==false&&x.tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
+    if(conRut&&tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
     const g2=diaSegundo(k,inf);if(g2.on&&f!==false)x.seg=true;
     /* el Lloretazo es agua: cuenta como sesión y la app no mete otra ese día */
     x.lloret=eventosDeFecha(k).some(function(e){return e.lloret;});
-    x.apto=!!x.tipo&&!x.quitado&&!x.choca&&!(x.tipo==='pisc'&&!cfg.pisc.on);
+    x.apto=!!tipo&&!x.quitado&&!x.choca&&!(tipo==='pisc'&&!cfg.pisc.on);
     dias.push(x);}
   const on=function(x){return x.base||x.forz||x.seg||x.auto||x.lloret;};
   const fuerzas=function(){return dias.filter(function(x){return (x.base||x.auto||x.forz)&&x.tipo==='fuerza';}).length;};
@@ -6600,7 +6598,7 @@ function resumenGym(fecha){
   xs.forEach(function(x){if(!por[x.ex]){por[x.ex]=[];orden.push(x.ex);}por[x.ex].push(x);});
   return orden.map(function(e){
     return e+' '+por[e].map(function(x){return (x.kg?x.kg+'×'+x.reps:x.reps+'×peso');}).join(' ')+
-      ' · '+Math.round(por[e].reduce(function(a,x){return a+volSerie(x);},0))+' kg';}).join(' | ');}
+      ' · '+Math.round(volDe(por[e]))+' kg';}).join(' | ');}
 function volumenSemana(desde){
   const ini=mondayOf(parseDate(desde)||new Date()),out=[];
   for(let i=0;i<7;i++){const dd=addDays(ini,i),k=iso(dd);
@@ -8484,7 +8482,7 @@ function renderSesionActiva(){
   const sa=ui.gymSesionActiva;if(!sa)return '';
   const g=gymS(),rt=g.rutinas.find(function(r){return r.id===sa.rutinaId;});
   const hechas=g.registro.filter(function(x){return x.sesionId===sa.id;});
-  const vol=Math.round(hechas.reduce(function(a,x){return a+volSerie(x);},0));
+  const vol=Math.round(volDe(hechas));
   return '<div class="card"><h2>🏁 Sesión en curso: '+esc(rt?rt.nombre:'')+'</h2>'+
     '<p class="note">'+hechas.length+' de '+sa.plan+' series hechas · '+vol.toLocaleString('es-ES')+' kg de volumen. '+
     'Apunta o ajusta las series en «El día» (más abajo) y, cuando acabes, dale a «he terminado».</p>'+
@@ -8518,7 +8516,7 @@ function informeSesion(sid){
   if(!ses)return null;
   const rt=g.rutinas.filter(function(r){return r.id===ses.rutinaId;})[0];
   const series=g.registro.filter(function(x){return x.sesionId===sid;});
-  const vol=Math.round(series.reduce(function(a,x){return a+volSerie(x);},0));
+  const vol=Math.round(volDe(series));
   /* los récords: se comparan contra todo lo anterior A ESTA sesión */
   const previos={};
   g.registro.forEach(function(x){
@@ -8537,7 +8535,7 @@ function informeSesion(sid){
     .sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');})[0];
   let volAntes=null;
   if(antes){const sa2=g.registro.filter(function(x){return x.sesionId===antes.id;});
-    volAntes=Math.round(sa2.reduce(function(a,x){return a+volSerie(x);},0));}
+    volAntes=Math.round(volDe(sa2));}
   const regs=new Set();
   series.forEach(function(x){regionesDeEjercicio(x).forEach(function(r){regs.add(r);});});
   return {ses:ses,rt:rt,series:series,vol:vol,records:records,antes:antes,volAntes:volAntes,regs:regs,
@@ -8792,20 +8790,20 @@ function esEjercicioDeAbajo(nombre){
   let abajo=false;
   regs.forEach(function(r){if(MREG_ABAJO[r])abajo=true;});
   return abajo;}
-function redondeaKg(x){return Math.max(0,Math.round((+x||0)/2.5)*2.5);}
 /* EL SALTO DE PESO VA CON EL EJERCICIO. Con 2,5 kg para todo, unas elevaciones laterales pasaban de 8
    a 10 kg (+25 %) y el redondeo convertía unas mancuernas de 8 en 7,5. Barra: 2,5 (5 en pierna);
    mancuerna o lastre en básicos: 2; aislamiento: 1; y se redondea a 0,5 fuera de la barra. */
-function redondeaEj(nombre,x){return ejInfo(nombre).barra?redondeaKg(x):Math.max(0,Math.round((+x||0)*2)/2);}
-function pasoEj(nombre){const i=ejInfo(nombre);if(i.barra)return esEjercicioDeAbajo(nombre)?5:2.5;return i.tipo==='a'?1:2;}
+function redondeaEj(nombre,x){const q=ejInfo(nombre).barra?2.5:0.5;return Math.max(0,Math.round((+x||0)/q)*q);}
+function pasoEj(nombre){const i=ejInfo(nombre);if(i.paso==null)i.paso=i.barra?(esEjercicioDeAbajo(nombre)?5:2.5):(i.tipo==='a'?1:2);return i.paso;}
 /* LA CARGA DE VERDAD DE UNA SERIE. Con lastre, lo que mueves es tu peso más el lastre; sin lastre
    (flexiones, pistol…) cerca de dos tercios de tu peso. Contarlo como 0 kg dejaba la calistenia fuera
    del volumen y un «1RM» de 6 kg en unas dominadas con 5 de lastre. */
-function cargaSerie(x){const m=ejInfo(x&&x.ex).medida,pc=+((store&&store.perfil&&store.perfil.pesoKg)||0),kg=+(x&&x.kg)||0;
+function cargaSerie(x){const m=ejInfo(x&&x.ex).medida,pc=+perfilS().pesoKg||0,kg=+(x&&x.kg)||0;
   if(m==='lastre')return pc?pc+kg:kg;
   if(m==='reps')return pc?Math.round(pc*0.65*10)/10:0;
   if(m==='tiempo'||m==='dist')return 0;
   return kg;}
+function volDe(xs){return xs.reduce(function(a,x){return a+volSerie(x);},0);}
 function volSerie(x){return (x&&x.t==='c')?0:cargaSerie(x)*(+(x&&x.reps)||0);}
 function diasDeEjercicio(nombre){
   /* las fechas en las que has hecho ese ejercicio, de la más nueva a la más vieja */
@@ -8915,11 +8913,14 @@ function vivoApuntar(){
 function descansoCfg(){
   const n=+((store.gym||{}).descansoSeg);
   return (n>=0&&n<=600)?n:90;}
-function arrancaDescanso(segOpt){
-  /* el de la rutina o el del ejercicio si se lo pasas; si no, el de por defecto */
+function arrancaDescanso(segOpt,exSig){
+  /* el de la rutina o el del ejercicio si se lo pasas; si no, el de por defecto. El aviso con la
+     pantalla apagada va con el cronómetro: quien lo arranca o lo para no tiene que acordarse */
   const seg=(+segOpt>0)?Math.round(+segOpt):descansoCfg();
-  if(!seg){ui.gymDesc=null;return;}
-  ui.gymDesc={fin:Date.now()+seg*1000,total:seg};}
+  if(!seg){pararDescanso();return;}
+  ui.gymDesc={fin:Date.now()+seg*1000,total:seg};
+  avisoDescanso(seg,exSig||'');}
+function pararDescanso(){ui.gymDesc=null;avisoDescansoFuera();}
 let _gvTick=null;
 function pintaDescanso(){
   /* el reloj se escribe A MANO en su nodo: render() reemplaza #main entero, y repintarlo cada
@@ -9545,9 +9546,18 @@ const EJ_BASE=[
   ['Farmer walk','b','kg',0],['Natación','b','dist',0],['Correr','b','tiempo',0],['Remo ergómetro','b','tiempo',0],['Bici','b','tiempo',0]];
 const EJ_MEDIDAS={kg:'kg × reps',lastre:'+kg lastre',reps:'solo reps',tiempo:'tiempo',dist:'metros'};
 function normEj(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();}
+/* lo que se sabe de un ejercicio depende solo de su nombre, y se pregunta por cada serie en cada
+   pintado (volumen, carga, saltos): se calcula una vez por nombre y se guarda */
+const _ejInfoMemo=new Map();let _ejBaseMapa=null;
 function ejInfo(nombre){
+  const key=String(nombre||'');
+  if(_ejInfoMemo.has(key))return _ejInfoMemo.get(key);
+  const r=ejInfoCalc(key);_ejInfoMemo.set(key,r);return r;}
+function ejInfoCalc(nombre){
   const n=normEj(nombre);
-  for(let i=0;i<EJ_BASE.length;i++)if(normEj(EJ_BASE[i][0])===n)return {tipo:EJ_BASE[i][1],medida:EJ_BASE[i][2],barra:!!EJ_BASE[i][3]};
+  if(!_ejBaseMapa){_ejBaseMapa=new Map();EJ_BASE.forEach(function(b){_ejBaseMapa.set(normEj(b[0]),b);});}
+  const b=_ejBaseMapa.get(n);
+  if(b)return {tipo:b[1],medida:b[2],barra:!!b[3]};
   /* los que escribes a mano: por el nombre */
   const barra=/\bbarra\b|sentadilla(?!.*(goblet|bulgara|pistol))|peso muerto|press banca|press militar|hip thrust|remo con barra/.test(n)&&!/mancuerna|maquina|multipower|polea/.test(n);
   let medida='kg';
@@ -9593,15 +9603,17 @@ function discosPorLado(kg){
   let q=lado;const pone=[];
   gymDiscos().forEach(function(d){while(q>=d-1e-6){pone.push(d);q=Math.round((q-d)*1000)/1000;}});
   return {pone:pone,sobra:q,lado:lado};}
-const DISCO_COLOR={25:'#e53935',20:'#1e88e5',15:'#fdd835',10:'#43a047',5:'#f5f5f5',2.5:'#424242',1.25:'#9e9e9e'};
+/* colores de disco por tamaño relativo: el mayor rojo, luego azul, amarillo, verde, blanco, negro, gris (kg y lb) */
+const DISCO_COLORES=['#e53935','#1e88e5','#fdd835','#43a047','#f5f5f5','#424242','#9e9e9e'];
 function discosHTML(kg){
   const p=discosPorLado(kg);if(!p||!p.pone.length)return '';
-  const alto=function(d){return Math.round(14+Math.min(26,d*1.1));};
+  const alto=function(d){return Math.round(14+Math.min(26,d*1.1));},todos=gymDiscos();
+  const kgTxt=function(v){return fmtKg(Math.round(v*100)/100)+' kg';};
   return '<div class="gplate" aria-label="por lado '+esc(p.pone.map(fmtKg).join(' + '))+'">'+
     '<span class="bar"></span>'+p.pone.map(function(d){
-      return '<i style="height:'+alto(d)+'px;background:'+(DISCO_COLOR[d]||'#888')+'"></i>';}).join('')+
-    '<span class="t">por lado: <b>'+esc(p.pone.map(function(d){return fmtKg(Math.round(d*100)/100)+' kg';}).join(' + '))+'</b> · barra '+fmtKg(Math.round(gymBarra()*100)/100)+' kg'+
-      (p.sobra>0.01?' · <i style="color:var(--warn);font-style:normal">faltan '+fmtKg(Math.round(p.sobra*2*100)/100)+' kg</i>':'')+'</span></div>';}
+      return '<i style="height:'+alto(d)+'px;background:'+(DISCO_COLORES[todos.indexOf(d)]||'#888')+'"></i>';}).join('')+
+    '<span class="t">por lado: <b>'+esc(p.pone.map(kgTxt).join(' + '))+'</b> · barra '+kgTxt(gymBarra())+
+      (p.sobra>0.01?' · <i style="color:var(--warn);font-style:normal">faltan '+kgTxt(p.sobra*2)+'</i>':'')+'</span></div>';}
 function sesionFilas(sa){
   /* EL PLAN DE ESTA SESIÓN: cada ejercicio con sus filas (las de la rutina + las que añadas hoy),
      lo que hiciste la vez anterior en cada una y lo que ya has marcado */
@@ -9649,7 +9661,7 @@ function sesionActual(sa,plan){
   for(let i=0;i<plan.length;i++)if(plan[i].hechas<plan[i].total)return i;
   return Math.max(0,Math.min(plan.length-1,n||0));}
 function filaActiva(p){if(!p)return -1;for(let i=0;i<p.filas.length;i++)if(!p.filas[i].hecha)return i;return -1;}
-function marcarSerie(x,si){
+function marcarSerie(x,si,soloApuntar){
   /* ✓ de una fila: la apunta con lo que pone (o la desmarca si ya estaba). Aquí se decide también
      lo que viene: el compañero de superserie sin descanso, o el descanso y el siguiente */
   const sa=ui.gymSesionActiva;if(!sa)return 'no hay ninguna sesión en curso';
@@ -9669,7 +9681,7 @@ function marcarSerie(x,si){
   if(med==='dist'&&+f.seg>0)reg.seg=Math.round(+f.seg);
   g.registro.push(reg);
   ui.gymRir=null;sa.ult=Date.now();
-  if(ui.gymTodas){save();return '';}   /* «✓ todas»: la última hace el resto (siguiente y descanso) */
+  if(soloApuntar)return '';   /* «✓ todas»: la última marca hace el resto (guardar, siguiente, descanso) */
   if(ui.gymFila)delete ui.gymFila[x+'|'+si];
   /* lo siguiente: en superserie, el compañero sin descanso; al cerrar la vuelta, descanso */
   const plan2=sesionFilas(sa),grupos=gruposSuperserie(plan2.map(function(q){return q.ej;}));
@@ -9683,7 +9695,7 @@ function marcarSerie(x,si){
   if(sig<0){for(let i=0;i<plan2.length;i++)if(plan2[i].hechas<plan2[i].total){sig=i;break;}}
   if(sig>=0)sa.ix=sig;
   const falta=plan2.some(function(q){return q.hechas<q.total;});
-  if(descansa&&falta&&f.t!=='c'){arrancaDescanso(p.desc);avisoDescanso(p.desc,sig>=0?plan2[sig].ex:'');}else if(!descansa){ui.gymDesc=null;avisoDescansoFuera();}
+  if(descansa&&falta&&f.t!=='c')arrancaDescanso(p.desc,sig>=0?plan2[sig].ex:'');else if(!descansa)pararDescanso();
   save();render();
   if(!falta)return '¡todas hechas! dale a «terminar» cuando quieras';
   return rec?('¡récord! '+p.ex+' '+fmtKg(kg)+' × '+reps):'';}
@@ -9723,7 +9735,7 @@ function cerrarSesionCore(min,rpe,opt){
     inicio:+sa.ts||null,fin:(+sa.ts||Date.now())+dur*60000,rpe:r,carga:r?r*dur:null,auto:!!opt.auto,
     tipo:rutTipo(rt)};
   g.sesiones.push(ses);
-  ui.gymSesionActiva=null;ui.gymDesc=null;ui.gymFila={};ui.gymRir=null;avisoDescansoFuera();
+  ui.gymSesionActiva=null;pararDescanso();ui.gymFila={};ui.gymRir=null;
   save();
   return ses;}
 function minutosSesion(sa){
@@ -9827,12 +9839,10 @@ function gymHeroHTML(sel){
       '<div class="glnk"><button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
   const e=entrenoDe(sel),hoy=iso(new Date()),inf=dayInfo(sel),malo=gymDiaMalo(sel,inf);
   const d=parseDate(sel),dtxt=sel===hoy?'HOY':(DIA3[d.getDay()].toUpperCase()+' '+d.getDate());
-  let rt=e&&e.tipo==='fuerza'?(e.rutina||rutinaDeFecha(sel)):null;
-  if(e&&e.tipo==='pisc'){rt=g.rutinas.filter(function(r){return rutTipo(r)==='agua';})[0]||null;}
-  /* una rutina que TÚ pegaste a este tipo de día sale aunque sea guardia o saliente: se enseña con el
-     choque dicho (y el aviso de arriba ofrece moverla), no se esconde */
-  const choqueRt=(!rt&&!e)?rutinaDeFecha(sel):null;
-  if(choqueRt)rt=choqueRt;
+  /* la rutina del día; si la pegaste a un tipo de día que hoy es guardia, sale igual con el choque
+     dicho (el aviso de arriba ofrece moverla), no se esconde */
+  const rt=(e&&e.tipo==='pisc')?(g.rutinas.filter(function(r){return rutTipo(r)==='agua';})[0]||null):((e&&e.rutina)||rutinaDeFecha(sel));
+  const choqueRt=!e&&!!rt;
   if(rt){
     const m=rutinaMeta(rt),hi=e&&e.hora?e.hora:'',casa=(hi&&e.dur)?hm(mins(hi)+e.dur+entrenoCfg().vuelta):'';
     /* el peso que toca en el primer ejercicio con barra o mancuerna: lo que miras antes de salir */
@@ -9942,7 +9952,7 @@ function renderGymRutina(){
       (rt.ejercicios.length?'':'<div class="card"><div class="empty">Sin ejercicios. Dale a «editar» para añadirlos.</div></div>');
   }else if(tab==='stats'){
     const ss=g.sesiones.filter(function(s){return s.rutinaId===rt.id;}).sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');}).slice(-8);
-    const vols=ss.map(function(s){return {f:s.fecha,v:Math.round(g.registro.filter(function(x){return x.sesionId===s.id&&x.t!=='c';}).reduce(function(a,x){return a+volSerie(x);},0))};});
+    const vols=ss.map(function(s){return {f:s.fecha,v:Math.round(volDe(g.registro.filter(function(x){return x.sesionId===s.id;})))};});
     const mx=Math.max(1,vols.reduce(function(a,x){return Math.max(a,x.v);},0));
     cuerpo='<div class="card"><div class="row"><b>Volumen por sesión</b><span class="sp"></span><span class="mini">kg · últimas '+vols.length+'</span></div>'+
       (vols.length?('<div class="gbars">'+vols.map(function(x,i){return '<div style="height:'+Math.max(4,Math.round(x.v/mx*100))+'%'+(i===vols.length-1?';background:var(--brand)':'')+'"><span>'+(x.v>=1000?(Math.round(x.v/100)/10).toString().replace('.',',')+'k':x.v)+'</span></div>';}).join('')+'</div>'+
@@ -9953,7 +9963,7 @@ function renderGymRutina(){
     const ss=g.sesiones.filter(function(s){return s.rutinaId===rt.id;}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).slice(0,30);
     cuerpo='<div class="card">'+(ss.length?ss.map(function(s){const d=parseDate(s.fecha);
       const reg=g.registro.filter(function(x){return x.sesionId===s.id&&x.t!=='c';});
-      const v=Math.round(reg.reduce(function(a,x){return a+volSerie(x);},0));
+      const v=Math.round(volDe(reg));
       return '<button class="ghs" data-a="gym-ses-ver" data-id="'+esc(s.id)+'"><span class="d">'+d.getDate()+'<small>'+MON[d.getMonth()].toUpperCase()+'</small></span>'+
         '<span class="t"><b>'+s.duracionMin+' min'+(s.rpe?(' · esfuerzo '+s.rpe):'')+(s.auto?' · cerrada sola':'')+'</b>'+
         reg.length+'/'+(+s.plan||reg.length)+' series · '+v.toLocaleString('es-ES')+' kg</span></button>';}).join(''):'<div class="empty">Sin sesiones todavía.</div>')+'</div>';}
@@ -10062,7 +10072,7 @@ function renderGymVivo(){
   const g=gymS(),rt=g.rutinas.filter(function(r){return r.id===sa.rutinaId;})[0];
   const plan=sesionFilas(sa),x=sesionActual(sa,plan),p=plan[x];
   const hechas=g.registro.filter(function(r){return r.sesionId===sa.id;});
-  const vol=Math.round(hechas.filter(function(r){return r.t!=='c';}).reduce(function(a,r){return a+volSerie(r);},0));
+  const vol=Math.round(volDe(hechas));
   const tot=plan.reduce(function(a,q){return a+q.total;},0),hn=plan.reduce(function(a,q){return a+q.hechas;},0);
   const cab='<div class="gvcab2"><button class="btn s volver" data-a="gym-panel" data-p="" aria-label="salir sin terminar">'+gymIco('atras','gico sm')+'</button>'+
     '<div class="t"><b>'+esc(rt?rt.nombre:'Entreno')+'</b><span><i id="gvMin">'+Math.max(0,Math.floor((Date.now()-(+sa.ts||Date.now()))/60000))+' min</i> · '+
@@ -10088,7 +10098,8 @@ function renderGymVivo(){
         (med==='dist'?'<td>'+cel('seg',f.seg||'')+(f.seg&&f.m?'<small class="gr100">'+ritmo100(f.m,f.seg)+'/100</small>':'')+'</td>':'')+
         '<td><button class="gck'+(f.hecha?' on':'')+'" data-a="gv-ok" data-x="'+x+'" data-i="'+i+'" aria-label="'+(f.hecha?'desmarcar':'hecha')+' serie '+(i+1)+'">✓</button></td></tr>';}).join('')+'</table>';
   const fa=act>=0?p.filas[act]:null;
-  const pasos=fa?('<div class="gpasos">'+(colKg?('<button data-a="gv-paso" data-k="kg" data-d="-'+pasoEj(p.ex)+'">−'+fmtKg(pasoEj(p.ex))+' kg</button><button data-a="gv-paso" data-k="kg" data-d="'+pasoEj(p.ex)+'">+'+fmtKg(pasoEj(p.ex))+' kg</button>'):'')+
+  const ps=pasoEj(p.ex);
+  const pasos=fa?('<div class="gpasos">'+(colKg?('<button data-a="gv-paso" data-k="kg" data-d="-'+ps+'">−'+fmtKg(ps)+' kg</button><button data-a="gv-paso" data-k="kg" data-d="'+ps+'">+'+fmtKg(ps)+' kg</button>'):'')+
     (med==='tiempo'?'<button data-a="gv-paso" data-k="seg" data-d="-5">−5″</button><button data-a="gv-paso" data-k="seg" data-d="5">+5″</button>':
      med==='dist'?'<button data-a="gv-paso" data-k="m" data-d="-25">−25 m</button><button data-a="gv-paso" data-k="m" data-d="25">+25 m</button>':
      '<button data-a="gv-paso" data-k="reps" data-d="-1">−1 rep</button><button data-a="gv-paso" data-k="reps" data-d="1">+1 rep</button>')+'</div>'):'';
@@ -10218,7 +10229,6 @@ function seriesMusculo(lunKey){
     Array.from(regionesDeEjercicio(x)).forEach(function(r,i){out[r]=(out[r]||0)+(i===0?1:0.5);});});
   Object.keys(out).forEach(function(r){out[r]=Math.round(out[r]*2)/2;});
   return out;}
-function nSeries(n){return String(n).replace('.',',');}
 function musculosHTML(sel){
   const lun=iso(mondayOf(parseDate(sel)||new Date())),sm=seriesMusculo(lun);
   const regs=MREGIONES.filter(function(r){return sm[r]>0;});
@@ -10230,7 +10240,7 @@ function musculosHTML(sel){
     regs.sort(function(a,b){return sm[b]-sm[a];}).map(function(r){const n=sm[r];
       const cl=n>MUSC_OBJ.mrv?'hi':(n<MUSC_OBJ.mev?'lo':(n>=MUSC_OBJ.min&&n<=MUSC_OBJ.max?'ok':'mid'));
       return '<div class="r"><span>'+esc(MREG_LABEL[r]||r)+'</span><div class="tr"><u style="left:'+(MUSC_OBJ.min/mx*100)+'%;width:'+((MUSC_OBJ.max-MUSC_OBJ.min)/mx*100)+'%"></u>'+
-        '<i class="'+cl+'" style="width:'+Math.min(100,n/mx*100)+'%"></i></div><b class="'+cl+'">'+nSeries(n)+'</b></div>';}).join('')+
+        '<i class="'+cl+'" style="width:'+Math.min(100,n/mx*100)+'%"></i></div><b class="'+cl+'">'+fmtKg(n)+'</b></div>';}).join('')+
     (faltan.length?('<div class="mini" style="margin-top:6px">Por debajo de '+MUSC_OBJ.mev+': '+faltan.map(function(r){return '<b style="color:var(--ink)">'+esc((MREG_LABEL[r]||r).toLowerCase())+'</b> ('+esc(MUSC_SUG[r])+')';}).join(', ')+'. Añádelo al próximo día de fuerza.</div>'):'')+
     (altos.length?('<div class="mini" style="margin-top:4px;color:var(--bad)">Pasado de '+MUSC_OBJ.mrv+': '+altos.map(function(r){return esc((MREG_LABEL[r]||r).toLowerCase());}).join(', ')+'. Más series ya no suman y cuestan recuperar.</div>'):'')+
     '</div>';}
@@ -10382,7 +10392,7 @@ function informeEntrenoHTML(lk){
   const ks={};for(let i=0;i<7;i++)ks[iso(addDays(l,i))]=1;
   const ses=g.sesiones.filter(function(s){return ks[s.fecha];});
   const reg=g.registro.filter(function(x){return ks[x.fecha]&&x.t!=='c';});
-  const ton=Math.round(reg.reduce(function(a,x){return a+volSerie(x);},0)/100)/10;
+  const ton=Math.round(volDe(reg)/100)/10;
   const agua=reg.reduce(function(a,x){return a+(+x.m||0);},0)+g.cardio.filter(function(x){return ks[x.fecha]&&/nata|piscina/i.test(x.tipo||'');}).reduce(function(a,x){return a+Math.round((+x.distanciaKm||0)*1000);},0);
   const ll=eventosS().filter(function(e){return e.lloret&&ks[e.fecha];}).length;
   const sm=seriesMusculo(lk),regs=MREGIONES.filter(function(r){return sm[r]>0;});
@@ -10394,8 +10404,8 @@ function informeEntrenoHTML(lk){
   const recs=[];
   if(gSig>=3)recs.push('<b>Plan B:</b> '+gSig+' guardias. Dos días de fuerza de cuerpo entero y piscina en el saliente; no persigas el mínimo.');
   bajos.slice(0,2).forEach(function(r){const ej=MUSC_SUG[r],cap=ej.charAt(0).toUpperCase()+ej.slice(1),ya=sigRut&&sigRut.ejercicios.some(function(e){return normEj(e.ex)===normEj(cap);});
-    recs.push('<b>+3 series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b> ('+nSeries(sm[r])+' esta semana): '+esc(ej)+'.'+(sigRut&&!ya?(' <button class="btn s" data-a="rt-add2" data-id="'+esc(sigRut.id)+'" data-n="'+esc(cap)+'">añadir a '+esc(sigRut.nombre)+'</button>'):''));});
-  altos.forEach(function(r){recs.push('<b>−20 % de series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b>: '+nSeries(sm[r])+' pasa de lo que se recupera bien (~'+MUSC_OBJ.mrv+').');});
+    recs.push('<b>+3 series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b> ('+fmtKg(sm[r])+' esta semana): '+esc(ej)+'.'+(sigRut&&!ya?(' <button class="btn s" data-a="rt-add2" data-id="'+esc(sigRut.id)+'" data-n="'+esc(cap)+'">añadir a '+esc(sigRut.nombre)+'</button>'):''));});
+  altos.forEach(function(r){recs.push('<b>−20 % de series de '+esc((MREG_LABEL[r]||r).toLowerCase())+'</b>: '+fmtKg(sm[r])+' pasa de lo que se recupera bien (~'+MUSC_OBJ.mrv+').');});
   if(ac&&ac.r>1.3)recs.push('<b>No subas más la carga</b>: esta semana fue '+String(ac.r).replace('.',',')+' veces tu media del mes. Repite volumen.');
   else if(ac&&ac.r<0.8)recs.push('<b>Puedes subir</b>: vas por debajo de tu media del mes ('+String(ac.r).replace('.',',')+').');
   if(bloqueDe(sig).descarga)recs.push('<b>Semana de descarga</b>: mitad de series y −10 %. La app ya lo aplica sola.');
@@ -10409,7 +10419,7 @@ function informeEntrenoHTML(lk){
       '<p class="mini" style="margin:4px 0 0"><b style="color:var(--ink)">'+String(ac.r).replace('.',',')+'</b> esta semana frente a tu media del mes.</p>'):'<p class="mini">Con un mes de sesiones con esfuerzo apuntado sale si subes la carga demasiado rápido.</p>')+
     '<div class="ginfk"><div><b>'+ses.length+'</b><span>sesiones</span></div><div><b>'+reg.length+'</b><span>series</span></div><div><b>'+String(ton).replace('.',',')+' t</b><span>levantadas</span></div><div><b>'+(agua?(agua.toLocaleString('es-ES')+' m'):(ll?'🌊':'—'))+'</b><span>agua'+(ll?(' · '+ll+' Lloret'):'')+'</span></div></div>'+
     (regs.length?('<div class="ml">'+regs.sort(function(a,b){return sm[b]-sm[a];}).map(function(r){const n=sm[r],c=n>MUSC_OBJ.mrv?'hi':(n<MUSC_OBJ.mev?'lo':'ok');
-      return '<span class="'+c+'">'+(c==='hi'?'▲ ':c==='lo'?'▼ ':'✓ ')+esc(MREG_LABEL[r]||r)+' '+nSeries(n)+'</span>';}).join('')+'</div>'):'')+
+      return '<span class="'+c+'">'+(c==='hi'?'▲ ':c==='lo'?'▼ ':'✓ ')+esc(MREG_LABEL[r]||r)+' '+fmtKg(n)+'</span>';}).join('')+'</div>'):'')+
     (sups.length?('<p class="mini" style="margin:8px 0 0">💊 '+sups.map(function(s){const a=supAdherencia(s.id,lk);return esc(s.n)+' '+a.n+'/'+a.de;}).join(' · ')+'</p>'):'')+
     '<div class="infrec"><b>La semana que viene'+(gSig?(' ('+gSig+' guardia'+(gSig===1?'':'s')+')'):'')+'</b>'+recs.map(function(r,i){return '<div class="rec"><span>'+(i+1)+'</span><div>'+r+'</div></div>';}).join('')+'</div>'+
   '</div>';}
@@ -10510,7 +10520,8 @@ function ritmo100(m,seg){return (m>0&&seg>0)?mmss(seg/m*100):'';}
    Límite honesto: una web no puede programar un aviso para dentro de horas con la app cerrada. El
    de «hoy toca» con la app cerrada llega por Google Calendar (el .ics lleva alarma); con la app
    abierta o en segundo plano, lo lanza ella. El del descanso lo cronometra el service worker. */
-function avisosCfg(){const g=gymS();if(!g.avisos||typeof g.avisos!=='object')g.avisos={on:false,antes:30};return g.avisos;}
+function avisosCfg(){const g=gymS();if(!g.avisos||typeof g.avisos!=='object')g.avisos={on:false,antes:30};
+  if(!(+g.avisos.antes>=0))g.avisos.antes=30;return g.avisos;}
 function avisosPermiso(){try{return (typeof Notification!=='undefined')?Notification.permission:'no';}catch(e){return 'no';}}
 function avisosListos(){return !!avisosCfg().on&&avisosPermiso()==='granted';}
 function swMensaje(m){
@@ -10534,8 +10545,8 @@ function programarAvisoHoy(){
   if(!avisosListos())return;
   const k=iso(new Date()),c=avisosCfg();if(c.hecho===k)return;
   const e=entrenoDe(k);if(!e||!e.hora)return;
-  const ahora=new Date(),nm=ahora.getHours()*60+ahora.getMinutes(),t=mins(e.hora)-(+c.antes||30)-nm;
-  if(t<-(+c.antes||30)||t>18*60)return;
+  const ahora=new Date(),nm=ahora.getHours()*60+ahora.getMinutes(),t=mins(e.hora)-c.antes-nm;
+  if(t<-c.antes||t>18*60)return;
   const lanza=function(){if(ui.gymSesionActiva)return;
     const rt=e.tipo==='fuerza'?(e.rutina||rutinaDeFecha(k)):null;
     swMensaje({tipo:'aviso',tag:'hoy-'+k,titulo:(e.tipo==='pisc'?'🏊 Hoy toca piscina':'💪 Hoy toca '+(rt?rt.nombre:'entrenar'))+' a las '+e.hora,
@@ -10547,13 +10558,13 @@ function avisosCardHTML(){
   return '<div class="card"><h2>🔔 Avisos</h2>'+
     '<div class="row" style="gap:8px"><b style="flex:1">'+(on?'Activados':(p==='denied'?'Bloqueados por el navegador':'Apagados'))+'</b>'+
       (on?'<button class="btn s" data-a="avisos-off">apagar</button>':(p==='no'?'':'<button class="btn p" data-a="avisos-on">activar</button>'))+'</div>'+
-    '<div class="gcfg"><span>Avisarme antes de entrenar<small>minutos</small></span><input inputmode="numeric" value="'+(+c.antes||30)+'" data-a="avisos-antes"></div>'+
+    '<div class="gcfg"><span>Avisarme antes de entrenar<small>minutos</small></span><input inputmode="numeric" value="'+c.antes+'" data-a="avisos-antes"></div>'+
     '<p class="mini" style="margin:6px 0 0;line-height:1.5">Fin del descanso: suena aunque apagues la pantalla (Android; en iPhone, con la app instalada en la pantalla de inicio). '+
       '«Hoy toca»: con la app abierta o en segundo plano, te lo digo yo; con la app cerrada del todo, llega por Google Calendar si tienes el calendario suscrito (lleva la alarma).'+
       (p==='denied'?' Para desbloquearlos: ajustes del navegador → esta web → notificaciones.':'')+'</p></div>';}
 function avisosPuertaHTML(){
   /* una vez, en la portada: si nunca te lo he preguntado */
-  const c=avisosCfg();if(c.visto||avisosListos()||avisosPermiso()==='no'||avisosPermiso()==='denied')return '';
+  const c=avisosCfg(),pm=avisosPermiso();if(c.visto||pm==='no'||pm==='denied'||avisosListos())return '';
   if(!gymS().rutinas.length)return '';
   return '<div class="card gpuerta"><span>🔔</span><span class="t"><b>¿Te aviso?</b><span class="mini">al acabar el descanso (con la pantalla apagada) y antes de entrenar</span></span>'+
     '<button class="btn p s" data-a="avisos-on">sí</button><button class="btn s" data-a="avisos-no" aria-label="no, gracias">✕</button></div>';}
@@ -10575,25 +10586,27 @@ function marcarTodas(x){
   const p=sesionFilas(sa)[x];if(!p)return '';
   const pend=p.filas.filter(function(f){return !f.hecha;}).map(function(f){return f.si;});
   if(!pend.length)return '';
-  ui.gymTodas=true;
-  pend.forEach(function(si,i){if(i===pend.length-1)ui.gymTodas=false;marcarSerie(x,si);});
-  ui.gymTodas=false;
+  pend.slice(0,-1).forEach(function(si){marcarSerie(x,si,true);});
+  marcarSerie(x,pend[pend.length-1]);
   return pend.length+' series marcadas como estaban';}
 /* ===================== COPIAS AUTOMÁTICAS EN EL MÓVIL =====================
    Una foto de tus datos al día, las últimas 7, en IndexedDB (aparte de donde vive la app). No te
    salva de cambiar de móvil —para eso, «Guardar en Drive»—, pero sí de un import equivocado, de
    «restaurar el ejemplo» sin querer o de un dato roto. Antes de importar o restaurar, se hace una. */
 const COPIAS_DB='planGuardias-copias';
-function copiasDB(){return new Promise(function(res,rej){
+let _copiasDB=null;
+function copiasDB(){if(_copiasDB)return _copiasDB;return (_copiasDB=new Promise(function(res,rej){
   try{if(typeof indexedDB==='undefined')return rej('sin IndexedDB');
     const r=indexedDB.open(COPIAS_DB,1);
     r.onupgradeneeded=function(){r.result.createObjectStore('snap',{keyPath:'k'});};
-    r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
+    r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}})).catch(function(e){_copiasDB=null;throw e;});}
 function copiasGuardar(etiqueta){
   return copiasDB().then(function(db){return new Promise(function(res){
     const tx=db.transaction('snap','readwrite'),st=tx.objectStore('snap');
     const k=etiqueta?(iso(new Date())+' '+etiqueta):iso(new Date());
-    st.put({k:k,t:Date.now(),json:JSON.stringify(store)});
+    /* lo último guardado ya está serializado en localStorage: no se vuelve a recorrer todo */
+    let json=null;try{json=localStorage.getItem(KEY);}catch(e){}
+    st.put({k:k,t:Date.now(),json:json||JSON.stringify(store)});
     const all=st.getAllKeys();
     all.onsuccess=function(){const ks=(all.result||[]).slice().sort();while(ks.length>7){st.delete(ks.shift());}};
     tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
@@ -10608,22 +10621,24 @@ function copiasLeer(k){
     r.onsuccess=function(){res(r.result||null);};r.onerror=function(){res(null);};});}).catch(function(){return null;});}
 function copiaDiaria(){
   /* una al día, la primera vez que abres la app ese día */
-  copiasLista().then(function(l){const hoy=iso(new Date());
-    if(l.some(function(x){return x.k===hoy;}))return l;
-    return copiasGuardar().then(function(){return copiasLista();});}).then(function(l){ui.copias=l;if(ui.tab==='data')render();});}
+  const hoy=iso(new Date());
+  copiasDB().then(function(db){return new Promise(function(res){
+    const r=db.transaction('snap','readonly').objectStore('snap').getKey(hoy);
+    r.onsuccess=function(){res(r.result!==undefined);};r.onerror=function(){res(true);};});})
+    .then(function(ya){if(!ya)return copiasGuardar().then(function(){ui.copias=null;});}).catch(function(){});}
 function copiaCompartir(){
   /* al menú de compartir del móvil: Drive, correo, Archivos… Si no se puede, se descarga */
-  const name='planning-guardias-'+iso(new Date())+'.json',txt=JSON.stringify(store);
-  try{const f=new File([txt],name,{type:'application/json'});
+  try{const f=new File([copiaJSON()],copiaNombre(),{type:'application/json'});
     if(navigator.canShare&&navigator.canShare({files:[f]})){
       return navigator.share({files:[f],title:'Copia de Guardias'}).then(function(){marcarBackup();render();return 'copia guardada';})
         .catch(function(e){return (e&&e.name==='AbortError')?'cancelado':(dl(),marcarBackup(),'descargada');});}}catch(e){}
   dl();marcarBackup();render();return Promise.resolve('descargada: guárdala en Drive o donde quieras');}
 function copiasPideLista(){
-  if(ui.copias==null&&!ui.copiasCargando){ui.copiasCargando=true;
-    copiasLista().then(function(l){ui.copias=l;ui.copiasCargando=false;if(ui.tab==='data')render();});}
-  return '';}
+  if(ui.copias!=null||ui.copiasCargando)return;
+  ui.copiasCargando=true;
+  copiasLista().then(function(l){ui.copias=l;ui.copiasCargando=false;if(ui.tab==='data')render();});}
 function copiasCardHTML(){
+  copiasPideLista();   /* la primera vez que se enseña, se pide la lista; luego se repinta sola */
   const l=ui.copias;
   return '<div class="card"><h2>Copias automáticas en este móvil</h2>'+
     '<p class="note">Una al día, las últimas 7, y otra justo antes de importar o restaurar. Te salvan de un error, no de perder el móvil: para eso, «Guardar en Drive».</p>'+
@@ -10637,7 +10652,7 @@ function copiasCardHTML(){
 const LB=2.20462;
 function gymUnidad(){return gymS().unidad==='lb'?'lb':'kg';}
 function uVer(kg){return gymUnidad()==='lb'?Math.round((+kg||0)*LB*2)/2:(+kg||0);}
-function uLeer(v){const n=+String(v).replace(',','.')||0;return gymUnidad()==='lb'?Math.round(n/LB*100)/100:n;}
+function uLeer(v){const n=num(v,0);return gymUnidad()==='lb'?Math.round(n/LB*100)/100:n;}
 function unidadHTML(){const u=gymUnidad();
   return '<div class="card"><h2>Unidades</h2><div class="gseg">'+
     '<button class="'+(u==='kg'?'on':'')+'" data-a="gym-unidad" data-v="kg">kilos</button>'+
@@ -10650,8 +10665,8 @@ function unidadesEnPantalla(){
   const w=document.createTreeWalker(m,NodeFilter.SHOW_TEXT,null);const ns=[];while(w.nextNode())ns.push(w.currentNode);
   ns.forEach(function(n){const t=n.nodeValue;if(!/kg/i.test(t))return;
     n.nodeValue=t.replace(/([+−-]?)(\d{1,4}(?:[.,]\d+)?)\s?kg\b/g,function(_,s,num){
-      const v=uVer(+num.replace(/\./g,'').replace(',','.'));return s+fmtKg(v)+' lb';}).replace(/\bKG\b/g,'LB').replace(/\+KG\b/g,'+LB');});
-  m.querySelectorAll('input[data-k="kg"]').forEach(function(i){if(i.value!=='')i.value=fmtKg(uVer(+String(i.value).replace(',','.')));});
+      const v=uVer(+num.replace(/\./g,'').replace(',','.'));return s+fmtKg(v)+' lb';}).replace(/\bKG\b/g,'LB');});
+  m.querySelectorAll('input[data-k="kg"]').forEach(function(i){if(i.value!=='')i.value=fmtKg(uVer(num(i.value,0)));});
   m.querySelectorAll('[data-a="gv-paso"][data-k="kg"]').forEach(function(b){const d=+b.dataset.d;
     const lb=Math.abs(d)>=5?10:5;b.dataset.d=String((d<0?-1:1)*lb/LB);b.textContent=(d<0?'−':'+')+lb+' lb';});}
 function renderGymCardio(){
@@ -14707,7 +14722,7 @@ function renderData(){
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-      </div></div>${copiasPideLista()}${copiasCardHTML()}`);
+      </div></div>${copiasCardHTML()}`);
   if(v==='texto')return datosPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
       <div class="row"><button class="btn" data-a="txt">Generar</button><button class="btn" data-a="txtcopy">Copiar</button></div>
@@ -14843,7 +14858,8 @@ function render(){
     const m=$('#main');
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
-  try{renderNow();try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}}catch(e){
+  _pintando=true;
+  try{renderNow();_pintando=false;try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -14852,6 +14868,7 @@ function render(){
   }
 }
 function renderNow(){
+  try{document.body.dataset.tab=ui.tab;}catch(e0){}   /* para reglas de estilo por pestaña (44 px en Entreno) */
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
   /* los platos de texto pasan a llevar alimentos (una vez por plato): de ahí salen sus macros y la compra */
   if(store&&Array.isArray(store.dishes)&&store.dishes.some(function(d){return d&&!d.alimsV;}))migrarPlatos();
@@ -15498,9 +15515,9 @@ function act(a,el){
         if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
       }catch(e){flash('Ese JSON no es válido');break;}
       confirmar('¿Sustituir TODOS tus datos actuales por este JSON? No se puede deshacer — si quieres conservar lo que tienes, cópialo antes con «JSON»/«copiar».').then(function(ok){
-        if(!ok)return;copiasGuardar('antes de importar').then(function(){normalize(o);store=o;save();render();flash('Importado ✔ (tienes una copia de antes en «Datos»)');});});break;}
+        if(!ok)return;reemplazarDatos(o,'antes de importar','Importado ✔ (tienes una copia de antes en «Datos»)');});break;}
     case 'reset':confirmar('¿Sustituir todo por el ejemplo por defecto?').then(function(ok){
-      if(!ok)return;copiasGuardar('antes de restaurar').then(function(){store=DEFAULTS();save();render();flash('Ejemplo restaurado (tienes una copia de antes en «Datos»)');});});break;
+      if(!ok)return;reemplazarDatos(DEFAULTS(),'antes de restaurar','Ejemplo restaurado (tienes una copia de antes en «Datos»)');});break;
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
     case 'draft':{const t=$('#pasteBox').value||'';
       window._draftExtras=mapCodes($('#codeMap').value);window._draftInfo=parsePlanning(t,window._draftExtras);
@@ -15878,7 +15895,7 @@ function act(a,el){
       break;}
     case 'gv-mas15':{if(!ui.gymDesc)break;
       ui.gymDesc.fin+=15000;ui.gymDesc.total+=15;pintaDescanso();avisoDescanso((ui.gymDesc.fin-Date.now())/1000,'');break;}
-    case 'gv-saltar':ui.gymDesc=null;avisoDescansoFuera();render();break;
+    case 'gv-saltar':pararDescanso();render();break;
     case 'gv-terminar':{if(!ui.gymSesionActiva)break;
       /* antes de guardar, UNA pregunta: qué tal de dura. Con eso sale la carga (esfuerzo × minutos) */
       ui.gymRpeMin=0;ui.gymPanel='rpe';render();window.scrollTo(0,0);break;}
@@ -15917,7 +15934,7 @@ function act(a,el){
     case 'copia-restaurar':{const k=el.dataset.k;confirmar('¿Volver a la copia del '+k+'? Antes guardo una de cómo está ahora, por si acaso.').then(function(ok){
         if(!ok)return;copiasLeer(k).then(function(x){if(!x){flash('esa copia ya no está');return;}
           let o;try{o=JSON.parse(x.json);}catch(e){flash('esa copia está dañada');return;}
-          copiasGuardar('antes de restaurar').then(function(){normalize(o);store=o;save();ui.copias=null;render();flash('restaurada la copia del '+k);});});});break;}
+          reemplazarDatos(o,'antes de restaurar','restaurada la copia del '+k);});});break;}
     case 'prog-ex':ui.progEx=el.dataset.n||'';render();break;
     case 'gym-bloque-hoy':gymS().bloqueDesde=iso(mondayOf(new Date()));save();render();flash('bloque nuevo desde este lunes: la descarga toca dentro de '+(descargaCada()-1)+' semanas');break;
     case 'rt-abrir':{const i=+el.dataset.ix;ui.rtAbierto=(ui.rtAbierto===i||i<0)?-1:i;render();break;}
@@ -16570,10 +16587,15 @@ function copy(txt){
 }
 function fallbackCopy(txt){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
   try{document.execCommand('copy');flash('Copiado');}catch(e){flash('Copia manual: selecciona el texto');}ta.remove();}
+function reemplazarDatos(o,etiqueta,msg){
+  /* importar, volver al ejemplo o restaurar una copia: siempre con una foto de cómo estaba antes */
+  return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;save();ui.copias=null;render();flash(msg);});}
+function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
+function copiaJSON(){return JSON.stringify(store,null,1);}
 function dl(){
-  const name='planning-guardias-'+iso(new Date())+'.json';
+  const name=copiaNombre();
   try{
-    const blob=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});
+    const blob=new Blob([copiaJSON()],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),3000);
   }catch(e){

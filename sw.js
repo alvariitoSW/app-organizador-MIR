@@ -162,6 +162,8 @@ function cachePrimero(req){
    worker no puede durar para siempre —Chrome lo corta a los ~5 minutos—, así que es para descansos,
    no para programar avisos de dentro de horas (eso va por Google Calendar). */
 let _descanso=null;
+/* lo común a todos los avisos: el icono y a dónde lleva tocarlos */
+const AVISO_BASE={icon:new URL('icon.svg',RAIZ).href,data:{url:RAIZ.href}};
 self.addEventListener('message',function(e){
   const d=e.data||{};
   if(d.tipo==='descanso-cancel'){
@@ -176,13 +178,12 @@ self.addEventListener('message',function(e){
       _descanso=setTimeout(function(){_descanso=null;
         self.clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cs){
           if(cs.some(function(c){return c.visibilityState==='visible';}))return;
-          return self.registration.showNotification(d.titulo||'Descanso terminado',{body:d.cuerpo||'',tag:'descanso',
-            renotify:true,vibrate:[250,120,250],icon:new URL('icon.svg',RAIZ).href,data:{url:RAIZ.href}});
+          return self.registration.showNotification(d.titulo||'Descanso terminado',Object.assign({body:d.cuerpo||'',tag:'descanso',
+            renotify:true,vibrate:[250,120,250]},AVISO_BASE));
         }).then(fin,fin);},ms);}));
     return;}
   if(d.tipo==='aviso'){
-    e.waitUntil(self.registration.showNotification(d.titulo||'Guardias',{body:d.cuerpo||'',tag:d.tag||'aviso',
-      icon:new URL('icon.svg',RAIZ).href,data:{url:RAIZ.href}}).catch(function(){}));}
+    e.waitUntil(self.registration.showNotification(d.titulo||'Guardias',Object.assign({body:d.cuerpo||'',tag:d.tag||'aviso'},AVISO_BASE)).catch(function(){}));}
 });
 self.addEventListener('notificationclick',function(e){
   e.notification.close();

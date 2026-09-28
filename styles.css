@@ -2398,37 +2398,20 @@ details.solplg>summary .mini{color:var(--ink2);font-weight:700}
 .tema>.tborra:hover{opacity:1;background:color-mix(in srgb,currentColor 16%,transparent)}
 .tema{position:relative}
 
-/* ============ EL DEDO MANDA: 44 px mínimo en lo que se toca entrenando o montando la rutina ============
+/* ============ EL DEDO MANDA: 44 px mínimo en todo lo que se toca en Entreno ============
    Con 51 de 63 controles del editor por debajo de 44 px, y el ✓ en 40×36, con las manos sudadas
-   se fallaba el toque. 44 px es el mínimo de las guías de accesibilidad (Apple HIG, WCAG 2.5.5). */
+   se fallaba el toque. 44 px es el mínimo de las guías de accesibilidad (Apple HIG, WCAG 2.5.5).
+   UNA regla para toda la pestaña (renderNow pone body[data-tab]): un control nuevo no necesita la suya. */
+body[data-tab="gym"] #main :is(button,input,select,.chipx){min-height:44px}
+body[data-tab="gym"] #main .btn.s,body[data-tab="gym"] #main .gx,body[data-tab="gym"] #main button.gsn{min-width:44px}
+body[data-tab="gym"] #main .gtb input{font-size:16px}
 .gck{width:48px;height:44px}
-.gtb input{min-height:44px;font-size:16px}
-.gtb td{padding:3px 3px}
-.gpasos button,.grir button,.gseg button,.gsegin,.gsegin input{min-height:44px}
-.gedpie button,.gedpie label{min-height:44px;padding:0 12px}
+.gx,.grtm{width:44px;height:44px}
+.grtm{top:4px;right:4px}
 .gmv{flex-direction:row;gap:4px}
-.gmv button{width:40px;height:44px;font-size:13px;padding:0}
-.gx{width:44px;height:44px}
-button.gsn{min-width:44px;height:44px}
-.gobjin input,.grango input{min-height:44px}
+.gmv button{width:44px;font-size:13px;padding:0}
 .grango input{width:54px}
-.gvcab2 .btn,.gfin{min-height:44px;min-width:44px}
-#main .subcab .volver{min-height:44px;min-width:44px}
-.grtm{width:44px;height:44px;top:4px;right:4px}
-.gsec .btn{min-height:44px}
-.glnk button{min-height:44px;padding:0 8px}
-.ged .chipx,.gtpl+.card .chipx,.card .chips .chipx[data-a="rt-dia"],.chips .chipx[data-a="plan-mat"]{min-height:44px}
-.ged input[data-a="rt-nombre"],.card input[data-a="rt-nombre"]{min-height:44px}
-.gsemcfg{min-height:44px}
-.gchips button{min-height:40px}
-.gsuph button{min-height:44px}
-
-.gedab,button.gfs.gedab{min-height:44px}
-#rtQ{min-height:44px}
-.subcab .btn,.gbusca input{min-height:44px}
-.gmv button{width:44px}
-[data-a="rt-borrar"],.btn[data-a="gym-rutv"],.gsec .btn{min-height:44px}
+.gedpie button,.gedpie label,.glnk button{padding:0 12px}
 .gpuerta{display:flex;align-items:center;gap:10px;padding:10px 12px}
 .gpuerta>span:first-child{font-size:20px}.gpuerta .t{flex:1;min-width:0}.gpuerta .t b{display:block;font-size:13.5px}
-.gpuerta .btn{min-height:44px;min-width:44px}
 .ghero2.choque{border-color:var(--warn)}.ghero2.choque .k{color:var(--warn)}
