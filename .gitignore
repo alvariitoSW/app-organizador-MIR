@@ -6,3 +6,6 @@ design/entreno/entreno-rediseno.html
 design/comida/comida-y-menus.html
 design/nutricion/*.html
 !design/nutricion/*.dc.html
+
+# marca del hook de pruebas
+.claude/.pruebas-pendientes
