@@ -5,12 +5,13 @@
 # que no sea solo de pruebas, maquetas, diseño, .claude/ o documentación.
 set -u
 cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null)
-printf '%s' "$cmd" | grep -qE 'git push[^;&|]*\bmain\b' || exit 0
+# solo un `git push` de verdad (inicio de comando), no el texto dentro de un echo
+printf '%s' "$cmd" | grep -qE '(^|[;&|(]|&&)[[:space:]]*git push[^;&|]*\bmain\b' || exit 0
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
 sello=$(git log -1 --format=%H -- version.json 2>/dev/null)
 [ -n "$sello" ] || exit 0
 pendientes=$(git diff --name-only "$sello" HEAD 2>/dev/null \
-  | grep -vE '^(tests|maquetas|design|\.claude|tools)/|\.md$|^version\.json$')
+  | grep -vE '^(tests|maquetas|design|\.claude|tools)/|\.md$|^version\.json$|^\.gitignore$')
 [ -z "$pendientes" ] && exit 0
 {
   echo "Push a main sin sellar: hay cambios después del último version.json:"
