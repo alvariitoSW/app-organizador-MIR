@@ -8523,6 +8523,53 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('las copias automáticas se guardan en el móvil y se listan', r.copias, JSON.stringify(r));
   }
 
+  // 213) LOS FALLOS DEL LUNES, encadenados por «Mes» y la portada de Entreno. Salieron al lanzar la
+  // suite un lunes y se arreglaron sin prueba propia:
+  //  · una rutina pegada al tipo «Guardia» desaparecía de la tarjeta grande el día que ponías la
+  //    guardia; ahora sale con «PERO ESTÁS DE GUARDIA» para que decidas moverla;
+  //  · el día siguiente, saliente con una rutina pegada A PROPÓSITO al tipo «Saliente», el plan lo
+  //    daba por piscina; ahora cuenta como fuerza;
+  //  · una guardia puesta sin repintar (lo que hace el puente de Claude) no llevaba su saliente a
+  //    Google: la memoria «por pintado» de salidaDeGuardia() seguía con lo de antes.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const d = (n) => P.iso(P.addDays(new Date(), n));
+      const K = d(14), K1 = d(15), K5 = d(18), K6 = d(19);
+      const clic = (sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
+      g.rutinas = [
+        { id: 'r213g', nombre: 'R213 guardia', dias: ['sh-g'], ejercicios: [{ ex: 'Sentadilla (barra)', series: 3, reps: 5 }] },
+        { id: 'r213s', nombre: 'R213 saliente', dias: ['sh-s'], ejercicios: [{ ex: 'Remo con barra', series: 3, reps: 8 }] }];
+      g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null;
+      [K, K1, K5, K6].forEach((k) => P.setDayOverride(k, 'sh-t', ''));
+      P.save();
+      // 1) en «Mes»: el día K de guardia y el siguiente de saliente, pulsando los botones del panel
+      P.ui.tab = 'month'; P.ui.monSel = K; P.render();
+      const puesG = clic('#main [data-a="day-set"][data-key="' + K + '"][data-sid="sh-g"]');
+      P.ui.monSel = K1; P.render();
+      const puesS = clic('#main [data-a="day-set"][data-key="' + K1 + '"][data-sid="sh-s"]');
+      // 2) a Entreno, mirando ese día: la rutina de guardia sigue ahí, con el choque dicho
+      P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.ui.gymDate = K; P.render();
+      const heroG = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
+      // 3) el saliente con su rutina pegada: fuerza en la semana y en la tarjeta grande
+      const diaS = (P.entrenoSemana(K1).dias.filter((x) => x.k === K1)[0] || {});
+      P.ui.gymDate = K1; P.render();
+      const heroS = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
+      // 4) sin repintar: se pregunta por K6 (se memoriza «no hay salida»), se pone guardia en K5 y se
+      //    exporta. El saliente de K6 tiene que ir a Google
+      const antes = P.salidaDeGuardia(K6);
+      P.setDayOverride(K5, 'sh-g', ''); P.save();
+      const salK6 = P.calEventos(K6, K6).some((e) => /Saliente/.test(e.summ || ''));
+      P.store = copia; P.save(); P.ui.gymDate = null; P.ui.tab = 'gym'; P.render();
+      return { puesG, puesS, heroG: heroG.slice(0, 160), diaS: diaS.tipo, heroS: heroS.slice(0, 160), antes: !!antes, salK6 };
+    });
+    check('Mes → Entreno: poner guardia en un día con rutina pegada a «Guardia» la deja en la tarjeta grande con «pero estás de guardia»',
+      r.puesG && /R213 guardia/.test(r.heroG) && /PERO ESTÁS DE GUARDIA/i.test(r.heroG), JSON.stringify(r));
+    check('una rutina pegada a propósito al tipo «Saliente» hace de ese día fuerza (no piscina) y sale en la tarjeta grande',
+      r.puesS && r.diaS === 'fuerza' && /R213 saliente/.test(r.heroS), JSON.stringify(r));
+    check('una guardia puesta sin repintar lleva su saliente a Google aunque antes se hubiera preguntado por ese día',
+      !r.antes && r.salK6, JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
