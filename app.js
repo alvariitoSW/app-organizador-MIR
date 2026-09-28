@@ -277,7 +277,7 @@ function avisarBackupSiToca(){
   if(!((db===null&&dp>n)||(db!==null&&db>n)))return;
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
-  setTimeout(function(){flash('💾 hace tiempo que no haces una copia de seguridad: en «Datos» tienes «Descargar JSON» — es la única red de seguridad, nada se guarda en ningún servidor',6000);},900);}
+  setTimeout(function(){flash('💾 hace tiempo que no guardas una copia fuera del móvil: en «Datos» → «Guardar en Drive / Archivos», un toque',6000);},900);}
 let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que quiere ver al entrar */
   drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
@@ -394,8 +394,13 @@ function temaAzar(){
     const base=h+az(20,60),paso=360/6,f={};
     const nombres=['sleep','work','guard','meal','gym','evt'];
     let malo=false;
+    /* en claro, un amarillo o un verde a 40 % de luz no llega a 3:1 sobre blanco, y descartar el tema
+       entero por eso dejaba los temas claros en ~0 de cada 40: se oscurece (o aclara, en oscuro) ESE
+       color hasta que se lea, que es lo que haría un diseñador */
     nombres.forEach(function(n,i){
-      const c=hsl(base+paso*i+az(-14,14),osc?az(62,84):az(52,74),osc?az(58,70):az(30,44));
+      const hh=base+paso*i+az(-14,14),ss=osc?az(62,84):az(52,74);let ll=osc?az(58,70):az(30,44);
+      let c=hsl(hh,ss,ll);
+      for(let k=0;k<20&&contraste(c,v.bg)<3;k++){ll+=osc?3:-3;c=hsl(hh,ss,Math.max(5,Math.min(95,ll)));}
       f[n]=c;if(contraste(c,v.bg)<3)malo=true;});
     if(malo)continue;
     return {id:'azar-'+Math.random().toString(36).slice(2,8),nombre:'Al azar',
@@ -878,7 +883,12 @@ function normalize(o){
   return o;
 }
 let saveFailWarned=false;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(store));saveFailWarned=false;}catch(e){console.warn('no se pudo guardar',e);
+function save(){
+  /* lo guardado cambia los datos: las memorias «por pintado» (¿vengo de guardia?, la semana de
+     entrenos, la cocina…) ya no valen. Sin esto, poner una guardia y exportar sin repintar mandaba
+     el saliente del día siguiente con el dato viejo —o no lo mandaba— */
+  try{_renderTick++;}catch(e0){}
+  try{localStorage.setItem(KEY,JSON.stringify(store));saveFailWarned=false;}catch(e){console.warn('no se pudo guardar',e);
   if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}
   /* y si tienes el calendario enchufado, que se suba solo. No aquí mismo: save() se llama en cada
      tecla y subir cuatro ficheros en cada una sería absurdo. Se pide, y el temporizador decide. */
@@ -1102,6 +1112,7 @@ function notasCuenta(){
 function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v===undefined||v===null||v==='')return null;
   return (typeof v==='string')?{shift:v,guard:''}:{shift:v.shift||'',guard:v.guard||''};}
 function setDayOverride(dateStr,shiftId,guard){
+  _renderTick++;   /* cambia el tipo de un día: lo memorizado de este pintado ya no vale */
   if(!store.rotation.daySet)store.rotation.daySet={};
   if(shiftId===null){delete store.rotation.daySet[dateStr];limpiarSalientesAuto(dateStr);return;}
   store.rotation.daySet[dateStr]=(guard&&shiftId)?{shift:shiftId,guard:guard}:{shift:shiftId||''};
@@ -6157,11 +6168,13 @@ function entrenoSemana(key){
       motivo:!sh?'sin tipo de día':guard?'guardia':vac?'vacaciones':sal?'saliente':''};
     if(tipo){const v=ventanaEntreno(k,tipo,inf);x.hora=v.hora;x.dur=v.dur;x.choca=eventoQueChoca(k,v);}
     const b=rutinaDeFechaBase(k);
-    if(b&&f!==false&&tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
+    /* una rutina pegada A PROPÓSITO al tipo «Saliente» es fuerza ese día, no piscina: la puso el usuario */
+    if(b&&f!==false&&x.tipo==='pisc'){x.tipo='fuerza';const v2=ventanaEntreno(k,'fuerza',inf);x.hora=v2.hora;x.dur=v2.dur;x.choca=eventoQueChoca(k,v2);}
+    if(b&&f!==false&&x.tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
     const g2=diaSegundo(k,inf);if(g2.on&&f!==false)x.seg=true;
     /* el Lloretazo es agua: cuenta como sesión y la app no mete otra ese día */
     x.lloret=eventosDeFecha(k).some(function(e){return e.lloret;});
-    x.apto=!!tipo&&!x.quitado&&!x.choca&&!(tipo==='pisc'&&!cfg.pisc.on);
+    x.apto=!!x.tipo&&!x.quitado&&!x.choca&&!(x.tipo==='pisc'&&!cfg.pisc.on);
     dias.push(x);}
   const on=function(x){return x.base||x.forz||x.seg||x.auto||x.lloret;};
   const fuerzas=function(){return dias.filter(function(x){return (x.base||x.auto||x.forz)&&x.tipo==='fuerza';}).length;};
@@ -9570,8 +9583,9 @@ function gruposSuperserie(ejs){
 /* ---- la sesión en curso vive en tus datos, no en memoria ---- */
 function gymCierreMin(){const n=+gymS().cierreMin;return (n>=10&&n<=180)?n:30;}
 function gymDiscos(){const d=gymS().discos;
-  return (Array.isArray(d)&&d.length?d:[25,20,15,10,5,2.5,1.25]).map(Number).filter(function(x){return x>0;}).sort(function(a,b){return b-a;});}
-function gymBarra(){const b=+gymS().barra;return b>0&&b<=40?b:20;}
+  const def=gymUnidad()==='lb'?[45,35,25,10,5,2.5].map(function(x){return x/LB;}):[25,20,15,10,5,2.5,1.25];
+  return (Array.isArray(d)&&d.length?d:def).map(Number).filter(function(x){return x>0;}).sort(function(a,b){return b-a;});}
+function gymBarra(){const b=+gymS().barra;return b>0&&b<=40?b:(gymUnidad()==='lb'?45/LB:20);}
 function discosPorLado(kg){
   /* qué poner a cada lado de la barra, de mayor a menor. Si no cuadra exacto, lo dice */
   const lado=(Math.round((+kg||0)*100)/100-gymBarra())/2;
@@ -9586,8 +9600,8 @@ function discosHTML(kg){
   return '<div class="gplate" aria-label="por lado '+esc(p.pone.map(fmtKg).join(' + '))+'">'+
     '<span class="bar"></span>'+p.pone.map(function(d){
       return '<i style="height:'+alto(d)+'px;background:'+(DISCO_COLOR[d]||'#888')+'"></i>';}).join('')+
-    '<span class="t">por lado: <b>'+esc(p.pone.map(fmtKg).join(' + '))+'</b> · barra '+fmtKg(gymBarra())+
-      (p.sobra>0.01?' · <i style="color:var(--warn);font-style:normal">faltan '+fmtKg(p.sobra*2)+' kg</i>':'')+'</span></div>';}
+    '<span class="t">por lado: <b>'+esc(p.pone.map(function(d){return fmtKg(Math.round(d*100)/100)+' kg';}).join(' + '))+'</b> · barra '+fmtKg(Math.round(gymBarra()*100)/100)+' kg'+
+      (p.sobra>0.01?' · <i style="color:var(--warn);font-style:normal">faltan '+fmtKg(Math.round(p.sobra*2*100)/100)+' kg</i>':'')+'</span></div>';}
 function sesionFilas(sa){
   /* EL PLAN DE ESTA SESIÓN: cada ejercicio con sus filas (las de la rutina + las que añadas hoy),
      lo que hiciste la vez anterior en cada una y lo que ya has marcado */
@@ -9655,6 +9669,7 @@ function marcarSerie(x,si){
   if(med==='dist'&&+f.seg>0)reg.seg=Math.round(+f.seg);
   g.registro.push(reg);
   ui.gymRir=null;sa.ult=Date.now();
+  if(ui.gymTodas){save();return '';}   /* «✓ todas»: la última hace el resto (siguiente y descanso) */
   if(ui.gymFila)delete ui.gymFila[x+'|'+si];
   /* lo siguiente: en superserie, el compañero sin descanso; al cerrar la vuelta, descanso */
   const plan2=sesionFilas(sa),grupos=gruposSuperserie(plan2.map(function(q){return q.ej;}));
@@ -9668,7 +9683,7 @@ function marcarSerie(x,si){
   if(sig<0){for(let i=0;i<plan2.length;i++)if(plan2[i].hechas<plan2[i].total){sig=i;break;}}
   if(sig>=0)sa.ix=sig;
   const falta=plan2.some(function(q){return q.hechas<q.total;});
-  if(descansa&&falta&&f.t!=='c')arrancaDescanso(p.desc);else if(!descansa)ui.gymDesc=null;
+  if(descansa&&falta&&f.t!=='c'){arrancaDescanso(p.desc);avisoDescanso(p.desc,sig>=0?plan2[sig].ex:'');}else if(!descansa){ui.gymDesc=null;avisoDescansoFuera();}
   save();render();
   if(!falta)return '¡todas hechas! dale a «terminar» cuando quieras';
   return rec?('¡récord! '+p.ex+' '+fmtKg(kg)+' × '+reps):'';}
@@ -9708,7 +9723,7 @@ function cerrarSesionCore(min,rpe,opt){
     inicio:+sa.ts||null,fin:(+sa.ts||Date.now())+dur*60000,rpe:r,carga:r?r*dur:null,auto:!!opt.auto,
     tipo:rutTipo(rt)};
   g.sesiones.push(ses);
-  ui.gymSesionActiva=null;ui.gymDesc=null;ui.gymFila={};ui.gymRir=null;
+  ui.gymSesionActiva=null;ui.gymDesc=null;ui.gymFila={};ui.gymRir=null;avisoDescansoFuera();
   save();
   return ses;}
 function minutosSesion(sa){
@@ -9775,7 +9790,7 @@ function gymSemanaCirculos(sel){
       '<button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana"><b>'+hechos+(meta?(' / '+meta):'')+'</b> '+(meta?'entrenos':'hechos')+' ⚙</button></div>'+
     '<div class="gscs">'+celdas.join('')+'</div>'+
     '<div class="gtiraq">'+esc(selTxt)+'</div>'+
-    gymKpisHTML()+'</div>';}
+    (gymCompleto()?gymKpisHTML():'')+'</div>';}
 function gymSemanasSeguidas(){
   /* semanas seguidas con al menos tu mínimo (o 1 día si no tienes mínimo), contando la actual solo si ya lo cumple */
   const min=Math.max(1,entrenoCfg().min||0);let n=0;
@@ -9814,6 +9829,10 @@ function gymHeroHTML(sel){
   const d=parseDate(sel),dtxt=sel===hoy?'HOY':(DIA3[d.getDay()].toUpperCase()+' '+d.getDate());
   let rt=e&&e.tipo==='fuerza'?(e.rutina||rutinaDeFecha(sel)):null;
   if(e&&e.tipo==='pisc'){rt=g.rutinas.filter(function(r){return rutTipo(r)==='agua';})[0]||null;}
+  /* una rutina que TÚ pegaste a este tipo de día sale aunque sea guardia o saliente: se enseña con el
+     choque dicho (y el aviso de arriba ofrece moverla), no se esconde */
+  const choqueRt=(!rt&&!e)?rutinaDeFecha(sel):null;
+  if(choqueRt)rt=choqueRt;
   if(rt){
     const m=rutinaMeta(rt),hi=e&&e.hora?e.hora:'',casa=(hi&&e.dur)?hm(mins(hi)+e.dur+entrenoCfg().vuelta):'';
     /* el peso que toca en el primer ejercicio con barra o mancuerna: lo que miras antes de salir */
@@ -9821,7 +9840,8 @@ function gymHeroHTML(sel){
       const pr=progresionDe(x.ex,ejSets(x).filter(function(z){return z.t!=='c';}).length,ejRango(x)[1],sel);
       return pr.kg>0?(x.ex+' '+fmtKg(pr.kg)+' kg'+(pr.cl==='sube'?' ▲':(pr.cl==='baja'?' ▼':''))):'';}).filter(Boolean)[0]||'';
     const lst=sel===hoy?listoDe(sel):{rec:'normal'},corta=lst.rec==='corta',bq=bloqueDe(sel);
-    return '<div class="ghero2"><div class="k">'+dtxt+' TOCA'+(hi?(' · '+esc(hi)+(casa?(' → EN CASA '+casa):'')):'')+(bq.descarga?' · DESCARGA':'')+'</div>'+
+    return '<div class="ghero2'+(choqueRt?' choque':'')+'"><div class="k">'+dtxt+' TOCA'+(hi?(' · '+esc(hi)+(casa?(' → EN CASA '+casa):'')):'')+(bq.descarga?' · DESCARGA':'')+
+        (choqueRt&&malo?(' · PERO ESTÁS DE '+malo.toUpperCase()):'')+'</div>'+
       '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+(pk?(' · <b style="color:var(--ink)">'+esc(pk)+'</b>'):'')+'</div>'+
       '<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?' data-corta="1"':'')+'>▶ Empezar '+esc(rt.nombre)+'</button>'+
       '<div class="glnk"><button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?'':' data-corta="1"')+'>'+(corta?'versión completa':'versión corta')+'</button><span>·</span>'+
@@ -9854,17 +9874,19 @@ function renderGymPortada(){
   $('#main').innerHTML='<div class="grid">'+cerr+
     gymSemanaCirculos(c.sel)+
     gymAvisoHTML(c.sel)+
-    (c.sel===iso(new Date())&&!ui.gymSesionActiva?listoHTML(c.sel):'')+
+    avisosPuertaHTML()+
+    (c.sel===iso(new Date())&&!ui.gymSesionActiva&&gymCompleto()?listoHTML(c.sel):'')+
     gymHeroHTML(c.sel)+
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="plannuevo">📋 plan</button><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
     (g.rutinas.length?('<div class="grts">'+g.rutinas.map(rutinaTarjetaHTML).join('')+'</div>'):'')+
-    musculosHTML(c.sel)+
+    (gymCompleto()?musculosHTML(c.sel):'')+
     '<div class="gtiles">'+
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
       gymFicha('sup','chispa','Suplementos',supsS().length?(supsS().filter(function(x){return supTomado(x.id,iso(new Date()));}).length+'/'+supsS().filter(function(x){return x.p!=='proteina'&&supTocaHoy(x,iso(new Date()));}).length):'—',supsS().length?'hoy':'con evidencia')+
     '</div>'+
+    (gymCompleto()?'':'<div class="glnk"><button data-a="gym-modo" data-v="completo">ver más datos (modo completo)</button></div>')+
     '<button class="card infpuerta" data-a="hoy-informe" data-sem="pasada"><span>📊</span><span class="t"><b>Informe de la semana</b><span class="mini">carga, descanso, músculos y qué cambiar</span></span><span class="mini">›</span></button>'+
     '</div>';
   if(ui.gymSesionActiva)relojGym();}
@@ -9872,7 +9894,7 @@ function renderGymPlan(){
   /* lo que antes ocupaba la portada: el mínimo de la semana, fuerza/piscina y los trayectos */
   const c=gymCtx();
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu semana de entreno')+
-    entrenoSemanaHTML(c.sel||iso(new Date()))+
+    entrenoSemanaHTML(c.sel||iso(new Date()))+avisosCardHTML()+modoCardHTML()+unidadHTML()+
     '<div class="card"><h2>Cómo entrenas</h2>'+
       '<div class="row" style="gap:8px"><label class="fld" style="flex:1">descanso por defecto (s)<input inputmode="numeric" value="'+descansoCfg()+'" data-a="gym-descanso"></label>'+
       '<label class="fld" style="flex:1">cierre automático (min)<input inputmode="numeric" value="'+gymCierreMin()+'" data-a="gym-cierre"></label></div>'+
@@ -10000,7 +10022,7 @@ function renderGymRutEdit(){
       '<div class="gseg sm">'+['kg','lastre','reps','tiempo'].concat(t==='agua'?['dist']:[]).map(function(k){
         return '<button class="'+(med===k?'on':'')+'" data-a="rt-med" data-id="'+id+'" data-ix="'+ix+'" data-v="'+k+'">'+EJ_MEDIDAS[k]+'</button>';}).join('')+'</div>'+
       '<label class="gobjin">🎯<input value="'+esc(ej.objetivo||'')+'" placeholder="objetivo: subir a 100 kg, 10×5…" data-a="rt-obj" data-id="'+id+'" data-ix="'+ix+'"></label>'+
-      ((med==='kg'||med==='lastre')?('<div class="grango">reps <b>'+ejRango(ej)[0]+'</b> a <input inputmode="numeric" value="'+ejRango(ej)[1]+'" data-a="rt-rmax" data-id="'+id+'" data-ix="'+ix+'" aria-label="tope del rango de repeticiones">'+
+      ((med==='kg'||med==='lastre')&&gymCompleto()?('<div class="grango">reps <b>'+ejRango(ej)[0]+'</b> a <input inputmode="numeric" value="'+ejRango(ej)[1]+'" data-a="rt-rmax" data-id="'+id+'" data-ix="'+ix+'" aria-label="tope del rango de repeticiones">'+
         ' · te dejas <input inputmode="numeric" value="'+ejRir(ej)+'" data-a="rt-rir" data-id="'+id+'" data-ix="'+ix+'" aria-label="repeticiones en reserva"> <span class="mini">al llegar al tope en todas, sube</span></div>'):'')+
       '<table class="gtb">'+cab+filas+'</table>'+
       '<div class="gedpie"><button data-a="rt-fila-mas" data-id="'+id+'" data-ix="'+ix+'">＋ serie</button>'+
@@ -10070,7 +10092,7 @@ function renderGymVivo(){
     (med==='tiempo'?'<button data-a="gv-paso" data-k="seg" data-d="-5">−5″</button><button data-a="gv-paso" data-k="seg" data-d="5">+5″</button>':
      med==='dist'?'<button data-a="gv-paso" data-k="m" data-d="-25">−25 m</button><button data-a="gv-paso" data-k="m" data-d="25">+25 m</button>':
      '<button data-a="gv-paso" data-k="reps" data-d="-1">−1 rep</button><button data-a="gv-paso" data-k="reps" data-d="1">+1 rep</button>')+'</div>'):'';
-  const rir=(fa&&fa.t!=='c'&&med!=='dist')?('<div class="grir"><span>¿cuántas te quedaban?</span>'+[[0,'0','fallo'],[2,'1–2','justo'],[3,'3+','sobrado']].map(function(o){
+  const rir=(fa&&fa.t!=='c'&&med!=='dist'&&gymCompleto())?('<div class="grir"><span>¿cuántas te quedaban?</span>'+[[0,'0','fallo'],[2,'1–2','justo'],[3,'3+','sobrado']].map(function(o){
     return '<button class="'+(ui.gymRir===o[0]?'on':'')+'" data-a="gv-rir" data-d="'+o[0]+'"'+(ui.gymRir===o[0]?' aria-pressed="true"':'')+'><b>'+o[1]+'</b>'+o[2]+'</button>';}).join('')+'</div>'):'';
   const sug=p.pr&&p.pr.txt?('<div class="gsug '+esc(p.pr.cl)+'">💡 <span>'+esc(p.pr.txt)+'</span></div>'):'';
   const resto=plan.map(function(q,i){if(i===x)return '';
@@ -10082,7 +10104,7 @@ function renderGymVivo(){
       tabla+
       (fa&&colKg&&med==='kg'&&ejInfo(p.ex).barra?discosHTML(fa.kg):'')+
       pasos+rir+sug+
-      '<div class="gedpie"><button data-a="gv-serie-mas" data-x="'+x+'">＋ serie</button><button data-a="gv-cambiar">cambiar ejercicio</button></div></div>'+
+      '<div class="gedpie">'+(act>=0?'<button class="ok" data-a="gv-todas" data-x="'+x+'">✓ todas como están</button>':'')+'<button data-a="gv-serie-mas" data-x="'+x+'">＋ serie</button><button data-a="gv-cambiar">cambiar ejercicio</button></div></div>'+
     resto+'</div>';
   relojGym();}
 function renderGymRpe(){
@@ -10091,7 +10113,7 @@ function renderGymRpe(){
   const min=ui.gymRpeMin||minutosSesion(sa);
   $('#main').innerHTML='<div class="grid"><div class="card"><h2>¿Qué tal de dura?</h2>'+
     '<p class="mini" style="margin:0">Una pregunta: con ella se mide la carga real de la sesión (esfuerzo × minutos).</p>'+
-    '<div class="grpe">'+RPE_CR10.map(function(r){return '<button data-a="gv-rpe-fin" data-d="'+r[0]+'"><b>'+r[0]+'</b><small>'+esc(r[1])+'</small></button>';}).join('')+'</div>'+
+    '<div class="grpe">'+(gymCompleto()?RPE_CR10:[[3,'suave'],[5,'normal'],[7,'dura'],[9,'muy dura'],[10,'al límite']]).map(function(r){return '<button data-a="gv-rpe-fin" data-d="'+r[0]+'"><b>'+r[0]+'</b><small>'+esc(r[1])+'</small></button>';}).join('')+'</div>'+
     '<div class="row" style="margin-top:12px;gap:8px"><span class="mini">duración</span><button class="btn s" data-a="gv-min" data-d="-5">−5</button>'+
       '<b style="font-size:18px">'+min+' min</b><button class="btn s" data-a="gv-min" data-d="5">+5</button></div>'+
     '<div class="row" style="margin-top:12px"><button class="btn s" data-a="gym-panel" data-p="vivo">‹ seguir entrenando</button><span class="sp"></span>'+
@@ -10483,6 +10505,155 @@ function planAgua(){
     bloque('Calentamiento libre suave',1,200,30),bloque('Técnica con pull-buoy',8,50,20),bloque('Series a ritmo',6,100,30),bloque('Vuelta a la calma espalda',1,200,30)]};
   g.rutinas.push(rt);save();return rt;}
 function ritmo100(m,seg){return (m>0&&seg>0)?mmss(seg/m*100):'';}
+/* ===================== AVISOS =====================
+   Dos, y solo dos: el del descanso (que suene aunque apagues la pantalla) y el de «hoy toca».
+   Límite honesto: una web no puede programar un aviso para dentro de horas con la app cerrada. El
+   de «hoy toca» con la app cerrada llega por Google Calendar (el .ics lleva alarma); con la app
+   abierta o en segundo plano, lo lanza ella. El del descanso lo cronometra el service worker. */
+function avisosCfg(){const g=gymS();if(!g.avisos||typeof g.avisos!=='object')g.avisos={on:false,antes:30};return g.avisos;}
+function avisosPermiso(){try{return (typeof Notification!=='undefined')?Notification.permission:'no';}catch(e){return 'no';}}
+function avisosListos(){return !!avisosCfg().on&&avisosPermiso()==='granted';}
+function swMensaje(m){
+  try{if(!('serviceWorker' in navigator))return;
+    if(navigator.serviceWorker.controller){navigator.serviceWorker.controller.postMessage(m);return;}
+    navigator.serviceWorker.ready.then(function(r){if(r&&r.active)r.active.postMessage(m);}).catch(function(){});}catch(e){}}
+function avisosActivar(){
+  if(typeof Notification==='undefined')return Promise.resolve('este navegador no permite avisos; el de «hoy toca» te llega igual por Google Calendar');
+  return Promise.resolve(Notification.requestPermission()).then(function(p){
+    const c=avisosCfg();c.on=p==='granted';c.visto=true;save();render();
+    return p==='granted'?'avisos activados: el descanso suena con la pantalla apagada y te aviso antes de entrenar':
+      'sin permiso: actívalo en los ajustes del navegador para esta web';});}
+function avisoDescanso(seg,ex){
+  if(!avisosListos())return;
+  swMensaje({tipo:'descanso',ms:Math.round(seg*1000),titulo:'⏱ Descanso terminado',cuerpo:ex?('Siguiente serie: '+ex):'Toca la siguiente serie'});}
+function avisoDescansoFuera(){swMensaje({tipo:'descanso-cancel'});}
+let _avisoHoyT=null;
+function programarAvisoHoy(){
+  /* «hoy toca Torso A a las 17:15», X minutos antes, una vez al día */
+  if(_avisoHoyT){clearTimeout(_avisoHoyT);_avisoHoyT=null;}
+  if(!avisosListos())return;
+  const k=iso(new Date()),c=avisosCfg();if(c.hecho===k)return;
+  const e=entrenoDe(k);if(!e||!e.hora)return;
+  const ahora=new Date(),nm=ahora.getHours()*60+ahora.getMinutes(),t=mins(e.hora)-(+c.antes||30)-nm;
+  if(t<-(+c.antes||30)||t>18*60)return;
+  const lanza=function(){if(ui.gymSesionActiva)return;
+    const rt=e.tipo==='fuerza'?(e.rutina||rutinaDeFecha(k)):null;
+    swMensaje({tipo:'aviso',tag:'hoy-'+k,titulo:(e.tipo==='pisc'?'🏊 Hoy toca piscina':'💪 Hoy toca '+(rt?rt.nombre:'entrenar'))+' a las '+e.hora,
+      cuerpo:'Toca para abrirlo y empezar.'});
+    avisosCfg().hecho=k;save();};
+  if(t<=0)lanza();else _avisoHoyT=setTimeout(lanza,t*60000);}
+function avisosCardHTML(){
+  const c=avisosCfg(),p=avisosPermiso(),on=avisosListos();
+  return '<div class="card"><h2>🔔 Avisos</h2>'+
+    '<div class="row" style="gap:8px"><b style="flex:1">'+(on?'Activados':(p==='denied'?'Bloqueados por el navegador':'Apagados'))+'</b>'+
+      (on?'<button class="btn s" data-a="avisos-off">apagar</button>':(p==='no'?'':'<button class="btn p" data-a="avisos-on">activar</button>'))+'</div>'+
+    '<div class="gcfg"><span>Avisarme antes de entrenar<small>minutos</small></span><input inputmode="numeric" value="'+(+c.antes||30)+'" data-a="avisos-antes"></div>'+
+    '<p class="mini" style="margin:6px 0 0;line-height:1.5">Fin del descanso: suena aunque apagues la pantalla (Android; en iPhone, con la app instalada en la pantalla de inicio). '+
+      '«Hoy toca»: con la app abierta o en segundo plano, te lo digo yo; con la app cerrada del todo, llega por Google Calendar si tienes el calendario suscrito (lleva la alarma).'+
+      (p==='denied'?' Para desbloquearlos: ajustes del navegador → esta web → notificaciones.':'')+'</p></div>';}
+function avisosPuertaHTML(){
+  /* una vez, en la portada: si nunca te lo he preguntado */
+  const c=avisosCfg();if(c.visto||avisosListos()||avisosPermiso()==='no'||avisosPermiso()==='denied')return '';
+  if(!gymS().rutinas.length)return '';
+  return '<div class="card gpuerta"><span>🔔</span><span class="t"><b>¿Te aviso?</b><span class="mini">al acabar el descanso (con la pantalla apagada) y antes de entrenar</span></span>'+
+    '<button class="btn p s" data-a="avisos-on">sí</button><button class="btn s" data-a="avisos-no" aria-label="no, gracias">✕</button></div>';}
+/* ===================== MODO SENCILLO =====================
+   La ciencia sigue trabajando por debajo —el peso que toca, la descarga, la versión corta—, pero en
+   modo sencillo no se enseñan las cifras: solo Empezar, ✓ y el resumen. Quien quiera ver el RIR,
+   las series por músculo o el «listo», lo enciende en ⚙. */
+function gymModo(){const g=gymS();if(g.modo==='sencillo'||g.modo==='completo')return g.modo;
+  return (g.rutinas.length||g.registro.length)?'completo':'sencillo';}
+function gymCompleto(){return gymModo()==='completo';}
+function modoCardHTML(){const m=gymModo();
+  return '<div class="card"><h2>Cómo ves Entreno</h2><div class="gseg">'+
+    '<button class="'+(m==='sencillo'?'on':'')+'" data-a="gym-modo" data-v="sencillo">Sencillo</button>'+
+    '<button class="'+(m==='completo'?'on':'')+'" data-a="gym-modo" data-v="completo">Completo</button></div>'+
+    '<p class="mini" style="margin:8px 0 0">Sencillo: empezar, marcar cada serie y el resumen. Completo: además «listo %», series por músculo, las cifras de la semana y cuántas reps te dejas en cada serie. Lo que la app calcula es lo mismo en los dos.</p></div>';}
+/* ---- ✓ todas las que quedan del ejercicio, como están escritas ---- */
+function marcarTodas(x){
+  const sa=ui.gymSesionActiva;if(!sa)return '';
+  const p=sesionFilas(sa)[x];if(!p)return '';
+  const pend=p.filas.filter(function(f){return !f.hecha;}).map(function(f){return f.si;});
+  if(!pend.length)return '';
+  ui.gymTodas=true;
+  pend.forEach(function(si,i){if(i===pend.length-1)ui.gymTodas=false;marcarSerie(x,si);});
+  ui.gymTodas=false;
+  return pend.length+' series marcadas como estaban';}
+/* ===================== COPIAS AUTOMÁTICAS EN EL MÓVIL =====================
+   Una foto de tus datos al día, las últimas 7, en IndexedDB (aparte de donde vive la app). No te
+   salva de cambiar de móvil —para eso, «Guardar en Drive»—, pero sí de un import equivocado, de
+   «restaurar el ejemplo» sin querer o de un dato roto. Antes de importar o restaurar, se hace una. */
+const COPIAS_DB='planGuardias-copias';
+function copiasDB(){return new Promise(function(res,rej){
+  try{if(typeof indexedDB==='undefined')return rej('sin IndexedDB');
+    const r=indexedDB.open(COPIAS_DB,1);
+    r.onupgradeneeded=function(){r.result.createObjectStore('snap',{keyPath:'k'});};
+    r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
+function copiasGuardar(etiqueta){
+  return copiasDB().then(function(db){return new Promise(function(res){
+    const tx=db.transaction('snap','readwrite'),st=tx.objectStore('snap');
+    const k=etiqueta?(iso(new Date())+' '+etiqueta):iso(new Date());
+    st.put({k:k,t:Date.now(),json:JSON.stringify(store)});
+    const all=st.getAllKeys();
+    all.onsuccess=function(){const ks=(all.result||[]).slice().sort();while(ks.length>7){st.delete(ks.shift());}};
+    tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
+function copiasLista(){
+  return copiasDB().then(function(db){return new Promise(function(res){
+    const r=db.transaction('snap','readonly').objectStore('snap').getAll();
+    r.onsuccess=function(){res((r.result||[]).map(function(x){return {k:x.k,t:x.t,n:(x.json||'').length};}).sort(function(a,b){return b.t-a.t;}));};
+    r.onerror=function(){res([]);};});}).catch(function(){return [];});}
+function copiasLeer(k){
+  return copiasDB().then(function(db){return new Promise(function(res){
+    const r=db.transaction('snap','readonly').objectStore('snap').get(k);
+    r.onsuccess=function(){res(r.result||null);};r.onerror=function(){res(null);};});}).catch(function(){return null;});}
+function copiaDiaria(){
+  /* una al día, la primera vez que abres la app ese día */
+  copiasLista().then(function(l){const hoy=iso(new Date());
+    if(l.some(function(x){return x.k===hoy;}))return l;
+    return copiasGuardar().then(function(){return copiasLista();});}).then(function(l){ui.copias=l;if(ui.tab==='data')render();});}
+function copiaCompartir(){
+  /* al menú de compartir del móvil: Drive, correo, Archivos… Si no se puede, se descarga */
+  const name='planning-guardias-'+iso(new Date())+'.json',txt=JSON.stringify(store);
+  try{const f=new File([txt],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){
+      return navigator.share({files:[f],title:'Copia de Guardias'}).then(function(){marcarBackup();render();return 'copia guardada';})
+        .catch(function(e){return (e&&e.name==='AbortError')?'cancelado':(dl(),marcarBackup(),'descargada');});}}catch(e){}
+  dl();marcarBackup();render();return Promise.resolve('descargada: guárdala en Drive o donde quieras');}
+function copiasPideLista(){
+  if(ui.copias==null&&!ui.copiasCargando){ui.copiasCargando=true;
+    copiasLista().then(function(l){ui.copias=l;ui.copiasCargando=false;if(ui.tab==='data')render();});}
+  return '';}
+function copiasCardHTML(){
+  const l=ui.copias;
+  return '<div class="card"><h2>Copias automáticas en este móvil</h2>'+
+    '<p class="note">Una al día, las últimas 7, y otra justo antes de importar o restaurar. Te salvan de un error, no de perder el móvil: para eso, «Guardar en Drive».</p>'+
+    (l==null?'<p class="mini">Cargando…</p>':(l.length?l.map(function(x){
+      return '<div class="gcfg"><span>'+esc(x.k)+'<small>'+esc(tamanoLegible(x.n))+'</small></span><button class="btn s" data-a="copia-restaurar" data-k="'+esc(x.k)+'">restaurar</button></div>';}).join(''):
+      '<p class="mini">Todavía ninguna: se hace sola al abrir la app.</p>'))+
+    '<div class="row" style="margin-top:8px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button></div></div>';}
+/* ===================== KILOS O LIBRAS =====================
+   Por dentro todo va en kilos (para no romper tu historial); se cambia lo que ves y lo que escribes.
+   En libras, la barra es de 45 y los discos 45 · 35 · 25 · 10 · 5 · 2,5. */
+const LB=2.20462;
+function gymUnidad(){return gymS().unidad==='lb'?'lb':'kg';}
+function uVer(kg){return gymUnidad()==='lb'?Math.round((+kg||0)*LB*2)/2:(+kg||0);}
+function uLeer(v){const n=+String(v).replace(',','.')||0;return gymUnidad()==='lb'?Math.round(n/LB*100)/100:n;}
+function unidadHTML(){const u=gymUnidad();
+  return '<div class="card"><h2>Unidades</h2><div class="gseg">'+
+    '<button class="'+(u==='kg'?'on':'')+'" data-a="gym-unidad" data-v="kg">kilos</button>'+
+    '<button class="'+(u==='lb'?'on':'')+'" data-a="gym-unidad" data-v="lb">libras</button></div>'+
+    '<p class="mini" style="margin:8px 0 0">Tu historial se guarda igual; solo cambia cómo lo ves y lo escribes.</p></div>';}
+function unidadesEnPantalla(){
+  /* en libras, los «N kg» de Entreno se reescriben al vuelo y los campos de peso se convierten */
+  if(gymUnidad()!=='lb'||ui.tab!=='gym')return;
+  const m=document.getElementById('main');if(!m)return;
+  const w=document.createTreeWalker(m,NodeFilter.SHOW_TEXT,null);const ns=[];while(w.nextNode())ns.push(w.currentNode);
+  ns.forEach(function(n){const t=n.nodeValue;if(!/kg/i.test(t))return;
+    n.nodeValue=t.replace(/([+−-]?)(\d{1,4}(?:[.,]\d+)?)\s?kg\b/g,function(_,s,num){
+      const v=uVer(+num.replace(/\./g,'').replace(',','.'));return s+fmtKg(v)+' lb';}).replace(/\bKG\b/g,'LB').replace(/\+KG\b/g,'+LB');});
+  m.querySelectorAll('input[data-k="kg"]').forEach(function(i){if(i.value!=='')i.value=fmtKg(uVer(+String(i.value).replace(',','.')));});
+  m.querySelectorAll('[data-a="gv-paso"][data-k="kg"]').forEach(function(b){const d=+b.dataset.d;
+    const lb=Math.abs(d)>=5?10:5;b.dataset.d=String((d<0?-1:1)*lb/LB);b.textContent=(d<0?'−':'+')+lb+' lb';});}
 function renderGymCardio(){
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Cardio')+renderCardioCard()+'</div>';}
 function renderGymProgreso(){
@@ -14529,14 +14700,14 @@ function renderData(){
       <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
       ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
         (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
-      <div class="row" style="margin-top:6px"><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
+      <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div>
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-      </div></div>`);
+      </div></div>${copiasPideLista()}${copiasCardHTML()}`);
   if(v==='texto')return datosPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
       <div class="row"><button class="btn" data-a="txt">Generar</button><button class="btn" data-a="txtcopy">Copiar</button></div>
@@ -14672,7 +14843,7 @@ function render(){
     const m=$('#main');
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
-  try{renderNow();try{carrilScroll();}catch(e2){}}catch(e){
+  try{renderNow();try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}}catch(e){
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -15327,9 +15498,9 @@ function act(a,el){
         if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
       }catch(e){flash('Ese JSON no es válido');break;}
       confirmar('¿Sustituir TODOS tus datos actuales por este JSON? No se puede deshacer — si quieres conservar lo que tienes, cópialo antes con «JSON»/«copiar».').then(function(ok){
-        if(!ok)return;normalize(o);store=o;save();render();flash('Importado ✔');});break;}
+        if(!ok)return;copiasGuardar('antes de importar').then(function(){normalize(o);store=o;save();render();flash('Importado ✔ (tienes una copia de antes en «Datos»)');});});break;}
     case 'reset':confirmar('¿Sustituir todo por el ejemplo por defecto?').then(function(ok){
-      if(!ok)return;store=DEFAULTS();save();render();flash('Ejemplo restaurado');});break;
+      if(!ok)return;copiasGuardar('antes de restaurar').then(function(){store=DEFAULTS();save();render();flash('Ejemplo restaurado (tienes una copia de antes en «Datos»)');});});break;
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
     case 'draft':{const t=$('#pasteBox').value||'';
       window._draftExtras=mapCodes($('#codeMap').value);window._draftInfo=parsePlanning(t,window._draftExtras);
@@ -15706,8 +15877,8 @@ function act(a,el){
         const nm=document.querySelector('#main input[data-a="rt-nombre"]');if(nm){nm.focus();try{nm.select();}catch(e){}}}
       break;}
     case 'gv-mas15':{if(!ui.gymDesc)break;
-      ui.gymDesc.fin+=15000;ui.gymDesc.total+=15;pintaDescanso();break;}
-    case 'gv-saltar':ui.gymDesc=null;render();break;
+      ui.gymDesc.fin+=15000;ui.gymDesc.total+=15;pintaDescanso();avisoDescanso((ui.gymDesc.fin-Date.now())/1000,'');break;}
+    case 'gv-saltar':ui.gymDesc=null;avisoDescansoFuera();render();break;
     case 'gv-terminar':{if(!ui.gymSesionActiva)break;
       /* antes de guardar, UNA pregunta: qué tal de dura. Con eso sale la carga (esfuerzo × minutos) */
       ui.gymRpeMin=0;ui.gymPanel='rpe';render();window.scrollTo(0,0);break;}
@@ -15736,6 +15907,17 @@ function act(a,el){
     case 'plan-prog':planCfg().prog=el.dataset.v;render();break;
     case 'plan-crear':{const l=planCrear();ui.gymPanel='';render();window.scrollTo(0,0);flash('creadas: '+l.join(', ')+'. Asígnalas a tus días en «editar» o deja que la app las reparta.',6000);break;}
     case 'gym-agua-nueva':{const rt=planAgua();ui.gymRutSel=rt.id;ui.gymRutTab='info';ui.gymPanel='rut';render();window.scrollTo(0,0);flash('sesión de piscina creada: cámbiala a tu gusto en «editar»');break;}
+    case 'avisos-on':avisosActivar().then(function(m){flash(m,5000);programarAvisoHoy();});break;
+    case 'avisos-off':avisosCfg().on=false;avisoDescansoFuera();save();render();flash('avisos apagados');break;
+    case 'avisos-no':avisosCfg().visto=true;save();render();break;
+    case 'gym-modo':gymS().modo=el.dataset.v==='completo'?'completo':'sencillo';save();render();flash(gymS().modo==='completo'?'modo completo: todas las cifras':'modo sencillo: empezar, marcar y resumen');break;
+    case 'gym-unidad':gymS().unidad=el.dataset.v==='lb'?'lb':'kg';save();render();break;
+    case 'gv-todas':{const m=marcarTodas(+el.dataset.x);if(m)flash(m);break;}
+    case 'copia-compartir':copiaCompartir().then(function(m){if(m)flash(m);});break;
+    case 'copia-restaurar':{const k=el.dataset.k;confirmar('¿Volver a la copia del '+k+'? Antes guardo una de cómo está ahora, por si acaso.').then(function(ok){
+        if(!ok)return;copiasLeer(k).then(function(x){if(!x){flash('esa copia ya no está');return;}
+          let o;try{o=JSON.parse(x.json);}catch(e){flash('esa copia está dañada');return;}
+          copiasGuardar('antes de restaurar').then(function(){normalize(o);store=o;save();ui.copias=null;render();flash('restaurada la copia del '+k);});});});break;}
     case 'prog-ex':ui.progEx=el.dataset.n||'';render();break;
     case 'gym-bloque-hoy':gymS().bloqueDesde=iso(mondayOf(new Date()));save();render();flash('bloque nuevo desde este lunes: la descarga toca dentro de '+(descargaCada()-1)+' semanas');break;
     case 'rt-abrir':{const i=+el.dataset.ix;ui.rtAbierto=(ui.rtAbierto===i||i<0)?-1:i;render();break;}
@@ -17197,7 +17379,8 @@ function calEventos(desde,hasta){
          no sean las mismas de la jornada; si no hay, la hora que pongas en Entreno, y si tampoco,
          el entreno va como aviso de todo el día (se sabe QUÉ día, no a qué hora) */
       const propias=sh.start&&!(jor&&jor.start===sh.start&&jor.end===sh.end);
-      const hG=gymS().hora||'';
+      /* sin hora puesta en el gym, la del plan (al salir del trabajo, o las 17 en un libre) */
+      const entP=entrenoDe(k),hG=gymS().hora||(entP&&entP.hora)||'';
       const hIni=propias?st:(hG?icsHM(hG):''),hFin=propias?((en&&en>st)?en:''):'';
       out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:(+gymS().duracion||75),
         uid:icsUID('entreno|'+k),
@@ -17206,6 +17389,11 @@ function calEventos(desde,hasta){
         summ:'💪 '+(rtDia?rtDia.nombre:'Entreno'),
         desc:(rtDia?('Rutina «'+rtDia.nombre+'»: '+rtDia.ejercicios.length+' ejercicios. '):'')+
           (hIni?'':'Sin hora puesta: ponla en Entreno o en las horas del «Día de fuerza».'),cat:'ENTRENO'});}
+    /* la piscina del saliente que pone el plan de la semana: con su hora y su alarma */
+    (function(){const e=entrenoDe(k);
+      if(!e||e.tipo!=='pisc'||!e.hora)return;
+      out.push({allDay:false,fecha:icsNum(k),isoKey:k,hora:icsHM(e.hora),horaFin:'',dur:+e.dur||90,
+        uid:icsUID('piscina|'+k),summ:'🏊 Piscina',desc:'Piscina del saliente, '+(+e.dur||90)+' min.',cat:'ENTRENO'});})();
     /* EL SALIENTE SÍ VA. Esa mañana no estás en casa: de 00:00 hasta que te relevan sigues
        trabajando, y al llegar duermes. Sin esto, en Google un saliente y un día libre se veían
        exactamente igual —en blanco— y no había forma de distinguirlos. */
@@ -17646,7 +17834,7 @@ document.addEventListener('input',e=>{
     searchDebounce=setTimeout(function(){render();const nx=document.getElementById('rtQ');
       if(nx){nx.focus();try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}},160);
     return;}
-  if(a==='gv-fila'){cambiaFila(+el.dataset.x,+el.dataset.i,el.dataset.k,el.value);return;}
+  if(a==='gv-fila'){cambiaFila(+el.dataset.x,+el.dataset.i,el.dataset.k,el.dataset.k==='kg'?uLeer(el.value):el.value);return;}
   if(a==='elegir-q'){
     if(ui.elegir)ui.elegir.q=el.value||'';
     clearTimeout(searchDebounce);
@@ -17831,11 +18019,11 @@ document.addEventListener('change',e=>{
       else if(f==='token')c.token=String(el.value||'').trim().slice(0,200);
       if(c.url&&c.token&&!c.buzon)c.buzon=buzonNuevo();
       save();render();break;}
-    case 'gv-fila':cambiaFila(+el.dataset.x,+el.dataset.i,el.dataset.k,el.value);break;
+    case 'gv-fila':cambiaFila(+el.dataset.x,+el.dataset.i,el.dataset.k,el.dataset.k==='kg'?uLeer(el.value):el.value);break;
     case 'rt-fila':{const rt=gymS().rutinas.filter(function(r){return r.id===el.dataset.id;})[0];if(!rt)break;
       const ej=rt.ejercicios[+el.dataset.ix];if(!ej)break;
       const sets=ejSets(ej).map(function(x){return Object.assign({},x);}),i=+el.dataset.i,k=el.dataset.k;
-      if(!sets[i])break;const v=Math.max(0,+String(el.value).replace(',','.')||0);
+      if(!sets[i])break;const v=Math.max(0,k==='kg'?uLeer(el.value):(+String(el.value).replace(',','.')||0));
       sets[i][k]=k==='kg'?Math.round(v*100)/100:Math.round(v);
       /* cambiar la primera serie de trabajo arrastra a las de detrás que eran iguales: 5×10 a 96 kg se escribe una vez */
       const ant=ejSets(ej)[i];
@@ -17846,6 +18034,7 @@ document.addEventListener('change',e=>{
       if(a==='rt-rmax'&&v>=1&&v<=50)ej.rmax=Math.max(+ej.reps||1,v);
       if(a==='rt-rir'&&v>=0&&v<=5)ej.rir=v;
       save();render();break;}
+    case 'avisos-antes':{const v=Math.round(+el.value);if(v>=0&&v<=240){avisosCfg().antes=v;avisosCfg().hecho='';save();programarAvisoHoy();}render();break;}
     case 'gym-peso':{const v=+String(el.value).replace(',','.');if(v>=30&&v<=300){perfilS().pesoKg=Math.round(v*10)/10;save();}render();break;}
     case 'gym-musc':{const v=Math.round(+el.value);const g=gymS();if(!g.musc||typeof g.musc!=='object')g.musc={};if(v>=1&&v<=40){g.musc[el.dataset.k]=v;save();}render();break;}
     case 'gym-rirdef':{const v=Math.round(+el.value);if(v>=0&&v<=5){gymS().rirDef=v;save();}render();break;}
@@ -17857,8 +18046,8 @@ document.addEventListener('change',e=>{
     case 'rt-ej-desc':{const rt=gymS().rutinas.filter(function(r){return r.id===el.dataset.id;})[0];if(!rt)break;
       const ej=rt.ejercicios[+el.dataset.ix];if(ej){ej.desc=+el.value||0;if(!ej.desc)delete ej.desc;save();render();}break;}
     case 'gym-cierre':{const v=Math.round(+el.value||0);if(v>=10&&v<=180){gymS().cierreMin=v;save();}render();break;}
-    case 'gym-barra':{const v=+String(el.value).replace(',','.')||0;if(v>0&&v<=40){gymS().barra=v;save();}render();break;}
-    case 'gym-discos':{const l=String(el.value||'').replace(/,/g,'.').split(/[\s;]+/).map(Number).filter(function(x){return x>0&&x<=50;});
+    case 'gym-barra':{const v=uLeer(el.value);if(v>0&&v<=40){gymS().barra=v;save();}render();break;}
+    case 'gym-discos':{const l=String(el.value||'').replace(/,/g,'.').split(/[\s;]+/).map(Number).filter(function(x){return x>0&&x<=110;}).map(function(x){return uLeer(x);});
       if(l.length){gymS().discos=l;save();}render();break;}
     case 'gym-cerrada-min':{const c=ui.gymCerrada,s2=c?gymS().sesiones.filter(function(x){return x.id===c.sid;})[0]:null;
       const v=Math.round(+el.value||0);if(s2&&v>=1&&v<=600){s2.duracionMin=v;s2.fin=(+s2.inicio||Date.now())+v*60000;if(s2.rpe)s2.carga=s2.rpe*v;save();}render();break;}
@@ -18142,7 +18331,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -18241,6 +18430,8 @@ if(ui.arranque&&ui.imp&&(ui.imp.txt||ui.imp.url))ui.arranque=null;
 impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
+copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
+programarAvisoHoy();    /* «hoy toca …» antes de entrenar, si lo tienes activado */
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 registrarSW();

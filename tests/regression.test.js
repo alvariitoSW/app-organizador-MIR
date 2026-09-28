@@ -2286,13 +2286,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const clave = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
     await page.evaluate(() => { window.PG.store.rotation.vacaciones = []; window.PG.save(); window.PG.render(); });
-    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'Semana Santa'); }, [clave(new Date(y, m, 3)), clave(new Date(y, m, 7))]);
-    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'verano'); }, [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))]);
+    // los periodos van RELATIVOS A HOY: con días fijos del mes (3–7 y 18–27), a final de mes ya no
+    // salían en la cuadrícula —que corre con la semana— y la prueba fallaba según el día en que se lanzara
+    const hoyD = new Date(y, m, new Date().getDate()), mas = (n) => new Date(hoyD.getTime() + n * 864e5);
+    const r1 = [clave(mas(1)), clave(mas(5))], r2 = [clave(mas(8)), clave(mas(14))];
+    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'Semana Santa'); }, r1);
+    await page.evaluate((r) => { window.PG.addVacation(r[0], r[1], 'verano'); }, r2);
     await page.waitForTimeout(300);
 
-    // el mes en el que estás empieza dos semanas antes de la de hoy: puede que los primeros días del
-    // mes ya no salgan. Se cuentan los días de vacaciones QUE SE VEN en la cuadrícula.
-    const r1 = [clave(new Date(y, m, 3)), clave(new Date(y, m, 7))], r2 = [clave(new Date(y, m, 18)), clave(new Date(y, m, 27))];
+    // se cuentan los días de vacaciones QUE SE VEN en la cuadrícula
     const esperados = await page.evaluate((rr) => [...document.querySelectorAll('.dbox')]
       .filter((x) => rr.some((r) => x.dataset.key >= r[0] && x.dataset.key <= r[1])).length, [r1, r2]);
     const dos = await page.evaluate(() => {
@@ -4274,7 +4276,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«Hoy» junta las cinco patas del día y las ordena: el día, lo que hay que hacer y, al final, lo de consulta',
       // entre el día y «toca entrenar» va ahora «¿cómo has dormido?» (lo real de la noche, lo primero
       // que se apunta por la mañana): por eso entrenar ya no es la 1 y el alto sube lo que mide ella
-      dia.dia === 0 && dia.sueno === 1 && dia.entrenar === 2 && dia.tareas === 3 && dia.pagar > dia.tareas &&
+      // (los lunes y martes, antes del sueño va la puerta del informe de la semana: por eso posiciones
+      // relativas y no «el sueño es la 1»)
+      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= 2 && dia.entrenar === dia.sueno + 1 && dia.tareas === dia.entrenar + 1 && dia.pagar > dia.tareas &&
       dia.comidas > dia.pagar && dia.sol > dia.comidas &&
       dia.alto < 2700 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
@@ -4928,8 +4932,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id],
         ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 }] }];
       S.gym.registro = [
-        { id: 'gp1', fecha: dia(0), ex: 'Press banca', kg: 60, reps: 8, ts: Date.now() },
-        { id: 'gp2', fecha: dia(1), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
+        // días relativos a HOY: con «el lunes y el martes de esta semana», un lunes el martes aún no
+        // ha llegado y todo salía «entrenado hoy», sin ningún grupo descansado que enseñar
+        { id: 'gp1', fecha: iso(P.addDays(new Date(), -8)), ex: 'Press banca', kg: 60, reps: 8, ts: Date.now() },
+        { id: 'gp2', fecha: iso(P.addDays(new Date(), -1)), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
       S.gym.sesiones = []; S.gym.cardio = []; S.gym.cambios = {};
       P.ui.gymDate = dia(4); P.ui.gymPanel = '';
       P.save();
@@ -7395,14 +7401,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const s1 = await page.evaluate(() => { const P = window.PG, s = P.entrenoSemana(P.iso(new Date()));
       return { min: s.min, total: s.total, faltan: s.faltan, auto: s.auto.length,
         enGuardia: s.dias.some((d) => d.auto && d.motivo === 'guardia'),
-        rt: s.auto.length ? !!P.rutinaDeFecha(s.auto[0]) : null, aptos: s.dias.filter((d) => d.apto).length }; });
+        // el primer día PUESTO DE FUERZA (el plan también pone piscina en los salientes, y esa no lleva rutina)
+        rt: (function () { const f = s.dias.filter((d) => d.auto && d.tipo === 'fuerza')[0]; return f ? !!P.rutinaDeFecha(f.k) : null; })(),
+        aptos: s.dias.filter((d) => d.apto && d.tipo === 'fuerza').length }; });
     const autoB = await page.$('.entdias button.auto');
     if (autoB) await autoB.click();
     await page.waitForTimeout(200);
     const s2 = await page.evaluate(() => { const P = window.PG, s = P.entrenoSemana(P.iso(new Date()));
       return { total: s.total, quitados: Object.keys(P.gymForzar()).filter((k) => P.gymForzar()[k] === false).length }; });
     check('el mínimo de entrenos por semana se completa en días libres, y al quitar uno a mano la app busca otro',
-      s1.min === 3 && !s1.enGuardia && (s1.aptos >= 3 ? (s1.faltan === 0 && s1.rt) : s1.faltan > 0) &&
+      // con 3 días de fuerza libres se llega seguro; con menos puede llegar igual gracias a la piscina del saliente
+      s1.min === 3 && !s1.enGuardia && (s1.aptos >= 3 ? s1.faltan === 0 : true) && s1.rt !== false &&
       s2.quitados === 1 && (s1.aptos >= 4 ? s2.total === 3 : true), JSON.stringify({ s1, s2 }));
 
     // en el día: al gym → entreno → a casa, y la cocina de la semana en su hora
@@ -8457,6 +8466,61 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('en las series por músculo el principal cuenta 1 y los que ayudan 0,5',
       r.pecho === 3 && r.triceps === 1.5, JSON.stringify(r));
     check('entrenando y en el editor todo lo que se toca mide al menos 44 px', r.vivo === 0 && r.editor === 0, JSON.stringify(r));
+  }
+
+  // 212) AVISOS (descanso con la pantalla apagada y «hoy toca»), MODO SENCILLO, «✓ TODAS», COPIAS EN EL MÓVIL y LIBRAS
+  {
+    const r = await page.evaluate(async () => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
+      const hoy = P.iso(new Date()), msgs = [];
+      // el navegador de pruebas no da permisos: se simula el permiso y se escucha lo que la app manda al service worker
+      const NotifReal = window.Notification;
+      window.Notification = function () {}; window.Notification.permission = 'granted'; window.Notification.requestPermission = () => Promise.resolve('granted');
+      try { Object.defineProperty(navigator.serviceWorker, 'controller', { configurable: true, get: () => ({ postMessage: (m) => msgs.push(m) }) }); } catch (e) {}
+      g.rutinas = [{ id: 'r212', nombre: 'R212', dias: [], descanso: 90, ejercicios: [{ ex: 'Sentadilla (barra)', series: 3, reps: 5, pesoObjetivo: 100 }, { ex: 'Remo con barra', series: 2, reps: 8 }] }];
+      g.registro = []; g.sesiones = []; g.modo = 'completo'; g.avisos = { on: false, antes: 30 }; P.ui.gymSesionActiva = null;
+      P.ui.tab = 'gym'; P.ui.gymPanel = 'plan'; P.render();
+      const bot = document.querySelector('#main [data-a="avisos-on"]'); if (bot) bot.click();
+      await new Promise((ok) => setTimeout(ok, 50));
+      const activos = g.avisos.on === true;
+      // descanso: al marcar una serie se manda al service worker con los segundos de la rutina; saltar lo cancela
+      P.empezarRutina('r212'); P.marcarSerie(0, 0);
+      const desc = msgs.filter((m) => m.tipo === 'descanso').pop();
+      const salt = document.querySelector('#main [data-a="gv-saltar"]'); if (salt) salt.click();
+      const cancel = msgs.some((m) => m.tipo === 'descanso-cancel');
+      // «✓ todas como están»: las que quedan del ejercicio de una vez
+      const todas = document.querySelector('#main [data-a="gv-todas"]'); if (todas) todas.click();
+      const fil = P.sesionFilas(P.ui.gymSesionActiva)[0];
+      const todasHechas = fil.filas.every((f) => f.hecha), pasa = P.ui.gymSesionActiva.ix === 1;
+      // «hoy toca»: con el entreno dentro de la ventana de aviso, sale el aviso una vez
+      P.ui.gymSesionActiva = null; P.setDayOverride(hoy, 'sh-l', ''); g.forzar = {}; g.forzar[hoy] = true;
+      const d = new Date(); g.hora = P.hm(d.getHours() * 60 + d.getMinutes() + 10); g.avisos.hecho = ''; P.render();
+      P.programarAvisoHoy();
+      const hoyToca = msgs.some((m) => m.tipo === 'aviso' && /Hoy toca/.test(m.titulo));
+      // modo sencillo: sin las cifras de la semana ni «cuántas te quedaban»
+      g.modo = 'sencillo'; P.ui.gymPanel = ''; P.render();
+      const kpiS = !!document.querySelector('#main .gkpi');
+      P.empezarRutina('r212'); const rirS = !!document.querySelector('#main .grir');
+      g.modo = 'completo'; P.render(); const rirC = !!document.querySelector('#main .grir');
+      // libras: se ve y se escribe en libras, se guarda en kilos
+      g.unidad = 'lb'; P.render();
+      const inp = document.querySelector('#main tr.act input[data-k="kg"]'); const verLb = inp ? inp.value : '';
+      if (inp) { inp.value = '225'; inp.dispatchEvent(new Event('change', { bubbles: true })); }
+      const ok = document.querySelector('#main tr.act [data-a="gv-ok"]'); if (ok) ok.click();
+      const ult = P.store.gym.registro[P.store.gym.registro.length - 1];
+      const cab = (document.querySelector('#main .gtb.vivo th:nth-child(3)') || { textContent: '' }).textContent;
+      // copias en el móvil: se guarda una y aparece en la lista
+      await P.copiasGuardar('prueba');
+      const l = await P.copiasLista();
+      window.Notification = NotifReal; try { delete navigator.serviceWorker.controller; } catch (e) {}
+      P.store = copia; P.save(); P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.render();
+      return { activos, desc: desc ? desc.ms : null, cancel, todasHechas, pasa, hoyToca, kpiS, rirS, rirC, verLb, kg: ult ? ult.kg : null, cab, copias: l.some((x) => /prueba/.test(x.k)) };
+    });
+    check('avisos: el descanso se manda al service worker con los segundos de la rutina, saltar lo cancela y «hoy toca» avisa antes de entrenar',
+      r.activos && r.desc === 90000 && r.cancel && r.hoyToca, JSON.stringify(r));
+    check('«✓ todas como están» marca las series que quedan y pasa al siguiente ejercicio', r.todasHechas && r.pasa, JSON.stringify(r));
+    check('modo sencillo: sin cifras de la semana ni RIR; en completo, sí', !r.kpiS && !r.rirS && r.rirC, JSON.stringify(r));
+    check('en libras se ve y se escribe en libras y se guarda en kilos', r.verLb === '220,5' && Math.abs(r.kg - 102.06) < 0.05 && /LB/.test(r.cab), JSON.stringify(r));
+    check('las copias automáticas se guardan en el móvil y se listan', r.copias, JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

@@ -2428,3 +2428,7 @@ button.gsn{min-width:44px;height:44px}
 .subcab .btn,.gbusca input{min-height:44px}
 .gmv button{width:44px}
 [data-a="rt-borrar"],.btn[data-a="gym-rutv"],.gsec .btn{min-height:44px}
+.gpuerta{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.gpuerta>span:first-child{font-size:20px}.gpuerta .t{flex:1;min-width:0}.gpuerta .t b{display:block;font-size:13.5px}
+.gpuerta .btn{min-height:44px;min-width:44px}
+.ghero2.choque{border-color:var(--warn)}.ghero2.choque .k{color:var(--warn)}

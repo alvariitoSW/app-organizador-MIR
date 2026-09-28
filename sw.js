@@ -155,3 +155,38 @@ function cachePrimero(req){
         caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});}
       return res;});
   }).catch(function(){return fetch(req);});}
+
+/* ===================== AVISOS =====================
+   El DESCANSO: la app manda cuántos milisegundos quedan y el service worker avisa al acabar, aunque
+   la pantalla esté apagada. Si la app está delante, no avisa (ya vibra ella). Un evento del service
+   worker no puede durar para siempre —Chrome lo corta a los ~5 minutos—, así que es para descansos,
+   no para programar avisos de dentro de horas (eso va por Google Calendar). */
+let _descanso=null;
+self.addEventListener('message',function(e){
+  const d=e.data||{};
+  if(d.tipo==='descanso-cancel'){
+    if(_descanso){clearTimeout(_descanso);_descanso=null;}
+    e.waitUntil(self.registration.getNotifications({tag:'descanso'})
+      .then(function(ns){ns.forEach(function(n){n.close();});}).catch(function(){}));
+    return;}
+  if(d.tipo==='descanso'){
+    if(_descanso){clearTimeout(_descanso);_descanso=null;}
+    const ms=Math.max(0,Math.min(290000,+d.ms||0));
+    e.waitUntil(new Promise(function(fin){
+      _descanso=setTimeout(function(){_descanso=null;
+        self.clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cs){
+          if(cs.some(function(c){return c.visibilityState==='visible';}))return;
+          return self.registration.showNotification(d.titulo||'Descanso terminado',{body:d.cuerpo||'',tag:'descanso',
+            renotify:true,vibrate:[250,120,250],icon:new URL('icon.svg',RAIZ).href,data:{url:RAIZ.href}});
+        }).then(fin,fin);},ms);}));
+    return;}
+  if(d.tipo==='aviso'){
+    e.waitUntil(self.registration.showNotification(d.titulo||'Guardias',{body:d.cuerpo||'',tag:d.tag||'aviso',
+      icon:new URL('icon.svg',RAIZ).href,data:{url:RAIZ.href}}).catch(function(){}));}
+});
+self.addEventListener('notificationclick',function(e){
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(function(cs){
+    for(let i=0;i<cs.length;i++){if('focus' in cs[i])return cs[i].focus();}
+    if(self.clients.openWindow)return self.clients.openWindow(RAIZ.href);}));
+});
