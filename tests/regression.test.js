@@ -4506,7 +4506,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await gotoTab('dinero');
     await page.waitForTimeout(200);
-    // Dinero es ahora ahorro: los recibos viven en su propia pantalla, y los fijos se editan desde ahí
+    // los recibos viven en su propia pantalla (portada → «⋯» → Recibos), y los fijos se editan desde ahí
+    await page.click('#main .d4pie [data-v="apartar"]');
+    await page.waitForTimeout(150);
     await page.click('#main [data-a="dinero-vista"][data-v="recibos"]');
     await page.waitForTimeout(200);
     await page.click('[data-a="dinero-vista"][data-v="fijos"]');
@@ -8715,7 +8717,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ tick, hoy2, mes2 }));
   }
 
-  // 216) DINERO v2, encadenado por la interfaz: capturas de Fintonic de tres meses → la portada dice
+  // 216) DINERO (v4: una pantalla y hojas), encadenado por la interfaz: capturas de Fintonic de tres meses → la portada dice
   // cuánto ahorras y en qué se va, con el gráfico de cada mes → la hoja enseña meses × categorías →
   // «Descargar Excel» da un .xlsx de verdad → hucha nueva con precio y aporte: dice cuándo llegas →
   // se crea con su aporte fijo, que el reparto le da primero → lista de «en qué me lo gasto» → y lo
@@ -8733,9 +8735,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
       try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
     const portada = await page.evaluate(() => { const m = document.querySelector('#main');
-      return { ahorras: /ESTE MES AHORRAS/.test(m.innerText), cats: m.querySelectorAll('.dcat').length, barras: m.querySelectorAll('.dsvg .dbarra').length,
-        tiles: m.querySelectorAll('.dtile').length, alto: m.scrollHeight }; });
-    const aHoja = await clic('#main .dtile[data-v="hoja"]');
+      return { ahorras: /ESTE MES AHORRAS/.test(m.innerText), tramos: m.querySelectorAll('.d4stack b').length, huchas: m.querySelectorAll('.d4hu').length,
+        pie: m.querySelectorAll('.d4pie > *').length, alto: m.scrollHeight }; });
+    // fijo / variable y meta, desde la hoja de gastos que sube encima
+    const hojaGastos = await clic('#main .d4key.tap');
+    const g1 = await page.evaluate(() => { const hj = document.querySelector('.hoja.din4h'); if (!hj) return null;
+      return { variables: hj.querySelectorAll('[data-a="din-cat-tipo"][data-t="variable"].on').length, fijos: hj.querySelectorAll('[data-a="din-cat-tipo"][data-t="fijo"].onf').length }; });
+    const aFijo = await clic('.din4h [data-a="din-cat-tipo"][data-c="Supermercado"][data-t="fijo"]');
+    const tipo = await page.evaluate(() => ((window.PG.store.ahorro.catCfg || {}).Supermercado || {}).tipo);
+    await clic('.din4h [data-a="din-cat-tipo"][data-c="Supermercado"][data-t="variable"]');
+    const pon = await clic('.din4h [data-a="din-meta"][data-c="Restaurantes"]');
+    const meta = await page.evaluate(() => ((window.PG.store.ahorro.catCfg || {}).Restaurantes || {}).meta);
+    const enPunto = await page.evaluate(() => { const e = document.elementFromPoint(200, 30); return e ? (e.tagName + '#' + e.id + '.' + String(e.className).slice(0, 30)) : 'nada'; });
+    await page.mouse.click(200, 30); await page.waitForTimeout(120);
+    const cerrada = await page.evaluate(() => !document.querySelector('.hoja'));
+    const aHoja = await clic('#main .d4pie [data-v="hoja"]');
     const hoja = await page.evaluate(() => { const t = document.querySelector('#main .dxl'); if (!t) return null;
       const f = t.querySelector('tbody tr'), c = f ? f.querySelectorAll('td') : [];
       // que la tabla no se descuadre: cada celda de mes a la derecha de la anterior, sin solaparse
@@ -8752,38 +8766,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         gastos: txt.includes('Gastos por categor') }; });
     // hucha nueva
     await clic('#main .subcab .volver');
-    await clic('#main .dtile[data-v="huchas"]');
-    await clic('#main [data-a="dinero-vista"][data-v="hucha-nueva"]');
+    await clic('#main .d4pie [data-v="hucha-nueva"]');
     await page.evaluate(() => { const s = (id, v) => { const el = document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
       s('hnNom', 'Japón 216'); s('hnPre', '2400'); s('hnYa', '300'); s('hnMen', '250'); });
     const cuando = await page.evaluate(() => (document.getElementById('hnRes') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
     const creada = await clic('#main [data-a="hn-crear"]');
     const h = await page.evaluate(() => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.nombre === 'Japón 216')[0];
-      return x ? { id: x.id, saldo: x.saldo, objetivo: x.objetivo, mensual: x.mensual, reparto: P.repartoDe(400)[x.id] } : null; });
+      return x ? { id: x.id, saldo: x.saldo, objetivo: x.objetivo, mensual: x.mensual, reparto: P.repartoDe(600)[x.id], puro: P.repartoDe(600)['hu-colchon'] } : null; });
     let deseo = null;
     if (h) {
-      await clic(`#main [data-a="deseo-nuevo"][data-h="${h.id}"]`);
+      // creada, se abre su hoja encima de la portada
+      await clic(`.din4h [data-a="deseo-nuevo"][data-h="${h.id}"]`);
       await page.evaluate(() => { const t = document.getElementById('dsTxt'), p = document.getElementById('dsPre'); if (t) t.value = 'Vuelos 216'; if (p) p.value = '900'; });
-      await clic(`#main [data-a="deseo-add"][data-h="${h.id}"]`);
-      await clic(`#main [data-a="deseo-ok"][data-h="${h.id}"]`);
+      await clic(`.din4h [data-a="deseo-add"][data-h="${h.id}"]`);
+      await clic(`.din4h [data-a="deseo-ok"][data-h="${h.id}"]`);
       deseo = await page.evaluate((id) => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.id === id)[0];
         const vuelta = P.normalize ? P.normalize(JSON.parse(JSON.stringify(P.store))) : null;
         const y = vuelta && vuelta.ahorro ? vuelta.ahorro.huchas.filter((q) => q.id === id)[0] : null;
         return { lista: (x.deseos || []).map((d) => d.txt + ':' + d.hecho).join(','), trasRecargar: y ? (y.deseos || []).length + '/' + y.mensual : 'sin normalize' }; }, h.id);
     }
-    await clic('#main .subcab .volver');
-    const apartar = await clic('#main .dtile[data-v="apartar"]') && await page.evaluate(() => !!document.querySelector('#main [data-a="aho-mas"]') && !!document.querySelector('#main [data-a="aho-reto-nuevo"]'));
+    await page.mouse.click(200, 30); await page.waitForTimeout(120);
+    const apartar = await clic('#main .d4pie [data-v="apartar"]') && await page.evaluate(() => !!document.querySelector('#main [data-a="aho-mas"]') && !!document.querySelector('#main [data-a="aho-reto-nuevo"]'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia216; P.save(); P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('Dinero: la portada dice cuánto ahorras, en qué se va y cada mes, en una pantalla',
-      portada.ahorras && portada.cats === 3 && portada.barras >= 3 && portada.tiles === 5 && portada.alto < 1200, JSON.stringify(portada));
+    check('Dinero: la portada dice cuánto ahorras, adónde va lo que ganas y el reparto, en una pantalla',
+      portada.ahorras && portada.tramos === 3 && portada.huchas >= 3 && portada.pie === 4 && portada.alto < 1000, JSON.stringify(portada));
+    check('la hoja de gastos separa fijos y variables (alquiler fijo solo), se cambia a mano y pone meta; toca fuera y se cierra',
+      hojaGastos && g1 && g1.fijos >= 1 && g1.variables >= 2 && aFijo && tipo === 'fijo' && pon && meta > 0 && cerrada,
+      JSON.stringify({ hojaGastos, g1, aFijo, tipo, pon, meta, cerrada, enPunto }));
     check('la hoja enseña meses × categorías sin descuadrarse y cabe en el móvil',
       aHoja && hoja && hoja.filas >= 4 && hoja.cols >= 4 && hoja.enOrden && hoja.cabeTodo, JSON.stringify(hoja));
     check('«Descargar Excel» baja un .xlsx de verdad (zip con libro, resumen, gastos y huchas)',
       /\.xlsx$/.test(descarga) && xlsx.pk && xlsx.libro && xlsx.hojas >= 4 && xlsx.gastos, JSON.stringify({ descarga, xlsx }));
     check('hucha nueva: con precio, lo que tienes y el aporte, dice cuándo llegas y cuánto es en guardias',
       /LLEGAS EN/.test(cuando) && /9 meses/.test(cuando) && /guardia/.test(cuando), cuando);
-    check('la hucha se crea con su aporte fijo, el reparto se lo da primero y la lista de deseos sobrevive a recargar',
-      creada && h && h.saldo === 300 && h.objetivo === 2400 && h.mensual === 250 && h.reparto === 250 &&
+    check('la hucha se crea con su aporte fijo: la mitad va antes a ahorro puro, luego su fijo; y la lista de deseos sobrevive a recargar',
+      creada && h && h.saldo === 300 && h.objetivo === 2400 && h.mensual === 250 && h.reparto === 250 && h.puro === 300 &&
       deseo && deseo.lista === 'Vuelos 216:true' && deseo.trasRecargar === '1/250', JSON.stringify({ h, deseo }));
     check('lo de antes (apartar, retos) sigue en «Apartar»', apartar, String(apartar));
   }

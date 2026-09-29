@@ -5786,12 +5786,12 @@ function abrirHojaDia(k){
   ui.hojaDia=k;ui.hojaVista='';ui.hojaRec=false;
   if(!store.meta.pulsarVisto){store.meta.pulsarVisto=true;save();}
   render();}
-function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';}
+function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';}
 function pintaHojaDia(){
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
-  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():'';
+  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&!ui.dineroVista&&ui.dinHoja)?dinHojaHTML():'');
   /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
   const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
   document.documentElement.classList.toggle('hoja-abierta',!!hoja);
@@ -13090,6 +13090,11 @@ function ahorroLimpia(o){
     deseos:(Array.isArray(h.deseos)?h.deseos:[]).filter(function(d){return d&&d.id;}).slice(0,40).map(function(d){
       return {id:String(d.id),txt:String(d.txt||'').slice(0,60),precio:Math.max(0,+d.precio||0),hecho:!!d.hecho};})};});
   if(Array.isArray(a.movs))a.movs=a.movs.filter(function(m){return m&&m.hucha;}).slice(0,200);
+  /* fijo/variable y meta de cada categoría de Fintonic, y cuánto va a ahorro puro */
+  if(a.catCfg&&typeof a.catCfg==='object'&&!Array.isArray(a.catCfg)){const cc={};Object.keys(a.catCfg).slice(0,80).forEach(function(k){const c=a.catCfg[k]||{};
+    cc[String(k).slice(0,60)]={tipo:c.tipo==='fijo'||c.tipo==='variable'?c.tipo:'',meta:Math.max(0,Math.round(+c.meta||0))};});a.catCfg=cc;}else delete a.catCfg;
+  if(a.puroPct!=null)a.puroPct=Math.max(50,Math.min(100,Math.round(+a.puroPct||50)));
+  if(a.puroId!=null)a.puroId=String(a.puroId).slice(0,40);
   if(typeof a.vivirMin!=='number'||!(a.vivirMin>=0))a.vivirMin=1000;
   if(Array.isArray(a.real))a.real=a.real.filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,36).map(function(x){
     const cats={};if(x.cats&&typeof x.cats==='object')Object.keys(x.cats).slice(0,40).forEach(function(k){const v=+x.cats[k];if(v>=0)cats[String(k).slice(0,40)]=v;});
@@ -13137,15 +13142,19 @@ function ahorroMes(mk,crear){
   if(!x.reparto||typeof x.reparto!=='object')x.reparto={};
   return x;}
 function repartoDe(importe){
-  /* por porcentaje, en euros enteros; lo que sobra del redondeo va a la primera hucha */
-  /* primero las huchas con aporte fijo (lo suyo, mientras llegue); lo que queda, por porcentaje */
-  const hs=ahorroS().huchas,out={};let queda=Math.max(0,+importe||0);
-  hs.forEach(function(h){out[h.id]=0;if(+h.mensual>0){const v=Math.min(queda,+h.mensual);out[h.id]=v;queda-=v;}});
-  const pcts=hs.filter(function(h){return !(+h.mensual>0);}),tot=pcts.reduce(function(t,h){return t+h.pct;},0)||1;
-  let usado=0;
-  pcts.forEach(function(h){const v=Math.floor(queda*h.pct/tot);out[h.id]=v;usado+=v;});
-  if(pcts.length)out[pcts[0].id]+=Math.round(queda-usado);
-  else if(hs.length&&queda>0)out[hs[0].id]+=Math.round(queda);
+  /* «mínimo la mitad, ahorro puro»: primero el ahorro puro (su %, 50 como poco); de lo que queda, las
+     huchas con aporte fijo (lo suyo, mientras llegue) y el resto por porcentaje. Con las huchas de
+     fábrica (colchón 50 / viajes 30 / caprichos 20) sale lo mismo que antes. */
+  const hs=ahorroS().huchas,out={};hs.forEach(function(h){out[h.id]=0;});
+  let queda=Math.max(0,Math.round(+importe||0));
+  if(!hs.length)return out;
+  const P=puroHucha(),vP=Math.round(queda*puroPct()/100);
+  out[P.id]=vP;queda-=vP;
+  const otras=hs.filter(function(h){return h.id!==P.id;});
+  otras.forEach(function(h){if(+h.mensual>0){const v=Math.min(queda,+h.mensual);out[h.id]=v;queda-=v;}});
+  const pcts=otras.filter(function(h){return !(+h.mensual>0)&&h.pct>0;}),tot=pcts.reduce(function(t,h){return t+h.pct;},0);
+  if(tot>0){let usado=0;pcts.forEach(function(h){const v=Math.floor(queda*h.pct/tot);out[h.id]+=v;usado+=v;});out[pcts[0].id]+=queda-usado;}
+  else out[P.id]+=queda;
   return out;}
 function ahoMov(hucha,importe,txt){ahorroS().movs.unshift({fecha:iso(new Date()),hucha:hucha,importe:Math.round(importe*100)/100,txt:String(txt||'').slice(0,60)});
   ahorroS().movs=ahorroS().movs.slice(0,200);}
@@ -13676,8 +13685,8 @@ function renderFintonic(){
    eran ni cuándo llegabas. Ahora: portada con lo que ahorras, en qué se va y cada mes; «la hoja» como
    en Excel (y descargable como .xlsx de verdad); huchas con aporte, fecha y lista de «en qué me lo
    gasto». Colores de los gráficos validados (validate_palette.js) en oscuro y en claro. */
-const DIN_COL={dark:{ahorro:'#1a9fc2',gasto:'#d9661c',seq:['#1c5a75','#1a7a9c','#1a9fc2','#5cc3de','#a3e0f0']},
-  light:{ahorro:'#0e7fa3',gasto:'#c2410c',seq:['#74bcd6','#46a2c5','#2088b0','#0e6a8c','#0a4a62']}};
+const DIN_COL={dark:{ahorro:'#1a9fc2',gasto:'#d9661c',base:'#1a9fc2',finde:'#c98500',seq:['#1c5a75','#1a7a9c','#1a9fc2','#5cc3de','#a3e0f0']},
+  light:{ahorro:'#0e7fa3',gasto:'#c2410c',base:'#0e7fa3',finde:'#b45309',seq:['#74bcd6','#46a2c5','#2088b0','#0e6a8c','#0a4a62']}};
 function dinCol(){return DIN_COL[document.documentElement.classList.contains('dark')?'dark':'light'];}
 function finCatIco(nombre){
   const n=String(nombre||'').toLowerCase();
@@ -13702,11 +13711,6 @@ function entraMes(mk){const t=ahoYm(mk);return t?nominaMes(t.y,t.m):null;}
 function ahorroDeMes(mk){const g=gastoMes(mk),e=entraMes(mk);
   if(!g||!e)return null;return {entra:e.neto,sale:g.total,ahorro:Math.round(e.neto-g.total),real:e.real!=null,g:g};}
 function eurR(n){return eur(Math.round(+n||0));}
-function aporteHucha(h){
-  /* lo que entra a una hucha cada mes: su fijo si lo tiene; si no, su parte de lo que apartas */
-  if(+h.mensual>0)return +h.mensual;
-  const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),true);
-  return repartoDe(+x.aparto||0)[h.id]||0;}
 function llegadaHucha(objetivo,saldo,aporte){
   const falta=Math.max(0,(+objetivo||0)-(+saldo||0));
   if(!falta)return {falta:0,meses:0,mk:ahoMk(new Date().getFullYear(),new Date().getMonth())};
@@ -13726,87 +13730,195 @@ function mediaAhorroReal(n){
   return v.length?Math.round(v.reduce(function(s,x){return s+x;},0)/v.length):null;}
 
 function dinPortadaHTML(){
+  /* DINERO v4 · UNA pantalla que se lee sin scroll: cuánto ahorras, adónde va lo que ganas (fijos /
+     variables / ahorro), dónde apretar con la meta a un toque, y el reparto con la mitad (o más) a
+     ahorro puro. El detalle sube en hojas encima, como la del día en Mes: no hay que cambiar de pantalla. */
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,t=ahoYm(mk);
-  const e=entraMes(mk),g=gastoMes(mk),a=ahorroDeMes(mk),prev=ahorroDeMes(mkSuma(mk,-1)),C=dinCol();
-  const x=ahorroMes(mk,false)||{},pres=+dineroS().presupuesto||0;
+  const e=entraMes(mk),p=mesPartes(mk),prev=ahorroDeMes(mkSuma(mk,-1)),C=dinCol();
+  const ganas=e?Math.round(e.neto):0,ahorro=p?Math.round(ganas-p.total):null;
+  // héroe
   let hero;
-  if(a){
-    const dl=prev?a.ahorro-prev.ahorro:null;
-    hero='<div class="cap">'+(a.ahorro>=0?'ESTE MES AHORRAS':'ESTE MES GASTAS MÁS DE LO QUE ENTRA')+'</div>'+
-      '<div class="dbig">'+esc(fmt(Math.abs(a.ahorro)))+' <small>€</small></div>'+
-      (dl!=null?'<span class="ddelta">'+(dl>=0?'▲ ':'▼ ')+esc(eurR(Math.abs(dl)))+(dl>=0?' más':' menos')+' que '+esc(MONTH_FULL[ahoYm(mkSuma(mk,-1)).m].toLowerCase())+'</span>':'');
+  if(p){
+    const dl=prev?ahorro-prev.ahorro:null,pc=ganas?Math.round(ahorro/ganas*100):0;
+    hero='<div class="cap">'+(ahorro>=0?'ESTE MES AHORRAS':'ESTE MES GASTAS MÁS DE LO QUE GANAS')+'</div>'+
+      '<div class="row" style="align-items:flex-end"><div class="dbig">'+esc(fmt(Math.abs(ahorro)))+' <small>€</small></div><span class="sp"></span>'+
+        '<span class="mini" style="text-align:right">'+(ahorro>=0?pc+' % de lo que ganas':'')+
+        (dl!=null?'<br>'+(dl>=0?'▲ ':'▼ ')+esc(eurR(Math.abs(dl)))+(dl>=0?' más':' menos')+' que '+esc(MON[ahoYm(mkSuma(mk,-1)).m]):'')+'</span></div>'+
+      '<div class="d4stack" role="img" aria-label="de '+esc(eurR(ganas))+' ganados: '+esc(eurR(p.fijos))+' fijos, '+esc(eurR(p.vars))+' variables'+(ahorro>0?', '+esc(eurR(ahorro))+' ahorro':'')+'">'+
+        '<b class="f" style="flex:'+Math.max(1,Math.round(p.fijos))+'">fijos</b><b class="v" style="flex:'+Math.max(1,Math.round(p.vars))+';background:'+C.gasto+'">variables</b>'+
+        (ahorro>0?'<b class="a" style="flex:'+ahorro+';background:'+C.ahorro+'">ahorro</b>':'')+'</div>'+
+      '<div class="d4keys"><button class="d4key" data-a="din-hoja" data-h="gastos"><span><i style="background:var(--d4fijo)"></i>FIJOS ›</span><b>'+esc(fmt(Math.round(p.fijos)))+'</b></button>'+
+        '<button class="d4key tap" data-a="din-hoja" data-h="gastos"><span><i style="background:'+C.gasto+'"></i>VARIABLES ›</span><b>'+esc(fmt(Math.round(p.vars)))+'</b></button>'+
+        '<div class="d4key"><span><i style="background:'+C.ahorro+'"></i>AHORRO</span><b>'+esc(fmt(Math.max(0,ahorro)))+'</b></div></div>';
   }else{
-    hero='<div class="cap">ESTE MES ENTRA</div><div class="dbig">'+(e&&e.real!=null?'':'≈ ')+esc(fmt(Math.round(e?e.neto:0)))+' <small>€</small></div>'+
-      '<p class="mini" style="margin:4px 0 0">Para ver lo que sale y lo que ahorras, sube una captura de Fintonic de '+esc(MONTH_FULL[t.m].toLowerCase())+'.</p>';}
-  const flujo='<div class="dflujo"><div><b>'+esc(eurR(e?e.neto:0))+'</b><span>entra'+(e&&e.real!=null?' (cobrado)':' (nómina + guardias, estimado)')+'</span></div><i>−</i>'+
-    '<div style="text-align:right"><b>'+(g?esc(eurR(g.total)):'—')+'</b><span>sale'+(g?(' ('+esc(g.fuente)+(g.fecha?', '+esc(fechaCorta(g.fecha)):'')+')'):' (sin captura)')+'</span></div></div>';
-  const meter=(g&&pres)?('<div class="dmeter" role="img" aria-label="gastado '+eurR(g.total)+' de un tope de '+eurR(pres)+'"><b style="width:'+Math.min(100,Math.round(g.total/pres*100))+'%;background:'+C.gasto+'"></b></div>'+
-    '<div class="row mini" style="margin-top:5px"><span>gastado <b style="color:var(--ink)">'+Math.round(g.total/pres*100)+' %</b> de tu tope ('+esc(eurR(pres))+')</span></div>'):'';
-  /* lo del banco y cuándo llega la nómina (estaba en la tarjeta de Fintonic, que ahora vive en «Apartar»):
-     es lo que se mira a fin de mes, así que va aquí en una línea */
-  let banco='';
-  if(mk===mkHoy){const u=finUltima(),hk=iso(hoy),L=proximaNomina(hk),dias=Math.max(0,Math.round((parseDate(iso(L.llega))-parseDate(hk))/86400000));
-    const nomTxt=dias===0?'la nómina llega hoy':('la nómina llega el '+DOWN0[L.llega.getDay()]+' '+L.llega.getDate());
-    banco='<div class="dbanco finreal">'+(u&&u.banco!=null?'<span>🏦 <b>'+esc(eur(u.banco))+'</b> en el banco'+(u.fecha<hk?' ('+esc(fechaCorta(u.fecha))+')':'')+'</span>':'')+
-      '<span>💶 '+esc(nomTxt)+(u&&u.banco!=null&&dias>0?' · <b>'+esc(eurR(Math.floor(u.banco/Math.max(1,dias))))+'</b> al día hasta entonces':'')+'</span></div>';}
-  const apartar='<button class="dapartar" data-a="dinero-vista" data-v="apartar"><span>'+(x.hecho?'✓ apartado':'Este mes apartas')+' <b>'+esc(eurR(x.aparto||0))+'</b></span><span>'+(x.hecho?'ver ›':'apartar ›')+'</span></button>';
-  // en qué se va
-  let cats='';
-  if(g&&Object.keys(g.cats).length){
-    const gp=gastoMes(mkSuma(mk,-1)),ks=Object.keys(g.cats).sort(function(p,q){return g.cats[q]-g.cats[p];});
-    const top=ks.slice(0,4),resto=ks.slice(4),vRes=resto.reduce(function(s,k){return s+g.cats[k];},0);
-    const filas=top.map(function(k){return [finCatIco(k),k,g.cats[k],gp&&gp.cats[k]?Math.round((g.cats[k]-gp.cats[k])/gp.cats[k]*100):null];});
-    if(vRes>0)filas.push(['🧾',resto.length===1?resto[0]:'El resto',vRes,null,resto.length]);
-    const mx=Math.max.apply(null,filas.map(function(f){return f[2];}))||1;
-    cats='<div class="card"><div class="row"><span class="cap">EN QUÉ SE VA</span><span class="sp"></span>'+
-        '<button class="dlink" data-a="dinero-vista" data-v="hoja">ver la hoja ›</button></div>'+
-      filas.map(function(f){
-        return '<div class="dcat" title="'+esc(f[1]+': '+eur(f[2]))+'"><span>'+f[0]+'</span><div class="n">'+esc(f[1])+
-          (f[3]!=null&&Math.abs(f[3])>=5?'<span>'+(f[3]>0?'▲ ':'▼ ')+Math.abs(f[3])+' %</span>':(f[4]?'<span>'+f[4]+' categorías</span>':''))+'</div>'+
-          '<div class="v">'+esc(eurR(f[2]))+'</div><div class="bar" style="width:'+Math.max(2,Math.round(f[2]/mx*100))+'%;background:'+C.seq[2]+'"></div></div>';}).join('')+'</div>';}
-  // ahorro de cada mes (6)
-  const serie=[];for(let i=5;i>=0;i--){const k=mkSuma(mk,-i);serie.push({mk:k,a:ahorroDeMes(k)});}
-  const con=serie.filter(function(s){return s.a;});
-  let graf='';
-  if(con.length>=2){
-    const W=340,H=120,base=76,alto=62,mx=Math.max.apply(null,con.map(function(s){return Math.abs(s.a.ahorro);}))||1;
-    const med=Math.round(con.reduce(function(s2,x2){return s2+x2.a.ahorro;},0)/con.length);
-    const bw=40,paso=W/6;
-    const barras=serie.map(function(s,i){
-      const cx=paso*i+paso/2,x0=cx-bw/2,lab='<text x="'+cx+'" y="'+(base+(s.a&&s.a.ahorro<0?-6:14)+(s.a&&s.a.ahorro<0?0:0))+'" class="dax">'+esc(mkCorto(s.mk))+'</text>';
-      if(!s.a)return '<rect x="'+x0+'" y="'+(base-2)+'" width="'+bw+'" height="2" fill="var(--line)"/>'+'<text x="'+cx+'" y="'+(base+14)+'" class="dax">'+esc(mkCorto(s.mk))+'</text>';
-      const v=s.a.ahorro,h=Math.max(3,Math.round(Math.abs(v)/mx*(v>=0?alto:alto*0.45))),neg=v<0,last=s.mk===mk;
-      const r=4,y=neg?base:base-h;
-      const d=neg?('M'+x0+' '+base+'v'+(h-r)+'q0 '+r+' '+r+' '+r+'h'+(bw-2*r)+'q'+r+' 0 '+r+' -'+r+'V'+base+'z'):
-        ('M'+x0+' '+base+'V'+(y+r)+'q0 -'+r+' '+r+' -'+r+'h'+(bw-2*r)+'q'+r+' 0 '+r+' '+r+'V'+base+'z');
-      return '<g class="dbarra"><title>'+esc(MONTH_FULL[ahoYm(s.mk).m]+': entra '+eurR(s.a.entra)+', sale '+eurR(s.a.sale)+' → '+(v>=0?'ahorras ':'pierdes ')+eurR(Math.abs(v)))+'</title>'+
-        '<path d="'+d+'" fill="'+(neg?C.gasto:C.ahorro)+'"'+(last?' stroke="var(--ink)" stroke-width="1.5"':'')+'/>'+
-        '<rect x="'+x0+'" y="'+(base-alto-8)+'" width="'+bw+'" height="'+(alto+40)+'" fill="transparent"/>'+
-        ((last||neg)?'<text x="'+cx+'" y="'+(neg?base+h+11:y-4)+'" class="dval">'+(neg?'−':'')+esc(fmt(Math.abs(v)))+'</text>':'')+
-        (neg?'':'<text x="'+cx+'" y="'+(base+14)+'" class="dax">'+esc(mkCorto(s.mk))+'</text>')+'</g>'+
-        (neg?'<text x="'+cx+'" y="'+(base-5)+'" class="dax">'+esc(mkCorto(s.mk))+'</text>':'');}).join('');
-    const ym=med>=0?base-Math.round(med/mx*alto):base;
-    graf='<div class="card"><div class="row"><span class="cap">AHORRO DE CADA MES</span><span class="sp"></span><span class="mini">'+con.length+' meses · media '+esc(eurR(med))+'</span></div>'+
-      '<svg class="dsvg" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="ahorro de los últimos seis meses">'+
-        '<line x1="0" y1="'+base+'" x2="'+W+'" y2="'+base+'" stroke="var(--line)"/>'+
-        '<line x1="0" y1="'+ym+'" x2="'+W+'" y2="'+ym+'" stroke="var(--ink2)" stroke-dasharray="3 4" opacity=".55"/>'+
-        '<text x="2" y="'+(ym-4)+'" class="dax" text-anchor="start">media</text>'+barras+'</svg>'+
-      (con.some(function(s){return s.a.ahorro<0;})?'<div class="mini">'+con.filter(function(s){return s.a.ahorro<0;}).map(function(s){
-        return 'En '+esc(MONTH_FULL[ahoYm(s.mk).m].toLowerCase())+' gastaste '+esc(eurR(-s.a.ahorro))+' más de lo que entró.';}).join(' ')+'</div>':'')+
-      '<details class="dtabla"><summary class="mini">ver en tabla</summary><table>'+serie.map(function(s){
-        return '<tr><td>'+esc(MONTH_FULL[ahoYm(s.mk).m])+'</td><td>'+(s.a?esc(eurR(s.a.entra)):'—')+'</td><td>'+(s.a?esc(eurR(s.a.sale)):'—')+'</td><td><b>'+(s.a?esc(eurR(s.a.ahorro)):'—')+'</b></td></tr>';}).join('')+
-        '</table></details></div>';
-  }else graf='<div class="card"><span class="cap">AHORRO DE CADA MES</span><p class="mini" style="margin:6px 0 0">Con capturas de Fintonic de dos meses o más, aquí ves cuánto ahorras cada mes y los meses que se te van.</p></div>';
-  const tiles='<div class="dtiles">'+
-    '<button class="dtile" data-a="dinero-vista" data-v="apartar"><i>💶</i>Apartar</button>'+
-    '<button class="dtile p" data-a="dinero-vista" data-v="huchas"><i>🐷</i>Huchas</button>'+
-    '<button class="dtile" data-a="dinero-vista" data-v="hoja"><i>📊</i>Hoja</button>'+
-    '<label class="dtile"><i>📷</i>Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
-    '<button class="dtile" data-a="dinero-vista" data-v="recibos"><i>🧾</i>Recibos</button></div>';
-  return '<div class="grid dinv2">'+
+    hero='<div class="cap">ESTE MES GANAS</div><div class="dbig">'+(e&&e.real!=null?'':'≈ ')+esc(fmt(ganas))+' <small>€</small></div>'+
+      '<p class="mini" style="margin:4px 0 0">Sube una captura de Fintonic de '+esc(MONTH_FULL[t.m].toLowerCase())+' y aquí ves lo fijo, lo variable y lo que ahorras.</p>';}
+  const sig=mkSuma(mk,1),eS=entraMes(sig);
+  const gana='<button class="d4gana" data-a="din-hoja" data-h="gano"><span>💶 Ganas <b>'+(e&&e.real!=null?'':'≈ ')+esc(eurR(ganas))+'</b> · con '+
+      (e?(e.finde+' guardia'+(e.finde===1?'':'s')+' de finde'+(e.supuesto?' (supuesta)':'')):'—')+'</span>'+
+    '<span class="ch">'+esc(MON[ahoYm(sig).m])+' ≈ '+esc(fmt(eS?Math.round(eS.neto):0))+' ›</span></button>';
+  // dónde apretar
+  let apretar='';
+  if(p&&p.V.length){
+    const vs=p.V.filter(function(k){return k!=='__resto';}).map(function(k){const cf=catCfg()[k]||{},m=catMedia(k,mk);
+      return {k:k,v:+p.g.cats[k]||0,media:m,meta:cf.meta>0?cf.meta:null};});
+    vs.sort(function(x,y){const px=x.meta!=null?x.v-x.meta:-1e6+x.v,py=y.meta!=null?y.v-y.meta:-1e6+y.v;return py-px;});
+    const top=vs.slice(0,2),extra=vs.reduce(function(s,c){return s+(c.meta!=null&&c.media!=null?Math.max(0,c.media-c.meta):0);},0);
+    let efecto='';
+    if(extra>=5){const hs=ahorroS().huchas.filter(function(h){return h.id!==puroHucha().id&&h.objetivo>h.saldo;});
+      const base=baseReparto(mkHoy).v;
+      if(hs.length){const h=hs[0],a0=repartoDe(base)[h.id]||0,a1=repartoDe(base+extra)[h.id]||0,l0=llegadaHucha(h.objetivo,h.saldo,a0),l1=llegadaHucha(h.objetivo,h.saldo,a1);
+        if(l1.mk&&l1.mk!==l0.mk)efecto=' → '+esc(h.ico+' '+h.nombre)+' llega en <b>'+esc(mkCorto(l1.mk))+'</b>'+(l0.mk?', no en '+esc(mkCorto(l0.mk)):'');}}
+    apretar='<div class="card"><div class="row"><span class="cap">✂️ DÓNDE APRETAR</span><span class="sp"></span><span class="mini">meta del mes</span></div>'+
+      top.map(function(c){return '<div class="d4ap"><span>'+finCatIco(c.k)+'</span><div class="n">'+esc(c.k)+'<small>llevas '+esc(fmt(Math.round(c.v)))+(c.media!=null?' · media '+esc(fmt(Math.round(c.media))):'')+'</small></div>'+
+        metaStepHTML(c.k,c.meta,c.media!=null?c.media:c.v)+'</div>';}).join('')+
+      (extra>=5?'<div class="d4win">Cumpliendo tus metas: <b>+'+esc(eurR(extra))+'/mes</b>'+efecto+'.</div>':'<div class="mini" style="margin-top:6px">Ponle una meta a lo que quieras recortar y te digo cuánto ganas.</div>')+'</div>';}
+  // reparto
+  const br=baseReparto(mkHoy),r=repartoDe(br.v),P=puroHucha(),a=ahorroS(),x=ahorroMes(mkHoy,true);
+  const otras=a.huchas.filter(function(h){return h.id!==P.id;});
+  const reparto='<div class="card"><div class="row"><span class="cap">REPARTO DE '+esc(fmt(Math.round(br.v)))+' €</span><span class="sp"></span><span class="mini">mín. 50 % ahorro puro</span></div>'+
+    (br.v>0?'<div class="d4rep">'+[P].concat(otras).map(function(h,i){return r[h.id]?'<b style="flex:'+r[h.id]+';background:'+(i===0?C.ahorro:C.seq[3])+(i>1?';opacity:.7':'')+'" title="'+esc(h.nombre+': '+eur(r[h.id]))+'"></b>':'';}).join('')+'</div>':'')+
+    '<button class="d4hu" data-a="din-hoja" data-h="puro"><span class="ic" style="background:color-mix(in srgb,'+C.ahorro+' 22%,var(--bg2))">🔒</span><span class="t"><b>Ahorro puro</b><span>'+esc(eurR(P.saldo))+' · no se toca</span></span>'+
+      '<span class="e"><b>+'+esc(fmt(r[P.id]||0))+'</b>'+puroPct()+' %</span></button>'+
+    otras.map(function(h){const ap=r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,pc=h.objetivo?Math.min(100,Math.round(h.saldo/h.objetivo*100)):null;
+      return '<button class="d4hu" data-a="din-hoja" data-h="hucha" data-id="'+esc(h.id)+'"><span class="ic" style="background:color-mix(in srgb,'+esc(h.color)+' 22%,var(--bg2))">'+esc(h.ico)+'</span>'+
+        '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+esc(fmt(Math.round(h.saldo)))+(h.objetivo?' de '+esc(fmt(h.objetivo)):' €')+'</span>'+
+          (pc!=null?'<span class="m"><i style="width:'+pc+'%;background:'+C.seq[3]+'"></i></span>':'')+'</span>'+
+        '<span class="e"><b>+'+esc(fmt(ap))+'</b>'+(ll?(ll.falta?(ll.mk?esc(mkCorto(ll.mk)+' '+String(ahoYm(ll.mk).y).slice(2)):'sin aporte'):'✓'):'')+'</span></button>';}).join('')+
+    (x.hecho?'<div class="row" style="margin-top:8px"><span class="ok" style="font-weight:800">✓ apartado este mes</span><span class="sp"></span><button class="btn s" data-a="aho-deshacer">deshacer</button></div>':
+      (br.v>0?'<button class="btn p gbig" style="margin-top:10px" data-a="din-apartar">✓ ya lo he apartado</button>':''))+'</div>';
+  const pie='<div class="d4pie"><label>📷 Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
+    '<button data-a="dinero-vista" data-v="hucha-nueva">＋ hucha</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button>'+
+    '<button data-a="dinero-vista" data-v="apartar" aria-label="más: nómina, retos y lo que viene">⋯</button></div>';
+  return '<div class="grid dinv2 din4">'+
     '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><div class="dmes"><button data-a="din-mes" data-d="-1" aria-label="mes anterior">‹</button>'+
       '<b>'+esc(MONTH_FULL[t.m].toLowerCase())+(t.y!==hoy.getFullYear()?' '+t.y:'')+'</b><button data-a="din-mes" data-d="1" aria-label="mes siguiente"'+(mk>=mkHoy?' disabled':'')+'>›</button></div></div>'+
-    '<div class="card dhero">'+hero+flujo+meter+banco+apartar+'</div>'+cats+graf+tiles+'</div>';}
+    '<div class="card dhero">'+hero+gana+bancoLineaHTML(mk,mkHoy)+'</div>'+apretar+reparto+pie+'</div>';}
+function bancoLineaHTML(mk,mkHoy){
+  /* lo que hay en el banco (última captura) y cuándo llega la nómina: lo que se mira a fin de mes */
+  if(mk!==mkHoy)return '';
+  const u=finUltima(),hk=iso(new Date()),L=proximaNomina(hk),dias=Math.max(0,Math.round((parseDate(iso(L.llega))-parseDate(hk))/86400000));
+  const nom=dias===0?'la nómina llega hoy':('la nómina llega el '+DOWN0[L.llega.getDay()]+' '+L.llega.getDate());
+  return '<div class="dbanco finreal">'+(u&&u.banco!=null?'<span>🏦 <b>'+esc(eur(u.banco))+'</b> en el banco'+(u.fecha<hk?' ('+esc(fechaCorta(u.fecha))+')':'')+' · ':'<span>')+
+    '💶 '+esc(nom)+(u&&u.banco!=null&&dias>0?' · <b>'+esc(eurR(Math.floor(u.banco/Math.max(1,dias))))+'</b>/día hasta entonces':'')+'</span></div>';}
+function metaStepHTML(cat,meta,ref){
+  return '<div class="d4step">'+(meta!=null?'<button data-a="din-meta" data-c="'+esc(cat)+'" data-d="-10" aria-label="bajar la meta de '+esc(cat)+'">−</button><b>'+esc(fmt(meta))+'</b>'+
+    '<button data-a="din-meta" data-c="'+esc(cat)+'" data-d="10" aria-label="subir la meta de '+esc(cat)+'">+</button>':
+    '<button class="pon" data-a="din-meta" data-c="'+esc(cat)+'" data-d="0" data-ref="'+Math.round(ref||0)+'">poner meta</button>')+'</div>';}
+
+/* ---- fijos, variables y metas (sobre las categorías de Fintonic) ---- */
+function catCfg(){const a=ahorroS();if(!a.catCfg||typeof a.catCfg!=='object'||Array.isArray(a.catCfg))a.catCfg={};return a.catCfg;}
+function catMedia(nombre,mk){
+  /* la media de los meses de antes (hasta 4 con captura), sin contar este */
+  const v=[];let k=mk;
+  for(let i=0;i<8&&v.length<4;i++){k=mkSuma(k,-1);const g=gastoMes(k);if(g&&g.cats[nombre]!=null)v.push(+g.cats[nombre]||0);}
+  return v.length?v.reduce(function(s,x){return s+x;},0)/v.length:null;}
+function catEsFijo(nombre,mk){
+  /* lo pones tú, o la app lo deduce: por el nombre (alquiler, seguro, suscripción…) o porque se repite
+     igual (±5 %) al menos tres meses */
+  const c=catCfg()[nombre];if(c&&c.tipo)return c.tipo==='fijo';
+  if(/alquiler|hipotec|suscrip|seguro|abono|cuota|gimnas|pr[ée]stamo|comunidad/i.test(nombre))return true;
+  const v=[];for(let i=0;i<6;i++){const g=gastoMes(mkSuma(mk,-i));if(g&&+g.cats[nombre]>0)v.push(+g.cats[nombre]);}
+  if(v.length<3)return false;
+  const mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),med=v.reduce(function(s,x){return s+x;},0)/v.length;
+  return mx-mn<=Math.max(2,med*0.05);}
+function mesPartes(mk){
+  const g=gastoMes(mk);if(!g)return null;
+  let fijos=0,vars=0;const F=[],V=[];
+  Object.keys(g.cats).forEach(function(k){const v=+g.cats[k]||0;if(catEsFijo(k,mk)){fijos+=v;F.push(k);}else{vars+=v;V.push(k);}});
+  const resto=Math.round((g.total-fijos-vars)*100)/100;
+  if(resto>=1)vars+=resto;   /* lo que Fintonic cuenta y no está en ninguna categoría leída: variable */
+  return {fijos:fijos,vars:vars,F:F,V:V,resto:resto>=1?resto:0,total:g.total,g:g};}
+
+/* ---- ahorro puro: la mitad (o más) de lo que se reparte, siempre ---- */
+function puroPct(){const p=+ahorroS().puroPct;return p>=50&&p<=100?Math.round(p):50;}
+function puroHucha(){
+  const a=ahorroS();
+  let h=a.huchas.filter(function(x){return x.id===a.puroId;})[0]||a.huchas.filter(function(x){return x.id==='hu-colchon';})[0];
+  if(!h){h={id:'hu-puro',nombre:'Ahorro puro',ico:'🔒',color:'#1a9fc2',pct:0,objetivo:0,meta:'no se toca',saldo:0,mensual:0,deseos:[]};a.huchas.unshift(h);}
+  a.puroId=h.id;return h;}
+function baseReparto(mk){
+  /* lo que se reparte este mes: lo ya apartado; si no, lo que ahorras de verdad (ganas − gastos de
+     Fintonic); si no hay captura, lo que pusiste en «apartar» */
+  const x=ahorroMes(mk,false)||{},a=ahorroDeMes(mk);
+  if(x.hecho)return {v:+x.aparto||0,fuente:'apartado'};
+  if(a&&a.ahorro>0)return {v:Math.round(a.ahorro),fuente:'real'};
+  return {v:+x.aparto||0,fuente:'aparto'};}
+function aporteHucha(h){
+  const hoy=new Date();return repartoDe(baseReparto(ahoMk(hoy.getFullYear(),hoy.getMonth())).v)[h.id]||0;}
+
+/* ---- las hojas de Dinero: suben encima, como la del día en Mes ---- */
+function dinHojaHTML(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,C=dinCol(),h0=ui.dinHoja||'';
+  let cuerpo='',tit='Dinero';
+  if(h0==='gastos'){
+    const p=mesPartes(mk);tit='Gastos de '+MONTH_FULL[ahoYm(mk).m].toLowerCase();
+    if(!p)cuerpo='<div class="empty">Sin captura de Fintonic de este mes.</div>';
+    else{
+      const fila=function(k,fijo){const v=+p.g.cats[k]||0,cf=catCfg()[k]||{},m=catMedia(k,mk),meta=cf.meta>0?cf.meta:null;
+        const mx=Math.max(v,meta||0,1);
+        return '<div class="d4cat"><span>'+finCatIco(k)+'</span><div class="n">'+esc(k)+'<small>'+esc(fmt(Math.round(v)))+' €'+(m!=null?' · media '+esc(fmt(Math.round(m))):'')+
+            (!fijo?(meta!=null?' · meta '+esc(fmt(meta)):' · sin meta'):'')+'</small></div>'+
+          '<div class="d4tg" role="group" aria-label="tipo de gasto"><button class="'+(fijo?'':'on')+'" data-a="din-cat-tipo" data-c="'+esc(k)+'" data-t="variable" aria-pressed="'+!fijo+'">variable</button>'+
+            '<button class="'+(fijo?'onf':'')+'" data-a="din-cat-tipo" data-c="'+esc(k)+'" data-t="fijo" aria-pressed="'+fijo+'">fijo</button></div>'+
+          (!fijo?'<div class="bar"><i style="width:'+Math.round(v/mx*100)+'%;background:'+C.gasto+'"></i>'+(meta!=null?'<u style="left:'+Math.round(meta/mx*100)+'%"></u>':'')+'</div>'+
+            '<div class="stp">'+metaStepHTML(k,meta,m!=null?m:v)+'</div>':'')+'</div>';};
+      cuerpo='<div class="row sh"><div><h3>'+esc(tit)+'</h3><div class="hsub">de Fintonic'+(p.g.fecha?' ('+esc(fechaCorta(p.g.fecha))+')':'')+'</div></div><span class="sp"></span><b>'+esc(eurR(p.total))+'</b></div>'+
+        '<div class="hcap">🛒 VARIABLES · '+esc(eurR(p.vars))+'</div>'+p.V.map(function(k){return fila(k,false);}).join('')+
+        (p.resto?'<div class="d4cat"><span>❔</span><div class="n">Sin categoría<small>lo que Fintonic cuenta y no he leído en ninguna</small></div><b>'+esc(fmt(Math.round(p.resto)))+'</b></div>':'')+
+        '<div class="hcap">🔒 FIJOS · '+esc(eurR(p.fijos))+' · IGUAL CADA MES</div>'+(p.F.length?p.F.map(function(k){return fila(k,true);}).join(''):'<div class="mini">Ninguno todavía.</div>')+
+        '<div class="hnota">La app marca «fijo» sola lo que se repite igual; tú mandas.</div>';}
+  }else if(h0==='gano'){
+    tit='Lo que ganas';
+    const meses=[];for(let i=-3;i<=2;i++){const k=mkSuma(mkHoy,i),t=ahoYm(k),n=nominaMes(t.y,t.m);meses.push({mk:k,n:n,fut:i>0});}
+    const mx=Math.max.apply(null,meses.map(function(q){return q.n.neto;}).concat([1]));
+    const barras=meses.map(function(q){const ep=q.n.ep||{},fp=Math.min(q.n.neto,(q.n.finde||0)*(+ep.finde||0)),bp=Math.max(0,q.n.neto-fp);
+      return '<div class="c'+(q.n.real==null?' est':'')+'" title="'+esc(MONTH_FULL[ahoYm(q.mk).m]+': '+eur(q.n.neto)+(q.n.real==null?' (estimado)':' (cobrado)'))+'">'+
+        '<em>'+(q.n.real==null?'≈':'')+esc(fmt(Math.round(q.n.neto)))+(q.n.paga?'*':'')+'</em>'+
+        '<b style="height:'+Math.round(fp/mx*100)+'%;background:'+C.finde+'"></b><b style="height:'+Math.round(bp/mx*100)+'%;background:'+C.base+'"></b>'+
+        '<span>'+esc(mkCorto(q.mk))+'</span></div>';}).join('');
+    const ep=(nominaMes(hoy.getFullYear(),hoy.getMonth()).ep)||{};
+    const linea=function(k){const t=ahoYm(k),n=nominaMes(t.y,t.m);
+      return '<tr><td>'+esc(MONTH_FULL[t.m])+' · '+n.finde+' de finde'+(n.g&&n.g.dias&&n.g.dias.length?' ('+esc(n.g.dias.map(function(x){const d=parseDate(x);return DIA3[d.getDay()].toLowerCase()+' '+d.getDate();}).join(', '))+')':(n.supuesto?' (supuesta)':''))+'</td>'+
+        '<td>'+(n.real==null?'≈ ':'')+esc(eurR(n.neto))+'</td></tr>';};
+    cuerpo='<div class="row sh"><h3>💶 Lo que ganas</h3></div>'+
+      '<div class="d4mbar">'+barras+'</div>'+
+      '<div class="mini" style="margin-top:6px"><i class="d4sw" style="background:'+C.base+'"></i>base · <i class="d4sw" style="background:'+C.finde+'"></i>guardias de finde · claros = estimado con tu calendario · * paga extra</div>'+
+      '<table class="d4tab"><tr><td>Neto con 1 guardia de finde'+(ep.nombre?' ('+esc(ep.nombre)+')':'')+'</td><td>'+esc(eurR(ep.neto||0))+'</td></tr>'+
+        '<tr><td>Cada guardia de finde de más</td><td>+'+esc(eurR(ep.finde||0))+'</td></tr>'+linea(mkHoy)+linea(mkSuma(mkHoy,1))+'</table>'+
+      '<button class="dlink" data-a="din-ir" data-v="nomina">corregir lo cobrado o tu nómina ›</button>';
+  }else if(h0==='puro'){
+    const P=puroHucha(),br=baseReparto(mkHoy),r=repartoDe(br.v),a=ahorroS(),meta=a.meta&&+a.meta.importe>0?a.meta:null;
+    const ll=meta&&r[P.id]?llegadaHucha(meta.importe,P.saldo,r[P.id]):null;
+    cuerpo='<div class="row sh"><span style="font-size:26px">🔒</span><div><h3>Ahorro puro</h3><div class="hsub">no se toca · para lo que venga</div></div></div>'+
+      '<div class="dbig" style="margin-top:10px">'+esc(fmt(Math.round(P.saldo)))+' <small>€</small></div>'+
+      '<div class="mini">este mes entran <b style="color:var(--ink)">'+esc(eurR(r[P.id]||0))+'</b>'+(ll&&ll.mk?' · a este ritmo, '+esc(eurR(meta.importe))+' en <b style="color:var(--ink)">'+esc(mkLargo(ll.mk))+'</b>':'')+'</div>'+
+      '<label class="hfld" style="margin-top:14px">PARTE DEL AHORRO QUE VA AQUÍ · <b id="puroTxt" style="color:var(--ink)">'+puroPct()+' %</b>'+
+        '<input type="range" min="50" max="100" step="5" value="'+puroPct()+'" data-a="din-puro" class="drange" aria-label="porcentaje a ahorro puro"></label>'+
+      '<div class="row mini"><span>50 % (mínimo)</span><span class="sp"></span><span>100 %</span></div>'+
+      '<div class="hnota">Si le das más a una hucha, sale de las otras huchas; el ahorro puro nunca baja del '+puroPct()+' %.</div>';
+  }else if(h0==='hucha'){
+    const h=ahorroS().huchas.filter(function(q){return q.id===ui.dinHuId;})[0];
+    if(!h){ui.dinHoja='';return '';}
+    const br=baseReparto(mkHoy),r=repartoDe(br.v),ap=r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,tr=ll?enTrabajo(ll.falta):null;
+    const libre=Math.max(0,br.v-(r[puroHucha().id]||0));
+    const ds=h.deseos||[];
+    cuerpo='<div class="row sh"><span style="font-size:26px">'+esc(h.ico)+'</span><div><h3>'+esc(h.nombre)+'</h3><div class="hsub">'+esc(eurR(h.saldo))+(h.objetivo?' de '+esc(eurR(h.objetivo)):'')+
+        (ll&&ll.falta?(ll.mk?' · llegas en '+esc(mkLargo(ll.mk)):' · sin aporte no llegas'):(ll?' · ✓ ya la tienes':''))+'</div></div>'+
+        '<span class="sp"></span><button class="dlink" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'">editar ›</button></div>'+
+      '<label class="hfld" style="margin-top:12px">APARTAS CADA MES · <b id="huMenTxt" style="color:var(--ink)">'+esc(eurR(h.mensual||ap))+'</b>'+
+        '<input type="range" min="0" max="'+Math.max(50,Math.ceil(libre/10)*10)+'" step="10" value="'+Math.min(Math.max(50,Math.ceil(libre/10)*10),Math.round(h.mensual||ap))+'" data-a="din-hu-men" data-id="'+esc(h.id)+'" class="drange" aria-label="lo que apartas cada mes"></label>'+
+      '<div class="hnota">Sale de lo que va a huchas ('+esc(eurR(libre))+'): el ahorro puro no se toca.</div>'+
+      (tr&&ll.falta?'<div class="deq"><div><b>≈ '+(tr.guardias!=null?Math.max(1,Math.round(tr.guardias)):'—')+'</b>guardias de finde</div><div><b>≈ '+(tr.dias!=null?Math.max(1,Math.round(tr.dias)):'—')+'</b>días de trabajo</div></div>':'')+
+      '<div class="hcap">EN QUÉ ME LO GASTO'+(ds.length?' · '+esc(eurR(ds.reduce(function(s,d){return s+(+d.precio||0);},0))):'')+'</div>'+
+      '<div class="dwish" style="border-top:0;margin-top:0">'+ds.map(function(d){
+        return '<div class="dw'+(d.hecho?' ok':'')+'"><button class="ck" data-a="deseo-ok" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-pressed="'+!!d.hecho+'" aria-label="'+(d.hecho?'desmarcar ':'marcar ')+esc(d.txt)+'"></button>'+
+          '<span>'+esc(d.txt)+'</span><em>'+esc(eurR(d.precio))+'</em><button class="x" data-a="deseo-del" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-label="quitar">×</button></div>';}).join('')+'</div>'+
+      (ui.deseoNuevo===h.id?'<div class="dwadd"><input id="dsTxt" placeholder="vuelos, hotel, casco…" maxlength="60" aria-label="qué"><input id="dsPre" inputmode="decimal" placeholder="€" aria-label="cuánto">'+
+          '<button class="btn p s" data-a="deseo-add" data-h="'+esc(h.id)+'">añadir</button></div>':
+        '<button class="dlink" data-a="deseo-nuevo" data-h="'+esc(h.id)+'">＋ añadir</button>');
+  }else return '';
+  return '<div class="hscrim" data-a="hoja-cerrar"></div><div class="hoja din4h" role="dialog" aria-modal="true" aria-label="'+esc(tit)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+cuerpo+'</div>';}
 
 /* ---- la hoja ---- */
 function hojaDatos(anio){
@@ -13979,7 +14091,7 @@ function renderHuchaNueva(){
   const ref=med!=null&&med>0?med:(+x.aparto||300),max=Math.max(500,Math.ceil(ref*1.5/50)*50);
   const f=ui.hn||(ui.hn={nombre:'',ico:'✈️',precio:'',ya:'',men:Math.min(max,Math.round(ref*0.6/10)*10)||100});
   const ICOS=['✈️','🏍️','💻','🏠','🎸','🎓','🚗','💍','📷'];
-  $('#main').innerHTML='<div class="grid dinv2">'+dinSubcab('Nueva hucha','','huchas')+
+  $('#main').innerHTML='<div class="grid dinv2">'+dinSubcab('Nueva hucha')+
     '<div class="card">'+
       '<label class="hfld">PARA QUÉ<input id="hnNom" data-a="hn-in" maxlength="30" placeholder="Viaje a Japón" value="'+esc(f.nombre)+'"></label>'+
       '<div class="dicos">'+ICOS.map(function(i){return '<button class="'+(f.ico===i?'on':'')+'" data-a="hn-ico" data-i="'+i+'" aria-label="icono '+i+'">'+i+'</button>';}).join('')+'</div>'+
@@ -15891,8 +16003,16 @@ function act(a,el){
     case 'aju-ir':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'datos-vista':{ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
-    case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';if(ui.dineroVista==='huchas')ui.huchaEd='';
+    case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';ui.dinHoja='';if(ui.dineroVista==='huchas')ui.huchaEd='';
       if(ui.dineroVista==='hucha-nueva')ui.hn=null;render();window.scrollTo(0,0);break;}
+    case 'din-hoja':{ui.dinHoja=el.dataset.h||'';ui.dinHuId=el.dataset.id||'';ui.deseoNuevo='';render();break;}
+    case 'din-ir':{cerrarHojaDia();ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'din-meta':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0}),d=+el.dataset.d||0;
+      if(!(c.meta>0))c.meta=Math.max(10,Math.round((+el.dataset.ref||100)*0.85/10)*10);else c.meta=Math.max(0,c.meta+d);
+      if(c.meta===0)flash('sin meta en '+k);save();render();break;}
+    case 'din-cat-tipo':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0});c.tipo=el.dataset.t==='fijo'?'fijo':'variable';save();render();break;}
+    case 'din-apartar':{const h=new Date(),mk=ahoMk(h.getFullYear(),h.getMonth()),x=ahorroMes(mk,true);
+      if(!x.hecho)x.aparto=baseReparto(mk).v;flash(apartarMes(mk));break;}
     case 'din-mes':{const h=new Date(),hoyMk=ahoMk(h.getFullYear(),h.getMonth()),mk=mkSuma(ui.dinMes||hoyMk,+el.dataset.d||0);
       if(mk<=hoyMk){ui.dinMes=mk===hoyMk?'':mk;render();}break;}
     case 'hoja-modo':ui.hojaModo=el.dataset.m||'gastos';render();break;
@@ -15931,7 +16051,7 @@ function act(a,el){
       const h={id:uid('hu'),nombre:String(f.nombre).trim().slice(0,30),ico:f.ico||'🐷',color:COLS[hs.length%COLS.length],pct:0,objetivo:pre,meta:'',saldo:Math.round(ya*100)/100,
         mensual:Math.max(0,Math.round(+f.men||0)),deseos:[]};
       hs.push(h);if(ya>0)ahoMov(h.id,ya,'lo que ya tenías');
-      ui.hn=null;ui.dineroVista='huchas';ui.huchaEd='';save();render();window.scrollTo(0,0);
+      ui.hn=null;ui.dineroVista='';ui.huchaEd='';ui.dinHoja='hucha';ui.dinHuId=h.id;save();render();window.scrollTo(0,0);
       flash('hucha «'+h.nombre+'» creada · '+eurR(h.mensual)+'/mes');break;}
     case 'fin-guardar':flash(finGuardar());break;
     case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
@@ -15965,7 +16085,7 @@ function act(a,el){
       const nh={id:uid('hu'),nombre:'Nueva hucha',ico:'🐷',color:cols[ahorroS().huchas.length%cols.length],pct:0,objetivo:0,meta:'',saldo:0};
       ahorroS().huchas.push(nh);ui.huchaEd=nh.id;ui.dineroVista='huchas';
       save();render();window.scrollTo(0,0);break;}
-    case 'aho-hu-abrir':{ui.huchaEd=el.dataset.id||'';ui.dineroVista='huchas';render();window.scrollTo(0,0);break;}
+    case 'aho-hu-abrir':{ui.huchaEd=el.dataset.id||'';ui.dineroVista='huchas';ui.dinHoja='';render();window.scrollTo(0,0);break;}
     case 'aho-meta-ed':ui.ahoMetaEd=true;render();break;
     case 'aho-meta-cancel':ui.ahoMetaEd=false;render();break;
     case 'aho-meta-del':{const a=ahorroS();delete a.meta;ui.ahoMetaEd=false;save();render();flash('objetivo quitado');break;}
@@ -18443,6 +18563,8 @@ let searchDebounce=null;
 document.addEventListener('input',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   if(a==='hn-in'){hnPinta();return;}
+  if(a==='din-puro'){const t=document.getElementById('puroTxt');if(t)t.textContent=el.value+' %';return;}
+  if(a==='din-hu-men'){const t=document.getElementById('huMenTxt');if(t)t.textContent=eurR(+el.value||0);return;}
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
   if(a==='ics-in'){ui.icsTxt=el.value||'';return;}
   if(a==='imp-txt'){ui.imp.txt=el.value||'';return;}
@@ -18592,6 +18714,8 @@ document.addEventListener('change',e=>{
         icsAnalizar();};
       rd.onerror=function(){flash('no he podido leer ese archivo: pégalo a mano en la caja de abajo');};
       rd.readAsText(f);break;}
+    case 'din-puro':{ahorroS().puroPct=Math.max(50,Math.min(100,+el.value||50));save();render();break;}
+    case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
     case 'pat-name':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.name=el.value;save();}break;}
     case 'pat-note':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.note=el.value;save();}break;}
