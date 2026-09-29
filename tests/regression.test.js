@@ -8605,6 +8605,78 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !r.antes && r.salK6, JSON.stringify(r));
   }
 
+  // 214) MANTENER PULSADO UN DÍA DEL MES, encadenado por la interfaz: toque corto (panel de siempre) →
+  // mantener (hoja) → guardia desde la hoja → evento sin Google → «ya hay» → pincel a otro día →
+  // deshacer → listo. Fija tres fallos que salieron al construirla:
+  //  · la hoja vivía dentro de #main y el pie de la app (#foot) se le ponía encima del «Guardar»;
+  //  · el primer toque DENTRO de la hoja justo después de abrirla se lo comía el filtro del clic
+  //    fantasma (el que cae al soltar el dedo);
+  //  · el campo nuevo «google» se perdía al recargar si no se daba de alta en normalize().
+  {
+    const prep = await page.evaluate(() => { const P = window.PG;
+      window.__copia214 = JSON.parse(JSON.stringify(P.store));
+      const d = (n) => P.iso(P.addDays(new Date(), n));
+      const K = d(3), K2 = d(9);
+      P.setDayOverride(K, 'sh-t', ''); P.setDayOverride(K2, 'sh-t', ''); P.setDayOverride(d(10), 'sh-t', '');
+      P.store.meta.pulsarMs = 600; P.ui.hojaDia = ''; P.ui.mesModo = null; P.ui.monSel = '';
+      P.ui.tab = 'month'; P.save(); P.render(); return { K, K2 }; });
+    const K = prep.K, K2 = prep.K2;
+    const celda = async (k) => { const el = await page.$(`#main .dbox[data-key="${k}"]`); if (!el) return null;
+      await el.scrollIntoViewIfNeeded(); await page.waitForTimeout(80); return el.boundingBox(); };
+    const mantener = async (k, ms) => { const bx = await celda(k); if (!bx) return false;
+      await page.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await page.mouse.down();
+      await page.waitForTimeout(ms); await page.mouse.up(); await page.waitForTimeout(60); return true; };
+    // si sin el arreglo el botón queda TAPADO, el clic tiene que fallar y decirlo, no esperar 30 s y tumbar la suite
+    const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
+      try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
+    // 1) toque corto: el panel de siempre, sin hoja
+    const bx0 = await celda(K); if (bx0) { await page.mouse.click(bx0.x + bx0.width / 2, bx0.y + bx0.height / 2); await page.waitForTimeout(120); }
+    const corto = await page.evaluate(() => ({ sel: window.PG.ui.monSel, hoja: !!document.querySelector('.hoja') }));
+    // 2) soltar antes de tiempo no abre; mantener sí
+    await mantener(K, 250);
+    const antesDeTiempo = await page.evaluate(() => !!document.querySelector('.hoja'));
+    await mantener(K, 750);
+    const abierta = await page.evaluate(() => !!document.querySelector('.hoja'));
+    // 3) guardia desde la hoja, sin esperar (el primer toque dentro NO se come)
+    const g = await clic('.hoja .hchip.gd');
+    const guardia = await page.evaluate((K) => ({ tipo: window.PG.dayInfo(K).shiftId, sigue: !!document.querySelector('.hoja') }), K);
+    // 4) evento sin Google: el «Guardar» se ve y se puede pulsar (antes lo tapaba el pie)
+    await clic('.hoja [data-a="hoja-vista"][data-v="evento"]');
+    await page.evaluate(() => { const t = document.getElementById('hjTit'), h = document.getElementById('hjHora');
+      if (t) t.value = 'Revisión 214'; if (h) h.value = '10:00'; });
+    await page.evaluate(() => { const c = document.getElementById('hjGoo'); if (c) c.checked = false; });
+    const tapado = await page.evaluate(() => { const b = document.querySelector('.hoja [data-a="hoja-ev-ok"]'); if (!b) return 'no hay botón';
+      const r = b.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return t && t.closest('.hoja') ? '' : ((t && (t.id || t.tagName)) || 'nada'); });
+    const guardado = await clic('.hoja [data-a="hoja-ev-ok"]');
+    const yaHay = await page.evaluate(() => Array.from(document.querySelectorAll('.hoja .hhay')).map((x) => x.textContent).join(' | '));
+    // 5) pincel: copia la guardia a K2, deshacer, listo
+    await clic('.hoja [data-a="pincel-on"]');
+    const bx2 = await celda(K2); if (bx2) { await page.mouse.click(bx2.x + bx2.width / 2, bx2.y + bx2.height / 2); await page.waitForTimeout(120); }
+    const pintado = await page.evaluate((k) => window.PG.dayInfo(k).shiftId, K2);
+    await clic('[data-a="pincel-deshacer"]');
+    const deshecho = await page.evaluate((k) => window.PG.dayInfo(k).shiftId, K2);
+    await clic('[data-a="pincel-fin"]');
+    const r = await page.evaluate((K) => { const P = window.PG;
+      const ics = P.calEventos(K, K).filter((e) => e.cat === 'EVENTO').map((e) => e.summ).join(' | ');
+      // la vuelta completa por normalize(): el «google:false» tiene que sobrevivir
+      const vuelta = P.normalize ? P.normalize(JSON.parse(JSON.stringify(P.store))) : null;
+      const ev = ((vuelta || P.store).eventos || []).filter((e) => e.titulo === 'Revisión 214')[0];
+      const barra = !!document.querySelector('.mpincel');
+      P.store = window.__copia214; P.save(); P.ui.hojaDia = ''; P.ui.mesModo = null; P.ui.monSel = ''; P.render();
+      return { ics, google: ev ? ev.google : 'no está', barra }; }, K);
+    check('Mes: un toque corto abre el panel de siempre y soltar antes de tiempo no abre la hoja; mantener sí',
+      corto.sel === K && !corto.hoja && !antesDeTiempo && abierta, JSON.stringify({ corto, antesDeTiempo, abierta }));
+    check('la hoja del día: la guardia se pone al primer toque y la hoja sigue abierta',
+      g && guardia.tipo === 'sh-g' && guardia.sigue, JSON.stringify(guardia));
+    check('el «Guardar» del evento no lo tapa nada, y el evento sale en «ya hay»',
+      tapado === '' && guardado && /Revisión 214/.test(yaHay), JSON.stringify({ tapado, guardado, yaHay }));
+    check('un evento marcado «sin Google» no va al .ics y lo sigue estando tras recargar',
+      !/Revisión 214/.test(r.ics) && r.google === false, JSON.stringify(r));
+    check('pincel: toca un día y lo pinta, «deshacer» lo devuelve y «listo» quita la barra',
+      pintado === 'sh-g' && deshecho === 'sh-t' && !r.barra, JSON.stringify({ pintado, deshecho, barra: r.barra }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -843,6 +843,8 @@ function normalize(o){
       soloTrabajo:!!e.soloTrabajo,
       /* el Lloretazo puesto con su botón: se reconoce para poder quitarlo con el mismo botón */
       lloret:!!e.lloret,
+      /* «mandarlo a Google» desde la hoja del día: false = se queda solo en la app */
+      google:e.google!==false,
       color:/^#[0-9a-fA-F]{6}$/.test(e.color||'')?e.color:'#38e1ff',on:e.on!==false};})
     .filter(function(e){return e.modo==='semanal'?e.dow.length>0:!!e.fecha;});
   /* las dos sesiones fijas del hospital: la de la UMI los martes (8:00–8:39) y la general del
@@ -5764,6 +5766,133 @@ function mesRejilla(y,mo,lead){
     const x=monthDays(yy,m).filter(function(o){return o.key===k;})[0];
     if(x)out.push(x);}
   return out;}
+/* ===================== MANTENER PULSADO UN DÍA DEL MES =====================
+   «Al mantener pulsado un día poder editarlo, añadir eventos o una nota». Tocar un día abría su panel
+   DEBAJO del mes: en el móvil caía en y≈1128 con la pantalla acabando en 915, así que parecía que no
+   pasaba nada, y ponerlo de guardia pedía bajar 1,6 pantallas y abrir un desplegable. Ahora, pulsando
+   un rato, sube una hoja encima del mes con lo que se hace con un día: qué es, añadir, lo que ya hay y
+   lo demás. El toque corto sigue haciendo lo de siempre. */
+function pulsarMs(){const v=+((store.meta||{}).pulsarMs);return v>=250&&v<=3000?v:600;}
+function abrirHojaDia(k){
+  ui.hojaDia=k;ui.hojaVista='';ui.hojaRec=false;
+  if(!store.meta.pulsarVisto){store.meta.pulsarVisto=true;save();}
+  render();}
+function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';}
+function pintaHojaDia(){
+  /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
+     1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
+  let c=document.getElementById('hojaDia');
+  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():'';
+  /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
+  const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
+  document.documentElement.classList.toggle('hoja-abierta',!!hoja);
+  document.documentElement.classList.toggle('pincel-on',!!barra);
+  if(!hoja&&!barra){if(c)c.remove();return;}
+  if(!c){c=document.createElement('div');c.id='hojaDia';document.body.appendChild(c);}
+  c.innerHTML=hoja+barra;}
+function hojaTiposHTML(k,inf){
+  /* los tipos de día y, aparte, los de guardia: uno de cada, a un toque */
+  const gd=store.shifts.filter(isGuardia),tipos=gTipos(),sd0=saltoDia(),d=parseDate(k);
+  const esG=!!(gd.length&&inf.shiftId===gd[0].id);
+  const normales=store.shifts.filter(function(s){return !isGuardia(s);}).map(function(s){
+    const on=inf.shiftId===s.id;
+    return '<button class="hchip'+(on?' on':'')+'" data-a="day-set" data-key="'+k+'" data-sid="'+s.id+'" data-guard=""'+
+      (on?' aria-pressed="true"':'')+'>'+esc(s.icon)+' '+esc(nombreCorto(s.name))+'</button>';}).join('');
+  const guardias=gd.length?tipos.map(function(t){
+    const on=esG&&String(inf.guard||'').toLowerCase()===t.code;
+    return '<button class="hchip gd'+(on?' on':'')+'" data-a="day-guardia" data-key="'+k+'" data-guard="'+t.code+'"'+
+      (on?' aria-pressed="true"':'')+'>🩺 '+esc(t.label)+'</button>';}).join(''):'';
+  const nota=gd.length?(d&&d.getDay()===sd0.from?('Con una guardia, el saliente cae el '+DOWN0[sd0.to]+'.'):'Con una guardia, el día siguiente queda saliente solo.'):
+    'Marca en «Turno y rotación» qué tipo de día es guardia.';
+  return '<div class="hcap">QUÉ ES ESTE DÍA</div><div class="hchips">'+normales+guardias+'</div><div class="hnota">'+nota+'</div>';}
+function hojaDiaHTML(){
+  const k=ui.hojaDia,d=parseDate(k);if(!d)return '';
+  const inf=dayInfo(k),sh=shiftById(inf.shiftId),v=ui.hojaVista||'';
+  const DOW3=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  const titulo=DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' de '+MONTH_FULL[d.getMonth()].toLowerCase();
+  const col=(sh&&sh.color)||'var(--line)';
+  let cuerpo='';
+  if(v==='evento'){
+    const jor=jornadaOf(k,inf),dow=DAYN[(d.getDay()+6)%7].toLowerCase();
+    const SUG=[['🎓','Sesión clínica'],['📚','Curso'],['🩺','Médico'],['🎂','Cumple'],['🍽️','Cena']];
+    cuerpo='<div class="hbar"><button class="hvolver" data-a="hoja-vista" data-v="">‹ '+esc(DAYN[(d.getDay()+6)%7].slice(0,3)+' '+d.getDate()+' '+MON[d.getMonth()])+'</button>'+
+        '<b>'+(ui.hojaRec?'Nuevo recordatorio':'Nuevo evento')+'</b><span></span></div>'+
+      '<label class="hfld">QUÉ<input id="hjTit" maxlength="70" autocomplete="off" placeholder="'+(ui.hojaRec?'Llamar al banco':'Sesión clínica')+'"></label>'+
+      '<div class="hsug">'+SUG.map(function(s){return '<button data-a="hoja-sug" data-t="'+esc(s[1])+'">'+s[0]+' '+esc(s[1])+'</button>';}).join('')+'</div>'+
+      '<div class="hdos"><label class="hfld">EMPIEZA<input id="hjHora" type="time" value="'+(ui.hojaRec?'09:00':'09:00')+'"></label>'+
+        '<label class="hfld">DURA<select id="hjDur">'+[[0,'sin hora de fin'],[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30'],[120,'2 h'],[180,'3 h'],[240,'4 h']]
+          .map(function(o){return '<option value="'+o[0]+'"'+(o[0]===(ui.hojaRec?0:60)?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label></div>'+
+      '<label class="htg">⏰ Avisarme antes<input type="checkbox" id="hjRec"'+(ui.hojaRec?' checked':'')+'><i></i></label>'+
+      '<label class="htg">🔁 Todos los '+esc(dow)+(/s$/.test(dow)?'':'s')+'<input type="checkbox" id="hjRep"><i></i></label>'+
+      '<label class="htg">📤 Mandarlo a Google<input type="checkbox" id="hjGoo" checked><i></i></label>'+
+      (jor?'<div class="hnota">Ese día trabajas '+esc(hCorta(jor.start)+'–'+hCorta(jor.end))+'. Si choca, se guarda igual: solo te lo digo.</div>':'')+
+      '<button class="hbig" data-a="hoja-ev-ok">Guardar en el '+esc(DAYN[(d.getDay()+6)%7].toLowerCase()+' '+d.getDate())+'</button>';
+  }else if(v==='nota'){
+    cuerpo='<div class="hbar"><button class="hvolver" data-a="hoja-vista" data-v="">‹ '+esc(DAYN[(d.getDay()+6)%7].slice(0,3)+' '+d.getDate()+' '+MON[d.getMonth()])+'</button>'+
+        '<b>Nota para este día</b><span></span></div>'+
+      '<label class="hfld">QUÉ NO SE TE PUEDE OLVIDAR<textarea id="hjNota" rows="4" maxlength="600" placeholder="Llevar el fonendo a revisar"></textarea></label>'+
+      '<button class="hbig" data-a="hoja-nota-ok">Guardar la nota</button>';
+  }else{
+    const rt=rutinaDeFecha(k),hd=horasDelDiaTxt(k,inf),seg=diaSegundo(k,inf);
+    const sub=[(sh?(sh.icon+' '+sh.name):'sin asignar'),hd,rt?('toca «'+rt.nombre+'»'):''].filter(Boolean).join(' · ');
+    const evs=eventosDeFecha(k),nts=notasDeFecha(k);
+    const hay=evs.map(function(ev){return '<button class="hhay" data-a="hoja-ev" data-id="'+esc(ev.id)+'">📅 <b>'+esc(ev.titulo)+'</b><span>'+
+        esc(ev.hora?evHoraTxt(ev):'todo el día')+'</span></button>';}).join('')+
+      nts.map(function(n){return '<button class="hhay" data-a="hoja-nota" data-id="'+esc(n.id)+'">📝 '+esc(String(n.txt).slice(0,60))+'<span>nota</span></button>';}).join('');
+    const ov=dayOverride(k);
+    cuerpo='<div class="hcab"><div class="hnum" style="--c:'+esc(col)+'">'+d.getDate()+'<small>'+DOW3[d.getDay()]+'</small></div>'+
+        '<div class="htit"><h3>'+esc(titulo)+'</h3><div class="hsub">'+esc(sub)+'</div></div>'+
+        '<button class="hver" data-a="hoja-ver" data-k="'+k+'">ver el día →</button></div>'+
+      hojaTiposHTML(k,inf)+
+      '<div class="hcap">AÑADIR</div><div class="htiles">'+
+        '<button class="htile p" data-a="hoja-vista" data-v="evento"><i>📅</i>Evento</button>'+
+        '<button class="htile" data-a="hoja-vista" data-v="nota"><i>📝</i>Nota</button>'+
+        '<button class="htile'+(seg.on?' on':'')+'" data-a="gym-seg-hoy" data-key="'+k+'"><i>🏊</i>'+(seg.on?'✓ 2.º entreno':'2.º entreno')+'</button>'+
+        '<button class="htile" data-a="hoja-vista" data-v="evento" data-rec="1"><i>⏰</i>Recordatorio</button></div>'+
+      (hay?'<div class="hcap">YA HAY</div><div class="hhays">'+hay+'</div>':'')+
+      '<div class="hcap">MÁS</div><div class="hlist">'+
+        '<button data-a="pincel-on" data-sid="'+esc(inf.shiftId||'')+'" data-guard="'+esc(inf.guard||'')+'"><i>🖌️</i>Copiar este día a otros<span>pincel</span></button>'+
+        (rt?'<button data-a="hoja-modo" data-m="mover"><i>↔️</i>Mover el entreno a otro día<span>'+esc(nombreCorto(rt.nombre))+'</span></button>':'')+
+        '<button data-a="hoja-modo" data-m="vac"><i>🏖️</i>Vacaciones desde aquí hasta…</button>'+
+        (ov?'<button class="mal" data-a="day-set" data-key="'+k+'" data-sid="" data-guard=""><i>↺</i>Quitar lo puesto a mano<span>vuelve a la rotación</span></button>':'')+
+      '</div>'+
+      '<div class="hpie">mantener pulsado '+[400,600,1000,2000].map(function(ms){
+        return '<button class="'+(pulsarMs()===ms?'on':'')+'" data-a="pulsar-ms" data-ms="'+ms+'">'+String(ms/1000).replace('.',',')+' s</button>';}).join('')+'</div>';}
+  return '<div class="hscrim" data-a="hoja-cerrar"></div>'+
+    '<div class="hoja" role="dialog" aria-modal="true" aria-label="'+esc(titulo)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+cuerpo+'</div>';}
+function mesModoHTML(y,mo){
+  /* la barra del pincel / de «toca el otro día», encima de la cuadrícula */
+  const m=ui.mesModo;if(!m)return '';
+  if(m.tipo==='pincel'){
+    const gd=store.shifts.filter(isGuardia)[0],sh=shiftById(m.sid),g=guardCount(y,mo),cupo=+store.rotation.guardiasMes||0;
+    const nom=m.guard?('🩺 '+((gTipo(m.guard)||{}).label||gEtiqueta(m.guard))):(sh?(sh.icon+' '+nombreCorto(sh.name)):'—');
+    const chips=(gd?gTipos().map(function(t){return {sid:gd.id,guard:t.code,txt:'🩺 '+t.label};}):[])
+      .concat(store.shifts.filter(function(s){return !isGuardia(s);}).map(function(s){return {sid:s.id,guard:'',txt:s.icon+' '+nombreCorto(s.name)};}));
+    return '<div class="mpincel'+(m.guard||(sh&&isGuardia(sh))?' g':'')+'"><div class="r1">🖌️ <b>Pintando '+esc(nom)+'</b>'+
+        (m.deshacer?'<button class="btn s" data-a="pincel-deshacer">Deshacer</button>':'')+
+        '<button class="ok" data-a="pincel-fin">Listo</button></div>'+
+      '<div class="r2">'+chips.map(function(c){return '<button class="'+(c.sid===m.sid&&c.guard===(m.guard||'')?'on':'')+'" data-a="pincel-set" data-sid="'+esc(c.sid)+'" data-guard="'+esc(c.guard)+'">'+esc(c.txt)+'</button>';}).join('')+'</div>'+
+      '<div class="r3">Toca los días. Otra vez = quitar. <b>'+g.any+(cupo?(' de '+cupo):'')+'</b> guardias '+(cupo?'del cupo ':'')+'de '+MONTH_FULL[mo]+'.</div></div>';}
+  const rt=m.tipo==='mover'?rutinaDeFecha(m.de):null;
+  const txt=m.tipo==='mover'?('Toca el día al que mueves «'+(rt?rt.nombre:'el entreno')+'»'):('Vacaciones desde el '+fechaCortaTxt(m.de)+': toca el último día');
+  return '<div class="mpincel"><div class="r1">'+(m.tipo==='mover'?'↔️':'🏖️')+' <b>'+esc(txt)+'</b><button class="ok" data-a="pincel-fin">Cancelar</button></div></div>';}
+function mesModoToque(k){
+  /* un toque en una casilla mientras hay un modo puesto: pinta, mueve o cierra las vacaciones */
+  const m=ui.mesModo;if(!m||!k)return false;
+  if(m.tipo==='mover'){ui.mesModo=null;flash(moverEntreno(m.de,k));render();return true;}
+  if(m.tipo==='vac'){ui.mesModo=null;flash(addVacation(m.de,k,'Vacaciones'));render();return true;}
+  m.deshacer=JSON.stringify(store.rotation);
+  const inf=dayInfo(k),ov=dayOverride(k),gd=store.shifts.filter(isGuardia)[0];
+  const esG=!!(m.guard||(shiftById(m.sid)&&isGuardia(shiftById(m.sid))));
+  let msg='';
+  if(esG){
+    const ya=gd&&inf.shiftId===gd.id&&String(inf.guard||'').toLowerCase()===String(m.guard||'').toLowerCase();
+    msg=setGuardiaTipo(k,ya?'':(m.guard||(gTipos()[0]||{}).code||'')).msg;}
+  else{
+    const ya=ov&&ov.shift===m.sid;
+    setDayOverride(k,ya?null:m.sid,'');save();
+    msg=ya?('quitado el '+fechaCortaTxt(k)):(((shiftById(m.sid)||{}).name||'día')+' el '+fechaCortaTxt(k));}
+  flash(msg);render();return true;}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo);
   const domFirst=store.rotation.calWeekStart==='dom';
@@ -5873,7 +6002,8 @@ function renderMonth(){
         <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button></div>
-      <div class="cal ext${rejilla.movil?' conprev':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
+      ${!store.meta.pulsarVisto&&!ui.mesModo?'<div class="mhint">💡 <b>Mantén pulsado un día</b> para cambiar qué es, añadir un evento o una nota. Un toque normal sigue abriendo el resumen.<button class="x" data-a="pulsar-visto" aria-label="entendido">✕</button></div>':''}
+      <div class="cal ext${rejilla.movil?' conprev':''}${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
@@ -5918,7 +6048,7 @@ function renderMonth(){
       </div>
       </details>
     </div>
-  </div>`;}
+   </div>`;}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
 const GYM_URL='https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json';
@@ -14872,7 +15002,7 @@ function render(){
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
   _pintando=true;
-  try{renderNow();_pintando=false;try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}}catch(e){_pintando=false;
+  try{renderNow();_pintando=false;try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}try{pintaHojaDia();}catch(e4){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -15754,6 +15884,7 @@ function act(a,el){
         if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},60);
       break;}
     case 'mon-day':{
+      if(ui.mesModo&&mesModoToque(el.dataset.key))break;
       ui.diaEditor=false;   /* tocando una casilla el editor va plegado; solo el botón lo abre */
       /* antes abría renderDayModal() como ventana aparte; ahora despliega el panel inline debajo
          del calendario (informe "reformular Mes/Semana/Hoy", decisión A) — si se llama desde fuera
@@ -16388,6 +16519,39 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
     case 'day-rhythm':editDayRhythm(el.dataset.key);break;
     case 'day-guardia':{const rg=setGuardiaTipo(el.dataset.key,el.dataset.guard||'');flash(rg.msg);
       if(rg.ok)render();break;}
+    /* la hoja del día (mantener pulsado en Mes) y sus modos: pincel, mover el entreno, vacaciones */
+    case 'hoja-cerrar':cerrarHojaDia();render();break;
+    case 'hoja-vista':{ui.hojaVista=el.dataset.v||'';ui.hojaRec=!!el.dataset.rec;render();
+      setTimeout(function(){const f=document.getElementById(ui.hojaVista==='nota'?'hjNota':'hjTit');if(f)f.focus();},60);break;}
+    case 'hoja-sug':{const i=document.getElementById('hjTit');if(i){i.value=el.dataset.t||'';i.focus();}break;}
+    case 'hoja-ev-ok':{
+      const k=ui.hojaDia,d=parseDate(k);if(!d)break;
+      const val=function(id){return ((document.getElementById(id)||{}).value||'').trim();},
+        chk=function(id){return !!(document.getElementById(id)||{}).checked;};
+      const t=val('hjTit');if(!t){flash('ponle un título');const i=document.getElementById('hjTit');if(i)i.focus();break;}
+      const h=/^\d{2}:\d{2}$/.test(val('hjHora'))?val('hjHora'):'09:00',dur=+val('hjDur')||0,rep=chk('hjRep');
+      eventosS().push({id:uid('ev'),titulo:t.slice(0,70),hora:h,fin:dur?hm((mins(h)+dur)%1440):'',
+        modo:rep?'semanal':'fecha',fecha:rep?'':k,dow:rep?[d.getDay()]:[],
+        recordatorio:chk('hjRec'),cuentaAtras:false,color:tlColor('evt'),on:true,google:chk('hjGoo')});
+      ui.hojaVista='';save();render();
+      flash((rep?'cada '+DAYN[(d.getDay()+6)%7].toLowerCase():'el '+fechaCortaTxt(k))+': '+t);break;}
+    case 'hoja-nota-ok':{const r=addNota(((document.getElementById('hjNota')||{}).value||''),ui.hojaDia);
+      flash(r.msg);if(r.ok){ui.hojaVista='';render();}break;}
+    case 'hoja-ev':{ui.tab='eventos';ui.evVista=el.dataset.id||'';ui.evForm=null;cerrarHojaDia();render();window.scrollTo(0,0);break;}
+    case 'hoja-nota':{ui.notaSel=el.dataset.id;ui.tab='notas';cerrarHojaDia();render();window.scrollTo(0,0);break;}
+    case 'hoja-ver':{ui.diaHoy=esHoyDeVerdad(el.dataset.k)?'':el.dataset.k;ui.tab='hoy';ui.calMode='hoy';cerrarHojaDia();render();window.scrollTo(0,0);break;}
+    case 'hoja-modo':{ui.mesModo={tipo:el.dataset.m,de:ui.hojaDia};cerrarHojaDia();render();break;}
+    case 'pincel-on':{const gd=store.shifts.filter(isGuardia)[0];
+      let sid=el.dataset.sid||'',guard=el.dataset.guard||'';
+      if(!sid&&gd){sid=gd.id;guard=(gTipos()[0]||{}).code||'';}
+      if(gd&&sid===gd.id&&!guard)guard=(gTipos()[0]||{}).code||'';
+      ui.mesModo={tipo:'pincel',sid:sid,guard:guard};cerrarHojaDia();render();break;}
+    case 'pincel-set':{if(ui.mesModo){ui.mesModo.sid=el.dataset.sid||'';ui.mesModo.guard=el.dataset.guard||'';}render();break;}
+    case 'pincel-deshacer':{const m=ui.mesModo;if(m&&m.deshacer){store.rotation=JSON.parse(m.deshacer);m.deshacer=null;save();render();flash('deshecho');}break;}
+    case 'pincel-fin':ui.mesModo=null;render();break;
+    case 'pulsar-ms':{store.meta.pulsarMs=Math.max(250,Math.min(3000,+el.dataset.ms||600));save();render();
+      flash('mantener pulsado: '+String(pulsarMs()/1000).replace('.',',')+' s');break;}
+    case 'pulsar-visto':store.meta.pulsarVisto=true;save();render();break;
     case 'gtipo-add':{const inp=document.getElementById('gtipoNuevo');const r=addGuardiaTipo(inp?inp.value:'');
       if(r.ok&&inp)inp.value='';flash(r.msg);break;}
     case 'gym-wipe':{const txts={log:'¿Borrar las series apuntadas? Tus pesos y tus marcas salen de ahí (luego se pueden deshacer).',
@@ -17521,7 +17685,7 @@ function calEventos(desde,hasta){
         summ:'📚 repasar '+hoyMismo.length+' tema'+(hoyMismo.length===1?'':'s'),
         desc:hoyMismo.map(function(x){return x.nombre;}).slice(0,12).join(', '),cat:'ESTUDIO'});}}
   eventosS().forEach(function(ev){
-    if(ev.on===false||ev.modo!=='fecha'||!ev.fecha)return;
+    if(ev.on===false||ev.google===false||ev.modo!=='fecha'||!ev.fecha)return;
     const dd=parseDate(ev.fecha);
     if(!dd||dd<i0||dd>i1)return;
     /* el rato de verdad: `horaFin` cuando acaba el mismo día, y `dur` para el que cruza la
@@ -17539,7 +17703,7 @@ function calEventos(desde,hasta){
   for(let d=new Date(i0.getTime());d<=i1;d=addDays(d,1)){
     const k=iso(d);
     eventosDelDia(d.getDay()).forEach(function(ev){
-      if(!eventoAplica(ev,k))return;
+      if(!eventoAplica(ev,k)||ev.google===false)return;
       const dur=evDura(ev);
       out.push({allDay:!ev.hora,fecha:icsNum(k),isoKey:k,hora:icsHM(ev.hora||''),
         horaFin:ev.fin||'',dur:dur||60,
@@ -17818,6 +17982,36 @@ document.addEventListener('keydown',e=>{
   if((k==='Enter'||k===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset&&t.dataset.a){
     e.preventDefault();t.click();}
 });
+/* MANTENER PULSADO un día del Mes abre su hoja. Se cancela si el dedo se mueve (estás haciendo scroll)
+   o se levanta antes; el clic que llega después de abrirla se come, para que no abra también el panel
+   de abajo. El anillo que se llena lo pinta el CSS con la misma duración (--lp). */
+let _lp=null,_lpComido=false;
+function lpCancel(){if(!_lp)return;clearTimeout(_lp.t);if(_lp.el)_lp.el.classList.remove('pulsando');_lp=null;}
+document.addEventListener('pointerdown',function(e){
+  const el=e.target&&e.target.closest?e.target.closest('#main .cal .dbox[data-key]'):null;
+  if(!el||!el.dataset.key||ui.mesModo||ui.hojaDia)return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  lpCancel();_lpComido=false;
+  const ms=pulsarMs();
+  el.style.setProperty('--lp',ms+'ms');el.classList.add('pulsando');
+  _lp={el:el,x:e.clientX,y:e.clientY,t:setTimeout(function(){
+    const k=el.dataset.key;lpCancel();_lpComido=true;
+    try{if(navigator.vibrate)navigator.vibrate(18);}catch(e2){}
+    abrirHojaDia(k);},ms)};});
+document.addEventListener('pointermove',function(e){
+  if(_lp&&Math.hypot(e.clientX-_lp.x,e.clientY-_lp.y)>10)lpCancel();},{passive:true});
+document.addEventListener('pointerup',function(){lpCancel();
+  if(_lpComido)setTimeout(function(){_lpComido=false;},450);},true);
+document.addEventListener('pointercancel',lpCancel,true);
+window.addEventListener('scroll',lpCancel,{passive:true});
+document.addEventListener('click',function(e){
+  /* el clic «fantasma» del dedo al soltar cae en la casilla o en el fondo oscuro: ese se come (si no,
+     abriría el panel de abajo o cerraría la hoja nada más abrirse). Un toque DENTRO de la hoja, no */
+  if(!_lpComido)return;
+  const t=e.target&&e.target.closest?e.target:null;
+  if(t&&t.closest('.hoja'))return;
+  _lpComido=false;e.stopPropagation();e.preventDefault();},true);
+document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cal .dbox'))e.preventDefault();});
 document.addEventListener('click',e=>{
   if(e.target.id==='overlay'){cancelModal();return;}
   if(e.target.id==='drawerScrim'){closeDrawer();return;}
