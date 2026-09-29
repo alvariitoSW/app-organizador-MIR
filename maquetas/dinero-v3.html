@@ -1,0 +1,178 @@
+<!doctype html><meta charset=utf-8>
+<title>Dinero v3</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;
+ --brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ /* validados con validate_palette.js sobre #111a2b */
+ --base:#1a9fc2;--finde:#c98500;--fijo:#56657f;--vari:#d9661c;--queda:#1a9fc2;--puro:#1a9fc2;--hucha:#5cc3de}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;
+ background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px}
+.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:9px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}
+.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.top h1{font-size:19px;margin:0}
+.mes{margin-left:auto;display:flex;gap:4px;align-items:center;font-weight:800;font-size:13px}
+.mes span{width:30px;height:30px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;color:var(--ink2)}
+.back{font-size:12.5px;font-weight:800;color:var(--ink2)}
+/* cascada */
+.cas{display:grid;grid-template-columns:auto 1fr auto;gap:0 10px;align-items:center}
+.cas .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:var(--bg2);border:1px solid var(--line)}
+.cas .t b{display:block;font-size:14px}.cas .t span{font-size:11px;color:var(--ink2)}
+.cas .v{font-size:17px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
+.cas .bar{grid-column:2/4;height:10px;border-radius:0 5px 5px 0;margin:5px 0 10px}
+.cas .res{border-top:1px dashed var(--line);padding-top:8px}
+.cas .res .v{font-size:26px;color:var(--ink)}
+.split{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;margin-top:6px}
+.split b{display:block}
+.leg2{display:flex;justify-content:space-between;margin-top:6px;font-size:12px}
+.leg2 div b{display:block;font-size:16px}.leg2 div span{font-size:11px;color:var(--ink2);font-weight:700}
+.leg2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.tip{border-radius:14px;padding:10px 12px;background:color-mix(in srgb,var(--vari) 14%,var(--card));border:1px solid color-mix(in srgb,var(--vari) 50%,var(--line))}
+.tip b{color:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.tile{height:64px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:800}
+.tile i{font-style:normal;font-size:19px}
+/* gastos */
+.seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:9px}
+.seg span{flex:1;text-align:center;padding:7px 0;border-radius:99px;font-size:12.5px;font-weight:800;color:var(--ink2)}.seg .on{background:var(--brand);color:#04121c}
+.g{display:grid;grid-template-columns:24px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.g:first-of-type{border-top:0}
+.g .n{font-size:13.5px;font-weight:700}.g .n small{display:block;font-size:11px;color:var(--ink2);font-weight:600}
+.g .v{font-size:14px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}.g .v small{display:block;font-size:10.5px;color:var(--ink2);font-weight:600}
+.g .m{grid-column:2/4;height:8px;border-radius:99px;background:var(--line);position:relative;margin-top:4px}
+.g .m i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+.g .m u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.chipfv{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--ink2)}
+.tot{display:flex;justify-content:space-between;font-weight:900;font-size:14px;margin-top:4px}
+/* ganas */
+.mbar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:150px;margin-top:8px}
+.mbar .c{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:2px}
+.mbar .c b{display:block;border-radius:0}
+.mbar .c b:first-child{border-radius:4px 4px 0 0}
+.mbar .c span{font-size:10px;color:var(--ink2);font-weight:700;text-align:center;margin-top:4px}
+.mbar .c em{font-style:normal;font-size:10px;font-weight:800;text-align:center;color:var(--ink)}
+.mbar .c.est b{opacity:.55}
+.gtab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;font-variant-numeric:tabular-nums}
+.gtab td{padding:6px 2px;border-top:1px solid var(--line)}.gtab td:last-child{text-align:right;font-weight:800}
+/* huchas */
+.puro{background:linear-gradient(135deg,color-mix(in srgb,var(--puro) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--puro) 55%,var(--line))}
+.puro .big{font-size:34px;font-weight:900}
+.slider{position:relative;height:26px;margin-top:6px}
+.slider .tr{position:absolute;left:0;right:0;top:11px;height:5px;border-radius:9px;background:var(--line)}
+.slider .fi{position:absolute;left:0;width:0%;top:11px;height:5px;border-radius:9px;background:var(--puro)}
+.slider .k{position:absolute;top:2px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--ink)}
+.hu{display:grid;grid-template-columns:40px 1fr auto;gap:3px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.hu:first-of-type{border-top:0}
+.hu .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;grid-row:span 2}
+.hu b{font-size:14.5px}.hu .s{font-size:11.5px;color:var(--ink2)}
+.hu .m{grid-column:2/4;height:7px;border-radius:99px;background:var(--line);overflow:hidden}.hu .m i{display:block;height:100%;background:var(--hucha)}
+.hu .eta{grid-column:2/4;font-size:11px;color:var(--ink2);display:flex;justify-content:space-between}.hu .eta b{font-size:11px}
+</style>
+
+<!-- ============ 1 · portada: de lo que ganas a lo que ahorras ============ -->
+<div class="ab"><div class="lbl">1 · Tu mes: de lo que ganas a lo que ahorras</div>
+ <div class="top"><h1>💶 Dinero</h1><div class="mes"><span>‹</span>octubre<span>›</span></div></div>
+ <div class="card">
+  <div class="cas">
+   <span class="ic">💶</span><div class="t"><b>Ganas</b><span>base 2.166 + 1 guardia de finde (300)</span></div><div class="v">2.466</div>
+   <div class="bar" style="width:100%;background:linear-gradient(90deg,var(--base) 88%,var(--finde) 88%)"></div>
+   <span class="ic">🔒</span><div class="t"><b>Fijos</b><span>alquiler, abono, suscripciones, seguro</span></div><div class="v">−746</div>
+   <div class="bar" style="width:30%;background:var(--fijo)"></div>
+   <span class="ic">🛒</span><div class="t"><b>Variables</b><span>súper, restaurantes, ocio… · aquí se ahorra</span></div><div class="v">−803</div>
+   <div class="bar" style="width:33%;background:var(--vari)"></div>
+   <span class="ic res">🐷</span><div class="t res"><b>Te queda para ahorrar</b><span>37 % de lo que ganas</span></div><div class="v res">917</div>
+  </div>
+  <div class="split"><b style="flex:50;background:var(--puro)"></b><b style="flex:50;background:var(--hucha)"></b></div>
+  <div class="leg2"><div><i style="background:var(--puro)"></i><b>459 €</b><span>ahorro puro · 50 %</span></div><div style="text-align:right"><i style="background:var(--hucha)"></i><b>458 €</b><span>a tus huchas</span></div></div>
+ </div>
+ <div class="tip">
+  <div class="cap" style="color:var(--ink)">✂️ DÓNDE PUEDES APRETAR</div>
+  <div class="mini" style="margin-top:5px">🍽️ Restaurantes <b>186 €</b> (tu meta 150) · 🎟️ Ocio <b>161 €</b> (meta 120)</div>
+  <div style="margin-top:6px;font-size:13px">Cumpliendo esas dos metas: <b>+77 €/mes</b> → ✈️ Japón llega en <b>mayo</b> en vez de junio.</div>
+ </div>
+ <div class="card" style="padding:10px 12px">
+  <div class="row"><span class="cap">NOVIEMBRE</span><span class="sp"></span><span class="mini">2 guardias de finde puestas</span></div>
+  <div style="margin-top:4px;font-size:13px">Ganarás <b>≈ 2.766 €</b> → te quedarían <b>≈ 1.217</b> para ahorrar si gastas como en octubre.</div>
+ </div>
+ <div class="tiles"><div class="tile"><i>🧾</i>Gastos</div><div class="tile"><i>💶</i>Lo que gano</div><div class="tile"><i>🐷</i>Huchas</div><div class="tile"><i>📷</i>Fintonic</div></div>
+</div>
+
+<!-- ============ 2 · gastos fijos y variables ============ -->
+<div class="ab"><div class="lbl">2 · Gastos: lo fijo y lo que puedes recortar</div>
+ <div class="top"><span class="back">‹ Dinero</span><h1 style="margin-left:6px">🧾 Gastos</h1><div class="mes">octubre</div></div>
+ <div class="card">
+  <div class="row"><span class="cap">🔒 FIJOS · IGUAL CADA MES</span><span class="sp"></span><b>746 €</b></div>
+  <div class="g"><span>🏠</span><div class="n">Alquiler y casa<small>5 meses seguidos igual</small></div><div class="v">640</div></div>
+  <div class="g"><span>🚌</span><div class="n">Abono transporte</div><div class="v">40</div></div>
+  <div class="g"><span>📱</span><div class="n">Suscripciones</div><div class="v">42</div></div>
+  <div class="g"><span>🛡️</span><div class="n">Seguro coche</div><div class="v">24</div></div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">🛒 VARIABLES · CON META</span><span class="sp"></span><b>803 €</b></div>
+  <div class="g"><span>🛒</span><div class="n">Supermercado<small>media 286 · meta 300</small></div><div class="v">312<small>+12 sobre meta</small></div>
+   <div class="m"><i style="width:94%;background:var(--vari)"></i><u style="left:90%"></u></div></div>
+  <div class="g"><span>🍽️</span><div class="n">Restaurantes<small>media 237 · meta 150</small></div><div class="v">186<small>+36 sobre meta</small></div>
+   <div class="m"><i style="width:56%;background:var(--vari)"></i><u style="left:45%"></u></div></div>
+  <div class="g"><span>🎟️</span><div class="n">Ocio<small>media 150 · meta 120</small></div><div class="v">161<small>+41 sobre meta</small></div>
+   <div class="m"><i style="width:48%;background:var(--vari)"></i><u style="left:36%"></u></div></div>
+  <div class="g"><span>⛽</span><div class="n">Gasolina y taxis<small>media 60 · sin meta</small></div><div class="v">54</div>
+   <div class="m"><i style="width:16%;background:var(--vari)"></i></div></div>
+  <div class="g"><span>🧾</span><div class="n">Otros<small>media 88</small></div><div class="v">90</div>
+   <div class="m"><i style="width:27%;background:var(--vari)"></i></div></div>
+  <div class="mini" style="margin-top:8px">Toca una categoría para moverla a fijos o ponerle meta. La raya blanca es tu meta.</div>
+ </div>
+ <div class="row"><span class="chipfv">📊 ver la hoja</span><span class="chipfv">⬇ Excel</span></div>
+</div>
+
+<!-- ============ 3 · lo que gano ============ -->
+<div class="ab"><div class="lbl">3 · Lo que gano: base + guardias de finde</div>
+ <div class="top"><span class="back">‹ Dinero</span><h1 style="margin-left:6px">💶 Lo que gano</h1></div>
+ <div class="card">
+  <div class="row"><span class="cap">6 MESES</span><span class="sp"></span><span class="mini"><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--base)"></i> base &nbsp;<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--finde)"></i> guardias de finde</span></div>
+  <div class="mbar">
+   <div class="c"><em>2.466</em><b style="height:10%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>jul</span></div>
+   <div class="c"><em>2.766</em><b style="height:20%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>ago</span></div>
+   <div class="c"><em>2.466</em><b style="height:10%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>sep</span></div>
+   <div class="c"><em>2.466</em><b style="height:10%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>oct</span></div>
+   <div class="c est"><em>≈2.766</em><b style="height:20%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>nov</span></div>
+   <div class="c est"><em>≈2.899*</em><b style="height:10%;background:var(--finde)"></b><b style="height:72%;background:var(--base)"></b><span>dic</span></div>
+  </div>
+  <div class="mini" style="margin-top:6px">Los claros son estimados con las guardias de tu calendario. * Diciembre lleva la paga extra (733 €).</div>
+ </div>
+ <div class="card">
+  <div class="cap">CÓMO SE CALCULA</div>
+  <table class="gtab">
+   <tr><td>Neto con 1 guardia de finde</td><td>2.466 €</td></tr>
+   <tr><td>Cada guardia de finde de más</td><td>+300 €</td></tr>
+   <tr><td>Octubre · 1 de finde (sáb 11)</td><td>2.466 €</td></tr>
+   <tr><td>Noviembre · 2 de finde (sáb 1, dom 23)</td><td>≈ 2.766 €</td></tr>
+  </table>
+  <div class="mini" style="margin-top:8px">¿Te han pagado distinto? Toca el mes y pon lo cobrado de verdad.</div>
+ </div>
+</div>
+
+<!-- ============ 4 · huchas con la mitad a ahorro puro ============ -->
+<div class="ab"><div class="lbl">4 · Huchas: mínimo la mitad, ahorro puro</div>
+ <div class="top"><span class="back">‹ Dinero</span><h1 style="margin-left:6px">🐷 Huchas</h1></div>
+ <div class="card puro">
+  <div class="row"><span class="cap" style="color:var(--ink)">🔒 AHORRO PURO</span><span class="sp"></span><span class="mini">no se toca</span></div>
+  <div class="big">6.240 €</div>
+  <div class="mini">este mes entra <b style="color:var(--ink)">459 €</b> · a este ritmo, 10.000 € en <b style="color:var(--ink)">ago 2027</b></div>
+  <div class="row" style="margin-top:10px"><span class="mini">Parte del ahorro que va aquí</span><span class="sp"></span><b>50 %</b></div>
+  <div class="slider"><div class="tr"></div><div class="fi" style="width:0%"></div><div class="k" style="left:0%"></div></div>
+  <div class="row mini"><span>50 % (mínimo)</span><span class="sp"></span><span>100 %</span></div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">PARA COSAS CONCRETAS · 458 €/MES</span></div>
+  <div class="hu"><span class="ic" style="background:color-mix(in srgb,#38bdf8 20%,var(--bg2))">✈️</span><div><b>Viaje a Japón</b><div class="s">540 de 2.400 · 250 €/mes</div></div><b>22 %</b>
+   <div class="m"><i style="width:22%"></i></div><div class="eta"><span>llegas en <b style="color:var(--ink)">junio 2027</b></span><span>vuelos ✓ · hotel · JR pass</span></div></div>
+  <div class="hu"><span class="ic" style="background:color-mix(in srgb,#fbbf24 20%,var(--bg2))">💻</span><div><b>Portátil</b><div class="s">320 de 1.100 · 208 €/mes</div></div><b>29 %</b>
+   <div class="m"><i style="width:29%"></i></div><div class="eta"><span>llegas en <b style="color:var(--ink)">marzo 2027</b></span></div></div>
+  <div class="hu"><span class="ic" style="background:var(--bg2);border:1px dashed var(--line)">＋</span><div><b>Nueva hucha</b><div class="s">para qué, cuánto cuesta y cuándo llegas</div></div></div>
+ </div>
+ <div class="mini" style="padding:0 4px">Si pones más en una hucha, sale de las otras huchas, nunca del ahorro puro.</div>
+</div>
