@@ -3996,6 +3996,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // y la de levantarse no salía en ninguna parte; en «Semana» las dos horas solo aparecían
     // abriendo el día, y en modo plantilla ni eso —`sl` y `nt` se calculaban en la fila y no se
     // usaban en ningún sitio—. Ahora van juntas debajo de la franja, siempre, en las dos pantallas.
+    // hoy, día de trabajo con la víspera libre: si la víspera es guardia (en el ejemplo, los lunes)
+    // hoy es saliente y enseña la siesta en vez del despertador, y la prueba caía según el día
+    const visperaSueno = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
+      const antes = { hoy: P.dayOverride(hoy), ay: P.dayOverride(ay) };
+      P.setDayOverride(ay, 'sh-l', ''); P.setDayOverride(hoy, 'sh-t', ''); P.save(); P.render(); return antes; });
     await gotoTab('hoy');
     await page.waitForTimeout(250);
     const hoySueno = await page.evaluate(() => {
@@ -4007,6 +4012,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!hoySueno.bed && !!hoySueno.wake &&
       hoySueno.txt.includes('🛌 ' + hoySueno.bed) && hoySueno.txt.includes('⏰ ' + hoySueno.wake),
       JSON.stringify(hoySueno));
+    await page.evaluate((a) => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
+      P.setDayOverride(ay, a.ay ? a.ay.shift : null, a.ay ? a.ay.guard : '');
+      P.setDayOverride(hoy, a.hoy ? a.hoy.shift : null, a.hoy ? a.hoy.guard : ''); P.save(); P.render(); }, visperaSueno);
 
     await gotoTab('week');
     await page.waitForTimeout(300);
@@ -4046,6 +4054,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // «Semana» ya no es de lunes a domingo: empieza HOY. Se pone hoy como día de trabajo para
       // no depender de lo que otras pruebas hayan dejado en los días que vienen
       const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      const ayK = P.iso(P.addDays(new Date(), -1)), ovAy = P.dayOverride(ayK);
+      P.setDayOverride(ayK, 'sh-l', '');   // víspera libre: si fue guardia, hoy es saliente y no «Día de trabajo»
       P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = '01:30';
       P.store.rhythm['sh-t'].wake = '06:50';
@@ -4060,6 +4070,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = f ? f.querySelector('.drsol').innerText : '';
       P.store.rhythm['sh-t'] = guardado;
       P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.setDayOverride(ayK, ovAy ? ovAy.shift : null, ovAy ? ovAy.guard : '');
       P.save(); P.render();
       return txt;
     });
@@ -4071,6 +4082,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG;
       const guardado = JSON.parse(JSON.stringify(P.store.rhythm['sh-t']));
       const hoyK = P.iso(new Date()), ovAntes = P.dayOverride(hoyK);
+      const ayK = P.iso(P.addDays(new Date(), -1)), ovAy = P.dayOverride(ayK);
+      P.setDayOverride(ayK, 'sh-l', '');   // víspera libre: si fue guardia, hoy es saliente y no «Día de trabajo»
       P.setDayOverride(hoyK, 'sh-t', '');
       P.store.rhythm['sh-t'].sleep = ''; P.store.rhythm['sh-t'].wake = '';
       P.save(); P.render();
@@ -4078,6 +4091,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = f ? f.querySelector('.drsol').innerText : '';
       P.store.rhythm['sh-t'] = guardado;
       P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
+      P.setDayOverride(ayK, ovAy ? ovAy.shift : null, ovAy ? ovAy.guard : '');
       P.save(); P.render();
       return txt;
     });
@@ -6444,6 +6458,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // un día de jornada 8–15, sin entreno. Tiene que ser LABORABLE: en sábado no hay jornada de
       // la que salir y la prueba caía por el día en que se ejecutara, no por el código
       const k = P.diaLaborableCerca();
+      // y con la víspera libre: tras una guardia ese día es saliente y la comida la manda otra cosa
+      const ay = P.iso(P.addDays(P.parseDate(k), -1));
+      window.__ovAyViaje = P.dayOverride(ay);
+      // sin el segundo entreno de la semana (en el ejemplo, piscina los martes a las 15:30): si cae
+      // ese día, la comida la empuja la piscina y la prueba caía según el día en que se ejecutara
+      const mk = P.gymS().marks; window.__mkViaje = mk[k]; mk[k] = { on: false };
+      P.setDayOverride(ay, 'sh-l', '');
       P.setDayOverride(k, 'sh-t', '');
       P.save(); return k; });
 
@@ -6495,7 +6516,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       off.salir === false && off.comidaDe === '15:00',
       JSON.stringify(off));
 
-    await page.evaluate((k) => { const P = window.PG; P.setDayOverride(k, null); P.save(); P.render(); }, k);
+    await page.evaluate((k) => { const P = window.PG; P.setDayOverride(k, null);
+      const o = window.__ovAyViaje, mk = P.gymS().marks;
+      if (window.__mkViaje) mk[k] = window.__mkViaje; else delete mk[k];
+      P.setDayOverride(P.iso(P.addDays(P.parseDate(k), -1)), o ? o.shift : null, o ? o.guard : ''); P.save(); P.render(); }, k);
     await page.waitForTimeout(200);
   }
 
@@ -6515,13 +6539,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const sh = S.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
       if (!sh) return { sinDiaDeFuerza: true };
       const antes = { start: sh.start, end: sh.end };
+      const ay = P.iso(P.addDays(new Date(), -1)), ovAy = P.dayOverride(ay);
+      P.setDayOverride(ay, 'sh-l', '');   // víspera libre: tras una guardia hoy sería saliente
+      const mk = P.gymS().marks, mkAntes = mk[k]; mk[k] = { on: false };   // y sin la piscina de la semana
       sh.start = '06:30'; sh.end = '08:00';
       P.setDayOverride(k, sh.id, ''); P.save();
       const manana = { fin: P.finEntrenoDe(k), cp: P.comidaPrincipalDe(k) };
       // y por la tarde SÍ manda: entrenando de 17:00 a 18:15 la comida es la post-entreno
       sh.start = '17:00'; sh.end = '18:15'; P.save();
       const tarde = { fin: P.finEntrenoDe(k), cp: P.comidaPrincipalDe(k) };
-      sh.start = antes.start; sh.end = antes.end; P.setDayOverride(k, null); P.save(); P.render();
+      sh.start = antes.start; sh.end = antes.end; P.setDayOverride(k, null);
+      P.setDayOverride(ay, ovAy ? ovAy.shift : null, ovAy ? ovAy.guard : '');
+      if (mkAntes) mk[k] = mkAntes; else delete mk[k];
+      P.save(); P.render();
       return { manana, tarde }; });
     check('entrenando a las 6:30 la comida es al llegar del trabajo, no «post-entreno» a las 18:00',
       ent.sinDiaDeFuerza ? false : (
@@ -8554,18 +8584,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const diaS = (P.entrenoSemana(K1).dias.filter((x) => x.k === K1)[0] || {});
       P.ui.gymDate = K1; P.render();
       const heroS = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
+      // y la semana no lo marca como choque ni ofrece «moverla»: la pusiste ahí tú
+      const circS = (document.querySelector('#main .gsc[data-key="' + K1 + '"]') || { className: 'NO' }).className;
+      const avisos = Array.from(document.querySelectorAll('#main .gaviso')).map((x) => x.textContent).join(' | ');
       // 4) sin repintar: se pregunta por K6 (se memoriza «no hay salida»), se pone guardia en K5 y se
       //    exporta. El saliente de K6 tiene que ir a Google
       const antes = P.salidaDeGuardia(K6);
       P.setDayOverride(K5, 'sh-g', ''); P.save();
       const salK6 = P.calEventos(K6, K6).some((e) => /Saliente/.test(e.summ || ''));
       P.store = copia; P.save(); P.ui.gymDate = null; P.ui.tab = 'gym'; P.render();
-      return { puesG, puesS, heroG: heroG.slice(0, 160), diaS: diaS.tipo, heroS: heroS.slice(0, 160), antes: !!antes, salK6 };
+      return { puesG, puesS, heroG: heroG.slice(0, 160), diaS: diaS.tipo, heroS: heroS.slice(0, 160), circS, avisos: avisos.slice(0, 200), antes: !!antes, salK6 };
     });
     check('Mes → Entreno: poner guardia en un día con rutina pegada a «Guardia» la deja en la tarjeta grande con «pero estás de guardia»',
       r.puesG && /R213 guardia/.test(r.heroG) && /PERO ESTÁS DE GUARDIA/i.test(r.heroG), JSON.stringify(r));
     check('una rutina pegada a propósito al tipo «Saliente» hace de ese día fuerza (no piscina) y sale en la tarjeta grande',
       r.puesS && r.diaS === 'fuerza' && /R213 saliente/.test(r.heroS), JSON.stringify(r));
+    check('la rutina pegada a propósito al saliente no se marca como choque ni se ofrece moverla',
+      r.circS !== 'NO' && !/choque/.test(r.circS) && !/de saliente/.test(r.avisos), JSON.stringify(r));
     check('una guardia puesta sin repintar lleva su saliente a Google aunque antes se hubiera preguntado por ese día',
       !r.antes && r.salK6, JSON.stringify(r));
   }

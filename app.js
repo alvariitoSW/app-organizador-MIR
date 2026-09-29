@@ -383,6 +383,17 @@ function temaAzar(){
       brand:hsl(h+d1,az(58,82),Math.max(22,42+sub*0.5)),
       brand2:hsl(h+d2,az(52,76),Math.max(24,46+sub*0.5)),
       accent:hsl(h+d3,az(48,72),Math.max(20,34+sub*0.5))};
+    /* lo mismo que con la franja: en claro, el gris secundario y un amarillo o un verde de marca a
+       ~42 % de luz no llegan a leerse sobre blanco, y tirar el tema entero dejaba los claros en ~7 de
+       cada 100 en vez de 40. Se oscurece (o aclara, en oscuro) ese color hasta que se lea */
+    const leible=function(hh,ss,ll,min){let c=hsl(hh,ss,ll);
+      for(let k=0;k<20&&contraste(c,v.bg)<min;k++){ll+=osc?3:-3;c=hsl(hh,ss,Math.max(5,Math.min(95,ll)));}
+      return c;};
+    if(!osc){
+      v.ink2=leible(h,az(14,28),Math.max(24,42+sub),4.5);
+      v.brand=leible(h+d1,az(58,82),Math.max(22,42+sub*0.5),3);
+      v.brand2=leible(h+d2,az(52,76),Math.max(24,46+sub*0.5),3);
+      v.accent=leible(h+d3,az(48,72),Math.max(20,34+sub*0.5),3);}
     if(contraste(v.ink,v.bg)<7)continue;
     if(contraste(v.ink2,v.bg)<4.5)continue;
     if(contraste(v.brand,v.bg)<3)continue;
@@ -8947,7 +8958,9 @@ function gymDiaMalo(key,infOpt){
   /* un día en el que no vas a entrenar aunque el calendario diga que toca: guardia o saliente */
   const inf=infOpt||dayInfo(key),sh=shiftById(inf.shiftId);
   if(sh&&isGuardia(sh))return 'guardia';
-  if(esSaliente(sh))return 'saliente';
+  /* una rutina que pegaste A PROPÓSITO al tipo «Saliente» (o que moviste a ese día) no choca: la
+     elegiste tú, y el plan ya lo cuenta como fuerza. Ofrecer «moverla» era deshacer tu decisión */
+  if(esSaliente(sh))return rutinaDeFechaBase(key)?'':'saliente';
   if(salidaDeGuardia(key))return 'saliente';
   return '';}
 function gymHechoEn(key){
