@@ -2518,3 +2518,87 @@ html.hoja-abierta #flash{bottom:auto!important;top:calc(14px + env(safe-area-ins
 .dbox .dev.nota .n{color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
 .drev.nota i{background:var(--warn)}
 .drplan .pl.nota{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+
+/* ============ Dinero v2: el mes de un vistazo, la hoja y las huchas ============ */
+.dinv2 .cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.dtop{display:flex;align-items:center;gap:8px}
+.dtop .subtit{margin:0}
+.dmes{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13.5px}
+.dmes button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
+.dmes button:disabled{opacity:.35;cursor:default}
+.dbig{font-size:44px;font-weight:900;letter-spacing:-.02em;line-height:1.05;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.dbig small{font-size:18px;font-weight:800;color:var(--ink2)}
+.ddelta{display:inline-flex;gap:4px;align-items:center;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;
+  background:color-mix(in srgb,var(--brand) 16%,transparent);color:var(--ink)}
+.dflujo{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:12px}
+.dflujo b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.dflujo span{font-size:11px;color:var(--ink2);font-weight:700}
+.dflujo i{font-style:normal;color:var(--ink2)}
+.dmeter{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}
+.dmeter b{display:block;height:100%;border-radius:0 5px 5px 0}
+.dapartar{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:46px;margin-top:12px;padding:0 12px;border-radius:12px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.dapartar b{color:var(--ink)}.dapartar span:last-child{color:var(--brand);font-weight:800}
+.dlink{border:0;background:none;color:var(--brand);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;padding:0;min-height:32px}
+.dcat{display:grid;grid-template-columns:22px 1fr auto;gap:4px 8px;align-items:center;margin-top:9px}
+.dcat .n{font-size:13px;font-weight:700;display:flex;justify-content:space-between;gap:6px;min-width:0}
+.dcat .n span{color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap}
+.dcat .v{font-size:13px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.dcat .bar{grid-column:2/4;height:8px;border-radius:0 4px 4px 0}
+.dsvg{display:block;margin-top:6px;overflow:visible}
+.dsvg .dax{fill:var(--ink2);font-size:9.5px;font-weight:700;text-anchor:middle}
+.dsvg .dval{fill:var(--ink);font-size:10px;font-weight:800;text-anchor:middle}
+.dsvg .dbarra:hover path{filter:brightness(1.15)}
+.dtabla{margin-top:6px}.dtabla summary{cursor:pointer}
+.dtabla table{width:100%;font-size:12px;border-collapse:collapse;margin-top:6px;font-variant-numeric:tabular-nums}
+.dtabla td{padding:3px 4px;border-top:1px solid var(--line);text-align:right}.dtabla td:first-child{text-align:left}
+.dtiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.dtile{min-height:68px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:11px;font-weight:800;text-align:center;cursor:pointer;padding:4px;overflow-wrap:normal}
+.dtile i{font-style:normal;font-size:20px}.dtile.p{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.dseg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px}
+.dseg button{flex:1;min-height:38px;border:0;border-radius:99px;background:none;color:var(--ink2);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.dseg .on{background:var(--brand);color:#04121c}
+html:not(.dark) .dseg .on{color:#fff}
+.dxlw{overflow-x:auto;overscroll-behavior-x:contain}
+.dxl{border-collapse:separate;border-spacing:2px;font-size:11.5px;font-variant-numeric:tabular-nums;width:100%}
+.dxl td,.dxl th{border-bottom:0}
+.dxl th{font-size:10px;color:var(--ink2);font-weight:800;text-align:right;padding:3px 5px;letter-spacing:.04em;white-space:nowrap}
+.dxl th:first-child,.dxl td:first-child{text-align:left;white-space:nowrap;padding-right:6px}
+.dxl td .lb{display:block;max-width:92px;overflow:hidden;text-overflow:ellipsis}
+.dxl td{padding:6px 5px;text-align:right;border-radius:4px;font-weight:700;color:var(--ink);white-space:nowrap}
+.dxl td.vac{color:var(--ink2);font-weight:400}
+.dxl td.t{font-weight:900}
+.dxl tr.dtot td{border-top:1px solid var(--line);font-weight:900;padding-top:8px}
+.dxl [data-hoy]{box-shadow:inset 0 0 0 1.5px var(--brand)}
+.dleg{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink2);margin-top:8px}
+.dleg span{display:flex;gap:2px}.dleg i{width:18px;height:8px;border-radius:2px}
+.ddl{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border-radius:14px;padding:6px 14px;border:0;cursor:pointer;text-align:left;
+  background:linear-gradient(90deg,#1d6f45,#15803d);color:#fff;font:inherit}
+.ddl b{display:block;font-size:15px}.ddl small{display:block;font-size:11px;opacity:.88}.ddl>span:first-child{font-size:20px}
+.dhucab{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;padding:0}
+.dhucab .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:none}
+.dhucab .t{flex:1;min-width:0}.dhucab .t b{display:block;font-size:15px}.dhucab .t span{font-size:11.5px;color:var(--ink2)}
+.dhucab .pc{font-size:15px}
+.dhu .dmeter{height:8px;margin-top:9px}
+.deta{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:11.5px;color:var(--ink2)}.deta b{color:var(--ink)}
+.dwish{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.dw{display:flex;align-items:center;gap:9px;min-height:44px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+.dw .ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);background:none;flex:none;cursor:pointer}
+.dw.ok .ck{background:var(--ok);border-color:var(--ok)}.dw.ok span{text-decoration:line-through;color:var(--ink2)}
+.dw span{flex:1;min-width:0}.dw em{font-style:normal;color:var(--ink2);font-weight:700}
+.dw .x{width:32px;height:32px;border:0;background:none;color:var(--ink2);cursor:pointer}
+.dwadd{display:flex;gap:6px;margin-top:8px}.dwadd input{min-height:44px}.dwadd input:first-child{flex:1;min-width:0}.dwadd input:nth-child(2){width:80px}
+.dnueva{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border-style:dashed!important;color:var(--ink);font:inherit;cursor:pointer;text-align:left;min-height:56px}
+.dicos{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.dicos button{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:19px;cursor:pointer}
+.dicos .on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 16%,var(--bg2))}
+.drange{width:100%;margin-top:10px;accent-color:var(--brand);min-height:30px}
+.dres{margin-top:10px;border-radius:14px;padding:11px 12px;background:color-mix(in srgb,var(--brand) 12%,var(--card));border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line))}
+.dres .dax{fill:var(--ink2);font-size:9.5px;font-weight:700}
+.deq{display:flex;gap:8px;margin:8px 0}.deq div{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:7px 9px;font-size:11px;color:var(--ink2);font-weight:700}
+.deq b{display:block;font-size:17px;color:var(--ink)}
+.dalts{display:flex;gap:6px;margin-top:8px}
+.dalts button{flex:1;min-height:48px;border-radius:11px;border:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.dalts button small{display:block;font-weight:600;color:var(--ink2);font-size:10.5px}
+.dalts .on{border-color:var(--brand)}
+@media print{.dtiles,.ddl,.dapartar{display:none}}

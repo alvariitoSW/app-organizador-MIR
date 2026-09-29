@@ -6075,7 +6075,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.epocas = [{ id: 'e1', nombre: 'prueba', desde: '2000-01', neto: 2766, finde: 300, pagaJun: 0, pagaDic: 0 }];
       a.huchas.forEach((h) => { h.saldo = 0; });
       a.meses = {}; a.meses[mk] = { aparto: 700, hecho: false, reparto: {}, retos: [] };
-      P.ui.dineroVista = ''; P.ui.ahoRetoNuevo = false;   // otra prueba dejó Dinero en «recibos»
+      P.ui.dineroVista = 'apartar'; P.ui.ahoRetoNuevo = false;   // otra prueba dejó Dinero en «recibos»
       P.save();
       const n = P.nominaMes(y, m);
       return { finde: n.g.finde, total: n.g.total, est: n.est, mk };
@@ -6138,7 +6138,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; delete P.store.ahorro;
       const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
       P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
-      P.ui.dineroVista = ''; P.save(); P.render(); });
+      P.ui.dineroVista = 'apartar'; P.save(); P.render(); });
   }
 
   // ===================== Dinero → lo real: capturas de Fintonic =====================
@@ -6184,7 +6184,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // y de punta a punta, con el lector de verdad (vendor/ocr) sobre una captura que se dibuja aquí
     // mismo, al estilo de la pantalla de Inicio de Fintonic: subirla, revisar, guardar, verla en Dinero
-    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); });
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = 'apartar'; P.save(); });
     await gotoTab('dinero');
     await page.waitForTimeout(250);
     const png = await page.evaluate(() => {
@@ -6215,7 +6215,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!input && leido && leido.estado === 'listo' && leido.pantalla && leido.banco && leido.banco.v === 1234 &&
       guardado && guardado.banco === 1234 && /1234 €/.test(tarjeta) && /nómina llega/.test(tarjeta),
       JSON.stringify({ leido, guardado, tarjeta: tarjeta.slice(0, 160) }));
-    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = 'apartar'; P.save(); P.render(); });
   }
 
   // ===================================================================================
@@ -7209,7 +7209,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     // ahorro: poner una meta y aplicar lo que recomienda
     await page.evaluate(() => { const P = window.PG; const a = P.store.ahorro; delete a.meta;
-      P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.ahoMetaEd = false; P.save(); P.render(); });
+      P.ui.tab = 'dinero'; P.ui.dineroVista = 'apartar'; P.ui.ahoMetaEd = false; P.save(); P.render(); });
     await page.waitForTimeout(200);
     await page.fill('#ahMetaImp', '10000');
     await page.fill('#ahMetaFec', (new Date().getFullYear() + 1) + '-12');
@@ -8713,6 +8713,79 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ guardada, mes, semana, hoy }));
     check('marcada hecha desde Hoy, la nota deja de salir en Hoy y en Mes', tick && !hoy2.aviso && !mes2.aviso,
       JSON.stringify({ tick, hoy2, mes2 }));
+  }
+
+  // 216) DINERO v2, encadenado por la interfaz: capturas de Fintonic de tres meses → la portada dice
+  // cuánto ahorras y en qué se va, con el gráfico de cada mes → la hoja enseña meses × categorías →
+  // «Descargar Excel» da un .xlsx de verdad → hucha nueva con precio y aporte: dice cuándo llegas →
+  // se crea con su aporte fijo, que el reparto le da primero → lista de «en qué me lo gasto» → y lo
+  // de antes (apartar, objetivo, retos) sigue en «Apartar». Antes: nada de Fintonic se veía y la
+  // tabla se descuadraba porque la fila del total llevaba la clase global «.tot» (un flex).
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia216 = JSON.parse(JSON.stringify(P.store));
+      const a = P.store.ahorro || (P.store.ahorro = {}); a.real = [];
+      const hoy = new Date();
+      [[2, 640, 280, 160], [1, 640, 290, 410], [0, 640, 312, 186]].forEach((x) => {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - x[0], 15, 12), mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        a.real.push({ fecha: P.iso(d), hora: '', mes: mk, banco: 3000, ingresos: 2700, gastos: x[1] + x[2] + x[3],
+          cats: { 'Alquiler y casa': x[1], 'Supermercado': x[2], 'Restaurantes': x[3] } }); });
+      P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.dinMes = ''; P.ui.hojaTodo = false; P.save(); P.render(); });
+    const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
+      try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
+    const portada = await page.evaluate(() => { const m = document.querySelector('#main');
+      return { ahorras: /ESTE MES AHORRAS/.test(m.innerText), cats: m.querySelectorAll('.dcat').length, barras: m.querySelectorAll('.dsvg .dbarra').length,
+        tiles: m.querySelectorAll('.dtile').length, alto: m.scrollHeight }; });
+    const aHoja = await clic('#main .dtile[data-v="hoja"]');
+    const hoja = await page.evaluate(() => { const t = document.querySelector('#main .dxl'); if (!t) return null;
+      const f = t.querySelector('tbody tr'), c = f ? f.querySelectorAll('td') : [];
+      // que la tabla no se descuadre: cada celda de mes a la derecha de la anterior, sin solaparse
+      let ok = c.length > 2;
+      for (let i = 1; i < c.length; i++) { const p = c[i - 1].getBoundingClientRect(), q = c[i].getBoundingClientRect(); if (q.left < p.right - 1) ok = false; }
+      return { filas: t.querySelectorAll('tbody tr').length, cols: t.querySelectorAll('thead th').length, enOrden: ok,
+        cabeTodo: document.querySelector('#main .dxlw').scrollWidth <= document.querySelector('#main .dxlw').clientWidth + 2 }; });
+    let descarga = '';
+    try { const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), clic('#main [data-a="hoja-xlsx"]')]); descarga = dl.suggestedFilename(); }
+    catch (e) { descarga = 'no descargó: ' + String(e).slice(0, 60); }
+    const xlsx = await page.evaluate(() => { const P = window.PG, b = P.dineroXlsx(new Date().getFullYear());
+      const txt = new TextDecoder('latin1').decode(b);
+      return { pk: b[0] === 0x50 && b[1] === 0x4b, libro: txt.includes('xl/workbook.xml'), hojas: (txt.match(/xl\/worksheets\/sheet\d+\.xml/g) || []).length / 2,
+        gastos: txt.includes('Gastos por categor') }; });
+    // hucha nueva
+    await clic('#main .subcab .volver');
+    await clic('#main .dtile[data-v="huchas"]');
+    await clic('#main [data-a="dinero-vista"][data-v="hucha-nueva"]');
+    await page.evaluate(() => { const s = (id, v) => { const el = document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
+      s('hnNom', 'Japón 216'); s('hnPre', '2400'); s('hnYa', '300'); s('hnMen', '250'); });
+    const cuando = await page.evaluate(() => (document.getElementById('hnRes') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
+    const creada = await clic('#main [data-a="hn-crear"]');
+    const h = await page.evaluate(() => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.nombre === 'Japón 216')[0];
+      return x ? { id: x.id, saldo: x.saldo, objetivo: x.objetivo, mensual: x.mensual, reparto: P.repartoDe(400)[x.id] } : null; });
+    let deseo = null;
+    if (h) {
+      await clic(`#main [data-a="deseo-nuevo"][data-h="${h.id}"]`);
+      await page.evaluate(() => { const t = document.getElementById('dsTxt'), p = document.getElementById('dsPre'); if (t) t.value = 'Vuelos 216'; if (p) p.value = '900'; });
+      await clic(`#main [data-a="deseo-add"][data-h="${h.id}"]`);
+      await clic(`#main [data-a="deseo-ok"][data-h="${h.id}"]`);
+      deseo = await page.evaluate((id) => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.id === id)[0];
+        const vuelta = P.normalize ? P.normalize(JSON.parse(JSON.stringify(P.store))) : null;
+        const y = vuelta && vuelta.ahorro ? vuelta.ahorro.huchas.filter((q) => q.id === id)[0] : null;
+        return { lista: (x.deseos || []).map((d) => d.txt + ':' + d.hecho).join(','), trasRecargar: y ? (y.deseos || []).length + '/' + y.mensual : 'sin normalize' }; }, h.id);
+    }
+    await clic('#main .subcab .volver');
+    const apartar = await clic('#main .dtile[data-v="apartar"]') && await page.evaluate(() => !!document.querySelector('#main [data-a="aho-mas"]') && !!document.querySelector('#main [data-a="aho-reto-nuevo"]'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia216; P.save(); P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Dinero: la portada dice cuánto ahorras, en qué se va y cada mes, en una pantalla',
+      portada.ahorras && portada.cats === 3 && portada.barras >= 3 && portada.tiles === 5 && portada.alto < 1200, JSON.stringify(portada));
+    check('la hoja enseña meses × categorías sin descuadrarse y cabe en el móvil',
+      aHoja && hoja && hoja.filas >= 4 && hoja.cols >= 4 && hoja.enOrden && hoja.cabeTodo, JSON.stringify(hoja));
+    check('«Descargar Excel» baja un .xlsx de verdad (zip con libro, resumen, gastos y huchas)',
+      /\.xlsx$/.test(descarga) && xlsx.pk && xlsx.libro && xlsx.hojas >= 4 && xlsx.gastos, JSON.stringify({ descarga, xlsx }));
+    check('hucha nueva: con precio, lo que tienes y el aporte, dice cuándo llegas y cuánto es en guardias',
+      /LLEGAS EN/.test(cuando) && /9 meses/.test(cuando) && /guardia/.test(cuando), cuando);
+    check('la hucha se crea con su aporte fijo, el reparto se lo da primero y la lista de deseos sobrevive a recargar',
+      creada && h && h.saldo === 300 && h.objetivo === 2400 && h.mensual === 250 && h.reparto === 250 &&
+      deseo && deseo.lista === 'Vuelos 216:true' && deseo.trasRecargar === '1/250', JSON.stringify({ h, deseo }));
+    check('lo de antes (apartar, retos) sigue en «Apartar»', apartar, String(apartar));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
