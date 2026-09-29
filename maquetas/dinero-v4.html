@@ -1,0 +1,165 @@
+<!doctype html><meta charset=utf-8>
+<title>Dinero v4</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;
+ --brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;
+ /* validados con validate_palette.js sobre #111a2b */
+ --base:#1a9fc2;--finde:#c98500;--fijo:#56657f;--vari:#d9661c;--puro:#1a9fc2;--hucha:#5cc3de}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;
+ background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px}
+.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}
+.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}
+.mes{margin-left:auto;display:flex;gap:4px;align-items:center;font-weight:800;font-size:13px}
+.mes span{width:30px;height:30px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;color:var(--ink2)}
+/* héroe: una barra = de lo que ganas, a dónde va */
+.big{font-size:40px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.big small{font-size:16px;color:var(--ink2);font-weight:800}
+.stack{display:flex;gap:2px;height:30px;border-radius:9px;overflow:hidden;margin-top:12px}
+.stack b{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#04121c}
+.stack .f{background:var(--fijo);color:#e9f2ff}.stack .v{background:var(--vari)}.stack .a{background:var(--puro)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.key{border:1px solid var(--line);border-radius:12px;padding:7px 8px;background:var(--bg2)}
+.key i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}
+.key span{font-size:10.5px;color:var(--ink2);font-weight:800}
+.key b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.key.tap{border-color:color-mix(in srgb,var(--vari) 60%,var(--line))}
+.gana{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:12px;color:var(--ink2)}
+.gana b{color:var(--ink)}.gana .ch{margin-left:auto;color:var(--brand);font-weight:800}
+/* apretar: metas en línea */
+.ap{display:grid;grid-template-columns:22px 1fr auto;gap:2px 8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.ap:first-of-type{border-top:0}
+.ap .n{font-size:13px;font-weight:700}.ap .n small{display:block;font-size:11px;color:var(--ink2);font-weight:600}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step span{width:34px;height:34px;display:grid;place-items:center;font-weight:900;color:var(--ink2)}
+.step b{min-width:48px;text-align:center;font-size:13px}
+.win{font-size:12.5px;margin-top:6px}.win b{color:var(--ok)}
+/* reparto */
+.rep{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;margin-top:8px}
+.hu{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--line)}
+.hu:first-of-type{border-top:0}
+.hu .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
+.hu .t{flex:1;min-width:0}.hu .t b{font-size:13.5px}.hu .t span{display:block;font-size:11px;color:var(--ink2)}
+.hu .m{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:4px}.hu .m i{display:block;height:100%;background:var(--hucha)}
+.hu .e{text-align:right;font-size:11px;color:var(--ink2)}.hu .e b{display:block;font-size:12.5px;color:var(--ink)}
+.foot{display:flex;gap:6px}.foot span{flex:1;text-align:center;font-size:11.5px;font-weight:800;padding:9px 0;border-radius:11px;border:1px solid var(--line);color:var(--ink2)}
+/* hoja que sube */
+.scrim{position:absolute;inset:0;background:rgba(2,4,10,.6);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:linear-gradient(var(--card),color-mix(in srgb,var(--card) 82%,var(--bg)));
+ border-top:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-radius:22px 22px 0 0;padding:8px 14px 16px}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.sh h3{margin:0;font-size:17px}.sh .sub{font-size:12px;color:var(--ink2)}
+.cat{display:grid;grid-template-columns:22px 1fr auto;gap:3px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cat .n{font-size:13.5px;font-weight:700}.cat .n small{display:block;font-size:11px;color:var(--ink2);font-weight:600}
+.cat .bar{grid-column:2/4;height:7px;border-radius:99px;background:var(--line);position:relative}
+.cat .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--vari)}
+.cat .bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.tg{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;font-size:10.5px;font-weight:800}
+.tg span{padding:4px 8px;color:var(--ink2)}.tg .on{background:var(--vari);color:#04121c}.tg .onf{background:var(--fijo);color:#e9f2ff}
+.mbar{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;align-items:end;height:110px;margin-top:6px}
+.mbar .c{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:2px}
+.mbar .c b{display:block}.mbar .c b:first-of-type{border-radius:4px 4px 0 0}
+.mbar .c em{font-style:normal;font-size:9.5px;font-weight:800;text-align:center}
+.mbar .c span{font-size:10px;color:var(--ink2);font-weight:700;text-align:center;margin-top:3px}
+.mbar .c.est b{opacity:.55}
+.slider{position:relative;height:26px;margin-top:4px}
+.slider .tr{position:absolute;left:0;right:0;top:11px;height:5px;border-radius:9px;background:var(--line)}
+.slider .fi{position:absolute;left:0;top:11px;height:5px;border-radius:9px;background:var(--brand)}
+.slider .k{position:absolute;top:2px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--ink)}
+.wish{display:flex;align-items:center;gap:9px;min-height:40px;border-top:1px solid var(--line);font-size:13px;font-weight:700}
+.wish .ck{width:20px;height:20px;border-radius:6px;border:2px solid var(--line)}
+.wish.ok .ck{background:var(--ok);border-color:var(--ok)}.wish.ok span{text-decoration:line-through;color:var(--ink2)}
+.wish em{margin-left:auto;font-style:normal;color:var(--ink2)}
+.bigbtn{display:block;text-align:center;padding:14px;border-radius:14px;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;font-weight:900;margin-top:10px}
+</style>
+
+<!-- ============ 1 · UNA pantalla: todo lo que importa ============ -->
+<div class="ab"><div class="lbl">1 · Una sola pantalla, sin scroll</div>
+ <div class="top"><h1>💶 Dinero</h1><div class="mes"><span>‹</span>octubre<span>›</span></div></div>
+ <div class="card">
+  <div class="cap">ESTE MES AHORRAS</div>
+  <div class="row" style="align-items:flex-end"><div class="big">917 <small>€</small></div><span class="sp"></span><span class="mini" style="text-align:right">37 % de lo que ganas<br>▲ 120 € más que sept.</span></div>
+  <div class="stack" role="img" aria-label="de 2.466 € ganados: 746 fijos, 803 variables, 917 ahorro">
+   <b class="f" style="flex:746">fijos</b><b class="v" style="flex:803">variables</b><b class="a" style="flex:917">ahorro</b></div>
+  <div class="keys">
+   <div class="key"><span><i style="background:var(--fijo)"></i>FIJOS</span><b>746</b></div>
+   <div class="key tap"><span><i style="background:var(--vari)"></i>VARIABLES ›</span><b>803</b></div>
+   <div class="key"><span><i style="background:var(--puro)"></i>AHORRO</span><b>917</b></div>
+  </div>
+  <div class="gana"><span>💶 Ganas <b>2.466 €</b> · con 1 guardia de finde</span><span class="ch">nov ≈ 2.766 ›</span></div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">✂️ DÓNDE APRETAR</span><span class="sp"></span><span class="mini">meta del mes</span></div>
+  <div class="ap"><span>🍽️</span><div class="n">Restaurantes<small>llevas 186 · media 237</small></div><div class="step"><span>−</span><b>150</b><span>+</span></div></div>
+  <div class="ap"><span>🎟️</span><div class="n">Ocio<small>llevas 161 · media 150</small></div><div class="step"><span>−</span><b>120</b><span>+</span></div></div>
+  <div class="win">Cumpliendo las dos: <b>+77 €/mes</b> → Japón llega en <b>mayo</b>, no en junio.</div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">REPARTO DE 917 €</span><span class="sp"></span><span class="mini">mín. 50 % ahorro puro</span></div>
+  <div class="rep"><b style="flex:50;background:var(--puro)"></b><b style="flex:27;background:var(--hucha)"></b><b style="flex:23;background:color-mix(in srgb,var(--hucha) 60%,var(--card))"></b></div>
+  <div class="hu"><span class="ic" style="background:color-mix(in srgb,var(--puro) 22%,var(--bg2))">🔒</span><div class="t"><b>Ahorro puro</b><span>6.240 € · no se toca</span></div><div class="e"><b>+459</b>50 %</div></div>
+  <div class="hu"><span class="ic" style="background:color-mix(in srgb,#38bdf8 20%,var(--bg2))">✈️</span><div class="t"><b>Japón</b><span>540 de 2.400</span><div class="m"><i style="width:22%"></i></div></div><div class="e"><b>+250</b>jun 27</div></div>
+  <div class="hu"><span class="ic" style="background:color-mix(in srgb,#fbbf24 20%,var(--bg2))">💻</span><div class="t"><b>Portátil</b><span>320 de 1.100</span><div class="m"><i style="width:29%"></i></div></div><div class="e"><b>+208</b>mar 27</div></div>
+ </div>
+ <div class="foot"><span>📷 Fintonic</span><span>＋ hucha</span><span>📊 Excel</span></div>
+</div>
+
+<!-- ============ 2 · toca «variables» → hoja ============ -->
+<div class="ab"><div class="lbl">2 · Toca «variables»: sube la hoja, sin salir</div>
+ <div class="top"><h1>💶 Dinero</h1></div>
+ <div class="scrim"></div>
+ <div class="sheet" style="top:130px">
+  <div class="grab"></div>
+  <div class="row sh"><div><h3>Gastos de octubre</h3><div class="sub">de tus capturas de Fintonic (27 oct)</div></div><span class="sp"></span><b>1.549 €</b></div>
+  <div class="cap" style="margin:12px 0 2px">🛒 VARIABLES · 803 €</div>
+  <div class="cat"><span>🛒</span><div class="n">Supermercado<small>media 286 · meta 300</small></div><div class="tg"><span class="on">variable</span><span>fijo</span></div>
+   <div class="bar"><i style="width:94%"></i><u style="left:90%"></u></div></div>
+  <div class="cat"><span>🍽️</span><div class="n">Restaurantes<small>media 237 · meta 150</small></div><div class="tg"><span class="on">variable</span><span>fijo</span></div>
+   <div class="bar"><i style="width:56%"></i><u style="left:45%"></u></div></div>
+  <div class="cat"><span>🎟️</span><div class="n">Ocio<small>media 150 · meta 120</small></div><div class="tg"><span class="on">variable</span><span>fijo</span></div>
+   <div class="bar"><i style="width:48%"></i><u style="left:36%"></u></div></div>
+  <div class="cat"><span>⛽</span><div class="n">Gasolina y taxis<small>media 60 · sin meta</small></div><div class="tg"><span class="on">variable</span><span>fijo</span></div>
+   <div class="bar"><i style="width:16%"></i></div></div>
+  <div class="cap" style="margin:12px 0 2px">🔒 FIJOS · 746 € · IGUAL CADA MES</div>
+  <div class="cat"><span>🏠</span><div class="n">Alquiler y casa<small>5 meses seguidos igual</small></div><div class="tg"><span>variable</span><span class="onf">fijo</span></div></div>
+  <div class="cat"><span>📱</span><div class="n">Suscripciones · abono · seguro</div><b>106</b></div>
+  <div class="mini" style="margin-top:6px">Toca la meta para cambiarla · la app pone «fijo» sola cuando se repite igual</div>
+ </div>
+</div>
+
+<!-- ============ 3 · toca «Japón» o «nov» → hoja ============ -->
+<div class="ab"><div class="lbl">3 · Toca una hucha (o lo que ganas): otra hoja</div>
+ <div class="top"><h1>💶 Dinero</h1></div>
+ <div class="scrim"></div>
+ <div class="sheet" style="top:92px">
+  <div class="grab"></div>
+  <div class="row sh"><span style="font-size:26px">✈️</span><div><h3>Viaje a Japón</h3><div class="sub">540 de 2.400 € · llegas en junio 2027</div></div></div>
+  <div class="row" style="margin-top:12px"><span class="cap">APARTAS CADA MES</span><span class="sp"></span><b>250 €</b></div>
+  <div class="slider"><div class="tr"></div><div class="fi" style="width:45%"></div><div class="k" style="left:45%"></div></div>
+  <div class="row mini"><span>150 € → dic 27</span><span class="sp"></span><span>350 € → abr 27</span></div>
+  <div class="mini" style="margin-top:4px">Sale de lo que va a huchas (458 €): el ahorro puro no se toca.</div>
+  <div class="row" style="margin-top:10px;gap:6px">
+   <div class="key" style="flex:1"><span>≈ GUARDIAS DE FINDE</span><b>6</b></div><div class="key" style="flex:1"><span>≈ DÍAS DE TRABAJO</span><b>18</b></div></div>
+  <div class="cap" style="margin:12px 0 2px">EN QUÉ ME LO GASTO · 2.400 €</div>
+  <div class="wish ok"><span class="ck"></span><span>Vuelos Madrid–Tokio</span><em>900</em></div>
+  <div class="wish"><span class="ck"></span><span>Hoteles (12 noches)</span><em>800</em></div>
+  <div class="wish"><span class="ck"></span><span>JR Pass 14 días</span><em>320</em></div>
+  <div class="wish"><span class="ck"></span><span>Comer y caprichos</span><em>380</em></div>
+  <div class="wish" style="color:var(--brand)">＋ añadir</div>
+  <div class="cap" style="margin:14px 0 2px">Y SI TOCAS «NOV ≈ 2.766»: LO QUE GANAS</div>
+  <div class="mbar">
+   <div class="c"><em>2.466</em><b style="height:10%;background:var(--finde)"></b><b style="height:70%;background:var(--base)"></b><span>ago</span></div>
+   <div class="c"><em>2.766</em><b style="height:20%;background:var(--finde)"></b><b style="height:70%;background:var(--base)"></b><span>sep</span></div>
+   <div class="c"><em>2.466</em><b style="height:10%;background:var(--finde)"></b><b style="height:70%;background:var(--base)"></b><span>oct</span></div>
+   <div class="c est"><em>≈2.766</em><b style="height:20%;background:var(--finde)"></b><b style="height:70%;background:var(--base)"></b><span>nov</span></div>
+   <div class="c est"><em>≈3.199</em><b style="height:10%;background:var(--finde)"></b><b style="height:70%;background:var(--base)"></b><span>dic*</span></div>
+   <div class="c est"><em>≈2.066</em><b style="height:4%;background:var(--finde)"></b><b style="height:60%;background:var(--base)"></b><span>ene</span></div>
+  </div>
+  <div class="mini">azul base · ámbar guardias de finde · claros estimados · *paga extra · en enero baja por el IRPF</div>
+ </div>
+</div>
