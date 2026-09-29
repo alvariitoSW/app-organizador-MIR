@@ -2386,7 +2386,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     const notaTrasRecargar = await page.evaluate((k) => ({
       enDisco: window.PG.notasDeFecha(k).map((x) => x.txt),
-      enLaCasilla: document.querySelectorAll('.dnota').length,
+      // la nota va en su casilla como una línea con su texto (antes era un 📝 suelto, .dnota)
+      enLaCasilla: document.querySelectorAll('.dbox .dev.nota').length,
     }), hoyKeyDia);
     check('una nota de un día se guarda al escribirla, sobrevive a recargar y se ve en su casilla',
       notaTrasRecargar.enDisco.join('|') === 'Llevar el informe de la sesión' && notaTrasRecargar.enLaCasilla === 1,
@@ -2580,7 +2581,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         contenido: Math.round(alto),
         puntos: celda.querySelectorAll('.dpt').length,
         masN: (celda.querySelector('.dmas') || {}).textContent || '',
-        nota: !!celda.querySelector('.dnota'),
+        // la nota ya no es un 📝 aparte: con la casilla llena de eventos cuenta en el «+N»
+        nota: !celda.querySelector('.dev.nota'),
         desborda: celda.scrollHeight > celda.clientHeight,
         // los que caben llevan su nombre, y NINGUNO pasa de una línea
         titulos: [...celda.querySelectorAll('.dev')].filter((x) => /Un evento de/.test(x.innerText)).length,
@@ -2588,8 +2590,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
           Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)))),
       };
     });
-    check('con diez eventos en un día, la casilla enseña cuatro de UNA línea y «+6», sin desbordarse',
-      aprieto.puntos === 4 && aprieto.masN === '+6' && aprieto.nota && aprieto.titulos === 4 &&
+    check('con diez eventos en un día, la casilla enseña cuatro de UNA línea y «+7» (seis eventos y la nota), sin desbordarse',
+      aprieto.puntos === 4 && aprieto.masN === '+7' && aprieto.nota && aprieto.titulos === 4 &&
       aprieto.maxLineas === 1 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
       JSON.stringify(aprieto));
 
@@ -8675,6 +8677,42 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !/Revisión 214/.test(r.ics) && r.google === false, JSON.stringify(r));
     check('pincel: toca un día y lo pinta, «deshacer» lo devuelve y «listo» quita la barra',
       pintado === 'sh-g' && deshecho === 'sh-t' && !r.barra, JSON.stringify({ pintado, deshecho, barra: r.barra }));
+  }
+
+  // 215) UNA NOTA CON DÍA ES UN AVISO DE ESE DÍA, encadenado: nota desde la hoja del día → sale con su
+  // texto en Mes, en la fila de Semana y en Hoy de ese día → se marca hecha desde Hoy → desaparece de
+  // los tres. Una nota SIN día no sale en ningún calendario. Antes: en Mes era un 📝 sin texto, en
+  // Semana no salía y en Hoy solo si era la de HOY.
+  {
+    const K = await page.evaluate(() => { const P = window.PG;
+      window.__copia215 = JSON.parse(JSON.stringify(P.store));
+      P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true;
+      const K = P.iso(P.addDays(new Date(), 2));
+      P.addNota('SINDIA215 idea suelta');
+      P.ui.hojaDia = K; P.ui.hojaVista = 'nota'; P.ui.tab = 'month'; P.save(); P.render(); return K; });
+    const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
+      try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
+    await page.evaluate(() => { const t = document.getElementById('hjNota'); if (t) t.value = 'AVISO215 renovar DNI'; });
+    const guardada = await clic('.hoja [data-a="hoja-nota-ok"]');
+    await clic('.hoja [data-a="hoja-cerrar"], .hscrim');
+    const ver = () => page.evaluate(() => { const t = (document.querySelector('#main') || {}).innerText || '';
+      return { aviso: /AVISO215/.test(t), sindia: /SINDIA215/.test(t) }; });
+    const mes = await ver();
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semDesde = ''; P.render(); });
+    const semana = await ver();
+    await page.evaluate((K) => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = K; P.render(); }, K);
+    const hoy = await ver();
+    // hecha desde la tarjeta de Hoy → fuera de los tres
+    const tick = await clic('#main [data-a="nota-hecha"]');
+    const hoy2 = await ver();
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.render(); });
+    const mes2 = await ver();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia215; P.save(); P.ui.diaHoy = ''; P.ui.hojaDia = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('una nota con día sale como aviso en Mes, Semana y Hoy de ese día; la de sin día, en ninguno',
+      guardada && mes.aviso && semana.aviso && hoy.aviso && !mes.sindia && !semana.sindia && !hoy.sindia,
+      JSON.stringify({ guardada, mes, semana, hoy }));
+    check('marcada hecha desde Hoy, la nota deja de salir en Hoy y en Mes', tick && !hoy2.aviso && !mes2.aviso,
+      JSON.stringify({ tick, hoy2, mes2 }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

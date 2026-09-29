@@ -2513,3 +2513,8 @@ html.hoja-abierta,html.hoja-abierta body{overflow:hidden}   /* con la hoja abier
 html.pincel-on #flash{bottom:calc(180px + env(safe-area-inset-bottom))!important}   /* el aviso, encima de la barra del pincel */
 /* con la hoja del día abierta, el aviso sale ARRIBA: abajo tapaba el «Guardar» de la hoja */
 html.hoja-abierta #flash{bottom:auto!important;top:calc(14px + env(safe-area-inset-top))}
+/* notas con día = avisos de ese día: el mismo sitio que los eventos, en ámbar para distinguirlas */
+.dbox .dev.nota .dpt,.dev.nota .dpt{background:var(--warn)}
+.dbox .dev.nota .n{color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
+.drev.nota i{background:var(--warn)}
+.drplan .pl.nota{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}

@@ -1041,6 +1041,11 @@ function notasPorFecha(){
     _notasTick=_renderTick;}
   return _notasIdx;}
 function notasDeFecha(key){return notasPorFecha()[key]||[];}
+function notasAviso(key){
+  /* «si pongo una nota en un día, que se sobreentienda que es importante»: una nota CON DÍA y sin
+     hacer es un aviso de ese día, y sale en Mes, Semana y Hoy como los eventos. La que ya se pasó a
+     evento no se repite (sale el evento); la que no tiene día se queda en la libreta y no molesta. */
+  return notasDeFecha(key).filter(function(x){return !x.hecha&&!(x.evId&&eventoDeNota(x));});}
 function notaDia(key){
   /* se queda por compatibilidad: las notas de un día, en una sola cadena */
   return notasDeFecha(key).map(function(x){return x.txt;}).join('\n');}
@@ -5262,7 +5267,7 @@ function renderHoy(){
     tocaEntrenarHTML(hoy)+
     /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
        mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
-    (esHoy?tareasHoyHTML():'')+
+    tareasHoyHTML(hoy,esHoy)+
     /* la compra es una tarea más de la semana: sale aquí cuando toca, igual que entrenar. Al
        calendario de Google no va —eso se queda en la app— */
     (esHoy?compraTocaHTML():'')+
@@ -5502,7 +5507,11 @@ function semanaFilaHTML(d,i,anyDate){
   const evs=filas.map(function(x){
     return '<div class="drev"><i style="background:'+esc(x.color)+'"></i>'+
       '<span class="h">'+esc(hCortaHM(x.hora))+(x.fin?'–'+esc(hCortaHM(x.fin)):'')+'</span>'+
-      '<span class="pl '+(x.tipo==='gym'?'gym':'evt')+'">'+x.ico+' '+esc(x.txt)+'</span></div>';}).join('');
+      '<span class="pl '+(x.tipo==='gym'?'gym':'evt')+'">'+x.ico+' '+esc(x.txt)+'</span></div>';}).join('')+
+    /* y las notas con día de ese día, como aviso: antes no salían en Semana */
+    (d.key?notasAviso(d.key).map(function(x){
+      return '<div class="drev nota"><i></i><span class="h">📝</span>'+
+        '<span class="pl nota">'+esc(String(x.txt).split('\n')[0].slice(0,60))+'</span></div>';}).join(''):'');
   /* Al desplegar un día salían las tres comidas ENTERAS —nombre largo, el menú del que salen, las
      kcal, los gramos de proteína y la pastilla de la tanda— más cuatro botones. Lo mismo que
      enseña «Hoy» y lo mismo que salía en Mes al tocar el día. Aquí se queda lo que es de la
@@ -5938,7 +5947,6 @@ function renderMonth(){
        una línea entera, así que con cuatro eventos la casilla reventaba. Un punto de color por
        evento dice cuántos hay y de qué son, cabe siempre, y el nombre entero está dos sitios más
        abajo: en la lista de eventos del mes y al tocar el día. */
-    const nt=d.key?notaDia(d.key):'';
     const marcas=[];
     /* «que quepan aunque sea en pequeño los eventos del día»: con las casillas ya altas, cada evento
        lleva su nombre en letra pequeña —hasta dos líneas, partido por palabras— y la hora DETRÁS:
@@ -5951,19 +5959,23 @@ function renderMonth(){
        «S. ge…». Está en la agenda del mes, justo debajo, y al tocar el día —y las horas que
        de verdad mandan, las del turno, siguen en su propia línea («8-15», «15→8»). */
     const EVMAX=4;
+    /* las notas con día van como los eventos, con su texto (antes: un 📝 suelto que no decía qué) */
+    const ntsDia=d.key?notasAviso(d.key):[];
+    const ntLineas=ntsDia.slice(0,Math.max(0,EVMAX-evsDia.length)).map(function(x){
+      const tt=esc(String(x.txt).split('\n')[0]);
+      return '<span class="dev nota" title="'+tt+'"><i class="dpt"></i><span class="n">📝 '+esc(tituloCasilla(String(x.txt).split('\n')[0]))+'</span></span>';}).join('');
     const evLineas=evsDia.slice(0,EVMAX).map(function(ev){
       const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo);
       return '<span class="dev" title="'+tit+'">'+
         '<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+tit+'"></i>'+
         '<span class="n">'+esc(tituloCasilla(ev.titulo))+'</span></span>';}).join('');
-    if(evsDia.length>EVMAX)marcas.push('<b class="dmas">+'+(evsDia.length-EVMAX)+'</b>');
-    if(nt)marcas.push('<b class="dnota" title="'+esc(nt)+'">📝</b>');
+    if(evsDia.length+ntsDia.length>EVMAX)marcas.push('<b class="dmas">+'+(evsDia.length+ntsDia.length-EVMAX)+'</b>');
     /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */
     const gsDia=d.key?gastosDeFecha(d.key):[];
     if(gsDia.length){const n2=new Date(),pend=gsDia.filter(function(g){return !gastoPagado(g,n2.getFullYear(),n2.getMonth());});
       marcas.push('<b class="dgasto'+(pend.length?' pend':'')+'" title="'+
         esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
-    if(evLineas)lineas.push(evLineas);
+    if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
@@ -12900,9 +12912,13 @@ function repasoHoyHTML(key){
     (t.length>4?('<p class="mini" style="margin:9px 0 0">y '+(t.length-4)+' más.</p>'):'')+
     '<div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-tab" data-t="estudio">ver Estudio →</button></div>'+
   '</div>';}
-function tareasHoyHTML(){
+function tareasHoyHTML(key,esHoy){
   /* lo que toca hoy y lo que se te pasó, en «Hoy». Sin esto, una nota con día era algo que solo
-     veías si te acordabas de entrar en la libreta. */
+     veías si te acordabas de entrar en la libreta. Mirando OTRO día salen las notas de ese día
+     (antes solo las de hoy: la nota del jueves no salía al abrir el jueves) */
+  if(key&&!esHoy){const ns=notasAviso(key);if(!ns.length)return '';
+    return '<div class="card"><h2>📝 Ese día <span class="mini">'+ns.length+'</span></h2>'+
+      ns.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';}
   const t=notasDeHoy();
   if(!t.hoy.length&&!t.tarde.length)return '';
   const n=t.hoy.length+t.tarde.length;
