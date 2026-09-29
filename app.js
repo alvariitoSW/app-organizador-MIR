@@ -13742,6 +13742,13 @@ function dinPortadaHTML(){
     '<div style="text-align:right"><b>'+(g?esc(eurR(g.total)):'—')+'</b><span>sale'+(g?(' ('+esc(g.fuente)+(g.fecha?', '+esc(fechaCorta(g.fecha)):'')+')'):' (sin captura)')+'</span></div></div>';
   const meter=(g&&pres)?('<div class="dmeter" role="img" aria-label="gastado '+eurR(g.total)+' de un tope de '+eurR(pres)+'"><b style="width:'+Math.min(100,Math.round(g.total/pres*100))+'%;background:'+C.gasto+'"></b></div>'+
     '<div class="row mini" style="margin-top:5px"><span>gastado <b style="color:var(--ink)">'+Math.round(g.total/pres*100)+' %</b> de tu tope ('+esc(eurR(pres))+')</span></div>'):'';
+  /* lo del banco y cuándo llega la nómina (estaba en la tarjeta de Fintonic, que ahora vive en «Apartar»):
+     es lo que se mira a fin de mes, así que va aquí en una línea */
+  let banco='';
+  if(mk===mkHoy){const u=finUltima(),hk=iso(hoy),L=proximaNomina(hk),dias=Math.max(0,Math.round((parseDate(iso(L.llega))-parseDate(hk))/86400000));
+    const nomTxt=dias===0?'la nómina llega hoy':('la nómina llega el '+DOWN0[L.llega.getDay()]+' '+L.llega.getDate());
+    banco='<div class="dbanco finreal">'+(u&&u.banco!=null?'<span>🏦 <b>'+esc(eur(u.banco))+'</b> en el banco'+(u.fecha<hk?' ('+esc(fechaCorta(u.fecha))+')':'')+'</span>':'')+
+      '<span>💶 '+esc(nomTxt)+(u&&u.banco!=null&&dias>0?' · <b>'+esc(eurR(Math.floor(u.banco/Math.max(1,dias))))+'</b> al día hasta entonces':'')+'</span></div>';}
   const apartar='<button class="dapartar" data-a="dinero-vista" data-v="apartar"><span>'+(x.hecho?'✓ apartado':'Este mes apartas')+' <b>'+esc(eurR(x.aparto||0))+'</b></span><span>'+(x.hecho?'ver ›':'apartar ›')+'</span></button>';
   // en qué se va
   let cats='';
@@ -13799,7 +13806,7 @@ function dinPortadaHTML(){
   return '<div class="grid dinv2">'+
     '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><div class="dmes"><button data-a="din-mes" data-d="-1" aria-label="mes anterior">‹</button>'+
       '<b>'+esc(MONTH_FULL[t.m].toLowerCase())+(t.y!==hoy.getFullYear()?' '+t.y:'')+'</b><button data-a="din-mes" data-d="1" aria-label="mes siguiente"'+(mk>=mkHoy?' disabled':'')+'>›</button></div></div>'+
-    '<div class="card dhero">'+hero+flujo+meter+apartar+'</div>'+cats+graf+tiles+'</div>';}
+    '<div class="card dhero">'+hero+flujo+meter+banco+apartar+'</div>'+cats+graf+tiles+'</div>';}
 
 /* ---- la hoja ---- */
 function hojaDatos(anio){
