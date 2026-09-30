@@ -8730,7 +8730,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         const d = new Date(hoy.getFullYear(), hoy.getMonth() - x[0], 15, 12), mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
         a.real.push({ fecha: P.iso(d), hora: '', mes: mk, banco: 3000, ingresos: 2700, gastos: x[1] + x[2] + x[3],
           cats: { 'Alquiler y casa': x[1], 'Supermercado': x[2], 'Restaurantes': x[3] } }); });
-      P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.dinMes = ''; P.ui.hojaTodo = false; P.save(); P.render(); });
+      P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorros'; P.ui.dineroVista = ''; P.ui.dinMes = ''; P.ui.hojaTodo = false; P.save(); P.render(); });
     const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
       try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
     const portada = await page.evaluate(() => { const m = document.querySelector('#main');
@@ -8892,7 +8892,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
         { id: 'hu-v', nombre: 'Viajes', ico: '✈️', color: '#38bdf8', pct: 60, objetivo: 0, meta: '', saldo: 800, mensual: 0, deseos: [] },
         { id: 'hu-c', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 40, objetivo: 0, meta: '', saldo: 300, mensual: 0, deseos: [] }];
-      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.render();
+      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorros'; P.ui.dineroVista = ''; P.render();
       return { total: (document.querySelector('.din5 .dbig') || {}).textContent || '', filas: document.querySelectorAll('.d5pk').length }; });
     await page.click('[data-a="din-hoja"][data-h="gaste"]'); await page.waitForTimeout(120);
     await page.click('.hoja [data-a="din-gaste-de"][data-id="hu-v"]'); await page.waitForTimeout(80);
@@ -8984,6 +8984,38 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { queda: P.store.food.cocinado[0].queda, grises: document.querySelectorAll('.cocq .t i.o').length }; });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.render(); });
     check('lo cocinado: apuntar una ración la descuenta y se ve gris en Cocina', co.queda === 3 && co.grises === 1, JSON.stringify(co));
+  }
+
+  // 221) DINERO v6 · ANÁLISIS: cuánto puedes gastar hoy (lo variable que queda, ya quitados lo fijo y
+  // el ahorro, entre los días que faltan), cada categoría contra tu media, consejos con lo que ganas,
+  // la meta de una categoría y la revisión 50/30/20
+  {
+    const d6 = await page.evaluate(() => { const P = window.PG, a = P.ahorroS(); a.real = []; const hoy = new Date();
+      const cats = [['Alquiler y casa', 640, 640, 640, 640, 640], ['Supermercado', 270, 295, 284, 279, 191], ['Restaurantes', 160, 210, 198, 150, 238], ['Ocio', 90, 110, 95, 97, 134], ['Suscripciones', 42, 42, 42, 42, 42]];
+      for (let i = 4; i >= 0; i--) { const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, i ? 28 : 1, 12), mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const c = {}; let t = 0; cats.forEach((x) => { c[x[0]] = x[5 - i]; t += x[5 - i]; }); a.real.unshift({ fecha: P.iso(d), hora: '', mes: mk, banco: 3000, ingresos: 2700, gastos: t, cats: c }); }
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      const M = P.d6Mes(), big = (document.querySelector('.din6 .dbig') || {}).textContent || '';
+      return { M: { ingreso: M.ingreso, fijos: M.fijos, ahorro: M.ahorro, presu: M.presu, gastado: M.gastado, queda: M.queda, dias: M.dias, hoyMax: M.hoyMax },
+        big: big.replace(/\s+/g, ' '), filas: [...document.querySelectorAll('.din6 .d6cat .n')].map((e) => e.textContent),
+        tips: [...document.querySelectorAll('.d6tip .t b')].map((e) => e.textContent) }; });
+    const M = d6.M;
+    check('Dinero · Este mes: «puedes gastar hoy» = lo variable que queda (sin fijos ni ahorro) entre los días que faltan, y dice dónde se te va y dónde ahorrar',
+      M.presu === Math.max(0, M.ingreso - M.fijos - M.ahorro) && M.queda === Math.max(0, M.presu - M.gastado) && M.hoyMax === Math.floor(M.queda / M.dias) &&
+      d6.big.indexOf(String(M.hoyMax).replace(/\B(?=(\d{3})+(?!\d))/g, '.')) === 0 && d6.filas[0] === 'Restaurantes' && !d6.filas.includes('Alquiler y casa') &&
+      d6.tips.some((t) => /Restaurantes a \d+ €/.test(t)), JSON.stringify(d6));
+    await page.click('[data-a="dinero-vista"][data-v="analisis"]'); await page.waitForTimeout(150);
+    const an = await page.evaluate(() => ({ n: document.querySelectorAll('.din6 .d6cat').length, fijo: [...document.querySelectorAll('.din6 .d6cat')].filter((b) => /fijo/.test(b.innerText)).map((b) => b.dataset.c) }));
+    await page.click('.d6cat[data-c="Restaurantes"]'); await page.waitForTimeout(150);
+    await page.click('[data-a="din-meta"][data-c="Restaurantes"]'); await page.waitForTimeout(120);
+    const cat = await page.evaluate(() => ({ barras: document.querySelectorAll('.d6m > div').length, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), meta: (window.PG.store.ahorro.catCfg || {}).Restaurantes }));
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); });
+    const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' '), m = /necesidades (\d+) % .*?caprichos (\d+) % .*?ahorro (\d+) %/.exec(t);
+      return { suma: m ? +m[1] + +m[2] + +m[3] : null, colchon: /Fondo de emergencia/.test(t), aviso: /no asesoramiento/.test(t) }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Dinero · análisis: todas las categorías (lo fijo marcado), la de una categoría con sus 6 meses y su meta dice lo que ganas al año, y la salud financiera cuadra el 50/30/20',
+      an.n === 5 && an.fijo.includes('Alquiler y casa') && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
+      sal.suma === 100 && sal.colchon && sal.aviso, JSON.stringify({ an, cat: { barras: cat.barras, meta: cat.meta }, sal }));
   }
 
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»

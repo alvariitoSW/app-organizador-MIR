@@ -13638,11 +13638,15 @@ function renderDinero(){
   if(v==='apartar')return renderAhorro();
   if(v==='cierre')return renderDinCierre();
   if(v==='plan')return renderDinPlan();
-  $('#main').innerHTML=dinPortadaHTML();}
+  if(v==='analisis')return renderDinAnalisis();
+  if(v==='categoria')return renderDinCategoria();
+  if(v==='salud')return renderDinSalud();
+  /* dos portadas: «Este mes» (lo que puedes gastar y en qué se te va) y «Ahorros» (los bolsillos) */
+  $('#main').innerHTML=ui.dinTab==='ahorros'?dinPortadaHTML():dinMesHTML();}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas',apartar:'Apartar'}[vv]||'Dinero')+'</button>'+
+    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas',apartar:'Apartar',analisis:'Análisis'}[vv]||'Dinero')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function renderDineroMes(){
   const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth();
@@ -14545,7 +14549,7 @@ function dinPortadaHTML(){
     '<button data-a="din-hoja" data-h="gastos">🧾 Gastos</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button>'+
     '<button data-a="dinero-vista" data-v="apartar" aria-label="más: nómina, retos y lo que viene">⋯</button></div>';
   return '<div class="grid dinv2 din5">'+
-    '<div class="dtop"><h2 class="subtit">💶 Ahorros</h2><span class="mini">'+esc(MONTH_FULL[hoy.getMonth()].toLowerCase())+'</span></div>'+
+    '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><span class="sp"></span><div class="d6seg"><button data-a="d6-tab" data-v="">Este mes</button><button class="on">Ahorros</button></div></div>'+
     '<div class="card"><div class="cap">TIENES AHORRADO</div><div class="dbig">'+esc(fmtMil(total))+' <small>€</small></div>'+stack+filas+'</div>'+
     '<div class="two d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté ahorros</button><button class="btn" data-a="dinero-vista" data-v="plan">⚖️ Mi plan</button></div>'+
     mes+hist+pie+'</div>';}
@@ -14637,6 +14641,161 @@ function gasteApuntar(){
   ui.dinGaste=null;save();
   return eurR(s.v)+' de «'+txt+'»: '+Object.keys(s.salen).filter(function(id){return s.salen[id];}).map(function(id){
     const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];return (h?h.nombre:'')+' −'+eurR(s.salen[id]);}).join(', ');}
+/* ===================== DINERO v6 · analizar lo que gastas =====================
+   «Que me haga un análisis de gastos, que me diga en qué debería ahorrar más, en qué me tengo que
+   fijar para gastar menos, cuánto debería gastarme al día máximo y que me ayude con consejos.»
+   Con las capturas de Fintonic: lo que puedes gastar hoy (lo variable que te queda entre los días
+   que faltan, con lo fijo y tu ahorro ya descontados), cada categoría contra tu media, los consejos
+   con lo que ganas al mes y al año, y una revisión de lo básico. Una sola escala por gráfico; azul =
+   dentro, naranja = por encima, gris = fijo (paleta validada). */
+function d6Mes(mk){
+  /* el mes desde las capturas: fijos esperados (lo fijo de este mes o su media, lo que sea mayor:
+     el alquiler puede no haberse cobrado aún), variable gastado y presupuesto variable */
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());mk=mk||mkHoy;
+  const e=entraMes(mk),ingreso=e?Math.round(e.neto):0,p=mesPartes(mk);
+  let fijosMedia=0;(p?p.F:[]).forEach(function(k){const m=catMedia(k,mk);if(m!=null)fijosMedia+=m;});
+  const fijos=p?Math.max(p.fijos,fijosMedia):fijosMedia;
+  const ahorro=Math.round(ingreso*metaPct()/100),presu=Math.max(0,Math.round(ingreso-fijos-ahorro));
+  const t=ahoYm(mk),dim=new Date(t.y,t.m+1,0).getDate(),dia=mk===mkHoy?hoy.getDate():dim;
+  const gastado=p?Math.round(p.vars):0,queda=Math.max(0,presu-gastado),dias=Math.max(1,dim-dia+1);
+  const toca=dia/dim,lleva=presu?gastado/presu:0;
+  const est=!p?'sin':(lleva<=toca+0.05?'bien':(lleva<=toca+0.15?'ojo':'pasa'));
+  return {mk:mk,e:e,ingreso:ingreso,p:p,fijos:Math.round(fijos),ahorro:ahorro,presu:presu,gastado:gastado,queda:queda,dias:dias,dia:dia,dim:dim,
+    hoyMax:Math.floor(queda/dias),toca:toca,lleva:lleva,est:est,fecha:p&&p.g?p.g.fecha:''};}
+function d6Cats(mk){
+  /* cada categoría de este mes con su media (hasta 4 meses anteriores) */
+  const p=mesPartes(mk);if(!p)return [];
+  return Object.keys(p.g.cats).map(function(k){const v=+p.g.cats[k]||0,m=catMedia(k,mk),fijo=catEsFijo(k,mk);
+    return {k:k,v:Math.round(v),m:m==null?null:Math.round(m),fijo:fijo,d:m?Math.round((v-m)/m*100):null,meta:(catCfg()[k]||{}).meta||0};})
+    .filter(function(c){return c.v>0||c.m;}).sort(function(a,b){return b.v-a.v;});}
+function d6Consejos(mk){
+  /* en qué ahorrar: lo variable que pasa de tu media, las suscripciones y las guardias de más */
+  const out=[],cs=d6Cats(mk);
+  cs.filter(function(c){return !c.fijo&&c.m&&c.m>=30;}).forEach(function(c){
+    const meta=c.meta>0?c.meta:Math.round(c.m*0.85/10)*10,gana=Math.round(Math.max(c.v,c.m)-meta);
+    if(gana<8||(c.v<=c.m*1.05&&!(c.meta>0)))return;
+    out.push({ico:finCatIco(c.k),t:c.k+' a '+meta+' €',s:'este mes llevas '+c.v+' € · tu media '+c.m+' €',v:gana,k:c.k});});
+  cs.filter(function(c){return /suscrip|streaming|plataforma|netflix|spotify/i.test(c.k)&&c.v>=15;}).forEach(function(c){
+    out.push({ico:'📱',t:'Revisa tus suscripciones',s:c.v+' €/mes fijos: ¿usas todas?',v:Math.round(c.v*0.35),k:c.k});});
+  const t=ahoYm(mk),nm=nominaMes(t.y,t.m);
+  if(nm.ep&&nm.finde>1&&nm.ep.finde>0)out.push({ico:'🩺',t:'La guardia de finde extra, directa al bolsillo',s:'este mes cobras '+(nm.finde-1)+' de finde más',v:Math.round((nm.finde-1)*nm.ep.finde),una:true});
+  return out.sort(function(a,b){return b.v-a.v;}).slice(0,3);}
+function d6Barra(v,m,max,cls){
+  return '<div class="d6t"><i class="'+cls+'" style="width:'+Math.min(100,Math.round(v/max*100))+'%"></i>'+(m!=null?'<u style="left:'+Math.min(100,Math.round(m/max*100))+'%"></u>':'')+'</div>';}
+function d6CatFila(c,max){
+  const sobre=c.m&&c.v>c.m*1.15,cls=c.fijo?'f':(sobre?'x':'');
+  return '<button class="d6cat" data-a="d6-cat" data-c="'+esc(c.k)+'"><span>'+finCatIco(c.k)+'</span><span class="n">'+esc(c.k)+'</span>'+d6Barra(c.v,c.m,max,cls)+
+    '<b>'+fmtMil(c.v)+' €<small class="'+(c.fijo?'':(c.d==null?'':(c.d>5?'ex':(c.d<-5?'ok':''))))+'">'+(c.fijo?'fijo':(c.d==null?'nuevo':((c.d>0?'+':'')+c.d+' %')))+'</small></b></button>';}
+function dinMesHTML(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),M=d6Mes(mkHoy);
+  const cs=d6Cats(mkHoy).filter(function(c){return !c.fijo;}).slice(0,4),max=Math.max(1,Math.max.apply(null,cs.map(function(c){return Math.max(c.v,c.m||0);})));
+  const tips=d6Consejos(mkHoy);
+  const ESTTXT={bien:['vas bien','ok'],ojo:['un poco por encima','warn'],pasa:['vas pasado','ex'],sin:['sin captura','']};
+  const hero=M.p?('<div class="cap">PUEDES GASTAR HOY</div>'+
+      '<div class="row" style="align-items:flex-end"><div class="dbig">'+fmtMil(M.hoyMax)+' <small>€</small></div><span class="sp"></span>'+
+        '<div style="text-align:right"><b class="'+ESTTXT[M.est][1]+'">'+ESTTXT[M.est][0]+'</b><div class="mini">te quedan '+fmtMil(M.queda)+' € para '+M.dias+' día'+(M.dias===1?'':'s')+'</div></div></div>'+
+      '<div class="d6bul" role="img" aria-label="gastado '+M.gastado+' de '+M.presu+' euros; a estas alturas tocaría el '+Math.round(M.toca*100)+' %">'+
+        '<i class="'+(M.est==='pasa'?'x':'')+'" style="width:'+Math.min(100,Math.round(M.lleva*100))+'%"></i><u style="left:'+Math.round(M.toca*100)+'%"></u>'+
+        '<em style="left:'+Math.round(M.toca*100)+'%;transform:translateX('+(M.toca>0.75?'-100%':(M.toca<0.25?'0':'-50%'))+')">a día '+M.dia+' tocaría el '+Math.round(M.toca*100)+' %</em></div>'+
+      '<div class="mini" style="margin-top:22px">Lo variable: <b style="color:var(--ink)">'+fmtMil(M.gastado)+' de '+fmtMil(M.presu)+' €</b>. Ya descontados lo fijo ('+fmtMil(M.fijos)+' €) y tu ahorro ('+metaPct()+' % = '+fmtMil(M.ahorro)+' €)'+
+        (M.fecha?' · captura del '+esc(fechaCorta(M.fecha)):'')+'.</div>'):
+    ('<div class="cap">PUEDES GASTAR HOY</div><div class="dbig">— <small>€</small></div>'+
+      '<p class="mini" style="margin:6px 0 0">Sube una captura de Fintonic de este mes y te digo cuánto puedes gastar cada día, en qué se te va y dónde ahorrar.</p>'+
+      '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>');
+  return '<div class="grid dinv2 din6 mt">'+
+    '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><span class="sp"></span><div class="d6seg"><button class="on">Este mes</button><button data-a="d6-tab" data-v="ahorros">Ahorros</button></div></div>'+
+    '<div class="card">'+hero+bancoLineaHTML(mkHoy,mkHoy)+'</div>'+
+    (cs.length?('<div class="card"><div class="row"><span class="cap">DÓNDE SE TE VA</span><span class="sp"></span><span class="mini">este mes · <b style="color:var(--ink)">|</b> tu media</span></div>'+
+      cs.map(function(c){return d6CatFila(c,max);}).join('')+
+      '<div class="mini" style="margin-top:4px"><span class="h2leg"></span>en tu media <span class="h2leg x"></span>por encima (+15 %) · <button class="dlink" data-a="dinero-vista" data-v="analisis">ver todo ›</button></div></div>'):'')+
+    (tips.length?('<div class="card"><div class="row"><span class="cap">PARA AHORRAR MÁS</span><span class="sp"></span><span class="mini">al mes</span></div>'+
+      tips.map(function(t){return '<button class="d6tip"'+(t.k?' data-a="d6-cat" data-c="'+esc(t.k)+'"':'')+'><span class="ic">'+t.ico+'</span><span class="t"><b>'+esc(t.t)+'</b><span>'+esc(t.s)+'</span></span>'+
+        '<span class="v">+'+fmtMil(t.v)+' €<small>'+(t.una?'una vez':'≈ '+fmtMil(t.v*12)+' €/año')+'</small></span></button>';}).join('')+'</div>'):'')+
+    '<div class="two d5two"><button class="btn" data-a="dinero-vista" data-v="analisis">📊 Análisis</button><button class="btn" data-a="dinero-vista" data-v="salud">💡 Tu salud financiera</button></div>'+
+    '<div class="d4pie"><label>📷 Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
+      '<button data-a="din-hoja" data-h="gastos">🧾 Fijos/variables</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button>'+
+      '<button data-a="dinero-vista" data-v="apartar" aria-label="más: nómina, retos y lo que viene">⋯</button></div>'+
+  '</div>';}
+function renderDinAnalisis(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,t=ahoYm(mk),M=d6Mes(mk),cs=d6Cats(mk);
+  const max=Math.max(1,Math.max.apply(null,cs.map(function(c){return Math.max(c.v,c.m||0);}).concat([1])));
+  const total=M.p?Math.round(M.p.total):0,ah=Math.max(0,M.ingreso-total);
+  const top=cs.filter(function(c){return !c.fijo&&c.m&&c.v>c.m;}).sort(function(a,b){return (b.v-b.m)-(a.v-a.m);}).slice(0,2);
+  const T=Math.max(1,M.ingreso);
+  $('#main').innerHTML='<div class="grid dinv2 din6 mt">'+dinSubcab('Análisis de gastos','<span class="sp"></span><div class="dmes"><button data-a="din-mes" data-d="-1" aria-label="mes anterior">‹</button><b>'+esc(MON[t.m])+'</b><button data-a="din-mes" data-d="1" aria-label="mes siguiente"'+(mk>=mkHoy?' disabled':'')+'>›</button></div>')+
+    (M.p?('<div class="card"><div class="row"><span class="cap">GASTASTE</span><span class="sp"></span><span class="mini">de lo que ganaste ('+fmtMil(M.ingreso)+' €)</span></div>'+
+      '<div class="row" style="align-items:baseline"><div class="dbig">'+fmtMil(total)+' <small>€</small></div><span class="sp"></span><b>'+Math.round(total/T*100)+' %</b></div>'+
+      '<div class="d6stk"><i style="flex:'+Math.round(M.p.fijos)+';background:var(--bp)"></i><i style="flex:'+Math.round(M.p.vars)+';background:var(--bc)"></i>'+(ah?'<i style="flex:'+ah+';background:var(--bg3)"></i>':'')+'</div>'+
+      '<div class="mini" style="margin-top:4px"><span class="d6k" style="background:var(--bp)"></span>fijos '+fmtMil(M.p.fijos)+' <span class="d6k" style="background:var(--bc)"></span>variables '+fmtMil(M.p.vars)+(ah?' <span class="d6k" style="background:var(--bg3)"></span>ahorro '+fmtMil(ah):'')+'</div></div>'+
+    '<div class="card"><div class="row"><span class="cap">POR CATEGORÍA</span><span class="sp"></span><span class="mini">€ · <b style="color:var(--ink)">|</b> tu media</span></div>'+
+      cs.map(function(c){return d6CatFila(c,max);}).join('')+
+      '<p class="mini" style="margin:6px 0 0">Gris: fijos (no se recortan de un mes para otro). Toca una para ver sus meses.</p></div>'+
+    (top.length?('<div class="card"><div class="cap">LO QUE MÁS HA CAMBIADO</div><p class="mini" style="margin:4px 0 0">'+
+      top.map(function(c){return finCatIco(c.k)+' '+esc(c.k)+' <b class="ex">+'+(c.v-c.m)+' €</b>';}).join(' y ')+' sobre tu media'+
+      (top.length>1?': entre las dos, <b style="color:var(--ink)">'+top.reduce(function(s,c){return s+c.v-c.m;},0)+' €</b> que este mes no han ido a tus bolsillos.':'.')+'</p></div>'):'')):
+    '<div class="card"><p class="mini" style="margin:0">Sin captura de Fintonic de '+esc(MONTH_FULL[t.m].toLowerCase())+'.</p></div>')+
+  '</div>';}
+const D6_COMO=[
+  [/restaur|bar|comida fuera|delivery|glovo|uber eats/i,['Los días de guardia y de saliente es cuando más se come fuera: deja un táper hecho la víspera.','Pedir a domicilio cuesta varias veces lo que cocinar lo mismo: mira Comer → Rápido y sano.']],
+  [/super|mercad|aliment/i,['Ve con la lista de Compra: sale de tu menú y evita lo que no ibas a comer.','Compra una vez por semana: cada visita extra suma caprichos.']],
+  [/ocio|entreten|cine|concierto/i,['Ponle una meta y mírala a mitad de mes.','Lo que sobre de la meta, a Caprichos: gastar sin culpa lo que sí está previsto.']],
+  [/transp|gasolin|coche|taxi|parking|uber|cabify/i,['Los taxis/VTC a la vuelta de guardia pesan: compara con el abono o el coche compartido.']],
+  [/compra|ropa|moda|amazon/i,['Espera 48 h antes de comprar lo que no es urgente: la mitad se olvida.']],
+  [/suscrip|telef|móvil|movil|internet|streaming/i,['Revisa qué usas de verdad: una plataforma que no abres en un mes, fuera.']]];
+function renderDinCategoria(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),k=ui.dinCat||'',cf=catCfg()[k]||{};
+  const ms=[];for(let i=5;i>=0;i--){const mk=mkSuma(mkHoy,-i),g=gastoMes(mk);ms.push({mk:mk,v:g&&g.cats[k]!=null?Math.round(+g.cats[k]||0):null});}
+  const con=ms.filter(function(x){return x.v!=null;}),media=con.length?Math.round(con.reduce(function(s,x){return s+x.v;},0)/con.length):0;
+  const meta=cf.meta>0?cf.meta:0,ref=meta||media,max=Math.max(1,Math.max.apply(null,con.map(function(x){return x.v;}).concat([ref*1.15])));
+  const gana=meta&&media>meta?media-meta:0;
+  const hs=ahorroS().huchas.filter(function(h){return h.id!==puroHucha().id&&h.objetivo>h.saldo;}),h=hs[0];
+  let efecto='';if(h&&gana){const br=baseReparto(mkHoy).v,a0=repartoDe(br)[h.id]||0,a1=repartoDe(br+gana)[h.id]||0,l0=llegadaHucha(h.objetivo,h.saldo,a0),l1=llegadaHucha(h.objetivo,h.saldo,a1);
+    if(l1.mk&&l1.mk!==l0.mk)efecto='A tu bolsillo '+esc(h.ico+' '+h.nombre)+': <b style="color:var(--ink)">llegas en '+esc(mkLargo(l1.mk))+(l0.mk?' y no en '+esc(mkLargo(l0.mk)):'')+'</b>.';}
+  const como=(D6_COMO.filter(function(x){return x[0].test(k);})[0]||[null,['Ponle una meta y la app te dice cada mes cómo vas.']])[1];
+  $('#main').innerHTML='<div class="grid dinv2 din6 mt">'+dinSubcab(finCatIco(k)+' '+k,'','analisis')+
+    '<div class="card"><div class="row"><span class="cap">ÚLTIMOS 6 MESES</span><span class="sp"></span><span class="mini">media '+fmtMil(media)+' €'+(meta?' · - - meta '+meta+' €':'')+'</span></div>'+
+      '<div class="d6m" role="img" aria-label="'+esc(k)+' los últimos 6 meses">'+(ref?'<span class="obj" style="bottom:'+(Math.round(ref/max*64)+15)+'px"></span>':'')+
+      ms.map(function(x){const sobre=x.v!=null&&ref&&x.v>ref*1.1;
+        return '<div class="'+(x.v==null?'v':(sobre?'x':''))+'"><em>'+(x.v==null?'':fmtMil(x.v))+'</em><i style="height:'+(x.v==null?3:Math.max(3,Math.round(x.v/max*64)))+'px'+(x.mk===mkHoy?';opacity:.7':'')+'"></i><span'+(x.mk===mkHoy?' class="hoy"':'')+'>'+esc(mkCorto(x.mk))+'</span></div>';}).join('')+'</div>'+
+      '<div class="mini" style="margin-top:4px"><span class="h2leg"></span>dentro'+(meta?' de la meta':' de tu media')+' (±10 %) <span class="h2leg x"></span>por encima</div></div>'+
+    '<div class="card"><div class="row"><span class="cap">TU META</span><span class="sp"></span>'+metaStepHTML(k,meta?meta:null,media)+'</div>'+
+      (gana?'<p class="mini" style="margin:8px 0 0">Con '+meta+' €/mes en vez de tu media de '+media+' €: <b class="ok">+'+gana+' €/mes · '+fmtMil(gana*12)+' €/año</b></p>':
+        '<p class="mini" style="margin:8px 0 0">'+(meta?'Tu media ya está dentro de la meta. 👌':'Ponle una meta y te digo cuánto ganas al año.')+'</p>')+
+      (efecto?'<p class="mini" style="margin:4px 0 0">'+efecto+'</p>':'')+'</div>'+
+    '<div class="card"><div class="cap">CÓMO</div>'+como.map(function(t){return '<div class="d6chk"><span>💡</span><span>'+esc(t)+'</span></div>';}).join('')+'</div>'+
+  '</div>';}
+function renderDinSalud(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  /* el último mes con captura completa (el anterior) y, si no, este */
+  let mk=mkSuma(mkHoy,-1);if(!mesPartes(mk))mk=mkHoy;
+  const M=d6Mes(mk),p=M.p,T=Math.max(1,M.ingreso);
+  let nec=0,cap=0;if(p)Object.keys(p.g.cats).forEach(function(k){const v=+p.g.cats[k]||0;
+    if(catEsFijo(k,mk)||/super|mercad|aliment|transp|salud|farma|m[eé]dic/i.test(k))nec+=v;else cap+=v;});
+  const ah=Math.max(0,M.ingreso-nec-cap),pn=Math.round(nec/T*100),pc=Math.round(cap/T*100),pa=Math.max(0,100-pn-pc);
+  const colchon=puroHucha().saldo,gm=(function(){let s=0,n=0;for(let i=1;i<=4;i++){const g=gastoMes(mkSuma(mkHoy,-i));if(g){s+=g.total;n++;}}return n?s/n:(p?p.total:0);})();
+  const meses=gm?Math.round(colchon/gm*10)/10:0;
+  const Mh=d6Mes(mkHoy),varMedia=(function(){let s=0,n=0;for(let i=1;i<=4;i++){const pp=mesPartes(mkSuma(mkHoy,-i));if(pp){s+=pp.vars;n++;}}return n?s/n:0;})();
+  const dv=varMedia&&Mh.p?Math.round((Mh.gastado/Math.max(1,Mh.toca)-varMedia)/varMedia*100):null;
+  const deuda=p?Object.keys(p.g.cats).filter(function(k){return /pr[eé]stamo|cr[eé]dito|financ|tarjeta|aplaz/i.test(k)&&+p.g.cats[k]>0;}):[];
+  const inv=ahorroS().huchas.some(function(h){return /invers/i.test(h.nombre);});
+  const ep=epocaDe(mkHoy),sig=ahorroS().epocas.filter(function(e){return e.desde>mkHoy;}).sort(function(a,b){return a.desde.localeCompare(b.desde);})[0];
+  const baja=ep&&sig&&sig.neto<ep.neto?Math.round(ep.neto-sig.neto):0;
+  const fila=function(ic,t,s,est,cl){return '<div class="d6chk"><span>'+ic+'</span><span><b>'+t+'</b><br><span class="mini">'+s+'</span></span><b class="'+cl+'">'+est+'</b></div>';};
+  $('#main').innerHTML='<div class="grid dinv2 din6 mt">'+dinSubcab('💡 Tu salud financiera')+
+    (p?('<div class="card"><div class="row"><span class="cap">REGLA 50 / 30 / 20</span><span class="sp"></span><span class="mini">'+esc(MONTH_FULL[ahoYm(mk).m].toLowerCase())+' vs la regla</span></div>'+
+      '<div class="d6rule"><span>Tú</span><div class="d6stk"><i style="flex:'+pn+';background:var(--bp)"></i><i style="flex:'+pc+';background:var(--bc)"></i>'+(pa?'<i style="flex:'+pa+';background:var(--bg3)"></i>':'')+'</div></div>'+
+      '<div class="d6rule"><span>Regla</span><div class="d6stk" style="opacity:.55"><i style="flex:50;background:var(--bp)"></i><i style="flex:30;background:var(--bc)"></i><i style="flex:20;background:var(--bg3)"></i></div></div>'+
+      '<div class="mini" style="margin-top:6px"><span class="d6k" style="background:var(--bp)"></span>necesidades '+pn+' % <span class="d6k" style="background:var(--bc)"></span>caprichos '+pc+' % <span class="d6k" style="background:var(--bg3)"></span>ahorro '+pa+' %'+
+        ' · <b class="'+(pa>=20?'ok':'warn')+'">'+(pa>=35?'ahorras mucho más de lo que pide la regla':(pa>=20?'cumples la regla':'por debajo del 20 % de ahorro'))+'</b></div></div>'):'')+
+    '<div class="card"><div class="cap">LO BÁSICO</div>'+
+      fila(meses>=3?'✅':'⚠️','Fondo de emergencia',fmtMil(colchon)+' € en '+esc(puroHucha().nombre)+' = '+String(meses).replace('.',',')+' meses de gastos (meta 3–6)',meses>=3?'bien':(meses>=1?'ojo':'falta'),meses>=3?'ok':'warn')+
+      (dv!=null?fila(dv>15?'⚠️':'✅','Gasto variable este mes',(dv>0?'+':'')+dv+' % sobre tu media, al ritmo que llevas',dv>15?'ojo':'bien',dv>15?'warn':'ok'):'')+
+      fila(deuda.length?'⚠️':'✅','Deudas caras',deuda.length?('en tus capturas: '+esc(deuda.join(', '))):'ninguna categoría de préstamos o tarjeta en tus capturas',deuda.length?'ojo':'bien',deuda.length?'warn':'ok')+
+      (meses>=3&&!inv?fila('💡','Invertir lo que no vas a tocar en años','con el colchón hecho, lo que sobre de él rinde más a largo plazo en un fondo indexado que en la cuenta. Puedes crear un bolsillo de inversión en «Mi plan»','idea',''):'')+
+      (baja?fila('💡','Cuando cambie tu nómina ('+esc(mkLargo(sig.desde))+')','cobrarás ~'+fmtMil(baja)+' € menos: tu máximo diario pasará de unos '+fmtMil(Math.floor(Mh.presu/30))+' € a '+fmtMil(Math.max(0,Math.floor((Mh.presu-baja*(1-metaPct()/100))/30)))+' €','aviso',''):'')+
+    '</div>'+
+    '<p class="mini" style="text-align:center;margin:0 10px">Son pautas generales con tus números, no asesoramiento financiero personalizado.</p>'+
+  '</div>';}
 /* ---- las hojas de Dinero: suben encima, como la del día en Mes ---- */
 function dinHojaHTML(){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,C=dinCol(),h0=ui.dinHoja||'';
@@ -17312,6 +17471,8 @@ function act(a,el){
       const ps=protoS()[pm.c];if(ps.length<3)ps.push(m.id);save();flash('prototipo guardado: '+d.name);ui.prCls=pm.c;ui.pm=null;ui.typesVista='protos';render();window.scrollTo(0,0);break;}
     case 'compra-todo':ui.compraTodo=!ui.compraTodo;render();break;
     case 'nav-atras':navAtras();break;
+    case 'd6-tab':ui.dinTab=el.dataset.v||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
+    case 'd6-cat':ui.dinCat=el.dataset.c||'';ui.dineroVista='categoria';render();window.scrollTo(0,0);break;
     case 'fb-filtro':ui.fbFiltro=el.dataset.f||'';ui.fbMas=false;buscarRepinta();break;
     case 'fb-prot':ui.fbProt=!ui.fbProt;buscarRepinta();break;
     case 'fb-mas':ui.fbMas=true;buscarRepinta();break;
@@ -20038,7 +20199,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
