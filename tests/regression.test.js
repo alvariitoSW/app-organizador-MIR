@@ -3165,8 +3165,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const despuesCompra = await page.evaluate(() => window.PG.listasS().reduce((a, l) => a + l.items.length, 0));
     compraDeltaCm = despuesCompra - antesCompra;
   }
-  check('"qué hago hoy" separa lo que sale entero de lo que casi (en Cocina, con sus tres pestañas), y "a la compra" apunta lo que falta',
-    platosQueSalen.pestanas === 3 &&
+  check('"qué hago hoy" separa lo que sale entero de lo que casi (en Cocina, con sus pestañas: la nevera ya es la de Comer), y "a la compra" apunta lo que falta',
+    platosQueSalen.pestanas === 2 &&
     platosQueSalen.total > 0 && platosQueSalen.listos > 0 && platosQueSalen.listos <= platosQueSalen.total &&
     (platosQueSalen.aLaCompra === 0 || compraDeltaCm > 0),
     JSON.stringify({ ...platosQueSalen, compraDeltaCm }));
@@ -3330,7 +3330,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la portada del día lleva los tres macros, los micros en una línea y las tres despensas',
       diaMic.macros.join('|') === 'P|H|G' && diaMic.puntos === 9 &&
       diaMic.casillas === 0 && /corto|por debajo|mitad/.test(diaMic.linea) &&
-      diaMic.puertas.join('|') === 'platos|nevera|alimentos', JSON.stringify(diaMic));
+      diaMic.puertas.join('|') === 'platos|nevera2|alimentos', JSON.stringify(diaMic));
   }
 
   // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre
