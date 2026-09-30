@@ -165,10 +165,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
     // «Qué cocino», «Mi nevera» e «Ideas» ya no son tres pantallas: son las tres pestañas de Cocina
     if (vista === 'cocinar' || vista === 'nevera' || vista === 'ideas') {
-      // con la cocina simple, el panel de cocina cuelga de la pestaña Nevera
-      await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'cocina-panel'; P.render(); });
-      await page.waitForTimeout(150);
-      await page.click(`[data-a="cocina-tab"][data-t="${vista === 'nevera' ? 'nevera' : ''}"]`);
+      // la nevera es UNA (pestaña Nevera); «qué cocino» e «ideas» siguen en el panel de cocina
+      await page.evaluate((v) => { const P = window.PG; if (v === 'nevera') { P.ui.foodVista = 'nevera2'; } else { P.ui.foodVista = 'cocina-panel'; P.ui.cocinaTab = ''; } P.render(); }, vista);
       await page.waitForTimeout(150);
       return;
     }
@@ -3366,7 +3364,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.save();
     });
     await gotoFood('nevera');
-    const nev = await page.evaluate(() => document.querySelectorAll('#main .chipx .x').length);
+    // la nevera es una sola pantalla (la pestaña); lo marcado a mano sigue alimentando las ideas
+    const nev = await page.evaluate(() => window.PG.food().nevera.length);
     await gotoFood('ideas');
     const ideas = await page.evaluate(() => (window.PG.ui.ideasCache || []).map((c) => ({
       nombre: c.nombre,
@@ -9167,6 +9166,64 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sem.n >= 1 && sem.plan === 100 && sem.barras === 7 && sem.alto < 1000, JSON.stringify(sem));
     check('clasificación: nota 0–100, dos 👎 bajan el plato, y «Más proteína» ordena por proteína',
       rk.filas >= 3 && rk.rango && rk.desp < rk.antes && prot.length >= 3 && prot.every((v, i) => i === 0 || prot[i - 1] >= v), JSON.stringify({ rk, prot }));
+  }
+
+  // 225) COMER CON LO QUE HAY, encadenado con los productos de un ticket real:
+  //  · la tabla reconoce los 42 productos (antes 16) y la nevera es UNA (las rutas viejas llevan a ella);
+  //  · la compra, con la semana de ejemplo y ya comprado, no pide patatas ni puerros y dice lo que compraste;
+  //  · «bocata de pavo con queso y mayo» → pan sin gluten (celíaco), fiambre, queso y mayo de la nevera;
+  //    el tamaño escala; Enter apunta; dos veces en la semana → «guardar como plato»;
+  //  · ¿Qué como?: plato, bowl y bocata salen con lo de la nevera y «Me lo hago» lo apunta
+  {
+    const NOMS = ['fiambre lomo adobado','pechuga pollo ajillo','carrilladas al vino','isotónico blue','fritada pisto','tomate frito a.oliva','macedonia de verdura',
+      'c. fresa extra 0%','gouda lonchas','tahini','lenteja cocida','salmón marinado','lomo embuchado','pollo extrafino','jamón extrafino','maria sin gluten',
+      'entrecot novillo','barrita rellena lech','picada de vacuno','panna cotta','crema 100% cacahuete','mayonesa pequeña','cookie sin gluten y sin lactosa',
+      'jardinera','boquerones al vinagr','guacamole 200 g','leche desnatada, prot p6','queso curado','nuez natural','proteina 0% natural','jamon s. extra fino',
+      'queso roquefort','salsa piri piri','pan m.cereales s/glu','griego ligero natural','tortilla de maiz','nuez pecana','queso feta','baguette sin gluten',
+      'kiwi verde bandeja','huevos medianos','plátano'];
+    const base = await page.evaluate((noms) => { const P = window.PG; window.__copia225 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.despensa = []; P.store.food.log = {};
+      P.store.menu = JSON.parse(JSON.stringify(P.DEFAULTS().menu)); P.store.dishes = JSON.parse(JSON.stringify(P.DEFAULTS().dishes)); P.store.semBase = { on: false, d: {} };
+      noms.forEach((n) => P.despensaAdd(n, 1, '')); P.store.food.ultimaCompra = P.iso(new Date()); P.save();
+      return { reconoce: noms.filter((n) => P.alimDeTexto(n)).length, nevera: P.food().nevera.length }; }, NOMS);
+    const rutas = [];
+    for (const v of ['nevera', 'nevera2']) { await page.evaluate((v) => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = v; P.render(); }, v); rutas.push(await page.evaluate(() => window.PG.ui.foodVista)); }
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'cocina-panel'; P.ui.cocinaTab = 'nevera'; P.render(); }); rutas.push(await page.evaluate(() => window.PG.ui.foodVista));
+    const nev = await page.evaluate(() => ({ grupos: document.querySelectorAll('#main .nvg').length, botones: document.querySelectorAll('#main .nvb button').length }));
+    const compra = await page.evaluate(() => { const P = window.PG, d = P.compraDatos(); P.ui.tab = 'shop'; P.ui.shopVista = ''; P.render();
+      const txt = document.getElementById('main').innerText;
+      return { ejemplo: d.ejemplo, fresco: d.grupos[0][2].length, compraste: /Compraste hoy/.test(txt), patata: /Patata/.test(txt) }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
+    await page.fill('#frIn', 'bocata de pavo con queso y mayo'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(150);
+    const fr = await page.evaluate(() => { const P = window.PG, f = P.ui.frase; if (!f) return null;
+      return { tipo: f.tipo,
+        panSG: f.items.some((x) => x.pan) && f.items.filter((x) => x.pan).every((x) => /sin-gluten/.test(x.id)), ids: f.items.map((x) => x.id), casa: f.items.filter((x) => x.casa).length, g0: f.items[0].g, kcal: P.fraseMacros(f).kcal }; });
+    await page.click('[data-a="fr-tam"][data-v="xl"]'); await page.waitForTimeout(80);
+    const grande = await page.evaluate(() => ({ g: window.PG.ui.frase.items[0].g, kcal: window.PG.fraseMacros(window.PG.ui.frase).kcal }));
+    await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
+    const apuntado = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())), e = l[l.length - 1]; return e ? { n: e.nombre, frase: !!e.frase, kcal: e.kcal } : null; });
+    await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())), e = l[l.length - 1], d = new Date(); d.setDate(d.getDate() - 1);
+      const k = P.iso(d); P.store.food.log[k] = [Object.assign({}, e, { id: 'fe225' })]; P.save(); P.render(); });
+    const rep = await page.evaluate(() => window.PG.fraseRepetidas().length);
+    const bt = await page.$('[data-a="fr-plato"]'); if (bt) { await bt.click(); await page.waitForTimeout(120); }
+    const plato = await page.evaluate(() => { const d = window.PG.store.dishes[window.PG.store.dishes.length - 1]; return d && d.frase ? { n: d.name, ing: d.ingredients.length, kcal: d.kcal } : null; });
+    const qc = await page.evaluate(() => { const P = window.PG; return ['plato', 'bowl', 'bocata'].map((t) => { const c = P.qcCombos(t); return { t, n: c.length, falta: c.filter((x) => x.falta.length).length, nombre: c[0] ? c[0].fr.txt : '' }; }); });
+    await page.evaluate(() => { const P = window.PG; P.ui.qcTipo = 'bowl'; P.ui.foodVista = 'quecomo'; P.render(); });
+    const antesQ = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
+    await page.click('.qcs [data-a="qc-hago"]'); await page.waitForTimeout(150);
+    const trasQ = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { n: l.length, ult: (l[l.length - 1] || {}).nombre, vista: P.ui.foodVista }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia225; P.save(); P.ui.frase = null; P.ui.qcTipo = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('la tabla reconoce los 42 productos del ticket y la nevera es una sola (las rutas viejas llevan a la pestaña, con −/× en cada fila)',
+      base.reconoce === 42 && base.nevera >= 38 && rutas.every((v) => v === 'nevera2') && nev.grupos >= 2 && nev.botones >= 10, JSON.stringify({ base, rutas, nev }));
+    check('compra: con la semana de ejemplo y ya comprado, no pide los ingredientes de ejemplo y dice lo que compraste',
+      compra.ejemplo && compra.fresco === 0 && compra.compraste && !compra.patata, JSON.stringify(compra));
+    check('frase: «bocata de pavo con queso y mayo» → pan sin gluten, fiambre, queso y mayo de tu nevera; el tamaño escala y Enter/apuntar lo guarda',
+      fr && fr.tipo === 'bocata' && fr.panSG && fr.ids.includes('al-fiambre-de-pavo') && fr.ids.includes('al-queso-gouda') && fr.ids.includes('al-mayonesa') && fr.casa >= 3 &&
+      grande.g > fr.g0 && grande.kcal > fr.kcal && apuntado && apuntado.frase && /Bocata muy grande de pavo/.test(apuntado.n), JSON.stringify({ fr, grande, apuntado }));
+    check('lo apuntado con frase dos veces en la semana se ofrece como plato y se guarda con sus ingredientes',
+      rep === 1 && plato && plato.ing >= 4 && plato.kcal > 500, JSON.stringify({ rep, plato }));
+    check('¿Qué como?: plato, bowl y bocata salen con lo de la nevera (todo en casa) y «Me lo hago» lo apunta',
+      qc.every((x) => x.n >= 2 && x.falta === 0 && x.nombre) && trasQ.n === antesQ + 1 && /^Bowl de/.test(trasQ.ult) && trasQ.vista === '', JSON.stringify({ qc, trasQ }));
   }
 
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
