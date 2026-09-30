@@ -1,0 +1,150 @@
+<!doctype html><meta charset=utf-8>
+<title>Dinero v6 · análisis</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70;--ex:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 12%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:10px 12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.nav div{text-align:center;padding:8px 0;border-radius:11px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}
+.nav div.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.big{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.mb{display:grid;grid-template-columns:18px 1fr 64px;gap:6px;align-items:center;font-size:11.5px;margin-top:5px}
+.mb .t{height:8px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}.mb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.mb b{text-align:right;font-weight:800}
+.busca{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card));margin-bottom:8px;font-weight:800}
+.mom{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mom:first-of-type{border-top:0}.mom b{font-size:13px}.mom .s{font-size:11px;color:var(--ink2)}
+.add{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg2);font-weight:900;color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.chip.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+/* barras de semana */
+.wk{display:flex;gap:6px;align-items:flex-end;height:96px;position:relative;margin-top:8px}
+.wk>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:3px}
+.wk i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.wk .x i{background:var(--ex)}.wk .v i{background:var(--line)}
+.wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.wk .obj b{position:absolute;right:0;top:-13px;font-size:9px;color:var(--ink2)}
+.dots{display:flex;gap:6px;margin-top:4px}.dots span{flex:1;text-align:center;font-size:10px;font-weight:900}
+/* buscador */
+.q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;border:1.5px solid var(--brand);background:var(--bg2);font-size:15px;font-weight:700}
+.res{display:grid;grid-template-columns:30px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res .e{font-size:20px;text-align:center}.res b{font-size:13px;display:block}.res .s{font-size:10.5px;color:var(--ink2)}
+.res .k{text-align:right;font-size:12px;font-weight:900}.res .k small{display:block;font-size:10.5px;color:var(--p);font-weight:900}
+.src{font-size:9.5px;font-weight:900;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.src.m{background:#0f3d2a;color:#34d399}.src.f{background:#3b2410;color:#fbbf24}.src.t{background:#1d2a50;color:#9fb5ff}
+.more{text-align:center;font-size:12px;font-weight:800;color:var(--brand);padding:8px 0 2px}
+/* menú */
+.tipo{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.tipo:first-of-type{border-top:0}.tipo .e{font-size:20px;grid-row:span 2}.tipo b{font-size:13.5px}.tipo .k{font-weight:900;font-size:14px;text-align:right}
+.stk{display:flex;height:7px;border-radius:5px;overflow:hidden;gap:2px;grid-column:2/4}.stk i{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.days div{border:1px solid var(--line);border-radius:10px;padding:5px 0;text-align:center;font-size:9.5px;color:var(--ink2);font-weight:800;background:var(--bg2)}
+.days div b{display:block;font-size:16px}.days div.hoy{border-color:var(--brand)}
+/* cocina */
+.pl{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}.pl .e{font-size:18px;grid-row:span 2}.pl b{font-size:13px}.pl .s{font-size:10.5px;color:var(--ink2)}
+.btn{padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;grid-row:span 2}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hb{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.hb .t{height:12px;display:flex;gap:3px}.hb .t i{display:block;width:20px;height:12px;border-radius:3px;background:var(--p)}.hb .t i.o{background:var(--line)}
+.tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px}.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+/* compra */
+.pas{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;font-weight:800}
+.pas .n{font-size:11px;color:var(--ink2);font-weight:800}
+.it{display:grid;grid-template-columns:22px 58px 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13px}
+.it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ink2)}.it .ck.on{background:var(--ok);border-color:var(--ok)}
+.it .qt{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}.it .w{font-size:10.5px;color:var(--ink2)}
+.it.done{opacity:.45;text-decoration:line-through}
+.prog{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:6px}.prog i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.leg{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px}
+
+.lbl{white-space:nowrap}
+.h6{padding:14px 12px}
+.big{font-size:44px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:15px;color:var(--ink2);font-weight:700}
+.bul{position:relative;height:14px;border-radius:7px;background:var(--line);margin-top:10px;overflow:visible}
+.bul i{position:absolute;left:0;top:0;bottom:0;border-radius:7px}.bul u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);text-decoration:none}
+.bul em{position:absolute;top:18px;font-style:normal;font-size:9.5px;color:var(--ink2);transform:translateX(-50%);white-space:nowrap}
+.cat{display:grid;grid-template-columns:24px 92px 1fr 58px;gap:8px;align-items:center;font-size:12px;padding:5px 0}
+.cat .t{position:relative;height:12px}.cat .t i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;background:var(--p)}
+.cat .t i.x{background:var(--ex)}.cat .t u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);text-decoration:none;opacity:.85}
+.cat b{text-align:right;font-variant-numeric:tabular-nums}.cat .d{font-size:10px;font-weight:900}
+.tip{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.tip:first-of-type{border-top:0}.tip .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);font-size:17px}
+.tip b{font-size:13px;display:block}.tip span.s{font-size:11px;color:var(--ink2)}.tip .v{text-align:right;font-weight:900;color:var(--ok);font-size:13px}.tip .v small{display:block;font-size:10px;color:var(--ink2);font-weight:700}
+.mb6{display:flex;gap:6px;align-items:flex-end;height:90px;position:relative;margin-top:10px}
+.mb6>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:3px}
+.mb6 i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.mb6 .x i{background:var(--ex)}.mb6 em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}.mb6 span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}
+.mb6 .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.stk3{display:flex;gap:2px;height:16px;border-radius:6px;overflow:hidden;margin-top:6px}.stk3 i{display:block}
+.rule{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center;font-size:11px;margin-top:6px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.ex{color:var(--ex)}
+.check{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:12.5px}
+.check:first-of-type{border-top:0}
+</style>
+<div class="wrap"><div class="lbl">1 · Este mes: cuánto puedes gastar hoy y dónde se te va</div><div class="ab"><div class="row" style="margin-bottom:8px"><b style="font-size:18px">💶 Dinero</b><span class="sp"></span><span class="chip on">Este mes</span><span class="chip">Ahorros</span></div>
+<div class="card h6"><div class="cap">PUEDES GASTAR HOY</div>
+<div class="row" style="align-items:flex-end"><div class="big">37 <small>€</small></div><span class="sp"></span><div style="text-align:right"><b class="ok">vas bien</b><div class="mini">te quedan 412 € para 11 días</div></div></div>
+<div class="bul"><i style="width:58%;background:var(--p)"></i><u style="left:63%"></u><em style="left:63%">a día 19 «tocaría» 63 %</em></div>
+<div class="mini" style="margin-top:22px">Gastado en lo variable: <b style="color:var(--ink)">578 de 990 €</b> · lo fijo (alquiler, seguros…) y tu ahorro ya están descontados.</div></div>
+<div class="card"><div class="row"><span class="cap">DÓNDE SE TE VA</span><span class="sp"></span><span class="mini">este mes · <b style="color:var(--ink)">|</b> tu media</span></div>
+<div class="cat"><span>🍽️</span><span>Restaurantes</span><div class="t"><i class="x" style="width:92%"></i><u style="left:62%"></u></div><b>238 €<br><span class="d ex">+48 %</span></b></div>
+<div class="cat"><span>🛒</span><span>Súper</span><div class="t"><i style="width:74%"></i><u style="left:78%"></u></div><b>191 €<br><span class="d ok">−5 %</span></b></div>
+<div class="cat"><span>🎟️</span><span>Ocio</span><div class="t"><i class="x" style="width:52%"></i><u style="left:38%"></u></div><b>134 €<br><span class="d ex">+37 %</span></b></div>
+<div class="cat"><span>🚌</span><span>Transporte</span><div class="t"><i style="width:26%"></i><u style="left:31%"></u></div><b>68 €<br><span class="d ok">−16 %</span></b></div>
+<div class="mini" style="margin-top:4px"><span class="leg" style="background:var(--p);margin-left:0"></span>en tu media <span class="leg" style="background:var(--ex)"></span>por encima (+15 %) · ver todo ›</div></div>
+<div class="card"><div class="row"><span class="cap">PARA AHORRAR MÁS</span><span class="sp"></span><span class="mini">al mes</span></div>
+<div class="tip"><span class="ic">🍽️</span><div><b>Restaurantes a 160 €</b><span class="s">2 cenas fuera menos; llevas 6 este mes</span></div><span class="v">+78 €<small>≈ 940 €/año</small></span></div>
+<div class="tip"><span class="ic">📱</span><div><b>Revisa 2 suscripciones</b><span class="s">42 €/mes fijos: ¿usas las dos plataformas?</span></div><span class="v">+15 €<small>180 €/año</small></span></div>
+<div class="tip"><span class="ic">🩺</span><div><b>La guardia extra, directa al bolsillo</b><span class="s">este mes cobras 1 de finde más</span></div><span class="v">+300 €<small>una vez</small></span></div></div>
+</div></div><div class="wrap"><div class="lbl">2 · Todas las categorías: este mes contra tu media</div><div class="ab">
+<div class="row" style="margin-bottom:8px"><span class="mini">‹ Dinero</span><b style="font-size:16px">Análisis de gastos</b><span class="sp"></span><span class="mini">sep</span></div>
+<div class="card"><div class="row"><span class="cap">GASTASTE</span><span class="sp"></span><span class="mini">de lo que ganaste (2.466 €)</span></div>
+<div class="row" style="align-items:baseline"><div class="big" style="font-size:34px">1.549 <small>€</small></div><span class="sp"></span><b>63 %</b></div>
+<div class="stk3"><i style="flex:44;background:var(--p)"></i><i style="flex:19;background:var(--c)"></i><i style="flex:37;background:var(--g)"></i></div>
+<div class="mini" style="margin-top:4px"><span class="leg" style="background:var(--p);margin-left:0"></span>fijos 1.083 <span class="leg" style="background:var(--c)"></span>variables 466 <span class="leg" style="background:var(--g)"></span>ahorro 917</div></div>
+<div class="card"><div class="row"><span class="cap">POR CATEGORÍA</span><span class="sp"></span><span class="mini">€ · <b style="color:var(--ink)">|</b> media 3 meses</span></div>
+<div class="cat"><span>🏠</span><span>Alquiler y casa</span><div class="t"><i style="width:100%;background:var(--ink2)"></i><u style="left:100%"></u></div><b>640 €<br><span class="d mini">fijo</span></b></div>
+<div class="cat"><span>🍽️</span><span>Restaurantes</span><div class="t"><i class="x" style="width:37%"></i><u style="left:25%"></u></div><b>238 €<br><span class="d ex">+48 %</span></b></div>
+<div class="cat"><span>🛒</span><span>Súper</span><div class="t"><i style="width:30%"></i><u style="left:31%"></u></div><b>191 €<br><span class="d ok">−5 %</span></b></div>
+<div class="cat"><span>🎟️</span><span>Ocio</span><div class="t"><i class="x" style="width:21%"></i><u style="left:15%"></u></div><b>134 €<br><span class="d ex">+37 %</span></b></div>
+<div class="cat"><span>🚌</span><span>Transporte</span><div class="t"><i style="width:11%"></i><u style="left:13%"></u></div><b>68 €<br><span class="d ok">−16 %</span></b></div>
+<div class="cat"><span>📱</span><span>Suscripciones</span><div class="t"><i style="width:7%;background:var(--ink2)"></i><u style="left:7%"></u></div><b>42 €<br><span class="d mini">fijo</span></b></div>
+<div class="cat"><span>🛍️</span><span>Compras</span><div class="t"><i style="width:9%"></i><u style="left:12%"></u></div><b>58 €<br><span class="d ok">−24 %</span></b></div>
+<div class="cat"><span>💊</span><span>Salud</span><div class="t"><i style="width:4%"></i><u style="left:3%"></u></div><b>24 €<br><span class="d mini">=</span></b></div>
+<div class="mini" style="margin-top:6px">Gris: fijos (no se recortan de un mes para otro). Toca una para ver sus 6 meses.</div></div>
+<div class="card"><div class="cap">LO QUE MÁS HA CAMBIADO</div><div class="mini" style="margin-top:4px">🍽️ Restaurantes <b class="ex">+77 €</b> y 🎟️ Ocio <b class="ex">+36 €</b> sobre tu media: entre las dos, <b style="color:var(--ink)">113 €</b> que este mes no han ido a tus bolsillos.</div></div>
+</div></div><div class="wrap"><div class="lbl">3 · Una categoría: sus 6 meses, tu meta y qué ganas bajándola</div><div class="ab">
+<div class="row" style="margin-bottom:8px"><span class="mini">‹ Análisis</span><b style="font-size:16px">🍽️ Restaurantes</b></div>
+<div class="card"><div class="row"><span class="cap">ÚLTIMOS 6 MESES</span><span class="sp"></span><span class="mini">media 161 € · - - meta 160 €</span></div>
+<div class="mb6"><span class="obj" style="bottom:58px"></span>
+<div><em>160</em><i style="height:47px"></i><span>abr</span></div><div class="x"><em>410</em><i style="height:74px"></i><span>may</span></div><div><em>198</em><i style="height:55px"></i><span>jun</span></div>
+<div class="x"><em>232</em><i style="height:62px"></i><span>jul</span></div><div><em>186</em><i style="height:52px"></i><span>ago</span></div><div class="x"><em>238</em><i style="height:63px;opacity:.7"></i><span style="color:var(--brand)">sep</span></div></div>
+<div class="mini" style="margin-top:4px"><span class="leg" style="background:var(--p);margin-left:0"></span>dentro de la meta (±10 %) <span class="leg" style="background:var(--ex)"></span>por encima</div></div>
+<div class="card"><div class="row"><span class="cap">TU META</span><span class="sp"></span><span class="chip">−</span><b style="margin:0 6px">160 €</b><span class="chip">＋</span></div>
+<div class="mini" style="margin-top:8px">Con 160 €/mes en vez de tu media de 206 € (6 meses): <b style="color:var(--ok)">+46 €/mes · 552 €/año</b></div>
+<div class="mini" style="margin-top:4px">A tu bolsillo ✈️ Viajes (Japón 2.400): <b style="color:var(--ink)">llegas en abril y no en junio</b>.</div></div>
+<div class="card"><div class="cap">CÓMO</div>
+<div class="check"><span>🍱</span><span>Los días de guardia ya llevas táper: el gasto sube los <b>salientes</b> (4 de 6 cenas fuera)</span><span></span></div>
+<div class="check"><span>🥡</span><span>Pedir a domicilio te sale a 24 € de media; cocinar lo mismo, ~6 €</span><span></span></div>
+<div class="check"><span>📅</span><span>Pon el tope en el móvil: te aviso al llegar al 80 %</span><span class="chip">avísame</span></div></div>
+</div></div><div class="wrap"><div class="lbl">4 · Consejos: cómo estás en lo básico, con tus números</div><div class="ab">
+<div class="row" style="margin-bottom:8px"><span class="mini">‹ Dinero</span><b style="font-size:16px">💡 Tu salud financiera</b></div>
+<div class="card"><div class="row"><span class="cap">REGLA 50 / 30 / 20</span><span class="sp"></span><span class="mini">tu mes vs la regla</span></div>
+<div class="rule"><span>Tú</span><div class="stk3" style="margin:0"><i style="flex:44;background:var(--p)"></i><i style="flex:19;background:var(--c)"></i><i style="flex:37;background:var(--g)"></i></div></div>
+<div class="rule"><span>Regla</span><div class="stk3" style="margin:0;opacity:.55"><i style="flex:50;background:var(--p)"></i><i style="flex:30;background:var(--c)"></i><i style="flex:20;background:var(--g)"></i></div></div>
+<div class="mini" style="margin-top:6px"><span class="leg" style="background:var(--p);margin-left:0"></span>necesidades 44 % <span class="leg" style="background:var(--c)"></span>caprichos 19 % <span class="leg" style="background:var(--g)"></span>ahorro 37 % · <b class="ok">ahorras casi el doble de lo que pide la regla</b></div></div>
+<div class="card"><div class="cap">LO BÁSICO</div>
+<div class="check"><span>✅</span><span><b>Fondo de emergencia</b><br><span class="mini">5.000 € = 4,6 meses de gastos fijos (meta 3–6)</span></span><b class="ok">bien</b></div>
+<div class="check"><span>⚠️</span><span><b>Gasto variable este mes</b><br><span class="mini">+18 % sobre tu media, sobre todo restaurantes</span></span><b class="warn">ojo</b></div>
+<div class="check"><span>✅</span><span><b>Deudas caras</b><br><span class="mini">ninguna tarjeta ni préstamo en Fintonic</span></span><b class="ok">bien</b></div>
+<div class="check"><span>💡</span><span><b>Invertir lo que no vas a tocar en años</b><br><span class="mini">con el colchón hecho, lo que sobra de él rinde más en un fondo indexado a largo plazo que en la cuenta</span></span><b>idea</b></div>
+<div class="check"><span>💡</span><span><b>Cuando suba el IRPF en enero</b><br><span class="mini">cobrarás ~700 € menos: tu máximo diario bajará a 29 €</span></span><b>aviso</b></div></div>
+<div class="mini" style="text-align:center;padding:0 10px">Son pautas generales con tus números, no asesoramiento financiero personalizado.</div>
+</div></div>
