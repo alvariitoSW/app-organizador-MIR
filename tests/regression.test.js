@@ -8805,6 +8805,54 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('lo de antes (apartar, retos) sigue en «Apartar»', apartar, String(apartar));
   }
 
+  // 217) BUSCADOR QUE NO SE CONGELA + INTERNET SOLO + CERRAR LA HOJA ARRASTRANDO, encadenado:
+  //  · escribir en el buscador repintaba la pantalla entera en cada pausa (desmontaba el campo y en el
+  //    móvil congelaba ~medio segundo cada palabra): ahora el campo es el MISMO nodo y solo cambia la lista;
+  //  · con poco en la app, busca solo en Open Food Facts y enseña lo que encuentra (antes, solo con un
+  //    botón); y lee las fichas que traen «x_100g», que antes se descartaban por «sin datos»;
+  //  · la hoja del día se cierra arrastrándola hacia abajo; un arrastre corto la deja donde estaba.
+  {
+    let offLlamadas = 0;
+    await page.route('https://world.openfoodfacts.org/**', (r) => { offLlamadas++; r.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ products: [{ code: '8480000217217', product_name: 'Kombucha 217', brands: 'Hacendado', quantity: '330 ml',
+        nutriments: { 'energy-kcal_100g': 18, proteins_100g: 0.1, carbohydrates_100g: 4, fat_100g: 0 } }] }) }); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'buscar'; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.off = null; P.ui.offCache = {}; P.render(); });
+    await page.waitForTimeout(150);
+    const campo0 = await page.$('#fbQ');
+    if (campo0) await campo0.click();
+    for (const ch of 'kombu') { await page.keyboard.type(ch); await page.waitForTimeout(60); }
+    await page.waitForTimeout(250);
+    const mitad = await page.evaluate(() => ({ foco: (document.activeElement || {}).id, valor: (document.getElementById('fbQ') || {}).value }));
+    const mismoNodo = campo0 ? await page.evaluate((c) => c === document.getElementById('fbQ') && c.isConnected, campo0) : false;
+    for (const ch of 'cha') { await page.keyboard.type(ch); await page.waitForTimeout(60); }
+    await page.waitForTimeout(1400);
+    const off = await page.evaluate(() => ({ foco: (document.activeElement || {}).id, sale: /Kombucha 217/.test((document.getElementById('fbRes') || {}).innerText || ''),
+      kcal: ((window.PG.ui.off || {}).list || [])[0] ? window.PG.ui.off.list[0].kcal : null }));
+    await page.unroute('https://world.openfoodfacts.org/**');
+    // la hoja del día, arrastrada con el ratón (los mismos eventos de puntero que el dedo)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.hojaDia = P.iso(new Date()); P.ui.hojaVista = ''; P.ui.foodBusca = ''; P.render(); });
+    await page.waitForTimeout(500);
+    // desde el centro de la hoja: a 1280 px va centrada y a la izquierda está el fondo, que la cierra al tocarlo
+    const arrastra = async (dy) => { const r = await page.evaluate(() => { const h = document.querySelector('.hoja'); if (!h) return null; const b = h.getBoundingClientRect(); return { t: b.top, x: b.left + b.width / 2 }; });
+      if (!r) return false;
+      const t = r.t, x = r.x;
+      await page.mouse.move(x, t + 12); await page.mouse.down();
+      for (let i = 1; i <= 8; i++) { await page.mouse.move(x, t + 12 + dy * i / 8); await page.waitForTimeout(30); }
+      await page.mouse.up(); await page.waitForTimeout(450); return true; };
+    await arrastra(40);
+    const corta = await page.evaluate(() => !!document.querySelector('.hoja') && !document.querySelector('.hoja').style.transform);
+    await arrastra(170);
+    const larga = await page.evaluate(() => !document.querySelector('.hoja') && !window.PG.ui.hojaDia);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); });
+    check('el buscador no desmonta el campo al escribir: mismo nodo, con el foco y todo lo tecleado',
+      mismoNodo && mitad.foco === 'fbQ' && mitad.valor === 'kombu' && off.foco === 'fbQ', JSON.stringify({ mismoNodo, mitad, off }));
+    check('con poco en la app busca solo en Open Food Facts y lee las fichas con «x_100g»',
+      offLlamadas >= 1 && off.sale && off.kcal === 18, JSON.stringify({ offLlamadas, off }));
+    check('la hoja del día: un arrastre corto la deja en su sitio y uno largo hacia abajo la cierra',
+      corta && larga, JSON.stringify({ corta, larga }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

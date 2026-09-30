@@ -3,7 +3,7 @@
    2. de paso da modo sin conexión.
    Estrategia: red primero y caché de reserva. Al revés (caché primero) se quedaría servida una versión
    vieja de app.js después de cada despliegue. */
-const CACHE='guardias-v5';
+const CACHE='guardias-v6';
 /* Absolutas y contra el ámbito del registro. En GitHub Pages la app no cuelga de la raíz sino de
    /app-organizador-MIR/, y una ruta relativa suelta no siempre cae donde uno cree. */
 const RAIZ=new URL('./',self.registration?self.registration.scope:self.location.href);
@@ -38,6 +38,14 @@ self.addEventListener('fetch',function(e){
      el límite servía la reserva, que la primera vez está vacía, y el lector no arrancaba nunca. */
   if(url.pathname.indexOf('/vendor/')>=0){e.respondWith(cachePrimero(req));return;}
   const navegacion=req.mode==='navigate';
+  /* app.js y styles.css CON marca de versión (?v=…, la pone navegacionSellada): lo que hay detrás de
+     esa URL no cambia nunca, así que si ya está guardado se sirve AL MOMENTO. Medido con la app
+     instalada y app.js tardando 9 s (1,5 MB con mala cobertura): la pantalla se quedaba 7 s en negro
+     esperando a la red antes de tirar de la copia, y a veces el usuario la cerraba creyendo que no
+     arrancaba. Si la versión nueva aún no está, se espera como mucho 2,5 s; si no llega, arranca con
+     la de antes y la nueva se sigue bajando para la próxima vez. */
+  if(!navegacion&&/[?&]v=/.test(url.search)&&/\/(app\.js|styles\.css)$/.test(url.pathname)){
+    e.respondWith(versionada(req,url));return;}
   const responder=(navegacion&&!url.search)?navegacionSellada(req,url):desdeLaRed(req,url,navegacion);
   /* El reloj va AQUÍ, en la frontera, y no alrededor de cada fetch. Es la diferencia que importa:
      fetch() resuelve en cuanto llegan las CABECERAS, así que un servidor que contesta «200, es
@@ -47,6 +55,19 @@ self.addEventListener('fetch',function(e){
   e.respondWith(conLimite(responder,LIMITE_TOTAL,function(){
     return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});}));
 });
+function versionada(req,url){
+  return caches.open(CACHE).then(function(c){
+    return c.match(req).then(function(exacta){
+      if(exacta)return exacta;
+      const red=pedirFresco(req,url).then(function(res){
+        if(res&&res.ok){const copia=res.clone();c.put(req,copia).catch(function(){});}
+        return res;});
+      /* la de antes (sin mirar la marca) como reserva, pero solo si la red tarda o falla */
+      const antes=function(){return c.match(req,{ignoreSearch:true});};
+      return conLimite(red.then(function(res){return res.ok?res:antes().then(function(v){return v||res;});}),2500,
+        function(){return antes().then(function(v){return v||red;});})
+        .then(function(r){return r||red;});});
+  }).catch(function(){return fetch(req);});}
 function desdeLaRed(req,url,navegacion){
   /* «red primero» NO se cumple con un fetch() a secas: por encima del service worker está la caché
      HTTP del navegador, y GitHub Pages sirve con Cache-Control: max-age=600. Medido: tras desplegar

@@ -3219,8 +3219,11 @@ function mapOffProduct(p){
   const n=p.nutriments||{},code=String(p.code||p.barcode||'').replace(/\D/g,'');
   const name=String(p.product_name||p.product_name_es||p.generic_name||'').trim();
   if(!name&&!code)return null;
-  const per=function(k){const a=k+'_per_100g';return offNum(n[a]!=null?n[a]:n[k]);};
-  const kcal=(n['energy-kcal_per_100g']!=null)?offNum(n['energy-kcal_per_100g']):Math.round(per('energy')/4.184);
+  /* Open Food Facts manda «x_100g» (lo normal), a veces «x_per_100g», y «x» a secas: se acepta
+     cualquiera. Antes solo se miraban las dos últimas y había fichas que se descartaban por «sin datos» */
+  const per=function(k){const v=[k+'_100g',k+'_per_100g',k].map(function(c){return n[c];}).filter(function(v){return v!=null;})[0];return offNum(v);};
+  const kc=[n['energy-kcal_100g'],n['energy-kcal_per_100g'],n['energy-kcal']].filter(function(v){return v!=null;})[0];
+  const kcal=kc!=null?offNum(kc):Math.round(per('energy')/4.184);
   const out={ean:code,nombre:name||(code+' sin nombre'),marca:String(p.brands||'').split(',')[0].trim(),
     kcal:kcal,prot:per('proteins'),carb:per('carbohydrates'),gresa:per('fat'),
     azucar:per('sugars'),fibra:per('fiber'),sal:per('salt'),
@@ -3963,6 +3966,34 @@ function buscarEan(code){
       if(!out)return {ok:false,msg:'no encuentro el '+c+' con datos de nutrición: prueba a buscarlo por nombre'};
       return {ok:true,p:out};})
     .catch(function(e){return {ok:false,msg:'no he podido consultar ('+((e&&e.message)||'sin red')+')'};});}
+function offBuscarEnVivo(t){
+  /* Open Food Facts con Mercadona primero; si hay menos de 3 de Mercadona, también lo demás. Pinta
+     solo la lista de resultados y guarda lo encontrado (en memoria) para no repetir la consulta */
+  const k=t.toLowerCase();
+  if(!ui.offCache)ui.offCache={};
+  if(ui.offCache[k]){ui.off=ui.offCache[k];buscarRepinta();return;}
+  ui.off={q:t,estado:'buscando',list:[]};buscarRepinta();
+  buscarOffNombre(t,'hacendado').then(function(r){
+    if(r.ok&&r.list.length>=3)return r;
+    return buscarOffNombre(t,'').then(function(r2){
+      const a=(r.list||[]).concat((r2.list||[]).filter(function(p){return !(r.list||[]).some(function(q){return q.ean===p.ean;});}));
+      return {ok:a.length>0,list:a.slice(0,12),msg:r2.msg||r.msg};});
+  }).then(function(r){
+    const o={q:t,estado:'',list:r.list||[],msg:r.msg};
+    if(r.ok)ui.offCache[k]=o;
+    if(!ui.off||ui.off.q!==t)return;
+    ui.off=o;buscarRepinta();});}
+function buscarRepinta(){
+  const r=document.getElementById('fbRes');
+  if(r&&ui.tab==='food'&&ui.foodVista==='buscar')r.innerHTML=buscarResultadosHTML();else render();}
+let _offAuto=null;
+function offAutoProgramar(){
+  /* si con lo de la app hay poco (menos de 8), se busca solo en Open Food Facts al dejar de teclear */
+  clearTimeout(_offAuto);
+  const t=String(ui.foodBusca||'').trim();
+  if(t.length<3||(ui.foodTab||'')!==''||navigator.onLine===false)return;
+  if(((_buscarQ===t&&_buscarR)||foodBuscar(t,'')).length>=8)return;
+  _offAuto=setTimeout(function(){if(String(ui.foodBusca||'').trim()===t)offBuscarEnVivo(t);},600);}
 function buscarOffNombre(txt,marca){
   /* búsqueda por nombre en Open Food Facts; con "marca" (p. ej. "mercadona") se filtra a esa marca
      -sus propias etiquetas Hacendado, Deliplus, etc. van con el nombre "Mercadona" en Open Food Facts-,
@@ -7278,7 +7309,13 @@ function rangoSemanaTxt(){
   const a=parseDate(d[0].key),b=parseDate(d[d.length-1].key);
   if(!a||!b){const pt=store.patterns[store.rotation.pattern];return pt?('plantilla · '+pt.name):'plantilla';}
   return 'del '+a.getDate()+' al '+b.getDate()+' de '+MON[b.getMonth()];}
+let _buscTick=-1,_buscCache=null,_buscarQ='',_buscarR=null;
 function foodBuscables(){
+  /* memorizada mientras no cambie nada (save() mueve _renderTick): se pide en cada tecla del buscador
+     y reconstruirla (888 elementos, con su texto normalizado) era la mitad del coste de cada búsqueda */
+  if(_buscTick===_renderTick&&_buscCache)return _buscCache;
+  _buscCache=foodBuscablesCrea();_buscTick=_renderTick;_buscarQ='';return _buscCache;}
+function foodBuscablesCrea(){
   /* todo lo que se puede apuntar, en una sola lista: los productos que has guardado y tus platos */
   const f=food(),out=[];
   Object.keys(f.eans).forEach(function(k){const x=f.eans[k];
@@ -7338,6 +7375,14 @@ const BUSCA_ALIAS={'coca cola':'refresco de cola','cocacola':'refresco de cola',
 function buscaToks(t){return alimTxt(t).replace(/[^a-z0-9ñ ]/g,' ').split(/\s+/)
   .filter(function(w){return w&&!ALIM_VACIAS[w];}).map(alimRaiz);}
 function foodBuscar(q,tipo){
+  /* la última búsqueda se recuerda: la lista de resultados y el «¿busco en internet?» preguntan lo
+     mismo en la misma tecla */
+  const lista=foodBuscables();
+  if(!tipo&&q===_buscarQ&&_buscarR)return _buscarR;
+  const r=foodBuscarCrea(q,tipo);
+  if(!tipo){_buscarQ=q;_buscarR=r;}
+  return r;}
+function foodBuscarCrea(q,tipo){
   /* antes era «el texto tal cual, seguido»: «tortilla de patatas» no daba con «Tortilla de patata»
      ni «pollo asado» con «asado de pollo». Ahora cada palabra por su raíz, en cualquier orden, y
      la última puede estar a medio escribir */
@@ -7411,7 +7456,9 @@ function destinoBuscable(x,cant){
     migrarPlato(d);d.alims.push({id:a.id,g:g});recalcDish(d);save();
     return a.n+' ('+pesoTxt(g)+') añadido a «'+d.name+'» · ahora '+d.kcal+' kcal por ración';}
   return null;}
-function renderFoodBuscar(){
+function buscarResultadosHTML(){
+  /* la lista de resultados sola: al teclear se repinta SOLO esto (antes, la pantalla entera en cada
+     pausa, que desmontaba el campo y en el móvil congelaba medio segundo cada palabra) */
   /* EL BUSCADOR, como el de las apps de nutrición: pestañas Base de datos · Favoritos · Creados, lo
      reciente arriba y cada resultado con su ración natural y sus kcal. Debajo de lo genérico, lo de
      Mercadona; y si no está, Open Food Facts en directo. */
@@ -7454,6 +7501,13 @@ function renderFoodBuscar(){
     cuerpo=(trozos?('<div class="card">'+trozos+'</div>'):
       '<div class="card"><div class="empty">Nada se llama así en la app. Búscalo en Open Food Facts, escanéalo o créalo.</div></div>')+
       offBloqueHTML(q);}
+  return cuerpo;}
+function renderFoodBuscar(){
+  /* EL BUSCADOR, como el de las apps de nutrición: pestañas Base de datos · Favoritos · Creados, lo
+     reciente arriba y cada resultado con su ración natural y sus kcal. Debajo de lo genérico, lo de
+     Mercadona; y si hay poco, Open Food Facts en directo, solo, mientras escribes. */
+  const c=foodCtx(),q=ui.foodBusca||'',tab=ui.foodTab||'';
+  const cuerpo='<div id="fbRes">'+buscarResultadosHTML()+'</div>';
   $('#main').innerHTML='<div class="grid">'+
     foodSubcab('Añadir','<span class="tag b2">'+c.ft.kcal+(objetivoMacros().kcal?' / '+objetivoMacros().kcal:'')+' kcal</span>')+
     '<div class="buscador">'+gymIco('lupa','gico sm')+
@@ -7480,7 +7534,7 @@ function offBloqueHTML(q){
      hospital la red va como va y no se gasta sin preguntar—, y lo que eliges se queda guardado */
   const t=String(q||'').trim();
   if(t.length<3)return '';
-  const o=ui.off&&ui.off.q===t?ui.off:null;
+  const o=ui.off&&ui.off.q===t?ui.off:((ui.offCache||{})[t.toLowerCase()]||null);
   if(!o)return '<div class="card"><button class="btn s" data-a="off-buscar">🌐 buscar «'+esc(t)+'» en Open Food Facts</button>'+
     '<p class="mini" style="margin:6px 0 0">Productos con su etiqueta real, los de Mercadona (Hacendado) primero.</p></div>';
   if(o.estado==='buscando')return '<div class="card"><div class="empty">Buscando en Open Food Facts…</div></div>';
@@ -16822,16 +16876,7 @@ function act(a,el){
       if(k>=0)l.splice(k,1);else l.push(v);
       if(/^ean:/.test(v)){const fe=food().fav,e=v.slice(4),j=fe.indexOf(e);if(k>=0&&j>=0)fe.splice(j,1);}
       save();render();flash(k>=0?'quitado de favoritos':'en favoritos');break;}
-    case 'off-buscar':{const t=String(ui.foodBusca||'').trim();if(t.length<3)break;
-      ui.off={q:t,estado:'buscando',list:[]};render();
-      buscarOffNombre(t,'hacendado').then(function(r){
-        if(r.ok&&r.list.length>=3)return r;
-        return buscarOffNombre(t,'').then(function(r2){
-          const a=(r.list||[]).concat((r2.list||[]).filter(function(p){return !(r.list||[]).some(function(q){return q.ean===p.ean;});}));
-          return {ok:a.length>0,list:a.slice(0,12),msg:r2.msg||r.msg};});
-      }).then(function(r){if(!ui.off||ui.off.q!==t)return;ui.off={q:t,estado:'',list:r.list||[],msg:r.msg};render();
-        const f=document.getElementById('fbQ');if(f)f.blur();});
-      break;}
+    case 'off-buscar':{const t=String(ui.foodBusca||'').trim();if(t.length<3)break;offBuscarEnVivo(t);break;}
     case 'off-usar':{const o=ui.off,p2=o&&o.list&&o.list[+el.dataset.i];if(!p2)break;
       const f=food(),code=p2.ean||('off-'+Date.now());p2.ean=code;f.eans[code]=Object.assign({},p2,{fuente:'Open Food Facts'});save();
       ui.foodSel='ean:'+code;const x=buscableDe(ui.foodSel);ui.foodCant=x?x.porDefecto:100;ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
@@ -18542,11 +18587,46 @@ window.addEventListener('scroll',lpCancel,{passive:true});
 document.addEventListener('click',function(e){
   /* el clic «fantasma» del dedo al soltar cae en la casilla o en el fondo oscuro: ese se come (si no,
      abriría el panel de abajo o cerraría la hoja nada más abrirse). Un toque DENTRO de la hoja, no */
+  if(_hdComido){_hdComido=false;e.stopPropagation();e.preventDefault();return;}
   if(!_lpComido)return;
   const t=e.target&&e.target.closest?e.target:null;
   if(t&&t.closest('.hoja'))return;
   _lpComido=false;e.stopPropagation();e.preventDefault();},true);
 document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cal .dbox'))e.preventDefault();});
+/* DESLIZAR HACIA ABAJO PARA CERRAR una hoja (la del día en Mes y las de Dinero): «que al arrastrar de
+   arriba abajo se quite, en vez de tener que pulsar justo fuera». Se agarra por la parte de arriba
+   (la barrita y la cabecera, 72 px) o por cualquier sitio si la hoja ya está arriba del todo; sigue al
+   dedo, y al soltar se cierra si has bajado más de 90 px o lo has hecho rápido. Si no, vuelve. */
+let _hd=null,_hdComido=false;
+document.addEventListener('pointerdown',function(e){
+  const h=e.target&&e.target.closest?e.target.closest('.hoja'):null;
+  if(!h||(e.pointerType==='mouse'&&e.button!==0))return;
+  const top=h.getBoundingClientRect().top;
+  if(e.clientY-top>72&&h.scrollTop>0)return;
+  if(e.target.closest('input,select,textarea,.drange'))return;
+  _hd={h:h,y0:e.clientY,t0:Date.now(),dy:0,activo:false,id:e.pointerId};},true);
+document.addEventListener('pointermove',function(e){
+  if(!_hd||e.pointerId!==_hd.id)return;
+  const dy=e.clientY-_hd.y0;
+  if(!_hd.activo){if(dy<10)return;_hd.activo=true;_hd.h.style.transition='none';}
+  _hd.dy=Math.max(0,dy);
+  _hd.h.style.transform='translateY('+_hd.dy+'px)';
+  const sc=document.querySelector('.hscrim');if(sc)sc.style.opacity=String(Math.max(0.2,1-_hd.dy/400));},{passive:true});
+function _hdSoltar(e){
+  if(!_hd||(e&&e.pointerId!==_hd.id))return;
+  const d=_hd;_hd=null;
+  if(!d.activo)return;
+  const v=d.dy/Math.max(1,Date.now()-d.t0);
+  /* tras arrastrar, el clic que llega al soltar no cuenta: si se empezó en la barrita (que también es
+     el botón de cerrar), un arrastre corto la cerraba en vez de devolverla a su sitio */
+  _hdComido=true;setTimeout(function(){_hdComido=false;},350);
+  if(d.dy>90||v>0.6){
+    d.h.style.transition='transform .16s ease-in';d.h.style.transform='translateY(100%)';
+    setTimeout(function(){cerrarHojaDia();render();},150);}
+  else{d.h.style.transition='transform .18s ease-out';d.h.style.transform='';
+    const sc=document.querySelector('.hscrim');if(sc)sc.style.opacity='';}}
+document.addEventListener('pointerup',_hdSoltar,true);
+document.addEventListener('pointercancel',_hdSoltar,true);
 document.addEventListener('click',e=>{
   if(e.target.id==='overlay'){cancelModal();return;}
   if(e.target.id==='drawerScrim'){closeDrawer();return;}
@@ -18607,6 +18687,11 @@ document.addEventListener('input',e=>{
     clearTimeout(searchDebounce);
     searchDebounce=setTimeout(function(){render();const nx=document.getElementById('elQ');
       if(nx){nx.focus();try{nx.setSelectionRange(nx.value.length,nx.value.length);}catch(e2){}}},160);
+    return;}
+  if(a==='food-busca'&&document.getElementById('fbRes')){
+    ui.foodBusca=el.value||'';
+    clearTimeout(searchDebounce);
+    searchDebounce=setTimeout(function(){buscarRepinta();offAutoProgramar();},140);
     return;}
   if(a==='alim-busca'||a==='nevera-busca'||a==='plato-busca'||a==='food-busca'){
     /* mismo patrón que la búsqueda de comida: se re-renderiza con retraso y se devuelve el foco al
@@ -19100,7 +19185,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
