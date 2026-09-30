@@ -165,14 +165,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
     // «Qué cocino», «Mi nevera» e «Ideas» ya no son tres pantallas: son las tres pestañas de Cocina
     if (vista === 'cocinar' || vista === 'nevera' || vista === 'ideas') {
-      await page.click('[data-a="food-vista"][data-v="cocina-panel"]');
+      // con la cocina simple, el panel de cocina cuelga de la pestaña Nevera
+      await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'cocina-panel'; P.render(); });
       await page.waitForTimeout(150);
       await page.click(`[data-a="cocina-tab"][data-t="${vista === 'nevera' ? 'nevera' : ''}"]`);
       await page.waitForTimeout(150);
       return;
     }
     if (vista) {
-      await page.click(`[data-a="food-vista"][data-v="${vista}"]`);
+      // si la puerta ya no está en la portada (cocina simple), se entra directo a la vista
+      const puerta = await page.$(`[data-a="food-vista"][data-v="${vista}"]`);
+      if (puerta && await puerta.isVisible()) await puerta.click();
+      else await page.evaluate((v) => { const P = window.PG; P.ui.foodVista = v; P.render(); }, vista);
       await page.waitForTimeout(150);
     }
     if (modo) {
