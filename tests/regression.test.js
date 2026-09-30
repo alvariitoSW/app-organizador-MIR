@@ -9018,6 +9018,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sal.suma === 100 && sal.colchon && sal.aviso, JSON.stringify({ an, cat: { barras: cat.barras, meta: cat.meta }, sal }));
   }
 
+  // 222) BUSCADOR Y SELECTOR COMPLETOS: el plural casa con el singular («nueces» → Nuez), los platos
+  // caseros de siempre están (fabada, huevos revueltos, jamón york, pechuga empanada…), sin el mismo
+  // producto repetido, y en el menú se puede poner un alimento suelto, no solo tus platos
+  {
+    const bus = await page.evaluate(() => { const P = window.PG, t = (q) => P.foodBuscar(q, '').map((x) => x.nombre);
+      const qs = ['huevos revueltos', 'fabada', 'jamon york', 'pechuga empanada', 'crema de calabacin', 'colacao', 'espaguetis carbonara'];
+      const ks = ['arroz', 'yogur griego', 'lentejas'].flatMap((q) => P.foodBuscar(q, '').map((x) => q + '|' + x.nombre + '|' + (x.sub || '') + '|' + x.tipo));
+      const dup = ks.filter((k, i, a) => a.indexOf(k) !== i);
+      return { nueces: t('nueces').includes('Nuez'), faltan: qs.filter((q) => !t(q).length), dup: dup.length }; });
+    await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} }; P.ui.tab = 'types';
+      P.ui.elegir = { modo: 'sb', w: 3, c: 'comida', q: '', f: 'comida' }; P.ui.typesVista = 'elegir'; P.render(); });
+    await page.fill('#elQ', 'pechuga'); await page.waitForTimeout(450);
+    const alim = await page.$('#main [data-a="elegir-alim"]'); if (alim) { await alim.click(); await page.waitForTimeout(200); }
+    const cel = await page.evaluate(() => { const c = window.PG.store.semBase.d[3], d = c && c.comida && c.comida.items[0] ? window.PG.store.dishes.find((x) => x.id === c.comida.items[0].id) : null;
+      return d ? { n: d.name, kcal: d.kcal, suelto: !!d.suelto } : null; });
+    await page.evaluate(() => { const P = window.PG; P.ui.elegir = null; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('buscador: plural = singular, platos caseros de siempre y sin repetidos; y en el menú se pone un alimento suelto',
+      bus.nueces && bus.faltan.length === 0 && bus.dup === 0 && !!alim && cel && cel.suelto && cel.kcal > 0 && /pechuga/i.test(cel.n),
+      JSON.stringify({ bus, cel }));
+  }
+
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
   // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
   {

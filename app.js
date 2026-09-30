@@ -1966,7 +1966,17 @@ function renderElegir(){
         return '<button class="chipx'+(f===c[0]?' on':'')+'" data-a="elegir-f" data-f="'+c[0]+'">'+c[1]+'</button>';}).join('')+'</div>'+
       (o.meals.length?('<div class="grp">COMIDAS ARMADAS · '+o.meals.length+'</div>'+o.meals.map(fila).join('')):'')+
       (o.platos.length?('<div class="grp">PLATOS · '+o.platos.length+'</div>'+o.platos.map(fila).join('')):'')+
-      (!o.meals.length&&!o.platos.length?'<div class="empty">Nada se llama así. Prueba en «Todo» o «Platos sueltos».</div>':'')+
+      (function(){
+        /* «no están todas las comidas»: aquí solo salían tus platos. Ahora, con lo que escribes,
+           también cualquier alimento o producto de la app (se pone como una ración) */
+        const q=(e.q||'').trim();if(q.length<2)return '';
+        const pri={alim:0,ean:1,fuera:2},al=foodBuscar(q,'').filter(function(x){return x.tipo!=='dish';}).map(function(x,i){return {x:x,i:i};})
+          .sort(function(A,B){return ((pri[A.x.tipo]||0)-(pri[B.x.tipo]||0))||A.i-B.i;}).map(function(o){return o.x;}).slice(0,8);if(!al.length)return '';
+        return '<div class="grp">ALIMENTOS Y MÁS · '+al.length+'</div>'+al.map(function(x){const r=x.rac,g=x.base===1?1:(r?r[1]:(x.porDefecto||100));
+          const k=x.base===1||x.tipo==='fuera'?(x.kcal||0):Math.round((x.kcal||0)*g/100),pr=Math.round(hitProt(x));
+          return '<button class="elop" data-a="elegir-alim" data-v="'+esc(x.v)+'"><span class="em">'+esc(foodEmoji(x))+'</span><span class="nm"><b>'+esc(x.nombre)+'</b><span>'+
+            esc(x.tipo==='fuera'?(x.sub||'fuera'):(r?r[0]+' · '+r[1]+' g':(x.base===1?'1 ración':g+' g')))+'</span></span><span class="kc"><b>'+k+'</b>'+pr+' g P</span></button>';}).join('');})()+
+      (!o.meals.length&&!o.platos.length&&(e.q||'').trim().length<2?'<div class="empty">Escribe para buscar entre todo lo de la app, o prueba en «Todo».</div>':'')+
       (e.modo==='meal'?'':('<button class="elop" data-a="meal-new"><span class="em">➕</span>'+
         '<span class="nm"><b>Crear comida nueva</b><span>eliges platos y se guarda para reutilizarla</span></span></button>'))+
     '</div></div>';}
@@ -2566,6 +2576,45 @@ const ALIMENTOS=[
    («1 filete (120 g)»), no «100 g». Los productos de marca con su etiqueta real vienen de Open Food
    Facts en directo; esto es la base genérica que funciona sin red. ---- */
 const ALIMENTOS_MAS=[
+/* platos caseros que no estaban (auditoría: 13 de 101 comidas habituales no salían en el buscador) */
+{n:'Huevos revueltos',e:'🍳',g:'preparado',kcal:160,pr:10.5,ch:1.5,az:1,fi:1,gr:12.5,sa:0.6,r:[['2 huevos', 120]]},
+{n:'Espaguetis a la carbonara',e:'🍝',g:'preparado',kcal:190,pr:7.5,ch:21,az:1,fi:1,gr:8.5,sa:0.6,r:[['1 plato', 300]]},
+{n:'Espaguetis a la boloñesa',e:'🍝',g:'preparado',kcal:150,pr:7,ch:19,az:1,fi:1,gr:5,sa:0.6,r:[['1 plato', 350]]},
+{n:'Macarrones con carne y tomate',e:'🍝',g:'preparado',kcal:160,pr:7,ch:20,az:1,fi:1,gr:5.5,sa:0.6,r:[['1 plato', 350]]},
+{n:'Fabada asturiana',e:'🫘',g:'preparado',kcal:140,pr:8,ch:10,az:1,fi:1,gr:8,sa:0.6,r:[['1 plato', 300]]},
+{n:'Cocido madrileño',e:'🍲',g:'preparado',kcal:130,pr:9,ch:9,az:1,fi:1,gr:6.5,sa:0.6,r:[['1 plato', 400]]},
+{n:'Potaje de garbanzos',e:'🍲',g:'preparado',kcal:120,pr:6.5,ch:14,az:1,fi:1,gr:4,sa:0.6,r:[['1 plato', 350]]},
+{n:'Lentejas con verduras',e:'🍲',g:'preparado',kcal:95,pr:6,ch:14,az:1,fi:1,gr:1.5,sa:0.6,r:[['1 plato', 300]]},
+{n:'Guiso de ternera con patatas',e:'🥘',g:'preparado',kcal:125,pr:10,ch:9,az:1,fi:1,gr:5.5,sa:0.6,r:[['1 plato', 350]]},
+{n:'Arroz con pollo',e:'🍛',g:'preparado',kcal:150,pr:9,ch:18,az:1,fi:1,gr:4.5,sa:0.6,r:[['1 plato', 350]]},
+{n:'Pollo al horno con patatas',e:'🍗',g:'preparado',kcal:150,pr:12,ch:11,az:1,fi:1,gr:6.5,sa:0.6,r:[['1 plato', 350]]},
+{n:'Pollo al ajillo',e:'🍗',g:'preparado',kcal:190,pr:20,ch:2,az:1,fi:1,gr:11,sa:0.6,r:[['1 plato', 250]]},
+{n:'Pechuga de pollo a la plancha',e:'🍗',g:'preparado',kcal:150,pr:30,ch:0,az:1,fi:1,gr:3,sa:0.6,r:[['1 filete', 150]]},
+{n:'Pechuga empanada',e:'🍗',g:'preparado',kcal:240,pr:20,ch:13,az:1,fi:1,gr:12,sa:0.6,r:[['1 filete', 150]]},
+{n:'San jacobo',e:'🧀',g:'preparado',kcal:270,pr:14,ch:15,az:1,fi:1,gr:17,sa:0.6,r:[['1 unidad', 130]]},
+{n:'Merluza a la plancha',e:'🐟',g:'preparado',kcal:95,pr:18,ch:0,az:1,fi:1,gr:2.5,sa:0.6,r:[['1 filete', 150]]},
+{n:'Salmón a la plancha',e:'🐟',g:'preparado',kcal:210,pr:21,ch:0,az:1,fi:1,gr:14,sa:0.6,r:[['1 filete', 150]]},
+{n:'Bacalao con tomate',e:'🐟',g:'preparado',kcal:110,pr:13,ch:5,az:1,fi:1,gr:4.5,sa:0.6,r:[['1 plato', 250]]},
+{n:'Puré de verduras',e:'🥣',g:'preparado',kcal:55,pr:1.5,ch:7,az:1,fi:1,gr:2.3,sa:0.6,r:[['1 plato', 300]]},
+{n:'Crema de calabacín',e:'🥣',g:'preparado',kcal:45,pr:1.2,ch:4,az:1,fi:1,gr:2.7,sa:0.6,r:[['1 plato', 300]]},
+{n:'Crema de calabaza',e:'🥣',g:'preparado',kcal:50,pr:1.2,ch:6,az:1,fi:1,gr:2.5,sa:0.6,r:[['1 plato', 300]]},
+{n:'Sopa de pollo con fideos',e:'🍜',g:'preparado',kcal:45,pr:3,ch:5,az:1,fi:1,gr:1.3,sa:0.6,r:[['1 plato', 350]]},
+{n:'Verduras a la plancha',e:'🥦',g:'preparado',kcal:60,pr:2,ch:7,az:1,fi:1,gr:3,sa:0.6,r:[['1 plato', 250]]},
+{n:'Pisto',e:'🍅',g:'preparado',kcal:70,pr:1.5,ch:7,az:1,fi:1,gr:4,sa:0.6,r:[['1 plato', 250]]},
+{n:'Revuelto de setas',e:'🍳',g:'preparado',kcal:150,pr:9,ch:3,az:1,fi:1,gr:11,sa:0.6,r:[['1 plato', 200]]},
+{n:'Ensalada de pasta',e:'🥗',g:'preparado',kcal:160,pr:5.5,ch:20,az:1,fi:1,gr:6.5,sa:0.6,r:[['1 plato', 300]]},
+{n:'Ensalada de arroz',e:'🥗',g:'preparado',kcal:150,pr:5,ch:20,az:1,fi:1,gr:5.5,sa:0.6,r:[['1 plato', 300]]},
+{n:'Jamón cocido (york)',e:'🥓',g:'preparado',kcal:110,pr:18,ch:1.5,az:1,fi:1,gr:3.5,sa:0.6,r:[['3 lonchas', 45]]},
+{n:'Cacao soluble (Cola Cao)',e:'🍫',g:'preparado',kcal:380,pr:5,ch:80,az:1,fi:1,gr:3,sa:0.6,r:[['2 cucharadas', 18]]},
+{n:'Tostada con aguacate',e:'🥑',g:'preparado',kcal:230,pr:5.5,ch:25,az:1,fi:1,gr:12,sa:0.6,r:[['1 tostada', 120]]},
+{n:'Tostadas con tomate y aceite',e:'🍞',g:'preparado',kcal:220,pr:5,ch:30,az:1,fi:1,gr:9,sa:0.6,r:[['2 tostadas', 120]]},
+{n:'Gachas de avena (porridge)',e:'🥣',g:'preparado',kcal:110,pr:4.5,ch:16,az:1,fi:1,gr:3,sa:0.6,r:[['1 bol', 300]]},
+{n:'Fajitas de pollo',e:'🌯',g:'preparado',kcal:180,pr:12,ch:18,az:1,fi:1,gr:6.5,sa:0.6,r:[['2 fajitas', 250]]},
+{n:'Wrap de pollo',e:'🌯',g:'preparado',kcal:190,pr:12,ch:20,az:1,fi:1,gr:6.5,sa:0.6,r:[['1 wrap', 220]]},
+{n:'Hamburguesa casera con pan',e:'🍔',g:'preparado',kcal:250,pr:13,ch:22,az:1,fi:1,gr:12,sa:0.6,r:[['1 hamburguesa', 250]]},
+{n:'Bocadillo de tortilla',e:'🥪',g:'preparado',kcal:240,pr:8,ch:30,az:1,fi:1,gr:10,sa:0.6,r:[['1 bocadillo', 250]]},
+{n:'Churros',e:'🥐',g:'preparado',kcal:360,pr:5,ch:45,az:1,fi:1,gr:18,sa:0.6,r:[['4 churros', 100]]},
+{n:'Batido de proteínas con leche',e:'🥤',g:'preparado',kcal:75,pr:9.5,ch:5,az:1,fi:1,gr:1.8,sa:0.6,r:[['1 vaso', 330]]},
 {n:'Frambuesa',e:'🫐',g:'fruta',kcal:52,pr:1.2,ch:12,az:4.4,fi:6.5,gr:0.7,sa:0,r:[['1 puñado', 60]]},
 {n:'Mango',e:'🥭',g:'fruta',kcal:60,pr:0.8,ch:15,az:14,fi:1.6,gr:0.4,sa:0,r:[['1 mango', 300], ['medio', 150]]},
 {n:'Papaya',e:'🍈',g:'fruta',kcal:43,pr:0.5,ch:11,az:8,fi:1.7,gr:0.3,sa:0,r:[['1 tajada', 150]]},
@@ -3304,7 +3353,7 @@ const ALIM_VACIAS={de:1,del:1,la:1,el:1,los:1,las:1,en:1,con:1,y:1,para:1,al:1,a
   g:1,kg:1,ml:1,l:1,gr:1,grs:1,gramos:1,brick:1,bote:1,lata:1,latas:1,paquete:1,bolsa:1,tarro:1,trozo:1,
   fresco:1,fresca:1,natural:1,mediano:1,mediana:1,grande:1,pequeno:1,pequena:1,picado:1,picada:1,troceado:1,
   fileteada:1,fileteado:1,congelado:1,congelada:1,cocido:1,cocida:1,crudo:1,cruda:1,entero:1,entera:1};
-function alimRaiz(w){w=String(w||'');if(w.length>4)w=w.replace(/(es|s)$/,'');return w.slice(0,6);}
+function alimRaiz(w){w=String(w||'');if(w.length>4)w=w.replace(/ces$/,'z').replace(/(es|s)$/,'');return w.slice(0,6);}
 function alimToks(t){return alimTxt(t).replace(/[^a-z0-9ñ ]/g,' ').split(/\s+/)
   .filter(function(w){return w&&!ALIM_VACIAS[w]&&!/^\d/.test(w);});}
 function alimPorNombre(n){const t=alimTxt(n);return alimTodos().filter(function(a){return alimTxt(a.n)===t;})[0]||null;}
@@ -7526,7 +7575,7 @@ function frecuentes(n){
 const BUSCA_ALIAS={'coca cola':'refresco de cola','cocacola':'refresco de cola','coca':'refresco de cola',
   'pepsi':'refresco de cola','fanta':'refresco de naranja','cana':'cerveza','birra':'cerveza','tinto':'vino tinto',
   'chuches':'gominola','tortilla espanola':'tortilla de patata','bocata':'bocadillo','hamburguesa':'burger',
-  'papas':'patata'};
+  'papas':'patata','colacao':'cacao soluble','cola cao':'cacao soluble','nesquik':'cacao soluble','york':'jamon cocido'};
 function buscaToks(t){return alimTxt(t).replace(/[^a-z0-9ñ ]/g,' ').split(/\s+/)
   .filter(function(w){return w&&!ALIM_VACIAS[w];}).map(alimRaiz);}
 function foodBuscar(q,tipo){
@@ -7559,7 +7608,9 @@ function foodBuscarCrea(q,tipo){
          no el alfabeto: «kfc» empezaba por «Agua» */
       if(a.tipo==='fuera'&&b.tipo==='fuera'&&a.cid===b.cid)return a.ord-b.ord;
       return String(a.nombre).localeCompare(String(b.nombre),'es');})
-    .map(function(o){return o.x;});}
+    .map(function(o){return o.x;})
+    /* el mismo producto venía dos y tres veces (tabla + catálogo + guardado): uno basta */
+    .filter(function(x){const k=alimTxt(x.nombre)+'|'+Math.round((+x.kcal||0)/10)+'|'+(x.tipo==='fuera'?x.cid:'');if(this[k])return false;this[k]=1;return true;},{});}
 function hitKcHTML(x){
   /* a la derecha, la ración con la que se piensa y lo que suma: «1 filete (120 g) · 144 kcal», no
      «120 /100 g» */
@@ -17797,6 +17848,17 @@ function act(a,el){
         cel.meal=m.name;sbS().on=true;}
       else{const s=(store.menu[e.shift]||[])[e.i];if(!s)break;s.mealId=m.id;}
       save();flash('puesto: '+m.name);elegirVuelve();render();window.scrollTo(0,0);break;}
+    case 'elegir-alim':{
+      /* un alimento suelto hecho plato de una ración, y se pone igual que un plato */
+      const x=buscableDe(el.dataset.v||'');if(!x||!ui.elegir)break;
+      const ya=(store.dishes||[]).filter(function(d){return d.suelto===x.v;})[0];let d=ya;
+      if(!d){const a=x.tipo==='fuera'?null:alimDeBuscable(x);
+        d={id:uid('d'),name:x.nombre.slice(0,70),icon:foodEmoji(x),portions:1,suelto:x.v,steps:[],sinCasar:[],ingredients:[]};
+        if(a){const g=x.rac?x.rac[1]:(x.porDefecto||100);d.alims=[{id:a.id,g:g}];d.alimsV=1;recalcDish(d);}
+        else{d.kcal=+x.kcal||0;d.prot=+x.prot||0;d.carb=+x.carb||0;d.fat=+x.gresa||0;d.alimsV=1;d.alims=[];d.ingredients=[x.nombre];}
+        store.dishes.push(d);}
+      el.dataset.id=d.id;}
+    /* sigue en «elegir-plato» con el plato recién hecho */
     case 'elegir-plato':{const e=ui.elegir,d=dishById(el.dataset.id||'');if(!e||!d)break;
       if(e.modo==='meal'){const me=mealEdS();if(!me)break;me.o.items.push({kind:'dish',id:d.id,portions:1});
         ui.elegir=null;ui.typesVista='meal-ed';flash(d.name+' añadido');render();window.scrollTo(0,0);break;}
