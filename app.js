@@ -16279,7 +16279,7 @@ function render(){
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
   _pintando=true;
-  try{renderNow();_pintando=false;try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}try{pintaHojaDia();}catch(e4){}}catch(e){_pintando=false;
+  try{renderNow();_pintando=false;try{carrilScroll();}catch(e2){}try{unidadesEnPantalla();}catch(e3){}try{pintaHojaDia();}catch(e4){}try{navTras();}catch(e5){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -16287,6 +16287,35 @@ function render(){
       '<p class="mini">'+esc(String((e&&e.message)||e))+'</p></div>';
   }
 }
+/* ===================== volver a donde estabas =====================
+   «Si deslizo hacia abajo sin querer se actualiza la app y me manda al calendario del mes.» Tres
+   cosas: (1) el gesto de recargar se apaga en el CSS (overscroll-behavior); (2) la pantalla en la
+   que estabas se guarda y, si vuelves en menos de 12 h (o la app se recarga sola al actualizarse),
+   se abre ahí y no en el Mes; (3) un «‹ atrás» arriba —y el botón atrás del móvil— te lleva a la
+   pantalla anterior. */
+const NAV_KEY='guardias-vista',NAV_MAX=30;
+function navSnap(){const o={};Object.keys(ui).forEach(function(k){const v=ui[k];
+  if((k==='tab'||k==='calMode'||k==='cocinaTab'||/Vista$/.test(k))&&(typeof v==='string'))o[k]=v;});return o;}
+function navAplica(o){Object.keys(ui).forEach(function(k){if(/Vista$/.test(k)&&typeof ui[k]==='string')ui[k]='';});
+  Object.keys(o||{}).forEach(function(k){ui[k]=o[k];});}
+function navTras(){
+  /* en cada render: si has cambiado de pantalla, la anterior va a la pila */
+  const snap=navSnap(),j=JSON.stringify(snap);
+  if(ui._navJ&&ui._navJ!==j&&!ui._navVolviendo){
+    ui.navHist=(ui.navHist||[]);ui.navHist.push(JSON.parse(ui._navJ));if(ui.navHist.length>NAV_MAX)ui.navHist.shift();
+    try{history.pushState({guardias:ui.navHist.length},'');}catch(e){}}
+  ui._navVolviendo=false;ui._navJ=j;
+  try{localStorage.setItem(NAV_KEY,JSON.stringify({v:snap,t:Date.now()}));}catch(e){}
+  const b=document.getElementById('navAtras');if(b)b.hidden=!(ui.navHist&&ui.navHist.length);}
+function navAtras(){
+  const h=ui.navHist||[];if(!h.length)return false;
+  cerrarHojaDia();navAplica(h.pop());ui._navVolviendo=true;render();window.scrollTo(0,0);return true;}
+function vistaRestaurar(){
+  try{const x=JSON.parse(localStorage.getItem(NAV_KEY)||'null');
+    if(x&&x.v&&x.v.tab&&Date.now()-(+x.t||0)<12*3600e3)navAplica(x.v);}catch(e){}}
+window.addEventListener('popstate',function(){
+  /* el botón atrás del móvil: si hay a dónde volver dentro de la app, se vuelve ahí */
+  navAtras();});
 function renderNow(){
   try{document.body.dataset.tab=ui.tab;}catch(e0){}   /* para reglas de estilo por pestaña (44 px en Entreno) */
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
@@ -17282,6 +17311,7 @@ function act(a,el){
       const m={id:uid('m'),name:d.name,note:'por macros',cls:pm.c,items:[{kind:'dish',id:d.id,portions:1}]};store.meals.push(m);
       const ps=protoS()[pm.c];if(ps.length<3)ps.push(m.id);save();flash('prototipo guardado: '+d.name);ui.prCls=pm.c;ui.pm=null;ui.typesVista='protos';render();window.scrollTo(0,0);break;}
     case 'compra-todo':ui.compraTodo=!ui.compraTodo;render();break;
+    case 'nav-atras':navAtras();break;
     case 'fb-filtro':ui.fbFiltro=el.dataset.f||'';ui.fbMas=false;buscarRepinta();break;
     case 'fb-prot':ui.fbProt=!ui.fbProt;buscarRepinta();break;
     case 'fb-mas':ui.fbMas=true;buscarRepinta();break;
@@ -20097,6 +20127,7 @@ window.PG={suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gasto
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,constanciaRingHTML,habitoRowHTML,habitoHeatmapHTML,renderHabitos,habitosHoyHTML};
 load();
+vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 /* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del

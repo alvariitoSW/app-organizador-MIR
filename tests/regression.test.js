@@ -8986,6 +8986,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('lo cocinado: apuntar una ración la descuenta y se ve gris en Cocina', co.queda === 3 && co.grises === 1, JSON.stringify(co));
   }
 
+  // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
+  // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.navHist = []; P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'protos'; P.render(); });
+    const antes = await page.evaluate(() => ({ visible: !document.getElementById('navAtras').hidden, os: getComputedStyle(document.documentElement).overscrollBehaviorY }));
+    await page.click('#navAtras'); await page.waitForTimeout(120);
+    const uno = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.typesVista || ''));
+    await page.goBack(); await page.waitForTimeout(200);
+    const dos = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.foodVista || ''));
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = 'macros'; P.render(); });
+    await page.reload(); await page.waitForFunction(() => window.PG && window.__arrancada); await page.waitForTimeout(250);
+    const recarga = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.typesVista || ''));
+    await page.evaluate(() => { try { localStorage.removeItem('guardias-vista'); } catch (e) {} const P = window.PG; P.ui.tab = 'hoy'; P.ui.typesVista = ''; P.render(); });
+    check('deslizar no recarga; «‹ atrás» y el atrás del móvil vuelven a la pantalla anterior, y recargar abre donde estabas',
+      antes.visible && antes.os === 'none' && uno === 'types/' && dos === 'food/' && recarga === 'types/macros',
+      JSON.stringify({ antes, uno, dos, recarga }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

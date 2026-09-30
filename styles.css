@@ -2864,3 +2864,6 @@ em.warnt{font-style:normal;color:var(--warn)}
 .cocq .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cocq .t{display:flex;gap:3px;flex-wrap:wrap}.cocq .t i{display:block;width:16px;height:12px;border-radius:3px;background:#3987e5}.cocq .t i.o{background:var(--line)}
 html:not(.dark) .cocq .t i{background:#2a6fc4}html:not(.dark) .cocq .t i.o{background:var(--line)}
+/* deslizar hacia abajo ya no recarga la app (el «pull to refresh» de Chrome en Android) */
+html,body{overscroll-behavior-y:none}
+#navAtras{margin-right:auto;margin-left:6px;padding:5px 10px;font-weight:800}
