@@ -3732,7 +3732,13 @@ function listaAMano(texto){
    PRINCIPIO de línea, no por línea entera: «MERCADONA, S.A.» y «NIF: A-46103834» llevan cola. */
 const TICKET_FUERA=/^\s*(mercadona|carrefour|lidl|aldi|dia\b|alcampo|eroski|consum|s\.?a\.?\b|s\.?l\.?\b|c\/|avda|avenida|calle|plaza|pol[íi]gono|\d{5}\s|tel[ée]fono|tel[:.]|nif|cif|factura|descripci[óo]n|p\.? ?unit|importe|total|entrega|tarjeta|efectivo|contactless|cambio|iva\b|base imponible|cuota|gracias|su compra|op[:.]|aut[:.]|fecha|hora|caja|ticket|n\.? ?factura|simplificada|www\.|https?:|[-=*_]{3,})/i;
 const TICKET_FIN=/^total\b|^total ?\(/i;
-function ticketNum(x){const n=parseFloat(String(x||'').replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
+function ticketNum(x){
+  /* «2,81», «2.81», y lo que la foto deja torcido: «2'45», «2/45», «¡65», «240» (la coma perdida) */
+  let t=String(x||'').replace(/^[¡!|]/,'').replace(/['\/]/g,',');
+  if(/^\d{3}$/.test(t))t=t.slice(0,1)+','+t.slice(1);
+  if(/^\d{1,2}$/.test(t))return null;   /* «¡65», «25»: un importe sin céntimos es la foto, no el precio */
+  if(/^\d+\.\d{2}$/.test(t))t=t.replace('.',',');
+  const n=parseFloat(t.replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
 function ticketLinea(raw){
   /* una línea de ticket: cantidad, nombre y uno o dos importes al final. Los formatos que se ven
      de verdad en un Mercadona:
@@ -3744,21 +3750,42 @@ function ticketLinea(raw){
   if(!t||t.length>90)return null;
   if(TICKET_FUERA.test(t))return null;
   /* a peso: la cantidad lleva unidad pegada */
-  let m=t.match(/^([\d.,]+)\s*(kg|g|l|ml)\s+(.+?)(?:\s+([\d.,]+))?\s+([\d.,]+)$/i);
+  const PR='[¡!|]?\\d[\\d.,\'/]*';
+  let m=t.match(new RegExp('^([\\d.,]+)\\s*(kg|g)\\s*(?:'+PR+'\\s*€?\\s*/\\s*kg\\s*)?('+PR+')?$','i'));
+  if(m)return {peso:true,q:ticketPeso(m[1]),uni:m[2].toLowerCase(),eur:ticketNum(m[3])};
+  m=t.match(new RegExp('^([\\d.,]+)\\s*(kg|g|l|ml)\\s+(.+?)(?:\\s+('+PR+'))?\\s+('+PR+')$','i'));
   if(m){const q=ticketNum(m[1]);
     if(q==null||!m[3].trim())return null;
+    /* «2,104 kg  2,20 €/kg  4,63» debajo de «1 PLATANO»: es el peso de la línea de arriba, sin nombre */
+    if(!/[a-záéíóúñ]{4,}/i.test(m[3]))return {peso:true,q:ticketPeso(m[1]),uni:m[2].toLowerCase(),eur:ticketNum(m[5])};
     return {q:q,uni:m[2].toLowerCase(),nom:ticketNombre(m[3]),eur:ticketNum(m[5])};}
   /* por unidades: número al principio, importes al final */
-  m=t.match(/^(\d+)\s+(.+?)(?:\s+([\d.,]+))?\s+([\d.,]+)$/);
+  m=t.match(new RegExp('^(\\d+)\\s+(.+?)(?:\\s+('+PR+'))?\\s+('+PR+')$'));
   if(m){const q=+m[1],nom=ticketNombre(m[2]);
-    if(!nom||!/[a-záéíóúñ]/i.test(nom))return null;
+    if(!nom||!/[a-záéíóúñ]{2}/i.test(nom))return null;
     return {q:q,uni:'',nom:nom,eur:ticketNum(m[4])};}
+  /* sin cantidad delante (la foto se la come, o el súper no la pone): una unidad */
+  m=t.match(new RegExp('^[^\\wáéíóúñ]*([a-záéíóúñ][^€]*?[a-záéíóúñ.%)])\\s+('+PR+')$','i'));
+  if(m&&/[a-záéíóúñ]{3}/i.test(m[1])){const nom=ticketNombre(m[1]);if(nom)return {q:1,uni:'',nom:nom,eur:ticketNum(m[2])};}
   return null;}
+function ticketPeso(x){
+  /* «2,104» kg; si la foto se come la coma sale «2104»: nadie compra dos toneladas de plátanos */
+  const s=String(x||'');let q=ticketNum(s);
+  if(q!=null&&q>=50&&!/[.,]/.test(s))q=q/1000;
+  return q;}
 function ticketNombre(x){
   /* los tickets vienen en mayúsculas y con abreviaturas del súper. Se pasa a algo que la app sepa
      clasificar por pasillos y buscar en la tabla de alimentos. */
   let n=String(x||'').trim().toLowerCase();
   n=n.replace(/\b(bolsa pl[aá]stico|bolsa de pl[aá]stico|bolsa)\b/g,'bolsa');
+  /* lo que la foto tuerce siempre igual en un Mercadona */
+  n=n.replace(/\$\/gl\b/g,'s/gl').replace(/\bchamp[oó](?![a-záéíóúñ])/g,'champú').replace(/\bh[a&]s\b/g,'h&s').replace(/\bbac?g?uette\b|\bbacuette\b/g,'baguette')
+     .replace(/\bs\/gl\b/g,'sin gluten').replace(/\bs\/lac[ti]\b/g,'sin lactosa')
+     .replace(/\bplatan[do]?\b/g,'plátano').replace(/\bo[x%]\b/g,'0%').replace(/^.*\bm[ea]dianos?\b.*$/,'huevos medianos')
+     .replace(/\bsg\b/g,'sin gluten')
+     /* la cola de basura de la foto («plátano ta», «queso curado — a»), sin tocar «200 g» */
+     .replace(/([a-záéíóúñ.%)])[\s—–\-|]+[a-z]{1,2}$/,'$1')
+     .replace(/^[^a-záéíóúñ0-9]+|[\s—–\-|.]+$/g,'');
   n=n.replace(/\bsemi\b/g,'semidesnatada').replace(/\bdesn\b/g,'desnatada')
      .replace(/\bnat\b/g,'natural').replace(/\bcong\b/g,'congelado')
      .replace(/\bac\.? ?oliva\b/g,'aceite de oliva').replace(/\bac\b/g,'aceite')
@@ -3770,7 +3797,9 @@ function ticketLeer(texto){
   /* devuelve lo que ha entendido Y lo que no: una línea que no se entiende se enseña, no se tira
      en silencio. Así se ve de un vistazo si el ticket ha entrado entero. */
   const lineas=String(texto||'').split(/\n+/);
-  const items=[],sueltas=[];let total=null,fin=false;
+  const items=[],sueltas=[];let total=null,fin=false,empezado=false;
+  /* con cabecera de columnas («Descripción  P. Unit  Importe»), lo de antes es la dirección y el NIF */
+  const hayCabecera=lineas.some(function(l){return /descrip|p\.? ?unit|imp\.? ?\(/i.test(l);});
   lineas.forEach(function(l){
     /* el precio por kilo o por unidad («2,19/kg», «2,19 €/kg») no es parte del nombre */
     const t=l.replace(/\s+/g,' ').replace(/\s\d+[.,]\d+\s*€?\s*\/\s*(kg|l|ud|u)\b/ig,'').trim();
@@ -3780,7 +3809,11 @@ function ticketLeer(texto){
       if(m&&total==null)total=ticketNum(m[1]);
       fin=true;return;}
     if(fin)return;                       /* lo de después del total es forma de pago y datos fiscales */
-    const it=ticketLinea(t);
+    if(!empezado&&hayCabecera){if(/descrip|p\.? ?unit|imp\.? ?\(|importe/i.test(t))empezado=true;return;}
+    /* la línea partida de antes («2 C. FRESA EXTRA 0%» + «4 59» sueltos) */
+    const t2=t.replace(/(\s\d)\s(\d{2})$/,function(a,b,c){return /[.,]\d{2}$/.test(t)?a:b+','+c;});
+    const it=ticketLinea(t2);
+    if(it&&it.peso){const ult=items[items.length-1];if(ult&&!ult.uni){ult.q=it.q;ult.uni=it.uni;if(it.eur!=null)ult.eur=it.eur;}return;}
     if(it)items.push(it);
     else if(!TICKET_FUERA.test(t)&&/[a-záéíóúñ]{3}/i.test(t)&&t.length<90)sueltas.push(t);});
   return {items:items,sueltas:sueltas,total:total};}
@@ -3789,6 +3822,7 @@ function ticketAplicar(items){
      queda puesta, que es lo que apaga el aviso de «toca hacer la compra» */
   let n=0;
   (items||[]).forEach(function(x){
+    const v=vidaDe(x.nom);if(v&&v.no)return;   /* el champú y los táperes no van a la nevera */
     /* la cantidad va COMO NÚMERO, no metida en el texto: al pasarla por fmt() para escribirla,
        «0,894 kg» de tomate se quedaba en 0,89 kg y entraban 890 g en vez de 894. */
     if(despensaAdd(x.nom,x.q,x.uni))n++;});
@@ -7942,10 +7976,52 @@ function diasAguanta(d){
   if(/tortilla|huevo|revuelt|ensalad|poke|bowl|mayones/.test(n))return 2;
   if(/lentej|garbanz|alubia|fabada|cocido|guiso|estofad|potaje|puchero|caldo/.test(n))return 4;
   return 3;}
+/* CUÁNTO AGUANTA CADA COSA, cerrada y en su sitio (nevera o despensa), en días aproximados. Va por
+   el nombre del producto: el pasillo solo no basta (un fiambre loncheado no dura lo que un lomo
+   embuchado, ni el salmón marinado lo que el fresco). El orden importa: gana la primera que casa.
+   no:true = no se come (champú, táperes): va a la lista pero no a la nevera. */
+const VIDA_PROD=[
+  [/champ[uúoó]|gel |desodor|recipiente|t[aá]per|papel|bolsa|detergen|lavavaj|suaviz|lej[ií]a|friegasuel|servillet|esponja|pasta de dientes|cepillo/i,0,{no:true}],
+  [/picad|hamburgues|salchicha fresca|carne pic/i,1],
+  [/pescado fresco|merluza|dorada|lubina|at[uú]n fresco|sardina|calamar|gamba|langostino|mejill[oó]n|sepia|pulpo fresco/i,1],
+  [/boquer[oó]n.*vinagr|anchoa/i,20],
+  [/salm[oó]n.*(marinad|ahumad)|ahumad/i,10],
+  [/salm[oó]n|bacalao fresco/i,2],
+  [/carrillad|cocido|callos|albóndiga|albondiga|guiso|pollo asado|lasa[ñn]a|pizza fresca|plato preparado/i,10],
+  [/pechuga|muslo|contramuslo|filete|entrecot|chulet|solomillo|secreto|lomo fresco|pollo entero|ternera|cerdo|cordero|conejo|pavo fresco|novillo|vacuno/i,2],
+  [/embuchad|serrano|jam[oó]n s\.|jamon s |ib[eé]rico|chorizo|salchich[oó]n|fuet|lomo curado|cecina/i,30],
+  [/fiambre|jam[oó]n (cocido|york|extra)|pollo extra|pavo|lomo adobad|mortadela|chopped|bacon|beicon/i,6],
+  [/huevo/i,21],
+  [/roquefort|azul|gorgonzola/i,14],[/feta|fresco|burrata|mozzarella|ricotta|cottage|batido/i,7],
+  [/queso.*curado|curado|parmesano|manchego|grana/i,40],[/queso|gouda|edam|havarti|emmental|lonchas/i,14],
+  [/panna cotta|natilla|flan|arroz con leche|cuajada|mousse/i,10],
+  [/yogur|griego|kefir|skyr|prote[ií]na 0|fresa.*0%|0% natural|queso batido/i,14],
+  [/leche|bebida de (avena|soja|almendra)/i,30],
+  [/guacamole|hummus|gazpacho|salmorejo|zumo exprimido|pesto fresco/i,5],
+  [/can[oó]nigo|r[uú]cula|lechuga|espinaca fresca|brotes|ensalada|germinado|fresa(?!.*0%)|frambuesa|ar[aá]ndano|mora/i,4],
+  [/pl[aá]tano|aguacate|melocot[oó]n|nectarina|pera|uva|mango|cereza/i,5],
+  [/champi[ñn]|calabac|pepino|pimiento|tomate(?! frito)|berenjena|br[oó]coli|coliflor|jud[ií]a verde|esp[aá]rrago/i,6],
+  [/kiwi|manzana|naranja|mandarina|lim[oó]n|pomelo|pi[ñn]a/i,12],
+  [/zanahoria|cebolla|ajo|patata|boniato|calabaza|puerro|r[aá]bano/i,20],
+  [/baguette|barra|chapata|pan fresco/i,3],[/pan /i,7],[/pan$/i,5],[/tortilla de (ma[ií]z|trigo)|wrap|fajita/i,21],
+  [/tortilla/i,4],
+  [/lenteja|garbanzo|alubia|jud[ií]a cocid|pisto|fritada|tomate frito|jardinera|macedonia|conserva|lata|at[uú]n|sardinilla|ma[ií]z dulce|esp[aá]rrago blanco/i,365],
+  [/mayonesa|ketchup|mostaza|salsa|tahin|vinagre|aceite|miel|mermelada|crema.*cacahuete|crema de/i,120],
+  [/nuez|almendra|avellana|pistacho|anacardo|cacahuete|pecana|semilla|frutos secos/i,120],
+  [/galleta|mar[ií]a|cookie|barrita|cereal|avena|muesli|tostada|biscote|chocolate|cacao/i,90],
+  [/arroz|pasta|macarr|espagu|harina|az[uú]car|sal\b|legumbre seca|quinoa|cusc[uú]s/i,365],
+  [/isot[oó]nic|refresco|agua|zumo|cerveza|vino|bebida/i,180],
+  [/congelad/i,90]];
+function vidaDe(nom){
+  const t=String(nom||'');
+  for(let i=0;i<VIDA_PROD.length;i++)if(VIDA_PROD[i][0].test(t))return Object.assign({d:VIDA_PROD[i][1]},VIDA_PROD[i][2]||{});
+  return null;}
 const FRESCO_DIAS={carne:2,pescado:1,verdura:5,fruta:6,lacteos:7,pan:3};
 function frescoDias(x){
-  /* lo que queda de lo fresco desde que entró en casa (ticket o a mano), por su pasillo */
-  const sec=x.sec||seccionDeCompra(x.nom),vida=/huevo/i.test(x.nom)?21:(FRESCO_DIAS[sec]||null);
+  /* lo que queda desde que entró en casa (ticket o a mano): por el producto (vidaDe) y, si no se
+     conoce, por su pasillo. Lo de despensa larga (más de un mes) no cuenta como fresco */
+  const v=vidaDe(x.nom),sec=x.sec||seccionDeCompra(x.nom);
+  const vida=v?(v.no||v.d>45?null:v.d):(/huevo/i.test(x.nom)?21:(FRESCO_DIAS[sec]||null));
   if(!vida||!x.ts)return null;
   return vida-Math.floor((Date.now()-x.ts)/86400000);}
 function cadVence(){
@@ -8013,11 +8089,18 @@ function renderNevera2(){
         return '<div class="nvf"><span>'+esc(y.d.icon||'🍽')+'</span><span class="n"><b>'+esc(y.d.name)+'</b> · '+x.queda+' rac.</span><span class="d">'+q+'</span><b class="r '+(quedan<=0?'ex':(quedan<=1?'warn':''))+'">'+(quedan<=0?'hoy':'hasta '+dia(x.hasta))+'</b></div>';}).join('')+
         '<p class="mini" style="margin:6px 0 0">Cada cuadro, un día desde que lo cocinaste. Lo que no vayas a comer, congélalo antes (2–3 meses).</p>':
         '<p class="mini" style="margin:4px 0 0">Nada cocinado. Al cocinar desde «Hoy cocino…» se apunta aquí con los días que aguanta.</p>')+'</div>'+
-    '<div class="card"><div class="row"><span class="cap">FRESCO</span><span class="sp"></span><span class="mini">desde que lo compraste</span></div>'+
-      (fres.length?fres.slice(0,8).map(function(o){const x=o.x,sc=COMPRA_SECS.filter(function(y){return y[0]===x.sec;})[0];
-        return '<div class="nvf"><span>'+((sc&&sc[2])||'🛒')+'</span><span class="n">'+esc(x.nom)+(x.q?' · '+fmtKg(x.q)+(x.uni?' '+x.uni:''):'')+'</span><span class="mini">'+(o.r<=0?'caduca hoy':(o.r===1?'caduca mañana':o.r+' días'))+'</span><b class="r '+(o.r<=1?'ex':(o.r<=2?'warn':''))+'">'+(o.r<=1?'⏳':'')+'</b></div>';}).join(''):
-        '<p class="mini" style="margin:4px 0 0">Haz una foto del ticket y entra todo solo.</p>')+
-      (resto>0?'<button class="dlink" style="margin-top:6px" data-a="food-vista" data-v="cocina-panel" data-cocina="nevera">+ '+resto+' de despensa (arroz, pasta, latas…) ›</button>':'')+'</div>'+
+    (function(){
+      /* lo fresco por urgencia: lo que hay que comerse ya, lo de esta semana y lo que aguanta */
+      const fila=function(o){const x=o.x,sc=COMPRA_SECS.filter(function(y){return y[0]===(x.sec||seccionDeCompra(x.nom));})[0];
+        return '<div class="nvf"><span>'+((sc&&sc[2])||'🛒')+'</span><span class="n">'+esc(x.nom)+(x.q&&!(x.uni===''&&x.q===1)?' · '+fmtKg(x.uni==='g'&&x.q>=1000?x.q/1000:x.q)+(x.uni?' '+(x.uni==='g'&&x.q>=1000?'kg':x.uni):''):'')+'</span>'+
+          '<b class="r '+(o.r<=1?'ex':(o.r<=3?'warn':''))+'">'+(o.r<=0?'hoy':(o.r===1?'mañana':o.r+' d'))+'</b></div>';};
+      const G=[['CÓMELO PRIMERO','hasta 3 días',fres.filter(function(o){return o.r<=3;})],['ESTA SEMANA','4–7 días',fres.filter(function(o){return o.r>3&&o.r<=7;})],
+        ['AGUANTA','más de una semana',fres.filter(function(o){return o.r>7;})]];
+      if(!fres.length)return '<div class="card"><div class="cap">FRESCO</div><p class="mini" style="margin:4px 0 0">Haz una foto del ticket y entra todo solo, con lo que aguanta cada cosa.</p></div>';
+      return G.filter(function(g){return g[2].length;}).map(function(g,i){const largo=i===2||g[0]==='AGUANTA',ver=!largo||ui.nvTodo,lim=ver?g[2]:[];
+        return '<div class="card nvg"><div class="row"><span class="cap">'+g[0]+' · '+g[2].length+'</span><span class="sp"></span><span class="mini">'+g[1]+'</span></div>'+
+          lim.map(fila).join('')+(largo?'<button class="dlink" style="margin-top:4px" data-a="nv-todo">'+(ui.nvTodo?'ocultar':'ver '+esc(g[2].slice(0,3).map(function(o){return o.x.nom;}).join(', '))+(g[2].length>3?'…':''))+' ›</button>':'')+'</div>';}).join('')+
+        (resto>0?'<button class="dlink" data-a="food-vista" data-v="cocina-panel" data-cocina="nevera">+ '+resto+' de despensa (latas, pasta, frutos secos…) ›</button>':'');})()+
     '<div class="row" style="gap:6px"><button class="btn p" style="flex:1;min-height:46px" data-a="ticket-foto">📷 Foto del ticket</button>'+
       '<button class="btn" style="flex:1;min-height:46px" data-a="nev-mano">＋ A mano</button></div>'+
     '<button class="btn" style="min-height:44px" data-a="food-vista" data-v="cocina-panel">🍳 ¿Qué puedo cocinar con esto?</button>'+
@@ -13057,6 +13140,11 @@ function seccionDeCompra(texto){
   /* segundo intento sin tildes, por lo que venga del ticket o escrito a la carrera */
   const t2=alimTxt(texto),rr=reglasSinTildes();
   for(let j=0;j<rr.length;j++)if(rr[j][0].test(t2))return rr[j][1];
+  /* lo que trae el ticket de Mercadona con su nombre de etiqueta */
+  if(/vacuno|novillo|entrecot|carrillad|embuchad|fiambre|picada/.test(t2))return 'carne';
+  if(/baguette|chapata|hogaza/.test(t2))return 'pan';
+  if(/guacamole|canonigo|rucula/.test(t2))return 'verdura';
+  if(/boqueron|salmon/.test(t2))return 'pescado';
   return 'otros';}
 function secsOrdenadas(){
   /* EL ORDEN EN QUE RECORRES EL SÚPER. COMPRA_SECS lo traía fijo (verdura → carne → pescado → …) y
@@ -13265,7 +13353,7 @@ function tkPrepara(file){
       const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
       const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(img,0,0,c.width,c.height);
       const d=x.getImageData(0,0,c.width,c.height),a=d.data;
-      for(let i=0;i<a.length;i+=4){const v=(.299*a[i]+.587*a[i+1]+.114*a[i+2])<165?0:255;a[i]=a[i+1]=a[i+2]=v;a[i+3]=255;}
+      for(let i=0;i<a.length;i+=4){const v=(.299*a[i]+.587*a[i+1]+.114*a[i+2])<180?0:255;a[i]=a[i+1]=a[i+2]=v;a[i+3]=255;}
       x.putImageData(d,0,0);ok(c);};
     img.onerror=function(){URL.revokeObjectURL(url);ko(new Error('esa imagen no se puede abrir'));};img.src=url;});}
 function tkOcr(files){
@@ -13277,7 +13365,10 @@ function tkOcr(files){
   ui.tab='shop';ui.shopVista='ticket';render();window.scrollTo(0,0);
   const base=new URL('vendor/ocr/',location.href).href;let worker=null;const txt=[];
   return ocrListo().then(function(T){return T.createWorker('spa',1,{workerPath:base+'worker.min.js',corePath:base+'tesseract-core-lstm.wasm.js',langPath:base.replace(/\/$/,''),gzip:true});})
-    .then(function(w){worker=w;return fs.reduce(function(p,f){return p.then(function(){
+    .then(function(w){worker=w;
+      /* modo «columna de texto de tamaño variable»: con el ticket real separa mejor las líneas pegadas (43–45 de 49 frente a 39) */
+      return w.setParameters({tessedit_pageseg_mode:'4'}).catch(function(){});})
+    .then(function(){return fs.reduce(function(p,f){return p.then(function(){
       return tkPrepara(f).then(function(c){return worker.recognize(c);}).then(function(r){txt.push(r.data.text||'');t.hechas++;render();});});},Promise.resolve());})
     .then(function(){t.txt=txt.join('\n').replace(/(\d),\s+(\d)/g,'$1,$2');t.leido=ticketLeer(t.txt);t.estado='';t.msg=t.leido.items.length?'':'No he sacado productos de la foto: prueba con más luz y el ticket recto, o pega el texto.';})
     .catch(function(e){t.estado='';t.msg=(e&&e.message)||'no se ha podido leer';})
@@ -13301,8 +13392,9 @@ function renderShopTicket(){
     const glu=esCeliaco()?glutenChipHTML(glutenDe(x.nom),true):'';
     return '<div class="dfila">'+
       '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'🛒')+'</span>'+
-      '<span class="n">'+esc(x.nom)+glu+'</span>'+
+      '<span class="n"><input class="tknom" data-a="tk-nom" data-i="'+i+'" value="'+esc(x.nom)+'" aria-label="nombre del producto">'+glu+'</span>'+
       '<span class="q">'+fmtKg(x.q)+(x.uni?(' '+x.uni):'')+'</span>'+
+      (function(){const v=vidaDe(x.nom);return '<span class="tkvida'+(v&&!v.no&&v.d<=3?' pronto':'')+'">'+(!v?'':(v.no?'casa':(v.d>45?'despensa':'~'+v.d+' d')))+'</span>';})()+
       '<button class="btn d s" data-a="tk-quitar" data-i="'+i+'" aria-label="quitar">×</button>'+
       '</div>';}).join(''):'';
   $('#main').innerHTML='<div class="grid">'+
@@ -13326,7 +13418,8 @@ function renderShopTicket(){
       '</div>'+
     '</div>'+
     /* la foto: se ofrece solo donde de verdad funciona, y diciendo que la foto sale del móvil */
-    '<div class="card"><h2>📷 Una foto del ticket</h2>'+
+    /* con el lector del móvil (arriba), esta tarjeta solo sale cuando además está Claude */
+    (!puedeImagen?'':'<div class="card"><h2>📷 Una foto del ticket</h2>'+
       (puedeImagen
         ?('<p class="note">Le paso la foto a Claude y él saca la lista. <b>Ojo: la foto sale de tu '+
           'móvil</b> y viaja a Claude para que pueda leerla. Si prefieres que no salga nada, usa la caja de arriba.</p>'+
@@ -13341,7 +13434,7 @@ function renderShopTicket(){
         :('<p class="note">Aquí no se puede: leer una foto necesita a Claude, y Claude solo está cuando '+
           'abres la app <b>dentro de claude.ai</b>. En el móvil, con la app instalada, no existe. '+
           'Por eso el camino de todos los días es pegar el texto del ticket, aquí arriba.</p>'))+
-    '</div>'+
+    '</div>')+
     (t.msg?('<div class="card"><div class="empty">'+esc(t.msg)+'</div></div>'):'')+
     (l?('<div class="card"><h2>Lo que he leído <span class="mini">'+l.items.length+'</span></h2>'+
       (l.total!=null?('<p class="mini" style="margin:0 0 8px">Total del ticket: <b>'+eur(l.total)+'</b>.</p>'):'')+
@@ -14913,7 +15006,7 @@ function metaObjetivo(h){
   const ds=(h.deseos||[]).filter(function(d){return !d.hecho;});
   const lista=ds.reduce(function(s,d){return s+(+d.precio||0);},0);
   return Math.max(+h.objetivo||0,metaTipo(h)==='casa'&&lista?lista:0);}
-function metaCalc(h){
+function metaHucha(h){
   /* con fecha: lo que pide al mes para llegar; sin fecha: con lo que le toca, cuándo llegas */
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),obj=metaObjetivo(h),falta=Math.max(0,obj-(+h.saldo||0));
   if(!obj)return {obj:0,falta:0};
@@ -14930,7 +15023,7 @@ function apartasMes(){const hoy=new Date();return baseReparto(ahoMk(hoy.getFullY
 function dinMetasHTML(){
   const bs=bolsillos(),P=puroHucha(),T=mesTipo(),hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
   const COL={viaje:'var(--bp)',casa:'var(--bc)',capricho:'var(--bg3)',inversion:'var(--bg3)',otro:'var(--bp)'};
-  const filas=bs.filter(function(b){return !b.puro;}).map(function(b){const h=b.h,c=metaCalc(h),tp=metaTipo(h);
+  const filas=bs.filter(function(b){return !b.puro;}).map(function(b){const h=b.h,c=metaHucha(h),tp=metaTipo(h);
     const ds=(h.deseos||[]).filter(function(d){return !d.hecho;});
     let sub;
     if(tp==='inversion')sub='largo plazo · '+(c.men?fmtMil(c.men)+' €/mes':(aporteHucha(h)?'≈ '+fmtMil(aporteHucha(h))+' €/mes':'sin aporte'));
@@ -14995,7 +15088,7 @@ function din7Aplicar(){
   a.puroPct=R.colchon;inv.mensual=0;cap.mensual=0;
   inv.pct=R.inversion;cap.pct=R.caprichos;
   /* las metas con fecha se llevan lo que piden (€/mes); las demás, su parte del 30 % */
-  metas.forEach(function(h){const c=metaCalc(h);if(c.fecha)h.mensual=c.men;});
+  metas.forEach(function(h){const c=metaHucha(h);if(c.fecha)h.mensual=c.men;});
   const libres=metas.filter(function(h){return !(+h.mensual>0);});
   libres.forEach(function(h){h.pct=Math.round(R.metas/libres.length);});
   if(!libres.length&&!metas.length)inv.pct+=R.metas;
@@ -15186,7 +15279,7 @@ function dinHojaHTML(){
         '<input type="range" min="0" max="'+Math.max(50,Math.ceil(libre/10)*10)+'" step="10" value="'+Math.min(Math.max(50,Math.ceil(libre/10)*10),Math.round(h.mensual||ap))+'" data-a="din-hu-men" data-id="'+esc(h.id)+'" class="drange" aria-label="lo que apartas cada mes"></label>'+
       '<div class="hnota">Sale de lo que va a huchas ('+esc(eurR(libre))+'): el ahorro puro no se toca.</div>'+
       '<label class="hfld" style="margin-top:10px">PARA CUÁNDO<input type="month" data-a="din-hu-para" data-id="'+esc(h.id)+'" value="'+esc(h.para||'')+'" aria-label="para cuándo"></label>'+
-      (function(){const c=metaCalc(h);return c.fecha&&c.falta?'<div class="hnota">Para llegar en '+esc(ahoMesTxt(h.para).toLowerCase())+': <b>'+fmtMil(c.men)+' €/mes</b> ('+c.dia+' €/día).</div>':'';})()+
+      (function(){const c=metaHucha(h);return c.fecha&&c.falta?'<div class="hnota">Para llegar en '+esc(ahoMesTxt(h.para).toLowerCase())+': <b>'+fmtMil(c.men)+' €/mes</b> ('+c.dia+' €/día).</div>':'';})()+
       (tr&&ll.falta?'<div class="deq"><div><b>≈ '+(tr.guardias!=null?Math.max(1,Math.round(tr.guardias)):'—')+'</b>guardias de finde</div><div><b>≈ '+(tr.dias!=null?Math.max(1,Math.round(tr.dias)):'—')+'</b>días de trabajo</div></div>':'')+
       '<div class="hcap">EN QUÉ ME LO GASTO'+(ds.length?' · '+esc(eurR(ds.reduce(function(s,d){return s+(+d.precio||0);},0))):'')+'</div>'+
       '<div class="dwish" style="border-top:0;margin-top:0">'+ds.map(function(d){
@@ -17835,6 +17928,7 @@ function act(a,el){
       pl.huecos.forEach(function(x){mPoner(x.w,x.c,[{id:d.id,portions:1}],'');const cel=sbCelda(x.w,x.c);if(cel)cel.auto=false;});save();
       flash(d.name+': '+pl.rac+' raciones en la semana · aguanta '+diasAguanta(d)+' días');ui.hcSel='';ui.tab='types';ui.typesVista='';ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'nev-mano':ui.tab='food';ui.foodVista='cocina-panel';ui.cocinaTab='nevera';render();window.scrollTo(0,0);break;
+    case 'nv-todo':ui.nvTodo=!ui.nvTodo;render();break;
     case 'fb-filtro':ui.fbFiltro=el.dataset.f||'';ui.fbMas=false;buscarRepinta();break;
     case 'fb-prot':ui.fbProt=!ui.fbProt;buscarRepinta();break;
     case 'fb-mas':ui.fbMas=true;buscarRepinta();break;
@@ -20197,8 +20291,9 @@ document.addEventListener('change',e=>{
     case 'din-plan-pct':{bolsilloSetPct(el.dataset.id,+el.value||0);save();render();break;}
     case 'din-puro':{ahorroS().puroPct=Math.max(puroMin(),Math.min(100,+el.value||50));save();render();break;}
     case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
+    case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'din-hu-para':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
-      h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaCalc(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
+      h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
     case 'pat-name':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.name=el.value;save();}break;}
     case 'pat-note':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.note=el.value;save();}break;}
@@ -20583,7 +20678,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={d6Mes,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaCalc,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

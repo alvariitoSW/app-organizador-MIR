@@ -1,0 +1,167 @@
+<!doctype html><meta charset=utf-8>
+<title>Seguimiento y platos</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70;--ex:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 12%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:10px 12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.nav div{text-align:center;padding:8px 0;border-radius:11px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}
+.nav div.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.big{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.mb{display:grid;grid-template-columns:18px 1fr 64px;gap:6px;align-items:center;font-size:11.5px;margin-top:5px}
+.mb .t{height:8px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}.mb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.mb b{text-align:right;font-weight:800}
+.busca{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card));margin-bottom:8px;font-weight:800}
+.mom{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mom:first-of-type{border-top:0}.mom b{font-size:13px}.mom .s{font-size:11px;color:var(--ink2)}
+.add{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg2);font-weight:900;color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.chip.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+/* barras de semana */
+.wk{display:flex;gap:6px;align-items:flex-end;height:96px;position:relative;margin-top:8px}
+.wk>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:3px}
+.wk i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.wk .x i{background:var(--ex)}.wk .v i{background:var(--line)}
+.wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.wk .obj b{position:absolute;right:0;top:-13px;font-size:9px;color:var(--ink2)}
+.dots{display:flex;gap:6px;margin-top:4px}.dots span{flex:1;text-align:center;font-size:10px;font-weight:900}
+/* buscador */
+.q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;border:1.5px solid var(--brand);background:var(--bg2);font-size:15px;font-weight:700}
+.res{display:grid;grid-template-columns:30px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res .e{font-size:20px;text-align:center}.res b{font-size:13px;display:block}.res .s{font-size:10.5px;color:var(--ink2)}
+.res .k{text-align:right;font-size:12px;font-weight:900}.res .k small{display:block;font-size:10.5px;color:var(--p);font-weight:900}
+.src{font-size:9.5px;font-weight:900;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.src.m{background:#0f3d2a;color:#34d399}.src.f{background:#3b2410;color:#fbbf24}.src.t{background:#1d2a50;color:#9fb5ff}
+.more{text-align:center;font-size:12px;font-weight:800;color:var(--brand);padding:8px 0 2px}
+/* menú */
+.tipo{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.tipo:first-of-type{border-top:0}.tipo .e{font-size:20px;grid-row:span 2}.tipo b{font-size:13.5px}.tipo .k{font-weight:900;font-size:14px;text-align:right}
+.stk{display:flex;height:7px;border-radius:5px;overflow:hidden;gap:2px;grid-column:2/4}.stk i{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.days div{border:1px solid var(--line);border-radius:10px;padding:5px 0;text-align:center;font-size:9.5px;color:var(--ink2);font-weight:800;background:var(--bg2)}
+.days div b{display:block;font-size:16px}.days div.hoy{border-color:var(--brand)}
+/* cocina */
+.pl{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}.pl .e{font-size:18px;grid-row:span 2}.pl b{font-size:13px}.pl .s{font-size:10.5px;color:var(--ink2)}
+.btn{padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;grid-row:span 2}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hb{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.hb .t{height:12px;display:flex;gap:3px}.hb .t i{display:block;width:20px;height:12px;border-radius:3px;background:var(--p)}.hb .t i.o{background:var(--line)}
+.tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px}.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+/* compra */
+.pas{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;font-weight:800}
+.pas .n{font-size:11px;color:var(--ink2);font-weight:800}
+.it{display:grid;grid-template-columns:22px 58px 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13px}
+.it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ink2)}.it .ck.on{background:var(--ok);border-color:var(--ok)}
+.it .qt{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}.it .w{font-size:10.5px;color:var(--ink2)}
+.it.done{opacity:.45;text-decoration:line-through}
+.prog{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:6px}.prog i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.leg{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px}
+
+.lbl{white-space:nowrap}
+.meal{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}.meal .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);font-size:18px}
+.meal b{font-size:13.5px;display:block}.meal .s{font-size:11px;color:var(--ink2)}
+.acts{display:flex;gap:4px}.acts span{padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);font-size:11px;font-weight:800}
+.acts span.ok{border-color:var(--ok);color:var(--ok)}
+.wrow{display:grid;grid-template-columns:34px repeat(3,1fr);gap:4px;align-items:center;margin-top:4px;font-size:11px}
+.wrow>span{font-weight:900;color:var(--ink2);font-size:10px}.wrow>div{padding:6px 6px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow>div.cz{border-color:color-mix(in srgb,var(--p) 60%,var(--line));background:color-mix(in srgb,var(--p) 14%,var(--bg2))}
+.wrow>div.hoy{outline:1.5px solid var(--brand)}
+.nv{display:grid;grid-template-columns:26px 1fr 90px 44px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.nv:first-of-type{border-top:0}.nv .d{display:flex;gap:3px}.nv .d i{display:block;flex:1;height:10px;border-radius:3px;background:var(--ok)}
+.nv .d i.w{background:var(--warn)}.nv .d i.x{background:var(--ex)}.nv .d i.o{background:var(--line)}
+.nv b.r{text-align:right;font-size:11px}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}.seg3 div{text-align:center;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg3 div b{display:block;font-size:15px;color:var(--ink)}.seg3 div.on{border:1.5px solid var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 12%,var(--bg2))}
+.tk{display:grid;grid-template-columns:22px 1fr auto 20px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.tk:first-of-type{border-top:0}.tk .q{font-weight:900;color:var(--ink2);font-size:11px}.tk .st{color:var(--warn)}
+.foto{height:120px;border-radius:14px;border:1.5px dashed var(--line);display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--bg2) 0 10px,transparent 10px 20px);font-size:12px;color:var(--ink2);font-weight:800}
+.dots7{display:flex;gap:6px;margin-top:8px}.dots7 div{flex:1;text-align:center;font-size:10px;color:var(--ink2);font-weight:800}
+.dots7 i{display:block;height:26px;border-radius:8px;margin-bottom:3px;background:var(--line)}.dots7 i.ok{background:var(--p)}.dots7 i.mas{background:var(--ex)}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.goal{display:grid;grid-template-columns:38px 1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0}.goal .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:var(--bg2);grid-row:span 2}
+.goal b{font-size:13.5px}.goal .v{text-align:right;font-weight:900;font-size:14px}.goal .s{font-size:11px;color:var(--ink2);grid-column:2/4}
+.pb{grid-column:2/4;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.pb i{display:block;height:100%;border-radius:5px}
+.stk{display:flex;gap:2px;height:18px;border-radius:7px;overflow:hidden;margin-top:8px}.stk i{display:block}
+.pct{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.pct:first-of-type{border-top:0}.pct i{width:12px;height:12px;border-radius:3px;display:block}.pct b{font-variant-numeric:tabular-nums}
+.pct span.s{display:block;font-size:10.5px;color:var(--ink2)}
+.ln{position:relative;height:96px;margin-top:8px}
+.fld2{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.1em;color:var(--ink2);margin-top:8px}
+.fld2 div{padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:800;color:var(--ink);letter-spacing:0}
+</style><style>
+.bars{display:flex;gap:6px;align-items:flex-end;height:110px;position:relative;margin-top:10px}
+.bars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px}
+.bars i{display:block;width:100%;border-radius:5px 5px 0 0;background:var(--p)}.bars .x i{background:var(--ex)}.bars .v i{background:var(--line)}
+.bars em{font-style:normal;font-size:9.5px;font-weight:800}.bars span{font-size:10px;color:var(--ink2);font-weight:800}
+.obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.pdot{width:9px;height:9px;border-radius:50%;background:var(--g);display:block}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.kpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px}
+.kpi b{display:block;font-size:20px;font-weight:900}.kpi span{font-size:10.5px;color:var(--ink2);font-weight:700}
+.rk{display:grid;grid-template-columns:22px 30px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.rk:first-of-type{border-top:0}.rk .n{font-weight:900;color:var(--ink2);text-align:center}.rk .e{font-size:20px}
+.rk .t b{font-size:13px;display:block}.rk .t span{font-size:11px;color:var(--ink2)}
+.rk .sc{font-size:15px;font-weight:900;text-align:right}.rk .sc small{display:block;font-size:10px;color:var(--ink2);font-weight:700}
+.tag{font-size:10px;font-weight:900;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--g) 22%,transparent);color:#6ee7b7}
+.tag.w{background:color-mix(in srgb,var(--c) 22%,transparent);color:#fcd34d}
+.vote{display:flex;gap:6px}.vote span{width:34px;height:30px;border-radius:9px;border:1px solid var(--line);display:grid;place-items:center;background:var(--bg2)}
+.vote span.on{border-color:var(--g);background:color-mix(in srgb,var(--g) 18%,var(--bg2))}
+.qt{margin-top:6px;padding:8px 10px;border-radius:12px;border:1px dashed color-mix(in srgb,var(--brand) 50%,var(--line));display:flex;align-items:center;gap:8px;font-size:12px}
+.btnl{padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:12.5px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+</style>
+<div class="wrap"><div class="lbl">1 · Hoy: al marcar ✓, «¿qué tal?» en una línea</div><div class="ab">
+ <div class="nav"><div class="on">Hoy</div><div>Semana</div><div>Nevera</div><div>Compra</div></div>
+ <div class="card"><div class="row"><span class="cap">HOY TE TOCA</span><span class="sp"></span><span class="mini">1.640 / 2.470 kcal · 118 / 140 g prot</span></div>
+  <div class="mom"><div><b>☀️ Desayuno</b><div class="s">Griego ligero + nueces + kiwi</div></div><span class="mini" style="color:var(--ok)">✓ hecho</span><span></span></div>
+  <div class="mom"><div><b>🍽 Comida</b><div class="s">Carrilladas al vino + pan</div></div><span class="mini" style="color:var(--ok)">✓ hecho</span><span></span></div>
+  <div class="qt">¿Qué tal las carrilladas? <span class="sp"></span><div class="vote"><span>👎</span><span>😐</span><span class="on">👍</span></div></div>
+  <div class="mom"><div><b>🌙 Cena</b><div class="s">Salmón marinado + canónigos</div></div><span class="add">✓</span><span class="add">±</span></div>
+ </div>
+ <div class="two"><div class="btnl">📈 Mi semana<div class="mini">6 de 7 días · 93 % prot</div></div><div class="btnl">🏆 Mis platos<div class="mini">top: pechuga ajillo</div></div></div>
+ <p class="mini" style="margin:10px 4px">La valoración es opcional: si no tocas nada, cuenta solo que lo comiste. Tres caras, sin estrellas.</p>
+</div></div>
+
+<div class="wrap"><div class="lbl">2 · Mi semana (seguimiento)</div><div class="ab">
+ <div class="row" style="margin:4px 2px 8px"><span class="mini">‹ Hoy</span><b style="font-size:17px">📈 Mi semana</b><span class="sp"></span><span class="mini">‹ 23–29 sep ›</span></div>
+ <div class="kpi" style="margin-bottom:8px"><div><b>6/7</b><span>días apuntados</span></div><div><b>2.380</b><span>kcal/día · obj 2.470</span></div><div><b style="color:#6ee7b7">131 g</b><span>prot/día · 93 %</span></div></div>
+ <div class="card"><div class="row"><span class="cap">KCAL CADA DÍA</span><span class="sp"></span><span class="mini">- - objetivo · <span class="pdot" style="display:inline-block"></span> proteína ≥ 140</span></div>
+  <div class="bars"><span class="obj" style="bottom:88px"></span>
+   <div><em>2.310</em><i style="height:70px"></i><span class="pdot"></span><span>lun</span></div>
+   <div><em>2.520</em><i style="height:76px"></i><span class="pdot"></span><span>mar</span></div>
+   <div class="x"><em>3.150</em><i style="height:92px"></i><span class="pdot" style="background:var(--line)"></span><span>mié</span></div>
+   <div><em>2.200</em><i style="height:66px"></i><span class="pdot"></span><span>jue</span></div>
+   <div class="v"><em></em><i style="height:3px"></i><span></span><span>vie</span></div>
+   <div><em>2.090</em><i style="height:63px"></i><span class="pdot" style="background:var(--line)"></span><span>sáb</span></div>
+   <div><em>2.010</em><i style="height:61px"></i><span class="pdot"></span><span>dom</span></div></div>
+  <p class="mini" style="margin:8px 0 0">El miércoles (guardia) +680 kcal: 2 comidas fuera. El viernes sin apuntar.</p></div>
+ <div class="card"><div class="cap">CÓMO HAS COMIDO</div>
+  <div class="mb"><span>📅</span><div class="t"><i style="width:74%;background:var(--p)"></i></div><b>74 % plan</b></div>
+  <div class="mb"><span>🍴</span><div class="t"><i style="width:17%;background:var(--c)"></i></div><b>17 % fuera</b></div>
+  <div class="mb"><span>🥡</span><div class="t"><i style="width:9%;background:var(--g)"></i></div><b>9 % otro</b></div>
+  <p class="mini" style="margin:8px 0 0">Lo que más repetiste: <b style="color:var(--ink)">pechuga ajillo ×3</b>, griego + nueces ×5.</p></div>
+ <div class="card"><div class="cap">PARA LA SEMANA QUE VIENE</div><p class="mini" style="margin:4px 0 0">Los días de guardia te faltan 25 g de proteína: llévate el táper de carrilladas o 2 lonchas de pollo extrafino.</p></div>
+</div></div>
+
+<div class="wrap"><div class="lbl">3 · Mis platos (clasificación)</div><div class="ab">
+ <div class="row" style="margin:4px 2px 8px"><span class="mini">‹ Hoy</span><b style="font-size:17px">🏆 Mis platos</b></div>
+ <div class="chips" style="margin-bottom:8px"><span class="chip on">Mejores</span><span class="chip">Más proteína</span><span class="chip">Más comidos</span><span class="chip">Olvidados</span></div>
+ <div class="card">
+  <div class="rk"><span class="n">1</span><span class="e">🍗</span><span class="t"><b>Pechuga al ajillo <span class="tag">👍 ×3</span></b><span>41 g prot · 420 kcal · 4 veces este mes</span></span><span class="sc">92<small>nota</small></span></div>
+  <div class="rk"><span class="n">2</span><span class="e">🐟</span><span class="t"><b>Salmón + canónigos</b><span>34 g prot · 480 kcal · 2 veces</span></span><span class="sc">88<small>nota</small></span></div>
+  <div class="rk"><span class="n">3</span><span class="e">🥣</span><span class="t"><b>Griego + nueces + kiwi</b><span>22 g prot · 380 kcal · 11 veces</span></span><span class="sc">85<small>nota</small></span></div>
+  <div class="rk"><span class="n">4</span><span class="e">🍲</span><span class="t"><b>Lentejas con verdura</b><span>24 g prot · 520 kcal · 1 vez</span></span><span class="sc">79<small>nota</small></span></div>
+  <div class="rk"><span class="n">5</span><span class="e">🥩</span><span class="t"><b>Carrilladas al vino <span class="tag">👍</span></b><span>36 g prot · 610 kcal · 1 vez</span></span><span class="sc">76<small>nota</small></span></div>
+  <div class="rk"><span class="n">…</span><span class="e">🌮</span><span class="t"><b>Tacos de picada <span class="tag w">👎</span></b><span>28 g prot · 780 kcal · 1 vez</span></span><span class="sc">54<small>nota</small></span></div>
+ </div>
+ <div class="card"><div class="cap">CÓMO SE HACE LA NOTA</div><p class="mini" style="margin:4px 0 0">40 % lo que te gusta (👍/👎) · 40 % lo sano (proteína por kcal, fuera de tu objetivo resta) · 20 % lo que lo repites. Los 👎 salen menos en «Móntamela»; los mejores, más.</p></div>
+</div></div>

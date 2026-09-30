@@ -298,7 +298,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }));
   check('la barra son tres grupos y «Comer» agrupa el día, el menú, la cocina y la compra',
     navShape.barra.join('|') === 'Calendario|Entreno|Comer|☰ Más' &&
-    navShape.modos.join('|') === 'Hoy|Menú|Cocina|Compra' &&
+    navShape.modos.join('|') === 'Hoy|Semana|Nevera|Compra' &&
     ['food', 'shop', 'types', 'batches', 'import'].every((t) => navShape.cajon.indexOf(t) < 0),
     JSON.stringify(navShape));
 
@@ -5987,7 +5987,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       lee.n === 10 && lee.total === 25.86 && lee.sueltas.length === 0 &&
       lee.tomate && lee.tomate.q === 0.894 && lee.tomate.uni === 'kg' &&
       /leche semidesnatada/.test(lee.leche.nom) && /yogur natural/.test(lee.yogur.nom) &&
-      lee.pasillos.indexOf('platano=verdura') >= 0 &&
+      lee.pasillos.some((p) => /^pl[aá]tano=verdura$/.test(p)) &&
       lee.pasillos.indexOf('leche semidesnatada=lacteos') >= 0,
       JSON.stringify(lee));
 
@@ -6008,15 +6008,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 2 · la pantalla: pegar → leer → quitar una línea → a la despensa
     await page.click('[data-a="compra-ticket"]');
     await page.waitForTimeout(300);
-    const sinClaude = await page.evaluate(() =>
-      /Claude solo está cuando abres la app/.test(document.getElementById('main').innerText));
+    // sin Claude no se enseña su tarjeta: la foto se lee en el móvil (tarjeta «Foto del ticket»)
+    const sinClaude = await page.evaluate(() => !/Una foto del ticket/.test(document.getElementById('main').innerText) && !!document.getElementById('tkOcrIn'));
     await page.fill('#tkTxt', TICKET);
     await page.click('[data-a="tk-leer"]');
     await page.waitForTimeout(400);
     const pintado = await page.evaluate(() => document.querySelectorAll('#main .dfila').length);
     // la bolsa de plástico no es comida: se quita antes de meterla en casa
     await page.evaluate(() => {
-      const b = [...document.querySelectorAll('#main .dfila')].filter((d) => /bolsa/.test(d.innerText))[0];
+      const b = [...document.querySelectorAll('#main .dfila')].filter((d) => /bolsa/.test((d.querySelector('.tknom') || {}).value || d.innerText))[0];
       if (b) b.querySelector('[data-a="tk-quitar"]').click(); });
     await page.waitForTimeout(250);
     const trasQuitar = await page.evaluate(() => document.querySelectorAll('#main .dfila').length);
@@ -7026,8 +7026,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // cuándo cocinar: sesiones y los días en la nevera
     // al añadir un plato el selector se queda abierto (para añadir más): se vuelve con su botón
-    const volver = await page.$('#main .volver[data-v="semana"]');
-    if (volver) await volver.click();
+    // (con la cocina simple, el selector vuelve a Semana; la semana base sigue en «Más formas de montar»)
+    await page.evaluate(() => { const P = window.PG; P.ui.elegir = null; P.ui.typesVista = 'semana'; P.render(); });
     await page.waitForTimeout(200);
     const aCoc = await page.$('[data-a="types-vista"][data-v="cocinar"]');
     if (aCoc) await aCoc.click();
@@ -8949,7 +8949,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.food.objetivo = { kcal: 2470, prot: 140 }; P.store.food.log[hoy] = [];
       P.addFoodEntry(hoy, { dishId: ds[0].id, rac: 1, pos: 'comida' });
       P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); window.scrollTo(0, 0);
-      const cards = [...document.querySelectorAll('#main .card')], lo = cards.filter((c) => /LO DE HOY/.test(c.innerText))[0];
+      const cards = [...document.querySelectorAll('#main .card')], lo = cards.filter((c) => /LO DE HOY|HOY TE TOCA/.test(c.innerText))[0];
       return { top: lo ? Math.round(lo.getBoundingClientRect().top) : null, carb: P.foodLog(hoy)[0].carb, h: (document.querySelector('.h2mac') || {}).innerText || '' }; });
     check('Comer · Hoy: lo apuntado sale en la primera pantalla y un plato suma hidratos y grasa',
       hoyV.top != null && hoyV.top < 700 && hoyV.carb > 0 && !/H\s*0 \//.test(hoyV.h), JSON.stringify(hoyV));
@@ -8972,6 +8972,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('.mprmas summary'); await page.waitForTimeout(50); await page.click('[data-a="pr-add"]'); await page.waitForTimeout(80);
     await page.click('[data-a="pr-aplicar"]'); await page.waitForTimeout(150);
     const prR = await page.evaluate(() => { const P = window.PG, d = P.store.semBase.d, ids = P.store.protos.desayuno;
+      P.ui.typesVista = 'montar'; P.render();   // la cuadrícula con las letras está en «Más formas de montar»
       const nombres = ids.map((id) => P.store.meals.find((m) => m.id === id).name);
       const vuelta = P.normalize(JSON.parse(JSON.stringify(P.store)));
       return { dias: [0, 1, 2, 3, 4, 5, 6].map((w) => (d[w] && d[w].desayuno && d[w].desayuno.meal) || ''), nombres, vuelta: (vuelta.protos || {}).desayuno || [],
@@ -9087,14 +9088,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const tk = await page.evaluate(() => { const P = window.PG;
       const r = P.ticketLeer('MERCADONA, S.A.\n1 LECHE SEMIDESNATADA 0,89\n2 HUEVOS FRESCOS L 2,35 4,70\n1 PECHUGA POLLO FILETE 5,49\n0,862 kg PLATANO 2,19/kg 1,89\nTOTAL (€) 12,97');
       P.tkHabitual(r.items); const l = (P.store.listas || []).filter((x) => x.habitual)[0];
-      return { n: r.items.length, platano: r.items.some((x) => /platano/i.test(x.nom) && !/\/kg/.test(x.nom)), total: r.total, habitual: l ? l.items.length : 0 }; });
+      return { n: r.items.length, platano: r.items.some((x) => /pl[aá]tano/i.test(x.nom) && !/\/kg/.test(x.nom)), total: r.total, habitual: l ? l.items.length : 0 }; });
     const din = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
       a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: '', saldo: 3000, mensual: 0, deseos: [] },
         { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#38bdf8', pct: 50, objetivo: 2400, meta: '', saldo: 800, mensual: 0, deseos: [], para: '' },
         { id: 'hu-p', nombre: 'Juego de la Play', ico: '🎮', color: '#fbbf24', pct: 50, objetivo: 70, meta: '', saldo: 50, mensual: 0, deseos: [] }];
       a.puroId = 'hu-colchon'; a.puroPct = 50;
       const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 4); a.huchas[1].para = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-      const c = P.metaCalc(a.huchas[1]);
+      const c = P.metaHucha(a.huchas[1]);
       P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.dinTab = 'plan'; P.render();
       return { men: c.men, meses: c.meses, dia: c.dia, rep: document.querySelectorAll('.d7rep').length }; });
     await page.click('#main [data-a="din7-aplicar"]'); await page.waitForTimeout(150);
@@ -9108,8 +9109,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia223; P.save(); P.ui.ajuVista = ''; P.ui.dinTab = ''; P.ui.foodVista = ''; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Cocina simple: Hoy · Semana · Nevera · Compra; «Móntamela» llena huecos con lo que hay; «Hoy cocino» guarda raciones con los días que aguanta; ✓ apunta el día',
       tabs.length === 4 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Nevera/.test(tabs[2]) && /Compra/.test(tabs[3]) &&
-      trasAuto < vacias && opciones > 0 && coc.length === 1 && coc[0].total > 1 && coc[0].dias >= 1 &&
+      trasAuto < vacias && opciones > 0 && coc.length >= 1 && coc[coc.length - 1].total > 1 && coc[coc.length - 1].dias >= 1 &&
       aguanta.join() === '1,2,4,3' && nevera.foto && log1 > 0, JSON.stringify({ tabs, vacias, trasAuto, opciones, coc, aguanta, log1, nevera: nevera.txt.slice(0, 160) }));
+    // un ticket real leído por la foto, con lo que la foto tuerce: precios «2/45», «1'90», «459»,
+    // líneas sin cantidad, la dirección antes de «Descripción» y el peso del plátano en la línea de abajo
+    const real = await page.evaluate(() => { const P = window.PG;
+      const r = P.ticketLeer(['MERCADONA, S.A.', 'CL REPÚBLICA Doy', '35010 LAS PALMAS', 'Descripció. <P. Unit Imp.(e)', '1 FIAMBRE LOMO ADOBADO 2,81',
+        '4 ISOTÓNICO BLUE 0,52 2,08', '1 CHAMPÓ CITRUS H8S 3,80', '1 QUESO CURADO — 459', '1 JAMON S. EXTRA FINO 2/45', '| QUESO ROQUEFORT 1\'90',
+        '1 PAN M.CEREALES $/GL 2,90', 'BACUETTE SG 1.95', '| DO CAOS MEDIANOS -H 3,25', 'GOS RUC', '1 PLATAND 2.00', '2104 kg 2,20 e/kg 4,63', 'TOTAL (£) — 133,61'].join('\n'));
+      const by = (re) => r.items.filter((x) => re.test(x.nom))[0] || null;
+      return { n: r.items.length, noms: r.items.map((x) => x.nom), platano: by(/plátano/), curado: by(/queso curado/), huevos: !!by(/^huevos medianos$/),
+        vida: ['picada de vacuno', 'salmón marinado', 'lomo embuchado', 'champú citrus h&s', 'fritada pisto'].map((n) => { const v = P.vidaDe(n); return v ? (v.no ? 'no' : v.d) : null; }) }; });
+    check('ticket real: 10 productos sin la dirección, precios torcidos, sin cantidad, huevos y el plátano con sus 2,104 kg; cada cosa con lo que aguanta',
+      real.n === 10 && !real.noms.some((n) => /rep[uú]blica|palmas/.test(n)) && real.platano && Math.abs(real.platano.q - 2.104) < 0.001 && real.platano.uni === 'kg' &&
+      real.curado && real.curado.nom === 'queso curado' && Math.abs(real.curado.eur - 4.59) < 0.001 && real.huevos && real.noms.includes('baguette sin gluten') &&
+      real.vida.join() === '1,10,30,no,365', JSON.stringify(real));
     check('ticket de Mercadona: lee los productos (el plátano sin el «€/kg»), el total, y guarda la compra como lista habitual',
       tk.n === 4 && tk.platano && Math.abs(tk.total - 12.97) < 0.01 && tk.habitual === 4, JSON.stringify(tk));
     check('Dinero v7: una meta con fecha pide su €/mes y €/día; «Aplicar» crea inversión y caprichos, el colchón baja a 30 % y el reparto suma todo',
