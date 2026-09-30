@@ -8735,10 +8735,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const clic = async (sel) => { const el = await page.$(sel); if (!el) return false;
       try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
     const portada = await page.evaluate(() => { const m = document.querySelector('#main');
-      return { ahorras: /ESTE MES AHORRAS/.test(m.innerText), tramos: m.querySelectorAll('.d4stack b').length, huchas: m.querySelectorAll('.d4hu').length,
+      return { ahorras: /TIENES AHORRADO/.test(m.innerText) && /has podido ahorrar/.test(m.innerText), tramos: m.querySelectorAll('.d5bars > div').length, huchas: m.querySelectorAll('.d5pk').length,
         pie: m.querySelectorAll('.d4pie > *').length, alto: m.scrollHeight }; });
     // fijo / variable y meta, desde la hoja de gastos que sube encima
-    const hojaGastos = await clic('#main .d4key.tap');
+    const hojaGastos = await clic('#main .d4pie [data-h="gastos"]');
     const g1 = await page.evaluate(() => { const hj = document.querySelector('.hoja.din4h'); if (!hj) return null;
       return { variables: hj.querySelectorAll('[data-a="din-cat-tipo"][data-t="variable"].on').length, fijos: hj.querySelectorAll('[data-a="din-cat-tipo"][data-t="fijo"].onf').length }; });
     const aFijo = await clic('.din4h [data-a="din-cat-tipo"][data-c="Supermercado"][data-t="fijo"]');
@@ -8766,7 +8766,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         gastos: txt.includes('Gastos por categor') }; });
     // hucha nueva
     await clic('#main .subcab .volver');
-    await clic('#main .d4pie [data-v="hucha-nueva"]');
+    await clic('#main [data-a="dinero-vista"][data-v="plan"]');
+    await clic('#main [data-v="hucha-nueva"]');
     await page.evaluate(() => { const s = (id, v) => { const el = document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
       s('hnNom', 'Japón 216'); s('hnPre', '2400'); s('hnYa', '300'); s('hnMen', '250'); });
     const cuando = await page.evaluate(() => (document.getElementById('hnRes') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
@@ -8788,8 +8789,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.mouse.click(200, 30); await page.waitForTimeout(120);
     const apartar = await clic('#main .d4pie [data-v="apartar"]') && await page.evaluate(() => !!document.querySelector('#main [data-a="aho-mas"]') && !!document.querySelector('#main [data-a="aho-reto-nuevo"]'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia216; P.save(); P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('Dinero: la portada dice cuánto ahorras, adónde va lo que ganas y el reparto, en una pantalla',
-      portada.ahorras && portada.tramos === 3 && portada.huchas >= 3 && portada.pie === 4 && portada.alto < 1000, JSON.stringify(portada));
+    check('Dinero: la portada dice cuánto tienes en cada bolsillo, lo que has podido ahorrar este mes y los meses de atrás, en una pantalla',
+      portada.ahorras && portada.tramos === 6 && portada.huchas >= 3 && portada.pie === 4 && portada.alto < 1000, JSON.stringify(portada));
     check('la hoja de gastos separa fijos y variables (alquiler fijo solo), se cambia a mano y pone meta; toca fuera y se cierra',
       hojaGastos && g1 && g1.fijos >= 1 && g1.variables >= 2 && aFijo && tipo === 'fijo' && pon && meta > 0 && cerrada,
       JSON.stringify({ hojaGastos, g1, aFijo, tipo, pon, meta, cerrada, enPunto }));
@@ -8851,6 +8852,77 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       offLlamadas >= 1 && off.sale && off.kcal === 18, JSON.stringify({ offLlamadas, off }));
     check('la hoja del día: un arrastre corto la deja en su sitio y uno largo hacia abajo la cierra',
       corta && larga, JSON.stringify({ corta, larga }));
+  }
+
+  // 218) SUEÑO, DINERO Y COMER SANO, encadenado:
+  // · la deuda de sueño suma las noches cortas y la guardia (a ratos cuenta la mitad), resta como
+  //   mucho 2 h por noche y sale en Hoy y en el «listo» del entreno; la hoja apunta una noche
+  // · un gasto de ahorros baja SOLO el bolsillo del que sale (y lo que falta, del que elijas); el
+  //   intocable no se toca; «Mi plan» suma siempre 100 y el intocable no baja de 50
+  // · Comer sano: si falta proteína te propone extras y «aplicar la mejor» llega a la meta
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.dineroVista = ''; P.render(); });
+    const sn = await page.evaluate(() => { const P = window.PG, sr = P.store.suenoReal = {}, hoy = new Date();
+      // todas las noches apuntadas (8 h), para que las guardias del calendario no cuenten como estimadas
+      for (let i = 5; i < 14; i++) sr[P.iso(P.addDays(hoy, -i))] = { h: 8, guardia: false };
+      // 5 noches: 6 h, guardia (2 h a ratos + 3 h de siesta), 10 h, 7 h, 12 h
+      [[6], [2, true, 3], [10], [7], [12]].forEach((x, i) => { const k = P.iso(P.addDays(hoy, i - 4));
+        sr[k] = x[1] ? { h: x[0], guardia: true, ratos: true, siesta: x[2] } : { h: x[0], guardia: false }; });
+      P.save(); P.render(); const d = P.suenoDeuda(P.iso(hoy));
+      const r = { deuda: d.deuda, src: d.src, card: !!document.querySelector('.dsuhoy') };
+      // con 12 h de deuda (tres noches de 4 h), el «listo» lo dice
+      const k2 = P.iso(P.addDays(hoy, -20)), sr2 = {}; for (let i = 0; i < 14; i++) sr2[P.iso(P.addDays(hoy, -20 - i))] = { h: i < 3 ? 4 : 8, guardia: false };
+      const antes = P.store.suenoReal; P.store.suenoReal = sr2; r.listoAlta = /deuda de sueño 12 h/.test(P.listoDe(k2).motivos.join(' | '));
+      P.store.suenoReal = antes; return r; });
+    // 8−6=2 → +(8−(1+3))=4 → 6 → −2 (10 h) → 4 → +1 → 5 → −2 (12 h, tope) → 3
+    await page.click('.dsuhoy'); await page.waitForTimeout(120);
+    const vista = await page.evaluate(() => ({ big: (document.querySelector('.dsubig') || {}).textContent || '', barras: document.querySelectorAll('.dsubars button').length }));
+    await page.click('.dsubars button:last-child'); await page.waitForTimeout(120);
+    await page.click('.hoja [data-a="sn-h"][data-v="6"]'); await page.waitForTimeout(80);
+    const prev = await page.evaluate(() => (document.querySelector('.dsuhd') || {}).textContent || '');
+    await page.click('.hoja [data-a="sn-guardar"]'); await page.waitForTimeout(120);
+    const trasHoja = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja'), deuda: window.PG.suenoDeuda(window.PG.iso(new Date())).deuda }));
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
+    check('la deuda de sueño acumula noches cortas y guardias, recupera como mucho 2 h por noche y sale en Hoy, en Sueño y en el «listo»',
+      sn.deuda === 3 && sn.src.guardiaN === 1 && sn.src.cortasN === 2 && sn.card && sn.listoAlta &&
+      /3 h/.test(vista.big.replace(/\s+/g, ' ')) && vista.barras === 14, JSON.stringify({ sn, vista }));
+    check('la hoja «anotar noche» enseña la deuda antes y después, y al guardar se cierra y la recalcula',
+      /3 h →\s*7 h/.test(prev.replace(/\s+/g, ' ')) && !trasHoja.hoja && trasHoja.deuda === 7, JSON.stringify({ prev, trasHoja }));
+
+    const din = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
+      a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
+        { id: 'hu-v', nombre: 'Viajes', ico: '✈️', color: '#38bdf8', pct: 60, objetivo: 0, meta: '', saldo: 800, mensual: 0, deseos: [] },
+        { id: 'hu-c', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 40, objetivo: 0, meta: '', saldo: 300, mensual: 0, deseos: [] }];
+      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.render();
+      return { total: (document.querySelector('.din5 .dbig') || {}).textContent || '', filas: document.querySelectorAll('.d5pk').length }; });
+    await page.click('[data-a="din-hoja"][data-h="gaste"]'); await page.waitForTimeout(120);
+    await page.click('.hoja [data-a="din-gaste-de"][data-id="hu-v"]'); await page.waitForTimeout(80);
+    await page.fill('#dgImp', '1000'); await page.fill('#dgTxt', 'Viaje a Lisboa');
+    const foco = await page.evaluate(() => (document.activeElement || {}).id);
+    const queda = await page.evaluate(() => (document.getElementById('dgQueda') || {}).innerText || '');
+    await page.click('.hoja [data-a="din-gaste-ok"]'); await page.waitForTimeout(120);
+    const trasG = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja'), s: window.PG.ahorroS().huchas.map((h) => h.saldo), mov: (window.PG.ahorroS().movs[0] || {}).txt }));
+    check('«Gasté de mis ahorros»: 1.000 € salen de Viajes (800) y lo que falta de Caprichos; el intocable sigue igual',
+      /6\.100/.test(din.total) && din.filas === 3 && foco === 'dgTxt' && /5\.100/.test(queda) &&
+      !trasG.hoja && trasG.s.join() === '5000,0,100' && trasG.mov === 'Viaje a Lisboa', JSON.stringify({ din, foco, queda, trasG }));
+    const plan = await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'plan'; P.render();
+      const set = (id, v) => { const el = document.querySelector('input[data-a="din-plan-pct"][data-id="' + id + '"]'); el.value = v; el.dispatchEvent(new Event('change', { bubbles: true })); };
+      set('hu-v', 40); const a1 = [...document.querySelectorAll('.d5pl .pc')].map((e) => parseInt(e.textContent, 10));
+      set('hu-colchon', 20); const a2 = [...document.querySelectorAll('.d5pl .pc')].map((e) => parseInt(e.textContent, 10));
+      P.ui.dineroVista = ''; P.render(); return { a1, a2 }; });
+    const suma = (x) => x.reduce((s, v) => s + v, 0);
+    check('«Mi plan»: al mover un bolsillo los demás se ajustan para sumar 100 y el intocable no baja de 50',
+      plan.a1.join() === '50,40,10' && suma(plan.a2) === 100 && plan.a2[0] === 50, JSON.stringify(plan));
+
+    const bw = await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'sano';
+      P.ui.bowl = { tipo: 'equi', obj: { kcal: 600, p: 40, c: 65, gr: 20 }, it: [['arroz', 150], ['salmon', 100], ['aguacate', 50], ['mayosri', 15]], paso: 4, n: '', e: '' }; P.render();
+      return { al: (document.querySelector('.bwal') || {}).innerText || '' }; });
+    await page.click('[data-a="bowl-mejor"]'); await page.waitForTimeout(100);
+    const trasB = await page.evaluate(() => { const P = window.PG, it = P.ui.bowl.it; let p = 0; return { n: it.length, pie: (document.querySelector('.bwpie') || {}).innerText || '', al: !!document.querySelector('.bwal') }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.bowl = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Comer sano: con el bowl corto de proteína dice cuánto falta, propone extras y «aplicar la mejor» llega a la meta',
+      /Te faltan \d+ g de proteína/.test(bw.al) && /Mejor combinación/.test(bw.al) && !trasB.al && trasB.n > 4 &&
+      (() => { const m = /Proteína\s*(\d+) \/ 40 g/.exec(trasB.pie); return m && +m[1] >= 38; })(), JSON.stringify({ bw, trasB }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

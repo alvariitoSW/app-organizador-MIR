@@ -1274,6 +1274,7 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o[k]==='number'&&o[k]>0)d[k]=o[k];});
   /* la siesta del saliente puede ser 0 (hay quien aguanta del tirón), así que no vale el >0 */
   if(typeof o.siesta==='number'&&o.siesta>=0&&o.siesta<=480)d.siesta=o.siesta;
+  d.avisoCama=!!o.avisoCama;
   return d;}
 function mins(t){const m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim());return m?(+m[1])*60+(+m[2]):null;}
 function hm(m){const x=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');}
@@ -5017,6 +5018,164 @@ function suenoSemanaHTML(key){
     '<p class="mini" style="margin:8px 0 0">'+(s.n<7?(7-s.n)+' día'+(7-s.n===1?'':'s')+' sin apuntar (vacíos). ':'')+
       (cortas.length?('<span style="color:var(--bad)">⚠ '+cortas.length+' '+(cortas.length===1?'noche':'noches')+' por debajo de '+fmt(corta)+' h</span> (en rojo). '):'')+
       (s.dias.some(function(d){return d.r&&d.r.siesta;})?'En los salientes, la parte clara es la siesta.':'')+'</p></div>';}
+/* ===================== la deuda de sueño =====================
+   Lo que no se duerme no desaparece al acabar la semana: se arrastra. Cada noche por debajo de tu
+   mínimo suma lo que falta; dormir de más resta, pero como mucho 2 h por noche (no se recupera un
+   fin de semana de golpe). Ventana de 14 días. En la guardia, lo dormido «a ratos» cuenta la mitad:
+   un sueño roto no descansa lo mismo. Una noche sin apuntar no suma ni resta —salvo la de una
+   guardia, que se estima con 2 h a ratos y tu siesta de saliente—. */
+const SN_DIAS=14;
+const fmtC=function(n){return fmt(n).replace('.',',');};
+function suenoNocheDeuda(k){
+  const r=suenoReal(k),c=suenoCfg();
+  if(r){const h=+r.h||0,s=+r.siesta||0;
+    return {t:(r.guardia&&r.ratos?h*0.5:h)+s,ver:h+s,h:h,siesta:s,guardia:!!r.guardia,real:true};}
+  if(salidaDeGuardia(k))return {t:1+c.siesta/60,ver:2+c.siesta/60,h:2,siesta:c.siesta/60,guardia:true,real:false};
+  return null;}
+function suenoDeuda(key){
+  const c=suenoCfg(),d0=parseDate(key||iso(new Date()))||new Date(),dias=[];let deuda=0;
+  const src={guardia:0,guardiaN:0,cortas:0,cortasN:0,rec:0,recN:0,sin:0};
+  for(let i=SN_DIAS-1;i>=0;i--){
+    const k=iso(addDays(d0,-i)),n=suenoNocheDeuda(k);
+    if(n){let delta=c.min-n.t;if(delta<0)delta=Math.max(delta,-2);
+      if(delta>0.05){if(n.guardia){src.guardia+=delta;src.guardiaN++;}else{src.cortas+=delta;src.cortasN++;}}
+      else if(delta<0&&deuda>0){src.rec+=Math.min(-delta,deuda);src.recN++;}
+      deuda=Math.max(0,deuda+delta);}
+    else src.sin++;
+    dias.push({k:k,n:n,deuda:Math.round(deuda*10)/10});}
+  deuda=Math.round(deuda*10)/10;
+  const nivel=deuda<5?0:(deuda<10?1:(deuda<20?2:3));
+  return {deuda:deuda,dias:dias,src:src,nivel:nivel,nivelTxt:['Baja','Moderada','Alta','Muy alta'][nivel],
+    col:['var(--ok)','var(--warn)','var(--dsu,#d95926)','var(--bad)'][nivel]};}
+function suenoLibre(k){
+  /* sin alarma a la mañana siguiente: libre, vacaciones o sin nada asignado */
+  const inf=dayInfo(k),sh=shiftById(inf.shiftId);
+  return !!inf.vac||!sh||sh.id==='sh-l'||sh.id==='sh-v'||/libre|vacaci|descanso/i.test(sh.name||'');}
+function suenoPlan(key){
+  /* los 7 próximos días con tu calendario: a qué hora a la cama para ir pagando, y dónde vuelve a
+     subir (las guardias que ya tienes puestas) */
+  const c=suenoCfg(),d0=parseDate(key)||new Date(),out=[];let deuda=suenoDeuda(key).deuda;
+  for(let i=0;i<7;i++){
+    const k=iso(addDays(d0,i)),sig=iso(addDays(d0,i+1)),inf=dayInfo(k),sh=shiftById(inf.shiftId);
+    const dia=DIA3[addDays(d0,i).getDay()];
+    if(!inf.vac&&sh&&isGuardia(sh)){
+      const t=1+c.siesta/60,delta=Math.max(0,c.min-t);deuda+=delta;
+      out.push({k:k,dia:dia,guardia:true,txt:'🩺 Guardia · siesta de 90 min antes si puedes',delta:delta,deuda:deuda});continue;}
+    const libre=suenoLibre(sig)||!!salidaDeGuardia(sig);
+    const extra=deuda>0?Math.min(libre?1.5:1,deuda):0,obj=c.min+extra;
+    const wake=libre?'':((rhythmOf(dayInfo(sig).shiftId,sig)||{}).wake||'');
+    const cama=wake?hm(mins(wake)-obj*60-c.latencia):'';
+    deuda=Math.max(0,deuda-extra);
+    const sal=salidaDeGuardia(k);
+    out.push({k:k,dia:dia,cama:cama,obj:obj,libre:libre,saliente:!!sal,delta:-extra,deuda:deuda,
+      txt:(sal?'Saliente · ':'')+(cama?('A la cama <b>'+esc(hCortaHM(cama))+'</b> · '+fmtC(obj)+' h'):(fmtC(obj)+' h sin alarma'))});}
+  return out;}
+function suenoNivelHTML(de){
+  return '<div class="dsunivel">'+[0,1,2,3].map(function(i){
+    return '<i class="n'+i+(i<=de.nivel?' on':'')+'"></i>';}).join('')+'</div>'+
+    '<div class="row mini dsunl"><span>0–5 bien</span><span class="sp"></span><span>5–10</span><span class="sp"></span><span>10–20 alta</span><span class="sp"></span><span>+20</span></div>';}
+function suenoCurvaHTML(de){
+  /* la deuda día a día, como área: se ve cuándo se disparó */
+  const W=340,H=90,n=de.dias.length,bw=W/n,max=Math.max(20,Math.ceil(Math.max.apply(null,de.dias.map(function(d){return d.deuda;}))/5)*5);
+  const y=function(v){return Math.round((H-v/max*H)*10)/10;},x=function(i){return Math.round((i*bw+bw/2)*10)/10;};
+  const pts=de.dias.map(function(d,i){return x(i)+','+y(d.deuda);}).join(' ');
+  let g='';for(let v=5;v<max;v+=5)g+='<line x1="0" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'" class="gl"/><text x="0" y="'+(y(v)-3)+'">'+v+' h</text>';
+  const u=de.dias[n-1];
+  return '<svg class="dsucurva" viewBox="0 -6 '+W+' '+(H+8)+'" role="img" aria-label="deuda de sueño en los últimos '+n+' días: '+fmtC(u.deuda)+' h hoy">'+g+
+    '<polygon points="'+x(0)+','+H+' '+pts+' '+x(n-1)+','+H+'" class="ar"/><polyline points="'+pts+'" class="ln"/>'+
+    '<circle cx="'+x(n-1)+'" cy="'+y(u.deuda)+'" r="4.5" class="pt"/></svg>';}
+function suenoNochesHTML(de){
+  /* una barra por noche, la guardia en su color; tocar una noche la apunta o la cambia */
+  const c=suenoCfg(),max=Math.max(10,Math.max.apply(null,de.dias.map(function(d){return d.n?d.n.ver:0;})));
+  const DL=['D','L','M','X','J','V','S'];
+  return '<div class="dsubars" role="img" aria-label="horas dormidas cada noche frente a '+fmtC(c.min)+' h">'+
+    '<span class="obj" style="bottom:'+(Math.round(c.min/max*110)+16)+'px"><span>'+fmtC(c.min)+' h</span></span>'+
+    de.dias.map(function(d,i){const n=d.n,h=n?Math.round(n.ver/max*110):0,dt=parseDate(d.k);
+      return '<button class="'+(n?(n.guardia?'g':''):'vacio')+(n&&!n.real?' est':'')+(i<7?' viejo':'')+'" data-a="sn-hoja" data-k="'+d.k+'" '+
+        'aria-label="'+esc(fechaCorta(d.k))+': '+(n?fmtHM(n.ver*60)+(n.guardia?' (guardia)':''):'sin apuntar')+'">'+
+        '<b>'+(n&&n.guardia?'G':'')+'</b><i style="height:'+Math.max(n?3:10,h)+'px"></i>'+DL[dt.getDay()]+'</button>';}).join('')+'</div>';}
+function renderSueno(){
+  const hoyK=iso(new Date()),de=suenoDeuda(hoyK),c=suenoCfg();
+  if(ui.snVista==='plan')return renderSuenoPlan(hoyK,de);
+  const noches=Math.round(de.deuda/c.min*2)/2;
+  $('#main').innerHTML='<div class="grid dsu">'+
+    '<div class="subcab"><button class="btn s volver" data-a="sn-cerrar">'+gymIco('atras','gico sm')+' Hoy</button>'+
+      '<h2 class="subtit">😴 Sueño</h2><span class="sp"></span><span class="mini">últimos '+SN_DIAS+' días</span></div>'+
+    '<div class="card"><div class="dsucap">DEUDA DE SUEÑO</div>'+
+      '<div class="row" style="align-items:flex-end"><div class="dsubig" style="color:'+de.col+'">'+fmtC(de.deuda)+' <small>h</small></div><span class="sp"></span>'+
+        '<div style="text-align:right"><b style="color:'+de.col+'">'+de.nivelTxt+'</b><div class="mini">'+(noches>=0.5?('≈ '+fmtC(noches)+' noche'+(noches===1?'':'s')+' entera'+(noches===1?'':'s')):'al día')+'</div></div></div>'+
+      suenoNivelHTML(de)+'</div>'+
+    '<div class="card"><div class="dsucap">CÓMO SE HA IDO ACUMULANDO</div>'+suenoCurvaHTML(de)+
+      '<p class="mini" style="margin:4px 0 0">Cada noche por debajo de '+fmtC(c.min)+' h suma lo que falta; dormir de más resta (hasta 2 h por noche). Las guardias pesan de golpe.'+
+      (de.src.sin?(' '+de.src.sin+' noche'+(de.src.sin===1?'':'s')+' sin apuntar no cuenta'+(de.src.sin===1?'':'n')+'.'):'')+'</p></div>'+
+    '<div class="card"><div class="row"><div class="dsucap">NOCHES</div><span class="sp"></span><span class="mini"><b class="dsuley"></b> normal <b class="dsuley g"></b> guardia</span></div>'+
+      suenoNochesHTML(de)+'<p class="mini" style="margin:6px 0 0">Toca una noche para apuntarla o cambiarla.</p></div>'+
+    '<div class="two dsubtn"><button class="btn" data-a="sn-hoja" data-k="'+hoyK+'">＋ Anotar noche</button>'+
+      '<button class="btn p" data-a="sn-vista" data-v="plan">'+(de.deuda>=1?'Plan para saldarla':'Plan de la semana')+'</button></div>'+
+  '</div>';}
+function renderSuenoPlan(hoyK,de){
+  const c=suenoCfg(),pl=suenoPlan(hoyK),fin=pl.length?pl[pl.length-1].deuda:de.deuda,s=de.src;
+  const fila=function(ic,t,v,cl){return '<div class="dsusrc"><span>'+ic+'</span><span>'+t+'</span><b class="'+cl+'">'+v+'</b></div>';};
+  const r1=function(v){return fmtC(Math.round(v*2)/2);};
+  const peor=s.cortas>s.guardia?'Lo que más pesa no son las guardias: son las noches cortas de diario.':(s.guardia?'Lo que más pesa son las guardias.':'');
+  const cama=pl.filter(function(p){return p.cama;})[0];
+  $('#main').innerHTML='<div class="grid dsu">'+
+    '<div class="subcab"><button class="btn s volver" data-a="sn-vista" data-v="">'+gymIco('atras','gico sm')+' Sueño</button>'+
+      '<h2 class="subtit">Deuda '+fmtC(de.deuda)+' h</h2></div>'+
+    '<div class="card"><div class="dsucap">DE DÓNDE SALE</div>'+
+      (s.guardiaN?fila('🩺',s.guardiaN+' guardia'+(s.guardiaN===1?'':'s'),'−'+r1(s.guardia)+' h','bad'):'')+
+      (s.cortasN?fila('🌙',s.cortasN+' noche'+(s.cortasN===1?'':'s')+' de menos de '+fmtC(c.min)+' h','−'+r1(s.cortas)+' h','warn'):'')+
+      (s.recN?fila('🛌',s.recN+' noche'+(s.recN===1?'':'s')+' recuperando','+'+r1(s.rec)+' h','ok'):'')+
+      (!s.guardiaN&&!s.cortasN?'<p class="mini" style="margin:6px 0 0">Nada: en 14 días no te ha faltado sueño. 👌</p>':'')+
+      (peor?'<p class="mini" style="margin:6px 0 0">'+peor+'</p>':'')+'</div>'+
+    '<div class="card"><div class="row"><div class="dsucap">PLAN DE ESTA SEMANA</div><span class="sp"></span><span class="mini">con tu calendario</span></div>'+
+      pl.map(function(p){return '<div class="dsupl"><span class="d">'+esc(p.dia.toUpperCase())+'</span><span>'+p.txt+'</span>'+
+        '<span class="mini'+(p.delta>0?' bad':'')+'">'+(Math.abs(p.delta)<0.05?'=':(p.delta>0?'+':'−')+fmtC(Math.round(Math.abs(p.delta)*2)/2)+' h')+'</span></div>';}).join('')+
+      '<div class="row" style="margin-top:8px"><b>En 7 días:</b><span class="sp"></span><b style="color:'+suenoDeudaCol(fin)+'">'+fmtC(Math.round(fin*2)/2)+' h</b></div>'+
+      '<p class="mini" style="margin:4px 0 0">Una hora más cada noche (hora y media sin alarma): más de golpe no se recupera.</p></div>'+
+    (cama?('<button class="btn p gbig" data-a="sn-aviso-cama">'+(suenoCfg().avisoCama&&avisosListos()?'✓ Te aviso a la hora de acostarte · quitar':'🔔 Avisarme para acostarme')+'</button>'):'')+
+  '</div>';}
+function suenoDeudaCol(v){return v<5?'var(--ok)':(v<10?'var(--warn)':(v<20?'var(--dsu,#d95926)':'var(--bad)'));}
+function suenoCamaHoy(){
+  /* la hora de hoy para ir a la cama según el plan (la primera fila del plan) */
+  const p=suenoPlan(iso(new Date()))[0];return p&&p.cama?p:null;}
+function suenoDeudaHoyHTML(){
+  /* en Hoy: la deuda, a qué hora a la cama y cuántas horas; se toca y abre Sueño */
+  const de=suenoDeuda(iso(new Date())),p=suenoPlan(iso(new Date()))[0],c=suenoCfg();
+  const ayer=de.dias[de.dias.length-1].n;
+  return '<button class="card dsuhoy n'+de.nivel+'" data-a="sn-abrir"><div class="row"><span style="font-size:22px">😴</span>'+
+      '<span class="t"><b>Deuda de sueño '+fmtC(de.deuda)+' h</b><span class="mini">'+(ayer?('anoche '+fmtHM(ayer.ver*60)+(ayer.ver<c.min?' · te faltó '+fmtHM((c.min-ayer.ver)*60):'')):'anoche sin apuntar')+'</span></span>'+
+      '<span class="sp"></span><b style="color:'+de.col+'">'+de.nivelTxt+'</b></div>'+
+    (p?('<div class="dsutm"><div><b>'+(p.guardia?'🩺':(p.cama?esc(hCortaHM(p.cama)):'—'))+'</b><span>'+(p.guardia?'GUARDIA':(p.cama?'A LA CAMA':'SIN ALARMA'))+'</span></div>'+
+      '<div><b>'+(p.guardia?'siesta':fmtC(p.obj)+' h')+'</b><span>'+(p.guardia?'ANTES, SI PUEDES':'OBJETIVO HOY')+'</span></div></div>'):'')+
+    (de.nivel>=2?'<span class="mini" style="display:block;margin-top:6px">Con esta deuda: estudio en bloques de 40 min y el entreno en versión corta.</span>':'')+
+  '</button>';}
+function suenoHojaHTML(){
+  const k=ui.snHoja,d=parseDate(k);if(!d)return '';
+  if(!ui.sd||ui.sd.key!==k){ui.sd=null;suenoDraft(k);ui.sd.editando=true;}
+  const antes=suenoDeuda(iso(new Date())).deuda;
+  /* la deuda con lo que llevas puesto en la hoja, sin guardar */
+  const r0=suenoRealS()[k],x=ui.sd;
+  suenoRealS()[k]={h:+x.h||0,guardia:!!x.guardia,ratos:!!x.ratos,siesta:x.guardia?(+x.siesta||0):0};
+  const despues=suenoDeuda(iso(new Date())).deuda;
+  if(r0)suenoRealS()[k]=r0;else delete suenoRealS()[k];
+  const cuerpo=suenoHoyHTML(k).replace(/^<div class="card sncard[^"]*">/,'<div class="dsuhform">').replace(/<button class="btn s" data-a="hoy-informe">[^<]*<\/button>/,'');
+  const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const tit=k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate());
+  return '<div class="hscrim" data-a="hoja-cerrar"></div><div class="hoja dsuh" role="dialog" aria-modal="true" aria-label="'+esc(tit)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+
+    '<h3 class="sh">'+esc(tit)+'</h3>'+cuerpo+
+    '<div class="row dsuhd"><span>Deuda</span><span class="sp"></span><span class="mini">'+fmtC(antes)+' h →</span><b style="color:'+suenoDeudaCol(despues)+'">'+fmtC(despues)+' h</b></div></div>';}
+let _avisoCamaT=null;
+function programarAvisoCama(){
+  if(_avisoCamaT){clearTimeout(_avisoCamaT);_avisoCamaT=null;}
+  if(!suenoCfg().avisoCama||!avisosListos())return;
+  const k=iso(new Date());if((store.sueno||{}).camaHecho===k)return;
+  const p=suenoCamaHoy();if(!p)return;
+  const ahora=new Date(),nm=ahora.getHours()*60+ahora.getMinutes();let t=mins(p.cama)-15-nm;
+  if(t<-15)t+=1440;if(t<0)t=0;if(t>18*60)return;
+  _avisoCamaT=setTimeout(function(){
+    swMensaje({tipo:'aviso',tag:'cama-'+k,titulo:'🛏 A la cama a las '+hCortaHM(p.cama),cuerpo:'Para dormir '+fmtC(p.obj)+' h y seguir pagando la deuda de sueño.'});
+    if(!store.sueno)store.sueno={};store.sueno.camaHecho=k;save();},t*60000);}
 /* ===================== el informe de la semana ===================== */
 function informeDatos(lunKey){
   const lun=parseDate(lunKey),ks=[];for(let i=0;i<7;i++)ks.push(iso(addDays(lun,i)));
@@ -5239,6 +5398,7 @@ function lloretPoner(key){
     (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena;}
 function renderHoy(){
   if(ui.hoyVista==='informe')return renderInforme();
+  if(ui.hoyVista==='sueno')return renderSueno();
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
   const esHoy=esHoyDeVerdad(hoy);
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
@@ -5294,7 +5454,7 @@ function renderHoy(){
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
        quieres es la lista, no el atardecer. */
     /* el sueño de verdad, a primera hora: lo que el plan no puede saber. Y los lunes, la semana */
-    (esHoy?informeTocaHTML()+suenoHoyHTML(hoy)+entrenoSemanaHTML(hoy,true)+supHoyHTML(hoy):'')+
+    (esHoy?informeTocaHTML()+suenoDeudaHoyHTML()+suenoHoyHTML(hoy)+entrenoSemanaHTML(hoy,true)+supHoyHTML(hoy):'')+
     tocaEntrenarHTML(hoy)+
     /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
        mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
@@ -5817,12 +5977,13 @@ function abrirHojaDia(k){
   ui.hojaDia=k;ui.hojaVista='';ui.hojaRec=false;
   if(!store.meta.pulsarVisto){store.meta.pulsarVisto=true;save();}
   render();}
-function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';}
+function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';if(ui.snHoja){ui.snHoja='';ui.sd=null;}}
 function pintaHojaDia(){
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
-  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&!ui.dineroVista&&ui.dinHoja)?dinHojaHTML():'');
+  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja)?dinHojaHTML():
+    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():''));
   /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
   const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
   document.documentElement.classList.toggle('hoja-abierta',!!hoja);
@@ -7241,6 +7402,7 @@ function renderFoodDia(){
     /* la barra de buscar es LA acción de esta pantalla, y va suelta para que se lea como una puerta */
     '<button class="buscaz" data-a="food-vista" data-v="buscar">'+gymIco('lupa','gico')+
       '<b>Apuntar algo</b> · busca entre todo<span class="kbd">'+foodBuscables().length+'</span></button>'+
+    '<button class="card sanopuerta" data-a="food-vista" data-v="sano"><span>🥗</span><span class="t"><b>Comer sano</b><span class="mini">un poke o un bowl que cuadre tus macros</span></span><span class="mini">›</span></button>'+
     cadenaHTML()+
     /* Micronutrientes eran nueve casillas que se llevaban el 25 % de la portada con información de
        consulta. Ahora es una línea de nueve puntos con su pantalla detrás. */
@@ -8657,8 +8819,190 @@ function renderFoodGluten(){
         'avena certificada, embutidos, caldos, salsas y suplementos. Mira la etiqueta una vez y ya lo sabes.</p>')
         :'<div class="empty">Nada dudoso.</div>')+
     '</div></div>';}
+/* ===================== COMER SANO · bowls a tu medida =====================
+   Como en un poke o en Honest Greens: dices qué necesita esta comida (o lo saco de lo que te queda
+   hoy), te propongo los bowls que mejor cuadran y, si lo montas tú, ves los macros en vivo. Si se
+   queda corto de proteína, te digo qué añadir y cuál es la mejor combinación. Valores por 100 g,
+   de la tabla de la app y de etiquetas de Mercadona; son aproximados, como todo lo de comer fuera. */
+const BOWL_ING=[
+  /* id, nombre, emoji, paso (base/prote/top/salsa), gramos por defecto, kcal, prot, hidratos, grasa (por 100 g) */
+  ['arroz','Arroz de sushi','🍚','base',150,130,2.4,29,0.3],['quinoa','Quinoa','🌾','base',150,120,4.4,21,1.9],
+  ['integral','Arroz integral','🍚','base',150,123,2.7,26,1],['hojas','Mix de hojas','🥬','base',70,20,1.5,3,0.3],
+  ['soba','Fideos soba','🍜','base',150,99,5,21,0.1],['boniato','Boniato asado','🍠','base',150,90,2,21,0.2],
+  ['cuscus','Cuscús','🌾','base',150,112,3.8,23,0.2],
+  ['salmon','Salmón','🐟','prote',100,208,20,0,13],['atun','Atún','🐟','prote',100,110,24,0,1],
+  ['pollo','Pollo a la plancha','🍗','prote',120,165,31,0,3.6],['tofu','Tofu','🧈','prote',120,144,15.7,2.8,8.7],
+  ['langostinos','Langostinos','🦐','prote',100,99,24,0.2,0.3],['garbanzos','Garbanzos','🫘','prote',150,164,8.9,27,2.6],
+  ['ternera','Ternera magra','🥩','prote',120,150,26,0,5],['huevo','Huevo cocido','🥚','prote',60,155,13,1.1,11],
+  ['edamame','Edamame','🫛','top',60,121,12,9,5],['aguacate','Aguacate','🥑','top',50,160,2,9,15],
+  ['mango','Mango','🥭','top',50,60,0.8,15,0.4],['pepino','Pepino','🥒','top',50,15,0.7,3.6,0.1],
+  ['zanahoria','Zanahoria','🥕','top',40,41,0.9,10,0.2],['maiz','Maíz','🌽','top',40,86,3.3,19,1.4],
+  ['cherry','Tomate cherry','🍅','top',60,18,0.9,3.9,0.2],['wakame','Wakame','🌿','top',30,45,3,9,0.6],
+  ['kale','Kale','🥬','top',40,49,4.3,9,0.9],['feta','Queso feta','🧀','top',40,264,14,4,21],
+  ['parmesano','Parmesano','🧀','top',15,392,36,3,26],['hummus','Hummus','🫘','top',40,166,8,14,10],
+  ['cebollac','Cebolla crujiente','🧅','top',10,590,6,40,44],['sesamo','Sésamo','⚪','top',5,573,18,23,50],
+  ['nueces','Nueces','🌰','top',15,654,15,14,65],['picatostes','Picatostes','🍞','top',20,400,11,70,8],
+  ['soja','Salsa de soja','🥢','salsa',10,53,8,5,0],['ponzu','Ponzu','🍋','salsa',15,60,3,10,0],
+  ['yogurp','Salsa de yogur proteico','🥛','salsa',50,60,10,4,0.2],['mayosri','Mayo sriracha','🌶️','salsa',15,600,1,5,65],
+  ['vinagreta','Vinagreta de aceite','🫒','salsa',15,450,0,3,48],['tahini','Salsa de tahini','🥣','salsa',20,300,8,8,26],
+  ['teriyaki','Teriyaki','🍯','salsa',20,90,2,18,0]].map(function(x){
+    return {id:x[0],n:x[1],e:x[2],paso:x[3],g:x[4],kcal:x[5],p:x[6],c:x[7],gr:x[8]};});
+function bowlIng(id){for(let i=0;i<BOWL_ING.length;i++)if(BOWL_ING[i].id===id)return BOWL_ING[i];return null;}
+const BOWL_PRESETS=[
+  {n:'Poke de salmón',e:'🍣',it:[['arroz',150],['salmon',100],['edamame',60],['aguacate',50],['pepino',50],['mango',40],['soja',10]]},
+  {n:'Poke de atún',e:'🐟',it:[['arroz',150],['atun',110],['edamame',50],['wakame',30],['pepino',50],['sesamo',5],['ponzu',15]]},
+  {n:'Bowl de pollo y quinoa',e:'🍗',it:[['quinoa',150],['pollo',120],['boniato',100],['kale',40],['cherry',60],['tahini',20]]},
+  {n:'Bowl de garbanzos',e:'🫘',it:[['hojas',60],['garbanzos',150],['feta',40],['pepino',50],['cherry',60],['hummus',40],['vinagreta',10]]},
+  {n:'César ligera',e:'🥬',it:[['hojas',90],['pollo',120],['parmesano',15],['picatostes',20],['yogurp',50]]},
+  {n:'Bowl de tofu teriyaki',e:'🧈',it:[['integral',150],['tofu',150],['edamame',50],['zanahoria',40],['maiz',40],['teriyaki',20]]},
+  {n:'Bowl de langostinos',e:'🦐',it:[['soba',150],['langostinos',120],['mango',50],['aguacate',40],['pepino',50],['ponzu',15]]},
+  {n:'Burrito bowl de ternera',e:'🌯',it:[['integral',130],['ternera',120],['maiz',40],['cherry',60],['aguacate',50],['garbanzos',60]]}];
+function bowlMacros(it){
+  const o={kcal:0,p:0,c:0,gr:0};
+  (it||[]).forEach(function(x){const b=bowlIng(x[0]||x.id);if(!b)return;const q=(+(x[1]!=null?x[1]:x.g)||0)/100;
+    o.kcal+=b.kcal*q;o.p+=b.p*q;o.c+=b.c*q;o.gr+=b.gr*q;});
+  return {kcal:Math.round(o.kcal),p:Math.round(o.p),c:Math.round(o.c),gr:Math.round(o.gr)};}
+function bowlObjetivo(tipo){
+  /* lo que necesita esta comida: la tercera parte larga de tu día (o una comida normal si no tienes
+     objetivo puesto), con la forma de cada tipo */
+  const ob=objetivoMacros(),k=ob.kcal>0?Math.round(ob.kcal*0.33/10)*10:600;
+  const p=ob.prot>0?Math.max(30,Math.round(ob.prot*0.3)):40,c=ob.carb>0?Math.round(ob.carb*0.33):65,g=ob.gresa>0?Math.round(ob.gresa*0.3):20;
+  if(tipo==='ligera')return {kcal:Math.round(k*0.75/10)*10,p:Math.round(p*0.9),c:Math.round(c*0.6),gr:Math.round(g*0.75)};
+  if(tipo==='prote')return {kcal:k,p:Math.round(p*1.4),c:Math.round(c*0.75),gr:g};
+  if(tipo==='post')return {kcal:Math.round(k*1.1/10)*10,p:Math.max(35,p),c:Math.round(c*1.25),gr:Math.round(g*0.75)};
+  return {kcal:k,p:p,c:c,gr:g};}
+function bowlS(){if(!ui.bowl)ui.bowl={tipo:'equi',obj:bowlObjetivo('equi'),it:[],paso:0,n:'',e:''};return ui.bowl;}
+function bowlFit(m,T){
+  /* 100 = clavado. Quedarse corto de proteína pesa más que pasarse */
+  const rel=function(v,t){return t>0?Math.abs(v-t)/t:0;};
+  const dp=m.p<T.p?rel(m.p,T.p)*1.5:rel(m.p,T.p)*0.5;
+  const e=0.4*rel(m.kcal,T.kcal)+0.35*dp+0.125*rel(m.c,T.c)+0.125*rel(m.gr,T.gr);
+  return Math.max(0,Math.min(100,Math.round(100*(1-e))));}
+function bowlEscala(it,T){
+  /* ajusta la ración de base y proteína a las kcal que buscas (entre −20 % y +25 %) */
+  const m=bowlMacros(it),s=m.kcal>0?Math.max(0.8,Math.min(1.25,T.kcal/m.kcal)):1;
+  return it.map(function(x){const b=bowlIng(x[0]);return [x[0],b&&(b.paso==='base'||b.paso==='prote')?Math.max(5,Math.round(x[1]*s/5)*5):x[1]];});}
+function bowlSugerencias(T){
+  const mios=(store.dishes||[]).filter(function(d){return d.bowl&&Array.isArray(d.bowlIt);}).map(function(d){return {n:d.name,e:d.icon||'🥗',it:d.bowlIt,mio:true};});
+  return BOWL_PRESETS.concat(mios).map(function(p){const it=bowlEscala(p.it,T),m=bowlMacros(it);return {n:p.n,e:p.e,it:it,m:m,fit:bowlFit(m,T),mio:!!p.mio};})
+    .sort(function(a,b){return b.fit-a.fit;});}
+function bowlBarra(m,T){
+  const w=function(v,t){return t>0?Math.min(100,Math.round(v/t*100)):0;};
+  const col=function(v,t,k){return k==='p'&&v<t-3?' corto':'';};
+  return [['Proteína','p','var(--bp)'],['Hidratos','c','var(--bc)'],['Grasa','gr','var(--bg3)']].map(function(r){
+    return '<div class="bwbar"><span>'+r[0]+'</span><div class="t"><i style="width:'+w(m[r[1]],T[r[1]])+'%;background:'+r[2]+'"></i><u></u></div>'+
+      '<b class="'+col(m[r[1]],T[r[1]],r[1])+'">'+m[r[1]]+' / '+T[r[1]]+' g</b></div>';}).join('');}
+function bowlMacroCajas(m,edit){
+  const c=function(k,u,t,cls){return edit?('<label class="'+cls+'"><input inputmode="numeric" value="'+m[k]+'" data-a="bowl-obj" data-k="'+k+'" aria-label="'+t+' objetivo"><span>'+t+'</span></label>'):
+    ('<div class="'+cls+'"><b>'+m[k]+(u||'')+'</b><span>'+t+'</span></div>');};
+  return '<div class="bwmac">'+c('kcal','','kcal','')+c('p',' g','proteína','p')+c('c',' g','hidratos','c')+c('gr',' g','grasa','g')+'</div>';}
+function bowlMiniBarra(m){const t=Math.max(1,m.p*4+m.c*4+m.gr*9);
+  return '<div class="bwmb"><i style="flex:'+Math.round(m.p*4/t*100)+';background:var(--bp)"></i><i style="flex:'+Math.round(m.c*4/t*100)+';background:var(--bc)"></i><i style="flex:'+Math.round(m.gr*9/t*100)+';background:var(--bg3)"></i></div>';}
+function bowlExtras(it,T){
+  /* qué añadir si falta proteína: cada opción con lo que suma, y la mejor pareja */
+  const m=bowlMacros(it),falta=T.p-m.p;if(falta<=3)return null;
+  const pro=it.filter(function(x){const b=bowlIng(x[0]);return b&&b.paso==='prote';})[0];
+  const ops=[];
+  if(pro)ops.push({id:'doble',t:'Doble de '+bowlIng(pro[0]).n.toLowerCase(),s:'+'+pro[1]+' g',e:bowlIng(pro[0]).e,apl:function(a){return a.map(function(x){return x[0]===pro[0]?[x[0],x[1]*2]:x;});}});
+  const suma=function(id,g,t,s){ops.push({id:id,t:t,s:s,e:bowlIng(id).e,apl:function(a){const y=a.filter(function(x){return x[0]===id;})[0];
+    return y?a.map(function(x){return x[0]===id?[id,x[1]+g]:x;}):a.concat([[id,g]]);}});};
+  suma('edamame',60,'Edamame','+60 g');suma('huevo',60,'Huevo cocido','1 ud');
+  const salsa=it.filter(function(x){const b=bowlIng(x[0]);return b&&b.paso==='salsa';})[0];
+  if(!salsa||salsa[0]!=='yogurp')ops.push({id:'yogurp',t:'Salsa de yogur proteico',s:salsa?'en vez de '+bowlIng(salsa[0]).n.toLowerCase():'50 g',e:'🥛',apl:function(a){
+    return a.filter(function(x){const b=bowlIng(x[0]);return !(b&&b.paso==='salsa');}).concat([['yogurp',50]]);}});
+  if(!it.some(function(x){return x[0]==='atun';})&&pro&&pro[0]!=='atun')suma('atun',60,'Atún','+60 g');
+  ops.forEach(function(o){const mm=bowlMacros(o.apl(it));o.dp=mm.p-m.p;o.dk=mm.kcal-m.kcal;});
+  /* la mejor: llega a la proteína (o lo más cerca) con las kcal más cerca de la meta */
+  let mejor=null;
+  const prueba=function(lst){let a=it;lst.forEach(function(o){a=o.apl(a);});const mm=bowlMacros(a);
+    const pen=Math.max(0,T.p-2-mm.p)*20+Math.abs(mm.kcal-T.kcal)+lst.length*15;
+    if(!mejor||pen<mejor.pen)mejor={pen:pen,lst:lst,m:mm,it:a};};
+  ops.forEach(function(o,i){prueba([o]);ops.slice(i+1).forEach(function(q){prueba([o,q]);});});
+  return {falta:falta,ops:ops,mejor:mejor,m:m};}
+function bowlNombre(it){
+  const pro=it.filter(function(x){const b=bowlIng(x[0]);return b&&b.paso==='prote';}).map(function(x){return bowlIng(x[0]);})[0];
+  const base=it.filter(function(x){const b=bowlIng(x[0]);return b&&b.paso==='base';}).map(function(x){return x[0];})[0];
+  if(!pro)return {n:'Bowl vegetal',e:'🥗'};
+  const poke=base==='arroz'&&/salm|atun/.test(pro.id);
+  return {n:(poke?'Poke de ':(base==='hojas'?'Ensalada de ':'Bowl de '))+pro.n.toLowerCase().replace(' a la plancha','').replace(' cocido',''),e:poke?'🍣':pro.e};}
+const BOWL_PASOS=[['base','BASE'],['prote','PROTEÍNA'],['top','TOPPINGS'],['salsa','SALSA']];
+function renderComerSano(){
+  const B=bowlS();
+  if(B.paso>=1&&B.paso<=4)return renderBowlPaso(B);
+  if(B.paso===5)return renderBowlListo(B);
+  const T=B.obj,sug=bowlSugerencias(T).slice(0,4),hoy=foodTotals(fechaHoy()),ob=objetivoMacros();
+  const nMios=(store.dishes||[]).filter(function(d){return d.bowl;}).length;
+  const TIPOS=[['ligera','Ligera'],['equi','Equilibrada'],['prote','Mucha proteína'],['post','Post-entreno']];
+  $('#main').innerHTML='<div class="grid sano">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Comer</button><h2 class="subtit">🥗 Comer sano</h2></div>'+
+    '<div class="card"><div class="cap">QUÉ NECESITA ESTA COMIDA</div>'+
+      '<div class="bwseg">'+TIPOS.map(function(t){return '<button class="'+(B.tipo===t[0]?'on':'')+'" data-a="bowl-tipo" data-v="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
+      bowlMacroCajas(T,true)+
+      '<p class="mini" style="margin:8px 0 0">'+(ob.prot>0?('Sale de tu día: llevas '+Math.round(hoy.prot)+' g de proteína de '+ob.prot+'. '):'Una comida normal; pon tu objetivo del día en Comer y lo ajusto. ')+'Toca los números para cambiarlos.</p></div>'+
+    '<div class="card"><div class="row"><span class="cap">TE CUADRAN</span><span class="sp"></span><span class="mini">ordenado por lo que se acerca</span></div>'+
+      sug.map(function(s,i){return '<button class="bwsug" data-a="bowl-usar" data-i="'+i+'"><span class="ic">'+esc(s.e)+'</span>'+
+        '<span class="t"><b>'+esc(s.n)+(s.mio?' ⭐':'')+'</b><span>'+esc(s.it.slice(0,4).map(function(x){return bowlIng(x[0]).n.toLowerCase();}).join(' · '))+' · '+s.m.kcal+' kcal · '+s.m.p+' g P</span>'+bowlMiniBarra(s.m)+'</span>'+
+        '<span class="fit '+(s.fit>=85?'a':'b')+'">'+s.fit+' %</span></button>';}).join('')+
+      '<div class="mini" style="margin-top:6px"><b class="bwk p"></b> proteína <b class="bwk c"></b> hidratos <b class="bwk g"></b> grasa</div></div>'+
+    '<div class="two bwtwo"><button class="btn p" data-a="bowl-nuevo">＋ Móntalo tú</button>'+
+      (nMios?'<button class="btn" data-a="food-vista" data-v="platos">⭐ Mis bowls ('+nMios+')</button>':'<button class="btn" data-a="bowl-usar" data-i="0">Usar el primero</button>')+'</div>'+
+  '</div>';}
+function renderBowlPaso(B){
+  const T=B.obj,m=bowlMacros(B.it),paso=BOWL_PASOS[B.paso-1];
+  const tarjeta=function(pp,i){const on=i+1===B.paso,sel=B.it.filter(function(x){return bowlIng(x[0]).paso===pp[0];});
+    if(!on)return '<button class="card bwcerr" data-a="bowl-paso" data-v="'+(i+1)+'"><span class="cap">'+(i+1)+' · '+pp[1]+'</span><span class="mini">'+
+      (sel.length?esc(sel.map(function(x){return bowlIng(x[0]).n+' '+x[1]+' g';}).join(' · ')):'—')+'</span></button>';
+    return '<div class="card"><div class="cap">'+(i+1)+' · '+pp[1]+'</div><div class="hchips bwchips">'+
+      BOWL_ING.filter(function(b){return b.paso===pp[0];}).map(function(b){const x=B.it.filter(function(y){return y[0]===b.id;})[0];
+        return '<button class="hchip'+(x?' on':'')+'" data-a="bowl-ing" data-id="'+b.id+'"'+(x?' aria-pressed="true"':'')+'>'+b.e+' '+esc(b.n)+
+          (pp[0]==='prote'?'<small>'+Math.round(b.p*b.g/100)+' P</small>':'')+'</button>';}).join('')+'</div>'+
+      sel.map(function(x){const b=bowlIng(x[0]),st=b.g>=100?20:(b.g>=30?10:5);
+        return '<div class="bwrac"><span>'+b.e+' '+esc(b.n)+'</span><span class="sp"></span><button class="btn s" data-a="bowl-g" data-id="'+b.id+'" data-d="-'+st+'" aria-label="menos">−</button>'+
+          '<b>'+x[1]+' g</b><button class="btn s" data-a="bowl-g" data-id="'+b.id+'" data-d="'+st+'" aria-label="más">＋</button></div>';}).join('')+'</div>';};
+  const ex=B.paso===4?bowlExtras(B.it,T):null;
+  $('#main').innerHTML='<div class="grid sano">'+
+    '<div class="subcab"><button class="btn s volver" data-a="bowl-paso" data-v="0">'+gymIco('atras','gico sm')+' Comer sano</button><h2 class="subtit">Tu bowl</h2><span class="sp"></span><span class="mini">paso '+B.paso+' de 4</span></div>'+
+    '<div class="bwstep">'+[1,2,3,4].map(function(i){return '<i class="'+(i<=B.paso?'on':'')+'"></i>';}).join('')+'</div>'+
+    BOWL_PASOS.map(tarjeta).join('')+
+    (ex?bowlExtrasHTML(ex):'')+
+    '<div class="card bwpie"><div class="row"><span class="cap">LLEVAS</span><span class="sp"></span><b>'+m.kcal+'</b><span class="mini">/ '+T.kcal+' kcal</span></div>'+bowlBarra(m,T)+
+      '<button class="btn p gbig" style="margin-top:10px" data-a="bowl-paso" data-v="'+(B.paso+1)+'"'+(B.it.length?'':' disabled')+'>'+(B.paso<4?'Siguiente · '+BOWL_PASOS[B.paso][1].toLowerCase():'Listo')+'</button></div>'+
+  '</div>';}
+function bowlExtrasHTML(ex){
+  return '<div class="card bwal"><b style="font-size:15px">Te faltan '+ex.falta+' g de proteína</b>'+
+    '<div class="mini">Toca uno y se suma al bowl:</div>'+
+    ex.ops.map(function(o){return '<button class="bwex" data-a="bowl-extra" data-id="'+o.id+'"><span class="ic">'+o.e+'</span><span>'+esc(o.t)+' <span class="mini">'+esc(o.s)+'</span></span>'+
+      '<b>+'+o.dp+' P · '+(o.dk>=0?'+':'−')+Math.abs(o.dk)+' kcal</b></button>';}).join('')+
+    (ex.mejor?'<div class="mini" style="margin-top:6px">Mejor combinación: <b>'+esc(ex.mejor.lst.map(function(o){return o.t.toLowerCase();}).join(' + '))+'</b> → '+ex.mejor.m.p+' g P, '+ex.mejor.m.kcal+' kcal.</div>'+
+      '<button class="btn p gbig" style="margin-top:8px" data-a="bowl-mejor">Aplicar la mejor</button>':'')+'</div>';}
+function renderBowlListo(B){
+  const T=B.obj,m=bowlMacros(B.it),nm=B.n?{n:B.n,e:B.e||'🥗'}:bowlNombre(B.it),hoy=foodTotals(fechaHoy()),ob=objetivoMacros();
+  const ex=bowlExtras(B.it,T);
+  const tras=Math.round(hoy.prot+m.p),queda=ob.prot>0?Math.max(0,ob.prot-tras):0;
+  $('#main').innerHTML='<div class="grid sano">'+
+    '<div class="subcab"><button class="btn s volver" data-a="bowl-paso" data-v="4">'+gymIco('atras','gico sm')+' Tu bowl</button><h2 class="subtit">'+esc(nm.e)+' '+esc(nm.n)+'</h2></div>'+
+    (ex?bowlExtrasHTML(ex):'')+
+    '<div class="card"><div class="bwbowl" aria-hidden="true">'+B.it.map(function(x){return '<span>'+bowlIng(x[0]).e+'</span>';}).join('')+'</div>'+
+      bowlMacroCajas(m,false)+
+      '<p class="mini" style="margin:8px 0 0">'+esc(B.it.map(function(x){return bowlIng(x[0]).n.toLowerCase()+' '+x[1]+' g';}).join(' · '))+'</p></div>'+
+    (ob.prot>0?'<div class="card"><div class="row"><span class="cap">CON ESTO, HOY</span><span class="sp"></span><span class="mini">objetivo '+ob.prot+' g P</span></div>'+
+      '<div class="bwbar"><span>Proteína</span><div class="t"><i style="width:'+Math.min(100,Math.round(tras/ob.prot*100))+'%;background:var(--bp)"></i><u></u></div><b>'+tras+' / '+ob.prot+'</b></div>'+
+      '<p class="mini" style="margin:6px 0 0">'+(queda>0?'Te quedan '+queda+' g para el resto del día'+(queda<=35?': con un filete de pollo lo cierras.':'.'):'Con esto llegas a tu proteína del día. 💪')+'</p></div>':'')+
+    '<button class="btn p gbig" data-a="bowl-hoy">＋ Añadir a '+esc(posDeSlot('',horaLocal(new Date())))+' de hoy</button>'+
+    '<div class="two bwtwo"><button class="btn" data-a="bowl-guardar">⭐ Guardar como plato</button><button class="btn" data-a="bowl-compra">🛒 A la compra</button></div>'+
+  '</div>';}
+function bowlGuardar(){
+  const B=bowlS(),m=bowlMacros(B.it),nm=B.n?{n:B.n,e:B.e||'🥗'}:bowlNombre(B.it);
+  if(!B.it.length)return 'el bowl está vacío';
+  const ya=(store.dishes||[]).filter(function(d){return d.bowl&&d.name===nm.n;})[0];
+  const datos={name:nm.n,icon:nm.e,portions:1,kcal:m.kcal,prot:m.p,carb:m.c,fat:m.gr,bowl:true,bowlIt:B.it.map(function(x){return [x[0],x[1]];}),
+    ingredients:B.it.map(function(x){return x[1]+' g '+bowlIng(x[0]).n.toLowerCase();}),steps:[]};
+  if(ya){Object.assign(ya,datos);save();return 'actualizado en tus platos: '+nm.n;}
+  store.dishes.push(Object.assign({id:uid('d')},datos));save();
+  return 'guardado en tus platos: '+nm.n+' · '+m.kcal+' kcal';}
 function renderFood(){
   const v=ui.foodVista||'';
+  if(v==='sano')return renderComerSano();
   if(v==='buscar')return renderFoodBuscar();
   if(v==='fuera')return renderFuera();
   if(v==='fueracad')return renderFueraCad();
@@ -10394,6 +10738,11 @@ function listoDe(key){
      hace dos días, por músculos de la rutina tocados hace <48 h y por subir la carga de golpe */
   const c=suenoCfg(),s=suenoNoche(key),motivos=[];let v=100;
   if(s.h!=null&&s.h<c.min){const q=Math.round((c.min-s.h)*9)+(s.h<5?10:0);   /* por debajo de 5 h la caída de fuerza se acelera */v-=q;motivos.push('dormiste '+String(s.h).replace('.',',')+' h'+(s.real?'':' (según el plan)'));}
+  /* la deuda acumulada pesa aparte de la última noche: diez horas perdidas en dos semanas se notan
+     aunque anoche durmieras bien */
+  const dd=suenoDeuda(key).deuda;
+  if(dd>=20){v-=15;motivos.push('deuda de sueño '+String(dd).replace('.',',')+' h');}
+  else if(dd>=10){v-=10;motivos.push('deuda de sueño '+String(dd).replace('.',',')+' h');}
   const d=parseDate(key);
   if(salidaDeGuardia(key)){v-=20;motivos.push('sales de guardia');}
   else if(d&&salidaDeGuardia(iso(addDays(d,-1)))){v-=8;motivos.push('guardia hace dos días');}
@@ -13011,6 +13360,8 @@ function renderDinero(){
   /* lo que antes era la portada (nómina, apartar, objetivo, mes a mes, retos, lo que viene) sigue
      entero, ahora en su pantalla «Apartar»; la portada es el mes de un vistazo */
   if(v==='apartar')return renderAhorro();
+  if(v==='cierre')return renderDinCierre();
+  if(v==='plan')return renderDinPlan();
   $('#main').innerHTML=dinPortadaHTML();}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
@@ -13147,6 +13498,7 @@ function ahorroLimpia(o){
   /* fijo/variable y meta de cada categoría de Fintonic, y cuánto va a ahorro puro */
   if(a.catCfg&&typeof a.catCfg==='object'&&!Array.isArray(a.catCfg)){const cc={};Object.keys(a.catCfg).slice(0,80).forEach(function(k){const c=a.catCfg[k]||{};
     cc[String(k).slice(0,60)]={tipo:c.tipo==='fijo'||c.tipo==='variable'?c.tipo:'',meta:Math.max(0,Math.round(+c.meta||0))};});a.catCfg=cc;}else delete a.catCfg;
+  if(a.metaPct!=null)a.metaPct=Math.max(5,Math.min(80,Math.round(+a.metaPct||30)));
   if(a.puroPct!=null)a.puroPct=Math.max(50,Math.min(100,Math.round(+a.puroPct||50)));
   if(a.puroId!=null)a.puroId=String(a.puroId).slice(0,40);
   if(typeof a.vivirMin!=='number'||!(a.vivirMin>=0))a.vivirMin=1000;
@@ -13783,71 +14135,6 @@ function mediaAhorroReal(n){
   for(let i=0;i<12&&v.length<n;i++){const a=ahorroDeMes(mk);if(a)v.push(a.ahorro);mk=mkSuma(mk,-1);}
   return v.length?Math.round(v.reduce(function(s,x){return s+x;},0)/v.length):null;}
 
-function dinPortadaHTML(){
-  /* DINERO v4 · UNA pantalla que se lee sin scroll: cuánto ahorras, adónde va lo que ganas (fijos /
-     variables / ahorro), dónde apretar con la meta a un toque, y el reparto con la mitad (o más) a
-     ahorro puro. El detalle sube en hojas encima, como la del día en Mes: no hay que cambiar de pantalla. */
-  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,t=ahoYm(mk);
-  const e=entraMes(mk),p=mesPartes(mk),prev=ahorroDeMes(mkSuma(mk,-1)),C=dinCol();
-  const ganas=e?Math.round(e.neto):0,ahorro=p?Math.round(ganas-p.total):null;
-  // héroe
-  let hero;
-  if(p){
-    const dl=prev?ahorro-prev.ahorro:null,pc=ganas?Math.round(ahorro/ganas*100):0;
-    hero='<div class="cap">'+(ahorro>=0?'ESTE MES AHORRAS':'ESTE MES GASTAS MÁS DE LO QUE GANAS')+'</div>'+
-      '<div class="row" style="align-items:flex-end"><div class="dbig">'+esc(fmt(Math.abs(ahorro)))+' <small>€</small></div><span class="sp"></span>'+
-        '<span class="mini" style="text-align:right">'+(ahorro>=0?pc+' % de lo que ganas':'')+
-        (dl!=null?'<br>'+(dl>=0?'▲ ':'▼ ')+esc(eurR(Math.abs(dl)))+(dl>=0?' más':' menos')+' que '+esc(MON[ahoYm(mkSuma(mk,-1)).m]):'')+'</span></div>'+
-      '<div class="d4stack" role="img" aria-label="de '+esc(eurR(ganas))+' ganados: '+esc(eurR(p.fijos))+' fijos, '+esc(eurR(p.vars))+' variables'+(ahorro>0?', '+esc(eurR(ahorro))+' ahorro':'')+'">'+
-        '<b class="f" style="flex:'+Math.max(1,Math.round(p.fijos))+'">fijos</b><b class="v" style="flex:'+Math.max(1,Math.round(p.vars))+';background:'+C.gasto+'">variables</b>'+
-        (ahorro>0?'<b class="a" style="flex:'+ahorro+';background:'+C.ahorro+'">ahorro</b>':'')+'</div>'+
-      '<div class="d4keys"><button class="d4key" data-a="din-hoja" data-h="gastos"><span><i style="background:var(--d4fijo)"></i>FIJOS ›</span><b>'+esc(fmt(Math.round(p.fijos)))+'</b></button>'+
-        '<button class="d4key tap" data-a="din-hoja" data-h="gastos"><span><i style="background:'+C.gasto+'"></i>VARIABLES ›</span><b>'+esc(fmt(Math.round(p.vars)))+'</b></button>'+
-        '<div class="d4key"><span><i style="background:'+C.ahorro+'"></i>AHORRO</span><b>'+esc(fmt(Math.max(0,ahorro)))+'</b></div></div>';
-  }else{
-    hero='<div class="cap">ESTE MES GANAS</div><div class="dbig">'+(e&&e.real!=null?'':'≈ ')+esc(fmt(ganas))+' <small>€</small></div>'+
-      '<p class="mini" style="margin:4px 0 0">Sube una captura de Fintonic de '+esc(MONTH_FULL[t.m].toLowerCase())+' y aquí ves lo fijo, lo variable y lo que ahorras.</p>';}
-  const sig=mkSuma(mk,1),eS=entraMes(sig);
-  const gana='<button class="d4gana" data-a="din-hoja" data-h="gano"><span>💶 Ganas <b>'+(e&&e.real!=null?'':'≈ ')+esc(eurR(ganas))+'</b> · con '+
-      (e?(e.finde+' guardia'+(e.finde===1?'':'s')+' de finde'+(e.supuesto?' (supuesta)':'')):'—')+'</span>'+
-    '<span class="ch">'+esc(MON[ahoYm(sig).m])+' ≈ '+esc(fmt(eS?Math.round(eS.neto):0))+' ›</span></button>';
-  // dónde apretar
-  let apretar='';
-  if(p&&p.V.length){
-    const vs=p.V.filter(function(k){return k!=='__resto';}).map(function(k){const cf=catCfg()[k]||{},m=catMedia(k,mk);
-      return {k:k,v:+p.g.cats[k]||0,media:m,meta:cf.meta>0?cf.meta:null};});
-    vs.sort(function(x,y){const px=x.meta!=null?x.v-x.meta:-1e6+x.v,py=y.meta!=null?y.v-y.meta:-1e6+y.v;return py-px;});
-    const top=vs.slice(0,2),extra=vs.reduce(function(s,c){return s+(c.meta!=null&&c.media!=null?Math.max(0,c.media-c.meta):0);},0);
-    let efecto='';
-    if(extra>=5){const hs=ahorroS().huchas.filter(function(h){return h.id!==puroHucha().id&&h.objetivo>h.saldo;});
-      const base=baseReparto(mkHoy).v;
-      if(hs.length){const h=hs[0],a0=repartoDe(base)[h.id]||0,a1=repartoDe(base+extra)[h.id]||0,l0=llegadaHucha(h.objetivo,h.saldo,a0),l1=llegadaHucha(h.objetivo,h.saldo,a1);
-        if(l1.mk&&l1.mk!==l0.mk)efecto=' → '+esc(h.ico+' '+h.nombre)+' llega en <b>'+esc(mkCorto(l1.mk))+'</b>'+(l0.mk?', no en '+esc(mkCorto(l0.mk)):'');}}
-    apretar='<div class="card"><div class="row"><span class="cap">✂️ DÓNDE APRETAR</span><span class="sp"></span><span class="mini">meta del mes</span></div>'+
-      top.map(function(c){return '<div class="d4ap"><span>'+finCatIco(c.k)+'</span><div class="n">'+esc(c.k)+'<small>llevas '+esc(fmt(Math.round(c.v)))+(c.media!=null?' · media '+esc(fmt(Math.round(c.media))):'')+'</small></div>'+
-        metaStepHTML(c.k,c.meta,c.media!=null?c.media:c.v)+'</div>';}).join('')+
-      (extra>=5?'<div class="d4win">Cumpliendo tus metas: <b>+'+esc(eurR(extra))+'/mes</b>'+efecto+'.</div>':'<div class="mini" style="margin-top:6px">Ponle una meta a lo que quieras recortar y te digo cuánto ganas.</div>')+'</div>';}
-  // reparto
-  const br=baseReparto(mkHoy),r=repartoDe(br.v),P=puroHucha(),a=ahorroS(),x=ahorroMes(mkHoy,true);
-  const otras=a.huchas.filter(function(h){return h.id!==P.id;});
-  const reparto='<div class="card"><div class="row"><span class="cap">REPARTO DE '+esc(fmt(Math.round(br.v)))+' €</span><span class="sp"></span><span class="mini">mín. 50 % ahorro puro</span></div>'+
-    (br.v>0?'<div class="d4rep">'+[P].concat(otras).map(function(h,i){return r[h.id]?'<b style="flex:'+r[h.id]+';background:'+(i===0?C.ahorro:C.seq[3])+(i>1?';opacity:.7':'')+'" title="'+esc(h.nombre+': '+eur(r[h.id]))+'"></b>':'';}).join('')+'</div>':'')+
-    '<button class="d4hu" data-a="din-hoja" data-h="puro"><span class="ic" style="background:color-mix(in srgb,'+C.ahorro+' 22%,var(--bg2))">🔒</span><span class="t"><b>Ahorro puro</b><span>'+esc(eurR(P.saldo))+' · no se toca</span></span>'+
-      '<span class="e"><b>+'+esc(fmt(r[P.id]||0))+'</b>'+puroPct()+' %</span></button>'+
-    otras.map(function(h){const ap=r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,pc=h.objetivo?Math.min(100,Math.round(h.saldo/h.objetivo*100)):null;
-      return '<button class="d4hu" data-a="din-hoja" data-h="hucha" data-id="'+esc(h.id)+'"><span class="ic" style="background:color-mix(in srgb,'+esc(h.color)+' 22%,var(--bg2))">'+esc(h.ico)+'</span>'+
-        '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+esc(fmt(Math.round(h.saldo)))+(h.objetivo?' de '+esc(fmt(h.objetivo)):' €')+'</span>'+
-          (pc!=null?'<span class="m"><i style="width:'+pc+'%;background:'+C.seq[3]+'"></i></span>':'')+'</span>'+
-        '<span class="e"><b>+'+esc(fmt(ap))+'</b>'+(ll?(ll.falta?(ll.mk?esc(mkCorto(ll.mk)+' '+String(ahoYm(ll.mk).y).slice(2)):'sin aporte'):'✓'):'')+'</span></button>';}).join('')+
-    (x.hecho?'<div class="row" style="margin-top:8px"><span class="ok" style="font-weight:800">✓ apartado este mes</span><span class="sp"></span><button class="btn s" data-a="aho-deshacer">deshacer</button></div>':
-      (br.v>0?'<button class="btn p gbig" style="margin-top:10px" data-a="din-apartar">✓ ya lo he apartado</button>':''))+'</div>';
-  const pie='<div class="d4pie"><label>📷 Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
-    '<button data-a="dinero-vista" data-v="hucha-nueva">＋ hucha</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button>'+
-    '<button data-a="dinero-vista" data-v="apartar" aria-label="más: nómina, retos y lo que viene">⋯</button></div>';
-  return '<div class="grid dinv2 din4">'+
-    '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><div class="dmes"><button data-a="din-mes" data-d="-1" aria-label="mes anterior">‹</button>'+
-      '<b>'+esc(MONTH_FULL[t.m].toLowerCase())+(t.y!==hoy.getFullYear()?' '+t.y:'')+'</b><button data-a="din-mes" data-d="1" aria-label="mes siguiente"'+(mk>=mkHoy?' disabled':'')+'>›</button></div></div>'+
-    '<div class="card dhero">'+hero+gana+bancoLineaHTML(mk,mkHoy)+'</div>'+apretar+reparto+pie+'</div>';}
 function bancoLineaHTML(mk,mkHoy){
   /* lo que hay en el banco (última captura) y cuándo llega la nómina: lo que se mira a fin de mes */
   if(mk!==mkHoy)return '';
@@ -13901,11 +14188,185 @@ function baseReparto(mk){
 function aporteHucha(h){
   const hoy=new Date();return repartoDe(baseReparto(ahoMk(hoy.getFullYear(),hoy.getMonth())).v)[h.id]||0;}
 
+/* ===================== DINERO v5 · bolsillos =====================
+   «Lo que este mes he podido ahorrar, y mantenerlo.» La nómina cambia con las guardias de finde, así
+   que la portada no gira alrededor de lo que cobras sino de lo que TIENES ahorrado, repartido en
+   bolsillos: el intocable (la mitad o más de lo que ahorras, y no se toca), inversión, viajes,
+   caprichos… Cada gasto de ahorros baja SOLO el bolsillo del que sale: si te gastas 1.000 € en un
+   viaje, los 5.000 del intocable siguen siendo 5.000. Colores: paleta categórica validada
+   (validate_palette.js), por orden de bolsillo. */
+function fmtMil(n){const v=Math.round(+n||0);return (v<0?'−':'')+String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+const DIN5_COL={dark:['#3987e5','#199e70','#d95926','#c98500','#9b6bdf','#1f9fb4'],light:['#2a6fc4','#127a56','#b8461a','#946200','#7a4bc4','#0f7d8f']};
+function bolsillos(){
+  const P=puroHucha(),a=ahorroS(),pal=DIN5_COL[document.documentElement.classList.contains('dark')?'dark':'light'];
+  return [P].concat(a.huchas.filter(function(h){return h.id!==P.id;})).map(function(h,i){return {h:h,col:pal[i%pal.length],puro:i===0};});}
+function bolsilloShares(){
+  /* el % de lo que ahorras que va a cada bolsillo: el intocable su puroPct y el resto, en proporción a
+     su pct, hasta sumar 100. Los de aporte fijo (€/mes) no entran en los % */
+  const P=puroHucha(),pp=puroPct(),out={};out[P.id]=pp;
+  const otras=ahorroS().huchas.filter(function(h){return h.id!==P.id&&!(+h.mensual>0);});
+  const tot=otras.reduce(function(t,h){return t+(+h.pct||0);},0),libre=100-pp;
+  otras.forEach(function(h){out[h.id]=tot>0?Math.round((+h.pct||0)/tot*libre):(otras.length?Math.round(libre/otras.length):0);});
+  return out;}
+function bolsilloSetPct(id,v){
+  /* mover un deslizador: los demás (menos el intocable) se reparten lo que quede, en su proporción */
+  const P=puroHucha(),a=ahorroS(),sh=bolsilloShares();
+  const otras=a.huchas.filter(function(h){return h.id!==P.id&&!(+h.mensual>0);});
+  const repartir=function(ids,total){const t=ids.reduce(function(s,h){return s+(sh[h.id]||0);},0);let usado=0;
+    ids.forEach(function(h,i){const x=i===ids.length-1?total-usado:(t>0?Math.round((sh[h.id]||0)/t*total):Math.round(total/ids.length));h.pct=Math.max(0,x);usado+=h.pct;});};
+  if(id===P.id){a.puroPct=Math.max(50,Math.min(100,Math.round(v)));repartir(otras,100-a.puroPct);return;}
+  const h=otras.filter(function(q){return q.id===id;})[0];if(!h)return;
+  const libre=100-puroPct();h.pct=Math.max(0,Math.min(libre,Math.round(v)));
+  const resto=otras.filter(function(q){return q.id!==id;});
+  if(resto.length)repartir(resto,libre-h.pct);else h.pct=libre;}
+function metaPct(){const v=+ahorroS().metaPct;return v>=5&&v<=80?Math.round(v):30;}
+function nominaMedia(){
+  /* lo que cobras de media (6 meses hacia atrás, real si lo apuntaste) */
+  const hoy=new Date();let s=0,n=0;
+  for(let i=0;i<6;i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1,12),nm=nominaMes(d.getFullYear(),d.getMonth());if(nm.neto>0){s+=nm.neto;n++;}}
+  return n?Math.round(s/n):0;}
+function ahorroMeses(n){
+  /* lo que has podido ahorrar cada mes (con captura de Fintonic o gastos apuntados), del más viejo al de ahora */
+  const hoy=new Date(),out=[];let mk=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  for(let i=0;i<n;i++){const a=ahorroDeMes(mk);out.unshift({mk:mk,a:a,meta:a?Math.round(a.entra*metaPct()/100):null});mk=mkSuma(mk,-1);}
+  return out;}
+function dinPortadaHTML(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),bs=bolsillos(),a=ahorroS();
+  const total=Math.round(bs.reduce(function(s,b){return s+Math.max(0,+b.h.saldo||0);},0));
+  const x=ahorroMes(mkHoy,true),br=baseReparto(mkHoy),r=x.hecho?x.reparto:repartoDe(br.v),sh=bolsilloShares();
+  const mesC=MON[hoy.getMonth()];
+  const filas=bs.map(function(b){const h=b.h,ap=+r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null;
+    const sub=[h.meta&&!b.puro?h.meta:(b.puro?'colchón':''),(+h.mensual>0?esc(eurR(h.mensual))+'/mes fijo':(sh[h.id]!=null?sh[h.id]+' %':'')),
+      h.objetivo?(ll&&!ll.falta?'✓ '+esc(fmtMil(h.objetivo)):(esc(fmtMil(h.objetivo))+(ll&&ll.mk?' · llegas en '+esc(mkCorto(ll.mk)+' '+String(ahoYm(ll.mk).y).slice(2)):''))):''].filter(Boolean).join(' · ');
+    return '<button class="d5pk" data-a="din-hoja" data-h="'+(b.puro?'puro':'hucha')+'" data-id="'+esc(h.id)+'">'+
+      '<span class="ic" style="background:color-mix(in srgb,'+b.col+' 22%,var(--bg2))">'+esc(h.ico)+'</span>'+
+      '<span class="t"><b>'+esc(h.nombre)+(b.puro?' <em class="d5lock">no se toca</em>':'')+'</b><span>'+sub+'</span></span>'+
+      '<span class="v"><b>'+esc(fmtMil((h.saldo)))+'</b>'+(ap?'<small>'+(x.hecho?'+':'≈ +')+esc(fmtMil((ap)))+' '+esc(mesC)+'</small>':'')+'</span></button>';}).join('');
+  const stack=total>0?'<div class="d5stack" role="img" aria-label="'+esc(bs.map(function(b){return b.h.nombre+' '+eurR(b.h.saldo);}).join(', '))+'">'+
+    bs.map(function(b){return b.h.saldo>0?'<b style="flex:'+Math.round(b.h.saldo)+';background:'+b.col+'"></b>':'';}).join('')+'</div>':'';
+  // este mes
+  const p=mesPartes(mkHoy),e=entraMes(mkHoy),ganas=e?Math.round(e.neto):0,ah=p?Math.round(ganas-p.total):null;
+  const mes='<button class="card d5mes" data-a="dinero-vista" data-v="cierre"><div class="row"><span class="cap">'+esc(MONTH_FULL[hoy.getMonth()].toUpperCase())+'</span><span class="sp"></span><span class="mini">cierre del mes ›</span></div>'+
+    (p?('<div class="row" style="align-items:baseline;gap:8px;margin-top:4px"><span class="mini">has podido ahorrar</span><span class="sp"></span><b class="d5ah'+(ah<0?' neg':'')+'">'+esc(fmtMil(ah))+' €</b>'+
+      (ganas?'<span class="d5pc '+(ah>=ganas*metaPct()/100?'ok':'no')+'">'+Math.round(ah/ganas*100)+' %</span>':'')+'</div>'+
+      '<div class="mini">ganaste '+esc(eurR(ganas))+' · gastaste '+esc(eurR(p.total))+(x.hecho?' · ✓ apartado':'')+'</div>'):
+      '<div class="mini" style="margin-top:4px">Sube una captura de Fintonic y te digo lo que has podido ahorrar este mes.</div>')+bancoLineaHTML(mkHoy,mkHoy)+'</button>';
+  // lo que has podido ahorrar
+  const ms=ahorroMeses(6),con=ms.filter(function(m){return m.a;});
+  let hist='';
+  if(con.length){
+    const max=Math.max.apply(null,con.map(function(m){return Math.max(m.a.ahorro,m.meta||0);}).concat([1]));
+    let racha=0;for(let i=ms.length-1;i>=0;i--){const m=ms[i];if(!m.a)continue;if(m.a.ahorro>=m.meta)racha++;else break;}
+    const enc=con.filter(function(m){return m.a.ahorro>=m.meta;}).length;
+    hist='<div class="card"><div class="row"><span class="cap">LO QUE HAS PODIDO AHORRAR</span><span class="sp"></span><span class="mini">meta '+metaPct()+' % del sueldo</span></div>'+
+      '<div class="d5bars" role="img" aria-label="ahorro de cada mes frente a la meta">'+ms.map(function(m){
+        if(!m.a)return '<div class="vacio"><em></em><i style="height:3px"></i><span>'+esc(mkCorto(m.mk))+'</span></div>';
+        const v=Math.max(0,m.a.ahorro),h=Math.round(v/max*70),mh=Math.round((m.meta||0)/max*70),ok=m.a.ahorro>=m.meta;
+        return '<div class="'+(ok?'ok':'no')+(m.mk===mkHoy?' hoy':'')+'"><em>'+esc(fmtMil((m.a.ahorro)))+'</em><i style="height:'+Math.max(3,h)+'px"></i>'+
+          '<u style="bottom:'+(mh+16)+'px"></u><span>'+esc(mkCorto(m.mk))+'</span></div>';}).join('')+'</div>'+
+      '<div class="mini" style="margin-top:6px">'+enc+' de '+con.length+' mes'+(con.length===1?'':'es')+' en tu meta'+(racha>1?' · <b>racha: '+racha+'</b>':'')+'</div></div>';}
+  const pie='<div class="d4pie"><label>📷 Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
+    '<button data-a="din-hoja" data-h="gastos">🧾 Gastos</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button>'+
+    '<button data-a="dinero-vista" data-v="apartar" aria-label="más: nómina, retos y lo que viene">⋯</button></div>';
+  return '<div class="grid dinv2 din5">'+
+    '<div class="dtop"><h2 class="subtit">💶 Ahorros</h2><span class="mini">'+esc(MONTH_FULL[hoy.getMonth()].toLowerCase())+'</span></div>'+
+    '<div class="card"><div class="cap">TIENES AHORRADO</div><div class="dbig">'+esc(fmtMil(total))+' <small>€</small></div>'+stack+filas+'</div>'+
+    '<div class="two d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté ahorros</button><button class="btn" data-a="dinero-vista" data-v="plan">⚖️ Mi plan</button></div>'+
+    mes+hist+pie+'</div>';}
+function renderDinCierre(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,t=ahoYm(mk);
+  const e=entraMes(mk),p=mesPartes(mk),ganas=e?Math.round(e.neto):0,ah=p?Math.round(ganas-p.total):null;
+  const x=ahorroMes(mk,mk===mkHoy),bs=bolsillos(),sh=bolsilloShares();
+  const base=x.hecho?(+x.aparto||0):Math.max(0,ah||0),r=x.hecho?x.reparto:repartoDe(base);
+  let cuerpo;
+  if(!p){cuerpo='<div class="card"><p class="mini" style="margin:0">Sin gastos de '+esc(MONTH_FULL[t.m].toLowerCase())+': sube una captura de Fintonic de ese mes.</p>'+
+    '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';}
+  else{
+    const pc=ganas?Math.round(ah/ganas*100):0,ok=ah>=ganas*metaPct()/100;
+    cuerpo='<div class="card"><div class="row mini"><span>Ganaste <b style="color:var(--ink)">'+esc(eurR(ganas))+'</b>'+(e?' ('+e.finde+' guardia'+(e.finde===1?'':'s')+' de finde)':'')+'</span><span class="sp"></span>'+
+        '<button class="dlink" data-a="din-hoja" data-h="gastos">gastaste <b style="color:var(--ink)">'+esc(eurR(p.total))+'</b> ›</button></div>'+
+      '<div class="cap" style="margin-top:10px">'+(ah>0?'ESTE MES HAS PODIDO AHORRAR':'ESTE MES NO HA SOBRADO')+'</div>'+
+      '<div class="row" style="align-items:flex-end;gap:8px"><div class="dbig">'+esc(fmtMil(ah))+' <small>€</small></div>'+
+        (ah>0?'<span class="d5pc '+(ok?'ok':'no')+'">'+pc+' % '+(ok?'✓':'·')+' meta '+metaPct()+' %</span>':'')+'</div>'+
+      (base>0?('<div class="cap" style="margin-top:12px">SE REPARTE SEGÚN TU PLAN</div>'+
+        bs.map(function(b){const v=+r[b.h.id]||0;if(!v)return '';
+          return '<div class="d5res"><span>'+esc(b.h.ico)+' '+esc(b.h.nombre)+(sh[b.h.id]!=null?' · '+sh[b.h.id]+' %':'')+'</span><b>+'+esc(fmtMil((v)))+'</b></div>';}).join('')):'')+
+      '<p class="mini" style="margin:8px 0 0">Lo calculo con lo que gastaste de verdad (Fintonic), no con lo que cobras: un mes con más guardias no infla el plan.</p>'+
+      (x.hecho?'<div class="row" style="margin-top:10px"><b class="ok">✓ apartado en los bolsillos</b><span class="sp"></span><button class="btn s" data-a="aho-deshacer" data-mk="'+mk+'">deshacer</button></div>':
+        (base>0?'<button class="btn p gbig" style="margin-top:10px" data-a="din-apartar" data-mk="'+mk+'">✓ Apartado · meterlo en los bolsillos</button>':''))+'</div>'+
+      (ah<=0?'<div class="card"><div class="cap">SI UN MES NO LLEGAS</div><p class="mini" style="margin:4px 0 0">No se aparta nada y nada sale del intocable para cubrir el mes. El mes que viene, otra vez.</p></div>':'');}
+  $('#main').innerHTML='<div class="grid dinv2 din5">'+dinSubcab(MONTH_FULL[t.m]+(t.y!==hoy.getFullYear()?' '+t.y:''),
+      '<span class="sp"></span><div class="dmes"><button data-a="din-mes" data-d="-1" aria-label="mes anterior">‹</button><button data-a="din-mes" data-d="1" aria-label="mes siguiente"'+(mk>=mkHoy?' disabled':'')+'>›</button></div>')+
+    cuerpo+'</div>';}
+function renderDinPlan(){
+  const bs=bolsillos(),sh=bolsilloShares(),med=nominaMedia(),mp=metaPct();
+  const inv=ahorroS().huchas.some(function(h){return /invers/i.test(h.nombre);});
+  $('#main').innerHTML='<div class="grid dinv2 din5">'+dinSubcab('Mi plan')+
+    '<div class="card"><div class="row"><span class="cap">META DE AHORRO</span><span class="sp"></span><b id="d5metaTxt">'+mp+' % del sueldo</b></div>'+
+      '<input type="range" min="5" max="60" step="5" value="'+mp+'" data-a="din-meta-pct" class="drange" aria-label="meta de ahorro en % del sueldo">'+
+      '<p class="mini" style="margin:4px 0 0">≈ '+esc(eurR(med*mp/100))+'/mes con tu nómina media ('+esc(eurR(med))+'). Solo es la meta: se compara con lo que ahorres de verdad.</p></div>'+
+    '<div class="card"><div class="cap">LO QUE AHORRES, SE REPARTE ASÍ</div>'+
+      bs.map(function(b){const h=b.h,fijo=!b.puro&&+h.mensual>0,v=sh[h.id]||0;
+        return '<div class="d5pl"><span class="ic">'+esc(h.ico)+'</span><div class="t"><b>'+esc(h.nombre)+'</b><span>'+(b.puro?'mínimo 50 %':esc(h.meta||(h.objetivo?'meta '+eurR(h.objetivo):'')))+'</span></div>'+
+          (fijo?'<span class="pc">'+esc(eurR(h.mensual))+'<small>/mes</small></span><button class="btn s d5fijo" data-a="din-a-pct" data-id="'+esc(h.id)+'">pasar a %</button>':
+            '<span class="pc">'+v+' %</span><input type="range" min="0" max="100" step="5" value="'+v+'" data-a="din-plan-pct" data-id="'+esc(h.id)+'" class="drange d5sl" style="--c:'+b.col+'" aria-label="% para '+esc(h.nombre)+'">')+'</div>';}).join('')+
+      '<p class="mini" style="margin:8px 0 0">Suma 100 %: al subir uno, bajan los otros (nunca el intocable por debajo de 50).'+
+        (bs.some(function(b){return !b.puro&&+b.h.mensual>0;})?' Los de «€/mes» se llevan su parte fija antes del reparto.':'')+'</p></div>'+
+    '<div class="two d5two">'+(inv?'':'<button class="btn" data-a="din-bolsillo-inv">📈 Añadir inversión</button>')+
+      '<button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nuevo bolsillo</button></div></div>';}
+function gasteEstado(){
+  const bs=bolsillos().filter(function(b){return !b.puro;});
+  const g=ui.dinGaste||(ui.dinGaste={imp:'',txt:'',de:'',resto:''});
+  if(!bs.some(function(b){return b.h.id===g.de;}))g.de=(bs.filter(function(b){return /viaj/i.test(b.h.nombre);})[0]||bs.slice().sort(function(p,q){return q.h.saldo-p.h.saldo;})[0]||{h:{}}).h.id||'';
+  const v=numEuro(g.imp)||0,de=bs.filter(function(b){return b.h.id===g.de;})[0];
+  const salen={};let falta=v;
+  if(de){const x=Math.min(falta,Math.max(0,de.h.saldo));salen[de.h.id]=x;falta-=x;}
+  let resto=null;
+  if(falta>0.004){
+    const cand=bs.filter(function(b){return b.h.id!==g.de&&b.h.saldo>0;});
+    resto=cand.filter(function(b){return b.h.id===g.resto;})[0]||cand.slice().sort(function(p,q){return q.h.saldo-p.h.saldo;})[0]||null;
+    if(resto){g.resto=resto.h.id;const x=Math.min(falta,resto.h.saldo);salen[resto.h.id]=x;falta-=x;}}
+  return {g:g,v:v,bs:bs,de:de,resto:resto,salen:salen,falta:Math.round(falta*100)/100};}
+function gasteQuedaHTML(){
+  const s=gasteEstado(),todos=bolsillos(),tot0=todos.reduce(function(t,b){return t+b.h.saldo;},0);
+  if(!s.v)return '<p class="mini" style="margin:8px 0 0">Pon cuánto y te enseño cómo quedan los bolsillos.</p>';
+  let aviso=s.de&&s.salen[s.de.h.id]<s.v?('<p class="mini" style="margin:6px 0 0">En '+esc(s.de.h.nombre)+' hay '+esc(eurR(s.de.h.saldo))+': faltan <b>'+esc(eurR(s.v-s.salen[s.de.h.id]))+'</b>'+
+    (s.resto?' → los cojo de '+esc(s.resto.h.ico+' '+s.resto.h.nombre)+'.':'')+'</p>'):'';
+  if(s.de&&s.salen[s.de.h.id]<s.v){const cand=s.bs.filter(function(b){return b.h.id!==s.de.h.id&&b.h.saldo>0;});
+    if(cand.length>1)aviso+='<div class="hcap">LO QUE FALTA, DE</div><div class="hchips">'+cand.map(function(b){const on=s.resto&&s.resto.h.id===b.h.id;
+      return '<button class="hchip'+(on?' on':'')+'" data-a="din-gaste-resto" data-id="'+esc(b.h.id)+'"'+(on?' aria-pressed="true"':'')+'>'+esc(b.h.ico)+' '+esc(b.h.nombre)+'</button>';}).join('')+'</div>';}
+  return aviso+(s.falta>0?'<p class="mini bad" style="margin:4px 0 0">No llega sin tocar el intocable: faltan '+esc(eurR(s.falta))+'.</p>':'')+
+    '<div class="hcap">ASÍ QUEDA</div>'+todos.map(function(b){const x=s.salen[b.h.id]||0;
+      return '<div class="d5q"><span>'+esc(b.h.ico)+'</span><span>'+esc(b.h.nombre)+'</span><span class="mini">'+(x?esc(fmtMil((b.h.saldo))):'')+'</span>'+
+        '<b>'+esc(fmtMil((b.h.saldo-x)))+'</b><em class="'+(x?'baja':'ok')+'">'+(x?'−'+esc(fmtMil((x))):'sin tocar')+'</em></div>';}).join('')+
+    '<div class="d5q tot"><span></span><b>Total</b><span class="mini">'+esc(fmtMil((tot0)))+' →</span><b>'+esc(fmtMil((tot0-(s.v-s.falta))))+'</b><em></em></div>';}
+function gasteHojaHTML(){
+  const s=gasteEstado(),P=puroHucha();
+  return '<h3 class="sh">Gasté de mis ahorros</h3>'+
+    '<div class="hdos"><label class="hfld">CUÁNTO (€)<input id="dgImp" data-a="din-gaste-in" data-k="imp" inputmode="decimal" placeholder="1000" value="'+esc(s.g.imp)+'"></label>'+
+      '<label class="hfld">EN QUÉ<input id="dgTxt" data-a="din-gaste-in" data-k="txt" maxlength="60" placeholder="Viaje a Lisboa" value="'+esc(s.g.txt)+'"></label></div>'+
+    '<div class="hcap">DE QUÉ BOLSILLO</div><div class="hchips">'+
+      s.bs.map(function(b){const on=b.h.id===s.g.de,rs=s.resto&&b.h.id===s.resto.h.id;
+        return '<button class="hchip'+(on?' on':'')+(rs?' d5rs':'')+'" data-a="din-gaste-de" data-id="'+esc(b.h.id)+'"'+(on?' aria-pressed="true"':'')+'>'+esc(b.h.ico)+' '+esc(b.h.nombre)+' · '+esc(fmtMil((b.h.saldo)))+'</button>';}).join('')+
+      '<button class="hchip" disabled aria-disabled="true" title="el intocable no se usa para gastos">🔒 '+esc(P.nombre)+'</button></div>'+
+    '<div id="dgQueda">'+gasteQuedaHTML()+'</div>'+
+    '<button class="btn p gbig" style="margin-top:12px" data-a="din-gaste-ok">Apuntar el gasto</button>';}
+function gasteApuntar(){
+  const s=gasteEstado();
+  if(!(s.v>0))return 'pon cuánto te has gastado';
+  if(s.falta>0)return 'no llega con esos bolsillos: faltan '+eurR(s.falta);
+  const txt=(s.g.txt||'gasto de ahorros').trim();
+  Object.keys(s.salen).forEach(function(id){const v=s.salen[id];if(!v)return;const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];
+    if(h){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,txt);}});
+  ui.dinGaste=null;save();
+  return eurR(s.v)+' de «'+txt+'»: '+Object.keys(s.salen).filter(function(id){return s.salen[id];}).map(function(id){
+    const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];return (h?h.nombre:'')+' −'+eurR(s.salen[id]);}).join(', ');}
 /* ---- las hojas de Dinero: suben encima, como la del día en Mes ---- */
 function dinHojaHTML(){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,C=dinCol(),h0=ui.dinHoja||'';
   let cuerpo='',tit='Dinero';
-  if(h0==='gastos'){
+  if(h0==='gaste'){tit='Gasté de mis ahorros';cuerpo=gasteHojaHTML();}
+  else if(h0==='gastos'){
     const p=mesPartes(mk);tit='Gastos de '+MONTH_FULL[ahoYm(mk).m].toLowerCase();
     if(!p)cuerpo='<div class="empty">Sin captura de Fintonic de este mes.</div>';
     else{
@@ -16065,7 +16526,7 @@ function act(a,el){
       if(!(c.meta>0))c.meta=Math.max(10,Math.round((+el.dataset.ref||100)*0.85/10)*10);else c.meta=Math.max(0,c.meta+d);
       if(c.meta===0)flash('sin meta en '+k);save();render();break;}
     case 'din-cat-tipo':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0});c.tipo=el.dataset.t==='fijo'?'fijo':'variable';save();render();break;}
-    case 'din-apartar':{const h=new Date(),mk=ahoMk(h.getFullYear(),h.getMonth()),x=ahorroMes(mk,true);
+    case 'din-apartar':{const h=new Date(),mk=el.dataset.mk||ahoMk(h.getFullYear(),h.getMonth()),x=ahorroMes(mk,true);
       if(!x.hecho)x.aparto=baseReparto(mk).v;flash(apartarMes(mk));break;}
     case 'din-mes':{const h=new Date(),hoyMk=ahoMk(h.getFullYear(),h.getMonth()),mk=mkSuma(ui.dinMes||hoyMk,+el.dataset.d||0);
       if(mk<=hoyMk){ui.dinMes=mk===hoyMk?'':mk;render();}break;}
@@ -16114,7 +16575,30 @@ function act(a,el){
     case 'aho-mas':case 'aho-menos':{const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),true);
       if(x.hecho)break;x.aparto=Math.max(0,(+x.aparto||0)+(a==='aho-mas'?50:-50));save();render();break;}
     case 'aho-apartar':{const hoy=new Date();flash(apartarMes(ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
-    case 'aho-deshacer':{const hoy=new Date();flash(deshacerApartado(ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
+    case 'aho-deshacer':{const hoy=new Date();flash(deshacerApartado(el.dataset.mk||ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
+    case 'bowl-tipo':{const B=bowlS();B.tipo=el.dataset.v||'equi';B.obj=bowlObjetivo(B.tipo);render();break;}
+    case 'bowl-usar':{const B=bowlS(),x=bowlSugerencias(B.obj)[+el.dataset.i||0];if(x){B.it=x.it.map(function(y){return [y[0],y[1]];});B.n=x.n;B.e=x.e;B.paso=5;}render();window.scrollTo(0,0);break;}
+    case 'bowl-nuevo':{const B=bowlS();B.it=[];B.n='';B.e='';B.paso=1;render();window.scrollTo(0,0);break;}
+    case 'bowl-paso':{const B=bowlS();B.paso=Math.max(0,Math.min(5,+el.dataset.v||0));render();window.scrollTo(0,0);break;}
+    case 'bowl-ing':{const B=bowlS(),b=bowlIng(el.dataset.id);if(!b)break;
+      if(B.it.some(function(x){return x[0]===b.id;}))B.it=B.it.filter(function(x){return x[0]!==b.id;});else B.it.push([b.id,b.g]);
+      B.n='';render();break;}
+    case 'bowl-g':{const B=bowlS();B.it=B.it.map(function(x){return x[0]===el.dataset.id?[x[0],Math.max(5,x[1]+(+el.dataset.d||0))]:x;});render();break;}
+    case 'bowl-extra':{const B=bowlS(),ex=bowlExtras(B.it,B.obj),o=ex&&ex.ops.filter(function(q){return q.id===el.dataset.id;})[0];
+      if(o){B.it=o.apl(B.it);flash('+'+o.dp+' g de proteína');}render();break;}
+    case 'bowl-mejor':{const B=bowlS(),ex=bowlExtras(B.it,B.obj);if(ex&&ex.mejor){B.it=ex.mejor.it;flash('ahora: '+ex.mejor.m.p+' g de proteína, '+ex.mejor.m.kcal+' kcal');}render();break;}
+    case 'bowl-hoy':{const B=bowlS(),m=bowlMacros(B.it),nm=B.n?{n:B.n,e:B.e||'🥗'}:bowlNombre(B.it);
+      flash(addFoodEntry(fechaHoy(),{macro:{nombre:nm.n,kcal:m.kcal,prot:m.p,carb:m.c,gresa:m.gr,emoji:nm.e},pos:posDeSlot('',horaLocal(new Date()))}));
+      ui.bowl=null;ui.foodVista='';render();window.scrollTo(0,0);break;}
+    case 'bowl-guardar':flash(bowlGuardar());render();break;
+    case 'bowl-compra':{const B=bowlS();flash(listaAMano(B.it.map(function(x){return x[1]+' g '+bowlIng(x[0]).n.toLowerCase();}).join('\n')));break;}
+    case 'din-gaste-de':{const g=ui.dinGaste||{imp:'',txt:''};g.de=el.dataset.id||'';g.resto='';ui.dinGaste=g;render();break;}
+    case 'din-gaste-resto':{const g=ui.dinGaste||{imp:'',txt:''};g.resto=el.dataset.id||'';ui.dinGaste=g;render();break;}
+    case 'din-gaste-ok':{const m=gasteApuntar();flash(m,4500);if(!ui.dinGaste)ui.dinHoja='';render();break;}
+    case 'din-bolsillo-inv':{const a=ahorroS(),id='hu-inv'+Date.now().toString(36);
+      a.huchas.push({id:id,nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[]});
+      bolsilloSetPct(id,20);save();flash('bolsillo de inversión creado con un 20 %');render();break;}
+    case 'din-a-pct':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=0;bolsilloSetPct(h.id,10);save();}render();break;}
     case 'aho-reto-nuevo':ui.ahoRetoNuevo=true;render();{const f=document.getElementById('ahRtNom');if(f)f.focus();}break;
     case 'aho-reto-add':{const g=function(id){return (document.getElementById(id)||{}).value||'';};
       const nom=g('ahRtNom').trim(),mx=num(g('ahRtMax'),NaN);
@@ -16738,7 +17222,17 @@ function act(a,el){
     case 'franja-cfg':irACard('ajustes','franja');break;
     case 'sn-h':{const d=ui.sd;if(d){d.h=+el.dataset.v||0;}render();break;}
     case 'sn-siesta':{const d=ui.sd;if(d){d.siesta=+el.dataset.v||0;}render();break;}
-    case 'sn-guardar':flash(suenoGuardar());render();break;
+    case 'sn-guardar':flash(suenoGuardar());if(ui.snHoja)ui.snHoja='';render();break;
+    case 'sn-abrir':ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';render();window.scrollTo(0,0);break;
+    case 'sn-cerrar':ui.hoyVista='';ui.snVista='';ui.snHoja='';ui.sd=null;render();window.scrollTo(0,0);break;
+    case 'sn-vista':ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
+    case 'sn-hoja':{const k=el.dataset.k||iso(new Date());if(k>iso(new Date()))break;ui.snHoja=k;ui.sd=null;render();break;}
+    case 'sn-aviso-cama':{if(!store.sueno)store.sueno={};
+      if(store.sueno.avisoCama&&avisosListos()){store.sueno.avisoCama=false;save();programarAvisoCama();flash('aviso de la cama quitado');render();break;}
+      store.sueno.avisoCama=true;save();
+      if(avisosListos()){programarAvisoCama();const p=suenoCamaHoy();flash(p?'te aviso a las '+hCortaHM(hm(mins(p.cama)-15))+', 15 min antes':'te aviso los días que toque');render();}
+      else avisosActivar().then(function(m){programarAvisoCama();flash(m);render();});
+      break;}
     case 'sn-editar':{const k=fechaHoy(),r=suenoReal(k);ui.sd=Object.assign({key:k},clone(r||{}));render();break;}
     case 'sn-modo':{const d=ui.sd;if(d){d.guardia=!d.guardia;d.h=d.guardia?2:7;if(d.guardia&&!d.siesta)d.siesta=Math.round(suenoCfg().siesta/60);}render();break;}
     case 'hoy-informe':{ui.tab='hoy';ui.hoyVista='informe';ui.infLun=el.dataset.sem==='pasada'?'':iso(mondayOf(new Date()));render();window.scrollTo(0,0);break;}
@@ -18643,6 +19137,9 @@ let searchDebounce=null;
 document.addEventListener('input',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   if(a==='hn-in'){hnPinta();return;}
+  if(a==='din-gaste-in'){const g=ui.dinGaste||(ui.dinGaste={imp:'',txt:'',de:'',resto:''});g[el.dataset.k==='txt'?'txt':'imp']=el.value||'';
+    if(el.dataset.k!=='txt'){const q=document.getElementById('dgQueda');if(q)q.innerHTML=gasteQuedaHTML();}return;}
+  if(a==='din-meta-pct'){const t=document.getElementById('d5metaTxt');if(t)t.textContent=el.value+' % del sueldo';return;}
   if(a==='din-puro'){const t=document.getElementById('puroTxt');if(t)t.textContent=el.value+' %';return;}
   if(a==='din-hu-men'){const t=document.getElementById('huMenTxt');if(t)t.textContent=eurR(+el.value||0);return;}
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
@@ -18799,6 +19296,9 @@ document.addEventListener('change',e=>{
         icsAnalizar();};
       rd.onerror=function(){flash('no he podido leer ese archivo: pégalo a mano en la caja de abajo');};
       rd.readAsText(f);break;}
+    case 'bowl-obj':{const B=bowlS(),k=el.dataset.k;if(['kcal','p','c','gr'].indexOf(k)>=0)B.obj[k]=Math.max(0,Math.min(k==='kcal'?3000:400,Math.round(+el.value||0)));render();break;}
+    case 'din-meta-pct':{ahorroS().metaPct=Math.max(5,Math.min(80,Math.round(+el.value||30)));save();render();break;}
+    case 'din-plan-pct':{bolsilloSetPct(el.dataset.id,+el.value||0);save();render();break;}
     case 'din-puro':{ahorroS().puroPct=Math.max(50,Math.min(100,+el.value||50));save();render();break;}
     case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
@@ -19185,7 +19685,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -19285,7 +19785,7 @@ impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
-programarAvisoHoy();    /* «hoy toca …» antes de entrenar, si lo tienes activado */
+programarAvisoHoy();programarAvisoCama();    /* «hoy toca …» antes de entrenar, si lo tienes activado */
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 registrarSW();
