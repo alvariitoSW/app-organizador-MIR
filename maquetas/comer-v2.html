@@ -1,0 +1,200 @@
+<!doctype html><meta charset=utf-8>
+<title>Comer v2 · cocina, menú y buscador</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70;--ex:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 12%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:10px 12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.nav div{text-align:center;padding:8px 0;border-radius:11px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}
+.nav div.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.big{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.mb{display:grid;grid-template-columns:18px 1fr 64px;gap:6px;align-items:center;font-size:11.5px;margin-top:5px}
+.mb .t{height:8px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}.mb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.mb b{text-align:right;font-weight:800}
+.busca{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card));margin-bottom:8px;font-weight:800}
+.mom{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mom:first-of-type{border-top:0}.mom b{font-size:13px}.mom .s{font-size:11px;color:var(--ink2)}
+.add{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg2);font-weight:900;color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.chip.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+/* barras de semana */
+.wk{display:flex;gap:6px;align-items:flex-end;height:96px;position:relative;margin-top:8px}
+.wk>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:3px}
+.wk i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.wk .x i{background:var(--ex)}.wk .v i{background:var(--line)}
+.wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.wk .obj b{position:absolute;right:0;top:-13px;font-size:9px;color:var(--ink2)}
+.dots{display:flex;gap:6px;margin-top:4px}.dots span{flex:1;text-align:center;font-size:10px;font-weight:900}
+/* buscador */
+.q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;border:1.5px solid var(--brand);background:var(--bg2);font-size:15px;font-weight:700}
+.res{display:grid;grid-template-columns:30px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res .e{font-size:20px;text-align:center}.res b{font-size:13px;display:block}.res .s{font-size:10.5px;color:var(--ink2)}
+.res .k{text-align:right;font-size:12px;font-weight:900}.res .k small{display:block;font-size:10.5px;color:var(--p);font-weight:900}
+.src{font-size:9.5px;font-weight:900;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.src.m{background:#0f3d2a;color:#34d399}.src.f{background:#3b2410;color:#fbbf24}.src.t{background:#1d2a50;color:#9fb5ff}
+.more{text-align:center;font-size:12px;font-weight:800;color:var(--brand);padding:8px 0 2px}
+/* menú */
+.tipo{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.tipo:first-of-type{border-top:0}.tipo .e{font-size:20px;grid-row:span 2}.tipo b{font-size:13.5px}.tipo .k{font-weight:900;font-size:14px;text-align:right}
+.stk{display:flex;height:7px;border-radius:5px;overflow:hidden;gap:2px;grid-column:2/4}.stk i{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.days div{border:1px solid var(--line);border-radius:10px;padding:5px 0;text-align:center;font-size:9.5px;color:var(--ink2);font-weight:800;background:var(--bg2)}
+.days div b{display:block;font-size:16px}.days div.hoy{border-color:var(--brand)}
+/* cocina */
+.pl{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}.pl .e{font-size:18px;grid-row:span 2}.pl b{font-size:13px}.pl .s{font-size:10.5px;color:var(--ink2)}
+.btn{padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;grid-row:span 2}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hb{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.hb .t{height:12px;display:flex;gap:3px}.hb .t i{display:block;width:20px;height:12px;border-radius:3px;background:var(--p)}.hb .t i.o{background:var(--line)}
+.tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px}.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+/* compra */
+.pas{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;font-weight:800}
+.pas .n{font-size:11px;color:var(--ink2);font-weight:800}
+.it{display:grid;grid-template-columns:22px 58px 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13px}
+.it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ink2)}.it .ck.on{background:var(--ok);border-color:var(--ok)}
+.it .qt{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}.it .w{font-size:10.5px;color:var(--ink2)}
+.it.done{opacity:.45;text-decoration:line-through}
+.prog{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:6px}.prog i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.leg{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px}
+</style>
+
+<!-- 1 · Comer · Hoy -->
+<div class="wrap"><div class="lbl">1 · Hoy: lo que llevas y lo que has comido, sin scroll</div>
+<div class="ab">
+ <div class="nav"><div class="on">Hoy</div><div>Menú</div><div>Cocina</div><div>Compra</div></div>
+ <div class="card">
+  <div class="hero">
+   <div><div class="cap">HOY</div><div class="big">1.340<small> / 2.470</small></div><div class="mini">te quedan 1.130 kcal</div></div>
+   <div>
+    <div class="mb"><span style="color:var(--p);font-weight:900">P</span><div class="t"><i style="width:56%;background:var(--p)"></i></div><b>78 / 140</b></div>
+    <div class="mb"><span style="color:var(--c);font-weight:900">H</span><div class="t"><i style="width:48%;background:var(--c)"></i></div><b>132 / 275</b></div>
+    <div class="mb"><span style="color:var(--g);font-weight:900">G</span><div class="t"><i style="width:62%;background:var(--g)"></i></div><b>46 / 74</b></div>
+   </div>
+  </div>
+ </div>
+ <div class="busca">🔍 Apuntar algo <span class="mini" style="font-weight:700">· 888 alimentos y platos</span><span class="sp"></span>📷</div>
+ <div class="card">
+  <div class="row"><span class="cap">LO DE HOY</span><span class="sp"></span><span class="mini">toca ＋ para apuntar ahí</span></div>
+  <div class="mom"><div><b>☕ Desayuno</b><div class="s">Porridge overnight · café con leche</div></div><span class="mini">420</span><span class="add">＋</span></div>
+  <div class="mom"><div><b>🍎 Media mañana</b><div class="s">Yogur de proteínas · plátano</div></div><span class="mini">210</span><span class="add">＋</span></div>
+  <div class="mom"><div><b>🍽 Comida</b><div class="s">Arroz caldoso de pollo (1 ración)</div></div><span class="mini">710</span><span class="add">＋</span></div>
+  <div class="mom"><div><b>🌙 Cena</b><div class="s" style="color:var(--brand)">menú: tortilla de patata · 313 kcal · ＋ un toque</div></div><span class="mini">—</span><span class="add">＋</span></div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">LA SEMANA</span><span class="sp"></span><span class="mini">kcal comidas · <b style="color:var(--ink)">✓</b> proteína cumplida</span></div>
+  <div class="wk"><span class="obj" style="bottom:66px"><b>2.470</b></span>
+   <div><em>2.380</em><i style="height:62px"></i><span>L</span></div><div class="x"><em>3.010</em><i style="height:74px"></i><span>M</span></div>
+   <div class="hoy"><em>1.340</em><i style="height:35px;opacity:.6"></i><span style="color:var(--brand)">X</span></div>
+   <div class="v"><em></em><i style="height:3px"></i><span>J</span></div><div class="v"><em></em><i style="height:3px"></i><span>V</span></div><div class="v"><em></em><i style="height:3px"></i><span>S</span></div><div class="v"><em></em><i style="height:3px"></i><span>D</span></div></div>
+  <div class="dots"><span style="color:var(--ok)">✓</span><span style="color:var(--ok)">✓</span><span class="mini">·</span><span></span><span></span><span></span><span></span></div>
+ </div>
+ <div class="chips"><span class="chip">🥗 Comer sano</span><span class="chip">🍔 Comí fuera</span><span class="chip">🏥 Hospital</span><span class="chip">🍫 Moncheo</span></div>
+</div></div>
+
+<!-- 2 · buscador -->
+<div class="wrap"><div class="lbl">2 · Buscador: por relevancia, con proteína, 8 primero</div>
+<div class="ab">
+ <div class="row" style="margin-bottom:8px"><span class="mini">‹ Hoy</span><span class="sp"></span><span class="mini">a <b style="color:var(--ink)">🍽 Comida</b> ▾</span></div>
+ <div class="q">🔍 pollo<span style="border-left:2px solid var(--brand);height:18px"></span><span class="sp"></span><span class="mini">✕</span></div>
+ <div class="chips" style="margin:8px 0"><span class="chip on">Todo 71</span><span class="chip">Genérico 14</span><span class="chip">Mercadona 5</span><span class="chip">Fuera 11</span><span class="chip">Mis platos 3</span><span class="chip">↓ + proteína</span></div>
+ <div class="card">
+  <div class="res"><span class="e">🍗</span><div><b>Pechuga de pollo<span class="src t">tabla</span></b><div class="s">1 filete · 120 g · usada 12 veces</div></div><div class="k">144 kcal<small>27 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🥘</span><div><b>Arroz caldoso de pollo<span class="src t">tuyo</span></b><div class="s">1 ración · tu plato</div></div><div class="k">672 kcal<small>52 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🛒</span><div><b>Pechuga fileteada<span class="src m">Hacendado</span></b><div class="s">100 g · bandeja 500 g</div></div><div class="k">110 kcal<small>23 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🍗</span><div><b>Muslo de pollo<span class="src t">tabla</span></b><div class="s">1 muslo · 110 g</div></div><div class="k">131 kcal<small>20 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🍗</span><div><b>Pollo asado<span class="src t">tabla</span></b><div class="s">1 ración · 150 g</div></div><div class="k">327 kcal<small>41 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🥗</span><div><b>Ensalada César con pollo<span class="src f">McDonald's</span></b><div class="s">1 ensalada</div></div><div class="k">345 kcal<small>28 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🌯</span><div><b>Sub pollo teriyaki 15 cm<span class="src f">Subway</span></b><div class="s">1 unidad</div></div><div class="k">370 kcal<small>26 g P</small></div><span class="add">＋</span></div>
+  <div class="res"><span class="e">🍗</span><div><b>Contramuslo de pollo<span class="src m">Hacendado</span></b><div class="s">100 g</div></div><div class="k">180 kcal<small>18 g P</small></div><span class="add">＋</span></div>
+  <div class="more">ver los 63 restantes ›</div>
+ </div>
+ <div class="card"><div class="row"><span>🌐</span><div><b style="font-size:13px">También en internet</b><div class="mini">buscando «pollo» en Open Food Facts…</div></div></div></div>
+ <div class="mini" style="text-align:center">Tocar la fila abre la cantidad; ＋ lo apunta con su ración de siempre.</div>
+</div></div>
+
+<!-- 3 · menú -->
+<div class="wrap"><div class="lbl">3 · Menú: la semana contra tu objetivo, de un vistazo</div>
+<div class="ab">
+ <div class="nav"><div>Hoy</div><div class="on">Menú</div><div>Cocina</div><div>Compra</div></div>
+ <div class="card">
+  <div class="row"><span class="cap">ESTA SEMANA · PLANIFICADO</span><span class="sp"></span><span class="mini">media <b style="color:var(--ink)">2.497</b> kcal</span></div>
+  <div class="days"><div>LUN<b>🩺</b>Guard.</div><div>MAR<b>🚪</b>Salie.</div><div class="hoy">MIÉ<b>💼</b>Trab.</div><div>JUE<b>💼</b>Trab.</div><div>VIE<b>💪</b>Fuerza</div><div>SÁB<b>🌿</b>Libre</div><div>DOM<b>🌿</b>Libre</div></div>
+  <div class="wk" style="height:84px"><span class="obj" style="bottom:57px"></span>
+   <div class="x"><em>3.174</em><i style="height:64px"></i><span>L</span></div><div><em>2.340</em><i style="height:47px"></i><span>M</span></div><div><em>2.468</em><i style="height:50px"></i><span>X</span></div>
+   <div><em>2.468</em><i style="height:50px"></i><span>J</span></div><div><em>2.697</em><i style="height:55px"></i><span>V</span></div><div><em>2.166</em><i style="height:44px"></i><span>S</span></div><div><em>2.166</em><i style="height:44px"></i><span>D</span></div></div>
+  <div class="mini" style="margin-top:4px"><span class="leg" style="background:var(--p);margin-left:0"></span>dentro (±10 %) <span class="leg" style="background:var(--ex)"></span>se pasa · - - objetivo 2.470</div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">TUS TIPOS DE DÍA</span><span class="sp"></span><span class="mini"><b style="color:var(--p)">P</b> · <b style="color:var(--c)">H</b> · <b style="color:var(--g)">G</b></span></div>
+  <div class="tipo"><span class="e">🩺</span><div><b>Guardia</b> <span class="mini">4 tomas · 172 g P</span></div><span class="k">3.174</span><div class="stk"><i style="flex:22;background:var(--p)"></i><i style="flex:50;background:var(--c)"></i><i style="flex:28;background:var(--g)"></i></div></div>
+  <div class="tipo"><span class="e">🚪</span><div><b>Saliente</b> <span class="mini">3 tomas · 138 g P</span></div><span class="k">2.340</span><div class="stk"><i style="flex:24;background:var(--p)"></i><i style="flex:46;background:var(--c)"></i><i style="flex:30;background:var(--g)"></i></div></div>
+  <div class="tipo"><span class="e">💼</span><div><b>Día de trabajo</b> <span class="mini">3 tomas · 141 g P</span></div><span class="k">2.468</span><div class="stk"><i style="flex:23;background:var(--p)"></i><i style="flex:47;background:var(--c)"></i><i style="flex:30;background:var(--g)"></i></div></div>
+  <div class="tipo"><span class="e">💪</span><div><b>Día de fuerza</b> <span class="mini">4 tomas · 168 g P</span></div><span class="k">2.697</span><div class="stk"><i style="flex:25;background:var(--p)"></i><i style="flex:50;background:var(--c)"></i><i style="flex:25;background:var(--g)"></i></div></div>
+  <div class="tipo"><span class="e">🌿</span><div><b>Día libre</b> <span class="mini">3 tomas · 120 g P</span></div><span class="k">2.166</span><div class="stk"><i style="flex:22;background:var(--p)"></i><i style="flex:45;background:var(--c)"></i><i style="flex:33;background:var(--g)"></i></div></div>
+ </div>
+ <div class="row" style="gap:6px"><span class="btn p" style="flex:1;text-align:center;padding:12px">✨ Montar la semana sola</span><span class="btn" style="padding:12px">📅 Semana base</span></div>
+ <div class="chips" style="margin-top:8px"><span class="chip">📦 Comidas armadas 18</span><span class="chip">📖 Mis platos 16</span><span class="chip">🗑 Vaciar</span></div>
+</div></div>
+
+<!-- 4 · cocina -->
+<div class="wrap"><div class="lbl">4 · Cocina: filas de una línea y lo cocinado que te queda</div>
+<div class="ab">
+ <div class="nav"><div>Hoy</div><div>Menú</div><div class="on">Cocina</div><div>Compra</div></div>
+ <div class="chips" style="margin-bottom:8px"><span class="chip on">Qué hago hoy</span><span class="chip">Mi nevera 12</span><span class="chip">En lote 3</span></div>
+ <div class="card">
+  <div class="row"><span class="cap">LO QUE TIENES COCINADO</span><span class="sp"></span><span class="mini">raciones · hasta</span></div>
+  <div class="hb"><span>🍗 Arroz caldoso</span><div class="t"><i></i><i></i><i></i><i class="o"></i></div><span class="mini">vie</span></div>
+  <div class="hb"><span>🥣 Porridge</span><div class="t"><i></i><i></i><i class="o"></i><i class="o"></i></div><span class="mini">jue</span></div>
+  <div class="hb"><span>🍳 Tortilla</span><div class="t"><i></i><i></i><i></i><i></i><i></i><i class="o"></i></div><span class="mini">sáb</span></div>
+  <div class="mini" style="margin-top:6px">Cada cuadrito es una ración; lo gris ya te lo has comido. Se acaba el porridge el jueves: <b style="color:var(--ink)">toca cocinar el miércoles</b>.</div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">TE SALE ENTERO</span><span class="sp"></span><span class="tag ok">7</span></div>
+  <div class="pl"><span class="e">🍳</span><b>Tortilla de patata y cebolla</b><span class="btn">🍳 Cocinar</span><span class="s">6 rac · 313 kcal · 13 g P</span></div>
+  <div class="pl"><span class="e">🥣</span><b>Porridge overnight</b><span class="btn">🍳 Cocinar</span><span class="s">4 rac · 321 kcal · 18 g P</span></div>
+  <div class="pl"><span class="e">🍗</span><b>Arroz caldoso de pollo</b><span class="btn">🍳 Cocinar</span><span class="s">4 rac · 672 kcal · 52 g P</span></div>
+  <div class="pl"><span class="e">🐟</span><b>Salmón al horno con patata</b><span class="btn">🍳 Cocinar</span><span class="s">2 rac · 540 kcal · 38 g P</span></div>
+  <div class="more">y 3 más ›</div>
+ </div>
+ <div class="card">
+  <div class="row"><span class="cap">TE FALTA POCO</span><span class="sp"></span><span class="tag w">2</span></div>
+  <div class="pl"><span class="e">🍳</span><b>Tortilla francesa de atún</b><span class="btn">＋ compra</span><span class="s">falta: queso rallado</span></div>
+  <div class="pl"><span class="e">🍲</span><b>Crema de verduras con pollo</b><span class="btn">＋ compra</span><span class="s">falta: puerro, pollo desmechado</span></div>
+ </div>
+</div></div>
+
+<!-- 5 · compra -->
+<div class="wrap"><div class="lbl">5 · Compra: por pasillos plegados, una línea por cosa</div>
+<div class="ab">
+ <div class="nav"><div>Hoy</div><div>Menú</div><div>Cocina</div><div class="on">Compra</div></div>
+ <div class="card">
+  <div class="row"><b style="font-size:15px">12 de 50</b><span class="mini">en el carro</span><span class="sp"></span><span class="chip">Súper</span><span class="chip">Frutería</span></div>
+  <div class="prog"><i style="width:24%"></i></div>
+ </div>
+ <div class="card" style="padding-top:2px">
+  <div class="pas">🥬 Fruta y verdura<span class="n">4 / 16</span><span class="sp"></span>▾</div>
+  <div class="it"><span class="ck"></span><span class="qt">1,8 kg</span><span>Patata <span class="w">· 3 recetas</span></span><span class="w">🥔</span></div>
+  <div class="it"><span class="ck"></span><span class="qt">480 g</span><span>Cebolla</span><span class="w">🧅</span></div>
+  <div class="it"><span class="ck"></span><span class="qt">750 g</span><span>Tomate</span><span class="w">🍅</span></div>
+  <div class="it"><span class="ck"></span><span class="qt">360 g</span><span>Espinaca <span class="w">· 2 bolsas</span></span><span class="w">🥬</span></div>
+  <div class="it"><span class="ck"></span><span class="qt">2,5 kg</span><span>Manzana</span><span class="w">🍎</span></div>
+  <div class="it done"><span class="ck on"></span><span class="qt">150 g</span><span>Pimiento verde</span><span class="w"></span></div>
+  <div class="mini" style="padding:2px 0 6px 30px">+ 9 más · 3 ya en el carro</div>
+  <div class="pas">🍗 Carne<span class="n">0 / 4</span><span class="sp"></span>›</div>
+  <div class="pas">🐟 Pescado<span class="n">0 / 1</span><span class="sp"></span>›</div>
+  <div class="pas">🥚 Huevos y lácteos<span class="n">2 / 4</span><span class="sp"></span>›</div>
+  <div class="pas">🍞 Panadería<span class="n">0 / 1</span><span class="sp"></span>›</div>
+  <div class="pas">🥫 Despensa<span class="n">6 / 14</span><span class="sp"></span>›</div>
+  <div class="pas">🔁 De rutina · 🏠 Básicos<span class="n">18</span><span class="sp"></span>›</div>
+ </div>
+ <div class="btn p" style="text-align:center;padding:13px;border-radius:13px">✓ He hecho la compra · 12 a la despensa</div>
+ <div class="mini" style="text-align:center;margin-top:6px">Toca una cosa para ver de qué receta sale; lo marcado baja al final.</div>
+</div></div>
