@@ -8361,18 +8361,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const ok = document.querySelector('tr.act [data-a="gv-ok"]'); if (ok) ok.click();
       const reg = P.store.gym.registro.filter((x) => x.sesionId === sa.id)[0] || {};
       P.ui.gymSesionActiva = null;
-      // Lloretazo: ese día cuenta como agua en la semana
+      // Lloretazo: NO es nadar (es ir a la playa a fumar): se marca el día pero no cuenta como entreno
       const k = P.iso(P.addDays(P.mondayOf(new Date()), 5));
       P.store.eventos.push({ id: 'll210', titulo: '🌊 Lloretazo', hora: '20:00', fin: '22:10', modo: 'fecha', fecha: k, on: true, lloret: true });
       P.render();
       const s = P.entrenoSemana(k), d = s.dias.filter((x) => x.k === k)[0];
-      const out = { hayTpl, nombres, sinBarra, rango, tec: tec ? tec.total : 0, reg: reg.m + '/' + reg.seg, lloret: !!(d && d.lloret), pisc: s.pisc };
+      const sin = (() => { P.store.eventos = P.store.eventos.filter((e) => e.id !== 'll210'); return P.entrenoSemana(k).total; })();
+      const out = { hayTpl, nombres, sinBarra, rango, tec: tec ? tec.total : 0, reg: reg.m + '/' + reg.seg, lloret: !!(d && d.lloret), total: s.total, sin };
       P.store = copia; P.save(); P.ui.gymPanel = ''; P.render();
       return out; });
     check('un plan se crea desde tus días reales: plantillas, material (sin barra → mancuernas) y rango de reps del objetivo',
       r.hayTpl === 4 && r.nombres === 'Torso A,Pierna A,Torso B,Pierna B' && r.sinBarra && r.rango === '8-12', JSON.stringify(r));
-    check('la piscina va por series con metros y tiempo, y el Lloretazo cuenta como sesión de agua de la semana',
-      r.tec === 8 && r.reg === '50/55' && r.lloret && r.pisc >= 1, JSON.stringify(r));
+    check('la piscina va por series con metros y tiempo; el Lloretazo se marca en el día pero no cuenta como entreno',
+      r.tec === 8 && r.reg === '50/55' && r.lloret && r.total === r.sin, JSON.stringify(r));
   }
 
 

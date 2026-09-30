@@ -5531,7 +5531,7 @@ function lloretPoner(key){
   const ya=lloretDe(key);
   if(ya){store.eventos=store.eventos.filter(function(e){return e!==ya;});save();return 'Lloretazo quitado de ese día';}
   const p=lloretPlan(key);
-  store.eventos.push({id:uid('ll'),titulo:'🌊 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],
+  store.eventos.push({id:uid('ll'),titulo:'🌿 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],
     color:'#38bdf8',on:true,lloret:true});
   save();
   /* la cena: si cae en medio, se dice (la hora de la cena no se mueve sola) */
@@ -5572,7 +5572,7 @@ function renderHoy(){
       '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
       '<span class="sp"></span>'+
       '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="Lloretazo: '+
-        esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌊'+(lloretDe(hoy)?' ✓':'')+'</button>'+
+        esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌿'+(lloretDe(hoy)?' ✓':'')+'</button>'+
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
     modoAvisoHTML()+
@@ -6661,11 +6661,12 @@ function entrenoSemana(key){
     if(tipo){const v=ventanaEntreno(k,tipo,inf);x.hora=v.hora;x.dur=v.dur;x.choca=eventoQueChoca(k,v);}
     if(conRut&&tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
     const g2=diaSegundo(k,inf);if(g2.on&&f!==false)x.seg=true;
-    /* el Lloretazo es agua: cuenta como sesión y la app no mete otra ese día */
+    /* el Lloretazo NO es nadar (es ir a la playa a fumar): no cuenta como entreno; solo se marca
+       para que la app no ponga un entreno encima esa tarde */
     x.lloret=eventosDeFecha(k).some(function(e){return e.lloret;});
     x.apto=!!tipo&&!x.quitado&&!x.choca&&!(tipo==='pisc'&&!cfg.pisc.on);
     dias.push(x);}
-  const on=function(x){return x.base||x.forz||x.seg||x.auto||x.lloret;};
+  const on=function(x){return x.base||x.forz||x.seg||x.auto;};
   const fuerzas=function(){return dias.filter(function(x){return (x.base||x.auto||x.forz)&&x.tipo==='fuerza';}).length;};
   const cuenta=function(){return dias.filter(on).length;};
   if(cfg.min>cuenta()){
@@ -6693,7 +6694,7 @@ function entrenoSemana(key){
     if(r){asig[x.k]=r;prev=rs.indexOf(r);}});
   const n=cuenta(),choques=dias.filter(function(x){return x.choca&&(x.perdido||(!on(x)&&x.tipo));});
   const r={lun:lk,dias:dias,total:n,min:cfg.min,faltan:Math.max(0,cfg.min-n),fuerza:fuerzas(),
-    pisc:dias.filter(function(x){return on(x)&&(x.tipo!=='fuerza'||x.lloret)&&!(x.tipo==='fuerza'&&(x.base||x.auto||x.forz));}).length,
+    pisc:dias.filter(function(x){return on(x)&&x.tipo!=='fuerza';}).length,
     auto:dias.filter(function(x){return x.auto;}).map(function(x){return x.k;}),asig:asig,
     guardias:guardias,choques:choques,hayRut:hayRut};
   /* también es conflicto no llegar a tus días de fuerza: tres salientes llenan el mínimo de
@@ -6738,7 +6739,7 @@ function entrenoSemanaHTML(key,compacto){
     if(x.tipo==='pisc'&&(x.auto||x.forz))return '🏊';
     if(x.base)return '💪';if(x.forz)return '✋';if(x.auto)return '✨';
     if(x.seg)return '🏊';
-    if(x.lloret)return '🌊';
+    if(x.lloret)return '🌿';
     if(x.choca||x.perdido)return '📌';
     return x.apto?'·':(x.motivo==='guardia'?'🩺':'—');};
   return '<div class="card"><div class="row"><h2 style="margin:0">Entrenos de la semana</h2><span class="sp"></span>'+
@@ -11081,7 +11082,7 @@ function gymSemanaCirculos(sel){
     if(hecho){cl='ok';ic='✓';}
     else if(e.est==='choque'){cl='choque';ic='!';}
     else if(pl&&pl.tipo==='pisc'){cl='pis';ic='🏊';}
-    else if(x&&x.lloret){cl='pis';ic='🌊';}
+    else if(x&&x.lloret){cl='';ic='🌿';}
     else if(pl){cl='plan';ic='💪';}
     else if(e.malo==='guardia'||(x&&x.motivo==='guardia')){cl='no';ic='🩺';}
     if(k===sel)selTxt=L[i]+' '+parseDate(k).getDate()+' · '+e.txt;
@@ -11618,7 +11619,7 @@ function objetivoNuevoCardHTML(o){
   if(o.tipo==='minutos'){hoy=minutosSemana(iso(mondayOf(new Date())));
     let t=0;for(let w=1;w<=8;w++)t+=minutosSemana(iso(addDays(mondayOf(new Date()),-7*w)));
     sub='min esta semana';lado='media 8 sem: '+Math.round(t/8)+'′';}
-  else{const a=aguaMes(iso(new Date()).slice(0,7));hoy=a.m;sub='m este mes';lado=a.lloret?(a.lloret+' Lloretazo'+(a.lloret===1?'':'s')):'';}
+  else{const a=aguaMes(iso(new Date()).slice(0,7));hoy=a.m;sub='m este mes';lado='';}
   const pct=Math.min(100,Math.round(hoy/meta*100));
   return '<div class="card obj '+o.tipo+(hoy>=meta?' hecho':'')+'">'+
     '<div class="objcab"><b>'+esc(objetivoTitulo(o))+'</b><span class="e">'+(o.tipo==='minutos'?'TIEMPO':'AGUA')+'</span>'+
