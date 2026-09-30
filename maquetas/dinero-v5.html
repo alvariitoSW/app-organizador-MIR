@@ -1,0 +1,141 @@
+<!doctype html><meta charset=utf-8>
+<title>Dinero v5 · bolsillos</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ /* bolsillos: 4 categóricos (azul, naranja, aqua, amarillo) de la paleta validada, pasos de oscuro */
+ --int:#3987e5;--inv:#199e70;--via:#d95926;--cap:#c98500}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px}
+.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}
+.big{font-size:40px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:16px;color:var(--ink2)}
+.stack{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;margin-top:10px}.stack b{display:block}
+.pk{display:grid;grid-template-columns:38px 1fr auto;gap:2px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.pk:first-of-type{border-top:0}
+.pk .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;grid-row:span 2}
+.pk b{font-size:14.5px}.pk .s{font-size:11px;color:var(--ink2)}.pk .v{font-size:17px;font-weight:900;text-align:right}.pk .v small{display:block;font-size:10.5px;color:var(--ink2);font-weight:700}
+.lock{font-size:10px;font-weight:800;padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--ink2);margin-left:4px}
+.btn2{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:13px;padding:0 10px;white-space:nowrap}
+.btn2.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mes{display:flex;gap:6px;align-items:flex-end;height:78px;margin-top:8px}
+.mes div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:2px}
+.mes b{display:block;border-radius:3px 3px 0 0;background:var(--int)}
+.mes span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:700}
+.mes em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.obj{position:relative}.obj::after{content:'';position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.6}
+/* plan */
+.pl{display:grid;grid-template-columns:30px 1fr 52px;gap:4px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}
+.pl .ic{font-size:18px;text-align:center}.pl b{font-size:13.5px}.pl .s{font-size:11px;color:var(--ink2)}
+.pl .pc{font-size:16px;font-weight:900;text-align:right}
+.sl{grid-column:2/4;position:relative;height:22px}
+.sl .tr{position:absolute;left:0;right:0;top:9px;height:5px;border-radius:9px;background:var(--line)}
+.sl .fi{position:absolute;left:0;top:9px;height:5px;border-radius:9px}
+.sl .k{position:absolute;top:1px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--ink)}
+.res{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 10px;border-radius:11px;background:var(--bg2);border:1px solid var(--line);margin-top:6px}
+/* hoja */
+.scrim{position:absolute;inset:0;background:rgba(2,4,10,.6);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:linear-gradient(var(--card),color-mix(in srgb,var(--card) 82%,var(--bg)));border-top:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-radius:22px 22px 0 0;padding:8px 14px 16px}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.in{margin-top:5px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);display:flex;align-items:center;padding:0 12px;font-size:18px;font-weight:800}
+.fld{display:block;font-size:11px;font-weight:800;color:var(--ink2);letter-spacing:.04em;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{min-height:40px;display:inline-flex;align-items:center;gap:5px;padding:0 11px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:12.5px}
+.chip.on{border-color:var(--via);background:color-mix(in srgb,var(--via) 22%,var(--bg2))}
+.chip.off{opacity:.45}
+.ant{display:grid;grid-template-columns:22px 1fr auto auto auto;gap:6px;align-items:center;font-size:13px;padding:6px 0;border-top:1px solid var(--line)}
+.ant .a{color:var(--ink2);text-decoration:none}.ant .f{font-weight:900}.ant .d{font-size:11px;font-weight:800}
+</style>
+
+<!-- 1 · TUS AHORROS: bolsillos -->
+<div class="ab"><div class="lbl">1 · Tus ahorros: cada bolsillo con lo suyo</div>
+ <div class="top"><h1>💶 Ahorros</h1><span class="sp"></span><span class="mini">septiembre</span></div>
+ <div class="card">
+  <div class="cap">TIENES AHORRADO</div>
+  <div class="big">7.300 <small>€</small></div>
+  <div class="stack"><b style="flex:5000;background:var(--int)"></b><b style="flex:1200;background:var(--inv)"></b><b style="flex:800;background:var(--via)"></b><b style="flex:300;background:var(--cap)"></b></div>
+  <div style="margin-top:8px">
+   <div class="pk"><span class="ic" style="background:color-mix(in srgb,var(--int) 22%,var(--bg2))">🔒</span><div><b>Intocable</b><span class="lock">no se toca</span><div class="s">colchón · 50 % de lo que ahorras</div></div><div class="v">5.000<small>+459 sep</small></div></div>
+   <div class="pk"><span class="ic" style="background:color-mix(in srgb,var(--inv) 22%,var(--bg2))">📈</span><div><b>Inversión</b><div class="s">fondo indexado · 20 %</div></div><div class="v">1.200<small>+183 sep</small></div></div>
+   <div class="pk"><span class="ic" style="background:color-mix(in srgb,var(--via) 22%,var(--bg2))">✈️</span><div><b>Viajes</b><div class="s">Japón 2.400 · 20 % · llegas en jun 27</div></div><div class="v">800<small>+183 sep</small></div></div>
+   <div class="pk"><span class="ic" style="background:color-mix(in srgb,var(--cap) 22%,var(--bg2))">🎁</span><div><b>Caprichos</b><div class="s">10 %</div></div><div class="v">300<small>+92 sep</small></div></div>
+  </div>
+ </div>
+ <div class="two"><div class="btn2">💸 Gasté ahorros</div><div class="btn2">⚖️ Mi plan</div></div>
+ <div class="card" style="margin-top:8px">
+  <div class="row"><span class="cap">LO QUE HAS PODIDO AHORRAR</span><span class="sp"></span><span class="mini">meta 30 % del sueldo</span></div>
+  <div class="mes">
+   <div><em>1.072</em><b style="height:70%"></b><span>may</span></div><div><em>99</em><b style="height:7%;background:var(--via)"></b><span>jun</span></div>
+   <div><em>1.016</em><b style="height:66%"></b><span>jul</span></div><div><em>797</em><b style="height:52%"></b><span>ago</span></div>
+   <div><em>917</em><b style="height:60%;outline:1.5px solid var(--ink)"></b><span>sep</span></div>
+  </div>
+  <div class="mini" style="margin-top:6px">4 de 5 meses por encima de tu meta · <b style="color:var(--ink)">racha: 3</b></div>
+ </div>
+</div>
+
+<!-- 2 · EL CIERRE DEL MES -->
+<div class="ab"><div class="lbl">2 · Cierre del mes: lo que has podido ahorrar, repartido</div>
+ <div class="top"><h1>💶 Septiembre</h1></div>
+ <div class="card">
+  <div class="row"><span class="mini">Ganaste <b style="color:var(--ink)">2.466</b> (1 guardia de finde)</span><span class="sp"></span><span class="mini">gastaste <b style="color:var(--ink)">1.549</b></span></div>
+  <div class="cap" style="margin-top:12px">ESTE MES HAS PODIDO AHORRAR</div>
+  <div class="big">917 <small>€ · 37 % ✓ meta 30 %</small></div>
+  <div class="cap" style="margin-top:14px">SE REPARTE SEGÚN TU PLAN</div>
+  <div class="res"><span>🔒 Intocable · 50 %</span><b>+459</b></div>
+  <div class="res"><span>📈 Inversión · 20 %</span><b>+183</b></div>
+  <div class="res"><span>✈️ Viajes · 20 %</span><b>+183</b></div>
+  <div class="res"><span>🎁 Caprichos · 10 %</span><b>+92</b></div>
+  <div class="mini" style="margin-top:8px">Lo calculo con Fintonic (lo que gastaste de verdad), no con lo que cobras: un mes con más guardias no infla el plan.</div>
+  <div class="btn2 p" style="margin-top:12px">✓ Apartado · meterlo en los bolsillos</div>
+ </div>
+ <div class="card">
+  <div class="cap">SI UN MES NO LLEGAS</div>
+  <div class="mini" style="margin-top:4px">Con 99 € (junio) se reparte igual: 50 · 20 · 20 · 10 %. Nada sale del intocable para cubrir el mes.</div>
+ </div>
+</div>
+
+<!-- 3 · MI PLAN -->
+<div class="ab"><div class="lbl">3 · Mi plan: qué % de lo que ahorras va a cada bolsillo</div>
+ <div class="top"><h1>⚖️ Mi plan</h1></div>
+ <div class="card">
+  <div class="row"><span class="cap">META DE AHORRO</span><span class="sp"></span><b>30 % del sueldo</b></div>
+  <div class="sl" style="margin-top:4px"><div class="tr"></div><div class="fi" style="width:30%;background:var(--brand)"></div><div class="k" style="left:30%"></div></div>
+  <div class="mini">≈ 740 €/mes con tu nómina media (2.466). Solo es la meta: se compara con lo que ahorres de verdad.</div>
+ </div>
+ <div class="card">
+  <div class="cap">LO QUE AHORRES, SE REPARTE ASÍ</div>
+  <div class="pl"><span class="ic">🔒</span><div><b>Intocable</b><div class="s">mínimo 50 %</div></div><span class="pc">50 %</span><div class="sl"><div class="tr"></div><div class="fi" style="width:50%;background:var(--int)"></div><div class="k" style="left:50%"></div></div></div>
+  <div class="pl"><span class="ic">📈</span><div><b>Inversión</b><div class="s">fondo indexado</div></div><span class="pc">20 %</span><div class="sl"><div class="tr"></div><div class="fi" style="width:20%;background:var(--inv)"></div><div class="k" style="left:20%"></div></div></div>
+  <div class="pl"><span class="ic">✈️</span><div><b>Viajes</b><div class="s">Japón · 2.400</div></div><span class="pc">20 %</span><div class="sl"><div class="tr"></div><div class="fi" style="width:20%;background:var(--via)"></div><div class="k" style="left:20%"></div></div></div>
+  <div class="pl"><span class="ic">🎁</span><div><b>Caprichos</b><div class="s">sin culpa</div></div><span class="pc">10 %</span><div class="sl"><div class="tr"></div><div class="fi" style="width:10%;background:var(--cap)"></div><div class="k" style="left:10%"></div></div></div>
+  <div class="row" style="margin-top:8px"><span class="mini">Suma <b style="color:var(--ok)">100 %</b> · al subir uno, bajan los otros (nunca el intocable por debajo de 50)</span></div>
+ </div>
+ <div class="btn2">＋ Nuevo bolsillo (moto, máster, boda…)</div>
+</div>
+
+<!-- 4 · GASTÉ DE MIS AHORROS -->
+<div class="ab"><div class="lbl">4 · Gasté de mis ahorros: baja solo ese bolsillo</div>
+ <div class="top"><h1>💶 Ahorros</h1></div>
+ <div class="scrim"></div>
+ <div class="sheet" style="top:150px">
+  <div class="grab"></div>
+  <h3 style="margin:0;font-size:17px">Gasté de mis ahorros</h3>
+  <label class="fld">CUÁNTO<div class="in">1.000 €</div></label>
+  <label class="fld">EN QUÉ<div class="in" style="font-size:15px">Viaje a Lisboa</div></label>
+  <div class="fld">DE QUÉ BOLSILLO</div>
+  <div class="chips"><span class="chip on">✈️ Viajes · 800</span><span class="chip">🎁 Caprichos · 300</span><span class="chip">📈 Inversión · 1.200</span><span class="chip off">🔒 Intocable</span></div>
+  <div class="mini" style="margin-top:6px">En Viajes hay 800: faltan <b style="color:var(--ink)">200</b> → los cojo de <b style="color:var(--ink)">🎁 Caprichos</b> (cámbialo si quieres).</div>
+  <div class="cap" style="margin-top:12px">ASÍ QUEDA</div>
+  <div class="ant"><span>🔒</span><span>Intocable</span><span class="a">5.000</span><span class="f">5.000</span><span class="d" style="color:var(--ok)">sin tocar</span></div>
+  <div class="ant"><span>✈️</span><span>Viajes</span><span class="a">800</span><span class="f">0</span><span class="d">−800</span></div>
+  <div class="ant"><span>🎁</span><span>Caprichos</span><span class="a">300</span><span class="f">100</span><span class="d">−200</span></div>
+  <div class="ant"><span>📈</span><span>Inversión</span><span class="a">1.200</span><span class="f">1.200</span><span class="d" style="color:var(--ok)">sin tocar</span></div>
+  <div class="row" style="margin-top:6px;font-weight:800"><span>Total</span><span class="sp"></span><span class="mini">7.300 →</span><b>6.300</b></div>
+  <div class="btn2 p" style="margin-top:12px">Apuntar el gasto</div>
+ </div>
+</div>

@@ -1,0 +1,134 @@
+<!doctype html><meta charset=utf-8>
+<title>Sueño · deuda</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}.back{font-size:18px;color:var(--ink2)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.seg div{text-align:center;padding:7px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11px;font-weight:800;color:var(--ink2)}
+.seg div.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.mac{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.mac div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:7px;text-align:center}
+.mac b{display:block;font-size:17px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.sug{display:grid;grid-template-columns:52px 1fr auto;gap:2px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.sug:first-of-type{border-top:0}
+.sug .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:26px;background:var(--bg2);grid-row:span 2}
+.sug b{font-size:14px}.sug .s{font-size:11px;color:var(--ink2)}
+.fit{font-size:12px;font-weight:900;padding:3px 7px;border-radius:99px;grid-row:span 2}
+.fit.a{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}.fit.b{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.mb{display:flex;height:6px;border-radius:9px;overflow:hidden;gap:2px;margin-top:3px}.mb i{display:block}
+.btn2{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:13px;padding:0 10px}
+.btn2.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:#04121c;border:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.step{display:flex;gap:6px;margin:4px 0 8px}.step div{flex:1;height:4px;border-radius:4px;background:var(--line)}.step div.on{background:var(--ok)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{padding:7px 10px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);font-size:12px;font-weight:700}
+.chip small{color:var(--ink2);font-weight:700;margin-left:3px}
+.chip.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--bg2))}
+.bar{display:grid;grid-template-columns:62px 1fr 72px;gap:8px;align-items:center;margin-top:7px;font-size:12px}
+.bar .t{position:relative;height:10px;border-radius:6px;background:var(--line)}
+.bar .t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.bar .t u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);text-decoration:none}
+.bar .n{text-align:right;font-weight:800}
+.al{border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:color-mix(in srgb,var(--warn) 9%,var(--card))}
+.ex{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.ex:first-of-type{border-top:0}.ex .ic{font-size:20px;text-align:center}.ex .add{font-weight:900;color:var(--ok)}
+.bowl{height:150px;border-radius:50% / 0 0 100% 100%;background:radial-gradient(circle at 30% 35%,#e98a6d 0 18%,transparent 19%),radial-gradient(circle at 62% 30%,#7fcf8a 0 14%,transparent 15%),radial-gradient(circle at 70% 60%,#f3d36b 0 12%,transparent 13%),radial-gradient(circle at 40% 64%,#a5d86b 0 13%,transparent 14%),radial-gradient(circle at 52% 45%,#f5f0e6 0 45%,transparent 46%),#1d2a40;margin:4px 30px 10px;border:3px solid #2a3b58}
+.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.wrap{position:relative;margin-top:22px}
+
+.big{font-size:44px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:17px;color:var(--ink2)}
+.nivel{display:flex;gap:3px;margin-top:10px}.nivel div{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.src{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.src:first-of-type{border-top:0}.src .v{font-weight:900}
+.pl{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.pl:first-of-type{border-top:0}.pl .d{font-weight:900;color:var(--ink2);font-size:11.5px}
+.hoycard{border:1px solid color-mix(in srgb,#d95926 50%,var(--line));background:color-mix(in srgb,#d95926 8%,var(--card))}
+.tm{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.tm div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.tm b{display:block;font-size:22px}.tm span{font-size:10.5px;color:var(--ink2);font-weight:800}
+</style>
+
+<div class="wrap"><div class="lbl">1 · Sueño: la deuda manda</div>
+<div class="ab">
+ <div class="top"><span class="back">‹</span><h1>😴 Sueño</h1><span class="sp"></span><span class="mini">últimos 14 días</span></div>
+ <div class="card">
+  <div class="cap">DEUDA DE SUEÑO</div>
+  <div class="row" style="align-items:flex-end;margin-top:4px"><div class="big" style="color:#d95926">17,5 <small>h</small></div><span class="sp"></span><div style="text-align:right"><b style="color:#d95926">Alta</b><div class="mini">≈ 2 noches enteras</div></div></div>
+  <div class="nivel"><div style="background:#199e70"></div><div style="background:#c98500"></div><div style="background:#d95926"></div><div></div></div>
+  <div class="row mini" style="margin-top:3px"><span>0–5 ok</span><span class="sp"></span><span>5–10</span><span class="sp"></span><span>10–20 alta</span><span class="sp"></span><span>+20</span></div>
+ </div>
+ <div class="card">
+  <div class="row"><div class="cap">CÓMO SE HA IDO ACUMULANDO</div></div>
+  <svg viewBox="0 -6 340 100" width="100%" style="margin-top:6px"><polygon points="12.1,90 12.1,87.8 36.4,81.0 60.7,76.5 85.0,49.5 109.3,56.2 133.6,56.2 157.9,58.5 182.1,49.5 206.4,45.0 230.7,38.3 255.0,33.8 279.3,11.2 303.6,15.8 327.9,11.2 327.9,90" fill="#d95926" opacity=".22"/><polyline points="12.1,87.8 36.4,81.0 60.7,76.5 85.0,49.5 109.3,56.2 133.6,56.2 157.9,58.5 182.1,49.5 206.4,45.0 230.7,38.3 255.0,33.8 279.3,11.2 303.6,15.8 327.9,11.2" fill="none" stroke="#d95926" stroke-width="2.5" stroke-linejoin="round"/><circle cx="327.9" cy="11.2" r="4.5" fill="#d95926"/><line x1="0" x2="340" y1="67.5" y2="67.5" stroke="#1e2b44"/><text x="0" y="64.5" font-size="9" fill="#8fa6c6">5 h</text><line x1="0" x2="340" y1="45.0" y2="45.0" stroke="#1e2b44"/><text x="0" y="42.0" font-size="9" fill="#8fa6c6">10 h</text><line x1="0" x2="340" y1="22.5" y2="22.5" stroke="#1e2b44"/><text x="0" y="19.5" font-size="9" fill="#8fa6c6">15 h</text></svg>
+  <div class="mini">Cada noche por debajo de 8 h suma lo que falta; dormir de más resta. Las guardias pesan de golpe.</div>
+ </div>
+ <div class="card">
+  <div class="row"><div class="cap">NOCHES</div><span class="sp"></span><span class="mini"><b style="color:#3987e5">■</b> normal <b style="color:#d95926">■</b> guardia</span></div>
+  <svg viewBox="0 -10 340 176" width="100%" style="margin-top:4px"><rect x="3.0" y="37.5" width="18.3" height="112.5" rx="3" fill="#3987e5" opacity="0.55"/><text x="12.1" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">L</text><rect x="27.3" y="52.5" width="18.3" height="97.5" rx="3" fill="#3987e5" opacity="0.55"/><text x="36.4" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">M</text><rect x="51.6" y="45.0" width="18.3" height="105.0" rx="3" fill="#3987e5" opacity="0.55"/><text x="60.7" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">X</text><rect x="75.9" y="120.0" width="18.3" height="30.0" rx="3" fill="#d95926" opacity="0.55"/><text x="85.0" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">J</text><text x="85.0" y="116.0" font-size="9" fill="#d95926" text-anchor="middle" font-weight="900">G</text><rect x="100.1" y="7.5" width="18.3" height="142.5" rx="3" fill="#3987e5" opacity="0.55"/><text x="109.3" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">V</text><rect x="124.4" y="30.0" width="18.3" height="120.0" rx="3" fill="#3987e5" opacity="0.55"/><text x="133.6" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">S</text><rect x="148.7" y="22.5" width="18.3" height="127.5" rx="3" fill="#3987e5" opacity="0.55"/><text x="157.9" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">D</text><rect x="173.0" y="60.0" width="18.3" height="90.0" rx="3" fill="#3987e5" opacity="1"/><text x="182.1" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">L</text><rect x="197.3" y="45.0" width="18.3" height="105.0" rx="3" fill="#3987e5" opacity="1"/><text x="206.4" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">M</text><rect x="221.6" y="52.5" width="18.3" height="97.5" rx="3" fill="#3987e5" opacity="1"/><text x="230.7" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">X</text><rect x="245.9" y="45.0" width="18.3" height="105.0" rx="3" fill="#3987e5" opacity="1"/><text x="255.0" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">J</text><rect x="270.1" y="105.0" width="18.3" height="45.0" rx="3" fill="#d95926" opacity="1"/><text x="279.3" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">V</text><text x="279.3" y="101.0" font-size="9" fill="#d95926" text-anchor="middle" font-weight="900">G</text><rect x="294.4" y="15.0" width="18.3" height="135.0" rx="3" fill="#3987e5" opacity="1"/><text x="303.6" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">S</text><rect x="318.7" y="45.0" width="18.3" height="105.0" rx="3" fill="#3987e5" opacity="1"/><text x="327.9" y="163" font-size="9.5" fill="#8fa6c6" text-anchor="middle" font-weight="700">D</text><line x1="0" x2="340" y1="30.0" y2="30.0" stroke="#e9f2ff" stroke-dasharray="4 3" opacity=".6"/><text x="340" y="26.0" font-size="9.5" fill="#8fa6c6" text-anchor="end">8 h</text></svg>
+ </div>
+ <div class="two"><div class="btn2">＋ Anotar noche</div><div class="btn2 p">Plan para saldarla</div></div>
+</div></div>
+
+<div class="wrap"><div class="lbl">2 · De dónde sale y cómo se paga</div>
+<div class="ab">
+ <div class="top"><span class="back">‹</span><h1>Deuda 17,5 h</h1></div>
+ <div class="card">
+  <div class="cap">DE DÓNDE SALE</div>
+  <div class="src"><span>🚑</span><span>2 guardias <span class="mini">(J 2 h · V 3 h)</span></span><span class="v" style="color:#d95926">−11 h</span></div>
+  <div class="src"><span>🌙</span><span>8 noches de menos de 8 h</span><span class="v" style="color:#c98500">−9,5 h</span></div>
+  <div class="src"><span>🛌</span><span>3 noches recuperando</span><span class="v" style="color:#199e70">+3 h</span></div>
+  <div class="mini" style="margin-top:4px">Lo que más pesa no son las guardias: son las noches de 6–7 h de martes a jueves.</div>
+ </div>
+ <div class="card">
+  <div class="row"><div class="cap">PLAN DE ESTA SEMANA</div><span class="sp"></span><span class="mini">con tu calendario</span></div>
+  <div class="pl"><span class="d">LUN</span><span>A la cama <b>22:45</b> · 9 h</span><span class="mini">−1 h</span></div>
+  <div class="pl"><span class="d">MAR</span><span>A la cama <b>22:45</b> · 9 h</span><span class="mini">−1 h</span></div>
+  <div class="pl"><span class="d">MIÉ</span><span>🚑 Guardia · siesta 90 min antes</span><span class="mini" style="color:#d95926">+5 h</span></div>
+  <div class="pl"><span class="d">JUE</span><span>Saliente · dormir <b>hasta 13:00</b> + noche 8 h</span><span class="mini">−4 h</span></div>
+  <div class="pl"><span class="d">VIE</span><span>A la cama <b>23:00</b> · 8,5 h</span><span class="mini">−0,5 h</span></div>
+  <div class="pl"><span class="d">S–D</span><span>9 h sin alarma</span><span class="mini">−2 h</span></div>
+  <div class="row" style="margin-top:6px"><b>El domingo:</b><span class="sp"></span><b style="color:#c98500">14 h</b><span class="mini">→ baja de «alta» en 2 semanas</span></div>
+ </div>
+ <div class="btn2 p">Poner avisos para acostarme</div>
+</div></div>
+
+<div class="wrap"><div class="lbl">3 · En Hoy y en el entreno</div>
+<div class="ab">
+ <div class="top"><h1>Hoy · lunes</h1></div>
+ <div class="card hoycard">
+  <div class="row"><span style="font-size:22px">😴</span><div><b>Deuda de sueño 17,5 h</b><div class="mini">anoche 7 h · te faltó 1 h</div></div><span class="sp"></span><b style="color:#d95926">Alta</b></div>
+  <div class="tm"><div><b>22:45</b><span>A LA CAMA</span></div><div><b>9 h</b><span>OBJETIVO HOY</span></div></div>
+ </div>
+ <div class="card">
+  <div class="row"><span style="font-size:20px">🏋️</span><div><b>Entreno: pierna</b><div class="mini">listo 58 % · antes 74 %</div></div><span class="sp"></span><span class="fit b">bajar</span></div>
+  <div class="mini" style="margin-top:6px">Con más de 10 h de deuda baja el «listo»: hoy 2 series menos por ejercicio y sin fallo. Si mañana vuelves a menos de 7 h, se cambia a descanso activo.</div>
+ </div>
+ <div class="card">
+  <div class="row"><span style="font-size:20px">📚</span><div><b>Estudio</b><div class="mini">bloques de 40 min, no de 60, hasta bajar de 10 h</div></div></div>
+ </div>
+ <div class="card" style="opacity:.6"><div class="mini">… resto de Hoy igual que ahora</div></div>
+</div></div>
+
+<div class="wrap"><div class="lbl">4 · Anotar la noche en dos toques</div>
+<div class="ab">
+ <div class="top" style="opacity:.3"><h1>😴 Sueño</h1></div>
+ <div style="position:absolute;inset:0;background:#000a"></div>
+ <div class="card" style="position:absolute;left:0;right:0;bottom:0;margin:0;border-radius:22px 22px 0 0;padding:14px 16px 20px">
+  <div style="width:42px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px"></div>
+  <h3 style="margin:0 0 4px;font-size:17px">Anoche · domingo</h3>
+  <div class="mini">Por defecto sale tu hora de siempre; solo cambias lo que no cuadra.</div>
+  <div class="tm"><div><span>ME ACOSTÉ</span><b>00:15</b></div><div><span>ME LEVANTÉ</span><b>07:15</b></div></div>
+  <div class="cap" style="margin-top:12px">DORMÍ</div>
+  <div class="chips"><span class="chip">5 h</span><span class="chip">6 h</span><span class="chip on">7 h</span><span class="chip">8 h</span><span class="chip">9 h</span><span class="chip">＋ siesta</span></div>
+  <div class="cap" style="margin-top:12px">¿FUE GUARDIA?</div>
+  <div class="chips"><span class="chip on">No</span><span class="chip">Guardia (0–4 h)</span><span class="chip">Mal dormido</span></div>
+  <div class="row" style="margin-top:12px"><span>Deuda</span><span class="sp"></span><span class="mini">16,5 h →</span><b style="color:#d95926">17,5 h</b></div>
+  <div class="btn2 p" style="margin-top:10px">Guardar</div>
+ </div>
+</div></div>
