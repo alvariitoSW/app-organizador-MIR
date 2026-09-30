@@ -6009,7 +6009,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="compra-ticket"]');
     await page.waitForTimeout(300);
     // sin Claude no se enseña su tarjeta: la foto se lee en el móvil (tarjeta «Foto del ticket»)
-    const sinClaude = await page.evaluate(() => !/Una foto del ticket/.test(document.getElementById('main').innerText) && !!document.getElementById('tkOcrIn'));
+    // y la foto se puede HACER (cámara) o ELEGIR de la galería/archivos: con «capture» Android solo abre la cámara
+    const sinClaude = await page.evaluate(() => { const cam = document.getElementById('tkOcrIn'), gal = document.getElementById('tkOcrGal');
+      return !/Una foto del ticket/.test(document.getElementById('main').innerText) && !!cam && cam.hasAttribute('capture') &&
+        !!gal && !gal.hasAttribute('capture') && gal.dataset.a === 'tk-ocr' && /image/.test(gal.accept); });
     await page.fill('#tkTxt', TICKET);
     await page.click('[data-a="tk-leer"]');
     await page.waitForTimeout(400);

@@ -2965,3 +2965,4 @@ html,body{overscroll-behavior-y:none}
 .mprk .tg{font-style:normal;font-size:10px;font-weight:900;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--bg3) 22%,transparent)}
 .mprk .tg.w{background:color-mix(in srgb,var(--bc) 22%,transparent)}
 .mpvot{display:flex;align-items:center;gap:6px;padding:0 0 9px 56px}.mpvot button{width:42px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:16px;cursor:pointer}
+.tkbtns{display:grid;grid-template-columns:1fr 1fr;gap:7px}.tkbtns .gbig{white-space:nowrap;justify-content:center}

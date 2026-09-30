@@ -13513,7 +13513,10 @@ function renderShopTicket(){
     '<div class="card tkfoto"><h2>📷 Foto del ticket</h2>'+
       (t.estado==='leyendo'?'<p class="note">Leyendo '+Math.min(t.total,(t.hechas||0)+1)+' de '+t.total+'… (la primera vez se descarga el lector, ~6 MB; después va sin internet)</p>':
         '<p class="note">Haz la foto con el ticket recto y buena luz. Se lee aquí, en el móvil; luego revisas y va a la nevera.</p>'+
-        '<label class="btn p gbig">📷 Hacer / elegir foto<input id="tkOcrIn" type="file" accept="image/*" capture="environment" multiple data-a="tk-ocr" hidden></label>')+
+        /* dos entradas: con «capture» Android abre SOLO la cámara, sin ella deja elegir de la galería o de
+           Archivos (una foto ya hecha o la captura del ticket de la app de Mercadona) */
+        '<div class="tkbtns"><label class="btn p gbig">📷 Hacer foto<input id="tkOcrIn" type="file" accept="image/*" capture="environment" multiple data-a="tk-ocr" hidden></label>'+
+        '<label class="btn gbig">🖼 Galería o archivos<input id="tkOcrGal" type="file" accept="image/*" multiple data-a="tk-ocr" hidden></label></div>')+
       (t.msg?'<p class="mini" style="margin:8px 0 0;color:var(--warn)">'+esc(t.msg)+'</p>':'')+'</div>'+
     '<div class="card"><h2>O pega el ticket</h2>'+
       '<p class="note">El ticket electrónico de Mercadona (el de su app o el del correo) es texto: '+
@@ -17452,8 +17455,8 @@ function act(a,el){
       break;}
     case 'tk-claude':ticketConClaude();break;
     case 'tk-habitual':{const t=ui.ticket;if(!t||!t.leido)break;flash(tkHabitual(t.leido.items));break;}
-    case 'ticket-foto':{ui.tab='shop';ui.shopVista='ticket';render();window.scrollTo(0,0);
-      const inp=document.getElementById('tkOcrIn');if(inp)inp.click();break;}
+    /* a la pantalla del ticket, sin abrir la cámara sola: ahí eliges cámara o galería/archivos */
+    case 'ticket-foto':{ui.tab='shop';ui.shopVista='ticket';render();window.scrollTo(0,0);break;}
     case 'ir-fruteria':ui.compraSalida='fruteria';ui.tab='shop';ui.shopVista='';render();window.scrollTo(0,0);break;
     case 'compra-hecha':flash(hacerCompra(el.dataset.solo==='1'));break;
     case 'compra-mano':{const t=document.getElementById('compraMano');
