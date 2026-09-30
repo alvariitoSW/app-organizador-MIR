@@ -2945,3 +2945,23 @@ html,body{overscroll-behavior-y:none}
 /* ticket: nombre corregible y lo que aguanta */
 .tknom{width:100%;min-width:0;border:0;border-bottom:1px dashed var(--line);background:none;color:var(--ink);font:inherit;font-size:13px;padding:2px 0}
 .tkvida{font-size:11px;font-weight:800;color:var(--ink2);white-space:nowrap;min-width:52px;text-align:right}.tkvida.pronto{color:var(--warn)}
+/* ---- Mi semana · Mis platos ---- */
+.mskpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mskpi>div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 10px}
+.mskpi b{display:block;font-size:20px;font-weight:900;line-height:1.1}.mskpi b.ok{color:var(--ok)}.mskpi span{font-size:10.5px;color:var(--ink2);font-weight:700}
+.msb{height:118px}.msb .pd{display:block;width:8px;height:8px;border-radius:50%;margin:1px auto 0;background:var(--line)}.msb .pd.ok{background:var(--bg3)}
+.msb2{display:grid;grid-template-columns:20px 1fr 78px;gap:6px;align-items:center;font-size:12px;margin-top:6px}
+.msb2 .t{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.msb2 .t i{display:block;height:100%;border-radius:5px}.msb2 b{text-align:right;white-space:nowrap}
+.h2vot{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin-top:6px;padding:7px 9px;border-radius:12px;border:1px dashed color-mix(in srgb,var(--brand) 50%,var(--line));font-size:12.5px}
+.h2vot button{width:40px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:16px;cursor:pointer}
+.h2seg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.h2seg button{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;padding:8px;border-radius:13px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.h2seg b{font-size:13.5px}.h2seg span{font-size:11px;color:var(--ink2);font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mprk{border-top:1px solid var(--line)}.mprk:first-child{border-top:0}
+.mprk .r{display:grid;grid-template-columns:20px 28px 1fr auto;gap:8px;align-items:center;width:100%;padding:9px 0;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.mprk .n{font-weight:900;color:var(--ink2);text-align:center;font-size:13px}.mprk .e{font-size:20px}
+.mprk .t{min-width:0}.mprk .t b{display:block;font-size:13.5px}.mprk .t>span{font-size:11px;color:var(--ink2)}
+.mprk .sc{font-size:16px;font-weight:900;text-align:right}.mprk .sc small{display:block;font-size:10px;color:var(--ink2);font-weight:700}
+.mprk .tg{font-style:normal;font-size:10px;font-weight:900;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--bg3) 22%,transparent)}
+.mprk .tg.w{background:color-mix(in srgb,var(--bc) 22%,transparent)}
+.mpvot{display:flex;align-items:center;gap:6px;padding:0 0 9px 56px}.mpvot button{width:42px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:16px;cursor:pointer}

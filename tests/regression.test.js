@@ -9133,6 +9133,39 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       guiaBtn > 0 && guiaBtn < 48 && guia.cards === 5 && /Llena la nevera/.test(guia.txt) && /Apunta sin pesar/.test(guia.txt), JSON.stringify({ guiaBtn, cards: guia.cards }));
   }
 
+  // 224) SEGUIMIENTO Y CLASIFICACIÓN DE PLATOS: ✓ en Hoy apunta «del plan» y pregunta «¿qué tal?» por
+  // el plato principal; 👍/👎 se guardan y sobreviven a recargar; «Mi semana» cuenta días, kcal,
+  // proteína y plan/fuera/otro; la clasificación da una nota 0–100 y un 👎 baja el plato en «Móntamela»
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia224 = JSON.parse(JSON.stringify(P.store));
+      P.store.food.objetivo = { kcal: 2470, prot: 140 }; P.store.food.votos = {}; P.store.food.log[P.iso(new Date())] = [];
+      P.ui.h2Voto = null; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
+    const ok = await page.$('#main .h2ok'); if (ok) { await ok.click(); await page.waitForTimeout(150); }
+    const pregunta = await page.evaluate(() => ({ txt: (document.querySelector('.h2vot') || {}).innerText || '', id: (window.PG.ui.h2Voto || {}).id,
+      plan: window.PG.foodLog(window.PG.iso(new Date())).every((x) => x.plan === 1) }));
+    const bot = await page.$('.h2vot [data-v="1"]'); if (bot) { await bot.click(); await page.waitForTimeout(120); }
+    const tras = await page.evaluate((id) => { const P = window.PG, v = (P.store.food.votos || {})[id], n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      return { v, vuelta: ((n.food.votos || {})[id] || {}).up, cerrada: !document.querySelector('.h2vot') }; }, pregunta.id);
+    await page.click('.h2seg [data-v="misemana"]'); await page.waitForTimeout(150);
+    const sem = await page.evaluate(() => { const S = window.PG.semanaComida(0);
+      return { n: S.n, prot: S.prot, plan: S.tipo && S.tipo.plan, barras: document.querySelectorAll('#main .msb > div').length, alto: document.querySelector('#main').scrollHeight }; });
+    await page.click('#main .subcab .volver'); await page.waitForTimeout(100);
+    await page.click('.h2seg [data-v="misplatos"]'); await page.waitForTimeout(150);
+    const rk = await page.evaluate(() => { const P = window.PG, R = P.platoRanking(), d = R[0].d.id;
+      const antes = R.filter((x) => x.d.id === d)[0].nota; P.platoVotar(d, -1); P.platoVotar(d, -1);
+      const desp = P.platoRanking().filter((x) => x.d.id === d)[0].nota;
+      return { filas: document.querySelectorAll('#main .mprk').length, rango: R.every((x) => x.nota >= 0 && x.nota <= 100), antes, desp }; });
+    await page.click('[data-a="mp-f"][data-v="prot"]'); await page.waitForTimeout(100);
+    const prot = await page.$$eval('#main .mprk .t > span', (e) => e.map((x) => parseInt(x.textContent, 10)));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia224; P.save(); P.ui.h2Voto = null; P.ui.mpF = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Hoy: ✓ apunta lo del plan y pregunta «¿qué tal?» por el plato principal; el 👍 se guarda y sobrevive a recargar',
+      /¿Qué tal/.test(pregunta.txt) && pregunta.plan && tras.v && tras.v.up === 1 && tras.vuelta === 1 && tras.cerrada, JSON.stringify({ pregunta, tras }));
+    check('Mi semana: días apuntados, proteína, % del plan y una barra por día, en una pantalla',
+      sem.n >= 1 && sem.plan === 100 && sem.barras === 7 && sem.alto < 1000, JSON.stringify(sem));
+    check('clasificación: nota 0–100, dos 👎 bajan el plato, y «Más proteína» ordena por proteína',
+      rk.filas >= 3 && rk.rango && rk.desp < rk.antes && prot.length >= 3 && prot.every((v, i) => i === 0 || prot[i - 1] >= v), JSON.stringify({ rk, prot }));
+  }
+
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
   // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
   {

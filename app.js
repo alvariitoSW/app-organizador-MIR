@@ -686,6 +686,10 @@ function normalize(o){
   o.food.neveraMano=Array.isArray(o.food.neveraMano)
     ?o.food.neveraMano.filter(function(x){return typeof x==='string'&&x&&x.length<60;}).slice(0,300):[];
   o.food.ultimaCompra=/^\d{4}-\d{2}-\d{2}$/.test(String(o.food.ultimaCompra))?o.food.ultimaCompra:'';
+  /* 👍/👎 de cada plato (Mis platos) */
+  if(o.food.votos&&typeof o.food.votos==='object'&&!Array.isArray(o.food.votos)){const vv={};Object.keys(o.food.votos).slice(0,500).forEach(function(k){const x=o.food.votos[k]||{};
+    vv[String(k).slice(0,40)]={up:Math.max(0,Math.min(999,Math.round(+x.up||0))),down:Math.max(0,Math.min(999,Math.round(+x.down||0))),ult:x.ult>0?1:(x.ult<0?-1:0)};});o.food.votos=vv;}
+  else delete o.food.votos;
   o.food.compraCada=(+o.food.compraCada>=1&&+o.food.compraCada<=14)?+o.food.compraCada:4;
   /* EL PASILLO QUE LE HAS PUESTO TÚ A UN PRODUCTO. Sin esta línea se pierde al recargar:
      normalize() tira todo lo que no reconoce. Solo se guardan claves de pasillo que existen. */
@@ -3999,7 +4003,7 @@ function addFoodEntry(dateStr,opt){
     const d=dishById(opt.dishId);if(!d)return 'ese plato ya no está en el catálogo';
     const rac=Math.max(0.1,Math.round((+opt.rac||1)*4)/4);
     cocinadoGasta(d.id,rac);
-    list.push({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:d.name,dishId:d.id,rac:rac,
+    list.push({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:d.name,dishId:d.id,rac:rac,plan:opt.plan?1:0,
       kcal:Math.round((+d.kcal||0)*rac),prot:Math.round((+d.prot||0)*rac*10)/10,
       /* hidratos y grasa también: sin ellos un día con platos salía con 0 g de las dos */
       carb:Math.round((+d.carb||0)*rac*10)/10,gresa:Math.round((+d.fat||0)*rac*10)/10,ts:Date.now()});
@@ -7471,6 +7475,9 @@ function renderFoodDia(){
         '<button class="chipx" data-a="h2-ajusta" data-p="'+p+'" data-d="-0.5">− media ración</button>'+
         '<button class="chipx" data-a="h2-add" data-p="'+p+'">🔍 otra cosa</button>'+
         '<button class="chipx" data-a="h2-fuera" data-p="'+p+'">🍽️ comí fuera</button></div>':'')+
+      (ui.h2Voto&&ui.h2Voto.p===p&&dishById(ui.h2Voto.id)?'<div class="h2vot"><span>¿Qué tal '+esc(dishById(ui.h2Voto.id).name.toLowerCase())+'?</span><span class="sp"></span>'+
+        '<button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="-1" aria-label="no me gustó">👎</button><button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="0" aria-label="normal">😐</button>'+
+        '<button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="1" aria-label="me gustó">👍</button></div>':'')+
       (ab?'<div class="h2lista">'+xs.map(function(x){
         const peso=(x.ean||x.alim)?(x.g+' g'):rac(x.rac);
         return '<div class="logrow"><span class="nm"><b>'+esc(x.emoji?(x.emoji+' '):'')+esc(x.nombre)+'</b><span>'+esc(peso)+' · '+(x.kcal||0)+' kcal · '+Math.round(+x.prot||0)+' g P</span></span>'+
@@ -7511,6 +7518,9 @@ function renderFoodDia(){
       '<b>Apuntar algo</b> · '+fmtMil(foodBuscables().length)+' alimentos y platos</button>'+
     (e?diaEspCardHTML(sel):'')+
     '<div class="card"><div class="row"><span class="cap">'+(sel===c.hoy?'HOY TE TOCA':'ESTE DÍA')+'</span><span class="sp"></span><span class="mini">✓ lo que tocaba · ± otra cosa</span></div>'+filas+'</div>'+
+    (function(){const S=semanaComida(0),top=platoRanking().sort(function(a,b){return b.nota-a.nota;})[0];
+      return '<div class="h2seg"><button data-a="food-vista" data-v="misemana"><b>📈 Mi semana</b><span>'+S.n+' de '+S.cuenta+' días'+(S.objP&&S.n?' · '+Math.round(S.prot/S.objP*100)+' % prot':'')+'</span></button>'+
+        '<button data-a="food-vista" data-v="misplatos"><b>🏆 Clasificación</b><span>'+(top?'top: '+esc(top.d.name):'la nota de cada plato')+'</span></button></div>';})()+
     (sel===c.hoy?cadVence().slice(0,2).map(function(v){return '<div class="card h2cad"><span>⏳</span><div><b>'+esc(v.n)+(v.t==='cocinado'?' (cocinado)':'')+' caduca '+v.cuando+'</b><div class="mini">'+
       (v.t==='cocinado'?'cómelo hoy o congélalo':'cocínalo hoy: mira «Hoy cocino…»')+'</div></div>'+(v.t==='fresco'?'<button class="btn s" data-a="food-vista" data-v="hoycocino">🍳</button>':'')+'</div>';}).join(''):'')+
     '<div class="card"><div class="row"><span class="cap">LA SEMANA</span><span class="sp"></span><span class="mini">kcal apuntadas'+(objP?' · ✓ proteína cumplida':'')+'</span></div>'+semHTML+
@@ -7520,6 +7530,102 @@ function renderFoodDia(){
     '<div class="chips h2chips"><button class="chipx" data-a="food-vista" data-v="platos">📖 Mis platos '+store.dishes.length+'</button>'+
       '<button class="chipx" data-a="food-vista" data-v="nevera">🧊 Nevera '+neveraAlimentos().length+'</button>'+
       '<button class="chipx" data-a="food-vista" data-v="alimentos">🍎 Alimentos</button></div>'+
+  '</div>';}
+/* ===================== SEGUIMIENTO Y CLASIFICACIÓN DE PLATOS =====================
+   «Llevar seguimiento de lo que como y clasificación de platos.» Mi semana: días apuntados, kcal y
+   proteína contra el objetivo, cuánto fue del plan, fuera u otra cosa, y un consejo. Mis platos: una
+   nota de 0 a 100 por plato (40 % lo que te gusta, 40 % lo sano, 20 % lo que lo repites); los 👎
+   salen menos en «Móntamela» y los mejores, más. Paleta validada: azul dentro, naranja por encima. */
+function votosS(){const f=food();if(!f.votos||typeof f.votos!=='object'||Array.isArray(f.votos))f.votos={};return f.votos;}
+function platoVotar(id,v){
+  const V=votosS(),x=V[id]||(V[id]={up:0,down:0,ult:0});
+  if(v>0)x.up++;else if(v<0)x.down++;x.ult=v>0?1:(v<0?-1:0);save();}
+function comidasDe(n){
+  /* lo apuntado los últimos n días (sin crear días vacíos en el registro) */
+  const lg=food().log,out=[];
+  for(let i=0;i<n;i++){const k=foodKey(iso(addDays(new Date(),-i)));(Array.isArray(lg[k])?lg[k]:[]).forEach(function(x){out.push({k:k,x:x});});}
+  return out;}
+function platoRanking(){
+  const objK=+food().objetivo.kcal||0,porComida=objK?objK/3:0,V=votosS();
+  const veces={},ult={};
+  comidasDe(30).forEach(function(o){const id=o.x.dishId;if(!id)return;veces[id]=(veces[id]||0)+1;if(!ult[id]||o.k>ult[id])ult[id]=o.k;});
+  return store.dishes.filter(function(d){return +d.kcal>0;}).map(function(d){
+    const v=V[d.id]||{up:0,down:0},k=+d.kcal||1,p=+d.prot||0,n=veces[d.id]||0;
+    const g=Math.max(0,Math.min(100,50+25*((v.up||0)-(v.down||0))));
+    let s=Math.max(0,Math.min(100,p/k*1000));if(porComida&&k>porComida*1.3)s=Math.max(0,s-15);
+    const r=Math.min(100,n*25);
+    return {d:d,nota:Math.round(.4*g+.4*s+.2*r),n:n,up:v.up||0,down:v.down||0,p:Math.round(p),k:Math.round(k),ult:ult[d.id]||''};});}
+function platoNotas(){const m={};platoRanking().forEach(function(x){m[x.d.id]=x;});return m;}
+function semanaComida(off){
+  /* la semana (lunes a domingo) de lo que comiste: por día y en total */
+  const ob=food().objetivo,objK=+ob.kcal||0,objP=+ob.prot||0,ini=addDays(mondayOf(new Date()),7*(off||0)),hoyK=iso(new Date());
+  const dias=[];let kc=0,pr=0,n=0,cuenta=0;const tipo={plan:0,fuera:0,otro:0},rep={};
+  for(let i=0;i<7;i++){const k=iso(addDays(ini,i)),lg=food().log[foodKey(k)],xs=Array.isArray(lg)?lg:[],t=foodTotals(k);
+    const futuro=k>hoyK;if(!futuro)cuenta++;
+    const fuera=xs.filter(function(x){return x.fuera;}).length;
+    dias.push({k:k,nm:DIA3[addDays(ini,i).getDay()].toLowerCase(),kc:t.kcal,p:t.prot,n:xs.length,fuera:fuera,futuro:futuro,hoy:k===hoyK});
+    if(xs.length){n++;kc+=t.kcal;pr+=t.prot;}
+    xs.forEach(function(x){const c=x.fuera?'fuera':(x.plan?'plan':'otro');tipo[c]+=+x.kcal||0;const nm=x.nombre||'';if(nm)rep[nm]=(rep[nm]||0)+1;});}
+  const tot=tipo.plan+tipo.fuera+tipo.otro;
+  return {ini:ini,dias:dias,n:n,cuenta:cuenta,objK:objK,objP:objP,kcal:n?Math.round(kc/n):0,prot:n?Math.round(pr/n):0,
+    tipo:tot?{plan:Math.round(tipo.plan/tot*100),fuera:Math.round(tipo.fuera/tot*100),otro:Math.max(0,100-Math.round(tipo.plan/tot*100)-Math.round(tipo.fuera/tot*100))}:null,
+    rep:Object.keys(rep).map(function(k){return [k,rep[k]];}).filter(function(x){return x[1]>1;}).sort(function(a,b){return b[1]-a[1];}).slice(0,2)};}
+function semanaConsejo(S){
+  if(S.n<Math.min(4,S.cuenta))return 'Apunta aunque sea con ✓: con 4–5 días apuntados la media ya dice algo.';
+  if(S.objP&&S.prot<S.objP*0.9){const top=platoRanking().filter(function(x){return x.down<=x.up;}).sort(function(a,b){return b.p-a.p;})[0];
+    return 'Te faltan '+(S.objP-S.prot)+' g de proteína al día de media'+(top?': mete más «'+top.d.name+'» ('+top.p+' g) o un yogur proteico':'')+'.';}
+  const pas=S.dias.filter(function(d){return S.objK&&d.kc>S.objK*1.1;});
+  if(pas.length>=2)return pas.length+' días por encima del objetivo'+(pas.some(function(d){return d.fuera;})?', casi siempre comiendo fuera: deja un táper hecho la víspera':'')+'.';
+  return 'Vas bien: repite los platos que mejor nota tienen en «Mis platos».';}
+function renderMiSemana(){
+  const off=ui.msOff||0,S=semanaComida(off),fin=addDays(S.ini,6);
+  const tope=Math.max(S.objK*1.25,Math.max.apply(null,S.dias.map(function(d){return d.kc;})),1);
+  const rango=S.ini.getDate()+(S.ini.getMonth()!==fin.getMonth()?' '+MON[S.ini.getMonth()]:'')+'–'+fin.getDate()+' '+MON[fin.getMonth()];
+  const pasa=S.dias.filter(function(d){return S.objK&&d.kc>S.objK*1.1;}).sort(function(a,b){return b.kc-a.kc;})[0];
+  const sin=S.dias.filter(function(d){return !d.futuro&&!d.n;});
+  const nota=[pasa?('El '+DOWN0[parseDate(pasa.k).getDay()]+' +'+fmtMil(pasa.kc-S.objK)+' kcal'+(pasa.fuera?': '+pasa.fuera+' comida'+(pasa.fuera===1?'':'s')+' fuera':'')+'.'):'',
+    sin.length?(sin.length===1?'El '+DOWN0[parseDate(sin[0].k).getDay()]+' sin apuntar.':sin.length+' días sin apuntar.'):''].filter(Boolean).join(' ');
+  $('#main').innerHTML='<div class="grid mt ms">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Hoy</button><h2 class="subtit">📈 Mi semana</h2></div>'+
+      '<div class="row"><span class="sp"></span><div class="dmes"><button data-a="ms-sem" data-d="-1" aria-label="semana anterior">‹</button><b>'+esc(rango)+'</b><button data-a="ms-sem" data-d="1" aria-label="semana siguiente"'+(off>=0?' disabled':'')+'>›</button></div><span class="sp"></span></div>'+
+    '<div class="mskpi"><div><b>'+S.n+'/'+S.cuenta+'</b><span>días apuntados</span></div>'+
+      '<div><b>'+fmtMil(S.kcal)+'</b><span>kcal/día'+(S.objK?' · obj '+fmtMil(S.objK):'')+'</span></div>'+
+      '<div><b class="'+(S.objP&&S.prot>=S.objP*0.9?'ok':'')+'">'+S.prot+' g</b><span>prot/día'+(S.objP?' · '+Math.round(S.prot/S.objP*100)+' %':'')+'</span></div></div>'+
+    '<div class="card"><div class="row"><span class="cap">KCAL CADA DÍA</span><span class="sp"></span><span class="mini">'+(S.objK?'- - objetivo · ':'')+(S.objP?'● proteína ≥ '+S.objP:'')+'</span></div>'+
+      '<div class="d6m msb" role="img" aria-label="kcal de cada día de la semana">'+(S.objK?'<span class="obj" style="bottom:'+(Math.round(S.objK/tope*64)+27)+'px"></span>':'')+
+      S.dias.map(function(d){const x=S.objK&&d.kc>S.objK*1.1;
+        return '<div class="'+(!d.kc?'v':(x?'x':''))+'"><em>'+(d.kc?fmtMil(d.kc):'')+'</em><i style="height:'+(d.kc?Math.max(3,Math.round(d.kc/tope*64)):3)+'px"></i>'+
+          '<b class="pd'+(S.objP&&d.kc&&d.p>=S.objP?' ok':'')+'"></b><span'+(d.hoy?' class="hoy"':'')+'>'+esc(d.nm)+'</span></div>';}).join('')+'</div>'+
+      (nota?'<p class="mini" style="margin:6px 0 0">'+esc(nota)+'</p>':'')+'</div>'+
+    (S.tipo?'<div class="card"><div class="cap">CÓMO HAS COMIDO</div>'+
+      [['📅','plan','var(--bp)','plan'],['🍴','fuera','var(--bc)','fuera'],['🥡','otro','var(--bg3)','otro']].map(function(r){
+        return '<div class="msb2"><span>'+r[0]+'</span><div class="t"><i style="width:'+S.tipo[r[1]]+'%;background:'+r[2]+'"></i></div><b>'+S.tipo[r[1]]+' % '+r[3]+'</b></div>';}).join('')+
+      (S.rep.length?'<p class="mini" style="margin:6px 0 0">Lo que más repetiste: '+S.rep.map(function(x){return '<b style="color:var(--ink)">'+esc(x[0])+' ×'+x[1]+'</b>';}).join(', ')+'.</p>':'')+
+      '<p class="mini" style="margin:4px 0 0">«Plan» es lo apuntado con ✓ desde el menú.</p></div>':'')+
+    '<div class="card"><div class="cap">PARA LA SEMANA QUE VIENE</div><p class="mini" style="margin:4px 0 0">'+esc(semanaConsejo(S))+'</p></div>'+
+  '</div>';}
+function renderRanking(){
+  const f=ui.mpF||'',R=platoRanking(),hoy=iso(new Date()),hace=iso(addDays(new Date(),-21));
+  let L=R.slice();
+  if(f==='prot')L.sort(function(a,b){return b.p-a.p;});
+  else if(f==='comidos')L=L.filter(function(x){return x.n>0;}).sort(function(a,b){return b.n-a.n||b.nota-a.nota;});
+  else if(f==='olvidados')L=L.filter(function(x){return x.nota>=55&&(!x.ult||x.ult<hace);}).sort(function(a,b){return b.nota-a.nota;});
+  else L.sort(function(a,b){return b.nota-a.nota;});
+  L=L.slice(0,ui.mpTodo?60:12);
+  const fila=function(x,i){const ab=ui.mpAb===x.d.id;
+    return '<div class="mprk'+(ab?' ab':'')+'"><button class="r" data-a="mp-ab" data-id="'+esc(x.d.id)+'"><span class="n">'+(i+1)+'</span><span class="e">'+esc(x.d.icon||'🍽')+'</span>'+
+      '<span class="t"><b>'+esc(x.d.name)+(x.up>x.down?' <em class="tg">👍'+(x.up>1?' ×'+x.up:'')+'</em>':(x.down>x.up?' <em class="tg w">👎</em>':''))+'</b>'+
+      '<span>'+x.p+' g prot · '+fmtMil(x.k)+' kcal · '+(x.n?x.n+(x.n===1?' vez':' veces')+' este mes':'no lo has comido este mes')+'</span></span>'+
+      '<span class="sc">'+x.nota+'<small>nota</small></span></button>'+
+      (ab?'<div class="mpvot"><span class="mini">¿Te gusta?</span><button data-a="mp-voto" data-id="'+esc(x.d.id)+'" data-v="-1" aria-label="no me gusta">👎</button>'+
+        '<button data-a="mp-voto" data-id="'+esc(x.d.id)+'" data-v="0" aria-label="normal">😐</button><button data-a="mp-voto" data-id="'+esc(x.d.id)+'" data-v="1" aria-label="me gusta">👍</button></div>':'')+'</div>';};
+  $('#main').innerHTML='<div class="grid mt ms">'+
+    '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="">'+gymIco('atras','gico sm')+' Hoy</button><h2 class="subtit">🏆 Clasificación de platos</h2></div>'+
+    '<div class="chips">'+[['','Mejores'],['prot','Más proteína'],['comidos','Más comidos'],['olvidados','Olvidados']].map(function(c){
+      return '<button class="chipx'+(f===c[0]?' on':'')+'" data-a="mp-f" data-v="'+c[0]+'"'+(f===c[0]?' aria-pressed="true"':'')+'>'+c[1]+'</button>';}).join('')+'</div>'+
+    '<div class="card">'+(L.length?L.map(fila).join(''):'<p class="mini" style="margin:0">'+(f==='comidos'?'Aún no has apuntado platos este mes: marca ✓ en Hoy.':'Nada por aquí.')+'</p>')+
+      (R.length>12&&!ui.mpTodo&&f!=='olvidados'?'<button class="dlink" data-a="mp-todo">ver todos ('+R.length+') ›</button>':'')+'</div>'+
+    '<div class="card"><div class="cap">CÓMO SE HACE LA NOTA</div><p class="mini" style="margin:4px 0 0">40 % lo que te gusta (👍/👎) · 40 % lo sano (proteína por kcal; si pasa mucho de un tercio de tu objetivo, resta) · 20 % lo que lo repites este mes. Los 👎 salen menos en «Móntamela»; los mejores, más.</p></div>'+
   '</div>';}
 function cadenaHTML(){
   /* la cadena: el menú manda en las tandas y las tandas mandan en la compra. Hasta ahora eran tres
@@ -8034,7 +8140,7 @@ function sbAuto(){
   /* «Móntamela»: los huecos de la semana con lo que tienes. Primero lo cocinado que queda, luego
      los platos que te salen enteros con la nevera, luego lo que sueles comer ahí; sin repetir plato
      el mismo día. Lo que puso la app lleva marca y se puede volver a montar sin tocar lo tuyo. */
-  const s=sbS(),por=platosDeClase(),sem=mSemana();let n=0;
+  const s=sbS(),por=platosDeClase(),sem=mSemana(),notas=platoNotas();let n=0;
   for(let w=0;w<7;w++)SB_CLASES.forEach(function(c){const cel=sbCelda(w,c[0]);if(cel&&cel.auto){cel.items=[];cel.auto=false;}});
   const coc={};cocinadoS().forEach(function(x){coc[x.dishId]=(coc[x.dishId]||0)+x.queda;});
   sem.forEach(function(dia){const w=dia.w;
@@ -8043,8 +8149,9 @@ function sbAuto(){
       const ya={};SB_CLASES.forEach(function(q){const x=sbCelda(w,q[0]);if(x)x.items.forEach(function(it){ya[it.id]=1;});});
       const cand=Object.keys(Object.assign({},por[c[0]]||{},c[0]!=='desayuno'?coc:{})).filter(function(id){return dishById(id)&&!ya[id]&&platoApto(dishById(id));});
       if(!cand.length)return;
-      const score=function(id){const d=dishById(id),cu=platoCubierto(d);
-        return (coc[id]>0&&c[0]!=='desayuno'?100:0)+(cu.total?cu.pct:0)+((por[c[0]]||{})[id]||0)*3-((w+SB_CLASES.indexOf(c))%3===0?0:0);};
+      const score=function(id){const d=dishById(id),cu=platoCubierto(d),nt=notas[id];
+        /* la nota de «Mis platos»: los mejores suben y un 👎 baja mucho */
+        return (coc[id]>0&&c[0]!=='desayuno'?100:0)+(cu.total?cu.pct:0)+((por[c[0]]||{})[id]||0)*3+(nt?(nt.nota-50)/2-(nt.down>nt.up?40:0):0);};
       cand.sort(function(a,b){return score(b)-score(a);});
       /* un poco de variedad entre días con la misma puntuación */
       const top=cand.filter(function(id){return score(id)>=score(cand[0])-15;});
@@ -9336,6 +9443,8 @@ function bowlGuardar(){
 function renderFood(){
   const v=ui.foodVista||'';
   if(v==='sano')return renderComerSano();
+  if(v==='misemana')return renderMiSemana();
+  if(v==='misplatos')return renderRanking();
   if(v==='nevera2')return renderNevera2();
   if(v==='hoycocino')return renderHoyCocino();
   if(v==='buscar')return renderFoodBuscar();
@@ -16403,7 +16512,8 @@ const COCINA_GUIA=[
     'Cada plato dura lo que aguanta en la nevera: arroz 1 día, pescado 2, legumbres y guisos 4, lo demás 3. La app lo reparte en los huecos y te avisa antes de que caduque.']],
   ['✓','4 · Apunta sin pesar',[
     'En <b>Hoy</b>, pulsa <b>✓</b> si comiste lo que tocaba. Si comiste más o menos, <b>±</b> y «＋ media ración» / «− media ración».',
-    'Si comiste fuera o algo distinto, «＋» y lo buscas: no hace falta báscula, las raciones van a ojo.']],
+    'Si comiste fuera o algo distinto, «＋» y lo buscas: no hace falta báscula, las raciones van a ojo.',
+    'Tras el ✓ sale «¿qué tal?» (👎 😐 👍): con eso se hace la <b>Clasificación</b> de tus platos, y «Móntamela» pone más los mejores. En <b>Mi semana</b> ves días apuntados, kcal y proteína.']],
   ['💡','Trucos',[
     'El buscador entiende plurales y marcas (colacao, york…). Si algo no sale, créalo una vez y ya queda.',
     'Las proteínas y kcal del día se ven arriba en Hoy: con el ✓ diario basta para que cuadren.']]];
@@ -17929,6 +18039,12 @@ function act(a,el){
       flash(d.name+': '+pl.rac+' raciones en la semana · aguanta '+diasAguanta(d)+' días');ui.hcSel='';ui.tab='types';ui.typesVista='';ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'nev-mano':ui.tab='food';ui.foodVista='cocina-panel';ui.cocinaTab='nevera';render();window.scrollTo(0,0);break;
     case 'nv-todo':ui.nvTodo=!ui.nvTodo;render();break;
+    case 'h2-voto':{platoVotar(el.dataset.id,+el.dataset.v||0);ui.h2Voto=null;flash(+el.dataset.v>0?'👍 apuntado: saldrá más':(+el.dataset.v<0?'👎 apuntado: saldrá menos':'apuntado'));render();break;}
+    case 'ms-sem':ui.msOff=Math.min(0,(ui.msOff||0)+(+el.dataset.d||0));render();break;
+    case 'mp-f':ui.mpF=el.dataset.v||'';ui.mpTodo=false;render();break;
+    case 'mp-todo':ui.mpTodo=true;render();break;
+    case 'mp-ab':ui.mpAb=ui.mpAb===el.dataset.id?'':el.dataset.id;render();break;
+    case 'mp-voto':{platoVotar(el.dataset.id,+el.dataset.v||0);ui.mpAb='';render();break;}
     case 'fb-filtro':ui.fbFiltro=el.dataset.f||'';ui.fbMas=false;buscarRepinta();break;
     case 'fb-prot':ui.fbProt=!ui.fbProt;buscarRepinta();break;
     case 'fb-mas':ui.fbMas=true;buscarRepinta();break;
@@ -17942,7 +18058,10 @@ function act(a,el){
     case 'h2-abre':{const o=ui.h2Abierto||(ui.h2Abierto={});o[el.dataset.p]=!o[el.dataset.p];render();break;}
     case 'h2-add':ui.foodPos=el.dataset.p||'';ui.foodVista='buscar';ui.foodBusca='';render();window.scrollTo(0,0);break;
     case 'h2-menu':{const c=foodCtx(),pl=menuPorMomento(c.sel)[el.dataset.p]||[];let m='';
-      pl.forEach(function(x){m=addFoodEntry(c.sel,{dishId:x.id,rac:num(x.portions,1),pos:el.dataset.p});});
+      pl.forEach(function(x){m=addFoodEntry(c.sel,{dishId:x.id,rac:num(x.portions,1),pos:el.dataset.p,plan:true});});
+      /* «¿qué tal?» del plato principal, una línea opcional */
+      const ppal=pl.filter(function(x){return dishById(x.id);}).sort(function(a2,b2){return (+dishById(b2.id).kcal||0)-(+dishById(a2.id).kcal||0);})[0];
+      if(ppal)ui.h2Voto={p:el.dataset.p,id:ppal.id};
       flash(pl.length>1?pl.length+' platos apuntados':(m||'nada que apuntar'));render();break;}
     case 'food-jump':{const k=foodKey(el.dataset.key);if(k)ui.foodDate=k;render();break;}
     case 'food-panel':ui.foodPanel=el.dataset.k||'scan';ui.foodSel='';render();window.scrollTo(0,0);break;
@@ -20678,7 +20797,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={d6Mes,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
