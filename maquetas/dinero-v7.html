@@ -1,0 +1,140 @@
+<!doctype html><meta charset=utf-8>
+<title>Dinero v7</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70;--ex:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 12%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:10px 12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.nav div{text-align:center;padding:8px 0;border-radius:11px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}
+.nav div.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.big{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.mb{display:grid;grid-template-columns:18px 1fr 64px;gap:6px;align-items:center;font-size:11.5px;margin-top:5px}
+.mb .t{height:8px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}.mb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.mb b{text-align:right;font-weight:800}
+.busca{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card));margin-bottom:8px;font-weight:800}
+.mom{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mom:first-of-type{border-top:0}.mom b{font-size:13px}.mom .s{font-size:11px;color:var(--ink2)}
+.add{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg2);font-weight:900;color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.chip.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+/* barras de semana */
+.wk{display:flex;gap:6px;align-items:flex-end;height:96px;position:relative;margin-top:8px}
+.wk>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:3px}
+.wk i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.wk .x i{background:var(--ex)}.wk .v i{background:var(--line)}
+.wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.wk .obj b{position:absolute;right:0;top:-13px;font-size:9px;color:var(--ink2)}
+.dots{display:flex;gap:6px;margin-top:4px}.dots span{flex:1;text-align:center;font-size:10px;font-weight:900}
+/* buscador */
+.q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;border:1.5px solid var(--brand);background:var(--bg2);font-size:15px;font-weight:700}
+.res{display:grid;grid-template-columns:30px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res .e{font-size:20px;text-align:center}.res b{font-size:13px;display:block}.res .s{font-size:10.5px;color:var(--ink2)}
+.res .k{text-align:right;font-size:12px;font-weight:900}.res .k small{display:block;font-size:10.5px;color:var(--p);font-weight:900}
+.src{font-size:9.5px;font-weight:900;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.src.m{background:#0f3d2a;color:#34d399}.src.f{background:#3b2410;color:#fbbf24}.src.t{background:#1d2a50;color:#9fb5ff}
+.more{text-align:center;font-size:12px;font-weight:800;color:var(--brand);padding:8px 0 2px}
+/* menú */
+.tipo{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.tipo:first-of-type{border-top:0}.tipo .e{font-size:20px;grid-row:span 2}.tipo b{font-size:13.5px}.tipo .k{font-weight:900;font-size:14px;text-align:right}
+.stk{display:flex;height:7px;border-radius:5px;overflow:hidden;gap:2px;grid-column:2/4}.stk i{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.days div{border:1px solid var(--line);border-radius:10px;padding:5px 0;text-align:center;font-size:9.5px;color:var(--ink2);font-weight:800;background:var(--bg2)}
+.days div b{display:block;font-size:16px}.days div.hoy{border-color:var(--brand)}
+/* cocina */
+.pl{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}.pl .e{font-size:18px;grid-row:span 2}.pl b{font-size:13px}.pl .s{font-size:10.5px;color:var(--ink2)}
+.btn{padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;grid-row:span 2}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hb{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.hb .t{height:12px;display:flex;gap:3px}.hb .t i{display:block;width:20px;height:12px;border-radius:3px;background:var(--p)}.hb .t i.o{background:var(--line)}
+.tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px}.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+/* compra */
+.pas{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;font-weight:800}
+.pas .n{font-size:11px;color:var(--ink2);font-weight:800}
+.it{display:grid;grid-template-columns:22px 58px 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13px}
+.it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ink2)}.it .ck.on{background:var(--ok);border-color:var(--ok)}
+.it .qt{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}.it .w{font-size:10.5px;color:var(--ink2)}
+.it.done{opacity:.45;text-decoration:line-through}
+.prog{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:6px}.prog i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.leg{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px}
+
+.lbl{white-space:nowrap}
+.meal{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}.meal .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);font-size:18px}
+.meal b{font-size:13.5px;display:block}.meal .s{font-size:11px;color:var(--ink2)}
+.acts{display:flex;gap:4px}.acts span{padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);font-size:11px;font-weight:800}
+.acts span.ok{border-color:var(--ok);color:var(--ok)}
+.wrow{display:grid;grid-template-columns:34px repeat(3,1fr);gap:4px;align-items:center;margin-top:4px;font-size:11px}
+.wrow>span{font-weight:900;color:var(--ink2);font-size:10px}.wrow>div{padding:6px 6px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow>div.cz{border-color:color-mix(in srgb,var(--p) 60%,var(--line));background:color-mix(in srgb,var(--p) 14%,var(--bg2))}
+.wrow>div.hoy{outline:1.5px solid var(--brand)}
+.nv{display:grid;grid-template-columns:26px 1fr 90px 44px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.nv:first-of-type{border-top:0}.nv .d{display:flex;gap:3px}.nv .d i{display:block;flex:1;height:10px;border-radius:3px;background:var(--ok)}
+.nv .d i.w{background:var(--warn)}.nv .d i.x{background:var(--ex)}.nv .d i.o{background:var(--line)}
+.nv b.r{text-align:right;font-size:11px}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}.seg3 div{text-align:center;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg3 div b{display:block;font-size:15px;color:var(--ink)}.seg3 div.on{border:1.5px solid var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 12%,var(--bg2))}
+.tk{display:grid;grid-template-columns:22px 1fr auto 20px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.tk:first-of-type{border-top:0}.tk .q{font-weight:900;color:var(--ink2);font-size:11px}.tk .st{color:var(--warn)}
+.foto{height:120px;border-radius:14px;border:1.5px dashed var(--line);display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--bg2) 0 10px,transparent 10px 20px);font-size:12px;color:var(--ink2);font-weight:800}
+.dots7{display:flex;gap:6px;margin-top:8px}.dots7 div{flex:1;text-align:center;font-size:10px;color:var(--ink2);font-weight:800}
+.dots7 i{display:block;height:26px;border-radius:8px;margin-bottom:3px;background:var(--line)}.dots7 i.ok{background:var(--p)}.dots7 i.mas{background:var(--ex)}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.goal{display:grid;grid-template-columns:38px 1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0}.goal .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:var(--bg2);grid-row:span 2}
+.goal b{font-size:13.5px}.goal .v{text-align:right;font-weight:900;font-size:14px}.goal .s{font-size:11px;color:var(--ink2);grid-column:2/4}
+.pb{grid-column:2/4;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.pb i{display:block;height:100%;border-radius:5px}
+.stk{display:flex;gap:2px;height:18px;border-radius:7px;overflow:hidden;margin-top:8px}.stk i{display:block}
+.pct{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.pct:first-of-type{border-top:0}.pct i{width:12px;height:12px;border-radius:3px;display:block}.pct b{font-variant-numeric:tabular-nums}
+.pct span.s{display:block;font-size:10.5px;color:var(--ink2)}
+.ln{position:relative;height:96px;margin-top:8px}
+.fld2{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.1em;color:var(--ink2);margin-top:8px}
+.fld2 div{padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:800;color:var(--ink);letter-spacing:0}
+</style>
+<div class="wrap"><div class="lbl">1 · Metas: un viaje, la lista de la casa, un capricho — cuánto y cuándo</div><div class="ab"><div class="nav" style="grid-template-columns:repeat(3,1fr)"><div class="">Mes</div><div class="on">Metas</div><div class="">Plan</div></div>
+<div class="card"><div class="row"><span class="cap">TUS METAS</span><span class="sp"></span><span class="mini">apartas 740 €/mes</span></div>
+<div class="goal"><span class="ic">✈️</span><b>Japón</b><span class="v">800 / 2.400</span><div class="pb"><i style="width:33%;background:var(--p)"></i></div><span class="s">180 €/mes → <b style="color:var(--ink)">llegas en febrero</b> (≈ 4 meses · 6 €/día)</span></div>
+<div class="goal"><span class="ic">🏠</span><b>Cosas de casa · 4</b><span class="v">90 / 330</span><div class="pb"><i style="width:27%;background:var(--c)"></i></div><span class="s">aspiradora 150 · sartenes 60 · estantería 80 · lámpara 40 → <b style="color:var(--ink)">diciembre</b></span></div>
+<div class="goal"><span class="ic">🎮</span><b>Juego de la Play</b><span class="v">50 / 70</span><div class="pb"><i style="width:71%;background:var(--g)"></i></div><span class="s">te faltan 20 € → <b style="color:var(--ink)">en 1 semana</b> con Caprichos</span></div>
+<div class="goal"><span class="ic">🔒</span><b>Colchón</b><span class="v">5.000</span><div class="pb"><i style="width:83%;background:var(--ink2)"></i></div><span class="s">no se toca · 4,6 meses de gastos (meta 6: faltan 1.300)</span></div></div>
+<div class="row" style="gap:6px"><span class="btn p" style="flex:1;text-align:center;padding:12px">＋ Nueva meta</span><span class="btn" style="flex:1;text-align:center;padding:12px">💸 Gasté de una meta</span></div>
+<div class="mini" style="text-align:center;margin-top:6px">Gastar de una meta solo baja esa meta: el colchón no se mueve.</div></div></div><div class="wrap"><div class="lbl">2 · Nueva meta: cuánto, para cuándo → cuánto al mes y al día</div><div class="ab"><div class="nav" style="grid-template-columns:repeat(3,1fr)"><div class="">Mes</div><div class="on">Metas</div><div class="">Plan</div></div>
+<div class="row" style="margin-bottom:6px"><span class="mini">‹ Metas</span><b style="font-size:16px">Nueva meta</b></div>
+<div class="card"><div class="chips"><span class="chip on">✈️ Viaje</span><span class="chip">🏠 Casa (lista)</span><span class="chip">🎮 Capricho</span><span class="chip">🚗 Otro</span></div>
+<div class="fld2">NOMBRE<div>Viaje a Lisboa</div></div>
+<div class="row" style="gap:8px"><div class="fld2" style="flex:1">CUESTA<div>900 €</div></div><div class="fld2" style="flex:1">PARA<div>marzo 2027</div></div></div>
+<div class="fld2">YA TENGO<div>0 €</div></div></div>
+<div class="card"><div class="cap">PARA LLEGAR</div><div class="row" style="align-items:baseline;margin-top:4px"><div class="big">180 <small>€/mes</small></div><span class="sp"></span><span class="mini">5 meses · 6 €/día</span></div>
+<div class="mini" style="margin-top:6px">Cabe en lo que apartas (740 €/mes): quedan <b style="color:var(--ink)">560 €</b> para colchón, inversión y el resto. Si lo quieres para enero: 300 €/mes.</div></div>
+<div class="btn p" style="text-align:center;padding:13px;border-radius:13px">Crear meta</div></div></div><div class="wrap"><div class="lbl">3 · Plan: qué % a cada cosa, recomendado según cómo estás</div><div class="ab"><div class="nav" style="grid-template-columns:repeat(3,1fr)"><div class="">Mes</div><div class="">Metas</div><div class="on">Plan</div></div>
+<div class="card"><div class="row"><span class="cap">TU MES TIPO</span><span class="sp"></span><span class="mini">media de 4 meses</span></div>
+<div class="row" style="align-items:baseline"><div class="big">2.466 <small>€ entran</small></div><span class="sp"></span><span class="mini">guardias de finde: ±300</span></div>
+<div class="stk"><i style="flex:1083;background:var(--ink2)"></i><i style="flex:470;background:var(--c)"></i><i style="flex:913;background:var(--p)"></i></div>
+<div class="mini" style="margin-top:4px"><span class="leg" style="background:var(--ink2);margin-left:0"></span>fijos 1.083 <span class="leg" style="background:var(--c)"></span>día a día 470 <span class="leg" style="background:var(--p)"></span>libre para ahorrar 913</div></div>
+<div class="card"><div class="row"><span class="cap">TE RECOMIENDO REPARTIR LOS 913 €</span></div>
+<div class="stk"><i style="flex:30;background:var(--ink2)"></i><i style="flex:25;background:var(--p)"></i><i style="flex:30;background:var(--g)"></i><i style="flex:15;background:var(--c)"></i></div>
+<div class="pct"><i style="background:var(--ink2)"></i><span>Colchón <span class="s">hasta tener 6 meses de gastos (te faltan 1.300 €)</span></span><b>30 % · 274 €</b></div>
+<div class="pct"><i style="background:var(--p)"></i><span>Inversión a largo plazo <span class="s">fondo indexado global, dinero que no tocarás en 5+ años</span></span><b>25 % · 228 €</b></div>
+<div class="pct"><i style="background:var(--g)"></i><span>Metas <span class="s">Japón, casa, Play…</span></span><b>30 % · 274 €</b></div>
+<div class="pct"><i style="background:var(--c)"></i><span>Caprichos <span class="s">gastar sin culpa</span></span><b>15 % · 137 €</b></div>
+<div class="mini" style="margin-top:6px">Cuando el colchón llegue a 6 meses, su 30 % pasa a inversión y metas. Pautas generales, no asesoramiento.</div></div>
+<div class="btn p" style="text-align:center;padding:13px;border-radius:13px">Aplicar a mis bolsillos</div></div></div><div class="wrap"><div class="lbl">4 · Mes: el análisis (lo de v6) y los gastos del día a día sin apuntar</div><div class="ab"><div class="nav" style="grid-template-columns:repeat(3,1fr)"><div class="on">Mes</div><div class="">Metas</div><div class="">Plan</div></div>
+<div class="card"><div class="cap">PUEDES GASTAR HOY</div><div class="row" style="align-items:baseline"><div class="big">37 <small>€</small></div><span class="sp"></span><b class="ok">vas bien</b></div>
+<div class="mini" style="margin-top:4px">quedan 412 € para 11 días · la última captura de Fintonic es del 19</div></div>
+<div class="card"><div class="row"><span class="cap">GASTO DEL DÍA A DÍA</span><span class="sp"></span><span class="mini">6 meses · - - tu media</span></div>
+<div class="wk" style="height:80px"><span class="obj" style="bottom:52px"></span>
+<div><em>430</em><i style="height:44px"></i><span>abr</span></div><div class="x"><em>620</em><i style="height:62px"></i><span>may</span></div><div><em>470</em><i style="height:47px"></i><span>jun</span></div><div><em>455</em><i style="height:45px"></i><span>jul</span></div><div><em>490</em><i style="height:49px"></i><span>ago</span></div><div class="x"><em>≈ 560</em><i style="height:56px;opacity:.6"></i><span>sep</span></div></div>
+<div class="mini" style="margin-top:4px">Septiembre a este ritmo acaba en ~560 €: +90 € sobre tu media, casi todo restaurantes.</div></div>
+<div class="card"><div class="row"><span class="cap">SIN APUNTAR</span><span class="sp"></span><span class="mini">desde la última captura</span></div>
+<div class="mini" style="margin-top:4px">Lo del día a día no hace falta apuntarlo: al subir la captura de fin de mes se cuadra solo. Si quieres, apunta lo grande:</div>
+<div class="row" style="gap:6px;margin-top:8px"><span class="btn" style="flex:1;text-align:center">＋ gasto</span><span class="btn" style="flex:1;text-align:center">📷 captura</span></div></div>
+<div class="row" style="gap:6px"><span class="btn" style="flex:1;text-align:center;padding:12px">📊 Análisis</span><span class="btn" style="flex:1;text-align:center;padding:12px">💡 Salud financiera</span></div>
+<div class="mini" style="text-align:center;margin-top:6px">Lo antiguo («Apartar», retos, «lo que viene») desaparece: la nómina se edita en Plan.</div></div></div>

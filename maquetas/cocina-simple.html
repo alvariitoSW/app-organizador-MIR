@@ -1,0 +1,159 @@
+<!doctype html><meta charset=utf-8>
+<title>Cocina simple</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70;--ex:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand) 12%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:10px 12px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.nav div{text-align:center;padding:8px 0;border-radius:11px;border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--ink2)}
+.nav div.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.big{font-size:38px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.mb{display:grid;grid-template-columns:18px 1fr 64px;gap:6px;align-items:center;font-size:11.5px;margin-top:5px}
+.mb .t{height:8px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}.mb .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.mb b{text-align:right;font-weight:800}
+.busca{display:flex;align-items:center;gap:8px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card));margin-bottom:8px;font-weight:800}
+.mom{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mom:first-of-type{border-top:0}.mom b{font-size:13px}.mom .s{font-size:11px;color:var(--ink2)}
+.add{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg2);font-weight:900;color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.chip.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+/* barras de semana */
+.wk{display:flex;gap:6px;align-items:flex-end;height:96px;position:relative;margin-top:8px}
+.wk>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:3px}
+.wk i{display:block;border-radius:4px 4px 0 0;background:var(--p)}.wk .x i{background:var(--ex)}.wk .v i{background:var(--line)}
+.wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}
+.wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.wk .obj b{position:absolute;right:0;top:-13px;font-size:9px;color:var(--ink2)}
+.dots{display:flex;gap:6px;margin-top:4px}.dots span{flex:1;text-align:center;font-size:10px;font-weight:900}
+/* buscador */
+.q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:14px;border:1.5px solid var(--brand);background:var(--bg2);font-size:15px;font-weight:700}
+.res{display:grid;grid-template-columns:30px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res .e{font-size:20px;text-align:center}.res b{font-size:13px;display:block}.res .s{font-size:10.5px;color:var(--ink2)}
+.res .k{text-align:right;font-size:12px;font-weight:900}.res .k small{display:block;font-size:10.5px;color:var(--p);font-weight:900}
+.src{font-size:9.5px;font-weight:900;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.src.m{background:#0f3d2a;color:#34d399}.src.f{background:#3b2410;color:#fbbf24}.src.t{background:#1d2a50;color:#9fb5ff}
+.more{text-align:center;font-size:12px;font-weight:800;color:var(--brand);padding:8px 0 2px}
+/* menú */
+.tipo{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.tipo:first-of-type{border-top:0}.tipo .e{font-size:20px;grid-row:span 2}.tipo b{font-size:13.5px}.tipo .k{font-weight:900;font-size:14px;text-align:right}
+.stk{display:flex;height:7px;border-radius:5px;overflow:hidden;gap:2px;grid-column:2/4}.stk i{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.days div{border:1px solid var(--line);border-radius:10px;padding:5px 0;text-align:center;font-size:9.5px;color:var(--ink2);font-weight:800;background:var(--bg2)}
+.days div b{display:block;font-size:16px}.days div.hoy{border-color:var(--brand)}
+/* cocina */
+.pl{display:grid;grid-template-columns:28px 1fr auto;gap:2px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}.pl .e{font-size:18px;grid-row:span 2}.pl b{font-size:13px}.pl .s{font-size:10.5px;color:var(--ink2)}
+.btn{padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;grid-row:span 2}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.hb{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.hb .t{height:12px;display:flex;gap:3px}.hb .t i{display:block;width:20px;height:12px;border-radius:3px;background:var(--p)}.hb .t i.o{background:var(--line)}
+.tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px}.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+/* compra */
+.pas{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;font-weight:800}
+.pas .n{font-size:11px;color:var(--ink2);font-weight:800}
+.it{display:grid;grid-template-columns:22px 58px 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13px}
+.it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ink2)}.it .ck.on{background:var(--ok);border-color:var(--ok)}
+.it .qt{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}.it .w{font-size:10.5px;color:var(--ink2)}
+.it.done{opacity:.45;text-decoration:line-through}
+.prog{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:6px}.prog i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.leg{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px}
+
+.lbl{white-space:nowrap}
+.meal{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0}.meal .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg2);font-size:18px}
+.meal b{font-size:13.5px;display:block}.meal .s{font-size:11px;color:var(--ink2)}
+.acts{display:flex;gap:4px}.acts span{padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);font-size:11px;font-weight:800}
+.acts span.ok{border-color:var(--ok);color:var(--ok)}
+.wrow{display:grid;grid-template-columns:34px repeat(3,1fr);gap:4px;align-items:center;margin-top:4px;font-size:11px}
+.wrow>span{font-weight:900;color:var(--ink2);font-size:10px}.wrow>div{padding:6px 6px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow>div.cz{border-color:color-mix(in srgb,var(--p) 60%,var(--line));background:color-mix(in srgb,var(--p) 14%,var(--bg2))}
+.wrow>div.hoy{outline:1.5px solid var(--brand)}
+.nv{display:grid;grid-template-columns:26px 1fr 90px 44px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.nv:first-of-type{border-top:0}.nv .d{display:flex;gap:3px}.nv .d i{display:block;flex:1;height:10px;border-radius:3px;background:var(--ok)}
+.nv .d i.w{background:var(--warn)}.nv .d i.x{background:var(--ex)}.nv .d i.o{background:var(--line)}
+.nv b.r{text-align:right;font-size:11px}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}.seg3 div{text-align:center;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg3 div b{display:block;font-size:15px;color:var(--ink)}.seg3 div.on{border:1.5px solid var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 12%,var(--bg2))}
+.tk{display:grid;grid-template-columns:22px 1fr auto 20px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.tk:first-of-type{border-top:0}.tk .q{font-weight:900;color:var(--ink2);font-size:11px}.tk .st{color:var(--warn)}
+.foto{height:120px;border-radius:14px;border:1.5px dashed var(--line);display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--bg2) 0 10px,transparent 10px 20px);font-size:12px;color:var(--ink2);font-weight:800}
+.dots7{display:flex;gap:6px;margin-top:8px}.dots7 div{flex:1;text-align:center;font-size:10px;color:var(--ink2);font-weight:800}
+.dots7 i{display:block;height:26px;border-radius:8px;margin-bottom:3px;background:var(--line)}.dots7 i.ok{background:var(--p)}.dots7 i.mas{background:var(--ex)}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1}.big small{font-size:14px;color:var(--ink2);font-weight:700}
+.goal{display:grid;grid-template-columns:38px 1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0}.goal .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:var(--bg2);grid-row:span 2}
+.goal b{font-size:13.5px}.goal .v{text-align:right;font-weight:900;font-size:14px}.goal .s{font-size:11px;color:var(--ink2);grid-column:2/4}
+.pb{grid-column:2/4;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.pb i{display:block;height:100%;border-radius:5px}
+.stk{display:flex;gap:2px;height:18px;border-radius:7px;overflow:hidden;margin-top:8px}.stk i{display:block}
+.pct{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.pct:first-of-type{border-top:0}.pct i{width:12px;height:12px;border-radius:3px;display:block}.pct b{font-variant-numeric:tabular-nums}
+.pct span.s{display:block;font-size:10.5px;color:var(--ink2)}
+.ln{position:relative;height:96px;margin-top:8px}
+.fld2{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.1em;color:var(--ink2);margin-top:8px}
+.fld2 div{padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:800;color:var(--ink);letter-spacing:0}
+</style>
+<div class="wrap"><div class="lbl">1 · Hoy: qué te toca comer y un toque para decir cómo fue</div><div class="ab"><div class="nav"><div class="on">Hoy</div><div class="">Semana</div><div class="">Nevera</div><div class="">Compra</div></div>
+<div class="card"><div class="row"><span class="cap">HOY TE TOCA</span><span class="sp"></span><span class="mini">miércoles</span></div>
+<div class="meal"><span class="ic">☕</span><div><b>Porridge + café</b><span class="s">desayuno tipo A · lo tienes</span></div><div class="acts"><span class="ok">✓</span></div></div>
+<div class="meal"><span class="ic">🍲</span><div><b>Lentejas con verduras</b><span class="s">de la nevera · ración 2 de 4 · aguantan hasta el jueves</span></div><div class="acts"><span>✓</span><span>±</span></div></div>
+<div class="meal"><span class="ic">🍳</span><div><b>Tortilla francesa + ensalada</b><span class="s">10 min · tienes todo</span></div><div class="acts"><span>✓</span><span>±</span></div></div>
+<div class="mini" style="margin-top:6px">✓ = lo que tocaba · ± = más, menos, otra cosa o comí fuera. Sin pesar nada.</div></div>
+<div class="card"><div class="row"><span class="cap">ESTA SEMANA, ¿CÓMO VAS?</span><span class="sp"></span><span class="mini">sin pesar: por comidas</span></div>
+<div class="dots7"><div><i class="ok"></i>L</div><div><i class="ok"></i>M</div><div><i class="mas"></i>X</div><div><i></i>J</div><div><i></i>V</div><div><i></i>S</div><div><i></i>D</div></div>
+<div class="mini" style="margin-top:6px"><span class="leg" style="background:var(--p);margin-left:0"></span>según el plan <span class="leg" style="background:var(--ex)"></span>me pasé (apuntado) · 2 de 3 días según el plan</div></div>
+<div class="card" style="border-color:color-mix(in srgb,var(--warn) 45%,var(--line))"><div class="row"><span style="font-size:20px">⏳</span><div><b>El pollo caduca mañana</b><div class="mini">cocínalo hoy: te propongo «pollo al horno con patatas» para hoy y mañana</div></div></div></div>
+<div class="row" style="gap:6px"><span class="btn" style="flex:1;text-align:center;padding:12px">🔍 Apuntar algo</span><span class="btn" style="flex:1;text-align:center;padding:12px">🍔 Comí fuera</span></div></div></div><div class="wrap"><div class="lbl">2 · Semana: la app la monta con tu nevera; tú solo cambias lo que no quieras</div><div class="ab"><div class="nav"><div class="">Hoy</div><div class="on">Semana</div><div class="">Nevera</div><div class="">Compra</div></div>
+<div class="card"><div class="row"><span class="cap">TU SEMANA</span><span class="sp"></span><span class="mini">📅 30 sep – 6 oct</span></div>
+<div class="wrow"><span></span><span>DESAYUNO</span><span>COMIDA</span><span>CENA</span></div>
+<div class="wrow"><span>LUN</span><div>☕ Porridge</div><div class="cz">🍲 Lentejas</div><div>🍳 Tortilla</div></div>
+<div class="wrow"><span>MAR</span><div>☕ Porridge</div><div class="cz">🍲 Lentejas</div><div>🐟 Merluza</div></div>
+<div class="wrow"><span>MIÉ</span><div class="hoy">☕ Porridge</div><div class="cz hoy">🍲 Lentejas</div><div class="hoy">🍳 Tortilla</div></div>
+<div class="wrow"><span>JUE</span><div>🥪 Tostadas</div><div>🩺 táper</div><div>—</div></div>
+<div class="wrow"><span>VIE</span><div>—</div><div class="cz">🍗 Pollo horno</div><div>🥗 Ensalada</div></div>
+<div class="wrow"><span>SÁB</span><div>🥪 Tostadas</div><div class="cz">🍗 Pollo horno</div><div>🍕 fuera</div></div>
+<div class="wrow"><span>DOM</span><div>🥪 Tostadas</div><div>🍛 Arroz</div><div>🍳 Revuelto</div></div>
+<div class="mini" style="margin-top:6px"><span class="leg" style="background:var(--p);margin-left:0"></span>cocinado en tanda (una vez, varios días) · jueves: guardia (táper)</div></div>
+<div class="card"><div class="row"><span class="cap">CON LO QUE TIENES</span><span class="sp"></span><b class="ok">17 de 19 comidas</b></div>
+<div class="mini" style="margin-top:4px">Para las 2 que faltan: <b style="color:var(--ink)">merluza, lechuga</b> → a la compra</div></div>
+<div class="row" style="gap:6px"><span class="btn p" style="flex:1;text-align:center;padding:12px">✨ Móntamela otra vez</span><span class="btn" style="padding:12px">🧩 Mis tipos</span></div>
+<div class="mini" style="text-align:center;margin-top:6px">Toca una casilla para cambiarla por cualquier plato o alimento.</div></div></div><div class="wrap"><div class="lbl">3 · Nevera: lo cocinado con los días que aguanta, y lo fresco que caduca</div><div class="ab"><div class="nav"><div class="">Hoy</div><div class="">Semana</div><div class="on">Nevera</div><div class="">Compra</div></div>
+<div class="card"><div class="row"><span class="cap">COCINADO</span><span class="sp"></span><span class="mini">días en la nevera</span></div>
+<div class="nv"><span>🍲</span><span><b>Lentejas</b> · 2 raciones</span><div class="d"><i></i><i></i><i class="w"></i><i class="o"></i></div><b class="r warn">hasta jue</b></div>
+<div class="nv"><span>🍗</span><span><b>Pollo al horno</b> · 3 rac.</span><div class="d"><i></i><i class="o"></i><i class="o"></i><i class="o"></i></div><b class="r">hasta sáb</b></div>
+<div class="nv"><span>🍚</span><span><b>Arroz blanco</b> · 1 rac.</span><div class="d"><i class="x"></i></div><b class="r ex">hoy</b></div>
+<div class="mini" style="margin-top:6px">Cada cuadro es un día desde que lo cocinaste. Lo que no llegues a comer, congélalo antes de ⏳.</div></div>
+<div class="card"><div class="row"><span class="cap">FRESCO</span><span class="sp"></span><span class="mini">del ticket del lunes</span></div>
+<div class="nv"><span>🍗</span><span>Pechuga de pollo · 1 kg</span><span class="mini">caduca mañana</span><b class="r ex">⏳</b></div>
+<div class="nv"><span>🥬</span><span>Espinacas · 1 bolsa</span><span class="mini">3 días</span><b class="r warn"></b></div>
+<div class="nv"><span>🥚</span><span>Huevos · 12</span><span class="mini">2 semanas</span><b class="r"></b></div>
+<div class="mini" style="margin-top:4px">+ 14 de despensa (arroz, pasta, legumbres, latas…) ›</div></div>
+<div class="row" style="gap:6px"><span class="btn p" style="flex:1;text-align:center;padding:12px">📷 Foto del ticket</span><span class="btn" style="flex:1;text-align:center;padding:12px">＋ A mano</span></div></div></div><div class="wrap"><div class="lbl">4 · Cocinar: hoy cocino para 1, 2 o varios días (y cuánto aguanta)</div><div class="ab"><div class="nav"><div class="">Hoy</div><div class="on">Semana</div><div class="">Nevera</div><div class="">Compra</div></div>
+<div class="row" style="margin-bottom:6px"><span class="mini">‹ Semana</span><b style="font-size:16px">🍳 Hoy cocino…</b></div>
+<div class="seg3"><div>para hoy<b>1 día</b></div><div class="on">hoy y mañana<b>2 días</b></div><div>en tanda<b>3–4 días</b></div></div>
+<div class="card" style="margin-top:8px"><div class="row"><span class="cap">TE SALEN</span><span class="sp"></span><span class="mini">con lo que tienes · aguanta</span></div>
+<div class="meal"><span class="ic">🍗</span><div><b>Pollo al horno con patatas</b><span class="s">4 raciones · 50 min · usa el pollo que caduca</span></div><span class="mini">3–4 días</span></div>
+<div class="meal"><span class="ic">🍝</span><div><b>Macarrones con carne y tomate</b><span class="s">4 raciones · 30 min</span></div><span class="mini">3–4 días</span></div>
+<div class="meal"><span class="ic">🐟</span><div><b>Merluza al horno</b><span class="s">2 raciones · 25 min · falta merluza</span></div><span class="mini">1–2 días</span></div></div>
+<div class="card"><div class="row"><span class="cap">SE COLOCA ASÍ</span><span class="sp"></span><span class="mini">pollo al horno · 4 rac.</span></div>
+<div class="wrow"><span>HOY</span><div class="cz">comida</div><div class="cz">cena</div><div></div></div>
+<div class="wrow"><span>JUE</span><div class="cz">comida</div><div class="cz">cena</div><div></div></div>
+<div class="mini" style="margin-top:6px">Aguanta hasta el sábado en la nevera; congelado, 3 meses.</div></div>
+<div class="btn p" style="text-align:center;padding:13px;border-radius:13px">✓ Lo cocino · ponlo en la semana</div></div></div><div class="wrap"><div class="lbl">5 · Ticket de Mercadona por foto: a la nevera y tus habituales</div><div class="ab"><div class="nav"><div class="">Hoy</div><div class="">Semana</div><div class="">Nevera</div><div class="on">Compra</div></div>
+<div class="row" style="margin-bottom:6px"><span class="mini">‹ Compra</span><b style="font-size:16px">🧾 El ticket</b></div>
+<div class="foto">📷 Foto del ticket · leído en el móvil, sin internet</div>
+<div class="card" style="margin-top:8px"><div class="row"><span class="cap">HE LEÍDO</span><span class="sp"></span><b>19 productos · 58,40 €</b></div>
+<div class="tk"><span>🥛</span><span>Leche semidesnatada</span><span class="q">6 × 0,89</span><span class="st">★</span></div>
+<div class="tk"><span>🍗</span><span>Pechuga de pollo fileteada</span><span class="q">1,02 kg</span><span class="st">★</span></div>
+<div class="tk"><span>🥚</span><span>Huevos frescos L</span><span class="q">12 ud</span><span class="st">★</span></div>
+<div class="tk"><span>🍌</span><span>Plátano de Canarias</span><span class="q">0,86 kg</span><span class="st"></span></div>
+<div class="tk"><span>❓</span><span style="color:var(--warn)">«HAC. SALSA TOM. FR»</span><span class="q">1,15 €</span><span>✎</span></div>
+<div class="mini" style="margin-top:6px">★ = lo compras siempre: va a tu lista habitual. Lo que no entiendo, lo corriges con ✎.</div></div>
+<div class="row" style="gap:6px"><span class="btn p" style="flex:1;text-align:center;padding:12px">✓ A la nevera (19)</span><span class="btn" style="flex:1;text-align:center;padding:12px">★ Lista habitual</span></div>
+<div class="mini" style="text-align:center;margin-top:6px">Y el gasto (58,40 €) entra en Dinero · súper.</div></div></div>
