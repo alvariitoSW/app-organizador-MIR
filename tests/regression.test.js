@@ -6424,6 +6424,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 4 · aplicar lo escribe de verdad: una toma con «comida» guardada apunta a un
     // mealId, y si no se suelta ese enlace seguiría mandando la comida vieja
     await gotoTab('types');
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'montar'; P.render(); });  // Menú v2 está en «Más formas de montar»
     await page.waitForTimeout(350);
     await page.click('[data-a="types-vista"][data-v="auto"]');
     await page.waitForTimeout(450);
@@ -6971,7 +6972,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // compra dice qué semana sale de lo que hay en casa. La lista nativa de 19 nombres sin kcal se va.
   {
     await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} };
-      P.ui.tab = 'types'; P.ui.typesVista = ''; P.save(); P.render(); });
+      P.ui.tab = 'types'; P.ui.typesVista = 'montar'; P.save(); P.render(); });
     await page.waitForTimeout(200);
     const puerta = await page.$('[data-a="types-vista"][data-v="semana"]');
     if (puerta) await puerta.click();
@@ -8218,6 +8219,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // 2) y se puede volver a vaciar a mano desde «Menú», conduciendo la pantalla
     await gotoTab('types');
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'montar'; P.render(); });  // Menú v2 está en «Más formas de montar»
     await page.waitForTimeout(250);
     await page.evaluate(() => { const P = window.PG, D = P.DEFAULTS();
       P.store.dishes = JSON.parse(JSON.stringify(D.dishes));
