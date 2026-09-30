@@ -90,7 +90,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       await page.click('[data-a="nav-comer"]');
       await page.waitForTimeout(100);
       if (tab === 'types') await page.click('#calModes button[data-t="types"]');
-      else if (tab === 'shop') await page.click('#calModes button[data-t="shop"]');
+      else if (tab === 'shop') {
+        await page.click('#calModes button[data-t="shop"]');
+        /* v2 abre solo el primer pasillo: estas pruebas miran líneas de todos, así que «ver todo» */
+        await page.waitForTimeout(100);
+        if (!(await page.evaluate(() => !!window.PG.ui.compraTodo))) { const vt = await page.$('[data-a="compra-todo"]'); if (vt) await vt.click(); }
+      }
       else if (tab === 'batches') {
         await page.click('#calModes button[data-v="cocina-panel"]');
         await page.waitForTimeout(100);
@@ -1059,14 +1064,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoFood('');
   await page.waitForTimeout(150);
   const comidaHero = await page.evaluate(() => ({
-    ring: !!document.querySelector('#main .ringFill'),
-    macros: document.querySelectorAll('#main .macros .macro').length,
-    etiquetas: [...document.querySelectorAll('#main .macros .mt span')].map(x => x.textContent.trim()),
+    big: !!document.querySelector('#main .h2big'),
+    macros: document.querySelectorAll('#main .h2mac .h2mb').length,
+    etiquetas: [...document.querySelectorAll('#main .h2mac .h2mb > span')].map(x => x.textContent.trim()),
     noOldKpis: !document.querySelector('#main .kpis'),
   }));
-  check('Comida resume el día con un anillo de kcal y los tres macros, sin los cuatro KPI de antes',
-    comidaHero.ring && comidaHero.macros === 3 && comidaHero.noOldKpis &&
-    comidaHero.etiquetas.join('|') === 'proteína|carbohidratos|grasa', JSON.stringify(comidaHero));
+  check('Comida resume el día con las kcal contra el objetivo y los tres macros, sin los cuatro KPI de antes',
+    comidaHero.big && comidaHero.macros === 3 && comidaHero.noOldKpis &&
+    comidaHero.etiquetas.join('|') === 'P|H|G', JSON.stringify(comidaHero));
 
   // 37) Comida: escanear / a mano / mis productos ya no viven en la portada, sino como modos de
   // «apuntar comida»; la portada no enseña ninguno de sus formularios
@@ -2739,29 +2744,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Estas pruebas encadenan gestos a propósito. La auditoría anterior dejó seis fallos con la suite
   // en verde porque cada prueba partía de cero y tocaba un solo camino; aquí se navega de verdad.
 
-  // 45) la portada de Comida: anillo, cifras (no barras) para lo que no es progreso, la línea de
-  // micros, la barra de buscar como acción principal y TRES puertas — ni formulario ni seis fichas
+  // 45) la portada de Comida (v2): lo que llevas contra el objetivo con P/H/G, lo de hoy por momentos
+  // en la primera pantalla, la línea de micros, buscar como acción principal, la semana en barras y
+  // las tres despensas en una fila — ni formulario ni seis fichas
   await gotoFood('');
   const portadaComida = await page.evaluate(() => ({
-    ring: !!document.querySelector('#main .ringFill'),
-    macros: document.querySelectorAll('#main .macros .macro').length,
-    cifras: document.querySelectorAll('#main .dosdatos b').length,
-    // "te quedan" y "cocinado hoy" NO pueden ser barras: no son progreso hacia nada
-    cifrasSinBarra: !document.querySelector('#main .dosdatos .fbar'),
-    semana: document.querySelectorAll('#main .semd').length,
+    big: !!document.querySelector('#main .h2big'),
+    macros: [...document.querySelectorAll('#main .h2mac .h2mb > span')].map((x) => x.textContent).join('|'),
+    momentos: document.querySelectorAll('#main .h2mom').length,
+    semana: document.querySelectorAll('#main .h2wk > button').length,
     buscaz: document.querySelectorAll('#main .buscaz').length,
-    puertas: document.querySelectorAll('#main .puerta').length,
+    despensas: [...document.querySelectorAll('#main .h2chips [data-a="food-vista"]')].map((x) => x.dataset.v).filter((v) => /platos|nevera|alimentos/.test(v)).length,
     micros: document.querySelectorAll('#main .microlinea .pts i').length,
-    // los micros ya no ocupan nueve casillas en la portada, y apuntar no vive aquí
     sinCasillasMicro: !document.querySelector('#main .micros .mic'),
     sinFormulario: !document.getElementById('fbQ') && !document.getElementById('foodNewNombre'),
     botones: document.querySelectorAll('#main button').length,
+    alto: Math.round(document.querySelector('#main').scrollHeight),
   }));
-  check('la portada de Comida es anillo + cifras + micros en una línea + buscar + tres puertas',
-    portadaComida.ring && portadaComida.macros === 3 && portadaComida.cifras === 2 &&
-    portadaComida.cifrasSinBarra && portadaComida.semana === 7 && portadaComida.buscaz === 1 &&
-    portadaComida.puertas === 3 && portadaComida.micros === 9 && portadaComida.sinCasillasMicro &&
-    portadaComida.sinFormulario && portadaComida.botones < 35, JSON.stringify(portadaComida));
+  check('la portada de Comida: P/H/G contra el objetivo, lo de hoy por momentos, micros en una línea, buscar, la semana y las tres despensas',
+    portadaComida.big && portadaComida.macros === 'P|H|G' && portadaComida.momentos >= 3 &&
+    portadaComida.semana === 7 && portadaComida.buscaz === 1 && portadaComida.despensas === 3 &&
+    portadaComida.micros === 9 && portadaComida.sinCasillasMicro && portadaComida.sinFormulario && portadaComida.botones < 35,
+    JSON.stringify(portadaComida));
 
   // 46) el buscador es LA puerta: sin escribir no hay lista larga, se escribe y sale agrupado por
   // tipo; tocar el nombre abre la hoja de cantidad, se cambia la ración y la toma entra con ella
@@ -2786,11 +2790,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     return r ? r.dataset.v : null;
   });
   const agrupado = await page.evaluate(() => ({
-    grupos: Array.prototype.map.call(document.querySelectorAll('#main .grp'), (x) => x.textContent),
+    /* v2: una lista por relevancia, con filtros por tipo que dicen cuántos hay de cada uno */
+    grupos: Array.prototype.map.call(document.querySelectorAll('#main .fbchips [data-a="fb-filtro"]'), (x) => x.textContent).filter((t) => /[1-9]/.test(t)),
     filas: document.querySelectorAll('#main .hit').length,
     foco: document.activeElement.id,
   }));
-  check('al escribir, los resultados salen agrupados por tipo y el campo no pierde el foco',
+  check('al escribir, los resultados salen con filtros por tipo (con cuántos hay) y el campo no pierde el foco',
     agrupado.grupos.length >= 2 && agrupado.filas > 0 && agrupado.foco === 'fbQ' && !!primerPlatoCm,
     JSON.stringify(agrupado));
 
@@ -2929,38 +2934,32 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     (!platoAntojo || trasAntojo.kcal === kcalAntesAntojo + trasAntojo.unaRacion),
     JSON.stringify({ antojoTodos, antojoProt, antojoLimpio, kcalAntesAntojo, trasAntojo }));
 
-  // 47e) la cadena de la portada: Compra, Menú y Comida eran tres destinos que no se nombraban
-  // entre ellos, aunque el código ya los encadenaba (la compra sale de las tandas y las tandas del
-  // menú de cada tipo de día). Ahora eso se ve, con sus cifras, y cada eslabón es una puerta.
+  // 47e) Menú v2: las tres formas de montar (rápido y sano, prototipos, por macros) llevan a su
+  // pantalla, la semana es una cuadrícula de 21 casillas y «pasar a la compra» lleva a la compra
   {
-    await gotoFood('');
-    const cadena = await page.evaluate(() => {
-      const esl = [...document.querySelectorAll('#main .cadena .eslabon')];
-      return {
-        n: esl.length,
-        titulos: esl.map((e) => e.querySelector('b').textContent),
-        // cada eslabón lleva cifras de verdad, no una etiqueta suelta
-        cifras: esl.map((e) => [...e.querySelectorAll('em')].map((x) => x.textContent)),
-      };
-    });
-    // y llevan donde dicen, uno por uno, volviendo a la portada entre medias
+    await gotoTab('types');
+    await page.evaluate(() => { const P = window.PG; P.ui.typesVista = ''; P.render(); });
+    await page.waitForTimeout(200);
+    const menu = await page.evaluate(() => ({
+      formas: [...document.querySelectorAll('#main .mway')].map((e) => e.dataset.v),
+      casillas: document.querySelectorAll('#main .mgrid > button').length,
+      prot: document.querySelectorAll('#main .mprot > button').length,
+    }));
     const adonde = [];
-    for (const cls of ['m', 'c', 'k']) {
-      // si la cadena no está, esta prueba tiene que FALLAR, no tumbar la suite entera con un
-      // timeout de 30 s que impide ver el resto
-      const b = await page.$(`#main .cadena .eslabon.${cls}`);
+    for (const v of ['rapido', 'protos', 'macros']) {
+      const b = await page.$(`#main .mway[data-v="${v}"]`);
       if (!b) { adonde.push('(no está)'); continue; }
-      await b.click();
-      await page.waitForTimeout(280);
-      adonde.push(await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.foodVista || '')));
-      await page.click('.subcab [data-a="nav-comer"], .subcab [data-a="food-vista"][data-v=""]');
-      await page.waitForTimeout(220);
+      await b.click(); await page.waitForTimeout(200);
+      adonde.push(await page.evaluate(() => window.PG.ui.typesVista + ':' + !!document.querySelector('#main .subcab .volver')));
+      await page.click('#main .subcab .volver'); await page.waitForTimeout(200);
     }
-    check('la portada encadena menú → cocina → compra, con cifras, y cada eslabón lleva a su pantalla',
-      cadena.n === 3 && cadena.titulos.join('|') === 'Menú|Cocina|Compra' &&
-      cadena.cifras.every((c) => c.length >= 2 && c.every((x) => /\d/.test(x))) &&
-      adonde.join('|') === 'types/|food/cocina-panel|shop/',
-      JSON.stringify({ cadena, adonde }));
+    const aCompra = await page.$('#main [data-a="tab"][data-t="shop"]');
+    if (aCompra) { await aCompra.click(); await page.waitForTimeout(250); }
+    const tab = await page.evaluate(() => window.PG.ui.tab);
+    check('Menú: tres formas de montar que llevan a su pantalla y vuelven, 21 casillas, proteína por día y «pasar a la compra»',
+      menu.formas.join('|') === 'rapido|protos|macros' && menu.casillas === 21 && menu.prot === 7 &&
+      adonde.join('|') === 'rapido:true|protos:true|macros:true' && tab === 'shop',
+      JSON.stringify({ menu, adonde, tab }));
   }
 
   // 47f) la compra: por secciones, con el origen de cada cosa, y marcar actualiza la barra sin
@@ -3150,8 +3149,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // falta en una lista de verdad (secuencia: se mira la lista antes y después del toque)
   await gotoFood('cocinar');
   const platosQueSalen = await page.evaluate(() => ({
-    listos: document.querySelectorAll('#main .idea [data-a="food-cocina"]').length,
-    total: document.querySelectorAll('#main .idea').length,
+    listos: document.querySelectorAll('#main .cofila [data-a="food-cocina"]').length,
+    total: document.querySelectorAll('#main .cofila, #main .idea').length,
     aLaCompra: document.querySelectorAll('#main [data-a="cocinar-compra"]').length,
     pestanas: document.querySelectorAll('#main .pestb').length,
   }));
@@ -3173,7 +3172,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // pueden comprar (nada de "933,33 g de patata"), y los pasos se recorren de uno en uno
   await gotoFood('cocinar');
   const platoCocinaCm = await page.evaluate(() => {
-    const b = document.querySelector('#main .idea [data-a="food-cocina"]');
+    const b = document.querySelector('#main .cofila [data-a="food-cocina"]');
     return b ? b.dataset.id : null;
   });
   await page.click(`[data-a="food-cocina"][data-id="${platoCocinaCm}"]`);
@@ -3319,16 +3318,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await gotoFood('');
     const diaMic = await page.evaluate(() => ({
-      macros: [...document.querySelectorAll('#main .macros .mt span')].map((x) => x.textContent.trim()),
+      macros: [...document.querySelectorAll('#main .h2mac .h2mb > span')].map((x) => x.textContent.trim()),
       puntos: document.querySelectorAll('#main .microlinea .pts i').length,
       casillas: document.querySelectorAll('#main .micros .mic').length,
       linea: (document.querySelector('#main .microlinea .tx small') || {}).textContent || '',
-      puertas: [...document.querySelectorAll('#main .puerta b')].map((x) => x.textContent.trim()),
+      puertas: [...document.querySelectorAll('#main .h2chips [data-a="food-vista"]')].map((x) => x.dataset.v).filter((v) => /platos|nevera|alimentos/.test(v)),
     }));
     check('la portada del día lleva los tres macros, los micros en una línea y las tres despensas',
-      diaMic.macros.join('|') === 'proteína|carbohidratos|grasa' && diaMic.puntos === 9 &&
+      diaMic.macros.join('|') === 'P|H|G' && diaMic.puntos === 9 &&
       diaMic.casillas === 0 && /corto|por debajo|mitad/.test(diaMic.linea) &&
-      diaMic.puertas.join('|') === 'Mis platos|Mi nevera|Alimentos', JSON.stringify(diaMic));
+      diaMic.puertas.join('|') === 'platos|nevera|alimentos', JSON.stringify(diaMic));
   }
 
   // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre
@@ -6671,12 +6670,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(400);
     const bus = await page.evaluate(() => ({
       filas: document.querySelectorAll('#main .hit').length,
-      grupos: Array.from(document.querySelectorAll('#main .grp')).map((g) => g.textContent),
+      grupos: Array.from(document.querySelectorAll('#main .fbchips [data-a="fb-filtro"]')).map((g) => g.textContent),
       racion: !!document.querySelector('#main .kc.rac b'),
       off: !!document.querySelector('#main [data-a="off-buscar"]'),
     }));
-    check('buscar «pollo» saca genéricos con su ración, Mercadona aparte y Open Food Facts a un toque',
-      bus.filas >= 15 && bus.grupos.some((g) => /Mercadona/.test(g)) && bus.racion && bus.off, JSON.stringify(bus));
+    check('buscar «pollo» saca genéricos con su ración, Mercadona en su filtro y Open Food Facts a un toque',
+      bus.filas >= 8 && bus.grupos.some((g) => /Mercadona\s*[1-9]/.test(g)) && bus.racion && bus.off, JSON.stringify(bus));
 
     const hit = await page.$('#main .hit [data-a="food-abrir"]');
     if (hit) await hit.click();
@@ -6970,7 +6969,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} };
       P.ui.tab = 'types'; P.ui.typesVista = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
-    const puerta = await page.$('.sbpuerta');
+    const puerta = await page.$('[data-a="types-vista"][data-v="semana"]');
     if (puerta) await puerta.click();
     await page.waitForTimeout(200);
     const cop = await page.$('[data-a="sb-copiar"]');
@@ -8923,6 +8922,68 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Comer sano: con el bowl corto de proteína dice cuánto falta, propone extras y «aplicar la mejor» llega a la meta',
       /Te faltan \d+ g de proteína/.test(bw.al) && /Mejor combinación/.test(bw.al) && !trasB.al && trasB.n > 4 &&
       (() => { const m = /Proteína\s*(\d+) \/ 40 g/.exec(trasB.pie); return m && +m[1] >= 38; })(), JSON.stringify({ bw, trasB }));
+  }
+
+  // 219) COMER v2 Y MONTAR COMIDAS, encadenado:
+  // · Hoy: lo apuntado sale arriba (no a 1.052 px) y un plato apuntado suma también hidratos y grasa
+  // · buscador: 8 filas por relevancia con «ver más», «repollo» no sale por «pollo», el filtro Mercadona filtra
+  // · prototipos: dos desayunos y UN toque pone los 7 días; los prototipos sobreviven a recargar
+  // · por macros: proteína → hidratos → grasa llega a la meta de la comida y se pone en la semana
+  // · lo cocinado: apuntar una ración de un plato cocinado la descuenta
+  {
+    const hoyV = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), ds = P.store.dishes.filter((d) => +d.carb > 0);
+      P.store.food.objetivo = { kcal: 2470, prot: 140 }; P.store.food.log[hoy] = [];
+      P.addFoodEntry(hoy, { dishId: ds[0].id, rac: 1, pos: 'comida' });
+      P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); window.scrollTo(0, 0);
+      const cards = [...document.querySelectorAll('#main .card')], lo = cards.filter((c) => /LO DE HOY/.test(c.innerText))[0];
+      return { top: lo ? Math.round(lo.getBoundingClientRect().top) : null, carb: P.foodLog(hoy)[0].carb, h: (document.querySelector('.h2mac') || {}).innerText || '' }; });
+    check('Comer · Hoy: lo apuntado sale en la primera pantalla y un plato suma hidratos y grasa',
+      hoyV.top != null && hoyV.top < 700 && hoyV.carb > 0 && !/H\s*0 \//.test(hoyV.h), JSON.stringify(hoyV));
+
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.fbFiltro = ''; P.ui.fbProt = false; P.render(); });
+    await page.type('#fbQ', 'pollo', { delay: 30 }); await page.waitForTimeout(400);
+    const fb = await page.evaluate(() => ({ filas: document.querySelectorAll('#fbRes .hit').length, mas: !!document.querySelector('#fbRes .fbmas'),
+      nombres: [...document.querySelectorAll('#fbRes .hit .nm b')].map((e) => e.textContent), prot: /g P/.test((document.querySelector('#fbRes .hit .kc') || {}).textContent || ''), foco: document.activeElement.id }));
+    await page.click('[data-a="fb-filtro"][data-f="merca"]'); await page.waitForTimeout(120);
+    const merca = await page.evaluate(() => [...document.querySelectorAll('#fbRes .hit .nm b')].map((e) => e.textContent));
+    await page.evaluate(() => { const P = window.PG; P.ui.fbFiltro = ''; P.ui.foodBusca = ''; P.ui.foodVista = ''; P.render(); });
+    check('buscador: 8 resultados con su proteína y «ver más», sin «repollo», y el filtro Mercadona solo deja Hacendado',
+      fb.filas === 8 && fb.mas && fb.prot && fb.foco === 'fbQ' && !fb.nombres.some((n) => /repollo/i.test(n)) &&
+      merca.length > 0 && merca.every((n) => /Hacendado/.test(n)), JSON.stringify({ fb, merca }));
+
+    const pr = await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} }; P.store.protos = {};
+      P.ui.tab = 'types'; P.ui.typesVista = 'protos'; P.ui.prCls = 'desayuno'; P.ui.prPat = null; P.save(); P.render();
+      return document.querySelectorAll('[data-a="pr-add"]').length; });
+    await page.click('[data-a="pr-add"]'); await page.waitForTimeout(80);
+    await page.click('.mprmas summary'); await page.waitForTimeout(50); await page.click('[data-a="pr-add"]'); await page.waitForTimeout(80);
+    await page.click('[data-a="pr-aplicar"]'); await page.waitForTimeout(150);
+    const prR = await page.evaluate(() => { const P = window.PG, d = P.store.semBase.d, ids = P.store.protos.desayuno;
+      const nombres = ids.map((id) => P.store.meals.find((m) => m.id === id).name);
+      const vuelta = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      return { dias: [0, 1, 2, 3, 4, 5, 6].map((w) => (d[w] && d[w].desayuno && d[w].desayuno.meal) || ''), nombres, vuelta: (vuelta.protos || {}).desayuno || [],
+        letras: [...document.querySelectorAll('.mgrid .LA, .mgrid .LB')].length }; });
+    check('prototipos: con dos desayunos, un toque pone los 7 (diario A, finde B), se ven en la semana y sobreviven a recargar',
+      pr >= 2 && prR.dias.slice(0, 5).every((x) => x === prR.nombres[0]) && prR.dias[5] === prR.nombres[1] && prR.dias[6] === prR.nombres[1] &&
+      prR.vuelta.length === 2 && prR.letras === 7, JSON.stringify({ pr, prR }));
+
+    await page.evaluate(() => { const P = window.PG; P.ui.mDest = { w: 4, c: 'comida' }; P.ui.pm = null; P.ui.typesVista = 'macros'; P.render(); });
+    for (let i = 0; i < 3; i++) { const b = await page.$('.mop.best'); if (b) { await b.click(); await page.waitForTimeout(100); } }
+    const pmR = await page.evaluate(() => { const pm = window.PG.ui.pm; return { obj: pm.obj, txt: [...document.querySelectorAll('.mbul b')].map((e) => e.textContent), sel: Object.keys(pm.sel) }; });
+    await page.click('[data-a="pm-poner"]'); await page.waitForTimeout(150);
+    const vie = await page.evaluate(() => { const P = window.PG, c = P.store.semBase.d[4] && P.store.semBase.d[4].comida; const d = c ? P.store.dishes.find((x) => x.id === c.items[0].id) : null;
+      return d ? { n: d.name, kcal: d.kcal, prot: d.prot, alims: (d.alims || []).length } : null; });
+    const cerca = (v, t) => Math.abs(v - t) <= Math.max(3, t * 0.12);
+    check('por macros: proteína, hidratos y grasa llegan a la meta de la comida y el plato va al viernes',
+      pmR.sel.length === 3 && pmR.txt.length === 3 && pmR.txt.slice(1).every((t) => /✓/.test(t)) && vie && vie.alims === 3 &&
+      cerca(vie.kcal, pmR.obj.kcal * 1.02) && vie.prot >= pmR.obj.p, JSON.stringify({ pmR, vie }));
+
+    const co = await page.evaluate(() => { const P = window.PG, d = P.store.dishes[0], hoy = new Date();
+      P.store.food.cocinado = [{ id: 'c219', dishId: d.id, total: 4, queda: 4, fecha: P.iso(hoy), hasta: P.iso(P.addDays(hoy, 3)) }];
+      P.addFoodEntry(P.iso(hoy), { dishId: d.id, rac: 1, pos: 'cena' });
+      P.ui.tab = 'food'; P.ui.foodVista = 'cocina-panel'; P.ui.cocinaTab = ''; P.render();
+      return { queda: P.store.food.cocinado[0].queda, grises: document.querySelectorAll('.cocq .t i.o').length }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.render(); });
+    check('lo cocinado: apuntar una ración la descuenta y se ve gris en Cocina', co.queda === 3 && co.grises === 1, JSON.stringify(co));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
