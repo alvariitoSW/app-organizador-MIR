@@ -2757,7 +2757,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     semana: document.querySelectorAll('#main .h2wk > button').length,
     buscaz: document.querySelectorAll('#main .buscaz').length,
     despensas: [...document.querySelectorAll('#main .h2chips [data-a="food-vista"]')].map((x) => x.dataset.v).filter((v) => /platos|nevera|alimentos/.test(v)).length,
-    micros: document.querySelectorAll('#main .microlinea .pts i').length,
+    micros: document.querySelectorAll('#main .h2mic6 .v').length,
     sinCasillasMicro: !document.querySelector('#main .micros .mic'),
     sinFormulario: !document.getElementById('fbQ') && !document.getElementById('foodNewNombre'),
     botones: document.querySelectorAll('#main button').length,
@@ -2766,7 +2766,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('la portada de Comida: P/H/G contra el objetivo, lo de hoy por momentos, micros en una línea, buscar, la semana y las tres despensas',
     portadaComida.big && portadaComida.macros === 'P|H|G' && portadaComida.momentos >= 3 &&
     portadaComida.semana === 7 && portadaComida.buscaz === 1 && portadaComida.despensas === 3 &&
-    portadaComida.micros === 9 && portadaComida.sinCasillasMicro && portadaComida.sinFormulario && portadaComida.botones < 35,
+    portadaComida.micros === 6 && portadaComida.sinCasillasMicro && portadaComida.sinFormulario && portadaComida.botones < 35,
     JSON.stringify(portadaComida));
 
   // 46) el buscador es LA puerta: sin escribir no hay lista larga, se escribe y sale agrupado por
@@ -3316,26 +3316,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       conMicros.cortos[0] === 'vd' && conMicros.cortos.indexOf('fo') < 0, JSON.stringify(conMicros));
   }
 
-  // 58) el día lleva los tres macros y los micros en UNA línea de nueve puntos (ya no nueve
+  // 58) el día lleva los tres macros y seis micros clave (calcio, hierro, vit D, B12, fibra, potasio) (ya no nueve
   // casillas en la portada), y las tres puertas de la app de comida
   {
     await gotoFood('');
     const diaMic = await page.evaluate(() => ({
       macros: [...document.querySelectorAll('#main .h2mac .h2mb > span')].map((x) => x.textContent.trim()),
-      puntos: document.querySelectorAll('#main .microlinea .pts i').length,
+      puntos: document.querySelectorAll('#main .h2mic6 .v').length,
       casillas: document.querySelectorAll('#main .micros .mic').length,
-      linea: (document.querySelector('#main .microlinea .tx small') || {}).textContent || '',
+      linea: (document.querySelector('#main .h2mic .mini') || {}).textContent || '',
       puertas: [...document.querySelectorAll('#main .h2chips [data-a="food-vista"]')].map((x) => x.dataset.v).filter((v) => /platos|nevera|alimentos/.test(v)),
     }));
     check('la portada del día lleva los tres macros, los micros en una línea y las tres despensas',
-      diaMic.macros.join('|') === 'P|H|G' && diaMic.puntos === 9 &&
+      diaMic.macros.join('|') === 'P|H|G' && diaMic.puntos === 6 &&
       diaMic.casillas === 0 && /corto|por debajo|mitad/.test(diaMic.linea) &&
       diaMic.puertas.join('|') === 'platos|nevera2|alimentos', JSON.stringify(diaMic));
   }
 
   // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre
   {
-    await page.click('#main .microlinea');
+    await page.click('#main .h2mic');
     await page.waitForTimeout(250);
     const pantallaMicros = await page.evaluate(() => ({
       vista: window.PG.ui.foodVista,
@@ -9225,6 +9225,40 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       rep === 1 && plato && plato.ing >= 4 && plato.kcal > 500, JSON.stringify({ rep, plato }));
     check('¿Qué como?: plato, bowl y bocata salen con lo de la nevera (todo en casa) y «Me lo hago» lo apunta',
       qc.every((x) => x.n >= 2 && x.falta === 0 && x.nombre) && trasQ.n === antesQ + 1 && /^Bowl de/.test(trasQ.ult) && trasQ.vista === '', JSON.stringify({ qc, trasQ }));
+  }
+
+  // 226) HOY CON DETALLE: lo apuntado con frase sale en su fila sin tocar nada; al tocarla, su hoja dice
+  // qué lleva, el reparto de macros y lo que aporta del día; tamaño escala también los micros; se mueve
+  // de comida y se borra; los seis micros de arriba y la pantalla de micros dicen qué falta y con qué
+  {
+    const r = await page.evaluate(() => { const P = window.PG; window.__copia226 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.food.log[P.iso(new Date())] = []; P.store.food.despensa = [];
+      ['leche desnatada, prot p6', 'gouda lonchas', 'mayonesa pequeña', 'baguette sin gluten', 'pollo extrafino', 'barrita rellena lech', 'salmón marinado'].forEach((t) => P.despensaAdd(t, 1, ''));
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render();
+      return { leche: P.fraseLeer('Leche').items.map((x) => x.id).join() }; });
+    await page.fill('#frIn', 'bocata de pollo con queso y mayo'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
+    await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
+    const filas = await page.evaluate(() => ({ n: document.querySelectorAll('#main .h2en').length, txt: (document.querySelector('#main .h2en') || {}).innerText || '',
+      mic: document.querySelectorAll('#main .h2mic6 .v').length, conDato: [...document.querySelectorAll('#main .h2mic6 .v > i')].some((i) => parseFloat(i.style.height) > 0) }));
+    await page.click('#main .h2en'); await page.waitForTimeout(150);
+    const hoja = await page.evaluate(() => { const h = document.querySelector('.fehoja'); return h ? { ing: h.querySelectorAll('.feing').length, mic: h.querySelectorAll('.femic').length, stk: h.querySelectorAll('.festk i').length } : null; });
+    const antes = await page.evaluate(() => { const e = window.PG.foodLog(window.PG.iso(new Date()))[0]; return { kcal: e.kcal, ca: (e.mi || {}).ca }; });
+    await page.click('.fehoja [data-a="fe-more"]'); await page.waitForTimeout(120);
+    const mas = await page.evaluate(() => { const e = window.PG.foodLog(window.PG.iso(new Date()))[0]; return { kcal: e.kcal, ca: (e.mi || {}).ca, rac: e.rac }; });
+    await page.selectOption('.fehoja select', 'cena'); await page.waitForTimeout(100);
+    const p = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date()))[0].p);
+    await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'micros'; P.render(); });
+    const mic = await page.evaluate(() => ({ falta: /LO QUE MÁS TE FALTA/.test(document.querySelector('#main').innerText), con: /en tu nevera/.test(document.querySelector('#main').innerText) }));
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); P.ui.feVer = P.foodLog(P.iso(new Date()))[0].id; P.render(); });
+    await page.click('.fehoja [data-a="fe-borrar"]'); await page.waitForTimeout(120);
+    const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia226; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('frase: «leche» es tu leche (no la barrita de leche) y lo apuntado sale en su fila, con micros arriba',
+      r.leche === 'al-leche-desnatada-con-proteinas' && filas.n === 1 && /Bocata de pollo/.test(filas.txt) && filas.mic === 6 && filas.conDato, JSON.stringify({ r, filas }));
+    check('la hoja de una toma: qué lleva, reparto de macros y lo que aporta; + escala kcal y micros; se mueve y se borra',
+      hoja && hoja.ing === 4 && hoja.mic >= 3 && hoja.stk === 3 && mas.rac === 1.5 && Math.abs(mas.kcal - antes.kcal * 1.5) <= 2 && mas.ca > antes.ca &&
+      p === 'cena' && mic.falta && mic.con && borrado.n === 0 && !borrado.hoja, JSON.stringify({ hoja, antes, mas, p, mic, borrado }));
   }
 
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»

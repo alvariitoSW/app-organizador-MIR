@@ -2581,34 +2581,34 @@ const ALIMENTOS=[
    Facts en directo; esto es la base genérica que funciona sin red. ---- */
 const ALIMENTOS_MAS=[
 /* lo del ticket de Mercadona que no estaba (auditoría con un ticket real de 46 productos) */
-{n:'Fiambre de pavo',e:'🦃',g:'carne',kcal:100,pr:19,ch:2,az:1,fi:0,gr:1.5,sa:1.8,r:[['3 lonchas',45]]},
-{n:'Fiambre de pollo',e:'🐔',g:'carne',kcal:98,pr:17,ch:3,az:1,fi:0,gr:1.8,sa:1.9,r:[['3 lonchas',45]]},
-{n:'Fiambre de lomo adobado',e:'🥓',g:'carne',kcal:125,pr:21,ch:1.5,az:1,fi:0,gr:4,sa:2.2,r:[['3 lonchas',45]]},
-{n:'Lomo embuchado',e:'🥓',g:'carne',kcal:250,pr:40,ch:1,az:0.5,fi:0,gr:10,sa:4.5,r:[['5 lonchas',30]]},
-{n:'Entrecot de ternera',e:'🥩',g:'carne',kcal:210,pr:20,ch:0,az:0,fi:0,gr:14,sa:0.15,r:[['1 filete',250]]},
-{n:'Pechuga de pollo al ajillo',e:'🍗',g:'carne',kcal:140,pr:21,ch:1,az:0,fi:0,gr:6,sa:1.5,r:[['1 ración',150]]},
-{n:'Carrilladas al vino',e:'🥩',g:'preparado',kcal:170,pr:19,ch:3,az:1,fi:0,gr:9,sa:1,r:[['1 ración',250]]},
-{n:'Salmón marinado',e:'🐟',g:'pescado',kcal:180,pr:22,ch:1,az:1,fi:0,gr:10,sa:3,r:[['1 paquete',80]]},
-{n:'Boquerones en vinagre',e:'🐟',g:'pescado',kcal:130,pr:18,ch:0,az:0,fi:0,gr:6,sa:2.5,r:[['1 ración',80]]},
-{n:'Queso gouda',e:'🧀',g:'lacteo',kcal:356,pr:25,ch:0,az:0,fi:0,gr:28,sa:2,r:[['2 lonchas',30]]},
-{n:'Queso feta',e:'🧀',g:'lacteo',kcal:265,pr:14,ch:4,az:4,fi:0,gr:21,sa:2.8,r:[['1 ración',40]]},
-{n:'Queso roquefort',e:'🧀',g:'lacteo',kcal:370,pr:22,ch:0,az:0,fi:0,gr:31,sa:3.6,r:[['1 ración',30]]},
-{n:'Yogur griego ligero',e:'🥛',g:'lacteo',kcal:76,pr:5.5,ch:4,az:4,fi:0,gr:4,sa:0.1,r:[['1 yogur',120]]},
-{n:'Yogur desnatado de fresa',e:'🍓',g:'lacteo',kcal:45,pr:4,ch:6,az:5,fi:0,gr:0.1,sa:0.1,r:[['1 yogur',125]]},
-{n:'Leche desnatada con proteínas',e:'🥛',g:'lacteo',kcal:45,pr:6,ch:5,az:5,fi:0,gr:0.3,sa:0.1,r:[['1 vaso',250]]},
-{n:'Panna cotta',e:'🍮',g:'preparado',kcal:230,pr:3,ch:22,az:20,fi:0,gr:14,sa:0.1,r:[['1 vasito',100]]},
-{n:'Baguette sin gluten',e:'🥖',g:'cereal',kcal:260,pr:4,ch:52,az:3,fi:4,gr:3,sa:1.2,r:[['1 barra',150],['media barra',75]]},
-{n:'Pan de cereales sin gluten',e:'🍞',g:'cereal',kcal:260,pr:5,ch:45,az:3,fi:7,gr:6,sa:1.1,r:[['2 rebanadas',60]]},
-{n:'Tortilla de maíz',e:'🌮',g:'cereal',kcal:220,pr:6,ch:45,az:1,fi:5,gr:3,sa:0.6,r:[['1 tortilla',30]]},
-{n:'Galletas María sin gluten',e:'🍪',g:'cereal',kcal:440,pr:5,ch:75,az:20,fi:2,gr:13,sa:0.5,r:[['4 galletas',30]]},
-{n:'Cookie sin gluten',e:'🍪',g:'cereal',kcal:480,pr:5,ch:65,az:30,fi:2,gr:22,sa:0.6,r:[['1 cookie',40]]},
-{n:'Barrita rellena de leche',e:'🍫',g:'otro',kcal:450,pr:6,ch:60,az:30,fi:2,gr:20,sa:0.4,r:[['1 barrita',30]]},
-{n:'Tahini',e:'🥜',g:'graso',kcal:600,pr:18,ch:10,az:0.5,fi:9,gr:53,sa:0,r:[['1 cucharada',15]]},
-{n:'Nuez pecana',e:'🌰',g:'graso',kcal:690,pr:9,ch:14,az:4,fi:10,gr:72,sa:0,r:[['un puñado',30]]},
-{n:'Salsa piri piri',e:'🌶️',g:'otro',kcal:100,pr:1,ch:15,az:10,fi:1,gr:4,sa:3,r:[['1 cucharada',15]]},
-{n:'Macedonia de verduras',e:'🥫',g:'verdura',kcal:50,pr:2.5,ch:7,az:2,fi:3,gr:0.5,sa:0.6,r:[['1 ración',150]]},
-{n:'Lentejas cocidas',e:'🫘',g:'legumbre',kcal:90,pr:7,ch:12,az:0.5,fi:5,gr:0.5,sa:0.3,r:[['medio bote',200]]},
-{n:'Bebida isotónica',e:'🧃',g:'otro',kcal:24,pr:0,ch:6,az:6,fi:0,gr:0,sa:0.1,r:[['1 botella',500]]},
+{n:'Fiambre de pavo',e:'🦃',g:'carne',kcal:100,pr:19,ch:2,az:1,fi:0,gr:1.5,sa:1.8,fe:.8,ca:10,k:300,mg:22,b12:.4,b6:.3,fo:5,r:[['3 lonchas',45]]},
+{n:'Fiambre de pollo',e:'🐔',g:'carne',kcal:98,pr:17,ch:3,az:1,fi:0,gr:1.8,sa:1.9,fe:.7,ca:10,k:280,mg:22,b12:.3,b6:.35,fo:4,r:[['3 lonchas',45]]},
+{n:'Fiambre de lomo adobado',e:'🥓',g:'carne',kcal:125,pr:21,ch:1.5,az:1,fi:0,gr:4,sa:2.2,fe:1,ca:10,k:350,mg:25,b12:.7,b6:.4,fo:3,r:[['3 lonchas',45]]},
+{n:'Lomo embuchado',e:'🥓',g:'carne',kcal:250,pr:40,ch:1,az:0.5,fi:0,gr:10,sa:4.5,fe:2,ca:15,k:500,mg:30,b12:1.5,b6:.5,fo:3,r:[['5 lonchas',30]]},
+{n:'Entrecot de ternera',e:'🥩',g:'carne',kcal:210,pr:20,ch:0,az:0,fi:0,gr:14,sa:0.15,fe:2.3,ca:10,k:320,mg:22,b12:2.5,b6:.5,fo:7,r:[['1 filete',250]]},
+{n:'Pechuga de pollo al ajillo',e:'🍗',g:'carne',kcal:140,pr:21,ch:1,az:0,fi:0,gr:6,sa:1.5,fe:.6,ca:10,k:330,mg:28,b12:.3,b6:.6,fo:4,r:[['1 ración',150]]},
+{n:'Carrilladas al vino',e:'🥩',g:'preparado',kcal:170,pr:19,ch:3,az:1,fi:0,gr:9,sa:1,fe:2.5,ca:12,k:250,mg:20,b12:2,b6:.3,fo:5,r:[['1 ración',250]]},
+{n:'Salmón marinado',e:'🐟',g:'pescado',kcal:180,pr:22,ch:1,az:1,fi:0,gr:10,sa:3,fe:.6,ca:12,k:250,mg:25,vd:11,b12:3,b6:.3,fo:5,r:[['1 paquete',80]]},
+{n:'Boquerones en vinagre',e:'🐟',g:'pescado',kcal:130,pr:18,ch:0,az:0,fi:0,gr:6,sa:2.5,fe:2,ca:60,k:280,mg:35,vd:5,b12:8,b6:.3,fo:9,r:[['1 ración',80]]},
+{n:'Queso gouda',e:'🧀',g:'lacteo',kcal:356,pr:25,ch:0,az:0,fi:0,gr:28,sa:2,fe:.2,ca:700,k:120,mg:29,vd:.5,b12:1.5,b6:.08,fo:20,r:[['2 lonchas',30]]},
+{n:'Queso feta',e:'🧀',g:'lacteo',kcal:265,pr:14,ch:4,az:4,fi:0,gr:21,sa:2.8,fe:.6,ca:490,k:60,mg:19,b12:1.7,b6:.4,fo:32,r:[['1 ración',40]]},
+{n:'Queso roquefort',e:'🧀',g:'lacteo',kcal:370,pr:22,ch:0,az:0,fi:0,gr:31,sa:3.6,fe:.5,ca:660,k:90,mg:30,b12:.6,b6:.1,fo:49,r:[['1 ración',30]]},
+{n:'Yogur griego ligero',e:'🥛',g:'lacteo',kcal:76,pr:5.5,ch:4,az:4,fi:0,gr:4,sa:0.1,ca:110,k:150,mg:11,b12:.5,b6:.06,fo:7,r:[['1 yogur',120]]},
+{n:'Yogur desnatado de fresa',e:'🍓',g:'lacteo',kcal:45,pr:4,ch:6,az:5,fi:0,gr:0.1,sa:0.1,ca:140,k:170,mg:13,b12:.4,fo:10,r:[['1 yogur',125]]},
+{n:'Leche desnatada con proteínas',e:'🥛',g:'lacteo',kcal:45,pr:6,ch:5,az:5,fi:0,gr:0.3,sa:0.1,ca:160,k:180,mg:13,b12:.5,b6:.04,fo:5,r:[['1 vaso',250]]},
+{n:'Panna cotta',e:'🍮',g:'preparado',kcal:230,pr:3,ch:22,az:20,fi:0,gr:14,sa:0.1,ca:90,k:120,mg:9,b12:.3,r:[['1 vasito',100]]},
+{n:'Baguette sin gluten',e:'🥖',g:'cereal',kcal:260,pr:4,ch:52,az:3,fi:4,gr:3,sa:1.2,fe:1,ca:20,k:100,mg:20,fo:10,r:[['1 barra',150],['media barra',75]]},
+{n:'Pan de cereales sin gluten',e:'🍞',g:'cereal',kcal:260,pr:5,ch:45,az:3,fi:7,gr:6,sa:1.1,fe:2,ca:40,k:200,mg:50,b6:.1,fo:20,r:[['2 rebanadas',60]]},
+{n:'Tortilla de maíz',e:'🌮',g:'cereal',kcal:220,pr:6,ch:45,az:1,fi:5,gr:3,sa:0.6,fe:1.5,ca:80,k:150,mg:60,b6:.2,fo:10,r:[['1 tortilla',30]]},
+{n:'Galletas María sin gluten',e:'🍪',g:'cereal',kcal:440,pr:5,ch:75,az:20,fi:2,gr:13,sa:0.5,fe:1,ca:30,k:100,mg:15,r:[['4 galletas',30]]},
+{n:'Cookie sin gluten',e:'🍪',g:'cereal',kcal:480,pr:5,ch:65,az:30,fi:2,gr:22,sa:0.6,fe:1.5,ca:30,k:150,mg:30,r:[['1 cookie',40]]},
+{n:'Barrita rellena de leche',e:'🍫',g:'otro',kcal:450,pr:6,ch:60,az:30,fi:2,gr:20,sa:0.4,fe:1,ca:150,k:200,mg:30,b12:.2,r:[['1 barrita',30]]},
+{n:'Tahini',e:'🥜',g:'graso',kcal:600,pr:18,ch:10,az:0.5,fi:9,gr:53,sa:0,fe:9,ca:420,k:410,mg:95,b6:.15,fo:98,r:[['1 cucharada',15]]},
+{n:'Nuez pecana',e:'🌰',g:'graso',kcal:690,pr:9,ch:14,az:4,fi:10,gr:72,sa:0,fe:2.5,ca:70,k:410,mg:120,b6:.2,fo:22,r:[['un puñado',30]]},
+{n:'Salsa piri piri',e:'🌶️',g:'otro',kcal:100,pr:1,ch:15,az:10,fi:1,gr:4,sa:3,vc:10,k:150,r:[['1 cucharada',15]]},
+{n:'Macedonia de verduras',e:'🥫',g:'verdura',kcal:50,pr:2.5,ch:7,az:2,fi:3,gr:0.5,sa:0.6,fe:.8,ca:25,k:170,mg:15,vc:8,fo:25,r:[['1 ración',150]]},
+{n:'Lentejas cocidas',e:'🫘',g:'legumbre',kcal:90,pr:7,ch:12,az:0.5,fi:5,gr:0.5,sa:0.3,fe:3.3,ca:19,k:370,mg:36,b6:.18,fo:180,r:[['medio bote',200]]},
+{n:'Bebida isotónica',e:'🧃',g:'otro',kcal:24,pr:0,ch:6,az:6,fi:0,gr:0,sa:0.1,k:12,r:[['1 botella',500]]},
 /* platos caseros que no estaban (auditoría: 13 de 101 comidas habituales no salían en el buscador) */
 {n:'Huevos revueltos',e:'🍳',g:'preparado',kcal:160,pr:10.5,ch:1.5,az:1,fi:1,gr:12.5,sa:0.6,r:[['2 huevos', 120]]},
 {n:'Espaguetis a la carbonara',e:'🍝',g:'preparado',kcal:190,pr:7.5,ch:21,az:1,fi:1,gr:8.5,sa:0.6,r:[['1 plato', 300]]},
@@ -4069,7 +4069,10 @@ function bumpFoodEntry(dateStr,id,delta){
   else if(e.ean){const p=food().eans[e.ean]||e;const g=Math.max(5,(+e.g||0)+(+delta||0));
     const pc=porcionDe(p,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}
   else if(e.k1){const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);e.rac=rac;
-    ['kcal','prot','carb','gresa'].forEach(function(q){e[q]=q==='kcal'?Math.round((+e.k1[q]||0)*rac):Math.round((+e.k1[q]||0)*rac*10)/10;});}
+    ['kcal','prot','carb','gresa'].forEach(function(q){e[q]=q==='kcal'?Math.round((+e.k1[q]||0)*rac):Math.round((+e.k1[q]||0)*rac*10)/10;});
+    /* los micros, la fibra y la sal de lo apuntado con frase escalan con el tamaño */
+    if(e.mi1){const mi={};Object.keys(e.mi1).forEach(function(q){mi[q]=Math.round(e.mi1[q]*rac*100)/100;});e.mi=mi;}
+    if(e.fibra1!=null)e.fibra=Math.round(e.fibra1*rac*10)/10;if(e.sal1!=null)e.sal=Math.round(e.sal1*rac*100)/100;}
   else{const d=dishById(e.dishId)||e;const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);
     e.rac=rac;e.kcal=Math.round((+d.kcal||0)*rac);e.prot=Math.round((+d.prot||0)*rac*10)/10;
     if(d.carb!=null)e.carb=Math.round((+d.carb||0)*rac*10)/10;if(d.fat!=null)e.gresa=Math.round((+d.fat||0)*rac*10)/10;}
@@ -6123,13 +6126,13 @@ function abrirHojaDia(k){
   ui.hojaDia=k;ui.hojaVista='';ui.hojaRec=false;
   if(!store.meta.pulsarVisto){store.meta.pulsarVisto=true;save();}
   render();}
-function cerrarHojaDia(){ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';if(ui.snHoja){ui.snHoja='';ui.sd=null;}}
+function cerrarHojaDia(){ui.feVer='';ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';if(ui.snHoja){ui.snHoja='';ui.sd=null;}}
 function pintaHojaDia(){
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
   const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja)?dinHojaHTML():
-    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():''));
+    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():((ui.tab==='food'&&!ui.foodVista&&ui.feVer)?feHojaHTML():'')));
   /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
   const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
   document.documentElement.classList.toggle('hoja-abierta',!!hoja);
@@ -7622,7 +7625,7 @@ function fraseReescala(fr,tam){
   if(fr.tipo!=='libre'&&fr.tipo!=='tostada')fr.items.forEach(function(x){x.g=Math.max(1,Math.round(x.g*k1/k0));});
   fr.tam=tam;}
 function fraseApuntar(fr,pos){
-  const m=fraseMacros(fr),nom=fraseNombre(fr),T=FR_TIPOS[fr.tipo];
+  const m=fraseMacros(fr),nom=fraseNombre(fr),T0=FR_TIPOS[fr.tipo],a0=fr.tipo==='libre'&&fr.items[0]?alimById(fr.items[0].id):null,T=[a0&&a0.e||T0[0],T0[1]];
   const msg=addFoodEntry(foodCtx().sel,{macro:{nombre:nom,kcal:m.kcal,prot:m.prot,carb:m.carb,gresa:m.gresa,emoji:T[0]},pos:pos});
   /* lo que dijiste, con sus piezas: para «guardar como plato» y para la clasificación */
   const l=foodLog(foodCtx().sel),e=l[l.length-1];
@@ -7630,7 +7633,9 @@ function fraseApuntar(fr,pos){
     /* con sus micronutrientes: sin esto, lo apuntado con una frase dejaba los micros en gris */
     const mi={};fr.items.forEach(function(x){const a=alimById(x.id);if(!a)return;const q=alimEntrada(a,x.g).mi||{};
       Object.keys(q).forEach(function(k){mi[k]=Math.round(((mi[k]||0)+q[k])*100)/100;});});
-    if(Object.keys(mi).length)e.mi=mi;}
+    if(Object.keys(mi).length){e.mi=mi;e.mi1=mi;}
+    let fi=0,sa=0;fr.items.forEach(function(x){const a=alimById(x.id);if(!a)return;const q=alimEntrada(a,x.g);fi+=+q.fibra||0;sa+=+q.sal||0;});
+    e.fibra=e.fibra1=Math.round(fi*10)/10;e.sal=e.sal1=Math.round(sa*100)/100;}
   /* lo de tu nevera se gasta un poco */
   fr.items.forEach(function(x){if(x.casa)despensaGasta(x.casa,pasoDeGasto(despensaS().filter(function(d){return d.nom===x.casa;})[0]||{}));});
   save();return msg;}
@@ -7734,6 +7739,59 @@ function renderQueComo(){
         '<p class="mini" style="margin:4px 0 0">'+(despensaS().length?'Con lo que hay en casa no me sale '+esc(T[2].toLowerCase())+': prueba otra forma o escríbelo en Hoy («'+(tipo==='bocata'?'bocata de…':'plato de…')+'»).':'Tu nevera está vacía: haz la foto del ticket (Nevera → 📷) y aquí salen las ideas.')+'</p>')+'</div>'+
     '<p class="mini" style="margin:0 8px">«Me lo hago» lo apunta en '+esc((POS_TXT[posDeSlot('',horaLocal(new Date()))]||'').toLowerCase())+' y gasta de la nevera lo que usa. «Ajustar» lo abre para cambiar tamaño o cantidades.</p>'+
   '</div>';}
+/* ===================== HOY CON DETALLE =====================
+   «Si añado algo, ¿dónde veo lo que he añadido y sus micronutrientes? Falta información.» Cada toma
+   del día en su fila (sin tocar nada), su hoja al tocarla (qué lleva, reparto de macros, lo que te
+   aporta del día) y seis micros clave arriba. Una sola escala por barra (% de la referencia diaria);
+   azul = vas, naranja = por debajo de la mitad (paleta validada). */
+const MICRO6=[['ca','calcio'],['fe','hierro'],['vd','vit D'],['b12','B12'],['fibra','fibra'],['k','potasio']];
+const FIBRA_REF=25;
+function micro6Pct(k,t,mt){if(k==='fibra')return Math.round((+t.fibra||0)/FIBRA_REF*100);return microPct(k,mt[k]||0);}
+function micro6HTML(sel){
+  const mt=microTotales(sel),t=foodTotals(sel),hay=Object.keys(mt).length>0||t.fibra>0;
+  return '<button class="h2mic" data-a="food-vista" data-v="micros" aria-label="micronutrientes de hoy">'+
+    '<span class="h2mic6">'+MICRO6.map(function(m){const p=hay?micro6Pct(m[0],t,mt):0;
+      return '<span><i class="v'+(hay&&p<50?' lo':'')+'"><i style="height:'+Math.min(100,p)+'%"></i></i><em>'+m[1]+'</em></span>';}).join('')+'</span>'+
+    '<span class="mini">'+(hay?'% de lo que necesitas hoy · <b class="lo">naranja</b> = por debajo de la mitad · toca para ver todos':'aún sin micros: los traen los alimentos de la tabla y lo que apuntas con una frase')+'</span></button>';}
+function feSub(x){
+  /* debajo del nombre: de qué va la toma, en pocas palabras */
+  if(x.frase){const n=x.frase.it.length,c=x.frase.tam&&x.frase.tipo!=='libre'&&x.frase.tipo!=='tostada'?({s:'pequeño',m:'mediano',l:'grande',xl:'muy grande'})[x.frase.tam]:'';
+    return [c,n>1?n+' ingredientes':((alimById(x.frase.it[0][0])||{}).n?x.frase.it[0][1]+' g':'')].filter(Boolean).join(' · ');}
+  if(x.dishId){const d=dishById(x.dishId),n=(d&&d.ingredients||[]).length;return rac(+x.rac||1)+(n?' · '+n+' ingredientes':'');}
+  if(x.alim||x.ean)return x.g+' g'+(x.marca?' · '+x.marca:'');
+  if(x.fuera)return 'fuera · '+(x.rac&&x.rac!==1?'×'+fmt(x.rac):'1 ración');
+  return x.rac&&x.rac!==1?'×'+fmt(x.rac):'';}
+function feFila(x,sel){
+  return '<button class="h2en" data-a="fe-ver" data-id="'+esc(x.id)+'"><span class="e">'+esc(x.emoji||(x.alim&&(alimById(x.alim)||{}).e)||(x.dishId&&(dishById(x.dishId)||{}).icon)||'🍽')+'</span>'+
+    '<span class="n"><b>'+esc(x.nombre)+'</b><span>'+esc(feSub(x))+'</span></span>'+
+    '<span class="k">'+fmtMil(x.kcal||0)+'<small>'+Math.round(+x.prot||0)+' g P</small></span><span class="ch">›</span></button>';}
+function feHojaHTML(){
+  const sel=foodCtx().sel,x=foodLog(sel).filter(function(e){return e.id===ui.feVer;})[0];
+  if(!x){ui.feVer='';return '';}
+  const P=(+x.prot||0)*4,H=(+x.carb||0)*4,G=(+x.gresa||0)*9,T=Math.max(1,P+H+G);
+  let lleva='';
+  if(x.frase){const k=+x.rac||1;lleva=x.frase.it.map(function(y){const a=alimById(y[0]);if(!a)return '';const g=Math.round(y[1]*k);
+    return '<div class="feing"><span>'+esc(a.e||'🍽')+'</span><span>'+esc(a.n)+'</span><span class="r">'+g+' g</span><span class="r">'+alimEntrada(a,g).kcal+' kcal</span></div>';}).join('');}
+  else if(x.dishId){const d=dishById(x.dishId);lleva=(d&&d.ingredients||[]).map(function(t){return '<div class="feing"><span>·</span><span>'+esc(t)+'</span><span></span><span></span></div>';}).join('');}
+  else if(x.alim||x.ean)lleva='<div class="feing"><span>'+esc(x.emoji||'🍽')+'</span><span>'+esc(x.nombre)+'</span><span class="r">'+x.g+' g</span><span class="r">'+x.kcal+' kcal</span></div>';
+  const mi=x.mi||{},ap=ALIM_MICROS.map(function(k){return [ALIM_LABEL[k]||k,microPct(k,mi[k]||0),false];});
+  if(+x.fibra>0)ap.push(['Fibra',Math.round(x.fibra/FIBRA_REF*100),false]);
+  if(+x.sal>0)ap.push(['Sal (límite)',Math.round(x.sal/5*100),true]);
+  const top=ap.filter(function(a){return a[1]>=3;}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  const hora=x.ts?new Date(x.ts):null;
+  return '<div class="hscrim" data-a="fe-cerrar"></div><div class="hoja fehoja" role="dialog" aria-modal="true" aria-label="'+esc(x.nombre)+'"><div class="hgrab" data-a="fe-cerrar" aria-label="cerrar"></div>'+
+    '<div class="row"><span style="font-size:26px">'+esc(x.emoji||'🍽')+'</span><div style="flex:1;min-width:0"><b style="font-size:15px">'+esc(x.nombre)+'</b>'+
+      '<div class="mini">'+esc(POS_TXT[x.p]||x.p||'')+(hora?' · '+hm(hora.getHours()*60+hora.getMinutes()):'')+(feSub(x)?' · '+esc(feSub(x)):'')+'</div></div>'+
+      '<b style="font-size:21px">'+fmtMil(x.kcal||0)+'</b><span class="mini">kcal</span></div>'+
+    '<div class="festk" role="img" aria-label="reparto de las kcal: proteína, hidratos y grasa"><i style="flex:'+Math.round(P)+';background:var(--bp)"></i><i style="flex:'+Math.round(H)+';background:var(--bc)"></i><i style="flex:'+Math.round(G)+';background:var(--bg3)"></i></div>'+
+    '<div class="mini" style="margin-top:4px"><b style="color:var(--bp)">'+Math.round(+x.prot||0)+' g P</b> '+Math.round(P/T*100)+' % · <b style="color:var(--bc)">'+Math.round(+x.carb||0)+' g HC</b> '+Math.round(H/T*100)+' % · <b style="color:var(--bg3)">'+Math.round(+x.gresa||0)+' g grasa</b> '+Math.round(G/T*100)+' % de las kcal</div>'+
+    (lleva?'<div class="hcap">LLEVA</div>'+lleva:'')+
+    (top.length?'<div class="hcap">TE APORTA (DEL DÍA)</div>'+top.map(function(a){return '<div class="femic"><span>'+esc(a[0])+'</span><span class="t"><i class="'+(a[2]?'lo':'')+'" style="width:'+Math.min(100,a[1])+'%"></i></span><b>'+a[1]+' %</b></div>';}).join(''):
+      '<p class="mini" style="margin:10px 0 0">Esta toma no trae micronutrientes (los productos de código de barras no los tienen).</p>')+
+    '<div class="feacts"><span class="fetam"><button data-a="fe-less" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="menos">−</button>tamaño<button data-a="fe-more" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="más">+</button></span>'+
+      '<select data-a="fe-mover" data-id="'+esc(x.id)+'" aria-label="mover a otra comida">'+FOOD_POS.map(function(p){return '<option value="'+p+'"'+(p===x.p?' selected':'')+'>'+esc(p===x.p?'mover a…':(POS_TXT[p]||p))+'</option>';}).join('')+'</select>'+
+      (x.frase?'<button data-a="fe-plato" data-id="'+esc(x.id)+'">guardar plato</button>':'<span></span>')+
+      '<button class="del" data-a="fe-borrar" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'">borrar</button></div></div>';}
 function renderFoodDia(){
   const c=foodCtx(),f=c.f,sel=c.sel,ft=c.ft,ob=c.ob,d=c.d;
   const objK=+ob.kcal||0,objP=+ob.prot||0,obm=objetivoMacros();
@@ -7746,7 +7804,7 @@ function renderFoodDia(){
   const filas=momentos.map(function(p){
     const xs=c.lista.filter(function(x){return (x.p||'comida')===p;}),k=xs.reduce(function(s,x){return s+(+x.kcal||0);},0);
     const pl=plan[p]||[],ab=!!abiertos[p];
-    const sub=xs.length?esc(xs.map(function(x){return x.nombre;}).join(' · ')):
+    const sub=xs.length?(fmtMil(k)+' kcal · '+Math.round(xs.reduce(function(a,x){return a+(+x.prot||0);},0))+' g P'):
       (pl.length?('<span class="h2menu">menú: '+esc(pl.map(function(x){return dishById(x.id).name;}).join(' + '))+' · '+
         totals(pl).kcal+' kcal</span>'):'<span class="mini">nada todavía</span>');
     return '<div class="h2mom'+(ab?' ab':'')+'">'+
@@ -7764,12 +7822,9 @@ function renderFoodDia(){
       (ui.h2Voto&&ui.h2Voto.p===p&&dishById(ui.h2Voto.id)?'<div class="h2vot"><span>¿Qué tal '+esc(dishById(ui.h2Voto.id).name.toLowerCase())+'?</span><span class="sp"></span>'+
         '<button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="-1" aria-label="no me gustó">👎</button><button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="0" aria-label="normal">😐</button>'+
         '<button data-a="h2-voto" data-id="'+esc(ui.h2Voto.id)+'" data-v="1" aria-label="me gustó">👍</button></div>':'')+
-      (ab?'<div class="h2lista">'+xs.map(function(x){
-        const peso=(x.ean||x.alim)?(x.g+' g'):rac(x.rac);
-        return '<div class="logrow"><span class="nm"><b>'+esc(x.emoji?(x.emoji+' '):'')+esc(x.nombre)+'</b><span>'+esc(peso)+' · '+(x.kcal||0)+' kcal · '+Math.round(+x.prot||0)+' g P</span></span>'+
-          '<span class="row" style="gap:2px"><button class="btn s" data-a="fe-less" data-key="'+sel+'" data-id="'+x.id+'" aria-label="menos">−</button>'+
-          '<button class="btn s" data-a="fe-more" data-key="'+sel+'" data-id="'+x.id+'" aria-label="más">+</button>'+
-          '<button class="btn d s" data-a="fe-del" data-key="'+sel+'" data-id="'+x.id+'" aria-label="quitar">×</button></span></div>';}).join('')+'</div>':'')+
+      /* lo apuntado, siempre a la vista: una fila por toma; al tocarla, su hoja con el detalle */
+      (xs.length?'<div class="h2ens">'+xs.map(function(x){return feFila(x,sel);}).join('')+'</div>':'')+
+
     '</div>';}).join('');
   // la semana: kcal apuntadas contra el objetivo, y si llegaste a la proteína
   const ini=mondayOf(d),sem=[];
@@ -7799,7 +7854,7 @@ function renderFoodDia(){
         '<label class="fld" style="flex:0 0 100px">grasa (g)<input type="number" min="0" max="300" step="5" value="'+(+ob.gresa||0)+'" data-a="food-ob" data-k="gresa" placeholder="'+obm.gresa+'"></label>'+
         '<button class="btn s" data-a="food-sugerir">sugerir desde mis menús</button>'+
         '<button class="btn s" data-a="food-vista" data-v="perfil">'+gymIco('balanza','gico sm')+' tú: peso, altura y gluten</button></div>'):'')+
-      microLineaHTML(sel)+'</div>'+
+      micro6HTML(sel)+'</div>'+
     fraseCardHTML()+
     '<div class="qcway mini3">'+QC_TIPOS.map(function(x){return '<button data-a="qc-ir" data-v="'+x[0]+'"><b>'+x[1]+'</b>'+x[2]+'</button>';}).join('')+'</div>'+
     '<button class="buscaz" data-a="food-vista" data-v="buscar">'+gymIco('lupa','gico')+
@@ -8846,8 +8901,20 @@ function renderFoodMicros(){
       '<span class="kc">'+(ricos.kcal||0)+'<small>/100 g</small></span></button>'+
       '<button class="add" data-a="food-rapido" data-v="alim:'+esc(ricos.id)+'" data-key="'+esc(sel)+'" '+
         'aria-label="apuntar '+esc(ricos.n)+'">'+gymIco('mas','gico sm')+'</button></div>';}).join('');
+  /* qué falta y con qué llegar: primero lo de tu nevera; la fibra también (sale de los macros) */
+  const t0=foodTotals(sel),lista=ALIM_MICROS.map(function(k){return {k:k,n:ALIM_LABEL[k]||k,p:microPct(k,mt[k]||0)};})
+    .concat([{k:'fibra',n:'Fibra',p:Math.round((+t0.fibra||0)/FIBRA_REF*100)}]);
+  const casaIds={};despensaS().forEach(function(x){const a=despAlim(x);if(a)casaIds[a.id]=1;});
+  const con=function(k){if(k==='fibra')return alimTodos().filter(function(a){return casaIds[a.id]&&+a.fi>=3;}).sort(function(a,b){return b.fi-a.fi;}).slice(0,2).map(function(a){return a.n.toLowerCase()+' (en tu nevera)';});
+    const casa=alimTodos().filter(function(a){return casaIds[a.id]&&+a[k]>0;}).sort(function(a,b){return b[k]-a[k];}).slice(0,2).map(function(a){return a.n.toLowerCase()+' (en tu nevera)';});
+    return casa.concat(alimRicosEn(k,3).filter(function(a){return !casaIds[a.id];}).slice(0,2-Math.min(2,casa.length)+1).map(function(a){return a.n.toLowerCase();})).slice(0,3);};
+  const fila=function(m){return '<div class="femic"><span>'+esc(m.n)+'</span><span class="t"><i class="'+(m.p<50?'lo':'')+'" style="width:'+Math.min(100,m.p)+'%"></i></span><b>'+m.p+' %</b></div>';};
+  const faltan=lista.filter(function(m){return m.p<50;}).sort(function(a,b){return a.p-b.p;}),bien=lista.filter(function(m){return m.p>=50;}).sort(function(a,b){return b.p-a.p;});
+  const resumen=(conDato||t0.fibra>0)?('<div class="card mt"><div class="row"><span class="cap">LO QUE MÁS TE FALTA</span><span class="sp"></span><span class="mini">% de lo que necesitas hoy</span></div>'+
+      (faltan.length?faltan.map(function(m){const c=con(m.k);return fila(m)+(c.length?'<div class="mini femcon">con: '+esc(c.join(' · '))+'</div>':'');}).join(''):'<p class="mini" style="margin:4px 0 0">Nada por debajo de la mitad ✓</p>')+'</div>'+
+    (bien.length?'<div class="card mt"><div class="cap">BIEN ENCAMINADO</div>'+bien.map(fila).join('')+'</div>':'')):'';
   $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Micronutrientes',cortos.length?('<span class="tag b4">'+cortos.length+' cortos</span>'):'')+
+    foodSubcab('Micronutrientes',cortos.length?('<span class="tag b4">'+cortos.length+' cortos</span>'):'')+resumen+
     '<p class="note" style="margin:0">Sobre la ingesta de referencia de un adulto, la de las etiquetas. '+
       (conDato?('Salen de '+conDato+' de tus '+c.lista.length+' tomas de hoy.'):
         'Hoy no tengo ninguno: los traen los alimentos de la tabla, no los productos de código de barras.')+'</p>'+
@@ -18375,6 +18442,12 @@ function act(a,el){
     case 'nev-ver':ui.tab='food';ui.foodVista='nevera2';render();window.scrollTo(0,0);break;
     case 'nv-desp':ui.nvDesp=!ui.nvDesp;render();break;
     case 'nv-todo':ui.nvTodo=!ui.nvTodo;render();break;
+    case 'fe-ver':ui.feVer=el.dataset.id||'';render();break;
+    case 'fe-cerrar':ui.feVer='';render();break;
+    case 'fe-borrar':flash(delFoodEntry(el.dataset.key,el.dataset.id));ui.feVer='';render();break;
+    case 'fe-plato':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(!x||!x.frase)break;
+      if((store.dishes||[]).some(function(d){return alimTxt(d.name)===alimTxt(x.nombre);})){flash('ya está en tus platos');break;}
+      const d=fraseADish({n:x.nombre,e:x.emoji||'🍽',x:x});flash('«'+d.name+'» guardado en tus platos');render();break;}
     case 'qc-ir':ui.qcTipo=el.dataset.v||'plato';ui.foodVista='quecomo';render();window.scrollTo(0,0);break;
     case 'qc-tipo':ui.qcTipo=el.dataset.v||'plato';render();break;
     case 'qc-hago':{const c=qcCombos(ui.qcTipo||(new Date().getHours()<11?'bocata':'plato'))[+el.dataset.i];if(!c)break;
@@ -18438,7 +18511,7 @@ function act(a,el){
     case 'fe-quick':{const gg=el.dataset.gq?(+(document.getElementById(el.dataset.gq)||{}).value||150):150;
       flash(addFoodEntry(el.dataset.key,{ean:el.dataset.ean,grams:gg,pos:'comida'}));render();break;}
     case 'fe-more':case 'fe-less':{const e=foodLog(el.dataset.key).filter(function(x){return x.id===el.dataset.id;})[0]||{};
-      const paso=e.dishId?0.5:25;
+      const paso=(e.dishId||e.k1)?0.5:25;   /* un plato o algo apuntado con frase: media ración; un alimento: 25 g */
       flash(bumpFoodEntry(el.dataset.key,el.dataset.id,a==='fe-more'?paso:-paso));render();break;}
     case 'fe-del':flash(delFoodEntry(el.dataset.key,el.dataset.id));render();break;
     case 'hoy-log-slot':{const hk=el.dataset.key||iso(new Date()),s=(store.menu[el.dataset.shift]||[]).find(function(x){return x.id===el.dataset.slot;});
@@ -20764,6 +20837,7 @@ document.addEventListener('change',e=>{
     case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'fr-pos':ui.frPos=el.value||'';render();break;
+    case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
     case 'din-hu-para':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
       h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}

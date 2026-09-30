@@ -2768,8 +2768,8 @@ html:not(.dark) .sano{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56}
 .bwex .ic{font-size:20px;text-align:center}.bwex b{color:var(--ok);font-size:12px}
 .bwbowl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;font-size:30px;padding:14px 20px 18px;margin:0 20px 10px;border-radius:0 0 999px 999px;background:var(--bg2);border:3px solid var(--line);border-top:0}
 /* ===== comer v2: macros con la paleta validada (P azul, H ámbar, G verde; exceso naranja) ===== */
-.h2,.mt,.sano,.sanopuerta{--bp:#3987e5;--bc:#c98500;--bg3:#199e70;--bx:#d95926}
-html:not(.dark) .h2,html:not(.dark) .mt,html:not(.dark) .sano{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
+.h2,.mt,.sano,.sanopuerta,.fehoja{--bp:#3987e5;--bc:#c98500;--bg3:#199e70;--bx:#d95926}
+html:not(.dark) .h2,html:not(.dark) .mt,html:not(.dark) .sano,html:not(.dark) .fehoja{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .h2 .cap,.mt .cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
 .h2nav{gap:6px;margin-bottom:6px}.h2nav .btn.s{padding:4px 9px}
 .h2top{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
@@ -2991,3 +2991,25 @@ html,body{overscroll-behavior-y:none}
 .qcs{padding:10px 0;border-top:1px solid var(--line)}.qcs:first-of-type{border-top:0}.qcs>b{font-size:13.5px}
 .qcs .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--ok) 20%,transparent)}
 .qcs .tg.w{background:color-mix(in srgb,var(--warn) 22%,transparent)}
+/* ---- Hoy con detalle ---- */
+.h2mic{display:block;width:100%;margin-top:10px;padding:9px 0 0;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.h2mic6{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.h2mic6>span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.h2mic6 .v{display:block;position:relative;width:100%;height:28px;border-radius:6px;background:var(--line);overflow:hidden}
+.h2mic6 .v>i{position:absolute;left:0;right:0;bottom:0;background:var(--bp)}.h2mic6 .v.lo>i{background:var(--bx)}
+.h2mic6 em{font-style:normal;font-size:9.5px;font-weight:800;color:var(--ink2)}
+.h2mic .mini{display:block;margin-top:5px}.h2mic b.lo{color:var(--bx)}
+.h2ens{grid-column:1/-1;margin-top:4px}
+.h2en{display:grid;grid-template-columns:24px 1fr auto 12px;gap:8px;align-items:center;width:100%;padding:8px 0 8px 4px;border:0;border-top:1px dashed var(--line);background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.h2en .e{font-size:18px}.h2en .n{min-width:0}.h2en .n b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h2en .n span{font-size:11px;color:var(--ink2)}.h2en .k{text-align:right;font-weight:900;font-size:13.5px}.h2en .k small{display:block;font-size:10px;color:var(--ink2);font-weight:700}
+.h2en .ch{color:var(--ink2)}
+.fehoja .festk{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-top:10px}.fehoja .festk i{display:block}
+.feing{display:grid;grid-template-columns:22px 1fr 52px 64px;gap:6px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}.feing .r{text-align:right;color:var(--ink2)}
+.femic{display:grid;grid-template-columns:96px 1fr 46px;gap:8px;align-items:center;font-size:12px;margin-top:7px}
+.femic .t{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.femic .t i{display:block;height:100%;border-radius:5px;background:var(--bp)}.femic .t i.lo{background:var(--bx)}
+.femic b{text-align:right}.femcon{margin:2px 0 6px 104px}
+.feacts{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr;gap:6px;margin-top:14px}
+.feacts>*{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
+.feacts .fetam{display:flex;align-items:center;justify-content:space-between;padding:0 4px}.feacts .fetam button{width:28px;height:28px;border:0;background:none;color:var(--ink);font-size:16px;font-weight:900;cursor:pointer}
+.feacts select{padding:0 4px}.feacts .del{color:var(--bad)}
