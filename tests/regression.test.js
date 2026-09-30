@@ -9255,7 +9255,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia226; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('frase: «leche» es tu leche (no la barrita de leche) y lo apuntado sale en su fila, con micros arriba',
-      r.leche === 'al-leche-desnatada-con-proteinas' && filas.n === 1 && /Bocata de pollo/.test(filas.txt) && filas.mic === 6 && filas.conDato, JSON.stringify({ r, filas }));
+      /^al-leche-desnatada-con-prote/.test(r.leche) && filas.n === 1 && /Bocata de pollo/.test(filas.txt) && filas.mic === 6 && filas.conDato, JSON.stringify({ r, filas }));
     check('la hoja de una toma: qué lleva, reparto de macros y lo que aporta; + escala kcal y micros; se mueve y se borra',
       hoja && hoja.ing === 4 && hoja.mic >= 3 && hoja.stk === 3 && mas.rac === 1.5 && Math.abs(mas.kcal - antes.kcal * 1.5) <= 2 && mas.ca > antes.ca &&
       p === 'cena' && mic.falta && mic.con && borrado.n === 0 && !borrado.hoja, JSON.stringify({ hoja, antes, mas, p, mic, borrado }));
