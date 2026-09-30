@@ -7523,11 +7523,16 @@ function frPan(){
     return o.a&&o.a.g==='cereal'&&/pan|baguette|barra|chapata/i.test(o.a.n)&&(!cel||/sin gluten|\bsg\b/i.test(o.a.n+' '+o.x.nom));})[0];
   if(casa)return {a:casa.a,casa:casa.x};
   return {a:alimPorNombre(cel?'Pan sin gluten':'Pan blanco')||alimDeTexto(cel?'pan sin gluten':'pan'),casa:null};}
+const FR_GENERICOS=['fiambr','pechug','filete','carne','muslo','contra','lomo'].map(alimRaiz);
 function frBuscaTrozo(tr,tipo){
   /* primero tu nevera (si dices «pavo» y tienes fiambre de pavo, es eso), luego la tabla */
   const toks=alimToks(tr).map(alimRaiz);if(!toks.length)return null;
   const casa=despensaS().map(function(x){return {x:x,a:despAlim(x)};}).filter(function(o){
-    if(!o.a)return false;const w=alimToks(o.x.nom+' '+o.a.n).map(alimRaiz);return toks.every(function(t){return w.indexOf(t)>=0;});})
+    if(!o.a)return false;const w=alimToks(o.x.nom+' '+o.a.n).map(alimRaiz);if(!toks.every(function(t){return w.indexOf(t)>=0;}))return false;
+    /* y lo que dices tiene que ser LO QUE ES, no un ingrediente suyo: «leche» es la leche, no la
+       «barrita rellena de leche»; «pavo» sí es el «fiambre de pavo» y «pollo» la «pechuga de pollo» */
+    const ft=alimToks(o.a.n).map(alimRaiz),cab=ft.filter(function(t){return FR_GENERICOS.indexOf(t)<0;})[0]||ft[0];
+    return toks.indexOf(cab)>=0;})
     .sort(function(p,q){/* en un bocata, el fiambre antes que la pechuga cruda */
       const fp=/fiambre|lonchas|cocido|serrano|embuchad/i.test(p.a.n)?1:0,fq=/fiambre|lonchas|cocido|serrano|embuchad/i.test(q.a.n)?1:0;
       return tipo==='bocata'||tipo==='tostada'?fq-fp:fp-fq;})[0];
@@ -7577,7 +7582,9 @@ function fraseLeer(txt){
   /* fuera lo que no es comida: «he comido», el tamaño, la plantilla */
   let t=t0.replace(/^(hoy |ayer )?(he (comido|cenado|desayunado|merendado|tomado)|me he (comido|tomado|hecho)|comi|cene|desayune)\s*/,'')
     .replace(/\b(muy grande|grande|mediano|mediana|pequeno|pequena|mini|enorme|gigante)\b/g,' ')
-    .replace(/\b(un|una|unos|unas)\b/g,' ');
+    .replace(/\b(un|una|unos|unas)\b/g,' ')
+    /* «vaso de», «taza de», «trozo de»: la medida no es el alimento (sale de su ración) */
+    .replace(/\b(vasos?|vasitos?|tazas?|tazon|copas?|botellas?|latas?|cuencos?|trozos?|porcion|racion)\s+de\b/g,' ');
   if(tipo!=='libre')t=t.replace(/\b(bocatas?|bocadillos?|sandwich(es)?|montaditos?|pepitos?|molletes?|wraps?|burritos?|tostadas?|pokes?|bowls?|ensaladas?|platos?|salteados?)\b/,' ');
   t=t.replace(/^\s*(de|del)\s+/,'').replace(/\s+/g,' ').trim();
   Object.keys(FR_COMBOS).forEach(function(c){if(new RegExp('\\b'+c+'\\b').test(t))t=t.replace(new RegExp('\\b'+c+'\\b'),FR_COMBOS[c].join(' , '));});
@@ -7618,7 +7625,11 @@ function fraseApuntar(fr,pos){
   const msg=addFoodEntry(foodCtx().sel,{macro:{nombre:nom,kcal:m.kcal,prot:m.prot,carb:m.carb,gresa:m.gresa,emoji:T[0]},pos:pos});
   /* lo que dijiste, con sus piezas: para «guardar como plato» y para la clasificación */
   const l=foodLog(foodCtx().sel),e=l[l.length-1];
-  if(e)e.frase={tipo:fr.tipo,tam:fr.tam,it:fr.items.map(function(x){return [x.id,x.g];})};
+  if(e){e.frase={tipo:fr.tipo,tam:fr.tam,it:fr.items.map(function(x){return [x.id,x.g];})};
+    /* con sus micronutrientes: sin esto, lo apuntado con una frase dejaba los micros en gris */
+    const mi={};fr.items.forEach(function(x){const a=alimById(x.id);if(!a)return;const q=alimEntrada(a,x.g).mi||{};
+      Object.keys(q).forEach(function(k){mi[k]=Math.round(((mi[k]||0)+q[k])*100)/100;});});
+    if(Object.keys(mi).length)e.mi=mi;}
   /* lo de tu nevera se gasta un poco */
   fr.items.forEach(function(x){if(x.casa)despensaGasta(x.casa,pasoDeGasto(despensaS().filter(function(d){return d.nom===x.casa;})[0]||{}));});
   save();return msg;}
