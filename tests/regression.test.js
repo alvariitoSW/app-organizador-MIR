@@ -6316,8 +6316,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'buscar'; P.render(); });
     await page.fill('#fbQ', 'big mac');
     await page.waitForTimeout(500);
-    const bigmac = await page.$('#main .hit [data-a="food-rapido"][data-v="fuera:mcd:bigmac"]');
-    if (bigmac) await bigmac.click();
+    /* por selector y no por ElementHandle: la búsqueda repinta con retardo y el nodo cogido antes se suelta */
+    const selBig = '#main .hit [data-a="food-rapido"][data-v="fuera:mcd:bigmac"]';
+    const bigmac = !!(await page.$(selBig)); if (bigmac) await page.click(selBig);
     await page.waitForTimeout(300);
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.foodBusca = ''; P.render(); });
     await page.waitForTimeout(250);
@@ -9403,25 +9404,44 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ mas, corr, menos, hoyIntacto }));
   }
 
-  // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
-  // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
+  // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»
+  // (y el atrás del móvil) llevan de una sub‑pantalla a su madre y, desde la portada de una sección, a
+  // la sección anterior saltándose lo que hiciste dentro; una hoja abierta se cierra primero; al
+  // recargar se abre donde estabas
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.navHist = []; P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.navHist = []; P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); });
+    for (const v of ['quecomo', 'micros', '']) await page.evaluate((v) => { const P = window.PG; P.ui.foodVista = v; P.render(); }, v);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = 'montar'; P.render(); });
     await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'protos'; P.render(); });
     const antes = await page.evaluate(() => ({ visible: !document.getElementById('navAtras').hidden, os: getComputedStyle(document.documentElement).overscrollBehaviorY }));
-    await page.click('#navAtras'); await page.waitForTimeout(120);
-    const uno = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.typesVista || ''));
+    const donde = () => page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.typesVista || ''));
+    await page.click('#navAtras'); await page.waitForTimeout(120); const uno = await donde();
+    await page.click('#navAtras'); await page.waitForTimeout(120); const dos = await donde();
     await page.goBack(); await page.waitForTimeout(200);
-    const dos = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.foodVista || ''));
+    const tres = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.foodVista || ''));
+    await page.click('#navAtras'); await page.waitForTimeout(120); const cuatro = await page.evaluate(() => window.PG.ui.tab);
+    for (let i = 0; i < 6 && !(await page.evaluate(() => document.getElementById('navAtras').hidden)); i++) { await page.click('#navAtras'); await page.waitForTimeout(100); }
+    const cinco = await page.evaluate(() => ({ tab: window.PG.ui.tab, oculto: document.getElementById('navAtras').hidden }));
+    /* una hoja abierta: atrás la cierra sin cambiar de pantalla */
+    await page.evaluate(() => { const P = window.PG; window.__log220 = JSON.parse(JSON.stringify(P.store.food.log[P.iso(new Date())] || []));
+      P.store.food.log[P.iso(new Date())] = [{ id: 'fx220', p: 'comida', nombre: 'Prueba', kcal: 100, prot: 5, carb: 10, gresa: 2, rac: 1 }];
+      P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); P.ui.feVer = 'fx220'; P.render(); });
+    const hayHoja = await page.evaluate(() => !!document.querySelector('#hojaDia .hoja'));
+    /* con la hoja abierta, el atrás del móvil: la cierra y te quedas en Comer */
+    await page.goBack(); await page.waitForTimeout(200);
+    const hoja = await page.evaluate(() => ({ abierta: !!document.querySelector('#hojaDia .hoja'), tab: window.PG.ui.tab }));
+    await page.evaluate(() => { const P = window.PG; P.store.food.log[P.iso(new Date())] = window.__log220; P.save(); });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = 'macros'; P.render(); });
     await page.reload(); await page.waitForFunction(() => window.PG && window.__arrancada); await page.waitForTimeout(250);
     const recarga = await page.evaluate(() => window.PG.ui.tab + '/' + (window.PG.ui.typesVista || ''));
     await page.evaluate(() => { try { localStorage.removeItem('guardias-vista'); } catch (e) {} const P = window.PG; P.ui.tab = 'hoy'; P.ui.typesVista = ''; P.render(); });
-    check('deslizar no recarga; «‹ atrás» y el atrás del móvil vuelven a la pantalla anterior, y recargar abre donde estabas',
-      antes.visible && antes.os === 'none' && uno === 'types/' && dos === 'food/' && recarga === 'types/macros',
-      JSON.stringify({ antes, uno, dos, recarga }));
+    check('deslizar no recarga; «atrás» sube de nivel (sub‑pantalla → su madre → sección anterior → Mes), cierra hojas y recargar abre donde estabas',
+      antes.visible && antes.os === 'none' && uno === 'types/montar' && dos === 'types/' && tres === 'food/' && cuatro === 'dinero' &&
+      cinco.tab === 'month' && cinco.oculto && hayHoja && !hoja.abierta && hoja.tab === 'food' && recarga === 'types/macros',
+      JSON.stringify({ antes, uno, dos, tres, cuatro, cinco, hayHoja, hoja, recarga }));
   }
+
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

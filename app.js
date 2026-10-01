@@ -17749,10 +17749,27 @@ function navTras(){
     try{history.pushState({guardias:ui.navHist.length},'');}catch(e){}}
   ui._navVolviendo=false;ui._navJ=j;
   try{localStorage.setItem(NAV_KEY,JSON.stringify({v:snap,t:Date.now()}));}catch(e){}
-  const b=document.getElementById('navAtras');if(b)b.hidden=!(ui.navHist&&ui.navHist.length);}
+  const b=document.getElementById('navAtras');if(b)b.hidden=!navPuedeVolver();}
+/* «atrás» sube de nivel, no deshace pasos: «si navego mucho no me lleva al menú anterior sino a lo
+   último que estaba haciendo». (1) una hoja abierta se cierra; (2) en una sub‑pantalla, a su madre
+   (lo mismo que su «‹ volver»); (3) en la portada de una sección, a la sección anterior en la que
+   estuviste (a su portada), saltándose todo lo que hiciste dentro; (4) si no hay, al Mes. */
+const NAV_INICIO='month';
+function navHojaAbierta(){return !!document.querySelector('#hojaDia .hoja');}
+function navVolverBtn(){return document.querySelector('#main .subcab .volver')||document.querySelector('#main .volver');}
+function navSeccionAnterior(){const h=ui.navHist||[];for(let i=h.length-1;i>=0;i--){if(h[i].tab&&h[i].tab!==ui.tab)return i;}return -1;}
+function navPuedeVolver(){return navHojaAbierta()||!!navVolverBtn()||navSeccionAnterior()>=0||ui.tab!==NAV_INICIO;}
 function navAtras(){
-  const h=ui.navHist||[];if(!h.length)return false;
-  cerrarHojaDia();navAplica(h.pop());ui._navVolviendo=true;render();window.scrollTo(0,0);return true;}
+  if(navHojaAbierta()){cerrarHojaDia();ui._navVolviendo=true;render();return true;}
+  const v=navVolverBtn();
+  if(v){ui._navVolviendo=true;v.click();ui._navVolviendo=false;window.scrollTo(0,0);return true;}
+  const h=ui.navHist||[],i=navSeccionAnterior();let dest=null;
+  if(i>=0){dest=h[i];h.length=i;}
+  else if(ui.tab!==NAV_INICIO){dest={tab:NAV_INICIO,calMode:NAV_INICIO};h.length=0;}
+  if(!dest)return false;
+  /* la portada de esa sección: sin sus sub‑pantallas */
+  const o={tab:dest.tab};if(dest.calMode)o.calMode=dest.calMode;if(dest.cocinaTab)o.cocinaTab=dest.cocinaTab;
+  cerrarHojaDia();navAplica(o);ui._navVolviendo=true;render();window.scrollTo(0,0);return true;}
 function vistaRestaurar(){
   try{const x=JSON.parse(localStorage.getItem(NAV_KEY)||'null');
     if(x&&x.v&&x.v.tab&&Date.now()-(+x.t||0)<12*3600e3)navAplica(x.v);}catch(e){}}
