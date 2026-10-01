@@ -9337,6 +9337,48 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       m1 === (m0 == null ? 30 : m0) + 5 && plan.suma === 100 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan, rec, hu }));
   }
 
+  // 229) LA SEMANA LLEGA A LA PROTEÍNA: «Móntamela» reparte la proteína (desayunos con proteína de
+  // verdad, más de lo que tiene proteína y extras de la nevera) y todos los días llegan; lo hecho con
+  // la nevera cuenta como «en casa»; un día que no llega dice cuánto falta y «＋ ponerlo» lo sube.
+  // En Consumo se apunta una sesión de ayer o de otro día
+  {
+    const NOMS = ['pechuga pollo ajillo', 'carrilladas al vino', 'fritada pisto', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino',
+      'jamón extrafino', 'maria sin gluten', 'entrecot novillo', 'picada de vacuno', 'leche desnatada, prot p6', 'nuez natural', 'proteina 0% natural',
+      'queso feta', 'baguette sin gluten', 'kiwi verde bandeja', 'huevos medianos', 'tortilla de maiz', 'griego ligero natural', 'lomo embuchado'];
+    await page.evaluate((noms) => { const P = window.PG; window.__copia229 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.menu = {}; P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = [];
+      noms.forEach((n) => P.despensaAdd(n, 1, '')); P.save(); P.ui.tab = 'types'; P.ui.typesVista = ''; P.render(); }, NOMS);
+    await page.click('[data-a="ss-auto"]'); await page.waitForTimeout(250);
+    const sem = await page.evaluate(() => { const P = window.PG, ps = P.protSemana(), d = P.store.semBase.d, des = {};
+      Object.keys(d).forEach((w) => { const it = (d[w].desayuno || { items: [] }).items[0]; if (it) des[P.dishById(it.id).name] = 1; });
+      const txt = document.querySelector('#main').innerText;
+      return { v: ps.map((x) => x.v), cortos: ps.filter((x) => x.corta).length, des: Object.keys(des).length,
+        llegan: /todos los días llegan/.test(txt), enCasa: +((txt.match(/(\d+) de 21 comidas/) || [])[1] || 0) }; });
+    await page.evaluate(() => { const P = window.PG, h = P.dishHospital();
+      P.store.semBase.d[1] = { desayuno: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' }, comida: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' } };
+      P.save(); P.render(); });
+    const aviso = await page.evaluate(() => { const a = document.querySelector('#main .prav'); return a ? a.innerText.replace(/\s+/g, ' ') : ''; });
+    const antes = await page.evaluate(() => window.PG.protSemana().filter((x) => x.w === 1)[0].v);
+    await page.click('#main .prav [data-a="prot-extra"]'); await page.waitForTimeout(120);
+    const despues = await page.evaluate(() => window.PG.protSemana().filter((x) => x.w === 1)[0].v);
+    await page.evaluate(() => { const P = window.PG; delete P.store.consumo; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-f"][data-k="dia"][data-v="1"]'); await page.click('[data-a="cn-add"]'); await page.waitForTimeout(100);
+    const otro = await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() - 5); return window.PG.iso(d); });
+    const inp = await page.$('input[data-a="cn-fecha"]'); await inp.fill(otro); await inp.dispatchEvent('change'); await page.waitForTimeout(80);
+    await page.click('[data-a="cn-add"]'); await page.waitForTimeout(100);
+    const cn = await page.evaluate((otro) => { const P = window.PG, d = new Date(); d.setDate(d.getDate() - 1);
+      const f = P.consumoS().ses.map((x) => x.fecha); return { ayer: f.includes(P.iso(d)), otro: f.includes(otro), filas: document.querySelectorAll('#main .cnrow').length,
+        futuro: P.cnFechaDe({ fecha: '2999-01-01' }) === P.iso(new Date()) }; }, otro);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia229; P.save(); P.ui.cnF = null; P.ui.tab = 'hoy'; P.render(); });
+    check('«Móntamela» llega a la proteína todos los días, con desayunos distintos, y lo de la nevera cuenta como en casa',
+      sem.cortos === 0 && sem.v.every((v) => v >= 120) && sem.des >= 3 && sem.llegan && sem.enCasa >= 18, JSON.stringify(sem));
+    check('un día que no llega dice cuánto falta y con qué, y «＋ ponerlo» lo sube',
+      /te faltan \d+ g/.test(aviso) && /Añade/.test(aviso) && despues > antes, JSON.stringify({ aviso, antes, despues }));
+    check('Consumo: se apunta una sesión de ayer y de otro día (nunca en el futuro) y salen en los últimos 7 días',
+      cn.ayer && cn.otro && cn.filas === 2 && cn.futuro, JSON.stringify(cn));
+  }
+
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
   // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
   {
