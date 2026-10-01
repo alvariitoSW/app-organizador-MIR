@@ -7505,6 +7505,10 @@ function menuPorMomento(key){
   slotsFor(inf.shiftId).forEach(function(sl){const pos=posDeSlot(sl.label,sl.time);
     const ds=slotItems(inf.shiftId,sl,key).items.filter(function(x){return x&&dishById(x.id);});
     if(ds.length&&!out[pos])out[pos]=ds;});
+  /* lo que montaste en la Semana manda aunque tu tipo de día no tenga esa comida en su menú: sin
+     esto, con el menú vacío, Hoy decía «nada todavía» con la semana llena */
+  if(sbActiva()){const w=sbDow(key);SB_CLASES.forEach(function(c){const cel=sbCelda(w,c[0]);
+    if(cel&&cel.items.length&&!out[c[0]]){const ds=cel.items.filter(function(x){return x&&dishById(x.id);});if(ds.length)out[c[0]]=ds;}});}
   return out;}
 function hoyBarraHTML(l,v,t,col){
   return '<div class="h2mb"><span style="color:'+col+'">'+l+'</span><div class="t"><i style="width:'+(t>0?Math.min(100,Math.round(v/t*100)):0)+'%;background:'+col+'"></i></div>'+
@@ -7814,7 +7818,7 @@ function monchisOpciones(){
   const nv=qcNevera(),hay=function(re){return nv.filter(function(o){return re.test(alimTxt(o.a.n+' '+o.x.nom));})[0];};
   const it=function(o,g){return {id:o.a.id,g:g||((o.a.r&&o.a.r[0])||[0,100])[1],casa:o.x.nom};};
   const sanos=[],caprichos=[];
-  const yog=hay(/yogur|griego|proteina|skyr|kefir/),nuez=hay(/nuez|almendr|pecana|anacardo|pistach/),fru=hay(/kiwi|platano|manzana|pera|naranja|mandarina|uva|fresa/),
+  const yog=hay(/yogur|griego|proteina|skyr|kefir/),nuez=hay(/nuez|almendr|pecana|anacardo|pistach/),fru=nv.filter(function(o){return o.a.g==='fruta';})[0],
     gal=hay(/maria|galleta|tostada|biscote/),tor=hay(/tortilla de (maiz|trigo)|wrap/),fia=hay(/fiambre|pavo|pollo extrafino|jamon cocido|york/),que=hay(/queso/);
   if(yog)sanos.push({n:yog.a.n+(nuez?' + '+nuez.a.n.toLowerCase():''),e:'🥛',it:[it(yog)].concat(nuez?[it(nuez,20)]:[]),tag:'sacia'});
   if(fru)sanos.push({n:'2 × '+fru.a.n.toLowerCase()+(gal?' + '+gal.a.n.toLowerCase():''),e:fru.a.e||'🍎',it:[it(fru,(((fru.a.r&&fru.a.r[0])||[0,100])[1])*2)].concat(gal?[it(gal)]:[]),tag:'dulce y ligero'});
@@ -7918,6 +7922,27 @@ function renderConsumoEfectos(){
         '<button class="dlink" data-a="cn-eur" data-d="-1">−</button> <button class="dlink" data-a="cn-eur" data-d="1">+</button>)</p></div>'+
     '<div class="card"><div class="cap">PARA QUE SIENTE MEJOR</div><p class="mini" style="margin:4px 0 0">Vaporizar en seco y sin tabaco evita la combustión y la nicotina. Después, nada de coche ni moto. Si la tolerancia sube (necesitas más para lo mismo), 2–3 días sin la bajan. Antes de una guardia, mejor no: te lo recuerdo al apuntar si al día siguiente tienes guardia. Son pautas generales, no consejo médico.</p></div>'+
   '</div>';}
+/* ---- la semana con lo que hay en la nevera ----
+   «Móntamela» y «Hoy cocino» solo sabían usar los platos de tus menús: sin menú, no ponían nada
+   aunque la nevera estuviera llena. Ahora también montan con lo que tienes (plato, bowl, bocata y
+   desayunos de nevera), y el día de guardia la comida y la cena son del hospital (aproximadas). */
+function comboADish(fr,icon){
+  /* una combinación de la nevera hecha plato (una ración); si ya existe con ese nombre, esa */
+  const ya=(store.dishes||[]).filter(function(d){return alimTxt(d.name)===alimTxt(fr.txt);})[0];if(ya)return ya;
+  const m=fraseMacros(fr);
+  const d={id:uid('d'),name:fr.txt,icon:icon||FR_TIPOS[fr.tipo][0],portions:1,kcal:m.kcal,prot:m.prot,carb:m.carb,fat:m.gresa,nevera:true,frase:true,
+    ingredients:fr.items.map(function(y){const a=alimById(y.id);return y.g+' g '+(a?a.n.toLowerCase():'');}),steps:[]};
+  store.dishes.push(d);return d;}
+function dishHospital(){
+  let d=(store.dishes||[]).filter(function(x){return x.hospital;})[0];
+  if(!d){d={id:'d-hospital',name:'Menú del hospital (aprox.)',icon:'🏥',portions:1,kcal:750,prot:35,carb:80,fat:28,hospital:true,ingredients:[],steps:[]};store.dishes.push(d);}
+  return d;}
+function esDiaGuardia(k){const sh=shiftById(dayInfo(k).shiftId);return !!(sh&&isGuardia(sh));}
+function nevCombos(cls){
+  /* lo que la nevera da para cada momento */
+  if(cls==='desayuno')return monchisOpciones().sanos.map(function(x){return {fr:x.fr,icon:x.e};});
+  if(cls==='comida')return qcCombos('plato').concat(qcCombos('bowl')).map(function(c){return {fr:c.fr,icon:FR_TIPOS[c.fr.tipo][0],falta:c.falta};});
+  return qcCombos('bowl').concat(qcCombos('bocata')).concat(qcCombos('plato')).map(function(c){return {fr:c.fr,icon:FR_TIPOS[c.fr.tipo][0],falta:c.falta};});}
 function renderFoodDia(){
   const c=foodCtx(),f=c.f,sel=c.sel,ft=c.ft,ob=c.ob,d=c.d;
   const objK=+ob.kcal||0,objP=+ob.prot||0,obm=objetivoMacros();
@@ -8615,11 +8640,19 @@ function sbAuto(){
   const s=sbS(),por=platosDeClase(),sem=mSemana(),notas=platoNotas();let n=0;
   for(let w=0;w<7;w++)SB_CLASES.forEach(function(c){const cel=sbCelda(w,c[0]);if(cel&&cel.auto){cel.items=[];cel.auto=false;}});
   const coc={};cocinadoS().forEach(function(x){coc[x.dishId]=(coc[x.dishId]||0)+x.queda;});
-  sem.forEach(function(dia){const w=dia.w;
+  const nev={};SB_CLASES.forEach(function(c){nev[c[0]]=nevCombos(c[0]).filter(function(x){return !x.falta||!x.falta.length;});});
+  const hosp=dishHospital();
+  sem.forEach(function(dia){const w=dia.w,guardia=!!(dia.d.shiftId&&isGuardia(shiftById(dia.d.shiftId)));
     SB_CLASES.forEach(function(c){
       const o=dia.cls[c[0]];if(o.items.length&&!(sbCelda(w,c[0])||{}).auto)return;
+      /* guardia: la comida y la cena son del hospital, aproximadas (si te llevas un bocata, cámbialo) */
+      if(guardia&&c[0]!=='desayuno'){const cel=sbCeldaMia(w,c[0]);cel.items=[{kind:'dish',id:hosp.id,portions:1}];cel.meal='';cel.auto=true;n++;return;}
       const ya={};SB_CLASES.forEach(function(q){const x=sbCelda(w,q[0]);if(x)x.items.forEach(function(it){ya[it.id]=1;});});
-      const cand=Object.keys(Object.assign({},por[c[0]]||{},c[0]!=='desayuno'?coc:{})).filter(function(id){return dishById(id)&&!ya[id]&&platoApto(dishById(id));});
+      const cand=Object.keys(Object.assign({},por[c[0]]||{},c[0]!=='desayuno'?coc:{})).filter(function(id){return dishById(id)&&!ya[id]&&platoApto(dishById(id))&&!dishById(id).hospital;});
+      /* sin platos tuyos que salgan con la nevera, lo que la nevera da para ese momento */
+      const cubre=cand.some(function(id){const cu=platoCubierto(dishById(id));return coc[id]>0||(cu.total&&cu.pct>=60);});
+      if((!cand.length||!cubre)&&nev[c[0]].length){const x=nev[c[0]][(w+n)%nev[c[0]].length],d=comboADish(x.fr,x.icon);
+        if(!ya[d.id]){const cel=sbCeldaMia(w,c[0]);cel.items=[{kind:'dish',id:d.id,portions:1}];cel.meal='';cel.auto=true;n++;return;}}
       if(!cand.length)return;
       const score=function(id){const d=dishById(id),cu=platoCubierto(d),nt=notas[id];
         /* la nota de «Mis platos»: los mejores suben y un 👎 baja mucho */
@@ -8705,10 +8738,16 @@ function renderHoyCocino(){
       const d=o.x.dish,usa=cad.some(function(c){return (d.ingredients||[]).some(function(i){return alimTxt(i).indexOf(c.split(' ')[0])>=0;});});
       return {d:d,ok:o.ok,falta:o.x.faltan||[],usa:usa,dur:diasAguanta(d)};})
     .sort(function(a,b){return (b.usa-a.usa)||(b.ok-a.ok)||((b.d.portions||1)-(a.d.portions||1));}).slice(0,5);
+  /* sin platos tuyos que salgan, lo que la nevera da para cocinar (plato o bowl), como opciones */
+  const deCasa=[];qcCombos('plato').concat(qcCombos('bowl')).filter(function(c){return !c.falta.length;}).slice(0,4).forEach(function(c,i){
+    const pd={id:'qc:'+i,name:c.fr.txt,icon:FR_TIPOS[c.fr.tipo][0],portions:need,ingredients:c.fr.items.map(function(y){const a=alimById(y.id);return y.g+' g '+(a?a.n.toLowerCase():'');}),_fr:c.fr};
+    deCasa.push({d:pd,ok:true,falta:[],usa:!!c.urge,dur:diasAguanta(pd)});});
+  /* primero lo que sale ENTERO con tu nevera (lo tuyo listo y lo que la nevera da); lo que «casi», al final */
+  l.splice.apply(l,[0,l.length].concat(l.filter(function(o){return o.ok;}).concat(deCasa).concat(l.filter(function(o){return !o.ok;})).slice(0,6)));
   const sel=l.filter(function(o){return o.d.id===ui.hcSel;})[0]||l[0];
   let plan='';
   if(sel){const rac=Math.max(1,Math.min(modo===1?1:(modo===2?4:8),Math.round(+sel.d.portions||2))),hs=hcHuecos(Math.min(sel.dur,modo===1?1:(modo===2?2:4))).slice(0,rac);
-    ui.hcPlan={id:sel.d.id,rac:rac,huecos:hs};
+    ui.hcPlan={id:sel.d.id,rac:rac,huecos:hs,fr:sel.d._fr||null,icon:sel.d.icon};
     plan='<div class="card"><div class="row"><span class="cap">SE COLOCA ASÍ</span><span class="sp"></span><span class="mini">'+esc(sel.d.name.toLowerCase())+' · '+rac+' rac.</span></div>'+
       hs.map(function(x){return '<div class="nvf"><span>'+(x.i===0?'📍':'📅')+'</span><span class="n">'+(x.i===0?'hoy':SB_DIAS_L[x.w])+' · '+x.c+'</span><span></span><span></span></div>';}).join('')+
       '<p class="mini" style="margin:6px 0 0">Aguanta '+sel.dur+' día'+(sel.dur===1?'':'s')+' en la nevera; congelado, 2–3 meses.</p></div>'+
@@ -14735,6 +14774,7 @@ function ahorroLimpia(o){
   if(a.catCfg&&typeof a.catCfg==='object'&&!Array.isArray(a.catCfg)){const cc={};Object.keys(a.catCfg).slice(0,80).forEach(function(k){const c=a.catCfg[k]||{};
     cc[String(k).slice(0,60)]={tipo:c.tipo==='fijo'||c.tipo==='variable'?c.tipo:'',meta:Math.max(0,Math.round(+c.meta||0))};});a.catCfg=cc;}else delete a.catCfg;
   if(a.metaPct!=null)a.metaPct=Math.max(5,Math.min(80,Math.round(+a.metaPct||30)));
+  if(a.plan7&&typeof a.plan7==='object'){const p={};['colchon','inversion','metas','caprichos'].forEach(function(k){p[k]=Math.max(0,Math.min(100,Math.round(+a.plan7[k]||0)));});a.plan7=p;}else delete a.plan7;
   if(a.puroPct!=null)a.puroPct=Math.max(10,Math.min(100,Math.round(+a.puroPct||50)));
   if(a.puroId!=null)a.puroId=String(a.puroId).slice(0,40);
   if(typeof a.vivirMin!=='number'||!(a.vivirMin>=0))a.vivirMin=1000;
@@ -15683,8 +15723,13 @@ function dinMetasHTML(){
     '<div class="d5two"><button class="btn p" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de una meta</button></div>'+
     '<p class="mini" style="text-align:center;margin:0 10px">Gastar de una meta solo baja esa meta: el colchón no se mueve.</p></div>';}
 function din7Reparto(){
-  /* colchón hasta 6 meses de gastos; con él lleno, su parte pasa a inversión y metas */
-  const lleno=colchonMeses()>=6&&mesTipo().gasto>0;
+  /* el tuyo si lo has tocado; si no, el recomendado: colchón hasta 6 meses de gastos y, con él
+     lleno, su parte pasa a inversión y metas */
+  const lleno=colchonMeses()>=6&&mesTipo().gasto>0,p=ahorroS().plan7;
+  const base=din7RepartoRec(lleno);
+  if(p&&typeof p==='object')return base.map(function(r){return [r[0],Math.max(0,Math.min(100,Math.round(+p[r[0]]||0))),r[2],r[3]];});
+  return base;}
+function din7RepartoRec(lleno){
   return lleno?[['colchon',10,'Colchón','ya tienes 6 meses: solo lo mantiene al día'],['inversion',35,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',40,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']]:
     [['colchon',30,'Colchón',''],['inversion',25,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',30,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']];}
 function dinPlan7HTML(){
@@ -15699,12 +15744,16 @@ function dinPlan7HTML(){
     '<div class="card"><div class="cap">TU MES TIPO</div><p class="mini" style="margin:4px 0 0">Sube capturas de Fintonic (una por mes) y te saco lo que entra, lo fijo y lo del día a día.</p>'+
       '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   const L=T.libre||apartasMes();
-  const rep='<div class="card"><div class="cap">TE RECOMIENDO REPARTIR '+(L?'LOS '+fmtMil(L)+' €':'LO QUE AHORRES')+'</div>'+
+  const mp=metaPct(),ing=T.ingreso||nominaMedia(),propio=!!ahorroS().plan7;
+  const ahorro='<div class="card"><div class="row"><span class="cap">LO QUE QUIERES AHORRAR</span><span class="sp"></span><div class="d4step"><button data-a="d7-meta" data-d="-5" aria-label="ahorrar menos">−</button><b>'+mp+' %</b><button data-a="d7-meta" data-d="5" aria-label="ahorrar más">+</button></div></div>'+
+    '<p class="mini" style="margin:4px 0 0">de lo que entra: ≈ <b style="color:var(--ink)">'+fmtMil(Math.round(ing*mp/100))+' €/mes</b>. Con esto se calcula lo que puedes gastar cada día en «Mes».'+(T.libre?' Tu mes tipo deja libre '+fmtMil(T.libre)+' € ('+Math.round(T.libre/Math.max(1,ing)*100)+' %).':'')+'</p></div>';
+  const rep='<div class="card"><div class="row"><span class="cap">'+(propio?'TU REPARTO DE ':'TE RECOMIENDO REPARTIR ')+(L?'LOS '+fmtMil(L)+' €':'LO QUE AHORRES')+'</span><span class="sp"></span>'+(propio?'<button class="dlink" data-a="d7-rec">volver al recomendado</button>':'<span class="mini">toca ± para cambiarlo</span>')+'</div>'+
     '<div class="d6stk" style="margin-top:8px">'+R.map(function(r){return '<i style="flex:'+r[1]+';background:'+COL[r[0]]+'"></i>';}).join('')+'</div>'+
     R.map(function(r){const s=r[0]==='colchon'&&!r[3]?('hasta tener 6 meses de gastos'+(faltaC?' (te faltan '+fmtMil(faltaC)+' €)':'')):(r[0]==='metas'?(metas.slice(0,3).join(', ')+(metas.length>3?'…':''))||'viajes, casa, caprichos grandes':r[3]);
-      return '<div class="d7rep"><span class="d6k" style="background:'+COL[r[0]]+'"></span><span class="t"><b>'+r[2]+'</b><span>'+esc(s)+'</span></span><b>'+r[1]+' %'+(L?' · '+fmtMil(Math.round(L*r[1]/100))+' €':'')+'</b></div>';}).join('')+
+      return '<div class="d7rep"><span class="d6k" style="background:'+COL[r[0]]+'"></span><span class="t"><b>'+r[2]+'</b><span>'+esc(s)+'</span></span>'+
+        '<span class="d7pc"><button data-a="d7-rep" data-k="'+r[0]+'" data-d="-5" aria-label="menos a '+r[2]+'">−</button><b>'+r[1]+' %'+(L?'<small>'+fmtMil(Math.round(L*r[1]/100))+' €</small>':'')+'</b><button data-a="d7-rep" data-k="'+r[0]+'" data-d="5" aria-label="más a '+r[2]+'">+</button></span></div>';}).join('')+
     '<p class="mini" style="margin:8px 0 0">Cuando el colchón llegue a 6 meses, su parte pasa a inversión y metas. Pautas generales, no asesoramiento.</p></div>';
-  $('#main').innerHTML='<div class="grid dinv2 din6 din7 mt">'+din7Tabs('plan')+mes+rep+
+  $('#main').innerHTML='<div class="grid dinv2 din6 din7 mt">'+din7Tabs('plan')+mes+ahorro+rep+
     '<button class="btn p gbig" data-a="din7-aplicar">Aplicar a mis bolsillos</button>'+
     '<div class="d4pie d7pie"><button data-a="dinero-vista" data-v="plan">⚖️ A mano</button><button data-a="dinero-vista" data-v="nomina">💶 Nómina</button>'+
       '<button data-a="din-hoja" data-h="gastos">🧾 Fijos</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button></div></div>';}
@@ -15906,6 +15955,9 @@ function dinHojaHTML(){
     cuerpo='<div class="row sh"><span style="font-size:26px">'+esc(h.ico)+'</span><div><h3>'+esc(h.nombre)+'</h3><div class="hsub">'+esc(eurR(h.saldo))+(h.objetivo?' de '+esc(eurR(h.objetivo)):'')+
         (ll&&ll.falta?(ll.mk?' · llegas en '+esc(mkLargo(ll.mk)):' · sin aporte no llegas'):(ll?' · ✓ ya la tienes':''))+'</div></div>'+
         '<span class="sp"></span><button class="dlink" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'">editar ›</button></div>'+
+      '<div class="hdos" style="margin-top:12px"><label class="hfld">TIENES (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="saldo" data-id="'+esc(h.id)+'" value="'+esc(String(Math.round(h.saldo*100)/100).replace('.',','))+'"></label>'+
+        '<label class="hfld">CUESTA (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="objetivo" data-id="'+esc(h.id)+'" value="'+esc(h.objetivo?String(h.objetivo).replace('.',','):'')+'" placeholder="sin objetivo"></label></div>'+
+      '<label class="hfld">NOMBRE<input maxlength="30" data-a="din-hu-campo" data-k="nombre" data-id="'+esc(h.id)+'" value="'+esc(h.nombre)+'"></label>'+
       '<label class="hfld" style="margin-top:12px">APARTAS CADA MES · <b id="huMenTxt" style="color:var(--ink)">'+esc(eurR(h.mensual||ap))+'</b>'+
         '<input type="range" min="0" max="'+Math.max(50,Math.ceil(libre/10)*10)+'" step="10" value="'+Math.min(Math.max(50,Math.ceil(libre/10)*10),Math.round(h.mensual||ap))+'" data-a="din-hu-men" data-id="'+esc(h.id)+'" class="drange" aria-label="lo que apartas cada mes"></label>'+
       '<div class="hnota">Sale de lo que va a huchas ('+esc(eurR(libre))+'): el ahorro puro no se toca.</div>'+
@@ -18143,6 +18195,13 @@ function act(a,el){
     case 'din-gaste-de':{const g=ui.dinGaste||{imp:'',txt:''};g.de=el.dataset.id||'';g.resto='';ui.dinGaste=g;render();break;}
     case 'din-gaste-resto':{const g=ui.dinGaste||{imp:'',txt:''};g.resto=el.dataset.id||'';ui.dinGaste=g;render();break;}
     case 'din-gaste-ok':{const m=gasteApuntar();flash(m,4500);if(!ui.dinGaste)ui.dinHoja='';render();break;}
+    case 'd7-meta':{const a=ahorroS();a.metaPct=Math.max(5,Math.min(80,metaPct()+(+el.dataset.d||0)));save();render();break;}
+    case 'd7-rep':{const a=ahorroS(),R=din7Reparto(),p={};R.forEach(function(r){p[r[0]]=r[1];});
+      /* suma siempre 100: lo que subes a uno sale de «metas» (o de caprichos si tocas metas) */
+      const k=el.dataset.k,d=+el.dataset.d||0,otro=k==='metas'?'caprichos':'metas';
+      const nv=Math.max(0,Math.min(100,p[k]+d)),real=nv-p[k];if(p[otro]-real<0)break;
+      p[k]=nv;p[otro]-=real;a.plan7=p;save();render();break;}
+    case 'd7-rec':delete ahorroS().plan7;save();render();break;
     case 'din7-aplicar':{flash(din7Aplicar(),4500);render();window.scrollTo(0,0);break;}
     case 'din-bolsillo-inv':{const a=ahorroS(),id='hu-inv'+Date.now().toString(36);
       a.huchas.push({id:id,nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[]});
@@ -18562,7 +18621,7 @@ function act(a,el){
     case 'ss-auto':flash(sbAuto());render();break;
     case 'hc-modo':ui.hcModo=+el.dataset.v||2;ui.hcSel='';render();break;
     case 'hc-sel':ui.hcSel=el.dataset.id||'';render();break;
-    case 'hc-ok':{const pl=ui.hcPlan,d=pl&&dishById(pl.id);if(!d)break;cocinadoAdd(d.id,pl.rac);
+    case 'hc-ok':{const pl=ui.hcPlan;let d=pl&&dishById(pl.id);if(!d&&pl&&pl.fr)d=comboADish(pl.fr,pl.icon);if(!d)break;cocinadoAdd(d.id,pl.rac);
       pl.huecos.forEach(function(x){mPoner(x.w,x.c,[{id:d.id,portions:1}],'');const cel=sbCelda(x.w,x.c);if(cel)cel.auto=false;});save();
       flash(d.name+': '+pl.rac+' raciones en la semana · aguanta '+diasAguanta(d)+' días');ui.hcSel='';ui.tab='types';ui.typesVista='';ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'nev-mano':ui.tab='food';ui.foodVista='nevera2';ui.nvAdd=!ui.nvAdd;render();{const f2=document.getElementById('despAdd');if(f2)f2.focus();}break;
@@ -20975,6 +21034,11 @@ document.addEventListener('change',e=>{
     case 'fr-pos':ui.frPos=el.value||'';render();break;
     case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
+    case 'din-hu-campo':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;const k=el.dataset.k;
+      if(k==='nombre'){const v=String(el.value||'').trim().slice(0,30);if(v)h.nombre=v;}
+      else{const v=numEuro(el.value);if(k==='saldo'&&v!=null){const dif=Math.round((v-h.saldo)*100)/100;if(dif)ahoMov(h.id,dif,'corregido a mano');h.saldo=Math.round(v*100)/100;}
+        if(k==='objetivo')h.objetivo=v!=null&&v>0?Math.round(v):0;}
+      save();render();break;}
     case 'din-hu-para':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
       h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
@@ -21361,7 +21425,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={d6Mes,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

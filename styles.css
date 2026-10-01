@@ -3032,3 +3032,5 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cnrow .x{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
 .cnwk i{background:var(--bg3)}.cnwk .x i{background:var(--bx)}
 .mskpi b.ex{color:var(--bx)}
+.d7pc{display:flex;align-items:center;gap:4px}.d7pc button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-weight:900;cursor:pointer}
+.d7pc b{min-width:58px;text-align:center;font-size:13px;line-height:1.1}.d7pc b small{display:block;font-size:10px;color:var(--ink2);font-weight:700}
