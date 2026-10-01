@@ -58,7 +58,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'week', 'month']);
   const COMER_TABS = new Set(['food', 'shop', 'types', 'batches', 'import']);
-  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'eventos', 'estudio', 'cfg', 'data', 'ajustes']);
+  const DRAWER_TABS = new Set(['notas', 'habitos', 'dinero', 'consumo', 'eventos', 'estudio', 'cfg', 'data', 'ajustes']);
   // «Turno y rotación», «Ajustes» y «Datos» son ahora portada + una pantalla por tarea, igual que
   // Comer: para llegar a una tarjeta hay que abrir su puerta. El segundo argumento es esa puerta.
   const PUERTA = { cfg: 'cfg-vista', ajustes: 'aju-vista', data: 'datos-vista' };
@@ -9259,6 +9259,35 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la hoja de una toma: qué lleva, reparto de macros y lo que aporta; + escala kcal y micros; se mueve y se borra',
       hoja && hoja.ing === 4 && hoja.mic >= 3 && hoja.stk === 3 && mas.rac === 1.5 && Math.abs(mas.kcal - antes.kcal * 1.5) <= 2 && mas.ca > antes.ca &&
       p === 'cena' && mic.falta && mic.con && borrado.n === 0 && !borrado.hoja, JSON.stringify({ hoja, antes, mas, p, mic, borrado }));
+  }
+
+  // 227) MONCHIS Y CONSUMO: con Lloretazo hoy, Hoy avisa y enseña los monchis con tope y opciones de la
+  // nevera (primero lo que sacia); «＋» lo apunta en «Monchis»; 🌿 Consumo apunta una sesión en dos
+  // toques, cuenta la semana contra el objetivo, sobrevive a recargar, y está en el cajón
+  {
+    const r = await page.evaluate(() => { const P = window.PG; window.__copia227 = JSON.parse(JSON.stringify(P.store));
+      P.store.food.objetivo = { kcal: 2240, prot: 134 }; P.store.food.log[P.iso(new Date())] = []; P.store.food.despensa = []; delete P.store.food.monchisTope;
+      ['griego ligero natural', 'nuez natural', 'kiwi verde bandeja', 'maria sin gluten', 'panna cotta', 'cookie sin gluten y sin lactosa'].forEach((t) => P.despensaAdd(t, 1, ''));
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.lloretPoner(P.iso(new Date())); delete P.store.consumo;
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render();
+      const c = document.querySelector('.mcard'); const op = P.monchisOpciones();
+      return { aviso: !!document.querySelector('.mcll'), card: !!c, sanos: op.sanos.length, capr: op.caprichos.length, primero: op.sanos[0] && op.sanos[0].n,
+        tope: /500/.test(c ? c.innerText : '') }; });
+    await page.click('.mcard [data-a="mc-add"]'); await page.waitForTimeout(150);
+    const tras = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { pos: l.map((x) => x.p).join(), m: P.monchisKcal(P.iso(new Date())) }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-f"][data-k="forma"][data-v="dry"]'); await page.click('[data-a="cn-f"][data-k="g"][data-v="0.1"]'); await page.click('[data-a="cn-add"]'); await page.waitForTimeout(120);
+    const cn = await page.evaluate(() => { const P = window.PG, s = P.consumoS().ses, n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      return { n: s.length, ses: s[0] && (s[0].forma + ' ' + s[0].g + ' ' + s[0].ctx), semana: P.consumoSemana(P.iso(P.mondayOf(new Date()))).n, vuelta: (n.consumo || { ses: [] }).ses.length,
+        kpi: (document.querySelector('#main .mskpi') || {}).innerText || '' }; });
+    await page.click('[data-a="cn-vista"][data-v="efectos"]'); await page.waitForTimeout(100);
+    const ef = await page.evaluate(() => /DÍAS CON SESIÓN/.test(document.querySelector('#main').innerText) && /no consejo médico/.test(document.querySelector('#main').innerText));
+    const cajon = await page.evaluate(() => [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].some((b) => b.dataset.t === 'consumo'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia227; P.save(); P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Lloretazo hoy: aviso y monchis con tope (500) y opciones de tu nevera, lo que sacia primero; «＋» lo apunta en Monchis',
+      r.aviso && r.card && r.tope && r.sanos >= 2 && r.capr >= 1 && /Yogur griego/.test(r.primero) && tras.pos === 'monchis' && tras.m > 100, JSON.stringify({ r, tras }));
+    check('🌿 Consumo: una sesión en dos toques (dry, 0,1 g, Lloretazo), la semana la cuenta, sobrevive a recargar, «cómo te afecta» y está en el cajón',
+      cn.n === 1 && cn.ses === 'dry 0.1 lloret' && cn.semana === 1 && cn.vuelta === 1 && /objetivo ≤ 4/.test(cn.kpi) && ef && cajon, JSON.stringify({ cn, ef, cajon }));
   }
 
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»

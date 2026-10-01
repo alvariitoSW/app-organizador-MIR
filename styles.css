@@ -3013,3 +3013,22 @@ html,body{overscroll-behavior-y:none}
 .feacts>*{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
 .feacts .fetam{display:flex;align-items:center;justify-content:space-between;padding:0 4px}.feacts .fetam button{width:28px;height:28px;border:0;background:none;color:var(--ink);font-size:16px;font-weight:900;cursor:pointer}
 .feacts select{padding:0 4px}.feacts .del{color:var(--bad)}
+/* ---- 🍫 monchis ---- */
+.mcll{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--bg3) 45%,var(--line));background:color-mix(in srgb,var(--bg3) 10%,var(--card))}
+.mcll>span{font-size:22px}
+.mcbar{height:9px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:8px}.mcbar i{display:block;height:100%;border-radius:5px;background:var(--bg3)}.mcbar i.x{background:var(--bx)}
+.mcop{display:grid;grid-template-columns:24px 1fr 34px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.mcop .n b{font-size:13px}.mcop .n>span{display:block;font-size:11px;color:var(--ink2)}
+.mcop .tg{font-style:normal;font-size:10px;font-weight:900;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--bg3) 22%,transparent)}
+.mcop .add{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--brand);font:inherit;font-weight:900;cursor:pointer}
+/* ---- 🌿 consumo ---- */
+.cn{--bp:#3987e5;--bc:#c98500;--bg3:#199e70;--bx:#d95926}
+html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
+.cnseg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}
+.cnseg button{padding:9px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.cnseg button.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+.cntab{display:flex;align-items:center;gap:6px}.cntab input{width:auto}
+.cnrow{display:grid;grid-template-columns:22px 1fr 28px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+.cnrow .x{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
+.cnwk i{background:var(--bg3)}.cnwk .x i{background:var(--bx)}
+.mskpi b.ex{color:var(--bx)}

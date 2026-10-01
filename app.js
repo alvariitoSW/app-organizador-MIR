@@ -816,6 +816,14 @@ function normalize(o){
    else e.dias=EST_NIVELES.map(function(n,i){
      const v=+e.dias[i];return (v>=1&&v<=365)?Math.round(v):n.dias;});}
   ahorroLimpia(o);
+  /* 🌿 consumo: sesiones con su forma, cantidad y contexto; objetivo semanal y €/g */
+  if(o.consumo&&typeof o.consumo==='object'){const c=o.consumo;
+    c.ses=(Array.isArray(c.ses)?c.ses:[]).filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,2000).map(function(x){return {id:String(x.id||uid('cn')),ts:+x.ts||0,fecha:x.fecha,
+      hora:/^\d{2}:\d{2}$/.test(x.hora||'')?x.hora:'',forma:['dry','porro','comestible'].indexOf(x.forma)>=0?x.forma:'dry',g:Math.max(0,Math.min(5,+x.g||0)),
+      ctx:['lloret','casa','amigos'].indexOf(x.ctx)>=0?x.ctx:'casa',tabaco:!!x.tabaco};});
+    c.obj=Math.max(0,Math.min(21,Math.round(+c.obj>=0?+c.obj:4)));c.eurG=Math.max(1,Math.min(30,+c.eurG||7));}
+  else delete o.consumo;
+  if(o.food&&o.food.monchisTope!=null)o.food.monchisTope=Math.max(0,Math.min(3000,Math.round(+o.food.monchisTope||0)));
   /* el sueño de verdad y los libros: sin registrarlos aquí se perderían al recargar */
   if(!o.suenoReal||typeof o.suenoReal!=='object')o.suenoReal={};
   else{const sr={};Object.keys(o.suenoReal).filter(function(k){return /^\d{4}-\d{2}-\d{2}$/.test(k);}).sort().slice(-800).forEach(function(k){
@@ -7467,7 +7475,7 @@ function guardarCombinacion(idx){
     steps:[],nota:'idea armada con lo que tenías en la nevera'};
   store.dishes.push(d);save();
   return 'guardado como plato: '+d.name;}
-const FOOD_POS=['desayuno','media','comida','merienda','cena','post-entreno'];
+const FOOD_POS=['desayuno','media','comida','merienda','cena','monchis','post-entreno'];
 function foodCtx(){
   const f=food(),hoy=iso(new Date());
   const sel=(ui.foodDate&&foodKey(ui.foodDate))?foodKey(ui.foodDate):hoy;
@@ -7488,8 +7496,8 @@ function posOptions(seleccion){
    Medido antes: 1,6 pantallas y lo apuntado empezaba a 1.052 px, debajo del borde. Ahora arriba lo
    que llevas contra tu objetivo, justo debajo lo de hoy por momentos (con su ＋ y lo que dice el
    menú, a un toque), la semana como barras contra el objetivo y los días especiales en una fila. */
-const POS_ICO={desayuno:'☕',media:'🍎',comida:'🍽',merienda:'🥪',cena:'🌙','post-entreno':'💪'};
-const POS_TXT={desayuno:'Desayuno',media:'Media mañana',comida:'Comida',merienda:'Merienda',cena:'Cena','post-entreno':'Post-entreno'};
+const POS_ICO={desayuno:'☕',media:'🍎',comida:'🍽',merienda:'🥪',cena:'🌙',monchis:'🍫','post-entreno':'💪'};
+const POS_TXT={desayuno:'Desayuno',media:'Media mañana',comida:'Comida',merienda:'Merienda',cena:'Cena',monchis:'Monchis','post-entreno':'Post-entreno'};
 function menuPorMomento(key){
   /* lo que el menú pone ese día en cada momento (desayuno/comida/cena…), con sus platos */
   const inf=dayInfo(key),out={};if(!inf||!inf.shiftId)return out;
@@ -7792,6 +7800,124 @@ function feHojaHTML(){
       '<select data-a="fe-mover" data-id="'+esc(x.id)+'" aria-label="mover a otra comida">'+FOOD_POS.map(function(p){return '<option value="'+p+'"'+(p===x.p?' selected':'')+'>'+esc(p===x.p?'mover a…':(POS_TXT[p]||p))+'</option>';}).join('')+'</select>'+
       (x.frase?'<button data-a="fe-plato" data-id="'+esc(x.id)+'">guardar plato</button>':'<span></span>')+
       '<button class="del" data-a="fe-borrar" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'">borrar</button></div></div>';}
+/* ===================== 🍫 MONCHIS =====================
+   «El Lloretazo es ir a la playa a fumar y luego me da hambre.» Los monchis van en su propio apartado
+   del día, con un tope (lo que te queda hasta tu objetivo, o el que pongas), y la app te propone de tu
+   nevera primero lo que mejor sienta y luego lo que pide el cuerpo, con sus kcal. */
+function monchisTope(sel){
+  const t=+food().monchisTope;if(t>0)return t;
+  const ob=+food().objetivo.kcal||0;if(!ob)return 400;
+  const ya=foodTotals(sel).kcal-monchisKcal(sel);return Math.max(150,Math.min(500,Math.round((ob-ya)/10)*10));}   /* lo que te queda, con techo de 500 */
+function monchisKcal(sel){return foodLog(foodKey(sel)).filter(function(x){return x.p==='monchis';}).reduce(function(a,x){return a+(+x.kcal||0);},0);}
+function monchisOpciones(){
+  /* de tu nevera: combinaciones que sacian (proteína o fibra) y lo dulce/salado que pide el cuerpo */
+  const nv=qcNevera(),hay=function(re){return nv.filter(function(o){return re.test(alimTxt(o.a.n+' '+o.x.nom));})[0];};
+  const it=function(o,g){return {id:o.a.id,g:g||((o.a.r&&o.a.r[0])||[0,100])[1],casa:o.x.nom};};
+  const sanos=[],caprichos=[];
+  const yog=hay(/yogur|griego|proteina|skyr|kefir/),nuez=hay(/nuez|almendr|pecana|anacardo|pistach/),fru=hay(/kiwi|platano|manzana|pera|naranja|mandarina|uva|fresa/),
+    gal=hay(/maria|galleta|tostada|biscote/),tor=hay(/tortilla de (maiz|trigo)|wrap/),fia=hay(/fiambre|pavo|pollo extrafino|jamon cocido|york/),que=hay(/queso/);
+  if(yog)sanos.push({n:yog.a.n+(nuez?' + '+nuez.a.n.toLowerCase():''),e:'🥛',it:[it(yog)].concat(nuez?[it(nuez,20)]:[]),tag:'sacia'});
+  if(fru)sanos.push({n:'2 × '+fru.a.n.toLowerCase()+(gal?' + '+gal.a.n.toLowerCase():''),e:fru.a.e||'🍎',it:[it(fru,(((fru.a.r&&fru.a.r[0])||[0,100])[1])*2)].concat(gal?[it(gal)]:[]),tag:'dulce y ligero'});
+  if(tor&&fia)sanos.push({n:tor.a.n+' con '+fia.a.n.toLowerCase().replace(/^fiambre de /,''),e:'🌮',it:[it(tor),it(fia,45)].concat(que?[it(que,20)]:[]),tag:'salado'});
+  else if(fia&&que)sanos.push({n:'Rollitos de '+fia.a.n.toLowerCase().replace(/^fiambre de /,'')+' y queso',e:'🧀',it:[it(fia,45),it(que,30)],tag:'salado'});
+  const usados={};sanos.forEach(function(x){x.it.forEach(function(y){usados[y.id]=1;});});
+  nv.filter(function(o){return !usados[o.a.id];}).filter(function(o){return /panna|natilla|flan|cookie|barrita|galleta|chocolate|helado|bolleria|crema.*cacahuete|cacahuete|patatas fritas|nachos|gominola/.test(alimTxt(o.a.n));})
+    .forEach(function(o){const g=/crema.*cacahuete/.test(alimTxt(o.a.n))?15:(((o.a.r&&o.a.r[0])||[0,40])[1]);
+      caprichos.push({n:o.a.n,e:o.a.e||'🍪',it:[it(o,g)],nota:/cacahuete/.test(alimTxt(o.a.n))?'1 cda · ojo: se va rápido':''});});
+  const conM=function(x){const fr={txt:x.n,tipo:'libre',tam:'m',items:x.it,raros:[]};x.fr=fr;x.m=fraseMacros(fr);return x;};
+  return {sanos:sanos.map(conM).slice(0,3),caprichos:caprichos.map(conM).slice(0,4)};}
+function monchisCardHTML(sel){
+  const ll=lloretDe(sel),hoy=sel===iso(new Date()),hay=monchisKcal(sel)>0||consumoDe(sel).length>0;
+  if(!ll&&!hay)return '';
+  const tope=monchisTope(sel),ya=monchisKcal(sel),op=monchisOpciones(),p=ll?lloretPlan(sel):null;
+  const fila=function(x,i,tipo){return '<div class="mcop"><span>'+esc(x.e)+'</span><span class="n"><b>'+esc(x.n)+'</b>'+(x.tag?' <em class="tg">'+esc(x.tag)+'</em>':'')+
+      '<span>'+fmtMil(x.m.kcal)+' kcal'+(x.m.prot>=5?' · '+Math.round(x.m.prot)+' g P':'')+(x.nota?' · '+esc(x.nota):'')+'</span></span>'+
+      '<button class="add" data-a="mc-add" data-t="'+tipo+'" data-i="'+i+'" aria-label="apuntar '+esc(x.n)+' en monchis">＋</button></div>';};
+  return (ll&&hoy?'<div class="mcll"><span>🌿</span><div><b>Lloretazo '+hm(p.de)+'–'+hm(p.a)+'</b><div class="mini">luego suele dar hambre: deja algo a mano y no te pases</div></div></div>':'')+
+    '<div class="card mcard"><div class="row"><span class="cap">🍫 MONCHIS</span><span class="sp"></span><span class="mini">'+(ya>tope?'te has pasado '+fmtMil(ya-tope)+' kcal':'te quedan '+fmtMil(tope-ya)+' kcal')+'</span></div>'+
+      '<div class="mcbar" role="img" aria-label="monchis '+ya+' de '+tope+' kcal"><i class="'+(ya>tope?'x':'')+'" style="width:'+Math.min(100,Math.round(ya/Math.max(1,tope)*100))+'%"></i></div>'+
+      '<div class="row mini" style="margin-top:3px"><span>tope</span><div class="d4step"><button data-a="mc-tope" data-d="-50" aria-label="bajar tope">−</button><b>'+fmtMil(tope)+'</b><button data-a="mc-tope" data-d="50" aria-label="subir tope">+</button></div><span class="sp"></span><span>'+fmtMil(ya)+' / '+fmtMil(tope)+' kcal</span></div>'+
+      (op.sanos.length?'<div class="hcap">DE TU NEVERA · LOS QUE MEJOR SIENTAN</div>'+op.sanos.map(function(x,i){return fila(x,i,'s');}).join(''):'')+
+      (op.caprichos.length?'<div class="hcap">LO QUE PIDE EL CUERPO</div>'+op.caprichos.map(function(x,i){return fila(x,i,'c');}).join(''):'')+
+      (!op.sanos.length&&!op.caprichos.length?'<p class="mini" style="margin:6px 0 0">No veo nada de picar en tu nevera: escribe arriba lo que te comas («2 galletas y un yogur») y elige «Monchis».</p>':'')+'</div>';}
+
+/* ===================== 🌿 CONSUMO =====================
+   «Que también gestione el fumar peis, un apartado sobre el consumo de cannabis en forma de dry.»
+   Apuntar una sesión en dos toques (forma, cantidad, dónde), la semana contra tu objetivo, los días
+   seguidos sin, y cómo te afecta con tus propios datos (monchis, a qué hora te acuestas, proteína).
+   Sin sermones: datos tuyos y pautas de reducción de riesgos. Todo se queda en tu móvil. */
+const CN_FORMAS=[['dry','🌬️','Dry (vapo)'],['porro','🚬','Porro'],['comestible','🍪','Comestible']];
+const CN_CANT=[[0.1,'0,1 g'],[0.25,'0,2–0,3 g'],[0.5,'0,5 g+']];
+const CN_CTX=[['lloret','🌿','Lloretazo'],['casa','🏠','Casa'],['amigos','👥','Amigos']];
+function consumoS(){if(!store.consumo||typeof store.consumo!=='object')store.consumo={};const c=store.consumo;
+  if(!Array.isArray(c.ses))c.ses=[];if(!(+c.obj>=0))c.obj=4;if(!(+c.eurG>0))c.eurG=7;return c;}
+function consumoDe(k){return consumoS().ses.filter(function(x){return x.fecha===k;});}
+function consumoApuntar(o){
+  const c=consumoS(),d=new Date();
+  const x={id:uid('cn'),ts:d.getTime(),fecha:iso(new Date()),hora:hm(d.getHours()*60+d.getMinutes()),forma:o.forma||'dry',g:+o.g||0.25,ctx:o.ctx||'casa',tabaco:!!o.tabaco};
+  c.ses.unshift(x);c.ses=c.ses.slice(0,2000);save();return x;}
+function consumoSemana(lunK){
+  const l=parseDate(lunK),dias=[];let n=0,g=0;
+  for(let i=0;i<7;i++){const k=iso(addDays(l,i)),s=consumoDe(k);dias.push({k:k,n:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});n+=s.length;g+=dias[i].g;}
+  return {dias:dias,n:n,g:Math.round(g*100)/100};}
+function consumoSin(){
+  /* días seguidos sin, contando hoy si hoy no hay */
+  let n=0;for(let i=0;i<120;i++){const k=iso(addDays(new Date(),-i));if(consumoDe(k).length)break;n++;}return n;}
+function consumoEfectos(){
+  /* últimas 4 semanas: días con sesión frente a días sin (solo días con algo apuntado de comida) */
+  const con={m:[],p:[],cama:[],h:[]},sin={m:[],p:[],cama:[],h:[]};
+  for(let i=1;i<=28;i++){const k=iso(addDays(new Date(),-i)),l=foodLog(foodKey(k));const g=consumoDe(k).length?con:sin;
+    if(l.length){g.m.push(l.filter(function(x){return x.p==='monchis';}).reduce(function(a,x){return a+(+x.kcal||0);},0)+(diaEspDe(k)&&diaEspDe(k).tipo==='moncheo'?kcalExtraDe(k):0));
+      g.p.push(foodTotals(k).prot);}
+    const sr=suenoReal(iso(addDays(parseDate(k),1)));
+    if(sr&&sr.acostar){let mm=mins(sr.acostar);if(mm<12*60)mm+=1440;g.cama.push(mm);}
+    if(sr&&sr.h)g.h.push(+sr.h*60);}
+  const med=function(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:null;};
+  const dif=function(q){const a=med(con[q]),b=med(sin[q]);return a==null||b==null?null:Math.round(a-b);};
+  return {monchis:dif('m'),prot:dif('p'),cama:dif('cama'),sueno:dif('h'),dCon:con.p.length,dSin:sin.p.length};}
+function renderConsumo(){
+  const c=consumoS(),v=ui.cnVista||'';
+  if(v==='efectos')return renderConsumoEfectos();
+  const lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))?'lloret':'casa',tabaco:false});
+  const man=iso(addDays(new Date(),1)),guardiaMan=(function(){const sh=shiftById(dayInfo(man).shiftId);return !!(sh&&isGuardia(sh));})();
+  const hoyS=consumoDe(iso(new Date())),max=Math.max(2,Math.max.apply(null,S.dias.map(function(d){return d.n;})));
+  const seg=function(lista,key,val,lab){return '<div class="cnseg">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
+    return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="'+key+'" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+(x.length>2?x[1]+' '+x[2]:x[1])+'</button>';}).join('')+'</div>';};
+  $('#main').innerHTML='<div class="grid mt cn">'+
+    '<div class="subcab"><h2 class="subtit">🌿 Consumo</h2><span class="sp"></span><button class="btn s" data-a="cn-vista" data-v="efectos">cómo te afecta ›</button></div>'+
+    '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
+      '<div><b>'+String(S.g).replace('.',',')+' g</b><span>esta semana'+(S.n?' · '+String(Math.round(S.g/S.n*100)/100).replace('.',',')+' g/sesión':'')+'</span></div>'+
+      '<div><b>'+consumoSin()+'</b><span>días seguidos sin</span></div></div>'+
+    '<div class="card"><div class="cap">APUNTAR UNA SESIÓN</div>'+seg(CN_FORMAS,'forma')+seg(CN_CANT,'g')+seg(CN_CTX,'ctx')+
+      '<div class="row" style="margin-top:8px"><label class="mini cntab"><input type="checkbox" data-a="cn-tabaco"'+(f.tabaco?' checked':'')+'> con tabaco</label><span class="sp"></span>'+
+        '<button class="btn p" data-a="cn-add">Apuntar</button></div>'+
+      (guardiaMan?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">Mañana tienes guardia: hoy, mejor no (o poco y pronto).</p>':'')+
+      (hoyS.length?'<div class="hcap">HOY</div>'+hoyS.map(function(x){const F=CN_FORMAS.filter(function(q){return q[0]===x.forma;})[0]||CN_FORMAS[0],C=CN_CTX.filter(function(q){return q[0]===x.ctx;})[0]||CN_CTX[1];
+        return '<div class="cnrow"><span>'+F[1]+'</span><span>'+esc(x.hora)+' · '+esc(F[2])+' · '+String(x.g).replace('.',',')+' g · '+C[1]+' '+esc(C[2])+(x.tabaco?' · con tabaco':'')+'</span><button class="x" data-a="cn-del" data-id="'+esc(x.id)+'" aria-label="quitar">×</button></div>';}).join(''):'')+'</div>'+
+    '<div class="card"><div class="row"><span class="cap">LA SEMANA</span><span class="sp"></span><span class="mini">sesiones por día · '+S.n+(c.obj?' de ≤ '+c.obj:'')+'</span></div>'+
+      '<div class="d6m cnwk" role="img" aria-label="sesiones de cada día de la semana">'+S.dias.map(function(d){const pasa=c.obj&&d.n>Math.ceil(c.obj/3);
+        return '<div class="'+(!d.n?'v':(pasa?'x':''))+'"><em>'+(d.n||'')+'</em><i style="height:'+(d.n?Math.max(6,Math.round(d.n/max*60)):3)+'px"></i><span'+(d.k===iso(new Date())?' class="hoy"':'')+'>'+'LMXJVSD'[S.dias.indexOf(d)]+'</span></div>';}).join('')+'</div>'+
+      '<div class="row" style="margin-top:8px"><span class="mini">objetivo semanal</span><span class="sp"></span><div class="d4step"><button data-a="cn-obj" data-d="-1" aria-label="bajar objetivo">−</button><b>≤ '+c.obj+'</b><button data-a="cn-obj" data-d="1" aria-label="subir objetivo">+</button></div></div></div>'+
+  '</div>';}
+function renderConsumoEfectos(){
+  const c=consumoS(),E=consumoEfectos(),hoy=new Date();
+  const meses=[];for(let i=2;i>=0;i--){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1),ym=ahoMk(d.getFullYear(),d.getMonth());
+    const s=c.ses.filter(function(x){return x.fecha.slice(0,7)===ym;});meses.push({n:MON[d.getMonth()],s:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});}
+  const mx=Math.max(1,Math.max.apply(null,meses.map(function(m){return m.s;})));
+  const fila=function(t,v,u,sub,malo,ancho){return '<div class="femic"><span>'+t+'</span><span class="t"><i class="'+(malo?'lo':'')+'" style="width:'+ancho+'%"></i></span><b>'+v+'</b></div><div class="mini femcon">'+sub+'</div>';};
+  const pocos=E.dCon<3||E.dSin<3;
+  $('#main').innerHTML='<div class="grid mt cn">'+
+    '<div class="subcab"><button class="btn s volver" data-a="cn-vista" data-v="">'+gymIco('atras','gico sm')+' Consumo</button><h2 class="subtit">Cómo te afecta</h2></div>'+
+    '<div class="card"><div class="row"><span class="cap">LOS DÍAS CON SESIÓN, FRENTE A LOS DÍAS SIN</span><span class="sp"></span><span class="mini">4 semanas</span></div>'+
+      (pocos?'<p class="mini" style="margin:4px 0 0">Aún hay pocos días para comparar ('+E.dCon+' con sesión y '+E.dSin+' sin, con comida apuntada). Sigue apuntando y en unas semanas sale aquí.</p>':
+      (E.monchis!=null?fila('Monchis',(E.monchis>0?'+':'')+E.monchis,'kcal','kcal de monchis de más esos días',E.monchis>0,Math.min(100,Math.abs(E.monchis)/6)):'')+
+      (E.cama!=null?fila('Te acuestas',(E.cama>0?'+':'')+E.cama+'′','min',E.cama>0?'más tarde esos días'+(E.sueno!=null?'; duermes '+Math.abs(E.sueno)+' min '+(E.sueno<0?'menos':'más'):''):'más pronto esos días',E.cama>0,Math.min(100,Math.abs(E.cama))):'')+
+      (E.prot!=null?fila('Proteína',(E.prot>0?'+':'')+E.prot+' g','g',E.prot<0?'los monchis desplazan la cena':'',E.prot<0,Math.min(100,Math.abs(E.prot)*3)):''))+'</div>'+
+    '<div class="card"><div class="cap">MES A MES</div>'+meses.map(function(m){return '<div class="femic"><span>'+m.n+'</span><span class="t"><i style="width:'+Math.round(m.s/mx*100)+'%"></i></span><b>'+m.s+'</b></div>';}).join('')+
+      '<p class="mini" style="margin:6px 0 0">sesiones al mes · gasto aprox. '+fmtMil(meses[2].g*c.eurG)+' € este mes (a '+c.eurG+' €/g · '+
+        '<button class="dlink" data-a="cn-eur" data-d="-1">−</button> <button class="dlink" data-a="cn-eur" data-d="1">+</button>)</p></div>'+
+    '<div class="card"><div class="cap">PARA QUE SIENTE MEJOR</div><p class="mini" style="margin:4px 0 0">Vaporizar en seco y sin tabaco evita la combustión y la nicotina. Después, nada de coche ni moto. Si la tolerancia sube (necesitas más para lo mismo), 2–3 días sin la bajan. Antes de una guardia, mejor no: te lo recuerdo al apuntar si al día siguiente tienes guardia. Son pautas generales, no consejo médico.</p></div>'+
+  '</div>';}
 function renderFoodDia(){
   const c=foodCtx(),f=c.f,sel=c.sel,ft=c.ft,ob=c.ob,d=c.d;
   const objK=+ob.kcal||0,objP=+ob.prot||0,obm=objetivoMacros();
@@ -7861,6 +7987,7 @@ function renderFoodDia(){
       '<b>Buscar</b> · '+fmtMil(foodBuscables().length)+' alimentos y platos</button>'+
     (e?diaEspCardHTML(sel):'')+
     '<div class="card"><div class="row"><span class="cap">'+(sel===c.hoy?'HOY TE TOCA':'ESTE DÍA')+'</span><span class="sp"></span><span class="mini">✓ lo que tocaba · ± otra cosa</span></div>'+filas+'</div>'+
+    monchisCardHTML(sel)+
     (function(){const S=semanaComida(0),top=platoRanking().sort(function(a,b){return b.nota-a.nota;})[0];
       return '<div class="h2seg"><button data-a="food-vista" data-v="misemana"><b>📈 Mi semana</b><span>'+S.n+' de '+S.cuenta+' días'+(S.objP&&S.n?' · '+Math.round(S.prot/S.objP*100)+' % prot':'')+'</span></button>'+
         '<button data-a="food-vista" data-v="misplatos"><b>🏆 Clasificación</b><span>'+(top?'top: '+esc(top.d.name):'la nota de cada plato')+'</span></button></div>';})()+
@@ -17351,7 +17478,7 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','Consumo'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 /* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
@@ -17372,7 +17499,7 @@ function comerModosHTML(){
   return b('dia','Hoy','food-vista','')+b('semana','Semana','tab','types')+
     b('nevera','Nevera','food-vista','nevera2')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['eventos','📌 Eventos'],['estudio','📚 Estudio']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['consumo','🌿 Consumo'],['eventos','📌 Eventos'],['estudio','📚 Estudio']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -17484,7 +17611,7 @@ function renderNow(){
   const bt=document.querySelector('[data-a="theme"]');
   if(bt){const osc=document.documentElement.classList.contains('dark');bt.textContent=osc?'☀️':'🌙';
     bt.title=osc?'Modo día':'Modo noche HUD';bt.setAttribute('aria-label',bt.title);}
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,consumo:renderConsumo,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -18442,6 +18569,15 @@ function act(a,el){
     case 'nev-ver':ui.tab='food';ui.foodVista='nevera2';render();window.scrollTo(0,0);break;
     case 'nv-desp':ui.nvDesp=!ui.nvDesp;render();break;
     case 'nv-todo':ui.nvTodo=!ui.nvTodo;render();break;
+    case 'mc-add':{const op=monchisOpciones(),x=(el.dataset.t==='c'?op.caprichos:op.sanos)[+el.dataset.i];if(!x)break;
+      flash(fraseApuntar(x.fr,'monchis'));render();break;}
+    case 'mc-tope':{const f=food(),t=monchisTope(foodCtx().sel);f.monchisTope=Math.max(50,Math.min(3000,t+(+el.dataset.d||0)));save();render();break;}
+    case 'cn-f':{const f=ui.cnF||{};const k=el.dataset.k;f[k]=k==='g'?+el.dataset.v:el.dataset.v;ui.cnF=f;render();break;}
+    case 'cn-add':{const x=consumoApuntar(ui.cnF||{});flash('apuntada: '+x.hora+' · '+String(x.g).replace('.',',')+' g');render();break;}
+    case 'cn-del':{const c=consumoS();c.ses=c.ses.filter(function(x){return x.id!==el.dataset.id;});save();render();break;}
+    case 'cn-obj':{const c=consumoS();c.obj=Math.max(0,Math.min(21,(+c.obj||0)+(+el.dataset.d||0)));save();render();break;}
+    case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
+    case 'cn-vista':ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
     case 'fe-ver':ui.feVer=el.dataset.id||'';render();break;
     case 'fe-cerrar':ui.feVer='';render();break;
     case 'fe-borrar':flash(delFoodEntry(el.dataset.key,el.dataset.id));ui.feVer='';render();break;
@@ -20837,6 +20973,7 @@ document.addEventListener('change',e=>{
     case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'fr-pos':ui.frPos=el.value||'';render();break;
+    case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
     case 'din-hu-para':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
       h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
@@ -21224,7 +21361,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={d6Mes,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
