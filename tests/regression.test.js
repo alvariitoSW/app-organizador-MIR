@@ -392,7 +392,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(200);
   const icsFixture = path.join(require('os').tmpdir(), 'regression-test.ics');
   fs.writeFileSync(icsFixture,
-    'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:20260915\r\nSUMMARY:Guardia Urgencias\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n');
+    'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:' + (() => { const d = new Date(); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0'); })() + '15\r\nSUMMARY:Guardia Urgencias\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n');
   const icsFile = await page.$('#icsFile');
   await icsFile.setInputFiles(icsFixture);
   await page.waitForTimeout(300);
@@ -2521,8 +2521,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
        pasada, un día fijo del mes (el 9) puede caer fuera y entonces no hay punto que contar.
        Tienen que ser además del mes que se está viendo, para que salgan en «Eventos de …». */
     await page.evaluate(() => {
-      const mes = (window.PG.ui.monSel || '').slice(0, 7) ||
-        [...document.querySelectorAll('.dbox')].filter((x) => !x.classList.contains('fuera'))[0].dataset.key.slice(0, 7);
+      /* el mes que se ve es el de hoy (el día 1, la semana pasada de arriba es del mes anterior) */
+      const mes = (window.PG.ui.monSel || '').slice(0, 7) || window.PG.iso(new Date()).slice(0, 7);
       const vis = [...document.querySelectorAll('.dbox')]
         .map((x) => x.dataset.key).filter((k) => k && k.slice(0, 7) === mes);
       const ev = window.PG.eventosS();
@@ -4581,6 +4581,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 77) el dinero se cruza con el calendario: un gasto que cae hoy avisa en «Hoy» y se marca desde
   // ahí, y el día aparece marcado en el Mes. Antes no había ni una línea de dinero en la app.
   {
+    const pagado0 = await page.evaluate(() => window.PG.mesDinero(new Date().getFullYear(), new Date().getMonth()).pagado);
     await page.evaluate(() => {
       window.PG.addGasto({ nombre: 'Seguro del coche', importe: '58,90',
         dia: new Date().getDate(), cat: 'transporte' });
@@ -4588,15 +4589,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('hoy');
     await page.waitForTimeout(300);
     const enHoy = await page.evaluate(() => {
-      const c = document.querySelector('#main .card.avisa');
+      const c = [...document.querySelectorAll('#main .card.avisa')].find((x) => /Seguro del coche/.test(x.textContent)) || document.querySelector('#main .card.avisa');
       return { hay: !!c, dice: c ? /Seguro del coche/.test(c.textContent) : false,
         importe: c ? /58,90/.test(c.textContent) : false };
     });
     // si el aviso no está, esta prueba tiene que FALLAR, no tumbar la suite con un timeout de 30 s
-    const tick = await page.$('#main .card.avisa .tick');
+    const tick = await page.$('#main .card.avisa .tick[aria-label*="Seguro del coche"]');
     if (tick) { await tick.click(); await page.waitForTimeout(300); }
     const trasPagar = await page.evaluate(() => ({
-      avisa: !!document.querySelector('#main .card.avisa'),
+      avisa: [...document.querySelectorAll('#main .card.avisa')].some((c) => /Seguro del coche/.test(c.textContent)),
       pagado: window.PG.mesDinero(new Date().getFullYear(), new Date().getMonth()).pagado,
     }));
     await gotoTab('month');
@@ -4604,8 +4605,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const enMes = await page.evaluate(() => document.querySelectorAll('#main .dbox .dgasto').length);
     check('un gasto que cae hoy avisa en «Hoy», se marca desde ahí y el día sale marcado en el Mes',
       enHoy.hay && enHoy.dice && enHoy.importe && !trasPagar.avisa &&
-      trasPagar.pagado === 58.9 + 41.3 && enMes >= 2,
-      JSON.stringify({ enHoy, trasPagar, enMes }));
+      Math.abs(trasPagar.pagado - pagado0 - 58.9) < 0.001 && enMes >= 2,
+      JSON.stringify({ enHoy, trasPagar, pagado0, enMes }));
     await page.evaluate(() => { window.PG.store.dinero = { gastos: [], pagos: [], presupuesto: 0 }; window.PG.save(); });
   }
 
@@ -9288,6 +9289,52 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.aviso && r.card && r.tope && r.sanos >= 2 && r.capr >= 1 && /Yogur griego/.test(r.primero) && tras.pos === 'monchis' && tras.m > 100, JSON.stringify({ r, tras }));
     check('🌿 Consumo: una sesión en dos toques (dry, 0,1 g, Lloretazo), la semana la cuenta, sobrevive a recargar, «cómo te afecta» y está en el cajón',
       cn.n === 1 && cn.ses === 'dry 0.1 lloret' && cn.semana === 1 && cn.vuelta === 1 && /objetivo ≤ 4/.test(cn.kpi) && ef && cajon, JSON.stringify({ cn, ef, cajon }));
+  }
+
+  // 228) PLAN DE LA SEMANA CON LO QUE HAY y DINERO EDITABLE: con el menú vacío, «Móntamela» rellena las
+  // 21 comidas con lo de la nevera; el día de guardia come y cena «Menú del hospital (aprox.)»; Hoy enseña
+  // el plan; Hoy cocino ofrece platos de la nevera y «hecho» lo cocina. En Dinero se cambia el % de ahorro,
+  // el reparto (siempre suma 100, y vuelve al recomendado) y lo que llevas en una hucha
+  {
+    const NOMS = ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'jamón extrafino', 'maria sin gluten',
+      'picada de vacuno', 'mayonesa pequeña', 'leche desnatada, prot p6', 'nuez natural', 'queso feta', 'baguette sin gluten', 'kiwi verde bandeja',
+      'huevos medianos', 'plátano', 'tortilla de maiz', 'griego ligero natural', 'tomate frito a.oliva', 'fritada pisto'];
+    const r = await page.evaluate((noms) => { const P = window.PG; window.__copia228 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.menu = {}; P.store.semBase = { on: true, d: {} };
+      P.store.food.despensa = []; P.store.food.cocinado = []; noms.forEach((n) => P.despensaAdd(n, 1, ''));
+      const lun = P.mondayOf(new Date()), kg = P.iso(P.addDays(lun, 3));
+      const g = (P.store.shifts || []).find((s) => P.isGuardia(s)); if (g) { P.store.rotation.daySet = Object.assign({}, P.store.rotation.daySet, { [kg]: g.id }); }
+      P.save(); P.ui.tab = 'types'; P.ui.typesVista = ''; P.render(); return { kg, guardia: P.esDiaGuardia(kg) }; }, NOMS);
+    await page.click('[data-a="ss-auto"]'); await page.waitForTimeout(250);
+    const sb = await page.evaluate(() => { const P = window.PG, flash = (document.getElementById('flash') || {}).textContent || '', d = P.store.semBase.d;
+      let llenas = 0; const hosp = [];
+      Object.keys(d).forEach((w) => Object.keys(d[w]).forEach((c) => { const it = d[w][c].items || []; if (it.length) llenas++; if (it.some((x) => x.id === 'd-hospital')) hosp.push(w + c); }));
+      return { flash, llenas, hosp }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
+    const hoy = await page.$$eval('#main .h2mom', (e) => e.filter((x) => /\S/.test(x.innerText)).length);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'hoycocino'; P.render(); });
+    const hc = await page.$$eval('.hcop .t b', (e) => e.map((x) => x.textContent));
+    const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); }
+    const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).length);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.tab = 'dinero'; P.ui.dinTab = 'plan'; P.ui.dineroVista = ''; P.render(); });
+    const m0 = await page.evaluate(() => window.PG.ahorroS().metaPct);
+    await page.click('[data-a="d7-meta"][data-d="5"]'); await page.waitForTimeout(80);
+    const m1 = await page.evaluate(() => window.PG.ahorroS().metaPct);
+    await page.click('[data-a="d7-rep"][data-k="inversion"][data-d="5"]'); await page.waitForTimeout(80);
+    const plan = await page.evaluate(() => { const p = window.PG.ahorroS().plan7 || {}; return { p, suma: Object.values(p).reduce((a, b) => a + b, 0) }; });
+    await page.click('[data-a="d7-rec"]'); await page.waitForTimeout(80);
+    const rec = await page.evaluate(() => !window.PG.ahorroS().plan7);
+    await page.click('.d7seg [data-v="metas"]'); await page.waitForTimeout(100);
+    const meta = await page.$('.d7meta[data-h]'); if (meta) { await meta.click(); await page.waitForTimeout(120); }
+    const inp = await page.$('input[data-a="din-hu-campo"][data-k="saldo"]');
+    if (inp) { await inp.fill('1234,5'); await inp.dispatchEvent('change'); await page.waitForTimeout(120); }
+    const hu = await page.evaluate(() => window.PG.ahorroS().huchas.some((h) => h.saldo === 1234.5));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia228; P.save(); P.ui.foodVista = ''; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('«Móntamela» con el menú vacío rellena la semana con lo de la nevera, y la guardia come y cena el menú del hospital',
+      r.guardia && /comidas puestas/.test(sb.flash) && sb.llenas >= 20 && sb.hosp.includes('3comida') && sb.hosp.includes('3cena') && !sb.hosp.includes('3desayuno') && hoy >= 3, JSON.stringify({ r, sb, hoy }));
+    check('Hoy cocino ofrece platos de tu nevera y «hecho» lo deja cocinado', hc.length >= 2 && coc >= 1, JSON.stringify({ hc, coc }));
+    check('Dinero: el % de ahorro y el reparto se cambian (suma 100 y vuelve al recomendado) y lo que llevas en una hucha se corrige a mano',
+      m1 === (m0 == null ? 30 : m0) + 5 && plan.suma === 100 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan, rec, hu }));
   }
 
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
