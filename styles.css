@@ -3049,3 +3049,9 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .prwk em{font-style:normal;font-size:14px;font-weight:700;color:var(--ink)}
 .prwk .x{background:rgba(217,89,38,.16)}.prwk .x em{color:var(--bx)}
 .prwk .ok em{color:var(--bp)}
+/* hoja de una toma: corregir a mano (también días pasados) */
+.fecorr{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.fecorr summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--ink)}
+.fecg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.fecg .fen{grid-column:1/-1}
+.fecg input{width:100%}

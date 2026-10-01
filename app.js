@@ -4076,6 +4076,11 @@ function bumpFoodEntry(dateStr,id,delta){
     if(a){const pc=alimEntrada(a,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}}
   else if(e.ean){const p=food().eans[e.ean]||e;const g=Math.max(5,(+e.g||0)+(+delta||0));
     const pc=porcionDe(p,g);e.g=g;Object.keys(pc).forEach(function(k){e[k]=pc[k];});}
+  else{
+    /* lo apuntado a mano (sin plato ni alimento): su ración base sale de lo que tiene ahora. Sin esto,
+       «+» multiplicaba lo ya multiplicado y unas lentejas de 500 kcal acababan en 13.000 */
+    if(!e.k1&&!(e.dishId&&dishById(e.dishId))){const r0=+e.rac||1;e.k1={};['kcal','prot','carb','gresa'].forEach(function(q){e.k1[q]=(+e[q]||0)/r0;});e.rac=r0;}}
+  if(e.alim||e.ean){}
   else if(e.k1){const rac=Math.max(0.25,Math.round(((+e.rac||1)+(+delta||0))*4)/4);e.rac=rac;
     ['kcal','prot','carb','gresa'].forEach(function(q){e[q]=q==='kcal'?Math.round((+e.k1[q]||0)*rac):Math.round((+e.k1[q]||0)*rac*10)/10;});
     /* los micros, la fibra y la sal de lo apuntado con frase escalan con el tamaño */
@@ -4085,6 +4090,18 @@ function bumpFoodEntry(dateStr,id,delta){
     e.rac=rac;e.kcal=Math.round((+d.kcal||0)*rac);e.prot=Math.round((+d.prot||0)*rac*10)/10;
     if(d.carb!=null)e.carb=Math.round((+d.carb||0)*rac*10)/10;if(d.fat!=null)e.gresa=Math.round((+d.fat||0)*rac*10)/10;}
   save();return 'rectificado: '+e.nombre;}
+function feCampo(dateStr,id,k,v){
+  /* corregir a mano una toma (de hoy o de cualquier día): nombre, gramos o macros */
+  const e=foodLog(foodKey(dateStr)).filter(function(x){return x.id===id;})[0];if(!e)return 'no encuentro esa toma';
+  if(k==='nombre'){const t=String(v||'').trim().slice(0,60);if(t)e.nombre=t;save();return 'cambiado el nombre';}
+  const n=Math.max(0,+String(v).replace(',','.')||0);
+  if(k==='g'&&(e.alim||e.ean)){const d=n-(+e.g||0);if(n>0)bumpFoodEntry(dateStr,id,d);return 'ahora: '+Math.round(n)+' g';}
+  if(['kcal','prot','carb','gresa'].indexOf(k)<0)return '';
+  e[k]=k==='kcal'?Math.round(n):Math.round(n*10)/10;
+  /* desde aquí, lo que pusiste es la ración: el ± escala a partir de esto */
+  const r=+e.rac||1;e.k1={};['kcal','prot','carb','gresa'].forEach(function(q){e.k1[q]=(+e[q]||0)/r;});
+  if(e.alim||e.ean){e.manual=true;delete e.alim;delete e.ean;e.rac=1;e.k1={kcal:e.kcal,prot:+e.prot||0,carb:+e.carb||0,gresa:+e.gresa||0};}
+  save();return 'corregido: '+e.nombre;}
 function foodTotals(dateStr){
   const o={kcal:0,prot:0,carb:0,gresa:0,azucar:0,fibra:0,sal:0};
   foodLog(foodKey(dateStr)).forEach(function(x){Object.keys(o).forEach(function(k){o[k]+=+x[k]||0;});
@@ -7800,6 +7817,12 @@ function feHojaHTML(){
     (lleva?'<div class="hcap">LLEVA</div>'+lleva:'')+
     (top.length?'<div class="hcap">TE APORTA (DEL DÍA)</div>'+top.map(function(a){return '<div class="femic"><span>'+esc(a[0])+'</span><span class="t"><i class="'+(a[2]?'lo':'')+'" style="width:'+Math.min(100,a[1])+'%"></i></span><b>'+a[1]+' %</b></div>';}).join(''):
       '<p class="mini" style="margin:10px 0 0">Esta toma no trae micronutrientes (los productos de código de barras no los tienen).</p>')+
+    '<details class="fecorr"'+(ui.feCorr?' open':'')+'><summary>✎ corregir a mano</summary><div class="fecg">'+
+      '<label class="fld fen">nombre<input type="text" maxlength="60" value="'+esc(x.nombre||'')+'" data-a="fe-campo" data-k="nombre" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'"></label>'+
+      ((x.alim||x.ean)?'<label class="fld">gramos<input type="number" inputmode="decimal" min="1" max="3000" value="'+(+x.g||0)+'" data-a="fe-campo" data-k="g" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'"></label>':'')+
+      [['kcal','kcal'],['prot','proteína g'],['carb','hidratos g'],['gresa','grasa g']].map(function(q){
+        return '<label class="fld">'+q[1]+'<input type="number" inputmode="decimal" min="0" max="'+(q[0]==='kcal'?6000:600)+'" value="'+(Math.round((+x[q[0]]||0)*10)/10)+'" data-a="fe-campo" data-k="'+q[0]+'" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'"></label>';}).join('')+
+      '</div><p class="mini" style="margin:6px 0 0">Para cuando comiste otra cantidad o algo distinto: lo que pongas aquí manda. El ± de abajo escala a partir de esto.</p></details>'+
     '<div class="feacts"><span class="fetam"><button data-a="fe-less" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="menos">−</button>tamaño<button data-a="fe-more" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="más">+</button></span>'+
       '<select data-a="fe-mover" data-id="'+esc(x.id)+'" aria-label="mover a otra comida">'+FOOD_POS.map(function(p){return '<option value="'+p+'"'+(p===x.p?' selected':'')+'>'+esc(p===x.p?'mover a…':(POS_TXT[p]||p))+'</option>';}).join('')+'</select>'+
       (x.frase?'<button data-a="fe-plato" data-id="'+esc(x.id)+'">guardar plato</button>':'<span></span>')+
@@ -18770,8 +18793,8 @@ function act(a,el){
     case 'cn-obj':{const c=consumoS();c.obj=Math.max(0,Math.min(21,(+c.obj||0)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-vista':ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
-    case 'fe-ver':ui.feVer=el.dataset.id||'';render();break;
-    case 'fe-cerrar':ui.feVer='';render();break;
+    case 'fe-ver':ui.feVer=el.dataset.id||'';ui.feCorr=false;render();break;
+    case 'fe-cerrar':ui.feVer='';ui.feCorr=false;render();break;
     case 'fe-borrar':flash(delFoodEntry(el.dataset.key,el.dataset.id));ui.feVer='';render();break;
     case 'fe-plato':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(!x||!x.frase)break;
       if((store.dishes||[]).some(function(d){return alimTxt(d.name)===alimTxt(x.nombre);})){flash('ya está en tus platos');break;}
@@ -18839,7 +18862,7 @@ function act(a,el){
     case 'fe-quick':{const gg=el.dataset.gq?(+(document.getElementById(el.dataset.gq)||{}).value||150):150;
       flash(addFoodEntry(el.dataset.key,{ean:el.dataset.ean,grams:gg,pos:'comida'}));render();break;}
     case 'fe-more':case 'fe-less':{const e=foodLog(el.dataset.key).filter(function(x){return x.id===el.dataset.id;})[0]||{};
-      const paso=(e.dishId||e.k1)?0.5:25;   /* un plato o algo apuntado con frase: media ración; un alimento: 25 g */
+      const paso=(e.alim||e.ean)?25:0.5;   /* un alimento pesado: 25 g; todo lo demás (plato, frase, kcal a mano): media ración */
       flash(bumpFoodEntry(el.dataset.key,el.dataset.id,a==='fe-more'?paso:-paso));render();break;}
     case 'fe-del':flash(delFoodEntry(el.dataset.key,el.dataset.id));render();break;
     case 'hoy-log-slot':{const hk=el.dataset.key||iso(new Date()),s=(store.menu[el.dataset.shift]||[]).find(function(x){return x.id===el.dataset.slot;});
@@ -21167,6 +21190,7 @@ document.addEventListener('change',e=>{
     case 'fr-pos':ui.frPos=el.value||'';render();break;
     case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
+    case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
     case 'din-hu-campo':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;const k=el.dataset.k;
       if(k==='nombre'){const v=String(el.value||'').trim().slice(0,30);if(v)h.nombre=v;}

@@ -9379,6 +9379,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       cn.ayer && cn.otro && cn.filas === 2 && cn.futuro, JSON.stringify(cn));
   }
 
+  // 230) AJUSTAR LO DE AYER: en Comer se va al día anterior y en la hoja de una toma apuntada a mano
+  // el ± escala media ración (antes sumaba 25 raciones: 500 kcal → 13.000) y «corregir a mano»
+  // cambia nombre y kcal; el ± sigue desde lo corregido
+  {
+    const K = await page.evaluate(() => { const P = window.PG; window.__copia230 = JSON.parse(JSON.stringify(P.store));
+      const d = new Date(); d.setDate(d.getDate() - 1); const k = P.iso(d);
+      P.store.food.log[k] = [{ id: 'fx230', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25, carb: 60, gresa: 10, rac: 1 }];
+      P.save(); P.ui.feVer = ''; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); return k; });
+    await page.click('[data-a="food-prev"]'); await page.waitForTimeout(100);
+    await page.click('#main .h2en'); await page.waitForTimeout(120);
+    const e = () => page.evaluate((K) => { const x = window.PG.foodLog(K)[0]; return { n: x.nombre, kcal: x.kcal, rac: x.rac }; }, K);
+    await page.click('.fehoja [data-a="fe-more"]'); await page.waitForTimeout(100); const mas = await e();
+    await page.click('.fehoja .fecorr summary');
+    const ik = await page.$('.fehoja input[data-k="kcal"]'); await ik.fill('620'); await ik.dispatchEvent('change'); await page.waitForTimeout(100);
+    const inn = await page.$('.fehoja input[data-k="nombre"]'); await inn.fill('Lentejas con chorizo'); await inn.dispatchEvent('change'); await page.waitForTimeout(100);
+    const corr = await e();
+    await page.click('.fehoja [data-a="fe-less"]'); await page.waitForTimeout(100); const menos = await e();
+    const hoyIntacto = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).every((x) => x.id !== 'fx230'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia230; P.save(); P.ui.feVer = ''; P.ui.feCorr = false; P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('lo de ayer se ajusta: ± escala media ración, se corrige a mano (nombre y kcal) y el ± sigue desde ahí',
+      mas.kcal === 750 && mas.rac === 1.5 && corr.n === 'Lentejas con chorizo' && corr.kcal === 620 && menos.rac === 1 && Math.abs(menos.kcal - 413) <= 1 && hoyIntacto,
+      JSON.stringify({ mas, corr, menos, hoyIntacto }));
+  }
+
   // 220) DESLIZAR NO RECARGA y VOLVER A DONDE ESTABAS: el gesto de recargar está apagado, «‹ atrás»
   // y el botón atrás del móvil vuelven a la pantalla anterior, y al recargar se abre donde estabas
   {
