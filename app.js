@@ -827,7 +827,8 @@ function normalize(o){
   /* «cómo cocinas» y las tandas hechas: se guardan con la comida */
   if(o.food&&o.food.pref&&typeof o.food.pref==='object'){const P=o.food.pref;
     o.food.pref={horno:!!P.horno,noCocinar:Array.isArray(P.noCocinar)?P.noCocinar.filter(function(x){return typeof x==='string';}).slice(0,6):['guardia','entreno'],
-      taper:Math.max(1,Math.min(6,Math.round(+P.taper||3))),desayunos:Array.isArray(P.desayunos)?P.desayunos.filter(function(x){return typeof x==='string';}).slice(0,3):[]};}
+      taper:Math.max(1,Math.min(6,Math.round(+P.taper||3))),desayunos:Array.isArray(P.desayunos)?P.desayunos.filter(function(x){return typeof x==='string';}).slice(0,3):[]};
+    if(P.asis&&typeof P.asis==='object'){const a={};['meta','cocinar','cena','variedad'].forEach(function(k){if(typeof P.asis[k]==='string')a[k]=P.asis[k].slice(0,12);});o.food.pref.asis=a;}}
   if(o.food&&o.food.tandasHechas&&typeof o.food.tandasHechas!=='object')delete o.food.tandasHechas;
   /* el sueño de verdad y los libros: sin registrarlos aquí se perderían al recargar */
   if(!o.suenoReal||typeof o.suenoReal!=='object')o.suenoReal={};
@@ -4036,7 +4037,22 @@ function posDeSlot(label,time){
   const h=+String(time||'').split(':')[0];
   if(!isNaN(h)){if(h<10)return 'desayuno';if(h<12)return 'media';if(h<16)return 'comida';if(h<19)return 'merienda';return 'cena';}
   return 'comida';}
+/* «si me confundo al añadir algo, poder quitarlo fácilmente»: lo último que se apuntó o se quitó se
+   recuerda unos segundos y el aviso de abajo lleva «Deshacer» */
+let _ultimoCambio=null;
 function addFoodEntry(dateStr,opt){
+  const k=foodKey(dateStr),antes=k?foodLog(k).map(function(x){return x.id;}):[];
+  const r=addFoodEntry0(dateStr,opt);
+  if(k){const nuevos=foodLog(k).filter(function(x){return antes.indexOf(x.id)<0;}).map(function(x){return x.id;});
+    if(nuevos.length){if(_ultimoCambio&&_ultimoCambio.tipo==='add'&&_ultimoCambio.k===k&&Date.now()-_ultimoCambio.ts<1500)_ultimoCambio.ids=_ultimoCambio.ids.concat(nuevos);
+      else _ultimoCambio={tipo:'add',k:k,ids:nuevos,ts:Date.now()};_ultimoCambio.ts=Date.now();}}
+  return r;}
+function deshacerCambio(){
+  const u=_ultimoCambio;_ultimoCambio=null;if(!u)return 'nada que deshacer';
+  const l=foodLog(u.k);
+  if(u.tipo==='add'){const q=l.filter(function(x){return u.ids.indexOf(x.id)<0;});const n=l.length-q.length;l.length=0;q.forEach(function(x){l.push(x);});save();return n?'deshecho: quitado':'ya no estaba';}
+  l.splice(Math.min(u.i,l.length),0,u.e);save();return 'deshecho: '+u.e.nombre+' vuelve';}
+function addFoodEntry0(dateStr,opt){
   opt=opt||{};
   const k=foodKey(dateStr);if(!k)return 'ese día no tiene pinta de fecha (falta el calendario o la rotación por fecha)';
   const f=food(),list=foodLog(k);
@@ -4073,7 +4089,7 @@ function addFoodEntry(dateStr,opt){
   return 'dime qué: un código guardado o un plato del catálogo';}
 function delFoodEntry(dateStr,id){const list=foodLog(foodKey(dateStr));
   const i=list.findIndex(function(x){return x.id===id;});if(i<0)return 'esa toma ya no estaba';
-  const nm=list[i].nombre;list.splice(i,1);save();return 'quitado '+nm;}
+  const nm=list[i].nombre;_ultimoCambio={tipo:'del',k:foodKey(dateStr),e:list[i],i:i,ts:Date.now()};list.splice(i,1);save();return 'quitado '+nm;}
 function bumpFoodEntry(dateStr,id,delta){
   const e=foodLog(foodKey(dateStr)).filter(function(x){return x.id===id;})[0];
   if(!e)return 'no encuentro esa toma';
@@ -10216,6 +10232,8 @@ const TANDA_SI=/guis|lentej|garbanz|alubi|judia|curry|arroz|estofad|cocido|chili
 const TANDA_NO=/tortilla|bocata|bocadillo|sandwich|tostad|ensalada|poke|bowl|wrap|revuelto|batido|yogur|plancha|carpaccio|tartar/;
 function esTanda(d){
   /* se cocina de una vez lo que aguanta en un táper; un bowl o un bocata se hacen al momento aunque se repitan */
+  /* lo rápido de la nevera no es tanda aunque lleve lentejas, salvo que se eligiera para cocinarlo en tanda */
+  if(d&&d.nevera&&!d.tandaOk)return false;
   const n=alimTxt(d&&d.name);return TANDA_SI.test(n)&&!TANDA_NO.test(n);}
 function cjeTandaCands(){
   /* platos para cocinar en tanda: los tuyos de comida (sin gluten si eres celíaco, sin horno si no
@@ -10225,37 +10243,55 @@ function cjeTandaCands(){
   let c=(store.dishes||[]).filter(function(d){const n=alimTxt(d.name);return platoVale(d)&&!d.nevera&&!/^Extra de prote/.test(d.name)&&(d.ingredients||[]).length>=2&&(+d.kcal||0)>=250&&esTanda(d);})
     .filter(function(d){const n=notas[d.id];return !(n&&n.down>n.up);});
   c.sort(function(a,b){const s=function(d){const n=notas[d.id],cu=platoCubierto(d);return (por[d.id]||0)*3+(n?n.nota/2:0)+(cu.total?cu.pct/4:0)+Math.min(40,(+d.prot||0));};return s(b)-s(a);});
-  if(!c.length)c=qcCombos('plato').filter(function(x){return !x.falta.length;}).map(function(x){return comboADish(comboConProt(x.fr,protObj()*0.375),'🍳');});
+  if(!c.length)c=qcCombos('plato').filter(function(x){return !x.falta.length;}).map(function(x){const d=comboADish(comboConProt(x.fr,protObj()*0.375),'🍳');d.tandaOk=true;return d;});
   return c;}
-function cjeRapidos(){
-  /* cenas y días sin táper: lo de la nevera que se hace en 5–15 min */
-  return qcCombos('bowl').concat(qcCombos('bocata'),qcCombos('plato')).filter(function(x){return !x.falta.length;})
-    .map(function(x){const fr=comboConProt(x.fr,protObj()*0.375);return {fr:fr,icon:FR_TIPOS[x.fr.tipo][0],prot:fraseMacros(fr).prot};})
-    .sort(function(a,b){return b.prot-a.prot;});}
+function cjeRapidos(cena,fac){
+  /* cenas y días sin táper: lo de la nevera que se hace en 5–15 min. «cena» elige el tipo (bowl,
+     bocata, ligera) y «fac» sube o baja la ración de proteína (ganar músculo / perder grasa) */
+  const tipos=cena==='bowl'?['bowl']:(cena==='bocata'?['bocata']:['bowl','bocata','plato']);
+  let l=[];tipos.forEach(function(t){l=l.concat(qcCombos(t));});
+  l=l.filter(function(x){return !x.falta.length;})
+    .map(function(x){const fr=comboConProt(x.fr,protObj()*0.375*(fac||1));const m=fraseMacros(fr);return {fr:fr,icon:FR_TIPOS[x.fr.tipo][0],prot:m.prot,kcal:m.kcal};});
+  if(cena==='ligera')l.sort(function(a,b){return (a.kcal/Math.max(1,a.prot))-(b.kcal/Math.max(1,b.prot));});
+  else l.sort(function(a,b){return b.prot-a.prot;});
+  return l;}
+const CJE_ASIS=[
+  ['meta','¿Qué buscas?',[['mantener','⚖️ Mantenerme'],['perder','🔥 Perder grasa'],['ganar','💪 Ganar músculo']]],
+  ['cocinar','¿Cuánto quieres cocinar?',[['poco','😮‍💨 Lo mínimo (1 tanda)'],['normal','🍳 Normal (2 tandas)'],['mucho','👨‍🍳 Me gusta (más a menudo)']]],
+  ['cena','¿Cómo te gustan las cenas?',[['rapida','⚡ Rápidas, me da igual'],['ligera','🥗 Ligeras'],['bowl','🥙 Bowls y pokes'],['bocata','🥪 Bocatas']]],
+  ['variedad','¿Repetir o variar?',[['repetir','❤️ Lo que me gusta'],['variar','🔀 Variar mucho']]]];
+function cjeAsisDef(){const P=cocinaPref(),a=P.asis||{};return {meta:a.meta||'mantener',cocinar:a.cocinar||'normal',cena:a.cena||'rapida',variedad:a.variedad||'repetir'};}
 function cjeAuto(){
   /* «✨»: la semana entera con tus días. Guardia: hospital. Días que no cocinas: táper de una tanda
      hecha antes. Tandas los días que sí cocinas, cubriendo al menos los días que aguanta un táper y
      los días sin cocinar que vengan detrás (esos, al congelador si pasan de esos días). Cenas
      rápidas con la nevera. Lo que pongas tú a mano no se toca. */
-  const P=cocinaPref(),sem=cjeSemana(),objP=protObj();let n=0;
+  const P=cocinaPref(),sem=cjeSemana(),objP=protObj(),O=cjeAsisDef();let n=0;
+  const fac=O.meta==='ganar'?1.25:1,maxT=O.cocinar==='poco'?1:(O.cocinar==='mucho'?7:2);
   for(let w=0;w<7;w++)SB_CLASES.forEach(function(c){const cel=sbCelda(w,c[0]);if(cel&&cel.auto){cel.items=[];cel.auto=false;}});
   const mia=function(w,c){const cel=sbCelda(w,c);return !!(cel&&cel.items.length&&!cel.auto);};
   const pon=function(w,c,d){if(!d||mia(w,c))return;const cel=sbCeldaMia(w,c);cel.items=[{kind:'dish',id:d.id,portions:1}];cel.meal='';cel.auto=true;n++;};
-  const hosp=dishHospital(),des=cjeDesayunos(),tc=cjeTandaCands(),rap=cjeRapidos();
-  let ti=0,tanda=null;
+  const hosp=dishHospital(),des=cjeDesayunos(),rap=cjeRapidos(O.cena==='rapida'?'':O.cena,fac);
+  /* «lo que me gusta»: los dos primeros de tu lista se turnan; «variar»: toda la lista */
+  let tc=cjeTandaCands();if(O.variedad==='repetir'&&tc.length>2)tc=tc.slice(0,2);
+  const rapC=O.cena==='rapida'?rap:cjeRapidos('',fac);   /* comidas sin táper: cualquier rápida */
+  let ti=0,tanda=null,nT=0;
   sem.forEach(function(x,i){const w=x.w;
     if(des.length)pon(w,'desayuno',des[i%des.length]);
     if(x.tipo.guardia){pon(w,'comida',hosp);pon(w,'cena',hosp);return;}
     /* comida: la tanda en curso, o una nueva si hoy se cocina */
     if(tanda&&tanda.hasta>=i){pon(w,'comida',tanda.d);}
-    else if(x.tipo.cocina&&tc.length){
-      let hasta=i+P.taper-1;
+    else if(x.tipo.cocina&&tc.length&&nT<maxT){
+      /* lo mínimo: una tanda que llega lo más lejos posible (lo que pase de los días del táper, al
+         congelador); me gusta cocinar: tandas cortas de 2 días */
+      let hasta=O.cocinar==='mucho'?i+1:(O.cocinar==='poco'?i+6:i+P.taper-1);
       for(let j=hasta+1;j<sem.length&&j-i<=6&&!sem[j].tipo.cocina;j++)hasta=j;   /* días sin cocinar detrás: congelador */
-      tanda={d:tc[ti%tc.length],hasta:hasta};ti++;pon(w,'comida',tanda.d);}
-    else if(rap.length){const r=rap[(i+1)%rap.length];pon(w,'comida',comboADish(r.fr,r.icon));}
+      tanda={d:tc[ti%tc.length],hasta:hasta};ti++;nT++;pon(w,'comida',tanda.d);}
+    else if(rapC.length){const r=rapC[(i+1)%rapC.length];pon(w,'comida',comboADish(r.fr,r.icon));}
     /* cena: rápida y distinta de la comida */
     if(rap.length){const com=(x.cls.comida.items[0]||{}).id||((sbCelda(w,'comida')||{items:[]}).items[0]||{}).id;
-      for(let j=0;j<rap.length;j++){const d=comboADish(rap[(i*2+j)%rap.length].fr,rap[(i*2+j)%rap.length].icon);if(d.id!==com){pon(w,'cena',d);break;}}}});
+      const paso=O.variedad==='variar'?2:1;
+      for(let j=0;j<rap.length;j++){const r=rap[(i*paso+j)%(O.variedad==='repetir'?Math.min(3,rap.length):rap.length)]||rap[j];const d=comboADish(r.fr,r.icon);if(d.id!==com){pon(w,'cena',d);break;}}}});
   /* la proteína del día: si no llega, un extra de la nevera (como en «Móntamela») */
   let ex=0;
   if(objP)for(let w=0;w<7;w++)for(let k=0;k<2;k++){const dia=mSemana().filter(function(y){return y.w===w;})[0];
@@ -10305,14 +10341,14 @@ function renderComerEje(){
   const vacia=!sem.some(function(x){return x.cls.comida.items.length||x.cls.cena.items.length;});
   $('#main').innerHTML='<div class="grid cje">'+
     '<div class="subcab"><div><h2 class="subtit">Esta semana</h2>'+(base.length?'<div class="cjbase">'+base.map(function(b){return '<span>'+b+'</span>';}).join('')+'</div>':'')+'</div><span class="sp"></span>'+
-      '<button class="cji" data-a="cje-auto" aria-label="montar la semana sola" title="montar la semana">✨</button>'+
+      '<button class="cji" data-a="cje-asis" aria-label="montar la semana" title="montar la semana">✨</button>'+
       '<button class="cji" data-a="cje-hoja" data-v="pref" aria-label="cómo cocinas" title="cómo cocinas">⚙️</button>'+
       '<button class="cji cjreg" data-a="food-vista" data-v="" aria-label="registro de calorías" title="registro">📊</button></div>'+
     '<div class="cjav">'+
       '<button class="'+(A.nCoc?'on':'')+'" data-a="cje-hoja" data-v="cocinar"><span>🍳</span>'+(A.nCoc?esc(A.cocinar.charAt(0).toUpperCase()+A.cocinar.slice(1)):'nada')+'</button>'+
       '<button data-a="cje-hoja" data-v="compra"><span>🛒</span>'+A.compra+'</button>'+
       '<button class="'+(A.nevera?'w':'')+'" data-a="cje-hoja" data-v="nevera"><span>🧊</span>'+A.nevera+'</button></div>'+
-    (vacia?'<div class="card"><p style="margin:0 0 10px">Aún no hay nada en la semana.</p><button class="btn p gbig" data-a="cje-auto">✨ Móntamela con mis días</button></div>':'')+
+    (vacia?'<div class="card"><p style="margin:0 0 10px">Aún no hay nada en la semana.</p><button class="btn p gbig" data-a="cje-asis">✨ Montar mi semana</button></div>':'')+
     '<div class="card cjhoy"><div class="cap" style="color:var(--brand)">HOY · '+esc(DIA3[new Date().getDay()].toUpperCase())+'</div>'+
       fila('desayuno','desayuno')+fila('comida','comida')+fila('cena','cena')+
       '<div class="cjfr">'+fraseCardHTML(true)+'</div></div>'+
@@ -10366,6 +10402,24 @@ function tandaRaciones(t,d){
   const cel=sbCeldaMia(x.w,u.c);
   if(r){const dd=comboADish(r.fr,r.icon);cel.items=[{kind:'dish',id:dd.id,portions:1}];}else cel.items=[{kind:'dish',id:dishFuera().id,portions:1}];
   cel.meal='';cel.auto=false;save();return true;}
+/* ---- ✨ el asistente: unas preguntas, una semana propuesta y decides si se queda ---- */
+function cjeHojaAsis(h){
+  const r=h.r||(h.r=cjeAsisDef());
+  return '<div class="cjst">✨ Montar mi semana</div><div class="mini">Cuatro preguntas y te propongo la semana con tus turnos y entrenos. Luego decides si se queda.</div>'+
+    CJE_ASIS.map(function(q){return '<div class="cap" style="margin-top:12px">'+esc(q[1].toUpperCase())+'</div><div class="chips">'+
+      q[2].map(function(o){const on=r[q[0]]===o[0];return '<button class="chipx'+(on?' on':'')+'" data-a="cje-asis-r" data-k="'+q[0]+'" data-v="'+o[0]+'"'+(on?' aria-pressed="true"':'')+'>'+esc(o[1])+'</button>';}).join('')+'</div>';}).join('')+
+    '<div class="mini" style="margin-top:12px">'+(esCeliaco()?'Sin gluten':'')+(cocinaPref().horno?'':(esCeliaco()?' · sin horno':'Sin horno'))+' · no cocinas: '+esc(cocinaPref().noCocinar.join(', ')||'—')+' <button class="dlink" data-a="cje-hoja" data-v="pref">cambiar</button></div>'+
+    '<div class="cjbtns"><button class="btn p" data-a="cje-asis-ok">Proponer semana</button></div>';}
+function cjeHojaAsisRes(h){
+  const T=tandasSemana(),sem=T.sem,DN=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'],obj=protObj();
+  const nom=function(x,c){const it=x.cls[c].items[0],d=it&&dishById(it.id);return d?(d.hospital?'Hospital':d.name):'—';};
+  const ps=protSemana(),cortos=ps.filter(function(x){return x.corta;}).length;
+  return '<div class="cjst">Tu semana propuesta</div>'+
+    '<div class="mini">'+(h.msg?esc(h.msg)+' · ':'')+(obj?(cortos?cortos+' día'+(cortos===1?'':'s')+' sin llegar a la proteína':'proteína ✓ todos los días'):'')+'</div>'+
+    '<div class="cjres">'+sem.map(function(x,i){return '<div class="cjrd"><b>'+DN[parseDate(x.key).getDay()]+'</b><span>'+esc(nom(x,'comida'))+'</span><span>'+esc(nom(x,'cena'))+'</span></div>';}).join('')+'</div>'+
+    (T.tandas.length?'<div class="mini" style="margin-top:8px">🍳 '+T.tandas.map(function(t){return esc(DN[parseDate(t.key).getDay()].toLowerCase()+' '+t.d.name+' ×'+t.dias.length);}).join(' · ')+'</div>':'')+
+    '<div class="cjbtns"><button class="btn" data-a="cje-asis-no">Descartar</button><button class="btn p" data-a="cje-asis-si">✓ Guardar</button></div>'+
+    '<button class="dlink" data-a="cje-asis-otra">cambiar respuestas</button>';}
 /* ---- hojas ---- */
 function cjeHojaHTML(){
   const h=ui.cjeHoja||{},v=h.v||'';let body='';
@@ -10374,6 +10428,8 @@ function cjeHojaHTML(){
   else if(v==='compra'||v==='nevera')body=cjeHojaCompra(h);
   else if(v==='pref')body=cjeHojaPref();
   else if(v==='platos')body=cjeHojaPlatos(h);
+  else if(v==='asis')body=cjeHojaAsis(h);
+  else if(v==='asisres')body=cjeHojaAsisRes(h);
   if(!body)return '';
   return '<div class="hscrim" data-a="cje-cerrar"></div><div class="hoja cjh" role="dialog" aria-modal="true"><div class="hgrab" data-a="cje-cerrar" aria-label="cerrar"></div>'+body+'</div>';}
 function cjeCambios(w,c){
@@ -18162,7 +18218,11 @@ function renderNow(){
   mejoraAccesibilidad($('#main'));
 }
 function flash(msg,ms){let f=$('#flash');if(!f){f=document.createElement('div');f.id='flash';document.body.appendChild(f);}
-  f.textContent=msg;clearTimeout(f._t);f._t=setTimeout(()=>f.remove(),ms||2600);}
+  f.textContent=msg;f.classList.remove('undo');clearTimeout(f._t);
+  /* recién apuntado o quitado: «Deshacer» a mano durante unos segundos */
+  if(_ultimoCambio&&Date.now()-_ultimoCambio.ts<1500){const b=document.createElement('button');b.dataset.a='deshacer';b.textContent='Deshacer';
+    f.appendChild(document.createTextNode(' '));f.appendChild(b);f.classList.add('undo');ms=Math.max(ms||0,6000);}
+  f._t=setTimeout(()=>f.remove(),ms||2600);}
 function mejoraAccesibilidad(root){
   /* botones de solo icono (×, ★/☆, ‹›…) que ya llevan title: que un lector de pantalla tenga algo que decir */
   if(!root)return;
@@ -19107,6 +19167,18 @@ function act(a,el){
     case 'd6-cat':ui.dinCat=el.dataset.c||'';ui.dineroVista='categoria';render();window.scrollTo(0,0);break;
     case 'ss-celda':ui.elegir={modo:'sb',w:+el.dataset.w,c:el.dataset.c||'comida',q:'',f:el.dataset.c||'comida'};ui.tab='types';ui.typesVista='elegir';render();window.scrollTo(0,0);break;
     case 'ss-auto':flash(sbAuto());render();break;
+    case 'deshacer':{const m=deshacerCambio();const f=$('#flash');if(f)f.remove();render();flash(m);break;}
+    case 'cje-asis':ui.cjeHoja={v:'asis',r:cjeAsisDef()};render();break;
+    case 'cje-asis-r':{const h=ui.cjeHoja||{};(h.r||(h.r=cjeAsisDef()))[el.dataset.k]=el.dataset.v;render();break;}
+    case 'cje-asis-ok':{const h=ui.cjeHoja||{},P=cocinaPref();
+      /* copia de lo que había: «Descartar» lo deja tal cual */
+      if(!ui.cjeBack)ui.cjeBack={d:JSON.parse(JSON.stringify(sbS().d)),on:sbS().on,asis:P.asis?Object.assign({},P.asis):null};
+      P.asis=Object.assign({},h.r||cjeAsisDef());
+      const msg=cjeAuto();ui.cjeHoja={v:'asisres',r:P.asis,msg:msg};render();break;}
+    case 'cje-asis-si':ui.cjeBack=null;ui.cjeHoja=null;save();flash('semana guardada');render();break;
+    case 'cje-asis-no':{const b=ui.cjeBack;if(b){const s0=sbS();s0.d=b.d;s0.on=b.on;cocinaPref().asis=b.asis||undefined;if(!b.asis)delete cocinaPref().asis;save();}
+      ui.cjeBack=null;ui.cjeHoja=null;flash('descartada: la semana queda como estaba');render();break;}
+    case 'cje-asis-otra':ui.cjeHoja={v:'asis',r:Object.assign({},cocinaPref().asis||cjeAsisDef())};render();break;
     case 'cje-hoja':ui.cjeHoja={v:el.dataset.v};render();break;
     case 'cje-platos':ui.cjeHoja={v:'platos',w:el.dataset.w!=null?+el.dataset.w:null,c:el.dataset.c||null,f:''};render();break;
     case 'cje-pfilt':{const h=ui.cjeHoja||{};h.f=el.dataset.v||'';h.ver='';render();break;}
@@ -21967,7 +22039,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={d6Mes,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={d6Mes,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,suenoDeuda,suenoPlan,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

@@ -9424,7 +9424,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('month');
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(150);
     const entra = await page.evaluate(() => ({ v: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden, avisos: document.querySelectorAll('#main .cjav button').length, frase: !!document.querySelector('#main .cjhoy #frIn') }));
-    await page.click('#main [data-a="cje-auto"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
     const sem = await page.evaluate(() => { const P = window.PG, T = P.tandasSemana();
       return { tandas: T.tandas.map((t) => ({ n: t.d.name, cook: T.sem[t.cook].tipo.cocina, dias: t.dias.length })),
         guardiaHosp: T.sem.filter((x) => x.tipo.guardia).every((x) => (P.dishById((x.cls.comida.items[0] || {}).id) || {}).hospital),
@@ -9471,7 +9471,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
       P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
-    await page.click('#main [data-a="cje-auto"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
     const t0 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const mas = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="1"]'); if (mas) { await mas.click(); await page.waitForTimeout(120); }
@@ -9525,6 +9525,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia233; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('la cantidad no se queda fija abajo y se escribe; lo apuntado sale en la semana con × y su hoja',
       cant.pos === 'relative' && cant.alto > 700 && cant.input && c15 === 1.5 && chips === 1 && hoja && tras === 0, JSON.stringify({ cant, c15, chips, hoja, tras }));
+  }
+
+  // 234) ✨ CON PREGUNTAS Y DESHACER: ✨ abre cuatro preguntas; «lo mínimo» deja una sola tanda;
+  // «Descartar» devuelve la semana como estaba y «Guardar» la deja y recuerda las respuestas; lo que
+  // acabas de apuntar (o quitar) se deshace desde el aviso
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia234 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref; P.store.food.log[P.iso(new Date())] = [];
+      ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
+      P.ui.cjeHoja = null; P.ui.frase = null; P.ui.cjeBack = null; P.save(); P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    const preguntas = await page.evaluate(() => [...document.querySelectorAll('#hojaDia .cap')].length);
+    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cocinar"][data-v="poco"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250);
+    const prop = await page.evaluate(() => ({ dias: document.querySelectorAll('#hojaDia .cjrd').length, tandas: window.PG.tandasSemana().tandas.length }));
+    await page.click('#hojaDia [data-a="cje-asis-no"]'); await page.waitForTimeout(120);
+    const desc = await page.evaluate(() => Object.keys(window.PG.store.semBase.d).length);
+    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cena"][data-v="bowl"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250);
+    await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
+    const guard = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))); return { celdas: Object.keys(P.store.semBase.d).length, asis: n.food.pref.asis }; });
+    await page.fill('#frIn', 'yogur griego'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
+    await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(120);
+    const n1 = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
+    const und = await page.$('#flash [data-a="deshacer"]'); if (und) { await und.click(); await page.waitForTimeout(120); }
+    const n0 = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
+    await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { macro: { nombre: 'Prueba', kcal: 100, prot: 5 }, pos: 'comida' }); P.render(); });
+    const xb = await page.$('#main .cjeni .x'); if (xb) { await xb.click(); await page.waitForTimeout(120); }
+    const und2 = await page.$('#flash [data-a="deshacer"]'); if (und2) { await und2.click(); await page.waitForTimeout(120); }
+    const vuelve = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).map((e) => e.nombre));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia234; P.save(); P.ui.cjeHoja = null; P.ui.cjeBack = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('✨ pregunta, propone y deja guardar o descartar; «lo mínimo» es una sola tanda y las respuestas se recuerdan',
+      preguntas === 4 && prop.dias === 7 && prop.tandas === 1 && desc === 0 && guard.celdas >= 6 && guard.asis && /* «Descartar» también deshace las respuestas: la segunda vez parte de «normal» */
+      guard.asis.cena === 'bowl' && guard.asis.cocinar === 'normal',
+      JSON.stringify({ preguntas, prop, desc, guard }));
+    check('«Deshacer» en el aviso quita lo que acabas de apuntar y devuelve lo que acabas de quitar',
+      n1 === 1 && n0 === 0 && vuelve.join() === 'Prueba', JSON.stringify({ n1, n0, vuelve }));
   }
 
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»
