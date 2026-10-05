@@ -2809,14 +2809,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click(`[data-a="food-abrir"][data-v="${primerPlatoCm}"]`);
   await page.waitForTimeout(250);
   const hojaUna = await page.evaluate(() => ({
-    val: (document.getElementById('fcVal') || {}).textContent,
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
     raciones: Array.prototype.map.call(document.querySelectorAll('#main .racb'), (x) => x.textContent),
   }));
   await page.click('[data-a="food-cant-set"][data-n="2"]');
   await page.waitForTimeout(200);
   const hojaDos = await page.evaluate(() => ({
-    val: (document.getElementById('fcVal') || {}).textContent,
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
   }));
   const hoyKCm = new Date().toISOString().slice(0, 10);
@@ -9499,6 +9499,32 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«Mis platos»: filtros, solo lo de tanda en «Para tanda», ＋ crea un plato escrito, y desde un hueco lo pone ahí sin desayunos ni batidos',
       filtros === 4 && tandas.length >= 1 && !tandas.some((n) => /tortilla|bocata|bowl/i.test(n)) && creado &&
       lista.length >= 2 && !lista.some((n) => /batido|whey|yogur|porridge|tostada/i.test(n)) && puesto === lista[0], JSON.stringify({ filtros, tandas, creado, lista: lista.slice(0, 4), puesto }));
+  }
+
+  // 233) AÑADIR Y QUITAR SIN PELEARSE: la pantalla de cantidad no se queda fija abajo tapando la
+  // cabecera (compartía clase con las hojas que suben) y la cantidad se escribe; en la semana, lo
+  // apuntado sale bajo su comida con × para quitarlo y al tocarlo se abre su hoja
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia233 = JSON.parse(JSON.stringify(P.store));
+      P.store.food.log[P.iso(new Date())] = []; P.ui.frase = null; P.ui.feVer = ''; P.ui.cjeHoja = null; P.save(); P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    const dv = await page.evaluate(() => { const d = (window.PG.store.dishes || []).find((x) => (+x.kcal || 0) > 200 && !x.hospital); return 'dish:' + d.id; });
+    await page.evaluate((v) => { const P = window.PG; P.ui.foodSel = v; P.ui.foodCant = 1; P.ui.foodPos = 'comida'; P.ui.foodVista = 'cantidad'; P.render(); }, dv);
+    const cant = await page.evaluate(() => { const h = document.querySelector('#main .hoja'); return { pos: h ? getComputedStyle(h).position : '', alto: document.body.scrollHeight, input: !!document.querySelector('#fcVal[data-a="food-cant-in"]') }; });
+    const fi = await page.$('#fcVal'); if (fi) { await fi.fill('1.5'); await fi.dispatchEvent('change'); await page.waitForTimeout(100); }
+    const c15 = await page.evaluate(() => window.PG.ui.foodCant);
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.fill('#frIn', 'bocata de pollo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
+    await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
+    const chips = await page.$$eval('#main .cjeni', (e) => e.length);
+    await page.click('#main .cjeni .n'); await page.waitForTimeout(120);
+    const hoja = await page.evaluate(() => !!document.querySelector('#hojaDia .fehoja'));
+    await page.click('#hojaDia [data-a="fe-cerrar"].hgrab').catch(() => {}); await page.evaluate(() => { window.PG.ui.feVer = ''; window.PG.render(); });
+    await page.click('#main .cjeni .x'); await page.waitForTimeout(120);
+    const tras = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia233; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('la cantidad no se queda fija abajo y se escribe; lo apuntado sale en la semana con × y su hoja',
+      cant.pos === 'relative' && cant.alto > 700 && cant.input && c15 === 1.5 && chips === 1 && hoja && tras === 0, JSON.stringify({ cant, c15, chips, hoja, tras }));
   }
 
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»

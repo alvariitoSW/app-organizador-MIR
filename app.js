@@ -3268,7 +3268,7 @@ function renderFueraMenu(){
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><button class="btn s volver" data-a="fuera-cad" data-c="'+esc(r.c.id)+'">'+gymIco('atras','gico sm')+' '+esc(r.c.n)+'</button>'+
       '<h2 class="subtit">'+esc(r.m[1])+'</h2></div>'+
-    '<div class="hoja">'+
+    '<div class="hoja hojain">'+
       '<div class="platomac"><div><b>'+tot.kcal+'</b><span>KCAL</span></div><div><b>'+tot.prot+'</b><span>PROT</span></div>'+
         '<div><b>'+tot.carb+'</b><span>HC</span></div><div><b>'+tot.gresa+'</b><span>GRASA</span></div></div>'+
       (quedan!=null?('<p class="mini" style="margin:6px 0 0">'+(quedan>=0?('te quedan <b style="color:var(--ink)">'+quedan+' kcal</b> hoy'):
@@ -6162,7 +6162,7 @@ function pintaHojaDia(){
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
   const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja)?dinHojaHTML():
-    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():((ui.tab==='food'&&!ui.foodVista&&ui.feVer)?feHojaHTML():((ui.tab==='food'&&ui.foodVista==='eje'&&ui.cjeHoja)?cjeHojaHTML():''))));
+    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():((ui.tab==='food'&&(!ui.foodVista||ui.foodVista==='eje')&&ui.feVer)?feHojaHTML():((ui.tab==='food'&&ui.foodVista==='eje'&&ui.cjeHoja)?cjeHojaHTML():''))));
   /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
   const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
   document.documentElement.classList.toggle('hoja-abierta',!!hoja);
@@ -8648,7 +8648,7 @@ function renderFoodCantidad(){
     '<div class="subcab">'+
       '<button class="btn s volver" data-a="food-vista" data-v="buscar">'+gymIco('atras','gico sm')+' Apuntar</button>'+
       '<h2 class="subtit">'+esc(x.nombre)+'</h2></div>'+
-    '<div class="hoja">'+
+    '<div class="hoja hojain">'+
       '<div class="row" style="align-items:flex-start;gap:11px">'+
         '<span style="font-size:34px;line-height:1">'+esc(foodEmoji(x))+'</span>'+
         '<span style="flex:1;min-width:0"><b style="font-size:16px;display:block">'+esc(x.nombre)+'</b>'+
@@ -8656,7 +8656,7 @@ function renderFoodCantidad(){
       '</div>'+
       '<div class="pasos">'+
         '<button data-a="food-cant-paso" data-d="-'+paso+'" aria-label="menos">−</button>'+
-        '<span class="val"><b id="fcVal">'+fmt(cant)+'</b><span>'+(x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':'gramos'))+'</span></span>'+
+        '<span class="val"><input id="fcVal" class="fcin" type="number" inputmode="decimal" step="any" min="0" value="'+(Math.round(cant*100)/100)+'" data-a="food-cant-in" aria-label="cantidad"><span>'+(x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':'gramos'))+'</span></span>'+
         '<button data-a="food-cant-paso" data-d="'+paso+'" aria-label="más">+</button>'+
       '</div>'+
       '<div class="rac">'+racionesDe(x).map(function(r){
@@ -10270,7 +10270,14 @@ function cjeHoyPlan(k){
   const pm=menuPorMomento(k),out={};
   ['desayuno','comida','cena'].forEach(function(p){const l=(pm[p]||[]).filter(function(x){return dishById(x.id);});if(l.length)out[p]=l;});
   return out;}
-function cjeHecho(k,p){return foodLog(k).some(function(e){return (e.p||'comida')===p;});}
+function cjeHecho(k,p){return foodLog(k).some(function(e){return (e.p||'comida')===p&&e.plan;});}
+function cjeApuntadoHTML(k,ps){
+  /* lo apuntado en ese momento: tocar abre su hoja (cantidad, mover, corregir); × lo quita */
+  const l=foodLog(k).filter(function(e){return ps.indexOf(e.p||'comida')>=0;});
+  if(!l.length)return '';
+  return '<div class="cjen">'+l.map(function(e){
+    return '<span class="cjeni"><button class="n" data-a="fe-ver" data-id="'+esc(e.id)+'">'+esc(e.nombre)+' <i>'+fmtMil(+e.kcal||0)+'</i></button>'+
+      '<button class="x" data-a="fe-del" data-key="'+esc(k)+'" data-id="'+esc(e.id)+'" aria-label="quitar '+esc(e.nombre)+'">×</button></span>';}).join('')+'</div>';}
 function cjeAvisos(){
   const T=tandasSemana(),hoyK=iso(new Date()),DL=['dom','lun','mar','mié','jue','vie','sáb'];
   const pend=T.tandas.filter(function(t){return !t.hecho&&t.key>=hoyK;});
@@ -10288,7 +10295,8 @@ function renderComerEje(){
   const fila=function(p,lbl){const l=plan[p]||[],d=l[0]&&dishById(l[0].id),ok=cjeHecho(hoyK,p),m=hi>=0?(marca[hi+'|'+p]||''):'';
     return '<div class="cjm'+(ok?' ok':'')+'">'+(m?'<i class="dot '+m+'"></i>':'')+
       '<button class="n" data-a="cje-plato" data-w="'+(hi>=0?sem[hi].w:sbDow(hoyK))+'" data-c="'+p+'"><b>'+esc(d?(d.hospital?'Hospital':d.name):'—')+'</b><span>'+lbl+'</span></button>'+
-      (d?'<button class="cjt'+(ok?' on':'')+'" data-a="cje-ok" data-p="'+p+'" aria-label="'+(ok?'quitar «comido» de ':'comí lo que tocaba en ')+lbl+'">✓</button>':'')+'</div>';};
+      (d?'<button class="cjt'+(ok?' on':'')+'" data-a="cje-ok" data-p="'+p+'" aria-label="'+(ok?'quitar «comido» de ':'comí lo que tocaba en ')+lbl+'">✓</button>':'')+'</div>'+
+      cjeApuntadoHTML(hoyK,p==='comida'?['comida','media']:(p==='cena'?['cena','merienda','monchis','post-entreno']:['desayuno']));};
   const otros=sem.map(function(x,i){if(x.key===hoyK)return '';
     const t=x.tipo,ico=(t.guardia?'🩺':'')+(t.entreno?'🏋':'');
     return '<div class="cjd'+(x.key<hoyK?' pas':'')+'"><span class="dn">'+DN[parseDate(x.key).getDay()]+(ico?' <small>'+ico+'</small>':'')+'</span>'+
@@ -19123,7 +19131,7 @@ function act(a,el){
       const d=a.d||comboADish(a.fr,a.e),cel=sbCeldaMia(h.w,h.c);cel.items=[{kind:'dish',id:d.id,portions:1}];cel.meal='';cel.auto=false;sbS().on=true;save();
       ui.cjeHoja=null;flash('cambiado por '+d.name);render();break;}
     case 'cje-ok':{const k=iso(new Date()),p=el.dataset.p;
-      if(cjeHecho(k,p)){const l=foodLog(k),q=l.filter(function(e){return (e.p||'comida')!==p;});l.length=0;q.forEach(function(e){l.push(e);});save();flash('quitado');render();break;}
+      if(cjeHecho(k,p)){const l=foodLog(k),q=l.filter(function(e){return !((e.p||'comida')===p&&e.plan);});l.length=0;q.forEach(function(e){l.push(e);});save();flash('quitado');render();break;}
       const pl=cjeHoyPlan(k)[p]||[];let m='';
       pl.forEach(function(x){const d=dishById(x.id);if(!d)return;m=addFoodEntry(k,{dishId:x.id,rac:num(x.portions,1),pos:p,plan:true});
         if(d.hospital||d.fuera)return;
@@ -21562,6 +21570,7 @@ document.addEventListener('change',e=>{
     case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'fr-pos':ui.frPos=el.value||'';render();break;
+    case 'food-cant-in':{const v=+String(el.value).replace(',','.');if(v>0)ui.foodCant=v;render();break;}
     case 'fr-gset':{const x=ui.frase&&ui.frase.items[+el.dataset.i];if(x){x.g=Math.max(1,Math.min(2000,Math.round(+el.value||x.g)));}render();break;}
     case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
