@@ -9538,13 +9538,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.cjeHoja = null; P.ui.frase = null; P.ui.cjeBack = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
-    const preguntas = await page.evaluate(() => [...document.querySelectorAll('#hojaDia .cap')].length);
-    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cocinar"][data-v="poco"]'); await page.waitForTimeout(80);
+    const preguntas = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjdots i').length);
+    /* una pregunta por pantalla: elegir pasa a la siguiente */
+    for (const [k, v] of [['origen', 'nevera'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'poco']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
     await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250);
     const prop = await page.evaluate(() => ({ dias: document.querySelectorAll('#hojaDia .cjrd').length, tandas: window.PG.tandasSemana().tandas.length }));
     await page.click('#hojaDia [data-a="cje-asis-no"]'); await page.waitForTimeout(120);
     const desc = await page.evaluate(() => Object.keys(window.PG.store.semBase.d).length);
     await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    for (const [k, v] of [['origen', 'nevera'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'normal']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
+    await page.click('#hojaDia [data-a="cje-asis-paso"][data-d="1"]'); await page.waitForTimeout(80);
     await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cena"][data-v="bowl"]'); await page.waitForTimeout(80);
     await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250);
     await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
@@ -9560,11 +9563,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const vuelve = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).map((e) => e.nombre));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia234; P.save(); P.ui.cjeHoja = null; P.ui.cjeBack = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('✨ pregunta, propone y deja guardar o descartar; «lo mínimo» es una sola tanda y las respuestas se recuerdan',
-      preguntas === 4 && prop.dias === 7 && prop.tandas === 1 && desc === 0 && guard.celdas >= 6 && guard.asis && /* «Descartar» también deshace las respuestas: la segunda vez parte de «normal» */
+      preguntas === 8 && prop.dias === 7 && prop.tandas === 1 && desc === 0 && guard.celdas >= 6 && guard.asis && /* «Descartar» también deshace las respuestas: la segunda vez parte de «normal» */
       guard.asis.cena === 'bowl' && guard.asis.cocinar === 'normal',
       JSON.stringify({ preguntas, prop, desc, guard }));
     check('«Deshacer» en el aviso quita lo que acabas de apuntar y devuelve lo que acabas de quitar',
       n1 === 1 && n0 === 0 && vuelve.join() === 'Prueba', JSON.stringify({ n1, n0, vuelve }));
+  }
+
+  // 235) PLANIFICAR ENCIMA DE UNA SEMANA HECHA: con la semana ya montada a mano, «rehacerla entera» la
+  // cambia (antes no tocaba nada y decía «no he encontrado platos»); «comes fuera» el sábado lo pone;
+  // en la propuesta cada plato se abre, se cambia la ración, se quita y se vuelve a la propuesta
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia235 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref;
+      ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
+      const d0 = P.store.dishes.find((d) => !d.hospital); for (let w = 0; w < 7; w++) P.store.semBase.d[w] = { comida: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' }, cena: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' } };
+      window.__d0 = d0.id; P.ui.cjeHoja = null; P.ui.cjeBack = null; P.save(); P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    for (const [k, v] of [['origen', 'recetas'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'normal']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
+    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="gustos"][data-v="legumbre"]'); await page.waitForTimeout(60);
+    await page.click('#hojaDia [data-a="cje-asis-paso"][data-d="1"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cena"][data-v="rapida"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-asis-r"][data-k="fuera"][data-v="5"]'); await page.waitForTimeout(60);
+    await page.click('#hojaDia [data-a="cje-asis-paso"][data-d="1"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(300);
+    const res = await page.evaluate(() => { const P = window.PG, d = P.store.semBase.d;
+      const nombres = []; Object.keys(d).forEach((w) => ['comida', 'cena'].forEach((c) => { const it = (d[w][c] || { items: [] }).items[0]; if (it) nombres.push(it.id); }));
+      return { cambiada: nombres.filter((id) => id !== window.__d0).length, sabado: (P.dishById((d[5].comida.items[0] || {}).id) || {}).name,
+        msg: (document.querySelector('#hojaDia .mini') || {}).textContent || '', filas: document.querySelectorAll('#hojaDia .cjrc2').length }; });
+    /* abrir un plato desde la propuesta (uno que no sea del hospital) */
+    const abre = await page.evaluate(() => { const b = [...document.querySelectorAll('#hojaDia .cjrc2')].find((x) => !/Hospital|Como fuera/.test(x.textContent)); if (!b) return null; b.click(); return { w: +b.dataset.w, c: b.dataset.c }; });
+    await page.waitForTimeout(150);
+    const hoja = await page.evaluate(() => ({ v: window.PG.ui.cjeHoja.v, volver: !!document.querySelector('#hojaDia [data-a="cje-volver"]'), racs: document.querySelectorAll('#hojaDia [data-a="cje-rac2"]').length }));
+    const r15 = await page.$('#hojaDia [data-a="cje-rac2"][data-v="1.5"]'); if (r15) { await r15.click(); await page.waitForTimeout(100); }
+    const por = await page.evaluate((a) => a ? window.PG.store.semBase.d[a.w][a.c].items[0].portions : null, abre);
+    const qu = await page.$('#hojaDia [data-a="cje-quitar"]'); if (qu) { await qu.click(); await page.waitForTimeout(120); }
+    const tras = await page.evaluate((a) => ({ v: (window.PG.ui.cjeHoja || {}).v, nada: a ? !!(window.PG.dishById(window.PG.store.semBase.d[a.w][a.c].items[0].id) || {}).nada : false }), abre);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia235; P.save(); P.ui.cjeHoja = null; P.ui.cjeBack = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('planificar encima de una semana hecha la rehace, pone «como fuera» el día elegido y no dice «no he encontrado platos»',
+      res.cambiada >= 8 && res.sabado === 'Como fuera' && !/no he encontrado/.test(res.msg) && res.filas === 14, JSON.stringify(res));
+    check('en la propuesta cada plato se abre (con «volver»), se cambia la ración, se quita y se vuelve a la propuesta',
+      abre && hoja.v === 'plato' && hoja.volver && hoja.racs === 4 && por === 1.5 && tras.v === 'asisres' && tras.nada, JSON.stringify({ abre, hoja, por, tras }));
   }
 
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»
