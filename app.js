@@ -5362,9 +5362,9 @@ function suenoHojaHTML(){
   const cuerpo=suenoHoyHTML(k).replace(/^<div class="card sncard[^"]*">/,'<div class="dsuhform">').replace(/<button class="btn s" data-a="hoy-informe">[^<]*<\/button>/,'');
   const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const tit=k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate());
-  return '<div class="hscrim" data-a="hoja-cerrar"></div><div class="hoja dsuh" role="dialog" aria-modal="true" aria-label="'+esc(tit)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+
+  return hojaMarco('hoja-cerrar','dsuh',tit,
     '<h3 class="sh">'+esc(tit)+'</h3>'+cuerpo+
-    '<div class="row dsuhd"><span>Deuda</span><span class="sp"></span><span class="mini">'+fmtC(antes)+' h →</span><b style="color:'+suenoDeudaCol(despues)+'">'+fmtC(despues)+' h</b></div></div>';}
+    '<div class="row dsuhd"><span>Deuda</span><span class="sp"></span><span class="mini">'+fmtC(antes)+' h →</span><b style="color:'+suenoDeudaCol(despues)+'">'+fmtC(despues)+' h</b></div>');}
 let _avisoCamaT=null;
 function programarAvisoCama(){
   if(_avisoCamaT){clearTimeout(_avisoCamaT);_avisoCamaT=null;}
@@ -5848,15 +5848,6 @@ function semOpcHTML(){
     SEM_DIAS.map(function(x){
       return '<option value="'+x+'"'+(x===n?' selected':'')+'>'+x+' días</option>';}).join('')+
     '</select>';}
-function semanaCabeceraHTML(){
-  /* qué es cada color y cuántos días ver, en UNA fila.
-     EL EJE 0·6·12·18·24 YA NO VA AQUÍ: era el eje de la barra horizontal que llevaba cada día, y
-     esa barra solo se pinta al abrir un día. Dejaba veinte píxeles de números sueltos encima de la
-     rejilla —que ya trae sus propias horas a la izquierda— y empujaba la rejilla fuera de la
-     primera pantalla. El día que se abre pinta ahora su propio eje. */
-  return '<div class="leyfila semley">'+
-    '<details class="dtip"><summary class="mini">ⓘ colores</summary>'+franjaLeyendaHTML()+'</details>'+
-    semOpcHTML()+'</div>';}
 function solSemanaHTML(){
   /* «🌅 6:51–6:54 · 🌇 18:55–18:48»: el rango de la ventana que se está viendo. Si los siete días
      caen a la misma hora se enseña una sola. */
@@ -5911,7 +5902,7 @@ function semanaFilaHTML(d,i,anyDate){
       (sh?resumenDiaHTML(d.key,sh):'<div class="empty">Día sin asignar: elige qué es (y si toca guardia, de qué).</div>')+
       '<div class="row" style="margin-top:9px">'+
         (anyDate&&d.key?'<button class="btn s" data-a="mon-day" data-key="'+d.key+'">cambiar qué día es</button>':
-          ('<select data-a="day-pick" data-i="'+i+'" onchange="PG.render()" style="max-width:190px">'+
+          ('<select data-a="day-pick" data-i="'+i+'" style="max-width:190px">'+
             '<option value="">— sin día —</option>'+store.shifts.map(function(x){
               return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>'))+
         (sh&&d.key?'<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar las horas de dormir</button>':'')+
@@ -5960,17 +5951,15 @@ function semanaKeyEntreno(days){
   return ks[Math.floor(ks.length/2)]||iso(new Date());}
 function renderWeek(){
   const days=semanaVentana();   /* la rotación ya no se toca aquí: vive en semanaConfigHTML() */
-  const sleepStats=(function(){const c=suenoCfg();return function(){
-    let n=0,t=0,low=0;const min=c.min;
-    days.forEach(function(d){if(!d.date)return;const sl=sleepOf(d.key);
-      if(sl.h==null||!d.shiftId)return;n++;t+=sl.h;if(sl.h<min)low++;});
-    return {n:n,avg:n?Math.round(t/n*10)/10:null,low:low,min:min};};})();
   const anyDate=days.some(function(d){return !!d.date;});
-  const ss=sleepStats();
+  const ss=(function(){let n=0,t=0,low=0;const min=suenoCfg().min;
+    days.forEach(function(d){if(!d.date)return;const sl=sleepOf(d.key,d.inf);
+      if(sl.h==null||!d.shiftId)return;n++;t+=sl.h;if(sl.h<min)low++;});
+    return {n:n,avg:n?Math.round(t/n*10)/10:null,low:low,min:min};})();
   const rows=days.map(function(d,i){return semanaFilaHTML(d,i,anyDate);}).join('');
     const pb=planBatches(weekDays()), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
-  const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh)&&(!d.guard||true);}).length;
-  const tot=days.reduce((a,d)=>{a.k+=dayTotals(d.shiftId).kcal;return a;},{k:0});
+  const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh);}).length;
+  const kcalSem=days.reduce(function(a,d){return a+dayTotals(d.shiftId).kcal;},0);
   /* LA NAVEGACIÓN Y LAS OPCIONES, EN UNA FILA. Eran dos: el rango con sus flechas, y debajo otra
      entera con «ver 5 7 10 14 días» y la leyenda de colores. Entre las dos se comían 140 px antes
      de que empezara la semana —y el rango ya estaba, además, en el rótulo de la barra de arriba—. */
@@ -5982,7 +5971,7 @@ function renderWeek(){
       <div class="tot">
         <div><b>${g}</b><span>guardia${g===1?'':'s'}</span></div>
         <div><b>${used.length}</b><span>sesiones de cocina</span></div>
-        <div><b>${anyDate&&ss.avg!=null?ss.avg+' h':(g?Math.round(tot.k/days.length):0)}</b><span>${anyDate&&ss.avg!=null?'sueño de media':'kcal/día de media'}</span></div>
+        <div><b>${anyDate&&ss.avg!=null?ss.avg+' h':(g?Math.round(kcalSem/days.length):0)}</b><span>${anyDate&&ss.avg!=null?'sueño de media':'kcal/día de media'}</span></div>
       </div>
       <p class="mini" style="margin:10px 0 0">${esc(resumenSemana())}</p>
       ${anyDate&&ss.low?`<p class="mini" style="margin:5px 0 0;color:var(--warn)">${ss.low} noche(s) por debajo de ${ss.min} h.</p>`:''}
@@ -6162,8 +6151,7 @@ function mesRejilla(y,mo,lead){
   const out=[];
   out.movil=movil;out.semHoy=semHoy;
   for(let d=new Date(ini.getTime());d<=fin;d=addDays(d,1)){
-    const m=d.getMonth(),yy=d.getFullYear(),k=iso(d);
-    const x=monthDays(yy,m).filter(function(o){return o.key===k;})[0];
+    const x=monthDays(d.getFullYear(),d.getMonth())[d.getDate()-1];
     if(x)out.push(x);}
   return out;}
 /* ===================== MANTENER PULSADO UN DÍA DEL MES =====================
@@ -6177,13 +6165,29 @@ function abrirHojaDia(k){
   ui.hojaDia=k;ui.hojaVista='';ui.hojaRec=false;
   if(!store.meta.pulsarVisto){store.meta.pulsarVisto=true;save();}
   render();}
-function cerrarHojaDia(){ui.feVer='';ui.cjeHoja=null;ui.semPHoja=null;ui.hojaDia='';ui.hojaVista='';ui.dinHoja='';ui.deseoNuevo='';if(ui.snHoja){ui.snHoja='';ui.sd=null;}}
+/* LAS HOJAS QUE SUBEN DESDE ABAJO, en un sitio: cuándo está abierta cada una, qué pinta y qué limpia al
+   cerrarse. Pintar, cerrar con su botón, deslizar hacia abajo o el «atrás» del móvil usan lo mismo, así
+   que no hay un cierre que deje cosas a medias. El orden manda: la ficha de lo apuntado va encima de la
+   hoja de Comer. */
+const HOJAS={
+  dia:{abierta:function(){return ui.tab==='month'&&ui.hojaDia;},html:function(){return hojaDiaHTML();},cerrar:function(){ui.hojaDia='';ui.hojaVista='';ui.hojaRec=false;}},
+  dinero:{abierta:function(){return ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';ui.deseoNuevo='';}},
+  sueno:{abierta:function(){return ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja;},html:function(){return suenoHojaHTML();},cerrar:function(){if(ui.snHoja){ui.snHoja='';ui.sd=null;}}},
+  fe:{abierta:function(){return ui.tab==='food'&&(!ui.foodVista||ui.foodVista==='eje')&&ui.feVer;},html:function(){return feHojaHTML();},cerrar:function(){ui.feVer='';ui.feCorr=false;}},
+  cje:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='eje'&&ui.cjeHoja;},html:function(){return cjeHojaHTML();},
+    /* las hojas de una comida o del día apuntan en ese día: al cerrarlas, Comer vuelve a hoy */
+    cerrar:function(){if(ui.cjeHoja&&/^(mom|dia|acc)$/.test(ui.cjeHoja.v||'')){ui.foodDate='';ui.frPos='';ui.frase=null;}ui.cjeHoja=null;}},
+  semp:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja;},html:function(){return semPHojaHTML();},cerrar:function(){ui.semPHoja=null;}}};
+function cerrarHojaDia(){Object.keys(HOJAS).forEach(function(n){HOJAS[n].cerrar();});}
+function hojaMarco(cerrarA,cls,label,cuerpo){
+  /* el marco de toda hoja: fondo oscuro y barrita que la cierran, y el diálogo */
+  return '<div class="hscrim" data-a="'+cerrarA+'"></div><div class="hoja'+(cls?' '+cls:'')+'" role="dialog" aria-modal="true" aria-label="'+esc(label||'')+'">'+
+    '<div class="hgrab" data-a="'+cerrarA+'" aria-label="cerrar"></div>'+cuerpo+'</div>';}
 function pintaHojaDia(){
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
-  const enMes=ui.tab==='month',hoja=(enMes&&ui.hojaDia)?hojaDiaHTML():((ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja)?dinHojaHTML():
-    ((ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snHoja)?suenoHojaHTML():((ui.tab==='food'&&(!ui.foodVista||ui.foodVista==='eje')&&ui.feVer)?feHojaHTML():((ui.tab==='food'&&ui.foodVista==='eje'&&ui.cjeHoja)?cjeHojaHTML():((ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja)?semPHojaHTML():'')))));
+  const enMes=ui.tab==='month',n=Object.keys(HOJAS).filter(function(x){return HOJAS[x].abierta();})[0],hoja=n?HOJAS[n].html():'';
   /* la barra del pincel, igual: fija abajo, y dentro de la tarjeta del mes el «fixed» no lo era */
   const barra=(enMes&&ui.mesModo)?mesModoHTML(monthDate.getFullYear(),monthDate.getMonth()):'';
   document.documentElement.classList.toggle('hoja-abierta',!!hoja);
@@ -6220,7 +6224,7 @@ function hojaDiaHTML(){
         '<b>'+(ui.hojaRec?'Nuevo recordatorio':'Nuevo evento')+'</b><span></span></div>'+
       '<label class="hfld">QUÉ<input id="hjTit" maxlength="70" autocomplete="off" placeholder="'+(ui.hojaRec?'Llamar al banco':'Sesión clínica')+'"></label>'+
       '<div class="hsug">'+SUG.map(function(s){return '<button data-a="hoja-sug" data-t="'+esc(s[1])+'">'+s[0]+' '+esc(s[1])+'</button>';}).join('')+'</div>'+
-      '<div class="hdos"><label class="hfld">EMPIEZA<input id="hjHora" type="time" value="'+(ui.hojaRec?'09:00':'09:00')+'"></label>'+
+      '<div class="hdos"><label class="hfld">EMPIEZA<input id="hjHora" type="time" value="09:00"></label>'+
         '<label class="hfld">DURA<select id="hjDur">'+[[0,'sin hora de fin'],[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30'],[120,'2 h'],[180,'3 h'],[240,'4 h']]
           .map(function(o){return '<option value="'+o[0]+'"'+(o[0]===(ui.hojaRec?0:60)?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label></div>'+
       '<label class="htg">⏰ Avisarme antes<input type="checkbox" id="hjRec"'+(ui.hojaRec?' checked':'')+'><i></i></label>'+
@@ -6253,14 +6257,13 @@ function hojaDiaHTML(){
       (hay?'<div class="hcap">YA HAY</div><div class="hhays">'+hay+'</div>':'')+
       '<div class="hcap">MÁS</div><div class="hlist">'+
         '<button data-a="pincel-on" data-sid="'+esc(inf.shiftId||'')+'" data-guard="'+esc(inf.guard||'')+'"><i>🖌️</i>Copiar este día a otros<span>pincel</span></button>'+
-        (rt?'<button data-a="hoja-modo" data-m="mover"><i>↔️</i>Mover el entreno a otro día<span>'+esc(nombreCorto(rt.nombre))+'</span></button>':'')+
-        '<button data-a="hoja-modo" data-m="vac"><i>🏖️</i>Vacaciones desde aquí hasta…</button>'+
+        (rt?'<button data-a="hoja-mesmodo" data-m="mover"><i>↔️</i>Mover el entreno a otro día<span>'+esc(nombreCorto(rt.nombre))+'</span></button>':'')+
+        '<button data-a="hoja-mesmodo" data-m="vac"><i>🏖️</i>Vacaciones desde aquí hasta…</button>'+
         (ov?'<button class="mal" data-a="day-set" data-key="'+k+'" data-sid="" data-guard=""><i>↺</i>Quitar lo puesto a mano<span>vuelve a la rotación</span></button>':'')+
       '</div>'+
       '<div class="hpie">mantener pulsado '+[400,600,1000,2000].map(function(ms){
         return '<button class="'+(pulsarMs()===ms?'on':'')+'" data-a="pulsar-ms" data-ms="'+ms+'">'+String(ms/1000).replace('.',',')+' s</button>';}).join('')+'</div>';}
-  return '<div class="hscrim" data-a="hoja-cerrar"></div>'+
-    '<div class="hoja" role="dialog" aria-modal="true" aria-label="'+esc(titulo)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+cuerpo+'</div>';}
+  return hojaMarco('hoja-cerrar','',titulo,cuerpo);}
 function mesModoHTML(y,mo){
   /* la barra del pincel / de «toca el otro día», encima de la cuadrícula */
   const m=ui.mesModo;if(!m)return '';
@@ -6295,7 +6298,7 @@ function mesModoToque(k){
     msg=ya?('quitado el '+fechaCortaTxt(k)):(((shiftById(m.sid)||{}).name||'día')+' el '+fechaCortaTxt(k));}
   flash(msg);render();return true;}
 function renderMonth(){
-  const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo);
+  const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),minS=suenoCfg().min;
   const domFirst=store.rotation.calWeekStart==='dom';
   const list=monthDays(y,mo),lead=domFirst?new Date(y,mo,1).getDay():(new Date(y,mo,1).getDay()+6)%7;
   const WDH=domFirst?['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -6310,7 +6313,7 @@ function renderMonth(){
        no salen al imprimir: el papel empieza en la semana en la que estás) */
     const previa=rejilla.movil&&d.key<rejilla.semHoy;
     const fuera=rejilla.movil?previa:d.date.getMonth()!==mo;
-    const ov=dayOverride(d.key),manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
+    const manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
     const evsDia=d.key?eventosDeFecha(d.key):[];
     /* el usuario pedía ver de un vistazo qué toca cada día en vez de puntitos: además del tipo de
@@ -6369,11 +6372,10 @@ function renderMonth(){
         esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
     if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
-    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-key="'+d.key+'"'+
+    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
         (d.shiftId?'<span class="dic">'+esc(d.icon)+'</span>':'')+
-        (d.vac?'':'')+
         (manual?'<span class="dman" title="puesto a mano">✎</span>':'')+'</span>'+
       '<span class="dnm">'+(d.shiftId?esc(nombreCorto(d.name)):'·')+'</span>'+
       /* El tipo de guardia ya no va apretado en la fila del número —ahí «UMI» salía partido letra a
@@ -6382,10 +6384,10 @@ function renderMonth(){
       (d.guard?'<span class="dline gflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+
         esc(String(d.guard).toUpperCase().slice(0,4))+'</span>':'')+
       lineas.join('')+
-      (d.sleepH!=null?'<span class="dsl'+(d.sleepH<(store.sueno?store.sueno.min:8)?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
-        (d.sleepH<(store.sueno?store.sueno.min:8)?' ⚠':'')+'</span>':'')+
+      (d.sleepH!=null?'<span class="dsl'+(d.sleepH<minS?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
+        (d.sleepH<minS?' ⚠':'')+'</span>':'')+
       '</button>');});
-  const fiascos=list.filter(function(d){return d.shiftId&&d.sleepH!=null&&d.sleepH<(store.sueno?store.sueno.min:8);}).length;
+  const fiascos=list.filter(function(d){return d.shiftId&&d.sleepH!=null&&d.sleepH<minS;}).length;
   const conSueño=list.filter(function(d){return d.sleepH!=null;});
   const media=conSueño.length?Math.round(conSueño.reduce(function(a,d){return a+d.sleepH;},0)/conSueño.length*10)/10:null;
   $('#main').innerHTML=`<div class="grid">
@@ -6393,7 +6395,7 @@ function renderMonth(){
       ?MONTH_FULL[mo]+' – '+MONTH_FULL[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo]} de ${y}${
       /* el servicio del mes: es lo primero que se mira para saber «dónde estoy este mes», y estaba
          tres pantallas más abajo. En la casilla no cabe y además sería la misma palabra 30 veces. */
-      (function(){const sv=monthService(y,mo).service;
+      (function(){const sv=svc.service;
         return sv?('<span class="mini" style="margin-left:auto">'+esc(sv)+'</span>'):'';})()}</h2>
       ${modoAvisoHTML()}
       <!-- las flechas de mes YA están en la barra de arriba, que en Mes mueven el mes: aquí eran
@@ -6446,9 +6448,9 @@ function renderMonth(){
       <details class="dtip" style="margin-top:6px"><summary class="mini">ver más números ▾</summary>
       <div class="kpis compact" style="margin-top:8px">
         <div><b>${media||'—'}${media!=null?'h':''}</b><span>sueño de media</span></div>
-        <div><b>${fiascos}</b><span>noches con menos de ${store.sueno?store.sueno.min:8} h</span></div>
+        <div><b>${fiascos}</b><span>noches con menos de ${minS} h</span></div>
         <div><b>${list.filter(function(d){return d.over&&d.shiftId;}).length}</b><span>días escritos a mano</span></div>
-        <div><b>${acostarsePara(despertarBase())}</b><span>acostarse para ${store.sueno?store.sueno.min:8} h</span></div>
+        <div><b>${acostarsePara(despertarBase())}</b><span>acostarse para ${minS} h</span></div>
       </div>
       </details>
     </div>
@@ -7846,7 +7848,7 @@ function feHojaHTML(){
   if(+x.sal>0)ap.push(['Sal (límite)',Math.round(x.sal/5*100),true]);
   const top=ap.filter(function(a){return a[1]>=3;}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
   const hora=x.ts?new Date(x.ts):null;
-  return '<div class="hscrim" data-a="fe-cerrar"></div><div class="hoja fehoja" role="dialog" aria-modal="true" aria-label="'+esc(x.nombre)+'"><div class="hgrab" data-a="fe-cerrar" aria-label="cerrar"></div>'+
+  return hojaMarco('fe-cerrar','fehoja',x.nombre,
     '<div class="row"><span style="font-size:26px">'+esc(x.emoji||'🍽')+'</span><div style="flex:1;min-width:0"><b style="font-size:15px">'+esc(x.nombre)+'</b>'+
       '<div class="mini">'+esc(POS_TXT[x.p]||x.p||'')+(hora?' · '+hm(hora.getHours()*60+hora.getMinutes()):'')+(feSub(x)?' · '+esc(feSub(x)):'')+'</div></div>'+
       '<b style="font-size:21px">'+fmtMil(x.kcal||0)+'</b><span class="mini">kcal</span></div>'+
@@ -7864,7 +7866,7 @@ function feHojaHTML(){
     '<div class="feacts"><span class="fetam"><button data-a="fe-less" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="menos">−</button>tamaño<button data-a="fe-more" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'" aria-label="más">+</button></span>'+
       '<select data-a="fe-mover" data-id="'+esc(x.id)+'" aria-label="mover a otra comida">'+FOOD_POS.map(function(p){return '<option value="'+p+'"'+(p===x.p?' selected':'')+'>'+esc(p===x.p?'mover a…':(POS_TXT[p]||p))+'</option>';}).join('')+'</select>'+
       (x.frase?'<button data-a="fe-plato" data-id="'+esc(x.id)+'">guardar plato</button>':'<span></span>')+
-      '<button class="del" data-a="fe-borrar" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'">borrar</button></div></div>';}
+      '<button class="del" data-a="fe-borrar" data-key="'+esc(sel)+'" data-id="'+esc(x.id)+'">borrar</button></div>');}
 /* ===================== 🍫 MONCHIS =====================
    «El Lloretazo es ir a la playa a fumar y luego me da hambre.» Los monchis van en su propio apartado
    del día, con un tope (lo que te queda hasta tu objetivo, o el que pongas), y la app te propone de tu
@@ -10527,7 +10529,7 @@ function cjeHojaHTML(){
   else if(v==='dia')body=cjeHojaDia(h);
   else if(v==='acc')body=cjeHojaAcc(h);
   if(!body)return '';
-  return '<div class="hscrim" data-a="cje-cerrar"></div><div class="hoja cjh" role="dialog" aria-modal="true"><div class="hgrab" data-a="cje-cerrar" aria-label="cerrar"></div>'+body+'</div>';}
+  return hojaMarco('cje-cerrar','cjh','Comer',body);}
 function cjeCambios(w,c){
   /* tres cambios que encajan: rápidos con la nevera y los táperes de la semana */
   const cel=(cjeSemana().filter(function(x){return x.w===w;})[0]||{cls:{}}).cls[c]||{items:[]},cur=(cel.items[0]||{}).id,out=[],ya={};
@@ -10693,11 +10695,11 @@ function semPHojaHTML(){
   /* elegir qué va en un hueco del prototipo */
   const h=ui.semPHoja,p=semPActual();if(!h||!p)return '';
   const w=h.w,c=h.c,op=semPOpciones(p,h);
-  return '<div class="hscrim" data-a="semp-cerrar"></div><div class="hoja cjh" role="dialog" aria-modal="true"><div class="hgrab" data-a="semp-cerrar" aria-label="cerrar"></div>'+
+  return hojaMarco('semp-cerrar','cjh','Semana prototipo',
     '<div class="cjst">'+(c==='des'?'Añadir desayuno':(SEMP_DIAS[w].charAt(0)+SEMP_DIAS[w].slice(1).toLowerCase()+' · '+(c==='com'?'comida':'cena')))+'</div>'+
     op.map(function(o,i){return '<button class="cjalt" data-a="semp-pon" data-i="'+i+'"><span>'+esc(o.e)+'</span><span style="flex:1;min-width:0"><b style="display:block;font-weight:600">'+esc(o.t)+'</b>'+(o.s?'<span class="mini">'+esc(o.s)+'</span>':'')+'</span>›</button>';}).join('')+
     (c!=='des'&&p[c][w]?'<button class="cjalt" data-a="semp-pon" data-i="-1"><span>✕</span>Dejar vacío</button>':'')+
-    '<div class="frase" style="margin-top:10px"><span aria-hidden="true">✍️</span><input id="spNuevo" placeholder="otro: escríbelo («garbanzos con espinacas»)" autocomplete="off"><button class="btn p s" data-a="semp-escribe">Poner</button></div>';}
+    '<div class="frase" style="margin-top:10px"><span aria-hidden="true">✍️</span><input id="spNuevo" placeholder="otro: escríbelo («garbanzos con espinacas»)" autocomplete="off"><button class="btn p s" data-a="semp-escribe">Poner</button></div>');}
 
 function renderFood(){
   const v=ui.foodVista||'';
@@ -14349,7 +14351,13 @@ function necesidadProximos(n){
       need[d.id]=(need[d.id]||0)+num(it.portions,1);});});}
   cocinadoS().forEach(function(x){if(need[x.dishId])need[x.dishId]=Math.max(0,need[x.dishId]-x.queda);});
   return need;}
+/* durante un pintado la compra no cambia: Hoy, Comer y la propia Compra la piden varias veces (10 ms
+   cada una). Fuera del pintado, siempre fresca. */
+let _cdMemo=null,_cdTick=-1;
 function compraDatos(){
+  if(_pintando&&_cdTick===_renderTick&&_cdMemo)return _cdMemo;
+  const r=compraDatos0();if(_pintando){_cdMemo=r;_cdTick=_renderTick;}return r;}
+function compraDatos0(){
   const eje=sbS().on,nDias=eje?Math.min(7,compraCada()):7;
   const days=weekDays(), pb=eje?{}:planBatches(days), need=eje?necesidadProximos(nDias):necesidadSemana(days);
   const agg={},order=[];let recetas=0,sueltas=0;
@@ -16719,7 +16727,7 @@ function dinHojaHTML(){
           '<button class="btn p s" data-a="deseo-add" data-h="'+esc(h.id)+'">añadir</button></div>':
         '<button class="dlink" data-a="deseo-nuevo" data-h="'+esc(h.id)+'">＋ añadir</button>');
   }else return '';
-  return '<div class="hscrim" data-a="hoja-cerrar"></div><div class="hoja din4h" role="dialog" aria-modal="true" aria-label="'+esc(tit)+'"><div class="hgrab" data-a="hoja-cerrar" aria-label="cerrar"></div>'+cuerpo+'</div>';}
+  return hojaMarco('hoja-cerrar','din4h',tit,cuerpo);}
 
 /* ---- la hoja ---- */
 function hojaDatos(anio){
@@ -19088,8 +19096,6 @@ function act(a,el){
       else if(store.rotation.mode==='date'){moverSemana((a==='wk-next'?1:-1)*semDias());}
       else{weekDate=addDays(weekDate,a==='wk-next'?7:-7);}
       render();break;}
-    case 'sem-dias':{const n=+el.dataset.n;if(SEM_DIAS.indexOf(n)<0)break;
-      store.rotation.semanaDias=n;save();render();break;}
     case 'sem-ayer':ui.semAyer=!ui.semAyer;render();break;
     case 'dia-prev':moverDiaHoy(-1);render();break;
     case 'dia-next':moverDiaHoy(1);render();break;
@@ -19401,7 +19407,7 @@ function act(a,el){
       else{const s=semPS();if(s.uso[k]===a.id){delete s.uso[k];flash('quitada de la semana que viene');}else{s.uso[k]=a.id;flash('la semana que viene será la '+a.n+' (se pone sola el lunes)');}save();}
       render();break;}
     case 'semp-celda':ui.semPHoja={w:el.dataset.w!=null?+el.dataset.w:0,c:el.dataset.c};render();break;
-    case 'semp-cerrar':ui.semPHoja=null;render();break;
+    case 'semp-cerrar':HOJAS.semp.cerrar();render();break;
     case 'semp-des-x':{const a=semPActual();if(!a)break;a.des.splice(+el.dataset.i,1);save();render();break;}
     case 'semp-pon':{const a=semPActual(),h=ui.semPHoja;if(!a||!h)break;const i=+el.dataset.i;
       if(i<0){a[h.c][h.w]='';}
@@ -19424,7 +19430,7 @@ function act(a,el){
       h.ver=h.ver===id?'':id;render();break;}
     case 'cje-rac':{const t=tandasSemana().tandas[+el.dataset.i];if(!t)break;const d=+el.dataset.d||0;
       const ok=tandaRaciones(t,d);flash(ok?(d>0?'una ración más':'una ración menos'):(d>0?'no hay más días libres esta semana':'una tanda es de al menos 2 raciones'));render();break;}
-    case 'cje-cerrar':if(ui.cjeHoja&&(ui.cjeHoja.v==='mom'||ui.cjeHoja.v==='dia'||ui.cjeHoja.v==='acc')){ui.foodDate='';ui.frPos='';ui.frase=null;}ui.cjeHoja=null;render();break;
+    case 'cje-cerrar':HOJAS.cje.cerrar();render();break;
     case 'cje-registro':ui.cjeHoja=null;ui.frPos='';ui.foodVista='';render();window.scrollTo(0,0);break;
     case 'cje-mover':{const k=el.dataset.k||iso(new Date()),m=cjeMom(el.dataset.p),to=cjeMom(el.dataset.to);let n=0;
       foodLog(k).forEach(function(e){if(m[2].indexOf(e.p||'comida')>=0){e.p=to[2][0];n++;}});save();ui.cjeHoja=null;flash(n?'movido a '+to[1].toLowerCase():'no había nada');render();break;}
@@ -19490,7 +19496,7 @@ function act(a,el){
     case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-vista':ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
     case 'fe-ver':ui.feVer=el.dataset.id||'';ui.feCorr=false;render();break;
-    case 'fe-cerrar':ui.feVer='';ui.feCorr=false;render();break;
+    case 'fe-cerrar':HOJAS.fe.cerrar();render();break;
     case 'fe-borrar':flash(delFoodEntry(el.dataset.key,el.dataset.id));ui.feVer='';render();break;
     case 'fe-plato':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(!x||!x.frase)break;
       if((store.dishes||[]).some(function(d){return alimTxt(d.name)===alimTxt(x.nombre);})){flash('ya está en tus platos');break;}
@@ -20192,7 +20198,7 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
     case 'hoja-ev':{ui.tab='eventos';ui.evVista=el.dataset.id||'';ui.evForm=null;cerrarHojaDia();render();window.scrollTo(0,0);break;}
     case 'hoja-nota':{ui.notaSel=el.dataset.id;ui.tab='notas';cerrarHojaDia();render();window.scrollTo(0,0);break;}
     case 'hoja-ver':{ui.diaHoy=esHoyDeVerdad(el.dataset.k)?'':el.dataset.k;ui.tab='hoy';ui.calMode='hoy';cerrarHojaDia();render();window.scrollTo(0,0);break;}
-    case 'hoja-modo':{ui.mesModo={tipo:el.dataset.m,de:ui.hojaDia};cerrarHojaDia();render();break;}
+    case 'hoja-mesmodo':{ui.mesModo={tipo:el.dataset.m,de:ui.hojaDia};cerrarHojaDia();render();break;}
     case 'pincel-on':{const gd=store.shifts.filter(isGuardia)[0];
       let sid=el.dataset.sid||'',guard=el.dataset.guard||'';
       if(!sid&&gd){sid=gd.id;guard=(gTipos()[0]||{}).code||'';}
@@ -21642,24 +21648,23 @@ let _lp=null,_lpComido=false;
 function lpCancel(){if(!_lp)return;clearTimeout(_lp.t);if(_lp.el)_lp.el.classList.remove('pulsando');_lp=null;}
 /* lo mismo en Comer: mantener pulsada una comida, un plato de la semana o algo apuntado abre lo que se
    puede hacer con ello (data-lp dice qué). El toque corto sigue haciendo lo suyo. */
-function lpAccion(el){
-  const a=el.dataset.lp,hoyK=iso(new Date());
-  if(a==='mom'){const k=el.dataset.k||hoyK;ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.feVer='';ui.foodDate=k===hoyK?'':k;
-    ui.cjeHoja={v:'acc',p:cjeGrupo(el.dataset.p||'comida'),k:k};}
-  else if(a==='plato')ui.cjeHoja={v:'plato',w:+el.dataset.w,c:el.dataset.c||'comida'};
-  else if(a==='fe'){ui.feVer=el.dataset.id||'';ui.feCorr=false;}
-  render();}
+const LP={
+  dia:function(el){abrirHojaDia(el.dataset.key);},
+  mom:function(el){const hoyK=iso(new Date()),k=el.dataset.k||hoyK;ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.feVer='';ui.foodDate=k===hoyK?'':k;
+    ui.cjeHoja={v:'acc',p:cjeGrupo(el.dataset.p||'comida'),k:k};render();},
+  plato:function(el){ui.cjeHoja={v:'plato',w:+el.dataset.w,c:el.dataset.c||'comida'};render();},
+  fe:function(el){ui.feVer=el.dataset.id||'';ui.feCorr=false;render();}};
 document.addEventListener('pointerdown',function(e){
-  const el=e.target&&e.target.closest?(e.target.closest('#main .cal .dbox[data-key]')||e.target.closest('#main [data-lp],#hojaDia [data-lp]')):null;
-  if(!el||!(el.dataset.key||el.dataset.lp)||ui.mesModo||ui.hojaDia)return;
+  const el=e.target&&e.target.closest?e.target.closest('#main [data-lp],#hojaDia [data-lp]'):null;
+  if(!el||!LP[el.dataset.lp]||(ui.mesModo&&el.dataset.lp==='dia')||(navHojaAbierta()&&!el.closest('#hojaDia')))return;
   if(e.pointerType==='mouse'&&e.button!==0)return;
   lpCancel();_lpComido=false;
   const ms=pulsarMs();
   el.style.setProperty('--lp',ms+'ms');el.classList.add('pulsando');
   _lp={el:el,x:e.clientX,y:e.clientY,t:setTimeout(function(){
-    const k=el.dataset.key;lpCancel();_lpComido=true;
+    lpCancel();_lpComido=true;
     try{if(navigator.vibrate)navigator.vibrate(18);}catch(e2){}
-    if(el.dataset.lp)lpAccion(el);else abrirHojaDia(k);},ms)};});
+    LP[el.dataset.lp](el);},ms)};});
 document.addEventListener('pointermove',function(e){
   if(_lp&&Math.hypot(e.clientX-_lp.x,e.clientY-_lp.y)>10)lpCancel();},{passive:true});
 document.addEventListener('pointerup',function(){lpCancel();
@@ -21674,7 +21679,7 @@ document.addEventListener('click',function(e){
   const t=e.target&&e.target.closest?e.target:null;
   if(t&&t.closest('.hoja'))return;
   _lpComido=false;e.stopPropagation();e.preventDefault();},true);
-document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cal .dbox,[data-lp]'))e.preventDefault();});
+document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-lp]'))e.preventDefault();});
 /* DESLIZAR HACIA ABAJO PARA CERRAR una hoja (la del día en Mes y las de Dinero): «que al arrastrar de
    arriba abajo se quite, en vez de tener que pulsar justo fuera». Se agarra por la parte de arriba
    (la barrita y la cabecera, 72 px) o por cualquier sitio si la hoja ya está arriba del todo; sigue al

@@ -9799,6 +9799,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       plato === 'plato' && antiguo.v === 'eje' && antiguo.h === 'acc', JSON.stringify({ plato, antiguo }));
   }
 
+  // 241) LA HOJA DEL DÍA (Mes) Y SUS MODOS: «Vacaciones desde aquí hasta…» entraba en un case de Dinero con
+  // el mismo nombre (hoja-modo) y no hacía nada; ahora pone el modo de tocar el otro día. Y cerrar con
+  // el fondo cierra la hoja y deja limpio lo suyo.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.mesModo = null; P.ui.hojaDia = P.iso(new Date()); P.ui.hojaVista = ''; P.render(); });
+    const hay = await page.$('#hojaDia [data-a="hoja-mesmodo"][data-m="vac"]');
+    if (hay) { await hay.click(); await page.waitForTimeout(120); }
+    const modo = await page.evaluate(() => ({ m: window.PG.ui.mesModo && window.PG.ui.mesModo.tipo, hoja: window.PG.ui.hojaDia, din: window.PG.ui.hojaModo || '' }));
+    await page.evaluate(() => { const P = window.PG; P.ui.mesModo = null; P.ui.hojaDia = P.iso(new Date()); P.render(); });
+    await page.evaluate(() => document.querySelector('#hojaDia .hscrim').click()); await page.waitForTimeout(100);
+    const cerrada = await page.evaluate(() => ({ h: window.PG.ui.hojaDia, dom: !!document.querySelector('#hojaDia .hoja') }));
+    await page.evaluate(() => { const P = window.PG; P.ui.mesModo = null; P.ui.tab = 'hoy'; P.render(); });
+    check('«Vacaciones desde aquí…» de la hoja del día pone su modo (no el de Dinero) y el fondo cierra la hoja',
+      !!hay && modo.m === 'vac' && !modo.hoja && modo.din === '' && cerrada.h === '' && !cerrada.dom, JSON.stringify({ hay: !!hay, modo, cerrada }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

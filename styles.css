@@ -1447,10 +1447,7 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .semrango span{overflow:hidden;text-overflow:ellipsis}
 .semrango input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .semopc{display:flex;gap:5px;align-items:center;margin-top:6px}
-.semopc .btn{min-width:40px;justify-content:center}
 .semeje{margin:8px 12px 0}
-.semley{margin:2px 2px 4px}
-.semley summary{cursor:pointer}
 .dayer{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;
   background:color-mix(in srgb,var(--card) 70%,transparent);border:1px solid var(--line);border-left:3px solid var(--line);
   border-radius:12px;padding:7px 10px;opacity:.7;margin-bottom:8px}
@@ -1475,8 +1472,6 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .drsol{margin-top:6px}
 .semcab{display:flex;flex-direction:column;gap:0;min-width:0}
 .semcab .semnav{margin-bottom:0}
-.semley summary{list-style:none}
-.semley summary::-webkit-details-marker{display:none}
 .drev .pl.pl{color:var(--ink)}
 .tl-wrap.grande .tl-dot.meal{width:2px;opacity:.85}
 .drow .drsol{row-gap:2px;column-gap:10px}
@@ -1512,11 +1507,6 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .leyfila details{flex:1 1 auto;min-width:0;margin-top:3px}
 .leyfila .leyatajo{flex:none;padding:2px 9px;font-size:10.5px}
 .leyfila .leyatajo{order:2}
-.semley{align-items:center;flex-wrap:wrap;margin:6px 2px 0}
-.semley details{flex:1 1 auto}
-.semley details[open]{flex-basis:100%;order:3}
-.semley .semopc{margin-top:0;flex:none;gap:4px}
-.semley .semopc .btn{min-width:34px;padding:4px 6px}
 .semeje{margin:6px 12px 0}
 /* ===== Entreno · rutinas: una tarjeta por rutina, y el constructor ============================ */
 .rcard{display:flex;flex-direction:column;gap:8px}
@@ -3216,6 +3206,6 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cji[disabled]{opacity:.35}
 /* mantener pulsado en Comer: sin selección de texto ni menú del sistema, y se hunde mientras cuenta */
 [data-lp]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-[data-lp].pulsando{transform:scale(.97);background:color-mix(in srgb,var(--brand) 14%,transparent)!important;border-radius:12px;
+[data-lp]:not(.dbox).pulsando{transform:scale(.97);background:color-mix(in srgb,var(--brand) 14%,transparent)!important;border-radius:12px;
   transition:transform var(--lp,600ms) ease-out,background var(--lp,600ms) ease-out}
-@media (prefers-reduced-motion:reduce){[data-lp].pulsando{transition:none}}
+@media (prefers-reduced-motion:reduce){[data-lp]:not(.dbox).pulsando{transition:none}}
