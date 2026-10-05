@@ -9655,6 +9655,36 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
 
+  // 237) COCINA tras la revisión: una tanda marcada hecha sigue en la lista (y se puede desmarcar); HOY
+  // enseña lo mismo que la semana; la ✓ de un táper gasta UNA ración (no dos); «+ ración» no pisa
+  // un «Como fuera» ni un «Nada»
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia237 = JSON.parse(JSON.stringify(P.store));
+      P.store.semBase = { on: true, d: {} }; P.store.food.cocinado = []; P.store.food.tandasHechas = {};
+      const k = P.iso(new Date()); P.store.food.log[k] = [];
+      const d = { id: 'd237', name: 'Lentejas con verdura', icon: '🫘', portions: 1, kcal: 450, prot: 25 }; P.store.dishes.push(d);
+      const w = (new Date().getDay() + 6) % 7; window.__w237 = w;
+      for (let i = 0; i < 7; i++) ['comida', 'cena'].forEach((c) => P.sbPoner(i, c, (i % 2 ? P.dishFuera() : P.dishNada()).id));
+      P.sbPoner(w, 'comida', 'd237'); P.sbPoner(w, 'cena', 'd237'); P.save(); P.render(); });
+    const r = await page.evaluate(() => { const P = window.PG, w = window.__w237, k = P.iso(new Date());
+      const t0 = P.tandasSemana().tandas.filter((t) => t.dishId === 'd237')[0];
+      if (!t0) return { sinTanda: true };
+      P.store.food.tandasHechas[t0.key + '|d237'] = k; P.cocinadoAdd('d237', t0.dias.length);
+      const t1 = P.tandasSemana().tandas.filter((t) => t.dishId === 'd237')[0];
+      const hoy = ((P.cjeHoyPlan(k).comida || [])[0] || {}).id;
+      const antes = JSON.stringify(P.store.semBase.d);
+      const mas = P.tandaRaciones(t1, 1);
+      const pisa = JSON.stringify(P.store.semBase.d) !== antes;
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeHoja = null; P.render();
+      return { dias: t0.dias.length, sigue: !!t1, hecho: !!(t1 && t1.hecho), hoy, mas, pisa }; });
+    const ok = await page.$('#main [data-a="cje-ok"][data-p="comida"]'); if (ok) { await ok.click(); await page.waitForTimeout(120); }
+    const queda = await page.evaluate(() => window.PG.cocinadoS().filter((c) => c.dishId === 'd237').reduce((a, c) => a + c.queda, 0));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia237; P.save(); P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('tanda hecha sigue en la lista; HOY = la semana; ✓ de un táper gasta 1 ración; «+ ración» no pisa fuera/nada',
+      !r.sinTanda && r.dias === 2 && r.sigue && r.hecho && r.hoy === 'd237' && r.mas === false && !r.pisa && !!ok && queda === 1,
+      JSON.stringify({ r, ok: !!ok, queda }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
