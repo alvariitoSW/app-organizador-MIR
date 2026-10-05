@@ -1,0 +1,169 @@
+<!doctype html><meta charset=utf-8><title>Comer: un solo Hoy</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--ink3:#5d7190;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--tp:#199e70;--fz:#3987e5}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px;width:390px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.note{font-size:12.5px;color:#9fb2cd;line-height:1.45;margin:10px 4px 0}.note b{color:#e9f2ff}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:linear-gradient(var(--bg),var(--bg2));padding:12px 16px}
+.top{display:flex;gap:6px;align-items:center;margin-bottom:16px;font-size:12px;font-weight:800;color:var(--ink2)}
+.top .on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;padding:7px 14px;border-radius:99px}.top span{padding:7px 8px}
+.row{display:flex;align-items:center;gap:10px}.sp{flex:1}.mini{font-size:12px;color:var(--ink2)}
+.h1{font-size:22px;font-weight:900}
+.ico{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);display:grid;place-items:center;font-size:15px}
+/* total del día */
+.tot{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px 14px;margin:12px 0}
+.tot .big{font-size:26px;font-weight:900;letter-spacing:-.02em}.tot .big small{font-size:14px;color:var(--ink2);font-weight:700}
+.bar{height:7px;border-radius:7px;background:var(--line);overflow:hidden;margin:7px 0 10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.bar.p i{background:var(--ok)}
+.mac{display:flex;gap:14px;font-size:12.5px;color:var(--ink2)}.mac b{color:var(--ink);font-size:14px}
+/* comidas */
+.ml{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:2px 14px}
+.m{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.m:first-child{border-top:0}
+.m .q{width:26px;height:26px;flex:none;border-radius:50%;border:2px solid var(--ink3);margin-top:2px;display:grid;place-items:center;font-size:14px;font-weight:900}
+.m .q.on{background:var(--ok);border-color:var(--ok);color:#04121c}
+.m .q.otro{background:var(--brand);border-color:var(--brand);color:#04121c}
+.m .q.no{border-style:dashed}
+.m .tx{flex:1;min-width:0}
+.m .k{font-size:11px;font-weight:900;letter-spacing:.12em;color:var(--ink2)}
+.m .n{font-size:15.5px;font-weight:700;margin-top:2px}
+.m .n.plan{color:var(--ink3);font-weight:600}
+.m .pl{font-size:12px;color:var(--ink3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m .pl s{color:var(--ink3)}
+.m .kc{text-align:right;font-size:15px;font-weight:800;white-space:nowrap}.m .kc small{display:block;font-size:11.5px;color:var(--ink2);font-weight:600}
+.m .kc.g{color:var(--ink3);font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--ink2);margin-left:6px;vertical-align:1px}
+.tag.tp{color:#34d399;border-color:#1f6b52}
+.mas{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px dashed var(--line);color:var(--ink2);font-size:14px;font-weight:700}
+.av{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.av div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 10px;font-size:12px;color:var(--ink2)}
+.av div b{display:block;color:var(--ink);font-size:15px;margin-top:1px}
+.av div.w{border-color:#7a5a1a}
+.lnk{font-size:13.5px;color:var(--brand);font-weight:700;margin-top:12px;text-align:center}
+/* hoja */
+.scrim{position:absolute;inset:0;background:rgba(2,4,10,.64)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:12px 18px 22px}
+.grab{width:42px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+.st{font-size:19px;font-weight:900}
+.it{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:15px}
+.it:first-of-type{border-top:0}.it b{flex:1;font-weight:600}.it em{font-style:normal;color:var(--ink2);font-size:13px;text-align:right}.it .x{color:var(--ink2);font-size:18px;padding:0 4px}
+.inp{display:flex;align-items:center;gap:8px;border:1.5px solid var(--brand);border-radius:14px;padding:6px 6px 6px 12px;margin:12px 0 8px;color:var(--ink3);font-size:14.5px}
+.inp span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inp .go{flex:none}.inp .go{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;font-weight:900;padding:9px 13px;border-radius:10px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}.chips span{padding:7px 11px;border-radius:99px;border:1px solid var(--line);font-size:13px;color:var(--ink2)}
+.btn{white-space:nowrap;padding:12px;border-radius:13px;border:1px solid var(--line);text-align:center;font-weight:800;font-size:14px;margin-top:8px}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.btn.g{color:var(--ink2)}
+.opt{display:flex;gap:12px;align-items:center;padding:13px 12px;border:1px solid var(--line);border-radius:14px;margin-top:8px}
+.opt.on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 9%,var(--card))}
+.opt b{display:block;font-size:14.5px}.opt span.s{font-size:12px;color:var(--ink2)}
+.efe{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--ink2);line-height:1.6}
+.efe b{color:var(--ink)}
+.tb{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}.tb td{padding:9px 0;border-top:1px solid var(--line)}.tb td:not(:first-child){text-align:right;color:var(--ink2)}.tb tr.t td{font-weight:900;color:var(--ink)}
+</style>
+
+<!-- 1 -->
+<div class="wrap"><div class="lbl">1 · Comer, a las 20:38 (con lo de hoy)</div>
+<div class="ab">
+ <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+ <div class="row"><span class="h1">Hoy · lunes</span><span class="sp"></span><span class="ico">📅</span><span class="ico">⚙️</span></div>
+ <div class="tot">
+  <div class="row"><span class="big">1.597 <small>/ 2.240 kcal</small></span><span class="sp"></span><span class="mini">te quedan 643</span></div>
+  <div class="bar"><i style="width:71%"></i></div>
+  <div class="mac"><span>💪 <b>78</b> / 134 g prot</span><span>hidratos <b>162</b> g</span><span>grasa <b>58</b> g</span></div>
+ </div>
+ <div class="ml">
+  <div class="m"><span class="q no"></span><div class="tx"><div class="k">DESAYUNO</div><div class="n plan">Extra de proteína: lomo embuchado</div><div class="pl">tocaba · sin apuntar</div></div><div class="kc g">280</div></div>
+  <div class="m"><span class="q otro">✓</span><div class="tx"><div class="k">COMIDA</div><div class="n">Comí fuera</div><div class="pl"><span style="color:#34d399">🥡 la pechuga pasa a mañana</span></div></div><div class="kc">270<small>15 g P</small></div></div>
+  <div class="m"><span class="q otro">✓</span><div class="tx"><div class="k">CENA</div><div class="n">Carne picada, macarrones SG y tomate frito</div><div class="pl">en vez de <s>pechuga al ajillo</s></div></div><div class="kc">1.327<small>63 g P</small></div></div>
+  <div class="mas">＋ picoteo o algo más</div>
+ </div>
+ <div class="av"><div>🍳 cocinar<b>mié</b></div><div>🛒 comprar<b>16 cosas</b></div><div class="w">🧊 caduca<b>5 pronto</b></div></div>
+ <div class="lnk">ver la semana ›</div>
+</div>
+<p class="note"><b>Arriba, lo que has comido de verdad</b>: kcal y proteína del día, siempre. Cada comida enseña <b>lo que apuntaste</b>, en grande; el plan queda en gris y tachado («en vez de…»). Tres estados que no se confunden: <b>○ discontinuo</b> = sin apuntar, <b>✓ verde</b> = lo del plan, <b>✓ azul</b> = otra cosa. Una sola lista de comidas en toda la app (adiós merienda/post‑entreno sueltos: es «picoteo»). Los tres avisos con su nombre.</p>
+</div>
+
+<!-- 2 -->
+<div class="wrap"><div class="lbl">2 · Por la mañana, sin nada apuntado</div>
+<div class="ab">
+ <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+ <div class="row"><span class="h1">Hoy · martes</span><span class="sp"></span><span class="ico">📅</span><span class="ico">⚙️</span></div>
+ <div class="tot">
+  <div class="row"><span class="big">0 <small>/ 2.240 kcal</small></span><span class="sp"></span><span class="mini">si sigues el plan: 2.180</span></div>
+  <div class="bar"><i style="width:0%"></i></div>
+  <div class="mac"><span>💪 <b>0</b> / 134 g prot</span><span class="sp"></span><span>plan: 138 g ✓</span></div>
+ </div>
+ <div class="ml">
+  <div class="m"><span class="q no"></span><div class="tx"><div class="k">DESAYUNO</div><div class="n plan">Yogur proteico con kiwi</div></div><div class="kc g">310</div></div>
+  <div class="m"><span class="q no"></span><div class="tx"><div class="k">COMIDA</div><div class="n plan">Pechuga al ajillo con macedonia<span class="tag tp">🥡 táper</span></div></div><div class="kc g">640</div></div>
+  <div class="m"><span class="q no"></span><div class="tx"><div class="k">CENA</div><div class="n plan">Tortilla con pavo</div></div><div class="kc g">520</div></div>
+  <div class="mas">＋ picoteo o algo más</div>
+ </div>
+ <div class="btn g" style="margin-top:12px">hoy no sigo el plan…</div>
+ <div class="av"><div>🍳 cocinar<b>mié</b></div><div>🛒 comprar<b>16 cosas</b></div><div>🧊 caduca<b>nada</b></div></div>
+</div>
+<p class="note">Antes de comer, todo en <b>gris</b>: es lo que toca, no lo que has comido. Tocar el <b>○</b> = «me lo he comido tal cual» y se pone verde (un toque). Tocar el nombre abre la hoja de esa comida (3). Arriba también se ve si el plan llega a tu proteína, sin ir a 📊.</p>
+</div>
+
+<!-- 3 -->
+<div class="wrap"><div class="lbl">3 · Tocar «Cena»: apuntar otra cosa</div>
+<div class="ab">
+ <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+ <div class="row"><span class="h1">Hoy · lunes</span></div>
+ <div class="scrim"></div>
+ <div class="sheet"><div class="grab"></div>
+  <div class="row"><span class="st">Cena</span><span class="sp"></span><span class="mini">1.327 kcal · 63 g P</span></div>
+  <div class="it"><b>Carne picada, macarrones SG y tomate frito</b><em>1.199<br>61 g P</em><span class="x">×</span></div>
+  <div class="it"><b>Tomate frito · 150 g</b><em>128<br>2 g P</em><span class="x">×</span></div>
+  <div class="inp"><span>✍️ ¿qué más has cenado?</span><span class="go">Apuntar</span></div>
+  <div class="chips"><span>Yogur proteico</span><span>Cookie SG</span><span>Kiwi</span></div>
+  <div class="mini" style="margin-top:14px">TOCABA</div>
+  <div style="padding:6px 0 4px;color:var(--ink3);font-weight:600">Pechuga al ajillo con macedonia</div><div class="mini" style="color:#34d399">🥡 se queda en el táper → mañana</div>
+  <div class="row" style="gap:8px"><div class="btn" style="flex:1">✓ lo que tocaba</div><div class="btn g" style="flex:1">no he cenado</div></div>
+ </div>
+</div>
+<p class="note">Una hoja por comida y <b>todo lo de esa comida dentro</b>: lo apuntado con su × para quitar, el campo de escribir <b>ya dirigido a la cena</b> (no hay que elegir dónde va) y lo que tocaba, que <b>no se suma</b>: lo sustituye. La app avisa qué pasa con el plato que no comiste.</p>
+</div>
+
+<!-- 4 -->
+<div class="wrap"><div class="lbl">4 · «Hoy / mañana no sigo el plan»</div>
+<div class="ab">
+ <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+ <div class="row"><span class="h1">Hoy · martes</span></div>
+ <div class="scrim"></div>
+ <div class="sheet"><div class="grab"></div>
+  <div class="st">No sigo el plan</div>
+  <div class="row" style="gap:6px;margin:12px 0 4px"><div class="btn p" style="flex:1;margin:0">Hoy</div><div class="btn" style="flex:1;margin:0">Mañana</div></div>
+  <div class="opt on"><span style="font-size:22px">🤷</span><div><b>Ya veré qué como</b><span class="s">dejo hoy en blanco y apunto lo que sea</span></div></div>
+  <div class="opt"><span style="font-size:22px">🍽️</span><div><b>Como fuera</b><span class="s">comida, cena o las dos</span></div></div>
+  <div class="opt"><span style="font-size:22px">⚡</span><div><b>Algo rápido de la nevera</b><span class="s">la app te propone 3</span></div></div>
+  <div class="efe">Qué cambia:<br>🥡 el táper de pechuga pasa al <b>miércoles</b> (aguanta hasta el jueves)<br>🛒 la compra baja de 16 a <b>13 cosas</b><br>🍳 la tanda del miércoles sigue igual</div>
+  <div class="btn p">Hecho</div>
+ </div>
+</div>
+<p class="note">Para el día en que no te has organizado: un botón, tres respuestas. La app <b>reajusta sola</b> lo que dependía de ese día (tápers, compra, tandas) y te dice exactamente qué ha movido. Nada de platos fantasma «comidos».</p>
+</div>
+
+<!-- 5 -->
+<div class="wrap"><div class="lbl">5 · Tocar el total: el día por comidas</div>
+<div class="ab">
+ <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+ <div class="row"><span class="h1">Hoy · lunes</span></div>
+ <div class="scrim"></div>
+ <div class="sheet"><div class="grab"></div>
+  <div class="st">Lunes 5 · lo comido</div>
+  <table class="tb">
+   <tr><td></td><td>kcal</td><td>prot</td><td>hidr.</td><td>grasa</td></tr>
+   <tr><td>Desayuno</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+   <tr><td>Comida</td><td>270</td><td>15</td><td>28</td><td>11</td></tr>
+   <tr><td>Cena</td><td>1.327</td><td>63</td><td>134</td><td>47</td></tr>
+   <tr class="t"><td>Total</td><td>1.597</td><td>78</td><td>162</td><td>58</td></tr>
+   <tr><td>Objetivo</td><td>2.240</td><td>134</td><td>—</td><td>—</td></tr>
+  </table>
+  <div class="efe">💪 Te faltan <b>56 g de proteína</b>. Con lo que hay en casa: <b>yogur proteico + lomo embuchado</b> (≈ 40 g) antes de dormir.</div>
+  <div class="row" style="gap:8px"><div class="btn" style="flex:1">‹ ayer</div><div class="btn g" style="flex:1">ver la semana</div></div>
+ </div>
+</div>
+<p class="note">El detalle de macros, <b>a un toque del total</b> y no en otra pestaña. Si no llegas a la proteína, te dice qué tomar con lo que tienes. «‹ ayer» para corregir el día anterior.</p>
+</div>
