@@ -89,15 +89,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // por la vista que los contiene
       await page.click('[data-a="nav-comer"]');
       await page.waitForTimeout(100);
-      if (tab === 'types') await page.click('#calModes button[data-t="types"]');
+      /* «Comer» abre la semana (una sola pantalla, sin fila de modos); el día con las calorías es
+         «Registro» y las demás pestañas se piden directamente */
+      if (tab === 'food') await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+      if (tab === 'types') await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = ''; P.render(); });
       else if (tab === 'shop') {
-        await page.click('#calModes button[data-t="shop"]');
+        await page.evaluate(() => { const P = window.PG; P.ui.tab = 'shop'; P.ui.shopVista = ''; P.render(); });
         /* v2 abre solo el primer pasillo: estas pruebas miran líneas de todos, así que «ver todo» */
         await page.waitForTimeout(100);
         if (!(await page.evaluate(() => !!window.PG.ui.compraTodo))) { const vt = await page.$('[data-a="compra-todo"]'); if (vt) await vt.click(); }
       }
       else if (tab === 'batches') {
-        await page.click('#calModes button[data-v="cocina-panel"]');
+        await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'cocina-panel'; P.render(); });
         await page.waitForTimeout(100);
         await page.click('[data-a="cocina-tab"][data-t="lote"]');
       } else if (tab === 'import') {
@@ -2766,7 +2769,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('la portada de Comida: P/H/G contra el objetivo, lo de hoy por momentos, micros en una línea, buscar, la semana y las tres despensas',
     portadaComida.big && portadaComida.macros === 'P|H|G' && portadaComida.momentos >= 3 &&
     portadaComida.semana === 7 && portadaComida.buscaz === 1 && portadaComida.despensas === 3 &&
-    portadaComida.micros === 6 && portadaComida.sinCasillasMicro && portadaComida.sinFormulario && portadaComida.botones < 35,
+    portadaComida.micros === 6 && portadaComida.sinCasillasMicro && portadaComida.sinFormulario &&
+    /* cada toma de más del menú de ese día (media mañana, merienda) trae sus 3 botones */
+    portadaComida.botones < 35 + 3 * Math.max(0, portadaComida.momentos - 3),
     JSON.stringify(portadaComida));
 
   // 46) el buscador es LA puerta: sin escribir no hay lista larga, se escribe y sale agrupado por
@@ -4297,7 +4302,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // que se apunta por la mañana): por eso entrenar ya no es la 1 y el alto sube lo que mide ella
       // (los lunes y martes, antes del sueño va la puerta del informe de la semana: por eso posiciones
       // relativas y no «el sueño es la 1»)
-      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= 2 && dia.entrenar === dia.sueno + 1 && dia.tareas === dia.entrenar + 1 && dia.pagar > dia.tareas &&
+      /* lunes y martes: antes del sueño va la puerta del informe de la semana */
+      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar === dia.sueno + 1 && dia.tareas === dia.entrenar + 1 && dia.pagar > dia.tareas &&
       dia.comidas > dia.pagar && dia.sol > dia.comidas &&
       dia.alto < 2700 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
@@ -9402,6 +9408,57 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('lo de ayer se ajusta: ± escala media ración, se corrige a mano (nombre y kcal) y el ± sigue desde ahí',
       mas.kcal === 750 && mas.rac === 1.5 && corr.n === 'Lentejas con chorizo' && corr.kcal === 620 && menos.rac === 1 && Math.abs(menos.kcal - 413) <= 1 && hoyIntacto,
       JSON.stringify({ mas, corr, menos, hoyIntacto }));
+  }
+
+  // 231) COMER = LA SEMANA: «Comer» abre una sola pantalla (sin fila de modos) con tres avisos, hoy con
+  // ✓ y la frase, y la semana; ✨ monta tandas solo los días que se cocina (guardia = hospital), y
+  // una tanda es algo que aguanta (no una tortilla); «✓ hecho» la convierte en táperes; la compra
+  // pide el pan sin gluten si eres celíaco; ⚙️ guarda horno y días sin cocinar; los gramos de la
+  // frase se escriben; 📊 lleva al registro de calorías
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia231 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.menu = P.store.menu || {}; P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref; delete P.store.food.tandasHechas;
+      ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'kiwi verde bandeja', 'nuez natural', 'fritada pisto', 'queso feta'].forEach((n) => P.despensaAdd(n, 1, ''));
+      P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
+    await gotoTab('month');
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(150);
+    const entra = await page.evaluate(() => ({ v: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden, avisos: document.querySelectorAll('#main .cjav button').length, frase: !!document.querySelector('#main .cjhoy #frIn') }));
+    await page.click('#main [data-a="cje-auto"]'); await page.waitForTimeout(250);
+    const sem = await page.evaluate(() => { const P = window.PG, T = P.tandasSemana();
+      return { tandas: T.tandas.map((t) => ({ n: t.d.name, cook: T.sem[t.cook].tipo.cocina, dias: t.dias.length })),
+        guardiaHosp: T.sem.filter((x) => x.tipo.guardia).every((x) => (P.dishById((x.cls.comida.items[0] || {}).id) || {}).hospital),
+        dias: document.querySelectorAll('#main .cjd').length }; });
+    await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
+    const hayHoja = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjtd').length);
+    const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); }
+    const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).reduce((a, x) => a + x.total, 0));
+    await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    const sg = await page.evaluate(() => [window.PG.compraSG('Pan de masa madre'), window.PG.compraSG('Pasta'), window.PG.compraSG('Leche')]);
+    await page.click('#main [data-a="cje-hoja"][data-v="pref"]'); await page.waitForTimeout(120);
+    await page.click('#hojaDia [data-a="cje-noc"][data-v="saliente"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-taper"][data-v="4"]'); await page.waitForTimeout(80);
+    const pref = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))); return n.food.pref; });
+    await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    const okd = await page.$('#main [data-a="cje-ok"][data-p="desayuno"]'); if (okd) { await okd.click(); await page.waitForTimeout(120); }
+    const des = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).filter((e) => e.p === 'desayuno').length);
+    await page.fill('#frIn', 'bocata de pollo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
+    const g0 = await page.$('input[data-a="fr-gset"]'); if (g0) { await g0.fill('130'); await g0.dispatchEvent('change'); await page.waitForTimeout(100); }
+    const gr = await page.evaluate(() => (window.PG.ui.frase && window.PG.ui.frase.items[0] || {}).g);
+    await page.evaluate(() => { window.PG.ui.frase = null; window.PG.render(); });
+    await page.click('#main .cjreg'); await page.waitForTimeout(120);
+    const reg = await page.evaluate(() => window.PG.ui.foodVista === '' && !!document.querySelector('#main .h2nav'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia231; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('«Comer» es una pantalla: semana, avisos, hoy con ✓ y frase, sin fila de modos',
+      entra.v === 'eje' && entra.modos && entra.avisos === 3 && entra.frase && sem.dias >= 6, JSON.stringify({ entra, sem }));
+    check('✨ monta tandas solo en días que se cocina, que aguantan (no tortillas), guardia = hospital; ✓ hecho las hace táperes',
+      sem.tandas.length >= 1 && sem.tandas.every((t) => t.cook && t.dias >= 2 && !/tortilla|bocata/i.test(t.n)) && sem.guardiaHosp && hayHoja >= 1 && coc >= 2,
+      JSON.stringify({ sem, hayHoja, coc }));
+    check('celíaco: la compra pide pan y pasta sin gluten; ⚙️ guarda días sin cocinar y táper, y sobrevive a recargar',
+      sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.taper === 4 && pref.horno === false,
+      JSON.stringify({ sg, pref }));
+    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase se escriben y 📊 lleva al registro',
+      des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
   }
 
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»

@@ -3055,3 +3055,65 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .fecg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
 .fecg .fen{grid-column:1/-1}
 .fecg input{width:100%}
+/* ===== Comer: la semana como eje ===== */
+.cje .subcab{align-items:flex-start}
+.cjbase{display:flex;gap:6px;margin-top:4px}
+.cjbase span{font-size:11px;font-weight:800;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink2)}
+.cji{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:16px;margin-left:6px;cursor:pointer}
+.cjav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cjav button{padding:10px 0;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.cjav button span{display:block;font-size:20px;margin-bottom:2px}
+.cjav button.on{border-color:color-mix(in srgb,#fbbf24 60%,var(--line))}
+.cjav button.w{border-color:color-mix(in srgb,#fb7185 50%,var(--line))}
+.cjhoy{padding:8px 14px}
+.cjm{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.cjhoy .cap+.cjm{border-top:0}
+.cjm .n{flex:1;min-width:0;text-align:left;background:none;border:0;color:var(--ink);font:inherit;padding:0;cursor:pointer}
+.cjm .n b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cjm .n span{font-size:11.5px;color:var(--ink2)}
+.cjm.ok .n b{color:var(--ink2);text-decoration:line-through}
+.cjt{width:36px;height:36px;flex:none;border-radius:11px;border:1.5px solid color-mix(in srgb,#34d399 60%,var(--line));background:transparent;color:#34d399;font-weight:900;font-size:15px;cursor:pointer}
+.cjt.on{background:#34d399;color:#04121c;border-color:#34d399}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.dot.cz{background:#fbbf24}.dot.tp{background:#199e70}.dot.fz{background:#3987e5}
+.cjfr{margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
+.cjfr .frase{margin:0}
+.cjrc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cjrc button{font:inherit;font-size:12.5px;padding:7px 11px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);cursor:pointer}
+.cjsem{padding:0 2px}
+.cjd{display:grid;grid-template-columns:52px 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cjd:first-child{border-top:0}
+.cjd.pas{opacity:.45}
+.cjd .dn{font-size:12px;font-weight:900;color:var(--ink2)}
+.cjc{display:flex;align-items:center;gap:6px;min-width:0;background:none;border:0;padding:6px 0;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.cjc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cjc.g{color:var(--ink2)}.cjc.v{color:var(--ink2);justify-content:flex-start}
+.cjleg{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);padding:2px 4px 8px}
+.cjleg span{display:flex;align-items:center;gap:5px}
+.cjh .cjst{font-size:19px;font-weight:900;margin-bottom:2px}
+.cjbtns{display:flex;gap:8px;margin:12px 0}
+.cjbtns .btn{flex:1;justify-content:center;min-height:44px}
+.cjalt{display:flex;align-items:center;gap:10px;width:100%;padding:12px 2px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.cjalt .sp{flex:1}
+.cjrec{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:12px}
+.cjrec .li{font-size:13.5px;padding:4px 0}
+.cjtd{padding:12px 0;border-top:1px solid var(--line)}
+.cjtd:first-of-type{border-top:0}
+.cjtd .n{flex:1;min-width:0;text-align:left;background:none;border:0;color:var(--ink);font:inherit;padding:0;cursor:pointer}
+.cjtd .n b{display:block;font-size:15px}.cjtd .n span{font-size:12.5px;color:var(--ink2)}
+.cjtd.ok .n b{color:var(--ink2)}
+.cjseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:3px;margin-bottom:8px}
+.cjseg button{padding:9px;border-radius:10px;border:0;background:none;color:var(--ink2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.cjseg button.on{background:var(--card);color:var(--ink)}
+.cjli{display:flex;align-items:center;gap:12px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:15px;text-align:left}
+.cjli .tx{flex:1;min-width:0}
+.cjli .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--ink2);flex:none}
+.cjli .ck.on{background:#34d399;border-color:#34d399}
+.cjli.done{opacity:.45}.cjli.done .tx{text-decoration:line-through}
+.cjli .q{font-size:12.5px;color:var(--ink2)}.cjli .q.w{color:#fbbf24;font-weight:800}
+.cjli .x{background:none;border:0;color:var(--ink2);font-size:18px;cursor:pointer}
+.cjopt{display:flex;align-items:center;width:100%;padding:12px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.cjopt .sw{margin-left:auto;width:42px;height:24px;border-radius:99px;background:#34d399;position:relative}
+.cjopt .sw:after{content:"";position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.cjopt .sw.off{background:var(--line)}.cjopt .sw.off:after{right:auto;left:3px}
+.frit .g input{width:64px;text-align:right;padding:6px 8px;font-weight:800}
