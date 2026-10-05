@@ -1,0 +1,161 @@
+<!doctype html><meta charset=utf-8>
+<title>Comer: la semana, versión limpia</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--tp:#199e70;--fz:#3987e5}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.wrap{position:relative;margin-top:22px}.lbl{position:absolute;top:-22px;left:4px;font-size:12px;color:#8fa6c6;font-weight:700}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:linear-gradient(var(--bg),var(--bg2));padding:12px 16px}
+.top{display:flex;gap:6px;align-items:center;margin-bottom:18px;font-size:12px;font-weight:800;color:var(--ink2)}
+.top .on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;padding:7px 14px;border-radius:99px}.top span{padding:7px 8px}
+.h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.mini{font-size:12px;color:var(--ink2)}.row{display:flex;align-items:center;gap:10px}.sp{flex:1}
+.ico{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink2);font-size:15px}
+/* tres avisos en una línea */
+.avs{display:flex;gap:8px;margin:14px 0 18px}
+.av{flex:1;padding:10px 0;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center;font-size:13px;font-weight:800}
+.av span{display:block;font-size:20px;margin-bottom:2px}
+.av.on{border-color:color-mix(in srgb,var(--warn) 60%,var(--line))}
+/* hoy */
+.hoy{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:6px 14px;margin-bottom:16px}
+.hc{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--brand);padding:8px 0 2px}
+.mm{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.hc+.mm{border-top:0}
+.mm b{flex:1;font-size:15px;font-weight:700}
+.mm.ok b{color:var(--ink2);text-decoration:line-through}
+.t{width:34px;height:34px;border-radius:11px;border:1.5px solid color-mix(in srgb,var(--ok) 60%,var(--line));display:grid;place-items:center;color:var(--ok);font-weight:900}
+.t.on{background:var(--ok);color:#04121c;border-color:var(--ok)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.tp{background:var(--tp)}.dot.cz{background:var(--warn)}.dot.fz{background:var(--fz)}
+/* semana */
+.dia{display:grid;grid-template-columns:46px 1fr 1fr;gap:10px;align-items:center;padding:12px 2px;border-top:1px solid var(--line);font-size:14px}
+.dia:first-of-type{border-top:0}
+.dn{font-size:12px;font-weight:900;color:var(--ink2)}.dn small{font-size:12px}
+.c{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c.g{color:var(--ink2)}
+.leg{display:flex;gap:14px;margin-top:10px;font-size:11.5px;color:var(--ink2)}.leg span{display:flex;align-items:center;gap:5px}
+/* hojas */
+.scrim{position:absolute;inset:0;background:rgba(2,4,10,.62)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:12px 18px 22px}
+.grab{width:42px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+.st{font-size:19px;font-weight:900}
+.btns{display:flex;gap:8px;margin:16px 0}
+.btn{flex:1;padding:12px 0;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-size:13px;font-weight:800;text-align:center}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;border:0}
+.cap{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin:6px 0 4px}
+.alt{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+.alt:first-of-type{border-top:0}.alt .e{font-size:18px}
+.chev{color:var(--ink2)}
+.td{padding:14px 0;border-top:1px solid var(--line)}.td:first-of-type{border-top:0}
+.td b{font-size:16px}.td .to{font-size:13px;color:var(--ink2);margin-top:4px}
+.td .to em{font-style:normal;color:#9cc6ff}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:3px;margin-bottom:10px}
+.seg div{text-align:center;padding:9px;border-radius:10px;font-size:13px;font-weight:800;color:var(--ink2)}.seg .on{background:var(--card);color:var(--ink)}
+.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:15px}
+.li:first-of-type{border-top:0}
+.ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--ink2);flex:none}.ck.on{background:var(--ok);border-color:var(--ok)}
+.li .q{margin-left:auto;font-size:13px;color:var(--ink2)}.li.done{opacity:.4;text-decoration:line-through}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:10px 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:700}
+.field{display:flex;align-items:center;padding:13px 14px;border-radius:13px;border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));background:var(--bg2);font-size:15px;color:var(--ink2)}
+.note{font-size:12px;color:#8fa6c6;max-width:390px;line-height:1.45;margin-top:8px}
+</style>
+
+<!-- 1. PORTADA -->
+<div class="wrap"><div class="lbl">1 · La semana</div>
+<div class="ab">
+  <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+  <div class="row"><div class="h1">Esta semana</div><span class="sp"></span><span class="ico">✨</span><span class="ico">📊</span></div>
+  <div class="avs"><div class="av on"><span>🍳</span>Mié</div><div class="av"><span>🛒</span>12</div><div class="av"><span>🧊</span>2</div></div>
+
+  <div class="hoy">
+    <div class="hc">HOY · LUNES</div>
+    <div class="mm ok"><b>Yogur con avena</b><span class="t on">✓</span></div>
+    <div class="mm"><span class="dot tp"></span><b>Lentejas</b><span class="t">✓</span></div>
+    <div class="mm"><b>Bowl de salmón</b><span class="t">✓</span></div>
+  </div>
+
+  <div class="dia"><span class="dn">MAR <small>🩺</small></span><span class="c g">Hospital</span><span class="c g">Hospital</span></div>
+  <div class="dia"><span class="dn">MIÉ</span><span class="c"><span class="dot cz"></span>Pollo al horno</span><span class="c"><span class="dot tp"></span>Lentejas</span></div>
+  <div class="dia"><span class="dn">JUE <small>🏋</small></span><span class="c"><span class="dot tp"></span>Pollo al horno</span><span class="c">Bocata de pavo</span></div>
+  <div class="dia"><span class="dn">VIE <small>🏋</small></span><span class="c"><span class="dot tp"></span>Pollo al horno</span><span class="c">Poke de atún</span></div>
+  <div class="dia"><span class="dn">SÁB</span><span class="c"><span class="dot cz"></span>Garbanzos</span><span class="c">Pasta pesto</span></div>
+  <div class="dia"><span class="dn">DOM</span><span class="c"><span class="dot tp"></span>Garbanzos</span><span class="c"><span class="dot fz"></span>Pollo al horno</span></div>
+  <div class="leg"><span><i class="dot cz"></i>cocinas</span><span><i class="dot tp"></i>táper</span><span><i class="dot fz"></i>congelado</span></div>
+</div>
+<p class="note">Solo lo que necesitas mirar: los tres avisos en iconos (cocinas el miércoles, 12 cosas por comprar, 2 que caducan), hoy con ✓ y el resto de la semana en una fila por día con <b>comida y cena</b>. Los desayunos solo salen en «hoy». Un punto de color dice si es táper, día de cocinar o congelado. Las calorías van detrás de 📊.</p>
+</div>
+
+<!-- 2. TOCAR UN PLATO -->
+<div class="wrap"><div class="lbl">2 · Tocar un plato</div>
+<div class="ab">
+  <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="st">Bocata de pavo</div>
+    <div class="mini" style="margin-top:4px">Jueves · cena · todo en casa</div>
+    <div class="btns"><div class="btn">Receta</div><div class="btn">Como fuera</div></div>
+    <div class="cap">CAMBIAR POR</div>
+    <div class="alt"><span class="e">🥗</span>Bowl de pollo<span class="sp"></span><span class="chev">›</span></div>
+    <div class="alt"><span class="e">🍳</span>Tortilla con pavo<span class="sp"></span><span class="chev">›</span></div>
+    <div class="alt"><span class="e">🥡</span>Garbanzos (táper)<span class="sp"></span><span class="chev">›</span></div>
+    <div class="alt"><span class="e">📖</span>Mis platos…<span class="sp"></span><span class="chev">›</span></div>
+  </div>
+</div>
+<p class="note">Nombre, cuándo y si lo tienes. Dos botones y tres cambios ya pensados para ese día. Los ingredientes y las macros están dentro de «Receta».</p>
+</div>
+
+<!-- 3. COCINAR -->
+<div class="wrap"><div class="lbl">3 · 🍳 Cocinar</div>
+<div class="ab">
+  <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="st">Cocinar esta semana</div>
+    <div style="margin-top:8px">
+      <div class="td"><div class="row"><b>Mié · Pollo al horno ×4</b><span class="sp"></span><span class="t">✓</span></div><div class="to">→ mié, jue, vie · <em>❄ dom</em></div></div>
+      <div class="td"><div class="row"><b>Sáb · Garbanzos ×3</b><span class="sp"></span><span class="t">✓</span></div><div class="to">→ sáb, dom, lun</div></div>
+    </div>
+    <div class="mini" style="margin-top:12px">Toca una tanda para ver la receta o cambiar raciones.</div>
+  </div>
+</div>
+<p class="note">Una línea por tanda: qué día, qué y cuántas raciones; debajo, a qué días va (❄ = congelador). ✓ cuando esté hecho.</p>
+</div>
+
+<!-- 4. COMPRA -->
+<div class="wrap"><div class="lbl">4 · 🛒 Compra / 🧊 En casa</div>
+<div class="ab">
+  <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="seg"><div class="on">Comprar · 12</div><div>En casa</div></div>
+    <div class="li"><span class="ck"></span>Muslos de pollo<span class="q">1 kg</span></div>
+    <div class="li"><span class="ck"></span>Patatas<span class="q">800 g</span></div>
+    <div class="li"><span class="ck"></span>Garbanzos cocidos<span class="q">2 botes</span></div>
+    <div class="li"><span class="ck"></span>Espinacas<span class="q">1 bolsa</span></div>
+    <div class="li"><span class="ck"></span>Atún en lata<span class="q">2</span></div>
+    <div class="li"><span class="ck"></span>Yogur proteico<span class="q">4</span></div>
+    <div class="li done"><span class="ck on"></span>Plátanos<span class="q">6</span></div>
+    <div class="btns" style="margin-bottom:0"><div class="btn">📷 Ticket</div><div class="btn p">Ya he comprado</div></div>
+  </div>
+</div>
+<p class="note">Una lista para marcar con la cantidad. Para qué plato es cada cosa sale al tocarla. «En casa» es la nevera, con lo que caduca primero arriba.</p>
+</div>
+
+<!-- 5. FUE OTRA COSA -->
+<div class="wrap"><div class="lbl">5 · Fue otra cosa</div>
+<div class="ab">
+  <div class="top"><span>Calendario</span><span>Entreno</span><b class="on">Comer</b><span>☰ Más</span></div>
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="st">¿Qué comiste?</div>
+    <div class="chips" style="margin:16px 0"><span class="chip">🥡 Otro táper</span><span class="chip">🍽️ Fuera</span><span class="chip">🛵 Pedí</span><span class="chip">🏥 Hospital</span><span class="chip">✕ Nada</span></div>
+    <div class="field">✍️&nbsp; o escríbelo: «arroz con pollo 250 g»</div>
+    <div class="btns" style="margin-bottom:0"><div class="btn p">Apuntar</div></div>
+  </div>
+</div>
+<p class="note">Cinco atajos y una frase. Los gramos se escriben en la frase o, si los quieres ajustar, en un campo numérico (sin ir de 50 en 50).</p>
+</div>
