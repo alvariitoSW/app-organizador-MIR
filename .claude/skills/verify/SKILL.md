@@ -1,29 +1,88 @@
+---
+name: verify
+description: Arrancar, conducir y hacer capturas de la app (Guardias · rotación y cocina) en un navegador headless para ver un cambio funcionando de verdad, no solo la suite. Úsala para «ejecuta la app», «haz una captura», «comprueba que funciona en la app», «conduce la pantalla», «mide a 412×915», y antes de dar por bueno un cambio de interfaz. Incluye el driver (driver.mjs), cómo saltar el asistente, navegar, sembrar datos con window.PG y las trampas de Playwright de este repo.
+---
+
 # Verify: Guardias · rotación y cocina
 
-Static single-page app (no build step): `index.html` + `app.js` + `styles.css`.
-State lives in `localStorage` via `store` (persisted) / `ui` (transient, not persisted).
+App de una sola página, **sin build**: `index.html` + `app.js` + `styles.css` (+ `sw.js`). El estado
+vive en `localStorage` vía `store` (se guarda) y `ui` (no se guarda). Rutas relativas a la raíz del repo.
 
-## Launch
+## Conducirla (camino del agente): `driver.mjs`
+
+Sirve el repo en un puerto libre, abre Chromium a **412×915** (el móvil del usuario), salta el
+asistente de primer arranque y ejecuta **una orden por línea** de stdin; imprime el resultado de cada
+paso y, al final, los errores de JS de la página. Sale con 1 si algo falló.
 
 ```bash
-cd /home/user/app-organizador-MIR
-python3 -m http.server <free-port>   # serves the repo root as-is, no build
+node .claude/skills/verify/driver.mjs --out /tmp/claude-0/drv <<'FIN'
+nav comer
+click [data-a="food-prev"]
+text .h2nav
+fill #frIn bocata de pollo con queso
+press #frIn Enter
+click [data-a="fr-ok"]
+eval PG.foodLog(PG.ui.foodDate).map(x => x.nombre)
+ss comer-ayer
+nav consumo
+back
+eval PG.ui.tab
+FIN
 ```
 
-Drive it with Playwright. The installed `playwright` npm version usually doesn't
-match the pre-installed browser revision, so always pass the pinned binary:
+Órdenes: `nav <cal|mes|semana|hoy|entreno|comer|menu|nevera|compra>` (`menu` = la Semana de Comer) (o cualquier sección del cajón:
+`consumo`, `dinero`, `habitos`, `notas`, `eventos`, `cfg`, `data`, `ajustes`…), `ui clave=valor …`
+(pone `PG.ui` y pinta), `click <sel>`, `fill <sel> <texto>` (dispara `change`), `press <sel> <tecla>`,
+`back` (atrás del móvil), `wait <ms>`, `eval <js>`, `text [sel]`, `ss <nombre>` (página completa,
+desde arriba), `ssv <nombre>` (solo lo visible), `seed <fichero.js>` (código con `window.PG` para
+sembrar datos; luego guarda y pinta). Opciones: `--out DIR` (capturas; por defecto
+`/tmp/guardias-driver`), `--size 412x915`, `--wizard` (no salta el asistente).
+
+Sembrar y conducir:
+
+```bash
+cat > /tmp/claude-0/seed.js <<'FIN'
+const P = window.PG; P.store.food.log[P.iso(new Date())] = [{ id: 'e1', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25, carb: 60, gresa: 10, rac: 1 }];
+FIN
+node .claude/skills/verify/driver.mjs --out /tmp/claude-0/drv <<'FIN'
+seed /tmp/claude-0/seed.js
+nav comer
+click #main .h2en
+back
+eval !!document.querySelector('#hojaDia .hoja')
+FIN
+```
+
+**Mira las capturas** (Read sobre el .png). Para medir alturas, `eval` con `getBoundingClientRect()`.
+
+Si necesitas lógica que el driver no tiene (bucles, medir muchas cosas), escribe un script de
+Playwright en el scratchpad con el mismo arranque:
 
 ```js
 const { chromium } = require('/home/user/app-organizador-MIR/node_modules/playwright');
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
 ```
 
-(`npm install` first if `node_modules/playwright` is missing.)
+(`npm install` primero si falta `node_modules/playwright`). El `playwright` de npm no casa con el
+Chromium preinstalado: pasa **siempre** `executablePath`. No hace falta `xvfb` ni `apt-get`.
+
+## Pruebas
+
+```bash
+npm run -s test:app          # la suite de regresión (Playwright propio, no Jest): ~10 min, sirve sus propios ficheros
+npm run -s test:compartir    # 6
+npm run -s test:enlaces      # 7
+npm run -s test:actualiza    # 10
+```
+
+La suite imprime `PASS/FAIL — nombre (detalle)` y al final `N/M pruebas OK`. Lánzala en segundo plano
+(`run_in_background`) y espera con un `until grep -q ...; do sleep 5; done`: tarda más que el límite
+de una orden normal.
 
 ## Navigating the real UI
 
 La barra son **tres grupos** y un cajón: «Calendario» (modos Mes/Semana/Hoy),
-«Entreno», «Comer» (modos Hoy/Menú/Cocina/Compra) y «☰ Más» para lo que no es
+«Entreno», «Comer» (modos **Hoy · Semana · Nevera · Compra**) y «☰ Más» para lo que no es
 ninguna de las tres. La segunda fila (`#calModes`) sirve a los dos grupos que
 tienen modos, y se oculta en Entreno y en el cajón.
 
@@ -35,12 +94,11 @@ await page.click('#calModes button[data-t="week"]'); // o "month" / "hoy"
 // Entreno:
 await page.click('[data-a="tab"][data-t="gym"]');
 
-// Comer (food/types/shop/batches/import son pestañas internas del mismo grupo):
-await page.click('[data-a="nav-comer"]');              // portada: el día
-await page.click('#calModes button[data-t="types"]');  // Menú
-await page.click('#calModes button[data-v="cocina-panel"]'); // Cocina
-await page.click('#calModes button[data-t="shop"]');   // Compra
-await page.click('[data-a="cocina-tab"][data-t="lote"]');    // Cocina → Tandas
+// Comer: portada (el día) y sus modos
+await page.click('[data-a="nav-comer"]');
+await page.click('#calModes button[data-t="types"]');   // Semana (ui.tab='types')
+await page.click('#calModes button[data-v="nevera2"]'); // Nevera (ui.foodVista='nevera2')
+await page.click('#calModes button[data-t="shop"]');    // Compra
 
 // El cajón, que ya solo lleva lo que no es calendario, entreno ni comida:
 await page.click('[data-a="drawer-toggle"]');
@@ -88,10 +146,11 @@ de alta ahí se pierde en la siguiente carga sin ningún aviso — y una prueba 
 lo lea justo después de guardarlo pasará igual. Para probarlo de verdad hay que
 dar la vuelta completa: `PG.store = JSON.parse(JSON.stringify(PG.store))`.
 
-Vistas dentro de Comer, por `ui.foodVista`: `''` (el día), `buscar`, `cantidad`,
-`productos`, `micros`, `platos`, `alimentos`, `ficha`, `cocina-panel`, `plato`,
-`alimnuevo`, `add`, `cocina`. Y `ui.cocinaTab` (`''`/`nevera`/`lote`),
-`ui.platosTab` (`''`/`antojo`/`importar`), `ui.shopVista` (`''`/`listas`).
+Vistas dentro de Comer, por `ui.foodVista`: `''` (el día; `ui.foodDate` elige el día, `''` = hoy),
+`buscar`, `cantidad`, `micros`, `quecomo`, `hoycocino`, `platos`, `alimentos`, `ficha`, `plato`… La
+hoja de una toma se abre con `ui.feVer = <id de la entrada>`. En Menú, `ui.typesVista` (`''`,
+`montar`, `protos`, `macros`, `rapido`, `elegir`, `semana`…). Consumo: `ui.cnVista` (`''`/`efectos`).
+Dinero: `ui.dinTab` + `ui.dineroVista`.
 
 **Trampa al sembrar menús**: un plato dentro de una toma solo cuenta si lleva
 `kind:'dish'` — `dishQty()` filtra por ahí, así que `{id,portions}` a secas no
@@ -192,7 +251,26 @@ Un `case` en el switch que no toca no se dispara nunca y no da error: al añadir
 acción, comprueba si el elemento es un botón (clic) o un `input`/`select` (`change`), y
 **pulsa el botón de verdad en la prueba** en vez de comprobar solo que existe.
 
+## Más trampas vividas al conducirla
+
+- **`python3 -m http.server` en segundo plano se muere solo** en este contenedor: las capturas salen
+  de «ERR_CONNECTION_REFUSED». El driver monta su propio servidor de Node en un puerto libre y lo
+  cierra al acabar; usa eso.
+- **Captura completa con la página desplazada**: la barra de arriba es fija y sale pintada a media
+  altura. `ss` sube arriba antes; en tu propio script, `scrollTo(0,0)` antes de `fullPage`.
+- **Una hoja abierta (`.fehoja` en `#hojaDia`) tapa todo con su `.hscrim`**: `click #navAtras` espera
+  y falla («subtree intercepts pointer events»). Ciérrala con `back` (el atrás del móvil),
+  `[data-a="fe-cerrar"]`, o tocando el scrim.
+- **ElementHandle «not attached to the DOM»**: el buscador repinta con retardo; un nodo cogido con
+  `page.$()` y pulsado después se suelta. Pulsa **por selector** (`page.click(sel)`), como el driver.
+- **«‹ atrás» sube de nivel, no deshace pasos**: hoja → se cierra; sub‑pantalla → su `.volver`;
+  portada de sección → la sección anterior; si no hay, el Mes (y el botón se oculta).
+- **Pruebas con fecha fija**: el día 1 de mes se rompieron tres pruebas que usaban «el 15 de
+  septiembre» o «el primer día visible». Calcula las fechas desde `new Date()`.
+- **Desplegar**: el hook `sella-antes-de-main.sh` bloquea subir `main` sin sellar. `npm run -s sella`
+  y su commit van en una orden **aparte** del push (juntos, el hook la rechaza).
+
 ## Regression suite (not a substitute for driving the UI, but keep it green)
 
-`node tests/regression.test.js` — custom Playwright script (not Jest), same
+`node tests/regression.test.js` (= `npm run -s test:app`) — custom Playwright script (not Jest), same
 `executablePath` pinning as above already baked in.
