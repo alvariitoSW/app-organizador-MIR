@@ -9423,12 +9423,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
     await gotoTab('month');
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(150);
-    const entra = await page.evaluate(() => ({ v: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden, avisos: document.querySelectorAll('#main .cjav button').length, frase: !!document.querySelector('#main .cjhoy #frIn') }));
+    const entra = await page.evaluate(() => ({ v: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden, seg: document.querySelectorAll('#main [data-a="cje-tab"]').length, comidas: document.querySelectorAll('#main .cjmm').length }));
     await page.evaluate(() => { const P = window.PG; P.cjeAuto({ rehacer: 'todo' }); P.render(); }); await page.waitForTimeout(200);
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
     const sem = await page.evaluate(() => { const P = window.PG, T = P.tandasSemana();
       return { tandas: T.tandas.map((t) => ({ n: t.d.name, cook: T.sem[t.cook].tipo.cocina, dias: t.dias.length })),
         guardiaHosp: T.sem.filter((x) => x.tipo.guardia).every((x) => (P.dishById((x.cls.comida.items[0] || {}).id) || {}).hospital),
-        dias: document.querySelectorAll('#main .cjd').length }; });
+        dias: document.querySelectorAll('#main .cjwk').length }; });
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const hayHoja = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjtd').length);
     const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); }
@@ -9440,24 +9441,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#hojaDia [data-a="cje-taper"][data-v="4"]'); await page.waitForTimeout(80);
     const pref = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))); return n.food.pref; });
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(120);
     const okd = await page.$('#main [data-a="cje-ok"][data-p="desayuno"]'); if (okd) { await okd.click(); await page.waitForTimeout(120); }
     const des = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).filter((e) => e.p === 'desayuno').length);
+    await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(120);
     await page.fill('#frIn', 'bocata de pollo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
     const g0 = await page.$('input[data-a="fr-gset"]'); if (g0) { await g0.fill('130'); await g0.dispatchEvent('change'); await page.waitForTimeout(100); }
     const gr = await page.evaluate(() => (window.PG.ui.frase && window.PG.ui.frase.items[0] || {}).g);
-    await page.evaluate(() => { window.PG.ui.frase = null; window.PG.render(); });
-    await page.click('#main .cjreg'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.cjeHoja = { v: 'dia' }; P.render(); }); await page.waitForTimeout(100);
+    await page.click('#hojaDia [data-a="cje-registro"]'); await page.waitForTimeout(120);
     const reg = await page.evaluate(() => window.PG.ui.foodVista === '' && !!document.querySelector('#main .h2nav'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia231; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('«Comer» es una pantalla: semana, avisos, hoy con ✓ y frase, sin fila de modos',
-      entra.v === 'eje' && entra.modos && entra.avisos === 3 && entra.frase && sem.dias >= 6, JSON.stringify({ entra, sem }));
+    check('«Comer» es una pantalla: Hoy · Semana, hoy con sus comidas, la semana con sus 7 días, sin fila de modos',
+      entra.v === 'eje' && entra.modos && entra.seg === 2 && entra.comidas >= 3 && sem.dias === 7, JSON.stringify({ entra, sem }));
     check('✨ monta tandas solo en días que se cocina, que aguantan (no tortillas), guardia = hospital; ✓ hecho las hace táperes',
       sem.tandas.length >= 1 && sem.tandas.every((t) => t.cook && t.dias >= 2 && !/tortilla|bocata/i.test(t.n)) && sem.guardiaHosp && hayHoja >= 1 && coc >= 2,
       JSON.stringify({ sem, hayHoja, coc }));
     check('celíaco: la compra pide pan y pasta sin gluten; ⚙️ guarda días sin cocinar y táper, y sobrevive a recargar',
       sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.taper === 4 && pref.horno === false,
       JSON.stringify({ sg, pref }));
-    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase se escriben y 📊 lleva al registro',
+    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el detalle del día lleva al registro',
       des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
   }
 
@@ -9473,12 +9476,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     await page.evaluate(() => { const P = window.PG; P.cjeAuto({ rehacer: 'todo' }); P.render(); }); await page.waitForTimeout(200);
     const t0 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const mas = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="1"]'); if (mas) { await mas.click(); await page.waitForTimeout(120); }
     const t1 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
     const menos = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="-1"]'); if (menos) { await menos.click(); await page.waitForTimeout(120); }
     const t2 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-platos"]'); await page.waitForTimeout(120);
     const filtros = await page.$$eval('#hojaDia [data-a="cje-pfilt"]', (e) => e.length);
     await page.click('#hojaDia [data-a="cje-pfilt"][data-v="tanda"]'); await page.waitForTimeout(100);
@@ -9487,7 +9492,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.fill('#cjNuevo', 'pollo al curry con arroz'); await page.click('#hojaDia [data-a="cje-pcrea"]'); await page.waitForTimeout(120);
     const creado = await page.evaluate(() => (window.PG.store.dishes || []).some((d) => d.name === 'Pollo al curry con arroz' && !d.nevera && d.ingredients.length >= 2));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
-    await page.click('#main .cjd .cjc'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
+    await page.click('#main .cjwk .cjc'); await page.waitForTimeout(120);
     await page.click('#hojaDia [data-a="cje-platos"]'); await page.waitForTimeout(120);
     const lista = await page.$$eval('#hojaDia .cjpl b', (e) => e.map((x) => x.textContent));
     const destino = await page.evaluate(() => ({ w: window.PG.ui.cjeHoja.w, c: window.PG.ui.cjeHoja.c }));
@@ -9514,16 +9520,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const fi = await page.$('#fcVal'); if (fi) { await fi.fill('1.5'); await fi.dispatchEvent('change'); await page.waitForTimeout(100); }
     const c15 = await page.evaluate(() => window.PG.ui.foodCant);
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { window.PG.ui.cjeTab = ''; window.PG.render(); });
+    await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(120);
     await page.fill('#frIn', 'bocata de pollo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
     await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
-    const chips = await page.$$eval('#main .cjeni', (e) => e.length);
-    await page.click('#main .cjeni .n'); await page.waitForTimeout(120);
+    const chips = await page.$$eval('#hojaDia .cjit', (e) => e.length);
+    await page.click('#hojaDia .cjit .n'); await page.waitForTimeout(120);
     const hoja = await page.evaluate(() => !!document.querySelector('#hojaDia .fehoja'));
     await page.click('#hojaDia [data-a="fe-cerrar"].hgrab').catch(() => {}); await page.evaluate(() => { window.PG.ui.feVer = ''; window.PG.render(); });
-    await page.click('#main .cjeni .x'); await page.waitForTimeout(120);
+    await page.click('#hojaDia .cjit .x'); await page.waitForTimeout(120);
     const tras = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia233; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('la cantidad no se queda fija abajo y se escribe; lo apuntado sale en la semana con × y su hoja',
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia233; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frPos = ''; P.save(); P.ui.feVer = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('la cantidad no se queda fija abajo y se escribe; lo apuntado sale en la hoja de su comida con × y su hoja',
       cant.pos === 'relative' && cant.alto > 700 && cant.input && c15 === 1.5 && chips === 1 && hoja && tras === 0, JSON.stringify({ cant, c15, chips, hoja, tras }));
   }
 
@@ -9533,16 +9541,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.log[P.iso(new Date())] = [];
       P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-mom"][data-p="desayuno"]'); await page.waitForTimeout(120);
     await page.fill('#frIn', 'yogur griego'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
     await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(120);
     const n1 = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
     const und = await page.$('#flash [data-a="deshacer"]'); if (und) { await und.click(); await page.waitForTimeout(120); }
     const n0 = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
     await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { macro: { nombre: 'Prueba', kcal: 100, prot: 5 }, pos: 'comida' }); P.render(); });
-    const xb = await page.$('#main .cjeni .x'); if (xb) { await xb.click(); await page.waitForTimeout(120); }
+    const xb = await page.$('#hojaDia .cjit .x'); if (xb) { await xb.click(); await page.waitForTimeout(120); }
     const und2 = await page.$('#flash [data-a="deshacer"]'); if (und2) { await und2.click(); await page.waitForTimeout(120); }
     const vuelve = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).map((e) => e.nombre));
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia234; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia234; P.save(); P.ui.cjeHoja = null; P.ui.frPos = ''; P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('«Deshacer» en el aviso quita lo que acabas de apuntar y devuelve lo que acabas de quitar',
       n1 === 1 && n0 === 0 && vuelve.join() === 'Prueba', JSON.stringify({ n1, n0, vuelve }));
   }
@@ -9561,7 +9570,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const res = await page.evaluate(() => { const d = window.PG.store.semBase.d, ids = [];
       Object.keys(d).forEach((w) => ['comida', 'cena'].forEach((c) => { const it = (d[w][c] || { items: [] }).items[0]; if (it) ids.push(it.id); }));
       return { cambiada: ids.filter((id) => id !== window.__d0).length }; });
-    const abre = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .cjd .cjc')].find((x) => !/Hospital|Como fuera|Nada/.test(x.textContent)); if (!b) return null; b.click(); return { w: +b.dataset.w, c: b.dataset.c }; });
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
+    const abre = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .cjwk .cjc')].find((x) => !/Hospital|Como fuera|Nada/.test(x.textContent)); if (!b) return null; b.click(); return { w: +b.dataset.w, c: b.dataset.c }; });
     await page.waitForTimeout(150);
     const racs = await page.evaluate(() => document.querySelectorAll('#hojaDia [data-a="cje-rac2"]').length);
     const r15 = await page.$('#hojaDia [data-a="cje-rac2"][data-v="1.5"]'); if (r15) { await r15.click(); await page.waitForTimeout(100); }
@@ -9675,7 +9685,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const antes = JSON.stringify(P.store.semBase.d);
       const mas = P.tandaRaciones(t1, 1);
       const pisa = JSON.stringify(P.store.semBase.d) !== antes;
-      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeHoja = null; P.render();
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.render();
       return { dias: t0.dias.length, sigue: !!t1, hecho: !!(t1 && t1.hecho), hoy, mas, pisa }; });
     const ok = await page.$('#main [data-a="cje-ok"][data-p="comida"]'); if (ok) { await ok.click(); await page.waitForTimeout(120); }
     const queda = await page.evaluate(() => window.PG.cocinadoS().filter((c) => c.dishId === 'd237').reduce((a, c) => a + c.queda, 0));
@@ -9694,10 +9704,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.dishes.push({ id: 'd238', name: 'Garbanzos con espinacas', icon: '🫘', portions: 1, kcal: 400, prot: 20, ingredients: ['150 g garbanzos', '100 g espinacas'] });
       for (let i = 0; i < 7; i++) ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(i, c, c === 'comida' ? 'd238' : P.dishNada().id));
       P.store.listas = [{ id: 'l238', nombre: 'Habitual (tickets)', fija: true, habitual: true, items: ['garbanzos cocidos', 'papel higiénico', 'café molido'] }];
-      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.save(); P.render(); });
+      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.save(); P.render(); });
     const datos = await page.evaluate(() => { const d = window.PG.compraDatos(), g = {}; d.grupos.forEach((x) => { g[x[0]] = x[2].map((y) => y.texto); });
-      return { semana: d.semana, total: d.total, fresco: g.fresco, rutina: g.rutina, tile: document.querySelector('#main [data-a="cje-hoja"][data-v="compra"]').innerText.replace(/\D/g, '') }; });
-    await page.click('#main [data-a="cje-hoja"][data-v="compra"]'); await page.waitForTimeout(120);
+      return { semana: d.semana, total: d.total, fresco: g.fresco, rutina: g.rutina, tile: document.querySelector('#main .cjlinks [data-v="compra"]').innerText.replace(/\D/g, '') }; });
+    await page.click('#main .cjlinks [data-v="compra"]'); await page.waitForTimeout(120);
     const hoja = await page.evaluate(() => ({ items: document.querySelectorAll('#hojaDia .cjli').length, fijas: document.querySelectorAll('#hojaDia [data-a="cje-fija"]').length }));
     await page.click('#hojaDia [data-a="cje-fija"]'); await page.waitForTimeout(100);
     const abierta = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjli').length);
@@ -9706,6 +9716,53 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       datos.semana === 2 && datos.fresco.some((x) => /garbanzo/i.test(x)) && datos.fresco.some((x) => /espinaca/i.test(x)) &&
       datos.rutina.length === 2 && !datos.rutina.some((x) => /garbanzo/i.test(x)) && datos.tile === '2' && hoja.items === 2 && hoja.fijas === 1 && abierta === 4,
       JSON.stringify({ datos, hoja, abierta }));
+  }
+
+  // 239) UN SOLO HOY: arriba «para hacer hoy» (la tanda que toca cocinar hoy); cada comida enseña lo
+  // apuntado y el plan en gris (○ sin apuntar · ✓ verde lo del plan · ✓ azul otra cosa, «en vez de»);
+  // la hoja de una comida apunta la frase EN esa comida, «no he cenado» la cierra; el total abre el
+  // día por comidas y ‹ va a ayer; la pestaña Semana tiene los 7 días con su tipo y su proteína
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia239 = JSON.parse(JSON.stringify(P.store));
+      const k = P.iso(new Date()), w = (new Date().getDay() + 6) % 7;
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.semBase = { on: true, d: {} }; P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.food.log[k] = [];
+      P.store.dishes.push({ id: 'd239', name: 'Lentejas con verdura', icon: '🫘', portions: 1, kcal: 450, prot: 25 }, { id: 'd239b', name: 'Tortilla con pavo', icon: '🍳', portions: 1, kcal: 420, prot: 32 });
+      for (let i = 0; i < 7; i++) { P.sbPoner(i, 'desayuno', P.dishNada().id); P.sbPoner(i, 'comida', 'd239b'); P.sbPoner(i, 'cena', 'd239b'); }
+      P.sbPoner(w, 'comida', 'd239'); P.sbPoner(w, 'cena', 'd239');
+      P.addFoodEntry(k, { macro: { nombre: 'Comí fuera', kcal: 270, prot: 15 }, pos: 'comida' });
+      P.ui.cjeHoja = null; P.ui.cjeTab = ''; P.ui.frase = null; P.ui.foodDate = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.save(); P.render(); });
+    const hoy = await page.evaluate(() => { const fs = [...document.querySelectorAll('#main .cjmm')];
+      const f = (n) => fs.find((x) => x.querySelector('.k').textContent === n);
+      return { todo: [...document.querySelectorAll('#main .cjtd b')].map((b) => b.textContent),
+        comida: { q: f('COMIDA').querySelector('.cjq').className, n: f('COMIDA').querySelector('.n').textContent, pl: (f('COMIDA').querySelector('.pl') || {}).textContent || '' },
+        cena: { q: f('CENA').querySelector('.cjq').className, plan: f('CENA').querySelector('.n').classList.contains('plan') } }; });
+    await page.click('#main .cjmm:nth-child(3) .tx'); await page.waitForTimeout(120);
+    const titulo = await page.evaluate(() => (document.querySelector('#hojaDia .cjst') || {}).textContent);
+    await page.fill('#frIn', 'yogur griego'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(120);
+    await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
+    const cena = await page.evaluate(() => ({ p: window.PG.foodLog(window.PG.iso(new Date())).filter((e) => e.p === 'cena').length, items: document.querySelectorAll('#hojaDia .cjit').length }));
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'mom', p: 'desayuno', k: P.iso(new Date()) }; P.render(); });
+    const sinPlan = await page.evaluate(() => !document.querySelector('#hojaDia [data-a="cje-ok"]'));
+    await page.click('#hojaDia [data-a="cje-nocome"]'); await page.waitForTimeout(120);
+    const nada = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).some((e) => e.p === 'desayuno' && /No he desayunado/.test(e.nombre)));
+    await page.evaluate(() => { window.PG.ui.cjeHoja = null; window.PG.render(); });
+    await page.click('#main .cjln'); await page.waitForTimeout(120);
+    const dia = await page.evaluate(() => ({ filas: document.querySelectorAll('#hojaDia .cjtb tr').length, total: (document.querySelector('#hojaDia .cjtb tr.t') || {}).textContent || '' }));
+    await page.click('#hojaDia [data-a="cje-diak"][data-d="-1"]'); await page.waitForTimeout(100);
+    const ayer = await page.evaluate(() => { const P = window.PG; return P.ui.cjeHoja.k === P.iso(P.addDays(new Date(), -1)); });
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = null; P.render(); });
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
+    const sem = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .cjwk').length, tipos: document.querySelectorAll('#main .cjwk .ty').length,
+      prot: [...document.querySelectorAll('#main .cjwk .p')].filter((p) => /\d/.test(p.textContent)).length, sum: document.querySelectorAll('#main .cjsum > *').length }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia239; P.save(); P.ui.cjeHoja = null; P.ui.cjeTab = ''; P.ui.frPos = ''; P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Hoy: «para hacer hoy» pide cocinar la tanda de hoy; lo apuntado manda (✓ azul «en vez de» el plan) y lo no apuntado sale en gris con ○',
+      hoy.todo.some((t) => /Cocina Lentejas/.test(t)) && /otro/.test(hoy.comida.q) && hoy.comida.n === 'Comí fuera' && /en vez de Lentejas/.test(hoy.comida.pl) &&
+      hoy.cena.q === 'cjq' && hoy.cena.plan, JSON.stringify(hoy));
+    check('la hoja de una comida apunta la frase en ESA comida; «no he desayunado» la cierra; el total abre el día por comidas y ‹ va a ayer',
+      /Cena/.test(titulo) && cena.p === 1 && cena.items === 1 && sinPlan && nada && dia.filas >= 6 && /Total/.test(dia.total) && ayer, JSON.stringify({ titulo, cena, sinPlan, nada, dia, ayer }));
+    check('Semana: 7 días con su tipo de día y su proteína, y arriba cocinas · compra · proteína',
+      sem.filas === 7 && sem.tipos === 7 && sem.prot >= 1 && sem.sum === 3, JSON.stringify(sem));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
