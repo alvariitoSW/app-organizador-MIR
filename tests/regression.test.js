@@ -9424,7 +9424,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('month');
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(150);
     const entra = await page.evaluate(() => ({ v: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden, avisos: document.querySelectorAll('#main .cjav button').length, frase: !!document.querySelector('#main .cjhoy #frIn') }));
-    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'asis', r: P.cjeAsisDef(), paso: 0 }; P.render(); }); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
     const sem = await page.evaluate(() => { const P = window.PG, T = P.tandasSemana();
       return { tandas: T.tandas.map((t) => ({ n: t.d.name, cook: T.sem[t.cook].tipo.cocina, dias: t.dias.length })),
         guardiaHosp: T.sem.filter((x) => x.tipo.guardia).every((x) => (P.dishById((x.cls.comida.items[0] || {}).id) || {}).hospital),
@@ -9471,7 +9471,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
       P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
-    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'asis', r: P.cjeAsisDef(), paso: 0 }; P.render(); }); await page.waitForTimeout(120); await page.click('#hojaDia [data-a="cje-asis-ok"]'); await page.waitForTimeout(250); await page.click('#hojaDia [data-a="cje-asis-si"]'); await page.waitForTimeout(120);
     const t0 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const mas = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="1"]'); if (mas) { await mas.click(); await page.waitForTimeout(120); }
@@ -9537,7 +9537,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
       P.ui.cjeHoja = null; P.ui.frase = null; P.ui.cjeBack = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
-    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'asis', r: P.cjeAsisDef(), paso: 0 }; P.render(); }); await page.waitForTimeout(120);
     const preguntas = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjdots i').length);
     /* una pregunta por pantalla: elegir pasa a la siguiente */
     for (const [k, v] of [['origen', 'nevera'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'poco']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
@@ -9545,7 +9545,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const prop = await page.evaluate(() => ({ dias: document.querySelectorAll('#hojaDia .cjrd').length, tandas: window.PG.tandasSemana().tandas.length }));
     await page.click('#hojaDia [data-a="cje-asis-no"]'); await page.waitForTimeout(120);
     const desc = await page.evaluate(() => Object.keys(window.PG.store.semBase.d).length);
-    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'asis', r: P.cjeAsisDef(), paso: 0 }; P.render(); }); await page.waitForTimeout(120);
     for (const [k, v] of [['origen', 'nevera'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'normal']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
     await page.click('#hojaDia [data-a="cje-asis-paso"][data-d="1"]'); await page.waitForTimeout(80);
     await page.click('#hojaDia [data-a="cje-asis-r"][data-k="cena"][data-v="bowl"]'); await page.waitForTimeout(80);
@@ -9581,7 +9581,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const d0 = P.store.dishes.find((d) => !d.hospital); for (let w = 0; w < 7; w++) P.store.semBase.d[w] = { comida: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' }, cena: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' } };
       window.__d0 = d0.id; P.ui.cjeHoja = null; P.ui.cjeBack = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
-    await page.click('#main [data-a="cje-asis"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'asis', r: P.cjeAsisDef(), paso: 0 }; P.render(); }); await page.waitForTimeout(120);
     for (const [k, v] of [['origen', 'recetas'], ['rehacer', 'todo'], ['meta', 'mantener'], ['cocinar', 'normal']]) { await page.click(`#hojaDia [data-a="cje-asis-r"][data-k="${k}"][data-v="${v}"]`); await page.waitForTimeout(80); }
     await page.click('#hojaDia [data-a="cje-asis-r"][data-k="gustos"][data-v="legumbre"]'); await page.waitForTimeout(60);
     await page.click('#hojaDia [data-a="cje-asis-paso"][data-d="1"]'); await page.waitForTimeout(80);
@@ -9606,6 +9606,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       res.cambiada >= 8 && res.sabado === 'Como fuera' && !/no he encontrado/.test(res.msg) && res.filas === 14, JSON.stringify(res));
     check('en la propuesta cada plato se abre (con «volver»), se cambia la ración, se quita y se vuelve a la propuesta',
       abre && hoja.v === 'plato' && hoja.volver && hoja.racs === 4 && por === 1.5 && tras.v === 'asisres' && tras.nada, JSON.stringify({ abre, hoja, por, tras }));
+  }
+
+  // 236) SEMANAS PROTOTIPO: ✨ abre «Semanas prototipo»; se crea la semana A, «propónme uno» la llena
+  // (comidas que se cocinan, cenas de sobras o rápidas, 2–3 desayunos); un hueco de cena ofrece
+  // primero «sobras» de la comida; «usar esta semana» la monta (guardia = hospital) y la compra sale
+  // de ahí; «la semana que viene» queda apuntada; duplicar crea la B; todo sobrevive a recargar
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia236 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref; delete P.store.food.semP;
+      ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'kiwi verde bandeja', 'nuez natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
+      P.ui.cjeHoja = null; P.ui.semPHoja = null; P.ui.semP = ''; P.save(); P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.click('#main .cji[data-v="semp"]'); await page.waitForTimeout(120);
+    const vacio = await page.evaluate(() => ({ v: window.PG.ui.foodVista, crear: !!document.querySelector('#main [data-a="semp-nuevo"]'), modos: document.getElementById('calModes').hidden }));
+    await page.click('#main [data-a="semp-nuevo"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="semp-proponer"]'); await page.waitForTimeout(300);
+    const prop = await page.evaluate(() => { const p = window.PG.semPS().lista[0]; return { n: p.n, des: p.des.length, com: p.com.filter(Boolean).length, cen: p.cen.filter(Boolean).length,
+      sobras: document.querySelectorAll('#main .spc .sob').length }; });
+    /* el primer día con comida: su cena, ¿ofrece sobras? */
+    const w = await page.evaluate(() => window.PG.semPS().lista[0].com.findIndex(Boolean));
+    await page.click(`#main [data-a="semp-celda"][data-w="${w}"][data-c="cen"]`); await page.waitForTimeout(120);
+    const primera = await page.evaluate(() => ((document.querySelector('#hojaDia .cjalt b') || {}).textContent || ''));
+    await page.click('#hojaDia [data-a="semp-pon"][data-i="0"]'); await page.waitForTimeout(120);
+    const sob = await page.evaluate((w) => { const p = window.PG.semPS().lista[0]; return p.cen[w] === p.com[w]; }, w);
+    await page.click('#main [data-a="semp-usar"]:not([data-k$="x"])'); await page.waitForTimeout(150);
+    const usada = await page.evaluate(() => { const P = window.PG, d = P.store.semBase.d, lun = P.mondayOf(new Date()), g = [];
+      for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(lun, i)); if (P.esDiaGuardia(k)) g.push((P.dishById((d[i].comida.items[0] || {}).id) || {}).hospital); }
+      const cd = P.compraDatos(); return { v: P.ui.foodVista, celdas: Object.keys(d).length, guardiaHosp: g.every(Boolean), compra: cd.total, uso: Object.keys(P.semPS().uso).length }; });
+    await page.click('#main .cji[data-v="semp"]'); await page.waitForTimeout(120);
+    const prox = await page.$$('#main [data-a="semp-usar"]'); if (prox[1]) { await prox[1].click(); await page.waitForTimeout(100); }
+    await page.click('#main [data-a="semp-dup"]'); await page.waitForTimeout(120);
+    const fin = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))), s = n.food.semP || {};
+      return { lista: (s.lista || []).map((x) => x.n).join(), uso: Object.keys(s.uso || {}).length, tabs: document.querySelectorAll('#main .sptabs button').length }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia236; P.save(); P.ui.semPHoja = null; P.ui.semP = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('✨ abre las semanas prototipo; «propónme uno» llena comidas, cenas (con sobras) y 2–3 desayunos; la cena ofrece primero sobras',
+      vacio.v === 'semp' && vacio.crear && vacio.modos && prop.n === 'A' && prop.des >= 2 && prop.com >= 5 && prop.cen >= 5 && prop.sobras >= 1 && /^Sobras/.test(primera) && sob,
+      JSON.stringify({ vacio, prop, primera, sob }));
+    check('«usar esta semana» monta la semana (guardia = hospital) y la compra sale de ella; la que viene se apunta, duplicar crea la B y sobrevive a recargar',
+      usada.v === 'eje' && usada.celdas === 7 && usada.guardiaHosp && usada.compra >= 1 && usada.uso === 1 && fin.lista === 'A,B' && fin.uso === 2 && fin.tabs >= 3,
+      JSON.stringify({ usada, fin }));
   }
 
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»

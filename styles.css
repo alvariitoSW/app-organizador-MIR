@@ -3159,3 +3159,18 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cjrc2{display:flex;align-items:center;gap:6px;min-width:0;background:none;border:0;color:var(--ink);font:inherit;font-size:13px;text-align:left;padding:0;cursor:pointer}
 .cjrc2 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cjracs{display:flex;align-items:center;gap:6px;margin:4px 0 8px}
+/* ===== semanas prototipo ===== */
+.sptabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.sptabs button{flex:none;padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.sptabs button.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 16%,var(--bg2))}
+.spd{display:grid;grid-template-columns:40px 1fr 1fr;gap:6px;align-items:stretch;padding:5px 0;border-top:1px solid var(--line)}
+.spd:first-child{border-top:0}
+.spd>b{font-size:11px;color:var(--ink2);align-self:center}
+.sph span{font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink2)}
+.spc{min-width:0;min-height:44px;padding:6px 8px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
+.spc.v{color:var(--ink2);align-items:center}
+.spc .n{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.spc .sob{font-size:10px;font-weight:800;color:#34d399}
+.spbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.spbtns .btn{min-height:46px;justify-content:center}
+.spmas{display:flex;flex-wrap:wrap;gap:14px;padding:4px 4px 10px}
