@@ -9461,6 +9461,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
   }
 
+  // 232) MIS PLATOS Y RACIONES: desde la semana se abre «Mis platos» con filtros; desde un hueco,
+  // tocar un plato lo pone ahí (y para una comida no salen desayunos ni batidos); ＋ crea un plato
+  // escribiéndolo; en «Cocinar», + suma una ración sin quitársela a otra tanda y − la quita (mín. 2)
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia232 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
+      P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref; delete P.store.food.tandasHechas;
+      ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
+      P.ui.cjeHoja = null; P.ui.frase = null; P.save(); P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-auto"]'); await page.waitForTimeout(250);
+    const t0 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
+    await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
+    const mas = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="1"]'); if (mas) { await mas.click(); await page.waitForTimeout(120); }
+    const t1 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
+    const menos = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="-1"]'); if (menos) { await menos.click(); await page.waitForTimeout(120); }
+    const t2 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
+    await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="cje-platos"]'); await page.waitForTimeout(120);
+    const filtros = await page.$$eval('#hojaDia [data-a="cje-pfilt"]', (e) => e.length);
+    await page.click('#hojaDia [data-a="cje-pfilt"][data-v="tanda"]'); await page.waitForTimeout(100);
+    const tandas = await page.$$eval('#hojaDia .cjpl b', (e) => e.map((x) => x.textContent));
+    await page.click('#hojaDia [data-a="cje-pnuevo"]'); await page.waitForTimeout(100);
+    await page.fill('#cjNuevo', 'pollo al curry con arroz'); await page.click('#hojaDia [data-a="cje-pcrea"]'); await page.waitForTimeout(120);
+    const creado = await page.evaluate(() => (window.PG.store.dishes || []).some((d) => d.name === 'Pollo al curry con arroz' && !d.nevera && d.ingredients.length >= 2));
+    await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
+    await page.click('#main .cjd .cjc'); await page.waitForTimeout(120);
+    await page.click('#hojaDia [data-a="cje-platos"]'); await page.waitForTimeout(120);
+    const lista = await page.$$eval('#hojaDia .cjpl b', (e) => e.map((x) => x.textContent));
+    const destino = await page.evaluate(() => ({ w: window.PG.ui.cjeHoja.w, c: window.PG.ui.cjeHoja.c }));
+    await page.click('#hojaDia .cjpl'); await page.waitForTimeout(120);
+    const puesto = await page.evaluate((d) => { const P = window.PG, x = P.mSemana().filter((y) => y.w === d.w)[0]; return (P.dishById((x.cls[d.c].items[0] || {}).id) || {}).name; }, destino);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia232; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('«Cocinar»: + suma una ración sin quitársela a otra tanda y − la quita',
+      t0.length >= 1 && t1[0] === t0[0] + 1 && t1.slice(1).join() === t0.slice(1).join() && t2[0] === t0[0], JSON.stringify({ t0, t1, t2 }));
+    check('«Mis platos»: filtros, solo lo de tanda en «Para tanda», ＋ crea un plato escrito, y desde un hueco lo pone ahí sin desayunos ni batidos',
+      filtros === 4 && tandas.length >= 1 && !tandas.some((n) => /tortilla|bocata|bowl/i.test(n)) && creado &&
+      lista.length >= 2 && !lista.some((n) => /batido|whey|yogur|porridge|tostada/i.test(n)) && puesto === lista[0], JSON.stringify({ filtros, tandas, creado, lista: lista.slice(0, 4), puesto }));
+  }
+
   // 220) DESLIZAR NO RECARGA y «ATRÁS» SUBE DE NIVEL: el gesto de recargar está apagado; «‹ atrás»
   // (y el atrás del móvil) llevan de una sub‑pantalla a su madre y, desde la portada de una sección, a
   // la sección anterior saltándose lo que hiciste dentro; una hoja abierta se cierra primero; al
