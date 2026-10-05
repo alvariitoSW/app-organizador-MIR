@@ -7829,7 +7829,7 @@ function feSub(x){
   if(x.fuera)return 'fuera · '+(x.rac&&x.rac!==1?'×'+fmt(x.rac):'1 ración');
   return x.rac&&x.rac!==1?'×'+fmt(x.rac):'';}
 function feFila(x,sel){
-  return '<button class="h2en" data-a="fe-ver" data-id="'+esc(x.id)+'"><span class="e">'+esc(x.emoji||(x.alim&&(alimById(x.alim)||{}).e)||(x.dishId&&(dishById(x.dishId)||{}).icon)||'🍽')+'</span>'+
+  return '<button class="h2en" data-a="fe-ver" data-lp="fe" data-id="'+esc(x.id)+'"><span class="e">'+esc(x.emoji||(x.alim&&(alimById(x.alim)||{}).e)||(x.dishId&&(dishById(x.dishId)||{}).icon)||'🍽')+'</span>'+
     '<span class="n"><b>'+esc(x.nombre)+'</b><span>'+esc(feSub(x))+'</span></span>'+
     '<span class="k">'+fmtMil(x.kcal||0)+'<small>'+Math.round(+x.prot||0)+' g P</small></span><span class="ch">›</span></button>';}
 function feHojaHTML(){
@@ -8145,7 +8145,7 @@ function renderFoodDia(){
       (pl.length?('<span class="h2menu">menú: '+esc(pl.map(function(x){return dishById(x.id).name;}).join(' + '))+' · '+
         totals(pl).kcal+' kcal</span>'):'<span class="mini">nada todavía</span>');
     return '<div class="h2mom'+(ab?' ab':'')+'">'+
-      '<button class="t" data-a="'+(xs.length?'h2-abre':(pl.length?'h2-menu':'h2-add'))+'" data-p="'+p+'"><b>'+(POS_ICO[p]||'🍽')+' '+esc(POS_TXT[p]||p)+'</b><span>'+sub+'</span></button>'+
+      '<button class="t" data-a="'+(xs.length?'h2-abre':(pl.length?'h2-menu':'h2-add'))+'" data-lp="mom" data-p="'+p+'" data-k="'+esc(sel)+'"><b>'+(POS_ICO[p]||'🍽')+' '+esc(POS_TXT[p]||p)+'</b><span>'+sub+'</span></button>'+
       '<span class="k">'+(xs.length?k:'—')+'</span>'+
       /* ✓ = comí lo que tocaba (un toque, sin pesar) · ± = más, menos, otra cosa o fuera */
       '<span class="h2acts">'+(pl.length&&!xs.length?'<button class="h2ok" data-a="h2-menu" data-p="'+p+'" aria-label="comí lo que tocaba">✓</button>':
@@ -10334,8 +10334,8 @@ function cjeAvisos(){
   return {cocinar:pend.length?DL[parseDate(pend[0].key).getDay()]:'—',nCoc:pend.length,compra:falta,nevera:cad,T:T};}
 function cjeCelda(x,c,marca,i){
   const it=x.cls[c].items[0],d=it&&dishById(it.id),m=marca[i+'|'+c]||'';
-  if(!d)return '<button class="cjc v" data-a="cje-plato" data-w="'+x.w+'" data-c="'+c+'">＋</button>';
-  return '<button class="cjc'+(d.hospital||d.fuera?' g':'')+'" data-a="cje-plato" data-w="'+x.w+'" data-c="'+c+'">'+(m?'<i class="dot '+m+'"></i>':'')+
+  if(!d)return '<button class="cjc v" data-a="cje-plato" data-lp="plato" data-w="'+x.w+'" data-c="'+c+'">＋</button>';
+  return '<button class="cjc'+(d.hospital||d.fuera?' g':'')+'" data-a="cje-plato" data-lp="plato" data-w="'+x.w+'" data-c="'+c+'">'+(m?'<i class="dot '+m+'"></i>':'')+
     '<span>'+esc(d.hospital?'Hospital':d.name.replace(/^Extra de proteína: /,'💪 '))+'</span></button>';}
 /* las comidas del día en Comer, las mismas en Hoy, en sus hojas y en el detalle: cada una junta los
    «momentos» del registro que le tocan (la media mañana va con el desayuno; la merienda y los monchis
@@ -10359,7 +10359,7 @@ function cjeComidaHTML(r,k){
       :'<button class="cjq otro" data-a="cje-mom" data-p="'+r.p+'"'+K+' aria-label="ver '+r.lbl.toLowerCase()+'">✓</button>');
   const S=cjeSuma(r.e),pk=d&&!d.fuera&&!d.nada?Math.round((+d.kcal||0)*num(r.pl[0].portions,1)):0;
   const sub=st==='otro'&&d&&!d.nada&&!d.fuera?'en vez de <s>'+esc(cjeNomPlan(d))+'</s>'+(cocinadoS().some(function(c){return c.dishId===d.id;})?' · <span class="tpv">🥡 te queda el táper</span>':''):'';
-  return '<div class="cjmm">'+q+'<button class="tx" data-a="cje-mom" data-p="'+r.p+'"'+K+'><span class="k">'+esc(r.lbl.toUpperCase())+'</span>'+
+  return '<div class="cjmm">'+q+'<button class="tx" data-a="cje-mom" data-lp="mom" data-p="'+r.p+'"'+K+'><span class="k">'+esc(r.lbl.toUpperCase())+'</span>'+
     '<span class="n'+(r.e.length?'':' plan')+'">'+esc(r.e.length?r.e.map(function(x){return x.nombre;}).join(' + '):(d?cjeNomPlan(d):'sin plan · toca para apuntar'))+'</span>'+
     (sub?'<span class="pl">'+sub+'</span>':'')+'</button>'+
     '<span class="kc'+(r.e.length?'':' g')+'">'+(r.e.length?fmtMil(S.kcal)+'<small>'+S.prot+' g P</small>':(pk?fmtMil(pk):''))+'</span></div>';}
@@ -10429,7 +10429,7 @@ function cjeHojaMom(h){
   const S=cjeSuma(r.e),d=r.d,K=' data-k="'+esc(k)+'"',hoy=k===iso(new Date());
   const sem=cjeSemana().filter(function(x){return x.key===k;})[0];
   return '<div class="row"><div class="cjst">'+esc(m[1])+(hoy?'':' · '+esc(DIA3[parseDate(k).getDay()]))+'</div><span class="sp"></span>'+(r.e.length?'<span class="mini">'+fmtMil(S.kcal)+' kcal · '+S.prot+' g P</span>':'')+'</div>'+
-    r.e.map(function(x){return '<div class="cjit"><button class="n" data-a="fe-ver" data-id="'+esc(x.id)+'">'+esc(x.nombre)+'</button><em>'+fmtMil(Math.round(+x.kcal||0))+'<br>'+Math.round(+x.prot||0)+' g P</em>'+
+    r.e.map(function(x){return '<div class="cjit"><button class="n" data-a="fe-ver" data-lp="fe" data-id="'+esc(x.id)+'">'+esc(x.nombre)+'</button><em>'+fmtMil(Math.round(+x.kcal||0))+'<br>'+Math.round(+x.prot||0)+' g P</em>'+
       '<button class="x" data-a="fe-del" data-key="'+esc(k)+'" data-id="'+esc(x.id)+'" aria-label="quitar '+esc(x.nombre)+'">×</button></div>';}).join('')+
     '<div class="cjfr">'+fraseCardHTML(true)+'</div>'+
     (d&&['desayuno','comida','cena'].indexOf(m[0])>=0?'<div class="cap" style="margin-top:12px">TOCABA</div><div class="cjtoc">'+esc(cjeNomPlan(d))+'</div>'+
@@ -10437,6 +10437,26 @@ function cjeHojaMom(h){
       '<div class="cjbtns">'+(!r.e.length&&!d.nada?'<button class="btn" data-a="cje-ok" data-p="'+m[0]+'"'+K+'>✓ lo que tocaba</button>':'')+
         (!r.e.length?'<button class="btn" data-a="cje-nocome" data-p="'+m[0]+'"'+K+'>no he '+(m[0]==='cena'?'cenado':(m[0]==='comida'?'comido':'desayunado'))+'</button>':'')+
         (sem?'<button class="btn" data-a="cje-plato" data-w="'+sem.w+'" data-c="'+m[0]+'">cambiar el plan</button>':'')+'</div>':'');}
+function cjeGrupo(p){const m=CJE_MOM.filter(function(x){return x[2].indexOf(p)>=0;})[0];return m?m[0]:'comida';}
+function cjeHojaAcc(h){
+  /* MANTENER PULSADA una comida: qué se puede hacer con ella, todo a un toque (como el día del Mes) */
+  const k=h.k||iso(new Date()),m=cjeMom(h.p),r=cjeComidas(k).filter(function(x){return x.p===m[0];})[0]||{e:[],pl:[],d:null,p:m[0],lbl:m[1]};
+  const d=r.d,K=' data-k="'+esc(k)+'"',P=' data-p="'+m[0]+'"',dd=parseDate(k),hoy=k===iso(new Date());
+  const sem=cjeSemana().filter(function(x){return x.key===k;})[0],conPlan=['desayuno','comida','cena'].indexOf(m[0])>=0&&sem;
+  const op=function(a,e,t,s,extra){return '<button class="cjalt" data-a="'+a+'"'+(extra||'')+'><span>'+e+'</span><span style="flex:1;min-width:0"><b style="display:block;font-weight:600">'+t+'</b>'+(s?'<span class="mini">'+s+'</span>':'')+'</span>›</button>';};
+  const S=cjeSuma(r.e);
+  return '<div class="cjst">'+esc(m[1])+' · '+(hoy?'hoy':esc(DIA3[dd.getDay()]+' '+dd.getDate()))+'</div>'+
+    '<div class="mini" style="margin-bottom:8px">'+(r.e.length?esc(r.e.map(function(x){return x.nombre;}).join(' + '))+' · '+fmtMil(S.kcal)+' kcal · '+S.prot+' g P':(d?'tocaba: '+esc(cjeNomPlan(d)):'nada apuntado'))+'</div>'+
+    op('cje-mom','✍️',r.e.length?'Añadir o cambiar lo apuntado':'Apuntar lo que he comido','',P+K)+
+    (!r.e.length&&d&&!d.nada?op('cje-ok','✓','Me comí lo que tocaba',esc(cjeNomPlan(d)),P+K):'')+
+    (r.e.length===1?op('fe-ver','✏️','Cantidad o corregir','media ración, gramos, nombre o kcal',' data-id="'+esc(r.e[0].id)+'"'):'')+
+    (r.e.length?'<div class="cap" style="margin:12px 0 4px">MOVER A</div><div class="chips">'+CJE_MOM.filter(function(x){return x[0]!==m[0];}).map(function(x){
+      return '<button class="chipx" data-a="cje-mover" data-to="'+x[0]+'"'+P+K+'>'+x[1]+'</button>';}).join('')+'</div>':'')+
+    (conPlan?'<div class="cap" style="margin:12px 0 4px">EL PLAN DE LA SEMANA</div>'+
+      op('cje-plato','🔁','Cambiar el plato',d?esc(cjeNomPlan(d)):'hueco libre',' data-w="'+sem.w+'" data-c="'+m[0]+'"')+
+      (d&&!d.fuera?op('cje-fuera2','🍽️','Como fuera','se quita del plan y de la compra',' data-w="'+sem.w+'"'+P):''):'')+
+    (r.e.length?op('cje-borra','🗑️','Quitar lo apuntado',r.e.length+' cosa'+(r.e.length===1?'':'s')+' · se puede deshacer',P+K):
+      op('cje-nocome','🚫','No he '+(m[0]==='cena'?'cenado':(m[0]==='comida'?'comido':'tomado nada')),'cuenta 0 y la comida queda cerrada',P+K));}
 function cjeHojaDia(h){
   /* el día por comidas: lo de verdad, contra el objetivo; y si no llegas a la proteína, con qué */
   const k=h.k||iso(new Date()),rs=cjeComidas(k).filter(function(r){return r.e.length||['desayuno','comida','cena'].indexOf(r.p)>=0;}),ob=food().objetivo||{};
@@ -10505,6 +10525,7 @@ function cjeHojaHTML(){
   else if(v==='platos')body=cjeHojaPlatos(h);
   else if(v==='mom')body=cjeHojaMom(h);
   else if(v==='dia')body=cjeHojaDia(h);
+  else if(v==='acc')body=cjeHojaAcc(h);
   if(!body)return '';
   return '<div class="hscrim" data-a="cje-cerrar"></div><div class="hoja cjh" role="dialog" aria-modal="true"><div class="hgrab" data-a="cje-cerrar" aria-label="cerrar"></div>'+body+'</div>';}
 function cjeCambios(w,c){
@@ -19403,8 +19424,13 @@ function act(a,el){
       h.ver=h.ver===id?'':id;render();break;}
     case 'cje-rac':{const t=tandasSemana().tandas[+el.dataset.i];if(!t)break;const d=+el.dataset.d||0;
       const ok=tandaRaciones(t,d);flash(ok?(d>0?'una ración más':'una ración menos'):(d>0?'no hay más días libres esta semana':'una tanda es de al menos 2 raciones'));render();break;}
-    case 'cje-cerrar':if(ui.cjeHoja&&(ui.cjeHoja.v==='mom'||ui.cjeHoja.v==='dia')){ui.foodDate='';ui.frPos='';ui.frase=null;}ui.cjeHoja=null;render();break;
+    case 'cje-cerrar':if(ui.cjeHoja&&(ui.cjeHoja.v==='mom'||ui.cjeHoja.v==='dia'||ui.cjeHoja.v==='acc')){ui.foodDate='';ui.frPos='';ui.frase=null;}ui.cjeHoja=null;render();break;
     case 'cje-registro':ui.cjeHoja=null;ui.frPos='';ui.foodVista='';render();window.scrollTo(0,0);break;
+    case 'cje-mover':{const k=el.dataset.k||iso(new Date()),m=cjeMom(el.dataset.p),to=cjeMom(el.dataset.to);let n=0;
+      foodLog(k).forEach(function(e){if(m[2].indexOf(e.p||'comida')>=0){e.p=to[2][0];n++;}});save();ui.cjeHoja=null;flash(n?'movido a '+to[1].toLowerCase():'no había nada');render();break;}
+    case 'cje-borra':{const k=el.dataset.k||iso(new Date()),m=cjeMom(el.dataset.p);
+      foodLog(k).filter(function(e){return m[2].indexOf(e.p||'comida')>=0;}).forEach(function(e){delFoodEntry(k,e.id);});ui.cjeHoja=null;flash('quitado');render();break;}
+    case 'cje-fuera2':sbPoner(+el.dataset.w,el.dataset.p,dishFuera().id,{save:true});ui.cjeHoja=null;flash('apuntado: comes fuera');render();break;
     case 'cje-tab':ui.cjeTab=el.dataset.v==='sem'?'sem':'';ui.cjeHoja=null;render();window.scrollTo(0,0);break;
     case 'cje-mom':{const k=el.dataset.k||iso(new Date());ui.cjeHoja={v:'mom',p:el.dataset.p||'comida',k:k};ui.foodDate=k===iso(new Date())?'':k;ui.frPos='';ui.frase=null;render();break;}
     case 'cje-diak':{const h=ui.cjeHoja||{},d0=parseDate(h.k||iso(new Date())),k=iso(addDays(d0,+el.dataset.d||0));if(k>iso(new Date()))break;h.k=k;render();break;}
@@ -21614,9 +21640,18 @@ document.addEventListener('keydown',e=>{
    de abajo. El anillo que se llena lo pinta el CSS con la misma duración (--lp). */
 let _lp=null,_lpComido=false;
 function lpCancel(){if(!_lp)return;clearTimeout(_lp.t);if(_lp.el)_lp.el.classList.remove('pulsando');_lp=null;}
+/* lo mismo en Comer: mantener pulsada una comida, un plato de la semana o algo apuntado abre lo que se
+   puede hacer con ello (data-lp dice qué). El toque corto sigue haciendo lo suyo. */
+function lpAccion(el){
+  const a=el.dataset.lp,hoyK=iso(new Date());
+  if(a==='mom'){const k=el.dataset.k||hoyK;ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.feVer='';ui.foodDate=k===hoyK?'':k;
+    ui.cjeHoja={v:'acc',p:cjeGrupo(el.dataset.p||'comida'),k:k};}
+  else if(a==='plato')ui.cjeHoja={v:'plato',w:+el.dataset.w,c:el.dataset.c||'comida'};
+  else if(a==='fe'){ui.feVer=el.dataset.id||'';ui.feCorr=false;}
+  render();}
 document.addEventListener('pointerdown',function(e){
-  const el=e.target&&e.target.closest?e.target.closest('#main .cal .dbox[data-key]'):null;
-  if(!el||!el.dataset.key||ui.mesModo||ui.hojaDia)return;
+  const el=e.target&&e.target.closest?(e.target.closest('#main .cal .dbox[data-key]')||e.target.closest('#main [data-lp],#hojaDia [data-lp]')):null;
+  if(!el||!(el.dataset.key||el.dataset.lp)||ui.mesModo||ui.hojaDia)return;
   if(e.pointerType==='mouse'&&e.button!==0)return;
   lpCancel();_lpComido=false;
   const ms=pulsarMs();
@@ -21624,7 +21659,7 @@ document.addEventListener('pointerdown',function(e){
   _lp={el:el,x:e.clientX,y:e.clientY,t:setTimeout(function(){
     const k=el.dataset.key;lpCancel();_lpComido=true;
     try{if(navigator.vibrate)navigator.vibrate(18);}catch(e2){}
-    abrirHojaDia(k);},ms)};});
+    if(el.dataset.lp)lpAccion(el);else abrirHojaDia(k);},ms)};});
 document.addEventListener('pointermove',function(e){
   if(_lp&&Math.hypot(e.clientX-_lp.x,e.clientY-_lp.y)>10)lpCancel();},{passive:true});
 document.addEventListener('pointerup',function(){lpCancel();
@@ -21639,7 +21674,7 @@ document.addEventListener('click',function(e){
   const t=e.target&&e.target.closest?e.target:null;
   if(t&&t.closest('.hoja'))return;
   _lpComido=false;e.stopPropagation();e.preventDefault();},true);
-document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cal .dbox'))e.preventDefault();});
+document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cal .dbox,[data-lp]'))e.preventDefault();});
 /* DESLIZAR HACIA ABAJO PARA CERRAR una hoja (la del día en Mes y las de Dinero): «que al arrastrar de
    arriba abajo se quite, en vez de tener que pulsar justo fuera». Se agarra por la parte de arriba
    (la barrita y la cabecera, 72 px) o por cualquier sitio si la hoja ya está arriba del todo; sigue al
