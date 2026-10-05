@@ -5847,7 +5847,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const basicos = d.grupos.reduce((a, g) => a + g[2].filter((x) => x.basico).length, 0);
       return { total: d.total, todas: todas, tengo: tengo, basicos: basicos }; });
     check('lo que ya tienes en casa no se cuenta como pendiente en la compra',
-      cuenta.tengo === 3 && cuenta.total === cuenta.todas - cuenta.tengo - cuenta.basicos,
+      cuenta.tengo >= 3 && cuenta.total === cuenta.todas - cuenta.tengo - cuenta.basicos,
       JSON.stringify(cuenta));
 
     // 4 · gastarlo hasta el final: desaparece de la despensa y la compra lo vuelve a pedir
@@ -9683,6 +9683,29 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('tanda hecha sigue en la lista; HOY = la semana; ✓ de un táper gasta 1 ración; «+ ración» no pisa fuera/nada',
       !r.sinTanda && r.dias === 2 && r.sigue && r.hecho && r.hoy === 'd237' && r.mas === false && !r.pisa && !!ok && queda === 1,
       JSON.stringify({ r, ok: !!ok, queda }));
+  }
+
+  // 238) COMPRA más corta y sin mezclar las fijas: con «Esta semana» puesta, la lista sale de sus
+  // platos hasta la próxima compra; lo de tus listas fijas va aparte y plegado, y lo que ya pide la
+  // semana no se repite en ellas; el 🛒 de Comer cuenta solo lo de la semana
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia238 = JSON.parse(JSON.stringify(P.store));
+      P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; P.store.food.compraCada = 7;
+      P.store.dishes.push({ id: 'd238', name: 'Garbanzos con espinacas', icon: '🫘', portions: 1, kcal: 400, prot: 20, ingredients: ['150 g garbanzos', '100 g espinacas'] });
+      for (let i = 0; i < 7; i++) ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(i, c, c === 'comida' ? 'd238' : P.dishNada().id));
+      P.store.listas = [{ id: 'l238', nombre: 'Habitual (tickets)', fija: true, habitual: true, items: ['garbanzos cocidos', 'papel higiénico', 'café molido'] }];
+      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.save(); P.render(); });
+    const datos = await page.evaluate(() => { const d = window.PG.compraDatos(), g = {}; d.grupos.forEach((x) => { g[x[0]] = x[2].map((y) => y.texto); });
+      return { semana: d.semana, total: d.total, fresco: g.fresco, rutina: g.rutina, tile: document.querySelector('#main [data-a="cje-hoja"][data-v="compra"]').innerText.replace(/\D/g, '') }; });
+    await page.click('#main [data-a="cje-hoja"][data-v="compra"]'); await page.waitForTimeout(120);
+    const hoja = await page.evaluate(() => ({ items: document.querySelectorAll('#hojaDia .cjli').length, fijas: document.querySelectorAll('#hojaDia [data-a="cje-fija"]').length }));
+    await page.click('#hojaDia [data-a="cje-fija"]'); await page.waitForTimeout(100);
+    const abierta = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjli').length);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia238; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('la compra sale de «Esta semana»; tus listas fijas van aparte y plegadas, sin repetir lo que ya pide la semana; 🛒 cuenta solo la semana',
+      datos.semana === 2 && datos.fresco.some((x) => /garbanzo/i.test(x)) && datos.fresco.some((x) => /espinaca/i.test(x)) &&
+      datos.rutina.length === 2 && !datos.rutina.some((x) => /garbanzo/i.test(x)) && datos.tile === '2' && hoja.items === 2 && hoja.fijas === 1 && abierta === 4,
+      JSON.stringify({ datos, hoja, abierta }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

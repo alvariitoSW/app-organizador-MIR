@@ -3106,6 +3106,8 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cjseg button{padding:9px;border-radius:10px;border:0;background:none;color:var(--ink2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .cjseg button.on{background:var(--card);color:var(--ink)}
 .cjli{display:flex;align-items:center;gap:12px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:15px;text-align:left}
+.cjfija{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink2);font:inherit;font-size:14px;font-weight:700;text-align:left}
+.cjfija span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cjfija .n{font-size:13px}.cjfija[aria-expanded="true"]{color:var(--ink)}
 .cjli .tx{flex:1;min-width:0}
 .cjli .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--ink2);flex:none}
 .cjli .ck.on{background:#34d399;border-color:#34d399}

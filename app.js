@@ -10336,7 +10336,7 @@ function cjeApuntadoHTML(k,ps){
 function cjeAvisos(){
   const T=tandasSemana(),hoyK=iso(new Date()),DL=DIA3;
   const pend=T.tandas.filter(function(t){return !t.hecho&&t.key>=hoyK;});
-  const cd=compraDatos(),falta=Math.max(0,cd.total-cd.marcados);
+  const cd=compraDatos(),falta=cd.semana;   /* lo de la semana; tus listas fijas van aparte */
   const cad=despensaS().filter(function(x){const r=frescoDias(x);return r!=null&&r<=2;}).length;
   return {cocinar:pend.length?DL[parseDate(pend[0].key).getDay()]:'—',nCoc:pend.length,compra:falta,nevera:cad,T:T};}
 function cjeCelda(x,c,marca,i){
@@ -10467,10 +10467,16 @@ function cjeHojaCompra(h){
   const seg=h.seg||(h.v==='nevera'?'casa':'comprar');
   let body='';
   if(seg==='comprar'){const cd=compraDatos();
-    const items=[];cd.grupos.forEach(function(g){g[2].forEach(function(x){if(x.tengo&&!x.falta)return;if(x.basico)return;items.push(x);});});
-    body=items.length?items.map(function(x){const on=ui.marks.has(x.id);
-      return '<button class="cjli'+(on?' done':'')+'" data-a="cje-mark" data-id="'+esc(x.id)+'"><span class="ck'+(on?' on':'')+'"></span><span class="tx">'+esc(compraSG(x.texto))+'</span></button>';}).join(''):
-      '<p class="mini">No falta nada para la semana. 👌</p>';
+    /* arriba, solo lo que pide la semana hasta la próxima compra; cada lista fija, plegada aparte */
+    const sem=[],fijas={};cd.grupos.forEach(function(g){g[2].forEach(function(x){if(x.tengo&&!x.falta)return;if(x.basico)return;
+      if(x.fija)(fijas[x.lista]||(fijas[x.lista]=[])).push(x);else sem.push(x);});});
+    const li=function(x){const on=ui.marks.has(x.id);
+      return '<button class="cjli'+(on?' done':'')+'" data-a="cje-mark" data-id="'+esc(x.id)+'"><span class="ck'+(on?' on':'')+'"></span><span class="tx">'+esc(compraSG(x.texto))+'</span></button>';};
+    body=(cd.eje?'<div class="cap">PARA '+(cd.dias>=7?'LA SEMANA':'LOS PRÓXIMOS '+cd.dias+' DÍAS')+'</div>':'')+
+      (sem.length?sem.map(li).join(''):'<p class="mini">No falta nada para la semana. 👌</p>')+
+      Object.keys(fijas).map(function(n){const l=fijas[n],ab=h.lista===n,hech=l.filter(function(x){return ui.marks.has(x.id);}).length;
+        return '<button class="cjfija" data-a="cje-fija" data-v="'+esc(n)+'" aria-expanded="'+(ab?'true':'false')+'"><span>📋 '+esc(n)+'</span><span class="n">'+(hech?hech+'/':'')+l.length+'</span>'+gymIco('chevron','gico sm ch'+(ab?' abajo':''))+'</button>'+
+          (ab?l.map(li).join(''):'');}).join('');
     body+='<div class="cjbtns"><button class="btn" data-a="ticket-foto">📷 Ticket</button><button class="btn p" data-a="cje-comprado">Ya he comprado</button></div>'+
       '<button class="dlink" data-a="tab" data-t="shop" style="margin-top:8px">ver la lista completa ›</button>';}
   else{const l=despensaS().map(function(x){return {x:x,r:frescoDias(x)};}).sort(function(a,b){return (a.r==null?99:a.r)-(b.r==null?99:b.r);});
@@ -14235,8 +14241,18 @@ function menuDeEjemplo(){
   const sb=sbS();if(!sb.on)return true;
   for(let w=0;w<7;w++)for(const c in (sb.d[w]||{})){const x=sb.d[w][c];if(x&&x.items&&x.items.length&&!x.auto)return false;}
   return true;}
+function necesidadProximos(n){
+  /* con «Esta semana» puesta, la compra sale de ella: lo que comes de hoy hasta la próxima compra
+     (no la semana entera), sin el hospital, «como fuera» ni «nada», y sin lo que ya está cocinado */
+  const need={},hoy=new Date();
+  for(let i=0;i<n;i++){const key=iso(addDays(hoy,i)),cel=mCeldas(sbDow(key),{key:key,shiftId:dayInfo(key).shiftId});
+    M_CLS.forEach(function(c){cel[c[0]].items.forEach(function(it){const d=dishById(it.id);if(!d||d.hospital||d.fuera)return;
+      need[d.id]=(need[d.id]||0)+num(it.portions,1);});});}
+  cocinadoS().forEach(function(x){if(need[x.dishId])need[x.dishId]=Math.max(0,need[x.dishId]-x.queda);});
+  return need;}
 function compraDatos(){
-  const days=weekDays(), pb=planBatches(days), need=necesidadSemana(days);
+  const eje=sbS().on,nDias=eje?Math.min(7,compraCada()):7;
+  const days=weekDays(), pb=eje?{}:planBatches(days), need=eje?necesidadProximos(nDias):necesidadSemana(days);
   const agg={},order=[];let recetas=0,sueltas=0;
   /* un solo embudo para los dos orígenes: lo que se cocina en tanda y lo que no */
   const mete=function(ings){
@@ -14254,7 +14270,7 @@ function compraDatos(){
      faltaba: un plato del menú sin sesión de cocina no aportaba nada a la compra. */
   const sueltos=[],sinReceta=[];
   Object.keys(need).forEach(function(id){
-    const d=dishById(id);if(!d||isBatch(d.batchId)||!(need[id]>0))return;
+    const d=dishById(id);if(!d||(!eje&&isBatch(d.batchId))||!(need[id]>0))return;
     if((d.ingredients||[]).length)sueltos.push({dish:d,cooked:need[id]});
     else sinReceta.push({d:d,q:need[id]});});
   if(sueltos.length){sueltas=sueltos.length;mete(ingredientsFor(sueltos,true));}
@@ -14283,8 +14299,11 @@ function compraDatos(){
   /* la lista de origen solo se nombra si hay más de una «de rutina»: con una sola era repetir el
      mismo nombre en cada línea */
   const variasFijas=listasS().filter(function(l){return l.fija;}).length>1;
-  const rutina=itemsDeRutina().map(function(r){
-    return {id:'fija#'+r.texto,texto:r.texto,de:variasFijas?r.lista:''};});
+  /* lo de tus listas fijas que ya pide la semana no se repite: sale una vez, arriba */
+  const yaPide=fresco.map(function(r){return alimTxt(r.sort);});
+  const rutina=itemsDeRutina().filter(function(r){const t=alimTxt(r.texto);
+      return !yaPide.some(function(p){return p&&(t.indexOf(p)>=0||p.indexOf(t)>=0);});})
+    .map(function(r){return {id:'fija#'+r.texto,texto:r.texto,de:variasFijas?r.lista:'',lista:r.lista,fija:true};});
   /* 3 · lo del menú que no tiene receta escrita (el café, la fruta del desayuno, un yogur): se
      compra tal cual. Antes esto se filtraba con una expresión regular —whey|prote|Caf|fruta—, así
      que cualquier otra cosa que te comieras a diario no llegaba nunca a la lista. */
@@ -14316,15 +14335,15 @@ function compraDatos(){
     if(t){x.tengo=t.txt;x.falta=t.falta;}
     /* sal, especias, aceite: se da por hecho que hay en casa; salen apagados y no cuentan */
     else if(x.basico){x.tengo='básico de casa';x.falta=0;}});});
-  let total=0,marcados=0;
+  let total=0,marcados=0,semana=0;
   grupos.forEach(function(g){g[2].forEach(function(x){
     if(x.tengo&&!x.falta)return;        /* cubierto: no cuenta ni como pendiente ni como marcado */
-    total++;if(ui.marks.has(x.id))marcados++;});});
+    total++;if(ui.marks.has(x.id))marcados++;else if(!x.fija)semana++;});});
   /* lo que la semana del menú da de comer, frente a tu objetivo: la dieta se hace en la compra */
   let kcalSem=0;
   Object.keys(need).forEach(function(id){const dd=dishById(id);if(dd&&need[id]>0)kcalSem+=(+dd.kcal||0)*need[id];});
-  return {grupos:grupos,total:total,marcados:marcados,recetas:recetas,sueltas:sueltas,ejemplo:ejemplo,
-    kcalDia:Math.round(kcalSem/7),kcalObj:+(objetivoMacros()||{}).kcal||0};}
+  return {grupos:grupos,total:total,marcados:marcados,semana:semana,dias:nDias,eje:eje,recetas:recetas,sueltas:sueltas,ejemplo:ejemplo,
+    kcalDia:Math.round(kcalSem/nDias),kcalObj:+(objetivoMacros()||{}).kcal||0};}
 const ENVASES=['bandeja','malla','bote','paquete','brick','lata','cabeza','bolsa','barra','tarro','docena','manojo','pack'];
 function envaseDe(a,g){
   /* «1,6 kg de pechuga · 4 bandejas»: cómo se compra, sacado de las raciones del alimento */
@@ -19327,6 +19346,7 @@ function act(a,el){
       if(hh[k]){delete hh[k];cocinadoS().filter(function(c){return c.dishId===t.dishId;}).forEach(function(c){c.queda=0;});flash('tanda sin hacer');}
       else{hh[k]=iso(new Date());cocinadoAdd(t.dishId,t.dias.length);flash('hecho: '+t.dias.length+' raciones de '+t.d.name);}
       save();render();break;}
+    case 'cje-fija':{const h=ui.cjeHoja||{};h.lista=h.lista===el.dataset.v?'':el.dataset.v;render();break;}
     case 'cje-seg':{const h=ui.cjeHoja||(ui.cjeHoja={v:'compra'});h.seg=el.dataset.v;render();break;}
     case 'cje-mark':{const id=el.dataset.id;if(ui.marks.has(id))ui.marks.delete(id);else ui.marks.add(id);saveMarks();render();break;}
     case 'cje-comprado':flash(hacerCompra(ui.marks.size>0));break;
