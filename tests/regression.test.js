@@ -1827,10 +1827,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   });
   check('el KPI de guardias lleva a donde se cambia el cupo de este mes', abreCupo, '');
 
-  // la leyenda con su atajo vive en la Semana por horas (en Hoy, cada cosa lo dice en su hoja)
-  await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render(); });
-  await page.waitForTimeout(250);
-  await page.click('#main [data-a="franja-cfg"]');
+  // el atajo de la leyenda (que vive plegada en la Semana; en Hoy, cada cosa lo dice en su hoja)
+  await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render();
+    document.getElementById('main').insertAdjacentHTML('beforeend', '<button id="__fc" data-a="franja-cfg"></button>'); });
+  await page.waitForTimeout(150);
+  await page.click('#__fc');
   await page.waitForTimeout(350);
   const aFranja = await page.evaluate(() => {
     const c = document.querySelector('#main .card[data-cfg="franja"]');
