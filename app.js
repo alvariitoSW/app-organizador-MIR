@@ -12344,7 +12344,7 @@ function renderGymRutina(){
   }else{
     const ss=g.sesiones.filter(function(s){return s.rutinaId===rt.id;}).sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).slice(0,30);
     cuerpo='<div class="card">'+(ss.length?ss.map(function(s){const d=parseDate(s.fecha);
-      const reg=seriesDeSesion(s.id&&x.t!=='c');
+      const reg=seriesDeSesion(s.id).filter(function(x){return x.t!=='c';});
       const v=Math.round(volDe(reg));
       return '<button class="ghs" data-a="gym-ses-ver" data-id="'+esc(s.id)+'"><span class="d">'+d.getDate()+'<small>'+MON[d.getMonth()].toUpperCase()+'</small></span>'+
         '<span class="t"><b>'+s.duracionMin+' min'+(s.rpe?(' · esfuerzo '+s.rpe):'')+(s.auto?' · cerrada sola':'')+'</b>'+

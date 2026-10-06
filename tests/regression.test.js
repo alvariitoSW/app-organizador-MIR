@@ -9863,6 +9863,33 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify({ sem, marcado, toca: r.toca, rut }));
   }
 
+  // 243) TODAS LAS PANTALLAS DE ENTRENO CON HISTORIAL DE VERDAD. Una limpieza dejó la pestaña
+  // «Historial» de una rutina rota («x is not defined») y nada la pintaba con sesiones guardadas:
+  // se recorren todas, con su rutina abierta en cada pestaña, el informe y la sesión en vivo.
+  {
+    const rotas = await page.evaluate(() => { const P = window.PG; window.__copia243 = JSON.parse(JSON.stringify(P.store));
+      const g = P.gymS(), hoy = new Date();
+      g.rutinas.push({ id: 'rt243', nombre: 'Rutina 243', ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }, { ex: 'Sentadilla', series: 2, reps: 6 }] });
+      for (let d = 1; d < 30; d += 3) { const k = P.iso(new Date(hoy.getTime() - d * 864e5)), sid = 's243-' + d;
+        g.sesiones.push({ id: sid, fecha: k, rutinaId: 'rt243', duracionMin: 60, rpe: 7, carga: 420 });
+        g.registro.push({ id: 'a243-' + d, fecha: k, ex: 'Press banca', kg: 60, reps: 8, rir: 2, ts: 1, sesionId: sid, si: 0 });
+        g.registro.push({ id: 'c243-' + d, fecha: k, ex: 'Press banca', kg: 30, reps: 10, t: 'c', ts: 1, sesionId: sid, si: 1 }); }
+      P.save(); P.ui.tab = 'gym';
+      const out = [], mira = (n) => { P.render(); if (/Se ha roto esta vista/.test(document.getElementById('main').innerText)) out.push(n); };
+      ['', 'plan', 'sesion', 'plannuevo', 'rutinas', 'objetivos', 'progreso', 'cardio', 'sup'].forEach((pn) => { P.ui.gymPanel = pn; mira(pn || 'portada'); });
+      P.ui.gymRutSel = 'rt243';
+      ['', 'hist', 'stats', 'ej'].forEach((t) => { P.ui.gymRutTab = t; P.ui.gymPanel = 'rut'; mira('rut/' + (t || 'plan')); });
+      P.ui.gymPanel = 'rutedit'; mira('rutedit');
+      P.ui.gymPanel = ''; P.ui.gymInforme = 's243-1'; mira('informe'); P.ui.gymInforme = '';
+      P.empezarRutina('rt243', P.iso(hoy));
+      ['vivo', 'cambiar', 'rpe'].forEach((pn) => { P.ui.gymPanel = pn; mira(pn); });
+      P.descartarSesion();
+      P.store = window.__copia243; P.save(); P.ui.gymPanel = ''; P.ui.gymRutSel = ''; P.ui.gymRutTab = ''; P.ui.tab = 'hoy'; P.render();
+      return out; });
+    check('todas las pantallas de Entreno se pintan con historial de verdad (rutina abierta, informe, sesión en vivo)',
+      rotas.length === 0, JSON.stringify(rotas));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
