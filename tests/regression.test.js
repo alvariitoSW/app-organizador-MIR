@@ -4990,7 +4990,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // saliente del viernes SÍ se entrena: así lo decidió el usuario)
       /* dos semanas de trabajo con UNA guardia, el jueves: si no, la guardia de la semana siguiente
          sería otro choque y taparía la confirmación del movido */
-      for (let i = 0; i < 14; i++) P.setDayOverride(dia(i), trabajo.id);
+      const libre = S.shifts.filter((x) => /libre/i.test(x.name))[0] || trabajo;
+      for (let i = 0; i < 14; i++) P.setDayOverride(dia(i), i < 7 ? trabajo.id : libre.id);
       P.setDayOverride(dia(3), guardia.id, 'umi');
       S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id, guardia.id],
         ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 }] }];
