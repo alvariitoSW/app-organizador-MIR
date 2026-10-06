@@ -112,7 +112,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     } else if (DRAWER_TABS.has(tab)) {
       await page.click('[data-a="drawer-toggle"]');
       await page.waitForTimeout(260);
-      await page.click(`[data-a="drawer-nav"][data-t="${tab}"]`);
+      /* Turno y rotación y Datos están dentro de Ajustes: el cajón tiene UNA entrada para los tres */
+      const porAjustes = tab === 'cfg' || tab === 'data';
+      await page.click(`[data-a="drawer-nav"][data-t="${porAjustes ? 'ajustes' : tab}"]`);
+      if (tab === 'cfg') { await page.waitForTimeout(150); await page.click('#main [data-a="ir-tab"][data-t="cfg"]'); }
     } else {
       await page.click(`[data-a="tab"][data-t="${tab}"]`);
     }
@@ -1373,35 +1376,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('Hábitos: la pestaña nueva existe y, sin hábitos, invita a crear el primero',
     /Hábitos/i.test(habitosVacio) && /crea el primero/i.test(habitosVacio), '');
 
-  await page.fill('#habNuevoNombre', 'Estirar de prueba');
-  await page.click('[data-a="hab-add"]');
+  // crear: «Nuevo hábito» abre la hoja; «no en guardia» y «se marca solo» se eligen ahí
+  await page.click('#main [data-a="hab-ed"][data-id=""]');
+  await page.waitForTimeout(150);
+  await page.fill('#habEdNom', 'Estirar de prueba');
+  await page.click('#hojaDia [data-a="hab-ed-noen"][data-v="guardia"]');
+  await page.waitForTimeout(100);
+  const nombreSeQueda = await page.evaluate(() => document.getElementById('habEdNom').value);
+  await page.click('#hojaDia [data-a="hab-ed-ok"]');
   await page.waitForTimeout(150);
   const habCreado = await page.evaluate(() => {
     const items = window.PG.habitosS().items;
-    return { n: items.length, nombre: items[0] && items[0].nombre, dow: items[0] && items[0].dow };
+    return { n: items.length, nombre: items[0] && items[0].nombre, dow: items[0] && items[0].dow, noEn: items[0] && items[0].noEn,
+      hoja: !!document.querySelector('#hojaDia .hoja') };
   });
-  check('Hábitos: se puede crear un hábito (todos los días si no marcas ninguno en concreto)',
-    habCreado.n === 1 && habCreado.nombre === 'Estirar de prueba' && habCreado.dow.length === 7, JSON.stringify(habCreado));
+  check('Hábitos: se crea desde su hoja (todos los días si no marcas ninguno) con los días en que no toca, y lo escrito no se pierde al tocar un chip',
+    habCreado.n === 1 && habCreado.nombre === 'Estirar de prueba' && habCreado.dow.length === 7 &&
+    habCreado.noEn.join() === 'guardia' && !habCreado.hoja && nombreSeQueda === 'Estirar de prueba', JSON.stringify({ habCreado, nombreSeQueda }));
 
   const habId = await page.evaluate(() => window.PG.habitosS().items[0].id);
-  await page.click(`.wdot button.today[data-id="${habId}"]`);
-  await page.waitForTimeout(150);
   const hoyKeyHab = isoDate(new Date());
+  // hoy puede ser guardia (y entonces no toca): para marcarlo, que toque todos los días
+  await page.evaluate((id) => { const h = window.PG.habitosS().items.filter((x) => x.id === id)[0]; h.noEn = []; window.PG.save(); window.PG.render(); }, habId);
+  await page.waitForTimeout(100);
+  await page.click(`#main .hbt[data-id="${habId}"]`);
+  await page.waitForTimeout(150);
   const marcado = await page.evaluate(
     ({ hid, key }) => window.PG.habitoHecho(hid, key),
     { hid: habId, key: hoyKeyHab },
   );
-  check('Hábitos: tocar el círculo de hoy marca el hábito como hecho', marcado === true, String(marcado));
+  const dots = await page.evaluate(() => document.querySelectorAll('#main .hbr .hdots i').length);
+  check('Hábitos: tocar el círculo marca el de hoy, y cada uno lleva sus últimos 7 días', marcado === true && dots === 7, JSON.stringify({ marcado, dots }));
 
-  const heatCells = await page.evaluate(() => document.querySelectorAll('#main .heat .hcell').length);
-  check('Hábitos: la tarjeta de constancia muestra el mapa de calor de 6 semanas (42 días)', heatCells === 42, String(heatCells));
-
-  await page.click(`[data-a="hab-del"][data-id="${habId}"]`);
+  // editar y borrar: tocar el nombre abre su hoja, con «Borrar» (y confirmación)
+  await page.click(`#main [data-a="hab-ed"][data-id="${habId}"]`);
+  await page.waitForTimeout(150);
+  await page.click(`#hojaDia [data-a="hab-del"][data-id="${habId}"]`);
   await page.waitForTimeout(150);
   await page.click('[data-a="confirm-yes"]');
   await page.waitForTimeout(150);
-  const habTrasBorrar = await page.evaluate(() => window.PG.habitosS().items.length);
-  check('Hábitos: se puede borrar un hábito (con confirmación) y se limpia su historial', habTrasBorrar === 0, String(habTrasBorrar));
+  const habTrasBorrar = await page.evaluate(() => ({ n: window.PG.habitosS().items.length, hoja: !!document.querySelector('#hojaDia .hoja') }));
+  check('Hábitos: se puede borrar un hábito desde su hoja (con confirmación) y la hoja se cierra', habTrasBorrar.n === 0 && !habTrasBorrar.hoja, JSON.stringify(habTrasBorrar));
 
   // 47b) referencia cruzada: un hábito de hoy se ve y se puede marcar desde "Hoy" sin entrar en la
   // pestaña de Hábitos
@@ -6133,7 +6148,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     check('un festivo entre semana cuenta como guardia de finde', fest.antes === 2 && fest.despues === 3, JSON.stringify(fest));
     // la nómina se edita desde la app: una época nueva y lo cobrado de verdad manda sobre lo estimado
-    await toca('#main [data-a="dinero-vista"][data-v="nomina"]');
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dineroVista = 'nomina'; P.render(); });
+    await page.waitForTimeout(150);
     const hayCampo = await page.$('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]');
     if (hayCampo) { await page.fill('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]', '3001,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
     const ep0 = await page.evaluate(() => window.PG.ahorroS().epocas.length);
