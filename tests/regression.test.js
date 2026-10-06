@@ -6657,9 +6657,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // despertador. Se comprueba a una hora cualquiera del día, sin depender del reloj real.
     const ahora = await page.evaluate(() => { const P = window.PG;
       const k = P.iso(new Date());
-      const html = P.hoyAhoraHTML(k, P.dayInfo(k), true);
-      return { hay: /hoyahora/.test(html), sig: /SIGUIENTE/.test(html),
-        vacio: html === '' }; });
+      // a las 23:59 ya no queda nada hoy: «LUEGO» tiene que decir lo primero de mañana
+      const html = P.hoyTresHTML(P.hoyItems(k, P.dayInfo(k)), 1439, k);
+      return { hay: /hoy3/.test(html), sig: /LUEGO/.test(html) && /mañana/.test(html),
+        vacio: /nada más hoy/.test(html) }; });
     check('«Hoy» siempre dice qué es lo siguiente, aunque ya no quede nada por hoy',
       ahora.hay && ahora.sig && !ahora.vacio, JSON.stringify(ahora));
 
