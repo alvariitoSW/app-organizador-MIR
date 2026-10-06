@@ -4906,10 +4906,15 @@ function hoyModo(){
 function hoyItems(key,inf){
   /* la agenda del día con lo que ya está hecho: la comida apuntada, el entreno de esa rutina */
   const log=foodLog(key),rt=rutinaDeFecha(key),ses=gymS().sesiones;
-  return agendaDia(key,inf).map(function(x,i){const it=Object.assign({i:i},x);
+  const hechaRt=!!rt&&ses.some(function(s){return s.fecha===key&&s.rutinaId===rt.id;});
+  const it=agendaDia(key,inf).map(function(x,i){const it=Object.assign({i:i},x);
     if(x.tipo==='meal'&&x.slot){const cat=posDeSlot(x.slot.label,x.slot.time);it.hecha=log.some(function(e){return e.pos===cat;});}
-    if(x.tipo==='gym'&&rt){it.rt=rt;it.hecha=ses.some(function(s){return s.fecha===key&&s.rutinaId===rt.id;});}
-    return it;});}
+    if(x.tipo==='gym'&&rt){it.rt=rt;it.hecha=hechaRt;}
+    return it;});
+  /* toca rutina pero sin hora de gimnasio puesta: la agenda no la trae, y «▶ empezar» tiene que estar */
+  if(rt&&!it.some(function(x){return x.tipo==='gym';}))
+    it.push({i:it.length,tipo:'gym',hora:'',m:1440,m2:1440,fin:'',ico:'💪',txt:'Toca entrenar · '+rt.nombre,sub:'sin hora puesta',color:tlColor('gym'),rt:rt,hecha:hechaRt});
+  return it;}
 function hoyNow(esHoy){const d=new Date();return esHoy?d.getHours()*60+d.getMinutes():-1;}
 function hoyFilaHTML(x,key,n){
   const ahora=n>=0&&x.fin&&x.m2<=n&&n<finMin(x);
@@ -4943,7 +4948,7 @@ function hoyQuedaHTML(it,key,n){
   const ya=it.filter(hecho);
   return (pend.length?'<div class="hlst">'+pend.map(function(x){return hoyFilaHTML(x,key,n);}).join('')+'</div>':'')+
     (ya.length?'<div class="hlst"><button class="hya" data-a="hoy-hechas" aria-expanded="'+!!ui.hoyHechas+'">✓ '+ya.length+' hecha'+(ya.length===1?'':'s')+': '+
-      esc(ya.map(function(x){return nombreCorto(x.txt).toLowerCase();}).join(', '))+'<span>'+(ui.hoyHechas?'▾':'▸')+'</span></button>'+
+      esc(ya.map(function(x){return x.txt;}).join(', '))+'<span>'+(ui.hoyHechas?'▾':'▸')+'</span></button>'+
       (ui.hoyHechas?ya.map(function(x){return hoyFilaHTML(x,key,n);}).join(''):'')+'</div>':'');}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy);

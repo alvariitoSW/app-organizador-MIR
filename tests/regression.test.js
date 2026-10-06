@@ -4387,8 +4387,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await gotoTab('hoy');
     await page.waitForTimeout(300);
-    const enHoyG = await page.evaluate(() =>
-      [...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)));
+    /* en Hoy, el entreno es una fila de la lista del día con su «▶ empezar» */
+    const enHoyG = await page.evaluate(() => !!document.querySelector('#main .hrow [data-a="ses-empezar"]'));
     // y empezarla desde «Hoy» abre la sesión, quita el aviso y te deja ENTRENANDO.
     // Antes esta prueba exigía que al empezar aparecieran ya las 7 series en el registro; eso era
     // el fallo, no la intención: ui.gymSesionActiva no se guarda, así que cerrar la app a medias
@@ -4400,7 +4400,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sesion: !!window.PG.ui.gymSesionActiva,
       series: window.PG.gymS().registro.filter((x) => x.sesionId).length,
       entrenando: window.PG.ui.gymPanel === 'vivo' && !!document.querySelector('#main .gvact'),
-      yaNoAvisa: ![...document.querySelectorAll('#main .card')].some((x) => /toca entrenar/.test(x.textContent)),
+      yaNoAvisa: !document.querySelector('#main .hrow [data-a="ses-empezar"]'),
     }));
     check('una rutina se pega a un tipo de día, y entonces «hoy toca entrenar» sale en Entreno y en Hoy',
       chips >= 3 && enEntreno.hay && enEntreno.rutina && enEntreno.ultimoPeso && enEntreno.empezar &&
@@ -5426,9 +5426,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('hoy');
     // pulsar «Hoy» en la barra devuelve la pantalla al día de hoy, así que el día laborable se pone
     // DESPUÉS de navegar: si no, se mide un sábado sin jornada y sin el evento de la prueba
-    await page.evaluate((k) => { window.PG.ui.diaHoy = k; window.PG.render(); }, k);
+    await page.evaluate((k) => { window.PG.ui.diaHoy = k; window.PG.ui.hoyModo = 'linea'; window.PG.render(); }, k);
     await page.waitForTimeout(300);
-    // el día ya no es una LISTA de horas sino un CARRIL: cada cosa ocupa el rato que ocupa, así
+    // el día ya no es una LISTA de horas sino un CARRIL (la vista «Línea» del interruptor): cada cosa ocupa el rato que ocupa, así
     // que lo que se comprueba es que esté todo, en orden, con su duración real, y que cada bloque
     // lleve a dónde se cambia —que es lo que la lista no hacía—.
     const ag = await page.evaluate(() => { const P = window.PG;
@@ -5466,7 +5466,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }));
     check('en el carril del día cada bloque se puede tocar: las marcas finas no quedan tapadas por la jornada',
       tocables.length >= 4 && tocables.every((x) => x.ok), JSON.stringify(tocables));
-    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.ui.diaHoy = ''; P.save(); P.render(); }, k);
+    await page.evaluate((k) => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => e.id !== 'ev-ag'); P.setDayOverride(k, null); P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); }, k);
     await page.waitForTimeout(250);
     // la tarjeta de «ahora / siguiente» solo tiene sentido en el día de HOY, no en el laborable que
     // se estaba mirando con las flechas: se comprueba al volver, y a cualquier hora —a las once de
