@@ -489,7 +489,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .msin .tag{opacity:.55}
 .mreg{cursor:pointer}
 /* comida: resumen del día en un anillo de kcal + una barra de proteína, en vez de tres barras y cuatro KPI */
-.kcalhero{display:flex;align-items:center;gap:18px;margin:4px 0 6px;flex-wrap:wrap}
+
 .ringwrap{position:relative;width:120px;height:120px;flex:none}
 .ringwrap svg{transform:rotate(-90deg);width:100%;height:100%}
 .ringTrack{fill:none;stroke:color-mix(in srgb,var(--card) 70%,var(--bg));stroke-width:11}
@@ -498,9 +498,6 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .ringnum b{font-size:25px;font-weight:800;letter-spacing:-.02em;line-height:1}
 .ringnum span{font-size:9.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;font-weight:800;margin-top:3px}
-.heroside{flex:1 1 160px;display:flex;flex-direction:column;gap:8px;min-width:160px}
-.protrow{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--ink2)}
-.protrow b{color:var(--ink);font-size:13px;font-weight:800}
 .foodlog{margin-top:14px}
 .moment{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:12px 0 3px}
 .moment:first-child{margin-top:0}
@@ -561,16 +558,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .evdot{width:9px;height:9px;border-radius:99px;flex:none}
 .devt{font-size:11px;line-height:1.1}
 /* hábitos: fila de cada hábito con sus 7 círculos (uno por día de la semana en curso) */
-.habrow{padding:10px 0;border-top:1px dashed var(--line)}
-.habrow:first-child{border-top:none}
-.habicon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
-.habweek{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:9px;max-width:320px}
-.wdot{display:flex;flex-direction:column;align-items:center;gap:3px}
-.wdot span{font-size:9px;font-weight:800;color:var(--ink2);text-transform:uppercase}
-.wdot button{appearance:none;width:100%;aspect-ratio:1/1;border-radius:8px;border:1px solid var(--line);
-  background:color-mix(in srgb,var(--card) 55%,var(--bg));cursor:pointer;font-size:12px;color:#04140c;font-weight:800;padding:0;transition:.15s}
-.wdot button:disabled{opacity:.25;cursor:default}
-.wdot button.today{box-shadow:0 0 0 2px var(--brand)}
+
 .session{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:11px;
   background:color-mix(in srgb,var(--card) 86%,transparent);box-shadow:var(--shadow)}
 .session h3{margin:0 0 2px;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -593,13 +581,6 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 #drawer.on{transform:translateX(0)}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .drawer-head strong{font-size:15px}
-.drawer-group{margin-bottom:16px}
-.drawer-group h4{margin:0 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);font-weight:800}
-.drawer-item{display:flex;align-items:center;width:100%;text-align:left;appearance:none;border:1px solid transparent;background:none;
-  padding:9px 10px;margin-bottom:3px;font:inherit;font-weight:700;font-size:13.5px;color:var(--ink);border-radius:10px;cursor:pointer}
-.drawer-item:hover{background:color-mix(in srgb,var(--brand) 8%,transparent)}
-.drawer-item.on{background:color-mix(in srgb,var(--brand) 16%,transparent);border-color:color-mix(in srgb,var(--brand) 30%,transparent)}
-.drawer-item .tb{margin-left:auto}
 #drawer button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .fgrid{display:grid;gap:10px}
 @media(min-width:600px){.fgrid.c2{grid-template-columns:1fr 1fr}.fgrid.c3{grid-template-columns:1fr 1fr 1fr}}
@@ -2860,9 +2841,7 @@ html,body{overscroll-behavior-y:none}
 .d7rep .d6k{flex:0 0 12px;height:12px;border-radius:3px;margin:0}
 .d7pie>*:last-child{flex:1}
 /* Ajustes: guía de la cocina */
-.ajuguia{display:flex;align-items:center;gap:6px;width:100%;margin-top:9px;padding:9px 12px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;text-align:left}
-.ajuguia span{margin-left:auto}
-.ajug ul{margin:6px 0 0;padding-left:18px}.ajug li{font-size:13px;line-height:1.45;color:var(--ink2);margin:0 0 6px}.ajug li b{color:var(--ink)}
+
 /* ticket: nombre corregible y lo que aguanta */
 .tknom{width:100%;min-width:0;border:0;border-bottom:1px dashed var(--line);background:none;color:var(--ink);font:inherit;font-size:13px;padding:2px 0}
 .tkvida{font-size:11px;font-weight:800;color:var(--ink2);white-space:nowrap;min-width:52px;text-align:right}.tkvida.pronto{color:var(--warn)}

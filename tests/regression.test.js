@@ -9080,7 +9080,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   //  · el ticket de Mercadona (texto como el que sale del OCR) va a la nevera y a una lista habitual;
   //  · «Aplicar a mis bolsillos» crea inversión y caprichos, y el colchón puede bajar del 50 % porque
   //    lo que no se toca es colchón + inversión; una meta con fecha pide su €/mes;
-  //  · Ajustes tiene una entrada pequeña que abre la guía de la cocina
   {
     await page.evaluate(() => { const P = window.PG; window.__copia223 = JSON.parse(JSON.stringify(P.store));
       P.store.semBase = { on: true, d: {} };
@@ -9118,10 +9117,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const tras = await page.evaluate(() => { const P = window.PG, hs = P.ahorroS().huchas;
       return { puro: P.puroPct(), min: P.puroMin(), inv: hs.some((h) => /Inversión/.test(h.nombre)), cap: hs.some((h) => /Caprichos/.test(h.nombre)),
         japon: hs.filter((h) => h.id === 'hu-j')[0].mensual, suma: Object.values(P.repartoDe(1000)).reduce((s, v) => s + v, 0) }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'ajustes'; P.ui.ajuVista = ''; P.render(); });
-    const guiaBtn = await page.$eval('.ajuguia', (e) => e.getBoundingClientRect().height).catch(() => 0);
-    await page.click('.ajuguia').catch(() => {}); await page.waitForTimeout(150);
-    const guia = await page.evaluate(() => ({ cards: document.querySelectorAll('#main .ajug').length, txt: document.querySelector('#main').innerText }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia223; P.save(); P.ui.ajuVista = ''; P.ui.dinTab = ''; P.ui.foodVista = ''; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Cocina simple: Hoy · Semana · Nevera · Compra; «Móntamela» llena huecos con lo que hay; «Hoy cocino» guarda raciones con los días que aguanta; ✓ apunta el día',
       tabs.length === 4 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Nevera/.test(tabs[2]) && /Compra/.test(tabs[3]) &&
@@ -9145,8 +9140,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Dinero v7: una meta con fecha pide su €/mes y €/día; «Aplicar» crea inversión y caprichos, el colchón baja a 30 % y el reparto suma todo',
       din.men > 0 && din.meses === 4 && din.dia >= 1 && din.rep === 4 &&
       tras.puro === 30 && tras.min === 10 && tras.inv && tras.cap && tras.japon === din.men && tras.suma === 1000, JSON.stringify({ din, tras }));
-    check('Ajustes: una entrada pequeña abre la guía de la cocina (nevera, semana, cocinar, apuntar)',
-      guiaBtn > 0 && guiaBtn < 48 && guia.cards === 5 && /Llena la nevera/.test(guia.txt) && /Apunta sin pesar/.test(guia.txt), JSON.stringify({ guiaBtn, cards: guia.cards }));
   }
 
   // 224) SEGUIMIENTO Y CLASIFICACIÓN DE PLATOS: ✓ en Hoy apunta «del plan» y pregunta «¿qué tal?» por
