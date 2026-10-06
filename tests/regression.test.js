@@ -4322,7 +4322,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         alto: document.querySelector('#main').scrollHeight,
         ancho: document.documentElement.scrollWidth,
         dia: pos(/Hoy ·/), entrenar: pos(/toca entrenar/), tareas: pos(/Para hoy/),
-        sueno: cards.findIndex((c) => c.classList.contains('sncard')),
+        sueno: cards.findIndex((c) => c.classList.contains('snhoy')),
         pagar: pos(/toca pagar/), comidas: pos(/Comidas de hoy/), sol: pos(/El sol hoy/),
       };
     });
@@ -9999,7 +9999,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // modo noche: a los «20 min» (aquí 1,5 s) te manda levantarte; al volver apunta el desvelo
     await page.evaluate(() => { const P = window.PG; P.ui.nocheMs = 1500; P.ui.snVista = 'noche'; P.render(); });
     await page.click('[data-a="noche-empezar"]'); await page.waitForTimeout(2600);
-    r.noche = await page.evaluate(() => /Levántate/.test(document.getElementById('main').innerText));
+    r.noche = await page.evaluate(() => /Levántate/.test((document.getElementById('nocheCapa') || {}).innerText || ''));
     await page.click('[data-a="noche-vuelvo"]'); await page.waitForTimeout(150);
     r.desvelo = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1)), x = P.suenoReal(k); return x && { mal: x.mal, dde: x.dde }; });
     await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);

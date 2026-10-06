@@ -2609,7 +2609,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .pvtzona{display:grid;place-items:center;align-content:center;gap:6px;width:100%;height:58vh;min-height:300px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;touch-action:manipulation;user-select:none}
 .pvtzona span{font-size:64px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--warn);min-height:76px}
 .pvtzona small{font-size:14px;color:var(--ink2)}
-.nochemodo{position:fixed;inset:0;z-index:200;background:#000;color:#b3392f;display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 24px}
+.nochemodo{position:fixed;inset:0;z-index:9000;background:#000;color:#b3392f;display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 24px}
 .nochemodo .btn{background:#140606;border-color:#3a1210;color:#c4463b;align-self:flex-start}
 .nochec{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;max-width:360px;margin:0 auto;font-size:16px;line-height:1.5}
 .nochec .btn{align-self:center;min-height:48px;padding:0 20px}

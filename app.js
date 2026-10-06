@@ -6065,7 +6065,7 @@ function snResumenTramos(tr){
   return {noche:noche,rt:rt,siesta:siesta,cuenta:noche-rt*0.5+siesta};}
 function suenoHojaHTML(){
   const k=ui.snHoja,d=parseDate(k);if(!d)return '';
-  if(!ui.snTr||ui.snTr.k!==k)ui.snTr={k:k,tr:snTramosDe(k),modo:salidaDeGuardia(k)?1:0,kss:(suenoReal(k)||{}).kss||0};
+  if(!ui.snTr||ui.snTr.k!==k)ui.snTr={k:k,tr:snTramosDe(k),modo:salidaDeGuardia(k)?1:0,kss:(suenoReal(k)||{}).kss||0,supuesto:!((suenoReal(k)||{}).tramos||[]).length};
   const s=snResumenTramos(ui.snTr.tr),DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const tit=k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate());
   const cuerpo=suenoHoyHTML(k).replace(/^<div class="card sncard[^"]*">/,'<div class="dsuhform">').replace(/<button class="btn s" data-a="hoy-informe">[^<]*<\/button>/,'');
@@ -6091,13 +6091,18 @@ document.addEventListener('pointerdown',function(e){
 document.addEventListener('pointermove',function(e){
   if(!_snT||e.pointerId!==_snT.id)return;
   if(!_snT.mov){if(Math.abs(e.clientX-_snT.x)<6)return;_snT.mov=true;}
-  const t=Math.max(18,Math.min(42,snTLee(e))),a=Math.min(_snT.t0,t),b=Math.max(_snT.t0,t);
-  /* lo nuevo pisa lo que había debajo */
-  const tr=[];_snT.orig.forEach(function(x){if(x[1]<=a||x[0]>=b)tr.push(x.slice());else{if(x[0]<a)tr.push([x[0],a,x[2]]);if(x[1]>b)tr.push([b,x[1],x[2]]);}});
-  tr.push([a,b,ui.snTr.modo]);ui.snTr.tr=snTramosLimpia(tr);
+  const t=Math.max(18,Math.min(42,snTLee(e))),a=Math.min(_snT.t0,t),b=Math.max(_snT.t0,t),m=ui.snTr.modo;
+  /* el primer trazo sustituye lo que propone la app (es una suposición: lo que dibujas manda);
+     después, empezar DENTRO de un trozo del mismo tipo lo alarga y empezar fuera lo sustituye */
+  const dentro=!ui.snTr.supuesto&&_snT.orig.some(function(x){return !!x[2]===!!m&&_snT.t0>x[0]&&_snT.t0<x[1];});
+  const tr=[];_snT.orig.forEach(function(x){if(x[1]<=a||x[0]>=b)tr.push(x.slice());
+    else if(!!x[2]===!!m&&!dentro)return;
+    else{if(x[0]<a)tr.push([x[0],a,x[2]]);if(x[1]>b)tr.push([b,x[1],x[2]]);}});
+  tr.push([a,b,m]);ui.snTr.tr=snTramosLimpia(tr);
   const s=document.getElementById('snTramos');if(s)s.innerHTML=snTramosSVG(ui.snTr.tr);},{passive:true});
 document.addEventListener('pointerup',function(e){
   if(!_snT||e.pointerId!==_snT.id)return;const s=_snT;_snT=null;
+  if(s.mov)ui.snTr.supuesto=false;
   if(!s.mov){/* un toque sobre un trozo lo borra */const i=ui.snTr.tr.findIndex(function(x){return s.t0>=x[0]&&s.t0<x[1];});if(i>=0)ui.snTr.tr.splice(i,1);}
   render();});
 function snTGuardar(){
@@ -6163,7 +6168,10 @@ function renderSuenoNoche(){
   if(fase==='inicio')c='<p>Pantalla al mínimo y sin reloj. Si en unos 20 min no te has dormido, te aviso con una vibración suave para que te levantes a otra habitación con luz baja.</p><button class="btn gbig" data-a="noche-empezar">Empezar</button>';
   else if(fase==='espera')c='<div class="nochering" style="--p:'+(N.p||0)+'"></div><div class="nocheresp" aria-hidden="true"></div><p>Respira despacio con el círculo: entra el aire cuando crece, sale cuando se encoge.</p><button class="btn" data-a="noche-dormido">Cerrar</button>';
   else if(fase==='levanta')c='<p><b>Levántate un rato.</b> A otra habitación, luz baja, algo aburrido. Vuelve a la cama cuando te entre sueño.</p><button class="btn gbig" data-a="noche-vuelvo">Vuelvo a la cama</button><button class="btn" data-a="noche-dormido">Cerrar</button>';
-  $('#main').innerHTML='<div class="nochemodo"><button class="btn s" data-a="noche-salir">‹ Salir</button><div class="nochec">'+c+'</div></div>';}
+  /* va FUERA de #main, encima de todo: dentro, la cabecera de la app le tapaba el «Salir» */
+  let capa=document.getElementById('nocheCapa');if(!capa){capa=document.createElement('div');capa.id='nocheCapa';document.body.appendChild(capa);}
+  capa.innerHTML='<div class="nochemodo" role="dialog" aria-modal="true" aria-label="modo noche"><button class="btn s" data-a="noche-salir">‹ Salir</button><div class="nochec">'+c+'</div></div>';
+  $('#main').innerHTML='<div class="grid dsu"><p class="mini">Modo noche activo.</p></div>';}
 function nocheTick(){
   const N=_noche;if(!N||N.fase!=='espera')return;
   N.p=Math.min(1,(Date.now()-N.t0)/(ui.nocheMs||20*60000));
@@ -7120,6 +7128,7 @@ function hojaMarco(cerrarA,cls,label,cuerpo){
   return '<div class="hscrim" data-a="'+cerrarA+'"></div><div class="hoja'+(cls?' '+cls:'')+'" role="dialog" aria-modal="true" aria-label="'+esc(label||'')+'">'+
     '<div class="hgrab" data-a="'+cerrarA+'" aria-label="cerrar"></div>'+cuerpo+'</div>';}
 function pintaHojaDia(){
+  if(!(ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snVista==='noche')){const nc=document.getElementById('nocheCapa');if(nc)nc.remove();}
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
   let c=document.getElementById('hojaDia');
