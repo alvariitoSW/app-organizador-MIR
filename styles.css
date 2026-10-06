@@ -3224,3 +3224,4 @@ span.hbt{cursor:default;border-style:dashed}
 .hsw{width:16px;height:16px;border-radius:4px;flex:none}
 .hkv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin-top:10px}.hkv span{color:var(--ink2)}
 .hacc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.hacc .btn{justify-content:center;min-height:44px}
+.hoypie button.hoykcal{background:none;border:0;padding:0;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;min-height:32px}

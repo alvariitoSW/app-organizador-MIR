@@ -5791,7 +5791,7 @@ function renderHoy(){
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     '<div class="hoypie">'+
       '<div class="drsol">'+horasSuenoHTML(hoy,inf)+solPiesHTML(hoy)+'</div>'+
-      '<span class="hoykcal"><b>'+ft.kcal+'</b> / '+(pl.kcal||'—')+' kcal</span></div>'+
+      '<button class="hoykcal" data-a="hoy-food-obj" title="cambiar el objetivo de kcal"><b>'+ft.kcal+'</b> / '+(pl.kcal||'—')+' kcal ›</button></div>'+
     '</div>'+
     /* el orden manda: primero el día, luego LO QUE HAY QUE HACER —entrenar, las tareas, lo que
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
@@ -19273,6 +19273,7 @@ function act(a,el){
         save();render();flash('quitado');});
       break;}
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
+    case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'hoy-modo':ui.hoyModo=el.dataset.v==='linea'?'linea':'reloj';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
     case 'hoy-hechas':ui.hoyHechas=!ui.hoyHechas;render();break;
     case 'hoy-it':ui.hoyIt={k:fechaHoy(),i:+el.dataset.i};render();break;

@@ -1439,14 +1439,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('"Hoy" muestra los hábitos del día y se pueden marcar desde ahí', habCrossVisible && habCrossMarcado, JSON.stringify({ habCrossVisible, habCrossMarcado }));
   await page.evaluate(() => { window.PG.habitosS().items = window.PG.habitosS().items.filter((h) => h.id !== 'hab-cross'); window.PG.save(); });
 
-  // 47c) "Hoy": el objetivo de kcal y las horas de sueño se pueden abrir con un botón directo, y las
+  // 47c) "Hoy": las kcal del pie llevan al objetivo de kcal, y las
   // comidas de hoy llevan un botón que lleva a cambiar sus horas/platos en "Días y menús"
   await gotoTab('hoy');
   await page.waitForTimeout(150);
   await page.click('[data-a="hoy-food-obj"]');
   await page.waitForTimeout(150);
   const objAbierto = await page.evaluate(() => window.PG.ui.tab === 'food' && window.PG.ui.foodObjOpen === true);
-  check('"Hoy": el botón de objetivo de kcal lleva a Comida con el objetivo ya abierto', objAbierto, '');
+  check('"Hoy": tocar las kcal del pie lleva a Comida con el objetivo ya abierto', objAbierto, '');
 
   await gotoTab('hoy');
   await page.waitForTimeout(150);
@@ -4326,8 +4326,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // (los lunes y martes, antes del sueño va la puerta del informe de la semana: por eso posiciones
       // relativas y no «el sueño es la 1»)
       /* lunes y martes: antes del sueño va la puerta del informe de la semana */
-      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar === dia.sueno + 1 && dia.tareas === dia.entrenar + 1 && dia.pagar > dia.tareas &&
-      dia.comidas > dia.pagar && dia.sol > dia.comidas &&
+      /* el entreno y las comidas ya no son tarjetas aparte: van en la lista del día, dentro de la primera */
+      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar < 0 && dia.comidas < 0 &&
+      (dia.tareas < 0 || dia.tareas > dia.sueno) && dia.pagar > Math.max(dia.tareas, dia.sueno) && dia.sol > dia.pagar &&
       /* el reloj de 24 h (≈300 px) y «lo siguiente» entran arriba: el tope sube a 3.100 */
       dia.alto < 3100 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
