@@ -4823,10 +4823,40 @@ function hoyChoques(key,inf){
   eventosDeFecha(key).forEach(function(e){const de=mins(e.hora||'');if(de==null)return;let a=mins(e.fin||'');if(a==null||a<=de)a=de+60;
     const b=bl.filter(function(x){return de<Math.min(x.a,1440)&&x.de<a;})[0];if(b)out.push({e:e,guardia:b.tipo==='guard'});});
   return out;}
-function hoyRelojHTML(key,inf,esHoy){
-  const R=112,ag=agendaDia(key,inf),sl=sleepOf(key,inf),now=new Date(),n=now.getHours()*60+now.getMinutes();
-  /* tocar o mantener pulsado un arco abre su hoja: el arco lleva el número de su fila de la agenda */
-  const idx=function(f){const i=ag.findIndex(f);return i<0?'':' data-a="hoy-it" data-lp="hoyit" data-i="'+i+'" style="cursor:pointer"';};
+/* EL RELOJ SE TOCA POR ZONAS. Antes solo respondían los arcos (8 px el de un evento, 5 de radio una
+   comida): había que acertar. Ahora todo el anillo y su franja interior son tocables: tocar elige lo
+   que hay a esa hora (lo resalta y apaga lo demás, y debajo sale su tira con lo que puedes hacer),
+   arrastrar el dedo recorre el día con la aguja y el centro dice qué hay a cada hora, mantener
+   pulsado abre la hoja entera y tocar el centro vuelve a «ahora». */
+const HOY_RI=88,HOY_CENTRO=58;   /* la franja de dentro (eventos y comidas) y el centro */
+const HOY_CAP={sleep:'SUEÑO',work:'TRABAJO',guard:'GUARDIA',meal:'COMIDA',gym:'ENTRENO',evt:'EVENTO'};
+function hoySelDe(key){const s=ui.hoySel;return s&&s.k===key?s.i:-1;}
+function hoyRango(x){return x.fin?hCortaHM(x.hora)+'–'+hCortaHM(x.fin):'a las '+hCortaHM(x.hora);}
+function hoyRelojItem(key,inf,m,r){
+  /* qué hay en el minuto m a la distancia r del centro: dentro mandan las comidas (±30 min) y los
+     eventos; en el anillo, la jornada, la guardia, el entreno y el sueño */
+  const it=hoyItems(key,inf).filter(function(x){return x.m2<1440||x.fin;}),sl=sleepOf(key,inf);
+  const d=function(a,b){a=((a%1440)+1440)%1440;b=((b%1440)+1440)%1440;const q=Math.abs(a-b);return Math.min(q,1440-q);};
+  const en=function(x){if(!x.fin)return false;const a=x.m2,b=finMin(x);return (m>=a&&m<b)||(m+1440>=a&&m+1440<b);};
+  const cerca=function(l,ms){return l.filter(function(x){return !x.fin&&d(x.m2,m)<=ms;}).sort(function(p,q){return d(p.m2,m)-d(q.m2,m);})[0];};
+  const dentro=it.filter(function(x){return x.tipo==='meal'||x.tipo==='evt';});
+  if(r<HOY_RI+12){const x=cerca(dentro.filter(function(x){return x.tipo==='meal';}),30)||dentro.filter(en)[0]||cerca(dentro,30);if(x)return x.i;}
+  const anillo=it.filter(function(x){return (x.tipo==='work'||x.tipo==='guard'||x.tipo==='gym')&&en(x);})[0];if(anillo)return anillo.i;
+  /* la mañana del saliente: la agenda la trae como «Sales de la guardia», sin fin */
+  const bl=bloquesTrabajo(key,inf).filter(function(b){return b.de<=m&&m<b.a&&!/^entreno/.test(b.txt||'');})[0];
+  if(bl){const x=it.filter(function(x){return x.tipo===(bl.tipo==='guard'?'guard':'work');})[0];if(x)return x.i;}
+  /* el sueño: la siesta, lo de anoche hasta levantarte o lo de esta noche desde que te acuestas */
+  const w=mins(sl.wake),b=mins(sl.bed),sue=function(t){return it.filter(function(x){return x.tipo==='sleep'&&t.test(x.txt);})[0];};
+  const si=sue(/^Siesta/);let s=null;
+  if(sl.siesta&&si&&en(si))s=si;
+  else if(w!=null&&m<w)s=sue(/^Levantarse/);
+  else if(b!=null&&b>=18*60&&m>=b)s=sue(/^A la cama/);
+  if(s)return s.i;
+  const x=dentro.filter(en)[0]||cerca(it,25);return x?x.i:-1;}
+function hoyRelojSVG(key,inf,esHoy){
+  const R=112,it=hoyItems(key,inf),sl=sleepOf(key,inf),now=new Date(),n=now.getHours()*60+now.getMinutes();
+  const sel=hoySelDe(key),cur=ui.hoyCursor!=null&&ui.hoyCursorK===key?ui.hoyCursor:null;
+  const on=function(i){return i>=0&&i===sel?' on':'';};
   const nombres=[];
   let g='<defs><pattern id="hoySlp" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#2b3956"/><line x1="0" y1="0" x2="0" y2="6" stroke="#3a4b6e" stroke-width="2"/></pattern></defs>'+
     '<circle cx="150" cy="150" r="'+R+'" fill="none" stroke="var(--line)" stroke-width="22"/>';
@@ -4834,24 +4864,30 @@ function hoyRelojHTML(key,inf,esHoy){
   const so=solDe(key);
   if(so&&!so.sinDatos&&!so.polar&&so.sale&&so.pone){const a=so.sale.getHours()*60+so.sale.getMinutes(),b=so.pone.getHours()*60+so.pone.getMinutes();
     g+='<path d="'+relojArco(R+17,a,b)+'" fill="none" stroke="#f3c969" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>';}
-  /* el sueño: lo de anoche hasta que suena el despertador, la siesta del saliente y lo de esta noche */
   /* el sueño, de fondo y a rayas: no es una cosa que hagas, y su violeta se confundía con el de los
      eventos (diferencia 7,6 con vista normal; 0,5 con protanopia) */
-  const slc='url(#hoySlp)',arco=function(a,b,c,r,w,at){return '<path d="'+relojArco(r||R,a,b)+'" fill="none" stroke="'+c+'" stroke-width="'+(w||22)+'"'+(at||'')+'/>';};
-  if(sl.siesta){const a=mins(sl.siesta.de),b=mins(sl.siesta.a);if(a!=null&&b!=null)g+=arco(a,b,slc);}
-  else if(mins(sl.wake)!=null&&mins(sl.wake)<12*60)g+=arco(0,mins(sl.wake),slc);
-  if(mins(sl.bed)!=null&&mins(sl.bed)>=18*60&&diaTipo(key)!=='guardia')g+=arco(mins(sl.bed),1440,slc);
+  const arco=function(a,b,c,i,r,w,cap){const o=on(i);
+    return '<path class="arc'+o+'" style="color:'+esc(c)+'" d="'+relojArco(r||R,a,b)+'" fill="none" stroke="'+c+'" stroke-width="'+((w||22)+(o?6:0))+'"'+(cap?' stroke-linecap="round"':'')+'/>';};
+  const iS=function(t){const x=it.filter(function(x){return x.tipo==='sleep'&&t.test(x.txt);})[0];return x?x.i:-1;};
+  if(sl.siesta){const a=mins(sl.siesta.de),b=mins(sl.siesta.a);if(a!=null&&b!=null)g+=arco(a,b,'url(#hoySlp)',iS(/^Siesta/));}
+  else if(mins(sl.wake)!=null&&mins(sl.wake)<12*60)g+=arco(0,mins(sl.wake),'url(#hoySlp)',iS(/^Levantarse/));
+  if(mins(sl.bed)!=null&&mins(sl.bed)>=18*60&&diaTipo(key)!=='guardia')g+=arco(mins(sl.bed),1440,'url(#hoySlp)',iS(/^A la cama/));
   /* la jornada, la guardia y el entreno, en el anillo */
+  const iDe=function(tp,de){const l=it.filter(function(x){return x.tipo===tp;});return ((l.filter(function(x){return x.m===de;})[0]||l[0])||{i:-1}).i;};
   bloquesTrabajo(key,inf).forEach(function(b){const gym=/^entreno/.test(b.txt||''),tp=gym?'gym':(b.tipo==='guard'?'guard':'work'),c=tlColor(tp);
-    g+=arco(b.de,Math.min(b.a,1440),c,0,0,idx(function(x){return x.tipo===tp&&x.m===b.de;})||idx(function(x){return x.tipo===tp;}));
+    g+=arco(b.de,Math.min(b.a,1440),c,iDe(tp,b.de));
     if(b.de>0)nombres.push({a:b.de,b:Math.min(b.a,1440),t:gym?'Entreno':(b.tipo==='guard'?'Guardia':'Trabajo'),c:c});});
-  ag.forEach(function(x,i){
-    const at=' data-a="hoy-it" data-lp="hoyit" data-i="'+i+'" style="cursor:pointer"';
-    if(x.tipo==='gym'&&x.fin){g+=arco(x.m2,Math.min(finMin(x),1440),tlColor('gym'),0,0,at);nombres.push({a:x.m2,b:Math.min(finMin(x),1440),t:'Entreno',c:tlColor('gym')});}
-    else if(x.tipo==='evt'){if(x.fin){g+='<path d="'+relojArco(R-24,x.m2,Math.min(finMin(x),1440))+'" fill="none" stroke="'+x.color+'" stroke-width="8" stroke-linecap="round"'+at+'/>';
+  it.forEach(function(x){
+    if(x.m2>=1440&&!x.fin)return;
+    if(x.tipo==='gym'&&x.fin&&!bloquesTrabajo(key,inf).some(function(b){return /^entreno/.test(b.txt||'');})){
+      g+=arco(x.m2,Math.min(finMin(x),1440),tlColor('gym'),x.i);nombres.push({a:x.m2,b:Math.min(finMin(x),1440),t:'Entreno',c:tlColor('gym')});}
+    else if(x.tipo==='evt'){if(x.fin){g+=arco(x.m2,Math.min(finMin(x),1440),x.color,x.i,HOY_RI,8,1);
         nombres.push({a:x.m2,b:Math.min(finMin(x),1440),t:nombreCorto(x.txt).split(' ')[0],c:x.color});}
-      else{const p=relojPunto(R-24,x.m2);g+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="'+x.color+'"'+at+'/>';}}
-    else if(x.tipo==='meal'){const p=relojPunto(R-24,x.m2);g+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="var(--bg)" stroke="'+tlColor('meal')+'" stroke-width="2"'+at+'/>';}});
+      else{const p=relojPunto(HOY_RI,x.m2);g+='<circle class="mk'+on(x.i)+'" cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="'+esc(x.color)+'"/>';}}
+    else if(x.tipo==='meal'){const p=relojPunto(HOY_RI,x.m2),c=tlColor('meal');
+      /* las comidas, con su icono: rellenas cuando están apuntadas */
+      g+='<g class="mk'+on(x.i)+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="11" fill="'+(x.hecha?c:'var(--bg)')+'" stroke="'+c+'" stroke-width="2"/>'+
+        '<text x="'+p[0]+'" y="'+(+p[1]+4).toFixed(1)+'" text-anchor="middle" font-size="11">'+x.ico+'</text></g>';}});
   /* los nombres, junto a su arco y por fuera; si dos caen casi en el mismo sitio, se queda el largo */
   const puestos=[];
   nombres.sort(function(p,q){return (q.b-q.a)-(p.b-p.a);}).forEach(function(o){
@@ -4864,11 +4900,17 @@ function hoyRelojHTML(key,inf,esHoy){
     g+='<text x="'+Math.max(-14,Math.min(314,x+(anc==='start'?-22:anc==='end'?22:0))).toFixed(1)+'" y="'+(+p[1]+4)+'" text-anchor="'+anc+'" font-size="12" font-weight="800" fill="'+esc(o.c)+'">'+esc(o.t)+'</text>';});
   for(let h=0;h<24;h++){const p1=relojPunto(R-11,h*60),p2=relojPunto(R-15,h*60);g+='<line x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'" stroke="var(--bg)" stroke-width="1.5"/>';}
   [0,6,12,18].forEach(function(h){const p=relojPunto(R+31,h*60);g+='<text x="'+p[0]+'" y="'+(+p[1]+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="var(--ink2)">'+h+'</text>';});
-  /* el centro: lo que está pasando y cuánto queda; otro día, qué día es */
+  /* la aguja: ahora, o el dedo mientras recorres el día */
+  if(cur!=null||esHoy){const m=cur!=null?cur:n,col=cur!=null?'var(--ink)':'#f87171',p0=relojPunto(HOY_RI-18,m),p1=relojPunto(R+22,m);
+    g+='<line x1="'+p0[0]+'" y1="'+p0[1]+'" x2="'+p1[0]+'" y2="'+p1[1]+'" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/><circle cx="'+p1[0]+'" cy="'+p1[1]+'" r="'+(cur!=null?8:5)+'" fill="'+col+'"/>';}
+  /* el centro: lo que hay donde está el dedo; si no, lo elegido; si no, lo que está pasando y cuánto
+     queda (otro día, qué día es) */
   let c1='',c2='',c3='';
-  if(esHoy){
-    const p0=relojPunto(R-40,n),p1=relojPunto(R+22,n);
-    g+='<line x1="'+p0[0]+'" y1="'+p0[1]+'" x2="'+p1[0]+'" y2="'+p1[1]+'" stroke="#f87171" stroke-width="3" stroke-linecap="round"/><circle cx="'+p1[0]+'" cy="'+p1[1]+'" r="5" fill="#f87171"/>';
+  const corto=function(t){t=String(t||'').replace(/ ·.*$/,'');return t.length>16?t.slice(0,15)+'…':t;};
+  if(cur!=null){const i=hoyRelojItem(key,inf,cur,HOY_RI),x=it[i];c1=hm(Math.round(cur)%1440);c2=x?corto(x.txt):'Libre';c3=x?hoyRango(x):'nada a esta hora';}
+  else if(sel>=0&&it[sel]){const x=it[sel];c1=HOY_CAP[x.tipo]||'';c2=corto(x.txt);c3=x.hora?hoyRango(x):'sin hora puesta';}
+  else if(esHoy){
+    const ag=agendaDia(key,inf);
     const dura=ag.filter(function(x){return x.fin&&x.m2<=n&&n<finMin(x)&&x.tipo!=='meal';}),ya=dura[dura.length-1];
     const durm=(sl.siesta&&n>=mins(sl.siesta.de)&&n<mins(sl.siesta.a))||(mins(sl.wake)!=null&&n<mins(sl.wake)&&!sl.siesta)||(mins(sl.bed)!=null&&mins(sl.bed)>=18*60&&n>=mins(sl.bed));
     c1='AHORA · '+horaLocal(now);
@@ -4883,8 +4925,64 @@ function hoyRelojHTML(key,inf,esHoy){
   g+='<text x="150" y="128" text-anchor="middle" font-size="10.5" font-weight="900" letter-spacing="1.5" fill="var(--ink2)">'+esc(c1)+'</text>'+
     '<text x="150" y="156" text-anchor="middle" font-size="'+(c2.length>11?18:24)+'" font-weight="900" fill="var(--ink)">'+esc(c2)+'</text>'+
     '<text x="150" y="176" text-anchor="middle" font-size="13" fill="var(--ink2)">'+esc(c3)+'</text>'+
-    (so&&so.sale&&!so.sinDatos&&!so.polar?'<text x="150" y="194" text-anchor="middle" font-size="11" fill="#d9a93a">☀ '+horaLocal(so.sale)+' – '+horaLocal(so.pone)+'</text>':'');
-  return '<div class="hoyreloj"><svg viewBox="-20 -14 340 328" role="img" aria-label="el día en un reloj de 24 horas; toca un arco para ver qué es">'+g+'</svg></div>';}
+    (cur==null&&sel<0&&so&&so.sale&&!so.sinDatos&&!so.polar?'<text x="150" y="194" text-anchor="middle" font-size="11" fill="#d9a93a">☀ '+horaLocal(so.sale)+' – '+horaLocal(so.pone)+'</text>':'');
+  return '<svg viewBox="-20 -14 340 328" role="img" aria-label="el día en un reloj de 24 horas: toca una hora para ver qué hay, arrastra para recorrer el día, mantén pulsado para abrir su hoja">'+g+'</svg>';}
+function hoyRelojHTML(key,inf,esHoy){
+  return '<div class="hoyreloj'+(hoySelDe(key)>=0&&ui.hoyCursor==null?' dim':'')+'" data-k="'+esc(key)+'">'+hoyRelojSVG(key,inf,esHoy)+'</div>';}
+function hoyTiraHTML(it,n,key,esHoy){
+  /* lo elegido en el reloj, con lo que puedes hacer; sin nada elegido, ahora/luego/después */
+  const x=it[hoySelDe(key)];
+  if(!x)return esHoy?hoyTresHTML(it,n,key):'';
+  const sub=[x.hora?hoyRango(x):'sin hora puesta',x.sub].filter(Boolean).join(' · ');
+  const col=x.tipo==='sleep'?'#3a4b6e':x.color;
+  return '<div class="htira"><div class="htc"><span class="ic" style="background:color-mix(in srgb,'+esc(col)+' 26%,transparent)">'+x.ico+'</span>'+
+    '<div class="tx"><b>'+esc(x.txt)+'</b><span>'+esc(sub)+'</span></div>'+
+    '<button class="htver" data-a="hoy-it" data-i="'+x.i+'">ver todo ›</button></div>'+
+    '<div class="htacc">'+hoyAccionesHTML(x,key,true).join('')+
+      '<button class="btn s" data-a="hoy-sel">'+(esHoy?'◷ volver a ahora':'✕ quitar')+'</button></div></div>';}
+/* repintar solo el reloj y la tira mientras el dedo se mueve: un render() entero desmontaría el reloj
+   y se perdería el dedo */
+function hoyRelojRepinta(){
+  const box=document.querySelector('#main .hoyreloj');if(!box)return;
+  const key=box.dataset.k,inf=dayInfo(key),esHoy=esHoyDeVerdad(key);
+  box.innerHTML=hoyRelojSVG(key,inf,esHoy);
+  box.classList.toggle('dim',hoySelDe(key)>=0&&ui.hoyCursor==null);
+  const t=document.getElementById('hoyTira');if(t)t.innerHTML=hoyTiraHTML(hoyItems(key,inf),hoyNow(esHoy),key,esHoy);}
+let _hr=null;
+function hoyRelojLee(box,e){
+  const b=box.querySelector('svg').getBoundingClientRect(),k=340/Math.max(1,b.width);
+  const dx=(e.clientX-b.left)*k-20-150,dy=(e.clientY-b.top)*k-14-150;
+  let a=Math.atan2(dy,dx)*180/Math.PI+90;if(a<0)a+=360;
+  return {m:a/360*1440,r:Math.hypot(dx,dy)};}
+document.addEventListener('pointerdown',function(e){
+  const box=e.target&&e.target.closest?e.target.closest('#main .hoyreloj'):null;
+  if(!box||(e.pointerType==='mouse'&&e.button!==0))return;
+  const key=box.dataset.k,p=hoyRelojLee(box,e);
+  try{box.setPointerCapture(e.pointerId);}catch(e2){}
+  _hr={key:key,x:e.clientX,y:e.clientY,p:p,id:e.pointerId,movido:false,lp:null};
+  if(p.r<HOY_CENTRO)return;   /* el centro: se resuelve al soltar */
+  _hr.lp=setTimeout(function(){if(!_hr)return;_hr.lp=null;_hr.hecho=true;
+    const i=hoyRelojItem(key,dayInfo(key),p.m,p.r);if(i<0)return;
+    _lpComido=true;try{if(navigator.vibrate)navigator.vibrate(18);}catch(e3){}
+    ui.hoySel={k:key,i:i};ui.hoyCursor=null;ui.hoyIt={k:key,i:i};render();},pulsarMs());});
+document.addEventListener('pointermove',function(e){
+  if(!_hr||e.pointerId!==_hr.id||_hr.hecho)return;
+  if(!_hr.movido&&Math.hypot(e.clientX-_hr.x,e.clientY-_hr.y)<8)return;
+  if(_hr.lp){clearTimeout(_hr.lp);_hr.lp=null;}
+  _hr.movido=true;if(_hr.p.r<HOY_CENTRO)return;
+  const box=document.querySelector('#main .hoyreloj');if(!box)return;
+  const p=hoyRelojLee(box,e),i=hoyRelojItem(_hr.key,dayInfo(_hr.key),p.m,p.r);
+  ui.hoyCursor=p.m;ui.hoyCursorK=_hr.key;ui.hoySel=i>=0?{k:_hr.key,i:i}:null;hoyRelojRepinta();});
+function _hrSuelta(e){
+  if(!_hr||(e&&e.pointerId!==_hr.id))return;
+  const h=_hr;_hr=null;if(h.lp)clearTimeout(h.lp);
+  if(h.hecho)return;
+  if(h.movido||(e&&e.type==='pointercancel')){if(ui.hoyCursor!=null){ui.hoyCursor=null;hoyRelojRepinta();}return;}
+  if(h.p.r<HOY_CENTRO)ui.hoySel=null;
+  else{const i=hoyRelojItem(h.key,dayInfo(h.key),h.p.m,h.p.r);ui.hoySel=i>=0?{k:h.key,i:i}:null;}
+  ui.hoyCursor=null;hoyRelojRepinta();}
+document.addEventListener('pointerup',_hrSuelta);
+document.addEventListener('pointercancel',_hrSuelta);
 function hoyCuentaAtras(key){
   /* lo que esperas, en días: el próximo finde libre entero, lo que marcaste con cuenta atrás y las vacaciones */
   const out=[],d0=parseDate(key)||new Date(),hoyK=iso(new Date());
@@ -4962,10 +5060,24 @@ function hoyDiaHTML(key,inf,esHoy){
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
   const it=hoyItems(key,inf);
-  return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+(esHoy?hoyTresHTML(it,n,key):'')+
+  return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
 const HOY_COLOR_TXT={sleep:'el sueño va de fondo, a rayas',work:'tu jornada, en el anillo',guard:'la guardia, en el anillo',
   gym:'el entreno, en el anillo',evt:'un evento tuyo (cita, curso, sesión): va por dentro del reloj',meal:'una comida: un círculo por dentro del reloj, relleno cuando la apuntas'};
+function hoyAccionesHTML(x,k,peq){
+  /* lo que se puede hacer con una cosa del día: lo mismo en la hoja y en la tira de debajo del reloj */
+  const b=function(a,txt,extra,p){return '<button class="btn'+(peq?' s':'')+(p?' p':'')+'" data-a="'+a+'"'+(extra||'')+'>'+txt+'</button>';};
+  const acc=[];
+  if(x.tipo==='meal'){
+    if(x.conPlatos&&!x.hecha)acc.push(b('hoy-log-slot','✓ Comido',' data-shift="'+esc(x.sh.id)+'" data-slot="'+esc(x.slot.id)+'" data-key="'+esc(k)+'"',1));
+    acc.push(b('hoy-comer','🔁 Cambiar o mover',' data-k="'+esc(k)+'" data-p="'+esc(posDeSlot(x.slot&&x.slot.label,x.slot&&x.slot.time))+'"'));}
+  if(x.tipo==='gym'){if(x.rt&&!ui.gymSesionActiva)acc.push(b('ses-empezar','▶ Empezar',' data-id="'+esc(x.rt.id)+'" data-key="'+esc(k)+'"',1));
+    acc.push(b('tab','💪 Ver Entreno',' data-t="gym"'));}
+  if(x.tipo==='evt'&&x.ev){if(x.sem)acc.push(b('ev-salta','⏭ Quitar solo ese día',' data-id="'+esc(x.ev)+'" data-k="'+esc(k)+'"'));
+    acc.push(b('hoy-evento','✎ Cambiarlo',' data-id="'+esc(x.ev)+'"',!x.sem));}
+  if(x.tipo==='work'||x.tipo==='guard')acc.push(b('hoy-mes-dia','🗓️ Cambiar ese día',' data-k="'+esc(k)+'"',1));
+  if(x.tipo==='sleep')acc.push(b('cfg-vista','🛏️ Horas y sueño',' data-v="horas"',1));
+  return acc;}
 function hoyHojaHTML(){
   const h=ui.hoyIt;if(!h)return '';
   const it=hoyItems(h.k,dayInfo(h.k)),x=it[h.i];if(!x)return '';
@@ -4979,17 +5091,7 @@ function hoyHojaHTML(){
     kv.push(['Se repite',x.sem?'cada semana':'no, solo ese día']);}
   if(x.tipo==='meal')kv.push(['Apuntada',x.hecha?'sí':'todavía no']);
   if(x.tipo==='gym'&&x.rt)kv.push(['Rutina',x.rt.nombre+(x.hecha?' · ya hecha':'')]);
-  const b=function(a,txt,extra,p){return '<button class="btn'+(p?' p':'')+'" data-a="'+a+'"'+(extra||'')+'>'+txt+'</button>';};
-  const acc=[];
-  if(x.tipo==='meal'){
-    if(x.conPlatos&&!x.hecha)acc.push(b('hoy-log-slot','✓ Comido',' data-shift="'+esc(x.sh.id)+'" data-slot="'+esc(x.slot.id)+'" data-key="'+esc(h.k)+'"',1));
-    acc.push(b('hoy-comer','🔁 Cambiar o mover',' data-k="'+esc(h.k)+'" data-p="'+esc(posDeSlot(x.slot&&x.slot.label,x.slot&&x.slot.time))+'"'));}
-  if(x.tipo==='gym'){if(x.rt&&!ui.gymSesionActiva)acc.push(b('ses-empezar','▶ Empezar',' data-id="'+esc(x.rt.id)+'" data-key="'+esc(h.k)+'"',1));
-    acc.push(b('tab','💪 Ver Entreno',' data-t="gym"'));}
-  if(x.tipo==='evt'&&x.ev){if(x.sem)acc.push(b('ev-salta','⏭ Quitar solo ese día',' data-id="'+esc(x.ev)+'" data-k="'+esc(h.k)+'"'));
-    acc.push(b('hoy-evento','✎ Cambiarlo',' data-id="'+esc(x.ev)+'"',!x.sem));}
-  if(x.tipo==='work'||x.tipo==='guard')acc.push(b('hoy-mes-dia','🗓️ Cambiar ese día',' data-k="'+esc(h.k)+'"',1));
-  if(x.tipo==='sleep')acc.push(b('cfg-vista','🛏️ Horas y sueño',' data-v="horas"',1));
+  const acc=hoyAccionesHTML(x,h.k);
   return hojaMarco('hoy-it-x','hhoy',x.txt,
     '<div class="hhy"><span class="ic" style="background:color-mix(in srgb,'+esc(x.color)+' 22%,transparent)">'+x.ico+'</span>'+
       '<div><b>'+esc(x.txt)+'</b><span>'+esc((cat||'')+(cat?' · ':'')+cuando)+'</span></div></div>'+
@@ -19176,6 +19278,7 @@ function act(a,el){
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'hoy-modo':ui.hoyModo=el.dataset.v==='linea'?'linea':'reloj';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
+    case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
     case 'hoy-hechas':ui.hoyHechas=!ui.hoyHechas;render();break;
     case 'hoy-it':ui.hoyIt={k:fechaHoy(),i:+el.dataset.i};render();break;
     case 'hoy-it-x':ui.hoyIt=null;render();break;

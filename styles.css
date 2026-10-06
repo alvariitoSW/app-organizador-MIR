@@ -3072,7 +3072,20 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
   transition:transform var(--lp,600ms) ease-out,background var(--lp,600ms) ease-out}
 @media (prefers-reduced-motion:reduce){[data-lp]:not(.dbox).pulsando{transition:none}}
 /* ===== Hoy como reloj ===== */
-.hoyreloj{margin:4px auto 2px;max-width:340px}.hoyreloj svg{display:block;width:100%;height:auto}
+.hoyreloj{margin:4px auto 2px;max-width:340px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}.hoyreloj svg{display:block;width:100%;height:auto}
+/* lo elegido en el reloj brilla y lo demás se apaga */
+.hoyreloj .arc,.hoyreloj .mk{transition:opacity .18s,stroke-width .18s}
+.hoyreloj .arc.on,.hoyreloj .mk.on{filter:drop-shadow(0 0 6px currentColor)}
+.hoyreloj .mk.on{color:var(--ink)}
+.hoyreloj.dim .arc:not(.on),.hoyreloj.dim .mk:not(.on){opacity:.28}
+.htira{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin:4px 0 8px;display:flex;flex-direction:column;gap:10px}
+.htc{display:flex;align-items:center;gap:10px}
+.htc .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:none}
+.htc .tx{flex:1;min-width:0}.htc .tx b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htc .tx span{font-size:12px;color:var(--ink2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htver{font:inherit;font-size:12.5px;font-weight:800;color:var(--ink);background:none;border:1px solid var(--line);border-radius:99px;padding:7px 11px;cursor:pointer;flex:none}
+.htacc{display:flex;flex-wrap:wrap;gap:6px}
+@media (prefers-reduced-motion:reduce){.hoyreloj .arc,.hoyreloj .mk{transition:none}}
 .hoycta{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:8px 0 2px}.hoycta::-webkit-scrollbar{display:none}
 .hoycta span{white-space:nowrap;font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2)}.hoycta b{color:var(--ink)}
 .hoychoque{margin:8px 0;padding:11px 12px;border-radius:14px;border:1px solid color-mix(in srgb,#ef4444 55%,var(--line));background:color-mix(in srgb,#ef4444 9%,var(--card));font-size:14px}

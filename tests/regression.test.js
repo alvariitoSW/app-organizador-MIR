@@ -1657,12 +1657,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // qué es cada color ya no va en una leyenda aparte: tocar (o mantener) una cosa del reloj abre su
   // hoja, que lo dice con su muestra de color
-  const leyenda = await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.render();
-    const arco = document.querySelector('#main .hoyreloj [data-a="hoy-it"]');
-    if (arco) arco.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  const leyenda = await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.ui.hoySel = { k: P.iso(new Date()), i: 0 }; P.render();
+    const ver = document.querySelector('#hoyTira [data-a="hoy-it"]');
+    if (ver) ver.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     const h = document.querySelector('#hojaDia .hoja');
-    const r = h ? { muestra: !!h.querySelector('.hsw'), txt: (h.querySelector('.hqa') || {}).textContent || '', arcos: document.querySelectorAll('#main .hoyreloj [data-lp="hoyit"]').length } : { arco: !!arco };
-    P.ui.hoyIt = null; P.ui.hoyModo = 'linea'; P.render(); return r; });
+    const r = h ? { muestra: !!h.querySelector('.hsw'), txt: (h.querySelector('.hqa') || {}).textContent || '', arcos: document.querySelectorAll('#main .hoyreloj .arc').length } : { ver: !!ver };
+    P.ui.hoyIt = null; P.ui.hoySel = null; P.ui.hoyModo = 'linea'; P.render(); return r; });
   check('"Hoy": tocar una cosa del reloj abre su hoja, que dice qué es ese color',
     leyenda.muestra && leyenda.txt.length > 10 && leyenda.arcos >= 2, JSON.stringify(leyenda));
 
@@ -9892,6 +9892,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return out; });
     check('todas las pantallas de Entreno se pintan con historial de verdad (rutina abierta, informe, sesión en vivo)',
       rotas.length === 0, JSON.stringify(rotas));
+  }
+
+  // 244) EL RELOJ DE HOY SE TOCA POR ZONAS. Antes solo respondían los arcos finos; ahora tocar en
+  // cualquier sitio del anillo o de su franja interior elige lo que hay a esa hora (resaltado, lo demás
+  // apagado y su tira con acciones debajo), arrastrar recorre el día con la aguja, mantener pulsado
+  // abre la hoja y tocar el centro vuelve a «ahora». Se conduce con el ratón de verdad.
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia244 = JSON.parse(JSON.stringify(P.store)); const k = P.iso(new Date());
+      P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: '16:30', fin: '19:30', modo: 'fecha', fecha: k, on: true });
+      P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); });
+    await page.waitForTimeout(150);
+    const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 340 / s.width, t = m / 1440 * 2 * Math.PI;
+      return { x: s.left + (150 + r * Math.sin(t) + 20) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
+    const est = () => page.evaluate(() => { const P = window.PG, it = P.ui.hoySel ? P.hoyItems(P.ui.hoySel.k, P.dayInfo(P.ui.hoySel.k))[P.ui.hoySel.i] : null;
+      return { sel: it ? it.txt : '', cur: P.ui.hoyCursor, hoja: !!document.querySelector('#hojaDia .hoja'), on: document.querySelectorAll('#main .hoyreloj .on').length,
+        dim: document.querySelector('#main .hoyreloj').classList.contains('dim'), tira: (document.querySelector('#hoyTira') || {}).innerText || '',
+        centro: [...document.querySelectorAll('#main .hoyreloj svg > text')].map((x) => x.textContent).join('|') }; });
+    const tap = async (m, r) => { const q = await pt(m, r); await page.mouse.move(q.x, q.y); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(120); };
+    // en la franja de dentro, a las 18:00, al lado del arco (no encima): elige el evento
+    await tap(18 * 60, 80);
+    const toque = await est();
+    // arrastrar por el anillo de las 10 a las 17:30: la aguja va con el dedo y el centro dice la hora
+    let q = await pt(10 * 60, 92); await page.mouse.move(q.x, q.y); await page.mouse.down();
+    for (let m = 10 * 60; m <= 17.5 * 60; m += 30) { q = await pt(m, 92); await page.mouse.move(q.x, q.y); }
+    const arrastre = await est();
+    await page.mouse.up(); await page.waitForTimeout(120);
+    const suelto = await est();
+    // el centro vuelve a «ahora»
+    await tap(0, 10);
+    const centro = await est();
+    // mantener pulsado abre la hoja
+    q = await pt(17 * 60, 88); await page.mouse.move(q.x, q.y); await page.mouse.down(); await page.waitForTimeout(800); await page.mouse.up(); await page.waitForTimeout(500);
+    const mantener = await est();
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.ui.hoySel = null; P.store = window.__copia244; P.save(); P.ui.hoyModo = 'linea'; P.render(); });
+    check('"Hoy": tocar cerca de un evento en el reloj lo elige, lo resalta, apaga lo demás y saca su tira con acciones',
+      toque.sel === 'Curso 244' && toque.on >= 1 && toque.dim && /Curso 244/.test(toque.tira) && /ver todo/.test(toque.tira) && !toque.hoja, JSON.stringify(toque));
+    check('"Hoy": arrastrar por el reloj lleva la aguja con el dedo y el centro dice qué hay a esa hora; al soltar se queda elegido',
+      arrastre.cur != null && /17:\d\d\|Curso 244/.test(arrastre.centro) && suelto.cur == null && suelto.sel === 'Curso 244', JSON.stringify({ arrastre, suelto }));
+    check('"Hoy": tocar el centro del reloj vuelve a «ahora» y mantener pulsado abre la hoja',
+      centro.sel === '' && !centro.dim && /AHORA/.test(centro.centro) && mantener.hoja && mantener.sel === 'Curso 244', JSON.stringify({ centro, mantener }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
