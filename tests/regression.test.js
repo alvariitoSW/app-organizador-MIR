@@ -6098,7 +6098,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.epocas = [{ id: 'e1', nombre: 'prueba', desde: '2000-01', neto: 2766, finde: 300, pagaJun: 0, pagaDic: 0 }];
       a.huchas.forEach((h) => { h.saldo = 0; });
       a.meses = {}; a.meses[mk] = { aparto: 700, hecho: false, reparto: {}, retos: [] };
-      P.ui.dineroVista = 'apartar'; P.ui.ahoRetoNuevo = false;   // otra prueba dejó Dinero en «recibos»
+      P.ui.dineroVista = '';   // otra prueba dejó Dinero en «recibos»
       P.save();
       const n = P.nominaMes(y, m);
       return { finde: n.g.finde, total: n.g.total, est: n.est, mk };
@@ -6106,35 +6106,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('dinero');
     await page.waitForTimeout(250);
     const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(200); return !!el; };
-    const hubo = [];
-    const hero = await page.evaluate(() => (document.querySelector('#main .ahhero') || {}).innerText || '');
-    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
-    hubo.push(await toca('#main [data-a="aho-menos"]')); // 700
-    hubo.push(await toca('#main [data-a="aho-mas"]'));   // 750
-    hubo.push(await toca('#main [data-a="aho-apartar"]'));
-    const saldos1 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
-    hubo.push(await toca('#main [data-a="aho-deshacer"]'));
-    const saldos0 = await page.evaluate(() => window.PG.ahorroS().huchas.map((h) => h.saldo));
-    hubo.push(await toca('#main [data-a="aho-apartar"]'));
-    hubo.push(await toca('#main [data-a="aho-reto-nuevo"]'));
-    // si el formulario no sale, la prueba FALLA (hubo[]), no se cuelga 30 s en un fill
-    const form = await page.$('#ahRtNom');
-    hubo.push(!!form);
-    if (form) {
-      await page.fill('#ahRtNom', 'Salir'); await page.fill('#ahRtMax', '150'); await page.fill('#ahRtAnt', '220');
-      const hu2 = await page.evaluate(() => window.PG.ahorroS().huchas[1].id);
-      await page.selectOption('#ahRtHu', hu2);
-    }
-    hubo.push(await toca('#main [data-a="aho-reto-add"]'));
-    hubo.push(await toca('#main [data-a="aho-reto-ok"]'));
-    const trasReto = await page.evaluate(() => window.PG.ahorroS().huchas[1].saldo);
-    const vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store));
-      return P.ahorroS().huchas.map((h) => h.saldo); });
+    // apartar y deshacer: lo mismo que hace el botón «Apartado» del plan
+    const rep = await page.evaluate((mk) => { const P = window.PG, a = P.ahorroS();
+      a.meses[mk].aparto = 750; P.apartarMes(mk);
+      const s1 = a.huchas.map((h) => h.saldo);
+      P.deshacerApartado(mk);
+      const s0 = a.huchas.map((h) => h.saldo);
+      P.apartarMes(mk);
+      P.store = JSON.parse(JSON.stringify(P.store));
+      return { s1, s0, vuelta: P.ahorroS().huchas.map((h) => h.saldo) }; }, base.mk);
     check('Dinero estima la nómina con las guardias de finde y reparte lo que apartas en las huchas',
-      base.finde === 2 && base.total === 3 && base.est === 3066 && /3066/.test(hero.replace(/\D/g, '')) &&
-      hubo.every(Boolean) && saldos1.join() === '375,225,150' && saldos0.join() === '0,0,0' &&
-      trasReto === 295 && vuelta.join() === '375,295,150',
-      JSON.stringify({ base, hero: hero.slice(0, 120), hubo, saldos1, saldos0, trasReto, vuelta }));
+      base.finde === 2 && base.total === 3 && base.est === 3066 &&
+      rep.s1.join() === '375,225,150' && rep.s0.join() === '0,0,0' && rep.vuelta.join() === '375,225,150',
+      JSON.stringify({ base, rep }));
     // un festivo entre semana cuenta como guardia de finde; el viernes normal, no
     const fest = await page.evaluate(() => {
       const P = window.PG, a = P.ahorroS();
@@ -6161,7 +6145,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; delete P.store.ahorro;
       const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
       P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
-      P.ui.dineroVista = 'apartar'; P.save(); P.render(); });
+      P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
   // ===================== Dinero → lo real: capturas de Fintonic =====================
@@ -6207,7 +6191,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // y de punta a punta, con el lector de verdad (vendor/ocr) sobre una captura que se dibuja aquí
     // mismo, al estilo de la pantalla de Inicio de Fintonic: subirla, revisar, guardar, verla en Dinero
-    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = 'apartar'; P.save(); });
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.save(); });
     await gotoTab('dinero');
     await page.waitForTimeout(250);
     const png = await page.evaluate(() => {
@@ -6238,7 +6222,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!input && leido && leido.estado === 'listo' && leido.pantalla && leido.banco && leido.banco.v === 1234 &&
       guardado && guardado.banco === 1234 && /1234 €/.test(tarjeta) && /nómina llega/.test(tarjeta),
       JSON.stringify({ leido, guardado, tarjeta: tarjeta.slice(0, 160) }));
-    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = 'apartar'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; delete P.store.ahorro; P.ui.fin = null; P.ui.dineroVista = ''; P.save(); P.render(); });
   }
 
   // ===================================================================================
@@ -7234,22 +7218,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 204) AHORRO CON OBJETIVO → SUEÑO DE VERDAD → INFORME → ESTUDIO, encadenados por la interfaz
   {
-    // ahorro: poner una meta y aplicar lo que recomienda
-    await page.evaluate(() => { const P = window.PG; const a = P.store.ahorro; delete a.meta;
-      P.ui.tab = 'dinero'; P.ui.dineroVista = 'apartar'; P.ui.ahoMetaEd = false; P.save(); P.render(); });
+    // ahorro: con una meta y una fecha, la cuenta de cuánto apartar al mes
+    const m0 = await page.evaluate(() => { const P = window.PG, a = P.store.ahorro;
+      a.meta = { importe: 10000, fecha: (new Date().getFullYear() + 1) + '-12', para: '' };
+      const c = P.metaCalc(); delete a.meta;
+      P.ui.tab = 'dinero'; P.ui.dineroVista = 'huchas'; P.ui.huchaEd = ''; P.save(); P.render();
+      return c && { rec: c.rec, falta: c.falta, meses: c.meses }; });
     await page.waitForTimeout(200);
-    await page.fill('#ahMetaImp', '10000');
-    await page.fill('#ahMetaFec', (new Date().getFullYear() + 1) + '-12');
-    await page.click('[data-a="aho-meta-ok"]');
-    await page.waitForTimeout(200);
-    const m0 = await page.evaluate(() => { const c = window.PG.metaCalc(); return c && { rec: c.rec, falta: c.falta, meses: c.meses }; });
-    const ap = await page.$('[data-a="aho-meta-aplicar"]');
-    if (ap) await ap.click();
-    await page.waitForTimeout(200);
-    const m1 = await page.evaluate(() => { const c = window.PG.metaCalc(); return c && { ritmo: c.ritmo, rec: c.rec, tarde: c.tarde }; });
-    check('ahorro: con una meta y una fecha, la app dice cuánto apartar al mes y lo aplica con un toque',
-      m0 && m0.rec > 0 && Math.abs(m0.rec * m0.meses - m0.falta) < m0.meses * 10 + 1 && m1 && m1.ritmo === m1.rec && !(m1.tarde > 0),
-      JSON.stringify({ m0, m1 }));
+    check('ahorro: con una meta y una fecha, la app dice cuánto apartar al mes',
+      m0 && m0.rec > 0 && Math.abs(m0.rec * m0.meses - m0.falta) < m0.meses * 10 + 1,
+      JSON.stringify({ m0 }));
     const hu = await page.$('[data-a="aho-hu-abrir"]');
     if (hu) await hu.click();
     await page.waitForTimeout(200);
