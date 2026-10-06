@@ -8170,7 +8170,7 @@ function renderConsumo(){
   const seg=function(lista,key,val,lab){return '<div class="cnseg">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
     return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="'+key+'" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+(x.length>2?x[1]+' '+x[2]:x[1])+'</button>';}).join('')+'</div>';};
   $('#main').innerHTML='<div class="grid mt cn">'+
-    '<div class="subcab"><h2 class="subtit">🌿 Consumo</h2><span class="sp"></span><button class="btn s" data-a="cn-vista" data-v="efectos">cómo te afecta ›</button></div>'+
+    '<div class="subcab"><h2 class="subtit">🌿 4:20</h2><span class="sp"></span><button class="btn s" data-a="cn-vista" data-v="efectos">cómo te afecta ›</button></div>'+
     '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
       '<div><b>'+String(S.g).replace('.',',')+' g</b><span>esta semana'+(S.n?' · '+String(Math.round(S.g/S.n*100)/100).replace('.',',')+' g/sesión':'')+'</span></div>'+
       '<div><b>'+consumoSin()+'</b><span>días seguidos sin</span></div></div>'+
@@ -8197,7 +8197,7 @@ function renderConsumoEfectos(){
   const fila=function(t,v,u,sub,malo,ancho){return '<div class="femic"><span>'+t+'</span><span class="t"><i class="'+(malo?'lo':'')+'" style="width:'+ancho+'%"></i></span><b>'+v+'</b></div><div class="mini femcon">'+sub+'</div>';};
   const pocos=E.dCon<3||E.dSin<3;
   $('#main').innerHTML='<div class="grid mt cn">'+
-    '<div class="subcab"><button class="btn s volver" data-a="cn-vista" data-v="">'+gymIco('atras','gico sm')+' Consumo</button><h2 class="subtit">Cómo te afecta</h2></div>'+
+    '<div class="subcab"><button class="btn s volver" data-a="cn-vista" data-v="">'+gymIco('atras','gico sm')+' 4:20</button><h2 class="subtit">Cómo te afecta</h2></div>'+
     '<div class="card"><div class="row"><span class="cap">LOS DÍAS CON SESIÓN, FRENTE A LOS DÍAS SIN</span><span class="sp"></span><span class="mini">4 semanas</span></div>'+
       (pocos?'<p class="mini" style="margin:4px 0 0">Aún hay pocos días para comparar ('+E.dCon+' con sesión y '+E.dSin+' sin, con comida apuntada). Sigue apuntando y en unas semanas sale aquí.</p>':
       (E.monchis!=null?fila('Monchis',(E.monchis>0?'+':'')+E.monchis,'kcal','kcal de monchis de más esos días',E.monchis>0,Math.min(100,Math.abs(E.monchis)/6)):'')+
@@ -18548,7 +18548,7 @@ function showDiet(res){
   return hits.length;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','Consumo'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','4:20'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','week','month']);
 const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
 /* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
@@ -18569,7 +18569,7 @@ function comerModosHTML(){
   return b('dia','Hoy','food-vista','')+b('semana','Semana','tab','types')+
     b('nevera','Nevera','food-vista','nevera2')+b('compra','Compra','tab','shop');}
 const DRAWER_GROUPS=[
-  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['consumo','🌿 Consumo'],['eventos','📌 Eventos'],['estudio','📚 Estudio']]],
+  ['Seguimiento',[['notas','📝 Notas'],['habitos','✅ Hábitos'],['dinero','💶 Dinero'],['consumo','🌿 4:20'],['eventos','📌 Eventos'],['estudio','📚 Estudio']]],
   ['Configuración',[['cfg','🕐 Turno y rotación'],['ajustes','⚙️ Ajustes'],['data','📤 Datos']]]
 ];
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
