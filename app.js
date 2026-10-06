@@ -21611,6 +21611,7 @@ const LP={
   fe:function(el){ui.feVer=el.dataset.id||'';ui.feCorr=false;render();},
   hab:function(el){habEdAbre(el.dataset.id);render();}};
 document.addEventListener('pointerdown',function(e){
+  _lpComido=false;   /* un toque nuevo no es el «fantasma» de soltar la pulsación larga anterior */
   const el=e.target&&e.target.closest?e.target.closest('#main [data-lp],#hojaDia [data-lp]'):null;
   if(!el||!LP[el.dataset.lp]||(ui.mesModo&&el.dataset.lp==='dia')||(navHojaAbierta()&&!el.closest('#hojaDia')))return;
   if(e.pointerType==='mouse'&&e.button!==0)return;

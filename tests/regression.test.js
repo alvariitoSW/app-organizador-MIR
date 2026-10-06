@@ -9801,6 +9801,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // el mismo nombre (hoja-modo) y no hacía nada; ahora pone el modo de tocar el otro día. Y cerrar con
   // el fondo cierra la hoja y deja limpio lo suyo.
   {
+    // la prueba anterior acaba con una pulsación larga: su «toque fantasma» se come durante 450 ms
+    await page.waitForTimeout(500);
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.mesModo = null; P.ui.hojaDia = P.iso(new Date()); P.ui.hojaVista = ''; P.render(); });
     const hay = await page.$('#hojaDia [data-a="hoja-mesmodo"][data-m="vac"]');
     if (hay) { await hay.click(); await page.waitForTimeout(120); }
