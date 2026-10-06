@@ -4985,11 +4985,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const dia = (n) => iso(P.addDays(lun, n));
       const guardia = S.shifts.filter((x) => /guardia/i.test(x.name))[0];
       const trabajo = S.shifts.filter((x) => x.id === 'sh-t')[0] || S.shifts.filter((x) => /trabajo/i.test(x.name))[0];
-      // la semana entera de trabajo y una guardia el jueves: el VIERNES sales de ella, así que
-      // ese día la rutina «toca» pero no vas a entrenar. Es el caso real que el aviso resuelve.
+      // la semana entera de trabajo y una guardia el jueves, con la rutina pegada también a la
+      // guardia: ese día «toca» pero no vas a entrenar. Es el caso que el aviso resuelve (el
+      // saliente del viernes SÍ se entrena: así lo decidió el usuario)
       for (let i = 0; i < 7; i++) P.setDayOverride(dia(i), trabajo.id);
       P.setDayOverride(dia(3), guardia.id, 'umi');
-      S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id],
+      S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id, guardia.id],
         ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 }] }];
       S.gym.registro = [
         // días relativos a HOY: con «el lunes y el martes de esta semana», un lunes el martes aún no
@@ -4997,7 +4998,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'gp1', fecha: iso(P.addDays(new Date(), -8)), ex: 'Press banca', kg: 60, reps: 8, ts: Date.now() },
         { id: 'gp2', fecha: iso(P.addDays(new Date(), -1)), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
       S.gym.sesiones = []; S.gym.cardio = []; S.gym.cambios = {};
-      P.ui.gymDate = dia(4); P.ui.gymPanel = '';
+      P.ui.gymDate = dia(3); P.ui.gymPanel = '';
       P.save();
       return { lunes: dia(0), jueves: dia(3), viernes: dia(4) };
     });
@@ -5040,7 +5041,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 4 · el aviso ya no solo avisa: trae el botón, se toca, y el cambio sobrevive a recargar.
     //     Todo lo que crea el arreglo puede no existir sin él: se lee con paréntesis de seguridad
     //     para que la prueba FALLE en vez de tumbar la suite entera.
-    await page.evaluate((v) => { const P = window.PG; P.ui.gymDate = v; P.render(); }, mont.viernes);
+    await page.evaluate((v) => { const P = window.PG; P.ui.gymDate = v; P.render(); }, mont.jueves);
     await page.waitForTimeout(300);
     const bot = await page.$('#main [data-a="gym-mover"]');
     let movido = { hubo: !!bot };
@@ -5058,7 +5059,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
           trasRecargar: JSON.stringify(P.store.gym.cambios || {}),
           rutinaEseDia: ((P.rutinaDeFecha(v) || {}).nombre) || null,
           sigueSonando: !!P.gymChoque(v) };
-      }, mont.viernes);
+      }, mont.jueves);
     }
     check('el entreno que cae en una guardia se mueve desde el propio aviso, y sigue movido al recargar',
       movido.hubo && movido.guardado !== '{}' && movido.guardado === movido.trasRecargar &&
