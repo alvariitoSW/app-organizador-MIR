@@ -13,6 +13,8 @@ const DAYN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'
 const DAYSH=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWN0=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];   /* indexado como Date#getDay() */
 const DIA3=['dom','lun','mar','mié','jue','vie','sáb'];   /* también como Date#getDay() */
+/* el segundo entreno de fábrica (natación los martes por la tarde): uno solo para todos */
+const GYM_SEGUNDO_DEF={on:true,dias:[2],tipo:'piscina',hora:'15:30'};
 /* franja de 24 h: un color fijo por categoría (no por tipo de día), configurable en Ajustes */
 const TLCAT=[['sleep','Dormir','#7c5cff'],['work','Trabajo','#f59e0b'],['guard','Guardia','#ef4444'],
              ['meal','Comidas','#10b981'],['gym','Gimnasio','#22d3ee'],['evt','Eventos','#a855f7']];
@@ -108,7 +110,7 @@ function DEFAULTS(){return {
   /* quién eres, que es lo que decide cuántas kcal necesitas y qué puedes comer */
   perfil:{celiaco:false,avenaSinGluten:true,alturaCm:0,pesoKg:0,sexo:'h',nacido:0,nacidoF:'',actividad:1.5,meta:'mantener',pesos:[]},
   gym:{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
-    segundo:{on:true,dias:[2],tipo:'piscina',hora:'15:30'}},
+    segundo:clone(GYM_SEGUNDO_DEF)},
   patterns:[
     {id:'pat1',name:'1 guardia · repartida',days:['G','S','T','T','F','L','L'],note:'Lunes guardia → martes saliente → miércoles y jueves de 8 a 15 → viernes con gym → finde en casa.'},
     {id:'pat2',name:'2 guardias · alternas',days:['G','S','F','G','S','T','L'],note:'Dos guardias con su saliente automático; el resto de laborables, de 8 a 15.'},
@@ -723,14 +725,14 @@ function normalize(o){
     lim[k]={tipo:v.tipo,kcal:Math.max(0,Math.min(6000,Math.round(+v.kcal||0)))};});
     o.food.diasEsp=lim;}
   if(!o.gym||typeof o.gym!=='object')o.gym=JSON.parse(JSON.stringify(d.gym||{biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],
-    segundo:{on:true,dias:[2,5],tipo:'piscina',hora:'15:30'}}));
+    segundo:clone(GYM_SEGUNDO_DEF)}));
   ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(o.gym[k]))o.gym[k]=[];});
   migrarRutinas(o.gym);
   if(!Array.isArray(o.gym.sesiones))o.gym.sesiones=[];
   if(!Array.isArray(o.gym.cardio))o.gym.cardio=[];
   if(!o.gym.segundo||typeof o.gym.segundo!=='object')
-    o.gym.segundo={on:true,dias:[2,5],tipo:'piscina',hora:'15:30'};
-  if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=[2,5];
+    o.gym.segundo=clone(GYM_SEGUNDO_DEF);
+  if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=GYM_SEGUNDO_DEF.dias.slice();
   /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
      aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
      Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
@@ -5548,9 +5550,9 @@ function informeDatos(lunKey){
   /* estudio: minutos apuntados, pomodoros y páginas de los libros */
   const estMin=estS().sesiones.filter(function(x){return ks.indexOf(x.fecha)>=0;}).reduce(function(a,x){return a+(+x.min||0);},0);
   let pags=0;librosS().forEach(function(b){(b.log||[]).forEach(function(l){if(ks.indexOf(l.f)>=0)pags+=(+l.p||0);});});
-  /* entreno: sesiones hechas frente a los días de fuerza que tocaban */
-  const ses=gymS().sesiones.filter(function(x){return ks.indexOf(x.fecha)>=0;}).length;
-  const tocaGym=ks.filter(function(k){const sh=shiftById(dayInfo(k).shiftId);return sh&&/fuerza|entreno|gym/i.test(sh.name||'');}).length;
+  /* entreno: días entrenados frente a los que tenía el plan de esa semana */
+  const ses=ks.filter(gymHechoEn).length;
+  const tocaGym=(entrenoSemana(ks[0])||{}).total||0;
   const mk=ks[6].slice(0,7),am=ahorroS().meses[mk],mc=metaCalc();
   return {ks:ks,sueno:s,metaS:c.min*7,cortas:s.dias.filter(function(d){return d.t!=null&&d.t<c.min-1;}).length,
     dieta:{con:conComida,obj:enObj,prot:conComida?Math.round(prot/conComida):0,tieneObj:!!ob.kcal},
@@ -5577,7 +5579,7 @@ function renderInforme(){
         tile('🍽','DIETA',d.dieta.tieneObj?d.dieta.obj:d.dieta.con,d.dieta.tieneObj?'/ 7 días':'días',d.dieta.con?((d.dieta.tieneObj?'en objetivo · ':'apuntados · ')+d.dieta.prot+' g P de media'):'sin apuntar')+
         tile('✅','HÁBITOS',d.hab.pct==null?'—':d.hab.pct,d.hab.pct==null?'':'%',d.hab.por.slice(0,2).map(function(x){return esc(x.h.nombre.toLowerCase())+' '+x.n+'/'+x.de;}).join(' · ')||'sin hábitos')+
         tile('📚','ESTUDIO',fmtHM(d.est.min),'',(d.est.pags?d.est.pags+' págs · ':'')+(hudLeer().pomos?(hudLeer().pomos+' 🍅 en el HUD'):'sin HUD enlazado'))+
-        tile('💪','ENTRENO',d.gym.ses,d.gym.toca?('/ '+d.gym.toca):'','sesiones hechas')+
+        tile('💪','ENTRENO',d.gym.ses,d.gym.toca?('/ '+d.gym.toca):'','días entrenados')+
         tile('💰','AHORRO',fmt(d.aho.aparto),'€',d.aho.rec?('objetivo '+esc(eur(d.aho.rec))+'/mes'):(d.aho.aparto?'apartado en '+esc(ahoMesTxt(d.aho.mes)):'nada apartado ese mes'))+
       '</div>'+
       (cats.length?('<div class="infli">👍 Lo mejor: '+esc(cats[0][2]+' '+cats[0][0])+' ('+Math.round(cats[0][1]*100)+' %)</div>'+
@@ -6721,14 +6723,14 @@ const GYM_DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
 function gymS(){
   if(!store.gym||typeof store.gym!=='object')
     store.gym={biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
-      segundo:{on:true,dias:[3],tipo:'piscina',hora:'15:30'}};
+      segundo:clone(GYM_SEGUNDO_DEF)};
   const g=store.gym;
   ['biblioteca','registro','fav'].forEach(function(k){if(!Array.isArray(g[k]))g[k]=[];});
   migrarRutinas(g);
   if(!Array.isArray(g.sesiones))g.sesiones=[];
   if(!Array.isArray(g.cardio))g.cardio=[];
-  if(!g.segundo||typeof g.segundo!=='object')g.segundo={on:true,dias:[3],tipo:'piscina',hora:'15:30'};
-  if(!Array.isArray(g.segundo.dias))g.segundo.dias=[3];
+  if(!g.segundo||typeof g.segundo!=='object')g.segundo=clone(GYM_SEGUNDO_DEF);
+  if(!Array.isArray(g.segundo.dias))g.segundo.dias=GYM_SEGUNDO_DEF.dias.slice();
   if(!g.marks||typeof g.marks!=='object')g.marks={};
   if(!Array.isArray(g.objetivos))g.objetivos=[];
   if(!g.cambios||typeof g.cambios!=='object'||Array.isArray(g.cambios))g.cambios={};
@@ -6961,14 +6963,14 @@ function entrenoSemana(key){
   const rs=gymS().rutinas,hayRut=rs.length>0;
   const dias=[];let guardias=0;
   for(let i=0;i<7;i++){const k=iso(addDays(lun,i)),inf=dayInfo(k),sh=shiftById(inf.shiftId);
-    const f=fz[k],guard=!!sh&&isGuardia(sh),vac=!!inf.vac||/vacacion/i.test((sh&&sh.name)||'');
+    const f=fz[k],no=motivoNoEntreno(k,inf),guard=no==='guardia';
     const sal=!guard&&(!!salidaDeGuardia(k)||esSaliente(sh));
     if(guard)guardias++;
     /* una rutina pegada A PROPÓSITO al tipo «Saliente» hace de ese día fuerza, no piscina */
     const b=rutinaDeFechaBase(k),conRut=!!b&&f!==false;
-    const tipo=guard||vac||!sh?'':(sal&&!conRut?'pisc':'fuerza');
+    const tipo=no||!sh?'':(sal&&!conRut?'pisc':'fuerza');
     const x={k:k,i:i,tipo:tipo,forz:f===true,quitado:f===false,base:false,seg:false,auto:false,choca:null,
-      motivo:!sh?'sin tipo de día':guard?'guardia':vac?'vacaciones':sal?'saliente':''};
+      motivo:!sh?'sin tipo de día':no||(sal?'saliente':'')};
     if(tipo){const v=ventanaEntreno(k,tipo,inf);x.hora=v.hora;x.dur=v.dur;x.choca=eventoQueChoca(k,v);}
     if(conRut&&tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
     const g2=diaSegundo(k,inf);if(g2.on&&f!==false)x.seg=true;
@@ -7146,18 +7148,15 @@ function duracionTipica(rid){
   if(!ss.length)return 45;
   return Math.round(ss.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ss.length)||45;}
 function terminarSesion(minutos,completo,nota){
-  const g=gymS();
+  /* «he terminado» de la pantalla de sesión: lo mismo que cerrar desde Entrenar (con hora de
+     inicio y fin, tipo y carga), y si dices tú si fue entera o parcial, manda lo que digas */
   if(!ui.gymSesionActiva)return 'no hay ninguna sesión en curso';
-  const sa=ui.gymSesionActiva,rt=rutinaPorId(sa.rutinaId);
-  const seriesIds=seriesDeSesion(sa.id).map(function(x){return x.id;});
-  const dur=Math.max(1,Math.min(600,Math.round(+minutos||duracionTipica(sa.rutinaId))));
-  const comp=(typeof completo==='boolean')?completo:(seriesIds.length>=sa.plan);
-  g.sesiones.push({id:sa.id,rutinaId:sa.rutinaId,fecha:sa.fecha,duracionMin:dur,seriesIds:seriesIds,
-    plan:+sa.plan||seriesIds.length,   /* cuántas había planeadas: el informe dice «3 de 6», no «3 de 3» */
-    completo:comp,nota:String(nota||'').slice(0,140)});
-  ui.gymSesionActiva=null;
+  const rt=rutinaPorId(ui.gymSesionActiva.rutinaId);
+  const ses=cerrarSesionCore(minutos,null,{nota:nota});
+  if(!ses)return 'no hay ninguna sesión en curso';
+  if(typeof completo==='boolean')ses.completo=completo;
   save();render();
-  return 'sesión guardada: '+(rt?rt.nombre:'')+' · '+seriesIds.length+' series · '+dur+' min'+(comp?' · entera':' · parcial');}
+  return 'sesión guardada: '+(rt?rt.nombre:'')+' · '+ses.seriesIds.length+' series · '+ses.duracionMin+' min'+(ses.completo?' · entera':' · parcial');}
 function descartarSesion(){
   const g=gymS();
   if(!ui.gymSesionActiva)return 'no hay ninguna sesión en curso';
@@ -7351,8 +7350,7 @@ function diaSegundo(dateStr,infOpt){
   const g=gymS(),k=foodKey(dateStr);
   if(!k)return {on:false,auto:false,tipo:g.segundo.tipo,hora:g.segundo.hora};
   const d=parseDate(k),mk=g.marks[k];
-  const sh=shiftById((infOpt||dayInfo(k)).shiftId||'');
-  const bloqueado=!!(sh&&(isGuardia(sh)||/saliente|vacacion|festiv/i.test(sh.name||'')));
+  const bloqueado=!!motivoNoEntreno(k,infOpt);
   const porSemana=!!(g.segundo.on&&!bloqueado&&d&&g.segundo.dias.indexOf(d.getDay())>=0);
   if(mk&&typeof mk.on==='boolean')
     return {on:mk.on&&!bloqueado,auto:false,tipo:mk.tipo||g.segundo.tipo,hora:mk.hora||g.segundo.hora,porSemana:porSemana};
@@ -7362,8 +7360,8 @@ function toggleSegundo(dateStr,forzar){
   const cur=diaSegundo(k),mk=g.marks[k]||{};
   const nuevo=(forzar===true||forzar===false)?forzar:!cur.on;
   g.marks[k]={on:nuevo,tipo:mk.tipo||g.segundo.tipo,hora:mk.hora||g.segundo.hora};
-  if(nuevo&&/guardia|saliente|vacacion|festiv/i.test((shiftById(dayInfo(k).shiftId||'')||{}).name||''))
-    return 'lo he dejado apuntado, pero ese día toca '+((shiftById(dayInfo(k).shiftId||'')||{}).name||'descanso')+' y no se entrena';
+  const no=motivoNoEntreno(k);
+  if(nuevo&&no)return 'lo he dejado apuntado, pero ese día es '+no+' y no se entrena';
   save();render();
   return (nuevo?'segundo entreno añadido el ':'segundo entreno quitado del ')+k.slice(8)+' '+MON[+k.slice(5,7)-1];}
 function toggleSegundoDia(ix){
@@ -7389,7 +7387,7 @@ function gymLine(dateStr){
   return '🏊 '+(g.tipo||'entreno')+(g.hora?(' '+g.hora):'')+(g.auto?'':' · puesto tú');}
 /* ===================== limpiar el entreno (con red de seguridad) ===================== */
 function gymWipe(que){
-  const g=gymS(),fab={on:true,dias:[2],tipo:'piscina',hora:'15:30'};
+  const g=gymS(),fab=GYM_SEGUNDO_DEF;
   const antes=clone(g);
   let n=0;
   if(que==='log'){n=g.registro.length;g.registro=[];ui.gymSesionActiva=null;}
@@ -11144,8 +11142,9 @@ function entrenoHeatmapCard(){
   const g=gymS(),hoy=new Date(),hoyK=iso(hoy);
   const inicio=addDays(mondayOf(hoy),-35);
   const porFecha={};
-  g.sesiones.forEach(function(s){porFecha[s.fecha]=Math.max(porFecha[s.fecha]||0,2);});
-  g.cardio.forEach(function(c){porFecha[c.fecha]=Math.max(porFecha[c.fecha]||0,1);});
+  /* fuerza (sesión o series sueltas) más fuerte; solo cardio, más suave */
+  g.cardio.forEach(function(c){porFecha[c.fecha]=1;});
+  gymDiasHechos().forEach(function(k){if(!porFecha[k]||g.sesiones.some(function(s){return s.fecha===k;})||setsDe(k).length)porFecha[k]=2;});
   const cells=[];
   for(let i=0;i<42;i++){const k=iso(addDays(inicio,i));cells.push({k:k,lvl:k>hoyK?-1:(porFecha[k]||0)});}
   const trained=cells.filter(function(c){return c.lvl>0;}).length;
@@ -11233,12 +11232,10 @@ function gymCtx(){
   return {g:g,hoy:hoy,sel:sel,d:d,q:q,hay:hay,filtroTipo:filtroTipo,filtroRegion:filtroRegion,res:res,
     sets:sets,sem:sem,maxvol:maxvol,nombres:nombres,enRutina:enRutina,opcEx:opcEx,prs:prs,sg:diaSegundo(sel)};}
 function gymDiasMes(){
-  /* días con algo apuntado en el mes en curso: fuerza o cardio */
-  const g=gymS(),m=iso(new Date()).slice(0,7),dias={};
-  g.sesiones.forEach(function(s){if(String(s.fecha||'').slice(0,7)===m)dias[s.fecha]=1;});
-  g.registro.forEach(function(s){if(String(s.fecha||'').slice(0,7)===m)dias[s.fecha]=1;});
-  g.cardio.forEach(function(s){if(String(s.fecha||'').slice(0,7)===m)dias[s.fecha]=1;});
-  return Object.keys(dias).length;}
+  /* días entrenados en el mes en curso */
+  const m=iso(new Date()).slice(0,7);let n=0;
+  gymDiasHechos().forEach(function(k){if(String(k).slice(0,7)===m)n++;});
+  return n;}
 function gymCardioSemana(){
   const g=gymS(),l=iso(mondayOf(new Date())),f=iso(addDays(mondayOf(new Date()),6));
   return g.cardio.filter(function(x){return x.fecha>=l&&x.fecha<=f;}).length;}
@@ -11362,21 +11359,30 @@ function pintaDescanso(){
     const caja=document.getElementById('gvDesc');
     if(caja)caja.classList.add('fin');
     n.textContent='ya';}}
-function gymDiaMalo(key,infOpt){
-  /* un día en el que no vas a entrenar aunque el calendario diga que toca: guardia o saliente */
-  const inf=infOpt||dayInfo(key),sh=shiftById(inf.shiftId);
+/* LOS DÍAS SIN ENTRENO, una sola regla para el plan de la semana, el segundo entreno, los avisos y
+   el informe: guardia, vacaciones y festivos. El saliente SÍ se entrena (piscina, o la rutina que le
+   hayas pegado). Antes cada parte decidía a su manera y un mismo día podía estar libre para la
+   fuerza y prohibido para la piscina. */
+function motivoNoEntreno(k,infOpt){
+  const inf=infOpt||dayInfo(k),sh=shiftById(inf.shiftId),nm=(sh&&sh.name)||'';
   if(sh&&isGuardia(sh))return 'guardia';
-  /* una rutina que pegaste A PROPÓSITO al tipo «Saliente» (o que moviste a ese día) no choca: la
-     elegiste tú, y el plan ya lo cuenta como fuerza. Ofrecer «moverla» era deshacer tu decisión */
-  if(esSaliente(sh))return rutinaDeFechaBase(key)?'':'saliente';
-  if(salidaDeGuardia(key))return 'saliente';
+  if(inf.vac||/vacacion/i.test(nm))return 'vacaciones';
+  if(/festiv/i.test(nm)||((store.ahorro||{}).festivos||[]).indexOf(k)>=0)return 'festivo';
   return '';}
-function gymHechoEn(key){
-  /* ¿hiciste algo ese día? series apuntadas, sesión cerrada o cardio */
-  const g=gymS();
-  if(setsDe(key).length)return true;
-  if(g.sesiones.some(function(s){return s.fecha===key;}))return true;
-  return g.cardio.some(function(x){return x.fecha===key;});}
+function gymDiaMalo(key,infOpt){
+  /* un día en el que no vas a entrenar aunque el calendario diga que toca */
+  return motivoNoEntreno(key,infOpt);}
+/* ¿ENTRENASTE ESE DÍA? Cualquier cosa cuenta: series apuntadas, una sesión cerrada o cardio. Es la
+   única regla de rachas, constancia, días del mes, el mapa de 6 semanas y el informe del lunes */
+let _ghTick=-1,_ghDias=null;
+function gymDiasHechos(){
+  if(_ghDias&&_ghTick===_renderTick)return _ghDias;
+  const g=gymS(),d=new Set();
+  Object.keys(gymIdx().byFecha).forEach(function(k){d.add(k);});
+  g.sesiones.forEach(function(s){if(s.fecha)d.add(s.fecha);});
+  g.cardio.forEach(function(x){if(x.fecha)d.add(x.fecha);});
+  _ghDias=d;_ghTick=_renderTick;return d;}
+function gymHechoEn(key){return gymDiasHechos().has(foodKey(key)||key);}
 function gymDiaEstado(key){
   /* el estado de un día para la tira de la semana, y la línea que lo explica al tocarlo */
   const inf=dayInfo(key),sh=shiftById(inf.shiftId),hoy=iso(new Date());
@@ -11544,10 +11550,9 @@ function fuerzaEstimada(nombre,desde,hasta){
   xs.forEach(function(x){const r=rmSerie(x);if(r>mejor)mejor=r;});
   return mejor;}
 function diasEntrenadosSemana(lunKey){
-  const g=gymS(),dias={};
-  for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lunKey),i));
-    if(setsDe(k).length||g.cardio.some(function(x){return x.fecha===k;}))dias[k]=1;}
-  return Object.keys(dias);}
+  const out=[];
+  for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lunKey),i));if(gymHechoEn(k))out.push(k);}
+  return out;}
 function rachaConstancia(meta){
   /* semanas seguidas, hacia atrás desde la anterior, en las que llegaste a tu número */
   let n=0;
@@ -11740,7 +11745,7 @@ function cruceEntreno(){
     const k=iso(addDays(parseDate(lun),7+i));
     if(gymDiaMalo(k))guardias++;else libres++;}
   if(guardias)out.push({cl:'aviso',txt:'La semana que viene tienes '+guardias+' día'+(guardias===1?'':'s')+
-    ' de guardia o saliente: te quedan '+libres+' huecos para entrenar.'});
+    ' sin entreno (guardia, vacaciones o festivo): te quedan '+libres+' huecos para entrenar.'});
   /* sueño: entrenar con menos de tu mínimo dos días seguidos es pedir peras al olmo */
   try{
     let cortos=0;
@@ -12276,6 +12281,7 @@ function renderGymPortada(){
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
+      gymFicha('biblioteca','lupa','Biblioteca',gymS().biblioteca.length||'—','ejercicios · limpiar')+
       gymFicha('sup','chispa','Suplementos',supsS().length?(supsS().filter(function(x){return supTomado(x.id,iso(new Date()));}).length+'/'+supsS().filter(function(x){return x.p!=='proteina'&&supTocaHoy(x,iso(new Date()));}).length):'—',supsS().length?'hoy':'con evidencia')+
     '</div>'+
     (gymCompleto()?'':'<div class="glnk"><button data-a="gym-modo" data-v="completo">ver más datos (modo completo)</button></div>')+
@@ -20039,7 +20045,7 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       const r=addSet(el.dataset.key,{ex:gv('setEx'),kg:gv('setKg'),reps:gv('setReps'),rpe:gv('setRpe'),nota:gv('setNota')});
       ui.gymEx=gv('setEx');render();flash(r);break;}
     case 'set-del':{const r=delSet(el.dataset.id);render();flash(r);break;}
-    case 'gym-seg-on':{const gg=gymS();gg.segundo.on=!gg.segundo.on;if(gg.segundo.on&&!gg.segundo.dias.length)gg.segundo.dias=[3];
+    case 'gym-seg-on':{const gg=gymS();gg.segundo.on=!gg.segundo.on;if(gg.segundo.on&&!gg.segundo.dias.length)gg.segundo.dias=GYM_SEGUNDO_DEF.dias.slice();
       render();flash(gg.segundo.on?'segundo día activado: se pondrá solo en los días marcados':'segundo día apagado');break;}
     case 'gym-seg-day':flash(toggleSegundoDia(+el.dataset.day));break;
     case 'gym-seg-hoy':{const r=toggleSegundo(el.dataset.key);flash(r);break;}
