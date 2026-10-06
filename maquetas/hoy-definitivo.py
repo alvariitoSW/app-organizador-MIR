@@ -44,7 +44,10 @@ def reloj(size=300,labels=False,centro=('AHORA · 10:58','Trabajo','quedan 4 h 0
     if labels:
         for a,b,col,ico,t,s in BLK+[(a,b,EVT,ico,t,'') for a,b,ico,t in EVTS]:
             m=(hm(a)+hm(b))/2;x,y=pt(c,c,R+w*(3.4 if col==EVT else 3.0),m)
-            g+=f'<text x="{x:.1f}" y="{y+4:.1f}" text-anchor="middle" font-size="12.5" font-weight="800" fill="{col}">{ico} {t.split(" ·")[0].replace("Curso bioestadística","Curso").replace("Simulación UCI","Simulación")}</text>'
+            anc='middle'
+            if x<size*0.22:anc,x='start',max(4,x-30)
+            elif x>size*0.78:anc,x='end',min(size-4,x+30)
+            g+=f'<text x="{x:.1f}" y="{y+4:.1f}" text-anchor="{anc}" font-size="12.5" font-weight="800" fill="{col}">{ico} {t.split(" ·")[0].replace("Curso bioestadística","Curso").replace("Simulación UCI","Simulación")}</text>'
         x,y=pt(c,c,R+w*2.6,hm('3:00'));g+=f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="middle" font-size="12" font-weight="800" fill="#8fa6c6">🌙 8h12</text>'
     c1,c2,c3=centro
     g+=f'<text x="{c}" y="{c-size*0.07:.0f}" text-anchor="middle" font-size="{size*0.036:.1f}" font-weight="900" letter-spacing="1.5" fill="#8fa6c6">{c1}</text>'
@@ -155,5 +158,18 @@ sh2=('<div class="scrim"></div><div class="sheet"><div class="grab"></div>'
   '<p class="qa"><b>Por qué a esta hora:</b> entrenas de 18:30 a 19:45 y llegas a casa a las 20:00.</p>'
   '<div class="acts"><span class="p">✓ Comido</span><span>🔁 Cambiar plato</span><span>🕐 Mover hora</span><span>🚫 Hoy no</span></div></div>')
 out+=ab('S2',HEAD+reloj(250,centro=('20:00','Comida','🥗 hasta 21:30'))+sh2,'')
+
+# ---------- B+C juntos
+SEGR='<div class="seg2"><b>◷ Reloj</b><span>☰ Línea</span></div>'
+SEGL='<div class="seg2"><span>◷ Reloj</span><b>☰ Línea</b></div>'
+SIG=('<div class="sig"><div><small>AHORA</small><b>💼 Trabajo</b><br><span>📌 Simulación hasta 12:00</span></div><div><small>LUEGO</small><b>🥪 12:30</b><br><span>media mañana <b style="color:#10b981">○</b></span></div><div><small>DESPUÉS</small><b>📌 16:30</b><br><span>curso</span></div></div>')
+QUEDA=('<div class="ag" style="margin-top:8px">'+fila('12:30',MEAL,'🥪 Media mañana','yogur griego con avena','<span class="ck">✓</span>')+
+  fila('18:30',GYM,'💪 Rutina 2','6 ejercicios · 75 min','<span class="go">▶ empezar</span>')+
+  fila('20:00',MEAL,'🥗 Comida en casa','516 kcal · 51 g P','<span class="ck">✓</span>')+'</div>')
+out+=ab('J1',HEAD+SEGR+reloj(340,labels=True)+SIG+QUEDA,'')
+mini2=reloj(70,centro=('','',''))
+out+=ab('J2',HEAD+SEGL+tl(),'')
+out=out.replace('</style>','.seg2{display:flex;background:#111a2b;border:1px solid #1e2b44;border-radius:99px;padding:3px;margin:6px 0 2px}.seg2>*{flex:1;text-align:center;font-size:13px;font-weight:800;padding:6px;border-radius:99px;color:#8fa6c6}.seg2 b{background:linear-gradient(90deg,#38e1ff,#7c5cff);color:#04121c}.abx{height:auto!important}</style>',1)
+out+=('<div class="wrap"><div class="ab abx">'+TOP+HEAD+reloj(300,labels=True)+SIG+'<div class="cap" style="margin-bottom:18px">EL DÍA</div>'+tl()+'<div style="height:16px"></div></div></div>\n')
 open('/home/user/app-organizador-MIR/maquetas/hoy-definitivo.html','w').write(out)
 print('ok')
