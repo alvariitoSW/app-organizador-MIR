@@ -9899,9 +9899,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // apagado y su tira con acciones debajo), arrastrar recorre el día con la aguja, mantener pulsado
   // abre la hoja y tocar el centro vuelve a «ahora». Se conduce con el ratón de verdad.
   {
-    await page.evaluate(() => { const P = window.PG; window.__copia244 = JSON.parse(JSON.stringify(P.store)); const k = P.iso(new Date());
-      P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: '16:30', fin: '19:30', modo: 'fecha', fecha: k, on: true });
-      P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); });
+    // el evento va a una hora sin comidas a menos de hora y media: una comida en el mismo sitio gana (es la que se pinta encima)
+    const H = await page.evaluate(() => { const P = window.PG; window.__copia244 = JSON.parse(JSON.stringify(P.store)); const k = P.iso(new Date());
+      const com = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal').map((x) => x.m2 % 1440);
+      const h = [17, 11, 3, 19, 13, 9, 22, 1].find((h) => com.every((m) => Math.min(Math.abs(m - h * 60), 1440 - Math.abs(m - h * 60)) > 100)) || 17;
+      P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: P.hm(h * 60 - 60), fin: P.hm(h * 60 + 60), modo: 'fecha', fecha: k, on: true });
+      P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); return h * 60; });
     await page.waitForTimeout(150);
     const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 340 / s.width, t = m / 1440 * 2 * Math.PI;
       return { x: s.left + (150 + r * Math.sin(t) + 20) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
@@ -9910,12 +9913,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         dim: document.querySelector('#main .hoyreloj').classList.contains('dim'), tira: (document.querySelector('#hoyTira') || {}).innerText || '',
         centro: [...document.querySelectorAll('#main .hoyreloj svg > text')].map((x) => x.textContent).join('|') }; });
     const tap = async (m, r) => { const q = await pt(m, r); await page.mouse.move(q.x, q.y); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(120); };
-    // en la franja de dentro, a las 18:00, al lado del arco (no encima): elige el evento
-    await tap(18 * 60, 80);
+    // en la franja de dentro, a la hora del evento, al lado del arco (no encima): elige el evento
+    await tap(H, 80);
     const toque = await est();
-    // arrastrar por el anillo de las 10 a las 17:30: la aguja va con el dedo y el centro dice la hora
-    let q = await pt(10 * 60, 92); await page.mouse.move(q.x, q.y); await page.mouse.down();
-    for (let m = 10 * 60; m <= 17.5 * 60; m += 30) { q = await pt(m, 92); await page.mouse.move(q.x, q.y); }
+    // arrastrar por el reloj cinco horas, hasta media hora dentro del evento: la aguja va con el dedo y el centro dice la hora
+    let q = await pt(H - 300, 92); await page.mouse.move(q.x, q.y); await page.mouse.down();
+    for (let m = H - 300; m <= H + 30; m += 30) { q = await pt(m, 92); await page.mouse.move(q.x, q.y); }
     const arrastre = await est();
     await page.mouse.up(); await page.waitForTimeout(120);
     const suelto = await est();
@@ -9923,13 +9926,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await tap(0, 10);
     const centro = await est();
     // mantener pulsado abre la hoja
-    q = await pt(17 * 60, 88); await page.mouse.move(q.x, q.y); await page.mouse.down(); await page.waitForTimeout(800); await page.mouse.up(); await page.waitForTimeout(500);
+    q = await pt(H - 30, 88); await page.mouse.move(q.x, q.y); await page.mouse.down(); await page.waitForTimeout(800); await page.mouse.up(); await page.waitForTimeout(500);
     const mantener = await est();
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.ui.hoySel = null; P.store = window.__copia244; P.save(); P.ui.hoyModo = 'linea'; P.render(); });
     check('"Hoy": tocar cerca de un evento en el reloj lo elige, lo resalta, apaga lo demás y saca su tira con acciones',
       toque.sel === 'Curso 244' && toque.on >= 1 && toque.dim && /Curso 244/.test(toque.tira) && /ver todo/.test(toque.tira) && !toque.hoja, JSON.stringify(toque));
     check('"Hoy": arrastrar por el reloj lleva la aguja con el dedo y el centro dice qué hay a esa hora; al soltar se queda elegido',
-      arrastre.cur != null && /17:\d\d\|Curso 244/.test(arrastre.centro) && suelto.cur == null && suelto.sel === 'Curso 244', JSON.stringify({ arrastre, suelto }));
+      arrastre.cur != null && /\d:\d\d\|Curso 244/.test(arrastre.centro) && suelto.cur == null && suelto.sel === 'Curso 244', JSON.stringify({ arrastre, suelto }));
     check('"Hoy": tocar el centro del reloj vuelve a «ahora» y mantener pulsado abre la hoja',
       centro.sel === '' && !centro.dim && /AHORA/.test(centro.centro) && mantener.hoja && mantener.sel === 'Curso 244', JSON.stringify({ centro, mantener }));
   }
