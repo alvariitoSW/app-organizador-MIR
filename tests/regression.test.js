@@ -4988,7 +4988,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // la semana entera de trabajo y una guardia el jueves, con la rutina pegada también a la
       // guardia: ese día «toca» pero no vas a entrenar. Es el caso que el aviso resuelve (el
       // saliente del viernes SÍ se entrena: así lo decidió el usuario)
-      for (let i = 0; i < 7; i++) P.setDayOverride(dia(i), trabajo.id);
+      /* dos semanas de trabajo con UNA guardia, el jueves: si no, la guardia de la semana siguiente
+         sería otro choque y taparía la confirmación del movido */
+      for (let i = 0; i < 14; i++) P.setDayOverride(dia(i), trabajo.id);
       P.setDayOverride(dia(3), guardia.id, 'umi');
       S.gym.rutinas = [{ id: 'rtP', nombre: 'Torso A', notas: '', dias: [trabajo.id, guardia.id],
         ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Dominadas', series: 4, reps: 8 }] }];
@@ -5081,7 +5083,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((m) => {
       const P = window.PG;
       P.store.gym.rutinas = []; P.store.gym.registro = []; P.store.gym.cambios = {};
-      for (let i = 0; i < 7; i++) P.setDayOverride(P.iso(P.addDays(P.parseDate(m.lunes), i)), null);
+      for (let i = 0; i < 14; i++) P.setDayOverride(P.iso(P.addDays(P.parseDate(m.lunes), i)), null);
       P.ui.gymPanel = ''; P.ui.gymDate = ''; P.save(); P.render();
     }, mont);
   }

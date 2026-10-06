@@ -4945,7 +4945,10 @@ function hoyTresHTML(it,n,key){
     caja('DESPUÉS',sig[1],sig[1]?de(sig[1]):'<b>—</b><span></span>')+'</div>';}
 function hoyQuedaHTML(it,key,n){
   /* lo que queda por hacer (comidas sin apuntar, el entreno, los eventos que vienen) y lo hecho, plegado */
-  const hecho=function(x){return n>=0&&(x.hecha||(x.fin?finMin(x)<=n:x.m2<n));};
+  /* una comida sin apuntar o el entreno sin hacer siguen pendientes aunque haya pasado su hora:
+     aún puedes apuntarla o entrenar; lo demás (eventos, trabajo) se da por hecho al pasar */
+  const hecho=function(x){if(x.tipo==='meal'&&x.conPlatos||x.tipo==='gym'&&x.rt)return !!x.hecha;
+    return n>=0&&(x.hecha||(x.fin?finMin(x)<=n:x.m2<n));};
   const pend=it.filter(function(x){return !hecho(x)&&(x.tipo==='meal'||x.tipo==='gym'||x.tipo==='evt');});
   const ya=it.filter(hecho);
   return (pend.length?'<div class="hlst">'+pend.map(function(x){return hoyFilaHTML(x,key,n);}).join('')+'</div>':'')+
