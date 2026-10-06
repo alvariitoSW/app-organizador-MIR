@@ -84,6 +84,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       await page.click('[data-a="nav-cal"]');
       await page.waitForTimeout(80);
       await page.click(`#calModes button[data-t="${tab}"]`);
+      /* la Semana abre ahora en «Agenda» (eventos, rutina y hábitos); estas pruebas miran la vista
+         por horas, que sigue a un toque */
+      if (tab === 'week') await page.evaluate(() => { const P = window.PG; if (P.ui.semVista !== 'horas') { P.ui.semVista = 'horas'; P.render(); } });
     } else if (COMER_TABS.has(tab)) {
       // se entra por «Comer» y de ahí a su modo; los que no tienen modo propio (import) se piden
       // por la vista que los contiene
@@ -877,7 +880,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (de noche) no hay línea, y la prueba fallaba según a qué hora se pasara. Se compara con lo que
   // TOCA a esta hora, calculado aparte.
   const hoyBarra = await page.evaluate(() => { const P = window.PG, k = P.fechaHoy(), d = new Date();
-    const n = d.getHours() * 60 + d.getMinutes(), r = P.rangoCarril(P.bloquesDelDia(k));
+    const n = d.getHours() * 60 + d.getMinutes(), r = P.rangoCarril(P.bloquesDelDia(k), k);
     return { barra: !!document.querySelector('#main .carrilbox .carril'),
       ahora: !!document.querySelector('#main .carril .cnow'), toca: n >= r.de && n <= r.a }; });
   check('"Hoy" enseña el día como carril de horas, con la línea de ahora cuando cae dentro del día',
@@ -3013,6 +3016,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // expresión regular /whey|prote/ o /Caf|fruta/: si tu desayuno no se llamaba así, no entraba.
   // Se encadena de verdad: se mira la lista, se mete el plato desde el menú y se vuelve a mirar.
   {
+    /* con «Esta semana» la compra mira hasta la próxima salida: aquí, la semana entera, que el plato
+       de prueba va en un día cualquiera */
+    const cada0 = await page.evaluate(() => { const v = window.PG.store.food.compraCada; window.PG.store.food.compraCada = 7; window.PG.save(); return v; });
     await gotoTab('shop');
     await page.waitForTimeout(250);
     const antesC = await page.evaluate(() => ({
@@ -3071,6 +3077,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !/aguacate/i.test(antesC.txt) && despuesC.frescoConOrigen === despuesC.fresco &&
       despuesC.sinMediasPiezas && sinReceta.haySeccion && sinReceta.sale,
       JSON.stringify({ antes: antesC.lineas, despuesC, sinReceta }));
+    await page.evaluate((v) => { const P = window.PG; if (v == null) delete P.store.food.compraCada; else P.store.food.compraCada = v; P.save(); }, cada0);
   }
 
   // 47g) el menú de un tipo de día no se sale de la pantalla. Fallo real medido antes del rediseño:
@@ -3621,7 +3628,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // días en la primera pantalla, y debajo el detalle día a día. Lo que no puede pasar —y es lo
     // que fijaba esta prueba— es que lo primero sea un muro de ajustes.
     check('Semana empieza por la rejilla de los siete días, con hoy marcado, el sueño de cada uno y el sol arriba',
-      sem.rejilla >= 0 && sem.rejilla < 170 && sem.colsRejilla === 7 &&
+      /* +44 px: el selector «Agenda / Por horas» va encima de la rejilla */
+      sem.rejilla >= 0 && sem.rejilla < 220 && sem.colsRejilla === 7 &&
       sem.rejilla < sem.antesDelPrimerDia &&
       sem.kpis === 3 && sem.sinConfig && sem.irACfg &&
       sem.chipHoy && sem.fondoDistinto && sem.sol === 7 && sem.solCab && sem.noche >= 7, JSON.stringify(sem));
@@ -4305,7 +4313,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /* lunes y martes: antes del sueño va la puerta del informe de la semana */
       dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar === dia.sueno + 1 && dia.tareas === dia.entrenar + 1 && dia.pagar > dia.tareas &&
       dia.comidas > dia.pagar && dia.sol > dia.comidas &&
-      dia.alto < 2700 && dia.ancho <= 412, JSON.stringify(dia));
+      /* el reloj de 24 h (≈300 px) y «lo siguiente» entran arriba: el tope sube a 3.100 */
+      dia.alto < 3100 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
       const P = window.PG;
       P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 };
@@ -5438,7 +5447,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la tarjeta de «ahora / siguiente» solo tiene sentido en el día de HOY, no en el laborable que
     // se estaba mirando con las flechas: se comprueba al volver, y a cualquier hora —a las once de
     // la noche ya no queda nada por hoy y aun así tiene que decir qué es lo siguiente
-    const cajaAhora = await page.evaluate(() => !!document.querySelector('#main .hoyahora'));
+    const cajaAhora = await page.evaluate(() => !!document.querySelector('#main .hoyreloj'));
     check('«Hoy» lleva siempre la tarjeta de ahora y lo siguiente, a cualquier hora del día',
       cajaAhora, String(cajaAhora));
   }
@@ -6255,10 +6264,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.setPerfil('nacidoF', '1998-10-06');
       return { edad: P.edadHoy(), perder, mantener, ganar, sinEdad }; });
     // 10·95 + 6,25·179 − 5·27 + 5 = 1938,75 → 1939;  ×1,55 = 3005;  −18 % = 2464 → 2460
-    const basalManual = Math.round(10 * 95 + 6.25 * 179 - 5 * 27 + 5);
+    /* la edad sale del día en que se pase la prueba (el 6 de octubre cumple) */
+    const hoyT = new Date(), edadT = hoyT.getFullYear() - 1998 - ((hoyT.getMonth() < 9 || (hoyT.getMonth() === 9 && hoyT.getDate() < 6)) ? 1 : 0);
+    const basalManual = Math.round(10 * 95 + 6.25 * 179 - 5 * edadT + 5);
     const gastoManual = Math.round(basalManual * 1.55);
     check('las kcal salen de Mifflin-St Jeor y cuadran con la cuenta hecha a mano',
-      calc.edad === 27 && calc.perder.b === basalManual && calc.perder.g === gastoManual &&
+      calc.edad === edadT && calc.perder.b === basalManual && calc.perder.g === gastoManual &&
       calc.perder.k === Math.round(gastoManual * 0.82 / 10) * 10 && calc.perder.pr === 190 &&
       calc.mantener.k === Math.round(gastoManual / 10) * 10 && calc.mantener.pr === 150 &&
       calc.ganar.k > calc.mantener.k && calc.ganar.pr === 170 &&
@@ -6590,14 +6601,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const bajo = await page.evaluate(() => { const P = window.PG;
       P.ui.tab = 'hoy'; P.render(); const h = document.querySelector('#main .carrilbox');
       const hoy = h ? Math.round(h.getBoundingClientRect().height) : -1;
-      P.ui.tab = 'week'; P.render(); const w = document.querySelector('#main .semrej .carrilbox');
+      P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render(); const w = document.querySelector('#main .semrej .carrilbox');
       return { hoy, sem: w ? Math.round(w.getBoundingClientRect().height) : -1,
         guardado: P.store.franja.alto }; });
     // y el ajuste SOBREVIVE a recargar: normalize() tira los campos que no reconoce
     const traNormalize = await page.evaluate(() => { const P = window.PG;
       P.store = JSON.parse(JSON.stringify(P.store)); P.save(); return P.store.franja.alto; });
     await page.evaluate(() => { const P = window.PG; P.store.franja.alto = 'medio'; P.save();
-      P.ui.tab = 'week'; P.render(); });
+      P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render(); });
     await page.waitForTimeout(250);
     check('el alto del carril se cambia en Ajustes, manda en Hoy y en la semana, y aguanta recargar',
       altoUI.hay && altoUI.valor === 'medio' && bajo.guardado === 'bajo' &&
@@ -8716,7 +8727,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const ver = () => page.evaluate(() => { const t = (document.querySelector('#main') || {}).innerText || '';
       return { aviso: /AVISO215/.test(t), sindia: /SINDIA215/.test(t) }; });
     const mes = await ver();
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semDesde = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.ui.semDesde = ''; P.render(); });
     const semana = await ver();
     await page.evaluate((K) => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = K; P.render(); }, K);
     const hoy = await ver();
@@ -9813,6 +9824,42 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.mesModo = null; P.ui.tab = 'hoy'; P.render(); });
     check('«Vacaciones desde aquí…» de la hoja del día pone su modo (no el de Dinero) y el fondo cierra la hoja',
       !!hay && modo.m === 'vac' && !modo.hoja && modo.din === '' && cerrada.h === '' && !cerrada.dom, JSON.stringify({ hay: !!hay, modo, cerrada }));
+  }
+
+  // 242) HOY COMO RELOJ Y SEMANA CON RUTINA Y HÁBITOS: Hoy pinta el reloj de 24 h; un evento que cae en
+  // una guardia se avisa y «quitar solo este día» lo salta ese día; Semana abre en «Agenda» con una
+  // tarjeta por día (eventos, rutina del tipo de día, hábitos que tocan); un hábito marcado «no en
+  // guardia» no toca ese día y no rompe la racha; la rutina se edita por tipo de día
+  {
+    const r = await page.evaluate(() => { const P = window.PG; window.__copia242 = JSON.parse(JSON.stringify(P.store));
+      /* el próximo día de guardia (si no hay ninguno en 30 días, se deja la parte de choques sin probar) */
+      let kg = null; for (let i = 0; i < 30; i++) { const k = P.iso(P.addDays(new Date(), i)); if (P.diaTipo(k) === 'guardia') { kg = k; break; } }
+      P.store.habitos = { items: [{ id: 'h242', nombre: 'Estudio', icono: '📚', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: ['guardia'], auto: '' }], registro: {} };
+      if (kg) P.store.eventos.push({ id: 'ev242', titulo: 'Clase 242', hora: '19:00', fin: '20:00', modo: 'semanal', dow: [P.parseDate(kg).getDay()], on: true });
+      P.save(); return { kg, toca: kg ? P.habitoToca(P.store.habitos.items[0], kg) : null, choque: kg ? P.hoyChoques(kg, P.dayInfo(kg)).map((x) => x.e.id) : [] }; });
+    if (r.kg) await page.evaluate((kg) => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.diaHoy = kg; P.render(); }, r.kg);
+    else await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForTimeout(150);
+    const hoy = await page.evaluate(() => ({ reloj: !!document.querySelector('#main .hoyreloj svg path'), choque: !!document.querySelector('#main [data-a="ev-salta"]') }));
+    if (hoy.choque) { await page.click('#main [data-a="ev-salta"]'); await page.waitForTimeout(120); }
+    const saltado = await page.evaluate((kg) => !kg || window.PG.eventosS().find((e) => e.id === 'ev242').salta.includes(kg), r.kg);
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'week'; P.ui.semVista = ''; P.ui.semDesde = ''; P.render(); });
+    await page.waitForTimeout(150);
+    const sem = await page.evaluate(() => ({ tarjetas: document.querySelectorAll('#main .sdc').length, tira: document.querySelectorAll('#main .ssp').length,
+      rutina: document.querySelectorAll('#main .sdc .sdr span').length, matriz: !!document.querySelector('#main .shm'), hoyHab: !!document.querySelector('#main .sdc.hoy .sdhb [data-a="hab-mark"]') }));
+    const bh = await page.$('#main .sdc.hoy .sdhb [data-a="hab-mark"]'); if (bh) { await bh.click(); await page.waitForTimeout(100); }
+    const marcado = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return !!(P.store.habitos.registro[k] || {}).h242; });
+    await page.click('#main [data-a="sem-vista"][data-v="rutina"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="rut-tipo"][data-t="libre"]'); await page.waitForTimeout(80);
+    await page.fill('#rutTxt', 'leer un rato'); await page.click('#main [data-a="rut-add"]'); await page.waitForTimeout(100);
+    const rut = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      return (n.rutinas.libre || []).some((a) => a.txt === 'leer un rato' && a.ico === '📚'); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia242; P.save(); P.ui.semVista = ''; P.ui.rutTipo = ''; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
+    check('Hoy pinta el reloj de 24 h, avisa del evento que cae en guardia y «quitar solo este día» lo salta ese día',
+      hoy.reloj && (!r.kg || (r.choque.includes('ev242') && hoy.choque && saltado)), JSON.stringify({ r, hoy, saltado }));
+    check('Semana abre en Agenda: tira de días, una tarjeta por día con su rutina, hábitos a un toque; «no en guardia» no toca ese día; la rutina se edita por tipo y se guarda',
+      sem.tira === 7 && sem.tarjetas >= 7 && sem.rutina >= 7 && sem.matriz && marcado && (r.kg ? r.toca === false : true) && rut,
+      JSON.stringify({ sem, marcado, toca: r.toca, rut }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
