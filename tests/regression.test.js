@@ -7266,10 +7266,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('huchas: se abre una cada vez (antes 21 campos a la vez)', campos > 0 && campos <= 8, String(campos));
 
     // sueño de verdad, en Hoy: dormí mal y se desveló una hora
+    // (ahora va en la hoja de la noche, plegado bajo «o escribe las horas»)
     await page.evaluate(() => { const P = window.PG; P.suenoRealS()[P.iso(new Date())] = undefined; delete P.suenoRealS()[P.iso(new Date())];
       P.ui.sd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
     await page.waitForTimeout(250);
-    const hayCard = await page.evaluate(() => !!document.querySelector('.sncard [data-a="sn-guardar"]'));
+    const anotar = await page.$('.snhoy [data-a="sn-hoja"]');
+    if (anotar) await anotar.click();
+    await page.waitForTimeout(200);
+    await page.click('.hoja .snescribe summary'); await page.waitForTimeout(100);
+    const hayCard = await page.evaluate(() => !!document.querySelector('.hoja [data-a="sn-guardar"]'));
     await page.evaluate(() => { const d = window.PG.ui.sd; if (d && d.guardia) { const b = document.querySelector('[data-a="sn-modo"]'); if (b) b.click(); } });
     await page.waitForTimeout(150);
     await page.fill('[data-a="sn-t"][data-k="acostar"]', '23:30');
@@ -7297,7 +7302,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.suenoRealS()[ayer] = { h: 2, guardia: true, ratos: true, siesta: 4 }; P.save();
       const s = P.suenoSemana(ayer); const d = s.dias.filter((x) => x.k === ayer)[0];
       return { total: d.t, guardia: d.r.guardia }; });
-    const bInf = await page.$('.sncard [data-a="hoy-informe"]');
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.render(); });
+    await page.waitForTimeout(150);
+    const bInf = await page.$('#main .snest [data-a="hoy-informe"]');
     if (bInf) await bInf.click();
     await page.waitForTimeout(250);
     const tiles = await page.evaluate(() => document.querySelectorAll('#main .inftile').length);
@@ -8900,39 +8907,42 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
   // 218) SUEÑO, DINERO Y COMER SANO, encadenado:
-  // · la deuda de sueño suma las noches cortas y la guardia (a ratos cuenta la mitad), resta como
-  //   mucho 2 h por noche y sale en Hoy y en el «listo» del entreno; la hoja apunta una noche
+  // · el sueño ya no se cuenta como deuda: «cómo llegas» mira las 3 últimas noches (a ratos cuenta la
+  //   mitad) y sale en Hoy, en Sueño y en el «listo» del entreno; la noche se apunta dibujándola
   // · un gasto de ahorros baja SOLO el bolsillo del que sale (y lo que falta, del que elijas); el
   //   intocable no se toca; «Mi plan» suma siempre 100 y el intocable no baja de 50
   // · Comer sano: si falta proteína te propone extras y «aplicar la mejor» llega a la meta
   {
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.dineroVista = ''; P.render(); });
     const sn = await page.evaluate(() => { const P = window.PG, sr = P.store.suenoReal = {}, hoy = new Date();
-      // todas las noches apuntadas (8 h), para que las guardias del calendario no cuenten como estimadas
-      for (let i = 5; i < 14; i++) sr[P.iso(P.addDays(hoy, -i))] = { h: 8, guardia: false };
-      // 5 noches: 6 h, guardia (2 h a ratos + 3 h de siesta), 10 h, 7 h, 12 h
-      [[6], [2, true, 3], [10], [7], [12]].forEach((x, i) => { const k = P.iso(P.addDays(hoy, i - 4));
-        sr[k] = x[1] ? { h: x[0], guardia: true, ratos: true, siesta: x[2] } : { h: x[0], guardia: false }; });
-      P.save(); P.render(); const d = P.suenoDeuda(P.iso(hoy));
-      const r = { deuda: d.deuda, src: d.src, card: !!document.querySelector('.dsuhoy') };
-      // con 12 h de deuda (tres noches de 4 h), el «listo» lo dice
-      const k2 = P.iso(P.addDays(hoy, -20)), sr2 = {}; for (let i = 0; i < 14; i++) sr2[P.iso(P.addDays(hoy, -20 - i))] = { h: i < 3 ? 4 : 8, guardia: false };
-      const antes = P.store.suenoReal; P.store.suenoReal = sr2; r.listoAlta = /deuda de sueño 12 h/.test(P.listoDe(k2).motivos.join(' | '));
-      P.store.suenoReal = antes; return r; });
-    // 8−6=2 → +(8−(1+3))=4 → 6 → −2 (10 h) → 4 → +1 → 5 → −2 (12 h, tope) → 3
-    await page.click('.dsuhoy'); await page.waitForTimeout(120);
-    const vista = await page.evaluate(() => ({ big: (document.querySelector('.dsubig') || {}).textContent || '', barras: document.querySelectorAll('.dsubars button').length }));
-    await page.click('.dsubars button:last-child'); await page.waitForTimeout(120);
-    await page.click('.hoja [data-a="sn-h"][data-v="6"]'); await page.waitForTimeout(80);
-    const prev = await page.evaluate(() => (document.querySelector('.dsuhd') || {}).textContent || '');
-    await page.click('.hoja [data-a="sn-guardar"]'); await page.waitForTimeout(120);
-    const trasHoja = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja'), deuda: window.PG.suenoDeuda(window.PG.iso(new Date())).deuda }));
+      for (let i = 3; i < 14; i++) sr[P.iso(P.addDays(hoy, -i))] = { h: 8, guardia: false };
+      // las 3 últimas: 6 h, guardia (2 h a ratos + 3 de siesta → cuenta 4) y 5 h = 15 de 24
+      sr[P.iso(P.addDays(hoy, -2))] = { h: 6, guardia: false };
+      sr[P.iso(P.addDays(hoy, -1))] = { h: 2, guardia: true, ratos: true, siesta: 3 };
+      sr[P.iso(hoy)] = { h: 5, guardia: false };
+      P.save(); P.render(); const st = P.suenoEstado(P.iso(hoy));
+      return { nivel: st.nivel, suma: st.suma, card: (document.querySelector('.snhoy') || {}).textContent || '',
+        listo: P.listoDe(P.iso(hoy)).motivos.join(' | '), deuda: typeof P.suenoDeuda };});
+    await page.click('.snhoy .snhoyc'); await page.waitForTimeout(150);
+    const vista = await page.evaluate(() => ({ est: !!document.querySelector('.snest'), barras: document.querySelectorAll('.snest .sn3').length,
+      deuda: /deuda/i.test(document.getElementById('main').innerText) }));
+    // anotar dibujando: de 23:00 a 7:00 sobre la franja, y lo despejado que estás (3)
+    await page.click('.snest .sn3:last-child'); await page.waitForTimeout(200);
+    const pt = (t) => page.evaluate((t) => { const b = document.querySelector('#snTramos svg').getBoundingClientRect();
+      return { x: b.left + (8 + (t - 18) / 24 * 336) / 352 * b.width, y: b.top + 30 / 70 * b.height }; }, t);
+    const p0 = await pt(23.02), p1 = await pt(30.98);
+    await page.mouse.move(p0.x, p0.y); await page.mouse.down(); await page.mouse.move(p1.x, p1.y, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(150);
+    await page.click('.hoja [data-a="sn-kss"][data-v="3"]'); await page.waitForTimeout(100);
+    await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(150);
+    const trasHoja = await page.evaluate(() => { const P = window.PG, r = P.suenoReal(P.iso(new Date()));
+      return { hoja: !!document.querySelector('.hoja'), r: r && { h: r.h, kss: r.kss, acostar: r.acostar, desp: r.desp, tr: r.tramos } }; });
     await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
-    check('la deuda de sueño acumula noches cortas y guardias, recupera como mucho 2 h por noche y sale en Hoy, en Sueño y en el «listo»',
-      sn.deuda === 3 && sn.src.guardiaN === 1 && sn.src.cortasN === 2 && sn.card && sn.listoAlta &&
-      /3 h/.test(vista.big.replace(/\s+/g, ' ')) && vista.barras === 14, JSON.stringify({ sn, vista }));
-    check('la hoja «anotar noche» enseña la deuda antes y después, y al guardar se cierra y la recalcula',
-      /3 h →\s*7 h/.test(prev.replace(/\s+/g, ' ')) && !trasHoja.hoja && trasHoja.deuda === 7, JSON.stringify({ prev, trasHoja }));
+    check('sueño: ya no hay deuda; «cómo llegas» mira las 3 últimas noches (a ratos cuenta la mitad) y lo dicen Hoy, Sueño y el «listo»',
+      sn.nivel === 3 && sn.suma === 15 && /Agotado/.test(sn.card) && /3 noches con 15 h/.test(sn.listo) && sn.deuda === 'undefined' &&
+      vista.est && vista.barras === 3 && !vista.deuda, JSON.stringify({ sn, vista }));
+    check('anotar la noche dibujándola: arrastrar de 23:00 a 7:00 la apunta, con lo despejado que estás, y la hoja se cierra',
+      !trasHoja.hoja && trasHoja.r && trasHoja.r.h === 8 && trasHoja.r.kss === 3 && trasHoja.r.acostar === '23:00' && trasHoja.r.desp === '07:00' &&
+      trasHoja.r.tr.some((x) => x[0] === 23 && x[1] === 31 && !x[2]), JSON.stringify(trasHoja));
 
     const din = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
       a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
@@ -9935,6 +9945,74 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       arrastre.cur != null && /\d:\d\d\|Curso 244/.test(arrastre.centro) && suelto.cur == null && suelto.sel === 'Curso 244', JSON.stringify({ arrastre, suelto }));
     check('"Hoy": tocar el centro del reloj vuelve a «ahora» y mantener pulsado abre la hoja',
       centro.sel === '' && !centro.dim && /AHORA/.test(centro.centro) && mantener.hoja && mantener.sel === 'Curso 244', JSON.stringify({ centro, mantener }));
+  }
+
+  // 245) SUEÑO PARA QUIEN HACE GUARDIAS: el simulador usa tus guardias reales y busca un plan con
+  // límites (siesta al salir de 2 a 4 h), los cafés se arrastran, los pasos con aviso van al
+  // calendario suscrito, la luz sale del amanecer real, las pruebas de 2 semanas preguntan cada día,
+  // el test de reacción guarda su resultado, el modo noche apunta el desvelo y el reloj enseña la energía
+  {
+    const ini = await page.evaluate(() => { const P = window.PG; window.__copia245 = JSON.parse(JSON.stringify(P.store));
+      const l = P.snGuardias(), hoyK = P.iso(new Date()), G = l.filter((k) => k > hoyK)[0] || l[0];
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snG = G; P.ui.snAj = ''; if (P.store.sueno.sim) delete P.store.sueno.sim[G]; P.render();
+      return { G, hay: !!document.querySelector('.snsim #snGraf [data-sn="m"]'), ver: (document.querySelector('.snver') || {}).textContent || '' }; });
+    let r = { ini };
+    if (ini.G) {
+      await page.click('[data-a="sn-mejor"]'); await page.waitForTimeout(300);
+      r.mejor = await page.evaluate((G) => { const P = window.PG, m = P.store.sueno.sim[G], post = m && m.sueno.filter((x) => x.id === 'post')[0];
+        const a = P.snMetricas(P.snPlan(G)), b = P.snMetricas(P.snPlan(G, 'base'));
+        return { post: post ? post.b - post.a : null, coche: a.coche, cocheBase: b.coche, tardios: m.cafes.filter((c) => c.t > 27).length }; }, ini.G);
+      const c0 = await page.evaluate(() => { const e = document.querySelector('#snGraf [data-sn="c"]'); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+      const t0 = await page.evaluate((G) => window.PG.store.sueno.sim[G].cafes[0].t, ini.G);
+      await page.mouse.move(c0.x, c0.y); await page.mouse.down(); await page.mouse.move(c0.x + 40, c0.y, { steps: 6 }); await page.mouse.up(); await page.waitForTimeout(200);
+      r.cafe = await page.evaluate((a) => ({ antes: a.t0, despues: window.PG.store.sueno.sim[a.G].cafes.map((c) => c.t) }), { G: ini.G, t0 });
+      await page.click('#main [data-a="sn-avisa"]'); await page.waitForTimeout(150);
+      r.avisos = await page.evaluate((G) => { const P = window.PG, ev = P.snAvisosEventos(G, P.iso(P.addDays(P.parseDate(G), 2)));
+        return { n: ev.length, cat: ev[0] && ev[0].cat, min: ev[0] && ev[0].avisoMin, guardado: Object.keys(P.store.sueno.avisos[G] || {}).length }; }, ini.G);
+    }
+    // la luz: si te levantas antes de que amanezca, no te pide luz de calle
+    r.luz = await page.evaluate(() => { const P = window.PG; P.store.sueno.ancla = '05:30'; P.ui.snAj = 'luz'; P.render();
+      return (document.getElementById('snAj') || {}).innerText || ''; });
+    // probar dos semanas, y la pregunta de cada mañana en Hoy
+    await page.evaluate(() => { const P = window.PG; P.ui.snAj = 'hora'; P.render(); });
+    await page.click('#snAj [data-a="sn-probar"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG, x = P.store.sueno.pruebas[P.store.sueno.pruebas.length - 1]; x.desde = P.iso(P.addDays(new Date(), -2)); P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
+    await page.click('.snhoy [data-a="sn-prueba-dia"][data-v="1"]'); await page.waitForTimeout(120);
+    r.prueba = await page.evaluate(() => { const P = window.PG, x = P.store.sueno.pruebas[P.store.sueno.pruebas.length - 1]; return { id: x.id, ayer: x.dias[P.iso(P.addDays(new Date(), -1))] }; });
+    // el anillo de energía en el reloj de Hoy
+    r.anillo = await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.render(); return document.querySelectorAll('#main .hoyreloj path[stroke-width="4"]').length; });
+    // test de reacción corto
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snVista = 'pvt'; P.ui.pvtMs = 7000; P.ui.pvtMin = 1; P.render(); });
+    await page.click('[data-a="pvt-empezar"]');
+    const fin = Date.now() + 15000;
+    while (Date.now() < fin) {
+      const st = await page.evaluate(() => ({ zona: !!document.getElementById('pvtZona'), n: (document.getElementById('pvtN') || {}).textContent || '', info: (document.getElementById('pvtInfo') || {}).textContent || '' }));
+      if (!st.zona) break;
+      await page.waitForTimeout(70);
+      const n2 = await page.evaluate(() => (document.getElementById('pvtN') || {}).textContent || '');
+      /* el contador corre: es el estímulo (no el resultado del anterior, que se queda quieto) */
+      if (/^\d+$/.test(st.n) && /^\d+$/.test(n2) && +n2 > +st.n) { const z = await page.$('#pvtZona'); const b = await z.boundingBox(); await page.mouse.click(b.x + 20, b.y + 20); }
+      await page.waitForTimeout(120);
+    }
+    await page.waitForTimeout(300);
+    r.pvt = await page.evaluate(() => { const P = window.PG, l = P.suenoPVT(); return { n: l.length, ult: l[l.length - 1], res: /reacción media/.test(document.getElementById('main').innerText) }; });
+    // modo noche: a los «20 min» (aquí 1,5 s) te manda levantarte; al volver apunta el desvelo
+    await page.evaluate(() => { const P = window.PG; P.ui.nocheMs = 1500; P.ui.snVista = 'noche'; P.render(); });
+    await page.click('[data-a="noche-empezar"]'); await page.waitForTimeout(2600);
+    r.noche = await page.evaluate(() => /Levántate/.test(document.getElementById('main').innerText));
+    await page.click('[data-a="noche-vuelvo"]'); await page.waitForTimeout(150);
+    r.desvelo = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1)), x = P.suenoReal(k); return x && { mal: x.mal, dde: x.dde }; });
+    await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.ui.pvtMs = 0; P.ui.pvtMin = 0; P.ui.nocheMs = 0; P.ui.snG = ''; P.render(); });
+    check('el plan de guardia sale de tus guardias, «mejor plan» deja la siesta del saliente entre 2 y 4 h sin cafés tras las 3:00, y un café se arrastra',
+      !ini.G || (ini.hay && /Coche/.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
+        !r.cafe.despues.includes(r.cafe.antes)), JSON.stringify(r));
+    check('un paso con «Avisar» se guarda y va al calendario suscrito con su alarma a la hora',
+      !ini.G || (r.avisos.guardado === 1 && r.avisos.n === 1 && r.avisos.cat === 'TAREA' && r.avisos.min === 0), JSON.stringify(r.avisos));
+    check('«Luz y café» no pide luz de calle antes de amanecer; «Probar 2 semanas» pregunta en Hoy si lo cumpliste; el reloj enseña tu energía',
+      /Luz fuerte al levantarte/.test(r.luz) && /Amanece/.test(r.luz) && r.prueba.id === 'hora' && r.prueba.ayer === 1 && r.anillo >= 12, JSON.stringify({ luz: r.luz.slice(0, 200), prueba: r.prueba, anillo: r.anillo }));
+    check('el test de reacción guarda tu resultado y el modo noche manda levantarte y apunta el desvelo',
+      r.pvt.n >= 1 && r.pvt.ult.med > 0 && r.pvt.res && r.noche && r.desvelo && r.desvelo.mal && /^\d\d:\d\d$/.test(r.desvelo.dde), JSON.stringify({ pvt: r.pvt, noche: r.noche, desvelo: r.desvelo }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
