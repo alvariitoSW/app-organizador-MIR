@@ -578,7 +578,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 @media(min-width:780px){.cols{grid-template-columns:1fr 1.25fr 1fr}}
 .cols b.mini{display:block;margin-bottom:4px;color:var(--ink2)}
 #overlay{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 62%,#000);display:none;align-items:flex-start;justify-content:center;
-  z-index:60;padding:14px;overflow:auto;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  z-index:70;padding:14px;overflow:auto;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #overlay.on{display:flex;animation:viewIn .18s ease}
 #modal{background:color-mix(in srgb,var(--card) 96%,transparent);border-radius:18px;box-shadow:0 30px 70px -18px rgba(0,0,0,.8),var(--glow);
   width:100%;max-width:680px;margin:auto;padding:16px;border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line))}
