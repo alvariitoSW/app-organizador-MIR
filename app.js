@@ -4949,7 +4949,8 @@ function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy);
   const seg='<div class="hoyseg" role="tablist">'+[['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
     return '<button role="tab" aria-selected="'+(m===o[0])+'" class="'+(m===o[0]?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
-  if(m==='linea')return seg+carrilHTML(key,{px:34,caja:4000});
+  /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
+  if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
   const it=hoyItems(key,inf);
   return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+(esHoy?hoyTresHTML(it,n,key):'')+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}

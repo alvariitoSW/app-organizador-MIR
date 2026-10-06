@@ -883,11 +883,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (de noche) no hay línea, y la prueba fallaba según a qué hora se pasara. Se compara con lo que
   // TOCA a esta hora, calculado aparte.
   const hoyBarra = await page.evaluate(() => { const P = window.PG, k = P.fechaHoy(), d = new Date();
+    P.ui.hoyModo = 'linea'; P.render();   /* el carril es la vista «Línea» del interruptor */
     const n = d.getHours() * 60 + d.getMinutes(), r = P.rangoCarril(P.bloquesDelDia(k), k);
     return { barra: !!document.querySelector('#main .carrilbox .carril'),
       ahora: !!document.querySelector('#main .carril .cnow'), toca: n >= r.de && n <= r.a }; });
   check('"Hoy" enseña el día como carril de horas, con la línea de ahora cuando cae dentro del día',
     hoyBarra.barra && hoyBarra.ahora === hoyBarra.toca, JSON.stringify(hoyBarra));
+  await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.render(); });
 
   // 26) en Semana + "por fecha", la fila de hoy lleva la marca "today" y su barra de 24h
   // sustituye a la línea de texto densa que había antes
@@ -1484,9 +1486,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // el segundo entreno y los eventos ya no son puntos en una barra: son bloques del carril, con
   // su color y su hora, y se tocan para ir a cambiarlos
   const marcasTimeline = await page.evaluate(() => { const P = window.PG;
+    P.ui.hoyModo = 'linea'; P.render();
     const col = (c) => P.tlColor(c);
     const bs = [...document.querySelectorAll('#main .carril .cb')]
       .map((b) => b.style.getPropertyValue('--c').trim());
+    P.ui.hoyModo = 'reloj'; P.render();
     return { gym: bs.indexOf(col('gym')) >= 0, evt: bs.indexOf(col('evt')) >= 0,
       bloques: bs.length }; });
   check('el carril pinta el segundo entreno y los eventos del día con su color propio',
@@ -1639,6 +1643,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }, PALETA);
   await page.waitForTimeout(250);
   await gotoTab('hoy');
+  // el carril de Hoy es ahora la vista «Línea» (el interruptor Reloj | Línea)
+  await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'linea'; P.render(); });
   await page.waitForTimeout(200);
   // los colores mandan ahora sobre el CARRIL: al quitar la barra horizontal, ese ajuste tenía que
   // seguir sirviendo para algo o sobraba de Ajustes
@@ -1649,13 +1655,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     franjaHoy.length >= 2 && franjaHoy.some((c) => elegidos.indexOf(c.toLowerCase()) >= 0),
     JSON.stringify({ franjaHoy, elegidos }));
 
-  // la leyenda dice qué es cada color y lleva de vuelta a Ajustes
-  const leyenda = await page.evaluate(() => {
-    const l = document.querySelector('#main .tlleg');
-    return l ? { n: l.querySelectorAll('i').length, atajo: !!l.querySelector('[data-a="franja-cfg"]') } : null;
-  });
-  check('"Hoy" explica con una leyenda qué es cada color de la franja y lleva a cambiarlos',
-    leyenda && leyenda.n === 6 && leyenda.atajo, JSON.stringify(leyenda));
+  // qué es cada color ya no va en una leyenda aparte: tocar (o mantener) una cosa del reloj abre su
+  // hoja, que lo dice con su muestra de color
+  const leyenda = await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.render();
+    const arco = document.querySelector('#main .hoyreloj [data-a="hoy-it"]');
+    if (arco) arco.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const h = document.querySelector('#hojaDia .hoja');
+    const r = h ? { muestra: !!h.querySelector('.hsw'), txt: (h.querySelector('.hqa') || {}).textContent || '', arcos: document.querySelectorAll('#main .hoyreloj [data-lp="hoyit"]').length } : { arco: !!arco };
+    P.ui.hoyIt = null; P.ui.hoyModo = 'linea'; P.render(); return r; });
+  check('"Hoy": tocar una cosa del reloj abre su hoja, que dice qué es ese color',
+    leyenda.muestra && leyenda.txt.length > 10 && leyenda.arcos >= 2, JSON.stringify(leyenda));
 
   // el ajuste de 12/18/24 h manda ahora en CUÁNTAS HORAS VES DE UNA VEZ en el carril: la caja mide
   // lo mismo siempre —si creciera, la portada crecería al elegir 24 h— y lo que cambia es lo alta
@@ -1672,14 +1681,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const a = mide(24), b = mide(12);
     P.store.franja = { horas: 24, colores: {} }; P.render();
     return { h24: a, h12: b }; });
-  // la caja tiene un TECHO (no un alto fijo): a 24 h el carril entero cabe en menos y no se deja
-  // media caja vacía, pero nunca puede pasar de ese techo, que es lo que impide que elegir 12 h
-  // alargue la portada
-  check('eligiendo 12 h el carril se ve más holgado, y la caja nunca pasa de su techo',
-    zoom.h12.hora > zoom.h24.hora * 1.5 && zoom.h24.hora >= 16 &&
-    zoom.h12.caja <= 400 && zoom.h24.caja <= 400 && zoom.h24.caja <= zoom.h12.caja,
+  // en la «Línea» de Hoy el día entero se ve sin desplazarlo por dentro: a 24 h ocupa menos que a 12
+  check('eligiendo 12 h la línea del día se ve más holgada, y a 24 h más recogida',
+    zoom.h12.hora > zoom.h24.hora * 1.5 && zoom.h24.hora >= 16 && zoom.h24.caja < zoom.h12.caja,
     JSON.stringify(zoom));
-  await page.evaluate(() => { window.PG.store.franja = { horas: 24, colores: {} }; window.PG.render(); });
+  await page.evaluate(() => { const P = window.PG; P.store.franja = { horas: 24, colores: {} }; P.ui.hoyModo = 'reloj'; P.render(); });
   await page.waitForTimeout(150);
 
   // 99-103) Compra: fuera "Para el carro"; ahora manda lo que el usuario compra de rutina, en listas
@@ -1821,7 +1827,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   });
   check('el KPI de guardias lleva a donde se cambia el cupo de este mes', abreCupo, '');
 
-  await gotoTab('hoy');
+  // la leyenda con su atajo vive en la Semana por horas (en Hoy, cada cosa lo dice en su hoja)
+  await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render(); });
   await page.waitForTimeout(250);
   await page.click('#main [data-a="franja-cfg"]');
   await page.waitForTimeout(350);
@@ -6600,8 +6607,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.selectOption('#main [data-a="franja-alto"]', 'bajo');
     await page.waitForTimeout(300);
     const bajo = await page.evaluate(() => { const P = window.PG;
-      P.ui.tab = 'hoy'; P.render(); const h = document.querySelector('#main .carrilbox');
-      const hoy = h ? Math.round(h.getBoundingClientRect().height) : -1;
+      /* en la «Línea» de Hoy el día va entero: el alto elegido manda en lo que mide una hora */
+      P.ui.tab = 'hoy'; P.ui.hoyModo = 'linea'; P.render(); const h = document.querySelector('#main .carril .ch');
+      const hoy = h ? Math.round(h.getBoundingClientRect().height) : -1; P.ui.hoyModo = 'reloj';
       P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render(); const w = document.querySelector('#main .semrej .carrilbox');
       return { hoy, sem: w ? Math.round(w.getBoundingClientRect().height) : -1,
         guardado: P.store.franja.alto }; });
@@ -6613,7 +6621,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
     check('el alto del carril se cambia en Ajustes, manda en Hoy y en la semana, y aguanta recargar',
       altoUI.hay && altoUI.valor === 'medio' && bajo.guardado === 'bajo' &&
-      bajo.hoy > 0 && bajo.hoy <= 300 && bajo.sem > 0 && bajo.sem <= 260 && traNormalize === 'bajo',
+      bajo.hoy > 0 && bajo.hoy <= 26 && bajo.sem > 0 && bajo.sem <= 260 && traNormalize === 'bajo',
       JSON.stringify({ altoUI, bajo, traNormalize }));
 
     // 3) LA SEMANA, EN UNA LÍNEA POR DÍA. El sueño va en UNA pastilla y el sol se fue a la
@@ -8332,8 +8340,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const destino = await page.evaluate(() => (document.querySelector('.diares [data-a="sem-dia"]') || {}).dataset.k);
     await page.click('.diares [data-a="sem-dia"]');
     await page.waitForTimeout(450);
+    /* en Hoy, las comidas van en la lista del día (o plegadas en «✓ hechas» si ya pasaron) */
     const llega = await page.evaluate(() => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy,
-      comidas: document.querySelectorAll('#main div.meal').length }));
+      comidas: document.querySelectorAll('#main .hlst .hrow, #main .hya').length }));
     check('«ver el día entero» lleva a «Hoy» en ese día, que es donde las comidas se cuentan enteras',
       llega.tab === 'hoy' && (llega.dia === destino || (!llega.dia && destino)) && llega.comidas >= 1,
       JSON.stringify({ destino, llega }));
