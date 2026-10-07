@@ -936,11 +936,15 @@ function normalize(o){
   if(!Array.isArray(o.batches))o.batches=[];
   if(!o.batches.some(b=>b.id==='bn'))o.batches.push({id:'bn',label:'Sin lote (la vuelta)',when:'',note:''});
   const mids=new Set((o.meals||[]).map(m=>m.id));
-  /* la semana base: {on, d:{0..6:{desayuno|comida|cena:{items,meal}}}}. Sin esto se perdería al recargar */
+  /* el plan de comidas: {on, d:{'AAAA-MM-DD':{desayuno|comida|cena:{items,meal}}}}, POR FECHA. Antes
+     iba por día de la semana (0..6) y lo de un miércoles se repetía todos los miércoles: esas
+     casillas viejas pasan a la semana en curso. Lo de hace más de 60 días se borra. */
   if(!o.semBase||typeof o.semBase!=='object')o.semBase={on:true,d:{}};
-  else{const dd={},ids=new Set((o.dishes||[]).map(function(x){return x.id;}));
-    Object.keys(o.semBase.d||{}).forEach(function(w){if(!/^[0-6]$/.test(w))return;
-      ['desayuno','comida','cena'].forEach(function(c){const x=(o.semBase.d[w]||{})[c];if(!x||!Array.isArray(x.items))return;
+  else{const dd={},ids=new Set((o.dishes||[]).map(function(x){return x.id;})),lun0=mondayOf(new Date()),viejo=iso(addDays(new Date(),-60));
+    Object.keys(o.semBase.d||{}).forEach(function(w0){
+      const w=/^[0-6]$/.test(w0)?iso(addDays(lun0,+w0)):(/^\d{4}-\d{2}-\d{2}$/.test(w0)&&w0>=viejo?w0:'');if(!w)return;
+      if(/^[0-6]$/.test(w0)&&o.semBase.d[w])return;   /* si ya hay algo en esa fecha, manda la fecha */
+      ['desayuno','comida','cena'].forEach(function(c){const x=(o.semBase.d[w0]||{})[c];if(!x||!Array.isArray(x.items))return;
         const its=x.items.filter(function(it){return it&&ids.has(it.id);}).slice(0,8)
           .map(function(it){return {kind:'dish',id:it.id,portions:Math.max(0.25,Math.min(10,+it.portions||1))};});
         (dd[w]||(dd[w]={}))[c]={items:its,meal:String(x.meal||'').slice(0,80)};if(x.auto)dd[w][c].auto=true;});});
@@ -1810,7 +1814,11 @@ function sbS(){
   if(!store.semBase||typeof store.semBase!=='object')store.semBase={on:true,d:{}};
   if(!store.semBase.d||typeof store.semBase.d!=='object')store.semBase.d={};
   return store.semBase;}
-function sbCelda(w,c){const d=sbS().d[w];return (d&&d[c]&&Array.isArray(d[c].items))?d[c]:null;}
+/* la semana que se está planeando (lunes), y la fecha de su día w (0 = lunes). Las casillas se
+   siguen pidiendo por w, pero se guardan por fecha: lo del miércoles 7 no se repite el 14 */
+function sbLun(){return iso(mondayOf(weekDate));}   /* la misma semana que el calendario: ‹ › de Comer la mueve */
+function sbKey(w){return /^\d{4}-/.test(String(w))?String(w):iso(addDays(parseDate(sbLun()),+w||0));}
+function sbCelda(w,c){const d=sbS().d[sbKey(w)];return (d&&d[c]&&Array.isArray(d[c].items))?d[c]:null;}
 /* LA GUARDIA SALE DEL DÍA, NO DE LA CASILLA. La semana se guarda por día de la semana (lunes…domingo)
    y el «Hospital» se escribía en la casilla del día en que caía la guardia cuando se montó: la semana
    siguiente la guardia caía otro día y salía comida de casa en la guardia y «Hospital» en el
@@ -1825,11 +1833,11 @@ function sbCeldaDia(key,c){
   /* la casilla de un día concreto: la guardia manda; si no es guardia, el «Hospital» que se quedó
      guardado de otra semana no vale (cae al menú del tipo de día) */
   const g=guardiaCelda(key,c);if(g)return g;
-  const x=sbCelda(sbDow(key),c),d=x&&x.items[0]&&dishById(x.items[0].id);
+  const x=sbCelda(key,c),d=x&&x.items[0]&&dishById(x.items[0].id);
   return d&&d.hospital?null:x;}
-function sbFechaW(w){return iso(addDays(mondayOf(new Date()),+w||0));}
-function sbCeldaMia(w,c){const s=sbS();if(!s.d[w])s.d[w]={};if(!s.d[w][c])s.d[w][c]={items:[],meal:''};
-  if(!Array.isArray(s.d[w][c].items))s.d[w][c].items=[];return s.d[w][c];}
+function sbFechaW(w){return sbKey(w);}
+function sbCeldaMia(w,c){const s=sbS(),k=sbKey(w);if(!s.d[k])s.d[k]={};if(!s.d[k][c])s.d[k][c]={items:[],meal:''};
+  if(!Array.isArray(s.d[k][c].items))s.d[k][c].items=[];return s.d[k][c];}
 function sbPoner(w,c,id,o){
   /* un plato en un hueco de la semana: el único sitio que lo escribe. En un día de guardia de esta
      semana lo que eliges es para ESA fecha (hospital o táper); lo automático no la toca */
@@ -9516,10 +9524,17 @@ function buscarResultadosHTML(){
     if(ui.fbProt)l.sort(function(a,b){return hitProt(b)-hitProt(a);});
     else l=l.map(function(x,i){return {x:x,r:rank(x),i:i};}).sort(function(A,B){return B.r-A.r||A.i-B.i;}).map(function(o){return o.x;});
     const N=ui.fbMas?60:8;
+    /* UN SOLO BUSCADOR, en grupos y siempre en el mismo orden: tus platos → lo que compras → alimentos
+       → fuera. Tres de cada uno (las mejores para lo que escribes); el chip de un tipo enseña todos */
+    const GR=[['dish','TUS PLATOS',function(x){return x.tipo==='dish';}],['ean','LO QUE COMPRAS',function(x){return x.tipo==='ean';}],
+      ['alim','ALIMENTOS',function(x){return x.tipo==='alim';}],['fuera','COMER FUERA',function(x){return x.tipo==='fuera';}]];
+    const enGrupos=!fl&&!ui.fbProt&&!ui.fbMas?GR.map(function(g){const k=l.filter(g[2]);if(!k.length)return '';
+      return '<div class="grp">'+g[1]+' · '+k.length+'</div>'+k.slice(0,3).map(function(x){return hitHTML(x,sel);}).join('')+
+        (k.length>3?'<button class="fbmas" data-a="fb-filtro" data-f="'+(g[0]==='ean'?'merca':g[0])+'">ver los '+k.length+' ›</button>':'');}).join(''):'';
     const ch=function(k,t,n){return '<button class="chipx'+(fl===k?' on':'')+'" data-a="fb-filtro" data-f="'+k+'">'+t+(n!=null?' <b>'+n+'</b>':'')+'</button>';};
     cuerpo='<div class="chips fbchips">'+ch('','Todo',todos.length)+ch('alim','Genérico',cuenta.alim)+ch('merca','Mercadona',cuenta.merca)+ch('fuera','Fuera',cuenta.fuera)+ch('dish','Mis platos',cuenta.dish)+
         '<button class="chipx'+(ui.fbProt?' on':'')+'" data-a="fb-prot">↓ + proteína</button></div>'+
-      (l.length?('<div class="card">'+l.slice(0,N).map(function(x){return hitHTML(x,sel);}).join('')+
+      (enGrupos?'<div class="card fbgr">'+enGrupos+'</div>':l.length?('<div class="card">'+l.slice(0,N).map(function(x){return hitHTML(x,sel);}).join('')+
         (l.length>N?'<button class="fbmas" data-a="fb-mas">ver los '+(l.length-N)+' restantes ›</button>':'')+'</div>'):
         '<div class="card"><div class="empty">'+(fl?'Nada de eso con este filtro.':'Nada se llama así en la app. Búscalo en Open Food Facts, escanéalo o créalo.')+'</div></div>')+
       offBloqueHTML(q);
@@ -9566,8 +9581,7 @@ function renderFoodBuscar(){
       return '<button class="ftab'+(tab===t[0]?' on':'')+'" data-a="food-tab" data-t="'+t[0]+'">'+esc(t[1])+'</button>';}).join('')+'</div>'+
     cuerpo+
     '<div class="row">'+
-      '<button class="btn s" data-a="food-vista" data-v="productos">'+gymIco('caja','gico sm')+' mis productos</button>'+
-      '<button class="btn s" data-a="food-vista" data-v="perfil">'+gymIco('balanza','gico sm')+' tú</button>'+
+      '<button class="btn s" data-a="cje-gestion">⚙️ gestionar platos y alimentos</button>'+
     '</div></div>';
 }
 function offBloqueHTML(q){
@@ -11167,8 +11181,8 @@ function cjeDia(key){
 function cjeSemana(){
   /* la semana de lunes a domingo con sus tres comidas (de la Semana base o del tipo de día) */
   /* en «plantilla» los días no llevan fecha: la de esta semana, de lunes a domingo */
-  /* siempre ESTA semana: mSemana sigue a la semana que se esté mirando en el calendario */
-  const lun=mondayOf(new Date());
+  /* la semana que se planea (sbLun): la del calendario, que las flechas de Comer mueven */
+  const lun=parseDate(sbLun());
   return [0,1,2,3,4,5,6].map(function(i){const key=iso(addDays(lun,i)),d={key:key,shiftId:dayInfo(key).shiftId};
     return {w:i,d:d,key:key,cls:mCeldas(i,d),tipo:cjeDia(key)};});}
 /* durante un pintado la semana no cambia: las tandas se calculan una vez (la portada, la hoja y sus
@@ -11241,6 +11255,22 @@ function cjeRapidos(cena,fac){
   if(cena==='ligera')l.sort(function(a,b){return (a.kcal/Math.max(1,a.prot))-(b.kcal/Math.max(1,b.prot));});
   else l.sort(function(a,b){return b.prot-a.prot;});
   return l;}
+function cjeCopiarSiguiente(){
+  /* lo de esta semana (por fecha) a la siguiente, día por día; las guardias salen solas de su fecha */
+  const s=sbS(),lun=parseDate(sbLun());let n=0;
+  for(let w=0;w<7;w++){const a=iso(addDays(lun,w)),b=iso(addDays(lun,w+7)),src=s.d[a];if(!src)continue;
+    SB_CLASES.forEach(function(c){const x=src[c[0]];if(!x||!x.items.length)return;
+      const it=x.items[0],d=dishById(it.id);if(d&&d.hospital)return;
+      if(!s.d[b])s.d[b]={};s.d[b][c[0]]={items:JSON.parse(JSON.stringify(x.items)),meal:x.meal||''};n++;});}
+  weekDate=addDays(lun,7);save();
+  return n?'copiadas '+n+' comidas a la semana siguiente':'esta semana no tiene nada que copiar';}
+function cjeRepetir(w,c,n){
+  /* «la cocino para 2 / 3 días»: el mismo plato en los días siguientes (sin guardias) = una tanda */
+  const sem=cjeSemana(),i=sem.findIndex(function(x){return x.w===w;});if(i<0)return '';
+  const it=sem[i].cls[c].items[0],d=it&&dishById(it.id);if(!d)return 'primero elige un plato';
+  let puestos=1;
+  for(let j=i+1;j<sem.length&&puestos<n;j++){if(sem[j].tipo.guardia)continue;sbPoner(sem[j].w,c,d.id,{});puestos++;}
+  save();return d.name+': '+puestos+' día'+(puestos===1?'':'s')+(puestos<n?' (la semana se acaba: el resto, en la siguiente)':'');}
 function cjeAuto(opt){
   /* la semana con tus días: guardia = hospital; tandas solo los días que cocinas, que cubren los
      días sin cocinar de detrás (lo que pase de los días del táper, al congelador); cenas rápidas.
@@ -11345,25 +11375,32 @@ function renderComerEje(){
   const tab=ui.cjeTab==='sem'?'sem':'hoy',hoyK=iso(new Date()),A=cjeAvisos(),sem=A.T.sem,marca=A.T.marca;
   const cab='<div class="cjtop"><div class="cjseg2">'+[['hoy','Hoy'],['sem','Semana']].map(function(x){
       return '<button class="'+(tab===x[0]?'on':'')+'" data-a="cje-tab" data-v="'+x[0]+'"'+(tab===x[0]?' aria-pressed="true"':'')+'>'+x[1]+'</button>';}).join('')+'</div>'+
-    '<button class="cji" data-a="food-vista" data-v="semp" aria-label="semanas prototipo" title="semanas prototipo">✨</button>'+
     '<button class="cji" data-a="cje-hoja" data-v="pref" aria-label="cómo cocinas" title="cómo cocinas">⚙️</button></div>';
   const vacia=!sem.some(function(x){return x.cls.comida.items.length||x.cls.cena.items.length;});
-  const montar=vacia?'<div class="card"><p style="margin:0 0 10px">Aún no hay nada en la semana.</p><button class="btn p gbig" data-a="food-vista" data-v="semp">✨ Montar con una semana prototipo</button></div>':'';
+  const montar=vacia?'<div class="card"><p style="margin:0 0 10px">Aún no hay nada en la semana.</p><button class="btn p gbig" data-a="cje-montar">✨ Montar la semana</button></div>':'';
   let body='';
   if(tab==='hoy'){
-    const tar=cjeTareas(A,hoyK),ft=foodTotals(hoyK),ob=food().objetivo||{},oP=+ob.prot||0,oK=+ob.kcal||0;
-    body=(tar.length?'<div class="cap">PARA HACER HOY</div><div class="cjtodo">'+tar.map(function(o){
+    /* UN SOLO HOY: el día con sus flechas (lo que antes era la pantalla «‹ HOY ›» del registro), la
+       proteína y las kcal, los micros en una línea y cada comida con su ✓ */
+    const dk=ui.foodDate&&ui.foodDate<=hoyK?ui.foodDate:hoyK,esHoy=dk===hoyK,dd=parseDate(dk);
+    const tar=esHoy?cjeTareas(A,hoyK):[],ft=foodTotals(dk),ob=food().objetivo||{},oP=+ob.prot||0,oK=+ob.kcal||0;
+    body='<div class="cjdia"><button class="cji" data-a="food-prev" aria-label="día anterior">‹</button>'+
+        '<b>'+(esHoy?'Hoy · ':'')+(esHoy?DIA3[dd.getDay()]:DIA3[dd.getDay()].replace(/^./,function(c){return c.toUpperCase();}))+' '+dd.getDate()+'</b>'+
+        (esHoy?'':'<button class="dlink" data-a="food-today">hoy</button>')+
+        '<button class="cji" data-a="food-next"'+(esHoy?' disabled':'')+' aria-label="día siguiente">›</button></div>'+
+      (tar.length?'<div class="cap">PARA HACER HOY</div><div class="cjtodo">'+tar.map(function(o){
         return '<button class="cjtd" data-a="cje-hoja" data-v="'+o.v+'"><span class="e">'+o.e+'</span><span class="tx"><b>'+esc(o.t)+'</b><span>'+esc(o.s)+'</span></span>'+gymIco('chevron','gico sm')+'</button>';}).join('')+'</div>':'')+
       '<button class="cjln" data-a="cje-hoja" data-v="dia" aria-label="el día por comidas">💪 <b>'+Math.round(ft.prot)+'</b>'+(oP?'/'+oP:'')+' g'+
         (oP?'<span class="bar"><i style="width:'+Math.min(100,Math.round(ft.prot/oP*100))+'%"></i></span>':'<span class="sp"></span>')+
         '<span>'+fmtMil(Math.round(ft.kcal))+(oK?'/'+fmtMil(oK):'')+' kcal</span></button>'+
-      montar+
-      '<div class="card cjml">'+cjeComidas(hoyK).map(function(r){return cjeComidaHTML(r,hoyK);}).join('')+
-        '<button class="cjmas" data-a="cje-mom" data-p="merienda">＋ picoteo o algo más</button></div>'+
+      (esHoy?montar:'')+
+      '<details class="cjmic"><summary class="mini">micros de '+(esHoy?'hoy':'ese día')+' ▾</summary>'+micro6HTML(dk)+'</details>'+
+      '<div class="card cjml">'+cjeComidas(dk).map(function(r){return cjeComidaHTML(r,dk);}).join('')+
+        '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button></div>'+
       '<div class="cjlinks"><button data-a="cje-hoja" data-v="nevera">🧊 Nevera'+(A.nevera?' <b class="w">'+A.nevera+'</b>':'')+'</button>'+
         '<button data-a="cje-hoja" data-v="compra">🛒 Compra <b>'+A.compra+'</b></button><button data-a="cje-platos">📖 Mis platos</button></div>';}
   else{
-    const sp=semPDe(semPS().uso[iso(mondayOf(new Date()))]),lun=mondayOf(new Date()),dom=addDays(lun,6),obj=protObj();
+    const lun=parseDate(sbLun()),dom=addDays(lun,6),obj=protObj();
     const pend=A.T.tandas.filter(function(t){return !t.hecho&&t.key>=hoyK;}),diasC=[];
     pend.forEach(function(t){const n=DIA3[parseDate(t.key).getDay()];if(diasC.indexOf(n)<0)diasC.push(n);});
     const tc=tocaComprar(),pr=sem.map(function(x){return x.key>=hoyK?protDiaPlan(x):0;});
@@ -11374,8 +11411,15 @@ function renderComerEje(){
         cjeCelda(x,'comida',marca,i)+cjeCelda(x,'cena',marca,i)+
         '<span class="p'+(obj&&p?(p<obj*0.9?' bad':' ok'):'')+'">'+(p||'—')+'</span></div>';}).join('');
     const c0=cortos[0];
-    body='<div class="cjsh"><span class="cjL'+(sp?'':' x')+'">'+(sp?esc(sp.n):'·')+'</span><b>'+(sp?'Semana '+esc(sp.n):'Esta semana')+' · '+fecha(lun)+'–'+fecha(dom)+'</b><span class="sp"></span>'+
-        '<button class="dlink" data-a="food-vista" data-v="semp">cambiar ›</button></div>'+
+    /* UN SOLO PLAN, POR FECHA: las flechas mueven la semana; «Montar» rellena los huecos (lo tuyo no lo
+       toca) y «Copiar a la siguiente» hace lo que hacían las semanas prototipo */
+    const esta=iso(lun)===iso(mondayOf(new Date()));
+    body='<div class="cjsh"><button class="btn s" data-a="cje-sem" data-d="-1" aria-label="semana anterior">‹</button>'+
+        '<b class="cjshT">'+(esta?'Esta semana':'Semana')+' · '+fecha(lun)+'–'+fecha(dom)+'</b>'+
+        (esta?'':'<button class="dlink" data-a="cje-sem" data-d="0">hoy</button>')+
+        '<button class="btn s" data-a="cje-sem" data-d="1" aria-label="semana siguiente">›</button></div>'+
+      '<div class="row cjacc"><button class="btn p s" data-a="cje-montar">✨ Montar los huecos</button>'+
+        '<button class="btn s" data-a="cje-copiar">Copiar a la siguiente</button></div>'+
       '<div class="cjsum">'+
         '<button data-a="cje-hoja" data-v="cocinar"'+(diasC.length?' class="on"':'')+'>🍳 cocinas<b>'+(diasC.length?esc(diasC.join(' · ')):'nada')+'</b></button>'+
         '<button data-a="cje-hoja" data-v="compra">🛒 compra<b>'+A.compra+' cosa'+(A.compra===1?'':'s')+'</b><small>'+(tc.toca?'toca ya':'en '+tc.faltan+' día'+(tc.faltan===1?'':'s'))+'</small></button>'+
@@ -11434,7 +11478,7 @@ function cjeHojaDia(h){
     '<tr class="t"><td>Total</td><td>'+f(t.kcal)+'</td><td>'+f(t.prot)+'</td><td>'+f(t.carb)+'</td><td>'+f(t.gresa)+'</td></tr>'+
     '<tr><td>Objetivo</td><td>'+f(+ob.kcal)+'</td><td>'+f(+ob.prot)+'</td><td>—</td><td>—</td></tr></table>'+
     (falta>0&&+ob.prot?'<div class="cjefe">💪 Te faltan <b>'+falta+' g de proteína</b>'+(ex?'. Con lo que hay en casa: <b>'+esc(ex.fr.txt)+'</b> (≈ '+Math.round(ex.prot)+' g)':'')+'.</div>':'')+
-    '<button class="dlink" data-a="cje-registro" style="margin-top:10px">registro completo (micros, semana) ›</button>';}
+    '';}
 /* ---- mis platos: el recetario del que salen las tandas y las comidas rápidas ---- */
 const DES=/desayun|yogur|tostad|avena|porridge|huevos? revuelt|leche|cereal|tortitas|skyr|kefir|fruta y|batido|whey/i;
 const CJE_FILT=[['','Todos'],['tanda','Para tanda'],['rapido','Rápidos'],['bowl','Bowls']];
@@ -11518,6 +11562,7 @@ function cjeHojaPlato(h){
   return '<div class="cjst">'+esc(d?(d.hospital?'Menú del hospital':(d.nada?'Nada planeado':d.name)):'Hueco libre')+'</div>'+
     '<div class="mini">'+esc(DL[parseDate(x.key).getDay()]+' · '+h.c+(gc?' · guardia':'')+(est?' · '+est:'')+(cu&&cu.total?(cu.n===cu.total?' · todo en casa':' · falta '+(cu.total-cu.n)):''))+'</div>'+gsel+
     (d&&!d.nada?'<div class="cjbtns"><button class="btn" data-a="cje-receta">'+(h.receta?'ocultar receta':'Receta')+'</button><button class="btn" data-a="cje-fuera">Como fuera</button><button class="btn" data-a="cje-quitar">Quitar</button></div>':'')+racs+lleva+
+    (d&&!gc&&!d.hospital&&!d.fuera&&!d.nada?'<div class="cjracs"><span class="mini">cocinar para</span>'+[2,3,4].map(function(v){return '<button class="chipx" data-a="cje-dias" data-n="'+v+'">'+v+' días</button>';}).join('')+'</div>':'')+
     '<div class="cap" style="margin-top:12px">'+(d?'CAMBIAR POR':'PONER')+'</div>'+
     alts.map(function(a,k){return '<button class="cjalt" data-a="cje-cambia" data-i="'+k+'"><span>'+esc(a.e)+'</span>'+esc(a.txt)+'<span class="sp"></span>›</button>';}).join('')+
     '<button class="cjalt" data-a="cje-platos" data-w="'+h.w+'" data-c="'+h.c+'"><span>📖</span>Mis platos…<span class="sp"></span>›</button>';}
@@ -11530,6 +11575,17 @@ function cjeHojaCocinar(h){
         '<button class="cjt'+(t.hecho?' on':'')+'" data-a="cje-hecho" data-i="'+k+'" aria-label="tanda hecha">✓</button></div>'+
       (!t.hecho?'<div class="cjrac"><span class="mini">raciones</span><button data-a="cje-rac" data-i="'+k+'" data-d="-1" aria-label="una ración menos"'+(t.dias.length<=2?' disabled':'')+'>−</button><b>'+t.dias.length+'</b><button data-a="cje-rac" data-i="'+k+'" data-d="1" aria-label="una ración más">+</button></div>':'')+
       (ab?recetaHTML(t.d,'<div class="mini">'+t.dias.length+' raciones'+(t.dias.some(function(y){return y.fz;})?' · las ❄ al congelador':'')+'</div>'):'')+'</div>';}).join('');}
+function compraProximos(n){
+  /* ¿esta línea de la compra la pide lo que comes en los próximos n días? Por alimento si lo hay,
+     si no por el nombre del ingrediente; lo del menú sin receta, por su plato */
+  const need=necesidadProximos(n),list=[];
+  Object.keys(need).forEach(function(id){const d=dishById(id);if(d&&need[id]>0)list.push({dish:d,cooked:need[id]});});
+  const ings=list.length?ingredientsFor(list,true):[],aids={},noms=[];
+  ings.forEach(function(i){if(i.aid)aids[i.aid]=1;else if(i.item)noms.push(alimTxt(i.item));});
+  return function(x){
+    if(/^base#/.test(x.id||''))return need[String(x.id).slice(5)]>0;
+    if(x.aid)return !!aids[x.aid];
+    const t=alimTxt(x.texto||'');return noms.some(function(m){return m&&t.indexOf(m)>=0;});};}
 function cjeHojaCompra(h){
   const seg=h.seg||(h.v==='nevera'?'casa':'comprar');
   let body='';
@@ -11539,8 +11595,18 @@ function cjeHojaCompra(h){
       if(x.fija)(fijas[x.lista]||(fijas[x.lista]=[])).push(x);else sem.push(x);});});
     const li=function(x){const on=ui.marks.has(x.id);
       return '<button class="cjli'+(on?' done':'')+'" data-a="cje-mark" data-id="'+esc(x.id)+'"><span class="ck'+(on?' on':'')+'"></span><span class="tx">'+esc(compraSG(x.texto))+'</span></button>';};
-    body=(cd.eje?'<div class="cap">PARA '+(cd.dias>=7?'LA SEMANA':'LOS PRÓXIMOS '+cd.dias+' DÍAS')+'</div>':'')+
-      (sem.length?sem.map(li).join(''):'<p class="mini">No falta nada para la semana. 👌</p>')+
+    /* COMPRA CORTA: arriba solo lo que pide lo que comes en los próximos 3 días; lo demás de la
+       semana, plegado por pasillo (antes, 2,1 pantallas y 34 botones de una sentada) */
+    const p3=compraProximos(3),ya3=sem.filter(function(x){return p3(x);}),resto=sem.filter(function(x){return !p3(x);});
+    const porSec={};resto.forEach(function(x){const k=seccionDeCompra(x.texto)||'otros';(porSec[k]||(porSec[k]=[])).push(x);});
+    body=(cd.eje&&cd.dias>3?'<div class="cap">PARA LOS PRÓXIMOS 3 DÍAS · '+ya3.length+'</div>'+
+        (ya3.length?ya3.map(li).join(''):'<p class="mini">Para estos 3 días no falta nada. 👌</p>')+
+        (resto.length?'<div class="cap" style="margin-top:12px">RESTO HASTA LA PRÓXIMA COMPRA · '+resto.length+'</div>'+
+          COMPRA_SECS.filter(function(c){return porSec[c[0]];}).map(function(c){const l=porSec[c[0]],ab=h.lista==='sec:'+c[0],hech=l.filter(function(x){return ui.marks.has(x.id);}).length;
+            return '<button class="cjfija" data-a="cje-fija" data-v="sec:'+c[0]+'" aria-expanded="'+(ab?'true':'false')+'"><span>'+c[2]+' '+esc(c[1])+'</span><span class="n">'+(hech?hech+'/':'')+l.length+'</span>'+gymIco('chevron','gico sm ch'+(ab?' abajo':''))+'</button>'+
+              (ab?l.map(li).join(''):'');}).join(''):'')
+      :(cd.eje?'<div class="cap">PARA '+(cd.dias>=7?'LA SEMANA':'LOS PRÓXIMOS '+cd.dias+' DÍAS')+'</div>':'')+
+        (sem.length?sem.map(li).join(''):'<p class="mini">No falta nada para la semana. 👌</p>'))+
       Object.keys(fijas).map(function(n){const l=fijas[n],ab=h.lista===n,hech=l.filter(function(x){return ui.marks.has(x.id);}).length;
         return '<button class="cjfija" data-a="cje-fija" data-v="'+esc(n)+'" aria-expanded="'+(ab?'true':'false')+'"><span>📋 '+esc(n)+'</span><span class="n">'+(hech?hech+'/':'')+l.length+'</span>'+gymIco('chevron','gico sm ch'+(ab?' abajo':''))+'</button>'+
           (ab?l.map(li).join(''):'');}).join('');
@@ -11562,7 +11628,11 @@ function cjeHojaPref(){
     '<div class="cap" style="margin-top:12px">UN TÁPER AGUANTA EN LA NEVERA</div><div class="chips">'+[2,3,4].map(function(n){return '<button class="chipx'+(P.taper===n?' on':'')+'" data-a="cje-taper" data-v="'+n+'">'+n+' días</button>';}).join('')+'</div>'+
     '<div class="cap" style="margin-top:12px">DESAYUNOS FIJOS (HASTA 3)</div>'+(cands.length?'<div class="chips">'+cands.map(function(d){const on=P.desayunos.indexOf(d.id)>=0;
       return '<button class="chipx'+(on?' on':'')+'" data-a="cje-des" data-id="'+esc(d.id)+'">'+esc(d.name)+'</button>';}).join('')+'</div>':'<p class="mini">Sin elegir: la app usa los de tu nevera con más proteína.</p>')+
-    '<label class="fld" style="margin-top:12px">💪 proteína al día (g)<input type="number" inputmode="numeric" min="0" max="400" step="5" value="'+(+ob.prot||0)+'" data-a="food-ob" data-k="prot"></label>';}
+    '<label class="fld" style="margin-top:12px">💪 proteína al día (g)<input type="number" inputmode="numeric" min="0" max="400" step="5" value="'+(+ob.prot||0)+'" data-a="food-ob" data-k="prot"></label>'+
+    /* las listas sueltas que antes eran buscadores aparte: aquí se editan, se borran y se crean */
+    '<div class="cap" style="margin-top:14px">GESTIONAR</div><div class="cjgest">'+
+      [['platos','📖 Mis platos'],['misplatos','🏆 Clasificación de platos'],['misemana','📈 Cómo fue la semana'],['alimentos','🍎 Alimentos'],['productos','📦 Mis productos'],['perfil','⚖️ Tú y tu objetivo'],['gluten','🌾 Sin gluten']].map(function(x){
+        return '<button class="cjalt" data-a="food-vista" data-v="'+x[0]+'">'+x[1]+'<span class="sp"></span>›</button>';}).join('')+'</div>';}
 
 /* ===================== SEMANAS PROTOTIPO =====================
    «Vamos a lo fácil: semana A y semana B.» Una semana prototipo son tus desayunos (2–3 que rotan) y,
@@ -14934,7 +15004,7 @@ function mealUsos(id){
   const m=mealById(id);
   if(m&&store.semBase&&store.semBase.d)Object.keys(store.semBase.d).forEach(function(w){
     SB_CLASES.forEach(function(c){const x=(store.semBase.d[w]||{})[c[0]];
-      if(x&&x.meal===m.name)out.push('📅 '+SB_DIAS_L[+w]+' · '+c[1].toLowerCase());});});
+      if(x&&x.meal===m.name)out.push('📅 '+(/^\d{4}-/.test(w)?fechaCorta(w):SB_DIAS_L[+w])+' · '+c[1].toLowerCase());});});
   return out;}
 function renderTypesMeals(){
   const q=ui.mealsQ||'',f=ui.mealsF||'';
@@ -19364,7 +19434,7 @@ function act(a,el){
          mirar el sábado que viene: si no, «Hoy» no llevaba a hoy, que es lo único que promete */
       if(ui.tab==='hoy')ui.diaHoy='';
       render();window.scrollTo(0,0);break;
-    case 'nav-comer':{ui.tab='food';ui.foodVista='eje';ui.cjeHoja=null;ui.foodDate='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
+    case 'nav-comer':{weekDate=mondayOf(new Date());ui.tab='food';ui.foodVista='eje';ui.cjeHoja=null;ui.foodDate='';ui.typesVista='';ui.shopVista='';render();window.scrollTo(0,0);break;}
     case 'compra-salida':ui.compraSalida=el.dataset.v||'todo';render();break;
     /* el pasillo de un producto: abrir la lista y elegir. Van en el switch de CLICKS —son botones—,
        que es donde tienen que estar: un `case` en el de `change` no se dispararía nunca. */
@@ -20050,6 +20120,7 @@ function act(a,el){
       const d=platoDeTexto(t);if(!d){flash('no reconozco ningún alimento en «'+t+'»');break;}
       if(h.c==='des'){if(a.des.length<3)a.des.push(d.id);}else a[h.c][h.w]=d.id;ui.semPHoja=null;save();flash('puesto: '+d.name);render();break;}
     case 'cje-hoja':ui.cjeHoja={v:el.dataset.v};render();break;
+    case 'cje-gestion':ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.cjeHoja={v:'pref'};render();break;
     case 'cje-platos':ui.cjeHoja={v:'platos',w:el.dataset.w!=null?+el.dataset.w:null,c:el.dataset.c||null,f:''};render();break;
     case 'cje-pfilt':{const h=ui.cjeHoja||{};h.f=el.dataset.v||'';h.ver='';render();break;}
     case 'cje-pnuevo':{const h=ui.cjeHoja||{};h.nuevo=!h.nuevo;render();setTimeout(function(){const i=document.getElementById('cjNuevo');if(i)i.focus();},30);break;}
@@ -20091,7 +20162,11 @@ function act(a,el){
     case 'rut-del':{const t=ui.rutTipo||diaTipo(iso(new Date())),r=store.rutinas||(store.rutinas={}),l=rutinaDe(t).slice();
       l.splice(+el.dataset.i,1);r[t]=l;save();render();break;}
     case 'rut-reset':{const t=ui.rutTipo||diaTipo(iso(new Date()));if(store.rutinas)delete store.rutinas[t];save();render();break;}
-    case 'cje-tab':ui.cjeTab=el.dataset.v==='sem'?'sem':'';ui.cjeHoja=null;render();window.scrollTo(0,0);break;
+    case 'cje-tab':ui.cjeTab=el.dataset.v==='sem'?'sem':'';ui.cjeHoja=null;if(!ui.cjeTab)weekDate=mondayOf(new Date());render();window.scrollTo(0,0);break;
+    case 'cje-sem':{const d=+el.dataset.d||0;weekDate=d?addDays(mondayOf(weekDate),7*d):mondayOf(new Date());ui.cjeHoja=null;render();break;}
+    case 'cje-montar':{const n=cjeAuto({rehacer:'huecos'});save();render();flash(typeof n==='string'?n:'semana montada: lo que pusiste tú no se ha tocado');break;}
+    case 'cje-copiar':flash(cjeCopiarSiguiente());render();break;
+    case 'cje-dias':{const h=ui.cjeHoja||{};if(h.w==null)break;flash(cjeRepetir(h.w,h.c,+el.dataset.n||2));ui.cjeHoja=null;render();break;}
     case 'cje-mom':{const k=el.dataset.k||iso(new Date());ui.cjeHoja={v:'mom',p:el.dataset.p||'comida',k:k};ui.foodDate=k===iso(new Date())?'':k;ui.frPos='';ui.frase=null;render();break;}
     case 'cje-diak':{const h=ui.cjeHoja||{},d0=parseDate(h.k||iso(new Date())),k=iso(addDays(d0,+el.dataset.d||0));if(k>iso(new Date()))break;h.k=k;render();break;}
     case 'cje-nocome':{const k=el.dataset.k||iso(new Date());addFoodEntry(k,{macro:{nombre:'No he '+(el.dataset.p==='cena'?'cenado':(el.dataset.p==='comida'?'comido':'desayunado')),kcal:0,prot:0,carb:0,gresa:0,emoji:'·'},pos:el.dataset.p||'comida'});save();render();break;}
@@ -20557,7 +20632,7 @@ function act(a,el){
       save();flash(d.name+' añadido');elegirVuelve();render();window.scrollTo(0,0);break;}
     case 'elegir-quitar':{const e=ui.elegir;if(!e||e.modo!=='sb')break;const cel=sbCeldaMia(e.w,e.c);
       cel.items.splice(+el.dataset.j,1);cel.meal='';save();render();break;}
-    case 'food-vista':{ui.foodVista=el.dataset.v||'';
+    case 'food-vista':{ui.foodVista=el.dataset.v||'eje';if(ui.foodVista==='eje')ui.cjeTab='';
       if(el.dataset.p)ui.foodPanel=el.dataset.p;
       if(ui.foodVista!=='add')ui.foodSel='';
       if(ui.foodVista!=='cocina'){ui.cocinaPlato='';ui.cocinaPaso=0;ui.cocinaRac=0;}
@@ -23014,7 +23089,7 @@ window.PG={diaTipo,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,c
   TEMAS,temaById,ponerTema,ponerTemaPropio,temaAzar,temasMios,guardarTemaActual,borrarTemaMio,contraste,aplicarTema,tintaLegible,eventoAplica,mesRejilla,
   alimDeTexto,gramosDeIng,ingAlim,migrarPlato,migrarPlatos,platoMacrosDe,alimTodos,alimBuscar,alimById,
   suenoRealS,suenoReal,suenoGuardar,suenoSemana,informeDatos,librosS,libroNuevo,libroPag,libroCalc,hudLeer,HUD_LIBROS,
-  lloretPlan,lloretPoner,lloretDe,gymSemanaCirculos,mCeldas,guardiaCelda,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,
+  lloretPlan,lloretPoner,lloretDe,gymSemanaCirculos,mCeldas,guardiaCelda,sbKey,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,
   FUERA_CADENAS,FUERA_OJO,fueraBuscables,fueraItem,fueraMenuCalc,fueraApuntar,fueraUltimos,
   finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,repartoDe,sacarHucha,epocaDe,

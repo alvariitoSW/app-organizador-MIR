@@ -3330,3 +3330,5 @@ span.hbt{cursor:default;border-style:dashed}
   .mesres .mrstat b,.mesres .mrstat span{color:#000}
   .mesres .mrmas,.mesres .d4step button,.mesres [data-a="mes-vac"],.mesres [data-a="mon-auto"]{display:none}}
 .mcll.mcmini{width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.cjsh .cjshT{flex:1;text-align:center;font-size:15px}.cjacc{gap:8px;margin-top:8px;flex-wrap:wrap}.cjacc .btn{flex:1}
+.cjdia{display:flex;align-items:center;gap:8px;margin-bottom:6px}.cjdia b{flex:1;text-align:center;font-size:16px}.cjmic{margin:4px 0 8px}.cjmic>summary{cursor:pointer;list-style:none;padding:2px 4px}.cjmic>summary::-webkit-details-marker{display:none}

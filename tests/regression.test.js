@@ -163,6 +163,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (vista === 'add') {
       await page.click('[data-a="food-vista"][data-v="buscar"]');
       await page.waitForTimeout(150);
+      // «mis productos» ya no cuelga del buscador: está en ⚙️ → Gestionar
+      if (modo === 'productos') {
+        await page.click('[data-a="cje-gestion"]'); await page.waitForTimeout(150);
+        await page.click('#hojaDia [data-a="food-vista"][data-v="productos"]'); await page.waitForTimeout(150);
+        return;
+      }
       if (modo && modo !== 'buscar') {
         const sel = modo === 'productos'
           ? '[data-a="food-vista"][data-v="productos"]'
@@ -7099,7 +7105,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // y viaja por normalize (si no, se perdería al recargar)
     const persiste = await page.evaluate(() => { const P = window.PG;
-      P.store = JSON.parse(JSON.stringify(P.store)); return (P.store.semBase.d['3'] || {}).cena; });
+      P.store = JSON.parse(JSON.stringify(P.store)); return (P.store.semBase.d[P.sbKey(3)] || {}).cena; });
     check('la semana base sobrevive a normalize()', !!persiste && persiste.items.length === 1, JSON.stringify(persiste));
     await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} }; P.ui.tab = 'hoy'; P.save(); P.render(); });
   }
@@ -9022,7 +9028,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.typesVista = 'montar'; P.render();   // la cuadrícula con las letras está en «Más formas de montar»
       const nombres = ids.map((id) => P.store.meals.find((m) => m.id === id).name);
       const vuelta = P.normalize(JSON.parse(JSON.stringify(P.store)));
-      return { dias: [0, 1, 2, 3, 4, 5, 6].map((w) => (d[w] && d[w].desayuno && d[w].desayuno.meal) || ''), nombres, vuelta: (vuelta.protos || {}).desayuno || [],
+      return { dias: [0, 1, 2, 3, 4, 5, 6].map((w) => (d[P.sbKey(w)] && d[P.sbKey(w)].desayuno && d[P.sbKey(w)].desayuno.meal) || ''), nombres, vuelta: (vuelta.protos || {}).desayuno || [],
         letras: [...document.querySelectorAll('.mgrid .LA, .mgrid .LB')].length }; });
     check('prototipos: con dos desayunos, un toque pone los 7 (diario A, finde B), se ven en la semana y sobreviven a recargar',
       pr >= 2 && prR.dias.slice(0, 5).every((x) => x === prR.nombres[0]) && prR.dias[5] === prR.nombres[1] && prR.dias[6] === prR.nombres[1] &&
@@ -9032,7 +9038,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     for (let i = 0; i < 3; i++) { const b = await page.$('.mop.best'); if (b) { await b.click(); await page.waitForTimeout(100); } }
     const pmR = await page.evaluate(() => { const pm = window.PG.ui.pm; return { obj: pm.obj, txt: [...document.querySelectorAll('.mbul b')].map((e) => e.textContent), sel: Object.keys(pm.sel) }; });
     await page.click('[data-a="pm-poner"]'); await page.waitForTimeout(150);
-    const vie = await page.evaluate(() => { const P = window.PG, c = P.store.semBase.d[4] && P.store.semBase.d[4].comida; const d = c ? P.store.dishes.find((x) => x.id === c.items[0].id) : null;
+    const vie = await page.evaluate(() => { const P = window.PG, c = P.store.semBase.d[P.sbKey(4)] && P.store.semBase.d[P.sbKey(4)].comida; const d = c ? P.store.dishes.find((x) => x.id === c.items[0].id) : null;
       return d ? { n: d.name, kcal: d.kcal, prot: d.prot, alims: (d.alims || []).length } : null; });
     const cerca = (v, t) => Math.abs(v - t) <= Math.max(3, t * 0.12);
     check('por macros: proteína, hidratos y grasa llegan a la meta de la comida y el plato va al viernes',
@@ -9097,7 +9103,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.elegir = { modo: 'sb', w: 3, c: 'comida', q: '', f: 'comida' }; P.ui.typesVista = 'elegir'; P.render(); });
     await page.fill('#elQ', 'pechuga'); await page.waitForTimeout(450);
     const alim = await page.$('#main [data-a="elegir-alim"]'); if (alim) { await alim.click(); await page.waitForTimeout(200); }
-    const cel = await page.evaluate(() => { const c = window.PG.store.semBase.d[3], d = c && c.comida && c.comida.items[0] ? window.PG.store.dishes.find((x) => x.id === c.comida.items[0].id) : null;
+    const cel = await page.evaluate(() => { const c = window.PG.store.semBase.d[window.PG.sbKey(3)], d = c && c.comida && c.comida.items[0] ? window.PG.store.dishes.find((x) => x.id === c.comida.items[0].id) : null;
       return d ? { n: d.name, kcal: d.kcal, suelto: !!d.suelto } : null; });
     await page.evaluate(() => { const P = window.PG; P.ui.elegir = null; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('buscador: plural = singular, platos caseros de siempre y sin repetidos; y en el menú se pone un alimento suelto',
@@ -9190,7 +9196,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const sem = await page.evaluate(() => { const S = window.PG.semanaComida(0);
       return { n: S.n, prot: S.prot, plan: S.tipo && S.tipo.plan, barras: document.querySelectorAll('#main .msb > div').length, alto: document.querySelector('#main').scrollHeight }; });
     await page.click('#main .subcab .volver'); await page.waitForTimeout(100);
-    await page.click('.h2seg [data-v="misplatos"]'); await page.waitForTimeout(150);
+    // «volver» lleva al Hoy de Comer; la clasificación cuelga de ⚙️ → Gestionar
+    await page.click('[data-a="cje-hoja"][data-v="pref"]'); await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="food-vista"][data-v="misplatos"]'); await page.waitForTimeout(150);
     const rk = await page.evaluate(() => { const P = window.PG, R = P.platoRanking(), d = R[0].d.id;
       const antes = R.filter((x) => x.d.id === d)[0].nota; P.platoVotar(d, -1); P.platoVotar(d, -1);
       const desp = P.platoRanking().filter((x) => x.d.id === d)[0].nota;
@@ -9346,7 +9354,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="ss-auto"]'); await page.waitForTimeout(250);
     const sb = await page.evaluate(() => { const P = window.PG, flash = (document.getElementById('flash') || {}).textContent || '', d = P.store.semBase.d;
       let llenas = 0; const hosp = [];
-      Object.keys(d).forEach((w) => Object.keys(d[w]).forEach((c) => { const it = d[w][c].items || []; if (it.length) llenas++; if (it.some((x) => x.id === 'd-hospital')) hosp.push(w + c); }));
+      Object.keys(d).forEach((w) => Object.keys(d[w]).forEach((c) => { const it = d[w][c].items || []; if (it.length) llenas++; }));
+      // la guardia ya no se guarda en la casilla: sale de la fecha (guardiaCelda)
+      const kg = P.iso(P.addDays(P.mondayOf(new Date()), 3));
+      ['desayuno', 'comida', 'cena'].forEach((c) => { const g = P.guardiaCelda(kg, c); if (g && P.dishById(g.items[0].id).hospital) hosp.push('3' + c); });
       return { flash, llenas, hosp }; });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
     const hoy = await page.$$eval('#main .h2mom', (e) => e.filter((x) => /\S/.test(x.innerText)).length);
@@ -9369,7 +9380,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hu = await page.evaluate(() => window.PG.ahorroS().huchas.some((h) => h.saldo === 1234.5));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia228; P.save(); P.ui.foodVista = ''; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('«Móntamela» con el menú vacío rellena la semana con lo de la nevera, y la guardia come y cena el menú del hospital',
-      r.guardia && /comidas puestas/.test(sb.flash) && sb.llenas >= 20 && sb.hosp.includes('3comida') && sb.hosp.includes('3cena') && !sb.hosp.includes('3desayuno') && hoy >= 3, JSON.stringify({ r, sb, hoy }));
+      r.guardia && /comidas puestas/.test(sb.flash) && sb.llenas >= 18 && sb.hosp.includes('3comida') && sb.hosp.includes('3cena') && !sb.hosp.includes('3desayuno') && hoy >= 3, JSON.stringify({ r, sb, hoy }));
     check('Hoy cocino ofrece platos de tu nevera y «hecho» lo deja cocinado', hc.length >= 2 && coc >= 1, JSON.stringify({ hc, coc }));
     check('Dinero: el % de ahorro y el reparto se cambian (suma 100 y vuelve al recomendado) y lo que llevas en una hucha se corrige a mano',
       m1 === (m0 == null ? 30 : m0) + 5 && plan.suma === 100 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan, rec, hu }));
@@ -9393,8 +9404,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = document.querySelector('#main').innerText;
       return { v: ps.map((x) => x.v), cortos: ps.filter((x) => x.corta).length, des: Object.keys(des).length,
         llegan: /todos los días llegan/.test(txt), enCasa: +((txt.match(/(\d+) de 21 comidas/) || [])[1] || 0) }; });
-    await page.evaluate(() => { const P = window.PG, h = P.dishHospital();
-      P.store.semBase.d[1] = { desayuno: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' }, comida: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' } };
+    // el plan va por FECHA: el martes de esta semana, con «nada» (el hospital ya no vale fuera de guardia)
+    await page.evaluate(() => { const P = window.PG, h = P.dishNada();
+      P.store.semBase.d[P.sbKey(1)] = { desayuno: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' }, comida: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' } };
       P.save(); P.render(); });
     const aviso = await page.evaluate(() => { const a = document.querySelector('#main .prav'); return a ? a.innerText.replace(/\s+/g, ' ') : ''; });
     const antes = await page.evaluate(() => window.PG.protSemana().filter((x) => x.w === 1)[0].v);
@@ -9594,7 +9606,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
       P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; delete P.store.food.pref;
       ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
-      const d0 = P.store.dishes.find((d) => !d.hospital); for (let w = 0; w < 7; w++) P.store.semBase.d[w] = { comida: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' }, cena: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' } };
+      const d0 = P.store.dishes.find((d) => !d.hospital); for (let w = 0; w < 7; w++) P.store.semBase.d[P.sbKey(w)] = { comida: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' }, cena: { items: [{ kind: 'dish', id: d0.id, portions: 1 }], meal: '' } };
       window.__d0 = d0.id; P.ui.cjeHoja = null; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     const msg = await page.evaluate(() => { const P = window.PG, m = P.cjeAuto({ rehacer: 'todo' }); P.render(); return m; });
@@ -9606,9 +9618,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150);
     const racs = await page.evaluate(() => document.querySelectorAll('#hojaDia [data-a="cje-rac2"]').length);
     const r15 = await page.$('#hojaDia [data-a="cje-rac2"][data-v="1.5"]'); if (r15) { await r15.click(); await page.waitForTimeout(100); }
-    const por = await page.evaluate((a) => a ? window.PG.store.semBase.d[a.w][a.c].items[0].portions : null, abre);
+    const por = await page.evaluate((a) => a ? window.PG.store.semBase.d[window.PG.sbKey(a.w)][a.c].items[0].portions : null, abre);
     const qu = await page.$('#hojaDia [data-a="cje-quitar"]'); if (qu) { await qu.click(); await page.waitForTimeout(120); }
-    const tras = await page.evaluate((a) => ({ hoja: !!window.PG.ui.cjeHoja, nada: a ? !!(window.PG.dishById(window.PG.store.semBase.d[a.w][a.c].items[0].id) || {}).nada : false }), abre);
+    const tras = await page.evaluate((a) => ({ hoja: !!window.PG.ui.cjeHoja, nada: a ? !!(window.PG.dishById(window.PG.store.semBase.d[window.PG.sbKey(a.w)][a.c].items[0].id) || {}).nada : false }), abre);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia235; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('rehacer encima de una semana hecha la cambia y no dice «no he encontrado platos»',
       res.cambiada >= 8 && !/no he encontrado|no ha cambiado/.test(msg), JSON.stringify({ msg, res }));
@@ -9627,7 +9639,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'baguette sin gluten', 'huevos medianos', 'proteina 0% natural', 'kiwi verde bandeja', 'nuez natural', 'fritada pisto'].forEach((n) => P.despensaAdd(n, 1, ''));
       P.ui.cjeHoja = null; P.ui.semPHoja = null; P.ui.semP = ''; P.save(); P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
-    await page.click('#main .cji[data-v="semp"]'); await page.waitForTimeout(120);
+    // ✨ ya no está en Comer (un solo plan; «Copiar a la siguiente» hace su papel): se abre por dentro
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'semp'; P.render(); }); await page.waitForTimeout(120);
     const vacio = await page.evaluate(() => ({ v: window.PG.ui.foodVista, crear: !!document.querySelector('#main [data-a="semp-nuevo"]'), modos: document.getElementById('calModes').hidden }));
     await page.click('#main [data-a="semp-nuevo"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="semp-proponer"]'); await page.waitForTimeout(300);
@@ -9641,9 +9654,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const sob = await page.evaluate((w) => { const p = window.PG.semPS().lista[0]; return p.cen[w] === p.com[w]; }, w);
     await page.click('#main [data-a="semp-usar"]:not([data-k$="x"])'); await page.waitForTimeout(150);
     const usada = await page.evaluate(() => { const P = window.PG, d = P.store.semBase.d, lun = P.mondayOf(new Date()), g = [];
-      for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(lun, i)); if (P.esDiaGuardia(k)) g.push((P.dishById((d[i].comida.items[0] || {}).id) || {}).hospital); }
+      for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(lun, i)); if (P.esDiaGuardia(k)) g.push((P.dishById(P.guardiaCelda(k, 'comida').items[0].id) || {}).hospital); }
       const cd = P.compraDatos(); return { v: P.ui.foodVista, celdas: Object.keys(d).length, guardiaHosp: g.every(Boolean), compra: cd.total, uso: Object.keys(P.semPS().uso).length }; });
-    await page.click('#main .cji[data-v="semp"]'); await page.waitForTimeout(120);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'semp'; P.render(); }); await page.waitForTimeout(120);
     const prox = await page.$$('#main [data-a="semp-usar"]'); if (prox[1]) { await prox[1].click(); await page.waitForTimeout(100); }
     await page.click('#main [data-a="semp-dup"]'); await page.waitForTimeout(120);
     const fin = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))), s = n.food.semP || {};
