@@ -4849,7 +4849,7 @@ function hoyChoques(key,inf){
    que hay a esa hora (lo resalta y apaga lo demás, y debajo sale su tira con lo que puedes hacer),
    arrastrar el dedo recorre el día con la aguja y el centro dice qué hay a cada hora, mantener
    pulsado abre la hoja entera y tocar el centro vuelve a «ahora». */
-const HOY_RI=88,HOY_CENTRO=58;   /* la franja de dentro (eventos y comidas) y el centro */
+const HOY_RI=88,HOY_CENTRO=58,HOY_FUERA=140;   /* fuera del anillo (más allá de las horas escritas) es como tocar el centro */   /* la franja de dentro (eventos y comidas) y el centro */
 const HOY_CAP={sleep:'SUEÑO',work:'TRABAJO',guard:'GUARDIA',meal:'COMIDA',gym:'ENTRENO',evt:'EVENTO'};
 function hoySelDe(key){const s=ui.hoySel;return s&&s.k===key?s.i:-1;}
 function hoyRango(x){return x.fin?hCortaHM(x.hora)+'–'+hCortaHM(x.fin):'a las '+hCortaHM(x.hora);}
@@ -4986,7 +4986,7 @@ document.addEventListener('pointerdown',function(e){
   const key=box.dataset.k,p=hoyRelojLee(box,e);
   try{box.setPointerCapture(e.pointerId);}catch(e2){}
   _hr={key:key,x:e.clientX,y:e.clientY,p:p,id:e.pointerId,movido:false,lp:null};
-  if(p.r<HOY_CENTRO)return;   /* el centro: se resuelve al soltar */
+  if(p.r<HOY_CENTRO||p.r>HOY_FUERA)return;   /* el centro y lo de fuera: se resuelven al soltar */
   _hr.lp=setTimeout(function(){if(!_hr)return;_hr.lp=null;_hr.hecho=true;
     const i=hoyRelojItem(key,dayInfo(key),p.m,p.r);if(i<0)return;
     _lpComido=true;try{if(navigator.vibrate)navigator.vibrate(18);}catch(e3){}
@@ -4995,7 +4995,7 @@ document.addEventListener('pointermove',function(e){
   if(!_hr||e.pointerId!==_hr.id||_hr.hecho)return;
   if(!_hr.movido&&Math.hypot(e.clientX-_hr.x,e.clientY-_hr.y)<8)return;
   if(_hr.lp){clearTimeout(_hr.lp);_hr.lp=null;}
-  _hr.movido=true;if(_hr.p.r<HOY_CENTRO)return;
+  _hr.movido=true;if(_hr.p.r<HOY_CENTRO||_hr.p.r>HOY_FUERA)return;
   const box=document.querySelector('#main .hoyreloj');if(!box)return;
   const p=hoyRelojLee(box,e),i=hoyRelojItem(_hr.key,dayInfo(_hr.key),p.m,p.r);
   ui.hoyCursor=p.m;ui.hoyCursorK=_hr.key;ui.hoySel=i>=0?{k:_hr.key,i:i}:null;hoyRelojRepinta();});
@@ -5004,7 +5004,7 @@ function _hrSuelta(e){
   const h=_hr;_hr=null;if(h.lp)clearTimeout(h.lp);
   if(h.hecho)return;
   if(h.movido||(e&&e.type==='pointercancel')){if(ui.hoyCursor!=null){ui.hoyCursor=null;hoyRelojRepinta();}return;}
-  if(h.p.r<HOY_CENTRO)ui.hoySel=null;
+  if(h.p.r<HOY_CENTRO||h.p.r>HOY_FUERA)ui.hoySel=null;
   else{const i=hoyRelojItem(h.key,dayInfo(h.key),h.p.m,h.p.r);ui.hoySel=i>=0?{k:h.key,i:i}:null;}
   ui.hoyCursor=null;hoyRelojRepinta();}
 document.addEventListener('pointerup',_hrSuelta);

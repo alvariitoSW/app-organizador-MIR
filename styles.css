@@ -2540,7 +2540,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .snver span{display:inline-flex;align-items:center;gap:5px}
 .snver i{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:900;color:var(--bg)}
 .snverd{margin-top:6px;font-size:13px}.snverd p{margin:6px 0 0;line-height:1.45}
-.sngraf{margin:8px -4px 0;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.sngraf{margin:8px -4px 0;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .sngraf svg{display:block;width:100%;height:auto;overflow:visible}
 .sngraf [data-sn]:focus-visible{outline:none;stroke:var(--ink);stroke-width:2}
 .sntip{margin:2px 0 0;text-align:center}
@@ -3137,7 +3137,7 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
   transition:transform var(--lp,600ms) ease-out,background var(--lp,600ms) ease-out}
 @media (prefers-reduced-motion:reduce){[data-lp]:not(.dbox).pulsando{transition:none}}
 /* ===== Hoy como reloj ===== */
-.hoyreloj{margin:4px auto 2px;max-width:340px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}.hoyreloj svg{display:block;width:100%;height:auto}
+.hoyreloj{margin:4px auto 2px;max-width:340px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}.hoyreloj svg{display:block;width:100%;height:auto}
 /* lo elegido en el reloj brilla y lo demás se apaga */
 .hoyreloj .arc,.hoyreloj .mk{transition:opacity .18s,stroke-width .18s}
 .hoyreloj .arc.on,.hoyreloj .mk.on{filter:drop-shadow(0 0 6px currentColor)}
