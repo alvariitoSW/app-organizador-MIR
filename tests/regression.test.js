@@ -2789,7 +2789,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     micros: document.querySelectorAll('#main .h2mic6 .v').length,
     sinCasillasMicro: !document.querySelector('#main .micros .mic'),
     sinFormulario: !document.getElementById('fbQ') && !document.getElementById('foodNewNombre'),
-    botones: document.querySelectorAll('#main button').length,
+    // la tarjeta de monchis sale las noches de Lloretazo (ahora casi todas) y trae sus propios botones
+    botones: document.querySelectorAll('#main button:not(.mcard button)').length,
     alto: Math.round(document.querySelector('#main').scrollHeight),
   }));
   check('la portada de Comida: P/H/G contra el objetivo, lo de hoy por momentos, micros en una línea, buscar, la semana y las tres despensas',
@@ -7507,7 +7508,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       dia && dia.ida === (dia.ent - 15) + '-' + dia.ent && dia.vuelta === 20 && dia.icsSinCocina, JSON.stringify(dia));
 
     // Lloretazo: un toque, 2 h 10 por la noche, y con otro toque se quita
-    await page.evaluate(() => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => !e.lloret);
+    // (con el Lloretazo de cada noche apagado: aquí se prueba el de poner a mano)
+    await page.evaluate(() => { const P = window.PG; P.store.eventos = P.store.eventos.filter((e) => !e.lloret); P.store.lloret = { diario: false };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
     const ll = await page.$('[data-a="lloret"]');
@@ -9305,7 +9307,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = await page.evaluate(() => { const P = window.PG; window.__copia227 = JSON.parse(JSON.stringify(P.store));
       P.store.food.objetivo = { kcal: 2240, prot: 134 }; P.store.food.log[P.iso(new Date())] = []; P.store.food.despensa = []; delete P.store.food.monchisTope;
       ['griego ligero natural', 'nuez natural', 'kiwi verde bandeja', 'maria sin gluten', 'panna cotta', 'cookie sin gluten y sin lactosa'].forEach((t) => P.despensaAdd(t, 1, ''));
-      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.lloretPoner(P.iso(new Date())); delete P.store.consumo;
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: false }; P.lloretPoner(P.iso(new Date())); delete P.store.consumo;
       P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render();
       const c = document.querySelector('.mcard'); const op = P.monchisOpciones();
       return { aviso: !!document.querySelector('.mcll'), card: !!c, sanos: op.sanos.length, capr: op.caprichos.length, primero: op.sanos[0] && op.sanos[0].n,
@@ -10018,6 +10020,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /Luz fuerte al levantarte/.test(r.luz) && /Amanece/.test(r.luz) && r.prueba.id === 'hora' && r.prueba.ayer === 1 && r.anillo >= 12, JSON.stringify({ luz: r.luz.slice(0, 200), prueba: r.prueba, anillo: r.anillo }));
     check('el test de reacción guarda tu resultado y el modo noche manda levantarte y apunta el desvelo',
       r.pvt.n >= 1 && r.pvt.ult.med > 0 && r.pvt.res && r.noche && r.desvelo && r.desvelo.mal && /^\d\d:\d\d$/.test(r.desvelo.dde), JSON.stringify({ pvt: r.pvt, noche: r.noche, desvelo: r.desvelo }));
+  }
+
+  // 246) EL LLORETAZO ES DE CADA NOCHE Y LA CENA VA ANTES: sale solo todas las noches menos las de
+  // guardia, la cena se pone 45 min antes de salir (cenar a las 22 y pico con hambre era el hábito a
+  // cambiar), el 🌿 lo quita ese día y la cena vuelve a su hora; en guardia se come a la hora de ese
+  // tipo (UMI 13:45–14:20, Urgencias 14:00–15:00), y no va al calendario de Google
+  {
+    const r = await page.evaluate(() => { const P = window.PG; window.__copia246 = JSON.parse(JSON.stringify(P.store));
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = {};
+      let kn = null, kg = null;
+      for (let i = 0; i < 30 && (!kn || !kg); i++) { const k = P.iso(P.addDays(new Date(), i)), t = P.diaTipo(k);
+        if (!kg && t === 'guardia') kg = k; if (!kn && t !== 'guardia') kn = k; }
+      const cena = (k) => (P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && /cena/i.test(x.txt))[0] || {}).hora || '';
+      const ll = P.lloretDe(kn), c1 = cena(kn);
+      P.lloretPoner(kn); const sinLl = !P.lloretDe(kn), c2 = cena(kn); P.lloretPoner(kn); const vuelve = !!P.lloretDe(kn);
+      const out = { kn, kg, ll: ll && ll.hora + '-' + ll.fin, c1, c2, sinLl, vuelve, ics: /Lloretazo/.test(JSON.stringify(P.calEventos(kn, kn))) };
+      if (kg) { out.enGuardia = !!P.lloretDe(kg); P.setDayOverride(kg, P.dayInfo(kg).shiftId, 'umi');
+        const cm = P.hoyItems(kg, P.dayInfo(kg)).filter((x) => x.tipo === 'meal' && P.esComidaPrincipal(x.slot))[0];
+        out.comidaUmi = cm ? cm.hora : null; }
+      P.store = window.__copia246; P.save(); P.render(); return out; });
+    const m = (h) => { const x = /^(\d\d):(\d\d)$/.exec(h || ''); return x ? +x[1] * 60 + +x[2] : null; };
+    check('el Lloretazo sale solo cada noche (no en guardia ni en Google), la cena va 45 min antes de salir y el 🌿 lo quita ese día',
+      !!r.ll && m(r.c1) === m(r.ll.split('-')[0]) - 45 && r.sinLl && r.c2 !== r.c1 && r.vuelve && !r.ics && (!r.kg || r.enGuardia === false), JSON.stringify(r));
+    check('en guardia de UMI la comida es a las 13:45', !r.kg || r.comidaUmi === '13:45', JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

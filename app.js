@@ -801,7 +801,8 @@ function normalize(o){
       return {code:String(t.code).slice(0,8),label:String(t.label||'').slice(0,22),
         relevoSem:h(t.relevoSem,'08:00'),
         relevoFinde:h(t.relevoFinde,String(t.code)==='umi'?'10:00':'09:00'),
-        pase:Math.max(0,Math.min(480,Math.round(+t.pase||0)))};});
+        pase:Math.max(0,Math.min(480,Math.round(+t.pase||0))),
+        comeDe:h(t.comeDe,String(t.code)==='umi'?'13:45':'14:00'),comeA:h(t.comeA,String(t.code)==='umi'?'14:20':'15:00')};});
   if(!Array.isArray(o.rotation.vacaciones))o.rotation.vacaciones=[];
   o.rotation.vacaciones=o.rotation.vacaciones.filter(function(v){return v&&v.start&&v.end;})
     .map(function(v){return {label:String(v.label||''),start:String(v.start),end:String(v.end)};});
@@ -1433,7 +1434,9 @@ function gTipos(){
     return {code:code,label:lab||code.toUpperCase(),
       relevoSem:hora(t&&t.relevoSem,hora(jd.start,'08:00')),
       relevoFinde:hora(t&&t.relevoFinde,code==='umi'?'10:00':'09:00'),
-      pase:Math.max(0,Math.min(480,+((t&&t.pase)!=null?t.pase:(code==='umi'?75:0))||0))};};
+      pase:Math.max(0,Math.min(480,+((t&&t.pase)!=null?t.pase:(code==='umi'?75:0))||0)),
+      /* a qué hora se come en el hospital: en la UMI de 13:45 a 14:20, en Urgencias de 14:00 a 15:00 */
+      comeDe:hora(t&&t.comeDe,code==='umi'?'13:45':'14:00'),comeA:hora(t&&t.comeA,code==='umi'?'14:20':'15:00')};};
   if(!Array.isArray(r.guardiaTipos)||!r.guardiaTipos.length)
     r.guardiaTipos=[{code:'urg',label:'Urgencias'},{code:'umi',label:'UMI'}];
   r.guardiaTipos=r.guardiaTipos.map(sane);
@@ -1486,6 +1489,7 @@ function setHorasTipo(code,campo,valor){
   if(!m||+m[1]>23||+m[2]>59)return 'pon la hora como 09:00';
   t[campo]=String(+m[1]).padStart(2,'0')+':'+m[2];
   save();render();
+  if(campo==='comeDe'||campo==='comeA')return t.label+': comes de '+t.comeDe+' a '+t.comeA;
   return t.label+': relevo '+(campo==='relevoSem'?'de lunes a viernes':'de sábado y domingo')+' a las '+t[campo];}
 function renombraTipo(code,label){
   const l=gTipos(),t=l.filter(function(x){return x.code===code;})[0];
@@ -1631,6 +1635,10 @@ function comidaPrincipalDe(dateStr,infOpt){
   if(sal){const sl=sleepOf(dateStr,inf);
     if(sl&&sl.siesta){const m=mins(sl.siesta.a);
       if(m!=null)return {de:hm(m+c.trasSiesta),a:hm(m+c.trasSiesta+60),por:'siesta'};}}
+  /* EL DÍA DE GUARDIA SE COME EN EL HOSPITAL, a la hora de ese tipo de guardia (UMI 13:45–14:20,
+     Urgencias 14:00–15:00). Antes salía la hora de llegar a casa, y ese día no vuelves */
+  const shG=shiftById(inf.shiftId);
+  if(shG&&isGuardia(shG)){const t=gTipo(inf.guard);return {de:t.comeDe,a:t.comeA,por:'guardia'};}
   /* LA COMIDA POST-ENTRENO SOLO MANDA SI EL ENTRENO ES EL QUE LA EMPUJA. Con un entreno de fuerza a
      las 6:30 de la mañana la app ponía «comida post-entreno · 18:00»: el entreno había acabado a
      las ocho y la comida caía cuatro horas tarde. Si el entreno acaba antes de tu hora normal de
@@ -1654,7 +1662,7 @@ function comidaPrincipalDe(dateStr,infOpt){
   /* un día libre no tiene jornada de la que salir: la hora es la misma, pero no se inventa el motivo */
   return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'normal'};}
 function comidaPorqueTxt(por){
-  return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':
+  return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':por==='guardia'?'en la guardia':
     por==='llegar'?'al llegar a casa del trabajo':
     por==='jornada'?'al salir de la jornada':'';}
 function comidaPrincipalTxt(cp){
@@ -1669,7 +1677,10 @@ function horaDeToma(dateStr,slot,cpOpt){
   /* la hora que hay que ENSEÑAR de esa toma: la de la lista, salvo que sea la comida principal y
      ese día tenga una hora propia */
   const cp=cpOpt!==undefined?cpOpt:(dateStr?comidaPrincipalDe(dateStr):null);
-  return (cp&&esComidaPrincipal(slot))?cp.de:((slot&&slot.time)||'');}
+  if(cp&&esComidaPrincipal(slot))return cp.de;
+  const ll=dateStr&&slot&&/cena/i.test(slot.label||'')?lloretDe(dateStr):null;
+  if(ll){const m=mins(ll.hora);if(m!=null)return hm(m-LL_CENA_ANTES);}
+  return (slot&&slot.time)||'';}
 function trayectoMin(){
   /* LO QUE TARDAS DEL TRABAJO A CASA, DE UN SOLO SITIO. Había dos números para lo mismo: este, que
      salía de las horas «salir→llegar» del tipo de día de guardia, y el de Ajustes → Ir y volver.
@@ -4483,7 +4494,7 @@ function planDiaHTML(d){
     if(rt)bits.push('<span class="pl gym">\ud83c\udfcb\ufe0f '+esc(nombreCorto(rt.nombre))+'</span>');
     const s2=diaSegundo(d.key,d.inf);
     if(s2&&s2.on)bits.push('<span class="pl gym">\ud83c\udfca '+esc(s2.hora||'')+'</span>');
-    const evs=eventosDeFecha(d.key);
+    const evs=eventosCalendario(d.key);
     evs.slice(0,2).forEach(function(ev){
       bits.push('<span class="pl evt">\ud83d\udcc5 '+esc(evHoraTxt(ev))+' '+esc(nombreCorto(ev.titulo||''))+'</span>');});
     if(evs.length>2)bits.push('<span class="pl evt">+'+(evs.length-2)+'</span>');
@@ -4640,7 +4651,7 @@ function timelineBar(dateStr,inf,opt){
   const comidas=(sh?slotsFor(sh.id).map(function(x){
     return {time:horaDeToma(dateStr,x,cpF),label:x.label};}):[]);
   const seg2=diaSegundo(dateStr,inf);
-  const evs=eventosDeFecha(dateStr);
+  const evs=eventosCalendario(dateStr);
   const V=franjaVentana([mins(sl.wake),mins(sl.bed),
     sl.siesta?mins(sl.siesta.de):null,sl.siesta?mins(sl.siesta.a):null,
     (seg2&&seg2.on)?mins(seg2.hora):null]
@@ -5101,7 +5112,9 @@ function hoyAccionesHTML(x,k,peq){
     acc.push(b('hoy-comer','🔁 Cambiar o mover',' data-k="'+esc(k)+'" data-p="'+esc(posDeSlot(x.slot&&x.slot.label,x.slot&&x.slot.time))+'"'));}
   if(x.tipo==='gym'){if(x.rt&&!ui.gymSesionActiva)acc.push(b('ses-empezar','▶ Empezar',' data-id="'+esc(x.rt.id)+'" data-key="'+esc(k)+'"',1));
     acc.push(b('tab','💪 Ver Entreno',' data-t="gym"'));}
-  if(x.tipo==='evt'&&x.ev){if(x.sem)acc.push(b('ev-salta','⏭ Quitar solo ese día',' data-id="'+esc(x.ev)+'" data-k="'+esc(k)+'"'));
+  if(x.tipo==='evt'&&/^ll-auto-/.test(x.ev||'')){acc.push(b('lloret','⏭ Hoy no voy',' data-k="'+esc(k)+'"'));
+    acc.push(b('lloret-diario','Dejar de ponerlo cada noche',''));}
+  else if(x.tipo==='evt'&&x.ev){if(x.sem)acc.push(b('ev-salta','⏭ Quitar solo ese día',' data-id="'+esc(x.ev)+'" data-k="'+esc(k)+'"'));
     acc.push(b('hoy-evento','✎ Cambiarlo',' data-id="'+esc(x.ev)+'"',!x.sem));}
   if(x.tipo==='work'||x.tipo==='guard')acc.push(b('hoy-mes-dia','🗓️ Cambiar ese día',' data-k="'+esc(k)+'"',1));
   if(x.tipo==='sleep')acc.push(b('cfg-vista','🛏️ Horas y sueño',' data-v="horas"',1));
@@ -6438,8 +6451,20 @@ function estudioHudHTML(){
    Un toque y ese día queda puesto: 35 min de ida, una hora allí y 35 de vuelta (2 h 10 en total), por
    la noche, sobre las 20:00. Cuadrado con dormir: si volviendo a las 22:10 no te da para tus horas de
    sueño antes de levantarte al día siguiente, se adelanta lo justo y te lo dice. */
+/* ES UNA RUTINA DE CADA NOCHE, NO UN EVENTO SUELTO: vas a diario, así que sale solo todas las noches
+   menos las de guardia (estás en el hospital) y se quita un día con el 🌿. La cena va ANTES de salir:
+   volver a las 22 y pico con hambre y cenar a esa hora era justo el hábito que querías cambiar, y
+   cenar tan cerca de dormir empeora el sueño */
 function lloretCfg(){const l=store.lloret||{};
-  return {ida:(+l.ida>0?+l.ida:35),estancia:(+l.estancia>0?+l.estancia:60),hora:/^\d{2}:\d{2}$/.test(l.hora||'')?l.hora:'20:00',margen:15};}
+  return {ida:(+l.ida>0?+l.ida:35),estancia:(+l.estancia>0?+l.estancia:60),hora:/^\d{2}:\d{2}$/.test(l.hora||'')?l.hora:'20:00',margen:15,
+    diario:l.diario!==false,salta:(l.salta&&typeof l.salta==='object')?l.salta:{}};}
+function lloretAuto(key){
+  /* el de cada noche, si toca: ni en guardia ni el día que lo quitaste */
+  const c=lloretCfg();if(!c.diario||c.salta[key])return null;
+  const sh=shiftById(dayInfo(key).shiftId);if(sh&&isGuardia(sh))return null;
+  const p=lloretPlan(key);
+  return {id:'ll-auto-'+key,titulo:'🌿 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],color:'#38bdf8',on:true,lloret:true,auto:true};}
+const LL_CENA_ANTES=45;   /* la cena, 45 min antes de salir */
 function lloretPlan(key){
   const c=lloretCfg(),tot=c.ida*2+c.estancia;
   const sig=nextIso(key),wake=(rhythmOf(dayInfo(sig).shiftId,sig)||{}).wake||'';
@@ -6451,10 +6476,14 @@ function lloretPlan(key){
   if(tope!=null&&pref>tope){de=tope;ajustado=true;}
   return {de:de,a:de+tot,vuelta:de+tot,bed:bed,wake:wake,tot:tot,ajustado:ajustado,cfg:c,
     justo:tope!=null?tope-de:null,pronto:de<18*60};}
-function lloretDe(key){return (store.eventos||[]).filter(function(e){return e.modo==='fecha'&&e.fecha===key&&e.lloret;})[0]||null;}
+function lloretDe(key){return (store.eventos||[]).filter(function(e){return e.modo==='fecha'&&e.fecha===key&&e.lloret;})[0]||lloretAuto(key);}
 function lloretPoner(key){
   const ya=lloretDe(key);
+  if(!store.lloret)store.lloret={};
+  if(ya&&ya.auto){if(!store.lloret.salta)store.lloret.salta={};store.lloret.salta[key]=1;save();return 'Hoy no hay Lloretazo: la cena vuelve a su hora';}
   if(ya){store.eventos=store.eventos.filter(function(e){return e!==ya;});save();return 'Lloretazo quitado de ese día';}
+  if(store.lloret.salta&&store.lloret.salta[key]){delete store.lloret.salta[key];save();
+    const q=lloretAuto(key);if(q)return 'Lloretazo '+q.hora+'–'+q.fin+' · cena antes de salir';}
   const p=lloretPlan(key);
   store.eventos.push({id:uid('ll'),titulo:'🌿 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],
     color:'#38bdf8',on:true,lloret:true});
@@ -6592,7 +6621,8 @@ function agendaDia0(key,inf){
   tomasDelDia(key,inf).forEach(function(t){
     const info=slotItems(t.sh.id,t.slot,key);
     const platos=info.items.map(function(it){const dd=dishById(it.id);return dd?dd.name:'';}).filter(Boolean).join(' + ');
-    add(t.hora,'',t.ico,t.label||'Comida',platos,'meal',tlColor('meal'),{slot:t.slot,sh:t.sh,conPlatos:info.items.length>0});});
+    const antesLl=/cena/i.test(t.label||'')&&lloretDe(key);
+    add(t.hora,'',t.ico,t.label||'Comida',(antesLl?'antes del Lloretazo'+(platos?' · ':''):'')+platos,'meal',tlColor('meal'),{slot:t.slot,sh:t.sh,conPlatos:info.items.length>0});});
   if(sl.bed){const bm=mins(sl.bed),wm=mins(sl.wake);
     const tarde=bm!=null&&wm!=null&&bm<wm;   /* a la cama pasada la medianoche: va al final del día */
     add(sl.bed,'','🛌','A la cama','','sleep',tlColor('sleep'),{m2:tarde?bm+1440:bm});}
@@ -6726,7 +6756,7 @@ function semanaFilaHTML(d,i,anyDate){
   const tomas=tomasDelDia(d.key||'',d.inf,d.shiftId);
   const comidas=tomas.length?('<div class="drcom">'+tomas.map(function(t){
     return '<span class="pl com" title="'+esc(t.label)+'">'+t.ico+' <b>'+esc(hCortaHM(t.hora))+'</b></span>';}).join('')+'</div>'):'';
-  const filas=d.key?agendaDia(d.key,d.inf).filter(function(x){return x.tipo==='gym'||x.tipo==='evt';}):[];
+  const filas=d.key?agendaDia(d.key,d.inf).filter(function(x){return (x.tipo==='gym'||x.tipo==='evt')&&!/^ll-auto-/.test(x.ev||'');}):[];
   let est='';
   if(d.key){try{const nr=estTocaHoy(d.key);if(nr&&nr.length)est='<div class="drev est"><i style="background:var(--brand2)"></i><span class="h">repaso</span><span class="pl est">📚 '+nr.length+' tema'+(nr.length===1?'':'s')+'</span></div>';}catch(e){}}
   const evs=filas.map(function(x){
@@ -6781,7 +6811,7 @@ function semanaAyerHTML(){
   const d=diaObj(addDays(semDesde(),-1)),sh=shiftById(d.shiftId);
   if(ui.semAyer)return '<div class="semayer-abierto">'+semanaFilaHTML(d,-1,true).replace('class="drow','class="drow ayer')+
     '<button class="btn s" data-a="sem-ayer" style="margin-top:4px">plegar '+(ui.semDesde?'el día anterior':'ayer')+' ▴</button></div>';
-  const evs=eventosDeFecha(d.key);
+  const evs=eventosCalendario(d.key);
   return '<button class="dayer" data-a="sem-ayer" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
     '<span class="drday">'+(ui.semDesde?(d.short+' '+d.date.getDate()):('Ayer '+d.date.getDate()))+'</span>'+
     '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+(sh?esc(sh.icon)+' '+esc(sh.name):'sin asignar')+'</span>'+
@@ -6820,7 +6850,7 @@ function semDiaCardHTML(d,nowMin){
   const k=d.key,inf=d.inf||dayInfo(k),t=diaTipo(k),ti=diaTipoInfo(t),sh=shiftById(inf.shiftId);
   const col=sh&&!inf.vac?sh.color:'var(--line)',hoyK=iso(new Date()),esHoy=k===hoyK,pasado=k<hoyK;
   const hh=horasCortasDia(k,inf,sh),ch=hoyChoques(k,inf).map(function(x){return x.e.id;});
-  const evs=eventosDeFecha(k),rut=rutinaDia(k),habs=habitosDelDia(k);
+  const evs=eventosCalendario(k),rut=rutinaDia(k),habs=habitosDelDia(k);
   const hechos=habs.filter(function(h){return habitoHecho(h.id,k);}).length;
   return '<div class="sdc'+(esHoy?' hoy':'')+(pasado?' pas':'')+'" id="sd-'+k+'" style="--c:'+esc(col)+'">'+
     '<button class="sdh" data-a="hoja-ver" data-k="'+k+'"><b>'+(esHoy?'Hoy · ':'')+esc(DIA3[d.date.getDay()])+' '+d.date.getDate()+'</b>'+
@@ -7279,7 +7309,7 @@ function renderMonth(){
     const fuera=rejilla.movil?previa:d.date.getMonth()!==mo;
     const manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
-    const evsDia=d.key?eventosDeFecha(d.key):[];
+    const evsDia=d.key?eventosCalendario(d.key):[];
     /* el usuario pedía ver de un vistazo qué toca cada día en vez de puntitos: además del tipo de
        día van una línea por cosa (jornada, entreno, eventos), cortas y con su color */
     const lineas=[];
@@ -15997,6 +16027,10 @@ function renderCfg(){
         '<label class="fld" style="flex:0 0 142px">relevo sáb. y dom.<input type="time" value="'+esc(t.relevoFinde||'09:00')+'" data-a="gtipo-finde" data-code="'+t.code+'"></label>'+
         '<label class="fld" style="flex:0 0 132px">pase de guardia (min)<input type="number" min="0" max="480" step="5" value="'+(+t.pase||0)+'" data-a="gtipo-pase" data-code="'+t.code+'"></label>'+
         '</div>'+
+        '<div class="row" style="margin-top:6px">'+
+        '<label class="fld" style="flex:0 0 132px">comes desde<input type="time" value="'+esc(t.comeDe)+'" data-a="gtipo-come" data-k="comeDe" data-code="'+t.code+'"></label>'+
+        '<label class="fld" style="flex:0 0 132px">hasta<input type="time" value="'+esc(t.comeA)+'" data-a="gtipo-come" data-k="comeA" data-code="'+t.code+'"></label>'+
+        '</div>'+
         '<p class="mini" style="margin:7px 0 0">'+esc(ejemplo(t))+'</p>'+
       '</div>';}).join('');
     return cfgPantalla('Rotación por fecha',
@@ -17638,8 +17672,12 @@ function eventoAplica(ev,key){
   if(inf.vac)return false;
   return bloquesTrabajo(key,inf).length>0;}
 function eventosDeFecha(key){const d=parseDate(key);if(!d)return [];
-  return eventosDelDia(d.getDay()).filter(function(e){return eventoAplica(e,key);}).concat(eventosPuntualesDe(key))
+  const ll=eventosPuntualesDe(key).some(function(e){return e.lloret;})?null:lloretAuto(key);
+  return eventosDelDia(d.getDay()).filter(function(e){return eventoAplica(e,key);}).concat(eventosPuntualesDe(key)).concat(ll?[ll]:[])
     .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});}
+/* el Lloretazo de cada noche es rutina: va en Hoy y en el día, no repetido en cada casilla del mes
+   ni en cada fila de la semana */
+function eventosCalendario(key){return eventosDeFecha(key).filter(function(e){return !e.auto;});}
 function eventosDelMes(y,mo){
   /* los eventos con fecha que caen en el mes que estás viendo, en orden. Los que se repiten cada
      semana no se listan uno a uno —serían veinte líneas iguales—: van resumidos al final. */
@@ -20431,7 +20469,9 @@ function act(a,el){
     case 'libro-del':{const b=libroById(el.dataset.id);if(!b)break;
       confirmar('¿Quitar «'+b.titulo+'» de tus objetivos?').then(function(ok){if(!ok)return;
         estS().libros=librosS().filter(function(x){return x.id!==b.id;});save();render();});break;}
-    case 'lloret':{const k=el.dataset.k||fechaHoy();flash(lloretPoner(k),6000);render();break;}
+    case 'lloret-diario':{if(!store.lloret)store.lloret={};store.lloret.diario=!lloretCfg().diario;ui.hoyIt=null;ui.hoySel=null;save();render();
+      flash(store.lloret.diario?'Lloretazo cada noche (menos las de guardia)':'El Lloretazo ya no sale solo: ponlo con el 🌿 los días que vayas');break;}
+    case 'lloret':{const k=el.dataset.k||fechaHoy();flash(lloretPoner(k),6000);ui.hoyIt=null;ui.hoySel=null;render();break;}
     case 'ent-min':{const g=gymS();g.minSemana=Math.max(0,Math.min(7,entrenoCfg().min+(+el.dataset.d||0)));save();render();
       const s=entrenoSemana(iso(new Date()));flash(g.minSemana?('mínimo '+g.minSemana+' por semana'+(s&&s.faltan?(' · esta semana solo caben '+s.total):'')):'sin mínimo semanal');break;}
     case 'ent-dia':{const k=el.dataset.k,fz=gymForzar(),s=entrenoSemana(k),x=s?s.dias.filter(function(y){return y.k===k;})[0]:null;if(!x)break;
@@ -22704,6 +22744,7 @@ document.addEventListener('change',e=>{
       setMonthService(monthDate.getFullYear(),monthDate.getMonth(),null,suma);save();render();
       flash('cupo por tipo: '+suma+' guardias este mes');break;}
     case 'gtipo-lbl':{flash(renombraTipo(el.dataset.code,el.value));break;}
+    case 'gtipo-come':flash(setHorasTipo(el.dataset.code,el.dataset.k==='comeA'?'comeA':'comeDe',el.value));break;
     case 'gtipo-sem':case 'gtipo-finde':case 'gtipo-pase':{
       flash(setHorasTipo(el.dataset.code,a==='gtipo-sem'?'relevoSem':a==='gtipo-finde'?'relevoFinde':'pase',el.value));break;}
     case 'cal-desde':{ui.calDesde=el.value||'';
