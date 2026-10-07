@@ -3560,11 +3560,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return +peor.toFixed(2);
     }`;
     // primero, en la pantalla de verdad: se entra en Hoy y se mide lo que hay pintado
+    // (el sol ya no es una tarjeta al final de Hoy: es una hoja que abre el arco amarillo del reloj)
     await gotoTab('hoy');
+    await page.evaluate(() => { const P = window.PG; P.ui.solHoja = P.iso(new Date()); P.render(); });
     await page.waitForTimeout(250);
     const enPantalla = await page.evaluate((src) => {
       const mide = new Function('return ' + src)();
-      const card = [...document.querySelectorAll('#main .card')].find((c) => /El sol hoy/.test(c.textContent));
+      const card = document.querySelector('#hojaDia .hoja');
       if (!card) return { sinTarjeta: true };
       const rec = card.querySelectorAll('.arco svg path')[1];
       // el círculo del sol solo está cuando el sol está arriba: es el mismo aviso que usa el
@@ -3576,6 +3578,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }, sobreLaGuia);
     // y después, sin recargar, el día entero hora a hora: que salga bien depende de la hora a la
     // que se ejecute la suite, y eso es precisamente lo que dejó pasar el fallo
+    await page.evaluate(() => { window.PG.ui.solHoja = ''; window.PG.render(); });
     const elDiaEntero = await page.evaluate((src) => {
       const P = window.PG;
       const mide = new Function('return ' + src)();
@@ -4197,7 +4200,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('hoy');
     await page.waitForTimeout(250);
     check('«Hoy» dice lo que toca repasar',
-      /Toca repasar/.test(await page.evaluate(() => document.getElementById('main').innerText)), '');
+      /Repasar \d+ tema/.test(await page.evaluate(() => document.getElementById('main').innerText)), '');
 
     // EL contrato: volver a traer el temario renombrado y reordenado no borra tu progreso
     await gotoTab('estudio');
@@ -4324,6 +4327,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         dia: pos(/Hoy ·/), entrenar: pos(/toca entrenar/), tareas: pos(/Para hoy/),
         sueno: cards.findIndex((c) => c.classList.contains('snhoy')),
         pagar: pos(/toca pagar/), comidas: pos(/Comidas de hoy/), sol: pos(/El sol hoy/),
+        alquiler: /Alquiler/.test((cards.find((c) => c.classList.contains('parahoy')) || {}).textContent || ''),
       };
     });
     // el orden se comprueba por posiciones RELATIVAS, no por el número de tarjeta: entre «lo que
@@ -4336,7 +4340,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /* lunes y martes: antes del sueño va la puerta del informe de la semana */
       /* el entreno y las comidas ya no son tarjetas aparte: van en la lista del día, dentro de la primera */
       dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar < 0 && dia.comidas < 0 &&
-      (dia.tareas < 0 || dia.tareas > dia.sueno) && dia.pagar > Math.max(dia.tareas, dia.sueno) && dia.sol > dia.pagar &&
+      /* los recibos, las notas y los hábitos van ahora juntos en «Para hoy», después del sueño; el sol
+         ya no es una tarjeta (es la hoja del arco amarillo del reloj) */
+      dia.tareas > dia.sueno && dia.pagar < 0 && dia.alquiler && dia.sol < 0 &&
       /* el reloj de 24 h (≈300 px) y «lo siguiente» entran arriba: el tope sube a 3.100 */
       dia.alto < 3100 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
@@ -4523,16 +4529,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('hoy');
     await page.waitForTimeout(300);
     const enHoy = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('#main .card')].find((x) => /Para hoy/.test(x.textContent));
-      return { hay: !!c, n: c ? c.querySelectorAll('.nota').length : 0,
+      const c = document.querySelector('#main .parahoy');
+      return { hay: !!c, n: c ? c.querySelectorAll('[data-a="nota-hecha"]').length : 0,
         // las dos atrasadas van primero, que son las que urgen
-        primera: c ? (c.querySelector('.nota .t') || {}).textContent : '' };
+        primera: c ? (c.querySelector('.phf.av .t b') || {}).textContent : '' };
     });
-    const tick = await page.$('#main .card .nota .tick');
+    const tick = await page.$('#main .parahoy [data-a="nota-hecha"]');
     if (tick) { await tick.click(); await page.waitForTimeout(320); }
     const tras = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('#main .card')].find((x) => /Para hoy/.test(x.textContent));
-      return { quedan: c ? c.querySelectorAll('.nota').length : 0,
+      const c = document.querySelector('#main .parahoy');
+      return { quedan: c ? c.querySelectorAll('[data-a="nota-hecha"]').length : 0,
         hechas: window.PG.store.notas.filter((n) => n.hecha).length };
     });
     check('lo que toca hoy y lo que se te pasó salen en «Hoy», y se marcan desde ahí',
@@ -8090,7 +8096,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       corto.yaCorto === 'Curso rcp' && corto.pelado === 'Lloretazo' && corto.vacio === 'evento',
       JSON.stringify(corto));
 
-    // «Hoy»: Próximos a una línea por evento, y el sol plegado con sus horas en el propio renglón
+    // «Hoy»: Próximos a una línea por evento; el sol, en el reloj (su arco abre la hoja)
     await page.evaluate(() => { const P = window.PG;
       const d = new Date(); d.setDate(d.getDate() + 4);
       const k = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -8102,27 +8108,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(400);
     const hoyCorto = await page.evaluate(() => {
       const filas = [...document.querySelectorAll('#main .proxf')];
-      const sol = document.querySelector('#main details.solplg');
-      const res = sol ? (sol.querySelector('summary .mini') || {}).textContent || '' : '';
       return { filas: filas.length,
         deDosLineas: filas.filter((f) => f.getBoundingClientRect().height > 34).length,
         sinElRelleno: !/Eventos puntuales que has apuntado/.test(document.getElementById('main').innerText),
-        solPlegado: !!(sol && !sol.open),
-        solConHoras: /\d{1,2}:\d{2}\s*→\s*\d{1,2}:\d{2}/.test(res) };
+        sinTarjetaSol: !document.querySelector('#main details.solplg') && !/El sol hoy/.test(document.getElementById('main').innerText) };
     });
-    check('en «Hoy», cada evento de «Próximos» ocupa una línea y el sol cabe en su propio renglón',
-      hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno &&
-      hoyCorto.solPlegado && hoyCorto.solConHoras, JSON.stringify(hoyCorto));
+    check('en «Hoy», cada evento de «Próximos» ocupa una línea y el sol ya no es una tarjeta al final (lo dice el reloj)',
+      hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno && hoyCorto.sinTarjetaSol, JSON.stringify(hoyCorto));
 
-    // y el sol sigue entero al abrirlo: plegarlo no es esconderlo
-    await page.click('#main details.solplg > summary');
+    // y el sol sigue entero: tocar el arco amarillo del reloj abre su hoja, con el arco y el sitio
+    const pSol = await page.evaluate(() => { const v = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 340 / v.width, t = Math.PI;
+      return { x: v.left + (150 + 129 * Math.sin(t) + 20) / k, y: v.top + (150 - 129 * Math.cos(t) + 14) / k }; });
+    await page.mouse.click(pSol.x, pSol.y);
     await page.waitForTimeout(250);
     const solAbierto = await page.evaluate(() => {
-      const sol = document.querySelector('#main details.solplg');
-      return { abierto: !!(sol && sol.open), conArco: !!sol.querySelector('.solhero svg'),
-        conSitio: !!sol.querySelector('[data-a="ir-sol"]') };
+      const sol = document.querySelector('#hojaDia .hoja');
+      return { abierto: !!sol && /El sol/.test(sol.innerText), conArco: !!(sol && sol.querySelector('.solhero svg')),
+        conSitio: !!(sol && sol.querySelector('[data-a="ir-sol"]')) };
     });
-    check('el sol plegado no es el sol escondido: al abrirlo está el arco y el sitio',
+    await page.evaluate(() => { window.PG.ui.solHoja = ''; window.PG.render(); });
+    check('el sol no se pierde: el arco amarillo del reloj abre su hoja, con el arco y el sitio',
       solAbierto.abierto && solAbierto.conArco && solAbierto.conSitio, JSON.stringify(solAbierto));
     await page.waitForTimeout(150);
   }
@@ -8298,7 +8303,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.gymPanel = 'sup'; P.render();
       const bot = document.querySelector('[data-a="sup-add"][data-p="creatina"]'); if (bot) bot.click();
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render();
-      const enHoy = document.querySelector('.gsuph [data-a="sup-tomar"]'); if (enHoy) enHoy.click();
+      const enHoy = document.querySelector('.parahoy [data-a="sup-tomar"]'); if (enHoy) enHoy.click();
       const tomado = g.supLog[hoy] && g.supLog[hoy].length === 1;
       // informe de la semana pasada con la parte de entreno
       P.ui.hoyVista = 'informe'; P.ui.infLun = ''; P.render();

@@ -3273,3 +3273,28 @@ span.hbt{cursor:default;border-style:dashed}
 .hkv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin-top:10px}.hkv span{color:var(--ink2)}
 .hacc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.hacc .btn{justify-content:center;min-height:44px}
 .hoypie button.hoykcal{background:none;border:0;padding:0;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;min-height:32px}
+
+/* ===== Hoy · «Para hoy»: todo lo que hay que hacer, en filas que se marcan ===== */
+.parahoy .phf{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.parahoy h2+.phf{border-top:0}
+.parahoy .phck{width:30px;height:30px;flex:none;border-radius:9px;border:1.5px solid var(--line);background:none;color:transparent;font:inherit;font-weight:900;cursor:pointer;display:grid;place-items:center;padding:0}
+.parahoy .phck.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.parahoy .phck.vacio{border-style:dashed;color:var(--ink);cursor:default;font-size:15px}
+.parahoy .phf .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.parahoy .phf .t b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parahoy .phf .t small{font-size:11.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parahoy .phf.hecho .t b{color:var(--ink2);text-decoration:line-through}
+.parahoy .phf.av .t small{color:var(--warn)}
+.parahoy .phf .btn{flex:none}
+
+.snley{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink2);margin-top:8px}
+.snley span{display:inline-flex;align-items:center;gap:5px}
+.snley i{display:inline-block;width:12px;height:9px;border-radius:2px;font-style:normal}
+.snley i.s{background:color-mix(in srgb,var(--sns) 45%,transparent)}
+.snley i.g{background:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
+.snley i.c{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);font-size:8px;font-weight:900;display:grid;place-items:center}
+.snley i.l{height:2px;background:var(--brand)}.snley i.r{height:2px;background:var(--ink2)}
+.snbars>div i.g{background:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
+.snbars>div u{display:block;width:7px;height:7px;border-radius:50%;margin-top:2px;text-decoration:none}
+.snbars>div u.ok{background:var(--ok)}.snbars>div u.no{background:var(--warn)}
+.snhoyc>.mini:last-child{white-space:nowrap}

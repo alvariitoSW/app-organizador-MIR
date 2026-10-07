@@ -3996,6 +3996,33 @@ function tocaComprar(){
   if(d==null)return {toca:true,dias:null,faltan:0,primera:true};
   const c=compraCada();
   return {toca:d>=c,dias:d,faltan:Math.max(0,c-d),primera:false};}
+/* ===================== «Para hoy»: todo lo que hay que hacer, en una lista =====================
+   El aviso de entreno, los suplementos, las notas con día, la compra, los recibos, el repaso y los
+   hábitos eran siete tarjetas con su título, su lista y su botón. Aquí son filas: se marcan con un
+   toque, lo hecho baja al final y la que lleva algo que abrir tiene su acción a la derecha. */
+function paraHoyHTML(key){
+  const f=[],ck=function(a,attrs,on,lab){return '<button class="tick phck'+(on?' on':'')+'" data-a="'+a+'"'+attrs+' aria-pressed="'+!!on+'" aria-label="'+esc(lab)+'">✓</button>';};
+  const ir=function(a,attrs,t){return '<button class="btn s" data-a="'+a+'"'+attrs+'>'+t+'</button>';};
+  const s=entrenoSemana(key);
+  if(s&&s.min&&s.conflicto)f.push({av:1,ico:'⚠',t:'Esta semana '+(s.faltan?('solo caben '+s.total+' de '+s.min+' entrenos'):('solo '+s.fuerza+' días de fuerza')),sub:entrenoPorQue(s),acc:ir('tab',' data-t="gym"','ver ›')});
+  const tn=notasDeHoy();tn.tarde.concat(tn.hoy).forEach(function(x){const tarde=tn.tarde.indexOf(x)>=0;
+    f.push({av:tarde,ico:'📝',t:x.txt.split('\n')[0],sub:tarde?'se te pasó: '+fechaCorta(x.fecha):'nota',hecho:!!x.hecha,
+      ck:ck('nota-hecha',' data-id="'+x.id+'"',x.hecha,'marcar hecha'),acc:ir('nota-abrir',' data-id="'+x.id+'"','abrir')});});
+  const d=parseDate(key),y=d.getFullYear(),m=d.getMonth();
+  gastosDeFecha(key).filter(function(g){return !gastoPagado(g,y,m);}).forEach(function(g){
+    f.push({av:1,ico:dinCatIco(g.cat),t:g.nombre+' · '+eur(g.importe),sub:'toca pagar hoy',ck:ck('dinero-pagar',' data-id="'+esc(g.id)+'"',false,'marcar como pagado '+g.nombre)});});
+  const tc=tocaComprar();if(tc.toca){const cd=compraDatos();if(cd.total)f.push({ico:'🛒',t:'Hacer la compra',sub:cd.total+' cosas por coger'+(tc.primera?'':' · hace '+tc.dias+' d'),acc:ir('tab',' data-t="shop"','lista ›')});}
+  if(store.estudio&&estS().temas.length){const t=estTocaHoy(key);if(t.length)f.push({ico:'📚',t:'Repasar '+t.length+' tema'+(t.length===1?'':'s'),sub:t.slice(0,2).map(function(x){return x.nombre;}).join(', '),acc:ir('ir-tab',' data-t="estudio"','ver ›')});}
+  supsS().filter(function(x){return supTocaHoy(x,key)&&x.p!=='proteina';}).forEach(function(x){const on=supTomado(x.id,key);
+    f.push({ico:'💊',t:x.n,sub:'suplemento',hecho:on,ck:ck('sup-tomar',' data-id="'+esc(x.id)+'" data-k="'+esc(key)+'"',on,(on?'desmarcar ':'tomado: ')+x.n)});});
+  const hb=habitosS(),dw=d.getDay();hb.items.filter(function(h){return (h.dow||[]).indexOf(dw)>=0;}).forEach(function(h){const on=habitoHecho(h.id,key),r=rachaHabito(h);
+    f.push({ico:h.icono,t:h.nombre,sub:'hábito'+(r?' · '+r+' día'+(r===1?'':'s')+' seguidos':''),hecho:on,ck:ck('hab-mark',' data-id="'+h.id+'" data-key="'+key+'"',on,(on?'desmarcar ':'hecho: ')+h.nombre)});});
+  if(!f.length)return '';
+  const marcables=f.filter(function(x){return x.ck;}),hechos=marcables.filter(function(x){return x.hecho;}).length;
+  f.sort(function(a,b){return (a.hecho?1:0)-(b.hecho?1:0)||(b.av?1:0)-(a.av?1:0);});
+  return '<div class="card parahoy'+(f.some(function(x){return x.av&&!x.hecho;})?' avisa':'')+'"><h2>✅ Para hoy'+(marcables.length?'<span class="mini" style="margin-left:auto;font-weight:400">'+hechos+' de '+marcables.length+'</span>':'')+'</h2>'+
+    f.map(function(x){return '<div class="phf'+(x.hecho?' hecho':'')+(x.av&&!x.hecho?' av':'')+'">'+(x.ck||'<span class="phck vacio" aria-hidden="true">'+x.ico+'</span>')+
+      '<span class="t"><b>'+(x.ck?esc(x.ico)+' ':'')+esc(x.t)+'</b>'+(x.sub?'<small>'+esc(x.sub)+'</small>':'')+'</span>'+(x.acc||'')+'</div>';}).join('')+'</div>';}
 function compraTocaHTML(){
   const t=tocaComprar();
   if(!t.toca)return '';
@@ -5005,6 +5032,8 @@ function _hrSuelta(e){
   if(h.hecho)return;
   if(h.movido||(e&&e.type==='pointercancel')){if(ui.hoyCursor!=null){ui.hoyCursor=null;hoyRelojRepinta();}return;}
   if(h.p.r<HOY_CENTRO||h.p.r>HOY_FUERA)ui.hoySel=null;
+  else if(h.p.r>=124){/* el arco amarillo de la luz del día, por fuera del anillo: abre la hoja del sol */
+    ui.hoySel=null;ui.hoyCursor=null;ui.solHoja=h.key;render();return;}
   else{const i=hoyRelojItem(h.key,dayInfo(h.key),h.p.m,h.p.r);ui.hoySel=i>=0?{k:h.key,i:i}:null;}
   ui.hoyCursor=null;hoyRelojRepinta();}
 document.addEventListener('pointerup',_hrSuelta);
@@ -5495,19 +5524,30 @@ function suenoSemanaHTML(key){
   const max=Math.max(c.min*1.25,Math.max.apply(null,s.dias.map(function(d){return d.t||0;})));
   const DL=['L','M','X','J','V','S','D'];
   const cortas=s.dias.filter(function(d){return d.t!=null&&d.t<corta;});
-  return '<div class="card"><div class="row" style="align-items:baseline;gap:8px"><span class="snbig">'+fmt(s.total)+' h</span>'+
-      '<span class="mini">de '+fmt(c.min*7)+(s.n?(' · media '+fmtHM(s.media*60)):'')+'</span><span class="sp"></span>'+
-      (s.n?('<span class="hrpill '+(s.total>=c.min*s.n?'ok':'warn')+'">'+(s.total-c.min*s.n>=0?'+':'−')+fmt(Math.abs(Math.round(s.total-c.min*s.n)))+' h</span>'):'')+'</div>'+
+  /* la media de las noches APUNTADAS frente a tu objetivo, cuántas hay y cuántas a tu hora. Antes
+     decía «21,3 h de 56» un miércoles (56 es la semana entera) y una pastilla «−3 h», que era la
+     deuda de antes con otro nombre */
+  const hora=suenoAHora(s.dias);
+  return '<div class="card"><div class="row" style="align-items:baseline;gap:8px"><span class="snbig">'+(s.n?fmtHM(s.media*60):'—')+'</span>'+
+      '<span class="mini">de media · objetivo '+fmtHM(c.min*60)+'</span></div>'+
+    '<p class="mini" style="margin:2px 0 0">'+s.n+' de 7 noches apuntadas'+(hora.n?' · <b style="color:var(--ink)">'+hora.ok+' de '+hora.n+'</b> a tu hora':'')+'</p>'+
     '<div class="snbars" role="img" aria-label="horas dormidas cada día de la semana frente a '+c.min+' h">'+
-      '<span class="obj" style="bottom:'+(Math.round(c.min/max*70)+16)+'px"><span>objetivo '+fmt(c.min)+' h</span></span>'+
+      '<span class="obj" style="bottom:'+(Math.round(c.min/max*70)+25)+'px"><span>objetivo '+fmt(c.min)+' h</span></span>'+
       s.dias.map(function(d,i){
         const g=d.r&&d.r.guardia,h=d.t!=null?Math.round(d.t/max*70):0,sies=d.r&&d.r.siesta?Math.round(d.r.siesta/max*70):0;
         return '<div class="'+(d.t==null?'vacio':'')+(d.t!=null&&d.t<corta?' poco':'')+'" title="'+esc(fechaCorta(d.k))+': '+(d.t==null?'sin apuntar':fmtHM(d.t*60))+'">'+
           '<b>'+(d.t==null?'':(g&&d.r.siesta?(fmt(d.r.h)+'+'+fmt(d.r.siesta)):fmt(d.t)))+'</b>'+
-          '<i style="height:'+Math.max(d.t!=null?3:14,h)+'px">'+(sies?'<em style="height:'+sies+'px"></em>':'')+'</i>'+DL[i]+(g?' 🩺':'')+'</div>';}).join('')+'</div>'+
+          '<i class="'+(g?'g':'')+'" style="height:'+Math.max(d.t!=null?3:14,h)+'px">'+(sies?'<em style="height:'+sies+'px"></em>':'')+'</i>'+DL[i]+
+          (hora.dia[d.k]!=null?'<u class="'+(hora.dia[d.k]?'ok':'no')+'" title="'+(hora.dia[d.k]?'a tu hora':'fuera de tu hora')+'"></u>':'<u></u>')+'</div>';}).join('')+'</div>'+
     '<p class="mini" style="margin:8px 0 0">'+(s.n<7?(7-s.n)+' día'+(7-s.n===1?'':'s')+' sin apuntar (vacíos). ':'')+
       (cortas.length?('<span style="color:var(--bad)">⚠ '+cortas.length+' '+(cortas.length===1?'noche':'noches')+' por debajo de '+fmt(corta)+' h</span> (en rojo). '):'')+
-      (s.dias.some(function(d){return d.r&&d.r.siesta;})?'En los salientes, la parte clara es la siesta.':'')+'</p></div>';}
+      (s.dias.some(function(d){return d.r&&d.r.siesta;})?'Las guardias, a rayas; la parte clara es la siesta. ':'')+
+      (hora.n?'Punto verde: te levantaste a tu hora (±30 min); ámbar: fuera de ella.':'')+'</p></div>';}
+function suenoAHora(dias){
+  /* qué noches te levantaste a tu hora fija (±30 min); las de guardia no cuentan */
+  const w=mins(suenoAncla()),dia={};let n=0,ok=0;
+  dias.forEach(function(d){if(!d.r||d.r.guardia||!d.r.desp)return;const v=Math.abs(mins(d.r.desp)-w)<=30;dia[d.k]=v;n++;if(v)ok++;});
+  return {dia:dia,n:n,ok:ok};}
 /* ===================== SUEÑO: cómo llegas, no cuánto debes =====================
    Antes había una «deuda» que sumaba lo que faltaba en 14 días. Con guardias sube casi siempre y no
    baja nunca, y además da a entender que el sueño se devuelve hora a hora, que no es verdad: tras
@@ -5764,6 +5804,7 @@ function renderSuenoSim(){
       '<div style="flex:1;text-align:center"><div class="dsucap">'+(G<iso(new Date())?'GUARDIA DE AYER':'TU GUARDIA')+'</div><b>'+DIA3[d.getDay()]+' '+d.getDate()+' · '+esc(hCortaHM(g.desde))+' → '+esc(hCortaHM(g.sale))+'</b></div>'+
       '<button class="btn s" data-a="sn-g" data-v="'+(l[i+1]||'')+'"'+(i<l.length-1?'':' disabled')+' aria-label="guardia siguiente">›</button></div>'+
     snVeredictoHTML(p,m,rm)+
+    '<div class="snley"><span><i class="s"></i>dormir</span><span><i class="g"></i>guardia</span><span><i class="c">C</i>café</span><span><i class="l"></i>energía</span>'+(ref?'<span><i class="r"></i>lo de siempre</span>':'')+'</div>'+
     '<div class="sngraf" id="snGraf">'+snSVG(p,se,ref)+'</div>'+
     '<p class="mini sntip">Arrastra una siesta o un café, estira su borde, o toca una hora. Con el teclado: flechas.</p>'+
     '<div class="snlect" id="snLect" aria-live="polite">'+snLecturaHTML(p,se)+'</div>'+
@@ -5842,7 +5883,7 @@ function suenoEstadoHTML(hoyK){
   const barras=st.tres.map(function(x){const d=parseDate(x.k),h=x.n?x.n.h:0,pct=Math.min(100,h/(c.min*1.25)*100);
     return '<button class="sn3" data-a="sn-hoja" data-k="'+x.k+'" aria-label="'+esc(fechaCorta(x.k))+': '+(x.n?fmtHM(x.n.h*60)+(x.n.real?'':' estimado'):'sin apuntar')+'">'+
       '<i style="height:'+Math.max(x.n?6:2,pct*0.56)+'px;'+(x.n&&x.n.guardia?'background:url(#)':'')+'" class="'+(x.n?(x.n.guardia?'g':''):'vacio')+(x.n&&!x.n.real?' est':'')+'"></i>'+
-      '<b>'+(x.n?fmtC(Math.round(x.n.h*10)/10):'—')+'</b><span>'+DIA3[d.getDay()]+'</span></button>';}).join('');
+      '<b>'+(x.n?(x.n.real?'':'≈')+fmtC(Math.round(x.n.h*10)/10):'—')+'</b><span>'+(x.n&&!x.n.real?'aprox.':DIA3[d.getDay()])+'</span></button>';}).join('');
   const nv=st.nivel>=0?SN_NIVEL[st.nivel]:null;
   return '<div class="card snest'+(st.nivel>=2?' alto':'')+'">'+
     '<div class="dsucap">CÓMO LLEGAS HOY</div>'+
@@ -5856,8 +5897,7 @@ function suenoEstadoHTML(hoyK){
     '<div class="row" style="gap:8px;margin-top:10px">'+(r?'<button class="btn s" data-a="sn-hoja" data-k="'+hoyK+'">✎ Anoche: '+fmtHM(suenoTotal(r)*60)+(r.kss?' · '+r.kss+'/9':'')+'</button>':
       '<button class="btn p s" data-a="sn-hoja" data-k="'+hoyK+'">Anotar anoche</button>')+
       '<span class="sp"></span><button class="btn s" data-a="sn-vista" data-v="pvt">⏱ Test de reacción</button></div>'+
-    '<button class="btn s" style="margin-top:8px;width:100%" data-a="hoy-informe">Esta semana: '+fmt(Math.round(suenoSemana(hoyK).total))+' h de '+fmt(c.min*7)+' · informe ›</button>'+
-    '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+((store.sueno||{}).relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label></div>';}
+    '<button class="btn s" style="margin-top:8px;width:100%" data-a="hoy-informe">Informe de la semana ›</button></div>';}
 function renderSueno(){
   const hoyK=iso(new Date());
   if(ui.snVista==='pvt')return renderSuenoPVT();
@@ -6259,14 +6299,15 @@ function renderInforme(){
       '<b style="flex:1;text-align:center">'+esc(fechaCorta(lk))+' – '+esc(fechaCorta(fin))+'</b>'+
       '<button class="btn s" data-a="inf-sem" data-d="7" aria-label="semana siguiente"'+(iso(addDays(lun,7))>iso(mondayOf(hoy))?' disabled':'')+'>›</button></div>'+
       '<div class="inftiles">'+
-        tile('🛏','SUEÑO',fmt(d.sueno.total),'/ '+fmt(d.metaS)+' h',d.sueno.n?('media '+fmtHM(d.sueno.media*60)+(d.cortas?(' · '+d.cortas+' noche'+(d.cortas===1?'':'s')+' corta'+(d.cortas===1?'':'s')):'')):'sin apuntar')+
+        (function(){const h=suenoAHora(d.sueno.dias);return tile('🛏','SUEÑO',d.sueno.n?fmtHM(d.sueno.media*60):'—',d.sueno.n?'de media':'',
+          d.sueno.n?('objetivo '+fmtHM(suenoCfg().min*60)+' · '+d.sueno.n+'/7 apuntadas'+(h.n?' · '+h.ok+' a tu hora':'')+(d.cortas?(' · '+d.cortas+' de menos de '+fmt(suenoCfg().min-1)+' h'):'')):'sin apuntar');})()+
         tile('🍽','DIETA',d.dieta.tieneObj?d.dieta.obj:d.dieta.con,d.dieta.tieneObj?'/ 7 días':'días',d.dieta.con?((d.dieta.tieneObj?'en objetivo · ':'apuntados · ')+d.dieta.prot+' g P de media'):'sin apuntar')+
         tile('✅','HÁBITOS',d.hab.pct==null?'—':d.hab.pct,d.hab.pct==null?'':'%',d.hab.por.slice(0,2).map(function(x){return esc(x.h.nombre.toLowerCase())+' '+x.n+'/'+x.de;}).join(' · ')||'sin hábitos')+
         tile('📚','ESTUDIO',fmtHM(d.est.min),'',(d.est.pags?d.est.pags+' págs · ':'')+(hudLeer().pomos?(hudLeer().pomos+' 🍅 en el HUD'):'sin HUD enlazado'))+
         tile('💪','ENTRENO',d.gym.ses,d.gym.toca?('/ '+d.gym.toca):'','días entrenados')+
         tile('💰','AHORRO',fmt(d.aho.aparto),'€',d.aho.rec?('objetivo '+esc(eur(d.aho.rec))+'/mes'):(d.aho.aparto?'apartado en '+esc(ahoMesTxt(d.aho.mes)):'nada apartado ese mes'))+
       '</div>'+
-      (cats.length?('<div class="infli">👍 Lo mejor: '+esc(cats[0][2]+' '+cats[0][0])+' ('+Math.round(cats[0][1]*100)+' %)</div>'+
+      (cats.length?('<div class="infli">👍 Lo mejor: '+esc(cats[0][2]+' '+cats[0][0])+' ('+Math.round(cats[0][1]*100)+' % de tu objetivo)</div>'+
         (cats.length>1?('<div class="infli">👎 A mejorar: '+esc(cats[cats.length-1][2]+' '+cats[cats.length-1][0])+' ('+Math.round(cats[cats.length-1][1]*100)+' %)</div>'):'')):'')+
     '</div>'+
     informeEntrenoHTML(lk)+
@@ -6489,26 +6530,11 @@ function renderHoy(){
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
        quieres es la lista, no el atardecer. */
     /* el sueño de verdad, a primera hora: lo que el plan no puede saber. Y los lunes, la semana */
-    (esHoy?informeTocaHTML()+suenoHoyCardHTML()+entrenoSemanaHTML(hoy,true)+supHoyHTML(hoy):'')+
-    /* las tareas, los hábitos y «lo que viene» se marcan y se cuentan contra HOY: enseñarlos
-       mirando el jueves que viene sería invitarte a tachar una casilla del día equivocado */
-    tareasHoyHTML(hoy,esHoy)+
-    /* la compra es una tarea más de la semana: sale aquí cuando toca, igual que entrenar. Al
-       calendario de Google no va —eso se queda en la app— */
-    (esHoy?compraTocaHTML():'')+
-    pagosHoyHTML(hoy)+
-    repasoHoyHTML(hoy)+
-    (esHoy?habitosHoyHTML():'')+
-    (esHoy?proximosPuntualesHTML():'')+
-    /* EL SOL, EN UNA LÍNEA. Cuánta luz queda es lo que usas para decidir si sales a correr: eso
-       son tres números, y ocupaban una tarjeta de 330 px con su arco. Los tres números se leen
-       ahora en el resumen y el arco sigue ahí, a un toque, para quien quiera mirarlo. */
-    (function(){const sr=solResumenTxt(hoy,esHoy);
-      return '<details class="card solplg"><summary><b>☀️ El sol '+(esHoy?'hoy':'ese día')+'</b>'+
-        (sr?'<span class="mini">'+sr+'</span>':'')+'</summary>'+solHoyHTML(hoy)+
-        '<div class="row" style="margin-top:10px">'+
-          '<button class="btn s" data-a="ir-sol">cambiar de sitio</button>'+
-          '<span class="mini">se calcula en el móvil, sin internet</span></div></details>';})()+
+    /* debajo del reloj, tres bloques: el sueño en una línea, «Para hoy» (todo lo que hay que hacer,
+       en una lista que se marca) y lo que viene. Eran hasta diez tarjetas sueltas, ~1 000 px, y la
+       del sol repetía lo que ya dice el reloj: el arco amarillo se toca y abre su hoja */
+    (esHoy?informeTocaHTML()+suenoHoyCardHTML()+paraHoyHTML(hoy)+proximosPuntualesHTML():
+      tareasHoyHTML(hoy,false)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
 }
 /* ===================== la agenda de un día: lo que haces, a su hora =====================
@@ -7114,6 +7140,9 @@ function abrirHojaDia(k){
 const HOJAS={
   dia:{abierta:function(){return ui.tab==='month'&&ui.hojaDia;},html:function(){return hojaDiaHTML();},cerrar:function(){ui.hojaDia='';ui.hojaVista='';ui.hojaRec=false;}},
   dinero:{abierta:function(){return ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';ui.deseoNuevo='';}},
+  sol:{abierta:function(){return ui.tab==='hoy'&&!!ui.solHoja;},html:function(){return hojaMarco('hoja-cerrar','',(ui.solHoja===iso(new Date())?'El sol hoy':'El sol ese día'),
+    '<h3 class="sh">☀️ '+(ui.solHoja===iso(new Date())?'El sol hoy':'El sol ese día')+'</h3>'+solHoyHTML(ui.solHoja)+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="ir-sol">cambiar de sitio</button><span class="mini">se calcula en el móvil, sin internet</span></div>');},cerrar:function(){ui.solHoja='';}},
   sueno:{abierta:function(){return ui.tab==='hoy'&&!!ui.snHoja;},html:function(){return suenoHojaHTML();},cerrar:function(){if(ui.snHoja){ui.snHoja='';ui.sd=null;ui.snTr=null;}}},
   fe:{abierta:function(){return ui.tab==='food'&&(!ui.foodVista||ui.foodVista==='eje')&&ui.feVer;},html:function(){return feHojaHTML();},cerrar:function(){ui.feVer='';ui.feCorr=false;}},
   cje:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='eje'&&ui.cjeHoja;},html:function(){return cjeHojaHTML();},
@@ -15826,7 +15855,8 @@ function horasPantallaHTML(){
       '<div class="row" style="margin-top:6px"><div class="hrst"><button class="btn s" data-a="sueno-paso" data-d="-0.5" aria-label="media hora menos">−</button>'+
         '<b>'+fmt(SC.min)+' h</b><button class="btn s" data-a="sueno-paso" data-d="0.5" aria-label="media hora más">+</button></div>'+
         '<input type="number" hidden value="'+SC.min+'" data-a="sueno-f" data-k="min">'+
-        '<span class="sp"></span><span class="mini" style="text-align:right">cena '+fmt(SC.cenaMax/60)+'–'+fmt(SC.cenaMin/60)+' h antes<br>de acostarte</span></div></div>'+
+        '<span class="sp"></span><span class="mini" style="text-align:right">cena '+fmt(SC.cenaMax/60)+'–'+fmt(SC.cenaMin/60)+' h antes<br>de acostarte</span></div>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+((store.sueno||{}).relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label></div>'+
     '<div class="card">'+filas+'</div>'+
     '<details class="card hradv"><summary>a qué hora comes · minutos en dormirte · siesta del saliente</summary>'+
       '<div class="fgrid c3" style="margin-top:10px">'+num('latencia','tardas en dormirte (min)',0,60,5)+
@@ -18235,13 +18265,14 @@ function proximosPuntualesHTML(){
      «eventos puntuales que has apuntado», que es lo que ya dice el título. Seis eventos ocupaban
      250 px para decir cinco fechas. */
   return '<div class="card"><h2>📌 Próximos<span class="mini" style="margin-left:auto;font-weight:400">'+prox.length+'</span></h2>'+
-    '<div class="proxl">'+prox.slice(0,6).map(function(ev){
+    '<div class="proxl">'+prox.slice(0,ui.proxTodos?12:3).map(function(ev){
       return '<div class="proxf"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
         '<b>'+esc(ev.titulo||'(sin título)')+'</b>'+
         '<span class="cd">'+esc(fechaCorta(ev.fecha))+' '+esc(evHoraTxt(ev))+
         (ev.recordatorio?' 🔔':'')+'</span>'+
         (ev.cuentaAtras?'<span class="tag b2">'+cuentaAtrasTxt(ev.fecha)+'</span>':'')+
         '</div>';}).join('')+'</div>'+
+    (prox.length>3?'<button class="btn s" style="margin-top:6px" data-a="prox-todos">'+(ui.proxTodos?'ver menos':'ver '+(Math.min(12,prox.length)-3)+' más ›')+'</button>':'')+
     '</div>';
 }
 /* ===================== Ajustes: portada y una pantalla por tarea =====================
@@ -19859,6 +19890,7 @@ function act(a,el){
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'hoy-modo':ui.hoyModo=el.dataset.v==='linea'?'linea':'reloj';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
+    case 'prox-todos':ui.proxTodos=!ui.proxTodos;render();break;
     case 'hoy-hechas':ui.hoyHechas=!ui.hoyHechas;render();break;
     case 'hoy-it':ui.hoyIt={k:fechaHoy(),i:+el.dataset.i};render();break;
     case 'hoy-it-x':ui.hoyIt=null;render();break;
@@ -20715,7 +20747,7 @@ function act(a,el){
       /* Turno y rotación ya no es una pantalla única: la tarjeta de la semana vive en su vista, así
          que el atajo tiene que abrirla antes de ir a buscarla */
       ui.cfgVista='semana';irACard('cfg','semana');break;
-    case 'ir-sol':irACard('ajustes','sol');break;
+    case 'ir-sol':ui.solHoja='';irACard('ajustes','sol');break;
     case 'usda-probar':usdaProbar();break;
     case 'usda-guia':ui.usdaGuia=!ui.usdaGuia;render();break;
     case 'usda-olvidar-todo':{
