@@ -1199,18 +1199,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('month');
   await page.waitForTimeout(150);
   const mesSimple = await page.evaluate(() => {
-    const kpis = document.querySelector('#main .card .kpis');
+    // debajo del calendario, UNA tarjeta con tres cifras (antes cuatro cuadros + cuatro plegados)
+    const kpis = document.querySelector('#main .mesres .mrstat');
     const summaries = Array.from(document.querySelectorAll('#main details > summary'));
     return {
       kpisVisibles: kpis ? kpis.children.length : 0,
+      tarjetas: document.querySelectorAll('#main .grid > .card').length,
       // el párrafo de 120 palabras explicando «cómo se calcula este mes» ya no está: el mes no se
       // calcula, lo marcas tú, y lo que decía se ve haciendo
       sinExplicacion: !summaries.some((s) => /cómo se calcula/i.test(s.textContent)),
-      masNumerosPlegado: summaries.some((s) => /ver más números/i.test(s.textContent) && !s.parentElement.open),
+      // los números de sueño que se repetían aquí ya viven en Sueño
+      sinMasNumeros: !summaries.some((s) => /ver más números/i.test(s.textContent)),
     };
   });
-  check('en "Mes" no hay explicación larga y los KPI secundarios quedan plegados por defecto',
-    mesSimple.kpisVisibles <= 4 && mesSimple.sinExplicacion && mesSimple.masNumerosPlegado, JSON.stringify(mesSimple));
+  check('en "Mes" no hay explicación larga, ni números de sueño repetidos, y debajo del calendario va una sola tarjeta',
+    mesSimple.kpisVisibles === 3 && mesSimple.sinExplicacion && mesSimple.sinMasNumeros, JSON.stringify(mesSimple));
 
   // 44) Ajustes: el mínimo de horas de sueño (antes solo en "Turno y rotación") también se puede
   // tocar aquí, junto al resto de números de sueño
@@ -1528,7 +1531,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
   const ordenOk = await page.evaluate(() => {
     const cal = document.querySelector('#main .cal');
-    const numeros = document.querySelector('#main .kpis');
+    const numeros = document.querySelector('#main .kpis, #main .mesres .mrstat');
     if (!cal || !numeros) return false;
     return !!(cal.compareDocumentPosition(numeros) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -1811,21 +1814,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // change) y un case en el que no toca no se dispara nunca, así que cada atajo se prueba clicando.
   await gotoTab('month');
   await page.waitForTimeout(250);
-  await page.click('[data-a="mes-cfg"][data-to="vac"]');
+  // «+ vacaciones» no abre un formulario: pide el primer día y el último en la cuadrícula
+  await page.click('[data-a="mes-vac"]');
   await page.waitForTimeout(250);
-  const aVacaciones = await page.evaluate(() => {
-    const c = document.querySelector('#main [data-cfg="vac"]');
-    return !!c && /brand/.test(c.style.outline);
-  });
-  check('el KPI de vacaciones del mes lleva a la tarjeta donde se apuntan', aVacaciones, '');
+  const vacModo = await page.evaluate(() => ({ modo: (window.PG.ui.mesModo || {}).tipo, barra: (document.querySelector('#hojaDia') || {}).innerText || '' }));
+  await page.evaluate(() => { window.PG.ui.mesModo = null; window.PG.render(); });
+  check('«+ vacaciones» pide tocar el primer día en el calendario', vacModo.modo === 'vac' && /primer día/.test(vacModo.barra), JSON.stringify(vacModo));
 
-  await page.click('[data-a="mes-cfg"][data-to="mescfg"]');
-  await page.waitForTimeout(250);
-  const abreCupo = await page.evaluate(() => {
-    const d = document.querySelector('#main [data-cfg="mescfg"]');
-    return !!d && !!d.querySelector('[data-a="mon-guard"]');
-  });
-  check('el KPI de guardias lleva a donde se cambia el cupo de este mes', abreCupo, '');
+  // el cupo de guardias se cambia con − / + sin escribir
+  const cupo = await page.evaluate(() => { const P = window.PG, d = new Date(), y = d.getFullYear(), m = d.getMonth();
+    const a = P.monthService(y, m).guardias; document.querySelector('[data-a="mon-guard-d"][data-d="1"]').click();
+    const b = P.monthService(y, m).guardias; document.querySelector('[data-a="mon-guard-d"][data-d="-1"]').click();
+    return { a, b, c: P.monthService(y, m).guardias }; });
+  check('el + y el − cambian el cupo de guardias del mes', cupo.b === Math.min(15, cupo.a + 1) && cupo.c === cupo.a, JSON.stringify(cupo));
 
   // el atajo de la leyenda (que vive plegada en la Semana; en Hoy, cada cosa lo dice en su hoja)
   await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.ui.semVista = 'horas'; P.render();
@@ -2334,21 +2335,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const esperados = await page.evaluate((rr) => [...document.querySelectorAll('.dbox')]
       .filter((x) => rr.some((r) => x.dataset.key >= r[0] && x.dataset.key <= r[1])).length, [r1, r2]);
     const dos = await page.evaluate(() => {
-      const c = document.querySelector('.card[data-cfg="vac"]');
-      const cards = [...document.querySelectorAll('#main .card')];
+      const c = document.querySelector('.mesres [data-cfg="vac"]');
       return {
         guardados: window.PG.store.rotation.vacaciones.length,
         filas: c ? c.querySelectorAll('[data-a="vac-del"]').length : 0,
         diasEnElCalendario: [...document.querySelectorAll('.dbox')].filter((x) => /Vacacion/.test(x.innerText)).length,
-        enPlural: c ? /todos los periodos que quieras/i.test(c.innerText) : false,
-        cuenta: c ? /2 periodos/.test(c.innerText) : false,
-        posicion: c ? cards.indexOf(c) + 1 : 0,
-        total: cards.length,
+        conNombre: c ? /Semana Santa/.test(c.innerText) && /verano/.test(c.innerText) : false,
       };
     });
-    check('se pueden apuntar varios periodos de vacaciones, y la tarjeta lo dice en plural',
+    check('se pueden apuntar varios periodos de vacaciones y cada uno sale como una pastilla con su nombre',
       dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === esperados && esperados >= 10 &&
-      dos.enPlural && dos.cuenta && dos.posicion < dos.total, JSON.stringify({ dos, esperados }));
+      dos.conNombre, JSON.stringify({ dos, esperados }));
 
     // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta
     const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
@@ -2364,7 +2361,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // quitar uno deja los otros en pie
     await page.evaluate(() => { window.PG.ui.monSel = ''; window.PG.render(); });
     await page.waitForTimeout(300);
-    await page.click('.card[data-cfg="vac"] [data-a="vac-del"]');
+    await page.click('.mesres [data-cfg="vac"] [data-a="vac-del"][data-ix="0"]');
     await page.waitForTimeout(300);
     // con más de un periodo, quitar pregunta por el diálogo propio de la app: hay que contestarlo,
     // o su capa se queda encima y se come los clics de todo lo que venga después
@@ -3903,7 +3900,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const mesImpreso = await page.evaluate(() => {
       const celdas = [...document.querySelectorAll('#main .dbox')];
       const vis = celdas.filter((c) => getComputedStyle(c).display !== 'none');
-      const kpi = document.querySelector('#main .kpis div, #main .tot div, #main .dosdatos div');
+      const kpi = document.querySelector('#main .kpis div, #main .tot div, #main .dosdatos div, #main .mesres .mrstat > *');
       const cs = kpi ? getComputedStyle(kpi) : null;
       return { celdas: celdas.length, visibles: vis.length,
         conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
@@ -8415,8 +8412,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return out; });
     check('un plan se crea desde tus días reales: plantillas, material (sin barra → mancuernas) y rango de reps del objetivo',
       r.hayTpl === 4 && r.nombres === 'Torso A,Pierna A,Torso B,Pierna B' && r.sinBarra && r.rango === '8-12', JSON.stringify(r));
-    check('la piscina va por series con metros y tiempo; el Lloretazo se marca en el día pero no cuenta como entreno',
-      r.tec === 8 && r.reg === '50/55' && r.lloret && r.total === r.sin, JSON.stringify(r));
+    // y no se pinta con 🌿 en la semana de Entreno: parecía un entreno más (era ir a fumar)
+    check('la piscina va por series con metros y tiempo; el Lloretazo ni cuenta como entreno ni se marca en la semana de Entreno',
+      r.tec === 8 && r.reg === '50/55' && !r.lloret && r.total === r.sin, JSON.stringify(r));
   }
 
 
@@ -9308,6 +9306,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.food.objetivo = { kcal: 2240, prot: 134 }; P.store.food.log[P.iso(new Date())] = []; P.store.food.despensa = []; delete P.store.food.monchisTope;
       ['griego ligero natural', 'nuez natural', 'kiwi verde bandeja', 'maria sin gluten', 'panna cotta', 'cookie sin gluten y sin lactosa'].forEach((t) => P.despensaAdd(t, 1, ''));
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: false }; P.lloretPoner(P.iso(new Date())); delete P.store.consumo;
+      // antes de las 21:00 los monchis van en una línea: se abre como lo haría el dedo
+      P.ui.mcAbre = true;
       P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render();
       const c = document.querySelector('.mcard'); const op = P.monchisOpciones();
       return { aviso: !!document.querySelector('.mcll'), card: !!c, sanos: op.sanos.length, capr: op.caprichos.length, primero: op.sanos[0] && op.sanos[0].n,
@@ -10043,7 +10043,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const m = (h) => { const x = /^(\d\d):(\d\d)$/.exec(h || ''); return x ? +x[1] * 60 + +x[2] : null; };
     check('el Lloretazo sale solo cada noche (no en guardia ni en Google), la cena va 45 min antes de salir y el 🌿 lo quita ese día',
       !!r.ll && m(r.c1) === m(r.ll.split('-')[0]) - 45 && r.sinLl && r.c2 !== r.c1 && r.vuelve && !r.ics && (!r.kg || r.enGuardia === false), JSON.stringify(r));
+    // el Lloretazo de cada noche es ir a fumar, no deporte: no pinta 🌿 en la semana de Entreno ni
+    // le quita el entreno a ningún día (la piscina del saliente es a las 20:00, como él)
+    const ent = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), c = window.__copia246b = JSON.parse(JSON.stringify(P.store));
+      const dias = (diario) => { P.store.lloret = { diario }; P.save(); P.render();
+        return P.entrenoSemana(k).dias.map((x) => (x.apto ? 'A' : '') + (x.choca ? 'C' : '')).join(','); };
+      const sin = dias(false), con = dias(true);
+      const div = document.createElement('div'); div.innerHTML = P.gymSemanaCirculos(k);
+      const hoja = div.textContent;
+      P.store = c; P.save(); P.render(); return { sin, con, hoja12: /🌿/.test(hoja) }; });
+    check('el Lloretazo diario no quita entrenos ni sale como 🌿 en Entreno', ent.sin === ent.con && !ent.hoja12, JSON.stringify(ent));
     check('en guardia de UMI la comida es a las 13:45', !r.kg || r.comidaUmi === '13:45', JSON.stringify(r));
+  }
+
+  // 247) LA GUARDIA SALE DE LA FECHA, NO DEL DÍA DE LA SEMANA: la semana de comidas se guarda por
+  // lunes…domingo y el «Hospital» se quedaba pegado al día en que caía la guardia cuando se montó.
+  // La semana siguiente, con la guardia otro día, salía comida de casa en la guardia y «Hospital» en
+  // el saliente (captura del usuario). Y en la guardia se elige hospital o táper para ESA fecha.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, copia = JSON.parse(JSON.stringify(P.store));
+      P.cjeAuto({ rehacer: 'todo' });
+      const lun = P.mondayOf(new Date()), mal = [];
+      for (let i = 0; i < 21; i++) { const k = P.iso(P.addDays(lun, i)), w = i % 7;
+        const c = P.mCeldas(w, { key: k, shiftId: P.dayInfo(k).shiftId });
+        ['comida', 'cena'].forEach((x) => { const it = c[x].items[0], d = it && P.store.dishes.find((y) => y.id === it.id);
+          const hosp = !!(d && d.hospital), g = P.diaTipo(k) === 'guardia';
+          if (hosp !== g) mal.push(k + ' ' + x + ' ' + P.diaTipo(k) + (hosp ? ' HOSP' : ' casa')); }); }
+      // táper en una guardia de esta semana: se guarda para esa fecha y no toca el mismo día de otra semana
+      let taper = null;
+      for (let w = 0; w < 7; w++) { const k = P.iso(P.addDays(lun, w)); if (P.diaTipo(k) !== 'guardia') continue;
+        const plato = P.store.dishes.find((d) => !d.hospital && !d.fuera && !d.nada && d.kcal > 200);
+        P.sbPoner(w, 'comida', plato.id, {}); const g = P.guardiaCelda(k, 'comida'), k2 = P.iso(P.addDays(lun, w + 7));
+        const otra = P.mCeldas(w, { key: k2, shiftId: P.dayInfo(k2).shiftId }).comida.items[0];
+        taper = { puesto: g && g.items[0].id === plato.id, otraSemana: otra ? otra.id !== plato.id || P.diaTipo(k2) === 'guardia' : true };
+        P.sbPoner(w, 'comida', '', {}); taper.vuelve = P.store.dishes.find((d) => d.id === P.guardiaCelda(k, 'comida').items[0].id).hospital; break; }
+      P.store = copia; P.save(); P.render();
+      return { mal, taper }; });
+    check('la comida y la cena de guardia salen de la fecha: hospital solo los días de guardia, en esta semana y en las dos siguientes',
+      r.mal.length === 0, JSON.stringify(r.mal.slice(0, 6)));
+    check('en una guardia se elige táper para esa fecha y se vuelve al hospital',
+      !r.taper || (r.taper.puesto && r.taper.otraSemana && r.taper.vuelve), JSON.stringify(r.taper));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
