@@ -2793,7 +2793,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     sinCasillasMicro: !document.querySelector('#main .micros .mic'),
     sinFormulario: !document.getElementById('fbQ') && !document.getElementById('foodNewNombre'),
     // la tarjeta de monchis sale las noches de Lloretazo (ahora casi todas) y trae sus propios botones
-    botones: document.querySelectorAll('#main button:not(.mcard button)').length,
+    botones: document.querySelectorAll('#main button:not(.mcard button):not(.mcmini)').length,
     alto: Math.round(document.querySelector('#main').scrollHeight),
   }));
   check('la portada de Comida: P/H/G contra el objetivo, lo de hoy por momentos, micros en una línea, buscar, la semana y las tres despensas',
@@ -9010,12 +9010,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.fbFiltro = ''; P.ui.fbProt = false; P.render(); });
     await page.type('#fbQ', 'pollo', { delay: 30 }); await page.waitForTimeout(400);
     const fb = await page.evaluate(() => ({ filas: document.querySelectorAll('#fbRes .hit').length, mas: !!document.querySelector('#fbRes .fbmas'),
+      grupos: [...document.querySelectorAll('#fbRes .fbgr .grp')].map((g) => g.textContent),
       nombres: [...document.querySelectorAll('#fbRes .hit .nm b')].map((e) => e.textContent), prot: /g P/.test((document.querySelector('#fbRes .hit .kc') || {}).textContent || ''), foco: document.activeElement.id }));
     await page.click('[data-a="fb-filtro"][data-f="merca"]'); await page.waitForTimeout(120);
     const merca = await page.evaluate(() => [...document.querySelectorAll('#fbRes .hit .nm b')].map((e) => e.textContent));
     await page.evaluate(() => { const P = window.PG; P.ui.fbFiltro = ''; P.ui.foodBusca = ''; P.ui.foodVista = ''; P.render(); });
-    check('buscador: 8 resultados con su proteína y «ver más», sin «repollo», y el filtro Mercadona solo deja Hacendado',
-      fb.filas === 8 && fb.mas && fb.prot && fb.foco === 'fbQ' && !fb.nombres.some((n) => /repollo/i.test(n)) &&
+    // un solo buscador, en grupos fijos (tus platos → lo que compras → alimentos → fuera), tres de cada
+    check('buscador: en grupos (tus platos primero), tres de cada uno con su proteína y «ver los N», sin «repollo», y el filtro Mercadona solo deja Hacendado',
+      fb.grupos.length >= 2 && /^TUS PLATOS/.test(fb.grupos[0]) && fb.filas <= fb.grupos.length * 3 && fb.mas && fb.prot && fb.foco === 'fbQ' && !fb.nombres.some((n) => /repollo/i.test(n)) &&
       merca.length > 0 && merca.every((n) => /Hacendado/.test(n)), JSON.stringify({ fb, merca }));
 
     const pr = await page.evaluate(() => { const P = window.PG; P.store.semBase = { on: true, d: {} }; P.store.protos = {};
@@ -9394,6 +9396,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const NOMS = ['pechuga pollo ajillo', 'carrilladas al vino', 'fritada pisto', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino',
       'jamón extrafino', 'maria sin gluten', 'entrecot novillo', 'picada de vacuno', 'leche desnatada, prot p6', 'nuez natural', 'proteina 0% natural',
       'queso feta', 'baguette sin gluten', 'kiwi verde bandeja', 'huevos medianos', 'tortilla de maiz', 'griego ligero natural', 'lomo embuchado'];
+    // el plan sigue a la semana del calendario: se vuelve a la de hoy (entrar en Comer la pone)
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     await page.evaluate((noms) => { const P = window.PG; window.__copia229 = JSON.parse(JSON.stringify(P.store));
       P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
       P.store.menu = {}; P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = [];
@@ -9404,8 +9408,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = document.querySelector('#main').innerText;
       return { v: ps.map((x) => x.v), cortos: ps.filter((x) => x.corta).length, des: Object.keys(des).length,
         llegan: /todos los días llegan/.test(txt), enCasa: +((txt.match(/(\d+) de 21 comidas/) || [])[1] || 0) }; });
-    // el plan va por FECHA: el martes de esta semana, con «nada» (el hospital ya no vale fuera de guardia)
-    await page.evaluate(() => { const P = window.PG, h = P.dishNada();
+    // el plan va por FECHA: el martes de esta semana, con un plato ligero (el hospital ya no vale fuera de guardia)
+    await page.evaluate(() => { const P = window.PG, h = P.store.dishes.find((d) => !d.hospital && !d.fuera && +d.prot > 3 && +d.prot < 25);
       P.store.semBase.d[P.sbKey(1)] = { desayuno: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' }, comida: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' } };
       P.save(); P.render(); });
     const aviso = await page.evaluate(() => { const a = document.querySelector('#main .prav'); return a ? a.innerText.replace(/\s+/g, ' ') : ''; });
@@ -9492,8 +9496,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const g0 = await page.$('input[data-a="fr-gset"]'); if (g0) { await g0.fill('130'); await g0.dispatchEvent('change'); await page.waitForTimeout(100); }
     const gr = await page.evaluate(() => (window.PG.ui.frase && window.PG.ui.frase.items[0] || {}).g);
     await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.cjeHoja = { v: 'dia' }; P.render(); }); await page.waitForTimeout(100);
-    await page.click('#hojaDia [data-a="cje-registro"]'); await page.waitForTimeout(120);
-    const reg = await page.evaluate(() => window.PG.ui.foodVista === '' && !!document.querySelector('#main .h2nav'));
+    // ya no hay «registro completo»: el Hoy de Comer lleva las flechas de día y los micros
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = null; P.render(); }); await page.waitForTimeout(100);
+    const reg = await page.evaluate(() => window.PG.ui.foodVista === 'eje' && !!document.querySelector('#main .cjdia [data-a="food-prev"]') && !!document.querySelector('#main .cjmic .h2mic'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia231; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('«Comer» es una pantalla: Hoy · Semana, hoy con sus comidas, la semana con sus 7 días, sin fila de modos',
       entra.v === 'eje' && entra.modos && entra.seg === 2 && entra.comidas >= 3 && sem.dias === 7, JSON.stringify({ entra, sem }));
@@ -9503,7 +9508,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('celíaco: la compra pide pan y pasta sin gluten; ⚙️ guarda días sin cocinar y táper, y sobrevive a recargar',
       sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.taper === 4 && pref.horno === false,
       JSON.stringify({ sg, pref }));
-    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el detalle del día lleva al registro',
+    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el Hoy de Comer trae las flechas de día y los micros',
       des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
   }
 
@@ -9746,7 +9751,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; window.__copia238 = JSON.parse(JSON.stringify(P.store));
       P.store.semBase = { on: true, d: {} }; P.store.food.despensa = []; P.store.food.cocinado = []; P.store.food.compraCada = 7;
       P.store.dishes.push({ id: 'd238', name: 'Garbanzos con espinacas', icon: '🫘', portions: 1, kcal: 400, prot: 20, ingredients: ['150 g garbanzos', '100 g espinacas'] });
-      for (let i = 0; i < 7; i++) ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(i, c, c === 'comida' ? 'd238' : P.dishNada().id));
+      // el plan va por fecha: los 7 días desde hoy (la compra mira de hoy a la próxima compra)
+      for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(new Date(), i)); ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(k, c, c === 'comida' ? 'd238' : P.dishNada().id)); }
       P.store.listas = [{ id: 'l238', nombre: 'Habitual (tickets)', fija: true, habitual: true, items: ['garbanzos cocidos', 'papel higiénico', 'café molido'] }];
       P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.save(); P.render(); });
     const datos = await page.evaluate(() => { const d = window.PG.compraDatos(), g = {}; d.grupos.forEach((x) => { g[x[0]] = x[2].map((y) => y.texto); });
