@@ -5939,7 +5939,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // Google NO entra: eso lo dijo él, y aquí se fija para que no se cuele luego.
     const tarea = await page.evaluate(() => { const P = window.PG;
       const mira = () => { P.ui.tab = 'hoy'; P.render();
-        return /Toca hacer la compra/.test(document.getElementById('main').innerText); };
+        return /Hacer la compra/.test(document.getElementById('main').innerText); };
       P.food().compraCada = 4;
       delete P.food().ultimaCompra; P.save();
       const sinComprar = mira();
@@ -9987,7 +9987,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // el anillo de energía en el reloj de Hoy
     r.anillo = await page.evaluate(() => { const P = window.PG; P.ui.hoyModo = 'reloj'; P.render(); return document.querySelectorAll('#main .hoyreloj path[stroke-width="4"]').length; });
     // test de reacción corto
-    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snVista = 'pvt'; P.ui.pvtMs = 7000; P.ui.pvtMin = 1; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snVista = 'pvt'; P.SN_T.pvtMs = 7000; P.SN_T.pvtMin = 1; P.render(); });
     await page.click('[data-a="pvt-empezar"]');
     const fin = Date.now() + 15000;
     while (Date.now() < fin) {
@@ -10002,13 +10002,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     r.pvt = await page.evaluate(() => { const P = window.PG, l = P.suenoPVT(); return { n: l.length, ult: l[l.length - 1], res: /reacción media/.test(document.getElementById('main').innerText) }; });
     // modo noche: a los «20 min» (aquí 1,5 s) te manda levantarte; al volver apunta el desvelo
-    await page.evaluate(() => { const P = window.PG; P.ui.nocheMs = 1500; P.ui.snVista = 'noche'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.SN_T.nocheMs = 1500; P.ui.snVista = 'noche'; P.render(); });
     await page.click('[data-a="noche-empezar"]'); await page.waitForTimeout(2600);
     r.noche = await page.evaluate(() => /Levántate/.test((document.getElementById('nocheCapa') || {}).innerText || ''));
     await page.click('[data-a="noche-vuelvo"]'); await page.waitForTimeout(150);
     r.desvelo = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1)), x = P.suenoReal(k); return x && { mal: x.mal, dde: x.dde }; });
     await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.ui.pvtMs = 0; P.ui.pvtMin = 0; P.ui.nocheMs = 0; P.ui.snG = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.SN_T.pvtMs = 180000; P.SN_T.pvtMin = 5; P.SN_T.nocheMs = 20 * 60000; P.ui.snG = ''; P.render(); });
     check('el plan de guardia sale de tus guardias, «mejor plan» deja la siesta del saliente entre 2 y 4 h sin cafés tras las 3:00, y un café se arrastra',
       !ini.G || (ini.hay && /Coche/.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
         !r.cafe.despues.includes(r.cafe.antes)), JSON.stringify(r));

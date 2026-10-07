@@ -2180,12 +2180,6 @@ button.gfs.gedab{display:flex;width:100%}
 .proxf .cd{flex:none;font-size:11.5px;color:var(--ink2);font-weight:700;white-space:nowrap}
 .proxf .evdot{flex:none}
 /* El sol, plegado: el renglón lleva las tres cifras, así que abrirlo es opcional */
-details.solplg>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none}
-details.solplg>summary::-webkit-details-marker{display:none}
-details.solplg>summary::after{content:'\25be';margin-left:auto;color:var(--ink2);font-size:12px}
-details.solplg[open]>summary::after{content:'\25b4'}
-details.solplg>summary>b{font-size:15px}
-details.solplg>summary .mini{color:var(--ink2);font-weight:700}
 /* listo, músculos, progreso */
 .glisto{display:flex;gap:10px;align-items:center;border:1px solid color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 10%,var(--card));border-radius:14px;padding:10px 12px}
 .glisto .g{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;position:relative;flex:none}
@@ -2519,7 +2513,7 @@ button.d4key{cursor:pointer}
 /* la hoja se arrastra hacia abajo para cerrarla: que el navegador no se lleve el gesto como scroll de la página */
 .hoja .hgrab,.hoja .hcab,.hoja .sh{touch-action:none}
 /* ===== sueño: cómo llegas, el simulador de la guardia y las palancas ===== */
-:root{--dsu:#d95926;--dsuN:#3987e5;--sns:#4f7fe0;--sng:#d9702f}
+:root{--dsu:#d95926;--sns:#4f7fe0;--sng:#d9702f;--sn-rayas:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
 html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .dsucap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
 .dsuh .dsuhform{margin-top:6px}
@@ -2531,7 +2525,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .sn3s{display:flex;gap:5px;align-items:flex-end;height:66px}
 .sn3{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;width:34px;height:100%;padding:0;border:0;background:none;color:var(--ink2);font:inherit;cursor:pointer}
 .sn3 i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--sns)}
-.sn3 i.g{background:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
+.sn3 i.g,.snley i.g,.snbars>div i.g{background:var(--sn-rayas)}
 .sn3 i.est{opacity:.5}.sn3 i.vacio{background:transparent;border:1.5px dashed var(--line);border-bottom:0}
 .sn3 b{font-size:10.5px;color:var(--ink)}.sn3 span{font-size:10px;font-weight:800}
 .snrel{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink2);margin-top:10px}
@@ -3291,10 +3285,8 @@ span.hbt{cursor:default;border-style:dashed}
 .snley span{display:inline-flex;align-items:center;gap:5px}
 .snley i{display:inline-block;width:12px;height:9px;border-radius:2px;font-style:normal}
 .snley i.s{background:color-mix(in srgb,var(--sns) 45%,transparent)}
-.snley i.g{background:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
 .snley i.c{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);font-size:8px;font-weight:900;display:grid;place-items:center}
 .snley i.l{height:2px;background:var(--brand)}.snley i.r{height:2px;background:var(--ink2)}
-.snbars>div i.g{background:repeating-linear-gradient(135deg,var(--sng) 0 3px,color-mix(in srgb,var(--sng) 55%,#000) 3px 6px)}
 .snbars>div u{display:block;width:7px;height:7px;border-radius:50%;margin-top:2px;text-decoration:none}
 .snbars>div u.ok{background:var(--ok)}.snbars>div u.no{background:var(--warn)}
 .snhoyc>.mini:last-child{white-space:nowrap}
