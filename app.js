@@ -5607,6 +5607,23 @@ function snPlanSim(G,cual){
   if(_snPST!==_renderTick){_snPSM={};_snPST=_renderTick;}
   const k=G+'|'+(cual||'');if(_snPSM[k])return _snPSM[k];
   const p=snPlan(G,cual),se=SNM.sim(p,6,48);return (_snPSM[k]={p:p,se:se,m:snMetricas(p,se)});}
+function snMejorSim(G){
+  /* EL MEJOR PLAN, YA CALCULADO. Estaba detrás de «Buscar el mejor plan» y casi nunca se pulsaba:
+     ahora se calcula al pintar (una vez) y se enseña al lado del tuyo */
+  if(_snPST!==_renderTick){_snPSM={};_snPST=_renderTick;}
+  const k=G+'|mejor';if(_snPSM[k])return _snPSM[k];
+  const p=snMejor(G),se=SNM.sim(p,6,48);return (_snPSM[k]={p:p,se:se,m:snMetricas(p,se)});}
+function snFirma(p){return JSON.stringify([p.sueno.map(function(x){return [x.id,Math.round(x.a*4),Math.round(x.b*4)];}).sort(),
+  p.cafes.map(function(c){return Math.round(c.t*4);}).sort()]);}
+function snMejorHTML(G,r){
+  const mj=snMejorSim(G),igual=snFirma(mj.p)===snFirma(r.p);
+  if(igual)return '<div class="snmej ok"><b>✓ Tu plan ya es el mejor</b><span class="mini">de los que prueba la app: siesta antes, cafés y siesta al llegar de 2 a 4 h</span></div>';
+  const n=function(t,a,b){return '<span>'+t+' <b>'+a+'</b> → <b style="color:'+(b>=a?'var(--ok)':'var(--bad)')+'">'+b+'</b></span>';};
+  return '<div class="snmej"><div class="dsucap">EL MEJOR PLAN, AL LADO DEL TUYO</div>'+
+    '<div class="snmejc">'+n('Vuelta',r.m.coche,mj.m.coche)+n('Peor rato',r.m.peor,mj.m.peor)+
+      '<span>Esta noche <b>'+(r.m.duerme?'bien':'mal')+'</b> → <b style="color:'+(mj.m.duerme?'var(--ok)':'var(--bad)')+'">'+(mj.m.duerme?'bien':'mal')+'</b></span></div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn p s" data-a="sn-mejor">Usar el mejor plan</button>'+
+      '<span class="mini">energía de 0 a 100 · lo tuyo → lo mejor</span></div></div>';}
 function snPlan(G,cual){
   /* el tuyo: lo guardado; si no has tocado nada, lo de siempre */
   const p=snBase(G),m=((store.sueno||{}).sim||{})[G];
@@ -5775,14 +5792,13 @@ function renderSuenoSim(){
     '<div class="row" style="align-items:center;gap:6px"><button class="btn s" data-a="sn-g" data-v="'+(l[i-1]||'')+'"'+(i>0?'':' disabled')+' aria-label="guardia anterior">‹</button>'+
       '<div style="flex:1;text-align:center"><div class="dsucap">'+(G<iso(new Date())?'GUARDIA DE AYER':'TU GUARDIA')+'</div><b>'+DIA3[d.getDay()]+' '+d.getDate()+' · '+esc(hCortaHM(g.desde))+' → '+esc(hCortaHM(g.sale))+'</b></div>'+
       '<button class="btn s" data-a="sn-g" data-v="'+(l[i+1]||'')+'"'+(i<l.length-1?'':' disabled')+' aria-label="guardia siguiente">›</button></div>'+
-    snVeredictoHTML(p,m,rm)+
+    snVeredictoHTML(p,m,rm)+snMejorHTML(G,r)+
     '<div class="snley"><span><i class="s"></i>dormir</span><span><i class="g"></i>guardia</span><span><i class="c">C</i>café</span><span><i class="l"></i>energía</span>'+(ref?'<span><i class="r"></i>lo de siempre</span>':'')+'</div>'+
     '<div class="sngraf" id="snGraf">'+snSVG(p,se,ref)+'</div>'+
     '<p class="mini sntip">Arrastra una siesta o un café, estira su borde, o toca una hora. Con el teclado: flechas.</p>'+
     '<div class="snlect" id="snLect" aria-live="polite">'+snLecturaHTML(p,se)+'</div>'+
     (ui.snTabla?snTablaHTML(p,se):'')+
-    '<div class="snbtn"><button class="btn p" data-a="sn-mejor">Buscar el mejor plan</button>'+
-      (tocado?'<button class="btn" data-a="sn-deshacer">Volver a lo de siempre</button>':'')+'</div>'+
+    (tocado?'<div class="snbtn"><button class="btn" data-a="sn-deshacer">Volver a lo de siempre</button></div>':'')+
     '<div class="row snopc">'+(tocado?'<label><input type="checkbox" data-a="sn-comparar"'+(ui.snComparar?' checked':'')+'> comparar con lo de siempre</label>':'')+
       '<span class="sp"></span><button class="chip" data-a="sn-tabla">'+(ui.snTabla?'ocultar tabla':'ver en tabla')+'</button></div>'+
     '<div class="dsucap" style="margin-top:12px">PASO A PASO</div>'+snPasosHTML(p,m)+'</div>';}
@@ -5856,7 +5872,7 @@ function suenoEstadoHTML(hoyK){
   const barras=st.tres.map(function(x){const d=parseDate(x.k),h=x.n?x.n.h:0,pct=Math.min(100,h/(c.min*1.25)*100);
     return '<button class="sn3" data-a="sn-hoja" data-k="'+x.k+'" aria-label="'+esc(fechaCorta(x.k))+': '+(x.n?fmtHM(x.n.h*60)+(x.n.real?'':' estimado'):'sin apuntar')+'">'+
       '<i style="height:'+Math.max(x.n?6:2,pct*0.56)+'px" class="'+(x.n?(x.n.guardia?'g':''):'vacio')+(x.n&&!x.n.real?' est':'')+'"></i>'+
-      '<b>'+(x.n?(x.n.real?'':'≈')+fmtC(Math.round(x.n.h*10)/10):'—')+'</b><span>'+(x.n&&!x.n.real?'aprox.':DIA3[d.getDay()])+'</span></button>';}).join('');
+      '<b>'+(x.n?(x.n.real?'':'≈')+fmtC(Math.round(x.n.h*10)/10):'—')+'</b><span>'+DIA3[d.getDay()]+'</span></button>';}).join('');   /* el «≈» ya dice que es estimado: «aprox.» no cabía */
   const nv=st.nivel>=0?SN_NIVEL[st.nivel]:null;
   return '<div class="card snest'+(st.nivel>=2?' alto':'')+'">'+
     '<div class="dsucap">CÓMO LLEGAS HOY</div>'+
@@ -5976,13 +5992,14 @@ function suenoFranjaSVG(hoyK){
   for(let k=0;k<=24;k+=6){const h=w+k;g+='<line x1="'+ax(h)+'" x2="'+ax(h)+'" y1="0" y2="94" stroke="var(--line)"/><text x="'+ax(h)+'" y="106" text-anchor="'+(k===0?'start':k===24?'end':'middle')+'" font-size="10.5" fill="var(--ink2)">'+hCortaHM(hm(h*60))+'</text>';}
   return '<svg viewBox="0 0 '+W2+' 110" role="img" aria-label="tu día: luz, café, cena y luz baja según tu hora de levantarte">'+g+'</svg>';}
 function suenoVueltaSVG(fil,act,b){
-  let g='';const bx=function(a){return 104+a/100*228;},n=fil.length;
+  /* las etiquetas («6 h · hasta 15:55») miden ~110 px: la barra empieza después, no encima */
+  let g='';const bx=function(a){return 132+a/100*200;},n=fil.length;
   g+='<rect x="'+bx(0)+'" y="0" width="'+(bx(38)-bx(0))+'" height="'+(n*26)+'" fill="var(--ok)" opacity=".08"/>'+
      '<text x="'+bx(19)+'" y="'+(n*26+13)+'" text-anchor="middle" font-size="10" font-weight="800" fill="var(--ok)">te dormirás</text>'+
      '<text x="'+bx(70)+'" y="'+(n*26+13)+'" text-anchor="middle" font-size="10" font-weight="800" fill="var(--bad)">te costará</text>';
   fil.forEach(function(f,i){const on=f.h===act,yy=i*26,A=f.m.camaA,ok=f.m.duerme;
     g+='<g data-a="sn-siesta-cfg" data-v="'+f.h+'" style="cursor:pointer" role="button" tabindex="0" aria-label="siesta de '+f.h+' horas: '+(ok?'te dormirás':'te costará')+'"><rect x="0" y="'+yy+'" width="340" height="26" fill="transparent"/>'+
-      '<text x="96" y="'+(yy+17)+'" text-anchor="end" font-size="12" font-weight="'+(on?900:600)+'" fill="'+(on?'var(--ink)':'var(--ink2)')+'">'+f.h+' h · hasta '+snHH(b.llega+f.h)+'</text>'+
+      '<text x="126" y="'+(yy+17)+'" text-anchor="end" font-size="12" font-weight="'+(on?900:600)+'" fill="'+(on?'var(--ink)':'var(--ink2)')+'">'+f.h+' h · hasta '+snHH(b.llega+f.h)+'</text>'+
       '<line x1="'+bx(0)+'" x2="'+bx(A)+'" y1="'+(yy+13)+'" y2="'+(yy+13)+'" stroke="'+(ok?'var(--ok)':'var(--bad)')+'" stroke-width="'+(on?6:3)+'" stroke-linecap="round" opacity="'+(on?1:.55)+'"/>'+
       '<circle cx="'+bx(A)+'" cy="'+(yy+13)+'" r="'+(on?6:4)+'" fill="'+(ok?'var(--ok)':'var(--bad)')+'" stroke="var(--card)" stroke-width="2"/></g>';});
   return '<svg viewBox="0 0 340 '+(n*26+18)+'" role="img" aria-label="energía a la hora de acostarte según lo que dure la siesta tras la guardia">'+g+'</svg>';}

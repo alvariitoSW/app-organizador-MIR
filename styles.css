@@ -2533,7 +2533,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .sn3 i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--sns)}
 .sn3 i.g,.snley i.g,.snbars>div i.g{background:var(--sn-rayas)}
 .sn3 i.est{opacity:.5}.sn3 i.vacio{background:transparent;border:1.5px dashed var(--line);border-bottom:0}
-.sn3 b{font-size:10.5px;color:var(--ink)}.sn3 span{font-size:10px;font-weight:800}
+.sn3 b{font-size:10.5px;color:var(--ink);white-space:nowrap}.sn3 span{font-size:10px;font-weight:800;white-space:nowrap}
 .snrel{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink2);margin-top:10px}
 .snsim .row .btn[disabled]{opacity:.35}
 .snver{display:flex;flex-wrap:wrap;gap:6px 12px;width:100%;margin-top:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
@@ -2565,7 +2565,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .snh2{font-size:19px;font-weight:900;margin:18px 2px 8px}
 .snaj{display:flex}.snaj button{flex:1;font-size:12px;padding-inline:2px}
 .sndiag{display:flex;align-items:center;gap:12px}
-.sndiag .big{font-size:32px;font-weight:900;line-height:1}.sndiag .big small{font-size:15px;color:var(--ink2)}
+.sndiag .big{font-size:32px;font-weight:900;line-height:1;white-space:nowrap;flex:none}.sndiag .big small{font-size:15px;color:var(--ink2)}
 .sndiag p{margin:0;font-size:13px;color:var(--ink2);line-height:1.4}.sndiag p b{color:var(--ink)}
 .snctl{display:grid;grid-template-columns:92px 1fr 56px;gap:10px;align-items:center;margin-top:10px;font-size:13px;color:var(--ink2)}
 .snctl output{font-weight:900;color:var(--ink);text-align:right;font-size:15px}
@@ -3353,3 +3353,7 @@ span.hbt{cursor:default;border-style:dashed}
 .sntr input[type=time]::-webkit-calendar-picker-indicator{display:none}
 .sntr input[type=time]{padding:8px 2px}
 .sntr .sntipo{min-width:0;flex:0 0 96px;padding:8px 7px}
+/* el mejor plan, al lado del tuyo, en el simulador de la guardia */
+.snmej{margin-top:10px;border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:12px;padding:9px 11px;background:color-mix(in srgb,var(--ok) 7%,var(--card))}
+.snmej.ok{display:flex;flex-direction:column;gap:2px}
+.snmejc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:4px}

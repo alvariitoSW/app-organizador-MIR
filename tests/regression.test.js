@@ -9992,7 +9992,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { G, hay: !!document.querySelector('.snsim #snGraf [data-sn="m"]'), ver: (document.querySelector('.snver') || {}).textContent || '' }; });
     let r = { ini };
     if (ini.G) {
-      await page.click('[data-a="sn-mejor"]'); await page.waitForTimeout(300);
+      // el mejor plan sale ya calculado al lado del tuyo; si coincide con el tuyo no hay botón, y se usa igual
+      const bm = await page.$('[data-a="sn-mejor"]');
+      if (bm) await bm.click();
+      else await page.evaluate(() => { const b = document.createElement('button'); b.dataset.a = 'sn-mejor'; document.querySelector('#main').appendChild(b); b.click(); });
+      await page.waitForTimeout(300);
       r.mejor = await page.evaluate((G) => { const P = window.PG, m = P.store.sueno.sim[G], post = m && m.sueno.filter((x) => x.id === 'post')[0];
         const a = P.snMetricas(P.snPlan(G)), b = P.snMetricas(P.snPlan(G, 'base'));
         return { post: post ? post.b - post.a : null, coche: a.coche, cocheBase: b.coche, tardios: m.cafes.filter((c) => c.t > 27).length }; }, ini.G);
