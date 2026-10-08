@@ -1337,6 +1337,7 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   /* la siesta del saliente puede ser 0 (hay quien aguanta del tirón), así que no vale el >0 */
   if(typeof o.siesta==='number'&&o.siesta>=0&&o.siesta<=480)d.siesta=o.siesta;
   d.avisoCama=!!o.avisoCama;
+  d.conduce=o.conduce===true;   /* «no tengo carné»: por defecto vuelves en transporte, no conduciendo */
   return d;}
 function mins(t){const m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim());return m?(+m[1])*60+(+m[2]):null;}
 function hm(m){const x=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');}
@@ -5617,7 +5618,7 @@ function snPlanSim(G,cual){
 function snPlan(G,cual){
   /* el tuyo: lo guardado; si no has tocado nada, lo de siempre */
   const p=snBase(G),m=((store.sueno||{}).sim||{})[G];
-  if(cual!=='base'&&m){p.sueno=m.sueno.map(function(s){return Object.assign({},s);});p.cafes=m.cafes.map(function(x){return Object.assign({},x);});}
+  if(cual!=='base'&&m){p.sueno=m.sueno.filter(function(s){return s.id!=='coche'||suenoCfg().conduce;}).map(function(s){return Object.assign({},s);});   /* sin carné, fuera la «siesta antes de conducir» guardada */p.cafes=m.cafes.map(function(x){return Object.assign({},x);});}
   return snCompleta(p);}
 function snGuarda(p){
   if(!store.sueno)store.sueno={};if(!store.sueno.sim)store.sueno.sim={};
@@ -5645,13 +5646,14 @@ function snMejor(G){
     if(fin-o[0]>=10)pres.push({id:'pre',a:fin-o[0],b:fin,txt:o[1]});});}
   const cafs=[[b0.gu+0.5,21,25.5],[b0.gu+0.5,20.5,24.5],[b0.gu+0.5,22,26.5]];
   let best=null,bs=-1e9;
-  pres.forEach(function(pr){cafs.forEach(function(cf){[0,1].forEach(function(co){[2,2.5,3,3.5,4].forEach(function(len){
+  const conduce=suenoCfg().conduce;
+  pres.forEach(function(pr){cafs.forEach(function(cf){(conduce?[0,1]:[0]).forEach(function(co){[2,2.5,3,3.5,4].forEach(function(len){
     const p=snCopia(b0);p.sueno=p.sueno.filter(function(s){return s.id==='desc';});
     if(pr)p.sueno.push(Object.assign({},pr));
     if(co)p.sueno.push({id:'coche',a:b0.sale-1/3,b:b0.sale,txt:'20 min antes de conducir'});
     p.sueno.push({id:'post',a:p.llega,b:p.llega+len,txt:'Siesta al llegar'});
     p.cafes=cf.filter(function(t){return t>=b0.de&&t<b0.sale;}).map(function(t){return {t:t,mg:80};});
-    snCompleta(p);const m=snMetricas(p),s=1.2*m.coche+m.peor+(m.camaA<=38?15:-(m.camaA-38)*1.5)-m.camaMg*0.3+len*2;
+    snCompleta(p);const m=snMetricas(p),s=(conduce?1.2:0.4)*m.coche+m.peor+(m.camaA<=38?15:-(m.camaA-38)*1.5)-m.camaMg*0.3+len*2;
     if(s>bs){bs=s;best=p;}});});});});
   return best;}
 
@@ -5699,7 +5701,7 @@ function snSVG(p,se,ref){
   const ca=SNM.en(se,p.coche).A,ce=snEstadoA(ca);
   g+='<line x1="'+X(p.coche)+'" x2="'+X(p.coche)+'" y1="'+G.YT+'" y2="'+G.YB+'" stroke="var(--ink)" opacity=".45"/>'+
      (ca!=null?'<circle cx="'+X(p.coche)+'" cy="'+Y(ca)+'" r="5" fill="'+ce.c+'" stroke="var(--card)" stroke-width="2"/>':'')+
-     '<text x="'+(X(p.coche)+5)+'" y="'+(G.YT+11)+'" font-size="10" font-weight="800" fill="var(--ink)">vuelta en coche</text>';
+     '<text x="'+(X(p.coche)+5)+'" y="'+(G.YT+11)+'" font-size="10" font-weight="800" fill="var(--ink)">'+(suenoCfg().conduce?'vuelta en coche':'vuelta a casa')+'</text>';
   /* los cafés, abajo, con su dosis */
   p.cafes.forEach(function(c,i){const on=sel==='c'+i,tarde=c.t>27&&c.t<p.sale+1;
     g+='<g><circle cx="'+X(c.t)+'" cy="'+G.YC+'" r="8" fill="'+(on?'var(--ink)':'var(--card)')+'" stroke="'+(tarde?'var(--bad)':'var(--line)')+'" stroke-width="1.5"/>'+
@@ -5724,13 +5726,13 @@ function snLecturaHTML(p,se){
   return '<div class="snnum" style="color:'+e.c+'">'+Math.round(q.A)+'<small>'+e.t.toUpperCase()+'</small></div><div class="sntx"><b>'+esc(cuando)+(ui.snCur==null?' · tu peor momento':'')+'</b>'+esc(sug)+(acc?'<div class="snacc">'+acc+'</div>':'')+'</div>';}
 function snVeredictoHTML(p,m,r){
   const d=function(a,b){if(!r||Math.abs(a-b)<1)return '';return ' <span style="color:'+(a>b?'var(--ok)':'var(--bad)')+'">'+(a>b?'+':'−')+Math.abs(Math.round(a-b))+'</span>';};
-  const e1=snEstadoA(m.coche),e2=snEstadoA(m.peor);
+  const e1=snEstadoA(m.coche),e2=snEstadoA(m.peor),cond=suenoCfg().conduce;
   return '<button class="snver" data-a="sn-ver" aria-expanded="'+!!ui.snVer+'">'+
-    '<span><i style="background:'+e1.c+'">'+e1.i+'</i>Volver en coche '+snHH(p.coche)+' · energía <b>'+m.coche+'</b>/100'+d(m.coche,r&&r.coche)+'</span>'+
+    '<span><i style="background:'+e1.c+'">'+e1.i+'</i>'+(cond?'Volver en coche ':'Vuelta a casa ')+snHH(p.coche)+' · energía <b>'+m.coche+'</b>/100'+d(m.coche,r&&r.coche)+'</span>'+
     '<span><i style="background:'+e2.c+'">'+e2.i+'</i>Peor rato '+snHH(m.peorT)+' · energía <b>'+m.peor+'</b>/100'+d(m.peor,r&&r.peor)+'</span>'+
     '<span><i style="background:'+(m.duerme?'var(--ok)':'var(--bad)')+'">'+(m.duerme?'✓':'!')+'</i>Esta noche: <b>'+(m.duerme?'te dormirás':'te costará')+'</b></span></button>'+
     (ui.snVer?('<div class="snverd">'+
-      '<p><b>Al volver ('+snHH(p.coche)+'):</b> '+(m.coche<35?'energía '+m.coche+'. Mejor bus, taxi o que te recojan. Tras guardias de 24 h, los residentes tienen más del doble de accidentes al volver (Barger 2005).':'energía '+m.coche+'. Si notas sueño, para.')+'</p>'+
+      '<p><b>Al volver ('+snHH(p.coche)+'):</b> '+(!cond?('energía '+m.coche+'. '+(m.coche<35?'Es fácil quedarte dormido en el bus o el metro: pon una alarma para tu parada. ':'')+'Gafas de sol: la luz de la mañana espabila y luego cuesta dormir la siesta.'):m.coche<35?'energía '+m.coche+'. Mejor bus, taxi o que te recojan. Tras guardias de 24 h, los residentes tienen más del doble de accidentes al volver (Barger 2005).':'energía '+m.coche+'. Si notas sueño, para.')+'</p>'+
       '<p><b>Peor momento ('+snDia(p,m.peorT)+' '+snHH(m.peorT)+'):</b> deja lo delicado para antes o después si puedes.</p>'+
       '<p><b>Esta noche ('+snHH(p.cama)+'):</b> '+(m.duerme?'llegas con sueño suficiente.':(m.camaA>38?'la siesta larga te ha quitado sueño: acórtala.':'te quedan '+m.camaMg+' mg de cafeína.'))+'</p>'+
       '<p class="mini">Energía estimada con el modelo de dos procesos (presión de sueño y ritmo de 24 h). Sirve para comparar planes; tu medida de verdad es el test de reacción.</p></div>'):'');}
@@ -5747,7 +5749,8 @@ function snPasos(p,m){
     it.push({k:s.id,t:s.a,b:(s.txt||'Siesta')+' · '+durT,s:sub,mal:s.id==='post'&&s.b-s.a>4.1});});
   p.cafes.forEach(function(c,i){const tarde=c.t>27&&c.t<p.sale+1;
     it.push({k:'cafe'+snHH(c.t),t:c.t,b:'Café'+((c.mg||80)>=150?' doble':''),s:tarde?'Tarde: aún lo tendrás al salir.':'Antes de las 3:00 se pasa a tiempo.',mal:tarde});});
-  it.push({k:'coche',t:p.sale,b:'Volver a casa',s:m.coche<35?'Energía '+m.coche+': mejor no conducir. Gafas de sol.':'Gafas de sol: la luz de la mañana espabila y luego cuesta dormir.',mal:m.coche<35});
+  it.push({k:'coche',t:p.sale,b:'Volver a casa',s:suenoCfg().conduce?(m.coche<35?'Energía '+m.coche+': mejor no conducir. Gafas de sol.':'Gafas de sol: la luz de la mañana espabila y luego cuesta dormir.'):
+    (m.coche<35?'Energía '+m.coche+': alarma para tu parada, que te puedes dormir. Gafas de sol.':'Gafas de sol: la luz de la mañana espabila y luego cuesta dormir.'),mal:m.coche<35&&suenoCfg().conduce});
   it.push({k:'cama',t:p.cama,b:'A la cama',s:'Tu hora de siempre, aunque antes tengas sueño.'});
   it.sort(function(a,b){return a.t-b.t;});
   return it.map(function(x){x.on=!!av[x.k];return x;});}
@@ -6039,7 +6042,8 @@ function suenoHoyCardHTML(){
   const f=st.fase.id,L=suenoLuz(hoyK);let tres=[];
   if(f==='saliente'){const s=salidaDeGuardia(hoyK),c=suenoCfg(),lleg=mins(s.sale)+trayectoMin();
     tres=[[hCortaHM(hm(lleg+Math.min(c.siesta,240))),'fin de la siesta'],[hCortaHM(hm(mins(bed)-6*60)),'último café'],[hCortaHM(bed),'a la cama']];}
-  else if(f==='guardia'){const m=snPlanSim(hoyK).m;tres=[[m.peor+'','peor, '+snHH(m.peorT)],['3:00','último café'],[m.coche<35?'no':'ok','conducir al salir']];}
+  else if(f==='guardia'){const sm=snPlanSim(hoyK),m=sm.m;tres=[[m.peor+'','peor, '+snHH(m.peorT)],['3:00','último café'],
+    suenoCfg().conduce?[m.coche<35?'no':'ok','conducir al salir']:[snHH(sm.p.sale),'sales: alarma en tu parada']];}
   else tres=[[hCortaHM(hm(L.de)),L.casa?'luz en casa':'luz de calle'],[hCortaHM(hm(mins(bed)-6*60)),'último café'],[hCortaHM(bed),'a la cama']];
   const pr=suenoPruebas().filter(function(x){return !x.fin;})[0],ayer=iso(addDays(parseDate(hoyK),-1));
   const pend=pr&&ayer>=pr.desde&&suenoPruebaDia(pr,ayer)==null;
@@ -15924,7 +15928,8 @@ function horasPantallaHTML(){
         '<b>'+fmt(SC.min)+' h</b><button class="btn s" data-a="sueno-paso" data-d="0.5" aria-label="media hora más">+</button></div>'+
         '<input type="number" hidden value="'+SC.min+'" data-a="sueno-f" data-k="min">'+
         '<span class="sp"></span><span class="mini" style="text-align:right">cena '+fmt(SC.cenaMax/60)+'–'+fmt(SC.cenaMin/60)+' h antes<br>de acostarte</span></div>'+
-      '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+((store.sueno||{}).relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label></div>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+((store.sueno||{}).relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-conduce"'+(suenoCfg().conduce?' checked':'')+'> vuelvo de la guardia conduciendo</label></div>'+
     '<div class="card">'+filas+'</div>'+
     '<details class="card hradv"><summary>a qué hora comes · minutos en dormirte · siesta del saliente</summary>'+
       '<div class="fgrid c3" style="margin-top:10px">'+num('latencia','tardas en dormirte (min)',0,60,5)+
@@ -20495,7 +20500,7 @@ function act(a,el){
     case 'sn-todos':ui.snTodos=!ui.snTodos;render();break;
     case 'sn-mejor':{const G=snGuardiaSel();if(!G)break;const viejo=snPlanSim(G).se;snGuarda(snMejor(G));ui.snComparar=true;ui.snCur=null;ui.snSel=null;render();
       const n=snPlanSim(G),r=snPlanSim(G,'base').m;snAnima(viejo,n.se);
-      flash('Coche '+r.coche+'→'+n.m.coche+' · madrugada '+r.peor+'→'+n.m.peor+' · esta noche '+(n.m.duerme?'duermes':'cuesta'));break;}
+      flash((suenoCfg().conduce?'Coche ':'Vuelta ')+r.coche+'→'+n.m.coche+' · madrugada '+r.peor+'→'+n.m.peor+' · esta noche '+(n.m.duerme?'duermes':'cuesta'));break;}
     case 'sn-deshacer':{const G=snGuardiaSel();if(store.sueno&&store.sueno.sim)delete store.sueno.sim[G];save();ui.snSel=null;render();flash('vuelves a lo de siempre');break;}
     case 'sn-add':{const G=snGuardiaSel(),p=snPlan(G),t=ui.snCur!=null?Math.round(ui.snCur*4)/4:null;if(t==null)break;
       if(el.dataset.v==='cafe'){p.cafes.push({t:t,mg:80});p.cafes.sort(function(a,b){return a.t-b.t;});flash('café a las '+snHH(t));}
@@ -22763,6 +22768,7 @@ document.addEventListener('change',e=>{
       save();render();break;}
     case 'sn-tt':snTCambia(+el.dataset.i,+el.dataset.k,el.value);render();break;
     case 'sn-comparar':ui.snComparar=!!el.checked;render();break;
+    case 'sn-conduce':if(!store.sueno)store.sueno={};store.sueno.conduce=!!el.checked;save();render();break;
     case 'sn-reloj':if(!store.sueno)store.sueno={};store.sueno.relojEnergia=!!el.checked;save();render();break;
     case 'sn-ancla':{if(!store.sueno)store.sueno={};store.sueno.ancla=hm(+el.value);save();render();break;}
     case 'sn-need':{if(!store.sueno)store.sueno={};store.sueno.min=Math.max(6,Math.min(10,Math.round(+el.value*4)/4));save();render();break;}
