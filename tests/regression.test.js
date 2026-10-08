@@ -7292,7 +7292,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     const sn = await page.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())));
     check('«¿cómo has dormido?»: cada trozo con su hora; dos trozos con un hueco = dormí mal con su desvelo, y las horas salen solas',
-      hayCard && !!sn && Math.abs(sn.h - 6.25) < 0.01 && sn.mal && sn.dde === '03:00' && sn.da === '04:00', JSON.stringify({ hayCard, sn }));
+      hayCard && !!sn && Math.abs(sn.h - 19 / 3) < 0.01 && sn.mal && sn.dde === '03:00' && sn.da === '04:00', JSON.stringify({ hayCard, sn }));
 
     // la guardia de ayer: 2 h a ratos + 4 de siesta, y el informe lo cuenta
     const inf = await page.evaluate(() => { const P = window.PG, ayer = P.iso(new Date(Date.now() - 864e5));
@@ -8692,6 +8692,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (t) t.value = 'Revisión 214'; if (h) h.value = '10:00'; });
     await page.evaluate(() => { const c = document.getElementById('hjGoo'); if (c) c.checked = false; });
     const tapado = await page.evaluate(() => { const b = document.querySelector('.hoja [data-a="hoja-ev-ok"]'); if (!b) return 'no hay botón';
+      // primero a la vista: fuera de pantalla elementFromPoint da null («nada») sin que nada lo tape
+      b.scrollIntoView({ block: 'center' });
       const r = b.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
       return t && t.closest('.hoja') ? '' : ((t && (t.id || t.tagName)) || 'nada'); });
     const guardado = await clic('.hoja [data-a="hoja-ev-ok"]');
@@ -8914,7 +8916,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.dineroVista = ''; P.render(); });
     const sn = await page.evaluate(() => { const P = window.PG, sr = P.store.suenoReal = {}, hoy = new Date();
       for (let i = 3; i < 14; i++) sr[P.iso(P.addDays(hoy, -i))] = { h: 8, guardia: false };
-      // las 3 últimas: 6 h, guardia (2 h a ratos + 3 de siesta → cuenta 4) y 5 h = 15 de 24
+      // las 3 últimas: 6 h, guardia (2 h en ella + 3 de siesta = 5: todo cuenta entero) y 5 h = 16 de 24
       sr[P.iso(P.addDays(hoy, -2))] = { h: 6, guardia: false };
       sr[P.iso(P.addDays(hoy, -1))] = { h: 2, guardia: true, ratos: true, siesta: 3 };
       sr[P.iso(hoy)] = { h: 5, guardia: false };
@@ -8935,8 +8937,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const trasHoja = await page.evaluate(() => { const P = window.PG, r = P.suenoReal(P.iso(new Date()));
       return { hoja: !!document.querySelector('.hoja'), r: r && { h: r.h, kss: r.kss, acostar: r.acostar, desp: r.desp, tr: r.tramos } }; });
     await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
-    check('sueño: ya no hay deuda; «cómo llegas» mira las 3 últimas noches (a ratos cuenta la mitad) y lo dicen Hoy, Sueño y el «listo»',
-      sn.nivel === 3 && sn.suma === 15 && /Agotado/.test(sn.card) && /3 noches con 15 h/.test(sn.listo) && sn.deuda === 'undefined' &&
+    check('sueño: ya no hay deuda; «cómo llegas» mira las 3 últimas noches (lo de la guardia cuenta entero) y lo dicen Hoy, Sueño y el «listo»',
+      sn.nivel === 3 && sn.suma === 16 && /Agotado/.test(sn.card) && /3 noches con 16 h/.test(sn.listo) && sn.deuda === 'undefined' &&
       vista.est && vista.barras === 3 && !vista.deuda, JSON.stringify({ sn, vista }));
     check('anotar la noche dibujándola: arrastrar de 23:00 a 7:00 la apunta, con lo despejado que estás, y la hoja se cierra',
       !trasHoja.hoja && trasHoja.r && trasHoja.r.h === 8 && trasHoja.r.kss === 3 && trasHoja.r.acostar === '23:00' && trasHoja.r.desp === '07:00' &&
@@ -10111,6 +10113,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('sueño: tocar la franja no borra; un solo «Guardar»; la hora escrita es la que se guarda, y en la noche que abriste',
       antes === trasToque && ui248.guardar === 1 && !ui248.plegado && /8h30/.test(boton) && r.h === 8.5 && r.desp === '07:30' && r.hoyIntacto,
       JSON.stringify({ antes, trasToque, ui248, boton, r }));
+  }
+
+  // 249) «HE DORMIDO BASTANTE EN LA GUARDIA Y LUEGO OTRO RATO EN CASA, Y ME CUENTA 5 H»: lo de la
+  // guardia contaba la mitad (5h30 → 2h45, + 2h20 = 5h05) y se redondeaba a cuartos (2h20 → 2h15) y a
+  // décimas. Ahora todo cuenta entero y al minuto, en la hoja, al guardar, al recargar y en Hoy
+  {
+    const r = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1)); window.__copia249 = JSON.parse(JSON.stringify(P.store));
+      const gd = P.store.shifts.find((s) => P.isGuardia(s)); P.setDayOverride(ay, gd.id, 'urg'); delete P.store.suenoReal[k];
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = k; P.ui.snTr = null; P.render();
+      P.ui.snTr.tr = [[25, 30.5, 1], [36 + 10 / 60, 38.5, 0]]; P.render();
+      return { hoja: document.querySelector('#hojaDia .snres').innerText.replace(/\s+/g, ' '), boton: document.querySelector('#hojaDia .gbig').innerText }; });
+    await page.click('#hojaDia [data-a="sn-tguardar"]'); await page.waitForTimeout(150);
+    const tras = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      const out = { total: P.fmtHM ? '' : '', cuenta: Math.round(P.suenoCuenta(k).h * 60), vuelta: JSON.stringify(n.suenoReal[k].tramos),
+        card: (document.querySelector('.snhoy [data-a="sn-hoja"]') || {}).innerText || '' };
+      P.store = window.__copia249; P.save(); P.render(); return out; });
+    check('guardia 1:00–6:30 + 12:10–14:30 en casa = 7h50 en la hoja, al guardar, al recargar y en la tarjeta de Hoy (que sigue dejando añadir)',
+      /Total 7h50/.test(r.hoja) && /7h50/.test(r.boton) && tras.cuenta === 470 && tras.vuelta === JSON.stringify([[25, 30.5, 1], [36 + 10 / 60, 38.5, 0]].map((t) => [Math.round(t[0] * 60) / 60, Math.round(t[1] * 60) / 60, t[2]])) &&
+      /7h50 · cambiar o añadir/.test(tras.card), JSON.stringify({ r, tras }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

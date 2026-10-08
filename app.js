@@ -860,11 +860,11 @@ function normalize(o){
     const x=o.suenoReal[k];if(!x||typeof x!=='object')return;const hm2=function(t){return /^\d{2}:\d{2}$/.test(t||'')?t:'';};
     sr[k]={h:Math.max(0,Math.min(16,+x.h||0)),guardia:!!x.guardia,acostar:hm2(x.acostar),desp:hm2(x.desp),mal:!!x.mal,dde:hm2(x.dde),da:hm2(x.da),
       ratos:!!x.ratos,siesta:Math.max(0,Math.min(8,+x.siesta||0))};
-    /* lo dibujado (tramos de 18 a 42 h), lo dormido a ratos y lo despejado que estabas (1–9) */
+    /* los trozos (de 18 a 42 h), lo dormido en la guardia y lo despejado que estabas (1–9) */
     if(x.rt!=null)sr[k].rt=Math.max(0,Math.min(sr[k].h,+x.rt||0));
     if(+x.kss>=1&&+x.kss<=9)sr[k].kss=Math.round(+x.kss);
     if(Array.isArray(x.tramos))sr[k].tramos=x.tramos.filter(function(t){return Array.isArray(t)&&+t[1]>+t[0]&&+t[0]>=18&&+t[1]<=42;}).slice(0,12)
-      .map(function(t){return [Math.round(+t[0]*4)/4,Math.round(+t[1]*4)/4,t[2]?1:0];});});o.suenoReal=sr;}
+      .map(function(t){return [Math.round(+t[0]*60)/60,Math.round(+t[1]*60)/60,t[2]?1:0];});});o.suenoReal=sr;}   /* al minuto: a cuartos, 12:10 volvía como 12:15 */
   if(o.estudio&&typeof o.estudio==='object')o.estudio.libros=(Array.isArray(o.estudio.libros)?o.estudio.libros:[]).filter(function(b){return b&&b.id;}).slice(0,60).map(function(b){
     return {id:String(b.id).slice(0,40),titulo:String(b.titulo||'Libro').slice(0,80),pags:Math.max(1,Math.round(+b.pags||1)),caps:Math.max(0,Math.min(200,Math.round(+b.caps||0))),
       pag:Math.max(0,Math.round(+b.pag||0)),horasDia:Math.max(0.25,Math.min(12,+b.horasDia||1)),pph:Math.max(1,Math.min(60,Math.round(+b.pph||10))),
@@ -5471,10 +5471,11 @@ function carrilScroll(){
    media y la semana cuadraba en la app y no en el cuerpo. Ahora cada mañana se apunta lo dormido:
    la fecha D es la noche que acaba la mañana de D (más la siesta de ese día), la misma regla que
    usa sleepOf(). El día que sales de guardia, la «noche» es lo que pudiste dormir en la guardia
-   (0–4 h, a ratos) y se suma la siesta al llegar. */
+   y se suma lo que duermas al llegar. TODO cuenta entero: antes lo de la guardia contaba la mitad
+   y 5h30 en la guardia + 2h20 al llegar salían «5h05» en vez de 7h50. */
 function suenoRealS(){if(!store.suenoReal||typeof store.suenoReal!=='object')store.suenoReal={};return store.suenoReal;}
 function suenoReal(key){const x=suenoRealS()[key];return x&&typeof x==='object'?x:null;}
-function suenoTotal(x){if(!x)return null;return Math.round(((+x.h||0)+(+x.siesta||0))*10)/10;}
+function suenoTotal(x){if(!x)return null;return Math.round(((+x.h||0)+(+x.siesta||0))*60)/60;}   /* al minuto: redondear a 0,1 h dejaba 7h50 en 7h48 */
 function suenoSemana(key){
   const lun=mondayOf(parseDate(key)||new Date()),dias=[];let total=0,n=0;
   for(let i=0;i<7;i++){const k=iso(addDays(lun,i)),r=suenoReal(k),t=suenoTotal(r);
@@ -5490,7 +5491,7 @@ function suenoSemanaHTML(key){
   /* la media de las noches APUNTADAS frente a tu objetivo, cuántas hay y cuántas a tu hora. Antes
      decía «21,3 h de 56» un miércoles (56 es la semana entera) y una pastilla «−3 h», que era la
      deuda de antes con otro nombre */
-  const hora=suenoAHora(s.dias);
+  const hora=suenoAHora(s.dias),f1=function(v){return fmtC(Math.round(v*10)/10);};   /* «7,8», no «7.83» */
   return '<div class="card"><div class="row" style="align-items:baseline;gap:8px"><span class="snbig">'+(s.n?fmtHM(s.media*60):'—')+'</span>'+
       '<span class="mini">de media · objetivo '+fmtHM(c.min*60)+'</span></div>'+
     '<p class="mini" style="margin:2px 0 0">'+s.n+' de 7 noches apuntadas'+(hora.n?' · <b style="color:var(--ink)">'+hora.ok+' de '+hora.n+'</b> a tu hora':'')+'</p>'+
@@ -5499,7 +5500,7 @@ function suenoSemanaHTML(key){
       s.dias.map(function(d,i){
         const g=d.r&&d.r.guardia,h=d.t!=null?Math.round(d.t/max*70):0,sies=d.r&&d.r.siesta?Math.round(d.r.siesta/max*70):0;
         return '<div class="'+(d.t==null?'vacio':'')+(d.t!=null&&d.t<corta?' poco':'')+'" title="'+esc(fechaCorta(d.k))+': '+(d.t==null?'sin apuntar':fmtHM(d.t*60))+'">'+
-          '<b>'+(d.t==null?'':(g&&d.r.siesta?(fmt(d.r.h)+'+'+fmt(d.r.siesta)):fmt(d.t)))+'</b>'+
+          '<b>'+(d.t==null?'':(g&&d.r.siesta?(f1(d.r.h)+'+'+f1(d.r.siesta)):f1(d.t)))+'</b>'+
           '<i class="'+(g?'g':'')+'" style="height:'+Math.max(d.t!=null?3:14,h)+'px">'+(sies?'<em style="height:'+sies+'px"></em>':'')+'</i>'+DL[i]+
           (hora.dia[d.k]!=null?'<u class="'+(hora.dia[d.k]?'ok':'no')+'" title="'+(hora.dia[d.k]?'a tu hora':'fuera de tu hora')+'"></u>':'<u></u>')+'</div>';}).join('')+'</div>'+
     '<p class="mini" style="margin:8px 0 0">'+(s.n<7?(7-s.n)+' día'+(7-s.n===1?'':'s')+' sin apuntar (vacíos). ':'')+
@@ -5520,11 +5521,11 @@ function suenoAHora(dias){
 const fmtC=function(n){return fmt(n).replace('.',',');};
 const SN_NIVEL=[{t:'Bien',c:'var(--ok)',i:'✓'},{t:'Justo',c:'var(--warn)',i:'~'},{t:'Tocado',c:'var(--dsu,#d95926)',i:'!'},{t:'Agotado',c:'var(--bad)',i:'!!'}];
 function suenoCuenta(k){
-  /* lo que cuenta de la noche que acaba la mañana de k, con la siesta: a ratos (de guardia) vale la mitad */
+  /* lo que dormiste la noche que acaba la mañana de k, más la siesta. Sin apuntar, de saliente se
+     estima (2 h en la guardia + tu siesta de siempre) */
   const r=suenoReal(k),c=suenoCfg();
-  if(r){const h=+r.h||0,s=+r.siesta||0,rt=r.rt!=null?Math.min(+r.rt||0,h):(r.guardia&&r.ratos?h:0);
-    return {h:h-rt*0.5+s,ver:h+s,real:true,guardia:!!r.guardia,kss:r.kss||0};}
-  if(salidaDeGuardia(k))return {h:1+c.siesta/60,ver:2+c.siesta/60,real:false,guardia:true,kss:0};
+  if(r)return {h:suenoTotal(r),real:true,guardia:!!r.guardia,kss:r.kss||0};
+  if(salidaDeGuardia(k))return {h:2+c.siesta/60,real:false,guardia:true,kss:0};
   return null;}
 function suenoFase(key){
   const d=parseDate(key)||new Date(),sh=shiftById(dayInfo(key).shiftId);
@@ -5558,7 +5559,7 @@ function suenoLuz(key){
    para comparar planes, no una medida tuya: por eso existe también el test de reacción. */
 const SNM={DT:1/12,
   C:function(h){const x=((h%24)+24)%24;return 0.5*Math.cos(2*Math.PI*(x-17)/24)+0.12*Math.cos(4*Math.PI*(x-17)/24);},
-  dormido:function(p,t){for(let i=0;i<p.todo.length;i++){const s=p.todo[i];if(t>=s.a&&t<s.b)return s.ratos?0.5:1;}return 0;},
+  dormido:function(p,t){for(let i=0;i<p.todo.length;i++){const s=p.todo[i];if(t>=s.a&&t<s.b)return 1;}return 0;},
   cafe:function(p,t){let c=0;p.cafes.forEach(function(x){const d=t-x.t;if(d>0)c+=(x.mg||80)*(1-Math.exp(-d/0.5))*Math.exp(-d*Math.LN2/5);});return c;},
   /* la torpeza de los primeros 20 min al despertar (inercia del sueño): resta y se va */
   inercia:function(p,t){let r=0;p.todo.forEach(function(s){const d=t-s.b;if(d>=0&&d<0.34&&s.b-s.a>0.4)r=Math.max(r,18*(1-d/0.34));});return r;},
@@ -5601,7 +5602,7 @@ function snBase(G){
     fijo:[{id:'previa',a:bed,b:wake,fijo:1,txt:'La noche de antes'},{id:'cama',a:cama,b:cama+c.min,fijo:1,txt:'A la cama'}],
     sueno:[],cafes:[]};
   if(c.siesta>0)p.sueno.push({id:'post',a:llega,b:llega+c.siesta/60,txt:'Siesta al llegar'});
-  if(26<sale-0.5)p.sueno.push({id:'desc',a:26,b:Math.min(28,sale-0.5),ratos:1,txt:'Descanso en la guardia'});
+  if(26<sale-0.5)p.sueno.push({id:'desc',a:26,b:Math.min(28,sale-0.5),ratos:1,txt:'Descanso en la guardia'});   /* ratos: solo se pinta a rayas */
   [gu+0.5,21,28].filter(function(t){return t>=de&&t<sale;}).forEach(function(t){p.cafes.push({t:t,mg:80});});
   return p;}
 function snCompleta(p){p.todo=p.fijo.concat(p.sueno);return p;}
@@ -5629,7 +5630,7 @@ function snMetricas(p,se){
   const g=se.filter(function(x){return x.t>=p.de&&x.t<=p.sale&&!x.z;});
   const peor=g.reduce(function(m,x){return x.A<m.A?x:m;},g[0]||{A:100,t:p.gu});
   const co=SNM.en(se,p.coche),cm=SNM.en(se,Math.min(47.9,p.cama-0.1));
-  let horas=0;p.todo.forEach(function(s){if(s.id==='previa'||s.id==='cama')return;horas+=(s.b-s.a)*(s.ratos?0.5:1);});
+  let horas=0;p.todo.forEach(function(s){if(s.id==='previa'||s.id==='cama')return;horas+=s.b-s.a;});
   return {coche:Math.round(co.A||0),peor:Math.round(peor.A),peorT:peor.t,camaA:Math.round(cm.A==null?0:cm.A),camaMg:Math.round(cm.c),
     duerme:(cm.A==null||cm.A<=38)&&cm.c<25,horas:horas};}
 function snComidaEn(G){
@@ -5639,7 +5640,7 @@ function snMejor(G){
   /* prueba planes con sentido y se queda con el que deja mejor el coche, la madrugada y la noche
      siguiente. Límites: la siesta del saliente de 2 a 4 h; la de antes de entrar, sin pisar la comida
      ni el trayecto; el último café antes de las 3:00 */
-  const b0=snBase(G),sale=b0.tray+0.5,sal=b0.de-b0.tray-0.25,comida=snComidaEn(G);
+  const b0=snBase(G),sal=b0.de-b0.tray-0.25,comida=snComidaEn(G);
   const pres=[null];
   if(sal>=12.5){[[1.5,'Siesta antes de entrar'],[1/3,'Siesta corta antes de entrar']].forEach(function(o){
     let fin=sal;if(comida!=null&&fin>comida&&fin-o[0]<comida+0.75)fin=comida-0.25;
@@ -5663,7 +5664,7 @@ function snX(t){return SNG.X0+(t-SNG.T0)/(SNG.T1-SNG.T0)*(SNG.X1-SNG.X0);}
 function snY(A){return SNG.YB-(A/100)*(SNG.YB-SNG.YT);}
 function snHH(t){return hCortaHM(hm(Math.round(t*12)*5));}
 function snDia(p,t){const d=addDays(parseDate(p.G),Math.floor(t/24));return DIA3[d.getDay()];}
-/* las rayas de lo dormido a ratos en la guardia, iguales en los tres gráficos de Sueño */
+/* las rayas de lo dormido en la guardia, iguales en los tres gráficos de Sueño */
 function snRayas(id){return '<pattern id="'+id+'" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(135)"><rect width="6" height="6" fill="var(--sng,#d9702f)"/><line x1="0" y1="0" x2="0" y2="6" stroke="#8a4519" stroke-width="3"/></pattern>';}
 function snCamino(se){let d='',on=false;se.forEach(function(q){if(q.A==null){on=false;return;}d+=(on?'L':'M')+snX(q.t).toFixed(1)+','+snY(q.A).toFixed(1);on=true;});return d;}
 function snArea(se){let d='',tr=[];const fl=function(){if(tr.length>1)d+='M'+snX(tr[0].t).toFixed(1)+','+SNG.YB+tr.map(function(q){return 'L'+snX(q.t).toFixed(1)+','+snY(q.A).toFixed(1);}).join('')+'L'+snX(tr[tr.length-1].t).toFixed(1)+','+SNG.YB+'Z';tr=[];};
@@ -5713,7 +5714,7 @@ function snSVG(p,se,ref){
 function snLecturaHTML(p,se){
   const m=snMetricas(p,se),t=ui.snCur!=null?ui.snCur:m.peorT,q=SNM.en(se,t),cuando=snDia(p,t)+' '+snHH(t);
   if(q.A==null){const s=p.todo.filter(function(s){return t>=s.a&&t<s.b;})[0];
-    return '<div class="snnum" style="color:var(--sns,#4f7fe0)">zz<small>DUERMES</small></div><div class="sntx"><b>'+esc(cuando)+' · '+esc(s?s.txt:'')+'</b>'+(s&&s.ratos?'A ratos: cuenta la mitad.':'Baja la presión de sueño.')+'</div>';}
+    return '<div class="snnum" style="color:var(--sns,#4f7fe0)">zz<small>DUERMES</small></div><div class="sntx"><b>'+esc(cuando)+' · '+esc(s?s.txt:'')+'</b>'+(s&&s.ratos?'En la guardia: lo que duermas, cuenta.':'Baja la presión de sueño.')+'</div>';}
   const e=snEstadoA(q.A),enG=t>=p.de&&t<p.sale;let sug='',acc='';
   if(q.A<35&&enG){sug='Tu peor rato. Si hay hueco, 20 min de siesta aquí.';acc='<button class="chip" data-a="sn-add" data-v="nap">＋ siesta 20 min aquí</button>';}
   else if(q.A<45&&t<p.de-p.tray){sug='Buen momento para una siesta antes de entrar.';acc='<button class="chip" data-a="sn-add" data-v="nap">＋ siesta aquí</button>';}
@@ -5744,7 +5745,7 @@ function snPasos(p,m){
   const it=[],av=((store.sueno||{}).avisos||{})[p.G]||{};
   p.sueno.forEach(function(s){
     const dur=Math.round((s.b-s.a)*60),durT=dur>=60?(Math.floor(dur/60)+' h'+(dur%60?' '+dur%60:'')):dur+' min';
-    const sub={pre:'Un ciclo de sueño antes de la noche en vela (Ruggiero y Redeker 2014).',desc:'Si te dejan. A ratos cuenta la mitad.',coche:'En la sala de guardia, antes de coger el coche.',
+    const sub={pre:'Un ciclo de sueño antes de la noche en vela (Ruggiero y Redeker 2014).',desc:'Si te dejan: todo lo que duermas cuenta.',coche:'En la sala de guardia, antes de coger el coche.',
       nap:'20 min: más larga y despiertas torpe.',post:s.b-s.a>4.1?'Larga: te quitará sueño esta noche. Mejor que acabe antes de las 13:00.':'Corta y temprana: esta noche dormirás.'}[s.id.replace(/\d+$/,'')]||'';
     it.push({k:s.id,t:s.a,b:(s.txt||'Siesta')+' · '+durT,s:sub,mal:s.id==='post'&&s.b-s.a>4.1});});
   p.cafes.forEach(function(c,i){const tarde=c.t>27&&c.t<p.sale+1;
@@ -6052,21 +6053,22 @@ function suenoHoyCardHTML(){
       '<span class="t"><b>Sueño · '+(nv?nv.t:'sin datos')+'</b><span class="mini">'+esc(st.fase.t)+(st.n?' · '+(st.n===1?'última noche':'últimas '+st.n+' noches')+': '+fmtC(st.suma)+' de '+fmtC(st.n*suenoCfg().min)+' h':'')+'</span></span><span class="sp"></span><span class="mini">ver ›</span></button>'+
     '<div class="sn3t">'+tres.map(function(x){return '<div><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>';}).join('')+'</div>'+
     (pend?snPruebaPregunta(pr,'¿Cumpliste ayer «'+pr.txt.toLowerCase()+'»?'):'')+
-    (r?'':'<button class="btn p s" style="margin-top:8px;width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche')+'</button>')+
+    /* con algo ya apuntado el botón no se va: tras la guardia se duerme otra vez al llegar a casa */
+    '<button class="btn '+(r?'':'p ')+'s" style="margin-top:8px;width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(r?'✎ '+(r.guardia?'Hoy':'Anoche')+': '+fmtHM(suenoTotal(r)*60)+' · cambiar o añadir':(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche'))+'</button>'+
     (f==='vispera'||f==='guardia'?'<button class="btn s" style="margin-top:8px;width:100%" data-a="sn-abrir">Ver el plan de guardia</button>':'')+
   '</div>';}
 
 /* ---------- anotar la noche dibujándola ----------
-   La franja va de las 18:00 a las 18:00 del día siguiente: arrastras el dedo donde dormiste. «A
-   ratos» pinta lo que dormiste en la guardia, que cuenta la mitad. Debajo, lo despejado que estás
+   La franja va de las 18:00 a las 18:00 del día siguiente. Lo dormido en la guardia va a rayas
+   (cuenta entero, como todo). Debajo, lo despejado que estás
    (escala de somnolencia de Karolinska, 1–9, Åkerstedt y Gillberg 1990). */
 const KSS=['','muy despierto','','despierto','','ni despierto ni con sueño','','con sueño, sin esfuerzo para seguir','','mucho sueño, me cuesta mantenerme'];
 function snTramosDe(k){
   const r=suenoReal(k);if(r&&r.tramos&&r.tramos.length)return r.tramos.map(function(x){return x.slice();});
   if(r&&r.acostar&&r.desp&&!r.guardia){let a=mins(r.acostar)/60,b=mins(r.desp)/60;if(a<18)a+=24;b+=24;if(b<=a)b+=24;return [[a,b,0]];}
-  if(r&&r.guardia){const t=[[26,26+(+r.h||0),1]];if(r.siesta)t.push([33,33+(+r.siesta),0]);return t;}
-  const sal=salidaDeGuardia(k);
-  if(sal){const c=suenoCfg(),de=mins(sal.sale)/60+24+trayectoMin()/60;return [[26,28,1],[de,de+c.siesta/60,0]];}
+  const sal=salidaDeGuardia(k),llega=sal?Math.max(30,mins(sal.sale)/60+24+trayectoMin()/60):33;
+  if(r&&r.guardia){const t=[[26,26+(+r.h||0),1]];if(r.siesta)t.push([llega,Math.min(42,llega+(+r.siesta)),0]);return t;}
+  if(sal){const c=suenoCfg();return [[26,28,1],[llega,Math.min(42,llega+c.siesta/60),0]];}
   const ant=iso(addDays(parseDate(k),-1)),b=mins(sleepOf(ant).bed),w=mins(sleepOf(k).wake);
   if(b!=null&&w!=null){let a=b/60;if(a<18)a+=24;let z=w/60+24;if(z<=a)z+=24;return [[a,z,0]];}
   return [];}
@@ -6080,28 +6082,28 @@ function snTramosSVG(tr){
   for(let h=18;h<=42;h+=3)g+='<line x1="'+ax(h)+'" x2="'+ax(h)+'" y1="10" y2="50" stroke="var(--line)"/><text x="'+ax(h)+'" y="66" text-anchor="'+(h===18?'start':h===42?'end':'middle')+'" font-size="10.5" fill="var(--ink2)">'+(h%24)+'</text>';
   tr.forEach(function(x,i){g+='<rect x="'+ax(x[0])+'" y="14" width="'+Math.max(2,ax(x[1])-ax(x[0]))+'" height="32" rx="5" fill="'+(x[2]?'url(#snRt3)':'var(--sns,#4f7fe0)')+'"/>'+
     (ax(x[1])-ax(x[0])>44?'<text x="'+((ax(x[0])+ax(x[1]))/2)+'" y="34" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff">'+snHH(x[0])+'–'+snHH(x[1])+'</text>':'');});
-  return '<svg viewBox="0 0 352 70" role="img" aria-label="lo que dormiste: '+(tr.map(function(x){return snHH(x[0])+' a '+snHH(x[1])+(x[2]?' a ratos':'');}).join(', ')||'nada')+'">'+
+  return '<svg viewBox="0 0 352 70" role="img" aria-label="lo que dormiste: '+(tr.map(function(x){return snHH(x[0])+' a '+snHH(x[1])+(x[2]?' en la guardia':'');}).join(', ')||'nada')+'">'+
     '<defs>'+snRayas('snRt3')+'</defs>'+g+'</svg>';}
 function snResumenTramos(tr){
   let noche=0,rt=0,siesta=0;tr.forEach(function(x){const d=x[1]-x[0];if(x[0]>=30)siesta+=d;else{noche+=d;if(x[2])rt+=d;}});
-  return {noche:noche,rt:rt,siesta:siesta,cuenta:noche-rt*0.5+siesta};}
+  return {noche:noche,rt:rt,siesta:siesta,cuenta:noche+siesta};}
 /* «Anotar lo dormido es una mierda: al pinchar para poner la hora…». Tenía cuatro fallos: tocar la
    franja BORRABA el trozo (justo lo que haces para poner la hora), había dos formularios con dos
    «Guardar» que no coincidían (el dibujo guardaba 8h10 aunque hubieras escrito 6h45), el ✎ de una
    noche pasada abría la de hoy, y arrastrando, 15 minutos eran 4 px. Ahora hay UNA lista de trozos
    con su hora de empezar y de acabar (el reloj del móvil), la franja los enseña y sirve para dibujar
-   rápido, y un solo «Guardar». Lo de la guardia, «a ratos»; lo que duermes al llegar, «siesta». */
+   rápido, y un solo «Guardar». Lo de la guardia va a rayas; lo que duermes al llegar, «siesta». */
 function snHM(h){h=((h%24)+24)%24;const m=Math.round(h*60);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
 function snAEje(v){const m=mins(v);if(m==null)return null;const h=m/60;return h<18?h+24:h;}   /* 18:00…17:59 del día siguiente */
-function snTipo(x){return x[0]>=30?['si','☀️ Siesta']:(x[2]?['gu','🩺 A ratos']:['ok','🛏 Dormido']);}
+function snTipo(x){return x[0]>=30?['si','☀️ Siesta']:(x[2]?['gu','🩺 En la guardia']:['ok','🛏 Dormido']);}
 function suenoHojaHTML(){
   const k=ui.snHoja,d=parseDate(k);if(!d)return '';
-  if(!ui.snTr||ui.snTr.k!==k)ui.snTr={k:k,tr:snTramosDe(k).map(function(x){return [Math.round(x[0]*4)/4,Math.round(x[1]*4)/4,x[2]];}),
+  if(!ui.snTr||ui.snTr.k!==k)ui.snTr={k:k,tr:snTramosDe(k).map(function(x){return [Math.round(x[0]*60)/60,Math.round(x[1]*60)/60,x[2]];}),
     kss:(suenoReal(k)||{}).kss||0,supuesto:!((suenoReal(k)||{}).tramos||[]).length};
   const T=ui.snTr,s=snResumenTramos(T.tr),DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],sal=salidaDeGuardia(k);
   const tit=(k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate()))+(sal?' · guardia':'');
   const filas=T.tr.map(function(x,i){const t=snTipo(x);
-    return '<div class="sntr '+t[0]+'"><button class="sntipo" data-a="sn-tipo" data-i="'+i+'"'+(x[0]>=30?' disabled':'')+' title="cambiar entre dormido y a ratos">'+t[1]+'</button>'+
+    return '<div class="sntr '+t[0]+'"><span class="sntipo">'+t[1]+'</span>'+
       '<input type="time" step="300" value="'+snHM(x[0])+'" data-a="sn-tt" data-i="'+i+'" data-k="0" aria-label="'+t[1]+': empieza">'+
       '<span class="a">→</span><input type="time" step="300" value="'+snHM(x[1])+'" data-a="sn-tt" data-i="'+i+'" data-k="1" aria-label="'+t[1]+': acaba">'+
       '<button class="x" data-a="sn-tquita" data-i="'+i+'" aria-label="quitar este trozo">×</button></div>';}).join('');
@@ -6112,12 +6114,12 @@ function suenoHojaHTML(){
     (filas||'<p class="mini">Nada apuntado: añade un trozo.</p>')+
     '<div class="snmas">'+(sal?'<button class="chipx" data-a="sn-tmas" data-v="gu">＋ rato en la guardia</button><button class="chipx" data-a="sn-tmas" data-v="si">＋ dormí al llegar</button>':
       '<button class="chipx" data-a="sn-tmas" data-v="ok">＋ otro trozo</button><button class="chipx" data-a="sn-tmas" data-v="si">＋ siesta</button>')+'</div>'+
-    '<div class="row snres"><span>Noche <b>'+fmtHM(s.noche*60)+'</b>'+(s.rt?' ('+fmtHM(s.rt*60)+' a ratos)':'')+'</span>'+(s.siesta?'<span>Siesta <b>'+fmtHM(s.siesta*60)+'</b></span>':'')+'<span class="sp"></span><span>Cuenta <b>'+fmtHM(s.cuenta*60)+'</b></span></div>'+
+    '<div class="row snres"><span>'+(s.rt?'En la guardia':'Noche')+' <b>'+fmtHM(s.noche*60)+'</b></span>'+(s.siesta?'<span>+ después <b>'+fmtHM(s.siesta*60)+'</b></span>':'')+'<span class="sp"></span><span>Total <b>'+fmtHM(s.cuenta*60)+'</b></span></div>'+
     '<div class="dsucap" style="margin-top:12px">¿CÓMO DE DESPEJADO ESTÁS AHORA?</div>'+
     '<div class="snkss" role="radiogroup" aria-label="escala de somnolencia de 1 a 9">'+[1,2,3,4,5,6,7,8,9].map(function(n){
       return '<button role="radio" aria-checked="'+(T.kss===n)+'" class="'+(T.kss===n?'on':'')+'" data-a="sn-kss" data-v="'+n+'" style="--k:'+n+'">'+n+'</button>';}).join('')+'</div>'+
     '<p class="mini" style="margin:4px 0 0;min-height:18px">'+esc(T.kss?(T.kss+': '+(KSS[T.kss]||KSS[T.kss-1]+' / '+KSS[T.kss+1])):'1 muy despierto · 9 mucho sueño')+'</p>'+
-    '<button class="btn p gbig" style="margin-top:10px;width:100%" data-a="sn-tguardar">Guardar · cuenta '+fmtHM(s.cuenta*60)+'</button>');}
+    '<button class="btn p gbig" style="margin-top:10px;width:100%" data-a="sn-tguardar">Guardar · '+fmtHM(s.cuenta*60)+' dormidas</button>');}
 function snTCambia(i,k,v){
   /* una hora escrita: dentro de la franja 18:00→18:00; si el final queda antes del principio, se
      corre el otro extremo (no se tira lo que escribiste) */
@@ -6144,7 +6146,7 @@ document.addEventListener('pointerdown',function(e){
 document.addEventListener('pointermove',function(e){
   if(!_snT||e.pointerId!==_snT.id)return;
   if(!_snT.mov){if(Math.abs(e.clientX-_snT.x)<6)return;_snT.mov=true;}
-  const t=Math.max(18,Math.min(42,snTLee(e))),a=Math.min(_snT.t0,t),b=Math.max(_snT.t0,t),m=a<30&&salidaDeGuardia(ui.snTr.k)?1:0;   /* en la guardia, de madrugada = a ratos */
+  const t=Math.max(18,Math.min(42,snTLee(e))),a=Math.min(_snT.t0,t),b=Math.max(_snT.t0,t),m=a<30&&salidaDeGuardia(ui.snTr.k)?1:0;   /* de madrugada en un saliente = en la guardia */
   /* el primer trazo sustituye lo que propone la app (es una suposición: lo que dibujas manda);
      después, empezar DENTRO de un trozo del mismo tipo lo alarga y empezar fuera lo sustituye */
   const dentro=!ui.snTr.supuesto&&_snT.orig.some(function(x){return !!x[2]===!!m&&_snT.t0>x[0]&&_snT.t0<x[1];});
@@ -6157,19 +6159,19 @@ document.addEventListener('pointerup',function(e){
   if(!_snT||e.pointerId!==_snT.id)return;const s=_snT;_snT=null;
   if(!s.mov)return;   /* un toque no hace nada: antes BORRABA el trozo (y era lo que hacías para poner la hora) */
   ui.snTr.supuesto=false;
-  ui.snTr.tr=ui.snTr.tr.map(function(x){return [Math.round(x[0]*4)/4,Math.round(x[1]*4)/4,x[2]];});
-  render();});
+  render();});   /* lo dibujado ya va a cuartos (snTLee); lo escrito a mano conserva sus minutos */
 document.addEventListener('pointercancel',function(e){if(_snT&&e.pointerId===_snT.id){ui.snTr.tr=_snT.orig;_snT=null;render();}});
 function snTGuardar(){
   const T=ui.snTr;if(!T)return '';const s=snResumenTramos(T.tr),k=T.k,noche=T.tr.filter(function(x){return x[0]<30;}),r0=suenoReal(k)||{};
   const gu=noche.length>0&&noche.every(function(x){return x[2];})||!!salidaDeGuardia(k)&&s.rt>0;
   /* dos trozos de noche con un hueco = te desvelaste: se apunta como «dormí mal» con su desvelo */
   const dorm=noche.filter(function(q){return !q[2];}),hueco=dorm.length>1?[dorm[0][1],dorm[1][0]]:null;
-  const x={h:Math.round(s.noche*4)/4,rt:Math.round(s.rt*4)/4,guardia:gu,ratos:s.rt>0,siesta:Math.round(s.siesta*4)/4,kss:T.kss||0,
+  const min=function(v){return Math.round(v*60)/60;};   /* al minuto: a cuartos, 2h20 de siesta se guardaba 2h15 */
+  const x={h:min(s.noche),rt:min(s.rt),guardia:gu,ratos:s.rt>0,siesta:min(s.siesta),kss:T.kss||0,
     tramos:T.tr.map(function(q){return [q[0],q[1],q[2]?1:0];}),mal:!!hueco,dde:hueco?snHM(hueco[0]):'',da:hueco?snHM(hueco[1]):''};
   if(noche.length){x.acostar=hm(noche[0][0]*60);x.desp=hm(noche[noche.length-1][1]*60);}
   suenoRealS()[k]=x;ui.snTr=null;save();
-  return 'apuntado: cuenta '+fmtHM(s.cuenta*60);}
+  return 'apuntado: '+fmtHM(s.cuenta*60)+' dormidas';}
 
 /* ---------- test de reacción (versión de 3 min, Basner 2011) ----------
    Un contador aparece cada 2–5 s y lo tocas cuanto antes. Fallos: tardar más de 355 ms o tocar
@@ -13385,7 +13387,7 @@ function listoDe0(key){
   /* 100 = llegas bien. Resta por dormir menos de tu objetivo, por salir de guardia, por guardia
      hace dos días, por músculos de la rutina tocados hace <48 h y por subir la carga de golpe */
   const c=suenoCfg(),s=suenoNoche(key),motivos=[];let v=100;
-  if(s.h!=null&&s.h<c.min){const q=Math.round((c.min-s.h)*9)+(s.h<5?10:0);   /* por debajo de 5 h la caída de fuerza se acelera */v-=q;motivos.push('dormiste '+String(s.h).replace('.',',')+' h'+(s.real?'':' (según el plan)'));}
+  if(s.h!=null&&s.h<c.min){const q=Math.round((c.min-s.h)*9)+(s.h<5?10:0);   /* por debajo de 5 h la caída de fuerza se acelera */v-=q;motivos.push('dormiste '+fmtHM(s.h*60)+(s.real?'':' (según el plan)'));}
   /* la deuda acumulada pesa aparte de la última noche: diez horas perdidas en dos semanas se notan
      aunque anoche durmieras bien */
   const st=suenoEstado(key);
@@ -20523,7 +20525,6 @@ function act(a,el){
       x.dias[iso(addDays(new Date(),-1))]=+el.dataset.v?1:0;save();render();break;}
     case 'sn-prueba-fin':{const x=suenoPruebas().filter(function(q){return q.id===el.dataset.id&&!q.fin;})[0];if(x){x.fin=true;save();}render();break;}
     case 'sn-kss':if(ui.snTr){ui.snTr.kss=+el.dataset.v||0;}render();break;
-    case 'sn-tipo':{const x=ui.snTr&&ui.snTr.tr[+el.dataset.i];if(x&&x[0]<30){x[2]=x[2]?0:1;ui.snTr.tr=snTramosLimpia(ui.snTr.tr);ui.snTr.supuesto=false;}render();break;}
     case 'sn-tquita':if(ui.snTr){ui.snTr.tr.splice(+el.dataset.i,1);ui.snTr.supuesto=false;}render();break;
     case 'sn-tmas':snTMas(el.dataset.v);render();break;
     case 'sn-tguardar':flash(snTGuardar());ui.snHoja='';render();break;
