@@ -3357,3 +3357,17 @@ span.hbt{cursor:default;border-style:dashed}
 .snmej{margin-top:10px;border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:12px;padding:9px 11px;background:color-mix(in srgb,var(--ok) 7%,var(--card))}
 .snmej.ok{display:flex;flex-direction:column;gap:2px}
 .snmejc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:4px}
+/* Sueño por pestañas: la puerta de la guardia, las cifras de Medir y el historial del test */
+.sntabs{margin-bottom:2px}
+.sntabs button{font-size:12.5px}
+.snpuerta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.snpuerta>span:first-child{font-size:22px}
+.snpuerta .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.snmf{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
+.snmf:first-of-type{border-top:0}
+.snmf b{font-size:20px;min-width:64px;font-variant-numeric:tabular-nums}
+.snmf span{flex:1;min-width:0;font-size:13px;color:var(--ink2);line-height:1.4}
+.snmf i{display:block;font-size:11px;opacity:.8}
+.snpvth{display:flex;gap:4px;align-items:flex-end;height:46px;margin-top:10px}
+.snpvth i{flex:1;background:var(--brand);border-radius:3px 3px 0 0;opacity:.8}
+.snpvth i.s{background:var(--sn-rayas,var(--warn))}

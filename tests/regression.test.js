@@ -9988,7 +9988,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     const ini = await page.evaluate(() => { const P = window.PG; window.__copia245 = JSON.parse(JSON.stringify(P.store));
       const l = P.snGuardias(), hoyK = P.iso(new Date()), G = l.filter((k) => k > hoyK)[0] || l[0];
-      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snG = G; P.ui.snAj = ''; if (P.store.sueno.sim) delete P.store.sueno.sim[G]; P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = 'guardia'; P.ui.snG = G; P.ui.snAj = ''; if (P.store.sueno.sim) delete P.store.sueno.sim[G]; P.render();
       return { G, hay: !!document.querySelector('.snsim #snGraf [data-sn="m"]'), ver: (document.querySelector('.snver') || {}).textContent || '' }; });
     let r = { ini };
     if (ini.G) {
@@ -10009,7 +10009,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         return { n: ev.length, cat: ev[0] && ev[0].cat, min: ev[0] && ev[0].avisoMin, guardado: Object.keys(P.store.sueno.avisos[G] || {}).length }; }, ini.G);
     }
     // la luz: si te levantas antes de que amanezca, no te pide luz de calle
-    r.luz = await page.evaluate(() => { const P = window.PG; P.store.sueno.ancla = '05:30'; P.ui.snAj = 'luz'; P.render();
+    r.luz = await page.evaluate(() => { const P = window.PG; P.store.sueno.ancla = '05:30'; P.ui.snTab = 'ajusta'; P.ui.snAj = 'luz'; P.render();
       return (document.getElementById('snAj') || {}).innerText || ''; });
     // probar dos semanas, y la pregunta de cada mañana en Hoy
     await page.evaluate(() => { const P = window.PG; P.ui.snAj = 'hora'; P.render(); });
