@@ -5699,7 +5699,7 @@ function snSVG(p,se,ref){
   const ca=SNM.en(se,p.coche).A,ce=snEstadoA(ca);
   g+='<line x1="'+X(p.coche)+'" x2="'+X(p.coche)+'" y1="'+G.YT+'" y2="'+G.YB+'" stroke="var(--ink)" opacity=".45"/>'+
      (ca!=null?'<circle cx="'+X(p.coche)+'" cy="'+Y(ca)+'" r="5" fill="'+ce.c+'" stroke="var(--card)" stroke-width="2"/>':'')+
-     '<text x="'+(X(p.coche)+5)+'" y="'+(G.YT+11)+'" font-size="10" font-weight="800" fill="var(--ink)">coche</text>';
+     '<text x="'+(X(p.coche)+5)+'" y="'+(G.YT+11)+'" font-size="10" font-weight="800" fill="var(--ink)">vuelta en coche</text>';
   /* los cafés, abajo, con su dosis */
   p.cafes.forEach(function(c,i){const on=sel==='c'+i,tarde=c.t>27&&c.t<p.sale+1;
     g+='<g><circle cx="'+X(c.t)+'" cy="'+G.YC+'" r="8" fill="'+(on?'var(--ink)':'var(--card)')+'" stroke="'+(tarde?'var(--bad)':'var(--line)')+'" stroke-width="1.5"/>'+
@@ -5726,8 +5726,8 @@ function snVeredictoHTML(p,m,r){
   const d=function(a,b){if(!r||Math.abs(a-b)<1)return '';return ' <span style="color:'+(a>b?'var(--ok)':'var(--bad)')+'">'+(a>b?'+':'−')+Math.abs(Math.round(a-b))+'</span>';};
   const e1=snEstadoA(m.coche),e2=snEstadoA(m.peor);
   return '<button class="snver" data-a="sn-ver" aria-expanded="'+!!ui.snVer+'">'+
-    '<span><i style="background:'+e1.c+'">'+e1.i+'</i>Coche '+snHH(p.coche)+' · <b>'+m.coche+'</b>'+d(m.coche,r&&r.coche)+'</span>'+
-    '<span><i style="background:'+e2.c+'">'+e2.i+'</i>Peor '+snHH(m.peorT)+' · <b>'+m.peor+'</b>'+d(m.peor,r&&r.peor)+'</span>'+
+    '<span><i style="background:'+e1.c+'">'+e1.i+'</i>Volver en coche '+snHH(p.coche)+' · energía <b>'+m.coche+'</b>/100'+d(m.coche,r&&r.coche)+'</span>'+
+    '<span><i style="background:'+e2.c+'">'+e2.i+'</i>Peor rato '+snHH(m.peorT)+' · energía <b>'+m.peor+'</b>/100'+d(m.peor,r&&r.peor)+'</span>'+
     '<span><i style="background:'+(m.duerme?'var(--ok)':'var(--bad)')+'">'+(m.duerme?'✓':'!')+'</i>Esta noche: <b>'+(m.duerme?'te dormirás':'te costará')+'</b></span></button>'+
     (ui.snVer?('<div class="snverd">'+
       '<p><b>Al volver ('+snHH(p.coche)+'):</b> '+(m.coche<35?'energía '+m.coche+'. Mejor bus, taxi o que te recojan. Tras guardias de 24 h, los residentes tienen más del doble de accidentes al volver (Barger 2005).':'energía '+m.coche+'. Si notas sueño, para.')+'</p>'+

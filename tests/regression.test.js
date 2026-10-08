@@ -10018,7 +10018,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.SN_T.pvtMs = 180000; P.SN_T.pvtMin = 5; P.SN_T.nocheMs = 20 * 60000; P.ui.snG = ''; P.render(); });
     check('el plan de guardia sale de tus guardias, «mejor plan» deja la siesta del saliente entre 2 y 4 h sin cafés tras las 3:00, y un café se arrastra',
-      !ini.G || (ini.hay && /Coche/.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
+      !ini.G || (ini.hay && /coche/i.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
         !r.cafe.despues.includes(r.cafe.antes)), JSON.stringify(r));
     check('un paso con «Avisar» se guarda y va al calendario suscrito con su alarma a la hora',
       !ini.G || (r.avisos.guardado === 1 && r.avisos.n === 1 && r.avisos.cat === 'TAREA' && r.avisos.min === 0), JSON.stringify(r.avisos));
