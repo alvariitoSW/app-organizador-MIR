@@ -3332,3 +3332,18 @@ span.hbt{cursor:default;border-style:dashed}
 .mcll.mcmini{width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .cjsh .cjshT{flex:1;text-align:center;font-size:15px}.cjacc{gap:8px;margin-top:8px;flex-wrap:wrap}.cjacc .btn{flex:1}
 .cjdia{display:flex;align-items:center;gap:8px;margin-bottom:6px}.cjdia b{flex:1;text-align:center;font-size:16px}.cjmic{margin:4px 0 8px}.cjmic>summary{cursor:pointer;list-style:none;padding:2px 4px}.cjmic>summary::-webkit-details-marker{display:none}
+
+/* ============ Sueño: anotar por trozos con su hora (en vez de un dibujo a 4 px por cuarto de hora) ============ */
+.sntr{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--line)}
+.sntr .sntipo{flex:0 0 auto;min-width:104px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:none;color:var(--ink);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.sntr.gu .sntipo{border-color:color-mix(in srgb,var(--warn) 60%,var(--line))}
+.sntr.si .sntipo{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.sntr .sntipo:disabled{cursor:default;opacity:1}
+.sntr input[type=time]{flex:1 1 0;min-width:0;font:inherit;font-size:16px;font-weight:800;text-align:center;color:var(--ink);
+  background:color-mix(in srgb,var(--card) 62%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:8px 4px;min-height:42px}
+.sntr .a{color:var(--ink2);font-weight:800}
+.sntr .x{flex:0 0 36px;height:42px;border:0;background:none;color:var(--ink2);font-size:22px;cursor:pointer}
+.snmas{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sntr input[type=time]::-webkit-calendar-picker-indicator{display:none}
+.sntr input[type=time]{padding:8px 2px}
+.sntr .sntipo{min-width:0;flex:0 0 96px;padding:8px 7px}

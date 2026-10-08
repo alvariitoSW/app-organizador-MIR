@@ -7046,9 +7046,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
     const efecto = await page.evaluate(() => {
       const P = window.PG;
-      // el próximo jueves de verdad
-      const d = new Date(); d.setDate(d.getDate() + ((4 - d.getDay() + 7) % 7 || 7));
-      const k = P.iso(d), inf = P.dayInfo(k);
+      // el jueves de la semana que se planea: el plan va por FECHA (no se repite el jueves siguiente)
+      const k = P.sbKey(3), inf = P.dayInfo(k);
       const sh = inf.shiftId, slots = (P.store.menu[sh] || []);
       const cena = slots.filter((s) => P.claseDeToma(s.label) === 'cena')[0];
       const hoy = cena ? P.slotItems(sh, cena, k).items.map((x) => x.id) : null;
@@ -7275,37 +7274,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const campos = await page.evaluate(() => document.querySelectorAll('#main input').length);
     check('huchas: se abre una cada vez (antes 21 campos a la vez)', campos > 0 && campos <= 8, String(campos));
 
-    // sueño de verdad, en Hoy: dormí mal y se desveló una hora
-    // (ahora va en la hoja de la noche, plegado bajo «o escribe las horas»)
+    // sueño de verdad, en Hoy: dormí mal y se desveló una hora. Ya no hay un segundo formulario
+    // plegado: cada trozo lleva su hora de empezar y de acabar, y un hueco entre dos es el desvelo
     await page.evaluate(() => { const P = window.PG; P.suenoRealS()[P.iso(new Date())] = undefined; delete P.suenoRealS()[P.iso(new Date())];
-      P.ui.sd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
+      P.ui.snTr = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
     await page.waitForTimeout(250);
     const anotar = await page.$('.snhoy [data-a="sn-hoja"]');
     if (anotar) await anotar.click();
     await page.waitForTimeout(200);
-    await page.click('.hoja .snescribe summary'); await page.waitForTimeout(100);
-    const hayCard = await page.evaluate(() => !!document.querySelector('.hoja [data-a="sn-guardar"]'));
-    await page.evaluate(() => { const d = window.PG.ui.sd; if (d && d.guardia) { const b = document.querySelector('[data-a="sn-modo"]'); if (b) b.click(); } });
-    await page.waitForTimeout(150);
-    await page.fill('[data-a="sn-t"][data-k="acostar"]', '23:30');
-    await page.keyboard.press('Tab');
-    await page.fill('[data-a="sn-t"][data-k="desp"]', '06:50');
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(150);
-    // al marcarla se repinta la tarjeta (salen los campos del desvelo): se pulsa desde la página
-    await page.evaluate(() => { const c = document.querySelector('[data-a="sn-mal"]'); if (c && !c.checked) c.click(); });
-    await page.waitForTimeout(150);
-    await page.fill('[data-a="sn-t"][data-k="dde"]', '03:00');
-    await page.keyboard.press('Tab');
-    await page.fill('[data-a="sn-t"][data-k="da"]', '04:00');
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(150);
-    const g = await page.$('[data-a="sn-guardar"]');
+    const hayCard = await page.evaluate(() => document.querySelectorAll('.hoja input[data-a="sn-tt"]').length >= 2);
+    // dos trozos de noche (lo que suponga la app depende de si hoy es saliente): se reescriben a mano
+    await page.evaluate(() => { const P = window.PG; P.ui.snTr.tr = [[23, 31, 0], [32, 33, 0]]; P.render(); });
+    const pon = async (i, k, v) => { await page.fill(`.hoja input[data-a="sn-tt"][data-i="${i}"][data-k="${k}"]`, v); await page.keyboard.press('Tab'); await page.waitForTimeout(120); };
+    await pon(0, 0, '23:30'); await pon(0, 1, '03:00'); await pon(1, 0, '04:00'); await pon(1, 1, '06:50');
+    const g = await page.$('.hoja [data-a="sn-tguardar"]');
     if (g) await g.click();
     await page.waitForTimeout(200);
     const sn = await page.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())));
-    check('«¿cómo has dormido?»: con la hora de acostarte, la de despertar y el desvelo, las horas salen solas',
-      hayCard && !!sn && Math.abs(sn.h - 6.25) < 0.01 && sn.mal && sn.dde === '03:00', JSON.stringify({ hayCard, sn }));
+    check('«¿cómo has dormido?»: cada trozo con su hora; dos trozos con un hueco = dormí mal con su desvelo, y las horas salen solas',
+      hayCard && !!sn && Math.abs(sn.h - 6.25) < 0.01 && sn.mal && sn.dde === '03:00' && sn.da === '04:00', JSON.stringify({ hayCard, sn }));
 
     // la guardia de ayer: 2 h a ratos + 4 de siesta, y el informe lo cuenta
     const inf = await page.evaluate(() => { const P = window.PG, ayer = P.iso(new Date(Date.now() - 864e5));
@@ -10102,6 +10089,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.mal.length === 0, JSON.stringify(r.mal.slice(0, 6)));
     check('en una guardia se elige táper para esa fecha y se vuelve al hospital',
       !r.taper || (r.taper.puesto && r.taper.otraSemana && r.taper.vuelve), JSON.stringify(r.taper));
+  }
+
+  // 248) ANOTAR EL SUEÑO, LOS CUATRO FALLOS QUE VIO EL USUARIO: tocar la franja BORRABA el trozo (y era
+  // lo que hacía para poner la hora); el dibujo y el formulario guardaban cosas distintas con dos
+  // «Guardar»; el ✎ de una noche pasada abría la de hoy; y no había forma precisa de poner la hora
+  {
+    const k = await page.evaluate(() => { const P = window.PG, k = P.iso(P.addDays(new Date(), -3)); window.__copia248 = JSON.parse(JSON.stringify(P.store));
+      P.store.suenoReal[k] = { h: 7, guardia: false, acostar: '23:00', desp: '06:00' }; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = k; P.ui.snTr = null; P.render(); return k; });
+    await page.waitForTimeout(200);
+    const antes = await page.evaluate(() => JSON.stringify(window.PG.ui.snTr.tr));
+    const c = await page.evaluate(() => { const b = document.querySelector('#snTramos svg').getBoundingClientRect(); return { x: b.left + (8 + (27 - 18) / 24 * 336) / 352 * b.width, y: b.top + b.height * 0.4 }; });
+    await page.mouse.click(c.x, c.y); await page.waitForTimeout(150);
+    const trasToque = await page.evaluate(() => JSON.stringify(window.PG.ui.snTr && window.PG.ui.snTr.tr));
+    const ui248 = await page.evaluate(() => ({ guardar: document.querySelectorAll('.hoja [data-a="sn-tguardar"], .hoja [data-a="sn-guardar"]').length, plegado: !!document.querySelector('.hoja .snescribe') }));
+    await page.fill('.hoja input[data-a="sn-tt"][data-i="0"][data-k="1"]', '07:30'); await page.keyboard.press('Tab'); await page.waitForTimeout(120);
+    const boton = await page.evaluate(() => document.querySelector('.hoja [data-a="sn-tguardar"]').innerText);
+    await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(150);
+    const r = await page.evaluate((k) => { const P = window.PG, x = P.suenoReal(k), hoy = P.suenoReal(P.iso(new Date())); P.store = window.__copia248; P.save(); P.render();
+      return { h: x.h, desp: x.desp, hoyIntacto: JSON.stringify(hoy) === JSON.stringify(window.__copia248.suenoReal[P.iso(new Date())]) }; }, k);
+    check('sueño: tocar la franja no borra; un solo «Guardar»; la hora escrita es la que se guarda, y en la noche que abriste',
+      antes === trasToque && ui248.guardar === 1 && !ui248.plegado && /8h30/.test(boton) && r.h === 8.5 && r.desp === '07:30' && r.hoyIntacto,
+      JSON.stringify({ antes, trasToque, ui248, boton, r }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
