@@ -115,7 +115,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /* Turno y rotación y Datos están dentro de Ajustes: el cajón tiene UNA entrada para los tres */
       const porAjustes = tab === 'cfg' || tab === 'data';
       await page.click(`[data-a="drawer-nav"][data-t="${porAjustes ? 'ajustes' : tab}"]`);
-      if (tab === 'cfg') { await page.waitForTimeout(150); await page.click('#main [data-a="ir-tab"][data-t="cfg"]'); }
+      /* las pantallas de Turno cuelgan directamente de Ajustes: la puerta se toca abajo */
     } else {
       await page.click(`[data-a="tab"][data-t="${tab}"]`);
     }
@@ -2353,12 +2353,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       dos.guardados === 2 && dos.filas === 2 && dos.diasEnElCalendario === esperados && esperados >= 10 &&
       dos.conNombre, JSON.stringify({ dos, esperados }));
 
-    // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta
+    // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta.
+    // El panel de un toque ya solo es para mirar: el periodo se marca desde la hoja del día
+    // (mantener pulsado) → «más…» → «Vacaciones desde aquí hasta…» y tocando el último día
     const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
-    await page.evaluate((k) => { window.PG.ui.monSel = k; window.PG.ui.diaEditor = true; window.PG.render(); }, desde);
+    await page.evaluate((k) => { window.PG.ui.hojaDia = k; window.PG.render(); }, desde);
     await page.waitForTimeout(400);
-    await page.fill('#vacHasta-' + desde, hasta);
-    await page.click('[data-a="vac-desde"]');
+    await page.click('#hojaDia [data-a="hoja-mas"]');
+    await page.waitForTimeout(250);
+    await page.click('#hojaDia [data-a="hoja-mesmodo"][data-m="vac"]');
+    await page.waitForTimeout(300);
+    await page.click('.dbox[data-key="' + hasta + '"]');
     await page.waitForTimeout(400);
     const tercero = await page.evaluate(() => window.PG.store.rotation.vacaciones.map((v) => v.start + '→' + v.end));
     check('desde el panel de un día se marca un periodo entero, no solo ese día',
@@ -2391,15 +2396,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     await page.click('[data-a="dia-editar"]');
     await page.waitForTimeout(400);
+    // «editar» abre la hoja del día (la de mantener pulsado), que es donde se cambia y se añade
     const abierto = await page.evaluate(() => ({
-      dia: window.PG.ui.monSel,
-      panel: !!document.querySelector('.daydetail'),
-      editorDesplegado: !!document.querySelector('.daydetail details[open]'),
+      dia: window.PG.ui.hojaDia,
+      hoja: !!document.querySelector('#hojaDia .hoja'),
+      tipos: document.querySelectorAll('#hojaDia .hchip:not(.mas)').length,
+      mas: !!document.querySelector('#hojaDia [data-a="hoja-mas"]'),
     }));
     const hoyKeyDia = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
       .toISOString().slice(0, 10);
-    check('el botón «editar un día» elige el día de hoy y abre su editor ya desplegado',
-      abierto.dia === hoyKeyDia && abierto.panel && abierto.editorDesplegado, JSON.stringify(abierto));
+    check('el botón «editar un día» abre la hoja de hoy, con los tipos de siempre a la vista y el resto en «más…»',
+      abierto.dia === hoyKeyDia && abierto.hoja && abierto.tipos >= 3 && abierto.tipos <= 4 && abierto.mas, JSON.stringify(abierto));
+    await page.click('#hojaDia .hgrab');
+    await page.waitForTimeout(300);
+    await page.evaluate((k) => { window.PG.ui.monSel = k; window.PG.render(); }, hoyKeyDia);
+    await page.waitForTimeout(300);
 
     // el día ya no tiene UNA nota en un textarea: tiene las notas de la libreta que caen en él.
     // «+ nota» crea una y la abre para escribirla. SIN NOTAS es una línea: el «Ninguna. Apunta lo
@@ -2435,10 +2446,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // y un evento se crea desde el propio día, sin ir a otra pestaña a escribir la fecha a mano
     await page.click('[data-a="dia-editar"]');
     await page.waitForTimeout(400);
-    await page.fill('#evDia-' + hoyKeyDia, 'Sesión clínica');
-    await page.fill('#evDiaH-' + hoyKeyDia, '08:30');
-    await page.click('[data-a="dia-ev-add"]');
+    await page.click('#hojaDia [data-a="hoja-vista"][data-v="evento"]');
+    await page.waitForTimeout(300);
+    await page.fill('#hjTit', 'Sesión clínica');
+    await page.fill('#hjHora', '08:30');
+    await page.click('#hojaDia [data-a="hoja-ev-ok"]');
     await page.waitForTimeout(500);
+    await page.click('#hojaDia .hgrab');
+    await page.waitForTimeout(300);
     const evDesdeElDia = await page.evaluate((k) => ({
       creados: window.PG.eventosS().filter((e) => e.fecha === k).map((e) => e.titulo + ' ' + e.hora),
       enLaAgenda: document.querySelectorAll('.agrow').length,
@@ -4423,46 +4438,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
   // ===================== Turno y rotación =====================
-  // 80) era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos, y es lo
-  // primero que tocas al llegar a un destino nuevo. Ahora es una portada que dice cómo estás
-  // montado y una pantalla por tarea, como Comida.
+  // 80) era UNA pantalla de 7 005 px con 126 campos; luego una portada de puertas dentro de Ajustes
+  // que repetía «Ir y volver» y «A qué horas». Ahora sus pantallas cuelgan de Ajustes, en cuatro
+  // grupos, cada cosa una vez, y cada una vuelve a Ajustes.
   {
-    await gotoTab('cfg');
+    await gotoTab('ajustes');
     await page.waitForTimeout(300);
     const portada = await page.evaluate(() => ({
-      alto: document.querySelector('#main').scrollHeight,
+      grupos: [...document.querySelectorAll('#main .acap')].map((x) => x.textContent),
       campos: document.querySelectorAll('#main input,#main select,#main textarea').length,
-      puertas: [...document.querySelectorAll('#main .puerta b')].map((x) => x.textContent),
-      // el estado de un vistazo: cuántos tipos de día y cómo se arma la semana
-      cifras: [...document.querySelectorAll('#main .dosdatos b')].map((x) => x.textContent),
+      filas: [...document.querySelectorAll('#main .ali b')].map((x) => x.textContent),
     }));
-    // y cada puerta abre lo suyo y vuelve
     const visitas = [];
-    for (const v of ['dias', 'horas', 'semana', 'rotacion', 'notas']) {
-      // sin portada no hay puertas: esta prueba tiene que FALLAR, no tumbar la suite con un timeout
-      const b = await page.$(`[data-a="cfg-vista"][data-v="${v}"]`);
-      if (!b) { visitas.push({ v: '(sin puerta)', campos: 0, ancho: 0 }); continue; }
+    for (const v of ['dias', 'horas', 'semana', 'rotacion', 'notas', 'viaje']) {
+      const b = await page.$(`#main [data-a="cfg-vista"][data-v="${v}"]`);
+      if (!b) { visitas.push({ v: '(sin fila)', campos: 0, ancho: 0 }); continue; }
       await b.click();
       await page.waitForTimeout(250);
       visitas.push(await page.evaluate(() => ({
         v: window.PG.ui.cfgVista,
-        tit: (document.querySelector('#main .subtit') || {}).textContent,
         campos: document.querySelectorAll('#main input,#main select,#main textarea').length,
         ancho: document.documentElement.scrollWidth,
+        volver: (document.querySelector('.subcab .volver') || {}).dataset?.a || '',
       })));
-      const volver = await page.$('.subcab [data-a="cfg-vista"][data-v=""]');
-      if (volver) { await volver.click(); await page.waitForTimeout(200); }
+      await page.click('.subcab .volver');
+      await page.waitForTimeout(200);
     }
-    // el número de puertas no está congelado: lo que importa es que la portada NO tenga campos
-    // —que era el problema: 7,7 pantallas de formulario— y que cada tarea tenga la suya. «Ir y
-    // volver» es una más, y tiene que estar: es lo que decide a qué hora sales de casa y comes.
-    check('Turno y rotación es una portada de media pantalla y una pantalla por tarea',
-      portada.alto < 700 && portada.campos === 0 && portada.puertas.length >= 6 &&
-      portada.puertas.indexOf('Ir y volver') >= 0 &&
-      portada.cifras.length === 2 &&
-      visitas.length === 5 && visitas.every((x) => x.campos > 0 && x.ancho <= 412) &&
-      visitas.map((x) => x.v).join('|') === 'dias|horas|semana|rotacion|notas',
-      JSON.stringify({ portada, visitas }));
+    const vuelta = await page.evaluate(() => ({ tab: window.PG.ui.tab, grupos: document.querySelectorAll('#main .acap').length }));
+    check('Ajustes tiene cuatro grupos, sin duplicados, y las pantallas de Turno se abren y vuelven a Ajustes',
+      portada.grupos.join('|') === 'MIS TURNOS|YO|LA APP|MIS DATOS' && portada.campos === 0 &&
+      portada.filas.filter((x) => x === 'Ir y volver').length === 1 &&
+      !portada.filas.some((x) => /Turno y rotación/.test(x)) &&
+      visitas.length === 6 && visitas.every((x) => x.campos > 0 && x.ancho <= 412 && x.volver === 'aju-vista') &&
+      visitas.map((x) => x.v).join('|') === 'dias|horas|semana|rotacion|notas|viaje' &&
+      vuelta.tab === 'ajustes' && vuelta.grupos === 4,
+      JSON.stringify({ portada, visitas, vuelta }));
   }
 
   // 81) y el atajo «patrón y rotación» de Semana sigue llevando a su tarjeta, que ahora vive dentro
@@ -7537,7 +7547,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const s = P.entrenoSemana(k(0)), d = s.dias;
       const a = { total: s.total, conflicto: s.conflicto, pisc: d[2].auto && d[2].tipo === 'pisc', jue: !d[3].auto && !!d[3].choca,
         guardia: d[1].auto, fuerza: s.fuerza, orden: d.filter((x) => x.auto && x.tipo === 'fuerza').map((x) => s.asig[x.k].nombre).join(','),
-        piscBloque: P.bloquesDelDia(k(2)).some((b) => /Piscina/.test(b.tit) && b.de === 20 * 60 && b.a === 21 * 60 + 30),
+        piscBloque: P.bloquesDelDia(k(2)).some((b) => /Piscina/.test(b.tit) && b.de === 18 * 60 && b.a === 19 * 60 + 30),
         gymBloque: d.filter((x) => x.auto && x.tipo === 'fuerza').every((x) => P.bloquesDelDia(x.k).some((b) => /Entreno/.test(b.tit))) };
       // tres guardias: no llega y dice por qué
       P.setDayOverride(k(3), 'sh-g', ''); P.setDayOverride(k(4), 'sh-s', ''); P.setDayOverride(k(5), 'sh-g', ''); P.setDayOverride(k(6), 'sh-s', '');
@@ -7556,7 +7566,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         rejilla: /Vuelo 206/.test(rej), puntos: /class="sp2"/.test(rej), leyenda: /srley/.test(rej) };
       P.store = copia; P.save(); P.render();
       return { a, b, c }; });
-    check('la semana se completa con 2 de fuerza (en tu orden) + piscina del saliente a las 20:00, sin tocar la guardia ni el día con evento',
+    check('la semana se completa con 2 de fuerza (en tu orden) + piscina del saliente a las 18:00 (a las 20:00 pisaba el Lloretazo), sin tocar la guardia ni el día con evento',
       r.a.total === 4 && !r.a.conflicto && r.a.pisc && r.a.jue && !r.a.guardia && r.a.fuerza >= 2 && /^A206,B206/.test(r.a.orden) && r.a.piscBloque && r.a.gymBloque, JSON.stringify(r.a));
     check('con más de 2 guardias la semana avisa de que no llega y dice por qué',
       r.b.conflicto && r.b.guardias === 3 && /3 guardias/.test(r.b.porque) && /solo cabe/i.test(r.b.aviso), JSON.stringify(r.b));
@@ -7882,6 +7892,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // GESTO 1: teclear la dirección y el token. Van en el switch de `change`, así que hace falta
     // el Tab: un fill() a secas no dispara nada y la prueba pasaría sin que la app se enterara.
+    // la suscripción va plegada en «Calendario del móvil»: se abre su apartado
+    await page.evaluate(() => { const i = document.querySelector('[data-a="calsync-f"]'); const d = i && i.closest('details'); if (d) d.open = true; });
     await page.fill('[data-a="calsync-f"][data-f="url"]', 'https://cal.midominio.workers.dev');
     await page.keyboard.press('Tab');
     await page.waitForTimeout(250);
@@ -8618,11 +8630,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null;
       [K, K1, K5, K6].forEach((k) => P.setDayOverride(k, 'sh-t', ''));
       P.save();
-      // 1) en «Mes»: el día K de guardia y el siguiente de saliente, pulsando los botones del panel
-      P.ui.tab = 'month'; P.ui.monSel = K; P.render();
-      const puesG = clic('#main [data-a="day-set"][data-key="' + K + '"][data-sid="sh-g"]');
-      P.ui.monSel = K1; P.render();
-      const puesS = clic('#main [data-a="day-set"][data-key="' + K1 + '"][data-sid="sh-s"]');
+      // 1) en «Mes»: el día K de guardia y el siguiente de saliente, pulsando los botones de la hoja del día
+      P.ui.tab = 'month'; P.ui.hojaDia = K; P.ui.hojaMas = true; P.render();
+      const puesG = clic('#hojaDia [data-a="day-guardia"][data-key="' + K + '"]');
+      P.ui.hojaDia = K1; P.ui.hojaMas = true; P.render();
+      const puesS = P.dayInfo(K1).shiftId === 'sh-s' || clic('#hojaDia [data-a="day-set"][data-key="' + K1 + '"][data-sid="sh-s"]');
+      P.ui.hojaDia = ''; P.ui.hojaMas = false;
       // 2) a Entreno, mirando ese día: la rutina de guardia sigue ahí, con el choque dicho
       P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.ui.gymDate = K; P.render();
       const heroG = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
@@ -8688,6 +8701,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const guardia = await page.evaluate((K) => ({ tipo: window.PG.dayInfo(K).shiftId, sigue: !!document.querySelector('.hoja') }), K);
     // 4) evento sin Google: el «Guardar» se ve y se puede pulsar (antes lo tapaba el pie)
     await clic('.hoja [data-a="hoja-vista"][data-v="evento"]');
+    await page.waitForTimeout(450);   /* la hoja sube animada: se mide cuando ya ha llegado */
     await page.evaluate(() => { const t = document.getElementById('hjTit'), h = document.getElementById('hjHora');
       if (t) t.value = 'Revisión 214'; if (h) h.value = '10:00'; });
     await page.evaluate(() => { const c = document.getElementById('hjGoo'); if (c) c.checked = false; });
@@ -8698,7 +8712,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return t && t.closest('.hoja') ? '' : ((t && (t.id || t.tagName)) || 'nada'); });
     const guardado = await clic('.hoja [data-a="hoja-ev-ok"]');
     const yaHay = await page.evaluate(() => Array.from(document.querySelectorAll('.hoja .hhay')).map((x) => x.textContent).join(' | '));
-    // 5) pincel: copia la guardia a K2, deshacer, listo
+    // 5) pincel: copia la guardia a K2, deshacer, listo (va en «más…»: arriba solo lo de siempre)
+    await clic('.hoja [data-a="hoja-mas"]');
     await clic('.hoja [data-a="pincel-on"]');
     const bx2 = await celda(K2); if (bx2) { await page.mouse.click(bx2.x + bx2.width / 2, bx2.y + bx2.height / 2); await page.waitForTimeout(120); }
     const pintado = await page.evaluate((k) => window.PG.dayInfo(k).shiftId, K2);
@@ -9148,7 +9163,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia223; P.save(); P.ui.ajuVista = ''; P.ui.dinTab = ''; P.ui.foodVista = ''; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Cocina simple: Hoy · Semana · Nevera · Compra; «Móntamela» llena huecos con lo que hay; «Hoy cocino» guarda raciones con los días que aguanta; ✓ apunta el día',
       tabs.length === 4 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Nevera/.test(tabs[2]) && /Compra/.test(tabs[3]) &&
-      trasAuto < vacias && opciones > 0 && coc.length >= 1 && coc[coc.length - 1].total > 1 && coc[coc.length - 1].dias >= 1 &&
+      // sin guardias del ciclo puede no quedar ningún hueco: «Móntamela» nunca deja más de los que había
+      trasAuto <= vacias && (vacias === 0 || trasAuto < vacias) && opciones > 0 && coc.length >= 1 && coc[coc.length - 1].total > 1 && coc[coc.length - 1].dias >= 1 &&
       aguanta.join() === '1,2,4,3' && nevera.foto && log1 > 0, JSON.stringify({ tabs, vacias, trasAuto, opciones, coc, aguanta, log1, nevera: nevera.txt.slice(0, 160) }));
     // un ticket real leído por la foto, con lo que la foto tuerce: precios «2/45», «1'90», «459»,
     // líneas sin cantidad, la dirección antes de «Descripción» y el peso del plátano en la línea de abajo
@@ -9473,7 +9489,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
     const sg = await page.evaluate(() => [window.PG.compraSG('Pan de masa madre'), window.PG.compraSG('Pasta'), window.PG.compraSG('Leche')]);
     await page.click('#main [data-a="cje-hoja"][data-v="pref"]'); await page.waitForTimeout(120);
-    await page.click('#hojaDia [data-a="cje-noc"][data-v="saliente"]'); await page.waitForTimeout(80);
+    // el saliente ya viene marcado de fábrica: se añade el trabajo
+    await page.click('#hojaDia [data-a="cje-noc"][data-v="trabajo"]'); await page.waitForTimeout(80);
     await page.click('#hojaDia [data-a="cje-taper"][data-v="4"]'); await page.waitForTimeout(80);
     const pref = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))); return n.food.pref; });
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
@@ -9495,7 +9512,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sem.tandas.length >= 1 && sem.tandas.every((t) => t.cook && t.dias >= 2 && !/tortilla|bocata/i.test(t.n)) && sem.guardiaHosp && hayHoja >= 1 && coc >= 2,
       JSON.stringify({ sem, hayHoja, coc }));
     check('celíaco: la compra pide pan y pasta sin gluten; ⚙️ guarda días sin cocinar y táper, y sobrevive a recargar',
-      sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.taper === 4 && pref.horno === false,
+      sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.noCocinar.includes('trabajo') && pref.taper === 4 && pref.horno === false,
       JSON.stringify({ sg, pref }));
     check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el Hoy de Comer trae las flechas de día y los micros',
       des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
@@ -9845,6 +9862,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la prueba anterior acaba con una pulsación larga: su «toque fantasma» se come durante 450 ms
     await page.waitForTimeout(500);
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.mesModo = null; P.ui.hojaDia = P.iso(new Date()); P.ui.hojaVista = ''; P.render(); });
+    // va en «más…»: arriba solo lo de siempre
+    const mas = await page.$('#hojaDia [data-a="hoja-mas"]'); if (mas) { await mas.click(); await page.waitForTimeout(120); }
     const hay = await page.$('#hojaDia [data-a="hoja-mesmodo"][data-m="vac"]');
     if (hay) { await hay.click(); await page.waitForTimeout(120); }
     const modo = await page.evaluate(() => ({ m: window.PG.ui.mesModo && window.PG.ui.mesModo.tipo, hoja: window.PG.ui.hojaDia, din: window.PG.ui.hojaModo || '' }));
@@ -10132,6 +10151,74 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('guardia 1:00–6:30 + 12:10–14:30 en casa = 7h50 en la hoja, al guardar, al recargar y en la tarjeta de Hoy (que sigue dejando añadir)',
       /Total 7h50/.test(r.hoja) && /7h50/.test(r.boton) && tras.cuenta === 470 && tras.vuelta === JSON.stringify([[25, 30.5, 1], [36 + 10 / 60, 38.5, 0]].map((t) => [Math.round(t[0] * 60) / 60, Math.round(t[1] * 60) / 60, t[2]])) &&
       /7h50 · cambiar o añadir/.test(tras.card), JSON.stringify({ r, tras }));
+  }
+
+  // 250) POR FECHA, EL CICLO NO PONE GUARDIAS NI SALIENTES (salían 8 de 6, «2 sin tipo» y salientes
+  // dobles) y EL SALIENTE NO SUMA LA NOCHE QUE AÚN NO HA PASADO («dormiste 13h18», «a la cama 07:25»)
+  {
+    const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store)), hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
+      P.store.rotation.mode = 'date'; P.store.rotation.daySet = {}; P.store.rotation.anchorSet = true;
+      const gd = P.store.shifts.find((s) => P.isGuardia(s));
+      [5, 12, 19].forEach((d, i) => P.setDayOverride(P.iso(new Date(y, m, d, 12)), gd.id, i ? 'urg' : 'umi'));
+      let guard = 0, sal = 0, sinTipo = 0;
+      for (let d = 1; d <= 28; d++) { const k = P.iso(new Date(y, m, d, 12)), i = P.dayInfo(k), sh = P.store.shifts.find((x) => x.id === i.shiftId);
+        if (sh && P.isGuardia(sh)) { guard++; if (!i.guard) sinTipo++; } if (sh && /saliente/i.test(sh.name)) sal++; }
+      // el día después de la guardia del 12: lo que dice el panel
+      const k13 = P.iso(new Date(y, m, 13, 12)), sl = P.sleepOf(k13), nt = P.nightOf ? P.nightOf(k13, sl) : null;
+      P.store = c; P.save(); P.render();
+      return { guard, sal, sinTipo, h: sl.h, rec: nt && nt.rec }; });
+    check('por fecha el ciclo no mete guardias ni salientes: 3 guardias puestas = 3 guardias, con tipo, y como mucho un saliente cada una',
+      r.guard === 3 && r.sinTipo === 0 && r.sal <= 3, JSON.stringify(r));
+    check('el saliente no suma la noche de hoy (≈2 h + la siesta) y la cama no sale de madrugada',
+      r.h < 10 && !!r.rec && +r.rec.slice(0, 2) >= 19, JSON.stringify(r));
+  }
+
+  // 251) HOY Y COMER DICEN LO MISMO, Y «MONTAR» LLEGA A LA PROTEÍNA. El calendario repartía el plan
+  // entre las tomas del tipo de día (en el saliente la comida del plan iba al «post-guardia» y la de
+  // las 16:05 era otra); la semana montada salía con 59–116 g de 150; el desayuno, «sin plan»; el ajo
+  // y la miel, a la compra por gramos; y el saliente, día de cocinar
+  {
+    const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store)), hoy = new Date();
+      P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true;
+      const gd = P.store.shifts.find((s) => P.isGuardia(s)); P.setDayOverride(P.iso(P.addDays(hoy, -1)), gd.id, 'urg');
+      P.store.food.objetivo = { kcal: 2240, prot: 150 }; P.ui.tab = 'hoy'; P.render();
+      P.cjeAuto({ rehacer: 'todo' });
+      const nombres = (l) => l.map((i) => (P.dishById(i.id) || {}).name).filter(Boolean).sort().join('+');
+      const dias = []; for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(P.mondayOf(hoy), i));
+        const t = P.tomasDelDia(k, P.dayInfo(k)), pl = P.cjeHoyPlan(k);
+        dias.push({ k, n: t.length, igual: nombres([].concat(...t.map((x) => x.items || []))) === nombres([].concat(...Object.values(pl))) }); }
+      const ps = P.protSemana(), sem = P.cjeSemana();
+      const out = { dias, cortos: ps.filter((x) => !x.guardia && x.v > 0 && x.corta).map((x) => x.k + ':' + x.v),
+        sinDes: sem.filter((x) => !x.cls.desayuno.items.length).length,
+        basicos: ['Ajo', 'Miel', 'Café con leche', 'Canela'].map((n) => P.esBasicoCasa(n)).join(','),
+        noBasico: P.esBasicoCasa('Pechuga de pollo'),
+        noCoc: P.cocinaPref().noCocinar.indexOf('saliente') >= 0 };
+      P.store = c; P.save(); P.render(); return out; });
+    check('Hoy y Comer enseñan las mismas comidas cada día de la semana (sin tomas de más)',
+      r.dias.every((d) => d.igual && d.n <= 3), JSON.stringify(r.dias));
+    check('«Montar» llega a la proteína todos los días que no son de guardia, pone desayuno, el ajo y la miel son básicos de casa y el saliente no se cocina',
+      r.cortos.length === 0 && r.sinDes === 0 && r.basicos === 'true,true,true,true' && !r.noBasico && r.noCoc, JSON.stringify(r));
+  }
+
+  // 252) ENTRENO: un entreno que choca con un evento se mueve a otra hora libre en vez de perderse, la
+  // piscina del saliente va a las 18:00 (a las 20:00 pisaba el Lloretazo) y una rutina sin ejercicios
+  // no se reparte en la semana
+  {
+    const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store));
+      const lun = P.mondayOf(P.addDays(new Date(), 7)), sab = P.iso(P.addDays(lun, 5));
+      const lib = P.store.shifts.find((s) => /libre/i.test(s.name)); P.store.rotation.mode = 'date'; P.setDayOverride(sab, lib.id, '');
+      const g = P.gymS(); g.hora = ''; g.piscinaSal = {}; g.forzar = {}; g.forzar[sab] = true;
+      g.rutinas = [{ id: 'rv', nombre: 'Vacía', notas: '', ejercicios: [] }, { id: 'rf', nombre: 'Fuerza', notas: '', ejercicios: [{ ex: 'Sentadilla', sets: [{ kg: 60, reps: 8 }] }] }];
+      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '17:00', fin: '18:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
+      P.render();
+      const s = P.entrenoSemana(sab), x = s.dias.find((d) => d.k === sab);
+      const out = { hora: x.hora, movido: !!x.movido, choca: !!x.choca, perdido: !!x.perdido,
+        agenda: P.agendaDia(sab).filter((a) => a.tipo === 'gym').map((a) => a.hora),
+        asig: Object.values(s.asig).map((q) => q.nombre), pisc: P.entrenoCfg().pisc.hora };
+      P.store = c; P.save(); P.render(); return out; });
+    check('el entreno del sábado con dentista a las 17:00 se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
+      r.hora !== '17:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
+      r.asig.indexOf('Vacía') < 0 && r.asig.indexOf('Fuerza') >= 0 && r.pisc === '18:00', JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

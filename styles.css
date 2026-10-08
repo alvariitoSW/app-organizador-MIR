@@ -1103,6 +1103,9 @@ ul.slots{list-style:none;margin:0;padding:0}
 .plegable>summary::before{content:'▾';font-size:10px;transition:transform .15s}
 .plegable[open]>summary::before{transform:rotate(180deg)}
 .plegable>summary:hover{color:var(--brand)}
+.card>.plegable:only-child{border-top:0;padding-top:0}
+.card>.plegable:only-child>summary{font-size:14px;color:var(--ink);padding:2px 0}
+.card>.plegable:only-child[open]>summary{margin-bottom:10px}
 
 /* ===================== el primer arranque =====================
    Se come la pantalla entera (sin barra de pestañas), así que centra el contenido y deja aire. */
@@ -2323,6 +2326,9 @@ body[data-tab="gym"] #main .gtb input{font-size:16px}
 .hchip.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,var(--bg2))}
 .hchip.gd{border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}
 .hchip.gd.on{background:color-mix(in srgb,var(--bad) 24%,var(--bg2));border-color:var(--bad)}
+.hchip.mas{border-style:dashed;color:var(--ink2)}
+.mleyenda{font-size:11px;color:var(--ink2);margin:8px 2px 0;line-height:1.5}
+.mleyenda b{color:var(--ink);font-weight:700}
 .hnota{font-size:11.5px;color:var(--ink2);margin-top:6px}
 .htiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
 .htile{overflow-wrap:normal;word-break:keep-all;min-height:74px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;display:flex;flex-direction:column;
