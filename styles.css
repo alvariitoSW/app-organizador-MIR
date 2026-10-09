@@ -596,6 +596,9 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .tarj .fld>input,.tarj .fld>select,.fgrid.tight .fld>input,.fgrid.tight .fld>select{width:100%}
 .tarj>input{width:100%}
 .empty{color:var(--ink2);font-size:12.5px;font-style:italic;padding:8px 0}
+.girando{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:girar .8s linear infinite;vertical-align:-1px;margin-right:4px}
+@keyframes girar{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.girando{animation-duration:2.4s}}
 footer{max-width:1220px;margin:0 auto;padding:6px 14px 40px;color:var(--ink2);font-size:11.5px;position:relative;z-index:1}
 #daystrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 #daystrip label{flex:1 1 92px;font-size:10px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
@@ -2896,6 +2899,16 @@ html,body{overscroll-behavior-y:none}
 /* ---- apuntar con una frase ---- */
 .frase{display:flex;gap:8px;align-items:center;padding:8px 8px 8px 12px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--brand) 70%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card))}
 .frase input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;padding:6px 0;outline:none}
+/* la lectura de la frase, debajo del campo, mientras escribes: una o dos líneas */
+.frlect{margin:6px 2px 0;font-size:12.5px;line-height:1.45;color:var(--ink2)}
+.frlect:empty{display:none}
+.frlect .frl1{color:var(--ink)}.frlect .frl1 b{font-weight:800}.frlect .frl1 em{font-style:normal;color:var(--brand);font-weight:700}
+.frlect .frl2{margin-top:2px;font-size:11.5px}.frlect .frl2 .cs::after{content:' ✓';color:var(--ok);font-weight:800}
+.frlect .frl2 i{font-style:normal;color:var(--ok)}
+.frlect .frl2 .dlink{font-size:11.5px;padding:0 2px;min-height:0}
+.frlect .frl3{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:5px;color:var(--warn);font-weight:700}
+.frlect .frl3 .chipx{font-size:11.5px;padding:4px 9px}
+.frlect .vacia{font-style:italic}
 .frc .frtam{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0}
 .frc .frtam button{padding:7px 0;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
 .frc .frtam button.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
@@ -2904,7 +2917,7 @@ html,body{overscroll-behavior-y:none}
 .frit .n b.ok{color:var(--ok);font-size:11px}.frit .g{display:flex;align-items:center;gap:4px;font-weight:800;white-space:nowrap}
 .frit .g button,.frit .x{width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-weight:900;cursor:pointer;padding:0}
 .frit .k{color:var(--ink2);font-size:11px;text-align:right}
-.frit.raro{grid-template-columns:22px 1fr auto;color:var(--warn)}
+.frit.raro{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--warn)}.frit.raro .n{flex:1 1 100%}
 .frrep{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.frrep:first-of-type{border-top:0}.frrep>div{flex:1}
 .frrep .tg{font-style:normal;font-size:10px;font-weight:900;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--ok) 20%,transparent)}
 /* ---- ¿qué como? ---- */
