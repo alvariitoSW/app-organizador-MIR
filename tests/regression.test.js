@@ -10494,7 +10494,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
     const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
     pasos.push(await cl('#main .asist [data-a="asist-kss"][data-v="4"]')); pasos.push(await cl('#main .asist [data-a="asist-animo"][data-v="4"]'));
-    const ck = await page.evaluate(() => { const c = window.PG.asistS().checkins[window.PG.iso(new Date())] || {}; return { kss: c.kss, animo: c.animo, hecho: c.hecho }; });
+    const ck = await page.evaluate(() => { const k = window.PG.iso(new Date()), c = window.PG.asistS().checkins[k] || {}; return { kss: window.PG.cnKss(k), animo: c.animo, hecho: window.PG.asistHecho(k) }; });
     const antes = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
     pasos.push(await cl('#main .astj [data-a="asist-sil"]'));
     const despues = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
