@@ -3364,7 +3364,7 @@ span.hbt{cursor:default;border-style:dashed}
 .snpuerta>span:first-child{font-size:22px}
 .snpuerta .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .snmf{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
-.snmf:first-of-type{border-top:0}
+.dsucap+.snmf{border-top:0}
 .snmf b{font-size:20px;min-width:64px;font-variant-numeric:tabular-nums}
 .snmf span{flex:1;min-width:0;font-size:13px;color:var(--ink2);line-height:1.4}
 .snmf i{display:block;font-size:11px;opacity:.8}

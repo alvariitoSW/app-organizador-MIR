@@ -10262,6 +10262,51 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(r));
   }
 
+  // 254) REVISIÓN DEL CÓDIGO DE SUEÑO: «Ver el plan de guardia» abre la pestaña Guardia; la prueba de 3 h
+  // acaba sola a los 14 días y tocar otra duración la termina; la pregunta pendiente es la de AYER; «hora
+  // fija» se mide con la hora del día que empezó y el saliente no cuenta; la búsqueda del mejor plan no
+  // se repite en cada pintado y no se ofrece si es peor que el tuyo; el jet lag sin datos no dice que lo
+  // tienes; y lo escrito en «Apárcalo» sobrevive a un repintado
+  {
+    const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store)), hoy = new Date(), d = (n) => P.iso(P.addDays(hoy, n));
+      const out = {};
+      const b = document.createElement('button'); b.dataset.a = 'sn-abrir'; b.dataset.v = 'guardia'; document.body.appendChild(b); b.click(); b.remove();
+      out.abrir = P.ui.snTab;
+      P.store.sueno.siesta = 360;
+      P.store.sueno.pruebas = [{ id: 'siesta3', txt: 's3', desde: d(-15), dias: {}, fin: false }];
+      out.caducada = P.suenoCfg().siesta;
+      P.store.sueno.pruebas = [{ id: 'siesta3', txt: 's3', desde: d(-2), dias: {}, fin: false }];
+      out.dentro = P.suenoCfg().siesta;
+      const b2 = document.createElement('button'); b2.dataset.a = 'sn-siesta-cfg'; b2.dataset.v = '4'; document.body.appendChild(b2); b2.click(); b2.remove();
+      out.tocada = { siesta: P.suenoCfg().siesta, fin: P.store.sueno.pruebas[0].fin };
+      // la pregunta: respondida ayer → no pendiente; sin responder → pendiente
+      const x = { id: 'luz', txt: 'luz', desde: d(-3), dias: {}, fin: false };
+      out.pend1 = P.snPruebaPendiente(x, d(0)); x.dias[d(-1)] = 1; out.pend2 = P.snPruebaPendiente(x, d(0));
+      // hora fija con el ancla del principio
+      P.store.sueno.ancla = '08:00';
+      let kH = d(-1); for (let i = 1; i < 10 && P.salidaDeGuardia(kH); i++) kH = d(-1 - i);   /* el saliente no cuenta: otro día */
+      P.store.suenoReal[kH] = { h: 7.5, guardia: false, acostar: '23:00', desp: '07:00' };
+      out.hora = P.suenoPruebaDia({ id: 'hora', desde: d(-12), dias: {}, ancla: '07:00' }, kH);
+      out.salienteNo = P.suenoPruebaDia({ id: 'hora', desde: d(-12), dias: {}, ancla: '07:00' }, kH) === 1;
+      // el mejor plan: se memoriza (el mismo objeto en dos pintados) y no se ofrece si no mejora el tuyo
+      const G = P.snGuardiaSel();
+      if (G) { const m1 = P.snMejorSim(G); P.render(); const m2 = P.snMejorSim(G); out.memo = m1 === m2;
+        const r0 = P.snPlanSim(G); out.noPeor = P.snPuntua(m1.p, m1.m) >= P.snPuntua(r0.p, r0.m) || !document.querySelector('[data-a="sn-mejor"]'); } else { out.memo = true; out.noPeor = true; }
+      // jet lag sin noches de finde y de diario
+      P.store.suenoReal = {}; P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = 'medir'; P.render();
+      out.jet = [...document.querySelectorAll('#main .snmf')].map((e) => e.innerText).filter((t) => /jet lag/.test(t))[0] || '';
+      // Apárcalo
+      P.ui.snVista = 'noche'; P.render(); P.ui.nocheNota = 'llamar al banco'; P.render();
+      out.nota = (document.getElementById('nocheNota') || {}).value || '';
+      P.ui.snVista = ''; P.ui.nocheNota = ''; P.store = c; P.save(); P.render();
+      return out; });
+    check('Sueño, revisión: plan de guardia en su pestaña, la prueba de 3 h caduca sola y se termina al tocar otra duración, pregunta de ayer, hora fija con su ancla',
+      r.abrir === 'guardia' && r.caducada === 360 && r.dentro === 180 && r.tocada.siesta === 240 && r.tocada.fin === true &&
+      r.pend1 === true && r.pend2 === false && r.hora === 1, JSON.stringify(r));
+    check('Sueño, revisión: el mejor plan se calcula una vez y no se ofrece si es peor; el jet lag sin datos no se inventa; «Apárcalo» no se borra al repintar',
+      r.memo && r.noPeor && /hacen falta noches/.test(r.jet) && r.nota === 'llamar al banco', JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
