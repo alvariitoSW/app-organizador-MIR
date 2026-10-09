@@ -14,7 +14,9 @@ const DAYSH=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWN0=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];   /* indexado como Date#getDay() */
 const DIA3=['dom','lun','mar','mié','jue','vie','sáb'];   /* también como Date#getDay() */
 /* el segundo entreno de fábrica (natación los martes por la tarde): uno solo para todos */
-const GYM_SEGUNDO_DEF={on:true,dias:[2],tipo:'piscina',hora:'15:30'};
+/* el segundo entreno viene APAGADO: encendido de fábrica ponía «🏊 15:30» todos los martes en el Mes,
+   la Semana y Hoy sin que nadie lo hubiera elegido */
+const GYM_SEGUNDO_DEF={on:false,dias:[2],tipo:'piscina',hora:'15:30'};
 /* franja de 24 h: un color fijo por categoría (no por tipo de día), configurable en Ajustes */
 const TLCAT=[['sleep','Dormir','#7c5cff'],['work','Trabajo','#f59e0b'],['guard','Guardia','#ef4444'],
              ['meal','Comidas','#10b981'],['gym','Gimnasio','#22d3ee'],['evt','Eventos','#a855f7']];
@@ -733,6 +735,8 @@ function normalize(o){
   if(!o.gym.segundo||typeof o.gym.segundo!=='object')
     o.gym.segundo=clone(GYM_SEGUNDO_DEF);
   if(!Array.isArray(o.gym.segundo.dias))o.gym.segundo.dias=GYM_SEGUNDO_DEF.dias.slice();
+  /* una vez: el de fábrica (martes 15:30, piscina) encendido sin tocarlo, se apaga */
+  if(!o.gym.segundo.v2){const z=o.gym.segundo;if(z.on&&z.dias.join()==='2'&&z.hora==='15:30'&&z.tipo==='piscina')z.on=false;z.v2=1;}
   /* los cambios de día sueltos: {díaQueTocaba:díaAlQueSeMueve}, ambos YYYY-MM-DD. Sin registrarlos
      aquí se perderían al recargar, que es lo que pasa con todo campo que normalize() no conoce.
      Se tiran los de hace más de 60 días: ya no cambian nada y solo engordan el guardado. */
@@ -1812,6 +1816,9 @@ function necesidadSemana(days){
   (days||[]).forEach(function(d){if(!d.shiftId)return;
     const q=dishQty(d.key?itemsDelDia(d.key,null,d.shiftId):[].concat.apply([],slotsFor(d.shiftId).map(function(s){return slotItems(d.shiftId,s).items;})));
     Object.keys(q).forEach(function(id){need[id]=(need[id]||0)+q[id];});});
+  /* lo que ya está cocinado no se vuelve a cocinar: con dos raciones de lentejas en la nevera, «En
+     lote» mandaba cocinar otras cuatro el domingo y la Semana decía «cocinas: nada» */
+  cocinadoS().forEach(function(x){if(need[x.dishId])need[x.dishId]=Math.max(0,need[x.dishId]-x.queda);});
   return need;}
 function planBatches(days){
   const need=necesidadSemana(days);
@@ -1821,7 +1828,7 @@ function planBatches(days){
     const needP=Math.round((need[d.id]||0)*10)/10;
     const perPort=d.portions||1;
     const runs=needP>0?Math.max(1,Math.ceil(needP/perPort)):0;
-    const suelo=Math.max(needP||0,(b.minCook||0),runs*perPort);   // nunca media receta: se hace la tanda y lo que sobra se congela
+    const suelo=runs>0?Math.max(needP||0,(b.minCook||0),runs*perPort):0;   /* sin nada que cocinar, 0: no «4 raciones, sobran 4» */   // nunca media receta: se hace la tanda y lo que sobra se congela
     const cooked=Math.round(suelo*10)/10;
     if(!batches[b.id])batches[b.id]={id:b.id,label:b.label,when:b.when,note:b.note,minCook:b.minCook||0,items:[],portions:0,hasNeed:false};
     batches[b.id].items.push({dish:d,needPort:needP,runs:runs,cooked:cooked});
@@ -1997,6 +2004,11 @@ function renderSemanaBase(){
       '<button class="chipx" data-a="sb-copiar">⤵ copiar de mis tipos de día</button>'+
     '</div>'+
   '</div>';}
+function platoCortoSem(t){
+  /* en la Semana caben dos líneas: «Bowl de pechuga de pollo, garbanzo…» se quedaba en «Bowl de pechug…».
+     Sin la coletilla («· más pechuga»), sin la lista tras la coma y sin «Extra de proteína:» */
+  let x=String(t||'').replace(/^Extra de proteína:\s*/i,'+ ').replace(/^Extra:\s*/i,'+ ').split(' · ')[0].split(',')[0].replace(/\s*\(.*?\)\s*/g,' ').trim();
+  return x.length>34?x.slice(0,33)+'…':x;}
 function nomCorto(t){
   /* lo que cabe en una casilla de 45 px: el nombre sin lo que va entre paréntesis ni la coletilla */
   let x=String(t||'').replace(/\s*\(.*?\)\s*/g,' ').replace(/\s+(con|y|de la|del|al)\s.*$/i,'').trim();
@@ -2118,27 +2130,20 @@ function renderElegir(){
 function elegirVuelve(){const e=ui.elegir||{};ui.elegir=null;ui.typesVista=e.modo==='sb'?'':(e.shift||'');}
 /* ---------- compra ⇄ menú ---------- */
 function compraSemanaHTML(){
-  /* ¿qué semana sale de lo que tienes en casa? Cada comida de la semana está cubierta si TODOS sus
-     platos tienen en casa todos sus ingredientes */
-  const dias=weekDays();let tot=0,ok=0;const faltan={};
-  dias.forEach(function(d){if(!d.shiftId)return;
-    slotsFor(d.shiftId).forEach(function(s){const its=slotItems(d.shiftId,s,d.key).items.filter(function(x){return dishById(x.id);});
-      if(!its.length)return;tot++;
-      const todos=its.every(function(x){const c=platoCubierto(dishById(x.id));return c.total&&c.n===c.total;});
-      if(todos)ok++;
-      else its.forEach(function(x){const dd=dishById(x.id),c=platoCubierto(dd);if(!(c.total&&c.n===c.total))faltan[dd.id]=c;});});});
+  /* ¿qué semana sale de lo que tienes en casa? La misma cuenta que la Semana (semanaCubierta) */
+  const cub=semanaCubierta(),tot=cub.tot,ok=cub.ok;
   if(!tot)return '';
-  const desp=despensaS();
-  const lista=Object.keys(faltan).slice(0,3).map(function(id){const dd=dishById(id);
-    const fl=(dd.ingredients||[]).filter(function(l){const k=despClave(parseIng(l).item||l);return !(k&&desp.some(function(x){return x.k===k;}));}).slice(0,3);
+  const nv=neveraGramos();
+  const lista=cub.platos.slice(0,3).map(function(id){const dd=dishById(id),fl=platoCubierto(dd,1,nv).faltan.slice(0,3).map(sinGlutenTexto);
     return '<div class="elahora"><span class="em">'+esc(dd.icon||'🍽')+'</span><span class="nm"><b>'+esc(dd.name)+'</b><span>falta: '+esc(fl.join(', '))+'</span></span></div>';}).join('');
   const pct=Math.round(ok/tot*100);
-  return '<div class="card"><h2>¿Qué semana sale de lo que tienes?</h2>'+
+  /* plegada en una línea con la cifra: en la Compra, lo que se mira de pie en el súper es la lista */
+  return '<div class="card"><details class="plegable" data-tg="cmpSem"'+(ui.cmpSem?' open':'')+'><summary><b>¿Qué semana sale de lo que tienes?</b> · '+ok+' de '+tot+'</summary>'+
     '<div class="cub" role="img" aria-label="'+ok+' de '+tot+' comidas cubiertas"><i style="width:'+pct+'%"></i></div>'+
     '<div class="row" style="margin-top:6px;align-items:baseline"><b style="font-size:20px">'+ok+'</b><span class="mini">de '+tot+' comidas de la semana ya tienen todo en casa'+(tot-ok?(' · faltan '+(tot-ok)):'')+'</span></div>'+
     lista+
     '<div class="row" style="margin-top:8px"><button class="btn s" data-a="menu-ir" data-v="auto">🗓 montar la semana con lo que tengo</button>'+
-      '<button class="btn s" data-a="menu-ir" data-v="semana">📅 semana base</button></div></div>';}
+      '<button class="btn s" data-a="menu-ir" data-v="semana">📅 semana base</button></div></details></div>';}
 /* ===================== montar la semana sola =====================
    Fase 5. «Que según lo que compre pueda montar automáticamente las comidas de la semana y no
    tener que ir una a una». El modo manual se queda: esto es el otro.
@@ -2172,16 +2177,58 @@ function platosDeClase(){
         if(!x||x.kind!=='dish'||!x.id)return;
         (por[c]||(por[c]={}))[x.id]=(por[c][x.id]||0)+1;});});});
   return por;}
-function platoCubierto(d){
-  /* cuánto de este plato ya está en casa: de sus ingredientes, cuántos hay en la despensa */
+/* ¿TENGO ESTE PLATO? Una sola respuesta para Cocina, Semana, Compra y Montar. Antes había tres: una
+   por nombre exacto de ingrediente («lenteja pardina» ≠ «lentejas»), otra por las listas de la compra
+   y otra por gramos, y con la misma nevera Cocina decía «te sale entero» y la cuenta, 20 %. Ahora va
+   por ALIMENTO (lo que reconoce la tabla) y, si los dos lados tienen gramos, por cantidad. Lo básico
+   de casa (sal, aceite, especias, ajo…) se da por hecho. rac = raciones que vas a hacer (por defecto,
+   la receta entera). */
+const _ingAlimMemo={};
+function ingAlimMemo(l){const k=String(l||'');if(!(k in _ingAlimMemo))_ingAlimMemo[k]=ingAlim(k)||null;return _ingAlimMemo[k];}
+function neveraGramos(){
+  /* lo de casa por alimento: gramos (o ml) si se saben; Infinity si se tiene sin cantidad */
+  const out={},porClave={};
+  despensaS().forEach(function(x){const a=despAlim(x),q=(x.uni==='g'||x.uni==='ml')?(+x.q||0):Infinity;
+    if(a)out[a.id]=(out[a.id]||0)+(q||Infinity);
+    porClave[x.k]=(porClave[x.k]||0)+(q||Infinity);});
+  return {id:out,k:porClave};}
+function platoCubierto(d,rac,nvOpt){
   const ing=(d&&d.ingredients)||[];
-  if(!ing.length)return {n:0,total:0,pct:0};
-  const desp=despensaS();
-  let n=0;
+  if(!ing.length)return {n:0,total:0,pct:0,faltan:[],poco:[],usa:[]};
+  const nv=nvOpt||neveraGramos(),f=(rac==null?1:(+rac||1)/Math.max(1,+d.portions||1));
+  let n=0,total=0;const faltan=[],poco=[],usa=[];
   ing.forEach(function(l){
-    const k=despClave(parseIng(l).item||l);
-    if(k&&desp.some(function(x){return x.k===k;}))n++;});
-  return {n:n,total:ing.length,pct:Math.round(n/ing.length*100)};}
+    const p=parseIng(l),nom=(p.item||String(l)).trim(),x=ingAlimMemo(l);
+    if(esBasicoCasa(x&&x.a?x.a:nom)||esBasicoCasa(nom))return;   /* sal, aceite, especias: se dan por hechos */
+    total++;
+    const hay=x&&nv.id[x.id]!=null?nv.id[x.id]:nv.k[despClave(nom)];
+    if(hay==null){faltan.push(nom);return;}
+    if(x&&isFinite(hay)&&x.g*f>hay*1.05){poco.push(nom);faltan.push(nom);return;}
+    if(x)usa.push({id:x.id,g:x.g*f});
+    n++;});
+  /* un plato que solo lleva básicos (el café, una infusión) no falta de nada, pero tampoco «lo tienes en
+     casa» para puntuar: pct 0, faltan [] */
+  return {n:n,total:total,pct:total?Math.round(n/total*100):0,faltan:faltan,poco:poco,usa:usa};}
+function semanaCubierta(){
+  /* las comidas que quedan de la semana (de hoy en adelante) y si tienes todo para ellas. Lo
+     cocinado cuenta como tenerlo; el hospital, «como fuera» y «nada» no cuentan; y lo que gasta una
+     comida ya no está para la siguiente (300 g de pollo no dan para cinco cenas). La usan la Semana
+     y la Compra: misma nevera, misma cifra. */
+  const coc={};cocinadoS().forEach(function(x){coc[x.dishId]=(coc[x.dishId]||0)+x.queda;});
+  const nv=neveraGramos(),hoyK=iso(new Date());let tot=0,ok=0;const faltan={},platos={};
+  mSemana().forEach(function(dia){if(dia.d.key&&dia.d.key<hoyK)return;
+    M_CLS.forEach(function(c){
+      const its=dia.cls[c[0]].items.map(function(i){return {d:dishById(i.id),r:num(i.portions,1)};}).filter(function(x){return x.d&&!x.d.hospital&&!x.d.fuera;});
+      if(!its.length)return;tot++;
+      const mal=its.filter(function(x){
+        if(coc[x.d.id]>0){coc[x.d.id]-=x.r;return false;}
+        const cu=platoCubierto(x.d,x.r,nv);if(cu.faltan.length)return true;
+        cu.usa.forEach(function(u){if(isFinite(nv.id[u.id]))nv.id[u.id]=Math.max(0,nv.id[u.id]-u.g);});
+        return false;});
+      if(!mal.length){ok++;return;}
+      mal.forEach(function(x){platos[x.d.id]=1;platoCubierto(x.d,x.r,nv).faltan.forEach(function(f){faltan[f.toLowerCase()]=1;});});});});
+  return {tot:tot,ok:ok,faltan:Object.keys(faltan),platos:Object.keys(platos)};}
+function platoTengo(d,rac,nv){const c=platoCubierto(d,rac,nv);return !c.faltan.length;}
 function platoApto(d){
   /* con gluten no entra, y punto. «Depende» sí entra: es un aviso, no una prohibición. */
   if(!esCeliaco())return true;
@@ -4963,8 +5010,10 @@ function hoyRelojSVG(key,inf,esHoy){
     const card=Math.round(m/360)*360%1440,dd=((m-card+720+1440)%1440)-720;
     if(Math.abs(dd)<80){const m2=card+(dd>=0?80:-80),mm=(m2+1440)%1440;if(mm>=o.a&&mm<=o.b)m=mm;else return;}
     if(puestos.some(function(x){const d=Math.abs(x-m)%1440;return Math.min(d,1440-d)<100;}))return;
-    puestos.push(m);const p=relojPunto(R+46,m),x=+p[0],anc=x<110?'start':(x>190?'end':'middle');
-    g+='<text x="'+Math.max(-14,Math.min(314,x+(anc==='start'?-22:anc==='end'?22:0))).toFixed(1)+'" y="'+(+p[1]+4)+'" text-anchor="'+anc+'" font-size="12" font-weight="800" fill="'+esc(o.c)+'">'+esc(o.t)+'</text>';});
+    /* POR FUERA DEL ANILLO: a la derecha el texto empieza en el punto y crece hacia fuera, a la izquierda
+       acaba en él. Antes «Entreno» a las 3 se pintaba hacia dentro, encima del arco */
+    puestos.push(m);const p=relojPunto(R+40,m),x=+p[0],anc=x<120?'end':(x>180?'start':'middle');
+    g+='<text x="'+Math.max(-58,Math.min(358,x+(anc==='start'?-4:anc==='end'?4:0))).toFixed(1)+'" y="'+(+p[1]+4)+'" text-anchor="'+anc+'" font-size="12" font-weight="800" fill="'+esc(o.c)+'">'+esc(o.t)+'</text>';});
   for(let h=0;h<24;h++){const p1=relojPunto(R-11,h*60),p2=relojPunto(R-15,h*60);g+='<line x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'" stroke="var(--bg)" stroke-width="1.5"/>';}
   [0,6,12,18].forEach(function(h){const p=relojPunto(R+31,h*60);g+='<text x="'+p[0]+'" y="'+(+p[1]+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="var(--ink2)">'+h+'</text>';});
   /* la aguja: ahora, o el dedo mientras recorres el día */
@@ -4994,7 +5043,7 @@ function hoyRelojSVG(key,inf,esHoy){
     '<text x="150" y="156" text-anchor="middle" font-size="'+(c2.length>11?18:24)+'" font-weight="900" fill="var(--ink)">'+esc(c2)+'</text>'+
     '<text x="150" y="176" text-anchor="middle" font-size="13" fill="var(--ink2)">'+esc(c3)+'</text>'+
     (cur==null&&sel<0&&so&&so.sale&&!so.sinDatos&&!so.polar?'<text x="150" y="194" text-anchor="middle" font-size="11" fill="#d9a93a">☀ '+horaLocal(so.sale)+' – '+horaLocal(so.pone)+'</text>':'');
-  return '<svg viewBox="-20 -14 340 328" role="img" aria-label="el día en un reloj de 24 horas: toca una hora para ver qué hay, arrastra para recorrer el día, mantén pulsado para abrir su hoja">'+g+'</svg>';}
+  return '<svg viewBox="-60 -14 420 328" role="img" aria-label="el día en un reloj de 24 horas: toca una hora para ver qué hay, arrastra para recorrer el día, mantén pulsado para abrir su hoja">'+g+'</svg>';}
 function hoyRelojHTML(key,inf,esHoy){
   return '<div class="hoyreloj'+(hoySelDe(key)>=0&&ui.hoyCursor==null?' dim':'')+'" data-k="'+esc(key)+'">'+hoyRelojSVG(key,inf,esHoy)+'</div>';}
 function hoyTiraHTML(it,n,key,esHoy){
@@ -5020,8 +5069,9 @@ let _hr=null;
 function snDeDia(key,m){const so=solDe(key);if(!so||so.sinDatos||so.polar||!so.sale||!so.pone)return false;
   const a=so.sale.getHours()*60+so.sale.getMinutes(),b=so.pone.getHours()*60+so.pone.getMinutes();return m>=a&&m<=b;}
 function hoyRelojLee(box,e){
-  const b=box.querySelector('svg').getBoundingClientRect(),k=340/Math.max(1,b.width);
-  const dx=(e.clientX-b.left)*k-20-150,dy=(e.clientY-b.top)*k-14-150;
+  /* misma caja que el viewBox del reloj (-60 -14 420 328) */
+  const b=box.querySelector('svg').getBoundingClientRect(),k=420/Math.max(1,b.width);
+  const dx=(e.clientX-b.left)*k-60-150,dy=(e.clientY-b.top)*k-14-150;
   let a=Math.atan2(dy,dx)*180/Math.PI+90;if(a<0)a+=360;
   return {m:a/360*1440,r:Math.hypot(dx,dy)};}
 document.addEventListener('pointerdown',function(e){
@@ -5206,6 +5256,19 @@ function hoyAgendaHTML(key,inf,esHoy){
 
    Un solo sitio arma los bloques de un día; lo usan Hoy, la Semana y el Mes. */
 function bloqDeMin(t){const m=mins(t);return m==null?null:m;}
+function trasEntreno(key,inf,fin){
+  /* ¿del gym vas a trabajar? Si la jornada empieza al acabar el entreno (o hasta 2 h después), el
+     tramo de después es «al trabajo» y a casa se llega al salir de la jornada. Antes salía «🏠 A
+     casa 08:00–08:15» a la vez que «💼 Trabajo 08:00» */
+  inf=inf||dayInfo(key);const sh=inf.shiftId?shiftById(inf.shiftId):null;
+  if(!sh||isGuardia(sh)||fin==null)return null;
+  const jor=jornadaOf(key,inf),e=jor&&jor.start?mins(jor.start):null;
+  if(e==null||e<fin-15||e>fin+120)return null;
+  return {trabajo:jor.start,casa:llegasACasa(key,inf)};}
+function gymAntesDeTrabajo(key,inf){
+  const rtD=rutinaDeFecha(key),ent=entrenoDe(key)||(rtD?{tipo:rutTipo(rtD)==='agua'?'pisc':'fuerza'}:null);if(!ent)return null;
+  const v=ventanaEntreno(key,ent.tipo,inf),i0=mins(v.hora);if(i0==null)return null;
+  return trasEntreno(key,inf,i0+v.dur);}
 function bloquesDelDia(key){
   /* todo lo que pasa ese día con su hora de inicio y su duración. Cada bloque dice a dónde lleva
      al tocarlo: sin eso la rejilla es un cuadro bonito y nada más. */
@@ -5251,7 +5314,7 @@ function bloquesDelDia(key){
     const jor=jornadaOf(key,inf);
     if(!jor||!jor.start||isGuardia(sh))return;
     const ent=mins(jor.start);
-    if(ent!=null){
+    if(ent!=null&&!gymAntesDeTrabajo(key,inf)){   /* del gym se va directo: no se sale de casa */
       const b=v.bus?mins(v.bus):null;
       const sale=(b!=null)?(b-v.antes):(ent-v.min);
       add({de:sale,a:ent,cat:'work',fino:true,
@@ -5264,7 +5327,7 @@ function bloquesDelDia(key){
   /* EL ENTRENO QUE TOCA SEGÚN EL PLAN DE LA SEMANA: fuerza (con su rutina) o la piscina del
      saliente, a su hora y con el ir y volver. Sin hora puesta en el gym ya no desaparece: sale del
      día (al salir del trabajo, o a las 17 en un libre). */
-  const rtD=rutinaDeFecha(key),ent=entrenoDe(key)||(rtD?{tipo:'fuerza',rutina:rtD}:null),esF=/fuerza|entreno/i.test(sh.name||'')&&gymForzar()[key]!==false;
+  const rtD=rutinaDeFecha(key),ent=entrenoDe(key)||(rtD?{tipo:rutTipo(rtD)==='agua'?'pisc':'fuerza',rutina:rtD}:null),esF=/fuerza|entreno/i.test(sh.name||'')&&gymForzar()[key]!==false;
   if(ent||esF){
     const rt=ent&&ent.tipo==='fuerza'?(ent.rutina||rutinaDeFecha(key)):null;
     const v=ventanaEntreno(key,ent?ent.tipo:'fuerza',inf),ec=entrenoCfg();
@@ -5277,7 +5340,9 @@ function bloquesDelDia(key){
         ir:'tab',irV:'gym'});
       /* ir y volver del gym: solo en la app —no va a Google—, para que el día cuadre de verdad */
       if(ec.ida>0)add({de:i0-ec.ida,a:i0,cat:'gym',fino:true,tit:'🚶 Al '+(ent&&ent.tipo==='pisc'?'agua':'gym'),sub:ec.ida+' min',ir:'tab',irV:'gym'});
-      if(ec.vuelta>0)add({de:f0,a:f0+ec.vuelta,cat:'gym',fino:true,tit:'🏠 A casa',sub:'llegas '+hm(f0+ec.vuelta),ir:'tab',irV:'gym'});}}
+      const tw=trasEntreno(key,inf,f0);
+      if(tw)add({de:f0,a:Math.max(f0+15,mins(tw.trabajo)),cat:'work',fino:true,tit:'💼 Al trabajo',sub:'entras '+tw.trabajo,ir:'ir-viaje'});
+      else if(ec.vuelta>0)add({de:f0,a:f0+ec.vuelta,cat:'gym',fino:true,tit:'🏠 A casa',sub:'llegas '+hm(f0+ec.vuelta),ir:'tab',irV:'gym'});}}
   /* la sesión de cocina de esa semana, en su día y su hora, si esa semana hay algo que cocinar en
      ella. Solo en la app: sirve para cuadrar las horas, no es una cita */
   cocinaDelDia(key).forEach(function(c){
@@ -5494,18 +5559,21 @@ function suenoSemanaHTML(key){
      decía «21,3 h de 56» un miércoles (56 es la semana entera) y una pastilla «−3 h», que era la
      deuda de antes con otro nombre */
   const hora=suenoAHora(s.dias),f1=function(v){return fmtC(Math.round(v*10)/10);};   /* «7,8», no «7.83» */
+  /* lo que aún no ha llegado no está «sin apuntar»: el viernes salían 3 vacíos que eran vie, sáb y dom */
+  const hoyK=iso(new Date()),pasan=s.dias.filter(function(d){return d.k<=hoyK;}).length,vacios=s.dias.filter(function(d){return d.k<=hoyK&&d.t==null;}).length;
   return '<div class="card"><div class="row" style="align-items:baseline;gap:8px"><span class="snbig">'+(s.n?fmtHM(s.media*60):'—')+'</span>'+
       '<span class="mini">de media · objetivo '+fmtHM(c.min*60)+'</span></div>'+
-    '<p class="mini" style="margin:2px 0 0">'+s.n+' de 7 noches apuntadas'+(hora.n?' · <b style="color:var(--ink)">'+hora.ok+' de '+hora.n+'</b> a tu hora':'')+'</p>'+
+    '<p class="mini" style="margin:2px 0 0">'+s.n+' de '+pasan+' noche'+(pasan===1?'':'s')+' apuntada'+(pasan===1?'':'s')+(hora.n?' · <b style="color:var(--ink)">'+hora.ok+' de '+hora.n+'</b> a tu hora':'')+'</p>'+
     '<div class="snbars" role="img" aria-label="horas dormidas cada día de la semana frente a '+c.min+' h">'+
       '<span class="obj" style="bottom:'+(Math.round(c.min/max*70)+25)+'px"><span>objetivo '+fmt(c.min)+' h</span></span>'+
       s.dias.map(function(d,i){
         const g=d.r&&d.r.guardia,h=d.t!=null?Math.round(d.t/max*70):0,sies=d.r&&d.r.siesta?Math.round(d.r.siesta/max*70):0;
-        return '<div class="'+(d.t==null?'vacio':'')+(d.t!=null&&d.t<corta?' poco':'')+'" title="'+esc(fechaCorta(d.k))+': '+(d.t==null?'sin apuntar':fmtHM(d.t*60))+'">'+
+        const fut=d.k>hoyK&&d.t==null;
+        return '<div class="'+(fut?'fut':(d.t==null?'vacio':''))+(d.t!=null&&d.t<corta?' poco':'')+'" title="'+esc(fechaCorta(d.k))+': '+(fut?'aún no':(d.t==null?'sin apuntar':fmtHM(d.t*60)))+'">'+
           '<b>'+(d.t==null?'':(g&&d.r.siesta?(f1(d.r.h)+'+'+f1(d.r.siesta)):f1(d.t)))+'</b>'+
-          '<i class="'+(g?'g':'')+'" style="height:'+Math.max(d.t!=null?3:14,h)+'px">'+(sies?'<em style="height:'+sies+'px"></em>':'')+'</i>'+DL[i]+
+          '<i class="'+(g?'g':'')+'" style="height:'+(fut?0:Math.max(d.t!=null?3:14,h))+'px">'+(sies?'<em style="height:'+sies+'px"></em>':'')+'</i>'+DL[i]+
           (hora.dia[d.k]!=null?'<u class="'+(hora.dia[d.k]?'ok':'no')+'" title="'+(hora.dia[d.k]?'a tu hora':'fuera de tu hora')+'"></u>':'<u></u>')+'</div>';}).join('')+'</div>'+
-    '<p class="mini" style="margin:8px 0 0">'+(s.n<7?(7-s.n)+' día'+(7-s.n===1?'':'s')+' sin apuntar (vacíos). ':'')+
+    '<p class="mini" style="margin:8px 0 0">'+(vacios?vacios+' día'+(vacios===1?'':'s')+' sin apuntar (vacíos). ':'')+
       (cortas.length?('<span style="color:var(--bad)">⚠ '+cortas.length+' '+(cortas.length===1?'noche':'noches')+' por debajo de '+fmt(corta)+' h</span> (en rojo). '):'')+
       (s.dias.some(function(d){return d.r&&d.r.siesta;})?'Las guardias, a rayas; la parte clara es la siesta. ':'')+
       (hora.n?'Punto verde: te levantaste a tu hora (±30 min); ámbar: fuera de ella.':'')+'</p></div>';}
@@ -5900,7 +5968,8 @@ function suenoEstadoHTML(hoyK){
       '<div style="flex:1;min-width:0"><b class="snnv" style="color:'+(nv?nv.c:'var(--ink2)')+'">'+(nv?nv.t:'Sin datos')+'</b>'+
         '<div class="mini">'+esc(st.fase.t+(st.fase.n?' · '+st.fase.n:''))+'</div></div>'+
       '<div class="sn3s" role="img" aria-label="horas que cuentan en las 3 últimas noches, objetivo '+fmtC(c.min)+' h">'+barras+'</div></div>'+
-    '<p class="mini" style="margin:8px 0 0">'+(st.n?('Últimas 3 noches: <b>'+fmtC(st.suma)+' h</b> de '+fmtC(c.min*st.n)+' que necesitas'+(st.n<3?' ('+(3-st.n)+' sin apuntar)':'')+'. '):'Apunta tus noches y te digo cómo llegas. ')+
+    /* la misma frase que la tarjeta de Hoy: «últimas N noches: X de Y h» */
+    '<p class="mini" style="margin:8px 0 0">'+(st.n?((st.n===1?'Última noche':'Últimas '+st.n+' noches')+': <b>'+fmtC(st.suma)+' de '+fmtC(c.min*st.n)+' h</b>'+(st.n<3?' ('+(3-st.n)+' sin apuntar)':'')+'. '):'Apunta tus noches y te digo cómo llegas. ')+
       'Lo que cuenta es lo reciente: las horas perdidas no se devuelven una a una.</p>'+
     '<div class="row" style="gap:8px;margin-top:10px">'+(r?'<button class="btn s" data-a="sn-hoja" data-k="'+hoyK+'">✎ Anoche: '+fmtHM(suenoTotal(r)*60)+(r.kss?' · '+r.kss+'/9':'')+'</button>':
       '<button class="btn p s" data-a="sn-hoja" data-k="'+hoyK+'">Anotar anoche</button>')+
@@ -7060,7 +7129,10 @@ function habitoSugerencia(){
   /* «los salientes nunca estudias»: un hábito que en un tipo de día no se ha hecho ni una vez en 4
      semanas (con al menos 3 ocasiones) se propone dejar de pedirlo esos días */
   const hoy=new Date(),no=ui.habTipNo||{};let mejor=null;
-  habitosS().items.forEach(function(h){if(h.auto)return;const c={};
+  habitosS().items.forEach(function(h){
+    /* beber agua, la cama, la medicación no dependen del tipo de día: proponer «no pedírtelo los días
+       de trabajo» es quitar justo lo que más cuesta. Solo para lo que puede no tocar (estudiar…) */
+    if(h.auto||/agua|beber|hidrat|cama|dormir|medica|pastilla|vitamina|creatina|dientes/i.test(h.nombre||''))return;const c={};
     for(let i=1;i<=28;i++){const k=iso(addDays(hoy,-i));if(!habitoToca(h,k))continue;const t=diaTipo(k);
       c[t]=c[t]||{n:0,ok:0};c[t].n++;if(habitoHecho(h.id,k))c[t].ok++;}
     Object.keys(c).forEach(function(t){if(c[t].n>=3&&c[t].ok===0&&!no[h.id+'|'+t]&&(!mejor||c[t].n>mejor.n))mejor={h:h,t:t,n:c[t].n};});});
@@ -7078,7 +7150,7 @@ function semDiaCardHTML(d,nowMin){
       return '<div class="sde'+(x?' x':'')+'"><em>'+esc(e.hora?hCortaHM(e.hora):'todo el día')+'</em><span>'+(x?'⚠ ':'📌 ')+esc(e.titulo||'Evento')+(x?' <small>cae en '+(t==='guardia'?'la guardia':'la jornada')+'</small>':'')+'</span></div>';}).join('')
       :'<div class="sde v"><em>—</em><span>sin eventos</span></div>')+
     (rut.length?'<div class="sdr">'+rut.map(function(a){const ya=pasado||(esHoy&&mins(a.h)<=nowMin);
-      return '<span class="'+(ya?'ok':'')+(a.fijo?'':' mia')+'">'+a.ico+' '+esc(hCortaHM(a.h))+(a.fijo?'':' '+esc(a.txt))+'</span>';}).join('')+'</div>':'')+
+      return '<span class="'+(ya?'ok':'')+(a.fijo?'':' mia')+'"'+(a.movido?' title="la mueve de '+esc(a.movido)+': a esa hora estás ocupado"':'')+'>'+a.ico+' '+esc(hCortaHM(a.h))+(a.fijo?'':' '+esc(a.txt))+(a.movido?' ↷':'')+'</span>';}).join('')+'</div>':'')+
     (habs.length?'<div class="sdhb">'+habs.map(function(h){const on=habitoHecho(h.id,k),fut=k>hoyK;
       return '<button class="'+(on?'on':'')+'" style="'+(on?'background:'+esc(h.color)+';border-color:'+esc(h.color):'')+'"'+(fut||h.auto?' disabled':' data-a="hab-mark" data-id="'+esc(h.id)+'" data-key="'+k+'"')+
         ' aria-label="'+esc(h.nombre)+(on?' hecho':'')+'" title="'+esc(h.nombre)+(h.auto?' (se marca solo)':'')+'">'+esc(h.icono)+'</button>';}).join('')+
@@ -7540,6 +7612,10 @@ function mesModoToque(k){
     setDayOverride(k,ya?null:m.sid,'');save();
     msg=ya?('quitado el '+fechaCortaTxt(k)):(((shiftById(m.sid)||{}).name||'día')+' el '+fechaCortaTxt(k));}
   flash(msg);render();return true;}
+function mhintVigente(){
+  /* el aviso de «mantén pulsado» se va solo a los tres días de verlo (o al primer mantener pulsado) */
+  const m=store.meta,hoy=iso(new Date());if(!m.pulsarDesde)m.pulsarDesde=hoy;
+  return (parseDate(hoy)-parseDate(m.pulsarDesde))/86400000<3;}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),minS=suenoCfg().min;
   const domFirst=store.rotation.calWeekStart==='dom';
@@ -7601,7 +7677,8 @@ function renderMonth(){
     const ntsDia=d.key?notasAviso(d.key):[];
     const ntLineas=ntsDia.slice(0,Math.max(0,EVMAX-evsDia.length)).map(function(x){
       const tt=esc(String(x.txt).split('\n')[0]);
-      return '<span class="dev nota" title="'+tt+'"><i class="dpt"></i><span class="n">📝 '+esc(tituloCasilla(String(x.txt).split('\n')[0]))+'</span></span>';}).join('');
+      /* sin el 📝 delante: se comía medio ancho y la nota se quedaba en «📝 Prep…»; el cuadradito ámbar ya dice que es nota */
+      return '<span class="dev nota" title="'+tt+'"><i class="dpt"></i><span class="n">'+esc(tituloCasilla(String(x.txt).split('\n')[0]))+'</span></span>';}).join('');
     const evLineas=evsDia.slice(0,EVMAX).map(function(ev){
       const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo);
       return '<span class="dev" title="'+tit+'">'+
@@ -7648,9 +7725,9 @@ function renderMonth(){
         <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button></div>
-      ${!store.meta.pulsarVisto&&!ui.mesModo?'<div class="mhint">💡 <b>Mantén pulsado un día</b> para cambiar qué es, añadir un evento o una nota. Un toque normal sigue abriendo el resumen.<button class="x" data-a="pulsar-visto" aria-label="entendido">✕</button></div>':''}
+      ${!store.meta.pulsarVisto&&!ui.mesModo&&mhintVigente()?'<div class="mhint">💡 <b>Mantén pulsado un día</b> para cambiar qué es, añadir un evento o una nota. Un toque normal sigue abriendo el resumen.<button class="x" data-a="pulsar-visto" aria-label="entendido">✕</button></div>':''}
       <div class="cal ext${rejilla.movil?' conprev':''}${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
-      <div class="mleyenda">🩺 <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b>8–15</b> jornada</div>
+      <div class="mleyenda">🩺 <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b>8–15</b> jornada · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
@@ -7990,21 +8067,34 @@ function entrenoDe(key){
   const s=entrenoSemana(key);if(!s)return null;
   const x=s.dias.filter(function(y){return y.k===key;})[0];if(!x)return null;
   if(x.tipo==='pisc'&&(x.auto||x.forz))return {tipo:'pisc',hora:x.hora,dur:x.dur,auto:x.auto};
-  if(x.tipo==='fuerza'&&(x.base||x.auto||x.forz))return {tipo:'fuerza',rutina:s.asig[key]||null,hora:x.hora,dur:x.dur,auto:x.auto};
+  if(x.tipo==='fuerza'&&(x.base||x.auto||x.forz)){const rt=s.asig[key]||null;
+    /* una rutina de agua pegada a un día es piscina, a la hora de la piscina: salía «💪 17:00» el
+       saliente cuando la piscina es a las 18:00 */
+    if(rt&&rutTipo(rt)==='agua'){const c=entrenoCfg();return {tipo:'pisc',rutina:rt,hora:c.pisc.hora,dur:c.pisc.dur,auto:x.auto};}
+    return {tipo:'fuerza',rutina:rt,hora:x.hora,dur:x.dur,auto:x.auto};}
   return null;}
 function entrenoContadorHTML(key){
   /* el contador de días, a la vista: «💪 3/4 esta semana» y, si no llegas, por qué */
   const s=entrenoSemana(key);if(!s||!s.min)return '';
   const esta=s.lun===iso(mondayOf(new Date())),cual=esta?'esta semana':('semana del '+parseDate(s.lun).getDate());
+  /* UNA cifra en Hoy, Entreno y el informe: hechos de los planeados, y el mínimo aparte. Antes Hoy
+     decía «5/3» (planeados/mínimo), Entreno «2 / 3» (hechos/mínimo) y el informe «3 de 5» */
+  const h=entrenosHechos(s.lun);
   return '<button class="entcont'+(s.conflicto?' mal':'')+'" data-a="tab" data-t="gym">'+
-    '<b>💪 '+s.total+'/'+s.min+'</b><span>'+(s.conflicto?'no llegas ':'entrenos ')+cual+
+    '<b>💪 '+h+' de '+s.total+'</b><span>'+(s.conflicto?'no llegas al mínimo ('+s.min+') ':'hechos '+cual+' · mínimo '+s.min)+
     ' · '+s.fuerza+' fuerza'+(s.pisc?(' + '+s.pisc+' piscina'):'')+'</span></button>';}
+function entrenosHechos(lunKey){return diasEntrenadosSemana(lunKey).length;}
 function entrenoPorQue(s){
   const DL=['lun','mar','mié','jue','vie','sáb','dom'],p=[];
   if(s.guardias)p.push(s.guardias+' guardia'+(s.guardias===1?'':'s'));
   s.choques.forEach(function(x){p.push('el '+DL[x.i]+' choca con «'+(x.choca.titulo||'evento')+'»');});
   if(!s.hayRut)p.push('no tienes rutinas creadas');
   return p.join(' · ');}
+function rutSigla(n){
+  /* lo que cabe bajo el día (≈5 letras): «Torso A» → «Tor A», «Piscina» → «Pisc» (antes «Piscin», cortado) */
+  const w=String(n||'').trim().split(/\s+/);
+  if(w.length>1&&w[w.length-1].length<=2)return w[0].slice(0,3)+' '+w[w.length-1];
+  return w[0].slice(0,4);}
 function entrenoSemanaHTML(key,compacto){
   const s=entrenoSemana(key),cfg=entrenoCfg();if(!s)return '';
   if(compacto){
@@ -8032,7 +8122,7 @@ function entrenoSemanaHTML(key,compacto){
         x.seg?'piscina':x.perdido?('choca con «'+x.choca.titulo+'»'):x.quitado?'quitado a mano':x.choca?('choca con «'+x.choca.titulo+'»'):(x.motivo||'libre'))+
         (x.movido&&on?' · movido a las '+x.hora+' (a las '+x.movido.de+' chocaba con «'+x.movido.por+'»)':'');
       return '<button class="'+cls+'" data-a="ent-dia" data-k="'+x.k+'" title="'+esc(tit)+'" aria-label="'+esc(tit)+'">'+
-        '<span>'+DL[x.i]+'</span><b>'+ico(x)+'</b>'+(x.tipo==='fuerza'&&r&&on?('<i>'+esc(r.nombre.slice(0,6))+'</i>'):'')+'</button>';}).join('')+'</div>'+
+        '<span>'+DL[x.i]+'</span><b>'+ico(x)+'</b>'+(x.tipo==='fuerza'&&r&&on?('<i>'+esc(rutSigla(r.nombre))+'</i>'):'')+'</button>';}).join('')+'</div>'+
       '<p class="mini" style="margin:8px 0 0">'+(s.conflicto?('<span style="color:var(--warn)">⚠ '+(s.faltan?('Solo caben '+s.total+' de '+s.min):('Solo '+s.fuerza+' de fuerza'))+': '+esc(entrenoPorQue(s))+'.</span> '):
         ('<b style="color:var(--ink)">'+s.total+' de '+s.min+'</b> · '+s.fuerza+' de fuerza'+(s.pisc?' + '+s.pisc+' de piscina':'')+'. '))+
         '💪 de siempre · ✨ la app · 🏊 piscina · ✋ a mano · 📌 choca con un evento. Toca un día para ponerlo o quitarlo.</p>'+
@@ -8658,6 +8748,8 @@ function combinaciones(huecoK,huecoP){
         gras=n.filter(esGrasa);   /* la grasa sí puede ser un condimento: van 10 ml de aceite */
   if(!prot.length||(!carb.length&&!verd.length))return [];
   const meta=metaDePlato(huecoK,huecoP);
+  /* nunca más de lo que hay: 320 g de queso fresco con 200 g en la nevera no es una idea, es una compra */
+  const nv=neveraGramos(),hay=function(a){const q=nv.id[a.id];return q!=null&&isFinite(q)&&q>0?Math.floor(q/5)*5:Infinity;};
   const out=[];
   prot.forEach(function(P){
     (carb.length?carb:[null]).forEach(function(C){
@@ -8666,17 +8758,17 @@ function combinaciones(huecoK,huecoP){
         if(V&&(V.id===P.id||(C&&V.id===C.id)))return;
         const partes=[];
         /* 1) la proteína cubre el objetivo de proteína del plato, con tope de ración */
-        const gP=Math.min(topeRacion(P),Math.max(60,redondeaG(meta.prot*100/Math.max(1,+P.pr||1))));
+        const gP=Math.min(topeRacion(P),hay(P),Math.max(60,redondeaG(meta.prot*100/Math.max(1,+P.pr||1))));
         partes.push({a:P,g:gP});
         /* 2) la verdura va fija: es guarnición, no se estira para cuadrar números */
-        if(V)partes.push({a:V,g:150});
+        if(V)partes.push({a:V,g:Math.min(150,hay(V))});
         /* 3) la grasa de cocinar, antes de rellenar: 10 ml de aceite son 88 kcal y si se suman
               después, el carbohidrato ya se ha comido ese hueco y el plato se va por encima */
         if(gras.length&&gras[0].id!==P.id)partes.push({a:gras[0],g:10});
         /* 4) el carbohidrato rellena las kcal que falten, sin pasarse de ración */
         if(C){
           const hasta=sumaAlimentos(partes).kcal;
-          const gC=Math.min(topeRacion(C),Math.max(30,redondeaG((meta.kcal-hasta)*100/Math.max(1,+C.kcal||1))));
+          const gC=Math.min(topeRacion(C),hay(C),Math.max(30,redondeaG((meta.kcal-hasta)*100/Math.max(1,+C.kcal||1))));
           if(gC>=25)partes.push({a:C,g:gC});}
         const t=sumaAlimentos(partes);
         /* el nombre se lee como un plato: proteína, carbohidrato y verdura, en ese orden */
@@ -9143,7 +9235,7 @@ function consumoEfectos(){
 function renderConsumo(){
   const c=consumoS(),v=ui.cnVista||'';
   if(v==='efectos')return renderConsumoEfectos();
-  const lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))?'lloret':'casa',tabaco:false});
+  const lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))&&new Date().getHours()>=19?'lloret':'casa',tabaco:false});   /* el Lloretazo es por la noche: por la mañana, «Casa» */
   const man=iso(addDays(new Date(),1)),guardiaMan=(function(){const sh=shiftById(dayInfo(man).shiftId);return !!(sh&&isGuardia(sh));})();
   const desde=iso(addDays(new Date(),-6)),recS=c.ses.filter(function(x){return x.fecha>=desde;}),max=Math.max(2,Math.max.apply(null,S.dias.map(function(d){return d.n;})));
   const seg=function(lista,key,val,lab){return '<div class="cnseg">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
@@ -9152,7 +9244,7 @@ function renderConsumo(){
     '<div class="subcab"><h2 class="subtit">🌿 4:20</h2><span class="sp"></span><button class="btn s" data-a="cn-vista" data-v="efectos">cómo te afecta ›</button></div>'+
     '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
       '<div><b>'+String(S.g).replace('.',',')+' g</b><span>esta semana'+(S.n?' · '+String(Math.round(S.g/S.n*100)/100).replace('.',',')+' g/sesión':'')+'</span></div>'+
-      '<div><b>'+consumoSin()+'</b><span>días seguidos sin</span></div></div>'+
+      (function(){const n=consumoSin();return '<div><b>'+n+'</b><span>'+(n===1?'día sin':'días seguidos sin')+'</span></div>';})()+'</div>'+
     '<div class="card"><div class="cap">APUNTAR UNA SESIÓN</div>'+
       '<div class="cnseg cndia">'+CN_DIA.map(function(x){const on=!f.fecha&&String(f.dia||'0')===x[0];
         return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="dia" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+x[1]+'</button>';}).join('')+
@@ -9308,9 +9400,60 @@ function protExtraPoner(w,auto){
   const d=comboADish(ex.fr,ex.icon);d.extra=true;if(ex.compra)d.nevera=false;
   /* al desayuno; si ya lleva dos cosas, a la cena (el día de guardia no: la cena es del hospital) */
   const n=function(c){return (sbCelda(w,c)||{items:[]}).items.length;},kG=sbKey(w);
-  if(guardiaCelda(kG,'cena')&&n('desayuno')>=2)return null;   /* tres yogures en el desayuno, no: el resto, al táper */
+  /* la guardia: comida y cena son del hospital, así que lo que falta va con el desayuno, para llevar
+     (hasta tres cosas). Antes con dos cosas el botón no hacía nada y no decía por qué */
+  if(guardiaCelda(kG,'cena')&&n('desayuno')>=3)return null;
   const cls=(n('desayuno')<2||guardiaCelda(kG,'cena'))?'desayuno':(n('cena')<2?'cena':'comida');
   const cel=sbCeldaMia(w,cls);cel.items.push({kind:'dish',id:d.id,portions:1});if(auto&&cel.items.length===1)cel.auto=true;return {d:d,cls:cls,prot:ex.prot,compra:!!ex.compra};}
+/* ---- las kcal del día ----
+   «Montar cuadra la proteína pero deja el día 200–1.000 kcal corto»: tras la proteína, se completa
+   la energía con hidratos y grasa de verdad (fruta, frutos secos, arroz, pan sin gluten), primero de
+   la nevera, hasta quedar a ±10 % del objetivo. Solo en lo que puso la app, nunca en lo tuyo. */
+const KCAL_FABRICA=[['Plátano',120,'un plátano',['desayuno','comida']],['Nuez',30,'un puñado de nueces',['desayuno','cena']],
+  ['Arroz basmati',70,'arroz de guarnición',['comida','cena']],['Pan sin gluten',60,'pan sin gluten',['cena','desayuno']],
+  ['Copos de avena',50,'avena',['desayuno']]];
+function kcalObj(){return +(food().objetivo||{}).kcal||0;}
+function kcalDiaPlan(dia){
+  let k=0,hay=false;M_CLS.forEach(function(c){const o=dia.cls[c[0]];if(o&&o.items.length){hay=true;k+=totals(o.items).kcal;}});
+  if(!hay&&dia.d.key)k=planTotalsOf(dia.d.key).kcal;
+  return Math.round(k);}
+function kcalExtras(){
+  /* lo que sube energía sin cocinar nada: PRIMERO lo de casa (fruta, pan, frutos secos, cereales que
+     ya tienes); si no hay, lo de siempre para comprar */
+  const nv=neveraGramos(),vistos={},out=[],cel=esCeliaco();
+  qcNevera().forEach(function(o){const a=o.a,t=alimTxt(a.n+' '+o.x.nom);if(vistos[a.id])return;
+    const fruta=a.g==='fruta'&&!/aguacate|limon|lima/.test(t),seco=/nuez|almendr|anacardo|pistach|avellan/.test(t),carb=a.g==='cereal'||/\bpan\b|baguette|tortita|arroz|patata|boniato|avena|quinoa/.test(t);
+    if(!fruta&&!seco&&!carb)return;
+    if(cel&&glutenDe(a.n+' '+o.x.nom)==='si')return;
+    vistos[a.id]=1;
+    const g=seco?30:(fruta?racDe(a,120):(/arroz|quinoa|avena/.test(t)?60:racDe(a,60)));
+    const fr={txt:'Extra: '+o.x.nom.toLowerCase(),tipo:'libre',tam:'m',items:[{id:a.id,g:g,casa:o.x.nom}],raros:[]};
+    out.push({fr:fr,icon:a.e||'➕',kcal:fraseMacros(fr).kcal,donde:fruta?['desayuno','comida']:(seco?['desayuno','cena']:['comida','cena','desayuno']),casa:true});});
+  KCAL_FABRICA.forEach(function(x){const a=alimPorNombre(x[0]);if(!a||vistos[a.id])return;
+    const fr={txt:'Extra: '+x[2],tipo:'libre',tam:'m',items:[{id:a.id,g:x[1]}],raros:[]};
+    if(cel&&glutenDe(a.n)==='si')return;
+    out.push({fr:fr,icon:a.e||'➕',kcal:fraseMacros(fr).kcal,donde:x[3],casa:nv.id[a.id]!=null});});
+  return out.filter(function(x){return x.kcal>=40;});}
+function kcalExtraPoner(w){
+  /* un extra de energía para el día w, en una comida que puso la app (o vacía) y que no sea de guardia */
+  const obj=kcalObj();if(!obj)return null;
+  const dia=mSemana().filter(function(x){return x.w===w;})[0];if(!dia)return null;
+  const gap=obj*0.95-kcalDiaPlan(dia);if(gap<obj*0.05)return null;
+  const ya={};SB_CLASES.forEach(function(c){const x=sbCelda(w,c[0]);if(x)x.items.forEach(function(it){ya[it.id]=1;});});
+  const kG=sbKey(w),libre=function(c){if(guardiaCelda(kG,c))return false;const cel=sbCelda(w,c);return !cel||!cel.items.length||cel.auto;};
+  const l=kcalExtras().filter(function(x){const d=(store.dishes||[]).filter(function(q){return alimTxt(q.name)===alimTxt(x.fr.txt);})[0];
+    return !(d&&ya[d.id])&&x.donde.some(libre);});
+  if(!l.length)return null;
+  /* el que mejor encaja en lo que falta sin pasarse mucho; a igualdad, lo de casa */
+  l.sort(function(p,q){const f=function(x){return Math.abs(gap-x.kcal)+(x.kcal>gap+120?400:0)-(x.casa?250:0);};return f(p)-f(q);});
+  const ex=l[0],c=ex.donde.filter(libre)[0];
+  const d=comboADish(ex.fr,ex.icon);d.extra=true;d.nevera=ex.casa;
+  const cel=sbCeldaMia(w,c);cel.items.push({kind:'dish',id:d.id,portions:1});if(cel.items.length===1)cel.auto=true;
+  return {d:d,cls:c,kcal:ex.kcal,compra:!ex.casa};}
+function kcalCompletar(){
+  /* toda la semana, hasta tres extras por día */
+  let n=0;for(let w=0;w<7;w++)for(let k=0;k<3;k++){if(!kcalExtraPoner(w))break;n++;}
+  return n;}
 function protSimpleHTML(){
   /* en la Semana: si algún día no llega a la proteína, se dice aquí mismo */
   const obj=protObj();if(!obj)return '';
@@ -9333,7 +9476,7 @@ function protAvisoHTML(){
     return '<div class="prav"><b>'+SB_DIAS_L[x.w]+'</b> · '+x.v+' de '+obj+' g — <span class="lo">te faltan '+x.falta+' g</span>'+
       '<div class="mini">'+(x.guardia?'Guardia: el menú del hospital es aproximado. Llévate algo: ':'Añade: ')+
         (su.length?esc(su.join(', ')):'compra yogur proteico, atún o pechuga de pavo (no tienes nada así en la nevera)')+'</div>'+
-      (su.length?'<button class="btn s" data-a="prot-extra" data-w="'+x.w+'">＋ ponerlo</button>':'')+'</div>';}).join('')+'</div>';}
+      (su.length?'<button class="btn s" data-a="prot-extra" data-w="'+x.w+'">'+(x.guardia?'＋ para llevar':'＋ ponerlo')+'</button>':'')+'</div>';}).join('')+'</div>';}
 function renderFoodDia(){
   const c=foodCtx(),f=c.f,sel=c.sel,ft=c.ft,ob=c.ob,d=c.d;
   const objK=+ob.kcal||0,objP=+ob.prot||0,obm=objetivoMacros();
@@ -10078,28 +10221,28 @@ function sbAuto(){
     for(let k=0;k<3;k++){const dia=mSemana().filter(function(x){return x.w===w;})[0];if(!dia||protDiaPlan(dia)>=objP*0.97)break;
       const de=sbCelda(w,'desayuno');if(de&&de.items.length&&!de.auto)break;
       const r=protExtraPoner(w,true);if(!r)break;ex++;}}
+  ex+=kcalCompletar();
   s.on=true;save();
   const cortos=objP?protSemana().filter(function(x){return x.corta;}).length:0;
-  return n?(n+' comida'+(n===1?'':'s')+' puesta'+(n===1?'':'s')+' con lo que tienes'+(ex?' · '+ex+' extra'+(ex===1?'':'s')+' de proteína':'')+
+  return n?(n+' comida'+(n===1?'':'s')+' puesta'+(n===1?'':'s')+' con lo que tienes'+(ex?' · '+ex+' extra'+(ex===1?'':'s')+' de proteína y energía':'')+
     (cortos?' · '+cortos+' día'+(cortos===1?'':'s')+' sin llegar a la proteína: mira la Semana':'')):'no he encontrado nada que poner: añade platos o haz la compra';}
 function renderSemanaSimple(){
   const sem=mSemana(),hoyK=iso(new Date()),coc={};cocinadoS().forEach(function(x){coc[x.dishId]=1;});
-  let tot=0,ok=0;const falta={};
+  const cub=semanaCubierta(),tot=cub.tot,ok=cub.ok;
   const celda=function(dia,c){const o=dia.cls[c];const d=o.items.length?dishById(o.items[0].id):null;
     const hoy=dia.d.key===hoyK;
-    if(d){tot++;const cu=platoCubierto(d);if(!cu.total||cu.n===cu.total||coc[d.id])ok++;
-      else (d.ingredients||[]).forEach(function(l){const k=despClave(parseIng(l).item||l);if(k&&!despensaS().some(function(x){return x.k===k;}))falta[(parseIng(l).item||l).toLowerCase()]=1;});}
     return '<button class="ssc'+(d&&coc[d.id]?' cz':'')+(hoy?' hoy':'')+(o.fuente==='tipo'?' tp':'')+'" data-a="ss-celda" data-w="'+dia.w+'" data-c="'+c+'">'+
-      (d?esc((d.icon||'🍽')+' '+d.name):'<span class="mini">＋</span>')+'</button>';};
+      (d?esc((d.icon||'🍽')+' '+platoCortoSem(d.name)):'<span class="mini">＋</span>')+'</button>';};
   const filas=sem.map(function(dia){const sh=dia.d.shiftId?shiftById(dia.d.shiftId):null;
     return '<span class="ssd'+(dia.d.key===hoyK?' hoy':'')+'">'+SB_DIAS[dia.w]+(sh&&isGuardia(sh)?' 🩺':'')+'</span>'+SB_CLASES.map(function(c){return celda(dia,c[0]);}).join('');}).join('');
-  const fl=Object.keys(falta);
+  const fl=cub.faltan;
   $('#main').innerHTML='<div class="grid mt">'+
     '<div class="card"><div class="row"><span class="cap">TU SEMANA</span><span class="sp"></span><span class="mini">'+esc(rangoSemanaTxt())+'</span></div>'+
       '<div class="ssg"><span></span><span class="ssh">DESAYUNO</span><span class="ssh">COMIDA</span><span class="ssh">CENA</span>'+filas+'</div>'+
       '<div class="mini" style="margin-top:6px"><span class="h2leg"></span>cocinado en tanda · las claras vienen de tu tipo de día · toca una casilla para cambiarla</div></div>'+
     protSimpleHTML()+
     (tot?('<div class="card"><div class="row"><span class="cap">CON LO QUE TIENES</span><span class="sp"></span><b class="'+(ok===tot?'ok':'')+'">'+ok+' de '+tot+' comidas</b></div>'+
+      '<p class="mini" style="margin:2px 0 0">las que quedan de la semana: lo cocinado cuenta, y lo que gasta una ya no está para la siguiente</p>'+
       (fl.length?'<p class="mini" style="margin:4px 0 0">Para las que faltan: <b style="color:var(--ink)">'+esc(fl.slice(0,6).join(', '))+(fl.length>6?'…':'')+'</b> — ya están en la compra.</p>':
         '<p class="mini" style="margin:4px 0 0">Tienes todo lo de la semana. 👌</p>')+'</div>'):'')+
     '<div class="row" style="gap:6px"><button class="btn p" style="flex:1;min-height:46px" data-a="ss-auto">✨ '+(tot?'Móntamela otra vez':'Móntamela')+'</button>'+
@@ -10143,10 +10286,17 @@ function renderNevera2(){
     '<button class="btn" style="min-height:44px" data-a="food-vista" data-v="quecomo">🍳 ¿Qué como con esto? · plato, bowl o bocata</button>'+
   '</div>';}
 function hcHuecos(dias){
-  /* los huecos de comida y cena desde ahora, dentro de los días que aguanta, para colocar raciones */
+  /* los huecos de comida y cena desde ahora, dentro de los días que aguanta, para colocar raciones.
+     Por FECHA (el domingo → lunes ya es otra semana), y sin tocar lo que pusiste tú ni la guardia:
+     antes «Hoy cocino» pisaba la cena que tenías puesta sin decir nada. Lo que puso la app sí se
+     cambia, pero se dice qué había. */
   const out=[],h=new Date().getHours();
-  for(let i=0;i<Math.max(1,dias);i++){const d=addDays(new Date(),i),w=(d.getDay()+6)%7;
-    ['comida','cena'].forEach(function(c){if(i===0&&c==='comida'&&h>=16)return;out.push({w:w,c:c,i:i,k:iso(d)});});}
+  for(let i=0;i<Math.max(1,dias);i++){const d=addDays(new Date(),i),k=iso(d),w=(d.getDay()+6)%7;
+    ['comida','cena'].forEach(function(c){if(i===0&&c==='comida'&&h>=16)return;
+      if(guardiaCelda(k,c))return;
+      const cel=sbCelda(k,c);if(cel&&cel.items.length&&!cel.auto)return;
+      const o=mCeldas(w,{key:k,shiftId:dayInfo(k).shiftId})[c],antes=o.items.length?dishById(o.items[0].id):null;
+      out.push({w:w,c:c,i:i,k:k,antes:antes&&!antes.nada?antes:null});});}
   return out;}
 function renderHoyCocino(){
   const modo=ui.hcModo||2,need=modo===1?1:(modo===2?2:3);
@@ -10167,7 +10317,10 @@ function renderHoyCocino(){
   if(sel){const rac=Math.max(1,Math.min(modo===1?1:(modo===2?4:8),Math.round(+sel.d.portions||2))),hs=hcHuecos(Math.min(sel.dur,modo===1?1:(modo===2?2:4))).slice(0,rac);
     ui.hcPlan={id:sel.d.id,rac:rac,huecos:hs,fr:sel.d._fr||null,icon:sel.d.icon};
     plan='<div class="card"><div class="row"><span class="cap">SE COLOCA ASÍ</span><span class="sp"></span><span class="mini">'+esc(sel.d.name.toLowerCase())+' · '+rac+' rac.</span></div>'+
-      hs.map(function(x){return '<div class="nvf"><span>'+(x.i===0?'📍':'📅')+'</span><span class="n">'+(x.i===0?'hoy':SB_DIAS_L[x.w])+' · '+x.c+'</span><span></span><span></span></div>';}).join('')+
+      hs.map(function(x){const cambia=x.antes&&x.antes.id!==sel.d.id;
+        return '<div class="nvf"><span>'+(x.i===0?'📍':'📅')+'</span><span class="n">'+(x.i===0?'hoy':SB_DIAS_L[x.w])+' · '+x.c+
+          (cambia?' <span class="mini">· en lugar de '+esc(x.antes.name.length>28?x.antes.name.slice(0,27)+'…':x.antes.name)+'</span>':'')+'</span><span></span><span></span></div>';}).join('')+
+      (hs.length<rac?'<p class="mini" style="margin:6px 0 0">'+(rac-hs.length)+' ración'+(rac-hs.length===1?'':'es')+' sin hueco libre (lo que pusiste tú no se toca): al congelador o para otro día.</p>':'')+
       '<p class="mini" style="margin:6px 0 0">Aguanta '+sel.dur+' día'+(sel.dur===1?'':'s')+' en la nevera; congelado, 2–3 meses.</p></div>'+
       '<button class="btn p gbig" data-a="hc-ok">✓ Lo cocino · ponlo en la semana</button>';}
   $('#main').innerHTML='<div class="grid mt">'+
@@ -10239,7 +10392,7 @@ function queHagoHTML(){
         return '<div class="idea'+(bien?' buena':'')+'">'+
           '<h4>'+esc(x.nombre)+'</h4>'+
           '<p class="por">'+x.t.kcal+' kcal · '+fmt(x.t.pr)+' g P · '+fmt(x.t.ch)+' g C · '+fmt(x.t.gr)+' g G'+
-            (bien?' · cuadra con lo que te queda':'')+'</p>'+
+            (bien?' · cuadra con lo que te queda':(x.t.pr<x.meta.prot*0.8?' · con lo que hay en casa no llega a tu proteína':''))+'</p>'+
           x.partes.map(function(pt){
             return '<div class="ingr"><span>'+esc(pt.a.e||'')+' '+esc(String(pt.a.n).toLowerCase())+
               (/crud/i.test(pt.a.nota||'')?' <span class="mini">(en crudo)</span>':'')+'</span><b>'+pt.g+' g</b></div>';}).join('')+
@@ -10386,6 +10539,15 @@ function platosPorAntojo(){
     return a.ing.some(function(g){
       return g.split(' ').some(function(p){return txt.indexOf(alimTxt(p))>=0;});});
   }).sort(function(x,y){return (+y.prot||0)-(+x.prot||0);});}
+function platosAppSinUso(){
+  /* los platos que montó la app y ya no están en ninguna semana, ni cocinados, ni en ninguna toma */
+  const usados={};
+  Object.keys(sbS().d||{}).forEach(function(k){const d=sbS().d[k]||{};Object.keys(d).forEach(function(c){((d[c]||{}).items||[]).forEach(function(it){usados[it.id]=1;});});});
+  Object.keys(gComidaS()).forEach(function(k){usados[gComidaS()[k]]=1;});
+  cocinadoS().forEach(function(x){usados[x.dishId]=1;});
+  Object.keys(store.menu||{}).forEach(function(sid){(store.menu[sid]||[]).forEach(function(sl){(slotItems(sid,sl).items||[]).forEach(function(it){usados[it.id]=1;});});});
+  (store.meals||[]).forEach(function(m){(m.items||[]).forEach(function(it){usados[it.id]=1;});});
+  return (store.dishes||[]).filter(function(d){return (d.nevera||d.extra)&&!usados[d.id];});}
 function renderMisPlatos(){
   const tab=ui.platosTab||'';
   const cab='<div class="pest">'+PLATOS_TABS.map(function(t){
@@ -10401,10 +10563,14 @@ function renderMisPlatos(){
     '<p class="mini" style="margin:0">También puedes compartir el vídeo desde TikTok directamente a «Guardias».</p>';
   else{
     const q=(ui.dishQ||'').toLowerCase();
-    const ds=(store.dishes||[]).filter(function(d){return !q||String(d.name||'').toLowerCase().indexOf(q)>=0;});
-    cuerpo='<div class="buscador">'+gymIco('lupa','gico sm')+
-      '<input id="mpQ" value="'+esc(ui.dishQ||'')+'" data-a="dish-q" placeholder="buscar entre tus platos…"></div>'+
-      '<div class="card">'+(ds.length?ds.map(function(d){
+    const ds0=(store.dishes||[]).filter(function(d){return !q||String(d.name||'').toLowerCase().indexOf(q)>=0;});
+    /* TRES GRUPOS. Montar crea platos solo («Bowl de pechuga… · más pechuga», «Extra de proteína: 2
+       huevos») y se mezclaban con los tuyos: 27 platos y 9 de la app, 2,4 pantallas. Los tuyos
+       arriba; los de la app y los especiales (hospital, fuera, nada), plegados */
+    const esApp=function(d){return !!(d.nevera||d.extra);},esEsp=function(d){return !!(d.hospital||d.fuera||d.nada);};
+    const ds=q?ds0:ds0.filter(function(d){return !esApp(d)&&!esEsp(d);});
+    const app=q?[]:ds0.filter(esApp),esp=q?[]:ds0.filter(esEsp),sinUso=platosAppSinUso();
+    const fila=function(d){
         /* la etiqueta de la tanda venía del «Catálogo de platos», que era la otra pantalla que
            pintaba estos mismos platos: al fundirlas no se pierde */
         const b=isBatch(d.batchId)?batchById(d.batchId):null;
@@ -10414,8 +10580,13 @@ function renderMisPlatos(){
             (b?(' · '+esc(b.label)):'')+'</span></span>'+
           '<span class="kc">'+(d.kcal||0)+'<small>/ración</small></span></button>'+
           '<button class="add" data-a="food-cocina" data-id="'+d.id+'" aria-label="cocinar '+esc(d.name)+'">'+
-          gymIco('olla','gico sm')+'</button></div>';}).join(''):
-        '<div class="empty">Ningún plato con ese nombre.</div>')+'</div>'+
+          gymIco('olla','gico sm')+'</button></div>';};
+    cuerpo='<div class="buscador">'+gymIco('lupa','gico sm')+
+      '<input id="mpQ" value="'+esc(ui.dishQ||'')+'" data-a="dish-q" placeholder="buscar entre tus platos…"></div>'+
+      '<div class="card">'+(ds.length?ds.map(fila).join(''):'<div class="empty">'+(q?'Ningún plato con ese nombre.':'Aún no tienes platos tuyos: crea uno abajo.')+'</div>')+'</div>'+
+      (app.length?'<div class="card"><details class="plegable" data-tg="mpApp"'+(ui.mpApp?' open':'')+'><summary>los que ha montado la app · '+app.length+'</summary>'+app.map(fila).join('')+
+        (sinUso.length?'<button class="btn s" style="margin-top:8px" data-a="platos-app-limpiar">quitar los '+sinUso.length+' que no usa ninguna semana</button>':'')+'</details></div>':'')+
+      (esp.length?'<div class="card"><details class="plegable" data-tg="mpEsp"'+(ui.mpEsp?' open':'')+'><summary>especiales (hospital, comer fuera, nada) · '+esp.length+'</summary>'+esp.map(fila).join('')+'</details></div>':'')+
       '<div class="row"><button class="btn p" data-a="plato-nuevo">'+gymIco('mas','gico sm')+' plato con ingredientes</button>'+
       '<button class="btn s" data-a="dish-new">a mano</button></div>';}
   $('#main').innerHTML='<div class="grid">'+
@@ -10864,6 +11035,18 @@ const SIN_GLUTEN_POR={'al-pan-de-barra':'Pan sin gluten','al-pan-blanco':'Pan si
   'al-pan-de-molde':'Pan sin gluten','al-pan-de-molde-integral':'Pan sin gluten','al-pan-tostado':'Tortitas de maíz',
   'al-pasta':'Pasta sin gluten','al-macarrones':'Pasta sin gluten','al-espaguetis':'Pasta sin gluten','al-pasta-integral':'Pasta sin gluten',
   'al-harina-de-trigo':'Harina de maíz','al-cuscus':'Quinoa','al-bulgur':'Quinoa','al-tortilla-de-trigo':'Tortitas de maíz','al-pan-rallado':'Harina de maíz'};
+function sinGlutenTexto(nom){
+  /* para un celíaco, lo que lleva gluten se pide ya en su versión sin gluten: «pan bocadillo
+     integral» → «pan sin gluten». Lo usan la compra y los «falta:» */
+  nom=String(nom||'');if(!esCeliaco()||glutenDe(nom)!=='si')return nom;
+  const a=alimDeTexto(nom),n=a&&SIN_GLUTEN_POR[a.id];
+  if(n)return n.toLowerCase();
+  const t=alimTxt(nom);
+  if(/\bpan\b|baguette|chapata|bocadillo/.test(t))return 'pan sin gluten';
+  if(/pasta|macarr|espaguet|fideo|tallar/.test(t))return 'pasta sin gluten';
+  if(/harina|pan rallado|rebozad/.test(t))return 'harina de maíz';
+  if(/cuscus|cous|bulgur/.test(t))return 'quinoa';
+  return nom+' sin gluten';}
 function platoDesdeDish(id){
   const d=dishById(id);if(!d)return platoVacio();
   migrarPlato(d);
@@ -11557,9 +11740,10 @@ function cjeAuto(opt){
   if(objP)for(let w=0;w<7;w++)for(let k=0;k<3;k++){const dia=mSemana().filter(function(y){return y.w===w;})[0];
     if(!dia||protDiaPlan(dia)>=objP*0.97)break;const de=sbCelda(w,'desayuno');if(de&&de.items.length&&!de.auto)break;
     const pe=protExtraPoner(w,true);if(!pe)break;ex++;if(pe.compra)exC++;}
+  const exK=kcalCompletar();
   sbS().on=true;save();
   const T=tandasSemana().tandas.length;
-  return n?((T?T+' tanda'+(T===1?'':'s')+' de cocinar':'sin tandas')+(ex?' · '+ex+' extra'+(ex===1?'':'s')+' de proteína'+(exC?' ('+exC+' a comprar: no hay bastante en casa)':''):'')):
+  return n?((T?T+' tanda'+(T===1?'':'s')+' de cocinar':'sin tandas')+(ex?' · '+ex+' extra'+(ex===1?'':'s')+' de proteína'+(exC?' ('+exC+' a comprar: no hay bastante en casa)':''):'')+(exK?' · '+exK+' para llegar a las kcal':'')):
     (despensaS().length||(store.dishes||[]).length?'no ha cambiado nada':'no hay platos ni nevera: haz la foto del ticket o crea platos');}
 function cjeHoyPlan(k){
   /* lo de hoy por momento, lo mismo que enseña la semana: la casilla o, si no, lo del tipo de día */
@@ -11570,7 +11754,7 @@ function cjeHecho(k,p){return foodLog(k).some(function(e){return (e.p||'comida')
 function cjeAvisos(){
   const T=tandasSemana(),hoyK=iso(new Date()),DL=DIA3;
   const pend=T.tandas.filter(function(t){return !t.hecho&&t.key>=hoyK;});
-  const cd=compraDatos(),falta=cd.semana;   /* lo de la semana; tus listas fijas van aparte */
+  const cd=compraDatos(),falta=cd.total-cd.marcados;   /* una sola cifra: la misma que la pantalla de la Compra (semana + tus listas de rutina) */
   const cad=despensaS().filter(function(x){const r=frescoDias(x);return r!=null&&r<=2;}).length;
   return {cocinar:pend.length?DL[parseDate(pend[0].key).getDay()]:'—',nCoc:pend.length,compra:falta,nevera:cad,T:T};}
 function cjeCelda(x,c,marca,i){
@@ -12314,6 +12498,8 @@ function gymCardioSemana(){
   const g=gymS(),l=iso(mondayOf(new Date())),f=iso(addDays(mondayOf(new Date()),6));
   return g.cardio.filter(function(x){return x.fecha>=l&&x.fecha<=f;}).length;}
 function gymFicha(p,ico,titulo,n,sub){
+  /* sin dato («—») no merece una ficha de 80 px: va como enlace pequeño en una fila aparte */
+  if(n==='—'||n===0)return '<button class="gtile vacia" data-a="gym-panel" data-p="'+p+'">'+gymIco(ico,'gico sm')+' '+esc(titulo)+' <span class="s">· '+esc(sub)+'</span></button>';
   return '<button class="gtile" data-a="gym-panel" data-p="'+p+'">'+gymIco(ico)+
     '<b>'+esc(titulo)+'</b><span class="n">'+esc(n)+'</span><span class="s">'+esc(sub)+'</span></button>';}
 /* ===================== entrenar en vivo =====================
@@ -12715,7 +12901,8 @@ function renderGymRutinas(){
       '<div class="rcab"><b>'+esc(rt.nombre)+'</b>'+
         (hoyRt&&hoyRt.id===rt.id?'<span class="tag b2">HOY</span>':'')+'</div>'+
       '<div class="rsub">'+rutinaResumen(rt)+' · '+rutinaDiasTxt(rt)+'</div>'+
-      (chips?('<div class="rmusr">'+chips+'</div>'):'<div class="rmusr"><span class="mini">añade ejercicios para ver qué trabaja</span></div>')+
+      (chips?('<div class="rmusr">'+chips+'</div>'):'<div class="rmusr"><span class="mini">'+(!rt.ejercicios.length?'añade ejercicios para ver qué trabaja':
+        (rutTipo(rt)==='agua'?'nado: todo el cuerpo, sobre todo espalda y hombros':'no reconozco «'+esc(rt.ejercicios[0].ex)+'»: elige el ejercicio de la lista para ver qué trabaja'))+'</span></div>')+
       '<div class="rbot">'+
         '<button class="btn p" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(c.sel)+'">empezar</button>'+
         '<button class="btn s" data-a="rt-editar" data-id="'+esc(rt.id)+'">editar</button>'+
@@ -12906,8 +13093,9 @@ function objetivoCardHTML(o){
     '</div>';}
 function volumenPorMusculo(desde,hasta){
   /* el volumen repartido por grupo grande: es lo que enseña si llevas semanas descuidando la
-     pierna sin darte cuenta. Una serie que toca dos grupos suma en los dos: no se reparte, porque
-     no sabemos cuánto va a cada uno y repartir a medias sería inventárselo. */
+     pierna sin darte cuenta. El músculo principal se lleva la serie entera y los que ayudan, la
+     mitad (lo mismo que las series por músculo): sumándolo entero en todos, hombros y tríceps
+     pasaban al pecho en un plan con el press banca de ejercicio principal. */
   const g=gymS(),out={};
   MREGIONES.forEach(function(r){out[r]=0;});
   g.registro.forEach(function(x){
@@ -12915,7 +13103,7 @@ function volumenPorMusculo(desde,hasta){
     if(hasta&&x.fecha>hasta)return;
     const v=volSerie(x);
     if(!v)return;
-    regionesDeEjercicio(x).forEach(function(r){if(out[r]!=null)out[r]+=v;});});
+    Array.from(regionesDeEjercicio(x)).forEach(function(r,i){if(out[r]!=null)out[r]+=i===0?v:v/2;});});
   return out;}
 function volumenMusculoHTML(){
   const desde=semanasAtras(4);
@@ -13259,7 +13447,7 @@ function gymSemanaCirculos(sel){
   const bq=bloqueDe(iso(lun));
   return '<div class="card gsem"><div class="row"><b>'+(iso(lun)===iso(mondayOf(new Date()))?'Esta semana':('Semana del '+lun.getDate()+' '+MON[lun.getMonth()]))+'</b>'+
       '<span class="mini" style="margin-left:6px">'+(bq.descarga?'<b style="color:var(--warn)">descarga</b>':('bloque · sem '+bq.sem+'/'+bq.de))+'</span><span class="sp"></span>'+
-      '<button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana"><b>'+hechos+(meta?(' / '+meta):'')+'</b> '+(meta?'entrenos':'hechos')+' ⚙</button></div>'+
+      '<button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana"><b>'+hechos+(s&&s.total?(' de '+s.total):'')+'</b> hechos'+(meta?' · mín. '+meta:'')+' ⚙</button></div>'+
     '<div class="gscs">'+celdas.join('')+'</div>'+
     '<div class="gtiraq">'+esc(selTxt)+'</div>'+
     (gymCompleto()?gymKpisHTML():'')+'</div>';}
@@ -13275,13 +13463,17 @@ function gymKpisHTML(){
   const g=gymS(),ses=g.sesiones.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
   const ult=ses.slice(0,8),media=ult.length?Math.round(ult.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ult.length):null;
   const hoy=new Date(),vol=function(d0,d1){let v=0;for(let i=d0;i<d1;i++)v+=volumenDe(iso(addDays(hoy,-i)));return v;};
-  const v7=vol(0,7),v28=vol(7,35)/4;
+  /* la media de las semanas de antes CON entreno: dividir entre 4 una sola semana con datos daba «+758 %» */
+  const v7=vol(0,7),prev=[1,2,3,4].map(function(w){return vol(7*w,7*w+7);}).filter(function(v){return v>0;});
+  const v28=prev.length?prev.reduce(function(a,b){return a+b;},0)/prev.length:0;
   /* sin nada esta semana no es «−100 %»: es que aún no has entrenado */
   const dv=(v28>0&&v7>0)?Math.round((v7-v28)/v28*100):null;
   const sem=gymSemanasSeguidas();
   const k=function(b,s){return '<div><b>'+b+'</b><span>'+s+'</span></div>';};
-  return '<div class="gkpi">'+k((sem?'🔥 ':'')+sem,'semanas seguidas')+k(gymDiasMes(),'días este mes')+
-    k(media!=null?(media+'′'):'—','de media')+k(dv==null?'—':((dv>0?'+':'')+dv+'%'),'volumen')+'</div>';}
+  /* sin racha todavía, lo que sí hay: las sesiones de las dos últimas semanas (no «0 semanas seguidas» con 3 hechas) */
+  let d14=0;for(let i=0;i<14;i++)if(gymHechoEn(iso(addDays(hoy,-i))))d14++;
+  return '<div class="gkpi">'+(sem?k('🔥 '+sem,'semanas seguidas'):k(d14,'días en 2 semanas'))+k(gymDiasMes(),'días este mes')+
+    k(media!=null?(media+'′'):'—','de media')+k(dv==null?'—':((dv>0?'+':'')+dv+'%'),dv==null?'volumen (falta otra semana)':'volumen vs. tu media')+'</div>';}
 function rutinaMeta(rt){
   const ejs=rt.ejercicios,n=ejs.reduce(function(a,e){return a+ejSets(e).length;},0);
   const min=Math.round(ejs.reduce(function(a,e){return a+ejSets(e).length*(40+ejDescanso(e,rt));},0)/60);
@@ -13304,13 +13496,14 @@ function gymHeroHTML(sel){
   const rt=(e&&e.tipo==='pisc')?(g.rutinas.filter(function(r){return rutTipo(r)==='agua';})[0]||null):((e&&e.rutina)||rutinaDeFecha(sel));
   const choqueRt=!e&&!!rt;
   if(rt){
-    const m=rutinaMeta(rt),hi=e&&e.hora?e.hora:'',casa=(hi&&e.dur)?hm(mins(hi)+e.dur+entrenoCfg().vuelta):'';
+    const m=rutinaMeta(rt),hi=e&&e.hora?e.hora:'',tw=hi&&e.dur?trasEntreno(sel,inf,mins(hi)+e.dur):null,
+      casa=tw?'':((hi&&e.dur)?hm(mins(hi)+e.dur+entrenoCfg().vuelta):'');
     /* el peso que toca en el primer ejercicio con barra o mancuerna: lo que miras antes de salir */
     const pk=rt.ejercicios.filter(function(x){return ejMedida(x)==='kg';}).map(function(x){
       const pr=progresionDe(x.ex,ejSets(x).filter(function(z){return z.t!=='c';}).length,ejRango(x)[1],sel);
       return pr.kg>0?(x.ex+' '+fmtKg(pr.kg)+' kg'+(pr.cl==='sube'?' ▲':(pr.cl==='baja'?' ▼':''))):'';}).filter(Boolean)[0]||'';
     const lst=sel===hoy?listoDe(sel):{rec:'normal'},corta=lst.rec==='corta',bq=bloqueDe(sel);
-    return '<div class="ghero2'+(choqueRt?' choque':'')+'"><div class="k">'+dtxt+' TOCA'+(hi?(' · '+esc(hi)+(casa?(' → EN CASA '+casa):'')):'')+(bq.descarga?' · DESCARGA':'')+
+    return '<div class="ghero2'+(choqueRt?' choque':'')+'"><div class="k">'+dtxt+' TOCA'+(hi?(' · '+esc(hi)+(tw?(' → TRABAJO '+esc(tw.trabajo)):(casa?(' → EN CASA '+casa):''))):'')+(bq.descarga?' · DESCARGA':'')+
         (choqueRt&&malo?(' · PERO ESTÁS DE '+malo.toUpperCase()):'')+'</div>'+
       '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+(pk?(' · <b style="color:var(--ink)">'+esc(pk)+'</b>'):'')+'</div>'+
       '<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?' data-corta="1"':'')+'>▶ Empezar '+esc(rt.nombre)+'</button>'+
@@ -13346,7 +13539,7 @@ function renderGymPortada(){
     gymAvisoHTML(c.sel)+
     avisosPuertaHTML()+
     (c.sel===iso(new Date())&&!ui.gymSesionActiva&&gymCompleto()?listoHTML(c.sel):'')+
-    gymHeroHTML(c.sel)+
+    gymHeroHTML(c.sel)+pesoCorporalAvisoHTML()+
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="plannuevo">📋 plan</button><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
     (g.rutinas.length?('<div class="grts">'+g.rutinas.map(rutinaTarjetaHTML).join('')+'</div>'):'')+
     (gymCompleto()?musculosHTML(c.sel):'')+
@@ -13361,11 +13554,23 @@ function renderGymPortada(){
     '<button class="card infpuerta" data-a="hoy-informe" data-sem="pasada"><span>📊</span><span class="t"><b>Informe de la semana</b><span class="mini">carga, descanso, músculos y qué cambiar</span></span><span class="mini">›</span></button>'+
     '</div>';
   if(ui.gymSesionActiva)relojGym();}
+function pesoCorporalAvisoHTML(){
+  /* las dominadas, fondos y flexiones se cuentan con tu peso: sin él valían 0 kg en «Tus marcas», en
+     las estadísticas y en el informe, y no sumaban volumen. Se pide aquí, donde se ve que falta */
+  if(+perfilS().pesoKg)return '';
+  const usa=gymS().registro.some(function(x){const m=ejInfo(x.ex).medida;return m==='lastre'||m==='reps';});
+  if(!usa)return '';
+  return '<div class="card gpeso"><div class="row"><span class="cap">⚖️ TU PESO</span><span class="sp"></span>'+
+    '<input inputmode="decimal" placeholder="kg" data-a="gym-peso" aria-label="tu peso corporal en kg" style="width:84px"></div>'+
+    '<p class="mini" style="margin:4px 0 0">Las dominadas y los fondos se cuentan con tu peso (+ el lastre). Sin él valen 0 kg y no suman a tu volumen ni a tus marcas.</p></div>';}
 function renderGymPlan(){
   /* lo que antes ocupaba la portada: el mínimo de la semana, fuerza/piscina y los trayectos */
   const c=gymCtx();
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu semana de entreno')+
-    entrenoSemanaHTML(c.sel||iso(new Date()))+avisosCardHTML()+modoCardHTML()+unidadHTML()+
+    entrenoSemanaHTML(c.sel||iso(new Date()))+avisosCardHTML()+modoCardHTML()+
+    /* lo que se toca una vez (unidades, descanso, discos, la ciencia) plegado: el plan era 2,2 pantallas */
+    '<div class="card"><details class="plegable"'+(ui.gymFino?' open':'')+' data-tg="gymFino"><summary><b>Ajustes finos</b> · unidades, descanso, discos y la ciencia</summary>'+
+    unidadHTML()+
     '<div class="card"><h2>Cómo entrenas</h2>'+
       '<div class="row" style="gap:8px"><label class="fld" style="flex:1">descanso por defecto (s)<input inputmode="numeric" value="'+descansoCfg()+'" data-a="gym-descanso"></label>'+
       '<label class="fld" style="flex:1">cierre automático (min)<input inputmode="numeric" value="'+gymCierreMin()+'" data-a="gym-cierre"></label></div>'+
@@ -13379,6 +13584,7 @@ function renderGymPlan(){
       '<div class="gcfg"><span>Repeticiones que te dejas<small>RIR por defecto en cada serie</small></span><input inputmode="numeric" value="'+ejRir({})+'" data-a="gym-rirdef"></div>'+
       '<div class="gcfg"><span>Descarga<small>una semana suave cada…</small></span><input inputmode="numeric" value="'+descargaCada()+'" data-a="gym-descarga"></div>'+
       '<p class="mini" style="margin:10px 0 0;line-height:1.5">Volumen: Schoenfeld 2017 y Pelland 2024 (dosis-respuesta), puntos MEV/MRV de Israetel. Carga: sRPE de Foster 2001. ACWR: Gabbett 2016. 1RM: Epley con repeticiones en reserva (Helms, Zourdos). Sueño y fuerza: Knowles 2018. Suplementos: posicionamientos de la ISSN y del AIS.</p></div>'+
+    '</details></div>'
     '</div>';}
 /* ---------- LA RUTINA: lo que vas a hacer, serie a serie ---------- */
 function filaPlanTxt(med,s,ult){
@@ -13452,15 +13658,18 @@ function comoQuedaHTML(rt){
       (sinMusc.length?('<p class="mini" style="margin-top:4px;color:var(--warn)">No sé qué músculos trabaja: '+
         esc(sinMusc.join(', '))+'. Se cuenta igual en la rutina, solo que no pinta el muñeco.</p>'):'')+
       '</div></div></div>';}
-function rtBuscar(q){
-  const n=normEj(q),vistos={},out=[];
+function rtBuscar(q,tipo){
+  /* lo que se ofrece va con el tipo de rutina: a «Torso A» se le ofrecía «Crol 100 m» por ser «tuyo» */
+  const n=normEj(q),vistos={},out=[],agua=tipo==='agua';
   const mete=function(nm,sub){const k=normEj(nm);if(!k||vistos[k])return;vistos[k]=1;out.push({n:nm,sub:sub});};
-  const mios={};gymS().rutinas.forEach(function(r){r.ejercicios.forEach(function(e){mios[e.ex]=1;});});
+  const mios={},deAgua={},deTierra={};
+  gymS().rutinas.forEach(function(r){const a=rutTipo(r)==='agua';r.ejercicios.forEach(function(e){mios[e.ex]=1;(a?deAgua:deTierra)[e.ex]=1;});});
   Object.keys(gymIdx().byEx).forEach(function(x){mios[x]=1;});
+  const vale=function(x){const m=ejInfo(x).medida;if(agua)return !!deAgua[x]||m==='dist'||m==='tiempo';return !(deAgua[x]&&!deTierra[x])&&m!=='dist';};
   const toks=n.split(' ').filter(Boolean);
   const casa=function(nm){const t=normEj(nm);return toks.every(function(w){return t.indexOf(w)>=0;});};
-  Object.keys(mios).forEach(function(x){if(!n||casa(x))mete(x,'tuyo');});
-  EJ_BASE.forEach(function(b){if(!n||casa(b[0]))mete(b[0],EJ_MEDIDAS[b[2]]);});
+  Object.keys(mios).forEach(function(x){if((!n||casa(x))&&(!tipo||vale(x)))mete(x,'tuyo');});
+  EJ_BASE.forEach(function(b){if((!n||casa(b[0]))&&(!tipo||(agua?(b[2]==='dist'||b[2]==='tiempo'):b[2]!=='dist')))mete(b[0],EJ_MEDIDAS[b[2]]);});
   if(n)gymS().biblioteca.forEach(function(b){if(out.length<40&&casa(b.n))mete(b.n,b.tg||b.c||'biblioteca');});
   return out.slice(0,n?12:10);}
 function renderGymRutEdit(){
@@ -13504,7 +13713,7 @@ function renderGymRutEdit(){
         '<button class="ok" data-a="rt-abrir" data-ix="-1">✓ hecho</button></div></div>'+
       (ej.ss&&ix<rt.ejercicios.length-1?'<div class="gss">SUPERSERIE</div>':'');}).join('');
   const ya={};rt.ejercicios.forEach(function(e){ya[normEj(e.ex)]=1;});
-  const res=rtBuscar(ui.rtQ||'').filter(function(r){return !ya[normEj(r.n)];}).slice(0,ui.rtQ?12:6);
+  const res=rtBuscar(ui.rtQ||'',t).filter(function(r){return !ya[normEj(r.n)];}).slice(0,ui.rtQ?12:6);
   const exacto=(ui.rtQ||'').trim()&&!ya[normEj(ui.rtQ)]&&!res.some(function(r){return normEj(r.n)===normEj(ui.rtQ);});
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><button class="btn s volver" data-a="gym-panel" data-p="rut" aria-label="volver">'+gymIco('atras','gico sm')+'</button>'+
@@ -13705,18 +13914,29 @@ function seriesMusculo(lunKey){
     Array.from(regionesDeEjercicio(x)).forEach(function(r,i){out[r]=(out[r]||0)+(i===0?1:0.5);});});
   Object.keys(out).forEach(function(r){out[r]=Math.round(out[r]*2)/2;});
   return out;}
+function seriesPrevistas(lunKey){
+  /* lo que el plan aún tiene para esta semana (de mañana al domingo), por músculo: el viernes «pecho 3,
+     por debajo de 8» saltaba aunque el sábado tocara otra vez fuerza */
+  const out={},hoyK=iso(new Date());MREGIONES.forEach(function(r){out[r]=0;});
+  for(let i=0;i<7;i++){const k=iso(addDays(parseDate(lunKey),i));if(k<=hoyK)continue;
+    const e=entrenoDe(k),rt=e&&e.tipo==='fuerza'?e.rutina:null;if(!rt)continue;
+    rt.ejercicios.forEach(function(ej){const n=ejSets(ej).filter(function(z){return z.t!=='c';}).length;
+      Array.from(regionesDeEjercicio({ex:ej.ex})).forEach(function(r,j){out[r]=(out[r]||0)+(j===0?n:n/2);});});}
+  return out;}
 function musculosHTML(sel){
-  const lun=iso(mondayOf(parseDate(sel)||new Date())),sm=seriesMusculo(lun);
+  const lun=iso(mondayOf(parseDate(sel)||new Date())),sm=seriesMusculo(lun),pv=seriesPrevistas(lun);
   const regs=MREGIONES.filter(function(r){return sm[r]>0;});
   if(!regs.length)return '';
-  const mx=30;
-  const bajos=regs.filter(function(r){return sm[r]<MUSC_OBJ.mev;}),altos=regs.filter(function(r){return sm[r]>MUSC_OBJ.mrv;});
-  const faltan=MREGIONES.filter(function(r){return ['pecho','espalda','hombros','cuadriceps','isquiotibiales'].indexOf(r)>=0&&sm[r]<MUSC_OBJ.mev;});
+  const mx=30,tot=function(r){return (sm[r]||0)+(pv[r]||0);};
+  const altos=regs.filter(function(r){return sm[r]>MUSC_OBJ.mrv;});
+  /* el aviso cuenta lo hecho más lo que el plan aún tiene: solo salta si ni así llegas */
+  const faltan=MREGIONES.filter(function(r){return ['pecho','espalda','hombros','cuadriceps','isquiotibiales'].indexOf(r)>=0&&tot(r)<MUSC_OBJ.mev;});
   return '<div class="card gmus"><div class="row"><b>Series por músculo · esta semana</b><span class="sp"></span><span class="mini">objetivo '+MUSC_OBJ.min+'–'+MUSC_OBJ.max+'</span></div>'+
     regs.sort(function(a,b){return sm[b]-sm[a];}).map(function(r){const n=sm[r];
       const cl=n>MUSC_OBJ.mrv?'hi':(n<MUSC_OBJ.mev?'lo':(n>=MUSC_OBJ.min&&n<=MUSC_OBJ.max?'ok':'mid'));
       return '<div class="r"><span>'+esc(MREG_LABEL[r]||r)+'</span><div class="tr"><u style="left:'+(MUSC_OBJ.min/mx*100)+'%;width:'+((MUSC_OBJ.max-MUSC_OBJ.min)/mx*100)+'%"></u>'+
-        '<i class="'+cl+'" style="width:'+Math.min(100,n/mx*100)+'%"></i></div><b class="'+cl+'">'+fmtKg(n)+'</b></div>';}).join('')+
+        '<i class="'+cl+'" style="width:'+Math.min(100,n/mx*100)+'%"></i></div><b class="'+cl+'">'+fmtKg(n)+(pv[r]?'<small> +'+fmtKg(Math.round(pv[r]*2)/2)+'</small>':'')+'</b></div>';}).join('')+
+    (MREGIONES.some(function(r){return pv[r]>0;})?'<div class="mini" style="margin-top:4px">+N: lo que el plan aún tiene esta semana.</div>':'')+
     (faltan.length?('<div class="mini" style="margin-top:6px">Por debajo de '+MUSC_OBJ.mev+': '+faltan.map(function(r){return '<b style="color:var(--ink)">'+esc((MREG_LABEL[r]||r).toLowerCase())+'</b> ('+esc(MUSC_SUG[r])+')';}).join(', ')+'. Añádelo al próximo día de fuerza.</div>'):'')+
     (altos.length?('<div class="mini" style="margin-top:4px;color:var(--bad)">Pasado de '+MUSC_OBJ.mrv+': '+altos.map(function(r){return esc((MREG_LABEL[r]||r).toLowerCase());}).join(', ')+'. Más series ya no suman y cuestan recuperar.</div>'):'')+
     '</div>';}
@@ -13746,12 +13966,14 @@ function progresoE1rmHTML(){
   const bq=bloqueDe(iso(new Date()));
   return '<div class="card"><div class="row"><b>1RM estimado</b><span class="sp"></span><span class="mini">12 semanas'+(dif!=null?(' · <b style="color:'+(dif>=0?'var(--ok)':'var(--bad)')+'">'+(dif>0?'+':'')+dif+' %</b>'):'')+'</span></div>'+
     '<div class="gchips">'+exs.slice(0,8).map(function(ex){return '<button class="'+(ex===sel?'on':'')+'" data-a="prog-ex" data-n="'+esc(ex)+'">'+esc(ex)+'</button>';}).join('')+'</div>'+
-    '<svg class="gline" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="1RM estimado de '+esc(sel)+' por semana">'+bandas+
+    /* con menos de tres semanas una curva de 12 es un gráfico vacío con dos puntos: hasta entonces, la lista */
+    (vals.length>=3?('<svg class="gline" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="1RM estimado de '+esc(sel)+' por semana">'+bandas+
       (pts?'<polyline fill="none" stroke="var(--brand)" stroke-width="3" stroke-linejoin="round" points="'+pts+'"></polyline>':'')+
       sem.map(function(x,i){return x.v?'<circle cx="'+px(i)+'" cy="'+py(x.v)+'" r="3.5" fill="var(--brand)"></circle>':'';}).join('')+'</svg>'+
     '<div class="gbarsx"><span>'+esc(fechaCortaTxt(sem[0].l))+'</span><span style="text-align:right">esta semana</span></div>'+
-    '<p class="mini" style="margin:6px 0 0">'+(vals.length?('Mejor serie de cada semana, contando las reps que te dejaste. Las franjas rojas son semanas de 3 guardias o más.'):'Sin series con peso de este ejercicio en 12 semanas.')+'</p></div>'+
-    (basicos?'<div class="card"><b>Tus básicos · últimas 5 semanas</b>'+basicos+'</div>':'')+
+    '<p class="mini" style="margin:6px 0 0">Mejor serie de cada semana, contando las reps que te dejaste. Las franjas rojas son semanas de 3 guardias o más.</p>'):
+      (basicos||'<p class="mini" style="margin:6px 0 0">Sin series con peso en 12 semanas.</p>')+(vals.length?'<p class="mini" style="margin:6px 0 0">Con tres semanas de datos sale la curva.</p>':''))+'</div>'+
+    (basicos&&vals.length>=3?'<div class="card"><b>Tus básicos · últimas 5 semanas</b>'+basicos+'</div>':'')+
     '<div class="card"><div class="row"><b>Bloque '+bq.bloque+' · semana '+bq.sem+' de '+bq.de+'</b><span class="sp"></span>'+(bq.descarga?'<span class="tag b1">DESCARGA</span>':'')+'</div>'+
       '<p class="mini" style="margin:6px 0 0">'+(bq.descarga?'Esta semana es de descarga: la app te propone la mitad de series y un 10 % menos. Es cuando se nota lo entrenado.':
         ('Cada '+bq.de+' semanas, una de descarga (mitad de series, −10 %). La próxima empieza en '+(bq.de-bq.sem)+' semana'+(bq.de-bq.sem===1?'':'s')+'.'))+'</p>'+
@@ -13871,7 +14093,8 @@ function informeEntrenoHTML(lk){
   const sups=supsS().filter(function(s){return s.p!=='proteina';});
   /* la semana que viene */
   const sig=iso(addDays(l,7)),gSig=guardiasSemana(sig),rSig=entrenoSemana(sig);
-  const sigRut=(function(){if(!rSig)return null;const x=rSig.dias.filter(function(d){return d.tipo==='fuerza'&&(d.base||d.auto||d.forz);})[0];return x?(rSig.asig[x.k]||null):null;})()||g.rutinas.filter(function(r){return rutTipo(r)!=='agua';})[0]||null;
+  /* la siguiente rutina DE FUERZA: mandaba «+3 series de pecho · añadir a Piscina» */
+  const sigRut=(function(){if(!rSig)return null;const x=rSig.dias.filter(function(d){const r=rSig.asig[d.k];return d.tipo==='fuerza'&&(d.base||d.auto||d.forz)&&r&&rutTipo(r)!=='agua';})[0];return x?rSig.asig[x.k]:null;})()||g.rutinas.filter(function(r){return rutTipo(r)!=='agua';})[0]||null;
   const recs=[];
   if(gSig>=3)recs.push('<b>Plan B:</b> '+gSig+' guardias. Dos días de fuerza de cuerpo entero y piscina en el saliente; no persigas el mínimo.');
   bajos.slice(0,2).forEach(function(r){const ej=MUSC_SUG[r],cap=ej.charAt(0).toUpperCase()+ej.slice(1),ya=sigRut&&sigRut.ejercicios.some(function(e){return normEj(e.ex)===normEj(cap);});
@@ -13901,7 +14124,9 @@ function informeEntrenoHTML(lk){
 function capacidadSemanas(n){
   const lun=mondayOf(new Date());let fz=0,pis=0,g3=0;
   for(let w=0;w<n;w++){const s=entrenoSemana(iso(addDays(lun,7*w)));if(!s)continue;
-    fz+=s.dias.filter(function(x){return x.tipo==='fuerza'&&!x.choca;}).length;
+    /* los días en que cabe fuerza (sin guardia, saliente ni evento a esa hora) menos uno de
+       descanso: con 6 guardias al mes y el Lloretazo cada noche no caben 6 de media */
+    fz+=Math.max(0,s.dias.filter(function(x){return x.tipo==='fuerza'&&!x.choca&&!x.quitado;}).length-1);
     pis+=s.dias.filter(function(x){return x.tipo==='pisc';}).length;
     if(s.guardias>=3)g3++;}
   return {fuerza:Math.round(fz/n*10)/10,pisc:Math.round(pis/n*10)/10,semanas3g:g3,n:n};}
@@ -14146,18 +14371,20 @@ function renderGymProgreso(){
   const c=gymCtx();
   const exs=Object.keys(gymIdx().byEx).sort();
   const sel=(exs.indexOf(ui.objEx)>=0)?ui.objEx:(exs[0]||'');
+  const vm=volumenPorMusculo(semanasAtras(4),null),hayVm=MREGIONES.some(function(r){return vm[r]>0;});
   $('#main').innerHTML='<div class="grid">'+
     gymSubcab('Progreso')+progresoE1rmHTML()+gymDescansoHTML()+
     /* «Fuerza estimada» era la misma curva que el 1RM estimado de arriba: fuera, una sola vez */
-    '<div class="card"><h2>Cómo evoluciona</h2>'+
+    /* SOLO LO QUE TIENE DATOS. Era la pantalla más larga de la app (2.611 px) y la mitad, tarjetas
+       vacías: «Ritmo de carrera» sin correr, «Cómo evoluciona» con siete barras a cero */
+    (volumenSemanal(8).filter(function(x){return x.vol>0;}).length>=2?('<div class="card"><h2>Cómo evoluciona</h2>'+
     '<p class="note">Volumen semana a semana, y lo que la app ve venir cruzando tus guardias, tu sueño y lo que comes.</p>'+
-    evolucionHTML()+'</div>'+
-    '<div class="card"><h2>Dónde va el trabajo</h2>'+
-    '<p class="note">Volumen de las últimas cuatro semanas repartido por grupo muscular.</p>'+
-    volumenMusculoHTML()+'</div>'+
-    '<div class="card"><h2>Ritmo de carrera</h2>'+cardioProgresoHTML()+'</div>'+
-    entrenoHeatmapCard()+
-    renderHistorialCard()+
+    evolucionHTML()+'</div>'):'')+
+    (hayVm?('<div class="card"><h2>Dónde va el trabajo</h2>'+
+    '<p class="note">Volumen de las últimas cuatro semanas repartido por grupo muscular (el músculo principal entero, los que ayudan a la mitad).</p>'+
+    volumenMusculoHTML()+'</div>'):'')+
+    (gymS().cardio.filter(function(x){return /carrera|corr/i.test(x.tipo||'');}).length>=2?'<div class="card"><h2>Ritmo de carrera</h2>'+cardioProgresoHTML()+'</div>':'')+
+    (gymS().sesiones.length?entrenoHeatmapCard()+renderHistorialCard():'')+
     '<div class="card"><h2>🏆 Tus marcas</h2>'+
     (c.prs.length?('<div style="overflow-x:auto"><table><thead><tr><th>Ejercicio</th><th>más peso</th><th>1RM estimado</th>'+
       '<th>series</th></tr></thead><tbody>'+c.prs.map(function(x){
@@ -14280,9 +14507,45 @@ function rutinaDia(key){
     else if(b.tipo==='guard')add(hm(b.de),'🩺','Guardia','',true);
     else add(hm(b.de),'💼','Trabajo','hasta las '+hm(Math.min(b.a,1439)),true);});
   const en=entrenoDe(key);if(en&&en.hora&&!out.some(function(a){return a.txt==='Entreno';}))add(en.hora,en.tipo==='pisc'?'🏊':'💪','Entreno',en.rutina?nombreCorto(en.rutina.nombre||''):'',true);
-  rutinaDe(t).forEach(function(a){add(a.h,a.ico,a.txt,a.sub,false);});
+  const R=rutinaDe(t),B=R.length?bloquesDelDia(key):[],occ=R.length?rutinaOcupado(key,sl,B):[];
+  const tuyas=R.map(function(a){return rutinaAjusta(sl,a,B,occ);}).filter(Boolean);
+  tuyas.forEach(function(a){add(a.h,a.ico,a.txt,a.sub,false);out[out.length-1].movido=a.movido||'';});
   if(sl.bed&&t!=='guardia')add(sl.bed,'🛌','A la cama',sl.h?fmtHM(Math.round(sl.h*60))+' de sueño':'',true);
   return out.sort(function(a,b){return (mins(a.h)||0)-(mins(b.h)||0);});}
+function rutinaOcupado(key,sl,B){
+  /* lo que ocupa el día de verdad: la jornada o la guardia, el entreno con su ir y volver, los
+     eventos (el Lloretazo también) y la siesta. Las comidas no: son marcas, no tramos */
+  const occ=B.filter(function(b){return b.cat!=='meal';}).map(function(b){return [b.de,b.a];});
+  const ll=lloretDe(key);if(ll){const de=mins(ll.hora||'');let a=mins(ll.fin||'');if(de!=null){if(a==null||a<=de)a=de+60;occ.push([de,a]);}}
+  if(sl&&sl.siesta){const de=mins(sl.siesta.de),a=mins(sl.siesta.a);if(de!=null&&a!=null)occ.push([de,a>de?a:1440]);}
+  return occ;}
+function rutinaAjusta(sl,a,B,occ){
+  /* UN ANCLA TUYA CONTRA EL DÍA DE VERDAD. Las horas de «Mi rutina por tipo de día» son fijas por
+     tipo y se pintaban tal cual: «Estudio 10:00» en plena guardia, «Comer antes de entrar 13:30»
+     cuatro horas después de entrar y «Estudio 20:00» a la hora del Lloretazo. Ahora: lo de antes de
+     entrar va antes de entrar; lo que cae dentro de algo se mueve al hueco libre más cercano (antes
+     si cabe, si no después, sin pasar de la hora de la cama) y, si no hay hueco, ese día no sale. */
+  const m=mins(a.h);if(m==null)return a;
+  if(/antes de entrar/i.test(a.txt||'')){
+    const g=B.filter(function(b){return (b.cat==='guard'||b.cat==='work')&&!b.fino;}).sort(function(p,q){return p.de-q.de;})[0];
+    if(!g)return null;
+    const sale=B.filter(function(b){return b.fino&&b.cat==='work'&&b.a===g.de;})[0];
+    const h=Math.max(0,(sale?sale.de:g.de)-30);
+    return Object.assign({},a,{h:hm(h),movido:h!==m?a.h:''});}
+  const conDur=/(\d+(?:[.,]\d+)?)\s*h\b/.exec(a.sub||''),dur=conDur?Math.round(parseFloat(conDur[1].replace(',','.'))*60):5;
+  const choca=function(de){return occ.some(function(o){return de<o[1]&&o[0]<de+dur;});};
+  if(!choca(m))return a;
+  /* dentro de la guardia no se estudia ni se pasea: ese día no sale */
+  if(B.some(function(b){return b.cat==='guard'&&m>=b.de&&m<b.a;}))return null;
+  const fin=sl&&sl.bed?mins(sl.bed):23*60,tope=(fin!=null&&fin>12*60?fin:23*60)-15,ini=sl&&sl.wake?mins(sl.wake):7*60;
+  /* el hueco más cercano, buscando en pasos de 15 min hacia atrás y hacia delante */
+  for(let d=15;d<=4*60;d+=15){
+    const antes=Math.round((m-d)/5)*5,despues=Math.round((m+d)/5)*5;
+    /* lo que dura (estudiar 1 h) busca antes; un momento («pantallas fuera») va mejor después */
+    const va=antes>=(ini||0)&&!choca(antes),vd=despues+dur<=tope&&!choca(despues);
+    if(conDur?va:(!vd&&va))return Object.assign({},a,{h:hm(antes),movido:a.h});
+    if(vd)return Object.assign({},a,{h:hm(despues),movido:a.h});}
+  return null;}
 function habitoToca(hab,key){
   const d=parseDate(key);if(!d||(hab.dow||[]).indexOf(d.getDay())<0)return false;
   return !(hab.noEn||[]).length||(hab.noEn||[]).indexOf(diaTipo(key))<0;}
@@ -14333,14 +14596,20 @@ function habSubTxt(h){
 function habMesHTML(items){
   /* el mes en %, y lo que la app ve: un tipo de día en el que toca y no lo has hecho nunca */
   const hoy=new Date(),hoyK=iso(hoy),ini=iso(new Date(hoy.getFullYear(),hoy.getMonth(),1,12));
+  const reg=habitosS().registro;
   const filas=items.map(function(h){
     let toca=0,hechos=0;const porTipo={};
+    /* desde que existe: lo que diga «creado» o el primer día marcado, lo que sea antes. Si no, al
+       restaurar una copia o marcar días pasados salía racha 🔥 2 y «este mes 0 %» */
+    let desde=h.creado||'';Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][h.id]&&(!desde||k<desde))desde=k;});
     for(let d=new Date(hoy.getFullYear(),hoy.getMonth(),1,12);iso(d)<=hoyK;d=addDays(d,1)){const k=iso(d);
-      if(h.creado&&k<h.creado)continue;if(!habitoToca(h,k))continue;
+      if(desde&&k<desde)continue;if(!habitoToca(h,k))continue;
+      if(k===hoyK&&!habitoHecho(h.id,k))continue;   /* hoy aún no ha acabado: no baja el % */
       const ok=habitoHecho(h.id,k),t=diaTipo(k);toca++;if(ok)hechos++;
       const x=porTipo[t]||(porTipo[t]={n:0,ok:0});x.n++;if(ok)x.ok++;}
     if(!toca)return '';
-    const nunca=Object.keys(porTipo).filter(function(t){return porTipo[t].n>=2&&!porTipo[t].ok;})[0];
+    const nunca=/agua|beber|hidrat|cama|dormir|medica|pastilla|vitamina|creatina|dientes/i.test(h.nombre||'')||h.auto?null:
+      Object.keys(porTipo).filter(function(t){return porTipo[t].n>=2&&!porTipo[t].ok;})[0];
     return '<div class="ali"><span class="e">'+esc(h.icono)+'</span><span class="hmt"><b>'+esc(h.nombre)+'</b>'+
       (nunca?'<span class="w">los días de '+esc(diaTipoInfo(nunca)[1].toLowerCase())+', nunca</span>':'')+'</span>'+
       (nunca?'<button class="chipx" data-a="hab-noen" data-id="'+h.id+'" data-t="'+nunca+'">no pedírmelo</button>':'')+
@@ -14867,14 +15136,6 @@ function menuSubcab(titulo,volver,extra){
   return '<div class="subcab">'+
     '<button class="btn s volver" data-a="types-vista" data-v="'+esc(volver.v||'')+'">'+gymIco('atras','gico sm')+' '+esc(volver.t||'Menú')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
-function loQueHay(){
-  /* lo que se da por disponible: las listas marcadas «de rutina» más lo fresco que piden las
-     tandas de la semana vista. Es la misma idea que «qué platos salen» de la Compra. */
-  const out=itemsDeRutina().map(function(r){return r.texto;});
-  const pb=planBatches(weekDays());
-  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;
-    ingredientsFor(b.items.filter(function(i){return i.runs>0;})).forEach(function(i){out.push(i.item);});});
-  return out;}
 function esReceta(d){
   /* «qué cocino» tiene que proponer cosas que se cocinen. En el catálogo conviven recetas de verdad
      con entradas de registro —el café, la fruta con frutos secos, el batido de whey, el brik de
@@ -14882,7 +15143,13 @@ function esReceta(d){
      El corte es el que distingue a unas de otras: tres ingredientes y al menos dos pasos. */
   return (d.ingredients||[]).length>=3&&(d.steps||[]).filter(Boolean).length>=2;}
 function platosCocinables(){
-  const todo=platosConLista(loQueHay(),0,200).filter(function(x){return esReceta(x.dish);});
+  /* qué recetas te salen con TU nevera (la misma cuenta que la Semana y la Compra: platoCubierto),
+     sin lo que ya tienes cocinado: proponer otra tanda de lentejas con dos raciones en la nevera era
+     cocinar dos veces lo mismo */
+  const nv=neveraGramos(),coc={};cocinadoS().forEach(function(x){coc[x.dishId]=1;});
+  const todo=(store.dishes||[]).filter(function(d){return esReceta(d)&&!coc[d.id]&&platoVale(d);}).map(function(d){
+    const cu=platoCubierto(d,null,nv);return {dish:d,pct:cu.pct,faltan:cu.faltan.map(sinGlutenTexto)};})
+    .sort(function(a,b){return b.pct-a.pct;});
   return {listos:todo.filter(function(x){return !x.faltan.length;}),
           casi:todo.filter(function(x){return x.faltan.length&&x.faltan.length<=3;})};}
 /* ===================== MENÚ v2 · montar comidas de tres formas =====================
@@ -14963,8 +15230,9 @@ function renderTypesLista(){
     way('macros','🎯','Por macros','primero la proteína que te falta, luego hidratos y grasa')+
     '<div class="card"><div class="row"><span class="cap">ESTA SEMANA</span><span class="sp"></span><span class="mini"><b style="color:var(--ink)">'+puestas+'</b> de 21 puestas</span></div>'+grid+
       '<p class="mini" style="margin:6px 0 0">Toca un ＋ y elige arriba cómo llenarlo. Las casillas claras vienen de tu tipo de día.</p></div>'+
-    '<div class="card"><div class="row"><span class="cap">PROTEÍNA PLANIFICADA</span><span class="sp"></span><span class="mini">'+(objP?'objetivo '+objP+' g/día':'pon tu objetivo en Comer')+'</span></div>'+barras+
-      (objP?'<div class="mini" style="margin-top:4px"><span class="h2leg"></span>llega <span class="h2leg x"></span>se queda corta (−10 %) · - - '+objP+' g</div>':'')+protAvisoHTML()+'</div>'+
+    /* la misma proteína que enseña la Semana: aquí, plegada (la pantalla eran 1,9 pantallas) */
+    '<div class="card"><details class="plegable" data-tg="mProt"'+(ui.mProt?' open':'')+'><summary>proteína planificada'+(objP?' · '+pd.filter(function(v){return v&&v<objP*0.9;}).length+' días sin llegar':'')+'</summary>'+barras+
+      (objP?'<div class="mini" style="margin-top:4px"><span class="h2leg"></span>llega <span class="h2leg x"></span>se queda corta (−10 %) · - - '+objP+' g</div>':'')+protAvisoHTML()+'</details></div>'+
     '<button class="btn p gbig" data-a="tab" data-t="shop">🛒 Pasar a la compra · '+cd.total+' cosa'+(cd.total===1?'':'s')+'</button>'+
     '<div class="card"><div class="row"><span class="cap">TUS TIPOS DE DÍA</span><span class="sp"></span><span class="mini"><b style="color:var(--bp)">P</b> · <b style="color:var(--bc)">H</b> · <b style="color:var(--bg3)">G</b></span></div>'+
       (filas||'<div class="empty">No hay tipos de día: créalos en «Turno y rotación».</div>')+'</div>'+
@@ -15221,6 +15489,8 @@ function renderTypesDia(shiftId){
       '<span class="mini">'+esc((sh.start||sh.end)?((sh.start||'—')+'–'+(sh.end||'—')):'sin jornada')+' · carga '+esc(sh.intensity||'—')+'</span>'+
       '<span class="row" style="gap:6px"><span class="tag b3">'+t.prot+' g P</span><span class="tag">'+t.parts+' rac./día</span></span></div>'+
       (sh.desc?'<p class="mini" style="margin:8px 0 0">'+esc(sh.desc)+'</p>':'')+
+      '<p class="mini" style="margin:8px 0 0">Aquí va <b>qué</b> comes este tipo de día. La hora de cada toma la pone el día (la guardia, la jornada, el entreno).'+
+        (slots.some(function(x){return (slotItems(sh.id,x).items||[]).some(function(it){return num(it.portions,1)>1;});})?' ⚠ Hay tomas con más de una ración: cuentan doble en las kcal del día.':'')+'</p>'+
     '</div>'+
     '<div class="card" data-shift="'+sh.id+'">'+
       '<ul class="slots">'+(slots.map(function(s,i){return slotRow(sh.id,s,i,slots.length);}).join('')||
@@ -15387,7 +15657,8 @@ function slotRow(shiftId,s,i,count){
       (inf.items.length?('<button class="mini2" data-a="slot-tomeal" data-i="'+i+'" data-shift="'+shiftId+'" title="conviértela en una comida reutilizable">guardar como comida</button>'):'');
   return '<li class="toma2" data-slot="'+s.id+'" data-shift="'+shiftId+'">'+
     '<div class="cab">'+
-      '<input class="st" value="'+esc(s.time||'')+'" placeholder="14:00" data-a="slot-time" data-i="'+i+'" data-shift="'+shiftId+'" aria-label="hora">'+
+      /* sin hora: la pone cada día (guardia, jornada, entreno). Enseñar aquí «11:00» o «21:00» como si
+         mandaran confundía: el calendario ya no las usa */
       '<input class="sl" value="'+esc(s.label||'')+'" placeholder="etiqueta de la comida" data-a="slot-label" data-i="'+i+'" data-shift="'+shiftId+'" aria-label="etiqueta">'+
       '<span class="kc">'+t.kcal+' kcal</span>'+
     '</div>'+
@@ -15606,6 +15877,8 @@ function compraDatos0(){
   /* un solo embudo para los dos orígenes: lo que se cocina en tanda y lo que no */
   const mete=function(ings){
     ings.forEach(function(i){
+      /* celíaco: lo que lleva gluten entra ya en su versión sin gluten */
+      if(esCeliaco()&&glutenDe(i.item)==='si'){const sg=sinGlutenTexto(i.item),b=alimPorNombre(sg);i=Object.assign({},i,{item:sg.charAt(0).toUpperCase()+sg.slice(1),aid:b?b.id:i.aid});}
       const key=i.aid?('alim:'+i.aid):(i.item.toLowerCase()+'|'+(i.unit||''));
       const n=i.aid?(+i.num||0):parseFloat(String(i.q).replace(',','.'));
       if(!agg[key]){agg[key]={item:i.item,unit:i.unit,num:(isNaN(n)?null:n),hasNum:!isNaN(n),notes:new Set(),aid:i.aid||''};order.push(key);}
@@ -15689,10 +15962,13 @@ function compraDatos0(){
     if(x.tengo&&!x.falta)return;        /* cubierto: no cuenta ni como pendiente ni como marcado */
     total++;if(ui.marks.has(x.id))marcados++;else if(!x.fija)semana++;});});
   /* lo que la semana del menú da de comer, frente a tu objetivo: la dieta se hace en la compra */
-  let kcalSem=0;
-  Object.keys(need).forEach(function(id){const dd=dishById(id);if(dd&&need[id]>0)kcalSem+=(+dd.kcal||0)*need[id];});
   return {grupos:grupos,total:total,marcados:marcados,semana:semana,dias:nDias,eje:eje,recetas:recetas,sueltas:sueltas,ejemplo:ejemplo,
-    kcalDia:Math.round(kcalSem/nDias),kcalObj:+(objetivoMacros()||{}).kcal||0};}
+    kcalDia:kcalPlanMedia(),kcalObj:+(objetivoMacros()||{}).kcal||0};}
+function kcalPlanMedia(){
+  /* las kcal de media de los días de la semana con plan: la misma cuenta que cada día (planTotalsOf).
+     Antes la Compra calculaba las suyas con lo que pedía la lista y salía otra cifra */
+  let k=0,n=0;mSemana().forEach(function(dia){const t=kcalDiaPlan(dia);if(t>0){k+=t;n++;}});
+  return n?Math.round(k/n):0;}
 const ENVASES=['bandeja','malla','bote','paquete','brick','lata','cabeza','bolsa','barra','tarro','docena','manojo','pack'];
 function envaseDe(a,g){
   /* «1,6 kg de pechuga · 4 bandejas»: cómo se compra, sacado de las raciones del alimento */
@@ -16166,6 +16442,11 @@ function ordenPasillosCardHTML(){
    tipo de día (se toca y se abren tres campos) y lo avanzado plegado. */
 function horasPantallaHTML(){
   const SC=suenoCfg();
+  /* EL SALIENTE: lo que predice el simulador con TU siesta y tu próxima guardia, no «6h00 + 9h00»
+     como si fuera el plan (15 h; el propio simulador dice que con 6 h de siesta te costará dormir) */
+  const salPred=(function(){const G=snGuardiaSel();if(!G)return null;
+    const b=snBase(G),p=snCopia(b);p.sueno=p.sueno.filter(function(x){return x.id!=='post';});p.sueno.push({id:'post',a:p.llega,b:p.llega+SC.siesta/60});snCompleta(p);
+    return snMetricas(p);})();
   const filas=store.shifts.map(function(sh){
     const rh=(store.rhythm&&store.rhythm[sh.id])||{};
     const h=sleepHours(rh.sleep,rh.wake),abierto=ui.hrAbierto===sh.id;
@@ -16174,7 +16455,7 @@ function horasPantallaHTML(){
     const linea=guardia?('⏰ '+hh(rh.wake)+' · 🚪 '+hh(rh.leave)+' · 24 h de trabajo'):
       (saliente?('siesta al llegar · 🛏 '+hh(rh.sleep)):('⏰ '+hh(rh.wake)+(rh.leave?(' · 🚪 '+hh(rh.leave)):'')+' · 🛏 '+hh(rh.sleep)));
     const pill=guardia?'<span class="hrpill g">se apunta</span>':
-      (saliente?('<span class="hrpill ok">'+fmtHM(SC.siesta)+' + '+(h?fmtHM(h*60):'—')+'</span>'):
+      (saliente?('<span class="hrpill '+(salPred&&!salPred.duerme?'warn':'ok')+'">siesta '+fmtHM(SC.siesta)+(salPred?(salPred.duerme?' · noche bien':' · ⚠ noche difícil'):'')+'</span>'):
       ('<span class="hrpill '+(h!=null&&h<SC.min?'warn':'ok')+'">'+(h!=null&&h<SC.min?'⚠ ':'')+(h?fmtHM(h*60):'—')+'</span>'));
     const rec=acostarsePara(rh.wake),ven=ventanaCena(rec||rh.sleep);
     const campo=function(k,txt){return '<label class="fld">'+txt+'<input type="time" value="'+esc(rh[k]||'')+'" data-a="rh-f" data-id="'+sh.id+'" data-f="'+k+'"></label>';};
@@ -16288,8 +16569,11 @@ function renderCfg(){
   const r=store.rotation;
   /* un bloque por tipo de día en vez de una fila de tabla de 9 columnas: en el móvil la tabla
      obligaba a hacer scroll lateral y las horas no se leían (comentarios del usuario) */
-  const shifts=store.shifts.map(s=>`<div class="tarj">
-    <div class="tarj-top">
+  /* cada tipo de día, plegado en una línea con su nombre y sus horas: abiertas, las seis tarjetas eran
+     1,9 pantallas y 48 campos para cambiar una hora */
+  const shifts=store.shifts.map(s=>`<details class="tarj tdpl" data-tg="sh_${esc(s.id)}"${ui['sh_'+s.id]?' open':''}>
+    <summary><span class="ic">${esc(s.icon||'·')}</span><b>${esc(s.name||'sin nombre')}</b><span class="mini">${s.start?esc(s.start)+'–'+esc(s.end||''):'sin horas'}</span><i style="background:${esc(s.color||'#2563eb')}"></i></summary>
+    <div class="tarj-top" style="margin-top:8px">
       <input class="tarj-ic" value="${esc(s.icon)}" data-a="sh-f" data-id="${s.id}" data-f="icon" maxlength="4" aria-label="icono">
       <input class="tarj-nm" value="${esc(s.name)}" data-a="sh-f" data-id="${s.id}" data-f="name" placeholder="nombre del día" aria-label="nombre">
       <input type="color" value="${esc(s.color||'#2563eb')}" data-a="sh-f" data-id="${s.id}" data-f="color" style="height:30px;width:42px;padding:2px;flex:none" aria-label="color">
@@ -16307,12 +16591,15 @@ function renderCfg(){
     <div class="row" style="margin-top:9px">
       <button class="btn s" data-a="day-rhythm-shift" data-id="${s.id}">🕐 sus horas →</button>
       <button class="btn s" data-a="day-edit" data-id="${s.id}">🍽 sus comidas →</button>
-    </div></div>`).join('');
+    </div></details>`).join('');
   const DSEM=['L','M','X','J','V','S','D'];
   const pats=store.patterns.map((p,pi)=>{
-    const usada=pi===r.pattern;
-    return `<div class="tarj${usada?' usada':''}">
-      <div class="tarj-top">
+    const usada=pi===r.pattern,abierta=usada||ui['pt_'+p.id];
+    /* las semanas tipo que no están en uso, plegadas en una línea con sus siete días: abiertas, «Mi
+       semana» eran 1.690 px y 37 campos */
+    return `<details class="tarj tdpl${usada?' usada':''}" data-tg="pt_${esc(p.id)}"${abierta?' open':''}>
+      <summary><b>${esc(p.name||'semana tipo')}</b><span class="mini">${p.days.map(c=>esc(c)).join(' ')}</span>${usada?'<span class="tag b3">en uso</span>':''}</summary>
+      <div class="tarj-top" style="margin-top:8px">
         <input class="tarj-nm" value="${esc(p.name)}" data-a="pat-name" data-id="${p.id}" placeholder="nombre de la semana tipo" aria-label="nombre">
         ${usada?'<span class="tag b3">en uso</span>':`<button class="btn s" data-a="pat-use" data-id="${p.id}">usar</button>`}
         <button class="btn s" data-a="pat-copy" data-id="${p.id}" title="duplicar">⧉</button>
@@ -16323,7 +16610,7 @@ function renderCfg(){
           <select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="border-color:${s?s.color:'var(--line)'}">${store.shifts.map(x=>`<option value="${esc(x.code)}" ${x.code===c?'selected':''}>${esc(x.code)}</option>`).join('')}</select>
           <b style="color:${s?s.color:'var(--ink2)'}">${s?esc(s.icon):'·'}</b></label>`;}).join('')}</div>
       <input value="${esc(p.note||'')}" placeholder="nota (cuándo usas esta semana)" data-a="pat-note" data-id="${p.id}" style="margin-top:8px;font-size:12px">
-    </div>`}).join('');
+    </details>`}).join('');
   /* mismas horas, pero cada tipo de día en su bloque con las etiquetas visibles al lado de cada hora */
   /* Esto era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos: los seis
      tipos de día con sus ocho campos, la tabla de horas de levantarse y acostarse, la estructura
@@ -16360,8 +16647,10 @@ function renderCfg(){
         ', sales el miércoles a las '+sale(rs)+
         ' \u00b7 sábado: entras a las '+rf+' y sales el domingo a las '+sale(rf)+
         ' \u00b7 domingo: entras a las '+rf+' y sales el lunes a las '+sale(rs);};
+    /* cada tipo de guardia, plegado en una línea con lo que se mira (cuántas y a qué hora): eran siete campos por tipo */
     const tipoRows=tipos.map(function(t){
-      return '<div class="tarj" style="margin-top:8px">'+
+      return '<details class="tarj tdpl" style="margin-top:8px" data-tg="gt_'+esc(t.code)+'"'+(ui['gt_'+t.code]?' open':'')+'><summary><span class="ic">🩺</span><b>'+esc(t.label)+'</b>'+
+        '<span class="mini">'+(+store.rotation.cupoTipos[t.code]||0)+' al mes · relevo '+esc(t.relevoSem||jd.start||'08:00')+'</span></summary>'+
         '<div class="row">'+
         '<label class="fld" style="flex:1 1 150px">nombre<input value="'+esc(t.label)+'" data-a="gtipo-lbl" data-code="'+t.code+'"></label>'+
         '<label class="fld" style="flex:0 0 108px">cuántas al mes<input type="number" min="0" max="15" value="'+(+store.rotation.cupoTipos[t.code]||0)+'" data-a="gtipo-n" data-code="'+t.code+'"></label>'+
@@ -16376,7 +16665,7 @@ function renderCfg(){
         '<label class="fld" style="flex:0 0 132px">hasta<input type="time" value="'+esc(t.comeA)+'" data-a="gtipo-come" data-k="comeA" data-code="'+t.code+'"></label>'+
         '</div>'+
         '<p class="mini" style="margin:7px 0 0">'+esc(ejemplo(t))+'</p>'+
-      '</div>';}).join('');
+      '</details>';}).join('');
     return cfgPantalla('Rotación por fecha',
     '<div class="card"><p class="note" style="margin:0 0 10px">Si tu calendario es un ciclo de semanas (1G·S → 2G·S·S → libre), '+
       'ordena las semanas del ciclo en «Cómo se arma tu semana» y pon aquí la fecha de un lunes que sepas qué semana era. '+
@@ -16403,11 +16692,9 @@ function renderCfg(){
       <div class="row" style="margin-top:8px">
         <label class="fld" style="flex:0 0 200px">añadir un tipo más<input id="gtipoNuevo" placeholder="p. ej. Guardias de placa"></label>
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="gtipo-add">+ tipo</button></label>
-      </div></div>
-    <div class="card" data-cfg="rotaciones"><h2>Mis rotaciones</h2>
-      <p class="note">Por dónde vas rotando y cuánto dura cada sitio. Si te salen rotaciones nuevas (R2 y demás), se añaden aquí.</p>
-      ${serviciosEditorHTML()}
-      </div>`+serviciosCard());}
+      </div></div>`+
+    /* «Mis rotaciones» era la misma lista que «Tus rotaciones» justo debajo: queda una, con su editor dentro */
+    serviciosCard());}
   if(v==='viaje'){
     /* IR Y VOLVER, en Ajustes y no en el código: es lo que cambia cuando cambias de destino o de
        línea de bus, y no tiene por qué pasar por una versión nueva de la app. */
@@ -16740,7 +17027,7 @@ function ahorroLimpia(o){
   if(a.catCfg&&typeof a.catCfg==='object'&&!Array.isArray(a.catCfg)){const cc={};Object.keys(a.catCfg).slice(0,80).forEach(function(k){const c=a.catCfg[k]||{};
     cc[String(k).slice(0,60)]={tipo:c.tipo==='fijo'||c.tipo==='variable'?c.tipo:'',meta:Math.max(0,Math.round(+c.meta||0))};});a.catCfg=cc;}else delete a.catCfg;
   if(a.metaPct!=null)a.metaPct=Math.max(5,Math.min(80,Math.round(+a.metaPct||30)));
-  if(a.plan7&&typeof a.plan7==='object'){const p={};['colchon','inversion','metas','caprichos'].forEach(function(k){p[k]=Math.max(0,Math.min(100,Math.round(+a.plan7[k]||0)));});a.plan7=p;}else delete a.plan7;
+  delete a.plan7;   /* el «plan» paralelo a los bolsillos ya no existe: manda el reparto de tus bolsillos */
   if(a.puroPct!=null)a.puroPct=Math.max(10,Math.min(100,Math.round(+a.puroPct||50)));
   if(a.puroId!=null)a.puroId=String(a.puroId).slice(0,40);
   if(Array.isArray(a.real))a.real=a.real.filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,36).map(function(x){
@@ -16851,14 +17138,21 @@ function mkTxt(mk){const t=ahoYm(mk);return t?(MON[t.m]+' '+t.y):'';}
 function renderAhorroNomina(){
   const a=ahorroS(),hoy=new Date();
   const ep=a.epocas.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);});
+  const actual=epocaDe(ahoMk(hoy.getFullYear(),hoy.getMonth()));
   const fila=function(e){
     const f=function(k,txt,val,tipo){return '<label class="fld">'+txt+'<input '+(tipo==='month'?'type="month"':'inputmode="decimal"')+
       ' value="'+esc(val)+'" data-a="aho-ep" data-id="'+esc(e.id)+'" data-k="'+k+'"></label>';};
+    /* las épocas que ya pasaron, plegadas en una línea: abiertas eran 1,9 pantallas y 20 campos */
+    if(actual&&e.id!==actual.id&&!ui['ep_'+e.id])return '<div class="card ahep"><details class="plegable" data-tg="ep_'+esc(e.id)+'"><summary><b>'+esc(e.nombre||'época')+'</b> · desde '+esc(e.desde||'—')+' · '+esc(eur(+e.neto||0))+'</summary>'+
+      '<div class="fgrid c2 tight" style="margin-top:8px">'+f('desde','desde',e.desde,'month')+f('neto','neto con 1 finde',fmt(e.neto))+
+        f('finde','cada finde de más',fmt(e.finde))+'<span></span>'+f('pagaJun','paga extra junio',fmt(e.pagaJun))+f('pagaDic','paga extra diciembre',fmt(e.pagaDic))+'</div></details></div>';
     return '<div class="card ahep"><div class="row"><input class="ahepnom" value="'+esc(e.nombre)+'" data-a="aho-ep" data-id="'+esc(e.id)+'" data-k="nombre" aria-label="nombre de la época">'+
       '<button class="mini2 d" data-a="aho-ep-del" data-id="'+esc(e.id)+'" aria-label="quitar esta época">×</button></div>'+
       '<div class="fgrid c2 tight" style="margin-top:8px">'+f('desde','desde',e.desde,'month')+f('neto','neto con 1 finde',fmt(e.neto))+
         f('finde','cada finde de más',fmt(e.finde))+'<span></span>'+f('pagaJun','paga extra junio',fmt(e.pagaJun))+f('pagaDic','paga extra diciembre',fmt(e.pagaDic))+'</div></div>';};
-  const meses=[];for(let i=-3;i<=1;i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1,12);meses.push(nominaMes(d.getFullYear(),d.getMonth()));}
+  /* solo los meses ya cobrados: el de ahora, si ya ha llegado la nómina (antes pedía hasta el mes que viene) */
+  const meses=[],yaEste=iso(llegadaNomina(hoy.getFullYear(),hoy.getMonth()).llega)<=iso(hoy);
+  for(let i=yaEste?-3:-4;i<=(yaEste?0:-1);i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1,12);meses.push(nominaMes(d.getFullYear(),d.getMonth()));}
   $('#main').innerHTML='<div class="grid">'+dinSubcab('Tu nómina')+
     '<p class="note" style="margin:0">Tu sueldo depende de las guardias, y la app ya sabe cuántas tienes y cuáles caen en finde (sábado, domingo o festivo). Cada época dice cuánto cobras con una de finde y cuánto suma cada una de más; la de cada mes es la última que haya empezado. Cuando llegue la nómina, apunta lo cobrado y manda eso.</p>'+
     ep.map(fila).join('')+
@@ -17081,7 +17375,9 @@ function finGuardar(){
 function renderFintonic(){
   const f=ui.fin;
   const cab=dinSubcab('Revisa lo leído');
-  if(!f){$('#main').innerHTML='<div class="grid">'+cab+'<div class="card"><div class="empty">No hay capturas leyéndose.</div></div></div>';return;}
+  if(!f){const u=finUltima();$('#main').innerHTML='<div class="grid">'+cab+'<div class="card"><p class="mini" style="margin:0">Haz una captura de la pantalla de Fintonic del mes (gastos e ingresos) y súbela: se lee aquí, en tu móvil, y te dejo revisar las cifras antes de guardar.'+
+    (u?' La última, del '+esc(fechaCorta(u.fecha))+'.':'')+'</p>'+
+    '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div></div>';return;}
   if(f.estado==='leyendo'){$('#main').innerHTML='<div class="grid">'+cab+
     '<div class="card"><h2>Leyendo '+(f.hechas+1>f.total?f.total:f.hechas+1)+' de '+f.total+'…</h2>'+
     '<div class="prog"><span class="bar"><i style="width:'+Math.round(f.hechas/Math.max(1,f.total)*100)+'%"></i></span></div>'+
@@ -17141,10 +17437,18 @@ function gastoMes(mk){
   const r=(ahorroS().real||[]).filter(function(x){return x.mes===mk&&x.gastos!=null;})
     .sort(function(p,q){return (q.fecha+(q.hora||'')).localeCompare(p.fecha+(p.hora||''));})[0];
   if(r)return {total:+r.gastos,cats:r.cats||{},fecha:r.fecha,fuente:'Fintonic'};
+  /* sin captura, lo apuntado: los pagos a mano Y los recibos fijos (pagados o por pagar). Antes los
+     recibos vivían solo en «Recibos» y el Mes, el Plan y el Análisis decían «fijos 0» con 748 € de
+     alquiler, luz, gimnasio y móvil apuntados. Cada recibo va con su nombre, que cuenta como fijo. */
   const t=ahoYm(mk);if(!t)return null;
-  const ps=pagosDelMes(t.y,t.m);if(!ps.length)return null;
-  const cats={};ps.forEach(function(p){const k=dinCatTxt(p.cat);cats[k]=(cats[k]||0)+(+p.importe||0);});
-  return {total:ps.reduce(function(s,p){return s+(+p.importe||0);},0),cats:cats,fecha:'',fuente:'apuntado'};}
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const ps=pagosDelMes(t.y,t.m),fijos=gastosFijos();
+  if(!ps.length&&!(mk===mkHoy&&fijos.length))return null;
+  const cats={},gid={};fijos.forEach(function(g){gid[g.id]=g;});
+  ps.forEach(function(p){const g=p.gastoId&&gid[p.gastoId],k=g?g.nombre:dinCatTxt(p.cat);cats[k]=(cats[k]||0)+(+p.importe||0);});
+  fijos.forEach(function(g){if(!gastoPagado(g,t.y,t.m))cats[g.nombre]=(cats[g.nombre]||0)+(+g.importe||0);});
+  const total=Object.keys(cats).reduce(function(s,k){return s+cats[k];},0);
+  return {total:Math.round(total*100)/100,cats:cats,fecha:'',fuente:'apuntado'};}
 function entraMes(mk){const t=ahoYm(mk);return t?nominaMes(t.y,t.m):null;}
 function ahorroDeMes(mk){const g=gastoMes(mk),e=entraMes(mk);
   if(!g||!e)return null;return {entra:e.neto,sale:g.total,ahorro:Math.round(e.neto-g.total),real:e.real!=null,g:g};}
@@ -17190,6 +17494,7 @@ function catEsFijo(nombre,mk){
   /* lo pones tú, o la app lo deduce: por el nombre (alquiler, seguro, suscripción…) o porque se repite
      igual (±5 %) al menos tres meses */
   const c=catCfg()[nombre];if(c&&c.tipo)return c.tipo==='fijo';
+  if(gastosFijos().some(function(g){return g.nombre===nombre;}))return true;   /* un recibo de «Recibos fijos» */
   if(/alquiler|hipotec|suscrip|seguro|abono|cuota|gimnas|pr[ée]stamo|comunidad/i.test(nombre))return true;
   const v=[];for(let i=0;i<6;i++){const g=gastoMes(mkSuma(mk,-i));if(g&&+g.cats[nombre]>0)v.push(+g.cats[nombre]);}
   if(v.length<3)return false;
@@ -17219,8 +17524,9 @@ function baseReparto(mk){
      Fintonic); si no hay captura, lo que pusiste en «apartar» */
   const x=ahorroMes(mk,false)||{},a=ahorroDeMes(mk);
   if(x.hecho)return {v:+x.aparto||0,fuente:'apartado'};
-  if(a&&a.ahorro>0)return {v:Math.round(a.ahorro),fuente:'real'};
-  return {v:+x.aparto||0,fuente:'aparto'};}
+  /* a mitad de mes «lo que ahorras» es lo que aún no has gastado: hasta el cierre, tu meta */
+  if(a&&a.ahorro>0&&cierreAbierto(mk))return {v:Math.round(a.ahorro),fuente:'real'};
+  return {v:+x.aparto||Math.round(nominaMedia()*metaPct()/100),fuente:x.aparto?'aparto':'meta'};}
 function aporteHucha(h){
   const hoy=new Date();return repartoDe(baseReparto(ahoMk(hoy.getFullYear(),hoy.getMonth())).v)[h.id]||0;}
 
@@ -17266,6 +17572,13 @@ function ahorroMeses(n){
   const hoy=new Date(),out=[];let mk=ahoMk(hoy.getFullYear(),hoy.getMonth());
   for(let i=0;i<n;i++){const a=ahorroDeMes(mk);out.unshift({mk:mk,a:a,meta:a?Math.round(a.entra*metaPct()/100):null});mk=mkSuma(mk,-1);}
   return out;}
+function cierreAbierto(mk){
+  /* el mes se cierra cuando acaba o cuando ya ha llegado la nómina: el día 9, «has podido ahorrar
+     2.821 €» con 22 días por gastar metía en los bolsillos dinero que aún no ha sobrado */
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  if(mk<mkHoy)return true;if(mk>mkHoy)return false;
+  const dim=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
+  return hoy.getDate()>=dim-2||iso(llegadaNomina(hoy.getFullYear(),hoy.getMonth()).llega)<=iso(hoy);}
 function renderDinCierre(){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,t=ahoYm(mk);
   const e=entraMes(mk),p=mesPartes(mk),ganas=e?Math.round(e.neto):0,ah=p?Math.round(ganas-p.total):null;
@@ -17274,6 +17587,12 @@ function renderDinCierre(){
   let cuerpo;
   if(!p){cuerpo='<div class="card"><p class="mini" style="margin:0">Sin gastos de '+esc(MONTH_FULL[t.m].toLowerCase())+': sube una captura de Fintonic de ese mes.</p>'+
     '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';}
+  else if(!cierreAbierto(mk)&&!x.hecho){
+    const M=d6Mes(mk),prev=Math.round(ganas-M.fijos-M.gastado/Math.max(1,M.dia)*M.dim),L=llegadaNomina(t.y,t.m).llega;
+    cuerpo='<div class="card"><div class="cap">PREVISIÓN · A ESTE RITMO</div>'+
+      '<div class="row" style="align-items:flex-end;gap:8px"><div class="dbig">'+esc(fmtMil(prev))+' <small>€</small></div><span class="mini">al acabar el mes</span></div>'+
+      '<p class="mini" style="margin:6px 0 0">Llevas '+M.dia+' de '+M.dim+' días: '+esc(eurR(M.gastado))+' del día a día y '+esc(eurR(M.fijos))+' de fijos. '+
+        'El cierre se abre cuando llegue la nómina ('+L.getDate()+' '+esc(MON[L.getMonth()])+') o el último día del mes: entonces se aparta lo que haya sobrado de verdad.</p></div>';}
   else{
     const pc=ganas?Math.round(ah/ganas*100):0,ok=ah>=ganas*metaPct()/100;
     cuerpo='<div class="card"><div class="row mini"><span>Ganaste <b style="color:var(--ink)">'+esc(eurR(ganas))+'</b>'+(e?' ('+e.finde+' guardia'+(e.finde===1?'':'s')+' de finde)':'')+'</span><span class="sp"></span>'+
@@ -17367,12 +17686,14 @@ function d6Mes(mk){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());mk=mk||mkHoy;
   const e=entraMes(mk),ingreso=e?Math.round(e.neto):0,p=mesPartes(mk);
   let fijosMedia=0;(p?p.F:[]).forEach(function(k){const m=catMedia(k,mk);if(m!=null)fijosMedia+=m;});
-  const fijos=p?Math.max(p.fijos,fijosMedia):fijosMedia;
+  /* lo fijo es, como poco, lo que suman tus recibos: con una captura de antes del día 1 el alquiler aún no ha salido */
+  const recibos=mk===mkHoy?gastosFijos().reduce(function(s,g){return s+(+g.importe||0);},0):0;
+  const fijos=Math.max(p?Math.max(p.fijos,fijosMedia):fijosMedia,recibos);
   const ahorro=Math.round(ingreso*metaPct()/100),presu=Math.max(0,Math.round(ingreso-fijos-ahorro));
   const t=ahoYm(mk),dim=new Date(t.y,t.m+1,0).getDate(),dia=mk===mkHoy?hoy.getDate():dim;
   /* lo grande que apuntas a mano después de la última captura cuenta ya; la captura siguiente lo cuadra */
   const sinCaptura={n:0,v:0};
-  if(p&&p.g.fuente==='Fintonic'&&mk===mkHoy)pagosDelMes(t.y,t.m).forEach(function(q){if(q.fecha>p.g.fecha){sinCaptura.n++;sinCaptura.v+=+q.importe||0;}});
+  if(p&&p.g.fuente==='Fintonic'&&mk===mkHoy)pagosDelMes(t.y,t.m).forEach(function(q){if(q.fecha>p.g.fecha&&!q.gastoId){sinCaptura.n++;sinCaptura.v+=+q.importe||0;}});
   sinCaptura.v=Math.round(sinCaptura.v);
   const gastado=p?Math.round(p.vars)+sinCaptura.v:0,queda=Math.max(0,presu-gastado),dias=Math.max(1,dim-dia+1);
   const toca=dia/dim,lleva=presu?gastado/presu:0;
@@ -17471,7 +17792,7 @@ function dinMetasHTML(){
     (T.gasto?'<span class="d7bar"><i style="width:'+Math.min(100,Math.round(meses/6*100))+'%;background:var(--ink2)"></i></span>':'')+
     '<span class="s">no se toca'+(T.gasto?' · '+String(meses).replace('.',',')+' meses de gastos'+(faltaC?' (meta 6: faltan '+fmtMil(faltaC)+')':' ✓'):'')+'</span></span></button>';
   const x=ahorroMes(mkHoy,false)||{},p=mesPartes(mkHoy),e=entraMes(mkHoy),ah=p&&e?Math.round(e.neto-p.total):0;
-  const cierre=p&&!x.hecho&&ah>0?'<button class="d7cierre" data-a="dinero-vista" data-v="cierre">📥 Este mes has podido ahorrar <b>'+fmtMil(ah)+' €</b> · repartir en las metas ›</button>':
+  const cierre=p&&!x.hecho&&ah>0&&cierreAbierto(mkHoy)?'<button class="d7cierre" data-a="dinero-vista" data-v="cierre">📥 Este mes has podido ahorrar <b>'+fmtMil(ah)+' €</b> · repartir en las metas ›</button>':
     (x.hecho?'<div class="mini" style="text-align:center">✓ '+esc(MONTH_FULL[hoy.getMonth()].toLowerCase())+' ya está repartido en las metas</div>':'');
   return '<div class="grid dinv2 din6 din7 mt">'+din7Tabs('metas')+
     '<div class="card"><div class="row"><span class="cap">TUS METAS</span><span class="sp"></span><span class="mini">apartas '+fmtMil(apartasMes())+' €/mes</span></div>'+
@@ -17479,20 +17800,21 @@ function dinMetasHTML(){
     '<div class="d5two"><button class="btn p" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de una meta</button></div>'+
     '<p class="mini" style="text-align:center;margin:0 10px">Gastar de una meta solo baja esa meta: el colchón no se mueve.</p></div>';}
 function din7Reparto(){
-  /* el tuyo si lo has tocado; si no, el recomendado: colchón hasta 6 meses de gastos y, con él
-     lleno, su parte pasa a inversión y metas */
-  const lleno=colchonMeses()>=6&&mesTipo().gasto>0,p=ahorroS().plan7;
-  const base=din7RepartoRec(lleno);
-  if(p&&typeof p==='object')return base.map(function(r){return [r[0],Math.max(0,Math.min(100,Math.round(+p[r[0]]||0))),r[2],r[3]];});
-  return base;}
+  /* el recomendado: colchón hasta 6 meses de gastos y, con él lleno, su parte pasa a inversión y
+     metas. Ya no hay un «plan» aparte de tus bolsillos: tres repartos a la vez (Plan 30/25/30/15,
+     Huchas 50/30/20, Cierre…) era no saber cuál mandaba. Manda el de tus bolsillos. */
+  return din7RepartoRec(colchonMeses()>=6&&mesTipo().gasto>0);}
+function repartoComoRec(){
+  /* tus bolsillos agrupados como el recomendado, para compararlos */
+  const sh=bolsilloShares(),P=puroHucha(),o={colchon:sh[P.id]||0,inversion:0,metas:0,caprichos:0};
+  ahorroS().huchas.forEach(function(h){if(h.id===P.id||sh[h.id]==null)return;const t=metaTipo(h);
+    o[t==='inversion'?'inversion':(t==='capricho'?'caprichos':'metas')]+=sh[h.id]||0;});
+  return o;}
 function din7RepartoRec(lleno){
   return lleno?[['colchon',10,'Colchón','ya tienes 6 meses: solo lo mantiene al día'],['inversion',35,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',40,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']]:
     [['colchon',30,'Colchón',''],['inversion',25,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',30,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']];}
 function dinPlan7HTML(){
   const T=mesTipo(),R=din7Reparto(),P=puroHucha(),faltaC=Math.max(0,Math.round(T.gasto*6-P.saldo));
-  const metas=ahorroS().huchas.filter(function(h){const t=metaTipo(h);return h.id!==P.id&&t!=='inversion'&&t!=='capricho';}).map(function(h){return h.nombre;});
-  const COL={colchon:'var(--ink2)',inversion:'var(--bp)',metas:'var(--bg3)',caprichos:'var(--bc)'};
-  const tot=Math.max(1,T.fijos+T.vars+T.libre);
   const mes=T.n?('<div class="card"><div class="row"><span class="cap">TU MES TIPO</span><span class="sp"></span><span class="mini">media de '+T.n+' mes'+(T.n===1?'':'es')+'</span></div>'+
       '<div class="row" style="align-items:baseline"><div class="dbig">'+fmtMil(T.ingreso)+' <small>€ entran</small></div><span class="sp"></span>'+(T.finde?'<span class="mini">guardias de finde: ±'+fmtMil(T.finde)+'</span>':'')+'</div>'+
       '<div class="d6stk" role="img" aria-label="fijos '+T.fijos+', día a día '+T.vars+', libre '+T.libre+' euros"><i style="flex:'+T.fijos+';background:var(--ink2)"></i><i style="flex:'+T.vars+';background:var(--bc)"></i>'+(T.libre?'<i style="flex:'+T.libre+';background:var(--bp)"></i>':'')+'</div>'+
@@ -17500,17 +17822,21 @@ function dinPlan7HTML(){
     '<div class="card"><div class="cap">TU MES TIPO</div><p class="mini" style="margin:4px 0 0">Sube capturas de Fintonic (una por mes) y te saco lo que entra, lo fijo y lo del día a día.</p>'+
       '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   const L=T.libre||apartasMes();
-  const mp=metaPct(),ing=T.ingreso||nominaMedia(),propio=!!ahorroS().plan7;
+  const mp=metaPct(),ing=T.ingreso||nominaMedia();
   const ahorro='<div class="card"><div class="row"><span class="cap">LO QUE QUIERES AHORRAR</span><span class="sp"></span><div class="d4step"><button data-a="d7-meta" data-d="-5" aria-label="ahorrar menos">−</button><b>'+mp+' %</b><button data-a="d7-meta" data-d="5" aria-label="ahorrar más">+</button></div></div>'+
     '<p class="mini" style="margin:4px 0 0">de lo que entra: ≈ <b style="color:var(--ink)">'+fmtMil(Math.round(ing*mp/100))+' €/mes</b>. Con esto se calcula lo que puedes gastar cada día en «Mes».'+(T.libre?' Tu mes tipo deja libre '+fmtMil(T.libre)+' € ('+Math.round(T.libre/Math.max(1,ing)*100)+' %).':'')+'</p></div>';
-  const rep='<div class="card"><div class="row"><span class="cap">'+(propio?'TU REPARTO DE ':'TE RECOMIENDO REPARTIR ')+(L?'LOS '+fmtMil(L)+' €':'LO QUE AHORRES')+'</span><span class="sp"></span>'+(propio?'<button class="dlink" data-a="d7-rec">volver al recomendado</button>':'<span class="mini">toca ± para cambiarlo</span>')+'</div>'+
-    '<div class="d6stk" style="margin-top:8px">'+R.map(function(r){return '<i style="flex:'+r[1]+';background:'+COL[r[0]]+'"></i>';}).join('')+'</div>'+
-    R.map(function(r){const s=r[0]==='colchon'&&!r[3]?('hasta tener 6 meses de gastos'+(faltaC?' (te faltan '+fmtMil(faltaC)+' €)':'')):(r[0]==='metas'?(metas.slice(0,3).join(', ')+(metas.length>3?'…':''))||'viajes, casa, caprichos grandes':r[3]);
-      return '<div class="d7rep"><span class="d6k" style="background:'+COL[r[0]]+'"></span><span class="t"><b>'+r[2]+'</b><span>'+esc(s)+'</span></span>'+
-        '<span class="d7pc"><button data-a="d7-rep" data-k="'+r[0]+'" data-d="-5" aria-label="menos a '+r[2]+'">−</button><b>'+r[1]+' %'+(L?'<small>'+fmtMil(Math.round(L*r[1]/100))+' €</small>':'')+'</b><button data-a="d7-rep" data-k="'+r[0]+'" data-d="5" aria-label="más a '+r[2]+'">+</button></span></div>';}).join('')+
-    '<p class="mini" style="margin:8px 0 0">Cuando el colchón llegue a 6 meses, su parte pasa a inversión y metas. Pautas generales, no asesoramiento.</p></div>';
+  const bs=bolsillos(),sh=bolsilloShares(),cr=repartoComoRec();
+  const igual=R.every(function(r){return Math.abs((cr[r[0]]||0)-r[1])<=2;});
+  const rep='<div class="card"><div class="row"><span class="cap">TU REPARTO DE '+(L?'LOS '+fmtMil(L)+' €':'LO QUE AHORRES')+'</span><span class="sp"></span><button class="dlink" data-a="dinero-vista" data-v="plan">cambiar ›</button></div>'+
+    '<div class="d6stk" style="margin-top:8px">'+bs.map(function(b){const v=+b.h.mensual>0&&!b.puro?0:(sh[b.h.id]||0);return v?'<i style="flex:'+v+';background:'+b.col+'"></i>':'';}).join('')+'</div>'+
+    bs.map(function(b){const fijo=!b.puro&&+b.h.mensual>0,v=sh[b.h.id]||0;
+      return '<div class="d7rep"><span class="d6k" style="background:'+b.col+'"></span><span class="t"><b>'+esc(b.h.ico+' '+b.h.nombre)+'</b><span>'+esc(b.puro?'no se toca'+(faltaC?' · hasta 6 meses de gastos (faltan '+fmtMil(faltaC)+' €)':''):(b.h.meta||''))+'</span></span>'+
+        '<span class="d7pc"><b>'+(fijo?fmtMil(b.h.mensual)+' €<small>al mes</small>':v+' %'+(L?'<small>'+fmtMil(Math.round(L*v/100))+' €</small>':''))+'</b></span></div>';}).join('')+
+    (igual?'<p class="mini" style="margin:8px 0 0">✓ Coincide con lo recomendado. Pautas generales, no asesoramiento.</p>':
+      '<div class="d7sug"><div class="cap">LA APP TE SUGIERE</div><p class="mini" style="margin:2px 0 6px">'+R.map(function(r){return esc(r[2].replace(' a largo plazo','').toLowerCase())+' '+r[1]+' %';}).join(' · ')+
+        '. Cuando el colchón llegue a 6 meses, su parte pasa a inversión y metas. Pautas generales, no asesoramiento.</p>'+
+        '<button class="btn s" data-a="din7-aplicar">Aplicar la sugerencia a mis bolsillos</button></div>')+'</div>';
   $('#main').innerHTML='<div class="grid dinv2 din6 din7 mt">'+din7Tabs('plan')+mes+ahorro+rep+
-    '<button class="btn p gbig" data-a="din7-aplicar">Aplicar a mis bolsillos</button>'+
     '<div class="d4pie d7pie"><button data-a="dinero-vista" data-v="plan">⚖️ A mano</button><button data-a="dinero-vista" data-v="nomina">💶 Nómina</button>'+
       '<button data-a="din-hoja" data-h="gastos">🧾 Fijos</button><button data-a="dinero-vista" data-v="hoja">📊 Excel</button></div></div>';}
 function din7Aplicar(){
@@ -17543,8 +17869,10 @@ function din7Trend(M){
     '<div class="d6m" role="img" aria-label="gasto variable de los últimos 6 meses; media '+media+' euros"><span class="obj" style="bottom:'+(Math.round(media/max*64)+15)+'px"></span>'+
     ms.map(function(x){const sobre=x.v!=null&&x.v>media*1.1;
       return '<div class="'+(x.v==null?'v':(sobre?'x':''))+'"><em>'+(x.v==null?'':(x.est?'≈ ':'')+fmtMil(x.v))+'</em><i style="height:'+(x.v==null?3:Math.max(3,Math.round(x.v/max*64)))+'px'+(x.est?';opacity:.7':'')+'"></i><span'+(x.mk===M.mk?' class="hoy"':'')+'>'+esc(mkCorto(x.mk))+'</span></div>';}).join('')+'</div>'+
-    (dif!=null?'<p class="mini" style="margin:6px 0 0">'+esc(MONTH_FULL[ahoYm(M.mk).m])+(act.est?' a este ritmo acaba en ~':' acabó en ')+fmtMil(act.v)+' €: '+
-      (Math.abs(dif)<media*0.05?'en tu media.':((dif>0?'<b class="ex">+':'<b class="ok">−')+fmtMil(Math.abs(dif))+' €</b> '+(dif>0?'sobre':'bajo')+' tu media'+(dif>0&&cs.length?', sobre todo '+esc(cs[0].k.toLowerCase()):'')+'.'))+'</p>':'')+'</div>';}
+    (dif!=null?'<p class="mini" style="margin:6px 0 0">'+esc(MONTH_FULL[ahoYm(M.mk).m])+(act.est?' a este ritmo acaba en ~':' acabó en ')+fmtMil(act.v)+' €'+
+      /* con un solo mes de antes, «+814 € sobre tu media» asusta sin decir nada: hacen falta dos */
+      (prev.length<2?'. Con un mes más de datos te digo si es mucho o poco.':': ')+
+      (prev.length<2?'':Math.abs(dif)<media*0.05?'en tu media.':((dif>0?'<b class="ex">+':'<b class="ok">−')+fmtMil(Math.abs(dif))+' €</b> '+(dif>0?'sobre':'bajo')+' tu media'+(dif>0&&cs.length?', sobre todo '+esc(cs[0].k.toLowerCase()):'')+'.'))+'</p>':'')+'</div>';}
 function dinMesHTML(){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),M=d6Mes(mkHoy);
   const ESTTXT={bien:['vas bien','ok'],ojo:['un poco por encima','warn'],pasa:['vas pasado','ex'],sin:['sin captura','']};
@@ -18262,7 +18590,7 @@ function renderEstudio(){
       :('<div class="card"><h2>Hoy no toca repasar nada</h2>'+
         '<p class="note" style="margin:0">Todo al día. Si quieres adelantar, entra en el temario y dale a un tema sin ver.</p></div>'))+
     '<div class="card"><h2>Cómo vas</h2>'+
-      '<div class="prog"><div class="bar"><i style="width:'+pct+'%"></i></div><b>'+c.sabidos+' de '+c.total+'</b></div>'+
+      '<div class="prog"><div class="bar"><i style="width:'+pct+'%"></i></div><b>'+c.sabidos+' de '+c.total+' temas dominados</b></div>'+
       '<div class="dosdatos" style="margin-top:10px">'+
         '<div><b>'+c.enMarcha+'</b><span>en marcha</span></div>'+
         '<div><b>'+(min?fmtHM(min):'0h00')+'</b><span>esta semana</span></div>'+
@@ -18998,7 +19326,16 @@ function renderAjustes(){
               '<button class="tborra" data-a="tema-borrar" data-id="'+esc(t.id)+'" title="borrar este tema" '+
                 'aria-label="borrar «'+esc(t.nombre)+'»" style="color:'+esc(t.v.ink2)+'">×</button>'+
             '</div>';}).join('')+'</div>'):'')+
-        '</div>';})()}</div>
+        '</div>';})()}
+      <details class="plegable" style="margin-top:12px" data-tg="temaMano"${ui.temaMano?' open':''}><summary>retocar a mano (pisa el tema elegido)</summary>
+      <div class="row">
+        <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto">Color del texto<input type="color" value="${esc(tm.ink||'#e9f2ff')}" data-a="tema-f" data-k="ink" style="height:30px;width:56px;padding:2px"></label>
+        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
+      </div>
+      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
+      </details></div>
     <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
       <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
         sea cual sea el tipo de día, y aquí se cambian.</p>
@@ -19018,15 +19355,10 @@ function renderAjustes(){
           '</label>';}).join('')}</div>
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="franja-reset">restablecer colores</button></div>
       <div style="margin-top:12px">${carrilHTML(iso(new Date()),{caja:220})}</div></div>
-    <div class="card"><h2>Apariencia</h2>
-      <div class="row">
-        <label class="fld" style="flex:0 0 auto">Color principal<input type="color" value="${esc(tm.brand||'#38e1ff')}" data-a="tema-f" data-k="brand" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto">Color secundario<input type="color" value="${esc(tm.brand2||'#7c5cff')}" data-a="tema-f" data-k="brand2" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto">Color del texto<input type="color" value="${esc(tm.ink||'#e9f2ff')}" data-a="tema-f" data-k="ink" style="height:30px;width:56px;padding:2px"></label>
-        <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="tema-reset">restablecer</button></label>
-      </div>
-      <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
-      <label class="fld" style="max-width:220px;margin-top:12px">Primer día de la semana en «Mes»
+    <!-- «Apariencia» repetía los temas con tres colores sueltos que los pisaban: ahora van dentro de
+         Temas, plegados, como «a mano»; el primer día de la semana no es aspecto y va aparte -->
+    <div class="card"><h2>Calendario</h2>
+      <label class="fld" style="max-width:220px">Primer día de la semana en «Mes»
         <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
           <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label></div>`);
   if(v==='lector')return ajuPantalla('\ud83d\udd17 Lector de enlaces',`<div class="card" data-cfg="lector">
@@ -19142,7 +19474,21 @@ function renderData(){
       <label class="fld" style="margin-top:8px">Año en el que aplico los meses
         <input type="number" id="rhythmYear" value="${new Date().getFullYear()}" min="2000" max="2100" style="max-width:110px"></label>
       <p class="mini" style="margin-top:6px">Lo que no se entienda se ignora y se dice: no se toca ningún horario que no hayas mencionado y no se reparte ninguna guardia ni se da por hecho ningún servicio de mes si tú no lo escribes.</p></div>`);
-  if(v==='copia')return datosPantalla('\ud83d\udcbe Copias de seguridad',`<div class="card" data-cfg="copias"><h2>Dónde se guarda todo esto</h2>
+  if(v==='copia')return datosPantalla('\ud83d\udcbe Copias de seguridad',`<div class="card" data-cfg="copias"><h2>Copia de seguridad (JSON)</h2>
+      <!-- lo que se viene a hacer, arriba; la explicación de dónde se guarda, plegada (era 1.286 px) -->
+      <p class="note">Descárgalo y guárdalo donde quieras —Drive, el correo a ti mismo, lo que sea—. Sirve también para
+      pasarte todo a otro móvil: lo bajas aquí y lo pegas allí en «Importar JSON».</p>
+      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
+      ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
+        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
+      <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
+      <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
+      <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div>
+      <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
+        <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
+          <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
+      <details class="plegable" style="margin-top:12px" data-tg="copiaInfo"${ui.copiaInfo||_almacen.estado==='no'?' open':''}><summary>dónde se guarda todo esto y qué lo borra</summary>
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
       se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
       ni yo ni nadie puede verlo. La contrapartida es que <b>nadie puede devolvértelo si lo pierdes</b>.</p>
@@ -19161,19 +19507,7 @@ function renderData(){
       <p class="note" style="margin-bottom:6px"><b>Lo que sí se los lleva por delante, aunque estén protegidos:</b>
       desinstalar la app, «borrar datos del sitio» o limpiar el navegador a fondo, y cambiar de móvil.
       Para cualquiera de esas tres, la única red de seguridad es el JSON de aquí abajo.</p>
-      <h2 style="margin-top:14px">Copia de seguridad (JSON)</h2>
-      <p class="note">Descárgalo y guárdalo donde quieras —Drive, el correo a ti mismo, lo que sea—. Sirve también para
-      pasarte todo a otro móvil: lo bajas aquí y lo pegas allí en «Importar JSON».</p>
-      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
-      ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
-        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
-      <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
-      <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
-      <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div>
-      <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
-        <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
-          <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
+      </details>
       </div></div>${copiasCardHTML()}`);
   if(v==='texto')return datosPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
@@ -19267,7 +19601,7 @@ function cajonVivo(t){
       return M.p?'hoy puedes <b>'+fmtMil(M.hoyMax)+' €</b>':'sube la captura del mes';}
     if(t==='estudio'){const m=estMinSemana(hoyK);return m?'<b>'+fmtHM(m)+'</b> esta semana':'nada esta semana';}
     if(t==='consumo'){const n=consumoSemana(iso(mondayOf(new Date()))).n;
-      return n?'<b>'+n+'</b> esta semana':'<b>'+consumoSin()+'</b> días sin';}
+      return n?'<b>'+n+'</b> esta semana':(function(){const d=consumoSin();return '<b>'+d+'</b> día'+(d===1?'':'s')+' sin';})();}
     if(t==='eventos'){const ahora=horaLocal(new Date());
       for(let i=0;i<21;i++){const d=addDays(new Date(),i),k=iso(d);
         const e=eventosDeFecha(k).filter(function(x){return i>0||!x.hora||x.hora>=ahora;})[0];
@@ -19875,7 +20209,9 @@ function act(a,el){
       if(!(c.meta>0))c.meta=Math.max(10,Math.round((+el.dataset.ref||100)*0.85/10)*10);else c.meta=Math.max(0,c.meta+d);
       if(c.meta===0)flash('sin meta en '+k);save();render();break;}
     case 'din-cat-tipo':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0});c.tipo=el.dataset.t==='fijo'?'fijo':'variable';save();render();break;}
-    case 'din-apartar':{const h=new Date(),mk=el.dataset.mk||ahoMk(h.getFullYear(),h.getMonth()),x=ahorroMes(mk,true);
+    case 'din-apartar':{const h=new Date(),mk=el.dataset.mk||ahoMk(h.getFullYear(),h.getMonth());
+      if(!cierreAbierto(mk)){flash('el mes se cierra al llegar la nómina o el último día');break;}
+      const x=ahorroMes(mk,true);
       if(!x.hecho)x.aparto=baseReparto(mk).v;flash(apartarMes(mk));break;}
     case 'din-mes':{const h=new Date(),hoyMk=ahoMk(h.getFullYear(),h.getMonth()),mk=mkSuma(ui.dinMes||hoyMk,+el.dataset.d||0);
       if(mk<=hoyMk){ui.dinMes=mk===hoyMk?'':mk;render();}break;}
@@ -19940,12 +20276,6 @@ function act(a,el){
     case 'din-gaste-resto':{const g=ui.dinGaste||{imp:'',txt:''};g.resto=el.dataset.id||'';ui.dinGaste=g;render();break;}
     case 'din-gaste-ok':{const m=gasteApuntar();flash(m,4500);if(!ui.dinGaste)ui.dinHoja='';render();break;}
     case 'd7-meta':{const a=ahorroS();a.metaPct=Math.max(5,Math.min(80,metaPct()+(+el.dataset.d||0)));save();render();break;}
-    case 'd7-rep':{const a=ahorroS(),R=din7Reparto(),p={};R.forEach(function(r){p[r[0]]=r[1];});
-      /* suma siempre 100: lo que subes a uno sale de «metas» (o de caprichos si tocas metas) */
-      const k=el.dataset.k,d=+el.dataset.d||0,otro=k==='metas'?'caprichos':'metas';
-      const nv=Math.max(0,Math.min(100,p[k]+d)),real=nv-p[k];if(p[otro]-real<0)break;
-      p[k]=nv;p[otro]-=real;a.plan7=p;save();render();break;}
-    case 'd7-rec':delete ahorroS().plan7;save();render();break;
     case 'din7-aplicar':{flash(din7Aplicar(),4500);render();window.scrollTo(0,0);break;}
     case 'din-bolsillo-inv':{const a=ahorroS(),id='hu-inv'+Date.now().toString(36);
       a.huchas.push({id:id,nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[]});
@@ -20420,11 +20750,15 @@ function act(a,el){
     case 'cje-des':{const P=cocinaPref(),id=el.dataset.id,i=P.desayunos.indexOf(id);if(i>=0)P.desayunos.splice(i,1);else if(P.desayunos.length<3)P.desayunos.push(id);else flash('máximo 3');save();render();break;}
     case 'fr-rec':{const e=fraseRecientes()[+el.dataset.i];if(!e||!e.frase)break;
       ui.frase={txt:e.nombre,tipo:e.frase.tipo,tam:e.frase.tam||'m',items:e.frase.it.map(function(y){return {id:y[0],g:y[1]};}),raros:[]};render();break;}
-    case 'prot-extra':{const r=protExtraPoner(+el.dataset.w);save();flash(r?('puesto: '+r.d.name.replace(/^Extra de proteína: /,'')+' (+'+Math.round(r.prot)+' g) en el '+r.cls+' del '+SB_DIAS_L[+el.dataset.w]):'no queda nada en la nevera que sume proteína');render();break;}
+    case 'prot-extra':{const w=+el.dataset.w,gu=!!guardiaCelda(sbKey(w),'cena'),r=protExtraPoner(w);save();
+      flash(r?((gu?'para llevar a la guardia: ':'puesto: ')+r.d.name.replace(/^Extra de proteína: /,'')+' (+'+Math.round(r.prot)+' g) '+(gu?'con el desayuno':'en el '+r.cls)+' del '+SB_DIAS_L[w]):
+        (gu?'el desayuno de la guardia ya lleva tres cosas: llévate el extra aparte':'no queda nada en la nevera que sume proteína'));render();break;}
+    case 'platos-app-limpiar':{const fuera=platosAppSinUso().map(function(d){return d.id;});
+      store.dishes=store.dishes.filter(function(d){return fuera.indexOf(d.id)<0;});save();flash(fuera.length+' plato'+(fuera.length===1?'':'s')+' de la app quitado'+(fuera.length===1?'':'s'));render();break;}
     case 'hc-modo':ui.hcModo=+el.dataset.v||2;ui.hcSel='';render();break;
     case 'hc-sel':ui.hcSel=el.dataset.id||'';render();break;
     case 'hc-ok':{const pl=ui.hcPlan;let d=pl&&dishById(pl.id);if(!d&&pl&&pl.fr)d=comboADish(pl.fr,pl.icon);if(!d)break;cocinadoAdd(d.id,pl.rac);
-      pl.huecos.forEach(function(x){mPoner(x.w,x.c,[{id:d.id,portions:1}],'');const cel=sbCelda(x.w,x.c);if(cel)cel.auto=false;});save();
+      pl.huecos.forEach(function(x){mPoner(x.k,x.c,[{id:d.id,portions:1}],'');const cel=sbCelda(x.k,x.c);if(cel)cel.auto=false;});save();
       flash(d.name+': '+pl.rac+' raciones en la semana · aguanta '+diasAguanta(d)+' días');ui.hcSel='';ui.tab='types';ui.typesVista='';ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'nev-mano':ui.tab='food';ui.foodVista='nevera2';ui.nvAdd=!ui.nvAdd;render();{const f2=document.getElementById('despAdd');if(f2)f2.focus();}break;
     case 'nev-ver':ui.tab='food';ui.foodVista='nevera2';render();window.scrollTo(0,0);break;
@@ -22746,6 +23080,9 @@ document.addEventListener('input',e=>{
     },140);
   }
 });
+/* los <details data-tg="clave"> recuerdan si estaban abiertos: render() repinta y, sin esto, al
+   cambiar un campo de dentro se volvía a plegar */
+document.addEventListener('toggle',function(e){const d=e.target;if(d&&d.dataset&&d.dataset.tg)ui[d.dataset.tg]=d.open;},true);
 document.addEventListener('change',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   switch(a){
@@ -23301,7 +23638,7 @@ window.PG={diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDi
   foodBuscar,frecuentes,buscableDe,racionesDe,previaMacrosDe,apuntaBuscable,FOOD_TIPOS,
   renderFoodBuscar,renderFoodCantidad,renderFoodMicros,renderFoodProductos,renderCocinaPanel,renderMisPlatos,
   platosPorAntojo,antojoS,microLineaHTML,
-  esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,loQueHay,escalaIng,parseIng,
+  esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,semanaCubierta,repartoComoRec,din7Reparto,cierreAbierto,kcalPlanMedia,kcalCompletar,sinGlutenTexto,neveraGramos,escalaIng,parseIng,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,trayectoMin,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,timelineBar,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,

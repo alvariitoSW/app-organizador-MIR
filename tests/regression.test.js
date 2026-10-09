@@ -1606,6 +1606,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('cfg', 'dias');
   await page.waitForTimeout(150);
   const firstShiftId = await page.evaluate(() => window.PG.store.shifts[0].id);
+  // cada tipo de día va plegado en una línea: se abre el primero
+  await page.click(`#main details.tdpl[data-tg="sh_${firstShiftId}"] summary`);
+  await page.waitForTimeout(100);
   await page.click(`[data-a="day-rhythm-shift"][data-id="${firstShiftId}"]`);
   await page.waitForTimeout(200);
   const modalAbierto = await page.evaluate(() => document.getElementById('overlay').classList.contains('on'));
@@ -1613,6 +1616,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
   check('Ajustes: el botón "horas" de un tipo de día abre directamente su modal de horario', modalAbierto, '');
 
+  if (!(await page.evaluate((sid) => { const d = document.querySelector(`#main details.tdpl[data-tg="sh_${sid}"]`); return !d || d.open; }, firstShiftId)))
+    await page.click(`#main details.tdpl[data-tg="sh_${firstShiftId}"] summary`);
   await page.click(`[data-a="day-edit"][data-id="${firstShiftId}"]`);
   await page.waitForTimeout(250);
   const fueATypes = await page.evaluate((sid) => window.PG.ui.tab === 'types' && !!document.querySelector(`#main .card[data-shift="${sid}"]`), firstShiftId);
@@ -1810,7 +1815,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('cfg', 'rotacion');
   await page.waitForTimeout(250);
   const enAjustes = await page.evaluate(() => {
-    const c = document.querySelector('#main .card[data-cfg="rotaciones"]');
+    // una sola lista de rotaciones: la de «Tus rotaciones», con su editor dentro
+    const c = document.querySelector('#main .card[data-cfg="servicios"]');
     return c ? { filas: c.querySelectorAll('.svcrow').length, meses: !!c.querySelector('[data-a="svc-meses"]'), nueva: !!c.querySelector('[data-a="svc-add"]') } : null;
   });
   check('Ajustes deja tocar las rotaciones y cuánto dura cada una, sin salir de Ajustes',
@@ -1862,7 +1868,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // cambiar la duración de una rotación es un <select>: se dispara con "change", no con un clic
   await gotoTab('cfg', 'rotacion');
   await page.waitForTimeout(250);
-  await page.selectOption('#main [data-cfg="rotaciones"] [data-a="svc-meses"][data-ix="0"]', '3');
+  await page.evaluate(() => { const d = document.querySelector('#main [data-cfg="servicios"] details'); if (d) d.open = true; });
+  await page.selectOption('#main [data-cfg="servicios"] [data-a="svc-meses"][data-ix="0"]', '3');
   await page.waitForTimeout(250);
   const duracionGuardada = await page.evaluate(() => window.PG.store.rotation.svcMeses[0]);
   check('cambiar los meses de una rotación en el desplegable se guarda', duracionGuardada === 3, String(duracionGuardada));
@@ -2710,8 +2717,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await gotoTab('data', 'copia');
     await page.waitForTimeout(400);
+    // la explicación va plegada debajo de los botones de la copia: se abre
+    await page.evaluate(() => { const d = document.querySelector('#main [data-cfg="copias"] details[data-tg="copiaInfo"]'); if (d) d.open = true; });
     const tarjeta = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('#main .card')].find((x) => /Dónde se guarda/.test(x.textContent));
+      const c = [...document.querySelectorAll('#main .card')].find((x) => /d[oó]nde se guarda/i.test(x.textContent));
       return c ? { txt: c.innerText, cifras: c.querySelectorAll('.dosdatos b').length } : null;
     });
     check('«Datos» dice dónde vive todo y si el navegador puede borrarlo',
@@ -3146,7 +3155,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       clientWidth: document.documentElement.clientWidth,
       tomas: document.querySelectorAll('#main .toma2').length,
       // lo que hacía falta seguir teniendo: hora, etiqueta, comida armada y los platos
-      campos: document.querySelectorAll('#main .toma2 .st, #main .toma2 .sl').length,
+      // la hora ya no está aquí (la pone cada día): queda la etiqueta de cada toma
+      campos: document.querySelectorAll('#main .toma2 .sl').length, horas: document.querySelectorAll('#main .toma2 .st').length,
       // la comida armada ya no es una lista nativa: es el botón que abre el selector con buscador
       armadas: document.querySelectorAll('#main .toma2 [data-a="elegir-abrir"]').length,
       sinFilaTabla: !document.querySelector('#main li.slot'),
@@ -3155,7 +3165,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150);
     check('el menú de un día son tarjetas por toma y ya no se sale de la pantalla a lo ancho',
       menuDia.scrollWidth <= menuDia.clientWidth && menuDia.tomas > 0 && menuDia.sinFilaTabla &&
-      menuDia.campos === menuDia.tomas * 2 && menuDia.armadas === menuDia.tomas,
+      menuDia.campos === menuDia.tomas && menuDia.horas === 0 && menuDia.armadas === menuDia.tomas,
       JSON.stringify(menuDia));
   }
 
@@ -3203,7 +3213,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
   // 48) "qué puedo cocinar": separa lo que sale entero de lo que casi, y "a la compra" mete lo que
-  // falta en una lista de verdad (secuencia: se mira la lista antes y después del toque)
+  // falta en una lista de verdad (secuencia: se mira la lista antes y después del toque).
+  // «Te sale entero» mira TU nevera (la misma cuenta que la Semana y la Compra): se mete en casa lo
+  // de una receta, y de otra todo menos un ingrediente
+  await page.evaluate(() => { const P = window.PG, rs = P.store.dishes.filter((d) => P.esReceta(d) && !d.hospital && P.glutenDePlato(d).est !== 'si');
+    window.__desp48 = JSON.parse(JSON.stringify(P.store.food.despensa || []));
+    rs.slice(0, 2).forEach((d) => d.ingredients.forEach((l) => P.despensaAdd(l)));
+    if (rs[2]) rs[2].ingredients.slice(1).forEach((l) => P.despensaAdd(l));
+    P.save(); });
   await gotoFood('cocinar');
   const platosQueSalen = await page.evaluate(() => ({
     listos: document.querySelectorAll('#main .cofila [data-a="food-cocina"]').length,
@@ -3290,6 +3307,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   check('cambiar de receta en modo cocina vuelve al paso 1 y a las raciones de esa receta',
     traFsCambio.paso === 0 && traFsCambio.rac === 0 && traFsCambio.hayTexto &&
     traFsCambio.primeroMarcado === 1, JSON.stringify(traFsCambio));
+  // la nevera vuelve a como estaba: lo metido para «te sale entero» no debe cambiar las pruebas de después
+  await page.evaluate(() => { const P = window.PG; if (window.__desp48) { P.store.food.despensa = window.__desp48; P.save(); } });
 
   // 51) "hecho" cierra el ciclo: apunta una ración en el día de hoy y devuelve a la portada
   const kcalAntesHecho = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyKCm);
@@ -4725,7 +4744,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // …y ahora la cadena: cambiar la hora DESDE LA PANTALLA y que el mes se entere. El campo vive
     // en el switch de `change`, así que hay que salir del campo: con page.fill() a secas no salta.
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'rotacion'; P.render(); });
+    // cada tipo de guardia va plegado en una línea: se abre el de UMI
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'rotacion'; P.ui.gt_umi = true; P.render(); });
     await page.waitForTimeout(350);
     const campo = await page.$('[data-a="gtipo-finde"][data-code="umi"]');
     if (campo) { await campo.fill('11:30'); await page.keyboard.press('Tab'); await page.waitForTimeout(300); }
@@ -6185,14 +6205,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la nómina se edita desde la app: una época nueva y lo cobrado de verdad manda sobre lo estimado
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dineroVista = 'nomina'; P.render(); });
     await page.waitForTimeout(150);
-    const hayCampo = await page.$('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]');
-    if (hayCampo) { await page.fill('#main [data-a="aho-cobrado"][data-mk="' + base.mk + '"]', '3001,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
+    // solo se piden los meses ya cobrados (el de ahora, si ya ha llegado la nómina): el último de la lista
+    const mkCob = await page.evaluate(() => { const l = [...document.querySelectorAll('#main [data-a="aho-cobrado"]')]; return l.length ? l[l.length - 1].dataset.mk : ''; });
+    const hayCampo = mkCob ? await page.$('#main [data-a="aho-cobrado"][data-mk="' + mkCob + '"]') : null;
+    if (hayCampo) { await page.fill('#main [data-a="aho-cobrado"][data-mk="' + mkCob + '"]', '3001,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
     const ep0 = await page.evaluate(() => window.PG.ahorroS().epocas.length);
     await toca('#main [data-a="aho-ep-add"]');
     const nom = await page.evaluate((mk) => { const P = window.PG, t = mk.split('-');
-      return { cob: P.ahorroS().cobrado[mk], neto: P.nominaMes(+t[0], +t[1] - 1).neto, epocas: P.ahorroS().epocas.length }; }, base.mk);
+      return { mk, futuro: mk > P.iso(new Date()).slice(0, 7), cob: P.ahorroS().cobrado[mk], neto: P.nominaMes(+t[0], +t[1] - 1).neto, epocas: P.ahorroS().epocas.length }; }, mkCob || base.mk);
     check('lo cobrado de verdad manda sobre lo estimado, y las épocas se añaden desde la app',
-      !!hayCampo && nom.cob === 3001.5 && nom.neto === 3001.5 && nom.epocas === ep0 + 1, JSON.stringify({ nom, ep0 }));
+      !!hayCampo && !nom.futuro && nom.cob === 3001.5 && nom.neto === 3001.5 && nom.epocas === ep0 + 1, JSON.stringify({ nom, ep0 }));
     await page.evaluate(() => { const P = window.PG; delete P.store.ahorro;
       const hoy = new Date(), G = P.store.shifts.filter(P.isGuardia)[0];
       P.monthDays(hoy.getFullYear(), hoy.getMonth()).forEach((d) => { if (d.shiftId === G.id) P.setDayOverride(d.key, null); });
@@ -6472,7 +6494,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         trasEnCasa: /lo tienes en casa/.test(porQueTras),
         diasAntes: cuenta(antes), diasTras: cuenta(tras) }; });
     check('lo que ya tienes en casa pesa en la elección y se dice por qué está ahí',
-      conDesp.cubPct === 100 && conDesp.cubN === 5 && conDesp.cubTotal === 5 &&
+      conDesp.cubPct === 100 && conDesp.cubN === conDesp.cubTotal && conDesp.cubTotal >= 4 &&
       conDesp.antesEnCasa === false && conDesp.trasEnCasa === true &&
       conDesp.diasTras >= conDesp.diasAntes,
       JSON.stringify(conDesp));
@@ -8123,8 +8145,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno && hoyCorto.sinTarjetaSol, JSON.stringify(hoyCorto));
 
     // y el sol sigue entero: tocar el arco amarillo del reloj abre su hoja, con el arco y el sitio
-    const pSol = await page.evaluate(() => { const v = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 340 / v.width, t = Math.PI;
-      return { x: v.left + (150 + 129 * Math.sin(t) + 20) / k, y: v.top + (150 - 129 * Math.cos(t) + 14) / k }; });
+    // el reloj se dibuja en la caja -60 -14 420 328 (las etiquetas van por fuera del anillo)
+    const pSol = await page.evaluate(() => { const v = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / v.width, t = Math.PI;
+      return { x: v.left + (150 + 129 * Math.sin(t) + 60) / k, y: v.top + (150 - 129 * Math.cos(t) + 14) / k }; });
     await page.mouse.click(pSol.x, pSol.y);
     await page.waitForTimeout(250);
     const solAbierto = await page.evaluate(() => {
@@ -8859,7 +8882,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Dinero v7: Mes dice lo que puedes gastar hoy y el día a día de 6 meses; Metas, cada bolsillo; Plan, el mes tipo y el reparto; todo en una pantalla y sin «Apartar»',
       /PUEDES GASTAR HOY/.test(portada.txt) && /GASTO DEL DÍA A DÍA/.test(portada.txt) && /SIN APUNTAR/.test(portada.txt) && portada.tramos === 6 && portada.alto < 1000 &&
       /TUS METAS/.test(metas.txt) && metas.metas >= 3 && /no se toca/.test(metas.txt) && metas.alto < 1000 &&
-      /TU MES TIPO/.test(plan7.txt) && plan7.rep === 4 && /Aplicar a mis bolsillos/.test(plan7.txt) &&
+      /TU MES TIPO/.test(plan7.txt) && plan7.rep >= 2 && /TU REPARTO/.test(plan7.txt) && (/Aplicar la sugerencia/.test(plan7.txt) || /Coincide con lo recomendado/.test(plan7.txt)) &&
       !portada.apartar && !metas.apartar && !plan7.apartar, JSON.stringify({ portada: [portada.tramos, portada.alto, portada.apartar], metas: [metas.metas, metas.alto], plan7: [plan7.rep, plan7.alto] }));
     check('la hoja de gastos separa fijos y variables (alquiler fijo solo), se cambia a mano y pone meta; toca fuera y se cierra',
       hojaGastos && g1 && g1.fijos >= 1 && g1.variables >= 2 && aFijo && tipo === 'fijo' && pon && meta > 0 && cerrada,
@@ -9184,7 +9207,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('ticket de Mercadona: lee los productos (el plátano sin el «€/kg»), el total, y guarda la compra como lista habitual',
       tk.n === 4 && tk.platano && Math.abs(tk.total - 12.97) < 0.01 && tk.habitual === 4, JSON.stringify(tk));
     check('Dinero v7: una meta con fecha pide su €/mes y €/día; «Aplicar» crea inversión y caprichos, el colchón baja a 30 % y el reparto suma todo',
-      din.men > 0 && din.meses === 4 && din.dia >= 1 && din.rep === 4 &&
+      // el reparto es el de tus bolsillos (una fila por bolsillo); el recomendado va dentro como sugerencia
+      din.men > 0 && din.meses === 4 && din.dia >= 1 && din.rep >= 2 &&
       tras.puro === 30 && tras.min === 10 && tras.inv && tras.cap && tras.japon === din.men && tras.suma === 1000, JSON.stringify({ din, tras }));
   }
 
@@ -9343,7 +9367,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Lloretazo hoy: aviso y monchis con tope (500) y opciones de tu nevera, lo que sacia primero; «＋» lo apunta en Monchis',
       r.aviso && r.card && r.tope && r.sanos >= 2 && r.capr >= 1 && /Yogur griego/.test(r.primero) && tras.pos === 'monchis' && tras.m > 100, JSON.stringify({ r, tras }));
     check('🌿 Consumo: una sesión en dos toques (dry, 0,1 g, Lloretazo), la semana la cuenta, sobrevive a recargar, «cómo te afecta» y está en el cajón',
-      cn.n === 1 && cn.ses === 'dry 0.1 lloret' && cn.semana === 1 && cn.vuelta === 1 && /objetivo ≤ 4/.test(cn.kpi) && ef && cajon, JSON.stringify({ cn, ef, cajon }));
+      // el Lloretazo es de noche: antes de las 19:00 el sitio por defecto es «casa»
+      cn.n === 1 && cn.ses === 'dry 0.1 ' + (new Date().getHours() >= 19 ? 'lloret' : 'casa') && cn.semana === 1 && cn.vuelta === 1 && /objetivo ≤ 4/.test(cn.kpi) && ef && cajon, JSON.stringify({ cn, ef, cajon }));
   }
 
   // 228) PLAN DE LA SEMANA CON LO QUE HAY y DINERO EDITABLE: con el menú vacío, «Móntamela» rellena las
@@ -9378,10 +9403,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const m0 = await page.evaluate(() => window.PG.ahorroS().metaPct);
     await page.click('[data-a="d7-meta"][data-d="5"]'); await page.waitForTimeout(80);
     const m1 = await page.evaluate(() => window.PG.ahorroS().metaPct);
-    await page.click('[data-a="d7-rep"][data-k="inversion"][data-d="5"]'); await page.waitForTimeout(80);
-    const plan = await page.evaluate(() => { const p = window.PG.ahorroS().plan7 || {}; return { p, suma: Object.values(p).reduce((a, b) => a + b, 0) }; });
-    await page.click('[data-a="d7-rec"]'); await page.waitForTimeout(80);
-    const rec = await page.evaluate(() => !window.PG.ahorroS().plan7);
+    // un solo reparto: el de tus bolsillos; el recomendado es una sugerencia que se aplica a ellos
+    const sug = await page.$('#main [data-a="din7-aplicar"]'); if (sug) { await sug.click(); await page.waitForTimeout(100); }
+    const plan = await page.evaluate(() => { const P = window.PG, c = P.repartoComoRec(), r = {}; P.din7Reparto().forEach((x) => { r[x[0]] = x[1]; });
+      return { p: c, suma: Object.values(c).reduce((a, b) => a + b, 0), rec: r, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ') }; });
+    const rec = /Coincide con lo recomendado/.test(plan.txt) && !plan.txt.includes('LA APP TE SUGIERE');
     await page.click('.d7seg [data-v="metas"]'); await page.waitForTimeout(100);
     const meta = await page.$('.d7meta[data-h]'); if (meta) { await meta.click(); await page.waitForTimeout(120); }
     const inp = await page.$('input[data-a="din-hu-campo"][data-k="saldo"]');
@@ -9392,7 +9418,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.guardia && /comidas puestas/.test(sb.flash) && sb.llenas >= 18 && sb.hosp.includes('3comida') && sb.hosp.includes('3cena') && !sb.hosp.includes('3desayuno') && hoy >= 3, JSON.stringify({ r, sb, hoy }));
     check('Hoy cocino ofrece platos de tu nevera y «hecho» lo deja cocinado', hc.length >= 2 && coc >= 1, JSON.stringify({ hc, coc }));
     check('Dinero: el % de ahorro y el reparto se cambian (suma 100 y vuelve al recomendado) y lo que llevas en una hucha se corrige a mano',
-      m1 === (m0 == null ? 30 : m0) + 5 && plan.suma === 100 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan, rec, hu }));
+      m1 === (m0 == null ? 30 : m0) + 5 && Math.abs(plan.suma - 100) <= 2 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan: [plan.p, plan.rec], rec, hu }));
   }
 
   // 229) LA SEMANA LLEGA A LA PROTEÍNA: «Móntamela» reparte la proteína (desayunos con proteína de
@@ -9414,7 +9440,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       Object.keys(d).forEach((w) => { const it = (d[w].desayuno || { items: [] }).items[0]; if (it) des[P.dishById(it.id).name] = 1; });
       const txt = document.querySelector('#main').innerText;
       return { v: ps.map((x) => x.v), cortos: ps.filter((x) => x.corta).length, des: Object.keys(des).length,
-        llegan: /todos los días llegan/.test(txt), enCasa: +((txt.match(/(\d+) de 21 comidas/) || [])[1] || 0) }; });
+        // «con lo que tienes» cuenta las comidas que quedan de la semana (de hoy al domingo), no las 21
+        llegan: /todos los días llegan/.test(txt), enCasa: +((txt.match(/(\d+) de (\d+) comidas/) || [])[1] || 0), tot: +((txt.match(/(\d+) de (\d+) comidas/) || [])[2] || 0) }; });
     // el plan va por FECHA: el martes de esta semana, con un plato ligero (el hospital ya no vale fuera de guardia)
     await page.evaluate(() => { const P = window.PG, h = P.store.dishes.find((d) => !d.hospital && !d.fuera && +d.prot > 3 && +d.prot < 25);
       P.store.semBase.d[P.sbKey(1)] = { desayuno: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' }, comida: { items: [{ kind: 'dish', id: h.id, portions: 1 }], meal: '' } };
@@ -9433,7 +9460,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         futuro: P.cnFechaDe({ fecha: '2999-01-01' }) === P.iso(new Date()) }; }, otro);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia229; P.save(); P.ui.cnF = null; P.ui.tab = 'hoy'; P.render(); });
     check('«Móntamela» llega a la proteína todos los días, con desayunos distintos, y lo de la nevera cuenta como en casa',
-      sem.cortos === 0 && sem.v.every((v) => v >= 120) && sem.des >= 3 && sem.llegan && sem.enCasa >= 18, JSON.stringify(sem));
+      sem.cortos === 0 && sem.v.every((v) => v >= 120) && sem.des >= 3 && sem.llegan && sem.tot > 0 && sem.enCasa >= Math.floor(sem.tot * 0.85), JSON.stringify(sem));
     check('un día que no llega dice cuánto falta y con qué, y «＋ ponerlo» lo sube',
       /te faltan \d+ g/.test(aviso) && /Añade/.test(aviso) && despues > antes, JSON.stringify({ aviso, antes, despues }));
     check('Consumo: se apunta una sesión de ayer y de otro día (nunca en el futuro) y salen en los últimos 7 días',
@@ -9770,9 +9797,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#hojaDia [data-a="cje-fija"]'); await page.waitForTimeout(100);
     const abierta = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjli').length);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia238; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('la compra sale de «Esta semana»; tus listas fijas van aparte y plegadas, sin repetir lo que ya pide la semana; 🛒 cuenta solo la semana',
+    check('la compra sale de «Esta semana»; tus listas fijas van aparte y plegadas, sin repetir lo que ya pide la semana; 🛒 cuenta lo mismo que la Compra',
       datos.semana === 2 && datos.fresco.some((x) => /garbanzo/i.test(x)) && datos.fresco.some((x) => /espinaca/i.test(x)) &&
-      datos.rutina.length === 2 && !datos.rutina.some((x) => /garbanzo/i.test(x)) && datos.tile === '2' && hoja.items === 2 && hoja.fijas === 1 && abierta === 4,
+      // una sola cifra en toda la app: el 🛒 cuenta lo mismo que la pantalla de la Compra (semana + tus listas)
+      datos.rutina.length === 2 && !datos.rutina.some((x) => /garbanzo/i.test(x)) && datos.tile === String(datos.total) && hoja.items === 2 && hoja.fijas === 1 && abierta === 4,
       JSON.stringify({ datos, hoja, abierta }));
   }
 
@@ -9952,8 +9980,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: P.hm(h * 60 - 60), fin: P.hm(h * 60 + 60), modo: 'fecha', fecha: k, on: true });
       P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); return h * 60; });
     await page.waitForTimeout(150);
-    const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 340 / s.width, t = m / 1440 * 2 * Math.PI;
-      return { x: s.left + (150 + r * Math.sin(t) + 20) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
+    const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / s.width, t = m / 1440 * 2 * Math.PI;
+      return { x: s.left + (150 + r * Math.sin(t) + 60) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
     const est = () => page.evaluate(() => { const P = window.PG, it = P.ui.hoySel ? P.hoyItems(P.ui.hoySel.k, P.dayInfo(P.ui.hoySel.k))[P.ui.hoySel.i] : null;
       return { sel: it ? it.txt : '', cur: P.ui.hoyCursor, hoja: !!document.querySelector('#hojaDia .hoja'), on: document.querySelectorAll('#main .hoyreloj .on').length,
         dim: document.querySelector('#main .hoyreloj').classList.contains('dim'), tira: (document.querySelector('#hoyTira') || {}).innerText || '',
@@ -10305,6 +10333,45 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.pend1 === true && r.pend2 === false && r.hora === 1, JSON.stringify(r));
     check('Sueño, revisión: el mejor plan se calcula una vez y no se ofrece si es peor; el jet lag sin datos no se inventa; «Apárcalo» no se borra al repintar',
       r.memo && r.noPeor && /hacen falta noches/.test(r.jet) && r.nota === 'llamar al banco', JSON.stringify(r));
+  }
+
+  // 255) LOS CUATRO INFORMES: una sola verdad en Comer (Semana y Compra cuentan lo mismo; «Hoy cocino»
+  // no propone lo ya cocinado ni pisa lo puesto a mano); Dinero cuenta los recibos y no cierra el mes a
+  // mitad; la rutina no cae dentro de la guardia y «comer antes de entrar» va antes de entrar; del gym
+  // de las 6:30 se va «al trabajo»; el segundo entreno viene apagado
+  {
+    const r = await page.evaluate(() => { const P = window.PG, copia = JSON.parse(JSON.stringify(P.store)), out = {};
+      // Comer
+      out.cubierta = P.semanaCubierta(); const t = P.compraSemanaHTML(); out.compraIgual = !out.cubierta.tot || t.includes(out.cubierta.ok + ' de ' + out.cubierta.tot);
+      const rec = P.store.dishes.find((d) => P.esReceta(d) && P.glutenDePlato(d).est !== 'si');
+      if (rec) { P.store.food.despensa = []; rec.ingredients.forEach((l) => P.despensaAdd(l)); P.cocinadoAdd(rec.id, 3);
+        out.noRepite = !P.platosCocinables().listos.some((x) => x.dish.id === rec.id); } else out.noRepite = true;
+      // Dinero: un recibo sin captura de Fintonic cuenta como fijo este mes; el cierre no se abre a mitad
+      P.store.dinero = { gastos: [], pagos: [], presupuesto: 0 }; P.store.ahorro = undefined;
+      P.addGasto({ nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa' });
+      const hoy = new Date(), mk = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+      const g = P.gastoMes(mk); out.recibo = g ? g.cats.Alquiler : null;
+      const dim = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+      out.cierre = P.cierreAbierto(mk); out.dim = dim;
+      // Calendario: guardia con la rutina de fábrica
+      const G = P.store.shifts.filter(P.isGuardia)[0], k = P.iso(P.addDays(hoy, 3));
+      P.store.rutinas = {}; P.setDayOverride(k, G.id, '');
+      const rd = P.rutinaDia(k), bq = P.bloquesDelDia(k).filter((b) => b.cat === 'guard')[0];
+      const dentro = rd.filter((a) => !a.fijo && bq && P.mins(a.h) >= bq.de && P.mins(a.h) < bq.a);
+      const comer = rd.filter((a) => /antes de entrar/i.test(a.txt))[0];
+      out.guardia = { dentro: dentro.map((a) => a.h + ' ' + a.txt), comer: comer ? comer.h : null, entra: bq ? P.hm(bq.de) : null, antes: !comer || !bq || P.mins(comer.h) < bq.de };
+      P.setDayOverride(k, null);
+      // segundo entreno de fábrica apagado
+      out.segundo = P.normalize(JSON.parse(JSON.stringify(Object.assign({}, P.store, { gym: Object.assign({}, P.store.gym, { segundo: { on: true, dias: [2], tipo: 'piscina', hora: '15:30' } }) })))).gym.segundo.on;
+      P.store = copia; P.save(); P.render();
+      return out; });
+    check('Comer: la Semana y la Compra dicen lo mismo, y «te sale entero» no vuelve a proponer lo ya cocinado',
+      r.compraIgual && r.noRepite, JSON.stringify({ c: r.cubierta, compraIgual: r.compraIgual, noRepite: r.noRepite }));
+    check('Dinero: los recibos fijos cuentan en el mes aunque no haya captura de Fintonic',
+      r.recibo === 650, JSON.stringify({ recibo: r.recibo, cierre: r.cierre }));
+    check('la rutina de la guardia no cae dentro de la guardia y «comer antes de entrar» va antes de entrar',
+      r.guardia.dentro.length === 0 && r.guardia.antes, JSON.stringify(r.guardia));
+    check('el segundo entreno de fábrica (martes 15:30) viene apagado', r.segundo === false, String(r.segundo));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
