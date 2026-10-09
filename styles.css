@@ -2971,6 +2971,32 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cndia label input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .cntab{display:flex;align-items:center;gap:6px}.cntab input{width:auto}
 .cnrow{display:grid;grid-template-columns:22px 1fr 28px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12px}
+/* 4:20 v2: pestañas, ganas, cómo sentó, comparaciones con n, ciencia y plan */
+.cnvis{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px}
+.cnvis button{padding:8px 2px;border:0;border-radius:9px;background:none;color:var(--ink2);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;min-height:36px}
+.cnvis button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.cnseg.mot,.cnseg.c3{grid-template-columns:repeat(3,1fr)}.cnseg.c5{grid-template-columns:repeat(5,1fr)}.cnseg.c2{grid-template-columns:repeat(2,1fr);margin-top:0}
+.cnseg.c5 button{font-size:18px;padding:6px 0}
+.cnlinea{margin:0;padding:0 2px}
+.cntb b{font-size:14px}
+.cnsento{display:flex;flex-direction:column;gap:2px}.cnsento>span{font-size:13px;font-weight:700}
+.cnganas{border-top:1px solid var(--line);margin-top:8px;padding-top:2px}
+.cnaf{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.cnaf .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.cnaf .t b{font-size:13px}.cnaf .t span{font-size:11.5px;color:var(--ink2)}
+.cnaf em{font-style:normal;font-weight:900}.cnaf em.ok{color:var(--ok)}.cnaf em.lo{color:var(--warn)}
+.cnaf.nc .t b{color:var(--ink2)}.cnaf small{font-size:10.5px}
+.cnpa{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.cnpa span{color:var(--ink2);text-align:right}.cnpa.w span{color:var(--warn);font-weight:700}
+details.cnci{padding:0}details.cnci summary{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;cursor:pointer;list-style:none}
+details.cnci summary::-webkit-details-marker{display:none}
+details.cnci summary .e{font-size:18px;line-height:1.2}details.cnci summary .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+details.cnci summary .t b{font-size:13.5px}details.cnci summary .t em{font-style:normal;font-size:12px;color:var(--brand);font-weight:700}
+details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.mini{font-size:11px}
+.cncu b{display:block;font-size:14px;margin:2px 0 8px}
+.cncuo{display:flex;flex-direction:column;gap:6px}
+.cncuo button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:13px;cursor:pointer;min-height:44px}
+.cncuh{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.cncuh div{border:1px solid var(--line);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;align-items:center}
+.cncuh b{font-size:17px}.cncuh span{font-size:10.5px;color:var(--ink2)}
 .cnrow .x{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
 .cnwk i{background:var(--bg3)}.cnwk .x i{background:var(--bx)}
 .mskpi b.ex{color:var(--bx)}
@@ -3249,7 +3275,32 @@ span.hbt{cursor:default;border-style:dashed}
 .hdots i{width:13px;height:13px;border-radius:3px;background:var(--line)}
 .hdots i.x{background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 4px)}
 .hdots i.hoy{outline:1.5px solid var(--ink2);outline-offset:1px}
-.hbrr{font-size:12.5px;font-weight:800;flex:none}
+.hbrr{font-size:12.5px;font-weight:800;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.hbrr small{font-size:10px;color:var(--ink2);font-weight:700}
+.hmin{font:inherit;font-size:11px;font-weight:800;padding:4px 8px;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
+.hdots i.mn{opacity:.55}
+.hcorto{font-size:11px;font-weight:700;color:var(--brand)}
+.hbacc{gap:8px}.hcortop{margin:0}
+/* el asistente en Hoy: el check-in y una tarjeta */
+.card.asist{display:flex;flex-direction:column;gap:10px}
+.asck .hlab{margin-top:8px}
+button.asck{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;min-height:40px}
+button.asck .t{flex:1;min-width:0;display:flex;flex-direction:column}button.asck .t span{font-size:12px;color:var(--ink2)}
+.astj{border-top:1px solid var(--line);padding-top:10px}.card.asist>.astj:first-child{border-top:0;padding-top:0}
+.astj .row{gap:8px;align-items:center}.astj .ico{font-size:18px}.astj b{font-size:14px}
+.astj p{margin:6px 0 8px;font-size:13px;line-height:1.5}
+.astj .x{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
+.asacc{gap:8px;flex-wrap:wrap}.asacc .dlink{font-size:11.5px;color:var(--ink2);font-weight:700}
+/* la semana: los números, el cruce, la propuesta, los objetivos */
+.rvg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.rvn{border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.rvn>span{font-size:11.5px;color:var(--ink2);font-weight:700}.rvn b{font-size:19px;font-variant-numeric:tabular-nums}.rvn b small{font-size:11px;margin-left:2px}
+.rvn b em{font-style:normal;font-size:11px;margin-left:5px}.rvn b em.ok{color:var(--ok)}.rvn b em.lo{color:var(--warn)}.rvn>small{font-size:10.5px;color:var(--ink2)}
+.obj{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.obj .t{flex:1;min-width:0;display:flex;flex-direction:column}.obj .t b{font-size:13px}.obj .t small{font-size:11px;color:var(--ink2)}
+.obj .ck{color:var(--ok);font-weight:900;width:16px}.obj .x{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
+.objn{margin-top:8px}
+#rvNota{width:100%;box-sizing:border-box;font:inherit;font-size:13px}
 .hhab .hhd b{font-size:18px}
 .hlab{font-size:11px;font-weight:900;letter-spacing:.12em;color:var(--ink2);margin:14px 0 6px}
 .hchs{display:flex;flex-wrap:wrap;gap:6px}

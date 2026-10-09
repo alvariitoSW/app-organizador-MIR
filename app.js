@@ -854,8 +854,22 @@ function normalize(o){
   if(o.consumo&&typeof o.consumo==='object'){const c=o.consumo;
     c.ses=(Array.isArray(c.ses)?c.ses:[]).filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,2000).map(function(x){return {id:String(x.id||uid('cn')),ts:+x.ts||0,fecha:x.fecha,
       hora:/^\d{2}:\d{2}$/.test(x.hora||'')?x.hora:'',forma:['dry','porro','comestible'].indexOf(x.forma)>=0?x.forma:'dry',g:Math.max(0,Math.min(5,+x.g||0)),
-      ctx:['lloret','casa','amigos'].indexOf(x.ctx)>=0?x.ctx:'casa',tabaco:!!x.tabaco};});
-    c.obj=Math.max(0,Math.min(21,Math.round(+c.obj>=0?+c.obj:4)));c.eurG=Math.max(1,Math.min(30,+c.eurG||7));}
+      ctx:['lloret','casa','amigos'].indexOf(x.ctx)>=0?x.ctx:'casa',tabaco:!!x.tabaco,
+      motivo:['relajar','social','aburr','dormir','dolor','costumbre'].indexOf(x.motivo)>=0?x.motivo:'',
+      sento:+x.sento>=1&&+x.sento<=5?Math.round(+x.sento):0,thc:Math.max(0,Math.min(5000,Math.round(+x.thc||0)))};});
+    c.obj=Math.max(0,Math.min(21,Math.round(+c.obj>=0?+c.obj:4)));c.eurG=Math.max(1,Math.min(30,+c.eurG||7));
+    /* las ganas que aguantas (o no), el plan, el CUDIT-R mensual y la privacidad */
+    c.ganas=(Array.isArray(c.ganas)?c.ganas:[]).filter(function(g){return g&&/^\d{4}-\d{2}-\d{2}$/.test(g.fecha||'');}).slice(0,2000).map(function(g){
+      return {id:String(g.id||uid('cg')),ts:+g.ts||0,fecha:g.fecha,hora:/^\d{2}:\d{2}$/.test(g.hora||'')?g.hora:'',int:[1,2,3].indexOf(+g.int)>=0?+g.int:2,
+        res:['sesion','aguante','otra'].indexOf(g.res)>=0?g.res:'',q:['paseo','nadar','comer'].indexOf(g.q)>=0?g.q:''};});
+    c.cudit=(Array.isArray(c.cudit)?c.cudit:[]).filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'')&&Array.isArray(x.r);}).slice(-60).map(function(x){
+      const r=x.r.slice(0,8).map(function(v){return Math.max(0,Math.min(4,Math.round(+v||0)));});return {fecha:x.fecha,r:r,p:cuditPuntos(r)};});
+    const pl=c.plan&&typeof c.plan==='object'?c.plan:{};
+    c.plan={pot:[10,15,20].indexOf(+pl.pot)>=0?+pl.pot:15,ventana:/^\d{2}:\d{2}$/.test(pl.ventana||'')?pl.ventana:'',guardia:pl.guardia!==false,
+      tb:pl.tb&&/^\d{4}-\d{2}-\d{2}$/.test(pl.tb.desde||'')&&[3,7,28].indexOf(+pl.tb.dias)>=0?{desde:pl.tb.desde,dias:+pl.tb.dias}:null,
+      tbHist:(Array.isArray(pl.tbHist)?pl.tbHist:[]).filter(function(h){return h&&/^\d{4}-\d{2}-\d{2}$/.test(h.desde||'');}).slice(-30).map(function(h){return {desde:h.desde,dias:+h.dias||0,roto:!!h.roto};})};
+    c.priv={oculto:!!(c.priv&&c.priv.oculto),fueraCopia:!!(c.priv&&c.priv.fueraCopia)};
+    if(['relajar','social','aburr','dormir','dolor','costumbre'].indexOf(c.ultMotivo)<0)delete c.ultMotivo;}
   else delete o.consumo;
   if(o.food&&o.food.monchisTope!=null)o.food.monchisTope=Math.max(0,Math.min(3000,Math.round(+o.food.monchisTope||0)));
   /* «cómo cocinas» y las tandas hechas: se guardan con la comida */
@@ -940,11 +954,36 @@ function normalize(o){
       dow:dow.length?dow:[0,1,2,3,4,5,6],creado:h.creado||iso(new Date()),
       /* los tipos de día en los que no toca (guardia, saliente…): ese día ni se pide ni rompe la racha */
       noEn:Array.isArray(h.noEn)?h.noEn.filter(function(t){return TIPOS_DIA.some(function(x){return x[0]===t;});}):[],
-      /* se marca solo con lo que la app ya sabe: 'entreno' (sesión o series ese día) o 'cama' (noche anotada a tu hora) */
-      auto:h.auto==='entreno'||h.auto==='cama'?h.auto:''};});
+      /* se marca solo con lo que la app ya sabe (entreno, cama, noche, agua, estudio, proteína, día sin 4:20, Lloretazo sin) */
+      auto:['entreno','cama','noche','agua','estudio','prot','sin420','lloretsin'].indexOf(h.auto)>=0?h.auto:'',
+      /* el ancla (una hora o «al salir de guardia»…), la versión mínima, el obstáculo con su plan y el por qué */
+      ancla:h.ancla&&h.ancla.t==='hora'&&/^\d{2}:\d{2}$/.test(h.ancla.v||'')?{t:'hora',v:h.ancla.v}:
+        (h.ancla&&h.ancla.t==='tras'&&['despertar','guardia','comer','entreno','lloret','cena','cama'].indexOf(h.ancla.v)>=0?{t:'tras',v:h.ancla.v}:{}),
+      min:String(h.min||'').slice(0,60),obst:['guardia','cansancio','lloret','pantallas','olvido'].indexOf(h.obst)>=0?h.obst:'',
+      plan:String(h.plan||'').slice(0,60),porQue:String(h.porQue||'').slice(0,80)};});
   if(!o.habitos.registro||typeof o.habitos.registro!=='object')o.habitos.registro={};
   Object.keys(o.habitos.registro).forEach(function(k){
-    if(!o.habitos.registro[k]||typeof o.habitos.registro[k]!=='object')delete o.habitos.registro[k];});
+    if(!o.habitos.registro[k]||typeof o.habitos.registro[k]!=='object'){delete o.habitos.registro[k];return;}
+    /* hecho (true/'ok') o el mínimo ('min') */
+    const r=o.habitos.registro[k];Object.keys(r).forEach(function(id){if(r[id]==='min')return;if(r[id])r[id]='ok';else delete r[id];});});
+  if(o.habitos.horas&&typeof o.habitos.horas==='object'){Object.keys(o.habitos.horas).forEach(function(id){const l=o.habitos.horas[id];
+    o.habitos.horas[id]=Array.isArray(l)?l.filter(function(x){return /^\d{2}:\d{2}$/.test(x);}).slice(-30):[];});}
+  else delete o.habitos.horas;
+  /* el asistente: check-ins, lo silenciado, la versión corta, notas, experimentos y objetivos */
+  if(o.asist&&typeof o.asist==='object'){const A=o.asist,fe=/^\d{4}-\d{2}-\d{2}$/;
+    const ck={};Object.keys(A.checkins||{}).filter(function(k){return fe.test(k);}).sort().slice(-400).forEach(function(k){const c=A.checkins[k]||{};
+      ck[k]={kss:+c.kss>=1&&+c.kss<=9?Math.round(+c.kss):0,animo:+c.animo>=1&&+c.animo<=5?Math.round(+c.animo):0,int:String(c.int||'').slice(0,20),intTxt:String(c.intTxt||'').slice(0,60),hecho:!!c.hecho};});
+    A.checkins=ck;
+    const sl={};Object.keys(A.sil||{}).slice(0,200).forEach(function(k){if(fe.test(A.sil[k]))sl[String(k).slice(0,60)]=A.sil[k];});A.sil=sl;
+    const nu={};Object.keys(A.nunca||{}).slice(0,200).forEach(function(k){if(A.nunca[k])nu[String(k).slice(0,60)]=1;});A.nunca=nu;
+    const co={};Object.keys(A.corto||{}).filter(function(k){return fe.test(k);}).sort().slice(-60).forEach(function(k){co[k]=!!A.corto[k];});A.corto=co;
+    const rv={};Object.keys(A.revisado||{}).filter(function(k){return fe.test(k);}).sort().slice(-60).forEach(function(k){rv[k]=1;});A.revisado=rv;
+    A.notas=(Array.isArray(A.notas)?A.notas:[]).filter(function(x){return x&&fe.test(x.fecha||'');}).slice(-200).map(function(x){return {fecha:x.fecha,txt:String(x.txt||'').slice(0,280)};});
+    const ex=A.exp&&typeof A.exp==='object'?A.exp:{},ids=['antes22','lloretsin','minimo','nadar','pantallas'];
+    A.exp={act:ex.act&&ids.indexOf(ex.act.id)>=0&&fe.test(ex.act.desde||'')?{id:ex.act.id,desde:ex.act.desde,dias:+ex.act.dias===14?14:7}:null,
+      hist:(Array.isArray(ex.hist)?ex.hist:[]).filter(function(h){return h&&ids.indexOf(h.id)>=0;}).slice(-50).map(function(h){return {id:h.id,desde:String(h.desde||''),dias:+h.dias||7,antes:String(h.antes||'—'),durante:String(h.durante||'—'),ver:String(h.ver||'').slice(0,80)};})};
+    A.obj=(Array.isArray(A.obj)?A.obj:[]).filter(function(x){return x&&['ses','kss','estudio','habitos','sueno'].indexOf(x.m)>=0;}).slice(0,3).map(function(x){return {m:x.m,meta:+x.meta||0,desde:fe.test(x.desde||'')?x.desde:''};});}
+  else delete o.asist;
   if(!Array.isArray(o.rules))o.rules=[];
   if(!Array.isArray(o.dishes))o.dishes=[];
   if(!Array.isArray(o.meals))o.meals=[];
@@ -4176,8 +4215,11 @@ function paraHoyHTML(key){
   if(store.estudio&&estS().temas.length){const t=estTocaHoy(key);if(t.length)f.push({ico:'📚',t:'Repasar '+t.length+' tema'+(t.length===1?'':'s'),sub:t.slice(0,2).map(function(x){return x.nombre;}).join(', '),acc:ir('ir-tab',' data-t="estudio"','ver ›')});}
   supsS().filter(function(x){return supTocaHoy(x,key)&&x.p!=='proteina';}).forEach(function(x){const on=supTomado(x.id,key);
     f.push({ico:'💊',t:x.n,sub:'suplemento',hecho:on,ck:ck('sup-tomar',' data-id="'+esc(x.id)+'" data-k="'+esc(key)+'"',on,(on?'desmarcar ':'tomado: ')+x.n)});});
-  const hb=habitosS(),dw=d.getDay();hb.items.filter(function(h){return (h.dow||[]).indexOf(dw)>=0;}).forEach(function(h){const on=habitoHecho(h.id,key),r=rachaHabito(h);
-    f.push({ico:h.icono,t:h.nombre,sub:'hábito'+(r?' · '+r+' día'+(r===1?'':'s')+' seguidos':''),hecho:on,ck:ck('hab-mark',' data-id="'+h.id+'" data-key="'+key+'"',on,(on?'desmarcar ':'hecho: ')+h.nombre)});});
+  /* los hábitos que tocan hoy (no los de guardia el día de guardia), con su frase «al salir de guardia →
+     estirar»; el día de versión corta, el ✓ marca el mínimo */
+  const hb=habitosS(),corto=habCorto(key);hb.items.filter(function(h){return habitoToca(h,key);}).forEach(function(h){const est=habitoEstado(h.id,key),on=!!est,r=rachaHabito(h),cm=corto&&h.min;
+    f.push({ico:h.icono,t:cm&&!on?h.min:h.nombre,sub:(habFrase(h,cm)||'hábito')+(est==='min'?' · el mínimo':'')+(r?' · 🔥 '+r:''),hecho:on,
+      ck:ck(cm&&!on?'hab-min':'hab-mark',' data-id="'+h.id+'" data-key="'+key+'"',on,(on?'desmarcar ':(cm?'hecho el mínimo: ':'hecho: '))+h.nombre)});});
   if(!f.length)return '';
   const marcables=f.filter(function(x){return x.ck;}),hechos=marcables.filter(function(x){return x.hecho;}).length;
   f.sort(function(a,b){return (a.hecho?1:0)-(b.hecho?1:0)||(b.av?1:0)-(a.av?1:0);});
@@ -6859,7 +6901,7 @@ function renderHoy(){
     /* debajo del reloj, tres bloques: el sueño en una línea, «Para hoy» (todo lo que hay que hacer,
        en una lista que se marca) y lo que viene. Eran hasta diez tarjetas sueltas, ~1 000 px, y la
        del sol repetía lo que ya dice el reloj: el arco amarillo se toca y abre su hoja */
-    (esHoy?informeTocaHTML()+suenoHoyCardHTML()+paraHoyHTML(hoy)+proximosPuntualesHTML():
+    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+suenoHoyCardHTML()+paraHoyHTML(hoy)+proximosPuntualesHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
 }
@@ -7218,11 +7260,11 @@ function semHabitosHTML(days){
     (hb.items.some(function(h){return h.auto;})?'<p class="mini" style="margin:8px 0 0">Se marcan solos: '+hb.items.filter(function(h){return h.auto;}).map(function(h){return esc(h.icono+' '+h.nombre)+(h.auto==='entreno'?' (al entrenar)':' (al anotar la noche)');}).join(' · ')+'</p>':'')+
     '<div class="row" style="margin-top:8px"><button class="btn s" data-a="tab" data-t="habitos">editar hábitos →</button></div></div>';}
 const HAB_PRESETS=[
-  {nombre:'Agua 2 L',icono:'💧',color:'#38bdf8',noEn:[],auto:''},
-  {nombre:'Estudio',icono:'📚',color:'#f59e0b',noEn:['guardia','saliente'],auto:''},
-  {nombre:'Entreno',icono:'💪',color:'#22c55e',noEn:['guardia','saliente'],auto:'entreno'},
-  {nombre:'Estirar',icono:'🧘',color:'#c084fc',noEn:[],auto:''},
-  {nombre:'Cama a su hora',icono:'🛌',color:'#818cf8',noEn:['guardia'],auto:'cama'}];
+  {nombre:'Agua 2 L',icono:'💧',color:'#38bdf8',noEn:[],auto:'agua',min:'1 vaso grande',ancla:{t:'tras',v:'despertar'}},
+  {nombre:'Estudio',icono:'📚',color:'#f59e0b',noEn:['guardia','saliente'],auto:'estudio',min:'10 min de test',ancla:{}},
+  {nombre:'Entreno',icono:'💪',color:'#22c55e',noEn:['guardia','saliente'],auto:'entreno',min:'',ancla:{}},
+  {nombre:'Estirar',icono:'🧘',color:'#c084fc',noEn:[],auto:'',min:'3 posturas',ancla:{t:'tras',v:'cama'}},
+  {nombre:'Cama a su hora',icono:'🛌',color:'#818cf8',noEn:['guardia'],auto:'cama',min:'',ancla:{}}];
 function renderSemanaAgenda(days){
   const hoyK=iso(new Date()),now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
   const strip='<div class="sstrip" style="grid-template-columns:repeat('+days.length+',1fr)">'+days.map(function(d){
@@ -9590,16 +9632,26 @@ function monchisCardHTML(sel){
       (op.caprichos.length?'<div class="hcap">LO QUE PIDE EL CUERPO</div>'+op.caprichos.map(function(x,i){return fila(x,i,'c');}).join(''):'')+
       (!op.sanos.length&&!op.caprichos.length?'<p class="mini" style="margin:6px 0 0">No veo nada de picar en tu nevera: escribe arriba lo que te comas («2 galletas y un yogur») y elige «Monchis».</p>':'')+'</div>';}
 
-/* ===================== 🌿 CONSUMO =====================
+/* ===================== 🌿 4:20 =====================
    «Que también gestione el fumar peis, un apartado sobre el consumo de cannabis en forma de dry.»
-   Apuntar una sesión en dos toques (forma, cantidad, dónde), la semana contra tu objetivo, los días
-   seguidos sin, y cómo te afecta con tus propios datos (monchis, a qué hora te acuestas, proteína).
-   Sin sermones: datos tuyos y pautas de reducción de riesgos. Todo se queda en tu móvil. */
+   v2 (el informe «4:20, hábitos y asistente»): para reducir importa más POR QUÉ que cuánto, y las
+   GANAS que no acaban en sesión. Cada sesión lleva su motivo, cómo te sentó y los mg de THC
+   estimados; «tengo ganas» apunta las que aguantas; «Cómo me afecta» compara con mediana y con
+   su n (sin n no hay barra); «Ciencia» explica la farmacología con tu dato al lado; «Plan» junta
+   el objetivo, la hora tope, el T-break y el CUDIT-R. Sin sermones y todo en tu móvil. */
 const CN_FORMAS=[['dry','🌬️','Dry (vapo)'],['porro','🚬','Porro'],['comestible','🍪','Comestible']];
 const CN_CANT=[[0.1,'0,1 g'],[0.25,'0,2–0,3 g'],[0.5,'0,5 g+']];
 const CN_CTX=[['lloret','🌿','Lloretazo'],['casa','🏠','Casa'],['amigos','👥','Amigos']];
+const CN_MOT=[['relajar','😌','relajar'],['social','👥','social'],['aburr','🥱','aburrimiento'],['dormir','😴','dormir'],['dolor','🤕','dolor'],['costumbre','🔁','costumbre']];
+const CN_VISTAS=[['','Hoy'],['efectos','Cómo me afecta'],['ciencia','Ciencia'],['plan','Plan']];
 function consumoS(){if(!store.consumo||typeof store.consumo!=='object')store.consumo={};const c=store.consumo;
-  if(!Array.isArray(c.ses))c.ses=[];if(!(+c.obj>=0))c.obj=4;if(!(+c.eurG>0))c.eurG=7;return c;}
+  if(!Array.isArray(c.ses))c.ses=[];if(!(+c.obj>=0))c.obj=4;if(!(+c.eurG>0))c.eurG=7;
+  if(!Array.isArray(c.ganas))c.ganas=[];if(!Array.isArray(c.cudit))c.cudit=[];
+  if(!c.plan||typeof c.plan!=='object')c.plan={};const p=c.plan;
+  if(!(+p.pot>0))p.pot=15;if(typeof p.ventana!=='string')p.ventana='';if(typeof p.guardia!=='boolean')p.guardia=true;
+  if(!Array.isArray(p.tbHist))p.tbHist=[];
+  if(!c.priv||typeof c.priv!=='object')c.priv={oculto:false,fueraCopia:false};
+  return c;}
 function consumoDe(k){return consumoS().ses.filter(function(x){return x.fecha===k;});}
 const CN_DIA=[['0','Hoy'],['1','Ayer'],['2','Anteayer']];
 function cnFechaDe(o){
@@ -9607,77 +9659,278 @@ function cnFechaDe(o){
   const hoy=iso(new Date());
   if(o.fecha&&parseDate(o.fecha))return o.fecha>hoy?hoy:o.fecha;
   return iso(addDays(new Date(),-(+o.dia||0)));}
+function cnThc(g,forma){
+  /* mg de THC en lo que usaste: gramos × potencia. No es lo absorbido (inhalado, 25–50 %), pero es la
+     unidad que se compara entre dry, porro y comestible; la de investigación es 5 mg */
+  return Math.round((+g||0)*1000*(+consumoS().plan.pot||15)/100);}
 function consumoApuntar(o){
   const c=consumoS(),d=new Date(),fecha=cnFechaDe(o||{}),hoy=fecha===iso(new Date());
-  const x={id:uid('cn'),ts:hoy?d.getTime():parseDate(fecha).getTime()+21*3600000,fecha:fecha,hora:hoy?hm(d.getHours()*60+d.getMinutes()):'',forma:o.forma||'dry',g:+o.g||0.25,ctx:o.ctx||'casa',tabaco:!!o.tabaco};
-  c.ses.unshift(x);c.ses.sort(function(p,q){return (q.fecha+(q.hora||'')).localeCompare(p.fecha+(p.hora||''));});c.ses=c.ses.slice(0,2000);save();return x;}
+  const x={id:uid('cn'),ts:hoy?d.getTime():parseDate(fecha).getTime()+21*3600000,fecha:fecha,hora:hoy?hm(d.getHours()*60+d.getMinutes()):'',forma:o.forma||'dry',g:+o.g||0.25,ctx:o.ctx||'casa',tabaco:!!o.tabaco,
+    motivo:CN_MOT.some(function(m){return m[0]===o.motivo;})?o.motivo:''};
+  x.thc=cnThc(x.g,x.forma);
+  c.ses.unshift(x);c.ses.sort(function(p,q){return (q.fecha+(q.hora||'')).localeCompare(p.fecha+(p.hora||''));});c.ses=c.ses.slice(0,2000);
+  if(x.motivo)c.ultMotivo=x.motivo;
+  /* si venías de ganas apuntadas hace un rato, esas ganas acabaron en sesión */
+  const g0=c.ganas[0];if(g0&&!g0.res&&hoy&&d.getTime()-g0.ts<3*3600000)g0.res='sesion';
+  save();return x;}
 function cnDiaTxt(k){const n=Math.round((parseDate(iso(new Date()))-parseDate(k))/86400000);
   if(n===0)return 'hoy';if(n===1)return 'ayer';if(n===2)return 'anteayer';const d=parseDate(k);return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]+' '+d.getDate();}
 function consumoSemana(lunK){
-  const l=parseDate(lunK),dias=[];let n=0,g=0;
-  for(let i=0;i<7;i++){const k=iso(addDays(l,i)),s=consumoDe(k);dias.push({k:k,n:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});n+=s.length;g+=dias[i].g;}
-  return {dias:dias,n:n,g:Math.round(g*100)/100};}
+  const l=parseDate(lunK),dias=[];let n=0,g=0,mg=0;
+  for(let i=0;i<7;i++){const k=iso(addDays(l,i)),s=consumoDe(k);dias.push({k:k,n:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});n+=s.length;g+=dias[i].g;
+    mg+=s.reduce(function(a,x){return a+(+x.thc||cnThc(x.g,x.forma));},0);}
+  return {dias:dias,n:n,g:Math.round(g*100)/100,mg:mg};}
 function consumoSin(){
   /* días seguidos sin, contando hoy si hoy no hay */
   let n=0;for(let i=0;i<120;i++){const k=iso(addDays(new Date(),-i));if(consumoDe(k).length)break;n++;}return n;}
+/* ---------- la ciencia que se usa en las pantallas ---------- */
+function cnTolerancia(d){
+  /* los receptores CB1 empiezan a volver a los 2 días y casi del todo a las 4 semanas (Hirvonen
+     2012, D'Souza 2016): una curva exponencial con τ ≈ 4,3 días da ~50 % al día 3 y ~100 % al 28 */
+  return Math.round(100*(1-Math.exp(-(+d||0)/4.3)));}
+function cnAbstinencia(d){
+  /* lo esperable cada día sin (Bonnet y Preuss 2017; Bahji 2020: ~47 % de quien usa a diario) */
+  if(d<=0)return '';
+  if(d===1)return 'Día 1: se nota poco. Las ganas vienen a tu hora de siempre.';
+  if(d<=3)return 'Día '+d+': empieza lo incómodo (irritable, peor sueño, menos hambre). Es la abstinencia, no que lo necesites.';
+  if(d<=6)return 'Día '+d+': el pico. Sueños vívidos por el rebote del REM. Desde aquí baja.';
+  if(d<=13)return 'Día '+d+': el humor y el apetito vuelven; el sueño tarda unos días más.';
+  if(d<28)return 'Día '+d+': los receptores siguen volviendo. Tolerancia recuperada ~'+cnTolerancia(d)+' %.';
+  return 'Día '+d+': tolerancia prácticamente recuperada.';}
+function cnKss(k){
+  /* lo despejado que amaneces: la noche anotada o el check-in de la mañana */
+  const r=suenoReal(k);if(r&&+r.kss)return +r.kss;
+  const c=asistS().checkins[k];return c&&+c.kss?+c.kss:null;}
+function cnMediana(a){if(!a.length)return null;const s=a.slice().sort(function(x,y){return x-y;}),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function cnAfecta(dias){
+  /* CADA FILA CON SU n Y CON MEDIANA: «+140 kcal» con 3 días frente a 20 se leía igual que con 15
+     frente a 15. Con menos de 5 días en un lado, la fila dice que aún no concluye */
+  dias=dias||28;const hoy=new Date(),filas={};
+  const M=[['kss','Despierto al día siguiente','KSS',function(k,k1){return cnKss(k1);},-1],
+    ['animo','Ánimo al día siguiente','de 5',function(k,k1){const c=asistS().checkins[k1];return c&&+c.animo?+c.animo:null;},1],
+    ['cama','Hora de acostarte','min',function(k,k1){const sr=suenoReal(k1);if(!sr||!sr.acostar)return null;let mm=mins(sr.acostar);if(mm<12*60)mm+=1440;return mm;},-1],
+    ['sueno','Horas dormidas','min',function(k,k1){const sr=suenoReal(k1);return sr&&+sr.h?+sr.h*60:null;},1],
+    ['estudio','Estudio al día siguiente','min',function(k,k1){if(k1>=iso(hoy))return null;return estS().sesiones.filter(function(s){return s.fecha===k1;}).reduce(function(a,s){return a+(+s.min||0);},0);},1],
+    ['entreno','Entrenas al día siguiente','%',function(k,k1){const e=entrenoDe(k1);if(!e||k1>=iso(hoy))return null;return gymHechoEn(k1)?100:0;},1],
+    ['monchis','Monchis','kcal',function(k){const l=foodLog(foodKey(k));if(!l.length)return null;
+      return l.filter(function(x){return x.p==='monchis';}).reduce(function(a,x){return a+(+x.kcal||0);},0)+(diaEspDe(k)&&diaEspDe(k).tipo==='moncheo'?kcalExtraDe(k):0);},-1],
+    ['prot','Proteína','g',function(k){const l=foodLog(foodKey(k));return l.length?foodTotals(k).prot:null;},1]];
+  M.forEach(function(m){filas[m[0]]={id:m[0],t:m[1],u:m[2],bueno:m[4],con:[],sin:[]};});
+  for(let i=1;i<=dias;i++){const k=iso(addDays(hoy,-i)),k1=iso(addDays(hoy,-i+1)),con=consumoDe(k).length>0;
+    M.forEach(function(m){const v=m[3](k,k1);if(v==null||!isFinite(v))return;(con?filas[m[0]].con:filas[m[0]].sin).push(v);});}
+  const out=M.map(function(m){const f=filas[m[0]],a=cnMediana(f.con),b=cnMediana(f.sin);
+    f.nCon=f.con.length;f.nSin=f.sin.length;f.ok=f.nCon>=5&&f.nSin>=5;f.mCon=a;f.mSin=b;f.dif=a!=null&&b!=null?Math.round((a-b)*10)/10:null;
+    f.malo=f.dif!=null&&f.dif*f.bueno<0;delete f.con;delete f.sin;return f;});
+  /* cómo sentó: las sesiones de antes de las 22:00 frente a las de después */
+  const ses=consumoS().ses.filter(function(x){return +x.sento>0&&x.hora&&x.fecha>=iso(addDays(hoy,-dias));});
+  const pronto=ses.filter(function(x){return mins(x.hora)<22*60&&mins(x.hora)>=12*60;}).map(function(x){return +x.sento;}),tarde=ses.filter(function(x){return mins(x.hora)>=22*60||mins(x.hora)<6*60;}).map(function(x){return +x.sento;});
+  out.push({id:'sento',t:'Cómo te sentó',u:'de 5',bueno:1,nCon:tarde.length,nSin:pronto.length,mCon:cnMediana(tarde),mSin:cnMediana(pronto),
+    dif:tarde.length&&pronto.length?Math.round((cnMediana(tarde)-cnMediana(pronto))*10)/10:null,ok:tarde.length>=5&&pronto.length>=5,etq:['después de las 22:00','antes']});
+  out.forEach(function(f){if(f.id!=='sento')f.malo=f.dif!=null&&f.dif*f.bueno<0;else f.malo=f.dif!=null&&f.dif<0;});
+  return out;}
 function consumoEfectos(){
-  /* últimas 4 semanas: días con sesión frente a días sin (solo días con algo apuntado de comida) */
-  const con={m:[],p:[],cama:[],h:[]},sin={m:[],p:[],cama:[],h:[]};
-  for(let i=1;i<=28;i++){const k=iso(addDays(new Date(),-i)),l=foodLog(foodKey(k));const g=consumoDe(k).length?con:sin;
-    if(l.length){g.m.push(l.filter(function(x){return x.p==='monchis';}).reduce(function(a,x){return a+(+x.kcal||0);},0)+(diaEspDe(k)&&diaEspDe(k).tipo==='moncheo'?kcalExtraDe(k):0));
-      g.p.push(foodTotals(k).prot);}
-    const sr=suenoReal(iso(addDays(parseDate(k),1)));
-    if(sr&&sr.acostar){let mm=mins(sr.acostar);if(mm<12*60)mm+=1440;g.cama.push(mm);}
-    if(sr&&sr.h)g.h.push(+sr.h*60);}
-  const med=function(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:null;};
-  const dif=function(q){const a=med(con[q]),b=med(sin[q]);return a==null||b==null?null:Math.round(a-b);};
-  return {monchis:dif('m'),prot:dif('p'),cama:dif('cama'),sueno:dif('h'),dCon:con.p.length,dSin:sin.p.length};}
+  /* lo de siempre (lo leen otras pantallas y las pruebas): diferencia de medias de 4 semanas */
+  const F={};cnAfecta(28).forEach(function(f){F[f.id]=f;});
+  const r=function(f){return f&&f.dif!=null?Math.round(f.dif):null;};
+  return {monchis:r(F.monchis),prot:r(F.prot),cama:r(F.cama),sueno:r(F.sueno),dCon:F.prot?F.prot.nCon:0,dSin:F.prot?F.prot.nSin:0};}
+function cnLloret(ym){
+  /* los Lloretazos del mes y cuántos fueron SIN sesión: la señal es el plan de las 20:00, no los gramos */
+  const d0=parseDate(ym+'-01'),hoyK=iso(new Date());let n=0,sin=0;
+  for(let d=d0;iso(d).slice(0,7)===ym&&iso(d)<=hoyK;d=addDays(d,1)){const k=iso(d);if(!lloretDe(k))continue;
+    if(k===hoyK&&new Date().getHours()<23)continue;n++;
+    if(!consumoDe(k).some(function(x){return x.ctx==='lloret';}))sin++;}
+  return {n:n,sin:sin};}
+function cnGanasSemana(){const d=iso(addDays(new Date(),-6));return consumoS().ganas.filter(function(g){return g.fecha>=d;});}
+function cnTB(){
+  /* el T-break en marcha (o el último acabado sin cerrar) con su día */
+  const p=consumoS().plan,tb=p.tb;if(!tb||!tb.desde)return null;
+  const dia=Math.round((parseDate(iso(new Date()))-parseDate(tb.desde))/86400000)+1;
+  const roto=consumoS().ses.some(function(x){return x.fecha>=tb.desde&&x.fecha<=iso(new Date());});
+  return {desde:tb.desde,dias:tb.dias,dia:dia,fin:dia>tb.dias,roto:roto};}
+function cnTBResumen(tb){
+  /* al acabar: las dos semanas de antes frente a los días del T-break */
+  const med=function(de,a,fn){const v=[];for(let d=parseDate(de);iso(d)<=a;d=addDays(d,1)){const x=fn(iso(d));if(x!=null)v.push(x);}return {m:cnMediana(v),n:v.length};};
+  const antesDe=iso(addDays(parseDate(tb.desde),-14)),antesA=iso(addDays(parseDate(tb.desde),-1)),fin=iso(addDays(parseDate(tb.desde),tb.dias-1));
+  const kss=function(k){return cnKss(k);},hs=function(k){const r=suenoReal(k);return r&&+r.h?+r.h:null;};
+  const gan=function(de,a){return consumoS().ganas.filter(function(g){return g.fecha>=de&&g.fecha<=a;}).length;};
+  return {kss:[med(antesDe,antesA,kss),med(tb.desde,fin,kss)],sueno:[med(antesDe,antesA,hs),med(tb.desde,fin,hs)],ganas:[gan(antesDe,antesA),gan(tb.desde,fin)]};}
+/* ---------- CUDIT-R (Adamson 2010): 8 preguntas, 0–4 cada una ---------- */
+const CN_FREQ=['Nunca','Menos de una vez al mes','Cada mes','Cada semana','Cada día o casi'];
+const CUDIT=[
+  ['¿Con qué frecuencia consumes?',['Nunca','Una vez al mes o menos','2–4 veces al mes','2–3 veces por semana','4 o más por semana']],
+  ['Un día de consumo típico, ¿cuántas horas estás colocado?',['Menos de 1','1–2','3–4','5–6','7 o más']],
+  ['En 6 meses, ¿cuántas veces no has podido parar una vez empezado?',CN_FREQ],
+  ['En 6 meses, ¿cuántas veces no has hecho lo que se esperaba de ti por consumir?',CN_FREQ],
+  ['En 6 meses, ¿cuántas veces has dedicado mucho tiempo a conseguirlo, consumir o recuperarte?',CN_FREQ],
+  ['En 6 meses, ¿cuántas veces has tenido problemas de memoria o concentración después?',CN_FREQ],
+  ['¿Cuántas veces consumes en situaciones de riesgo (conducir, máquinas, cuidar de alguien)?',CN_FREQ],
+  ['¿Has pensado alguna vez en reducir o dejarlo?',['Nunca','Sí, pero no en los últimos 6 meses','Sí, en los últimos 6 meses']]];
+function cuditPuntos(r){return r.reduce(function(a,v,i){return a+(i===7?[0,2,4][v]||0:(+v||0));},0);}
+function cuditLectura(p){return p>=13?'13 o más: el cuestionario sugiere un trastorno por consumo probable':(p>=8?'8–12: el cuestionario lo cuenta como consumo de riesgo':'menos de 8: por debajo del umbral de riesgo');}
+function cuditToca(){const l=consumoS().cudit;return !l.length||l[l.length-1].fecha<iso(addDays(new Date(),-28));}
+/* ---------- pantallas ---------- */
+function cnCab(v){
+  return '<div class="subcab"><h2 class="subtit">🌿 4:20</h2></div>'+
+    '<div class="cnvis" role="tablist">'+CN_VISTAS.map(function(x){return '<button role="tab" aria-selected="'+(v===x[0])+'" class="'+(v===x[0]?'on':'')+'" data-a="cn-vista" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';}
 function renderConsumo(){
-  const c=consumoS(),v=ui.cnVista||'';
+  const v=ui.cnVista||'';
   if(v==='efectos')return renderConsumoEfectos();
-  const lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))&&new Date().getHours()>=19?'lloret':'casa',tabaco:false});   /* el Lloretazo es por la noche: por la mañana, «Casa» */
-  const man=iso(addDays(new Date(),1)),guardiaMan=(function(){const sh=shiftById(dayInfo(man).shiftId);return !!(sh&&isGuardia(sh));})();
+  if(v==='ciencia')return renderConsumoCiencia();
+  if(v==='plan')return renderConsumoPlan();
+  const c=consumoS(),lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))&&new Date().getHours()>=19?'lloret':'casa',tabaco:false,motivo:c.ultMotivo||''});   /* el Lloretazo es por la noche: por la mañana, «Casa» */
+  if(f.motivo==null)f.motivo=c.ultMotivo||'';
+  const man=iso(addDays(new Date(),1)),guardiaMan=c.plan.guardia&&(function(){const sh=shiftById(dayInfo(man).shiftId);return !!(sh&&isGuardia(sh));})();
   const desde=iso(addDays(new Date(),-6)),recS=c.ses.filter(function(x){return x.fecha>=desde;}),max=Math.max(2,Math.max.apply(null,S.dias.map(function(d){return d.n;})));
-  const seg=function(lista,key,val,lab){return '<div class="cnseg">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
+  const seg=function(lista,key,cls){return '<div class="cnseg'+(cls?' '+cls:'')+'">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
     return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="'+key+'" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+(x.length>2?x[1]+' '+x[2]:x[1])+'</button>';}).join('')+'</div>';};
-  $('#main').innerHTML='<div class="grid mt cn">'+
-    '<div class="subcab"><h2 class="subtit">🌿 4:20</h2><span class="sp"></span><button class="btn s" data-a="cn-vista" data-v="efectos">cómo te afecta ›</button></div>'+
+  const sin=consumoSin(),tb=cnTB(),ll=cnLloret(iso(new Date()).slice(0,7)),gs=cnGanasSemana(),aguant=gs.filter(function(g){return g.res==='aguante'||g.res==='otra';}).length;
+  const tarde=c.plan.ventana&&mins(horaLocal(new Date()))>=mins(c.plan.ventana);
+  /* ¿qué tal te sentó la última? (a partir de 2 h después, o al día siguiente) */
+  const pend=c.ses.filter(function(x){return !x.sento&&x.fecha>=iso(addDays(new Date(),-2))&&(x.fecha<iso(new Date())||(x.ts&&Date.now()-x.ts>2*3600000));})[0];
+  const G=ui.cnGanas;
+  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('')+
     '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
-      '<div><b>'+String(S.g).replace('.',',')+' g</b><span>esta semana'+(S.n?' · '+String(Math.round(S.g/S.n*100)/100).replace('.',',')+' g/sesión':'')+'</span></div>'+
-      (function(){const n=consumoSin();return '<div><b>'+n+'</b><span>'+(n===1?'día sin':'días seguidos sin')+'</span></div>';})()+'</div>'+
-    '<div class="card"><div class="cap">APUNTAR UNA SESIÓN</div>'+
+      '<div><b>'+(S.mg||0)+' mg</b><span>THC esta semana · '+String(S.g).replace('.',',')+' g</span></div>'+
+      '<div><b>'+sin+'</b><span>'+(sin===1?'día sin':'días seguidos sin')+(sin>=2?' · tolerancia −'+cnTolerancia(sin)+' %':'')+'</span></div></div>'+
+    (tb&&!tb.fin?'<div class="card cntb"><b>T-break · día '+tb.dia+' de '+tb.dias+'</b>'+(tb.roto?' <span class="mini">(con alguna sesión: sigue contando)</span>':'')+'<p class="mini" style="margin:4px 0 0">'+esc(cnAbstinencia(tb.dia))+'</p></div>':
+      (sin>=1&&!tb?'<p class="mini cnlinea">'+esc(cnAbstinencia(sin))+'</p>':''))+
+    (pend?'<div class="card cnsento"><span>¿Qué tal te sentó la de '+esc(cnDiaTxt(pend.fecha)+(pend.hora?' '+pend.hora:''))+'?</span><div class="cnseg c5">'+[1,2,3,4,5].map(function(n){
+      return '<button data-a="cn-sento" data-id="'+esc(pend.id)+'" data-v="'+n+'" aria-label="'+n+' de 5">'+['','😣','😕','😐','🙂','😄'][n]+'</button>';}).join('')+'</div></div>':'')+
+    '<div class="card"><div class="row"><span class="cap">APUNTAR UNA SESIÓN</span><span class="sp"></span><button class="btn s" data-a="cn-ganas">'+(G?'cerrar':'tengo ganas')+'</button></div>'+
+      (G?'<div class="cnganas"><p class="mini" style="margin:6px 0">Las ganas suben y bajan solas: el pico dura 15–20 min. Apúntalas y elige qué hacer.</p>'+
+        '<div class="cnseg">'+[[1,'Pocas'],[2,'Bastantes'],[3,'Muchas']].map(function(x){return '<button class="'+(G.int===x[0]?'on':'')+'" data-a="cn-ganas-int" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
+        '<div class="cnseg">'+[['paseo','🚶 Paseo 15 min'],['nadar','🏊 Nadar / moverme'],['comer','🥣 Comer algo']].map(function(x){return '<button data-a="cn-ganas-res" data-v="otra" data-q="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
+        '<div class="row" style="margin-top:8px;gap:8px"><button class="btn p s" data-a="cn-ganas-res" data-v="aguante">Las he aguantado</button><span class="sp"></span><span class="mini">'+aguant+' aguantadas esta semana</span></div></div>':'')+
       '<div class="cnseg cndia">'+CN_DIA.map(function(x){const on=!f.fecha&&String(f.dia||'0')===x[0];
         return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="dia" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+x[1]+'</button>';}).join('')+
         '<label class="'+(f.fecha?'on':'')+'"><span>'+(f.fecha?esc(cnDiaTxt(f.fecha)):'otro día')+'</span><input type="date" data-a="cn-fecha" max="'+iso(new Date())+'" value="'+esc(f.fecha||'')+'" aria-label="otro día"></label></div>'+
       seg(CN_FORMAS,'forma')+seg(CN_CANT,'g')+seg(CN_CTX,'ctx')+
+      '<div class="hcap" style="margin-top:8px">POR QUÉ</div>'+seg(CN_MOT,'motivo','mot')+
       '<div class="row" style="margin-top:8px"><label class="mini cntab"><input type="checkbox" data-a="cn-tabaco"'+(f.tabaco?' checked':'')+'> con tabaco</label><span class="sp"></span>'+
-        '<button class="btn p" data-a="cn-add">Apuntar</button></div>'+
+        '<span class="mini">≈ '+cnThc(f.g,f.forma)+' mg</span><button class="btn p" data-a="cn-add">Apuntar</button></div>'+
       (guardiaMan?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">Mañana tienes guardia: hoy, mejor no (o poco y pronto).</p>':'')+
-      (recS.length?'<div class="hcap">ÚLTIMOS 7 DÍAS</div>'+recS.map(function(x){const F=CN_FORMAS.filter(function(q){return q[0]===x.forma;})[0]||CN_FORMAS[0],C=CN_CTX.filter(function(q){return q[0]===x.ctx;})[0]||CN_CTX[1];
-        return '<div class="cnrow"><span>'+F[1]+'</span><span>'+esc(cnDiaTxt(x.fecha)+(x.hora?' '+x.hora:''))+' · '+esc(F[2])+' · '+String(x.g).replace('.',',')+' g · '+C[1]+' '+esc(C[2])+(x.tabaco?' · con tabaco':'')+'</span><button class="x" data-a="cn-del" data-id="'+esc(x.id)+'" aria-label="quitar">×</button></div>';}).join(''):'')+'</div>'+
+      (tarde?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">Pasada tu hora tope ('+esc(c.plan.ventana)+').</p>':'')+
+      (recS.length?'<div class="hcap">ÚLTIMOS 7 DÍAS</div>'+recS.map(function(x){const F=CN_FORMAS.filter(function(q){return q[0]===x.forma;})[0]||CN_FORMAS[0],C=CN_CTX.filter(function(q){return q[0]===x.ctx;})[0]||CN_CTX[1],Mo=CN_MOT.filter(function(q){return q[0]===x.motivo;})[0];
+        return '<div class="cnrow"><span>'+F[1]+'</span><span>'+esc(cnDiaTxt(x.fecha)+(x.hora?' '+x.hora:''))+' · '+esc(F[2])+' · '+String(x.g).replace('.',',')+' g · '+C[1]+' '+esc(C[2])+(x.tabaco?' · con tabaco':'')+(Mo?' · '+Mo[1]+' '+esc(Mo[2]):'')+(x.sento?' · '+['','😣','😕','😐','🙂','😄'][x.sento]:'')+'</span><button class="x" data-a="cn-del" data-id="'+esc(x.id)+'" aria-label="quitar">×</button></div>';}).join(''):'')+'</div>'+
     '<div class="card"><div class="row"><span class="cap">LA SEMANA</span><span class="sp"></span><span class="mini">sesiones por día · '+S.n+(c.obj?' de ≤ '+c.obj:'')+'</span></div>'+
       '<div class="d6m cnwk" role="img" aria-label="sesiones de cada día de la semana">'+S.dias.map(function(d){const pasa=c.obj&&d.n>Math.ceil(c.obj/3);
         return '<div class="'+(!d.n?'v':(pasa?'x':''))+'"><em>'+(d.n||'')+'</em><i style="height:'+(d.n?Math.max(6,Math.round(d.n/max*60)):3)+'px"></i><span'+(d.k===iso(new Date())?' class="hoy"':'')+'>'+'LMXJVSD'[S.dias.indexOf(d)]+'</span></div>';}).join('')+'</div>'+
+      (ll.n?'<p class="mini" style="margin:8px 0 0">🌿 Lloretazos de este mes: <b style="color:var(--ink)">'+ll.n+'</b> · <b style="color:var(--ok)">'+ll.sin+' sin sesión</b></p>':'')+
       '<div class="row" style="margin-top:8px"><span class="mini">objetivo semanal</span><span class="sp"></span><div class="d4step"><button data-a="cn-obj" data-d="-1" aria-label="bajar objetivo">−</button><b>≤ '+c.obj+'</b><button data-a="cn-obj" data-d="1" aria-label="subir objetivo">+</button></div></div></div>'+
   '</div>';}
 function renderConsumoEfectos(){
-  const c=consumoS(),E=consumoEfectos(),hoy=new Date();
+  const c=consumoS(),dias=ui.cnDias||28,F=cnAfecta(dias),hoy=new Date();
   const meses=[];for(let i=2;i>=0;i--){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1),ym=ahoMk(d.getFullYear(),d.getMonth());
     const s=c.ses.filter(function(x){return x.fecha.slice(0,7)===ym;});meses.push({n:MON[d.getMonth()],s:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});}
   const mx=Math.max(1,Math.max.apply(null,meses.map(function(m){return m.s;})));
-  const fila=function(t,v,u,sub,malo,ancho){return '<div class="femic"><span>'+t+'</span><span class="t"><i class="'+(malo?'lo':'')+'" style="width:'+ancho+'%"></i></span><b>'+v+'</b></div><div class="mini femcon">'+sub+'</div>';};
-  const pocos=E.dCon<3||E.dSin<3;
-  $('#main').innerHTML='<div class="grid mt cn">'+
-    '<div class="subcab"><button class="btn s volver" data-a="cn-vista" data-v="">'+gymIco('atras','gico sm')+' 4:20</button><h2 class="subtit">Cómo te afecta</h2></div>'+
-    '<div class="card"><div class="row"><span class="cap">LOS DÍAS CON SESIÓN, FRENTE A LOS DÍAS SIN</span><span class="sp"></span><span class="mini">4 semanas</span></div>'+
-      (pocos?'<p class="mini" style="margin:4px 0 0">Aún hay pocos días para comparar ('+E.dCon+' con sesión y '+E.dSin+' sin, con comida apuntada). Sigue apuntando y en unas semanas sale aquí.</p>':
-      (E.monchis!=null?fila('Monchis',(E.monchis>0?'+':'')+E.monchis,'kcal','kcal de monchis de más esos días',E.monchis>0,Math.min(100,Math.abs(E.monchis)/6)):'')+
-      (E.cama!=null?fila('Te acuestas',(E.cama>0?'+':'')+E.cama+'′','min',E.cama>0?'más tarde esos días'+(E.sueno!=null?'; duermes '+Math.abs(E.sueno)+' min '+(E.sueno<0?'menos':'más'):''):'más pronto esos días',E.cama>0,Math.min(100,Math.abs(E.cama))):'')+
-      (E.prot!=null?fila('Proteína',(E.prot>0?'+':'')+E.prot+' g','g',E.prot<0?'los monchis desplazan la cena':'',E.prot<0,Math.min(100,Math.abs(E.prot)*3)):''))+'</div>'+
+  const fmtV=function(f,v){if(v==null)return '—';if(f.id==='cama')return hm(Math.round(v)%1440);if(f.u==='min')return fmtHM(v);if(f.u==='%')return Math.round(v)+' %';return String(Math.round(v*10)/10).replace('.',',');};
+  const fmtD=function(f){if(f.dif==null)return '';if(Math.abs(f.dif)<0.05)return '= igual';const s=f.dif>0?'+':'−',a=Math.abs(f.dif);
+    return s+(f.u==='min'?(a>=60?fmtHM(a):Math.round(a)+' min'):(f.u==='%'?Math.round(a)+' pts':String(Math.round(a*10)/10).replace('.',',')+(f.u==='kcal'?' kcal':(f.u==='g'?' g':''))));};
+  const fila=function(f){const et=f.etq||['con sesión','sin'];
+    return '<div class="cnaf'+(f.ok?'':' nc')+'"><div class="t"><b>'+esc(f.t)+'</b><span>'+(f.ok?'<em class="'+(f.malo?'lo':'ok')+'">'+fmtD(f)+'</em> · ':'')+
+      esc(et[0])+' '+fmtV(f,f.mCon)+' <small>(n '+f.nCon+')</small> · '+esc(et[1])+' '+fmtV(f,f.mSin)+' <small>(n '+f.nSin+')</small></span></div>'+
+      (f.ok?'':'<span class="mini">aún no concluye</span>')+'</div>';};
+  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('efectos')+
+    '<div class="card"><div class="row"><span class="cap">LOS DÍAS CON SESIÓN, FRENTE A LOS DÍAS SIN</span><span class="sp"></span>'+
+      '<div class="cnseg c2">'+[[28,'4 sem'],[90,'3 meses']].map(function(x){return '<button class="'+(dias===x[0]?'on':'')+'" data-a="cn-dias" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div></div>'+
+      '<p class="mini" style="margin:4px 0 6px">Medianas, con cuántos días hay en cada lado (n). Con menos de 5 en uno, no se saca conclusión.</p>'+
+      F.map(fila).join('')+'</div>'+
     '<div class="card"><div class="cap">MES A MES</div>'+meses.map(function(m){return '<div class="femic"><span>'+m.n+'</span><span class="t"><i style="width:'+Math.round(m.s/mx*100)+'%"></i></span><b>'+m.s+'</b></div>';}).join('')+
       '<p class="mini" style="margin:6px 0 0">sesiones al mes · gasto aprox. '+fmtMil(meses[2].g*c.eurG)+' € este mes (a '+c.eurG+' €/g · '+
         '<button class="dlink" data-a="cn-eur" data-d="-1">−</button> <button class="dlink" data-a="cn-eur" data-d="1">+</button>)</p></div>'+
-    '<div class="card"><div class="cap">PARA QUE SIENTE MEJOR</div><p class="mini" style="margin:4px 0 0">Vaporizar en seco y sin tabaco evita la combustión y la nicotina. Después, nada de coche ni moto. Si la tolerancia sube (necesitas más para lo mismo), 2–3 días sin la bajan. Antes de una guardia, mejor no: te lo recuerdo al apuntar si al día siguiente tienes guardia. Son pautas generales, no consejo médico.</p></div>'+
+    '<p class="mini">Tus datos, sin interpretación clínica: no consejo médico. La ciencia de cada cosa, en «Ciencia».</p>'+
+  '</div>';}
+function cnTusDatos(){
+  /* lo tuyo que acompaña a cada tarjeta de ciencia */
+  const c=consumoS(),hoy=new Date(),d28=iso(addDays(hoy,-27)),s28=c.ses.filter(function(x){return x.fecha>=d28;});
+  const F={};cnAfecta(28).forEach(function(f){F[f.id]=f;});
+  const sin=consumoSin(),S=consumoSemana(iso(mondayOf(hoy)));
+  const dias7=(function(){let n=0;for(let i=0;i<7;i++)if(consumoDe(iso(addDays(hoy,-i))).length)n++;return n;})();
+  const horas=s28.filter(function(x){return x.hora;}).map(function(x){let m=mins(x.hora);if(m<12*60)m+=1440;return m;});
+  const dry=s28.length?Math.round(100*s28.filter(function(x){return x.forma==='dry';}).length/s28.length):0;
+  const tab=s28.filter(function(x){return x.tabaco;}).length,dormir=s28.filter(function(x){return x.motivo==='dormir';}).length;
+  /* ¿hay menos sesiones los días que entrenas? */
+  let eC=0,eN=0,nC=0,nN=0;for(let i=1;i<=28;i++){const k=iso(addDays(hoy,-i)),e=gymHechoEn(k),s=consumoDe(k).length>0;if(e){eN++;if(s)eC++;}else{nN++;if(s)nC++;}}
+  const cu=c.cudit[c.cudit.length-1];
+  const dif=function(f,u){return f&&f.ok?(f.dif>0?'+':'')+(u==='min'?Math.round(f.dif)+' min':String(Math.round(f.dif*10)/10).replace('.',','))+' (n '+f.nCon+'/'+f.nSin+')':'';};
+  return {tiempos:s28.length?dry+' % de tus sesiones son dry · hora mediana '+(horas.length?hm(Math.round(cnMediana(horas))%1440):'—'):'',
+    tolerancia:sin>=1?'Llevas '+sin+' día'+(sin===1?'':'s')+' sin: tolerancia recuperada ~'+cnTolerancia(sin)+' % (si venías de uso frecuente).':'',
+    sueno:F.cama&&F.cama.ok?'Los días con sesión te acuestas '+dif(F.cama,'min')+(F.sueno&&F.sueno.ok?' y duermes '+dif(F.sueno,'min'):'')+'.'+(dormir?' '+dormir+' sesiones «para dormir» en 4 semanas.':''):(dormir?dormir+' sesiones «para dormir» en 4 semanas.':''),
+    abstinencia:sin>=1?cnAbstinencia(sin):'Si paras: el pico de lo incómodo cae entre el día 2 y el 6.',
+    cognicion:F.estudio&&F.estudio.ok?'Estudio al día siguiente: '+dif(F.estudio,'min')+' los días con sesión.':'',
+    dependencia:cu?'Tu último CUDIT-R: '+cu.p+' ('+fechaCorta(cu.fecha)+'). '+cuditLectura(cu.p)+'.':'Aún no lo has hecho: está en «Plan», son 8 toques.',
+    tabaco:s28.length?tab+' de '+s28.length+' sesiones con tabaco en 4 semanas.':'',
+    dosis:'Esta semana ≈ '+S.mg+' mg de THC ('+(Math.round(S.mg/5))+' unidades de 5 mg) con potencia '+c.plan.pot+' %.',
+    riesgo:'Días con sesión en los últimos 7: '+dias7+' de 7.',
+    apetito:F.monchis&&F.monchis.ok?'Monchis: '+dif(F.monchis)+' kcal los días con sesión.':'',
+    ejercicio:eN>=3&&nN>=3?'Los días que entrenas consumes '+Math.round(100*eC/eN)+' % de las veces; los que no, '+Math.round(100*nC/nN)+' %.':''};}
+const CN_CIENCIA=[
+  ['tiempos','⏱','Inhalado frente a comestible','Inhalado, el pico llega en 5–10 min y dura 2–4 h. Un comestible tarda 30–120 min en empezar y dura 4–8 h o más: es donde más fácil es pasarse, porque se repite antes de notar la primera.','Huestis, Chem Biodivers 2007; Grotenhermen, Clin Pharmacokinet 2003'],
+  ['tolerancia','📉','La tolerancia baja en 2–4 semanas','Con uso diario, los receptores CB1 bajan de densidad. A los 2 días sin empiezan a volver y a las 4 semanas casi del todo. «2–3 días sin» la bajan solo en parte.','Hirvonen, Mol Psychiatry 2012; D\'Souza, Biol Psychiatry 2016'],
+  ['sueno','😴','Ayuda a dormirte, estropea el resto','Al principio acorta lo que tardas en dormirte, pero reduce el sueño REM, el efecto se pierde con el uso regular y al dejarlo hay rebote (sueños vívidos, insomnio) 1–2 semanas. Usarlo para dormir es la trampa más frecuente.','Babson, Curr Psychiatry Rep 2017; Kesner y Lovinger, Front Mol Neurosci 2020'],
+  ['abstinencia','📆','Qué esperar cuando paras','Irritabilidad, ansiedad, peor sueño, menos hambre e inquietud. Empieza a las 24–72 h, el pico entre el día 2 y el 6, y remite en 1–2 semanas. La tiene alrededor de la mitad de quien consume a menudo.','Bonnet y Preuss, Subst Abuse Rehabil 2017; Bahji, JAMA Netw Open 2020'],
+  ['cognicion','🧠','Concentración: aguda sí, crónica poco','Durante 3–6 h bajan la memoria de trabajo, la atención y el tiempo de reacción. En adultos, el efecto que queda es pequeño y se va tras unos días sin consumir. Estudiar antes compensa más que después.','Scott, JAMA Psychiatry 2018; Broyd, Biol Psychiatry 2016'],
+  ['dependencia','🧭','Dependencia: el CUDIT-R','Alrededor de 1 de cada 10 personas que consumen desarrolla trastorno por consumo; el uso diario lo multiplica. El CUDIT-R son 8 preguntas: 8 o más es consumo de riesgo; 13 o más, trastorno probable.','Adamson, Drug Alcohol Depend 2010; Leung, Addict Behav 2020'],
+  ['tabaco','🚬','El tabaco es lo que más daño añade','La nicotina crea su propia dependencia y la combustión irrita el bronquio. Vaporizar en seco reduce los síntomas respiratorios frente a fumar.','Hindocha, Front Psychiatry 2016; Earleywine y Barnwell, Harm Reduct J 2007'],
+  ['dosis','⚖️','Gramos no es THC','La unidad de investigación son 5 mg de THC. Un cuarto de gramo al 15–20 % son 37–50 mg en la flor, de los que inhalado se absorbe quizá un 25–50 %. Por eso la app cuenta en mg: es lo comparable entre formas.','NIDA, unidad estándar de THC 2021; Volkow, NEJM 2014'],
+  ['riesgo','❤️','Corazón y cabeza','Agudo: la frecuencia cardiaca sube un 20–50 %. Con uso diario de alta potencia sube el riesgo de psicosis (a más dosis, más riesgo) y la ansiedad empeora con dosis altas aunque alivie con bajas.','Di Forti, Lancet Psychiatry 2019; Page, Circulation 2020'],
+  ['apetito','🍫','Los monchis son farmacología','El THC activa CB1 en el hipotálamo y sube la grelina: el hambre no es falta de voluntad. Lo que funciona es tener la opción buena preparada ANTES de la sesión.','Kirkham, Behav Pharmacol 2005; Koch, Nature 2015'],
+  ['ejercicio','🏊','Moverte baja las ganas','El ejercicio aeróbico sube la anandamida (parte del «subidón del corredor» es endocannabinoide) y en estudios pequeños bajó las ganas y el consumo durante semanas.','Buchowski, PLoS One 2011; Raichlen, J Exp Biol 2012']];
+function cnPautas(){
+  /* las pautas de menor riesgo (Fischer 2017, actualizadas en 2022), cada una con tu cifra */
+  const c=consumoS(),hoy=new Date(),d28=iso(addDays(hoy,-27)),s28=c.ses.filter(function(x){return x.fecha>=d28;});
+  let dias7=0;for(let i=0;i<7;i++)if(consumoDe(iso(addDays(hoy,-i))).length)dias7++;
+  const porro=s28.filter(function(x){return x.forma==='porro';}).length,tab=s28.filter(function(x){return x.tabaco;}).length;
+  const gu=s28.filter(function(x){const sh=shiftById(dayInfo(iso(addDays(parseDate(x.fecha),1))).shiftId);return sh&&isGuardia(sh);}).length;
+  return [['No a diario',dias7+' de los últimos 7 días',dias7>=6],
+    ['Sin combustión (vapo o comestible)',porro+' porros en 4 semanas',porro>0],
+    ['Sin tabaco',tab+' sesiones con tabaco en 4 semanas',tab>0],
+    ['No retener el humo','no añade efecto, sí alquitrán',false],
+    ['Nada de coche ni moto en 6 h','no conduces: ✓',false],
+    ['Antes de una guardia, no',gu+' sesiones la víspera de guardia en 4 semanas',gu>0],
+    ['Si la tolerancia sube, unos días sin',(function(n){return 'llevas '+n+' día'+(n===1?'':'s')+' sin';})(consumoSin()),false]];}
+function renderConsumoCiencia(){
+  const T=cnTusDatos(),P=cnPautas();
+  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('ciencia')+
+    '<div class="card"><div class="cap">PAUTAS DE MENOR RIESGO · CON TUS CIFRAS</div>'+P.map(function(p){
+      return '<div class="cnpa'+(p[2]?' w':'')+'"><b>'+esc(p[0])+'</b><span>'+esc(p[1].trim())+'</span></div>';}).join('')+
+      '<p class="mini" style="margin:6px 0 0">Fischer et al., Am J Public Health 2017; actualización, Int J Drug Policy 2022.</p></div>'+
+    CN_CIENCIA.map(function(x){const d=T[x[0]];
+      return '<details class="card cnci" data-tg="cnci_'+x[0]+'"'+(ui['cnci_'+x[0]]?' open':'')+'><summary><span class="e">'+x[1]+'</span><span class="t"><b>'+esc(x[2])+'</b>'+(d?'<em>'+esc(d)+'</em>':'')+'</span></summary>'+
+        '<p>'+esc(x[3])+'</p><p class="mini">'+esc(x[4])+'</p></details>';}).join('')+
+    '<p class="mini">Ciencia general y tus datos: no es consejo médico ni un diagnóstico.</p>'+
+  '</div>';}
+function renderConsumoPlan(){
+  const c=consumoS(),p=c.plan,tb=cnTB(),Q=ui.cnCudit;
+  const cu=c.cudit.slice(-6);
+  let cuerpoTB='';
+  if(tb&&!tb.fin)cuerpoTB='<p style="margin:4px 0"><b>Día '+tb.dia+' de '+tb.dias+'</b>'+(tb.roto?' · con alguna sesión':'')+'</p><p class="mini">'+esc(cnAbstinencia(tb.dia))+'</p>'+
+    '<button class="btn s" data-a="cn-tb-fin">terminar ya</button>';
+  else if(tb&&tb.fin){const R=cnTBResumen(p.tb),f=function(x,d){return x.m==null?'—':String(Math.round(x.m*10)/10).replace('.',',')+(d||'')+' (n '+x.n+')';};
+    cuerpoTB='<p style="margin:4px 0"><b>T-break de '+tb.dias+' días terminado'+(tb.roto?' (con alguna sesión)':'')+'</b></p>'+
+      '<div class="cnaf"><div class="t"><b>Despierto por la mañana (KSS)</b><span>antes '+f(R.kss[0])+' · durante '+f(R.kss[1])+'</span></div></div>'+
+      '<div class="cnaf"><div class="t"><b>Horas dormidas</b><span>antes '+f(R.sueno[0],' h')+' · durante '+f(R.sueno[1],' h')+'</span></div></div>'+
+      '<div class="cnaf"><div class="t"><b>Ganas apuntadas</b><span>2 semanas antes '+R.ganas[0]+' · durante '+R.ganas[1]+'</span></div></div>'+
+      '<button class="btn p s" data-a="cn-tb-fin">guardarlo y cerrar</button>';}
+  else cuerpoTB='<p class="mini" style="margin:4px 0 8px">Unos días sin con lo esperable cada día y, al acabar, la comparación con las dos semanas de antes.</p>'+
+    '<div class="cnseg">'+[3,7,28].map(function(n){return '<button data-a="cn-tb" data-v="'+n+'">'+n+' días</button>';}).join('')+'</div>'+
+    (p.tbHist.length?'<p class="mini" style="margin:8px 0 0">Hechos: '+p.tbHist.slice(-4).map(function(h){return h.dias+' d ('+fechaCorta(h.desde)+(h.roto?', con sesión':'')+')';}).join(' · ')+'</p>':'');
+  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('plan')+
+    '<div class="card"><div class="cap">MI PLAN</div>'+
+      '<div class="row" style="margin-top:6px"><span class="mini">sesiones por semana</span><span class="sp"></span><div class="d4step"><button data-a="cn-obj" data-d="-1" aria-label="bajar objetivo">−</button><b>≤ '+c.obj+'</b><button data-a="cn-obj" data-d="1" aria-label="subir objetivo">+</button></div></div>'+
+      '<div class="row" style="margin-top:6px"><span class="mini">hora tope<small style="display:block">aviso si apuntas después</small></span><span class="sp"></span><input type="time" data-a="cn-ventana" value="'+esc(p.ventana)+'" aria-label="hora tope" style="width:auto"></div>'+
+      '<div class="row" style="margin-top:6px"><span class="mini">potencia aproximada<small style="display:block">para los mg de THC</small></span><span class="sp"></span><div class="cnseg c3">'+[10,15,20].map(function(n){return '<button class="'+(p.pot===n?'on':'')+'" data-a="cn-pot" data-v="'+n+'">'+n+' %</button>';}).join('')+'</div></div>'+
+      '<label class="row mini" style="margin-top:8px;gap:6px"><input type="checkbox" data-a="cn-guardia"'+(p.guardia?' checked':'')+' style="width:auto"> avisarme la víspera de una guardia</label></div>'+
+    '<div class="card"><div class="cap">T-BREAK</div>'+cuerpoTB+'</div>'+
+    '<div class="card"><div class="row"><span class="cap">CUDIT-R · UNA VEZ AL MES</span><span class="sp"></span>'+(Q?'':'<button class="btn '+(cuditToca()?'p ':'')+'s" data-a="cn-cudit">'+(cuditToca()?'hacerlo':'repetir')+'</button>')+'</div>'+
+      (Q?'<div class="cncu"><p class="mini" style="margin:4px 0">'+(Q.i+1)+' de 8</p><b>'+esc(CUDIT[Q.i][0])+'</b><div class="cncuo">'+CUDIT[Q.i][1].map(function(t,j){return '<button data-a="cn-cudit-r" data-v="'+j+'">'+esc(t)+'</button>';}).join('')+'</div>'+
+        '<button class="dlink" data-a="cn-cudit-x">cancelar</button></div>':
+      (cu.length?'<div class="cncuh">'+cu.map(function(x){return '<div><b>'+x.p+'</b><span>'+esc(fechaCorta(x.fecha))+'</span></div>';}).join('')+'</div><p class="mini" style="margin:6px 0 0">'+esc(cuditLectura(cu[cu.length-1].p))+'. Es lo que dice el cuestionario, no un diagnóstico.</p>':
+        '<p class="mini" style="margin:4px 0 0">8 preguntas sobre los últimos 6 meses. Se guarda la puntuación y la tendencia; nada sale del móvil.</p>'))+'</div>'+
+    '<div class="card"><div class="cap">PRIVACIDAD</div>'+
+      '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="oculto"'+(c.priv.oculto?' checked':'')+' style="width:auto"> en «Más», mostrar como «🔒 Privado», sin cifras</label>'+
+      '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(c.priv.fueraCopia?' checked':'')+' style="width:auto"> dejar 4:20 fuera de la copia que compartes</label>'+
+      '<p class="mini" style="margin:6px 0 0">Todo vive en tu móvil; nada se manda a ningún servidor.</p></div>'+
   '</div>';}
 /* ---- la semana con lo que hay en la nevera ----
    «Móntamela» y «Hoy cocino» solo sabían usar los platos de tus menús: sin menú, no ponían nada
@@ -14927,6 +15180,11 @@ function rutinaDia(key){
   const R=rutinaDe(t),B=R.length?bloquesDelDia(key):[],occ=R.length?rutinaOcupado(key,sl,B):[];
   const tuyas=R.map(function(a){return rutinaAjusta(sl,a,B,occ);}).filter(Boolean);
   tuyas.forEach(function(a){add(a.h,a.ico,a.txt,a.sub,false);out[out.length-1].movido=a.movido||'';});
+  /* los hábitos con ancla a una hora salen en su sitio del día, como una frase «a las 18:00 → estirar» */
+  const HA=habitosS().items.filter(function(h){return h.ancla&&h.ancla.t==='hora'&&h.ancla.v&&habitoToca(h,key)&&!out.some(function(a){return a.txt===h.nombre;});});
+  if(HA.length){const BB=R.length?B:bloquesDelDia(key),OO=R.length?occ:rutinaOcupado(key,sl,BB);
+    HA.forEach(function(h){const aj=rutinaAjusta(sl,{h:h.ancla.v,ico:h.icono,txt:h.nombre,sub:habCorto(key)&&h.min?h.min:''},BB,OO);
+      if(aj){add(aj.h,aj.ico,aj.txt,aj.sub,false);out[out.length-1].movido=aj.movido||'';}});}
   if(sl.bed&&t!=='guardia')add(sl.bed,'🛌','A la cama',sl.h?fmtHM(Math.round(sl.h*60))+' de sueño':'',true);
   return out.sort(function(a,b){return (mins(a.h)||0)-(mins(b.h)||0);});}
 function rutinaOcupado(key,sl,B){
@@ -14963,24 +15221,62 @@ function rutinaAjusta(sl,a,B,occ){
     if(conDur?va:(!vd&&va))return Object.assign({},a,{h:hm(antes),movido:a.h});
     if(vd)return Object.assign({},a,{h:hm(despues),movido:a.h});}
   return null;}
+/* ===================== HÁBITOS v2 (el informe «4:20, hábitos y asistente») =====================
+   Un hábito era un nombre y unos días. Ahora lleva lo que la ciencia dice que lo sostiene: un ANCLA
+   («cuando salgo de guardia…», Gollwitzer 2006), una VERSIÓN MÍNIMA para los días malos (la cadena
+   no se rompe), el OBSTÁCULO que suele impedirlo con su plan (WOOP, Oettingen 2014) y su POR QUÉ.
+   Se marca hecho o mínimo; la racha aguanta un fallo (Lally 2010: saltarse un día no deshace el
+   hábito, dos seguidos sí) y el % es de los últimos 30 días, no del mes natural. */
+const HAB_AUTOS=[['','No, a mano'],['entreno','💪 al entrenar'],['cama','🛌 cama a su hora'],['noche','📝 al anotar la noche'],
+  ['agua','💧 1,5 L de agua'],['estudio','📚 30 min de estudio'],['prot','🍗 llegar a la proteína'],['sin420','🌿 día sin 4:20'],['lloretsin','🌿 Lloretazo sin']];
+const HAB_TRAS=[['despertar','al despertar'],['guardia','al salir de guardia'],['comer','después de comer'],['entreno','después de entrenar'],
+  ['lloret','antes del Lloretazo'],['cena','después de cenar'],['cama','antes de dormir']];
+const HAB_OBST=[['guardia','🩺 la guardia'],['cansancio','😮‍💨 el cansancio'],['lloret','🌿 el Lloretazo'],['pantallas','📱 el móvil'],['olvido','🤷 se me olvida']];
 function habitoToca(hab,key){
   const d=parseDate(key);if(!d||(hab.dow||[]).indexOf(d.getDay())<0)return false;
+  /* «Lloretazo sin» solo toca los días que hay Lloretazo */
+  if(hab.auto==='lloretsin'&&!lloretDe(key))return false;
   return !(hab.noEn||[]).length||(hab.noEn||[]).indexOf(diaTipo(key))<0;}
+function aguaDelDia(key){
+  /* el agua que has apuntado en Comer (el alimento «Agua», o «agua» de fuera), en ml */
+  return foodLog(foodKey(key)).reduce(function(a,x){
+    if(x.alim==='al-agua')return a+(+x.g||0);
+    if(/^agua\b/i.test(x.nombre||''))return a+(+x.g||(+x.rac||1)*(x.fuera?500:250));
+    return a;},0);}
 function habitoAuto(hab,key){
-  if(hab.auto==='entreno')return gymHechoEn(key);
+  /* lo que la app ya sabe marca el hábito: 'ok' entero, 'min' a medias, '' nada */
+  const hoyK=iso(new Date()),pasado=key<hoyK;
+  if(hab.auto==='entreno')return gymHechoEn(key)?'ok':'';
   if(hab.auto==='cama'){
     /* la noche de ese día se apunta en la mañana siguiente: a la cama como mucho 30 min tarde */
     const r=suenoReal(iso(addDays(parseDate(key),1))),plan=sleepOf(key).bed;
-    if(!r||!r.acostar||!plan)return false;
+    if(!r||!r.acostar||!plan)return '';
     const a=mins(r.acostar),p=mins(plan),n=function(x){return x<12*60?x+1440:x;};
-    return n(a)<=n(p)+30;}
-  return false;}
-function habitoHecho(hid,key){const h=habitosS();if(h.registro[key]&&h.registro[key][hid])return true;
-  const hab=h.items.filter(function(x){return x.id===hid;})[0];return !!(hab&&hab.auto&&habitoAuto(hab,key));}
-function toggleHabito(hid,key){
+    return n(a)<=n(p)+30?'ok':'';}
+  if(hab.auto==='noche'){const r=suenoReal(key);return r?(+r.kss?'ok':'min'):'';}
+  if(hab.auto==='agua'){const ml=aguaDelDia(key);return ml>=1500?'ok':(ml>=750?'min':'');}
+  if(hab.auto==='estudio'){const m=estS().sesiones.filter(function(s){return s.fecha===key;}).reduce(function(a,s){return a+(+s.min||0);},0);return m>=30?'ok':(m>0?'min':'');}
+  if(hab.auto==='prot'){const ob=+objetivoMacros().prot||0;if(!ob)return '';const p=foodTotals(key).prot;return p>=ob?'ok':(p>=ob*0.75&&pasado?'min':'');}
+  /* el día sin y el Lloretazo sin solo se saben cuando el día acaba (o pasadas las 23:00) */
+  const cerrado=pasado||(key===hoyK&&new Date().getHours()>=23);
+  if(hab.auto==='sin420')return cerrado&&!consumoDe(key).length?'ok':'';
+  if(hab.auto==='lloretsin')return cerrado&&lloretDe(key)&&!consumoDe(key).some(function(x){return x.ctx==='lloret';})?'ok':'';
+  return '';}
+function habitoEstado(hid,key){
+  /* 'ok', 'min' o '' (lo marcado a mano manda; si no, lo que sepa la app) */
+  const h=habitosS(),v=h.registro[key]&&h.registro[key][hid];
+  if(v)return v==='min'?'min':'ok';
+  const hab=h.items.filter(function(x){return x.id===hid;})[0];return hab&&hab.auto?habitoAuto(hab,key):'';}
+function habitoHecho(hid,key){return !!habitoEstado(hid,key);}
+function toggleHabito(hid,key,est){
+  /* sin «est»: hecho ↔ nada. Con «min»: la versión mínima (o quitarla) */
   const h=habitosS();
   if(!h.registro[key])h.registro[key]={};
-  if(h.registro[key][hid])delete h.registro[key][hid];else h.registro[key][hid]=true;
+  const ya=h.registro[key][hid],nuevo=est==='min'?(ya==='min'?'':'min'):(ya?'':'ok');
+  if(nuevo){h.registro[key][hid]=nuevo;
+    /* la hora a la que sueles hacerlo, para proponerla como ancla */
+    if(key===iso(new Date())){const hs=h.horas||(h.horas={}),l=hs[hid]||(hs[hid]=[]);l.push(horaLocal(new Date()));if(l.length>30)l.splice(0,l.length-30);}}
+  else delete h.registro[key][hid];
   if(!Object.keys(h.registro[key]).length)delete h.registro[key];
   save();
 }
@@ -14991,65 +15287,93 @@ function rachaHabito(hab){
   const k=hab.id+'|'+(hab.dow||[]).join('')+'|'+(hab.noEn||[]).join('');
   return k in _rachaCache?_rachaCache[k]:(_rachaCache[k]=rachaHabito0(hab));}
 function rachaHabito0(hab){
-  /* cuenta hacia atrás desde hoy los días que tocan según hab.dow: si hoy toca y aún no está marcado,
-     no rompe la racha (el día no ha terminado); el primer día pasado sin marcar sí la corta */
-  let n=0,d=new Date();const hoyK=iso(new Date());
+  /* RACHA QUE AGUANTA UN FALLO: cuenta los días hechos (o mínimos) hacia atrás y solo se corta con
+     dos fallos SEGUIDOS en días que tocan. Con la de antes, un día sin marcar la ponía a 0 y eso
+     lleva al «ya da igual» (Polivy y Herman 2002). Hoy, sin marcar, no cuenta aún como fallo */
+  let n=0,seguidos=0,d=new Date();const hoyK=iso(new Date());
   for(let i=0;i<371;i++){
     const key=iso(d);
     if(habitoToca(hab,key)){
-      if(habitoHecho(hab.id,key))n++;
-      else if(key!==hoyK)break;
+      if(habitoHecho(hab.id,key)){n++;seguidos=0;}
+      else if(key!==hoyK){seguidos++;if(seguidos>=2)break;}
     }
     d=addDays(d,-1);
   }
   return n;
 }
+function habFallos(hab,dias){
+  /* los días que tocaban y no se hicieron (sin contar hoy) */
+  let f=0;for(let i=1;i<=(dias||7);i++){const k=iso(addDays(new Date(),-i));if(habitoToca(hab,k)&&!habitoHecho(hab.id,k))f++;}return f;}
+function habPct(hab,dias,hasta){
+  /* % de los últimos N días que tocaban: hecho 1, mínimo ½. Desde que existe el hábito */
+  const fin=hasta?parseDate(hasta):new Date(),hoyK=iso(new Date()),reg=habitosS().registro;
+  let desde=hab.creado||'';Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][hab.id]&&(!desde||k<desde))desde=k;});
+  let toca=0,pts=0;const porTipo={};
+  for(let i=0;i<(dias||30);i++){const k=iso(addDays(fin,-i));if(desde&&k<desde)break;if(!habitoToca(hab,k))continue;
+    const e=habitoEstado(hab.id,k);if(k===hoyK&&!e)continue;
+    toca++;pts+=e==='ok'?1:(e==='min'?0.5:0);const t=diaTipo(k),x=porTipo[t]||(porTipo[t]={n:0,ok:0});x.n++;if(e)x.ok++;}
+  return {toca:toca,pct:toca?Math.round(100*pts/toca):null,porTipo:porTipo};}
+function habMejorHora(hab){const l=(habitosS().horas||{})[hab.id]||[];if(l.length<5)return '';return hm(Math.round(cnMediana(l.map(mins))));}
+function habAnclaTxt(h){
+  const a=h.ancla||{};
+  if(a.t==='hora'&&a.v)return 'a las '+hCortaHM(a.v);
+  if(a.t==='tras'){const x=HAB_TRAS.filter(function(q){return q[0]===a.v;})[0];return x?x[1]:'';}
+  return '';}
+function habFrase(h,corto){
+  /* «al salir de guardia → 3 posturas»: la intención de implementación, en una línea */
+  const an=habAnclaTxt(h),que=corto&&h.min?h.min:h.nombre;
+  return an?an.charAt(0).toUpperCase()+an.slice(1)+' → '+que.charAt(0).toLowerCase()+que.slice(1):'';}
 function habSubTxt(h){
-  const p=[diasCorta(h.dow)];
+  const p=[];const fr=habFrase(h);if(fr)p.push(fr);else p.push(diasCorta(h.dow));
   if((h.noEn||[]).length)p.push('no en '+h.noEn.map(function(t){return diaTipoInfo(t)[1].toLowerCase();}).join(' ni '));
-  if(h.auto==='entreno')p.push('se marca solo al entrenar');
-  if(h.auto==='cama')p.push('se marca solo al anotar la noche');
+  const au=HAB_AUTOS.filter(function(x){return x[0]&&x[0]===h.auto;})[0];if(au)p.push('se marca solo: '+au[1].replace(/^\S+ /,''));
+  if(h.min)p.push('mínimo: '+h.min);
   return p.join(' · ');}
 function habMesHTML(items){
-  /* el mes en %, y lo que la app ve: un tipo de día en el que toca y no lo has hecho nunca */
-  const hoy=new Date(),hoyK=iso(hoy),ini=iso(new Date(hoy.getFullYear(),hoy.getMonth(),1,12));
-  const reg=habitosS().registro;
+  /* los últimos 30 días en %, y lo que la app ve: un tipo de día en el que toca y no lo has hecho nunca */
   const filas=items.map(function(h){
-    let toca=0,hechos=0;const porTipo={};
-    /* desde que existe: lo que diga «creado» o el primer día marcado, lo que sea antes. Si no, al
-       restaurar una copia o marcar días pasados salía racha 🔥 2 y «este mes 0 %» */
-    let desde=h.creado||'';Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][h.id]&&(!desde||k<desde))desde=k;});
-    for(let d=new Date(hoy.getFullYear(),hoy.getMonth(),1,12);iso(d)<=hoyK;d=addDays(d,1)){const k=iso(d);
-      if(desde&&k<desde)continue;if(!habitoToca(h,k))continue;
-      if(k===hoyK&&!habitoHecho(h.id,k))continue;   /* hoy aún no ha acabado: no baja el % */
-      const ok=habitoHecho(h.id,k),t=diaTipo(k);toca++;if(ok)hechos++;
-      const x=porTipo[t]||(porTipo[t]={n:0,ok:0});x.n++;if(ok)x.ok++;}
-    if(!toca)return '';
+    const P=habPct(h,30);if(!P.toca)return '';
     const nunca=/agua|beber|hidrat|cama|dormir|medica|pastilla|vitamina|creatina|dientes/i.test(h.nombre||'')||h.auto?null:
-      Object.keys(porTipo).filter(function(t){return porTipo[t].n>=2&&!porTipo[t].ok;})[0];
+      Object.keys(P.porTipo).filter(function(t){return P.porTipo[t].n>=2&&!P.porTipo[t].ok;})[0];
+    const mh=!(h.ancla&&h.ancla.t)?habMejorHora(h):'';
     return '<div class="ali"><span class="e">'+esc(h.icono)+'</span><span class="hmt"><b>'+esc(h.nombre)+'</b>'+
-      (nunca?'<span class="w">los días de '+esc(diaTipoInfo(nunca)[1].toLowerCase())+', nunca</span>':'')+'</span>'+
-      (nunca?'<button class="chipx" data-a="hab-noen" data-id="'+h.id+'" data-t="'+nunca+'">no pedírmelo</button>':'')+
-      '<em>'+Math.round(100*hechos/toca)+' %</em></div>';}).join('');
-  return filas?'<div class="acap">ESTE MES</div><div class="alst">'+filas+'</div>':'';}
+      (nunca?'<span class="w">los días de '+esc(diaTipoInfo(nunca)[1].toLowerCase())+', nunca</span>':'')+
+      (mh?'<span>sueles hacerlo hacia las '+esc(hCortaHM(mh))+'</span>':'')+'</span>'+
+      (nunca?'<button class="chipx" data-a="hab-noen" data-id="'+h.id+'" data-t="'+nunca+'">no pedírmelo</button>':
+        (mh?'<button class="chipx" data-a="hab-ancla-hora" data-id="'+h.id+'" data-v="'+mh+'">anclar ahí</button>':''))+
+      '<em>'+P.pct+' %</em></div>';}).join('');
+  return filas?'<div class="acap">ÚLTIMOS 30 DÍAS</div><div class="alst">'+filas+'</div>':'';}
+function habCorto(key){
+  /* «hoy, versión corta»: al salir de guardia o si amaneces a 7 o más de 9 (Pilcher 2015: sin sueño
+     no hay autocontrol). Lo que digas en la tarjeta del asistente manda */
+  const a=asistS().corto[key];if(a===true||a===false)return a;
+  return diaTipo(key)==='saliente'||(cnKss(key)||0)>=7;}
+function habCortoSugerido(key){return asistS().corto[key]==null&&(diaTipo(key)==='saliente'||(cnKss(key)||0)>=7);}
 function renderHabitos(){
-  /* hoy primero y a un toque; cada hábito con lo que dice de sí mismo y sus últimos 7 días. Crear y
-     editar, en una hoja (habHojaHTML). Era 1,9 pantallas con el formulario de crear siempre abierto */
-  const items=habitosS().items,hoyK=iso(new Date());
+  const v=ui.habVista||'';
+  if(v==='rev')return renderRevision();
+  if(v==='exp')return renderExperimentos();
+  /* hoy primero y a un toque; cada hábito con su frase («al salir de guardia → estirar»), su
+     mínimo y sus últimos 7 días. Crear y editar, en una hoja (habHojaHTML) */
+  const items=habitosS().items,hoyK=iso(new Date()),corto=habCorto(hoyK);
   const tocan=items.filter(function(h){return habitoToca(h,hoyK);}),resto=items.filter(function(h){return !habitoToca(h,hoyK);});
   const hechos=tocan.filter(function(h){return habitoHecho(h.id,hoyK);}).length;
   const fila=function(h){
-    const toca=habitoToca(h,hoyK),ok=toca&&habitoHecho(h.id,hoyK),racha=rachaHabito(h);
-    let dots='';for(let i=6;i>=0;i--){const k=iso(addDays(new Date(),-i)),t=habitoToca(h,k),hd=t&&habitoHecho(h.id,k);
-      dots+='<i class="'+(t?'':'x')+(i===0?' hoy':'')+'"'+(hd?' style="background:'+esc(h.color)+'"':'')+'></i>';}
+    const toca=habitoToca(h,hoyK),est=toca?habitoEstado(h.id,hoyK):'',ok=!!est,racha=rachaHabito(h),fa=habFallos(h,7);
+    let dots='';for(let i=6;i>=0;i--){const k=iso(addDays(new Date(),-i)),t=habitoToca(h,k),e=t?habitoEstado(h.id,k):'';
+      dots+='<i class="'+(t?'':'x')+(i===0?' hoy':'')+(e==='min'?' mn':'')+'"'+(e?' style="background:'+esc(h.color)+'"':'')+'></i>';}
     return '<div class="hbr'+(toca?'':' notoca')+'" data-lp="hab" data-id="'+h.id+'">'+
-      (toca?'<button class="hbt'+(ok?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="hab-mark" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+ok+'" aria-label="'+esc(h.nombre)+(ok?': hecho':': marcar hecho')+'">'+(ok?'✓':esc(h.icono))+'</button>':
+      (toca?'<button class="hbt'+(ok?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="'+(corto&&h.min&&!ok?'hab-min':'hab-mark')+'" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+ok+'" aria-label="'+esc(h.nombre)+(ok?': hecho':(corto&&h.min?': marcar el mínimo':': marcar hecho'))+'">'+(est==='min'?'½':(ok?'✓':esc(h.icono)))+'</button>':
         '<span class="hbt" style="--c:'+esc(h.color)+'" title="hoy no toca">'+esc(h.icono)+'</span>')+
-      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.nombre)+'</b><span>'+esc(habSubTxt(h))+(toca?'':' · hoy no toca')+'</span>'+
+      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.nombre)+(corto&&toca&&h.min&&!ok?' <small class="hcorto">hoy: '+esc(h.min)+'</small>':'')+'</b><span>'+esc(habSubTxt(h))+(toca?'':' · hoy no toca')+'</span>'+
         '<span class="hdots" aria-hidden="true">'+dots+'</span></button>'+
-      '<span class="hbrr">'+(racha?'🔥 '+racha:'')+'</span></div>';};
+      '<span class="hbrr">'+(racha?'🔥 '+racha:'')+(racha&&fa?'<small>'+fa+' fallo'+(fa===1?'':'s')+'</small>':'')+
+        (toca&&!ok&&h.min&&!corto?'<button class="hmin" data-a="hab-min" data-id="'+h.id+'" data-key="'+hoyK+'" aria-label="hecho el mínimo: '+esc(h.min)+'">mín.</button>':'')+'</span></div>';};
+  const ex=expActivo();
   $('#main').innerHTML='<div class="grid ajg">'+
     '<div class="subcab"><h2 class="subtit">✅ Hábitos</h2><span class="sp"></span>'+(tocan.length?'<span class="mini"><b>'+hechos+' de '+tocan.length+'</b> hoy</span>':'')+'</div>'+
+    '<div class="row hbacc"><button class="btn s" data-a="hab-vista" data-v="rev">📋 Tu semana</button><button class="btn s" data-a="hab-vista" data-v="exp">🧪 Experimentos'+(ex?' · día '+ex.dia:'')+'</button></div>'+
+    (corto&&tocan.length?'<p class="mini hcortop">Hoy, versión corta'+(diaTipo(hoyK)==='saliente'?' (sales de guardia)':' (amaneces cansado)')+': el ✓ marca el mínimo y la racha sigue. <button class="dlink" data-a="asist-corto" data-v="0" data-k="'+hoyK+'">hoy entero</button></p>':'')+
     (items.length?'<div class="alst">'+tocan.concat(resto).map(fila).join('')+'</div>':
       '<div class="card"><p class="note" style="margin:0">Aún no tienes ninguno: crea el primero o empieza con uno de estos.</p><div class="chips" style="margin-top:8px">'+
         HAB_PRESETS.map(function(p,i){return '<button class="chipx" data-a="hab-preset" data-i="'+i+'">'+esc(p.icono+' '+p.nombre)+'</button>';}).join('')+'</div></div>')+
@@ -15062,16 +15386,25 @@ function habHojaHTML(){
   const e=ui.habEd;if(!e)return '';
   const chip=function(a,v,on,txt,extra){return '<button class="'+(on?'on':'')+'" data-a="'+a+'" data-v="'+v+'" aria-pressed="'+on+'"'+(extra||'')+'>'+txt+'</button>';};
   const DS=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];
-  const TT=['guardia','saliente','trabajo','fuerza','libre'];
+  const TT=['guardia','saliente','trabajo','fuerza','libre'],an=e.ancla||{};
   return hojaMarco('hab-ed-x','hhab',e.id?'editar hábito':'nuevo hábito',
     '<div class="hhd"><b>'+(e.id?esc(e.icono+' '+e.nombre):'Nuevo hábito')+'</b></div>'+
     '<div class="hlab">NOMBRE</div><div class="row" style="gap:8px;flex-wrap:nowrap">'+
       '<input id="habEdIco" value="'+esc(e.icono)+'" maxlength="4" aria-label="icono" style="width:58px;flex:none;text-align:center">'+
       '<input id="habEdNom" value="'+esc(e.nombre)+'" maxlength="40" placeholder="p. ej. Estirar 10 min" aria-label="nombre" style="flex:1;min-width:0"></div>'+
+    '<div class="hlab">CUÁNDO (EL ANCLA)</div><div class="hchs">'+chip('hab-ed-ancla','',!an.t,'sin ancla')+chip('hab-ed-ancla','hora',an.t==='hora','⏰ a una hora')+
+      HAB_TRAS.map(function(x){return chip('hab-ed-ancla','tras:'+x[0],an.t==='tras'&&an.v===x[0],x[1]);}).join('')+'</div>'+
+      (an.t==='hora'?'<input id="habEdHora" type="time" value="'+esc(an.v||'')+'" aria-label="hora" style="width:auto;margin-top:6px">':'')+
+    '<div class="hlab">VERSIÓN MÍNIMA <small>para los días malos: cuenta para la racha</small></div>'+
+      '<input id="habEdMin" value="'+esc(e.min||'')+'" maxlength="60" placeholder="p. ej. 3 posturas · 10 min · un vaso" aria-label="versión mínima">'+
+    '<div class="hlab">QUÉ SUELE IMPEDIRLO</div><div class="hchs">'+chip('hab-ed-obst','',!e.obst,'nada')+HAB_OBST.map(function(x){return chip('hab-ed-obst',x[0],e.obst===x[0],x[1]);}).join('')+'</div>'+
+      (e.obst?'<input id="habEdPlan" value="'+esc(e.plan||'')+'" maxlength="60" placeholder="entonces haré… (p. ej. la versión mínima al llegar)" aria-label="plan si aparece" style="margin-top:6px">':'')+
+    '<div class="hlab">POR QUÉ <small>una frase tuya</small></div>'+
+      '<input id="habEdPq" value="'+esc(e.porQue||'')+'" maxlength="80" placeholder="p. ej. para llegar entero a las guardias" aria-label="por qué">'+
     '<div class="hlab">QUÉ DÍAS</div><div class="hchs">'+DS.map(function(x){return chip('hab-ed-dow',x[0],e.dow.indexOf(x[0])>=0,x[1]);}).join('')+'</div>'+
     '<div class="hlab">NO ME LO PIDAS LOS DÍAS DE</div><div class="hchs">'+TT.map(function(t){const ti=diaTipoInfo(t);
       return chip('hab-ed-noen',t,e.noEn.indexOf(t)>=0,ti[2]+' '+ti[1]);}).join('')+'</div>'+
-    '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+[['','No, a mano'],['entreno','💪 al entrenar'],['cama','🛌 al anotar la noche']].map(function(x){
+    '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){
       return chip('hab-ed-auto',x[0],e.auto===x[0],x[1]);}).join('')+'</div>'+
     '<div class="hlab">COLOR</div><div class="hchs hcol">'+HAB_COLORES.map(function(c){
       return chip('hab-ed-col',c,e.color===c,'',' style="background:'+c+'" aria-label="color '+c+'"');}).join('')+'</div>'+
@@ -15080,13 +15413,227 @@ function habHojaHTML(){
       '<button class="btn p" style="flex:2" data-a="hab-ed-ok">'+(e.id?'Guardar':'Crear hábito')+'</button></div>');}
 function habEdAbre(id){
   const h=id&&habitosS().items.filter(function(x){return x.id===id;})[0];
-  ui.habEd=h?{id:h.id,nombre:h.nombre,icono:h.icono||'✅',color:h.color||HAB_COLORES[0],dow:(h.dow||[]).slice(),noEn:(h.noEn||[]).slice(),auto:h.auto||''}:
-    {id:'',nombre:'',icono:'✅',color:HAB_COLORES[habitosS().items.length%HAB_COLORES.length],dow:[0,1,2,3,4,5,6],noEn:[],auto:''};}
+  ui.habEd=h?{id:h.id,nombre:h.nombre,icono:h.icono||'✅',color:h.color||HAB_COLORES[0],dow:(h.dow||[]).slice(),noEn:(h.noEn||[]).slice(),auto:h.auto||'',
+      ancla:Object.assign({},h.ancla||{}),min:h.min||'',obst:h.obst||'',plan:h.plan||'',porQue:h.porQue||''}:
+    {id:'',nombre:'',icono:'✅',color:HAB_COLORES[habitosS().items.length%HAB_COLORES.length],dow:[0,1,2,3,4,5,6],noEn:[],auto:'',ancla:{},min:'',obst:'',plan:'',porQue:''};}
 function habEdLee(){
   /* lo escrito en la hoja, antes de que un chip la repinte */
   const e=ui.habEd;if(!e)return;
-  const n=document.getElementById('habEdNom'),i=document.getElementById('habEdIco');
-  if(n)e.nombre=n.value;if(i)e.icono=i.value;}
+  const v=function(id){const n=document.getElementById(id);return n?n.value:null;};
+  if(v('habEdNom')!=null)e.nombre=v('habEdNom');if(v('habEdIco')!=null)e.icono=v('habEdIco');
+  if(v('habEdMin')!=null)e.min=v('habEdMin');if(v('habEdPlan')!=null)e.plan=v('habEdPlan');if(v('habEdPq')!=null)e.porQue=v('habEdPq');
+  if(v('habEdHora')!=null&&e.ancla&&e.ancla.t==='hora')e.ancla.v=v('habEdHora');}
+/* ===================== EL ASISTENTE =====================
+   No es un chat ni una IA en la nube (el tema es sensible y los datos se quedan en el móvil): son
+   reglas escritas a mano sobre lo que ya apuntas. Tres salidas: el check-in de la mañana (KSS, ánimo
+   e intención, 30 s), UNA tarjeta al día en Hoy y la revisión de la semana. Principios: una cosa
+   al día, tú decides el objetivo, cifras tuyas con su n, y si no concluye lo dice. */
+function asistS(){
+  if(!store.asist||typeof store.asist!=='object')store.asist={};const a=store.asist;
+  if(!a.checkins||typeof a.checkins!=='object')a.checkins={};if(!a.sil||typeof a.sil!=='object')a.sil={};
+  if(!a.nunca||typeof a.nunca!=='object')a.nunca={};if(!a.corto||typeof a.corto!=='object')a.corto={};
+  if(!Array.isArray(a.notas))a.notas=[];if(!a.exp||typeof a.exp!=='object')a.exp={act:null,hist:[]};
+  if(!Array.isArray(a.exp.hist))a.exp.hist=[];if(!Array.isArray(a.obj))a.obj=[];if(!a.revisado||typeof a.revisado!=='object')a.revisado={};
+  return a;}
+const ANIMO=['','😣','😕','😐','🙂','😄'];
+function asistIntenciones(k){
+  /* lo que propone para hoy, sacado de lo que hay hoy: elegir una es la intención del día */
+  const out=[],e=entrenoDe(k),hb=habitosS().items.filter(function(h){return habitoToca(h,k);});
+  if(e&&e.hora&&!gymHechoEn(k))out.push(['entreno','💪 entreno a las '+hCortaHM(e.hora)]);
+  if(lloretDe(k))out.push(['lloretsin','🌿 Lloretazo sin']);
+  const est=hb.filter(function(h){return /estudi|mir|repas/i.test(h.nombre)||h.auto==='estudio';})[0];
+  if(est)out.push(['estudio','📚 '+(est.min&&habCorto(k)?est.min:'estudio')+(lloretDe(k)?' antes del Lloretazo':'')]);
+  if(habCorto(k)&&hb.some(function(h){return h.min;}))out.push(['corto','🌱 lo mínimo y descansar']);
+  out.push(['pantallas','📵 pantallas fuera a las '+hCortaHM(hm(Math.max(0,(mins(sleepOf(k).bed||'23:00')||23*60)-30)))]);
+  return out.slice(0,3);}
+function asistCheckinHTML(k){
+  const c=asistS().checkins[k]||{},r=suenoReal(k),kss=+c.kss||(r&&+r.kss)||0;
+  if(c.hecho&&!ui.asistCheck)return '<button class="asck ok" data-a="asist-check-abrir"><span>☀️</span><span class="t"><b>Esta mañana</b><span>'+
+    (kss?'KSS '+kss:'')+(c.animo?' · '+ANIMO[c.animo]:'')+(c.int?' · hoy: '+esc((asistIntenciones(k).concat([[c.int,c.intTxt||c.int]]).filter(function(x){return x[0]===c.int;})[0]||[0,''])[1].replace(/^\S+ /,'')):'')+'</span></span><span class="ch">›</span></button>';
+  const ints=asistIntenciones(k);
+  return '<div class="asck"><div class="cap">☀️ ¿CÓMO AMANECES?</div>'+
+    '<div class="hlab">DESPEJADO (KSS · 1 muy despierto, 9 me caigo)</div><div class="snkss">'+[1,2,3,4,5,6,7,8,9].map(function(n){
+      return '<button class="'+(kss===n?'on':'')+'" data-a="asist-kss" data-v="'+n+'" data-k="'+k+'" style="--k:'+n+'" aria-pressed="'+(kss===n)+'">'+n+'</button>';}).join('')+'</div>'+
+    '<div class="hlab">ÁNIMO</div><div class="cnseg c5">'+[1,2,3,4,5].map(function(n){
+      return '<button class="'+(+c.animo===n?'on':'')+'" data-a="asist-animo" data-v="'+n+'" data-k="'+k+'" aria-pressed="'+(+c.animo===n)+'" aria-label="ánimo '+n+' de 5">'+ANIMO[n]+'</button>';}).join('')+'</div>'+
+    '<div class="hlab">HOY ME PROPONGO</div><div class="chips">'+ints.map(function(x){
+      return '<button class="chipx'+(c.int===x[0]?' on':'')+'" data-a="asist-int" data-v="'+x[0]+'" data-t="'+esc(x[1])+'" data-k="'+k+'">'+esc(x[1])+'</button>';}).join('')+'</div></div>';}
+function asistReglas(k){
+  /* LAS SEÑALES: cada una con su condición sobre tus datos, su texto con cifras tuyas y qué hacer.
+     El orden es la prioridad; sale solo la primera que no hayas silenciado */
+  const R=[],hoy=new Date(),hoyK=iso(hoy),man=iso(addDays(hoy,1)),kss=cnKss(k)||0,A=asistS(),c=consumoS();
+  const shM=shiftById(dayInfo(man).shiftId),guardiaMan=!!(shM&&isGuardia(shM));
+  /* 1 · versión corta */
+  if(habCortoSugerido(k)&&habitosS().items.some(function(h){return habitoToca(h,k)&&h.min;})){
+    const mins_=habitosS().items.filter(function(h){return habitoToca(h,k)&&h.min;}).map(function(h){return h.icono+' '+h.min;});
+    R.push({id:'corto',ico:'🌱',t:'Hoy, versión corta',txt:(diaTipo(k)==='saliente'?'Sales de guardia':'Amaneces a '+kss+' de 9')+'. Hoy pido solo lo mínimo: '+mins_.join(', ')+'. La racha sigue igual.',
+      acc:[['Vale','asist-corto',' data-v="1" data-k="'+k+'"',1],['Hoy entero','asist-corto',' data-v="0" data-k="'+k+'"']]});}
+  /* 2 · víspera de guardia con Lloretazo */
+  if(guardiaMan&&lloretDe(k)&&hoy.getHours()<23&&c.plan.guardia){
+    const con=[],sin=[];for(let i=1;i<=90;i++){const d=iso(addDays(hoy,-i)),d1=iso(addDays(hoy,-i+1)),sh=shiftById(dayInfo(d1).shiftId);
+      if(!(sh&&isGuardia(sh)))continue;const x=cnKss(d1);if(x==null)continue;(consumoDe(d).length?con:sin).push(x);}
+    const dato=con.length>=2&&sin.length>=2?' Las vísperas de guardia con sesión amaneces a '+String(cnMediana(con)).replace('.',',')+' de 9 (n '+con.length+'); sin, a '+String(cnMediana(sin)).replace('.',',')+' (n '+sin.length+').':' Antes de una guardia, mejor sin.';
+    R.push({id:'guardia',ico:'🩺',t:'Mañana guardia',txt:'Hoy hay Lloretazo.'+dato,acc:[['Lloretazo sin','asist-int',' data-v="lloretsin" data-t="🌿 Lloretazo sin" data-k="'+k+'"',1]]});}
+  /* 3 · T-break en marcha */
+  const tb=cnTB();if(tb&&!tb.fin)R.push({id:'tbreak',ico:'📆',t:'T-break · día '+tb.dia+' de '+tb.dias,txt:cnAbstinencia(tb.dia)+(cnGanasSemana().length?' Esta semana has apuntado '+cnGanasSemana().length+' ganas.':''),
+    acc:[['Ver ciencia','ir-cn',' data-v="ciencia"']]});
+  if(tb&&tb.fin)R.push({id:'tbfin',ico:'✅',t:'T-break terminado',txt:'Ya tienes la comparación con las dos semanas de antes.',acc:[['Verla','ir-cn',' data-v="plan"',1]]});
+  /* 4 · experimento terminado */
+  const ex=expActivo();if(ex&&ex.fin)R.push({id:'expfin',ico:'🧪',t:'Tu experimento ha terminado',txt:'«'+EXP[ex.id].t+'»: '+ex.dias+' días. Mira qué ha pasado.',acc:[['Ver el resultado','hab-vista',' data-v="exp"',1]]});
+  /* 5 · usar para dormir */
+  const d7=iso(addDays(hoy,-6)),dormir=c.ses.filter(function(x){return x.fecha>=d7&&x.motivo==='dormir';}).length;
+  if(dormir>=3){const F={};cnAfecta(28).forEach(function(f){F[f.id]=f;});
+    R.push({id:'dormir',ico:'😴',t:dormir+' sesiones para dormir esta semana',txt:'Ayuda a dormirte pero recorta el REM y se pierde con el uso.'+(F.sueno&&F.sueno.ok?' Los días con sesión duermes '+(F.sueno.dif>0?'+':'−')+Math.abs(Math.round(F.sueno.dif))+' min (n '+F.sueno.nCon+'/'+F.sueno.nSin+').':''),
+      acc:[['Probar 7 días antes de las 22:00','exp-start',' data-v="antes22"',1],['Ver ciencia','ir-cn',' data-v="ciencia"']]});}
+  /* 6 · un hábito con dos fallos seguidos */
+  const h2=habitosS().items.filter(function(h){if(!habitoToca(h,k)||habitoHecho(h.id,k))return false;
+    let f=0,vistos=0;for(let i=1;i<=14&&vistos<2;i++){const d=iso(addDays(parseDate(k),-i));if(!habitoToca(h,d))continue;vistos++;if(!habitoHecho(h.id,d))f++;}return f>=2;})[0];
+  if(h2)R.push({id:'fallo2:'+h2.id,ico:h2.icono,t:h2.nombre+' lleva dos días',txt:h2.min?'Hoy solo la versión mínima ('+h2.min+') y la cadena sigue.':'Hoy, aunque sea un poco: un día más sin y la racha se corta.',
+    acc:h2.min?[['Hecho el mínimo','hab-min',' data-id="'+h2.id+'" data-key="'+k+'"',1]]:[['Hecho','hab-mark',' data-id="'+h2.id+'" data-key="'+k+'"',1]]});
+  /* 7 · cansado y con entreno */
+  const en=entrenoDe(k);if(kss>=7&&en&&!gymHechoEn(k))R.push({id:'kssentreno',ico:'💪',t:'Vienes a '+kss+' de 9',txt:'Hoy, sesión corta o '+(en.tipo==='pisc'?'piscina suave':'cuerpo entero ligero')+'; lo recuperas otro día. Entrenar cansado sube el riesgo de lesión.',acc:[]});
+  /* 8 · un hábito que nunca se hace un tipo de día */
+  const sg=habitoSugerencia();if(sg)R.push({id:'nunca:'+sg.h.id+'|'+sg.t,ico:'💡',t:'Los días de '+diaTipoInfo(sg.t)[1].toLowerCase()+' no haces '+sg.h.nombre.toLowerCase(),
+    txt:'Ninguna vez en '+sg.n+' ocasiones (4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.',acc:[['Sí, esos días no','hab-noen',' data-id="'+sg.h.id+'" data-t="'+sg.t+'"',1]]});
+  /* 9 · siete de siete */
+  let d7n=0;for(let i=0;i<7;i++)if(consumoDe(iso(addDays(hoy,-i))).length)d7n++;
+  if(d7n>=7&&c.obj<=4&&!tb)R.push({id:'siete',ico:'🌿',t:'Siete de siete esta semana',txt:'Tu objetivo es ≤ '+c.obj+'. Unos días sin ya bajan algo la tolerancia (con 3, ~'+cnTolerancia(3)+' %).',acc:[['T-break de 3 días','cn-tb',' data-v="3"',1]]});
+  /* 10 · ganas aguantadas */
+  const ag=cnGanasSemana().filter(function(g){return g.res==='aguante'||g.res==='otra';}).length;
+  if(ag>=3)R.push({id:'ganas',ico:'👏',t:ag+' ganas aguantadas esta semana',txt:'Es la cifra que mejor dice si estás reduciendo, más que los gramos.',acc:[]});
+  /* 11 · la revisión de la semana (domingo, o lunes por la mañana) */
+  const dw=hoy.getDay(),lun=iso(mondayOf(hoy));
+  if((dw===0||(dw===1&&hoy.getHours()<13))&&!A.revisado[dw===0?lun:iso(addDays(parseDate(lun),-7))])
+    R.push({id:'rev',ico:'📋',t:'Tu semana en 2 minutos',txt:'Cinco números, un cruce de tus datos y una propuesta para la que entra.',acc:[['Verla','hab-vista',' data-v="rev"',1]]});
+  return R;}
+function asistTarjeta(k){
+  const A=asistS(),hoyK=iso(new Date());
+  return asistReglas(k).filter(function(r){const base=r.id.split(':')[0];return !A.nunca[base]&&!A.nunca[r.id]&&!(A.sil[r.id]&&A.sil[r.id]>=hoyK);})[0]||null;}
+function asistHoyHTML(k){
+  /* en Hoy: el check-in (si falta) y UNA tarjeta */
+  const t=asistTarjeta(k),hh=new Date().getHours();
+  const ck=hh>=5?asistCheckinHTML(k):'';
+  if(!ck&&!t)return '';
+  return '<div class="card asist">'+ck+
+    (t?'<div class="astj"><div class="row"><span class="ico">'+esc(t.ico)+'</span><b>'+esc(t.t)+'</b><span class="sp"></span>'+
+      '<button class="x" data-a="asist-sil" data-id="'+esc(t.id)+'" aria-label="ahora no (vuelve en 14 días)" title="ahora no">×</button></div>'+
+      '<p>'+esc(t.txt)+'</p><div class="row asacc">'+t.acc.map(function(a){return '<button class="btn '+(a[3]?'p ':'')+'s" data-a="'+a[1]+'"'+a[2]+'>'+esc(a[0])+'</button>';}).join('')+
+      '<span class="sp"></span><button class="dlink" data-a="asist-nunca" data-id="'+esc(t.id)+'">no me lo digas más</button></div></div>':'')+
+  '</div>';}
+/* ---------- la semana: cinco números, un cruce y una propuesta ---------- */
+function semNumeros(fin){
+  /* los 7 días que acaban en «fin» */
+  const ks=[];for(let i=6;i>=0;i--)ks.push(iso(addDays(parseDate(fin),-i)));
+  const hs=ks.map(function(k){const r=suenoReal(k);return r&&+r.h?+r.h:null;}).filter(function(x){return x!=null;});
+  const ses=ks.reduce(function(a,k){return a+consumoDe(k).length;},0),mg=ks.reduce(function(a,k){return a+consumoDe(k).reduce(function(b,x){return b+(+x.thc||cnThc(x.g,x.forma));},0);},0);
+  let toca=0,pts=0;habitosS().items.forEach(function(h){ks.forEach(function(k){if(!habitoToca(h,k)||k>iso(new Date()))return;toca++;const e=habitoEstado(h.id,k);pts+=e==='ok'?1:(e==='min'?0.5:0);});});
+  const est=estS().sesiones.filter(function(s){return ks.indexOf(s.fecha)>=0;}).reduce(function(a,s){return a+(+s.min||0);},0);
+  const ent=ks.filter(function(k){return gymHechoEn(k);}).length;
+  const kss=ks.map(cnKss).filter(function(x){return x!=null;});
+  return {sueno:hs.length?Math.round(hs.reduce(function(a,b){return a+b;},0)/hs.length*10)/10:null,nS:hs.length,ses:ses,mg:mg,hab:toca?Math.round(100*pts/toca):null,est:est,ent:ent,
+    kss:kss.length?Math.round(cnMediana(kss)*10)/10:null};}
+function renderRevision(){
+  const hoy=new Date(),fin=iso(hoy),A=asistS(),c=consumoS();
+  const S=semNumeros(fin),P=semNumeros(iso(addDays(hoy,-7)));
+  const fl=function(a,b,mejor){if(a==null||b==null||a===b)return '';const up=a>b;return '<em class="'+((up===(mejor>0))?'ok':'lo')+'">'+(up?'▲':'▼')+'</em>';};
+  const n=function(t,v,ant,u,mejor,sub){return '<div class="rvn"><span>'+t+'</span><b>'+(v==null?'—':v)+(v==null?'':'<small>'+u+'</small>')+fl(v,ant,mejor)+'</b><small>antes '+(ant==null?'—':ant+u)+(sub?' · '+sub:'')+'</small></div>';};
+  /* el cruce: el que más se separa, con n suficiente */
+  const F=cnAfecta(28).filter(function(f){return f.ok&&f.dif&&['kss','animo','sueno','estudio','cama'].indexOf(f.id)>=0;})
+    .sort(function(a,b){return Math.abs(b.dif/(b.mSin||1))-Math.abs(a.dif/(a.mSin||1));})[0];
+  const cruce=F?('Los días con sesión: '+F.t.toLowerCase()+' '+(F.id==='cama'?hm(Math.round(F.mCon)%1440):(F.u==='min'?fmtHM(F.mCon):String(Math.round(F.mCon*10)/10).replace('.',',')))+
+    ' (n '+F.nCon+'); sin: '+(F.id==='cama'?hm(Math.round(F.mSin)%1440):(F.u==='min'?fmtHM(F.mSin):String(Math.round(F.mSin*10)/10).replace('.',',')))+' (n '+F.nSin+').'):
+    'Aún no hay un cruce con días suficientes en los dos lados (hacen falta 5 y 5).';
+  /* la propuesta: un experimento que encaje con lo que sale */
+  const prop=expActivo()?null:(F&&(F.id==='kss'||F.id==='sueno'||F.id==='cama')?'antes22':(S.hab!=null&&S.hab<60?'minimo':(cnLloret(fin.slice(0,7)).n?'lloretsin':'pantallas')));
+  const lun=iso(mondayOf(hoy)),mes=A.notas.filter(function(x){return x.fecha<=iso(addDays(hoy,-25))&&x.fecha>=iso(addDays(hoy,-40));}).slice(-1)[0];
+  const nota=A.notas.filter(function(x){return x.fecha===fin;})[0];
+  $('#main').innerHTML='<div class="grid ajg">'+
+    '<div class="subcab"><button class="btn s volver" data-a="hab-vista" data-v="">'+gymIco('atras','gico sm')+' Hábitos</button><h2 class="subtit">Tu semana</h2></div>'+
+    '<div class="card"><div class="cap">LOS ÚLTIMOS 7 DÍAS, FRENTE A LOS 7 DE ANTES</div><div class="rvg">'+
+      n('😴 Sueño',S.sueno==null?null:String(S.sueno).replace('.',','),P.sueno==null?null:String(P.sueno).replace('.',','),' h',1,S.nS+' noches')+
+      n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj)+
+      n('✅ Hábitos',S.hab,P.hab,' %',1)+
+      n('📚 Estudio',S.est?fmtHM(S.est):'0h00',P.est?fmtHM(P.est):'0h00','',1)+
+      n('💪 Entrenos',S.ent,P.ent,'',1)+
+      n('☀️ KSS',S.kss==null?null:String(S.kss).replace('.',','),P.kss==null?null:String(P.kss).replace('.',','),'',-1,'mediana')+'</div></div>'+
+    '<div class="card"><div class="cap">UN CRUCE DE TUS DATOS</div><p style="margin:4px 0 0">'+esc(cruce)+'</p></div>'+
+    (prop?'<div class="card"><div class="cap">UNA PROPUESTA PARA LA SEMANA QUE ENTRA</div><p style="margin:4px 0 8px"><b>'+esc(EXP[prop].t)+'</b> · '+esc(EXP[prop].por)+'</p>'+
+      '<div class="row" style="gap:8px"><button class="btn p s" data-a="exp-start" data-v="'+prop+'">Probarlo 7 días</button><button class="btn s" data-a="hab-vista" data-v="exp">ver otros</button></div></div>':'')+
+    objetivosHTML()+
+    '<div class="card"><div class="cap">QUÉ ME HA FUNCIONADO</div>'+
+      (mes?'<p class="mini" style="margin:4px 0 6px">Hace un mes escribiste: «'+esc(mes.txt)+'»</p>':'')+
+      '<textarea id="rvNota" rows="2" maxlength="280" placeholder="una línea para ti dentro de un mes" aria-label="qué me ha funcionado">'+esc(nota?nota.txt:'')+'</textarea>'+
+      '<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn s" data-a="rev-nota">guardar</button></div></div>'+
+  '</div>';}
+/* ---------- objetivos de trimestre: tres como mucho, pegados a una métrica que ya existe ---------- */
+const OBJ_M={ses:['🌿 sesiones de 4:20 por semana','≤',-1,1,0,21],kss:['☀️ KSS de la mañana (mediana)','≤',-1,0.5,1,9],
+  estudio:['📚 horas de estudio por semana','≥',1,1,0,60],habitos:['✅ hábitos cumplidos','≥',1,5,0,100],sueno:['😴 horas de sueño por noche','≥',1,0.5,4,10]};
+function objValor(m,desde,dias){
+  const ks=[];for(let i=0;i<dias;i++)ks.push(iso(addDays(parseDate(desde),-i)));const sem=dias/7;
+  if(m==='ses')return Math.round(ks.reduce(function(a,k){return a+consumoDe(k).length;},0)/sem*10)/10;
+  if(m==='kss'){const v=ks.map(cnKss).filter(function(x){return x!=null;});return v.length>=3?cnMediana(v):null;}
+  if(m==='estudio')return Math.round(estS().sesiones.filter(function(s){return ks.indexOf(s.fecha)>=0;}).reduce(function(a,s){return a+(+s.min||0);},0)/60/sem*10)/10;
+  if(m==='habitos'){let t=0,p=0;habitosS().items.forEach(function(h){ks.forEach(function(k){if(!habitoToca(h,k))return;t++;const e=habitoEstado(h.id,k);p+=e==='ok'?1:(e==='min'?0.5:0);});});return t?Math.round(100*p/t):null;}
+  if(m==='sueno'){const v=ks.map(function(k){const r=suenoReal(k);return r&&+r.h?+r.h:null;}).filter(function(x){return x!=null;});return v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length*10)/10:null;}
+  return null;}
+function objetivosHTML(){
+  const A=asistS(),hoy=iso(new Date()),E=ui.objNuevo;
+  const fila=function(o,i){const M=OBJ_M[o.m];if(!M)return '';const v=objValor(o.m,hoy,28),ant=objValor(o.m,iso(addDays(new Date(),-28)),28);
+    const ok=v!=null&&(M[1]==='≤'?v<=o.meta:v>=o.meta),tend=v!=null&&ant!=null&&v!==ant?((v>ant)===(M[2]>0)?'▲ mejora':'▼ empeora'):'';
+    return '<div class="obj'+(ok?' ok':'')+'"><span class="t"><b>'+esc(M[0])+' '+M[1]+' '+String(o.meta).replace('.',',')+'</b><small>ahora '+(v==null?'—':String(v).replace('.',','))+' (4 semanas)'+(tend?' · '+tend:'')+' · desde '+esc(fechaCorta(o.desde))+'</small></span>'+
+      '<span class="ck">'+(ok?'✓':'')+'</span><button class="x" data-a="obj-del" data-i="'+i+'" aria-label="quitar objetivo">×</button></div>';};
+  return '<div class="card"><div class="row"><span class="cap">OBJETIVOS DEL TRIMESTRE</span><span class="sp"></span>'+(A.obj.length<3&&!E?'<button class="btn s" data-a="obj-nuevo">＋ objetivo</button>':'')+'</div>'+
+    (A.obj.length?A.obj.map(fila).join(''):(E?'':'<p class="mini" style="margin:4px 0 0">Tres como mucho, cada uno con un número que la app ya calcula. Sin insignias.</p>'))+
+    (E?'<div class="objn"><div class="chips">'+Object.keys(OBJ_M).filter(function(m){return !A.obj.some(function(o){return o.m===m;});}).map(function(m){
+        return '<button class="chipx'+(E.m===m?' on':'')+'" data-a="obj-m" data-v="'+m+'">'+esc(OBJ_M[m][0])+'</button>';}).join('')+'</div>'+
+      (E.m?'<div class="row" style="margin-top:8px"><span class="mini">'+esc(OBJ_M[E.m][0])+' '+OBJ_M[E.m][1]+'</span><span class="sp"></span><div class="d4step"><button data-a="obj-meta" data-d="-1" aria-label="menos">−</button><b>'+String(E.meta).replace('.',',')+'</b><button data-a="obj-meta" data-d="1" aria-label="más">+</button></div></div>'+
+        '<div class="row" style="margin-top:8px;gap:8px"><button class="btn s" data-a="obj-x">cancelar</button><span class="sp"></span><button class="btn p s" data-a="obj-ok">Ponerlo</button></div>':'')+'</div>':'')+'</div>';}
+/* ---------- experimentos n-de-1 ---------- */
+const EXP={
+  antes22:{t:'Sesión antes de las 22:00',por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
+  lloretsin:{t:'Lloretazo sin, entre semana',por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
+  minimo:{t:'Versión mínima los días malos',por:'medido en el % de hábitos cumplidos',v:'habitos',bueno:1,u:' %'},
+  nadar:{t:'Moverme cuando tengo ganas',por:'medido en las ganas que no acaban en sesión',v:'aguante',bueno:1,u:''},
+  pantallas:{t:'Pantallas fuera 30 min antes de la cama',por:'medido en las horas dormidas',v:'sueno',bueno:1,u:' h'}};
+function expVar(v,k){
+  if(v==='kss')return cnKss(k);
+  if(v==='sueno'){const r=suenoReal(k);return r&&+r.h?+r.h:null;}
+  if(v==='habitos'){let t=0,p=0;habitosS().items.forEach(function(h){if(!habitoToca(h,k))return;t++;const e=habitoEstado(h.id,k);p+=e==='ok'?1:(e==='min'?0.5:0);});return t?100*p/t:null;}
+  if(v==='aguante')return consumoS().ganas.filter(function(g){return g.fecha===k&&g.res!=='sesion';}).length;
+  return null;}
+function expActivo(){
+  const a=asistS().exp.act;if(!a||!EXP[a.id])return null;
+  const dia=Math.round((parseDate(iso(new Date()))-parseDate(a.desde))/86400000)+1;
+  return {id:a.id,desde:a.desde,dias:a.dias,dia:dia,fin:dia>a.dias};}
+function expResultado(x){
+  /* antes (las 2 semanas previas) frente a durante, con su n y un veredicto que no exagera */
+  const E=EXP[x.id],ant=[],dur=[];
+  for(let i=1;i<=14;i++){const v=expVar(E.v,iso(addDays(parseDate(x.desde),-i)));if(v!=null)ant.push(v);}
+  for(let i=0;i<x.dias;i++){const k=iso(addDays(parseDate(x.desde),i));if(k>iso(new Date()))break;const v=expVar(E.v,k);if(v!=null)dur.push(v);}
+  const a=cnMediana(ant),d=cnMediana(dur);let ver='pocos datos: hacen falta 5 días en cada lado';
+  if(ant.length>=5&&dur.length>=5&&a!=null&&d!=null){const rel=(d-a)/(Math.abs(a)||1);
+    ver=Math.abs(rel)<0.1?'no se nota (menos de un 10 % de diferencia)':((d-a)*E.bueno>0?'mejora':'empeora');}
+  const r=function(v){return v==null?'—':String(Math.round(v*10)/10).replace('.',',');};
+  return {antes:r(a),nA:ant.length,durante:r(d),nD:dur.length,ver:ver};}
+function renderExperimentos(){
+  const A=asistS(),x=expActivo();
+  let act='';
+  if(x){const R=expResultado(x),E=EXP[x.id];
+    act='<div class="card"><div class="cap">'+(x.fin?'TERMINADO':'EN MARCHA · DÍA '+x.dia+' DE '+x.dias)+'</div><p style="margin:4px 0"><b>'+esc(E.t)+'</b> · '+esc(E.por)+'</p>'+
+      '<div class="cnaf"><div class="t"><b>2 semanas antes</b><span>mediana '+R.antes+E.u+' (n '+R.nA+')</span></div></div>'+
+      '<div class="cnaf"><div class="t"><b>Durante</b><span>mediana '+R.durante+E.u+' (n '+R.nD+')</span></div></div>'+
+      (x.fin?'<p style="margin:8px 0"><b>Veredicto: '+esc(R.ver)+'</b></p><button class="btn p s" data-a="exp-cerrar">guardarlo en mi historial</button>':
+        '<button class="btn s" data-a="exp-cerrar" style="margin-top:8px">dejarlo ya</button>')+'</div>';}
+  $('#main').innerHTML='<div class="grid ajg">'+
+    '<div class="subcab"><button class="btn s volver" data-a="hab-vista" data-v="">'+gymIco('atras','gico sm')+' Hábitos</button><h2 class="subtit">Experimentos</h2></div>'+
+    '<p class="mini" style="margin:0">Un cambio pequeño durante 7 o 14 días, comparado con tus dos semanas de antes. Uno a la vez. El historial es tu manual de lo que funciona contigo.</p>'+
+    act+
+    (x?'':'<div class="alst">'+Object.keys(EXP).map(function(id){const E=EXP[id];
+      return '<div class="ali"><span class="hmt"><b>'+esc(E.t)+'</b><span>'+esc(E.por)+'</span></span>'+
+        '<button class="chipx" data-a="exp-start" data-v="'+id+'" data-d="7">7 días</button><button class="chipx" data-a="exp-start" data-v="'+id+'" data-d="14">14</button></div>';}).join('')+'</div>')+
+    (A.exp.hist.length?'<div class="acap">LO QUE HAS PROBADO</div><div class="alst">'+A.exp.hist.slice().reverse().map(function(h){const E=EXP[h.id]||{t:h.id,u:''};
+      return '<div class="ali"><span class="hmt"><b>'+esc(E.t)+'</b><span>'+esc(fechaCorta(h.desde))+' · '+h.dias+' días · antes '+esc(h.antes)+(E.u||'')+' → '+esc(h.durante)+(E.u||'')+'</span></span><em>'+esc(h.ver)+'</em></div>';}).join('')+'</div>':'')+
+  '</div>';}
 /* ===================== render: días y menús ===================== */
 /* ===================== importar recetas de redes sociales ===================== */
 /* El caso de uso: ves una receta en TikTok/Instagram y quieres el plato en la app sin teclearlo.
@@ -20017,7 +20564,7 @@ function cajonVivo(t){
     if(t==='dinero'){const h=new Date(),M=d6Mes(ahoMk(h.getFullYear(),h.getMonth()));
       return M.p?'hoy puedes <b>'+fmtMil(M.hoyMax)+' €</b>':'sube la captura del mes';}
     if(t==='estudio'){const m=estMinSemana(hoyK);return m?'<b>'+fmtHM(m)+'</b> esta semana':'nada esta semana';}
-    if(t==='consumo'){const n=consumoSemana(iso(mondayOf(new Date()))).n;
+    if(t==='consumo'){if(consumoS().priv.oculto)return '';const n=consumoSemana(iso(mondayOf(new Date()))).n;
       return n?'<b>'+n+'</b> esta semana':(function(){const d=consumoSin();return '<b>'+d+'</b> día'+(d===1?'':'s')+' sin';})();}
     if(t==='eventos'){const ahora=horaLocal(new Date());
       for(let i=0;i<21;i++){const d=addDays(new Date(),i),k=iso(d);
@@ -20031,7 +20578,8 @@ function cajonHTML(){
   const d=diasDesdeBackup(),copia=d===null||d>avisoBackupD(),aj=['ajustes','cfg','data'].indexOf(ui.tab)>=0;
   return '<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
     '<div class="ctil">'+CAJON.map(function(t){
-      return '<button class="cti'+(ui.tab===t[0]?' on':'')+'" data-a="drawer-nav" data-t="'+t[0]+'"><span class="t">'+t[1]+' '+t[2]+'</span>'+
+      const priv=t[0]==='consumo'&&store.consumo&&consumoS().priv.oculto;   /* 4:20 discreto: sin nombre ni cifras */
+      return '<button class="cti'+(ui.tab===t[0]?' on':'')+'" data-a="drawer-nav" data-t="'+t[0]+'"><span class="t">'+(priv?'🔒 Privado':t[1]+' '+t[2])+'</span>'+
         '<span class="v">'+(ui.drawerOpen?cajonVivo(t[0]):'')+'</span></button>';}).join('')+'</div>'+
     '<button class="cli'+(aj?' on':'')+'" data-a="drawer-nav" data-t="ajustes"><span class="e">⚙️</span><b>Ajustes</b>'+
       (copia?'<em class="w">⚠ copia</em>':'')+'<span class="ch">›</span></button>';}
@@ -20844,7 +21392,7 @@ function act(a,el){
     case 'clear-overrides':store.rotation.shiftByDay={};store.rotation.daySet={};store.rotation.dayRhythm={};
       save();render();flash('Días vuelve a la rotación (y se quita lo escrito a mano en el calendario)');break;
     case 'export':dl();marcarBackup();render();break;
-    case 'copy':copy(JSON.stringify(store,null,1));marcarBackup();render();break;
+    case 'copy':copy(copiaJSON());marcarBackup();render();break;
     case 'import':{let raw,o;
       try{raw=$('#importBox').value.trim();if(!raw)throw ' vacío';o=JSON.parse(raw);
         if(!o||typeof o!=='object'||!Array.isArray(o.shifts)||!o.menu||!Array.isArray(o.dishes))throw 'x';
@@ -21009,8 +21557,11 @@ function act(a,el){
     case 'hab-ed-col':habEdLee();if(ui.habEd)ui.habEd.color=el.dataset.v;render();break;
     case 'hab-ed-ok':{habEdLee();const e=ui.habEd;if(!e)break;const nm=String(e.nombre||'').trim().slice(0,40);
       if(!nm){flash('ponle un nombre al hábito');break;}
+      const an=e.ancla||{};
       const datos={nombre:nm,icono:(String(e.icono||'').trim()||'✅').slice(0,4),color:e.color,
-        dow:(e.dow.length?e.dow:[0,1,2,3,4,5,6]).slice().sort(function(x,y){return x-y;}),noEn:e.noEn.slice(),auto:e.auto||''};
+        dow:(e.dow.length?e.dow:[0,1,2,3,4,5,6]).slice().sort(function(x,y){return x-y;}),noEn:e.noEn.slice(),auto:e.auto||'',
+        ancla:an.t==='hora'&&/^\d{2}:\d{2}$/.test(an.v||'')?{t:'hora',v:an.v}:(an.t==='tras'&&an.v?{t:'tras',v:an.v}:{}),
+        min:String(e.min||'').trim().slice(0,60),obst:e.obst||'',plan:e.obst?String(e.plan||'').trim().slice(0,60):'',porQue:String(e.porQue||'').trim().slice(0,80)};
       const h=e.id&&habitosS().items.filter(function(x){return x.id===e.id;})[0];
       if(h)Object.assign(h,datos);else habitosS().items.push(Object.assign({id:uid('hb'),creado:iso(new Date())},datos));
       ui.habEd=null;save();render();flash(h?'hábito guardado':'hábito creado');break;}
@@ -21021,6 +21572,43 @@ function act(a,el){
           if(!Object.keys(h.registro[k]).length)delete h.registro[k];});
         ui.habEd=null;save();render();flash('hábito borrado');});break;}
     case 'hab-mark':{toggleHabito(el.dataset.id,el.dataset.key);render();break;}
+    case 'hab-min':{toggleHabito(el.dataset.id,el.dataset.key,'min');const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];
+      if(h&&habitoEstado(h.id,el.dataset.key)==='min')flash('hecho el mínimo: la racha sigue');render();break;}
+    case 'hab-vista':{const v=el.dataset.v||'';ui.habVista=v;if(ui.tab!=='habitos')ui.tab='habitos';
+      if(v==='rev'){const hoy=new Date(),lun=iso(mondayOf(hoy));asistS().revisado[hoy.getDay()===1&&hoy.getHours()<13?iso(addDays(parseDate(lun),-7)):lun]=1;save();}
+      render();window.scrollTo(0,0);break;}
+    case 'hab-ancla-hora':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.ancla={t:'hora',v:el.dataset.v};save();flash('«'+h.nombre+'» anclado a las '+hCortaHM(el.dataset.v));render();break;}
+    case 'hab-ed-ancla':{habEdLee();const e=ui.habEd;if(!e)break;const v=el.dataset.v||'';
+      e.ancla=!v?{}:(v==='hora'?{t:'hora',v:(e.ancla&&e.ancla.t==='hora'&&e.ancla.v)||'20:00'}:{t:'tras',v:v.replace(/^tras:/,'')});render();break;}
+    case 'hab-ed-obst':habEdLee();if(ui.habEd)ui.habEd.obst=el.dataset.v||'';render();break;
+    case 'asist-kss':{const A=asistS(),k=el.dataset.k||iso(new Date()),c=A.checkins[k]||(A.checkins[k]={}),v=+el.dataset.v||0;
+      c.kss=c.kss===v?0:v;const r=suenoReal(k);if(r){if(c.kss)r.kss=c.kss;else delete r.kss;}
+      c.hecho=!!(c.kss&&c.animo);save();render();break;}
+    case 'asist-animo':{const A=asistS(),k=el.dataset.k||iso(new Date()),c=A.checkins[k]||(A.checkins[k]={}),v=+el.dataset.v||0;
+      c.animo=c.animo===v?0:v;c.hecho=!!(c.kss&&c.animo);save();render();break;}
+    case 'asist-int':{const A=asistS(),k=el.dataset.k||iso(new Date()),c=A.checkins[k]||(A.checkins[k]={});
+      c.int=c.int===el.dataset.v?'':el.dataset.v;c.intTxt=c.int?String(el.dataset.t||''):'';if(c.kss&&c.animo)c.hecho=true;ui.asistCheck=false;save();
+      if(c.int)flash('hoy te propones: '+String(el.dataset.t||'').replace(/^\S+ /,''));render();break;}
+    case 'asist-check-abrir':ui.asistCheck=!ui.asistCheck;render();break;
+    case 'asist-corto':{const k=el.dataset.k||iso(new Date());asistS().corto[k]=el.dataset.v==='1';save();
+      flash(el.dataset.v==='1'?'hoy, versión corta: el ✓ marca el mínimo':'hoy, entero');render();break;}
+    case 'asist-sil':{asistS().sil[el.dataset.id]=iso(addDays(new Date(),14));save();render();break;}
+    case 'asist-nunca':{asistS().nunca[el.dataset.id]=1;save();flash('no te lo vuelvo a decir');render();break;}
+    case 'ir-cn':ui.tab='consumo';ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
+    case 'exp-start':{const A=asistS(),id=el.dataset.v;if(!EXP[id])break;if(expActivo()&&!expActivo().fin){flash('ya tienes uno en marcha: uno a la vez');break;}
+      if(expActivo()&&expActivo().fin){const x=expActivo(),R=expResultado(x);A.exp.hist.push({id:x.id,desde:x.desde,dias:x.dias,antes:R.antes,durante:R.durante,ver:R.ver});}
+      A.exp.act={id:id,desde:iso(new Date()),dias:+el.dataset.d===14?14:7};save();flash('experimento: «'+EXP[id].t+'», '+A.exp.act.dias+' días desde hoy');render();break;}
+    case 'exp-cerrar':{const A=asistS(),x=expActivo();if(!x)break;if(x.fin){const R=expResultado(x);A.exp.hist.push({id:x.id,desde:x.desde,dias:x.dias,antes:R.antes,durante:R.durante,ver:R.ver});}
+      A.exp.act=null;save();render();break;}
+    case 'rev-nota':{const t=String((document.getElementById('rvNota')||{}).value||'').trim().slice(0,280),A=asistS(),k=iso(new Date());
+      A.notas=A.notas.filter(function(x){return x.fecha!==k;});if(t)A.notas.push({fecha:k,txt:t});save();flash(t?'guardado: dentro de un mes te lo recuerdo aquí':'borrado');render();break;}
+    case 'obj-nuevo':ui.objNuevo={m:'',meta:0};render();break;
+    case 'obj-x':ui.objNuevo=null;render();break;
+    case 'obj-m':{const E=ui.objNuevo;if(!E)break;E.m=el.dataset.v;const M=OBJ_M[E.m],v=objValor(E.m,iso(new Date()),28);
+      E.meta=v==null?(M[1]==='≤'?M[5]/3:M[5]/2):v;E.meta=Math.max(M[4],Math.min(M[5],Math.round(E.meta/M[3])*M[3]));render();break;}
+    case 'obj-meta':{const E=ui.objNuevo;if(!E||!E.m)break;const M=OBJ_M[E.m];E.meta=Math.max(M[4],Math.min(M[5],Math.round((E.meta+(+el.dataset.d||0)*M[3])*10)/10));render();break;}
+    case 'obj-ok':{const E=ui.objNuevo,A=asistS();if(!E||!E.m||A.obj.length>=3)break;A.obj.push({m:E.m,meta:E.meta,desde:iso(new Date())});ui.objNuevo=null;save();render();break;}
+    case 'obj-del':{asistS().obj.splice(+el.dataset.i,1);save();render();break;}
     case 'mon-today':monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);render();break;
     case 'mon-autopos':store.rotation.autoPos=!store.rotation.autoPos;save();render();break;
     case 'mon-auto':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
@@ -21150,7 +21738,8 @@ function act(a,el){
     case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
     case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;
-      habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto});
+      habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
+        min:p.min||'',ancla:Object.assign({},p.ancla||{}),obst:'',plan:'',porQue:''});
       save();flash('hábito «'+p.nombre+'» añadido');render();break;}
     case 'hab-noen':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
       h.noEn=(h.noEn||[]).concat([el.dataset.t]);save();flash('«'+h.nombre+'» ya no se pide los días de '+diaTipoInfo(el.dataset.t)[1].toLowerCase());render();break;}
@@ -21242,7 +21831,25 @@ function act(a,el){
     case 'cn-del':{const c=consumoS();c.ses=c.ses.filter(function(x){return x.id!==el.dataset.id;});save();render();break;}
     case 'cn-obj':{const c=consumoS();c.obj=Math.max(0,Math.min(21,(+c.obj||0)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
-    case 'cn-vista':ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
+    case 'cn-vista':ui.cnVista=el.dataset.v||'';ui.cnCudit=null;render();window.scrollTo(0,0);break;
+    case 'cn-sento':{const x=consumoS().ses.filter(function(q){return q.id===el.dataset.id;})[0];if(x){x.sento=+el.dataset.v||0;save();flash('apuntado: '+['','😣','😕','😐','🙂','😄'][x.sento]);}render();break;}
+    case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2};render();break;
+    case 'cn-ganas-int':if(ui.cnGanas)ui.cnGanas.int=+el.dataset.v||2;render();break;
+    case 'cn-ganas-res':{const c=consumoS(),d=new Date(),G=ui.cnGanas||{int:2};
+      c.ganas.unshift({id:uid('cg'),ts:d.getTime(),fecha:iso(d),hora:hm(d.getHours()*60+d.getMinutes()),int:G.int||2,res:el.dataset.v||'aguante',q:el.dataset.q||''});c.ganas=c.ganas.slice(0,2000);save();
+      ui.cnGanas=null;const q=el.dataset.q;
+      if(q==='comer'){ui.tab='food';ui.foodVista='';ui.cjeHoja={v:'mom',p:'monchis',k:iso(d)};flash('apuntadas las ganas: aquí tienes lo de tu nevera');}
+      else flash(q==='paseo'?'apuntado: 15 minutos fuera y las ganas bajan solas':(q==='nadar'?'apuntado: moverte baja las ganas':'apuntadas: '+cnGanasSemana().filter(function(g){return g.res!=='sesion';}).length+' aguantadas esta semana'));
+      render();break;}
+    case 'cn-dias':ui.cnDias=+el.dataset.v||28;render();break;
+    case 'cn-pot':{const p=consumoS().plan;p.pot=+el.dataset.v||15;save();render();break;}
+    case 'cn-tb':{const p=consumoS().plan;p.tb={desde:iso(new Date()),dias:+el.dataset.v||7};save();flash('T-break de '+p.tb.dias+' días: empieza hoy');render();break;}
+    case 'cn-tb-fin':{const p=consumoS().plan,tb=cnTB();if(tb)p.tbHist.push({desde:tb.desde,dias:tb.fin?tb.dias:tb.dia-1,roto:tb.roto});p.tb=null;save();render();break;}
+    case 'cn-cudit':ui.cnCudit={i:0,r:[]};render();break;
+    case 'cn-cudit-x':ui.cnCudit=null;render();break;
+    case 'cn-cudit-r':{const Q=ui.cnCudit;if(!Q)break;Q.r[Q.i]=+el.dataset.v||0;Q.i++;
+      if(Q.i>=CUDIT.length){const c=consumoS(),p=cuditPuntos(Q.r);c.cudit.push({fecha:iso(new Date()),r:Q.r.slice(),p:p});c.cudit=c.cudit.slice(-60);ui.cnCudit=null;save();flash('CUDIT-R: '+p+' · '+cuditLectura(p));}
+      render();break;}
     case 'fe-ver':ui.feVer=el.dataset.id||'';ui.feCorr=false;render();break;
     case 'fe-cerrar':HOJAS.fe.cerrar();render();break;
     case 'fe-borrar':flash(delFoodEntry(el.dataset.key,el.dataset.id));ui.feVer='';render();break;
@@ -22184,7 +22791,11 @@ function reemplazarDatos(o,etiqueta,msg){
   /* importar, volver al ejemplo o restaurar una copia: siempre con una foto de cómo estaba antes */
   return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;save();ui.copias=null;render();flash(msg);});}
 function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
-function copiaJSON(){return JSON.stringify(store,null,1);}
+function copiaJSON(){return JSON.stringify(storeParaCopia(),null,1);}
+function storeParaCopia(){
+  /* lo que sale del móvil: con «dejar 4:20 fuera de la copia», sin store.consumo */
+  if(store.consumo&&store.consumo.priv&&store.consumo.priv.fueraCopia){const o=Object.assign({},store);delete o.consumo;return o;}
+  return store;}
 function dl(){
   const name=copiaNombre();
   try{
@@ -22192,10 +22803,10 @@ function dl(){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),3000);
   }catch(e){
-    const ta=document.createElement('textarea');ta.value=JSON.stringify(store,null,1);
+    const ta=document.createElement('textarea');ta.value=copiaJSON();
     document.body.appendChild(ta);ta.select();
     try{document.execCommand('copy');flash('Tu navegador no permite descargar: copia el JSON del cuadro «Importar»');}
-    catch(e2){copy(JSON.stringify(store,null,1));}
+    catch(e2){copy(copiaJSON());}
     ta.remove();
   }
 }
@@ -23614,6 +24225,9 @@ document.addEventListener('change',e=>{
       if(x){if(x.dish||x.fuera)x.rac=Math.max(0.25,Math.min(10,Math.round((+el.value||x.rac||1)*4)/4));
         else{x.g=Math.max(1,Math.min(2000,Math.round(+el.value||x.g)));x.gCorr=true;}x.corr=true;}render();break;}
     case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
+    case 'cn-ventana':{const p=consumoS().plan;p.ventana=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';save();render();break;}
+    case 'cn-guardia':{consumoS().plan.guardia=!!el.checked;save();render();break;}
+    case 'cn-priv':{const pv=consumoS().priv;pv[el.dataset.k==='fueraCopia'?'fueraCopia':'oculto']=!!el.checked;save();render();break;}
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
     case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
@@ -24109,7 +24723,9 @@ programarAvisoHoy();programarAvisoCama();snProgramaAvisos();    /* «hoy toca �
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{buscaEnVivo,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx});
+Object.assign(window.PG,{buscaEnVivo,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+  cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
+  asistS,asistReglas,asistTarjeta,expResultado,expActivo,objValor,storeParaCopia,semNumeros});
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
 vigilarElDia();     /* y que «hoy» siga siendo hoy aunque la app pase la noche abierta */

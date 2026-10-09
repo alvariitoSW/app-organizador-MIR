@@ -10449,6 +10449,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       busc.every((b) => b.valor === 'pechuga de pollo' && b.mismo && b.foco), JSON.stringify(busc));
   }
 
+  // 257) 4:20, HÁBITOS Y ASISTENTE (el informe): la sesión lleva motivo y mg; «tengo ganas» apunta las
+  // aguantadas; «Cómo me afecta» compara con mediana y n (y dice «no concluye»); Ciencia y Plan con
+  // T-break y CUDIT-R; el hábito tiene ancla, mínimo y racha que aguanta un fallo; se marca solo con
+  // el agua, el estudio o el día sin; el asistente da UNA tarjeta y se calla si se lo pides
+  {
+    const r = await page.evaluate(() => { const P = window.PG; window.__copia257 = JSON.parse(JSON.stringify(P.store)); const out = {};
+      delete P.store.consumo; delete P.store.asist; P.store.habitos = { items: [], registro: {} };
+      const hoy = new Date(), k = (i) => { const d = new Date(hoy); d.setDate(d.getDate() - i); return P.iso(d); };
+      const c = P.consumoS(); P.store.suenoReal = P.store.suenoReal || {};
+      for (let i = 1; i <= 28; i++) { if (i % 3) c.ses.push({ id: 'c' + i, ts: 0, fecha: k(i), hora: '20:30', forma: 'dry', g: 0.25, ctx: 'casa', tabaco: false, motivo: 'relajar', sento: 4, thc: 38 });
+        P.store.suenoReal[k(i - 1)] = { acostar: i % 3 ? '00:30' : '23:30', levantar: '07:30', h: i % 3 ? 6.5 : 7.5, kss: i % 3 ? 6 : 3 }; }
+      P.save();
+      const F = {}; P.cnAfecta(28).forEach((f) => { F[f.id] = f; });
+      out.kss = { ok: F.kss.ok, dif: F.kss.dif, n: [F.kss.nCon, F.kss.nSin] }; out.animoNC = F.animo.ok === false;
+      out.efectos = P.consumoEfectos(); out.tol = [P.cnTolerancia(3), P.cnTolerancia(28)]; out.abst = /pico/.test(P.cnAbstinencia(4));
+      out.cudit = P.cuditPuntos([4, 4, 3, 2, 1, 0, 0, 2]); out.thc = P.cnThc(0.25, 'dry');
+      // privacidad: fuera de la copia
+      c.priv.fueraCopia = true; out.copia = !('consumo' in P.storeParaCopia()); c.priv.fueraCopia = false;
+      // hábitos: racha que aguanta un fallo, mínimo, auto-marcado
+      P.store.habitos.items = [{ id: 'hx', nombre: 'Estirar', icono: '🧘', color: '#c084fc', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: '', min: '3 posturas', ancla: { t: 'tras', v: 'cama' } },
+        { id: 'hs', nombre: 'Día sin', icono: '🌿', color: '#22c55e', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: 'sin420', min: '' }];
+      const R = P.store.habitos.registro; [1, 2, 4, 5, 6].forEach((i) => { R[k(i)] = { hx: i === 5 ? 'min' : 'ok' }; });
+      out.racha = P.rachaHabito(P.store.habitos.items[0]); out.min = P.habitoEstado('hx', k(5));
+      out.sinAuto = [P.habitoEstado('hs', k(3)), P.habitoEstado('hs', k(1))];
+      out.norm = (() => { const n = P.normalize(JSON.parse(JSON.stringify(P.store))); return { min: n.habitos.items[0].min, ancla: n.habitos.items[0].ancla.v, reg: n.habitos.registro[k(5)].hx, mot: n.consumo.ses[0].motivo }; })();
+      P.save(); P.render(); return out; });
+    // 4:20 en la pantalla: motivo, ganas, las cuatro vistas, CUDIT-R y T-break
+    await page.evaluate(() => { const P = window.PG; P.ui.cnF = null; P.ui.cnGanas = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
+    const cl = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(80); return true; } return false; };
+    const pasos = [];
+    pasos.push(await cl('[data-a="cn-f"][data-k="motivo"][data-v="dormir"]')); pasos.push(await cl('[data-a="cn-add"]'));
+    pasos.push(await cl('[data-a="cn-ganas"]')); pasos.push(await cl('[data-a="cn-ganas-res"][data-v="aguante"]'));
+    const ses = await page.evaluate(() => { const s = window.PG.consumoS(); return { mot: s.ses[0].motivo, thc: s.ses[0].thc, ganas: s.ganas.length }; });
+    pasos.push(await cl('[data-a="cn-vista"][data-v="efectos"]'));
+    const ef = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .cnaf').length, n: /\(n \d+\)/.test(document.querySelector('#main').innerText), nc: /aún no concluye/.test(document.querySelector('#main').innerText) }));
+    pasos.push(await cl('[data-a="cn-vista"][data-v="ciencia"]'));
+    const ci = await page.evaluate(() => ({ tarjetas: document.querySelectorAll('#main details.cnci').length, pautas: document.querySelectorAll('#main .cnpa').length }));
+    pasos.push(await cl('[data-a="cn-vista"][data-v="plan"]')); pasos.push(await cl('[data-a="cn-cudit"]'));
+    for (let i = 0; i < 8; i++) pasos.push(await cl('[data-a="cn-cudit-r"][data-v="1"]'));
+    pasos.push(await cl('[data-a="cn-tb"][data-v="7"]'));
+    const plan = await page.evaluate(() => { const c = window.PG.consumoS(); return { cudit: c.cudit.length && c.cudit[0].p, tb: !!(c.plan.tb && c.plan.tb.dias === 7) }; });
+    // asistente en Hoy: check-in y una sola tarjeta; × la silencia
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
+    const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
+    pasos.push(await cl('#main .asist [data-a="asist-kss"][data-v="4"]')); pasos.push(await cl('#main .asist [data-a="asist-animo"][data-v="4"]'));
+    const ck = await page.evaluate(() => { const c = window.PG.asistS().checkins[window.PG.iso(new Date())] || {}; return { kss: c.kss, animo: c.animo, hecho: c.hecho }; });
+    const antes = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
+    pasos.push(await cl('#main .astj [data-a="asist-sil"]'));
+    const despues = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
+    // hábitos: Tu semana y un experimento
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = ''; P.render(); });
+    pasos.push(await cl('[data-a="hab-vista"][data-v="rev"]'));
+    const rev = await page.evaluate(() => document.querySelectorAll('#main .rvn').length);
+    pasos.push(await cl('[data-a="hab-vista"][data-v="exp"]')); pasos.push(await cl('[data-a="exp-start"][data-v="pantallas"][data-d="7"]'));
+    const ex = await page.evaluate(() => { const x = window.PG.expActivo(); return x && x.id === 'pantallas' && x.dias === 7; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia257; P.save(); P.ui.habVista = ''; P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('4:20: «Cómo me afecta» compara con mediana y n, y sin 5 días por lado no concluye; tolerancia, abstinencia, CUDIT-R, mg y copia sin 4:20',
+      r.kss.ok && r.kss.dif === 3 && r.kss.n[0] >= 5 && r.animoNC && r.efectos.cama === 60 && r.tol[0] >= 45 && r.tol[0] <= 55 && r.tol[1] >= 99 && r.abst && r.cudit === 18 && r.thc === 38 && r.copia, JSON.stringify(r));
+    check('hábitos: la racha aguanta un fallo, el mínimo cuenta, «día sin 4:20» se marca solo y todo sobrevive a normalize',
+      r.racha === 5 && r.min === 'min' && r.sinAuto[0] === 'ok' && r.sinAuto[1] === '' && r.norm.min === '3 posturas' && r.norm.ancla === 'cama' && r.norm.reg === 'min' && r.norm.mot === 'relajar', JSON.stringify(r));
+    check('4:20 en pantalla: motivo y mg al apuntar, ganas aguantadas, 9 comparaciones con n, 11 tarjetas de ciencia y 7 pautas, CUDIT-R de 8 toques y T-break',
+      pasos.every(Boolean) && ses.mot === 'dormir' && ses.thc > 0 && ses.ganas === 1 && ef.filas === 9 && ef.n && ci.tarjetas === 11 && ci.pautas === 7 && plan.cudit === 9 && plan.tb, JSON.stringify({ pasos, ses, ef, ci, plan }));
+    check('asistente: check-in en Hoy y UNA tarjeta; el × la silencia y sale la siguiente; Tu semana con 6 números y un experimento a la vez',
+      asist.check && asist.tarjetas === 1 && ck.kss === 4 && ck.animo === 4 && ck.hecho && antes && antes !== despues && rev === 6 && ex, JSON.stringify({ asist, ck, antes, despues, rev, ex }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
