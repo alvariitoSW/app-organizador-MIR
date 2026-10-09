@@ -5019,7 +5019,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         // días relativos a HOY: con «el lunes y el martes de esta semana», un lunes el martes aún no
         // ha llegado y todo salía «entrenado hoy», sin ningún grupo descansado que enseñar
         { id: 'gp1', fecha: iso(P.addDays(new Date(), -8)), ex: 'Press banca', kg: 60, reps: 8, ts: Date.now() },
-        { id: 'gp2', fecha: iso(P.addDays(new Date(), -1)), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
+        // «ayer», salvo que ayer sea el jueves de la guardia (los viernes): entonces anteayer, o el
+        // choque sale como «entrenado» y la prueba falla según el día de la semana
+        { id: 'gp2', fecha: iso(P.addDays(new Date(), iso(P.addDays(new Date(), -1)) === dia(3) ? -2 : -1)), ex: 'Sentadilla', kg: 80, reps: 6, ts: Date.now() }];
       S.gym.sesiones = []; S.gym.cardio = []; S.gym.cambios = {};
       P.ui.gymDate = dia(3); P.ui.gymPanel = '';
       P.save();

@@ -782,6 +782,8 @@ function normalize(o){
    o.sueno.pvt=(Array.isArray(o.sueno.pvt)?o.sueno.pvt:[]).filter(function(x){return x&&ok(x.k)&&num(x.med)>0;}).slice(-60).map(function(x){
      return {k:x.k,h:String(x.h||'').slice(0,5),med:Math.round(num(x.med)),fallos:Math.max(0,Math.round(num(x.fallos))),n:Math.round(num(x.n)),sal:!!x.sal};});
    const ck={};Object.keys(o.sueno.chk||{}).filter(ok).sort().slice(-60).forEach(function(k){const m=o.sueno.chk[k]||{};ck[k]={};['luz','cafe','cena','pant','cama'].forEach(function(q){if(m[q])ck[k][q]=true;});});o.sueno.chk=ck;
+   /* Dormitorio y hábitos: lo que ya tienes en casa, marcado una vez */
+   const ca={};Object.keys(o.sueno.casa||{}).forEach(function(k){if(/^(oscuro|ruido|fresco|alcohol|nicotina|ejercicio)$/.test(k)&&o.sueno.casa[k])ca[k]=1;});o.sueno.casa=ca;
    const q=o.sueno.insom||{};o.sueno.insom={lat:/^[cml]$/.test(q.lat||'')?q.lat:'',desp:/^[nac]$/.test(q.desp||'')?q.desp:'',noches:/^[123]$/.test(q.noches||'')?q.noches:''};}
   /* a qué hora se come, que depende de si ese día entrenas y no del tipo de día */
   if(!o.comidas||typeof o.comidas!=='object')o.comidas={};
@@ -1344,6 +1346,8 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   ['min','cenaMin','cenaMax','latencia'].forEach(function(k){if(typeof o[k]==='number'&&o[k]>0)d[k]=o[k];});
   /* la siesta del saliente puede ser 0 (hay quien aguanta del tirón), así que no vale el >0 */
   if(typeof o.siesta==='number'&&o.siesta>=0&&o.siesta<=480)d.siesta=o.siesta;
+  /* mientras pruebas «siesta de 3 h» (2 semanas), la siesta es esa; al acabar vuelve la tuya sola */
+  if(Array.isArray(o.pruebas)&&o.pruebas.some(function(x){return x&&x.id==='siesta3'&&!x.fin;}))d.siesta=180;
   d.avisoCama=!!o.avisoCama;
   d.conduce=o.conduce===true;   /* «no tengo carné»: por defecto vuelves en transporte, no conduciendo */
   return d;}
@@ -5899,12 +5903,58 @@ function renderSueno(){
   const cuerpo=t==='guardia'?renderSuenoSim():
     t==='ajusta'?('<h2 class="snh2">Ajusta tu sueño</h2>'+suenoAjustaHTML(hoyK)+suenoPruebasHTML(hoyK)):
     t==='medir'?suenoMedirHTML(hoyK):
+    t==='ciencia'?suenoCienciaHTML():
     (suenoEstadoHTML(hoyK)+suenoKssHoyHTML(hoyK)+suenoPruebasHoyHTML(hoyK)+suenoEnergiaHoyHTML(hoyK)+suenoGuardiaPuertaHTML());
   $('#main').innerHTML='<div class="grid dsu">'+
     '<div class="subcab"><button class="btn s volver" data-a="sn-cerrar">'+gymIco('atras','gico sm')+' Hoy</button>'+
       '<h2 class="subtit">😴 Sueño</h2></div>'+seg+cuerpo+
   '</div>';}
-const SN_TABS=[['','Hoy'],['guardia','Guardia'],['ajusta','Ajusta'],['medir','Medir'],['noche','Noche']];
+const SN_TABS=[['','Hoy'],['guardia','Guardia'],['ajusta','Ajusta'],['medir','Medir'],['ciencia','Ciencia'],['noche','Noche']];
+/* ---------- la ciencia: una tarjeta por hallazgo, con su nivel de evidencia ----------
+   A fuerte: revisiones sistemáticas, ensayos o guías · B moderada: estudios buenos pero pocos, o en
+   otras poblaciones · C baja: consenso o estudios pequeños. «ap» dice dónde lo usa la app */
+const SN_CIEN_CAT=[['guardias','Guardias'],['ritmo','Ritmo y horas'],['luz','Café y luz'],['insom','Insomnio'],['habitos','Hábitos']];
+const SN_CIEN=[
+  ['errores','guardias','A','Guardias largas y errores','En residentes, los turnos de 24 h o más se asociaron a un 36 % más de errores médicos graves que los turnos más cortos.','Landrigan 2004 · Lockley 2004 (NEJM)','«Tu peor rato» de la guardia, para dejar lo delicado para antes o después.'],
+  ['nadir','guardias','A','El peor rato, de madrugada','El reloj interno toca fondo hacia las 3–6 h. Con la presión de sueño acumulada, de noche el riesgo de error sube más cuantas más horas llevas.','Borbély 1982 · Folkard y Tucker 2003','La curva de energía del simulador y su raya de riesgo.'],
+  ['pre','guardias','B','Siesta antes de la noche','Dormir un rato antes de un turno de noche reduce la somnolencia y mejora el rendimiento de madrugada.','Ruggiero y Redeker 2014 (revisión sistemática)','El primer paso del plan de la guardia.'],
+  ['inercia','guardias','B','Siestas en la guardia: 20 min o 90','Al despertar de una siesta que entra en sueño profundo, los primeros 15–30 min se rinde peor. Mejor 20 min, o un ciclo entero de unos 90 si hay hueco.','Tassi y Muzet 2000 · Hilditch 2017','El descanso de la guardia y «+ siesta 20 min aquí».'],
+  ['cafeturno','guardias','A','Café en el turno','La cafeína reduce los errores en trabajadores a turnos. Mejor en tomas pequeñas y repartidas, y no al final del turno.','Ker 2010 (Cochrane)','Los cafés del simulador y el último antes de las 3:00.'],
+  ['vuelta','guardias','C','Volver a tu horario tras la guardia','Siesta al llegar, limitada, y a la cama a tu hora: la noche siguiente vuelve a ser normal. Es la recomendación de las guías para personal sanitario, más consenso que ensayo.','NIOSH (Caruso 2015) · Borbély 1982','Ajusta → Tras guardia: lo que predice cada duración de siesta.'],
+  ['melatonina','guardias','C','Melatonina tras la noche','Tomada al acostarse de día, alarga el sueño de día unos 24 min. La evidencia es de baja calidad: no es la solución, como mucho una ayuda.','Liira 2014 (Cochrane)','Dormitorio y hábitos.'],
+  ['regular','ritmo','A','Regularidad antes que horas','Acostarte y levantarte a horas parecidas predice la mortalidad mejor que las horas que duermes.','Windred 2024 (Sleep) · Phillips 2017 (Sci Rep)','Ajusta → Hora fija, y la regularidad de Medir.'],
+  ['siete','ritmo','A','Al menos 7 horas','El consenso de las sociedades de sueño fija 7 h como mínimo en adultos: menos se asocia a peor salud y más errores.','Watson 2015 (AASM/SRS)','Tu mínimo de horas, en Ajustes → Horas y sueño.'],
+  ['deficit','ritmo','A','El déficit no se nota','Con 6 h durante dos semanas el rendimiento cae como tras una o dos noches sin dormir, pero uno se nota casi igual de despejado.','Van Dongen 2003 (Sleep)','Medir cruza tu 1–9 con lo que dormiste.'],
+  ['recuperar','ritmo','B','Recuperar no es devolver','Tras días durmiendo poco, una o dos noches largas no devuelven del todo la atención: lo que cuenta es lo reciente y seguido.','Belenky 2003 (J Sleep Res)','«Cómo llegas hoy» mira las 3 últimas noches.'],
+  ['procesos','ritmo','A','Dos procesos','El sueño depende de la presión que se acumula despierto y del reloj interno de 24 h. Una siesta larga de día gasta la presión que necesitas por la noche.','Borbély 1982','La curva de energía de Hoy y del simulador.'],
+  ['jetlag','ritmo','B','Jet lag social','Levantarte mucho más tarde el finde es como cambiar de huso horario cada semana; se asocia a peor salud metabólica.','Roenneberg 2012 (Curr Biol)','La cifra de Medir y Hora fija.'],
+  ['cafe6','luz','B','El último café, 6 h antes','Cafeína 6 h antes de acostarse quitó más de 1 h de sueño, y quien la tomó no lo notó.','Drake 2013 (J Clin Sleep Med)','Ajusta → Luz y café: la hora de tu último café.'],
+  ['luzmanana','luz','A','La luz de la mañana adelanta el reloj','La luz al poco de levantarte adelanta el reloj interno; la de la noche lo retrasa. Es la herramienta más potente para moverlo.','Khalsa 2003 (J Physiol)','Ajusta → Luz y café: luz de calle 20–30 min.'],
+  ['pantallas','luz','B','Pantallas por la noche','Leer en una pantalla luminosa antes de dormir retrasó la melatonina y el sueño frente a leer en papel.','Chang 2015 (PNAS)','Luz baja la última hora.'],
+  ['gafas','luz','B','Gafas de sol al salir de la noche','La luz de la mañana al volver de una noche te despierta y desplaza el reloj; con gafas oscuras se duerme mejor la siesta y se vuelve antes al horario.','Smith y Eastman 2009','La vuelta a casa del plan de la guardia.'],
+  ['cbti','insom','A','Terapia del insomnio (CBT-I)','Es el primer tratamiento del insomnio crónico, por delante de las pastillas: horario fijo, control de estímulos, restricción del tiempo en cama y técnicas cognitivas.','Qaseem 2016 (ACP) · Edinger 2021 (AASM) · Riemann 2017','Ajusta → No me duermo.'],
+  ['estimulos','insom','B','La regla de los 20 minutos','Si no te duermes, levantarte a otra habitación con luz baja y volver con sueño enseña al cuerpo que la cama es para dormir.','Edinger 2021 (AASM)','El contador del modo noche.'],
+  ['relajacion','insom','B','Respiración lenta y relajación','Las técnicas de relajación, como respirar despacio (unas 6 veces por minuto), ayudan a dormirse. Recomendación condicional en las guías.','Edinger 2021 (AASM)','El modo noche.'],
+  ['alcohol','habitos','B','Alcohol','Ayuda a dormirse y da más sueño profundo al principio, pero rompe la segunda mitad de la noche y quita sueño REM.','Ebrahim 2013 (Alcohol Clin Exp Res)','Dormitorio y hábitos.'],
+  ['nicotina','habitos','B','Nicotina y cannabis','La nicotina activa y empeora el sueño. El cannabis puede acortar lo que tardas en dormirte, pero con el uso diario el efecto se pierde y al dejarlo el sueño empeora unas semanas.','Jaehne 2009 (Sleep Med Rev) · Babson 2017 (Curr Psychiatry Rep)','Dormitorio y hábitos, sin juicios: qué hace cada cosa.'],
+  ['ejercicio','habitos','B','Ejercicio','Hacer ejercicio mejora algo el sueño. Por la tarde no lo empeora, salvo el muy intenso en la última hora antes de acostarte.','Kredlow 2015 · Stutz 2019 (Sports Med)','Dormitorio y hábitos, y la hora de tus entrenos.'],
+  ['dormitorio','habitos','C','Dormir de día: oscuro, fresco y en silencio','Oscuridad total (persianas o antifaz), silencio o tapones y unos 18 °C ayudan, sobre todo para dormir de día tras la guardia.','Okamoto-Mizuno 2012 (J Physiol Anthropol) · NIOSH (Caruso 2015)','Dormitorio y hábitos.']];
+const SN_NIV={A:['fuerte','A'],B:['moderada','B'],C:['baja','C']};
+function snNivHTML(n){const v=SN_NIV[n]||SN_NIV.C;return '<span class="snniv '+v[1]+'">'+v[0]+'</span>';}
+function snPorQue(id,corto){
+  /* «por qué», junto a un consejo: lleva a su tarjeta de la ciencia */
+  const c=SN_CIEN.filter(function(x){return x[0]===id;})[0];if(!c)return '';
+  return '<button class="snporque" data-a="sn-ciencia" data-id="'+c[0]+'" aria-label="por qué: '+esc(c[3])+'">'+snNivHTML(c[2])+(corto?' ›':' por qué ›')+'</button>';}
+function suenoCienciaHTML(){
+  const cat=SN_CIEN_CAT.some(function(c){return c[0]===ui.snCat;})?ui.snCat:'guardias';
+  const l=SN_CIEN.filter(function(x){return x[1]===cat;});
+  return '<div class="chips sncats">'+SN_CIEN_CAT.map(function(c){
+      return '<button class="chipx'+(c[0]===cat?' on':'')+'" data-a="sn-cat" data-v="'+c[0]+'">'+esc(c[1])+'</button>';}).join('')+'</div>'+
+    l.map(function(x){return '<div class="card sncien'+(ui.snCien===x[0]?' foco':'')+'" id="sncien-'+x[0]+'">'+
+      '<div class="row" style="align-items:baseline;gap:8px"><h3 style="margin:0;flex:1;min-width:0">'+esc(x[3])+'</h3>'+snNivHTML(x[2])+'</div>'+
+      '<p style="margin:6px 0 0">'+esc(x[4])+'</p><p class="snref" style="margin-top:6px"><i>'+esc(x[5])+'</i></p>'+
+      '<p class="mini" style="margin:6px 0 0;border-top:1px dashed var(--line);padding-top:6px">En la app: '+esc(x[6])+'</p></div>';}).join('')+
+    '<p class="mini" style="margin:4px 2px 0"><b>Fuerte</b>: revisiones, ensayos o guías · <b>moderada</b>: estudios buenos pero pocos o en otra población · <b>baja</b>: consenso o estudios pequeños. '+SN_CIEN.length+' en total.</p>';}
 function suenoKssHoyHTML(hoyK){
   /* LA ESCALA 1–9, A UN TOQUE. Vivía dentro de la hoja de anotar y no servía para nada; ahora se
      marca aquí y Medir la cruza con lo que dormiste (Åkerstedt y Gillberg 1990) */
@@ -5964,7 +6014,13 @@ function suenoMedirHTML(hoyK){
       '<p class="snref">PVT de 3 min (Basner y Dinges 2011): fallo = más de 355 ms.</p></div>';}
 
 /* ---------- Ajusta tu sueño: cuatro palancas con evidencia ---------- */
-const SN_AJ=[['hora','Hora fija'],['luz','Luz y café'],['vuelta','Tras guardia'],['insom','No me duermo']];
+const SN_AJ=[['hora','Hora fija'],['luz','Luz y café'],['vuelta','Tras guardia'],['insom','No me duermo'],['casa','Dormitorio']];
+const SN_CASA=[['oscuro','Oscuridad total para dormir de día','persianas bajadas o antifaz','dormitorio'],
+  ['ruido','Silencio, o tapones','el móvil en silencio salvo la alarma','dormitorio'],
+  ['fresco','Habitación fresca, unos 18 °C','','dormitorio'],
+  ['alcohol','Sin alcohol las 3 h antes de dormir','ayuda a dormirte pero rompe la segunda mitad','alcohol'],
+  ['nicotina','Nada de nicotina la última hora','activa; el cannabis diario pierde efecto y al dejarlo se duerme peor unas semanas','nicotina'],
+  ['ejercicio','Ejercicio, y el intenso no en la última hora','','ejercicio']];
 function suenoNoches(hoyK,n){
   /* las n últimas noches APUNTADAS, en tramos de 18 a 42 h (los mismos que dibuja la hoja de la noche) */
   const out=[];for(let i=n-1;i>=0;i--){const k=iso(addDays(parseDate(hoyK),-i)),r=suenoReal(k),d=parseDate(k);
@@ -6011,6 +6067,7 @@ function suenoAjustaHTML(hoyK){
       '<div class="snreco">A la cama a las <b>'+esc(hCortaHM(bed))+'</b> para levantarte a las <b>'+esc(hCortaHM(an))+'</b> con '+fmtHM(c.min*60)+'. '+
         (s.jet>0.75?'Los findes te levantas unas <b>'+fmtHM(s.jet*60)+'</b> más tarde: es como cambiar de huso horario cada semana. Mejor como mucho 1 h ('+esc(hCortaHM(hm(mins(an)+60)))+').':(s.total?'Los findes te mantienes cerca de tu hora.':'Apunta unas noches para ver si la cumples.'))+'</div>'+
       '<p class="snref">Levantarte y acostarte a horas regulares predice la salud más que las horas que duermes. <i>Windred 2024 (Sleep) · Roenneberg 2012</i></p>'+
+      '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('regular')+snPorQue('jetlag')+'</div>'+
       suenoProbarHTML('hora','Levantarme a las '+hCortaHM(an)+' ±30 min');}
   else if(t==='luz'){const L=suenoLuz(hoyK),bm=mins(bed),ck=((store.sueno||{}).chk||{})[hoyK]||{};
     const its=[['luz',L.casa?'Luz fuerte al levantarte':'Luz de calle 20–30 min',hCortaHM(hm(L.de)),L.casa?'Amanece a las '+hCortaHM(hm(L.de))+': hasta entonces, luz fuerte en casa.':''],
@@ -6021,6 +6078,7 @@ function suenoAjustaHTML(hoyK){
       '<div class="snfranja">'+suenoFranjaSVG(hoyK)+'</div>'+
       its.map(function(x){return '<div class="snchk"><button data-a="sn-chk" data-v="'+x[0]+'" class="'+(ck[x[0]]?'on':'')+'" aria-pressed="'+!!ck[x[0]]+'" aria-label="'+esc(x[1])+' hecho">✓</button><span><b>'+esc(x[1])+'</b>'+(x[3]?'<small>'+esc(x[3])+'</small>':'')+'</span><span class="hr">'+esc(x[2])+'</span></div>';}).join('')+
       '<p class="snref">La luz de la mañana adelanta el reloj interno y la de la noche lo retrasa. Cafeína 6 h antes de acostarse quitó más de 1 h de sueño sin que se notara. <i>Khalsa 2003 · Chang 2015 · Drake 2013</i></p>'+
+      '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('luzmanana')+snPorQue('cafe6')+snPorQue('pantallas')+'</div>'+
       suenoProbarHTML('luz','Luz al levantarme y café antes de las '+hCortaHM(hm(bm-6*60)));}
   else if(t==='vuelta'){const G=snGuardiaSel();
     if(!G)h+='<p class="mini">Cuando tengas una guardia en el calendario, aquí verás cuánto debe durar la siesta al salir para dormir bien esa noche.</p>';
@@ -6029,7 +6087,14 @@ function suenoAjustaHTML(hoyK){
       h+='<div class="sndiag"><span class="big" style="color:'+(f.m.duerme?'var(--ok)':'var(--bad)')+'">'+(f.m.duerme?'Bien':'Mal')+'</span><p><b>Con '+act+' h de siesta al salir</b> ('+esc(snHH(b.llega))+'–'+esc(snHH(b.llega+act))+') '+(f.m.duerme?'llegas a la noche con sueño suficiente.':'a las '+esc(snHH(b.cama))+' aún estarás despejado y te costará dormir.')+'</p></div>'+
         '<p class="mini" style="margin:10px 0 4px">Toca una duración. La barra es tu energía a la hora de acostarte: menos es mejor para dormirte.</p>'+suenoVueltaSVG(fil,act,b)+
         '<div class="snreco"><b>La vuelta en 3 pasos:</b> siesta al llegar, corta y temprana · luz y moverte por la tarde · a la cama a tu hora, no antes. La segunda noche ya es normal.</div>'+
-        '<p class="snref">Una siesta larga de día gasta la presión de sueño que necesitas por la noche. <i>Modelo de dos procesos (Borbély 1982)</i></p>';}}
+        '<p class="snref">Una siesta larga de día gasta la presión de sueño que necesitas por la noche. <i>Modelo de dos procesos (Borbély 1982)</i></p>'+
+        '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('vuelta')+snPorQue('procesos')+snPorQue('gafas')+'</div>'+
+        (Math.round(c.siesta/60)>3?suenoProbarHTML('siesta3','Siesta de 3 h al salir de guardia'):'');}}
+  else if(t==='casa'){const ck=((store.sueno||{}).casa)||{},n=SN_CASA.filter(function(x){return ck[x[0]];}).length;
+    h+='<div class="sndiag"><span class="big">'+n+'<small>/'+SN_CASA.length+'</small></span><p><b>ya los tienes</b>. Se marcan una vez; no es una lista de cada día. Pesa más tras la guardia, cuando duermes de día.</p></div>'+
+      SN_CASA.map(function(x){return '<div class="snchk"><button data-a="sn-casa" data-v="'+x[0]+'" class="'+(ck[x[0]]?'on':'')+'" aria-pressed="'+!!ck[x[0]]+'" aria-label="'+esc(x[1])+'">✓</button>'+
+        '<span><b>'+esc(x[1])+'</b>'+(x[2]?'<small>'+esc(x[2])+'</small>':'')+'</span>'+snPorQue(x[3],true)+'</div>';}).join('')+
+      suenoProbarHTML('casa','Dormitorio oscuro y fresco, y sin alcohol ni nicotina antes de dormir');}
   else{const q=(store.sueno||{}).insom||{},o=function(k,v,tx){return '<button data-a="sn-q" data-k="'+k+'" data-v="'+v+'" class="'+(q[k]===v?'on':'')+'" aria-pressed="'+(q[k]===v)+'">'+tx+'</button>';};
     const ef=suenoEficiencia(hoyK),tools=[];
     if(q.lat==='m'||q.lat==='l')tools.push(['Regla de los 20 min','Si no te duermes en unos 20 min, levántate a otra habitación con luz baja y vuelve cuando tengas sueño. El modo noche te guía.']);
@@ -6046,6 +6111,7 @@ function suenoAjustaHTML(hoyK){
       (cron?'<div class="snreco aviso"><b>Si dura más de 3 meses es insomnio.</b> El tratamiento de primera elección es la terapia cognitivo-conductual (CBT-I), por delante de las pastillas. Coméntalo con tu médico de familia.</div>':'')+
       '<button class="btn" style="width:100%;margin-top:10px" data-a="sn-vista" data-v="noche">🌙 Abrir el modo noche</button>'+
       '<p class="snref">Control de estímulos y horario fijo forman parte de la CBT-I. <i>Qaseem 2016 (ACP) · Riemann 2017</i></p>'+
+      '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('cbti')+snPorQue('estimulos')+'</div>'+
       suenoProbarHTML('insom','Regla de los 20 min y misma hora de levantarme');}
   return h+'</div>';}
 function suenoFranjaSVG(hoyK){
@@ -20619,11 +20685,17 @@ function act(a,el){
       a[k]=!a[k];if(!a[k])delete a[k];save();render();snProgramaAvisos();
       flash(a[k]?'te aviso: con la app abierta y en tu calendario suscrito':'aviso quitado');break;}
     case 'sn-aj':ui.snAj=el.dataset.v;render();break;
+    case 'sn-casa':{if(!store.sueno)store.sueno={};const c=store.sueno.casa||(store.sueno.casa={}),v=el.dataset.v;if(c[v])delete c[v];else c[v]=1;save();render();break;}
+    case 'sn-cat':ui.snCat=el.dataset.v||'';ui.snCien='';render();break;
+    case 'sn-ciencia':{const c=SN_CIEN.filter(function(x){return x[0]===el.dataset.id;})[0];if(!c)break;
+      ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';ui.snTab='ciencia';ui.snCat=c[1];ui.snCien=c[0];render();
+      setTimeout(function(){const n=document.getElementById('sncien-'+c[0]);if(n)n.scrollIntoView({block:'center'});},40);break;}
     case 'sn-chk':{const k=iso(new Date());if(!store.sueno.chk)store.sueno.chk={};const c=store.sueno.chk[k]||(store.sueno.chk[k]={});c[el.dataset.v]=!c[el.dataset.v];save();render();break;}
     case 'sn-siesta-cfg':{store.sueno.siesta=(+el.dataset.v||0)*60;save();render();flash('siesta del saliente: '+el.dataset.v+' h');break;}
     case 'sn-q':{if(!store.sueno.insom)store.sueno.insom={};const k=el.dataset.k;store.sueno.insom[k]=store.sueno.insom[k]===el.dataset.v?'':el.dataset.v;save();render();break;}
     case 'sn-probar':{if(!Array.isArray(store.sueno.pruebas))store.sueno.pruebas=[];
-      store.sueno.pruebas.push({id:el.dataset.id,txt:el.dataset.txt||'',desde:iso(new Date()),dias:{},fin:false});save();render();flash('Empiezas hoy. Cada mañana te pregunto si lo cumpliste.');break;}
+      store.sueno.pruebas.push({id:el.dataset.id,txt:el.dataset.txt||'',desde:iso(new Date()),dias:{},fin:false});save();render();
+      flash(el.dataset.id==='siesta3'?'Dos semanas con 3 h de siesta al salir de guardia. Al acabar vuelve la tuya.':'Empiezas hoy. Cada mañana te pregunto si lo cumpliste.');break;}
     case 'sn-prueba-dia':{const x=suenoPruebas().filter(function(q){return q.id===el.dataset.id&&!q.fin;})[0];if(!x)break;
       x.dias[iso(addDays(new Date(),-1))]=+el.dataset.v?1:0;save();render();break;}
     case 'sn-prueba-fin':{const x=suenoPruebas().filter(function(q){return q.id===el.dataset.id&&!q.fin;})[0];if(x){x.fin=true;save();}render();break;}
