@@ -3385,3 +3385,6 @@ span.hbt{cursor:default;border-style:dashed}
 .snchk .snporque{margin-left:auto}
 .hoyseg.snaj button{white-space:normal;word-break:keep-all;overflow-wrap:normal;hyphens:none;text-overflow:clip;line-height:1.15}
 .snchk button.snporque{width:auto;height:auto;color:var(--ink2);border:1px solid var(--line);font-weight:700}
+.nochepark{margin-top:18px;text-align:left;width:100%;max-width:340px}
+.nochepark summary{cursor:pointer;color:#c9a27a;font-size:13px}
+.nochepark textarea{width:100%;margin:8px 0;background:#0d0b08;color:#c9a27a;border:1px solid #2a2218;border-radius:10px;padding:8px;font:inherit}

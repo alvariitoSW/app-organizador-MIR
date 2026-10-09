@@ -6149,13 +6149,20 @@ function suenoEficienciaHTML(e){
 
 /* ---------- pruebas de dos semanas ---------- */
 function suenoPruebas(){const s=store.sueno||{};return Array.isArray(s.pruebas)?s.pruebas:[];}
-function suenoPruebaDia(x,k){return (x.dias||{})[k];}
+function suenoPruebaDia(x,k){
+  /* «hora fija» no se pregunta: sale de lo que apuntas (te levantaste a tu hora ±30 min o no) */
+  if(x.id==='hora'&&(x.dias||{})[k]==null){const r=suenoReal(k);
+    if(r&&!r.guardia&&r.desp){const d=Math.abs(mins(r.desp)-mins(suenoAncla()));return Math.min(d,1440-d)<=30?1:0;}}
+  return (x.dias||{})[k];}
 function suenoPruebaResumen(x){
   /* antes (14 días previos) y durante: horas medias y lo que varía tu hora de levantarte */
   const med=function(desde,n){const hs=[],ws=[];for(let i=0;i<n;i++){const k=iso(addDays(parseDate(desde),i)),r=suenoReal(k);
       if(!r||r.guardia)continue;hs.push(suenoTotal(r));if(r.desp)ws.push(mins(r.desp));}
     const avg=function(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:null;},m=avg(ws);
-    return {h:avg(hs),var:ws.length>1?Math.sqrt(avg(ws.map(function(v){return (v-m)*(v-m);}))):null,n:hs.length};};
+    /* y lo que dicen tu 1–9 y el test de reacción en esos días: así la prueba se mide con datos */
+    const ks=[],pv=[];for(let i=0;i<n;i++){const k=iso(addDays(parseDate(desde),i)),r=suenoReal(k);if(r&&r.kss)ks.push(r.kss);
+      suenoPVT().forEach(function(t){if(t.k===k&&!t.sal)pv.push(t.med);});}
+    return {h:avg(hs),var:ws.length>1?Math.sqrt(avg(ws.map(function(v){return (v-m)*(v-m);}))):null,n:hs.length,kss:avg(ks),pvt:avg(pv)};};
   return {antes:med(iso(addDays(parseDate(x.desde),-14)),14),durante:med(x.desde,14)};}
 function snPruebaPregunta(x,txt){
   return '<div class="row" style="gap:6px;margin-top:8px;align-items:center"><span class="mini" style="flex:1">'+esc(txt)+'</span>'+
@@ -6167,10 +6174,15 @@ function suenoPruebasHTML(hoyK){
     const pend=dia>1&&suenoPruebaDia(x,ayer)==null&&ayer>=x.desde;
     const dots=Array.from({length:14},function(_,i){const k=iso(addDays(d0,i)),v=suenoPruebaDia(x,k);
       return '<i class="'+(v===1?'ok':(v===0?'no':(k===hoyK?'hoy':'')))+'" title="'+esc(fechaCorta(k))+'"></i>';}).join('');
-    let fin='';if(dia>=14){const r=suenoPruebaResumen(x),f=function(v,u){return v==null?'—':(u==='h'?fmtHM(v*60):Math.round(v)+' min');};
-      fin='<div class="snantes"><span></span><b>Antes</b><b>Probando</b><span>Horas</span><span>'+f(r.antes.h,'h')+'</span><span>'+f(r.durante.h,'h')+'</span>'+
-        '<span>Varía tu hora de levantarte</span><span>±'+f(r.antes.var)+'</span><span>±'+f(r.durante.var)+'</span></div>'+
-        '<button class="btn s" data-a="sn-prueba-fin" data-id="'+esc(x.id)+'">Terminar la prueba</button>';}
+    let fin='';if(dia>=7){const r=suenoPruebaResumen(x),f=function(v,u){return v==null?'—':(u==='h'?fmtHM(v*60):(u==='k'?String(Math.round(v*10)/10).replace('.',','):(u==='ms'?Math.round(v)+' ms':'±'+Math.round(v)+' min')));};
+      /* a partir del día 7 ya se lee cómo va; al 14, se cierra. Mejor = más horas, menos variación, 1–9 más bajo, reacción más rápida */
+      const fila=function(t,a,b,u,menosMejor){const c=(a==null||b==null)?'':((menosMejor?b<a:b>a)?' style="color:var(--ok)"':(b===a?'':' style="color:var(--bad)"'));
+        return '<span>'+t+'</span><span>'+f(a,u)+'</span><span'+c+'>'+f(b,u)+'</span>';};
+      fin='<div class="snantes"><span></span><b>Antes</b><b>'+(dia>=14?'Probando':'Por ahora')+'</b>'+
+        fila('Horas',r.antes.h,r.durante.h,'h',false)+fila('Varía tu hora de levantarte',r.antes.var,r.durante.var,'v',true)+
+        fila('Tu 1–9 (más bajo, mejor)',r.antes.kss,r.durante.kss,'k',true)+fila('Test de reacción',r.antes.pvt,r.durante.pvt,'ms',true)+'</div>'+
+        (dia>=14?'<button class="btn s" data-a="sn-prueba-fin" data-id="'+esc(x.id)+'">Terminar la prueba</button>':
+          '<p class="mini" style="margin:6px 0 0">Haz el test de reacción algún día de la prueba: así se compara también lo que rindes, no solo lo que duermes.</p>');}
     return '<div class="snprueba"><div class="row" style="align-items:baseline"><b>'+esc(x.txt)+'</b><span class="sp"></span><span class="mini">día '+dia+' de 14</span></div>'+
       '<div class="sndots">'+dots+'</div>'+
       (pend?snPruebaPregunta(x,'¿Lo cumpliste ayer?'):'')+
@@ -6366,8 +6378,13 @@ function renderSuenoNoche(){
   const fase=!N?'inicio':N.fase;
   let c='';
   if(fase==='inicio')c='<p>Pantalla al mínimo y sin reloj. Si en unos 20 min no te has dormido, te aviso con una vibración suave para que te levantes a otra habitación con luz baja.</p><button class="btn gbig" data-a="noche-empezar">Empezar</button>';
-  else if(fase==='espera')c='<div class="nochering" style="--p:'+(N.p||0)+'"></div><div class="nocheresp" aria-hidden="true"></div><p>Respira despacio con el círculo: entra el aire cuando crece, sale cuando se encoge.</p><button class="btn" data-a="noche-dormido">Cerrar</button>';
+  else if(fase==='espera')c='<div class="nochering" style="--p:'+(N.p||0)+'"></div><div class="nocheresp" aria-hidden="true"></div><p>Respira despacio con el círculo: entra el aire cuando crece (4 s), sale cuando se encoge (6 s). Unas 6 respiraciones por minuto.</p><button class="btn" data-a="noche-dormido">Cerrar</button>';
   else if(fase==='levanta')c='<p><b>Levántate un rato.</b> A otra habitación, luz baja, algo aburrido. Vuelve a la cama cuando te entre sueño.</p><button class="btn gbig" data-a="noche-vuelvo">Vuelvo a la cama</button><button class="btn" data-a="noche-dormido">Cerrar</button>';
+  /* APARCAR LO QUE TE RONDA: una línea y el siguiente paso, y a tus notas de mañana. Sacarlo de la
+     cabeza y dejarlo escrito es parte de la terapia del insomnio */
+  if(fase!=='espera')c+='<details class="nochepark"><summary>¿Te ronda algo? Apárcalo</summary>'+
+    '<textarea id="nocheNota" rows="3" maxlength="300" placeholder="Qué es y cuál es el siguiente paso"></textarea>'+
+    '<button class="btn" data-a="noche-aparca">A mis notas de mañana</button></details>';
   /* va FUERA de #main, encima de todo: dentro, la cabecera de la app le tapaba el «Salir» */
   let capa=document.getElementById('nocheCapa');if(!capa){capa=document.createElement('div');capa.id='nocheCapa';document.body.appendChild(capa);}
   capa.innerHTML='<div class="nochemodo" role="dialog" aria-modal="true" aria-label="modo noche"><button class="btn s" data-a="noche-salir">‹ Salir</button><div class="nochec">'+c+'</div></div>';
@@ -20711,6 +20728,8 @@ function act(a,el){
     case 'pvt-parar':if(_pvt){clearTimeout(_pvt.t);clearInterval(_pvt.iv);cancelAnimationFrame(_pvt.raf);}_pvt=null;render();break;
     case 'noche-empezar':_noche={fase:'espera',t0:Date.now(),p:0};render();nocheTick();
       try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){if(_noche)_noche.lock=l;}).catch(function(){});}catch(e){}break;
+    case 'noche-aparca':{const t=((document.getElementById('nocheNota')||{}).value||'').trim();if(!t){flash('escribe una línea');break;}
+      const r=addNota(t,iso(addDays(new Date(),new Date().getHours()<12?0:1)));flash(r&&r.ok===false?r.msg:'Aparcado: mañana lo tienes en tus notas');render();break;}
     case 'noche-vuelvo':nocheGuardaDesvelo();_noche={fase:'espera',t0:Date.now(),p:0};render();nocheTick();break;
     case 'noche-dormido':case 'noche-salir':if(_noche){clearTimeout(_noche.iv);try{_noche.lock&&_noche.lock.release();}catch(e){}if(_noche.fase==='levanta'&&el.dataset.a==='noche-dormido')nocheGuardaDesvelo();}
       _noche=null;ui.snVista='';render();break;
@@ -23171,7 +23190,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

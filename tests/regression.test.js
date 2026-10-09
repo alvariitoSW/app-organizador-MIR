@@ -10227,6 +10227,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.asig.indexOf('Vacía') < 0 && r.asig.indexOf('Fuerza') >= 0 && r.pisc === '18:00', JSON.stringify(r));
   }
 
+  // 253) SUEÑO POR PESTAÑAS, CON SU CIENCIA. Nada se quita: Hoy, Guardia, Ajusta, Medir, Ciencia y Noche;
+  // 24 tarjetas con nivel; «por qué ›» lleva a la suya; la palanca Dormitorio sobrevive a recargar;
+  // «probar 3 h» cambia la siesta solo mientras dura; «hora fija» se mide sola; el modo noche aparca
+  {
+    const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store)), hoy = new Date();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = ''; P.render();
+      const tabs = [...document.querySelectorAll('#main .sntabs button')].map((b) => b.textContent.trim());
+      const vistas = {};
+      ['guardia', 'ajusta', 'medir', 'ciencia'].forEach((t) => { P.ui.snTab = t; P.render(); vistas[t] = { alto: document.querySelector('#main').scrollHeight, ancho: document.documentElement.scrollWidth }; });
+      const tarjetas = P.SN_CIEN ? P.SN_CIEN.length : -1;
+      P.ui.snTab = 'ajusta'; P.ui.snAj = 'casa'; P.render();
+      document.querySelector('[data-a="sn-casa"][data-v="oscuro"]').click();
+      document.querySelector('[data-a="sn-ciencia"][data-id="dormitorio"]').click();
+      const porque = { tab: P.ui.snTab, foco: !!document.querySelector('.sncien.foco#sncien-dormitorio') };
+      const casa = JSON.stringify(P.normalize(JSON.parse(JSON.stringify(P.store))).sueno.casa);
+      const antes = P.suenoCfg().siesta;
+      P.store.sueno.pruebas = [{ id: 'siesta3', txt: 'Siesta de 3 h', desde: P.iso(hoy), dias: {}, fin: false }];
+      const durante = P.suenoCfg().siesta;
+      P.store.sueno.pruebas[0].fin = true;
+      const despues = P.suenoCfg().siesta;
+      // hora fija: un día apuntado a tu hora cuenta como cumplido sin preguntar
+      const k = P.iso(P.addDays(hoy, -1)), ancla = P.store.sueno.ancla || '06:45';
+      P.store.sueno.ancla = ancla; P.store.suenoReal[k] = { h: 7.5, guardia: false, acostar: '23:15', desp: ancla };
+      P.store.sueno.pruebas = [{ id: 'hora', txt: 'Hora fija', desde: P.iso(P.addDays(hoy, -3)), dias: {}, fin: false }];
+      const hora = P.suenoPruebaDia(P.store.sueno.pruebas[0], k);
+      P.store = c; P.save(); P.render();
+      return { tabs, vistas, tarjetas, porque, casa, antes, durante, despues, hora }; });
+    check('Sueño va por pestañas (Hoy, Guardia, Ajusta, Medir, Ciencia, Noche), ninguna se sale de la pantalla, y hay 24 tarjetas de ciencia',
+      r.tabs.join('|') === 'Hoy|Guardia|Ajusta|Medir|Ciencia|Noche' && Object.values(r.vistas).every((v) => v.ancho <= 412 && v.alto > 200) && r.tarjetas === 24,
+      JSON.stringify(r));
+    check('«por qué ›» lleva a su tarjeta; Dormitorio sobrevive a recargar; «probar 3 h» cambia la siesta solo mientras dura; «hora fija» se mide sola',
+      r.porque.tab === 'ciencia' && r.porque.foco && r.casa === '{"oscuro":1}' && r.durante === 180 && r.despues === r.antes && r.hora === 1,
+      JSON.stringify(r));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
