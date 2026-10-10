@@ -10067,7 +10067,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="noche-empezar"]'); await page.waitForTimeout(2600);
     r.noche = await page.evaluate(() => /Levántate/.test((document.getElementById('nocheCapa') || {}).innerText || ''));
     await page.click('[data-a="noche-vuelvo"]'); await page.waitForTimeout(150);
-    r.desvelo = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1)), x = P.suenoReal(k); return x && { mal: x.mal, dde: x.dde }; });
+    r.desvelo = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1)), x = P.suenoReal(k), pd = (P.store.sueno.desvelos || {})[k]; return x && x.mal ? { mal: x.mal, dde: x.dde } : (pd ? { mal: true, dde: pd.dde } : null); });
     await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.SN_T.pvtMs = 180000; P.SN_T.pvtMin = 5; P.SN_T.nocheMs = 20 * 60000; P.ui.snG = ''; P.render(); });
     check('el plan de guardia sale de tus guardias, «mejor plan» deja la siesta del saliente entre 2 y 4 h sin cafés tras las 3:00, y un café se arrastra',
@@ -10620,6 +10620,87 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /Cuánta pizza/.test(r.c0.q) && r.c0.ayer && r.c1 && /pizza/i.test(r.c1.n) && r.c1.p === 'cena' && r.c1.kcal > 100 && /macarrones/.test(r.c2.corr) && /macarrones/.test(r.c2.lec),
       JSON.stringify({ c0: r.c0, c1: r.c1, c2: r.c2 }));
     check('Despensa: pasar de «Comprar» a «En casa» se queda en la pestaña, sin abrir una hoja encima', !r.d.hoja && r.d.seg === 'casa' && r.d.casa, JSON.stringify(r.d));
+  }
+
+  // 260) SUEÑO, LO QUE EL INFORME ENCONTRÓ, EN CADENA: (a) el modo noche sin la noche apuntada no crea una
+  // noche de 0 h («Agotado · Anoche: 0h00»): el desvelo espera y se guarda al apuntar la noche; (b) el
+  // saliente sin apuntar no dice «8 de 8 h» y la tarjeta de Hoy avisa de la siesta igual que Ajusta, que
+  // respeta tus 6 h; (c) el plan de guardia de fábrica no trae un café que él mismo marca «Tarde»; (d) la
+  // víspera lleva a la guardia; (e) el aviso de cama se enciende y va al calendario (sin las noches de
+  // guardia); (f) el 1–9 de la tarde no pisa el de la mañana; (g) la eficiencia ya no es siempre 100 %.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia260 = JSON.parse(JSON.stringify(P.store));
+      P.store.suenoReal = {}; P.store.sueno.desvelos = {}; P.store.rotation.mode = 'date'; P.SN_T.nocheMs = 1500;
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = ''; P.ui.snAj = ''; P.ui.snHoja = ''; P.save(); P.render(); });
+    // (a) modo noche → levántate → vuelvo → salir, sin la noche apuntada
+    await page.click('#main [data-a="sn-vista"][data-v="noche"]'); await page.waitForTimeout(150);
+    await page.click('[data-a="noche-empezar"]'); await page.waitForTimeout(2600);
+    await page.click('[data-a="noche-vuelvo"]'); await page.waitForTimeout(150);
+    await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(150);
+    r.a = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(d.getHours() < 18 ? d : P.addDays(d, 1));
+      return { k, hoy: P.iso(d), noche: P.suenoReal(k), pend: (P.store.sueno.desvelos || {})[k] || null, est: (document.querySelector('#main .snest') || {}).innerText || '' }; });
+    if (r.a.k === r.a.hoy) {
+      await page.click('#main [data-a="sn-hoja"][data-k="' + r.a.k + '"]'); await page.waitForTimeout(150);
+      r.a.nota = await page.evaluate(() => /Desvelo del modo noche/.test((document.querySelector('.hoja') || {}).innerText || ''));
+      await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(150);
+      r.a.tras = await page.evaluate((k) => { const P = window.PG, x = P.suenoReal(k); return { mal: x && x.mal, dde: x && x.dde, h: x && x.h, pend: !!(P.store.sueno.desvelos || {})[k] }; }, r.a.k);
+    }
+    // (b) saliente sin apuntar: guardia ayer
+    await page.evaluate(() => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0], ay = P.iso(P.addDays(new Date(), -1));
+      P.store.suenoReal = {}; P.setDayOverride(ay, G.id, 'urg'); P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.waitForTimeout(150);
+    r.b = await page.evaluate(() => { const c = document.querySelector('#main .snhoy'), n = document.querySelector('#main .snhoy .snnota');
+      return { t: c ? c.innerText.replace(/\s+/g, ' ') : '', nota: n ? n.innerText : '' }; });
+    if (r.b.nota) { await page.click('#main .snhoy .snnota'); await page.waitForTimeout(150);
+      r.b.aj = await page.evaluate(() => ({ tab: window.PG.ui.snTab, txt: ((document.getElementById('snAj') || {}).innerText || '').replace(/\s+/g, ' ') })); }
+    // (c) el plan de guardia de fábrica: ningún café «Tarde»
+    await page.evaluate(() => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0], ay = P.iso(P.addDays(new Date(), -1)), g = P.iso(P.addDays(new Date(), 3));
+      P.setDayOverride(ay, null, ''); P.setDayOverride(g, G.id, 'urg'); if (P.store.sueno.sim) delete P.store.sueno.sim[g];
+      P.ui.hoyVista = 'sueno'; P.ui.snTab = 'guardia'; P.ui.snG = g; P.ui.snTodos = true; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    r.c = await page.evaluate(() => ({ cafes: [...document.querySelectorAll('#main .snpaso')].filter((e) => /Café/.test(e.innerText)).map((e) => ({ mal: e.classList.contains('mal'), t: e.innerText.replace(/\s+/g, ' ').slice(0, 30) })) }));
+    // (d) la víspera: mañana guardia → Ajusta lleva a Guardia
+    await page.evaluate(() => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(P.addDays(new Date(), 3)), m = P.iso(P.addDays(new Date(), 1));
+      P.setDayOverride(g, null, ''); P.setDayOverride(m, G.id, 'urg'); P.ui.snG = ''; P.ui.snTodos = false; P.ui.snTab = 'ajusta'; P.ui.snAj = ''; P.save(); P.render(); });
+    await page.waitForTimeout(150);
+    r.d = await page.evaluate(() => ({ puerta: !!document.querySelector('#main .snpuerta[data-v="guardia"]'), rec: ((document.querySelector('#main .snaj button[aria-selected="true"]') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    await page.click('#main .snpuerta[data-v="guardia"]'); await page.waitForTimeout(150);
+    r.d.tab = await page.evaluate(() => window.PG.ui.snTab);
+    // (e) aviso de cama: se enciende desde Hora fija y va al calendario, sin la noche de guardia
+    await page.evaluate(() => { const P = window.PG; P.ui.snTab = 'ajusta'; P.ui.snAj = 'hora'; P.render(); });
+    await page.click('#snAj [data-a="sn-avcama"]'); await page.waitForTimeout(150);
+    r.e = await page.evaluate(() => { const P = window.PG, h = P.iso(new Date()), f = P.iso(P.addDays(new Date(), 6)), m = P.iso(P.addDays(new Date(), 1));
+      const ev = P.calEventos(h, f).filter((e) => /A la cama/.test(e.summ));
+      return { on: P.store.sueno.avisoCama === true, n: ev.length, guardia: ev.some((e) => e.isoKey === m), min: ev[0] && ev[0].avisoMin }; });
+    // (f) el 1–9 de la tarde no pisa el de la mañana
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.setDayOverride(P.iso(P.addDays(new Date(), 1)), null, '');
+      P.store.suenoReal[k] = { h: 7.5, acostar: '23:30', desp: '07:00', kss: 4, kssH: 8, guardia: false, tramos: [[23.5, 31, 0]] }; P.ui.snTab = ''; P.save(); P.render(); });
+    await page.click('#main [data-a="sn-kss-hoy"][data-v="7"]'); await page.waitForTimeout(120);
+    r.f = await page.evaluate(() => { const P = window.PG, x = P.suenoReal(P.iso(new Date())); return { h: new Date().getHours(), kss: x.kss, tarde: x.kssTarde || 0 }; });
+    // (g) eficiencia: con un desvelo de 1 h baja de verdad; sin desvelos ya no es 100 % (la latencia cuenta)
+    r.g = await page.evaluate(() => { const P = window.PG, k = (i) => P.iso(P.addDays(new Date(), -i));
+      P.store.suenoReal = {}; P.store.suenoReal[k(1)] = { h: 7, acostar: '23:00', desp: '07:00', tramos: [[23, 27, 0], [28, 31, 0]], guardia: false };
+      P.store.suenoReal[k(2)] = { h: 8, acostar: '23:00', desp: '07:00', tramos: [[23, 31, 0]], guardia: false };
+      const e = P.suenoEficiencia(P.iso(new Date())); P.store.suenoReal = {}; P.store.suenoReal[k(2)] = { h: 8, acostar: '23:00', desp: '07:00', tramos: [[23, 31, 0]], guardia: false };
+      const e2 = P.suenoEficiencia(P.iso(new Date())); return { ef: e.ef, dv: e.dv, ef2: e2.ef, dv2: e2.dv }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia260; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.ui.snTab = ''; P.ui.snAj = ''; P.ui.snG = ''; P.SN_T.nocheMs = 20 * 60000; P.render(); });
+    check('modo noche sin la noche apuntada: no crea una noche de 0 h ni dice «Agotado»; el desvelo espera y se guarda al apuntar la noche',
+      !r.a.noche && r.a.pend && /^\d\d:\d\d$/.test(r.a.pend.dde) && !/Agotado|0h00/.test(r.a.est) &&
+      (r.a.k !== r.a.hoy || (r.a.nota && r.a.tras && r.a.tras.mal && r.a.tras.dde === r.a.pend.dde && r.a.tras.h > 0 && !r.a.tras.pend)), JSON.stringify(r.a));
+    check('saliente sin apuntar: ni «8 de 8 h» ni «Bien»; Hoy avisa de la siesta y lleva a Ajusta, que dice lo mismo y respeta tus horas',
+      /Saliente/.test(r.b.t) && !/8 de 8/.test(r.b.t) && /Tocado/.test(r.b.t) && /2 de 8/.test(r.b.t) &&
+      (!r.b.nota || (r.b.aj && r.b.aj.tab === 'ajusta' && /las eliges tú/.test(r.b.aj.txt) && (r.b.nota.match(/con (\d) h te dormirías/) || [])[1] === (r.b.aj.txt.match(/Con hasta (\d) h/) || [])[1])), JSON.stringify(r.b));
+    check('el plan de guardia de fábrica no trae ningún café que él mismo marque «Tarde»',
+      r.c.cafes.length >= 2 && r.c.cafes.every((x) => !x.mal), JSON.stringify(r.c));
+    check('la víspera de guardia, Ajusta no recomienda «Tras guardia» y lleva a la pestaña Guardia',
+      r.d.puerta && !/Tras/.test(r.d.rec) && r.d.tab === 'guardia', JSON.stringify(r.d));
+    check('el aviso de cama se enciende desde Hora fija y va al calendario con su alarma, sin la noche de guardia',
+      r.e.on && r.e.n >= 5 && !r.e.guardia && r.e.min === 15, JSON.stringify(r.e));
+    check('el 1–9 marcado por la tarde va aparte y no pisa el de la mañana (por la mañana, sí cambia el de la noche)',
+      r.f.h >= 13 ? (r.f.kss === 4 && r.f.tarde === 7) : (r.f.kss === 7 && !r.f.tarde), JSON.stringify(r.f));
+    check('eficiencia: con un desvelo de 1 h baja y lo cuenta; sin desvelos tampoco es 100 % (cuenta lo que tardas en dormirte)',
+      r.g.dv === 1 && r.g.ef <= 92 && r.g.dv2 === 0 && r.g.ef2 < 100 && r.g.ef2 >= 95, JSON.stringify(r.g));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
