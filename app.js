@@ -543,6 +543,7 @@ function normalize(o){
       ultima:(+cs.ultima>0)?+cs.ultima:0,
       /* subir solo: encendido salvo que lo apagues a mano */
       auto:cs.auto!==false,
+      borrar:(Array.isArray(cs.borrar)?cs.borrar:[]).filter(function(u){return /^https:\/\//.test(String(u));}).slice(-12),
       firma:String(cs.firma||'').slice(0,80)};}
   if(!o.rotation.icsColores||typeof o.rotation.icsColores!=='object')o.rotation.icsColores={};
   else{const ic={};ICS_GRUPOS.forEach(function(g){
@@ -1279,11 +1280,13 @@ function dayOverride(dateStr){const v=(store.rotation.daySet||{})[dateStr];if(v=
 function setDayOverride(dateStr,shiftId,guard){
   if(!_pintando)_renderTick++;   /* cambia el tipo de un día: lo memorizado ya no vale */
   if(!store.rotation.daySet)store.rotation.daySet={};
-  if(shiftId===null){delete store.rotation.daySet[dateStr];limpiarSalientesAuto(dateStr);return;}
+  if(shiftId===null){delete store.rotation.daySet[dateStr];limpiarSalientesAuto(dateStr);return {pos:null};}
   store.rotation.daySet[dateStr]=(guard&&shiftId)?{shift:shiftId,guard:guard}:{shift:shiftId||''};
-  const sh=shiftById(shiftId);
-  if(sh&&isGuardia(sh)){if(store.rotation.autoPos!==false)ponerSalienteAuto(dateStr);}
-  else limpiarSalientesAuto(dateStr);}
+  /* devuelve lo que hizo con el día siguiente: quien llama ya no vuelve a decidirlo por su cuenta */
+  const sh=shiftById(shiftId);let pos=null;
+  if(sh&&isGuardia(sh)){if(store.rotation.autoPos!==false)pos=ponerSalienteAuto(dateStr);}
+  else limpiarSalientesAuto(dateStr);
+  return {pos:pos};}
 function saltoDia(){const s=(store.rotation&&store.rotation.saltoDia)||{};
   const from=(s.from!=null?+s.from:6),to=(s.to!=null?+s.to:1);
   return {from:isNaN(from)?6:from,to:isNaN(to)?1:to};}
@@ -1619,7 +1622,8 @@ function addGuardiaTipo(nombre){
     return {ok:false,msg:'«'+n+'» ya está en la lista'};
   let code=n.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'').slice(0,8);
   if(!code)code='t'+(l.length+1);
-  while(l.some(function(t){return t.code===code;}))code=code.slice(0,7)+(l.length+1);
+  /* un número distinto en cada vuelta: antes probaba siempre el mismo y, si también estaba, no salía nunca */
+  const base=code.slice(0,6);for(let i=2;l.some(function(t){return t.code===code;});i++)code=base+i;
   l.push({code:code,label:n.slice(0,22)});
   store.rotation.cupoTipos[code]=0;
   save();render();
@@ -1644,8 +1648,10 @@ function esDiaDeJornada(d){
   return wd.indexOf(d.getDay())>=0;}
 function horaRelevo(t,d){
   /* a qué hora se hace el cambio de guardia ESE día */
-  const j=store.rotation&&store.rotation.jornada;
-  return esDiaDeJornada(d)?(t.relevoSem||(j&&j.start)||'08:00'):(t.relevoFinde||'09:00');}
+  /* entre semana o finde según tus días de trabajo, aunque la jornada no tenga hora: con la entrada
+     vacía, todas las guardias salían con el relevo de finde (9:00 a 9:00 un martes) */
+  const j=store.rotation&&store.rotation.jornada,wd=(j&&j.workdays&&j.workdays.length)?j.workdays:[1,2,3,4,5];
+  return wd.indexOf(d.getDay())>=0?(t.relevoSem||(j&&j.start)||'08:00'):(t.relevoFinde||'09:00');}
 function guardiaHoras(dateStr,tipoCode){
   /* desde: cuándo pisas el hospital · guardia: cuándo empieza la guardia propiamente
      sale:  cuándo te vas al día siguiente, con el pase ya sumado */
@@ -1827,7 +1833,7 @@ function bloquesTrabajo(dateStr,inf){
   const sh=shiftById(inf.shiftId);
   const sal=salidaDeGuardia(dateStr);
   if(sal&&mins(sal.sale)!=null&&mins(sal.sale)>0)
-    out.push({de:0,a:mins(sal.sale),tipo:'guard',
+    out.push({de:0,a:mins(sal.sale),tipo:'guard',pase:sal.pase||0,   /* la agenda dice «con el pase» con esto */
       txt:'guardia de ayer hasta el relevo de las '+sal.sale+(sal.pase?(' (con pase de '+fmtHM(sal.pase)+')'):'')});
   if(sh&&isGuardia(sh)){
     const g=guardiaHoras(dateStr,inf.guard);
@@ -7967,7 +7973,7 @@ function renderMonth(){
     if(evsDia.length+ntsDia.length>EVMAX)marcas.push('<b class="dmas">+'+(evsDia.length+ntsDia.length-EVMAX)+'</b>');
     /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */
     const gsDia=d.key?gastosDeFecha(d.key):[];
-    if(gsDia.length){const n2=new Date(),pend=gsDia.filter(function(g){return !gastoPagado(g,n2.getFullYear(),n2.getMonth());});
+    if(gsDia.length){const n2=d.date||parseDate(d.key)||new Date(),pend=gsDia.filter(function(g){return !gastoPagado(g,n2.getFullYear(),n2.getMonth());});   /* el mes de la casilla, no el de hoy */
       marcas.push('<b class="dgasto'+(pend.length?' pend':'')+'" title="'+
         esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
     if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
@@ -15822,7 +15828,8 @@ function copiasDB(){if(_copiasDB)return _copiasDB;return (_copiasDB=new Promise(
 function copiasGuardar(etiqueta){
   return copiasDB().then(function(db){return new Promise(function(res){
     const tx=db.transaction('snap','readwrite'),st=tx.objectStore('snap');
-    const k=etiqueta?(iso(new Date())+' '+etiqueta):iso(new Date());
+    /* con hora: dos restauraciones el mismo día ya no pisan la copia de la primera */
+    const ah=new Date(),k=etiqueta?(iso(ah)+' '+String(ah.getHours()).padStart(2,'0')+':'+String(ah.getMinutes()).padStart(2,'0')+':'+String(ah.getSeconds()).padStart(2,'0')+' '+etiqueta):iso(ah);
     /* lo último guardado ya está serializado en localStorage: no se vuelve a recorrer todo */
     let json=null;try{json=localStorage.getItem(KEY);}catch(e){}
     st.put({k:k,t:Date.now(),json:json||JSON.stringify(store)});
@@ -20889,7 +20896,8 @@ function arrAplica(){
   const t=shiftById('sh-t');if(t){t.start=a.jEntra;t.end=a.jSale;}
   const f=shiftById('sh-f');if(f)f.end=a.jSale;   /* el día de fuerza entrena antes y luego trabaja igual */
   if(!store.rotation.jornada)store.rotation.jornada={};
-  store.rotation.jornada.from=a.jEntra;store.rotation.jornada.to=a.jSale;
+  /* start/end: es lo que lee el resto de la app (from/to no lo leía nadie y la jornada seguía en 8–15) */
+  store.rotation.jornada.start=a.jEntra;store.rotation.jornada.end=a.jSale;
   /* las guardias */
   const g=shiftById('sh-g');if(g){g.start=a.gEntra;g.end=a.gSale;}
   store.rotation.guardiasMes=a.gMes;
@@ -20997,7 +21005,9 @@ function evFormDefecto(ev){
 function evPantalla(titulo,cuerpo,extra){subPantalla('ev-vista','Eventos',titulo,cuerpo,extra);}
 function evFormHTML(ev){
   const f=ui.evForm||(ui.evForm=evFormDefecto(ev));
-  const hora=ev?(ev.hora||''):'18:00',fin=ev?(ev.fin||''):'';
+  /* lo que ya tecleaste manda sobre lo guardado (cambiar de «cada semana» a «un día» repinta) */
+  const de=function(k,v){return f[k]!==undefined?f[k]:v;};
+  const hora=de('hora',ev?(ev.hora||''):'18:00'),fin=de('fin',ev?(ev.fin||''):'');
   const dActual=ev?evDura(ev):null;
   const chips=EV_DURAS.map(function(d){
     const on=(d[1]===0&&!fin)||(d[1]>0&&dActual===d[1])||(d[1]===-1&&dActual===240)||(d[1]===-2&&!hora);
@@ -21008,10 +21018,10 @@ function evFormHTML(ev){
       '<button class="btn s '+(f.modo==='fecha'?'p':'')+'" data-a="ev-modo" data-modo="fecha">un día en concreto</button>'+
     '</div>'+
     '<div class="row" style="margin-top:9px">'+
-      '<label class="fld" style="flex:1 1 180px">título<input id="evTitulo" value="'+esc(ev?(ev.titulo||''):'')+
+      '<label class="fld" style="flex:1 1 180px">título<input id="evTitulo" value="'+esc(de('titulo',ev?(ev.titulo||''):''))+
         '" placeholder="'+(f.modo==='fecha'?'p. ej. Presentación en rayos':'p. ej. Sesión clínica')+'"></label>'+
       '<label class="fld" style="flex:0 0 54px">color<input type="color" id="evColor" value="'+
-        esc(ev?(ev.color||'#38e1ff'):'#38e1ff')+'" style="height:30px;padding:2px"></label>'+
+        esc(de('color',ev?(ev.color||'#38e1ff'):'#38e1ff'))+'" style="height:30px;padding:2px"></label>'+
     '</div>'+
     (f.modo==='fecha'
       ?('<div class="row" style="margin-top:8px"><label class="fld" style="flex:0 0 172px">qué día'+
@@ -21154,6 +21164,9 @@ function icsColorChoca(){
 /* los once colores que tiene Google Calendar, con el nombre que les pone él */
 const ICS_COLORES=['Tomate','Mandarina','Plátano','Albahaca','Salvia','Pavo real','Arándano',
   'Lavanda','Uva','Flamenco','Grafito'];
+function icsAvisoMin(){
+  /* 0 = avisar a la hora justa. Con el «||30» de antes, 0 se guardaba y se exportaba como 30 */
+  const v=store.rotation.icsAvisoMin;return (typeof v==='number'&&v>=0)?v:30;}
 function icsColorGrupo(k){
   /* QUÉ COLOR LE HAS PUESTO TÚ EN GOOGLE a ese calendario. La app te dice cuál poner para que se
      vea como aquí, pero el nombre estaba en el código: si usabas otro, el texto mentía. */
@@ -21234,7 +21247,10 @@ function calSyncAhoraSiToca(){
   let toca=false;try{toca=calSyncPendiente();}catch(e){toca=false;}
   if(!toca)return;
   _syncEnCurso=true;
-  calSyncSubir(true).then(function(){_syncEnCurso=false;}).catch(function(){_syncEnCurso=false;});}
+  /* lo que cambies MIENTRAS sube se pide otra vez al acabar: antes se perdía porque esta vuelta
+     estaba en curso y la firma se tomaba después, ya con el cambio dentro («Al día» sin estarlo) */
+  const fin=function(){_syncEnCurso=false;let otra=false;try{otra=calSyncPendiente();}catch(e){}if(otra)calSyncPide();};
+  calSyncSubir(true).then(fin).catch(fin);}
 async function calSyncSubir(callado){
   /* sube los CUATRO ficheros, uno por calendario de Google. Si alguno falla se dice cuál: subir
      tres de cuatro y callarlo dejaría un calendario desfasado sin que se notara. */
@@ -21243,13 +21259,19 @@ async function calSyncSubir(callado){
   if(!c.token)return 'pon primero el token del Worker';
   if(!c.buzon){c.buzon=buzonNuevo();save();}
   const r=calRangoExport(calRango());
+  if(Array.isArray(c.borrar)&&c.borrar.length){const quedan=[];
+    for(const u of c.borrar){try{const rb=await fetch(u,{method:'DELETE',headers:{'authorization':'Bearer '+c.token}});if(!(rb.ok||rb.status===404))quedan.push(u);}catch(e){quedan.push(u);}}
+    c.borrar=quedan;}
+  /* lo que se sube y su firma, tomados a la vez y ANTES de subir: la firma dice lo que se mandó */
+  const cuerpos=ICS_GRUPOS.map(function(g){return icsTexto(r.desde,r.hasta,{cats:g[2]});});
+  let firma0='';try{firma0=calSyncFirma();}catch(e){firma0='';}
   const malas=[];
   for(let i=0;i<ICS_GRUPOS.length;i++){
     const g=ICS_GRUPOS[i];
     try{
       const resp=await fetch(calSyncURL(g[0]),{method:'PUT',
         headers:{'authorization':'Bearer '+c.token,'content-type':'text/calendar; charset=utf-8'},
-        body:icsTexto(r.desde,r.hasta,{cats:g[2]})});
+        body:cuerpos[i]});
       if(!resp.ok)malas.push(g[1]+' ('+resp.status+(resp.status===401?': token':'')+')');
     }catch(e){malas.push(g[1]+' (no se ha podido llegar al Worker)');}}
   if(malas.length===ICS_GRUPOS.length){
@@ -21262,7 +21284,7 @@ async function calSyncSubir(callado){
      la app decía «Al día» con un calendario de Google congelado, y el automático no volvía a
      intentarlo hasta el siguiente cambio. Un aviso que se lee una vez no es un estado. Dejando la
      firma vieja, sigue diciendo «hay cambios sin subir» y se arregla solo en el próximo guardado. */
-  if(!malas.length){try{c.firma=calSyncFirma();}catch(e){c.firma='';}}
+  if(!malas.length)c.firma=firma0;
   /* OJO: save() pide otra subida, y ésta viene DE una subida. Se apaga un momento el automático
      para no entrar en bucle. */
   const antes=c.auto;c.auto=false;save();c.auto=antes;
@@ -21398,7 +21420,7 @@ function renderAjustes(){
       <div class="row">
         <label class="fld">desde<input type="date" id="calDesde" data-a="cal-desde" value="${esc(de)}"></label>
         <label class="fld">hasta<input type="date" id="calHasta" data-a="cal-hasta" value="${esc(ha)}" min="${esc(de)}"></label>
-        <label class="fld" style="flex:0 0 118px">avisar (min antes)<input type="number" min="0" max="180" value="${+store.rotation.icsAvisoMin||30}" data-a="ics-aviso-min"></label></div>
+        <label class="fld" style="flex:0 0 118px">avisar (min antes)<input type="number" min="0" max="180" value="${icsAvisoMin()}" data-a="ics-aviso-min"></label></div>
       <div class="row" style="margin-top:10px"><button class="btn p" data-a="cal-dl-todos">📤 Mandar a mi calendario</button>
         <span class="mini">${ICS_GRUPOS.length} ficheros, uno por color${store.rotation.calYaMandado?' · como la otra vez':''}</span></div></div>`+
     pleg('Cómo dejarlo en Google, paso a paso',!store.rotation.calYaMandado,`${icsCatsHTML(de,ha)}
@@ -21628,7 +21650,7 @@ function renderAjustes(){
       fila('aju-vista','sol','📍','Dónde estoy',sitioActual().nombre)])+
     grupo('LA APP',[
       fila('aju-vista','aspecto','🎨','Aspecto',(store.tema&&store.tema.brand?'a tu color':'oscuro')+' · la franja'),
-      fila('aju-vista','calendario','📅','Calendario del móvil','aviso '+(+r.icsAvisoMin||30)+' min'),
+      fila('aju-vista','calendario','📅','Calendario del móvil','aviso '+icsAvisoMin()+' min'),
       fila('aju-vista','comida','🥗','Datos de alimentos',usdaOn()?'USDA oficial':'tabla local'),
       fila('aju-vista','lector','🔗','Lector de enlaces',lec,lec==='apagado'?'off':'')])+
     grupo('MIS DATOS',[
@@ -22277,8 +22299,17 @@ function act(a,el){
     case 'calsync-nuevo':{
       confirmar('Las cuatro direcciones de ahora dejan de funcionar y tendrás que volver a suscribir los cuatro calendarios en Google. Hazlo si crees que alguien más las tiene.','Sí, cambiarla')
         .then(function(si){if(!si)return;
-          const c=calSyncCfg();c.buzon=buzonNuevo();c.ultima=0;c.firma='';save();render();
-          flash('dirección nueva: vuelve a subir y a suscribir los cuatro');});
+          /* las de antes se BORRAN en el Worker: cambiar solo la del móvil dejaba tus guardias a la
+             vista en la dirección vieja para siempre, aunque aquí dijera que dejaba de funcionar */
+          const c=calSyncCfg(),viejas=c.buzon&&c.url&&c.token?ICS_GRUPOS.map(function(g){return calSyncURL(g[0]);}):[];
+          return Promise.all(viejas.map(function(u){return fetch(u,{method:'DELETE',headers:{'authorization':'Bearer '+c.token}})
+            .then(function(r){return r.ok||r.status===404;}).catch(function(){return false;});})).then(function(oks){
+            const pend=viejas.filter(function(u,i){return !oks[i];}),fallan=pend.length;
+            /* las que no se pudieron borrar se reintentan en la próxima subida */
+            c.borrar=(c.borrar||[]).concat(pend).slice(-12);
+            c.buzon=buzonNuevo();c.ultima=0;c.firma='';save();render();
+            flash(fallan?'dirección nueva; '+fallan+' de las viejas no se han podido borrar (¿sin red?): lo reintento en la próxima subida':
+              'dirección nueva y las viejas borradas: vuelve a subir y a suscribir los cuatro',6000);});});
       break;}
     case 'sec-mover':{const m=moverSeccion(el.dataset.k||'',+el.dataset.d||0);
       if(m)flash(m);render();break;}
@@ -22755,7 +22786,10 @@ function act(a,el){
       /* el modo cambia qué campos hay (un día concreto o unos días de la semana), así que aquí sí
          toca repintar; lo tecleado se relee del DOM antes para no perderlo */
       ui.evForm.modo=el.dataset.modo==='fecha'?'fecha':'semanal';
-      const t=$('#evTitulo');if(t)ui.evForm.titulo=t.value;
+      /* todo lo tecleado (título, horas, color, día), no solo el título: el formulario lo vuelve a
+         poner al repintar. Antes se perdía todo menos el título… y el título tampoco salía */
+      [['evTitulo','titulo'],['evHora','hora'],['evFin','fin'],['evColor','color'],['evFecha','fecha']].forEach(function(p){
+        const x=document.getElementById(p[0]);if(x)ui.evForm[p[1]]=x.value;});
       render();break;}
     case 'ev-dia':{const ix=+el.dataset.day;if(!ui.evForm)ui.evForm=evFormDefecto(null);
       const at=ui.evForm.dow.indexOf(ix);
@@ -23875,11 +23909,14 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       if(Array.isArray(store.rotation.svcMeses))store.rotation.svcMeses.splice(ix,1);
       save();render();break;}
     case 'day-set':{const v=el.dataset.sid||'';
-      setDayOverride(el.dataset.key,v||'',el.dataset.guard||(v?'':''));save();
+      /* sin turno = «quitar lo puesto a mano»: vuelve a la rotación (antes lo dejaba «sin asignar»).
+         El saliente del día siguiente lo decide setDayOverride, solo si es guardia y con el automático
+         encendido: antes se ponía aquí con CUALQUIER turno, también con «Libre» */
+      const rd=setDayOverride(el.dataset.key,v?v:null,el.dataset.guard||'');save();
       render();
-      const auto=v?((ponerSalienteAuto(el.dataset.key).txt)||''):'';
-      flash(v?('día puesto: '+((shiftById(v)||{}).name||'')+(el.dataset.guard?(' · '+el.dataset.guard):'')+
-        (store.rotation.autoPos!==false?auto:'')):'día liberado (y su saliente automático, si lo puso la app)');break;}
+      const auto=(rd&&rd.pos&&rd.pos.txt)||'';
+      flash(v?('día puesto: '+((shiftById(v)||{}).name||'')+(el.dataset.guard?(' · '+el.dataset.guard):'')+auto):
+        'vuelve a la rotación (y su saliente automático, si lo puso la app)');break;}
     case 'day-rhythm':editDayRhythm(el.dataset.key);break;
     case 'day-guardia':{const rg=setGuardiaTipo(el.dataset.key,el.dataset.guard||'');flash(rg.msg);
       if(rg.ok)render();break;}
@@ -23951,7 +23988,7 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       if(!tx||tx.indexOf('BEGIN:VEVENT')<0){flash('no hay nada de eso en el rango');break;}
       const nom=(g[0]+'-'+rr.desde+'-a-'+rr.hasta+'.ics');
       dlTxt(tx,nom,'text/calendar;charset=utf-8');
-      flash(g[1]+': descargado. En Google, calendario nuevo con el color «'+g[4]+'» e importa ahí este fichero.');
+      flash(g[1]+': descargado. En Google, calendario nuevo con el color «'+icsColorGrupo(g[0])+'» e importa ahí este fichero.');   /* el que elegiste, no el de serie */
       break;}
     case 'cal-copiar':{const rr2=calRangoExport(calRangoUI());
       copy(icsTexto(rr2.desde,rr2.hasta,{import:calNombreTxt(rr2.desde)}));break;}
@@ -24797,6 +24834,10 @@ function icsFecha(v,tz){
   let hh=m[4]?String(Math.min(23,+m[4])).padStart(2,'0'):'',mi=+m[5]||0,key=m[1]+'-'+m[2]+'-'+m[3],tzOk=false;
   if(m[4]&&tz&&!m[7]){const loc=tzWallToLocal(+m[1],+m[2]-1,+m[3],+m[4],mi,+m[6]||0,tz);
     if(loc){key=iso(loc);hh=String(loc.getHours()).padStart(2,'0');mi=loc.getMinutes();tzOk=true;}}
+  /* «…T060000Z» es hora UTC: se pasa a la hora de aquí (antes un evento de las 08:00 de Madrid entraba
+     a las 06:00, y uno a las 23:30Z caía el día anterior) */
+  if(m[4]&&m[7]){const loc=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],mi,+m[6]||0));
+    key=iso(loc);hh=String(loc.getHours()).padStart(2,'0');mi=loc.getMinutes();}
   return {key:key,hm:hh?(hh+':'+(mi<10?'0'+mi:''+mi)):'',
     allDay:!m[4],utc:!!m[7],tzAplicada:tzOk};}   /* la Z es el grupo 7: con el 6 toda hora con segundos parecía UTC */
 function calFinMes(d){const x=parseDate(d)||new Date();
@@ -25103,7 +25144,7 @@ function icsTexto(desde,hasta,opt){
     cuerpo.push('SUMMARY:'+icsEscTxt(e.summ),'DESCRIPTION:'+icsEscTxt(e.desc||''),
       'CATEGORIES:'+icsEscTxt(e.cat||'OTRO'),'STATUS:CONFIRMED','SEQUENCE:0');
     if(store.rotation.calAlarm!==false){
-      const av=e.avisoMin!=null?e.avisoMin:Math.max(0,+store.rotation.icsAvisoMin||30);
+      const av=e.avisoMin!=null?e.avisoMin:icsAvisoMin();
       cuerpo.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEscTxt(e.summ),
         'TRIGGER;VALUE=DURATION:-PT'+av+'M','END:VALARM');}
     const bloque=cuerpo.join('\r\n');
@@ -25702,7 +25743,7 @@ document.addEventListener('change',e=>{
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
     case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
-    case 'ics-aviso-min':{store.rotation.icsAvisoMin=Math.max(0,Math.min(180,+el.value||30));save();render();break;}
+    case 'ics-aviso-min':{const v=String(el.value).trim()===''?30:+el.value;store.rotation.icsAvisoMin=Math.max(0,Math.min(180,isFinite(v)?Math.round(v):30));save();render();break;}
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
     case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
       store.meta.backupAvisoD=Math.max(1,Math.min(90,+el.value||13));save();render();break;}
@@ -25814,8 +25855,9 @@ document.addEventListener('change',e=>{
       if(ui.calHasta&&ui.calHasta<ui.calDesde)ui.calHasta=ui.calDesde;
       calRefresca();render();break;}
     case 'cal-hasta':{ui.calHasta=el.value||'';calRefresca();render();break;}
-    case 'cal-ics-desde':{ui.icsDesde=el.value||'';render();break;}
-    case 'cal-ics-hasta':{ui.icsHasta=el.value||'';render();break;}
+    /* cambiar el rango tira lo analizado: «Marcar esos días» usaba las fechas viejas */
+    case 'cal-ics-desde':{ui.icsDesde=el.value||'';ui.icsPrev=null;render();break;}
+    case 'cal-ics-hasta':{ui.icsHasta=el.value||'';ui.icsPrev=null;render();break;}
     case 'cal-encima':{ui.icsEncima=!!el.checked;
       if(ui.icsTxt)icsAnalizar();else render();break;}
     case 'cal-oculto':{store.rotation.calOculto=!!el.checked;calRefresca();save();render();
@@ -25985,7 +26027,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

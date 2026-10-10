@@ -264,12 +264,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     const montada = await page.evaluate(() => {
       const S = window.PG.store, t = S.shifts.filter((x) => x.id === 'sh-t')[0];
-      return { trabajo: t.start + '-' + t.end, jornada: (S.rotation.jornada || {}).from,
+      return { trabajo: t.start + '-' + t.end, jornada: (S.rotation.jornada || {}).start + '-' + (S.rotation.jornada || {}).end,   // start/end: lo que lee la app (antes guardaba from/to, que no leía nadie)
+
         gMes: S.rotation.guardiasMes, wake: S.rhythm['sh-t'].wake, montada: S.meta.montada,
         tab: window.PG.ui.tab };
     });
     check('lo que contestas en el asistente queda puesto de verdad en el planning',
-      montada.trabajo === '08:30-16:00' && montada.jornada === '08:30' && montada.gMes === 5 &&
+      montada.trabajo === '08:30-16:00' && montada.jornada === '08:30-16:00' && montada.gMes === 5 &&
       montada.wake === '07:15' && montada.montada === true && montada.tab === 'month',
       JSON.stringify(montada));
 
@@ -11144,6 +11145,88 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('una captura de antes de la última nómina pide otra en vez de contar hasta una nómina pasada',
       r.f.cad === true && /HA LLEGADO LA NÓMINA/.test(r.f.txt), JSON.stringify(r.f));
     check('«Poner la cifra» desde Hoy lleva a Dinero → Mes', r.g === 'dinero/mes', r.g);
+  }
+
+  // 267) TURNOS Y CALENDARIO, EN CADENA (tanda 3 del informe de código): (a) poner «Libre» a mano no
+  //      marca saliente al día siguiente; (b) «quitar lo puesto a mano» vuelve a la rotación; (c) una hora
+  //      «…Z» de un .ics se pasa a la hora de aquí; (d) lo que cambias mientras se sube a Google se vuelve
+  //      a pedir; (e) «cambiar la dirección» borra las viejas en el Worker; (f) avisar 0 min se guarda como
+  //      0; (g) sin hora de entrada, la guardia de un martes usa el relevo de entre semana; (h) añadir un
+  //      tipo de guardia con códigos ocupados no cuelga; (i) cambiar un evento a «cada semana» no borra lo
+  //      escrito; (j) el día después de una guardia de UMI dice «con el pase».
+  {
+    const r = {};
+    await page.evaluate(() => { window.__copia267 = JSON.parse(JSON.stringify(window.PG.store)); });
+    // (a)(b) por la hoja del día: data-a="day-set"
+    r.ab = await page.evaluate(() => {
+      const P = window.PG, d = P.addDays(new Date(), 10), k = P.iso(d), k1 = P.iso(P.addDays(d, 1));
+      const libre = P.store.shifts.filter((x) => /libre/i.test(x.name))[0];
+      P.setDayOverride(k1, null); P.store.rotation.autoPos = true; P.save();
+      const pulsa = (sid) => { const b = document.createElement('button'); b.dataset.a = 'day-set'; b.dataset.key = k; b.dataset.sid = sid;
+        document.getElementById('main').appendChild(b); b.click(); };
+      pulsa(libre.id);
+      const sig = P.dayOverride(k1), puesto = P.dayOverride(k);
+      pulsa('');
+      return { libre: !!libre, siguiente: sig ? (sig.auto || 'mano') : 'nada', puesto: puesto && puesto.shift === libre.id, quitado: P.dayOverride(k) ? 'sigue' : 'rotación' };
+    });
+    // (c) un .ics de Google con la hora en UTC, abierto en Madrid
+    { const ctx2 = await browser.newContext({ timezoneId: 'Europe/Madrid' }); const p2 = await ctx2.newPage();
+      await p2.goto(base + 'index.html'); await p2.waitForTimeout(400);
+      r.c = await p2.evaluate(() => { const a = window.PG.icsFecha('20260911T060000Z'), b = window.PG.icsFecha('20260911T233000Z'); return a.key + ' ' + a.hm + ' | ' + b.key + ' ' + b.hm; });
+      await ctx2.close(); }
+    // (d)(e) Google con un Worker de mentira: una subida lenta con un cambio en medio, y cambiar la dirección
+    r.de = await page.evaluate(async () => {
+      const P = window.PG, c = P.calSyncCfg(), real = window.fetch, llamadas = [];
+      c.url = 'https://worker.ejemplo.dev'; c.token = 'tok'; c.buzon = 'abcdefghijklmnopqrstuvwx'; c.auto = false; c.firma = ''; c.borrar = [];
+      window.fetch = (u, o) => { llamadas.push(((o && o.method) || 'GET') + ' ' + u); return new Promise((ok) => setTimeout(() => ok(new Response('', { status: 200 })), 60)); };
+      const sube = P.calSyncSubir(true);
+      await new Promise((ok) => setTimeout(ok, 20));
+      const k = P.iso(P.addDays(new Date(), 5)), g = P.store.shifts.filter((x) => /guardia/i.test(x.name))[0];
+      P.setDayOverride(k, g.id, 'urg'); P.save();
+      await sube;
+      const pendiente = P.calSyncPendiente();
+      llamadas.length = 0;
+      const b = document.createElement('button'); b.dataset.a = 'calsync-nuevo'; document.getElementById('main').appendChild(b); b.click();
+      await new Promise((ok) => setTimeout(ok, 60));
+      const si = document.querySelector('[data-a="confirm-yes"]'); if (si) si.click();
+      await new Promise((ok) => setTimeout(ok, 250));
+      window.fetch = real;
+      const borradas = llamadas.filter((x) => /^DELETE https:\/\/worker\.ejemplo\.dev\/cal\/abcdefghijklmnopqrstuvwx\//.test(x)).length;
+      return { pendiente, borradas, nuevo: c.buzon !== 'abcdefghijklmnopqrstuvwx' };
+    });
+    // (f) avisar 0 minutos antes
+    r.f = await page.evaluate(() => { const i = document.createElement('input'); i.dataset.a = 'ics-aviso-min'; i.value = '0';
+      document.getElementById('main').appendChild(i); i.dispatchEvent(new Event('change', { bubbles: true })); return window.PG.icsAvisoMin(); });
+    // (g) jornada sin hora de entrada: una guardia de martes
+    r.g = await page.evaluate(() => { const P = window.PG, j = P.store.rotation.jornada, antes = j.start; j.start = '';
+      let d = new Date(); while (d.getDay() !== 2) d = P.addDays(d, 1);
+      const t = P.gTipos().filter((x) => x.code === 'urg')[0], h = P.guardiaHoras(P.iso(d), 'urg'); j.start = antes;
+      return { desde: h && h.desde, sem: t && t.relevoSem }; });
+    // (h) dos tipos ya ocupan los códigos que saldrían
+    r.h = await page.evaluate(() => { const P = window.PG, l = P.gTipos(); l.push({ code: 'placa', label: 'Placa' }, { code: 'placa3', label: 'Placa 3' });
+      const t0 = Date.now(), res = P.addGuardiaTipo('Placa.'); return { ok: res.ok, ms: Date.now() - t0, codes: P.gTipos().map((x) => x.code).join(',') }; });
+    // (i) evento nuevo: escribo y cambio a «cada semana»
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'eventos'; P.ui.evVista = 'nuevo'; P.ui.evForm = null; P.render(); });
+    await page.fill('#evTitulo', 'Curso RCP'); await page.fill('#evHora', '10:00');
+    await page.click('#main [data-a="ev-modo"][data-modo="semanal"]'); await page.waitForTimeout(100);
+    r.i = await page.evaluate(() => ({ t: (document.getElementById('evTitulo') || {}).value, h: (document.getElementById('evHora') || {}).value }));
+    // (j) el día después de una guardia de UMI
+    r.j = await page.evaluate(() => { const P = window.PG, ay = P.iso(P.addDays(new Date(), -1)), hoy = P.iso(new Date()), g = P.store.shifts.filter((x) => /guardia/i.test(x.name))[0];
+      P.setDayOverride(ay, g.id, 'umi'); P.save(); P.render();
+      const it = P.agendaDia(hoy).filter((x) => /Sales de la guardia/.test(x.t || x.txt || x.titulo || JSON.stringify(x)))[0];
+      return it ? JSON.stringify(it).slice(0, 200) : 'sin línea'; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia267; P.save(); P.ui.tab = 'month'; P.ui.evVista = ''; P.ui.evForm = null; P.render(); });
+    check('poner «Libre» a mano no marca saliente al día siguiente', r.ab.libre && r.ab.puesto && r.ab.siguiente === 'nada', JSON.stringify(r.ab));
+    check('«quitar lo puesto a mano» vuelve a la rotación (no deja el día en blanco)', r.ab.quitado === 'rotación', JSON.stringify(r.ab));
+    check('una hora «…Z» de un .ics se pasa a la hora de Madrid', r.c === '2026-09-11 08:00 | 2026-09-12 01:30', r.c);
+    check('lo que cambias mientras se sube a Google queda pendiente (no dice «Al día»)', r.de.pendiente === true, JSON.stringify(r.de));
+    check('«cambiar la dirección» borra las cuatro viejas en el Worker', r.de.borradas === 4 && r.de.nuevo, JSON.stringify(r.de));
+    check('avisar 0 minutos antes se guarda como 0', r.f === 0, String(r.f));
+    check('sin hora de entrada en la jornada, la guardia de un martes usa el relevo de entre semana',
+      r.g.desde === r.g.sem && r.g.sem !== undefined, JSON.stringify(r.g));
+    check('añadir un tipo de guardia con códigos ocupados no cuelga la app', r.h.ok && r.h.ms < 200 && /placa2|placa4/.test(r.h.codes), JSON.stringify(r.h));
+    check('cambiar un evento a «cada semana» no borra el título ni la hora', r.i.t === 'Curso RCP' && r.i.h === '10:00', JSON.stringify(r.i));
+    check('el día después de una guardia de UMI dice «con el pase»', /con el pase/.test(r.j), r.j);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
