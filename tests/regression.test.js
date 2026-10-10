@@ -10037,7 +10037,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         return { n: ev.length, cat: ev[0] && ev[0].cat, min: ev[0] && ev[0].avisoMin, guardado: Object.keys(P.store.sueno.avisos[G] || {}).length }; }, ini.G);
     }
     // la luz: si te levantas antes de que amanezca, no te pide luz de calle
-    r.luz = await page.evaluate(() => { const P = window.PG; P.store.sueno.ancla = '05:30'; P.ui.snTab = 'ajusta'; P.ui.snAj = 'luz'; P.render();
+    r.luz = await page.evaluate(() => { const P = window.PG; P.store.sueno.ancla = '05:30'; P.store.sueno.margen = 0; P.ui.snTab = 'ajusta'; P.ui.snAj = 'luz'; P.render();
       return (document.getElementById('snAj') || {}).innerText || ''; });
     // probar dos semanas, y la pregunta de cada mañana en Hoy
     await page.evaluate(() => { const P = window.PG; P.ui.snAj = 'hora'; P.render(); });
