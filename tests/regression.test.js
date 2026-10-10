@@ -7333,9 +7333,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.suenoRealS()[ayer] = { h: 2, guardia: true, ratos: true, siesta: 4 }; P.save();
       const s = P.suenoSemana(ayer); const d = s.dias.filter((x) => x.k === ayer)[0];
       return { total: d.t, guardia: d.r.guardia }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'datos'; P.render(); });
     await page.waitForTimeout(150);
-    const bInf = await page.$('#main .snest [data-a="hoy-informe"]');
+    const bInf = await page.$('#main [data-a="hoy-informe"]');
     if (bInf) await bInf.click();
     await page.waitForTimeout(250);
     const tiles = await page.evaluate(() => document.querySelectorAll('#main .inftile').length);
@@ -10017,7 +10017,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const ini = await page.evaluate(() => { const P = window.PG; window.__copia245 = JSON.parse(JSON.stringify(P.store));
       const l = P.snGuardias(), hoyK = P.iso(new Date()), G = l.filter((k) => k > hoyK)[0] || l[0];
       P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = 'guardia'; P.ui.snG = G; P.ui.snAj = ''; if (P.store.sueno.sim) delete P.store.sueno.sim[G]; P.render();
-      return { G, hay: !!document.querySelector('.snsim #snGraf [data-sn="m"]'), ver: (document.querySelector('.snver') || {}).textContent || '' }; });
+      return { G, hay: !!document.querySelector('.snsim #snGraf [data-sn="m"]'), ver: (document.querySelector('.sncifras') || {}).textContent || '' }; });
     let r = { ini };
     if (ini.G) {
       // el mejor plan sale ya calculado al lado del tuyo; si coincide con el tuyo no hay botón, y se usa igual
@@ -10071,7 +10071,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="noche-salir"]'); await page.waitForTimeout(100);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia245; P.save(); P.ui.hoyVista = ''; P.ui.snVista = ''; P.SN_T.pvtMs = 180000; P.SN_T.pvtMin = 5; P.SN_T.nocheMs = 20 * 60000; P.ui.snG = ''; P.render(); });
     check('el plan de guardia sale de tus guardias, «mejor plan» deja la siesta del saliente entre 2 y 4 h sin cafés tras las 3:00, y un café se arrastra',
-      !ini.G || (ini.hay && /coche/i.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
+      !ini.G || (ini.hay && /coche|vuelta/i.test(ini.ver) && r.mejor.post >= 2 && r.mejor.post <= 4 && r.mejor.tardios === 0 &&
         !r.cafe.despues.includes(r.cafe.antes)), JSON.stringify(r));
     check('un paso con «Avisar» se guarda y va al calendario suscrito con su alarma a la hora',
       !ini.G || (r.avisos.guardado === 1 && r.avisos.n === 1 && r.avisos.cat === 'TAREA' && r.avisos.min === 0), JSON.stringify(r.avisos));
@@ -10261,12 +10261,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = ''; P.render();
       const tabs = [...document.querySelectorAll('#main .sntabs button')].map((b) => b.textContent.trim());
       const vistas = {};
-      ['guardia', 'ajusta', 'medir', 'ciencia'].forEach((t) => { P.ui.snTab = t; P.render(); vistas[t] = { alto: document.querySelector('#main').scrollHeight, ancho: document.documentElement.scrollWidth }; });
+      ['guardia', 'mejorar', 'datos'].forEach((t) => { P.ui.snTab = t; P.render(); vistas[t] = { alto: document.querySelector('#main').scrollHeight, ancho: document.documentElement.scrollWidth }; });
+      const luna = !!document.querySelector('#main .snluna[data-a="sn-vista"][data-v="noche"]');
       const tarjetas = P.SN_CIEN ? P.SN_CIEN.length : -1;
       P.ui.snTab = 'ajusta'; P.ui.snAj = 'casa'; P.render();
       document.querySelector('[data-a="sn-casa"][data-v="oscuro"]').click();
       document.querySelector('[data-a="sn-ciencia"][data-id="dormitorio"]').click();
-      const porque = { tab: P.ui.snTab, foco: !!document.querySelector('.sncien.foco#sncien-dormitorio') };
+      const porque = { hoja: !!P.ui.snCienH, foco: !!document.querySelector('.hoja .sncien.foco#sncien-dormitorio') };
+      P.ui.snCienH = false; P.ui.snCien = '';
       const casa = JSON.stringify(P.normalize(JSON.parse(JSON.stringify(P.store))).sueno.casa);
       const antes = P.suenoCfg().siesta;
       P.store.sueno.pruebas = [{ id: 'siesta3', txt: 'Siesta de 3 h', desde: P.iso(hoy), dias: {}, fin: false }];
@@ -10279,12 +10281,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.sueno.pruebas = [{ id: 'hora', txt: 'Hora fija', desde: P.iso(P.addDays(hoy, -3)), dias: {}, fin: false }];
       const hora = P.suenoPruebaDia(P.store.sueno.pruebas[0], k);
       P.store = c; P.save(); P.render();
-      return { tabs, vistas, tarjetas, porque, casa, antes, durante, despues, hora }; });
-    check('Sueño va por pestañas (Hoy, Guardia, Ajusta, Medir, Ciencia, Noche), ninguna se sale de la pantalla, y hay 24 tarjetas de ciencia',
-      r.tabs.join('|') === 'Hoy|Guardia|Ajusta|Medir|Ciencia|Noche' && Object.values(r.vistas).every((v) => v.ancho <= 412 && v.alto > 200) && r.tarjetas === 24,
+      return { tabs, vistas, luna, tarjetas, porque, casa, antes, durante, despues, hora }; });
+    check('Sueño va en cuatro pestañas (Hoy, Guardia, Mejorar, Datos) con Noche en un botón, ninguna se sale de la pantalla, y hay 24 tarjetas de ciencia',
+      r.tabs.join('|') === 'Hoy|Guardia|Mejorar|Datos' && r.luna && Object.values(r.vistas).every((v) => v.ancho <= 412 && v.alto > 200) && r.tarjetas === 24,
       JSON.stringify(r));
-    check('«por qué ›» lleva a su tarjeta; Dormitorio sobrevive a recargar; «probar 3 h» cambia la siesta solo mientras dura; «hora fija» se mide sola',
-      r.porque.tab === 'ciencia' && r.porque.foco && r.casa === '{"oscuro":1}' && r.durante === 180 && r.despues === r.antes && r.hora === 1,
+    check('«por qué ›» abre la hoja de la ciencia en su tarjeta; Dormitorio sobrevive a recargar; «probar 3 h» cambia la siesta solo mientras dura; «hora fija» se mide sola',
+      r.porque.hoja && r.porque.foco && r.casa === '{"oscuro":1}' && r.durante === 180 && r.despues === r.antes && r.hora === 1,
       JSON.stringify(r));
   }
 
@@ -10310,7 +10312,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       out.pend1 = P.snPruebaPendiente(x, d(0)); x.dias[d(-1)] = 1; out.pend2 = P.snPruebaPendiente(x, d(0));
       // hora fija con el ancla del principio
       P.store.sueno.ancla = '08:00';
-      let kH = d(-1); for (let i = 1; i < 10 && P.salidaDeGuardia(kH); i++) kH = d(-1 - i);   /* el saliente no cuenta: otro día */
+      let kH = d(-1); for (let i = 1; i < 10 && P.snTipoDia(kH) === 'sal'; i++) kH = d(-1 - i);   /* el saliente y el día siguiente no cuentan: otro día */
       P.store.suenoReal[kH] = { h: 7.5, guardia: false, acostar: '23:00', desp: '07:00' };
       out.hora = P.suenoPruebaDia({ id: 'hora', desde: d(-12), dias: {}, ancla: '07:00' }, kH);
       out.salienteNo = P.suenoPruebaDia({ id: 'hora', desde: d(-12), dias: {}, ancla: '07:00' }, kH) === 1;
@@ -10320,7 +10322,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         const r0 = P.snPlanSim(G); out.noPeor = P.snPuntua(m1.p, m1.m) >= P.snPuntua(r0.p, r0.m) || !document.querySelector('[data-a="sn-mejor"]'); } else { out.memo = true; out.noPeor = true; }
       // jet lag sin noches de finde y de diario
       P.store.suenoReal = {}; P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = 'medir'; P.render();
-      out.jet = [...document.querySelectorAll('#main .snmf')].map((e) => e.innerText).filter((t) => /jet lag/.test(t))[0] || '';
+      out.jet = [...document.querySelectorAll('#main .sntile')].map((e) => e.innerText).filter((t) => /jet lag/.test(t))[0] || '';
       // Apárcalo
       P.ui.snVista = 'noche'; P.render(); P.ui.nocheNota = 'llamar al banco'; P.render();
       out.nota = (document.getElementById('nocheNota') || {}).value || '';
@@ -10664,7 +10666,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(P.addDays(new Date(), 3)), m = P.iso(P.addDays(new Date(), 1));
       P.setDayOverride(g, null, ''); P.setDayOverride(m, G.id, 'urg'); P.ui.snG = ''; P.ui.snTodos = false; P.ui.snTab = 'ajusta'; P.ui.snAj = ''; P.save(); P.render(); });
     await page.waitForTimeout(150);
-    r.d = await page.evaluate(() => ({ puerta: !!document.querySelector('#main .snpuerta[data-v="guardia"]'), rec: ((document.querySelector('#main .snaj button[aria-selected="true"]') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    r.d = await page.evaluate(() => ({ puerta: !!document.querySelector('#main .snpuerta[data-v="guardia"]'), rec: ((document.querySelector('#main #snAj .snajt') || {}).innerText || '').replace(/\s+/g, ' ') }));
     await page.click('#main .snpuerta[data-v="guardia"]'); await page.waitForTimeout(150);
     r.d.tab = await page.evaluate(() => window.PG.ui.snTab);
     // (e) aviso de cama: se enciende desde Hora fija y va al calendario, sin la noche de guardia
@@ -10690,17 +10692,65 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       (r.a.k !== r.a.hoy || (r.a.nota && r.a.tras && r.a.tras.mal && r.a.tras.dde === r.a.pend.dde && r.a.tras.h > 0 && !r.a.tras.pend)), JSON.stringify(r.a));
     check('saliente sin apuntar: ni «8 de 8 h» ni «Bien»; Hoy avisa de la siesta y lleva a Ajusta, que dice lo mismo y respeta tus horas',
       /Saliente/.test(r.b.t) && !/8 de 8/.test(r.b.t) && /Tocado/.test(r.b.t) && /2 de 8/.test(r.b.t) &&
-      (!r.b.nota || (r.b.aj && r.b.aj.tab === 'ajusta' && /las eliges tú/.test(r.b.aj.txt) && (r.b.nota.match(/con (\d) h te dormirías/) || [])[1] === (r.b.aj.txt.match(/Con hasta (\d) h/) || [])[1])), JSON.stringify(r.b));
+      (!r.b.nota || (r.b.aj && r.b.aj.tab === 'mejorar' && /las eliges tú/.test(r.b.aj.txt) && (r.b.nota.match(/con (\d) h te dormirías/) || [])[1] === (r.b.aj.txt.match(/Con hasta (\d) h/) || [])[1])), JSON.stringify(r.b));
     check('el plan de guardia de fábrica no trae ningún café que él mismo marque «Tarde»',
       r.c.cafes.length >= 2 && r.c.cafes.every((x) => !x.mal), JSON.stringify(r.c));
     check('la víspera de guardia, Ajusta no recomienda «Tras guardia» y lleva a la pestaña Guardia',
-      r.d.puerta && !/Tras/.test(r.d.rec) && r.d.tab === 'guardia', JSON.stringify(r.d));
+      r.d.puerta && r.d.rec && !/Tras/.test(r.d.rec) && r.d.tab === 'guardia', JSON.stringify(r.d));
     check('el aviso de cama se enciende desde Hora fija y va al calendario con su alarma, sin la noche de guardia',
       r.e.on && r.e.n >= 5 && !r.e.guardia && r.e.min === 15, JSON.stringify(r.e));
     check('el 1–9 marcado por la tarde va aparte y no pisa el de la mañana (por la mañana, sí cambia el de la noche)',
       r.f.h >= 13 ? (r.f.kss === 4 && r.f.tarde === 7) : (r.f.kss === 7 && !r.f.tarde), JSON.stringify(r.f));
     check('eficiencia: con un desvelo de 1 h baja y lo cuenta; sin desvelos tampoco es 100 % (cuenta lo que tardas en dormirte)',
       r.g.dv === 1 && r.g.ef <= 92 && r.g.dv2 === 0 && r.g.ef2 < 100 && r.g.ef2 >= 95, JSON.stringify(r.g));
+  }
+
+  // 261) SUEÑO CORTO Y LA HORA FIJA SEGÚN EL DÍA, EN CADENA: «hora fija» medía todas las mañanas contra
+  // la misma hora, así que los libres (duermes más y te acuestas más tarde) y el saliente salían siempre
+  // «fuera». Ahora: trabajo contra tu hora, libre con su margen (de serie 1 h 30), saliente y el día
+  // siguiente no cuentan; «libre» sale del calendario, no del sábado. Se conduce como lo haría el usuario:
+  // Mejorar → Hora fija → cambiar el margen → la cama de esta noche (mañana libre) → el aviso → Datos → por qué
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, d = (n) => P.iso(P.addDays(new Date(), n)), G = P.store.shifts.filter(P.isGuardia)[0];
+      window.__copia261 = JSON.parse(JSON.stringify(P.store));
+      P.store.rotation.mode = 'date'; P.store.sueno.ancla = '07:00'; delete P.store.sueno.margen; P.store.sueno.avisoCama = false; P.store.sueno.pruebas = [];
+      for (let i = -8; i <= 1; i++) P.setDayOverride(d(i), 'sh-t', '');
+      P.setDayOverride(d(-6), G.id, 'urg');                     // guardia: d(-5) saliente y d(-4) el día siguiente no cuentan
+      P.setDayOverride(d(-1), 'sh-l', ''); P.setDayOverride(d(-3), 'sh-l', ''); P.setDayOverride(d(1), 'sh-l', '');
+      const n = (a, b) => { let A = P.mins(a) / 60; if (A < 18) A += 24; const B = P.mins(b) / 60 + 24; return { h: B - A, acostar: a, desp: b, guardia: false, tramos: [[A, B, 0]] }; };
+      P.store.suenoReal = {};
+      P.store.suenoReal[d(-1)] = n('00:45', '08:45');   // libre, dentro de 1 h 30 (8:30 +30)
+      P.store.suenoReal[d(-2)] = n('23:00', '07:10');   // trabajo, a su hora
+      P.store.suenoReal[d(-3)] = n('01:30', '10:00');   // libre, fuera del margen
+      P.store.suenoReal[d(-4)] = n('23:30', '11:00');   // el día siguiente al saliente: no cuenta
+      P.store.suenoReal[d(-5)] = { h: 2, rt: 2, guardia: true, ratos: true, siesta: 4, tramos: [[26, 28, 1], [33, 37, 0]] };
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = ''; P.ui.snAj = ''; P.ui.snHoja = ''; P.ui.snCienH = false; P.save(); P.render(); });
+    await page.waitForTimeout(150);
+    r.tabs = await page.evaluate(() => [...document.querySelectorAll('#main .sntabs button')].map((b) => b.textContent.trim()).join('|'));
+    await page.click('#main [data-a="sn-tab"][data-v="mejorar"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="sn-aj"][data-v="hora"]'); await page.waitForTimeout(150);
+    r.antes = await page.evaluate(() => ({ cifras: [...document.querySelectorAll('#main .snhf3 b')].map((b) => b.textContent), on: (document.querySelector('#main .snmarg button.on') || {}).textContent || '' }));
+    await page.click('#main [data-a="sn-margen"][data-v="60"]'); await page.waitForTimeout(150);
+    r.despues = await page.evaluate(() => ({ margen: window.PG.store.sueno.margen, cifras: [...document.querySelectorAll('#main .snhf3 b')].map((b) => b.textContent) }));
+    await page.click('#snAj [data-a="sn-avcama"]'); await page.waitForTimeout(150);
+    r.cama = await page.evaluate(() => { const P = window.PG, h = P.iso(new Date()), ev = P.calEventos(h, h).filter((e) => /A la cama/.test(e.summ))[0];
+      return { cama: P.snCamaDe(h), ev: ev && ev.hora, mañana: P.suenoAnclaDe(P.iso(P.addDays(new Date(), 1))) }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); }); await page.waitForTimeout(120);
+    r.hoyCard = await page.evaluate(() => ((document.querySelector('#main .snhoy') || {}).innerText || '').replace(/\s+/g, ' '));
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'datos'; P.render(); }); await page.waitForTimeout(120);
+    r.datos = await page.evaluate(() => [...document.querySelectorAll('#main .sntile')].map((e) => e.innerText.replace(/\s+/g, ' ')));
+    await page.click('#main .sntile[data-id="jetlag"]'); await page.waitForTimeout(150);
+    r.cien = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja .sncien.foco#sncien-jetlag'), texto: !!document.querySelector('.hoja .sncien.foco .sncient') }));
+    await page.click('.hoja .hgrab'); await page.waitForTimeout(120);
+    r.cerrada = await page.evaluate(() => !document.querySelector('.hoja') && !window.PG.ui.snCienH);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia261; P.save(); P.ui.hoyVista = ''; P.ui.snTab = ''; P.ui.snAj = ''; P.render(); });
+    check('Sueño en cuatro pestañas; hora fija según el día: trabajo a su hora, libres con margen de 1 h 30, el saliente y el día siguiente no cuentan',
+      r.tabs === 'Hoy|Guardia|Mejorar|Datos' && r.antes.on === '1h30' && r.antes.cifras.join('|') === '1/1|1/2|2', JSON.stringify(r));
+    check('cambiar el margen de los libres a 1 h mueve lo que cuenta, la cama de esta noche (mañana libre: 8:00 → 23:50), su aviso y la tarjeta de Hoy',
+      r.despues.margen === 60 && r.despues.cifras.join('|') === '1/1|0/2|2' && r.cama.mañana === '08:00' && r.cama.cama === '23:50' && r.cama.ev === '23:50' && /23:50/.test(r.hoyCard), JSON.stringify(r));
+    check('Datos compara tus libres con tus días de trabajo y cada cifra abre su «por qué» en la hoja de la ciencia, que se cierra',
+      r.datos.some((t) => /más tarde los libres/.test(t)) && r.cien.hoja && r.cien.texto && r.cerrada, JSON.stringify({ datos: r.datos, cien: r.cien, cerrada: r.cerrada }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
