@@ -1,0 +1,5847 @@
+[
+{
+"f": "un plátano",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "dos huevos",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+120,
+200
+]
+},
+{
+"f": "200 g de pollo",
+"tiene": [
+"pechuga de pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+300
+]
+},
+{
+"f": "medio aguacate",
+"tiene": [
+"aguacate"
+],
+"dudas": 0,
+"kcal": [
+80,
+160
+]
+},
+{
+"f": "un puñado de almendras",
+"tiene": [
+"almendra"
+],
+"dudas": 0,
+"kcal": [
+100,
+220
+]
+},
+{
+"f": "un vaso de leche",
+"tiene": [
+"leche"
+],
+"dudas": 0,
+"kcal": [
+80,
+180
+]
+},
+{
+"f": "un yogur griego",
+"tiene": [
+"yogur griego"
+],
+"dudas": 0,
+"kcal": [
+90,
+220
+]
+},
+{
+"f": "una manzana",
+"tiene": [
+"manzana"
+],
+"dudas": 0,
+"kcal": [
+50,
+120
+]
+},
+{
+"f": "un kiwi y una naranja",
+"tiene": [
+"kiwi",
+"naranja"
+],
+"dudas": 0,
+"kcal": [
+80,
+170
+]
+},
+{
+"f": "un plátano y un yogur",
+"tiene": [
+"platano",
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+150,
+280
+]
+},
+{
+"f": "100 g de arroz",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+100,
+380
+]
+},
+{
+"f": "150 g de salmón",
+"tiene": [
+"salmon"
+],
+"dudas": 0,
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "250 ml de leche",
+"tiene": [
+"leche"
+],
+"dudas": 0,
+"kcal": [
+80,
+170
+]
+},
+{
+"f": "2 rebanadas de pan de molde",
+"tiene": [
+"pan de molde"
+],
+"dudas": 0,
+"kcal": [
+100,
+200
+]
+},
+{
+"f": "3 lonchas de jamón serrano",
+"tiene": [
+"jamon serrano"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "una cucharada de aceite",
+"tiene": [
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+70,
+100
+]
+},
+{
+"f": "una cucharada de crema de cacahuete",
+"tiene": [
+"crema de cacahuete"
+],
+"dudas": 0,
+"kcal": [
+40,
+120
+]
+},
+{
+"f": "una onza de chocolate",
+"tiene": [
+"chocolate"
+],
+"dudas": 0,
+"kcal": [
+30,
+80
+]
+},
+{
+"f": "un huevo cocido",
+"tiene": [
+"huevo cocido"
+],
+"dudas": 0,
+"kcal": [
+60,
+110
+]
+},
+{
+"f": "una lata de atún",
+"tiene": [
+"atun"
+],
+"no": [
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+40,
+180
+]
+},
+{
+"f": "una lata de atún en aceite",
+"tiene": [
+"atun en aceite"
+],
+"no": [
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+90,
+260
+]
+},
+{
+"f": "una lata de sardinas",
+"tiene": [
+"sardina"
+],
+"dudas": 0,
+"kcal": [
+100,
+320
+]
+},
+{
+"f": "una lata de mejillones en escabeche",
+"tiene": [
+"mejillon"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "un bote de garbanzos",
+"tiene": [
+"garbanzo"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "un vaso de zumo de naranja",
+"tiene": [
+"zumo de naranja"
+],
+"dudas": 0,
+"kcal": [
+60,
+140
+]
+},
+{
+"f": "un tazón de leche con cacao",
+"tiene": [
+"leche",
+"cacao"
+],
+"dudas": 0,
+"kcal": [
+150,
+380
+]
+},
+{
+"f": "una taza de café",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+60
+]
+},
+{
+"f": "un puñado de frutos secos",
+"tiene": [
+"frutos secos"
+],
+"dudas": 0,
+"kcal": [
+120,
+250
+]
+},
+{
+"f": "un café con leche",
+"tiene": [
+"cafe con leche"
+],
+"dudas": 0,
+"kcal": [
+30,
+140
+]
+},
+{
+"f": "un café solo",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+20
+]
+},
+{
+"f": "una cerveza",
+"tiene": [
+"cerveza"
+],
+"dudas": 0,
+"kcal": [
+80,
+200
+]
+},
+{
+"f": "dos cervezas",
+"tiene": [
+"cerveza"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "una caña",
+"tiene": [
+"cana|cerveza"
+],
+"dudas": 0,
+"kcal": [
+50,
+130
+]
+},
+{
+"f": "un tercio",
+"tiene": [
+"tercio|cerveza"
+],
+"dudas": 0,
+"kcal": [
+100,
+200
+]
+},
+{
+"f": "una coca cola",
+"tiene": [
+"cola"
+],
+"dudas": 0,
+"kcal": [
+100,
+200
+]
+},
+{
+"f": "una coca cola zero",
+"tiene": [
+"zero"
+],
+"dudas": 0,
+"kcal": [
+0,
+10
+]
+},
+{
+"f": "un colacao",
+"tiene": [
+"cao"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "una copa de vino",
+"tiene": [
+"vino"
+],
+"dudas": 0,
+"kcal": [
+80,
+170
+]
+},
+{
+"f": "un vaso de vino",
+"tiene": [
+"vino"
+],
+"dudas": 0,
+"kcal": [
+80,
+220
+]
+},
+{
+"f": "agua",
+"dudas": 0,
+"kcal": [
+0,
+0
+]
+},
+{
+"f": "una caña y unas aceitunas",
+"tiene": [
+"cana|cerveza",
+"aceituna"
+],
+"dudas": 0,
+"kcal": [
+90,
+250
+]
+},
+{
+"f": "una tostada con aceite",
+"tiene": [
+"pan",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+100,
+220
+]
+},
+{
+"f": "dos tostadas con tomate y aceite",
+"tiene": [
+"pan",
+"tomate",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+180,
+380
+]
+},
+{
+"f": "dos tostadas con aguacate y huevo",
+"tiene": [
+"pan",
+"aguacate",
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+250,
+520
+]
+},
+{
+"f": "tostada con mantequilla y mermelada",
+"tiene": [
+"mantequilla",
+"mermelada"
+],
+"dudas": 0,
+"kcal": [
+150,
+330
+]
+},
+{
+"f": "tostada con pavo y queso fresco",
+"tiene": [
+"pan",
+"pavo",
+"queso fresco"
+],
+"dudas": 0,
+"kcal": [
+120,
+300
+]
+},
+{
+"f": "tostada con aguacate",
+"tiene": [
+"aguacate"
+],
+"dudas": 0,
+"kcal": [
+120,
+300
+]
+},
+{
+"f": "un bocadillo de jamón serrano",
+"tiene": [
+"pan",
+"jamon serrano"
+],
+"dudas": 0,
+"kcal": [
+300,
+520
+]
+},
+{
+"f": "bocata de tortilla",
+"tiene": [
+"pan",
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+350,
+650
+]
+},
+{
+"f": "bocadillo de jamón york y queso",
+"tiene": [
+"jamon cocido",
+"queso"
+],
+"dudas": 0,
+"kcal": [
+300,
+560
+]
+},
+{
+"f": "un sándwich mixto",
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "bocadillo de calamares",
+"tiene": [
+"calamar"
+],
+"dudas": 0,
+"kcal": [
+400,
+750
+]
+},
+{
+"f": "bocadillo de lomo con queso",
+"tiene": [
+"lomo",
+"queso"
+],
+"dudas": 0,
+"kcal": [
+400,
+750
+]
+},
+{
+"f": "un montadito de lomo",
+"tiene": [
+"lomo"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "pan con tomate y jamón",
+"tiene": [
+"pan",
+"tomate",
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "bocadillo de atún con tomate",
+"tiene": [
+"atun",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+300,
+550
+]
+},
+{
+"f": "bocadillo de pavo",
+"tiene": [
+"pavo"
+],
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "bocadillo de chorizo",
+"tiene": [
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+350,
+650
+]
+},
+{
+"f": "un serranito",
+"tiene": [
+"lomo",
+"jamon serrano",
+"pimiento"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "un sándwich vegetal",
+"tiene": [
+"lechuga",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un sándwich de pollo",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un wrap de pollo",
+"tiene": [
+"wrap|tortilla de trigo",
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "medio bocadillo de jamón",
+"tiene": [
+"pan",
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+130,
+300
+]
+},
+{
+"f": "un bocadillo grande de lomo",
+"tiene": [
+"lomo"
+],
+"dudas": 0,
+"kcal": [
+450,
+850
+]
+},
+{
+"f": "bocadillo pequeño de queso",
+"tiene": [
+"queso"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "huevos turcos",
+"tiene": [
+"huevos turcos"
+],
+"dudas": 0,
+"kcal": [
+300,
+500
+]
+},
+{
+"f": "huevos rotos",
+"tiene": [
+"huevo",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+400,
+700
+]
+},
+{
+"f": "tortilla de patatas",
+"tiene": [
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+180,
+400
+]
+},
+{
+"f": "un pincho de tortilla",
+"tiene": [
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "tortilla francesa de dos huevos",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+150,
+260
+]
+},
+{
+"f": "revuelto de gambas",
+"tiene": [
+"gamba"
+],
+"dudas": 0,
+"kcal": [
+200,
+400
+]
+},
+{
+"f": "huevos con bacon",
+"tiene": [
+"huevo",
+"bacon"
+],
+"dudas": 0,
+"kcal": [
+250,
+500
+]
+},
+{
+"f": "dos huevos fritos con patatas",
+"tiene": [
+"huevo",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+350,
+800
+]
+},
+{
+"f": "un pincho de tortilla y un café con leche",
+"tiene": [
+"tortilla",
+"cafe con leche"
+],
+"dudas": 0,
+"kcal": [
+200,
+420
+]
+},
+{
+"f": "pechuga a la plancha",
+"tiene": [
+"pechuga de pollo"
+],
+"dudas": 0,
+"kcal": [
+150,
+300
+]
+},
+{
+"f": "pechuga a la plancha con arroz",
+"tiene": [
+"pechuga de pollo",
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+330,
+600
+]
+},
+{
+"f": "pollo a la plancha con ensalada",
+"tiene": [
+"pollo",
+"ensalada|lechuga"
+],
+"dudas": 0,
+"kcal": [
+180,
+420
+]
+},
+{
+"f": "salmón a la plancha",
+"tiene": [
+"salmon"
+],
+"dudas": 0,
+"kcal": [
+200,
+420
+]
+},
+{
+"f": "salmón al horno con patatas",
+"tiene": [
+"salmon",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "merluza al horno con verduras",
+"tiene": [
+"merluza",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "merluza a la plancha",
+"tiene": [
+"merluza"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "lubina a la sal",
+"tiene": [
+"lubina"
+],
+"dudas": 0,
+"kcal": [
+120,
+350
+]
+},
+{
+"f": "dorada al horno",
+"tiene": [
+"dorada"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "filete de ternera con patatas fritas",
+"tiene": [
+"ternera",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+350,
+850
+]
+},
+{
+"f": "lomo de cerdo a la plancha",
+"tiene": [
+"lomo de cerdo"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "pollo asado",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "muslos de pollo al horno",
+"tiene": [
+"muslo de pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "alitas de pollo",
+"tiene": [
+"alitas"
+],
+"dudas": 0,
+"kcal": [
+200,
+700
+]
+},
+{
+"f": "chuleta de cerdo con ensalada",
+"tiene": [
+"chuleta de cerdo"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "entrecot con pimientos",
+"tiene": [
+"entrecot",
+"pimiento"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "pechuga empanada",
+"tiene": [
+"pechuga empanada|pechuga"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "san jacobo",
+"tiene": [
+"san jacobo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "varitas de merluza",
+"tiene": [
+"varitas"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "pulpo a la gallega",
+"tiene": [
+"pulpo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "gambas al ajillo",
+"tiene": [
+"gamba"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "mejillones al vapor",
+"tiene": [
+"mejillon"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "boquerones fritos",
+"tiene": [
+"boqueron"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "calamares a la romana",
+"tiene": [
+"calamar"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "atún con tomate",
+"tiene": [
+"atun",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "hamburguesa con patatas",
+"tiene": [
+"hamburguesa",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+500,
+950
+]
+},
+{
+"f": "hamburguesa de ternera",
+"tiene": [
+"hamburguesa de ternera"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "albóndigas en salsa",
+"tiene": [
+"albondiga"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "nuggets de pollo",
+"tiene": [
+"nuggets"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "wok de pollo",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "pollo al curry con arroz",
+"tiene": [
+"curry",
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+450,
+900
+]
+},
+{
+"f": "chili con carne",
+"tiene": [
+"chili|carne picada"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+150,
+500
+]
+},
+{
+"f": "un plato de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+180,
+550
+]
+},
+{
+"f": "lentejas con chorizo",
+"tiene": [
+"lenteja",
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+300,
+750
+]
+},
+{
+"f": "garbanzos con espinacas",
+"tiene": [
+"garbanzo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "fabada",
+"tiene": [
+"fabada"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "cocido madrileño",
+"tiene": [
+"cocido"
+],
+"dudas": 0,
+"kcal": [
+400,
+800
+]
+},
+{
+"f": "potaje de garbanzos",
+"tiene": [
+"potaje|garbanzo"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "macarrones con tomate",
+"tiene": [
+"macarron|pasta",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "macarrones con tomate y atún",
+"tiene": [
+"macarron|pasta",
+"tomate",
+"atun"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "espaguetis a la carbonara",
+"tiene": [
+"carbonara"
+],
+"dudas": 0,
+"kcal": [
+450,
+800
+]
+},
+{
+"f": "espaguetis a la boloñesa",
+"tiene": [
+"bolonesa"
+],
+"dudas": 0,
+"kcal": [
+400,
+750
+]
+},
+{
+"f": "pasta al pesto",
+"tiene": [
+"pesto"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "lasaña",
+"tiene": [
+"lasana"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "arroz con pollo",
+"tiene": [
+"arroz",
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "arroz tres delicias",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "paella",
+"tiene": [
+"paella"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "paella de marisco",
+"tiene": [
+"paella"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "risotto de setas",
+"tiene": [
+"arroz|risotto"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "arroz blanco con huevo frito",
+"tiene": [
+"arroz",
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+300,
+600
+]
+},
+{
+"f": "quinoa con verduras",
+"tiene": [
+"quinoa",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "tofu con verduras",
+"tiene": [
+"tofu",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "arroz con leche",
+"tiene": [
+"arroz con leche"
+],
+"dudas": 0,
+"kcal": [
+150,
+380
+]
+},
+{
+"f": "pizza margarita",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "dos porciones de pizza",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "kebab",
+"tiene": [
+"kebab"
+],
+"dudas": 0,
+"kcal": [
+500,
+900
+]
+},
+{
+"f": "un dürum",
+"tiene": [
+"durum"
+],
+"dudas": 0,
+"kcal": [
+600,
+1000
+]
+},
+{
+"f": "sushi",
+"tiene": [
+"sushi"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "16 piezas de sushi",
+"tiene": [
+"sushi"
+],
+"dudas": 0,
+"kcal": [
+500,
+900
+]
+},
+{
+"f": "un poke de salmón",
+"tiene": [
+"poke de salmon"
+],
+"dudas": 0,
+"kcal": [
+450,
+750
+]
+},
+{
+"f": "burrito de pollo",
+"tiene": [
+"burrito|tortilla de trigo",
+"pollo"
+],
+"no": [
+"fiambre"
+],
+"dudas": 0,
+"kcal": [
+450,
+950
+]
+},
+{
+"f": "tacos de pollo",
+"tiene": [
+"taco|tortilla",
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "fajitas de pollo",
+"tiene": [
+"fajita"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "un big mac",
+"tiene": [
+"big mac"
+],
+"dudas": 0,
+"kcal": [
+450,
+560
+]
+},
+{
+"f": "menú big mac",
+"tiene": [
+"big mac"
+],
+"dudas": 0,
+"kcal": [
+900,
+1100
+]
+},
+{
+"f": "un whopper",
+"tiene": [
+"whopper"
+],
+"dudas": 0,
+"kcal": [
+550,
+700
+]
+},
+{
+"f": "patatas bravas",
+"tiene": [
+"bravas|patata"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "croquetas de jamón",
+"tiene": [
+"croqueta"
+],
+"dudas": 0,
+"kcal": [
+200,
+550
+]
+},
+{
+"f": "6 croquetas",
+"tiene": [
+"croqueta"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "ensaladilla rusa",
+"tiene": [
+"ensaladilla"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "tarta de queso",
+"tiene": [
+"tarta de queso"
+],
+"dudas": 0,
+"kcal": [
+300,
+500
+]
+},
+{
+"f": "menú del día",
+"tiene": [
+"menu del dia"
+],
+"dudas": 0,
+"kcal": [
+1000,
+1700
+]
+},
+{
+"f": "una ensalada mixta",
+"tiene": [
+"ensalada mixta"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "ensalada césar",
+"tiene": [
+"cesar"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "ensalada de pasta",
+"tiene": [
+"ensalada de pasta"
+],
+"dudas": 0,
+"kcal": [
+300,
+600
+]
+},
+{
+"f": "ensalada de tomate",
+"tiene": [
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "una ensalada",
+"tiene": [
+"ensalada"
+],
+"dudas": 0,
+"kcal": [
+10,
+150
+]
+},
+{
+"f": "ensalada de atún",
+"tiene": [
+"atun"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "gazpacho",
+"tiene": [
+"gazpacho"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "un vaso de gazpacho",
+"tiene": [
+"gazpacho"
+],
+"dudas": 0,
+"kcal": [
+60,
+200
+]
+},
+{
+"f": "salmorejo",
+"tiene": [
+"salmorejo"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "crema de calabacín",
+"tiene": [
+"calabacin"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "sopa de fideos",
+"tiene": [
+"sopa"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "una sopa de cocido",
+"tiene": [
+"sopa|cocido"
+],
+"dudas": 0,
+"kcal": [
+80,
+400
+]
+},
+{
+"f": "pisto con huevo",
+"tiene": [
+"pisto",
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+180,
+400
+]
+},
+{
+"f": "menestra de verduras",
+"tiene": [
+"menestra"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "judías verdes con patata",
+"tiene": [
+"judia",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+120,
+350
+]
+},
+{
+"f": "brócoli al vapor",
+"tiene": [
+"brocoli"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "verduras a la plancha",
+"tiene": [
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+50,
+250
+]
+},
+{
+"f": "puré de verduras",
+"tiene": [
+"pure"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "hummus con zanahoria",
+"tiene": [
+"hummus",
+"zanahoria"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "guacamole con nachos",
+"tiene": [
+"guacamole"
+],
+"dudas": 0,
+"kcal": [
+200,
+600
+]
+},
+{
+"f": "un yogur con granola y fresas",
+"tiene": [
+"yogur",
+"granola",
+"fresa"
+],
+"dudas": 0,
+"kcal": [
+250,
+500
+]
+},
+{
+"f": "yogur con nueces y miel",
+"tiene": [
+"yogur",
+"nuez",
+"miel"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un bol de cereales con leche",
+"tiene": [
+"cereales",
+"leche"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "avena con leche y plátano",
+"tiene": [
+"avena",
+"leche",
+"platano"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "porridge",
+"tiene": [
+"porridge|avena"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "tortitas de avena",
+"tiene": [
+"tortitas de avena"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "un croissant",
+"tiene": [
+"croissant"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "dos magdalenas",
+"tiene": [
+"magdalena"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un donut",
+"tiene": [
+"donut"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "churros con chocolate",
+"tiene": [
+"churro",
+"chocolate"
+],
+"dudas": 0,
+"kcal": [
+350,
+800
+]
+},
+{
+"f": "galletas maría",
+"tiene": [
+"galletas maria"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "4 galletas",
+"tiene": [
+"galleta"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "un helado",
+"tiene": [
+"helado"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "un flan",
+"tiene": [
+"flan"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "unas natillas",
+"tiene": [
+"natillas"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "una barrita de proteínas",
+"tiene": [
+"barrita de proteinas"
+],
+"dudas": 0,
+"kcal": [
+150,
+300
+]
+},
+{
+"f": "un batido de proteínas",
+"tiene": [
+"batido|proteina"
+],
+"dudas": 0,
+"kcal": [
+100,
+320
+]
+},
+{
+"f": "batido de whey con leche",
+"tiene": [
+"whey|proteina",
+"leche"
+],
+"dudas": 0,
+"kcal": [
+200,
+420
+]
+},
+{
+"f": "colacao con galletas",
+"tiene": [
+"cao",
+"galleta"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "platano con crema de cacahuete",
+"tiene": [
+"platano",
+"crema de cacahuete"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "macarones con atun",
+"tiene": [
+"macarron|pasta",
+"atun"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "yogurt griego",
+"tiene": [
+"yogur griego"
+],
+"dudas": 0,
+"kcal": [
+90,
+220
+]
+},
+{
+"f": "jamon york",
+"tiene": [
+"jamon cocido"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "esparragos a la plancha",
+"tiene": [
+"esparrago"
+],
+"dudas": 0,
+"kcal": [
+20,
+150
+]
+},
+{
+"f": "una hamburguesa casera",
+"tiene": [
+"hamburguesa"
+],
+"dudas": 0,
+"kcal": [
+300,
+750
+]
+},
+{
+"f": "dos piezas de fruta",
+"pregunta": [
+"fruta"
+],
+"dudas": 1
+},
+{
+"f": "fruta",
+"pregunta": [
+"fruta"
+],
+"dudas": 1
+},
+{
+"f": "una pieza de fruta",
+"pregunta": [
+"fruta"
+],
+"dudas": 1
+},
+{
+"f": "un filete",
+"pregunta": [
+"filete"
+],
+"dudas": 1
+},
+{
+"f": "un filete con patatas",
+"tiene": [
+"filete"
+],
+"kcal": [
+400,
+900
+],
+"dudas": 0
+},
+{
+"f": "carne",
+"pregunta": [
+"carne"
+],
+"dudas": 1
+},
+{
+"f": "pescado con ensalada",
+"pregunta": [
+"pescado"
+]
+},
+{
+"f": "embutido",
+"pregunta": [
+"embutido"
+],
+"dudas": 1
+},
+{
+"f": "sopa",
+"pregunta": [
+"sopa"
+],
+"dudas": 1
+},
+{
+"f": "un menú del día: sopa y filete con patatas",
+"no": [
+"fiambre"
+],
+"pregunta": [
+"sopa",
+"filete"
+]
+},
+{
+"f": "menú del día: ensalada mixta, merluza a la plancha y flan",
+"tiene": [
+"ensalada mixta",
+"merluza",
+"flan"
+],
+"dudas": 0,
+"kcal": [
+350,
+900
+]
+},
+{
+"f": "de cena merluza con patatas",
+"tiene": [
+"merluza",
+"patata"
+],
+"pos": "cena"
+},
+{
+"f": "para desayunar café con leche y tostadas",
+"tiene": [
+"cafe con leche",
+"pan"
+],
+"pos": "desayuno"
+},
+{
+"f": "he comido lentejas",
+"tiene": [
+"lenteja"
+]
+},
+{
+"f": "he cenado una ensalada de pollo",
+"tiene": [
+"pollo"
+],
+"pos": "cena"
+},
+{
+"f": "merienda: un yogur",
+"tiene": [
+"yogur"
+],
+"dudas": 0,
+"pos": "merienda"
+},
+{
+"f": "a media mañana una pieza de fruta",
+"pregunta": [
+"fruta"
+],
+"pos": "media"
+},
+{
+"f": "después de entrenar un batido de proteínas",
+"tiene": [
+"proteina"
+],
+"pos": "post-entreno"
+},
+{
+"f": "un filete de ternera",
+"tiene": [
+"filete de ternera"
+],
+"kcal": [
+120,
+300
+],
+"dudas": 0
+},
+{
+"f": "filete con ensalada",
+"pregunta": [
+"filete"
+]
+},
+{
+"f": "lentejas, pan y una manzana",
+"tiene": [
+"lenteja",
+"pan",
+"manzana"
+],
+"dudas": 0,
+"kcal": [
+300,
+750
+]
+},
+{
+"f": "macarrones con tomate, una ensalada y un yogur",
+"tiene": [
+"pasta|macarron",
+"ensalada",
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+400,
+900
+]
+},
+{
+"f": "pollo con arroz y brócoli",
+"tiene": [
+"pollo",
+"arroz",
+"brocoli"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "salmón con quinoa y espárragos",
+"tiene": [
+"salmon",
+"quinoa",
+"esparrago"
+],
+"dudas": 0,
+"kcal": [
+400,
+800
+]
+},
+{
+"f": "dos huevos revueltos con una tostada",
+"tiene": [
+"huevo",
+"pan"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "café con leche y dos galletas",
+"tiene": [
+"cafe con leche",
+"galleta"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "un yogur, un plátano y un puñado de nueces",
+"tiene": [
+"yogur",
+"platano",
+"nuez"
+],
+"dudas": 0,
+"kcal": [
+300,
+550
+]
+},
+{
+"f": "tortilla de patatas con ensalada",
+"tiene": [
+"tortilla",
+"ensalada"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "una hamburguesa, patatas y una coca cola",
+"tiene": [
+"hamburguesa",
+"patata",
+"cola"
+],
+"dudas": 0,
+"kcal": [
+700,
+1300
+]
+},
+{
+"f": "bocadillo de jamón y una cerveza",
+"tiene": [
+"jamon",
+"cerveza"
+],
+"dudas": 0,
+"kcal": [
+400,
+700
+]
+},
+{
+"f": "lentejas y de postre un yogur",
+"tiene": [
+"lenteja",
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+250,
+650
+]
+},
+{
+"f": "pollo asado y de postre fruta",
+"tiene": [
+"pollo"
+],
+"pregunta": [
+"fruta"
+]
+},
+{
+"f": "cena: tortilla francesa y ensalada",
+"tiene": [
+"tortilla|huevo",
+"ensalada"
+],
+"dudas": 0,
+"pos": "cena"
+},
+{
+"f": "desayuno: tostadas con aceite y café",
+"tiene": [
+"pan",
+"aceite",
+"cafe"
+],
+"dudas": 0,
+"pos": "desayuno"
+},
+{
+"f": "de desayuno un colacao y galletas",
+"tiene": [
+"cao",
+"galleta"
+],
+"dudas": 0,
+"pos": "desayuno"
+},
+{
+"f": "para cenar pescado",
+"pregunta": [
+"pescado"
+],
+"pos": "cena"
+},
+{
+"f": "ayer cené pizza",
+"pregunta": [
+"pizza"
+],
+"pos": "cena"
+},
+{
+"f": "he merendado un bocadillo de pavo",
+"tiene": [
+"pavo"
+],
+"dudas": 0,
+"pos": "merienda"
+},
+{
+"f": "media ración de croquetas",
+"tiene": [
+"croqueta"
+],
+"dudas": 0,
+"kcal": [
+150,
+330
+]
+},
+{
+"f": "una ración de patatas bravas",
+"tiene": [
+"bravas|patata"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "dos raciones de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+350,
+1000
+]
+},
+{
+"f": "un plato grande de macarrones",
+"tiene": [
+"macarron|pasta"
+],
+"dudas": 0,
+"kcal": [
+350,
+800
+]
+},
+{
+"f": "un plato pequeño de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+100,
+400
+]
+},
+{
+"f": "un poco de queso",
+"tiene": [
+"queso"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "una tostada con un poco de aceite",
+"tiene": [
+"pan",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+100,
+200
+]
+},
+{
+"f": "media pechuga de pollo",
+"tiene": [
+"pechuga de pollo"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "un cuarto de pollo asado",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "1/2 aguacate",
+"tiene": [
+"aguacate"
+],
+"dudas": 0,
+"kcal": [
+80,
+160
+]
+},
+{
+"f": "300 g de lentejas cocidas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "80 g de arroz",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+90,
+320
+]
+},
+{
+"f": "un litro de agua",
+"dudas": 0,
+"kcal": [
+0,
+10
+]
+},
+{
+"f": "dos vasos de leche",
+"tiene": [
+"leche"
+],
+"dudas": 0,
+"kcal": [
+180,
+350
+]
+},
+{
+"f": "3 cucharadas de aceite",
+"tiene": [
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+200,
+300
+]
+},
+{
+"f": "un trozo de tarta",
+"tiene": [
+"tarta"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "un trozo de pan",
+"tiene": [
+"pan"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "dos lonchas de queso",
+"tiene": [
+"queso"
+],
+"dudas": 0,
+"kcal": [
+40,
+200
+]
+},
+{
+"f": "5 aceitunas",
+"tiene": [
+"aceituna"
+],
+"dudas": 0,
+"kcal": [
+10,
+80
+]
+},
+{
+"f": "un racimo de uvas",
+"tiene": [
+"uva"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "una tableta de chocolate",
+"tiene": [
+"chocolate"
+],
+"dudas": 0,
+"kcal": [
+400,
+700
+]
+},
+{
+"f": "café sin azúcar",
+"tiene": [
+"cafe"
+],
+"no": [
+"azucar"
+],
+"dudas": 0,
+"kcal": [
+0,
+20
+]
+},
+{
+"f": "un café con leche sin lactosa",
+"tiene": [
+"cafe|leche"
+],
+"dudas": 0,
+"kcal": [
+30,
+140
+]
+},
+{
+"f": "pan sin gluten con tomate",
+"tiene": [
+"pan sin gluten",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "yogur natural sin azúcar",
+"tiene": [
+"yogur natural"
+],
+"no": [
+"azucar"
+],
+"dudas": 0,
+"kcal": [
+50,
+150
+]
+},
+{
+"f": "café con leche de avena",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+20,
+150
+]
+},
+{
+"f": "café con sacarina",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+20
+]
+},
+{
+"f": "un café con azúcar",
+"tiene": [
+"cafe",
+"azucar"
+],
+"dudas": 0,
+"kcal": [
+15,
+60
+]
+},
+{
+"f": "un té",
+"tiene": [
+"te|infusion"
+],
+"dudas": 0,
+"kcal": [
+0,
+20
+]
+},
+{
+"f": "una infusión",
+"tiene": [
+"infusion"
+],
+"dudas": 0,
+"kcal": [
+0,
+20
+]
+},
+{
+"f": "un zumo",
+"tiene": [
+"zumo"
+],
+"dudas": 0,
+"kcal": [
+50,
+150
+]
+},
+{
+"f": "un batido de fresa",
+"tiene": [
+"batido"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "una cerveza sin alcohol",
+"tiene": [
+"cerveza sin alcohol"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "un tinto de verano",
+"tiene": [
+"tinto de verano"
+],
+"dudas": 0,
+"kcal": [
+80,
+200
+]
+},
+{
+"f": "un gin tonic",
+"tiene": [
+"gin"
+],
+"dudas": 0,
+"kcal": [
+150,
+300
+]
+},
+{
+"f": "un vaso de agua con gas",
+"dudas": 0,
+"kcal": [
+0,
+10
+]
+},
+{
+"f": "un red bull",
+"tiene": [
+"energetica"
+],
+"dudas": 0,
+"kcal": [
+80,
+160
+]
+},
+{
+"f": "un aquarius",
+"tiene": [
+"isotonica"
+],
+"dudas": 0,
+"kcal": [
+40,
+140
+]
+},
+{
+"f": "un menú del burger king",
+"pregunta": [
+"menu|burger"
+]
+},
+{
+"f": "un whopper con patatas",
+"tiene": [
+"whopper",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+800,
+1100
+]
+},
+{
+"f": "una porción de pizza barbacoa",
+"tiene": [
+"pizza barbacoa"
+],
+"dudas": 0,
+"kcal": [
+180,
+320
+]
+},
+{
+"f": "pizza de jamón y queso",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "una pizza familiar",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "nuggets del mcdonalds",
+"tiene": [
+"nuggets"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "un mcflurry",
+"tiene": [
+"mcflurry"
+],
+"dudas": 0,
+"kcal": [
+300,
+400
+]
+},
+{
+"f": "un donut de chocolate",
+"tiene": [
+"donut"
+],
+"dudas": 0,
+"kcal": [
+200,
+350
+]
+},
+{
+"f": "un frappuccino",
+"tiene": [
+"frappuccino"
+],
+"dudas": 0,
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un caffè latte del starbucks",
+"tiene": [
+"latte"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "ramen",
+"tiene": [
+"ramen"
+],
+"dudas": 0,
+"kcal": [
+400,
+800
+]
+},
+{
+"f": "un poke bowl",
+"tiene": [
+"poke"
+],
+"dudas": 0,
+"kcal": [
+450,
+750
+]
+},
+{
+"f": "un perrito caliente",
+"tiene": [
+"perrito"
+],
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "unas alitas de pollo picantes",
+"tiene": [
+"alitas"
+],
+"dudas": 0,
+"kcal": [
+200,
+700
+]
+},
+{
+"f": "salmorejo con huevo y jamón",
+"tiene": [
+"salmorejo",
+"huevo",
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "pimientos de padrón",
+"tiene": [
+"padron|pimiento"
+],
+"dudas": 0,
+"kcal": [
+50,
+300
+]
+},
+{
+"f": "patatas a lo pobre",
+"tiene": [
+"patata"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "migas",
+"tiene": [
+"migas|pan"
+],
+"dudas": 0,
+"kcal": [
+300,
+800
+]
+},
+{
+"f": "cachopo",
+"tiene": [
+"cachopo|ternera"
+],
+"dudas": 0,
+"kcal": [
+600,
+1300
+]
+},
+{
+"f": "flamenquín",
+"tiene": [
+"flamenquin|lomo"
+],
+"dudas": 0,
+"kcal": [
+400,
+900
+]
+},
+{
+"f": "pollo al ajillo",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "callos",
+"tiene": [
+"callos"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "morcilla",
+"tiene": [
+"morcilla"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "torrijas",
+"tiene": [
+"torrija"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "crema catalana",
+"tiene": [
+"crema catalana|natillas"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "arroz negro",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "fideuá",
+"tiene": [
+"fideua|fideo"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "marmitako",
+"tiene": [
+"marmitako|bonito|atun"
+],
+"dudas": 0,
+"kcal": [
+300,
+600
+]
+},
+{
+"f": "empanada gallega",
+"tiene": [
+"empanada"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "pan con aceite",
+"tiene": [
+"pan",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "tostada con tomate",
+"tiene": [
+"pan",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "un pincho de lomo",
+"tiene": [
+"lomo"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "una tapa de ensaladilla",
+"tiene": [
+"ensaladilla"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "una tapa de jamón",
+"tiene": [
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "chorizo a la sidra",
+"tiene": [
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "escalivada",
+"tiene": [
+"escalivada|pimiento|berenjena"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "ensalada de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "ensalada de quinoa",
+"tiene": [
+"quinoa"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "ensalada de garbanzos",
+"tiene": [
+"garbanzo"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "lentejas estofadas",
+"tiene": [
+"lentejas estofadas|lenteja"
+],
+"dudas": 0,
+"kcal": [
+250,
+800
+]
+},
+{
+"f": "pollo al curry",
+"tiene": [
+"curry"
+],
+"dudas": 0,
+"kcal": [
+400,
+700
+]
+},
+{
+"f": "tortilla de patata y cebolla",
+"tiene": [
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "crema de verduras con pollo",
+"tiene": [
+"crema de verduras"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "el táper de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+250,
+800
+]
+},
+{
+"f": "una tortilla francesa",
+"tiene": [
+"tortilla francesa|huevo"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "huevos revueltos",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "dos huevos a la plancha",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+150,
+250
+]
+},
+{
+"f": "un huevo frito",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+90,
+200
+]
+},
+{
+"f": "pescado a la plancha con ensalada",
+"tiene": [
+"pescado|merluza|ensalada"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "lentejsa",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+150,
+500
+]
+},
+{
+"f": "platano",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "ensalada cesar",
+"tiene": [
+"cesar"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "albondigas",
+"tiene": [
+"albondiga"
+],
+"dudas": 0,
+"kcal": [
+250,
+700
+]
+},
+{
+"f": "esparagos",
+"tiene": [
+"esparrago"
+],
+"dudas": 0,
+"kcal": [
+20,
+150
+]
+},
+{
+"f": "yogurth natural",
+"tiene": [
+"yogur natural"
+],
+"dudas": 0,
+"kcal": [
+50,
+150
+]
+},
+{
+"f": "tortila de patatas",
+"tiene": [
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+180,
+400
+]
+},
+{
+"f": "macarrones con tomate y atun",
+"tiene": [
+"pasta|macarron",
+"tomate",
+"atun"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "pechuga de poyo",
+"tiene": [
+"pechuga de pollo"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "brocoli",
+"tiene": [
+"brocoli"
+],
+"dudas": 0,
+"kcal": [
+20,
+120
+]
+},
+{
+"f": "media manzana",
+"tiene": [
+"manzana"
+],
+"dudas": 0,
+"kcal": [
+30,
+70
+]
+},
+{
+"f": "dos mandarinas",
+"tiene": [
+"mandarina"
+],
+"dudas": 0,
+"kcal": [
+50,
+110
+]
+},
+{
+"f": "una pera",
+"tiene": [
+"pera"
+],
+"dudas": 0,
+"kcal": [
+70,
+130
+]
+},
+{
+"f": "un melocotón",
+"tiene": [
+"melocoton"
+],
+"dudas": 0,
+"kcal": [
+40,
+90
+]
+},
+{
+"f": "una raja de melón",
+"tiene": [
+"melon"
+],
+"dudas": 0,
+"kcal": [
+40,
+120
+]
+},
+{
+"f": "un trozo de sandía",
+"tiene": [
+"sandia"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "piña",
+"tiene": [
+"pina"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "un puñado de cerezas",
+"tiene": [
+"cereza"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "fresas con nata",
+"tiene": [
+"fresa",
+"nata"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "macedonia",
+"tiene": [
+"macedonia"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "una compota de manzana",
+"tiene": [
+"compota"
+],
+"dudas": 0,
+"kcal": [
+50,
+150
+]
+},
+{
+"f": "un kiwi",
+"tiene": [
+"kiwi"
+],
+"dudas": 0,
+"kcal": [
+30,
+80
+]
+},
+{
+"f": "un mango",
+"tiene": [
+"mango"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "uvas",
+"tiene": [
+"uva"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "un plátano maduro",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "arándanos con yogur",
+"tiene": [
+"arandano",
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "dátiles",
+"tiene": [
+"datil"
+],
+"dudas": 0,
+"kcal": [
+60,
+300
+]
+},
+{
+"f": "tres nueces",
+"tiene": [
+"nuez"
+],
+"dudas": 0,
+"kcal": [
+40,
+120
+]
+},
+{
+"f": "ensalada de lechuga y tomate",
+"tiene": [
+"lechuga|ensalada",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+20,
+180
+]
+},
+{
+"f": "una zanahoria",
+"tiene": [
+"zanahoria"
+],
+"dudas": 0,
+"kcal": [
+20,
+60
+]
+},
+{
+"f": "espinacas salteadas",
+"tiene": [
+"espinaca"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "champiñones al ajillo",
+"tiene": [
+"champinon"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "setas a la plancha",
+"tiene": [
+"seta"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "alcachofas",
+"tiene": [
+"alcachofa"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "coliflor",
+"tiene": [
+"coliflor"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "calabacín a la plancha",
+"tiene": [
+"calabacin"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "berenjena al horno",
+"tiene": [
+"berenjena"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "pimientos asados",
+"tiene": [
+"pimiento"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "pepino",
+"tiene": [
+"pepino"
+],
+"dudas": 0,
+"kcal": [
+5,
+60
+]
+},
+{
+"f": "una ensalada de canónigos",
+"tiene": [
+"canonigo"
+],
+"dudas": 0,
+"kcal": [
+15,
+150
+]
+},
+{
+"f": "coles de bruselas",
+"tiene": [
+"coles de bruselas"
+],
+"dudas": 0,
+"kcal": [
+40,
+150
+]
+},
+{
+"f": "judías verdes",
+"tiene": [
+"judia"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "solomillo de cerdo",
+"tiene": [
+"solomillo de cerdo"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "secreto ibérico",
+"tiene": [
+"secreto"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "pollo empanado",
+"tiene": [
+"pollo|empanad"
+],
+"dudas": 0,
+"kcal": [
+200,
+550
+]
+},
+{
+"f": "carne picada con tomate",
+"tiene": [
+"carne picada",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "conejo al ajillo",
+"tiene": [
+"conejo"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "cordero asado",
+"tiene": [
+"cordero"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "costillas de cerdo",
+"tiene": [
+"costilla"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "dos salchichas",
+"tiene": [
+"salchicha"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "pinchos morunos",
+"tiene": [
+"moruno|cerdo"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "lomo adobado",
+"tiene": [
+"lomo"
+],
+"dudas": 0,
+"kcal": [
+50,
+350
+]
+},
+{
+"f": "chuletas de cordero",
+"tiene": [
+"cordero"
+],
+"dudas": 0,
+"kcal": [
+250,
+650
+]
+},
+{
+"f": "pavo a la plancha",
+"tiene": [
+"pavo"
+],
+"dudas": 0,
+"kcal": [
+120,
+300
+]
+},
+{
+"f": "hamburguesa de pollo",
+"tiene": [
+"hamburguesa de pollo"
+],
+"dudas": 0,
+"kcal": [
+120,
+350
+]
+},
+{
+"f": "albóndigas con tomate",
+"tiene": [
+"albondiga"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "bacalao al pil pil",
+"tiene": [
+"bacalao"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "sardinas a la plancha",
+"tiene": [
+"sardina"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "trucha a la plancha",
+"tiene": [
+"trucha"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "atún a la plancha",
+"tiene": [
+"atun"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "gambas a la plancha",
+"tiene": [
+"gamba"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "langostinos cocidos",
+"tiene": [
+"langostino"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "pescaíto frito",
+"tiene": [
+"pescaito|boqueron|pescado"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "rape",
+"tiene": [
+"rape"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "emperador a la plancha",
+"tiene": [
+"emperador"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "salmón ahumado",
+"tiene": [
+"salmon ahumado"
+],
+"dudas": 0,
+"kcal": [
+60,
+200
+]
+},
+{
+"f": "mejillones",
+"tiene": [
+"mejillon"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "pulpo",
+"tiene": [
+"pulpo"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "merluza en salsa verde",
+"tiene": [
+"merluza"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "bacalao con tomate",
+"tiene": [
+"bacalao"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un vaso de kéfir",
+"tiene": [
+"kefir"
+],
+"dudas": 0,
+"kcal": [
+100,
+200
+]
+},
+{
+"f": "queso fresco con miel",
+"tiene": [
+"queso fresco",
+"miel"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "requesón",
+"tiene": [
+"requeson"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "skyr con frutos rojos",
+"tiene": [
+"skyr",
+"fresa|frambuesa|arandano"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "cuajada",
+"tiene": [
+"cuajada"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "un batido de proteínas con agua",
+"tiene": [
+"proteina|whey"
+],
+"dudas": 0,
+"kcal": [
+90,
+200
+]
+},
+{
+"f": "un yogur de proteínas",
+"tiene": [
+"yogur de proteinas"
+],
+"dudas": 0,
+"kcal": [
+60,
+200
+]
+},
+{
+"f": "leche con galletas",
+"tiene": [
+"leche",
+"galleta"
+],
+"dudas": 0,
+"kcal": [
+180,
+400
+]
+},
+{
+"f": "un trozo de queso manchego",
+"tiene": [
+"manchego"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "un bol de avena",
+"tiene": [
+"avena"
+],
+"dudas": 0,
+"kcal": [
+120,
+400
+]
+},
+{
+"f": "muesli con yogur",
+"tiene": [
+"muesli",
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "tortitas de arroz con crema de cacahuete",
+"tiene": [
+"tortitas de arroz",
+"crema de cacahuete"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "cuscús con verduras",
+"tiene": [
+"cuscus",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "pan integral con aceite",
+"tiene": [
+"pan integral",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "un bollo",
+"pregunta": [
+"bollo"
+]
+},
+{
+"f": "patatas fritas de bolsa",
+"tiene": [
+"patatas fritas de bolsa"
+],
+"dudas": 0,
+"kcal": [
+100,
+400
+]
+},
+{
+"f": "palomitas",
+"tiene": [
+"palomitas"
+],
+"dudas": 0,
+"kcal": [
+100,
+400
+]
+},
+{
+"f": "un puñado de pipas",
+"tiene": [
+"pipas"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "gominolas",
+"tiene": [
+"gominola"
+],
+"dudas": 0,
+"kcal": [
+50,
+300
+]
+},
+{
+"f": "un kitkat",
+"tiene": [
+"kitkat|chocolate"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "una palmera de chocolate",
+"tiene": [
+"palmera"
+],
+"dudas": 0,
+"kcal": [
+300,
+600
+]
+},
+{
+"f": "una napolitana de chocolate",
+"tiene": [
+"napolitana"
+],
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "un bollycao",
+"tiene": [
+"bollycao|bollo"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "un brownie",
+"tiene": [
+"brownie"
+],
+"dudas": 0,
+"kcal": [
+250,
+500
+]
+},
+{
+"f": "una galleta",
+"tiene": [
+"galleta"
+],
+"dudas": 0,
+"kcal": [
+20,
+100
+]
+},
+{
+"f": "un trozo de bizcocho",
+"tiene": [
+"bizcocho"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "helado de chocolate",
+"tiene": [
+"helado"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "pollo al horno con patatas",
+"tiene": [
+"pollo",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "potaje",
+"tiene": [
+"potaje"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "cocido",
+"tiene": [
+"cocido"
+],
+"dudas": 0,
+"kcal": [
+400,
+800
+]
+},
+{
+"f": "pimientos rellenos",
+"tiene": [
+"pimiento"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "canelones",
+"tiene": [
+"canelon"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
+},
+{
+"f": "espaguetis con tomate",
+"tiene": [
+"espagueti|pasta",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "arroz a la cubana",
+"tiene": [
+"arroz",
+"huevo",
+"tomate"
+],
+"dudas": 0,
+"kcal": [
+400,
+800
+]
+},
+{
+"f": "huevos con chorizo",
+"tiene": [
+"huevo",
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+300,
+600
+]
+},
+{
+"f": "revuelto de setas",
+"tiene": [
+"revuelto|seta"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "tortilla de espinacas",
+"tiene": [
+"espinaca",
+"huevo|tortilla"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "lasaña de verduras",
+"tiene": [
+"lasana"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "salpicón de marisco",
+"tiene": [
+"salpicon|gamba|marisco"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "ensalada de pollo",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "crema de calabaza",
+"tiene": [
+"calabaza"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "sopa de pollo",
+"tiene": [
+"sopa"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "pechuga rellena",
+"tiene": [
+"pechuga"
+],
+"dudas": 0,
+"kcal": [
+250,
+600
+]
+},
+{
+"f": "tallarines con gambas",
+"tiene": [
+"pasta|espagueti|tallarin",
+"gamba"
+],
+"dudas": 0,
+"kcal": [
+350,
+700
+]
+},
+{
+"f": "arroz con verduras",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+250,
+550
+]
+},
+{
+"f": "pollo con verduras",
+"tiene": [
+"pollo",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "garbanzos con chorizo",
+"tiene": [
+"garbanzo",
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "alubias con chorizo",
+"tiene": [
+"alubia",
+"chorizo"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "lentejas con arroz",
+"tiene": [
+"lenteja",
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "salmón con verduras",
+"tiene": [
+"salmon",
+"verdura"
+],
+"dudas": 0,
+"kcal": [
+300,
+550
+]
+},
+{
+"f": "merluza con patatas",
+"tiene": [
+"merluza",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "un kebab mixto",
+"tiene": [
+"kebab"
+],
+"dudas": 0,
+"kcal": [
+500,
+900
+]
+},
+{
+"f": "un dürum de pollo",
+"tiene": [
+"durum"
+],
+"dudas": 0,
+"kcal": [
+600,
+1000
+]
+},
+{
+"f": "nachos con queso",
+"tiene": [
+"nachos"
+],
+"dudas": 0,
+"kcal": [
+400,
+1100
+]
+},
+{
+"f": "alitas del kfc",
+"tiene": [
+"alitas"
+],
+"dudas": 0,
+"kcal": [
+250,
+450
+]
+},
+{
+"f": "un bocadillo de la máquina",
+"tiene": [
+"pan"
+],
+"dudas": 0,
+"kcal": [
+200,
+600
+]
+},
+{
+"f": "un sándwich de la máquina",
+"dudas": 0,
+"kcal": [
+150,
+500
+]
+},
+{
+"f": "una tapa de tortilla",
+"tiene": [
+"tortilla"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "una ración de calamares",
+"tiene": [
+"calamar"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "unas croquetas",
+"tiene": [
+"croqueta"
+],
+"dudas": 0,
+"kcal": [
+200,
+550
+]
+},
+{
+"f": "pimientos del padrón",
+"tiene": [
+"padron|pimiento"
+],
+"dudas": 0,
+"kcal": [
+50,
+300
+]
+},
+{
+"f": "una caña y una tapa de ensaladilla",
+"tiene": [
+"cana|cerveza",
+"ensaladilla"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "una hamburguesa del burger king",
+"tiene": [
+"hamburguesa"
+],
+"dudas": 0,
+"kcal": [
+200,
+400
+]
+},
+{
+"f": "un menú del mcdonalds",
+"pregunta": [
+"menu"
+]
+},
+{
+"f": "unas patatas medianas del mcdonalds",
+"tiene": [
+"patatas"
+],
+"dudas": 0,
+"kcal": [
+300,
+360
+]
+},
+{
+"f": "un mcmenu",
+"pregunta": [
+"menu|mcmenu"
+]
+},
+{
+"f": "un vermut",
+"tiene": [
+"vermut"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "una sidra",
+"tiene": [
+"sidra"
+],
+"dudas": 0,
+"kcal": [
+50,
+200
+]
+},
+{
+"f": "un cubata",
+"tiene": [
+"cubata"
+],
+"dudas": 0,
+"kcal": [
+200,
+300
+]
+},
+{
+"f": "dos copas de vino",
+"tiene": [
+"vino"
+],
+"dudas": 0,
+"kcal": [
+180,
+320
+]
+},
+{
+"f": "una botella de agua",
+"dudas": 0,
+"kcal": [
+0,
+5
+]
+},
+{
+"f": "un zumo de manzana",
+"tiene": [
+"zumo"
+],
+"dudas": 0,
+"kcal": [
+60,
+150
+]
+},
+{
+"f": "un café cortado",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+5,
+60
+]
+},
+{
+"f": "un capuchino",
+"tiene": [
+"cafe|capuchino|cappuccino"
+],
+"dudas": 0,
+"kcal": [
+50,
+160
+]
+},
+{
+"f": "un descafeinado con leche",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+20,
+140
+]
+},
+{
+"f": "una lata de coca cola",
+"tiene": [
+"cola"
+],
+"dudas": 0,
+"kcal": [
+120,
+160
+]
+},
+{
+"f": "un botellín de cerveza",
+"tiene": [
+"cerveza"
+],
+"dudas": 0,
+"kcal": [
+80,
+150
+]
+},
+{
+"f": "un mosto",
+"tiene": [
+"mosto|zumo"
+],
+"dudas": 0,
+"kcal": [
+60,
+200
+]
+},
+{
+"f": "para comer pollo con arroz",
+"tiene": [
+"pollo",
+"arroz"
+],
+"dudas": 0,
+"pos": "comida"
+},
+{
+"f": "de merienda fruta",
+"pregunta": [
+"fruta"
+],
+"pos": "merienda"
+},
+{
+"f": "he desayunado tostadas con aceite",
+"tiene": [
+"pan",
+"aceite"
+],
+"dudas": 0,
+"pos": "desayuno"
+},
+{
+"f": "anoche cené sushi",
+"tiene": [
+"sushi"
+],
+"dudas": 0,
+"pos": "cena"
+},
+{
+"f": "a mediodía lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"pos": "comida"
+},
+{
+"f": "almuerzo: un bocadillo de jamón",
+"tiene": [
+"jamon"
+],
+"dudas": 0,
+"pos": "media"
+},
+{
+"f": "esta noche pizza",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "me he comido un plátano",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "me tomé un café",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+60
+]
+},
+{
+"f": "he picado unas almendras",
+"tiene": [
+"almendra"
+],
+"dudas": 0,
+"kcal": [
+80,
+250
+]
+},
+{
+"f": "un par de huevos",
+"tiene": [
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+120,
+200
+]
+},
+{
+"f": "media docena de gambas",
+"tiene": [
+"gamba"
+],
+"dudas": 0,
+"kcal": [
+50,
+150
+]
+},
+{
+"f": "una docena de almendras",
+"tiene": [
+"almendra"
+],
+"dudas": 0,
+"kcal": [
+50,
+120
+]
+},
+{
+"f": "250gr de pollo",
+"tiene": [
+"pollo"
+],
+"dudas": 0,
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "150 gramos de arroz cocido",
+"tiene": [
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+150,
+250
+]
+},
+{
+"f": "medio litro de leche",
+"tiene": [
+"leche"
+],
+"dudas": 0,
+"kcal": [
+200,
+350
+]
+},
+{
+"f": "1kg de sandía",
+"tiene": [
+"sandia"
+],
+"dudas": 0,
+"kcal": [
+250,
+400
+]
+},
+{
+"f": "un bocadillo y medio de jamón",
+"tiene": [
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+450,
+900
+]
+},
+{
+"f": "2 tostadas",
+"tiene": [
+"pan"
+],
+"dudas": 0,
+"kcal": [
+120,
+250
+]
+},
+{
+"f": "tostadas x2 con aceite",
+"tiene": [
+"pan",
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "Pechuga A La Plancha",
+"tiene": [
+"pechuga de pollo"
+],
+"dudas": 0,
+"kcal": [
+150,
+300
+]
+},
+{
+"f": "LENTEJAS",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+150,
+500
+]
+},
+{
+"f": "🍌 un plátano",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "un plátano.",
+"tiene": [
+"platano"
+],
+"dudas": 0,
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "café, tostada y zumo",
+"tiene": [
+"cafe",
+"pan",
+"zumo"
+],
+"dudas": 0,
+"kcal": [
+150,
+400
+]
+},
+{
+"f": "en la guardia una barrita y un café",
+"tiene": [
+"barrita",
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "un café de máquina",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+80
+]
+},
+{
+"f": "dos cafés con leche",
+"tiene": [
+"cafe con leche"
+],
+"dudas": 0,
+"kcal": [
+60,
+260
+]
+},
+{
+"f": "un yogur y medio",
+"tiene": [
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+90,
+250
+]
+},
+{
+"f": "doble de pollo con arroz",
+"tiene": [
+"pollo",
+"arroz"
+],
+"dudas": 0,
+"kcal": [
+400,
+900
+]
+},
+{
+"f": "ración doble de patatas",
+"tiene": [
+"patata"
+],
+"dudas": 0,
+"kcal": [
+200,
+800
+]
+},
+{
+"f": "un plato hondo de lentejas",
+"tiene": [
+"lenteja"
+],
+"dudas": 0,
+"kcal": [
+200,
+600
+]
+},
+{
+"f": "un cuenco de gazpacho",
+"tiene": [
+"gazpacho"
+],
+"dudas": 0,
+"kcal": [
+60,
+250
+]
+},
+{
+"f": "una taza de caldo",
+"tiene": [
+"caldo"
+],
+"dudas": 0,
+"kcal": [
+5,
+60
+]
+},
+{
+"f": "un chorrito de aceite",
+"tiene": [
+"aceite"
+],
+"dudas": 0,
+"kcal": [
+30,
+60
+]
+},
+{
+"f": "un poco de jamón",
+"tiene": [
+"jamon"
+],
+"dudas": 0,
+"kcal": [
+30,
+200
+]
+},
+{
+"f": "algo de fruta",
+"pregunta": [
+"fruta"
+]
+},
+{
+"f": "tres lonchas de pavo",
+"tiene": [
+"pavo"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "dos rebanadas de pan integral",
+"tiene": [
+"pan integral"
+],
+"dudas": 0,
+"kcal": [
+100,
+220
+]
+},
+{
+"f": "una loncha de queso",
+"tiene": [
+"queso"
+],
+"dudas": 0,
+"kcal": [
+30,
+120
+]
+},
+{
+"f": "un tazón de cereales",
+"tiene": [
+"cereales"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "2 cucharadas de mayonesa",
+"tiene": [
+"mayonesa"
+],
+"dudas": 0,
+"kcal": [
+100,
+250
+]
+},
+{
+"f": "una cucharadita de azúcar",
+"tiene": [
+"azucar"
+],
+"dudas": 0,
+"kcal": [
+10,
+30
+]
+},
+{
+"f": "un vaso de leche con colacao",
+"tiene": [
+"leche",
+"cao"
+],
+"dudas": 0,
+"kcal": [
+150,
+350
+]
+},
+{
+"f": "pollo con patatas fritas",
+"tiene": [
+"pollo",
+"patata"
+],
+"dudas": 0,
+"kcal": [
+350,
+800
+]
+},
+{
+"f": "arroz con tomate y huevo",
+"tiene": [
+"arroz",
+"tomate",
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "ensalada con atún y huevo",
+"tiene": [
+"atun",
+"huevo"
+],
+"dudas": 0,
+"kcal": [
+150,
+450
+]
+},
+{
+"f": "pasta con atún",
+"tiene": [
+"pasta",
+"atun"
+],
+"dudas": 0,
+"kcal": [
+300,
+650
+]
+},
+{
+"f": "tostada de aguacate con salmón",
+"tiene": [
+"aguacate",
+"salmon"
+],
+"dudas": 0,
+"kcal": [
+200,
+450
+]
+},
+{
+"f": "bocadillo de tortilla con pimientos",
+"tiene": [
+"tortilla",
+"pimiento"
+],
+"dudas": 0,
+"kcal": [
+350,
+750
+]
+},
+{
+"f": "wrap de atún",
+"tiene": [
+"atun",
+"tortilla de trigo"
+],
+"dudas": 0,
+"kcal": [
+200,
+500
+]
+},
+{
+"f": "sándwich de jamón y queso",
+"tiene": [
+"jamon",
+"queso"
+],
+"dudas": 0,
+"kcal": [
+250,
+500
+]
+},
+{
+"f": "macarrones gratinados",
+"tiene": [
+"macarron|pasta"
+],
+"dudas": 0,
+"kcal": [
+300,
+800
+]
+},
+{
+"f": "pescado al horno",
+"pregunta": [
+"pescado"
+]
+},
+{
+"f": "carne a la plancha",
+"pregunta": [
+"carne"
+]
+},
+{
+"f": "un filete a la plancha",
+"pregunta": [
+"filete"
+]
+},
+{
+"f": "sopa de verduras",
+"tiene": [
+"sopa|crema de verduras|caldo de verduras"
+],
+"dudas": 0,
+"kcal": [
+30,
+250
+]
+},
+{
+"f": "crema de champiñones",
+"tiene": [
+"champinon|crema"
+],
+"dudas": 0,
+"kcal": [
+80,
+300
+]
+},
+{
+"f": "dos yogures",
+"tiene": [
+"yogur"
+],
+"dudas": 0,
+"kcal": [
+100,
+300
+]
+},
+{
+"f": "tres galletas maría",
+"tiene": [
+"galletas maria"
+],
+"dudas": 0,
+"kcal": [
+60,
+150
+]
+},
+{
+"f": "cuatro nueces",
+"tiene": [
+"nuez"
+],
+"dudas": 0,
+"kcal": [
+60,
+180
+]
+},
+{
+"f": "un puñado de uvas",
+"tiene": [
+"uva"
+],
+"dudas": 0,
+"kcal": [
+30,
+150
+]
+},
+{
+"f": "dos kiwis",
+"tiene": [
+"kiwi"
+],
+"dudas": 0,
+"kcal": [
+60,
+140
+]
+},
+{
+"f": "un vaso de vino tinto",
+"tiene": [
+"vino"
+],
+"dudas": 0,
+"kcal": [
+80,
+220
+]
+},
+{
+"f": "una copa de cava",
+"tiene": [
+"cava|vino"
+],
+"dudas": 0,
+"kcal": [
+60,
+150
+]
+},
+{
+"f": "dos tercios",
+"tiene": [
+"cerveza|tercio"
+],
+"dudas": 0,
+"kcal": [
+200,
+400
+]
+},
+{
+"f": "un batido de chocolate",
+"tiene": [
+"batido de chocolate"
+],
+"dudas": 0,
+"kcal": [
+100,
+350
+]
+},
+{
+"f": "agua y una manzana",
+"tiene": [
+"manzana"
+],
+"dudas": 0,
+"kcal": [
+50,
+120
+]
+},
+{
+"f": "nada",
+"dudas": 0,
+"kcal": [
+0,
+0
+]
+},
+{
+"f": "un café y nada más",
+"tiene": [
+"cafe"
+],
+"dudas": 0,
+"kcal": [
+0,
+40
+]
+}
+]

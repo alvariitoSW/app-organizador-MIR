@@ -9273,13 +9273,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = document.getElementById('main').innerText;
       return { ejemplo: d.ejemplo, fresco: d.grupos[0][2].length, compraste: /Compraste hoy/.test(txt), patata: /Patata/.test(txt) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.render(); });
-    // la frase se lee sola mientras escribes (sin Enter); «corregir ›» abre las piezas
+    // la frase se lee sola mientras escribes (sin Enter) y la lectura ya trae sus piezas editables
     await page.fill('#frIn', 'bocata de pavo con queso y mayo'); await page.waitForTimeout(400);
-    await page.click('#frLectura [data-a="fr-corr"]'); await page.waitForTimeout(120);
     const fr = await page.evaluate(() => { const P = window.PG, f = P.ui.frase; if (!f) return null;
       return { tipo: f.tipo,
         panSG: f.items.some((x) => x.pan) && f.items.filter((x) => x.pan).every((x) => /sin-gluten/.test(x.id)), ids: f.items.map((x) => x.id), casa: f.items.filter((x) => x.casa).length, g0: f.items[0].g, kcal: P.fraseMacros(f).kcal }; });
-    await page.click('[data-a="fr-tam"][data-v="xl"]'); await page.waitForTimeout(80);
+    await page.click('[data-a="fr-tam"][data-v="l"]'); await page.waitForTimeout(80);
     const grande = await page.evaluate(() => ({ g: window.PG.ui.frase.items[0].g, kcal: window.PG.fraseMacros(window.PG.ui.frase).kcal }));
     await page.click('[data-a="fr-ok"]'); await page.waitForTimeout(150);
     const apuntado = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())), e = l[l.length - 1]; return e ? { n: e.nombre, frase: !!e.frase, kcal: e.kcal } : null; });
@@ -9300,7 +9299,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       compra.ejemplo && compra.fresco === 0 && compra.compraste && !compra.patata, JSON.stringify(compra));
     check('frase: «bocata de pavo con queso y mayo» → pan sin gluten, fiambre, queso y mayo de tu nevera; el tamaño escala y Enter/apuntar lo guarda',
       fr && fr.tipo === 'bocata' && fr.panSG && fr.ids.includes('al-fiambre-de-pavo') && fr.ids.includes('al-queso-gouda') && fr.ids.includes('al-mayonesa') && fr.casa >= 3 &&
-      grande.g > fr.g0 && grande.kcal > fr.kcal && apuntado && apuntado.frase && /Bocata muy grande de pavo/.test(apuntado.n), JSON.stringify({ fr, grande, apuntado }));
+      grande.g > fr.g0 && grande.kcal > fr.kcal && apuntado && apuntado.frase && /Bocata (muy )?grande de pavo/.test(apuntado.n), JSON.stringify({ fr, grande, apuntado }));
     check('lo apuntado con frase dos veces en la semana se ofrece como plato y se guarda con sus ingredientes',
       rep === 1 && plato && plato.ing >= 4 && plato.kcal > 500, JSON.stringify({ rep, plato }));
     check('¿Qué como?: plato, bowl y bocata salen con lo de la nevera (todo en casa) y «Me lo hago» lo apunta',
@@ -9529,7 +9528,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const des = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).filter((e) => e.p === 'desayuno').length);
     await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(120);
     await page.fill('#frIn', 'bocata de pollo con queso'); await page.waitForTimeout(400);
-    await page.click('#frLectura [data-a="fr-corr"]'); await page.waitForTimeout(120);
     const g0 = await page.$('input[data-a="fr-gset"]'); if (g0) { await g0.fill('130'); await g0.dispatchEvent('change'); await page.waitForTimeout(100); }
     const gr = await page.evaluate(() => (window.PG.ui.frase && window.PG.ui.frase.items[0] || {}).g);
     await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.cjeHoja = { v: 'dia' }; P.render(); }); await page.waitForTimeout(100);
@@ -9537,8 +9535,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = null; P.render(); }); await page.waitForTimeout(100);
     const reg = await page.evaluate(() => window.PG.ui.foodVista === 'eje' && !!document.querySelector('#main .cjdia [data-a="food-prev"]') && !!document.querySelector('#main .cjmic .h2mic'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia231; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('«Comer» es una pantalla: Hoy · Semana, hoy con sus comidas, la semana con sus 7 días, sin fila de modos',
-      entra.v === 'eje' && entra.modos && entra.seg === 2 && entra.comidas >= 3 && sem.dias === 7, JSON.stringify({ entra, sem }));
+    check('«Comer» es una pantalla: Hoy · Cocina · Plan · Despensa, hoy con sus comidas, la semana con sus 7 días, sin fila de modos',
+      entra.v === 'eje' && entra.modos && entra.seg === 4 && entra.comidas >= 3 && sem.dias === 7, JSON.stringify({ entra, sem }));
     check('✨ monta tandas solo en días que se cocina, que aguantan (no tortillas), guardia = hospital; ✓ hecho las hace táperes',
       sem.tandas.length >= 1 && sem.tandas.every((t) => t.cook && t.dias >= 2 && !/tortilla|bocata/i.test(t.n)) && sem.guardiaHosp && hayHoja >= 1 && coc >= 2,
       JSON.stringify({ sem, hayHoja, coc }));
@@ -9789,10 +9787,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // el plan va por fecha: los 7 días desde hoy (la compra mira de hoy a la próxima compra)
       for (let i = 0; i < 7; i++) { const k = P.iso(P.addDays(new Date(), i)); ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(k, c, c === 'comida' ? 'd238' : P.dishNada().id)); }
       P.store.listas = [{ id: 'l238', nombre: 'Habitual (tickets)', fija: true, habitual: true, items: ['garbanzos cocidos', 'papel higiénico', 'café molido'] }];
-      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.save(); P.render(); });
+      // la cifra de la compra está en el resumen del Plan (antes, en una fila de accesos de Hoy)
+      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'sem'; P.save(); P.render(); });
     const datos = await page.evaluate(() => { const d = window.PG.compraDatos(), g = {}; d.grupos.forEach((x) => { g[x[0]] = x[2].map((y) => y.texto); });
-      return { semana: d.semana, total: d.total, fresco: g.fresco, rutina: g.rutina, tile: document.querySelector('#main .cjlinks [data-v="compra"]').innerText.replace(/\D/g, '') }; });
-    await page.click('#main .cjlinks [data-v="compra"]'); await page.waitForTimeout(120);
+      return { semana: d.semana, total: d.total, fresco: g.fresco, rutina: g.rutina, tile: document.querySelector('#main .cjsum [data-v="compra"] b').innerText.replace(/\D/g, '') }; });
+    await page.click('#main .cjsum [data-v="compra"]'); await page.waitForTimeout(120);
     const hoja = await page.evaluate(() => ({ items: document.querySelectorAll('#hojaDia .cjli').length, fijas: document.querySelectorAll('#hojaDia [data-a="cje-fija"]').length }));
     await page.click('#hojaDia [data-a="cje-fija"]'); await page.waitForTimeout(100);
     const abierta = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjli').length);
@@ -10564,6 +10563,63 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /Poke de salmón/.test(bus.lec) && /kcal/.test(bus.lec) && !bus.nada && /ms/.test(bus.ms) && ap && peg === 'Bowl de pollo con arroz' && /POR RACIÓN \(DE 2\)/.test(rec) &&
       pasos.slice(7).every(Boolean) && guar.n === 'Bowl de pollo con arroz' && guar.rac === 2 && guar.al >= 4 && guar.st === 2 && guar.kcal > 300,
       JSON.stringify({ bus, ap, peg, rec: rec.slice(0, 120), guar, pasos }));
+  }
+
+  // 259) COMER v2, EN CADENA: (a) la frase se edita en su tarjeta: cambias los gramos de un trozo, luego
+  // el tamaño, y lo que tocaste a mano NO se reescala (antes «Mucho» pisaba tus gramos) — y repintar al
+  // perder el foco ya no tira NotFoundError; (b) «menú del día: sopa y filete con patatas» pregunta en vez
+  // de inventar, no deja apuntar hasta contestar y lo contestado se recuerda: el siguiente «un filete» ya
+  // no pregunta; (c) en el buscador «ayer cené pizza margarita» pregunta cuánta y va a la cena de AYER, y
+  // la errata siguiente («macarones con atun») se corrige y se dice; (d) la compra de la pestaña
+  // Despensa cambia de «Comprar» a «En casa» sin abrir una hoja encima
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia259 = JSON.parse(JSON.stringify(P.store)); P.store.food.frMemo = {};
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    // (a) gramos a mano y luego «Mucho»
+    await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(120);
+    await page.fill('#frIn', 'pechuga a la plancha con arroz'); await page.waitForTimeout(450);
+    r.a0 = await page.evaluate(() => ({ cab: (document.querySelector('#frLectura .lech') || {}).textContent || '', n: window.PG.ui.frase && window.PG.ui.frase.items.length }));
+    await page.fill('#frLectura input[data-a="fr-gset"][data-i="0"]', '200'); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await page.click('#frLectura [data-a="fr-tam"][data-v="l"]'); await page.waitForTimeout(150);
+    r.a1 = await page.evaluate(() => { const f = window.PG.ui.frase; return { g0: f.items[0].g, arroz: (f.items.filter((x) => /arroz/.test(x.id))[0] || {}).g }; });
+    await page.click('#frLectura [data-a="fr-ok"]'); await page.waitForTimeout(150);
+    r.a2 = await page.evaluate((k) => { const l = window.PG.foodLog(k), e = l[l.length - 1]; return e ? { n: e.nombre, kcal: e.kcal, p: e.p } : null; }, hoyK);
+    // (b) preguntas encadenadas y memoria
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'mom', p: 'cena', k: P.iso(new Date()) }; P.ui.frase = null; P.ui.frTxt = ''; P.render(); }); await page.waitForTimeout(100);
+    await page.fill('#frIn', 'menú del día: sopa y filete con patatas'); await page.waitForTimeout(450);
+    r.b0 = await page.evaluate(() => ({ dudas: window.PG.ui.frase.dudas.length, off: !!(document.querySelector('#frLectura [data-a="fr-ok"]') || {}).disabled, rango: (document.querySelector('#frLectura .lecrg') || {}).textContent || '' }));
+    await page.click('#frLectura [data-a="fr-elige"][data-d="0"][data-o="0"]'); await page.waitForTimeout(150);
+    await page.click('#frLectura [data-a="fr-elige"][data-d="0"][data-o="1"]'); await page.waitForTimeout(150);
+    r.b1 = await page.evaluate(() => ({ dudas: window.PG.ui.frase.dudas.length, off: !!(document.querySelector('#frLectura [data-a="fr-ok"]') || {}).disabled }));
+    await page.click('#frLectura [data-a="fr-ok"]'); await page.waitForTimeout(150);
+    await page.fill('#frIn', 'un filete'); await page.waitForTimeout(450);
+    r.b2 = await page.evaluate(() => { const f = window.PG.ui.frase; return f ? { dudas: f.dudas.length, it: f.items.map((x) => x.id) } : null; });
+    await page.evaluate(() => { const e = document.querySelector('#hojaDia .hscrim'); if (e) e.click(); }); await page.waitForTimeout(100);
+    // (c) el buscador: ayer, cuánta pizza, y la errata de después
+    await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.foodPos = 'comida'; P.render(); }); await page.waitForTimeout(100);
+    await page.fill('#fbQ', 'ayer cené pizza margarita'); await page.waitForTimeout(450);
+    r.c0 = await page.evaluate(() => ({ q: (document.querySelector('#fbRes .lecd b') || {}).textContent || '', ayer: /ayer/.test((document.querySelector('#fbRes .lech') || {}).textContent || '') }));
+    await page.click('#fbRes [data-a="fr-elige"][data-o="0"]'); await page.waitForTimeout(150);
+    await page.click('#fbRes [data-a="fb-lec-ok"]'); await page.waitForTimeout(150);
+    r.c1 = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() - 1); const l = P.foodLog(P.iso(d)), e = l[l.length - 1];
+      return e ? { n: e.nombre, p: e.p, kcal: e.kcal } : null; });
+    await page.fill('#fbQ', 'macarones con atun'); await page.waitForTimeout(450);
+    r.c2 = await page.evaluate(() => ({ corr: (document.querySelector('#fbRes .fbcorr') || {}).textContent || '', lec: (document.querySelector('#fbRes .lecfr') || {}).textContent || '' }));
+    // (d) Despensa: el segmento no abre hoja
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'desp'; P.ui.cjeHoja = null; P.ui.despH = null; P.render(); }); await page.waitForTimeout(100);
+    await page.click('#main .cjdsph [data-a="cje-seg"][data-v="casa"]'); await page.waitForTimeout(120);
+    r.d = await page.evaluate(() => ({ hoja: !!window.PG.ui.cjeHoja, seg: (window.PG.ui.despH || {}).seg, casa: !!document.querySelector('#main .cjdsph .cjseg button.on[data-v="casa"]') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia259; P.save(); P.ui.cjeTab = ''; P.ui.despH = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('la frase se edita en su tarjeta: los gramos que cambias a mano no los pisa «Mucho», y se apunta con su aceite de la plancha',
+      /TODO ENTENDIDO/.test(r.a0.cab) && r.a0.n >= 3 && r.a1.g0 === 200 && r.a1.arroz > 120 && r.a2 && /pechuga/i.test(r.a2.n) && r.a2.p === 'comida', JSON.stringify({ a0: r.a0, a1: r.a1, a2: r.a2 }));
+    check('«menú del día: sopa y filete…» pregunta con botones y un rango de kcal, no deja apuntar hasta contestar, y lo contestado se recuerda',
+      r.b0.dudas === 2 && r.b0.off && /kcal/.test(r.b0.rango) && r.b1.dudas === 0 && !r.b1.off && r.b2 && r.b2.dudas === 0 && r.b2.it.length === 1, JSON.stringify({ b0: r.b0, b1: r.b1, b2: r.b2 }));
+    check('buscador: «ayer cené pizza margarita» pregunta cuánta y va a la cena de ayer; la errata siguiente se corrige y lo dice',
+      /Cuánta pizza/.test(r.c0.q) && r.c0.ayer && r.c1 && /pizza/i.test(r.c1.n) && r.c1.p === 'cena' && r.c1.kcal > 100 && /macarrones/.test(r.c2.corr) && /macarrones/.test(r.c2.lec),
+      JSON.stringify({ c0: r.c0, c1: r.c1, c2: r.c2 }));
+    check('Despensa: pasar de «Comprar» a «En casa» se queda en la pestaña, sin abrir una hoja encima', !r.d.hoja && r.d.seg === 'casa' && r.d.casa, JSON.stringify(r.d));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
