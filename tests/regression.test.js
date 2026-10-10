@@ -11290,6 +11290,78 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('apuntar una serie a mano mantiene viva la sesión en curso', r.j === true, String(r.j));
   }
 
+  // 269) EL RESTO, EN CADENA (tanda 5 del informe de código): (a) pasar un hábito a «ya te sale solo» no
+  //      reescribe su pasado; (b) vaciar el mínimo al editar lo deja vacío; (c) unas ganas que acaban en
+  //      sesión no cuentan como aguantadas; (d) fumar después de un T-break acabado no lo rompe; (e) un
+  //      libro recién creado no va «1 día por detrás»; (f) «no me acordaba» deja el repaso a 7 días y
+  //      borrar una sesión resta sus minutos; (g) el aguacate no es una bebida y la despensa no mezcla
+  //      unidades; (h) pegar una lista cuenta solo lo nuevo; (i) «0.894» kg en el ticket son 0,894; (j)
+  //      la actividad de serie es una de las opciones; (k) el día de moncheo no cuenta dos veces lo que
+  //      apuntas; (l) desmarcar una comida devuelve la ración al táper.
+  {
+    const r = {};
+    await page.evaluate(() => { window.__copia269 = JSON.parse(JSON.stringify(window.PG.store)); });
+    r.a = await page.evaluate(() => { const P = window.PG, H = P.habitosS(), hace = P.iso(P.addDays(new Date(), -10));
+      const h = { id: 'hb269', nombre: 'Leer 10 páginas', icono: '📖', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], fase: 'marcha', inicio: hace, si: [], creado: hace, min: '2 páginas' };
+      H.items.push(h); P.save();
+      const antes = P.habitoToca(h, hace); P.habFaseA(h, 'solo'); P.save();
+      return { antes, despues: P.habitoToca(h, hace), hoy: P.habitoToca(h, P.iso(new Date())) }; });
+    // (b) por la hoja: vacío el mínimo y guardo
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = ''; P.habEdAbre('hb269'); P.render(); });
+    if (await page.$('#habEdMin')) { await page.fill('#habEdMin', ''); }
+    await page.evaluate(() => { const b = document.querySelector('[data-a="hab-ed-ok"]'); if (b) b.click(); });
+    r.b = await page.evaluate(() => (window.PG.habitosS().items.filter((x) => x.id === 'hb269')[0] || {}).min);
+    // (c) ganas → paseo → sesión al rato
+    r.c = await page.evaluate(() => { const P = window.PG, c = P.consumoS(), hoy = P.iso(new Date());
+      c.ganas.unshift({ id: 'g269', fecha: hoy, ts: Date.now() - 20 * 60000, res: 'otra' }); P.consumoApuntar({ forma: 'dry', g: 0.2 });
+      return c.ganas.filter((g) => g.id === 'g269')[0].res; });
+    // (d) T-break de 3 días hace 6, y una sesión hace 2
+    r.d = await page.evaluate(() => { const P = window.PG, c = P.consumoS(); c.plan = c.plan || {};
+      c.plan.tb = { desde: P.iso(P.addDays(new Date(), -6)), dias: 3 };
+      c.ses = (c.ses || []).filter((x) => !(x.fecha >= c.plan.tb.desde));
+      c.ses.push({ id: 's269', fecha: P.iso(P.addDays(new Date(), -2)), ts: Date.now() - 2 * 864e5, g: 0.2, forma: 'dry' });
+      const t = P.cnTB(); delete c.plan.tb; return t.roto; });
+    // (e) un libro nuevo hoy
+    r.e = await page.evaluate(() => { const P = window.PG; return P.libroCalc({ titulo: 'L269', pags: 300, pag: 0, horasDia: 1, pph: 10, inicio: P.iso(new Date()), log: [] }).dif; });
+    // (f) repaso y sesión
+    r.f = await page.evaluate(() => { const P = window.PG, e = P.estS(); e.temas = e.temas || []; e.temas.push({ id: 't269', nombre: 'Tema 269' });
+      const x = P.estEstado('t269'); x.nivel = 3; x.visto = P.iso(P.addDays(new Date(), -25)); x.min = 0;
+      P.estBajar('t269'); const visto = P.estEstado('t269').visto;
+      P.estAddSesion(600, ['t269']); const ses = P.estS().sesiones.slice(-1)[0]; P.estDelSesion(ses.id);
+      return { visto: visto === P.iso(new Date()), min: P.estEstado('t269').min }; });
+    // (g) aguacate y la despensa
+    r.g = await page.evaluate(() => { const P = window.PG; const sec = P.seccionDeCompra2('Aguacate');
+      P.despensaAdd('2 lata atún 269'); P.despensaAdd('200 g atún 269');
+      const x = P.despensaS().filter((d) => /atún 269/.test(d.nom))[0]; return { sec, q: x && x.q, uni: x && x.uni }; });
+    // (h) pegar una lista con repetidos
+    r.h = await page.evaluate(() => { const P = window.PG; P.listaAMano('leche269\nleche269\npan269'); return P.listaAMano('leche269'); });
+    r.i = await page.evaluate(() => window.PG.ticketPeso('0.894'));
+    r.j = await page.evaluate(() => { const P = window.PG, o = JSON.parse(JSON.stringify(P.store)); o.perfil.actividad = 1.5; P.store = o; return P.perfilS().actividad; });
+    // (k) moncheo: 600 estimados, 450 apuntados → 150 de estimación
+    r.k = await page.evaluate(() => { const P = window.PG, k = P.iso(P.addDays(new Date(), -1)), f = P.store.food;
+      f.diasEsp = f.diasEsp || {}; f.diasEsp[k] = { tipo: 'moncheo', kcal: 600 };
+      const l = P.foodLog(k); l.push({ id: 'm269', p: 'monchis', nombre: 'patatas', kcal: 450 }); P.save(); return P.kcalExtraDe(k); });
+    // (l) táper de 1 ración: ✓ y quitar
+    r.l = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), d = P.store.dishes.filter((x) => !x.hospital && !x.fuera && !x.nada)[0];
+      P.cocinadoAdd(d.id, 1); P.addFoodEntry(k, { dishId: d.id, rac: 1, pos: 'cena' });
+      const tras = P.cocinadoS().filter((x) => x.dishId === d.id).reduce((a, x) => a + x.queda, 0);
+      const e = P.foodLog(k).filter((x) => x.dishId === d.id).slice(-1)[0]; P.delFoodEntry(k, e.id);
+      return { tras, vuelve: P.cocinadoS().filter((x) => x.dishId === d.id).reduce((a, x) => a + x.queda, 0) }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia269; P.save(); P.ui.habEd = null; P.ui.tab = 'month'; P.render(); });
+    check('pasar un hábito a «ya te sale solo» no reescribe su pasado', r.a.antes && r.a.despues && !r.a.hoy, JSON.stringify(r.a));
+    check('vaciar el mínimo al editar un hábito lo deja vacío', r.b === '', JSON.stringify(r.b));
+    check('unas ganas que acaban en sesión no cuentan como aguantadas', r.c === 'sesion', r.c);
+    check('fumar después de un T-break ya acabado no lo rompe', r.d === false, String(r.d));
+    check('un libro recién creado no va «1 día por detrás»', r.e === 0, String(r.e));
+    check('«no me acordaba» cuenta el repaso desde hoy y borrar una sesión resta sus minutos', r.f.visto && r.f.min === 0, JSON.stringify(r.f));
+    check('el aguacate no va a bebidas y 2 latas + 200 g no son 202 g', r.g.sec !== 'bebida' && !(r.g.q === 202), JSON.stringify(r.g));
+    check('pegar una lista con repetidos cuenta solo lo nuevo', /^0 cosas/.test(r.h || ''), r.h);
+    check('«0.894» kg en el ticket son 0,894 kg', r.i === 0.894, String(r.i));
+    check('la actividad de serie es una de las opciones (1,55)', r.j === 1.55, String(r.j));
+    check('el día de moncheo descuenta de la estimación lo que apuntas', r.k === 150, String(r.k));
+    check('quitar una comida apuntada devuelve la ración al táper', r.l.tras === 0 && r.l.vuelve === 1, JSON.stringify(r.l));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
