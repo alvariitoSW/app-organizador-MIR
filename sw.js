@@ -52,21 +52,25 @@ self.addEventListener('fetch',function(e){
      HTML» y luego se calla pasaba el filtro y se colgaba después, al leer el cuerpo. Con el límite
      en respondWith() queda cubierto todo lo que hay detrás —leer el cuerpo, buscar en la caché— y
      también lo que se añada mañana. */
-  e.respondWith(conLimite(responder,LIMITE_TOTAL,function(){
-    return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});}));
+  e.respondWith(conLimite(responder,LIMITE_TOTAL,function(){return reservaOSinRed(req,navegacion);}));
 });
 function versionada(req,url){
   return caches.open(CACHE).then(function(c){
     return c.match(req).then(function(exacta){
       if(exacta)return exacta;
       const red=pedirFresco(req,url).then(function(res){
-        if(res&&res.ok){const copia=res.clone();c.put(req,copia).catch(function(){});}
+        /* guardada la nueva, las versiones anteriores sobran: sin esto cada despliegue dejaba otra
+           copia de app.js (1,5 MB) en el móvil para siempre. La entrada sin marca se queda: es la
+           que pide la portada guardada cuando no hay red */
+        if(res&&res.ok){const copia=res.clone();c.put(req,copia).then(function(){
+          return c.keys(req,{ignoreSearch:true}).then(function(ks){return Promise.all(ks.filter(function(k){
+            return k.url!==req.url&&/[?&]v=/.test(new URL(k.url).search);}).map(function(k){return c.delete(k);}));});
+        }).catch(function(){});}
         return res;});
       /* la de antes (sin mirar la marca) como reserva, pero solo si la red tarda o falla */
       const antes=function(){return c.match(req,{ignoreSearch:true});};
       return conLimite(red.then(function(res){return res.ok?res:antes().then(function(v){return v||res;});}),2500,
-        function(){return antes().then(function(v){return v||red;});})
-        .then(function(r){return r||red;});});
+        function(){return antes().then(function(v){return v||red;});});});
   }).catch(function(){return fetch(req);});}
 function desdeLaRed(req,url,navegacion){
   /* «red primero» NO se cumple con un fetch() a secas: por encima del service worker está la caché
@@ -82,12 +86,15 @@ function desdeLaRed(req,url,navegacion){
     /* no se guarda la navegación de un «compartir»: su URL lleva la receta en la query, así que
        cada vídeo compartido dejaría una copia distinta engordando la caché para siempre */
     if(!(navegacion&&url.search)){
-      const copia=res.clone();
-      caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});
+      guardaCopia(req,res);
     }
     return res;
-  }).catch(function(){
-    return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});});}
+  }).catch(function(){return reservaOSinRed(req,navegacion);});}
+function guardaCopia(req,res){
+  const copia=res.clone();
+  caches.open(CACHE).then(function(c){return c.put(req,copia);}).catch(function(){});}
+function reservaOSinRed(req,navegacion){
+  return reserva(req,navegacion).then(function(r){return r||respuestaSinRed();});}
 function reserva(req,navegacion){
   /* La mejor respuesta guardada para esta petición, o null si no hay ninguna. Antes esto estaba
      escrito tres veces con tres respuestas distintas para el mismo caso; ahora la decisión vive en
@@ -108,8 +115,9 @@ function conLimite(promesa,ms,alternativa){
   return new Promise(function(res){
     let listo=false;
     const dar=function(v){if(listo)return;listo=true;clearTimeout(t);res(v);};
-    const t=setTimeout(function(){dar(typeof alternativa==='function'?alternativa():alternativa);},ms);
-    promesa.then(dar,function(){dar(typeof alternativa==='function'?alternativa():alternativa);});
+    const alt=function(){dar(typeof alternativa==='function'?alternativa():alternativa);};
+    const t=setTimeout(alt,ms);
+    promesa.then(dar,alt);
   });}
 const LIMITE_SELLO=1500;    /* la marca de versión es un adorno: si tarda, se sigue sin ella */
 const LIMITE_TOTAL=7000;    /* tope de TODA la respuesta. index.html espera algo más que esto antes
@@ -132,13 +140,11 @@ function navegacionSellada(req,url){
      es que la URL cambie, así que el propio service worker le pega la marca de la versión al
      enlace de app.js y styles.css antes de entregar el HTML. Cuando despliego, la marca cambia,
      la URL cambia y no hay caché que valga. */
-  const guardada=function(){
-    return reserva(req,true).then(function(r){return r||respuestaSinRed();});};
   /* solo leerSello lleva reloj propio: si la marca tarda pero el HTML ya está, servir el HTML sin
      marca es mucho mejor que esperar. Del resto se encarga el límite de la frontera. */
   return Promise.all([pedirFresco(req,url),leerSello()]).then(function(r){
     const res=r[0],sello=r[1];
-    if(!res.ok)return guardada();   /* 404/500: mejor la portada guardada que un error */
+    if(!res.ok)return reservaOSinRed(req,true);   /* 404/500: mejor la portada guardada que un error */
     if(!sello)return res;
     const ct=res.headers.get('content-type')||'';
     if(!/text\/html/i.test(ct))return res;
@@ -149,7 +155,7 @@ function navegacionSellada(req,url){
       return new Response(sellado,{status:res.status,statusText:res.statusText,headers:h});});
   }).catch(function(){
     /* sin red: la portada guardada, que apunta a app.js sin marca — y esa sí está en la caché */
-    return guardada();});}
+    return reservaOSinRed(req,true);});}
 function pedirFresco(req,url){
   /* no se puede reutilizar un Request de navegación cambiándole el modo de caché, así que se pide
      por URL. Si el navegador no admite la opción, se cae al fetch de siempre en vez de romper. */
@@ -172,8 +178,7 @@ function cachePrimero(req){
   return caches.match(req).then(function(hit){
     if(hit)return hit;
     return fetch(req).then(function(res){
-      if(res.ok){const copia=res.clone();
-        caches.open(CACHE).then(function(c){c.put(req,copia).catch(function(){});}).catch(function(){});}
+      if(res.ok)guardaCopia(req,res);
       return res;});
   }).catch(function(){return fetch(req);});}
 

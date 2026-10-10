@@ -156,6 +156,21 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
     trasActualizar.tieneLoNuevo && trasActualizar.version === '2099-06-06T00:00:00Z' && trasActualizar.sinAviso,
     JSON.stringify(trasActualizar));
 
+  // tras tres versiones (la de arranque y dos despliegues) solo queda UNA copia sellada de app.js
+  // y la de sin marca. Antes cada despliegue dejaba otra app.js?v=… (1,5 MB) en el móvil para siempre.
+  await page.waitForTimeout(500);
+  const enCache = await page.evaluate(async () => {
+    const out = [];
+    for (const n of await caches.keys()) {
+      const c = await caches.open(n);
+      for (const r of await c.keys()) if (/\/app\.js(\?|$)/.test(r.url)) out.push(r.url.split('/').pop());
+    }
+    return out;
+  });
+  check('cada despliegue sustituye la copia de app.js guardada en vez de acumularlas',
+    enCache.filter((u) => /\?v=/.test(u)).length === 1 && enCache.some((u) => /\?v=2099-06-06/.test(u)),
+    JSON.stringify(enCache));
+
   // 4) sin red, comprobar la versión no puede reventar nada
   await context.setOffline(true);
   const sinRed = await page.evaluate(async () => {
