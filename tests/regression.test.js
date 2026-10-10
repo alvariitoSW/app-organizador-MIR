@@ -10041,7 +10041,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.mejor = await page.evaluate((G) => { const P = window.PG, m = P.store.sueno.sim[G], post = m && m.sueno.filter((x) => x.id === 'post')[0];
         const a = P.snMetricas(P.snPlan(G)), b = P.snMetricas(P.snPlan(G, 'base'));
         return { post: post ? post.b - post.a : null, coche: a.coche, cocheBase: b.coche, tardios: m.cafes.filter((c) => c.t > 27).length }; }, ini.G);
-      const c0 = await page.evaluate(() => { const e = document.querySelector('#snGraf [data-sn="c"]'); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+      const c0 = await page.evaluate(() => { const e = document.querySelector('#snGraf [data-sn="c"]'); e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
       const t0 = await page.evaluate((G) => window.PG.store.sueno.sim[G].cafes[0].t, ini.G);
       await page.mouse.move(c0.x, c0.y); await page.mouse.down(); await page.mouse.move(c0.x + 40, c0.y, { steps: 6 }); await page.mouse.up(); await page.waitForTimeout(200);
       r.cafe = await page.evaluate((a) => ({ antes: a.t0, despues: window.PG.store.sueno.sim[a.G].cafes.map((c) => c.t) }), { G: ini.G, t0 });
