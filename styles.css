@@ -3627,3 +3627,24 @@ html:not(.dark){--snlib:#6d28d9}
 .dcifl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
 .dcifl:first-of-type{border-top:0}
 .dcifl b{font-variant-numeric:tabular-nums}.dcifl .mini{grid-column:1}.dcifl .dlink{grid-column:2;justify-self:end}
+/* Dinero v8: el asistente (Hoy · Ahorro · Mes) y la captura del banco */
+.din8 .dhero .dbig.ex{color:var(--bad,#e5484d)}
+.dcuen{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--bg) 60%,var(--card))}
+.dcuen>div{display:flex;align-items:baseline;gap:8px;font-size:13px}.dcuen>div>span{flex:1;color:var(--ink2)}
+.dcuen b{font-variant-numeric:tabular-nums}.dcuen .ok span{color:var(--ok,#34d399)}
+.dcuen .dlink{font-size:12px;margin-left:4px}
+.bkfu{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:var(--ink2)}.bkfu>span{flex:1}
+.bkfu.viejo>span{color:var(--warn)}.bkfu .btn{min-height:40px;cursor:pointer}
+.din8 .dasis .astj{border-top:0;padding-top:0}.card.asist .astj.din{border-top:1px solid var(--line);padding-top:10px}
+.card.asist>.astj.din:first-child{border-top:0;padding-top:0}
+.drec{display:flex;align-items:baseline;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.drec:first-of-type{border-top:0}
+.drec>span:first-child{flex:1}.drec .warn{color:var(--warn)}
+.dfila{display:flex;align-items:baseline;gap:8px;width:100%;padding:6px 0;font-size:14px;border:0;background:none;color:var(--ink);font:inherit;text-align:left}
+.dfila>span{flex:1;color:var(--ink2)}.dfila b{font-variant-numeric:tabular-nums}
+.dfila.dver{cursor:pointer}.dfila.dver>span{text-decoration:underline dotted;text-underline-offset:3px}
+.dfila.dtot{border-top:1px solid var(--line);margin-top:4px;padding-top:8px}.dfila.dtot>span{color:var(--ink);font-weight:700}
+.dbols{padding-top:4px;padding-bottom:4px}.dbols .d7meta:last-child{border-bottom:0}
+.d6m.dah>div.x i{background:var(--bad,#e5484d)}
+.bkc .row{flex-wrap:nowrap}.bkc .bknom{flex:1;min-width:0;font-weight:700}.bkc .bkv{width:110px;text-align:right;font-variant-numeric:tabular-nums}
+.bkc .hchips{margin-top:8px}.bkc.duda{border-color:color-mix(in srgb,var(--warn) 60%,var(--line))}.bkc .m{width:16px;text-align:center}
+.bkcuadre{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
