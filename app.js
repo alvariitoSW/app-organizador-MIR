@@ -21827,6 +21827,11 @@ function act(a,el){
     case 'obj-ok':{const E=ui.objNuevo,A=asistS();if(!E||!E.m||A.obj.length>=3)break;A.obj.push({m:E.m,meta:E.meta,desde:iso(new Date())});ui.objNuevo=null;save();render();break;}
     case 'obj-del':{asistS().obj.splice(+el.dataset.i,1);save();render();break;}
     case 'mon-today':monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);render();break;
+    case 'ir-inicio':
+      /* el reloj de arriba es la casa: desde cualquier sitio, al Mes de este mes, sin hojas abiertas */
+      cerrarHojaDia();if(ui.drawerOpen)closeDrawer();
+      ui.tab='month';ui.calMode='month';ui.hoyVista='';monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);
+      render();window.scrollTo(0,0);break;
     case 'mon-autopos':store.rotation.autoPos=!store.rotation.autoPos;save();render();break;
     case 'mon-auto':{const y=monthDate.getFullYear(),m=monthDate.getMonth();
       flash(distributeGuardias(y,m,false));save();render();break;}

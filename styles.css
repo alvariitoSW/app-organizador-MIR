@@ -3511,3 +3511,7 @@ details[data-tg] .card{border:0;box-shadow:none;background:transparent;padding:1
 .fblec .fbmac{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--ink2);margin-bottom:6px}
 .fblec .fbmac b{color:var(--ink);font-size:15px}.fblec .fbmac .p b{color:var(--brand)}
 .fbms{margin:2px 2px 0;opacity:.75}
+/* el reloj de arriba a la izquierda: el botón de casa (al Mes) */
+.hlogo{appearance:none;border:0;background:none;padding:0;margin:-11px;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border-radius:12px;flex:none}
+.hlogo:active{transform:scale(.94)}
+.hlogo:focus-visible{outline:2px solid var(--brand);outline-offset:-4px}
