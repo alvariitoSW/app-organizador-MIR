@@ -3494,3 +3494,20 @@ details[data-tg] .card{border:0;box-shadow:none;background:transparent;padding:1
 /* Hoy en modo Línea: las marcas finas (comidas, ir y volver) miden lo que duran, 20 px; sin moverlas,
    la zona que se puede tocar crece 6 px arriba y abajo (32 px) */
 .carril .cb.fino::after{content:'';position:absolute;left:0;right:0;top:-6px;bottom:-6px}
+/* Comer › Hoy: lo comido frente al objetivo, los cuatro a la vez */
+.cjmac{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;border:1px solid var(--line);border-radius:14px;
+  background:color-mix(in srgb,var(--card) 80%,transparent);color:var(--ink);font:inherit;padding:10px 12px;text-align:left;cursor:pointer}
+.cjmac>span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cjmac small{font-size:11px;color:var(--ink2);font-weight:700}
+.cjmac b{font-size:16px;line-height:1.1;white-space:nowrap}
+.cjmac b i{font-style:normal;font-weight:500;font-size:11px;color:var(--ink2)}
+.cjmac .bar{height:5px;border-radius:5px;background:var(--line);overflow:hidden}
+.cjmac .bar i{display:block;height:100%;background:var(--ink2)}
+.cjmac .p .bar i{background:var(--brand)}.cjmac .c .bar i{background:#a78bfa}.cjmac .g .bar i{background:var(--warn)}.cjmac .kcal .bar i{background:var(--ok)}
+/* el buscador lee platos, frases y recetas pegadas */
+.fblec{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.fblec .fbln{display:flex;align-items:center;gap:8px;margin:4px 0 6px;font-size:16px}
+.fblec .fbln .em{font-size:20px}
+.fblec .fbmac{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.fblec .fbmac b{color:var(--ink);font-size:15px}.fblec .fbmac .p b{color:var(--brand)}
+.fbms{margin:2px 2px 0;opacity:.75}

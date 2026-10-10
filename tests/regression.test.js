@@ -9832,7 +9832,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#hojaDia [data-a="cje-nocome"]'); await page.waitForTimeout(120);
     const nada = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).some((e) => e.p === 'desayuno' && /No he desayunado/.test(e.nombre)));
     await page.evaluate(() => { window.PG.ui.cjeHoja = null; window.PG.render(); });
-    await page.click('#main .cjln'); await page.waitForTimeout(120);
+    await page.click('#main .cjmac'); await page.waitForTimeout(120);
     const dia = await page.evaluate(() => ({ filas: document.querySelectorAll('#hojaDia .cjtb tr').length, total: (document.querySelector('#hojaDia .cjtb tr.t') || {}).textContent || '' }));
     await page.click('#hojaDia [data-a="cje-diak"][data-d="-1"]'); await page.waitForTimeout(100);
     const ayer = await page.evaluate(() => { const P = window.PG; return P.ui.cjeHoja.k === P.iso(P.addDays(new Date(), -1)); });
@@ -10513,6 +10513,57 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       pasos.every(Boolean) && ses.mot === 'dormir' && ses.thc > 0 && ses.ganas === 1 && ef.filas === 9 && ef.n && ci.tarjetas === 11 && ci.pautas === 7 && plan.cudit === 9 && plan.tb, JSON.stringify({ pasos, ses, ef, ci, plan }));
     check('asistente: check-in en Hoy y UNA tarjeta; el × la silencia y sale la siguiente; Tu semana con 6 números y un experimento a la vez',
       asist.check && asist.tarjetas === 1 && ck.kss === 4 && ck.animo === 4 && ck.hecho && antes && antes !== despues && rev === 6 && ex, JSON.stringify({ asist, ck, antes, despues, rev, ex }));
+  }
+
+  // 258) COMER, ENTREGA 1: apuntar AYER no salta a hoy al cerrar la hoja (solo vuelve a hoy si la
+  // hoja vino de fuera de Comer); la cabecera da kcal y P/H/G; «Por macros» tiene puerta y su «atrás»
+  // vuelve a Comer; la frase y el buscador entienden platos (huevos turcos, poke de salmón, tortilla
+  // de 2 huevos) y el tuyo manda sobre el genérico; pegar una receta entera da macros por ración y
+  // se guarda como plato con sus pasos; y el buscador dice lo que tarda
+  {
+    const cl = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(90); return true; } return false; };
+    const pasos = [];
+    await page.evaluate(() => { const P = window.PG; window.__copia258 = JSON.parse(JSON.stringify(P.store)); P.store.food.objetivo = { kcal: 2166, prot: 130 };
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.save(); P.render(); });
+    pasos.push(await cl('#main [data-a="food-prev"]'));
+    pasos.push(await cl('#main [data-a="cje-mom"][data-p="desayuno"]'));
+    await page.fill('#frIn', 'huevos turcos'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(150);
+    pasos.push(await page.evaluate(() => { const e = document.querySelector('#hojaDia .hscrim'); if (e) e.click(); return !!e; })); await page.waitForTimeout(90);
+    const ayer = await page.evaluate(() => { const P = window.PG, k = P.iso(P.addDays(new Date(), -1)), l = P.foodLog(k);
+      return { dia: P.ui.foodDate === k, ht: l.some((e) => /Huevos turcos/.test(e.nombre) && (e.p || '') === 'desayuno'), cab: (document.querySelector('#main .cjmac') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'acc', p: 'comida', k: P.iso(new Date()), fuera: true }; P.ui.foodDate = P.iso(P.addDays(new Date(), -2)); P.render(); });
+    pasos.push(await page.evaluate(() => { const e = document.querySelector('#hojaDia .hscrim'); if (e) e.click(); return !!e; })); await page.waitForTimeout(90);
+    const fuera = await page.evaluate(() => window.PG.ui.foodDate === '');
+    pasos.push(await cl('#main [data-a="cje-tab"][data-v="sem"]'));
+    pasos.push(await cl('#main [data-a="cje-macros"]'));
+    const mac = await page.evaluate(() => ({ v: window.PG.ui.typesVista, volver: !!document.querySelector('#main [data-a="m-vuelta"]') }));
+    pasos.push(await cl('#main [data-a="m-vuelta"]'));
+    const vuelta = await page.evaluate(() => window.PG.ui.tab === 'food' && window.PG.ui.cjeTab === 'sem');
+    const fr = await page.evaluate(() => { const P = window.PG, L = (t) => { const f = P.fraseLeer(t); return f ? { n: P.fraseNombre(f), m: P.fraseMacros(f), it: f.items.map((x) => x.nom + ' ' + (x.g || '')), dish: f.items.some((x) => x.dish), dudas: (f.dudas || []).length } : null; };
+      return { ht: L('huevos turcos'), poke: L('poke de salmón'), tort: L('tortilla de 2 huevos'), mio: L('pollo al curry'), fruta: L('fruta') }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.foodPos = 'cena'; P.ui.foodDate = P.iso(P.addDays(new Date(), -1)); P.render(); });
+    await page.click('#fbQ'); await page.keyboard.type('poke de salmon', { delay: 30 }); await page.waitForTimeout(350);
+    const bus = await page.evaluate(() => ({ lec: (document.querySelector('#fbRes .fblec') || {}).textContent || '', ms: (document.getElementById('fbMs') || {}).textContent || '', nada: /Nada se llama así/.test((document.getElementById('fbRes') || {}).textContent || '') }));
+    pasos.push(await cl('#fbRes [data-a="fb-lec-ok"]'));
+    const ap = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(P.addDays(new Date(), -1))); return l.some((e) => /Poke de salmón/.test(e.nombre) && e.p === 'cena'); });
+    const peg = await page.evaluate(() => { const dt = new DataTransfer(); dt.setData('text/plain', 'Bowl de pollo con arroz\nIngredientes (para 2 personas):\n300 g pechuga de pollo\n150 g arroz basmati\n1 aguacate\n2 huevos\nPreparación:\n1. Cuece el arroz 12 minutos.\n2. Haz el pollo a la plancha y monta el bowl.');
+      const i = document.getElementById('fbQ'); i.focus(); i.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); return i.value; });
+    await page.waitForTimeout(250);
+    const rec = await page.evaluate(() => (document.querySelector('#fbRes .fblec') || {}).textContent || '');
+    pasos.push(await cl('#fbRes [data-a="fb-lec-receta"]'));
+    const guar = await page.evaluate(() => { const P = window.PG, d = P.store.dishes[P.store.dishes.length - 1]; return { n: d.name, rac: d.portions, al: (d.alims || []).length, st: (d.steps || []).length, kcal: d.kcal }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia258; P.save(); P.ui.tab = 'hoy'; P.ui.foodVista = 'eje'; P.ui.foodDate = ''; P.ui.foodBusca = ''; P.ui.fbReceta = null; P.ui.foodPos = ''; P.render(); });
+    check('Comer: apuntar ayer y cerrar la hoja te deja en ayer (si la hoja vino de Hoy, vuelve a hoy); la cabecera da kcal, proteína, hidratos y grasa; «Por macros» tiene puerta y vuelve',
+      pasos.slice(0, 7).every(Boolean) && ayer.dia && ayer.ht && /kcal/.test(ayer.cab) && /proteína/.test(ayer.cab) && /hidratos/.test(ayer.cab) && /grasa/.test(ayer.cab) && fuera && mac.v === 'macros' && mac.volver && vuelta,
+      JSON.stringify({ pasos, ayer, fuera, mac, vuelta }));
+    check('platos que todo el mundo nombra: huevos turcos (yogur + 2 huevos), poke de salmón, tortilla de 2 huevos; tu «pollo al curry» manda sobre el genérico; «fruta» sigue preguntando',
+      fr.ht && fr.ht.n === 'Huevos turcos' && fr.ht.it.some((x) => /yogur griego 150/.test(x)) && fr.ht.it.some((x) => /huevo 120/.test(x)) && fr.ht.m.prot > 20 &&
+      fr.poke && fr.poke.n === 'Poke de salmón' && fr.poke.it.length >= 5 && fr.tort && fr.tort.it.some((x) => /huevo 120/.test(x)) && fr.mio && fr.mio.dish && fr.fruta && fr.fruta.dudas === 1,
+      JSON.stringify(fr));
+    check('buscador: escribir un plato lo lee con macros y se apunta en el día y la comida elegidos; pegar una receta da macros por ración y se guarda con sus pasos; dice lo que tarda',
+      /Poke de salmón/.test(bus.lec) && /kcal/.test(bus.lec) && !bus.nada && /ms/.test(bus.ms) && ap && peg === 'Bowl de pollo con arroz' && /POR RACIÓN \(DE 2\)/.test(rec) &&
+      pasos.slice(7).every(Boolean) && guar.n === 'Bowl de pollo con arroz' && guar.rac === 2 && guar.al >= 4 && guar.st === 2 && guar.kcal > 300,
+      JSON.stringify({ bus, ap, peg, rec: rec.slice(0, 120), guar, pasos }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
