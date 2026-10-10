@@ -11078,6 +11078,74 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.g.igual && r.g.tab === 'month', JSON.stringify(r.g));
   }
 
+  // 266) SALUD Y DINERO, EN CADENA (tanda 2 del informe de código): (a) «copos de avena y trigo» ya no
+  //      sale «sin gluten»; (b) un solo lector de importes: «1.500» en una hucha son 1.500 € y «-200» no la
+  //      pone a 0; (c) la captura del banco no pega letras ni cuentas a los importes; (d) «ya lo he
+  //      apartado» al cobrar tiene su propio registro y su «deshacer», y no deja el cierre del mes como
+  //      repartido; (e) sin Fintonic, banco ni tu cifra no hay «has ahorrado» inventado; (f) una captura de
+  //      antes de la última nómina pide otra en vez de contar hasta una nómina pasada; (g) «Poner la
+  //      cifra» desde Hoy lleva a Dinero.
+  {
+    const r = {};
+    r.gluten = await page.evaluate(() => { const P = window.PG; return [P.glutenDe('copos de avena y trigo'), P.glutenDe('harina de avena y espelta'), P.glutenDe('copos de avena')].join(','); });
+    r.lee = await page.evaluate(() => { const P = window.PG; return ['1.500', '2.766,40', '12.50', '41,30'].map(P.leeImporte).join('|'); });
+    await page.evaluate(() => { const P = window.PG, s = P.store, h = new Date();
+      window.__copia266 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS();
+      a.epocas = [{ id: 'e266', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      a.real = []; a.gastado = {}; a.meses = {}; a.metaPct = 30; delete a.banco;
+      a.huchas = [{ id: 'hu-a', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 100, objetivo: 0, meta: '', saldo: 1000 }];
+      a.puroId = 'hu-a'; a.puroPct = 50;
+      P.dineroS().pagos = []; P.dineroS().gastos = [{ id: 'g266', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }];
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.ui.bk = null; P.save(); P.render(); });
+    // (b) la hucha, escrita como en España, por el campo de verdad
+    const campo = async (v) => { await page.evaluate((v) => { const i = document.createElement('input'); i.dataset.a = 'din-hu-campo'; i.dataset.id = 'hu-a'; i.dataset.k = 'saldo'; i.value = v;
+      document.getElementById('main').appendChild(i); i.dispatchEvent(new Event('change', { bubbles: true })); }, v); await page.waitForTimeout(60);
+      return page.evaluate(() => window.PG.huchaDe('hu-a').saldo); };
+    r.h1 = await campo('1.500'); r.h2 = await campo('-200'); r.h3 = await campo('aa');
+    // (c) la captura
+    r.bk = await page.evaluate(() => { const P = window.PG;
+      const a = P.bancoParse('Saldo actual 850,00 €'), b = P.bancoParse('Cuenta Online ···4821 300,00 €'),
+        c = P.bancoParse('Cuenta Nómina ···4821\n1.670,32 €\nCuenta Naranja\n5.000,00 €');
+      return [a[0] && a[0].v, b[0] && b[0].v, c.length, c.map((x) => x.num || '-').join('/')].join('|'); });
+    // (d) captura de hoy → «ya lo he apartado» → deshacer → otra vez; el cierre sigue por repartir
+    await page.evaluate(() => { const P = window.PG, B = P.bancoS(), hoy = P.iso(new Date());
+      B.cuentas = [{ id: 'c266', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: hoy, hora: '10:00', s: { c266: 1500 } }];
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); });
+    r.d0 = await page.evaluate(() => { const Q = window.PG.bkQueda(); return { ap: Q.ap, mk: Q.mk0, cad: Q.caducada }; });
+    const pulsa = async (sel) => { const b = await page.$(sel); if (b) { await b.click(); await page.waitForTimeout(120); } return !!b; };
+    r.d1 = await pulsa('#main [data-a="din-apartar-meta"]');
+    r.d2 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(), x = P.ahorroMes(Q.mk0, false) || {};
+      return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho }; });
+    r.d3 = await pulsa('#main [data-a="din-apartar-ini-x"]');
+    r.d4 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(); return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo }; });
+    // (e) sin datos de gasto de verdad no hay ahorro del mes
+    r.e = await page.evaluate(() => { const P = window.PG, h = new Date(), mk = h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0'); return P.ahorroDeMes(mk); });
+    // (f) la captura de hace 40 días, de antes de la última nómina
+    r.f = await page.evaluate(() => { const P = window.PG, B = P.bancoS(); B.capturas = [{ fecha: P.iso(P.addDays(new Date(), -40)), hora: '10:00', s: { c266: 1500 } }];
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); const Q = P.bkQueda();
+      return { cad: Q.caducada, txt: ((document.querySelector('#main .dhero') || {}).innerText || '').replace(/\s+/g, ' ').slice(0, 60) }; });
+    // (g) desde Hoy de la app, una tarjeta de dinero lleva a Dinero
+    r.g = await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render();
+      const b = document.createElement('button'); b.dataset.a = 'd6-tab'; b.dataset.v = 'mes'; document.getElementById('main').appendChild(b); b.click();
+      return P.ui.tab + '/' + P.ui.dinTab; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia266; P.save(); P.ui.tab = 'month'; P.render(); });
+    check('«copos de avena y trigo» y «harina de avena y espelta» llevan gluten; la avena sola, no',
+      r.gluten === 'si,si,no', r.gluten);
+    check('un solo lector de importes: «1.500», «2.766,40», «12.50» y «41,30»', r.lee === '1500|2766.4|12.5|41.3', r.lee);
+    check('en una hucha «1.500» son 1.500 € y «-200» o letras no la ponen a 0', r.h1 === 1500 && r.h2 === 1500 && r.h3 === 1500, [r.h1, r.h2, r.h3].join(','));
+    check('la captura del banco no lee letras como cifras ni pega el número de cuenta, y cada cuenta tiene el suyo',
+      r.bk === '850|300|2|4821/-', r.bk);
+    check('«ya lo he apartado» al cobrar: a la hucha, deja de restarse y no marca el cierre del mes como repartido',
+      r.d0.ap > 0 && r.d1 && r.d2.ap === 0 && r.d2.hecho && r.d2.ini === r.d0.ap && r.d2.saldo === 1500 + r.d0.ap && !r.d2.cierre, JSON.stringify({ d0: r.d0, d2: r.d2 }));
+    check('y tiene «deshacer»: vuelve a contar como lo que apartas y la hucha queda como estaba',
+      r.d3 && r.d4.ap === r.d0.ap && !r.d4.hecho && r.d4.saldo === 1500, JSON.stringify(r.d4));
+    check('sin Fintonic, banco ni tu cifra no hay «has ahorrado» inventado', r.e === null, JSON.stringify(r.e));
+    check('una captura de antes de la última nómina pide otra en vez de contar hasta una nómina pasada',
+      r.f.cad === true && /HA LLEGADO LA NÓMINA/.test(r.f.txt), JSON.stringify(r.f));
+    check('«Poner la cifra» desde Hoy lleva a Dinero → Mes', r.g === 'dinero/mes', r.g);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
