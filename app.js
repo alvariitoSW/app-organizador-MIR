@@ -293,7 +293,7 @@ let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que qu
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
   menuAuto:null,shopVista:'',compraCerradas:new Set(['rutina','basicos','casa']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
-  evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estTxt:'',estPrev:null,arranque:null,
+  evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habEd:null,cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
@@ -10242,8 +10242,8 @@ function consumoApuntar(o){
      «me voy a dar un paseo» (antes solo se marcaba si no habías contestado, y siempre habías contestado) */
   const g0=c.ganas[0];if(g0&&g0.res!=='sesion'&&hoy&&d.getTime()-g0.ts<3*3600000)g0.res='sesion';
   save();return x;}
-function cnDiaTxt(k){const n=Math.round((parseDate(iso(new Date()))-parseDate(k))/86400000);
-  if(n===0)return 'hoy';if(n===1)return 'ayer';if(n===2)return 'anteayer';const d=parseDate(k);return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]+' '+d.getDate();}
+function cnDiaTxt(k){const n=-diasHasta(k);
+  if(n===0)return 'hoy';if(n===1)return 'ayer';if(n===2)return 'anteayer';const d=parseDate(k);return DIA3[d.getDay()]+' '+d.getDate();}
 function consumoSemana(lunK){
   const l=parseDate(lunK),dias=[];let n=0,g=0,mg=0;
   for(let i=0;i<7;i++){const k=iso(addDays(l,i)),s=consumoDe(k);dias.push({k:k,n:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});n+=s.length;g+=dias[i].g;
@@ -10368,7 +10368,7 @@ function renderConsumo(){
     return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="'+key+'" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+(x.length>2?x[1]+' '+x[2]:x[1])+'</button>';}).join('')+'</div>';};
   const sin=consumoSin(),tb=cnTB(),ll=cnLloret(iso(new Date()).slice(0,7)),aguant=cnGanasSemana().filter(cnAguanto).length;
   /* pasada la medianoche también es tarde (con tope a las 23:00, a las 00:30 llevas hora y media) */
-  const vt=c.plan.ventana?mins(c.plan.ventana):null,nt=mins(horaLocal(new Date()));
+  const vt=c.plan.ventana?mins(c.plan.ventana):null,nt=hoyNow(true);
   const tarde=vt!=null&&(nt>=vt||(vt>=12*60&&nt<6*60));
   /* ¿qué tal te sentó la última? (a partir de 2 h después, o al día siguiente) */
   const pend=c.ses.filter(function(x){return !x.sento&&x.fecha>=iso(addDays(new Date(),-2))&&(x.fecha<iso(new Date())||(x.ts&&Date.now()-x.ts>2*3600000));})[0];
@@ -12533,12 +12533,12 @@ function notaPiesHTML(x){
     const quedan=Math.max(0,Math.ceil((x.hecha+NOTA_PURGA_DIAS*86400000-Date.now())/86400000));
     out.push('<span class="pie">se borra en '+quedan+' día'+(quedan===1?'':'s')+'</span>');}
   return out.join('');}
-function notaFilaHTML(x,conAbrir){
+function notaFilaHTML(x){
   return '<div class="nota'+(x.hecha?' hecha':'')+'">'+
     '<button class="tick" data-a="nota-hecha" data-id="'+x.id+'" title="'+(x.hecha?'volver a pendiente':'marcar hecha')+'" '+
       'aria-label="'+(x.hecha?'volver a pendiente':'marcar hecha')+'">✓</button>'+
     '<span class="franja" style="background:'+esc(notaColor(x))+'"></span>'+
-    '<button class="cuerpo" '+(conAbrir!==false?('data-a="nota-abrir" data-id="'+x.id+'"'):'')+'>'+
+    '<button class="cuerpo" data-a="nota-abrir" data-id="'+x.id+'">'+
       '<span class="t">'+esc(x.txt.split('\n')[0])+(x.txt.indexOf('\n')>=0?' …':'')+'</span>'+
       '<span class="pies">'+notaPiesHTML(x)+'</span></button>'+
   '</div>';}
@@ -12567,7 +12567,7 @@ function renderNotas(){
   const bloque=function(titulo,cual,lista,cls){
     if(!lista.length||(filtro&&filtro!==cual))return '';
     return '<div class="card'+(cls?(' '+cls):'')+'"><h2>'+esc(titulo)+' <span class="mini">'+lista.length+'</span></h2>'+
-      lista.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';};
+      lista.map(notaFilaHTML).join('')+'</div>';};
   const cuerpo=bloque('Se te pasó','con',tarde,'avisa')+bloque('Hoy','con',hoyL)+
     bloque('Esta semana','con',semana)+bloque('Más adelante','con',luego)+
     bloque('Sin día','sin',sinDia)+bloque('Hechas','hechas',hechas);
@@ -12662,7 +12662,7 @@ function notasDelDiaHTML(key){
     '<span class="mini">📝 sin notas este día</span><span class="sp"></span>'+
     '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota</button></div>';
   return '<div class="card"><h2>📝 Notas de este día <span class="mini">'+ns.length+'</span></h2>'+
-    ns.map(function(x){return notaFilaHTML(x);}).join('')+
+    ns.map(notaFilaHTML).join('')+
     '<div class="row" style="margin-top:10px">'+
       '<button class="btn s" data-a="nota-add-dia" data-key="'+esc(key)+'">+ nota para este día</button>'+
       '<button class="btn s" data-a="tab" data-t="notas">ver todas mis notas</button></div></div>';}
@@ -15662,7 +15662,7 @@ function programarAvisoHoy(){
   if(!avisosListos())return;
   const k=iso(new Date()),c=avisosCfg();if(c.hecho===k)return;
   const e=entrenoDe(k);if(!e||!e.hora)return;
-  const ahora=new Date(),nm=ahora.getHours()*60+ahora.getMinutes(),t=mins(e.hora)-c.antes-nm;
+  const nm=hoyNow(true),t=mins(e.hora)-c.antes-nm;
   if(t<-c.antes||t>18*60)return;
   const lanza=function(){if(ui.gymSesionActiva)return;
     const rt=e.tipo==='fuerza'?(e.rutina||rutinaDeFecha(k)):null;
@@ -15721,7 +15721,7 @@ function copiasGuardar(etiqueta){
   return copiasDB().then(function(db){return new Promise(function(res){
     const tx=db.transaction('snap','readwrite'),st=tx.objectStore('snap');
     /* con hora: dos restauraciones el mismo día ya no pisan la copia de la primera */
-    const ah=new Date(),k=etiqueta?(iso(ah)+' '+String(ah.getHours()).padStart(2,'0')+':'+String(ah.getMinutes()).padStart(2,'0')+':'+String(ah.getSeconds()).padStart(2,'0')+' '+etiqueta):iso(ah);
+    const ah=new Date(),k=etiqueta?(iso(ah)+' '+horaLocal(ah)+':'+String(ah.getSeconds()).padStart(2,'0')+' '+etiqueta):iso(ah);
     /* lo último guardado ya está serializado en localStorage: no se vuelve a recorrer todo */
     let json=null;try{json=localStorage.getItem(KEY);}catch(e){}
     st.put({k:k,t:Date.now(),json:json||JSON.stringify(store)});
@@ -16021,7 +16021,8 @@ function habitoEstadoH(hab,key){
   const v=(habitosS().registro[key]||{})[hab.id];
   if(v)return v==='min'?'min':'ok';
   return hab.auto?habitoAuto(hab,key):'';}
-function habitoEstado(hid,key){const hab=habitosS().items.filter(function(x){return x.id===hid;})[0];return hab?habitoEstadoH(hab,key):'';}
+function habPorId(id){return habitosS().items.filter(function(x){return x.id===id;})[0]||null;}
+function habitoEstado(hid,key){const hab=habPorId(hid);return hab?habitoEstadoH(hab,key):'';}
 function habitoHecho(hid,key){return !!habitoEstado(hid,key);}
 function habPuntosDia(k){
   /* todos los hábitos de un día: cuántos tocaban y cuántos puntos (hecho 1, mínimo ½) */
@@ -16082,12 +16083,6 @@ function habFrase(h,corto){
   /* «al salir de guardia → 3 posturas»: la intención de implementación, en una línea */
   const an=habAnclaTxt(h),que=corto&&h.min?h.min:h.nombre;
   return an?an.charAt(0).toUpperCase()+an.slice(1)+' → '+que.charAt(0).toLowerCase()+que.slice(1):'';}
-function habSubTxt(h){
-  const p=[];const fr=habFrase(h);if(fr)p.push(fr);else p.push(diasCorta(h.dow));
-  if((h.noEn||[]).length)p.push('no en '+h.noEn.map(function(t){return diaTipoInfo(t)[1].toLowerCase();}).join(' ni '));
-  if(HAB_AUTO[h.auto])p.push('se marca solo: '+HAB_AUTO[h.auto].lab.replace(/^\S+ /,''));
-  if(h.min)p.push('mínimo: '+h.min);
-  return p.join(' · ');}
 function habFase(h){return h.fase||'marcha';}
 function habEnMarcha(){return habitosS().items.filter(function(h){return habFase(h)==='marcha';});}
 function habDia(h){
@@ -16176,7 +16171,7 @@ function habHojaHTML(){
   const e=ui.habEd;if(!e)return '';
   const chip=function(a,v,on,txt,extra){return '<button class="'+(on?'on':'')+'" data-a="'+a+'" data-v="'+v+'" aria-pressed="'+on+'"'+(extra||'')+'>'+txt+'</button>';};
   const DS=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];
-  const TT=['guardia','saliente','trabajo','fuerza','libre'],an=e.ancla||{},h=e.id&&habitosS().items.filter(function(x){return x.id===e.id;})[0];
+  const TT=['guardia','saliente','trabajo','fuerza','libre'],an=e.ancla||{},h=e.id&&habPorId(e.id);
   const lleno=!e.id&&habEnMarcha().length>=3,n=function(x,t,sub){return '<div class="hlab"><b class="hnum">'+x+'</b> '+t+(sub?' <small>'+sub+'</small>':'')+'</div>';};
   /* el obstáculo y su plan: al tercer día (el asistente lo pregunta), no al crear */
   const obst=e.id&&(e.obst||(h&&habDia(h)>=3));
@@ -16214,7 +16209,7 @@ function habHojaHTML(){
       (e.id?'<button class="btn d" style="flex:1" data-a="hab-del" data-id="'+e.id+'">Borrar</button>':'')+
       '<button class="btn p" style="flex:2" data-a="hab-ed-ok">'+(e.id?'Guardar':(lleno?'Guardar: espera turno':'Empezar · día 1 de ~66'))+'</button></div>');}
 function habEdAbre(id){
-  const h=id&&habitosS().items.filter(function(x){return x.id===id;})[0];
+  const h=id&&habPorId(id);
   ui.habEd=h?{id:h.id,nombre:h.nombre,icono:h.icono||'✅',color:h.color||HAB_COLORES[0],dow:(h.dow||[]).slice(),noEn:(h.noEn||[]).slice(),auto:h.auto||'',
       ancla:Object.assign({},h.ancla||{}),min:h.min||'',obst:h.obst||'',plan:h.plan||'',porQue:h.porQue||''}:
     {id:'',nombre:'',icono:'✅',color:HAB_COLORES[habitosS().items.length%HAB_COLORES.length],dow:[0,1,2,3,4,5,6],noEn:[],auto:'',ancla:{},min:'',obst:'',plan:'',porQue:''};}
@@ -16369,7 +16364,6 @@ function reglasDe(lista,k,primera,sinNada){
     if(!primera){R.push(r);continue;}
     if(r.nada||(!A.nunca[r.id.split(':')[0]]&&!A.nunca[r.id]&&!(A.sil[r.id]&&A.sil[r.id]>=hoyK)))return r;}
   return primera?null:R;}
-function asistReglas(k,primera){return reglasDe(HAB_R.concat(CN_R),k,primera,true);}
 function asistTarjeta(k){return reglasDe(HAB_R,k,true,true);}
 function asistTarjetaHab(k){return reglasDe(HAB_R,k,true,false);}
 function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
@@ -16412,7 +16406,7 @@ function renderRevision(){
       n('😴 Sueño',S.sueno==null?null:String(S.sueno).replace('.',','),P.sueno==null?null:String(P.sueno).replace('.',','),' h',1,S.nS+' noches',S.sueno,P.sueno)+
       n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj)+
       n('✅ Hábitos',S.hab,P.hab,' %',1,'de los días que tocaban')+
-      n('📚 Estudio',S.est?fmtHM(S.est):'0h00',P.est?fmtHM(P.est):'0h00','',1,'',S.est||0,P.est||0)+
+      n('📚 Estudio',fmtHM(S.est||0),fmtHM(P.est||0),'',1,'',S.est||0,P.est||0)+
       n('💪 Entrenos',S.ent,P.ent,'',1)+
       n('☀️ KSS',S.kss==null?null:String(S.kss).replace('.',','),P.kss==null?null:String(P.kss).replace('.',','),'',-1,'mediana',S.kss,P.kss)+'</div></div>'+
     '<div class="card"><div class="cap">UN CRUCE DE TUS DATOS</div><p style="margin:4px 0 0">'+esc(cruce)+'</p></div>'+
@@ -18633,7 +18627,7 @@ function tareasHoyHTML(key){
   /* mirando OTRO día salen las notas de ese día; las de hoy van en «Para hoy» */
   const ns=notasAviso(key);if(!ns.length)return '';
   return '<div class="card"><h2>📝 Ese día <span class="mini">'+ns.length+'</span></h2>'+
-    ns.map(function(x){return notaFilaHTML(x);}).join('')+'</div>';}
+    ns.map(notaFilaHTML).join('')+'</div>';}
 function pagosHoyHTML(key){
   /* «hoy toca pagar el alquiler» es de las cosas que más se olvidan viviendo solo, y hasta ahora la
      app no lo sabía. Sale en Hoy, junto a los hábitos y los eventos. */
@@ -18924,7 +18918,7 @@ function deshacerApartado(mk){
   return 'deshecho: el dinero vuelve a estar sin apartar';}
 function sacarHucha(id,importe,txt,meter){
   /* sacar para el viaje, o meter a mano lo que ya tenías ahorrado de antes */
-  const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];
+  const h=huchaDe(id);
   if(!h)return 'esa hucha no existe';
   const v=numEuro(importe);if(!v)return meter?'pon cuánto metes':'pon cuánto sacas';
   const d=meter?v:-v;
@@ -18951,7 +18945,6 @@ function metaCalc(){
   const nm=nominaMes(hoy.getFullYear(),hoy.getMonth());
   return {m:m,llevas:llevas,falta:falta,meses:meses,rec:rec,ritmo:ritmo,llegasMk:llegasMk,tarde:tarde,
     pctSueldo:nm.neto?Math.round(rec/nm.neto*100):0,pct:m.importe?Math.min(100,Math.round(llevas/m.importe*100)):0,hecho:x.hecho,mk:mk};}
-function mkTxt(mk){const t=ahoYm(mk);return t?(MON[t.m]+' '+t.y):'';}
 function renderAhorroNomina(){
   const a=ahorroS(),hoy=new Date();
   const ep=a.epocas.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);});
@@ -19050,7 +19043,7 @@ function finParse(texto){
   const lin=String(texto||'').split(/\n+/).map(function(l){return l.trim();}).filter(Boolean);
   const todo=lin.join('\n');
   const per=/(\d{1,2})\s*([a-zA-Z]{3,4})\.?\s*[-–]\s*(\d{1,2})\s*([a-zA-Z]{3,4})\.?\s*(\d{4})/.exec(todo);
-  if(per&&FIN_MESES[per[4].toLowerCase()]!=null)out.mes=per[5]+'-'+String(FIN_MESES[per[4].toLowerCase()]+1).padStart(2,'0');
+  if(per&&FIN_MESES[per[4].toLowerCase()]!=null)out.mes=ahoMk(per[5],FIN_MESES[per[4].toLowerCase()]);
   /* Inicio: «Bancos 582€» y «Ingresos ↑ 11€ Gastos ↓ 1.578€», en euros enteros */
   const bn=/Bancos\s+([\dOoIl.]+)\s*€/.exec(todo);
   if(bn){out.banco=finNum(bn[1],false);out.pantallas.push('inicio');}
@@ -19117,11 +19110,6 @@ function llegadaNomina(y,m){
   const c=nominaCfg();let d=new Date(y,m,c.dia,12),n=0;
   while(n<c.habiles){d=addDays(d,1);if(esHabil(d))n++;}
   return {transfiere:new Date(y,m,c.dia,12),llega:d};}
-function proximaNomina(desde){
-  const d=parseDate(desde)||new Date();
-  let L=llegadaNomina(d.getFullYear(),d.getMonth());
-  if(iso(L.llega)<iso(d))L=llegadaNomina(d.getFullYear(),d.getMonth()+1);
-  return L;}
 function finUltima(){return (ahorroS().real||[])[0]||null;}
 let _ocrCarga=null;
 function ocrListo(){
@@ -19236,7 +19224,13 @@ function finCatIco(nombre){
   return '🧾';}
 function mkSuma(mk,n){const t=ahoYm(mk);const d=new Date(t.y,t.m+n,1,12);return ahoMk(d.getFullYear(),d.getMonth());}
 function mkCorto(mk){const t=ahoYm(mk);return t?MON[t.m]:'';}
+let _gmT=-1,_gmM={};
 function gastoMes(mk){
+  /* lo leen catEsFijo, catMedia, mesTipo y la hoja: cientos de veces por pintado */
+  if(!_pintando)return gastoMes0(mk);
+  if(_gmT!==_renderTick){_gmM={};_gmT=_renderTick;}
+  return (mk in _gmM)?_gmM[mk]:(_gmM[mk]=gastoMes0(mk));}
+function gastoMes0(mk){
   /* lo que salió ese mes: la última captura de Fintonic de ese mes; si no hay, lo apuntado a mano */
   const r=(ahorroS().real||[]).filter(function(x){return x.mes===mk&&x.gastos!=null;})
     .sort(function(p,q){return (q.fecha+(q.hora||'')).localeCompare(p.fecha+(p.hora||''));})[0];
@@ -19408,7 +19402,12 @@ function bolsilloSetPct(id,v){
   const resto=otras.filter(function(q){return q.id!==id;});
   if(resto.length)repartir(resto,libre-h.pct);else h.pct=libre;}
 function metaPct(){const v=+ahorroS().metaPct;return v>=5&&v<=80?Math.round(v):30;}
+let _nomT=-1,_nomM=null;
 function nominaMedia(){
+  if(!_pintando)return nominaMedia0();
+  if(_nomT!==_renderTick){_nomM=nominaMedia0();_nomT=_renderTick;}
+  return _nomM;}
+function nominaMedia0(){
   /* lo que cobras de media (6 meses hacia atrás, real si lo apuntaste) */
   const hoy=new Date();let s=0,n=0;
   for(let i=0;i<6;i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1,12),nm=nominaMes(d.getFullYear(),d.getMonth());if(nm.neto>0){s+=nm.neto;n++;}}
@@ -19488,11 +19487,11 @@ function gasteApuntar(){
   if(!(s.v>0))return 'pon cuánto te has gastado';
   if(s.falta>0)return 'no llega con esos bolsillos: faltan '+eurR(s.falta);
   const txt=(s.g.txt||'gasto de ahorros').trim();
-  Object.keys(s.salen).forEach(function(id){const v=s.salen[id];if(!v)return;const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];
+  Object.keys(s.salen).forEach(function(id){const v=s.salen[id];if(!v)return;const h=huchaDe(id);
     if(h){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,txt);}});
   ui.dinGaste=null;save();
   return eurR(s.v)+' de «'+txt+'»: '+Object.keys(s.salen).filter(function(id){return s.salen[id];}).map(function(id){
-    const h=ahorroS().huchas.filter(function(q){return q.id===id;})[0];return (h?h.nombre:'')+' −'+eurR(s.salen[id]);}).join(', ');}
+    const h=huchaDe(id);return (h?h.nombre:'')+' −'+eurR(s.salen[id]);}).join(', ');}
 /* ===================== DINERO v6 · analizar lo que gastas =====================
    «Que me haga un análisis de gastos, que me diga en qué debería ahorrar más, en qué me tengo que
    fijar para gastar menos, cuánto debería gastarme al día máximo y que me ayude con consejos.»
@@ -19550,7 +19549,12 @@ function d6CatFila(c,max){
    de mes. Metas = cada bolsillo con su fecha (viaje, lista de casa, un juego…) y lo que pide al mes;
    gastar de una meta solo baja esa meta. Plan = tu mes tipo y el reparto recomendado de lo que sobra. */
 function mkEntre(a,b){const x=ahoYm(a),y=ahoYm(b);return x&&y?(y.y-x.y)*12+(y.m-x.m):0;}
+let _mesT=-1,_mesM=null;
 function mesTipo(){
+  if(!_pintando)return mesTipo0();
+  if(_mesT!==_renderTick){_mesM=mesTipo0();_mesT=_renderTick;}
+  return _mesM;}
+function mesTipo0(){
   /* la media de los meses cerrados con captura (hasta 4): lo que entra, lo fijo y lo del día a día */
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());let f=0,v=0,n=0;
   for(let i=1;i<=8&&n<4;i++){const p=mesPartes(mkSuma(mkHoy,-i));if(p){f+=p.fijos;v+=p.vars;n++;}}
@@ -19718,7 +19722,7 @@ function bkTotal(c,rol){
   let t=0,n=0;bancoS().cuentas.forEach(function(q){if(q.rol===rol&&c.s[q.id]!=null){t+=c.s[q.id];n++;}});
   return n?Math.round(t*100)/100:null;}
 function bkUltima(rol){return bancoS().capturas.filter(function(c){return bkTotal(c,rol)!=null;})[0]||null;}
-function bkEdad(c){return c?Math.round((parseDate(iso(new Date()))-parseDate(c.fecha))/864e5):null;}
+function bkEdad(c){return c?-diasHasta(c.fecha):null;}
 function nominaTras(f){
   /* la primera nómina que llega DESPUÉS del día f (la de ese mismo día ya está en la cuenta) */
   const d=parseDate(f);let L=llegadaNomina(d.getFullYear(),d.getMonth());
@@ -19783,7 +19787,7 @@ function imgsDe(files){return Array.prototype.slice.call(files||[]).filter(funct
 function capturaCuando(fs){
   /* la fecha de la captura es la del archivo: la del día en que la hiciste, no la de hoy */
   const d=new Date(fs.reduce(function(t,f){return Math.max(t,+f.lastModified||0);},0)||Date.now());
-  return {fecha:iso(d),hora:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};}
+  return {fecha:iso(d),hora:horaLocal(d)};}
 function ocrTextos(fs,cada){
   /* cada captura → su texto, aquí en el móvil y de una en una */
   const base=new URL('vendor/ocr/',location.href).href,out=[];let worker=null;
@@ -19810,7 +19814,7 @@ function bkMano(desde){
   const b=bancoS(),u=desde||b.capturas[0]||null,h=new Date();
   const cs=b.cuentas.length?b.cuentas.map(function(q){return {nombre:q.nombre,num:q.num,v:u&&u.s[q.id]!=null?u.s[q.id]:NaN,ok:true,rol:q.rol};}):
     [{nombre:'Cuenta nómina',num:'',v:NaN,ok:true,rol:'gasto'},{nombre:'Cuenta ahorro',num:'',v:NaN,ok:true,rol:'ahorro'}];
-  ui.bk={estado:'listo',hechas:0,total:0,fecha:desde?u.fecha:iso(h),hora:desde?u.hora:String(h.getHours()).padStart(2,'0')+':'+String(h.getMinutes()).padStart(2,'0'),
+  ui.bk={estado:'listo',hechas:0,total:0,fecha:desde?u.fecha:iso(h),hora:desde?u.hora:horaLocal(h),
     cuentas:cs,msg:'',cuadre:'',mano:true};
   ui.dineroVista='banco';}
 function bkGuardar(){
@@ -20116,7 +20120,7 @@ function dinHojaHTML(){
       '<div class="row mini"><span>'+puroMin()+' % (mínimo)</span><span class="sp"></span><span>100 %</span></div>'+
       '<div class="hnota">Si le das más a una hucha, sale de las otras huchas; el ahorro puro nunca baja del '+puroPct()+' %.</div>';
   }else if(h0==='hucha'){
-    const h=ahorroS().huchas.filter(function(q){return q.id===ui.dinHuId;})[0];
+    const h=huchaDe(ui.dinHuId);
     if(!h){ui.dinHoja='';return '';}
     const br=baseReparto(mkHoy),r=repartoDe(br.v),ap=r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,tr=ll?enTrabajo(ll.falta):null;
     const libre=Math.max(0,br.v-(r[puroHucha().id]||0));
@@ -20233,7 +20237,7 @@ function zipGuardado(files){
   let p=0;todo.forEach(function(x){out.set(x,p);p+=x.length;});return out;}
 function xlsxLibro(hojas){
   /* hojas: [{nombre, filas:[[celda…]]}]; celda = número | texto | {v, b:true} (negrita) */
-  const x=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  const x=icsEscXml;
   const col=function(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;};
   const hojaXML=function(h){
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
@@ -20423,7 +20427,7 @@ function agendaMesHTML(y,mo){
     return '<button class="agrow'+(pasado?' ya':'')+(ev.fecha===hoy?' hoy':'')+'" data-a="mon-day" data-key="'+esc(ev.fecha)+'"'+
       ' title="ver ese día">'+
       '<span class="agdot" style="background:'+esc(ev.color||tlColor('evt'))+'"></span>'+
-      '<span class="agd"><b>'+(d?d.getDate():'?')+'</b><span>'+(d?DAYSH[(d.getDay()+6)%7].toLowerCase():'')+'</span></span>'+
+      '<span class="agd"><b>'+(d?d.getDate():'?')+'</b><span>'+(d?DIA3[d.getDay()]:'')+'</span></span>'+
       '<span class="agnm"><b>'+esc(ev.titulo||'(sin título)')+'</b>'+
         (ev.cuentaAtras&&!pasado?'<span class="mini">'+esc(cuentaAtrasTxt(ev.fecha))+'</span>':'')+'</span>'+
       '<span class="aghr">'+esc(evHoraTxt(ev))+'</span></button>';}).join('');
@@ -20437,18 +20441,6 @@ function agendaMesHTML(y,mo){
 function eventosPuntualesProximos(){const hoy=iso(new Date());
   return eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.fecha>=hoy;})
     .sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.hora||'').localeCompare(b.hora||'');});}
-function eventoRowHTML(ev){
-  const dur=evDuraTxt(ev);
-  const cuando=esc(evHoraTxt(ev))+(dur?(' <span style="opacity:.75">('+esc(dur)+')</span>'):'');
-  const sub=ev.modo==='fecha'?(fechaCorta(ev.fecha)+' · '+cuando+(ev.cuentaAtras?' · '+cuentaAtrasTxt(ev.fecha):'')):
-    (diasCorta(ev.dow)+' · '+cuando);
-  return '<div class="logrow"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
-    '<span class="nm"><b>'+esc(ev.titulo||'(sin título)')+(ev.modo==='fecha'?' <span class="tag b2" style="font-size:9px;vertical-align:middle">puntual</span>':'')+'</b>'+
-    '<span>'+sub+(ev.recordatorio?' · 🔔':'')+'</span></span>'+
-    '<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink2);white-space:nowrap">'+
-      '<input type="checkbox" data-a="ev-toggle" data-id="'+ev.id+'" style="width:auto" '+(ev.on!==false?'checked':'')+'> activo</label>'+
-    '<button class="btn d" data-a="ev-del" data-id="'+ev.id+'" title="quitar este evento">×</button></div>';
-}
 /* ===================== Estudio =====================
    El temario NO vive aquí: vive en tu otra app. Esta no intenta ser un temario —sería mantener dos
    listas que se desincronizan— sino aportar lo que la otra no puede saber: qué toca hoy contra tu
@@ -20522,9 +20514,8 @@ function estCuenta(){
   return n;}
 function estMinSemana(key){
   const hoy=parseDate(key||iso(new Date()))||new Date();
-  const lun=mondayOf(hoy),dom=iso(addDays(lun,6)),ini=iso(lun);
-  return estS().sesiones.filter(function(s){return s.fecha>=ini&&s.fecha<=dom;})
-    .reduce(function(a,s){return a+(+s.min||0);},0);}
+  const lun=mondayOf(hoy);
+  return estMinDe(iso(lun),iso(addDays(lun,6)));}
 function estSubir(id){
   /* «me lo he estudiado / lo he repasado»: sube un nivel y reinicia la cuenta atrás del repaso */
   const t=estTema(id);if(!t)return 'ese tema ya no está';
@@ -20682,7 +20673,7 @@ function renderEstudio(){
       '<div class="prog"><div class="bar"><i style="width:'+pct+'%"></i></div><b>'+c.sabidos+' de '+c.total+' temas dominados</b></div>'+
       '<div class="dosdatos" style="margin-top:10px">'+
         '<div><b>'+c.enMarcha+'</b><span>en marcha</span></div>'+
-        '<div><b>'+(min?fmtHM(min):'0h00')+'</b><span>esta semana</span></div>'+
+        '<div><b>'+fmtHM(min)+'</b><span>esta semana</span></div>'+
       '</div>'+
       '<div class="row" style="margin-top:11px"><button class="btn p" data-a="est-vista" data-v="sesiones">+ apuntar un rato</button></div>'+
     '</div>'+
@@ -20712,7 +20703,7 @@ function estConectarHTML(){
     '<div class="row" style="margin-top:10px">'+
       '<label class="fld" style="flex:0 0 auto">fichero .json<input type="file" id="estFile" data-a="est-file" accept="application/json,.json"></label>'+
     '</div>'+
-    '<textarea id="estBox" rows="6" style="margin-top:8px" placeholder=\'{"nombre":"Temario MIR","url":"https://…","temas":[{"id":"card-01","bloque":"Cardiología","nombre":"Insuficiencia cardiaca","url":"https://…"}]}\'>'+esc(ui.estTxt||'')+'</textarea>'+
+    '<textarea id="estBox" rows="6" style="margin-top:8px" placeholder=\'{"nombre":"Temario MIR","url":"https://…","temas":[{"id":"card-01","bloque":"Cardiología","nombre":"Insuficiencia cardiaca","url":"https://…"}]}\'>'+'</textarea>'+
     '<div class="row" style="margin-top:8px">'+
       '<button class="btn p" data-a="est-importar">traer estos temas</button>'+
       '<span class="sp"></span>'+
@@ -20734,7 +20725,7 @@ function estConectarHTML(){
 function estSesionesHTML(){
   const e=estS(),hoy=iso(new Date());
   const ult=e.sesiones.slice(-14).reverse();
-  const deHoy=e.sesiones.filter(function(s){return s.fecha===hoy;}).reduce(function(a,s){return a+s.min;},0);
+  const deHoy=estMinDe(hoy);
   return '<div class="card"><h2>Apuntar un rato</h2>'+
     '<div class="row">'+
       '<label class="fld" style="flex:0 0 120px">minutos<input type="number" id="estMin" min="1" max="600" value="45"></label>'+
@@ -20744,7 +20735,7 @@ function estSesionesHTML(){
       '</select></label>'+
     '</div>'+
     '<div class="row" style="margin-top:9px"><button class="btn p" data-a="est-sesion">apuntar</button>'+
-      '<span class="mini">hoy llevas <b style="color:var(--ink)">'+(deHoy?fmtHM(deHoy):'0h00')+'</b></span></div>'+
+      '<span class="mini">hoy llevas <b style="color:var(--ink)">'+fmtHM(deHoy)+'</b></span></div>'+
   '</div>'+
   '<div class="card"><h2>Lo apuntado</h2>'+
     (ult.length?ult.map(function(s){
@@ -21018,7 +21009,7 @@ function icsResumen(desde,hasta){
      tres cosas» y se quedó caduca cuando los avisos empezaron a llevar también recibos, tareas y
      eventos: ahora la cuenta sale del mismo sitio que el .ics, así que no puede desfasarse. */
   let evs=[];
-  try{evs=calEventos(desde,hasta);}catch(e){evs=[];}
+  evs=icsEventosMemo(desde,hasta);
   const n={};evs.forEach(function(e){n[e.cat]=(n[e.cat]||0)+1;});
   return {total:evs.length,n:n};}
 /* los ficheros que se ofrecen, con el color de la app y el nombre del color de Google que más se
@@ -21187,7 +21178,7 @@ function calSyncCardHTML(){
   const c=calSyncCfg(),listo=!!(c.url&&c.token&&c.buzon);
   const pend=listo&&calSyncPendiente();
   const cuando=c.ultima?(function(){const d=new Date(c.ultima);
-    return fechaCortaTxt(iso(d))+' a las '+hm(d.getHours()*60+d.getMinutes());})():'';
+    return fechaCortaTxt(iso(d))+' a las '+horaLocal(d);})():'';
   return '<div style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">'+
     '<p class="mini" style="margin:0 0 6px"><b style="color:var(--ink)">O que se actualice solo.</b> '+
     'Importar un <code>.ics</code> es una foto: lo que borres después se queda en Google para siempre. '+
@@ -21324,7 +21315,7 @@ function renderAjustes(){
         Google importa cada <code>.ics</code> en UN calendario y le pone UN color: con todo junto, el
         widget del móvil lo pinta todo igual. Bájate estos cuatro, mete cada uno en su propio
         calendario de Google y ponle ahí el color que dice — así el widget se ve como la app.</p>
-        ${icsGruposHTML(ui.calDesde||calRango().desde,ui.calHasta||calRango().hasta)}
+        ${icsGruposHTML(de,ha)}
         <div class="row" style="margin-top:8px"><button class="btn p s" data-a="cal-dl-todos">descargar los ${ICS_GRUPOS.length} de una vez</button></div>
         <p class="mini" style="margin:6px 0 0">Cada fichero lleva también los 3 meses anteriores: al importar octubre no se borra septiembre, y lo que ya estaba se actualiza en vez de duplicarse.</p>
       </div>`}
@@ -21669,8 +21660,8 @@ ${pat||'—'}`;
   if(sv&&sv.length){
     out.textContent+='\nServicios: '+sv.map(function(x){
       return x.months.map(function(m){return MON[m];}).join('+')+' → '+(x.label||x.service);}).join(' · ');}
-  $('#draftMsg').textContent=info.dias?info.weeks.length+' semana(s) listas para aplicar':'no he encontrado días';
-  $('#applyBtn').disabled=!info.dias;
+  $('#draftMsg').textContent=info.weeks.length+' semana(s) listas para aplicar';
+  $('#applyBtn').disabled=false;
 }
 /* ===================== render ===================== */
 const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','4:20'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
@@ -22351,7 +22342,7 @@ function act(a,el){
       const box=$('#estBox');
       const r=estImportar(box?box.value:'');
       ui.estPrev=r;
-      if(r.ok){ui.estTxt='';ui.estVista='temario';}
+      if(r.ok)ui.estVista='temario';
       flash(r.msg);render();window.scrollTo(0,0);break;}
     case 'est-url':{
       const u=($('#estUrl')||{}).value||'';
@@ -22392,8 +22383,6 @@ function act(a,el){
       if(!cierreAbierto(mk)){flash('el mes se cierra al llegar la nómina o el último día');break;}
       const x=ahorroMes(mk,true);
       if(!x.hecho)x.aparto=baseReparto(mk).v;flash(apartarMes(mk));break;}
-    case 'din-mes':{const h=new Date(),hoyMk=ahoMk(h.getFullYear(),h.getMonth()),mk=mkSuma(ui.dinMes||hoyMk,+el.dataset.d||0);
-      if(mk<=hoyMk){ui.dinMes=mk===hoyMk?'':mk;render();}break;}
     case 'hoja-modo':ui.hojaModo=el.dataset.m||'gastos';render();break;
     case 'hoja-todo':ui.hojaTodo=!ui.hojaTodo;render();break;
     case 'hoja-anio':{const y=(ui.hojaAnio||new Date().getFullYear())+(+el.dataset.d||0);if(y<=new Date().getFullYear())ui.hojaAnio=y;render();break;}
@@ -22409,17 +22398,17 @@ function act(a,el){
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(tx):Promise.reject())
         .then(function(){flash('tabla copiada: pégala en Excel o en Sheets');},function(){flash('no he podido copiar');});break;}
     case 'deseo-nuevo':ui.deseoNuevo=el.dataset.h||'';render();{const f2=document.getElementById('dsTxt');if(f2)f2.focus();}break;
-    case 'deseo-add':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.h;})[0];if(!h)break;
+    case 'deseo-add':{const h=huchaDe(el.dataset.h);if(!h)break;
       const tx=((document.getElementById('dsTxt')||{}).value||'').trim(),pr=num((document.getElementById('dsPre')||{}).value,0)||0;
       if(!tx){flash('¿en qué? vuelos, hotel, casco…');break;}
       if(!Array.isArray(h.deseos))h.deseos=[];
       h.deseos.push({id:uid('ds'),txt:tx.slice(0,60),precio:Math.max(0,pr),hecho:false});
       if(!h.objetivo){h.objetivo=h.deseos.reduce(function(s2,d){return s2+(+d.precio||0);},0);}
       ui.deseoNuevo='';save();render();break;}
-    case 'deseo-ok':case 'deseo-del':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.h;})[0];if(!h||!h.deseos)break;
+    case 'deseo-ok':case 'deseo-del':{const h=huchaDe(el.dataset.h);if(!h||!h.deseos)break;
       const i=h.deseos.findIndex(function(d){return d.id===el.dataset.id;});if(i<0)break;
       if(a==='deseo-ok')h.deseos[i].hecho=!h.deseos[i].hecho;else h.deseos.splice(i,1);save();render();break;}
-    case 'deseo-objetivo':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.h;})[0];if(!h)break;
+    case 'deseo-objetivo':{const h=huchaDe(el.dataset.h);if(!h)break;
       h.objetivo=(h.deseos||[]).reduce(function(s2,d){return s2+(+d.precio||0);},0);save();render();flash('objetivo: '+eurR(h.objetivo));break;}
     case 'hn-tipo':if(ui.hn){hnPinta();ui.hn.tipo=el.dataset.v||'viaje';}render();break;
     case 'hn-crear':{hnPinta();const f=ui.hn||{},c=hnCalc(f),tp=f.tipo||'otro';
@@ -22485,7 +22474,7 @@ function act(a,el){
     case 'din-bolsillo-inv':{const a=ahorroS(),id='hu-inv'+Date.now().toString(36);
       a.huchas.push({id:id,nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[]});
       bolsilloSetPct(id,20);save();flash('bolsillo de inversión creado con un 20 %');render();break;}
-    case 'din-a-pct':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=0;bolsilloSetPct(h.id,10);save();}render();break;}
+    case 'din-a-pct':{const h=huchaDe(el.dataset.id);if(h){h.mensual=0;bolsilloSetPct(h.id,10);save();}render();break;}
     case 'aho-ep-add':{const eps=ahorroS().epocas,ult=eps.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);}).pop()||{};
       const d=ahoYm(ult.desde||ahoMk(new Date().getFullYear(),new Date().getMonth()));
       eps.push({id:uid('ep'),nombre:'Nueva época',desde:ahoMk(d.y+1,d.m),neto:ult.neto||0,finde:ult.finde||0,pagaJun:ult.pagaJun||0,pagaDic:ult.pagaDic||0});
@@ -22497,7 +22486,7 @@ function act(a,el){
       if(ahorroS().festivos.indexOf(v)<0)ahorroS().festivos.push(v);save();render();break;}
     case 'aho-fest-del':{const a2=ahorroS();a2.festivos=a2.festivos.filter(function(f){return f!==el.dataset.f;});save();render();break;}
     case 'aho-hu-abrir':{ui.huchaEd=el.dataset.id||'';ui.dineroVista='huchas';ui.dinHoja='';render();window.scrollTo(0,0);break;}
-    case 'aho-hu-del':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
+    case 'aho-hu-del':{const h=huchaDe(el.dataset.id);if(!h)break;
       confirmar('¿Quitar la hucha «'+h.nombre+'»?'+(h.saldo?' Tiene '+eur(h.saldo)+': ese dinero deja de contarse aquí.':'')).then(function(ok){
         if(!ok)return;const a2=ahorroS();a2.huchas=a2.huchas.filter(function(q){return q.id!==h.id;});save();render();});break;}
     case 'aho-sacar':case 'aho-meter':{const inp=document.getElementById('ahSac-'+el.dataset.id);const v=inp?inp.value:'';
@@ -22751,7 +22740,7 @@ function act(a,el){
     case 'hab-ed-col':habEdLee();if(ui.habEd)ui.habEd.color=el.dataset.v;ui.habEdMas=true;render();break;
     case 'hab-ed-ok':{habEdLee();const e=ui.habEd;if(!e)break;const datos=habDatosHoja(e);
       if(!datos){flash('ponle un nombre al hábito');break;}const nm=datos.nombre;
-      const h=e.id&&habitosS().items.filter(function(x){return x.id===e.id;})[0];
+      const h=e.id&&habPorId(e.id);
       /* el mínimo propuesto, solo al crearlo: si al editar lo vacías, es que no quieres mínimo */
       if(!h&&!datos.min)datos.min=habMinSug(nm);
       let fase='marcha';
@@ -22759,7 +22748,7 @@ function act(a,el){
       else{fase=habEnMarcha().length>=3?'espera':'marcha';
         habitosS().items.push(Object.assign({id:uid('hb'),creado:iso(new Date()),fase:fase,inicio:fase==='marcha'?iso(new Date()):''},datos));}
       ui.habEd=null;ui.habEdMas=false;save();render();flash(h?'hábito guardado':(fase==='espera'?'creado: espera turno (tienes 3 en marcha)':'en marcha: día 1 de ~66'));break;}
-    case 'hab-probar':{habEdLee();const e=ui.habEd,h=e&&habitosS().items.filter(function(x){return x.id===e.id;})[0];if(!h)break;
+    case 'hab-probar':{habEdLee();const e=ui.habEd,h=e&&habPorId(e.id);if(!h)break;
       /* lo demás que cambiaste en la hoja (nombre, días…) también se guarda: antes solo se quedaban
          el cuándo y el mínimo, y el resto se perdía aunque el botón dijera «Guardar» */
       {const dd=habDatosHoja(e);if(dd){delete dd.ancla;delete dd.min;Object.assign(h,dd);}}
@@ -22770,11 +22759,11 @@ function act(a,el){
       h.prueba={desde:iso(new Date()),antes:habPct(h,14).pct,prev:{ancla:Object.assign({},h.ancla||{}),min:h.min||''},
         txt:cambia==='ancla'?'«'+(habAnclaTxt({ancla:nuevo})||'sin ancla')+'»':'el mínimo «'+(min||'nada')+'»'};
       h.ancla=nuevo;h.min=min;ui.habEd=null;ui.habEdMas=false;save();render();flash('probando 14 días: luego te digo cómo ha ido');break;}
-    case 'hab-ed-fase':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+    case 'hab-ed-fase':{const h=habPorId(el.dataset.id);if(!h)break;
       if(ui.habEd&&ui.habEd.id===h.id){habEdLee();const dd=habDatosHoja(ui.habEd);if(dd)Object.assign(h,dd);}   /* y lo editado en la hoja, también */
       habFaseA(h,el.dataset.v);ui.habEd=null;save();render();break;}
-    case 'hab-fase':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;habFaseA(h,el.dataset.v);save();render();break;}
-    case 'hab-cruzo':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;const v=el.dataset.v,hoyK=iso(new Date());
+    case 'hab-fase':{const h=habPorId(el.dataset.id);if(!h)break;habFaseA(h,el.dataset.v);save();render();break;}
+    case 'hab-cruzo':{const h=habPorId(el.dataset.id);if(!h)break;const v=el.dataset.v,hoyK=iso(new Date());
       asistS().sil['cruzo:'+h.id]=iso(addDays(new Date(),14));
       if(v==='cansancio'){h.obst='cansancio';if(!h.min)h.min=habMinSug(h.nombre);if(!h.plan&&h.min)h.plan='solo '+h.min;
         if(!h.min){habEdAbre(h.id);flash('ponle un mínimo para los días cansado');}else flash('los días cansado: '+h.min+' y cuenta');}
@@ -22784,21 +22773,21 @@ function act(a,el){
         ts.forEach(function(t){if(h.noEn.indexOf(t)<0)h.noEn.push(t);});
         flash(ts.length?'ya no te lo pido los días de '+ts.filter(function(t,i){return ts.indexOf(t)===i;}).map(function(t){return diaTipoInfo(t)[1].toLowerCase();}).join(' ni '):'vale');}
       save();render();break;}
-    case 'hab-obst':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.obst=el.dataset.v;save();habEdAbre(h.id);render();
+    case 'hab-obst':{const h=habPorId(el.dataset.id);if(!h)break;h.obst=el.dataset.v;save();habEdAbre(h.id);render();
       flash('¿y qué harás ese día? escríbelo en «entonces haré…»');break;}
-    case 'hab-si':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+    case 'hab-si':{const h=habPorId(el.dataset.id);if(!h)break;
       /* tres «sí» seguidos: ya sale solo y deja hueco */
       if(!Array.isArray(h.si))h.si=[];h.si.push({f:iso(new Date()),v:el.dataset.v==='1'});
       const u=h.si.slice(-3);if(u.length===3&&u.every(function(x){return x.v;})){habFaseA(h,'solo');flash(h.nombre+' ya te sale solo: queda un hueco');}
       else flash(el.dataset.v==='1'?'apuntado: '+u.filter(function(x){return x.v;}).length+' de 3':'vale: en 14 días te lo vuelvo a preguntar');
       save();render();break;}
-    case 'hab-sigue':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+    case 'hab-sigue':{const h=habPorId(el.dataset.id);if(!h)break;
       /* «ha vuelto a costar» con 3 en marcha: pasa a esperar turno (antes no cambiaba nada y la
          pregunta volvía cada día) */
       if(el.dataset.v==='1')h.soloVisto=iso(new Date());
       else{h.si=[];if(!habFaseA(h,'marcha')){habFaseA(h,'espera');flash(h.nombre+': espera turno, entra cuando dejes hueco');}}
       save();render();break;}
-    case 'hab-prueba':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h||!h.prueba)break;
+    case 'hab-prueba':{const h=habPorId(el.dataset.id);if(!h||!h.prueba)break;
       if(el.dataset.v!=='1'){h.ancla=Object.assign({},h.prueba.prev.ancla||{});h.min=h.prueba.prev.min||'';flash('vuelto a lo de antes');}else flash('te quedas con el cambio');
       h.prueba=null;save();render();break;}
     case 'hab-del':{if(el.tagName!=='BUTTON')break;const hid=el.dataset.id;
@@ -22808,14 +22797,14 @@ function act(a,el){
           if(!Object.keys(h.registro[k]).length)delete h.registro[k];});
         ui.habEd=null;save();render();flash('hábito borrado');});break;}
     case 'hab-mark':{toggleHabito(el.dataset.id,el.dataset.key);render();break;}
-    case 'hab-min':{toggleHabito(el.dataset.id,el.dataset.key,'min');const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];
+    case 'hab-min':{toggleHabito(el.dataset.id,el.dataset.key,'min');const h=habPorId(el.dataset.id);
       if(h&&habitoEstado(h.id,el.dataset.key)==='min')flash('hecho el mínimo: la racha sigue');render();break;}
     case 'hab-vista':{const v=el.dataset.v||'';ui.habVista=v;if(ui.tab!=='habitos')ui.tab='habitos';
       /* solo cuenta como revisión del domingo si se abre cuando toca (domingo o lunes por la mañana):
          abrirla un miércoles escondía la revisión de ese domingo */
       if(v==='rev'){const h0=new Date(),dw=h0.getDay();if(dw===0||(dw===1&&h0.getHours()<13)){asistS().revisado[revSemanaKey(h0)]=1;save();}}
       render();window.scrollTo(0,0);break;}
-    case 'hab-ancla-hora':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.ancla={t:'hora',v:el.dataset.v};if(ui.habEd&&ui.habEd.id===h.id){habEdLee();ui.habEd.ancla={t:'hora',v:el.dataset.v};}save();flash('«'+h.nombre+'» anclado a las '+hCortaHM(el.dataset.v));render();break;}
+    case 'hab-ancla-hora':{const h=habPorId(el.dataset.id);if(!h)break;h.ancla={t:'hora',v:el.dataset.v};if(ui.habEd&&ui.habEd.id===h.id){habEdLee();ui.habEd.ancla={t:'hora',v:el.dataset.v};}save();flash('«'+h.nombre+'» anclado a las '+hCortaHM(el.dataset.v));render();break;}
     case 'hab-ed-ancla':{habEdLee();const e=ui.habEd;if(!e)break;const v=el.dataset.v||'';
       e.ancla=!v?{}:(v==='hora'?{t:'hora',v:(e.ancla&&e.ancla.t==='hora'&&e.ancla.v)||'20:00'}:{t:'tras',v:v.replace(/^tras:/,'')});render();break;}
     case 'hab-ed-obst':habEdLee();if(ui.habEd)ui.habEd.obst=el.dataset.v||'';render();break;
@@ -22977,7 +22966,7 @@ function act(a,el){
       habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
         min:p.min||'',ancla:Object.assign({},p.ancla||{}),obst:'',plan:'',porQue:'',fase:fase,inicio:fase==='marcha'?iso(new Date()):''});
       save();flash('hábito «'+p.nombre+'» añadido');render();break;}
-    case 'hab-noen':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+    case 'hab-noen':{const h=habPorId(el.dataset.id);if(!h)break;
       h.noEn=(h.noEn||[]).concat([el.dataset.t]);save();flash('«'+h.nombre+'» ya no se pide los días de '+diaTipoInfo(el.dataset.t)[1].toLowerCase());render();break;}
     case 'hab-tip-no':{ui.habTipNo=ui.habTipNo||{};ui.habTipNo[el.dataset.id+'|'+el.dataset.t]=1;render();break;}
     case 'rut-tipo':ui.rutTipo=el.dataset.t;render();break;
@@ -24611,8 +24600,7 @@ function icsFold(l){/* el RFC pide líneas cortas: se parten con un espacio dela
   const out=[];let s=String(l);
   /* sin partir un emoji por la mitad (dos mitades de un par sustituto no son nada en Google) */
   while(s.length>72){let n=72;const c=s.charCodeAt(n-1);if(c>=0xD800&&c<=0xDBFF)n--;out.push(s.slice(0,n));s=' '+s.slice(n);}
-  out.push(s);return out.join('\r\n');}
-function icsEsc(t){return icsEscTxt(t).slice(0,200);}   /* el bloc de notas no perdona las líneas kilométricas */
+  out.push(s);return out.join('\r\n');}   /* el bloc de notas no perdona las líneas kilométricas */
 function icsEscTxt(t){return String(t==null?'':t).replace(/\\/g,'\\\\').replace(/;/g,'\\;')
   .replace(/,/g,'\\,').replace(/\n/g,'\\n');}
 function icsUnesc(s){return String(s==null?'':s).replace(/\\n/gi,' · ').replace(/\\([,;\\:])/g,'$1');}
@@ -24705,13 +24693,12 @@ function icsHM(t){const m=/^(\d{1,2}):(\d{2})$/.exec(String(t||'').trim());
   const h=Math.min(23,Math.max(0,+m[1]));
   return (h<10?'0':'')+h+':'+m[2];}
 function icsCompacta(t){return icsHM(t).replace(':','')+'00';}
-function icsTimestamp(d){const p=function(n){return String(n).padStart(2,'0');};
-  return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+const _dtfTz={};
 function tzWallToLocal(y,mo,d,h,mi,s,tz){
   /* "las 8:00 en Europe/Madrid" -> el Date real que le corresponde, para leerlo luego en la hora de este navegador */
   try{
     const guess=Date.UTC(y,mo,d,h,mi,s||0);
-    const dtf=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const dtf=_dtfTz[tz]||(_dtfTz[tz]=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}));   /* uno por zona: crearlo por cada fecha del .ics pesaba */
     const p=dtf.formatToParts(new Date(guess)).reduce(function(a,x){a[x.type]=x.value;return a;},{});
     const comoUtc=Date.UTC(+p.year,+p.month-1,+p.day,(+p.hour)%24,+p.minute,+p.second);
     return new Date(guess-(comoUtc-guess));
@@ -24736,7 +24723,7 @@ function calIniMes(d){const x=parseDate(d)||new Date();return iso(new Date(x.get
 function calRango(desdeStr){
   /* del mes que se está mirando a dos meses más; si traes un «desde», de ese mes al siguiente */
   const base=parseDate(desdeStr||'')||parseDate(iso(monthDate))||new Date();
-  const ini=iso(new Date(base.getFullYear(),base.getMonth(),1,12));
+  const ini=calIniMes(iso(base));
   const hasta=calFinMes(iso(new Date(base.getFullYear(),base.getMonth()+1,1,12)));
   return {desde:ini,hasta:hasta};}
 /* «Radiología» → «Rayos», «Cardiología» → «Cardio»… lo que cabe en una columna de 7 días */
@@ -25452,7 +25439,7 @@ document.addEventListener('change',e=>{
     case 'aho-cobrado':{const c=ahorroS().cobrado,v=String(el.value||'').trim();
       if(!v)delete c[el.dataset.mk];else{const n=numEuro(v);if(n)c[el.dataset.mk]=n;}
       save();render();break;}
-    case 'aho-hu':{const h=ahorroS().huchas.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+    case 'aho-hu':{const h=huchaDe(el.dataset.id);if(!h)break;
       const k=el.dataset.k;
       if(k==='pct')h.pct=Math.max(0,Math.min(100,Math.round(num(el.value,0))));
       else if(k==='objetivo')h.objetivo=Math.max(0,num(el.value,0));
@@ -25503,7 +25490,7 @@ document.addEventListener('change',e=>{
     case 'din-meta-pct':{ahorroS().metaPct=Math.max(5,Math.min(80,Math.round(+el.value||30)));save();render();break;}
     case 'din-plan-pct':{bolsilloSetPct(el.dataset.id,+el.value||0);save();render();break;}
     case 'din-puro':{ahorroS().puroPct=Math.max(puroMin(),Math.min(100,+el.value||50));save();render();break;}
-    case 'din-hu-men':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
+    case 'din-hu-men':{const h=huchaDe(el.dataset.id);if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'fr-pos':{ui.frPos=el.value||'';if(ui.frase)ui.frase.pos=ui.frPos;lecRepinta('fr');break;}
     case 'rut-copia':{if(!el.value)break;const t=ui.rutTipo||diaTipo(iso(new Date())),r=store.rutinas||(store.rutinas={});
@@ -25519,7 +25506,7 @@ document.addEventListener('change',e=>{
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
     case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
-    case 'din-hu-campo':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;const k=el.dataset.k;
+    case 'din-hu-campo':{const h=huchaDe(el.dataset.id);if(!h)break;const k=el.dataset.k;
       if(k==='nombre'){const v=String(el.value||'').trim().slice(0,30);if(v)h.nombre=v;}
       else{const v=numEuro(el.value);
         /* «-200», letras o lo que no sea un importe NO pone la hucha a 0 (antes lo hacía, apuntaba el
@@ -25528,7 +25515,7 @@ document.addEventListener('change',e=>{
         if(k==='saldo'&&String(el.value||'').trim()!==''){const dif=Math.round((v-h.saldo)*100)/100;if(dif)ahoMov(h.id,dif,'corregido a mano');h.saldo=Math.round(v*100)/100;}
         if(k==='objetivo')h.objetivo=v!=null&&v>0?Math.round(v):0;}
       save();render();break;}
-    case 'din-hu-para':{const h=ahorroS().huchas.filter(function(q){return q.id===el.dataset.id;})[0];if(!h)break;
+    case 'din-hu-para':{const h=huchaDe(el.dataset.id);if(!h)break;
       h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
     case 'pat-name':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.name=el.value;save();}break;}
@@ -25572,8 +25559,6 @@ document.addEventListener('change',e=>{
       if(k==='siesta'){if(v>=0&&v<=480){store.sueno.siesta=Math.round(v);store.sueno.siestaMia=true;}}
       else if(v>0||(k==='latencia'&&v===0&&el.value!==''))store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
       save();render();break;}
-    case 'ev-toggle':{const ev=eventosS().find(function(e){return e.id===el.dataset.id;});
-      if(ev){ev.on=!!el.checked;save();render();}break;}
     case 'salto-from':{if(!store.rotation.saltoDia)store.rotation.saltoDia={from:6,to:1};
       store.rotation.saltoDia.from=Math.max(0,Math.min(6,+el.value));save();render();break;}
     case 'salto-to':{if(!store.rotation.saltoDia)store.rotation.saltoDia={from:6,to:1};
@@ -25960,7 +25945,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   enArtifact,versionActual,hayVersionNueva,mirarVersion,pedirPersistencia,tamanoLegible,impPegar,impAutoDesdeEnlace,lectorIntentos,lectorPublicoOn,LECTORES_PUBLICOS,compartidoPendiente,impOlvidaPendiente,lectorSitio,lectorProxy,lectorNormaliza,traerDescripcion,impTraerEnlace,
   svcMesesDe,svcColor,serviciosEditorHTML,anyoServiciosHTML,serviciosCard,
   gEtiqueta,gTiposTxt,repartoTipos,setCupoTipo,setGuardiaTipo,renombraTipo,addGuardiaTipo,
-  icsUID,icsEscTxt,icsEsc,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
+  icsUID,icsEscTxt,icsUnfold,icsStampUTC,calNombreTxt,calRangoUI,calFileTxt,calUrlBloque,calNotas,icsPreviewHTML,icsAnalizar,
   gymWipe,gymUndoWipe,calEventos,icsTexto,parseIcs,icsDesdoblar,icsClasificar,icsPlan,icsAplicar,calFinMes,calIniMes,calRango,
   gymS,gymImportText,gymImportUrl,gymBuscar,nuevaRutina,delRutinaCard,addRutina,delRutina, moverEjercicio,
   tipoDeEjercicio,recomendacionRutina,entrenoHeatmapCard, 
@@ -25980,7 +25965,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   suenoRealS,suenoReal,suenoSemana,snTipoDia,snMargenLibre,suenoAnclaDe,snAHora,snCamaDe,snVuelta,suenoMes,suenoEficiencia,snCamaEventos,suenoFase,informeDatos,librosS,libroNuevo,libroPag,libroCalc,hudLeer,HUD_LIBROS,
   lloretPlan,lloretPoner,lloretDe,gymSemanaCirculos,mCeldas,guardiaCelda,sbKey,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,compraSemanaHTML,slotItems,
   FUERA_CADENAS,FUERA_OJO,fueraBuscables,fueraItem,fueraMenuCalc,fueraApuntar,fueraUltimos,
-  finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,proximaNomina,nominaCfg,
+  finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,nominaCfg,
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,sacarHucha,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
   estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,estDias,setEstDias,
@@ -26001,7 +25986,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,trayectoMin,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
-  notaDia,eventosDelDia,eventosDelMes,agendaMesHTML,diasCorta,eventoRowHTML,eventosTagsHTML,
+  notaDia,eventosDelDia,eventosDelMes,agendaMesHTML,diasCorta,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML};
 load();
@@ -26025,7 +26010,7 @@ claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
 Object.assign(window.PG,{fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
-  asistS,asistReglas,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
+  asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
 vigilarElDia();     /* y que «hoy» siga siendo hoy aunque la app pase la noche abierta */
