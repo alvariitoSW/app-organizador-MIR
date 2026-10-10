@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Semana organizada</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070b14}
+a{color:#38e1ff}a:hover{color:#7fefff}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 1420px; box-sizing: border-box; background: #070b14; color: #e9f2ff; font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; padding-bottom: 20px">
+
+  <div style="display: flex; gap: 4px; padding: 14px 14px 0">
+    <a href="Hoy.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Hoy</a>
+    <a href="Cocina.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Cocinar</a>
+    <a href="Main.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Recetas</a>
+    <a href="Nevera.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Nevera</a>
+    <a href="#" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 800; color: #051018; background: linear-gradient(94deg, #38e1ff, #6f6dff); text-decoration: none">Semana</a>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 0">
+    <button aria-label="Semana anterior" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; display: flex; align-items: center; justify-content: center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div style="flex: 1; text-align: center; display: flex; flex-direction: column; line-height: 1.2">
+      <b style="font-size: 17px">12 – 18 de octubre</b>
+      <span style="font-size: 12px; color: #8fa6c6">2 guardias · 2 salientes</span>
+    </div>
+    <button aria-label="Semana siguiente" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; display: flex; align-items: center; justify-content: center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 16px 0">
+    <button style="min-height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #111a2b; color: #e9f2ff; font-weight: 700; font-size: 13px">Móntamela</button>
+    <button style="min-height: 44px; border-radius: 12px; border: 1px solid #38e1ff; background: #0d2433; color: #e9f2ff; font-weight: 700; font-size: 13px">Por macros</button>
+    <a href="Nevera.dc.html" style="min-height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #111a2b; color: #e9f2ff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; text-decoration: none">Compra · 6</a>
+  </div>
+
+  <div style="margin: 14px 16px 0; padding: 12px 15px; border-radius: 16px; border: 1px solid #16485a; background: #0d2433; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 10px; align-items: flex-start">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38e1ff" stroke-width="2" stroke-linecap="round" style="flex: none; margin-top: 2px" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/></svg>
+      <span style="font-size: 13.5px; line-height: 1.45">Los días normales se quedan en unas <b>1.415 kcal y 85 g de proteína</b>. Tu objetivo es 2.166 kcal y 130 g: falta una comida.</span>
+    </div>
+    <button style="align-self: flex-start; min-height: 40px; padding: 0 14px; border-radius: 11px; border: 0; background: #38e1ff; color: #051018; font-weight: 800; font-size: 13px">Añadir merienda a esos días</button>
+  </div>
+
+  <div style="margin: 14px 16px 0; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column; padding: 2px 15px">
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Lun 12</b><span style="padding: 2px 8px; border-radius: 999px; background: #3a1418; color: #fda4af; font-size: 12px; font-weight: 700">guardia</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">871 + hospital</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Lentejas estofadas <span style="color: #8fa6c6">· táper</span></span><span style="color: #8fa6c6">Cena en el hospital: no se cuenta</span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 40%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Mar 13</b><span style="padding: 2px 8px; border-radius: 999px; background: #142640; color: #93c5fd; font-size: 12px; font-weight: 700">saliente</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">1.461 · 92 g P</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Pollo al curry con boniato <span style="color: #8fa6c6">· táper</span></span><span>Salmón al horno con patata</span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 67%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Mié 14</b><span style="padding: 2px 8px; border-radius: 999px; background: #0f2a22; color: #6ee7b7; font-size: 12px; font-weight: 700">fuerza</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">1.411 · 84 g P</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Lentejas estofadas <span style="color: #8fa6c6">· el táper que caduca hoy</span></span><span>Salmón al horno con patata</span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 65%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Jue 15</b><span style="padding: 2px 8px; border-radius: 999px; background: #3a1418; color: #fda4af; font-size: 12px; font-weight: 700">guardia</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">921 + hospital</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Pollo al curry con boniato <span style="color: #8fa6c6">· táper</span></span><span style="color: #8fa6c6">Cena en el hospital: no se cuenta</span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 43%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Vie 16</b><span style="padding: 2px 8px; border-radius: 999px; background: #142640; color: #93c5fd; font-size: 12px; font-weight: 700">saliente</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">1.391 · 82 g P</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Lentejas estofadas <span style="color: #8fa6c6">· congelador</span></span><span>Pollo al curry con boniato <span style="color: #8fa6c6">· congelador</span></span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 64%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Sáb 17</b><span style="padding: 2px 8px; border-radius: 999px; background: #0d2433; color: #67e8f9; font-size: 12px; font-weight: 700">trabajo</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">1.351 + cena</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Comes fuera <span style="color: #8fa6c6">· 950 kcal estimadas</span></span><span>Huevos turcos <span style="color: #8fa6c6">· 15 min · [kcal]</span></span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 62%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="display: flex; align-items: center; gap: 8px"><b style="width: 50px">Dom 18</b><span style="padding: 2px 8px; border-radius: 999px; background: #2a1a44; color: #d8b4fe; font-size: 12px; font-weight: 700">libre</span><span style="flex: 1"></span><span style="font-size: 12.5px; color: #8fa6c6">1.391 · 82 g P</span></div>
+      <div style="display: flex; flex-direction: column; font-size: 13.5px; padding-left: 58px"><span>Pollo al curry con boniato <span style="color: #8fa6c6">· recién hecho</span></span><span>Lentejas estofadas <span style="color: #8fa6c6">· recién hechas</span></span></div>
+      <div style="margin-left: 58px; height: 5px; border-radius: 3px; background: #1e2b44"><div style="width: 64%; height: 5px; border-radius: 3px; background: #2a5f78"></div></div>
+    </div>
+    <span style="font-size: 12px; color: #8fa6c6; padding: 0 0 12px">Desayuno fijo cada día: porridge overnight + café, 401 kcal. La barra es lo planificado frente a 2.166.</span>
+  </div>
+
+  <div style="margin: 14px 16px 0; padding: 12px 15px; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column">
+    <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6; padding-bottom: 6px">CUÁNDO COCINAS</span>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #1a2640">
+      <div style="flex: 1; display: flex; flex-direction: column"><b>Dom 11 · 18:00</b><span style="font-size: 12.5px; color: #8fa6c6">Salmón al horno ×2 · 30 min</span></div>
+      <a href="Cocina.dc.html" style="min-height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; font-weight: 700; font-size: 13px; display: flex; align-items: center; text-decoration: none">Ver</a>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #1a2640">
+      <div style="flex: 1; display: flex; flex-direction: column"><b>Dom 18 · 17:00</b><span style="font-size: 12.5px; color: #8fa6c6">Pollo al curry ×6 y Lentejas ×4 · la semana que viene</span></div>
+      <a href="Cocina.dc.html" style="min-height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; font-weight: 700; font-size: 13px; display: flex; align-items: center; text-decoration: none">Ver</a>
+    </div>
+    <span style="font-size: 12px; color: #8fa6c6; padding-top: 4px">Lunes a viernes salen de los tápers que ya tienes: 3 de lentejas y 3 de pollo al curry.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1420}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

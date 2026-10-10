@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Modo cocina, al terminar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070b14}
+a{color:#38e1ff}a:hover{color:#7fefff}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #070b14; color: #e9f2ff; font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; padding: 14px 16px 18px; gap: 14px">
+
+  <div style="display: flex; align-items: center; gap: 10px">
+    <a href="Cocina.dc.html" aria-label="Volver al paso 4" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; display: flex; align-items: center; justify-content: center; text-decoration: none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span style="flex: 1; font-size: 13px; font-weight: 700">Lentejas estofadas · hecho</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 4px">
+    <div style="width: 52px; height: 52px; border-radius: 50%; background: #0f2a22; border: 1px solid #1f5d47; color: #6ee7b7; display: flex; align-items: center; justify-content: center">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+    </div>
+    <h1 style="margin: 10px 0 0; font-size: 26px; line-height: 1.2; font-weight: 800">4 raciones. ¿Dónde van?</h1>
+    <p style="margin: 0; font-size: 14px; color: #8fa6c6">Aguantan 4 días en la nevera: hasta el miércoles 14. En el congelador, 3 meses.</p>
+  </div>
+
+  <div style="padding: 6px 15px; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0">
+      <div style="flex: 1; display: flex; flex-direction: column"><b style="font-size: 15px">Me la como ahora</b><span style="font-size: 12px; color: #8fa6c6">se apunta en la comida de hoy</span></div>
+      <div style="display: flex; align-items: center; border: 1px solid #1e2b44; border-radius: 12px; overflow: hidden">
+        <button aria-label="Una menos para ahora" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">−</button>
+        <b style="width: 34px; text-align: center; font-size: 17px">1</b>
+        <button aria-label="Una más para ahora" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">+</button>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #1a2640">
+      <div style="flex: 1; display: flex; flex-direction: column"><b style="font-size: 15px">Tápers a la nevera</b><span style="font-size: 12px; color: #8fa6c6">hasta mié 14 · salen en Hoy</span></div>
+      <div style="display: flex; align-items: center; border: 1px solid #1e2b44; border-radius: 12px; overflow: hidden">
+        <button aria-label="Un táper menos a la nevera" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">−</button>
+        <b style="width: 34px; text-align: center; font-size: 17px">1</b>
+        <button aria-label="Un táper más a la nevera" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">+</button>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #1a2640">
+      <div style="flex: 1; display: flex; flex-direction: column"><b style="font-size: 15px">Al congelador</b><span style="font-size: 12px; color: #8fa6c6">para la guardia del lunes 12</span></div>
+      <div style="display: flex; align-items: center; border: 1px solid #1e2b44; border-radius: 12px; overflow: hidden">
+        <button aria-label="Uno menos al congelador" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">−</button>
+        <b style="width: 34px; text-align: center; font-size: 17px">2</b>
+        <button aria-label="Uno más al congelador" style="width: 44px; height: 44px; border: 0; background: #0d1526; color: #e9f2ff; font-size: 19px">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 15px; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6">SALE DE TU NEVERA</span>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <span style="padding: 4px 10px; border-radius: 999px; background: #0d1526; border: 1px solid #1e2b44; font-size: 12.5px">lenteja −500 g</span>
+      <span style="padding: 4px 10px; border-radius: 999px; background: #0d1526; border: 1px solid #1e2b44; font-size: 12.5px">chorizo −200 g</span>
+      <span style="padding: 4px 10px; border-radius: 999px; background: #0d1526; border: 1px solid #1e2b44; font-size: 12.5px">zanahoria −2</span>
+      <span style="padding: 4px 10px; border-radius: 999px; background: #0d1526; border: 1px solid #1e2b44; font-size: 12.5px">pimiento −1</span>
+      <span style="padding: 4px 10px; border-radius: 999px; background: #0d1526; border: 1px solid #1e2b44; font-size: 12.5px">tomate −400 g</span>
+    </div>
+    <span style="font-size: 12px; color: #8fa6c6">Si usaste otra cantidad, tócala para corregirla.</span>
+  </div>
+
+  <div style="flex: 1"></div>
+
+  <button style="min-height: 54px; border-radius: 14px; border: 0; background: linear-gradient(94deg, #38e1ff, #6f6dff); color: #051018; font-weight: 800; font-size: 16px">Guardar: 1 ahora, 3 tápers</button>
+  <button style="min-height: 44px; border-radius: 12px; border: 0; background: transparent; color: #8fa6c6; font-weight: 700; font-size: 13.5px">Guardar también como receta para 4 (sale a 470 kcal)</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

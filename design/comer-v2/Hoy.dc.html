@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Hoy, kcal y macros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070b14}
+a{color:#38e1ff}a:hover{color:#7fefff}
+button,input{font:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 1260px; box-sizing: border-box; background: #070b14; color: #e9f2ff; font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; padding-bottom: 20px">
+
+  <div style="display: flex; gap: 4px; padding: 14px 14px 0">
+    <a href="#" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 800; color: #051018; background: linear-gradient(94deg, #38e1ff, #6f6dff); text-decoration: none">Hoy</a>
+    <a href="Cocina.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Cocinar</a>
+    <a href="Main.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Recetas</a>
+    <a href="Nevera.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Nevera</a>
+    <a href="Semana.dc.html" style="flex: 1; text-align: center; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #8fa6c6; text-decoration: none">Semana</a>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 0">
+    <button aria-label="Día anterior" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; display: flex; align-items: center; justify-content: center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div style="flex: 1; text-align: center; display: flex; flex-direction: column; line-height: 1.2">
+      <b style="font-size: 17px">Hoy · sábado 10</b>
+      <span style="font-size: 12px; color: #8fa6c6">día libre · objetivo 2.166 kcal</span>
+    </div>
+    <button aria-label="Día siguiente" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; display: flex; align-items: center; justify-content: center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div style="margin: 14px 16px 0; padding: 16px 15px; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <div style="position: relative; width: 104px; height: 104px; flex: none">
+        <svg width="104" height="104" viewBox="0 0 104 104" aria-hidden="true">
+          <circle cx="52" cy="52" r="45" fill="none" stroke="#1e2b44" stroke-width="9"></circle>
+          <circle cx="52" cy="52" r="45" fill="none" stroke="#38e1ff" stroke-width="9" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="169" transform="rotate(-90 52 52)"></circle>
+        </svg>
+        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1">
+          <b style="font-size: 22px">871</b>
+          <span style="font-size: 11.5px; color: #8fa6c6">de 2.166 kcal</span>
+        </div>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #8fa6c6">te quedan</span>
+        <b style="font-size: 24px; line-height: 1.1">1.295 kcal</b>
+        <span style="font-size: 13px; color: #c7d6ec">y 82 g de proteína</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; justify-content: space-between; font-size: 13px"><b>Proteína</b><span><b>48</b><span style="color: #8fa6c6"> / 130 g</span></span></div>
+        <div style="height: 8px; border-radius: 4px; background: #1e2b44"><div style="width: 37%; height: 8px; border-radius: 4px; background: #38e1ff"></div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; justify-content: space-between; font-size: 13px"><b>Hidratos</b><span><b>96</b><span style="color: #8fa6c6"> / 250 g</span></span></div>
+        <div style="height: 8px; border-radius: 4px; background: #1e2b44"><div style="width: 38%; height: 8px; border-radius: 4px; background: #a78bfa"></div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; justify-content: space-between; font-size: 13px"><b>Grasa</b><span><b>30</b><span style="color: #8fa6c6"> / 70 g</span></span></div>
+        <div style="height: 8px; border-radius: 4px; background: #1e2b44"><div style="width: 43%; height: 8px; border-radius: 4px; background: #fbbf24"></div></div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #0d2433; border: 1px solid #16485a">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38e1ff" stroke-width="2" stroke-linecap="round" style="flex: none; margin-top: 2px" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/></svg>
+      <span style="font-size: 13px; line-height: 1.45">Con la cena que toca llegas a 84 g de proteína. Un yogur griego de postre suma unos 11 g.</span>
+    </div>
+  </div>
+
+  <div style="margin: 14px 16px 0; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 16px; border: 1px solid #38e1ff; background: #0d1a2b">
+    <label for="frase" style="position: absolute; left: -9999px">Qué has comido, en una frase</label>
+    <input id="frase" placeholder="huevos turcos con pan sin gluten" style="flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; color: #e9f2ff; font-size: 15px; outline: none">
+    <button style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 0; background: linear-gradient(94deg, #38e1ff, #6f6dff); color: #051018; font-weight: 800; font-size: 14px">Apuntar</button>
+    <a href="Buscar.dc.html" aria-label="Buscar un alimento" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #111a2b; color: #e9f2ff; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    </a>
+  </div>
+
+  <div style="margin: 14px 16px 0; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column; padding: 4px 15px">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0">
+      <div style="width: 30px; height: 30px; border-radius: 50%; background: #0f2a22; border: 1px solid #1f5d47; color: #6ee7b7; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+        <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6">DESAYUNO</span>
+        <span style="font-weight: 700">Porridge overnight + café</span>
+      </div>
+      <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.25"><b>401</b><span style="font-size: 12px; color: #8fa6c6">22 g P</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="width: 30px; height: 30px; border-radius: 50%; background: #0f2a22; border: 1px solid #1f5d47; color: #6ee7b7; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+        <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6">COMIDA · TÁPER</span>
+        <span style="font-weight: 700">Lentejas estofadas</span>
+      </div>
+      <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.25"><b>470</b><span style="font-size: 12px; color: #8fa6c6">26 g P</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #1a2640">
+      <div style="width: 30px; height: 30px; border-radius: 50%; border: 2px dashed #3b4f74; flex: none"></div>
+      <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+        <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6">CENA · TOCA</span>
+        <span style="font-weight: 700; color: #c7d6ec">Salmón al horno con patata</span>
+      </div>
+      <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.25"><b style="color: #c7d6ec">540</b><span style="font-size: 12px; color: #8fa6c6">36 g P</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 4px 0 12px">
+      <button style="min-height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; font-weight: 700; font-size: 13.5px">Cena: lo que toca</button>
+      <button style="min-height: 44px; border-radius: 12px; border: 1px solid #1e2b44; background: #0d1526; color: #e9f2ff; font-weight: 700; font-size: 13.5px">+ picoteo</button>
+    </div>
+  </div>
+
+  <div style="margin: 14px 16px 0; padding: 14px 15px; border-radius: 16px; border: 1px solid #1e2b44; background: #111a2b; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #8fa6c6">ÚLTIMOS 7 DÍAS</span>
+      <span style="font-size: 12px; color: #8fa6c6">media 2.040 kcal · 118 g P</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; align-items: end; height: 110px; position: relative">
+      <div style="position: absolute; left: 0; right: 0; bottom: 84px; border-top: 1px dashed #3b4f74" aria-hidden="true"></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 80px; border-radius: 6px 6px 3px 3px; background: #2a5f78"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 22px; border-radius: 6px 6px 3px 3px; border: 1px dashed #3b4f74; box-sizing: border-box"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 75px; border-radius: 6px 6px 3px 3px; background: #2a5f78"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 88px; border-radius: 6px 6px 3px 3px; background: #2a5f78"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 78px; border-radius: 6px 6px 3px 3px; background: #2a5f78"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 82px; border-radius: 6px 6px 3px 3px; background: #2a5f78"></div></div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 100%; height: 34px; border-radius: 6px 6px 3px 3px; background: #38e1ff"></div></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 11.5px; color: #8fa6c6">
+      <span>D 4</span><span>L 5</span><span>M 6</span><span>X 7</span><span>J 8</span><span>V 9</span><b style="color: #e9f2ff">S 10</b>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; font-size: 11.5px">
+      <span style="color: #6ee7b7">P ✓</span><span style="color: #8fa6c6">guardia</span><span style="color: #6ee7b7">P ✓</span><span style="color: #6ee7b7">P ✓</span><span style="color: #fbbf24">P −20</span><span style="color: #6ee7b7">P ✓</span><span style="color: #8fa6c6">en curso</span>
+    </div>
+    <span style="font-size: 12px; color: #8fa6c6">La raya es tu objetivo. El lunes de guardia comiste en el hospital: no se cuenta.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
