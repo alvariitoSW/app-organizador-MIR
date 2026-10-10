@@ -297,7 +297,7 @@ let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que qu
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habEd:null,cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
   cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
-  alimQ:'',alimGrupo:'',alimSel:'',alimG:100,neveraQ:'',microAbierto:'',
+  alimQ:'',alimGrupo:'',alimSel:'',alimG:100,microAbierto:'',
   plato:null,platoQ:'',ideasCache:null,alimNuevo:null,sitioNuevo:false,
   notaSel:'',notaFiltro:'',notaNueva:'',
   imp:impVacio()};
@@ -1791,14 +1791,6 @@ function comidaPrincipalDe(dateStr,infOpt){
     return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'jornada'};}
   /* un día libre no tiene jornada de la que salir: la hora es la misma, pero no se inventa el motivo */
   return {de:c.sinEntreno.de,a:c.sinEntreno.a,por:'normal'};}
-function comidaPorqueTxt(por){
-  return por==='entreno'?'después de entrenar':por==='siesta'?'al despertar de la siesta':por==='guardia'?'en la guardia':
-    por==='llegar'?'al llegar a casa del trabajo':
-    por==='jornada'?'al salir de la jornada':'';}
-function comidaPrincipalTxt(cp){
-  if(!cp)return '';
-  const q=comidaPorqueTxt(cp.por);
-  return fmtTimeOut(cp.de)+'–'+fmtTimeOut(cp.a)+(q?(' · '+q):'');}
 function esComidaPrincipal(slot){
   /* cuál de las tomas del día es «la comida»: la que se llama así, y no la media mañana */
   const l=String((slot&&slot.label)||'');
@@ -2141,7 +2133,7 @@ function cocinarDatos(){
       filas.push({d:d,b:b,color:bi<3?('var(--ses'+(bi+1)+')'):'var(--ink2)',col:col,dias:dias});});
     ses.push({b:b,color:bi<3?('var(--ses'+(bi+1)+')'):'var(--ink2)',dia:dia,platos:platos,rac:Math.round(rac*10)/10});});
   const mal=[];filas.forEach(function(f){f.dias.forEach(function(x){if(x.lleva>4)mal.push({f:f,x:x});});});
-  return {ses:ses,filas:filas,mal:mal};}
+  return {ses:ses,filas:filas,mal:mal,con:con};}
 function renderCuandoCocinar(){
   const r=cocinarDatos();
   const tl=r.filas.length?('<div class="ctlh"><span></span>'+COC_ORDEN.map(function(w){return '<span>'+COC_LET[w]+'</span>';}).join('')+'</div>'+
@@ -2164,7 +2156,7 @@ function renderCuandoCocinar(){
       '<h2 class="subtit">Cuándo cocinar</h2></div>'+
     '<div class="card">'+(r.ses.length?r.ses.map(function(s){
       return '<div class="cses"><span class="sq" style="background:'+s.color+'">🔪</span><span class="t"><b>'+esc(s.b.label)+(s.b.when?(' · '+esc(s.b.when)):'')+'</b>'+
-        '<span>'+esc(s.platos.map(function(d){return nomCorto(d.name)+' ×'+fmt(Math.round(Object.keys(sbConsumo()[d.id]||{}).reduce(function(a,w){return a+sbConsumo()[d.id][w];},0)*10)/10);}).join(' · '))+
+        '<span>'+esc(s.platos.map(function(d){return nomCorto(d.name)+' ×'+fmt(Math.round(Object.keys(r.con[d.id]||{}).reduce(function(a,w){return a+r.con[d.id][w];},0)*10)/10);}).join(' · '))+
         ' · '+fmt(s.rac)+' táper'+(s.rac===1?'':'es')+'</span></span></div>';}).join(''):'<div class="empty">Ninguna sesión de cocina esta semana.</div>')+'</div>'+
     '<div class="card"><h3 style="margin:0 0 6px">De la olla al plato</h3>'+tl+
       (r.filas.length?'<div class="sbley"><span>🔪 se cocina</span><span><i class="o"></i>se come (raciones)</span><span style="color:var(--bad)">● más de 4 días en la nevera</span></div>':'')+
@@ -2173,9 +2165,14 @@ function renderCuandoCocinar(){
         (r.mal.length>1?(' Y '+(r.mal.length-1)+' más igual.'):'')+'</div>'):'')+
     '</div></div>';}
 /* ---------- elegir la comida de una toma (sustituye a la lista nativa) ---------- */
+function buscaCasa(t){
+  /* cada palabra de la búsqueda empieza alguna palabra del texto; la búsqueda se trocea una vez */
+  const qt=t?buscaToks(t):[];
+  return function(txt){if(!t)return true;const it=buscaToks(txt);
+    return qt.every(function(w){return it.some(function(i){return i.indexOf(w)===0;});});};}
 function elegirOpciones(q,f){
   const t=alimTxt(q||'').trim();
-  const casa=function(txt){return !t||buscaToks(t).every(function(w){return buscaToks(txt).some(function(i){return i.indexOf(w)===0;});});};
+  const casa=buscaCasa(t);
   const meals=store.meals.map(function(m){
     const names=(m.items||[]).map(function(it){const d=dishById(it.id);return d?d.name:'';}).filter(Boolean);
     return {tipo:'meal',id:m.id,n:m.name,e:'🍱',sub:names.join(' + '),t:totals(m.items||[]),cls:mealCls(m)};})
@@ -2334,7 +2331,6 @@ function semanaCubierta(){
       if(!mal.length){ok++;return;}
       mal.forEach(function(x){platos[x.d.id]=1;platoCubierto(x.d,x.r,nv).faltan.forEach(function(f){faltan[f.toLowerCase()]=1;});});});});
   return {tot:tot,ok:ok,faltan:Object.keys(faltan),platos:Object.keys(platos)};}
-function platoTengo(d,rac,nv){const c=platoCubierto(d,rac,nv);return !c.faltan.length;}
 function platoApto(d){
   /* con gluten no entra, y punto. «Depende» sí entra: es un aviso, no una prohibición. */
   if(!esCeliaco())return true;
@@ -4029,8 +4025,6 @@ function despensaQuitar(k){
   f.despensa=despensaS().filter(function(x){return x.k!==k;});
   neveraSync();
   return 'fuera de la despensa';}
-function despensaVaciar(){const f=food();const n=despensaS().length;f.despensa=[];neveraSync();
-  return n?('despensa vacía: '+n+' cosa(s) fuera'):'ya estaba vacía';}
 const _despAlimMemo={};
 function despAlim(x){
   /* el alimento de la tabla que es este producto de casa (memo por nombre; los alimentos no cambian a mitad) */
@@ -4240,7 +4234,7 @@ function ticketConClaude(){
     t.estado='';
     if(code==='cancelled'){render();return;}
     t.msg=IMP_ERRORES[code]||('No ha salido («'+code+'»). Pega el texto del ticket aquí arriba.');
-    if(code==='not_granted'||code==='sampling_disabled'||code==='not_declared'||code==='capability_disabled')_sampleEstado='no';
+    if(CLAUDE_SIN_PERMISO.indexOf(code)>=0)_sampleEstado='no';
     render();});}
 function compraCada(){
   /* cada cuántos días toca ir. Por defecto 4: dos veces por semana, que es como dijo que la hace.
@@ -4314,26 +4308,6 @@ function neveraToggle(id){
   neveraSync();
   const a=alimById(id);
   return ((i>=0||estaba)?'fuera de la nevera: ':'a la nevera: ')+((a&&a.n)||id);}
-function neveraVaciar(){const f=food();const n=f.nevera.length;
-  f.neveraMano=[];f.despensa=[];f.nevera=[];save();
-  return n?('vaciada: '+n+' cosa(s) fuera'):'la nevera ya estaba vacía';}
-function neveraDesdeCompra(){
-  /* lo que hay en tus listas de la compra, pasado a la nevera: lo normal es que si lo compras, lo
-     tengas. Solo entra lo que la tabla sabe reconocer por nombre. */
-  const nombres=[];
-  (store.listas||[]).forEach(function(L){(L.items||[]).forEach(function(it){
-    nombres.push(String(it&&it.txt!=null?it.txt:it));});});
-  const f=food();let n=0;
-  nombres.forEach(function(txt){
-    const p=parseIng(txt),cual=alimTxt(p.item||txt).trim();
-    if(!cual)return;
-    const hit=alimTodos().filter(function(a){
-      const an=alimTxt(a.n);return an===cual||cual.indexOf(an)>=0||an.indexOf(cual)>=0;})
-      .sort(function(a,b){return a.n.length-b.n.length;})[0];
-    if(hit&&f.nevera.indexOf(hit.id)<0){f.nevera.push(hit.id);n++;}});
-  save();
-  return n?(n+' cosa(s) de tu compra puestas en la nevera'):
-    (nombres.length?'no he reconocido nada de tu compra en la tabla de alimentos':'no tienes nada en las listas de la compra');}
 function foodKey(dateStr){const d=parseDate(dateStr);return d?iso(d):'';}
 function foodLog(dateStr){const f=food(),k=foodKey(dateStr);
   if(!k)return [];
@@ -8023,7 +7997,6 @@ function renderMonth(){
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
 const GYM_URL='https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json';
 const GYM_SITIO='https://opengym-bc111a.gitlab.io/#/library';
-const GYM_DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
 function gymS(){
   if(!store.gym||typeof store.gym!=='object')
     store.gym={biblioteca:[],rutinas:[],registro:[],sesiones:[],cardio:[],fav:[],fuente:'',marks:{},
@@ -8495,10 +8468,7 @@ function empezarRutina(rid,fecha,corta){
   ui.tab='gym';ui.gymPanel='vivo';
   save();render();window.scrollTo(0,0);
   return '«'+rt.nombre+'»: '+n+' series por delante. Apunta cada una según la hagas.';}
-function duracionTipica(rid){
-  const g=gymS(),ss=g.sesiones.filter(function(s){return s.rutinaId===rid;});
-  if(!ss.length)return 45;
-  return Math.round(ss.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ss.length)||45;}
+function duracionTipica(rid){return historialRutina(rid).media||45;}
 function terminarSesion(minutos,completo,nota){
   /* «he terminado» de la pantalla de sesión: lo mismo que cerrar desde Entrenar (con hora de
      inicio y fin, tipo y carga), y si dices tú si fue entera o parcial, manda lo que digas */
@@ -8723,7 +8693,7 @@ function toggleSegundoDia(ix){
   const g=gymS(),d=g.segundo,dias=d.dias.slice(),i=dias.indexOf(+ix);
   if(i>=0)dias.splice(i,1);else dias.push(+ix);
   d.dias=dias.sort(function(a,b){return a-b;});d.on=dias.length>0;save();render();
-  return dias.length?('segundo entreno: '+dias.map(function(x){return GYM_DIAS[x];}).join(', ')):'sin segundo día fijo';}
+  return dias.length?('segundo entreno: '+dias.map(function(x){return DIA3[x];}).join(', ')):'sin segundo día fijo';}
 function resumenGym(fecha){
   const xs=setsDe(fecha);
   if(!xs.length)return '';
@@ -8732,11 +8702,6 @@ function resumenGym(fecha){
   return orden.map(function(e){
     return e+' '+por[e].map(function(x){return (x.kg?x.kg+'×'+x.reps:x.reps+'×peso');}).join(' ')+
       ' · '+Math.round(volDe(por[e]))+' kg';}).join(' | ');}
-function volumenSemana(desde){
-  const ini=mondayOf(parseDate(desde)||new Date()),out=[];
-  for(let i=0;i<7;i++){const dd=addDays(ini,i),k=iso(dd);
-    out.push({k:k,nm:DAYSH[i]+' '+dd.getDate(),sets:setsDe(k).length,vol:volumenDe(k)});}
-  return out;}
 function gymLine(dateStr){
   const g=diaSegundo(dateStr);if(!g.on)return '';
   return '🏊 '+(g.tipo||'entreno')+(g.hora?(' '+g.hora):'')+(g.auto?'':' · puesto tú');}
@@ -9196,7 +9161,7 @@ function frGramos(a,tipo,p){
     if(g==='verdura'||g==='fruta')return 30;}
   if(tipo==='bowl'){if(g==='carne'||g==='pescado')return 120;if(g==='cereal'||g==='legumbre')return 150;if(g==='verdura')return 80;}
   if(tipo==='plato'){if(g==='carne'||g==='pescado')return 160;if(g==='cereal'||g==='legumbre')return 200;if(g==='verdura')return 120;}
-  return ((a.r&&a.r[0])||[0,100])[1];}
+  return racDe(a,100);}
 const FR_COMBOS={mixto:['jamon cocido','queso'],vegetal:['lechuga','tomate','huevo cocido','mayonesa'],serranito:['lomo','jamon serrano','pimiento'],
   caprese:['tomate','mozzarella','aceite']};
 const FR_COMBOS_RE=Object.keys(FR_COMBOS).map(function(c){return [c,new RegExp('\\b'+c+'\\b')];});
@@ -9455,12 +9420,6 @@ function frPlatosMarca(t,out,fx){
       t=t.slice(0,m.index)+m[1]+'§'+(out.length-1)+t.slice(m.index+m[0].length);}});
   return t;}
 function frMemoS(){const f=food();if(!f.frMemo||typeof f.frMemo!=='object'||Array.isArray(f.frMemo))f.frMemo={};return f.frMemo;}
-function frAlimDe(o){
-  /* el alimento (o algo que se le parece) de cualquier fuente, para gramos y nombre */
-  if(o.k==='alim')return o.a;
-  if(o.k==='ean'){const p=o.p;return {id:'',n:p.nombre,g:'',kcal:+p.kcal||0,r:[]};}
-  return null;}
-function frCandidato(o,base,bonus,extra){return Object.assign({k:o.k,base:base,tot:base+(bonus||0),o:o},extra||{});}
 function frBusca(pz,tipo,opt){
   /* un trozo → el mejor candidato de todas las fuentes, con su confianza; y los que casan a medias
      por si hay que preguntar */
@@ -9894,7 +9853,7 @@ function fraseRecientes(n){
   /* las últimas frases distintas que escribiste (14 días), y antes las que sueles poner a esta hora */
   const out=[],vis={},h=new Date().getHours();
   const cand=[];
-  for(let i=0;i<14;i++){const l=foodLog(iso(addDays(new Date(),-i))).slice().reverse();
+  for(let i=0;i<14;i++){const l=[].concat(logDe(iso(addDays(new Date(),-i)))).reverse();   /* leer sin crear 14 días vacíos */
     l.forEach(function(e){if(!e.frase)return;const hh=e.ts?new Date(e.ts).getHours():-9;cand.push({e:e,i:i,cerca:Math.abs(hh-h)<=2&&i>0});});}
   cand.filter(function(c){return c.cerca;}).concat(cand).forEach(function(c){const k=c.e.frase.txt||c.e.nombre;
     if(out.length>=(n||3)||vis[k])return;vis[k]=1;out.push(c.e);});
@@ -9930,7 +9889,7 @@ function lecturaCardHTML(fr,ctx){
   if(!fr)return '';
   const it=fr.items,du=fr.dudas||[],c=' data-c="'+ctx+'"';
   if(!it.length&&!du.length)return '<div class="lec vacia">no entiendo nada de eso todavía</div>';
-  const pos=fr.pos||(ctx==='fb'?ui.foodPos:ui.frPos)||posDeSlot('',horaLocal(new Date()));
+  const pos=fr.pos||(ctx==='fb'?ui.foodPos:ui.frPos)||momentoAhora();
   /* la frase, trozo a trozo y en orden */
   const vis={},pills=[];
   it.forEach(function(x){if(x.pan||x.impl)return;const t=x.pl?x.pl.toLowerCase():(x.errata||x.pz||frNomItem(x,fr.tipo));
@@ -10046,7 +10005,7 @@ function frEnter(){
   const fr=ui.frase;
   if(!fr||(!fr.items.length&&!(fr.dudas||[]).length)){ui.frase=null;flash('no he entendido nada de eso');return;}
   if((fr.dudas||[]).length){frPintaLectura();flash('dime qué es «'+fr.dudas[0].txt+'» o quítalo, y lo apunto');return;}
-  const m=fraseApuntar(fr,fr.pos||ui.frPos||posDeSlot('',horaLocal(new Date())));
+  const m=fraseApuntar(fr,fr.pos||ui.frPos||momentoAhora());
   ui.frase=null;ui.frTxt='';ui.frPos='';
   flash(m);
   /* el campo se queda (y el teclado abierto) para la siguiente: se repinta lo demás */
@@ -10116,7 +10075,7 @@ function renderQueComo(){
           '<div class="row" style="margin-top:6px">'+(c.urge?'<span class="mini" style="color:var(--warn)">'+esc(nom(c.urge.id))+': '+(c.urge.r<=0?'cómelo hoy':(c.urge.r===1?'cómelo mañana':'caduca en '+c.urge.r+' d'))+'</span>':'')+
             '<span class="sp"></span><button class="btn s" data-a="qc-ver" data-i="'+i+'">ajustar</button><button class="btn p s" data-a="qc-hago" data-i="'+i+'">Me lo hago</button></div></div>';}).join(''):
         '<p class="mini" style="margin:4px 0 0">'+(despensaS().length?'Con lo que hay en casa no me sale '+esc(T[2].toLowerCase())+': prueba otra forma o escríbelo en Hoy («'+(tipo==='bocata'?'bocata de…':'plato de…')+'»).':'Tu nevera está vacía: haz la foto del ticket (Nevera → 📷) y aquí salen las ideas.')+'</p>')+'</div>'+
-    '<p class="mini" style="margin:0 8px">«Me lo hago» lo apunta en '+esc((POS_TXT[posDeSlot('',horaLocal(new Date()))]||'').toLowerCase())+' y gasta de la nevera lo que usa. «Ajustar» lo abre para cambiar tamaño o cantidades.</p>'+
+    '<p class="mini" style="margin:0 8px">«Me lo hago» lo apunta en '+esc((POS_TXT[momentoAhora()]||'').toLowerCase())+' y gasta de la nevera lo que usa. «Ajustar» lo abre para cambiar tamaño o cantidades.</p>'+
   '</div>';}
 /* ===================== HOY CON DETALLE =====================
    «Si añado algo, ¿dónde veo lo que he añadido y sus micronutrientes? Falta información.» Cada toma
@@ -10190,17 +10149,17 @@ function monchisKcal(sel){return foodLog(foodKey(sel)).filter(function(x){return
 function monchisOpciones(){
   /* de tu nevera: combinaciones que sacian (proteína o fibra) y lo dulce/salado que pide el cuerpo */
   const nv=qcNevera(),hay=function(re){return nv.filter(function(o){return re.test(alimTxt(o.a.n+' '+o.x.nom));})[0];};
-  const it=function(o,g){return {id:o.a.id,g:g||((o.a.r&&o.a.r[0])||[0,100])[1],casa:o.x.nom};};
+  const it=function(o,g){return {id:o.a.id,g:g||racDe(o.a,100),casa:o.x.nom};};
   const sanos=[],caprichos=[];
   const yog=hay(/yogur|griego|proteina|skyr|kefir/),nuez=hay(/nuez|almendr|pecana|anacardo|pistach/),fru=nv.filter(function(o){return o.a.g==='fruta';})[0],
     gal=hay(/maria|galleta|tostada|biscote/),tor=hay(/tortilla de (maiz|trigo)|wrap/),fia=hay(/fiambre|pavo|pollo extrafino|jamon cocido|york/),que=hay(/queso/);
   if(yog)sanos.push({n:yog.a.n+(nuez?' + '+nuez.a.n.toLowerCase():''),e:'🥛',it:[it(yog)].concat(nuez?[it(nuez,20)]:[]),tag:'sacia'});
-  if(fru)sanos.push({n:'2 × '+fru.a.n.toLowerCase()+(gal?' + '+gal.a.n.toLowerCase():''),e:fru.a.e||'🍎',it:[it(fru,(((fru.a.r&&fru.a.r[0])||[0,100])[1])*2)].concat(gal?[it(gal)]:[]),tag:'dulce y ligero'});
+  if(fru)sanos.push({n:'2 × '+fru.a.n.toLowerCase()+(gal?' + '+gal.a.n.toLowerCase():''),e:fru.a.e||'🍎',it:[it(fru,racDe(fru.a,100)*2)].concat(gal?[it(gal)]:[]),tag:'dulce y ligero'});
   if(tor&&fia)sanos.push({n:tor.a.n+' con '+fia.a.n.toLowerCase().replace(/^fiambre de /,''),e:'🌮',it:[it(tor),it(fia,45)].concat(que?[it(que,20)]:[]),tag:'salado'});
   else if(fia&&que)sanos.push({n:'Rollitos de '+fia.a.n.toLowerCase().replace(/^fiambre de /,'')+' y queso',e:'🧀',it:[it(fia,45),it(que,30)],tag:'salado'});
   const usados={};sanos.forEach(function(x){x.it.forEach(function(y){usados[y.id]=1;});});
   nv.filter(function(o){return !usados[o.a.id];}).filter(function(o){return /panna|natilla|flan|cookie|barrita|galleta|chocolate|helado|bolleria|crema.*cacahuete|cacahuete|patatas fritas|nachos|gominola/.test(alimTxt(o.a.n));})
-    .forEach(function(o){const g=/crema.*cacahuete/.test(alimTxt(o.a.n))?15:(((o.a.r&&o.a.r[0])||[0,40])[1]);
+    .forEach(function(o){const g=/crema.*cacahuete/.test(alimTxt(o.a.n))?15:racDe(o.a,40);
       caprichos.push({n:o.a.n,e:o.a.e||'🍪',it:[it(o,g)],nota:/cacahuete/.test(alimTxt(o.a.n))?'1 cda · ojo: se va rápido':''});});
   const conM=function(x){const fr={txt:x.n,tipo:'libre',tam:'m',items:x.it};x.fr=fr;x.m=fraseMacros(fr);return x;};
   return {sanos:sanos.map(conM).slice(0,3),caprichos:caprichos.map(conM).slice(0,4)};}
@@ -10945,12 +10904,11 @@ function renderFoodDia(){
       return '<button class="'+(pasa?'x':'')+(x.kc?'':' v')+(x.ver?' ver':'')+'" data-a="food-jump" data-key="'+x.k+'" aria-label="'+x.k+': '+x.kc+' kcal">'+
         '<em>'+(x.kc?fmtMil(x.kc):'')+'</em><i style="height:'+Math.max(3,Math.round(x.kc/tope*64))+'px'+(x.hoy&&x.kc?';opacity:.65':'')+'"></i><span'+(x.hoy?' class="hoy"':'')+'>'+x.nm+'</span>'+
         '<small>'+(objP&&x.kc?(x.p>=objP?'✓':'·'):'')+'</small></button>';}).join('')+'</div>';
-  const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const e=diaEspDe(sel);
   $('#main').innerHTML='<div class="grid h2">'+
     '<div class="card h2hero">'+
       '<div class="row h2nav"><button class="btn s" data-a="food-prev" aria-label="día anterior">‹</button>'+
-        '<span class="cap">'+(sel===c.hoy?'HOY':esc(DN[d.getDay()].toUpperCase()+' '+d.getDate()))+'</span>'+
+        '<span class="cap">'+(sel===c.hoy?'HOY':esc(DOWN0[d.getDay()].toUpperCase()+' '+d.getDate()))+'</span>'+
         '<button class="btn s" data-a="food-next" aria-label="día siguiente">›</button>'+(sel===c.hoy?'':'<button class="btn s" data-a="food-today">hoy</button>')+
         '<span class="sp"></span><button class="btn s" data-a="food-obj-toggle">'+(ui.foodObjOpen?'▴ objetivo':'✎ objetivo')+'</button></div>'+
       '<div class="h2top"><div><div class="h2big">'+fmtMil(ft.kcal)+(objK?'<small> / '+fmtMil(objK)+'</small>':'')+'</div>'+
@@ -11080,36 +11038,6 @@ function renderRanking(){
       (R.length>12&&!ui.mpTodo&&f!=='olvidados'?'<button class="dlink" data-a="mp-todo">ver todos ('+R.length+') ›</button>':'')+'</div>'+
     '<div class="card"><div class="cap">CÓMO SE HACE LA NOTA</div><p class="mini" style="margin:4px 0 0">40 % lo que te gusta (👍/👎) · 40 % lo sano (proteína por kcal; si pasa mucho de un tercio de tu objetivo, resta) · 20 % lo que lo repites este mes. Los 👎 salen menos en «Móntamela»; los mejores, más.</p></div>'+
   '</div>';}
-function cadenaHTML(){
-  /* la cadena: el menú manda en las tandas y las tandas mandan en la compra. Hasta ahora eran tres
-     destinos distintos que no se nombraban entre ellos, aunque el código ya los encadenaba así. */
-  const days=weekDays(),pb=planBatches(days);
-  let sesiones=0,raciones=0;
-  Object.keys(pb).forEach(function(k){const b=pb[k];if(!b.hasNeed)return;sesiones++;raciones+=b.portions||0;});
-  const plan=days.map(function(d){
-    return d.key?planTotalsOf(d.key).kcal:(d.shiftId?dayTotals(d.shiftId).kcal:0);
-  }).filter(function(x){return x>0;});
-  const media=plan.length?Math.round(plan.reduce(function(a,x){return a+x;},0)/plan.length):0;
-  const listos=platosCocinables().listos.length;
-  const c=compraDatos();
-  const esl=function(cls,ico,tit,txt,accion){
-    return '<button class="eslabon '+cls+'" '+accion+'>'+
-      '<span class="pto">'+gymIco(ico)+'</span>'+
-      '<span class="tx"><b>'+tit+'</b><span>'+txt+'</span></span>'+
-      gymIco('chevron','gico sm ch')+'</button>';};
-  const n=function(v){return '<em>'+v+'</em>';};
-  return '<div class="card"><h2>Esta semana <span class="mini">'+esc(rangoSemanaTxt())+'</span></h2>'+
-    '<p class="note" style="margin:0 0 2px">El menú manda en las tandas, y las tandas en la compra.</p>'+
-    '<div class="cadena">'+
-      esl('m','libro','Menú',n(store.shifts.length)+' tipos de día'+
-        (media?(' · '+n(media)+' kcal/día planificadas'):' · sin menús puestos'),
-        'data-a="tab" data-t="types"')+
-      esl('c','olla','Cocina',n(sesiones)+' tanda'+(sesiones===1?'':'s')+' · '+n(raciones)+' raciones · '+
-        n(listos)+' plato'+(listos===1?'':'s')+' te sale'+(listos===1?'':'n')+' hoy',
-        'data-a="food-vista" data-v="cocina-panel"')+
-      esl('k','lista','Compra',n(c.total)+' cosa'+(c.total===1?'':'s')+' · '+n(c.marcados)+' ya las tienes',
-        'data-a="tab" data-t="shop"')+
-    '</div></div>';}
 function rangoSemanaTxt(){
   /* en modo plantilla la semana no tiene fechas: se dice el patrón, que es lo que la define */
   const d=weekDays();
@@ -11158,18 +11086,13 @@ function esFav(v){return favV().indexOf(v)>=0||(/^ean:/.test(v)&&food().fav.inde
    Antes había tres listas separadas —86 alimentos, 188 productos, 16 platos— y antes de buscar
    había que acertar en cuál de los tres mundos vivía lo que querías. Ahora hay un campo y una
    lista. Y sin escribir no se vuelca nada: salen las seis cosas que más apuntas. */
-const FOOD_TIPOS=[['','todo'],['alim','alimentos'],['ean','productos'],['dish','mis platos']];
 function foodEmoji(x){
   if(x.em)return x.em;
   if(x.tipo==='dish')return '🍽';
   return '📦';}
 function frecuentes(n){
   /* lo que más apuntas, contado de tu propio historial: nada que configurar y se adapta solo */
-  const f=food(),cuenta={};
-  Object.keys(f.log).forEach(function(k){
-    (f.log[k]||[]).forEach(function(t){
-      const v=t.alim?('alim:'+t.alim):(t.ean?('ean:'+t.ean):(t.dishId?('dish:'+t.dishId):(t.fuera||'')));
-      if(v)cuenta[v]=(cuenta[v]||0)+1;});});
+  const cuenta=frecuenciasV();
   const todo=foodBuscables(),porV={};
   todo.forEach(function(x){porV[x.v]=x;});
   const orden=Object.keys(cuenta).filter(function(v){return porV[v];})
@@ -11594,15 +11517,10 @@ const COCINA_TABS=[['','Qué hago hoy'],['lote','En lote']];
 function renderCocinaPanel(){
   const tab=ui.cocinaTab||'';
   if(tab==='nevera'){ui.cocinaTab='';ui.foodVista='nevera2';return renderNevera2();}
-  const dentro=neveraAlimentos();
   const cab='<div class="pest">'+COCINA_TABS.map(function(t){
-    const n=(t[0]==='nevera'&&dentro.length)?(' '+dentro.length):'';
     return '<button class="pestb'+(tab===t[0]?' on':'')+'" data-a="cocina-tab" data-t="'+t[0]+'">'+
-      esc(t[1])+n+'</button>';}).join('')+'</div>';
-  let cuerpo='';
-  if(tab==='nevera')cuerpo=neveraCuerpoHTML();
-  else if(tab==='lote')cuerpo=loteCuerpoHTML();
-  else cuerpo=queHagoHTML();
+      esc(t[1])+'</button>';}).join('')+'</div>';
+  const cuerpo=tab==='lote'?loteCuerpoHTML():queHagoHTML();
   $('#main').innerHTML='<div class="grid">'+
     foodSubcab('Cocina')+cab+cuerpo+'</div>';
 }
@@ -11756,7 +11674,7 @@ function nvBtns(x){
   return '<span class="nvb"><button data-a="desp-gasta" data-k="'+esc(x.k)+'" aria-label="he gastado un poco de '+esc(x.nom)+'">−</button>'+
     '<button data-a="desp-quitar" data-k="'+esc(x.k)+'" aria-label="quitar '+esc(x.nom)+'">×</button></span>';}
 function renderNevera2(){
-  const coc=cocinadoPrevision(),DN=['dom','lun','mar','mié','jue','vie','sáb'],dia=function(k){const d=parseDate(k);return d?DN[d.getDay()]:'';};
+  const coc=cocinadoPrevision(),dia=function(k){const d=parseDate(k);return d?DIA3[d.getDay()]:'';};
   const hoyK=iso(new Date());
   const fres=despensaS().map(function(x){return {x:x,r:frescoDias(x)};}).filter(function(o){return o.r!=null;}).sort(function(a,b){return a.r-b.r;});
   const resto=despensaS().length-fres.length;
@@ -11866,7 +11784,7 @@ function cocinadoPrevision(){
   return out.sort(function(a,b){return a.fin.k.localeCompare(b.fin.k);});}
 function cocinadoHTML(){
   const l=cocinadoPrevision();if(!l.length)return '';
-  const DN=['dom','lun','mar','mié','jue','vie','sáb'],dia=function(k){const d=parseDate(k);return d?DN[d.getDay()]:'';};
+  const dia=function(k){const d=parseDate(k);return d?DIA3[d.getDay()]:'';};
   const pr=l.filter(function(y){return !y.fin.cad;})[0];
   return '<div class="card"><h2>Lo que tienes cocinado <span class="mini" style="margin-left:auto">raciones · hasta</span></h2>'+
     l.map(function(y){const t=Math.min(12,y.x.total);let q='';for(let i=0;i<t;i++)q+='<i class="'+(i<y.x.queda?'':'o')+'"></i>';
@@ -11915,63 +11833,6 @@ function queHagoHTML(){
         '</div>';}).join('')+'</div>'):'')+
     (pc.casi.length?('<div class="card"><h2>Te falta poco <span class="mini">'+pc.casi.length+'</span></h2>'+
       pc.casi.slice(0,2).map(function(x){return tarjeta(x,false);}).join('')+'</div>'):'');}
-function despensaCardHTML(){
-  /* LO QUE HAY Y CUÁNTO. Con cantidad se puede gastar, y lo que se gasta vuelve solo a la lista de
-     la compra: es lo que cierra el círculo comprar → cocinar → comprar. */
-  const l=despensaS().slice().sort(function(a,b){
-    const sa=COMPRA_SECS.map(function(x){return x[0];});
-    const da=sa.indexOf(a.sec||'otros'),db=sa.indexOf(b.sec||'otros');
-    if(da!==db)return da-db;
-    return String(a.nom).localeCompare(String(b.nom),'es');});
-  const filas=l.map(function(x){
-    const sc=COMPRA_SECS.filter(function(y){return y[0]===x.sec;})[0];
-    const glu=esCeliaco()?glutenChipHTML(glutenDe(x.nom),true):'';
-    return '<div class="dfila">'+
-      '<span class="i" aria-hidden="true">'+((sc&&sc[2])||'\ud83d\uded2')+'</span>'+
-      '<span class="n">'+esc(x.nom)+glu+'</span>'+
-      '<span class="q">'+(x.q?(fmtKg(x.q)+(x.uni?(' '+x.uni):'')):'—')+'</span>'+
-      '<button class="btn s" data-a="desp-gasta" data-k="'+esc(x.k)+'" title="he gastado un poco">'+
-        (x.q&&pasoDeGasto(x)?('−'+fmt(pasoDeGasto(x))+(x.uni||'')):'gastar')+'</button>'+
-      '<button class="btn d s" data-a="desp-quitar" data-k="'+esc(x.k)+'" aria-label="quitar">×</button>'+
-      '</div>';}).join('');
-  return '<div class="card"><h2>La despensa</h2>'+
-    '<p class="note">Lo que hay en casa Y cuánto. Al gastarlo baja, y cuando se acaba vuelve solo a la '+
-    'lista de la compra. Entra sola al pulsar «he hecho esta compra».</p>'+
-    (l.length?('<div class="dlista">'+filas+'</div>')
-      :'<div class="empty">Vacía. Haz la compra y pulsa «he hecho esta compra», o mete algo aquí abajo.</div>')+
-    '<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'+
-      '<label class="fld" style="flex:1 1 200px">he metido en casa'+
-      '<input id="despAdd" placeholder="500 g lenteja pardina"></label>'+
-      '<button class="btn p" data-a="desp-add">a la despensa</button></div>'+
-    '</div>';}
-function neveraCuerpoHTML(){
-  const dentro=neveraAlimentos(),q=ui.neveraQ||'';
-  const sug=q?alimBuscar(q,'').filter(function(a){return food().nevera.indexOf(a.id)<0;}).slice(0,8):[];
-  return despensaCardHTML()+
-    /* la lista de abajo son los alimentos de la tabla, que es lo que hace falta para las ideas de
-       cocina; la de arriba es lo que hay y cuánto. Se dice, porque si no parecen la misma lista
-       dos veces. */
-    '<p class="note" style="margin:0">Y esto es lo que la app reconoce de ahí para darte ideas: lo de '+
-    'la despensa entra solo, y aquí puedes añadir lo que se le haya escapado.</p>'+
-    '<div class="buscador">'+gymIco('lupa','gico sm')+
-      '<input id="nvQ" value="'+esc(q)+'" data-a="nevera-busca" placeholder="añadir algo que tengas…"></div>'+
-    (sug.length?('<div class="card">'+sug.map(function(a){
-      return '<div class="hit"><button class="hitnom" data-a="nevera-add" data-id="'+esc(a.id)+'">'+
-        '<span class="em">'+esc(a.e||'🍽')+'</span>'+
-        '<span class="nm"><b>'+esc(a.n)+'</b><span>'+esc(alimSubtexto(a))+'</span></span></button>'+
-        '<button class="add" data-a="nevera-add" data-id="'+esc(a.id)+'" aria-label="a la nevera">'+
-        gymIco('mas','gico sm')+'</button></div>';}).join('')+'</div>'):
-      (q?'<div class="card"><div class="empty">Nada se llama así en la tabla de alimentos.</div></div>':''))+
-    '<div class="card"><h2>En casa <span class="mini">'+dentro.length+'</span></h2>'+
-      (dentro.length?('<div class="chips">'+dentro.map(function(a){
-        return '<span class="chipx">'+esc(a.e||'🍽')+' '+esc(a.n)+
-          '<button class="x" data-a="nevera-del" data-id="'+esc(a.id)+'" aria-label="quitar '+esc(a.n)+'">×</button></span>';}).join('')+'</div>'):
-        '<div class="empty">Vacía. Busca arriba lo que tengas, o tráelo de tu lista de la compra.</div>')+
-      '<div class="row" style="margin-top:11px">'+
-        '<button class="btn s" data-a="nevera-compra">'+gymIco('lista','gico sm')+' de mi lista de la compra</button>'+
-        (dentro.length?'<button class="btn s" data-a="nevera-vaciar">vaciar</button>':'')+'</div></div>'+
-    (dentro.length?('<button class="btn p gbig" data-a="cocina-tab" data-t="">'+gymIco('chispa','gico sm')+
-      ' qué hago con esto</button>'):'');}
 function loteCuerpoHTML(){
   /* «Cocina en lote» era una pantalla aparte de 5 356 px —casi seis pantallas de móvil— porque
      repetía, de cada plato de cada sesión, los pasos enteros. Los pasos se siguen en el modo cocina,
@@ -12086,7 +11947,7 @@ function renderMisPlatos(){
        arriba; los de la app y los especiales (hospital, fuera, nada), plegados */
     const esApp=function(d){return !!(d.nevera||d.extra||d.fabrica);},esEsp=function(d){return !!(d.hospital||d.fuera||d.nada);};
     const ds=q?ds0:ds0.filter(function(d){return !esApp(d)&&!esEsp(d);});
-    const app=q?[]:ds0.filter(esApp),esp=q?[]:ds0.filter(esEsp),sinUso=platosAppSinUso();
+    const app=q?[]:ds0.filter(esApp),esp=q?[]:ds0.filter(esEsp),sinUso=app.length?platosAppSinUso():[];
     const fila=function(d){
         /* la etiqueta de la tanda venía del «Catálogo de platos», que era la otra pantalla que
            pintaba estos mismos platos: al fundirlas no se pierde */
@@ -12145,20 +12006,6 @@ function antojoHTML(){
     '</div>';}
 /* ---------- micronutrientes: una línea en la portada, su pantalla aparte ---------- */
 function microColor(p){return p<50?'var(--bad)':(p<80?'var(--warn)':(p>=100?'var(--brand)':'var(--ok)'));}
-function microLineaHTML(key){
-  const mt=microTotales(key),cortos=microCortos(key);
-  const conDato=Object.keys(mt).length>0;
-  const pts=ALIM_MICROS.map(function(k){
-    const p=conDato?microPct(k,mt[k]||0):0;
-    return '<i style="background:'+(conDato?microColor(p):'var(--line)')+'"></i>';}).join('');
-  const txt=conDato
-    ?(cortos.length?(cortos.length+' por debajo de la mitad · '+cortos.slice(0,3).map(function(k){
-        return String(ALIM_LABEL[k]||k).toLowerCase();}).join(', ')):'todo por encima de la mitad de la referencia')
-    :'los traen los alimentos de la tabla, no los productos de código de barras';
-  return '<button class="microlinea" data-a="food-vista" data-v="micros">'+
-    '<span class="pts">'+pts+'</span>'+
-    '<span class="tx">Micronutrientes<small>'+esc(txt)+'</small></span>'+
-    gymIco('chevron','gico sm')+'</button>';}
 function renderFoodMicros(){
   const c=foodCtx(),sel=c.sel;
   const mt=microTotales(sel),cortos=microCortos(sel);
@@ -12222,7 +12069,7 @@ function renderFoodProductos(){
     if(marca&&(x.marca||'').trim()!==marca)return false;
     if(!q)return true;
     return alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean).indexOf(q)>=0;
-  }).sort(function(a,b){return String(a.nombre||'').localeCompare(String(b.nombre||''),'es');});
+  }).sort(function(a,b){const x=String(a.nombre||''),y=String(b.nombre||'');return _colES?_colES.compare(x,y):x.localeCompare(y,'es');});
   /* ocho filas y a buscar: antes se pintaban los 188 con un campo numérico y tres botones cada uno,
      24 882 px de una sentada. La lista deja de ser el sitio donde se elige; el buscador lo es. */
   const muestra=ver.slice(0,8);
@@ -12378,10 +12225,6 @@ function renderFoodCocina(){
     '</div>';
 }
 /* ===================== nutrición: trozos de pantalla que se repiten ===================== */
-function macroHTML(nm,val,obj,cls){
-  const pct=obj>0?Math.min(100,Math.round(val/obj*100)):0;
-  return '<div class="macro"><div class="mt"><span>'+esc(nm)+'</span><b>'+fmt(val)+' / '+(obj>0?fmt(obj):'—')+' g</b></div>'+
-    '<div class="mbar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';}
 function micHTML(k,val,obj,extra){
   /* la barra es el % de la ingesta de referencia: por encima del 100 % cambia de color en vez de
      desbordarse, que era la única forma de ver de un vistazo lo que ya está cubierto */
@@ -13076,7 +12919,7 @@ function renderBowlListo(B){
     (ob.prot>0?'<div class="card"><div class="row"><span class="cap">CON ESTO, HOY</span><span class="sp"></span><span class="mini">objetivo '+ob.prot+' g P</span></div>'+
       '<div class="bwbar"><span>Proteína</span><div class="t"><i style="width:'+Math.min(100,Math.round(tras/ob.prot*100))+'%;background:var(--bp)"></i><u></u></div><b>'+tras+' / '+ob.prot+'</b></div>'+
       '<p class="mini" style="margin:6px 0 0">'+(queda>0?'Te quedan '+queda+' g para el resto del día'+(queda<=35?': con un filete de pollo lo cierras.':'.'):'Con esto llegas a tu proteína del día. 💪')+'</p></div>':'')+
-    '<button class="btn p gbig" data-a="bowl-hoy">＋ Añadir a '+esc(posDeSlot('',horaLocal(new Date())))+' de hoy</button>'+
+    '<button class="btn p gbig" data-a="bowl-hoy">＋ Añadir a '+esc(momentoAhora())+' de hoy</button>'+
     '<div class="two bwtwo"><button class="btn" data-a="bowl-guardar">⭐ Guardar como plato</button><button class="btn" data-a="bowl-compra">🛒 A la compra</button></div>'+
   '</div>';}
 function bowlGuardar(){
@@ -14039,29 +13882,28 @@ function gymSubcab(titulo,extra){
     '<button class="btn s volver" data-a="gym-panel" data-p="">'+gymIco('atras','gico sm')+' Entreno</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function gymCtx(){
+  /* cada pantalla usa una parte: la biblioteca, las opciones y los récords se calculan solo si se leen */
   const g=gymS(),hoy=iso(new Date());
   const sel=(ui.gymDate&&foodKey(ui.gymDate))?foodKey(ui.gymDate):hoy;
   const d=parseDate(sel)||new Date();
   const q=ui.gymQ||'';
   const hay=g.biblioteca.length>0;
   const filtroTipo=ui.gymFiltroTipo||'',filtroRegion=ui.gymFiltroRegion||'';
-  const res=hay?gymBuscar(q,200).filter(function(x){
-    if(filtroTipo&&tipoDeEjercicio(x)!==filtroTipo)return false;
-    if(filtroRegion&&!regionesDeEjercicio(x).has(filtroRegion))return false;
-    return true;}).slice(0,40):[];
-  const sets=setsDe(sel);
-  const sem=volumenSemana(sel);
-  const maxvol=Math.max(1,sem.reduce(function(a,x){return Math.max(a,x.vol);},0));
-  const nombres={},enRutina={};
-  g.registro.forEach(function(x){nombres[x.ex]=(nombres[x.ex]||0)+1;});
-  g.rutinas.forEach(function(rt){rt.ejercicios.forEach(function(r){enRutina[r.ex]=1;});});
   if(!g.rutinas.some(function(r){return r.id===ui.gymRutinaSel;}))ui.gymRutinaSel=(g.rutinas[0]||{}).id||'';
-  const opcEx=Object.keys(nombres).concat(Object.keys(enRutina)).filter(function(x,i,a){return a.indexOf(x)===i;})
-    .sort().map(function(nm){return '<option value="'+esc(nm)+'"></option>';}).join('');
-  const prs=Object.keys(nombres).map(function(nm){const p=prDe(nm);return p?{ex:nm,p:p}:null;}).filter(Boolean)
-    .sort(function(a,b){return b.p.rm-a.p.rm;}).slice(0,10);
-  return {g:g,hoy:hoy,sel:sel,d:d,q:q,hay:hay,filtroTipo:filtroTipo,filtroRegion:filtroRegion,res:res,
-    sets:sets,sem:sem,maxvol:maxvol,nombres:nombres,enRutina:enRutina,opcEx:opcEx,prs:prs,sg:diaSegundo(sel)};}
+  const m={},una=function(k,f){return k in m?m[k]:(m[k]=f());};
+  const nombres=function(){return una('n',function(){const n={};g.registro.forEach(function(x){n[x.ex]=(n[x.ex]||0)+1;});return n;});};
+  const enRutina=function(){return una('r',function(){const r={};g.rutinas.forEach(function(rt){rt.ejercicios.forEach(function(x){r[x.ex]=1;});});return r;});};
+  return {g:g,hoy:hoy,sel:sel,d:d,q:q,hay:hay,filtroTipo:filtroTipo,filtroRegion:filtroRegion,sg:diaSegundo(sel),
+    get sets(){return una('s',function(){return setsDe(sel);});},
+    get res(){return una('res',function(){return hay?gymBuscar(q,200).filter(function(x){
+      if(filtroTipo&&tipoDeEjercicio(x)!==filtroTipo)return false;
+      if(filtroRegion&&!regionesDeEjercicio(x).has(filtroRegion))return false;
+      return true;}).slice(0,40):[];});},
+    get nombres(){return nombres();},get enRutina(){return enRutina();},
+    get opcEx(){return una('o',function(){const v={};Object.keys(nombres()).concat(Object.keys(enRutina())).forEach(function(x){v[x]=1;});
+      return Object.keys(v).sort().map(function(nm){return '<option value="'+esc(nm)+'"></option>';}).join('');});},
+    get prs(){return una('p',function(){return Object.keys(nombres()).map(function(nm){const p=prDe(nm);return p?{ex:nm,p:p}:null;}).filter(Boolean)
+      .sort(function(a,b){return b.p.rm-a.p.rm;}).slice(0,10);});}};}
 function gymDiasMes(){
   /* días entrenados en el mes en curso */
   const m=iso(new Date()).slice(0,7);let n=0;
@@ -14082,7 +13924,7 @@ function gymFicha(p,ico,titulo,n,sub){
    NO se guarda: si cerrabas la app a medias, la sesión desaparecía y las 17 series se quedaban en tu
    historial como si las hubieras hecho. Ahora la serie se apunta cuando la haces, y solo esa. */
 const RPE_PAL=[{n:7,txt:'fácil'},{n:8,txt:'justo'},{n:9,txt:'duro'},{n:10,txt:'al fallo'}];
-function fmtKg(n){return fmt(n).replace('.',',');}   /* 62,5 y no 62.5: es el número más grande de la pantalla */
+function fmtKg(n){return fmtC(n);}   /* 62,5 y no 62.5: es el número más grande de la pantalla */
 function esfuerzoTxt(rpe){
   const n=+rpe||0;if(!n)return '';
   let mejor=RPE_PAL[0];
@@ -14159,14 +14001,10 @@ function progresionDe(nombre,nser,tope,hoyKey){
   return {kg:kg,cl:'mantiene',
     txt:'Repite '+fmtKg(kg)+' kg. La última vez '+(dur?('te costó «'+esfuerzoTxt(9)+'» o más'):('te quedaste en '+peorReps+' repeticiones'))+
       ', así que toca cerrarla antes de subir.'};}
-function esRecord(nombre,kg,reps,excluirId){
+function esRecord(nombre,kg,reps){
   /* récord = mejor serie estimada (Epley) por encima de todo lo anterior de ese ejercicio */
   const rm=rmSerie({ex:nombre,kg:kg,reps:reps});
-  if(!rm)return false;
-  const xs=(gymIdx().byEx[nombre]||[]).filter(function(x){return x.id!==excluirId;});
-  let mejor=0;
-  xs.forEach(function(x){const r=rmSerie(x);if(r>mejor)mejor=r;});
-  return rm>mejor;}
+  return !!rm&&rm>fuerzaEstimada(nombre);}
 function descansoCfg(){
   const n=+((store.gym||{}).descansoSeg);
   return (n>=0&&n<=600)?n:90;}
@@ -14178,19 +14016,18 @@ function arrancaDescanso(segOpt,exSig){
   ui.gymDesc={fin:Date.now()+seg*1000,total:seg};
   avisoDescanso(seg,exSig||'');}
 function pararDescanso(){ui.gymDesc=null;avisoDescansoFuera();}
-let _gvTick=null;
 function pintaDescanso(){
   /* el reloj se escribe A MANO en su nodo: render() reemplaza #main entero, y repintarlo cada
      segundo tiraría lo que estés tocando además de ser un derroche */
   const n=document.getElementById('gvReloj');
-  if(!n){if(_gvTick){clearInterval(_gvTick);_gvTick=null;}return;}
+  if(!n)return;
   const d=ui.gymDesc;
-  if(!d){if(_gvTick){clearInterval(_gvTick);_gvTick=null;}return;}
+  if(!d)return;
   const queda=Math.max(0,Math.round((d.fin-Date.now())/1000));
   n.textContent=mmss(queda);
   const b=document.getElementById('gvBarra');
   if(b)b.style.width=Math.round(queda/Math.max(1,d.total)*100)+'%';
-  if(queda<=0){ui.gymDesc=null;if(_gvTick){clearInterval(_gvTick);_gvTick=null;}
+  if(queda<=0){ui.gymDesc=null;
     try{if(navigator.vibrate)navigator.vibrate([250,120,250]);}catch(e){}
     const caja=document.getElementById('gvDesc');
     if(caja)caja.classList.add('fin');
@@ -14499,7 +14336,7 @@ function renderSegundoCard(c,g){
     '<p class="note">Junto al día de fuerza, un segundo día para piscina o entreno normal. '+
     'Se marca solo en los días que elijas; en guardias, salientes y vacaciones nunca se pone.</p>'+
     '<div class="row"><span class="mini">entre semana, qué días:</span>'+
-      GYM_DIAS.map(function(nm,ix){const on=g.segundo.dias.indexOf(ix)>=0;
+      DIA3.map(function(nm,ix){const on=g.segundo.dias.indexOf(ix)>=0;
         return '<button class="btn s '+(on?'p':'')+'" data-a="gym-seg-day" data-day="'+ix+'">'+nm+'</button>';}).join('')+'</div>'+
     '<div class="fgrid c3 tight" style="margin-top:9px">'+
       '<label class="fld">qué haces<select id="segTipo" data-a="gym-seg-tipo">'+
@@ -14902,7 +14739,7 @@ function marcarSerie(x,si,soloApuntar){
   const id=uid('gs'),med=p.med;
   const kg=(med==='kg'||med==='lastre')?Math.max(0,Math.round((+f.kg||0)*100)/100):0;
   const reps=(med==='tiempo'||med==='dist')?1:Math.max(0,Math.min(200,Math.round(+f.reps||0)));
-  const rec=(med==='kg'&&f.t!=='c')?esRecord(p.ex,kg,reps,id):false;
+  const rec=(med==='kg'&&f.t!=='c')?esRecord(p.ex,kg,reps):false;
   const reg={id:id,fecha:sa.fecha,ex:p.ex,kg:kg,reps:reps,si:si,ts:Date.now(),sesionId:sa.id,nota:'',
     rpe:null,rir:(ui.gymRir==null?null:+ui.gymRir)};
   if(f.t==='c')reg.t='c';
@@ -15041,8 +14878,7 @@ function gymSemanasSeguidas(){
     if(d>=min)n++;else if(w>0)break;}
   return n;}
 function gymKpisHTML(){
-  const g=gymS(),ses=g.sesiones.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
-  const ult=ses.slice(0,8),media=ult.length?Math.round(ult.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ult.length):null;
+  const g=gymS(),ult=sesionesRecientes(8),media=ult.length?Math.round(ult.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ult.length):null;
   const hoy=new Date(),vol=function(d0,d1){let v=0;for(let i=d0;i<d1;i++)v+=volumenDe(iso(addDays(hoy,-i)));return v;};
   /* la media de las semanas de antes CON entreno: dividir entre 4 una sola semana con datos daba «+758 %» */
   const v7=vol(0,7),prev=[1,2,3,4].map(function(w){return vol(7*w,7*w+7);}).filter(function(v){return v>0;});
@@ -15097,7 +14933,7 @@ function gymHeroHTML(sel){
     (g.rutinas.length?'Hoy no toca nada.':'Crea tu primera rutina y la app te la pone en tus días.');
   /* sin plan ese día, la que sigue en tu orden a la última que hiciste: entrenar sigue a un toque */
   const fuerza=g.rutinas.filter(function(r){return rutTipo(r)!=='agua'&&r.ejercicios.length;});
-  const ultS=g.sesiones.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');})[0];
+  const ultS=sesionesRecientes(1)[0];
   const iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
   const sigR=fuerza.length?fuerza[(iu+1)%fuerza.length]:null;
   return '<div class="ghero2 calma"><div class="k">'+dtxt+'</div><div class="m" style="font-size:14px;color:var(--ink)">'+esc(txt)+'</div>'+
@@ -15746,7 +15582,7 @@ function planEtiqueta(k,cap){
   if(k==='fb')return f<3||cap.semanas3g?['b','PLAN B PARA SEMANAS DURAS']:['ok','TE CABE'];
   if(k==='tp')return f>=2?['ok','ENCAJA CON GUARDIAS']:['b','JUSTO'];
   return f>=3?['ok','TE CABE']:['b','JUSTO'];}
-function planRecomendada(cap){return cap.fuerza>=3.5?'tp':(cap.fuerza>=2?'tp':'fb');}
+function planRecomendada(cap){return cap.fuerza>=2?'tp':'fb';}
 function planCrear(){
   const c=planCfg(),cap=capacidadSemanas(8),k=c.tpl||planRecomendada(cap),t=PLAN_TPL[k],o=PLAN_OBJ[c.obj]||PLAN_OBJ.musculo,g=gymS();
   const cambia=function(nm){let x=nm;if(!c.mat.barra&&PLAN_SIN.barra[x])x=PLAN_SIN.barra[x];if(!c.mat.poleas&&PLAN_SIN.poleas[x])x=PLAN_SIN.poleas[x];
@@ -16896,13 +16732,15 @@ function lectorProbar(){
 let _sampleFn=null,_sampleLim=null,_sampleEstado='buscando';
 function claudeBuscar(){
   /* window.claude no existe en GitHub Pages ni en un index.html abierto a pelo: ahí no hay nada que hacer */
-  if(typeof window==='undefined'||!window.claude||typeof window.claude.use!=='function'){_sampleEstado='no';return;}
+  if(!enArtifact()){_sampleEstado='no';return;}
   window.claude.use('sample').then(function(s){
     if(!s){_sampleEstado='no';return;}
     _sampleFn=s;_sampleEstado='si';
     return s.limits().then(function(l){_sampleLim=l;}).catch(function(){});
   }).catch(function(){_sampleEstado='no';})
    .then(function(){if(ui.tab==='import')render();});}
+/* los errores que dicen «aquí Claude no está permitido»: no se vuelve a intentar */
+const CLAUDE_SIN_PERMISO=['not_granted','sampling_disabled','not_declared','capability_disabled'];
 const IMP_ERRORES={
   not_granted:'No has dado permiso para que esta página use Claude. Pega el texto y dale a «Leerlo aquí mismo».',
   sampling_disabled:'Tu cuenta no tiene disponible esta función de Claude.',
@@ -16954,7 +16792,7 @@ function impConClaude(){
     if(code==='cancelled'){ui.imp.estado='';render();return;}
     impFuenteNueva();ui.imp.estado='error';
     ui.imp.msg=IMP_ERRORES[code]||'No ha salido («'+code+'»). Puedes leerlo aquí mismo con el lector de la app.';
-    if(code==='not_granted'||code==='sampling_disabled'||code==='not_declared'||code==='capability_disabled')_sampleEstado='no';
+    if(CLAUDE_SIN_PERMISO.indexOf(code)>=0)_sampleEstado='no';
     render();});}
 function impLocal(){
   const r=parseReceta(ui.imp.txt);
@@ -17188,10 +17026,10 @@ function renderTypesLista(){
       return '<button class="'+(corta?'x':'')+(v?'':' v')+'" tabindex="-1"><em>'+(v||'')+'</em><i style="height:'+Math.max(3,Math.round(v/tope*56))+'px"></i><span>'+M_DIAS[x.w]+'</span></button>';}).join('')+'</div>';
   const filas=store.shifts.map(function(sh){
     const items=[];slotsFor(sh.id).forEach(function(s){items.push.apply(items,slotItems(sh.id,s).items);});
-    const m=macrosItems(items),n=slotsFor(sh.id).length,tot=Math.max(1,m.p*4+m.c*4+m.g*9);
+    const m=macrosItems(items),n=slotsFor(sh.id).length;
     return '<button class="mtipo" data-a="types-vista" data-v="'+esc(sh.id)+'"><span class="e">'+esc(sh.icon||'🍽')+'</span>'+
       '<span class="t"><b>'+esc(sh.name)+'</b> <span class="mini">'+n+' toma'+(n===1?'':'s')+(m.p?' · '+m.p+' g P':'')+'</span></span><span class="k">'+fmtMil(m.kcal)+'</span>'+
-      (m.kcal?'<span class="mstk"><i style="flex:'+Math.round(m.p*4/tot*100)+';background:var(--bp)"></i><i style="flex:'+Math.round(m.c*4/tot*100)+';background:var(--bc)"></i><i style="flex:'+Math.round(m.g*9/tot*100)+';background:var(--bg3)"></i></span>':'')+'</button>';}).join('');
+      (m.kcal?mMiniBarra(m):'')+'</button>';}).join('');
   const cd=compraDatos();
   $('#main').innerHTML='<div class="grid mt">'+
     '<div class="subcab"><button class="btn s volver" data-a="types-vista" data-v="">'+gymIco('atras','gico sm')+' Semana</button><h2 class="subtit">Más formas de montar</h2></div>'+
@@ -17502,7 +17340,7 @@ function mealUsos(id){
 function renderTypesMeals(){
   const q=ui.mealsQ||'',f=ui.mealsF||'';
   const t=alimTxt(q).trim();
-  const casa=function(txt){return !t||buscaToks(t).every(function(w){return buscaToks(txt).some(function(i){return i.indexOf(w)===0;});});};
+  const casa=buscaCasa(t);
   const lista=store.meals.map(function(m){
     const names=(m.items||[]).map(function(it){const d=dishById(it.id);return d?d.name+(num(it.portions,1)!==1?(' ×'+fmt(num(it.portions,1))):''):'';}).filter(Boolean);
     const d0=dishById(((m.items||[])[0]||{}).id);
@@ -17718,24 +17556,6 @@ function ingredientsFor(list,exacto){
     const de=m.from.size>2?(m.from.size+' recetas'):Array.from(m.from).join(' + ');
     const also=m.notes.size?(Array.from(m.notes).join('/')+(de?' · '+de:'')):de;
     return {q:q,unit:m.unit,num:m.hasNum?m.num:null,item:m.item,also:also,aid:m.aid||''};})
-    .sort((a,b)=>a.item.localeCompare(b.item,'es'));
-}
-function mergeIng(dishes,scale){
-  const map={};
-  dishes.forEach(d=>{
-    const per=(d.portions||1);
-    const mult=typeof scale==='function'?scale(d):(scale||1);
-    (d.ingredients||[]).forEach(line=>{
-      const p=parseIng(line);if(!p.item)return;
-      const key=(p.item.toLowerCase().replace(/\(.*?\)/g,'').trim()||p.item)+'|'+(p.unit||'');
-      if(!map[key])map[key]={item:p.item,unit:p.unit,num:0,hasNum:false,notes:new Set()};
-      if(p.num!=null){map[key].num+=p.num*mult;map[key].hasNum=true;}
-      else map[key].notes.add(/[^\d]/.test(p.q)?p.q.replace(/^[^\s,]+\s*[a-záéíóúñ]*\s*/i,'').trim()||'al gusto':'al gusto');
-    });
-  });
-  return Object.keys(map).map(k=>{const m=map[k];
-    const q=m.hasNum?fmt(roundNice(m.num))+(m.unit?' '+m.unit:''):'';
-    return {q:q,item:m.item+(m.notes.size&&!m.hasNum?' · '+Array.from(m.notes).join('/'):'')};})
     .sort((a,b)=>a.item.localeCompare(b.item,'es'));
 }
 
@@ -18106,9 +17926,10 @@ function compraLineaHTML(x){
      botón NO marca la línea. */
   const k=despClave(x.texto),mio=pasilloTuyo(x.texto);
   const abierto=ui.compraPasillo===k;
+  const sec=abierto?seccionDeCompra(x.texto):'';
   const sel=abierto?('<li class="secpick">'+
       COMPRA_SECS.map(function(sc){
-        const act=seccionDeCompra(x.texto)===sc[0];
+        const act=sec===sc[0];
         return '<button class="btn s'+(act?' p':'')+'" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="'+sc[0]+'">'+
           sc[2]+' '+esc(sc[1])+'</button>';}).join('')+
       (mio?('<button class="btn s" data-a="compra-pasillo-set" data-t="'+esc(x.texto)+'" data-v="">↺ como lo pone la app</button>'):'')+
@@ -22650,7 +22471,7 @@ function act(a,el){
       if(o){B.it=o.apl(B.it);flash('+'+o.dp+' g de proteína');}render();break;}
     case 'bowl-mejor':{const B=bowlS(),ex=bowlExtras(B.it,B.obj);if(ex&&ex.mejor){B.it=ex.mejor.it;flash('ahora: '+ex.mejor.m.p+' g de proteína, '+ex.mejor.m.kcal+' kcal');}render();break;}
     case 'bowl-hoy':{const B=bowlS(),m=bowlMacros(B.it),nm=B.n?{n:B.n,e:B.e||'🥗'}:bowlNombre(B.it);
-      flash(addFoodEntry(fechaHoy(),{macro:{nombre:nm.n,kcal:m.kcal,prot:m.p,carb:m.c,gresa:m.gr,emoji:nm.e},pos:posDeSlot('',horaLocal(new Date()))}));
+      flash(addFoodEntry(fechaHoy(),{macro:{nombre:nm.n,kcal:m.kcal,prot:m.p,carb:m.c,gresa:m.gr,emoji:nm.e},pos:momentoAhora()}));
       ui.bowl=null;ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'bowl-guardar':flash(bowlGuardar());render();break;
     case 'bowl-compra':{const B=bowlS();flash(listaAMano(B.it.map(function(x){return x[1]+' g '+bowlIng(x[0]).n.toLowerCase();}).join('\n')));break;}
@@ -23287,7 +23108,7 @@ function act(a,el){
     case 'qc-ir':ui.qcTipo=el.dataset.v||'plato';ui.foodVista='quecomo';render();window.scrollTo(0,0);break;
     case 'qc-tipo':ui.qcTipo=el.dataset.v||'plato';render();break;
     case 'qc-hago':{const c=qcCombos(ui.qcTipo||(new Date().getHours()<11?'bocata':'plato'))[+el.dataset.i];if(!c)break;
-      flash(fraseApuntar(c.fr,posDeSlot('',horaLocal(new Date()))));ui.foodVista='';render();window.scrollTo(0,0);break;}
+      flash(fraseApuntar(c.fr,momentoAhora()));ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'qc-ver':{const c=qcCombos(ui.qcTipo||(new Date().getHours()<11?'bocata':'plato'))[+el.dataset.i];if(!c)break;
       ui.frase=c.fr;ui.frTxt=c.fr.txt;ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'fr-leer':frEnter();break;
@@ -23300,7 +23121,7 @@ function act(a,el){
     case 'fr-mas':lecOp(el,function(fr){const en=alimPorNombre('Ensalada de bolsa'),ac=frAceiteItem(5,'aliño',99);if(!en)return;
       fr.items.push({id:en.id,g:80,nom:'ensalada',pz:'ensalada',conf:1,papel:'acomp',fuente:'tabla',ord:98,corr:true});if(ac)fr.items.push(ac);});break;
     case 'fr-busca':ui.foodPos=(ui.frase&&ui.frase.pos)||ui.frPos||ui.foodPos;ui.frase=null;ui.frTxt=null;ui.foodVista='buscar';ui.foodBusca=el.dataset.q||'';render();window.scrollTo(0,0);break;
-    case 'fr-ok':{if(!ui.frase)break;const m=fraseApuntar(ui.frase,ui.frase.pos||ui.frPos||posDeSlot('',horaLocal(new Date())));ui.frase=null;ui.frTxt='';ui.frPos='';flash(m);render();break;}
+    case 'fr-ok':{if(!ui.frase)break;const m=fraseApuntar(ui.frase,ui.frase.pos||ui.frPos||momentoAhora());ui.frase=null;ui.frTxt='';ui.frPos='';flash(m);render();break;}
     case 'fr-plato':{const p=fraseRepetidas()[+el.dataset.i];if(p){const d=fraseADish(p);flash('«'+d.name+'» guardado en tus platos: ya sale en la semana y en la clasificación');}render();break;}
     case 'h2-voto':{platoVotar(el.dataset.id,+el.dataset.v||0);ui.h2Voto=null;flash(+el.dataset.v>0?'👍 apuntado: saldrá más':(+el.dataset.v<0?'👎 apuntado: saldrá menos':'apuntado'));render();break;}
     case 'ms-sem':ui.msOff=Math.min(0,(ui.msOff||0)+(+el.dataset.d||0));render();break;
@@ -23807,11 +23628,6 @@ function act(a,el){
       if(r.ok){ui.alimSel=r.id;ui.alimG=100;ui.foodVista='ficha';ui.alimNuevo=null;render();window.scrollTo(0,0);}
       break;}
     case 'micro-abrir':{ui.microAbierto=(ui.microAbierto===el.dataset.k)?'':(el.dataset.k||'');render();break;}
-    case 'nevera-add':{flash(neveraToggle(el.dataset.id));ui.neveraQ='';render();break;}
-    case 'nevera-del':{flash(neveraToggle(el.dataset.id));render();break;}
-    case 'nevera-vaciar':{confirmar('¿Vaciar la nevera entera?','Sí, vaciarla').then(function(ok){
-      if(!ok)return;flash(neveraVaciar());render();});break;}
-    case 'nevera-compra':{flash(neveraDesdeCompra());render();break;}
     case 'idea-guardar':{flash(guardarCombinacion(+el.dataset.ix));render();break;}
     case 'idea-apuntar':{
       const c=(ui.ideasCache||[])[+el.dataset.ix];
@@ -25234,7 +25050,7 @@ function icsPreviewHTML(p){
   if(!p||!p.ok)return '<div id="calOut" class="mini" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));'+
     'border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;white-space:pre-wrap">'+
     esc((p&&p.msg)||'nada reconocible')+'</div>';
-  const dia=function(k){const d=parseDate(k);return d?((GYM_DIAS[d.getDay()]||'')+' '):'';};
+  const dia=function(k){const d=parseDate(k);return d?((DIA3[d.getDay()]||'')+' '):'';};
   const fila=function(o,aplica,why){
     return '<div class="row wrap" style="gap:8px;padding:5px 0;border-top:1px solid var(--line);align-items:center">'+
       '<span class="mini" style="flex:0 0 92px;font-family:ui-monospace,Menlo,Consolas,monospace">'+
@@ -25574,8 +25390,8 @@ document.addEventListener('input',e=>{
     clearTimeout(searchDebounce);
     searchDebounce=setTimeout(function(){buscarRepinta();offAutoProgramar();},90);
     return;}
-  if(a==='alim-busca'||a==='nevera-busca'||a==='plato-busca'||a==='food-busca'){
-    ui[a==='alim-busca'?'alimQ':(a==='nevera-busca'?'neveraQ':(a==='food-busca'?'foodBusca':'platoQ'))]=el.value||'';
+  if(a==='alim-busca'||a==='plato-busca'||a==='food-busca'){
+    ui[a==='alim-busca'?'alimQ':(a==='food-busca'?'foodBusca':'platoQ')]=el.value||'';
     vivoProgramar();return;}
   if(a==='dinero-f'){
     const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
@@ -26112,7 +25928,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
-  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyTresHTML,hoyItems,hoyDiaHTML,hoyHojaHTML,
+  comidasCfg,comidaPrincipalDe,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyTresHTML,hoyItems,hoyDiaHTML,hoyHojaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
   objetivosS,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
@@ -26125,7 +25941,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,secsOrdenadas,moverSeccion,
-  despensaS,despensaAdd,despensaGasta,despensaQuitar,despensaVaciar,despClave,neveraSync,
+  despensaS,despensaAdd,despensaGasta,despensaQuitar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
@@ -26150,7 +25966,7 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   ejercicioUltimo,empezarRutina,terminarSesion,descartarSesion,duracionTipica,historialRutina,sesionesRecientes,
   addCardio,delCardio, regionesDeTexto,regionesDeNombre,ejerciciosSinMusculo,EJERCICIOS_NOMBRE,regionesDeEjercicio,regionesDeRutina,regionesDeSesion,svgCuerpo,
   MREGIONES,MREG_LABEL,GYM_SITIO,GYM_URL,
-  diaSegundo,toggleSegundo, toggleSegundoDia,resumenGym,volumenSemana,gymLine,
+  diaSegundo,toggleSegundo, toggleSegundoDia,resumenGym,gymLine,
   food,foodKey,offNum,mapOffProduct,addEanProduct,delEanProduct,toggleFavEan,porcionDe,foodLog,delFoodEntry,
   bumpFoodEntry,foodTotals,sugerirObjetivo,buscarEan,buscarOffNombre,iniciarEscaner,pararEscaner,buscarYmostrar,
   FOOD_CATALOGO,foodImportCatalogo,
@@ -26172,13 +25988,13 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,
   alimTxt,alimSlug,alimPorcion,alimEntrada,alimFuenteTxt,addAlimPropio,delAlimPropio,
   microTotales,microPct,microCortos,alimRicosEn,
-  neveraIds,neveraAlimentos,neveraToggle,neveraVaciar,neveraDesdeCompra,
+  neveraIds,neveraAlimentos,neveraToggle,
   usdaKey,usdaOn,mapUsdaFood,usdaBuscar,usdaOlvidar,USDA_NUM,
   objetivoMacros,sumaAlimentos,combinaciones,metaDePlato,topeRacion,esCondimento,ALIM_CONDIMENTO,guardarCombinacion,platoVacio,platoTotales,guardarPlato,gramosPorDefecto,
   renderAlimentos,renderAlimFicha,renderCocinaPanel,renderPlatoNuevo,renderAlimNuevo,
-  frecuentes,buscableDe,racionesDe,previaMacrosDe,apuntaBuscable,FOOD_TIPOS,
+  frecuentes,buscableDe,racionesDe,previaMacrosDe,apuntaBuscable,
   renderFoodBuscar,renderFoodCantidad,renderFoodMicros,renderFoodProductos,renderMisPlatos,
-  platosPorAntojo,antojoS,microLineaHTML,
+  platosPorAntojo,antojoS,
   esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,semanaCubierta,repartoComoRec,cierreAbierto,kcalPlanMedia,kcalCompletar,sinGlutenTexto,neveraGramos,escalaIng,parseIng,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,trayectoMin,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
