@@ -10100,6 +10100,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // tipo (UMI 13:45–14:20, Urgencias 14:00–15:00), y no va al calendario de Google
   {
     const r = await page.evaluate(() => { const P = window.PG; window.__copia246 = JSON.parse(JSON.stringify(P.store));
+      // primero Hoy pintado SIN Lloretazo; luego se enciende y se relee sin repintar: la agenda del pintado
+      // anterior no puede colarse (se quedaba guardada y la cena seguía a su hora de siempre)
+      P.store.lloret = { diario: false }; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render();
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = {};
       let kn = null, kg = null;
       for (let i = 0; i < 30 && (!kn || !kg); i++) { const k = P.iso(P.addDays(new Date(), i)), t = P.diaTipo(k);
@@ -10973,7 +10976,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#hojaDia .hmas summary'); await page.waitForTimeout(80);
     await page.click('#hojaDia [data-a="hab-probar"]'); await page.waitForTimeout(150);
     r.prueba = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'ha')[0]; return h.prueba && (h.prueba.txt + '|' + h.ancla.v); });
-    await page.evaluate(() => { const P = window.PG, h = P.habitosS().items.filter((x) => x.id === 'ha')[0]; h.prueba.desde = P.iso(P.addDays(new Date(), -14)); P.store = JSON.parse(JSON.stringify(P.store)); P.render(); });
+    await page.evaluate(() => { const P = window.PG, h = P.habitosS().items.filter((x) => x.id === 'ha')[0]; h.prueba.desde = P.iso(P.addDays(new Date(), -14));
+      // el hábito ya estaba en marcha esos 14 días: su «empezó» se adelanta con la prueba (cada día cuenta con la fase que tenía)
+      (h.fases || []).forEach((x) => { if (x.f === P.iso(new Date())) x.f = h.prueba.desde; }); P.store = JSON.parse(JSON.stringify(P.store)); P.render(); });
     r.c5 = await card();
     const vuelve = await page.$('#main .astj [data-a="hab-prueba"][data-v="0"]'); if (vuelve) { await vuelve.click(); await page.waitForTimeout(120); }
     r.tras = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'ha')[0]; return (h.ancla.v || 'sin') + '|' + !!h.prueba; });

@@ -7127,6 +7127,8 @@ function horasCortasDia(key,inf,sh){
 /* la piden el reloj, la lista, las casillas y la hoja de Hoy en el mismo pintado */
 let _agTick=-1,_agCache={};
 function agendaDia(key,inf){
+  /* fuera de un pintado (una acción que cambia algo y relee) se calcula de nuevo: guardada valdría la de antes */
+  if(!_pintando)return agendaDia0(key,inf);
   if(_agTick!==_renderTick){_agCache={};_agTick=_renderTick;}
   /* por fecha y por pintado: antes comparaba inf con un dayInfo(key) recién creado, nunca era el
      mismo objeto y se recalculaba la agenda entera en cada llamada (4 veces por movimiento del dedo
