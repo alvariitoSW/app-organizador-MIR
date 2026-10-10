@@ -10753,6 +10753,45 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.datos.some((t) => /más tarde los libres/.test(t)) && r.cien.hoja && r.cien.texto && r.cerrada, JSON.stringify({ datos: r.datos, cien: r.cien, cerrada: r.cerrada }));
   }
 
+  // 262) DINERO SIN FINTONIC, EN CADENA: sin capturas, Dinero no sabía cuánto gastabas y no había mes tipo,
+  // ahorro ni metas. Ahora pide una cifra al cerrar el mes («¿cuánto gastaste en septiembre?»). Se conduce
+  // por la pantalla: tres meses seguidos con «1.420», «1510» y «1380,50» → mes tipo de 3 meses → «Tus meses»
+  // → cambiar uno → sobrevive a normalize() → Salud no dice «−100 %» de un mes sin gasto variable apuntado
+  {
+    const r = {};
+    r.mks = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
+      window.__copia262 = JSON.parse(JSON.stringify(P.store));
+      P.store.dinero.gastos = [{ id: 'g262', nombre: 'Alquiler', importe: 600, dia: 1, on: true }]; P.store.dinero.pagos = [];
+      a.real = []; a.gastado = {}; a.epocas = [{ id: 'e1', nombre: 'prueba', desde: '2000-01', neto: 2766, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.ui.dinGastEd = ''; P.save(); P.render();
+      const h = new Date(), mk = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+      return [mk(1), mk(2), mk(3)]; });
+    await page.waitForTimeout(150);
+    const pide = () => page.evaluate(() => { const b = document.querySelector('#main [data-a="din-gastado"]'); return b ? b.dataset.mk : ''; });
+    r.pide = [];
+    for (const v of ['1.420', '1510', '1380,50']) {
+      r.pide.push(await pide());
+      await page.fill('#dinGast', v); await page.click('#main [data-a="din-gastado"]'); await page.waitForTimeout(150);
+    }
+    r.tras = await page.evaluate(() => { const P = window.PG, t = P.mesTipo();
+      return { g: P.ahorroS().gastado, n: t.n, sigue: !!document.querySelector('#main .dcifra'),
+        filas: [...document.querySelectorAll('#main .dcifl')].length, ahorro: (P.ahorroDeMes(Object.keys(P.ahorroS().gastado).sort().pop()) || {}).ahorro }; });
+    await page.click('#main [data-a="din-gastado-ed"][data-mk="' + r.mks[0] + '"]'); await page.waitForTimeout(150);
+    r.ed = await page.evaluate(() => ({ v: (document.getElementById('dinGast') || {}).value, mk: (document.querySelector('#main [data-a="din-gastado"]') || { dataset: {} }).dataset.mk, filas: document.querySelectorAll('#main .dcifl').length }));
+    await page.fill('#dinGast', '1300'); await page.click('#main [data-a="din-gastado"]'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.ahorroS().gastado; });
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); }); await page.waitForTimeout(150);
+    r.salud = await page.evaluate(() => (document.querySelector('#main').innerText || '').replace(/\s+/g, ' '));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia262; P.save(); P.ui.dineroVista = ''; P.ui.dinGastEd = ''; P.ui.tab = 'hoy'; P.render(); });
+    const [m1, m2, m3] = r.mks;
+    check('Dinero sin Fintonic: pide lo gastado de cada mes cerrado, del más reciente hacia atrás, y entiende «1.420», «1510» y «1380,50»',
+      r.pide.join() === [m1, m2, m3].join() && r.tras.g[m1] === 1420 && r.tras.g[m2] === 1510 && r.tras.g[m3] === 1380.5 && !r.tras.sigue, JSON.stringify(r.pide.concat([r.tras.g])));
+    check('con tres cifras hay mes tipo de 3 meses, «Tus meses» lista los tres con lo ahorrado, y «cambiar» reabre el mes con su cifra',
+      r.tras.n === 3 && r.tras.filas === 3 && typeof r.tras.ahorro === 'number' && r.ed.v === '1420' && r.ed.mk === m1 && r.ed.filas === 2, JSON.stringify({ tras: r.tras, ed: r.ed }));
+    check('la cifra cambiada sobrevive a normalize() y Salud no saca «−100 %» de un mes sin gasto variable apuntado',
+      r.vuelta[m1] === 1300 && r.vuelta[m3] === 1380.5 && !/−100 %|-100 %/.test(r.salud), JSON.stringify({ vuelta: r.vuelta, salud: r.salud.slice(0, 400) }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

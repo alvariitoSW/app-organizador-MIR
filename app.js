@@ -18822,6 +18822,9 @@ function ahorroLimpia(o){
   delete a.plan7;   /* el «plan» paralelo a los bolsillos ya no existe: manda el reparto de tus bolsillos */
   if(a.puroPct!=null)a.puroPct=Math.max(10,Math.min(100,Math.round(+a.puroPct||50)));
   if(a.puroId!=null)a.puroId=String(a.puroId).slice(0,40);
+  /* lo que gastaste cada mes, la cifra que pones a fin de mes (sin Fintonic) */
+  if(a.gastado&&typeof a.gastado==='object'&&!Array.isArray(a.gastado)){const gm={};Object.keys(a.gastado).filter(function(k){return /^\d{4}-\d{2}$/.test(k);}).sort().slice(-36)
+    .forEach(function(k){const v=Math.round((+a.gastado[k]||0)*100)/100;if(v>0&&v<1e6)gm[k]=v;});a.gastado=gm;}else delete a.gastado;
   if(Array.isArray(a.real))a.real=a.real.filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.fecha||'');}).slice(0,36).map(function(x){
     const cats={};if(x.cats&&typeof x.cats==='object')Object.keys(x.cats).slice(0,40).forEach(function(k){const v=+x.cats[k];if(v>=0)cats[String(k).slice(0,40)]=v;});
     const n=function(v){return (v==null||v==='')?null:(isFinite(+v)?+v:null);};
@@ -19229,6 +19232,13 @@ function gastoMes(mk){
   const r=(ahorroS().real||[]).filter(function(x){return x.mes===mk&&x.gastos!=null;})
     .sort(function(p,q){return (q.fecha+(q.hora||'')).localeCompare(p.fecha+(p.hora||''));})[0];
   if(r)return {total:+r.gastos,cats:r.cats||{},fecha:r.fecha,fuente:'Fintonic'};
+  /* SIN FINTONIC: la cifra que pones a fin de mes («¿cuánto gastaste en septiembre?»). Lo fijo son
+     tus recibos; el resto, el día a día. Con esto hay mes tipo, colchón en meses y fecha de cada meta
+     sin una sola captura */
+  const gm=+((ahorroS().gastado||{})[mk])||0;
+  if(gm>0){const cats={};let sf=0;gastosFijos().forEach(function(g){const v=+g.importe||0;cats[g.nombre]=(cats[g.nombre]||0)+v;sf+=v;});
+    const resto=Math.round((gm-sf)*100)/100;if(resto>0)cats[DIN_DIA]=resto;
+    return {total:Math.max(gm,sf),cats:cats,fecha:'',fuente:'tu cifra'};}
   /* sin captura, lo apuntado: los pagos a mano Y los recibos fijos (pagados o por pagar). Antes los
      recibos vivían solo en «Recibos» y el Mes, el Plan y el Análisis decían «fijos 0» con 748 € de
      alquiler, luz, gimnasio y móvil apuntados. Cada recibo va con su nombre, que cuenta como fijo. */
@@ -19241,6 +19251,32 @@ function gastoMes(mk){
   fijos.forEach(function(g){if(!gastoPagado(g,t.y,t.m))cats[g.nombre]=(cats[g.nombre]||0)+(+g.importe||0);});
   const total=Object.keys(cats).reduce(function(s,k){return s+cats[k];},0);
   return {total:Math.round(total*100)/100,cats:cats,fecha:'',fuente:'apuntado'};}
+function dinMesSinCifra(){
+  /* el mes cerrado más reciente (de los 3 últimos) sin captura de Fintonic ni cifra tuya, y con
+     nómina: el que se pregunta. Al contestarlo, sale el anterior, hasta tener los tres */
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),a=ahorroS();
+  for(let i=1;i<=3;i++){const mk=mkSuma(mkHoy,-i);
+    if((a.real||[]).some(function(x){return x.mes===mk&&x.gastos!=null;})||(+((a.gastado||{})[mk])>0))continue;
+    if(entraMes(mk))return mk;}
+  return '';}
+function dinCifrasHechasHTML(){
+  /* los meses que ya cerraste con tu cifra: lo gastado y lo ahorrado, y cambiarla */
+  const a=ahorroS(),hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),out=[];
+  for(let i=1;i<=3;i++){const mk=mkSuma(mkHoy,-i),v=+((a.gastado||{})[mk])||0;if(!v||ui.dinGastEd===mk)continue;
+    if((a.real||[]).some(function(x){return x.mes===mk&&x.gastos!=null;}))continue;
+    const x=ahorroDeMes(mk),t=ahoYm(mk);
+    out.push('<div class="dcifl"><span>'+esc(MONTH_FULL[t.m])+'</span><b>'+fmtMil(Math.round(v))+' €</b><span class="mini">'+(x?(x.ahorro>=0?'ahorraste ':'gastaste de más ')+fmtMil(Math.abs(x.ahorro))+' €':'')+'</span>'+
+      '<button class="dlink" data-a="din-gastado-ed" data-mk="'+mk+'">cambiar</button></div>');}
+  return out.length?'<div class="card"><div class="cap">TUS MESES</div>'+out.join('')+'</div>':'';}
+function dinCifraHTML(){
+  /* «¿CUÁNTO GASTASTE EN SEPTIEMBRE?»: un número a fin de mes, mirado en la app del banco */
+  const mk=ui.dinGastEd||dinMesSinCifra();if(!mk)return '';
+  const t=ahoYm(mk),nom=MONTH_FULL[t.m].toLowerCase(),v=+((ahorroS().gastado||{})[mk])||0,e=entraMes(mk);
+  return '<div class="card dcifra"><div class="cap">¿CUÁNTO GASTASTE EN '+esc(nom.toUpperCase())+'?</div>'+
+    '<p class="mini" style="margin:4px 0 8px">Míralo en la app del banco: todo lo que salió de la cuenta en '+esc(nom)+'. Con esa cifra sé cuánto ahorraste'+(e?' (entraron '+fmtMil(Math.round(e.neto))+' €)':'')+', tu mes tipo y cuándo llegas a cada meta. No hace falta Fintonic.</p>'+
+    '<div class="row" style="gap:8px"><label class="fld" style="flex:1;margin:0"><input id="dinGast" inputmode="decimal" placeholder="por ejemplo 1.420" value="'+(v?String(v).replace('.',','):'')+'" aria-label="lo que gastaste en '+esc(nom)+', en euros"></label>'+
+      '<button class="btn p" data-a="din-gastado" data-mk="'+mk+'">Guardar</button></div>'+
+    (ui.dinGastEd?'<button class="dlink" data-a="din-gastado-x" style="margin-top:6px">cancelar</button>':'')+'</div>';}
 function entraMes(mk){const t=ahoYm(mk);return t?nominaMes(t.y,t.m):null;}
 function ahorroDeMes(mk){const g=gastoMes(mk),e=entraMes(mk);
   if(!g||!e)return null;return {entra:e.neto,sale:g.total,ahorro:Math.round(e.neto-g.total),real:e.real!=null,g:g};}
@@ -19282,7 +19318,9 @@ function catMedia(nombre,mk){
   const v=[];let k=mk;
   for(let i=0;i<8&&v.length<4;i++){k=mkSuma(k,-1);const g=gastoMes(k);if(g&&g.cats[nombre]!=null)v.push(+g.cats[nombre]||0);}
   return v.length?v.reduce(function(s,x){return s+x;},0)/v.length:null;}
+const DIN_DIA='Día a día';
 function catEsFijo(nombre,mk){
+  if(nombre===DIN_DIA)return false;   /* el resto de tu cifra del mes: siempre variable */
   /* lo pones tú, o la app lo deduce: por el nombre (alquiler, seguro, suscripción…) o porque se repite
      igual (±5 %) al menos tres meses */
   const c=catCfg()[nombre];if(c&&c.tipo)return c.tipo==='fijo';
@@ -19677,15 +19715,16 @@ function dinMesHTML(){
       '<div class="mini" style="margin-top:22px">Lo variable: <b style="color:var(--ink)">'+fmtMil(M.gastado)+' de '+fmtMil(M.presu)+' €</b>. Ya descontados lo fijo ('+fmtMil(M.fijos)+' €) y tu ahorro ('+metaPct()+' % = '+fmtMil(M.ahorro)+' €)'+
         (M.fecha?' · captura del '+esc(fechaCorta(M.fecha)):'')+'.</div>'):
     ('<div class="cap">PUEDES GASTAR HOY</div><div class="dbig">— <small>€</small></div>'+
-      '<p class="mini" style="margin:6px 0 0">Sube una captura de Fintonic de este mes y te digo cuánto puedes gastar cada día, en qué se te va y dónde ahorrar.</p>'+
-      '<label class="btn p gbig" style="margin-top:10px">📷 Subir captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>');
+      '<p class="mini" style="margin:6px 0 0">Apunta tus recibos fijos (alquiler, luz, móvil…) y te digo cuánto puedes gastar cada día. Si quieres saber en qué se te va, sube una captura de Fintonic.</p>'+
+      '<button class="btn p gbig" style="margin-top:10px" data-a="dinero-vista" data-v="recibos">🧾 Mis recibos fijos</button>'+
+      '<label class="btn gbig" style="margin-top:8px">📷 Subir captura de Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>');
   const sa=M.sinCaptura||{n:0,v:0};
   const sin='<div class="card"><div class="row"><span class="cap">SIN APUNTAR</span><span class="sp"></span><span class="mini">'+(M.fecha?'desde la captura del '+esc(fechaCorta(M.fecha)):'este mes')+'</span></div>'+
-    '<p class="mini" style="margin:4px 0 0">Lo del día a día no hace falta apuntarlo: al subir la captura de fin de mes se cuadra solo. Si quieres, apunta lo grande'+
+    '<p class="mini" style="margin:4px 0 0">Lo del día a día no hace falta apuntarlo: a fin de mes pones lo que gastaste (o subes la captura de Fintonic) y se cuadra solo. Si quieres, apunta lo grande'+
       (sa.n?' (llevas <b style="color:var(--ink)">'+sa.n+' · '+fmtMil(sa.v)+' €</b>, ya restados de lo que puedes gastar)':'')+':</p>'+
     '<div class="d5two" style="margin-top:8px"><button class="btn" data-a="dinero-apuntar">＋ gasto</button><label class="btn">📷 captura<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div></div>';
   return '<div class="grid dinv2 din6 din7 mt">'+din7Tabs('')+
-    '<div class="card">'+hero+bancoLineaHTML(mkHoy,mkHoy)+'</div>'+din7Trend(M)+sin+
+    dinCifraHTML()+'<div class="card">'+hero+bancoLineaHTML(mkHoy,mkHoy)+'</div>'+din7Trend(M)+sin+dinCifrasHechasHTML()+
     '<div class="d5two"><button class="btn" data-a="dinero-vista" data-v="analisis">📊 Análisis</button><button class="btn" data-a="dinero-vista" data-v="salud">💡 Salud financiera</button></div>'+
     '<div class="d5two"><button class="btn" data-a="dinero-vista" data-v="recibos">🧾 Recibos fijos</button><button class="btn" data-a="dinero-vista" data-v="hoja">📒 La hoja</button></div>'+
   '</div>';}
@@ -19751,7 +19790,8 @@ function renderDinSalud(){
   const colchon=puroHucha().saldo,gm=(function(){let s=0,n=0;for(let i=1;i<=4;i++){const g=gastoMes(mkSuma(mkHoy,-i));if(g){s+=g.total;n++;}}return n?s/n:(p?p.total:0);})();
   const meses=gm?Math.round(colchon/gm*10)/10:0;
   const Mh=d6Mes(mkHoy),varMedia=(function(){let s=0,n=0;for(let i=1;i<=4;i++){const pp=mesPartes(mkSuma(mkHoy,-i));if(pp){s+=pp.vars;n++;}}return n?s/n:0;})();
-  const dv=varMedia&&Mh.p?Math.round((Mh.gastado/Math.max(1,Mh.toca)-varMedia)/varMedia*100):null;
+  /* sin gasto variable apuntado este mes no hay ritmo que comparar (salía «−100 %») */
+  const dv=varMedia&&Mh.p&&Mh.gastado>0?Math.round((Mh.gastado/Math.max(1,Mh.toca)-varMedia)/varMedia*100):null;
   const deuda=p?Object.keys(p.g.cats).filter(function(k){return /pr[eé]stamo|cr[eé]dito|financ|tarjeta|aplaz/i.test(k)&&+p.g.cats[k]>0;}):[];
   const inv=ahorroS().huchas.some(function(h){return /invers/i.test(h.nombre);});
   const ep=epocaDe(mkHoy),sig=ahorroS().epocas.filter(function(e){return e.desde>mkHoy;}).sort(function(a,b){return a.desde.localeCompare(b.desde);})[0];
@@ -22096,6 +22136,16 @@ function act(a,el){
       flash('meta «'+h.nombre+'» creada'+(h.mensual?' · '+eurR(h.mensual)+'/mes':''));break;}
     case 'fin-guardar':flash(finGuardar());break;
     case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
+    case 'din-gastado':{const mk=el.dataset.mk,n=document.getElementById('dinGast'),txt=String(n?n.value:'').trim().replace(/\s|€/g,'');
+      /* «1.420», «1420», «1.420,50» y «1420,5» son lo mismo */
+      const v=/,/.test(txt)?parseFloat(txt.replace(/\./g,'').replace(',','.')):parseFloat(/^\d{1,3}(\.\d{3})+$/.test(txt)?txt.replace(/\./g,''):txt);
+      if(!/^\d{4}-\d{2}$/.test(mk||''))break;
+      const a=ahorroS();if(!a.gastado||typeof a.gastado!=='object')a.gastado={};
+      if(!(v>0)){delete a.gastado[mk];ui.dinGastEd='';save();render();break;}
+      a.gastado[mk]=Math.round(v*100)/100;ui.dinGastEd='';save();
+      const x=ahorroDeMes(mk),t=ahoYm(mk);flash(MONTH_FULL[t.m]+': '+(x?(x.ahorro>=0?'ahorraste '+eurR(x.ahorro):'gastaste '+eurR(-x.ahorro)+' de más'):'guardado'));render();break;}
+    case 'din-gastado-ed':ui.dinGastEd=el.dataset.mk||'';render();break;
+    case 'din-gastado-x':ui.dinGastEd='';render();break;
     case 'fin-cobrado':{const f=ui.fin;if(!f||!f.res||!f.res.ingresos)break;
       ahorroS().cobrado[f.res.mes]=f.res.ingresos.v;save();flash(eur(f.res.ingresos.v)+' apuntados como lo cobrado de '+ahoMesTxt(f.res.mes));render();break;}
     case 'aho-deshacer':{const hoy=new Date();flash(deshacerApartado(el.dataset.mk||ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}

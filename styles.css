@@ -3621,3 +3621,9 @@ html:not(.dark){--snlib:#6d28d9}
 .sncienb{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 14px;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
 .sncienb span:first-child{flex:1}
 .sncient{padding:0 14px 12px}.sncient p{margin:4px 0 0;font-size:13px;line-height:1.45}
+
+/* Dinero sin Fintonic: la cifra de fin de mes */
+.dcifra{border-color:color-mix(in srgb,var(--brand) 50%,var(--line))}
+.dcifl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
+.dcifl:first-of-type{border-top:0}
+.dcifl b{font-variant-numeric:tabular-nums}.dcifl .mini{grid-column:1}.dcifl .dlink{grid-column:2;justify-self:end}
