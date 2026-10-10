@@ -1449,7 +1449,7 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   return d;}
 function siesta3On(){
   /* la prueba «siesta de 3 h»: manda solo sus 14 días (desde el día que empezó), aunque no la cierres */
-  const l=(store.sueno||{}).pruebas;if(!Array.isArray(l))return null;
+  const l=store.sueno.pruebas;if(!Array.isArray(l))return null;
   const hoy=iso(new Date());
   return l.filter(function(x){if(!x||x.id!=='siesta3'||x.fin||!x.desde)return false;
     const fin=iso(addDays(parseDate(x.desde),14));return x.desde<=hoy&&hoy<fin;})[0]||null;}
@@ -2482,16 +2482,7 @@ function togglePicker(shiftId,kind,mid){
 
 /* ============ ritmo del día (acostarse / levantarse) y reparto de guardias ============ */
 const RKEYS=[['wake','levantarse'],['breakfast','desayuno'],['leave','salir de casa'],['arrive','llegar'],['sleep','acostarse']];
-function schedLine(shiftId,dateStr){
-  const sh=shiftById(shiftId);if(!sh)return '';
-  const rh=rhythmOf(shiftId,dateStr);
-  const bed=rh.sleep?fmtTimeOut(rh.sleep):'',wake=rh.wake?fmtTimeOut(rh.wake):'';
-  const h=fmtHM(sleepHours(rh.sleep,rh.wake)*60);
-  const s=bed&&wake?'🛌 '+bed+' → ⏰ '+wake+(h?' · '+h:''):'';
-  const tr=(rh.leave&&rh.arrive)?' · 🚌 '+fmtTimeOut(rh.leave)+'→'+fmtTimeOut(rh.arrive):'';
-  return s+tr;}
-function fmtTimeOut(t){const m=toMin(t);if(m==null)return '';const h=Math.floor(m/60),mi=m%60;
-  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');}
+function fmtTimeOut(t){const m=toMin(t);return m==null?'':hm(m);}
 function nombreCorto(n){
   /* en la casilla del mes «Día de trabajo» no cabe: el «Día de» sobra, el icono ya dice que es un día.
      «Vacaciones» sí se parte en dos líneas, y se deja: cabe, y acortarlo salía peor. */
@@ -2500,26 +2491,6 @@ function hCorta(t){/* en la casilla del mes no cabe «08:00»: las horas en punt
   const m=toMin(t);if(m==null)return '';
   const h=Math.floor(m/60),mi=m%60;
   return mi?String(h)+':'+String(mi).padStart(2,'0'):String(h);}
-function dayLine(d){
-  const sh=shiftById(d.shiftId);
-  if(!sh)return '<span class="mini">sin asignar</span>';
-  const g=isGuardia(sh),rh=rhythmOf(sh.id,d.key);
-  const jo=d.key?jornadaOf(d.key):jornadaEn((((d.idx||0)+1)%7),d.shiftId,false);
-  const t=[];
-  /* las horas de dormir y de levantarse NO van aquí: desde que se enseñan siempre debajo de la
-     franja (horasSuenoHTML), ponerlas también en esta línea era decirlas dos veces en la misma
-     fila. Aquí se queda lo del trabajo, que es lo otro que define el día. */
-  /* con fecha, las horas DE VERDAD de ese día: una guardia de sábado no entra a la misma hora que
-     una de martes, y el saliente trabaja hasta que le relevan */
-  const hd=d.key?horasDelDiaTxt(d.key,d.inf):'';
-  if(hd)t.push((g?'🩺 ':'💼 ')+hd);
-  else if(sh.start)t.push((g?'🩺 ':'💼 ')+fmtTimeOut(sh.start)+(sh.end?'–'+fmtTimeOut(sh.end):'')+
-    (jo&&sh.start!==jo.start?(' · jornada '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end)):''));
-  else if(jo)t.push('💼 '+fmtTimeOut(jo.start)+'–'+fmtTimeOut(jo.end));
-  else if(rh.leave)t.push('🚌 '+fmtTimeOut(rh.leave));
-  const gl=d.key?gymLine(d.key):'';if(gl)t.push(gl);
-  const gs=d.key?resumenGym(d.key):'';if(gs)t.push('🏋️ '+gs);
-  return t.join(' · ')||esc(sh.name);}
 function distributeGuardias(y,m,replace){
   /* el mes: las guardias del cupo (6 por defecto), cada una con su saliente automático del día siguiente */
   const svc=monthService(y,m),G=(store.shifts.filter(isGuardia)[0])||store.shifts[0];
@@ -4772,32 +4743,6 @@ function solHoyHTML(key){
     '</div></div>'+
     '<p class="mini" style="margin:9px 0 0">'+esc(sit.nombre)+
       (delta!=null&&delta!==0?(' · '+Math.abs(delta)+' min '+(delta>0?'más':'menos')+' de luz que ayer'):'')+'</p>';}
-function planDiaHTML(d){
-  /* LO QUE VAS A HACER ese día, que es a lo que se entra a «Semana». Antes la fila solo llevaba la
-     franja y las horas de dormir, y el detalle del día eran las comidas: había que abrirlo para
-     saber si ese día entrenabas o a qué hora entrabas. Aquí va todo lo que ocupa el día —jornada o
-     guardia con sus horas de verdad, entreno, eventos, repasos— y las comidas se quedan en una
-     línea con la principal. */
-  if(!d)return '';
-  const sh=shiftById(d.shiftId),bits=[];
-  const hd=d.key?horasDelDiaTxt(d.key,d.inf):'';
-  const deGuardia=!!(sh&&isGuardia(sh))||!!(d.key&&salidaDeGuardia(d.key));
-  if(hd)bits.push('<span class="pl trab">'+(deGuardia?'\ud83e\ude7a':'\ud83d\udcbc')+' '+esc(hd)+'</span>');
-  if(d.key){
-    const rt=rutinaDeFecha(d.key);
-    if(rt)bits.push('<span class="pl gym">\ud83c\udfcb\ufe0f '+esc(nombreCorto(rt.nombre))+'</span>');
-    const s2=diaSegundo(d.key,d.inf);
-    if(s2&&s2.on)bits.push('<span class="pl gym">\ud83c\udfca '+esc(s2.hora||'')+'</span>');
-    const evs=eventosCalendario(d.key);
-    evs.slice(0,2).forEach(function(ev){
-      bits.push('<span class="pl evt">\ud83d\udcc5 '+esc(evHoraTxt(ev))+' '+esc(nombreCorto(ev.titulo||''))+'</span>');});
-    if(evs.length>2)bits.push('<span class="pl evt">+'+(evs.length-2)+'</span>');
-    try{const n=estTocaHoy(d.key);
-      if(n&&n.length)bits.push('<span class="pl est">\ud83d\udcda '+n.length+' repaso'+(n.length===1?'':'s')+'</span>');}catch(e){}
-    const cp=comidaPrincipalDe(d.key,d.inf);
-    if(cp)bits.push('<span class="pl com">\ud83c\udf7d\ufe0f '+esc(comidaPrincipalTxt(cp))+'</span>');
-  }
-  return bits.length?('<div class="drplan">'+bits.join('')+'</div>'):'';}
 function horasSuenoHTML(key,inf,shiftId,comp){
   /* Las dos horas del sueño, SIEMPRE a la vista, igual que las dos del sol. Antes solo se veían
      abriendo el día en «Semana» (y en «Hoy» había una sola: la de acostarse). La de levantarse no
@@ -5097,9 +5042,8 @@ function moverDiaHoy(n){
    guardia y el entreno en el anillo; dentro, las comidas y los eventos; fuera, la luz del día; la aguja
    es ahora. En el centro, lo que estás haciendo y cuánto queda. */
 function relojArco(r,a0,a1){
-  const p=function(a){const t=(a/1440*360-90)*Math.PI/180;return [(150+r*Math.cos(t)).toFixed(1),(150+r*Math.sin(t)).toFixed(1)];};
   a1=Math.min(a1,1439.5);if(a1-a0<4)a1=a0+4;
-  const x0=p(a0),x1=p(a1);
+  const x0=relojPunto(r,a0),x1=relojPunto(r,a1);
   return 'M'+x0[0]+','+x0[1]+' A'+r+','+r+' 0 '+((a1-a0)>720?1:0)+' 1 '+x1[0]+','+x1[1];}
 function relojPunto(r,a){const t=(a/1440*360-90)*Math.PI/180;return [(150+r*Math.cos(t)).toFixed(1),(150+r*Math.sin(t)).toFixed(1)];}
 function hoyChoques(key,inf){
@@ -5151,7 +5095,7 @@ function hoyRelojSVG(key,inf,esHoy){
   if(so&&!so.sinDatos&&!so.polar&&so.sale&&so.pone){const a=so.sale.getHours()*60+so.sale.getMinutes(),b=so.pone.getHours()*60+so.pone.getMinutes();
     g+='<path d="'+relojArco(R+17,a,b)+'" fill="none" stroke="#f3c969" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>';}
   /* tu energía estimada, en un anillo fino por dentro: verde despejado, ámbar flojo, rojo riesgo */
-  const en=(store.sueno||{}).relojEnergia!==false?snEnergiaMemo(key):null;
+  const en=store.sueno.relojEnergia!==false?snEnergiaMemo(key):null;
   if(en)for(let h=0;h<48;h++){const q=SNM.en(en,h/2+0.25),e=snEstadoA(q.A);if(!e)continue;
     g+='<path d="'+relojArco(HOY_RI-17,h*30,h*30+30)+'" fill="none" stroke="'+e.c+'" stroke-opacity=".6" stroke-width="4"/>';}
   /* el sueño, de fondo y a rayas: no es una cosa que hagas, y su violeta se confundía con el de los
@@ -5407,33 +5351,12 @@ function hoyChoqueHTML(key,inf){
     (sem?'<div class="row" style="gap:8px;margin-top:8px"><button class="btn s" data-a="ev-salta" data-id="'+esc(e.id)+'" data-k="'+esc(key)+'">Quitar solo este día</button>'+
       (ch.guardia?'<button class="btn p s" data-a="ev-noguardia" data-id="'+esc(e.id)+'">Quitar en todas las guardias</button>':'')+'</div>'
       :'<div class="mini" style="margin-top:4px">muévelo o bórralo en Eventos</div>')+'</div>';}
-function hoyAgendaHTML(key,inf,esHoy){
-  /* el día entero como lista por horas: cada cosa con su hora, su color y, las comidas, sus platos
-     y el ✓ para apuntarla. Lo que ya ha pasado se apaga. */
-  const ag=agendaDia(key,inf);
-  /* los eventos sin hora (todo el día) no caben en una lista por horas: van encima, como etiqueta */
-  const sinHora=eventosDeFecha(key).filter(function(e){return !e.hora;});
-  const tags=sinHora.length?('<div class="row" style="margin-top:8px;flex-wrap:wrap">'+eventosTagsHTML(sinHora)+'</div>'):'';
-  if(!ag.length)return tags;
-  const now=new Date(),n=now.getHours()*60+now.getMinutes();
-  return tags+'<div class="hoyag">'+ag.map(function(x){
-    const pasado=esHoy&&finMin(x)<n&&!(x.fin&&n<finMin(x));
-    const enCurso=esHoy&&x.fin&&x.m2<=n&&n<finMin(x);
-    const sub=[x.fin?('hasta '+hCortaHM(x.fin)):'',x.sub,enCurso?'ahora':''].filter(Boolean).join(' · ');
-    return '<div class="agf '+x.tipo+(pasado?' ya':'')+(enCurso?' ahora':'')+'">'+
-      '<b class="h">'+esc(hCortaHM(x.hora))+'</b><i style="background:'+esc(x.color)+'"></i>'+
-      '<span class="ico">'+x.ico+'</span>'+
-      '<span class="t"><b>'+esc(x.txt)+'</b>'+(sub?' <span class="mini">'+esc(sub)+'</span>':'')+'</span>'+
-      (x.tipo==='meal'&&x.conPlatos?('<button class="btn s" data-a="hoy-log-slot" data-shift="'+esc(x.sh.id)+'" data-slot="'+esc(x.slot.id)+
-        '" data-key="'+esc(key)+'" title="ya me la he comido">✓</button>'):'')+
-    '</div>';}).join('')+'</div>';}
 /* ===================== el carril de horas =====================
    El calendario pasa de listas de texto a rejilla: un bloque ocupa el rato que ocupa de verdad, y
    así se ve de un vistazo cuánto dura cada cosa y qué hueco queda entre dos. Es lo que hace el
    widget del móvil, y por eso se entiende sin leerlo.
 
    Un solo sitio arma los bloques de un día; lo usan Hoy, la Semana y el Mes. */
-function bloqDeMin(t){const m=mins(t);return m==null?null:m;}
 function trasEntreno(key,inf,fin){
   /* ¿del gym vas a trabajar? Si la jornada empieza al acabar el entreno (o hasta 2 h después), el
      tramo de después es «al trabajo» y a casa se llega al salir de la jornada. Antes salía «🏠 A
@@ -5469,7 +5392,7 @@ function bloquesDelDia(key){
   /* la guardia: el rato entero fuera de casa, con su pase */
   if(isGuardia(sh)){
     const g=guardiaHoras(key,inf.guard);
-    const de=bloqDeMin(g?g.desde:(sh.start||'08:00'));
+    const de=mins(g?g.desde:(sh.start||'08:00'));
     add({de:de,a:1440,cat:'guard',
       tit:(sh.icon||'🩺')+' '+sh.name+(inf.guard?(' · '+gTipo(inf.guard).label):''),
       sub:g?('entras '+g.desde+' · sales '+g.sale+' del día siguiente'):'',
@@ -5478,10 +5401,10 @@ function bloquesDelDia(key){
     const jor=jornadaOf(key,inf);
     if(jor&&jor.start){
       const rot=monthService(+key.slice(0,4),+key.slice(5,7)-1).service;
-      add({de:bloqDeMin(jor.start),a:bloqDeMin(jor.end),cat:'work',
+      add({de:mins(jor.start),a:mins(jor.end),cat:'work',
         tit:'💼 Trabajo'+(rot?(' · '+rot):''),sub:jor.start+'–'+(jor.end||''),ir:'ir-cfg'});}
     else if(sh.start&&!/fuerza|entreno/i.test(sh.name||'')){
-      add({de:bloqDeMin(sh.start),a:bloqDeMin(sh.end),cat:'work',
+      add({de:mins(sh.start),a:mins(sh.end),cat:'work',
         tit:(sh.icon||'💼')+' '+sh.name,sub:sh.start+'–'+(sh.end||''),ir:'ir-cfg'});}}
   /* IR Y VOLVER. Dos rayas finas: la de salir de casa (con la hora del bus) y la de volver. No es
      un bloque gordo porque no es una tarea, es el borde de la jornada — pero sin ellas la app te
@@ -5527,7 +5450,7 @@ function bloquesDelDia(key){
     add({de:c.de,a:c.a,cat:'meal',tit:'🔪 Cocinar · '+c.label,sub:c.platos,ir:'menu-ir',irV:'cocinar'});});
   /* el segundo entreno: natación o lo que sea */
   const g2=diaSegundo(key,inf);
-  if(g2.on)add({de:bloqDeMin(g2.hora||'15:30'),dur:60,cat:'gym',
+  if(g2.on)add({de:mins(g2.hora||'15:30'),dur:60,cat:'gym',
     tit:'🏊 '+(g2.tipo||'entreno'),sub:g2.auto?'regla de la semana':'puesto por ti',
     ir:'tab',irV:'gym'});
   /* las comidas: finas y a un lado, que son marcas de hora y no ocupan la mañana entera */
@@ -5537,7 +5460,7 @@ function bloquesDelDia(key){
        cp.slotId que no existe dejaba la comida en su hora de lista —dentro de la jornada— */
     const h=horaDeToma(key,sl,cp);
     const t=totals(slotItems(sh.id,sl,key).items||[]);
-    add({de:bloqDeMin(h),dur:30,cat:'meal',tit:'🍽 '+sl.label,
+    add({de:mins(h),dur:30,cat:'meal',tit:'🍽 '+sl.label,
       sub:t.kcal?(t.kcal+' kcal · '+t.prot+' g'):'sin platos',
       ir:'tab',irV:'food',fino:true});});
   /* los eventos que has apuntado, con su hora y lo que duran */
@@ -5546,9 +5469,9 @@ function bloquesDelDia(key){
   return out;}
 function eventosBloques(key){
   return eventosDeFecha(key).map(function(ev){
-    const de=bloqDeMin(ev.hora||'');
+    const de=mins(ev.hora||'');
     if(de==null)return null;          /* un evento sin hora no tiene sitio en el carril: sale arriba */
-    const a=bloqDeMin(ev.fin||'');
+    const a=mins(ev.fin||'');
     return {de:de,a:(a!=null&&a>de)?a:null,dur:60,cat:'evt',
       tit:(/^\p{Extended_Pictographic}/u.test(ev.titulo||'')?'':'📌 ')+(ev.titulo||'evento'),sub:ev.hora+(ev.fin?('–'+ev.fin):''),
       ir:'tab',irV:'eventos'};}).filter(Boolean);}
@@ -5797,14 +5720,14 @@ function suenoEstado(key){
   /* con una noche SUPUESTA (la guardia sin apuntar) no se dice más que «Tocado»: no se sabe lo que dormiste */
   if(con.some(function(x){return !x.n.real;})&&nivel>2)nivel=2;
   return {nivel:nivel,tres:tres,fase:fase,suma:Math.round(suma*10)/10,n:con.length,ratio:ratio};}
-function suenoAncla(){const a=(store.sueno||{}).ancla;return /^\d{2}:\d{2}$/.test(a||'')?a:despertarBase();}
+function suenoAncla(){const a=store.sueno.ancla;return /^\d{2}:\d{2}$/.test(a||'')?a:despertarBase();}
 /* ---------- la hora fija, según el día ----------
    Una sola hora para todos los días no encaja con quien hace guardias: los libres se duerme más y te
    acuestas más tarde, y el saliente no te «levantas». Cada mañana se mide contra la suya: la de
    trabajo (tu hora fija), la de libre (con el margen que eliges, de 0 a 3 h) y la del saliente y el
    día siguiente, que no cuentan. «Libre» sale de tu calendario (días sin jornada y vacaciones), no
    del sábado: con turnos, el sábado puede ser de guardia y el martes libre */
-function snMargenLibre(){const m=(store.sueno||{}).margen;return typeof m==='number'&&m>=0&&m<=180?m:90;}
+function snMargenLibre(){const m=store.sueno.margen;return typeof m==='number'&&m>=0&&m<=180?m:90;}
 function snEsLibre(sh){return !sh||(!sh.start&&!isGuardia(sh)&&!esSaliente(sh));}
 function snTipoDia(k){
   const d=parseDate(k);if(!d)return 'trabajo';
@@ -5899,7 +5822,9 @@ function snMejorSim(G){
   const k=G+'|'+JSON.stringify(suenoCfg())+'|'+JSON.stringify(snBase(G));
   if(_snMejorM[k])return _snMejorM[k];
   const p=snMejor(G),se=SNM.sim(p,6,48);
-  _snMejorM={};return (_snMejorM[k]={p:p,se:se,m:snMetricas(p,se)});}
+  /* hasta 6 guardias recordadas: ir y volver con ‹ › rehacía 45–90 simulaciones cada vez */
+  const ks=Object.keys(_snMejorM);if(ks.length>=6)delete _snMejorM[ks[0]];
+  return (_snMejorM[k]={p:p,se:se,m:snMetricas(p,se)});}
 let _snMejorM={};
 function snFirma(p){return JSON.stringify([p.sueno.map(function(x){return [x.id,Math.round(x.a*4),Math.round(x.b*4)];}).sort(),
   p.cafes.map(function(c){return Math.round(c.t*4);}).sort()]);}
@@ -5916,11 +5841,11 @@ function snCifrasHTML(G,r){
       '<span class="sp"></span><button class="chip" data-a="sn-ver" aria-expanded="'+!!ui.snVer+'">'+(ui.snVer?'menos':'qué significa')+'</button></div>';}
 function snPlan(G,cual){
   /* el tuyo: lo guardado; si no has tocado nada, lo de siempre */
-  const p=snBase(G),m=((store.sueno||{}).sim||{})[G];
+  const p=snBase(G),m=(store.sueno.sim||{})[G];
   if(cual!=='base'&&m){p.sueno=m.sueno.filter(function(s){return s.id!=='coche'||suenoCfg().conduce;}).map(function(s){return Object.assign({},s);});   /* sin carné, fuera la «siesta antes de conducir» guardada */p.cafes=m.cafes.map(function(x){return Object.assign({},x);});}
   return snCompleta(p);}
 function snGuarda(p){
-  if(!store.sueno)store.sueno={};if(!store.sueno.sim)store.sueno.sim={};
+  if(!store.sueno.sim)store.sueno.sim={};
   /* el aviso de un café va con su hora: si lo mueves, el aviso se va con él (antes se quedaba huérfano
      y el temporizador seguía sonando a la hora vieja) */
   const av=(store.sueno.avisos||{})[p.G];
@@ -6048,7 +5973,7 @@ function snTablaHTML(p,se){
     f+='<tr><td>'+snDia(p,t)+' '+snHH(t)+'</td><td>'+(q.A==null?'—':Math.round(q.A))+'</td><td>'+(e?e.t:'dormido')+'</td><td>'+esc(s?s.txt:(t>=p.de&&t<p.sale?'guardia':''))+'</td></tr>';}
   return '<div class="sntabla"><table><thead><tr><th>Hora</th><th>Energía</th><th>Estado</th><th>Qué haces</th></tr></thead><tbody>'+f+'</tbody></table></div>';}
 function snPasos(p,m){
-  const it=[],av=((store.sueno||{}).avisos||{})[p.G]||{};
+  const it=[],av=(store.sueno.avisos||{})[p.G]||{};
   p.sueno.forEach(function(s){
     const dur=Math.round((s.b-s.a)*60),durT=dur>=60?(Math.floor(dur/60)+' h'+(dur%60?' '+dur%60:'')):dur+' min';
     const sub={pre:'Un ciclo de sueño antes de la noche en vela (Ruggiero y Redeker 2014).',desc:'Si te dejan: todo lo que duermas cuenta.',coche:'En la sala de guardia, antes de coger el coche.',
@@ -6095,7 +6020,7 @@ function renderSuenoSim(){
   const G=snGuardiaSel();
   if(!G)return '<div class="card"><div class="dsucap">TU PRÓXIMA GUARDIA</div><p class="mini" style="margin:6px 0 0">No tienes guardias en las próximas tres semanas. Cuando haya una, aquí verás tu energía hora a hora y el plan para llegar bien.</p></div>';
   const l=snGuardias(),i=l.indexOf(G),r=snPlanSim(G),p=r.p,se=r.se,m=r.m;
-  const tocado=!!(((store.sueno||{}).sim||{})[G]);
+  const tocado=!!((store.sueno.sim||{})[G]);
   const b=ui.snComparar&&tocado?snPlanSim(G,'base'):null,ref=b&&b.se,rm=b&&b.m;
   const d=parseDate(G),g=p.g;
   return '<div class="card snsim">'+
@@ -6403,7 +6328,7 @@ function suenoProbarHTML(id,txt){
   return ya?'<button class="btn" style="width:100%;margin-top:10px" disabled>✓ Lo estás probando</button>':
     '<button class="btn p" style="width:100%;margin-top:10px" data-a="sn-probar" data-id="'+id+'" data-txt="'+esc(txt)+'">Probar 2 semanas</button>';}
 function suenoAjRecomienda(hoyK){
-  const f=suenoFase(hoyK).id,q=(store.sueno||{}).insom||{};
+  const f=suenoFase(hoyK).id,q=store.sueno.insom||{};
   if(f==='saliente')return 'vuelta';
   if(q.noches==='3'&&(q.lat==='l'||q.desp==='c'))return 'insom';
   const s=suenoHoraStats(hoyK);if(s.total>=4&&s.dentro/s.total<0.7)return 'hora';
@@ -6443,7 +6368,7 @@ function suenoAjustaHTML(hoyK){
       '<p class="snref">Levantarte a horas parecidas predice la salud más que las horas que duermes; más de 1 h de diferencia los libres es como cambiar de huso cada semana. <i>Windred 2024 (Sleep) · Roenneberg 2012</i></p>'+
       '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('regular')+snPorQue('jetlag')+'</div>'+
       suenoProbarHTML('hora','Levantarme a mi hora: '+hCortaHM(an)+' trabajo, hasta '+hCortaHM(anL)+' los libres');}
-  else if(t==='luz'){const L=suenoLuz(hoyK),bm=mins(bed),ck=((store.sueno||{}).chk||{})[hoyK]||{},an=suenoAnclaDe(hoyK);
+  else if(t==='luz'){const L=suenoLuz(hoyK),bm=mins(bed),ck=(store.sueno.chk||{})[hoyK]||{},an=suenoAnclaDe(hoyK);
     const its=[['luz',L.casa?'Luz fuerte al levantarte':'Luz de calle 20–30 min',hCortaHM(hm(L.de)),L.casa?'Amanece a las '+hCortaHM(hm(L.de))+': hasta entonces, luz fuerte en casa.':''],
       ['cafe','Último café',hCortaHM(hm(bm-6*60)),'Seis horas antes de dormir.'],['cena','Cena',hCortaHM(hm(bm-c.cenaMax))+'–'+hCortaHM(hm(bm-c.cenaMin)),''],
       ['pant','Luz baja, sin pantallas',hCortaHM(hm(bm-60)),''],['cama','A la cama',hCortaHM(bed),'']];
@@ -6465,13 +6390,13 @@ function suenoAjustaHTML(hoyK){
         '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('vuelta')+snPorQue('procesos')+snPorQue('gafas')+'</div>'+
         (siesta3On()?'<p class="snreco">Estás probando 3 h de siesta hasta el '+esc(fechaCorta(iso(addDays(parseDate(siesta3On().desde),13))))+
           '. Si tocas otra duración, la prueba se termina y se queda esa.</p>':
-          (Math.round(((store.sueno||{}).siesta!=null?store.sueno.siesta:360)/60)>3?suenoProbarHTML('siesta3','Siesta de 3 h al salir de guardia'):''));}}
-  else if(t==='casa'){const ck=((store.sueno||{}).casa)||{},n=SN_CASA.filter(function(x){return ck[x[0]];}).length;
+          (Math.round((store.sueno.siesta!=null?store.sueno.siesta:360)/60)>3?suenoProbarHTML('siesta3','Siesta de 3 h al salir de guardia'):''));}}
+  else if(t==='casa'){const ck=(store.sueno.casa)||{},n=SN_CASA.filter(function(x){return ck[x[0]];}).length;
     h+='<div class="sndiag"><span class="big">'+n+'<small>/'+SN_CASA.length+'</small></span><p><b>ya los tienes</b>. Se marcan una vez; no es una lista de cada día. Pesa más tras la guardia, cuando duermes de día.</p></div>'+
       SN_CASA.map(function(x){return '<div class="snchk"><button data-a="sn-casa" data-v="'+x[0]+'" class="'+(ck[x[0]]?'on':'')+'" aria-pressed="'+!!ck[x[0]]+'" aria-label="'+esc(x[1])+'">✓</button>'+
         '<span><b>'+esc(x[1])+'</b>'+(x[2]?'<small>'+esc(x[2])+'</small>':'')+'</span>'+snPorQue(x[3],true)+'</div>';}).join('')+
       suenoProbarHTML('casa','Dormitorio oscuro y fresco, y sin alcohol ni nicotina antes de dormir');}
-  else{const q=(store.sueno||{}).insom||{},o=function(k,v,tx){return '<button data-a="sn-q" data-k="'+k+'" data-v="'+v+'" class="'+(q[k]===v?'on':'')+'" aria-pressed="'+(q[k]===v)+'">'+tx+'</button>';};
+  else{const q=store.sueno.insom||{},o=function(k,v,tx){return '<button data-a="sn-q" data-k="'+k+'" data-v="'+v+'" class="'+(q[k]===v?'on':'')+'" aria-pressed="'+(q[k]===v)+'">'+tx+'</button>';};
     const ef=suenoEficiencia(hoyK),tools=[];
     if(q.lat==='m'||q.lat==='l')tools.push(['Regla de los 20 min','Si no te duermes en unos 20 min, levántate a otra habitación con luz baja y vuelve cuando tengas sueño. El modo noche te guía.']);
     if(q.desp==='a'||q.desp==='c')tools.push(['El reloj, de cara a la pared','Mirar la hora de madrugada activa y alarga el desvelo.']);
@@ -6492,10 +6417,10 @@ function suenoAjustaHTML(hoyK){
   /* las otras cuatro, una línea con su cifra; tocarla la abre arriba */
   const res=function(id){try{
     if(id==='hora'){const q=suenoHoraStats(hoyK);return 'trabajo '+q.tra.ok+'/'+q.tra.n+' · libres '+q.lib.ok+'/'+q.lib.n;}
-    if(id==='luz'){const ck=((store.sueno||{}).chk||{})[hoyK]||{};return Object.keys(ck).filter(function(x){return ck[x];}).length+' de 5 hoy';}
+    if(id==='luz'){const ck=(store.sueno.chk||{})[hoyK]||{};return Object.keys(ck).filter(function(x){return ck[x];}).length+' de 5 hoy';}
     if(id==='vuelta'){const G=snGuardiaSel();if(!G)return 'sin guardias cerca';const V=snVuelta(G);return 'tus '+fmtC(V.act)+' h: '+(V.f.m.duerme?'bien':'difícil');}
     if(id==='insom'){const e=suenoEficiencia(hoyK);return e?e.ef+' % eficiencia':'';}
-    if(id==='casa'){const ck=((store.sueno||{}).casa)||{};return SN_CASA.filter(function(x){return ck[x[0]];}).length+' de '+SN_CASA.length;}
+    if(id==='casa'){const ck=(store.sueno.casa)||{};return SN_CASA.filter(function(x){return ck[x[0]];}).length+' de '+SN_CASA.length;}
   }catch(e){}return '';};
   return h+'</div><div class="card snajl">'+SN_AJ.filter(function(o){return o[0]!==t;}).map(function(o){
       return '<button class="snajr" data-a="sn-aj" data-v="'+o[0]+'"><b>'+esc(o[1])+(o[0]===rec?' ●':'')+'</b><span>'+esc(res(o[0]))+'</span><i aria-hidden="true">›</i></button>';}).join('')+
@@ -6513,12 +6438,18 @@ function snVuelta(G){
   /* la siesta al salir de la guardia: lo que prevé el modelo para 1–6 h, la tuya (de Ajustes) y la
      más larga con la que aún te dormirías a tu hora. La usan Ajusta y la tarjeta del saliente, que
      antes decían cosas distintas (Hoy planificaba 6 h; Ajusta, con esas 6 h, decía «Mal») */
-  const c=suenoCfg(),b=snBase(G),con=function(len){const p=snCopia(b);p.sueno=p.sueno.filter(function(s){return s.id!=='post';});
+  const c=suenoCfg(),b=snBase(G),kv=G+'|'+JSON.stringify(c)+'|'+JSON.stringify(b);
+  /* 6 o 7 simulaciones que solo dependen de tu configuración y de la guardia: se recuerdan (antes se
+     rehacían en cada pintado de Mejorar y de Hoy el día de saliente) */
+  if(_snVuM[kv])return _snVuM[kv];
+  const con=function(len){const p=snCopia(b);p.sueno=p.sueno.filter(function(s){return s.id!=='post';});
     if(len>0)p.sueno.push({id:'post',a:p.llega,b:p.llega+len});snCompleta(p);return {h:len,m:snMetricas(p)};};
   /* tu siesta tal cual (90 min = 1,5 h): redondeada a horas, «tus 2 h» juzgaba otra siesta */
   const fil=[1,2,3,4,5,6].map(con),act=Math.round(c.siesta/15)/4,f=fil.filter(function(x){return x.h===act;})[0]||con(act);
   const bien=fil.filter(function(x){return x.m.duerme;});
-  return {b:b,fil:fil,act:act,f:f,mejor:bien.length?bien[bien.length-1].h:null};}
+  const ks=Object.keys(_snVuM);if(ks.length>=6)delete _snVuM[ks[0]];
+  return (_snVuM[kv]={b:b,fil:fil,act:act,f:f,mejor:bien.length?bien[bien.length-1].h:null});}
+let _snVuM={};
 function suenoVueltaSVG(fil,act,b){
   /* las etiquetas («6 h · hasta 15:55») miden ~110 px: la barra empieza después, no encima */
   let g='';const bx=function(a){return 132+a/100*200;},n=fil.length;
@@ -6656,7 +6587,6 @@ function snResumenTramos(tr){
    noche pasada abría la de hoy, y arrastrando, 15 minutos eran 4 px. Ahora hay UNA lista de trozos
    con su hora de empezar y de acabar (el reloj del móvil), la franja los enseña y sirve para dibujar
    rápido, y un solo «Guardar». Lo de la guardia va a rayas; lo que duermes al llegar, «siesta». */
-function snHM(h){h=((h%24)+24)%24;const m=Math.round(h*60);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
 function snAEje(v){const m=mins(v);if(m==null)return null;const h=m/60;return h<18?h+24:h;}   /* 18:00…17:59 del día siguiente */
 function snTipo(x){return x[0]>=30?['si','☀️ Siesta']:(x[2]?['gu','🩺 En la guardia']:['ok','🛏 Dormido']);}
 function suenoHojaHTML(){
@@ -6667,8 +6597,8 @@ function suenoHojaHTML(){
   const tit=(k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate()))+(sal?' · guardia':'');
   const filas=T.tr.map(function(x,i){const t=snTipo(x);
     return '<div class="sntr '+t[0]+'"><span class="sntipo">'+t[1]+'</span>'+
-      '<input type="time" step="300" value="'+snHM(x[0])+'" data-a="sn-tt" data-i="'+i+'" data-k="0" aria-label="'+t[1]+': empieza">'+
-      '<span class="a">→</span><input type="time" step="300" value="'+snHM(x[1])+'" data-a="sn-tt" data-i="'+i+'" data-k="1" aria-label="'+t[1]+': acaba">'+
+      '<input type="time" step="300" value="'+hm(x[0]*60)+'" data-a="sn-tt" data-i="'+i+'" data-k="0" aria-label="'+t[1]+': empieza">'+
+      '<span class="a">→</span><input type="time" step="300" value="'+hm(x[1]*60)+'" data-a="sn-tt" data-i="'+i+'" data-k="1" aria-label="'+t[1]+': acaba">'+
       '<button class="x" data-a="sn-tquita" data-i="'+i+'" aria-label="quitar este trozo">×</button></div>';}).join('');
   return hojaMarco('hoja-cerrar','dsuh',tit,
     '<h3 class="sh">'+esc(tit)+'</h3>'+
@@ -6730,7 +6660,7 @@ function snTGuardar(){
   const dorm=noche.filter(function(q){return !q[2];}),hueco=dorm.length>1?[dorm[0][1],dorm[1][0]]:null;
   const min=function(v){return Math.round(v*60)/60;};   /* al minuto: a cuartos, 2h20 de siesta se guardaba 2h15 */
   const x={h:min(s.noche),rt:min(s.rt),guardia:gu,ratos:s.rt>0,siesta:min(s.siesta),kss:T.kss||0,
-    tramos:T.tr.map(function(q){return [q[0],q[1],q[2]?1:0];}),mal:!!hueco,dde:hueco?snHM(hueco[0]):'',da:hueco?snHM(hueco[1]):''};
+    tramos:T.tr.map(function(q){return [q[0],q[1],q[2]?1:0];}),mal:!!hueco,dde:hueco?hm(hueco[0]*60):'',da:hueco?hm(hueco[1]*60):''};
   if(noche.length){x.acostar=hm(noche[0][0]*60);x.desp=hm(noche[noche.length-1][1]*60);}
   /* el desvelo del modo noche (pendiente, o el que ya tenía la noche) no se pierde al guardar */
   const dv=snDesveloPend(k)||(r0.mal&&r0.dde&&r0.da?{dde:r0.dde,da:r0.da}:null);
@@ -6773,19 +6703,22 @@ function pvtProgramar(){
   const P=_pvt;if(!P||P.fin)return;clearTimeout(P.t);
   P.t=setTimeout(function(){if(!_pvt||_pvt!==P)return;P.on=performance.now();
     const n=document.getElementById('pvtN'),i=document.getElementById('pvtInfo');if(i)i.textContent='';
-    const tick=function(){if(!P.on||_pvt!==P)return;if(n)n.textContent=Math.round(performance.now()-P.on);P.raf=requestAnimationFrame(tick);};tick();},2000+Math.random()*3000);}
+    /* si te vas del test por las pestañas, el número ya no está en la página: se para (antes seguía
+       60 veces por segundo para siempre) */
+    const tick=function(){if(!P.on||_pvt!==P)return;if(!n||!n.isConnected){P.raf=0;return;}n.textContent=Math.round(performance.now()-P.on);P.raf=requestAnimationFrame(tick);};tick();},2000+Math.random()*3000);}
 function pvtToque(){
   const P=_pvt;if(!P||P.fin)return;
   if(!P.on){P.falsos++;const i=document.getElementById('pvtInfo');if(i)i.textContent='¡antes de tiempo!';pvtProgramar();return;}
   const rt=performance.now()-P.on;P.on=0;cancelAnimationFrame(P.raf);P.rts.push(rt);
   const n=document.getElementById('pvtN');if(n)n.textContent=Math.round(rt);
   if(Date.now()>=P.fin0)return pvtAcaba();pvtProgramar();}
+function pvtCorta(P){if(P){clearTimeout(P.t);clearInterval(P.iv);cancelAnimationFrame(P.raf);}}
 function pvtAcaba(){
-  const P=_pvt;if(!P)return;clearTimeout(P.t);cancelAnimationFrame(P.raf);clearInterval(P.iv);
+  const P=_pvt;if(!P)return;pvtCorta(P);
   const rts=P.rts.filter(function(x){return x>=100;}),med=rts.length?Math.round(rts.reduce(function(s,x){return s+x;},0)/rts.length):0;
   const lapsos=P.rts.filter(function(x){return x>355;}).length,k=iso(new Date());
   P.res={k:k,h:horaLocal(new Date()),med:med,fallos:lapsos+P.falsos,n:P.rts.length,sal:!!salidaDeGuardia(k)};P.fin=true;
-  if(rts.length>=SN_T.pvtMin){if(!store.sueno)store.sueno={};if(!Array.isArray(store.sueno.pvt))store.sueno.pvt=[];store.sueno.pvt.push(P.res);store.sueno.pvt=store.sueno.pvt.slice(-60);save();}
+  if(rts.length>=SN_T.pvtMin){if(!Array.isArray(store.sueno.pvt))store.sueno.pvt=[];store.sueno.pvt.push(P.res);store.sueno.pvt=store.sueno.pvt.slice(-60);save();}
   render();}
 document.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('#pvtZona')){e.preventDefault();pvtToque();}});
 
@@ -6821,9 +6754,9 @@ function nocheGuardaDesvelo(){
   const N=_noche;if(!N||!N.levanta)return;const a=N.levanta,b=new Date(),k=iso(b.getHours()<18?b:addDays(b,1));
   const r=suenoRealS()[k],d={dde:horaLocal(a),da:horaLocal(b)};
   if(r){r.mal=true;r.dde=d.dde;r.da=d.da;}
-  else{if(!store.sueno)store.sueno={};(store.sueno.desvelos||(store.sueno.desvelos={}))[k]=d;}
+  else{(store.sueno.desvelos||(store.sueno.desvelos={}))[k]=d;}
   save();}
-function snDesveloPend(k){return ((store.sueno||{}).desvelos||{})[k]||null;}
+function snDesveloPend(k){return (store.sueno.desvelos||{})[k]||null;}
 
 /* ---------- energía de hoy, para el reloj ---------- */
 let _snEnT=-1,_snEnM={};
@@ -6861,7 +6794,7 @@ function programarAvisoCama(){
   if(!suenoCfg().avisoCama||!avisosListos())return;
   /* la marca de «ya avisado» es la de la NOCHE, no la del día: al abrir la app pasada la medianoche
      ya no vuelve a sonar ni se come el aviso de la noche siguiente */
-  const k=nocheDeAhora();if((store.sueno||{}).camaHecho===k)return;
+  const k=nocheDeAhora();if(store.sueno.camaHecho===k)return;
   const p=suenoCamaHoy(k);if(!p)return;
   const bm=mins(p.cama),cuando=parseDate(k);if(bm==null||!cuando)return;
   cuando.setMinutes(bm+(bm<12*60?1440:0)-15);
@@ -6869,7 +6802,7 @@ function programarAvisoCama(){
   if(t<-15)return;if(t<0)t=0;if(t>18*60)return;
   _avisoCamaT=setTimeout(function(){
     swMensaje({tipo:'aviso',tag:'cama-'+k,titulo:'🛏 A la cama a las '+hCortaHM(p.cama),cuerpo:'Para dormir '+fmtC(p.obj)+' h y levantarte a tu hora.'});
-    if(!store.sueno)store.sueno={};store.sueno.camaHecho=k;save();},t*60000);}
+    store.sueno.camaHecho=k;save();},t*60000);}
 /* ===================== el informe de la semana ===================== */
 function informeDatos(lunKey){
   const lun=parseDate(lunKey),ks=[];for(let i=0;i<7;i++)ks.push(iso(addDays(lun,i)));
@@ -6914,7 +6847,7 @@ function renderInforme(){
           d.sueno.n?('objetivo '+fmtHM(suenoCfg().min*60)+' · '+d.sueno.n+'/7 apuntadas'+(h.n?' · '+h.ok+' a tu hora':'')+(d.cortas?(' · '+d.cortas+' de menos de '+fmt(suenoCfg().min-1)+' h'):'')):'sin apuntar');})()+
         tile('🍽','DIETA',d.dieta.tieneObj?d.dieta.obj:d.dieta.con,d.dieta.tieneObj?'/ 7 días':'días',d.dieta.con?((d.dieta.tieneObj?'en objetivo · ':'apuntados · ')+d.dieta.prot+' g P de media'):'sin apuntar')+
         tile('✅','HÁBITOS',d.hab.pct==null?'—':d.hab.pct,d.hab.pct==null?'':'%',d.hab.por.slice(0,2).map(function(x){return esc(x.h.nombre.toLowerCase())+' '+x.n+'/'+x.de;}).join(' · ')||'sin hábitos')+
-        tile('📚','ESTUDIO',fmtHM(d.est.min),'',(d.est.pags?d.est.pags+' págs · ':'')+(hudLeer().pomos?(hudLeer().pomos+' 🍅 en el HUD'):'sin HUD enlazado'))+
+        tile('📚','ESTUDIO',fmtHM(d.est.min),'',(d.est.pags?d.est.pags+' págs · ':'')+(function(p){return p?(p+' 🍅 en el HUD'):'sin HUD enlazado';})(hudLeer().pomos))+
         tile('💪','ENTRENO',d.gym.ses,d.gym.toca?('/ '+d.gym.toca):'','días entrenados')+
         tile('💰','AHORRO',fmt(d.aho.aparto),'€',d.aho.rec?('objetivo '+esc(eur(d.aho.rec))+'/mes'):(d.aho.aparto?'apartado en '+esc(ahoMesTxt(d.aho.mes)):'nada apartado ese mes'))+
       '</div>'+
@@ -7221,8 +7154,10 @@ function horasCortasDia(key,inf,sh){
 let _agTick=-1,_agCache={};
 function agendaDia(key,inf){
   if(_agTick!==_renderTick){_agCache={};_agTick=_renderTick;}
-  if(inf&&inf!==dayInfo(key))return agendaDia0(key,inf);
-  return _agCache[key]||(_agCache[key]=agendaDia0(key));}
+  /* por fecha y por pintado: antes comparaba inf con un dayInfo(key) recién creado, nunca era el
+     mismo objeto y se recalculaba la agenda entera en cada llamada (4 veces por movimiento del dedo
+     en el reloj de Hoy). Todos los que llaman pasan el dayInfo de ese mismo día */
+  return _agCache[key]||(_agCache[key]=agendaDia0(key,inf));}
 function agendaDia0(key,inf){
   inf=inf||dayInfo(key);
   const sh=shiftById(inf.shiftId),out=[];
@@ -18526,7 +18461,7 @@ function horasPantallaHTML(){
         '<b>'+fmt(SC.min)+' h</b><button class="btn s" data-a="sueno-paso" data-d="0.5" aria-label="media hora más">+</button></div>'+
         '<input type="number" hidden value="'+SC.min+'" data-a="sueno-f" data-k="min">'+
         '<span class="sp"></span><span class="mini" style="text-align:right">cena '+fmt(SC.cenaMax/60)+'–'+fmt(SC.cenaMin/60)+' h antes<br>de acostarte</span></div>'+
-      '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+((store.sueno||{}).relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-reloj"'+(store.sueno.relojEnergia!==false?' checked':'')+'> enseñar mi energía estimada en el reloj de Hoy</label>'+
       '<label class="snrel"><input type="checkbox" data-a="sn-conduce"'+(suenoCfg().conduce?' checked':'')+'> vuelvo de la guardia conduciendo</label></div>'+
     '<div class="card">'+filas+'</div>'+
     '<details class="card hradv"><summary>a qué hora comes · minutos en dormirte · siesta del saliente</summary>'+
@@ -18547,42 +18482,6 @@ function horasPantallaHTML(){
         '<button class="chipx" data-a="mon-autopos">'+(store.rotation.autoPos?'✓':'○')+' post-guardia automático</button></div>'+
     '</details>'+
     '<details class="card hradv"><summary>la jornada de diario y tus vacaciones</summary>'+jornadaCard()+'</details>';}
-function suenoCard(){
-  const c=suenoCfg(),base=despertarBase(),rec=acostarsePara(base),ven=ventanaCena(rec);
-  const dias=(store.rotation.jornada&&store.rotation.jornada.workdays)||[1,2,3,4,5];
-  const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  return '<div class="card" data-cfg="sueno"><h2>2c · Dormir '+c.min+' h, sin excepciones</h2>'+
-    '<p class="note">De lunes a viernes te levantas a las <b>'+esc(base)+'</b>, así que para tener tus '+c.min+' h hay que estar en la cama a las '
-    +'<b>'+esc(rec)+'</b> (contando '+c.latencia+' min de quedarte dormido). La cena, entre '+(ven?ven.from+' y '+ven.to:'—')+
-    ': de 3 h a 1,5 h antes de dormir, para no acostarse con la digestión a medias. Los días '+dias.map(function(x){return DN[x];}).join(', ')+'.</p>'+
-    /* la latencia estaba en una tarjeta aparte, en Ajustes, que además avisaba de que «la ventana de
-       la cena sigue en Turno y rotación → 2c»: eran dos editores a medias del mismo asunto. Aquí
-       están los cuatro números del sueño juntos. */
-    '<div class="fgrid c3"><label class="fld">Horas mínimas<input type="number" min="6" max="10" step="0.25" value="'+c.min+'" data-a="sueno-f" data-k="min"></label>'+
-    '<label class="fld">Tardas en dormirte (min)<input type="number" min="0" max="60" value="'+c.latencia+'" data-a="sueno-f" data-k="latencia"></label>'+
-    '<label class="fld">Cena antes (h)<input type="number" min="60" max="240" step="15" value="'+c.cenaMax+'" data-a="sueno-f" data-k="cenaMax"></label>'+
-    '<label class="fld">Cena como pronto (h)<input type="number" min="30" max="120" step="15" value="'+c.cenaMin+'" data-a="sueno-f" data-k="cenaMin"></label>'+
-    /* el día de después de una guardia se duerme dos veces: la siesta al llegar y la noche. Sin
-       este número la app daba por dormidas las horas que estabas saliendo del hospital. */
-    '<label class="fld">Siesta del saliente (min)<input type="number" min="0" max="480" step="15" value="'+c.siesta+'" data-a="sueno-f" data-k="siesta"></label></div>'+
-    '<p class="mini" style="margin:8px 0 0">El día de después de una guardia no cuenta como una noche: de 00:00 hasta que te relevan sigues trabajando, luego duermes '+fmtHM(c.siesta)+' al llegar a casa y por la noche lo de siempre. Las dos salen en «Hoy» y en «Semana», con su propio mínimo cada una.</p>'+
-    /* la comida principal no está a una hora fija: la manda lo que haces ese día */
-    (function(){const cm=comidasCfg();
-      return '<h3 style="font-size:13px;margin:14px 0 4px">A qué hora comes</h3>'+
-      '<p class="note" style="margin:0 0 8px">La comida principal no tiene una hora fija. El día que sales de guardia cae al despertar de la siesta. '+
-      'Si entrenas <b>por la tarde</b>, en la ventana de aquí abajo. Y si no —o si el entreno es de mañana— <b>al llegar a casa del trabajo</b>: '+
-      'Con jornada de 8 a 15 no te va a poner a comer a las 14:00 en el hospital. '+
-      'La hora de aquí es lo <b>más pronto</b> que comerías; si la jornada acaba más tarde, manda la jornada.</p>'+
-      '<div class="fgrid c3">'+
-      '<label class="fld">Si entrenas, desde<input type="time" value="'+esc(cm.conEntreno.de)+'" data-a="com-h" data-k="conEntreno" data-w="de"></label>'+
-      '<label class="fld">hasta<input type="time" value="'+esc(cm.conEntreno.a)+'" data-a="com-h" data-k="conEntreno" data-w="a"></label>'+
-      '<label class="fld">Si no entrenas, desde<input type="time" value="'+esc(cm.sinEntreno.de)+'" data-a="com-h" data-k="sinEntreno" data-w="de"></label>'+
-      '<label class="fld">hasta<input type="time" value="'+esc(cm.sinEntreno.a)+'" data-a="com-h" data-k="sinEntreno" data-w="a"></label>'+
-      '<label class="fld">De saliente, tras la siesta (min)<input type="number" min="0" max="180" step="5" value="'+cm.trasSiesta+'" data-a="com-tras"></label>'+
-      '</div>';})()+
-    '<div class="row" style="margin-top:10px"><button class="btn p" data-a="sueno-fix">poner la cama a '+esc(rec)+' en los días de diario</button>'+
-    '<button class="btn s" data-a="sueno-cenas">encajar la hora de la cena en los menús</button>'+
-    '<span class="sp"></span><span class="mini">el acostarse se calcula a partir de tu despertador; si lo cambias arriba, vuelve a darle</span></div></div>';}
 function aplicarAcostarse(){
   /* escribe la hora de dormir que garantiza el mínimo, solo en los días que madrugas como el de diario */
   const base=despertarBase(),rec=acostarsePara(base);
@@ -23673,14 +23572,14 @@ function act(a,el){
       a[k]=!a[k];if(!a[k])delete a[k];save();render();snProgramaAvisos();
       flash(a[k]?'te aviso: con la app abierta y en tu calendario suscrito':'aviso quitado');break;}
     case 'sn-aj':ui.snAj=el.dataset.v;render();break;
-    case 'sn-casa':{if(!store.sueno)store.sueno={};const c=store.sueno.casa||(store.sueno.casa={}),v=el.dataset.v;if(c[v])delete c[v];else c[v]=1;save();render();break;}
+    case 'sn-casa':{const c=store.sueno.casa||(store.sueno.casa={}),v=el.dataset.v;if(c[v])delete c[v];else c[v]=1;save();render();break;}
     case 'sn-cat':ui.snCat=el.dataset.v||'';ui.snCien='';render();break;
     case 'sn-ciencia':{const c=SN_CIEN.filter(function(x){return x[0]===el.dataset.id;})[0];if(!c)break;
       ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';ui.snHoja='';ui.snCienH=true;ui.snCat=c[1];ui.snCien=c[0];render();
       setTimeout(function(){const n=document.getElementById('sncien-'+c[0]);if(n)n.scrollIntoView({block:'center'});},40);break;}
     case 'sn-cienh':ui.snCienH=true;ui.snCien='';render();break;
     case 'sn-cien1':ui.snCien=ui.snCien===el.dataset.id?'':el.dataset.id;render();break;
-    case 'sn-margen':if(!store.sueno)store.sueno={};store.sueno.margen=Math.max(0,Math.min(180,+el.dataset.v||0));save();programarAvisoCama();render();break;
+    case 'sn-margen':store.sueno.margen=Math.max(0,Math.min(180,+el.dataset.v||0));save();programarAvisoCama();render();break;
     case 'sn-chk':{const k=iso(new Date());if(!store.sueno.chk)store.sueno.chk={};const c=store.sueno.chk[k]||(store.sueno.chk[k]={});c[el.dataset.v]=!c[el.dataset.v];save();render();break;}
     case 'sn-siesta-cfg':{const pr=siesta3On();if(pr)pr.fin=true;
       store.sueno.siesta=(+el.dataset.v||0)*60;store.sueno.siestaMia=true;save();render();flash((pr?'prueba de 3 h terminada · ':'')+'siesta del saliente: '+el.dataset.v+' h');break;}
@@ -23701,9 +23600,9 @@ function act(a,el){
     case 'sn-tmas':snTMas(el.dataset.v);render();break;
     case 'sn-tguardar':flash(snTGuardar());ui.snHoja='';render();break;
     case 'pvt-empezar':case 'pvt-otra':{const ms=SN_T.pvtMs;_pvt={rts:[],falsos:0,on:0,fin0:Date.now()+ms,fin:false};render();pvtProgramar();
-      _pvt.iv=setInterval(function(){if(!_pvt||_pvt.fin)return;const q=document.getElementById('pvtQ');if(q)q.textContent=Math.ceil(Math.max(0,_pvt.fin0-Date.now())/1000);
+      _pvt.iv=setInterval(function(){if(!_pvt||_pvt.fin)return;const q=document.getElementById('pvtQ');if(!q){pvtCorta(_pvt);_pvt=null;return;}q.textContent=Math.ceil(Math.max(0,_pvt.fin0-Date.now())/1000);
         if(Date.now()>=_pvt.fin0&&!_pvt.on)pvtAcaba();},250);break;}
-    case 'pvt-parar':if(_pvt){clearTimeout(_pvt.t);clearInterval(_pvt.iv);cancelAnimationFrame(_pvt.raf);}_pvt=null;render();break;
+    case 'pvt-parar':pvtCorta(_pvt);_pvt=null;render();break;
     case 'noche-empezar':_noche={fase:'espera',t0:Date.now(),p:0};render();nocheTick();
       try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){if(_noche)_noche.lock=l;}).catch(function(){});}catch(e){}break;
     case 'noche-aparca':{const t=((document.getElementById('nocheNota')||{}).value||'').trim();if(!t){flash('escribe una línea');break;}
@@ -23714,7 +23613,7 @@ function act(a,el){
       _noche=null;ui.snVista='';render();break;
 
     case 'sn-cerrar':ui.hoyVista='';ui.snVista='';ui.snHoja='';render();window.scrollTo(0,0);break;
-    case 'sn-vista':if(_pvt){clearTimeout(_pvt.t);clearInterval(_pvt.iv);_pvt=null;}ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
+    case 'sn-vista':if(_pvt){pvtCorta(_pvt);_pvt=null;}ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
     case 'sn-hoja':{const k=el.dataset.k||iso(new Date());if(k>iso(new Date()))break;ui.snHoja=k;ui.snTr=null;render();break;}
     case 'hoy-informe':{ui.tab='hoy';ui.hoyVista='informe';ui.infLun=el.dataset.sem==='pasada'?'':iso(mondayOf(new Date()));render();window.scrollTo(0,0);break;}
     case 'hoy-informe-cerrar':ui.hoyVista='';render();window.scrollTo(0,0);break;
@@ -23749,7 +23648,7 @@ function act(a,el){
     case 'hr-abrir':{const i=el.dataset.id||'';ui.hrAbierto=ui.hrAbierto===i?'':i;render();break;}
     case 'hr-cama':{const sh=el.dataset.id,rh=(store.rhythm||{})[sh];if(!rh)break;const rec=acostarsePara(rh.wake);if(!rec)break;
       rh.sleep=rec;save();render();flash('a la cama a las '+rec+' ese tipo de día');break;}
-    case 'sueno-paso':{if(!store.sueno)store.sueno={};const c=suenoCfg();
+    case 'sueno-paso':{const c=suenoCfg();
       store.sueno.min=Math.max(6,Math.min(10,c.min+(+el.dataset.d||0)));save();render();flash('objetivo: '+fmt(store.sueno.min)+' h');break;}
     case 'types-vista':{ui.typesVista=el.dataset.v||'';ui.mVuelta=false;render();window.scrollTo(0,0);break;}
     case 'menu-ir':{ui.tab='types';ui.typesVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
@@ -24090,8 +23989,7 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       flash(v?('día puesto: '+((shiftById(v)||{}).name||'')+(el.dataset.guard?(' · '+el.dataset.guard):'')+auto):
         'vuelve a la rotación (y su saliente automático, si lo puso la app)');break;}
     case 'day-rhythm':editDayRhythm(el.dataset.key);break;
-    case 'day-guardia':{const rg=setGuardiaTipo(el.dataset.key,el.dataset.guard||'');flash(rg.msg);
-      if(rg.ok)render();break;}
+    case 'day-guardia':flash(setGuardiaTipo(el.dataset.key,el.dataset.guard||'').msg);break;   /* ya guarda y pinta si sale bien */
     /* la hoja del día (mantener pulsado en Mes) y sus modos: pincel, mover el entreno, vacaciones */
     case 'hoja-cerrar':cerrarHojaDia();render();break;
     case 'hoja-vista':{ui.hojaVista=el.dataset.v||'';ui.hojaRec=!!el.dataset.rec;render();
@@ -24199,8 +24097,8 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       const r=icsAplicar(p2,opt2);
       if(r&&r.ok){ui.icsPrev=null;save();render();flash(r.msg);}
       else{ui.icsPrev=null;render();flash((r&&r.msg)||'nada que aplicar');}break;}
-    case 'sueno-fix':flash(aplicarAcostarse());save();render();break;
-    case 'sueno-cenas':flash(encajarCenas());save();render();break;
+    case 'sueno-fix':flash(aplicarAcostarse());break;      /* las dos ya guardan y pintan */
+    case 'sueno-cenas':flash(encajarCenas());break;
     case 'rh-8h':{const wEl=document.querySelector('#modal [data-k="wake"]');
       const rec=acostarsePara(wEl?wEl.value:'');
       if(!rec){flash('pon antes la hora de levantarte');break;}
@@ -25956,12 +25854,12 @@ document.addEventListener('change',e=>{
       save();render();break;}
     case 'sn-tt':snTCambia(+el.dataset.i,+el.dataset.k,el.value);render();break;
     case 'sn-comparar':ui.snComparar=!!el.checked;render();break;
-    case 'sn-conduce':if(!store.sueno)store.sueno={};store.sueno.conduce=!!el.checked;save();render();break;
-    case 'sn-avcama':if(!store.sueno)store.sueno={};store.sueno.avisoCama=!!el.checked;save();programarAvisoCama();render();break;
-    case 'sn-reloj':if(!store.sueno)store.sueno={};store.sueno.relojEnergia=!!el.checked;save();render();break;
+    case 'sn-conduce':store.sueno.conduce=!!el.checked;save();render();break;
+    case 'sn-avcama':store.sueno.avisoCama=!!el.checked;save();programarAvisoCama();render();break;
+    case 'sn-reloj':store.sueno.relojEnergia=!!el.checked;save();render();break;
     /* cambiar tu hora o lo que necesitas dormir mueve también el aviso de cama de esta noche */
-    case 'sn-ancla':{if(!store.sueno)store.sueno={};store.sueno.ancla=hm(+el.value);save();programarAvisoCama();render();break;}
-    case 'sn-need':{if(!store.sueno)store.sueno={};store.sueno.min=Math.max(6,Math.min(10,Math.round(+el.value*4)/4));save();programarAvisoCama();render();break;}
+    case 'sn-ancla':{store.sueno.ancla=hm(+el.value);save();programarAvisoCama();render();break;}
+    case 'sn-need':{store.sueno.min=Math.max(6,Math.min(10,Math.round(+el.value*4)/4));save();programarAvisoCama();render();break;}
     case 'libro-pag':flash(libroPag(el.dataset.id,el.value));render();break;
     case 'libro-f':{const b=libroById(el.dataset.id);if(!b)break;const k=el.dataset.k;
       if(k==='inicio')b.inicio=esFecha(el.value)?el.value:b.inicio;
@@ -26207,14 +26105,14 @@ window.PG={habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidades
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
   parsePlanning,parseSemanales,applyParse,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,diaLaborableCerca,monthDays,monthService,setMonthService,
-  guardCount,distributeGuardias,syncToRotation,quickBreakfast,schedLine,dayLine,RKEYS,necesidadSemana,
+  guardCount,distributeGuardias,syncToRotation,quickBreakfast,RKEYS,necesidadSemana,
   dineroS,gastosFijos,gastosDeFecha,gastoPagado,mesDinero,addGasto,delGasto,addPago,delPago,pagarGasto,eur,
   vacMap,vacationOf,addVacation,delVacation,jornadaOf,jornadaEn,parseVacacionesText,vacDays,
   baseWorkday,svcLabel,setGuardiasMes,planServicios,cicloServicios,ponerSalienteAuto,limpiarSalientesAuto,
   mins,hm,acostarsePara,ventanaCena,despertarBase,nightOf,aplicarAcostarse,encajarCenas,
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
-  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyTresHTML,hoyItems,hoyDiaHTML,hoyHojaHTML,planDiaHTML,
+  comidasCfg,comidaPrincipalDe,comidaPrincipalTxt,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyTresHTML,hoyItems,hoyDiaHTML,hoyHojaHTML,
   gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
   objetivosS,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
