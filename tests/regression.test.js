@@ -11001,6 +11001,83 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /T-break/.test(r.cn.enCn) && !/tbreak/.test(r.cn.hab) && !r.sem.obj && r.sem.exp && r.sem.tocaban, JSON.stringify({ cn: r.cn, sem: r.sem }));
   }
 
+  // 265) QUE NADA SE PIERDA, EN CADENA (tanda 1 del informe de código): (a) unos datos que no se leen
+  //      se apartan antes de que el primer pintado guarde el ejemplo encima; (b) tras editar una comida,
+  //      guardar otra ventana no le pone su nombre; (c) restaurar una copia antigua no vacía tu menú;
+  //      (d) un evento «todo el día» sigue sin hora al recargar; (e) la siesta de 3 h elegida a mano no
+  //      vuelve a 6 h; (f) «deshacer el borrado» de Entreno no se come lo apuntado después; (g) el «‹ atrás»
+  //      de la app quita también su entrada del historial del navegador.
+  {
+    const r = {};
+    const bueno = await page.evaluate(() => { const P = window.PG; P.ui.hojaDia = null; P.closeModal && P.closeModal(); return localStorage.getItem('planGuardias.v1'); });
+    // (a) datos dañados → se recarga → lo que había queda apartado tal cual
+    await page.evaluate(() => { localStorage.removeItem('planGuardias.rescate'); localStorage.setItem('planGuardias.v1', '{"shifts":[1,2],"roto":'); });
+    await page.reload(); await page.waitForTimeout(500);
+    r.a = await page.evaluate(() => ({ rescate: localStorage.getItem('planGuardias.rescate'), ahora: (localStorage.getItem('planGuardias.v1') || '').slice(0, 20) }));
+    await page.evaluate(() => { const P = window.PG; P.ui.arranque = null; P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render(); });
+    r.aUi = await page.evaluate(() => /Hay datos apartados/.test(document.getElementById('main').innerText) && !!document.querySelector('[data-a="rescate-copiar"]'));
+    await page.evaluate((b) => { localStorage.setItem('planGuardias.v1', b); localStorage.removeItem('planGuardias.rescate'); }, bueno);
+    await page.reload(); await page.waitForTimeout(500);
+    await page.evaluate(() => { const P = window.PG; P.store.meta.montada = true; P.ui.arranque = null; P.ui.tab = 'month'; P.render(); });
+    // (b) editar una comida, cancelar, y luego guardar un plato: la comida no cambia de nombre
+    r.b = await page.evaluate(async () => {
+      const P = window.PG, m = P.store.meals[0], d = P.store.dishes[0];
+      if (!m || !d) return 'sin datos';
+      const antes = m.name;
+      P.editMeal(m.id); document.querySelector('[data-a="m-cancel"]').click();
+      P.editDish(d.id); document.querySelector('[data-a="m-save"]').click();
+      await new Promise((ok) => setTimeout(ok, 50));
+      return (P.store.meals.find((x) => x.id === m.id) || {}).name === antes ? 'igual' : 'pisada: ' + (P.store.meals.find((x) => x.id === m.id) || {}).name;
+    });
+    // (c) una copia antigua (sin la marca de limpieza) con una comida tuya en una toma: se queda
+    r.c = await page.evaluate(() => {
+      const P = window.PG, o = JSON.parse(JSON.stringify(P.store));
+      delete o.meta.menuVaciado;
+      const mia = { id: 'm-mia-265', name: 'Mi cena', note: '', items: [] }; o.meals.push(mia);
+      const sh = Object.keys(o.menu)[0]; o.menu[sh][0].mealId = 'm-mia-265';
+      P.store = o;
+      return P.store.menu[sh][0].mealId;
+    });
+    // (d) evento sin hora → recargar (normalize) → sigue «todo el día»; (e) siesta 3 h a mano → sigue
+    r.de = await page.evaluate(() => {
+      const P = window.PG, o = JSON.parse(JSON.stringify(P.store));
+      o.eventos.push({ id: 'ev-265', titulo: 'Congreso', hora: '', modo: 'fecha', fecha: P.iso(new Date()), dow: [], on: true });
+      P.store = o; P.ui.tab = 'sueno'; P.render();
+      return P.store.eventos.find((e) => e.id === 'ev-265').hora;
+    });
+    // la siesta se elige tocando su barra en Sueño (data-a="sn-siesta-cfg"): se pulsa una igual
+    await page.evaluate(() => { const b = document.createElement('button'); b.dataset.a = 'sn-siesta-cfg'; b.dataset.v = '3';
+      document.getElementById('main').appendChild(b); b.click(); });
+    await page.waitForTimeout(80);
+    r.e = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.store.sueno.siesta; });
+    // (f) borrar el registro, entrenar, deshacer: vuelve lo de antes y lo nuevo se queda
+    r.f = await page.evaluate(() => {
+      const P = window.PG, hoy = P.iso(new Date());
+      P.addSet(hoy, { ex: 'Sentadilla 265', kg: 60, reps: 8 });
+      const antes = P.gymS().registro.length;
+      P.gymWipe('log');
+      P.addSet(hoy, { ex: 'Press 265', kg: 40, reps: 10 });
+      P.gymUndoWipe();
+      const R = P.gymS().registro;
+      return { antes, despues: R.length, viejo: R.some((x) => x.ex === 'Sentadilla 265'), nuevo: R.some((x) => x.ex === 'Press 265') };
+    });
+    // (g) tres pantallas y tres «‹ atrás» de la app: no queda nada apilado en el navegador
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.render(); P.ui.navHist = []; P.ui._navPushes = 0; history.replaceState({ m265: 1 }, ''); window.__s265 = JSON.stringify(history.state); });
+    for (const t of ['gym', 'dinero', 'habitos']) { await page.evaluate((t) => { const P = window.PG; P.ui.tab = t; P.render(); }, t); await page.waitForTimeout(40); }
+    for (let i = 0; i < 3; i++) { await page.evaluate(() => { const b = document.querySelector('[data-a="nav-atras"]'); if (b) b.click(); }); await page.waitForTimeout(120); }
+    r.g = await page.evaluate(() => ({ igual: JSON.stringify(history.state) === window.__s265, estado: history.state, tab: window.PG.ui.tab }));
+    check('unos datos que no se leen se apartan tal cual antes de guardar el ejemplo, y Datos lo enseña',
+      r.a.rescate === '{"shifts":[1,2],"roto":' && r.aUi, JSON.stringify(r.a) + ' ui=' + r.aUi);
+    check('tras editar una comida, guardar otra ventana no le pone su nombre', r.b === 'igual', r.b);
+    check('restaurar una copia antigua no vacía las comidas que pusiste tú', r.c === 'm-mia-265', r.c);
+    check('un evento «todo el día» sigue sin hora al recargar', r.de === '', JSON.stringify(r.de));
+    check('la siesta del saliente de 3 h elegida a mano no vuelve a 6 h al recargar', r.e === 180, String(r.e));
+    check('«deshacer el borrado» de Entreno trae lo borrado y conserva lo apuntado después',
+      r.f.viejo && r.f.nuevo && r.f.despues === r.f.antes + 1, JSON.stringify(r.f));
+    check('el «‹ atrás» de la app quita su entrada del historial: el atrás del móvil no se queda pillado',
+      r.g.igual && r.g.tab === 'month', JSON.stringify(r.g));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

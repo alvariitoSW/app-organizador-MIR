@@ -244,7 +244,10 @@ function DEFAULTS(){return {
 
 /* ===================== store ===================== */
 const KEY='planGuardias.v1', MKEY='planGuardias.marks.v1', TKEY='planGuardias.theme',
-  BKEY='planGuardias.lastBackup', FKEY='planGuardias.firstUse', NKEY='planGuardias.backupNag';
+  BKEY='planGuardias.lastBackup', FKEY='planGuardias.firstUse', NKEY='planGuardias.backupNag',
+  RKEY='planGuardias.rescate';   /* los datos que no se pudieron leer al abrir, tal cual */
+let _noPisar=false;   /* sin rescate posible: no se escribe encima de lo que había */
+function rescateTxt(){try{return localStorage.getItem(RKEY)||'';}catch(e){return '';}}
 function marcarBackup(){try{localStorage.setItem(BKEY,String(Date.now()));}catch(e){}}
 function diasDesdeBackup(){try{const t=+localStorage.getItem(BKEY);
   return t?Math.floor((Date.now()-t)/864e5):null;}catch(e){return null;}}
@@ -313,7 +316,15 @@ function load(){
       if(o&&Array.isArray(o.shifts)&&o.menu&&Array.isArray(o.dishes)){store=o;ok=true;}}}catch(e){
     console.warn('no se pudo leer el planning guardado, se arranca de cero');}
   if(!ok){store=DEFAULTS();
-    if(habiaAlgo)setTimeout(function(){flash('⚠ no se ha podido leer tu planning guardado (datos dañados o de un formato antiguo): se ha cargado el ejemplo. No hemos borrado nada — tus datos anteriores siguen tal cual en el navegador',7000);},0);}
+    /* LO QUE NO SE PUEDE LEER SE APARTA ANTES DE NADA. Antes el mensaje prometía «no hemos borrado
+       nada» y el primer pintado guardaba el ejemplo encima. Ahora se copia tal cual a otra clave (la
+       primera vez: un segundo fallo no pisa el rescate bueno) y, si ni eso se puede, no se guarda nada
+       hasta que importes o restaures a mano. */
+    if(habiaAlgo){let apartado=false;
+      try{if(!localStorage.getItem(RKEY))localStorage.setItem(RKEY,raw);apartado=true;}catch(e){}
+      if(!apartado)_noPisar=true;
+      setTimeout(function(){flash('⚠ no se ha podido leer tu planning guardado (datos dañados o de un formato antiguo): se ha cargado el ejemplo. '+
+        (apartado?'Lo que había está apartado: en Datos → Copias puedes copiarlo':'No se guardará nada encima hasta que importes una copia'),9000);},0);}}
   normalize(store);
   /* primer arranque: no hab\u00eda NADA guardado y no viene de una copia ya montada. Quien ya tiene
      sus datos no ve el asistente nunca, ni aunque actualice la app. */
@@ -909,7 +920,10 @@ function normalize(o){
   if(!Array.isArray(o.eventos))o.eventos=[];
   o.eventos=o.eventos.filter(function(e){return e&&e.id;}).map(function(e){
     const modo=e.modo==='fecha'?'fecha':'semanal';
-    return {id:e.id,titulo:String(e.titulo||''),hora:/^\d{2}:\d{2}$/.test(e.hora||'')?e.hora:'09:00',
+    /* sin hora = «todo el día» (así se crea si dejas la hora vacía). Antes se convertía en las 09:00
+       al recargar y así se mandaba a Google */
+    const hh=/^(\d{1,2}):(\d{2})$/.exec(String(e.hora||''));
+    return {id:e.id,titulo:String(e.titulo||''),hora:hh&&+hh[1]<24&&+hh[2]<60?hh[1].padStart(2,'0')+':'+hh[2]:'',
       /* hasta qué hora dura. Vacío = como siempre: la app no sabe cuánto ocupa y lo trata como una
          cita suelta. OJO: este map DESCARTA cualquier campo que no esté aquí, así que un campo nuevo
          que no se dé de alta en esta lista se pierde en la siguiente carga sin dar ningún error. */
@@ -950,7 +964,7 @@ function normalize(o){
      Se vacía UNA vez y queda la marca; lo que hayas creado tú no se toca (se comparan los ids con
      los de DEFAULTS). Una instalación nueva ya viene marcada: así «restaurar el ejemplo» sigue
      restaurando el ejemplo. */
-  if(!o.meta.menuVaciado){o.meta.menuVaciado=true;try{vaciarMenus(o);}catch(e){}}
+  if(!o.meta.menuVaciado){o.meta.menuVaciado=true;try{vaciarMenus(o,true);}catch(e){}}
   if(!o.habitos||typeof o.habitos!=='object')o.habitos={items:[],registro:{}};
   if(!Array.isArray(o.habitos.items))o.habitos.items=[];
   o.habitos.items=o.habitos.items.filter(function(h){return h&&h.id;}).map(function(h){
@@ -1036,7 +1050,7 @@ function save(){
   let txt='';try{txt=JSON.stringify(store);}catch(e0){}
   if(!txt||txt!==_ultimoTxt){_datosV++;_ultimoTxt=txt;}
   /* save() va en cada tecla y casi siempre con los mismos datos: lo ya escrito no se vuelve a escribir */
-  if(!txt||txt!==_escritoTxt)try{localStorage.setItem(KEY,txt||JSON.stringify(store));_escritoTxt=txt;saveFailWarned=false;}catch(e){_escritoTxt='';console.warn('no se pudo guardar',e);
+  if(!_noPisar&&(!txt||txt!==_escritoTxt))try{localStorage.setItem(KEY,txt||JSON.stringify(store));_escritoTxt=txt;saveFailWarned=false;}catch(e){_escritoTxt='';console.warn('no se pudo guardar',e);
   if(!saveFailWarned){saveFailWarned=true;flash('⚠ no se ha podido guardar: el navegador no deja escribir (¿modo incógnito o memoria llena?). Copia tu JSON desde «Datos» antes de cerrar esta pestaña',6000);}}
   /* y si tienes el calendario enchufado, que se suba solo. No aquí mismo: save() se llama en cada
      tecla y subir cuatro ficheros en cada una sería absurdo. Se pide, y el temporizador decide. */
@@ -8729,7 +8743,17 @@ function gymWipe(que){
       (n?' · con «deshacer» vuelve tal cual':'')};}
 function gymUndoWipe(){
   if(!ui.gymUndo)return {ok:false,msg:'no hay ningún borrado que deshacer ahora mismo'};
-  store.gym=ui.gymUndo.antes;const g=gymS();
+  /* vuelve SOLO lo que se borró, y lo apuntado después se queda. Antes se cambiaba store.gym entero
+     por la foto del momento del borrado: si entre medias entrenabas, se perdía todo lo de después */
+  const U=ui.gymUndo,A=U.antes,g=gymS(),fab=JSON.stringify(GYM_SEGUNDO_DEF);
+  const K={log:['registro'],rut:['rutinas','fav'],seg:['marks','segundo'],
+    all:['registro','rutinas','sesiones','cardio','fav','marks','segundo'],
+    todo:['registro','rutinas','sesiones','cardio','fav','marks','segundo','biblioteca','fuente']}[U.que]||[];
+  K.forEach(function(k){const a=A[k],b=g[k];
+    if(Array.isArray(a))g[k]=a.concat((b||[]).filter(function(x){return a.indexOf(x)<0;}));
+    else if(k==='marks')g[k]=Object.assign({},a||{},b||{});
+    else if(k==='segundo'){if(JSON.stringify(b)===fab)g[k]=a;}
+    else if(!b)g[k]=a;});
   ui.gymUndo=null;save();render();
   return {ok:true,msg:'restaurado: '+g.registro.length+' serie(s), '+g.rutinas.length+' rutina(s)'+
     (g.biblioteca.length?' y la biblioteca de '+g.biblioteca.length+' ejercicios':'')};}
@@ -21587,6 +21611,8 @@ function renderData(){
         (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
       <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
+      ${rescateTxt()?`<div class="aviso" style="margin-top:10px"><b>Hay datos apartados</b> que no se pudieron leer al abrir (${Math.round(rescateTxt().length/1024)} KB). Cópialos y pégalos en «Importar JSON» o guárdalos para ayuda.
+        <div class="row" style="margin-top:6px"><button class="btn s" data-a="rescate-copiar">Copiar esos datos</button><button class="btn s d" data-a="rescate-borrar">Borrarlos</button></div></div>`:''}
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn g" data-a="import">Importar JSON</button></div>
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
@@ -21815,7 +21841,7 @@ function navTras(){
   const snap=navSnap(),j=JSON.stringify(snap);
   if(ui._navJ&&ui._navJ!==j&&!ui._navVolviendo){
     ui.navHist=(ui.navHist||[]);ui.navHist.push(JSON.parse(ui._navJ));if(ui.navHist.length>NAV_MAX)ui.navHist.shift();
-    try{history.pushState({guardias:ui.navHist.length},'');}catch(e){}}
+    try{history.pushState({guardias:ui.navHist.length},'');ui._navPushes=(ui._navPushes||0)+1;}catch(e){}}
   ui._navVolviendo=false;ui._navJ=j;
   /* a disco solo si la pantalla ha cambiado o hace más de un minuto: render() pasa por aquí mucho */
   const ahora=Date.now();
@@ -21831,7 +21857,14 @@ function navHojaAbierta(){return !!document.querySelector('#hojaDia .hoja');}
 function navVolverBtn(){return document.querySelector('#main .subcab .volver')||document.querySelector('#main .volver');}
 function navSeccionAnterior(){const h=ui.navHist||[];for(let i=h.length-1;i>=0;i--){if(h[i].tab&&h[i].tab!==ui.tab)return i;}return -1;}
 function navPuedeVolver(){return navHojaAbierta()||!!navVolverBtn()||navSeccionAnterior()>=0||ui.tab!==NAV_INICIO;}
-function navAtras(){
+function navAtras(desdePop){
+  /* la pila del navegador va a la par que la de la app: el «‹ atrás» de la app también quita su
+     entrada. Antes solo se apilaban, y tras navegar un rato el botón atrás del móvil había que
+     pulsarlo unas diez veces para salir */
+  const r=navAtras0();
+  if(r&&!desdePop&&ui._navPushes>0){ui._navPushes--;ui._navIgnoraPop=true;try{history.back();}catch(e){ui._navIgnoraPop=false;}}
+  return r;}
+function navAtras0(){
   if(navHojaAbierta()){cerrarHojaDia();ui._navVolviendo=true;render();return true;}
   const v=navVolverBtn();
   if(v){ui._navVolviendo=true;v.click();ui._navVolviendo=false;window.scrollTo(0,0);return true;}
@@ -21847,7 +21880,9 @@ function vistaRestaurar(){
     if(x&&x.v&&x.v.tab&&Date.now()-(+x.t||0)<12*3600e3)navAplica(x.v);}catch(e){}}
 window.addEventListener('popstate',function(){
   /* el botón atrás del móvil: si hay a dónde volver dentro de la app, se vuelve ahí */
-  navAtras();});
+  if(ui._navIgnoraPop){ui._navIgnoraPop=false;return;}   /* el que acabamos de quitar nosotros */
+  ui._navPushes=Math.max(0,(ui._navPushes||0)-1);
+  navAtras(true);});
 function renderNow(){
   try{document.body.dataset.tab=ui.tab;}catch(e0){}   /* para reglas de estilo por pestaña (44 px en Entreno) */
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
@@ -21949,6 +21984,9 @@ function abreModal(modal,onSave){
   mejoraAccesibilidad(modal);
   const f=focusablesIn(modal);(f[0]||modal).focus();}
 function closeModal(){$('#overlay').classList.remove('on');modalSave=null;
+  /* la comida que se editaba deja de estar «abierta»: si no, el siguiente «Guardar» de cualquier otra
+     ventana (un plato, una tanda…) le escribía su nombre y su nota a esa comida */
+  mealCtx=null;draftMeal=null;
   if(modalPrevFocus&&document.body.contains(modalPrevFocus)&&modalPrevFocus.focus)modalPrevFocus.focus();
   modalPrevFocus=null;}
 function openDrawer(){
@@ -22552,6 +22590,9 @@ function act(a,el){
     case 'clear-overrides':store.rotation.shiftByDay={};store.rotation.daySet={};store.rotation.dayRhythm={};
       save();render();flash('Días vuelve a la rotación (y se quita lo escrito a mano en el calendario)');break;
     case 'export':dl();marcarBackup();render();break;
+    case 'rescate-copiar':copy(rescateTxt());break;
+    case 'rescate-borrar':confirmar('¿Borrar los datos apartados que no se pudieron leer?','Borrarlos').then(function(ok){
+      if(!ok)return;try{localStorage.removeItem(RKEY);}catch(e){}render();});break;
     case 'copy':copy(copiaJSON());marcarBackup();render();break;
     case 'import':{let raw,o;
       try{raw=$('#importBox').value.trim();if(!raw)throw ' vacío';o=JSON.parse(raw);
@@ -23365,7 +23406,7 @@ function act(a,el){
     case 'sn-margen':if(!store.sueno)store.sueno={};store.sueno.margen=Math.max(0,Math.min(180,+el.dataset.v||0));save();programarAvisoCama();render();break;
     case 'sn-chk':{const k=iso(new Date());if(!store.sueno.chk)store.sueno.chk={};const c=store.sueno.chk[k]||(store.sueno.chk[k]={});c[el.dataset.v]=!c[el.dataset.v];save();render();break;}
     case 'sn-siesta-cfg':{const pr=siesta3On();if(pr)pr.fin=true;
-      store.sueno.siesta=(+el.dataset.v||0)*60;save();render();flash((pr?'prueba de 3 h terminada · ':'')+'siesta del saliente: '+el.dataset.v+' h');break;}
+      store.sueno.siesta=(+el.dataset.v||0)*60;store.sueno.siestaMia=true;save();render();flash((pr?'prueba de 3 h terminada · ':'')+'siesta del saliente: '+el.dataset.v+' h');break;}
     case 'sn-q':{if(!store.sueno.insom)store.sueno.insom={};const k=el.dataset.k;store.sueno.insom[k]=store.sueno.insom[k]===el.dataset.v?'':el.dataset.v;save();render();break;}
     case 'sn-probar':{if(!Array.isArray(store.sueno.pruebas))store.sueno.pruebas=[];
       store.sueno.pruebas.push(Object.assign({id:el.dataset.id,txt:el.dataset.txt||'',desde:iso(new Date()),dias:{},fin:false},el.dataset.id==='hora'?{ancla:suenoAncla(),margen:snMargenLibre()}:{}));save();render();
@@ -24011,7 +24052,7 @@ function fallbackCopy(txt){const ta=document.createElement('textarea');ta.value=
   try{document.execCommand('copy');flash('Copiado');}catch(e){flash('Copia manual: selecciona el texto');}ta.remove();}
 function reemplazarDatos(o,etiqueta,msg){
   /* importar, volver al ejemplo o restaurar una copia: siempre con una foto de cómo estaba antes */
-  return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;save();ui.copias=null;render();flash(msg);});}
+  return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;_noPisar=false;save();ui.copias=null;render();flash(msg);});}
 function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
 function copiaJSON(){return JSON.stringify(storeParaCopia(),null,1);}
 function storeParaCopia(){
@@ -24738,20 +24779,29 @@ function esDeEjemplo(){
   let D=null;try{D=DEFAULTS();}catch(e){return {platos:new Set(),menus:new Set()};}
   return {platos:new Set((D.dishes||[]).map(function(x){return x.id;})),
     menus:new Set((D.meals||[]).map(function(x){return x.id;}))};}
-function vaciarMenus(o){
+function vaciarMenus(o,soloEjemplo){
+  /* soloEjemplo: la limpieza automática (al cargar o restaurar una copia antigua) quita SOLO lo de
+     ejemplo. Antes vaciaba todas las tomas, y restaurar una copia de hace meses dejaba sin menú a
+     quien ya se lo había montado. El botón de vaciar lo quita todo, como dice. */
   o=o||store;
   const ej=esDeEjemplo();
   let tomas=0,quitados=0;
+  const fuera=function(items){if(!Array.isArray(items)||!items.length)return items;
+    const q=soloEjemplo?items.filter(function(it){return !(it&&ej.platos.has(it.id));}):[];
+    quitados+=items.length-q.length;return q;};
   Object.keys(o.menu||{}).forEach(function(k){
     (o.menu[k]||[]).forEach(function(sl){
       tomas++;
-      if(sl.mealId){sl.mealId='';quitados++;}
-      if(Array.isArray(sl.items)&&sl.items.length){quitados+=sl.items.length;sl.items=[];}});});
+      if(sl.mealId&&(!soloEjemplo||ej.menus.has(sl.mealId))){sl.mealId='';quitados++;}
+      sl.items=fuera(sl.items);});});
   /* la semana base (qué comes cada día de la semana) sale del mismo sitio */
   if(o.semBase&&o.semBase.d)Object.keys(o.semBase.d).forEach(function(w){
     ['desayuno','comida','cena'].forEach(function(c){
       const x=(o.semBase.d[w]||{})[c];
-      if(x&&Array.isArray(x.items)&&x.items.length){quitados+=x.items.length;x.items=[];}});});
+      if(x)x.items=fuera(x.items);});});
+  /* y tus comidas no se quedan apuntando a platos de ejemplo que ya no existen */
+  if(soloEjemplo)(o.meals||[]).forEach(function(m){if(!ej.menus.has(m.id)&&Array.isArray(m.items))
+    m.items=m.items.filter(function(it){return !(it&&ej.platos.has(it.id));});});
   const platos0=(o.dishes||[]).length,menus0=(o.meals||[]).length;
   o.dishes=(o.dishes||[]).filter(function(x){return !ej.platos.has(x.id);});
   o.meals=(o.meals||[]).filter(function(x){return !ej.menus.has(x.id);});
@@ -25511,8 +25561,9 @@ document.addEventListener('change',e=>{
       /* la siesta SÍ puede ser 0 —hay quien aguanta del tirón—, así que no vale el mismo v>0 que
          para las demás: con el filtro de antes, poner 0 no se guardaba y no pasaba nada */
       const k=el.dataset.k,v=+el.value;
-      if(k==='siesta'){if(v>=0&&v<=480)store.sueno.siesta=Math.round(v);}
-      else if(v>0)store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
+      /* elegida a mano: la migración de 3 h → 6 h no vuelve a tocarla (antes la deshacía en cada carga) */
+      if(k==='siesta'){if(v>=0&&v<=480){store.sueno.siesta=Math.round(v);store.sueno.siestaMia=true;}}
+      else if(v>0||(k==='latencia'&&v===0&&el.value!==''))store.sueno[k]=(k==='min'?Math.round(v*4)/4:Math.round(v));
       save();render();break;}
     case 'ev-toggle':{const ev=eventosS().find(function(e){return e.id===el.dataset.id;});
       if(ev){ev.on=!!el.checked;save();render();}break;}
@@ -25805,8 +25856,11 @@ function mirarVersion(){
   _versionMirando=true;
   return leerVersion().then(function(v){
     if(!v)return;
-    if(_versionArranque===null){_versionArranque=v;return;}
-    if(v!==_versionArranque){
+    if(_versionArranque===null){_versionArranque=v;
+      /* el service worker ha tenido que tirar de la copia de antes (red lenta): lo que corre es
+         más viejo que lo que dice version.json */
+      if(!window.__codigoViejo)return;}
+    if(v!==_versionArranque||window.__codigoViejo){
       _versionNueva=true;
       /* también se le dice al service worker que se mire a sí mismo, para que la recarga traiga
          ya el código nuevo y no otra vuelta de lo mismo */
@@ -25854,7 +25908,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={editMeal,editDish,addSet,vaciarMenus,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

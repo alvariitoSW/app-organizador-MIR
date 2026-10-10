@@ -45,7 +45,9 @@ self.addEventListener('fetch',function(e){
      arrancaba. Si la versión nueva aún no está, se espera como mucho 2,5 s; si no llega, arranca con
      la de antes y la nueva se sigue bajando para la próxima vez. */
   if(!navegacion&&/[?&]v=/.test(url.search)&&/\/(app\.js|styles\.css)$/.test(url.pathname)){
-    e.respondWith(versionada(req,url));return;}
+    /* también con el reloj de la frontera: en una instalación nueva no hay copia de antes y una red
+       que acepta y no contesta dejaba esta respuesta colgada para siempre */
+    e.respondWith(conLimite(versionada(req,url),LIMITE_TOTAL,function(){return reservaOSinRed(req,false);}));return;}
   const responder=(navegacion&&!url.search)?navegacionSellada(req,url):desdeLaRed(req,url,navegacion);
   /* El reloj va AQUÍ, en la frontera, y no alrededor de cada fetch. Es la diferencia que importa:
      fetch() resuelve en cuanto llegan las CABECERAS, así que un servidor que contesta «200, es
@@ -62,13 +64,23 @@ function versionada(req,url){
         /* guardada la nueva, las versiones anteriores sobran: sin esto cada despliegue dejaba otra
            copia de app.js (1,5 MB) en el móvil para siempre. La entrada sin marca se queda: es la
            que pide la portada guardada cuando no hay red */
-        if(res&&res.ok){const copia=res.clone();c.put(req,copia).then(function(){
+        if(res&&res.ok){const copia=res.clone(),sinMarca=res.clone();
+          /* y la misma copia bajo la URL SIN marca: es la que pide la portada guardada sin red. Antes
+             se quedaba la de la instalación, y ese código viejo borraba al guardar los campos que no
+             conocía (las fases de los hábitos, por ejemplo) */
+          c.put(url.origin+url.pathname,sinMarca).catch(function(){});
+          c.put(req,copia).then(function(){
           return c.keys(req,{ignoreSearch:true}).then(function(ks){return Promise.all(ks.filter(function(k){
             return k.url!==req.url&&/[?&]v=/.test(new URL(k.url).search);}).map(function(k){return c.delete(k);}));});
         }).catch(function(){});}
         return res;});
       /* la de antes (sin mirar la marca) como reserva, pero solo si la red tarda o falla */
-      const antes=function(){return c.match(req,{ignoreSearch:true});};
+      /* si sale la de antes, el código lo sabe: así la app avisa de «hay una versión nueva» aunque
+         version.json ya diga la nueva (antes nunca avisaba en este caso) */
+      const antes=function(){return c.match(req,{ignoreSearch:true}).then(function(v){
+        if(!v||!/\.js$/.test(url.pathname))return v;
+        return v.text().then(function(t){return new Response(t+'\n;self.__codigoViejo=true;\n',
+          {status:v.status,statusText:v.statusText,headers:v.headers});});});};
       return conLimite(red.then(function(res){return res.ok?res:antes().then(function(v){return v||res;});}),2500,
         function(){return antes().then(function(v){return v||red;});});});
   }).catch(function(){return fetch(req);});}
@@ -145,6 +157,7 @@ function navegacionSellada(req,url){
   return Promise.all([pedirFresco(req,url),leerSello()]).then(function(r){
     const res=r[0],sello=r[1];
     if(!res.ok)return reservaOSinRed(req,true);   /* 404/500: mejor la portada guardada que un error */
+    guardaCopia(req,res);   /* la portada de ahora (sin marca) para abrir sin red */
     if(!sello)return res;
     const ct=res.headers.get('content-type')||'';
     if(!/text\/html/i.test(ct))return res;
