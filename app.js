@@ -283,7 +283,7 @@ function tamanoLegible(n){
   return (Math.round(n/1024/1024*10)/10)+' MB';}
 function avisarBackupSiToca(){
   const db=diasDesdeBackup(),dp=diasDesdePrimerUso(),n=avisoBackupD();
-  if(!((db===null&&dp>n)||(db!==null&&db>n)))return;
+  if(!((db===null&&dp>n)||(db!==null&&db>=n)))return;
   try{const ultimo=+localStorage.getItem(NKEY);if(Date.now()-ultimo<864e5)return;
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no guardas una copia fuera del móvil: en «Datos» → «Guardar en Drive / Archivos», un toque',6000);},900);}
@@ -608,7 +608,7 @@ function normalize(o){
     fecha:esFecha(x.fecha||'')?x.fecha:'',
     hecha:(+x.hecha>0)?+x.hecha:0,
     color:esColor(x.color||'')?x.color:'',
-    evId:String(x.evId||''),ts:+x.ts||Date.now()}:null;})
+    evId:String(x.evId||''),proy:String(x.proy||'').trim().slice(0,40),ts:+x.ts||Date.now()}:null;})
     .filter(function(x){return x&&x.txt.trim();});
   if(!o.notasDia||typeof o.notasDia!=='object'||Array.isArray(o.notasDia))o.notasDia={};
   Object.keys(o.notasDia).forEach(function(k){
@@ -19426,7 +19426,7 @@ function cierreAbierto(mk){
   return hoy.getDate()>=dim-2||iso(llegadaNomina(hoy.getFullYear(),hoy.getMonth()).llega)<=iso(hoy);}
 function renderDinPlan(){
   const bs=bolsillos(),sh=bolsilloShares(),med=nominaMedia(),mp=metaPct();
-  const inv=ahorroS().huchas.some(function(h){return /invers/i.test(h.nombre);});
+  const inv=ahorroS().huchas.some(function(h){return metaTipo(h)==='inversion';});
   $('#main').innerHTML='<div class="grid dinv2 din5">'+dinSubcab('Cambiar el reparto')+
     '<div class="card"><div class="row"><span class="cap">META DE AHORRO</span><span class="sp"></span><b id="d5metaTxt">'+mp+' % del sueldo</b></div>'+
       '<input type="range" min="5" max="60" step="5" value="'+mp+'" data-a="din-meta-pct" class="drange" aria-label="meta de ahorro en % del sueldo">'+
@@ -20334,7 +20334,7 @@ function renderHuchaNueva(){
     '<button class="btn p gbig" data-a="hn-crear" id="hnCrear">Crear meta</button></div>';
   hnPinta();}
 function hnCalc(f){
-  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),pre=num(f.precio,0)||0,ya=num(f.ya,0)||0,falta=Math.max(0,pre-ya);
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),pre=numEuro(f.precio),ya=numEuro(f.ya),falta=Math.max(0,pre-ya);
   const meses=/^\d{4}-\d{2}$/.test(f.para||'')?Math.max(1,mkEntre(mkHoy,f.para)):6;
   const men=falta?Math.ceil(falta/meses/5)*5:0;
   return {pre:pre,ya:ya,falta:falta,meses:meses,men:men,dia:men?Math.max(1,Math.round(men/30)):0};}
@@ -21574,9 +21574,9 @@ function renderData(){
       <!-- lo que se viene a hacer, arriba; la explicación de dónde se guarda, plegada (era 1.286 px) -->
       <p class="note">Descárgalo y guárdalo donde quieras —Drive, el correo a ti mismo, lo que sea—. Sirve también para
       pasarte todo a otro móvil: lo bajas aquí y lo pegas allí en «Importar JSON».</p>
-      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>avisoBackupD()?'color:var(--warn);font-weight:700':''}">
+      <p class="mini" style="${diasDesdeBackup()===null||diasDesdeBackup()>=avisoBackupD()?'color:var(--warn);font-weight:700':''}">
       ${diasDesdeBackup()===null?'⚠ todavía no has hecho ninguna copia de seguridad':
-        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>avisoBackupD()?' — te toca otra':''))}</p>
+        (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>=avisoBackupD()?' — te toca otra':''))}</p>
       <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
       ${rescateTxt()?`<div class="aviso" style="margin-top:10px"><b>Hay datos apartados</b> que no se pudieron leer al abrir (${Math.round(rescateTxt().length/1024)} KB). Cópialos y pégalos en «Importar JSON» o guárdalos para ayuda.
@@ -21709,7 +21709,7 @@ function cajonVivo(t){
   }catch(e){}
   return '';}
 function cajonHTML(){
-  const d=diasDesdeBackup(),copia=d===null||d>avisoBackupD(),aj=['ajustes','cfg','data'].indexOf(ui.tab)>=0;
+  const d=diasDesdeBackup(),copia=d===null||d>=avisoBackupD(),aj=['ajustes','cfg','data'].indexOf(ui.tab)>=0;
   const oculto=!!(store.consumo&&consumoS().priv.oculto);   /* 4:20 discreto: sin nombre ni cifras */
   return '<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
     '<div class="ctil">'+CAJON.map(function(t){
@@ -22399,7 +22399,7 @@ function act(a,el){
         .then(function(){flash('tabla copiada: pégala en Excel o en Sheets');},function(){flash('no he podido copiar');});break;}
     case 'deseo-nuevo':ui.deseoNuevo=el.dataset.h||'';render();{const f2=document.getElementById('dsTxt');if(f2)f2.focus();}break;
     case 'deseo-add':{const h=huchaDe(el.dataset.h);if(!h)break;
-      const tx=((document.getElementById('dsTxt')||{}).value||'').trim(),pr=num((document.getElementById('dsPre')||{}).value,0)||0;
+      const tx=((document.getElementById('dsTxt')||{}).value||'').trim(),pr=numEuro((document.getElementById('dsPre')||{}).value);
       if(!tx){flash('¿en qué? vuelos, hotel, casco…');break;}
       if(!Array.isArray(h.deseos))h.deseos=[];
       h.deseos.push({id:uid('ds'),txt:tx.slice(0,60),precio:Math.max(0,pr),hecho:false});
@@ -24036,7 +24036,7 @@ function fallbackCopy(txt){const ta=document.createElement('textarea');ta.value=
   try{document.execCommand('copy');flash('Copiado');}catch(e){flash('Copia manual: selecciona el texto');}ta.remove();}
 function reemplazarDatos(o,etiqueta,msg){
   /* importar, volver al ejemplo o restaurar una copia: siempre con una foto de cómo estaba antes */
-  return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;_noPisar=false;save();ui.copias=null;render();flash(msg);});}
+  return copiasGuardar(etiqueta).then(function(){normalize(o);store=o;_noPisar=false;olvidaSitios();save();ui.copias=null;render();flash(msg);});}
 function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
 function copiaJSON(){return JSON.stringify(storeParaCopia(),null,1);}
 function storeParaCopia(){
@@ -24639,7 +24639,7 @@ function calUrlBloque(archivo,nombre){
   if(/^https?:\/\//i.test(url))L.push('<href>'+icsEscXml(url)+'</href>');
   else L.push('<!-- aquí la URL pública a la que subas ESTE fichero (carpeta sincronizada, repositorio, tu servidor…)',
     '     p. ej. https://dl.dropboxusercontent.com/s/…/'+icsEscXml(archivo)+' -->');
-  if(store.rotation.calAlarm!==false)L.push('<alarm><minutes>30</minutes><action>DISPLAY</action></alarm>');
+  if(store.rotation.calAlarm!==false)L.push('<alarm><minutes>'+icsAvisoMin()+'</minutes><action>DISPLAY</action></alarm>');
   L.push('<color>#4A9172</color>','<timezone>Europe/Madrid</timezone>');
   L.push('<IMPORT>true</IMPORT>','<IMPORTABLE>yes</IMPORTABLE>');
   if(store.rotation.calOculto!==false)L.push('<IMPORT_TAG>'+icsEscXml(nombre)+'</IMPORT_TAG>');
@@ -25433,8 +25433,8 @@ document.addEventListener('change',e=>{
       const k=el.dataset.k;
       if(k==='nombre')e2.nombre=String(el.value||'').trim().slice(0,40)||'Época';
       else if(k==='desde'){if(/^\d{4}-\d{2}$/.test(el.value||''))e2.desde=el.value;}
-      else if(k==='finde')e2.finde=num(el.value,0);
-      else e2[k]=Math.max(0,num(el.value,0));
+      else if(k==='finde'){const v=leeImporte(el.value);e2.finde=isFinite(v)?v:0;}   /* puede ser negativo */
+      else e2[k]=numEuro(el.value);
       save();render();break;}
     case 'aho-cobrado':{const c=ahorroS().cobrado,v=String(el.value||'').trim();
       if(!v)delete c[el.dataset.mk];else{const n=numEuro(v);if(n)c[el.dataset.mk]=n;}
@@ -25442,7 +25442,7 @@ document.addEventListener('change',e=>{
     case 'aho-hu':{const h=huchaDe(el.dataset.id);if(!h)break;
       const k=el.dataset.k;
       if(k==='pct')h.pct=Math.max(0,Math.min(100,Math.round(num(el.value,0))));
-      else if(k==='objetivo')h.objetivo=Math.max(0,num(el.value,0));
+      else if(k==='objetivo')h.objetivo=numEuro(el.value);
       else if(k==='color'){if(esColor(el.value))h.color=el.value;}
       else if(k==='ico')h.ico=String(el.value||'').trim().slice(0,4)||'🐷';
       else if(k==='nombre')h.nombre=String(el.value||'').trim().slice(0,30)||'Hucha';

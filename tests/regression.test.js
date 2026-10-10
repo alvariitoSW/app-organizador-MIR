@@ -11367,6 +11367,56 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('quitar una comida apuntada devuelve la ración al táper', r.l.tras === 0 && r.l.vuelve === 1, JSON.stringify(r.l));
   }
 
+  // 270) TANDA 6 DEL INFORME (Hábitos/notas, Dinero y Ajustes), EN CADENA: (a) una meta nueva de «1.500» con
+  // «200» ya ahorrados es de mil quinientos euros (num() la leía como 1,5 €), y en la de casa el deseo «1.200»
+  // también; (b) el neto de tu época escrito «2.766» son 2.766 €; (c) el proyecto de una nota sobrevive a
+  // recargar (normalize lo tiraba); (d) la suscripción por URL lleva el aviso que elegiste, no 30 fijos;
+  // (e) un bolsillo de tipo inversión llamado «Fondo indexado» ya cuenta como inversión en el Plan; (f) el día
+  // justo del aviso de copia, la pantalla de copias también dice «te toca otra», como Ajustes
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia270', JSON.stringify(P.store));   // la recarga de (c) borra las variables de la página
+      P.ui.tab = 'dinero'; P.ui.dineroVista = 'hucha-nueva'; P.ui.dinHoja = ''; P.ui.hn = null; P.render(); });
+    await page.fill('#hnNom', 'Viaje a Lisboa'); await page.fill('#hnPre', '1.500'); await page.fill('#hnYa', '200');
+    await page.click('#hnCrear'); await page.waitForTimeout(150);
+    r.meta = await page.evaluate(() => { const h = window.PG.ahorroS().huchas.filter((x) => x.nombre === 'Viaje a Lisboa')[0]; return h ? h.objetivo + '|' + h.saldo : null; });
+    // la de casa abre su lista de deseos: «1.200» por el sofá
+    await page.evaluate(() => { const P = window.PG; P.ui.dinHoja = ''; P.ui.dineroVista = 'hucha-nueva'; P.ui.hn = null; P.render(); });
+    await page.click('#main [data-a="hn-tipo"][data-v="casa"]'); await page.waitForTimeout(100);
+    await page.fill('#hnNom', 'Cosas de casa'); await page.click('#hnCrear'); await page.waitForTimeout(150);
+    await page.fill('#dsTxt', 'Sofá'); await page.fill('#dsPre', '1.200');
+    await page.click('[data-a="deseo-add"]'); await page.waitForTimeout(120);
+    r.deseo = await page.evaluate(() => { const h = window.PG.ahorroS().huchas.filter((x) => x.nombre === 'Cosas de casa')[0]; return h && h.deseos.map((d) => d.txt + ':' + d.precio).join(); });
+    // la época: lo que cobras, con punto de miles
+    await page.evaluate(() => { const P = window.PG; P.ui.dinHoja = ''; P.ui.dineroVista = 'nomina'; P.render(); });
+    const neto = await page.$('#main [data-a="aho-ep"][data-k="neto"]');
+    if (neto) { await neto.fill('2.766'); await page.keyboard.press('Tab'); await page.waitForTimeout(120); }
+    r.neto = await page.evaluate(() => window.PG.ahorroS().epocas.some((e) => e.neto === 2766));
+    // una nota con proyecto, y recargar
+    await page.evaluate(() => { const P = window.PG; const n = P.addNota('Llamar al banco', P.iso(new Date())); P.ui.notaSel = (P.store.notas.filter((x) => x.txt === 'Llamar al banco')[0] || {}).id; P.ui.tab = 'notas'; P.render(); });
+    const proy = await page.$('#main [data-a="nota-f"][data-k="proy"]');
+    if (proy) { await proy.fill('Casa'); await page.keyboard.press('Tab'); await page.waitForTimeout(150); }
+    await page.reload(); await page.waitForTimeout(700);
+    r.proy = await page.evaluate(() => (window.PG.store.notas.filter((x) => x.txt === 'Llamar al banco')[0] || {}).proy || '');
+    // el aviso de la suscripción por URL, la inversión del Plan y la copia del día justo
+    r.resto = await page.evaluate(() => { const P = window.PG, out = {};
+      P.store.rotation.icsAvisoMin = 10; P.store.rotation.calAlarm = true;
+      out.alarm = (/<minutes>(\d+)<\/minutes>/.exec(P.calUrlBloque('x.ics', 'Guardias')) || [])[1];
+      P.ahorroS().huchas.push({ id: 'hu270', nombre: 'Fondo indexado', tipo: 'inversion', ico: '📈', color: '#38bdf8', pct: 10, objetivo: 0, saldo: 0, deseos: [] });
+      P.ui.tab = 'dinero'; P.ui.dinHoja = ''; P.ui.dineroVista = 'plan'; P.render();
+      out.inv = /Añadir inversión/.test(document.querySelector('#main').innerText);
+      const bk0 = localStorage.getItem('planGuardias.lastBackup');
+      localStorage.setItem('planGuardias.lastBackup', String(Date.now() - P.avisoBackupD() * 864e5 - 3600e3));
+      P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render();
+      out.copia = /te toca otra/.test(document.querySelector('#main').innerText);
+      P.store = JSON.parse(localStorage.getItem('__copia270')); localStorage.removeItem('__copia270'); if (bk0) localStorage.setItem('planGuardias.lastBackup', bk0); else localStorage.removeItem('planGuardias.lastBackup'); P.save(); P.ui.datosVista = ''; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); return out; });
+    check('una meta de «1.500» con «200» ya ahorrados es de 1.500 €, y el deseo «1.200» de la lista de casa también',
+      r.meta === '1500|200' && r.deseo === 'Sofá:1200', JSON.stringify(r));
+    check('el neto de la época escrito «2.766» son 2.766 € y el proyecto de una nota aguanta recargar',
+      r.neto === true && r.proy === 'Casa', JSON.stringify({ neto: r.neto, proy: r.proy }));
+    check('la suscripción por URL avisa con tus minutos, «Fondo indexado» de tipo inversión cuenta como inversión y el día del aviso toca copia',
+      r.resto.alarm === '10' && r.resto.inv === false && r.resto.copia === true, JSON.stringify(r.resto));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
