@@ -1417,8 +1417,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     ({ hid, key }) => window.PG.habitoHecho(hid, key),
     { hid: habId, key: hoyKeyHab },
   );
-  const dots = await page.evaluate(() => document.querySelectorAll('#main .hbr .hdots i').length);
-  check('Hábitos: tocar el círculo marca el de hoy, y cada uno lleva sus últimos 7 días', marcado === true && dots === 7, JSON.stringify({ marcado, dots }));
+  // v3: en vez de la racha y los 7 puntos, «día N de ~66» con su barra (Lally 2010)
+  const dia = await page.evaluate(() => ({ barra: !!document.querySelector('#main .hbr .hdia i'), txt: (document.querySelector('#main .hbr .hdiat') || {}).textContent || '' }));
+  check('Hábitos: tocar el círculo marca el de hoy, y cada uno dice en qué día va de ~66', marcado === true && dia.barra && /día 1 de ~66/.test(dia.txt), JSON.stringify({ marcado, dia }));
 
   // editar y borrar: tocar el nombre abre su hoja, con «Borrar» (y confirmación)
   await page.click(`#main [data-a="hab-ed"][data-id="${habId}"]`);
@@ -10504,7 +10505,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const plan = await page.evaluate(() => { const c = window.PG.consumoS(); return { cudit: c.cudit.length && c.cudit[0].p, tb: !!(c.plan.tb && c.plan.tb.dias === 7) }; });
     // asistente en Hoy: check-in y una sola tarjeta; × la silencia
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
-    const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj:not(.din)').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
+    const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj:not(.din):not(.cn)').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
     pasos.push(await cl('#main .asist [data-a="asist-kss"][data-v="4"]')); pasos.push(await cl('#main .asist [data-a="asist-animo"][data-v="4"]'));
     const ck = await page.evaluate(() => { const k = window.PG.iso(new Date()), c = window.PG.asistS().checkins[k] || {}; return { kss: window.PG.cnKss(k), animo: c.animo, hecho: window.PG.asistHecho(k) }; });
     const antes = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
@@ -10915,6 +10916,89 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('con una captura antes de cada nómina sale lo gastado del mes sin Fintonic ni cifra', r.gasto.g === r.gasto.espera && r.gasto.g > 0, JSON.stringify(r.gasto));
     check('una captura del banco se lee en el móvil: dos cuentas con sus cuatro números, su saldo y para qué es cada una',
       r.ocr.estado === 'listo' && r.ocr.c.join() === '4821:1670.32:gasto,0937:4810:ahorro', JSON.stringify(r.ocr));
+  }
+
+  // 264) HÁBITOS COMO ASISTENTE, EN CADENA: tres en marcha como mucho, «día N de ~66», el mínimo que se
+  // propone solo, el obstáculo al tercer día y no al crear, «¿qué se cruzó?» que cambia el hábito, la
+  // pregunta de automaticidad que lo pasa a «ya te salen solos» y deja hueco, «probar 14 días» dentro
+  // del hábito, las reglas de 4:20 en su sección y Tu semana sin objetivos del trimestre. Se conduce por
+  // la pantalla, tarjeta a tarjeta, con días libres para que la fecha no cambie el orden
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store, k = (i) => P.iso(P.addDays(new Date(), -i));
+      window.__copia264 = JSON.parse(JSON.stringify(s));
+      s.rotation.mode = 'date'; for (let i = -1; i <= 3; i++) P.setDayOverride(k(i), 'sh-l', '');
+      s.habitos = { items: [
+        { id: 'hl', nombre: 'Leer', icono: '📖', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: '', ancla: { t: 'tras', v: 'cama' }, min: '2 páginas', creado: k(33), fase: 'marcha', inicio: k(33) },
+        { id: 'he', nombre: 'Estirar', icono: '🧘', color: '#c084fc', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: '', ancla: { t: 'tras', v: 'comer' }, min: '3 min', creado: k(11), fase: 'marcha', inicio: k(11), obst: 'olvido', plan: '' },
+        { id: 'hc', nombre: 'Cama a su hora', icono: '🛌', color: '#818cf8', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: 'cama', ancla: {}, min: '', creado: k(90), fase: 'solo', soloVisto: k(10) },
+        { id: 'ha', nombre: 'Agua, 2 litros', icono: '💧', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], noEn: [], auto: '', ancla: {}, min: '', creado: k(5), fase: 'espera' }], registro: {} };
+      for (let i = 3; i <= 33; i++) { const x = s.habitos.registro[k(i)] = { hl: 'ok' }; if (i <= 11) x.he = 'ok'; }
+      s.habitos.registro[k(1)] = { hl: 'ok' }; s.habitos.registro[k(2)] = { hl: 'ok' };
+      delete s.asist; const A = P.asistS(); A.corto[P.iso(new Date())] = false;
+      if (s.consumo) { s.consumo.plan = s.consumo.plan || {}; delete s.consumo.plan.tb; }
+      P.ui.tab = 'habitos'; P.ui.habVista = ''; P.ui.habEd = null; P.save(); P.render(); });
+    const card = () => page.evaluate(() => { const t = document.querySelector('#main .card.asist .astj'); return t ? t.innerText.replace(/\s+/g, ' ') : ''; });
+    r.portada = await page.evaluate(() => document.querySelector('#main').innerText.replace(/\s+/g, ' '));
+    r.c1 = await card();
+    // «¿qué se cruzó?» → cansancio: el mínimo pasa a ser su plan para esos días
+    await page.click('#main .astj [data-a="hab-cruzo"][data-v="cansancio"]'); await page.waitForTimeout(120);
+    r.he = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'he')[0]; return h.obst + '|' + h.plan; });
+    r.c2 = await card();
+    await page.click('#main .astj [data-a="hab-min"]'); await page.waitForTimeout(120);
+    r.min = await page.evaluate(() => window.PG.habitoEstado('he', window.PG.iso(new Date())));
+    // al tercer día (y no al crear): ¿qué te lo puede impedir? → la hoja con «entonces haré…»
+    r.c3 = await card();
+    await page.click('#main .astj [data-a="hab-obst"][data-v="guardia"]'); await page.waitForTimeout(150);
+    await page.fill('#habEdPlan', 'leer en la cama de guardia'); await page.click('#hojaDia [data-a="hab-ed-ok"]'); await page.waitForTimeout(150);
+    r.hl = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'hl')[0]; return h.obst + '|' + h.plan; });
+    // cada 14 días: ¿te sale sin pensar? Con el tercer «sí» seguido pasa a «ya te salen solos»
+    r.c4 = await card();
+    await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'hl')[0], k = (i) => window.PG.iso(window.PG.addDays(new Date(), -i)); h.si = [{ f: k(28), v: true }, { f: k(14), v: true }]; window.PG.render(); });
+    r.c4b = await card();
+    await page.click('#main .astj [data-a="hab-si"][data-v="1"]'); await page.waitForTimeout(150);
+    r.solo = await page.evaluate(() => ({ fase: window.PG.habitosS().items.filter((x) => x.id === 'hl')[0].fase, marcha: window.PG.habEnMarcha().length }));
+    // queda hueco: «Empezar» el que esperaba (día 1)
+    await page.click('#main .hhueco [data-a="hab-fase"][data-v="marcha"]'); await page.waitForTimeout(150);
+    r.agua = await page.evaluate(() => { const P = window.PG, h = P.habitosS().items.filter((x) => x.id === 'ha')[0]; return h.fase + '|' + P.habDia(h); });
+    // nuevo: «Meditar 10 minutos» con su mínimo propuesto; el cuarto en marcha espera turno
+    const nuevo = async (nom) => { await page.click('#main [data-a="hab-ed"][data-id=""]'); await page.waitForTimeout(120); await page.fill('#habEdNom', nom);
+      await page.click('#hojaDia [data-a="hab-ed-ancla"][data-v="tras:despertar"]'); await page.waitForTimeout(80); await page.click('#hojaDia [data-a="hab-ed-ok"]'); await page.waitForTimeout(150); };
+    await nuevo('Meditar 10 minutos'); await nuevo('Inglés 20 min');
+    r.nuevos = await page.evaluate(() => window.PG.habitosS().items.filter((x) => /Meditar|Inglés/.test(x.nombre)).map((x) => x.nombre + ':' + x.fase + ':' + x.min + ':' + (x.ancla.v || '')));
+    // probar 14 días dentro del hábito: otro «cuándo», y a los 14 días, ¿te quedas? (aquí, volver)
+    await page.click('#main [data-a="hab-ed"][data-id="ha"]'); await page.waitForTimeout(120);
+    await page.click('#hojaDia [data-a="hab-ed-ancla"][data-v="tras:comer"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia .hmas summary'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="hab-probar"]'); await page.waitForTimeout(150);
+    r.prueba = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'ha')[0]; return h.prueba && (h.prueba.txt + '|' + h.ancla.v); });
+    await page.evaluate(() => { const P = window.PG, h = P.habitosS().items.filter((x) => x.id === 'ha')[0]; h.prueba.desde = P.iso(P.addDays(new Date(), -14)); P.store = JSON.parse(JSON.stringify(P.store)); P.render(); });
+    r.c5 = await card();
+    const vuelve = await page.$('#main .astj [data-a="hab-prueba"][data-v="0"]'); if (vuelve) { await vuelve.click(); await page.waitForTimeout(120); }
+    r.tras = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'ha')[0]; return (h.ancla.v || 'sin') + '|' + !!h.prueba; });
+    // las de 4:20, en su sección: un T-break en marcha sale allí y no en la tarjeta de hábitos
+    r.cn = await page.evaluate(() => { const P = window.PG, c = P.consumoS(); c.plan = c.plan || {}; c.plan.tb = { desde: P.iso(new Date()), dias: 7 };
+      P.ui.tab = 'consumo'; P.ui.cnVista = ''; P.render(); const enCn = (document.querySelector('#main .card.asist .astj.cn') || {}).innerText || '';
+      const hab = (P.asistTarjeta(P.iso(new Date())) || {}).id || ''; delete c.plan.tb; return { enCn: enCn.replace(/\s+/g, ' ').slice(0, 80), hab }; });
+    // Tu semana: sin objetivos del trimestre y con la puerta a los experimentos
+    r.sem = await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = 'rev'; P.render(); const t = document.querySelector('#main').innerText;
+      return { obj: /OBJETIVOS DEL TRIMESTRE/.test(t), exp: !!document.querySelector('#main [data-a="hab-vista"][data-v="exp"]'), tocaban: /de los días que tocaban/.test(t) }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia264; P.save(); P.ui.habVista = ''; P.ui.habEd = null; P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Hábitos: en marcha 2 de 3 con «día 34 de ~66» y su mínimo, los que salen solos sin marcar y los que esperan turno',
+      /EN MARCHA · 2 DE 3/.test(r.portada) && /día 34 de ~66/.test(r.portada) && /día malo: 2 páginas/.test(r.portada) && /YA TE SALEN SOLOS/.test(r.portada) && /Cama a su hora/.test(r.portada) && /ESPERAN TURNO/.test(r.portada),
+      r.portada.slice(0, 400));
+    check('dos fallos: «¿qué se cruzó?»; «cansancio» deja el mínimo como plan; luego «ayer no hubo…» y el mínimo vale',
+      /Dos días sin estirar/.test(r.c1) && r.he === 'cansancio|solo 3 min' && /Ayer no hubo estirar/.test(r.c2) && r.min === 'min', JSON.stringify({ c1: r.c1, he: r.he, c2: r.c2, min: r.min }));
+    check('al tercer día pregunta qué lo puede impedir y abre la hoja para el «entonces haré…»',
+      /¿Qué te lo puede impedir/.test(r.c3) && r.hl === 'guardia|leer en la cama de guardia', JSON.stringify({ c3: r.c3, hl: r.hl }));
+    check('cada 14 días, «¿te sale sin pensar?»; tres «sí» seguidos lo pasan a «ya te salen solos» y el que esperaba empieza en el día 1',
+      /sin pensar/.test(r.c4b) && r.solo.fase === 'solo' && r.solo.marcha === 1 && r.agua === 'marcha|1', JSON.stringify({ c4: r.c4, c4b: r.c4b, solo: r.solo, agua: r.agua }));
+    check('un hábito nuevo se crea con 4 preguntas y su mínimo propuesto («10 minutos» → «2 minutos»); con 3 en marcha, el siguiente espera turno',
+      r.nuevos.join() === 'Meditar 10 minutos:marcha:2 minutos:despertar,Inglés 20 min:espera:4 min:despertar', JSON.stringify(r.nuevos));
+    check('«probar 14 días» va dentro del hábito: el cambio se prueba, a los 14 días pregunta con su % y «volver» lo deja como estaba',
+      /después de comer/.test(r.prueba || '') && /14 días con/.test(r.c5) && /% hecho/.test(r.c5) && r.tras === 'sin|false', JSON.stringify({ prueba: r.prueba, c5: r.c5, tras: r.tras }));
+    check('las señales de 4:20 salen en su sección y no en la de hábitos; Tu semana sin objetivos del trimestre y con experimentos',
+      /T-break/.test(r.cn.enCn) && !/tbreak/.test(r.cn.hab) && !r.sem.obj && r.sem.exp && r.sem.tocaban, JSON.stringify({ cn: r.cn, sem: r.sem }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

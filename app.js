@@ -971,7 +971,15 @@ function normalize(o){
       ancla:h.ancla&&h.ancla.t==='hora'&&/^\d{2}:\d{2}$/.test(h.ancla.v||'')?{t:'hora',v:h.ancla.v}:
         (h.ancla&&h.ancla.t==='tras'&&idDe(HAB_TRAS,h.ancla.v)?{t:'tras',v:h.ancla.v}:{}),
       min:String(h.min||'').slice(0,60),obst:idDe(HAB_OBST,h.obst),
-      plan:String(h.plan||'').slice(0,60),porQue:String(h.porQue||'').slice(0,80)};});
+      plan:String(h.plan||'').slice(0,60),porQue:String(h.porQue||'').slice(0,80),
+      /* en marcha (3 como mucho), ya sale solo o espera turno; desde cuándo está en marcha, lo que
+         contestaste a «¿te sale sin pensar?», el último «¿sigue?» y la prueba de 14 días */
+      fase:['marcha','solo','espera'].indexOf(h.fase)>=0?h.fase:'marcha',inicio:/^\d{4}-\d{2}-\d{2}$/.test(h.inicio||'')?h.inicio:'',
+      si:(Array.isArray(h.si)?h.si:[]).filter(function(x){return x&&/^\d{4}-\d{2}-\d{2}$/.test(x.f||'');}).slice(-12).map(function(x){return {f:x.f,v:!!x.v};}),
+      soloVisto:/^\d{4}-\d{2}-\d{2}$/.test(h.soloVisto||'')?h.soloVisto:'',
+      prueba:h.prueba&&/^\d{4}-\d{2}-\d{2}$/.test(h.prueba.desde||'')?{desde:h.prueba.desde,txt:String(h.prueba.txt||'').slice(0,80),
+        antes:h.prueba.antes==null?null:Math.round(+h.prueba.antes)||0,prev:{ancla:h.prueba.prev&&h.prueba.prev.ancla&&h.prueba.prev.ancla.t?
+          {t:h.prueba.prev.ancla.t==='hora'?'hora':'tras',v:String(h.prueba.prev.ancla.v||'').slice(0,12)}:{},min:String((h.prueba.prev||{}).min||'').slice(0,60)}}:null};});
   if(!o.habitos.registro||typeof o.habitos.registro!=='object')o.habitos.registro={};
   Object.keys(o.habitos.registro).forEach(function(k){
     if(!o.habitos.registro[k]||typeof o.habitos.registro[k]!=='object'){delete o.habitos.registro[k];return;}
@@ -993,7 +1001,7 @@ function normalize(o){
     const ex=A.exp&&typeof A.exp==='object'?A.exp:{};
     A.exp={act:ex.act&&EXP[ex.act.id]&&fe.test(ex.act.desde||'')?{id:ex.act.id,desde:ex.act.desde,dias:+ex.act.dias===14?14:7}:null,
       hist:(Array.isArray(ex.hist)?ex.hist:[]).filter(function(h){return h&&EXP[h.id];}).slice(-50).map(function(h){return {id:h.id,desde:String(h.desde||''),dias:+h.dias||7,antes:String(h.antes||'—'),durante:String(h.durante||'—'),ver:String(h.ver||'').slice(0,80)};})};
-    A.obj=(Array.isArray(A.obj)?A.obj:[]).filter(function(x){return x&&OBJ_M[x.m];}).slice(0,3).map(function(x){return {m:x.m,meta:+x.meta||0,desde:fe.test(x.desde||'')?x.desde:''};});}
+    A.obj=(Array.isArray(A.obj)?A.obj:[]).filter(function(x){return x&&typeof x.m==='string';}).slice(0,3).map(function(x){return {m:x.m,meta:+x.meta||0,desde:fe.test(x.desde||'')?x.desde:''};});}
   else delete o.asist;
   if(!Array.isArray(o.rules))o.rules=[];
   if(!Array.isArray(o.dishes))o.dishes=[];
@@ -10357,7 +10365,8 @@ function renderConsumo(){
   /* ¿qué tal te sentó la última? (a partir de 2 h después, o al día siguiente) */
   const pend=c.ses.filter(function(x){return !x.sento&&x.fecha>=iso(addDays(new Date(),-2))&&(x.fecha<iso(new Date())||(x.ts&&Date.now()-x.ts>2*3600000));})[0];
   const G=ui.cnGanas;
-  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('')+
+  const cnT=cnTarjeta(iso(new Date()));
+  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('')+(cnT?'<div class="card asist">'+asistTjHTML(cnT,'cn')+'</div>':'')+
     '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
       '<div><b>'+(S.mg||0)+' mg</b><span>THC esta semana · '+String(S.g).replace('.',',')+' g</span></div>'+
       '<div><b>'+sin+'</b><span>'+(sin===1?'día sin':'días seguidos sin')+(sin>=2?' · tolerancia −'+cnTolerancia(sin)+' %':'')+'</span></div></div>'+
@@ -16073,6 +16082,7 @@ const HAB_TRAS=[['despertar','al despertar'],['guardia','al salir de guardia'],[
 const HAB_OBST=[['guardia','🩺 la guardia'],['cansancio','😮‍💨 el cansancio'],['lloret','🌿 el Lloretazo'],['pantallas','📱 el móvil'],['olvido','🤷 se me olvida']];
 const HAB_PESO={ok:1,min:0.5};   /* el mínimo cuenta medio en los %, entero en la racha */
 function habitoToca(hab,key){
+  if(hab.fase&&hab.fase!=='marcha')return false;
   const d=parseDate(key);if(!d||(hab.dow||[]).indexOf(d.getDay())<0)return false;
   const A=HAB_AUTO[hab.auto];if(A&&A.toca&&!A.toca(key))return false;
   return !(hab.noEn||[]).length||(hab.noEn||[]).indexOf(diaTipo(key))<0;}
@@ -16155,20 +16165,22 @@ function habSubTxt(h){
   if(HAB_AUTO[h.auto])p.push('se marca solo: '+HAB_AUTO[h.auto].lab.replace(/^\S+ /,''));
   if(h.min)p.push('mínimo: '+h.min);
   return p.join(' · ');}
-function habMesHTML(items){
-  /* los últimos 30 días en %, y lo que la app ve: un tipo de día en el que toca y no lo has hecho nunca */
-  const filas=items.map(function(h){
-    const P=habPct(h,30);if(!P.toca)return '';
-    const nunca=/agua|beber|hidrat|cama|dormir|medica|pastilla|vitamina|creatina|dientes/i.test(h.nombre||'')||h.auto?null:
-      Object.keys(P.porTipo).filter(function(t){return P.porTipo[t].n>=2&&!P.porTipo[t].ok;})[0];
-    const mh=!(h.ancla&&h.ancla.t)?habMejorHora(h):'';
-    return '<div class="ali"><span class="e">'+esc(h.icono)+'</span><span class="hmt"><b>'+esc(h.nombre)+'</b>'+
-      (nunca?'<span class="w">los días de '+esc(diaTipoInfo(nunca)[1].toLowerCase())+', nunca</span>':'')+
-      (mh?'<span>sueles hacerlo hacia las '+esc(hCortaHM(mh))+'</span>':'')+'</span>'+
-      (nunca?'<button class="chipx" data-a="hab-noen" data-id="'+h.id+'" data-t="'+nunca+'">no pedírmelo</button>':
-        (mh?'<button class="chipx" data-a="hab-ancla-hora" data-id="'+h.id+'" data-v="'+mh+'">anclar ahí</button>':''))+
-      '<em>'+P.pct+' %</em></div>';}).join('');
-  return filas?'<div class="acap">ÚLTIMOS 30 DÍAS</div><div class="alst">'+filas+'</div>':'';}
+function habFase(h){return h.fase||'marcha';}
+function habEnMarcha(){return habitosS().items.filter(function(h){return habFase(h)==='marcha';});}
+function habDia(h){
+  /* «día 34 de ~66» (Lally 2010: de 18 a 254 días, mediana 66): desde que está en marcha */
+  let d=h.inicio||h.creado||iso(new Date());
+  if(!h.inicio){const reg=habitosS().registro;Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][h.id]&&k<d)d=k;});}
+  return Math.max(1,1-diasHasta(d));}
+function habFaseA(h,f){
+  /* a «en marcha» solo si hay hueco (3 como mucho); al empezar, cuenta desde hoy */
+  if(f==='marcha'&&habFase(h)!=='marcha'){if(habEnMarcha().length>=3){flash('tienes 3 en marcha: deja uno esperando o que salga solo');return;}h.fase='marcha';h.inicio=iso(new Date());h.si=[];return;}
+  if(f==='solo'){h.fase='solo';h.soloVisto=iso(new Date());return;}
+  if(f==='espera')h.fase='espera';}
+function habMinSug(n){
+  /* el mínimo del día malo, propuesto: «10 páginas» → «2 páginas» (Fogg: tan pequeño que no cueste) */
+  const m=/(\d+)\s*(p[aá]ginas?|p[aá]gs?|min(?:utos)?|vasos?|km|flexiones|sentadillas|veces|series|posturas|ejercicios|palabras|preguntas|tarjetas)\b/i.exec(n||'');
+  return m?Math.max(1,Math.round(+m[1]/5))+' '+m[2]:'';}
 function habCorto(key){
   /* «hoy, versión corta»: al salir de guardia o si amaneces a 7 o más de 9 (Pilcher 2015: sin sueño
      no hay autocontrol). Lo que digas en la tarjeta del asistente manda */
@@ -16179,34 +16191,44 @@ function renderHabitos(){
   const v=ui.habVista||'';
   if(v==='rev')return renderRevision();
   if(v==='exp')return renderExperimentos();
-  /* hoy primero y a un toque; cada hábito con su frase («al salir de guardia → estirar»), su
-     mínimo y sus últimos 7 días. Crear y editar, en una hoja (habHojaHTML) */
-  const items=habitosS().items,hoyK=iso(new Date()),corto=habCorto(hoyK);
-  const tocan=items.filter(function(h){return habitoToca(h,hoyK);}),resto=items.filter(function(h){return !habitoToca(h,hoyK);});
-  const hechos=tocan.filter(function(h){return habTick(h,hoyK).on;}).length;
+  /* «Lo que funciona es uno o dos nuevos a la vez» (Wood y Neal 2016): arriba los que están en marcha
+     (3 como mucho) con su cuándo, «día N de ~66» y el mínimo del día malo; debajo, los que ya salen
+     solos (no se marcan) y los que esperan turno. Una frase del asistente encima. Crear y editar, en
+     la hoja de siempre (habHojaHTML) */
+  const items=habitosS().items,hoyK=iso(new Date()),corto=habCorto(hoyK),M=habEnMarcha();
+  const solos=items.filter(function(h){return habFase(h)==='solo';}),espera=items.filter(function(h){return habFase(h)==='espera';});
   const fila=function(h){
-    const toca=habitoToca(h,hoyK),T=toca?habTick(h,hoyK):{est:'',on:false,cm:false},racha=rachaHabito(h);
-    /* los 7 puntos y los fallos de la semana, en la misma pasada */
-    let dots='',fa=0;for(let i=6;i>=0;i--){const k=iso(addDays(new Date(),-i)),t=habitoToca(h,k),e=t?habitoEstadoH(h,k):'';
-      if(t&&!e&&i>0)fa++;
-      dots+='<i class="'+(t?'':'x')+(i===0?' hoy':'')+(e==='min'?' mn':'')+'"'+(e?' style="background:'+esc(h.color)+'"':'')+'></i>';}
-    return '<div class="hbr'+(toca?'':' notoca')+'" data-lp="hab" data-id="'+h.id+'">'+
-      (toca?'<button class="hbt'+(T.on?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="'+T.accion+'" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'">'+(T.est==='min'?'½':(T.on?'✓':esc(h.icono)))+'</button>':
-        '<span class="hbt" style="--c:'+esc(h.color)+'" title="hoy no toca">'+esc(h.icono)+'</span>')+
-      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.nombre)+(T.cm?' <small class="hcorto">hoy: '+esc(h.min)+'</small>':'')+'</b><span>'+esc(habSubTxt(h))+(toca?'':' · hoy no toca')+'</span>'+
-        '<span class="hdots" aria-hidden="true">'+dots+'</span></button>'+
-      '<span class="hbrr">'+(racha?'🔥 '+racha:'')+(racha&&fa?'<small>'+fa+' fallo'+(fa===1?'':'s')+'</small>':'')+
-        (toca&&!T.on&&h.min&&!corto?'<button class="hmin" data-a="hab-min" data-id="'+h.id+'" data-key="'+hoyK+'" aria-label="hecho el mínimo: '+esc(h.min)+'">mín.</button>':'')+'</span></div>';};
-  const ex=expActivo();
-  $('#main').innerHTML='<div class="grid ajg">'+
-    '<div class="subcab"><h2 class="subtit">✅ Hábitos</h2><span class="sp"></span>'+(tocan.length?'<span class="mini"><b>'+hechos+' de '+tocan.length+'</b> hoy</span>':'')+'</div>'+
-    '<div class="row hbacc"><button class="btn s" data-a="hab-vista" data-v="rev">📋 Tu semana</button><button class="btn s" data-a="hab-vista" data-v="exp">🧪 Experimentos'+(ex?' · día '+ex.dia:'')+'</button></div>'+
-    (corto&&tocan.length?'<p class="mini hcortop">Hoy, versión corta'+(diaTipo(hoyK)==='saliente'?' (sales de guardia)':' (amaneces cansado)')+': el ✓ marca el mínimo y la racha sigue. <button class="dlink" data-a="asist-corto" data-v="0" data-k="'+hoyK+'">hoy entero</button></p>':'')+
-    (items.length?'<div class="alst">'+tocan.concat(resto).map(fila).join('')+'</div>':
+    const toca=habitoToca(h,hoyK),T=toca?habTick(h,hoyK):{est:'',on:false,cm:false},dia=habDia(h),an=habAnclaTxt(h);
+    return '<div class="hbr hbr3'+(toca?'':' notoca')+'" data-lp="hab" data-id="'+h.id+'">'+
+      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.icono+' '+h.nombre)+(T.cm?' <small class="hcorto">hoy: '+esc(h.min)+'</small>':'')+'</b>'+
+        '<span>'+esc(an?an.charAt(0).toUpperCase()+an.slice(1):diasCorta(h.dow))+(toca?'':' · hoy no toca')+'</span>'+
+        '<span class="hdia" aria-label="día '+dia+' de unos 66"><i style="width:'+Math.min(100,Math.round(dia/66*100))+'%;background:'+esc(h.color)+'"></i></span>'+
+        '<span class="hdiat"><span>día '+dia+' de ~66</span>'+(h.min?'<span>día malo: '+esc(h.min)+'</span>':'')+'</span></button>'+
+      '<span class="hbrr">'+(toca&&!T.on&&h.min&&!corto?'<button class="hmin" data-a="hab-min" data-id="'+h.id+'" data-key="'+hoyK+'" aria-label="hecho el mínimo: '+esc(h.min)+'">mín.</button>':'')+
+        (toca?'<button class="hbt'+(T.on?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="'+T.accion+'" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'">'+(T.est==='min'?'½':(T.on?'✓':esc(h.icono)))+'</button>':
+          '<span class="hbt" style="--c:'+esc(h.color)+'" title="hoy no toca">'+esc(h.icono)+'</span>')+'</span></div>';};
+  const lin=function(h,der,acc){return '<div class="ali hlin"><span class="e">'+esc(h.icono)+'</span><button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.nombre)+'</b></button>'+
+    (acc||'<em>'+esc(der)+'</em>')+'</div>';};
+  const sigueMes=function(h){const d=parseDate(h.soloVisto||h.creado||hoyK)||new Date();return MONTH_FULL[addDays(d,30).getMonth()].toLowerCase();};
+  const t=asistTarjetaHab(hoyK);
+  const hueco=M.length<3?'<div class="hbr hhueco"><span>'+(espera.length?'Un hueco libre. ¿Empiezas <b>'+esc(espera[0].nombre.toLowerCase())+'</b>?':'Un hueco libre para un hábito nuevo.')+'</span>'+
+    (espera.length?'<button class="btn s hemp" data-a="hab-fase" data-id="'+espera[0].id+'" data-v="marcha">Empezar</button>':'<button class="btn s hemp" data-a="hab-ed" data-id="">＋ Nuevo</button>')+'</div>':'';
+  const demas=M.length>3?'<p class="mini hdemas">Tienes '+M.length+' en marcha. Lo que funciona es uno o dos nuevos a la vez, tres como mucho: ¿dejas alguno esperando turno? '+
+    M.map(function(h){return '<button class="chipx" data-a="hab-fase" data-id="'+h.id+'" data-v="espera">⏸ '+esc(h.nombre)+'</button>';}).join(' ')+'</p>':'';
+  $('#main').innerHTML='<div class="grid ajg hab3">'+
+    '<div class="subcab"><h2 class="subtit">✅ Hábitos</h2><span class="sp"></span><button class="dlink" data-a="hab-vista" data-v="rev">Tu semana ›</button></div>'+
+    (t?'<div class="card asist">'+asistTjHTML(t)+'</div>':'')+
+    (corto&&M.some(function(h){return habitoToca(h,hoyK);})?'<p class="mini hcortop">Hoy, versión corta'+(diaTipo(hoyK)==='saliente'?' (sales de guardia)':' (amaneces cansado)')+': el ✓ marca el mínimo y cuenta igual. <button class="dlink" data-a="asist-corto" data-v="0" data-k="'+hoyK+'">hoy entero</button></p>':'')+
+    (items.length?
+      '<div class="acap hcap"><span>EN MARCHA · '+M.length+' DE 3</span><span class="mini">uno o dos a la vez</span></div>'+demas+
+        '<div class="alst">'+M.map(fila).join('')+hueco+'</div>'+
+      (solos.length?'<div class="acap hcap"><span>YA TE SALEN SOLOS</span><span class="mini">no se marcan</span></div><div class="alst">'+
+        solos.map(function(h){return lin(h,'¿sigue? en '+sigueMes(h));}).join('')+'</div>':'')+
+      (espera.length?'<div class="acap">ESPERAN TURNO</div><div class="alst">'+espera.map(function(h,i){
+        return lin(h,i?'':'el siguiente',M.length<3?'<button class="btn s hemp" data-a="hab-fase" data-id="'+h.id+'" data-v="marcha">Empezar</button>':null);}).join('')+'</div>':''):
       '<div class="card"><p class="note" style="margin:0">Aún no tienes ninguno: crea el primero o empieza con uno de estos.</p><div class="chips" style="margin-top:8px">'+
         HAB_PRESETS.map(function(p,i){return '<button class="chipx" data-a="hab-preset" data-i="'+i+'">'+esc(p.icono+' '+p.nombre)+'</button>';}).join('')+'</div></div>')+
     '<div class="alst"><button class="ali" data-a="hab-ed" data-id=""><span class="e">＋</span><b>Nuevo hábito</b><span class="ch">›</span></button></div>'+
-    habMesHTML(items)+
   '</div>';
 }
 const HAB_COLORES=['#38bdf8','#f59e0b','#22c55e','#c084fc','#f472b6','#818cf8','#f87171','#2dd4bf'];
@@ -16214,31 +16236,43 @@ function habHojaHTML(){
   const e=ui.habEd;if(!e)return '';
   const chip=function(a,v,on,txt,extra){return '<button class="'+(on?'on':'')+'" data-a="'+a+'" data-v="'+v+'" aria-pressed="'+on+'"'+(extra||'')+'>'+txt+'</button>';};
   const DS=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];
-  const TT=['guardia','saliente','trabajo','fuerza','libre'],an=e.ancla||{};
+  const TT=['guardia','saliente','trabajo','fuerza','libre'],an=e.ancla||{},h=e.id&&habitosS().items.filter(function(x){return x.id===e.id;})[0];
+  const lleno=!e.id&&habEnMarcha().length>=3,n=function(x,t,sub){return '<div class="hlab"><b class="hnum">'+x+'</b> '+t+(sub?' <small>'+sub+'</small>':'')+'</div>';};
+  /* el obstáculo y su plan: al tercer día (el asistente lo pregunta), no al crear */
+  const obst=e.id&&(e.obst||(h&&habDia(h)>=3));
   return hojaMarco('hab-ed-x','hhab',e.id?'editar hábito':'nuevo hábito',
-    '<div class="hhd"><b>'+(e.id?esc(e.icono+' '+e.nombre):'Nuevo hábito')+'</b></div>'+
-    '<div class="hlab">NOMBRE</div><div class="row" style="gap:8px;flex-wrap:nowrap">'+
+    '<div class="hhd"><b>'+(e.id?esc(e.icono+' '+e.nombre):'Hábito nuevo')+'</b>'+(e.id?'':'<small>cuatro preguntas; el resto, cuando haga falta</small>')+'</div>'+
+    n(1,'¿QUÉ?')+'<div class="row" style="gap:8px;flex-wrap:nowrap">'+
       '<input id="habEdIco" value="'+esc(e.icono)+'" maxlength="4" aria-label="icono" style="width:58px;flex:none;text-align:center">'+
-      '<input id="habEdNom" value="'+esc(e.nombre)+'" maxlength="40" placeholder="p. ej. Estirar 10 min" aria-label="nombre" style="flex:1;min-width:0"></div>'+
-    '<div class="hlab">CUÁNDO (EL ANCLA)</div><div class="hchs">'+chip('hab-ed-ancla','',!an.t,'sin ancla')+chip('hab-ed-ancla','hora',an.t==='hora','⏰ a una hora')+
-      HAB_TRAS.map(function(x){return chip('hab-ed-ancla','tras:'+x[0],an.t==='tras'&&an.v===x[0],x[1]);}).join('')+'</div>'+
+      '<input id="habEdNom" value="'+esc(e.nombre)+'" maxlength="40" placeholder="p. ej. Leer 10 páginas" aria-label="nombre" style="flex:1;min-width:0"></div>'+
+    n(2,'¿DESPUÉS DE QUÉ?','pegado a algo que ya haces se aprende antes que a una hora')+'<div class="hchs">'+
+      HAB_TRAS.map(function(x){return chip('hab-ed-ancla','tras:'+x[0],an.t==='tras'&&an.v===x[0],x[1]);}).join('')+chip('hab-ed-ancla','hora',an.t==='hora','⏰ a una hora')+chip('hab-ed-ancla','',!an.t,'sin ancla')+'</div>'+
       (an.t==='hora'?'<input id="habEdHora" type="time" value="'+esc(an.v||'')+'" aria-label="hora" style="width:auto;margin-top:6px">':'')+
-    '<div class="hlab">VERSIÓN MÍNIMA <small>para los días malos: cuenta para la racha</small></div>'+
-      '<input id="habEdMin" value="'+esc(e.min||'')+'" maxlength="60" placeholder="p. ej. 3 posturas · 10 min · un vaso" aria-label="versión mínima">'+
-    '<div class="hlab">QUÉ SUELE IMPEDIRLO</div><div class="hchs">'+chip('hab-ed-obst','',!e.obst,'nada')+HAB_OBST.map(function(x){return chip('hab-ed-obst',x[0],e.obst===x[0],x[1]);}).join('')+'</div>'+
-      (e.obst?'<input id="habEdPlan" value="'+esc(e.plan||'')+'" maxlength="60" placeholder="entonces haré… (p. ej. la versión mínima al llegar)" aria-label="plan si aparece" style="margin-top:6px">':'')+
-    '<div class="hlab">POR QUÉ <small>una frase tuya</small></div>'+
-      '<input id="habEdPq" value="'+esc(e.porQue||'')+'" maxlength="80" placeholder="p. ej. para llegar entero a las guardias" aria-label="por qué">'+
-    '<div class="hlab">QUÉ DÍAS</div><div class="hchs">'+DS.map(function(x){return chip('hab-ed-dow',x[0],e.dow.indexOf(x[0])>=0,x[1]);}).join('')+'</div>'+
-    '<div class="hlab">NO ME LO PIDAS LOS DÍAS DE</div><div class="hchs">'+TT.map(function(t){const ti=diaTipoInfo(t);
+      (h&&!an.t&&habMejorHora(h)?'<p class="mini" style="margin:6px 0 0">Sueles hacerlo hacia las '+esc(hCortaHM(habMejorHora(h)))+'. <button class="dlink" data-a="hab-ancla-hora" data-id="'+h.id+'" data-v="'+habMejorHora(h)+'">anclarlo ahí</button></p>':'')+
+    n(3,'EL MÍNIMO DEL DÍA MALO','cuenta igual')+
+      '<input id="habEdMin" value="'+esc(e.min||'')+'" maxlength="60" placeholder="'+(habMinSug(e.nombre)?'si lo dejas vacío: '+esc(habMinSug(e.nombre)):'p. ej. 2 páginas · 5 min · un vaso')+'" aria-label="versión mínima">'+
+    n(4,'¿CUÁNDO NO TOCA?')+'<div class="hchs">'+TT.map(function(t){const ti=diaTipoInfo(t);
       return chip('hab-ed-noen',t,e.noEn.indexOf(t)>=0,ti[2]+' '+ti[1]);}).join('')+'</div>'+
-    '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){
-      return chip('hab-ed-auto',x[0],e.auto===x[0],x[1]);}).join('')+'</div>'+
-    '<div class="hlab">COLOR</div><div class="hchs hcol">'+HAB_COLORES.map(function(c){
-      return chip('hab-ed-col',c,e.color===c,'',' style="background:'+c+'" aria-label="color '+c+'"');}).join('')+'</div>'+
+    (obst?'<div class="hlab">QUÉ SUELE IMPEDIRLO <small>y qué harás entonces: duplica las veces que sale</small></div><div class="hchs">'+chip('hab-ed-obst','',!e.obst,'nada')+
+      HAB_OBST.map(function(x){return chip('hab-ed-obst',x[0],e.obst===x[0],x[1]);}).join('')+'</div>'+
+      (e.obst?'<input id="habEdPlan" value="'+esc(e.plan||'')+'" maxlength="60" placeholder="entonces haré… (p. ej. el mínimo al llegar)" aria-label="plan si aparece" style="margin-top:6px">':''):
+      (e.id?'':'<p class="mini hinfo">Al tercer día te pregunto qué te lo puede impedir y qué harás entonces.</p>'))+
+    '<details class="hmas"'+(ui.habEdMas?' open':'')+'><summary>Más: días, se marca solo, color'+(e.id?', fase y probar 14 días':'')+'</summary>'+
+      '<div class="hlab">QUÉ DÍAS</div><div class="hchs">'+DS.map(function(x){return chip('hab-ed-dow',x[0],e.dow.indexOf(x[0])>=0,x[1]);}).join('')+'</div>'+
+      '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){return chip('hab-ed-auto',x[0],e.auto===x[0],x[1]);}).join('')+'</div>'+
+      '<div class="hlab">POR QUÉ <small>una frase tuya</small></div>'+
+        '<input id="habEdPq" value="'+esc(e.porQue||'')+'" maxlength="80" placeholder="p. ej. para llegar entero a las guardias" aria-label="por qué">'+
+      '<div class="hlab">COLOR</div><div class="hchs hcol">'+HAB_COLORES.map(function(c){
+        return chip('hab-ed-col',c,e.color===c,'',' style="background:'+c+'" aria-label="color '+c+'"');}).join('')+'</div>'+
+      (h?'<div class="hlab">DÓNDE ESTÁ</div><div class="hchs">'+[['marcha','en marcha'],['solo','ya me sale solo'],['espera','que espere turno']].map(function(x){
+          return chip('hab-ed-fase',x[0],habFase(h)===x[0],x[1],' data-id="'+h.id+'"');}).join('')+'</div>'+
+        '<div class="hlab">PROBAR 14 DÍAS <small>cambia el cuándo o el mínimo y mira si sale más</small></div>'+
+        (h.prueba?'<p class="mini" style="margin:0">Probando '+esc(h.prueba.txt)+' desde el '+esc(fechaCorta(h.prueba.desde))+'.</p>':
+          '<button class="btn s" data-a="hab-probar">Guardar el cambio y probarlo 14 días</button>'):'')+
+    '</details>'+
     '<div class="row" style="margin-top:16px;gap:8px;flex-wrap:nowrap">'+
       (e.id?'<button class="btn d" style="flex:1" data-a="hab-del" data-id="'+e.id+'">Borrar</button>':'')+
-      '<button class="btn p" style="flex:2" data-a="hab-ed-ok">'+(e.id?'Guardar':'Crear hábito')+'</button></div>');}
+      '<button class="btn p" style="flex:2" data-a="hab-ed-ok">'+(e.id?'Guardar':(lleno?'Guardar: espera turno':'Empezar · día 1 de ~66'))+'</button></div>');}
 function habEdAbre(id){
   const h=id&&habitosS().items.filter(function(x){return x.id===id;})[0];
   ui.habEd=h?{id:h.id,nombre:h.nombre,icono:h.icono||'✅',color:h.color||HAB_COLORES[0],dow:(h.dow||[]).slice(),noEn:(h.noEn||[]).slice(),auto:h.auto||'',
@@ -16294,12 +16328,78 @@ function asistCheckinHTML(k){
       return '<button class="chipx'+(c.int===x[0]?' on':'')+'" data-a="asist-int" data-v="'+x[0]+'" data-t="'+esc(x[1])+'" data-k="'+k+'">'+esc(x[1])+'</button>';}).join('')+'</div></div>';}
 /* LAS SEÑALES: cada una con su condición sobre tus datos, su texto con cifras tuyas y qué hacer.
    El orden es la prioridad; sale solo la primera que no hayas silenciado (y las de detrás ni se calculan) */
-const ASIST_R=[
+/* LAS SEÑALES, en tres listas: hábitos, 4:20 y (en Dinero) el dinero. Cada una con su condición sobre
+   tus datos, su texto con cifras tuyas y qué hacer. El orden es la prioridad; sale la primera que no
+   hayas silenciado (y las de detrás ni se calculan). La de hábitos sigue la ciencia: el plan para el
+   obstáculo (Gollwitzer y Sheeran 2006), el mínimo que cuenta, la pregunta de automaticidad cada 14
+   días (Gardner 2012) y uno o dos nuevos a la vez (Wood y Neal 2016) */
+const HAB_R=[
   function corto(X){ /* 1 · versión corta */
     if(!habCortoSugerido(X.k))return null;
     const hm_=habitosS().items.filter(function(h){return habitoToca(h,X.k)&&h.min;});if(!hm_.length)return null;
     return {id:'corto',ico:'🌱',t:'Hoy, versión corta',txt:(diaTipo(X.k)==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9')+'. Hoy pido solo lo mínimo: '+hm_.map(function(h){return h.icono+' '+h.min;}).join(', ')+'. La racha sigue igual.',
       acc:[['Vale','asist-corto',' data-v="1" data-k="'+X.k+'"',1],['Hoy entero','asist-corto',' data-v="0" data-k="'+X.k+'"']]};},
+  function prueba(X){ /* «probar 14 días» terminado: ¿te quedas con el cambio? */
+    const h=habitosS().items.filter(function(h){return h.prueba&&-diasHasta(h.prueba.desde)>=14;})[0];if(!h)return null;
+    const P=habPct(h,14),a=h.prueba.antes;
+    return {id:'prueba:'+h.id,ico:'🧪',t:h.nombre+': 14 días con '+h.prueba.txt,txt:(P.pct==null?'No ha tocado ningún día.':P.pct+' % hecho'+(a!=null?' frente a '+a+' % antes':''))+'. ¿Te quedas con el cambio?',
+      acc:[['Me quedo','hab-prueba',' data-id="'+h.id+'" data-v="1"',1],['Volver a lo de antes','hab-prueba',' data-id="'+h.id+'" data-v="0"']]};},
+  function obstaculo(X){ /* hoy pasa lo que suele impedirlo: su plan, con el ✓ ahí mismo */
+    const t=diaTipo(X.k);
+    const h=habEnMarcha().filter(function(h){if(!h.plan||!habitoToca(h,X.k)||habitoHecho(h.id,X.k))return false;
+      return (h.obst==='guardia'&&(t==='guardia'||t==='saliente'))||(h.obst==='lloret'&&!!lloretDe(X.k))||(h.obst==='cansancio'&&(t==='saliente'||X.kss>=7));})[0];
+    if(!h)return null;
+    const por={guardia:t==='saliente'?'Sales de guardia':'Hoy hay guardia',lloret:'Hoy hay Lloretazo',cansancio:t==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9'}[h.obst];
+    return {id:'obst:'+h.id+':'+X.k,ico:h.icono,t:por+': '+h.plan,txt:'Tu plan para '+h.nombre.toLowerCase()+' cuando pasa esto. Hecho así, cuenta entero.',
+      acc:[['Hecho','hab-mark',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]};},
+  function cruzo(X){ /* dos fallos seguidos: ¿qué se cruzó? (y lo que contestes cambia el hábito) */
+    const h=habEnMarcha().filter(function(h){if(!habitoToca(h,X.k)||habitoHecho(h.id,X.k))return false;
+      let f=0,vistos=0;for(let i=1;i<=14&&vistos<2;i++){const d=iso(addDays(parseDate(X.k),-i));if(h.creado&&d<h.creado)break;if(!habitoToca(h,d))continue;vistos++;if(!habitoHecho(h.id,d))f++;}return f>=2;})[0];
+    if(!h)return null;
+    return {id:'cruzo:'+h.id,ico:h.icono,t:'Dos días sin '+h.nombre.toLowerCase()+'. ¿Qué se cruzó?',txt:'Lo que contestes cambia el hábito: el mínimo, el cuándo o los días en que no toca.',
+      acc:[['Cansancio','hab-cruzo',' data-id="'+h.id+'" data-v="cansancio"'],['Se me olvidó','hab-cruzo',' data-id="'+h.id+'" data-v="olvido"'],['No tocaba','hab-cruzo',' data-id="'+h.id+'" data-v="notoca"']]};},
+  function ayer(X){ /* ayer falló y hoy toca: el mínimo vale (no la culpa) */
+    const ay=iso(addDays(parseDate(X.k),-1));
+    const h=habEnMarcha().filter(function(h){return h.min&&habitoToca(h,X.k)&&!habitoHecho(h.id,X.k)&&habitoToca(h,ay)&&!habitoHecho(h.id,ay)&&!(h.creado&&ay<h.creado);})[0];
+    if(!h)return null;
+    return {id:'ayer:'+h.id+':'+X.k,ico:h.icono,t:'Ayer no hubo '+h.nombre.toLowerCase(),txt:'Hoy, '+h.min+' vale: cuenta igual para que se haga costumbre.',
+      acc:[['Hecho el mínimo','hab-min',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]};},
+  function obst3(X){ /* al tercer día: ¿qué te lo puede impedir? */
+    const h=habEnMarcha().filter(function(h){return !h.obst&&habDia(h)>=3;})[0];if(!h)return null;
+    return {id:'obst3:'+h.id,ico:h.icono,t:'Llevas '+habDia(h)+' días con '+h.nombre.toLowerCase(),txt:'¿Qué te lo puede impedir? Con un plan para ese día («si pasa X, hago Y») sale el doble de veces.',
+      acc:HAB_OBST.map(function(o){return [o[1],'hab-obst',' data-id="'+h.id+'" data-v="'+o[0]+'"'];})};},
+  function sinPensar(X){ /* cada 14 días: ¿ya te sale sin pensar? */
+    const h=habEnMarcha().filter(function(h){if(habDia(h)<14)return false;const u=(h.si||[]).slice(-1)[0];return !u||-diasHasta(u.f)>=14;})[0];
+    if(!h)return null;const an=habAnclaTxt(h);
+    return {id:'sinp:'+h.id+':'+X.k,ico:h.icono,t:'¿'+h.nombre+(an?' '+an:'')+' ya te sale sin pensar?',txt:'Día '+habDia(h)+' de ~66. Tres «sí» seguidos y pasa a «ya te salen solos»: queda un hueco.',
+      acc:[['Sí','hab-si',' data-id="'+h.id+'" data-v="1"',1],['Aún no','hab-si',' data-id="'+h.id+'" data-v="0"']]};},
+  function sigue(X){ /* los que ya salen solos: una vez al mes, ¿sigue? */
+    const h=habitosS().items.filter(function(h){return habFase(h)==='solo'&&-diasHasta(h.soloVisto||h.creado||X.k)>=30;})[0];if(!h)return null;
+    return {id:'sigue:'+h.id+':'+X.k,ico:h.icono,t:'¿'+h.nombre+' sigue saliendo solo?',txt:'Una vez al mes lo pregunto. Si ha vuelto a costar, vuelve a «en marcha».',
+      acc:[['Sí','hab-sigue',' data-id="'+h.id+'" data-v="1"',1],['Ha vuelto a costar','hab-sigue',' data-id="'+h.id+'" data-v="0"']]};},
+  function hueco(X){ /* sitio para uno nuevo */
+    if(habEnMarcha().length>=3)return null;const h=habitosS().items.filter(function(h){return habFase(h)==='espera';})[0];if(!h)return null;
+    return {id:'hueco:'+h.id,ico:h.icono,t:'Tienes sitio para uno nuevo',txt:'¿Empiezas '+h.nombre.toLowerCase()+'? Uno o dos a la vez es lo que funciona.',
+      acc:[['Empezar','hab-fase',' data-id="'+h.id+'" data-v="marcha"',1]]};},
+  function nunca(){ /* 8 · un hábito que nunca se hace un tipo de día */
+    const sg=habitoSugerencia();if(!sg)return null;
+    return {id:'nunca:'+sg.h.id+'|'+sg.t,ico:'💡',t:'Los días de '+diaTipoInfo(sg.t)[1].toLowerCase()+' no haces '+sg.h.nombre.toLowerCase(),
+      txt:'Ninguna vez en '+sg.n+' ocasiones (4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.',acc:[['Sí, esos días no','hab-noen',' data-id="'+sg.h.id+'" data-t="'+sg.t+'"',1]]};},
+  function kssentreno(X){ /* 7 · cansado y con entreno */
+    const en=X.kss>=7&&entrenoDe(X.k);if(!en||gymHechoEn(X.k))return null;
+    return {id:'kssentreno',ico:'💪',t:'Vienes a '+X.kss+' de 9',txt:'Hoy, sesión corta o '+(en.tipo==='pisc'?'piscina suave':'cuerpo entero ligero')+'; lo recuperas otro día. Entrenar cansado sube el riesgo de lesión.',acc:[]};},
+  function expfin(){ /* 4 · experimento terminado */
+    const ex=expActivo();if(!(ex&&ex.fin))return null;
+    return {id:'expfin',ico:'🧪',t:'Tu experimento ha terminado',txt:'«'+EXP[ex.id].t+'»: '+ex.dias+' días. Mira qué ha pasado.',acc:[['Ver el resultado','hab-vista',' data-v="exp"',1]]};},
+  function rev(X){ /* 11 · la revisión de la semana (domingo, o lunes por la mañana) */
+    const dw=X.hoy.getDay();if(!(dw===0||(dw===1&&X.hoy.getHours()<13))||X.A.revisado[revSemanaKey(X.hoy)])return null;
+    return {id:'rev',ico:'📋',t:'Tu semana en 2 minutos',txt:'Cinco números, un cruce de tus datos y una propuesta para la que entra.',acc:[['Verla','hab-vista',' data-v="rev"',1]]};},
+  function nadaH(X){ /* nada que decir: cómo va hoy */
+    const hs=habEnMarcha().filter(function(h){return habitoToca(h,X.k);});if(!hs.length)return null;
+    const quedan=hs.filter(function(h){return !habitoHecho(h.id,X.k);});
+    return {id:'hab-nada',ico:'✅',t:(hs.length-quedan.length)+' de '+hs.length+' hoy',nada:true,acc:[],
+      txt:quedan.length?'Te queda'+(quedan.length>1?'n ':' ')+quedan.map(function(h){return h.nombre.toLowerCase();}).join(' y ')+'.':'Hecho lo de hoy.'};}];
+const CN_R=[
   function guardia(X){ /* 2 · víspera de guardia con Lloretazo */
     if(!(X.c.plan.guardia&&X.hoy.getHours()<23&&esDiaGuardia(iso(addDays(X.hoy,1)))&&lloretDe(X.k)))return null;
     const con=[],sin=[];for(let i=1;i<=90;i++){const d=iso(addDays(X.hoy,-i)),d1=iso(addDays(X.hoy,-i+1));
@@ -16311,50 +16411,34 @@ const ASIST_R=[
     if(tb.fin)return {id:'tbfin',ico:'✅',t:'T-break terminado',txt:'Ya tienes la comparación con las dos semanas de antes.',acc:[['Verla','ir-cn',' data-v="plan"',1]]};
     const g=cnGanasSemana().length;
     return {id:'tbreak',ico:'📆',t:'T-break · día '+tb.dia+' de '+tb.dias,txt:cnAbstinencia(tb.dia)+(g?' Esta semana has apuntado '+g+' ganas.':''),acc:[['Ver ciencia','ir-cn',' data-v="ciencia"']]};},
-  function expfin(){ /* 4 · experimento terminado */
-    const ex=expActivo();if(!(ex&&ex.fin))return null;
-    return {id:'expfin',ico:'🧪',t:'Tu experimento ha terminado',txt:'«'+EXP[ex.id].t+'»: '+ex.dias+' días. Mira qué ha pasado.',acc:[['Ver el resultado','hab-vista',' data-v="exp"',1]]};},
   function dormir(X){ /* 5 · usar para dormir */
     const d7=iso(addDays(X.hoy,-6)),n=X.c.ses.filter(function(x){return x.fecha>=d7&&x.motivo==='dormir';}).length;if(n<3)return null;
     const S=cnAfectaPor(28).sueno;
     return {id:'dormir',ico:'😴',t:n+' sesiones para dormir esta semana',txt:'Ayuda a dormirte pero recorta el REM y se pierde con el uso.'+(S&&S.ok?' Los días con sesión duermes '+(S.dif>0?'+':'−')+Math.abs(Math.round(S.dif))+' min (n '+S.nCon+'/'+S.nSin+').':''),
       acc:[['Probar 7 días antes de las 22:00','exp-start',' data-v="antes22"',1],['Ver ciencia','ir-cn',' data-v="ciencia"']]};},
-  function fallo2(X){ /* 6 · un hábito con dos fallos seguidos */
-    const h=habitosS().items.filter(function(h){if(!habitoToca(h,X.k)||habitoHecho(h.id,X.k))return false;
-      let f=0,vistos=0;for(let i=1;i<=14&&vistos<2;i++){const d=iso(addDays(parseDate(X.k),-i));if(!habitoToca(h,d))continue;vistos++;if(!habitoHecho(h.id,d))f++;}return f>=2;})[0];
-    if(!h)return null;
-    return {id:'fallo2:'+h.id,ico:h.icono,t:h.nombre+' lleva dos días',txt:h.min?'Hoy solo la versión mínima ('+h.min+') y la cadena sigue.':'Hoy, aunque sea un poco: un día más sin y la racha se corta.',
-      acc:h.min?[['Hecho el mínimo','hab-min',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]:[['Hecho','hab-mark',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]};},
-  function kssentreno(X){ /* 7 · cansado y con entreno */
-    const en=X.kss>=7&&entrenoDe(X.k);if(!en||gymHechoEn(X.k))return null;
-    return {id:'kssentreno',ico:'💪',t:'Vienes a '+X.kss+' de 9',txt:'Hoy, sesión corta o '+(en.tipo==='pisc'?'piscina suave':'cuerpo entero ligero')+'; lo recuperas otro día. Entrenar cansado sube el riesgo de lesión.',acc:[]};},
-  function nunca(){ /* 8 · un hábito que nunca se hace un tipo de día */
-    const sg=habitoSugerencia();if(!sg)return null;
-    return {id:'nunca:'+sg.h.id+'|'+sg.t,ico:'💡',t:'Los días de '+diaTipoInfo(sg.t)[1].toLowerCase()+' no haces '+sg.h.nombre.toLowerCase(),
-      txt:'Ninguna vez en '+sg.n+' ocasiones (4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.',acc:[['Sí, esos días no','hab-noen',' data-id="'+sg.h.id+'" data-t="'+sg.t+'"',1]]};},
   function siete(X){ /* 9 · siete de siete */
     if(X.c.obj>4||cnTB()||cnDiasCon(7)<7)return null;
     return {id:'siete',ico:'🌿',t:'Siete de siete esta semana',txt:'Tu objetivo es ≤ '+X.c.obj+'. Unos días sin ya bajan algo la tolerancia (con 3, ~'+cnTolerancia(3)+' %).',acc:[['T-break de 3 días','cn-tb',' data-v="3"',1]]};},
   function ganas(){ /* 10 · ganas aguantadas */
     const ag=cnGanasSemana().filter(cnAguanto).length;if(ag<3)return null;
-    return {id:'ganas',ico:'👏',t:ag+' ganas aguantadas esta semana',txt:'Es la cifra que mejor dice si estás reduciendo, más que los gramos.',acc:[]};},
-  function rev(X){ /* 11 · la revisión de la semana (domingo, o lunes por la mañana) */
-    const dw=X.hoy.getDay();if(!(dw===0||(dw===1&&X.hoy.getHours()<13))||X.A.revisado[revSemanaKey(X.hoy)])return null;
-    return {id:'rev',ico:'📋',t:'Tu semana en 2 minutos',txt:'Cinco números, un cruce de tus datos y una propuesta para la que entra.',acc:[['Verla','hab-vista',' data-v="rev"',1]]};}];
-function asistReglas(k,primera){
+    return {id:'ganas',ico:'👏',t:ag+' ganas aguantadas esta semana',txt:'Es la cifra que mejor dice si estás reduciendo, más que los gramos.',acc:[]};}];
+function reglasDe(lista,k,primera,sinNada){
   /* todas las que se cumplen; con «primera», solo la primera visible */
   const hoy=new Date(),A=asistS(),hoyK=iso(hoy),X={k:k,hoy:hoy,kss:cnKss(k)||0,A:A,c:consumoS()},R=[];
-  for(let i=0;i<ASIST_R.length;i++){const r=ASIST_R[i](X);if(!r)continue;
+  for(let i=0;i<lista.length;i++){const r=lista[i](X);if(!r||(sinNada&&r.nada))continue;
     if(!primera){R.push(r);continue;}
-    if(!A.nunca[r.id.split(':')[0]]&&!A.nunca[r.id]&&!(A.sil[r.id]&&A.sil[r.id]>=hoyK))return r;}
+    if(r.nada||(!A.nunca[r.id.split(':')[0]]&&!A.nunca[r.id]&&!(A.sil[r.id]&&A.sil[r.id]>=hoyK)))return r;}
   return primera?null:R;}
-function asistTarjeta(k){return asistReglas(k,true);}
+function asistReglas(k,primera){return reglasDe(HAB_R.concat(CN_R),k,primera,true);}
+function asistTarjeta(k){return reglasDe(HAB_R,k,true,true);}
+function asistTarjetaHab(k){return reglasDe(HAB_R,k,true,false);}
+function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
 function asistHoyHTML(k){
-  /* en Hoy: el check-in (si falta), UNA tarjeta de hábitos y UNA de dinero (si hay algo que decir) */
-  const t=asistTarjeta(k),d=k===iso(new Date())?dinAsis(true):null,hh=new Date().getHours();
+  /* en Hoy: el check-in (si falta) y una tarjeta por asistente (hábitos, dinero y 4:20) si hay algo que decir */
+  const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK?cnTarjeta(k):null,hh=new Date().getHours();
   const ck=hh>=5?asistCheckinHTML(k):'';
-  if(!ck&&!t&&!d)return '';
-  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din'):'')+'</div>';}
+  if(!ck&&!t&&!d&&!c)return '';
+  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din'):'')+(c?asistTjHTML(c,'cn'):'')+'</div>';}
 /* ---------- la semana: cinco números, un cruce y una propuesta ---------- */
 function ventana(fin,dias){
   /* lo de una ventana de días que acaba en «fin»: Tu semana (7) y los objetivos (28) leen lo mismo */
@@ -16385,34 +16469,19 @@ function renderRevision(){
     '<div class="card"><div class="cap">LOS ÚLTIMOS 7 DÍAS, FRENTE A LOS 7 DE ANTES</div><div class="rvg">'+
       n('😴 Sueño',S.sueno==null?null:String(S.sueno).replace('.',','),P.sueno==null?null:String(P.sueno).replace('.',','),' h',1,S.nS+' noches')+
       n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj)+
-      n('✅ Hábitos',S.hab,P.hab,' %',1)+
+      n('✅ Hábitos',S.hab,P.hab,' %',1,'de los días que tocaban')+
       n('📚 Estudio',S.est?fmtHM(S.est):'0h00',P.est?fmtHM(P.est):'0h00','',1)+
       n('💪 Entrenos',S.ent,P.ent,'',1)+
       n('☀️ KSS',S.kss==null?null:String(S.kss).replace('.',','),P.kss==null?null:String(P.kss).replace('.',','),'',-1,'mediana')+'</div></div>'+
     '<div class="card"><div class="cap">UN CRUCE DE TUS DATOS</div><p style="margin:4px 0 0">'+esc(cruce)+'</p></div>'+
     (prop?'<div class="card"><div class="cap">UNA PROPUESTA PARA LA SEMANA QUE ENTRA</div><p style="margin:4px 0 8px"><b>'+esc(EXP[prop].t)+'</b> · '+esc(EXP[prop].por)+'</p>'+
       '<div class="row" style="gap:8px"><button class="btn p s" data-a="exp-start" data-v="'+prop+'">Probarlo 7 días</button><button class="btn s" data-a="hab-vista" data-v="exp">ver otros</button></div></div>':'')+
-    objetivosHTML()+
     '<div class="card"><div class="cap">QUÉ ME HA FUNCIONADO</div>'+
       (mes?'<p class="mini" style="margin:4px 0 6px">Hace un mes escribiste: «'+esc(mes.txt)+'»</p>':'')+
       '<textarea id="rvNota" rows="2" maxlength="280" placeholder="una línea para ti dentro de un mes" aria-label="qué me ha funcionado">'+esc(nota?nota.txt:'')+'</textarea>'+
-      '<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn s" data-a="rev-nota">guardar</button></div></div>','','ajg');}
+      '<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn s" data-a="rev-nota">guardar</button></div></div>'+
+    '<div class="alst"><button class="ali" data-a="hab-vista" data-v="exp"><span class="e">🧪</span><b>Experimentos</b><em>'+(expActivo()?'día '+expActivo().dia:'7 o 14 días')+'</em><span class="ch">›</span></button></div>','','ajg');}
 /* ---------- objetivos de trimestre: tres como mucho, pegados a una métrica que ya existe ---------- */
-const OBJ_M={ses:['🌿 sesiones de 4:20 por semana','≤',-1,1,0,21],kss:['☀️ KSS de la mañana (mediana)','≤',-1,0.5,1,9],
-  estudio:['📚 horas de estudio por semana','≥',1,1,0,60],habitos:['✅ hábitos cumplidos','≥',1,5,0,100],sueno:['😴 horas de sueño por noche','≥',1,0.5,4,10]};
-function objValor(m,desde,dias){const V=ventana(desde,dias);return {ses:V.sesSem,kss:V.kss,estudio:V.estSem,habitos:V.hab,sueno:V.sueno}[m];}
-function objetivosHTML(){
-  const A=asistS(),hoy=iso(new Date()),E=ui.objNuevo;
-  const fila=function(o,i){const M=OBJ_M[o.m];if(!M)return '';const v=objValor(o.m,hoy,28),ant=objValor(o.m,iso(addDays(new Date(),-28)),28);
-    const ok=v!=null&&(M[1]==='≤'?v<=o.meta:v>=o.meta),tend=v!=null&&ant!=null&&v!==ant?((v>ant)===(M[2]>0)?'▲ mejora':'▼ empeora'):'';
-    return '<div class="obj'+(ok?' ok':'')+'"><span class="t"><b>'+esc(M[0])+' '+M[1]+' '+String(o.meta).replace('.',',')+'</b><small>ahora '+(v==null?'—':String(v).replace('.',','))+' (4 semanas)'+(tend?' · '+tend:'')+' · desde '+esc(fechaCorta(o.desde))+'</small></span>'+
-      '<span class="ck">'+(ok?'✓':'')+'</span><button class="x" data-a="obj-del" data-i="'+i+'" aria-label="quitar objetivo">×</button></div>';};
-  return '<div class="card"><div class="row"><span class="cap">OBJETIVOS DEL TRIMESTRE</span><span class="sp"></span>'+(A.obj.length<3&&!E?'<button class="btn s" data-a="obj-nuevo">＋ objetivo</button>':'')+'</div>'+
-    (A.obj.length?A.obj.map(fila).join(''):(E?'':'<p class="mini" style="margin:4px 0 0">Tres como mucho, cada uno con un número que la app ya calcula. Sin insignias.</p>'))+
-    (E?'<div class="objn"><div class="chips">'+Object.keys(OBJ_M).filter(function(m){return !A.obj.some(function(o){return o.m===m;});}).map(function(m){
-        return '<button class="chipx'+(E.m===m?' on':'')+'" data-a="obj-m" data-v="'+m+'">'+esc(OBJ_M[m][0])+'</button>';}).join('')+'</div>'+
-      (E.m?'<div class="row" style="margin-top:8px"><span class="mini">'+esc(OBJ_M[E.m][0])+' '+OBJ_M[E.m][1]+'</span><span class="sp"></span><div class="d4step"><button data-a="obj-meta" data-d="-1" aria-label="menos">−</button><b>'+String(E.meta).replace('.',',')+'</b><button data-a="obj-meta" data-d="1" aria-label="más">+</button></div></div>'+
-        '<div class="row" style="margin-top:8px;gap:8px"><button class="btn s" data-a="obj-x">cancelar</button><span class="sp"></span><button class="btn p s" data-a="obj-ok">Ponerlo</button></div>':'')+'</div>':'')+'</div>';}
 /* ---------- experimentos n-de-1 ---------- */
 const EXP={
   antes22:{t:'Sesión antes de las 22:00',por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
@@ -22653,12 +22722,12 @@ function act(a,el){
       ui.tab='eventos';ui.evVista=ev.id;ui.evForm=evFormDefecto(ev);render();window.scrollTo(0,0);break;}
     case 'hoy-mes-dia':{const k=el.dataset.k||fechaHoy();ui.hoyIt=null;ui.tab='month';ui.calMode='month';
       const d=parseDate(k);if(d)monthDate=new Date(d.getFullYear(),d.getMonth(),1,12);abrirHojaDia(k);render();break;}
-    case 'hab-ed-x':ui.habEd=null;render();break;
+    case 'hab-ed-x':ui.habEd=null;ui.habEdMas=false;render();break;
     case 'hab-ed-dow':case 'hab-ed-noen':{habEdLee();const e=ui.habEd;if(!e)break;
       const L=a==='hab-ed-dow'?e.dow:e.noEn,v=a==='hab-ed-dow'?+el.dataset.v:el.dataset.v,at=L.indexOf(v);
-      if(at>=0)L.splice(at,1);else L.push(v);render();break;}
-    case 'hab-ed-auto':habEdLee();if(ui.habEd)ui.habEd.auto=el.dataset.v||'';render();break;
-    case 'hab-ed-col':habEdLee();if(ui.habEd)ui.habEd.color=el.dataset.v;render();break;
+      if(at>=0)L.splice(at,1);else L.push(v);if(a==='hab-ed-dow')ui.habEdMas=true;render();break;}
+    case 'hab-ed-auto':habEdLee();if(ui.habEd)ui.habEd.auto=el.dataset.v||'';ui.habEdMas=true;render();break;
+    case 'hab-ed-col':habEdLee();if(ui.habEd)ui.habEd.color=el.dataset.v;ui.habEdMas=true;render();break;
     case 'hab-ed-ok':{habEdLee();const e=ui.habEd;if(!e)break;const nm=String(e.nombre||'').trim().slice(0,40);
       if(!nm){flash('ponle un nombre al hábito');break;}
       const an=e.ancla||{};
@@ -22667,8 +22736,46 @@ function act(a,el){
         ancla:an.t==='hora'&&/^\d{2}:\d{2}$/.test(an.v||'')?{t:'hora',v:an.v}:(an.t==='tras'&&an.v?{t:'tras',v:an.v}:{}),
         min:String(e.min||'').trim().slice(0,60),obst:e.obst||'',plan:e.obst?String(e.plan||'').trim().slice(0,60):'',porQue:String(e.porQue||'').trim().slice(0,80)};
       const h=e.id&&habitosS().items.filter(function(x){return x.id===e.id;})[0];
-      if(h)Object.assign(h,datos);else habitosS().items.push(Object.assign({id:uid('hb'),creado:iso(new Date())},datos));
-      ui.habEd=null;save();render();flash(h?'hábito guardado':'hábito creado');break;}
+      if(!datos.min)datos.min=habMinSug(nm);
+      let fase='marcha';
+      if(h)Object.assign(h,datos);
+      else{fase=habEnMarcha().length>=3?'espera':'marcha';
+        habitosS().items.push(Object.assign({id:uid('hb'),creado:iso(new Date()),fase:fase,inicio:fase==='marcha'?iso(new Date()):''},datos));}
+      ui.habEd=null;ui.habEdMas=false;save();render();flash(h?'hábito guardado':(fase==='espera'?'creado: espera turno (tienes 3 en marcha)':'en marcha: día 1 de ~66'));break;}
+    case 'hab-probar':{habEdLee();const e=ui.habEd,h=e&&habitosS().items.filter(function(x){return x.id===e.id;})[0];if(!h)break;
+      /* «probar 14 días»: el cambio del cuándo o del mínimo, frente a los 14 días de antes */
+      const an=e.ancla||{},nuevo=an.t==='hora'&&/^\d{2}:\d{2}$/.test(an.v||'')?{t:'hora',v:an.v}:(an.t==='tras'&&an.v?{t:'tras',v:an.v}:{}),min=String(e.min||'').trim().slice(0,60);
+      const cambia=JSON.stringify(nuevo)!==JSON.stringify(h.ancla||{})?'ancla':(min!==(h.min||'')?'min':'');
+      if(!cambia){flash('cambia el cuándo o el mínimo y pruébalo');break;}
+      h.prueba={desde:iso(new Date()),antes:habPct(h,14).pct,prev:{ancla:Object.assign({},h.ancla||{}),min:h.min||''},
+        txt:cambia==='ancla'?'«'+(habAnclaTxt({ancla:nuevo})||'sin ancla')+'»':'el mínimo «'+(min||'nada')+'»'};
+      h.ancla=nuevo;h.min=min;ui.habEd=null;ui.habEdMas=false;save();render();flash('probando 14 días: luego te digo cómo ha ido');break;}
+    case 'hab-ed-fase':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;habFaseA(h,el.dataset.v);ui.habEd=null;save();render();break;}
+    case 'hab-fase':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;habFaseA(h,el.dataset.v);save();render();break;}
+    case 'hab-cruzo':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;const v=el.dataset.v,hoyK=iso(new Date());
+      asistS().sil['cruzo:'+h.id]=iso(addDays(new Date(),14));
+      if(v==='cansancio'){h.obst='cansancio';if(!h.min)h.min=habMinSug(h.nombre);if(!h.plan&&h.min)h.plan='solo '+h.min;
+        if(!h.min){habEdAbre(h.id);flash('ponle un mínimo para los días cansado');}else flash('los días cansado: '+h.min+' y cuenta');}
+      else if(v==='olvido'){h.obst='olvido';habEdAbre(h.id);flash('pégalo a algo que ya haces: elige «después de qué»');}
+      else{/* «no tocaba»: esos tipos de día dejan de pedírtelo */
+        const ts=[];for(let i=1;i<=14&&ts.length<2;i++){const d=iso(addDays(parseDate(hoyK),-i));if(habitoToca(h,d)&&!habitoHecho(h.id,d))ts.push(diaTipo(d));}
+        ts.forEach(function(t){if(h.noEn.indexOf(t)<0)h.noEn.push(t);});
+        flash(ts.length?'ya no te lo pido los días de '+ts.filter(function(t,i){return ts.indexOf(t)===i;}).map(function(t){return diaTipoInfo(t)[1].toLowerCase();}).join(' ni '):'vale');}
+      save();render();break;}
+    case 'hab-obst':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.obst=el.dataset.v;save();habEdAbre(h.id);render();
+      flash('¿y qué harás ese día? escríbelo en «entonces haré…»');break;}
+    case 'hab-si':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+      /* tres «sí» seguidos: ya sale solo y deja hueco */
+      if(!Array.isArray(h.si))h.si=[];h.si.push({f:iso(new Date()),v:el.dataset.v==='1'});
+      const u=h.si.slice(-3);if(u.length===3&&u.every(function(x){return x.v;})){habFaseA(h,'solo');flash(h.nombre+' ya te sale solo: queda un hueco');}
+      else flash(el.dataset.v==='1'?'apuntado: '+u.filter(function(x){return x.v;}).length+' de 3':'vale: en 14 días te lo vuelvo a preguntar');
+      save();render();break;}
+    case 'hab-sigue':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
+      if(el.dataset.v==='1')h.soloVisto=iso(new Date());else{h.si=[];habFaseA(h,'marcha');}
+      save();render();break;}
+    case 'hab-prueba':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h||!h.prueba)break;
+      if(el.dataset.v!=='1'){h.ancla=Object.assign({},h.prueba.prev.ancla||{});h.min=h.prueba.prev.min||'';flash('vuelto a lo de antes');}else flash('te quedas con el cambio');
+      h.prueba=null;save();render();break;}
     case 'hab-del':{if(el.tagName!=='BUTTON')break;const hid=el.dataset.id;
       confirmar('¿Borrar este hábito? También se pierde su historial de marcas.').then(function(ok){
         if(!ok)return;const h=habitosS();h.items=h.items.filter(function(x){return x.id!==hid;});
@@ -22681,7 +22788,7 @@ function act(a,el){
     case 'hab-vista':{const v=el.dataset.v||'';ui.habVista=v;if(ui.tab!=='habitos')ui.tab='habitos';
       if(v==='rev'){asistS().revisado[revSemanaKey(new Date())]=1;save();}
       render();window.scrollTo(0,0);break;}
-    case 'hab-ancla-hora':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.ancla={t:'hora',v:el.dataset.v};save();flash('«'+h.nombre+'» anclado a las '+hCortaHM(el.dataset.v));render();break;}
+    case 'hab-ancla-hora':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;h.ancla={t:'hora',v:el.dataset.v};if(ui.habEd&&ui.habEd.id===h.id){habEdLee();ui.habEd.ancla={t:'hora',v:el.dataset.v};}save();flash('«'+h.nombre+'» anclado a las '+hCortaHM(el.dataset.v));render();break;}
     case 'hab-ed-ancla':{habEdLee();const e=ui.habEd;if(!e)break;const v=el.dataset.v||'';
       e.ancla=!v?{}:(v==='hora'?{t:'hora',v:(e.ancla&&e.ancla.t==='hora'&&e.ancla.v)||'20:00'}:{t:'tras',v:v.replace(/^tras:/,'')});render();break;}
     case 'hab-ed-obst':habEdLee();if(ui.habEd)ui.habEd.obst=el.dataset.v||'';render();break;
@@ -22703,13 +22810,6 @@ function act(a,el){
       A.exp.act=null;save();render();break;}
     case 'rev-nota':{const t=String((document.getElementById('rvNota')||{}).value||'').trim().slice(0,280),A=asistS(),k=iso(new Date());
       A.notas=A.notas.filter(function(x){return x.fecha!==k;});if(t)A.notas.push({fecha:k,txt:t});save();flash(t?'guardado: dentro de un mes te lo recuerdo aquí':'borrado');render();break;}
-    case 'obj-nuevo':ui.objNuevo={m:'',meta:0};render();break;
-    case 'obj-x':ui.objNuevo=null;render();break;
-    case 'obj-m':{const E=ui.objNuevo;if(!E)break;E.m=el.dataset.v;const M=OBJ_M[E.m],v=objValor(E.m,iso(new Date()),28);
-      E.meta=v==null?(M[1]==='≤'?M[5]/3:M[5]/2):v;E.meta=Math.max(M[4],Math.min(M[5],Math.round(E.meta/M[3])*M[3]));render();break;}
-    case 'obj-meta':{const E=ui.objNuevo;if(!E||!E.m)break;const M=OBJ_M[E.m];E.meta=Math.max(M[4],Math.min(M[5],Math.round((E.meta+(+el.dataset.d||0)*M[3])*10)/10));render();break;}
-    case 'obj-ok':{const E=ui.objNuevo,A=asistS();if(!E||!E.m||A.obj.length>=3)break;A.obj.push({m:E.m,meta:E.meta,desde:iso(new Date())});ui.objNuevo=null;save();render();break;}
-    case 'obj-del':{asistS().obj.splice(+el.dataset.i,1);save();render();break;}
     case 'mon-today':monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);render();break;
     case 'ir-inicio':
       /* el reloj de arriba es la casa: desde cualquier sitio, al Mes de este mes, sin hojas abiertas */
@@ -22845,8 +22945,9 @@ function act(a,el){
     case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
     case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;
+      const fase=habEnMarcha().length>=3?'espera':'marcha';
       habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
-        min:p.min||'',ancla:Object.assign({},p.ancla||{}),obst:'',plan:'',porQue:''});
+        min:p.min||'',ancla:Object.assign({},p.ancla||{}),obst:'',plan:'',porQue:'',fase:fase,inicio:fase==='marcha'?iso(new Date()):''});
       save();flash('hábito «'+p.nombre+'» añadido');render();break;}
     case 'hab-noen':{const h=habitosS().items.filter(function(x){return x.id===el.dataset.id;})[0];if(!h)break;
       h.noEn=(h.noEn||[]).concat([el.dataset.t]);save();flash('«'+h.nombre+'» ya no se pide los días de '+diaTipoInfo(el.dataset.t)[1].toLowerCase());render();break;}
@@ -25765,7 +25866,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,desayunosNevera,cnFechaDe,protExtraPoner,nevCombos,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseMacros,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -25872,7 +25973,7 @@ claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
 Object.assign(window.PG,{fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
-  asistS,asistReglas,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,objValor,storeParaCopia,semNumeros});
+  asistS,asistReglas,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */
 vigilarElDia();     /* y que «hoy» siga siendo hoy aunque la app pase la noche abierta */

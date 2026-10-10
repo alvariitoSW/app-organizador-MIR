@@ -3648,3 +3648,18 @@ html:not(.dark){--snlib:#6d28d9}
 .bkc .row{flex-wrap:nowrap}.bkc .bknom{flex:1;min-width:0;font-weight:700}.bkc .bkv{width:110px;text-align:right;font-variant-numeric:tabular-nums}
 .bkc .hchips{margin-top:8px}.bkc.duda{border-color:color-mix(in srgb,var(--warn) 60%,var(--line))}.bkc .m{width:16px;text-align:center}
 .bkcuadre{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+/* Hábitos: 3 en marcha con «día N de ~66», los que salen solos y los que esperan turno */
+.hab3 .hcap{display:flex;align-items:baseline;gap:8px}.hab3 .hcap>span:first-child{flex:1}.hab3 .hcap .mini{letter-spacing:0;font-weight:500;text-transform:none}
+.hbr3{align-items:center}.hbr3 .hbn{gap:3px}
+.hdia{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:4px}.hdia i{display:block;height:100%;border-radius:3px}
+.hbn>.hdiat{display:flex;gap:8px;justify-content:space-between;font-size:11.5px;color:var(--ink2)}
+.hbr3 .hbrr{display:flex;align-items:center;gap:6px;flex:none}.hbr3 .hbt{width:48px;height:48px;border-radius:14px}
+.hhueco{color:var(--ink2);font-size:13.5px}.hhueco>span{flex:1}.hhueco b{color:var(--ink)}
+.hemp{flex:none;min-height:40px;border-style:dashed;border-color:var(--brand);color:var(--brand)}
+.hlin .hbn{flex:1}.hlin em{white-space:nowrap}
+.hdemas{margin:0 4px 8px}.hdemas .chipx{margin:4px 4px 0 0}
+.hhab .hnum{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:10px;background:var(--line);color:var(--ink);font-size:11px;margin-right:4px}
+.hhab .hhd small{display:block;font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px}
+.hhab .hinfo{margin:12px 0 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--bg) 60%,var(--card))}
+.hhab .hmas{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.hhab .hmas summary{cursor:pointer;color:var(--ink2);font-size:13px;font-weight:700;min-height:32px}
+.card.asist .astj.cn{border-top:1px solid var(--line);padding-top:10px}.card.asist>.astj.cn:first-child{border-top:0;padding-top:0}
