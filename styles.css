@@ -3163,8 +3163,6 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjmm .kc{text-align:right;font-size:15px;font-weight:800;white-space:nowrap}.cjmm .kc small{display:block;font-size:11.5px;color:var(--ink2);font-weight:600}
 .cjmm .kc.g{color:var(--ink2);font-weight:600;opacity:.8}
 .cjmas{display:block;width:100%;text-align:left;padding:12px 0;border:0;border-top:1px dashed var(--line);background:none;color:var(--ink2);font:inherit;font-size:14px;font-weight:700}
-.cjlinks{display:flex;gap:8px}.cjlinks button{flex:1;padding:10px 4px;border-radius:13px;border:1px solid var(--line);background:var(--card);color:var(--ink2);font:inherit;font-size:13px;font-weight:700}
-.cjlinks b{color:var(--ink)}.cjlinks b.w{color:#fbbf24}
 .cjsh{display:flex;align-items:center;gap:10px}.cjsh b{font-size:16px}
 .cjL{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:900;color:#04121c;background:var(--brand);flex:none}.cjL.x{background:var(--line);color:var(--ink2)}
 .cjsum{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
@@ -3518,10 +3516,8 @@ details[data-tg] .card{border:0;box-shadow:none;background:transparent;padding:1
 .cjmac .bar i{display:block;height:100%;background:var(--ink2)}
 .cjmac .p .bar i{background:var(--bp)}.cjmac .c .bar i{background:var(--bc)}.cjmac .g .bar i{background:var(--bg3)}
 /* el buscador lee platos, frases y recetas pegadas */
-.fblec{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
 .fblec .fbln{display:flex;align-items:center;gap:8px;margin:4px 0 6px;font-size:16px}
 .fblec .fbln .em{font-size:20px}
-.fblec .bwmac{margin-bottom:6px}
 .fbms{margin:2px 2px 0;opacity:.75}
 /* el reloj de arriba a la izquierda: el botón de casa (al Mes) */
 .hlogo{appearance:none;border:0;background:none;padding:0;margin:-11px;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border-radius:12px;flex:none}

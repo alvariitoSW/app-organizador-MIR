@@ -8976,7 +8976,7 @@ const FR_TAM=[['s','Pequeño',0.75],['m','Mediano',1],['l','Grande',1.35],['xl',
 const FR_TIPOS={bocata:['🥪','Bocata'],bowl:['🥗','Bowl'],plato:['🍳','Plato'],tostada:['🍞','Tostada'],libre:['🍽','Comida']};
 function frTamK(t){return (FR_TAM.filter(function(x){return x[0]===t;})[0]||[0,0,1])[2];}
 function frTipoDe(t){
-  if(/\b(bocata|bocatas|bocadillo|bocadillos|sandwich|sandwiches|montadito|pepito|mollete|wrap|burrito)\b/.test(t)||/^pan (con|de) /.test(t))return 'bocata';
+  if(/\b(bocata|bocatas|bocadillo|bocadillos|sandwich|sandwiches|montadito|pepito|mollete|wrap|burrito|serranito)\b/.test(t)||/^pan (con|de) /.test(t))return 'bocata';
   if(/\b(tostada|tostadas)\b/.test(t))return 'tostada';
   /* «ensalada» sola es comida («una ensalada césar», «con ensalada»); «ensalada de pollo y…» es un bowl */
   if(/\b(pokes?|bowls?)( bowls?)? de\b/.test(t)||/\bensaladas? de\b/.test(t))return 'bowl';
@@ -9012,6 +9012,7 @@ function frGramos(a,tipo,p){
   return ((a.r&&a.r[0])||[0,100])[1];}
 const FR_COMBOS={mixto:['jamon cocido','queso'],vegetal:['lechuga','tomate','huevo cocido','mayonesa'],serranito:['lomo','jamon serrano','pimiento'],
   caprese:['tomate','mozzarella','aceite']};
+const FR_COMBOS_RE=Object.keys(FR_COMBOS).map(function(c){return [c,new RegExp('\\b'+c+'\\b')];});
 /* ---------- 2 · momento, relleno y cantidades ---------- */
 const FR_MOM_W={desayuno:'desayuno',mediamanana:'media',almuerzo:'media',comida:'comida',merienda:'merienda',cena:'cena',monchis:'monchis',postentreno:'post-entreno'};
 const FR_MOM_V=[[/\b(he desayunado|desayune|de desayuno|para desayunar|en el desayuno)\b/,'desayuno'],
@@ -9115,16 +9116,15 @@ const FR_SINON={hamburguesa:'Hamburguesa completa',hamburguesas:'Hamburguesa com
 /* cómo está hecho: se quita para buscar («pechuga a la plancha» → pechuga) y se recuerda; lo que va a
    la plancha, frito o rebozado lleva su aceite aunque no lo digas */
 const FR_COCCION=/\s+(a la plancha|a la parrilla|a la brasa|al horno|al vapor|al microondas|a la sal|a la romana|a la gallega|al ajillo|en salsa|asad[oa]s?|cocid[oa]s?|hervid[oa]s?|frit[oa]s?|rebozad[oa]s?|empanad[oa]s?|guisad[oa]s?|estofad[oa]s?|saltead[oa]s?)$/;
+function frAceiteItem(g,impl,ord){const ac=alimPorNombre('Aceite de oliva');return ac?{id:ac.id,g:g,nom:'aceite',pz:'',conf:0.9,papel:'toque',fuente:'tabla',impl:impl,ord:ord}:null;}
 function frAceiteDe(coc){return /plancha|parrilla|brasa|saltead|ajillo|horno/.test(coc)?5:(/frit/.test(coc)?10:(/rebozad|empanad|romana/.test(coc)?15:0));}
 /* una unidad sola ya dice lo que es: «un tercio», «una caña», «una copa» */
 const FR_UNIDAD_SOLA={tercio:'cerveza',cana:'cerveza',copa:'vino',botella:'agua',botellin:'cerveza'};
 /* «nuggets del McDonald's», «un menú del Burger»: la cadena se quita de la frase y manda en lo de fuera */
-const FR_CADENAS=[['mcd',/(?:\b(?:en el|en|del|de|el)\s+)?\b(?:mc ?donald'?s?|mac ?donald'?s?|el mc)\b/],['bk',/(?:\b(?:en el|en|del|de|el)\s+)?\bburger(?: king)?\b/],
-  ['kfc',/(?:\b(?:en el|en|del|de|el)\s+)?\bkfc\b/],['tele',/(?:\b(?:en el|en|del|de)\s+)?\btelepizza\b/],['domi',/(?:\b(?:en el|en|del|de)\s+)?\bdomino'?s?\b/],
-  ['five',/(?:\b(?:en el|en|del|de)\s+)?\bfive guys\b/],['goiko',/(?:\b(?:en el|en|del|de)\s+)?\bgoiko\b/],['star',/(?:\b(?:en el|en|del|de)\s+)?\bstarbucks?\b/],
-  ['taco',/(?:\b(?:en el|en|del|de)\s+)?\btaco bell\b/],['vips',/(?:\b(?:en el|en|del|de)\s+)?\bvips\b/],['foster',/(?:\b(?:en el|en|del|de)\s+)?\bfoster'?s?(?: hollywood)?\b/],
-  ['sub',/(?:\b(?:en el|en|del|de)\s+)?\bsubway\b/],['popeyes',/(?:\b(?:en el|en|del|de)\s+)?\bpopeyes\b/],['rodilla',/(?:\b(?:en el|en|del|de)\s+)?\brodilla\b/],
-  ['dunkin',/(?:\b(?:en el|en|del|de)\s+)?\bdunkin'?(?: donuts)?\b/]];
+const FR_CADENAS=[['mcd',"mc ?donald'?s?|mac ?donald'?s?|el mc"],['bk','burger(?: king)?'],['kfc','kfc'],['tele','telepizza'],['domi',"domino'?s?"],
+  ['five','five guys'],['goiko','goiko'],['star','starbucks?'],['taco','taco bell'],['vips','vips'],['foster',"foster'?s?(?: hollywood)?"],
+  ['sub','subway'],['popeyes','popeyes'],['rodilla','rodilla'],['dunkin',"dunkin'?(?: donuts)?"]]
+  .map(function(c){return [c[0],new RegExp('(?:\\b(?:en el|en|del|de|el)\\s+)?\\b(?:'+c[1]+')\\b')];});
 const FR_PALABRAS=[[/\byog(?:h)?ur(?:t|th)\b/g,'yogur'],[/\byog(?:h)?ur(?:ts|ths)\b/g,'yogures'],[/\bbeicon\b/g,'bacon'],
   [/\bcola ?cao\b/g,'cola cao'],[/\bsand?wi(?:c|ch|tch)\b/g,'sandwich'],[/\bjamon de york\b/g,'jamon york'],[/\bcoca ?colas?\b/g,'coca cola'],[/\bpoyo\b/g,'pollo'],[/\buna pizza familiar\b/g,'1.5 pizza'],
   [/\bmc ?menu\b/g,'menu del mcdonalds'],[/\bdescafeinado\b/g,'cafe'],[/\bcafes con leche\b/g,'cafe con leche'],
@@ -9424,9 +9424,9 @@ function fraseLeer(txt,opt){
   let taper=false;t00=t00.replace(/\b(?:el |un |mi )?t(?:a|u)p+er(?:es)? de\s+/g,function(){taper=true;return '';});
   FR_PALABRAS.forEach(function(w){t00=t00.replace(w[0],w[1]);});
   if(!t00)return null;
-  const mo=frMomento(t00),fx=frIdx(),PL=[];let t0=mo.t.replace(FR_RELLENO,'').trim(),menu=false;
+  const mo=frMomento(t00),fx=frIdx(),PL=[];let t0=mo.t.replace(FR_RELLENO,'').trim();
   /* «menú del día: sopa y filete…» se lee plato a plato; «menú del día» solo es el menú del bar */
-  t0=t0.replace(/^(?:un |el )?menu del dia\s*[:,]\s*(?=\S)/,function(){menu=true;return '';});
+  t0=t0.replace(/^(?:un |el )?menu del dia\s*[:,]\s*(?=\S)/,'');
   /* «y de postre un yogur», «de segundo merluza»: separan, no son comida */
   t0=t0.replace(/\s*,?\s*(?:y\s+)?(?:de|para)\s+(?:postre|primero|segundo|beber)\s*,?\s*/g,' , ').replace(/^\s*,\s*/,'');
   let cad='';FR_CADENAS.forEach(function(x){if(!cad&&x[1].test(t0)){cad=x[0];t0=t0.replace(x[1],' ').replace(/\s+/g,' ').trim();}});
@@ -9435,7 +9435,7 @@ function fraseLeer(txt,opt){
      le quita el «poke de» como plantilla; «bocata de huevos turcos» sigue siendo un bocata */
   if(!(opt&&opt.soloAlim))t0=frPlatosMarca(t0,PL,fx);
   if(!t0&&cad)t0='menu';
-  let tipo=frTipoDe(t0),k=frTamK(frTamDe(t0));const tam=frTamDe(t0);
+  const tam=frTamDe(t0);let tipo=frTipoDe(t0),k=frTamK(tam);
   /* «ensalada de pasta» es un plato que ya existe: no se trocea como bowl */
   if(tipo==='bowl'&&alimIdx().porT[t0.replace(/^(un|una|unos|unas)\s+/,'')])tipo='libre';
   const mb=tipo==='bocata'&&/^(\d+(?:\.\d+)?|medi[oa]|dos|tres)\s+(?=bocat|bocadill|sandwich|montadit|wrap|burrit)/.exec(t0);
@@ -9449,8 +9449,8 @@ function fraseLeer(txt,opt){
   if(tipo==='bowl')t=t.replace(/^(un |una )?(pokes?|bowls?)\s*(de\s+)?/,'').replace(/^(un |una )?ensaladas? de\s+/,'ensalada , ');
   t=t.replace(/^\s*(de|del)\s+/,'').replace(/\s+/g,' ').trim();
   /* «mixto», «vegetal», «serranito» son rellenos de bocadillo: en otra cosa no se despliegan */
-  Object.keys(FR_COMBOS).forEach(function(c){if(c!=='caprese'&&tipo!=='bocata'&&tipo!=='tostada'&&!/^(un |una )?serranito$/.test(t))return;
-    if(new RegExp('\\b'+c+'\\b').test(t))t=t.replace(new RegExp('\\b'+c+'\\b'),FR_COMBOS[c].join(' , '));});
+  FR_COMBOS_RE.forEach(function(c){if(c[0]!=='caprese'&&tipo!=='bocata'&&tipo!=='tostada')return;
+    t=t.replace(c[1],FR_COMBOS[c[0]].join(' , '));});
   /* lo que no se parte: «café con leche», tus platos («lentejas con chorizo»), «1 y medio» */
   t=t.replace(/ y (medi[oa])\b/g,'_y_$1');
   const plant=/bocadillo|bocata|sandwich|tostada|montadito|pizza/;
@@ -9464,7 +9464,7 @@ function fraseLeer(txt,opt){
     w=w.replace(/_/g,' ').replace(/ y (medi[oa])\b/g,'_y_$1').trim();
     if(!w)return;
     trozos.push({txt:w,con:enCon});});
-  const items=[],dudas=[],raros=[];
+  const items=[],dudas=[];
   if(tipo==='bocata'||tipo==='tostada'){
     /* un wrap o un burrito van en tortilla de trigo, no en pan */
     const env=tipo==='bocata'&&/\b(wraps?|burritos?|fajitas?)\b/.test(t0)&&alimPorNombre('Tortilla de trigo'),pn=env?{a:env,casa:null}:frPan();
@@ -9495,8 +9495,8 @@ function fraseLeer(txt,opt){
     if(/^(agua|nada)$/.test(pz)&&!c.n)return;
     if(/^(hielo|gas|sacarina|edulcorante|stevia|sal|pimienta|limon exprimido)$/.test(pz)&&!c.n)return;
     /* «un menú del Burger King»: ¿cuál? con los menús de esa cadena */
-    if(/^menus?$/.test(pz)&&cad){const ms=foodBuscables().filter(function(x){return x.tipo==='fuera'&&x.menu&&x.cid===cad;}).slice(0,6);
-      dudas.push({txt:'menú',n:c.n,papel:tr.con?'acomp':'principal',ord:ti,opc:ms.map(function(x){return {k:'fuera',v:x.v,nom:x.nombre+' · '+x.kcal+' kcal',e:x.em||'🍔'};})});raros.push(pz);return;}
+    if(/^menus?$/.test(pz)&&cad){const ms=fx.fuera.map(function(o){return o.x;}).filter(function(x){return x.menu&&x.cid===cad;}).slice(0,6);
+      dudas.push({txt:'menú',n:c.n,papel:tr.con?'acomp':'principal',ord:ti,opc:ms.map(function(x){return {k:'fuera',v:x.v,nom:x.nombre+' · '+x.kcal+' kcal',e:x.em||'🍔'};})});return;}
     const papel=tr.con?'acomp':'principal';
     /* «fruta», «carne», «algo»: una familia, no un alimento → se pregunta cuál */
     const pzF=FR_DUDA[pz]?pz:pz.replace(FR_COCCION,'');
@@ -9504,7 +9504,7 @@ function fraseLeer(txt,opt){
       const deCasa=frIdx().casa.filter(function(o){const ct=frCat(o.a);return fam[0]&&(ct===fam[0]||(fam[0]==='pescado'&&o.a.g==='pescado')||(fam[0]==='legumbre'&&o.a.g==='legumbre')||(fam[0]==='postre'&&(ct==='yogur'||ct==='dulce'))||(fam[0]==='cereal'&&ct==='desay'));})
         .map(function(o){return o.a;});
       const opc=deCasa.concat(fam[1].map(function(n){return ix.porT[alimTxt(n)];}).filter(Boolean)).filter(function(a,i,l){return l.indexOf(a)===i;}).slice(0,4);
-      dudas.push({txt:pz,n:c.n,papel:papel,fam:true,ord:ti,opc:opc.map(function(a){return {k:'alim',id:a.id,nom:a.n,e:a.e||'🍽'};})});raros.push(pz);return;}
+      dudas.push({txt:pz,n:c.n,papel:papel,fam:true,ord:ti,opc:opc.map(function(a){return {k:'alim',id:a.id,nom:a.n,e:a.e||'🍽'};})});return;}
     /* el pan suelto, el tuyo (sin gluten si eres celíaco) */
     let r=null;
     if(/^pan( de barra| blanco)?$/.test(pz)){const pn=frPan();if(pn.a)r={ok:{k:'alim',base:0.95,o:{k:'alim',a:pn.a},casa:pn.casa}};}
@@ -9516,7 +9516,7 @@ function fraseLeer(txt,opt){
     const optP=/^(porcion|trozo)$/.test(c.u)?Object.assign({},opt2,{porc:true}):opt2;
     /* «un whopper con patatas»: las patatas de esa cadena, no una patata cocida */
     const fz=!r&&/^patatas?( fritas)?$/.test(pz)&&items.map(function(x){return x.fuera&&buscableDe(x.fuera);}).filter(Boolean)[0];
-    if(fz){const pm=foodBuscables().filter(function(x){return x.tipo==='fuera'&&x.cid===fz.cid&&/patatas/i.test(x.nombre)&&/median|regular|racion/i.test(x.u+' '+x.nombre);})[0];
+    if(fz){const pm=fx.fuera.map(function(o){return o.x;}).filter(function(x){return x.cid===fz.cid&&/patatas/i.test(x.nombre)&&/median|regular|racion/i.test(x.u+' '+x.nombre);})[0];
       if(pm)r={ok:{k:'fuera',base:0.9,o:{k:'fuera',x:pm}},ptxt:pz};}
     if(!r)r=frBusca(pz,tipo,optP);
     /* «café sin azúcar», «sin hielo»: si con el «sin…» no lo encuentra, sin él */
@@ -9528,7 +9528,7 @@ function fraseLeer(txt,opt){
     let errata='';
     if(!r||!r.ok){const cz=frCorrige(pz),r3=cz&&frBusca(cz,tipo,optP);if(r3&&r3.ok){r=r3;errata=pz;}}
     if(!r||!r.ok){
-      dudas.push({txt:pz,n:c.n,papel:papel,ord:ti,opc:(r?r.sug:[]).map(function(s){return frOpcion(s);}).filter(Boolean)});raros.push(pz);return;}
+      dudas.push({txt:pz,n:c.n,papel:papel,ord:ti,opc:(r?r.sug:[]).map(function(s){return frOpcion(s);}).filter(Boolean)});return;}
     const ok=r.ok,it={nom:'',pz:pz,conf:Math.round(ok.base*100)/100,papel:papel,ord:ti};
     if(errata)it.errata=errata;
     /* lo que también podría ser («¿era de pavo?»), para cambiarlo de un toque */
@@ -9543,7 +9543,7 @@ function fraseLeer(txt,opt){
       /* una pizza sin decir cuánta: ¿una porción, dos o entera? (de 120 a 400 g, no se adivina) */
       if(a&&c.n==null&&!ok.memo&&/^pizza/.test(alimTxt(a.n))&&!(opt&&opt.soloAlim)){const pr=frRacionDe(a,'porcion')||120,en=frRacionDe(a,'pizza')||400;
         dudas.push({txt:pz,papel:papel,cuanto:true,ord:ti,opc:[[pr,'1 porción'],[pr*2,'2 porciones'],[Math.round(en/2),'media'],[en,'entera']].map(function(x){return {k:'alim',id:a.id,g:x[0],nom:x[1],e:a.e||'🍕'};})});
-        raros.push(pz);return;}
+        return;}
       /* para los gramos de un producto, el alimento de la tabla que más se le parece */
       /* (con las kcal del producto: un bote de lentejas cocidas no es lenteja seca) */
       const ref=a||(function(){const t=alimDeTexto(p.nombre);return {n:p.nombre,g:t?t.g:'otro',kcal:+p.kcal||0,r:t?t.r:[]};})();
@@ -9561,15 +9561,14 @@ function fraseLeer(txt,opt){
       if(c.n!=null)it.cant=true;
       if(ti===0||papel==='principal')prinCat=prinCat||frCat(ref);}
     items.push(it);
-    const ac=coc&&frAceiteDe(coc),acA=ac&&alimPorNombre('Aceite de oliva');
-    if(acA)items.push({id:acA.id,g:ac,nom:'aceite',pz:'',conf:0.9,papel:'toque',fuente:'tabla',impl:coc,ord:ti});
+    const ac=coc&&frAceiteDe(coc)&&frAceiteItem(frAceiteDe(coc),coc,ti);if(ac)items.push(ac);
     /* «¿era arroz blanco?» cuando ya es arroz cocido no ayuda: fuera la misma cosa en seco */
     if(it.alt&&it.id)it.alt=it.alt.filter(function(o){const aa=o.k==='alim'&&alimById(o.id);return !aa||(aa.id!==it.id&&frCocido(aa).id!==it.id);});
     if(it.alt&&!it.alt.length)delete it.alt;});
   /* una ensalada lleva aliño aunque no lo digas */
   if(/\bensaladas?\b/.test(t0)&&!/§/.test(t0)&&items.length&&!items.some(function(x){const a=x.id&&alimById(x.id);return a&&frCat(a)==='grasa';})){
-    const ac=alimPorNombre('Aceite de oliva');if(ac)items.push({id:ac.id,g:10,nom:'aceite',pz:'',conf:0.9,papel:'toque',fuente:'tabla',impl:'aliño'});}
-  return {txt:String(txt).trim(),tipo:tipo,tam:tam,nt:nt,pos:mo.pos,items:items,raros:raros,dudas:dudas,menu:menu,ayer:ayer,cad:cad};}
+    const ac=frAceiteItem(10,'aliño');if(ac)items.push(ac);}
+  return {txt:String(txt).trim(),tipo:tipo,tam:tam,nt:nt,pos:mo.pos,items:items,dudas:dudas,ayer:ayer};}
 /* lo que se dice de un plato de fuera sin que cambie lo que es: «dürum de pollo», «kebab mixto» */
 const FR_VARIANTE=['de','con','pollo','terner','mixt','cerd','corder','vegetal','picant','grand','pequen','median','normal'].map(alimRaiz);
 function frFueraRac(x,c){
@@ -9587,14 +9586,18 @@ function frDist(a,b,max){
       q[j]=v;if(v<mn)mn=v;}
     if(mn>max)return max+1;p2=p;p=q;}
   return p[b.length];}
+let _frCorr={voc:null,ks:null,m:{}};
 function frCorrige(t){
-  /* cada palabra que no conoce, por la más parecida que sí (1 letra de 5 a 7, 2 desde 8) */
-  const voc=frIdx().voc,ks=Object.keys(voc);let cambia=false;
+  /* cada palabra que no conoce, por la más parecida que sí (1 letra hasta 9, 2 desde 10). Cada
+     palabra se busca una vez por vocabulario: al teclear se repiten */
+  const voc=frIdx().voc;if(_frCorr.voc!==voc)_frCorr={voc:voc,ks:null,m:{}};
+  let cambia=false;
   const out=t.split(' ').map(function(w){
     if(w.length<4||voc[w]||voc[w.replace(/(es|s)$/,'')])return w;
-    const max=w.length>=10?2:1;let mejor=null,md=max+1;
-    ks.forEach(function(k){if(Math.abs(k.length-w.length)>max||k[0]!==w[0]&&max<2)return;const d=frDist(w,k,max);if(d<md){md=d;mejor=k;}});
-    if(mejor){cambia=true;return mejor;}return w;});
+    if(!(w in _frCorr.m)){const ks=_frCorr.ks||(_frCorr.ks=Object.keys(voc)),max=w.length>=10?2:1;let mejor='',md=max+1;
+      ks.forEach(function(k){if(Math.abs(k.length-w.length)>max||k[0]!==w[0]&&max<2)return;const d=frDist(w,k,max);if(d<md){md=d;mejor=k;}});
+      _frCorr.m[w]=mejor;}
+    if(_frCorr.m[w]){cambia=true;return _frCorr.m[w];}return w;});
   return cambia?out.join(' '):'';}
 function frOpcion(s){
   if(!s)return null;
@@ -9710,22 +9713,19 @@ function fraseRecientes(n){
   return out;}
 /* ---------- lo que ves: la lectura en una o dos frases ---------- */
 function frOpcKcal(fr,d,o){
-  /* lo que sumaría una opción de una duda, para el rango «720–910 kcal hasta que contestes» */
-  if(o.k==='dish'){const x=dishById(o.id);return x?(+x.kcal||0)*(d.n||1):0;}
-  if(o.k==='fuera'){const b=buscableDe(o.v);return b?(+b.kcal||0)*(d.n||1):0;}
-  if(o.k==='ean'){const p=food().eans[o.ean];return p?porcionDe(p,100).kcal:0;}
-  const a=alimById(o.id);if(!a)return 0;
-  return alimEntrada(a,o.g||(d.n?d.n*frUnidad(a):frGramosPapel(a,d.papel,fr.tipo,fr.nt))).kcal;}
+  /* lo que sumaría una opción de una duda, para el rango «720–910 kcal hasta que contestes»: el
+     mismo trozo que saldría al elegirla */
+  const it=frItemDe(fr,d,o),q=it&&frItemMac(it);return q?q.kcal:0;}
 function lecRango(fr){
   const m=fraseMacros(fr).kcal;let lo=m,hi=m,sin=0;
   (fr.dudas||[]).forEach(function(d){const k=d.opc.map(function(o){return frOpcKcal(fr,d,o);}).filter(function(v){return v>0;});
     if(!k.length){sin++;return;}lo+=Math.min.apply(null,k);hi+=Math.max.apply(null,k);});
   return {lo:Math.round(lo),hi:Math.round(hi),sin:sin};}
 function lecGrupos(fr){
-  /* de qué está hecho lo que has escrito: lo que mira el nutricionista */
-  const g={};fr.items.forEach(function(x){const a=x.id&&alimById(x.id);if(!a||x.impl)return;const c=frCat(a);
-    if(a.g==='verdura'&&c!=='hidrato')g.verdura=1;else if(a.g==='fruta'&&c!=='aguacate')g.fruta=1;
-    else if(a.g==='legumbre')g.legumbre=1;else if(c==='prot'||c==='huevo'||c==='embutido')g.prot=1;else if(c==='hidrato'||c==='pan')g.hidrato=1;
+  /* de qué está hecho lo que has escrito: los grupos del nutricionista, y proteína o hidrato */
+  const g={};fr.items.forEach(function(x){const a=x.id&&alimById(x.id);if(!a||x.impl)return;const n=nutGrupo(a),c=frCat(a);
+    if(n==='verdura'||n==='fruta'||n==='legumbre')g[n]=1;
+    else if(n==='pescado'||n==='carne'||c==='prot'||c==='huevo'||c==='embutido')g.prot=1;else if(c==='hidrato'||c==='pan')g.hidrato=1;
     if(a.g==='preparado')g.plato=1;});
   return g;}
 function lecNutriHTML(fr,ctx,pos){
@@ -9759,7 +9759,7 @@ function lecturaCardHTML(fr,ctx){
   if(it.length)h+='<div class="lecl">'+it.map(function(x,i){
     const a=x.id?alimById(x.id):null,q=frItemMac(x)||{kcal:0};
     /* «Macarrones · pasta cocida»: lo que dijiste, y lo que cuenta si no es lo mismo */
-    const nb=a&&x.nom&&!x.impl&&alimTxt(a.n).indexOf(alimTxt(String(x.nom).replace(/ (a la|al|en) .*$| frit\S*$| asad\S*$/,'')))<0?x.nom.charAt(0).toUpperCase()+x.nom.slice(1)+' · '+a.n.toLowerCase():'';
+    const nb=a&&x.nom&&!x.impl&&alimTxt(a.n).indexOf(alimTxt(String(x.nom).replace(FR_COCCION,'')))<0?x.nom.charAt(0).toUpperCase()+x.nom.slice(1)+' · '+a.n.toLowerCase():'';
     const nm=x.dish||x.fuera||x.ean?frNomItem(x,fr.tipo):(nb||(a?a.n+(x.coc?' '+x.coc:''):''));
     const sub=x.impl?'lo pongo yo: '+(x.impl==='aliño'?'una ensalada lleva aliño':'lo que va '+x.impl+' lleva aceite'):
       (x.pl?'de «'+x.pl.toLowerCase()+'»':(x.dish?'tu plato':(x.fuera?'fuera'+(x.ojo?', a ojo':''):(x.casa?'de tu nevera':''))));
@@ -9770,7 +9770,7 @@ function lecturaCardHTML(fr,ctx){
       cant+'<span class="k">'+Math.round(q.kcal)+'</span><button class="x" data-a="fr-quita" data-i="'+i+'"'+c+' aria-label="quitar '+esc(nm)+'">×</button></div>';}).join('')+'</div>';
   /* las preguntas: con botones, sin inventarse nada */
   du.forEach(function(d,i){
-    const q=d.cuanto?'¿Cuánta '+d.txt+'?':(d.fam?'¿'+(d.txt==='menú'?'Qué menú':'Qué '+d.txt.replace(/(es|s)$/,''))+'?':'No conozco «'+d.txt+'»');
+    const q=d.cuanto?'¿Cuánta '+d.txt+'?':(d.txt==='menú'?'¿Qué menú?':(d.fam?'¿Qué '+d.txt.replace(/(es|s)$/,'')+'?':'No conozco «'+d.txt+'»'));
     h+='<div class="lecd"><b>'+esc(q)+'</b><div class="lecop">'+d.opc.slice(0,4).map(function(o,j){
       return '<button class="chipx" data-a="fr-elige" data-d="'+i+'" data-o="'+j+'"'+c+'>'+esc(o.nom)+'</button>';}).join('')+
       '<button class="chipx" data-a="fr-busca" data-q="'+esc(d.txt)+'"'+c+'>buscar</button>'+
@@ -9795,11 +9795,13 @@ function lecFr(c){return c==='fb'?fbLectura(ui.foodBusca||''):ui.frase;}
 /* fuera de la pila del evento: cambiar los gramos y tocar fuera dispara «change» al perder el foco, y
    repintar ahí mismo quitaba el campo que se estaba quitando (NotFoundError en innerHTML) */
 function lecRepinta(c){setTimeout(function(){if(c==='fb')buscarRepinta();else frPintaLectura();},0);}
+/* un botón de la tarjeta: toca la lectura de su sitio (frase o buscador) y la repinta */
+function lecOp(el,f){const c=el.dataset.c,fr=lecFr(c);if(fr)f(fr);lecRepinta(c);}
 function frEligeDuda(fr,i,j){
   /* eliges una de las propuestas: pasa a ser un trozo más y se recuerda para la próxima */
   const d=(fr.dudas||[])[i],o=d&&d.opc[j];if(!o)return;
   const it=frItemDe(fr,d,o);if(!it)return;
-  fr.items.push(it);fr.dudas.splice(i,1);fr.raros=fr.dudas.map(function(x){return x.txt;});}
+  fr.items.push(it);fr.dudas.splice(i,1);}
 function frCambiaItem(fr,i,j){
   /* «¿era de pavo?»: el trozo pasa a ser la otra opción, con la misma cantidad que escribiste */
   const x=fr.items[i],o=x&&x.alt&&x.alt[j];if(!o)return;
@@ -9824,8 +9826,8 @@ function frItemDe(fr,d,o){
   return it;}
 function fraseCardHTML(slim){
   /* el campo y, debajo, lo que ha entendido en una o dos frases MIENTRAS escribes (#frLectura se
-     rellena sin repintar: el teclado no se cierra). Enter apunta. «corregir ›» abre las piezas. */
-  const fr=ui.frase,pos=(fr&&fr.pos)||ui.frPos||posDeSlot('',horaLocal(new Date()));
+     rellena sin repintar: el teclado no se cierra). Enter apunta. */
+  const fr=ui.frase;
   let h='<div class="frase"><span aria-hidden="true">✍️</span><input id="frIn" data-a="fr-in" placeholder="bocata de pavo con queso y mayo" value="'+esc(ui.frTxt!=null?ui.frTxt:(fr?fr.txt:''))+'" aria-label="qué has comido, en una frase" autocomplete="off" enterkeyhint="done">'+
     '<button class="btn p s" data-a="fr-leer">Apuntar</button></div>'+
     '<div id="frLectura" class="frlect" aria-live="polite">'+(fr?fraseLecturaHTML(fr):'')+'</div>';
@@ -9909,7 +9911,7 @@ function qcCombos(tipo){
     pr.slice(0,3).forEach(function(p,i){const its=[it(p,'plato')];const g=guar[i%Math.max(1,guar.length)];if(g)its.push(it(g,'plato'));
       if(p.rol==='prot-cruda'){const ac=alimPorNombre('Aceite de oliva');if(ac)its.push({id:ac.id,g:8,casa:''});}
       out.push({items:its,falta:g?[]:['guarnición (patata, arroz o verdura)']});});}
-  return out.map(function(c){const fr={txt:'',tipo:tipo,tam:'m',items:c.items,raros:[]};fr.txt=fraseNombre(fr);
+  return out.map(function(c){const fr={txt:'',tipo:tipo,tam:'m',items:c.items};fr.txt=fraseNombre(fr);
     const m=fraseMacros(fr),r=c.items.filter(function(x){return x.r!=null;}).sort(function(p,q){return p.r-q.r;})[0];
     return {fr:fr,m:m,falta:c.falta,urge:r&&r.r<=3?r:null};});}
 const QC_TIPOS=[['plato','🍳','Plato','sartén, horno, olla'],['bowl','🥗','Bowl / poke','healthy, frío'],['bocata','🥪','Bocata','rápido, 5 min']];
@@ -10012,7 +10014,7 @@ function monchisOpciones(){
   nv.filter(function(o){return !usados[o.a.id];}).filter(function(o){return /panna|natilla|flan|cookie|barrita|galleta|chocolate|helado|bolleria|crema.*cacahuete|cacahuete|patatas fritas|nachos|gominola/.test(alimTxt(o.a.n));})
     .forEach(function(o){const g=/crema.*cacahuete/.test(alimTxt(o.a.n))?15:(((o.a.r&&o.a.r[0])||[0,40])[1]);
       caprichos.push({n:o.a.n,e:o.a.e||'🍪',it:[it(o,g)],nota:/cacahuete/.test(alimTxt(o.a.n))?'1 cda · ojo: se va rápido':''});});
-  const conM=function(x){const fr={txt:x.n,tipo:'libre',tam:'m',items:x.it,raros:[]};x.fr=fr;x.m=fraseMacros(fr);return x;};
+  const conM=function(x){const fr={txt:x.n,tipo:'libre',tam:'m',items:x.it};x.fr=fr;x.m=fraseMacros(fr);return x;};
   return {sanos:sanos.map(conM).slice(0,3),caprichos:caprichos.map(conM).slice(0,4)};}
 function monchisCardHTML(sel){
   const ll=lloretDe(sel),hoy=sel===iso(new Date()),hay=monchisKcal(sel)>0||consumoDe(sel).length>0;
@@ -10415,7 +10417,7 @@ function desayunosNevera(){
   const hue=nvDe(null,'huevo')[0],fia=nvDe(null,'fiambre').filter(function(o){return /pavo|pollo|jamon cocido|york|extrafino/.test(alimTxt(o.a.n+' '+o.x.nom));})[0]||nvDe(null,'fiambre')[0];
   const que=nvDe(null,'queso')[0],yog=nvDe(/proteina|griego|skyr|queso fresco batido|kefir/)[0],lec=nvDe(/leche/)[0];
   const fru=qcNevera().filter(function(o){return o.a.g==='fruta';})[0],nuez=nvDe(/nuez|almendr|pecana|anacardo/)[0];
-  const mk=function(txt,icon,its){out.push({fr:{txt:txt,tipo:'libre',tam:'m',items:its,raros:[]},icon:icon});};
+  const mk=function(txt,icon,its){out.push({fr:{txt:txt,tipo:'libre',tam:'m',items:its},icon:icon});};
   if(hue)mk('Huevos revueltos'+(fia?' con '+fia.a.n.toLowerCase().replace(/^fiambre de /,''):'')+(pan?' y pan':''),'🍳',
     [it(hue,120)].concat(fia?[it(fia,40)]:[]).concat(pan?[it(pan,60)]:[]));
   if(fia&&pan)mk('Tostadas de '+fia.a.n.toLowerCase().replace(/^fiambre de /,'')+(que?' y queso':''),'🍞',[it(pan,70),it(fia,60)].concat(que?[it(que,30)]:[]));
@@ -10434,7 +10436,7 @@ function comboConProt(fr,meta){
   const g0=best.x.g,falta=meta-m.prot,extra=Math.min(g0,Math.max(0,falta/best.d*100),250-g0);
   if(extra<15)return fr;
   best.x.g=Math.round((g0+extra)/5)*5;
-  const fr2={txt:'',tipo:fr.tipo,tam:fr.tam,items:its,raros:[]};
+  const fr2={txt:'',tipo:fr.tipo,tam:fr.tam,items:its};
   fr2.txt=(fr.tipo==='libre'?fr.txt:fraseNombre(fr2))+' · más '+best.a.n.toLowerCase().replace(/^fiambre de /,'').split(/[ ,]/)[0];
   return fr2;}
 function protExtras(){
@@ -10444,12 +10446,12 @@ function protExtras(){
     if(!/yogur|griego|skyr|proteina|leche|kefir|queso fresco|cottage|fiambre|pavo|pollo|jamon|lomo|atun|caballa|sardina|salmon ahumad|huevo|edamame|requeson/.test(t))return;
     vistos[a.id]=1;
     const g=/huevo/.test(t)?120:(/leche/.test(t)?250:(/yogur|griego|skyr|kefir|batido/.test(t)?Math.max(125,racDe(a,125)):(/fiambre|pavo|pollo|jamon|lomo/.test(t)?60:racDe(a,80))));
-    const fr={txt:'Extra de proteína: '+(/huevo/.test(t)?'2 huevos':a.n.toLowerCase()),tipo:'libre',tam:'m',items:[{id:a.id,g:g,casa:o.x.nom}],raros:[]};
+    const fr={txt:'Extra de proteína: '+(/huevo/.test(t)?'2 huevos':a.n.toLowerCase()),tipo:'libre',tam:'m',items:[{id:a.id,g:g,casa:o.x.nom}]};
     out.push({fr:fr,icon:'💪',prot:fraseMacros(fr).prot,n:/huevo/.test(t)?'2 huevos':a.n.toLowerCase()});});
   out.sort(function(p,q){return q.prot-p.prot;});
   /* y si en casa no hay (o no basta), lo de siempre para comprar: va a la lista solo */
   PROT_FABRICA.forEach(function(x){const a=alimById(alimSlug(x[0]));if(!a||vistos[a.id])return;vistos[a.id]=1;
-    const fr={txt:'Extra de proteína: '+x[2],tipo:'libre',tam:'m',items:[{id:a.id,g:x[1]}],raros:[]};
+    const fr={txt:'Extra de proteína: '+x[2],tipo:'libre',tam:'m',items:[{id:a.id,g:x[1]}]};
     out.push({fr:fr,icon:'💪',prot:fraseMacros(fr).prot,n:x[2]+' (a comprar)',compra:true});});
   return out.filter(function(x){return x.prot>=6;});}
 /* ===================== EL NUTRICIONISTA =====================
@@ -10513,15 +10515,15 @@ function nutDeNevera(grupo){
 function nutConsejosDia(k){
   /* lo que haría hoy un nutricionista, en orden: la verdura, la proteína y la fruta, cada cosa con lo
      que tienes en casa y un botón que lo deja escrito en la comida que toca */
-  const hoy=nutSuma(foodLog(k)),plan=nutSuma(nutPendiente(k)),out=[];
+  const pend=nutPendiente(k),hoy=nutSuma(foodLog(k)),plan=nutSuma(pend),out=[];
   const v=nutRedondea((hoy.r.verdura||0)+(plan.r.verdura||0)),f=nutRedondea((hoy.r.fruta||0)+(plan.r.fruta||0));
-  const sigue=nutPendiente(k).map(function(x){return x.p;}),cena=sigue.indexOf('cena')>=0?'cena':(sigue[0]||'cena');
+  const sigue=pend.map(function(x){return x.p;}),cena=sigue.indexOf('cena')>=0?'cena':(sigue[0]||'cena');
   if(v<NUT_OBJ.verdura){const nv=nutDeNevera('verdura')[0];
     const q=nv?nv.a.n.toLowerCase():'ensalada',dias=nv&&nv.r!=null&&nv.r<=3?(nv.r<=0?' (caduca hoy)':' (caduca en '+nv.r+' día'+(nv.r>1?'s':'')+')'):'';
     out.push({t:'Te falta'+(NUT_OBJ.verdura-v>1?'n '+fmtC(NUT_OBJ.verdura-v)+' raciones':' una ración')+' de verdura.',
       s:nv?'Tienes '+q+dias+': 150 g con la '+cena+'.':'Una ensalada con la '+cena+' es una ración.',
       b:[{l:'Añadir a la '+cena,p:cena,t:nv?'150 g de '+q:'ensalada'}]});}
-  const obj=protObj(),pr=foodTotals(k).prot+nutPendiente(k).reduce(function(a,x){const d=dishById(x.dishId);return a+(d?(+d.prot||0)*x.rac:0);},0);
+  const obj=protObj(),pr=foodTotals(k).prot+pend.reduce(function(a,x){const d=dishById(x.dishId);return a+(d?(+d.prot||0)*x.rac:0);},0);
   if(obj&&pr<obj*0.9){const ex=protExtras().slice(0,2);
     if(ex.length)out.push({t:'Proteína: te quedas en '+Math.round(pr)+' g de '+obj+'.',s:ex.map(function(x){return x.n+' da '+Math.round(x.prot)+' g';}).join('; ')+'.',
       b:ex.map(function(x){return {l:x.n.replace(/ \(a comprar\)$/,'').replace(/^./,function(c){return c.toUpperCase();}),p:sigue[0]||'merienda',fr:x.fr};})});}
@@ -10652,10 +10654,10 @@ function kcalExtras(){
     if(cel&&glutenDe(a.n+' '+o.x.nom)==='si')return;
     vistos[a.id]=1;
     const g=seco?30:(fruta?racDe(a,120):(/arroz|quinoa|avena/.test(t)?60:racDe(a,60)));
-    const fr={txt:'Extra: '+o.x.nom.toLowerCase(),tipo:'libre',tam:'m',items:[{id:a.id,g:g,casa:o.x.nom}],raros:[]};
+    const fr={txt:'Extra: '+o.x.nom.toLowerCase(),tipo:'libre',tam:'m',items:[{id:a.id,g:g,casa:o.x.nom}]};
     out.push({fr:fr,icon:a.e||'➕',kcal:fraseMacros(fr).kcal,donde:fruta?['desayuno','comida']:(seco?['desayuno','cena']:['comida','cena','desayuno']),casa:true});});
   KCAL_FABRICA.forEach(function(x){const a=alimPorNombre(x[0]);if(!a||vistos[a.id])return;
-    const fr={txt:'Extra: '+x[2],tipo:'libre',tam:'m',items:[{id:a.id,g:x[1]}],raros:[]};
+    const fr={txt:'Extra: '+x[2],tipo:'libre',tam:'m',items:[{id:a.id,g:x[1]}]};
     if(cel&&glutenDe(a.n)==='si')return;
     out.push({fr:fr,icon:a.e||'➕',kcal:fraseMacros(fr).kcal,donde:x[3],casa:nv.id[a.id]!=null});});
   return out.filter(function(x){return x.kcal>=40;});}
@@ -11023,9 +11025,9 @@ function foodBuscarCrea(q,tipo){
   if(!tipo)_buscarPrev={t:t,qt:qt,alias:alias,cand:cand,l:todos};
   /* NADA con lo que has escrito: primero las erratas («macarones con atun» → macarrones atún) y, si
      son varias palabras, lo que casa con alguna de ellas, más arriba lo que casa con más */
-  let corr='';
   if(!res.length&&qt.length){const cz=frCorrige(t.replace(/[^a-z0-9ñ ]/g,' ').replace(/\s+/g,' ').trim());
-    if(cz){const r2=foodBuscarCrea(cz,tipo);if(r2.length){r2.corr=cz;return r2;}}
+    /* (la búsqueda corregida no pisa lo de esta tecla: la siguiente sigue ampliando desde aquí) */
+    if(cz){const pv0=_buscarPrev,r2=foodBuscarCrea(cz,tipo);_buscarPrev=pv0;if(r2.length){r2.corr=cz;return r2;}}
     if(qt.length>1)todos.forEach(function(x){if(tipo&&x.tipo!==tipo)return;const it=x._toks||(x._toks=buscaToks(x.busca));
       const n=qt.filter(function(w){return it.some(function(i){return i.indexOf(w)===0;});}).length;if(n)res.push({x:x,s:n/qt.length,p:1});});}
   const vistos={};
@@ -11039,7 +11041,6 @@ function foodBuscarCrea(q,tipo){
     .map(function(o){return o.x;})
     /* el mismo producto venía dos y tres veces (tabla + catálogo + guardado): uno basta */
     .filter(function(x){const k=x.nt+'|'+Math.round((+x.kcal||0)/10)+'|'+(x.tipo==='fuera'?x.cid:'');if(vistos[k])return false;vistos[k]=1;return true;});
-  if(corr)out.corr=corr;
   return out;}
 function hitKcHTML(x){
   /* a la derecha, la ración con la que se piensa y lo que suma: «1 filete (120 g) · 144 kcal», no
@@ -11140,7 +11141,7 @@ function fbRecetaPegada(txt){
   const n=Math.max(1,+r.portions||1),d={ingredients:r.ingredients,portions:n};migrarPlato(d);
   if(!d.alims.length)return null;
   const nom=String(r.name||'Receta').slice(0,70),e=r.icon||'🍽';
-  return {receta:true,q:nom,nomL:nom,e:e,r:r,rac:n,sin:d.sinCasar,tipo:'libre',txt:nom,pos:'',dudas:[],raros:[],gTot:d.alims,
+  return {receta:true,q:nom,nomL:nom,e:e,r:r,rac:n,sin:d.sinCasar,tipo:'libre',txt:nom,pos:'',dudas:[],gTot:d.alims,
     items:d.alims.map(function(x){const a=alimById(x.id);return {id:x.id,g:Math.max(1,Math.round(x.g/n)),nom:frCorto(a?a.n:'','libre'),pz:'',conf:0.9,papel:'principal',fuente:'receta',pl:nom,plE:e};})};}
 function fbLecturaHTML(q){return lecturaCardHTML(fbLectura(q),'fb');}
 function platoDeAlims(o){
@@ -12955,7 +12956,7 @@ const DES_FABRICA=[
 function comboFabrica(txt,icon,l){
   const its=l.map(function(y){const a=alimById(alimSlug(y[0]));return a?{id:a.id,g:y[1]}:null;});
   if(its.some(function(y){return !y;}))return null;
-  const d=comboADish({txt:txt,tipo:'libre',tam:'m',items:its,raros:[]},icon);d.nevera=false;return d;}
+  const d=comboADish({txt:txt,tipo:'libre',tam:'m',items:its},icon);d.nevera=false;return d;}
 function cjeDesayunos(){
   /* tus desayunos fijos; si no hay, los de la nevera con más proteína; si tampoco, los de fábrica */
   const P=cocinaPref(),fijos=P.desayunos.map(dishById).filter(function(d){return d&&platoApto(d);});
@@ -13106,9 +13107,10 @@ function cjeCocinaHTML(){
       rk.map(function(o){const d=o.d;return '<button class="cjalt" data-a="cje-platos"><span>'+esc(d.icon||'🍽')+'</span>'+esc(d.name)+'<span class="sp"></span><small>'+fmtMil(o.k)+' kcal · '+o.p+' g P</small></button>';}).join('')+
       '<button class="cjalt" data-a="cje-platos"><span>📖</span>Todas tus recetas<span class="sp"></span>›</button></div>'+
     '<button class="cjalt cjfuera" data-a="food-vista" data-v="fuera"><span>🍔</span>Comer fuera: cadenas, la carta o el menú del día<span class="sp"></span>›</button>';}
+function compraH(){return ui.despH||(ui.despH={v:'compra'});}
 function cjeDespensaHTML(){
   /* NEVERA Y COMPRA juntas: lo que hay (con lo que caduca primero), lo que falta y cómo meterlo */
-  const h=ui.despH||(ui.despH={v:'compra'});
+  const h=compraH();
   return '<div class="cjdsp"><button data-a="ticket-foto"><b>📷</b>Foto del ticket</button><button data-a="food-panel2" data-k="scan"><b>▥</b>Código</button>'+
       '<button data-a="food-vista" data-v="nevera2"><b>＋</b>A mano</button></div>'+
     '<div class="card cjdsph">'+cjeHojaCompra(h)+'</div>';}
@@ -13222,11 +13224,14 @@ function cjeHojaMom(h){
       '<div class="cjbtns">'+(!r.e.length&&!d.nada?'<button class="btn" data-a="cje-ok" data-p="'+m[0]+'"'+K+'>✓ lo que tocaba</button>':'')+
         (!r.e.length?'<button class="btn" data-a="cje-nocome" data-p="'+m[0]+'"'+K+'>no he '+(m[0]==='cena'?'cenado':(m[0]==='comida'?'comido':'desayunado'))+'</button>':'')+
         (sem?'<button class="btn" data-a="cje-plato" data-w="'+sem.w+'" data-c="'+m[0]+'">cambiar el plan</button>':'')+'</div>':'');}
-function cjeAbreDesdeFuera(k,p){
+function cjeAbreDesdeFuera(k,p,v){
   /* una comida abierta desde fuera de Comer (Hoy, el calendario): Comer en ese día y la hoja de la
      comida, marcada «fuera» para que al cerrarla Comer vuelva a hoy */
   ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.feVer='';ui.foodDate=k===iso(new Date())?'':k;
-  ui.cjeHoja={v:'acc',p:cjeGrupo(p||'comida'),k:k,fuera:true};}
+  ui.cjeHoja={v:v||'acc',p:cjeGrupo(p||'comida'),k:k,fuera:true};}
+function nutAbreFrase(k,p,fr,txt){
+  /* un consejo del nutricionista se queda escrito en la comida que toca: lo revisas y lo apuntas tú */
+  cjeAbreDesdeFuera(k,p,'mom');ui.frPos=p;ui.frase=fr;if(fr)fr.pos=p;ui.frTxt=txt;}
 function volverAComer(){ui.mVuelta=false;navAplica({tab:'food',foodVista:'eje',cjeTab:'sem'});}
 function cjeGrupo(p){const m=CJE_MOM.filter(function(x){return x[2].indexOf(p)>=0;})[0];return m?m[0]:'comida';}
 function cjeHojaAcc(h){
@@ -22460,12 +22465,10 @@ function act(a,el){
     case 'cje-nocome':{const k=el.dataset.k||iso(new Date());addFoodEntry(k,{macro:{nombre:'No he '+(el.dataset.p==='cena'?'cenado':(el.dataset.p==='comida'?'comido':'desayunado')),kcal:0,prot:0,carb:0,gresa:0,emoji:'·'},pos:el.dataset.p||'comida'});save();render();break;}
     case 'nut-frase':{const k=el.dataset.k||iso(new Date()),c=nutConsejosDia(k)[+el.dataset.i],b=c&&c.b[+el.dataset.j];if(!b)break;
       /* el consejo se queda escrito en la comida que toca: lo revisas y lo apuntas tú */
-      ui.cjeHoja={v:'mom',p:cjeGrupo(b.p),k:k};ui.foodDate=k===iso(new Date())?'':k;ui.frPos=b.p;
-      ui.frase=b.fr?Object.assign({},b.fr,{items:b.fr.items.map(function(x){return Object.assign({papel:'principal',pz:'',ord:0},x);}),dudas:[],pos:b.p}):fraseLeer(b.t);
-      if(ui.frase)ui.frase.pos=b.p;ui.frTxt=b.fr?b.l:b.t;render();break;}
+      nutAbreFrase(k,b.p,b.fr?Object.assign({},b.fr,{items:b.fr.items.map(function(x){return Object.assign({papel:'principal',pz:'',ord:0},x);}),dudas:[]}):fraseLeer(b.t),b.fr?b.l:b.t);
+      render();break;}
     case 'nut-semfr':{const c=nutConsejosSemana(nutSemana())[+el.dataset.i];if(!c||!c.f)break;const p=momentoAhora(),k=iso(new Date());
-      ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.foodDate='';ui.cjeHoja={v:'mom',p:cjeGrupo(p),k:k};ui.frPos=p;ui.frase=fraseLeer(c.f);if(ui.frase)ui.frase.pos=p;ui.frTxt=c.f;
-      render();window.scrollTo(0,0);break;}
+      nutAbreFrase(k,p,fraseLeer(c.f),c.f);render();window.scrollTo(0,0);break;}
     case 'cje-protx':{const r=protExtraPoner(+el.dataset.w);save();flash(r?'＋ '+r.d.name+' en el '+r.cls+' ('+Math.round(r.prot)+' g)':'no hay nada en la nevera que dé proteína');render();break;}
     case 'cje-plato':ui.cjeHoja={v:'plato',w:+el.dataset.w,c:el.dataset.c||'comida'};render();break;
     case 'mc-abre':ui.mcAbre=true;render();break;
@@ -22498,8 +22501,8 @@ function act(a,el){
       else{hh[k]=iso(new Date());cocinadoAdd(t.dishId,t.dias.length);flash('hecho: '+t.dias.length+' raciones de '+t.d.name);}
       save();render();break;}
     /* la compra vive en una hoja (desde Plan) y en la pestaña Despensa: cada una con su estado */
-    case 'cje-fija':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?(ui.despH||(ui.despH={v:'compra'})):{});h.lista=h.lista===el.dataset.v?'':el.dataset.v;render();break;}
-    case 'cje-seg':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?(ui.despH||(ui.despH={v:'compra'})):(ui.cjeHoja={v:'compra'}));h.seg=el.dataset.v;render();break;}
+    case 'cje-fija':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?compraH():{});h.lista=h.lista===el.dataset.v?'':el.dataset.v;render();break;}
+    case 'cje-seg':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?compraH():(ui.cjeHoja={v:'compra'}));h.seg=el.dataset.v;render();break;}
     case 'cje-mark':{const id=el.dataset.id;if(ui.marks.has(id))ui.marks.delete(id);else ui.marks.add(id);saveMarks();render();break;}
     case 'cje-comprado':flash(hacerCompra(ui.marks.size>0));break;
     case 'cje-pref':{const k=el.dataset.k,P=cocinaPref();
@@ -22512,7 +22515,7 @@ function act(a,el){
     case 'fr-rec':{const e=fraseRecientes()[+el.dataset.i];if(!e||!e.frase)break;
       /* lo de otro día: con sus mismas piezas y gramos (o, si llevaba un plato tuyo o algo de fuera, se vuelve a leer) */
       const tx=e.frase.txt||e.nombre;ui.frTxt=tx;
-      ui.frase=(e.frase.ot&&e.frase.ot.length)||!e.frase.it.length?fraseLeer(tx):{txt:tx,tipo:e.frase.tipo,tam:e.frase.tam||'m',items:e.frase.it.map(function(y){const a=alimById(y[0]);return {id:y[0],g:y[1],papel:'principal',nom:a?frCorto(a.n,e.frase.tipo):'',fuente:'tabla'};}),raros:[],dudas:[]};
+      ui.frase=(e.frase.ot&&e.frase.ot.length)||!e.frase.it.length?fraseLeer(tx):{txt:tx,tipo:e.frase.tipo,tam:e.frase.tam||'m',items:e.frase.it.map(function(y){const a=alimById(y[0]);return {id:y[0],g:y[1],papel:'principal',nom:a?frCorto(a.n,e.frase.tipo):'',fuente:'tabla'};}),dudas:[]};
       render();break;}
     case 'prot-extra':{const w=+el.dataset.w,gu=!!guardiaCelda(sbKey(w),'cena'),r=protExtraPoner(w);save();
       flash(r?((gu?'para llevar a la guardia: ':'puesto: ')+r.d.name.replace(/^Extra de proteína: /,'')+' (+'+Math.round(r.prot)+' g) '+(gu?'con el desayuno':'en el '+r.cls)+' del '+SB_DIAS_L[w]):
@@ -22570,16 +22573,13 @@ function act(a,el){
       ui.frase=c.fr;ui.frTxt=c.fr.txt;ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'fr-leer':frEnter();break;
     /* la tarjeta «Te leo»: la misma en la frase (c «fr», ui.frase) y en el buscador (c «fb») */
-    case 'fr-elige':{const c=el.dataset.c,fr=lecFr(c);if(fr)frEligeDuda(fr,+el.dataset.d,+el.dataset.o);lecRepinta(c);break;}
-    case 'fr-quitad':{const c=el.dataset.c,fr=lecFr(c);if(fr&&fr.dudas){fr.dudas.splice(+el.dataset.d,1);fr.raros=fr.dudas.map(function(x){return x.txt;});}lecRepinta(c);break;}
-    case 'fr-tam':{const c=el.dataset.c,fr=lecFr(c);if(fr)fraseReescala(fr,el.dataset.v||'m');lecRepinta(c);break;}
-    case 'fr-quita':{const c=el.dataset.c,fr=lecFr(c);if(fr)fr.items.splice(+el.dataset.i,1);lecRepinta(c);break;}
-    case 'fr-alt':{const c=el.dataset.c,fr=lecFr(c);if(fr)frCambiaItem(fr,+el.dataset.i,+el.dataset.j);lecRepinta(c);break;}
-    case 'fr-mas':{const c=el.dataset.c,fr=lecFr(c),en=alimPorNombre('Ensalada de bolsa'),ac=alimPorNombre('Aceite de oliva');
-      if(fr&&en){fr.items.push({id:en.id,g:80,nom:'ensalada',pz:'ensalada',conf:1,papel:'acomp',fuente:'tabla',ord:98,corr:true});
-        if(ac)fr.items.push({id:ac.id,g:5,nom:'aceite',pz:'',conf:0.9,papel:'toque',fuente:'tabla',impl:'aliño',ord:99});}
-      lecRepinta(c);break;}
-    case 'fr-cancel':ui.frase=null;ui.frTxt='';render();break;
+    case 'fr-elige':lecOp(el,function(fr){frEligeDuda(fr,+el.dataset.d,+el.dataset.o);});break;
+    case 'fr-quitad':lecOp(el,function(fr){(fr.dudas||[]).splice(+el.dataset.d,1);});break;
+    case 'fr-tam':lecOp(el,function(fr){fraseReescala(fr,el.dataset.v||'m');});break;
+    case 'fr-quita':lecOp(el,function(fr){fr.items.splice(+el.dataset.i,1);});break;
+    case 'fr-alt':lecOp(el,function(fr){frCambiaItem(fr,+el.dataset.i,+el.dataset.j);});break;
+    case 'fr-mas':lecOp(el,function(fr){const en=alimPorNombre('Ensalada de bolsa'),ac=frAceiteItem(5,'aliño',99);if(!en)return;
+      fr.items.push({id:en.id,g:80,nom:'ensalada',pz:'ensalada',conf:1,papel:'acomp',fuente:'tabla',ord:98,corr:true});if(ac)fr.items.push(ac);});break;
     case 'fr-busca':ui.foodPos=(ui.frase&&ui.frase.pos)||ui.frPos||ui.foodPos;ui.frase=null;ui.frTxt=null;ui.foodVista='buscar';ui.foodBusca=el.dataset.q||'';render();window.scrollTo(0,0);break;
     case 'fr-ok':{if(!ui.frase)break;const m=fraseApuntar(ui.frase,ui.frase.pos||ui.frPos||posDeSlot('',horaLocal(new Date())));ui.frase=null;ui.frTxt='';ui.frPos='';flash(m);render();break;}
     case 'fr-plato':{const p=fraseRepetidas()[+el.dataset.i];if(p){const d=fraseADish(p);flash('«'+d.name+'» guardado en tus platos: ya sale en la semana y en la clasificación');}render();break;}

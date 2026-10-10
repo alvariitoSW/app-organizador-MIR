@@ -9566,7 +9566,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const menos = await page.$('#hojaDia [data-a="cje-rac"][data-i="0"][data-d="-1"]'); if (menos) { await menos.click(); await page.waitForTimeout(120); }
     const t2 = await page.evaluate(() => window.PG.tandasSemana().tandas.map((t) => t.dias.length));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
-    await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cje-tab"][data-v="coc"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-platos"]'); await page.waitForTimeout(120);
     const filtros = await page.$$eval('#hojaDia [data-a="cje-pfilt"]', (e) => e.length);
     await page.click('#hojaDia [data-a="cje-pfilt"][data-v="tanda"]'); await page.waitForTimeout(100);
@@ -10403,7 +10403,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const t0 = performance.now(); for (let i = 0; i < 20; i++) P.fraseLeer('bowl de quinoa, pollo, aguacate y edamame'); out.ms = (performance.now() - t0) / 20;
       return out; });
     // en vivo: escribir no repinta (el campo es el mismo nodo) y Enter apunta sin soltar el foco
-    await page.evaluate(() => { const P = window.PG; P.store.food.log[P.iso(new Date())] = []; P.ui.frase = null; P.ui.frTxt = null; P.ui.frCorr = false;
+    await page.evaluate(() => { const P = window.PG; P.store.food.log[P.iso(new Date())] = []; P.ui.frase = null; P.ui.frTxt = null;
       P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.save(); P.render(); window.__frNodo = document.getElementById('frIn'); });
     await page.click('#frIn'); await page.keyboard.type('bocata de pavo con queso y mayo', { delay: 20 }); await page.waitForTimeout(450);
     const vivo = await page.evaluate(() => ({ mismo: document.getElementById('frIn') === window.__frNodo, foco: document.activeElement === window.__frNodo,
