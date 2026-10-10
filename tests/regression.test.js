@@ -11229,6 +11229,67 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el día después de una guardia de UMI dice «con el pase»', /con el pase/.test(r.j), r.j);
   }
 
+  // 268) LO QUE VES CADA DÍA, EN CADENA (tanda 4 del informe de código): (a) en Hoy, una comida apuntada
+  //      sale hecha; (b) lo de mañana en «Luego» no es un botón que no abre nada; (c) «200 gr arroz» son
+  //      200 g; (d) elegir la comida de un día de guardia en la semana base cuenta de verdad; (e) la cama
+  //      pasada la medianoche avisa la noche que toca; (f) el aviso de un café se va con el café al
+  //      moverlo; (g) en libras, «104.5 kg» es 230,5 lb; (h) «estancado» va en el sentido correcto; (i) el
+  //      calentamiento no decide si subes; (j) apuntar una serie a mano mantiene viva la sesión.
+  {
+    const r = {};
+    await page.evaluate(() => { window.__copia268 = JSON.parse(JSON.stringify(window.PG.store)); });
+    r.a = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), log = P.foodLog(k);
+      log.push({ id: 'fe268', when: '', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25 }); P.save();
+      const it = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && x.slot && /comida/i.test(x.slot.label || ''));
+      return it.length ? it.some((x) => x.hecha) : 'sin comida en Hoy'; });
+    r.b = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return /data-i="undefined"/.test(P.hoyTresHTML(P.hoyItems(k, P.dayInfo(k)), 1439, k)); });
+    r.c = await page.evaluate(() => { const P = window.PG, a = P.parseIng('200 gr arroz'), b = P.parseIng('1 kilo de patatas'); return a.num + a.unit + '|' + b.num + b.unit; });
+    r.d = await page.evaluate(() => { const P = window.PG, w = 2, k = P.sbFechaW(w), g = P.store.shifts.filter((x) => /guardia/i.test(x.name))[0];
+      P.setDayOverride(k, g.id, 'urg'); P.save();
+      const d = P.store.dishes.filter((x) => !x.hospital)[0];
+      P.mPoner(w, 'comida', [{ kind: 'dish', id: d.id, portions: 1 }], ''); P.save();
+      const c = P.sbCeldaDia(k, 'comida'); return c && c.items[0] && c.items[0].id === d.id ? 'ok' : JSON.stringify(c); });
+    r.e = await page.evaluate(() => { const P = window.PG, s = P.store.sueno; s.avisoCama = true; s.ancla = '06:50'; s.margen = 90; s.min = 8; s.latencia = 10; P.save();
+      const hoy = P.iso(new Date()), hasta = P.iso(P.addDays(new Date(), 14)), ev = P.snCamaEventos(hoy, hasta);
+      const mal = ev.filter((e) => { const tarde = +e.hora.slice(0, 2) < 12, noche = tarde ? P.iso(P.addDays(P.parseDate(e.isoKey), -1)) : e.isoKey;
+        return P.snCamaDe(noche) !== e.hora.replace(/^0(\d:)/, '$1') && P.snCamaDe(noche) !== e.hora; });
+      /* una por NOCHE (la de las 00:10 y la de las 23:00 pueden caer en la misma fecha) */
+      const dias = ev.map((e) => +e.hora.slice(0, 2) < 12 ? P.iso(P.addDays(P.parseDate(e.isoKey), -1)) : e.isoKey), dup = dias.filter((x, i) => dias.indexOf(x) !== i);
+      return { n: ev.length, trasMedianoche: ev.filter((e) => +e.hora.slice(0, 2) < 12).length, mal: mal.length, dup: dup.length }; });
+    r.f = await page.evaluate(() => { const P = window.PG, G = P.iso(P.addDays(new Date(), 3)), g = P.store.shifts.filter((x) => /guardia/i.test(x.name))[0];
+      P.setDayOverride(G, g.id, 'urg'); P.save();
+      const p = P.snPlan(G); p.cafes = [{ t: 21, mg: 80 }]; P.snGuarda(p);
+      P.store.sueno.avisos = P.store.sueno.avisos || {}; P.store.sueno.avisos[G] = { 'cafe21:00': true };
+      const p2 = P.snPlan(G); p2.cafes[0].t = 22; P.snGuarda(p2);
+      return Object.keys(P.store.sueno.avisos[G]).join(','); });
+    r.g = await page.evaluate(() => { const P = window.PG, gs = P.gymS(), antes = gs.unidad; gs.unidad = 'lb'; P.ui.tab = 'gym'; P.render();
+      const m = document.getElementById('main'), sp = document.createElement('span'); sp.textContent = 'récord 104.5 kg'; m.appendChild(sp);
+      P.unidadesEnPantalla(); const t = sp.textContent; gs.unidad = antes; P.ui.tab = 'month'; P.render(); return t; });
+    r.h = await page.evaluate(() => { const P = window.PG, g = P.gymS(), hoy = new Date(), d = (n) => P.iso(P.addDays(hoy, -n));
+      const mete = (ex, reps) => reps.forEach((rp, i) => g.registro.push({ id: 'r268' + ex + i, fecha: d(30 - i * 7), ex, kg: 60, reps: rp, ts: 1 }));
+      mete('Sube268', [8, 9, 10]); mete('Baja268', [10, 9, 8]); P.save();
+      const e = P.estancados().map((x) => x.ex); return { sube: e.indexOf('Sube268') >= 0, baja: e.indexOf('Baja268') >= 0 }; });
+    r.i = await page.evaluate(() => { const P = window.PG, g = P.gymS(), d = P.iso(P.addDays(new Date(), -3));
+      g.registro.push({ id: 'w268c', fecha: d, ex: 'Press 268', kg: 20, reps: 8, t: 'c', ts: 1 });
+      [1, 2, 3].forEach((i) => g.registro.push({ id: 'w268' + i, fecha: d, ex: 'Press 268', kg: 50, reps: 12, rpe: 7, ts: 2 }));
+      P.save(); return P.progresionDe('Press 268', 3, 12, P.iso(new Date())).cl; });
+    r.j = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date());
+      P.ui.gymSesionActiva = { id: 'ses268', rutinaId: '', fecha: hoy, plan: 0, ix: 0, ts: 0, ult: 0 };
+      P.addSet(hoy, { ex: 'Remo 268', kg: 40, reps: 10 }); const u = P.ui.gymSesionActiva.ult; P.ui.gymSesionActiva = null; return Date.now() - u < 5000; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia268; P.save(); P.ui.tab = 'month'; P.render(); });
+    check('en Hoy, una comida apuntada sale como hecha (no se vuelve a ofrecer ✓)', r.a === true, String(r.a));
+    check('lo de mañana en «Luego» no es un botón que no abre nada', r.b === false, String(r.b));
+    check('«200 gr arroz» son 200 g y «1 kilo» es 1 kg', r.c === '200g|1kg', r.c);
+    check('elegir la comida de un día de guardia en la semana base cuenta de verdad', r.d === 'ok', r.d);
+    check('la cama pasada la medianoche avisa la noche que toca, una por noche',
+      r.e.n > 0 && r.e.mal === 0 && r.e.dup === 0, JSON.stringify(r.e));
+    check('el aviso de un café se va con el café al moverlo', r.f === 'cafe22:00', r.f);
+    check('en libras, «104.5 kg» es 230,5 lb (no 2.304)', /230,5 lb/.test(r.g), r.g);
+    check('«estancado» va en el sentido correcto: 8→9→10 avanza, 10→9→8 está atascado', !r.h.sube && r.h.baja, JSON.stringify(r.h));
+    check('el calentamiento no decide si subes: todas las de trabajo al tope → «Sube»', r.i === 'sube', r.i);
+    check('apuntar una serie a mano mantiene viva la sesión en curso', r.j === true, String(r.j));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
