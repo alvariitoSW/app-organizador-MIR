@@ -22751,12 +22751,12 @@ function act(a,el){
       save();ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);
       flash(ev?'guardado':('apuntado: '+t+(evDuraTxt(datos)?(' · '+evDuraTxt(datos)):'')));break;}
     case 'ev-del':{if(el.tagName!=='BUTTON')break;
-      const id=el.dataset.id;
-      confirmar('¿Quitar este evento?').then(function(ok){
+      const id=el.dataset.id,conNota=notasS().some(function(x){return x.evId===id;});
+      /* nota y evento son una sola cosa: quitar el evento quita también su nota (y se dice antes) */
+      confirmar(conNota?'¿Quitar este evento y su nota de la libreta?':'¿Quitar este evento?').then(function(ok){
         if(!ok)return;
         store.eventos=eventosS().filter(function(e){return e.id!==id;});
-        /* su nota se queda suelta en su fecha, sin borrarla */
-        notasS().forEach(function(x){if(x.evId===id)x.evId='';});olvidaNotas();
+        if(conNota){store.notas=notasS().filter(function(x){return x.evId!==id;});olvidaNotas();}
         /* si lo estabas mirando, no te dejes en una pantalla de un evento que ya no existe */
         if(ui.evVista===id){ui.evVista='';ui.evForm=null;}
         save();render();flash('quitado');});

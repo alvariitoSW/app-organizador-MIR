@@ -11458,8 +11458,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
   // 272) LAS CUATRO DECISIONES, EN CADENA: (a) un hábito nuevo no «tocaba» los días de antes de existir
   // (bajaba el % de la semana), pero lo que marcaste antes sí cuenta; (b) mover desde Eventos el evento
-  // de una nota mueve también la nota, en Google sale una sola vez, y quitar el evento deja la nota suelta
-  // en su fecha; (c) la lista de huchas dice lo mismo que el asistente: con fecha, «para <mes> · X €/mes»;
+  // de una nota mueve también la nota, en Google sale una sola vez, y quitar el evento (avisando) quita
+  // también su nota; (c) la lista de huchas dice lo mismo que el asistente: con fecha, «para <mes> · X €/mes»;
   // (d) el aviso de copia, sin tocar, es de 13 días
   {
     const r = {};
@@ -11484,8 +11484,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { fecha: n.fecha, google: g }; }, k1);
     await page.evaluate((a) => { const P = window.PG; P.ui.evVista = a.ev; P.ui.evForm = null; P.render(); }, k1);
     await page.click('#main [data-a="ev-del"]'); await page.waitForTimeout(120);
+    const r0 = await page.evaluate(() => document.body.innerText);   // lo que dice la confirmación
     await page.click('[data-a="confirm-yes"]'); await page.waitForTimeout(150);
-    r.suelta = await page.evaluate((a) => { const n = window.PG.store.notas.filter((x) => x.id === a.id)[0]; return n ? n.fecha + '|' + (n.evId || 'sin') : null; }, k1);
+    r.suelta = await page.evaluate((a) => ({ nota: !!window.PG.store.notas.filter((x) => x.id === a.id)[0] }), k1); r.suelta.aviso = r0;
     // (c) una meta con fecha en la lista de huchas, y (d) el aviso de copia sin tocar
     r.resto = await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = new Date(hoy.getFullYear(), hoy.getMonth() + 6, 1, 12);
       const para = P.iso(d).slice(0, 7);
@@ -11498,8 +11499,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.dineroVista = ''; P.ui.evVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('un hábito nuevo no «tocaba» los días de antes de crearlo, pero lo marcado antes sí cuenta',
       r.hab && r.hab.ayer === false && r.hab.hace5 === true, JSON.stringify(r.hab));
-    check('mover el evento de una nota mueve la nota, en Google sale una vez, y quitar el evento la deja suelta en su fecha',
-      r.nota.fecha === k1.k2 && r.nota.google.join() === 'EVENTO' && r.suelta === k1.k2 + '|sin', JSON.stringify({ nota: r.nota, suelta: r.suelta }));
+    check('mover el evento de una nota mueve la nota, en Google sale una vez, y quitar el evento (avisando) quita también la nota',
+      r.nota.fecha === k1.k2 && r.nota.google.join() === 'EVENTO' && r.suelta.nota === false && /y su nota/.test(r.suelta.aviso), JSON.stringify({ nota: r.nota, suelta: r.suelta }));
     check('la lista de huchas dice lo mismo que el asistente («para <mes> · X €/mes») y el aviso de copia por defecto es de 13 días',
       /para [a-zé]+ de \d{4} · 100 €\/mes/.test(r.resto.lista) && r.resto.copia === 13, JSON.stringify(r.resto));
   }

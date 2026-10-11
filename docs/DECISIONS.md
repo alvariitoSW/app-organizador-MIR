@@ -11,9 +11,11 @@ recibieron la del día de la migración; por eso manda lo marcado y no se pierde
 Descartado: dejarlo como estaba (bajaba el % de «Tu semana» y el «antes» de los experimentos), y
 usar solo la fecha de creación (habría borrado historia real).
 
-**Nota pasada a evento.** Elegido: el evento manda. Moverlo desde Eventos mueve su nota; en Google
-sale solo el evento; quitarlo deja la nota suelta en su fecha. Descartado: borrar la nota con el
-evento (se perdería lo escrito) y dejarlos separados (salían dos veces y en fechas distintas).
+**Nota pasada a evento.** Elegido: el evento manda. Moverlo desde Eventos mueve su nota y en Google
+sale solo el evento. Quitarlo quita también su nota, y la confirmación lo dice antes: «¿Quitar este
+evento y su nota de la libreta?». Lo cambió el usuario en el cuestionario: la primera versión dejaba
+la nota suelta en su fecha y él esperaba que se borrara. Descartado: dejar la nota suelta, fusionar
+nota y evento al convertirla, y dejarlos separados (salían dos veces y en fechas distintas).
 
 **«Cuándo llegas» de las huchas.** Elegido: la hoja, la lista y el Excel usan la cuenta del
 asistente (metaHucha), en la que la fecha («para julio») y la lista de casa mandan. Con fecha, la
