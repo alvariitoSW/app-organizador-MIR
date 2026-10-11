@@ -11456,6 +11456,53 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('un producto sin nombre sale con su marca y lo avisa, se guarda con el nombre que escribes, y los guardados como «… sin nombre» se llaman por su marca',
       r.b.nom === 'Nutella' && r.b.aviso && r.b.guardado === false && r.b2 === 'Nutella crema de cacao' && r.c === 'Nutella', JSON.stringify({ b: r.b, b2: r.b2, c: r.c }));
   }
+  // 272) LAS CUATRO DECISIONES, EN CADENA: (a) un hábito nuevo no «tocaba» los días de antes de existir
+  // (bajaba el % de la semana), pero lo que marcaste antes sí cuenta; (b) mover desde Eventos el evento
+  // de una nota mueve también la nota, en Google sale una sola vez, y quitar el evento deja la nota suelta
+  // en su fecha; (c) la lista de huchas dice lo mismo que el asistente: con fecha, «para <mes> · X €/mes»;
+  // (d) el aviso de copia, sin tocar, es de 13 días
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia272', JSON.stringify(P.store)); });
+    // (a) un hábito creado hoy desde la hoja
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = ''; P.ui.habEd = null; P.render(); });
+    await page.click('#main [data-a="hab-ed"][data-id=""]'); await page.waitForTimeout(120);
+    await page.fill('#habEdNom', 'Beber agua 272');
+    await page.click('#hojaDia [data-a="hab-ed-ok"]'); await page.waitForTimeout(150);
+    r.hab = await page.evaluate(() => { const P = window.PG, h = P.habitosS().items.filter((x) => x.nombre === 'Beber agua 272')[0]; if (!h) return null;
+      const ayer = P.iso(P.addDays(new Date(), -1)), hace5 = P.iso(P.addDays(new Date(), -5));
+      const o = { ayer: P.habitoToca(h, ayer) };
+      const reg = P.habitosS().registro; reg[hace5] = reg[hace5] || {}; reg[hace5][h.id] = 'ok'; P.save();   // marcado antes de «crearlo» (datos viejos)
+      o.hace5 = P.habitoToca(h, hace5) || h.dow.indexOf(new Date(hace5 + 'T12:00').getDay()) < 0; return o; });
+    // (b) una nota pasada a evento; el evento se mueve desde Eventos
+    const k1 = await page.evaluate(() => { const P = window.PG, k = P.iso(P.addDays(new Date(), 3)), k2 = P.iso(P.addDays(new Date(), 5));
+      P.addNota('Recoger el traje 272', k); const n = P.store.notas.filter((x) => x.txt === 'Recoger el traje 272')[0];
+      P.notaAEvento(n.id, {}); P.ui.tab = 'eventos'; P.ui.evVista = n.evId; P.ui.evForm = null; P.render(); return { k, k2, id: n.id, ev: n.evId }; });
+    await page.fill('#evFecha', k1.k2); await page.click('#main [data-a="ev-guardar"]'); await page.waitForTimeout(150);
+    r.nota = await page.evaluate((a) => { const P = window.PG, n = P.store.notas.filter((x) => x.id === a.id)[0];
+      const g = P.calEventos(a.k, a.k2).filter((e) => /Recoger el traje 272/.test(e.summ || '')).map((e) => e.cat);
+      return { fecha: n.fecha, google: g }; }, k1);
+    await page.evaluate((a) => { const P = window.PG; P.ui.evVista = a.ev; P.ui.evForm = null; P.render(); }, k1);
+    await page.click('#main [data-a="ev-del"]'); await page.waitForTimeout(120);
+    await page.click('[data-a="confirm-yes"]'); await page.waitForTimeout(150);
+    r.suelta = await page.evaluate((a) => { const n = window.PG.store.notas.filter((x) => x.id === a.id)[0]; return n ? n.fecha + '|' + (n.evId || 'sin') : null; }, k1);
+    // (c) una meta con fecha en la lista de huchas, y (d) el aviso de copia sin tocar
+    r.resto = await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = new Date(hoy.getFullYear(), hoy.getMonth() + 6, 1, 12);
+      const para = P.iso(d).slice(0, 7);
+      P.ahorroS().huchas.push({ id: 'hu272', nombre: 'Viaje 272', tipo: 'viaje', ico: '✈️', color: '#38bdf8', pct: 0, objetivo: 600, saldo: 0, deseos: [], para });
+      P.ui.tab = 'dinero'; P.ui.dinHoja = ''; P.ui.dineroVista = 'huchas'; P.render();
+      const card = Array.from(document.querySelectorAll('#main .dhu')).filter((c) => /Viaje 272/.test(c.innerText))[0];
+      delete P.store.meta.backupAvisoD;
+      return { lista: card ? card.innerText.replace(/\s+/g, ' ') : '', copia: P.avisoBackupD() }; });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia272')); localStorage.removeItem('__copia272'); P.save();
+      P.ui.dineroVista = ''; P.ui.evVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('un hábito nuevo no «tocaba» los días de antes de crearlo, pero lo marcado antes sí cuenta',
+      r.hab && r.hab.ayer === false && r.hab.hace5 === true, JSON.stringify(r.hab));
+    check('mover el evento de una nota mueve la nota, en Google sale una vez, y quitar el evento la deja suelta en su fecha',
+      r.nota.fecha === k1.k2 && r.nota.google.join() === 'EVENTO' && r.suelta === k1.k2 + '|sin', JSON.stringify({ nota: r.nota, suelta: r.suelta }));
+    check('la lista de huchas dice lo mismo que el asistente («para <mes> · X €/mes») y el aviso de copia por defecto es de 13 días',
+      /para [a-zé]+ de \d{4} · 100 €\/mes/.test(r.resto.lista) && r.resto.copia === 13, JSON.stringify(r.resto));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

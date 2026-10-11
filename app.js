@@ -254,7 +254,7 @@ function diasDesdeBackup(){try{const t=+localStorage.getItem(BKEY);
 function diasDesdePrimerUso(){try{let t=+localStorage.getItem(FKEY);
   if(!t){t=Date.now();localStorage.setItem(FKEY,String(t));}
   return Math.floor((Date.now()-t)/864e5);}catch(e){return 999;}}
-function avisoBackupD(){const v=store.meta&&+store.meta.backupAvisoD;return (v&&v>0)?v:7;}   /* una vez a la semana */
+function avisoBackupD(){const v=store.meta&&+store.meta.backupAvisoD;return (v&&v>0)?v:13;}   /* el mismo valor por defecto que DEFAULTS y normalize */
 /* Sin pedirlo, lo guardado en el navegador es «de usar y tirar»: Android y Chrome pueden borrarlo
    cuando al móvil le falta espacio, sin avisar y sin que tú hayas tocado nada. Esto pide que se
    trate como almacenamiento permanente —en una app instalada suele concederse sin preguntar— y así
@@ -1200,7 +1200,8 @@ function notasAviso(key){
   /* «si pongo una nota en un día, que se sobreentienda que es importante»: una nota CON DÍA y sin
      hacer es un aviso de ese día, y sale en Mes, Semana y Hoy como los eventos. La que ya se pasó a
      evento no se repite (sale el evento); la que no tiene día se queda en la libreta y no molesta. */
-  return notasDeFecha(key).filter(function(x){return !x.hecha&&!(x.evId&&eventoDeNota(x));});}
+  return notasDeFecha(key).filter(function(x){return !x.hecha&&!notaCubierta(x);});}
+function notaCubierta(x){return !!(x.evId&&eventoDeNota(x));}   /* pasada a evento y el evento sigue: sale el evento, no ella */
 function notaDia(key){
   /* se queda por compatibilidad: las notas de un día, en una sola cadena */
   return notasDeFecha(key).map(function(x){return x.txt;}).join('\n');}
@@ -16026,8 +16027,18 @@ const HAB_TRAS=[['despertar','al despertar'],['guardia','al salir de guardia'],[
   ['lloret','antes del Lloretazo'],['cena','después de cenar'],['cama','antes de dormir']];
 const HAB_OBST=[['guardia','🩺 la guardia'],['cansancio','😮‍💨 el cansancio'],['lloret','🌿 el Lloretazo'],['pantallas','📱 el móvil'],['olvido','🤷 se me olvida']];
 const HAB_PESO={ok:1,min:0.5};   /* el mínimo cuenta medio en los %, entero en la racha */
+let _hdT=-1,_hdM={};
+function habDesde(h){
+  /* desde cuándo existe un hábito: el día que lo creaste o el primero que lo marcaste, si fue antes
+     (los creados antes de guardar la fecha recibieron la de ese día: lo marcado antes no se pierde) */
+  if(_hdT!==_renderTick){_hdM={};_hdT=_renderTick;}
+  if(h.id in _hdM)return _hdM[h.id];
+  let d=h.creado||'';const reg=habitosS().registro;
+  Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][h.id]&&(!d||k<d))d=k;});
+  return (_hdM[h.id]=d);}
 function habitoToca(hab,key){
   /* la fase de ESE día: pasar a «ya te sale solo» ya no borra de la semana y de los % los días de antes */
+  if(key<habDesde(hab))return false;   /* antes de existir no «tocaba»: no baja tu % ni el «antes» */
   if(habFaseEn(hab,key)!=='marcha')return false;
   const d=parseDate(key);if(!d||(hab.dow||[]).indexOf(d.getDay())<0)return false;
   const A=HAB_AUTO[hab.auto];if(A&&A.toca&&!A.toca(key))return false;
@@ -19607,6 +19618,10 @@ function metaHucha(h){
     const men=Math.ceil(falta/meses/5)*5;return {obj:obj,falta:falta,men:men,meses:meses,mk:h.para,dia:Math.max(1,Math.round(men/30)),fecha:true};}
   const ap=+h.mensual>0?+h.mensual:aporteHucha(h),ll=llegadaHucha(obj,h.saldo,ap);
   return {obj:obj,falta:falta,men:Math.round(ap),meses:ll.meses,mk:ll.mk,dia:ap?Math.max(1,Math.round(ap/30)):0};}
+function huchaLlega(h){
+  /* la hoja, la lista y el Excel con la cuenta del asistente: la lista de casa y la fecha mandan */
+  const m=metaHucha(h);return m.obj?{obj:m.obj,falta:m.falta,mk:m.mk||'',men:m.men||0,fecha:!!m.fecha}:null;}
+function huchaLlegaTxt(ll){return ll.fecha?('para '+mkLargo(ll.mk)+' · '+eurR(ll.men)+'/mes'):(ll.mk?'llegas en '+mkLargo(ll.mk):'sin aporte no llegas');}
 function metaCuando(c){
   if(!c.mk)return 'sin aporte no llegas';
   if(c.meses!=null&&c.meses<=1&&c.falta<=60)return 'en 1 semana';
@@ -20145,11 +20160,11 @@ function dinHojaHTML(){
   }else if(h0==='hucha'){
     const h=huchaDe(ui.dinHuId);
     if(!h){ui.dinHoja='';return '';}
-    const br=baseReparto(mkHoy),r=repartoDe(br.v),ap=r[h.id]||0,ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,tr=ll?enTrabajo(ll.falta):null;
+    const br=baseReparto(mkHoy),r=repartoDe(br.v),ap=r[h.id]||0,ll=huchaLlega(h),tr=ll?enTrabajo(ll.falta):null;
     const libre=Math.max(0,br.v-(r[puroHucha().id]||0));
     const ds=h.deseos||[];
-    cuerpo='<div class="row sh"><span style="font-size:26px">'+esc(h.ico)+'</span><div><h3>'+esc(h.nombre)+'</h3><div class="hsub">'+esc(eurR(h.saldo))+(h.objetivo?' de '+esc(eurR(h.objetivo)):'')+
-        (ll&&ll.falta?(ll.mk?' · llegas en '+esc(mkLargo(ll.mk)):' · sin aporte no llegas'):(ll?' · ✓ ya la tienes':''))+'</div></div>'+
+    cuerpo='<div class="row sh"><span style="font-size:26px">'+esc(h.ico)+'</span><div><h3>'+esc(h.nombre)+'</h3><div class="hsub">'+esc(eurR(h.saldo))+(ll?' de '+esc(eurR(ll.obj)):'')+
+        (ll&&ll.falta?' · '+esc(huchaLlegaTxt(ll)):(ll?' · ✓ ya la tienes':''))+'</div></div>'+
         '<span class="sp"></span><button class="dlink" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'">editar ›</button></div>'+
       '<div class="hdos" style="margin-top:12px"><label class="hfld">TIENES (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="saldo" data-id="'+esc(h.id)+'" value="'+esc(String(Math.round(h.saldo*100)/100).replace('.',','))+'"></label>'+
         '<label class="hfld">CUESTA (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="objetivo" data-id="'+esc(h.id)+'" value="'+esc(h.objetivo?String(h.objetivo).replace('.',','):'')+'" placeholder="sin objetivo"></label></div>'+
@@ -20307,8 +20322,8 @@ function dineroXlsx(anio){
     return {nombre:MONTH_FULL[ahoYm(mk).m]+' '+ahoYm(mk).y,filas:[['Categoría','Gasto']].concat(Object.keys(g.cats).sort(function(p,q){return g.cats[q]-g.cats[p];})
       .map(function(k){return [k,g.cats[k]];}),[[{v:'Total',b:true},{v:g.total,b:true}]])};});
   const hu={nombre:'Huchas',filas:[['Hucha','Tiene','Objetivo','Al mes','Llegas en','Para qué']].concat(ahorroS().huchas.map(function(h){
-    const ap=aporteHucha(h),ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null;
-    return [h.ico+' '+h.nombre,h.saldo,h.objetivo||'',ap||'',ll&&ll.mk?mkLargo(ll.mk):'',(h.deseos||[]).map(function(d){return d.txt+' ('+eur(d.precio)+')';}).join(', ')||h.meta||''];}))};
+    const ap=aporteHucha(h),ll=huchaLlega(h);
+    return [h.ico+' '+h.nombre,h.saldo,ll?ll.obj:'',ap||'',ll&&ll.falta&&ll.mk?huchaLlegaTxt(ll):'',(h.deseos||[]).map(function(d){return d.txt+' ('+eur(d.precio)+')';}).join(', ')||h.meta||''];}))};
   return xlsxLibro([res,gas].concat(porMes,[hu]));}
 function dineroXlsxBlob(anio){return new Blob([dineroXlsx(anio)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
 
@@ -20318,14 +20333,14 @@ function renderHuchasLista(){
   /* solo mirar: abrir la lista ya no crea el mes (con un 20 % que pisaba tu % de ahorro) */
   const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),false)||{aparto:0,hecho:false,reparto:{},retos:[]},med=mediaAhorroReal(3);
   const tarjeta=function(h){
-    const ap=aporteHucha(h),ll=h.objetivo?llegadaHucha(h.objetivo,h.saldo,ap):null,pc=h.objetivo?Math.min(100,Math.round(h.saldo/h.objetivo*100)):null;
+    const ap=aporteHucha(h),ll=huchaLlega(h),pc=ll?Math.min(100,Math.round(h.saldo/ll.obj*100)):null;
     const ds=h.deseos||[],sumaD=ds.reduce(function(s,d){return s+(+d.precio||0);},0);
     return '<div class="card dhu"><button class="dhucab" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'" aria-label="cambiar '+esc(h.nombre)+'">'+
         '<span class="ic" style="background:color-mix(in srgb,'+esc(h.color)+' 24%,var(--bg2))">'+esc(h.ico)+'</span>'+
-        '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+esc(eurR(h.saldo))+(h.objetivo?' de '+esc(eurR(h.objetivo)):'')+' · '+(ap?esc(eurR(ap))+'/mes':'sin aporte')+(h.meta?' · '+esc(h.meta):'')+'</span></span>'+
+        '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+esc(eurR(h.saldo))+(ll?' de '+esc(eurR(ll.obj)):'')+' · '+(ap?esc(eurR(ap))+'/mes':'sin aporte')+(h.meta?' · '+esc(h.meta):'')+'</span></span>'+
         (pc!=null?'<b class="pc">'+pc+' %</b>':'')+'</button>'+
       (pc!=null?'<div class="dmeter" role="img" aria-label="'+pc+' por ciento"><b style="width:'+pc+'%;background:'+C.seq[2]+'"></b></div>'+
-        '<div class="deta">'+(ll.falta?(ll.mk?'llegas en <b>'+esc(mkLargo(ll.mk))+'</b>':'<b style="color:var(--warn)">sin aporte no llegas</b>')+'<span>faltan '+esc(eurR(ll.falta))+'</span>':'<b style="color:var(--ok)">✓ ya la tienes</b>')+'</div>':'')+
+        '<div class="deta">'+(ll.falta?(ll.mk?'<b>'+esc(huchaLlegaTxt(ll))+'</b>':'<b style="color:var(--warn)">sin aporte no llegas</b>')+'<span>faltan '+esc(eurR(ll.falta))+'</span>':'<b style="color:var(--ok)">✓ ya la tienes</b>')+'</div>':'')+
       (ds.length||ui.deseoNuevo===h.id?'<div class="dwish">'+ds.map(function(d){
           return '<div class="dw'+(d.hecho?' ok':'')+'"><button class="ck" data-a="deseo-ok" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-pressed="'+!!d.hecho+'" aria-label="'+(d.hecho?'desmarcar ':'marcar ')+esc(d.txt)+'"></button>'+
             '<span>'+esc(d.txt)+'</span><em>'+esc(eurR(d.precio))+'</em><button class="x" data-a="deseo-del" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-label="quitar">×</button></div>';}).join('')+
@@ -22729,7 +22744,9 @@ function act(a,el){
       const rec=!!($('#evRec')||{}).checked,cuenta=!!($('#evCuenta')||{}).checked;
       const datos={titulo:t,hora:hora,fin:fin,modo:modo,fecha:fecha,dow:dow,color:color,
         recordatorio:modo==='fecha'&&rec,cuentaAtras:modo==='fecha'&&cuenta};
-      if(ev){Object.keys(datos).forEach(function(k){ev[k]=datos[k];});}
+      if(ev){Object.keys(datos).forEach(function(k){ev[k]=datos[k];});
+        /* nota y evento son una sola cosa: si el evento cambia de día, su nota va con él */
+        const nt=ev.notaId&&notaById(ev.notaId);if(nt&&nt.evId===ev.id&&modo==='fecha'){nt.fecha=fecha;olvidaNotas();}}
       else eventosS().push(Object.assign({id:uid('ev'),on:true},datos));
       save();ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);
       flash(ev?'guardado':('apuntado: '+t+(evDuraTxt(datos)?(' · '+evDuraTxt(datos)):'')));break;}
@@ -22738,6 +22755,8 @@ function act(a,el){
       confirmar('¿Quitar este evento?').then(function(ok){
         if(!ok)return;
         store.eventos=eventosS().filter(function(e){return e.id!==id;});
+        /* su nota se queda suelta en su fecha, sin borrarla */
+        notasS().forEach(function(x){if(x.evId===id)x.evId='';});olvidaNotas();
         /* si lo estabas mirando, no te dejes en una pantalla de un evento que ya no existe */
         if(ui.evVista===id){ui.evVista='';ui.evForm=null;}
         save();render();flash('quitado');});
@@ -24948,7 +24967,7 @@ function calEventos(desde,hasta){
         summ:'💶 '+g.nombre+' · '+eur(g.importe),
         desc:'Gasto fijo del día '+g.dia+' de cada mes.',cat:'DINERO'});}});
   notasS().forEach(function(x){
-    if(x.hecha||!x.fecha)return;
+    if(x.hecha||!x.fecha||notaCubierta(x))return;   /* en Google salía dos veces: como evento y como tarea */
     const dd=parseDate(x.fecha);
     if(!dd||dd<i0||dd>i1)return;
     const t=String(x.txt||'').split('\n')[0].slice(0,60);
