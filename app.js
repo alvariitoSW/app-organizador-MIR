@@ -687,6 +687,9 @@ function normalize(o){
     .map(function(x){return {k:x.k,kg:Math.round(+x.kg*10)/10};})
     .sort(function(a,b){return a.k.localeCompare(b.k);}).slice(-400):[];
   if(!o.food.eans||typeof o.food.eans!=='object')o.food.eans={};
+  /* el escáner guardaba «80135463 sin nombre» aunque supiera la marca: se llaman por ella */
+  Object.keys(o.food.eans).forEach(function(k){const x=o.food.eans[k];
+    if(x&&/^\d+ sin nombre$/.test(String(x.nombre||'')))x.nombre=(String(x.marca||'').trim()||('Producto '+k)).slice(0,64);});
   if(!o.food.log||typeof o.food.log!=='object')o.food.log={};
   if(!Array.isArray(o.food.fav))o.food.fav=[];
   /* la despensa con cantidades: sin registrarla aquí se perdería al recargar */
@@ -3596,28 +3599,36 @@ function food(){
   if(!Array.isArray(f.despensa))f.despensa=[];     /* …y cuánto hay de cada cosa */
   if(!Array.isArray(f.neveraMano))f.neveraMano=[];
   return f;}
+const OFF_NOMBRES=['product_name_es','generic_name_es','product_name','product_name_en','product_name_fr','product_name_it',
+  'product_name_pt','product_name_de','abbreviated_product_name','generic_name'];
+const OFF_CAMPOS='code,'+OFF_NOMBRES.join(',')+',brands,quantity,nutriments';
 function offNum(v){const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?Math.round(n*10)/10:0;}
 function mapOffProduct(p){
   /* de la ficha de Open Food Facts a nuestro producto: siempre por 100 g, que es como se cuentan las raciones */
   if(!p||typeof p!=='object')return null;
   const n=p.nutriments||{},code=String(p.code||p.barcode||'').replace(/\D/g,'');
-  const name=String(p.product_name||p.product_name_es||p.generic_name||'').trim();
+  /* EL NOMBRE, EN ESPAÑOL SI LO HAY. Solo se pedía «product_name», que es el del idioma en que se
+     dio de alta: llegaba vacío (y se guardaba «80135463 sin nombre») o en portugués («Salmão com
+     legumes»). Sin ningún nombre, la marca; y al escanear, la tarjeta deja escribirlo antes de guardar */
+  const name=OFF_NOMBRES.map(function(k){return String(p[k]||'').trim();}).filter(Boolean)[0]||'';
+  const marca=String(p.brands||'').split(',')[0].trim();
   if(!name&&!code)return null;
   /* Open Food Facts manda «x_100g» (lo normal), a veces «x_per_100g», y «x» a secas: se acepta
      cualquiera. Antes solo se miraban las dos últimas y había fichas que se descartaban por «sin datos» */
   const per=function(k){const v=[k+'_100g',k+'_per_100g',k].map(function(c){return n[c];}).filter(function(v){return v!=null;})[0];return offNum(v);};
   const kc=[n['energy-kcal_100g'],n['energy-kcal_per_100g'],n['energy-kcal']].filter(function(v){return v!=null;})[0];
   const kcal=kc!=null?offNum(kc):Math.round(per('energy')/4.184);
-  const out={ean:code,nombre:name||(code+' sin nombre'),marca:String(p.brands||'').split(',')[0].trim(),
+  const out={ean:code,nombre:(name||marca||('Producto '+code)).slice(0,64),marca:marca,
     kcal:kcal,prot:per('proteins'),carb:per('carbohydrates'),gresa:per('fat'),
     azucar:per('sugars'),fibra:per('fiber'),sal:per('salt'),
     envase:String(p.quantity||'').trim().slice(0,28),fuente:'Open Food Facts',ts:Date.now()};
+  if(!name)out.sinNombre=true;
   if(!out.kcal&&!out.prot)return null;   /* sin datos no lo guardamos: la app no inventa lo que comes */
   return out;}
 function addEanProduct(o){
   if(!o||!(+o.kcal||+o.prot))return {ok:false,msg:'ese producto no trae kcal ni proteína por 100 g: no lo guardo a medias'};
   const f=food(),ean=String(o.ean||'').replace(/\D/g,'')||('sin'+String(Date.now()).slice(-6));
-  f.eans[ean]=Object.assign({},f.eans[ean]||{},o,{ean:ean,ts:Date.now()});
+  f.eans[ean]=Object.assign({},f.eans[ean]||{},o,{ean:ean,ts:Date.now()});delete f.eans[ean].sinNombre;
   save();
   return {ok:true,ean:ean,p:f.eans[ean],
     msg:'guardado: '+f.eans[ean].nombre+' · '+f.eans[ean].kcal+' kcal y '+f.eans[ean].prot+' g de proteína por 100 g'};}
@@ -4444,7 +4455,7 @@ function buscarEan(code){
   const c=String(code||'').replace(/\D/g,'');
   if(c.length<8)return Promise.resolve({ok:false,msg:'un código de barras suele tener 13 dígitos (has puesto '+c.length+')'});
   if(typeof fetch!=='function')return Promise.resolve({ok:false,msg:'este navegador no sale a la red: apunta las kcal del paquete a mano'});
-  return fetch(offUrl('api/v2/product/'+c+'.json?fields=code,product_name,brands,quantity,nutriments'))
+  return fetch(offUrl('api/v2/product/'+c+'.json?fields='+OFF_CAMPOS))
     .then(function(r){if(!r.ok)throw new Error('no está en la base ('+r.status+')');return r.json();})
     .then(function(j){const out=mapOffProduct(j&&j.product);
       if(!out)return {ok:false,msg:'no encuentro el '+c+' con datos de nutrición: prueba a buscarlo por nombre'};
@@ -4495,7 +4506,7 @@ function buscarOffNombre(txt,marca){
   if(typeof fetch!=='function')return Promise.resolve({ok:false,msg:'este navegador no sale a la red'});
   const filtroMarca=marca?('&tagtype_0=brands&tag_contains_0=contains&tag_0='+encodeURIComponent(marca)):'';
   const url=offUrl('cgi/search.pl?search_terms='+encodeURIComponent(t)+
-    '&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,brands,quantity,nutriments'+filtroMarca);
+    '&search_simple=1&action=process&json=1&page_size=16&fields='+OFF_CAMPOS+filtroMarca);
   /* con tope de 8 s y cancelable: en el hospital la red cuelga y la búsqueda vieja seguía viva */
   const ac=typeof AbortController==='function'?new AbortController():null;
   if(ac){_offAbort=ac;setTimeout(function(){try{ac.abort();}catch(e){}},8000);}
@@ -4554,9 +4565,21 @@ function buscarYmostrar(code){
   if(out)out.textContent='buscando '+code+'…';
   return buscarEan(code).then(function(r){
     if(!r.ok){if(out)out.textContent=r.msg;flash(r.msg);return r;}
-    const res=addEanProduct(r.p);
-    if(out)out.textContent=res.msg;
-    flash(res.msg);render();return r;});}
+    /* antes se guardaba aquí mismo, sin enseñar el nombre: ahora sale la ficha y guardas tú */
+    ui.scanPend=r.p;ui.scanMsg='';render();
+    const nom=document.getElementById('scanNom');if(nom&&r.p.sinNombre){try{nom.focus();nom.select();}catch(e){}}
+    return r;});}
+function scanPendHTML(){
+  /* lo que ha leído el escáner, antes de guardarlo: el nombre se ve y se puede cambiar */
+  const p=ui.scanPend;if(!p)return '';
+  return '<div class="card scanpend" style="margin-top:8px">'+
+    '<p class="mini" style="margin:0 0 6px">código '+esc(p.ean||'')+' · '+esc(p.fuente||'')+'</p>'+
+    '<label class="fld">nombre<input id="scanNom" maxlength="64" value="'+esc(p.nombre||'')+'" placeholder="lo que pone en el paquete"></label>'+
+    (p.sinNombre?'<p class="mini" style="color:var(--warn);margin:4px 0 0">Open Food Facts no trae su nombre: escríbelo como lo quieras ver.</p>':'')+
+    '<p class="mini" style="margin:6px 0">'+esc([p.marca,p.envase].filter(Boolean).join(' · '))+(p.marca||p.envase?' · ':'')+
+      (p.kcal||0)+' kcal · '+(p.prot||0)+' g prot · '+(p.carb||0)+' g hidratos · '+(p.gresa||0)+' g grasa por 100 g</p>'+
+    '<div class="row" style="gap:6px"><button class="btn p" data-a="scan-pend-ok">guardar</button>'+
+      '<button class="btn s" data-a="scan-pend-x">descartar</button></div></div>';}
 
 /* ===================== calendario: piezas compartidas entre Hoy/Semana/Mes =====================
    Reformulación del informe "Reformular Mes, Semana y Hoy": antes cada pantalla resolvía "qué día
@@ -12124,7 +12147,7 @@ function renderFoodAdd(){
   let cuerpo='';
   if(modo==='scan'){
     cuerpo='<div class="card" style="margin-top:11px">'+
-      '<p class="note">Enfoca el código de barras: se busca en Open Food Facts y se guarda con sus kcal y proteína. '+
+      '<p class="note">Enfoca el código de barras: se busca en Open Food Facts y te enseña su ficha (nombre, kcal y proteína) para que la revises antes de guardarla. '+
       'Solo el código (no tu nombre ni nada tuyo) sale hacia ese servicio externo.</p>'+
       '<div class="scanbox" id="scanBox"><video id="scanV" playsinline muted></video></div>'+
       '<div class="row"><button class="btn p" data-a="scan-start">'+gymIco('camara','gico sm')+' abrir la cámara</button>'+
@@ -12138,7 +12161,7 @@ function renderFoodAdd(){
       '<label class="fld" style="margin-top:6px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">'+
         '<input type="checkbox" id="scanMerc" data-a="scan-solo-merc" style="width:auto" '+(ui.scanSoloMercadona?'checked':'')+'>'+
         '<span>🛒 solo Mercadona (Hacendado, Deliplus…)</span></label>'+
-      '<p id="scanOut">'+esc(ui.scanMsg||'')+'</p>'+
+      '<p id="scanOut">'+esc(ui.scanMsg||'')+'</p>'+scanPendHTML()+
       ((ui.scanRes||[]).length?('<div class="daylist" style="margin-top:4px">'+ui.scanRes.map(function(x,ix){
         return '<div class="frow"><span><span class="fn">'+esc(x.nombre)+'</span>'+
           '<span class="fm">'+esc(x.marca||'')+(x.envase?' · '+esc(x.envase):'')+'</span></span>'+
@@ -23190,7 +23213,13 @@ function act(a,el){
          con un vídeo en negro que parezca que está escaneando sin estarlo */
       Promise.resolve(iniciarEscaner()).then(function(m){ui.scanMsg=m;
         const o=document.getElementById('scanOut');if(o)o.textContent=m;flash(m);});break;}
-    case 'scan-stop':pararEscaner();ui.scanMsg='';ui.scanRes=[];render();break;
+    case 'scan-stop':pararEscaner();ui.scanMsg='';ui.scanRes=[];ui.scanPend=null;render();break;
+    case 'scan-pend-ok':{const p=ui.scanPend;if(!p)break;
+      const nm=String((document.getElementById('scanNom')||{}).value||'').trim().slice(0,64);
+      if(!nm){flash('ponle un nombre: el que quieras ver en el buscador');break;}
+      const res=addEanProduct(Object.assign({},p,{nombre:nm}));flash(res.msg);
+      if(res.ok){ui.scanPend=null;ui.scanMsg=res.msg;}render();break;}
+    case 'scan-pend-x':ui.scanPend=null;ui.scanMsg='';render();break;
     case 'scan-go':{const c=(document.getElementById('scanEan')||{}).value||'';
       ui.scanMsg='buscando '+c+'…';const o=document.getElementById('scanOut');if(o)o.textContent=ui.scanMsg;
       Promise.resolve(buscarYmostrar(c)).then(function(){render();});break;}
@@ -23200,6 +23229,7 @@ function act(a,el){
         render();flash(r.msg);});break;}
     case 'scan-solo-merc':ui.scanSoloMercadona=!!el.checked;break;
     case 'scan-save':{const x=(ui.scanRes||[])[+el.dataset.ix];if(!x)break;
+      if(x.sinNombre){ui.scanPend=x;render();break;}
       const res=addEanProduct(x);flash(res.msg);if(res.ok)render();break;}
     case 'scan-today':{const x=(ui.scanRes||[])[+el.dataset.ix];if(!x)break;
       const r2=addEanProduct(x);if(!r2.ok){flash(r2.msg);break;}

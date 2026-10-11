@@ -11417,6 +11417,45 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la suscripción por URL avisa con tus minutos, «Fondo indexado» de tipo inversión cuenta como inversión y el día del aviso toca copia',
       r.resto.alarm === '10' && r.resto.inv === false && r.resto.copia === true, JSON.stringify(r.resto));
   }
+  // 271) ESCANEAR UN CÓDIGO ENSEÑA EL NOMBRE ANTES DE GUARDARLO, EN CADENA: se guardaba al momento, sin
+  // verlo, como «80135463 sin nombre» (Nutella) o en portugués («Salmão com legumes»). Ahora se pide el
+  // nombre en español, la ficha sale antes de guardar, uno sin nombre lleva su marca y pide escribirlo, lo
+  // que escribes es lo que se guarda, y los ya guardados como «… sin nombre» se llaman por su marca al recargar
+  {
+    const r = {};
+    const fichas = {
+      '5601234567890': { code: '5601234567890', product_name: 'Salmão com legumes', product_name_es: 'Salmón con verduras', brands: 'Hacendado', quantity: '400 g', nutriments: { 'energy-kcal_100g': 141, proteins_100g: 12 } },
+      '80135463': { code: '80135463', brands: 'Nutella,Ferrero', quantity: '200 g', nutriments: { 'energy-kcal_100g': 539, proteins_100g: 6.3 } } };
+    let pedido = '';
+    await page.route('https://world.openfoodfacts.org/**', (route) => { const u = route.request().url(); pedido = u;
+      const c = (/product\/(\d+)\.json/.exec(u) || [])[1];
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fichas[c] ? { product: fichas[c] } : { status: 0 }) }); });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia271', JSON.stringify(P.store));   // la recarga del final borra las variables de la página
+      delete P.store.food.eans['5601234567890']; delete P.store.food.eans['80135463']; P.ui.scanPend = null; P.ui.scanMsg = ''; P.save(); });
+    await gotoFood('add', 'scan');
+    await page.fill('#scanEan', '5601234567890'); await page.click('[data-a="scan-go"]'); await page.waitForTimeout(300);
+    r.a = await page.evaluate(() => ({ nom: (document.getElementById('scanNom') || {}).value || null, guardado: !!window.PG.store.food.eans['5601234567890'] }));
+    r.pideEs = /product_name_es/.test(pedido);
+    const ok1 = await page.$('[data-a="scan-pend-ok"]'); if (ok1) { await ok1.click(); await page.waitForTimeout(150); }
+    r.a2 = await page.evaluate(() => (window.PG.store.food.eans['5601234567890'] || {}).nombre || null);
+    // sin nombre en Open Food Facts: la ficha trae la marca y lo avisa; lo que escribes es lo que queda
+    await page.fill('#scanEan', '80135463'); await page.click('[data-a="scan-go"]'); await page.waitForTimeout(300);
+    r.b = await page.evaluate(() => ({ nom: (document.getElementById('scanNom') || {}).value || null,
+      aviso: /no trae su nombre/.test(document.querySelector('#main').innerText), guardado: !!window.PG.store.food.eans['80135463'] }));
+    if (await page.$('#scanNom')) { await page.fill('#scanNom', 'Nutella crema de cacao'); await page.click('[data-a="scan-pend-ok"]'); await page.waitForTimeout(150); }
+    r.b2 = await page.evaluate(() => (window.PG.store.food.eans['80135463'] || {}).nombre || null);
+    await page.unroute('https://world.openfoodfacts.org/**');
+    // uno guardado antes con el fallo: al recargar se llama por su marca
+    await page.evaluate(() => { const P = window.PG, f = P.store.food; f.eans['80135463'] = Object.assign({}, f.eans['80135463'] || { ean: '80135463', marca: 'Nutella', kcal: 539, prot: 6.3 }, { nombre: '80135463 sin nombre' }); P.save(); });
+    await page.reload(); await page.waitForTimeout(700);
+    r.c = await page.evaluate(() => (window.PG.store.food.eans['80135463'] || {}).nombre || null);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia271')); localStorage.removeItem('__copia271'); P.save();
+      P.ui.scanPend = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('escanear enseña la ficha antes de guardar, con el nombre en español aunque el principal venga en portugués',
+      r.pideEs && r.a.nom === 'Salmón con verduras' && r.a.guardado === false && r.a2 === 'Salmón con verduras', JSON.stringify({ pideEs: r.pideEs, a: r.a, a2: r.a2 }));
+    check('un producto sin nombre sale con su marca y lo avisa, se guarda con el nombre que escribes, y los guardados como «… sin nombre» se llaman por su marca',
+      r.b.nom === 'Nutella' && r.b.aviso && r.b.guardado === false && r.b2 === 'Nutella crema de cacao' && r.c === 'Nutella', JSON.stringify({ b: r.b, b2: r.b2, c: r.c }));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
