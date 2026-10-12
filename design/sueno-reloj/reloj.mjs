@@ -24,7 +24,7 @@ export function reloj(k, G, P) {
   W.POST_DX = 29; W.POST = { w: 7, d: 12 };
   W.GAUGE = { x: -108, y: -32, w: 9, d: 8 }; W.G0 = 10; W.G1 = 100;   // la regla de la alerta
   W.DIAL = [72, -20]; W.DIAL_Z = 47; W.DIAL_R = 30; W.DISC_T = 3;     // la esfera de día y noche
-  W.HOR_W = 36; W.HOR_H = 38;
+  W.HOR_W = 36; W.HOR_H = W.DIAL_Z + 2;   // el horizonte, a la altura del centro: el sol asoma de 11:00 a 23:00
   W.DN = [Math.SQRT1_2, Math.SQRT1_2, 0]; W.DU = [Math.SQRT1_2, -Math.SQRT1_2, 0];   // de cara, en diagonal
 
   /* ---------- el cristal: dos bulbos unidos por un cuello ---------- */
@@ -51,18 +51,15 @@ export function reloj(k, G, P) {
   function sandOf(F, lado, f, abajo) {
     if (f < 0.004) return "";
     const h = abajo ? desdeTapa(f) : desdeCuello(f);
-    const prof = [];
-    if (abajo) {           // un montón sobre la tapa, con su cono arriba
-      const s0 = W.CAP_S - 0.4, s1 = Math.max(W.CAP_S - h, 1.2), n = 10;
-      for (let i = 0; i <= n; i++) { const s = s1 + (s0 - s1) * i / n; prof.push([s, Math.max(0.6, bulbR(s) - 0.7)]); }
-      const cono = Math.min(3.4, h * 0.25); prof.unshift([Math.max(0.6, s1 - cono), 0.8]);
-    } else {               // la que queda arriba, apoyada en el cuello, con un hoyo en medio
-      const s0 = 0.6, s1 = Math.min(W.CAP_S - 0.4, h), n = 10;
-      for (let i = 0; i <= n; i++) { const s = s0 + (s1 - s0) * i / n; prof.push([s, Math.max(0.6, bulbR(s) - 0.7)]); }
-    }
-    const pf = prof.map(([s, r]) => [lado * s, r]);
-    if (lado < 0) pf.reverse();
-    return S(G.solidOf(pf, F, P, { smooth: false }), { tone: "mid", className: "m-sand", crease: "none" });
+    // de la tapa al nivel (abajo) o del cuello al nivel (arriba); la cara libre es siempre el anillo del nivel
+    const [a, b] = abajo ? [Math.max(W.CAP_S - h, 1.2), W.CAP_S - 0.4] : [0.6, Math.min(W.CAP_S - 0.4, h)];
+    const nivel = abajo ? a : b, n = 10, prof = [];
+    for (let i = 0; i <= n; i++) { const s = a + (b - a) * i / n; prof.push([lado * s, Math.max(0.6, bulbR(s) - 0.7)]); }
+    if (lado < 0) prof.reverse();
+    // la arena es grano: un relleno liso con la cara libre más clara (las bandas de tono escalonaban)
+    const pa = G.solidOf(prof, F, P, { smooth: false, steps: 40 });
+    const cara = G.circleOf(F, lado * nivel, Math.max(0.6, bulbR(nivel) - 0.7), P, 48);
+    return S({ ...pa, shades: [], top: cara }, { tone: "mid", className: "m-sand", crease: "none" });
   }
   W.sandOf = sandOf;
 
@@ -76,7 +73,7 @@ export function reloj(k, G, P) {
     // las tapas: la del bulbo del cansancio, de latón (al dormir se ve arriba); la otra, de madera
     for (const sg of [-1, 1]) {
       const a = sg * W.CAP_S, b = sg * (W.CAP_S + W.CAP_T);
-      const svg = S(G.disc(Math.min(a, b), Math.max(a, b), W.CAP_R, F, P), { tone: "mid", className: sg < 0 ? "m-brass" : "m-wood" })
+      const svg = S(G.disc(Math.min(a, b), Math.max(a, b), W.CAP_R, F, P, { steps: 56 }), { tone: "mid", className: sg < 0 ? "m-brass" : "m-wood" })
         + (sg < 0 ? L(G.arcOf(F, b, W.CAP_R - 5.5, P, { least: -1 }), { tone: "lo" }) : "")
         + k.dotsSvg(G.dotsOf(F, b, W.CAP_R - 3, 6, P, { all: true, phase: 0.5 }), { size: 0.55, tone: "hi" });
       put(ax(sg * (W.CAP_S + W.CAP_T / 2)), svg);
@@ -94,7 +91,7 @@ export function reloj(k, G, P) {
       const prof = lado
         ? [[-W.CAP_S, 2.4], [-W.CAP_S + 4, 2.4], [-W.CAP_S + 5, 1.6, 1], [-7, 1.5, 1], [-4.2, 3.2], [4.2, 3.2], [7, 1.5, 1], [W.CAP_S - 5, 1.6, 1], [W.CAP_S - 4, 2.4], [W.CAP_S, 2.4]]
         : [[-W.CAP_S, 2.4], [-W.CAP_S + 4, 2.4], [-W.CAP_S + 5, 1.6, 1], [-6, 1.5, 1], [-3, 2.2, 1], [3, 2.2, 1], [6, 1.5, 1], [W.CAP_S - 5, 1.6, 1], [W.CAP_S - 4, 2.4], [W.CAP_S, 2.4]];
-      put(p, S(G.solidOf(prof, C, P), { tone: "mid", className: lado ? "m-brass" : "m-wood" }));
+      put(p, S(G.solidOf(prof, C, P, { smooth: false, steps: 14 }), { tone: "mid", className: lado ? "m-brass" : "m-wood" }));
     }
     const vidrio = G.outlineOf(glassMeridian, F, P, { smooth: true });
     const hl = []; for (let i = 0; i <= 12; i++) { const s = -W.CAP_S * 0.86 + i * W.CAP_S * 0.62 / 12; hl.push(at(G.pointOf(F, s, bulbR(s) * 0.8, 2.4))); }

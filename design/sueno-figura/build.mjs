@@ -313,5 +313,5 @@ const body = k.plateHtml({
 const html = k.pageHtml({ title: "El banco del sueño", theme, body, script: kitScript() + live });
 const nombre = (arg ? "sueno-t" + t0 : "sueno") + (theme === "light" ? "-light" : "") + ".html";
 writeFileSync(join(HERE, nombre), html);
-if (!arg) { mkdirSync(join(RAIZ, "fig"), { recursive: true }); writeFileSync(join(RAIZ, "fig", nombre), html); }
+// ya no va a fig/: la app usa el reloj de arena (design/sueno-reloj/build.mjs --app)
 console.log("wrote", nombre, Math.round(html.length / 1024) + " KB");

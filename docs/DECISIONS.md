@@ -51,3 +51,20 @@ y «Cerrar» la quitan sin salir de Guardia. Sigue el tema: claro u oscuro.
 - Leer la guardia desde la figura (localStorage compartido): la ataría al formato de los datos de la
   app; con el plan ya calculado por snPlanSim la figura no repite la lógica de turnos.
 - La guardia típica fija (la maqueta A): el usuario pidió su guardia real.
+
+## 2026-10-12 · Del banco de pruebas al reloj de arena
+
+**Elegido:** la figura de Sueño → Guardia pasa a ser un reloj de arena de madera y latón
+(design/sueno-reloj/). El usuario eligió esta máquina porque el banco «no se entiende» y era
+«frío»; la quiere para entender, no para planear. Cada pieza es una parte del modelo:
+- la arena es el cansancio: cae al bulbo de la tapa de latón despierto; al dormir el bastidor gira
+  y ese bulbo se vacía (más rápido de lo que se llenó);
+- una esfera de día y noche tras un horizonte es el reloj interno: el sol asoma de 11:00 a 23:00,
+  cuando el término principal del ritmo es positivo, y está en lo más alto a las 17:00;
+- el café es un manguito de latón translúcido que tapa parte de la arena (enmascara, no quita);
+- la regla de la izquierda, con zonas roja, ámbar y verde, es la alerta.
+Mismo modelo que la app; los colores (madera, latón, arena, cielo) son lo que se explica.
+
+**Descartado:** la balanza (lee bien la alerta pero no el sueño como vaciado), el riel con levas
+(mejor para planear, y el usuario quiere entender) y el cuadro de mandos (otra vez abstracto).
+La esfera no dibuja el bajón de después de comer ni la inercia al despertar: están en la cifra.
