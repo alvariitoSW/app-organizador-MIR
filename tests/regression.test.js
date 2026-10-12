@@ -11550,6 +11550,78 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«qué es cada pieza» abre el reloj entero sin recargarse al repintar; «atrás» y «Cerrar» lo cierran sin salir de Sueño',
       r.c.hay && !r.c.corto && r.c.p && r.c.p.de === r.b.plan.de && r.c.repinta && !r.d.capa && !r.d.clase && r.d.vista === 'sueno' && !r.e.capa && r.e.vista === 'sueno', JSON.stringify({ c: r.c, d: r.d, e: r.e }));
   }
+  // 274) TUS PLATOS → SEMANA → COMPRA, EN CADENA: (a) en Comer → Plan escribes platos solo por el nombre y un
+  // repintado no borra lo escrito; (b) «Entender» trae qué lleva por ración y los pasos; la duda del curry
+  // contestada deja de estar «por revisar» y lo elegido (nata) entra en el plato guardado, con sus pasos y
+  // para qué comida va; volver a escribir uno que ya tenías no lo duplica; (c) la semana con tus platos pone
+  // desayunos en el desayuno, respeta la cena de la guardia y «Usar esta semana» la lleva a la compra; (d) «Qué
+  // tener» lista lo mismo sin cantidades y marcar ahí lo marca también en «Comprar»; (e) «atrás» desde la
+  // lectura vuelve a Plan
+  {
+    const r = {};
+    const toca = async (sel, ms) => { const e = await page.$(sel); if (e) await e.click(); await page.waitForTimeout(ms || 80); };
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia274', JSON.stringify(P.store));
+      const L = P.store.shifts.filter((x) => !P.isGuardia(x))[0], G = P.store.shifts.filter(P.isGuardia)[0];
+      for (let w = 0; w < 7; w++) P.setDayOverride(P.sbKey(w), w === 2 ? G.id : L.id, w === 2 ? 'urg' : '');
+      P.store.dishes.forEach((d) => { delete d.tuyo; });
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'sem'; P.ui.tpVista = ''; P.ui.tpTxt = ''; P.save(); P.render(); });
+    // (a)
+    const hay = !!(await page.$('#tpTxt'));
+    if (hay) await page.fill('#tpTxt', 'Lentejas con chorizo\nPollo al curry con arroz\nAvena con plátano');
+    await page.evaluate(() => window.PG.render());
+    r.a = await page.evaluate(() => ((document.getElementById('tpTxt') || {}).value || ''));
+    // (b)
+    await toca('[data-a="tp-leer"]');
+    r.b = await page.evaluate(() => { const l = window.PG.ui.tpBorr || [];
+      return { n: l.length, lent: l[0] && l[0].ing.length, pasos: l[0] && l[0].pasos.length, duda: !!(l[1] && l[1].duda), rev0: (document.querySelector('.tplist') || {}).innerText }; });
+    await toca('.tpfila[data-i="1"]');
+    await toca('[data-a="tp-duda"][data-i="1"][data-v="1"]');
+    r.b.rev1 = await page.evaluate(() => (document.querySelector('#main .card .mini') || {}).innerText || '');
+    await toca('[data-a="tp-guardar"]', 150);
+    // tolerante: con el código de antes no hay tpTodos y la prueba tiene que CAER, no romper la suite
+    r.b.g = await page.evaluate(() => { const P = window.PG; if (!P.tpTodos) return null; const l = P.tpTodos(), cu = l.filter((d) => /curry/i.test(d.name))[0], av = l.filter((d) => /avena/i.test(d.name))[0];
+      const nata = P.alimPorNombre('Nata para cocinar');
+      return { n: l.length, nata: !!(cu && nata && cu.alims.some((x) => x.id === nata.id)), pasos: cu ? cu.steps.length : 0, des: av ? av.momentos.join() : '', ingr: cu ? cu.ingredients.length : 0 }; });
+    await toca('.tpmas summary');
+    if (await page.$('#tpTxt')) await page.fill('#tpTxt', 'lentejas con chorizo');
+    await toca('[data-a="tp-leer"]'); await toca('[data-a="tp-guardar"]', 150);
+    r.b.n2 = await page.evaluate(() => (window.PG.tpTodos ? window.PG.tpTodos().length : -1));
+    // (c)
+    await toca('[data-a="tp-semana"]');
+    r.c = await page.evaluate(() => { const P = window.PG; if (!P.tpPropuesta) return { compra: {} }; const p = P.tpPropuesta(P.ui.tpSeed || 0), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
+      return { filas: document.querySelectorAll('.tpwk .d').length, des: p.every((x) => x.desayuno && av && x.desayuno.id === av.id), cenaG: p[2].cena, comG: p[2].comida && p[2].comida.tag,
+        texto: (document.querySelector('.tpwk') || {}).innerText || '' }; });
+    await toca('[data-a="tp-usar"]', 200);
+    r.c.compra = await page.evaluate(() => ({ tab: window.PG.ui.cjeTab, txt: (document.querySelector('.cjdsph') || {}).innerText || '' }));
+    // (d)
+    await toca('[data-a="cje-seg"][data-v="tener"]');
+    r.d = await page.evaluate(() => { const b = [...document.querySelectorAll('.tptener .tpt')]; return { n: b.length, txt: b.map((x) => x.innerText).join('|') }; });
+    const len = await page.$('.tptener .tpt:not(.ten)');
+    if (len) { r.d.id = await len.getAttribute('data-id'); await len.click(); await page.waitForTimeout(80); }
+    await toca('[data-a="cje-seg"][data-v="comprar"]');
+    // la misma marca: en «Comprar» sale hecha (si está a la vista; si no, plegada en su pasillo)
+    r.d.enComprar = await page.evaluate((id) => { const b = id && document.querySelector('.cjli[data-id="' + CSS.escape(id) + '"]');
+      return { marca: !!id && window.PG.ui.marks.has(id), vista: b ? b.classList.contains('done') : null }; }, r.d.id || '');
+    // (e)
+    await toca('[data-a="cje-tab"][data-v="sem"]'); await toca('.tpmas summary');
+    if (await page.$('#tpTxt')) await page.fill('#tpTxt', 'Pizza');
+    await toca('[data-a="tp-leer"]');
+    r.e = { antes: await page.evaluate(() => window.PG.ui.tpVista) };
+    await page.goBack(); await page.waitForTimeout(250);
+    r.e.despues = await page.evaluate(() => ({ v: window.PG.ui.tpVista, tab: window.PG.ui.cjeTab, f: window.PG.ui.tab, card: !!document.querySelector('.tpc') }));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia274')); localStorage.removeItem('__copia274'); P.save();
+      P.ui.tpVista = ''; P.ui.tpTxt = ''; P.ui.tpBorr = null; P.ui.cjeTab = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('Comer → Plan: escribes tus platos por el nombre y un repintado no borra lo escrito',
+      hay && /Lentejas con chorizo\nPollo al curry con arroz\nAvena con plátano/.test(r.a), JSON.stringify(r.a));
+    check('«Entender mis platos» trae qué lleva por ración y los pasos; la duda contestada deja de estar por revisar y entra en el plato guardado',
+      r.b.n === 3 && r.b.lent >= 6 && r.b.pasos >= 3 && r.b.duda && /3 ✓/.test(r.b.rev1) && !/por revisar/.test(r.b.rev1) &&
+      r.b.g && r.b.g.n === 3 && r.b.g.nata && r.b.g.pasos >= 3 && r.b.g.des === 'desayuno' && r.b.g.ingr >= 5 && r.b.n2 === 3, JSON.stringify(r.b));
+    check('la semana con tus platos pone el desayuno, deja la cena de la guardia y «Usar esta semana» lleva a su compra',
+      r.c.filas === 7 && r.c.des && !r.c.cenaG && r.c.comG === 'táper' && /en la guardia/.test(r.c.texto) && r.c.compra.tab === 'desp' && /lenteja/i.test(r.c.compra.txt), JSON.stringify(r.c));
+    check('«Qué tener» lista lo de la semana sin cantidades y marcar ahí lo marca también en «Comprar»',
+      r.d.n >= 5 && /Lenteja/.test(r.d.txt) && !/\d+\s*(g|kg|ml)\b/.test(r.d.txt) && !!r.d.id && r.d.enComprar.marca && r.d.enComprar.vista !== false, JSON.stringify(r.d));
+    check('«atrás» desde la lectura de tus platos vuelve a Plan', r.e.antes === 'leer' && r.e.despues.v === '' && r.e.despues.tab === 'sem' && r.e.despues.f === 'food' && r.e.despues.card, JSON.stringify(r.e));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

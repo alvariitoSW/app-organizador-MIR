@@ -6650,6 +6650,7 @@ function snProgramaAvisos(){
   snAvisosOn(hoy,nextIso(hoy)).forEach(function(a){const d=parseDate(a.G),t=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()+a.x.t*3600000-ahora;
     if(t>0&&t<20*3600000)_snAvT.push(setTimeout(function(){swMensaje({tipo:'aviso',tag:'sn-'+a.G+a.x.k,titulo:'😴 '+a.x.b,cuerpo:a.x.s});},t));});}
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='nocheNota')ui.nocheNota=e.target.value;});
+document.addEventListener('input',function(e){if(e.target&&e.target.id==='tpTxt')ui.tpTxt=e.target.value;});
 document.addEventListener('input',function(e){const t=e.target;if(!t||(t.id!=='snWake'&&t.id!=='snNeed'))return;
   const o=t.parentNode.querySelector('output');if(o)o.textContent=t.id==='snWake'?hCortaHM(hm(+t.value)):fmtHM(+t.value*60);});
 function nocheDeAhora(){
@@ -13094,6 +13095,369 @@ function cjeTareas(A,hoyK){
   if(cad.length)out.push({e:'🧊',t:'Gasta pronto: '+cad.slice(0,3).map(function(x){return x.nom;}).join(', ')+(cad.length>3?'…':''),s:'caduca hoy o mañana',v:'nevera'});
   return out;}
 function cjeTipoDia(t){return t.guardia?['gu','guardia']:(t.saliente?['sa','saliente']:(t.entreno?['en','entreno']:(t.trabajo?['tr','trabajo']:['li','libre'])));}
+/* ===================== TUS PLATOS: del nombre a la receta, la semana y la compra =====================
+   Escribes «lentejas con chorizo» y la app pone qué lleva POR RACIÓN y cómo se hace. Sin conexión
+   (los datos no salen del móvil): primero un recetario de platos de casa con sus pasos; si no está,
+   los platos que ya conoce el lector de frases (FR_PLATOS) con pasos según cómo se cocinan; y si
+   tampoco, patrones de cocina («crema de X», «X al horno con Y», «X con Y»). Lo que no reconoce no
+   se lo inventa: lo dice y va a la compra tal cual. Con tus platos se monta la semana (desayuno,
+   comida y cena) y de ahí sale la compra de siempre. */
+const TP_RECETAS=[
+  /* [nombre, icono, otras formas de decirlo, momentos (d desayuno · c comida · n cena), minutos,
+     ingredientes por ración [alimento, g], pasos] */
+  ['Lentejas con chorizo','🍲',['lentejas estofadas con chorizo','lentejas con chorizo y patata'],'cn',40,
+    [['Lenteja',70],['Chorizo',40],['Patata',80],['Zanahoria',40],['Cebolla',40],['Ajo',3],['Pimentón',2],['Aceite de oliva',8]],
+    ['Sofríe en el aceite la cebolla, el ajo y la zanahoria picados, 8 min.','Añade el chorizo en rodajas y el pimentón, 1 min (que no se queme).','Echa las lentejas, la patata en trozos y agua fría que cubra el doble.','Cuece 30 min a fuego suave y sala al final.']],
+  ['Lentejas con verduras','🍲',['lentejas estofadas','lentejas de la abuela','lentejas'],'cn',40,
+    [['Lenteja',70],['Patata',80],['Zanahoria',50],['Pimiento verde',40],['Cebolla',40],['Tomate',50],['Ajo',3],['Pimentón',2],['Aceite de oliva',8]],
+    ['Sofríe cebolla, ajo, pimiento y zanahoria picados, 8 min.','Añade el tomate rallado y el pimentón, 3 min.','Echa las lentejas, la patata en trozos y agua que cubra el doble.','Cuece 30 min a fuego suave; sala al final.']],
+  ['Garbanzos con espinacas','🥘',['potaje de garbanzos con espinacas','espinacas con garbanzos'],'cn',20,
+    [['Garbanzo de bote',200],['Espinaca',120],['Ajo',4],['Pan de barra',15],['Pimentón',2],['Comino',1],['Aceite de oliva',10]],
+    ['Dora en el aceite el ajo y el pan en trozos; machácalos con el comino y un poco de agua.','En la misma sartén, rehoga las espinacas 3 min.','Añade los garbanzos escurridos, el majado y el pimentón con un vaso de agua.','Cuece 10 min a fuego suave y sala.']],
+  ['Potaje de garbanzos','🥘',['garbanzos estofados','potaje'],'cn',35,
+    [['Garbanzo de bote',200],['Patata',80],['Zanahoria',50],['Cebolla',40],['Pimiento rojo',40],['Ajo',3],['Pimentón',2],['Aceite de oliva',8]],
+    ['Sofríe cebolla, pimiento, ajo y zanahoria picados, 8 min.','Añade el pimentón y la patata en trozos; cubre de agua.','Cuece 20 min, echa los garbanzos escurridos y 5 min más. Sala al final.']],
+  ['Alubias con chorizo','🫘',['judías con chorizo','alubias rojas con chorizo','fabes con chorizo'],'cn',35,
+    [['Alubia cocida',200],['Chorizo',40],['Cebolla',40],['Pimiento verde',40],['Ajo',3],['Pimentón',2],['Aceite de oliva',8]],
+    ['Sofríe cebolla, pimiento y ajo picados, 8 min.','Añade el chorizo en rodajas y el pimentón, 1 min.','Echa las alubias escurridas con un vaso de agua y cuece 15 min a fuego suave.']],
+  ['Crema de calabacín','🥬',['pure de calabacin','crema de calabacin con quesito'],'cn',30,
+    [['Calabacín',250],['Patata',80],['Cebolla',50],['Queso de untar',20],['Aceite de oliva',10]],
+    ['Pocha la cebolla en el aceite, 5 min.','Añade el calabacín y la patata en trozos, 3 min.','Cubre de agua y cuece 20 min.','Tritura con el queso y sal.']],
+  ['Crema de calabaza','🎃',['pure de calabaza','crema de calabaza y zanahoria'],'cn',30,
+    [['Calabaza',250],['Zanahoria',60],['Cebolla',50],['Patata',60],['Aceite de oliva',10]],
+    ['Pocha la cebolla en el aceite, 5 min.','Añade la calabaza, la zanahoria y la patata en trozos; cubre de agua.','Cuece 20 min y tritura. Sal y pimienta al gusto.']],
+  ['Crema de verduras','🥕',['pure de verduras','crema de verdura'],'cn',30,
+    [['Calabacín',120],['Puerro',60],['Zanahoria',60],['Patata',80],['Cebolla',40],['Aceite de oliva',10]],
+    ['Pocha cebolla y puerro en el aceite, 5 min.','Añade el resto de verduras en trozos y cubre de agua.','Cuece 20 min y tritura con sal.']],
+  ['Gazpacho','🍅',['gazpacho andaluz'],'cn',10,
+    [['Tomate',250],['Pepino',50],['Pimiento verde',30],['Ajo',2],['Pan de barra',15],['Aceite de oliva',15],['Vinagre',5]],
+    ['Trocea las verduras y el pan.','Tritura todo con el aceite, el vinagre, sal y un poco de agua fría.','Cuela si lo quieres fino y a la nevera.']],
+  ['Ensalada mixta','🥗',['ensalada','ensalada verde','ensalada de lechuga'],'cn',10,
+    [['Lechuga',80],['Tomate',100],['Cebolla morada',20],['Atún en lata al natural',60],['Huevo cocido',50],['Aceituna',15],['Aceite de oliva',10],['Vinagre',5]],
+    ['Lava y trocea la lechuga, el tomate y la cebolla.','Añade el atún escurrido, el huevo en cuartos y las aceitunas.','Aliña con aceite, vinagre y sal al servir.']],
+  ['Ensalada de pasta','🥗',['ensalada de macarrones','ensalada de pasta con atun'],'cn',20,
+    [['Pasta',75],['Tomate cherry',80],['Atún en lata al natural',60],['Maíz dulce',30],['Aceituna',15],['Aceite de oliva',10]],
+    ['Cuece la pasta según el paquete y enfríala con agua.','Mezcla con los tomates partidos, el atún, el maíz y las aceitunas.','Aliña con aceite y sal.']],
+  ['Ensaladilla rusa','🥗',['ensaladilla'],'cn',30,
+    [['Patata',150],['Zanahoria',40],['Guisante',30],['Atún en lata al natural',50],['Huevo cocido',50],['Mayonesa',20]],
+    ['Cuece la patata y la zanahoria en dados 15 min; los guisantes, los 5 últimos.','Enfría y mezcla con el atún y el huevo picado.','Liga con la mayonesa y a la nevera.']],
+  ['Tortilla de patatas','🍳',['tortilla de patata','tortilla española'],'cn',30,
+    [['Patata',150],['Huevo',120],['Cebolla',40],['Aceite de oliva',15]],
+    ['Fríe la patata en láminas con la cebolla, a fuego medio, 15 min sin dorar.','Escurre y mezcla con los huevos batidos y sal.','Cuaja 3-4 min por cada lado.']],
+  ['Tortilla francesa','🍳',['tortilla de dos huevos','tortilla'],'cn',5,
+    [['Huevo',120],['Aceite de oliva',5]],
+    ['Bate los huevos con sal.','Cuaja en sartén caliente con el aceite, 2 min, y dobla.']],
+  ['Huevos rotos','🍳',['huevos rotos con jamon','huevos estrellados'],'cn',25,
+    [['Patata',200],['Huevo',120],['Jamón serrano',30],['Aceite de oliva',15]],
+    ['Fríe o asa la patata en bastones, 15-20 min.','Fríe los huevos.','Sirve la patata con los huevos encima, rómpelos y añade el jamón.']],
+  ['Pisto con huevo','🍳',['pisto','pisto manchego'],'cn',35,
+    [['Calabacín',120],['Pimiento rojo',60],['Pimiento verde',40],['Cebolla',60],['Tomate triturado',120],['Huevo',60],['Aceite de oliva',12]],
+    ['Pocha la cebolla y los pimientos en dados, 10 min.','Añade el calabacín, 8 min, y el tomate; 15 min a fuego suave.','Haz un hueco, casca el huevo y tapa 4 min.']],
+  ['Revuelto de setas','🍳',['revuelto de champiñones','huevos revueltos con setas'],'cn',10,
+    [['Setas',150],['Huevo',120],['Ajo',3],['Aceite de oliva',8]],
+    ['Saltea las setas con el ajo, 5 min.','Añade los huevos batidos con sal y remueve hasta que cuajen.']],
+  ['Merluza en salsa verde','🐟',['merluza con salsa verde','merluza a la vasca'],'cn',20,
+    [['Merluza',180],['Ajo',4],['Perejil',4],['Harina de trigo',5],['Caldo de pescado',100],['Aceite de oliva',10]],
+    ['Dora el ajo picado en el aceite, sin quemarlo.','Añade la harina, 1 min, y el caldo poco a poco removiendo.','Pon la merluza, mueve la cazuela 5-6 min y termina con el perejil.']],
+  ['Merluza a la plancha','🐟',['merluza plancha'],'cn',15,
+    [['Merluza',180],['Aceite de oliva',8],['Limón',20],['Ajo',2],['Perejil',2]],
+    ['Seca la merluza y sálala.','Plancha muy caliente con el aceite: 3-4 min por lado.','Termina con ajo, perejil y limón.']],
+  ['Salmón al horno con patatas','🐟',['salmon al horno','salmon con patatas al horno'],'cn',35,
+    [['Salmón',150],['Patata',200],['Cebolla',30],['Aceite de oliva',10],['Limón',15]],
+    ['Patata en láminas y cebolla al horno a 200 °C con aceite y sal, 20 min.','Pon el salmón encima y 10-12 min más.','Sirve con limón.']],
+  ['Bacalao con tomate','🐟',['bacalao con tomate frito'],'cn',30,
+    [['Bacalao desalado',170],['Tomate triturado',150],['Cebolla',50],['Pimiento rojo',40],['Ajo',3],['Aceite de oliva',10]],
+    ['Sofríe cebolla, pimiento y ajo, 10 min.','Añade el tomate y cuece 10 min.','Pon el bacalao en la salsa y 8 min tapado.']],
+  ['Pollo al curry','🍛',['pollo al curry con arroz','curry de pollo'],'cn',30,
+    [['Pechuga de pollo',150],['Arroz blanco',70],['Cebolla',50],['Curry en polvo',3],['Aceite de oliva',8]],
+    ['Cuece el arroz según el paquete.','Dora el pollo en dados con la cebolla picada, 6 min.','Añade el curry, 1 min, y la salsa; 10 min a fuego suave.','Sirve con el arroz.'],
+    {q:'¿Con leche de coco o con nata?',ops:[['leche de coco',[['Leche de coco',60]]],['nata',[['Nata para cocinar',50]]],['ninguna',[]]]}],
+  ['Pollo al horno con patatas','🍗',['pollo asado con patatas','pollo al horno'],'cn',50,
+    [['Muslo de pollo',220],['Patata',200],['Cebolla',40],['Ajo',3],['Aceite de oliva',10]],
+    ['Patata en gajos y cebolla en una bandeja con aceite y sal.','Pon el pollo encima con ajo y especias.','Horno a 200 °C, 45 min, dándole la vuelta a media cocción.']],
+  ['Pollo al ajillo','🍗',['pollo con ajo'],'cn',30,
+    [['Contramuslo de pollo',200],['Ajo',8],['Aceite de oliva',12],['Perejil',2]],
+    ['Dora el pollo en trozos con sal, 10 min.','Añade los ajos laminados y un chorrito de agua; 10 min tapado.','Termina con perejil.']],
+  ['Pechuga a la plancha con ensalada','🍗',['pechuga de pollo a la plancha','pollo a la plancha','pechuga a la plancha'],'cn',15,
+    [['Pechuga de pollo',150],['Lechuga',60],['Tomate',80],['Aceite de oliva',10]],
+    ['Filetea la pechuga y sálala.','Plancha bien caliente, 3-4 min por lado.','Sirve con la ensalada aliñada.']],
+  ['Albóndigas en salsa','🍝',['albondigas con tomate','albondigas'],'cn',40,
+    [['Carne picada mixta',150],['Huevo',15],['Pan rallado',10],['Tomate triturado',120],['Cebolla',40],['Ajo',3],['Aceite de oliva',10]],
+    ['Mezcla la carne con el huevo, el pan rallado, ajo picado y sal; forma bolas.','Dóralas y apártalas.','Sofríe la cebolla, añade el tomate y las albóndigas: 20 min a fuego suave.']],
+  ['Macarrones con tomate','🍝',['macarrones con tomate y chorizo','macarrones'],'cn',20,
+    [['Macarrones',80],['Tomate frito',80],['Queso rallado',10],['Cebolla',30],['Aceite de oliva',5]],
+    ['Cuece los macarrones según el paquete.','Pocha la cebolla, añade el tomate 5 min.','Mezcla con la pasta y el queso por encima.']],
+  ['Espaguetis a la boloñesa','🍝',['espaguetis bolonesa','pasta bolonesa','espaguetis con carne'],'cn',30,
+    [['Espaguetis',80],['Carne picada de ternera',100],['Tomate triturado',100],['Cebolla',40],['Zanahoria',30],['Aceite de oliva',8]],
+    ['Sofríe cebolla y zanahoria picadas, 8 min.','Añade la carne, dórala, y el tomate: 15 min.','Cuece la pasta y mézclala con la salsa.']],
+  ['Espaguetis a la carbonara','🍝',['carbonara','pasta carbonara'],'cn',20,
+    [['Espaguetis',80],['Bacon',40],['Huevo',60],['Queso rallado',15],['Pimienta negra',1]],
+    ['Cuece la pasta.','Dora el bacon en tiras.','Fuera del fuego mezcla la pasta con el bacon, el huevo batido con queso y pimienta.']],
+  ['Arroz con pollo','🍚',['arroz con pollo y verduras'],'cn',35,
+    [['Arroz blanco',80],['Contramuslo de pollo',150],['Pimiento rojo',40],['Tomate triturado',50],['Cebolla',30],['Ajo',3],['Pimentón',2],['Aceite de oliva',8]],
+    ['Dora el pollo en trozos y apártalo.','Sofríe cebolla, pimiento y ajo; añade el tomate y el pimentón.','Echa el arroz, el pollo y el doble de agua: 18 min y reposo 5.']],
+  ['Paella de marisco','🥘',['paella','arroz con marisco'],'cn',40,
+    [['Arroz blanco',85],['Gamba',60],['Calamar',60],['Mejillón',60],['Tomate triturado',40],['Pimiento rojo',30],['Caldo de pescado',250],['Aceite de oliva',10]],
+    ['Sofríe el calamar y el pimiento; añade el tomate.','Echa el arroz, nácaralo y añade el caldo caliente.','A los 10 min, gambas y mejillones; 8 min más y reposo.']],
+  ['Fajitas de pollo','🌯',['fajitas','tacos de pollo','burrito de pollo'],'cn',20,
+    [['Pechuga de pollo',130],['Tortilla de trigo',80],['Pimiento rojo',50],['Cebolla',50],['Aceite de oliva',8]],
+    ['Corta el pollo, el pimiento y la cebolla en tiras.','Saltea a fuego fuerte con especias, 8 min.','Rellena las tortillas calientes.']],
+  ['Hamburguesa casera','🍔',['hamburguesa','hamburguesa con pan'],'cn',15,
+    [['Hamburguesa de ternera',150],['Pan de molde',60],['Lechuga',20],['Tomate',40],['Queso en lonchas',20]],
+    ['Haz la hamburguesa a la plancha, 3-4 min por lado.','Tuesta el pan.','Monta con lechuga, tomate y queso.']],
+  ['Judías verdes con patata','🫛',['judias verdes','judias verdes rehogadas'],'cn',25,
+    [['Judía verde',200],['Patata',120],['Ajo',3],['Pimentón',1],['Aceite de oliva',10]],
+    ['Cuece las judías y la patata en trozos, 15 min.','Escurre y rehoga con el ajo y el pimentón en el aceite.']],
+  ['Menestra de verduras','🥕',['menestra'],'cn',25,
+    [['Menestra de verduras',250],['Jamón serrano',20],['Ajo',3],['Aceite de oliva',10]],
+    ['Cuece la menestra según el paquete y escurre.','Rehoga el ajo y el jamón en tiras; añade la verdura, 3 min.']],
+  ['Wok de pollo y verduras','🥢',['salteado de pollo','pollo salteado con verduras','wok de pollo'],'cn',20,
+    [['Pechuga de pollo',140],['Brócoli',80],['Pimiento rojo',50],['Cebolla',40],['Salsa de soja',10],['Aceite de oliva',8]],
+    ['Corta el pollo y las verduras en tiras.','Saltea el pollo a fuego fuerte, 4 min, y apártalo.','Saltea las verduras 4 min, vuelve el pollo y la soja, 1 min.']],
+  ['Sopa de fideos','🍜',['sopa de pollo con fideos','sopa'],'cn',15,
+    [['Caldo de pollo',350],['Pasta',30],['Pechuga de pollo',40]],
+    ['Calienta el caldo con el pollo desmenuzado.','Añade los fideos y cuece lo que diga el paquete.']],
+  ['Lomo con pimientos','🥩',['lomo de cerdo con pimientos','lomo a la plancha con pimientos'],'cn',20,
+    [['Lomo de cerdo',150],['Pimiento verde',80],['Pimiento rojo',60],['Aceite de oliva',10]],
+    ['Fríe los pimientos en tiras a fuego medio, 10 min.','Haz el lomo a la plancha, 2 min por lado.','Sirve juntos con sal.']],
+  ['Gachas de avena con plátano','🥣',['avena con platano','porridge','gachas de avena','avena con leche'],'d',10,
+    [['Copos de avena',40],['Leche semidesnatada',200],['Plátano',100],['Canela',1]],
+    ['Calienta la avena con la leche, 4-5 min removiendo.','Añade el plátano en rodajas y la canela.']],
+  ['Tostadas con tomate y aceite','🍞',['tostada con tomate','pan con tomate','tostadas con tomate'],'d',5,
+    [['Pan de barra',60],['Tomate',60],['Aceite de oliva',8]],
+    ['Tuesta el pan.','Unta el tomate rallado, aceite y sal.']],
+  ['Tostadas con aguacate y huevo','🥑',['tostada de aguacate con huevo','tostadas con aguacate'],'d',10,
+    [['Pan integral',60],['Aguacate',50],['Huevo',60],['Aceite de oliva',3]],
+    ['Tuesta el pan.','Machaca el aguacate con sal y úntalo.','Pon encima el huevo a la plancha o cocido.']],
+  ['Yogur con fruta y nueces','🥣',['yogur con fruta','yogur con nueces','bol de yogur'],'d',3,
+    [['Yogur natural',125],['Plátano',60],['Arándano',40],['Nuez',15],['Miel',8]],
+    ['Pon el yogur en un bol.','Añade la fruta troceada, las nueces y la miel.']],
+  ['Tostadas con jamón y queso fresco','🍞',['tostada con jamon','tostadas con pavo y queso'],'d',5,
+    [['Pan integral',60],['Jamón serrano',30],['Queso fresco',40],['Tomate',40]],
+    ['Tuesta el pan.','Pon el tomate en rodajas, el queso y el jamón.']]];
+/* palabras sueltas que la biblioteca llama de otra manera */
+const TP_ALIAS={arroz:'Arroz blanco',leche:'Leche semidesnatada',pan:'Pan de barra',tostada:'Pan tostado',espinacas:'Espinaca',
+  garbanzos:'Garbanzo de bote',alubias:'Alubia cocida',judias:'Alubia cocida',atun:'Atún en lata al natural',curry:'Curry en polvo',
+  champinones:'Champiñón',gambas:'Gamba',queso:'Queso semicurado',pavo:'Pechuga de pavo',pollo:'Pechuga de pollo',
+  ternera:'Filete de ternera',cerdo:'Lomo de cerdo',lomo:'Lomo de cerdo','carne picada':'Carne picada mixta','judias verdes':'Judía verde',
+  guisantes:'Guisante',pimiento:'Pimiento rojo',pimientos:'Pimiento rojo',harina:'Harina de trigo',huevos:'Huevo',fideos:'Pasta',
+  avena:'Copos de avena',quesito:'Queso de untar',nata:'Nata para cocinar',pimienta:'Pimienta negra',fresas:'Fresa','frutos rojos':'Arándano',
+  nueces:'Nuez',almendras:'Almendra',yogur:'Yogur natural',calamares:'Calamar',mejillones:'Mejillón',langostinos:'Langostino',
+  verduras:'Menestra de verduras',pescado:'Merluza',sardinas:'Sardina',hamburguesa:'Hamburguesa de ternera',salchichas:'Salchicha fresca',
+  tomate:'Tomate',patatas:'Patata',boniatos:'Boniato',setas:'Setas',chorizo:'Chorizo',jamon:'Jamón serrano',york:'Jamón cocido',
+  bacon:'Bacon',beicon:'Bacon',lentejas:'Lenteja',maiz:'Maíz dulce',esparragos:'Espárrago',alcachofas:'Alcachofa',
+  'pechuga de pollo':'Pechuga de pollo',muslos:'Muslo de pollo',salmon:'Salmón',merluza:'Merluza',bacalao:'Bacalao desalado',
+  arroz_integral:'Arroz integral',quinoa:'Quinoa',cuscus:'Cuscús',tofu:'Tofu',mozzarella:'Queso mozzarella',aceitunas:'Aceituna',
+  coliflor:'Coliflor',brocoli:'Brócoli',calabacin:'Calabacín',berenjenas:'Berenjena',cebollas:'Cebolla',zanahorias:'Zanahoria',
+  pepinos:'Pepino',aguacates:'Aguacate',platanos:'Plátano',manzanas:'Manzana',kiwis:'Kiwi',naranjas:'Naranja'};
+/* cuánto lleva una ración, según de qué grupo es y si va de principal o de acompañamiento */
+const TP_G={carne:[150,100],pescado:[160,100],legumbre:[200,100],cereal:[75,50],verdura:[220,100],fruta:[120,70],lacteo:[125,30],graso:[10,8],salsa:[3,2],otro:[60,30]};
+let _tpIdx=null;
+function tpIdx(){
+  /* nombre normalizado → alimento, una vez: lo crudo antes que lo preparado */
+  if(_tpIdx)return _tpIdx;const m={};
+  alimTodos().forEach(function(a){const k=tpNorm(a.n);if(!m[k])m[k]=a;});
+  return (_tpIdx=m);}
+function tpNorm(s){return alimTxt(String(s||'')).replace(/[^a-z0-9ñ ]+/g,' ').replace(/\s+/g,' ').trim();}
+function tpAlim(txt){
+  /* un ingrediente escrito a mano → alimento de la biblioteca, o null si no lo conoce */
+  const t=tpNorm(txt).replace(/^(un|una|unos|unas|el|la|los|las|de|del|con)\s+/,'');if(!t)return null;
+  const idx=tpIdx(),sing=t.replace(/(es|s)$/,''),al=TP_ALIAS[t]||TP_ALIAS[sing]||TP_ALIAS[t.replace(/ /g,'_')];
+  if(al&&alimPorNombre(al))return alimPorNombre(al);
+  for(const v of [t,t.replace(/es$/,''),t.replace(/s$/,''),t+'s'])if(idx[v])return idx[v];
+  const l=alimTodos().filter(function(a){const n=tpNorm(a.n);return n.indexOf(t+' ')===0||n.indexOf(sing+' ')===0;})
+    .sort(function(a,b){return a.n.length-b.n.length;});
+  return l[0]||null;}
+function tpGramos(a,rol){
+  /* chorizo, bacon o jamón de acompañamiento no son 50 g de carne de un filete; el huevo, de 60 en 60 */
+  if(!a)return 0;
+  if(a.n==='Huevo')return rol?60:120;
+  if(/^(Chorizo|Bacon|Jamón serrano|Jamón cocido)$/.test(a.n))return 40;
+  if(/^(Lenteja|Garbanzo|Alubia blanca|Alubia roja|Lenteja roja)$/.test(a.n))return rol?40:70;   /* en seco */
+  if(a.g==='preparado'&&Array.isArray(a.r)&&a.r[0])return rol?Math.round(a.r[0][1]/2):a.r[0][1];   /* una pizza, 4 croquetas */
+  const g=TP_G[a.g]||TP_G.otro;return g[rol?1:0];}
+function tpIcono(ings){
+  const gs=ings.map(function(x){const a=alimById(x.id);return a?a.g:'';});
+  return gs.indexOf('legumbre')>=0?'🍲':gs.indexOf('pescado')>=0?'🐟':gs.indexOf('carne')>=0?'🍗':gs.indexOf('cereal')>=0?'🍝':gs.indexOf('verdura')>=0?'🥗':'🍽';}
+const TP_DESAYUNO=/\b(avena|gachas|porridge|tostad|yogur|cereales|muesli|granola|tortitas|cafe|batido|desayuno|bizcocho|magdalena|croissant)/;
+function tpPasos(nombre,ing){
+  /* la preparación de un plato que no está en el recetario: según cómo se cocina (lo dice el nombre)
+     y qué lleva (verduras, proteína, cereal) */
+  const t=tpNorm(nombre),nom=function(x){const a=alimById(x.id);return a?a.n.toLowerCase().replace(/ (cocid[oa]|congelad[oa]s?)$/,''):'';};
+  const de=function(g){return ing.filter(function(x){const a=alimById(x.id);return a&&a.g===g;}).map(nom);};
+  const y=function(l){return l.length>1?l.slice(0,-1).join(', ')+' y '+l[l.length-1]:(l[0]||'');};
+  const prot=de('carne').concat(de('pescado')),ver=de('verdura'),cer=de('cereal'),leg=de('legumbre');
+  /* ya hecho (pizza, croquetas, un batido): no hay receta que inventar */
+  if(ing.length&&ing.every(function(x){const a=alimById(x.id);return a&&(a.g==='preparado'||a.g==='graso');}))return ['Prepáralo según el envase (horno, sartén o microondas).'];
+  if(/\b(hummus|guacamole)\b/.test(t))return ['Corta '+y(ver.length?ver:['la verdura'])+' en bastones.','Sírvelo para mojar.'];
+  if(TP_DESAYUNO.test(t))return [(cer.length?'Prepara '+y(cer)+(/avena|gachas|porridge/.test(t)?' con la leche, 4-5 min a fuego suave':'')+'.':'Prepara la base.'),'Añade '+y(ing.slice(1).map(nom))+'.'];
+  if(/^(crema|pure)\b/.test(t))return ['Pocha la cebolla en el aceite, 5 min.','Añade '+y(ver.filter(function(n){return n!=='cebolla';}))+' en trozos y cubre de agua.','Cuece 20 min y tritura con sal.'];
+  if(/^ensalada\b/.test(t))return ['Lava y trocea '+y(ver.concat(de('fruta')))+'.',(cer.length||leg.length||prot.length?'Añade '+y(cer.concat(leg,prot))+(cer.length?' (cocido y frío)':'')+'.':'Mézclalo todo.'),'Aliña con aceite, vinagre y sal al servir.'];
+  if(/^(tortilla|revuelto)\b/.test(t)){const r=ver.concat(prot.filter(function(n){return n!=='huevo';}));
+    return [(r.length?'Rehoga '+y(r)+' en el aceite, 5 min.':'Calienta la sartén con el aceite.'),'Añade los huevos batidos con sal y cuaja 2-3 min.'];}
+  if(/^sopa\b/.test(t))return ['Sofríe la cebolla en el aceite, 5 min.','Añade el caldo y '+y(prot.concat(ver.filter(function(n){return n!=='cebolla';}),cer))+'; cuece 15 min a fuego suave.','Prueba de sal y sirve caliente.'];
+  if(/\bhorno|asad|rellen/.test(t))return ['Pon '+y(ver.length?ver:['la guarnición'])+' en una bandeja con aceite y sal; horno a 200 °C, 20 min.','Añade '+y(prot.length?prot:['el resto'])+' y 10-15 min más.'];
+  if(/\bplancha|parrilla/.test(t))return ['Sala '+y(prot.length?prot:ver)+'.','Plancha bien caliente con un poco de aceite, 3-4 min por lado.'].concat(ver.length&&prot.length?['Acompaña con '+y(ver)+' salteado o en ensalada.']:[]);
+  if(/\b(salteado|wok)\b/.test(t))return ['Corta todo en tiras.','Saltea '+y(prot)+' a fuego fuerte, 4 min, y apártalo.','Saltea '+y(ver)+' 4 min y junta todo con sal.'];
+  if(cer.length&&/\b(arroz|pasta|macarrones|espaguetis|fideos|cuscus|quinoa)\b/.test(t))return ['Cuece '+y(cer)+' según el paquete.',(prot.length||ver.length?'Saltea '+y(prot.concat(ver,leg))+' con aceite y sal, 8 min.':'Prepara la salsa.'),'Mézclalo todo.'];
+  if(leg.length)return ['Sofríe '+y(ver.length?ver:['cebolla y ajo'])+' en el aceite, 8 min.',(prot.length?'Añade '+y(prot)+', 2 min.':'Añade las especias, 1 min.'),'Echa '+y(leg)+' y agua o caldo; cuece a fuego suave hasta que esté tierno. Sal al final.'];
+  if(/\b(salsa|guisad|estofad|guiso)/.test(t))return ['Dora '+y(prot.length?prot:['la base'])+' y apártalo.','Sofríe '+y(ver.length?ver:['cebolla y ajo'])+', 8 min.','Vuelve todo a la cazuela con un vaso de agua o caldo, 20 min a fuego suave.'];
+  return [(prot.length?'Haz '+y(prot)+' a la plancha o en la sartén con un poco de aceite.':'Prepara la base.'),(ver.length?'Acompaña con '+y(ver)+' salteado o cocido.':'')].concat(cer.length?['Cuece '+y(cer)+' según el paquete.']:[]).filter(Boolean);}
+function tpLeer(linea){
+  /* una línea escrita → borrador de plato: {n,e,m,min,ing:[{id,g}],sin:[],pasos:[],duda,dudaSel,de} */
+  const txt=String(linea||'').replace(/^[\s\-•*·\d.)]+/,'').trim();if(!txt)return null;
+  const t=tpNorm(txt),nombre=txt.charAt(0).toUpperCase()+txt.slice(1);
+  const mom=function(code){return code==='d'?['desayuno']:['comida','cena'];};
+  const casa=function(l){const ing=[],sin=[];l.forEach(function(x){const a=alimPorNombre(x[0]);if(a)ing.push({id:a.id,g:x[1]});else sin.push(x[0].toLowerCase());});return {ing:ing,sin:sin};};
+  /* 1 · el recetario (nombre o cualquiera de sus formas) */
+  const r=TP_RECETAS.filter(function(x){return [x[0]].concat(x[2]).some(function(n){return tpNorm(n)===t;});})[0];
+  if(r){const c=casa(r[5]);return {n:nombre,e:r[1],m:mom(r[3]),min:r[4],ing:c.ing,sin:c.sin,pasos:r[6].slice(),duda:r[7]||null,dudaSel:r[7]?0:-1,de:'recetario'};}
+  /* 2 · los platos que ya conoce el lector de frases: sus ingredientes y pasos según cómo se cocinan */
+  const f=FR_PLATOS.filter(function(x){return [x[0]].concat(x[2]).some(function(n){return tpNorm(n)===t;});})[0];
+  if(f){const c=casa(f[3]);return {n:nombre,e:f[1],m:mom(TP_DESAYUNO.test(t)?'d':'cn'),min:20,ing:c.ing,sin:c.sin,pasos:tpPasos(txt,c.ing),duda:null,dudaSel:-1,de:'platos'};}
+  /* 3 · patrones de cocina: lo principal + con qué va. «crema de X», «X al horno con Y», «X con Y y Z» */
+  let base=t,extra='';
+  const pat=/^(crema|pure|ensalada|tortilla|revuelto|salteado|sopa|guiso|estofado) (?:francesa )?de (.+)$/.exec(t);
+  let tipo='';if(pat){tipo=pat[1];base=pat[2];}
+  base=base.replace(/\b(al horno|a la plancha|a la parrilla|asad[oa]s?|guisad[oa]s?|estofad[oa]s?|en salsa(?: verde| de tomate)?|al curry|salteados?|al vapor|rehogad[oa]s?|frit[oa]s?|cocid[oa]s?|rellen[oa]s?)\b/g,' ').replace(/\s+/g,' ').trim();
+  const m2=/^(.+?) (?:con|y) (.+)$/.exec(base);if(m2){base=m2[1];extra=m2[2];}
+  const trozos=[base].concat(extra?extra.split(/\s*(?:,| y | con )\s*/):[]).filter(Boolean);
+  const ing=[],sin=[];
+  trozos.forEach(function(p,i){const a=tpAlim(p);if(a){if(!ing.some(function(x){return x.id===a.id;}))ing.push({id:a.id,g:tpGramos(a,i>0)});}else sin.push(p);});
+  if(!ing.length)return {n:nombre,e:'🍽',m:mom(TP_DESAYUNO.test(t)?'d':'cn'),min:0,ing:[],sin:sin.length?sin:[txt.toLowerCase()],pasos:[],duda:null,dudaSel:-1,de:'nada'};
+  /* lo que pide la forma de cocinarlo: el sofrito de una crema o un guiso, el huevo de una tortilla, el aceite */
+  const pon=function(n,g){const a=alimPorNombre(n);if(a&&!ing.some(function(x){return x.id===a.id;}))ing.push({id:a.id,g:g});};
+  const gs=ing.map(function(x){return (alimById(x.id)||{}).g;});
+  if(tipo==='crema'||tipo==='pure'){pon('Patata',80);pon('Cebolla',50);}
+  else if(tipo==='ensalada'){pon('Lechuga',60);pon('Tomate',80);pon('Vinagre',5);}
+  else if(tipo==='tortilla'||tipo==='revuelto')pon('Huevo',120);
+  else if(tipo==='sopa'){pon('Caldo de pollo',350);pon('Cebolla',40);}
+  else if(gs.indexOf('legumbre')>=0||/guis|estof|salsa/.test(t)){pon('Cebolla',40);pon('Ajo',3);pon('Pimentón',2);}
+  if(/curry/.test(t)){pon('Cebolla',50);pon('Curry en polvo',3);}
+  if(!TP_DESAYUNO.test(t)&&!ing.every(function(x){return (alimById(x.id)||{}).g==='preparado';}))pon('Aceite de oliva',10);
+  const duda=/curry/.test(t)&&!/coco|nata/.test(t)?TP_RECETAS.filter(function(x){return x[0]==='Pollo al curry';})[0][7]:null;
+  return {n:nombre,e:tpIcono(ing),m:mom(TP_DESAYUNO.test(t)?'d':'cn'),min:/crema|pure|horno|guis|estof|legum/.test(t)||gs.indexOf('legumbre')>=0?30:20,
+    ing:ing,sin:sin,pasos:tpPasos(txt,ing),duda:duda,dudaSel:duda?0:-1,de:'patron'};}
+function tpTodos(){
+  /* tus platos: los que escribiste aquí (los demás platos de la app siguen donde estaban) */
+  return store.dishes.filter(function(d){return d.tuyo&&!d.oculto;});}
+function tpMomentos(d){return Array.isArray(d.momentos)&&d.momentos.length?d.momentos:(TP_DESAYUNO.test(tpNorm(d.name))?['desayuno']:['comida','cena']);}
+function tpGuardar(){
+  /* los borradores, hechos platos tuyos (con sus pasos y para qué comida van); si ya tenías uno con
+     ese nombre, se actualiza en vez de duplicarse */
+  const l=(ui.tpBorr||[]).filter(function(b){return b&&(b.ing.length||b.sin.length);});let n=0;
+  l.forEach(function(b){
+    const ex=b.duda&&b.dudaSel>=0?b.duda.ops[b.dudaSel][1]:[],alims=b.ing.map(function(x){return {id:x.id,g:Math.round(x.g)};});
+    ex.forEach(function(x){const a=alimPorNombre(x[0]);if(a&&!alims.some(function(y){return y.id===a.id;}))alims.push({id:a.id,g:x[1]});});
+    const ya=store.dishes.filter(function(d){return d.tuyo&&tpNorm(d.name)===tpNorm(b.n);})[0];
+    const d=ya||platoDeAlims({name:b.n,icon:b.e,portions:1,alims:alims,sin:b.sin,steps:b.pasos});
+    if(ya){ya.alims=alims;ya.alimsV=1;ya.sinCasar=b.sin.slice(0,20);ya.steps=b.pasos.slice(0,20);ya.icon=b.e;recalcDish(ya);}
+    d.tuyo=d.tuyo||Date.now();d.momentos=b.m.slice();d.min=b.min||0;n++;});
+  ui.tpBorr=null;ui.tpTxt='';save();return n;}
+/* LA SEMANA PROTOTIPO con tus platos: desayuno, comida y cena de lunes a domingo. Opciones: cocinar
+   para 2 días (el segundo son sobras), no repetir un plato en días seguidos y, en guardia, táper
+   para la comida (la cena es del hospital). Se enseña antes de usarla; «otra combinación» baraja */
+function tpOpt(){const f=food();if(!f.tpOpt||typeof f.tpOpt!=='object')f.tpOpt={dos:true,seguido:true,taper:true};return f.tpOpt;}
+function tpPropuesta(seed){
+  const o=tpOpt(),l=tpTodos(),de=function(c){return l.filter(function(d){return tpMomentos(d).indexOf(c)>=0;});};
+  let s=(seed||0)*9301+49297;const rnd=function(){s=(s*9301+49297)%233280;return s/233280;};
+  const baraja=function(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;}return a;};
+  const out=[];for(let w=0;w<7;w++)out.push({key:sbKey(w),g:esDiaGuardia(sbKey(w)),desayuno:null,comida:null,cena:null});
+  const des=baraja(de('desayuno'));if(des.length)out.forEach(function(x,w){x.desayuno={id:des[w%des.length].id,tag:''};});
+  const cola={comida:baraja(de('comida')),cena:baraja(de('cena'))},pos={comida:0,cena:0};
+  ['comida','cena'].forEach(function(c){const q=cola[c];if(!q.length)return;
+    for(let w=0;w<7;w++){const x=out[w];
+      if(x.g&&(c==='cena'||!o.taper))continue;   /* en guardia: hospital (o táper en la comida) */
+      const ant=w>0?out[w-1][c]:null;
+      if(o.dos&&ant&&ant.tag!=='sobras'&&ant.tag!==''){x[c]={id:ant.id,tag:'sobras'};continue;}
+      let d=null;
+      for(let k=0;k<q.length;k++){const cand=q[(pos[c]+k)%q.length];
+        const otra=c==='cena'?x.comida:null,choca=otra&&otra.id===cand.id,seguido=o.seguido&&ant&&ant.id===cand.id;
+        if(!choca&&!seguido){d=cand;pos[c]=(pos[c]+k+1)%q.length;break;}}
+      if(!d){d=q[pos[c]%q.length];pos[c]=(pos[c]+1)%q.length;}
+      x[c]={id:d.id,tag:x.g?'táper':(o.dos&&w<6?'cocinas':'')};}});
+  return out;}
+function tpAplicar(p){
+  /* la propuesta, a la semana del plan (la de las flechas de Comer): lo de Cocina y la compra se
+     recalculan solos. La cena de guardia no se toca (hospital); la comida, táper si lo pediste */
+  let n=0;p.forEach(function(x,w){SB_CLASES.forEach(function(c){const v=x[c[0]];if(!v)return;sbPoner(w,c[0],v.id);n++;});});
+  sbS().on=true;save();return n;}
+/* «qué hay que tener»: los ingredientes de la semana sin cantidades, con lo que ya está en casa */
+function tpTenerLista(){
+  const cd=compraDatos(),out=[];
+  cd.grupos.forEach(function(g){if(g[0]!=='fresco'&&g[0]!=='casa')return;g[2].forEach(function(x){
+    const a=x.aid&&alimById(x.aid),n=a?a.n:String(compraSG(x.texto)).replace(/^[\d.,]+\s*(kg|g|ml|l|ud|uds|unidades?)?\s*(de\s+)?/i,'').split(' · ')[0];
+    if(n&&!out.some(function(y){return y.n===n;}))out.push({id:x.id,n:n.charAt(0).toUpperCase()+n.slice(1),tengo:!!(x.tengo&&!x.falta),basico:!!x.basico});});});
+  return out.sort(function(a,b){return (a.tengo-b.tengo)||a.n.localeCompare(b.n,'es');});}
+function tpTenerHTML(){
+  const l=tpTenerLista();
+  if(!l.length)return '<p class="mini">La semana aún no pide nada. Monta la semana en Plan y aquí sale lo que tienes que tener.</p>';
+  const falta=l.filter(function(x){return !x.tengo;}).length;
+  return '<p class="mini" style="margin:4px 0 8px">Sin cantidades: lo que piden tus platos de la semana. '+(falta?'<b>Faltan '+falta+'</b>; ':'')+'lo que ya está en casa va tachado.</p>'+
+    '<div class="tptener">'+l.map(function(x){const on=ui.marks.has(x.id);
+      return '<button class="tpt'+(x.tengo?' ten':'')+(on?' on':'')+'" data-a="cje-mark" data-id="'+esc(x.id)+'">'+(x.tengo?'✓ ':(on?'🛒 ':'✗ '))+esc(x.n)+'</button>';}).join('')+'</div>'+
+    '<p class="mini" style="margin:8px 0 0">Toca lo que falta para marcarlo como comprado, igual que en «Comprar».</p>';}
+/* ---------- la interfaz, en Comer → Plan ---------- */
+function tpCardHTML(){
+  if(ui.tpVista==='leer')return tpLeerHTML();
+  if(ui.tpVista==='semana')return tpSemanaHTML();
+  const l=tpTodos(),ta='<textarea id="tpTxt" rows="5" placeholder="Lentejas con chorizo&#10;Crema de calabacín&#10;Avena con plátano">'+esc(ui.tpTxt||'')+'</textarea>'+
+    '<button class="btn p" style="width:100%;margin-top:8px" data-a="tp-leer">Entender mis platos</button>';
+  if(!l.length)return '<div class="card tpc"><div class="cap">TUS PLATOS</div><h3 style="margin:2px 0 4px">Escribe lo que sueles comer</h3>'+
+    '<p class="mini" style="margin:0 0 8px">Uno por línea, solo el nombre. La app pone qué lleva y cómo se hace; tú corriges lo que no cuadre. Luego monta la semana y la compra.</p>'+ta+'</div>';
+  return '<div class="card tpc"><div class="row" style="align-items:baseline"><div class="cap" style="flex:1;margin:0">TUS PLATOS · '+l.length+'</div><button class="dlink" data-a="tp-verlos">'+(ui.tpVer?'menos':'ver')+'</button></div>'+
+    '<div class="tpch">'+(ui.tpVer?l:l.slice(0,6)).map(function(d){return '<span class="tpchip">'+esc(d.icon||'🍽')+' '+esc(d.name)+
+      (ui.tpVer?'<button data-a="tp-quita" data-id="'+d.id+'" aria-label="quitar '+esc(d.name)+' de tus platos">×</button>':'')+'</span>';}).join('')+
+      (!ui.tpVer&&l.length>6?'<span class="tpchip mas">+'+(l.length-6)+'</span>':'')+'</div>'+
+    '<button class="btn p" style="width:100%;margin-top:8px" data-a="tp-semana">📅 Montar la semana con mis platos</button>'+
+    '<details class="tpmas"'+(ui.tpTxt?' open':'')+'><summary class="mini">＋ escribir más platos</summary>'+ta+'</details></div>';}
+function tpLeerHTML(){
+  /* por revisar: lo que no reconoce o una duda que aún no has contestado */
+  const rev=function(b){return b.sin.length||(b.duda&&!b.dudaOk);};
+  const l=ui.tpBorr||[],ok=l.filter(function(b){return b.ing.length&&!rev(b);}).length,ab=ui.tpAb!=null?ui.tpAb:0;
+  const fila=function(b,i){
+    const est=!b.ing.length?'<span style="color:var(--bad)">✗</span>':(rev(b)?'<span style="color:var(--warn)">?</span>':'<span style="color:var(--ok)">✓</span>');
+    if(i!==ab)return '<button class="tpfila" data-a="tp-ab" data-i="'+i+'"><span class="e">'+esc(b.e)+'</span><span class="t"><b>'+esc(b.n)+' '+est+'</b><span class="mini">'+
+      esc(b.ing.slice(0,4).map(function(x){const a=alimById(x.id);return (a?a.n.toLowerCase():'')+' '+Math.round(x.g)+' g';}).join(' · '))+(b.ing.length>4?' · …':'')+(b.pasos.length?' · '+b.pasos.length+' pasos':'')+'</span></span></button>';
+    return '<div class="tpab"><div class="row" style="align-items:center;gap:8px"><span style="font-size:24px">'+esc(b.e)+'</span><div style="flex:1;min-width:0"><b style="font-size:17px">'+esc(b.n)+'</b> '+est+
+        '<div class="mini">1 ración'+(b.min?' · '+b.min+' min':'')+(b.de==='patron'?' · deducido del nombre':'')+'</div></div>'+
+        '<button class="x" data-a="tp-borra" data-i="'+i+'" aria-label="quitar este plato">×</button></div>'+
+      '<div class="tpch" style="margin-top:6px">'+[['desayuno','desayuno'],['comida','comida'],['cena','cena']].map(function(m){
+        return '<button class="tpchip b'+(b.m.indexOf(m[0])>=0?' on':'')+'" data-a="tp-mom" data-i="'+i+'" data-v="'+m[0]+'">'+m[1]+'</button>';}).join('')+'</div>'+
+      (b.duda?'<div class="tpduda">'+esc(b.duda.q)+'<div class="tpch">'+b.duda.ops.map(function(o,k){
+        return '<button class="tpchip b'+(b.dudaSel===k?' on':'')+'" data-a="tp-duda" data-i="'+i+'" data-v="'+k+'">'+esc(o[0])+'</button>';}).join('')+'</div></div>':'')+
+      '<div class="cap" style="margin-top:10px">INGREDIENTES POR RACIÓN</div>'+
+      (b.ing.length?b.ing.map(function(x,j){const a=alimById(x.id);
+        return '<div class="tping"><span class="n">'+esc(a?a.n:'?')+'</span><button data-a="tp-g" data-i="'+i+'" data-j="'+j+'" data-v="-1" aria-label="menos">−</button><span class="g">'+Math.round(x.g)+' g</span>'+
+          '<button data-a="tp-g" data-i="'+i+'" data-j="'+j+'" data-v="1" aria-label="más">＋</button><button data-a="tp-ingx" data-i="'+i+'" data-j="'+j+'" aria-label="quitar">×</button></div>';}).join(''):'')+
+      b.sin.map(function(s,j){return '<div class="tping sin"><span class="n">«'+esc(s)+'»: no sé qué es</span><button data-a="tp-sinx" data-i="'+i+'" data-j="'+j+'" aria-label="quitar">×</button></div>';}).join('')+
+      (b.sin.length?'<p class="mini" style="margin:4px 0 0;color:var(--warn)">Lo que no reconozco va a la compra tal cual. Si lo escribes de otra forma abajo, lo cambio por el alimento.</p>':'')+
+      '<div class="row" style="gap:6px;margin-top:8px"><input id="tpAdd" placeholder="＋ ingrediente (p. ej. «zanahoria»)" style="flex:1;min-width:0"><button class="btn s" data-a="tp-add" data-i="'+i+'">Añadir</button></div>'+
+      '<div class="cap" style="margin-top:12px">PREPARACIÓN'+(b.de==='recetario'?'':' (PROPUESTA)')+'</div>'+
+      (ui.tpEdP===i?'<textarea id="tpPasos" rows="5">'+esc(b.pasos.join('\n'))+'</textarea><button class="btn s" style="margin-top:6px" data-a="tp-pasos-ok" data-i="'+i+'">Guardar los pasos</button>':
+        (b.pasos.length?'<ol class="tppas">'+b.pasos.map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ol>':'<p class="mini">Sin pasos.</p>')+
+        '<button class="dlink" data-a="tp-pasos" data-i="'+i+'">cambiar los pasos</button>')+'</div>';};
+  return '<div class="subcab"><button class="btn s volver" data-a="tp-volver">'+gymIco('atras','gico sm')+' Plan</button><h2 class="subtit" style="flex:1">Tus platos</h2></div>'+
+    '<div class="card"><div class="row"><div class="cap" style="flex:1;margin:0">'+l.length+' PLATO'+(l.length===1?'':'S')+' LEÍDO'+(l.length===1?'':'S')+'</div><span class="mini">'+ok+' ✓'+(l.length-ok?' · '+(l.length-ok)+' por revisar':'')+'</span></div>'+
+      '<p class="mini" style="margin:6px 0 0">Toca un plato para ver qué lleva y cómo se hace. Cantidades por ración: cocinar para 2 días las duplica en la compra.</p></div>'+
+    '<div class="card tplist">'+l.map(fila).join('')+'</div>'+
+    '<button class="btn p" style="width:100%" data-a="tp-guardar"'+(l.some(function(b){return b.ing.length||b.sin.length;})?'':' disabled')+'>Guardar '+(l.length===1?'el plato':'los '+l.length+' platos')+'</button>';}
+function tpSemanaHTML(){
+  const o=tpOpt(),p=tpPropuesta(ui.tpSeed||0),l=tpTodos(),lun=parseDate(sbLun());
+  const nom=function(v){const d=v&&dishById(v.id);return d?d.name:'';};
+  const celda=function(x,c){const v=x[c];
+    if(!v)return '<span class="c vac">'+(x.g&&c!=='desayuno'?'en la guardia':'—')+'</span>';
+    return '<span class="c'+(v.tag==='cocinas'||v.tag==='táper'?' t':'')+'">'+esc(nom(v))+(v.tag?'<i>'+(v.tag==='cocinas'?'cocinas · 2 días':v.tag)+'</i>':'')+'</span>';};
+  const ch=function(k,t){return '<button class="tpchip b'+(o[k]?' on':'')+'" data-a="tp-opt" data-v="'+k+'">'+t+'</button>';};
+  const falta=['desayuno','comida','cena'].filter(function(c){return !l.some(function(d){return tpMomentos(d).indexOf(c)>=0;});});
+  return '<div class="subcab"><button class="btn s volver" data-a="tp-volver">'+gymIco('atras','gico sm')+' Plan</button><h2 class="subtit" style="flex:1">La semana con tus platos</h2></div>'+
+    '<div class="card"><div class="cap">SEMANA DEL '+lun.getDate()+' '+MON[lun.getMonth()].toUpperCase()+' · CON TUS '+l.length+' PLATOS</div>'+
+      '<div class="tpch">'+ch('dos','cocinar para 2 días')+ch('seguido','sin repetir seguido')+ch('taper','guardias: táper')+'</div>'+
+      (falta.length?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">No tienes platos para '+falta.join(' ni ')+': esas casillas se quedan como están.</p>':'')+
+      '<div class="tpwk"><span></span><span class="h">DESAYUNO</span><span class="h">COMIDA</span><span class="h">CENA</span>'+
+        p.map(function(x,w){const d=parseDate(x.key),ty=esDiaGuardia(x.key)?'guardia':(salidaDeGuardia(x.key)?'saliente':'');
+          return '<span class="d">'+SB_DIAS[w]+'<small>'+d.getDate()+(ty?' · '+ty:'')+'</small></span>'+celda(x,'desayuno')+celda(x,'comida')+celda(x,'cena');}).join('')+'</div>'+
+      '<div class="row" style="gap:8px;margin-top:10px"><button class="btn" style="flex:1" data-a="tp-otra">↻ Otra combinación</button><button class="btn p" style="flex:1" data-a="tp-usar">Usar esta semana</button></div></div>';}
 function renderComerEje(){
   semPAuto();
   /* CUATRO PESTAÑAS: Hoy (el nutricionista), Cocina (el chef), Plan (la semana) y Despensa (nevera y
@@ -13124,6 +13488,7 @@ function renderComerEje(){
         '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button></div>';}
   else if(tab==='coc')body=cjeCocinaHTML();
   else if(tab==='desp')body=cjeDespensaHTML();
+  else if(ui.tpVista){$('#main').innerHTML='<div class="grid cje">'+tpCardHTML()+'</div>';return;}
   else{
     const lun=parseDate(sbLun()),dom=addDays(lun,6),obj=protObj();
     const pend=A.T.tandas.filter(function(t){return !t.hecho&&t.key>=hoyK;}),diasC=[];
@@ -13153,7 +13518,8 @@ function renderComerEje(){
       montar+
       '<div class="card cjwks">'+filas+'</div>'+
       '<div class="cjleg"><span><i class="dot cz"></i>cocinas</span><span><i class="dot tp"></i>táper</span><span><i class="dot fz"></i>congelado</span><span class="sp"></span><span>g proteína</span></div>'+
-      (c0?'<div class="card cjefe">💪 <b>'+esc(DIA3[parseDate(c0.key).getDay()])+': '+protDiaPlan(c0)+' g</b> de '+obj+'. <button class="dlink" data-a="cje-protx" data-w="'+c0.w+'">＋ ponle un extra de proteína</button></div>':'');}
+      (c0?'<div class="card cjefe">💪 <b>'+esc(DIA3[parseDate(c0.key).getDay()])+': '+protDiaPlan(c0)+' g</b> de '+obj+'. <button class="dlink" data-a="cje-protx" data-w="'+c0.w+'">＋ ponle un extra de proteína</button></div>':'')+
+      tpCardHTML();}
   $('#main').innerHTML='<div class="grid cje">'+cab+body+'</div>';}
 function cjeMacrosHTML(ft){
   /* LO COMIDO FRENTE AL OBJETIVO, LOS CUATRO: kcal, proteína, hidratos y grasa. Antes solo estaban
@@ -13357,10 +13723,11 @@ function cjeHojaCompra(h){
           (ab?l.map(li).join(''):'');}).join('');
     body+='<div class="cjbtns"><button class="btn" data-a="ticket-foto">📷 Ticket</button><button class="btn p" data-a="cje-comprado">Ya he comprado</button></div>'+
       '<button class="dlink" data-a="tab" data-t="shop" style="margin-top:8px">ver la lista completa ›</button>';}
+  else if(seg==='tener')body=tpTenerHTML();
   else{const l=despensaS().map(function(x){return {x:x,r:frescoDias(x)};}).sort(function(a,b){return (a.r==null?99:a.r)-(b.r==null?99:b.r);});
     body=l.length?l.map(function(o){return '<div class="cjli"><span class="tx">'+esc(o.x.nom)+'</span><span class="q'+(o.r!=null&&o.r<=2?' w':'')+'">'+(o.r==null?'':(o.r<=0?'hoy':(o.r===1?'mañana':o.r+' d')))+'</span>'+
       '<button class="x" data-a="desp-quitar" data-k="'+esc(o.x.k)+'" aria-label="quitar '+esc(o.x.nom)+'">×</button></div>';}).join(''):'<p class="mini">La nevera está vacía: «Ya he comprado» o la foto del ticket la llenan.</p>';}
-  return '<div class="cjseg"><button class="'+(seg==='comprar'?'on':'')+'" data-a="cje-seg" data-v="comprar">Comprar</button><button class="'+(seg==='casa'?'on':'')+'" data-a="cje-seg" data-v="casa">En casa</button></div>'+body;}
+  return '<div class="cjseg"><button class="'+(seg==='comprar'?'on':'')+'" data-a="cje-seg" data-v="comprar">Comprar</button><button class="'+(seg==='tener'?'on':'')+'" data-a="cje-seg" data-v="tener">Qué tener</button><button class="'+(seg==='casa'?'on':'')+'" data-a="cje-seg" data-v="casa">En casa</button></div>'+body;}
 function cjeHojaPref(){
   const P=cocinaPref(),ob=food().objetivo||{};
   const sw=function(on,k,txt){return '<button class="cjopt" data-a="cje-pref" data-k="'+k+'">'+txt+'<span class="sw'+(on?'':' off')+'" role="switch" aria-checked="'+(on?'true':'false')+'"></span></button>';};
@@ -22950,6 +23317,40 @@ function act(a,el){
       save();render();break;}
     /* la compra vive en una hoja (desde Plan) y en la pestaña Despensa: cada una con su estado */
     case 'cje-fija':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?compraH():{});h.lista=h.lista===el.dataset.v?'':el.dataset.v;render();break;}
+    /* TUS PLATOS (Comer → Plan): escribir → leer → guardar → semana → compra */
+    case 'tp-leer':{const t=((document.getElementById('tpTxt')||{}).value||ui.tpTxt||'');
+      const l=t.split(/\n+/).map(tpLeer).filter(Boolean).slice(0,30);if(!l.length){flash('escribe un plato por línea');break;}
+      ui.tpTxt=t;ui.tpBorr=l;ui.tpVista='leer';ui.tpAb=0;ui.tpEdP=null;render();window.scrollTo(0,0);break;}
+    case 'tp-volver':ui.tpVista='';ui.tpEdP=null;render();window.scrollTo(0,0);break;
+    case 'tp-ab':ui.tpAb=+el.dataset.i;ui.tpEdP=null;render();break;
+    case 'tp-borra':{const l=ui.tpBorr||[];l.splice(+el.dataset.i,1);ui.tpAb=0;ui.tpEdP=null;if(!l.length)ui.tpVista='';render();break;}
+    case 'tp-mom':{const b=(ui.tpBorr||[])[+el.dataset.i];if(!b)break;const v=el.dataset.v,k=b.m.indexOf(v);
+      if(k>=0){if(b.m.length>1)b.m.splice(k,1);}else b.m.push(v);render();break;}
+    case 'tp-duda':{const b=(ui.tpBorr||[])[+el.dataset.i];if(b){b.dudaSel=+el.dataset.v;b.dudaOk=true;}render();break;}
+    case 'tp-g':{const b=(ui.tpBorr||[])[+el.dataset.i],x=b&&b.ing[+el.dataset.j];if(!x)break;
+      const pas=x.g>=100?10:5;x.g=Math.max(pas,Math.round(x.g/pas)*pas+pas*(+el.dataset.v));render();break;}
+    case 'tp-ingx':{const b=(ui.tpBorr||[])[+el.dataset.i];if(b)b.ing.splice(+el.dataset.j,1);render();break;}
+    case 'tp-sinx':{const b=(ui.tpBorr||[])[+el.dataset.i];if(b)b.sin.splice(+el.dataset.j,1);render();break;}
+    case 'tp-add':{const b=(ui.tpBorr||[])[+el.dataset.i],t=((document.getElementById('tpAdd')||{}).value||'').trim();if(!b||!t)break;
+      const a=tpAlim(t);
+      if(a){if(!b.ing.some(function(x){return x.id===a.id;}))b.ing.push({id:a.id,g:tpGramos(a,b.ing.length>0)});
+        /* «lo escribo de otra forma»: si lo que no reconocía era esto, deja de estar en la duda */
+        const k=b.sin.findIndex(function(s){const o=tpAlim(s);return o&&o.id===a.id;});if(k>=0)b.sin.splice(k,1);
+        if(b.de==='nada')b.de='patron';}
+      else{if(b.sin.indexOf(t)<0)b.sin.push(t);flash('no lo conozco: va a la compra tal cual');}
+      render();break;}
+    case 'tp-pasos':ui.tpEdP=+el.dataset.i;render();{const ta=document.getElementById('tpPasos');if(ta)ta.focus();}break;
+    case 'tp-pasos-ok':{const b=(ui.tpBorr||[])[+el.dataset.i],t=((document.getElementById('tpPasos')||{}).value||'');
+      if(b)b.pasos=t.split(/\n+/).map(function(x){return x.trim();}).filter(Boolean).slice(0,20);ui.tpEdP=null;render();break;}
+    case 'tp-guardar':{const n=tpGuardar();ui.tpVista='';ui.tpEdP=null;render();window.scrollTo(0,0);
+      flash(n===1?'1 plato guardado':n+' platos guardados');break;}
+    case 'tp-verlos':ui.tpVer=!ui.tpVer;render();break;
+    case 'tp-quita':{const d=dishById(el.dataset.id);if(d){delete d.tuyo;save();}render();break;}
+    case 'tp-semana':ui.tpVista='semana';ui.tpSeed=0;render();window.scrollTo(0,0);break;
+    case 'tp-opt':{const o=tpOpt(),k=el.dataset.v;if(k in o){o[k]=!o[k];save();}render();break;}
+    case 'tp-otra':ui.tpSeed=(ui.tpSeed||0)+1;render();break;
+    case 'tp-usar':{tpAplicar(tpPropuesta(ui.tpSeed||0));ui.tpVista='';ui.cjeTab='desp';ui.cjeHoja=null;compraH().seg='comprar';
+      render();window.scrollTo(0,0);flash('semana puesta: esta es su compra');break;}
     case 'cje-seg':{const h=ui.cjeHoja||(ui.cjeTab==='desp'?compraH():(ui.cjeHoja={v:'compra'}));h.seg=el.dataset.v;render();break;}
     case 'cje-mark':{const id=el.dataset.id;if(ui.marks.has(id))ui.marks.delete(id);else ui.marks.add(id);saveMarks();render();break;}
     case 'cje-comprado':flash(hacerCompra(ui.marks.size>0));break;
@@ -25922,7 +26323,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden){try
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+Object.assign(window.PG,{tpLeer,tpPropuesta,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();

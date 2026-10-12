@@ -92,3 +92,37 @@ línea, y el reloj solo como botón en el aviso de guardia (no le daba importanc
 
 **Supuestos:** los días normales el reloj no lleva cafés (la app no apunta la cafeína que tomas); la
 siesta del saliente es la que elige el mejor plan (de 2 a 4 h).
+
+## 2026-10-12 · Tus platos por el nombre → semana prototipo → compra
+
+**Contexto:** el usuario quiere escribir platos con texto, que la app los entienda con sus ingredientes
+y su preparación, montar con ellos una semana prototipo y sacar de ahí la compra («qué hay que tener»).
+Respuestas: solo el nombre; la preparación la propone la app; desayuno, comida y cena; la compra de
+las dos formas (con cantidades y sin ellas). Maqueta aprobada («Me vale, móntalo»).
+
+**Elegido:**
+- Vive en **Comer → Plan**, al pie de la semana: una tarjeta «Tus platos» con un campo de texto (un
+  plato por línea). No es una pestaña nueva: el plan ya es donde se monta la semana.
+- La app lee cada línea sin conexión, en tres escalones: un recetario de 44 platos de casa (con
+  cantidades por ración y pasos escritos); si no está, los ~85 platos que ya conoce el lector de frases
+  (con pasos según cómo se cocinan); y si tampoco, patrones («crema de X», «X al horno con Y», «X con
+  Y»), que deducen ingredientes y pasos. Lo que no reconoce no se lo inventa: lo dice y va a la compra
+  tal cual.
+- La lectura se puede corregir antes de guardar: para qué comida va, ± gramos, quitar o añadir un
+  ingrediente, contestar la duda (el curry: ¿leche de coco, nata o nada?) y cambiar los pasos.
+- Los platos guardados son platos normales de la app (con macros, pasos e ingredientes) con la marca
+  «tuyo»; volver a escribir uno no lo duplica, lo actualiza.
+- La semana prototipo se enseña antes de usarla, con tres opciones: cocinar para 2 días (el segundo
+  son sobras), no repetir en días seguidos y, en guardia, táper para la comida (la cena es del
+  hospital). «Otra combinación» baraja. «Usar esta semana» la escribe en el plan de esa semana (lo de
+  Cocina y la compra se recalculan solos) y te lleva a la compra.
+- La compra tiene un tercer modo, «Qué tener»: los mismos ingredientes sin cantidades, con lo que ya
+  hay en casa tachado. Marcar ahí es lo mismo que marcar en «Comprar».
+
+**Descartado:** usar una IA externa para entender los platos (los datos no salen del móvil), una
+pestaña nueva en Comer (son cuatro y Plan ya es la semana) y escribir los ingredientes a mano (el
+usuario eligió «solo el nombre»).
+
+**Supuestos:** las cantidades son por ración de adulto y aproximadas; los pasos de los platos fuera
+del recetario son una propuesta genérica según el método (horno, plancha, guiso…); el desayuno se
+repite en rotación con los platos de desayuno que tengas.
