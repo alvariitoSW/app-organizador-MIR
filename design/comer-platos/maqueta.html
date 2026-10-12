@@ -1,0 +1,121 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tus platos · maqueta</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:#04070d;color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.tel{width:390px;background:var(--bg);border-radius:28px;border:1px solid var(--line);padding:14px 14px 22px;min-height:844px}
+.lbl{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:0 0 10px 4px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:12px}
+.seg b{font-size:13px;text-align:center;padding:8px 0;border-radius:10px;color:var(--ink2);font-weight:800}.seg b.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#06101e}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.cap{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin-bottom:8px}
+h3{margin:0 0 4px;font-size:18px}.mini{font-size:12.5px;color:var(--ink2)}
+.ta{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.6 system-ui;color:var(--ink);min-height:150px;white-space:pre-line}
+.btn{display:flex;justify-content:center;align-items:center;gap:6px;border-radius:12px;padding:11px 12px;font-weight:800;font-size:14px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);margin-top:10px}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#06101e;border:0}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{font-size:12.5px;border:1px solid var(--line);border-radius:99px;padding:4px 9px;background:var(--bg2)}
+.chip.on{border-color:var(--brand);color:var(--brand)}.chip.add{border-style:dashed;color:var(--ink2)}
+.ing{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-top:1px solid var(--line)}.ing:first-child{border-top:0}.ing span{color:var(--ink2)}
+ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--ink)}ol li{margin:3px 0}
+.dish{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.dish:first-of-type{border-top:0}
+.dish .e{font-size:22px}.dish .t{flex:1}.dish b{display:block}.ok{color:var(--ok)}.warn{color:var(--warn)}
+.duda{background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent);border-radius:12px;padding:9px 10px;margin-top:8px;font-size:13px}
+.inp{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px 9px;margin-top:6px;color:var(--ink2);font-size:13px}
+.wk{display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:4px;font-size:11.5px}
+.wk .h{font-weight:800;color:var(--ink2);text-align:center;font-size:10.5px;letter-spacing:.08em}
+.wk .d{font-weight:900;color:var(--ink2);display:flex;flex-direction:column;justify-content:center;font-size:11px}.wk .d small{display:block;font-size:8.5px;font-weight:700;letter-spacing:0}
+.wk .c{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:5px 6px;min-height:42px;line-height:1.25}
+.wk .c.t{border-color:color-mix(in srgb,var(--brand) 55%,transparent)}.wk .c i{font-style:normal;color:var(--brand);font-size:10px;display:block}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:10px}
+.tg b{text-align:center;padding:8px 0;border-radius:9px;font-size:13px;color:var(--ink2)}.tg b.on{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.pas{font:800 11px/1 system-ui;letter-spacing:.12em;color:var(--ink2);margin:12px 0 4px}
+.it{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.it:first-of-type{border-top:0}
+.ck{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex:none}.ck.on{background:var(--ok);border-color:var(--ok)}
+.it .q{margin-left:auto;color:var(--ink2);font-variant-numeric:tabular-nums}.it.ten{opacity:.5;text-decoration:line-through}
+.nota{font-size:12px;color:var(--ink2);margin-top:6px}
+</style></head><body>
+
+<!-- 1 · ESCRIBIR -->
+<div><p class="lbl">1 · Escribe tus platos</p><div class="tel">
+<div class="seg"><b>Hoy</b><b>Cocina</b><b class="on">Plan</b><b>Despensa</b></div>
+<div class="card"><div class="cap">Tus platos</div>
+<h3>Escribe lo que sueles comer</h3><p class="mini" style="margin:0 0 10px">Uno por línea, solo el nombre. La app pone qué lleva y cómo se hace; tú corriges lo que no cuadre.</p>
+<div class="ta">Lentejas con chorizo
+Crema de calabacín
+Salmón al horno con patatas
+Pollo al curry con arroz
+Avena con plátano
+Tostadas con aguacate y huevo
+Merluza en salsa verde
+Garbanzos con espinacas</div>
+<div class="btn p">Entender mis platos</div></div>
+<div class="card"><div class="cap">Ya tienes 6 platos tuyos</div>
+<div class="chips"><span class="chip">🥣 Avena con plátano</span><span class="chip">🍲 Lentejas con chorizo</span><span class="chip">🥗 Ensalada de pasta</span><span class="chip">🐟 Merluza en salsa verde</span><span class="chip add">+2</span></div>
+<div class="btn">📅 Montar la semana con mis platos</div></div>
+</div></div>
+
+<!-- 2 · LA APP LO ENTIENDE -->
+<div><p class="lbl">2 · Lo que entiende la app</p><div class="tel">
+<div class="card"><div class="row"><div class="cap" style="margin:0">8 platos leídos</div><span class="sp"></span><span class="mini">7 ✓ · 1 duda</span></div></div>
+<div class="card"><div class="row"><span style="font-size:24px">🥬</span><div class="sp"><h3 style="margin:0">Crema de calabacín</h3><span class="mini">2 raciones · comida o cena · 30 min</span></div></div>
+<div class="chips"><span class="chip">desayuno</span><span class="chip on">comida</span><span class="chip on">cena</span></div>
+<div class="cap" style="margin-top:8px">Ingredientes por ración</div>
+<div class="ing">Calabacín<span>250 g</span></div><div class="ing">Patata<span>80 g</span></div><div class="ing">Cebolla<span>50 g</span></div><div class="ing">Aceite de oliva<span>10 g</span></div><div class="ing">Quesito en porciones<span>1 ud</span></div>
+<div class="chips"><span class="chip add">＋ ingrediente</span></div>
+<div class="cap" style="margin-top:8px">Preparación (propuesta)</div>
+<ol><li>Pocha la cebolla en el aceite, 5 min.</li><li>Añade el calabacín y la patata en trozos, 3 min.</li><li>Cubre de agua y cuece 20 min.</li><li>Tritura con el quesito y sal.</li></ol>
+<div class="row"><div class="btn" style="flex:1">Cambiar</div><div class="btn p" style="flex:1">✓ Es así</div></div></div>
+<div class="card"><div class="dish"><span class="e">🍲</span><div class="t"><b>Lentejas con chorizo <span class="ok">✓</span></b><span class="mini">lentejas 80 g · chorizo 40 g · zanahoria · cebolla · pimentón · 4 pasos</span></div></div>
+<div class="dish"><span class="e">🐟</span><div class="t"><b>Salmón al horno con patatas <span class="ok">✓</span></b><span class="mini">salmón 150 g · patata 200 g · aceite · 3 pasos</span></div></div>
+<div class="dish"><span class="e">🍛</span><div class="t"><b>Pollo al curry con arroz <span class="warn">?</span></b><span class="mini">pollo 150 g · arroz 70 g · cebolla · curry</span>
+<div class="duda">¿Con leche de coco o con nata? <div class="chips"><span class="chip on">leche de coco</span><span class="chip">nata</span><span class="chip">ninguna</span></div></div></div></div>
+<div class="dish"><span class="e">🥣</span><div class="t"><b>Avena con plátano <span class="ok">✓</span></b><span class="mini">desayuno · avena 40 g · plátano 1 · leche 200 ml</span></div></div></div>
+<div class="btn p">Guardar los 8 platos</div>
+</div></div>
+
+<!-- 3 · LA SEMANA -->
+<div><p class="lbl">3 · La semana con tus platos</p><div class="tel">
+<div class="seg"><b>Hoy</b><b>Cocina</b><b class="on">Plan</b><b>Despensa</b></div>
+<div class="card"><div class="cap">Semana prototipo · con tus 8 platos</div>
+<div class="chips"><span class="chip on">cocinar para 2 días</span><span class="chip on">sin repetir seguido</span><span class="chip">guardias: táper</span></div>
+<div class="wk" style="margin-top:6px"><span></span><span class="h">DESAYUNO</span><span class="h">COMIDA</span><span class="h">CENA</span>
+<span class="d">LUN</span><span class="c">Avena con plátano</span><span class="c t">Lentejas con chorizo<i>cocinas · 2 días</i></span><span class="c t">Crema de calabacín<i>cocinas · 2 días</i></span>
+<span class="d">MAR</span><span class="c">Tostadas aguacate y huevo</span><span class="c">Lentejas con chorizo<i>sobras</i></span><span class="c">Crema de calabacín<i>sobras</i></span>
+<span class="d">MIÉ<small>guardia</small></span><span class="c">Avena con plátano</span><span class="c t">Pollo al curry con arroz<i>táper</i></span><span class="c">en la guardia</span>
+<span class="d">JUE<small>saliente</small></span><span class="c">Tostadas aguacate y huevo</span><span class="c">Pollo al curry<i>sobras</i></span><span class="c t">Merluza en salsa verde</span>
+<span class="d">VIE</span><span class="c">Avena con plátano</span><span class="c t">Garbanzos con espinacas<i>2 días</i></span><span class="c t">Salmón al horno con patatas</span>
+<span class="d">SÁB</span><span class="c">Tostadas aguacate y huevo</span><span class="c">Garbanzos con espinacas<i>sobras</i></span><span class="c">Ensalada de pasta</span>
+<span class="d">DOM</span><span class="c">Avena con plátano</span><span class="c">libre</span><span class="c">Ensalada de pasta</span></div>
+<p class="nota">Toca una casilla para cambiar el plato. Proteína de la semana: 6 de 7 días en tu objetivo.</p>
+<div class="row"><div class="btn" style="flex:1">↻ Otra combinación</div><div class="btn p" style="flex:1">Usar esta semana</div></div>
+<div class="btn">🧾 Ver la compra de esta semana</div></div>
+</div></div>
+
+<!-- 4 · LA COMPRA -->
+<div><p class="lbl">4 · La compra (dos modos)</p><div class="tel">
+<div class="seg"><b>Hoy</b><b>Cocina</b><b>Plan</b><b class="on">Despensa</b></div>
+<div class="card"><div class="cap">Compra · semana del 13</div>
+<div class="tg"><b class="on">Con cantidades</b><b>Qué hay que tener</b></div>
+<p class="mini" style="margin:0 0 4px">Para tus 8 platos de la semana. Lo que ya tienes en la despensa está tachado.</p>
+<div class="pas">FRUTA Y VERDURA</div>
+<div class="it"><span class="ck"></span>Calabacín<span class="q">500 g</span></div>
+<div class="it"><span class="ck"></span>Patata<span class="q">1,2 kg</span></div>
+<div class="it ten"><span class="ck on"></span>Cebolla<span class="q">tienes</span></div>
+<div class="it"><span class="ck"></span>Plátano<span class="q">4 ud</span></div>
+<div class="it"><span class="ck"></span>Aguacate<span class="q">2 ud</span></div>
+<div class="pas">PESCADO Y CARNE</div>
+<div class="it"><span class="ck"></span>Salmón<span class="q">150 g</span></div>
+<div class="it"><span class="ck"></span>Merluza<span class="q">180 g</span></div>
+<div class="it"><span class="ck"></span>Pechuga de pollo<span class="q">300 g</span></div>
+<div class="it"><span class="ck"></span>Chorizo<span class="q">80 g</span></div>
+<div class="pas">DESPENSA</div>
+<div class="it ten"><span class="ck on"></span>Lentejas<span class="q">tienes</span></div>
+<div class="it"><span class="ck"></span>Garbanzos cocidos<span class="q">1 bote</span></div>
+<div class="it"><span class="ck"></span>Leche de coco<span class="q">1 lata</span></div>
+<div class="it"><span class="ck"></span>Copos de avena<span class="q">160 g</span></div></div>
+<div class="card"><div class="cap">Modo «qué hay que tener»</div>
+<p class="mini" style="margin:0">Sin cantidades: la lista de ingredientes de tus platos para repasar la despensa. Marcas lo que falta y pasa a la compra.</p>
+<div class="chips" style="margin-top:8px"><span class="chip">✓ aceite de oliva</span><span class="chip">✓ ajo</span><span class="chip">✓ pimentón</span><span class="chip on">✗ curry</span><span class="chip">✓ arroz</span><span class="chip on">✗ quesitos</span><span class="chip">✓ perejil</span><span class="chip">✓ harina</span></div></div>
+</div></div>
+</body></html>
