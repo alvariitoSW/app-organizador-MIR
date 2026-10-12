@@ -35,3 +35,19 @@ como «… sin nombre» pasan a llamarse por su marca al cargar.
 - Traducir el nombre portugués o inglés: sin red de traducción en el móvil; se prefiere el que
   Open Food Facts ya tiene en español.
 - Renombrar «Salmão com legumes» ya guardado: no se sabe su nombre en español sin volver a consultar.
+
+## 2026-10-12 · El banco del sueño con tu guardia
+
+**Elegido:** la figura isométrica (fig/sueno.html, hecha con la skill anatomy) vive dentro de la app
+y se abre con «cómo funciona» en Sueño → Guardia. Recibe el plan de la guardia elegida (horas, lo
+dormido, los cafés, la siesta que hayas movido) detrás de «#p=», que el navegador nunca manda a
+ningún servidor: no sale del móvil. Si la guardia está en marcha, abre en la hora de ahora. Va en una
+capa propia, fuera de #main y de la hoja del día, para que un repintado no recargue la figura; «atrás»
+y «Cerrar» la quitan sin salir de Guardia. Sigue el tema: claro u oscuro.
+
+**Descartado:**
+- Pintarla dentro de la tarjeta del simulador: se rehace en cada render y la figura se recargaría.
+- Pasar el plan por «?…»: viajaría en la petición; además el service worker trata esa URL aparte.
+- Leer la guardia desde la figura (localStorage compartido): la ataría al formato de los datos de la
+  app; con el plan ya calculado por snPlanSim la figura no repite la lógica de turnos.
+- La guardia típica fija (la maqueta A): el usuario pidió su guardia real.

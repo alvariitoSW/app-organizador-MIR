@@ -6033,8 +6033,31 @@ function renderSuenoSim(){
     (ui.snTabla?snTablaHTML(p,se):'')+
     (tocado?'<div class="snbtn"><button class="btn" data-a="sn-deshacer">Volver a lo de siempre</button></div>':'')+
     '<div class="row snopc">'+(tocado?'<label><input type="checkbox" data-a="sn-comparar"'+(ui.snComparar?' checked':'')+'> comparar con lo de siempre</label>':'')+
-      '<span class="sp"></span><button class="chip" data-a="sn-tabla">'+(ui.snTabla?'ocultar tabla':'ver en tabla')+'</button></div>'+
+      '<span class="sp"></span><button class="chip" data-a="sn-banco">cómo funciona</button><button class="chip" data-a="sn-tabla">'+(ui.snTabla?'ocultar tabla':'ver en tabla')+'</button></div>'+
     '<div class="dsucap" style="margin-top:12px">PASO A PASO</div>'+snPasosHTML(p,m)+'</div>';}
+/* EL BANCO DEL SUEÑO: la figura que enseña cómo funciona tu guardia (fig/sueno.html), con TU plan.
+   El plan va detrás de «#», que el navegador nunca manda a ningún servidor: no sale del móvil */
+function bancoSrc(){
+  const G=snGuardiaSel();if(!G)return '';
+  const p=snPlanSim(G).p,d=parseDate(G),r=function(x){return Math.round(x*100)/100;};
+  const o={label:DIA3[d.getDay()]+' '+d.getDate(),wake:r(p.wake),de:r(p.de),sale:r(p.sale),llega:r(p.llega),cama:r(p.cama),
+    todo:p.todo.map(function(s){return {a:r(s.a),b:r(s.b),txt:String(s.txt||'').toLowerCase()};}),
+    cafes:p.cafes.map(function(c){return {t:r(c.t),mg:c.mg||80};})};
+  /* si la guardia está en marcha, la figura abre en la hora de ahora (cuenta desde las 0:00 de ese día) */
+  const ahora=(Date.now()-d.getTime())/36e5;
+  return 'fig/sueno'+(document.documentElement.classList.contains('dark')?'':'-light')+'.html#p='+encodeURIComponent(JSON.stringify(o))+
+    (ahora>r(p.wake)&&ahora<r(p.cama)?'&t='+r(ahora):'');}
+function pintaBanco(){
+  /* va FUERA de #hojaDia y de #main: los dos se rehacen en cada pintado y el iframe se recargaría */
+  const abierto=!!ui.snBanco&&ui.tab==='hoy'&&ui.hoyVista==='sueno';let c=document.getElementById('bancoCapa');
+  if(!abierto&&ui.snBanco)ui.snBanco='';
+  document.documentElement.classList.toggle('banco-abierto',abierto);
+  if(!abierto){if(c)c.remove();return;}
+  if(c&&c.dataset.src===ui.snBanco)return;
+  if(!c){c=document.createElement('div');c.id='bancoCapa';document.body.appendChild(c);}
+  c.dataset.src=ui.snBanco;
+  c.innerHTML='<div class="banco" role="dialog" aria-modal="true" aria-label="Cómo funciona tu guardia"><div class="bancobar"><b>Cómo funciona tu guardia</b>'+
+    '<button class="btn s" data-a="sn-banco-x">Cerrar</button></div><iframe title="El banco del sueño: tu guardia" src="'+esc(ui.snBanco)+'"></iframe></div>';}
 /* repintar solo el gráfico y la lectura mientras el dedo se mueve (render() soltaría el dedo) */
 function snRepinta(){
   const gEl=document.getElementById('snGraf');if(!gEl)return;
@@ -7779,6 +7802,7 @@ function hojaMarco(cerrarA,cls,label,cuerpo){
   return '<div class="hscrim" data-a="'+cerrarA+'"></div><div class="hoja'+(cls?' '+cls:'')+'" role="dialog" aria-modal="true" aria-label="'+esc(label||'')+'">'+
     '<div class="hgrab" data-a="'+cerrarA+'" aria-label="cerrar"></div>'+cuerpo+'</div>';}
 function pintaHojaDia(){
+  pintaBanco();
   if(!(ui.tab==='hoy'&&ui.hoyVista==='sueno'&&ui.snVista==='noche')){const nc=document.getElementById('nocheCapa');if(nc)nc.remove();}
   /* la hoja va FUERA de #main: dentro, #main es su propio apilado y el pie de la app (#foot, z-index
      1 pero detrás en el documento) se le ponía encima y tapaba el «Guardar» */
@@ -21871,6 +21895,7 @@ function navAtras(desdePop){
   if(r&&!desdePop&&ui._navPushes>0){ui._navPushes--;ui._navIgnoraPop=true;try{history.back();}catch(e){ui._navIgnoraPop=false;}}
   return r;}
 function navAtras0(){
+  if(ui.snBanco){ui.snBanco='';ui._navVolviendo=true;render();return true;}
   if(navHojaAbierta()){cerrarHojaDia();ui._navVolviendo=true;render();return true;}
   const v=navVolverBtn();
   if(v){ui._navVolviendo=true;v.click();ui._navVolviendo=false;window.scrollTo(0,0);return true;}
@@ -23416,6 +23441,8 @@ function act(a,el){
     case 'sn-g':if(el.dataset.v){ui.snG=el.dataset.v;ui.snCur=null;ui.snSel=null;}render();break;
     case 'sn-ver':ui.snVer=!ui.snVer;render();break;
     case 'sn-tabla':ui.snTabla=!ui.snTabla;render();break;
+    case 'sn-banco':ui.snBanco=bancoSrc();if(!ui.snBanco){flash('No hay ninguna guardia que enseñar');break;}render();break;
+    case 'sn-banco-x':ui.snBanco='';render();break;
     case 'sn-todos':ui.snTodos=!ui.snTodos;render();break;
     case 'sn-mejor':{const G=snGuardiaSel();if(!G)break;const viejo=snPlanSim(G).se;snGuarda(snCopia(snMejorSim(G).p));ui.snComparar=true;ui.snCur=null;ui.snSel=null;render();
       const n=snPlanSim(G),r=snPlanSim(G,'base').m;snAnima(viejo,n.se);

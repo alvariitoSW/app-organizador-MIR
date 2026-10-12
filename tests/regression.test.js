@@ -11504,6 +11504,44 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la lista de huchas dice lo mismo que el asistente («para <mes> · X €/mes») y el aviso de copia por defecto es de 13 días',
       /para [a-zé]+ de \d{4} · 100 €\/mes/.test(r.resto.lista) && r.resto.copia === 13, JSON.stringify(r.resto));
   }
+  // 273) EL BANCO DEL SUEÑO CON TU GUARDIA, EN CADENA: Sueño → Guardia → «cómo funciona» abre la figura con
+  // el plan de ESA guardia (sus horas, sus cafés, la siesta que hayas movido), no la guardia típica; un repintado
+  // no la recarga; «atrás» la cierra sin salir de Sueño y «Cerrar» también
+  {
+    const r = {};
+    // tolerante: con el código de antes el botón no existe y la prueba tiene que CAER, no colgarse
+    const toca = async (sel, ms) => { const e = await page.$(sel); if (e) await e.click(); await page.waitForTimeout(ms); };
+    const g = await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia273', JSON.stringify(P.store));
+      const G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(P.addDays(new Date(), 3));
+      P.setDayOverride(g, G.id, 'urg'); if (P.store.sueno.sim) delete P.store.sueno.sim[g];
+      P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snVista = ''; P.ui.snTab = 'guardia'; P.ui.snG = g; P.ui.snAj = ''; P.save(); P.render(); return g; });
+    await page.waitForTimeout(150);
+    // mueve un café a mano (como al arrastrarlo) para que el plan no sea el de fábrica
+    await page.evaluate((g) => { const P = window.PG, p = P.snPlanSim(g).p; p.cafes[0].t = 17.25; P.snGuarda(p); P.render(); }, g);
+    await toca('#main [data-a="sn-banco"]', 300);
+    const leeFig = () => page.evaluate(() => { const f = document.querySelector('#bancoCapa iframe'), src = f ? f.getAttribute('src') : '';
+      const m = /#p=([^&]+)/.exec(src); let p = null; try { p = JSON.parse(decodeURIComponent(m[1])); } catch (e) {}
+      return { src: src.split('#')[0], p, abierta: !!f }; });
+    r.a = await leeFig();
+    r.a.plan = await page.evaluate((g) => { const p = window.PG.snPlanSim(g).p; return { de: p.de, sale: p.sale, cafes: p.cafes.map((c) => c.t) }; }, g);
+    await page.waitForFunction(() => { const f = document.querySelector('#bancoCapa iframe'); try { return /TU GUARDIA/i.test(f.contentDocument.body.innerText); } catch (e) { return false; } }, null, { timeout: r.a.abierta ? 8000 : 50 }).catch(() => {});
+    r.a.titulo = await page.evaluate(() => { try { const t = document.querySelector('#bancoCapa iframe').contentDocument.body.innerText; return (t.match(/tu guardia[^\n]*/i) || [''])[0]; } catch (e) { return 'sin acceso'; } });
+    // un repintado de la app no recarga la figura (se marca su ventana y se mira que sigue ahí)
+    r.b = await page.evaluate(() => { const P = window.PG, f = document.querySelector('#bancoCapa iframe'); if (f) f.contentWindow.__marca273 = 1;
+      P.render(); P.render(); const f2 = document.querySelector('#bancoCapa iframe'); return { igual: !!f2 && f2 === f, marca: !!(f2 && f2.contentWindow.__marca273) }; });
+    await page.goBack(); await page.waitForTimeout(250);
+    r.c = await page.evaluate(() => ({ capa: !!document.getElementById('bancoCapa'), vista: window.PG.ui.hoyVista, tab: window.PG.ui.snTab, clase: document.documentElement.classList.contains('banco-abierto') }));
+    await toca('#main [data-a="sn-banco"]', 200);
+    await toca('#bancoCapa [data-a="sn-banco-x"]', 150);
+    r.d = await page.evaluate(() => ({ capa: !!document.getElementById('bancoCapa'), vista: window.PG.ui.hoyVista }));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia273')); localStorage.removeItem('__copia273'); P.save();
+      P.ui.hoyVista = ''; P.ui.snTab = ''; P.ui.snG = ''; P.ui.snBanco = ''; P.render(); });
+    check('«cómo funciona» abre la figura del sueño con TU guardia (sus horas y el café que moviste), sin recargarse al repintar',
+      r.a.abierta && /^fig\/sueno(-light)?\.html$/.test(r.a.src) && r.a.p && r.a.p.de === r.a.plan.de && r.a.p.sale === r.a.plan.sale &&
+      r.a.p.cafes.map((c) => c.t).indexOf(17.25) >= 0 && /tu guardia · [a-zé]{3} \d+/i.test(r.a.titulo) && r.b.igual && r.b.marca, JSON.stringify({ a: r.a, b: r.b }));
+    check('la figura del sueño se cierra con «atrás» (sin salir de Sueño → Guardia) y con «Cerrar»',
+      !r.c.capa && !r.c.clase && r.c.vista === 'sueno' && r.c.tab === 'guardia' && !r.d.capa && r.d.vista === 'sueno', JSON.stringify({ c: r.c, d: r.d }));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

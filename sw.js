@@ -8,7 +8,8 @@ const CACHE='guardias-v6';
    /app-organizador-MIR/, y una ruta relativa suelta no siempre cae donde uno cree. */
 const RAIZ=new URL('./',self.registration?self.registration.scope:self.location.href);
 const INDEX=new URL('index.html',RAIZ).href;
-const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json']
+/* las dos figuras del sueño (claro y oscuro) también: se abren dentro de la app y tienen que ir sin red */
+const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json','fig/sueno.html','fig/sueno-light.html']
   .map(function(f){return new URL(f,RAIZ).href;});
 
 self.addEventListener('install',function(e){
@@ -115,7 +116,8 @@ function reserva(req,navegacion){
      encarga de leer la query. */
   return caches.match(req,{ignoreSearch:true}).then(function(hit){
     if(hit)return hit;
-    return navegacion?caches.match(INDEX):null;
+    /* una figura de fig/ va dentro de un marco de la app: la portada ahí metería la app dentro de sí misma */
+    return navegacion&&!/\/fig\//.test(new URL(req.url).pathname)?caches.match(INDEX):null;
   }).catch(function(){return null;});}
 
 /* Una promesa que NUNCA se resuelve cuelga respondWith() para siempre y el usuario se queda

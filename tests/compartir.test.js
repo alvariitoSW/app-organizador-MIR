@@ -121,6 +121,33 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   check('sin red y sin copia, el service worker contesta 503 explicándolo en vez de fallar en seco',
     respuestaSuelta.status === 503, JSON.stringify(respuestaSuelta));
 
+  // 6) LA FIGURA DEL SUEÑO SIN RED, EN CADENA: se abre dentro de la app (un marco). Si no estaba guardada,
+  // la reserva servía la portada y salía la app metida dentro de sí misma; ahora va en la caché desde la
+  // primera visita, y una figura que no existe da el aviso de sin red, no la app
+  await page.goto(base + 'index.html');
+  await page.waitForTimeout(300);
+  await context.setOffline(true);
+  await page.goto(base + 'index.html').catch(() => {});
+  await page.waitForFunction(() => window.PG && window.PG.store).catch(() => {});
+  const fig = await page.evaluate(async (b) => {
+    const P = window.PG; P.store.meta.montada = true; P.ui.arranque = null; document.documentElement.classList.remove('en-arranque');
+    const G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(P.addDays(new Date(), 2)); P.setDayOverride(g, G.id, 'urg');
+    P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'guardia'; P.ui.snG = g; P.render();
+    const btn = document.querySelector('#main [data-a="sn-banco"]'); if (btn) btn.click();
+    const f = document.querySelector('#bancoCapa iframe'); if (!f) return { marco: false };
+    await new Promise((r) => { f.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });
+    const d = f.contentDocument, out = { marco: true, fig: /TU GUARDIA/i.test(d.body.innerText), app: !!f.contentWindow.PG };
+    const g2 = document.createElement('iframe'); g2.src = b + 'fig/no-existe.html'; document.body.appendChild(g2);
+    await new Promise((r2) => { g2.addEventListener('load', r2, { once: true }); setTimeout(r2, 4000); });
+    out.otra = { app: !!g2.contentDocument.getElementById('main'), txt: (g2.contentDocument.body.innerText || '').slice(0, 60) }; g2.remove();
+    out.cache = [];
+    for (const k of await caches.keys()) { const c = await caches.open(k); (await c.keys()).forEach((q) => { if (/\/fig\//.test(q.url)) out.cache.push(q.url.split('/fig/')[1].split('#')[0]); }); }
+    return out; }, base);
+  await context.setOffline(false);
+  check('sin red, la figura del sueño se abre dentro de la app (guardada al instalar) y nunca mete la app dentro de sí misma',
+    fig.marco && fig.fig && !fig.app && fig.otra && !fig.otra.app &&
+    ['sueno.html', 'sueno-light.html'].every((f) => fig.cache.indexOf(f) >= 0), JSON.stringify(fig));
+
   check('sin errores de JavaScript durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
