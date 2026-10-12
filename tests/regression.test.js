@@ -1491,6 +1491,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.evaluate((key) => {
     if (!window.PG.store.rotation.daySet) window.PG.store.rotation.daySet = {};
     window.PG.store.rotation.daySet[key] = { shift: 'sh-t' };
+    // ni festivo: el 12 de octubre (y cualquier festivo) tampoco hay segundo entreno, y la prueba caía ese día
+    const a = window.PG.store.ahorro || {}; window.__fest47d = (a.festivos || []).slice();
+    if (a.festivos) a.festivos = a.festivos.filter((f) => f !== key);
     window.PG.save();
   }, hoyKeyTl);
   await gotoTab('hoy');
@@ -1511,6 +1514,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.store.eventos = window.PG.store.eventos.filter((e) => e.id !== 'ev-tl-test');
     window.PG.gymS().segundo = { on: true, dias: [2], tipo: 'piscina', hora: '15:30' };
     if (window.PG.store.rotation.daySet) delete window.PG.store.rotation.daySet[key];
+    if (window.PG.store.ahorro && window.PG.store.ahorro.festivos) window.PG.store.ahorro.festivos = window.__fest47d;
     window.PG.save();
   }, hoyKeyTl);
 
@@ -8612,6 +8616,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const todasHechas = fil.filas.every((f) => f.hecha), pasa = P.ui.gymSesionActiva.ix === 1;
       // «hoy toca»: con el entreno dentro de la ventana de aviso, sale el aviso una vez
       P.ui.gymSesionActiva = null; P.setDayOverride(hoy, 'sh-l', ''); g.forzar = {}; g.forzar[hoy] = true;
+      // ni festivo (el 12 de octubre esto caía): un festivo no tiene entreno y no avisa, con razón
+      if (P.store.ahorro && P.store.ahorro.festivos) P.store.ahorro.festivos = P.store.ahorro.festivos.filter((f) => f !== hoy);
       const d = new Date(); g.hora = P.hm(d.getHours() * 60 + d.getMinutes() + 10); g.avisos.hecho = ''; P.render();
       P.programarAvisoHoy();
       const hoyToca = msgs.some((m) => m.tipo === 'aviso' && /Hoy toca/.test(m.titulo));
@@ -10067,7 +10073,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     while (Date.now() < fin) {
       const st = await page.evaluate(() => ({ zona: !!document.getElementById('pvtZona'), n: (document.getElementById('pvtN') || {}).textContent || '', info: (document.getElementById('pvtInfo') || {}).textContent || '' }));
       if (!st.zona) break;
-      await page.waitForTimeout(70);
+      // 130 ms: la app descarta los toques de menos de 100 ms (adelantos) y con 70 a veces no quedaba ninguno
+      await page.waitForTimeout(130);
       const n2 = await page.evaluate(() => (document.getElementById('pvtN') || {}).textContent || '');
       /* el contador corre: es el estímulo (no el resultado del anterior, que se queda quieto) */
       if (/^\d+$/.test(st.n) && /^\d+$/.test(n2) && +n2 > +st.n) { const z = await page.$('#pvtZona'); const b = await z.boundingBox(); await page.mouse.click(b.x + 20, b.y + 20); }
