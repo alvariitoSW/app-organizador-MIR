@@ -249,7 +249,7 @@ export function reloj(k, G, P) {
     const X = (t) => W.X(t, T0, T1), out = [], z = 0.85, ST = W.STRIP;
     const box = (a, b, y0, y1, cls) => `<path class="${cls}" d="${poly([[X(a), y0, z], [X(b), y0, z], [X(b), y1, z], [X(a), y1, z]])}"/>`;
     for (const s of p.todo) { const a = Math.max(T0, s.a), b = Math.min(T1, s.b); if (b - a > 0.05) out.push(box(a, b, ST.y + 1.2, ST.y + 4.6, "strip-sleep")); }
-    out.push(box(Math.max(T0, p.de), Math.min(T1, p.sale), ST.y + 5.4, ST.y + 7.2, "strip-guard"));
+    if (p.de != null) out.push(box(Math.max(T0, p.de), Math.min(T1, p.sale), ST.y + 5.4, ST.y + 7.2, "strip-guard"));
     const edge = ST.y + ST.d, mi = [], ma = [];
     for (let t = Math.ceil(T0); t <= T1; t++) (t % 6 === 0 ? ma : mi).push(k.lineOnTop([X(t), edge], [X(t), edge - (t % 6 === 0 ? 3.4 : 1.8)], z, P));
     return out.join("") + L(mi.join(""), { tone: "lo" }) + L(ma.join(""), { tone: "mid" });

@@ -2539,37 +2539,10 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .sn3s{display:flex;gap:5px;align-items:flex-end;height:66px}
 .sn3{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;width:34px;height:100%;padding:0;border:0;background:none;color:var(--ink2);font:inherit;cursor:pointer}
 .sn3 i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--sns)}
-.sn3 i.g,.snley i.g,.snbars>div i.g{background:var(--sn-rayas)}
+.sn3 i.g,.snbars>div i.g{background:var(--sn-rayas)}
 .sn3 i.est{opacity:.5}.sn3 i.vacio{background:transparent;border:1.5px dashed var(--line);border-bottom:0}
 .sn3 b{font-size:10.5px;color:var(--ink);white-space:nowrap}.sn3 span{font-size:10px;font-weight:800;white-space:nowrap}
 .snrel{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink2);margin-top:10px}
-.snsim .row .btn[disabled]{opacity:.35}
-.snver{display:flex;flex-wrap:wrap;gap:6px 12px;width:100%;margin-top:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
-.snver span{display:inline-flex;align-items:center;gap:5px}
-.snver i{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:900;color:var(--bg)}
-.snverd{margin-top:6px;font-size:13px}.snverd p{margin:6px 0 0;line-height:1.45}
-.sngraf{margin:8px -4px 0;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-.sngraf svg{display:block;width:100%;height:auto;overflow:visible}
-.sngraf [data-sn]:focus-visible{outline:none;stroke:var(--ink);stroke-width:2}
-.sntip{margin:2px 0 0;text-align:center}
-.snlect{display:flex;gap:10px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px;min-height:62px}
-.snnum{font-size:28px;font-weight:900;min-width:54px;text-align:center;line-height:1}
-.snnum small{display:block;font-size:10px;font-weight:800;color:var(--ink2);letter-spacing:.08em;margin-top:3px}
-.sntx{flex:1;min-width:0;font-size:13px;color:var(--ink2)}.sntx b{display:block;color:var(--ink);font-size:14px}
-.snacc{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.snbtn{display:flex;gap:8px;margin-top:10px}.snbtn .btn{flex:1;min-height:46px;justify-content:center}
-.snopc{margin-top:8px;align-items:center;font-size:12.5px;color:var(--ink2)}.snopc label{display:flex;gap:6px;align-items:center}
-.sntabla{max-height:260px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:10px}
-.sntabla table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
-.sntabla th,.sntabla td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
-.sntabla th{position:sticky;top:0;background:var(--card)}
-.snpaso{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
-.snpaso:first-of-type{border-top:0}
-.snpaso .h{font-size:14px;font-weight:900;text-align:right}.snpaso .h small{display:block;font-size:10.5px;color:var(--ink2);font-weight:800}
-.snpaso b{display:block;font-size:14px}.snpaso span{font-size:12.5px;color:var(--ink2);line-height:1.35}
-.snpaso.mal b{color:var(--bad)}
-.snav{font:inherit;font-size:12px;font-weight:800;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink2);padding:7px 9px;cursor:pointer;min-height:36px;white-space:nowrap}
-.snav.on{background:color-mix(in srgb,var(--brand) 16%,transparent);border-color:color-mix(in srgb,var(--brand) 45%,transparent);color:var(--ink)}
 .snh2{font-size:19px;font-weight:900;margin:18px 2px 8px}
 .snaj{display:flex}.snaj button{flex:1;font-size:12px;padding-inline:2px}
 .sndiag{display:flex;align-items:center;gap:12px}
@@ -2617,6 +2590,12 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .pvtzona{display:grid;place-items:center;align-content:center;gap:6px;width:100%;height:58vh;min-height:300px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;touch-action:manipulation;user-select:none}
 .pvtzona span{font-size:64px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--warn);min-height:76px}
 .pvtzona small{font-size:14px;color:var(--ink2)}
+/* tu reloj de ahora (Sueño → Hoy) y las tres órdenes del día de guardia */
+.snrelojf{display:block;width:100%;height:440px;border:0;background:transparent;margin-top:6px;color-scheme:normal}
+.snord>div{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}
+.snord>div:first-child{border-top:0}
+.snord .h{min-width:46px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--brand)}
+.snord .t{display:flex;flex-direction:column;min-width:0}.snord .t small{color:var(--ink2);font-size:12.5px}
 /* el banco del sueño: la figura de tu guardia a pantalla completa, encima de la app */
 .banco{position:fixed;inset:0;z-index:8000;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .bancobar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -3376,12 +3355,6 @@ button.asck .t{flex:1;min-width:0;display:flex;flex-direction:column}button.asck
 .parahoy .phf.av .t small{color:var(--warn)}
 .parahoy .phf .btn{flex:none}
 
-.snley{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink2);margin-top:8px}
-.snley span{display:inline-flex;align-items:center;gap:5px}
-.snley i{display:inline-block;width:12px;height:9px;border-radius:2px;font-style:normal}
-.snley i.s{background:color-mix(in srgb,var(--sns) 45%,transparent)}
-.snley i.c{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);font-size:8px;font-weight:900;display:grid;place-items:center}
-.snley i.l{height:2px;background:var(--brand)}.snley i.r{height:2px;background:var(--ink2)}
 .snbars>div u{display:block;width:7px;height:7px;border-radius:50%;margin-top:2px;text-decoration:none}
 .snbars>div u.ok{background:var(--ok)}.snbars>div u.no{background:var(--warn)}
 .snhoyc>.mini:last-child{white-space:nowrap}
@@ -3449,9 +3422,6 @@ button.asck .t{flex:1;min-width:0;display:flex;flex-direction:column}button.asck
 /* Sueño por pestañas: la puerta de la guardia, las cifras de Medir y el historial del test */
 .sntabs{margin-bottom:2px}
 .sntabs button{font-size:12.5px}
-.snpuerta{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
-.snpuerta>span:first-child{font-size:22px}
-.snpuerta .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .snmf{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
 .dsucap+.snmf{border-top:0}
 .snmf b{font-size:20px;min-width:64px;font-variant-numeric:tabular-nums}
@@ -3588,11 +3558,6 @@ html:not(.dark){--snlib:#6d28d9}
 .snluna{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink2);display:grid;place-items:center;cursor:pointer;flex:none}
 .snest .sn3s{height:52px}
 .snest .snkssc{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
-.sncifras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
-.sncifras>div{padding:8px;border-radius:12px;background:var(--bg2);display:flex;flex-direction:column;gap:2px;min-width:0}
-.sncifras span{font-size:11px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sncifras b{font-size:17px;font-variant-numeric:tabular-nums}.sncifras b i{font-style:normal}.sncifras small{font-size:11px;color:var(--ink2)}
-.sncifb{gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .snajc{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
 .snajt{margin:4px 0 8px;font-size:18px}
 .snajl{padding:0;overflow:hidden}

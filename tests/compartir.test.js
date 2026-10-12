@@ -131,9 +131,9 @@ function check(name, cond, detail) { results.push({ name, pass: !!cond, detail: 
   await page.waitForFunction(() => window.PG && window.PG.store).catch(() => {});
   const fig = await page.evaluate(async (b) => {
     const P = window.PG; P.store.meta.montada = true; P.ui.arranque = null; document.documentElement.classList.remove('en-arranque');
-    const G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(P.addDays(new Date(), 2)); P.setDayOverride(g, G.id, 'urg');
-    P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'guardia'; P.ui.snG = g; P.render();
-    const btn = document.querySelector('#main [data-a="sn-banco"]'); if (btn) btn.click();
+    const G = P.store.shifts.filter(P.isGuardia)[0], g = P.iso(new Date()); P.setDayOverride(g, G.id, 'urg');   // hoy, guardia: tu reloj la lleva
+    P.ui.tab = 'hoy'; P.ui.hoyVista = 'sueno'; P.ui.snTab = ''; P.render();
+    const btn = document.querySelector('#main .snreloj [data-a="sn-banco"]'); if (btn) btn.click();
     const f = document.querySelector('#bancoCapa iframe'); if (!f) return { marco: false };
     await new Promise((r) => { f.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });
     const d = f.contentDocument, out = { marco: true, fig: /TU GUARDIA/i.test(d.body.innerText), app: !!f.contentWindow.PG };

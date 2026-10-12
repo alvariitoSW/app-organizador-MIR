@@ -74,6 +74,7 @@ const CSS = [
   ".strip-sleep{fill:#5a78b8}.strip-guard{fill:#c9573a}.coffee{fill:#5a3218}[data-theme=light] .strip-sleep{fill:#6f8fd0}[data-theme=light] .coffee{fill:#6e3e1e}",
   // dentro de la app: sin márgenes de página de libro
   ".iso-page{margin:14px auto 28px!important;width:min(650px,100% - 20px)!important}",
+  ".corto .iso-legend{display:none}.corto .iso-page{margin:0 auto!important;width:100%!important}.corto .iso-figure{margin:0}.corto,.corto body{background:transparent}",
   "@media (max-width:520px){.iso-plate-corner{font-size:10.5px!important;letter-spacing:.03em!important}.iso-plate-corner[data-corner=readout]{font-size:10px!important;letter-spacing:0!important}}",
 ].join("");
 
@@ -95,12 +96,14 @@ const stage = document.querySelector(".iso-stage"), svg = stage.querySelector("s
 const $ = (n) => svg.querySelector('[data-part="' + n + '"]');
 const parts = { strip: $("strip"), cups: $("cups"), reloj: $("reloj"), disc: $("disc"), gcur: $("gcur"), car: $("carriage") };
 const readout = document.querySelector("[data-readout]");
-if (plan.label) { for (const n of document.querySelectorAll(".iso-plate *")) if (n.childElementCount === 0 && /reloj del sue/i.test(n.textContent)) { n.textContent = "Tu guardia · " + plan.label; break; } }
+if (plan.label) { for (const n of document.querySelectorAll(".iso-plate *")) if (n.childElementCount === 0 && /reloj del sue/i.test(n.textContent)) { n.textContent = (plan.g === false ? "Tu reloj · " : "Tu guardia · ") + plan.label; break; } }
+// &corto: dentro de una tarjeta de la app, sin leyenda ni márgenes
+if (/[#&]corto(&|$)/.test(location.hash)) document.body.classList.add("corto");
 parts.strip.innerHTML = W.stripMarks(plan, T0, T1);
 const still = matchMedia("(prefers-reduced-motion: reduce)");
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const hhmm = (t) => { const m = Math.round(((t % 24) + 24) % 24 * 60) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
-const fase = (t) => t < plan.de ? "antes de la guardia" : t < plan.sale ? "de guardia" : "saliente";
+const fase = (t) => plan.g === false ? (t < 0 ? "ayer" : t < 24 ? "hoy" : "mañana") : t < plan.de ? "antes de la guardia" : t < plan.sale ? "de guardia" : "saliente";
 const sueno = (t) => (plan.todo.filter((s) => t >= s.a && t < s.b)[0] || {}).txt || "durmiendo";
 const HT = /[#&]t=(-?[0-9.]+)/.exec(location.hash), ARG = ${arg ? t0 : "null"} ?? (HT ? clamp(+HT[1], T0, T1) : null);
 let t = ARG == null ? clamp(${t0}, T0, T1) : ARG, target = t, frame = 0, last = 0, touring = ARG == null, visible = false, idle = 0, grano = 0, tomadas = -1;
@@ -135,7 +138,8 @@ function tick(now) {
   frame = visible && !calm ? requestAnimationFrame(tick) : 0;
 }
 const run = () => { if (!frame && visible) { last = 0; frame = requestAnimationFrame(tick); } };
-const steer = (to) => { touring = false; target = clamp(to, T0, T1); clearTimeout(idle); idle = setTimeout(() => { touring = !still.matches; run(); }, 4000); run(); };
+// sin hora de la app, al soltar vuelve el paseo; con ella (la de ahora), vuelve a ahora
+const steer = (to) => { touring = false; target = clamp(to, T0, T1); clearTimeout(idle); idle = setTimeout(() => { if (ARG != null) target = ARG; else touring = !still.matches; run(); }, 4000); run(); };
 new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; if (visible) run(); }, { rootMargin: "120px 0px" }).observe(stage);
 if (still.matches) touring = false;
 stage.addEventListener("pointermove", (ev) => { const b = svg.getBoundingClientRect(); steer(T0 + clamp((ev.clientX - b.left) / b.width, 0, 1) * (T1 - T0)); });

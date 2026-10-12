@@ -41,12 +41,18 @@ export function planDe(hash) {
   try {
     const m = /[#&]p=([^&]+)/.exec(hash || ""); if (!m) return GUARDIA;
     const o = JSON.parse(decodeURIComponent(m[1])), n = (v, a, b) => typeof v === "number" && isFinite(v) && v >= a && v <= b;
-    if (!n(o.de, 0, 30) || !n(o.sale, o.de, 60) || !Array.isArray(o.todo) || !Array.isArray(o.cafes)) return GUARDIA;
+    if (!Array.isArray(o.todo) || !Array.isArray(o.cafes)) return GUARDIA;
+    const sinGuardia = o.g === false;   // un día normal: tu reloj de hoy con lo que has dormido
+    if (!sinGuardia && (!n(o.de, 0, 30) || !n(o.sale, o.de, 60))) return GUARDIA;
     const todo = o.todo.filter((s) => s && n(s.a, -24, 80) && n(s.b, s.a, 90)).slice(0, 12).map((s) => ({ a: s.a, b: s.b, txt: String(s.txt || "durmiendo").slice(0, 40) }));
     const cafes = o.cafes.filter((c) => c && n(c.t, -24, 80)).slice(0, 8).map((c) => ({ t: c.t, mg: n(c.mg, 1, 400) ? c.mg : 80 }));
+    if (sinGuardia) {
+      if (!n(o.t0, -24, 48) || !n(o.t1, o.t0 + 2, 72)) return GUARDIA;
+      return { label: String(o.label || "").slice(0, 40), g: false, wake: n(o.wake, -12, 30) ? o.wake : 7, de: null, sale: null, llega: null, cama: n(o.cama, 0, 60) ? o.cama : 23.5, todo, cafes, t0: o.t0, t1: o.t1 };
+    }
     return { label: String(o.label || "").slice(0, 40), wake: n(o.wake, 0, 30) ? o.wake : 7, de: o.de, sale: o.sale, llega: n(o.llega, o.sale, 60) ? o.llega : o.sale, cama: n(o.cama, o.sale, 60) ? o.cama : 47.5, todo, cafes };
   } catch (e) { return GUARDIA; }
 }
 /* la regla: desde que te levantas el día de la guardia hasta que te acuestas la noche siguiente */
-export const rangoDe = (p) => ({ T0: Math.max(4, Math.floor(Math.min(p.wake, p.de) * 2) / 2), T1: Math.min(50, Math.max(p.sale + 4, p.cama)) });
+export const rangoDe = (p) => p.g === false ? { T0: p.t0, T1: p.t1 } : ({ T0: Math.max(4, Math.floor(Math.min(p.wake, p.de) * 2) / 2), T1: Math.min(50, Math.max(p.sale + 4, p.cama)) });
 export const estado = (A) => A == null ? "durmiendo" : A < 35 ? "riesgo" : A < 55 ? "flojo" : "despejado";

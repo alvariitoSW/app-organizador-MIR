@@ -68,3 +68,27 @@ Mismo modelo que la app; los colores (madera, latón, arena, cielo) son lo que s
 **Descartado:** la balanza (lee bien la alerta pero no el sueño como vaciado), el riel con levas
 (mejor para planear, y el usuario quiere entender) y el cuadro de mandos (otra vez abstracto).
 La esfera no dibuja el bajón de después de comer ni la inercia al despertar: están en la cifra.
+
+## 2026-10-12 · Sin pestaña Guardia: tres órdenes y tu reloj de ahora
+
+**Contexto:** el usuario no usaba la pestaña Guardia ni le encontraba sentido a sus cifras («19 → 26»,
+«tuyo → mejor»). El reloj de arena le gustaba, pero «debería tener algo de importancia».
+
+**Elegido:**
+- Sueño tiene tres pestañas: Hoy, Mejorar y Datos. Un enlace viejo a Guardia cae en Hoy.
+- La víspera y el día de guardia, la tarjeta de Sueño (en Hoy y en Sueño → Hoy) da tres órdenes con
+  hora, sin cifras: la siesta antes de entrar (o «esta noche, a la cama a tu hora»), el último café y
+  la salida (siesta antes de conducir si conduces y hace falta; si no, la siesta al llegar). Salen
+  del mejor plan de la app, o del tuyo si ya lo guardaste. «Avisarme a esas horas» guarda ese plan y
+  enciende sus avisos (suenan con la app abierta y van al calendario suscrito).
+- Tu reloj de ahora sustituye a la curva «Tu energía hoy» en Sueño → Hoy: el reloj de arena con lo que
+  has dormido de verdad (lo apuntado), parado en la hora de ahora; el día de guardia y el saliente,
+  con tu guardia. «Qué es cada pieza» lo abre entero con su leyenda.
+- Fuera el simulador (gráfico arrastrable, cifras con flecha, tabla, paso a paso con «Avisar» por
+  paso) y su CSS: unas 290 líneas.
+
+**Descartado:** dejar la pestaña con otra cara (el usuario dijo que no la usa), un aviso de una sola
+línea, y el reloj solo como botón en el aviso de guardia (no le daba importancia).
+
+**Supuestos:** los días normales el reloj no lleva cafés (la app no apunta la cafeína que tomas); la
+siesta del saliente es la que elige el mejor plan (de 2 a 4 h).
