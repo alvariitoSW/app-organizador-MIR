@@ -9,3 +9,8 @@ design/nutricion/*.html
 
 # marca del hook de pruebas
 .claude/.pruebas-pendientes
+
+# imágenes de referencia de los tests de React de la skill anatomy (aquí no se usan)
+.claude/skills/anatomy/tests/fixtures/*.png
+# capturas que hacen sus scripts al comprobar una figura
+.claude/skills/anatomy/**/shots/
