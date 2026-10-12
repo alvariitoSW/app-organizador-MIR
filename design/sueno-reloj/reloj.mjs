@@ -165,7 +165,7 @@ export function reloj(k, G, P) {
   W.gaugeBack = function () {
     const g = W.GAUGE, out = [];
     out.push(S(k.slabOf({ x: g.x - 3, y: g.y - 3, w: g.w + 6, d: g.d + 6, r: 1.6 }, 0, 3, P, 3, 0.5), { tone: "mid", className: "m-brass" }));
-    out.push(S(k.slabOf(g, 3, W.G1 + 4 - 3, P, 2, 0.4), { tone: "mid", className: "m-wood" }));
+    out.push(S(k.slabOf({ ...g, r: 1.2 }, 3, W.G1 + 4 - 3, P, 2, 0.4), { tone: "mid", className: "m-wood" }));
     out.push(S(k.slabOf({ x: g.x - 1, y: g.y - 1, w: g.w + 2, d: g.d + 2, r: 1.2 }, W.G1 + 4, 2.4, P, 3, 0.5), { tone: "mid", className: "m-brass" }));
     const yf = g.y + g.d + 0.1, zA = (A) => W.G0 + (W.G1 - W.G0) * A / 100;
     for (const [a, b, cls] of [[0, 35, "z-bad"], [35, 55, "z-warn"], [55, 100, "z-ok"]])
