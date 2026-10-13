@@ -535,3 +535,23 @@ sale de la hora de levantarte y el reparto es orientativo.
 
 **Supuestos:** las clases de la tira llevan prefijo `mn` porque `.mbar` ya existía (la barra de dinero, con
 `overflow:hidden`, se comía las horas).
+
+## 2026-10-13 · Tanda 3b · El conductor con las escenas: manos, rotación, taxi, bici y barra
+
+**Elegido:**
+- **Cabina:** las manos en el volante (guantes de piel y manga azul) y, en el parasol, el cartel de la rotación con
+  el servicio del mes («📷 RAYOS · RADIOLOGÍA», de `monthService`).
+- **Taxi:** si hoy saliste después del último bus (hora apuntada) o el hábito está marcado, un taxi amarillo con la
+  luz del techo delante de ti mientras vas hacia la primera parada.
+- **Bici:** en los tramos de vuelta a casa (`diaEscenas` → `bici`), el volante y las manos se cambian por el
+  manillar con los puños, el timbre y «🚲 a casa en bici».
+- **Parque:** parado en el polideportivo, a la izquierda de la carretera (a la derecha lo tapaba la marquesina), la
+  barra de dominadas con el conductor colgado subiendo y bajando.
+- Las banderas llegan en `D.esc` (`conductorEscenas`, calculado en `hoyBusHTML`, no dentro de `hoyBusDatos`:
+  las escenas leen `hoyBusDatos` y sería un bucle). Prueba 286 (módulo, en cadena con el conductor cargado).
+
+**Descartado:** cambiar el paisaje de la parada por una marquesina nueva (ya la hay) y el taxi en la propia
+parada (la cámara ya está encima: iba fuera de plano).
+
+**Supuestos:** la rotación cabe en 22 letras; el taxi solo antes de llegar a la primera parada; la barra solo
+mientras estás parado en un entreno.

@@ -65,6 +65,12 @@
 @keyframes cd-humo{0%{opacity:0;transform:translateY(0)}18%{opacity:.6}100%{opacity:0;transform:translateY(var(--sube,-20px))}}@keyframes cd-ascua{0%,100%{opacity:.7}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cd-humo{animation:none;opacity:.35}.cd-ascua{animation:none}}
 .cd-hosp{fill:#c9d2de}.cd-hospe{fill:#9aa6b8}.cd-cross{fill:#e5484d}.cd-fly{fill:#e6ff8a}
+.cd-rot{fill:var(--cd-amb);font:800 10.5px ui-sans-serif,system-ui,sans-serif;letter-spacing:.02em}
+.cd-mano{fill:#e3b08e;stroke:#b07a52;stroke-width:1.1}.cd-manol{fill:none;stroke:#b07a52;stroke-width:.9}.cd-manga{fill:#2f5fb3}
+.cd-manillar{fill:none;stroke:#7d8ea8;stroke-width:11;stroke-linecap:round;paint-order:stroke;filter:drop-shadow(0 0 1px #05080e)}.cd-puno{fill:#0d1726;stroke:#7d8ea8;stroke-width:1.2}.cd-timbre{fill:#c9d4e4;stroke:#8fa6c6;stroke-width:1.2}.cd-timbrec{fill:#8fa6c6}
+.cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
+.cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
+.cd-barra{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}`;
@@ -180,7 +186,7 @@
   <path class="cd-frame" fill-rule="evenodd" d="M0 0H600V300H0Z M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/>
   <path class="cd-seal" d="M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/>
   <path class="cd-pillar" d="M0 40 L44 52 L28 266 L0 300Z"/><path class="cd-pillar" d="M600 40 L556 52 L572 266 L600 300Z"/>
-  <path class="cd-visor" d="M60 50 Q150 44 236 47 L232 74 Q150 72 66 76 Z"/>
+  <path class="cd-visor" d="M60 50 Q150 44 236 47 L232 74 Q150 72 66 76 Z"/><text data-r="rot" class="cd-rot" x="149" y="65" text-anchor="middle"></text>
   <g data-o="atras"><rect class="cd-mirror" x="244" y="50" width="112" height="30" rx="9"/><rect class="cd-mirrorg" x="249" y="54.5" width="102" height="21" rx="6"/>
     <text data-r="mir" class="cd-mirt" x="300" y="69"></text><rect x="296" y="40" width="8" height="11" rx="2" class="cd-pillar"/></g>
   <rect class="cd-strip" x="40" y="8" width="520" height="28" rx="7"/><text class="cd-stt" x="52" y="25.5">LÍNEA DE HOY</text><g data-r="route"></g>
@@ -198,7 +204,14 @@
   <g data-o="parahoy"><rect class="cd-tkb" x="452" y="404" width="124" height="34" rx="8"/><rect class="cd-tkp" x="462" y="398" width="104" height="22" rx="2"/>
     <text data-r="tk" class="cd-tkt" x="514" y="413.5"></text><circle cx="466" cy="430" r="2.4" fill="#38e1ff"/></g>
   <g data-r="nota" data-o="nota" style="display:none"><path class="cd-note" d="M300 400 L440 398 L442 434 L302 437 Z"/><text data-r="notat" class="cd-notet" x="310" y="421"></text></g>
-  <circle class="cd-wheel" cx="150" cy="532" r="118"/><path class="cd-spoke" d="M50 470 Q150 444 250 470 L240 488 Q150 466 60 488Z"/><circle class="cd-horn" cx="150" cy="520" r="44"/>
+  <g data-r="volante"><circle class="cd-wheel" cx="150" cy="532" r="118"/><path class="cd-spoke" d="M50 470 Q150 444 250 470 L240 488 Q150 466 60 488Z"/><circle class="cd-horn" cx="150" cy="520" r="44"/>
+    <g transform="translate(96 418)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
+    <g transform="translate(204 418) scale(-1 1)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g></g>
+  <g data-r="bici" style="display:none"><path class="cd-manillar" d="M14 436 Q60 404 120 410 Q150 414 150 440"/><path class="cd-manillar" d="M286 436 Q240 404 180 410 Q150 414 150 440"/>
+    <rect class="cd-puno" x="8" y="422" width="30" height="14" rx="7"/><rect class="cd-puno" x="262" y="422" width="30" height="14" rx="7"/><circle class="cd-timbre" cx="236" cy="408" r="7"/><circle class="cd-timbrec" cx="236" cy="408" r="2.2"/>
+    <g transform="translate(46 420)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
+    <g transform="translate(254 420) scale(-1 1)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
+    <text class="cd-bicit" x="150" y="406" text-anchor="middle">🚲 a casa en bici</text></g>
   <rect data-r="dim" class="cd-dimmer" x="0" y="300" width="600" height="140" opacity="0"/>`;
 
   function crea(opts) {
@@ -416,6 +429,12 @@
           (r > 5 ? '<text class="cd-sigt" x="' + c[0].toFixed(1) + '" y="' + (c[1] + r * 0.12).toFixed(1) + '" font-size="' + (r * 0.62).toFixed(1) + '">' + esc(sg.ico || "!") + "</text>" : "") +
           (r > 9 ? '<text class="cd-sigt" x="' + c[0].toFixed(1) + '" y="' + (c[1] + r * 0.62).toFixed(1) + '" font-size="' + (r * 0.3).toFixed(1) + '">' + hhmm(sg.t) + "</text>" : "") + "</g>");
       });
+      /* el taxi, parado junto a la primera parada del día cuando hoy saliste tarde (o lo marcaste): amarillo, con
+         la luz en el techo; y en el polideportivo, la barra con el conductor colgado mientras entrena */
+      const primera = R.est.filter((e) => !e.dep)[0];
+      if (D.esc && D.esc.taxi && primera && t < primera.a) { const z0 = Math.max(4.2, primera.s - cam + ZSTOP - 7.5); if (z0 < 120) out.push(taxi(z0)); }
+      const cc = camDe(R, t), enGym = cc.k >= 0 && R.est[cc.k] && R.est[cc.k].k === "gym" && cc.parado && t < R.est[cc.k].b;
+      if (enGym) out.push(barra(ZSTOP + 2.2, t));
       /* las paradas: marquesina y letrero, de lejos a cerca */
       const ps = R.est.filter((e) => !e.dep).map((e) => ({ e, zc: e.s - cam + ZSTOP })).filter((o) => o.zc > -3 && o.zc < 170).sort((a, b) => b.zc - a.zc);
       for (const { e, zc } of ps) {
@@ -442,6 +461,30 @@
       return out.join("");
     }
 
+    /* el taxi: carrocería, cabina con las lunas, ruedas, la luz del techo y el cartel */
+    function taxi(z0) {
+      const o = [], x0 = 0.9, x1 = 2.8, z1 = z0 + 3.4;
+      o.push(poly([[x0, 0.25, z0], [x1, 0.25, z0], [x1, 0.25, z1], [x0, 0.25, z1]], "cd-taxid"));
+      o.push(poly([[x0, 0.25, z0], [x0, 1.05, z0], [x0, 1.05, z1], [x0, 0.25, z1]], "cd-taxi"), poly([[x0, 0.25, z0], [x1, 0.25, z0], [x1, 1.05, z0], [x0, 1.05, z0]], "cd-taxid"));
+      o.push(poly([[x0, 1.05, z0], [x1, 1.05, z0], [x1, 1.05, z1], [x0, 1.05, z1]], "cd-taxi"));
+      o.push(poly([[x0 + 0.15, 1.05, z0 + 0.5], [x0 + 0.15, 1.65, z0 + 0.7], [x0 + 0.15, 1.65, z1 - 0.9], [x0 + 0.15, 1.05, z1 - 0.7]], "cd-taxiv"), poly([[x0 + 0.1, 1.05, z0 + 0.4], [x1 - 0.1, 1.05, z0 + 0.4], [x1 - 0.1, 1.65, z0 + 0.65], [x0 + 0.1, 1.65, z0 + 0.65]], "cd-taxiv"));
+      o.push(poly([[x0 + 0.1, 1.65, z0 + 0.65], [x1 - 0.1, 1.65, z0 + 0.65], [x1 - 0.1, 1.65, z1 - 0.85], [x0 + 0.1, 1.65, z1 - 0.85]], "cd-taxi"));
+      for (const zz of [z0 + 0.6, z1 - 0.6]) { const p = pr(x0 - 0.02, 0.3, zz), r = Math.max(0.6, 0.3 * F / zz); o.push('<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + r.toFixed(1) + '" fill="#111"/>'); }
+      o.push(poly([[x0 + 0.6, 1.66, z0 + 1.3], [x1 - 0.6, 1.66, z0 + 1.3], [x1 - 0.6, 1.9, z0 + 1.3], [x0 + 0.6, 1.9, z0 + 1.3]], "cd-taxil"));
+      const c = pr((x0 + x1) / 2, 0.68, z0), fs = 0.42 * F / z0; if (fs > 3.5) o.push('<text class="cd-taxit" x="' + c[0].toFixed(1) + '" y="' + (c[1] + fs * 0.35).toFixed(1) + '" font-size="' + fs.toFixed(1) + '">TAXI</text>');
+      return o.join("");
+    }
+    /* la barra de dominadas junto a la parada: dos postes, la barra y el conductor colgado, subiendo y bajando */
+    function barra(z, hora) {
+      const o = [], x0 = -7.6, x1 = -6.0, h = 2.6, sube = 0.5 + 0.5 * Math.sin(hora * 40);   /* a la izquierda, delante del polideportivo: a la derecha lo tapaba la marquesina */
+      o.push(seg([x0, 0.15, z], [x0, h, z], "cd-post", 0.08), seg([x1, 0.15, z], [x1, h, z], "cd-post", 0.08), seg([x0, h, z], [x1, h, z], "cd-barra", 0.06));
+      const xm = (x0 + x1) / 2, top = h - 0.3 - 0.35 * sube, k = F / z, P0 = pr(xm, top, z - 0.05), X = (m) => (P0[0] + m * k).toFixed(1), Y = (m) => (P0[1] - m * k).toFixed(1);
+      const rect = (x, y, w, hh, cls) => '<rect class="' + cls + '" x="' + X(x) + '" y="' + Y(y + hh) + '" width="' + (w * k).toFixed(1) + '" height="' + (hh * k).toFixed(1) + '" rx="' + (0.05 * k).toFixed(1) + '"/>';
+      o.push(rect(-0.3, -0.75, 0.6, 0.75, "cd-cuerpo"), rect(-0.42, 0.55 * sube - 0.1, 0.12, 0.9, "cd-piel"), rect(0.3, 0.55 * sube - 0.1, 0.12, 0.9, "cd-piel"));
+      o.push('<circle class="cd-piel" cx="' + X(0) + '" cy="' + Y(0.26) + '" r="' + (0.2 * k).toFixed(1) + '"/>' + rect(-0.22, 0.38, 0.44, 0.1, "cd-gorra"));
+      o.push(rect(-0.22, -1.35, 0.16, 0.6, "cd-gorra"), rect(0.06, -1.35, 0.16, 0.6, "cd-gorra"));
+      return o.join("");
+    }
     /* la cochera por dentro, de cara a la persiana */
     function cochera(desplaza, abierta, luzCalle) {
       const zd = 12 - desplaza; if (zd < NEAR + 0.05) return "";
@@ -564,6 +607,9 @@
       R_.garage.innerHTML = g;
       /* de guardia, la cabina en penumbra */
       R_.dim.setAttribute("opacity", st.guardia && L.d < 0.5 ? 0.32 : 0);
+      /* a casa en bici: el manillar en vez del volante */
+      const bici = ((D.esc && D.esc.bici) || []).some((v) => t >= v[0] && t < v[1]);
+      R_.volante.style.display = bici ? "none" : ""; R_.bici.style.display = bici ? "" : "none";
       salpicadero(st, c);
       R_.mirar.style.display = mirando ? "" : "none";
       if (mirando) R_.mirart.textContent = "viendo las " + hhmm(t) + " · volver ⟲";
@@ -636,6 +682,7 @@
         }, 30000);
       }
       indicadores();
+      R_.rot.textContent = D.esc && D.esc.rot ? D.esc.rot : "";
       /* para el lector de pantalla y el teclado: las paradas como botones */
       R_.sr.innerHTML = (D.dia || []).filter((e) => e.b > e.a).sort((a, b) => a.a - b.a).map((e) => '<button type="button" data-i="' + e.i + '">' + hhmm(e.a) + " " + esc(cap(e.t)) + (e.h ? ", hecha" : e.m ? ", sin hacer" : "") + "</button>").join("");
       draw(0);

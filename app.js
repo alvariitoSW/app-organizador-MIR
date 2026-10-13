@@ -5549,8 +5549,15 @@ function mananaRegleta(key){
     out.push({h:x.a,txt:e==='parada'?'Salir de casa':e==='bus'?'Bus':e==='taxi'?'Taxi':e==='cabina'?'Hospital':e==='guardia'?'Guardia':e==='cafe'?'Café':e==='ducha'?'Ducha':'Vestirse',e:e});
     if(e==='parada'&&x.ultimo)out.push({h:x.ultimo,txt:'Último bus',e:'ultimo'});});
   return out.sort(function(x,y){return x.h-y.h;});}
+/* lo que el conductor dibuja además de las paradas: el taxi (si hoy saliste tarde), los tramos en bici, el entreno
+   y el cartel de la rotación. Se calcula aquí y no dentro de hoyBusDatos: las escenas leen hoyBusDatos */
+function conductorEscenas(key){
+  let D;try{D=diaEscenas(key);}catch(e){return {};}
+  const iv=function(e){return D.seg.filter(function(x){return x.e===e;}).map(function(x){return [x.a,x.b];});};
+  const d=parseDate(key),ms=d?monthService(d.getFullYear(),d.getMonth()):null,sv=ms&&ms.service?String(ms.service):'';
+  return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):''};}
 function hoyBusHTML(key,inf,esHoy){
-  try{_condDatos=hoyBusDatos(key,inf,esHoy);}catch(e){_condDatos={dia:[],noches:[]};}
+  try{_condDatos=hoyBusDatos(key,inf,esHoy);_condDatos.esc=conductorEscenas(key);}catch(e){_condDatos={dia:[],noches:[]};}
   const est=hoyBusVista()==='estacion';
   return '<div id="hoyBusSlot" class="hoybus'+(est?' est':'')+'"></div>';}
 function hoyBusMonta(){

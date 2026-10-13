@@ -12231,6 +12231,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.hay && r.hitos.indexOf('Salir de casa') >= 0 && r.hitos.indexOf('Último bus') >= 0 && /Saliste a las 7:40/.test(r.txt) && /taxi/i.test(r.txt) && r.deshacer && r.taxi === 'ok' && r.puerta === '' && r.puerta2 === 'ok' && r.e745 === 'taxi' && Math.abs(r.salir - 7.667) < 0.01 && r.sem.n === 2 && r.sem.taxi === 1 && r.sem.aTiempo === 1, JSON.stringify(r));
     check('«deshacer» quita la hora apuntada y «he salido» guarda la del móvil', r.b.manana === null && (r.c.hubo === false || r.c.guardada === true), JSON.stringify({ b: r.b, c: r.c }));
   }
+  // 286) LAS ESCENAS DEL CONDUCTOR, EN CADENA (módulo, cargado en Hoy): con datos de un día de jornada, sesión,
+  // entreno a las 17:30 y las escenas (taxi, bici 15:00–15:20, rotación «Rayos»): (a) el cartel de la rotación en el
+  // parasol; (b) a las 7:48 el taxi delante y las manos en el volante; (c) a las 15:09 el manillar de la bici en vez
+  // del volante; (d) a las 17:42, parado en el polideportivo, la barra con el conductor colgado. Fija: la cabina
+  // sin manos ni rotación, y la vuelta a casa que seguía siendo en autobús.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForFunction(() => !!(window.Conductor && window.Conductor.crea), null, { timeout: 8000 }).catch(() => {});
+    const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.crea) return null;
+      const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 10, b: 10.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 15.33, b: 15.83, t: 'Comida en casa', k: 'meal', i: 2 }, { a: 17.5, b: 18.75, t: 'Fuerza', k: 'gym', i: 3, m: 'gym' }],
+        noches: [{ a: -1.5, b: 6.83, t: 'noche' }, { a: 22.67, b: 30.75, t: 'noche' }], pendiente: [], senales: [], ph: 1, modo: 'hoy', vivo: true, sueno: null, comida: { kc: 0, obj: 2000, pr: 0, prObj: 100 }, sol: [7.6, 19.2], manana: 6.83, claro: false,
+        esc: { taxi: true, bici: [[15, 15.33]], parque: [[17.5, 18.75]], rot: '📷 RAYOS · RADIOLOGÍA' } };
+      const box = document.createElement('div'); box.id = 't286'; box.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px'; document.body.appendChild(box);
+      const c = C.crea({}); box.appendChild(c.el); const cd = c.el, at = (h) => { D.ahora = h; c.actualiza(D); return { rot: cd.querySelector('[data-r="rot"]').textContent, bici: cd.querySelector('[data-r="bici"]').style.display === '', volante: cd.querySelector('[data-r="volante"]').style.display === '', taxi: !!cd.querySelector('.cd-taxi'), barra: !!cd.querySelector('.cd-barra'), manos: cd.querySelectorAll('[data-r="volante"] .cd-mano').length }; };
+      const out = { m748: at(7.8), m1100: at(11), m1509: at(15.15), m1742: at(17.7) }; box.remove(); return out; });
+    check('el conductor: la rotación en el parasol, el taxi delante a las 7:48 con las manos en el volante, el manillar de la bici a las 15:09 y la barra del polideportivo a las 17:42',
+      !!r && r.m748.rot === '📷 RAYOS · RADIOLOGÍA' && r.m748.taxi && r.m748.manos === 2 && r.m748.volante && !r.m748.bici && !r.m1100.taxi && r.m1100.volante && r.m1509.bici && !r.m1509.volante && !r.m1509.barra && r.m1742.barra && r.m1742.volante && !r.m1742.taxi, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
