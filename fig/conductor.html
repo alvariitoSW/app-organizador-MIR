@@ -25,11 +25,14 @@
   const s = m(/[#&]s=([0-9.]+)\/([0-9.]+)/), sol = m(/[#&]sol=([0-9.]+)\/([0-9.]+)/), t = m(/[#&]t=([0-9.]+)/), ph = m(/[#&]ph=([0-9]+)/);
   const dia = [], noches = [];
   DIA.forEach((e, i) => { if (e.k === "sleep") noches.push({ a: e.a, b: e.b, t: e.t === "SIESTA" ? "siesta" : "noche" }); else dia.push(Object.assign({ i: e.i != null ? e.i : i }, e)); });
-  const c = window.Conductor.crea({ onAbrir: (o) => console.log("abriría", JSON.stringify(o)) });
-  document.getElementById("w").appendChild(c.el);
-  c.actualiza({ dia, noches, modo: "hoy", ahora: t ? +t[1] : 10.4, vivo: false, sueno: s ? { h: +s[1], obj: +s[2] } : { h: 7, obj: 8 },
+  /* #v=estacion: la otra vista, la estación isométrica (fig/estacion.js), con los mismos datos */
+  const pon = (c) => { document.getElementById("w").appendChild(c.el); c.actualiza(datos); };
+  const datos = { dia, noches, modo: "hoy", ahora: t ? +t[1] : 10.4, vivo: false, sueno: s ? { h: +s[1], obj: +s[2] } : { h: 7, obj: 8 },
     comida: { kc: 1240, obj: 2340, pr: 72, prObj: 140 }, sol: sol ? [+sol[1], +sol[2]] : [7, 18.6], ph: ph ? +ph[1] : 2,
-    senales: [{ t: 16.67, txt: "Último café", ico: "☕" }], pendiente: [], manana: 6.75, claro: /[#&]claro/.test(H) });
+    senales: [{ t: 16.67, txt: "Último café", ico: "☕" }], pendiente: [], manana: 6.75, claro: /[#&]claro/.test(H) };
+  const abre = (o) => console.log("abriría", JSON.stringify(o));
+  if (/[#&]v=estacion/.test(H)) { const sc = document.createElement("script"); sc.src = "estacion.js"; sc.onload = () => pon(window.Estacion.crea({ onAbrir: abre })); document.head.appendChild(sc); }
+  else pon(window.Conductor.crea({ onAbrir: abre }));
 })();
 </script>
 </body>

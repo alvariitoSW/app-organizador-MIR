@@ -11656,6 +11656,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     r.b.it = await page.evaluate(() => { const P = window.PG, it = P.ui.hoyIt, d = P.conductor().d.dia;
       const e = it ? d.filter((x) => x.i === it.i)[0] : null; return e ? e.t : null; });
+    // (l) el paisaje va con lo que toca: a las 10:24 (trabajo) ciudad con ventanas; a las 21:00 (libre) bosque
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
+    await pon(10.4);
+    r.l = await page.evaluate(() => { const sc = document.querySelector('#main .cd [data-r="scene"]'); return { ciudad: !!sc.querySelector('.cd-win'), arboles: sc.querySelectorAll('.cd-trunk').length }; });
+    await pon(21);
+    r.l.noche = await page.evaluate(() => { const sc = document.querySelector('#main .cd [data-r="scene"]'); return { arboles: sc.querySelectorAll('.cd-trunk').length, luna: !!document.querySelector('#main .cd [data-r="stars"] circle[r="9.5"]') }; });
     // (c) el depósito de sueño
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
     await page.locator('#main .cd [data-o="sueno"]').click().catch(() => {});
@@ -11664,6 +11670,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (d) volver a Hoy y pintar dos veces: el mismo conductor, no uno nuevo
     r.d = await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); const el = P.conductor().c.el; P.render(); P.render();
       return { mismo: P.conductor().c.el === el, dentro: document.querySelector('#main #hoyBusSlot .cd') === el }; });
+    // (m) el botón cambia a la estación isométrica (se carga la primera vez), se recuerda, sobrevive a
+    // repintar, un toque en un autobús abre su hoja, y el mismo botón vuelve al conductor
+    await page.click('#main [data-a="hoy-busv"]').catch(() => {});
+    await page.waitForSelector('#main #hoyBusSlot .es svg', { timeout: 8000 }).catch(() => {});
+    r.m = await page.evaluate(() => { const P = window.PG, el = document.querySelector('#main #hoyBusSlot .es'); P.render(); P.render();
+      return { es: !!el, cd: !!document.querySelector('#main #hoyBusSlot .cd'), ls: localStorage.getItem('guardias-hoybusv'), mismo: document.querySelector('#main #hoyBusSlot .es') === el,
+        amb: [...document.querySelectorAll('#main .es [data-amb]')].filter((g) => g.style.opacity === '1').map((g) => g.getAttribute('data-amb')).join('|') }; });
+    r.m.hoja = await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null;
+      const n = document.querySelectorAll('#main .es [data-bus]').length;
+      for (let q = 0; q < n; q++) { const g = document.querySelectorAll('#main .es [data-bus]')[q]; if (!g) break; g.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 5 })); g.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 5 }));
+        /* el de «A DORMIR» abre Sueño (bien): se vuelve y se sigue con el siguiente */
+        if (P.ui.hoyVista === 'sueno') { P.ui.hoyVista = ''; P.render(); continue; } if (P.ui.hoyIt) return true; }
+      return false; });
+    await page.evaluate(() => { window.PG.ui.hoyIt = null; window.PG.ui.hoyVista = ''; window.PG.render(); });
+    await page.click('#main [data-a="hoy-busv"]').catch(() => {}).catch(() => {});
+    r.m.vuelta = await page.evaluate(() => ({ cd: !!document.querySelector('#main #hoyBusSlot .cd'), es: !!document.querySelector('#main #hoyBusSlot .es'), ls: localStorage.getItem('guardias-hoybusv') }));
     // (i) el «¿cómo amaneces?» va corto; «ánimo y lo que te propones» lo abre entero
     r.i = { corto: await page.evaluate(() => !!document.querySelector('#main .asck.corto')) };
     await page.click('#main [data-a="asist-mas"]').catch(() => {});
@@ -11717,6 +11739,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Hoy abre de serie en el conductor, dentro de la página (sin marco), con el día de la agenda y sin repetir la tarjeta de Sueño',
       r.a.hay && !r.a.marco && /^🚌 Conductor\*\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
     check('en el conductor, mantener la próxima parada abre la hoja de lo que pone el visor', !!r.b.it && r.b.visor.indexOf(r.b.it) >= 0, JSON.stringify(r.b));
+    check('el paisaje del conductor va con lo que toca: ciudad con ventanas en el trabajo, bosque y luna por la noche libre',
+      r.l.ciudad && r.l.noche.arboles > 0 && r.l.noche.luna, JSON.stringify(r.l));
+    check('el botón cambia a la estación isométrica, se recuerda, no se recarga al repintar, un toque en un autobús abre su hoja y vuelve al conductor',
+      r.m.es && !r.m.cd && r.m.ls === 'estacion' && r.m.mismo && r.m.amb.length > 0 && r.m.hoja && r.m.vuelta.cd && !r.m.vuelta.es && r.m.vuelta.ls === 'conductor', JSON.stringify(r.m));
     check('en el conductor, tocar el depósito de sueño abre Sueño', r.c === 'sueno', JSON.stringify(r.c));
     check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
     check('con el conductor, «¿cómo amaneces?» va corto y «ánimo y lo que te propones» lo abre', r.i.corto && r.i.largo, JSON.stringify(r.i));

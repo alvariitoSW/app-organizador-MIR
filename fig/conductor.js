@@ -59,6 +59,9 @@
 .cd-note{fill:#ffe27a}.cd-notet{fill:#3a2a00;font:800 11px ui-sans-serif,system-ui,sans-serif}
 .cd-chip{fill:#0d1726;stroke:#ffd66b;stroke-width:1.2}.cd-chipt{fill:#ffd66b;font:700 12px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-dimmer{fill:#000;pointer-events:none}
+.cd-trunk{stroke:#4a3527;fill:none;stroke-linecap:round}.cd-line{stroke:#e9f2e4;fill:none}.cd-fence{stroke:#8a96a8;fill:none;stroke-linecap:round}.cd-flood{fill:#cfd6e0}.cd-floodo{fill:#fff6d0}
+.cd-gyma{fill:#4b3f7a}.cd-gymb{fill:#3a3163}.cd-gymg{fill:#1a2236}.cd-gymgo{fill:#ffe7a6}.cd-gyms{fill:#0b1020;stroke:#9c86ff;stroke-width:.8}.cd-gymt{fill:#e9e4ff;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-hosp{fill:#c9d2de}.cd-hospe{fill:#9aa6b8}.cd-cross{fill:#e5484d}.cd-fly{fill:#e6ff8a}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}`;
@@ -103,13 +106,31 @@
     const it = (D.dia || []).filter((e) => e.b > e.a).map((e) => Object.assign({}, e));
     const no = (D.noches || []).filter((n) => n.b > n.a).map((n) => Object.assign({ dep: true }, n));
     const est = it.concat(no).sort((x, y) => x.a - y.a || (x.dep ? 1 : 0) - (y.dep ? 1 : 0));
-    est.forEach((e, i) => { e.s = i * GAP; });
+    est.forEach((e, i) => { e.s = i * GAP; e.amb = ambDe(e, it); });
     /* lo que tiene algo en marcha: mientras dure, el autobús no se mueve */
     const iv = est.map((e) => [e.a, e.b]).sort((x, y) => x[0] - y[0]), union = [];
     iv.forEach((v) => { const u = union[union.length - 1]; if (u && v[0] <= u[1] + 1e-6) u[1] = Math.max(u[1], v[1]); else union.push(v.slice()); });
     const finDe = (t) => { const u = union.find((v) => t >= v[0] - 1e-6 && t <= v[1] + 1e-6); return u ? u[1] : t; };
     est.forEach((e, i) => { const sig = est[i + 1]; e.hold = sig ? Math.min(sig.a, finDe(e.a)) : finDe(e.a); });
     return { est, union };
+  }
+  /* el paisaje de cada parada: la ciudad si es la jornada (o cae dentro), el hospital de guardia, el
+     polideportivo si toca entrenar y el bosque en lo libre y por la noche */
+  function ambDe(e, it) {
+    if (e.dep) return "bosque";
+    if (e.k === "guard") return "hospital";
+    if (e.k === "work") return "ciudad";
+    if (e.k === "gym") return "deporte";
+    const t = (it || []).find((x) => TURNO(x.k) && e.a >= x.a && e.a < x.b);
+    return t ? (t.k === "guard" ? "hospital" : "ciudad") : "bosque";
+  }
+  /* el ambiente de un trozo de carretera: el de su parada; entre dos, se mezclan con un fundido de
+     manzanas (cada una elige según lo cerca que esté de la siguiente) */
+  function ambEn(R, w, semilla) {
+    const E = R.est, n = E.length; if (!n) return "bosque";
+    const f = (w - ZSTOP) / GAP, i = Math.floor(f);
+    if (i < 0) return E[0].amb; if (i >= n - 1) return E[n - 1].amb;
+    return hash(semilla) < ease((f - i - 0.3) / 0.4) ? E[i + 1].amb : E[i].amb;
   }
   /* dónde va el autobús a una hora: parado en la última parada mientras haya algo en marcha; entre
      una y otra, de camino */
@@ -192,22 +213,93 @@
       for (let w = Math.floor(cam / 3) * 3; w < cam + 120; w += 3) { const z = w - cam + 3; if (z >= NEAR) out.push(seg([3.2, 0.16, z], [8, 0.16, z], "cd-walkl", 0.03)); }
       for (let w = Math.floor(cam / 6) * 6; w < cam + FAR; w += 6) { const z0 = w - cam + 2; if (z0 + 3 >= NEAR) out.push(poly([[-1.15, 0.01, z0], [-1.0, 0.01, z0], [-1.0, 0.01, z0 + 3], [-1.15, 0.01, z0 + 3]], "cd-dash")); }
       if (noche > 0.05) out.push(poly([[-1.6, 0.01, 1.2], [1.6, 0.01, 1.2], [4, 0.01, 30], [-4, 0.01, 30]], "", ' fill="url(#cdbeam' + ID + ')" style="opacity:' + (noche * 0.55).toFixed(2) + '"'));
-      /* edificios, de lejos a cerca */
-      const blq = [];
+      /* el paisaje, por manzanas de 13 m a cada lado: ciudad, hospital, polideportivo o bosque */
+      const blq = [], cosas = [];
       for (let j = Math.floor((cam - 20) / 13); j * 13 < cam + FAR; j++) for (const lado of [1, -1]) {
         const z0 = j * 13 - cam + 2, z1 = z0 + 10.5; if (z1 < NEAR) continue;
-        blq.push({ z0, z1, h: 5 + Math.floor(hash(j * 7 + (lado > 0 ? 1 : 5)) * 11), x0: lado > 0 ? 8.4 : -11.4, x1: lado > 0 ? 15 : -18, j, lado });
+        blq.push({ z0, z1, h: 5 + Math.floor(hash(j * 7 + (lado > 0 ? 1 : 5)) * 11), x0: lado > 0 ? 8.4 : -11.4, x1: lado > 0 ? 15 : -18, j, lado, amb: ambEn(R, j * 13 + 7, j * 3.7 + (lado > 0 ? 0.3 : 0.8)) });
       }
-      blq.sort((a, b) => b.z0 - a.z0);
-      const cls = ["cd-ba", "cd-bb", "cd-bc", "cd-bd"];
+      const verde = (a, b) => mix(a, b, noche * 0.75);
+      const G = { hierba: verde("#3d6b45", "#0f2218"), hierba2: verde("#46784d", "#122a1d"), pino: verde("#1f5a3e", "#0b2116"), pino2: verde("#2f7a52", "#11301f"),
+        hoja: verde("#3f8a4f", "#123020"), hoja2: verde("#5aa865", "#1a4229"), campo: verde("#2e7d4a", "#123a22"), campo2: verde("#348a52", "#154226") };
+      /* el suelo primero: hierba en el bosque, el campo en el polideportivo */
       for (const b of blq) {
-        out.push(poly([[b.x0, 0, b.z0], [b.x0, 0, b.z1], [b.x0, b.h, b.z1], [b.x0, b.h, b.z0]], cls[Math.floor(hash(b.j * 3 + b.lado) * 4)]));
-        if (b.z0 > NEAR) out.push(poly([[b.x0, 0, b.z0], [b.x1, 0, b.z0], [b.x1, b.h, b.z0], [b.x0, b.h, b.z0]], "cd-bend"));
-        if (b.z0 < 70) for (let y = 1.6; y < b.h - 1.2; y += 2.8) for (let z = b.z0 + 1; z < b.z1 - 1.4; z += 2.4) {
-          const on = noche > 0.3 && hash(b.j * 31 + y * 7 + z) > 0.55, x = b.x0 - 0.01 * b.lado;
-          out.push(poly([[x, y, z], [x, y, z + 1.3], [x, y + 1.4, z + 1.3], [x, y + 1.4, z]], on ? "cd-wino" : "cd-win"));
+        if (b.amb !== "bosque" && b.amb !== "deporte") continue;
+        const xa = b.lado > 0 ? 8.05 : -11.05, xb = b.lado > 0 ? 60 : -60, za = Math.max(NEAR, b.z0 - 2), zb = b.z0 + 11;
+        out.push(poly([[xa, 0.02, za], [xb, 0.02, za], [xb, 0.02, zb], [xa, 0.02, zb]], "", ' style="fill:' + (b.j % 2 ? G.hierba : G.hierba2) + '"'));
+        if (b.amb === "deporte" && b.lado > 0) {
+          out.push(poly([[9.6, 0.04, b.z0], [24, 0.04, b.z0], [24, 0.04, b.z0 + 9.6], [9.6, 0.04, b.z0 + 9.6]], "", ' style="fill:' + (b.j % 2 ? G.campo : G.campo2) + '"'));
+          const ln = (a, c) => out.push(seg(a, c, "cd-line", 0.05));
+          ln([10.2, 0.05, b.z0 + 0.4], [10.2, 0.05, b.z0 + 9.2]); ln([23.4, 0.05, b.z0 + 0.4], [23.4, 0.05, b.z0 + 9.2]);
+          ln([10.2, 0.05, b.z0 + 4.8], [23.4, 0.05, b.z0 + 4.8]);
+          if (b.z0 + 0.4 > NEAR) ln([10.2, 0.05, b.z0 + 0.4], [23.4, 0.05, b.z0 + 0.4]);
         }
       }
+      const cls = ["cd-ba", "cd-bb", "cd-bc", "cd-bd"];
+      for (const b of blq) {
+        const key = b.z0;
+        if (b.amb === "ciudad" || b.amb === "hospital") {
+          const hosp = b.amb === "hospital" && b.j % 2 === 0, h = hosp ? 9 : b.h, o = [];
+          o.push(poly([[b.x0, 0, b.z0], [b.x0, 0, b.z1], [b.x0, h, b.z1], [b.x0, h, b.z0]], hosp ? "cd-hosp" : cls[Math.floor(hash(b.j * 3 + b.lado) * 4)]));
+          if (b.z0 > NEAR) o.push(poly([[b.x0, 0, b.z0], [b.x1, 0, b.z0], [b.x1, h, b.z0], [b.x0, h, b.z0]], hosp ? "cd-hospe" : "cd-bend"));
+          if (b.z0 < 70) for (let y = 1.6; y < h - 1.2; y += 2.8) for (let z = b.z0 + 1; z < b.z1 - 1.4; z += 2.4) {
+            /* de noche, ventanas encendidas; de guardia, el hospital entero */
+            const on = noche > 0.3 && (hosp ? hash(b.j * 31 + y * 7 + z) > 0.2 : hash(b.j * 31 + y * 7 + z) > 0.55), x = b.x0 - 0.01 * b.lado;
+            o.push(poly([[x, y, z], [x, y, z + 1.3], [x, y + 1.4, z + 1.3], [x, y + 1.4, z]], on ? "cd-wino" : "cd-win"));
+          }
+          /* la cruz roja en la fachada de cara a la calle */
+          if (hosp && b.z0 > NEAR) { const xm = (b.x0 + b.x1) / 2, ym = h - 1.8, zz = b.z0 - 0.02;
+            o.push(poly([[xm - 1.1, ym - 0.35, zz], [xm + 1.1, ym - 0.35, zz], [xm + 1.1, ym + 0.35, zz], [xm - 1.1, ym + 0.35, zz]], "cd-cross"),
+              poly([[xm - 0.35, ym - 1.1, zz], [xm + 0.35, ym - 1.1, zz], [xm + 0.35, ym + 1.1, zz], [xm - 0.35, ym + 1.1, zz]], "cd-cross")); }
+          cosas.push({ key, svg: o.join("") });
+        } else if (b.amb === "bosque") {
+          /* tres árboles por manzana: pinos y frondosos, cada uno con su tronco */
+          for (let q = 0; q < 3; q++) {
+            const sd = b.j * 11 + q * 3 + (b.lado > 0 ? 0 : 50), z = b.z0 + 1.2 + q * 4.1 + hash(sd) * 1.6; if (z < NEAR + 0.3) continue;
+            const x = b.lado > 0 ? 9.6 + hash(sd + 1) * 7 : -12.6 - hash(sd + 1) * 7, sc = 0.8 + hash(sd + 2) * 0.5, o = [];
+            o.push(seg([x, 0, z], [x, 1.6 * sc, z], "cd-trunk", 0.22 * sc));
+            if (hash(sd + 3) > 0.45) {
+              for (let k = 0; k < 3; k++) { const yb = (1.0 + k * 1.45) * sc, r = (1.9 - k * 0.5) * sc, hh = 2.5 * sc;
+                o.push(poly([[x - r, yb, z], [x, yb, z], [x, yb + hh, z]], "", ' style="fill:' + G.pino + '"'), poly([[x, yb, z], [x + r, yb, z], [x, yb + hh, z]], "", ' style="fill:' + G.pino2 + '"')); }
+            } else {
+              const c = pr(x, 3.6 * sc, z), r = 1.9 * sc * F / z, c2 = pr(x - 0.5 * sc, 4.1 * sc, z);
+              o.push('<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + r.toFixed(1) + '" style="fill:' + G.hoja + '"/>' +
+                '<circle cx="' + c2[0].toFixed(1) + '" cy="' + c2[1].toFixed(1) + '" r="' + (r * 0.55).toFixed(1) + '" style="fill:' + G.hoja2 + '"/>');
+            }
+            /* de noche, luciérnagas */
+            if (noche > 0.55 && z < 45) for (let f = 0; f < 2; f++) { const p = pr(x + (hash(sd + f + 7) - 0.5) * 3, 0.6 + hash(sd + f + 9) * 1.6, z), al = 0.35 + 0.65 * Math.abs(Math.sin(t * 9 + sd + f));
+              o.push('<circle class="cd-fly" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + Math.max(0.6, 0.07 * F / z).toFixed(1) + '" opacity="' + (al * (noche - 0.5) * 2).toFixed(2) + '"/>'); }
+            cosas.push({ key: z, svg: o.join("") });
+          }
+        } else if (b.lado > 0) {
+          /* el polideportivo: la valla del campo y una torre de focos que se enciende al caer la tarde */
+          const o = [];
+          for (let z = b.z0; z < b.z1 + 2; z += 1.6) if (z > NEAR + 0.2) o.push(seg([8.9, 0, z], [8.9, 1.9, z], "cd-fence", 0.05));
+          o.push(seg([8.9, 1.9, Math.max(NEAR + 0.2, b.z0)], [8.9, 1.9, b.z1 + 2], "cd-fence", 0.06));
+          const zt = b.z0 + 5;
+          if (zt > NEAR + 0.3 && b.j % 2 === 0) {
+            const enc = L.d < 0.75;
+            o.push(seg([25, 0, zt], [25, 11, zt], "cd-fence", 0.16));
+            o.push(poly([[23.6, 11, zt], [26.4, 11, zt], [26.4, 12.3, zt], [23.6, 12.3, zt]], enc ? "cd-floodo" : "cd-flood"));
+            if (enc) { const c = pr(25, 11.6, zt);
+              o.push('<circle class="cd-glow" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + (2.6 * F / zt).toFixed(1) + '" style="opacity:' + (0.3 * (1 - L.d)).toFixed(2) + '"/>',
+                poly([[23.8, 11, zt], [26.2, 11, zt], [24, 0.05, zt + 6], [12, 0.05, zt + 6]], "cd-floodo", ' style="opacity:' + (0.1 * (1 - L.d)).toFixed(2) + '"')); }
+          }
+          cosas.push({ key: b.z0, svg: o.join("") });
+        } else {
+          /* el gimnasio: nave baja violeta con ventanales y su letrero de cara a la calle */
+          const o = [], h = 6;
+          o.push(poly([[b.x0, 0, b.z0], [b.x0, 0, b.z1], [b.x0, h, b.z1], [b.x0, h, b.z0]], "cd-gyma"));
+          if (b.z0 > NEAR) o.push(poly([[b.x0, 0, b.z0], [b.x1, 0, b.z0], [b.x1, h, b.z0], [b.x0, h, b.z0]], "cd-gymb"));
+          if (b.z0 < 90) for (let z = b.z0 + 0.8; z < b.z1 - 1; z += 3.1) { const x = b.x0 + 0.01;
+            o.push(poly([[x, 1, z], [x, 1, z + 2.5], [x, 4.4, z + 2.5], [x, 4.4, z]], noche > 0.25 ? "cd-gymgo" : "cd-gymg")); }
+          if (b.z0 > NEAR + 0.3) { const a = pr(b.x1 + 0.6, h + 1.9, b.z0), c = pr(b.x0 - 0.6, h + 0.2, b.z0), w = c[0] - a[0], hh = c[1] - a[1];
+            if (w > 6) o.push('<rect class="cd-gyms" x="' + a[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + (hh * 0.2).toFixed(1) + '"/>' +
+              '<text class="cd-gymt" x="' + (a[0] + w / 2).toFixed(1) + '" y="' + (a[1] + hh * 0.74).toFixed(1) + '" font-size="' + (hh * 0.7).toFixed(1) + '">▬●▬ GYM</text>'); }
+          cosas.push({ key: b.z0, svg: o.join("") });
+        }
+      }
+      cosas.sort((a, b) => b.key - a.key).forEach((c) => out.push(c.svg));
       for (let w = Math.floor(cam / 25) * 25; w < cam + 160; w += 25) {
         const z = w - cam + 12; if (z < NEAR + 0.5) continue;
         out.push(seg([3.5, 0.15, z], [3.5, 5.2, z], "cd-post", 0.09), seg([3.5, 5.2, z], [2.6, 5.4, z], "cd-post", 0.07));
@@ -340,11 +432,25 @@
       if (p) { R_.notat.textContent = ("Hoy toca: " + p.txt).slice(0, 22) + " ▶"; R_.nota.setAttribute("data-i", p.i); }
     }
 
+    /* el sol cruza de izquierda (al salir) a derecha (al ponerse), bajo y naranja por la mañana y por la
+       tarde; de noche, la luna */
+    function astro(t, SOL, L) {
+      let o = "";
+      const f = (t - SOL[0]) / (SOL[1] - SOL[0]);
+      if (f > -0.06 && f < 1.06) { const al = Math.sin(Math.PI * clamp(f, 0, 1)), x = 70 + f * 460, y = HY - 6 - al * 96, c = mix("#ff9a3c", "#fff4c8", clamp(al * 1.6, 0, 1));
+        o += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="34" fill="' + c + '" opacity="' + (0.18 * L.d).toFixed(2) + '"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="13" fill="' + c + '"/>'; }
+      const larga = 24 - (SOL[1] - SOL[0]), g = (((t - SOL[1]) % 24) + 24) % 24 / larga;
+      if (g > 0 && g < 1 && L.d < 0.9) { const al = Math.sin(Math.PI * g), x = 70 + g * 460, y = HY - 10 - al * 80, op = (1 - L.d).toFixed(2);
+        o += '<g opacity="' + op + '"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24" fill="#cfdcff" opacity=".12"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9.5" fill="#e8eefc"/>' +
+          '<circle cx="' + (x - 3).toFixed(1) + '" cy="' + (y - 2).toFixed(1) + '" r="2.2" fill="#c9d3ea"/><circle cx="' + (x + 2.6).toFixed(1) + '" cy="' + (y + 3).toFixed(1) + '" r="1.5" fill="#c9d3ea"/></g>'; }
+      return o;
+    }
+
     function draw(dt) {
       if (!D) return false;
       const L = luz(t, D.sol || [7, 18.6]), c = camDe(R, t), st = estado(t);
       R_.sky0.setAttribute("stop-color", L.top); R_.sky1.setAttribute("stop-color", L.bot);
-      R_.stars.innerHTML = L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "";
+      R_.stars.innerHTML = astro(t, D.sol || [7, 18.6], L) + (L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "");
       R_.scene.innerHTML = escena(c.s, L, st);
       /* la cochera: parada en una noche o siesta, con la persiana bajada; al salir sube y te alejas;
          al llegar a la siguiente, se funde */
@@ -435,5 +541,14 @@
     R_.sr.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) abrir({ tipo: "item", i: +b.getAttribute("data-i"), rapida: false }); });
     return { el, actualiza, hora: () => t };
   }
-  window.Conductor = { crea, ruta, camDe };
+  /* el ambiente a una hora (para la estación): el de lo que está en marcha, o el de lo siguiente */
+  function ambienteA(D, t) {
+    const it = (D.dia || []).filter((e) => e.b > e.a), n = (D.noches || []).find((x) => t >= x.a && t < x.b);
+    if (n) return "bosque";
+    const ya = it.filter((e) => t >= e.a && t < e.b), turno = ya.find((e) => TURNO(e.k)), gym = ya.find((e) => e.k === "gym");
+    if (gym) return "deporte"; if (turno) return turno.k === "guard" ? "hospital" : "ciudad";
+    const sig = it.filter((e) => e.a > t).sort((a, b) => a.a - b.a)[0];
+    return sig && sig.k === "gym" && sig.a - t < 0.75 ? "deporte" : "bosque";
+  }
+  window.Conductor = { crea, ruta, camDe, ambienteA, luz };
 })();

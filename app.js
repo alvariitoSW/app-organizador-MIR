@@ -5313,7 +5313,11 @@ function hoyDiaHTML(key,inf,esHoy){
    da el día: lo de hoy, la guardia de ayer si cruza la medianoche, las noches y siestas (la cochera),
    lo hecho, lo dormido, lo comido, el sol, el último café o las órdenes de la guardia, y lo que toca
    sin hora. Lo que se toca vuelve por onAbrir. */
-let _cond=null,_condDatos=null;
+let _cond=null,_condDatos=null,_est=null,_estCarga=false;
+/* dos maneras de ver el día con el autobús: desde el asiento del conductor (de serie) o la estación
+   isométrica; un botón cambia de una a otra y se recuerda */
+const HOY_BUSV_KEY='guardias-hoybusv';
+function hoyBusVista(){if(!ui.hoyBusV){let v='';try{v=localStorage.getItem(HOY_BUSV_KEY)||'';}catch(e){}ui.hoyBusV=v==='estacion'?'estacion':'conductor';}return ui.hoyBusV;}
 /* el nombre en el letrero: corto, sin coletillas («en destino», «antes de entrar», «opcional») */
 function busNombre(x){
   let t=nombreCorto(String(x.txt||'')).replace(/[^\p{L}\p{N} +\-:·]/gu,'').trim();
@@ -5371,11 +5375,21 @@ function hoyBusDatos(key,inf,esHoy){
     claro:!document.documentElement.classList.contains('dark')};}
 function hoyBusHTML(key,inf,esHoy){
   try{_condDatos=hoyBusDatos(key,inf,esHoy);}catch(e){_condDatos={dia:[],noches:[]};}
-  return '<div id="hoyBusSlot" class="hoybus"></div>';}
+  const est=hoyBusVista()==='estacion';
+  return '<div class="hoybusv"><button class="chipx" data-a="hoy-busv" data-v="'+(est?'conductor':'estacion')+'" aria-label="Cambiar a la vista '+(est?'del conductor':'de la estación')+'">⇄ '+(est?'🚌 Conductor':'🏗 Estación')+'</button></div>'+
+    '<div id="hoyBusSlot" class="hoybus'+(est?' est':'')+'"></div>';}
 function hoyBusMonta(){
   const slot=document.getElementById('hoyBusSlot');if(!slot||!window.Conductor||!_condDatos)return;
+  if(hoyBusVista()==='estacion'){
+    /* la estación pesa (el dibujo entero va dentro): se carga la primera vez que se elige */
+    if(!window.Estacion){if(!_estCarga){_estCarga=true;const sc=document.createElement('script');sc.src='fig/estacion.js';
+        sc.onload=function(){hoyBusMonta();};sc.onerror=function(){_estCarga=false;ui.hoyBusV='conductor';hoyBusMonta();};document.head.appendChild(sc);}
+      if(!slot.firstChild)slot.innerHTML='<p class="mini" style="padding:40px 0;text-align:center">montando la estación…</p>';return;}
+    if(!_est)_est=window.Estacion.crea({onAbrir:hoyBusAbrir});
+    if(_est.el.parentNode!==slot){slot.innerHTML='';slot.appendChild(_est.el);}
+    _est.actualiza(_condDatos);return;}
   if(!_cond)_cond=window.Conductor.crea({onAbrir:hoyBusAbrir});
-  if(_cond.el.parentNode!==slot)slot.appendChild(_cond.el);
+  if(_cond.el.parentNode!==slot){slot.innerHTML='';slot.appendChild(_cond.el);}
   _cond.actualiza(_condDatos);}
 function hoyBusAbrir(o){
   const k=fechaHoy();
@@ -23097,6 +23111,7 @@ function act(a,el){
       break;}
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
+    case 'hoy-busv':ui.hoyBusV=el.dataset.v==='estacion'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}render();break;
     case 'hoy-modo':ui.hoyModo=/^(reloj|linea)$/.test(el.dataset.v)?el.dataset.v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
     case 'prox-todos':ui.proxTodos=!ui.proxTodos;render();break;

@@ -192,3 +192,31 @@ teclado); una tercera pestaña para la vista (sigue el interruptor de tres).
 **Supuestos:** «lo rápido» solo desde una hora antes de la parada y en el día de hoy; las cosas de
 madrugada son de la guardia de esta noche si caen dentro de ella y si no, no son parada; las
 señales sin guardia son solo el último café, seis horas antes de la cama.
+
+## 2026-10-13 · Doble vista en Hoy y paisaje según lo que toca
+
+**Contexto:** «se podría añadir doble visión, que se pueda cambiar con un botón, primero la del
+autobusero y luego la del /anatomy… cuando tengo que trabajar que se vea la ciudad, cuando me toque
+entrenar que se vea algo, cuando esté libre que se vea en un bosque… diferencia entre por la mañana y
+por la tarde-noche».
+
+**Elegido:**
+- Un botón encima de la vista («⇄ 🏗 Estación» / «⇄ 🚌 Conductor») cambia entre el conductor (de
+  serie) y la estación isométrica; se recuerda (clave propia). La estación se genera con el kit de
+  /anatomy (`design/hoy-estacion/app.mjs` → `fig/estacion.js`) y se carga la primera vez que se
+  elige, porque el dibujo pesa ~400 KB; va en la caché sin conexión.
+- **El paisaje sale de las paradas.** Cada parada tiene su ambiente: la jornada es la ciudad, la
+  guardia el hospital (fachada blanca, cruz roja, ventanas encendidas, helipuerto en la estación),
+  el entreno el polideportivo (campo, valla, focos y el gimnasio violeta) y lo libre el bosque (pinos,
+  árboles de copa, luciérnagas de noche). En el conductor cada tramo de carretera toma el de su
+  parada y entre dos se mezclan manzana a manzana; en la estación el decorado de detrás del andén se
+  funde con el de la hora.
+- **La hora se nota:** el sol cruza el cielo (bajo y naranja por la mañana y por la tarde), de noche la
+  luna y las estrellas; en la estación los materiales se templan de tarde y se apagan de noche, y se
+  encienden ventanas, farolas y focos.
+
+**Descartado:** que el ambiente lo elija el tipo de día entero (un día de trabajo con entreno por la
+tarde perdería el polideportivo) y un decorado distinto para comidas (van dentro de lo que toque).
+
+**Supuestos:** una comida dentro de la jornada es ciudad; fuera, bosque; la noche y la siesta son
+bosque; el polideportivo se ve también en el rato de antes de entrenar (tres cuartos de hora).
