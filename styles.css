@@ -3739,3 +3739,18 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .astj-tit{background:none;border:0;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .carrslot{margin-top:6px}.lqv h2{margin-bottom:4px}.mesv{margin:8px 0 6px}
 @media print{.carrslot,.calisoslot,.mesv{display:none!important}}
+
+/* la mañana en corto: la tira de levantarte a salir por la puerta, con el último bus en rojo y «he salido» */
+.manana{margin:6px 0 8px;padding:10px 12px 8px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--card) 80%,var(--bg))}
+.manana .mnbar{position:relative;height:36px;margin:16px 10px 2px}
+.manana .mnbar:before{content:"";position:absolute;left:0;right:0;top:9px;height:3px;border-radius:2px;background:var(--line)}
+.manana .mntr{position:absolute;top:9px;height:3px;border-radius:2px}.manana .mntr.ok{background:color-mix(in srgb,var(--accent,#a3e635) 70%,transparent)}.manana .mntr.mal{background:#ff2b3a}
+.manana .mnh{position:absolute;top:3px;width:0;font-style:normal}.manana .mnh:before{content:"";position:absolute;left:-4px;top:1px;width:8px;height:8px;border-radius:50%;background:var(--ink2);border:2px solid var(--card);box-sizing:border-box}
+.manana .mnh b{position:absolute;left:0;top:-15px;transform:translateX(-50%);font-size:9.5px;font-weight:800;color:var(--ink2);white-space:nowrap;line-height:1}
+.manana .mnh small{position:absolute;left:0;top:12px;transform:translateX(-50%);font-size:8.5px;color:var(--ink2);white-space:nowrap;opacity:.85}
+.manana .mnh:nth-child(2n+1) small{top:21px}
+.manana .mnh.pta:before{background:var(--brand);width:10px;height:10px;left:-5px;top:0}.manana .mnh.pta b{color:var(--ink);font-size:10px}
+.manana .mnh.ult:before{background:#ff2b3a}.manana .mnh.ult b{color:#ff6b76}
+.manana .mnow{position:absolute;top:-2px;width:2px;height:22px;background:var(--brand);border-radius:1px;box-shadow:0 0 6px var(--brand)}
+.manana .mnlin{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;line-height:1.35;margin-top:4px}.manana .mnlin b{color:var(--ink)}
+.manana .mnlin .btn{flex:0 0 auto;white-space:nowrap}.manana .mini{margin:4px 0 0}

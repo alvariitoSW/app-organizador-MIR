@@ -656,6 +656,8 @@ function normalize(o){
   Object.keys(o.franja.colores).forEach(function(k){
     if(TLKEYS.indexOf(k)<0||!esColor(o.franja.colores[k]||''))delete o.franja.colores[k];});
   if(!o.calcol||typeof o.calcol!=='object')o.calcol={};
+  if(!o.manana||typeof o.manana!=='object')o.manana={};   /* a qué hora saliste de casa cada día: {'2026-10-15':{salio:'07:29'}} */
+  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||!/^\d{2}:\d{2}$/.test(v.salio||''))delete o.manana[k];});
   Object.keys(o.calcol).forEach(function(k){if(CAL_KEYS.indexOf(k)<0||!esColor(o.calcol[k]||''))delete o.calcol[k];});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
@@ -5334,7 +5336,7 @@ function hoyDiaHTML(key,inf,esHoy){
     return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
-  if(m==='bus')return seg+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
+  if(m==='bus')return seg+hoyChoqueHTML(key,inf)+mananaHTML(key,esHoy)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
   return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
@@ -5443,14 +5445,17 @@ function diaEscenas(key){
   const W=wake!=null?wake:(sl.wake?mins(sl.wake)/60:7),BED=nocheA!=null?nocheA:(sl.bed?mins(sl.bed)/60:23);
   /* 2) la mañana de un turno: ducha (si no es de libre), café, vestirse, puerta, parada, bus o taxi, hospital */
   const T0=bloques.filter(function(T){return !T.ayer&&T.a>W;})[0];
-  if(T0){const A=T0.a;let busT=busH!=null&&busH+min<=A+1e-6&&A-(busH+min)<=1?busH:A-min-0.1;const salir=busT-antes;
-    const taxi=!!hab.taxi&&habitoEstadoH(hab.taxi,key)==='ok';   /* el taxi es un hábito tuyo: si hoy lo has marcado, hoy fuiste en taxi */
+  if(T0){const A=T0.a;let busT=busH!=null&&busH+min<=A+1e-6&&A-(busH+min)<=1?busH:A-min-0.1;let salir=busT-antes;
+    const ultimo=busT+ULTIMO_BUS_MIN/60,real=((store.manana||{})[key]||{}).salio,salio=real?mins(real)/60:null;
+    /* el taxi: si has apuntado a qué hora saliste y fue después del último bus, o si el hábito está marcado a mano */
+    const taxi=salio!=null?salio>ultimo+1e-6:(!!hab.taxi&&habitoEstadoH(hab.taxi,key)==='ok');
+    if(salio!=null){salir=salio;busT=taxi?salio+0.05:Math.max(busT,salio);}
     const libre=W+0.08,fin=Math.max(libre,salir);
     const desayuna=dia.some(function(x){return x.k==='meal'&&x.a>=W&&x.a<salir;});   /* el desayuno ya es una escena: no hace falta el café */
     const ducha=t!=='libre'&&t!=='saliente',pasos=[];if(ducha)pasos.push(['ducha',0.25]);if(!desayuna)pasos.push(['cafe',0.25]);
     let c=libre;pasos.forEach(function(p){if(c+p[1]<=fin-0.1){add(c,c+p[1],p[0]);c+=p[1];}});
     if(fin-c>0.02)add(c,fin,'vestir',{movil:!!hab.pantallas});
-    add(salir,busT,'parada',{ultimo:busT+ULTIMO_BUS_MIN/60,taxi:taxi});
+    add(salir,busT,'parada',{ultimo:ultimo,taxi:taxi,salio:salio});
     add(busT,Math.min(A,busT+Math.max(min,0.15)),taxi?'taxi':'bus',{taxi:taxi});
     if(A-(busT+min)>0.02)add(busT+min,A,'camino');}
   /* 3) después del turno: en bici a casa (y la ducha del saliente al llegar) */
@@ -5481,7 +5486,54 @@ function diaEscenas(key){
     add(a,fin,a>=15.5||b>=19?'salon':'casa');});
   seg.sort(function(x,y){return x.a-y.a||y.b-x.b;});
   /* lo que sabe el dibujo de cada escena: lo que fuma y el taxi, si son hábitos tuyos */
-  return {seg:seg,wake:W,bed:BED,tipo:t,hab:Object.keys(hab),salir:T0?r(seg.filter(function(x){return x.e==='parada';})[0]?seg.filter(function(x){return x.e==='parada';})[0].a:0):null};}
+  const par=seg.filter(function(x){return x.e==='parada';})[0];
+  return {seg:seg,wake:W,bed:BED,tipo:t,hab:Object.keys(hab),salir:par?par.a:null,ultimo:par?par.ultimo:null,bus:par?par.b:null,salio:par?par.salio:null,llegada:T0?T0.a:null};}
+/* LA MAÑANA, EN CORTO: lo que hay entre levantarte y salir por la puerta. Es el hábito que falla (café, ducha, el
+   móvil, y el bus que se va a las 7:37): una tira mínima con los hitos, dónde vas, cuánto queda para salir y un
+   botón «he salido» que guarda la hora de verdad. De ahí salen los hábitos «salir a tiempo» y «taxi» solos. */
+function mananaPlan(){const v=viajeCfg();if(!v.on||!v.bus)return null;const b=mins(v.bus);if(b==null)return null;return {bus:b/60,plan:(b-v.antes)/60,ultimo:(b+ULTIMO_BUS_MIN)/60};}
+function mananaSalio(key){const m=(store.manana||{})[key];return m&&m.salio?mins(m.salio)/60:null;}
+function mananaDe(key){
+  const D=diaEscenas(key);if(D.salir==null)return null;
+  const real=((store.manana||{})[key]||{}).salio;
+  const P=mananaPlan(),plan=P&&D.salio!=null?P.plan:D.salir;   /* con hora apuntada, la parada empieza a esa hora: el plan sigue siendo el del viaje */
+  return {wake:D.wake,salir:D.salir,plan:plan,ultimo:D.ultimo,bus:P?P.bus:D.bus,llegada:D.llegada,salio:real?mins(real)/60:null,regleta:mananaRegleta(key)};}
+function mananaSemana(key){
+  /* esta semana: a tiempo / tarde / taxi, de los días con hora apuntada */
+  const d0=mondayOf(parseDate(key)),out={aTiempo:0,tarde:0,taxi:0,n:0},P=mananaPlan();if(!P)return out;
+  for(let i=0;i<7;i++){const k=iso(addDays(d0,i));if(k>key)break;const s=mananaSalio(k);if(s==null)continue;
+    out.n++;if(s<=P.plan+1e-6)out.aTiempo++;else if(s>P.ultimo+1e-6)out.taxi++;else out.tarde++;}
+  return out;}
+function mananaHTML(key,esHoy){
+  const m=mananaDe(key);if(!m)return '';
+  const ahora=new Date(),h=ahora.getHours()+ahora.getMinutes()/60;
+  const plan=m.plan,fin=m.llegada!=null?m.llegada:plan+0.5;
+  /* solo de mañana (desde media hora antes de levantarte hasta llegar), o si hay hora apuntada (para verla y deshacer) */
+  if(esHoy&&m.salio==null&&(h<m.wake-0.5||h>fin))return '';
+  if(!esHoy&&m.salio==null)return '';
+  const h0=m.wake-0.1,h1=Math.max(m.ultimo+0.3,m.salio!=null?m.salio+0.15:0),pct=function(x){return Math.round(Math.max(0,Math.min(1,(x-h0)/(h1-h0)))*1000)/10;};
+  const hitos=m.regleta.filter(function(x){return x.e!=='cabina'&&x.e!=='guardia';});
+  /* el bus y el último van pegados a la puerta: su hora va abajo, con el nombre, para no pisarse arriba */
+  const marcas=hitos.map(function(x){const u=x.e==='ultimo',hh=hCortaHM(hm(Math.round(x.h*60))),abajo=u||x.e==='bus'||x.e==='taxi';
+    return '<i class="mnh'+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(abajo?'':'<b>'+esc(hh)+'</b>')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
+  const tramo='<span class="mntr ok" style="left:'+pct(m.wake)+'%;width:'+(pct(plan)-pct(m.wake))+'%"></span><span class="mntr mal" style="left:'+pct(m.ultimo)+'%;width:'+(100-pct(m.ultimo))+'%"></span>';
+  let linea,boton='';
+  if(m.salio!=null){const tarde=m.salio>plan+1e-6,taxi=m.salio>m.ultimo+1e-6,dif=Math.round((m.salio-plan)*60);
+    linea=(taxi?'🚕 Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · '+dif+' min tarde: taxi':tarde?'⏱ Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · '+dif+' min tarde, aún a tiempo del último bus':'✓ Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · a tiempo');
+    boton='<button class="btn s" data-a="manana-deshacer" data-key="'+esc(key)+'">deshacer</button>';}
+  else{const q=Math.round((plan-h)*60),st=estadoDe(key,h);
+    linea=q>0?'Ahora <b>'+esc(st.txt)+'</b> · sales en <b>'+q+' min</b> (a las '+esc(hCortaHM(hm(Math.round(plan*60))))+', bus '+esc(hCortaHM(hm(Math.round(m.bus*60))))+')':
+      (h<=m.ultimo?'<b>Ya deberías haber salido</b> · el último bus pasa a las '+esc(hCortaHM(hm(Math.round(m.ultimo*60)))):'🚕 <b>Último bus perdido</b> · hoy toca taxi');
+    boton='<button class="btn p" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>';}
+  const sem=mananaSemana(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':''):'';
+  const ahoraPct=esHoy&&m.salio==null&&h>=h0&&h<=h1?'<i class="mnow" style="left:'+pct(h)+'%"></i>':'';
+  return '<div class="manana" data-key="'+esc(key)+'"><div class="mnbar">'+tramo+marcas+ahoraPct+'</div>'+
+    '<div class="mnlin"><span>'+linea+'</span>'+boton+'</div>'+(semTxt?'<p class="mini">'+esc(semTxt)+'</p>':'')+'</div>';}
+function mananaSali(key,hhmm){
+  if(!store.manana)store.manana={};
+  if(hhmm)store.manana[key]={salio:hhmm};else delete store.manana[key];
+  /* los hábitos «salir a tiempo» y «taxi», si los tienes, se marcan solos (son automáticos); nada que hacer aquí */
+  save();render();}
 function estadoDe(key,h){
   /* la escena a una hora (decimal): la más concreta de las que la contienen (la sesión manda sobre la jornada) */
   const D=diaEscenas(key),l=D.seg.filter(function(x){return h>=x.a&&h<x.b;});
@@ -16719,6 +16771,9 @@ const HAB_AUTO={
   prot:{lab:'🍗 llegar a la proteína',estado:function(key){const ob=+objetivoMacros().prot||0;if(!ob||!logDe(key).length)return '';const p=foodTotals(key).prot;
     return p>=ob?'ok':(p>=ob*0.75&&key<iso(new Date())?'min':'');}},
   sin420:{lab:'🌿 día sin 4:20',estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
+  /* de la hora apuntada al salir y del plan del viaje, sin pasar por las escenas (que a su vez leen los hábitos) */
+  puerta:{lab:'🚪 salir de casa a tiempo',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P||s==null)return '';return s<=P.plan+1e-6?'ok':(s<=P.ultimo+1e-6?'min':'');}},
+  taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);return P&&s!=null&&s>P.ultimo+1e-6?'ok':'';}},
   lloretsin:{lab:'🌿 Lloretazo sin',toca:function(key){return !!lloretDe(key);},
     estado:function(key){return habCerrado(key)&&!consumoDe(key).some(function(x){return x.ctx==='lloret';})?'ok':'';}}};
 const HAB_AUTOS=[['','No, a mano']].concat(Object.keys(HAB_AUTO).map(function(k){return [k,HAB_AUTO[k].lab];}));
@@ -24161,6 +24216,8 @@ function act(a,el){
       confirmar('Se borra «'+((t&&t.nombre)||'este tema')+'» de tus guardados. Si es el que tienes puesto, la app se queda como está.','Sí, borrarlo')
         .then(function(si){if(si)flash(borrarTemaMio(id));});
       break;}
+    case 'manana-sali':{mananaSali(el.dataset.key,horaLocal(new Date()));flash('Apuntado: saliste a las '+hCortaHM(horaLocal(new Date())));break;}
+    case 'manana-deshacer':{mananaSali(el.dataset.key,'');break;}
     case 'cal-color-reset':{store.calcol={};aplicarColoresCal();save();render();flash('Colores del calendario de serie');break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};
       store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
@@ -26704,7 +26761,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={diaEscenas,estadoDe,mananaRegleta,habitosEscena,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

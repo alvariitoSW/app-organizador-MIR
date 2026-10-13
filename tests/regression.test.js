@@ -12201,6 +12201,36 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('de guardia no hay bici a las 15:00; el saliente se ducha al llegar en bici; de libre la ducha es por la tarde-noche y no pisa nada',
       r.gTipo === 'guardia' && r.gBici15 === 0 && r.sTipo === 'saliente' && r.sDucha && Math.abs(r.sDucha[2] - r.sDucha[1]) < 0.01 && r.lTipo === 'libre' && r.lDucha.length === 1 && r.lDucha[0][0] >= 18 && !r.lPisa, JSON.stringify(r));
   }
+  // 285) LA MAÑANA EN CORTO, EN CADENA: con el viaje puesto (bus 7:35, 4 min antes → puerta 7:31, último 7:37) y
+  // una hora apuntada al salir, Hoy enseña la tira de la mañana con sus hitos y «deshacer»; «he salido» guarda la
+  // hora del móvil; con 7:40 apuntado, el hábito automático «taxi» se marca solo y el «puerta» no, y la escena a
+  // las 7:45 es el taxi; «esta semana» cuenta a tiempo/taxi. Fija: la hora de salir vivía solo en Ajustes, sin
+  // registro de la real ni hábito.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
+      const kt = kd(3), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.__t285 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
+      P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.habitosS().items.push({ id: 'hb285t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
+        { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kd(2)] = { salio: '07:29' };
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
+      const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small')].map((x) => x.textContent) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
+        taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kd(2)), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
+      return out; });
+    // «deshacer» quita la hora; «he salido» (hoy) guarda la del móvil
+    await page.click('#main [data-a="manana-deshacer"]');
+    await page.waitForTimeout(200);
+    r.b = await page.evaluate((kt) => ({ manana: window.PG.store.manana[kt] || null, hay: !!document.querySelector('#main .manana') }), r.kt);
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.render(); });
+    const hayHoy = await page.$('#main [data-a="manana-sali"]');
+    if (hayHoy) { await hayHoy.click(); await page.waitForTimeout(200); }
+    r.c = await page.evaluate((hubo) => { const P = window.PG, hoy = P.iso(new Date()), m = P.store.manana[hoy]; return { hubo, guardada: hubo ? !!(m && /^\d{2}:\d{2}$/.test(m.salio)) : null }; }, !!hayHoy);
+    await page.evaluate(() => { const P = window.PG, t = P.__t285; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.tab = t.tab; delete P.__t285; P.save(); P.render(); });
+    check('la tira de la mañana: hitos (levantarse … salir de casa, bus, último bus), «saliste a las 7:40 · tarde: taxi» y deshacer; el hábito «taxi» se marca solo y «salir a tiempo» no; a las 7:45 vas en taxi',
+      r.hay && r.hitos.indexOf('Salir de casa') >= 0 && r.hitos.indexOf('Último bus') >= 0 && /Saliste a las 7:40/.test(r.txt) && /taxi/i.test(r.txt) && r.deshacer && r.taxi === 'ok' && r.puerta === '' && r.puerta2 === 'ok' && r.e745 === 'taxi' && Math.abs(r.salir - 7.667) < 0.01 && r.sem.n === 2 && r.sem.taxi === 1 && r.sem.aTiempo === 1, JSON.stringify(r));
+    check('«deshacer» quita la hora apuntada y «he salido» guarda la del móvil', r.b.manana === null && (r.c.hubo === false || r.c.guardada === true), JSON.stringify({ b: r.b, c: r.c }));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

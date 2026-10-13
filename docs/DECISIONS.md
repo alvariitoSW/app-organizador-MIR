@@ -510,3 +510,28 @@ la maqueta sigue ese estilo.
 **Supuestos:** el conductor es una figura entera (no solo manos) en las escenas isométricas; en la cabina, solo
 manos. El tamaño del conjunto es un «Epic» de /anatomy repartido en tandas: cada escena aquí es una Figure
 (40–80 piezas), no un Hero.
+
+## 2026-10-13 · Tanda 3a · La mañana en corto: la tira de levantarte a salir, «he salido» y los hábitos «salir a tiempo» y «taxi»
+
+**Pedido:** «enfatizar bien sobre el tiempo antes de salir de casa, que es un hábito que fallo … como algo muy
+minimalista simplista».
+
+**Elegido:**
+- En Hoy, encima del conductor y solo de mañana (de media hora antes de levantarte hasta llegar), una tira con
+  los hitos (levantarse, ducha, café, vestirse, puerta 7:31, bus 7:35, último 7:37), el tramo bueno en verde y el
+  de taxi en rojo, la marca de ahora, «Ahora vistiéndote · sales en 19 min» y un botón **«he salido»** que guarda
+  la hora del móvil en `store.manana[día]`. Después: «Saliste a las 7:29 · a tiempo» (o «9 min tarde: taxi») y
+  «deshacer». Debajo, «esta semana: 3 de 4 a tiempo · 1 taxi».
+- Dos automatismos nuevos de hábito (`HAB_AUTO`): **salir de casa a tiempo** (ok ≤ 7:31, mínimo hasta el último
+  bus) y **taxi al trabajo, a reducir** (marcado si saliste después del último bus). Salen de la hora apuntada y
+  del plan del viaje, sin pasar por las escenas: las escenas leen los hábitos y se formaba un bucle (la app se
+  quedaba colgada al pintar Hoy).
+- La hora apuntada manda en las escenas: la parada empieza a esa hora y, si fue después del último bus, el viaje
+  es en taxi.
+- Prueba 285 en cadena (tira, hábitos automáticos, deshacer, «he salido»).
+
+**Descartado:** un cronómetro por paso (ducha 15 min, café…): es la versión simplista que ha pedido; cada paso
+sale de la hora de levantarte y el reparto es orientativo.
+
+**Supuestos:** las clases de la tira llevan prefijo `mn` porque `.mbar` ya existía (la barra de dinero, con
+`overflow:hidden`, se comía las horas).
