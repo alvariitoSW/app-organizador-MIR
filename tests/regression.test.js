@@ -12167,6 +12167,40 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la jornada vuelve como parada después de la sesión: a las 10:15 el autobús está en la sesión y a las 14:00 en «Trabajo», parado',
       !!r && r.n === 4 && r.cont.length === 1 && r.cont[0][0] === 10.5 && r.cont[0][1] === 15 && r.cont[0][2] === 'Trabajo' && r.cont[0][4] === 8 && r.en1015 === 'Sesión general' && r.parado1015 && r.en14 === 'Trabajo' && r.cont14 && r.parado14 && r.en1530 === 'Comida en casa', JSON.stringify(r));
   }
+  // 284) LAS ESCENAS DEL DÍA (el modelo del conductor nuevo), EN CADENA: (a) un día de jornada con sesión a las 10:00,
+  // el hábito «Taxi» marcado y el de pantallas: levantarse → ducha → vestirse → puerta 7:31 → parada (último bus
+  // 7:37) → taxi → hospital 8:00; la sesión cae dentro de la jornada; a las 15:00 la bici; el estudio de la rutina
+  // en el escritorio; sin pantallas antes de la cama; (b) el día de guardia no hay bici a las 15:00 (la guardia
+  // empieza al acabar la jornada); (c) el saliente se ducha al llegar en bici; (d) de libre, la ducha es por la
+  // tarde-noche y no pisa nada. Fija: un modelo que se inventaba la mañana en vez de sacarla del viaje.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
+      const ks = { t: kd(3), g: kd(5), s: kd(6), l: kd(8) }, ov = {}; Object.keys(ks).forEach((j) => { ov[j] = (P.store.rotation.shiftByDay || {})[ks[j]]; });
+      const SH = { t: P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0], g: P.store.shifts.filter(P.isGuardia)[0],
+        s: P.store.shifts.filter((x) => /sal/i.test(x.code || '') || /saliente/i.test(x.name || ''))[0], l: P.store.shifts.filter((x) => /libre|^l$/i.test(x.code || '') || /libre/i.test(x.name || ''))[0] };
+      P.__t284 = { ks, ov, mode: P.store.rotation.mode, nEv: P.eventosS().length, nH: P.habitosS().items.length, reg: P.habitosS().registro[ks.t], viaje: P.store.rotation.viaje };
+      P.store.rotation.mode = 'date'; if (SH.t) P.setDayOverride(ks.t, SH.t.id, ''); if (SH.t) P.setDayOverride(ks.g, SH.t.id, ''); if (SH.g) P.setDayOverride(ks.g, SH.g.id, 'urg'); if (SH.s) P.setDayOverride(ks.s, SH.s.id, ''); if (SH.l) P.setDayOverride(ks.l, SH.l.id, '');
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.eventosS().push({ id: 'ev284', titulo: 'Sesión general', hora: '10:00', fin: '10:30', dur: 30, modo: 'fecha', fecha: ks.t, dow: [], color: '#1fa6c4', on: true });
+      P.habitosS().items.push({ id: 'hb284t', nombre: 'Taxi al trabajo', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
+        { id: 'hb284p', nombre: 'Pantallas fuera', icono: '📵', color: '#818cf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      P.habitosS().registro[ks.t] = Object.assign({}, P.habitosS().registro[ks.t] || {}, { hb284t: 'ok' });
+      const seg = (k) => P.diaEscenas(k).seg, ea = (k, e) => seg(k).filter((x) => x.e === e), T = seg(ks.t), par = ea(ks.t, 'parada')[0];
+      const out = { sh: Object.keys(SH).filter((j) => !SH[j]), tipo: P.diaEscenas(ks.t).tipo, orden: T.filter((x) => x.a < 8.1 && x.e !== 'cama').map((x) => x.e).join('>'), parada: par ? [par.a, par.b, par.ultimo] : null, taxi: ea(ks.t, 'taxi').map((x) => [x.a, x.b]),
+        bus: ea(ks.t, 'bus').length, sesion: ea(ks.t, 'sesion').map((x) => [x.a, x.b, x.dentro]), bici: ea(ks.t, 'bici').map((x) => [x.a, x.b]), escritorio: ea(ks.t, 'escritorio').length, leer: ea(ks.t, 'leer').length, movil: ea(ks.t, 'movil').length,
+        e1015: P.estadoDe(ks.t, 10.25).e, e14: P.estadoDe(ks.t, 14).e, e0733: P.estadoDe(ks.t, 7.7).e, finJ: (ea(ks.t, 'cabina')[0] || {}).b, regleta: P.mananaRegleta(ks.t).map((x) => x.txt).join('>'),
+        gBici15: ea(ks.g, 'bici').filter((x) => Math.abs(x.a - 15) < 0.01).length, gTipo: P.diaEscenas(ks.g).tipo,
+        sTipo: P.diaEscenas(ks.s).tipo, sDucha: (function () { const b = ea(ks.s, 'bici')[0], du = ea(ks.s, 'ducha')[0]; return b && du ? [b.a, b.b, du.a] : null; })(),
+        lTipo: P.diaEscenas(ks.l).tipo, lDucha: ea(ks.l, 'ducha').map((x) => [x.a, x.b]), lPisa: ea(ks.l, 'ducha').some((d) => seg(ks.l).some((x) => x.e !== 'ducha' && x.e !== 'salon' && x.e !== 'casa' && x.a < d.b - 1e-6 && x.b > d.a + 1e-6)) };
+      const t2 = P.__t284; Object.keys(ks).forEach((j) => { P.setDayOverride(ks[j], t2.ov[j] ? t2.ov[j].shift : null, t2.ov[j] ? t2.ov[j].guard : ''); }); P.store.rotation.mode = t2.mode; P.eventosS().length = t2.nEv; P.habitosS().items.length = t2.nH;
+      if (t2.reg) P.habitosS().registro[ks.t] = t2.reg; else delete P.habitosS().registro[ks.t]; P.store.rotation.viaje = t2.viaje; delete P.__t284; P.save(); return out; });
+    check('la mañana de jornada sale del viaje: ducha → vestirse → puerta 7:31 → parada (último bus 7:37) → taxi (hábito marcado) → hospital; la sesión cae dentro; la bici al acabar; estudio y sin pantallas',
+      r.tipo === 'trabajo' && /^(ducha>)?(cafe>)?vestir>parada>taxi/.test(r.orden) && r.parada && Math.abs(r.parada[0] - 7.517) < 0.01 && Math.abs(r.parada[1] - 7.583) < 0.01 && Math.abs(r.parada[2] - 7.617) < 0.01 && r.taxi.length === 1 && r.bus === 0 &&
+      r.sesion.length === 1 && r.sesion[0][2] && Math.abs(r.sesion[0][0] - 10) < 0.01 && r.bici.length === 1 && r.finJ != null && Math.abs(r.bici[0][0] - r.finJ) < 0.01 && r.escritorio === 1 && r.leer >= 1 && r.movil === 0 &&
+      r.e1015 === 'sesion' && r.e14 === 'cabina' && r.e0733 === 'taxi' && /^Levantarse>(Ducha>)?(Café>)?Vestirse>Salir de casa>Taxi>Último bus>Hospital$/.test(r.regleta), JSON.stringify(r));
+    check('de guardia no hay bici a las 15:00; el saliente se ducha al llegar en bici; de libre la ducha es por la tarde-noche y no pisa nada',
+      r.gTipo === 'guardia' && r.gBici15 === 0 && r.sTipo === 'saliente' && r.sDucha && Math.abs(r.sDucha[2] - r.sDucha[1]) < 0.01 && r.lTipo === 'libre' && r.lDucha.length === 1 && r.lDucha[0][0] >= 18 && !r.lPisa, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

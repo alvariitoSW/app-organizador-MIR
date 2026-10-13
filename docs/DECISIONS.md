@@ -467,3 +467,27 @@ Ahora `ruta()` añade, tras cada cosa que cae dentro de un turno, una parada de 
 tarjetas: conductor 449, asistente 399, para hoy 332, lo que viene 333.
 
 **Supuestos:** una vuelta de menos de 15 min no cuenta (dos sesiones seguidas son una parada y otra).
+
+## 2026-10-13 · Tanda 1 · `diaEscenas` y `estadoDe`: el modelo del día que moverá el conductor y la estación
+
+**Elegido:**
+- `diaEscenas(día)` ordena en escenas lo que la app ya sabe, sin decidir nada nuevo: la cama (las noches y la
+  siesta), la mañana de un turno (ducha salvo de libre o saliente, café si no hay desayuno apuntado, vestirse,
+  parada desde «salir de casa» 7:31, bus 7:35 con el último bus 2 min después, o taxi si el hábito «Taxi» está
+  marcado ese día; nunca andando), el turno (cabina o guardia) con lo que cae dentro (sesión, comida), la bici al
+  acabar (y la ducha al llegar de saliente o de guardia), la ducha tras el gym, la rutina del tipo de día
+  (estudio → escritorio, paseo, «pantallas fuera»), la ducha de libre en el último hueco de la tarde-noche, y
+  lo demás en casa: salón (la play) de tarde, el móvil en la cama la última media hora o «sin pantallas» si las
+  apagas. La jornada y la guardia que empieza al acabar son un solo bloque (no hay bici a las 15:00).
+- `estadoDe(día, hora)`: la escena más concreta que contiene esa hora (la sesión manda sobre la jornada).
+- `mananaRegleta(día)`: la cadena que explica por qué llegar a las 8 es salir a las 7:31 (levantarse, ducha,
+  café, vestirse, salir, bus o taxi, último bus, hospital).
+- `habitosEscena(día)`: qué hábitos tienen sitio en el dibujo, por su nombre o su automatismo (taxi, fumar/4:20,
+  estudio, pantallas, agua, cama). Si quitas el hábito, su escena desaparece sola.
+- Prueba 284 en cadena con cuatro días (jornada con sesión y taxi, guardia, saliente, libre).
+
+**Descartado:** inventar la hora de salir de casa: sale de Ajustes → Ir y volver, que ya existía.
+
+**Supuestos:** el último bus que te vale pasa 2 min después del tuyo; la ducha dura 15 min y el café 15; la bici
+tarda lo que el viaje (20 min); «sin pantallas» solo si tienes el hábito o la rutina lo dice; de madrugada sin
+noche apuntada no se inventa nada.
