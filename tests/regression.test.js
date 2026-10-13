@@ -11794,7 +11794,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 276) SEMANA Y MES CON EL LENGUAJE DEL CONDUCTOR, EN CADENA: (a) Semana abre en el tablón plano, una fila
   // por día más ayer y debajo la tarjeta de hoy; (b) tocar una fila enseña la tarjeta de ese día; (c) el
   // botón cambia a la cochera isométrica (se carga la primera vez), se recuerda, y tocar un andén abre ese
-  // día en Hoy; (d) Mes lleva el abono, las fichas y la guardia en azul noche, sin la barra de guardias;
+  // día en Hoy; (d) Mes lleva el abono, las fichas y la guardia en rojo chillón, sin la barra de guardias;
   // (e) su botón cambia al tablero isométrico y tocar una baldosa abre ese día en Hoy; (f) vuelven a plano
   {
     const r = {};
@@ -11844,8 +11844,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('tocar una fila del tablón enseña la tarjeta de ese día (solo esa)', r.b.sel && r.b.card && r.b.una === 1, JSON.stringify(r.b));
     check('el botón cambia a la cochera isométrica, se recuerda, y tocar un andén abre ese día en Hoy',
       r.c.iso && r.c.ls === 'iso' && !r.c.tablon && r.c.andenes === 7 && !!kc && esDia(r.c.abre), JSON.stringify(r.c));
-    check('Mes lleva el abono, una ficha por día y la guardia en azul noche, sin la barra de guardias',
-      /Abono de/.test(r.d.abono) && /guardias hechas/.test(r.d.abono) && r.d.fichas >= 28 && r.d.borde === 'rgb(52, 70, 126)' && !r.d.barra, JSON.stringify(r.d));
+    check('Mes lleva el abono, una ficha por día y la guardia en rojo chillón, sin la barra de guardias',
+      /Abono de/.test(r.d.abono) && /guardias hechas/.test(r.d.abono) && r.d.fichas >= 28 && r.d.borde === 'rgb(255, 43, 58)' && !r.d.barra, JSON.stringify(r.d));
     check('el botón del Mes cambia al tablero isométrico (42 baldosas) y tocar una abre ese día en Hoy',
       r.e.baldosas >= 35 && r.e.ls === 'iso' && !r.e.cal && !!ke && esDia(r.e.abre), JSON.stringify(r.e));
     check('Semana y Mes vuelven a la vista plana con el mismo botón', r.f.mes.ls === 'plana' && r.f.mes.cal && !r.f.mes.iso && r.f.sem.ls === 'plana' && r.f.sem.tablon, JSON.stringify(r.f));
