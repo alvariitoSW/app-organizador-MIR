@@ -8170,14 +8170,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save(); });
     await gotoTab('hoy');
     await page.waitForTimeout(400);
+    /* «Próximos» es la carretera «Lo que viene»: el evento va como señal (cada uno en su cartel, no en filas) */
+    await page.waitForSelector('#main .lqv #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
     const hoyCorto = await page.evaluate(() => {
-      const filas = [...document.querySelectorAll('#main .proxf')];
-      return { filas: filas.length,
-        deDosLineas: filas.filter((f) => f.getBoundingClientRect().height > 34).length,
+      const svg = document.querySelector('#main .lqv #carrSlot .ct svg');
+      return { filas: svg && /Un evento con un nombre/.test(svg.textContent) ? 1 : 0,
+        deDosLineas: 0,
         sinElRelleno: !/Eventos puntuales que has apuntado/.test(document.getElementById('main').innerText),
         sinTarjetaSol: !document.querySelector('#main details.solplg') && !/El sol hoy/.test(document.getElementById('main').innerText) };
     });
-    check('en «Hoy», cada evento de «Próximos» ocupa una línea y el sol ya no es una tarjeta al final (lo dice el reloj)',
+    check('en «Hoy», el evento que viene va como señal en la carretera y el sol ya no es una tarjeta al final (lo dice el reloj)',
       hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno && hoyCorto.sinTarjetaSol, JSON.stringify(hoyCorto));
 
     // y el sol sigue entero: tocar el arco amarillo del reloj abre su hoja, con el arco y el sitio
