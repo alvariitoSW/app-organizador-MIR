@@ -5514,8 +5514,9 @@ function mananaHTML(key,esHoy){
   const h0=m.wake-0.1,h1=Math.max(m.ultimo+0.3,m.salio!=null?m.salio+0.15:0),pct=function(x){return Math.round(Math.max(0,Math.min(1,(x-h0)/(h1-h0)))*1000)/10;};
   const hitos=m.regleta.filter(function(x){return x.e!=='cabina'&&x.e!=='guardia';});
   /* el bus y el último van pegados a la puerta: su hora va abajo, con el nombre, para no pisarse arriba */
-  const marcas=hitos.map(function(x){const u=x.e==='ultimo',hh=hCortaHM(hm(Math.round(x.h*60))),abajo=u||x.e==='bus'||x.e==='taxi';
-    return '<i class="mnh'+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(abajo?'':'<b>'+esc(hh)+'</b>')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
+  const marcas=hitos.map(function(x,i){const u=x.e==='ultimo',hh=hCortaHM(hm(Math.round(x.h*60))),abajo=u||x.e==='bus'||x.e==='taxi';
+    const fila=u?2:(x.e==='bus'||x.e==='taxi')?1:x.e==='parada'?0:(i%2),arriba=x.e==='cama'||x.e==='parada';   /* la hora arriba solo en levantarse y en la puerta: lo demás se lee abajo */
+    return '<i class="mnh f'+fila+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(arriba?'<b>'+esc(hh)+'</b>':'')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
   const tramo='<span class="mntr ok" style="left:'+pct(m.wake)+'%;width:'+(pct(plan)-pct(m.wake))+'%"></span><span class="mntr mal" style="left:'+pct(m.ultimo)+'%;width:'+(100-pct(m.ultimo))+'%"></span>';
   let linea,boton='';
   if(m.salio!=null){const tarde=m.salio>plan+1e-6,taxi=m.salio>m.ultimo+1e-6,dif=Math.round((m.salio-plan)*60);
