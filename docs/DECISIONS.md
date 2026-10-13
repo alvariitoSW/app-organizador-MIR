@@ -444,3 +444,26 @@ jornada…) y es lo que cambia la ficha; un color por tipo de guardia (URG/UMI) 
 
 **Supuestos:** el color del autobús de la jornada es el del letrero del techo (la carrocería sigue clara para que
 se lea en las dos pieles); las dos pieles usan el mismo color tuyo, con las sombras de cada una.
+
+## 2026-10-13 · Rediseño de Hoy (conductor y estación): plan en cinco tandas, y la tanda 0
+
+**Pedido:** rediseñar Hoy con /anatomy y /redisena-seccion manteniendo el autobús: la mañana real (ducha, café,
+vestirse, salir 7:31, bus 7:35 o taxi), el taxi como hábito que desaparece si se quita, la cochera por dentro
+(cama, ducha, móvil, estudio, play), la cabina con manos y la rotación, la sesión que no dura todo el día, la bici
+a las 15:00, el parque de entrenamiento. Nunca andando (está lejos); dos duchas solo cuando hay gym.
+
+**Elegido (plan):** tanda 0 el fallo de la sesión y las medidas; tanda 1 `estadoDe(día, minuto)`, modelo puro
+del día; tanda 2 hoja de escenas con /anatomy y visto bueno; tanda 3 conductor; tanda 4 estación por dentro;
+tanda 5 hábitos dentro del dibujo + pruebas + despliegue. Es un «Epic» de /anatomy (6 h o más) troceado en
+tandas de 2–4 h que se despliegan solas.
+
+**Tanda 0, hecha.** No era diseño: el autobús se quedaba aparcado en el cartel «10:00 Sesión» hasta las 15:00
+(la parada tenía «hold» hasta el fin de la unión de intervalos) aunque el salpicadero dijera «Ahora: Trabajo».
+Ahora `ruta()` añade, tras cada cosa que cae dentro de un turno, una parada de vuelta al turno (`cont`, con
+`padre`), y en la línea de hoy esa vuelta no es otra bolita (el autobús vuelve a la del turno). Prueba 283
+(módulo, en cadena con el conductor cargado); con la ruta anterior cae.
+
+**Medido antes (412 px, jornada con sesión, 14:00):** Hoy 1 580 px (1,73 pantallas), 50 botones, 0 campos;
+tarjetas: conductor 449, asistente 399, para hoy 332, lo que viene 333.
+
+**Supuestos:** una vuelta de menos de 15 min no cuenta (dos sesiones seguidas son una parada y otra).

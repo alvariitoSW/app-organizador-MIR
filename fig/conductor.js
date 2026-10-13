@@ -107,8 +107,15 @@
   /* ---------- la ruta: paradas y cocheras en el orden en que empiezan ---------- */
   function ruta(D) {
     const it = (D.dia || []).filter((e) => e.b > e.a).map((e) => Object.assign({}, e));
+    /* lo que cae dentro de un turno (la sesión, la comida) es una parada, y después EL TURNO VUELVE como
+       parada: sin esto, el autobús se quedaba en el cartel «10:00 Sesión» hasta las 15:00 */
+    const vuelta = [];
+    it.filter((T) => TURNO(T.k)).forEach((T) => {
+      const dentro = it.filter((c) => c !== T && !TURNO(c.k) && c.a > T.a + 1e-6 && c.b < T.b - 1e-6).sort((x, y) => x.a - y.a);
+      dentro.forEach((c, j) => { const fin = dentro[j + 1] ? dentro[j + 1].a : T.b; if (fin - c.b >= 0.25) vuelta.push(Object.assign({}, T, { a: c.b, b: fin, cont: true, padre: T.a })); });
+    });
     const no = (D.noches || []).filter((n) => n.b > n.a).map((n) => Object.assign({ dep: true }, n));
-    const est = it.concat(no).sort((x, y) => x.a - y.a || (x.dep ? 1 : 0) - (y.dep ? 1 : 0));
+    const est = it.concat(vuelta, no).sort((x, y) => x.a - y.a || (x.dep ? 1 : 0) - (y.dep ? 1 : 0));
     est.forEach((e, i) => { e.s = i * GAP; e.amb = ambDe(e, it); });
     /* lo que tiene algo en marcha: mientras dure, el autobús no se mueve */
     const iv = est.map((e) => [e.a, e.b]).sort((x, y) => x[0] - y[0]), union = [];
@@ -500,13 +507,15 @@
       R_.mir.setAttribute("class", "cd-mirt" + (pend ? " cd-pend" : ""));
       R_.mir.parentNode.setAttribute("data-i", pv ? pv.i : "");
       /* la línea de hoy: una bolita por parada (verde hecha, ámbar sin apuntar, amarilla la próxima) */
-      const E = R.est.filter((e) => !e.dep), n = E.length, x = (i) => 150 + (400 * (i + 0.5)) / Math.max(1, n);
+      const E = R.est.filter((e) => !e.dep && !e.cont), n = E.length, x = (i) => 150 + (400 * (i + 0.5)) / Math.max(1, n);   /* la vuelta al turno no es otra bolita */
       let r = n ? '<path class="cd-stripl" d="M' + x(0).toFixed(1) + " 22H" + x(n - 1).toFixed(1) + '"/>' : "";
       E.forEach((e, i) => {
         const cls = e.h ? "cd-sdone" : (e.m && e.b <= ahora && D.modo !== "futuro") ? "cd-spend" : (igual(e, nx) || esta(st.enCurso, e)) ? "cd-snext" : e.b <= t ? "cd-spast" : "cd-sdot";
         r += '<circle class="' + cls + '" cx="' + x(i).toFixed(1) + '" cy="22" r="' + (esta(st.enCurso, e) ? 5 : 3.6) + '"/>';
       });
-      if (n) { const pos = E.findIndex((e) => e.s >= c.s - 1e-6), bi = pos < 0 ? n - 0.5 : clamp(pos - (E[pos].s - c.s) / GAP, -0.5, n - 0.5); r += '<path class="cd-sbus" d="M' + (x(bi) - 6).toFixed(1) + ' 15h12v7h-12z"/>'; }
+      /* parado en la vuelta a un turno, el autobús de la línea va en la bolita de ese turno */
+      const cur = c.k >= 0 ? R.est[c.k] : null, cs = cur && cur.cont && c.parado ? ((E.find((e) => e.k === cur.k && e.a === cur.padre) || cur).s) : c.s;
+      if (n) { const pos = E.findIndex((e) => e.s >= cs - 1e-6), bi = pos < 0 ? n - 0.5 : clamp(pos - (E[pos].s - cs) / GAP, -0.5, n - 0.5); r += '<path class="cd-sbus" d="M' + (x(bi) - 6).toFixed(1) + ' 15h12v7h-12z"/>'; }
       R_.route.innerHTML = r;
     }
 

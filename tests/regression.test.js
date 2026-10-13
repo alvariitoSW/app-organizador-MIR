@@ -12153,6 +12153,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.b.calcol && r.b.calcol.guardia === '#00b4ff' && r.b.calcol.saliente === '#1f8a4f' && r.b.borde === 'rgb(0, 180, 255)' && r.b.tren === '#00b4ff' && r.b.tejado === '#1f8a4f' && r.b.v === '#00b4ff' && r.b.cfSyms === 'cf' && r.b.iso === '#00b4ff' && /00b4ff/.test(r.b.mojon), JSON.stringify(r.b));
     check('«colores de serie» devuelve el tren al rojo (el de la piel que esté puesta)', r.c.calcol && !Object.keys(r.c.calcol).length && r.c.v === '#ff2b3a' && /^#ff(2b3a|3d4a)$/.test(r.c.tren) && r.c.css === '', JSON.stringify(r.c));
   }
+  // 283) EL AUTOBÚS VUELVE A LA JORNADA DESPUÉS DE LA SESIÓN, EN CADENA: cargado el conductor en Hoy, la ruta de un
+  // día con jornada 8–15 y una sesión 10:00–10:30 tiene una parada más («Trabajo» a las 10:30, la vuelta); a las
+  // 10:15 el autobús está en la sesión y a las 14:00 en la vuelta, parado. Fija: se quedaba en el cartel
+  // «10:00 Sesión» hasta las 15:00 aunque el salpicadero dijera «Ahora: Trabajo».
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForFunction(() => !!(window.Conductor && window.Conductor.ruta), null, { timeout: 8000 }).catch(() => {});
+    const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.ruta) return null;
+      const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 10, b: 10.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 15.33, b: 16, t: 'Comida en casa', k: 'meal', i: 2 }], noches: [] };
+      const R = C.ruta(D), E = R.est, cont = E.filter((e) => e.cont), c1 = C.camDe(R, 10.25), c2 = C.camDe(R, 14), c3 = C.camDe(R, 15.5);
+      return { n: E.length, cont: cont.map((e) => [e.a, e.b, e.t, e.k, e.padre]), en1015: E[c1.k] && E[c1.k].t, parado1015: c1.parado, en14: E[c2.k] && E[c2.k].t, cont14: !!(E[c2.k] && E[c2.k].cont), parado14: c2.parado, en1530: E[c3.k] && E[c3.k].t }; });
+    check('la jornada vuelve como parada después de la sesión: a las 10:15 el autobús está en la sesión y a las 14:00 en «Trabajo», parado',
+      !!r && r.n === 4 && r.cont.length === 1 && r.cont[0][0] === 10.5 && r.cont[0][1] === 15 && r.cont[0][2] === 'Trabajo' && r.cont[0][4] === 8 && r.en1015 === 'Sesión general' && r.parado1015 && r.en14 === 'Trabajo' && r.cont14 && r.parado14 && r.en1530 === 'Comida en casa', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
