@@ -3668,5 +3668,6 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .tpt.ten{opacity:.5;text-decoration:line-through}
 .tpt.on{border-color:var(--ok);color:var(--ok)}
 /* HOY desde el asiento del conductor (fig/conductor.html): el marco tiene la proporción del dibujo */
-.hoybusf{display:block;width:100%;aspect-ratio:600/440;border:0;border-radius:14px;background:#0a0e16;margin-top:8px;color-scheme:normal}
+.hoybus{margin-top:8px;min-height:120px}
+.asck.corto .kss{margin-bottom:2px}
 .hoyseg button{white-space:nowrap}

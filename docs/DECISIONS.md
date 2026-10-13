@@ -155,3 +155,40 @@ al repintar molesta); la tira corta de «¿Cómo amaneces?» (sigue la tarjeta d
 **Supuestos:** en otros días que no son hoy, el conductor se pone a las 10:00; la noche dura tu
 objetivo de sueño si «a la cama» no tiene hora de fin; las cosas sin hora (un entreno sin hora) no
 son parada.
+
+## 2026-10-13 · El conductor, con el informe aplicado
+
+**Contexto:** «Aplica todas las mejoras del documento»: el informe de errores, errores de concepto,
+fallos, mejoras y partes que faltan del conductor (C1–C6, F1–F7, P1–P7, M1–M7).
+
+**Elegido:**
+- **Sin marco.** El conductor es un módulo (`fig/conductor.js`) que se pinta dentro de la página y
+  se crea una sola vez: volver a pintar Hoy mueve el mismo dibujo a su hueco y le pasa los datos.
+  Se acaba el parpadeo, el postMessage y la dirección larga. `fig/conductor.html` queda como
+  envoltorio para la maqueta.
+- **El modelo del día es el de la app:** la guardia o el turno de ayer que acaban hoy son el primer
+  servicio (el saliente empieza de servicio hasta el relevo); de guardia por la noche el autobús va
+  de «SERVICIO NOCTURNO ☾», no a la cochera; la siesta del saliente es «SIESTA EN LA COCHERA»;
+  anoche va de tu hora de cama de ayer a la de levantarte.
+- **Dos cosas a la vez** (una comida dentro del turno): el autobús se queda en la parada mientras
+  dure algo y el visor dice las dos («Comida · en trabajo hasta 15:00»).
+- **Un toque hace lo rápido:** en el cartel de una comida con platos que ya toca, la apunta; en el
+  de un entreno con rutina, lo empieza. Mantener pulsado abre la hoja. Lo hecho lleva ✓ y lo que
+  pasó sin apuntar pregunta «¿la apuntas?» (también en el retrovisor).
+- **Lo que faltaba:** comida del día (kcal frente al plan) en el salpicadero, señales en la cuneta
+  (las órdenes de la guardia o el último café), la nota con el entreno sin hora, «viendo las HH:MM ·
+  volver» al arrastrar, día pasado («DÍA TERMINADO, n de m hechas») y futuro, tema claro, teclado y
+  lector de pantalla (las paradas también como botones), y a las 24:00 pasa solo al día siguiente.
+- Con el conductor, «¿Cómo amaneces?» va en una fila (solo la escala); «ánimo y lo que te propones»
+  la abre entera.
+- **Arreglo de paso:** la guardia de la agenda siempre sale al día siguiente. Antes, si la hora de
+  salida era igual o mayor que la de entrada (la de 24 h de 09:00 a 09:00, la UMI de sábado de 10:00
+  a 11:15) se leía como del mismo día: duraba un cuarto de hora, el reloj no la daba por «en curso»
+  y el saliente no empezaba de servicio.
+
+**Descartado:** mantener el marco (cada repintado lo recargaba y no compartía el tema ni el
+teclado); una tercera pestaña para la vista (sigue el interruptor de tres).
+
+**Supuestos:** «lo rápido» solo desde una hora antes de la parada y en el día de hoy; las cosas de
+madrugada son de la guardia de esta noche si caen dentro de ella y si no, no son parada; las
+señales sin guardia son solo el último café, seis horas antes de la cama.

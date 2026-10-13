@@ -11625,48 +11625,102 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.d.n >= 5 && /Lenteja/.test(r.d.txt) && !/\d+\s*(g|kg|ml)\b/.test(r.d.txt) && !!r.d.id && r.d.enComprar.marca && r.d.enComprar.vista !== false, JSON.stringify(r.d));
     check('«atrás» desde la lectura de tus platos vuelve a Plan', r.e.antes === 'leer' && r.e.despues.v === '' && r.e.despues.tab === 'sem' && r.e.despues.f === 'food' && r.e.despues.card, JSON.stringify(r.e));
   }
-  // 275) HOY DESDE EL ASIENTO DEL CONDUCTOR, EN CADENA: (a) sin haber elegido nada, Hoy abre en el
-  // conductor con el día de la agenda en la dirección y sin la tarjeta de Sueño (va en el salpicadero);
-  // (b) tocar el visor de la próxima parada abre la hoja de ESA cosa; (c) tocar el depósito abre Sueño;
-  // (d) elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño
+  // 275) HOY DESDE EL ASIENTO DEL CONDUCTOR (módulo dentro de la página, sin marco), EN CADENA:
+  // (a) sin haber elegido nada, Hoy abre en el conductor con el día de la agenda y sin la tarjeta de Sueño;
+  // (b) mantener el visor de la próxima parada abre la hoja de ESA cosa; (c) el depósito abre Sueño;
+  // (d) volver a pintar Hoy no recarga el conductor (el mismo nodo); (e) de guardia por la noche va
+  // «de servicio» y no en la cochera; (f) saliente: de servicio hasta el relevo; (g) sin la noche apuntada
+  // lo dice; (h) un toque en el cartel de una comida la apunta; (i) el «¿cómo amaneces?» va corto;
+  // (j) elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño
   {
     const r = {};
-    await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.removeItem('guardias-hoymodo2'); const P = window.PG;
-      P.ui.hoyModo = null; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.render(); });
-    await page.waitForTimeout(300);
-    r.a = await page.evaluate(() => { const f = document.querySelector('#main .hoybusf'), src = f ? decodeURIComponent(f.getAttribute('src')) : '';
-      let d = []; try { d = JSON.parse(/[#&]d=(\[.*\])/.exec(src)[1]); } catch (e) {}
-      return { hay: !!f, seg: [...document.querySelectorAll('.hoyseg button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'),
-        n: d.filter((e) => e.k !== 'sleep').length, conI: d.filter((e) => e.k !== 'sleep').every((e) => typeof e.i === 'number'), snhoy: !!document.querySelector('#main .snhoy') }; });
-    // (b) a las 10:24 (la hora va en la dirección): lo próximo es lo primero de la agenda que empieza después
-    const esperado = await page.evaluate(() => { const f = document.querySelector('#main .hoybusf'); if (!f) return null;
-      const src = decodeURIComponent(f.getAttribute('src')), d = JSON.parse(/[#&]d=(\[.*\])/.exec(src)[1]);
-      const sig = d.filter((e) => e.k !== 'sleep' && e.a > 10.4).sort((a, b) => a.a - b.a)[0];
-      /* cambiar solo lo de detrás de # no recarga el marco: primero en blanco y luego con la hora */
-      const nuevo = f.getAttribute('src').replace(/&t=[0-9.]+/, '&t=10.4').replace('&vivo', '');
-      f.setAttribute('src', 'about:blank'); setTimeout(() => f.setAttribute('src', nuevo), 50); return sig ? sig.i : -1; });
-    await page.waitForTimeout(900);
-    const fr = page.frames().find((x) => /conductor\.html/.test(x.url()));
-    if (fr && esperado >= 0) { await fr.click('#nxb'); await page.waitForTimeout(300); }
-    r.b = await page.evaluate(() => ({ it: window.PG.ui.hoyIt, hoja: !!document.querySelector('.hojadia, #hojaDia, [data-a="hoy-it-x"], .hoyhoja') }));
+    // la hora del conductor se fija a mano: la de verdad depende de cuándo corra la suite
+    const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false })); }, h);
+    const txt = () => page.evaluate(() => { const q = (s) => { const e = document.querySelector('#main .cd [data-r="' + s + '"]'); return e ? e.textContent : ''; };
+      return { nxl: q('nxl'), nxb: q('nxb'), nxa: q('nxa'), sval: q('sval') }; });
+    const antes = await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.removeItem('guardias-hoymodo2'); const P = window.PG;
+      const hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
+      const a = { hoy: P.dayOverride(hoy), ay: P.dayOverride(ay), sr: P.store.suenoReal[hoy] ? JSON.parse(JSON.stringify(P.store.suenoReal[hoy])) : null };
+      P.setDayOverride(ay, 'sh-l', ''); P.setDayOverride(hoy, 'sh-t', '');
+      P.store.suenoReal[hoy] = { h: 7.5, acostar: '23:15', desp: '06:45', tramos: [[23.25, 30.75, 0]], guardia: false, kss: 0 };
+      P.ui.hoyModo = null; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.ui.asistMas = false; P.save(); P.render(); return a; });
+    await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => { const C = window.PG.conductor(), d = (C.d && C.d.dia) || [];
+      return { hay: !!document.querySelector('#main #hoyBusSlot .cd svg'), marco: !!document.querySelector('#main iframe'),
+        seg: [...document.querySelectorAll('.hoyseg button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'),
+        n: d.filter((e) => e.i !== '').length, conI: d.filter((e) => e.i !== '').every((e) => typeof e.i === 'number'), snhoy: !!document.querySelector('#main .snhoy') }; });
+    // (b) a las 10:24, mantener pulsado el visor: la hoja de lo que pone el visor (sin atajo de apuntar)
+    await pon(10.4);
+    r.b = { visor: (await txt()).nxb };
+    await page.locator('#main .cd [data-o="proxima"]').click({ delay: 600 }).catch(() => {});
+    await page.waitForTimeout(200);
+    r.b.it = await page.evaluate(() => { const P = window.PG, it = P.ui.hoyIt, d = P.conductor().d.dia;
+      const e = it ? d.filter((x) => x.i === it.i)[0] : null; return e ? e.t : null; });
     // (c) el depósito de sueño
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
-    await page.waitForTimeout(900);
-    const fr2 = page.frames().find((x) => /conductor\.html/.test(x.url()));
-    if (fr2) { await fr2.click('#gval'); await page.waitForTimeout(300); }
+    await page.locator('#main .cd [data-o="sueno"]').click().catch(() => {});
+    await page.waitForTimeout(150);
     r.c = await page.evaluate(() => window.PG.ui.hoyVista);
-    // (d) «Reloj» se recuerda
-    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
+    // (d) volver a Hoy y pintar dos veces: el mismo conductor, no uno nuevo
+    r.d = await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); const el = P.conductor().c.el; P.render(); P.render();
+      return { mismo: P.conductor().c.el === el, dentro: document.querySelector('#main #hoyBusSlot .cd') === el }; });
+    // (i) el «¿cómo amaneces?» va corto; «ánimo y lo que te propones» lo abre entero
+    r.i = { corto: await page.evaluate(() => !!document.querySelector('#main .asck.corto')) };
+    await page.click('#main [data-a="asist-mas"]').catch(() => {});
+    r.i.largo = await page.evaluate(() => !!document.querySelector('#main .asck') && !document.querySelector('#main .asck.corto'));
+    // (h) un toque en el cartel de la primera comida sin apuntar, a su hora, la apunta
+    const comida = await page.evaluate(() => { const d = window.PG.conductor().d.dia.filter((e) => e.m === 'meal' && !e.h)[0]; return d ? { i: d.i, a: d.a } : null; });
+    r.h = { comida: !!comida };
+    if (comida) {
+      await pon(comida.a);
+      await page.evaluate((i) => { const g = document.querySelector('#main .cd [data-o="ev"][data-i="' + i + '"]'); if (!g) return;
+        g.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10 })); g.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 10 })); }, comida.i);
+      await page.waitForTimeout(200);
+      r.h.hecha = await page.evaluate((i) => { const P = window.PG, k = P.iso(new Date()), x = P.hoyItems(k, P.dayInfo(k))[i]; return !!(x && x.hecha); }, comida.i);
+      r.h.hoja = await page.evaluate(() => !!window.PG.ui.hoyIt);
+    }
+    // (g) sin la noche apuntada, el depósito lo dice
+    await page.evaluate(() => { const P = window.PG; delete P.store.suenoReal[P.iso(new Date())]; P.render(); });
+    r.g = (await txt()).sval;
+    // (e) de guardia, a las 23:40: de servicio, no en la cochera
+    await page.evaluate(() => { const P = window.PG; P.setDayOverride(P.iso(new Date()), 'sh-g', 'urg'); P.render(); });
+    await pon(23.67);
+    r.e = await txt();
+    // (f) saliente (la guardia fue ayer): a las 07:30 aún de servicio, hasta el relevo
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
+      P.setDayOverride(hoy, 'sh-s', ''); P.setDayOverride(ay, 'sh-g', 'urg'); P.render(); });
+    await pon(7.5);
+    r.f = await txt();
+    // (k) la guardia de sábado sale al día siguiente: de 09:00 a 09:00 (24 h) y la UMI de 10:00 a 11:15. Antes
+    // la hora de salida se leía como del mismo día: el conductor la pintaba de un cuarto de hora y el saliente
+    // no empezaba de servicio
+    r.k = await page.evaluate(() => { const P = window.PG, sab = '2027-03-06', dom = '2027-03-07', o1 = P.dayOverride(sab), o2 = P.dayOverride(dom), out = {};
+      const g = (k) => P.hoyBusDatos(k, P.dayInfo(k), false).dia.filter((e) => e.k === 'guard').map((e) => Math.round((e.b - e.a) * 4) / 4 + '@' + e.a);
+      P.setDayOverride(sab, 'sh-g', 'urg'); P.setDayOverride(dom, 'sh-s', ''); out.urg = g(sab); out.sal = g(dom);
+      P.setDayOverride(sab, 'sh-g', 'umi'); P.setDayOverride(dom, 'sh-s', ''); out.umi = g(sab);
+      const it = P.hoyItems(sab, P.dayInfo(sab)).filter((x) => x.tipo === 'guard')[0]; out.it = it ? P.finMin(it) - it.m2 : null;
+      P.setDayOverride(dom, o2 ? o2.shift : null, o2 ? o2.guard : ''); P.setDayOverride(sab, o1 ? o1.shift : null, o1 ? o1.guard : ''); P.render(); return out; });
+    // (j) «Reloj» se recuerda
     await page.click('.hoyseg [data-v="reloj"]').catch(() => {});
     await page.waitForTimeout(150);
-    r.d = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main .hoybusf'), snhoy: !!document.querySelector('#main .snhoy') }));
-    await page.evaluate(() => { sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo2', 'reloj'); const P = window.PG; P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.render(); });
-    check('Hoy abre de serie en el conductor, con el día de la agenda y sin repetir la tarjeta de Sueño',
-      r.a.hay && /^🚌 Conductor\*\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
-    check('en el conductor, tocar la próxima parada abre la hoja de esa cosa del día',
-      esperado >= 0 && r.b.it && r.b.it.i === esperado, JSON.stringify({ esperado, b: r.b }));
+    r.j = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main .cd'), snhoy: !!document.querySelector('#main .snhoy') }));
+    await page.evaluate((a) => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
+      P.setDayOverride(ay, a.ay ? a.ay.shift : null, a.ay ? a.ay.guard : ''); P.setDayOverride(hoy, a.hoy ? a.hoy.shift : null, a.hoy ? a.hoy.guard : '');
+      if (a.sr) P.store.suenoReal[hoy] = a.sr; else delete P.store.suenoReal[hoy];
+      sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo2', 'reloj'); P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.asistMas = false; P.save(); P.render(); }, antes);
+    check('Hoy abre de serie en el conductor, dentro de la página (sin marco), con el día de la agenda y sin repetir la tarjeta de Sueño',
+      r.a.hay && !r.a.marco && /^🚌 Conductor\*\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
+    check('en el conductor, mantener la próxima parada abre la hoja de lo que pone el visor', !!r.b.it && r.b.visor.indexOf(r.b.it) >= 0, JSON.stringify(r.b));
     check('en el conductor, tocar el depósito de sueño abre Sueño', r.c === 'sueno', JSON.stringify(r.c));
-    check('elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño', r.d.ls === 'reloj' && !r.d.bus && r.d.snhoy, JSON.stringify(r.d));
+    check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
+    check('con el conductor, «¿cómo amaneces?» va corto y «ánimo y lo que te propones» lo abre', r.i.corto && r.i.largo, JSON.stringify(r.i));
+    check('un toque en el cartel de una comida, a su hora, la apunta sin abrir la hoja', r.h.comida && r.h.hecha && !r.h.hoja, JSON.stringify(r.h));
+    check('sin la noche apuntada, el depósito de sueño dice «sin apuntar»', /sin apuntar/.test(r.g), JSON.stringify(r.g));
+    check('de guardia a las 23:40 el autobús va de servicio nocturno, no a la cochera', /SERVICIO NOCTURNO/.test(r.e.nxl) && !/COCHERA/.test(r.e.nxl), JSON.stringify(r.e));
+    check('el saliente a las 07:30 sigue de servicio hasta el relevo', /SERVICIO NOCTURNO/.test(r.f.nxl) && /hasta/.test(r.f.nxa), JSON.stringify(r.f));
+    check('la guardia de sábado acaba al día siguiente (24 h la de urgencias, 25¼ h la UMI) y el saliente empieza de servicio',
+      r.k.urg[0] === '24@9' && /^24@-15$/.test(r.k.sal[0] || '') && r.k.umi[0] === '25.25@10' && r.k.it > 1440, JSON.stringify(r.k));
+    check('elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño', r.j.ls === 'reloj' && !r.j.bus && r.j.snhoy, JSON.stringify(r.j));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
