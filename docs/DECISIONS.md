@@ -220,3 +220,22 @@ tarde perdería el polideportivo) y un decorado distinto para comidas (van dentr
 
 **Supuestos:** una comida dentro de la jornada es ciudad; fuera, bosque; la noche y la siesta son
 bosque; el polideportivo se ve también en el rato de antes de entrenar (tres cuartos de hora).
+
+## 2026-10-13 · El Lloretazo, en el acantilado
+
+**Contexto:** «El LLORETAZO tiene que ser un poco diferente, tiene que salirse el conductor del
+camión e irse a un acantilado con vistas al mar mientras se echa un cigarro».
+
+**Elegido:**
+- **Conductor:** mientras dura el Lloretazo, por el parabrisas se ve un mirador sobre el mar
+  (apartadero de grava, barandilla abierta en el centro, el cabo con su faro y su haz de noche, el
+  brillo del sol o de la luna en el agua). El conductor (camisa azul, chaleco con franja, gorra) baja
+  del autobús y anda hasta el borde (el primer 12 % del rato), se queda fumando de cara al mar con la
+  brasa y el humo vivos, y al final vuelve ya sin el cigarro. La carretera que lleva hasta allí va por
+  la costa: mar a la izquierda tras un murete, roca a la derecha.
+- **Estación:** el decorado pasa a «acantilado»: mar con olas, un acantilado de dos escalones con
+  hierba y matas, el conductor fumando en el borde y el faro, que se enciende de noche.
+- El Lloretazo se reconoce por su nombre en la agenda (marca `ll` en los datos del conductor).
+
+**Supuestos:** todo el rato del Lloretazo (también la ida y la vuelta que lleva dentro) es la escena
+del acantilado; el humo y la brasa se quedan quietos con «reducir movimiento».

@@ -11660,8 +11660,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
     await pon(10.4);
     r.l = await page.evaluate(() => { const sc = document.querySelector('#main .cd [data-r="scene"]'); return { ciudad: !!sc.querySelector('.cd-win'), arboles: sc.querySelectorAll('.cd-trunk').length }; });
-    await pon(21);
+    // por la noche libre (justo después del Lloretazo, si lo hay, que tiene su propia escena)
+    await pon(await page.evaluate(() => { const ll = window.PG.conductor().d.dia.filter((e) => e.ll)[0]; return ll ? Math.min(23.5, ll.b + 0.15) : 21; }));
     r.l.noche = await page.evaluate(() => { const sc = document.querySelector('#main .cd [data-r="scene"]'); return { arboles: sc.querySelectorAll('.cd-trunk').length, luna: !!document.querySelector('#main .cd [data-r="stars"] circle[r="9.5"]') }; });
+    // (n) el Lloretazo: el conductor se baja y va al acantilado; a mitad, fuma (brasa y humo) mirando al mar,
+    // y la estación pone el acantilado de decorado. Al llegar todavía va andando: sin cigarro
+    r.n = await page.evaluate(() => { const P = window.PG, C = P.conductor(), D = Object.assign({}, C.d, { vivo: false, dia: C.d.dia.filter((e) => !e.ll).concat([{ a: 20, b: 22, t: 'Lloretazo', k: 'plan', i: '', ll: 1 }]) });
+      const mira = (h) => { C.c.actualiza(Object.assign({}, D, { ahora: h })); const sc = document.querySelector('#main .cd [data-r="scene"]');
+        return { humo: sc.querySelectorAll('.cd-humo').length, brasa: !!sc.querySelector('.cd-ascua'), carretera: !!sc.querySelector('.cd-dash') }; };
+      const out = { andando: mira(20.05), fumando: mira(21), amb: window.Conductor.ambienteA(D, 21) };
+      P.render(); return out; });
     // (c) el depósito de sueño
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
     await page.locator('#main .cd [data-o="sueno"]').click().catch(() => {});
@@ -11743,6 +11751,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.l.ciudad && r.l.noche.arboles > 0 && r.l.noche.luna, JSON.stringify(r.l));
     check('el botón cambia a la estación isométrica, se recuerda, no se recarga al repintar, un toque en un autobús abre su hoja y vuelve al conductor',
       r.m.es && !r.m.cd && r.m.ls === 'estacion' && r.m.mismo && r.m.amb.length > 0 && r.m.hoja && r.m.vuelta.cd && !r.m.vuelta.es && r.m.vuelta.ls === 'conductor', JSON.stringify(r.m));
+    check('en el Lloretazo el conductor se baja al acantilado: llega andando y a mitad fuma mirando al mar; la estación pone el acantilado',
+      r.n.andando.humo === 0 && !r.n.andando.carretera && r.n.fumando.humo === 3 && r.n.fumando.brasa && !r.n.fumando.carretera && r.n.amb === 'acantilado', JSON.stringify(r.n));
     check('en el conductor, tocar el depósito de sueño abre Sueño', r.c === 'sueno', JSON.stringify(r.c));
     check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
     check('con el conductor, «¿cómo amaneces?» va corto y «ánimo y lo que te propones» lo abre', r.i.corto && r.i.largo, JSON.stringify(r.i));

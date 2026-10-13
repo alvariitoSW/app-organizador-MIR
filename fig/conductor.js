@@ -61,6 +61,9 @@
 .cd-dimmer{fill:#000;pointer-events:none}
 .cd-trunk{stroke:#4a3527;fill:none;stroke-linecap:round}.cd-line{stroke:#e9f2e4;fill:none}.cd-fence{stroke:#8a96a8;fill:none;stroke-linecap:round}.cd-flood{fill:#cfd6e0}.cd-floodo{fill:#fff6d0}
 .cd-gyma{fill:#4b3f7a}.cd-gymb{fill:#3a3163}.cd-gymg{fill:#1a2236}.cd-gymgo{fill:#ffe7a6}.cd-gyms{fill:#0b1020;stroke:#9c86ff;stroke-width:.8}.cd-gymt{fill:#e9e4ff;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-humo{fill:none;stroke:#e6ebf2;stroke-linecap:round;opacity:0;animation:cd-humo 3.6s ease-out infinite}.cd-ascua{fill:#ff7a2e;animation:cd-ascua 2.2s ease-in-out infinite}
+@keyframes cd-humo{0%{opacity:0;transform:translateY(0)}18%{opacity:.6}100%{opacity:0;transform:translateY(var(--sube,-20px))}}@keyframes cd-ascua{0%,100%{opacity:.7}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.cd-humo{animation:none;opacity:.35}.cd-ascua{animation:none}}
 .cd-hosp{fill:#c9d2de}.cd-hospe{fill:#9aa6b8}.cd-cross{fill:#e5484d}.cd-fly{fill:#e6ff8a}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -116,8 +119,10 @@
   }
   /* el paisaje de cada parada: la ciudad si es la jornada (o cae dentro), el hospital de guardia, el
      polideportivo si toca entrenar y el bosque en lo libre y por la noche */
+  const esLL = (e) => !!e && (e.ll || /lloret/i.test(String(e.t || "")));
   function ambDe(e, it) {
     if (e.dep) return "bosque";
+    if (esLL(e)) return "mar";
     if (e.k === "guard") return "hospital";
     if (e.k === "work") return "ciudad";
     if (e.k === "gym") return "deporte";
@@ -158,6 +163,7 @@
   const MARCO = `
   <defs><clipPath id="cdwin__ID"><path d="M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/></clipPath>
     <linearGradient id="cdsky__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="sky0" offset="0" stop-color="#5aa0e0"/><stop data-r="sky1" offset="1" stop-color="#bfe0ff"/></linearGradient>
+    <linearGradient id="cdmar__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="mar0" offset="0" stop-color="#4c8fc4"/><stop data-r="mar1" offset="1" stop-color="#123a5e"/></linearGradient>
     <linearGradient id="cdbeam__ID" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff3c4" stop-opacity=".42"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></linearGradient></defs>
   <g clip-path="url(#cdwin__ID)">
     <rect x="0" y="0" width="600" height="300" fill="url(#cdsky__ID)"/>
@@ -202,7 +208,83 @@
     let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false;
 
     /* ---------- lo que se dibuja por el parabrisas ---------- */
+    /* el Lloretazo: el conductor se baja, va hasta el borde del acantilado y se fuma un cigarro mirando
+       al mar; al acabar, vuelve. Se ve por el parabrisas desde el asiento vacío */
+    function mirador(L, p) {
+      const n = 1 - L.d, o = [], SOL = D.sol || [7, 18.6];
+      R_.mar0.setAttribute("stop-color", mix(mix("#5a9fd2", "#f2a65a", clamp(1 - Math.abs(t - SOL[1]) / 0.9, 0, 1) * 0.5), "#0d1d38", n * 0.9));
+      R_.mar1.setAttribute("stop-color", mix("#123a5e", "#050c18", n));
+      o.push('<rect x="0" y="' + HY + '" width="600" height="160" fill="url(#cdmar' + ID + ')"/>');
+      /* el cabo de enfrente con su faro, y otro más bajo a la izquierda */
+      const roca = mix("#5b5148", "#151820", n * 0.85);
+      o.push('<path d="M420 ' + HY + "L452 " + (HY - 16) + "L486 " + (HY - 27) + "L528 " + (HY - 31) + "L566 " + (HY - 24) + "L600 " + (HY - 20) + "V" + HY + 'Z" fill="' + roca + '"/>' +
+        '<path d="M0 ' + HY + "L0 " + (HY - 9) + "L46 " + (HY - 12) + "L98 " + (HY - 6) + "L136 " + HY + 'Z" fill="' + mix(roca, "#7d8ea8", 0.25) + '"/>');
+      o.push('<rect x="523" y="' + (HY - 52) + '" width="7" height="22" fill="' + mix("#e9eef5", "#8a93a6", n * 0.6) + '"/><rect x="523" y="' + (HY - 44) + '" width="7" height="4" fill="#c9302c"/><rect x="523" y="' + (HY - 36) + '" width="7" height="4" fill="#c9302c"/>' +
+        '<rect x="521" y="' + (HY - 56) + '" width="11" height="4" fill="' + (n > 0.4 ? "#fff3c4" : "#5d6676") + '"/><path d="M520 ' + (HY - 56) + 'h13l-6.5-4z" fill="#3a4250"/>');
+      if (n > 0.4) { const g = ((t * 1.6) % 2) - 1;
+        o.push('<circle cx="526.5" cy="' + (HY - 54) + '" r="9" fill="#fff3c4" opacity="' + (0.35 * n).toFixed(2) + '"/><path d="M526.5 ' + (HY - 54) + "L" + (526.5 - 260 * Math.cos(g)).toFixed(1) + " " + (HY - 70 + g * 18).toFixed(1) + "L" + (526.5 - 260 * Math.cos(g)).toFixed(1) + " " + (HY - 40 + g * 18).toFixed(1) + 'Z" fill="#fff3c4" opacity="' + (0.12 * n).toFixed(2) + '"/>'); }
+      /* el brillo del sol o de la luna en el agua, y las olas */
+      const f = (t - SOL[0]) / (SOL[1] - SOL[0]), larga = 24 - (SOL[1] - SOL[0]), gl = ((((t - SOL[1]) % 24) + 24) % 24) / larga;
+      const dia = f > 0 && f < 1, bx = dia ? 70 + f * 460 : gl > 0 && gl < 1 ? 70 + gl * 460 : null, bc = dia ? (Math.sin(Math.PI * f) < 0.45 ? "#ffb05a" : "#fff2c4") : "#dfe7ff";
+      if (bx != null) for (let k = 1; k < 13; k++) { const y = HY + 2 + k * k * 0.85, w = 4 + k * 2.6;
+        o.push('<rect x="' + (bx - w / 2 + Math.sin(k * 2.3 + t * 3) * k).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (0.8 + k * 0.12).toFixed(1) + '" rx=".6" fill="' + bc + '" opacity="' + (0.55 - k * 0.03).toFixed(2) + '"/>'); }
+      for (let k = 0; k < 26; k++) { const y = HY + 4 + hash(k) * hash(k + 3) * 60, x = hash(k + 7) * 600, w = 6 + (y - HY) * 0.5;
+        o.push('<path d="M' + x.toFixed(0) + " " + y.toFixed(1) + "h" + w.toFixed(1) + '" stroke="' + mix("#bcd6ee", "#41557a", n) + '" stroke-width="' + (0.6 + (y - HY) * 0.02).toFixed(2) + '" opacity=".5" stroke-linecap="round"/>'); }
+      /* el apartadero de grava, el borde con hierba y las rocas a los lados */
+      o.push(poly([[-9, 0, NEAR], [9, 0, NEAR], [9, 0, 14], [-9, 0, 14]], "", ' style="fill:' + mix("#7b7262", "#22242c", n * 0.85) + '"'));
+      for (let k = 0; k < 40; k++) { const z = 1.4 + hash(k * 3) * 12, x = (hash(k * 5) - 0.5) * 16, q = pr(x, 0, z);
+        o.push('<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="' + Math.max(0.5, (0.05 * F) / z).toFixed(1) + '" fill="' + mix("#958b78", "#2b2d35", n * 0.85) + '"/>'); }
+      o.push(poly([[-9, 0, 13.2], [9, 0, 13.2], [9, 0.12, 14], [-9, 0.12, 14]], "", ' style="fill:' + mix("#4f7a45", "#14261a", n * 0.85) + '"'));
+      for (const lado of [-1, 1]) o.push(poly([[lado * 9, 0, NEAR], [lado * 5.6, 0, 7], [lado * 6.4, 0, 14], [lado * 8, 1.6, 13], [lado * 9.6, 2.6, 5]], "", ' style="fill:' + mix(lado < 0 ? "#6a5e52" : "#5e544a", "#16181f", n * 0.85) + '"'));
+      /* la barandilla de madera, abierta en el centro para asomarse */
+      const post = mix("#8a6a48", "#2a2420", n * 0.8), palo = (a, b, w) => seg(a, b, "cd-palo", w).replace('class="cd-palo"', 'stroke="' + post + '" stroke-linecap="round"');
+      for (const [x0, x1] of [[-6.4, -1.4], [1.4, 6.4]]) {
+        for (let x = x0; x <= x1 + 0.01; x += 1.25) o.push(palo([x, 0, 12.8], [x, 1.0, 12.8], 0.08));
+        o.push(palo([x0, 0.95, 12.8], [x1, 0.95, 12.8], 0.07), palo([x0, 0.55, 12.8], [x1, 0.55, 12.8], 0.06));
+      }
+      o.push(conductorFuera(p, n));
+      return o.join("");
+    }
+    /* el conductor: camisa azul clara, chaleco con franja y gorra de la empresa. Va del autobús al borde,
+       se queda fumando (la brasa y el humo) y al final vuelve, ya sin el cigarro */
+    function conductorFuera(p, n) {
+      const ida = p < 0.12, vuelta = p > 0.88, w = ida ? ease(p / 0.12) : vuelta ? ease((1 - p) / 0.12) : 1;
+      const x = 1.4 + (0.2 - 1.4) * w, z = 2.6 + (12.2 - 2.6) * w, k = F / z, P0 = pr(x, 0, z), cx = P0[0], cy = P0[1];
+      const anda = ida || vuelta, paso = anda ? Math.sin(p * 260) * 0.07 * k : 0;
+      const c = (a, b) => mix(a, b, n * 0.65), Y = (m) => cy - m * k, X = (m) => cx + m * k, r1 = (v) => v.toFixed(1);
+      const rect = (x0, y0, w0, h0, r0, col) => '<rect x="' + r1(x0) + '" y="' + r1(y0) + '" width="' + r1(w0) + '" height="' + r1(h0) + '" rx="' + r1(r0) + '" fill="' + col + '"/>';
+      const piel = c("#e0b48f", "#3a2a22"), camisa = c("#9cc3ea", "#2a3a52"), chaleco = c("#1d2b4a", "#090d16"), pantalon = c("#2a3550", "#0c1018");
+      const o = ['<ellipse cx="' + r1(cx) + '" cy="' + r1(cy) + '" rx="' + r1(0.32 * k) + '" ry="' + r1(0.06 * k) + '" fill="#000" opacity=".25"/>'];
+      /* las piernas, que se alternan al andar */
+      o.push(rect(X(-0.2), Y(0.86) + paso, 0.15 * k, 0.86 * k - paso, 0.05 * k, pantalon), rect(X(0.05), Y(0.86) - paso, 0.15 * k, 0.86 * k + paso, 0.05 * k, pantalon));
+      /* el brazo izquierdo, colgando; el cuerpo, la franja del chaleco y la nuca */
+      o.push(rect(X(-0.33), Y(1.42), 0.11 * k, 0.56 * k, 0.05 * k, camisa));
+      o.push(rect(X(-0.24), Y(1.48), 0.48 * k, 0.66 * k, 0.1 * k, chaleco), rect(X(-0.24), Y(1.05), 0.48 * k, 0.05 * k, 0, c("#ffd66b", "#6b5a2a")));
+      o.push(rect(X(-0.05), Y(1.56), 0.1 * k, 0.1 * k, 0, piel));
+      /* la cabeza: de espaldas, pelo; al volver, la cara. Y la gorra con su visera al volver */
+      o.push('<circle cx="' + r1(cx) + '" cy="' + r1(Y(1.66)) + '" r="' + r1(0.12 * k) + '" fill="' + (vuelta ? piel : c("#3a2a20", "#0e0a08")) + '"/>');
+      o.push('<path d="M' + r1(X(-0.13)) + " " + r1(Y(1.72)) + "Q" + r1(cx) + " " + r1(Y(1.9)) + " " + r1(X(0.13)) + " " + r1(Y(1.72)) + 'Z" fill="' + chaleco + '"/>');
+      if (vuelta) o.push('<path d="M' + r1(X(-0.16)) + " " + r1(Y(1.72)) + "H" + r1(X(0.16)) + '" stroke="' + chaleco + '" stroke-width="' + r1(Math.max(1, 0.04 * k)) + '" stroke-linecap="round"/>');
+      if (!anda) {
+        /* fumando: el brazo derecho sube a la boca; el cigarro, la brasa con su halo y el humo que sube */
+        const sh = [X(0.22), Y(1.4)], el = [X(0.36), Y(1.12)], ha = [X(0.17), Y(1.58)], tip = [X(0.29), Y(1.6)];
+        o.push('<path d="M' + r1(sh[0]) + " " + r1(sh[1]) + "L" + r1(el[0]) + " " + r1(el[1]) + "L" + r1(ha[0]) + " " + r1(ha[1]) + '" stroke="' + camisa + '" stroke-width="' + r1(0.11 * k) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"/>');
+        o.push('<path d="M' + r1(ha[0]) + " " + r1(ha[1]) + "L" + r1(tip[0]) + " " + r1(tip[1]) + '" stroke="#f3efe4" stroke-width="' + r1(Math.max(1, 0.025 * k)) + '" stroke-linecap="round"/>' +
+          '<circle cx="' + r1(tip[0]) + '" cy="' + r1(tip[1]) + '" r="' + r1(Math.max(2, 0.06 * k)) + '" fill="#ff9a4a" opacity="' + (0.25 + 0.35 * n).toFixed(2) + '"/>' +
+          '<circle class="cd-ascua" cx="' + r1(tip[0]) + '" cy="' + r1(tip[1]) + '" r="' + r1(Math.max(0.9, 0.018 * k)) + '"/>');
+        for (let i = 0; i < 3; i++) {
+          const a = tip[0], b = tip[1] - 2;
+          o.push('<path class="cd-humo" style="--sube:' + (-0.55 * k).toFixed(0) + "px;animation-delay:" + (i * 1.2).toFixed(1) + "s;stroke-width:" + r1(Math.max(1, 0.03 * k)) + 'px" d="M' + r1(a) + " " + r1(b) +
+            "c" + r1(-0.12 * k) + " " + r1(-0.12 * k) + " " + r1(0.14 * k) + " " + r1(-0.2 * k) + " " + r1(0.02 * k) + " " + r1(-0.32 * k) +
+            "s" + r1(-0.1 * k) + " " + r1(-0.2 * k) + " " + r1(0.04 * k) + " " + r1(-0.3 * k) + '"/>');
+        }
+      } else o.push(rect(X(0.22), Y(1.42), 0.11 * k, 0.56 * k, 0.05 * k, camisa));
+      return o.join("");
+    }
+
     function escena(cam, L, st) {
+      const ll = !st.noche && st.enCurso.find(esLL);
+      if (ll) return mirador(L, clamp((t - ll.a) / Math.max(0.1, ll.b - ll.a), 0, 1));
       const out = [], noche = 1 - L.d;
       out.push('<rect class="cd-ground" x="0" y="' + HY + '" width="600" height="160"/>');
       out.push(poly([[-5.2, 0, NEAR], [3.0, 0, NEAR], [3.0, 0, FAR], [-5.2, 0, FAR]], "cd-road"));
@@ -252,6 +334,17 @@
             o.push(poly([[xm - 1.1, ym - 0.35, zz], [xm + 1.1, ym - 0.35, zz], [xm + 1.1, ym + 0.35, zz], [xm - 1.1, ym + 0.35, zz]], "cd-cross"),
               poly([[xm - 0.35, ym - 1.1, zz], [xm + 0.35, ym - 1.1, zz], [xm + 0.35, ym + 1.1, zz], [xm - 0.35, ym + 1.1, zz]], "cd-cross")); }
           cosas.push({ key, svg: o.join("") });
+        } else if (b.amb === "mar") {
+          /* la carretera de la costa: el mar a la izquierda tras un murete; a la derecha, roca */
+          const o = [];
+          if (b.lado < 0) {
+            o.push(poly([[-11.2, -0.4, Math.max(NEAR, b.z0 - 2)], [-200, -0.4, Math.max(NEAR, b.z0 - 2)], [-200, -0.4, b.z0 + 11], [-11.2, -0.4, b.z0 + 11]], "", ' style="fill:' + mix("#2f6fa3", "#0b1a33", noche) + '"'));
+            o.push(poly([[-11.2, 0, Math.max(NEAR, b.z0 - 2)], [-11.2, 0, b.z0 + 11], [-11.2, 0.7, b.z0 + 11], [-11.2, 0.7, Math.max(NEAR, b.z0 - 2)]], "", ' style="fill:' + mix("#8f8676", "#2a2a30", noche * 0.8) + '"'));
+          } else {
+            const h = 1.2 + hash(b.j * 5) * 2.2;
+            o.push(poly([[9.4, 0, b.z0 + 1], [9.4, 0, b.z1 - 1], [12, h, b.z1 - 3], [13.5, h * 0.8, b.z0 + 3]], "", ' style="fill:' + mix("#7a6e60", "#1d1f27", noche * 0.85) + '"'));
+          }
+          cosas.push({ key: b.z0, svg: o.join("") });
         } else if (b.amb === "bosque") {
           /* tres árboles por manzana: pinos y frondosos, cada uno con su tronco */
           for (let q = 0; q < 3; q++) {
@@ -545,7 +638,9 @@
   function ambienteA(D, t) {
     const it = (D.dia || []).filter((e) => e.b > e.a), n = (D.noches || []).find((x) => t >= x.a && t < x.b);
     if (n) return "bosque";
-    const ya = it.filter((e) => t >= e.a && t < e.b), turno = ya.find((e) => TURNO(e.k)), gym = ya.find((e) => e.k === "gym");
+    const ya = it.filter((e) => t >= e.a && t < e.b);
+    if (ya.some(esLL)) return "acantilado";
+    const turno = ya.find((e) => TURNO(e.k)), gym = ya.find((e) => e.k === "gym");
     if (gym) return "deporte"; if (turno) return turno.k === "guard" ? "hospital" : "ciudad";
     const sig = it.filter((e) => e.a > t).sort((a, b) => a.a - b.a)[0];
     return sig && sig.k === "gym" && sig.a - t < 0.75 ? "deporte" : "bosque";

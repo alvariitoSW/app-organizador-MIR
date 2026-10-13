@@ -5355,7 +5355,7 @@ function hoyBusDatos(key,inf,esHoy){
       if(g&&a+24>=g.m2/60&&a+24<busFin(g)/60){a+=24;b+=24;}
       else if(!deAyer.length)return;}
     const k={guard:'guard',work:'work',gym:'gym',evt:'plan',meal:'meal'}[x.tipo]||'plan';
-    dia.push({a:r3(a),b:r3(Math.max(b,a+0.25)),t:busNombre(x),k:k,i:x.i,h:x.hecha?1:0,m:(x.tipo==='meal'&&x.conPlatos)?'meal':((x.tipo==='gym'&&x.rt)?'gym':0)});});
+    dia.push({a:r3(a),b:r3(Math.max(b,a+0.25)),t:busNombre(x),k:k,i:x.i,h:x.hecha?1:0,m:(x.tipo==='meal'&&x.conPlatos)?'meal':((x.tipo==='gym'&&x.rt)?'gym':0),ll:/lloret/i.test(x.txt||'')?1:0});});
   /* lo de ayer no se toca desde hoy: sin índice */
   deAyer.forEach(function(e){e.i='';});
   /* las señales: de guardia (o la víspera), sus órdenes; si no, el último café, 6 h antes de la cama */

@@ -208,6 +208,55 @@ function bosque() {
   return out.join("");
 }
 
+/* el Lloretazo: el mar con sus olas, un acantilado de dos escalones con hierba arriba y, en el borde,
+   el conductor fumándose un cigarro de cara al mar (la brasa y el humo, vivos); enfrente, el faro */
+function acantilado() {
+  const out = [];
+  out.push(S(k.slabOf(FONDO, 0, 0.6, P, 3, 0.3), { tone: "mid", className: "m-sea", crease: "none", flat: true }));
+  const olas = [];
+  for (let i = 0; i < 22; i++) { const x = FONDO.x + 10 + hash(i * 2.7) * (FONDO.w - 30), y = FONDO.y + 6 + hash(i * 4.1) * (FONDO.d - 12);
+    if (x < -40 && y < -76) continue; olas.push(k.lineOnTop([x, y], [x + 8 + hash(i) * 8, y], 0.64, P)); }
+  out.push(L(olas.join(""), { className: "l-ola" }));
+  /* el acantilado: roca en dos escalones, hierba encima y unas piedras al pie */
+  const R1 = { x: -180, y: -148, w: 138, d: 76, r: 3 }, R2 = { x: -176, y: -146, w: 82, d: 50, r: 3 };
+  out.push(S(k.slabOf(R1, 0.6, 30, P, 4, 0.8), { tone: "mid", className: "m-roca" }));
+  out.push(S(k.slabOf({ ...R1, x: R1.x + 1, y: R1.y + 1, w: R1.w - 2, d: R1.d - 2 }, 30.6, 1.4, P, 4, 0.4), { tone: "mid", className: "m-grass" }));
+  out.push(S(k.slabOf(R2, 32, 12, P, 4, 0.6), { tone: "mid", className: "m-roca" }));
+  out.push(S(k.slabOf({ ...R2, x: R2.x + 1, y: R2.y + 1, w: R2.w - 2, d: R2.d - 2 }, 44, 1.2, P, 4, 0.4), { tone: "mid", className: "m-grass" }));
+  const est = [];
+  for (let z = 6; z < 30; z += 6) est.push(k.segment([R1.x + R1.w, R1.y + 6, z], [R1.x + R1.w, R1.y + R1.d - 6, z + 1.5], P));
+  out.push(L(est.join(""), { tone: "faint" }));
+  for (const [x, y, r] of [[-36, -74, 3.4], [-30, -96, 2.6], [-48, -70, 2]]) out.push(S(G.sphereOf([x, y, 0.6 + r * 0.5], r, P), { tone: "mid", className: "m-roca" }));
+  /* un banco de madera en lo alto, por si hay que sentarse */
+  out.push(S(k.slabOf({ x: -84, y: -120, w: 16, d: 4, r: 0.5 }, 32, 3, P, 2), { tone: "mid", className: "m-wood" }));
+  /* matas en lo alto y vetas en la cara de la roca que mira al andén */
+  for (const [x, y, r] of [[-170, -100, 4], [-160, -84, 3.2], [-120, -80, 3.6], [-96, -96, 2.6], [-66, -132, 3]]) out.push(S(G.sphereOf([x, y, 31 + r * 0.7], r, P), { tone: "mid", className: "m-leaf" }));
+  const vet = [];
+  for (let z = 5; z < 30; z += 5) vet.push(`M${R1.x + 4} ${-z}H${R1.x + R1.w - 4}`);
+  out.push(`<g transform="${front(R1.y + R1.d + 0.02)}"><path class="veta" d="${vet.join("")}"/></g>`);
+  /* el conductor, en el borde de cara al mar: piernas, chaleco con su franja, brazo al cigarro, cabeza y gorra */
+  const fx = -52, fy = -90, fz = 32, e = 1.7;
+  for (const dy of [-1, 1]) out.push(S(k.cylinder(fx, fy + dy * e * 0.55, 0.75 * e, fz, 5 * e, P, 10), { tone: "mid", className: "m-pant", crease: "none" }));
+  out.push(S(k.slabOf({ x: fx - 1.3 * e, y: fy - 2 * e, w: 2.6 * e, d: 4 * e, r: 0.8 * e }, fz + 5 * e, 5 * e, P, 3, 0.4), { tone: "mid", className: "m-vest" }));
+  out.push(S(k.slabOf({ x: fx - 1.35 * e, y: fy - 2.05 * e, w: 2.7 * e, d: 4.1 * e, r: 0.8 * e }, fz + 7 * e, 0.6 * e, P, 3), { tone: "mid", className: "m-amber" }));
+  out.push(S(k.cylinder(fx + 0.4 * e, fy + 2.3 * e, 0.6 * e, fz + 7.6 * e, 2.6 * e, P, 8), { tone: "mid", className: "m-shirt", crease: "none" }));
+  out.push(S(G.sphereOf([fx, fy, fz + 11.6 * e], 1.5 * e, P), { tone: "mid", className: "m-skin" }));
+  out.push(S(k.cylinder(fx, fy, 1.6 * e, fz + 12.4 * e, 0.9 * e, P, 16), { tone: "mid", className: "m-vest" }));
+  out.push(S(k.slabOf({ x: fx + 0.8 * e, y: fy - 1.2 * e, w: 1.8 * e, d: 2.4 * e, r: 0.6 }, fz + 12.4 * e, 0.4, P, 2), { tone: "mid", className: "m-vest" }));
+  /* el cigarro: la brasa y el humo que sube y se va */
+  const tip = at([fx + 1.6 * e, fy + 2.1 * e, fz + 10.6 * e]);
+  out.push(`<circle class="ascua-h" cx="${tip[0].toFixed(1)}" cy="${tip[1].toFixed(1)}" r="3"/><circle class="ascua" cx="${tip[0].toFixed(1)}" cy="${tip[1].toFixed(1)}" r="1"/>`);
+  for (let i = 0; i < 3; i++) out.push(`<path class="humo" style="animation-delay:${(i * 1.2).toFixed(1)}s" d="M${tip[0].toFixed(1)} ${(tip[1] - 1.4).toFixed(1)}c-2.4 -2.4 2.8 -4 0.5 -6.6s-1.9 -4 0.7 -6"/>`);
+  /* el faro sobre su roca, con franjas rojas y la linterna que se enciende de noche */
+  out.push(S(G.sphereOf([108, -118, -4], 11, P), { tone: "mid", className: "m-roca" }));
+  out.push(S(k.slabOf({ x: 98, y: -128, w: 20, d: 20, r: 6 }, 0.6, 8, P, 6, 0.8), { tone: "mid", className: "m-roca" }));
+  for (let i = 0; i < 4; i++) out.push(S(k.cylinder(108, -118, 4.4 - i * 0.35, 8.6 + i * 9.8, 9.8, P, 24), { tone: "mid", className: i % 2 ? "m-faroR" : "m-faro", crease: "none" }));
+  out.push(`<g data-part="faro">${S(k.cylinder(108, -118, 3.2, 48, 5, P, 20), { tone: "mid", className: "m-lamp-off" })}</g>`);
+  out.push(S(k.cylinder(108, -118, 4, 53, 1.2, P, 20), { tone: "mid", className: "m-steel" }));
+  out.push(S(G.sphereOf([108, -118, 55.4], 2, P), { tone: "mid", className: "m-faroR" }));
+  return out.join("");
+}
+
 /* ---------- la estación (igual que la maqueta) ---------- */
 function lane() {
   const out = [];
@@ -347,6 +396,7 @@ const svg = k.figureSvg({
     `<g data-amb="hospital">${ciudad(4)}${hospital()}</g>`,
     `<g data-amb="deporte">${deporte()}</g>`,
     `<g data-amb="bosque">${bosque()}</g>`,
+    `<g data-amb="acantilado">${acantilado()}</g>`,
     lane(), platform(), canopy(), `<g class="garaje" data-o="garaje">${garageBack()}</g>`,
     `<g data-part="buses"></g>`,
     `<g class="garaje" data-o="garaje">${garageFront()}</g>`,
@@ -374,6 +424,8 @@ const MATS = {
   bld1: ["#3e4c6a", "#c8d2e0"], bld2: ["#4a5878", "#d6dee9"], bld3: ["#33405c", "#bcc8d8"], hosp: ["#d5dce6", "#f4f7fb"], plaza: ["#2a3446", "#cfd7e2"],
   grass: ["#2d5a3a", "#b7d9a8"], pitch: ["#2e7d4a", "#8fcf8a"], goal: ["#e9eef5", "#ffffff"], gym: ["#3f3566", "#b9adf0"], trunk: ["#5a3f2a", "#a07a58"],
   pine: ["#1f5a3e", "#5f9e72"], leaf: ["#3f8a4f", "#86c47a"], roca: ["#59606c", "#b4bac4"],
+  sea: ["#1f4f73", "#7fb6dc"], faro: ["#e9eef5", "#ffffff"], faroR: ["#c9302c", "#e5484d"], vest: ["#1d2b4a", "#33456e"], shirt: ["#9cc3ea", "#b9d6f2"],
+  pant: ["#2a3550", "#3e4a66"], skin: ["#d8a982", "#e8bf9a"], amber: ["#ffd66b", "#f2b929"],
   ...Object.fromEntries(Object.entries(LIBREAS).map(([n, c]) => [n, c])),
 };
 const CSS = [
@@ -406,6 +458,9 @@ const CSS = [
   ".es .gymwin{fill:#20294a}.es.es-tarde .gymwin,.es.es-noche .gymwin{fill:#ffe7a6}",
   ".es .cruz{fill:#e5484d}.es .rotulo{fill:#e5484d}.es .rotulo.gym{fill:#0b1020;stroke:#9c86ff;stroke-width:.5}.es .rotulo-t{fill:#fff;font:800 3.4px/1 ui-sans-serif,system-ui,sans-serif;text-anchor:middle;letter-spacing:.12em}",
   ".es .rotulo-t.gym{fill:#e9e4ff;font-size:5.4px}.es .pesa{stroke:#e9e4ff;stroke-width:1.1;fill:none;stroke-linecap:round}",
+  ".es .veta{stroke:#3a3f48;stroke-width:.5;fill:none}.es[data-theme=light] .veta{stroke:#8f96a0}.es .l-ola{stroke:#bcd6ee!important;stroke-opacity:.55;stroke-width:.7px}.es .ascua{fill:#ff7a2e;animation:es-ascua 2.2s ease-in-out infinite}.es .ascua-h{fill:#ff9a4a;opacity:.35}",
+  ".es .humo{fill:none;stroke:#e6ebf2;stroke-width:.9;stroke-linecap:round;opacity:0;animation:es-humo 3.6s ease-out infinite}",
+  "@keyframes es-humo{0%{opacity:0;transform:translateY(0)}18%{opacity:.7}100%{opacity:0;transform:translateY(-14px)}}@keyframes es-ascua{0%,100%{opacity:.7}50%{opacity:1}}@media (prefers-reduced-motion:reduce){.es .humo{animation:none;opacity:.4}.es .ascua{animation:none}}",
   ".es .baliza{fill:#e5484d}.es .fly{fill:#e6ff8a;opacity:0}.es.es-noche [data-amb~=bosque] .fly{animation:es-fly 3s ease-in-out infinite}",
   "@keyframes es-fly{0%,100%{opacity:0}50%{opacity:.9}}@media (prefers-reduced-motion:reduce){.es.es-noche [data-amb~=bosque] .fly{animation:none;opacity:.6}.es [data-amb]{transition:none}}",
   ".es-pie{display:flex;align-items:center;gap:8px;margin-top:6px;font:600 12.5px/1.3 ui-sans-serif,system-ui,sans-serif;color:#8fa6c6}.es-pie b{color:#e9f2ff;font-weight:800}.es[data-theme=light] .es-pie{color:#4a5d78}.es[data-theme=light] .es-pie b{color:#0d1726}",
@@ -448,7 +503,7 @@ const live = String.raw`
     const capa = $("buses"), door = $("door"), slats = $("slats"), clip = $("garclip"), hands = $("hands"), astro = $("astro"), sky0 = $("sky0"), sky1 = $("sky1");
     const grupos = AMBS.map((a) => [a, [...svg.querySelectorAll("[data-amb]")].filter((g) => g.getAttribute("data-amb").split(" ").indexOf(a) >= 0)]);
     const todos = [...svg.querySelectorAll("[data-amb]")];
-    const farol = $("farol"), farola = $("farola"), focos = [...svg.querySelectorAll('[data-part="foco"]')];
+    const farol = $("farol"), farola = $("farola"), faro = $("faro"), focos = [...svg.querySelectorAll('[data-part="foco"]')];
     const lampara = (n, on) => n.querySelectorAll(".m-lamp-off,.m-lamp").forEach((x) => { x.classList.toggle("m-lamp", on); x.classList.toggle("m-lamp-off", !on); });
     const still = matchMedia("(prefers-reduced-motion: reduce)");
     const BIG = "M-50 -50H" + (W + 50) + "V" + (H + 50) + "H-50Z", facePath = "M" + FACE.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L") + "Z";
@@ -543,7 +598,7 @@ const live = String.raw`
       abierta = still.matches || !dt ? want : abierta + (want - abierta) * (1 - Math.exp(-dt / 0.35));
       if (Math.abs(want - abierta) < 0.002) abierta = want;
       pintaPuerta(abierta); pintaReloj(t);
-      lampara(farol, luz < 0.5); lampara(farola, luz < 0.6); focos.forEach((f) => lampara(f, luz < 0.75));
+      lampara(farol, luz < 0.5); lampara(farola, luz < 0.6); focos.forEach((f) => lampara(f, luz < 0.75)); if (faro) lampara(faro, luz < 0.6);
       let busy = abierta !== want;
       const st = estado(t);
       for (const b of buses) {
