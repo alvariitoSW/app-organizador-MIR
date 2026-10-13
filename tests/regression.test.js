@@ -2625,22 +2625,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         cabeceraNoEstirada: Math.round(document.querySelector('.cal .wd').getBoundingClientRect().height) < 40,
       };
     });
-    check('en el móvil la cuadrícula del mes se estira para llenar la pantalla',
-      rejilla.alturaCelda > 96 && rejilla.alturaCal > rejilla.ventana * 0.55 && rejilla.cabeceraNoEstirada,
+    /* la cuadrícula ya no se estira a la pantalla (845 px con el 70 % vacío): la casilla mide lo que su contenido */
+    check('en el móvil la casilla del mes mide lo que su contenido y la cuadrícula no se estira a la pantalla',
+      rejilla.alturaCelda >= 88 && rejilla.alturaCal < rejilla.ventana && rejilla.cabeceraNoEstirada,
       JSON.stringify(rejilla));
 
     // los eventos del mes se ven en su casilla Y en una lista con el nombre entero, porque en una
     // casilla de 53 px de ancho el título siempre sale cortado
+    /* la lista «Eventos de …» se fue con la carretera del mes (tercera vista): el nombre entero está en el title de la
+       casilla, al tocar el día y en la carretera */
     const agenda = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('#main .card')].find((x) => /^Eventos de/m.test(x.innerText));
       return {
         enCasilla: document.querySelectorAll('.dpt').length,
-        filas: c ? c.querySelectorAll('.agrow').length : 0,
-        nombreEntero: c ? /Congreso SEMES/.test(c.innerText) : false,
+        filas: document.querySelectorAll('.dbox .dev[title*="Congreso SEMES"], .dbox .dev[title*="Sesión clínica"]').length,
+        nombreEntero: !!document.querySelector('.dbox .dev[title*="Congreso SEMES"]'),
+        sinLista: ![...document.querySelectorAll('#main .card')].some((x) => /^Eventos de/m.test(x.innerText)),
       };
     });
-    check('los eventos del mes salen marcados en su casilla y listados enteros debajo',
-      agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero, JSON.stringify(agenda));
+    check('los eventos del mes salen marcados en su casilla con el nombre entero en el title, sin la lista de debajo',
+      agenda.enCasilla >= 2 && agenda.filas === 2 && agenda.nombreEntero && agenda.sinLista, JSON.stringify(agenda));
 
     // Con diez eventos en un día la casilla no puede reventar: caben CUATRO, cada uno en UNA sola
     // línea (lo pidió así: «los eventos y nombres y todo que no ocupe nada más de una línea»), y el
@@ -2695,10 +2698,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const f = document.querySelector('.dbox[data-key="' + k14 + '"] .mficha.f-guard');
       if (!f) return { hay: false };
       const r = f.getBoundingClientRect();
-      return { hay: true, texto: f.textContent, alto: Math.round(r.height), ancho: Math.round(r.width) };
+      /* la ficha es un dibujo (el búho con el aro violeta de la UMI): el tipo va en el title y en el símbolo */
+      return { hay: true, texto: f.title || f.textContent, sim: (f.querySelector('use') || { getAttribute: () => '' }).getAttribute('href'), alto: Math.round(r.height), ancho: Math.round(r.width) };
     });
     check('el tipo de guardia se lee en una línea, no partido en vertical',
-      etiquetas.hay && /UMI/.test(etiquetas.texto) && etiquetas.alto < 20,
+      etiquetas.hay && /UMI/.test(etiquetas.texto) && etiquetas.sim === '#f-guardiaUmi' && etiquetas.alto < 32,
       JSON.stringify(etiquetas));
 
     // se deja el mes como estaba antes de este aprieto: la prueba siguiente cuenta con esos dos
@@ -2717,12 +2721,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await page.waitForTimeout(300);
 
-    // y tocar uno de la lista te lleva a ese día
-    await page.click('.agrow');
+    // y tocar el evento en su casilla abre ese día (el 9 puede haber quedado atrás: se toca el que se vea)
+    const objetivo = await page.evaluate(() => { const e = document.querySelector('.dbox .dev[title*="Congreso SEMES"], .dbox .dev[title*="Sesión clínica"]'); return e ? e.closest('.dbox').dataset.key : ''; });
+    if (objetivo) await page.click('.dbox[data-key="' + objetivo + '"] .dev');
     await page.waitForTimeout(300);
     const saltó = await page.evaluate(() => window.PG.ui.monSel);
-    check('tocar un evento de la lista abre ese día en el calendario',
-      /^\d{4}-\d{2}-09$/.test(saltó || ''), 'monSel: ' + saltó);
+    check('tocar un evento en su casilla abre ese día en el calendario',
+      !!objetivo && saltó === objetivo, 'monSel: ' + saltó + ' / ' + objetivo);
 
     await page.evaluate(() => { window.PG.eventosS().length = 0; window.PG.save(); window.PG.ui.monSel = ''; });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -3966,10 +3971,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const mesImpreso = await page.evaluate(() => {
       const celdas = [...document.querySelectorAll('#main .dbox')];
       const vis = celdas.filter((c) => getComputedStyle(c).display !== 'none');
-      const kpi = document.querySelector('#main .dbox');
+      const kpi = document.querySelector('#main .card.calmes');
       const cs = kpi ? getComputedStyle(kpi) : null;
       return { celdas: celdas.length, visibles: vis.length,
-        conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
+        conTexto: vis.filter((c) => (c.innerText || '').trim().length > 0).length,
         kpiFondo: cs ? cs.backgroundColor : '', kpiTexto: cs ? cs.color : '',
         previas: celdas.filter((c) => c.classList.contains('semprev')).length,
         bodyFondo: getComputedStyle(document.body).backgroundColor };
@@ -11810,7 +11815,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.d = await page.evaluate(() => { const g = [...document.querySelectorAll('#main .dbox')].find((b) => b.querySelector('.mficha.f-guard'));
       return { abono: (document.querySelector('#main .carne') || { getAttribute: () => '' }).getAttribute('aria-label') || '', fichas: document.querySelectorAll('#main .dbox .mficha').length,
         borde: g ? getComputedStyle(g).borderTopColor : '', barra: !!document.querySelector('#main .mrbar') }; });
-    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.click('#main [data-a="cal-vista"][data-w="mes"][data-v="iso"]').catch(() => {});
     await page.waitForSelector('#main #calIsoSlot .ci [data-day]', { timeout: 8000 }).catch(() => {});
     r.e = await page.evaluate(() => ({ baldosas: document.querySelectorAll('#main .ci [data-day]').length, ls: localStorage.getItem('guardias-mesv'), cal: !!document.querySelector('#main .cal.ext') }));
     const ke = await page.evaluate(() => { const g = document.querySelectorAll('#main .ci [data-day]')[10]; if (!g) return ''; g.dispatchEvent(new MouseEvent('click', { bubbles: true })); return g.getAttribute('data-day'); });
@@ -11818,7 +11823,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.e.abre = await page.evaluate((k) => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy, k }), ke);
     // (f) de vuelta a plano en los dos
     await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.render(); });
-    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.click('#main [data-a="cal-vista"][data-w="mes"][data-v="plana"]').catch(() => {});
     r.f = { mes: await page.evaluate(() => ({ ls: localStorage.getItem('guardias-mesv'), cal: !!document.querySelector('#main .cal.ext'), iso: !!document.querySelector('#main .ci') })) };
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.render(); });
     await page.click('#main [data-a="cal-vista"][data-v="plana"]').catch(() => {});
@@ -11976,6 +11981,64 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.reloj.modo === 'reloj' && r.c.reloj.reloj && r.c.bus.cd && r.c.bus.ls === 'conductor' && r.c.bus.modo === 'bus', JSON.stringify(r.c));
     check('las tarjetas de dinero y 4:20 del asistente van en una línea que se abre al tocar (la de hábitos, abierta)',
       r.d.primeraAbierta && r.d.plegadas === r.d.n && (!r.d.n || r.d.abre === 1), JSON.stringify(r.d));
+  }
+
+  // 279) LA CARRETERA DEL MES, EN CADENA: (a) en Hoy, «Lo que viene» es la carretera (fig/carretera.js, cargada la
+  // primera vez), sin la cuenta atrás ni «Próximos»; la guardia de pasado mañana va en el salpicadero y como túnel
+  // con su cartel, y un evento con fecha es una señal; (b) tocar el cartel de la guardia abre ese día; (c) en Mes,
+  // el tercer chip pone la carretera (se recuerda) y «Eventos de …» ya no está; (d) la tira de arriba es el mes
+  // entero y tocar una marca abre ese día; (e) Plana vuelve a la cuadrícula y la carretera no se imprime.
+  // Fija: la cuenta atrás, «Próximos» y «Eventos de octubre» diciendo lo mismo tres veces (527 px).
+  {
+    const r = {};
+    const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 2); const k = P.iso(d), d3 = new Date(); d3.setDate(d3.getDate() + 4); const ke = P.iso(d3);
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      P.__t279 = { k, ov: (P.store.rotation.shiftByDay || {})[k], mode: P.store.rotation.mode, nEv: P.eventosS().length };
+      P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
+      P.eventosS().push({ id: 'ev279', titulo: 'Sesión t279', hora: '08:30', modo: 'fecha', fecha: ke, dow: [], color: '#38e1ff', on: true });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.mesV = 'plana'; P.save(); P.render(); return k; });
+    await page.waitForSelector('#main .lqv #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
+    r.a = await page.evaluate((k) => { const svg = document.querySelector('#main .lqv #carrSlot .ct svg'); const t = svg ? svg.textContent : '';
+      return { hay: !!svg, cuenta: !!document.querySelector('#main .hoycta'), proximos: [...document.querySelectorAll('#main .card h2')].some((h) => /Próximos/.test(h.textContent)),
+        cab: (document.querySelector('#main .lqv h2') || {}).textContent || '', tunel: !!svg && !!svg.querySelector('.ct-boca'), cartel: /GUARDIA/.test(t) && /en 2 días/.test(t), senal: /Sesión t279/.test(t),
+        mojones: svg ? svg.querySelectorAll('g[data-o]').length : 0, sr: document.querySelectorAll('#main .lqv .ct-sr button').length }; }, kg);
+    // (b) el cartel de la guardia (el más ancho con esa fecha) abre ese día en Hoy
+    const c = await page.evaluate((k) => { const gs = [...document.querySelectorAll('#main .lqv .ct svg g[data-o="' + k + '"]')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width); const g = gs[0]; if (!g) return null;
+      g.scrollIntoView({ block: 'center' }); const b = g.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; }, kg);
+    if (c) { await page.mouse.click(c[0], c[1]); await page.waitForTimeout(300); }
+    r.b = await page.evaluate((k) => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy, k: k, tocado: !!window.__t279 }), kg);
+    // (c) Mes: el tercer chip
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.ui.monSel = ''; P.render(); });
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(200);
+    r.c = { chips: await page.evaluate(() => [...document.querySelectorAll('#main .mesv button')].map((b) => b.textContent.trim()).join('|')) };
+    await page.click('#main .mesv [data-v="ruta"]');
+    await page.waitForSelector('#main .calmes #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
+    Object.assign(r.c, await page.evaluate(() => ({ hay: !!document.querySelector('#main .calmes #carrSlot .ct svg'), cal: !!document.querySelector('#main .cal.ext'), ls: localStorage.getItem('guardias-mesv'),
+      eventos: [...document.querySelectorAll('#main .card h2')].some((h) => /^Eventos de/.test(h.textContent)), on: (document.querySelector('#main .mesv .on') || {}).textContent || '' })));
+    // (d) la tira: una marca por día del mes; tocar una abre ese día
+    const t = await page.evaluate(() => { const l = [...document.querySelectorAll('#main #carrSlot .ct svg circle[data-o]')]; const m = l[Math.min(20, l.length - 1)]; if (!m) return null;
+      m.scrollIntoView({ block: 'center' }); const b = m.getBoundingClientRect(); return [m.getAttribute('data-o'), b.x + b.width / 2, b.y + b.height / 2, l.length]; });
+    if (t) { await page.mouse.click(t[1], t[2]); await page.waitForTimeout(300); }
+    r.d = await page.evaluate((t) => ({ marcas: t ? t[3] : 0, k: t ? t[0] : '', tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy }), t);
+    // (e) de vuelta a Mes: Plana devuelve la cuadrícula, y en papel la carretera no sale
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.render(); });
+    await page.waitForTimeout(200);
+    await page.emulateMedia({ media: 'print' });
+    r.e = { papel: await page.evaluate(() => { const s = document.querySelector('#main #carrSlot'); return { slot: !!s, visible: !!s && getComputedStyle(s).display !== 'none' }; }) };
+    await page.emulateMedia({ media: null });
+    await page.click('#main .mesv [data-v="plana"]');
+    await page.waitForTimeout(200);
+    r.e.plana = await page.evaluate(() => ({ cal: !!document.querySelector('#main .cal.ext'), ruta: !!document.querySelector('#main #carrSlot'), ls: localStorage.getItem('guardias-mesv') }));
+    await page.evaluate(() => { const P = window.PG, t = P.__t279; P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.eventosS().length = t.nEv; delete P.__t279; P.ui.diaHoy = ''; P.save(); P.render(); });
+    const esDia = (o) => o.tab === 'hoy' && (o.dia === o.k || (o.dia === '' && o.k === new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)));
+    check('en Hoy, «Lo que viene» es la carretera: sin cuenta atrás ni «Próximos», la guardia de pasado mañana en el salpicadero y como túnel con cartel, y el evento como señal',
+      r.a.hay && !r.a.cuenta && !r.a.proximos && /en 2 días/.test(r.a.cab) && r.a.tunel && r.a.cartel && r.a.senal && r.a.mojones >= 10 && r.a.sr >= 10, JSON.stringify(r.a));
+    check('tocar el cartel de la guardia en la carretera abre ese día en Hoy', !!c && esDia(r.b), JSON.stringify(r.b));
+    check('en Mes, el tercer chip pone la carretera (y se recuerda) y «Eventos de …» ya no está',
+      r.c.chips === '▦ Plana|🏗 Isométrica|🛣 Carretera' && r.c.hay && !r.c.cal && r.c.ls === 'ruta' && !r.c.eventos && /Carretera/.test(r.c.on), JSON.stringify(r.c));
+    check('la tira de arriba es el mes entero (28–31 marcas) y tocar una marca abre ese día en Hoy', r.d.marcas >= 28 && r.d.marcas <= 31 && !!r.d.k && esDia(r.d), JSON.stringify(r.d));
+    check('la carretera no se imprime y «Plana» devuelve la cuadrícula', r.e.papel.slot && !r.e.papel.visible && r.e.plana.cal && !r.e.plana.ruta && r.e.plana.ls === 'plana', JSON.stringify(r.e));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

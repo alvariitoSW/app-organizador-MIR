@@ -343,3 +343,24 @@ quitar del todo «Hábitos de la semana» (el usuario prefirió plegarlo).
 
 **Supuestos:** el texto recortado de una tarjeta plegada sigue en el DOM (la prueba del dinero lo lee); «Estación»
 guarda las dos claves (modo y vista) para que el conductor y la estación sigan siendo la misma cosa por dentro.
+
+## 2026-10-13 · Calendario, tanda 3: la carretera del mes en Hoy y en Mes
+
+**Elegido:**
+- **`fig/carretera.js`**, un módulo como el conductor: la misma cabina y cámara, pero la carretera son los días
+  que vienen. Mojones con el número y el color del tipo; la guardia es un túnel con su cartel (tipo, horas y
+  «en N días»); el finde libre, un área de descanso; las vacaciones, la salida a la playa; cada evento con
+  fecha, una señal azul. El salpicadero dice la fecha, la próxima guardia, el finde y la playa; la tira de
+  arriba es el mes entero. Se arrastra (hacia delante = avanzar días), tocar un mojón, un cartel o una marca
+  abre ese día en Hoy, y con el teclado van las flechas. Se carga la primera vez que hace falta.
+- **En Hoy**, la tarjeta «Lo que viene» en el sitio de «Próximos»; la cuenta atrás se va (la lleva el
+  salpicadero). **En Mes**, el tercer chip «▦ Plana · 🏗 Isométrica · 🛣 Carretera»; «Eventos de …» se va
+  (los eventos están en la casilla, con el nombre entero en el title, y en la carretera).
+- Solo los eventos con fecha van como señal: los semanales son rutina y saldrían cada semana.
+- Medido (412 px, octubre de ejemplo): Hoy 1 586 → 1 560 px con la carretera dentro (48 botones de los que 14
+  son los de la carretera); Mes plana 1 911 → 783 px; Mes carretera 585 px.
+
+**Descartado:** meter la carretera en Semana (la semana ya es el tablón y a siete días la carretera queda vacía).
+
+**Supuestos:** la carretera enseña 31 días desde hoy (desde el día 1 si miras otro mes); dentro del túnel
+(cuando avanzas hasta el día de la guardia) no se pinta el portal, para no ver negro.

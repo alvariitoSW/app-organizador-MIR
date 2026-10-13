@@ -7061,7 +7061,7 @@ function renderHoy(){
        las dos cosas a la vez y mejor que ninguna: cada cosa ocupa el rato que ocupa de verdad, así
        que la duración y el hueco entre dos se ven sin leer nada. Y al tocar un bloque se va a
        cambiarlo, que era lo que la lista no hacía. */
-    hoyCuentaAtras(hoy)+hoyDiaHTML(hoy,inf,esHoy)+
+    hoyDiaHTML(hoy,inf,esHoy)+
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     /* con el conductor, el sueño, el sol y lo comido ya van en el salpicadero */
     (hoyModo()==='bus'?'':'<div class="hoypie">'+
@@ -7076,10 +7076,11 @@ function renderHoy(){
        en una lista que se marca) y lo que viene. Eran hasta diez tarjetas sueltas, ~1 000 px, y la
        del sol repetía lo que ya dice el reloj: el arco amarillo se toca y abre su hoja */
     /* con el conductor, el sueño ya va en el salpicadero (el depósito abre Sueño) */
-    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML())+paraHoyHTML(hoy)+proximosPuntualesHTML():
+    /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
+    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML())+paraHoyHTML(hoy)+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
-  hoyBusMonta();
+  hoyBusMonta();carrMonta('hoy');
 }
 /* ===================== la agenda de un día: lo que haces, a su hora =====================
    Hoy y Semana la leen de aquí: dormir, trabajo o guardia, entreno, eventos y cada comida con su
@@ -7461,9 +7462,56 @@ const HAB_PRESETS=[
    paradas del conductor: jornada roja, guardia azul noche, comida verde, entreno violeta, planes turquesa. */
 const SEMV_KEY='guardias-semv',MESV_KEY='guardias-mesv';
 function calVista(w){const u=w==='sem'?'semV':'mesV';
-  if(!ui[u]){let v='';try{v=localStorage.getItem(w==='sem'?SEMV_KEY:MESV_KEY)||'';}catch(e){}ui[u]=v==='iso'?'iso':'plana';}return ui[u];}
-function calVistaBtn(w){const iso=calVista(w)==='iso';
-  return '<div class="hoybusv"><button class="chipx" data-a="cal-vista" data-w="'+w+'" data-v="'+(iso?'plana':'iso')+'" aria-label="Cambiar a la vista '+(iso?'plana':'isométrica')+'">⇄ '+(iso?'▦ Plana':'🏗 Isométrica')+'</button></div>';}
+  if(!ui[u]){let v='';try{v=localStorage.getItem(w==='sem'?SEMV_KEY:MESV_KEY)||'';}catch(e){}ui[u]=v==='iso'?'iso':(v==='ruta'&&w==='mes'?'ruta':'plana');}return ui[u];}
+/* Mes: tres formas de ver el mes en una fila (la plana se edita; la isométrica y la carretera se miran) */
+function calVistaBtn(w){const v=calVista(w);
+  return '<div class="semtog t3 mesv" role="tablist">'+[['plana','▦ Plana'],['iso','🏗 Isométrica'],['ruta','🛣 Carretera']].map(function(o){
+    return '<button role="tab" aria-selected="'+(v===o[0])+'" class="'+(v===o[0]?'on':'')+'" data-a="cal-vista" data-w="'+w+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';}
+/* ===================== LA CARRETERA DEL MES (fig/carretera.js): lo que viene, desde el asiento =====================
+   En Hoy es la tarjeta «Lo que viene» (sustituye a la cuenta atrás y a «Próximos») y en Mes la tercera vista
+   (sustituye a «Eventos de …»). Los datos salen de los mismos sitios que la cuadrícula: el tipo de cada día,
+   las horas de la guardia, los eventos con fecha, las vacaciones y los findes libres. */
+let _carr={hoy:null,mes:null},_carrDatos={hoy:null,mes:null},_carrCarga=false;
+function carreteraDatos(desde){
+  const hoyK=iso(new Date()),d0=parseDate(desde||hoyK)||new Date(),hoyInf=dayInfo(hoyK),hoySh=shiftById(hoyInf.shiftId);
+  const tipoDe=function(k,inf){const sh=shiftById(inf.shiftId);return inf.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(k);};
+  const dias=[];let tAnt=tipoDe(iso(addDays(d0,-1)),dayInfo(iso(addDays(d0,-1))));
+  for(let i=0;i<31;i++){const dt=addDays(d0,i),k=iso(dt),inf=dayInfo(k),t=tipoDe(k,inf),x={k:k,d:dt.getDate(),dow:dt.getDay(),tipo:t,g:'',gh:'',evs:[]};
+    if(t==='guardia'){x.g=String(inf.guard||'').toUpperCase();const g=guardiaHoras(k,inf.guard);if(g)x.gh=hCorta(g.guardia)+' → '+hCorta(g.sale);}
+    /* solo lo que tiene fecha: el pádel de cada jueves es rutina (ya va en el tablón) y como señal saldría cada semana */
+    x.evs=eventosCalendario(k).filter(function(e){return e.modo==='fecha';}).map(function(e){return {t:e.titulo||'Evento',h:e.hora?hCortaHM(e.hora):''};});
+    if(t==='libre'&&tAnt!=='libre'){x.finde0=true;const k1=iso(addDays(dt,1));if(tipoDe(k1,dayInfo(k1))==='libre')x.finde1=DIA3[(dt.getDay()+1)%7]+' '+addDays(dt,1).getDate();}
+    if(t==='vac'&&tAnt!=='vac'){let f=dt;for(let j=1;j<60;j++){const kj=iso(addDays(dt,j));if(tipoDe(kj,dayInfo(kj))!=='vac')break;f=addDays(dt,j);}
+      x.vac0=dt.getDate()+' '+MON[dt.getMonth()]+(f>dt?' → '+f.getDate()+' '+MON[f.getMonth()]:'');}
+    tAnt=t;dias.push(x);}
+  const y=d0.getFullYear(),mo=d0.getMonth(),n=new Date(y,mo+1,0).getDate(),tira=[];
+  for(let d=1;d<=n;d++){const k=iso(new Date(y,mo,d,12));tira.push({k:k,tipo:tipoDe(k,dayInfo(k)),hoy:k===hoyK,pasado:k<hoyK});}
+  const en=function(i){return i===1?'mañana':'en '+i+' días';};
+  const ig=dias.findIndex(function(x,i){return i>0&&x.tipo==='guardia';}),fi=dias.findIndex(function(x,i){return i>0&&x.finde0;}),vi=dias.findIndex(function(x,i){return i>0&&x.vac0;});
+  const prox={guardia:ig>0?{txt:DIA3[dias[ig].dow]+' '+dias[ig].d+' · '+en(ig)}:null,finde:fi>0?{txt:'finde libre '+DIA3[dias[fi].dow]+' '+dias[fi].d}:null,vac:vi>0?{txt:'playa '+en(vi)}:null};
+  let ph=0;try{ph=(hoyBusDatos(hoyK,hoyInf,true).ph||0);}catch(e){}
+  const nEv=dias.reduce(function(a,x){return a+x.evs.length;},0);
+  const hh=horasCortasDia(hoyK,hoyInf,hoySh);
+  return {hoy:hoyK,claro:!document.documentElement.classList.contains('dark'),hoyTxt:(DIA3[new Date().getDay()]+' '+new Date().getDate()).toUpperCase(),
+    hoySub:(hoyInf.vac?'vacaciones':(hoySh?nombreCorto(hoySh.name).toLowerCase()+(hoyInf.guard?' '+String(hoyInf.guard).toUpperCase():''):'sin día'))+(hh?' · '+hh:''),
+    mesTxt:MONTH_FULL[mo].toUpperCase(),dias:dias,tira:tira,prox:prox,
+    chips:[{txt:'PARA HOY · '+ph,o:'parahoy'},{txt:nEv+(nEv===1?' EVENTO':' EVENTOS'),o:'eventos'}]};}
+function carreteraAbre(o){
+  if(o.tipo==='dia'){act('hoja-ver',{dataset:{k:o.k}});return;}
+  if(o.o==='eventos'){act('ir-eventos',{dataset:{}});return;}
+  if(o.o==='parahoy'){if(ui.tab!=='hoy'){ui.tab='hoy';ui.calMode='hoy';ui.diaHoy='';render();}const c=document.querySelector('#main .parahoy');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});}}
+function carrMonta(w){
+  const slot=document.getElementById('carrSlot');if(!slot||!_carrDatos[w])return;
+  if(!window.Carretera){if(!_carrCarga){_carrCarga=true;const sc=document.createElement('script');sc.src='fig/carretera.js';
+      sc.onload=function(){carrMonta(w);};sc.onerror=function(){_carrCarga=false;};document.head.appendChild(sc);}
+    if(!slot.firstChild)slot.innerHTML='<p class="mini" style="padding:40px 0;text-align:center">montando la carretera…</p>';return;}
+  if(!_carr[w])_carr[w]=window.Carretera.crea({onAbrir:carreteraAbre});
+  if(_carr[w].el.parentNode!==slot){slot.innerHTML='';slot.appendChild(_carr[w].el);}
+  _carr[w].actualiza(_carrDatos[w]);}
+function loQueVieneHTML(){
+  _carrDatos.hoy=carreteraDatos('');const g=_carrDatos.hoy.prox.guardia;
+  return '<div class="card lqv"><h2>🛣️ Lo que viene<span class="mini" style="margin-left:auto;font-weight:400">'+(g?'próxima guardia '+esc(g.txt):'sin guardias a la vista')+'</span></h2>'+
+    '<div id="carrSlot" class="carrslot"></div></div>';}
 let _calIso={sem:null,mes:null},_calIsoDatos={sem:null,mes:null},_calIsoCarga=false;
 function calIsoMonta(w){
   const slot=document.getElementById('calIsoSlot');if(!slot||!_calIsoDatos[w])return;
@@ -8049,7 +8097,7 @@ function renderMonth(){
      empieza en el día 1 con huecos vacíos delante, sino una semana entera antes, y acaba una semana
      entera después. Los días de fuera van en su color pero apagados (.fuera), y se pueden tocar
      igual. Las cuentas del mes (guardias, vacaciones, sueño) siguen saliendo de `list`, solo del mes. */
-  const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc),isoM=calVista('mes')==='iso';
+  const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc),vM=calVista('mes'),isoM=vM==='iso',rutaM=vM==='ruta';
   calFigMonta();
   rejilla.forEach(function(d){
     /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
@@ -8149,12 +8197,13 @@ function renderMonth(){
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
         <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada ficha" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
       ${mesCarneHTML(abono,y,mo,svc)}${calVistaBtn('mes')}
-      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':`<div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
+      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':rutaM?'<div id="carrSlot" class="carrslot"></div>':`<div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
       ${ui.mesLey?'<div class="mleyenda">'+mesFichaHTML('guardia','')+' guardia · '+mesFichaHTML('trabajo')+' jornada · '+mesFichaHTML('fuerza')+' fuerza · '+mesFichaHTML('saliente')+' saliente · '+mesFichaHTML('libre')+' libre · '+mesFichaHTML('vac')+' vacaciones · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · las horas de la jornada de diario no se escriben · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
-    ${agendaMesHTML(y,mo)}
    </div>`;
+  /* la carretera del mes: desde hoy si es este mes, desde el día 1 si es otro */
+  if(rutaM){const h=new Date();_carrDatos.mes=carreteraDatos(h.getFullYear()===y&&h.getMonth()===mo?'':iso(new Date(y,mo,1,12)));carrMonta('mes');}
   /* el aviso de «mantén pulsado» era una caja de 76 px en la pantalla todos los días hasta cerrarla: ahora
      es un aviso que sale una vez y se va solo */
   if(!store.meta.pulsarVisto&&!ui.mesModo&&!ui.mhintDicho&&mhintVigente()){ui.mhintDicho=true;setTimeout(function(){flash('💡 Mantén pulsado un día para cambiar qué es o añadir algo',4500);},400);}
@@ -23530,7 +23579,7 @@ function act(a,el){
     case 'sem-vista':ui.semVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
     case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
     case 'sem-sel':ui.semSel=el.dataset.k||'';render();break;
-    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':'plana';ui[w==='sem'?'semV':'mesV']=v;if(w==='sem')ui.semVista='';
+    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':(el.dataset.v==='ruta'&&w==='mes'?'ruta':'plana');ui[w==='sem'?'semV':'mesV']=v;if(w==='sem')ui.semVista='';
       try{localStorage.setItem(w==='sem'?SEMV_KEY:MESV_KEY,v);}catch(e){}render();break;}
     case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;

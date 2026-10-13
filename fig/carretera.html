@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La carretera del mes</title>
+<!-- La carretera suelta (maqueta): el mismo módulo que usa la app, con octubre de 2026 de ejemplo. #claro para el tema claro -->
+<style>html,body{margin:0;background:#070b14;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:660px;margin:14px auto;padding:0 8px}</style>
+<script src="carretera.js"></script>
+</head>
+<body>
+<div class="wrap" id="w"></div>
+<script>
+(function () {
+  const HOY = 13, T = {}; for (let d = 1; d <= 31; d++) { const w = new Date(2026, 9, d).getDay(); T[d] = w === 0 || w === 6 ? "libre" : "trabajo"; }
+  Object.assign(T, { 3: "guardia", 8: "guardia", 13: "guardia", 19: "guardia", 24: "guardia", 28: "guardia", 4: "saliente", 9: "saliente", 14: "saliente", 20: "saliente", 25: "saliente", 29: "saliente", 30: "vac", 31: "vac" });
+  const G = { 8: "umi", 24: "umi" }, EV = { 15: [{ t: "Sesión general", h: "08:15" }], 17: [{ t: "Cumple de Marta", h: "21:00" }], 22: [{ t: "Dentista", h: "17:30" }], 27: [{ t: "Examen", h: "09:00" }] };
+  const k = (d) => "2026-10-" + String(d).padStart(2, "0"), dias = [];
+  for (let d = HOY; d <= 31; d++) { const t = T[d], x = { k: k(d), d: d, dow: new Date(2026, 9, d).getDay(), tipo: t, g: t === "guardia" ? (G[d] || "urg") : "", gh: t === "guardia" ? (G[d] ? "10:00 → 11:15" : "15:00 → 9:15") : "", evs: EV[d] || [] };
+    if (t === "libre" && T[d - 1] !== "libre") { x.finde0 = true; if (T[d + 1] === "libre") x.finde1 = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"][new Date(2026, 9, d + 1).getDay()] + " " + (d + 1); }
+    if (t === "vac" && T[d - 1] !== "vac") x.vac0 = "30 oct → 1 nov";
+    dias.push(x); }
+  const tira = []; for (let d = 1; d <= 31; d++) tira.push({ k: k(d), tipo: T[d], hoy: d === HOY, pasado: d < HOY });
+  const datos = { hoy: k(HOY), claro: /claro/.test(location.hash), hoyTxt: "MAR 13", hoySub: "guardia URG · 15→9", mesTxt: "OCTUBRE", dias: dias, tira: tira,
+    prox: { guardia: { txt: "lun 19 · en 6 días" }, finde: { txt: "finde libre sáb 17" }, vac: { txt: "playa en 17 d" } }, chips: [{ txt: "PARA HOY · 3", o: "parahoy" }, { txt: "4 EVENTOS", o: "eventos" }] };
+  const c = window.Carretera.crea({ onAbrir: (o) => console.log("abriría", JSON.stringify(o)) });
+  document.getElementById("w").appendChild(c.el); c.actualiza(datos); window.__c = c;
+})();
+</script>
+</body>
+</html>
