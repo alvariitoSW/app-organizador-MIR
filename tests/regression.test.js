@@ -11669,7 +11669,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="asist-mas"]').catch(() => {});
     r.i.largo = await page.evaluate(() => !!document.querySelector('#main .asck') && !document.querySelector('#main .asck.corto'));
     // (h) un toque en el cartel de la primera comida sin apuntar, a su hora, la apunta
-    const comida = await page.evaluate(() => { const d = window.PG.conductor().d.dia.filter((e) => e.m === 'meal' && !e.h)[0]; return d ? { i: d.i, a: d.a } : null; });
+    // si lo de antes dejó el día sin comidas con platos por apuntar, se pone una con el gesto de Plan
+    const comida = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date());
+      const busca = () => P.conductor().d.dia.filter((e) => e.m === 'meal' && !e.h)[0];
+      if (!busca()) { let w = -1; for (let j = 0; j < 14; j++) if (P.sbFechaW(j) === hoy) { w = j; break; }
+        const d = P.store.dishes.filter((x) => !x.hospital)[0];
+        ['cena', 'comida', 'desayuno'].some((c) => { if (w < 0 || !d) return true; P.mPoner(w, c, [{ kind: 'dish', id: d.id, portions: 1 }], ''); P.save(); P.render(); return !!busca(); }); }
+      const d = busca(); return d ? { i: d.i, a: d.a } : null; });
     r.h = { comida: !!comida };
     if (comida) {
       await pon(comida.a);
@@ -11703,7 +11709,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (j) «Reloj» se recuerda
     await page.click('.hoyseg [data-v="reloj"]').catch(() => {});
     await page.waitForTimeout(150);
-    r.j = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main .cd'), snhoy: !!document.querySelector('#main .snhoy') }));
+    r.j = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main #hoyBusSlot .cd'), snhoy: !!document.querySelector('#main .snhoy') }));
     await page.evaluate((a) => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
       P.setDayOverride(ay, a.ay ? a.ay.shift : null, a.ay ? a.ay.guard : ''); P.setDayOverride(hoy, a.hoy ? a.hoy.shift : null, a.hoy ? a.hoy.guard : '');
       if (a.sr) P.store.suenoReal[hoy] = a.sr; else delete P.store.suenoReal[hoy];

@@ -21360,7 +21360,7 @@ function proximosPuntualesHTML(){
     '<div class="proxl">'+prox.slice(0,ui.proxTodos?12:3).map(function(ev){
       return '<div class="proxf"><span class="evdot" style="background:'+esc(ev.color)+'"></span>'+
         '<b>'+esc(ev.titulo||'(sin título)')+'</b>'+
-        '<span class="cd">'+esc(fechaCorta(ev.fecha))+' '+esc(evHoraTxt(ev))+
+        '<span class="proxcd">'+esc(fechaCorta(ev.fecha))+' '+esc(evHoraTxt(ev))+
         (ev.recordatorio?' 🔔':'')+'</span>'+
         (ev.cuentaAtras?'<span class="tag b2">'+cuentaAtrasTxt(ev.fecha)+'</span>':'')+
         '</div>';}).join('')+'</div>'+

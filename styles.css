@@ -2188,7 +2188,7 @@ button.gfs.gedab{display:flex;width:100%}
 .proxf:last-child{border-bottom:0}
 .proxf>b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   font-size:13px;font-weight:700}
-.proxf .cd{flex:none;font-size:11.5px;color:var(--ink2);font-weight:700;white-space:nowrap}
+.proxf .proxcd{flex:none;font-size:11.5px;color:var(--ink2);font-weight:700;white-space:nowrap}
 .proxf .evdot{flex:none}
 /* El sol, plegado: el renglón lleva las tres cifras, así que abrirlo es opcional */
 /* listo, músculos, progreso */
