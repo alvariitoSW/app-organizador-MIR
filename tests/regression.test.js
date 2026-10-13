@@ -1353,8 +1353,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('hoy');
   await page.waitForTimeout(150);
   const proximosHoy = await page.evaluate(() => document.getElementById('main').innerText);
-  check('"Hoy" también muestra la tarjeta "Próximos" con el evento puntual (el recordatorio está a la vista)',
-    /Próximos/.test(proximosHoy) && /Presentación de prueba/.test(proximosHoy), '');
+  /* «Próximos» es ahora la carretera «Lo que viene»: el evento va como señal (y en su lista accesible) */
+  check('"Hoy" también muestra el evento puntual en «Lo que viene» (el recordatorio está a la vista)',
+    /Lo que viene/.test(proximosHoy) && /Presentación de prueba/.test(proximosHoy), proximosHoy.slice(0, 120));
 
   const enElDia = await page.evaluate((key) => window.PG.eventosDeFecha(key).map((e) => e.titulo), enDiez);
   check('el evento puntual aparece exactamente en su fecha vía eventosDeFecha() (para "Mes"/"Semana")',
@@ -2489,9 +2490,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(300);
     const evDesdeElDia = await page.evaluate((k) => ({
       creados: window.PG.eventosS().filter((e) => e.fecha === k).map((e) => e.titulo + ' ' + e.hora),
-      enLaAgenda: document.querySelectorAll('.agrow').length,
+      enLaAgenda: document.querySelectorAll('.dbox .dev[title*="Sesión clínica"]').length,   /* en su casilla: la lista del mes se fue con la carretera */
     }), hoyKeyDia);
-    check('un evento se crea desde el día y aparece en la agenda del mes',
+    check('un evento se crea desde el día y aparece en su casilla del mes',
       evDesdeElDia.creados.length === 1 && evDesdeElDia.creados[0] === 'Sesión clínica 08:30' &&
       evDesdeElDia.enLaAgenda >= 1, JSON.stringify(evDesdeElDia));
 

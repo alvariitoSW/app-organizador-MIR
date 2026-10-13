@@ -22757,7 +22757,7 @@ function curShiftId(el){const n=el&&el.closest?el.closest('[data-shift]'):null;i
 function act(a,el){
   const id=el.dataset.id;
   switch(a){
-    case 'tab':ui.tab=el.dataset.t;ui.hoyVista='';if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;
+    case 'tab':ui.tab=el.dataset.t;ui.hoyVista='';ui.mesHoja=false;if(CAL_SET.has(ui.tab))ui.calMode=ui.tab;
       if(el.dataset.dv!=null){ui.dineroVista=el.dataset.dv;ui.dinHoja='';}
       /* entrar en «Turno y rotación» te deja en su portada, no en la última pantalla que abriste
          hace tres días: es configuración, no un sitio donde se continúa algo */
@@ -24018,13 +24018,13 @@ function act(a,el){
       break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};
       store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
-    case 'mes-cfg':{
+    case 'mes-cfg':{ui.mesHoja=false;
       /* el número por sí solo no se puede tocar: el KPI lleva al sitio donde se cambia (315fd543) */
       const to=el.dataset.to;
       irACard(to==='jornada'?'types':'',to,to==='jornada'?80:0);
       break;}
     /* de Mes a donde se configuran los tipos de guardia y el ciclo, que ya no se repiten en Mes */
-    case 'ir-rotacion':irACard('cfg','rotaciones');break;
+    case 'ir-rotacion':ui.mesHoja=false;irACard('cfg','rotaciones');break;
     case 'franja-cfg':irACard('ajustes','franja');break;
     case 'sn-abrir':ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';ui.snTab=el.dataset.v||'';if(el.dataset.aj)ui.snAj=el.dataset.aj;render();window.scrollTo(0,0);break;
     case 'sn-banco':ui.snBanco=relojSrc(false);if(!ui.snBanco){flash('Apunta cómo dormiste para ver tu reloj');break;}render();break;
@@ -24361,7 +24361,7 @@ function act(a,el){
         recordatorio:!!(av&&av.checked),cuentaAtras:!!(ca&&ca.checked)});
       flash(r.msg);render();break;}
     case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
-    case 'ir-eventos':ui.tab='eventos';ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);break;
+    case 'ir-eventos':ui.mesHoja=false;ui.tab='eventos';ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);break;
     case 'ir-semana-cfg':
       /* Turno y rotación ya no es una pantalla única: la tarjeta de la semana vive en su vista, así
          que el atajo tiene que abrirla antes de ir a buscarla */
