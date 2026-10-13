@@ -301,3 +301,27 @@ queda.
 **Supuestos:** las cifras de «después» son la app con bloques ocultos o sustituidos por CSS/DOM (±20 px al
 construir); «las horas de siempre» son las de la jornada de diario de ajustes; la hoja del mes conserva
 «Este mes» entero.
+
+## 2026-10-13 · Calendario, tanda 1: Mes con las fichas estáticas, el carné y la hoja del mes
+
+**Contexto:** del informe de propuestas, el usuario eligió la A («carné corto encima de la cuadrícula»),
+la carretera en Hoy y en Mes, los hábitos plegados y que el tablero isométrico se quede.
+
+**Elegido:**
+- **Las fichas, estáticas** (`fig/calendario.js`, generado por `design/calendario-propuestas/build-fig.mjs`):
+  los seis objetos como `<symbol>` y cada casilla un `<use>`. Las horas de la jornada de diario ya no se
+  escriben: solo salen las que no son las de siempre («15→8», «→8», «10→11:15»).
+- **El carné corto** en el sitio del abono: el mes y el servicio grabados, las tres cifras y la regla del
+  mes con la aguja de hoy. Tocarlo abre **la hoja del mes**, que es «Este mes» tal cual (cupo, servicio,
+  vacaciones, repartir, ⋯), fuera de la pantalla hasta que se pide. «+ vacaciones» cierra la hoja.
+- **Cinco semanas desde la de hoy**, sin la semana pasada delante, y la casilla mide lo que su contenido
+  (mínimo 92 px): la cuadrícula ya no se estira a la pantalla. Los otros meses van del 1 al último.
+- **El aviso de mantener pulsado** es un aviso que sale una vez; **la leyenda** va detrás de un «?».
+- Mes (412 px, octubre de ejemplo): 1 911 → 1 175 px con «Eventos de octubre» todavía (se va en la tanda 3
+  con la carretera); la cuadrícula 845 → 585 px.
+
+**Descartado:** cargar las fichas en diferido como la vista isométrica (parpadeaban al abrir la app en Mes);
+van en un script fijo de 113 KB que el service worker guarda.
+
+**Supuestos:** «las horas de siempre» son las de la jornada de diario de Ajustes; el `<use>` toma los
+estilos del documento (Chrome y Firefox lo hacen; comprobado en claro y oscuro).

@@ -1176,7 +1176,7 @@ ul.slots{list-style:none;margin:0;padding:0}
   html.imp-mes .cal{margin-top:0;height:86vh;break-inside:auto;page-break-inside:auto;
     grid-auto-rows:minmax(0,1fr)}
   html.imp-mes .dbox{min-height:0;overflow:hidden}
-  html.imp-mes .abono,html.imp-mes .hoybusv,html.imp-mes .calisoslot{display:none!important}
+  html.imp-mes .abono,html.imp-mes .carne,html.imp-mes .mleyenda,html.imp-mes .hoybusv,html.imp-mes .calisoslot{display:none!important}
   html.imp-mes .dbox .dsl{display:none}   /* las horas de sueño no se cuelgan en la pared */
   html.imp-mes .dnum{font-size:12px}
   html.imp-mes .dnm{font-size:11px}
@@ -1348,7 +1348,7 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .mesnav{display:flex;gap:6px;align-items:center;margin-top:8px;min-width:0}
 .mesnav input[type=month]{flex:1 1 auto;min-width:0;width:auto}
 .mesnav .btn{flex:0 0 auto}
-.cal.ext{grid-auto-rows:minmax(92px,1fr);min-height:calc(100svh - 96px)}
+.cal.ext{grid-auto-rows:minmax(92px,auto);min-height:0}
 /* LA SEMANA PASADA, ENCOGIDA. Fila 1 = los nombres de los días, fila 2 = la semana que ya pasó
    (que se sigue viendo, pero no vale lo mismo que las que tienes por delante), y de la 3 en
    adelante las que importan, repartiéndose todo lo que sobra. */
@@ -1372,7 +1372,7 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .dbox .dev .n{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dbox .dev b{flex:none;font-weight:800;color:var(--ink2);margin-left:1px}
 @media(max-width:560px){
-  .cal.ext{min-height:calc(100svh - 70px);grid-auto-rows:minmax(92px,1fr)}
+  .cal.ext{grid-auto-rows:minmax(92px,auto);min-height:0}
   .calmes>h2{margin-bottom:0}
   /* UN PELÍN MÁS ANCHAS. La rejilla ocupaba 376 px de los 412 de su móvil: 36 se iban en márgenes
      a los lados, casi el ancho de media casilla. La tarjeta del mes pega la cuadrícula al borde
@@ -3712,3 +3712,13 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .abono b{display:block;font-size:21px;line-height:1.05;font-weight:900}.abono small{font-size:11px;font-weight:700;opacity:.8}
 .abono .agujeros{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}.abono .agujeros i{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(27,20,6,.55)}
 .abono .agujeros i.p{background:var(--card);border-color:var(--card)}
+
+/* ============ las fichas estáticas y el carné de abono (fig/calendario.js) ============ */
+.mficha.cf{background:none;padding:0;box-shadow:none;border:0;border-radius:0;overflow:visible}
+.mficha.cf svg{width:30px;height:27px;display:block}
+.mleyenda .mficha.cf svg{width:22px;height:20px}
+.mleyenda .mficha.cf{vertical-align:middle}
+.carne{display:block;width:100%;max-width:420px;border:0;background:none;padding:0;margin:6px 0 2px;cursor:pointer;border-radius:14px}
+.carne svg{display:block;width:100%;height:auto}
+.carne:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.hoja .card.mesres{border:0;padding:0;background:none;box-shadow:none;margin:0}

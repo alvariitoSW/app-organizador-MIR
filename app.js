@@ -7769,10 +7769,15 @@ function mesRejilla(y,mo,lead){
   /* los días que pinta la cuadrícula de Mes: la semana entera de antes del día 1, el mes, y la
      semana entera de después del último. Cada día sale de monthDays() de SU mes, así que trae lo
      mismo que los del mes (tipo de día, guardia, jornada, sueño). */
-  let ini=new Date(y,mo,1-lead-7,12,0,0,0);
+  /* CINCO SEMANAS Y NADA DE AIRE. La semana ya pasada se llevaba una fila (encogida) y la sexta semana
+     otra, y la casilla crecía hasta llenar la pantalla: 845 px con el 70 % vacío. Ahora: el mes en el que
+     estás son esta semana y las cuatro siguientes, los otros meses van del día 1 al último con las
+     semanas partidas que les toquen, y la casilla mide lo que mide su contenido. La semana pasada se ve
+     bajando un mes con ‹. */
+  let ini=new Date(y,mo,1-lead,12,0,0,0);
   const ult=new Date(y,mo+1,0,12,0,0,0);
   const cola=6-((lead+ult.getDate()-1)%7);
-  let fin=new Date(y,mo+1,cola+7,12,0,0,0);
+  let fin=new Date(y,mo+1,cola,12,0,0,0);
   /* el mes en el que ESTÁS no va del día 1 al 30: va con la semana. «Que se mueva según las semanas,
      que solo vea 2 anteriores a la que estoy y la mayoría delante»: dos semanas antes de la de hoy,
      la de hoy y cuatro más. Al pasar el lunes, la cuadrícula corre sola una fila. Los otros meses
@@ -7788,7 +7793,7 @@ function mesRejilla(y,mo,lead){
     const h=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12,0,0,0);
     const inicio=addDays(h,-(domFirst?h.getDay():(h.getDay()+6)%7));
     semHoy=iso(inicio);
-    ini=addDays(inicio,-7);fin=addDays(inicio,5*7-1);}
+    ini=inicio;fin=addDays(inicio,5*7-1);}
   const out=[];
   out.movil=movil;out.semHoy=semHoy;
   for(let d=new Date(ini.getTime());d<=fin;d=addDays(d,1)){
@@ -7825,7 +7830,8 @@ const HOJAS={
     cerrar:function(){const h=ui.cjeHoja;if(h&&/^(mom|dia|acc)$/.test(h.v||'')){if(h.fuera)ui.foodDate='';ui.frPos='';ui.frase=null;ui.frTxt=null;}ui.cjeHoja=null;}},
   semp:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja;},html:function(){return semPHojaHTML();},cerrar:function(){ui.semPHoja=null;}},
   hoy:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&ui.hoyIt;},html:function(){return hoyHojaHTML();},cerrar:function(){ui.hoyIt=null;}},
-  hab:{abierta:function(){return ui.tab==='habitos'&&ui.habEd;},html:function(){return habHojaHTML();},cerrar:function(){ui.habEd=null;}}};
+  hab:{abierta:function(){return ui.tab==='habitos'&&ui.habEd;},html:function(){return habHojaHTML();},cerrar:function(){ui.habEd=null;}},
+  mes:{abierta:function(){return ui.tab==='month'&&!!ui.mesHoja;},html:function(){return hojaMesHTML();},cerrar:function(){ui.mesHoja=false;}}};
 function cerrarHojaDia(){Object.keys(HOJAS).forEach(function(n){HOJAS[n].cerrar();});}
 function solHojaHTML(){
   /* la hoja del arco amarillo del reloj: el sol entero y dónde cambiar el sitio */
@@ -7966,14 +7972,25 @@ function mhintVigente(){
    «F/S» (fuera de servicio) el libre y el autocar las vacaciones */
 const MES_BUS='<svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true"><rect width="13" height="7" rx="2" fill="currentColor"/><rect x="2" y="1.4" width="9" height="2.4" rx=".6" fill="rgba(255,255,255,.6)"/><circle cx="3.5" cy="7.6" r="1.3" fill="var(--bg)"/><circle cx="9.5" cy="7.6" r="1.3" fill="var(--bg)"/></svg>';
 function mesTipoDia(d){if(!d.key)return '';const sh=shiftById(d.shiftId);return d.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(d.key);}
+/* LAS FICHAS, ESTÁTICAS. Los seis objetos del tablero isométrico dibujados una vez con el kit de /anatomy
+   (design/calendario-propuestas/fichas.mjs → fig/calendario.js) y pintados como <use>: la ficha dice el tipo
+   sola, sin emoji ni texto. Si el dibujo no ha llegado, la ficha de texto de antes. */
+const MES_FICHAS={guardia:['f-guard','guardia','guardia'],trabajo:['f-work','jornada','jornada'],fuerza:['f-gym','día de fuerza','fuerza'],
+  saliente:['f-sal','saliente: vuelta a la cochera','saliente'],vac:['f-vac','vacaciones','vacaciones'],libre:['f-libre','libre: fuera de servicio','libre']};
+function calFigMonta(){
+  /* el CSS del kit y los símbolos de las fichas, una vez en el documento */
+  if(!window.CalFig||document.getElementById('cf-css'))return;
+  const st=document.createElement('style');st.id='cf-css';st.textContent=window.CalFig.css;document.head.appendChild(st);
+  const d=document.createElement('div');d.id='cf-syms';d.setAttribute('aria-hidden','true');d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.innerHTML=window.CalFig.fichas;document.body.appendChild(d);}
 function mesFichaHTML(t,guard){
-  if(t==='guardia')return '<span class="mficha f-guard" title="guardia">☾'+(guard?' '+esc(String(guard).toUpperCase().slice(0,4)):'')+'</span>';
-  if(t==='trabajo')return '<span class="mficha f-work" title="jornada">'+MES_BUS+'</span>';
-  if(t==='fuerza')return '<span class="mficha f-gym" title="día de fuerza">'+MES_BUS+'</span>';
-  if(t==='saliente')return '<span class="mficha f-sal" title="saliente: vuelta a la cochera">→⌂</span>';
-  if(t==='vac')return '<span class="mficha f-vac" title="vacaciones">'+MES_BUS+'</span>';
-  if(t==='libre')return '<span class="mficha f-libre" title="libre: fuera de servicio">F/S</span>';
-  return '';}
+  const F=MES_FICHAS[t];if(!F)return '';
+  const tit=F[1]+(t==='guardia'&&guard?' '+esc(String(guard).toUpperCase()):'');
+  if(!window.CalFig){const TXT={guardia:'☾'+(guard?' '+esc(String(guard).toUpperCase().slice(0,4)):''),trabajo:MES_BUS,fuerza:MES_BUS,saliente:'→⌂',vac:MES_BUS,libre:'F/S'};
+    return '<span class="mficha '+F[0]+'" title="'+tit+'">'+TXT[t]+'</span>';}
+  const sym=t==='guardia'&&String(guard||'').toLowerCase()==='umi'?'guardiaUmi':F[2];
+  return '<span class="mficha cf '+F[0]+'" title="'+tit+'"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym+'"/></svg></span>';}
+/* las horas de siempre no se escriben: la ficha de jornada ya dice «8–15». Solo salen cuando no son las de la jornada de diario */
+function jornadaDeSiempre(j){const jd=store.rotation.jornada||{};return !!(j&&jd.start&&jd.end&&j.start===jd.start&&j.end===jd.end);}
 /* EL ABONO DEL MES: guardias hechas de las que tocan (taladradas), horas de servicio y findes libres.
    Sale de las mismas cuentas que el resto de Mes; sustituye a la barra de guardias de «Este mes» */
 function mesAbono(y,mo,list,svc){
@@ -7984,6 +8001,29 @@ function mesAbono(y,mo,list,svc){
     else if(d.jor){const a=mins(d.jor.start),b=mins(d.jor.end);if(a!=null&&b!=null&&b>a)hs+=b-a;}
     if(d.date.getDay()===6&&list[i+1]){const t2=mesTipoDia(list[i+1]);if(/^(libre|vac)$/.test(t)&&/^(libre|vac)$/.test(t2))fs++;}});
   return {hechas:hechas,cupo:svc.guardias||0,h:Math.round(hs/60),findes:fs,mes:MON[mo].toUpperCase()};}
+/* EL CARNÉ DE ABONO (design/calendario-propuestas/carne.mjs → fig/calendario.js): la tarjeta con el mes y el
+   servicio grabados, las tres cifras del abono y la regla del mes con la aguja de hoy. Tocarlo abre la hoja
+   del mes, que es lo que antes era la tarjeta «Este mes» debajo del calendario. */
+let _carnePos=null;
+function mesCarneHTML(a,y,mo,svc){
+  if(!window.CalFig)return mesAbonoHTML(a,mo);
+  const rr=function(svg,id,txt){return svg.replace(new RegExp('(data-r="'+id+'"[^>]*>)[^<]*'),'$1'+esc(txt));};
+  const jd=store.rotation.jornada||{},hoy=new Date(),dias=new Date(y,mo+1,0).getDate();
+  const esMes=hoy.getFullYear()===y&&hoy.getMonth()===mo,pasado=new Date(y,mo+1,0)<hoy,dia=esMes?hoy.getDate():(pasado?dias:0);
+  /* la línea pequeña: el servicio y la jornada de diario (caben unos 40 caracteres antes del chip) */
+  const sub=(svc.service?[svc.service]:[]).concat(jd.start&&jd.end?['jornada '+hCorta(jd.start)+'–'+hCorta(jd.end)]:[]).join(' · ').slice(0,42).toUpperCase()||'SIN SERVICIO PUESTO';
+  let svg=window.CalFig.carne;
+  if(!_carnePos){const m=/data-pos="([^"]*)"/.exec(svg);_carnePos=m?m[1].split(';').map(function(x){return x.split(',').map(Number);}):[];}
+  svg=rr(svg,'mes','ABONO · '+MONTH_FULL[mo].toUpperCase()+' '+y);svg=rr(svg,'sub',sub);
+  svg=rr(svg,'c0',a.hechas+'/'+a.cupo);svg=rr(svg,'l0','GUARDIAS');svg=rr(svg,'c1',a.h+' h');svg=rr(svg,'l1','SERVICIO');
+  svg=rr(svg,'c2',String(a.findes));svg=rr(svg,'l2',a.findes===1?'FINDE':'FINDES');svg=rr(svg,'ult',String(dias));
+  const pos=_carnePos[Math.max(1,Math.min(31,dia))-1]||[0,0];
+  svg=svg.replace(/<g data-r="aguja" data-pos="[^"]*">/,'<g data-r="aguja" transform="translate('+pos[0]+' '+pos[1]+')"'+(dia?'':' style="display:none"')+'>');
+  const lab='Abono de '+MONTH_FULL[mo]+': '+a.hechas+' de '+a.cupo+' guardias hechas, '+a.h+' h de servicio, '+a.findes+' finde'+(a.findes===1?'':'s')+' libre'+(a.findes===1?'':'s')+'. Toca para ver y cambiar el mes.';
+  return '<button class="carne cf" data-a="mes-hoja" aria-label="'+esc(lab)+'" title="'+esc(lab)+'">'+svg+'</button>';}
+function hojaMesHTML(){
+  const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),list=monthDays(y,mo);
+  return hojaMarco('hoja-cerrar','',MONTH_FULL[mo]+' '+y,'<h3 class="sh">🗓️ '+esc(MONTH_FULL[mo])+' '+y+'</h3>'+mesResumenHTML(y,mo,list,svc,g));}
 function mesAbonoHTML(a,mo){
   return '<div class="abono"><div class="t">ABONO DE '+esc(MONTH_FULL[mo].toUpperCase())+'</div><div class="nums">'+
     '<div><b>'+a.hechas+' <small>de</small> '+a.cupo+'</b><small>guardias hechas</small><span class="agujeros">'+
@@ -8000,18 +8040,18 @@ function renderMonth(){
      entera después. Los días de fuera van en su color pero apagados (.fuera), y se pueden tocar
      igual. Las cuentas del mes (guardias, vacaciones, sueño) siguen saliendo de `list`, solo del mes. */
   const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc),isoM=calVista('mes')==='iso';
+  calFigMonta();
   rejilla.forEach(function(d){
     /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
        no salen al imprimir: el papel empieza en la semana en la que estás) */
-    const previa=rejilla.movil&&d.key<rejilla.semHoy;
-    const fuera=rejilla.movil?previa:d.date.getMonth()!==mo;
+    const fuera=rejilla.movil?false:d.date.getMonth()!==mo;
     const manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
     const evsDia=d.key?eventosCalendario(d.key):[];
     /* el usuario pedía ver de un vistazo qué toca cada día en vez de puntitos: además del tipo de
        día van una línea por cosa (jornada, entreno, eventos), cortas y con su color */
     const lineas=[];
-    if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
+    if(d.jor&&!jornadaDeSiempre(d.jor))lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
     /* en la casilla caben ocho caracteres, así que la guardia va como «15→8» (empieza → sales) y el
        día de después como «→9:15» (hasta esa hora sigues trabajando). Antes no salía ninguna hora:
        jornadaOf() devuelve null en las guardias y la casilla se quedaba muda justo el día que más
@@ -8066,7 +8106,7 @@ function renderMonth(){
     if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     const tipoD=mesTipoDia(d);
-    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
+    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
       ' style="border-top-color:'+(tipoD==='guardia'?'#34467e':(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
 '</span>'+
@@ -8096,19 +8136,21 @@ function renderMonth(){
         <button class="btn p s" data-a="dia-editar" title="cambiar o añadir en un día (o mantén pulsada su casilla)">✏️ editar</button>
         <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
-        <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button></div>
-      ${!store.meta.pulsarVisto&&!ui.mesModo&&mhintVigente()?'<div class="mhint">💡 <b>Mantén pulsado un día</b> para cambiar qué es, añadir un evento o una nota. Un toque normal sigue abriendo el resumen.<button class="x" data-a="pulsar-visto" aria-label="entendido">✕</button></div>':''}
-      ${mesAbonoHTML(abono,mo)}${calVistaBtn('mes')}
-      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':`<div class="cal ext${rejilla.movil?' conprev':''}${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
-      <div class="mleyenda"><span class="mficha f-guard">☾</span> guardia · <span class="mficha f-work">${MES_BUS}</span> jornada · <span class="mficha f-sal">→⌂</span> saliente · <span class="mficha f-libre">F/S</span> libre · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b>8–15</b> jornada · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>
+        <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
+        <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada ficha" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
+      ${mesCarneHTML(abono,y,mo,svc)}${calVistaBtn('mes')}
+      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':`<div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
+      ${ui.mesLey?'<div class="mleyenda">'+mesFichaHTML('guardia','')+' guardia · '+mesFichaHTML('trabajo')+' jornada · '+mesFichaHTML('fuerza')+' fuerza · '+mesFichaHTML('saliente')+' saliente · '+mesFichaHTML('libre')+' libre · '+mesFichaHTML('vac')+' vacaciones · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · las horas de la jornada de diario no se escriben · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
-    ${mesResumenHTML(y,mo,list,svc,g)}
    </div>`;
+  /* el aviso de «mantén pulsado» era una caja de 76 px en la pantalla todos los días hasta cerrarla: ahora
+     es un aviso que sale una vez y se va solo */
+  if(!store.meta.pulsarVisto&&!ui.mesModo&&!ui.mhintDicho&&mhintVigente()){ui.mhintDicho=true;setTimeout(function(){flash('💡 Mantén pulsado un día para cambiar qué es o añadir algo',4500);},400);}
   if(isoM){const hoyK=iso(new Date());
     _calIsoDatos.mes={claro:!document.documentElement.classList.contains('dark'),
-      celdas:rejilla.slice(0,42).map(function(d){const fuera=rejilla.movil?d.key<rejilla.semHoy:d.date.getMonth()!==mo;
+      celdas:rejilla.slice(0,42).map(function(d){const fuera=rejilla.movil?false:d.date.getMonth()!==mo;
         return {k:d.key,d:d.date.getDate(),tipo:mesTipoDia(d)||'libre',g:d.guard||'',hoy:d.key===hoyK,fuera:fuera};}),
       abono:abono,pie:'<b>'+abono.hechas+' de '+abono.cupo+'</b> guardias · <b>'+abono.h+' h</b> de servicio · <b>'+abono.findes+'</b> findes libres · toca una baldosa para abrir ese día'};
     calIsoMonta('mes');}}
@@ -23350,7 +23392,9 @@ function act(a,el){
         if(!ok)return;
         monthDays(y,m).forEach(function(d){if(dayOverride(d.key))setDayOverride(d.key,null);});
         save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
-    case 'mes-vac':ui.mesModo={tipo:'vac',de:''};ui.monSel='';render();
+    case 'mes-hoja':ui.mesHoja=!ui.mesHoja;render();break;
+    case 'mes-ley':ui.mesLey=!ui.mesLey;render();break;
+    case 'mes-vac':ui.mesModo={tipo:'vac',de:''};ui.monSel='';ui.mesHoja=false;render();
       {const c=document.querySelector('#main .calmes');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});}break;
     case 'mon-guard-d':{const y=monthDate.getFullYear(),m=monthDate.getMonth(),sv=monthService(y,m);
       setMonthService(y,m,sv.service||'',Math.max(0,Math.min(15,(+sv.guardias||0)+(+el.dataset.d||0))));save();render();break;}

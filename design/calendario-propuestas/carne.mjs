@@ -7,6 +7,8 @@
    Tocar el carné abriría la hoja del mes (cupo, servicio, vacaciones, repartir): lo que hoy es «Este mes».
    node carne.mjs → carne.html, carne-light.html */
 import { writeFileSync } from "node:fs";
+import { basename } from "node:path";
+const MAIN = !!process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]));
 import * as k from "../../.claude/skills/anatomy/kit/iso-kit.mjs";
 import * as G from "../../.claude/skills/anatomy/kit/lathe.mjs";
 import { CSS, rect } from "./comun.mjs";
@@ -20,7 +22,7 @@ const CIFRAS = [["2/6", "GUARDIAS"], ["186 h", "SERVICIO"], ["2", "FINDES"]];
 const CARD0 = { x: 0, y: 0, w: 172, d: 108, r: 7 }, CZ = 0, CH = 3.2;
 const MAT = { x: -22, y: -18, w: 216, d: 146, r: 8 };
 const S = (paths, o) => k.solidSvg(paths, o), L = (d, o) => k.lineSvg(d, o), D = (p, o) => k.dotsSvg(p, o);
-function dibuja(P, conMat, W, H, corto) {
+export function dibuja(P, conMat, W, H, corto, huecos) {
 const CARD = corto ? { x: 0, y: 0, w: 172, d: 58, r: 7 } : CARD0;
 const at = (p) => k.iso(p, P), top = (z) => k.topMatrix([0, 0], z, P, "x");
 const out = [];
@@ -47,7 +49,7 @@ out.push(S(k.cylinder(10, 11, 3.2, CZ - 0.01, CH + 0.02, P, 24), { tone: "lo", c
 out.push(S(k.slabOf({ x: 4, y: 6.5, w: 12, d: 9, r: 4.5 }, CZ + CH + 0.3, 1.6, P, 8, 0.4), { tone: "hi", className: "m-steel" }));   /* la pinza, una lengüeta de acero */
 out.push(S(k.cylinder(10, 11, 2.2, CZ + CH + 1.9, 0.4, P, 20), { tone: "lo", className: "m-hole", crease: "none" }));
 /* los textos grabados de la cabecera */
-out.push(`<g transform="${top(CZ + CH + 0.33)}"><text class="grab" x="22" y="10">ABONO · OCTUBRE 2026</text><text class="grab s" x="22" y="17">URGENCIAS · GUARDIAS DE 17 H · JORNADA 8–15</text></g>`);
+out.push(`<g transform="${top(CZ + CH + 0.33)}"><text class="grab" data-r="mes" x="22" y="10">ABONO · OCTUBRE 2026</text><text class="grab s" data-r="sub" x="22" y="17">URGENCIAS · GUARDIAS DE 17 H · JORNADA 8–15</text></g>`);
 
 const GX = 8, GY = 28, CW = corto ? 22 : 14, CHh = 13.6, g = (d) => { const i = d - 1 + LEAD; return [GX + (i % 7) * CW, GY + Math.floor(i / 7) * CHh]; };
 const DOW = ["L", "M", "X", "J", "V", "S", "D"];
@@ -79,20 +81,23 @@ CIFRAS.forEach(([v, lab], i) => { const y = 34 + i * 23;
 } else {
 /* el carné corto: las tres cifras en fila, con sus cortes, y la regla debajo */
 CIFRAS.forEach(([v, lab], i) => { const x = 10 + i * 54;
-  out.push(`<g transform="${top(CZ + CH + 0.03)}"><text class="grab g" x="${x}" y="38">${v}</text><text class="grab" x="${x}" y="45">${lab}</text></g>`);
+  out.push(`<g transform="${top(CZ + CH + 0.03)}"><text class="grab g" data-r="c${i}" x="${x}" y="38">${v}</text><text class="grab" data-r="l${i}" x="${x}" y="45">${lab}</text></g>`);
   if (i) out.push(L(k.lineOnTop([x - 6, 28], [x - 6, 47], CZ + CH + 0.03, P), { tone: "faint" })); });
 }
 /* la regla del mes al pie: un tic por día, mayor cada 7, y la aguja de hoy */
 const RY = corto ? 53 : 100, tk = k.topTicks(GX, GX + 7 * CW, 7 * CW / 31, 7, RY, CZ + CH + 0.03, [1.6, 3], P);
 out.push(L(k.lineOnTop([GX, RY], [GX + 7 * CW, RY], CZ + CH + 0.03, P), { tone: "lo" }), L(tk.minor, { tone: "lo" }), L(tk.major, { tone: "mid" }));
-const hx = GX + (HOY - 0.5) * 7 * CW / 31;
-out.push(S(k.cylinder(hx, RY - 2.4, 1.3, CZ + CH, 1.2, P, 12), { tone: "hi", className: "m-amber", lit: true }));
-out.push(`<g transform="${top(CZ + CH + 0.03)}"><text class="dn" x="${GX + 7 * CW + 2}" y="${RY + 1.5}">31</text><text class="dn" x="${GX - 1}" y="${RY + 1.5}" text-anchor="end">1</text></g>`);
+const hxDe = (d) => GX + (d - 0.5) * 7 * CW / 31, hx = hxDe(huecos ? 1 : HOY);
+const AG = []; if (huecos) { const o = k.iso([hx, RY - 2.4, CZ + CH], P); for (let d = 1; d <= 31; d++) { const p = k.iso([hxDe(d), RY - 2.4, CZ + CH], P); AG.push([+(p[0] - o[0]).toFixed(2), +(p[1] - o[1]).toFixed(2)]); } }
+out.push(`<g data-r="aguja" data-pos="${AG.map((p) => p.join(",")).join(";")}">` + S(k.cylinder(hx, RY - 2.4, 1.3, CZ + CH, 1.2, P, 12), { tone: "hi", className: "m-amber", lit: true }) + `</g>`);
+out.push(`<g transform="${top(CZ + CH + 0.03)}"><text class="dn" data-r="ult" x="${GX + 7 * CW + 2}" y="${RY + 1.5}">31</text><text class="dn" x="${GX - 1}" y="${RY + 1.5}" text-anchor="end">1</text></g>`);
 /* la banda magnética, en el canto trasero: una franja oscura en la cara +y */
 out.push(`<g transform="${k.sideMatrix([0, CARD.d + 0.02], 0, P, "left")}"><path class="hole" style="opacity:.55" d="${rect(10, CZ + 0.9, 162, CZ + 2.3)}"/></g>`);
 
 return k.figureSvg({ width: W, height: H, label: "El carné de abono de octubre: el mes como rejilla de 5×7 con una marca por tipo de día y un agujero por día pasado, las tres cifras del mes y la regla con el día de hoy.", body: out });
 }
+export const corto = () => dibuja(k.fitProjection([...k.boxCorners({ x: 0, y: 0, w: 172, d: 58 }, -2, 0), ...k.boxCorners({ x: 0, y: 0, w: 172, d: 58 }, 0, 6)], 600, 180, { pad: 6, azimuth: 84, elevation: 64 }), false, 600, 180, true, true);
+if (MAIN) {
 const svg = dibuja(k.fitProjection([...k.boxCorners(MAT, -6, 0), ...k.boxCorners(CARD0, 0, 14)], 640, 380, { pad: 10, azimuth: 58, elevation: 50 }), true, 640, 380);
 const movil = dibuja(k.fitProjection([...k.boxCorners(CARD0, -2, 0), ...k.boxCorners(CARD0, 0, 6)], 600, 300, { pad: 6, azimuth: 84, elevation: 64 }), false, 600, 300);
 writeFileSync("carne-movil.svg", movil.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '));
@@ -107,3 +112,4 @@ for (const theme of ["dark", "light"]) {
     `h1{font-size:20px;color:var(--anatomy-strong);margin:0 0 6px}h2{font-size:15px;color:var(--anatomy-strong);margin:22px 0 8px}p{max-width:700px}p b{color:var(--anatomy-strong)}</style>`));
 }
 console.log("carné:", Math.round(svg.length / 1024), "KB · móvil", Math.round(movil.length / 1024), "KB · corto", Math.round(corto.length / 1024), "KB");
+}

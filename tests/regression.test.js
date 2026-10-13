@@ -871,15 +871,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 24) EN MES, SOLO LO DE ESTE MES. Había un desplegable con los nombres de los tipos de guardia,
   // sus cupos y el post-guardia automático: eso no cambia de un mes a otro y ya estaba en Turno y
   // rotación → Rotación. De este mes son dos cosas, y van a la vista sin desplegar nada.
+  /* lo de este mes vive en la hoja del mes, que abre el carné del abono */
+  await page.evaluate(() => { window.PG.ui.mesHoja = true; window.PG.render(); });
+  await page.waitForTimeout(250);
   const configMes = await page.evaluate(() => {
-    const c = document.querySelector('#main [data-cfg="mescfg"]');
-    return { hay: !!c,
+    const c = document.querySelector('#hojaDia [data-cfg="mescfg"]');
+    const r = { hay: !!c,
       servicio: !!(c && c.querySelector('[data-a="mon-svc"]')),
       guardias: !!(c && c.querySelector('[data-a="mon-guard"]')),
       // lo global ya no se repite aquí
-      tiposDeGuardia: !!document.querySelector('#main [data-a="gtipo-lbl"]'),
-      postGuardia: !!document.querySelector('#main [data-a="mon-autopos"]'),
-      atajo: !!document.querySelector('#main [data-a="ir-rotacion"]') };
+      tiposDeGuardia: !!document.querySelector('#hojaDia [data-a="gtipo-lbl"]'),
+      postGuardia: !!document.querySelector('#hojaDia [data-a="mon-autopos"]'),
+      atajo: !!document.querySelector('#hojaDia [data-a="ir-rotacion"]') };
+    window.PG.ui.mesHoja = false; window.PG.render(); return r;
   });
   check('en Mes solo se configura lo de ESTE mes: servicio y guardias, con atajo a lo demás',
     configMes.hay && configMes.servicio && configMes.guardias &&
@@ -1209,9 +1213,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 43) Mes: la explicación larga y los números secundarios quedan plegados, no siempre a la vista
   await gotoTab('month');
   await page.waitForTimeout(150);
+  await page.evaluate(() => { window.PG.ui.mesHoja = true; window.PG.render(); });
+  await page.waitForTimeout(250);
   const mesSimple = await page.evaluate(() => {
-    // debajo del calendario, UNA tarjeta con tres cifras (antes cuatro cuadros + cuatro plegados)
-    const kpis = document.querySelector('#main .mesres .mrstat');
+    // en la hoja del mes (tocando el carné), UNA tarjeta con tres cifras (antes cuatro cuadros + cuatro plegados)
+    const kpis = document.querySelector('#hojaDia .mesres .mrstat');
+    window.PG.ui.mesHoja = false;
     const summaries = Array.from(document.querySelectorAll('#main details > summary'));
     return {
       kpisVisibles: kpis ? kpis.children.length : 0,
@@ -1223,8 +1230,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sinMasNumeros: !summaries.some((s) => /ver más números/i.test(s.textContent)),
     };
   });
-  check('en "Mes" no hay explicación larga, ni números de sueño repetidos, y debajo del calendario va una sola tarjeta',
+  check('en "Mes" no hay explicación larga, ni números de sueño repetidos, y lo del mes va en una sola tarjeta en su hoja',
     mesSimple.kpisVisibles === 3 && mesSimple.sinExplicacion && mesSimple.sinMasNumeros, JSON.stringify(mesSimple));
+  await page.evaluate(() => window.PG.render());
 
   // 44) Ajustes: el mínimo de horas de sueño (antes solo en "Turno y rotación") también se puede
   // tocar aquí, junto al resto de números de sueño
@@ -1548,11 +1556,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(150);
   const ordenOk = await page.evaluate(() => {
     const cal = document.querySelector('#main .cal');
-    const numeros = document.querySelector('#main .kpis, #main .mesres .mrstat');
-    if (!cal || !numeros) return false;
-    return !!(cal.compareDocumentPosition(numeros) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const carne = document.querySelector('#main .carne');
+    if (!cal || !carne) return false;
+    return !!(carne.compareDocumentPosition(cal) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
-  check('"Mes": la cuadrícula del calendario aparece antes que los números', ordenOk, '');
+  check('"Mes": el carné del abono va encima de la cuadrícula, y los números del mes en su hoja', ordenOk, '');
 
   // 51) "Mes" en móvil: cada casilla tiene una línea por dato (sin horario/sueño de más, eso se ve
   // al tocar el día) y un tamaño cómodo de tocar, ni la tira gigante de antes ni una miniatura
@@ -1838,7 +1846,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('month');
   await page.waitForTimeout(250);
   // «+ vacaciones» no abre un formulario: pide el primer día y el último en la cuadrícula
-  await page.click('[data-a="mes-vac"]');
+  await page.click('#main .carne');
+  await page.waitForTimeout(300);
+  await page.click('#hojaDia [data-a="mes-vac"]');
   await page.waitForTimeout(250);
   const vacModo = await page.evaluate(() => ({ modo: (window.PG.ui.mesModo || {}).tipo, barra: (document.querySelector('#hojaDia') || {}).innerText || '' }));
   await page.evaluate(() => { window.PG.ui.mesModo = null; window.PG.render(); });
@@ -1846,9 +1856,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // el cupo de guardias se cambia con − / + sin escribir
   const cupo = await page.evaluate(() => { const P = window.PG, d = new Date(), y = d.getFullYear(), m = d.getMonth();
-    const a = P.monthService(y, m).guardias; document.querySelector('[data-a="mon-guard-d"][data-d="1"]').click();
-    const b = P.monthService(y, m).guardias; document.querySelector('[data-a="mon-guard-d"][data-d="-1"]').click();
-    return { a, b, c: P.monthService(y, m).guardias }; });
+    P.ui.mesHoja = true; P.render();
+    const a = P.monthService(y, m).guardias; document.querySelector('#hojaDia [data-a="mon-guard-d"][data-d="1"]').click();
+    const b = P.monthService(y, m).guardias; document.querySelector('#hojaDia [data-a="mon-guard-d"][data-d="-1"]').click();
+    const c = P.monthService(y, m).guardias; P.ui.mesHoja = false; P.render();
+    return { a, b, c }; });
   check('el + y el − cambian el cupo de guardias del mes', cupo.b === Math.min(15, cupo.a + 1) && cupo.c === cupo.a, JSON.stringify(cupo));
 
   // el atajo de la leyenda (que vive plegada en la Semana; en Hoy, cada cosa lo dice en su hoja)
@@ -2358,8 +2370,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // se cuentan los días de vacaciones QUE SE VEN en la cuadrícula
     const esperados = await page.evaluate((rr) => [...document.querySelectorAll('.dbox')]
       .filter((x) => rr.some((r) => x.dataset.key >= r[0] && x.dataset.key <= r[1])).length, [r1, r2]);
+    await page.evaluate(() => { window.PG.ui.mesHoja = true; window.PG.render(); });
+    await page.waitForTimeout(250);
     const dos = await page.evaluate(() => {
-      const c = document.querySelector('.mesres [data-cfg="vac"]');
+      const c = document.querySelector('#hojaDia .mesres [data-cfg="vac"]');
       return {
         guardados: window.PG.store.rotation.vacaciones.length,
         filas: c ? c.querySelectorAll('[data-a="vac-del"]').length : 0,
@@ -2389,9 +2403,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       tercero.length === 3 && tercero[2] === desde + '→' + hasta, JSON.stringify(tercero));
 
     // quitar uno deja los otros en pie
-    await page.evaluate(() => { window.PG.ui.monSel = ''; window.PG.render(); });
+    await page.evaluate(() => { window.PG.ui.monSel = ''; window.PG.ui.mesHoja = true; window.PG.render(); });
     await page.waitForTimeout(300);
-    await page.click('.mesres [data-cfg="vac"] [data-a="vac-del"][data-ix="0"]');
+    await page.click('#hojaDia .mesres [data-cfg="vac"] [data-a="vac-del"][data-ix="0"]');
     await page.waitForTimeout(300);
     // con más de un periodo, quitar pregunta por el diálogo propio de la app: hay que contestarlo,
     // o su capa se queda encima y se come los clics de todo lo que venga después
@@ -2401,7 +2415,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('quitar un periodo no se lleva por delante los demás',
       trasQuitar.length === 2 && trasQuitar[0] === 'verano', JSON.stringify(trasQuitar));
 
-    await page.evaluate(() => { window.PG.store.rotation.vacaciones = []; window.PG.save(); });
+    await page.evaluate(() => { window.PG.store.rotation.vacaciones = []; window.PG.ui.mesHoja = false; window.PG.save(); window.PG.render(); });
     await page.setViewportSize({ width: 390, height: 844 });
   }
 
@@ -3952,7 +3966,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const mesImpreso = await page.evaluate(() => {
       const celdas = [...document.querySelectorAll('#main .dbox')];
       const vis = celdas.filter((c) => getComputedStyle(c).display !== 'none');
-      const kpi = document.querySelector('#main .kpis div, #main .tot div, #main .dosdatos div, #main .mesres .mrstat > *');
+      const kpi = document.querySelector('#main .dbox');
       const cs = kpi ? getComputedStyle(kpi) : null;
       return { celdas: celdas.length, visibles: vis.length,
         conTexto: vis.filter((c) => (c.innerText || '').trim().length > 1).length,
@@ -5275,20 +5289,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       const h = new Date(); h.setHours(12, 0, 0, 0);
       const lun = new Date(h); lun.setDate(h.getDate() - ((h.getDay() + 6) % 7));
-      const menos7 = new Date(lun); menos7.setDate(lun.getDate() - 7);
       const prev = celdas.filter((c) => c.classList.contains('semprev'));
-      const otra = celdas.find((c) => !c.classList.contains('semprev'));
-      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(menos7),
+      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', esperado: iso(lun),
         previas: prev.length,
-        hoyEnFila2: celdas.findIndex((c) => c.classList.contains('today')) >= 7 && celdas.findIndex((c) => c.classList.contains('today')) < 14,
-        // y la semana pasada se sigue VIENDO, solo que encogida a menos de la mitad
-        altoPrev: prev[0] ? Math.round(prev[0].getBoundingClientRect().height) : 0,
-        altoNormal: otra ? Math.round(otra.getBoundingClientRect().height) : 0,
+        hoyEnFila1: celdas.findIndex((c) => c.classList.contains('today')) >= 0 && celdas.findIndex((c) => c.classList.contains('today')) < 7,
         huecos: [...document.querySelectorAll('#main .cal > span:not(.wd)')].length };
     });
-    check('en el mes actual Mes enseña UNA semana antes —encogida, pero visible—, la de hoy y 4 más',
-      mb && rej.n === 42 && rej.primero === rej.esperado && rej.previas === 7 && rej.hoyEnFila2 &&
-      rej.altoPrev > 30 && rej.altoPrev < rej.altoNormal * 0.55 && rej.huecos === 0,
+    /* la semana pasada ya no va delante (se llevaba una fila para mirar atrás): cinco semanas desde la de hoy */
+    check('en el mes actual Mes enseña la semana de hoy y 4 más, sin la semana pasada delante',
+      mb && rej.n === 35 && rej.primero === rej.esperado && rej.previas === 0 && rej.hoyEnFila1 && rej.huecos === 0,
       JSON.stringify(rej));
     // al imprimir, el papel empieza en la semana en la que estás
     await page.emulateMedia({ media: 'print' });
@@ -5314,19 +5323,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { n: celdas.length, antes: i1, despues: claves.length - 1 - iu, previas: celdas.filter((c) => c.classList.contains('semprev')).length,
         fueraBien: celdas.every((c, i) => c.classList.contains('fuera') === (i < i1 || i > iu)) };
     });
-    check('los otros meses se ven enteros, con una semana de margen a cada lado',
-      !!nx && otro.antes >= 7 && otro.antes <= 13 && otro.despues >= 7 && otro.despues <= 13 && otro.previas === 0 && otro.fueraBien,
+    check('los otros meses se ven enteros, del día 1 al último con las semanas partidas que les toquen',
+      !!nx && otro.antes >= 0 && otro.antes <= 6 && otro.despues >= 0 && otro.despues <= 6 && otro.n % 7 === 0 && otro.previas === 0 && otro.fueraBien,
       JSON.stringify(otro));
     const vt = await page.$('#main [data-a="mon-today"]');
     if (vt) await vt.click();
     await page.waitForTimeout(250);
-    // y se estira hasta el alto de la pantalla: con siete u ocho filas, cada casilla sigue alta
+    // la casilla mide lo que su contenido (nunca menos de 88 px) y la cuadrícula ya no se estira para llenar
+    // la pantalla: 845 px con el 70 % vacío
     const alto = await page.evaluate(() => {
       const cal = document.querySelector('#main .cal');
-      const c = [...document.querySelectorAll('#main .cal .dbox')].find((x) => !x.classList.contains('semprev'));
+      const c = document.querySelector('#main .cal .dbox');
       return { cal: Math.round(cal.getBoundingClientRect().height), celda: Math.round(c.getBoundingClientRect().height), vh: innerHeight };
     });
-    check('la cuadrícula del mes ocupa casi toda la pantalla', alto.cal >= alto.vh * 0.85 && alto.celda >= 90,
+    check('la casilla del mes mide lo que su contenido y la cuadrícula no se estira hasta llenar la pantalla', alto.celda >= 88 && alto.cal < alto.vh,
       JSON.stringify(alto));
   }
 
@@ -8119,7 +8129,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const evs = [...document.querySelectorAll('.dbox .dev')];
       return {
         nombres: nombres.length,
-        nombresDeDosLineas: nombres.filter((x) => alt(x) > fs(x) * 1.7).length,
+        nombresDeDosLineas: nombres.filter((x) => alt(x) > 30).length,
         eventos: evs.length,
         eventosDeDosLineas: evs.filter((x) => alt(x) > fs(x) * 1.7).length,
         // y el nombre entero sigue estando: en el title, para no perderlo al recortar
@@ -11798,7 +11808,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.ui.monSel = ''; P.render(); });
     await page.waitForTimeout(200);
     r.d = await page.evaluate(() => { const g = [...document.querySelectorAll('#main .dbox')].find((b) => b.querySelector('.mficha.f-guard'));
-      return { abono: (document.querySelector('#main .abono') || {}).textContent || '', fichas: document.querySelectorAll('#main .dbox .mficha').length,
+      return { abono: (document.querySelector('#main .carne') || { getAttribute: () => '' }).getAttribute('aria-label') || '', fichas: document.querySelectorAll('#main .dbox .mficha').length,
         borde: g ? getComputedStyle(g).borderTopColor : '', barra: !!document.querySelector('#main .mrbar') }; });
     await page.click('#main [data-a="cal-vista"]').catch(() => {});
     await page.waitForSelector('#main #calIsoSlot .ci [data-day]', { timeout: 8000 }).catch(() => {});
@@ -11821,10 +11831,86 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el botón cambia a la cochera isométrica, se recuerda, y tocar un andén abre ese día en Hoy',
       r.c.iso && r.c.ls === 'iso' && !r.c.tablon && r.c.andenes === 7 && !!kc && esDia(r.c.abre), JSON.stringify(r.c));
     check('Mes lleva el abono, una ficha por día y la guardia en azul noche, sin la barra de guardias',
-      /ABONO DE/.test(r.d.abono) && /guardias hechas/.test(r.d.abono) && r.d.fichas >= 28 && r.d.borde === 'rgb(52, 70, 126)' && !r.d.barra, JSON.stringify(r.d));
+      /Abono de/.test(r.d.abono) && /guardias hechas/.test(r.d.abono) && r.d.fichas >= 28 && r.d.borde === 'rgb(52, 70, 126)' && !r.d.barra, JSON.stringify(r.d));
     check('el botón del Mes cambia al tablero isométrico (42 baldosas) y tocar una abre ese día en Hoy',
       r.e.baldosas >= 35 && r.e.ls === 'iso' && !r.e.cal && !!ke && esDia(r.e.abre), JSON.stringify(r.e));
     check('Semana y Mes vuelven a la vista plana con el mismo botón', r.f.mes.ls === 'plana' && r.f.mes.cal && !r.f.mes.iso && r.f.sem.ls === 'plana' && r.f.sem.tablon, JSON.stringify(r.f));
+  }
+
+  // 277) MES CON LAS FICHAS ESTÁTICAS, EL CARNÉ Y LA HOJA DEL MES, EN CADENA: (a) las fichas son <use> de los
+  // símbolos de fig/calendario.js y la jornada de diario no escribe sus horas (la guardia sí); (b) el carné dice
+  // el abono y tocarlo abre la hoja del mes con «Este mes»; (c) subir el cupo en la hoja cambia la cifra del
+  // carné al cerrarla; (d) «+ vacaciones» desde la hoja la cierra y deja el modo puesto; (e) la cuadrícula son
+  // 35 casillas desde la semana de hoy, con la casilla a su contenido; (f) el aviso de mantener pulsado ya no
+  // es una caja: sale una vez como aviso y se va; (g) el «?» abre la leyenda con las fichas y la quita.
+  // Fija: las fichas de texto, las horas «8–15» escritas 20 veces, «Este mes» y el abono como dos tarjetas con
+  // las guardias contadas dos veces, la semana pasada delante y la cuadrícula estirada a la pantalla.
+  {
+    const r = {};
+    const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 1); const k = P.iso(d);
+      const G = P.store.shifts.filter(P.isGuardia)[0];
+      P.__t277 = { k, ov: (P.store.rotation.shiftByDay || {})[k], jor: P.store.rotation.jornada, pv: P.store.meta.pulsarVisto, pd: P.store.meta.pulsarDesde, mode: P.store.rotation.mode };
+      if (!P.store.rotation.jornada || !P.store.rotation.jornada.start) P.store.rotation.jornada = { start: '08:00', end: '15:00', workdays: [1, 2, 3, 4, 5] };
+      P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
+      P.store.meta.pulsarVisto = false; P.store.meta.pulsarDesde = ''; P.ui.mhintDicho = false; P.ui.mesModo = null; P.ui.mesHoja = false; P.ui.mesLey = false; P.ui.monSel = ''; P.ui.mesV = 'plana';
+      P.ui.tab = 'month'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(700);
+    // (a) y (f)
+    r.a = await page.evaluate((k) => { const hrs = [...document.querySelectorAll('#main .dbox .dline.hr')].map((e) => e.textContent.trim());
+      const g = document.querySelector('#main .dbox[data-key="' + k + '"]');
+      return { syms: !!document.querySelector('#cf-syms symbol[id="f-guardia"]'), uses: document.querySelectorAll('#main .dbox .mficha use').length, fichas: document.querySelectorAll('#main .dbox .mficha').length,
+        deSiempre: hrs.filter((h) => h === '8–15').length, guardia: g ? ((g.querySelector('.dline.hr') || {}).textContent || '') : '',
+        guardiaUse: g ? (g.querySelector('.mficha use') || { getAttribute: () => '' }).getAttribute('href') : '' }; }, kg);
+    r.f = await page.evaluate(() => ({ caja: !!document.querySelector('#main .mhint'), flash: /Mantén pulsado/.test((document.querySelector('#flash') || {}).textContent || '') }));
+    // (b)
+    r.b = { carne: await page.evaluate(() => (document.querySelector('#main .carne') || { getAttribute: () => '' }).getAttribute('aria-label') || '') };
+    await page.click('#main .carne');
+    await page.waitForTimeout(300);
+    Object.assign(r.b, await page.evaluate(() => ({ hoja: !!document.querySelector('#hojaDia .mesres'), estemes: /Este mes/.test((document.querySelector('#hojaDia') || {}).innerText || ''), cupo: +((document.querySelector('#hojaDia [data-a="mon-guard"]') || {}).value || 0) })));
+    // (c)
+    await page.click('#hojaDia [data-a="mon-guard-d"][data-d="1"]');
+    await page.waitForTimeout(250);
+    await page.click('#hojaDia .hgrab');
+    await page.waitForTimeout(300);
+    r.c = await page.evaluate(() => { const m = /de (\d+) guardias/.exec((document.querySelector('#main .carne') || { getAttribute: () => '' }).getAttribute('aria-label') || '');
+      return { hoja: !!document.querySelector('#hojaDia .mesres'), cupo: m ? +m[1] : -1 }; });
+    // (d)
+    await page.click('#main .carne');
+    await page.waitForTimeout(300);
+    await page.click('#hojaDia [data-a="mes-vac"]');
+    await page.waitForTimeout(300);
+    r.d = await page.evaluate(() => { const P = window.PG; const o = { hoja: !!document.querySelector('#hojaDia .mesres'), modo: (P.ui.mesModo || {}).tipo }; P.ui.mesModo = null; P.render(); return o; });
+    await page.waitForTimeout(200);
+    // (e)
+    r.e = await page.evaluate(() => { const celdas = [...document.querySelectorAll('#main .cal .dbox')];
+      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const h = new Date(); h.setHours(12, 0, 0, 0); const lun = new Date(h); lun.setDate(h.getDate() - ((h.getDay() + 6) % 7));
+      const cal = document.querySelector('#main .cal');
+      return { n: celdas.length, primero: celdas[0] ? celdas[0].dataset.key : '', lunes: iso(lun), hoyIdx: celdas.findIndex((c) => c.classList.contains('today')),
+        prev: celdas.filter((c) => c.classList.contains('semprev')).length, celda: Math.round(celdas[0].getBoundingClientRect().height), cal: Math.round(cal.getBoundingClientRect().height), vh: innerHeight }; });
+    // (g)
+    await page.click('#main [data-a="mes-ley"]');
+    await page.waitForTimeout(200);
+    r.g = { abre: await page.evaluate(() => document.querySelectorAll('#main .mleyenda .mficha use').length) };
+    await page.click('#main [data-a="mes-ley"]');
+    await page.waitForTimeout(200);
+    r.g.cierra = await page.evaluate(() => !!document.querySelector('#main .mleyenda'));
+    // se deja todo como estaba (el cupo vuelve a bajar desde la hoja)
+    await page.evaluate(() => { const P = window.PG, t = P.__t277; P.ui.mesHoja = true; P.render();
+      const b = document.querySelector('#hojaDia [data-a="mon-guard-d"][data-d="-1"]'); if (b) b.click();
+      P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.jornada = t.jor; P.store.rotation.mode = t.mode;
+      P.store.meta.pulsarVisto = t.pv; P.store.meta.pulsarDesde = t.pd; P.ui.mesHoja = false; P.ui.mesLey = false; delete P.__t277; P.save(); P.render(); });
+    check('Mes pinta cada día con su ficha estática (<use> de fig/calendario.js) y solo escribe las horas que no son las de siempre',
+      r.a.syms && r.a.uses === r.a.fichas && r.a.fichas >= 28 && r.a.deSiempre === 0 && /→/.test(r.a.guardia) && r.a.guardiaUse === '#f-guardia', JSON.stringify(r.a));
+    check('el carné del abono dice las guardias hechas del cupo, las horas y los findes, y tocarlo abre la hoja del mes con «Este mes»',
+      /guardias hechas/.test(r.b.carne) && /h de servicio/.test(r.b.carne) && r.b.hoja && r.b.estemes && r.b.cupo >= 0, JSON.stringify(r.b));
+    check('subir el cupo en la hoja del mes cambia la cifra del carné al cerrarla', !r.c.hoja && r.c.cupo === Math.min(15, r.b.cupo + 1), JSON.stringify(r.c));
+    check('«+ vacaciones» desde la hoja del mes la cierra y deja puesto el modo de marcar en la cuadrícula', !r.d.hoja && r.d.modo === 'vac', JSON.stringify(r.d));
+    check('Mes son 35 casillas desde la semana de hoy, sin la semana pasada, y la casilla mide lo que su contenido sin estirar la cuadrícula',
+      r.e.n === 35 && r.e.primero === r.e.lunes && r.e.hoyIdx >= 0 && r.e.hoyIdx < 7 && r.e.prev === 0 && r.e.celda >= 88 && r.e.cal < r.e.vh, JSON.stringify(r.e));
+    check('el aviso de mantener pulsado ya no es una caja en la pantalla: sale una vez como aviso y se va', !r.f.caja && r.f.flash, JSON.stringify(r.f));
+    check('el «?» de Mes abre la leyenda con las fichas y volver a tocarlo la quita', r.g.abre >= 6 && !r.g.cierra, JSON.stringify(r.g));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

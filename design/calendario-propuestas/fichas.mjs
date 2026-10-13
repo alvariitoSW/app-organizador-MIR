@@ -3,6 +3,8 @@
    emoji + texto («8–15», «☾ URG»); la ficha lo dice sola y las horas solo salen cuando no son las de siempre.
    node fichas.mjs → fichas.html, fichas-light.html y fichas.svg (los <symbol>) */
 import { writeFileSync } from "node:fs";
+import { basename } from "node:path";
+const MAIN = !!process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]));
 import * as k from "../../.claude/skills/anatomy/kit/iso-kit.mjs";
 import * as G from "../../.claude/skills/anatomy/kit/lathe.mjs";
 import { CSS, rect } from "./comun.mjs";
@@ -34,7 +36,7 @@ const T = {};
 T.jornada = bus("m-work");
 T.fuerza = bus("m-gym");
 /* la guardia: el búho, un tambor azul noche con la luna encima y el aro del tipo (ámbar URG, violeta UMI) */
-T.guardia = S(k.cylinder(cx + 2, cy - 2, 8, z, 12, P, 28, 0.8), { tone: "mid", className: "m-guard" }) + L(k.ring(cx + 2, cy - 2, 6, z + 12.02, P, 28), { className: "l-amber" }) +
+T.guardia = S(k.cylinder(cx + 2, cy - 2, 8, z, 12, P, 16, 0.8), { tone: "mid", className: "m-guard" }) + L(k.ring(cx + 2, cy - 2, 6, z + 12.02, P, 16), { className: "l-amber" }) +
   S(G.sphereOf([cx + 2, cy - 2, z + 15.2], 3.6, P), { tone: "hi", className: "m-moon" }) + D([at([cx + 2 - 1.2, cy - 2, z + 16.6]), at([cx + 2 + 1.2, cy - 2, z + 16.4])], { size: 0.5, tone: "lo" });
 T.guardiaUmi = T.guardia.replace("l-amber", "l-umi");
 /* el saliente: la cochera a la izquierda (la caseta con la persiana en su cara visible) y la flecha pintada en la
@@ -59,10 +61,12 @@ T.vacaciones = (() => { const B = { x: 2.5, y: cy - 7, w: 25, d: 10, r: 2.4 }, z
 
 const NOM = { jornada: "jornada", fuerza: "día de fuerza", guardia: "guardia (URG)", guardiaUmi: "guardia (UMI)", saliente: "saliente", libre: "libre", vacaciones: "vacaciones" };
 const CLS = { guardia: "m-guard", guardiaUmi: "m-guard" };
+export { T, baldosa, NOM, CLS };
 const figs = Object.keys(T).map((n) => ({ n, svg: k.figureSvg({ width: 120, height: 108, label: "ficha: " + NOM[n], body: baldosa(CLS[n]) + T[n], className: "ficha" }) }));
 const symbols = `<svg xmlns="http://www.w3.org/2000/svg" style="display:none">${figs.map((f) => f.svg.replace(/<svg[^>]*>/, `<symbol id="f-${f.n}" viewBox="0 0 120 108">`).replace("</svg>", "</symbol>")).join("")}</svg>`;
-writeFileSync("fichas.svg", symbols);
-for (const theme of ["dark", "light"]) {
+export const SYMBOLS = symbols;
+if (MAIN) writeFileSync("fichas.svg", symbols);
+if (MAIN) for (const theme of ["dark", "light"]) {
   const body = `<h1>Las fichas, estáticas</h1><p>Seis objetos del kit, uno por tipo de día. Los mismos que en el tablero isométrico, pero como <b>símbolos fijos</b> (un <code>&lt;symbol&gt;</code> cada uno, 73 KB en total, frente a los 300 KB de la vista isométrica viva) para la casilla de Mes, la fila de Semana, la cabecera de Hoy y la leyenda. La ficha dice el tipo sola: las horas solo se escriben cuando no son las de siempre.</p>
   <div class="hoja">${figs.map((f) => `<figure><div class="iso-plate">${f.svg}</div><figcaption>${NOM[f.n]}</figcaption></figure>`).join("")}</div>
   <h2>A tamaño de casilla (28 px) y a 4×</h2><div class="fila">${figs.map((f) => `<svg class="mini" viewBox="0 0 120 108"><use href="#f-${f.n}"/></svg>`).join("")}</div>
@@ -72,4 +76,4 @@ for (const theme of ["dark", "light"]) {
      h1{font-size:20px;color:var(--anatomy-strong);margin:0 0 6px}h2{font-size:15px;color:var(--anatomy-strong);margin:22px 0 8px}p{max-width:720px}p b{color:var(--anatomy-strong)}
      .fila{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.mini{width:28px;height:25px}.x4{width:112px;height:101px}</style>`));
 }
-console.log("fichas:", figs.length, "símbolos,", Math.round(symbols.length / 1024), "KB");
+if (MAIN) console.log("fichas:", figs.length, "símbolos,", Math.round(symbols.length / 1024), "KB");
