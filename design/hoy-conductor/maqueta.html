@@ -1,0 +1,21 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hoy · desde el conductor</title>
+<style>
+:root{--bg:#070b14;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 4px}p{margin:0 0 14px;color:var(--ink2);max-width:1080px}
+.fila{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.col{width:300px}.lbl{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:0 0 8px 2px}
+.col img{width:300px;display:block;border-radius:20px;border:1px solid var(--line)}
+.nota{font-size:13px;color:var(--ink2);margin-top:8px}.nota b{color:var(--ink)}
+.vivo{margin-top:26px}.vivo iframe{width:620px;max-width:100%;height:470px;border:0;display:block;border-radius:18px}
+</style></head><body>
+<h1>«Hoy» desde el asiento del conductor</h1>
+<p>Por el parabrisas, la calle: cada cosa del día es una parada con su marquesina y su letrero, en el orden en que llegan, y el autobús va de una a otra según pasa la hora (parado mientras dura lo de ahora, de camino en los ratos libres). El cielo sigue la luz del día. En el salpicadero, lo que se lee de un vistazo: la hora y lo que queda, el depósito de «sueño», la próxima parada y lo de ahora. Arriba, la línea de hoy con todas las paradas; en el retrovisor, la última que pasaste. De noche estás en la cochera con la persiana bajada; al despertar sube y sales. Tocar un letrero, el visor, el depósito o la máquina de billetes («Para hoy») abre lo suyo.</p>
+<div class="fila">
+ <div class="col"><p class="lbl">Antes</p><img src="shots/hoy-antes.png" alt="Hoy ahora"><p class="nota"><b>2 102 px</b>: 2,3 pantallas.</p></div>
+ <div class="col"><p class="lbl">Conductor · 10:24</p><img src="shots/hoy-dia.png" alt="Hoy desde el conductor de día"><p class="nota"><b>924 px</b>: una pantalla. Parado en el trabajo; la próxima, a las 11:00.</p></div>
+ <div class="col"><p class="lbl">Conductor · 21:10</p><img src="shots/hoy-noche.png" alt="Hoy desde el conductor de noche"><p class="nota">De noche: farolas, ventanas encendidas y los faros.</p></div>
+ <div class="col"><p class="lbl">Conductor · 23:40</p><img src="shots/hoy-cochera.png" alt="Hoy desde el conductor en la cochera"><p class="nota">En la cochera, persiana bajada: a qué hora sales mañana.</p></div>
+</div>
+<div class="vivo"><p class="lbl">El conductor, vivo (arrastra para mover la hora · toca un letrero)</p><iframe src="conductor.html"></iframe></div>
+</body></html>
