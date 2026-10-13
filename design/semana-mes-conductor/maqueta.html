@@ -1,0 +1,36 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Semana y Mes · el mundo del conductor</title>
+<style>
+:root{--bg:#070b14;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:17px;margin:30px 0 4px}p{margin:0 0 14px;color:var(--ink2);max-width:1080px}p b{color:var(--ink)}
+.fila{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.col{width:300px}.lbl{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:0 0 8px 2px}
+.col img{width:300px;display:block;border-radius:20px;border:1px solid var(--line)}
+.col iframe{width:390px;height:844px;border:1px solid var(--line);border-radius:20px;transform:scale(.77);transform-origin:0 0;margin-bottom:-194px;margin-right:-90px}
+.nota{font-size:13px;color:var(--ink2);margin-top:8px}.nota b{color:var(--ink)}
+ul{color:var(--ink2);max-width:1080px;padding-left:20px}li{margin:4px 0}li b{color:var(--ink)}
+</style></head><body>
+<h1>Semana y Mes con el lenguaje del conductor</h1>
+<p>El mismo mundo a distinta distancia. <b>Hoy</b> es el asiento del conductor (cerca y ahora); <b>Semana</b>, el tablón de servicios de la cochera, donde se prepara el servicio de los siete días; <b>Mes</b>, el cuadrante de la empresa, con el abono del mes. Mismos colores que las paradas del conductor: jornada en rojo, guardia en azul noche con luna, comida en verde, planes en turquesa. Datos de ejemplo sacados de la app (una semana con guardia y saliente; un mes con seis guardias), no de nadie.</p>
+
+<h2>Semana · S1, el tablón de la cochera</h2>
+<p>Siete filas (más ayer, en gris), cada una la línea de ese día en la misma escala de 6 de la mañana a 2 de la noche: se comparan de un vistazo (el lunes 19 no hay hueco; el saliente es siesta). Al principio, el autobús del tipo de día y los sellos de los hábitos; al final, la plaza de garaje con lo dormido (ayer) o lo previsto esta noche, en ámbar si no llega a tu objetivo. Hoy lleva la raya de la hora y el autobús. <b>Toca una fila</b> y debajo sale ese día con sus paradas, lo hecho y lo que falta por apuntar, y «Abrir su Hoy» lo abre en el conductor.</p>
+<div class="fila">
+ <div class="col"><p class="lbl">Antes</p><img src="shots/semana-antes.png" alt="Semana ahora"><p class="nota"><b>1 404 px</b> (1,5 pantallas): la tira de días (72 px) y siete tarjetas de 125 px.</p></div>
+ <div class="col" style="width:300px"><p class="lbl">Tablón · viva (toca un día)</p><iframe src="semana.html" title="Semana como tablón"></iframe><p class="nota">Unos <b>1 000 px</b> con hábitos: el tablón ocupa <b>523 px</b> y enseña la semana entera a la vez; el día tocado, debajo.</p></div>
+</div>
+
+<h2>Mes · M-1, el cuadrante de servicios</h2>
+<p>Se queda la rejilla (se edita igual: mantener pulsado cambia el turno) y cambia lo que hay en cada casilla: la ficha del servicio. <b>Búho con luna</b> la guardia (URG o UMI y sus horas), <b>autobús rojo</b> la jornada, <b>flecha a la cochera</b> el saliente, <b>F/S</b> («fuera de servicio») el libre y <b>autocar</b> las vacaciones. Las casillas bajan de unos 150 px a 72 sin perder los eventos. Arriba, el <b>abono del mes</b>: guardias hechas de las que tocan (taladradas), horas de servicio y findes libres; sustituye a la barra de guardias de «Este mes».</p>
+<div class="fila">
+ <div class="col"><p class="lbl">Antes</p><img src="shots/mes-antes.png" alt="Mes ahora"><p class="nota"><b>1 430 px</b> (1,6 pantallas): la rejilla mide 1 075 px.</p></div>
+ <div class="col" style="width:300px"><p class="lbl">Cuadrante · viva</p><iframe src="mes.html" title="Mes como cuadrante"></iframe><p class="nota">Unos <b>850 px</b> con «Este mes»: rejilla de <b>465 px</b> y abono de 103.</p></div>
+</div>
+
+<h2>Lo que hay que decidir</h2>
+<ul>
+ <li><b>El color de la guardia.</b> Hoy en Mes es rojo (el color del turno «Guardia»). En el conductor es azul noche y el rojo es la jornada. Para que el diccionario sea uno solo, propongo el del conductor en las tres.</li>
+ <li><b>Qué pasa con las tarjetas de Semana.</b> Propongo que el tablón sustituya a la tira y a las siete tarjetas, y que la tarjeta salga solo del día que tocas (con «editar el día» para lo de siempre).</li>
+ <li><b>Un toque en un día del Mes:</b> propongo que abra el tablón desde ese día (hoy abre el resumen del día).</li>
+</ul>
+</body></html>

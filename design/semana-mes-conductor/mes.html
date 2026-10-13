@@ -1,0 +1,227 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<title>Mes · el cuadrante</title><style>*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#e9f2ff;
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+a{color:#38e1ff;text-decoration:none}
+a:hover{color:#7c5cff}
+.bgfx{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,#38e1ff 22%,transparent),transparent 70%),
+   radial-gradient(900px 500px at 92% 4%,color-mix(in srgb,#7c5cff 18%,transparent),transparent 72%),
+   linear-gradient(#070b14,#0b1120 60%,#070b14)}
+.gridfx{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px),
+   linear-gradient(90deg,color-mix(in srgb,#38e1ff 9%,transparent) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%);
+  mask-image:radial-gradient(circle at 50% 0,#000,transparent 78%)}
+.scr{position:relative;z-index:1;min-height:844px;display:flex;flex-direction:column}
+header{position:relative;background:color-mix(in srgb,#070b14 82%,transparent);border-bottom:1px solid #1e2b44;
+  backdrop-filter:blur(14px) saturate(1.4)}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,#38e1ff 70%,transparent),color-mix(in srgb,#7c5cff 70%,transparent),transparent)}
+.hwrap{padding:12px 14px 0}
+h1{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:9px;font-weight:800;text-transform:uppercase;
+  background:linear-gradient(92deg,#e9f2ff,color-mix(in srgb,#38e1ff 85%,#e9f2ff) 55%,color-mix(in srgb,#7c5cff 85%,#e9f2ff));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:4px;padding:10px 0 8px}
+nav button{appearance:none;border:1px solid transparent;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12.5px;
+  color:#8fa6c6;border-radius:999px;cursor:pointer;white-space:nowrap;letter-spacing:.02em}
+nav button.on{color:#04121c;background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 70%,#38e1ff));
+  border-color:color-mix(in srgb,#38e1ff 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,#38e1ff 85%,transparent)}
+main{padding:14px 8px;position:relative;z-index:1;flex:1}
+.grid{display:grid;gap:13px}
+.card{position:relative;min-width:0;background:color-mix(in srgb,#111a2b 88%,transparent);border:1px solid #1e2b44;border-radius:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -22px rgba(0,0,0,.9);padding:14px 9px}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,color-mix(in srgb,#38e1ff 9%,transparent),transparent 42%)}
+.card>h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800}
+.card>h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
+  background:linear-gradient(#38e1ff,#7c5cff);box-shadow:0 0 12px color-mix(in srgb,#38e1ff 70%,transparent)}
+.note{color:#8fa6c6;font-size:12.5px;margin:0 0 12px}
+.mini{font-size:11.5px;color:#8fa6c6}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:13px;padding:7px 13px;border-radius:11px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff;cursor:pointer}
+.btn.p{background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 80%,#38e1ff));border-color:transparent;color:#051018;font-weight:800;
+  box-shadow:0 10px 26px -14px color-mix(in srgb,#38e1ff 90%,transparent)}
+.btn.s{padding:5px 9px;font-size:12px;border-radius:9px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:color-mix(in srgb,#8fa6c6 16%,transparent);color:#8fa6c6;white-space:nowrap;border:1px solid transparent}
+.tag.b2{background:color-mix(in srgb,#38e1ff 18%,transparent);color:color-mix(in srgb,#38e1ff 75%,#e9f2ff);border-color:color-mix(in srgb,#38e1ff 30%,transparent)}
+.tag.b3{background:color-mix(in srgb,#34d399 18%,transparent);color:color-mix(in srgb,#34d399 75%,#e9f2ff);border-color:color-mix(in srgb,#34d399 30%,transparent)}
+.tag.b4{background:color-mix(in srgb,#fbbf24 18%,transparent);color:color-mix(in srgb,#fbbf24 80%,#e9f2ff);border-color:color-mix(in srgb,#fbbf24 30%,transparent)}
+.ico{width:26px;height:26px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:18px;height:18px}
+/* --- comida --- */
+.subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.volver{display:inline-flex;align-items:center;gap:5px;flex:none}
+.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.big{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;font:inherit;color:#e9f2ff;
+  cursor:pointer;padding:12px 11px;border-radius:14px;min-height:96px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.tile .ico{color:#8fa6c6;margin-bottom:4px}
+.tile b{font-size:13.5px;line-height:1.2}
+.tile .n{font-size:13px;font-weight:800;color:#38e1ff}
+.tile .s{font-size:10.5px;color:#8fa6c6}
+/* anillo de kcal */
+.ringrow{display:flex;align-items:center;gap:14px}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.ringnum b{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ringnum span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.06em}
+.macros{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.macro .mt{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}
+.macro .mt span{color:#8fa6c6}
+.mbar{height:7px;border-radius:999px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;overflow:hidden}
+.mbar i{display:block;height:100%}
+.mbar i.p{background:linear-gradient(90deg,#38e1ff,#7c5cff)}
+.mbar i.g{background:linear-gradient(90deg,#34d399,#a3e635)}
+.mbar i.w{background:linear-gradient(90deg,#fbbf24,#fb7185)}
+/* registro del día */
+.logrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed #1e2b44}
+.logrow:first-child{border-top:none}
+.logrow .h{font-size:11px;font-weight:800;color:#8fa6c6;width:38px;flex:none}
+.logrow .nm{flex:1;min-width:0}
+.logrow .nm b{display:block;font-size:13px}
+.logrow .kc{font-size:12px;font-weight:800;flex:none}
+/* tira semanal */
+.wk{display:flex;gap:5px;margin-top:10px;align-items:flex-end}
+.wkd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wkb{width:100%;height:56px;border-radius:6px;background:color-mix(in srgb,#111a2b 60%,#070b14);border:1px solid #1e2b44;
+  display:flex;align-items:flex-end;overflow:hidden}
+.wkb i{display:block;width:100%;background:linear-gradient(180deg,#38e1ff,#7c5cff)}
+.wkb.over i{background:linear-gradient(180deg,#fbbf24,#fb7185)}
+.wkd span{font-size:9.5px;font-weight:800;color:#8fa6c6}
+.wkd.hoy span{color:#38e1ff}
+/* buscador y resultados */
+.buscador{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#070b14 55%,#111a2b);color:#8fa6c6;font-size:13.5px}
+.modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.modo{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;font:inherit;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b);color:#8fa6c6;cursor:pointer;min-height:62px}
+.modo.on{border-color:color-mix(in srgb,#38e1ff 55%,#1e2b44);color:#e9f2ff;background:color-mix(in srgb,#38e1ff 12%,#111a2b)}
+.modo span{font-size:10px;font-weight:700}
+.res{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed #1e2b44}
+.res:first-child{border-top:none}
+.res .nm{flex:1;min-width:0}
+.res .nm b{display:block;font-size:13px}
+/* platos */
+.platos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:10px 10px;border-radius:12px;
+  border:1px solid #1e2b44;background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.plato .pic{font-size:26px;line-height:1.15}
+.plato b{font-size:12.5px;line-height:1.2}
+.plato .mini{font-size:10.5px}
+.cocinable{border-color:color-mix(in srgb,#34d399 45%,#1e2b44);background:color-mix(in srgb,#34d399 8%,#111a2b)}
+/* modo cocina */
+.paso{font-size:19px;line-height:1.45;font-weight:600;margin:14px 0}
+.pasonum{display:flex;align-items:center;gap:9px}
+.pasopunto{width:8px;height:8px;border-radius:999px;background:#1e2b44}
+.pasopunto.on{background:#38e1ff;box-shadow:0 0 10px color-mix(in srgb,#38e1ff 80%,transparent)}
+.ingr{display:flex;justify-content:space-between;padding:7px 0;border-top:1px dashed #1e2b44;font-size:13px}
+.ingr:first-child{border-top:none}
+.ingr b{font-weight:800}
+.navpaso{margin-top:auto;position:relative;z-index:1;padding:11px 9px 14px;border-top:1px solid #1e2b44;display:flex;gap:8px;
+  background:color-mix(in srgb,#070b14 92%,transparent)}
+.chip{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:9px;border:1px solid #1e2b44;
+  background:color-mix(in srgb,#111a2b 62%,#070b14);color:#e9f2ff}
+.chip.on{border-color:color-mix(in srgb,#38e1ff 45%,#1e2b44);color:#38e1ff}
+/* solo lleva barra lo que de verdad es progreso; lo demás, cifra y ya */
+.dosdatos{display:flex;gap:8px}
+.dosdatos div{flex:1;min-width:0;border:1px solid #1e2b44;border-radius:10px;padding:6px 9px;
+  background:color-mix(in srgb,#070b14 42%,#111a2b)}
+.dosdatos b{display:block;font-size:16px;font-weight:800;line-height:1.15;letter-spacing:-.02em}
+.dosdatos span{font-size:9px;font-weight:800;color:#8fa6c6;text-transform:uppercase;letter-spacing:.05em}
+
+:root{--work:#d9573f;--guard:#34467e;--guard2:#7d93e0;--meal:#2f9e6b;--gym:#7a5cf0;--plan:#1fa6c4;--amber:#fbbf24;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44}
+body{width:390px}
+.tab{display:flex;gap:6px;margin:0 0 12px}.tab span{flex:1;text-align:center;padding:7px 0;border-radius:11px;border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--ink2)}
+.tab span.on{color:#04121c;background:linear-gradient(94deg,#38e1ff,color-mix(in srgb,#7c5cff 70%,#38e1ff))}
+.tablon{background:linear-gradient(#141d2e,#0e1524);border:1px solid #2a3a58;border-radius:16px;padding:10px 8px 8px;position:relative;
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -22px #000}
+.tablon h3{margin:0 2px 2px;font:800 11px/1.2 system-ui;letter-spacing:.16em;color:var(--amber);display:flex;align-items:center;gap:8px}
+.tablon h3 small{margin-left:auto;font:700 10.5px system-ui;letter-spacing:.04em;color:var(--ink2)}
+.resumen{font-size:12px;color:var(--ink2);margin:0 2px 6px}.resumen b{color:var(--ink)}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.fila{cursor:pointer}.fila:hover .fondo{fill:rgba(56,225,255,.05)}
+.det{margin-top:12px}.det h2 small{font-weight:600;color:var(--ink2);font-size:12px}
+.par{display:flex;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);font-size:13.5px}
+.par em{font-style:normal;color:var(--ink2);width:44px;flex:none;font-size:12.5px}.par i{width:9px;height:9px;border-radius:50%;flex:none}
+.par .ok{margin-left:auto;font-size:12px;color:#34d399}.par .pd{margin-left:auto;font-size:12px;color:var(--amber)}
+.ley{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--ink2);margin:6px 2px 0}.ley i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+/* mes */
+.abono{position:relative;border-radius:16px;padding:12px 14px 12px 16px;color:#1b1406;
+  background:linear-gradient(100deg,#fcd34d,#fbbf24 60%,#f59e0b);box-shadow:0 14px 30px -18px #f59e0b}
+.abono::before,.abono::after{content:'';position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#070b14;transform:translateY(-50%)}
+.abono::before{left:-7px}.abono::after{right:-7px}
+.abono .t{font:800 10.5px/1 system-ui;letter-spacing:.18em;opacity:.75;display:flex}.abono .t span{margin-left:auto;letter-spacing:.06em}
+.abono .nums{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;margin-top:8px}
+.abono .nums div{border-left:1.5px dashed rgba(27,20,6,.35);padding-left:8px}.abono .nums div:first-child{border:0;padding:0}
+.abono b{display:block;font-size:22px;line-height:1.05;font-weight:900}.abono small{font-size:11px;font-weight:700;opacity:.8}
+.agujeros{display:flex;gap:5px;margin-top:4px}.agujeros i{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(27,20,6,.55)}
+.agujeros i.p{background:#070b14;border-color:#070b14}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:12px}
+.cal .h{text-align:center;font:800 10px system-ui;letter-spacing:.1em;color:var(--ink2);padding:2px 0}
+.cel{position:relative;min-height:72px;border-radius:9px;background:color-mix(in srgb,#111a2b 88%,transparent);border:1px solid var(--line);
+  padding:3px 3px 4px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;cursor:pointer;overflow:hidden}
+.cel .n{font:800 12px/1 system-ui;color:var(--ink)}.cel.fin{background:color-mix(in srgb,#1a1730 80%,transparent)}
+.cel.pas{opacity:.55}.cel.fuera{opacity:.35}.cel.hoy{border:2px solid var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 22%,transparent)}
+.cel .s{font:700 9px/1.1 system-ui;letter-spacing:-.02em;color:var(--ink2);white-space:nowrap}
+.cel .ev{font:600 8.5px/1.15 system-ui;color:#c7d6ee;background:rgba(31,166,196,.18);border-radius:4px;padding:1px 3px;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ficha{display:flex;align-items:center;gap:2px;border-radius:6px;padding:2px 3px;font:800 8.5px/1 system-ui;letter-spacing:0;max-width:100%;white-space:nowrap}
+.ficha svg{flex:none}
+.f-guard{background:var(--guard);color:#dfe6ff;box-shadow:0 0 0 1px var(--guard2) inset}
+.f-work{background:color-mix(in srgb,var(--work) 22%,transparent);color:#ffb4a6}
+.f-sal{background:color-mix(in srgb,var(--guard2) 16%,transparent);color:#b9c7f3}
+.f-libre{border:1px dashed #3a4a68;color:#6f84a6;font-weight:700}
+.f-vac{background:color-mix(in srgb,var(--amber) 22%,transparent);color:#ffd877}
+.f-gym{background:color-mix(in srgb,var(--gym) 22%,transparent);color:#c9b9ff}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0e1626;border:1px solid #2a3a58;border-radius:12px;padding:9px 14px;font-size:13px;
+  box-shadow:0 12px 30px -10px #000;opacity:0;transition:opacity .2s;pointer-events:none;max-width:360px}
+.toast.on{opacity:1}
+</style></head><body><div class="bgfx"></div><div class="gridfx"></div><div class="scr"><main>
+<div class="tab"><span class="on">Mes</span><span class="">Semana</span><span class="">Hoy</span></div>
+
+<div class="row" style="margin-bottom:10px;gap:6px"><span class="btn s">‹</span><span class="btn s" style="flex:1;text-align:center">octubre 2026</span><span class="btn s">›</span><span class="btn s">✏️ editar</span></div>
+<div id="abono"></div><div id="cal"></div>
+<div class="ley" style="margin-top:8px"><span><span class="ficha f-guard" style="display:inline-flex">☾</span> guardia (búho)</span><span><span class="ficha f-work" style="display:inline-flex">bus</span> jornada</span><span><span class="ficha f-sal" style="display:inline-flex">→⌂</span> saliente: a cochera</span><span><span class="ficha f-libre" style="display:inline-flex">F/S</span> fuera de servicio</span><span><span class="ficha f-vac" style="display:inline-flex">autocar</span> vacaciones</span></div>
+<div class="card" style="margin-top:12px"><h2>Este mes</h2><p class="mini" style="margin:0">Se queda (servicio del mes, cupo de guardias, vacaciones), sin la barra de guardias: ya la cuenta el abono.</p></div></main></div><div class="toast" id="toast"></div>
+<script>const D={"oct":{"hechas":3,"h":245,"findes":2},"sem":[{"k":"2026-10-13","dow":2,"dnum":13,"tipo":"guardia","dia":[{"a":25.5,"b":26,"t":"Snack nocturno","k":"meal","h":0,"m":"meal","ayer":0},{"a":7,"b":7.5,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":8,"b":15,"t":"Trabajo","k":"work","h":0,"m":0,"ayer":0},{"a":14,"b":14.5,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":15,"b":32,"t":"Guardia","k":"guard","h":0,"m":0,"ayer":0},{"a":21.5,"b":22,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0}],"noches":[{"a":-1.333,"b":6.75,"t":"noche"}],"pend":[],"sueno":{"h":3,"real":1}},{"k":"2026-10-14","dow":3,"dnum":14,"tipo":"saliente","dia":[{"a":-9,"b":8,"t":"Guardia","k":"guard","ayer":1},{"a":8,"b":8.5,"t":"Fin de guardia","k":"guard","h":0,"m":0,"ayer":0},{"a":8.333,"b":8.833,"t":"Post-guardia","k":"meal","h":0,"m":"meal","ayer":0},{"a":15.167,"b":15.667,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":8.667,"b":14.667,"t":"siesta"},{"a":23.5,"b":30.833,"t":"noche"}],"pend":[],"sueno":{"h":7.3,"cama":"23:30"}},{"k":"2026-10-15","dow":4,"dnum":15,"tipo":"trabajo","dia":[{"a":7,"b":7.5,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":8,"b":15,"t":"Trabajo","k":"work","h":0,"m":0,"ayer":0},{"a":15.333,"b":15.833,"t":"Comida en casa","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena 3-15 h","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":-0.5,"b":6.833,"t":"noche"},{"a":22.667,"b":30.833,"t":"noche"}],"pend":[],"sueno":{"h":8.2,"cama":"22:40"}},{"k":"2026-10-16","dow":5,"dnum":16,"tipo":"trabajo","dia":[{"a":7,"b":7.5,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":8,"b":15,"t":"Trabajo","k":"work","h":0,"m":0,"ayer":0},{"a":15.333,"b":15.833,"t":"Comida en casa","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena 3-15 h","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":-1.333,"b":6.833,"t":"noche"},{"a":22.667,"b":32.5,"t":"noche"}],"pend":[],"sueno":{"h":9.8,"cama":"22:40"}},{"k":"2026-10-17","dow":6,"dnum":17,"tipo":"libre","dia":[{"a":9.5,"b":10,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":14,"b":14.5,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":-1.333,"b":8.5,"t":"noche"},{"a":23.75,"b":32.5,"t":"noche"}],"pend":[],"sueno":{"h":8.8,"cama":"23:45"}},{"k":"2026-10-18","dow":0,"dnum":18,"tipo":"libre","dia":[{"a":9.5,"b":10,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":14,"b":14.5,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":-0.25,"b":8.5,"t":"noche"},{"a":23.75,"b":30.75,"t":"noche"}],"pend":[],"sueno":{"h":7,"cama":"23:45"}},{"k":"2026-10-19","dow":1,"dnum":19,"tipo":"guardia","dia":[{"a":25.5,"b":26,"t":"Snack nocturno","k":"meal","h":0,"m":"meal","ayer":0},{"a":7,"b":7.5,"t":"Desayuno","k":"meal","h":0,"m":"meal","ayer":0},{"a":8,"b":15,"t":"Trabajo","k":"work","h":0,"m":0,"ayer":0},{"a":14,"b":14.5,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":15,"b":32,"t":"Guardia","k":"guard","h":0,"m":0,"ayer":0},{"a":21.5,"b":22,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0}],"noches":[{"a":-0.25,"b":6.75,"t":"noche"}],"pend":[],"sueno":null},{"k":"2026-10-20","dow":2,"dnum":20,"tipo":"saliente","dia":[{"a":-9,"b":8,"t":"Guardia","k":"guard","ayer":1},{"a":8,"b":8.5,"t":"Fin de guardia","k":"guard","h":0,"m":0,"ayer":0},{"a":8.333,"b":8.833,"t":"Post-guardia","k":"meal","h":0,"m":"meal","ayer":0},{"a":15.167,"b":15.667,"t":"Comida","k":"meal","h":0,"m":"meal","ayer":0},{"a":19.25,"b":19.75,"t":"Cena","k":"meal","h":0,"m":"meal","ayer":0},{"a":20,"b":22.167,"t":"Lloretazo","k":"plan","h":0,"m":0,"ayer":0}],"noches":[{"a":8.667,"b":14.667,"t":"siesta"},{"a":23.5,"b":30.833,"t":"noche"}],"pend":[],"sueno":{"h":7.3,"cama":"23:30"}}],"mes":[{"k":"2026-10-05","d":5,"m":9,"dow":1,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-06","d":6,"m":9,"dow":2,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-07","d":7,"m":9,"dow":3,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-08","d":8,"m":9,"dow":4,"tipo":"guardia","g":"umi","h":25.3,"sv":"15→09:15","vac":false},{"k":"2026-10-09","d":9,"m":9,"dow":5,"tipo":"saliente","g":"","h":0.5,"sv":"→09:15","vac":false},{"k":"2026-10-10","d":10,"m":9,"dow":6,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-10-11","d":11,"m":9,"dow":0,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-10-12","d":12,"m":9,"dow":1,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-13","d":13,"m":9,"dow":2,"tipo":"guardia","g":"urg","h":24,"sv":"15→08","vac":false},{"k":"2026-10-14","d":14,"m":9,"dow":3,"tipo":"saliente","g":"","h":0.5,"sv":"→08","vac":false},{"k":"2026-10-15","d":15,"m":9,"dow":4,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-16","d":16,"m":9,"dow":5,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-17","d":17,"m":9,"dow":6,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-10-18","d":18,"m":9,"dow":0,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-10-19","d":19,"m":9,"dow":1,"tipo":"guardia","g":"urg","h":24,"sv":"15→08","vac":false},{"k":"2026-10-20","d":20,"m":9,"dow":2,"tipo":"saliente","g":"","h":0.5,"sv":"→08","vac":false},{"k":"2026-10-21","d":21,"m":9,"dow":3,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-22","d":22,"m":9,"dow":4,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-23","d":23,"m":9,"dow":5,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-24","d":24,"m":9,"dow":6,"tipo":"guardia","g":"umi","h":25.3,"sv":"10→11:15","vac":false},{"k":"2026-10-25","d":25,"m":9,"dow":0,"tipo":"saliente","g":"","h":0.5,"sv":"→11:15","vac":false},{"k":"2026-10-26","d":26,"m":9,"dow":1,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-27","d":27,"m":9,"dow":2,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-28","d":28,"m":9,"dow":3,"tipo":"guardia","g":"urg","h":24,"sv":"15→08","vac":false},{"k":"2026-10-29","d":29,"m":9,"dow":4,"tipo":"saliente","g":"","h":0.5,"sv":"→08","vac":false},{"k":"2026-10-30","d":30,"m":9,"dow":5,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-10-31","d":31,"m":9,"dow":6,"tipo":"vac","g":"","h":0,"sv":"","vac":false},{"k":"2026-11-01","d":1,"m":10,"dow":0,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-11-02","d":2,"m":10,"dow":1,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-03","d":3,"m":10,"dow":2,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-04","d":4,"m":10,"dow":3,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-05","d":5,"m":10,"dow":4,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-06","d":6,"m":10,"dow":5,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-07","d":7,"m":10,"dow":6,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-11-08","d":8,"m":10,"dow":0,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-11-09","d":9,"m":10,"dow":1,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-10","d":10,"m":10,"dow":2,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-11","d":11,"m":10,"dow":3,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-12","d":12,"m":10,"dow":4,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-13","d":13,"m":10,"dow":5,"tipo":"trabajo","g":"","h":7,"sv":"08–15","vac":false},{"k":"2026-11-14","d":14,"m":10,"dow":6,"tipo":"libre","g":"","h":0,"sv":"","vac":false},{"k":"2026-11-15","d":15,"m":10,"dow":0,"tipo":"libre","g":"","h":0,"sv":"","vac":false}],"cuota":{"urg":4,"umi":2},"obj":8},DIAS=["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
+const toast=(t)=>{const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800);};
+const hm=(h)=>{h=((h%24)+24)%24;const H=Math.floor(h),M=Math.round((h-H)*60);return H+':'+String(M).padStart(2,'0');};
+const coma=(v)=>String(Math.round(v*10)/10).replace('.',',');
+
+const HOY='2026-10-14';
+/* dos eventos de ejemplo para ver que caben */
+const EV={'2026-10-22':'Curso RCP','2026-10-27':'Cumple Ana'};
+const ico={
+  guard:'<svg width="10" height="10" viewBox="0 0 10 10"><path d="M6.5 1a4 4 0 1 0 2.5 6.4A3.2 3.2 0 1 1 6.5 1z" fill="#e6ecff"/></svg>',
+  work:'<svg width="13" height="9" viewBox="0 0 13 9"><rect width="13" height="7" rx="2" fill="var(--work)"/><rect x="2" y="1.4" width="9" height="2.4" rx=".6" fill="rgba(255,255,255,.6)"/><circle cx="3.5" cy="7.6" r="1.3" fill="#0b1120"/><circle cx="9.5" cy="7.6" r="1.3" fill="#0b1120"/></svg>',
+  sal:'<svg width="13" height="10" viewBox="0 0 13 10"><path d="M1 5h6m-2 -2.6 2.6 2.6 -2.6 2.6" stroke="#b9c7f3" stroke-width="1.4" fill="none"/><path d="M8.5 9V4.2l2.2 -2 2.2 2V9z" fill="none" stroke="#b9c7f3" stroke-width="1.1"/></svg>',
+  vac:'<svg width="14" height="9" viewBox="0 0 14 9"><rect width="14" height="7" rx="2.5" fill="var(--amber)"/><rect x="2" y="1.4" width="10" height="2.4" rx=".6" fill="rgba(0,0,0,.35)"/><circle cx="3.5" cy="7.6" r="1.3" fill="#0b1120"/><circle cx="10.5" cy="7.6" r="1.3" fill="#0b1120"/></svg>'};
+const cor=(s)=>(s||'').replace(/(^|→|–)0(\d)/g,'$1$2');
+function ficha(c){c=Object.assign({},c,{sv:cor(c.sv)});
+  if(c.tipo==='guardia')return '<span class="ficha f-guard">'+ico.guard+({urg:'URG',umi:'UMI'}[c.g]||'')+'</span><span class="s">'+c.sv+'</span>';
+  if(c.tipo==='saliente')return '<span class="ficha f-sal">'+ico.sal+'</span><span class="s">'+c.sv+'</span>';
+  if(c.tipo==='trabajo')return '<span class="ficha f-work">'+ico.work+'</span><span class="s">'+c.sv.replace(/^0/,'')+'</span>';
+  if(c.tipo==='fuerza')return '<span class="ficha f-gym">💪</span><span class="s">'+c.sv.replace(/^0/,'')+'</span>';
+  if(c.tipo==='vac')return '<span class="ficha f-vac">'+ico.vac+'</span><span class="s">vacac.</span>';
+  return '<span class="ficha f-libre">F/S</span><span class="s">libre</span>';}
+function abono(){
+  /* las cuentas del mes entero (del 1 al 31), no solo de lo que se ve en la rejilla */
+  const hechas=D.oct.hechas,cupo=(D.cuota.urg||0)+(D.cuota.umi||0),hs=D.oct.h,fs=D.oct.findes;
+  return '<div class="abono"><div class="t">ABONO DE OCTUBRE<span>N.º 10/26</span></div><div class="nums">'+
+    '<div><b>'+hechas+' <small>de</small> '+cupo+'</b><small>guardias hechas</small><div class="agujeros">'+Array.from({length:cupo},(_,i)=>'<i class="'+(i<hechas?'p':'')+'"></i>').join('')+'</div></div>'+
+    '<div><b>'+Math.round(hs)+' h</b><small>de servicio</small></div><div><b>'+fs+'</b><small>findes libres</small></div></div></div>';}
+function cuadrante(){
+  let s='<div class="cal">'+['L','M','X','J','V','S','D'].map((d)=>'<div class="h">'+d+'</div>').join('');
+  D.mes.forEach((c)=>{const cls=['cel'];if(c.dow===0||c.dow===6)cls.push('fin');if(c.k<HOY)cls.push('pas');if(c.m!==9)cls.push('fuera');if(c.k===HOY)cls.push('hoy');
+    s+='<div class="'+cls.join(' ')+'" data-k="'+c.k+'"><span class="n">'+(c.d===1?c.d+' '+(c.m===10?'nov':'oct'):c.d)+'</span>'+ficha(c)+(EV[c.k]?'<span class="ev">'+EV[c.k]+'</span>':'')+'</div>';});
+  return s+'</div>';}
+document.getElementById('abono').innerHTML=abono();
+document.getElementById('cal').innerHTML=cuadrante();
+document.querySelectorAll('.cel').forEach((e)=>e.addEventListener('click',()=>toast('Un toque: la semana desde ese día en el tablón · mantener: cambiar el turno (como ahora)')));</script></body></html>
