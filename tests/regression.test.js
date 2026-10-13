@@ -3844,8 +3844,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     });
     await gotoTab('month');
     await page.waitForTimeout(250);
-    const antesDelClic = await page.evaluate(() => !!document.querySelector('#main [data-a="ir-eventos"]'));
-    await page.click('#main [data-a="ir-eventos"]');
+    /* el atajo vive en el menú ⋯ de la hoja del mes (la lista «Eventos de …» se fue con la carretera) */
+    await page.click('#main .carne');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { const d = document.querySelector('#hojaDia details.mrmas'); if (d) d.open = true; });
+    const antesDelClic = await page.evaluate(() => !!document.querySelector('#hojaDia [data-a="ir-eventos"]'));
+    await page.click('#hojaDia [data-a="ir-eventos"]');
     await page.waitForTimeout(600);
     const tras = await page.evaluate(() => ({
       tab: window.PG.ui.tab,

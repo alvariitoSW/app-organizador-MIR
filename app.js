@@ -7717,6 +7717,7 @@ function mesResumenHTML(y,mo,list,svc,g){
       '<details class="mrmas"><summary class="btn s" aria-label="más opciones del mes">⋯</summary><div class="mrmenu">'+
         '<button class="btn s" data-a="mon-auto-rep">Repartir desde cero</button>'+
         '<button class="btn s" data-a="mon-clear">Vaciar el mes</button>'+
+        '<button class="btn s" data-a="ir-eventos">Eventos: añadir o quitar →</button>'+
         '<button class="btn s" data-a="ir-rotacion">Tipos de guardia y ciclo →</button></div></details></div>'+
     '<div class="row mrg"><span class="cap">GUARDIAS</span><b class="mrn">'+g.any+'<i>/'+cupo+'</i></b><span class="sp"></span>'+
       '<span class="d4step"><button data-a="mon-guard-d" data-d="-1" aria-label="una guardia menos">−</button>'+
