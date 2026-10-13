@@ -1,0 +1,243 @@
+<title>Calendario, menos y mejor</title>
+<style>
+/* Una hoja de ruta de la cochera: tipografía técnica, el azul noche de la guardia, el ámbar de hoy y las cifras en monoespaciada; una columna de lectura con las figuras a todo el ancho. */
+:root{--bg:#f4f7fb;--card:#ffffff;--ink:#0d1726;--ink2:#4a5d78;--ink3:#8a9ab2;--line:#d9e1ec;--amber:#b8860b;--amber-bg:#fff3cc;--navy:#34467e;--work:#d9573f;--meal:#2f9e6b;--gym:#7a5cf0;--plan:#1fa6c4;--ok:#1f8a54;--bad:#b23b3b;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--ink3:#5d7394;--line:#1e2b44;--amber:#ffd66b;--amber-bg:#2a2410;--navy:#7d93e0;--ok:#4ad08a;--bad:#ff7a7a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--ink3:#5d7394;--line:#1e2b44;--amber:#ffd66b;--amber-bg:#2a2410;--navy:#7d93e0;--ok:#4ad08a;--bad:#ff7a7a;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15.5px/1.5 var(--sans);margin:0}
+.w{max-width:860px;margin:0 auto;padding-block:28px 80px;padding-inline:18px}
+h1{font-size:30px;line-height:1.15;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+.sub{color:var(--ink2);margin:0 0 18px;max-width:64ch}
+h2{font-size:21px;margin:44px 0 10px;text-wrap:balance;letter-spacing:-.005em}
+h3{font-size:16.5px;margin:26px 0 6px}
+p{margin:0 0 12px;max-width:68ch}
+p.lead{font-size:17px;color:var(--ink)}
+b{color:var(--ink)}
+.eye{font:800 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 18px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
+.kpi .n{font:800 26px/1.1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.kpi .n small{font:700 13px var(--mono);color:var(--ink3)}
+.kpi .l{color:var(--ink2);font-size:12.5px;margin-top:4px}
+.kpi .d{color:var(--ok);font:700 12.5px var(--mono);margin-top:2px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0 16px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink3);font:800 11px/1.2 var(--sans);letter-spacing:.1em;text-transform:uppercase}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.q{color:var(--bad);font-weight:700}
+.tw{overflow-x:auto}
+.fig{margin:16px 0 22px}
+.fig .plate{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b1120}
+.fig img{display:block;width:100%;height:auto}
+.fig figcaption{font-size:13px;color:var(--ink2);margin-top:8px;max-width:70ch}
+.fig figcaption b{color:var(--ink)}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.par .fig{margin:0}
+.par .cap{font:800 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+@media (max-width:620px){.par{grid-template-columns:1fr}}
+ul,ol{padding-left:20px;margin:0 0 12px;max-width:70ch}
+li{margin:4px 0}
+li b{color:var(--ink)}
+.chip{display:inline-block;font:700 11.5px/1 var(--mono);padding:4px 7px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);margin-right:4px;white-space:nowrap}
+.chip.q{color:var(--bad);border-color:var(--bad)}
+.chip.k{color:var(--ok);border-color:var(--ok)}
+.chip.m{color:var(--amber);border-color:var(--amber)}
+.box{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:12px 14px;background:var(--card);margin:14px 0}
+.box.navy{border-left-color:var(--navy)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.dec{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:12px 0}
+.dec>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
+.dec h4{margin:0 0 6px;font-size:15px}
+.dec p{font-size:13.5px;color:var(--ink2);margin:0}
+.q5 li{margin:8px 0}
+.q5 details{margin-top:4px}
+.q5 summary{cursor:pointer;color:var(--ink2);font-size:13.5px}
+.q5 details p{font-size:14px;margin:6px 0 0;color:var(--ink2)}
+code{font:600 13px var(--mono);color:var(--ink2)}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.toc a{font:700 12.5px var(--sans);color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:5px 10px;text-decoration:none}
+.toc a:hover,.toc a:focus-visible{color:var(--ink);border-color:var(--ink3)}
+</style>
+<div class="w">
+<p class="eye">Propuestas · calendario · 13 de octubre de 2026</p>
+<h1>Calendario, menos y mejor</h1>
+<p class="sub">Qué sobra en Mes, Semana y Hoy, medido en el móvil de 412 px con un octubre de verdad (6 guardias, 4 eventos, 3 hábitos), y tres modelos para arreglarlo: las fichas y el carné de abono, estáticos y hechos con el kit de /anatomy, y la carretera del mes, el modelo alternativo en primera persona. Nada de esto está construido en la app: son maquetas sobre la app real, a la espera de tu visto bueno.</p>
+<nav class="toc"><a href="#medido">Lo medido</a><a href="#sobra">Qué sobra</a><a href="#fichas">Fig 1 · fichas</a><a href="#carne">Fig 2 · carné</a><a href="#carretera">Fig 3 · carretera</a><a href="#mes">Mes</a><a href="#semana">Semana</a><a href="#hoy">Hoy</a><a href="#funcion">Funcionalidad</a><a href="#decidir">Qué decidir</a><a href="#supuestos">Supuestos</a><a href="#quiz">Quiz</a></nav>
+
+<div class="kpis">
+ <div class="kpi"><div class="n">1 911 <small>→ 645 px</small></div><div class="l">Mes · alto de la pantalla</div><div class="d">de 2,1 a 0,7 pantallas · 62 → 32 botones</div></div>
+ <div class="kpi"><div class="n">1 224 <small>→ 804 px</small></div><div class="l">Semana · alto de la pantalla</div><div class="d">de 1,3 a 0,9 pantallas · 28 → 10 botones</div></div>
+ <div class="kpi"><div class="n">1 586 <small>→ 1 393 px</small></div><div class="l">Hoy · con la carretera dentro</div><div class="d">37 → 18 botones · 1 059 px sin ella</div></div>
+</div>
+
+<h2 id="medido">1 · Lo medido, bloque a bloque</h2>
+<p>Las tres pantallas, conducidas de verdad a 412 × 915 con el mes de ejemplo y la hora a las 10:24 de un martes de guardia. Cada fila es un bloque de la pantalla con su alto, sus botones y lo primero que dice. Las cifras de «después» salen de la misma app con los recortes aplicados por encima (CSS y DOM), no de un dibujo.</p>
+<div class="tw"><table>
+<tr><th>Mes (plana)</th><th class="n">px</th><th class="n">botones</th><th>qué hace</th></tr>
+<tr><td>cabecera + selector de mes + hoy · editar · 🖨</td><td class="n">58</td><td class="n">4</td><td>se queda</td></tr>
+<tr><td>aviso «Mantén pulsado un día»</td><td class="n">76</td><td class="n">1</td><td class="q">sobra: un aviso de una vez ocupa sitio todos los días hasta que lo cierras</td></tr>
+<tr><td>abono (2 de 6 · 186 h · 2 findes)</td><td class="n">99</td><td class="n">0</td><td>se queda, pasa a ser el carné</td></tr>
+<tr><td>botón Isométrica</td><td class="n">36</td><td class="n">1</td><td>se queda (o se va a la cabecera)</td></tr>
+<tr><td>cuadrícula de 6 semanas (42 casillas de 140 px)</td><td class="n">845</td><td class="n">42</td><td class="q">sobra la mitad: la semana ya pasada, la sexta semana y 100 px de aire por casilla</td></tr>
+<tr><td>leyenda (9 entradas)</td><td class="n">50</td><td class="n">0</td><td class="q">sobra: explica unas fichas que se explican solas</td></tr>
+<tr><td>«Eventos de octubre»</td><td class="n">303</td><td class="n">5</td><td class="q">sobra: ya están en las casillas y en «Próximos» de Hoy</td></tr>
+<tr><td>«Este mes» (servicio, cupo, 3 cifras, vacaciones)</td><td class="n">298</td><td class="n">9</td><td class="q">sobra en la pantalla: cuenta las guardias por segunda vez (6/6 frente a 2 de 6) y se toca una vez al mes</td></tr>
+<tr><td><b>total</b></td><td class="n"><b>1 911</b></td><td class="n"><b>62</b></td><td>2,1 pantallas · 299 palabras</td></tr>
+</table></div>
+<div class="tw"><table>
+<tr><th>Semana (plana)</th><th class="n">px</th><th class="n">botones</th><th>qué hace</th></tr>
+<tr><td>rango de fechas + «7 días» + ⓘ</td><td class="n">40</td><td class="n">5</td><td>se queda</td></tr>
+<tr><td>Agenda / Por horas</td><td class="n">42</td><td class="n">2</td><td class="q">tres mandos seguidos (118 px) antes de ver nada: este, el de arriba y el de Isométrica</td></tr>
+<tr><td>botón Isométrica</td><td class="n">36</td><td class="n">1</td><td class="q">se funde con el de arriba en una sola fila</td></tr>
+<tr><td>tablón (resumen, 8 filas, leyenda)</td><td class="n">527</td><td class="n">0</td><td>se queda; la leyenda (41 px) se va</td></tr>
+<tr><td>tarjeta del día que tocas</td><td class="n">163</td><td class="n">2</td><td>se queda</td></tr>
+<tr><td>«Hábitos de la semana»</td><td class="n">273</td><td class="n">17</td><td class="q">sobra: el tablón ya lleva los sellos de hábitos por día, «Para hoy» los marca y Más › Hábitos los edita</td></tr>
+<tr><td>«mi rutina por tipo de día»</td><td class="n">30</td><td class="n">1</td><td class="q">un botón suelto: va al menú ⓘ</td></tr>
+<tr><td><b>total</b></td><td class="n"><b>1 224</b></td><td class="n"><b>28</b></td><td>1,3 pantallas · 216 palabras</td></tr>
+</table></div>
+<div class="tw"><table>
+<tr><th>Hoy (conductor)</th><th class="n">px</th><th class="n">botones</th><th>qué hace</th></tr>
+<tr><td>cabecera, ‹ Lun · Mié ›, 🌿, ＋ Añadir, estado del día</td><td class="n">80</td><td class="n">4</td><td>se queda</td></tr>
+<tr><td>cuenta atrás («finde libre en 4 d · examen en 14 d»)</td><td class="n">32</td><td class="n">0</td><td class="q">lo dice la carretera</td></tr>
+<tr><td>Conductor / Reloj / Línea <b>y debajo</b> ⇄ Estación</td><td class="n">80</td><td class="n">4</td><td class="q">dos selectores apilados para una sola elección</td></tr>
+<tr><td>el conductor (parabrisas + salpicadero)</td><td class="n">276</td><td class="n">6</td><td>se queda</td></tr>
+<tr><td>«Tu semana pasada» (lunes y martes)</td><td class="n">75</td><td class="n">0</td><td>se queda</td></tr>
+<tr><td>asistente: ¿cómo amaneces? + agua + banco</td><td class="n">482</td><td class="n">19</td><td class="q">más alto que el propio día: tres preguntas, cada una con su párrafo y sus botones</td></tr>
+<tr><td>«Para hoy»</td><td class="n">222</td><td class="n">3</td><td>se queda</td></tr>
+<tr><td>«Próximos» (4 eventos)</td><td class="n">192</td><td class="n">1</td><td class="q">lo dice la carretera (y lo repetía «Eventos de octubre»)</td></tr>
+<tr><td><b>total</b></td><td class="n"><b>1 586</b></td><td class="n"><b>37</b></td><td>1,7 pantallas · 287 palabras</td></tr>
+</table></div>
+<div class="par">
+ <figure class="fig"><p class="cap">Mes, hoy · 1 911 px</p><div class="plate"><img src="shots/antes-mes.png" alt="Mes plana, antes: aviso, abono, cuadrícula de seis semanas, leyenda, eventos y Este mes" loading="lazy"></div></figure>
+ <figure class="fig"><p class="cap">Hoy, hoy · 1 586 px</p><div class="plate"><img src="shots/antes-hoy.png" alt="Hoy con el conductor, antes: dos selectores, asistente de 482 px, Para hoy y Próximos" loading="lazy"></div></figure>
+</div>
+
+<h2 id="sobra">2 · Qué sobra y por qué</h2>
+<p class="lead">El calendario dice las mismas cosas varias veces y deja aire donde no hay nada que decir.</p>
+<ul>
+ <li><b>Las guardias se cuentan tres veces en Mes.</b> En la pestaña («Mes 6»), en el abono («2 de 6 hechas») y en «Este mes» («6/6 puestas»). Dos números distintos para una pregunta que se hace una vez: ¿cuántas me quedan?</li>
+ <li><b>Los eventos salen en tres sitios.</b> En la casilla del día, en «Eventos de octubre» (303 px) y en «Próximos» de Hoy (192 px). Un evento nuevo cuesta 500 px de pantalla.</li>
+ <li><b>La cuadrícula es aire.</b> 42 casillas de 140 px con unos 40 px de contenido: el 70 % de los 845 px está vacío. Y enseña seis semanas cuando las que importan son esta y las cuatro siguientes.</li>
+ <li><b>El texto repite a la ficha.</b> La casilla pone la ficha de jornada <i>y</i> «8–15» debajo, 20 veces al mes, para decir lo de siempre. Las horas solo informan cuando no son las de siempre («15→8», «→11:15»).</li>
+ <li><b>Los hábitos viven en cuatro sitios.</b> «Para hoy», la tarjeta del día en Semana, «Hábitos de la semana» y Más › Hábitos. La de Semana es la más grande (273 px, 17 botones) y la que menos se toca.</li>
+ <li><b>Los mandos se apilan.</b> Semana tiene tres filas de mandos seguidas (118 px) y Hoy dos (80 px) antes de enseñar nada. Cada una es una decisión que ya tomaste.</li>
+ <li><b>El asistente manda más que el día.</b> En Hoy, 482 px y 19 botones de preguntas (¿cómo amaneces?, el agua, el banco) frente a 276 px de conductor. Cada pregunta trae su párrafo de explicación, que ya leíste el primer día.</li>
+</ul>
+
+<h2 id="fichas">3 · Fig 1 · Las fichas, estáticas</h2>
+<p>Los seis objetos del tablero isométrico (autobús rojo la jornada, violeta el día de fuerza, búho azul noche la guardia con su aro ámbar o violeta, la cochera con la flecha el saliente, el árbol el libre, el autocar las vacaciones), pero fijos: un <code>&lt;symbol&gt;</code> por ficha, 73 KB en total, dibujados con el kit de /anatomy y pintados en todo el calendario. Frente a los 300 KB de la vista isométrica viva, que además tarda en montarse.</p>
+<figure class="fig"><div class="plate"><img src="shots/fichas.png" alt="Las siete fichas estáticas a tamaño grande, a tamaño de casilla y a 4×" loading="lazy"></div>
+<figcaption><b>Dónde se usan.</b> En la casilla de Mes en vez de emoji + texto; en la fila del tablón de Semana en vez del autobús dibujado a mano; en la cabecera de Hoy junto al nombre del día; y en la leyenda, que pasa a ser un botón «?» porque la ficha ya dice lo que es.</figcaption></figure>
+<div class="box navy"><b>La regla de las horas.</b> Con la ficha puesta, la casilla solo escribe la hora cuando no es la de siempre: «15→8» en la guardia, «→8» y «→11:15» en el saliente, «10→11:15» en la UMI. La jornada de 8 a 15 no se escribe: es el autobús rojo. Son 20 líneas de texto menos al mes.</div>
+
+<h2 id="carne">4 · Fig 2 · El carné de abono</h2>
+<p>La tarjeta de transporte del conductor. Junta en un solo objeto lo que hoy son cuatro bloques de Mes: el abono (99 px), «Este mes» (298 px), la leyenda (50 px) y, en su versión completa, la cuadrícula entera (845 px). Arriba, el mes y el servicio grabados; a la derecha, las tres cifras; abajo, la regla del mes con la aguja de hoy; y en la versión completa, el mes en 5×7 con la marca de cada tipo de día y <b>un agujero taladrado por cada día ya pasado</b>, como en un abono de verdad.</p>
+<figure class="fig"><div class="plate"><img src="shots/carne.png" alt="El carné de abono sobre la alfombrilla, y la versión del móvil vista desde arriba" loading="lazy"></div>
+<figcaption><b>Tocar el carné abre la hoja del mes</b>: el cupo con su −/+, el servicio, las vacaciones, «repartir las que faltan» y el menú ⋯. Es exactamente lo que hoy es «Este mes», pero fuera de la pantalla hasta que lo pides.</figcaption></figure>
+<div class="par">
+ <figure class="fig"><p class="cap">A · el carné corto (116 px) encima de la cuadrícula</p><div class="plate"><img src="shots/carne-corto.png" alt="El carné corto: cabecera, tres cifras y la regla del mes" loading="lazy"></div></figure>
+ <figure class="fig"><p class="cap">B · el carné completo (194 px) como vista de un vistazo</p><div class="plate"><img src="shots/despues-mes-B.png" alt="Mes con el carné completo encima de la cuadrícula de cinco semanas" loading="lazy"></div></figure>
+</div>
+<p>Te propongo <b>la A</b>: el carné corto encima de la cuadrícula de cinco semanas. La B dibuja el mes dos veces (en el carné y en la cuadrícula), y solo tiene sentido si el carné completo <i>sustituye</i> al tablero isométrico vivo como vista «de un vistazo»: un toque en una marca del carné abriría ese día, igual que hoy una baldosa.</p>
+
+<h2 id="carretera">5 · Fig 3 · La carretera del mes, en primera persona</h2>
+<p>El modelo alternativo, como el conductor de Hoy: la misma cabina (parabrisas, pilares, salpicadero, volante) y la misma cámara, pero la carretera no es el día, <b>son los días que vienen</b>. Cada día es un mojón al borde de la carretera con su número y la cabeza del color del tipo. Lo que toca está en la carretera a esa distancia:</p>
+<ul>
+ <li><span class="sw" style="background:#34467e"></span><b>La guardia es un túnel</b>: la noche de trabajo, se entra por la tarde y se sale a la mañana siguiente. Encima, el cartel: «GUARDIA URG · lun 19 · 15:00 → 9:15 · en 6 días».</li>
+ <li><span class="sw" style="background:#3f8a4f"></span><b>El finde libre es un área de descanso</b>, con su carril de entrada, la mesa y los árboles. El cartel verde dice «sáb 17 – dom 18».</li>
+ <li><span class="sw" style="background:#e3a72f"></span><b>Las vacaciones son la salida a la playa</b>: el pórtico verde sobre la carretera, «SALIDA 30 · PLAYA ↗», y la palmera.</li>
+ <li><span class="sw" style="background:#1a3f8a"></span><b>Cada evento es una señal azul</b> en su poste, con el nombre y la hora. Alternan a izquierda y derecha para no taparse.</li>
+ <li><span class="sw" style="background:#d9573f"></span><b>La jornada es la ciudad</b> a los lados, como en Hoy. Más baja, para no tapar los carteles.</li>
+</ul>
+<figure class="fig"><div class="plate"><img src="shots/carretera.png" alt="La carretera del mes desde la cabina: mojones, el túnel de la guardia, el área de descanso, las señales de los eventos, y el salpicadero con la próxima guardia" loading="lazy"></div>
+<figcaption><b>El salpicadero</b> no dice la hora: dice la fecha, «PRÓXIMA GUARDIA · lun 19 · en 6 días», el próximo finde libre y la playa. <b>La tira de arriba</b> es el mes entero: 31 marcas, hoy en ámbar, las guardias en azul, lo libre en verde, la playa en ámbar claro. En el parabrisas caben unos doce días; el resto está en la tira.</figcaption></figure>
+<p><b>Qué sustituye.</b> La cuenta atrás de Hoy (32 px), «Próximos» de Hoy (192 px) y «Eventos de octubre» de Mes (303 px): tres bloques que decían lo mismo con listas. Y da lo que ninguno daba: la distancia. Un evento a tres días se ve grande y uno a tres semanas, pequeño y lejos.</p>
+<p><b>Si se construye</b>, se movería con el dedo (arrastrar hacia delante = avanzar días, como la hora en el conductor), tocar un mojón o un cartel abriría ese día, y la tira de arriba sería un mapa que se toca. Hoy es un fotograma fijo de 37 KB, dibujado con la proyección del conductor, sin kit: a 390 px ocupa 290 px de alto, lo mismo que el conductor.</p>
+<div class="box"><b>Dónde vivir.</b> Propongo que sea la tarjeta <b>«Lo que viene»</b> de Hoy, en el sitio de «Próximos», y a la vez <b>la segunda vista de Mes</b> (en vez del tablero isométrico vivo, o además, con el mismo botón ⇄). En Semana no: la semana ya es el tablón, y la carretera a siete días se quedaría casi vacía.</div>
+
+<h2 id="mes">6 · Mes, después</h2>
+<div class="par">
+ <figure class="fig"><p class="cap">Antes · 1 911 px · 2,1 pantallas · 62 botones</p><div class="plate"><img src="shots/antes-mes.png" alt="Mes antes" loading="lazy"></div></figure>
+ <figure class="fig"><p class="cap">Después (A) · 645 px · 0,7 pantallas · 32 botones</p><div class="plate"><img src="shots/despues-mes.png" alt="Mes después: cabecera, carné corto y cuadrícula de cinco semanas con fichas" loading="lazy"></div></figure>
+</div>
+<ol>
+ <li><b>M1 · El carné corto</b> en vez del abono: las mismas tres cifras más el servicio y la regla del mes. Tocarlo abre la hoja del mes.</li>
+ <li><b>M2 · «Este mes» se va a la hoja del mes</b> (−298 px, −9 botones): cupo, servicio, vacaciones, repartir, ⋯. Se tocan una vez al mes; no hace falta que estén en la pantalla.</li>
+ <li><b>M3 · Cinco semanas, no seis</b>, y la casilla a su contenido (92 px de mínimo en vez de 140): esta semana y las cuatro siguientes. La semana pasada se ve bajando un mes con ‹. De 845 px a 388.</li>
+ <li><b>M4 · Fichas en vez de emoji + texto</b>, y las horas solo cuando no son las de siempre.</li>
+ <li><b>M5 · El aviso de mantener pulsado</b> pasa a ser un toast que sale una vez (−76 px), y <b>la leyenda</b>, un botón «?» en la cabecera (−50 px).</li>
+ <li><b>M6 · «Eventos de octubre» se quita</b> (−303 px): los eventos están en la casilla y en la carretera.</li>
+</ol>
+<p>Imprimir no cambia: el papel sigue siendo la cuadrícula de seis semanas desde la semana en la que estás, sin carné ni botones.</p>
+
+<h2 id="semana">7 · Semana, después</h2>
+<div class="par">
+ <figure class="fig"><p class="cap">Antes · 1 224 px · 1,3 pantallas · 28 botones</p><div class="plate"><img src="shots/antes-sem.png" alt="Semana antes" loading="lazy"></div></figure>
+ <figure class="fig"><p class="cap">Después · 804 px · 0,9 pantallas · 10 botones</p><div class="plate"><img src="shots/despues-sem.png" alt="Semana después: una fila de mandos, el tablón sin leyenda y la tarjeta del día" loading="lazy"></div></figure>
+</div>
+<ol>
+ <li><b>S1 · Una sola fila de mandos</b>: «▦ Tablón · 🏗 Cochera · ◷ Por horas» en el sitio de Agenda/Por horas, y fuera el botón suelto de Isométrica (−36 px).</li>
+ <li><b>S2 · «Hábitos de la semana» se quita</b> (−273 px, −17 botones). Los sellos por día siguen en el tablón, se marcan en «Para hoy» y en la tarjeta del día, y se editan en Más › Hábitos. La sugerencia («los días de guardia no has hecho…») pasa a la tarjeta del asistente en Hoy, que es donde están las demás.</li>
+ <li><b>S3 · «mi rutina por tipo de día»</b> entra en el menú ⓘ de la cabecera (−30 px).</li>
+ <li><b>S4 · La leyenda del tablón se quita</b> (−41 px): los colores son los del conductor y los de Mes, y el botón «?» los explica.</li>
+</ol>
+<p>Toda la pantalla cabe en una: el tablón entero y la tarjeta del día sin bajar.</p>
+
+<h2 id="hoy">8 · Hoy, después</h2>
+<div class="par">
+ <figure class="fig"><p class="cap">Antes · 1 586 px · 1,7 pantallas · 37 botones</p><div class="plate"><img src="shots/antes-hoy.png" alt="Hoy antes" loading="lazy"></div></figure>
+ <figure class="fig"><p class="cap">Después · 1 393 px · 1,5 pantallas · 18 botones</p><div class="plate"><img src="shots/despues-hoy.png" alt="Hoy después: una fila de modos, el asistente en tres líneas, Para hoy y la carretera como Lo que viene" loading="lazy"></div></figure>
+</div>
+<ol>
+ <li><b>H1 · Una sola fila</b>: «🚌 Conductor · 🏗 Estación · ◷ Reloj · ☰ Línea». La Estación es un modo más, no una vista dentro de un modo (−36 px, un selector menos).</li>
+ <li><b>H2 · El asistente en tres líneas</b> (482 → 220 px, 19 → 0 botones hasta que tocas): «¿Cómo amaneces?» con el 1–9 en una fila, y cada pregunta del asistente en una línea con su chevron. El párrafo de explicación y los botones de respuesta se abren al tocar.</li>
+ <li><b>H3 · La cuenta atrás se quita</b> (−32 px): la carretera la lleva en el salpicadero.</li>
+ <li><b>H4 · «Próximos» pasa a ser «Lo que viene»</b>, la carretera (334 px con el título). Es el único bloque que crece, y a cambio se van tres.</li>
+</ol>
+<p>Sin la carretera (si prefieres que viva solo en Mes), Hoy se queda en <b>1 059 px</b>, 1,2 pantallas.</p>
+
+<h2 id="funcion">9 · Qué gana la funcionalidad</h2>
+<ul>
+ <li><b>Una pregunta, un sitio.</b> ¿Cuántas guardias me quedan? El carné. ¿Qué viene? La carretera. ¿Qué día es cada uno? La ficha. ¿Qué hago hoy? Para hoy. Hoy cada una se contesta en dos o tres sitios con números que no siempre coinciden.</li>
+ <li><b>Lo que se toca una vez al mes, detrás de un toque.</b> El cupo, el servicio y las vacaciones salen de la pantalla y entran en la hoja del mes, a un toque del carné. Repartir las guardias que faltan sigue siendo un botón, en esa hoja.</li>
+ <li><b>La distancia se ve.</b> En una lista, un evento a 3 días y otro a 23 ocupan lo mismo. En la carretera, el de 3 días es grande y el de 23 está lejos. Es la misma idea que el conductor para el día, llevada al mes.</li>
+ <li><b>Menos modos que elegir.</b> Semana pasa de tres mandos a uno; Hoy, de dos selectores a uno. Las vistas isométricas siguen ahí, como un modo más, no como una capa encima del modo.</li>
+ <li><b>La cuadrícula se queda</b> para lo que es: tocar un día, mantenerlo pulsado para cambiarlo, marcar vacaciones del primer al último día e imprimir.</li>
+ <li><b>Carga más ligera.</b> Las fichas estáticas (73 KB) sustituyen a los emoji + texto sin cargar la vista isométrica (300 KB); el carné corto son 17 KB; la carretera fija, 37 KB.</li>
+</ul>
+
+<h2 id="orden">10 · Cómo lo construiría</h2>
+<div class="dec">
+ <div><h4>Tanda 1 · Mes</h4><p>Fichas estáticas, carné corto con la hoja del mes, cinco semanas con la casilla a su contenido, las horas solo cuando no son las de siempre, fuera el aviso, la leyenda a «?» y fuera «Eventos de octubre». Adaptar las pruebas 48, 77, 113, 207, 242 y 276. Media jornada.</p></div>
+ <div><h4>Tanda 2 · Semana y Hoy</h4><p>Una fila de mandos en cada una, fuera «Hábitos de la semana» (la sugerencia al asistente), «mi rutina» al ⓘ, el asistente en tres líneas, fuera la cuenta atrás. Pruebas 275 y las del asistente. Media jornada.</p></div>
+ <div><h4>Tanda 3 · La carretera viva</h4><p>Un módulo como el conductor (fig/carretera.js): se arrastra por días, tocar un mojón abre el día, la tira de arriba es el mapa. En Hoy como «Lo que viene» y en Mes como segunda vista. Una jornada.</p></div>
+</div>
+<p>Cada tanda se mide, pasa la suite entera y se despliega a main por separado, como las anteriores.</p>
+
+<h2 id="decidir">11 · Lo que hay que decidir</h2>
+<ol>
+ <li><b>Mes: ¿A o B?</b> A: carné corto encima de la cuadrícula de cinco semanas (lo que te recomiendo). B: carné completo como vista de un vistazo, en lugar del tablero isométrico vivo.</li>
+ <li><b>La carretera: ¿en Hoy, en Mes o en los dos?</b> Si solo en Mes, Hoy se queda en 1 059 px y «Próximos» vuelve como lista corta.</li>
+ <li><b>¿«Hábitos de la semana» fuera de Semana?</b> Es el recorte más grande de esa pantalla (273 px) y el que más cambia una costumbre: marcar la semana entera de un vistazo. Si lo quieres mantener, lo plegaría a una fila por hábito sin leyenda ni texto (unos 120 px).</li>
+ <li><b>¿El tablero isométrico de Mes se queda?</b> Si la carretera entra como segunda vista de Mes y el carné lleva las cifras, el tablero dice lo mismo que la cuadrícula y la canceladora lo mismo que el carné.</li>
+</ol>
+
+<h2 id="supuestos">Supuestos</h2>
+<ul>
+ <li>Las medidas de «después» son la app real con los bloques ocultos o sustituidos por CSS y DOM; al construirlo, los altos pueden variar en ±20 px por los márgenes de las tarjetas.</li>
+ <li>El mes de ejemplo es octubre de 2026 con 6 guardias (4 URG, 2 UMI), vacaciones el 30 y 31, cuatro eventos con fecha, un pádel semanal y tres hábitos; «hoy» es el martes 13, de guardia.</li>
+ <li>Los días «de siempre» son los de la jornada de diario puesta en ajustes (8–15); cualquier otra hora sí se escribe en la casilla.</li>
+ <li>La carretera enseña unos doce días en el parabrisas; más allá, en la tira. En un mes sin guardias ni eventos sería ciudad y mojones, que es lo que es ese mes.</li>
+ <li>La hoja del mes (detrás del carné) reúne «Este mes» tal cual: no se quita ninguna función, solo se saca de la pantalla.</li>
+ <li>Las fichas estáticas pesan 73 KB porque las esferas y los cilindros del kit tienen muchas caras; se puede bajar a la mitad con menos pasos sin que se note a 30 px.</li>
+</ul>
+
+<h2 id="quiz">Cinco preguntas para cerrar</h2>
+<ol class="q5">
+ <li>¿Cuántas veces se cuentan las guardias en la pantalla de Mes de hoy, y cuál es la cifra que importa?<details><summary>respuesta</summary><p>Tres: la pestaña, el abono y «Este mes». La que importa es «hechas de las del cupo» (2 de 6), que es la que se queda en el carné.</p></details></li>
+ <li>¿Qué parte de los 845 px de la cuadrícula está vacía, y por qué?<details><summary>respuesta</summary><p>Unos 100 de los 140 px de cada casilla (el 70 %): la casilla tiene altura mínima de pantalla y seis semanas, cuando el contenido ocupa 40 px y las semanas que importan son cinco.</p></details></li>
+ <li>¿Qué es la guardia en la carretera del mes, y por qué eso y no una señal?<details><summary>respuesta</summary><p>Un túnel: se entra por la tarde y se sale a la mañana siguiente, como la noche de trabajo. Una señal es un aviso; el túnel es un tramo que hay que atravesar.</p></details></li>
+ <li>¿Cuándo escribe horas la casilla de Mes con las fichas puestas?<details><summary>respuesta</summary><p>Solo cuando no son las de siempre: guardia «15→8», saliente «→8», UMI «10→11:15». La jornada de 8 a 15 es el autobús rojo y no se escribe.</p></details></li>
+ <li>¿A dónde va «Este mes» si se quita de la pantalla?<details><summary>respuesta</summary><p>A la hoja del mes, que se abre tocando el carné: cupo, servicio, vacaciones, repartir y el menú ⋯. No se pierde ninguna función.</p></details></li>
+</ol>
+</div>

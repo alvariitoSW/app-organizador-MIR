@@ -266,3 +266,38 @@ andén o una baldosa abre ese día en Hoy).
 **Supuestos:** las horas de servicio del abono son las de la guardia (de entrar a salir) y las de la
 jornada; un finde libre es sábado y domingo libres o de vacaciones dentro del mes; un turno llamado
 «Vacaciones» cuenta como vacaciones aunque no esté en un rango.
+
+## 2026-10-13 · Propuestas para Calendario: fichas, carné y la carretera del mes
+
+**Contexto:** «Propuestas de cambios visuales en el apartado calendario basándote en modelos estáticos
+de /anatomy y construyendo un modelo alternativo como el de la visión en primera persona del conductor.
+Evalúa qué se puede cambiar, qué se puede mejorar y cómo, y eliminar las partes largas y sobreinformadas».
+Solo informe y maquetas: la app no se toca hasta el visto bueno.
+
+**Medido (412 px, octubre de ejemplo):** Mes 1 911 px, 2,1 pantallas, 62 botones; Semana 1 224 px, 28
+botones; Hoy 1 586 px, 37 botones. Lo que sobra: las guardias contadas tres veces en Mes, los eventos en
+tres sitios, 845 px de cuadrícula con el 70 % vacío, «8–15» escrito 20 veces, los hábitos en cuatro
+sitios, mandos apilados (118 px en Semana, 80 en Hoy) y un asistente de 482 px más alto que el día.
+
+**Propuesto (`design/calendario-propuestas/`, informe publicado):**
+- **Fig 1, las fichas estáticas** (`fichas.mjs`): los seis objetos del tablero como `<symbol>` fijos
+  (73 KB) para la casilla, el tablón, la cabecera de Hoy y la leyenda; las horas solo cuando no son las de
+  siempre.
+- **Fig 2, el carné de abono** (`carne.mjs`): una tarjeta con el mes y el servicio grabados, las tres
+  cifras, la regla del mes con la aguja de hoy y, en la versión completa, el mes en 5×7 con un agujero
+  por día pasado. Tocarlo abre la hoja del mes (lo que hoy es «Este mes»). Recomendada la corta encima
+  de la cuadrícula de cinco semanas.
+- **Fig 3, la carretera del mes** (`carretera.mjs`): el modelo en primera persona. Los días como mojones,
+  la guardia un túnel, el finde libre un área de descanso, las vacaciones la salida a la playa, los
+  eventos señales azules; el salpicadero con la próxima guardia y la tira del mes arriba. Sustituye a la
+  cuenta atrás, a «Próximos» y a «Eventos de octubre».
+- **Recortes medidos sobre la app real:** Mes 1 911 → 645 px (32 botones); Semana 1 224 → 804 (10);
+  Hoy 1 586 → 1 393 con la carretera dentro (18), 1 059 sin ella.
+
+**Pendiente de decidir:** Mes A (carné corto + cuadrícula) o B (carné completo como vista); la carretera
+en Hoy, en Mes o en los dos; si «Hábitos de la semana» sale de Semana; si el tablero isométrico de Mes se
+queda.
+
+**Supuestos:** las cifras de «después» son la app con bloques ocultos o sustituidos por CSS/DOM (±20 px al
+construir); «las horas de siempre» son las de la jornada de diario de ajustes; la hoja del mes conserva
+«Este mes» entero.
