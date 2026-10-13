@@ -1176,6 +1176,7 @@ ul.slots{list-style:none;margin:0;padding:0}
   html.imp-mes .cal{margin-top:0;height:86vh;break-inside:auto;page-break-inside:auto;
     grid-auto-rows:minmax(0,1fr)}
   html.imp-mes .dbox{min-height:0;overflow:hidden}
+  html.imp-mes .abono,html.imp-mes .hoybusv,html.imp-mes .calisoslot{display:none!important}
   html.imp-mes .dbox .dsl{display:none}   /* las horas de sueño no se cuelgan en la pared */
   html.imp-mes .dnum{font-size:12px}
   html.imp-mes .dnm{font-size:11px}

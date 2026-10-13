@@ -7967,7 +7967,7 @@ function mhintVigente(){
 const MES_BUS='<svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true"><rect width="13" height="7" rx="2" fill="currentColor"/><rect x="2" y="1.4" width="9" height="2.4" rx=".6" fill="rgba(255,255,255,.6)"/><circle cx="3.5" cy="7.6" r="1.3" fill="var(--bg)"/><circle cx="9.5" cy="7.6" r="1.3" fill="var(--bg)"/></svg>';
 function mesTipoDia(d){if(!d.key)return '';const sh=shiftById(d.shiftId);return d.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(d.key);}
 function mesFichaHTML(t,guard){
-  if(t==='guardia')return '<span class="mficha f-guard" title="guardia">☾ '+esc(guard?String(guard).toUpperCase().slice(0,4):'GUARD.')+'</span>';
+  if(t==='guardia')return '<span class="mficha f-guard" title="guardia">☾'+(guard?' '+esc(String(guard).toUpperCase().slice(0,4)):'')+'</span>';
   if(t==='trabajo')return '<span class="mficha f-work" title="jornada">'+MES_BUS+'</span>';
   if(t==='fuerza')return '<span class="mficha f-gym" title="día de fuerza">'+MES_BUS+'</span>';
   if(t==='saliente')return '<span class="mficha f-sal" title="saliente: vuelta a la cochera">→⌂</span>';
@@ -24608,11 +24608,12 @@ function imprimir(){
   if(_imprimiendo)return;
   _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
     compraAbiertas:new Set(ui.compraAbiertas||[]),compraSalida:ui.compraSalida,
-    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
+    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel,mesV:ui.mesV};
   /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
      una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
   if(ui.tab==='month'){_imprimiendo.soloMes=true;
     ui.monSel=null;   /* el panel del día abierto se colaba en medio del calendario */
+    ui.mesV='plana';  /* a la pared va la cuadrícula aunque estés mirando el tablero isométrico */
     document.documentElement.classList.add('imp-mes');}
   try{ui.openDays=new Set(semanaVentana().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
@@ -24634,7 +24635,7 @@ function imprimir(){
     ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
     ui.compraSalida=a.compraSalida;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
-    if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
+    if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;ui.mesV=a.mesV;}
     window.removeEventListener('afterprint',restaurar);
     render();};
   window.addEventListener('afterprint',restaurar);

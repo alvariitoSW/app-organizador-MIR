@@ -2363,7 +2363,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return {
         guardados: window.PG.store.rotation.vacaciones.length,
         filas: c ? c.querySelectorAll('[data-a="vac-del"]').length : 0,
-        diasEnElCalendario: [...document.querySelectorAll('.dbox')].filter((x) => /Vacacion/.test(x.innerText)).length,
+        // cada día de vacaciones lleva su ficha (el autocar), con «vacaciones» en el title
+        diasEnElCalendario: [...document.querySelectorAll('.dbox')].filter((x) => x.querySelector('.mficha.f-vac')).length,
         conNombre: c ? /Semana Santa/.test(c.innerText) && /verano/.test(c.innerText) : false,
       };
     });
@@ -2677,7 +2678,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.store.rotation.daySet[k14] = { shift: g.id, guard: 'umi' };
       window.PG.save();
       window.PG.render();
-      const f = document.querySelector('.dbox .mficha.f-guard');
+      const f = document.querySelector('.dbox[data-key="' + k14 + '"] .mficha.f-guard');
       if (!f) return { hay: false };
       const r = f.getBoundingClientRect();
       return { hay: true, texto: f.textContent, alto: Math.round(r.height), ancho: Math.round(r.width) };
