@@ -121,9 +121,10 @@
         const z0 = z - 2, z1 = z + GAP * 0.7;
         o.push(poly([[-7, 0, z0], [-7, 7.5, z0], [-7, 7.5, z1], [-7, 0, z1]], "ct-gwl"), poly([[4.8, 0, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [4.8, 0, z1]], "ct-gwr"));
         o.push(poly([[-7, 7.5, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [-7, 7.5, z1]], "ct-gceil"));
-        /* el portal y la boca solo si aún no has entrado: dentro del túnel se ven las paredes y las lámparas */
-        if (z0 > NEAR + 0.6) { o.push(poly([[-8.5, 0, z0], [6.3, 0, z0], [6.3, 9, z0], [-8.5, 9, z0]], "ct-portal"));
-          o.push(poly([[-7, 0, z0 - 0.02], [4.8, 0, z0 - 0.02], [4.8, 7.5, z0 - 0.02], [-7, 7.5, z0 - 0.02]], "ct-boca")); }
+        /* el portal es un marco (dintel y dos jambas); la boca negra solo de lejos: cerca y dentro se ven las paredes y
+           las lámparas, que si no, a dos metros del túnel el parabrisas era negro */
+        if (z0 > NEAR + 0.6) { o.push(poly([[-8.5, 7.5, z0], [6.3, 7.5, z0], [6.3, 9, z0], [-8.5, 9, z0]], "ct-portal"), poly([[-8.5, 0, z0], [-7, 0, z0], [-7, 7.5, z0], [-8.5, 7.5, z0]], "ct-portal"), poly([[4.8, 0, z0], [6.3, 0, z0], [6.3, 7.5, z0], [4.8, 7.5, z0]], "ct-portal")); }
+        if (z0 > 6) o.push(poly([[-7, 0, z0 - 0.02], [4.8, 0, z0 - 0.02], [4.8, 7.5, z0 - 0.02], [-7, 7.5, z0 - 0.02]], "ct-boca"));
         for (let k2 = 0; k2 < 3; k2++) { const zz = z0 + 4 + k2 * 4; if (zz < z1 && zz >= NEAR) o.push(poly([[-1.5, 7.3, zz], [0.4, 7.3, zz], [0.4, 7.3, zz + 1.2], [-1.5, 7.3, zz + 1.2]], "ct-glampo")); }
         o.push(cartel(-7.2, 9.3, z0 - 0.03, 13.2, 3.4, "ct-sig", "GUARDIA" + (d.g ? " " + d.g.toUpperCase() : "") + " · " + fecha, (d.gh ? d.gh + " · " : "") + en, "ct-sigt", d.k));
         o.push(seg([-8.3, 0, z0 - 0.05], [-8.3, 9.1, z0 - 0.05], "ct-post", 0.18), seg([6.1, 0, z0 - 0.05], [6.1, 9.1, z0 - 0.05], "ct-post", 0.18));
