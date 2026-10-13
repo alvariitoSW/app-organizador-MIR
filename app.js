@@ -7444,22 +7444,104 @@ const HAB_PRESETS=[
   {nombre:'Entreno',icono:'💪',color:'#22c55e',noEn:['guardia','saliente'],auto:'entreno',min:'',ancla:{}},
   {nombre:'Estirar',icono:'🧘',color:'#c084fc',noEn:[],auto:'',min:'3 posturas',ancla:{t:'tras',v:'cama'}},
   {nombre:'Cama a su hora',icono:'🛌',color:'#818cf8',noEn:['guardia'],auto:'cama',min:'',ancla:{}}];
+/* ===================== Semana y Mes con el lenguaje del conductor =====================
+   Dos vistas con un botón: la plana (de serie, es la que se toca y se edita) y la isométrica (el kit de
+   /anatomy, fig/calendario-iso.js, que se carga la primera vez que se elige). Mismos colores que las
+   paradas del conductor: jornada roja, guardia azul noche, comida verde, entreno violeta, planes turquesa. */
+const SEMV_KEY='guardias-semv',MESV_KEY='guardias-mesv';
+function calVista(w){const u=w==='sem'?'semV':'mesV';
+  if(!ui[u]){let v='';try{v=localStorage.getItem(w==='sem'?SEMV_KEY:MESV_KEY)||'';}catch(e){}ui[u]=v==='iso'?'iso':'plana';}return ui[u];}
+function calVistaBtn(w){const iso=calVista(w)==='iso';
+  return '<div class="hoybusv"><button class="chipx" data-a="cal-vista" data-w="'+w+'" data-v="'+(iso?'plana':'iso')+'" aria-label="Cambiar a la vista '+(iso?'plana':'isométrica')+'">⇄ '+(iso?'▦ Plana':'🏗 Isométrica')+'</button></div>';}
+let _calIso={sem:null,mes:null},_calIsoDatos={sem:null,mes:null},_calIsoCarga=false;
+function calIsoMonta(w){
+  const slot=document.getElementById('calIsoSlot');if(!slot||!_calIsoDatos[w])return;
+  if(!window.CalIso){if(!_calIsoCarga){_calIsoCarga=true;const sc=document.createElement('script');sc.src='fig/calendario-iso.js';
+      sc.onload=function(){calIsoMonta(w);};sc.onerror=function(){_calIsoCarga=false;};document.head.appendChild(sc);}
+    if(!slot.firstChild)slot.innerHTML='<p class="mini" style="padding:40px 0;text-align:center">montando la vista…</p>';return;}
+  if(!_calIso[w])_calIso[w]=window.CalIso[w==='sem'?'semana':'mes']({onDia:function(k){act('hoja-ver',{dataset:{k:k}});}});
+  if(_calIso[w].el.parentNode!==slot){slot.innerHTML='';slot.appendChild(_calIso[w].el);}
+  _calIso[w].actualiza(_calIsoDatos[w]);}
+/* una fila por día: el día del conductor (hoyBusDatos) y lo dormido (pasado) o lo que toca dormir */
+function semFila(k,hoyK){
+  let D={dia:[],noches:[]};try{D=hoyBusDatos(k,dayInfo(k),k===hoyK);}catch(e){}
+  const dt=parseDate(k),k1=iso(addDays(dt,1)),noche=(D.noches||[]).filter(function(n){return n.t==='noche'&&n.a>12;})[0];
+  let sn=null;
+  if(k<hoyK){const sc=suenoCuenta(k1);if(sc&&sc.h)sn={h:Math.round(sc.h*10)/10,real:1};}
+  if(!sn&&noche)sn={h:Math.round((noche.b-noche.a)*10)/10};
+  const hs=habitosDelDia(k);
+  return {k:k,date:dt,dow:dt.getDay(),dnum:dt.getDate(),tipo:diaTipo(k),hoy:k===hoyK,dia:D.dia||[],noches:D.noches||[],sueno:sn,
+    hab:k<=hoyK?hs.slice(0,4).map(function(h){return habitoHecho(h.id,k)?1:0;}):[]};}
+function semResumen(filas,obj){
+  const fut=filas.filter(function(f){return !f.ayer;}),g=fut.filter(function(f){return f.tipo==='guardia';}).length;let hs=0;
+  fut.forEach(function(f){f.dia.forEach(function(e){if((e.k==='work'||e.k==='guard')&&!e.ayer&&e.b-e.a>=1)hs+=e.b-e.a;});});
+  const sn=fut.filter(function(f){return f.sueno&&!f.sueno.real;}).map(function(f){return f.sueno.h;}),med=sn.length?sn.reduce(function(a,b){return a+b;},0)/sn.length:0,cortas=sn.filter(function(h){return h<obj;}).length;
+  return '<b>'+g+' guardia'+(g===1?'':'s')+'</b> · <b>'+Math.round(hs)+' h</b> de servicio'+(sn.length?' · noches de <b>'+String(Math.round(med*10)/10).replace('.',',')+' h</b> de media':'')+
+    (cortas?' · <b class="tb-corta">'+cortas+' corta'+(cortas===1?'':'s')+'</b>':'');}
+/* EL TABLÓN DE LA COCHERA: una fila por día, todas en la misma escala de 6 a 2 de la noche, así se
+   comparan de un vistazo. Al principio de la fila, el autobús del tipo de día y los sellos de los
+   hábitos; por la fila, la jornada (roja), la guardia (azul noche), las paradas y la noche; al final,
+   lo dormido o lo que toca dormir. Tocar una fila enseña su tarjeta debajo. */
+function semTablonHTML(filas,obj,sel){
+  const W=356,L=56,R=300,T0=6,T1=26,RH=46,TOP=26,AHORA=horaDecimal(new Date());
+  const x=function(h){return L+(Math.max(T0,Math.min(T1,h))-T0)/(T1-T0)*(R-L);},r1=function(v){return v.toFixed(1);};
+  const COL={work:'tb-work',guard:'tb-guard',meal:'tb-meal',gym:'tb-gym',plan:'tb-plan'};
+  const bus=function(t,cx,cy){const c={trabajo:'tb-work',guardia:'tb-guard',saliente:'tb-sal',fuerza:'tb-gym'}[t]||'tb-libre';
+    return '<g transform="translate('+(cx-11)+','+(cy-7)+')"><rect class="'+c+'" width="22" height="12" rx="3"/><rect class="tb-win" x="3" y="2.5" width="16" height="4" rx="1"/>'+
+      '<circle class="tb-rueda" cx="6" cy="12.5" r="1.8"/><circle class="tb-rueda" cx="16" cy="12.5" r="1.8"/>'+
+      (t==='guardia'?'<path class="tb-luna" d="M19.6 -3.4a3.2 3.2 0 1 0 2.4 4.6a2.6 2.6 0 1 1 -2.4 -4.6z"/>':'')+
+      (t==='saliente'?'<path class="tb-flecha" d="M24 6h5m-2 -2.4 2.4 2.4 -2.4 2.4"/>':'')+'</g>';};
+  const H=TOP+filas.length*RH+2;
+  let s='<svg class="tablon" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="La semana como siete líneas de autobús en la misma escala de horas">';
+  [6,12,18,24].forEach(function(h){s+='<text class="tb-eje" x="'+r1(x(h))+'" y="12">'+(h===24?'0':h)+'</text><line class="tb-guia" x1="'+r1(x(h))+'" y1="17" x2="'+r1(x(h))+'" y2="'+(H-2)+'"/>';});
+  s+='<text class="tb-eje" x="'+r1(R+6+(W-R-6)/2)+'" y="12" style="letter-spacing:.08em">NOCHE</text>';
+  filas.forEach(function(f,i){
+    const y=TOP+i*RH,yc=y+25,pas=f.k<iso(new Date());let g='';
+    g+='<rect class="tb-fondo'+(f.hoy?' hoy':'')+(sel===f.k?' sel':'')+'" x="0" y="'+y+'" width="'+W+'" height="'+(RH-2)+'" rx="9"/>';
+    g+='<text class="tb-dia'+(f.hoy?' hoy':'')+'" x="6" y="'+(y+17)+'">'+(f.ayer?'AYER':DIA3[f.dow].toUpperCase())+' <tspan>'+f.dnum+'</tspan></text>';
+    g+=bus(f.tipo,17,y+30);
+    f.hab.forEach(function(h,j){g+='<circle class="tb-sello'+(h?' on':'')+'" cx="'+(35+j*7)+'" cy="'+(y+31)+'" r="2.6"/>';});
+    g+='<line class="tb-via" x1="'+r1(x(T0))+'" y1="'+yc+'" x2="'+r1(x(T1))+'" y2="'+yc+'"/>';
+    f.noches.forEach(function(n){const a=Math.max(n.a,T0),b=Math.min(n.b,T1);if(b<=a)return;
+      g+='<rect class="tb-noche'+(n.t==='siesta'?' siesta':'')+'" x="'+r1(x(a))+'" y="'+(yc-7)+'" width="'+r1(x(b)-x(a))+'" height="14" rx="4"/>';
+      if(x(b)-x(a)>16)g+='<text class="tb-z" x="'+r1(x(a)+4)+'" y="'+(yc+3.5)+'">'+(n.t==='siesta'?'siesta':'z')+'</text>';});
+    f.dia.filter(function(e){return (e.k==='work'||e.k==='guard')&&(e.b-e.a>=1||e.ayer);}).forEach(function(e){const a=Math.max(e.a,T0),b=Math.min(e.b,T1);if(b<=a)return;
+      g+='<rect class="'+COL[e.k]+'" x="'+r1(x(a))+'" y="'+(yc-4)+'" width="'+r1(Math.max(4,x(b)-x(a)))+'" height="8" rx="4"/>';
+      g+='<text class="tb-lab '+(e.k==='guard'?'g':'w')+'" x="'+r1(x(a)+2)+'" y="'+(yc-8)+'">'+(e.k==='guard'?(e.ayer?'→ '+hm(e.b*60%1440):'☾ guardia '+hm(e.a*60)):hm(e.a*60)+'–'+hm(e.b*60))+'</text>';});
+    f.dia.filter(function(e){return e.k!=='work'&&e.k!=='guard'&&e.a>=T0&&e.a<=T1;}).forEach(function(e){
+      const pend=e.m&&!e.h&&(pas||(f.hoy&&e.b<AHORA)),hecho=e.h||(!pas&&!f.hoy)||(f.hoy&&e.a>=AHORA);
+      g+='<circle class="'+(hecho?(COL[e.k]||'tb-plan'):'tb-vacio')+(pend?' tb-pend':'')+'" cx="'+r1(x(e.a))+'" cy="'+yc+'" r="3.8"/>';});
+    if(f.hoy){g+='<line class="tb-ahora" x1="'+r1(x(AHORA))+'" y1="'+(y+4)+'" x2="'+r1(x(AHORA))+'" y2="'+(y+RH-6)+'"/>'+
+      '<g transform="translate('+r1(x(AHORA)-7)+','+(yc+7)+')"><rect class="tb-busahora" width="14" height="8" rx="2"/><rect class="tb-win2" x="2" y="1.6" width="10" height="2.6" rx=".6"/></g>';}
+    const gx=R+6,sn=f.sueno,cor=sn&&sn.h<obj;
+    g+='<path class="tb-garaje'+(sn?(cor?' corta':''):' guardia')+'" d="M'+gx+' '+(yc+12)+'V'+(yc-5)+'l'+((W-gx)/2)+' -9 l'+((W-gx)/2)+' 9V'+(yc+12)+'"/>';
+    g+='<text class="tb-horas'+(sn?(cor?' corta':''):' guardia')+'" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+5)+'">'+(sn?String(sn.h).replace('.',',')+' h':'☾')+'</text>';
+    if(sn&&sn.real)g+='<text class="tb-mini" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+14)+'">dormidas</text>';
+    else if(!sn)g+='<text class="tb-mini" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+14)+'">de guardia</text>';
+    s+='<g class="tb-fila" data-a="sem-sel" data-k="'+f.k+'" role="button" aria-label="'+esc(DIA3[f.dow]+' '+f.dnum)+'">'+g+'</g>';});
+  return s+'</svg>';}
 function renderSemanaAgenda(days){
-  const hoyK=iso(new Date()),now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
-  const strip='<div class="sstrip" style="grid-template-columns:repeat('+days.length+',1fr)">'+days.map(function(d){
-    const k=d.key,inf=d.inf||dayInfo(k),sh=shiftById(inf.shiftId),ti=diaTipoInfo(diaTipo(k)),hs=habitosDelDia(k);
-    const p=hs.length&&k<=hoyK?hs.filter(function(h){return habitoHecho(h.id,k);}).length/hs.length:0;
-    return '<button class="ssp'+(k===hoyK?' on':'')+(k<hoyK?' pas':'')+'" style="--c:'+esc(sh&&!inf.vac?sh.color:'var(--line)')+'" data-a="sem-ir" data-k="'+k+'" aria-label="'+esc(DIA3[d.date.getDay()]+' '+d.date.getDate())+'">'+
-      '<span class="w">'+esc(DIA3[d.date.getDay()].charAt(0).toUpperCase())+'</span><b>'+d.date.getDate()+'</b><span class="i">'+ti[2]+'</span>'+(hs.length?anilloHTML(p,20):'')+'</button>';}).join('')+'</div>';
-  const pas=days.filter(function(d){return d.key<hoyK;}),fut=days.filter(function(d){return d.key>=hoyK;});
+  const hoyK=iso(new Date()),now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),obj=suenoCfg().min,isoV=calVista('sem')==='iso';
+  const filas=[Object.assign(semFila(iso(addDays(days[0].date,-1)),hoyK),{ayer:true})].concat(days.map(function(d){return semFila(d.key,hoyK);}));
+  if(filas[0].k!==iso(addDays(new Date(),-1)))filas[0].ayer=false;
+  const enVentana=function(k){return days.some(function(d){return d.key===k;});};
+  const sel=ui.semSel&&(enVentana(ui.semSel)||ui.semSel===filas[0].k)?ui.semSel:(enVentana(hoyK)?hoyK:days[0].key);
+  const dSel=days.filter(function(d){return d.key===sel;})[0]||diaObj(parseDate(sel));
+  let cuerpo;
+  if(isoV){
+    const f7=filas.slice(1,8);
+    _calIsoDatos.sem={filas:f7,obj:obj,ahora:horaDecimal(now),claro:!document.documentElement.classList.contains('dark'),
+      pie:semResumen(filas.slice(1),obj)+' · toca un andén para abrir ese día'};
+    cuerpo='<div id="calIsoSlot" class="calisoslot"></div>';
+  }else cuerpo='<div class="card tablonc"><p class="tb-res">'+semResumen(filas,obj)+'</p>'+semTablonHTML(filas,obj,sel)+
+    '<div class="tb-ley"><span><i class="k-work"></i>jornada</span><span><i class="k-guard"></i>guardia</span><span><i class="k-noche"></i>dormir</span><span><i class="k-meal"></i>comida</span><span><i class="k-plan"></i>plan</span><span><i class="k-pend"></i>sin apuntar</span></div></div>'+
+    semDiaCardHTML(dSel,nowMin);
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="semcab">'+semanaNavHTML(true)+'</div>'+semTogHTML('')+strip+
-    (pas.length?(ui.semPasados?pas.map(function(d){return semDiaCardHTML(d,nowMin);}).join(''):'')+
-      '<button class="btn s" data-a="sem-pasados" style="align-self:flex-start">'+(ui.semPasados?'▴ plegar':'▾ '+pas.length+' día'+(pas.length===1?'':'s')+' pasado'+(pas.length===1?'':'s'))+'</button>':'')+
-    fut.map(function(d){return semDiaCardHTML(d,nowMin);}).join('')+
+    '<div class="semcab">'+semanaNavHTML(true)+'</div>'+semTogHTML('')+calVistaBtn('sem')+cuerpo+
     semHabitosHTML(days)+
     '<div class="row"><button class="btn s" data-a="sem-vista" data-v="rutina">⏰ mi rutina por tipo de día →</button></div>'+
-  '</div>';}
+  '</div>';
+  if(isoV)calIsoMonta('sem');}
 function renderRutina(){
   const t=ui.rutTipo||diaTipo(iso(new Date())),ti=diaTipoInfo(t),l=rutinaDe(t),propia=Array.isArray((store.rutinas||{})[t]);
   /* un día de muestra de ese tipo (el próximo), para enseñar lo que pone el calendario */
@@ -7582,8 +7664,7 @@ function mesResumenHTML(y,mo,list,svc,g){
       '<span class="d4step"><button data-a="mon-guard-d" data-d="-1" aria-label="una guardia menos">−</button>'+
       '<input type="number" min="0" max="15" value="'+cupo+'" data-a="mon-guard" aria-label="guardias de este mes">'+
       '<button data-a="mon-guard-d" data-d="1" aria-label="una guardia más">+</button></span></div>'+
-    (seg.length?'<div class="mrbar" role="img" aria-label="'+esc(seg.map(function(x){return x.n+' '+x.txt;}).join(', '))+'">'+
-      seg.map(function(x){return '<i style="flex:'+x.n+';background:'+x.c+'"></i>';}).join('')+'</div>':'')+
+
     '<div class="row mini mrley">'+seg.map(function(x){return '<span><i style="background:'+x.c+'"></i>'+x.n+' '+esc(x.txt)+'</span>';}).join('')+
       '<span class="sp"></span>'+estado+'</div>'+
     '<div class="mrstat">'+
@@ -7880,6 +7961,34 @@ function mhintVigente(){
   /* el aviso de «mantén pulsado» se va solo a los tres días de verlo (o al primer mantener pulsado) */
   const m=store.meta,hoy=iso(new Date());if(!m.pulsarDesde)m.pulsarDesde=hoy;
   return (parseDate(hoy)-parseDate(m.pulsarDesde))/86400000<3;}
+/* LA FICHA DEL DÍA en el cuadrante del mes, con el diccionario del conductor: búho azul noche la
+   guardia, autobús rojo la jornada (violeta el día de fuerza), flecha a la cochera el saliente,
+   «F/S» (fuera de servicio) el libre y el autocar las vacaciones */
+const MES_BUS='<svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true"><rect width="13" height="7" rx="2" fill="currentColor"/><rect x="2" y="1.4" width="9" height="2.4" rx=".6" fill="rgba(255,255,255,.6)"/><circle cx="3.5" cy="7.6" r="1.3" fill="var(--bg)"/><circle cx="9.5" cy="7.6" r="1.3" fill="var(--bg)"/></svg>';
+function mesTipoDia(d){if(!d.key)return '';const sh=shiftById(d.shiftId);return d.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(d.key);}
+function mesFichaHTML(t,guard){
+  if(t==='guardia')return '<span class="mficha f-guard" title="guardia">☾ '+esc(guard?String(guard).toUpperCase().slice(0,4):'GUARD.')+'</span>';
+  if(t==='trabajo')return '<span class="mficha f-work" title="jornada">'+MES_BUS+'</span>';
+  if(t==='fuerza')return '<span class="mficha f-gym" title="día de fuerza">'+MES_BUS+'</span>';
+  if(t==='saliente')return '<span class="mficha f-sal" title="saliente: vuelta a la cochera">→⌂</span>';
+  if(t==='vac')return '<span class="mficha f-vac" title="vacaciones">'+MES_BUS+'</span>';
+  if(t==='libre')return '<span class="mficha f-libre" title="libre: fuera de servicio">F/S</span>';
+  return '';}
+/* EL ABONO DEL MES: guardias hechas de las que tocan (taladradas), horas de servicio y findes libres.
+   Sale de las mismas cuentas que el resto de Mes; sustituye a la barra de guardias de «Este mes» */
+function mesAbono(y,mo,list,svc){
+  const hoyK=iso(new Date());let hechas=0,hs=0,fs=0;
+  list.forEach(function(d,i){const t=mesTipoDia(d);
+    if(t==='guardia'){if(d.key<hoyK)hechas++;const g=guardiaHoras(d.key,d.guard);
+      if(g){const a=mins(g.guardia),b=mins(g.sale);if(a!=null&&b!=null)hs+=(b<=a?b+1440:b)-a;}}
+    else if(d.jor){const a=mins(d.jor.start),b=mins(d.jor.end);if(a!=null&&b!=null&&b>a)hs+=b-a;}
+    if(d.date.getDay()===6&&list[i+1]){const t2=mesTipoDia(list[i+1]);if(/^(libre|vac)$/.test(t)&&/^(libre|vac)$/.test(t2))fs++;}});
+  return {hechas:hechas,cupo:svc.guardias||0,h:Math.round(hs/60),findes:fs,mes:MON[mo].toUpperCase()};}
+function mesAbonoHTML(a,mo){
+  return '<div class="abono"><div class="t">ABONO DE '+esc(MONTH_FULL[mo].toUpperCase())+'</div><div class="nums">'+
+    '<div><b>'+a.hechas+' <small>de</small> '+a.cupo+'</b><small>guardias hechas</small><span class="agujeros">'+
+      Array.from({length:Math.min(12,a.cupo)},function(_,i){return '<i class="'+(i<a.hechas?'p':'')+'"></i>';}).join('')+'</span></div>'+
+    '<div><b>'+a.h+' h</b><small>de servicio</small></div><div><b>'+a.findes+'</b><small>finde'+(a.findes===1?'':'s')+' libre'+(a.findes===1?'':'s')+'</small></div></div></div>';}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),minS=suenoCfg().min;
   const domFirst=store.rotation.calWeekStart==='dom';
@@ -7890,7 +7999,7 @@ function renderMonth(){
      empieza en el día 1 con huecos vacíos delante, sino una semana entera antes, y acaba una semana
      entera después. Los días de fuera van en su color pero apagados (.fuera), y se pueden tocar
      igual. Las cuentas del mes (guardias, vacaciones, sueño) siguen saliendo de `list`, solo del mes. */
-  const rejilla=mesRejilla(y,mo,lead);
+  const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc),isoM=calVista('mes')==='iso';
   rejilla.forEach(function(d){
     /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
        no salen al imprimir: el papel empieza en la semana en la que estás) */
@@ -7956,17 +8065,16 @@ function renderMonth(){
         esc(gsDia.map(function(g){return g.nombre+' '+eur(g.importe);}).join(' · '))+'">€</b>');}
     if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
+    const tipoD=mesTipoDia(d);
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(previa?' semprev':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
-      ' style="border-top-color:'+(d.color||'var(--line)')+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
+      ' style="border-top-color:'+(tipoD==='guardia'?'#34467e':(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
-        (d.shiftId?'<span class="dic">'+esc(d.icon)+'</span>':'')+
 '</span>'+
-      '<span class="dnm">'+(d.shiftId?esc(nombreCorto(d.name)):'·')+'</span>'+
+      (d.shiftId||d.vac?mesFichaHTML(tipoD,d.guard):'<span class="dnm">·</span>')+
       /* El tipo de guardia ya no va apretado en la fila del número —ahí «UMI» salía partido letra a
          letra, o cortado— sino en su propia línea. La etiqueta «VAC» se ha quitado: el 🏖️ y la
          palabra debajo ya dicen que son vacaciones, y ocupaba un tercio del ancho de la casilla. */
-      (d.guard?'<span class="dline gflag" title="tipo de guardia: '+esc(gEtiqueta(d.guard))+'">'+
-        esc(String(d.guard).toUpperCase().slice(0,4))+'</span>':'')+
+
       lineas.join('')+
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<minS?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<minS?' ⚠':'')+'</span>':'')+
@@ -7990,13 +8098,20 @@ function renderMonth(){
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button></div>
       ${!store.meta.pulsarVisto&&!ui.mesModo&&mhintVigente()?'<div class="mhint">💡 <b>Mantén pulsado un día</b> para cambiar qué es, añadir un evento o una nota. Un toque normal sigue abriendo el resumen.<button class="x" data-a="pulsar-visto" aria-label="entendido">✕</button></div>':''}
-      <div class="cal ext${rejilla.movil?' conprev':''}${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
-      <div class="mleyenda">🩺 <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b>8–15</b> jornada · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>
+      ${mesAbonoHTML(abono,mo)}${calVistaBtn('mes')}
+      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':`<div class="cal ext${rejilla.movil?' conprev':''}${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
+      <div class="mleyenda"><span class="mficha f-guard">☾</span> guardia · <span class="mficha f-work">${MES_BUS}</span> jornada · <span class="mficha f-sal">→⌂</span> saliente · <span class="mficha f-libre">F/S</span> libre · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b>8–15</b> jornada · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
     ${agendaMesHTML(y,mo)}
     ${mesResumenHTML(y,mo,list,svc,g)}
-   </div>`;}
+   </div>`;
+  if(isoM){const hoyK=iso(new Date());
+    _calIsoDatos.mes={claro:!document.documentElement.classList.contains('dark'),
+      celdas:rejilla.slice(0,42).map(function(d){const fuera=rejilla.movil?d.key<rejilla.semHoy:d.date.getMonth()!==mo;
+        return {k:d.key,d:d.date.getDate(),tipo:mesTipoDia(d)||'libre',g:d.guard||'',hoy:d.key===hoyK,fuera:fuera};}),
+      abono:abono,pie:'<b>'+abono.hechas+' de '+abono.cupo+'</b> guardias · <b>'+abono.h+' h</b> de servicio · <b>'+abono.findes+'</b> findes libres · toca una baldosa para abrir ese día'};
+    calIsoMonta('mes');}}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
 const GYM_URL='https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json';
@@ -23352,6 +23467,9 @@ function act(a,el){
       ev.noGuardia=true;save();flash('«'+(ev.titulo||'evento')+'» ya no sale los días de guardia');render();break;}
     case 'sem-vista':ui.semVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
     case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
+    case 'sem-sel':ui.semSel=el.dataset.k||'';render();break;
+    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':'plana';ui[w==='sem'?'semV':'mesV']=v;
+      try{localStorage.setItem(w==='sem'?SEMV_KEY:MESV_KEY,v);}catch(e){}render();break;}
     case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;
       const fase=habEnMarcha().length>=3?'espera':'marcha';

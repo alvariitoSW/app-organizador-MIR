@@ -3671,3 +3671,43 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .hoybus{margin-top:6px;min-height:120px}.hoybusv{display:flex;justify-content:flex-end;margin-top:8px}.hoybusv .chipx{font-size:12.5px;padding:5px 11px}
 .asck.corto .kss{margin-bottom:2px}
 .hoyseg button{white-space:nowrap}
+
+/* ===== Semana: el tablón de la cochera (mismos colores que las paradas del conductor) ===== */
+.tablonc{padding:10px 8px 8px}.tb-res{font-size:12.5px;color:var(--ink2);margin:0 2px 6px}.tb-res b{color:var(--ink)}.tb-res .tb-corta{color:var(--warn)}
+.tablon{display:block;width:100%;height:auto}.tablon text{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.tb-eje{fill:var(--ink2);font-size:9.5px;font-weight:700;text-anchor:middle}.tb-guia{stroke:color-mix(in srgb,var(--ink2) 14%,transparent);stroke-dasharray:2 3}
+.tb-fila{cursor:pointer}.tb-fondo{fill:transparent}.tb-fila:hover .tb-fondo{fill:color-mix(in srgb,var(--brand) 6%,transparent)}
+.tb-fondo.hoy{fill:color-mix(in srgb,var(--warn) 8%,transparent);stroke:color-mix(in srgb,var(--warn) 55%,transparent)}.tb-fondo.sel{stroke:var(--brand);stroke-width:1.2}
+.tb-dia{fill:var(--ink);font-size:11px;font-weight:800;letter-spacing:.06em}.tb-dia tspan{fill:var(--ink2);font-weight:600}.tb-dia.hoy{fill:var(--warn)}
+.tb-work{fill:#d9573f}.tb-guard{fill:#34467e;stroke:#7d93e0}.tb-sal{fill:#3c5590}.tb-gym{fill:#7a5cf0}.tb-meal{fill:#2f9e6b}.tb-plan{fill:#1fa6c4}
+.tb-libre{fill:none;stroke:#5a6b8c;stroke-dasharray:2 2}.tb-win{fill:rgba(255,255,255,.55)}.tb-rueda{fill:var(--bg);stroke:color-mix(in srgb,var(--ink2) 40%,transparent)}
+.tb-luna{fill:#e6ecff}.tb-flecha{stroke:#b9c7f3;stroke-width:1.3;fill:none}
+.tb-sello{fill:none;stroke:#5a6b8c}.tb-sello.on{fill:var(--ok);stroke:var(--ok)}
+.tb-via{stroke:color-mix(in srgb,var(--ink2) 30%,transparent);stroke-width:2;stroke-linecap:round}
+.tb-noche{fill:rgba(52,70,126,.35);stroke:rgba(125,147,224,.35)}.tb-noche.siesta{stroke-dasharray:3 2}.tb-z{fill:#9fb2ea;font-size:9px}
+.tb-lab{font-size:9px;font-weight:700}.tb-lab.w{fill:#e8826e}.tb-lab.g{fill:#8fa3e0}
+.tb-vacio{fill:var(--bg)}.tb-pend{stroke:var(--warn);stroke-width:1.6}
+.tb-ahora{stroke:var(--warn);stroke-width:1.5}.tb-busahora{fill:var(--warn)}.tb-win2{fill:#3b2a05}
+.tb-garaje{fill:var(--bg2);stroke:#3c5590;stroke-width:1.2}.tb-garaje.corta{stroke:var(--warn)}.tb-garaje.guardia{stroke:#34467e}
+.tb-horas{fill:var(--ink);font-size:11px;font-weight:800;text-anchor:middle}.tb-horas.corta{fill:var(--warn)}.tb-horas.guardia{fill:#9fb2ea;font-size:9.5px}
+.tb-mini{fill:var(--ink2);font-size:7.5px;text-anchor:middle}
+.tb-ley{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--ink2);margin:6px 2px 0}.tb-ley i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.tb-ley .k-work{background:#d9573f}.tb-ley .k-guard{background:#34467e;box-shadow:0 0 0 1px #7d93e0 inset}.tb-ley .k-noche{background:rgba(52,70,126,.5)}.tb-ley .k-meal{background:#2f9e6b;border-radius:50%}.tb-ley .k-plan{background:#1fa6c4;border-radius:50%}.tb-ley .k-pend{border:1.5px solid var(--warn);border-radius:50%}
+.calisoslot{min-height:120px}
+
+/* ===== Mes: la ficha de cada día y el abono (diccionario del conductor) ===== */
+.mficha{display:inline-flex;align-items:center;gap:2px;border-radius:6px;padding:1px 4px;font:800 9px/1.25 ui-sans-serif,system-ui,sans-serif;white-space:nowrap;max-width:100%;overflow:hidden;vertical-align:middle}
+.dbox .mficha{margin:2px 0 1px;align-self:flex-start}
+.f-guard{background:#34467e;color:#dfe6ff;box-shadow:0 0 0 1px #7d93e0 inset}.f-work{background:color-mix(in srgb,#d9573f 20%,transparent);color:#d9573f}
+.f-gym{background:color-mix(in srgb,#7a5cf0 22%,transparent);color:#8f76f5}.f-sal{background:color-mix(in srgb,#7d93e0 18%,transparent);color:#8fa3e0}
+.f-libre{border:1px dashed #5a6b8c;color:#6f84a6;font-weight:700}.f-vac{background:color-mix(in srgb,#e3a72f 22%,transparent);color:#e3a72f}
+.mleyenda .mficha{padding:0 4px}
+.abono{position:relative;border-radius:16px;padding:11px 14px 11px 16px;margin:10px 0 4px;color:#1b1406;background:linear-gradient(100deg,#fcd34d,#fbbf24 60%,#f59e0b);box-shadow:0 14px 30px -18px #f59e0b}
+.abono::before,.abono::after{content:'';position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--card);transform:translateY(-50%)}
+.abono::before{left:-7px}.abono::after{right:-7px}
+.abono .t{font:800 10.5px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.18em;opacity:.75}
+.abono .nums{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;margin-top:7px}
+.abono .nums>div{border-left:1.5px dashed rgba(27,20,6,.35);padding-left:8px}.abono .nums>div:first-child{border:0;padding:0}
+.abono b{display:block;font-size:21px;line-height:1.05;font-weight:900}.abono small{font-size:11px;font-weight:700;opacity:.8}
+.abono .agujeros{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}.abono .agujeros i{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(27,20,6,.55)}
+.abono .agujeros i.p{background:var(--card);border-color:var(--card)}

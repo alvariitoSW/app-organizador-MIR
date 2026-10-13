@@ -239,3 +239,30 @@ camión e irse a un acantilado con vistas al mar mientras se echa un cigarro».
 
 **Supuestos:** todo el rato del Lloretazo (también la ida y la vuelta que lleva dentro) es la escena
 del acantilado; el humo y la brasa se quedan quietos con «reducir movimiento».
+
+## 2026-10-13 · Semana y Mes con el lenguaje del conductor
+
+**Contexto:** con las maquetas planas e isométricas a la vista: «Sí a las tres, monta Semana y Mes»
+(las dos vistas con un botón y la plana de serie; la guardia en azul noche en las dos; un toque en un
+andén o una baldosa abre ese día en Hoy).
+
+**Elegido:**
+- **Semana, plana:** el tablón de la cochera sustituye a la tira de días y a las tarjetas. Una fila por
+  día (más ayer) en la misma escala de 6 a 2: el autobús del tipo de día, sellos de hábitos, la jornada
+  roja, la guardia azul noche, las paradas (en ámbar las que pasaron sin apuntar), la noche y al final lo
+  dormido o lo que toca dormir. Debajo, la tarjeta de siempre del día que tocas (de serie, hoy).
+- **Semana, isométrica:** la cochera con siete andenes desde el primer día de la ventana.
+- **Mes, plano:** la rejilla de siempre (se edita igual), con la ficha del día en lugar del icono y el
+  nombre: búho «☾ URG/UMI» la guardia, autobús rojo la jornada (violeta la de fuerza), flecha a la
+  cochera el saliente, «F/S» el libre, autocar las vacaciones. El abono del mes arriba (guardias hechas
+  de las que tocan, horas de servicio, findes libres); en «Este mes» se quita la barra de guardias.
+- **Mes, isométrico:** el tablero de fichas con la canceladora (seis semanas).
+- Las isométricas se generan con el kit de /anatomy (`design/semana-mes-iso/app.mjs` →
+  `fig/calendario-iso.js`); lo fijo va dibujado y lo del día lo pinta el móvil con el kit dentro. Se
+  cargan la primera vez que se eligen.
+
+**Descartado:** mantener la tira de días encima del tablón (sería lo mismo dos veces).
+
+**Supuestos:** las horas de servicio del abono son las de la guardia (de entrar a salir) y las de la
+jornada; un finde libre es sábado y domingo libres o de vacaciones dentro del mes; un turno llamado
+«Vacaciones» cuenta como vacaciones aunque no esté en un rango.

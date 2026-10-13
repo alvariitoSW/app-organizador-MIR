@@ -1528,7 +1528,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('month');
   await page.waitForTimeout(150);
   const dnmColor = await page.evaluate(() => {
-    const el = document.querySelector('.dbox .dnm');
+    // (la casilla ya no lleva el nombre: lleva su ficha; el número del día y las líneas heredan el color de la casilla)
+    const el = document.querySelector('.dbox');
     return el ? getComputedStyle(el).color : null;
   });
   check('"Mes": el nombre del tipo de día usa el color de texto del tema, no el negro por defecto del botón',
@@ -2676,13 +2677,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.store.rotation.daySet[k14] = { shift: g.id, guard: 'umi' };
       window.PG.save();
       window.PG.render();
-      const f = document.querySelector('.dline.gflag');
+      const f = document.querySelector('.dbox .mficha.f-guard');
       if (!f) return { hay: false };
       const r = f.getBoundingClientRect();
       return { hay: true, texto: f.textContent, alto: Math.round(r.height), ancho: Math.round(r.width) };
     });
     check('el tipo de guardia se lee en una línea, no partido en vertical',
-      etiquetas.hay && etiquetas.texto === 'UMI' && etiquetas.alto < 20,
+      etiquetas.hay && /UMI/.test(etiquetas.texto) && etiquetas.alto < 20,
       JSON.stringify(etiquetas));
 
     // se deja el mes como estaba antes de este aprieto: la prueba siguiente cuenta con esos dos
@@ -8112,7 +8113,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const unaLinea = await page.evaluate(() => {
       const alt = (el) => el.getBoundingClientRect().height;
       const fs = (el) => parseFloat(getComputedStyle(el).fontSize);
-      const nombres = [...document.querySelectorAll('.dbox .dnm')].filter((x) => x.textContent.trim().length > 2);
+      // el tipo de día va ahora como ficha (búho, autobús, flecha, F/S): una línea, con el nombre entero en el title de la casilla
+      const nombres = [...document.querySelectorAll('.dbox .mficha')];
       const evs = [...document.querySelectorAll('.dbox .dev')];
       return {
         nombres: nombres.length,
@@ -9944,7 +9946,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const saltado = await page.evaluate((kg) => !kg || window.PG.eventosS().find((e) => e.id === 'ev242').salta.includes(kg), r.kg);
     await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'week'; P.ui.semVista = ''; P.ui.semDesde = ''; P.render(); });
     await page.waitForTimeout(150);
-    const sem = await page.evaluate(() => ({ tarjetas: document.querySelectorAll('#main .sdc').length, tira: document.querySelectorAll('#main .ssp').length,
+    const sem = await page.evaluate(() => ({ tarjetas: document.querySelectorAll('#main .sdc').length, tira: document.querySelectorAll('#main .tablon .tb-fila').length,
       rutina: document.querySelectorAll('#main .sdc .sdr span').length, matriz: !!document.querySelector('#main .shm'), hoyHab: !!document.querySelector('#main .sdc.hoy .sdhb [data-a="hab-mark"]') }));
     const bh = await page.$('#main .sdc.hoy .sdhb [data-a="hab-mark"]'); if (bh) { await bh.click(); await page.waitForTimeout(100); }
     const marcado = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return !!(P.store.habitos.registro[k] || {}).h242; });
@@ -9956,8 +9958,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia242; P.save(); P.ui.semVista = ''; P.ui.rutTipo = ''; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
     check('Hoy pinta el reloj de 24 h, avisa del evento que cae en guardia y «quitar solo este día» lo salta ese día',
       hoy.reloj && (!r.kg || (r.choque.includes('ev242') && hoy.choque && saltado)), JSON.stringify({ r, hoy, saltado }));
-    check('Semana abre en Agenda: tira de días, una tarjeta por día con su rutina, hábitos a un toque; «no en guardia» no toca ese día; la rutina se edita por tipo y se guarda',
-      sem.tira === 7 && sem.tarjetas >= 7 && sem.rutina >= 7 && sem.matriz && marcado && (r.kg ? r.toca === false : true) && rut,
+    check('Semana abre en el tablón: una fila por día (y ayer), la tarjeta de hoy con su rutina, hábitos a un toque; «no en guardia» no toca ese día; la rutina se edita por tipo y se guarda',
+      sem.tira === 8 && sem.tarjetas === 1 && sem.rutina >= 1 && sem.matriz && marcado && (r.kg ? r.toca === false : true) && rut,
       JSON.stringify({ sem, marcado, toca: r.toca, rut }));
   }
 
@@ -11763,6 +11765,65 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la guardia de sábado acaba al día siguiente (24 h la de urgencias, 25¼ h la UMI) y el saliente empieza de servicio',
       r.k.urg[0] === '24@9' && /^24@-15$/.test(r.k.sal[0] || '') && r.k.umi[0] === '25.25@10' && r.k.it > 1440, JSON.stringify(r.k));
     check('elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño', r.j.ls === 'reloj' && !r.j.bus && r.j.snhoy, JSON.stringify(r.j));
+  }
+  // 276) SEMANA Y MES CON EL LENGUAJE DEL CONDUCTOR, EN CADENA: (a) Semana abre en el tablón plano, una fila
+  // por día más ayer y debajo la tarjeta de hoy; (b) tocar una fila enseña la tarjeta de ese día; (c) el
+  // botón cambia a la cochera isométrica (se carga la primera vez), se recuerda, y tocar un andén abre ese
+  // día en Hoy; (d) Mes lleva el abono, las fichas y la guardia en azul noche, sin la barra de guardias;
+  // (e) su botón cambia al tablero isométrico y tocar una baldosa abre ese día en Hoy; (f) vuelven a plano
+  {
+    const r = {};
+    const ant = await page.evaluate(() => { const P = window.PG, a = { mode: P.store.rotation.mode };
+      /* una guardia dentro de lo que se ve, para ver su ficha en azul noche */
+      const kg = P.iso(P.addDays(new Date(), 3)), G = P.store.shifts.filter(P.isGuardia)[0]; a.kg = kg; a.ovg = P.dayOverride(kg); if (G) P.setDayOverride(kg, G.id, 'urg');
+      P.store.rotation.mode = 'date'; P.ui.semV = ''; P.ui.mesV = ''; P.ui.semSel = ''; P.ui.semDesde = ''; P.ui.semVista = '';
+      localStorage.removeItem('guardias-semv'); localStorage.removeItem('guardias-mesv'); P.ui.tab = 'week'; P.render(); return a; });
+    await page.waitForTimeout(200);
+    r.a = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .tablon .tb-fila').length, tarjetas: document.querySelectorAll('#main .sdc').length,
+      hoy: !!document.querySelector('#main .sdc.hoy'), tira: !!document.querySelector('#main .sstrip'), btn: (document.querySelector('#main [data-a="cal-vista"]') || {}).textContent || '' }));
+    // (b) la penúltima fila
+    const kb = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .tablon .tb-fila')]; const g = f[f.length - 2]; g.dispatchEvent(new MouseEvent('click', { bubbles: true })); return g.getAttribute('data-k'); });
+    await page.waitForTimeout(150);
+    r.b = await page.evaluate((k) => ({ sel: window.PG.ui.semSel === k, card: !!document.getElementById('sd-' + k), una: document.querySelectorAll('#main .sdc').length }), kb);
+    // (c) la isométrica
+    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.waitForSelector('#main #calIsoSlot .ci svg', { timeout: 8000 }).catch(() => {});
+    r.c = await page.evaluate(() => ({ iso: !!document.querySelector('#main #calIsoSlot .ci svg'), ls: localStorage.getItem('guardias-semv'), tablon: !!document.querySelector('#main .tablon'),
+      andenes: document.querySelectorAll('#main .ci [data-fila][data-day]').length }));
+    const kc = await page.evaluate(() => { const g = document.querySelectorAll('#main .ci [data-fila][data-day]')[3]; if (!g) return ''; g.dispatchEvent(new MouseEvent('click', { bubbles: true })); return g.getAttribute('data-day'); });
+    await page.waitForTimeout(150);
+    r.c.abre = await page.evaluate((k) => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy, k }), kc);
+    // (d) el Mes
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.ui.monSel = ''; P.render(); });
+    await page.waitForTimeout(200);
+    r.d = await page.evaluate(() => { const g = [...document.querySelectorAll('#main .dbox')].find((b) => b.querySelector('.mficha.f-guard'));
+      return { abono: (document.querySelector('#main .abono') || {}).textContent || '', fichas: document.querySelectorAll('#main .dbox .mficha').length,
+        borde: g ? getComputedStyle(g).borderTopColor : '', barra: !!document.querySelector('#main .mrbar') }; });
+    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.waitForSelector('#main #calIsoSlot .ci [data-day]', { timeout: 8000 }).catch(() => {});
+    r.e = await page.evaluate(() => ({ baldosas: document.querySelectorAll('#main .ci [data-day]').length, ls: localStorage.getItem('guardias-mesv'), cal: !!document.querySelector('#main .cal.ext') }));
+    const ke = await page.evaluate(() => { const g = document.querySelectorAll('#main .ci [data-day]')[10]; if (!g) return ''; g.dispatchEvent(new MouseEvent('click', { bubbles: true })); return g.getAttribute('data-day'); });
+    await page.waitForTimeout(150);
+    r.e.abre = await page.evaluate((k) => ({ tab: window.PG.ui.tab, dia: window.PG.ui.diaHoy, k }), ke);
+    // (f) de vuelta a plano en los dos
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.ui.tab = 'month'; P.render(); });
+    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    r.f = { mes: await page.evaluate(() => ({ ls: localStorage.getItem('guardias-mesv'), cal: !!document.querySelector('#main .cal.ext'), iso: !!document.querySelector('#main .ci') })) };
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.render(); });
+    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    r.f.sem = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-semv'), tablon: !!document.querySelector('#main .tablon') }));
+    await page.evaluate((a) => { const P = window.PG; P.store.rotation.mode = a.mode; P.ui.semSel = ''; P.setDayOverride(a.kg, a.ovg ? a.ovg.shift : null, a.ovg ? a.ovg.guard : ''); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); }, ant);
+    const esDia = (o) => o.tab === 'hoy' && (o.dia === o.k || (o.dia === '' && o.k === new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)));
+    check('Semana abre en el tablón plano: una fila por día y ayer, la tarjeta de hoy debajo y el botón a la isométrica',
+      r.a.filas >= 6 && r.a.tarjetas === 1 && r.a.hoy && !r.a.tira && /Isométrica/.test(r.a.btn), JSON.stringify(r.a));
+    check('tocar una fila del tablón enseña la tarjeta de ese día (solo esa)', r.b.sel && r.b.card && r.b.una === 1, JSON.stringify(r.b));
+    check('el botón cambia a la cochera isométrica, se recuerda, y tocar un andén abre ese día en Hoy',
+      r.c.iso && r.c.ls === 'iso' && !r.c.tablon && r.c.andenes === 7 && !!kc && esDia(r.c.abre), JSON.stringify(r.c));
+    check('Mes lleva el abono, una ficha por día y la guardia en azul noche, sin la barra de guardias',
+      /ABONO DE/.test(r.d.abono) && /guardias hechas/.test(r.d.abono) && r.d.fichas >= 28 && r.d.borde === 'rgb(52, 70, 126)' && !r.d.barra, JSON.stringify(r.d));
+    check('el botón del Mes cambia al tablero isométrico (42 baldosas) y tocar una abre ese día en Hoy',
+      r.e.baldosas >= 35 && r.e.ls === 'iso' && !r.e.cal && !!ke && esDia(r.e.abre), JSON.stringify(r.e));
+    check('Semana y Mes vuelven a la vista plana con el mismo botón', r.f.mes.ls === 'plana' && r.f.mes.cal && !r.f.mes.iso && r.f.sem.ls === 'plana' && r.f.sem.tablon, JSON.stringify(r.f));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
