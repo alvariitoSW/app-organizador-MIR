@@ -325,3 +325,21 @@ van en un script fijo de 113 KB que el service worker guarda.
 
 **Supuestos:** «las horas de siempre» son las de la jornada de diario de Ajustes; el `<use>` toma los
 estilos del documento (Chrome y Firefox lo hacen; comprobado en claro y oscuro).
+
+## 2026-10-13 · Calendario, tanda 2: Semana y Hoy con una fila de mandos, hábitos y asistente plegados
+
+**Elegido:**
+- **Semana:** una sola fila «▦ Tablón · 🏗 Cochera · ◷ Por horas» (el tablón y la cochera son dos formas de la
+  misma agenda; eran tres filas de mandos, 118 px). La leyenda del tablón y «mi rutina por tipo de día» van en el
+  ⓘ de la cabecera. **Hábitos de la semana** se pliega a una fila por hábito con «editar ›» en la cabecera
+  (273 → 178 px con tres hábitos): se marcan en «Para hoy» y en la tarjeta del día. 1 224 → 986 px.
+- **Hoy:** «🚌 Conductor · 🏗 Estación · ◷ Reloj · ☰ Línea» en una fila: la estación es un modo más, no una
+  vista dentro de un modo (eran dos selectores apilados). El asistente deja abierta la tarjeta de hábitos y las
+  de dinero y 4:20 van en una línea con el texto recortado, que se abre al tocar (482 → 399 px). 1 586 → 1 459 px;
+  la cuenta atrás y «Próximos» se van en la tanda 3 con la carretera.
+
+**Descartado:** plegar también la tarjeta de hábitos del asistente (sus botones son lo que se toca cada mañana) y
+quitar del todo «Hábitos de la semana» (el usuario prefirió plegarlo).
+
+**Supuestos:** el texto recortado de una tarjeta plegada sigue en el DOM (la prueba del dinero lo lee); «Estación»
+guarda las dos claves (modo y vista) para que el conductor y la estación sigan siendo la misma cosa por dentro.

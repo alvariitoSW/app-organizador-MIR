@@ -11693,7 +11693,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { mismo: P.conductor().c.el === el, dentro: document.querySelector('#main #hoyBusSlot .cd') === el }; });
     // (m) el botón cambia a la estación isométrica (se carga la primera vez), se recuerda, sobrevive a
     // repintar, un toque en un autobús abre su hoja, y el mismo botón vuelve al conductor
-    await page.click('#main [data-a="hoy-busv"]').catch(() => {});
+    await page.click('#main .hoyseg [data-v="est"]').catch(() => {});
     await page.waitForSelector('#main #hoyBusSlot .es svg', { timeout: 8000 }).catch(() => {});
     r.m = await page.evaluate(() => { const P = window.PG, el = document.querySelector('#main #hoyBusSlot .es'); P.render(); P.render();
       return { es: !!el, cd: !!document.querySelector('#main #hoyBusSlot .cd'), ls: localStorage.getItem('guardias-hoybusv'), mismo: document.querySelector('#main #hoyBusSlot .es') === el,
@@ -11705,7 +11705,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         if (P.ui.hoyVista === 'sueno') { P.ui.hoyVista = ''; P.render(); continue; } if (P.ui.hoyIt) return true; }
       return false; });
     await page.evaluate(() => { window.PG.ui.hoyIt = null; window.PG.ui.hoyVista = ''; window.PG.render(); });
-    await page.click('#main [data-a="hoy-busv"]').catch(() => {}).catch(() => {});
+    await page.click('#main .hoyseg [data-v="bus"]').catch(() => {});
     r.m.vuelta = await page.evaluate(() => ({ cd: !!document.querySelector('#main #hoyBusSlot .cd'), es: !!document.querySelector('#main #hoyBusSlot .es'), ls: localStorage.getItem('guardias-hoybusv') }));
     // (i) el «¿cómo amaneces?» va corto; «ánimo y lo que te propones» lo abre entero
     r.i = { corto: await page.evaluate(() => !!document.querySelector('#main .asck.corto')) };
@@ -11758,7 +11758,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (a.sr) P.store.suenoReal[hoy] = a.sr; else delete P.store.suenoReal[hoy];
       sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo2', 'reloj'); P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.asistMas = false; P.save(); P.render(); }, antes);
     check('Hoy abre de serie en el conductor, dentro de la página (sin marco), con el día de la agenda y sin repetir la tarjeta de Sueño',
-      r.a.hay && !r.a.marco && /^🚌 Conductor\*\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
+      r.a.hay && !r.a.marco && /^🚌 Conductor\*\|🏗 Estación\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
     check('en el conductor, mantener la próxima parada abre la hoja de lo que pone el visor', !!r.b.it && r.b.visor.indexOf(r.b.it) >= 0, JSON.stringify(r.b));
     check('el paisaje del conductor va con lo que toca: ciudad con ventanas en el trabajo, bosque y luna por la noche libre',
       r.l.ciudad && r.l.noche.arboles > 0 && r.l.noche.luna, JSON.stringify(r.l));
@@ -11791,13 +11791,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       localStorage.removeItem('guardias-semv'); localStorage.removeItem('guardias-mesv'); P.ui.tab = 'week'; P.render(); return a; });
     await page.waitForTimeout(200);
     r.a = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .tablon .tb-fila').length, tarjetas: document.querySelectorAll('#main .sdc').length,
-      hoy: !!document.querySelector('#main .sdc.hoy'), tira: !!document.querySelector('#main .sstrip'), btn: (document.querySelector('#main [data-a="cal-vista"]') || {}).textContent || '' }));
+      hoy: !!document.querySelector('#main .sdc.hoy'), tira: !!document.querySelector('#main .sstrip'), btn: (document.querySelector('#main [data-a="cal-vista"][data-v="iso"]') || {}).textContent || '' }));
     // (b) la penúltima fila
     const kb = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .tablon .tb-fila')]; const g = f[f.length - 2]; g.dispatchEvent(new MouseEvent('click', { bubbles: true })); return g.getAttribute('data-k'); });
     await page.waitForTimeout(150);
     r.b = await page.evaluate((k) => ({ sel: window.PG.ui.semSel === k, card: !!document.getElementById('sd-' + k), una: document.querySelectorAll('#main .sdc').length }), kb);
     // (c) la isométrica
-    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.click('#main [data-a="cal-vista"][data-v="iso"]').catch(() => {});
     await page.waitForSelector('#main #calIsoSlot .ci svg', { timeout: 8000 }).catch(() => {});
     r.c = await page.evaluate(() => ({ iso: !!document.querySelector('#main #calIsoSlot .ci svg'), ls: localStorage.getItem('guardias-semv'), tablon: !!document.querySelector('#main .tablon'),
       andenes: document.querySelectorAll('#main .ci [data-fila][data-day]').length }));
@@ -11821,12 +11821,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="cal-vista"]').catch(() => {});
     r.f = { mes: await page.evaluate(() => ({ ls: localStorage.getItem('guardias-mesv'), cal: !!document.querySelector('#main .cal.ext'), iso: !!document.querySelector('#main .ci') })) };
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'week'; P.render(); });
-    await page.click('#main [data-a="cal-vista"]').catch(() => {});
+    await page.click('#main [data-a="cal-vista"][data-v="plana"]').catch(() => {});
     r.f.sem = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-semv'), tablon: !!document.querySelector('#main .tablon') }));
     await page.evaluate((a) => { const P = window.PG; P.store.rotation.mode = a.mode; P.ui.semSel = ''; P.setDayOverride(a.kg, a.ovg ? a.ovg.shift : null, a.ovg ? a.ovg.guard : ''); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); }, ant);
     const esDia = (o) => o.tab === 'hoy' && (o.dia === o.k || (o.dia === '' && o.k === new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)));
-    check('Semana abre en el tablón plano: una fila por día y ayer, la tarjeta de hoy debajo y el botón a la isométrica',
-      r.a.filas >= 6 && r.a.tarjetas === 1 && r.a.hoy && !r.a.tira && /Isométrica/.test(r.a.btn), JSON.stringify(r.a));
+    check('Semana abre en el tablón plano: una fila por día y ayer, la tarjeta de hoy debajo y el chip a la cochera',
+      r.a.filas >= 6 && r.a.tarjetas === 1 && r.a.hoy && !r.a.tira && /Cochera/.test(r.a.btn), JSON.stringify(r.a));
     check('tocar una fila del tablón enseña la tarjeta de ese día (solo esa)', r.b.sel && r.b.card && r.b.una === 1, JSON.stringify(r.b));
     check('el botón cambia a la cochera isométrica, se recuerda, y tocar un andén abre ese día en Hoy',
       r.c.iso && r.c.ls === 'iso' && !r.c.tablon && r.c.andenes === 7 && !!kc && esDia(r.c.abre), JSON.stringify(r.c));
@@ -11911,6 +11911,71 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.e.n === 35 && r.e.primero === r.e.lunes && r.e.hoyIdx >= 0 && r.e.hoyIdx < 7 && r.e.prev === 0 && r.e.celda >= 88 && r.e.cal < r.e.vh, JSON.stringify(r.e));
     check('el aviso de mantener pulsado ya no es una caja en la pantalla: sale una vez como aviso y se va', !r.f.caja && r.f.flash, JSON.stringify(r.f));
     check('el «?» de Mes abre la leyenda con las fichas y volver a tocarlo la quita', r.g.abre >= 6 && !r.g.cierra, JSON.stringify(r.g));
+  }
+
+  // 278) SEMANA Y HOY CON UNA FILA DE MANDOS, LOS HÁBITOS Y EL ASISTENTE PLEGADOS, EN CADENA: (a) Semana tiene
+  // una sola fila (Tablón · Cochera · Por horas), sin el botón suelto a la isométrica ni la leyenda bajo el
+  // tablón (va en el ⓘ con «mi rutina»); Cochera → isométrica, Por horas → horas, Tablón desde horas → plana;
+  // (b) los hábitos van a una fila por hábito (sin leyenda ni texto de los automáticos), con «editar» en la
+  // cabecera; (c) Hoy tiene cuatro chips y «Estación» es uno más: la pone, se recuerda y «Conductor» vuelve;
+  // (d) las tarjetas de dinero y 4:20 del asistente van en una línea que se abre al tocar.
+  // Fija: tres filas de mandos (118 px) en Semana, dos selectores apilados (80 px) en Hoy, la tarjeta de
+  // hábitos de 273 px con 17 botones y el asistente de 482 px más alto que el día.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; P.__t278 = { hab: JSON.stringify(P.store.habitos || null), mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date';
+      if (!P.store.habitos || typeof P.store.habitos !== 'object') P.store.habitos = { items: [], registro: {} };
+      [['Agua 2 L', '💧', '#38bdf8', 'agua'], ['Estudio', '📚', '#f59e0b', 'estudio'], ['Estirar', '🧘', '#c084fc', '']].forEach((h, i) => P.store.habitos.items.push({ id: 't278' + i, nombre: h[0], icono: h[1], color: h[2], dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: [], auto: h[3], min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' }));
+      P.ui.semV = 'plana'; P.ui.semVista = ''; P.ui.semSel = ''; P.ui.semDesde = ''; P.ui.tab = 'week'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => ({ chips: [...document.querySelectorAll('#main .semtog button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'),
+      suelto: !!document.querySelector('#main .hoybusv'), leyAbajo: !!document.querySelector('#main .tablonc .tb-ley'), leyInfo: !!document.querySelector('#main .semcab details .tb-ley'),
+      rutinaInfo: !!document.querySelector('#main .semcab details [data-a="sem-vista"][data-v="rutina"]'), rutinaSuelta: !!document.querySelector('#main .grid > .row [data-v="rutina"]') }));
+    await page.click('#main .semtog [data-v="iso"]');
+    await page.waitForSelector('#main #calIsoSlot .ci [data-day]', { timeout: 8000 }).catch(() => {});
+    r.a.cochera = await page.evaluate(() => ({ iso: !!document.querySelector('#main .ci'), ls: localStorage.getItem('guardias-semv'), vista: window.PG.ui.semVista }));
+    await page.click('#main .semtog [data-a="sem-vista"][data-v="horas"]');
+    await page.waitForTimeout(200);
+    r.a.horas = await page.evaluate(() => ({ vista: window.PG.ui.semVista, on: (document.querySelector('#main .semtog .on') || {}).textContent || '' }));
+    await page.click('#main .semtog [data-v="plana"]');
+    await page.waitForTimeout(200);
+    r.a.tablon = await page.evaluate(() => ({ vista: window.PG.ui.semVista, ls: localStorage.getItem('guardias-semv'), tablon: !!document.querySelector('#main .tablon') }));
+    // (b)
+    r.b = await page.evaluate(() => { const c = document.querySelector('#main .card.habsem'); if (!c) return { hay: false };
+      const tip = c.querySelector('.semtip');   /* la sugerencia («los días de guardia no has hecho…») es contenido, no va en la medida */
+      return { hay: true, alto: Math.round(c.getBoundingClientRect().height - (tip ? tip.getBoundingClientRect().height : 0)), filas: c.querySelectorAll('.shm .nm').length, leyenda: !!c.querySelector('.legend2'),
+        solos: /Se marcan solos/.test(c.innerText), editar: !!c.querySelector('h2 [data-a="tab"][data-t="habitos"]'), botones: c.querySelectorAll('button:not(.c)').length }; });
+    // (c)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForTimeout(400);
+    r.c = await page.evaluate(() => ({ chips: [...document.querySelectorAll('#main .hoyseg button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'), suelto: !!document.querySelector('#main .hoybusv') }));
+    await page.click('#main .hoyseg [data-v="est"]');
+    await page.waitForSelector('#main #hoyBusSlot .es svg', { timeout: 8000 }).catch(() => {});
+    r.c.est = await page.evaluate(() => ({ es: !!document.querySelector('#main #hoyBusSlot .es'), modo: window.PG.ui.hoyModo, ls: localStorage.getItem('guardias-hoybusv'), on: (document.querySelector('#main .hoyseg .on') || {}).textContent || '' }));
+    await page.click('#main .hoyseg [data-v="reloj"]');
+    await page.waitForTimeout(200);
+    r.c.reloj = await page.evaluate(() => ({ modo: window.PG.ui.hoyModo, reloj: !!document.querySelector('#main .hoyreloj') }));
+    await page.click('#main .hoyseg [data-v="bus"]');
+    await page.waitForTimeout(400);
+    r.c.bus = await page.evaluate(() => ({ cd: !!document.querySelector('#main #hoyBusSlot .cd'), ls: localStorage.getItem('guardias-hoybusv'), modo: window.PG.ui.hoyModo }));
+    // (d)
+    r.d = await page.evaluate(() => { const l = [...document.querySelectorAll('#main .card.asist .astj.din, #main .card.asist .astj.cn')];
+      return { n: l.length, plegadas: l.filter((x) => x.classList.contains('plegada')).length, primeraAbierta: !!document.querySelector('#main .card.asist .astj:not(.din):not(.cn):not(.plegada)') || !document.querySelector('#main .card.asist .astj:not(.din):not(.cn)') }; });
+    if (r.d.n) { await page.click('#main .card.asist .astj.plegada .astj-cab'); await page.waitForTimeout(200);
+      r.d.abre = await page.evaluate(() => { const l = [...document.querySelectorAll('#main .card.asist .astj.din, #main .card.asist .astj.cn')]; return l.filter((x) => !x.classList.contains('plegada')).length; }); }
+    await page.evaluate(() => { const P = window.PG, t = P.__t278; P.store.habitos = t.hab ? JSON.parse(t.hab) : { items: [], registro: {} }; P.store.rotation.mode = t.mode; P.ui.asistAbre = ''; delete P.__t278; P.save(); P.render(); });
+    check('Semana tiene una sola fila de mandos (Tablón · Cochera · Por horas), y la leyenda y «mi rutina» viven en el ⓘ',
+      /^▦ Tablón\*\|🏗 Cochera\|◷ Por horas$/.test(r.a.chips) && !r.a.suelto && !r.a.leyAbajo && r.a.leyInfo && r.a.rutinaInfo && !r.a.rutinaSuelta, JSON.stringify(r.a));
+    check('Cochera pone la isométrica, Por horas las horas, y Tablón desde ahí vuelve al tablón plano',
+      r.a.cochera.iso && r.a.cochera.ls === 'iso' && r.a.cochera.vista === '' && r.a.horas.vista === 'horas' && /Por horas/.test(r.a.horas.on) && r.a.tablon.vista === '' && r.a.tablon.ls === 'plana' && r.a.tablon.tablon, JSON.stringify(r.a));
+    check('los hábitos de la semana van plegados: una fila por hábito, sin leyenda ni texto, con «editar» en la cabecera y menos de 200 px con tres',
+      r.b.hay && r.b.filas === 3 && !r.b.leyenda && !r.b.solos && r.b.editar && r.b.alto < 200, JSON.stringify(r.b));
+    check('Hoy tiene cuatro chips en una fila y «Estación» es un modo más: la pone, se recuerda, Reloj es otro y Conductor vuelve',
+      /^🚌 Conductor\*\|🏗 Estación\|◷ Reloj\|☰ Línea$/.test(r.c.chips) && !r.c.suelto && r.c.est.es && r.c.est.modo === 'bus' && r.c.est.ls === 'estacion' && /Estación/.test(r.c.est.on) &&
+      r.c.reloj.modo === 'reloj' && r.c.reloj.reloj && r.c.bus.cd && r.c.bus.ls === 'conductor' && r.c.bus.modo === 'bus', JSON.stringify(r.c));
+    check('las tarjetas de dinero y 4:20 del asistente van en una línea que se abre al tocar (la de hábitos, abierta)',
+      r.d.primeraAbierta && r.d.plegadas === r.d.n && (!r.d.n || r.d.abre === 1), JSON.stringify(r.d));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

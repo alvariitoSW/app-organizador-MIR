@@ -5298,9 +5298,11 @@ function hoyQuedaHTML(it,key,n){
       esc(ya.map(function(x){return x.txt;}).join(', '))+'<span>'+(ui.hoyHechas?'▾':'▸')+'</span></button>'+
       (ui.hoyHechas?ya.map(function(x){return hoyFilaHTML(x,key,n);}).join(''):'')+'</div>':'');}
 function hoyDiaHTML(key,inf,esHoy){
-  const m=hoyModo(),n=hoyNow(esHoy);
-  const seg='<div class="hoyseg" role="tablist">'+[['bus','🚌 Conductor'],['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
-    return '<button role="tab" aria-selected="'+(m===o[0])+'" class="'+(m===o[0]?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
+  const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
+  /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
+  const seg='<div class="hoyseg h4" role="tablist">'+[['bus','🚌 Conductor'],['est','🏗 Estación'],['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
+    const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
+    return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
   if(m==='bus')return seg+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
@@ -5376,8 +5378,7 @@ function hoyBusDatos(key,inf,esHoy){
 function hoyBusHTML(key,inf,esHoy){
   try{_condDatos=hoyBusDatos(key,inf,esHoy);}catch(e){_condDatos={dia:[],noches:[]};}
   const est=hoyBusVista()==='estacion';
-  return '<div class="hoybusv"><button class="chipx" data-a="hoy-busv" data-v="'+(est?'conductor':'estacion')+'" aria-label="Cambiar a la vista '+(est?'del conductor':'de la estación')+'">⇄ '+(est?'🚌 Conductor':'🏗 Estación')+'</button></div>'+
-    '<div id="hoyBusSlot" class="hoybus'+(est?' est':'')+'"></div>';}
+  return '<div id="hoyBusSlot" class="hoybus'+(est?' est':'')+'"></div>';}
 function hoyBusMonta(){
   const slot=document.getElementById('hoyBusSlot');if(!slot||!window.Conductor||!_condDatos)return;
   if(hoyBusVista()==='estacion'){
@@ -7262,7 +7263,8 @@ function semanaNavHTML(conFecha){
     (esHoy?'':'<button class="btn s" data-a="today">hoy</button>')+
     /* cuántos días ver y la leyenda, en ESTA misma fila: eran una fila entera para sí solos */
     (conFecha?semOpcHTML()+'<details class="dtip semlupa"><summary class="mini">ⓘ</summary>'+
-      franjaLeyendaHTML()+'</details>':'')+
+      franjaLeyendaHTML()+semLeyendaHTML()+
+      '<div class="row" style="margin-top:6px"><button class="btn s" data-a="sem-vista" data-v="rutina">⏰ mi rutina por tipo de día →</button></div></details>':'')+
     '</div>';}
 function semOpcHTML(){
   /* CUATRO BOTONES Y DOS PALABRAS → UN DESPLEGABLE. «ver 5 7 10 14 días» ocupaba una fila entera
@@ -7375,8 +7377,15 @@ function semanaKeyEntreno(days){
    de día y los hábitos que tocan. Más abajo la rejilla de hábitos, que entiende las guardias. La vista
    por horas de antes sigue a un toque. */
 function semTogHTML(v){
-  return '<div class="semtog"><button class="'+(v!=='horas'?'on':'')+'" data-a="sem-vista" data-v="">Agenda</button>'+
-    '<button class="'+(v==='horas'?'on':'')+'" data-a="sem-vista" data-v="horas">Por horas</button></div>';}
+  /* UNA FILA DE MANDOS. Eran tres seguidas (Agenda/Por horas, el botón a la isométrica y el rango): 118 px
+     de decisiones ya tomadas antes de ver nada. El tablón y la cochera son dos formas de la misma agenda */
+  const iso=calVista('sem')==='iso',ag=v!=='horas';
+  const b=function(on,a,extra,txt){return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="'+a+'"'+extra+'>'+txt+'</button>';};
+  return '<div class="semtog t3" role="tablist">'+b(ag&&!iso,'cal-vista',' data-w="sem" data-v="plana"','▦ Tablón')+b(ag&&iso,'cal-vista',' data-w="sem" data-v="iso"','🏗 Cochera')+
+    b(!ag,'sem-vista',' data-v="horas"','◷ Por horas')+'</div>';}
+/* la leyenda del tablón, detrás del ⓘ de la cabecera (los colores son los del conductor y los de Mes) */
+function semLeyendaHTML(){
+  return '<div class="tb-ley"><span><i class="k-work"></i>jornada</span><span><i class="k-guard"></i>guardia</span><span><i class="k-noche"></i>dormir</span><span><i class="k-meal"></i>comida</span><span><i class="k-plan"></i>plan</span><span><i class="k-pend"></i>sin apuntar</span></div>';}
 function anilloHTML(p,size){
   size=size||22;const st=2.8,r=(size-st)/2,c=2*Math.PI*r;
   return '<svg class="anillo" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r.toFixed(1)+'" fill="none" stroke="var(--line)" stroke-width="'+st+'"/>'+
@@ -7431,13 +7440,15 @@ function semHabitosHTML(days){
         (k>hoyK||h.auto?' disabled':' data-a="hab-mark" data-id="'+esc(h.id)+'" data-key="'+k+'"')+' aria-label="'+esc(h.nombre)+' '+k+'">'+(on?'✓':'')+'</button>';}).join('')+
       '<span class="st">🔥'+rachaHabito(h)+'</span>';}).join('');
   const sug=habitoSugerencia();
-  return '<div class="card"><h2>Hábitos de la semana<span class="mini" style="margin-left:auto;font-weight:700">'+ok+' de '+toca+'</span></h2>'+
+  /* PLEGADO A UNA FILA POR HÁBITO: eran 273 px y 17 botones con leyenda, el texto de los que se marcan solos
+     y un botón para editar; los hábitos ya se marcan en «Para hoy» y en la tarjeta del día, y se editan en
+     Más › Hábitos. Lo rayado es «no toca» (guardia, saliente…), como en la hoja de cada hábito */
+  return '<div class="card habsem"><h2>Hábitos de la semana<span class="mini" style="margin-left:auto;font-weight:700">'+ok+' de '+toca+'</span>'+
+      '<button class="dlink" style="margin-left:10px" data-a="tab" data-t="habitos" aria-label="editar los hábitos">editar ›</button></h2>'+
     '<div class="shm" style="grid-template-columns:minmax(80px,1.4fr) repeat('+days.length+',1fr) 34px">'+head+rows+'</div>'+
-    '<div class="legend2"><span><i style="background:#34d399"></i>hecho</span><span><i class="b"></i>toca</span><span><i class="ex"></i>no toca (guardia, saliente…)</span></div>'+
     (sug?'<div class="semtip">💡 Los días de <b>'+esc(diaTipoInfo(sug.t)[1].toLowerCase())+'</b> no has hecho <b>'+esc(sug.h.nombre.toLowerCase())+'</b> ninguna vez ('+sug.n+' en 4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.'+
       '<div class="row" style="gap:8px;margin-top:8px"><button class="btn s" data-a="hab-tip-no" data-id="'+esc(sug.h.id)+'" data-t="'+sug.t+'">Dejarlo</button><button class="btn p s" data-a="hab-noen" data-id="'+esc(sug.h.id)+'" data-t="'+sug.t+'">Sí, esos días no</button></div></div>':'')+
-    (hb.items.some(function(h){return h.auto;})?'<p class="mini" style="margin:8px 0 0">Se marcan solos: '+hb.items.filter(function(h){return h.auto;}).map(function(h){return esc(h.icono+' '+h.nombre)+' ('+(HAB_AUTO[h.auto]?HAB_AUTO[h.auto].lab.replace(/^\S+ /,''):'')+')';}).join(' · ')+'</p>':'')+
-    '<div class="row" style="margin-top:8px"><button class="btn s" data-a="tab" data-t="habitos">editar hábitos →</button></div></div>';}
+    '</div>';}
 const HAB_PRESETS=[
   {nombre:'Agua 2 L',icono:'💧',color:'#38bdf8',noEn:[],auto:'agua',min:'1 vaso grande',ancla:{t:'tras',v:'despertar'}},
   {nombre:'Estudio',icono:'📚',color:'#f59e0b',noEn:['guardia','saliente'],auto:'estudio',min:'10 min de test',ancla:{}},
@@ -7533,13 +7544,12 @@ function renderSemanaAgenda(days){
     _calIsoDatos.sem={filas:f7,obj:obj,ahora:horaDecimal(now),claro:!document.documentElement.classList.contains('dark'),
       pie:semResumen(filas.slice(1),obj)+' · toca un andén para abrir ese día'};
     cuerpo='<div id="calIsoSlot" class="calisoslot"></div>';
-  }else cuerpo='<div class="card tablonc"><p class="tb-res">'+semResumen(filas,obj)+'</p>'+semTablonHTML(filas,obj,sel)+
-    '<div class="tb-ley"><span><i class="k-work"></i>jornada</span><span><i class="k-guard"></i>guardia</span><span><i class="k-noche"></i>dormir</span><span><i class="k-meal"></i>comida</span><span><i class="k-plan"></i>plan</span><span><i class="k-pend"></i>sin apuntar</span></div></div>'+
+  }else cuerpo='<div class="card tablonc"><p class="tb-res">'+semResumen(filas,obj)+'</p>'+semTablonHTML(filas,obj,sel)+'</div>'+
     semDiaCardHTML(dSel,nowMin);
+  /* la leyenda y «mi rutina» viven en el ⓘ de la cabecera; los hábitos van plegados a una fila por hábito */
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="semcab">'+semanaNavHTML(true)+'</div>'+semTogHTML('')+calVistaBtn('sem')+cuerpo+
+    '<div class="semcab">'+semanaNavHTML(true)+'</div>'+semTogHTML('')+cuerpo+
     semHabitosHTML(days)+
-    '<div class="row"><button class="btn s" data-a="sem-vista" data-v="rutina">⏰ mi rutina por tipo de día →</button></div>'+
   '</div>';
   if(isoV)calIsoMonta('sem');}
 function renderRutina(){
@@ -16910,7 +16920,8 @@ function asistHoyHTML(k){
   const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK?cnTarjeta(k):null,hh=new Date().getHours();
   const ck=hh>=5?asistCheckinHTML(k):'';
   if(!ck&&!t&&!d&&!c)return '';
-  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din'):'')+(c?asistTjHTML(c,'cn'):'')+'</div>';}
+  /* la primera abierta; las otras, en una línea que se abre al tocar (eran 482 px entre las tres) */
+  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din',true):'')+(c?asistTjHTML(c,'cn',true):'')+'</div>';}
 /* ---------- la semana: cinco números, un cruce y una propuesta ---------- */
 function ventana(fin,dias){
   /* lo de una ventana de días que acaba en «fin»: Tu semana (7) y los objetivos (28) leen lo mismo */
@@ -20470,9 +20481,14 @@ function dinAsis(sinNada,solo){
   for(let i=0;i<DIN_R.length;i++){const r=DIN_R[i](X);if(!r||(sinNada&&r.nada)||(solo&&solo.indexOf(r.id.split(':')[0])<0))continue;
     if(!r.nada&&(A.nunca[r.id.split(':')[0]]||A.nunca[r.id]||(A.sil[r.id]&&A.sil[r.id]>=hk)))continue;return r;}
   return null;}
-function asistTjHTML(t,cls){
-  /* una tarjeta del asistente: la de Hoy y la de Dinero son la misma */
-  return '<div class="astj'+(cls?' '+cls:'')+'"><div class="row"><span class="ico">'+esc(t.ico)+'</span><b>'+esc(t.t)+'</b><span class="sp"></span>'+
+function asistTjHTML(t,cls,plegable){
+  /* una tarjeta del asistente: la de Hoy y la de Dinero son la misma. Plegable: una línea con el título y el
+     texto recortado; al tocarla se abre entera (y tocando el título se vuelve a plegar) */
+  const id=t.id||cls||'';
+  if(plegable&&ui.asistAbre!==id)return '<div class="astj plegada'+(cls?' '+cls:'')+'"><button class="astj-cab" data-a="asist-abre" data-id="'+esc(id)+'" aria-expanded="false">'+
+    '<span class="ico">'+esc(t.ico)+'</span><span class="t"><b>'+esc(t.t)+'</b><small>'+esc(t.txt)+'</small></span><span class="ch">›</span></button></div>';
+  return '<div class="astj'+(cls?' '+cls:'')+'"><div class="row"><span class="ico">'+esc(t.ico)+'</span>'+
+      (plegable?'<button class="astj-tit" data-a="asist-abre" data-id="" aria-expanded="true"><b>'+esc(t.t)+'</b></button>':'<b>'+esc(t.t)+'</b>')+'<span class="sp"></span>'+
       (t.nada?'':'<button class="x" data-a="asist-sil" data-id="'+esc(t.id)+'" aria-label="ahora no (vuelve en 14 días)" title="ahora no">×</button>')+'</div>'+
     '<p>'+esc(t.txt)+'</p>'+(t.acc.length||!t.nada?'<div class="row asacc">'+t.acc.map(function(a){
       return a[4]==='file'?'<label class="btn '+(a[3]?'p ':'')+'s">'+esc(a[0])+'<input type="file" accept="image/*" multiple data-a="'+a[1]+'" hidden></label>':
@@ -23269,7 +23285,8 @@ function act(a,el){
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'hoy-busv':ui.hoyBusV=el.dataset.v==='estacion'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}render();break;
-    case 'hoy-modo':ui.hoyModo=/^(reloj|linea)$/.test(el.dataset.v)?el.dataset.v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
+    case 'hoy-modo':{const v=el.dataset.v;ui.hoyModo=/^(reloj|linea)$/.test(v)?v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}
+      if(v==='bus'||v==='est'){ui.hoyBusV=v==='est'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}}render();break;}
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
     case 'prox-todos':ui.proxTodos=!ui.proxTodos;render();break;
     case 'hoy-hechas':ui.hoyHechas=!ui.hoyHechas;render();break;
@@ -23363,6 +23380,7 @@ function act(a,el){
       if(c.int)flash('hoy te propones: '+String(el.dataset.t||'').replace(/^\S+ /,''));render();break;}
     case 'asist-check-abrir':ui.asistCheck=!ui.asistCheck;render();break;
     case 'asist-mas':ui.asistMas=true;render();break;
+    case 'asist-abre':ui.asistAbre=el.dataset.id||'';render();break;
     case 'asist-corto':{const k=el.dataset.k||iso(new Date());asistS().corto[k]=el.dataset.v==='1';save();
       flash(el.dataset.v==='1'?'hoy, versión corta: el ✓ marca el mínimo':'hoy, entero');render();break;}
     case 'asist-sil':{asistS().sil[el.dataset.id]=iso(addDays(new Date(),14));save();render();break;}
@@ -23512,7 +23530,7 @@ function act(a,el){
     case 'sem-vista':ui.semVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
     case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
     case 'sem-sel':ui.semSel=el.dataset.k||'';render();break;
-    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':'plana';ui[w==='sem'?'semV':'mesV']=v;
+    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':'plana';ui[w==='sem'?'semV':'mesV']=v;if(w==='sem')ui.semVista='';
       try{localStorage.setItem(w==='sem'?SEMV_KEY:MESV_KEY,v);}catch(e){}render();break;}
     case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;

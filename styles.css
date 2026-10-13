@@ -3722,3 +3722,13 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .carne svg{display:block;width:100%;height:auto}
 .carne:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .hoja .card.mesres{border:0;padding:0;background:none;box-shadow:none;margin:0}
+
+/* ============ Semana y Hoy con una fila de mandos; el asistente y los hábitos plegados ============ */
+.semtog.t3{grid-template-columns:1fr 1fr 1fr}
+.hoyseg.h4 button{padding-left:4px;padding-right:4px;font-size:12.5px}
+.habsem h2 .dlink{font-size:12.5px;padding:0}
+.astj.plegada{padding-top:0}
+.astj-cab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:9px 0 3px;font:inherit;color:var(--ink);cursor:pointer;min-height:40px}
+.astj-cab .t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}.astj-cab b{font-size:14px}
+.astj-cab small{color:var(--ink2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.astj-cab .ch{color:var(--ink2);font-size:16px}
+.astj-tit{background:none;border:0;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
