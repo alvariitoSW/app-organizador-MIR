@@ -19,6 +19,10 @@
   for (let d = HOY; d <= 31; d++) { const t = T[d], x = { k: k(d), d: d, dow: new Date(2026, 9, d).getDay(), tipo: t, g: t === "guardia" ? (G[d] || "urg") : "", gh: t === "guardia" ? (G[d] ? "10:00 → 11:15" : "15:00 → 9:15") : "", evs: EV[d] || [] };
     if (t === "libre" && T[d - 1] !== "libre") { x.finde0 = true; if (T[d + 1] === "libre") x.finde1 = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"][new Date(2026, 9, d + 1).getDay()] + " " + (d + 1); }
     if (t === "vac" && T[d - 1] !== "vac") x.vac0 = "30 oct → 1 nov";
+    if (d === HOY) x.tunel = { sale: "9:15", total: 1095, faltan: 400 };   /* hoy de guardia: estás dentro, faltan 6 h 40 */
+    if (t === "guardia" && d !== HOY) x.tunel = { sale: G[d] ? "11:15" : "9:15", total: G[d] ? 75 : 1095 };
+    if (d === 14 || d === 16 || d === 21) x.gym = { t: d === 16 ? "Piscina" : "Fuerza", h: "17:30" };
+    if (d === 14 || d === 15) { x.com = ["8:00", "14:00", "21:00"]; x.hab = 3; }
     dias.push(x); }
   const tira = []; for (let d = 1; d <= 31; d++) tira.push({ k: k(d), tipo: T[d], hoy: d === HOY, pasado: d < HOY });
   const datos = { hoy: k(HOY), claro: /claro/.test(location.hash), hoyTxt: "MAR 13", hoySub: "guardia URG · 15→9", mesTxt: "OCTUBRE", dias: dias, tira: tira,

@@ -30,6 +30,10 @@
 .ct-sigv{fill:#1f6b3a;stroke:#e9f2ff;stroke-width:.8}.ct-sigtv{fill:#f3f7f1;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .ct-sigb{fill:#1a3f8a;stroke:#e9f2ff;stroke-width:.8}.ct-sigtb{fill:#e9f2ff;font-weight:700;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .ct-mesa{fill:#8a6a48}.ct-mesat{fill:#a07a58}
+.ct-sigg{fill:#4b3f7a;stroke:#9c86ff;stroke-width:.8}.ct-sigtg{fill:#e9e4ff;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.ct-sigm{fill:#215f45;stroke:#7fe0a8;stroke-width:.8}.ct-sigtm{fill:#eafff2;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.ct-pen{fill:#ffd66b}.ct-pent{fill:#3b2a05;font-weight:900;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.ct-salida{fill:#e8eef8;fill-opacity:.3}.ct-pared{fill:#0e1322;stroke:#ffd66b;stroke-width:.9}.ct-paredt{fill:#ffd66b;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.ct-paredt.s{fill:#e9f2ff;font-weight:600}
 .ct-frame{fill:var(--ct-frame)}.ct-pillar{fill:var(--ct-pillar)}.ct-strip{fill:#05070c;stroke:#1e2738;stroke-width:1.2}.ct-stt{fill:#5d7394;font:700 9.5px ui-monospace,Menlo,monospace;letter-spacing:.06em}
 .ct-sdot{fill:#2a3a55}.ct-spast{fill:#56708f}.ct-snext{fill:#ffd66b}.ct-sguard{fill:#7d93e0}.ct-svac{fill:#e3a72f}.ct-slibre{fill:#3f8a4f}.ct-scam{fill:none;stroke:#7fecff;stroke-width:1.2}
 .ct-dashtop{fill:var(--ct-dash)}.ct-dashe{stroke:var(--ct-dashe);stroke-width:1.5;fill:none}.ct-lcd{fill:var(--ct-panel);stroke:var(--ct-panele);stroke-width:1.2}.ct-clk{fill:var(--ct-cyan);font:700 24px ui-monospace,Menlo,monospace;text-anchor:middle}
@@ -65,13 +69,26 @@
   /* un cartel plano frente al conductor, con su texto a la medida del cartel */
   function cartel(x, y, z, w, h, cls, txt, sub, tcls, o) {
     if (z < NEAR) return "";
-    const p = pr(x, y, z), q = pr(x + w, y + h, z), sw = q[0] - p[0], sh = p[1] - q[1]; if (sw < 7) return "";
+    const p = pr(x, y, z), q = pr(x + w, y + h, z), sw = q[0] - p[0], sh = p[1] - q[1]; if (sw < 7 || sw > 330) return "";
     const fs = Math.max(4, Math.min(16, sw / Math.max(6, txt.length) * 1.7));
     return '<g' + (o ? ' data-o="' + esc(o) + '"' : "") + '><rect class="' + cls + '" x="' + f1(p[0]) + '" y="' + f1(q[1]) + '" width="' + f1(sw) + '" height="' + f1(sh) + '" rx="' + f1(sh * 0.08) + '"/>' +
       '<text class="' + tcls + '" x="' + f1(p[0] + sw / 2) + '" y="' + f1(q[1] + sh * (sub ? 0.5 : 0.66)) + '" style="font-size:' + f1(fs) + 'px">' + esc(txt) + "</text>" +
       (sub ? '<text class="' + tcls + '" x="' + f1(p[0] + sw / 2) + '" y="' + f1(q[1] + sh * 0.88) + '" style="font-size:' + f1(fs * 0.72) + 'px;opacity:.85">' + esc(sub) + "</text>" : "") + "</g>";
   }
   const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  const dur = (m) => { m = Math.max(0, Math.round(m)); return m >= 60 ? Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : "") : m + " min"; };
+  /* los carteles de salida colgados del techo cada «paso» metros: lo que falta para salir desde ese punto */
+  function salidas(o, z0, z1, d, faltan, paso, desde) {
+    const sale = d.tunel && d.tunel.sale ? "a las " + d.tunel.sale : "";
+    for (let zz = z0 + (desde || 2.2); zz < z1 - 1.4; zz += paso) { const queda = faltan != null ? faltan * (z1 - zz) / (z1 - z0) : null;
+      o.push(cartel(-1.7, 3.35, zz, 3.4, 0.95, "ct-pared", queda != null ? "SALIDA · " + dur(queda) : "SALIDA", sale, "ct-paredt", d.k)); }
+  }
+  function tunel(o, z0, z1, d, faltan) {
+    o.push(poly([[-7, 0, z0], [-7, 7.5, z0], [-7, 7.5, z1], [-7, 0, z1]], "ct-gwl"), poly([[4.8, 0, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [4.8, 0, z1]], "ct-gwr"));
+    o.push(poly([[-7, 7.5, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [-7, 7.5, z1]], "ct-gceil"));
+    for (let zz = z0 + 4; zz < z1 - 0.5; zz += 4) if (zz >= NEAR) o.push(poly([[-1.5, 7.3, zz], [0.4, 7.3, zz], [0.4, 7.3, zz + 1.2], [-1.5, 7.3, zz + 1.2]], "ct-glampo"));
+    salidas(o, z0, z1, d, faltan, 3);
+  }
   const COL = { trabajo: "#d9573f", fuerza: "#7a5cf0", guardia: "#34467e", saliente: "#7d93e0", libre: "#3f8a4f", vac: "#e3a72f" };
 
   /* ---------- la escena: los días desde la cámara (cam = días avanzados) ---------- */
@@ -107,6 +124,22 @@
     }
     /* lo que hay en la carretera, de atrás adelante */
     let nEv = 0;
+    const d0 = dias[0];
+    /* HOY DE GUARDIA (o saliente): estás dentro del túnel. Su salida se acerca según pasan las horas, y en la pared
+       va cada 3 m lo que falta para salir. Solo en la posición de hoy: si avanzas días, el túnel queda atrás */
+    if (cam === 0 && d0 && d0.tunel && d0.tunel.faltan != null) {
+      const T = d0.tunel, frac = T.total ? Math.max(0.1, Math.min(1, T.faltan / T.total)) : 1, z0 = NEAR - 0.3, z1 = NEAR + 4 + 9 * frac, o = [];
+      const XL = -5.4, XR = 3.2, YT = 4.6;
+      o.push('<rect class="ct-gceil" x="0" y="0" width="600" height="' + HY + '"/>');   /* dentro no hay cielo */
+      o.push(poly([[XL, 0, z0], [XL, YT, z0], [XL, YT, z1], [XL, 0, z1]], "ct-gwl"), poly([[XR, 0, z0], [XR, YT, z0], [XR, YT, z1], [XR, 0, z1]], "ct-gwr"));
+      o.push(poly([[XL, YT, z0], [XR, YT, z0], [XR, YT, z1], [XL, YT, z1]], "ct-gceil"));
+      for (let zz = z0 + 1.6; zz < z1 - 0.4; zz += 2) if (zz >= NEAR) o.push(poly([[-1.5, YT - 0.1, zz], [0.4, YT - 0.1, zz], [0.4, YT - 0.1, zz + 0.8], [-1.5, YT - 0.1, zz + 0.8]], "ct-glampo"));
+      /* la luz al final del túnel: la boca de salida, que se acerca según pasan las horas */
+      o.push(poly([[XL, 0, z1], [XR, 0, z1], [XR, YT, z1], [XL, YT, z1]], "ct-salida"));
+      o.push(cartel(XL + 0.6, YT * 0.55, z1 - 0.02, XR - XL - 1.2, YT * 0.3, "ct-pared", "SALIDA" + (T.sale ? " · " + T.sale : ""), dur(T.faltan), "ct-paredt", d0.k));
+      salidas(o, z0, z1, d0, T.faltan, 3, 3.5);
+      out.push(o.join(""));
+    }
     for (let i = dias.length - 1; i >= 1; i--) {
       const d = dias[i], z = zDe(i); if (z - 3 > FAR || z + GAP * 1.6 < NEAR) continue;
       const t = d.tipo, o = [], dow = DIAS[d.dow], fecha = dow + " " + d.d, en = i === 1 ? "mañana" : "en " + i + " días";
@@ -117,15 +150,14 @@
       if (z - 0.27 >= NEAR) { const p = pr(mx, mh * 0.3, z - 0.27), fs = Math.max(3, 0.42 * F / z); if (fs >= 3.5) o.push('<text class="ct-mojt" x="' + f1(p[0]) + '" y="' + f1(p[1] + fs * 0.35) + '" style="font-size:' + f1(fs) + 'px">' + d.d + "</text>"); }
       o.push("</g>");
       if (t === "guardia") {
-        /* el túnel de la guardia: la boca oscura sobre la carretera, el portal y el cartel con el tipo y las horas */
+        /* el túnel de la guardia: paredes, techo y lámparas, con los carteles de salida en la pared; la boca oscura
+           sobre la carretera, el portal y el cartel con el tipo y las horas */
         const z0 = z - 2, z1 = z + GAP * 0.7;
-        o.push(poly([[-7, 0, z0], [-7, 7.5, z0], [-7, 7.5, z1], [-7, 0, z1]], "ct-gwl"), poly([[4.8, 0, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [4.8, 0, z1]], "ct-gwr"));
-        o.push(poly([[-7, 7.5, z0], [4.8, 7.5, z0], [4.8, 7.5, z1], [-7, 7.5, z1]], "ct-gceil"));
+        tunel(o, z0, z1, d, d.tunel ? d.tunel.total : null);
         /* el portal es un marco (dintel y dos jambas); la boca negra solo de lejos: cerca y dentro se ven las paredes y
            las lámparas, que si no, a dos metros del túnel el parabrisas era negro */
         if (z0 > NEAR + 0.6) { o.push(poly([[-8.5, 7.5, z0], [6.3, 7.5, z0], [6.3, 9, z0], [-8.5, 9, z0]], "ct-portal"), poly([[-8.5, 0, z0], [-7, 0, z0], [-7, 7.5, z0], [-8.5, 7.5, z0]], "ct-portal"), poly([[4.8, 0, z0], [6.3, 0, z0], [6.3, 7.5, z0], [4.8, 7.5, z0]], "ct-portal")); }
         if (z0 > 6) o.push(poly([[-7, 0, z0 - 0.02], [4.8, 0, z0 - 0.02], [4.8, 7.5, z0 - 0.02], [-7, 7.5, z0 - 0.02]], "ct-boca"));
-        for (let k2 = 0; k2 < 3; k2++) { const zz = z0 + 4 + k2 * 4; if (zz < z1 && zz >= NEAR) o.push(poly([[-1.5, 7.3, zz], [0.4, 7.3, zz], [0.4, 7.3, zz + 1.2], [-1.5, 7.3, zz + 1.2]], "ct-glampo")); }
         o.push(cartel(-7.2, 9.3, z0 - 0.03, 13.2, 3.4, "ct-sig", "GUARDIA" + (d.g ? " " + d.g.toUpperCase() : "") + " · " + fecha, (d.gh ? d.gh + " · " : "") + en, "ct-sigt", d.k));
         o.push(seg([-8.3, 0, z0 - 0.05], [-8.3, 9.1, z0 - 0.05], "ct-post", 0.18), seg([6.1, 0, z0 - 0.05], [6.1, 9.1, z0 - 0.05], "ct-post", 0.18));
       }
@@ -143,6 +175,14 @@
         o.push(cartel(-6.2, 7, z - 2.02, 10.4, 2.8, "ct-sigv", "SALIDA " + d.d + " · PLAYA ↗", "vacaciones · " + d.vac0, "ct-sigtv", d.k));
         if (z + 4 >= NEAR) { o.push(seg([9, 0, z + 4], [9.6, 5, z + 4], "ct-trunk", 0.5)); for (let a = 0; a < 6; a++) { const an = a / 6 * Math.PI * 2; o.push(poly([[9.6, 5, z + 4], [9.6 + Math.cos(an) * 2.6, 4.7 + Math.sin(an) * 0.4, z + 4 + Math.sin(an) * 1.2], [9.6 + Math.cos(an + 0.5) * 2.2, 4.4 + Math.sin(an + 0.5) * 0.3, z + 4 + Math.sin(an + 0.5) * 1.1]], "", ' style="fill:#2f8a4f"')); } }
       }
+      /* lo del día cuando toca: el entreno (violeta, a la derecha, bajo), las comidas de los dos próximos días (verde,
+         a la izquierda, bajo) y los hábitos que tocan, como banderín en el mojón */
+      if (d.gym) { o.push(seg([5.6, 0, z - 1.0], [5.6, 1.3, z - 1.0], "ct-post", 0.14));
+        o.push(cartel(3.4, 1.3, z - 1.02, 5.2, 1.5, "ct-sigg", "ENTRENO" + (d.gym.h ? " · " + d.gym.h : ""), d.gym.t || fecha, "ct-sigtg", d.k)); }
+      if (d.com && d.com.length) { o.push(seg([-6.4, 0, z - 1.0], [-6.4, 1.3, z - 1.0], "ct-post", 0.14));
+        o.push(cartel(-9.4, 1.3, z - 1.02, 5.6, 1.5, "ct-sigm", d.com.length === 1 ? "COMIDA" : d.com.length + " COMIDAS", d.com.join(" · "), "ct-sigtm", d.k)); }
+      if (d.hab && z - 0.3 >= NEAR) { o.push(poly([[mx, mh, z - 0.3], [mx, mh + 0.7, z - 0.3], [mx + 0.9, mh + 0.5, z - 0.3]], "ct-pen"));
+        const p = pr(mx + 0.3, mh + 0.42, z - 0.31), fs = Math.max(2.5, 0.3 * F / z); if (fs >= 3.5) o.push('<text class="ct-pent" x="' + f1(p[0]) + '" y="' + f1(p[1] + fs * 0.35) + '" style="font-size:' + f1(fs) + 'px">' + d.hab + "</text>"); }
       (d.evs || []).slice(0, 2).forEach((ev, j) => {   /* las señales de los eventos, azules, alternando de lado */
         const izq = (nEv + j) % 2 === 0, px = izq ? -6.2 : 5.4, zz = z - 0.4 - j * 2.4;
         o.push(seg([px, 0, zz], [px, 4.2, zz], "ct-post", 0.16));
@@ -202,7 +242,8 @@
       D = d || { dias: [] }; cam = clamp(cam, 0, maxCam());
       el.classList.toggle("ct-claro", !!D.claro);
       svg.setAttribute("aria-label", "La carretera del mes: " + ((D.dias || []).length) + " días por delante. " + (D.prox && D.prox.guardia ? "Próxima guardia " + D.prox.guardia.txt + ". " : "") + "Arrastra para avanzar días; toca un mojón o un cartel para abrir ese día.");
-      sr.innerHTML = (D.dias || []).slice(1, 15).map((x) => '<button type="button" data-o="' + esc(x.k) + '">' + esc(DIAS[x.dow] + " " + x.d + " · " + x.tipo + ((x.evs || []).length ? " · " + x.evs.map((e) => e.t).join(", ") : "")) + "</button>").join("");
+      sr.innerHTML = (D.dias || []).slice(1, 15).map((x) => '<button type="button" data-o="' + esc(x.k) + '">' + esc(DIAS[x.dow] + " " + x.d + " · " + x.tipo + ((x.evs || []).length ? " · " + x.evs.map((e) => e.t).join(", ") : "") +
+        (x.gym ? " · entreno " + (x.gym.h || "") : "") + (x.com && x.com.length ? " · comidas " + x.com.join(" ") : "") + (x.hab ? " · " + x.hab + " hábitos" : "")) + "</button>").join("");
       pinta();
     }
     return { el: el, actualiza: actualiza, avanza: function (n) { cam = clamp(cam + n, 0, maxCam()); pinta(); return cam; }, donde: function () { return cam; } };

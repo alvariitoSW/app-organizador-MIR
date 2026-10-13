@@ -7477,8 +7477,22 @@ function carreteraDatos(desde){
   const hoyK=iso(new Date()),d0=parseDate(desde||hoyK)||new Date(),hoyInf=dayInfo(hoyK),hoySh=shiftById(hoyInf.shiftId);
   const tipoDe=function(k,inf){const sh=shiftById(inf.shiftId);return inf.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(k);};
   const dias=[];let tAnt=tipoDe(iso(addDays(d0,-1)),dayInfo(iso(addDays(d0,-1))));
+  const ahora=new Date(),nowMin=ahora.getHours()*60+ahora.getMinutes(),hhmm=function(h){const m=Math.round(h*60);return Math.floor(m/60)%24+':'+String(m%60).padStart(2,'0');};
   for(let i=0;i<31;i++){const dt=addDays(d0,i),k=iso(dt),inf=dayInfo(k),t=tipoDe(k,inf),x={k:k,d:dt.getDate(),dow:dt.getDay(),tipo:t,g:'',gh:'',evs:[]};
-    if(t==='guardia'){x.g=String(inf.guard||'').toUpperCase();const g=guardiaHoras(k,inf.guard);if(g)x.gh=hCorta(g.guardia)+' → '+hCorta(g.sale);}
+    const esHoy=k===hoyK;
+    if(t==='guardia'){x.g=String(inf.guard||'').toUpperCase();const g=guardiaHoras(k,inf.guard);
+      if(g){x.gh=hCorta(g.guardia)+' → '+hCorta(g.sale);
+        /* el túnel: cuánto dura y, si es hoy y ya estás dentro, cuánto falta para salir */
+        const a=mins(g.guardia),b0=mins(g.sale),b=b0==null?null:(b0<=a?b0+1440:b0);
+        if(a!=null&&b!=null){x.tunel={sale:hCortaHM(g.sale),total:b-a};if(esHoy&&nowMin>=a&&nowMin<b)x.tunel.faltan=b-nowMin;}}}
+    else if(esHoy){const sal=salidaDeGuardia(k);const b=sal?mins(sal.sale):null;   /* saliente: de madrugada sigues dentro hasta el relevo */
+      if(b!=null&&nowMin<b){const g=guardiaHoras(iso(addDays(dt,-1)),dayInfo(iso(addDays(dt,-1))).guard),a=g?mins(g.guardia):null;x.tunel={sale:hCortaHM(sal.sale),total:a!=null?b+1440-a:b,faltan:b-nowMin};}}
+    /* lo del día: el entreno siempre, las comidas y los hábitos solo en los dos próximos días (cuando toca) */
+    let B=null;try{B=hoyBusDatos(k,inf,esHoy);}catch(e){}
+    const items=(B&&B.dia)||[],gym=items.filter(function(e){return e.k==='gym';})[0];
+    if(gym)x.gym={t:String(gym.t||'').slice(0,22),h:hhmm(gym.a)};
+    if(i>=1&&i<=2){const com=items.filter(function(e){return e.k==='meal';}).map(function(e){return hhmm(e.a);});if(com.length)x.com=com.slice(0,4);
+      const nh=habitosDelDia(k).length;if(nh)x.hab=nh;}
     /* solo lo que tiene fecha: el pádel de cada jueves es rutina (ya va en el tablón) y como señal saldría cada semana */
     x.evs=eventosCalendario(k).filter(function(e){return e.modo==='fecha';}).map(function(e){return {t:e.titulo||'Evento',h:e.hora?hCortaHM(e.hora):''};});
     if(t==='libre'&&tAnt!=='libre'){x.finde0=true;const k1=iso(addDays(dt,1));if(tipoDe(k1,dayInfo(k1))==='libre')x.finde1=DIA3[(dt.getDay()+1)%7]+' '+addDays(dt,1).getDate();}
@@ -7494,7 +7508,8 @@ function carreteraDatos(desde){
   const nEv=dias.reduce(function(a,x){return a+x.evs.length;},0);
   const hh=horasCortasDia(hoyK,hoyInf,hoySh);
   return {hoy:hoyK,claro:!document.documentElement.classList.contains('dark'),hoyTxt:(DIA3[new Date().getDay()]+' '+new Date().getDate()).toUpperCase(),
-    hoySub:(hoyInf.vac?'vacaciones':(hoySh?nombreCorto(hoySh.name).toLowerCase()+(hoyInf.guard?' '+String(hoyInf.guard).toUpperCase():''):'sin día'))+(hh?' · '+hh:''),
+    hoySub:(hoyInf.vac?'vacaciones':(hoySh?nombreCorto(hoySh.name).toLowerCase()+(hoyInf.guard?' '+String(hoyInf.guard).toUpperCase():''):'sin día'))+
+      (dias[0]&&dias[0].tunel&&dias[0].tunel.faltan!=null?' · sales '+dias[0].tunel.sale:(hh?' · '+hh:'')),
     mesTxt:MONTH_FULL[mo].toUpperCase(),dias:dias,tira:tira,prox:prox,
     chips:[{txt:'PARA HOY · '+ph,o:'parahoy'},{txt:nEv+(nEv===1?' EVENTO':' EVENTOS'),o:'eventos'}]};}
 function carreteraAbre(o){

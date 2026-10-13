@@ -12049,6 +12049,37 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la tira de arriba es el mes entero (28–31 marcas) y tocar una marca abre ese día en Hoy', r.d.marcas >= 28 && r.d.marcas <= 31 && !!r.d.k && esDia(r.d), JSON.stringify(r.d));
     check('la carretera no se imprime y «Plana» devuelve la cuadrícula', r.e.papel.slot && !r.e.papel.visible && r.e.plana.cal && !r.e.plana.ruta && r.e.plana.ls === 'plana', JSON.stringify(r.e));
   }
+  // 280) EL TÚNEL POR DENTRO Y LO DEL DÍA EN LA CARRETERA, EN CADENA: (a) con los datos de un día de guardia en
+  // marcha (faltan 900 min de 1 095), la escena pinta el túnel de hoy con la boca de salida y, cada 3 m, un cartel
+  // «SALIDA · 10 h 31 / a las 9:15» que va bajando hasta «2 h 49» en el último; el entreno es una señal violeta («ENTRENO · 17:30»), las comidas
+  // de mañana una verde («3 COMIDAS») y los hábitos, un banderín con el número; (b) avanzado un día ya no hay
+  // túnel de hoy; (c) en la app, con una guardia mañana, su túnel lleva los carteles de salida con lo que dura.
+  // Fija: dentro del túnel no se sabía cuánto faltaba para salir, y la carretera solo contaba eventos.
+  {
+    const r = {};
+    const D = { hoy: '2026-10-14', claro: false, hoyTxt: 'MIÉ 14', hoySub: 'guardia URG · sales 9:15', mesTxt: 'OCTUBRE', prox: {}, chips: [], tira: [],
+      dias: [{ k: '2026-10-14', d: 14, dow: 3, tipo: 'guardia', g: 'URG', gh: '15 → 9', evs: [], tunel: { sale: '9:15', total: 1095, faltan: 900 } },
+        { k: '2026-10-15', d: 15, dow: 4, tipo: 'jornada', g: '', gh: '', evs: [], gym: { t: 'Fuerza', h: '17:30' }, com: ['8:00', '14:00', '21:00'], hab: 3 },
+        { k: '2026-10-16', d: 16, dow: 5, tipo: 'jornada', g: '', gh: '', evs: [] }] };
+    // (c) en la app: la guardia de mañana es un túnel con sus carteles de salida (lo que dura, no lo que falta); la carretera se carga aquí
+    const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 1); const k = P.iso(d), G = P.store.shifts.filter(P.isGuardia)[0];
+      P.__t280 = { k, ov: (P.store.rotation.shiftByDay || {})[k], mode: P.store.rotation.mode }; P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
+    await page.waitForSelector('#main .lqv #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
+    // (a) ya cargado el módulo: la escena con datos de un día de guardia en marcha
+    r.a = await page.evaluate((D) => { const C = window.Carretera; if (!C || !C.escena) return null; const s = C.escena(D, 0), s1 = C.escena(D, 1);
+      const n = (re, t) => (t.match(re) || []).length;
+      return { salida: n(/ct-salida/g, s), carteles: n(/SALIDA · \d+ h/g, s), alas: n(/a las 9:15/g, s), ultimo: /SALIDA · 2 h 49/.test(s), gym: /ENTRENO · 17:30/.test(s) && /Fuerza/.test(s),
+        com: /3 COMIDAS/.test(s) && /8:00 · 14:00 · 21:00/.test(s), hab: /ct-pen/.test(s) && />3<\/text>/.test(s), avanzado: n(/ct-salida/g, s1) }; }, D);
+    r.c = await page.evaluate((k) => { const svg = document.querySelector('#main .lqv #carrSlot .ct svg'); const t = svg ? svg.textContent : '';
+      return { hay: !!svg, manana: /GUARDIA URG/.test(t) && /mañana/.test(t), salidas: (t.match(/SALIDA · \d+ h/g) || []).length, alas: /a las \d+:\d\d/.test(t), hoyTunel: !!svg && !!svg.querySelector('.ct-gceil') }; }, kg);
+    await page.evaluate(() => { const P = window.PG, t = P.__t280; P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; delete P.__t280; P.save(); P.render(); });
+    check('de guardia, la carretera es el túnel de hoy: la boca de salida y cada 3 m un cartel con lo que falta y la hora («SALIDA · 2 h 49 / a las 9:15» en el último)',
+      !!r.a && r.a.salida === 1 && r.a.carteles === 3 && r.a.alas === 3 && r.a.ultimo && r.a.avanzado === 0, JSON.stringify(r.a));
+    check('en la carretera salen el entreno («ENTRENO · 17:30 Fuerza»), las comidas de mañana («3 COMIDAS 8:00 · 14:00 · 21:00») y los hábitos como banderín con el número',
+      !!r.a && r.a.gym && r.a.com && r.a.hab, JSON.stringify(r.a));
+    check('en la app, el túnel de la guardia de mañana lleva los carteles de salida con lo que dura', r.c.hay && r.c.manana && r.c.salidas >= 2 && r.c.alas, JSON.stringify(r.c));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

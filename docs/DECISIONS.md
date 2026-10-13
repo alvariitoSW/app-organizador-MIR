@@ -364,3 +364,29 @@ guarda las dos claves (modo y vista) para que el conductor y la estación sigan 
 
 **Supuestos:** la carretera enseña 31 días desde hoy (desde el día 1 si miras otro mes); dentro del túnel
 (cuando avanzas hasta el día de la guardia) no se pinta el portal, para no ver negro.
+
+## 2026-10-13 · Carretera: lo que falta para salir del túnel y lo del día (del cuestionario de la tanda 3)
+
+**Pedido:** «dentro del túnel que se vea cada x tiempo tantos km/tiempo para salir (terminar la guardia)» y «que
+salten los eventos del Día, incluso que aparezcan algo también para hábitos, comida y entreno cuando toque».
+
+**Elegido:**
+- **El túnel de hoy.** De guardia (o saliente de madrugada, hasta el relevo), la carretera de Hoy empieza dentro
+  del túnel: paredes, techo, lámparas y al fondo la boca de salida, que se acerca según pasan las horas (su
+  distancia es lo que falta entre lo que dura la guardia). En la boca, «SALIDA · 9:15 / 6 h 40»; y cada 3 m, un
+  cartel colgado «SALIDA · 3 h 35 / a las 9:15» con lo que faltará al llegar a ese punto. El salpicadero dice
+  «guardia URG · sales 9:15». Si avanzas días, el túnel de hoy queda atrás. Los túneles de guardias futuras
+  llevan los mismos carteles con lo que dura la guardia entera.
+- **Lo del día, cuando toca.** El entreno de cada día es una señal violeta baja a la derecha («ENTRENO · 17:30 /
+  Fuerza»), sacada del mismo bus que Hoy; las comidas de mañana y pasado, una verde baja a la izquierda
+  («3 COMIDAS / 8:00 · 14:00 · 21:00»); los hábitos que tocan esos dos días, un banderín amarillo con el número en
+  el mojón. Solo dos días de comidas y hábitos: más lejos son rutina y llenarían la carretera de lo mismo.
+- Prueba 280 (en cadena con la 279): con el módulo cargado, la escena con una guardia en marcha (900 de 1 095 min)
+  pinta la boca y tres carteles que bajan hasta «2 h 49», las señales de entreno y comidas y el banderín; en la
+  app, la guardia de mañana lleva sus carteles. Sin los carteles caen 2 de las 3.
+
+**Descartado:** señales de comida y hábitos para los 31 días (ruido), y un cartel por hora (a 11 m de túnel
+caben tres como mucho antes de que se solapen).
+
+**Supuestos:** «faltan» se calcula con la hora del teléfono al pintar; la carretera no se repinta sola cada minuto
+(al volver a Hoy sí). Los carteles se saltan si en pantalla miden menos de 7 px o más de 330 px.
