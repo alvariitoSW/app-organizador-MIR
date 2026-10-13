@@ -9971,6 +9971,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       rutina: document.querySelectorAll('#main .sdc .sdr span').length, matriz: !!document.querySelector('#main .shm'), hoyHab: !!document.querySelector('#main .sdc.hoy .sdhb [data-a="hab-mark"]') }));
     const bh = await page.$('#main .sdc.hoy .sdhb [data-a="hab-mark"]'); if (bh) { await bh.click(); await page.waitForTimeout(100); }
     const marcado = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return !!(P.store.habitos.registro[k] || {}).h242; });
+    /* «mi rutina» vive en el ⓘ de la cabecera de Semana: se abre antes de tocarlo */
+    await page.evaluate(() => { const d = document.querySelector('#main .semcab details'); if (d) d.open = true; });
     await page.click('#main [data-a="sem-vista"][data-v="rutina"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="rut-tipo"][data-t="libre"]'); await page.waitForTimeout(80);
     await page.fill('#rutTxt', 'leer un rato'); await page.click('#main [data-a="rut-add"]'); await page.waitForTimeout(100);

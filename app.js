@@ -7252,6 +7252,7 @@ function semanaNavHTML(conFecha){
     return '<div class="semnav">'+
       '<span class="mini">Modo <b style="color:var(--ink)">plantilla</b>: los días no llevan fecha.</span>'+
       '<span class="sp"></span>'+
+      '<button class="btn s" data-a="sem-vista" data-v="rutina" title="mi rutina por tipo de día">⏰ rutina</button>'+
       '<button class="btn p s" data-a="mode-date">ver mi semana real</button></div>';
   /* el rango se lee de un vistazo («vie 25 sep → jue 1 oct») y al tocarlo abre el calendario del
      móvil para saltar a otra fecha: el <input type=date> va encima, transparente */
