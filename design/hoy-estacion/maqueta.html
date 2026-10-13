@@ -1,0 +1,20 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hoy · tu estación</title>
+<style>
+:root{--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 4px}p{margin:0 0 14px;color:var(--ink2);max-width:1000px}
+.tres{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.col{width:330px}.lbl{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:0 0 8px 2px}
+.col img{width:330px;display:block;border-radius:20px;border:1px solid var(--line)}
+.nota{font-size:13px;color:var(--ink2);margin-top:8px}.nota b{color:var(--ink)}
+.vivo{margin-top:26px}.vivo iframe{width:620px;max-width:100%;height:430px;border:0;display:block;border-radius:18px}
+</style></head><body>
+<h1>«Hoy» como una estación de autobuses</h1>
+<p>Cada cosa del día es un autobús con su hora y su nombre. Hacen cola por orden de llegada: el del andén es lo que estás haciendo (letrero encendido) y los de detrás lo siguiente; cuando uno acaba sale por la derecha y la cola avanza. La cochera es la noche: por la mañana se abre y salen los autobuses; a tu hora de dormir entra el último y baja la puerta. En su fachada, lo que dormiste anoche frente a tu objetivo. Tocar un autobús abre su hoja de siempre; tocar la cochera abre Sueño. Debajo, una tira con «¿Cómo amaneces?» y «Para hoy».</p>
+<div class="tres">
+ <div class="col"><p class="lbl">Antes</p><img src="shots/hoy-antes.png" alt="Hoy ahora, con reloj, lista y tarjetas"><p class="nota"><b>2 102 px</b>: 2,3 pantallas.</p></div>
+ <div class="col"><p class="lbl">Después · 10:24</p><img src="shots/hoy-dia.png" alt="Hoy con la estación de día"><p class="nota"><b>925 px</b>: cabe en una pantalla.</p></div>
+ <div class="col"><p class="lbl">Después · 23:40</p><img src="shots/hoy-noche.png" alt="Hoy con la estación de noche"><p class="nota">De noche, la cochera cerrada con el farol encendido.</p></div>
+</div>
+<div class="vivo"><p class="lbl">La estación, viva (arrastra para mover la hora · toca un autobús)</p><iframe src="estacion.html"></iframe></div>
+</body></html>
