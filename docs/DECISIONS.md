@@ -126,3 +126,32 @@ usuario eligió «solo el nombre»).
 **Supuestos:** las cantidades son por ración de adulto y aproximadas; los pasos de los platos fuera
 del recetario son una propuesta genérica según el método (horno, plancha, guiso…); el desayuno se
 repite en rotación con los platos de desayuno que tengas.
+
+## 2026-10-13 · «Hoy» desde el asiento del conductor
+
+**Contexto:** el usuario quería que «Hoy» entero fuera algo visual y vivo con los eventos del día,
+el sueño y lo demás («una estación de autobuses indicando los eventos mientras se pone la hora»).
+Se probaron tres maquetas: un panel de lamas (le hizo gracia, no le convenció), la estación vista
+desde fuera (mejor, pero «tan alejada») y la vista del conductor: «Me gusta… súbela a main y vamos
+modificándola».
+
+**Elegido:**
+- «Hoy» abre de serie en **🚌 Conductor**; «Reloj» y «Línea» siguen en el mismo interruptor y la
+  elección se recuerda (clave nueva, para que el conductor le salga también a quien tenía el reloj).
+- La vista vive en `fig/conductor.html` (va en la caché sin conexión) y recibe el día por la
+  dirección: la agenda de Hoy (cada cosa con su índice), la hora (avanza sola con la app abierta),
+  lo dormido anoche y el objetivo, el sol y cuántas cosas quedan en «Para hoy».
+- Cada cosa es una parada con su letrero; el autobús está parado en la de ahora y va de camino en
+  los ratos libres. Salpicadero: hora y lo que queda, depósito de sueño, próxima parada y lo de
+  ahora; arriba la línea de hoy, en el retrovisor la última parada. De noche, en la cochera.
+- Tocar un letrero, el visor o el retrovisor abre la hoja de esa cosa (la misma de siempre); el
+  depósito abre Sueño; la máquina de billetes lleva a «Para hoy». Llega por postMessage y solo se
+  acepta de nuestra página y de ese marco.
+- Con el conductor, la tarjeta de Sueño no se repite debajo (está en el salpicadero).
+
+**Descartado por ahora:** dibujarlo dentro de app.js sin marco (más trabajo; se hará si el parpadeo
+al repintar molesta); la tira corta de «¿Cómo amaneces?» (sigue la tarjeta de siempre).
+
+**Supuestos:** en otros días que no son hoy, el conductor se pone a las 10:00; la noche dura tu
+objetivo de sueño si «a la cama» no tiene hora de fin; las cosas sin hora (un entreno sin hora) no
+son parada.

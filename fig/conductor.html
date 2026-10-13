@@ -139,7 +139,8 @@ svg{display:block;width:100%;height:auto;touch-action:pan-y;user-select:none;-we
   if (m(/[#&]s=([0-9.]+)\/([0-9.]+)/)) { const r = m(/[#&]s=([0-9.]+)\/([0-9.]+)/); SUENO = { h: +r[1], obj: +r[2] }; }
   if (m(/[#&]sol=([0-9.]+)\/([0-9.]+)/)) { const r = m(/[#&]sol=([0-9.]+)\/([0-9.]+)/); SOL = [+r[1], +r[2]]; }
   if (m(/[#&]ph=([0-9]+)/)) PH = +m(/[#&]ph=([0-9]+)/)[1];
-  const HT = m(/[#&]t=([0-9.]+)/);
+  const HT = m(/[#&]t=([0-9.]+)/), VIVO = /[#&]vivo(&|$)/.test(H), CARGA = Date.now();
+  let EMBEBIDO = false; try { EMBEBIDO = window.parent !== window && !!window.parent.PG; } catch (e) {}
   if (/[#&]corto(&|$)/.test(H)) document.body.classList.add("corto");
 
   const $ = (id) => document.getElementById(id), svg = $("cab");
@@ -346,7 +347,8 @@ svg{display:block;width:100%;height:auto;touch-action:pan-y;user-select:none;-we
   }
 
   /* ---------- la vida ---------- */
-  const AHORA = HT ? Math.min(23.99, +HT[1]) : null;
+  let AHORA = HT ? Math.min(23.99, +HT[1]) : null;
+  if (VIVO && AHORA != null) { const t0 = AHORA; setInterval(() => { const nuevo = Math.min(23.99, t0 + (Date.now() - CARGA) / 36e5); const sigue = target === AHORA; AHORA = nuevo; if (sigue) { target = AHORA; run(); } }, 30000); }
   let t = AHORA != null ? AHORA : 10.4, target = t, frame = 0, last = 0, touring = AHORA == null, visible = false, idle = 0, clock = 0, toastT = 0;
   const PARADAS = [5, 7.1, 7.6, 10.4, 15.4, 16.4, 18, 19.5, 21, 22.8, 23.6];
   function draw(dt) {
@@ -399,7 +401,9 @@ svg{display:block;width:100%;height:auto;touch-action:pan-y;user-select:none;-we
     if (e) msg = "abriría: " + cap(e.t) + " · " + hhmm(e.a);
     else if (k === "sueno") msg = "abriría: tu sueño";
     else if (k === "parahoy") msg = "abriría: Para hoy";
-    if (msg) { toast(msg); try { window.parent.postMessage({ hoy: e ? { abrir: e.t, a: e.a } : { abrir: k } }, "*"); } catch (er) {} }
+    if (!msg) return;
+    if (EMBEBIDO) { try { window.parent.postMessage({ hoy: e ? { i: e.i, a: e.a } : { abrir: k } }, location.origin); } catch (er) {} }
+    else toast(msg);
   });
   svg.addEventListener("pointerleave", () => { down = null; });
   svg.addEventListener("keydown", (ev) => { const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key]; if (!d) return; ev.preventDefault(); steer(Math.round(target * 4) / 4 + d * 0.25); });

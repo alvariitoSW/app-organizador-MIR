@@ -5239,9 +5239,11 @@ function hoyCuentaAtras(key){
    El día se contaba cuatro veces (reloj, «Ese día», carril y tarjetas de comidas y de entreno).
    Ahora: un interruptor entre el RELOJ (la forma del día, con ahora/luego/después y lo que queda por
    hacer) y la LÍNEA (el carril del día entero). Cada cosa se toca o se mantiene pulsada y abre su hoja. */
-const HOY_MODO_KEY='guardias-hoymodo';
+/* tres maneras de ver el día: desde el asiento del CONDUCTOR (la de serie), el reloj y la línea. La
+   clave es nueva para que el conductor salga a quien ya había elegido el reloj antes de existir */
+const HOY_MODO_KEY='guardias-hoymodo2';
 function hoyModo(){
-  if(!ui.hoyModo){let m='';try{m=localStorage.getItem(HOY_MODO_KEY)||'';}catch(e){}ui.hoyModo=m==='linea'?'linea':'reloj';}
+  if(!ui.hoyModo){let m='';try{m=localStorage.getItem(HOY_MODO_KEY)||'';}catch(e){}ui.hoyModo=/^(reloj|linea)$/.test(m)?m:'bus';}
   return ui.hoyModo;}
 function hoyItems(key,inf){
   /* la agenda del día con lo que ya está hecho: la comida apuntada, el entreno de esa rutina */
@@ -5297,13 +5299,50 @@ function hoyQuedaHTML(it,key,n){
       (ui.hoyHechas?ya.map(function(x){return hoyFilaHTML(x,key,n);}).join(''):'')+'</div>':'');}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy);
-  const seg='<div class="hoyseg" role="tablist">'+[['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
+  const seg='<div class="hoyseg" role="tablist">'+[['bus','🚌 Conductor'],['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
     return '<button role="tab" aria-selected="'+(m===o[0])+'" class="'+(m===o[0]?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
+  if(m==='bus')return seg+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
   return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
+/* ===================== HOY DESDE EL ASIENTO DEL CONDUCTOR =====================
+   fig/conductor.html dibuja el día como una ruta: cada cosa es una parada (en el orden en que llega)
+   y el autobús va de una a otra con la hora; en el salpicadero, la próxima parada, lo de ahora, la
+   hora y el depósito de sueño (anoche frente a tu objetivo). De noche, en la cochera. Recibe el día
+   en la dirección y, al tocar un letrero, el visor, el depósito o la máquina de billetes, avisa aquí
+   (postMessage) para abrir la hoja de esa cosa, Sueño o «Para hoy». */
+function hoyBusDatos(key,inf){
+  const it=hoyItems(key,inf),r3=function(x){return Math.round(x*1000)/1000;};
+  const kind={guard:'work',work:'work',gym:'gym',evt:'plan',meal:'meal'},dia=[];let wake=null;
+  it.forEach(function(x){if(!(x.m2<1440))return;const a=x.m2/60;
+    if(x.tipo==='sleep'){
+      /* «a la cama» es la noche que empieza; lo demás del sueño (levantarse) solo dice cuándo sales */
+      if(/cama|dorm/i.test(x.txt||''))dia.push({a:r3(a),b:r3((x.fin?finMin(x):x.m2+Math.round(suenoCfg().min*60))/60),t:'A DORMIR',k:'sleep',i:x.i});
+      else if(a<14)wake=a;
+      return;}
+    const fin=x.fin?finMin(x):x.m2+30;
+    dia.push({a:r3(a),b:r3(Math.max(fin,x.m2+15)/60),t:nombreCorto(String(x.txt||'')).replace(/[^\p{L}\p{N} +\-:·]/gu,'').trim().toUpperCase().replace(/[\s+·-]+$/,'').slice(0,24)||'EVENTO',k:kind[x.tipo]||'plan',i:x.i});});
+  dia.unshift({a:0,b:r3(wake!=null?wake:7),t:'DORMIR',k:'sleep'});
+  return dia;}
+function hoyBusSrc(key,inf,esHoy){
+  const d=new Date(),ahora=esHoy?d.getHours()+d.getMinutes()/60:10;
+  const n=suenoCuenta(key),sol=solDe(key)||{},r1=function(x){return Math.round(x*10)/10;};
+  let ph=0;try{ph=(paraHoyHTML(key).match(/class="phf(?! hecho)/g)||[]).length;}catch(e){ph=0;}
+  return 'fig/conductor.html#corto'+(esHoy?'&vivo':'')+'&t='+ahora.toFixed(3)+'&ph='+ph+
+    (n&&n.h?'&s='+r1(n.h)+'/'+suenoCfg().min:'')+(sol.sale&&sol.pone?'&sol='+r1(horaDecimal(sol.sale))+'/'+r1(horaDecimal(sol.pone)):'')+
+    '&d='+encodeURIComponent(JSON.stringify(hoyBusDatos(key,inf)));}
+function hoyBusHTML(key,inf,esHoy){
+  return '<iframe class="hoybusf" title="Tu día desde el asiento del conductor: toca un letrero para abrirlo" src="'+esc(hoyBusSrc(key,inf,esHoy))+'"></iframe>';}
+/* lo que se toca en la vista del conductor llega aquí: solo de nuestra propia página */
+window.addEventListener('message',function(ev){
+  if(ev.origin!==location.origin||!ev.data||!ev.data.hoy)return;
+  const f=document.querySelector('#main .hoybusf');if(!f||ev.source!==f.contentWindow)return;
+  const h=ev.data.hoy;
+  if(typeof h.i==='number'){ui.hoyIt={k:fechaHoy(),i:h.i};render();}
+  else if(h.abrir==='sueno'){ui.hoyVista='sueno';ui.snTab='';render();window.scrollTo(0,0);}
+  else if(h.abrir==='parahoy'){const p=document.querySelector('#main .parahoy');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}});
 const HOY_COLOR_TXT={sleep:'el sueño va de fondo, a rayas',work:'tu jornada, en el anillo',guard:'la guardia, en el anillo',
   gym:'el entreno, en el anillo',evt:'un evento tuyo (cita, curso, sesión): va por dentro del reloj',meal:'una comida: un círculo por dentro del reloj, relleno cuando la apuntas'};
 function hoyAccionesHTML(x,k,peq){
@@ -6973,7 +7012,8 @@ function renderHoy(){
     /* debajo del reloj, tres bloques: el sueño en una línea, «Para hoy» (todo lo que hay que hacer,
        en una lista que se marca) y lo que viene. Eran hasta diez tarjetas sueltas, ~1 000 px, y la
        del sol repetía lo que ya dice el reloj: el arco amarillo se toca y abre su hoja */
-    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+suenoHoyCardHTML()+paraHoyHTML(hoy)+proximosPuntualesHTML():
+    /* con el conductor, el sueño ya va en el salpicadero (el depósito abre Sueño) */
+    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML())+paraHoyHTML(hoy)+proximosPuntualesHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
 }
@@ -23005,7 +23045,7 @@ function act(a,el){
       break;}
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
-    case 'hoy-modo':ui.hoyModo=el.dataset.v==='linea'?'linea':'reloj';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
+    case 'hoy-modo':ui.hoyModo=/^(reloj|linea)$/.test(el.dataset.v)?el.dataset.v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}render();break;
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
     case 'prox-todos':ui.proxTodos=!ui.proxTodos;render();break;
     case 'hoy-hechas':ui.hoyHechas=!ui.hoyHechas;render();break;

@@ -47,6 +47,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     executablePath: fs.existsSync(preinstalled) ? preinstalled : undefined,
   });
   const context = await browser.newContext();
+  // «Hoy» abre de serie en la vista del conductor; las pruebas de antes son del reloj y la línea, que
+  // siguen ahí: arrancan en el reloj como antes, y la 275 prueba el conductor
+  await context.addInitScript(() => { try { if (!sessionStorage.getItem('__conductor')) localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} });
   await context.grantPermissions(['camera']);
   const page = await context.newPage();
   const nativeDialogs = [];
@@ -11621,6 +11624,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«Qué tener» lista lo de la semana sin cantidades y marcar ahí lo marca también en «Comprar»',
       r.d.n >= 5 && /Lenteja/.test(r.d.txt) && !/\d+\s*(g|kg|ml)\b/.test(r.d.txt) && !!r.d.id && r.d.enComprar.marca && r.d.enComprar.vista !== false, JSON.stringify(r.d));
     check('«atrás» desde la lectura de tus platos vuelve a Plan', r.e.antes === 'leer' && r.e.despues.v === '' && r.e.despues.tab === 'sem' && r.e.despues.f === 'food' && r.e.despues.card, JSON.stringify(r.e));
+  }
+  // 275) HOY DESDE EL ASIENTO DEL CONDUCTOR, EN CADENA: (a) sin haber elegido nada, Hoy abre en el
+  // conductor con el día de la agenda en la dirección y sin la tarjeta de Sueño (va en el salpicadero);
+  // (b) tocar el visor de la próxima parada abre la hoja de ESA cosa; (c) tocar el depósito abre Sueño;
+  // (d) elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño
+  {
+    const r = {};
+    await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.removeItem('guardias-hoymodo2'); const P = window.PG;
+      P.ui.hoyModo = null; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.waitForTimeout(300);
+    r.a = await page.evaluate(() => { const f = document.querySelector('#main .hoybusf'), src = f ? decodeURIComponent(f.getAttribute('src')) : '';
+      let d = []; try { d = JSON.parse(/[#&]d=(\[.*\])/.exec(src)[1]); } catch (e) {}
+      return { hay: !!f, seg: [...document.querySelectorAll('.hoyseg button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'),
+        n: d.filter((e) => e.k !== 'sleep').length, conI: d.filter((e) => e.k !== 'sleep').every((e) => typeof e.i === 'number'), snhoy: !!document.querySelector('#main .snhoy') }; });
+    // (b) a las 10:24 (la hora va en la dirección): lo próximo es lo primero de la agenda que empieza después
+    const esperado = await page.evaluate(() => { const f = document.querySelector('#main .hoybusf'); if (!f) return null;
+      const src = decodeURIComponent(f.getAttribute('src')), d = JSON.parse(/[#&]d=(\[.*\])/.exec(src)[1]);
+      const sig = d.filter((e) => e.k !== 'sleep' && e.a > 10.4).sort((a, b) => a.a - b.a)[0];
+      /* cambiar solo lo de detrás de # no recarga el marco: primero en blanco y luego con la hora */
+      const nuevo = f.getAttribute('src').replace(/&t=[0-9.]+/, '&t=10.4').replace('&vivo', '');
+      f.setAttribute('src', 'about:blank'); setTimeout(() => f.setAttribute('src', nuevo), 50); return sig ? sig.i : -1; });
+    await page.waitForTimeout(900);
+    const fr = page.frames().find((x) => /conductor\.html/.test(x.url()));
+    if (fr && esperado >= 0) { await fr.click('#nxb'); await page.waitForTimeout(300); }
+    r.b = await page.evaluate(() => ({ it: window.PG.ui.hoyIt, hoja: !!document.querySelector('.hojadia, #hojaDia, [data-a="hoy-it-x"], .hoyhoja') }));
+    // (c) el depósito de sueño
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
+    await page.waitForTimeout(900);
+    const fr2 = page.frames().find((x) => /conductor\.html/.test(x.url()));
+    if (fr2) { await fr2.click('#gval'); await page.waitForTimeout(300); }
+    r.c = await page.evaluate(() => window.PG.ui.hoyVista);
+    // (d) «Reloj» se recuerda
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
+    await page.click('.hoyseg [data-v="reloj"]').catch(() => {});
+    await page.waitForTimeout(150);
+    r.d = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main .hoybusf'), snhoy: !!document.querySelector('#main .snhoy') }));
+    await page.evaluate(() => { sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo2', 'reloj'); const P = window.PG; P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.render(); });
+    check('Hoy abre de serie en el conductor, con el día de la agenda y sin repetir la tarjeta de Sueño',
+      r.a.hay && /^🚌 Conductor\*\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
+    check('en el conductor, tocar la próxima parada abre la hoja de esa cosa del día',
+      esperado >= 0 && r.b.it && r.b.it.i === esperado, JSON.stringify({ esperado, b: r.b }));
+    check('en el conductor, tocar el depósito de sueño abre Sueño', r.c === 'sueno', JSON.stringify(r.c));
+    check('elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño', r.d.ls === 'reloj' && !r.d.bus && r.d.snhoy, JSON.stringify(r.d));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
