@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as k from "../../.claude/skills/anatomy/kit/iso-kit.mjs";
 import * as G from "../../.claude/skills/anatomy/kit/lathe.mjs";
+import { persona } from "../hoy-escenas/piezas.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WIDTH = 600, HEIGHT = 400;
@@ -23,6 +24,7 @@ const ROOF = { x: 28, y: -58, w: 128, d: 50, r: 2 }, ROOF_Z = 60;
 const POSTS = [[40, -46], [142, -46]];
 const CLOCK = [92, -9.6, 46], CLOCK_R = 7.4;
 const GAR = { x: -178, y: -46, w: 68, d: 68, r: 1 }, GAR_H = 46, DOOR = { y0: -4, y1: 18, h: 27 };
+const ZF = 35.5, ALTO_CASA = 72;   /* la casa está encima de la cochera: el suelo del piso y la altura de sus paredes */
 const BUS = { L: 60, W: 14, Z0: 3, Z1: 32 };
 const SLOT = { bay: 44, s0: -24, s1: -94, garage: -174, exit: 196 };
 /* el decorado vive detrás del andén: x de −182 a 156, y de −148 a −64 */
@@ -315,9 +317,17 @@ const FACE_PTS = [[GAR.x + GAR.w, GAR.y, 0], [GAR.x + GAR.w, GAR.y + GAR.d, 0], 
 const DX = GAR.x + GAR.w;
 function garageBack() {
   const out = [`<path class="iso-halo" d="${k.haloOf(GAR, 0, 4, P)}" style="filter:blur(3px)"/>`];
-  out.push(S(k.slabOf(GAR, 0, GAR_H, P, 2, 0.6), { tone: "mid", className: "m-brick" }));
-  out.push(S(k.slabOf({ x: GAR.x - 2, y: GAR.y - 2, w: GAR.w + 2, d: GAR.d + 4, r: 1 }, GAR_H, 3, P, 2, 0.5), { tone: "mid", className: "m-roof" }));
-  out.push(L(k.planOutline(k.insetPlan({ x: GAR.x - 2, y: GAR.y - 2, w: GAR.w + 2, d: GAR.d + 4, r: 1 }, 3), GAR_H + 3, P), { tone: "faint" }));
+  /* la cochera es también la casa: se ve por dentro como una casa de muñecas (sin tejado, la pared de delante
+     baja). Quedan en pie la del fondo, la del lado y la de la puerta, que lleva fuera el indicador del sueño */
+  out.push(S(k.slabOf({ x: GAR.x, y: GAR.y, w: GAR.w, d: GAR.d, r: 0.6 }, 0, 1.2, P, 2, 0.2), { tone: "mid", className: "m-concrete" }));
+  out.push(S(k.slabOf({ x: GAR.x, y: GAR.y, w: GAR.w, d: 1.6, r: 0 }, 0, ALTO_CASA, P, 1), { tone: "mid", className: "m-brick" }));
+  out.push(S(k.slabOf({ x: GAR.x, y: GAR.y, w: 1.6, d: GAR.d, r: 0 }, 0, ALTO_CASA, P, 1), { tone: "mid", className: "m-brick" }));
+  /* el piso de arriba: el forjado sobre el autobús, el suelo de madera y las ventanas del fondo */
+  out.push(S(k.slabOf({ x: GAR.x, y: GAR.y, w: GAR.w, d: GAR.d, r: 0.6 }, ZF - 1.5, 1.5, P, 2, 0.2), { tone: "mid", className: "m-floor" }));
+  out.push(L(Array.from({ length: 7 }, (_, i) => k.onTop([[GAR.x + 1, GAR.y + 8 * (i + 1)], [DX - 1, GAR.y + 8 * (i + 1)]], ZF + 0.02, P)).join(""), { tone: "faint" }));
+  out.push(`<g transform="${front(GAR.y + 1.62)}"><path class="vidrio" d="${rect(GAR.x + 46, ZF + 16, GAR.x + 62, ZF + 28)}"/><path class="vidrio" d="${rect(GAR.x + 8, ZF + 18, GAR.x + 20, ZF + 28)}"/></g>`);
+  out.push(interior());
+  out.push(S(k.slabOf({ x: DX - 1.6, y: GAR.y, w: 1.6, d: GAR.d, r: 0 }, 0, GAR_H, P, 1), { tone: "mid", className: "m-brick" }));   /* la pared de la puerta solo llega al pretil del piso: más alta tapaba la cocina y el sofá */
   const op = [[DX, DOOR.y0, 0], [DX, DOOR.y1, 0], [DX, DOOR.y1, DOOR.h], [DX, DOOR.y0, DOOR.h]];
   out.push(`<path class="garage-dark" d="${quad(op)}"/>`);
   out.push(`<path data-part="door" class="door" d=""/><path data-part="slats" class="door-slat" d=""/>`);
@@ -329,30 +339,94 @@ function garageBack() {
 function garageFront() {
   const out = [];
   const yF = GAR.y + GAR.d;
-  out.push(S(k.slabOf({ x: GAR.x, y: yF - 1, w: GAR.w, d: 1, r: 0 }, 0, GAR_H, P, 1), { tone: "mid", className: "m-brick" }));
+  const PAR = 9;   /* abajo, el pretil de la cochera (el autobús se ve dentro); arriba, el del piso (la casa se ve) */
+  out.push(S(k.slabOf({ x: GAR.x, y: yF - 1.6, w: GAR.w, d: 1.6, r: 0 }, 0, PAR, P, 1), { tone: "mid", className: "m-brick" }));
+  out.push(S(k.slabOf({ x: GAR.x, y: yF - 1.6, w: GAR.w, d: 1.6, r: 0 }, ZF - 1.5, 9.5, P, 1), { tone: "mid", className: "m-brick" }));
   const hil = [];
-  for (let z = 4; z < GAR_H; z += 4) hil.push(`M${GAR.x + 0.6} ${-z}H${DX - 0.6}`);
+  for (let z = 4; z < PAR; z += 4) hil.push(`M${GAR.x + 0.6} ${-z}H${DX - 0.6}`);
+  for (let z = ZF + 2; z < ZF + 8; z += 4) hil.push(`M${GAR.x + 0.6} ${-z}H${DX - 0.6}`);
   out.push(`<g transform="${front(yF + 0.02)}"><path class="brick" d="${hil.join("")}"/></g>`);
-  const g = { u0: -168, u1: -161, z0: 8, z1: 38 };
+  /* el indicador del sueño y el LCD, en la pared de la puerta (la de delante ya es un pretil); u = -y en esa cara */
+  const sideD = (x) => k.sideMatrix([x, 0], 0, P, "right");
+  const g = { u0: 36, u1: 43, z0: 8, z1: 38 };
   const zh = (h) => g.z0 + 1.2 + (g.z1 - g.z0 - 2.4) * Math.min(10, Math.max(0, h)) / 10;
   const marks = [];
   for (let h = 0; h <= 10; h++) marks.push(`M${g.u1 + 0.6} ${-zh(h)}H${g.u1 + (h % 2 ? 2 : 3.4)}`);
-  out.push(S(k.slabOf({ x: g.u0 - 2, y: yF, w: g.u1 - g.u0 + 7, d: 1.2, r: 0.5 }, g.z0 - 2.5, g.z1 - g.z0 + 5, P, 2, 0.3), { tone: "mid", className: "m-steel" }));
-  out.push(`<g transform="${front(yF + 1.25)}">` +
+  out.push(S(k.slabOf({ x: DX, y: -g.u1 - 2, w: 1.2, d: g.u1 - g.u0 + 7, r: 0.5 }, g.z0 - 2.5, g.z1 - g.z0 + 5, P, 2, 0.3), { tone: "mid", className: "m-steel" }));
+  out.push(`<g transform="${sideD(DX + 1.25)}">` +
     `<rect class="gauge-tube" x="${g.u0}" y="${-g.z1}" width="${g.u1 - g.u0}" height="${g.z1 - g.z0}" rx="1.6"/>` +
     `<rect data-part="gauge" class="gauge-fill" x="${g.u0 + 1}" y="${-zh(0)}" width="${g.u1 - g.u0 - 2}" height="0" rx="1"/>` +
     `<path class="gauge-mark" d="${marks.join("")}"/>` +
     `<path data-part="obj" class="gauge-obj" d=""/>` +
     `</g>`);
-  const v = { u0: -156, u1: -128, z0: 25, z1: 33 };
-  out.push(S(k.slabOf({ x: v.u0 - 1.5, y: yF, w: v.u1 - v.u0 + 3, d: 1.2, r: 0.6 }, v.z0 - 1.5, v.z1 - v.z0 + 3, P, 2, 0.3), { tone: "mid", className: "m-steel" }));
-  out.push(`<g transform="${front(yF + 1.25)}"><rect class="lcd" x="${v.u0}" y="${-v.z1}" width="${v.u1 - v.u0}" height="${v.z1 - v.z0}" rx="0.8"/>` +
+  const v = { u0: 8, u1: 32, z0: 25, z1: 33 };
+  out.push(S(k.slabOf({ x: DX, y: -v.u1 - 1.5, w: 1.2, d: v.u1 - v.u0 + 3, r: 0.6 }, v.z0 - 1.5, v.z1 - v.z0 + 3, P, 2, 0.3), { tone: "mid", className: "m-steel" }));
+  out.push(`<g transform="${sideD(DX + 1.25)}"><rect class="lcd" x="${v.u0}" y="${-v.z1}" width="${v.u1 - v.u0}" height="${v.z1 - v.z0}" rx="0.8"/>` +
     `<text data-part="lcd" class="lcd-t" x="${(v.u0 + v.u1) / 2}" y="${-(v.z0 + 2.2)}"></text>` +
     `<text class="lcd-s" x="${(v.u0 + v.u1) / 2}" y="${-(v.z0 - 4.6)}">ANOCHE</text></g>`);
-  out.push(S(k.slabOf({ x: -140, y: yF, w: 6, d: 2.4, r: 0.6 }, 40, 1.4, P, 2), { tone: "mid", className: "m-steel" }));
-  out.push(`<g data-part="farol">${S(k.slabOf({ x: -139.2, y: yF + 0.4, w: 4.4, d: 1.8, r: 0.6 }, 36.4, 3.6, P, 2, 0.3), { tone: "mid", className: "m-lamp-off" })}</g>`);
-  out.push(D([[-174, 4], [-114, 4], [-174, 42], [-114, 42]].map(([x, z]) => at([x, yF + 0.05, z])), { size: 0.45 }));
+  out.push(S(k.slabOf({ x: DX, y: 4, w: 2.4, d: 6, r: 0.6 }, 40, 1.4, P, 2), { tone: "mid", className: "m-steel" }));
+  out.push(`<g data-part="farol">${S(k.slabOf({ x: DX + 0.4, y: 4.8, w: 1.8, d: 4.4, r: 0.6 }, 36.4, 3.6, P, 2, 0.3), { tone: "mid", className: "m-lamp-off" })}</g>`);
+  out.push(D([[-174, 4], [-114, 4]].map(([x, z]) => at([x, yF + 0.05, z])), { size: 0.45 }));
   return out.join("");
+}
+/* ---------- la casa por dentro: dormitorio, baño y cocina al fondo; escritorio y salón delante; el conductor en
+   cada sitio según la hora (todas las posturas dibujadas, la parte viva enseña una) ---------- */
+function interior() {
+  const items = [], add = (c, svg) => items.push({ d: k.depthOf(c, P), svg }), ox = GAR.x, oy = GAR.y, zf = ZF;
+  const slab = (pl, z, h, P_, st, bv) => k.slabOf(pl, z + zf, h, P, st, bv), cyl = (x, y, r, z, h, P_, st, bv) => k.cylinder(x, y, r, z + zf, h, P, st, bv), AT = (q) => at([q[0], q[1], q[2] + zf]);
+  for (const x of [ox + 26, ox + 42]) add([x, oy + 15, 6], S(slab({ x: x - 0.7, y: oy + 1.6, w: 1.4, d: 26, r: 0 }, 1.2, 11, P, 1), { tone: "mid", className: "m-concrete" }));   /* tabiques bajos: la cámara ve por encima */
+  /* dormitorio: la cama, la mesilla con la lámpara y el móvil */
+  let o = S(slab({ x: ox + 4, y: oy + 4, w: 20, d: 12, r: 0.8 }, 1.2, 4, P, 3, 0.4), { tone: "mid", className: "m-wood" });
+  o += S(slab({ x: ox + 4.6, y: oy + 4.6, w: 18.8, d: 10.8, r: 1.2 }, 5.2, 2.4, P, 3, 0.6), { tone: "mid", className: "m-white" });
+  o += S(slab({ x: ox + 5.4, y: oy + 6, w: 5, d: 8, r: 1 }, 7.6, 1.6, P, 3, 0.6), { tone: "hi", className: "m-pillow" });
+  o += S(slab({ x: ox + 4, y: oy + 4, w: 1.2, d: 12, r: 0.3 }, 1.2, 10, P, 2, 0.3), { tone: "mid", className: "m-wood" });
+  o += `<g data-part="manta">` + S(slab({ x: ox + 11, y: oy + 5.4, w: 12, d: 9.2, r: 1 }, 7.6, 1.2, P, 3, 0.4), { tone: "mid", className: "m-cloth" }) + `</g>`;
+  o += `<g data-pose="cama" style="display:none">` + persona(P, [ox + 11, oy + 10, 7.6 + zf], "tumbado") + `</g>`;
+  add([ox + 14, oy + 10, 4], o);
+  o = S(slab({ x: ox + 4, y: oy + 18, w: 5, d: 5, r: 0.5 }, 1.2, 6, P, 2, 0.3), { tone: "mid", className: "m-wood" });
+  o += S(cyl(ox + 6.5, oy + 20.5, 0.3, 7.2, 3.5, P, 8), { tone: "mid", className: "m-steel", crease: "none" }) + `<g data-part="lampara">` + S(cyl(ox + 6.5, oy + 20.5, 1.7, 10.7, 2, P, 12, 0.3), { tone: "hi", className: "m-lamp-off" }) + `</g>`;
+  o += `<g data-part="movil">` + S(slab({ x: ox + 4.5, y: oy + 18.6, w: 1.6, d: 0.9, r: 0.15 }, 7.2, 0.3, P, 1), { tone: "mid", className: "m-lamp-off", crease: "none" }) + `</g>`;
+  add([ox + 6.5, oy + 20.5, 4], o);
+  /* baño: el plato de ducha con la mampara y el vapor, el lavabo */
+  o = S(slab({ x: ox + 28, y: oy + 3, w: 12, d: 12, r: 0.8 }, 1.2, 1.2, P, 3, 0.3), { tone: "mid", className: "m-tile" });
+  o += S(cyl(ox + 39.5, oy + 9, 0.4, 2.4, 20, P, 8), { tone: "mid", className: "m-steel", crease: "none" }) + S(cyl(ox + 34, oy + 9, 1.6, 21.8, 0.6, P, 12), { tone: "hi", className: "m-steel" });
+  o += `<g data-pose="ducha" style="display:none">` + persona(P, [ox + 34, oy + 9, 2.4 + zf], "de-pie", [0, 1]) + `</g>`;
+  o += `<g data-part="vapor" style="opacity:0">` + [[31, 7, 2.2], [36, 6, 1.8], [33, 12, 2]].map(([x, y, r]) => `<circle class="vapor" cx="${AT([ox + x, oy + y, 18]).map((v) => v.toFixed(1)).join('" cy="')}" r="${r}"/>`).join("") + `</g>`;
+  o += `<path class="vidrio" d="${k.pathOf([AT([ox + 28, oy + 15, 1.2]), AT([ox + 40, oy + 15, 1.2]), AT([ox + 40, oy + 15, 18]), AT([ox + 28, oy + 15, 18])], true)}"/>`;
+  add([ox + 34, oy + 9, 8], o);
+  o = S(slab({ x: ox + 28, y: oy + 21, w: 10, d: 6, r: 0.6 }, 1.2, 10, P, 3, 0.4), { tone: "mid", className: "m-white" }) + S(cyl(ox + 33, oy + 23, 0.4, 11.2, 2.6, P, 8), { tone: "hi", className: "m-steel", crease: "none" });
+  add([ox + 33, oy + 24, 6], o);
+  /* cocina: la encimera con la cafetera y la taza, la nevera, el perchero con la chaqueta */
+  o = S(slab({ x: ox + 44, y: oy + 3, w: 22, d: 9, r: 0.5 }, 1.2, 11, P, 3, 0.4), { tone: "mid", className: "m-wood" }) + S(slab({ x: ox + 43.6, y: oy + 2.6, w: 22.8, d: 9.8, r: 0.5 }, 12.2, 1, P, 3, 0.3), { tone: "hi", className: "m-steel" });
+  o += S(slab({ x: ox + 46, y: oy + 4.5, w: 5, d: 5, r: 0.8 }, 13.2, 7, P, 3, 0.6), { tone: "mid", className: "m-lcdcase" }) + S(cyl(ox + 48.5, oy + 7, 1.7, 20.2, 0.8, P, 12), { tone: "mid", className: "m-steel" });
+  o += `<g data-part="taza">` + S(cyl(ox + 54, oy + 7, 1.4, 13.2, 2, P, 12), { tone: "hi", className: "m-lamp-off" }) + `</g>`;
+  add([ox + 55, oy + 7.5, 7], o);
+  o = S(slab({ x: ox + 44, y: oy + 16, w: 8, d: 8, r: 0.6 }, 1.2, 22, P, 3, 0.5), { tone: "hi", className: "m-white" }) + L(k.pathOf([AT([ox + 52.02, oy + 17, 14]), AT([ox + 52.02, oy + 23, 14])]), { tone: "faint" });
+  add([ox + 48, oy + 20, 11], o);
+  add([ox + 55, oy + 16, 10], `<g data-pose="cafe" style="display:none">` + persona(P, [ox + 56, oy + 16, 1.2 + zf], "de-pie", [0, -1]) + `</g>`);
+  o = S(cyl(ox + 61, oy + 25, 2.2, 1.2, 0.6, P, 12), { tone: "lo", className: "m-steel" }) + S(cyl(ox + 61, oy + 25, 0.45, 1.8, 20, P, 8), { tone: "mid", className: "m-steel", crease: "none" });
+  o += `<g data-part="chaqueta">` + S(slab({ x: ox + 58.5, y: oy + 25, w: 5, d: 1.8, r: 0.6 }, 11, 9, P, 3, 0.6), { tone: "mid", className: "m-uni" }) + `</g>`;
+  o += `<g data-pose="vestir" style="display:none">` + persona(P, [ox + 57, oy + 31, 1.2 + zf], "de-pie", [1, 0]) + `</g>`;
+  add([ox + 61, oy + 25, 10], o);
+  /* delante: el escritorio con el flexo y la silla; el sofá y la tele con la play */
+  o = "";
+  for (const [x, y] of [[ox + 4, oy + 35], [ox + 16, oy + 35], [ox + 4, oy + 40], [ox + 16, oy + 40]]) o += S(slab({ x: x - 0.6, y: y - 0.6, w: 1.2, d: 1.2, r: 0.2 }, 1.2, 9, P, 1), { tone: "lo", className: "m-wood", crease: "none" });
+  o += S(slab({ x: ox + 3, y: oy + 34, w: 14, d: 7, r: 0.5 }, 10.2, 1.2, P, 3, 0.3), { tone: "mid", className: "m-wood" });
+  o += S(slab({ x: ox + 6, y: oy + 36, w: 6, d: 4, r: 0.2 }, 11.4, 0.8, P, 2, 0.2), { tone: "hi", className: "m-white" });
+  o += S(cyl(ox + 14.5, oy + 36, 0.3, 11.4, 5, P, 8), { tone: "mid", className: "m-steel", crease: "none" }) + `<g data-part="flexo">` + S(cyl(ox + 14.5, oy + 36, 1.6, 16.4, 1.6, P, 12, 0.3), { tone: "hi", className: "m-lamp-off" }) + `</g>`;
+  add([ox + 10, oy + 37.5, 6], o);
+  o = S(slab({ x: ox + 7.5, y: oy + 28.5, w: 5, d: 5, r: 0.8 }, 5.2, 1, P, 2, 0.3), { tone: "mid", className: "m-wood" }) + S(slab({ x: ox + 7.5, y: oy + 28.5, w: 5, d: 1, r: 0.2 }, 6.2, 7, P, 2, 0.3), { tone: "mid", className: "m-wood" });
+  o += S(cyl(ox + 10, oy + 31, 0.5, 1.2, 4, P, 8), { tone: "lo", className: "m-steel", crease: "none" });
+  o += `<g data-pose="escritorio" style="display:none">` + persona(P, [ox + 10, oy + 31, 6.2 + zf], "sentado") + `</g>`;
+  add([ox + 10, oy + 31, 4], o);
+  o = S(slab({ x: ox + 44, y: oy + 27, w: 14, d: 6, r: 1 }, 1.2, 5, P, 3, 0.6), { tone: "mid", className: "m-cloth" }) + S(slab({ x: ox + 44, y: oy + 27, w: 14, d: 1.6, r: 0.8 }, 6.2, 5, P, 3, 0.6), { tone: "mid", className: "m-cloth" });
+  o += `<g data-pose="salon" style="display:none">` + persona(P, [ox + 51, oy + 31, 6.2 + zf], "sentado") + S(slab({ x: ox + 49, y: oy + 34.5, w: 4, d: 1.6, r: 0.5 }, 12.6, 1, P, 3, 0.4), { tone: "mid", className: "m-lcdcase" }) + `</g>`;
+  add([ox + 51, oy + 30, 4], o);
+  o = S(slab({ x: ox + 44, y: oy + 36.5, w: 12, d: 3.5, r: 0.4 }, 1.2, 6, P, 3, 0.3), { tone: "mid", className: "m-wood" }) + S(slab({ x: ox + 45, y: oy + 37.5, w: 10, d: 1.2, r: 0.3 }, 7.2, 9, P, 2, 0.3), { tone: "lo", className: "m-lcdcase" });
+  o += `<g transform="${front(oy + 38.72)}"><path data-part="tv" class="pant" d="${rect(ox + 45.6, 8 + zf, ox + 54.4, 15.4 + zf)}"/></g>`;
+  o += S(slab({ x: ox + 46, y: oy + 37.8, w: 4, d: 2, r: 0.4 }, 7.2, 1, P, 3, 0.3), { tone: "mid", className: "m-lcdcase" });
+  add([ox + 50, oy + 38, 7], o);
+  return items.sort((a, b) => a.d - b.d).map((i) => i.svg).join("");
 }
 function busSvg(LV, TXT, HORA) {
   const { L: BL, W: BW, Z0, Z1 } = BUS, out = [];
@@ -426,6 +500,8 @@ const MATS = {
   pine: ["#1f5a3e", "#5f9e72"], leaf: ["#3f8a4f", "#86c47a"], roca: ["#59606c", "#b4bac4"],
   sea: ["#1f4f73", "#7fb6dc"], faro: ["#e9eef5", "#ffffff"], faroR: ["#c9302c", "#e5484d"], vest: ["#1d2b4a", "#33456e"], shirt: ["#9cc3ea", "#b9d6f2"],
   pant: ["#2a3550", "#3e4a66"], skin: ["#d8a982", "#e8bf9a"], amber: ["#ffd66b", "#f2b929"],
+  uni: ["#2f5fb3", "#4a7fd6"], gorra: ["#1d3a73", "#2d4f94"], cloth: ["#5c79c9", "#8fa8e6"], white: ["#e6ebf2", "#ffffff"], pillow: ["#f2f4f8", "#ffffff"], tile: ["#c9d6e4", "#e6edf5"],
+  floor: ["#3a2f27", "#d9c3a5"], lcdcase: ["#0e1626", "#26334a"],
   ...Object.fromEntries(Object.entries(LIBREAS).map(([n, c]) => [n, c])),
 };
 const CSS = [
@@ -436,6 +512,7 @@ const CSS = [
   /* la farola, el farol y los focos encendidos no se apagan con la noche */
   mat(".es .m-lamp", tono("#ffd66b", true)), mat(".es[data-theme=light] .m-lamp", tono("#ffcf4a", false)),
   ...Object.entries(LIBREAS).map(([n, [d, l]]) => `.es .lv.${n}{fill:${d}}.es[data-theme=light] .lv.${n}{fill:${l}}`),
+  ".es .vidrio{fill:#9fd3ff;fill-opacity:.22;stroke:#bfe7ff;stroke-width:.5}.es .vapor{fill:#e6ebf2;fill-opacity:.4;transition:opacity .6s}.es[data-theme=light] .vapor{fill:#8a9ab2;fill-opacity:.3}.es .pant{fill:#0d1726}.es .pant.on{fill:#7fe0a8;fill-opacity:.6}.es [data-pose],.es [data-part=vapor]{transition:opacity .4s}",
   ".es{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}.es svg{display:block;width:100%;height:auto}.es svg:focus-visible{outline:2px solid #ffd66b;outline-offset:2px;border-radius:14px}",
   ".es [data-amb]{transition:opacity .9s ease}.es [data-bus],.es .garaje{cursor:pointer}.es [data-bus]:hover .sign{stroke:#38e1ff;stroke-width:.5}",
   ".es .l-paint{stroke:#8fa6c6!important;stroke-opacity:.55}.es .l-bay{stroke:#e3b341!important;stroke-width:.9px}.es[data-theme=light] .l-paint{stroke:#ffffff!important;stroke-opacity:.9}",
@@ -504,6 +581,20 @@ const live = String.raw`
     const grupos = AMBS.map((a) => [a, [...svg.querySelectorAll("[data-amb]")].filter((g) => g.getAttribute("data-amb").split(" ").indexOf(a) >= 0)]);
     const todos = [...svg.querySelectorAll("[data-amb]")];
     const farol = $("farol"), farola = $("farola"), faro = $("faro"), focos = [...svg.querySelectorAll('[data-part="foco"]')];
+    /* la casa por dentro: el conductor en una postura por escena, y lo que se enciende con él */
+    const poses = [...svg.querySelectorAll("[data-pose]")], movil = $("movil"), lamparaM = $("lampara"), flexo = $("flexo"), tv = $("tv"), vapor = $("vapor"), taza = $("taza"), chaqueta = $("chaqueta"), manta = $("manta");
+    const POSE = { cama: "cama", movil: "cama", leer: "cama", siesta: "cama", ducha: "ducha", cafe: "cafe", vestir: "vestir", escritorio: "escritorio", salon: "salon", casa: "salon" };
+    let poseSet = null;
+    function enCasa(t) {
+      const casa = (D.esc && D.esc.casa) || [], sg = casa.find((s) => t >= s[0] && t < s[1]), e = sg ? sg[2] : "", pose = POSE[e] || "";
+      if (pose === poseSet && e === enCasa.e) return; poseSet = pose; enCasa.e = e;
+      poses.forEach((g) => { g.style.display = g.getAttribute("data-pose") === pose ? "" : "none"; });
+      if (manta) manta.style.display = pose === "cama" ? "none" : "";
+      if (vapor) vapor.style.opacity = e === "ducha" ? "1" : "0";
+      if (movil) lampara(movil, e === "movil"); if (lamparaM) lampara(lamparaM, e === "movil" || e === "leer"); if (flexo) lampara(flexo, e === "escritorio"); if (taza) lampara(taza, e === "cafe");
+      if (tv) tv.classList.toggle("on", e === "salon" || e === "casa");
+      if (chaqueta) chaqueta.style.display = (e === "escritorio" || e === "salon" || e === "casa" || e === "ducha" || e === "leer" || e === "movil" || e === "cama") ? "" : "none";
+    }
     const lampara = (n, on) => n.querySelectorAll(".m-lamp-off,.m-lamp").forEach((x) => { x.classList.toggle("m-lamp", on); x.classList.toggle("m-lamp-off", !on); });
     const still = matchMedia("(prefers-reduced-motion: reduce)");
     const BIG = "M-50 -50H" + (W + 50) + "V" + (H + 50) + "H-50Z", facePath = "M" + FACE.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L") + "Z";
@@ -597,7 +688,7 @@ const live = String.raw`
       const want = (t < WAKE || t >= BED) && !flota.some((e) => e.k === "guard" && t >= e.a && t < e.b) ? 0 : 1;
       abierta = still.matches || !dt ? want : abierta + (want - abierta) * (1 - Math.exp(-dt / 0.35));
       if (Math.abs(want - abierta) < 0.002) abierta = want;
-      pintaPuerta(abierta); pintaReloj(t);
+      pintaPuerta(abierta); pintaReloj(t); enCasa(t);
       lampara(farol, luz < 0.5); lampara(farola, luz < 0.6); focos.forEach((f) => lampara(f, luz < 0.75)); if (faro) lampara(faro, luz < 0.6);
       let busy = abierta !== want;
       const st = estado(t);
@@ -666,7 +757,7 @@ const live = String.raw`
           AHORA = h; if (!mirando) { target = h; run(); }
         }, 30000);
       }
-      ambSet = ""; buses.forEach((b) => { b.x = destino(b, t); });
+      ambSet = ""; poseSet = null; buses.forEach((b) => { b.x = destino(b, t); });
       draw(0);
     }
     return { el, actualiza, hora: () => t };

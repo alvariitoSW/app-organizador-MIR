@@ -555,3 +555,26 @@ parada (la cámara ya está encima: iba fuera de plano).
 
 **Supuestos:** la rotación cabe en 22 letras; el taxi solo antes de llegar a la primera parada; la barra solo
 mientras estás parado en un entreno.
+
+## 2026-10-13 · Tanda 4 · La casa encima de la cochera (la estación por dentro)
+
+**Elegido:**
+- La cochera de la estación es ahora **un piso sobre la cochera**: abajo sigue entrando el autobús por la persiana;
+  arriba, sin tejado y con un pretil bajo, la casa como una casa de muñecas: dormitorio (cama, mesilla con la
+  lámpara y el móvil), baño (plato de ducha con mampara y vapor, lavabo), cocina (encimera con la cafetera y la
+  taza, nevera, perchero con la chaqueta del uniforme), y delante el escritorio con el flexo y la silla, y el sofá
+  con la tele y la play. Tabiques bajos para que la cámara vea por encima; la pared de la puerta solo llega al
+  pretil del piso (más alta tapaba la cocina y el sofá). El indicador del sueño y el LCD «ANOCHE» pasan a la pared
+  de la puerta.
+- **El conductor está donde dice `estadoDe`**: cinco posturas dibujadas una vez (en la cama, en la ducha, en la
+  cocina, en el perchero, en el escritorio, en el sofá) y la parte viva enseña la que toca por `D.esc.casa`;
+  con él se encienden la lámpara y el móvil (móvil en la cama), el flexo (estudio), la tele (salón), la taza
+  (café) y el vapor (ducha); la manta se quita cuando está acostado. Fuera de casa no se le ve: va en el autobús.
+- La figura vive en `design/hoy-escenas/piezas.mjs`, compartida con la hoja de escenas. Prueba 287 (módulo, en
+  cadena con la estación cargada).
+
+**Descartado:** la casa en la planta baja detrás del autobús (lo tapaba entero) y quitar el autobús de la cochera
+(es la metáfora de estar en casa: ahora se ven los dos).
+
+**Supuestos:** `fig/estacion.js` pasa de 506 a 623 KB (se carga solo al elegir Estación); las luces de la
+casa no cambian el decorado de fuera.

@@ -5555,7 +5555,9 @@ function conductorEscenas(key){
   let D;try{D=diaEscenas(key);}catch(e){return {};}
   const iv=function(e){return D.seg.filter(function(x){return x.e===e;}).map(function(x){return [x.a,x.b];});};
   const d=parseDate(key),ms=d?monthService(d.getFullYear(),d.getMonth()):null,sv=ms&&ms.service?String(ms.service):'';
-  return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):''};}
+  const CASA={cama:1,movil:1,leer:1,siesta:1,ducha:1,cafe:1,vestir:1,escritorio:1,salon:1,casa:1};
+  return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',
+    casa:D.seg.filter(function(x){return CASA[x.e];}).map(function(x){return [x.a,x.b,x.e];})};}
 function hoyBusHTML(key,inf,esHoy){
   try{_condDatos=hoyBusDatos(key,inf,esHoy);_condDatos.esc=conductorEscenas(key);}catch(e){_condDatos={dia:[],noches:[]};}
   const est=hoyBusVista()==='estacion';

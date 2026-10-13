@@ -12186,7 +12186,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hb284p', nombre: 'Pantallas fuera', icono: '📵', color: '#818cf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.habitosS().registro[ks.t] = Object.assign({}, P.habitosS().registro[ks.t] || {}, { hb284t: 'ok' });
       const seg = (k) => P.diaEscenas(k).seg, ea = (k, e) => seg(k).filter((x) => x.e === e), T = seg(ks.t), par = ea(ks.t, 'parada')[0];
-      const out = { sh: Object.keys(SH).filter((j) => !SH[j]), tipo: P.diaEscenas(ks.t).tipo, orden: T.filter((x) => x.a < 8.1 && x.e !== 'cama').map((x) => x.e).join('>'), parada: par ? [par.a, par.b, par.ultimo] : null, taxi: ea(ks.t, 'taxi').map((x) => [x.a, x.b]),
+      const out = { sh: Object.keys(SH).filter((j) => !SH[j]), tipo: P.diaEscenas(ks.t).tipo, orden: T.filter((x) => x.a < 8.1 && x.e !== 'cama' && x.e !== 'comida').map((x) => x.e).join('>'), parada: par ? [par.a, par.b, par.ultimo] : null, taxi: ea(ks.t, 'taxi').map((x) => [x.a, x.b]),
         bus: ea(ks.t, 'bus').length, sesion: ea(ks.t, 'sesion').map((x) => [x.a, x.b, x.dentro]), bici: ea(ks.t, 'bici').map((x) => [x.a, x.b]), escritorio: ea(ks.t, 'escritorio').length, leer: ea(ks.t, 'leer').length, movil: ea(ks.t, 'movil').length,
         e1015: P.estadoDe(ks.t, 10.25).e, e14: P.estadoDe(ks.t, 14).e, e0733: P.estadoDe(ks.t, 7.7).e, finJ: (ea(ks.t, 'cabina')[0] || {}).b, regleta: P.mananaRegleta(ks.t).map((x) => x.txt).join('>'),
         gBici15: ea(ks.g, 'bici').filter((x) => Math.abs(x.a - 15) < 0.01).length, gTipo: P.diaEscenas(ks.g).tipo,
@@ -12228,7 +12228,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.c = await page.evaluate((hubo) => { const P = window.PG, hoy = P.iso(new Date()), m = P.store.manana[hoy]; return { hubo, guardada: hubo ? !!(m && /^\d{2}:\d{2}$/.test(m.salio)) : null }; }, !!hayHoy);
     await page.evaluate(() => { const P = window.PG, t = P.__t285; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.tab = t.tab; delete P.__t285; P.save(); P.render(); });
     check('la tira de la mañana: hitos (levantarse … salir de casa, bus, último bus), «saliste a las 7:40 · tarde: taxi» y deshacer; el hábito «taxi» se marca solo y «salir a tiempo» no; a las 7:45 vas en taxi',
-      r.hay && r.hitos.indexOf('Salir de casa') >= 0 && r.hitos.indexOf('Último bus') >= 0 && /Saliste a las 7:40/.test(r.txt) && /taxi/i.test(r.txt) && r.deshacer && r.taxi === 'ok' && r.puerta === '' && r.puerta2 === 'ok' && r.e745 === 'taxi' && Math.abs(r.salir - 7.667) < 0.01 && r.sem.n === 2 && r.sem.taxi === 1 && r.sem.aTiempo === 1, JSON.stringify(r));
+      r.hay && r.hitos.indexOf('Salir de casa') >= 0 && r.hitos.some((h) => /^Último/.test(h)) && /Saliste a las 7:40/.test(r.txt) && /taxi/i.test(r.txt) && r.deshacer && r.taxi === 'ok' && r.puerta === '' && r.puerta2 === 'ok' && r.e745 === 'taxi' && Math.abs(r.salir - 7.667) < 0.01 && r.sem.n === 2 && r.sem.taxi === 1 && r.sem.aTiempo === 1, JSON.stringify(r));
     check('«deshacer» quita la hora apuntada y «he salido» guarda la del móvil', r.b.manana === null && (r.c.hubo === false || r.c.guardada === true), JSON.stringify({ b: r.b, c: r.c }));
   }
   // 286) LAS ESCENAS DEL CONDUCTOR, EN CADENA (módulo, cargado en Hoy): con datos de un día de jornada, sesión,
@@ -12248,6 +12248,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const out = { m748: at(7.8), m1100: at(11), m1509: at(15.15), m1742: at(17.7) }; box.remove(); return out; });
     check('el conductor: la rotación en el parasol, el taxi delante a las 7:48 con las manos en el volante, el manillar de la bici a las 15:09 y la barra del polideportivo a las 17:42',
       !!r && r.m748.rot === '📷 RAYOS · RADIOLOGÍA' && r.m748.taxi && r.m748.manos === 2 && r.m748.volante && !r.m748.bici && !r.m1100.taxi && r.m1100.volante && r.m1509.bici && !r.m1509.volante && !r.m1509.barra && r.m1742.barra && r.m1742.volante && !r.m1742.taxi, JSON.stringify(r));
+  }
+  // 287) LA CASA ENCIMA DE LA COCHERA (la estación), EN CADENA (módulo, cargado desde Hoy → Estación): con las
+  // escenas de casa del día, el conductor está en la ducha a las 7:00 (con vapor), en el sofá con la tele encendida
+  // a las 16:30, en el escritorio con el flexo a las 17:36, en la cama con el móvil a las 22:24 y durmiendo a las
+  // 23:30 (sin manta sobre él); fuera de casa no se ve. Fija: la cochera era una caja cerrada con el autobús.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'estacion'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForFunction(() => !!(window.Estacion && window.Estacion.crea), null, { timeout: 15000 }).catch(() => {});
+    const r = await page.evaluate(() => { const E = window.Estacion; if (!E || !E.crea) return null;
+      const D = { dia: [{ a: 7, b: 7.5, t: 'Desayuno', k: 'meal', i: 0 }, { a: 8, b: 15, t: 'Trabajo', k: 'work', i: 1 }, { a: 17.5, b: 18.75, t: 'Fuerza', k: 'gym', i: 3 }], noches: [{ a: -1.5, b: 6.83, t: 'noche' }, { a: 22.67, b: 30.75, t: 'noche' }],
+        pendiente: [], senales: [], ph: 1, modo: 'hoy', vivo: false, sueno: { h: 7, obj: 8 }, comida: { kc: 0, obj: 2000, pr: 0, prObj: 100 }, sol: [7.6, 19.2], manana: 6.83, claro: false,
+        esc: { taxi: false, bici: [], parque: [], rot: '', casa: [[6.92, 7.17, 'ducha'], [15.83, 17, 'salon'], [17, 18, 'escritorio'], [22.17, 22.67, 'movil'], [22.67, 30, 'cama']] } };
+      const box = document.createElement('div'); box.id = 't287'; box.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px'; document.body.appendChild(box);
+      const c = E.crea({}); box.appendChild(c.el); const es = c.el, $ = (n) => es.querySelector('[data-part="' + n + '"]');
+      const at = (h) => { D.ahora = h; c.actualiza(D); return { pose: [...es.querySelectorAll('[data-pose]')].filter((g) => g.style.display !== 'none').map((g) => g.getAttribute('data-pose')).join(','), tv: $('tv').classList.contains('on'), vapor: $('vapor').style.opacity, flexo: !!$('flexo').querySelector('.m-lamp'), movil: !!$('movil').querySelector('.m-lamp'), manta: $('manta').style.display }; };
+      const out = { h700: at(7), h1000: at(10), h1630: at(16.5), h1736: at(17.6), h2224: at(22.4), h2330: at(23.5), piso: !!es.querySelector('.m-floor') }; box.remove(); return out; });
+    check('la casa encima de la cochera: ducha con vapor a las 7:00, nadie a las 10:00, sofá con la tele a las 16:30, escritorio con el flexo a las 17:36, cama con el móvil a las 22:24 y durmiendo a las 23:30',
+      !!r && r.piso && r.h700.pose === 'ducha' && r.h700.vapor === '1' && r.h1000.pose === '' && !r.h1000.tv && r.h1630.pose === 'salon' && r.h1630.tv && r.h1736.pose === 'escritorio' && r.h1736.flexo && !r.h1736.tv && r.h2224.pose === 'cama' && r.h2224.movil && r.h2224.manta === 'none' && r.h2330.pose === 'cama' && !r.h2330.movil, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
