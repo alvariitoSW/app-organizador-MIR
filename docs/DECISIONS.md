@@ -418,3 +418,29 @@ tablero isométrico (se dibuja grande de origen y se sale de la baldosa como en 
 
 **Supuestos:** el tren se pinta por encima de la casilla vecina solo dentro de su propia casilla (la casilla
 recorta); en el tablero, la baldosa siguiente tapa la cola del vagón, que es lo que se ve en una vía.
+
+## 2026-10-13 · Ajustes: los colores del calendario (el tren, los autobuses, la casa, el árbol)
+
+**Pedido:** «pon en ajustes para que se pueda cambiar el color de los días de la semana o del autobús y de la casa y eso».
+
+**Elegido:**
+- En **Ajustes → Cómo se ve → Calendario**, seis colores con su ficha delante: Guardia · el tren, Jornada · el
+  autobús (su letrero), Entreno · el microbús, Saliente · el tejado, Vacaciones · el tejado, Libre · el árbol; y
+  «colores de serie». Se guardan en `store.calcol` (solo los que cambias; lo demás, los de serie).
+- Cada color tiñe **el mismo material del kit** en todas partes: la ficha de Mes y la leyenda (`.cf`), el tablero
+  isométrico (`.ci`) y el mojón de la carretera (`D.col`), más el borde de la casilla y la variable `--cal-*`
+  para el CSS. `aplicarColoresCal()` calcula las mismas sombras que `comun.mjs` al generar las figuras (con el
+  tono oscuro del tren derivado del color) y las mete en `<style id="cal-col">`, con `html` delante para ganar al
+  CSS generado. Para que el saliente y las vacaciones puedan ir de distinto color, cada casa lleva su tejado
+  (`m-tejsal`, `m-tejvac`) y el árbol del libre es `m-arbol`.
+- **Fallo que salió al hacerlo:** un `<use>` se tiñe según dónde está el símbolo original, no dónde se usa. Los
+  símbolos vivían en un `div` sin `.cf`, así que ni la piel clara ni ningún color de contexto llegaban a las
+  fichas (en modo claro salían con la baldosa oscura). El contenedor de símbolos lleva ahora `.cf`.
+- Prueba 282 en cadena: la tarjeta con sus seis colores, el cambio llega a Mes, al tablero y a la carretera, y
+  «de serie» lo devuelve. Con el ajuste quitado caen las 3.
+
+**Descartado:** colores por día de la semana (lunes, martes…): el usuario habla de los tipos de día (guardia,
+jornada…) y es lo que cambia la ficha; un color por tipo de guardia (URG/UMI) ya lo lleva el aro.
+
+**Supuestos:** el color del autobús de la jornada es el del letrero del techo (la carrocería sigue clara para que
+se lea en las dos pieles); las dos pieles usan el mismo color tuyo, con las sombras de cada una.

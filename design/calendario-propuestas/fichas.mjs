@@ -72,12 +72,12 @@ T.guardiaUmi = tren("l-umi");
 /* la casa con jardín: el césped sobre la baldosa, la casa con el tejado a dos aguas, la puerta y la ventana, el seto
    y el árbol. El saliente vuelve a casa a dormir: la luna sobre el tejado y la flecha que entra por la puerta. Las
    vacaciones son la misma casa de día, con la sombrilla y la piscina */
-function casa({ luna, piscina, flecha }) {
+function casa({ luna, piscina, flecha, tejado }) {
   let o = S(k.slabOf({ x: 2, y: 2, w: C - 4, d: C - 4, r: 2 }, z, 0.5, P, 3, 0.2), { tone: "mid", className: "m-cesped" });
   const H = { x: 5, y: 9, w: 13, d: 12, r: 0.3 }, zh = z + 0.5, hw = 7;
   o += S(k.slabOf(H, zh, hw, P, 2, 0.2), { tone: "mid", className: "m-casa" });
   const F = G.frameAlong([H.x, H.y + H.d / 2, zh + hw], [1, 0, 0]);   /* el tejado: un prisma triangular a lo largo de x */
-  o += S(G.prismOf(F, [[-(H.d / 2 + 1), 0], [H.d / 2 + 1, 0], [0, 5]], -0.8, H.w + 0.8, P), { tone: "mid", className: "m-tejado" });
+  o += S(G.prismOf(F, [[-(H.d / 2 + 1), 0], [H.d / 2 + 1, 0], [0, 5]], -0.8, H.w + 0.8, P), { tone: "mid", className: tejado || "m-tejado" });
   o += `<g transform="${front(H.y + H.d + 0.02)}"><path class="glass" d="${rect(H.x + 2, zh + 0.1, H.x + 5, zh + 4.4)}"/><path class="glass" d="${rect(H.x + 7.5, zh + 2.6, H.x + 11, zh + 5.4)}"/></g>`;   /* la puerta y la ventana */
   o += `<g transform="${side(H.x + H.w + 0.02)}"><path class="glass" d="${rect(-(H.y + H.d) + 3, zh + 2.6, -H.y - 3, zh + 5.4)}"/></g>`;
   o += S(k.cylinder(23.5, 8, 1.1, z + 0.5, 4, P, 10), { tone: "mid", className: "m-trunk", crease: "none" }) + S(G.sphereOf([23.5, 8, z + 7.6], 4, P, { steps: 24 }), { tone: "mid", className: "m-leaf" });   /* el árbol */
@@ -88,11 +88,11 @@ function casa({ luna, piscina, flecha }) {
   if (flecha) o += L(k.onTop([[H.x + 3.5, H.y + H.d + 7], [H.x + 3.5, H.y + H.d + 0.6]], z + 0.52, P) + k.onTop([[H.x + 1.6, H.y + H.d + 3], [H.x + 3.5, H.y + H.d + 0.6], [H.x + 5.4, H.y + H.d + 3]], z + 0.52, P), { className: "l-sal" });
   return o;
 }
-T.saliente = casa({ luna: true, flecha: true });
+T.saliente = casa({ luna: true, flecha: true, tejado: "m-tejsal" });
 /* el libre: el árbol del bosque, con una segunda copa más baja */
 T.libre = S(k.cylinder(cx + 2, cy - 2, 1.3, z, 6, P, 12), { tone: "mid", className: "m-trunk", crease: "none" }) +
-  S(G.sphereOf([cx + 2, cy - 2, z + 10.5], 5.6, P), { tone: "mid", className: "m-leaf" }) + S(G.sphereOf([cx + 5.4, cy - 4.2, z + 8.4], 3.2, P), { tone: "mid", className: "m-leaf" });
-T.vacaciones = casa({ piscina: true });
+  S(G.sphereOf([cx + 2, cy - 2, z + 10.5], 5.6, P), { tone: "mid", className: "m-arbol" }) + S(G.sphereOf([cx + 5.4, cy - 4.2, z + 8.4], 3.2, P), { tone: "mid", className: "m-arbol" });
+T.vacaciones = casa({ piscina: true, tejado: "m-tejvac" });
 return { T, baldosa };
 }
 const { T, baldosa } = fichasDe(P, C);

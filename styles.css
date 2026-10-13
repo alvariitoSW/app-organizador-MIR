@@ -3680,7 +3680,7 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .tb-fila{cursor:pointer}.tb-fondo{fill:transparent}.tb-fila:hover .tb-fondo{fill:color-mix(in srgb,var(--brand) 6%,transparent)}
 .tb-fondo.hoy{fill:color-mix(in srgb,var(--warn) 8%,transparent);stroke:color-mix(in srgb,var(--warn) 55%,transparent)}.tb-fondo.sel{stroke:var(--brand);stroke-width:1.2}
 .tb-dia{fill:var(--ink);font-size:11px;font-weight:800;letter-spacing:.06em}.tb-dia tspan{fill:var(--ink2);font-weight:600}.tb-dia.hoy{fill:var(--warn)}
-.tb-work{fill:#d9573f}.tb-guard{fill:#ff2b3a;stroke:#ff8a94}.tb-sal{fill:#3c5590}.tb-gym{fill:#7a5cf0}.tb-meal{fill:#2f9e6b}.tb-plan{fill:#1fa6c4}
+.tb-work{fill:#d9573f}.tb-guard{fill:var(--cal-guardia,#ff2b3a);stroke:color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff)}.tb-sal{fill:#3c5590}.tb-gym{fill:#7a5cf0}.tb-meal{fill:#2f9e6b}.tb-plan{fill:#1fa6c4}
 .tb-libre{fill:none;stroke:#5a6b8c;stroke-dasharray:2 2}.tb-win{fill:rgba(255,255,255,.55)}.tb-rueda{fill:var(--bg);stroke:color-mix(in srgb,var(--ink2) 40%,transparent)}
 .tb-luna{fill:#e6ecff}.tb-flecha{stroke:#b9c7f3;stroke-width:1.3;fill:none}
 .tb-sello{fill:none;stroke:#5a6b8c}.tb-sello.on{fill:var(--ok);stroke:var(--ok)}
@@ -3689,18 +3689,18 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .tb-lab{font-size:9px;font-weight:700}.tb-lab.w{fill:#e8826e}.tb-lab.g{fill:#8fa3e0}
 .tb-vacio{fill:var(--bg)}.tb-pend{stroke:var(--warn);stroke-width:1.6}
 .tb-ahora{stroke:var(--warn);stroke-width:1.5}.tb-busahora{fill:var(--warn)}.tb-win2{fill:#3b2a05}
-.tb-garaje{fill:var(--bg2);stroke:#3c5590;stroke-width:1.2}.tb-garaje.corta{stroke:var(--warn)}.tb-garaje.guardia{stroke:#ff2b3a}
+.tb-garaje{fill:var(--bg2);stroke:#3c5590;stroke-width:1.2}.tb-garaje.corta{stroke:var(--warn)}.tb-garaje.guardia{stroke:var(--cal-guardia,#ff2b3a)}
 .tb-horas{fill:var(--ink);font-size:11px;font-weight:800;text-anchor:middle}.tb-horas.corta{fill:var(--warn)}.tb-horas.guardia{fill:#9fb2ea;font-size:9.5px}
 .tb-mini{fill:var(--ink2);font-size:7.5px;text-anchor:middle}
 .tb-ley{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--ink2);margin:6px 2px 0}.tb-ley i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.tb-ley .k-work{background:#d9573f}.tb-ley .k-guard{background:#ff2b3a;box-shadow:0 0 0 1px #ff8a94 inset}.tb-ley .k-noche{background:rgba(52,70,126,.5)}.tb-ley .k-meal{background:#2f9e6b;border-radius:50%}.tb-ley .k-plan{background:#1fa6c4;border-radius:50%}.tb-ley .k-pend{border:1.5px solid var(--warn);border-radius:50%}
+.tb-ley .k-work{background:#d9573f}.tb-ley .k-guard{background:var(--cal-guardia,#ff2b3a);box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff) inset}.tb-ley .k-noche{background:rgba(52,70,126,.5)}.tb-ley .k-meal{background:#2f9e6b;border-radius:50%}.tb-ley .k-plan{background:#1fa6c4;border-radius:50%}.tb-ley .k-pend{border:1.5px solid var(--warn);border-radius:50%}
 .calisoslot{min-height:120px}
 
 /* ===== Mes: la ficha de cada día y el abono (diccionario del conductor) ===== */
 .mficha{display:inline-flex;align-items:center;gap:2px;border-radius:6px;padding:1px 4px;font:800 9px/1.25 ui-sans-serif,system-ui,sans-serif;white-space:nowrap;max-width:100%;overflow:hidden;vertical-align:middle}
 .dbox .mficha{margin:2px 0 1px;align-self:flex-start}
-.f-guard{background:#ff2b3a;color:#fff;box-shadow:0 0 0 1px #ff8a94 inset}.f-work{background:color-mix(in srgb,#d9573f 20%,transparent);color:#d9573f}
-.f-gym{background:color-mix(in srgb,#7a5cf0 22%,transparent);color:#8f76f5}.f-sal{background:color-mix(in srgb,#7d93e0 18%,transparent);color:#8fa3e0}
+.f-guard{background:var(--cal-guardia,#ff2b3a);color:#fff;box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff) inset}.f-work{background:color-mix(in srgb,var(--cal-trabajo,#d9573f) 20%,transparent);color:var(--cal-trabajo,#d9573f)}
+.f-gym{background:color-mix(in srgb,var(--cal-fuerza,#7a5cf0) 22%,transparent);color:var(--cal-fuerza,#8f76f5)}.f-sal{background:color-mix(in srgb,#7d93e0 18%,transparent);color:#8fa3e0}
 .f-libre{border:1px dashed #5a6b8c;color:#6f84a6;font-weight:700}.f-vac{background:color-mix(in srgb,#e3a72f 22%,transparent);color:#e3a72f}
 .mleyenda .mficha{padding:0 4px}
 .abono{position:relative;border-radius:16px;padding:11px 14px 11px 16px;margin:10px 0 4px;color:#1b1406;background:linear-gradient(100deg,#fcd34d,#fbbf24 60%,#f59e0b);box-shadow:0 14px 30px -18px #f59e0b}
@@ -3720,6 +3720,8 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .mficha.cf.f-guard svg{width:46px;height:41px;margin:-6px -8px -5px -4px}
 .mleyenda .mficha.cf svg{width:22px;height:20px}
 .mleyenda .mficha.cf.f-guard svg{width:34px;height:30px;margin:-4px -6px -3px -2px}
+/* Ajustes → Cómo se ve → Calendario: cada color con su ficha delante */
+.calcol .fld{position:relative;padding-left:38px}.calcol .cfprev{position:absolute;left:0;top:0}.calcol .cfprev svg{width:34px;height:31px;display:block;overflow:visible}.calcol .fld.mio{outline:1px solid var(--brand);outline-offset:2px;border-radius:8px}
 .mleyenda .mficha.cf{vertical-align:middle}
 .carne{display:block;width:100%;max-width:420px;border:0;background:none;padding:0;margin:6px 0 2px;cursor:pointer;border-radius:14px}
 .carne svg{display:block;width:100%;height:auto}

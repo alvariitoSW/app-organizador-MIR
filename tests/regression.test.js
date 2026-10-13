@@ -12112,6 +12112,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el saliente y las vacaciones son la casa con jardín, y el microbús del entreno no es el autobús de la jornada', r.a.casaSal && r.a.casaVac && r.a.buses, JSON.stringify(r.a));
     check('el tablero isométrico pinta la guardia con el tren rojo (sin el búho azul) y la casa del saliente', r.c.hay && r.c.rojo && !r.c.buho && r.c.casa, JSON.stringify(r.c));
   }
+  // 282) LOS COLORES DEL CALENDARIO EN AJUSTES, EN CADENA: (a) en Ajustes → Cómo se ve, la tarjeta «Calendario» tiene
+  // seis colores, cada uno con su ficha delante; (b) cambiar el de la guardia (azul) y el del saliente (verde) tiñe
+  // la ficha de Mes (el tren y su baldosa), el borde de la casilla, el tablero isométrico y el mojón de la
+  // carretera; (c) «colores de serie» lo devuelve todo al rojo. Fija: un <use> se tiñe según dónde está el
+  // símbolo original, no dónde se usa (por eso la piel clara tampoco llegaba a las fichas).
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; P.store.calcol = {}; P.ui.tab = 'ajustes'; P.ui.ajuVista = 'aspecto'; P.render(); });
+    await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => { const c = document.querySelector('#main [data-cfg="calcol"]');
+      return { hay: !!c, inputs: c ? c.querySelectorAll('input[data-a="cal-color"]').length : 0, fichas: c ? c.querySelectorAll('.cfprev use').length : 0, reset: !!(c && c.querySelector('[data-a="cal-color-reset"]')) }; });
+    await page.evaluate(() => { const set = (k, v) => { const i = document.querySelector('#main input[data-a="cal-color"][data-k="' + k + '"]'); i.value = v; i.dispatchEvent(new Event('change', { bubbles: true })); };
+      set('guardia', '#00b4ff'); set('saliente', '#1f8a4f'); });
+    await page.waitForTimeout(250);
+    const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 2); const k = P.iso(d), G = P.store.shifts.filter(P.isGuardia)[0], k1 = P.iso(new Date(d.getTime() + 864e5));
+      P.__t282 = { k, k1, ov: (P.store.rotation.shiftByDay || {})[k], ov1: (P.store.rotation.shiftByDay || {})[k1], mode: P.store.rotation.mode }; P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
+      const S = P.store.shifts.filter((x) => /sal/i.test(x.code || '') || /saliente/i.test(x.name || ''))[0]; if (S) P.setDayOverride(k1, S.id, '');
+      P.ui.tab = 'month'; P.ui.monSel = ''; P.ui.mesV = 'plana'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(250);
+    r.b = await page.evaluate((k) => { const c = document.querySelector('#main .dbox[data-key="' + k + '"]'), g = document.querySelector('#cf-syms #f-guardia .m-rojo'), t = document.querySelector('#cf-syms #f-saliente .m-tejsal');
+      const pv = (el) => el ? getComputedStyle(el).getPropertyValue('--anatomy-paper').trim() : '?';
+      return { calcol: window.PG.store.calcol, borde: c ? c.style.borderTopColor : '', tren: pv(g), tejado: pv(t), v: getComputedStyle(document.documentElement).getPropertyValue('--cal-guardia').trim(), cfSyms: (document.getElementById('cf-syms') || {}).className || '' }; }, kg);
+    await page.click('#main .mesv [data-v="iso"]');
+    await page.waitForSelector('#main .calisoslot .ci svg [data-day]', { timeout: 10000 }).catch(() => {});
+    r.b.iso = await page.evaluate((k) => { const g = document.querySelector('#main .calisoslot .ci svg [data-day="' + k + '"] .m-rojo'); return g ? getComputedStyle(g).getPropertyValue('--anatomy-paper').trim() : '?'; }, kg);
+    await page.click('#main .mesv [data-v="ruta"]');
+    await page.waitForSelector('#main .calmes #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
+    r.b.mojon = await page.evaluate((k) => { const g = document.querySelector('#main #carrSlot .ct svg g[data-o="' + k + '"] path[style]'); return g ? g.getAttribute('style') : '?'; }, kg);
+    // (c) de serie
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'ajustes'; P.ui.ajuVista = 'aspecto'; P.render(); });
+    await page.waitForTimeout(200);
+    await page.click('#main [data-a="cal-color-reset"]');
+    await page.waitForTimeout(250);
+    r.c = await page.evaluate(() => ({ calcol: window.PG.store.calcol, v: getComputedStyle(document.documentElement).getPropertyValue('--cal-guardia').trim(), tren: getComputedStyle(document.querySelector('#cf-syms #f-guardia .m-rojo')).getPropertyValue('--anatomy-paper').trim(), css: (document.getElementById('cal-col') || {}).textContent || '' }));
+    await page.evaluate(() => { const P = window.PG, t = P.__t282; P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.setDayOverride(t.k1, t.ov1 ? t.ov1.shift : null, t.ov1 ? t.ov1.guard : ''); P.store.rotation.mode = t.mode; delete P.__t282; P.ui.mesV = 'plana'; P.save(); P.render(); });
+    check('Ajustes → Cómo se ve → Calendario: seis colores, cada uno con su ficha delante, y «colores de serie»', r.a.hay && r.a.inputs === 6 && r.a.fichas === 6 && r.a.reset, JSON.stringify(r.a));
+    check('cambiar el color de la guardia y del saliente tiñe la ficha de Mes, el borde de la casilla, el tablero isométrico y el mojón de la carretera',
+      r.b.calcol && r.b.calcol.guardia === '#00b4ff' && r.b.calcol.saliente === '#1f8a4f' && r.b.borde === 'rgb(0, 180, 255)' && r.b.tren === '#00b4ff' && r.b.tejado === '#1f8a4f' && r.b.v === '#00b4ff' && r.b.cfSyms === 'cf' && r.b.iso === '#00b4ff' && /00b4ff/.test(r.b.mojon), JSON.stringify(r.b));
+    check('«colores de serie» devuelve el tren al rojo', r.c.calcol && !Object.keys(r.c.calcol).length && r.c.v === '#ff2b3a' && r.c.tren === '#ff2b3a' && r.c.css === '', JSON.stringify(r.c));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

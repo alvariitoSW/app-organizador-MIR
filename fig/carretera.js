@@ -144,7 +144,7 @@
       const d = dias[i], z = zDe(i); if (z - 3 > FAR || z + GAP * 1.6 < NEAR) continue;
       const t = d.tipo, o = [], dow = DIAS[d.dow], fecha = dow + " " + d.d, en = i === 1 ? "mañana" : "en " + i + " días";
       /* el mojón del día: un hito blanco con la cabeza del color del tipo y el número */
-      const mx = 3.6, mh = 1.1, col = COL[t] || COL.libre;
+      const mx = 3.6, mh = 1.1, col = (D.col && D.col[t]) || COL[t] || COL.libre;   /* el color del tipo, el tuyo si lo has cambiado en Ajustes */
       o.push('<g data-o="' + esc(d.k) + '">' + poly([[mx - 0.25, 0, z - 0.25], [mx + 0.25, 0, z - 0.25], [mx + 0.25, mh, z - 0.25], [mx - 0.25, mh, z - 0.25]], "ct-mojon") +
         poly([[mx - 0.25, mh * 0.62, z - 0.26], [mx + 0.25, mh * 0.62, z - 0.26], [mx + 0.25, mh, z - 0.26], [mx - 0.25, mh, z - 0.26]], "", ' style="fill:' + col + '"'));
       if (z - 0.27 >= NEAR) { const p = pr(mx, mh * 0.3, z - 0.27), fs = Math.max(3, 0.42 * F / z); if (fs >= 3.5) o.push('<text class="ct-mojt" x="' + f1(p[0]) + '" y="' + f1(p[1] + fs * 0.35) + '" style="font-size:' + f1(fs) + 'px">' + d.d + "</text>"); }

@@ -36,6 +36,33 @@ const FRANJA_ALTOS={bajo:290,medio:370,alto:460};
 function franjaAlto(){const k=String((store.franja||{}).alto||'medio');
   return FRANJA_ALTOS[k]||FRANJA_ALTOS.medio;}
 function franjaAltoSem(){return Math.max(220,franjaAlto()-40);}
+/* LOS COLORES DEL CALENDARIO: uno por tipo de día, para la ficha (el tren, los autobuses, el tejado de la casa, el
+   árbol), la casilla de Mes, el tablero isométrico y el mojón de la carretera. Se cambian en Ajustes → Cómo se ve.
+   Cada tipo lleva el material del kit que se tiñe (el tren «rojo» y su tono oscuro, el letrero del urbano «work»,
+   el microbús «gym», los tejados y el árbol) */
+const CAL_TIPOS=[['guardia','Guardia · el tren','#ff2b3a',['rojo']],['trabajo','Jornada · el autobús','#d9573f',['work']],['fuerza','Entreno · el microbús','#7a5cf0',['gym']],
+  ['saliente','Saliente · el tejado','#b3503a',['tejsal']],['vac','Vacaciones · el tejado','#b3503a',['tejvac']],['libre','Libre · el árbol','#3f8a4f',['arbol']]];
+const CAL_KEYS=CAL_TIPOS.map(function(c){return c[0];});
+function calColor(t){const c=(store.calcol||{})[t];if(esColor(c))return c;
+  for(let i=0;i<CAL_TIPOS.length;i++)if(CAL_TIPOS[i][0]===t)return CAL_TIPOS[i][2];return '#888888';}
+function calMix(a,b,f){const h=function(x){return [1,3,5].map(function(i){return parseInt(x.slice(i,i+2),16);});};const A=h(a),B=h(b);
+  return '#'+A.map(function(v,i){return Math.round(v+(B[i]-v)*f).toString(16).padStart(2,'0');}).join('');}
+function calTinte(sel,c,osc){   /* las mismas sombras que calcula el kit al generar las figuras (comun.mjs) */
+  const m=calMix,v=osc?{paper:c,'shade-0':m(c,'#000000',.45),'shade-1':m(c,'#000000',.35),'shade-2':m(c,'#000000',.25),'shade-3':m(c,'#000000',.15),top:m(c,'#ffffff',.12),hi:m(c,'#ffffff',.55),mid:m(c,'#ffffff',.25),lo:m(c,'#000000',.5),faint:m(c,'#000000',.3)}
+    :{paper:c,'shade-0':m(c,'#000000',.22),'shade-1':m(c,'#000000',.16),'shade-2':m(c,'#000000',.1),'shade-3':m(c,'#000000',.04),top:m(c,'#ffffff',.3),hi:m(c,'#000000',.6),mid:m(c,'#000000',.35),lo:m(c,'#000000',.18),faint:m(c,'#000000',.08)};
+  return sel+'{'+Object.keys(v).map(function(k){return '--anatomy-'+k+':'+v[k];}).join(';')+'}';}
+function aplicarColoresCal(){
+  /* las variables --cal-* para el CSS (casilla, leyenda, tablero) y, si has puesto un color tuyo, el tinte del
+     material de esa ficha en las dos pieles (html delante para ganar al CSS generado, que llega después) */
+  const root=document.documentElement.style,css=[];
+  CAL_TIPOS.forEach(function(c){const t=c[0],col=calColor(t),mio=(store.calcol||{})[t];
+    root.setProperty('--cal-'+t,col);
+    if(!esColor(mio))return;
+    const mats=c[3].map(function(n){return [n,col,col];});if(t==='guardia')mats.push(['rojot',calMix(col,'#000000',.77),calMix(col,'#ffffff',.8)]);
+    mats.forEach(function(mm){css.push(calTinte('html .cf .m-'+mm[0],mm[1],true),calTinte('html:not(.dark) body .cf .m-'+mm[0],mm[2],false),
+      calTinte('html .ci .m-'+mm[0],mm[1],true),calTinte('html .ci[data-theme=light] .m-'+mm[0],mm[2],false));});});
+  let st=document.getElementById('cal-col');if(!st){st=document.createElement('style');st.id='cal-col';document.head.appendChild(st);}
+  st.textContent=css.join('\n');}
 function mondayOf(d){const x=new Date(d.getTime());x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
 function addDays(d,n){const x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
 function iso(d){const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10);}
@@ -332,7 +359,7 @@ function load(){
     gEntra:'08:00',gSale:'08:00',gMes:4,despierta:'06:50',acuesta:'22:40',sitio:SITIOS_FIJOS[0].id};
   try{const m=JSON.parse(localStorage.getItem(MKEY)||'[]');if(Array.isArray(m))ui.marks=new Set(m);}catch(e){}
   try{if(localStorage.getItem(TKEY)!=='light')document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}
-  aplicarTema();
+  aplicarTema();aplicarColoresCal();
 }
 /* ===================== temas de color =====================
    Cinco aspectos ya hechos, cada uno con su fondo, su texto, su acento y los colores de la franja
@@ -628,6 +655,8 @@ function normalize(o){
   if(!o.franja.colores||typeof o.franja.colores!=='object')o.franja.colores={};
   Object.keys(o.franja.colores).forEach(function(k){
     if(TLKEYS.indexOf(k)<0||!esColor(o.franja.colores[k]||''))delete o.franja.colores[k];});
+  if(!o.calcol||typeof o.calcol!=='object')o.calcol={};
+  Object.keys(o.calcol).forEach(function(k){if(CAL_KEYS.indexOf(k)<0||!esColor(o.calcol[k]||''))delete o.calcol[k];});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
   /* cuántos meses dura cada rotación: hay servicios de 1 mes y servicios de 2 o 3 */
@@ -7511,6 +7540,7 @@ function carreteraDatos(desde){
     hoySub:(hoyInf.vac?'vacaciones':(hoySh?nombreCorto(hoySh.name).toLowerCase()+(hoyInf.guard?' '+String(hoyInf.guard).toUpperCase():''):'sin día'))+
       (dias[0]&&dias[0].tunel&&dias[0].tunel.faltan!=null?' · sales '+dias[0].tunel.sale:(hh?' · '+hh:'')),
     mesTxt:MONTH_FULL[mo].toUpperCase(),dias:dias,tira:tira,prox:prox,
+    col:CAL_KEYS.reduce(function(a,t){a[t]=calColor(t);return a;},{}),
     chips:[{txt:'PARA HOY · '+ph,o:'parahoy'},{txt:nEv+(nEv===1?' EVENTO':' EVENTOS'),o:'eventos'}]};}
 function carreteraAbre(o){
   if(o.tipo==='dia'){act('hoja-ver',{dataset:{k:o.k}});return;}
@@ -8056,7 +8086,7 @@ function calFigMonta(){
   /* el CSS del kit y los símbolos de las fichas, una vez en el documento */
   if(!window.CalFig||document.getElementById('cf-css'))return;
   const st=document.createElement('style');st.id='cf-css';st.textContent=window.CalFig.css;document.head.appendChild(st);
-  const d=document.createElement('div');d.id='cf-syms';d.setAttribute('aria-hidden','true');d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.innerHTML=window.CalFig.fichas;document.body.appendChild(d);}
+  const d=document.createElement('div');d.id='cf-syms';d.className='cf';d.setAttribute('aria-hidden','true');   /* con .cf: un <use> se tiñe según dónde está el símbolo original, no dónde se usa (así la piel clara y tus colores llegan a las fichas) */d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.innerHTML=window.CalFig.fichas;document.body.appendChild(d);}
 function mesFichaHTML(t,guard){
   const F=MES_FICHAS[t];if(!F)return '';
   const tit=F[1]+(t==='guardia'&&guard?' '+esc(String(guard).toUpperCase()):'');
@@ -8182,7 +8212,7 @@ function renderMonth(){
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     const tipoD=mesTipoDia(d);
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
-      ' style="border-top-color:'+(tipoD==='guardia'?'#ff2b3a':(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
+      ' style="border-top-color:'+(tipoD==='guardia'?calColor('guardia'):(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
 '</span>'+
       (d.shiftId||d.vac?mesFichaHTML(tipoD,d.guard):'<span class="dnm">·</span>')+
@@ -22076,10 +22106,17 @@ function renderAjustes(){
       <div style="margin-top:12px">${carrilHTML(iso(new Date()),{caja:220})}</div></div>
     <!-- «Apariencia» repetía los temas con tres colores sueltos que los pisaban: ahora van dentro de
          Temas, plegados, como «a mano»; el primer día de la semana no es aspecto y va aparte -->
-    <div class="card"><h2>Calendario</h2>
+    <div class="card" data-cfg="calcol"><h2>Calendario</h2>
       <label class="fld" style="max-width:220px">Primer día de la semana en «Mes»
         <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
-          <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label></div>`);
+          <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label>
+      <p class="note" style="margin-top:12px">Los colores de cada tipo de día: el tren de la guardia, los autobuses, el tejado de la casa y el árbol.
+        Cambian la ficha en «Mes», el tablero isométrico y el mojón de la carretera.</p>
+      ${(function(){calFigMonta();const sym={guardia:'guardia',trabajo:'jornada',fuerza:'fuerza',saliente:'saliente',vac:'vacaciones',libre:'libre'};
+        return '<div class="colgrid calcol">'+CAL_TIPOS.map(function(c){const mio=esColor((store.calcol||{})[c[0]]);
+          return '<label class="fld'+(mio?' mio':'')+'"><span class="cfprev cf"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym[c[0]]+'"/></svg></span>'+esc(c[1])+
+            '<input type="color" value="'+esc(calColor(c[0]))+'" data-a="cal-color" data-k="'+c[0]+'" aria-label="color de '+esc(c[1])+'" style="height:30px;padding:2px"></label>';}).join('')+'</div>';})()}
+      <div class="row" style="margin-top:10px"><button class="btn s" data-a="cal-color-reset">colores de serie</button></div></div>`);
   if(v==='lector')return ajuPantalla('\ud83d\udd17 Lector de enlaces',`<div class="card" data-cfg="lector">
       <p class="note">Para que al mandarle un enlace de TikTok la app traiga sola la descripción y la convierta en receta.
       Primero lo intenta directamente con la plataforma; esto es para cuando el navegador no la deja.</p>
@@ -24032,6 +24069,7 @@ function act(a,el){
       confirmar('Se borra «'+((t&&t.nombre)||'este tema')+'» de tus guardados. Si es el que tienes puesto, la app se queda como está.','Sí, borrarlo')
         .then(function(si){if(si)flash(borrarTemaMio(id));});
       break;}
+    case 'cal-color-reset':{store.calcol={};aplicarColoresCal();save();render();flash('Colores del calendario de serie');break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};
       store.franja.colores={};save();render();flash('Colores de la franja restablecidos');break;}
     case 'mes-cfg':{ui.mesHoja=false;
@@ -26374,6 +26412,8 @@ document.addEventListener('change',e=>{
       store.franja.horas=+el.value||12;store.franja.elegido=true;save();render();break;}
     case 'franja-alto':{if(!store.franja)store.franja={colores:{}};
       store.franja.alto=el.value||'medio';save();render();break;}
+    case 'cal-color':{if(!store.calcol)store.calcol={};
+      store.calcol[el.dataset.k]=el.value||'';aplicarColoresCal();save();render();break;}
     case 'franja-color':{if(!store.franja)store.franja={horas:24};
       if(!store.franja.colores)store.franja.colores={};
       store.franja.colores[el.dataset.k]=el.value||'';save();render();break;}
