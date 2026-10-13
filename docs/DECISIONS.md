@@ -491,3 +491,22 @@ tarjetas: conductor 449, asistente 399, para hoy 332, lo que viene 333.
 **Supuestos:** el último bus que te vale pasa 2 min después del tuyo; la ducha dura 15 min y el café 15; la bici
 tarda lo que el viaje (20 min); «sin pantallas» solo si tienes el hábito o la rutina lo dice; de madrugada sin
 noche apuntada no se inventa nada.
+
+## 2026-10-13 · Tanda 2 · La hoja de escenas de Hoy (maquetas con /anatomy, a la espera del visto bueno)
+
+**Elegido:** `design/hoy-escenas/build.mjs` genera `escenas.html` y `escenas-light.html` (390 px): la casa por dentro
+en seis momentos (con el móvil en la cama, durmiendo, la ducha con vapor y mampara, el café en la encimera, el
+estudio con el flexo, el salón con la play), la parada con el poste (línea, 7:35, último 7:37), el reloj, la
+marquesina, tú con la mochila y el taxi detrás (solo si el hábito existe), la cabina en primera persona (manos a
+las 10 y a las 2, el cartel de la rotación «Rayos», la radio con la sesión), el manillar de la bici con la mochila
+en la cesta, el parque de calistenia (barra con el conductor colgado, paralelas, banco, mancuernas) y la regleta de
+la mañana (de levantarse a las 6:50 al hospital a las 8:00, con el tramo de taxi en rojo). La figura es un
+conductor de bloques con gorra, en cuatro posturas (de pie, tumbado, sentado, colgado), compartida por todas las
+escenas. Capturas en `design/hoy-escenas/shots/`.
+
+**Descartado:** dibujar la cabina y la bici en isométrico: en la app son primera persona (el conductor de ahora) y
+la maqueta sigue ese estilo.
+
+**Supuestos:** el conductor es una figura entera (no solo manos) en las escenas isométricas; en la cabina, solo
+manos. El tamaño del conjunto es un «Epic» de /anatomy repartido en tandas: cada escena aquí es una Figure
+(40–80 piezas), no un Hero.
