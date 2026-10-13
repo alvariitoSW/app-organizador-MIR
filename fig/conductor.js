@@ -431,7 +431,7 @@
       });
       /* el taxi, parado junto a la primera parada del día cuando hoy saliste tarde (o lo marcaste): amarillo, con
          la luz en el techo; y en el polideportivo, la barra con el conductor colgado mientras entrena */
-      const primera = R.est.filter((e) => !e.dep)[0];
+      const primera = R.est.filter((e) => !e.dep && TURNO(e.k) && !e.cont)[0];   /* el taxi va al hospital: antes del primer turno, no del desayuno */
       if (D.esc && D.esc.taxi && primera && t < primera.a) { const z0 = Math.max(4.2, primera.s - cam + ZSTOP - 7.5); if (z0 < 120) out.push(taxi(z0)); }
       const cc = camDe(R, t), enGym = cc.k >= 0 && R.est[cc.k] && R.est[cc.k].k === "gym" && cc.parado && t < R.est[cc.k].b;
       if (enGym) out.push(barra(ZSTOP + 2.2, t));
