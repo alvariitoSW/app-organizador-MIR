@@ -285,8 +285,9 @@
       o.push('<circle cx="' + r1(cx) + '" cy="' + r1(Y(1.66)) + '" r="' + r1(0.12 * k) + '" fill="' + (vuelta ? piel : c("#3a2a20", "#0e0a08")) + '"/>');
       o.push('<path d="M' + r1(X(-0.13)) + " " + r1(Y(1.72)) + "Q" + r1(cx) + " " + r1(Y(1.9)) + " " + r1(X(0.13)) + " " + r1(Y(1.72)) + 'Z" fill="' + chaleco + '"/>');
       if (vuelta) o.push('<path d="M' + r1(X(-0.16)) + " " + r1(Y(1.72)) + "H" + r1(X(0.16)) + '" stroke="' + chaleco + '" stroke-width="' + r1(Math.max(1, 0.04 * k)) + '" stroke-linecap="round"/>');
-      if (!anda) {
-        /* fumando: el brazo derecho sube a la boca; el cigarro, la brasa con su halo y el humo que sube */
+      if (!anda && !(D.esc && D.esc.fumar === false)) {
+        /* fumando: el brazo derecho sube a la boca; el cigarro, la brasa con su halo y el humo que sube. Solo si fumar
+           es cosa tuya (el hábito o el 4:20 de estas semanas): si lo dejas, el cigarro desaparece del dibujo */
         const sh = [X(0.22), Y(1.4)], el = [X(0.36), Y(1.12)], ha = [X(0.17), Y(1.58)], tip = [X(0.29), Y(1.6)];
         o.push('<path d="M' + r1(sh[0]) + " " + r1(sh[1]) + "L" + r1(el[0]) + " " + r1(el[1]) + "L" + r1(ha[0]) + " " + r1(ha[1]) + '" stroke="' + camisa + '" stroke-width="' + r1(0.11 * k) + '" stroke-linecap="round" stroke-linejoin="round" fill="none"/>');
         o.push('<path d="M' + r1(ha[0]) + " " + r1(ha[1]) + "L" + r1(tip[0]) + " " + r1(tip[1]) + '" stroke="#f3efe4" stroke-width="' + r1(Math.max(1, 0.025 * k)) + '" stroke-linecap="round"/>' +

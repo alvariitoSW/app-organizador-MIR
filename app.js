@@ -5504,6 +5504,12 @@ function mananaSemana(key){
   for(let i=0;i<7;i++){const k=iso(addDays(d0,i));if(k>key)break;const s=mananaSalio(k);if(s==null)continue;
     out.n++;if(s<=P.plan+1e-6)out.aTiempo++;else if(s>P.ultimo+1e-6)out.taxi++;else out.tarde++;}
   return out;}
+function mananaMes(key){
+  /* los taxis del mes: la cuenta que se quiere bajar */
+  const d=parseDate(key),P=mananaPlan(),out={taxi:0,n:0};if(!d||!P)return out;
+  const y=d.getFullYear(),m=d.getMonth();
+  Object.keys(store.manana||{}).forEach(function(k){const x=parseDate(k);if(!x||x.getFullYear()!==y||x.getMonth()!==m||k>key)return;const s=mananaSalio(k);if(s==null)return;out.n++;if(s>P.ultimo+1e-6)out.taxi++;});
+  return out;}
 function mananaHTML(key,esHoy){
   const m=mananaDe(key);if(!m)return '';
   const ahora=new Date(),h=ahora.getHours()+ahora.getMinutes()/60;
@@ -5526,7 +5532,7 @@ function mananaHTML(key,esHoy){
     linea=q>0?'Ahora <b>'+esc(st.txt)+'</b> · sales en <b>'+q+' min</b> (a las '+esc(hCortaHM(hm(Math.round(plan*60))))+', bus '+esc(hCortaHM(hm(Math.round(m.bus*60))))+')':
       (h<=m.ultimo?'<b>Ya deberías haber salido</b> · el último bus pasa a las '+esc(hCortaHM(hm(Math.round(m.ultimo*60)))):'🚕 <b>Último bus perdido</b> · hoy toca taxi');
     boton='<button class="btn p" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>';}
-  const sem=mananaSemana(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':''):'';
+  const sem=mananaSemana(key),mes=mananaMes(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':'')+(mes.taxi?' · este mes: '+mes.taxi+(mes.taxi===1?' taxi':' taxis'):''):'';
   const ahoraPct=esHoy&&m.salio==null&&h>=h0&&h<=h1?'<i class="mnow" style="left:'+pct(h)+'%"></i>':'';
   return '<div class="manana" data-key="'+esc(key)+'"><div class="mnbar">'+tramo+marcas+ahoraPct+'</div>'+
     '<div class="mnlin"><span>'+linea+'</span>'+boton+'</div>'+(semTxt?'<p class="mini">'+esc(semTxt)+'</p>':'')+'</div>';}
@@ -5555,8 +5561,10 @@ function conductorEscenas(key){
   let D;try{D=diaEscenas(key);}catch(e){return {};}
   const iv=function(e){return D.seg.filter(function(x){return x.e===e;}).map(function(x){return [x.a,x.b];});};
   const d=parseDate(key),ms=d?monthService(d.getFullYear(),d.getMonth()):null,sv=ms&&ms.service?String(ms.service):'';
-  const CASA={cama:1,movil:1,leer:1,siesta:1,ducha:1,cafe:1,vestir:1,escritorio:1,salon:1,casa:1};
-  return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',
+  const CASA={cama:1,movil:1,leer:1,siesta:1,ducha:1,cafe:1,vestir:1,escritorio:1,salon:1,casa:1},hab=habitosEscena(key);
+  /* fumar es cosa tuya si lo llevas como hábito o has apuntado 4:20 en las dos últimas semanas; si no, el conductor no fuma en el Lloretazo */
+  let fuma=!!hab.fumar;if(!fuma)try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
+  return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',fumar:fuma,
     casa:D.seg.filter(function(x){return CASA[x.e];}).map(function(x){return [x.a,x.b,x.e];})};}
 function hoyBusHTML(key,inf,esHoy){
   try{_condDatos=hoyBusDatos(key,inf,esHoy);_condDatos.esc=conductorEscenas(key);}catch(e){_condDatos={dia:[],noches:[]};}
@@ -26771,7 +26779,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

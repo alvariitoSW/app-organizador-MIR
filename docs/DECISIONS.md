@@ -578,3 +578,18 @@ mientras estás parado en un entreno.
 
 **Supuestos:** `fig/estacion.js` pasa de 506 a 623 KB (se carga solo al elegir Estación); las luces de la
 casa no cambian el decorado de fuera.
+
+## 2026-10-13 · Tanda 5 · Los hábitos dentro del dibujo, y cierre del rediseño de Hoy
+
+**Elegido:**
+- **Fumar:** el cigarro del Lloretazo solo sale si fumar es cosa tuya (el hábito «Fumar…» o 4:20 apuntado en las
+  dos últimas semanas); si lo dejas, desaparece del dibujo. **Taxi:** además de la semana, la tira de la mañana
+  cuenta los taxis del mes (`mananaMes`). **Pantallas:** con el hábito, la última media hora en la cama es «sin
+  pantallas»; sin él, el móvil encendido. **Estudio y paseo** salen de la rutina del tipo de día. Prueba 288.
+- **Medido después (412 px, jornada con sesión, 11:00):** Hoy 1 580 px (1,73 pantallas), 50 botones, igual que
+  antes: el rediseño cambia lo que se ve dentro del dibujo, no el largo de la pantalla. De mañana, la tira añade
+  132 px (y se va al llegar al hospital).
+
+**Descartado:** un hábito de agua en el dibujo (una botella en el escritorio): no aporta sin la cuenta de vasos.
+
+**Supuestos:** el conductor no bebe ni come en el dibujo: las comidas ya son paradas.

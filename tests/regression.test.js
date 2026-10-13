@@ -12267,6 +12267,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la casa encima de la cochera: ducha con vapor a las 7:00, nadie a las 10:00, sofá con la tele a las 16:30, escritorio con el flexo a las 17:36, cama con el móvil a las 22:24 y durmiendo a las 23:30',
       !!r && r.piso && r.h700.pose === 'ducha' && r.h700.vapor === '1' && r.h1000.pose === '' && !r.h1000.tv && r.h1630.pose === 'salon' && r.h1630.tv && r.h1736.pose === 'escritorio' && r.h1736.flexo && !r.h1736.tv && r.h2224.pose === 'cama' && r.h2224.movil && r.h2224.manta === 'none' && r.h2330.pose === 'cama' && !r.h2330.movil, JSON.stringify(r));
   }
+  // 288) LOS HÁBITOS DENTRO DEL DIBUJO, EN CADENA: sin hábito de fumar ni 4:20 reciente, el conductor no fuma en el
+  // Lloretazo (D.esc.fumar false); con el hábito «Fumar menos», sí; los taxis del mes se cuentan aparte de la
+  // semana. Fija: el cigarro salía siempre, fuera o no cosa tuya.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
+      P.__t288 = { nH: P.habitosS().items.length, manana: JSON.stringify(P.store.manana || {}), viaje: P.store.rotation.viaje, consumo: JSON.stringify(P.store.consumo || {}) };
+      P.store.consumo = {}; P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      const sin = P.conductorEscenas(hoy).fumar;
+      P.habitosS().items.push({ id: 'hb288f', nombre: 'Fumar menos', icono: '🚬', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      const con = P.conductorEscenas(hoy).fumar;
+      const m0 = new Date(d.getFullYear(), d.getMonth(), 1), k1 = P.iso(m0), k2 = P.iso(new Date(d.getFullYear(), d.getMonth(), Math.min(d.getDate(), 2)));
+      P.store.manana = {}; P.store.manana[k1] = { salio: '07:40' }; P.store.manana[k2] = { salio: '07:29' }; if (k1 !== hoy && k2 !== hoy) P.store.manana[hoy] = { salio: '07:45' };
+      const mes = P.mananaMes(hoy);
+      const t2 = P.__t288; P.habitosS().items.length = t2.nH; P.store.manana = JSON.parse(t2.manana); P.store.rotation.viaje = t2.viaje; P.store.consumo = JSON.parse(t2.consumo); delete P.__t288; P.save();
+      return { sin, con, mes }; });
+    check('sin hábito de fumar el conductor no fuma en el Lloretazo; con «Fumar menos», sí; los taxis del mes se cuentan', r.sin === false && r.con === true && r.mes.n >= 2 && r.mes.taxi >= 1, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
