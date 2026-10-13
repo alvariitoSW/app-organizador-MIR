@@ -12151,7 +12151,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Ajustes → Cómo se ve → Calendario: seis colores, cada uno con su ficha delante, y «colores de serie»', r.a.hay && r.a.inputs === 6 && r.a.fichas === 6 && r.a.reset, JSON.stringify(r.a));
     check('cambiar el color de la guardia y del saliente tiñe la ficha de Mes, el borde de la casilla, el tablero isométrico y el mojón de la carretera',
       r.b.calcol && r.b.calcol.guardia === '#00b4ff' && r.b.calcol.saliente === '#1f8a4f' && r.b.borde === 'rgb(0, 180, 255)' && r.b.tren === '#00b4ff' && r.b.tejado === '#1f8a4f' && r.b.v === '#00b4ff' && r.b.cfSyms === 'cf' && r.b.iso === '#00b4ff' && /00b4ff/.test(r.b.mojon), JSON.stringify(r.b));
-    check('«colores de serie» devuelve el tren al rojo', r.c.calcol && !Object.keys(r.c.calcol).length && r.c.v === '#ff2b3a' && r.c.tren === '#ff2b3a' && r.c.css === '', JSON.stringify(r.c));
+    check('«colores de serie» devuelve el tren al rojo (el de la piel que esté puesta)', r.c.calcol && !Object.keys(r.c.calcol).length && r.c.v === '#ff2b3a' && /^#ff(2b3a|3d4a)$/.test(r.c.tren) && r.c.css === '', JSON.stringify(r.c));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
