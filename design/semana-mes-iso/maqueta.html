@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Semana y Mes en isométrico</title>
+<style>
+:root{--bg:#070b14;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:17px;margin:30px 0 4px}p{margin:0 0 14px;color:var(--ink2);max-width:1080px}p b{color:var(--ink)}
+.fila{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.lbl{font:800 11px/1 system-ui;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:0 0 8px 2px}
+iframe{border:1px solid var(--line);border-radius:18px;background:#0b1120}
+.iso{width:680px;max-width:100%;height:600px}.plano{width:390px;height:844px;transform:scale(.7);transform-origin:0 0;margin:0 -117px -253px 0}
+ul{color:var(--ink2);max-width:1080px;padding-left:20px}li{margin:4px 0}li b{color:var(--ink)}
+</style></head><body>
+<h1>Semana y Mes en isométrico</h1>
+<p>Las maquetas planas (el tablón y el cuadrante) ya te gustaron. Esto es lo mismo hecho objeto con el kit de /anatomy, en el mismo mundo que Hoy: los colores de las paradas del conductor (jornada roja, guardia azul noche, comida verde, entreno violeta, planes turquesa), el bosque para lo libre y la cochera para dormir. Te propongo lo mismo que en Hoy: <b>las dos vistas con un botón</b>, la plana para mirar y tocar y la isométrica para verlo de un vistazo.</p>
+
+<h2>Semana · la cochera de la semana</h2>
+<p>Siete andenes, uno por día, con <b>la misma escala de horas pintada en el suelo</b>: cada andén es una fila del tablón. En la entrada, el autobús del tipo de día con su letrero («MIÉ 14 · →COCHERA», «LUN 19 · BÚHO»). Por el andén, el servicio pintado en el suelo (la jornada roja, la guardia azul) y las paradas como bolardos de colores a su hora. La noche es el suelo azul y al fondo un cartel con las horas de sueño previstas, en ámbar si no llegan a tu objetivo. Hoy va enmarcado en ámbar, con la raya de la hora y su farol. Tocar un andén abriría ese día.</p>
+<div class="fila">
+ <div><p class="lbl">Isométrica · viva (pasa por un andén)</p><iframe class="iso" src="semana.html" title="Semana como cochera"></iframe></div>
+ <div><p class="lbl">La plana, ya aprobada</p><iframe class="plano" src="../semana-mes-conductor/semana.html" title="Semana como tablón"></iframe></div>
+</div>
+
+<h2>Mes · el tablero de fichas y la canceladora</h2>
+<p>Cada día es una baldosa con su ficha: <b>búho azul con la luna</b> la guardia (aro ámbar URG, violeta UMI), <b>autobús rojo</b> la jornada, <b>flecha a la cochera</b> el saliente, <b>un árbol</b> el libre (el bosque de Hoy) y <b>el autocar amarillo</b> las vacaciones. Hoy, con el marco ámbar. Al lado, la <b>canceladora</b>: en su pantalla las horas de servicio del mes y el abono asomando, con un agujero taladrado por guardia hecha (3 de 6).</p>
+<div class="fila">
+ <div><p class="lbl">Isométrica · viva (pasa por una baldosa)</p><iframe class="iso" src="mes.html" title="Mes como tablero"></iframe></div>
+ <div><p class="lbl">La plana, ya aprobada</p><iframe class="plano" src="../semana-mes-conductor/mes.html" title="Mes como cuadrante"></iframe></div>
+</div>
+
+<h2>Lo que hay que decidir</h2>
+<ul>
+ <li><b>Cómo conviven las dos.</b> Propongo un botón como el de Hoy («⇄ Isométrica / ⇄ Plana»), con la plana de serie porque es la que se edita.</li>
+ <li><b>El color de la guardia en Mes</b> pasa a ser el azul noche del conductor (hoy es rojo), igual en las dos vistas.</li>
+ <li><b>Un toque</b> en un andén o una baldosa abre ese día en Hoy (en la vista que tengas elegida).</li>
+</ul>
+</body></html>
