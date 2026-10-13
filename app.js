@@ -8182,7 +8182,7 @@ function renderMonth(){
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
     const tipoD=mesTipoDia(d);
     cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
-      ' style="border-top-color:'+(tipoD==='guardia'?'#34467e':(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
+      ' style="border-top-color:'+(tipoD==='guardia'?'#ff2b3a':(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
 '</span>'+
       (d.shiftId||d.vac?mesFichaHTML(tipoD,d.guard):'<span class="dnm">·</span>')+

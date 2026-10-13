@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import * as k from "../../.claude/skills/anatomy/kit/iso-kit.mjs";
 import * as G from "../../.claude/skills/anatomy/kit/lathe.mjs";
 import { kitScript } from "../../.claude/skills/anatomy/scripts/inline-kit.mjs";
+import { fichasDe } from "../calendario-propuestas/fichas.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -24,6 +25,7 @@ const MATS = {
   work: ["#d9573f", "#ef7a63"], guard: ["#34467e", "#6f86c8"], meal: ["#2f9e6b", "#56c48f"], gym: ["#7a5cf0", "#9c86ff"], plan: ["#1fa6c4", "#4cc9e4"],
   night: ["#1b2547", "#aebce6"], libre: ["#56627a", "#c3cbd8"], vac: ["#e3a72f", "#f6c35a"], tile: ["#1d283c", "#eef2f7"], amber: ["#ffd66b", "#f2b929"],
   leaf: ["#3f8a4f", "#86c47a"], trunk: ["#5a3f2a", "#a07a58"], ticket: ["#f6c35a", "#f6c35a"], moon: ["#e9eef5", "#ffffff"], lcdcase: ["#0e1626", "#26334a"],
+  rojo: ["#ff2b3a", "#ff3d4a"], rojot: ["#3a0c12", "#ffd5d9"], casa: ["#e8dcc4", "#f3ead8"], tejado: ["#b3503a", "#c9654d"], cesped: ["#3f8a4f", "#7fc46e"], agua: ["#1fa6c4", "#4cc9e4"],
 };
 const CSS = [
   k.ISO_CSS,
@@ -157,24 +159,13 @@ function piezasMes() {
   const front = (y) => k.sideMatrix([0, y], 0, P, "left"), side = (x) => k.sideMatrix([x, 0], 0, P, "right"), top = (zz) => k.topMatrix([0, 0], zz, P, "x");
   const rect = (u0, z0, u1, z1) => `M${u0} ${-z1}H${u1}V${-z0}H${u0}Z`, T = {};
   T.baldosa = S(k.slabOf({ x: 0, y: 0, w: C, d: C, r: 2 }, 0, 2.6, P, 3, 0.6), { tone: "mid", className: "m-tile" });
-  T.baldosaG = S(k.slabOf({ x: 0, y: 0, w: C, d: C, r: 2 }, 0, 2.6, P, 3, 0.6), { tone: "mid", className: "m-guard" });
+  T.baldosaG = S(k.slabOf({ x: 0, y: 0, w: C, d: C, r: 2 }, 0, 2.6, P, 3, 0.6), { tone: "mid", className: "m-rojo" });
   T.num = `<g transform="${top(2.62)}"><text class="num __HOY__" x="2.2" y="${C - 2.2}">__N__</text></g>`;
   T.hoy = L(k.planOutline({ x: -1.6, y: -1.6, w: C + 3.2, d: C + 3.2, r: 2.6 }, 0.02, P), { className: "l-amber" });
-  T.guardia = S(k.cylinder(cx + 2, cy - 2, 8, z, 12, P, 28, 0.8), { tone: "mid", className: "m-guard" }) + S(G.sphereOf([cx + 2, cy - 2, z + 15], 3.6, P), { tone: "hi", className: "m-moon" }) +
-    L(k.ring(cx + 2, cy - 2, 6, z + 12, P, 28), { className: "__ARO__" });
-  const bus = (lv) => { const B = { x: 5, y: cy - 6, w: 21, d: 9, r: 1.6 }; let o = S(k.slabOf(B, z + 1.2, 9, P, 3, 0.5), { tone: "mid", className: "m-bus" });
-    o += S(k.slabOf({ x: B.x + 0.8, y: B.y + 0.7, w: B.w - 1.6, d: B.d - 1.4, r: 1.2 }, z + 10.2, 0.8, P, 3, 0.3), { tone: "mid", className: lv });
-    o += `<g transform="${front(B.y + B.d + 0.02)}"><path class="glass" d="${rect(B.x + 1.6, z + 5.4, B.x + B.w - 1.6, z + 8.6)}"/></g>`;
-    for (const wx of [B.x + 4.4, B.x + B.w - 4.4]) { const F = G.frameAlong([wx, B.y + B.d - 0.6, z + 1.8], [0, 1, 0]); o += S(G.disc(0, 1, 1.8, F, P), { tone: "lo", className: "m-tyre" }); }
-    return o; };
-  T.trabajo = bus("m-work"); T.fuerza = bus("m-gym");
-  T.saliente = S(k.slabOf({ x: 4, y: cy - 1.4, w: 12, d: 2.8, r: 0.6 }, z, 0.6, P, 2), { tone: "mid", className: "m-guard" }) +
-    L(k.onTop([[14, cy - 4], [18.5, cy], [14, cy + 4]], z + 0.6, P), { className: "l-sal" }) +
-    S(k.slabOf({ x: 19, y: cy - 6, w: 8, d: 12, r: 0.4 }, z, 9, P, 2, 0.3), { tone: "mid", className: "m-guard" }) +
-    `<g transform="${side(27.02)}"><path class="glass" d="${rect(-(cy + 6) + 2.4, z, -(cy - 6) - 2.4, z + 6)}"/></g>`;
-  T.vac = S(k.slabOf({ x: 3.5, y: cy - 7, w: 24, d: 10, r: 2.4 }, z + 1.2, 10, P, 3, 0.6), { tone: "mid", className: "m-vac" }) +
-    `<g transform="${front(cy + 3.02)}"><path class="glass" d="${rect(5.1, z + 6, 25.9, z + 9.4)}"/></g>`;
-  T.libre = S(k.cylinder(cx + 2, cy - 2, 1.3, z, 6, P, 12), { tone: "mid", className: "m-trunk", crease: "none" }) + S(G.sphereOf([cx + 2, cy - 2, z + 11.5], 6.4, P), { tone: "mid", className: "m-leaf" });
+  /* las mismas fichas que la casilla de Mes (design/calendario-propuestas/fichas.mjs): el tren rojo de la guardia,
+     los dos autobuses, la casa con jardín del saliente y de las vacaciones, el árbol del libre */
+  const F = fichasDe(P, C).T;
+  T.guardia = F.guardia.replace("l-amber", "__ARO__"); T.trabajo = F.jornada; T.fuerza = F.fuerza; T.saliente = F.saliente; T.vac = F.vacaciones; T.libre = F.libre;
   return T;
 }
 /* el orden de pintado: de atrás adelante; la canceladora entra en su sitio */

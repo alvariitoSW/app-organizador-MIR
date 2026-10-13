@@ -12,6 +12,7 @@ export const MATS = {
   night: ["#1b2547", "#aebce6"], libre: ["#56627a", "#c3cbd8"], vac: ["#e3a72f", "#f6c35a"], tile: ["#1d283c", "#eef2f7"], amber: ["#ffd66b", "#f2b929"],
   leaf: ["#3f8a4f", "#86c47a"], trunk: ["#5a3f2a", "#a07a58"], ticket: ["#f6c35a", "#f6c35a"], moon: ["#e9eef5", "#ffffff"], lcdcase: ["#0e1626", "#26334a"],
   card: ["#1b2a4a", "#e8eef8"], cardl: ["#223560", "#dbe4f3"], chip: ["#c9a24a", "#d8b454"], mat: ["#101828", "#d8e0ec"], hole: ["#070b14", "#8a9ab2"],
+  rojo: ["#ff2b3a", "#ff3d4a"], rojot: ["#3a0c12", "#ffd5d9"], casa: ["#e8dcc4", "#f3ead8"], tejado: ["#b3503a", "#c9654d"], cesped: ["#3f8a4f", "#7fc46e"], agua: ["#1fa6c4", "#4cc9e4"],
 };
 export const CSS = [
   k.ISO_CSS,

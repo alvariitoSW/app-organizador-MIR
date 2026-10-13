@@ -390,3 +390,31 @@ caben tres como mucho antes de que se solapen).
 
 **Supuestos:** «faltan» se calcula con la hora del teléfono al pintar; la carretera no se repinta sola cada minuto
 (al volver a Hoy sí). Los carteles se saltan si en pantalla miden menos de 7 px o más de 330 px.
+
+## 2026-10-13 · Mes: la guardia en rojo chillón con un tren grande; casa con jardín; dos autobuses distintos
+
+**Pedido:** «los días de guardia tienen que aparecer con un color rojo chillón e incluso pon un tren de tamaño mucho
+mayor al resto, y el día de saliente y las vacaciones en vez de un autobús deberías poner una casa con un jardín, y
+los días de entreno y de trabajo un autobús pero que se diferencien».
+
+**Elegido:**
+- **La guardia es un tren rojo** (`#ff2b3a`, baldosa roja, borde rojo de la casilla): locomotora con la caldera,
+  la chimenea con el humo, la cabina con el aro del tipo (ámbar URG, violeta UMI) y un vagón detrás. Es más largo
+  que la baldosa y en la casilla va a 46 px frente a los 30 de las demás fichas (se sale de su sitio a propósito).
+  El mismo rojo en el tablero isométrico, en la leyenda y en el mojón de la carretera; el túnel sigue como estaba.
+- **Saliente y vacaciones, la casa con jardín**: césped, tejado a dos aguas, puerta, ventana, seto y árbol. El
+  saliente lleva la luna sobre el tejado y la flecha que entra por la puerta (vienes de la guardia a dormir); las
+  vacaciones, la misma casa de día con la piscina y la sombrilla.
+- **Dos autobuses**: la jornada es el urbano, largo y claro con el letrero rojo-naranja; el entreno, el microbús
+  violeta, más corto, con la barra de pesas en la baca.
+- Las piezas viven una sola vez: `fichasDe(P, C)` en `design/calendario-propuestas/fichas.mjs` las da para
+  cualquier proyección, y el tablero isométrico (`design/semana-mes-iso/app.mjs`) las toma de ahí. Generados:
+  `fig/calendario.js` (159 KB; las fichas 112 KB, antes 73) y `fig/calendario-iso.js` (350 KB).
+- Prueba 281 en cadena: borde y tren rojos y 46 px frente a 30, casa en saliente y vacaciones, microbús distinto del
+  urbano, y el tablero isométrico sin el búho azul. Con las fichas anteriores caen las 3.
+
+**Descartado:** un tren también en la carretera (ahí la guardia ya es el túnel) y escalar el tren con CSS en el
+tablero isométrico (se dibuja grande de origen y se sale de la baldosa como en la casilla).
+
+**Supuestos:** el tren se pinta por encima de la casilla vecina solo dentro de su propia casilla (la casilla
+recorta); en el tablero, la baldosa siguiente tapa la cola del vagón, que es lo que se ve en una vía.

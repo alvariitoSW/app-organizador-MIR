@@ -12080,6 +12080,38 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!r.a && r.a.gym && r.a.com && r.a.hab, JSON.stringify(r.a));
     check('en la app, el túnel de la guardia de mañana lleva los carteles de salida con lo que dura', r.c.hay && r.c.manana && r.c.salidas >= 2 && r.c.alas, JSON.stringify(r.c));
   }
+  // 281) LAS FICHAS NUEVAS DE MES, EN CADENA: (a) puesta una guardia pasado mañana,
+  // la casilla lleva el borde rojo chillón y la ficha es el tren rojo (baldosa roja, más grande que las demás:
+  // 46 px frente a 30); (b) el saliente y las vacaciones son la casa con jardín (ya no un autobús) y el microbús
+  // del entreno es violeta y distinto del urbano de la jornada; (c) el tablero isométrico pinta esa guardia con
+  // las mismas piezas rojas. Fija: la guardia azul noche que no se veía entre los autobuses, y que saliente y
+  // vacaciones fueran otro autobús más.
+  {
+    const r = {};
+    const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 2); const k = P.iso(d), G = P.store.shifts.filter(P.isGuardia)[0];
+      P.__t281 = { k, ov: (P.store.rotation.shiftByDay || {})[k], mode: P.store.rotation.mode }; P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
+      P.ui.tab = 'month'; P.ui.monSel = ''; P.ui.mesV = 'plana'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(250);
+    r.a = await page.evaluate((k) => { const c = document.querySelector('#main .dbox[data-key="' + k + '"]'), f = c && c.querySelector('.mficha'), svg = f && f.querySelector('svg');
+      const sym = (id) => (document.getElementById(id) || {}).innerHTML || '', otra = document.querySelector('#main .dbox .mficha.f-work svg');
+      return { borde: c ? c.style.borderTopColor : '', ficha: f ? f.className : '', ancho: svg ? Math.round(svg.getBoundingClientRect().width) : 0, anchoBus: otra ? Math.round(otra.getBoundingClientRect().width) : 0,
+        tren: /m-rojo/.test(sym('f-guardia')) && /m-rojot/.test(sym('f-guardia')), umi: /l-umi/.test(sym('f-guardiaUmi')),
+        casaSal: /m-casa/.test(sym('f-saliente')) && /m-cesped/.test(sym('f-saliente')) && /m-moon/.test(sym('f-saliente')) && !/m-bus/.test(sym('f-saliente')),
+        casaVac: /m-casa/.test(sym('f-vacaciones')) && /m-agua/.test(sym('f-vacaciones')) && !/m-bus/.test(sym('f-vacaciones')),
+        buses: /m-bus/.test(sym('f-jornada')) && /m-gym/.test(sym('f-fuerza')) && !/m-bus/.test(sym('f-fuerza')) && sym('f-jornada').length !== sym('f-fuerza').length }; }, kg);
+    // (c) el tablero isométrico, con las mismas piezas
+    await page.click('#main .mesv [data-v="iso"]');
+    await page.waitForSelector('#main .calisoslot .ci svg [data-day]', { timeout: 10000 }).catch(() => {});
+    r.c = await page.evaluate((k) => { const g = document.querySelector('#main .calisoslot .ci svg [data-day="' + k + '"]'); const h = g ? g.innerHTML : '';
+      return { hay: !!g, rojo: /m-rojo/.test(h), casa: !!document.querySelector('#main .calisoslot .ci svg .m-casa'), buho: /m-guard/.test(h) }; }, kg);
+    await page.click('#main .mesv [data-v="plana"]');
+    await page.evaluate(() => { const P = window.PG, t = P.__t281; P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; delete P.__t281; P.save(); P.render(); });
+    check('la guardia en Mes es rojo chillón: borde rojo y el tren rojo, más grande que el autobús (46 px frente a 30)',
+      /255, 43, 58/.test(r.a.borde) && /f-guard/.test(r.a.ficha) && r.a.tren && r.a.umi && r.a.ancho >= 44 && r.a.anchoBus > 0 && r.a.ancho > r.a.anchoBus * 1.3, JSON.stringify(r.a));
+    check('el saliente y las vacaciones son la casa con jardín, y el microbús del entreno no es el autobús de la jornada', r.a.casaSal && r.a.casaVac && r.a.buses, JSON.stringify(r.a));
+    check('el tablero isométrico pinta la guardia con el tren rojo (sin el búho azul) y la casa del saliente', r.c.hay && r.c.rojo && !r.c.buho && r.c.casa, JSON.stringify(r.c));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

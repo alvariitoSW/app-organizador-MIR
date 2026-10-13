@@ -89,7 +89,7 @@
     for (let zz = z0 + 4; zz < z1 - 0.5; zz += 4) if (zz >= NEAR) o.push(poly([[-1.5, 7.3, zz], [0.4, 7.3, zz], [0.4, 7.3, zz + 1.2], [-1.5, 7.3, zz + 1.2]], "ct-glampo"));
     salidas(o, z0, z1, d, faltan, 3);
   }
-  const COL = { trabajo: "#d9573f", fuerza: "#7a5cf0", guardia: "#34467e", saliente: "#7d93e0", libre: "#3f8a4f", vac: "#e3a72f" };
+  const COL = { trabajo: "#d9573f", fuerza: "#7a5cf0", guardia: "#ff2b3a", saliente: "#7d93e0", libre: "#3f8a4f", vac: "#e3a72f" };
 
   /* ---------- la escena: los días desde la cámara (cam = días avanzados) ---------- */
   function escena(D, cam) {
