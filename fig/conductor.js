@@ -724,8 +724,10 @@
     /* lo de casa (sale de las escenas del día) cuando no hay nada en marcha: ni turno, ni comida, ni evento */
     function casaEn(st) {
       if (st.guardia || st.enCurso.some((x) => x.k !== "meal")) return null;   /* comer en casa sí es estar en casa */
-      const v = ((D.esc && D.esc.casa) || []).find((x) => t >= x[0] - 1e-6 && t < x[1]);
+      const cubre = ((D.esc && D.esc.casa) || []).filter((x) => t >= x[0] - 1e-6 && t < x[1]);
       const m = st.enCurso.find((x) => x.k === "meal");   /* la comida que toca: el plato se toca como su cartel */
+      let v = (m && cubre.find((x) => x[2] === "mesa")) || cubre[0];
+      if (v && m && v[2] !== "mesa") v = [m.a, m.b, "mesa", m.t];   /* en casa y a la hora de comer: a la mesa, aunque la rutina diga otra cosa */
       return v ? { e: v[2], a: v[0], b: v[1], t: v[3] || "", i: m ? m.i : null } : null;
     }
     function manoSVG(x, y, f, s, extra) {
