@@ -682,3 +682,18 @@ calculaba para lo que empezaba *después* del turno, y el autobús se quedaba en
 no cinco minutos antes dentro de la cochera a oscuras. Prueba 292 (en cadena; revertida la ruta cae solo ella).
 
 **Supuestos:** si dos cosas empiezan a la vez que el turno, manda la que acaba más tarde.
+
+## 2026-10-14 · Mes: las horas vuelven a la casilla, con el entreno y los eventos a su hora
+
+**Elegido:** cada casilla lleva otra vez la hora del día en UNA línea («8–15»; la guardia «15→8»; el saliente
+«→8»): con las fichas la jornada de siempre había dejado de escribirse. El entreno sale con su hora (la misma
+que pinta Hoy: la del día de fuerza, al salir del trabajo o la del gym), «🏋 17:30» en vez de «🏋 Fuerza»; el
+nombre de la rutina va en el título. Cada evento lleva su hora en su color delante del nombre, donde iba el
+punto («8:15 S. clínica»). Todo en una línea por cosa, recortado con «…». **Medido a 412 px:** casilla 92 →
+100 px, cuadrícula 479 → 503 px, ninguna casilla desborda. Prueba 293 (en cadena; con el código anterior cae
+solo ella); 46, 113 y 277 adaptadas (la marca del evento es el punto o la hora).
+
+**Descartado:** poner jornada y entreno en la misma línea («8–15 · 🏋17:30» no cabe en 50 px).
+
+**Supuestos:** el nombre del evento se recorta más («8:15 S. c…»): la hora es lo que no se adivina y el nombre
+entero está al tocar el día y en el título.

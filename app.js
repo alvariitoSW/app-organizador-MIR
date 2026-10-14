@@ -8342,7 +8342,9 @@ function renderMonth(){
     /* el usuario pedía ver de un vistazo qué toca cada día en vez de puntitos: además del tipo de
        día van una línea por cosa (jornada, entreno, eventos), cortas y con su color */
     const lineas=[];
-    if(d.jor&&!jornadaDeSiempre(d.jor))lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
+    /* las horas del día, siempre y en UNA línea: «8–15», «15→8», «→8». Se quitaron con las fichas (la
+       jornada de siempre no salía) y es lo primero que se busca al mirar el mes */
+    if(d.jor)lineas.push('<span class="dline hr">'+hCorta(d.jor.start)+'–'+hCorta(d.jor.end)+'</span>');
     /* en la casilla caben ocho caracteres, así que la guardia va como «15→8» (empieza → sales) y el
        día de después como «→9:15» (hasta esa hora sigues trabajando). Antes no salía ninguna hora:
        jornadaOf() devuelve null en las guardias y la casilla se quedaba muda justo el día que más
@@ -8358,8 +8360,13 @@ function renderMonth(){
           hCorta(sal.sale)+'</span>');}}
     if(seg&&seg.on)lineas.push('<span class="dline gym" title="segundo entreno: '+esc(seg.tipo||'entreno')+' a las '+esc(seg.hora||'—')+'">'+
       '🏊 '+esc(seg.hora||'')+'</span>');
+    /* el entreno con SU HORA (la misma que pinta Hoy: la del día de fuerza, al salir del trabajo o la del
+       gym); el nombre de la rutina va en el título y al tocar el día */
     const rtDia=d.key?rutinaDeFecha(d.key):null;
-    if(rtDia)lineas.push('<span class="dline gym" title="entreno: '+esc(rtDia.nombre)+'">🏋 '+esc(nombreCorto(rtDia.nombre))+'</span>');
+    if(d.key){let entD=null;try{entD=entrenoDe(d.key)||(rtDia?{tipo:rutTipo(rtDia)==='agua'?'pisc':'fuerza',rutina:rtDia}:null);}catch(e){entD=null;}
+      const shE=shiftById(d.shiftId),esF=!!(shE&&/fuerza|entreno/i.test(shE.name||'')&&gymForzar()[d.key]!==false);
+      if(entD||esF){const pisc=!!(entD&&entD.tipo==='pisc'),v=ventanaEntreno(d.key,pisc?'pisc':'fuerza',d.inf),nom=pisc?'piscina':(rtDia?rtDia.nombre:'fuerza');
+        lineas.push('<span class="dline gym" title="'+esc(nom)+' a las '+esc(v.hora)+'">'+(pisc?'🏊 ':'🏋 ')+esc(hCorta(v.hora))+'</span>');}}
     /* La casilla mide 53 px de ancho: ahí caben ocho caracteres. Poner el título del evento daba
        «Llegar a», «Vuelo de» —texto que aparenta informar y no informa— y además cada uno se comía
        una línea entera, así que con cuatro eventos la casilla reventaba. Un punto de color por
@@ -8384,9 +8391,10 @@ function renderMonth(){
       /* sin el 📝 delante: se comía medio ancho y la nota se quedaba en «📝 Prep…»; el cuadradito ámbar ya dice que es nota */
       return '<span class="dev nota" title="'+tt+'"><i class="dpt"></i><span class="n">'+esc(tituloCasilla(String(x.txt).split('\n')[0]))+'</span></span>';}).join('');
     const evLineas=evsDia.slice(0,EVMAX).map(function(ev){
-      const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo);
+      const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo),col=esc(ev.color||tlColor('evt'));
+      /* con hora, la hora en su color va donde iba el punto («8 S. general»): es lo que no se adivina */
       return '<span class="dev" title="'+tit+'">'+
-        '<i class="dpt" style="background:'+esc(ev.color||tlColor('evt'))+'" title="'+tit+'"></i>'+
+        (ev.hora&&hCorta(ev.hora)?'<b class="dh" style="color:'+col+'">'+esc(hCorta(ev.hora))+'</b>':'<i class="dpt" style="background:'+col+'" title="'+tit+'"></i>')+
         '<span class="n">'+esc(tituloCasilla(ev.titulo))+'</span></span>';}).join('');
     if(evsDia.length+ntsDia.length>EVMAX)marcas.push('<b class="dmas">+'+(evsDia.length+ntsDia.length-EVMAX)+'</b>');
     /* el alquiler, la luz, el gimnasio: si cae ese día, se ve en la casilla como se ven los eventos */

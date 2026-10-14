@@ -1383,7 +1383,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const mesConEvento = await page.evaluate(() => {
     const ev = [...document.querySelectorAll('#main .dbox .dev')].find((l) => /Entreno con Marta/.test(l.title));
     const cs = ev ? getComputedStyle(ev) : null;
-    return { marcado: !!(ev && ev.querySelector('.dpt')),
+    return { marcado: !!(ev && ev.querySelector('.dpt, .dh')),
       conNombre: ev ? /Entreno con/.test(ev.innerText) : false,
       unaLinea: ev ? ev.getBoundingClientRect().height <= parseFloat(cs.fontSize) * 1.7 : false,
       nombreSinPartir: ev ? getComputedStyle(ev.querySelector('.n')).whiteSpace === 'nowrap' : false,
@@ -2638,7 +2638,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
        casilla, al tocar el día y en la carretera */
     const agenda = await page.evaluate(() => {
       return {
-        enCasilla: document.querySelectorAll('.dpt').length,
+        enCasilla: document.querySelectorAll('.dbox .dpt, .dbox .dev .dh').length,
         filas: document.querySelectorAll('.dbox .dev[title*="Congreso SEMES"], .dbox .dev[title*="Sesión clínica"]').length,
         nombreEntero: !!document.querySelector('.dbox .dev[title*="Congreso SEMES"]'),
         sinLista: ![...document.querySelectorAll('#main .card')].some((x) => /^Eventos de/m.test(x.innerText)),
@@ -2665,13 +2665,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.PG.store.notas.push({ id: 'nt-lleno', txt: 'una nota que tampoco cabría', fecha: dia, hecha: 0, color: '', evId: '', ts: Date.now() });
       window.PG.save();
       window.PG.render();
-      const celda = [...document.querySelectorAll('.dbox')].find((x) => x.querySelector('.dpt'));
+      const celda = [...document.querySelectorAll('.dbox')].find((x) => x.querySelector('.dev .dh, .dpt'));
       const alto = [...celda.children].reduce((a, h) => a + h.getBoundingClientRect().height, 0);
       return {
         anchoCelda: Math.round(celda.getBoundingClientRect().width),
         altoCelda: Math.round(celda.getBoundingClientRect().height),
         contenido: Math.round(alto),
-        puntos: celda.querySelectorAll('.dpt').length,
+        puntos: celda.querySelectorAll('.dev .dh, .dev .dpt').length,
         masN: (celda.querySelector('.dmas') || {}).textContent || '',
         // la nota ya no es un 📝 aparte: con la casilla llena de eventos cuenta en el «+N»
         nota: !celda.querySelector('.dev.nota'),
@@ -11917,8 +11917,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const b = document.querySelector('#hojaDia [data-a="mon-guard-d"][data-d="-1"]'); if (b) b.click();
       P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.jornada = t.jor; P.store.rotation.mode = t.mode;
       P.store.meta.pulsarVisto = t.pv; P.store.meta.pulsarDesde = t.pd; P.ui.mesHoja = false; P.ui.mesLey = false; delete P.__t277; P.save(); P.render(); });
-    check('Mes pinta cada día con su ficha estática (<use> de fig/calendario.js) y solo escribe las horas que no son las de siempre',
-      r.a.syms && r.a.uses === r.a.fichas && r.a.fichas >= 28 && r.a.deSiempre === 0 && /→/.test(r.a.guardia) && r.a.guardiaUse === '#f-guardia', JSON.stringify(r.a));
+    check('Mes pinta cada día con su ficha estática (<use> de fig/calendario.js) y escribe la hora de la guardia («15→8»)',
+      r.a.syms && r.a.uses === r.a.fichas && r.a.fichas >= 28 && /→/.test(r.a.guardia) && r.a.guardiaUse === '#f-guardia', JSON.stringify(r.a));
     check('el carné del abono dice las guardias hechas del cupo, las horas y los findes, y tocarlo abre la hoja del mes con «Este mes»',
       /guardias hechas/.test(r.b.carne) && /h de servicio/.test(r.b.carne) && r.b.hoja && r.b.estemes && r.b.cupo >= 0, JSON.stringify(r.b));
     check('subir el cupo en la hoja del mes cambia la cifra del carné al cerrarla', !r.c.hoja && r.c.cupo === Math.min(15, r.b.cupo + 1), JSON.stringify(r.c));
@@ -12391,6 +12391,35 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { trabajoA: trabajo && trabajo.a, en0812: E[c1.k] && E[c1.k].t, en11: E[c2.k] && E[c2.k].t, parado11: c2.parado, modo: Dm.modo, ahora: Dm.ahora, wake: n0 ? n0.b : null }; });
     check('la sesión de las 8:00 va antes que la jornada: «Trabajo» se pone a las 8:30 y a las 11:00 el autobús está parado en «Trabajo»; mañana se abre ya levantado',
       !!r && r.trabajoA === 8.5 && r.en0812 === 'Sesión general' && r.en11 === 'Trabajo' && r.parado11 && r.modo === 'futuro' && (r.wake == null || r.ahora > r.wake), JSON.stringify(r));
+  }
+  // 293) LAS HORAS EN EL MES, EN CADENA: con la jornada 8–15, un día de diario con «Sesión clínica» a las 8:15 y un
+  // día de fuerza, Mes enseña en cada casilla la hora del día en UNA línea («8–15», la guardia «15→8»), el entreno
+  // con su hora («🏋 …» con la de Hoy) y el evento con la hora delante en su color («8:15 Sesión…»); y al tocar el
+  // día la hoja sigue abriéndose. Fija: con las fichas la jornada de siempre dejó de verse y el entreno salía
+  // como «Fuerza», sin hora.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
+      const lun = (() => { for (let i = 1; i < 9; i++) { const k = kd(i), w = P.parseDate(k).getDay(); if (w >= 1 && w <= 4) return k; } return kd(1); })(), sig = P.iso(P.addDays(P.parseDate(lun), 1));
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0], F = P.store.shifts.filter((x) => /fuerza/i.test(x.name || ''))[0];
+      P.__t293 = { lun, sig, ovL: (P.store.rotation.shiftByDay || {})[lun], ovS: (P.store.rotation.shiftByDay || {})[sig], jor: P.store.rotation.jornada, mode: P.store.rotation.mode, nEv: P.eventosS().length, tab: P.ui.tab };
+      P.store.rotation.jornada = { start: '08:00', end: '15:00', workdays: [1, 2, 3, 4, 5] }; P.store.rotation.mode = 'date';
+      if (T) P.setDayOverride(lun, T.id, ''); if (F) P.setDayOverride(sig, F.id, '');
+      P.eventosS().push({ id: 'ev293', titulo: 'Sesión clínica', hora: '08:15', modo: 'fecha', fecha: lun, dow: [], color: '#ec4899', on: true });
+      P.ui.tab = 'month'; P.ui.mesV = 'plana'; P.ui.monSel = ''; P.save(); P.render(); return { lun, sig, hayF: !!F }; });
+    await page.click('[data-a="mon-today"]');
+    await page.waitForTimeout(400);
+    Object.assign(r, await page.evaluate((r) => { const c = (k) => document.querySelector('#main .dbox[data-key="' + k + '"]'), L = c(r.lun), S = c(r.sig);
+      const ev = L ? [...L.querySelectorAll('.dev')].find((x) => /Sesión clínica/.test(x.title)) : null, hr = L ? L.querySelector('.dline.hr') : null, gym = S ? S.querySelector('.dline.gym') : null;
+      return { hr: hr ? hr.textContent : '', hrUna: hr ? hr.getBoundingClientRect().height <= parseFloat(getComputedStyle(hr).fontSize) * 1.7 : false,
+        evH: ev && ev.querySelector('.dh') ? ev.querySelector('.dh').textContent : '', evCol: ev && ev.querySelector('.dh') ? getComputedStyle(ev.querySelector('.dh')).color : '', evUna: ev ? ev.getBoundingClientRect().height <= parseFloat(getComputedStyle(ev).fontSize) * 1.7 : false,
+        gym: gym ? gym.textContent : '', gymTit: gym ? gym.title : '' }; }, r));
+    await page.click('#main .dbox[data-key="' + r.lun + '"]');
+    await page.waitForTimeout(300);
+    r.hoja = await page.evaluate((k) => window.PG.ui.monSel === k && !!document.querySelector('#main .dbox.sel[data-key="' + k + '"]'), r.lun);
+    await page.evaluate(() => { const P = window.PG, t = P.__t293; P.setDayOverride(t.lun, t.ovL ? t.ovL.shift : null, t.ovL ? t.ovL.guard : ''); P.setDayOverride(t.sig, t.ovS ? t.ovS.shift : null, t.ovS ? t.ovS.guard : '');
+      P.store.rotation.jornada = t.jor; P.store.rotation.mode = t.mode; P.eventosS().length = t.nEv; P.ui.tab = t.tab; P.ui.monSel = ''; delete P.__t293; P.save(); P.render(); });
+    check('Mes enseña la hora del día en una línea («8–15»), el evento con su hora delante en su color («8:15») y el entreno con su hora («🏋 …»)',
+      r.hr === '8–15' && r.hrUna && r.evH === '8:15' && r.evCol === 'rgb(236, 72, 153)' && r.evUna && (!r.hayF || (/^🏋 \d{1,2}(:\d{2})?$/.test(r.gym) && / a las \d{2}:\d{2}$/.test(r.gymTit))) && r.hoja, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
