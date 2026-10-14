@@ -902,3 +902,25 @@ contar 0 en los meses pasados sin pintar.
 **Supuestos:** las 4 que te quitas salen de Urgencias (si no hubiera, del siguiente tipo); una guardia del día
 de hoy cuenta como «puesta», no como hecha, hasta mañana; el cupo de cada mes es el de «Guardias este mes» (6 de
 serie, repartidas 4 + 2).
+
+## Rediseño artístico · fases 0 y 1 (2026-10-14)
+
+**Elegido:**
+- **Fase 0:** auditoría visual con 5 agentes (Hoy, Calendario, Comer, Entreno y Sueño, Más y lo común), informes y
+  capturas en `design/arte/auditoria/`.
+- **Continuidad** como filosofía (palabras del usuario en `design/arte/continuidad.md`): el tiempo pasa, la energía se
+  gasta y se recarga, lo hecho deja huella, sin cortes a medianoche.
+- **Dirección «La jornada»** (`design/arte/direccion/`), con visto bueno: el cielo de la hora como fondo de toda la
+  app; los 5 temas como tintes; el hilo de 24 h arriba (huella sólida, lo que viene punteado, el ahora que late); el
+  depósito de energía; las tarjetas como piezas de maqueta; escalas cortas de letra, esquinas, espacio y movimiento;
+  46 iconos vivos propios (`ico(nombre, estado)`).
+- **Decisiones del usuario:** barra de secciones **abajo**; de guardia, el rojo al **65 %**; en los temas claros el
+  cielo de la hora **suavizado** (lavado al 38 %).
+- **Orden de construcción:** lo común primero, por tandas: (1) fichas y temas + cielo de la hora + barra abajo;
+  (2) componentes únicos (botón, selector, chip, tarjeta, fila, hoja, aviso); (3) el hilo y la energía; (4) iconos vivos.
+
+**Descartado:** el estilo «premium sobrio» y el «ilustrado cálido» (el usuario dejó elegir); seguir con el cajón lateral
+de Más (pasa a hoja desde abajo).
+
+**Supuestos:** la energía es de momento solo un dibujo, sin cálculo (se decide con el usuario antes de darle números);
+los emojis de comida se quedan porque son datos.
