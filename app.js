@@ -1743,6 +1743,7 @@ function viajeCfg(){
   if(/^\d{1,2}:\d{2}$/.test(String(o.bus||'')))d.bus=o.bus; else if(o.bus==='')d.bus='';
   if(+o.antes>=0&&+o.antes<=30)d.antes=Math.round(+o.antes);
   if(o.on===false)d.on=false;
+  d.taxi=o.taxi!==false;   /* de serie se da por hecho el taxi, hasta que lo cambies en el hábito o en Ajustes */
   return d;}
 function salirDeCasaTxt(){
   /* «salir de casa 7:30 · bus 7:35», que es exactamente lo que pidió y nada más */
@@ -5448,7 +5449,7 @@ function diaEscenas(key){
   if(T0){const A=T0.a;let busT=busH!=null&&busH+min<=A+1e-6&&A-(busH+min)<=1?busH:A-min-0.1;let salir=busT-antes;
     const ultimo=busT+ULTIMO_BUS_MIN/60,real=((store.manana||{})[key]||{}).salio,salio=real?mins(real)/60:null;
     /* el taxi: si has apuntado a qué hora saliste y fue después del último bus, o si el hábito está marcado a mano */
-    const taxi=salio!=null?salio>ultimo+1e-6:(!!hab.taxi&&habitoEstadoH(hab.taxi,key)==='ok');
+    const taxi=salio!=null?salio>ultimo+1e-6:(v.taxi||(!!hab.taxi&&habitoEstadoH(hab.taxi,key)==='ok'));   /* de serie, taxi; la hora apuntada manda */
     if(salio!=null){salir=salio;busT=taxi?salio+0.05:Math.max(busT,salio);}
     const libre=W+0.08,fin=Math.max(libre,salir);
     const desayuna=dia.some(function(x){return x.k==='meal'&&x.a>=W&&x.a<salir;});   /* el desayuno ya es una escena: no hace falta el café */
@@ -5501,22 +5502,27 @@ function mananaDe(key){
 function mananaSemana(key){
   /* esta semana: a tiempo / tarde / taxi, de los días con hora apuntada */
   const d0=mondayOf(parseDate(key)),out={aTiempo:0,tarde:0,taxi:0,n:0},P=mananaPlan();if(!P)return out;
-  for(let i=0;i<7;i++){const k=iso(addDays(d0,i));if(k>key)break;const s=mananaSalio(k);if(s==null)continue;
+  for(let i=0;i<7;i++){const k=iso(addDays(d0,i));if(k>key)break;const s=mananaSalio(k);
+    if(s==null){if(viajeCfg().taxi&&k<key&&mananaDiaDeBus(k)){out.n++;out.taxi++;}continue;}
     out.n++;if(s<=P.plan+1e-6)out.aTiempo++;else if(s>P.ultimo+1e-6)out.taxi++;else out.tarde++;}
   return out;}
+function mananaDiaDeBus(k){const t=diaTipo(k);return t==='trabajo'||t==='fuerza';}   /* los días en que vas al hospital por la mañana */
 function mananaMes(key){
   /* los taxis del mes: la cuenta que se quiere bajar */
   const d=parseDate(key),P=mananaPlan(),out={taxi:0,n:0};if(!d||!P)return out;
   const y=d.getFullYear(),m=d.getMonth();
-  Object.keys(store.manana||{}).forEach(function(k){const x=parseDate(k);if(!x||x.getFullYear()!==y||x.getMonth()!==m||k>key)return;const s=mananaSalio(k);if(s==null)return;out.n++;if(s>P.ultimo+1e-6)out.taxi++;});
+  for(let i=1;i<=31;i++){const k=iso(new Date(y,m,i,12));if(k>key||new Date(y,m,i).getMonth()!==m)break;const s=mananaSalio(k);
+    if(s==null){if(viajeCfg().taxi&&k<key&&mananaDiaDeBus(k)){out.n++;out.taxi++;}continue;}
+    out.n++;if(s>P.ultimo+1e-6)out.taxi++;}
   return out;}
 function mananaHTML(key,esHoy){
   const m=mananaDe(key);if(!m)return '';
   const ahora=new Date(),h=ahora.getHours()+ahora.getMinutes()/60;
   const plan=m.plan,fin=m.llegada!=null?m.llegada:plan+0.5;
   /* solo de mañana (desde media hora antes de levantarte hasta llegar), o si hay hora apuntada (para verla y deshacer) */
+  const deSerie=viajeCfg().taxi,pasadoTaxi=!esHoy&&m.salio==null&&deSerie&&key<iso(new Date())&&mananaDiaDeBus(key);   /* contó como taxi sin que apuntaras nada */
   if(esHoy&&m.salio==null&&(h<m.wake-0.5||h>fin))return '';
-  if(!esHoy&&m.salio==null)return '';
+  if(!esHoy&&m.salio==null&&!pasadoTaxi)return '';
   const h0=m.wake-0.1,h1=Math.max(m.ultimo+0.3,m.salio!=null?m.salio+0.15:0),pct=function(x){return Math.round(Math.max(0,Math.min(1,(x-h0)/(h1-h0)))*1000)/10;};
   const hitos=m.regleta.filter(function(x){return x.e!=='cabina'&&x.e!=='guardia';});
   /* el bus y el último van pegados a la puerta: su hora va abajo, con el nombre, para no pisarse arriba */
@@ -5524,17 +5530,29 @@ function mananaHTML(key,esHoy){
     const fila=u?2:(x.e==='bus'||x.e==='taxi')?1:x.e==='parada'?0:(i%2),arriba=x.e==='cama'||x.e==='parada';   /* la hora arriba solo en levantarse y en la puerta: lo demás se lee abajo */
     return '<i class="mnh f'+fila+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(arriba?'<b>'+esc(hh)+'</b>':'')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
   const tramo='<span class="mntr ok" style="left:'+pct(m.wake)+'%;width:'+(pct(plan)-pct(m.wake))+'%"></span><span class="mntr mal" style="left:'+pct(m.ultimo)+'%;width:'+(100-pct(m.ultimo))+'%"></span>';
-  let linea,boton='';
+  let linea,boton='',pasos='';
+  const HH=function(x){return hCortaHM(hm(Math.round(x*60)));},enBus='<button class="btn s" data-a="manana-sali" data-key="'+esc(key)+'" data-hhmm="'+esc(hm(Math.round(plan*60)))+'">🚌 fui en bus</button>';
+  /* los pasos de la mañana como fichas: la de ahora encendida, las pasadas tachadas, cada una con su hora */
+  const ICO={cama:'⏰',ducha:'🚿',cafe:'☕',vestir:'👕',parada:'🚪',bus:'🚌',taxi:'🚕',cabina:'🏥',guardia:'🏥'},NOM={cama:'levantarse',ducha:'ducha',cafe:'café',vestir:'vestirse',parada:'puerta',bus:'bus',taxi:'taxi',cabina:'hospital',guardia:'hospital'};
+  const st=esHoy&&m.salio==null?estadoDe(key,h):null,ahoraE=st?st.e:'';
+  const fichas=m.regleta.filter(function(x){return x.e!=='ultimo';});
+  pasos='<div class="mnpasos">'+fichas.map(function(x,i){const sig=fichas[i+1],fin=sig?sig.h:x.h+0.25,hecho=pasadoTaxi||(esHoy&&(m.salio!=null?x.h<=m.salio:h>=fin)),ahora=!hecho&&esHoy&&m.salio==null&&h>=x.h&&h<fin;
+    return '<span class="mnp'+(ahora?' ahora':hecho?' hecho':'')+'"><i>'+ICO[x.e]+'</i><b>'+esc(HH(x.h))+'</b><small>'+esc(NOM[x.e]||x.txt)+'</small></span>';}).join('')+'</div>';
   if(m.salio!=null){const tarde=m.salio>plan+1e-6,taxi=m.salio>m.ultimo+1e-6,dif=Math.round((m.salio-plan)*60);
-    linea=(taxi?'🚕 Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · '+dif+' min tarde: taxi':tarde?'⏱ Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · '+dif+' min tarde, aún a tiempo del último bus':'✓ Saliste a las <b>'+esc(hCortaHM(hm(Math.round(m.salio*60))))+'</b> · a tiempo');
+    linea=(taxi?'🚕 Saliste a las <b>'+esc(HH(m.salio))+'</b> · '+dif+' min tarde: taxi':tarde?'⏱ Saliste a las <b>'+esc(HH(m.salio))+'</b> · '+dif+' min tarde, aún a tiempo del último bus':'✓ Saliste a las <b>'+esc(HH(m.salio))+'</b> · a tiempo'+(deSerie?' · hoy sin taxi':''));
     boton='<button class="btn s" data-a="manana-deshacer" data-key="'+esc(key)+'">deshacer</button>';}
-  else{const q=Math.round((plan-h)*60),st=estadoDe(key,h);
-    linea=q>0?'Ahora <b>'+esc(st.txt)+'</b> · sales en <b>'+q+' min</b> (a las '+esc(hCortaHM(hm(Math.round(plan*60))))+', bus '+esc(hCortaHM(hm(Math.round(m.bus*60))))+')':
-      (h<=m.ultimo?'<b>Ya deberías haber salido</b> · el último bus pasa a las '+esc(hCortaHM(hm(Math.round(m.ultimo*60)))):'🚕 <b>Último bus perdido</b> · hoy toca taxi');
-    boton='<button class="btn p" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>';}
+  else if(pasadoTaxi){linea='🚕 <b>Contó como taxi</b> (de serie) · sin hora apuntada';boton=enBus;}
+  else{const q=Math.round((plan-h)*60);
+    /* el margen: lo que te queda del paso de ahora frente a lo que tenías pensado */
+    const paso=st&&st.b?Math.round((st.b-h)*60):null,margen=paso!=null&&ahoraE!=='parada'&&ahoraE!=='bus'&&ahoraE!=='taxi'?(paso>=0?' · '+paso+' min para este paso':' · <b>'+(-paso)+' min tarde</b> en este paso'):'';
+    linea=q>0?'Ahora <b>'+esc(st.txt)+'</b>'+margen+' · puerta a las <b>'+esc(HH(plan))+'</b> ('+q+' min) para el bus de las '+esc(HH(m.bus)):
+      (h<=m.ultimo?'<b>Ya deberías haber salido</b> · el último bus pasa a las '+esc(HH(m.ultimo)):(deSerie?'🚕 <b>Hoy en taxi</b> (de serie) · el último bus pasó a las '+esc(HH(m.ultimo)):'🚕 <b>Último bus perdido</b> · hoy toca taxi'));
+    if(deSerie&&q>0)linea+='<br><small>De serie cuentas como taxi: si llegas al bus, apunta «he salido».</small>';
+    /* pasado el último bus, lo que queda por apuntar es que fuiste en bus a tiempo (de serie ya cuenta taxi) */
+    boton=deSerie&&h>m.ultimo?enBus:'<button class="btn '+(deSerie?'s':'p')+'" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>';}
   const sem=mananaSemana(key),mes=mananaMes(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':'')+(mes.taxi?' · este mes: '+mes.taxi+(mes.taxi===1?' taxi':' taxis'):''):'';
   const ahoraPct=esHoy&&m.salio==null&&h>=h0&&h<=h1?'<i class="mnow" style="left:'+pct(h)+'%"></i>':'';
-  return '<div class="manana" data-key="'+esc(key)+'"><div class="mnbar">'+tramo+marcas+ahoraPct+'</div>'+
+  return '<div class="manana" data-key="'+esc(key)+'"><div class="mnbar">'+tramo+marcas+ahoraPct+'</div>'+pasos+
     '<div class="mnlin"><span>'+linea+'</span>'+boton+'</div>'+(semTxt?'<p class="mini">'+esc(semTxt)+'</p>':'')+'</div>';}
 function mananaSali(key,hhmm){
   if(!store.manana)store.manana={};
@@ -16791,7 +16809,9 @@ const HAB_AUTO={
   sin420:{lab:'🌿 día sin 4:20',estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
   /* de la hora apuntada al salir y del plan del viaje, sin pasar por las escenas (que a su vez leen los hábitos) */
   puerta:{lab:'🚪 salir de casa a tiempo',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P||s==null)return '';return s<=P.plan+1e-6?'ok':(s<=P.ultimo+1e-6?'min':'');}},
-  taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);return P&&s!=null&&s>P.ultimo+1e-6?'ok':'';}},
+  taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P)return '';
+    if(s!=null)return s>P.ultimo+1e-6?'ok':'';
+    return viajeCfg().taxi&&key<=iso(new Date())?'ok':'';}},   /* sin hora apuntada: de serie, taxi */
   lloretsin:{lab:'🌿 Lloretazo sin',toca:function(key){return !!lloretDe(key);},
     estado:function(key){return habCerrado(key)&&!consumoDe(key).some(function(x){return x.ctx==='lloret';})?'ok':'';}}};
 const HAB_AUTOS=[['','No, a mano']].concat(Object.keys(HAB_AUTO).map(function(k){return [k,HAB_AUTO[k].lab];}));
@@ -17001,6 +17021,8 @@ function habHojaHTML(){
     '<details class="hmas"'+(ui.habEdMas?' open':'')+'><summary>Más: días, se marca solo, color'+(e.id?', fase y probar 14 días':'')+'</summary>'+
       '<div class="hlab">QUÉ DÍAS</div><div class="hchs">'+DS.map(function(x){return chip('hab-ed-dow',x[0],e.dow.indexOf(x[0])>=0,x[1]);}).join('')+'</div>'+
       '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){return chip('hab-ed-auto',x[0],e.auto===x[0],x[1]);}).join('')+'</div>'+
+      (e.auto==='taxi'?'<p class="mini" style="margin:6px 0 0"><button class="btn s '+(viajeCfg().taxi?'g':'')+'" data-a="viaje-taxi">'+(viajeCfg().taxi?'✓':'○')+' de serie voy en taxi</button> '+
+        (viajeCfg().taxi?'Cada día de jornada cuenta como taxi salvo que apuntes en Hoy que saliste a tiempo.':'Solo cuenta taxi si apuntas en Hoy que saliste después del último bus.')+'</p>':'')+
       '<div class="hlab">POR QUÉ <small>una frase tuya</small></div>'+
         '<input id="habEdPq" value="'+esc(e.porQue||'')+'" maxlength="80" placeholder="p. ej. para llegar entero a las guardias" aria-label="por qué">'+
       '<div class="hlab">COLOR</div><div class="hchs hcol">'+HAB_COLORES.map(function(c){
@@ -19283,7 +19305,9 @@ function renderCfg(){
         '</div>'+
         '<div class="row" style="margin-top:10px">'+
           '<button class="btn s '+(vj.on?'g':'')+'" data-a="viaje-on">'+(vj.on?'✓':'○')+' tenerlo en cuenta</button>'+
+          '<button class="btn s '+(vj.taxi?'g':'')+'" data-a="viaje-taxi">'+(vj.taxi?'✓':'○')+' 🚕 de serie voy en taxi</button>'+
         '</div>'+
+        '<p class="mini" style="margin:8px 0 0">Con «de serie voy en taxi», cada día de jornada cuenta como taxi salvo que apuntes en Hoy que saliste a tiempo. Quítalo cuando el bus sea lo normal.</p>'+
         (b!=null?('<p class="mini" style="margin:10px 0 0">Los días de jornada saldrás de casa a las <b>'+
           hm(b-vj.antes)+'</b> para el bus de las <b>'+esc(fmtTimeOut(vj.bus))+'</b>, y estarás de vuelta '+
           vj.min+' min después de salir del trabajo.</p>')
@@ -23037,6 +23061,8 @@ function act(a,el){
       break;}
     case 'compra-ticket':ui.shopVista='ticket';render();window.scrollTo(0,0);break;
     case 'ir-viaje':ui.tab='cfg';ui.cfgVista='viaje';render();window.scrollTo(0,0);break;
+    case 'viaje-taxi':{if(!store.rotation.viaje)store.rotation.viaje={};
+      store.rotation.viaje.taxi=!viajeCfg().taxi;save();render();flash(viajeCfg().taxi?'De serie: taxi. Apunta en Hoy cuando salgas a tiempo':'De serie: bus');break;}
     case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
       store.rotation.viaje.on=!viajeCfg().on;save();render();
       flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
@@ -24234,7 +24260,7 @@ function act(a,el){
       confirmar('Se borra «'+((t&&t.nombre)||'este tema')+'» de tus guardados. Si es el que tienes puesto, la app se queda como está.','Sí, borrarlo')
         .then(function(si){if(si)flash(borrarTemaMio(id));});
       break;}
-    case 'manana-sali':{mananaSali(el.dataset.key,horaLocal(new Date()));flash('Apuntado: saliste a las '+hCortaHM(horaLocal(new Date())));break;}
+    case 'manana-sali':{const hh=el.dataset.hhmm||horaLocal(new Date());mananaSali(el.dataset.key,hh);flash('Apuntado: saliste a las '+hCortaHM(hh));break;}
     case 'manana-deshacer':{mananaSali(el.dataset.key,'');break;}
     case 'cal-color-reset':{store.calcol={};aplicarColoresCal();save();render();flash('Colores del calendario de serie');break;}
     case 'franja-reset':{if(!store.franja)store.franja={horas:24};

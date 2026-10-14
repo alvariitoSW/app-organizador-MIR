@@ -6575,7 +6575,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     const k = await page.evaluate(() => { const P = window.PG;
       P.store.rotation.mode = 'date'; P.store.rotation.anchorSet = true;
-      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       // un día de jornada 8–15, sin entreno. Tiene que ser LABORABLE: en sábado no hay jornada de
       // la que salir y la prueba caía por el día en que se ejecutara, no por el código
       const k = P.diaLaborableCerca();
@@ -12184,7 +12184,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         s: P.store.shifts.filter((x) => /sal/i.test(x.code || '') || /saliente/i.test(x.name || ''))[0], l: P.store.shifts.filter((x) => /libre|^l$/i.test(x.code || '') || /libre/i.test(x.name || ''))[0] };
       P.__t284 = { ks, ov, mode: P.store.rotation.mode, nEv: P.eventosS().length, nH: P.habitosS().items.length, reg: P.habitosS().registro[ks.t], viaje: P.store.rotation.viaje };
       P.store.rotation.mode = 'date'; if (SH.t) P.setDayOverride(ks.t, SH.t.id, ''); if (SH.t) P.setDayOverride(ks.g, SH.t.id, ''); if (SH.g) P.setDayOverride(ks.g, SH.g.id, 'urg'); if (SH.s) P.setDayOverride(ks.s, SH.s.id, ''); if (SH.l) P.setDayOverride(ks.l, SH.l.id, '');
-      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.eventosS().push({ id: 'ev284', titulo: 'Sesión general', hora: '10:00', fin: '10:30', dur: 30, modo: 'fecha', fecha: ks.t, dow: [], color: '#1fa6c4', on: true });
       P.habitosS().items.push({ id: 'hb284t', nombre: 'Taxi al trabajo', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
         { id: 'hb284p', nombre: 'Pantallas fuera', icono: '📵', color: '#818cf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
@@ -12201,7 +12201,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la mañana de jornada sale del viaje: ducha → vestirse → puerta 7:31 → parada (último bus 7:37) → taxi (hábito marcado) → hospital; la sesión cae dentro; la bici al acabar; estudio y sin pantallas',
       r.tipo === 'trabajo' && /^(ducha>)?(cafe>)?vestir>parada>taxi/.test(r.orden) && r.parada && Math.abs(r.parada[0] - 7.517) < 0.01 && Math.abs(r.parada[1] - 7.583) < 0.01 && Math.abs(r.parada[2] - 7.617) < 0.01 && r.taxi.length === 1 && r.bus === 0 &&
       r.sesion.length === 1 && r.sesion[0][2] && Math.abs(r.sesion[0][0] - 10) < 0.01 && r.bici.length === 1 && r.finJ != null && Math.abs(r.bici[0][0] - r.finJ) < 0.01 && r.escritorio === 1 && r.leer >= 1 && r.movil === 0 &&
-      r.e1015 === 'sesion' && r.e14 === 'cabina' && r.e0733 === 'taxi' && /^Levantarse>(Ducha>)?(Café>)?Vestirse>Salir de casa>Taxi>Último bus>Hospital$/.test(r.regleta), JSON.stringify(r));
+      r.e1015 === 'sesion' && (r.e14 === 'cabina' || r.e14 === 'comida') && r.e0733 === 'taxi' && /^Levantarse>(Ducha>)?(Café>)?Vestirse>Salir de casa>Taxi>Último bus>Hospital$/.test(r.regleta), JSON.stringify(r));
     check('de guardia no hay bici a las 15:00; el saliente se ducha al llegar en bici; de libre la ducha es por la tarde-noche y no pisa nada',
       r.gTipo === 'guardia' && r.gBici15 === 0 && r.sTipo === 'saliente' && r.sDucha && Math.abs(r.sDucha[2] - r.sDucha[1]) < 0.01 && r.lTipo === 'libre' && r.lDucha.length === 1 && r.lDucha[0][0] >= 18 && !r.lPisa, JSON.stringify(r));
   }
@@ -12214,7 +12214,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
       const kt = kd(3), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
       P.__t285 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
-      P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.habitosS().items.push({ id: 'hb285t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kd(2)] = { salio: '07:29' };
@@ -12277,7 +12277,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
       P.__t288 = { nH: P.habitosS().items.length, manana: JSON.stringify(P.store.manana || {}), viaje: P.store.rotation.viaje, consumo: JSON.stringify(P.store.consumo || {}) };
-      P.store.consumo = {}; P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.store.consumo = {}; P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       const sin = P.conductorEscenas(hoy).fumar;
       P.habitosS().items.push({ id: 'hb288f', nombre: 'Fumar menos', icono: '🚬', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       const con = P.conductorEscenas(hoy).fumar;
@@ -12287,6 +12287,41 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const t2 = P.__t288; P.habitosS().items.length = t2.nH; P.store.manana = JSON.parse(t2.manana); P.store.rotation.viaje = t2.viaje; P.store.consumo = JSON.parse(t2.consumo); delete P.__t288; P.save();
       return { sin, con, mes }; });
     check('sin hábito de fumar el conductor no fuma en el Lloretazo; con «Fumar menos», sí; los taxis del mes se cuentan', r.sin === false && r.con === true && r.mes.n >= 2 && r.mes.taxi >= 1, JSON.stringify(r));
+  }
+  // 289) EL TAXI DE SERIE, EN CADENA: sin la clave «taxi» en el viaje se da por hecho que vas en taxi: el hábito
+  // automático «taxi» se marca solo en un día de jornada pasado sin hora apuntada, la escena de la mañana es el
+  // taxi, la semana y el mes lo cuentan, y la tira enseña las fichas de los pasos con sus horas; el botón «de serie
+  // voy en taxi» de Ajustes → Ir y volver lo quita y entonces nada de eso cuenta sin hora apuntada. Fija: el taxi
+  // solo contaba si apuntabas la hora, y la tira no explicaba los pasos.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
+      const kt = kd(-1), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.__t289 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
+      P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
+      P.habitosS().items.push({ id: 'hb289t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      P.store.manana = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
+      const e = document.querySelector('#main .manana');
+      return { kt, deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy), mes: P.mananaMes(hoy),
+        fichas: e ? [...e.querySelectorAll('.mnp small')].map((x) => x.textContent) : [], horas: e ? [...e.querySelectorAll('.mnp b')].map((x) => x.textContent) : [], boton: !!(e && e.querySelector('[data-a="manana-sali"]')) }; });
+    // «fui en bus» en ese día pasado apunta la hora del plan (7:31) y el taxi deja de contar; luego se deshace
+    const bEnBus = await page.$('#main .manana [data-a="manana-sali"]');
+    if (bEnBus) { await bEnBus.click(); await page.waitForTimeout(200); }
+    r.bus = await page.evaluate((kt) => { const P = window.PG, hoy = P.iso(new Date()); return { salio: (P.store.manana[kt] || {}).salio, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, sem: P.mananaSemana(hoy).taxi, deshacer: !!document.querySelector('#main .manana [data-a="manana-deshacer"]') }; }, r.kt);
+    const bDeshacer = await page.$('#main .manana [data-a="manana-deshacer"]');
+    if (bDeshacer) { await bDeshacer.click(); await page.waitForTimeout(200); }
+    // Ajustes → Ir y volver → «de serie voy en taxi» lo quita
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'viaje'; P.render(); });
+    await page.click('#main [data-a="viaje-taxi"]');
+    await page.waitForTimeout(200);
+    r.b = await page.evaluate((kt) => { const P = window.PG, hoy = P.iso(new Date()); return { deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy).taxi, mes: P.mananaMes(hoy).taxi, marcado: /✓/.test((document.querySelector('#main [data-a="viaje-taxi"]') || {}).textContent || '') }; }, r.kt);
+    await page.evaluate(() => { const P = window.PG, t = P.__t289; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.tab = t.tab; delete P.__t289; P.save(); P.render(); });
+    check('de serie vas en taxi: el hábito «taxi» se marca solo sin hora apuntada, a las 7:45 vas en taxi, la semana y el mes lo cuentan, y la tira lleva las fichas de los pasos con sus horas',
+      r.deSerie === true && r.hab === 'ok' && r.e745 === 'taxi' && r.taxi === true && r.sem.taxi >= 1 && r.mes.taxi >= 1 && r.fichas.indexOf('levantarse') >= 0 && r.fichas.indexOf('puerta') >= 0 && r.fichas.indexOf('taxi') >= 0 && r.horas.indexOf('7:31') >= 0 && r.boton, JSON.stringify(r));
+    check('«fui en bus» en un día pasado apunta la hora del plan (7:31): el hábito «taxi» se desmarca, a las 7:45 vas en bus y la semana baja un taxi',
+      r.bus.salio === '07:31' && r.bus.hab === '' && r.bus.e745 === 'bus' && r.bus.sem === r.sem.taxi - 1 && r.bus.deshacer, JSON.stringify(r.bus));
+    check('«de serie voy en taxi» en Ajustes lo quita: sin hora apuntada ya no cuenta taxi en el hábito, la escena, la semana ni el mes',
+      r.b.deSerie === false && !r.b.marcado && r.b.hab === '' && r.b.e745 === 'bus' && r.b.taxi === false && r.b.sem === 0 && r.b.mes === 0, JSON.stringify(r.b));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

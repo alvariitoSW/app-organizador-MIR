@@ -593,3 +593,24 @@ casa no cambian el decorado de fuera.
 **Descartado:** un hábito de agua en el dibujo (una botella en el escritorio): no aporta sin la cuenta de vasos.
 
 **Supuestos:** el conductor no bebe ni come en el dibujo: las comidas ya son paradas.
+
+## 2026-10-14 · Tanda A · La tira de la mañana, más contada, y el taxi de serie
+
+**Elegido:**
+- **El taxi se da por hecho** (`viajeCfg().taxi`, de serie `true`): cada día de jornada cuenta como taxi en el
+  hábito automático, en la escena de la mañana, en la semana y en el mes, salvo que apuntes que saliste a tiempo.
+  Se quita en Ajustes → Ir y volver («de serie voy en taxi») y en la hoja del hábito «taxi»; el botón «he salido»
+  sigue, pero en secundario. Pasado el último bus, y en un día de jornada pasado sin hora, el botón es
+  «🚌 fui en bus»: apunta la hora del plan (7:31) y el taxi deja de contar.
+- **La tira, más contada:** debajo de la regleta, una ficha por paso (⏰ levantarse · 🚿 ducha · 👕 vestirse ·
+  🚪 puerta · 🚕/🚌 · 🏥 hospital) con su hora; la de ahora encendida, las pasadas tachadas. La línea dice el paso
+  de ahora, los minutos que le quedan (o los que vas tarde), la hora de la puerta y el bus, y una frase de qué pasa
+  de serie. Prueba 289 (en cadena, conduce Hoy y Ajustes; con el taxi de serie revertido caen sus 3
+  comprobaciones y ninguna otra).
+
+**Descartado:** un hábito «taxi» marcado a mano cada día (justo lo que no se hacía) y esconder «he salido»
+cuando el taxi es lo normal (sin el botón no hay forma de que un día cuente como bus).
+
+**Supuestos:** «fui en bus» apunta la hora del plan, no una real: el dato vale para el hábito y la cuenta, no para
+medir cuánto tardaste. La prueba 284 acepta la comida de las 14:00 dentro del hospital (según el menú del día de
+la semana).
