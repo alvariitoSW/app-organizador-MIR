@@ -12461,12 +12461,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const nota = await page.evaluate(() => { const ph = ((window.PG.conductor().d.cab || {}).izq || {}).ph || []; return ph.findIndex((x) => x.t === 'Llamar al tutor'); });
     if (nota >= 0) await toca('#main .cd [data-r="lado"] [data-o="ph"][data-n="' + nota + '"]', 300);
     r.a.hecha = await page.evaluate(() => !!(window.PG.store.notas.filter((x) => x.id === 'nt294')[0] || {}).hecha);
-    r.a.sigue = /LA CIUDAD/.test(await lado());
+    r.a.sigue = /LA CIUDAD|LA COCINA/.test(await lado());   /* en casa, la izquierda es la cocina */
     // (b) el campo
     await toca('#main .cd g[data-o="mirad"]:not(.cd-espejo)', 250);
     r.b = { txt: await lado() };
     const hb = await page.evaluate(() => (((window.PG.conductor().d.cab || {}).der || {}).habs || []).findIndex((x) => x.t === 'Estirar'));
-    if (hb >= 0 && hb < 4) await toca('#main .cd [data-r="lado"] [data-o="hab"][data-n="' + hb + '"]', 300);
+    if (hb >= 0 && hb < 7) await toca('#main .cd [data-r="lado"] [data-o="hab"][data-n="' + hb + '"]', 300);
     r.b.marcado = await page.evaluate((k) => !!(window.PG.habitosS().registro[k] || {}).hb294, r.hoy);
     await toca('#main .cd [data-r="lado"] [data-o="frente"]', 750);   /* la cámara tarda ~0,55 s en volver */
     r.b.frente = await lado();
@@ -12487,10 +12487,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const ck = (P.store.asist || {}).checkins; if (ck) { if (t.ck === 'null') delete ck[k]; else ck[k] = JSON.parse(t.ck); }
       P.ui.diaHoy = ''; delete P.__t294; P.save(); P.render(); }, r.hoy);
     const d1 = new Date(); d1.setDate(d1.getDate() + 1); const kM = await page.evaluate((t) => window.PG.iso(new Date(t)), d1.getTime());
-    check('mirando a la izquierda, la ciudad trae el evento en su fachada y la nota en el quiosco; tocar la nota la marca y la vista sigue en la ciudad',
-      /LA CIUDAD/.test(r.a.txt) && /CENA CON LUCÍA/.test(r.a.txt) && /Llamar al tutor/.test(r.a.txt) && r.a.ev && r.a.hecha && r.a.sigue, JSON.stringify(r.a));
-    check('mirando a la derecha, el campo trae el hábito en el poste; tocarlo lo marca; «volver al frente» quita la vista',
-      /EL CAMPO/.test(r.b.txt) && /Estirar/.test(r.b.txt) && r.b.marcado && r.b.frente === '', JSON.stringify(r.b));
+    check('mirando a la izquierda, la ciudad (o la cocina, en casa) trae el evento y la nota; tocar la nota la marca y la vista sigue en ese lado',
+      /LA CIUDAD|LA COCINA/.test(r.a.txt) && /CENA CON LUCÍA/.test(r.a.txt) && /Llamar al tutor/.test(r.a.txt) && r.a.ev && r.a.hecha && r.a.sigue, JSON.stringify(r.a));
+    check('mirando a la derecha, el campo (o el dormitorio, en casa) trae el hábito; tocarlo lo marca; «volver al frente» quita la vista',
+      /EL CAMPO|DORMITORIO/.test(r.b.txt) && /Estirar/.test(r.b.txt) && r.b.marcado && r.b.frente === '', JSON.stringify(r.b));
     check('la radio se abre, sus botones de emisora guardan «cómo amaneces» (6) y la cara el ánimo (4), sin cerrarse',
       r.c.abierta && r.c.kss === 6 && r.c.animo === 4 && r.c.sigue && r.c.on6, JSON.stringify(r.c));
     check('la palanca en D lleva al día siguiente y en N vuelve a hoy', r.d.manana === kM && r.d.modo === 'futuro' && r.d.hoy === '', JSON.stringify(r.d));

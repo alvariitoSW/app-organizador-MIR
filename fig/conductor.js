@@ -76,7 +76,7 @@
 .cd-manillar{fill:none;stroke:#7d8ea8;stroke-width:11;stroke-linecap:round;paint-order:stroke;filter:drop-shadow(0 0 1px #05080e)}.cd-puno{fill:#0d1726;stroke:#7d8ea8;stroke-width:1.2}.cd-timbre{fill:#c9d4e4;stroke:#8fa6c6;stroke-width:1.2}.cd-timbrec{fill:#8fa6c6}
 .cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
 .cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
-.cd-barra{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
+.cd-barra,.cd-barrap{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
 .cd-nxl{font-size:9.5px}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
 .cd-arc0{fill:none;stroke:#1f2a3d;stroke-width:5;stroke-linecap:round}.cd-arc{fill:none;stroke:var(--cd-cyan);stroke-width:5;stroke-linecap:round}
 .cd-esp{fill:#1b2333;stroke:#38e1ff;stroke-width:3}.cd-espd{stroke:#4ad08a}.cd-espc{fill:#5b6a8a}.cd-esp.on{stroke-width:6;filter:drop-shadow(0 0 6px #38e1ff)}.cd-espd.on{filter:drop-shadow(0 0 6px #4ad08a)}
@@ -487,7 +487,7 @@
           for (let q = 0; q < 2; q++) { const sd = b.j * 17 + q * 5 + (b.lado > 0 ? 0 : 40), z = b.z0 + 2 + q * 5.5; if (z < NEAR + 0.3) continue;
             const x = b.lado > 0 ? 15 + hash(sd) * 6 : -15 - hash(sd) * 6, sc = 0.9 + hash(sd + 1) * 0.4, c = pr(x, 3.4 * sc, z), r = 2.1 * sc * F / z;
             o.push(seg([x, 0, z], [x, 1.8 * sc, z], "cd-trunk", 0.25 * sc), '<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + r.toFixed(1) + '" style="fill:' + G.hoja + '"/>'); }
-          if (b.lado > 0 && b.j % 2 === 0) { const zb = b.z0 + 4; if (zb > NEAR + 0.3) [[10.6, 2.4], [11.6, 2.0], [12.6, 1.6]].forEach(([x, hh]) => { o.push(seg([x, 0, zb], [x, hh, zb], "cd-post", 0.07), seg([x, 0, zb + 1.2], [x, hh, zb + 1.2], "cd-post", 0.07), seg([x, hh, zb], [x, hh, zb + 1.2], "cd-barra", 0.05)); }); }
+          if (b.lado > 0 && b.j % 2 === 0) { const zb = b.z0 + 4; if (zb > NEAR + 0.3) [[10.6, 2.4], [11.6, 2.0], [12.6, 1.6]].forEach(([x, hh]) => { o.push(seg([x, 0, zb], [x, hh, zb], "cd-post", 0.07), seg([x, 0, zb + 1.2], [x, hh, zb + 1.2], "cd-post", 0.07), seg([x, hh, zb], [x, hh, zb + 1.2], "cd-barrap", 0.05)); }); }
           if (b.lado < 0 && b.j % 3 === 0 && b.z0 > NEAR + 0.3) { const a = pr(-6.2, 2.6, b.z0), c = pr(-9.6, 1.6, b.z0), w = c[0] - a[0], hh = c[1] - a[1];
             if (w < -8) o.push(seg([-7.9, 0, b.z0], [-7.9, 1.6, b.z0], "", 0.12).replace("<path", '<path style="stroke:' + mad + '"') + '<rect x="' + c[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + (-w).toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2" style="fill:' + mad + '"/>' +
               '<text x="' + ((a[0] + c[0]) / 2).toFixed(1) + '" y="' + (a[1] + hh * 0.72).toFixed(1) + '" font-size="' + (hh * 0.6).toFixed(1) + '" text-anchor="middle" fill="#fff6e6" font-weight="900">PARQUE</text>'); }
