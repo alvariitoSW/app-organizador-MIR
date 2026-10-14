@@ -5372,7 +5372,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG;
       const k = '2027-03-10';
       P.store.rotation.vacaciones = (P.store.rotation.vacaciones || []).filter((v) => v.label !== 'medianoche');
-      P.addVacation(k, k, 'medianoche');
+      /* el día siguiente también de vacaciones: si mañana se trabaja, la cama de las 00:00 se adelanta para dormir tu mínimo */
+      P.addVacation(k, '2027-03-11', 'medianoche');
       const sh = P.dayInfo(k).shiftId;
       const r = P.store.rhythm[sh]; const antes = r.sleep; r.sleep = '00:00';
       const box = document.createElement('div'); box.innerHTML = P.timelineBar(k);
