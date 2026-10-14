@@ -717,3 +717,30 @@ cabina que se parezca a la de verdad, con mandos que se tocan, y mirar a los lad
   volumen el ánimo y el dial lo que te propones.
 
 **Pendiente:** el visto bueno antes de tocar `fig/conductor.js`.
+
+## 2026-10-14 · Tanda E, construida · La cabina con mandos de verdad
+
+**Elegido (con el visto bueno a la maqueta `design/hoy-cabina2/`):**
+- **Ventana el doble de alta:** el horizonte baja (HY 150 → 255) y el dibujo pasa de 600×440 a 600×900. El
+  paisaje, la cochera, las paradas y el acantilado del Lloretazo son los mismos: solo cambia el encuadre.
+- **Abajo, solo mandos:** el reloj del cuadro (lo de ahora con su barra, lo siguiente), la máquina de billetes
+  con «Para hoy» (lleva al quiosco), la palanca de cambios (R el día de antes · N hoy · D el de después), la radio
+  y el volante con las manos. El busca de la guardia y la nota «hoy toca» van a la derecha, bajo la radio.
+- **Los retrovisores miran a los lados:** el izquierdo enseña la ciudad (los eventos del día en sus fachadas, las
+  vallas de lo importante que viene y el quiosco de «Para hoy» con su ✓); el derecho, el campo (el entreno en
+  el polideportivo con la cuenta de la semana, la comida en el merendero con las kcal y el poste con un hábito
+  por flecha). Tocar marca o abre lo mismo que la tarjeta de antes, y la vista se queda donde estaba.
+- **La radio es el sueño:** lo dormido anoche y ayer, la cama y el último café; los botones de emisora 1–9 son
+  el «¿cómo amaneces?», las caras el ánimo y el dial lo que te propones; «abrir Sueño» lleva a Sueño.
+- **Hoy, más corto:** con el conductor ya no salen debajo la tarjeta del check-in ni «Para hoy» (siguen en las
+  vistas Reloj y Línea). `paraHoyItems()` da la lista como datos y la leen la tarjeta y la cabina.
+- **Medido (412 px, jornada a las 11:00):** Hoy 1 580 → 1 379 px (1,73 → 1,51 pantallas), 50 → 35 botones; el
+  dibujo 279 → 564 px de alto. Prueba 294 (en cadena: retrovisor izquierdo → nota marcada desde el quiosco,
+  retrovisor derecho → hábito marcado en el poste, radio → 6 y 🙂, palanca D → mañana y N → hoy; con el
+  conductor anterior caen sus 4 comprobaciones y ninguna otra); 275 adaptada (la radio en vez del depósito).
+
+**Descartado:** la cabina con un salpicadero lleno de paneles (E1 y E2) y girar la cámara en 3D al mirar a los
+lados (la ventana enseña directamente la vista lateral: se lee mejor en un móvil).
+
+**Supuestos:** la palanca dice «ayer» y «mañana» aunque lleve al día anterior o siguiente al que miras; en el
+quiosco caben 3 cosas y en el poste 4 hábitos (el resto se cuenta como «+N»).

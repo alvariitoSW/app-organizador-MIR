@@ -11665,7 +11665,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la hora del conductor se fija a mano: la de verdad depende de cuándo corra la suite
     const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false })); }, h);
     const txt = () => page.evaluate(() => { const q = (s) => { const e = document.querySelector('#main .cd [data-r="' + s + '"]'); return e ? e.textContent : ''; };
-      return { nxl: q('nxl'), nxb: q('nxb'), nxa: q('nxa'), sval: q('sval') }; });
+      return { nxl: q('nxl'), nxb: q('nxb'), nxa: q('nxa'), sval: q('rdl') }; });   /* lo dormido va en la pantalla de la radio */
     const antes = await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.removeItem('guardias-hoymodo2'); const P = window.PG;
       const hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
       const a = { hoy: P.dayOverride(hoy), ay: P.dayOverride(ay), sr: P.store.suenoReal[hoy] ? JSON.parse(JSON.stringify(P.store.suenoReal[hoy])) : null };
@@ -11699,8 +11699,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const out = { andando: mira(20.05), fumando: mira(21), amb: window.Conductor.ambienteA(D, 21) };
       D.esc = Object.assign({}, D.esc, { fumar: false }); out.sinFumar = mira(21);   /* sin el hábito ni 4:20: el mismo mirador, sin cigarro */
       P.render(); return out; });
-    // (c) el depósito de sueño
+    // (c) la radio (el sueño): se enciende al tocarla y su «abrir Sueño» lleva a Sueño
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
+    await page.locator('#main .cd g[data-o="radio"]').first().click().catch(() => {});
+    await page.waitForTimeout(150);
     await page.locator('#main .cd [data-o="sueno"]').click().catch(() => {});
     await page.waitForTimeout(150);
     r.c = await page.evaluate(() => window.PG.ui.hoyVista);
@@ -11723,10 +11725,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { window.PG.ui.hoyIt = null; window.PG.ui.hoyVista = ''; window.PG.render(); });
     await page.click('#main .hoyseg [data-v="bus"]').catch(() => {});
     r.m.vuelta = await page.evaluate(() => ({ cd: !!document.querySelector('#main #hoyBusSlot .cd'), es: !!document.querySelector('#main #hoyBusSlot .es'), ls: localStorage.getItem('guardias-hoybusv') }));
-    // (i) el «¿cómo amaneces?» va corto; «ánimo y lo que te propones» lo abre entero
-    r.i = { corto: await page.evaluate(() => !!document.querySelector('#main .asck.corto')) };
-    await page.click('#main [data-a="asist-mas"]').catch(() => {});
-    r.i.largo = await page.evaluate(() => !!document.querySelector('#main .asck') && !document.querySelector('#main .asck.corto'));
+    // (i) con el conductor, el «¿cómo amaneces?» no es una tarjeta: está en la radio de la cabina (y «Para hoy», en el quiosco)
+    r.i = await page.evaluate(() => ({ sinTarjeta: !document.querySelector('#main .asck'), sinParaHoy: !document.querySelector('#main .parahoy'), radio: !!document.querySelector('#main .cd [data-o="kss"]'), quiosco: !!document.querySelector('#main .cd [data-o="parahoy"]') }));
     // (h) un toque en el cartel de la primera comida sin apuntar, a su hora, la apunta
     // si lo de antes dejó el día sin comidas con platos por apuntar, se pone una con el gesto de Plan
     const comida = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date());
@@ -11782,11 +11782,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.m.es && !r.m.cd && r.m.ls === 'estacion' && r.m.mismo && r.m.amb.length > 0 && r.m.hoja && r.m.vuelta.cd && !r.m.vuelta.es && r.m.vuelta.ls === 'conductor', JSON.stringify(r.m));
     check('en el Lloretazo el conductor se baja al acantilado: llega andando y a mitad fuma mirando al mar; la estación pone el acantilado',
       r.n.andando.humo === 0 && !r.n.andando.carretera && r.n.fumando.humo === 3 && r.n.fumando.brasa && !r.n.fumando.carretera && r.n.amb === 'acantilado' && r.n.sinFumar.humo === 0 && !r.n.sinFumar.brasa && !r.n.sinFumar.carretera, JSON.stringify(r.n));
-    check('en el conductor, tocar el depósito de sueño abre Sueño', r.c === 'sueno', JSON.stringify(r.c));
+    check('en el conductor, la radio (el sueño) se abre y su «abrir Sueño» lleva a Sueño', r.c === 'sueno', JSON.stringify(r.c));
     check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
-    check('con el conductor, «¿cómo amaneces?» va corto y «ánimo y lo que te propones» lo abre', r.i.corto && r.i.largo, JSON.stringify(r.i));
+    check('con el conductor, «¿cómo amaneces?» y «Para hoy» no son tarjetas: van en la radio y en la máquina de billetes de la cabina', r.i.sinTarjeta && r.i.sinParaHoy && r.i.radio && r.i.quiosco, JSON.stringify(r.i));
     check('un toque en el cartel de una comida, a su hora, la apunta sin abrir la hoja', r.h.comida && r.h.hecha && !r.h.hoja, JSON.stringify(r.h));
-    check('sin la noche apuntada, el depósito de sueño dice «sin apuntar»', /sin apuntar/.test(r.g), JSON.stringify(r.g));
+    check('sin la noche apuntada, la radio dice «sin apuntar»', /sin apuntar/.test(r.g), JSON.stringify(r.g));
     check('de guardia a las 23:40 el autobús va de servicio nocturno, no a la cochera', /SERVICIO NOCTURNO/.test(r.e.nxl) && !/COCHERA/.test(r.e.nxl), JSON.stringify(r.e));
     check('el saliente a las 07:30 sigue de servicio hasta el relevo', /SERVICIO NOCTURNO/.test(r.f.nxl) && /hasta/.test(r.f.nxa), JSON.stringify(r.f));
     check('la guardia de sábado acaba al día siguiente (24 h la de urgencias, 25¼ h la UMI) y el saliente empieza de servicio',
@@ -12420,6 +12420,63 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.jornada = t.jor; P.store.rotation.mode = t.mode; P.eventosS().length = t.nEv; P.ui.tab = t.tab; P.ui.monSel = ''; delete P.__t293; P.save(); P.render(); });
     check('Mes enseña la hora del día en una línea («8–15»), el evento con su hora delante en su color («8:15») y el entreno con su hora («🏋 …»)',
       r.hr === '8–15' && r.hrUna && r.evH === '8:15' && r.evCol === 'rgb(236, 72, 153)' && r.evUna && (!r.hayF || (/^🏋 \d{1,2}(:\d{2})?$/.test(r.gym) && / a las \d{2}:\d{2}$/.test(r.gymTit))) && r.hoja, JSON.stringify(r));
+  }
+  // 294) LA CABINA CON MANDOS, EN CADENA (conduce Hoy): con una nota para hoy, un evento a las 23:30 y un hábito,
+  // (a) el retrovisor izquierdo enseña la ciudad: el evento en su fachada y la nota en el quiosco; tocar la nota la
+  // marca hecha y la vista sigue en la ciudad; (b) el retrovisor derecho enseña el campo con el hábito en el poste;
+  // tocarlo lo marca; (c) la radio se abre y sus botones de emisora guardan el «¿cómo amaneces?» (6) y la cara el
+  // ánimo (4); (d) la palanca en D lleva a mañana y en N vuelve a hoy. Fija: toda esa información vivía en
+  // tarjetas apiladas debajo del dibujo.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date());
+      P.__t294 = { nN: (P.store.notas || []).length, nH: P.habitosS().items.length, nEv: P.eventosS().length, ck: JSON.stringify(((P.store.asist || {}).checkins || {})[hoy] || null), reg: JSON.stringify(P.habitosS().registro[hoy] || null) };
+      if (!Array.isArray(P.store.notas)) P.store.notas = [];
+      P.store.notas.push({ id: 'nt294', txt: 'Llamar al tutor', fecha: hoy, hecha: 0, color: '', evId: '', ts: Date.now() });
+      P.eventosS().push({ id: 'ev294', titulo: 'Cena con Lucía', hora: '23:30', fin: '23:55', dur: 25, modo: 'fecha', fecha: hoy, dow: [], color: '#7a5cf0', on: true });
+      P.habitosS().items.push({ id: 'hb294', nombre: 'Estirar', icono: '🧘', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); return { hoy }; });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="mirai"]'), null, { timeout: 8000 }).catch(() => {});
+    const toca = async (sel, ms) => { const e = await page.$(sel); if (!e) return false; await e.click().catch(() => {}); await page.waitForTimeout(ms || 250); return true; };
+    const lado = () => page.evaluate(() => { const g = document.querySelector('#main .cd [data-r="lado"]'); return g ? g.textContent.replace(/\s+/g, ' ') : ''; });
+    // (a) la ciudad
+    await toca('#main .cd g[data-o="mirai"]', 250);
+    r.a = { txt: await lado(), ev: await page.evaluate(() => !!document.querySelector('#main .cd [data-r="lado"] [data-o="ev"]')) };
+    const nota = await page.evaluate(() => { const ph = ((window.PG.conductor().d.cab || {}).izq || {}).ph || []; return ph.findIndex((x) => x.t === 'Llamar al tutor'); });
+    if (nota >= 0) await toca('#main .cd [data-r="lado"] [data-o="ph"][data-n="' + nota + '"]', 300);
+    r.a.hecha = await page.evaluate(() => !!(window.PG.store.notas.filter((x) => x.id === 'nt294')[0] || {}).hecha);
+    r.a.sigue = /LA CIUDAD/.test(await lado());
+    // (b) el campo
+    await toca('#main .cd g[data-o="mirad"]', 250);
+    r.b = { txt: await lado() };
+    const hb = await page.evaluate(() => (((window.PG.conductor().d.cab || {}).der || {}).habs || []).findIndex((x) => x.t === 'Estirar'));
+    if (hb >= 0 && hb < 4) await toca('#main .cd [data-r="lado"] [data-o="hab"][data-n="' + hb + '"]', 300);
+    r.b.marcado = await page.evaluate((k) => !!(window.PG.habitosS().registro[k] || {}).hb294, r.hoy);
+    await toca('#main .cd [data-r="lado"] [data-o="frente"]', 200);
+    r.b.frente = await lado();
+    // (c) la radio
+    await toca('#main .cd g[data-o="radio"]', 200);
+    r.c = { abierta: await page.evaluate(() => { const g = document.querySelector('#main .cd [data-r="radiob"]'); return !!g && g.style.display === ''; }) };
+    await toca('#main .cd [data-o="kss"][data-v="6"]', 250);
+    await toca('#main .cd [data-o="animo"][data-v="4"]', 250);
+    Object.assign(r.c, await page.evaluate((k) => { const P = window.PG, c = ((P.store.asist || {}).checkins || {})[k] || {}; return { kss: P.cnKss ? P.cnKss(k) : c.kss, animo: c.animo, sigue: !!document.querySelector('#main .cd [data-r="radiob"]') && document.querySelector('#main .cd [data-r="radiob"]').style.display === '', on6: !!document.querySelector('#main .cd [data-o="kss"][data-v="6"].on') }; }, r.hoy));
+    await toca('#main .cd [data-r="radiob"] g[data-o="radio"]', 150);
+    // (d) la palanca
+    await toca('#main .cd [data-o="marcha"][data-d="1"]', 400);
+    r.d = { manana: await page.evaluate(() => window.PG.ui.diaHoy), modo: await page.evaluate(() => window.PG.conductor().d.modo) };
+    await toca('#main .cd [data-o="marcha"][data-d="0"]', 400);
+    r.d.hoy = await page.evaluate(() => window.PG.ui.diaHoy);
+    await page.evaluate((k) => { const P = window.PG, t = P.__t294; P.store.notas.length = t.nN; P.habitosS().items.length = t.nH; P.eventosS().length = t.nEv;
+      if (t.reg === 'null') delete P.habitosS().registro[k]; else P.habitosS().registro[k] = JSON.parse(t.reg);
+      const ck = (P.store.asist || {}).checkins; if (ck) { if (t.ck === 'null') delete ck[k]; else ck[k] = JSON.parse(t.ck); }
+      P.ui.diaHoy = ''; delete P.__t294; P.save(); P.render(); }, r.hoy);
+    const d1 = new Date(); d1.setDate(d1.getDate() + 1); const kM = await page.evaluate((t) => window.PG.iso(new Date(t)), d1.getTime());
+    check('mirando a la izquierda, la ciudad trae el evento en su fachada y la nota en el quiosco; tocar la nota la marca y la vista sigue en la ciudad',
+      /LA CIUDAD/.test(r.a.txt) && /CENA CON LUCÍA/.test(r.a.txt) && /Llamar al tutor/.test(r.a.txt) && r.a.ev && r.a.hecha && r.a.sigue, JSON.stringify(r.a));
+    check('mirando a la derecha, el campo trae el hábito en el poste; tocarlo lo marca; «volver al frente» quita la vista',
+      /EL CAMPO/.test(r.b.txt) && /Estirar/.test(r.b.txt) && r.b.marcado && r.b.frente === '', JSON.stringify(r.b));
+    check('la radio se abre, sus botones de emisora guardan «cómo amaneces» (6) y la cara el ánimo (4), sin cerrarse',
+      r.c.abierta && r.c.kss === 6 && r.c.animo === 4 && r.c.sigue && r.c.on6, JSON.stringify(r.c));
+    check('la palanca en D lleva al día siguiente y en N vuelve a hoy', r.d.manana === kM && r.d.modo === 'futuro' && r.d.hoy === '', JSON.stringify(r.d));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

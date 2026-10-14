@@ -48,12 +48,12 @@
 .cd-strip{fill:#05070c;stroke:#1e2738;stroke-width:1.2}.cd-stripl{stroke:#2a3a55;stroke-width:2}.cd-stt{fill:#5d7394;font:700 9.5px ui-monospace,Menlo,monospace;letter-spacing:.06em}
 .cd-sdot{fill:#2a3a55}.cd-sdone{fill:#4ad08a}.cd-spast{fill:#56708f}.cd-snext{fill:#ffd66b}.cd-spend{fill:none;stroke:#f2a33a;stroke-width:1.8}.cd-sbus{fill:#38e1ff}
 .cd-dashtop{fill:var(--cd-dash)}.cd-dashe{stroke:var(--cd-dashe);stroke-width:1.5;fill:none}
-.cd-lcd{fill:var(--cd-panel);stroke:var(--cd-panele);stroke-width:1.2}.cd-clk{fill:var(--cd-cyan);font:700 32px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
+.cd-lcd{fill:var(--cd-panel);stroke:var(--cd-panele);stroke-width:1.2}.cd-clk{fill:var(--cd-cyan);font:700 30px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
 .cd-q{fill:var(--cd-ink2);font:700 11.5px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-lab{fill:var(--cd-ink3);font:800 9px ui-sans-serif,system-ui,sans-serif;letter-spacing:.1em}
 .cd-bar{fill:#1f2a3d}.cd-claro .cd-bar{fill:#dfe6ef}.cd-barf{fill:#5a78d0}.cd-barf.cd-kc{fill:#2f9e6b}.cd-barobj{stroke:#38e1ff;stroke-width:2}.cd-bv{fill:var(--cd-ink);font:700 11px ui-monospace,Menlo,monospace}
 .cd-bv.cd-sin{fill:#f2a33a}
 .cd-disp{fill:var(--cd-disp);stroke:var(--cd-dashe);stroke-width:1.4}.cd-nxl{fill:#b98c2c;font:800 10px ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em}
-.cd-nxb{fill:#ffd66b;font:800 24px ui-sans-serif,system-ui,sans-serif}.cd-nxa{fill:#e9f2ff;font:600 13.5px ui-sans-serif,system-ui,sans-serif}
+.cd-nxb{fill:#ffd66b;font:800 12.5px ui-sans-serif,system-ui,sans-serif}.cd-nxa{fill:#e9f2ff;font:600 12px ui-sans-serif,system-ui,sans-serif}
 .cd-wheel{stroke:var(--cd-wheel);stroke-width:22;fill:none}.cd-spoke{fill:var(--cd-wheel)}.cd-horn{fill:var(--cd-dashe)}
 .cd-tkb{fill:#1b2333;stroke:#2a3448;stroke-width:1.2}.cd-tkp{fill:#f3efe4}.cd-tkt{fill:#1d2b40;font:800 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-note{fill:#ffe27a}.cd-notet{fill:#3a2a00;font:800 11px ui-sans-serif,system-ui,sans-serif}
@@ -77,6 +77,23 @@
 .cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
 .cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
 .cd-barra{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
+.cd-nxl{font-size:9.5px}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
+.cd-arc0{fill:none;stroke:#1f2a3d;stroke-width:5;stroke-linecap:round}.cd-arc{fill:none;stroke:var(--cd-cyan);stroke-width:5;stroke-linecap:round}
+.cd-esp{fill:#1b2333;stroke:#38e1ff;stroke-width:3}.cd-espd{stroke:#4ad08a}.cd-espc{fill:#5b6a8a}.cd-esp.on{stroke-width:6;filter:drop-shadow(0 0 6px #38e1ff)}.cd-espd.on{filter:drop-shadow(0 0 6px #4ad08a)}
+.cd-lado{fill:#0d1726;stroke-width:2}.cd-ladoi{stroke:#38e1ff}.cd-ladod{stroke:#4ad08a}.cd-ladot{font:800 13px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-ladoit{fill:#7fecff}.cd-ladodt{fill:#7cf0b0}
+.cd-tks{fill:#04131a}.cd-tkv{fill:#7fecff;font:700 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-rdisp{fill:#061a10}.cd-rt{fill:#7cf0b0;font:800 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-rl{fill:#4ad08a;font:700 9.5px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-knob{fill:#2a3448;stroke:#5d6676;stroke-width:2}.cd-rh{fill:var(--cd-ink3);font:700 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-ranura{stroke:#3a4458;stroke-width:7;stroke-linecap:round;fill:none}.cd-ml{fill:#8fa6c6;font:900 15px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-mw{fill:#5d7394;font:700 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-ml.on,.cd-mw.on{fill:#ffd66b}.cd-palo{stroke:#5d6676;stroke-width:9;stroke-linecap:round}.cd-pomo{fill:#2a3448;stroke:#ffd66b;stroke-width:2.5}
+[data-r="palanca"]{transition:transform .35s ease}@media (prefers-reduced-motion:reduce){[data-r="palanca"]{transition:none}}
+.cd-rpanel{fill:#10151f;stroke:#ffd66b;stroke-width:2.5}.cd-rtt{fill:#7cf0b0;font:900 16px ui-sans-serif,system-ui,sans-serif}.cd-rs1{fill:#c8ffe0;font:800 20px ui-sans-serif,system-ui,sans-serif}.cd-rs2{fill:#4ad08a;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
+.cd-rlink{fill:#0d2a1c;stroke:#4ad08a;stroke-width:1.5}.cd-rlinkt{fill:#7cf0b0;font:800 12px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd-rlab{fill:#8fa6c6;font:800 11.5px ui-sans-serif,system-ui,sans-serif;letter-spacing:.04em}.cd-rmini{fill:#5d7394;font:700 11px ui-sans-serif,system-ui,sans-serif}
+.cd-kb rect{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-kb text{fill:#c9d4e4;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-kb.on rect{fill:#ffd66b;stroke:#ffd66b}.cd-kb.on text{fill:#06101a}
+.cd-ab circle{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-ab text{font-size:17px;text-anchor:middle}.cd-ab.on circle{fill:#3a2f0a;stroke:#ffd66b}
+.cd-dial{fill:#2a3448;stroke:#38e1ff;stroke-width:2}.cd-dialm{stroke:#38e1ff;stroke-width:3;stroke-linecap:round}.cd-rint{fill:#e9f2ff;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
+.cd-rx{fill:#1b2333;stroke:#ffd66b;stroke-width:2}.cd-rxt{fill:#ffd66b;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}`;
@@ -96,7 +113,7 @@
   const esta = (l, x) => l.some((y) => igual(x, y));
 
   /* ---------- la cámara: los ojos del conductor ---------- */
-  const CX = 300, HY = 150, F = 270, EYE = 2.4, NEAR = 0.9, FAR = 260, ZSTOP = 9, GAP = 40;
+  const CX = 300, HY = 255, F = 270, EYE = 2.4, NEAR = 0.9, FAR = 260, ZSTOP = 9, GAP = 40;
   const pr = (x, y, z) => [CX + F * x / z, HY + F * (EYE - y) / z];
   function poly(pts, cls, extra) {
     const out = [];
@@ -184,47 +201,66 @@
 
   /* ---------- el dibujo fijo: marco, salpicadero, volante ---------- */
   const MARCO = `
-  <defs><clipPath id="cdwin__ID"><path d="M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/></clipPath>
+  <defs><clipPath id="cdwin__ID"><path d="M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/></clipPath>
     <linearGradient id="cdsky__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="sky0" offset="0" stop-color="#5aa0e0"/><stop data-r="sky1" offset="1" stop-color="#bfe0ff"/></linearGradient>
     <linearGradient id="cdmar__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="mar0" offset="0" stop-color="#4c8fc4"/><stop data-r="mar1" offset="1" stop-color="#123a5e"/></linearGradient>
+    <linearGradient id="cdrio__ID" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c8fc4"/><stop offset="1" stop-color="#1d5a8a"/></linearGradient>
     <linearGradient id="cdbeam__ID" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff3c4" stop-opacity=".42"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></linearGradient></defs>
   <g clip-path="url(#cdwin__ID)">
-    <rect x="0" y="0" width="600" height="300" fill="url(#cdsky__ID)"/>
-    <g data-r="stars"></g><g data-r="scene"></g><g data-r="garage"></g>
-    <g data-r="mirar" style="display:none" data-o="ahora"><rect class="cd-chip" x="214" y="232" width="172" height="26" rx="13"/><text data-r="mirart" class="cd-chipt" x="300" y="249.5"></text></g>
+    <rect x="0" y="0" width="600" height="600" fill="url(#cdsky__ID)"/>
+    <g data-r="stars"></g><g data-r="scene"></g><g data-r="garage"></g><g data-r="lado"></g>
+    <g data-r="mirar" style="display:none" data-o="ahora"><rect class="cd-chip" x="214" y="520" width="172" height="28" rx="14"/><text data-r="mirart" class="cd-chipt" x="300" y="538.5"></text></g>
   </g>
-  <path class="cd-frame" fill-rule="evenodd" d="M0 0H600V300H0Z M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/>
-  <path class="cd-seal" d="M44 52 Q300 40 556 52 L572 266 Q300 284 28 266 Z"/>
-  <path class="cd-pillar" d="M0 40 L44 52 L28 266 L0 300Z"/><path class="cd-pillar" d="M600 40 L556 52 L572 266 L600 300Z"/>
-  <path class="cd-visor" d="M60 50 Q150 44 236 47 L232 74 Q150 72 66 76 Z"/><text data-r="rot" class="cd-rot" x="149" y="65" text-anchor="middle"></text>
-  <g data-o="atras"><rect class="cd-mirror" x="244" y="50" width="112" height="30" rx="9"/><rect class="cd-mirrorg" x="249" y="54.5" width="102" height="21" rx="6"/>
-    <text data-r="mir" class="cd-mirt" x="300" y="69"></text><rect x="296" y="40" width="8" height="11" rx="2" class="cd-pillar"/></g>
+  <path class="cd-frame" fill-rule="evenodd" d="M0 0H600V610H0Z M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/>
+  <path class="cd-seal" d="M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/>
+  <path class="cd-pillar" d="M0 44 L44 56 L26 560 L0 600Z"/><path class="cd-pillar" d="M600 44 L556 56 L574 560 L600 600Z"/>
+  <path class="cd-visor" d="M62 54 Q150 48 238 51 L234 80 Q150 78 68 82 Z"/><text data-r="rot" class="cd-rot" x="151" y="70" text-anchor="middle"></text>
+  <g data-o="atras"><rect class="cd-mirror" x="244" y="52" width="112" height="30" rx="9"/><rect class="cd-mirrorg" x="249" y="56.5" width="102" height="21" rx="6"/>
+    <text data-r="mir" class="cd-mirt" x="300" y="71"></text><rect x="296" y="42" width="8" height="11" rx="2" class="cd-pillar"/></g>
   <rect class="cd-strip" x="40" y="8" width="520" height="28" rx="7"/><text class="cd-stt" x="52" y="25.5">LÍNEA DE HOY</text><g data-r="route"></g>
-  <path class="cd-dashtop" d="M0 300 Q300 278 600 300 V440 H0Z"/><path class="cd-dashe" d="M0 300 Q300 278 600 300"/>
-  <rect class="cd-lcd" x="34" y="306" width="232" height="88" rx="14"/>
-  <text class="cd-lab" x="48" y="323">HORA</text><text data-r="clk" class="cd-clk" x="96" y="361"></text><text data-r="q" class="cd-q" x="96" y="382"></text>
-  <g data-o="sueno"><rect x="152" y="310" width="110" height="38" fill="transparent"/><text class="cd-lab" x="160" y="323">SUEÑO</text>
-    <rect class="cd-bar" x="160" y="328" width="96" height="7" rx="3.5"/><rect data-r="sbar" class="cd-barf" x="160" y="328" width="0" height="7" rx="3.5"/><path data-r="sobj" class="cd-barobj" d=""/>
-    <text data-r="sval" class="cd-bv" x="160" y="347"></text></g>
-  <g data-o="comer"><rect x="152" y="352" width="110" height="40" fill="transparent"/><text class="cd-lab" x="160" y="364">COMIDA</text>
-    <rect class="cd-bar" x="160" y="369" width="96" height="7" rx="3.5"/><rect data-r="kbar" class="cd-barf cd-kc" x="160" y="369" width="0" height="7" rx="3.5"/>
-    <text data-r="kval" class="cd-bv" x="160" y="388"></text></g>
-  <g data-o="proxima"><rect class="cd-disp" x="278" y="306" width="290" height="88" rx="14"/>
-    <text data-r="nxl" class="cd-nxl" x="294" y="326"></text><text data-r="nxb" class="cd-nxb" x="294" y="356"></text><text data-r="nxa" class="cd-nxa" x="294" y="381"></text></g>
-  <g data-o="parahoy"><rect class="cd-tkb" x="452" y="404" width="124" height="34" rx="8"/><rect class="cd-tkp" x="462" y="398" width="104" height="22" rx="2"/>
-    <text data-r="tk" class="cd-tkt" x="514" y="413.5"></text><circle cx="466" cy="430" r="2.4" fill="#38e1ff"/></g>
-  <g data-r="busca" style="display:none"><rect class="cd-busca" x="300" y="402" width="148" height="32" rx="6"/><rect class="cd-buscap" x="308" y="408" width="116" height="20" rx="3"/>
-    <text class="cd-buscat" x="313" y="416">GUARDIA</text><text data-r="buscav" class="cd-buscav" x="313" y="426"></text><circle class="cd-led" cx="436" cy="418" r="4"/></g>
-  <g data-r="nota" data-o="nota" style="display:none"><path class="cd-note" d="M300 400 L440 398 L442 434 L302 437 Z"/><text data-r="notat" class="cd-notet" x="310" y="421"></text></g>
-  <g data-r="volante"><circle class="cd-wheel" cx="150" cy="532" r="118"/><path class="cd-spoke" d="M50 470 Q150 444 250 470 L240 488 Q150 466 60 488Z"/><circle class="cd-horn" cx="150" cy="520" r="44"/>
-    <g transform="translate(96 418)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
-    <g transform="translate(204 418) scale(-1 1)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g></g>
-  <g data-r="bici" style="display:none"><path class="cd-manillar" d="M14 436 Q60 404 120 410 Q150 414 150 440"/><path class="cd-manillar" d="M286 436 Q240 404 180 410 Q150 414 150 440"/>
+  <g data-o="mirai" class="cd-espejo"><ellipse data-r="mi" class="cd-esp" cx="30" cy="520" rx="32" ry="40"/><ellipse class="cd-espc" cx="30" cy="520" rx="24" ry="32"/>
+    <rect x="16" y="508" width="9" height="28" rx="1" fill="#2e3850"/><rect x="27" y="498" width="11" height="38" rx="1" fill="#3a4763"/><rect x="40" y="516" width="7" height="20" rx="1" fill="#2e3850"/></g>
+  <g data-o="mirad" class="cd-espejo"><ellipse data-r="md" class="cd-esp cd-espd" cx="570" cy="520" rx="32" ry="40"/><ellipse class="cd-espc" cx="570" cy="520" rx="24" ry="32" style="fill:#46784d"/>
+    <path d="M548 526L563 502L576 514L592 500V548H548Z" fill="#6f8aa8"/><rect x="546" y="530" width="48" height="9" fill="#4c8fc4"/></g>
+  <path class="cd-dashtop" d="M0 604 Q300 576 600 604 V900 H0Z"/><path class="cd-dashe" d="M0 604 Q300 576 600 604"/>
+  <g data-o="mirai"><rect class="cd-lado cd-ladoi" x="6" y="588" width="98" height="26" rx="13"/><text class="cd-ladot cd-ladoit" x="55" y="606">◀ eventos</text></g>
+  <g data-o="mirad"><rect class="cd-lado cd-ladod" x="484" y="588" width="110" height="26" rx="13"/><text class="cd-ladot cd-ladodt" x="539" y="606">entreno ▶</text></g>
+  <g data-o="proxima"><rect class="cd-lcd" x="180" y="620" width="240" height="110" rx="20"/>
+    <path class="cd-arc0" d="M222 684H378"/><path data-r="arc" class="cd-arc" d=""/>
+    <text data-r="nxl" class="cd-nxl" x="300" y="638" text-anchor="middle"></text><text data-r="clk" class="cd-clk" x="300" y="672"></text>
+    <text data-r="nxa" class="cd-nxa" x="300" y="704" text-anchor="middle"></text><text data-r="nxb" class="cd-nxb" x="300" y="721" text-anchor="middle"></text><text data-r="q" class="cd-q" x="300" y="0" style="display:none"></text></g>
+  <g data-o="parahoy"><rect class="cd-tkb" x="18" y="652" width="142" height="76" rx="10"/><rect class="cd-tkp" x="30" y="630" width="118" height="28" rx="2"/>
+    <text data-r="tk" class="cd-tkt" x="89" y="649"></text><rect x="30" y="676" width="118" height="20" rx="4" class="cd-tks"/><text data-r="tkv" class="cd-tkv" x="89" y="690"></text><circle cx="42" cy="712" r="4" fill="#38e1ff"/></g>
+  <g data-o="radio"><rect class="cd-tkb" x="440" y="632" width="142" height="92" rx="12"/><rect class="cd-rdisp" x="452" y="644" width="118" height="32" rx="5"/>
+    <text class="cd-rt" x="511" y="659">📻 RADIO SUEÑO</text><text data-r="rdl" class="cd-rl" x="511" y="671"></text>
+    <circle class="cd-knob" cx="472" cy="700" r="12"/><circle class="cd-knob" cx="550" cy="700" r="12"/><rect x="490" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="502" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="514" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="526" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/>
+    <text class="cd-rh" x="511" y="740">toca para oírla</text></g>
+  <g data-r="busca" style="display:none"><rect class="cd-busca" x="432" y="752" width="156" height="32" rx="6"/><rect class="cd-buscap" x="440" y="758" width="124" height="20" rx="3"/>
+    <text class="cd-buscat" x="445" y="766">GUARDIA</text><text data-r="buscav" class="cd-buscav" x="445" y="776"></text><circle class="cd-led" cx="576" cy="768" r="4"/></g>
+  <g data-r="nota" data-o="nota" style="display:none"><path class="cd-note" d="M428 796 L588 794 L590 830 L430 833 Z"/><text data-r="notat" class="cd-notet" x="438" y="817"></text></g>
+  <g class="cd-marcha"><rect class="cd-tkb" x="8" y="772" width="132" height="120" rx="18"/><path class="cd-ranura" d="M32 832H112"/>
+    <text data-r="mR" class="cd-ml" x="32" y="858">R</text><text data-r="mN" class="cd-ml" x="72" y="858">N</text><text data-r="mD" class="cd-ml" x="112" y="858">D</text>
+    <text data-r="wR" class="cd-mw" x="32" y="878">ayer</text><text data-r="wN" class="cd-mw" x="72" y="878">hoy</text><text data-r="wD" class="cd-mw" x="112" y="878">mañana</text>
+    <g data-r="palanca"><path class="cd-palo" d="M72 832L72 786"/><circle class="cd-pomo" cx="72" cy="778" r="16"/><circle cx="67" cy="773" r="5" fill="#5d6676"/></g>
+    <rect data-o="marcha" data-d="-1" x="10" y="774" width="42" height="116" fill="transparent"/><rect data-o="marcha" data-d="0" x="52" y="774" width="40" height="116" fill="transparent"/><rect data-o="marcha" data-d="1" x="92" y="774" width="46" height="116" fill="transparent"/></g>
+  <g data-r="volante" style="pointer-events:none"><circle class="cd-wheel" cx="300" cy="932" r="160"/><path class="cd-spoke" d="M172 884 Q300 852 428 884 L418 904 Q300 876 182 904Z"/><circle class="cd-horn" cx="300" cy="918" r="46"/>
+    <g transform="translate(178 830) scale(1.2)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
+    <g transform="translate(422 830) scale(-1.2 1.2)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g></g>
+  <g data-r="bici" style="display:none;pointer-events:none"><g transform="translate(150 372)"><path class="cd-manillar" d="M14 436 Q60 404 120 410 Q150 414 150 440"/><path class="cd-manillar" d="M286 436 Q240 404 180 410 Q150 414 150 440"/>
     <rect class="cd-puno" x="8" y="422" width="30" height="14" rx="7"/><rect class="cd-puno" x="262" y="422" width="30" height="14" rx="7"/><circle class="cd-timbre" cx="236" cy="408" r="7"/><circle class="cd-timbrec" cx="236" cy="408" r="2.2"/>
     <g transform="translate(46 420)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
     <g transform="translate(254 420) scale(-1 1)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
-    <text class="cd-bicit" x="150" y="406" text-anchor="middle">🚲 a casa en bici</text></g>
-  <rect data-r="dim" class="cd-dimmer" x="0" y="300" width="600" height="140" opacity="0"/>`;
+    <text class="cd-bicit" x="150" y="396" text-anchor="middle">🚲 a casa en bici</text></g></g>
+  <rect data-r="dim" class="cd-dimmer" x="0" y="604" width="600" height="296" opacity="0"/>
+  <g data-r="radiob" style="display:none"><rect data-o="radio" x="0" y="580" width="600" height="320" fill="#000" opacity=".4"/>
+    <rect class="cd-rpanel" x="26" y="608" width="548" height="284" rx="22"/><rect class="cd-rdisp" x="46" y="626" width="508" height="104" rx="10"/>
+    <text class="cd-rtt" x="62" y="652">📻 RADIO SUEÑO · 97.5 FM</text><g data-o="sueno"><rect x="420" y="634" width="128" height="26" rx="13" class="cd-rlink"/><text class="cd-rlinkt" x="484" y="652">abrir Sueño ›</text></g>
+    <text data-r="rs1" class="cd-rs1" x="62" y="686"></text><text data-r="rs2" class="cd-rs2" x="62" y="714"></text>
+    <text class="cd-rlab" x="46" y="748">¿CÓMO AMANECES? · los botones de emisora</text><g data-o="kss" data-v="1" class="cd-kb"><rect x="46" y="756" width="50" height="40" rx="8"/><text x="71" y="783">1</text></g><g data-o="kss" data-v="2" class="cd-kb"><rect x="103" y="756" width="50" height="40" rx="8"/><text x="128" y="783">2</text></g><g data-o="kss" data-v="3" class="cd-kb"><rect x="160" y="756" width="50" height="40" rx="8"/><text x="185" y="783">3</text></g><g data-o="kss" data-v="4" class="cd-kb"><rect x="217" y="756" width="50" height="40" rx="8"/><text x="242" y="783">4</text></g><g data-o="kss" data-v="5" class="cd-kb"><rect x="274" y="756" width="50" height="40" rx="8"/><text x="299" y="783">5</text></g><g data-o="kss" data-v="6" class="cd-kb"><rect x="331" y="756" width="50" height="40" rx="8"/><text x="356" y="783">6</text></g><g data-o="kss" data-v="7" class="cd-kb"><rect x="388" y="756" width="50" height="40" rx="8"/><text x="413" y="783">7</text></g><g data-o="kss" data-v="8" class="cd-kb"><rect x="445" y="756" width="50" height="40" rx="8"/><text x="470" y="783">8</text></g><g data-o="kss" data-v="9" class="cd-kb"><rect x="502" y="756" width="50" height="40" rx="8"/><text x="527" y="783">9</text></g>
+    <text class="cd-rmini" x="46" y="814">1 muy despierto</text><text class="cd-rmini" x="554" y="814" text-anchor="end">9 me caigo</text>
+    <text class="cd-rlab" x="46" y="858">ÁNIMO</text><g data-o="animo" data-v="1" class="cd-ab"><circle cx="118" cy="852" r="17"/><text x="118" y="858">😣</text></g><g data-o="animo" data-v="2" class="cd-ab"><circle cx="158" cy="852" r="17"/><text x="158" y="858">😕</text></g><g data-o="animo" data-v="3" class="cd-ab"><circle cx="198" cy="852" r="17"/><text x="198" y="858">😐</text></g><g data-o="animo" data-v="4" class="cd-ab"><circle cx="238" cy="852" r="17"/><text x="238" y="858">🙂</text></g><g data-o="animo" data-v="5" class="cd-ab"><circle cx="278" cy="852" r="17"/><text x="278" y="858">😄</text></g>
+    <g data-o="int"><circle class="cd-dial" cx="352" cy="852" r="18"/><path data-r="rdial" class="cd-dialm" d="M352 852L342 840"/><text data-r="rint" class="cd-rint" x="378" y="857"></text></g>
+    <g data-o="radio"><circle cx="556" cy="626" r="15" class="cd-rx"/><text class="cd-rxt" x="556" y="632">×</text></g></g>`;
 
   function crea(opts) {
     opts = opts || {};
@@ -232,12 +268,12 @@
     const el = document.createElement("div");
     el.className = "cd";
     if (!document.getElementById("cd-css")) { const st = document.createElement("style"); st.id = "cd-css"; st.textContent = CSS; document.head.appendChild(st); }
-    el.innerHTML = '<svg viewBox="0 0 600 440" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="24" aria-label="Tu día desde el asiento del conductor. Arrastra a lo ancho o usa las flechas para mover la hora; Intro abre la próxima parada.">' + MARCO.replace(/__ID/g, ID) + "</svg>" +
+    el.innerHTML = '<svg viewBox="0 0 600 900" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="24" aria-label="Tu día desde el asiento del conductor. Arrastra a lo ancho o usa las flechas para mover la hora; Intro abre la próxima parada.">' + MARCO.replace(/__ID/g, ID) + "</svg>" +
       '<div class="cd-sr" data-r="sr" aria-label="Paradas de hoy"></div>';
     const svg = el.querySelector("svg"), R_ = {};
     el.querySelectorAll("[data-r]").forEach((n) => { R_[n.getAttribute("data-r")] = n; });
     const still = matchMedia("(prefers-reduced-motion: reduce)");
-    let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false;
+    let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false, lado = null, radio = false;
 
     /* ---------- lo que se dibuja por el parabrisas ---------- */
     /* el Lloretazo: el conductor se baja, va hasta el borde del acantilado y se fuma un cigarro mirando
@@ -246,7 +282,7 @@
       const n = 1 - L.d, o = [], SOL = D.sol || [7, 18.6];
       R_.mar0.setAttribute("stop-color", mix(mix("#5a9fd2", "#f2a65a", clamp(1 - Math.abs(t - SOL[1]) / 0.9, 0, 1) * 0.5), "#0d1d38", n * 0.9));
       R_.mar1.setAttribute("stop-color", mix("#123a5e", "#050c18", n));
-      o.push('<rect x="0" y="' + HY + '" width="600" height="160" fill="url(#cdmar' + ID + ')"/>');
+      o.push('<rect x="0" y="' + HY + '" width="600" height="400" fill="url(#cdmar' + ID + ')"/>');
       /* el cabo de enfrente con su faro, y otro más bajo a la izquierda */
       const roca = mix("#5b5148", "#151820", n * 0.85);
       o.push('<path d="M420 ' + HY + "L452 " + (HY - 16) + "L486 " + (HY - 27) + "L528 " + (HY - 31) + "L566 " + (HY - 24) + "L600 " + (HY - 20) + "V" + HY + 'Z" fill="' + roca + '"/>' +
@@ -319,7 +355,7 @@
       const ll = !st.noche && st.enCurso.find(esLL);
       if (ll) return mirador(L, clamp((t - ll.a) / Math.max(0.1, ll.b - ll.a), 0, 1));
       const out = [], noche = 1 - L.d;
-      out.push('<rect class="cd-ground" x="0" y="' + HY + '" width="600" height="160"/>');
+      out.push('<rect class="cd-ground" x="0" y="' + HY + '" width="600" height="400"/>');
       out.push(poly([[-5.2, 0, NEAR], [3.0, 0, NEAR], [3.0, 0, FAR], [-5.2, 0, FAR]], "cd-road"));
       out.push(poly([[3.0, 0.15, NEAR], [8, 0.15, NEAR], [8, 0.15, FAR], [3.0, 0.15, FAR]], "cd-walk"));
       out.push(poly([[-11, 0.15, NEAR], [-5.2, 0.15, NEAR], [-5.2, 0.15, FAR], [-11, 0.15, FAR]], "cd-walk"));
@@ -575,16 +611,27 @@
       R_.route.innerHTML = r;
     }
 
+    const coma = (v) => String(Math.round(v * 10) / 10).replace(".", ",");
+    /* que un texto quepa en su sitio: si es largo se encoge, sin cortarlo */
+    const cabe = (n, max) => { if (n.textContent.length * parseFloat(getComputedStyle(n).fontSize || 12) * 0.56 > max) { n.setAttribute("textLength", max); n.setAttribute("lengthAdjust", "spacingAndGlyphs"); } else n.removeAttribute("textLength"); };
     function indicadores() {
-      const s = D.sueno;
-      R_.sbar.setAttribute("width", s ? (96 * clamp(s.h / 10, 0, 1)).toFixed(1) : 0);
-      R_.sobj.setAttribute("d", s && s.obj ? "M" + (160 + 96 * clamp(s.obj / 10, 0, 1)).toFixed(1) + " 325v13" : "");
-      R_.sval.textContent = s ? String(Math.round(s.h * 10) / 10).replace(".", ",") + " de " + s.obj + " h" : "sin apuntar · toca";
-      R_.sval.setAttribute("class", "cd-bv" + (s ? "" : " cd-sin"));
-      const k = D.comida;
-      R_.kbar.setAttribute("width", k && k.obj ? (96 * clamp(k.kc / k.obj, 0, 1)).toFixed(1) : 0);
-      R_.kval.textContent = k ? Math.round(k.kc) + (k.obj ? "/" + Math.round(k.obj) : "") + " kcal" : "—";
-      R_.tk.textContent = D.ph ? "PARA HOY · " + D.ph : "PARA HOY ✓";
+      const s = D.sueno, cab = D.cab || {}, rd = cab.radio || {}, ph = (cab.izq && cab.izq.ph) || [];
+      R_.rdl.textContent = s ? "anoche " + coma(s.h) + " h" : "anoche: sin apuntar";
+      const pend = ph.filter((x) => !x.hecho).length;
+      R_.tk.textContent = pend ? "PARA HOY · " + pend : "PARA HOY ✓";
+      R_.tkv.textContent = ph.length ? ph.filter((x) => x.hecho).length + " de " + ph.length + " hechas" : "nada pendiente";
+      /* la radio: lo dormido, la cama y el café; los botones de emisora son el «¿cómo amaneces?» */
+      R_.rs1.textContent = s ? "Anoche dormiste " + coma(s.h) + " h de " + s.obj : "Anoche: sin apuntar · toca «abrir Sueño»";
+      R_.rs2.textContent = [rd.ayer != null ? "ayer " + coma(rd.ayer) + " h" : "", rd.cama ? "a la cama " + rd.cama : "", rd.cafe ? "último café " + rd.cafe : ""].filter(Boolean).join(" · ");
+      svg.querySelectorAll('[data-o="kss"]').forEach((g) => g.classList.toggle("on", +g.getAttribute("data-v") === rd.kss));
+      svg.querySelectorAll('[data-o="animo"]').forEach((g) => g.classList.toggle("on", +g.getAttribute("data-v") === rd.animo));
+      R_.rint.textContent = rd.int ? "hoy: " + (rd.intTxt || "") : "¿qué te propones hoy?";
+      const ni = (rd.ints || []).findIndex((x) => x[0] === rd.int), ang = ni < 0 ? -2.3 : -2.3 + (ni + 1) * (4.6 / Math.max(1, (rd.ints || []).length));
+      R_.rdial.setAttribute("d", "M352 852L" + (352 + 12 * Math.sin(ang)).toFixed(1) + " " + (852 - 12 * Math.cos(ang)).toFixed(1));
+      /* la palanca: R el día de antes, N hoy, D el de después */
+      const m = D.modo === "pasado" ? -1 : D.modo === "futuro" ? 1 : 0;
+      R_.palanca.style.transform = "translateX(" + m * 40 + "px)";
+      ["R", "N", "D"].forEach((l, j) => { R_["m" + l].classList.toggle("on", j - 1 === m); R_["w" + l].classList.toggle("on", j - 1 === m); });
       const p = (D.pendiente || [])[0];
       R_.nota.style.display = p ? "" : "none";
       if (p) { R_.notat.textContent = ("Hoy toca: " + p.txt).slice(0, 22) + " ▶"; R_.nota.setAttribute("data-i", p.i); }
@@ -630,11 +677,97 @@
       const bici = ((D.esc && D.esc.bici) || []).some((v) => t >= v[0] && t < v[1]);
       R_.volante.style.display = bici ? "none" : ""; R_.bici.style.display = bici ? "" : "none";
       salpicadero(st, c);
-      R_.mirar.style.display = mirando ? "" : "none";
+      const ah = st.corto || st.turno;
+      if (ah && !st.noche) { const f = clamp((t - ah.a) / Math.max(0.01, ah.b - ah.a), 0, 1);
+        R_.arc.setAttribute("d", f > 0.005 ? "M222 684H" + (222 + 156 * f).toFixed(1) : ""); }
+      else R_.arc.setAttribute("d", "");
+      cabe(R_.nxl, 224); cabe(R_.nxa, 226); cabe(R_.nxb, 226);
+      /* mirar a un lado: la ventana enseña la ciudad (izquierda) o el campo (derecha); la radio, encima del salpicadero */
+      R_.lado.innerHTML = lado ? ladoSVG(lado, st) : "";
+      R_.mi.classList.toggle("on", lado === "izq"); R_.md.classList.toggle("on", lado === "der");
+      R_.radiob.style.display = radio ? "" : "none";
+      R_.mirar.style.display = mirando && !lado ? "" : "none";
       if (mirando) R_.mirart.textContent = "viendo las " + hhmm(t) + " · volver ⟲";
       svg.setAttribute("aria-valuenow", String(Math.round(t * 100) / 100));
       svg.setAttribute("aria-valuetext", hhmm(t) + " · " + (st.noche ? "en la cochera" : (st.corto || st.turno) ? cap((st.corto || st.turno).t) + " hasta las " + hhmm((st.corto || st.turno).b) : "libre"));
       return false;
+    }
+    /* ---------- mirar a los lados ---------- */
+    const Rr = (x, y, w, h, rx, fill, extra) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + rx + '" fill="' + fill + '" ' + (extra || "") + "/>";
+    const Tt = (x, y, str, size, fill, w, anchor, max) => { const long = String(str).length * size * 0.56 > (max || 1e9);
+      return '<text x="' + x + '" y="' + y + '" font-size="' + size + '" font-weight="' + (w || 700) + '" fill="' + fill + '" text-anchor="' + (anchor || "start") + '"' + (long ? ' textLength="' + max + '" lengthAdjust="spacingAndGlyphs"' : "") + ">" + esc(str) + "</text>"; };
+    const Pp = (pts, fill, extra) => '<path d="M' + pts.map((p) => p[0] + " " + p[1]).join("L") + 'Z" fill="' + fill + '" ' + (extra || "") + "/>";
+    const cuando = (e, ahora) => D.modo !== "hoy" ? hhmm(e.a) + "–" + hhmm(e.b) : e.b <= ahora ? "✓ ya pasó" : e.a <= ahora ? "ahora · hasta " + hhmm(e.b) : "dentro de " + dura(e.a - ahora);
+    const dentro = (d) => d === 1 ? "mañana" : "dentro de " + d + " días";
+    function ladoSVG(cual, st) {
+      const ahora = AHORA != null ? AHORA : t, cab = D.cab || {}, o = [];
+      const cielo = cual === "izq" ? ["#4f93d8", "#d7ebff"] : ["#5aa0e0", "#e3f1ff"];
+      o.push('<defs><linearGradient id="cdl' + cual + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + cielo[0] + '"/><stop offset="1" stop-color="' + cielo[1] + '"/></linearGradient></defs>');
+      o.push(Rr(0, 0, 600, 600, 0, "url(#cdl" + cual + ")"));
+      if (cual === "izq") {
+        const izq = cab.izq || {}, viene = izq.viene || [], ph = izq.ph || [];
+        const evs = (D.dia || []).filter((e) => e.k === "plan" && e.b > e.a).sort((a, b) => a.a - b.a);
+        o.push('<g fill="#fff" opacity=".8"><ellipse cx="460" cy="150" rx="56" ry="15"/><ellipse cx="486" cy="138" rx="28" ry="14"/></g><g transform="translate(0 26)">');
+        /* al fondo, lo importante que viene: la torre y el hospital, con sus vallas */
+        o.push(Rr(70, 150, 92, 330, 2, "#9fb3cf"), Rr(84, 136, 64, 18, 2, "#9fb3cf"));
+        for (let y = 170; y < 470; y += 26) for (let x = 80; x < 156; x += 20) o.push(Rr(x, y, 12, 14, 1, "#b9c9de"));
+        o.push(Rr(178, 220, 150, 260, 2, "#c3cfdf"), Rr(232, 234, 42, 14, 2, "#e5484d"), Rr(246, 220, 14, 42, 2, "#e5484d"));
+        for (let y = 270; y < 470; y += 26) for (let x = 190; x < 320; x += 24) o.push(Rr(x, y, 14, 14, 1, "#dfe7f2"));
+        const valla = (v, x, y, w) => '<g data-o="verdia" data-k="' + v.k + '">' + Rr(x, y, w, 46, 8, "#0b1020", 'stroke="' + v.col + '" stroke-width="2"') + Tt(x + 14, y + 22, v.t, 14, "#e9f2ff", 800, "start", w - 26) + Tt(x + 14, y + 38, dentro(v.dias), 12, "#ffd66b", 700) + "</g>";
+        if (viene[0]) o.push(valla(viene[0], 50, 100, 206)); else o.push(Rr(50, 100, 206, 40, 8, "#0b1020", 'stroke="#3a4458" stroke-width="2"'), Tt(64, 125, "nada importante a la vista", 13, "#8fa6c6", 700));
+        if (viene[1]) o.push(valla(viene[1], 186, 164, 176));
+        /* delante, los eventos de hoy en sus fachadas */
+        o.push(Rr(350, 196, 230, 290, 3, "#5b6a8a"));
+        for (let y = 280; y < 480; y += 30) for (let x = 362; x < 570; x += 28) o.push(Rr(x, y, 16, 18, 2, "#1a2236"));
+        o.push(Rr(26, 330, 150, 160, 3, "#43506d"), Rr(26, 320, 150, 16, 2, "#7a5cf0"));
+        for (let y = 360; y < 480; y += 30) for (let x = 36; x < 166; x += 26) o.push(Rr(x, y, 14, 18, 2, "#1a2236"));
+        const pend = evs.filter((e) => e.b > ahora || D.modo !== "hoy"), a1 = pend[0] || evs[evs.length - 1] || null, a2 = evs.filter((e) => e !== a1 && (pend.indexOf(e) >= 0 || !pend.length))[0] || null;
+        const cartel = (e, x, y, w, col, mas) => '<g data-o="ev" data-i="' + e.i + '">' + Rr(x, y, w, 56, 8, "#0b1020", 'stroke="' + col + '" stroke-width="2.5"') +
+          Tt(x + 12, y + 24, hhmm(e.a) + " " + String(e.t).toUpperCase(), 15, "#e9f2ff", 900, "start", w - 22) + Tt(x + 12, y + 44, cuando(e, ahora) + (mas ? " · +" + mas + " más" : ""), 12.5, e.b <= ahora && D.modo === "hoy" ? "#4ad08a" : "#c9bfff", 700, "start", w - 22) + "</g>";
+        if (a1) o.push(cartel(a1, 352, 210, 216, "#1fa6c4", 0)); else o.push(Rr(352, 210, 216, 46, 8, "#0b1020", 'stroke="#3a4458" stroke-width="2"'), Tt(366, 238, "Sin eventos este día", 14, "#8fa6c6", 800));
+        if (a2) o.push(cartel(a2, 44, 274, 196, "#7a5cf0", Math.max(0, evs.length - 2)));
+        /* la acera y el quiosco de «Para hoy» */
+        o.push(Rr(0, 486, 600, 120, 0, "#59616f"), Rr(0, 486, 600, 6, 0, "#9aa3b2"));
+        const lista = ph.map((x, n) => Object.assign({ n }, x)).sort((a, b) => (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0) || (b.av ? 1 : 0) - (a.av ? 1 : 0)).slice(0, 3);
+        const hechas = ph.filter((x) => x.hecho).length, kh = 30 + Math.max(1, lista.length) * 34 + (ph.length > 3 ? 14 : 0);
+        o.push('<g>' + Rr(186, 492 - kh, 196, kh, 10, "#1f6b4f") + Rr(176, 480 - kh, 216, 22, 6, "#2f9e6b") + Tt(284, 496 - kh, ph.length ? "PARA HOY · " + hechas + " de " + ph.length : "PARA HOY", 13, "#eafff4", 900, "middle") + "</g>");
+        if (!lista.length) o.push(Rr(196, 514 - kh, 176, 30, 3, "#f3efe4"), Tt(284, 534 - kh, "✓ nada pendiente", 12.5, "#1d2b40", 800, "middle"));
+        lista.forEach((x, j) => { const y = 506 - kh + j * 34;
+          o.push('<g data-o="ph" data-n="' + x.n + '"' + (x.hecho ? ' opacity=".6"' : "") + ">" + Rr(196, y, 176, 30, 3, "#f3efe4") + Rr(202, y + 8, 12, 12, 3, x.hecho ? "#2f9e6b" : "none", 'stroke="' + (x.av ? "#c46a1a" : "#4a5d78") + '" stroke-width="2"') +
+            (x.hecho ? Tt(208, y + 18, "✓", 11, "#fff", 900, "middle") : "") + Tt(220, y + 14, (x.ico ? x.ico + " " : "") + x.t, 12, "#1d2b40", 800, "start", 146) + Tt(220, y + 26, x.sub || "", 9.5, "#4a5d78", 600, "start", 146) + "</g>"); });
+        if (ph.length > 3) o.push(Tt(284, 500, "+" + (ph.length - 3) + " más · toca la máquina de billetes", 10, "#eafff4", 700, "middle"));
+        o.push('<path d="M520 496V330q0-14 14-14h18" stroke="#6c7686" stroke-width="6" fill="none"/>' + Rr(546, 310, 22, 10, 3, "#9aa3b2") + "</g>");
+      } else {
+        const der = cab.der || {}, habs = der.habs || [];
+        o.push('<circle cx="120" cy="130" r="34" fill="#fff6c8" opacity=".35"/><circle cx="120" cy="130" r="18" fill="#fff3b8"/>');
+        o.push(Pp([[0, 410], [120, 230], [190, 280], [300, 140], [430, 290], [520, 240], [600, 330], [600, 430], [0, 430]], "#6f8aa8"), Pp([[300, 140], [330, 180], [312, 176], [296, 190], [276, 172]], "#eef4fb"));
+        o.push(Pp([[0, 430], [0, 360], [160, 330], [340, 350], [600, 320], [600, 430]], "#3d6b45"));
+        /* el polideportivo en la ladera, con el entreno de hoy */
+        const gym = (D.dia || []).filter((e) => e.k === "gym" && e.b > e.a).sort((a, b) => a.a - b.a)[0];
+        o.push(Rr(330, 266, 150, 70, 4, "#4b3f7a"), Pp([[322, 268], [405, 236], [488, 268]], "#3a3163"), Rr(392, 298, 26, 38, 2, "#ffe7a6"));
+        o.push('<g data-o="' + (gym ? 'ev" data-i="' + gym.i : "tabgym") + '">' + Rr(290, 196, 230, 54, 8, "#0b1020", 'stroke="#9c86ff" stroke-width="2.5"') +
+          Tt(304, 219, gym ? "🏋 " + hhmm(gym.a) + " " + String(gym.t).toUpperCase() : "🏋 Hoy no toca entrenar", 16, "#e9e4ff", 900, "start", 204) + Tt(304, 240, gym ? (gym.h ? "✓ hecho · " : cuando(gym, ahora) + " · ") + (der.sem || "") : der.sem || "toca para ver Entreno", 12, "#c9bfff", 700, "start", 204) + "</g>");
+        /* el río */
+        o.push(Pp([[0, 440], [600, 422], [600, 500], [0, 518]], "url(#cdrio" + ID + ")"));
+        for (let i = 0; i < 18; i++) { const x = (i * 71) % 600, y = 450 + ((i * 29) % 56); o.push('<path d="M' + x + " " + y + "h" + (18 + (i % 3) * 8) + '" stroke="#bcd6ee" stroke-width="2" opacity=".55" stroke-linecap="round"/>'); }
+        o.push(Pp([[0, 518], [600, 500], [600, 610], [0, 610]], "#46784d"));
+        /* el merendero junto al río, con la comida que toca */
+        const meals = (D.dia || []).filter((e) => e.k === "meal" && e.b > e.a).sort((a, b) => a.a - b.a), m = meals.find((e) => e.b > ahora) || meals[meals.length - 1], k = D.comida || {};
+        o.push(Rr(30, 392, 176, 96, 6, "#8a6a48"), Pp([[22, 396], [118, 356], [214, 396]], "#c9302c"));
+        o.push('<g data-o="' + (m ? 'ev" data-i="' + m.i : "comer") + '">' + Rr(42, 420, 152, 56, 4, "#f3efe4") + Tt(118, 442, m ? "🍽 " + hhmm(m.a) + " " + String(m.t).toUpperCase() : "🍽 COMIDA", 13.5, "#1d2b40", 900, "middle", 140) +
+          Tt(118, 464, m && m.h ? "✓ apuntada · " + Math.round(k.kc || 0) + " kcal" : Math.round(k.kc || 0) + (k.obj ? " / " + Math.round(k.obj) : "") + " kcal", 12, "#2f9e6b", 800, "middle", 140) + "</g>");
+        /* el poste de madera: una flecha por hábito, con su luz */
+        const ver = habs.slice(0, 4), y0 = 372;
+        o.push(Rr(318, y0 - 4, 10, 160, 0, "#6b4c32"));
+        if (!ver.length) o.push(Pp([[328, y0], [480, y0], [498, y0 + 13], [480, y0 + 26], [328, y0 + 26]], "#a07650"), Tt(342, y0 + 18, "sin hábitos hoy", 12.5, "#fff8ec", 800));
+        ver.forEach((hb, j) => { const y = y0 + j * 32, luz = hb.on ? "#4ad08a" : hb.est === "min" ? "#f2a33a" : "#2a3a55";
+          o.push('<g data-o="hab" data-n="' + j + '">' + Pp([[328, y], [488, y], [508, y + 13], [488, y + 26], [328, y + 26]], "#a07650") + '<circle cx="343" cy="' + (y + 13) + '" r="6" fill="' + luz + '"/>' + Tt(356, y + 18, (hb.ico ? hb.ico + " " : "") + hb.t, 12.5, "#fff8ec", 800, "start", 140) + "</g>"); });
+        if (habs.length > 4) o.push(Tt(418, y0 + 4 * 32 + 14, "+" + (habs.length - 4) + " más en Hábitos", 10.5, "#eafff4", 700, "middle"));
+      }
+      /* el letrero de arriba y el botón para volver a mirar al frente */
+      o.push(Rr(120, 92, 360, 22, 11, "#0b1020", 'opacity=".85"'), Tt(300, 107, cual === "izq" ? "◀ MIRANDO A LA IZQUIERDA · LA CIUDAD" : "MIRANDO A LA DERECHA · EL CAMPO ▶", 11.5, "#e9f2ff", 800, "middle"));
+      o.push('<g data-o="frente">' + Rr(196, 524, 208, 32, 16, "#0d1726", 'stroke="#ffd66b" stroke-width="2.5"') + Tt(300, 545, cual === "izq" ? "volver al frente ▶" : "◀ volver al frente", 15, "#ffd66b", 800, "middle") + "</g>");
+      return o.join("");
     }
     function tick(now) {
       const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60; last = now;
@@ -665,9 +798,20 @@
       const o = n.getAttribute("data-o"), i = n.getAttribute("data-i"), st = estado(t);
       const item = (idx) => (D.dia || []).find((e) => String(e.i) === String(idx));
       if (o === "ahora") return vuelve();
-      if (o === "sueno") return abrir({ tipo: D.sueno ? "sueno" : "anotar" });
+      if (o === "sueno") { radio = false; draw(0); return abrir({ tipo: D.sueno ? "sueno" : "anotar" }); }
       if (o === "comer") return abrir({ tipo: "comer" });
-      if (o === "parahoy") return abrir({ tipo: "parahoy" });
+      /* mirar a un lado (los retrovisores y sus letreros), volver al frente; la máquina de billetes lleva al quiosco */
+      if (o === "mirai" || o === "mirad" || o === "parahoy") { const q = o === "mirad" ? "der" : "izq"; lado = lado === q && o !== "parahoy" ? null : q; radio = false; draw(0); return; }
+      if (o === "frente") { lado = null; draw(0); return; }
+      if (o === "radio") { radio = !radio; draw(0); return; }
+      const rd = (D.cab && D.cab.radio) || {}, cab = D.cab || {};
+      if (o === "kss" || o === "animo") return abrir({ tipo: "act", a: o === "kss" ? "asist-kss" : "asist-animo", ds: { k: rd.k || "", v: n.getAttribute("data-v") } });
+      if (o === "int") { const L = rd.ints || []; if (!L.length) return; const j = L.findIndex((x) => x[0] === rd.int), x = L[(j + 1) % L.length];
+        return abrir({ tipo: "act", a: "asist-int", ds: { k: rd.k || "", v: x[0], t: x[1] } }); }
+      if (o === "marcha") return abrir({ tipo: "marcha", d: +n.getAttribute("data-d") });
+      if (o === "verdia") return abrir({ tipo: "verdia", k: n.getAttribute("data-k") });
+      if (o === "tabgym") return abrir({ tipo: "tab", t: "gym" });
+      if (o === "ph" || o === "hab") { const x = ((o === "ph" ? (cab.izq || {}).ph : (cab.der || {}).habs) || [])[+n.getAttribute("data-n")]; if (x && x.acc) abrir({ tipo: "act", a: x.acc.a, ds: x.acc.ds }); return; }
       let e = null;
       if (o === "ev" || o === "nota") e = item(i) || (o === "nota" ? { i: +i } : null);
       else if (o === "proxima") e = st.corto || st.sig[0] || st.turno;
@@ -681,7 +825,7 @@
       const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key];
       if (d) { ev.preventDefault(); steer(Math.round(target * 4) / 4 + d * 0.25); return; }
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); const st = estado(t), e = st.corto || st.sig[0] || st.turno; if (e) abrir({ tipo: "item", i: +e.i, rapida: false }); }
-      if (ev.key === "Escape" || ev.key === "Home") vuelve();
+      if (ev.key === "Escape" || ev.key === "Home") { if (lado || radio) { lado = null; radio = false; draw(0); } else vuelve(); }
     });
 
     /* ---------- los datos ---------- */

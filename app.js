@@ -4297,9 +4297,12 @@ function tocaComprar(){
    El aviso de entreno, los suplementos, las notas con día, la compra, los recibos, el repaso y los
    hábitos eran siete tarjetas con su título, su lista y su botón. Aquí son filas: se marcan con un
    toque, lo hecho baja al final y la que lleva algo que abrir tiene su acción a la derecha. */
-function paraHoyHTML(key){
-  const f=[],ck=function(a,attrs,on,lab){return '<button class="tick phck'+(on?' on':'')+'" data-a="'+a+'"'+attrs+' aria-pressed="'+!!on+'" aria-label="'+esc(lab)+'">✓</button>';};
-  const ir=function(a,attrs,t){return '<button class="btn s" data-a="'+a+'"'+attrs+'>'+t+'</button>';};
+function paraHoyItems(key){
+  /* lo que hay que hacer hoy, como datos: cada cosa con su ✓ (acción y dataset) o su botón. Lo leen la tarjeta
+     «Para hoy» y la cabina del conductor (el quiosco de la ciudad, la máquina de billetes y el poste de hábitos) */
+  const f=[],dsDe=function(attrs){const ds={};String(attrs||'').replace(/data-([a-z]+)="([^"]*)"/g,function(_,k,v){ds[k]=v.replace(/&quot;/g,'"').replace(/&amp;/g,'&');return '';});return ds;};
+  const ck=function(a,attrs,on,lab){return {a:a,ds:dsDe(attrs),on:!!on,lab:lab};};
+  const ir=function(a,attrs,t){return {a:a,ds:dsDe(attrs),t:t};};
   const s=entrenoSemana(key);
   if(s&&s.min&&s.conflicto)f.push({av:1,ico:'⚠',t:'Esta semana '+(s.faltan?('solo caben '+s.total+' de '+s.min+' entrenos'):('solo '+s.fuerza+' días de fuerza')),sub:entrenoPorQue(s),acc:ir('tab',' data-t="gym"','ver ›')});
   const tn=notasDeHoy();tn.tarde.concat(tn.hoy).forEach(function(x){const tarde=tn.tarde.indexOf(x)>=0;
@@ -4319,9 +4322,16 @@ function paraHoyHTML(key){
   /* los hábitos que tocan hoy (no los de guardia el día de guardia), con su frase «al salir de guardia →
      estirar»; el día de versión corta, el ✓ marca el mínimo */
   habitosS().items.filter(function(h){return habitoToca(h,key);}).forEach(function(h){const T=habTick(h,key),r=rachaHabito(h);
-    f.push({ico:h.icono,t:T.cm?h.min:h.nombre,sub:(habFrase(h,T.cm)||'hábito')+(T.est==='min'?' · el mínimo':'')+(r?' · 🔥 '+r:''),hecho:T.on,
+    f.push({ico:h.icono,t:T.cm?h.min:h.nombre,sub:(habFrase(h,T.cm)||'hábito')+(T.est==='min'?' · el mínimo':'')+(r?' · 🔥 '+r:''),hecho:T.on,hab:h.id,est:T.est,
       ck:ck(T.accion,' data-id="'+h.id+'" data-key="'+key+'"',T.on,T.etq)});});
+  return f;}
+function paraHoyHTML(key){
+  const f=paraHoyItems(key);
   if(!f.length)return '';
+  const attrs=function(ds){return Object.keys(ds||{}).map(function(k){return ' data-'+k+'="'+esc(ds[k])+'"';}).join('');};
+  f.forEach(function(x){
+    if(x.ck)x.ck='<button class="tick phck'+(x.ck.on?' on':'')+'" data-a="'+x.ck.a+'"'+attrs(x.ck.ds)+' aria-pressed="'+x.ck.on+'" aria-label="'+esc(x.ck.lab)+'">✓</button>';
+    if(x.acc)x.acc='<button class="btn s" data-a="'+x.acc.a+'"'+attrs(x.acc.ds)+'>'+x.acc.t+'</button>';});
   const marcables=f.filter(function(x){return x.ck;}),hechos=marcables.filter(function(x){return x.hecho;}).length;
   f.sort(function(a,b){return (a.hecho?1:0)-(b.hecho?1:0)||(b.av?1:0)-(a.av?1:0);});
   return '<div class="card parahoy'+(f.some(function(x){return x.av&&!x.hecho;})?' avisa':'')+'"><h2>✅ Para hoy'+(marcables.length?'<span class="mini" style="margin-left:auto;font-weight:400">'+hechos+' de '+marcables.length+'</span>':'')+'</h2>'+
@@ -5590,8 +5600,30 @@ function conductorEscenas(key){
   let fuma=!!hab.fumar;if(!fuma)try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
   return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',fumar:fuma,
     casa:D.seg.filter(function(x){return CASA[x.e];}).map(function(x){return [x.a,x.b,x.e];})};}
+/* LO QUE SE VE AL MIRAR A LOS LADOS Y EN LA RADIO (la cabina con mandos): a la izquierda la ciudad, con los
+   eventos del día en sus fachadas, las vallas de lo importante que viene y el quiosco de «Para hoy»; a la
+   derecha el campo, con el entreno, la comida y el poste de los hábitos; la radio es el sueño y el check-in */
+function cabinaDatos(key,D){
+  const d=parseDate(key),hoyK=iso(new Date()),it=paraHoyItems(key),acc=function(x){const q=x.ck||x.acc;return q?{a:q.a,ds:q.ds}:null;};
+  const r1=function(v){return v==null?null:Math.round(v*10)/10;};
+  let ayer=null,bed='';try{const n=suenoCuenta(iso(addDays(d,-1)));ayer=n&&n.h?r1(n.h):null;}catch(e){}
+  try{bed=snCamaDe(key)||'';}catch(e){}
+  const c=(asistS().checkins||{})[key]||{};let ints=[];try{ints=asistIntenciones(key)||[];}catch(e){}
+  const radio={k:key,h:D.sueno?D.sueno.h:null,obj:D.sueno?D.sueno.obj:suenoCfg().min,ayer:ayer,cama:bed?hCortaHM(bed):'',cafe:bed&&mins(bed)!=null?hCortaHM(hm(mins(bed)-360)):'',
+    kss:+cnKss(key)||0,animo:+c.animo||0,int:c.int||'',intTxt:String(c.intTxt||'').replace(/^\S+ /,''),ints:ints.map(function(x){return [x[0],x[1]];})};
+  /* lo importante que viene: la próxima guardia y los eventos con fecha de las próximas semanas (antes los de cuenta atrás) */
+  const viene=[];
+  for(let i=1;i<=30&&viene.length<4;i++){const k=iso(addDays(d,i));
+    if(!viene.some(function(v){return v.g;})&&diaTipo(k)==='guardia')viene.push({g:1,t:'☾ Guardia · '+DIA3[parseDate(k).getDay()]+' '+parseDate(k).getDate(),dias:i,k:k,col:calColor('guardia')});
+    eventosCalendario(k).filter(function(e){return e.modo==='fecha';}).forEach(function(e){viene.push({t:e.titulo||'Evento',dias:i,k:k,col:e.color||'#38e1ff',ca:!!e.cuentaAtras});});}
+  viene.sort(function(a,b){return (b.ca?1:0)-(a.ca?1:0)||a.dias-b.dias;});
+  const s=entrenoSemana(key);let sem='';try{if(s&&s.min)sem=entrenosHechos(s.lun)+' de '+s.total+' esta semana · mín. '+s.min;}catch(e){}
+  return {radio:radio,
+    izq:{viene:viene.slice(0,2),ph:it.filter(function(x){return !x.hab;}).map(function(x){return {ico:x.ico,t:x.t,sub:x.sub||'',hecho:!!x.hecho,av:!!x.av,acc:acc(x)};})},
+    der:{sem:sem,habs:it.filter(function(x){return x.hab;}).map(function(x){return {ico:x.ico,t:x.t,on:!!x.hecho,est:x.est||'',acc:acc(x)};})},
+    hoy:hoyK};}
 function hoyBusHTML(key,inf,esHoy){
-  try{_condDatos=hoyBusDatos(key,inf,esHoy);_condDatos.esc=conductorEscenas(key);}catch(e){_condDatos={dia:[],noches:[]};}
+  try{_condDatos=hoyBusDatos(key,inf,esHoy);_condDatos.esc=conductorEscenas(key);_condDatos.cab=cabinaDatos(key,_condDatos);}catch(e){_condDatos={dia:[],noches:[]};}
   const est=hoyBusVista()==='estacion';
   return '<div id="hoyBusSlot" class="hoybus'+(est?' est':'')+'"></div>';}
 function hoyBusMonta(){
@@ -5609,6 +5641,10 @@ function hoyBusMonta(){
   _cond.actualiza(_condDatos);}
 function hoyBusAbrir(o){
   const k=fechaHoy();
+  if(o.tipo==='act'&&o.a){act(o.a,{dataset:Object.assign({},o.ds||{})});return;}
+  if(o.tipo==='marcha'){const h=new Date(),dd=+o.d||0;ui.diaHoy=dd?iso(addDays(h,dd)):'';render();return;}
+  if(o.tipo==='verdia'&&o.k){act('hoja-ver',{dataset:{k:o.k}});return;}
+  if(o.tipo==='tab'&&o.t){act('tab',{dataset:{t:o.t}});return;}
   if(o.tipo==='item'){
     const it=hoyItems(k,dayInfo(k))[o.i];if(!it)return;
     /* un toque: apuntar la comida o empezar el entreno; si no, la hoja de siempre */
@@ -7292,7 +7328,9 @@ function renderHoy(){
        del sol repetía lo que ya dice el reloj: el arco amarillo se toca y abre su hoja */
     /* con el conductor, el sueño ya va en el salpicadero (el depósito abre Sueño) */
     /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
-    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML())+paraHoyHTML(hoy)+loQueVieneHTML():
+    /* con el conductor, el sueño y el «¿cómo amaneces?» van en la radio y «Para hoy» en el quiosco de la ciudad y
+       el poste de los hábitos: debajo del dibujo solo queda lo que no está dentro de la cabina */
+    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML()+paraHoyHTML(hoy))+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
   hoyBusMonta();carrMonta('hoy');
@@ -17097,9 +17135,6 @@ function asistCheckinHTML(k){
   if(asistHecho(k)&&!ui.asistCheck)return '<button class="asck ok" data-a="asist-check-abrir"><span>☀️</span><span class="t"><b>Esta mañana</b><span>'+
     'KSS '+kss+' · '+ANIMO[c.animo]+(c.int?' · hoy: '+esc((c.intTxt||c.int).replace(/^\S+ /,'')):'')+'</span></span><span class="ch">›</span></button>';
   const ints=asistIntenciones(k);
-  if(hoyModo()==='bus'&&!ui.asistMas)return '<div class="asck corto"><div class="cap">☀️ ¿CÓMO AMANECES? <span class="mini">despejado, 1 a 9</span></div>'+
-    kssEscalaHTML(kss,' data-a="asist-kss" data-k="'+k+'"','')+
-    '<button class="dlink" data-a="asist-mas">ánimo y lo que te propones ›</button></div>';
   return '<div class="asck"><div class="cap">☀️ ¿CÓMO AMANECES?</div>'+
     '<div class="hlab">DESPEJADO (KSS)</div>'+kssEscalaHTML(kss,' data-a="asist-kss" data-k="'+k+'"','1 muy despierto · 9 me caigo')+
     '<div class="hlab">ÁNIMO</div><div class="cnseg c5">'+[1,2,3,4,5].map(function(n){
@@ -17215,7 +17250,7 @@ function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
 function asistHoyHTML(k){
   /* en Hoy: el check-in (si falta) y una tarjeta por asistente (hábitos, dinero y 4:20) si hay algo que decir */
   const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK?cnTarjeta(k):null,hh=new Date().getHours();
-  const ck=hh>=5?asistCheckinHTML(k):'';
+  const ck=hh>=5&&hoyModo()!=='bus'?asistCheckinHTML(k):'';   /* con el conductor, el check-in es la radio */
   if(!ck&&!t&&!d&&!c)return '';
   /* la primera abierta; las otras, en una línea que se abre al tocar (eran 482 px entre las tres) */
   return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din',true):'')+(c?asistTjHTML(c,'cn',true):'')+'</div>';}
@@ -23697,7 +23732,6 @@ function act(a,el){
       c.int=c.int===el.dataset.v?'':el.dataset.v;c.intTxt=c.int?String(el.dataset.t||''):'';ui.asistCheck=false;save();
       if(c.int)flash('hoy te propones: '+String(el.dataset.t||'').replace(/^\S+ /,''));render();break;}
     case 'asist-check-abrir':ui.asistCheck=!ui.asistCheck;render();break;
-    case 'asist-mas':ui.asistMas=true;render();break;
     case 'asist-abre':ui.asistAbre=el.dataset.id||'';render();break;
     case 'asist-corto':{const k=el.dataset.k||iso(new Date());asistS().corto[k]=el.dataset.v==='1';save();
       flash(el.dataset.v==='1'?'hoy, versión corta: el ✓ marca el mínimo':'hoy, entero');render();break;}
