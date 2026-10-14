@@ -1461,7 +1461,9 @@ function dayInfo(dateStr){
   /* LAS VACACIONES LAS PONES TÚ: un día de vacaciones que venga del ciclo es un día de trabajo (o libre en finde) */
   if(auto&&raw&&esVacacionSh(shiftById(raw))){const d=parseDate(dateStr),fin=d&&(d.getDay()===0||d.getDay()===6);
     raw=((fin?shiftByCode('L'):shiftByCode('T'))||{}).id||null;}
-  if(auto&&raw&&store.rotation.mode==='date'){const sh=shiftById(raw);
+  /* EN NINGÚN MODO: con las semanas tipo (el modo de serie) el ciclo seguía poniendo guardias y salientes en los
+     meses que aún no habías pintado. Las guardias las pintas tú, mes a mes */
+  if(auto&&raw){const sh=shiftById(raw);
     if(sh&&(isGuardia(sh)||esSaliente(sh))){const d=parseDate(dateStr),fin=d&&(d.getDay()===0||d.getDay()===6);
       raw=((fin?shiftByCode('L'):shiftByCode('T'))||{}).id||null;}}
   const shiftId=raw||(!ov&&!vac?baseWorkday(dateStr):null);
@@ -1551,55 +1553,57 @@ function setGuardiasMes(y,m,n){
   const cur=store.rotation.month[key]||{service:store.rotation.monthService,guardias:store.rotation.guardiasMes};
   store.rotation.month[key]={service:cur.service,guardias:Math.max(0,Math.min(15,+n||0))};}
 function svcLabel(y,m){return monthService(y,m).service||'sin servicio';}
-/* LAS GUARDIAS QUE TE QUEDAN DE R1 (en Mes, bajo el abono): de hoy al último día de R1, por tipo. Los meses que
-   ya has pintado cuentan las guardias puestas (de hoy en adelante); los que no, el cupo del mes repartido
-   como lo repartes tú (4 Urgencias + 2 UMI), y el mes en curso sin pintar, la parte que queda. Cada semana
-   de vacaciones que ya tienes puesta en un mes sin pintar quita una de Urgencias (en uno pintado ya la
-   habrás quitado tú al pintarlo). Las vacaciones que aún no has puesto no se descuentan. */
+/* LAS GUARDIAS DE R1 (en Mes, bajo el abono): el año de R1 son los 12 meses que acaban el último día de R1 (de
+   junio a mayo). Lo que toca es el cupo de cada mes (4 Urgencias + 2 UMI: 48 + 24) menos las que te puedes quitar al
+   año (4, de Urgencias): 44 + 24. LLEVAS: los meses ya pasados cuentan lo que pintaste y, si uno quedó sin pintar,
+   su cupo entero (no usabas la app); el mes en curso, lo pintado hasta ayer. QUEDAN: lo que toca menos lo que
+   llevas. De lo que queda se dice cuántas ya están puestas y cuántas faltan por poner: un mes que no has pintado
+   no se rellena con guardias inventadas. */
 function finR1(){const f=String(store.rotation.finR1||'');return /^\d{4}-\d{2}-\d{2}$/.test(f)?f:'2027-05-31';}
+function inicioR1(){const f=parseDate(finR1());return iso(new Date(f.getFullYear(),f.getMonth()-11,1));}
+function quitaR1(){const q=(store.rotation||{}).quitaR1;return (typeof q==='number'&&q>=0)?Math.min(30,q):4;}
 function guardiasR1(hoyK){
-  hoyK=hoyK||iso(new Date());const fin=finR1(),tipos=gTipos(),out={fin:fin,por:{},total:0,vac:0,meses:[]};
-  tipos.forEach(function(t){out.por[t.code]=0;});
-  if(hoyK>fin)return out;
-  const h=parseDate(hoyK),f=parseDate(fin),pintado={};
-  for(let y=h.getFullYear(),m=h.getMonth();y<f.getFullYear()||(y===f.getFullYear()&&m<=f.getMonth());m===11?(y++,m=0):m++){
-    const g=guardCount(y,m),key=y+'-'+String(m+1).padStart(2,'0'),fila={key:key,por:{},pintado:g.any>0};pintado[key]=fila.pintado;
-    if(fila.pintado){monthDays(y,m).forEach(function(d){if(d.key<hoyK||d.key>fin||!d.shiftId||!isGuardia(shiftById(d.shiftId)))return;
-      const k=d.guard?String(d.guard).toLowerCase():(tipos[0]||{}).code;fila.por[k]=(fila.por[k]||0)+1;});}
-    else{const dias=new Date(y,m+1,0).getDate(),ini=(y===h.getFullYear()&&m===h.getMonth())?h.getDate():1,
-        ult=(y===f.getFullYear()&&m===f.getMonth())?f.getDate():dias,parte=(ult-ini+1)/dias;
-      const rep={};repartoTipos(monthService(y,m).guardias).forEach(function(c){rep[c]=(rep[c]||0)+1;});
-      Object.keys(rep).forEach(function(c){fila.por[c]=Math.round(rep[c]*parte);});}
+  hoyK=hoyK||iso(new Date());const fin=finR1(),ini=inicioR1(),tipos=gTipos(),cero=function(){const o={};tipos.forEach(function(t){o[t.code]=0;});return o;};
+  const out={ini:ini,fin:fin,quita:quitaR1(),toca:cero(),llevas:cero(),quedan:cero(),puestas:cero(),porPoner:cero(),meses:[],total:0};
+  const i0=parseDate(ini),f=parseDate(fin),mesHoy=hoyK.slice(0,7),suma=function(o,c,n){o[c]=(o[c]||0)+n;};
+  for(let y=i0.getFullYear(),m=i0.getMonth();y<f.getFullYear()||(y===f.getFullYear()&&m<=f.getMonth());m===11?(y++,m=0):m++){
+    const key=y+'-'+String(m+1).padStart(2,'0'),cupo={};repartoTipos(monthService(y,m).guardias).forEach(function(c){suma(cupo,c,1);});
+    Object.keys(cupo).forEach(function(c){suma(out.toca,c,cupo[c]);});
+    const pint={},antes={};let any=0;
+    monthDays(y,m).forEach(function(d){if(!d.shiftId||!isGuardia(shiftById(d.shiftId)))return;
+      const c=d.guard?String(d.guard).toLowerCase():(tipos[0]||{}).code;any++;suma(pint,c,1);if(d.key<hoyK)suma(antes,c,1);});
+    const fila={key:key,pintado:any>0,pasado:key<mesHoy,actual:key===mesHoy,por:any?pint:(key<mesHoy?cupo:{})};
+    if(fila.pasado)Object.keys(fila.por).forEach(function(c){suma(out.llevas,c,fila.por[c]);});
+    else{Object.keys(antes).forEach(function(c){suma(out.llevas,c,antes[c]);});
+      Object.keys(pint).forEach(function(c){suma(out.puestas,c,pint[c]-(antes[c]||0));});}
     out.meses.push(fila);}
-  /* las vacaciones puestas: cada 5 días laborables de un mismo periodo, una semana */
-  ((store.rotation||{}).vacaciones||[]).forEach(function(v){let n=0;
-    for(let d=parseDate(v.start>hoyK?v.start:hoyK),e=parseDate(v.end<fin?v.end:fin);d&&e&&d<=e;d=addDays(d,1)){
-      const w=d.getDay(),k=iso(d);if(w>0&&w<6&&!pintado[k.slice(0,7)])n++;}
-    out.vac+=Math.floor(n/5);});
-  out.meses.forEach(function(r){Object.keys(r.por).forEach(function(c){out.por[c]=(out.por[c]||0)+r.por[c];});});
-  /* el descuento va a Urgencias; si no quedan, al siguiente tipo */
-  let q=out.vac;const orden=['urg'].concat(tipos.map(function(t){return t.code;}).filter(function(c){return c!=='urg';}));
-  orden.forEach(function(c){const x=Math.min(q,out.por[c]||0);if(x){out.por[c]-=x;q-=x;}});
-  out.total=Object.keys(out.por).reduce(function(a,c){return a+out.por[c];},0);
+  /* las que te puedes quitar salen de Urgencias (si no hubiera, del siguiente tipo) */
+  let q=out.quita;['urg'].concat(tipos.map(function(t){return t.code;}).filter(function(c){return c!=='urg';})).forEach(function(c){
+    const x=Math.min(q,out.toca[c]||0);if(x){out.toca[c]-=x;q-=x;}});
+  Object.keys(out.toca).forEach(function(c){out.quedan[c]=Math.max(0,out.toca[c]-(out.llevas[c]||0));
+    out.porPoner[c]=Math.max(0,out.quedan[c]-(out.puestas[c]||0));});
+  const tot=function(o){return Object.keys(o).reduce(function(a,c){return a+(o[c]||0);},0);};
+  out.total=tot(out.quedan);out.totToca=tot(out.toca);out.totLlevas=tot(out.llevas);out.totPuestas=tot(out.puestas);out.totPorPoner=tot(out.porPoner);
   return out;}
 function vacGastadosHTML(){
   const v=vacGastados();if(!v.desde)return '';const q=Math.max(0,v.tope-v.n);
   const lab='Vacaciones: '+v.n+' de '+v.tope+' días gastados (de lunes a viernes, del '+fechaCortaTxt(v.desde)+' al '+fechaCortaTxt(v.hasta)+'). Quedan '+q+'.';
   return '<div class="r1v'+(v.n>v.tope?' pasa':'')+'" title="'+esc(lab)+'" aria-label="'+esc(lab)+'">🏖️ <b>'+v.n+'</b> de '+v.tope+' días de vacaciones <span>· quedan '+q+' (L–V)</span></div>';}
 function guardiasR1HTML(){
-  const r=guardiasR1(),hoyK=iso(new Date());if(hoyK>r.fin)return '';
-  const f=parseDate(r.fin),tipos=gTipos().filter(function(t){return r.por[t.code]||(t.code==='urg'||t.code==='umi');});
-  const fech=f.getDate()+' '+MON[f.getMonth()]+' '+f.getFullYear();
-  const lab='Te quedan '+r.total+' guardias de R1 hasta el '+fech+': '+tipos.map(function(t){return (r.por[t.code]||0)+' de '+t.label;}).join(' y ')+
-    (r.vac?', ya descontadas '+r.vac+' por '+r.vac+' semana'+(r.vac===1?'':'s')+' de vacaciones':'');
-  return '<details class="r1g"><summary aria-label="'+esc(lab)+'"><span class="r1t">🩺 Quedan de R1</span><b class="r1n">'+r.total+'</b>'+
-      tipos.map(function(t){return '<span class="r1p '+esc(t.code)+'"><b>'+(r.por[t.code]||0)+'</b> '+esc(t.code==='urg'?'Urg':t.label)+'</span>';}).join('')+
-      (r.vac?'<span class="r1f">−'+r.vac+' 🏖️</span>':'')+'</summary>'+
-    '<div class="r1d"><p class="r1h">Hasta el '+esc(fech)+', mes a mes ('+tipos.map(function(t){return t.code==='urg'?'Urg':t.label;}).join(' + ')+'):</p>'+r.meses.map(function(m){const d=parseDate(m.key+'-01');
-      return '<span><i>'+esc(MONTH_FULL[d.getMonth()].slice(0,3))+'</i>'+
-        tipos.map(function(t){return (m.por[t.code]||0);}).join(' + ')+(m.pintado?'':' <small>cupo</small>')+'</span>';}).join('')+
-      '<p>Meses pintados: las guardias puestas desde hoy. Sin pintar: el cupo ('+tipos.map(function(t){return t.label;}).join(' + ')+').'+
-      (r.vac?' Cada semana de vacaciones puesta en un mes sin pintar quita una de Urgencias: −'+r.vac+'.':' Cada semana de vacaciones que pongas en un mes sin pintar quitará una de Urgencias.')+'</p></div></details>';}
+  const hoyK=iso(new Date()),r=guardiasR1(hoyK);if(hoyK>r.fin||hoyK<r.ini)return '';
+  const tipos=gTipos().filter(function(t){return r.toca[t.code]||(t.code==='urg'||t.code==='umi');}),corto=function(t){return t.code==='urg'?'Urg':t.label;};
+  const fd=function(k){const d=parseDate(k);return MON[d.getMonth()]+' '+d.getFullYear();};
+  const lab='R1, de '+fd(r.ini)+' a '+fd(r.fin)+': llevas '+r.totLlevas+' de '+r.totToca+' guardias y quedan '+r.total+' ('+
+    tipos.map(function(t){return (r.quedan[t.code]||0)+' de '+t.label;}).join(' y ')+')';
+  return '<details class="r1g"><summary aria-label="'+esc(lab)+'"><span class="r1t">🩺 R1 <span class="r1l">'+r.totLlevas+'/'+r.totToca+'</span> · quedan</span><b class="r1n">'+r.total+'</b>'+
+      tipos.map(function(t){return '<span class="r1p '+esc(t.code)+'"><b>'+(r.quedan[t.code]||0)+'</b> '+esc(corto(t))+'</span>';}).join('')+'</summary>'+
+    '<div class="r1d">'+tipos.map(function(t){const c=t.code;
+        return '<p class="r1x '+esc(c)+'"><b>'+esc(t.label)+'</b>: llevas '+(r.llevas[c]||0)+' de '+(r.toca[c]||0)+(c==='urg'&&r.quita?' ('+((r.toca[c]||0)+r.quita)+' − '+r.quita+' que te quitas)':'')+
+          ' · quedan '+(r.quedan[c]||0)+' <small>('+(r.puestas[c]||0)+' puestas, '+(r.porPoner[c]||0)+' por poner)</small></p>';}).join('')+
+      '<p class="r1h">Mes a mes ('+tipos.map(corto).join(' + ')+'):</p>'+r.meses.map(function(m){const d=parseDate(m.key+'-01');
+      return '<span class="'+(m.pasado?'pas':m.actual?'hoy':'fut')+'"><i>'+esc(MONTH_FULL[d.getMonth()].slice(0,3))+'</i>'+
+        (m.pintado||m.pasado?tipos.map(function(t){return (m.por[t.code]||0);}).join(' + ')+(m.pintado?'':' <small>cupo</small>'):'<small>sin poner</small>')+'</span>';}).join('')+
+      '<p>Lo pasado: lo que pintaste (un mes sin pintar cuenta su cupo entero). Lo que viene: solo lo que tú pongas.</p></div></details>';}
 function svcMesesDe(nombre,porDefecto){
   /* cada rotación puede durar lo suyo: se busca por nombre para que valga aunque el orden venga de fuera */
   const r=store.rotation,ix=(r.servicios||[]).indexOf(nombre);
@@ -19419,8 +19423,10 @@ function renderCfg(){
       <p class="mini" style="margin-top:8px">Ahora mismo: ${saltoDiaTxt()}.</p>
       <label class="fld" style="max-width:220px;margin-top:10px">Guardias por mes, por defecto (para un mes que no hayas tocado)
         <input type="number" min="0" max="15" value="${store.rotation.guardiasMes!=null?store.rotation.guardiasMes:6}" data-a="guard-default"></label>
-      <label class="fld" style="max-width:220px;margin-top:10px">Último día de R1 (para «te quedan de R1» en Mes)
+      <label class="fld" style="max-width:220px;margin-top:10px">Último día de R1 (el año de R1 son los 12 meses que acaban ese día)
         <input type="date" value="${finR1()}" data-a="fin-r1"></label>
+      <label class="fld" style="max-width:220px;margin-top:10px">Guardias que te puedes quitar al año (de Urgencias)
+        <input type="number" min="0" max="30" value="${quitaR1()}" data-a="quita-r1"></label>
       <label class="fld" style="max-width:220px;margin-top:10px">Días de vacaciones al año (de lunes a viernes)
         <input type="number" min="0" max="60" value="${(store.rotation||{}).vacDias!=null?store.rotation.vacDias:22}" data-a="vac-dias"></label>
       <p class="mini" style="margin-top:10px">Tipos de guardia, cuántas tocan al mes y <b>a qué hora se entra y se sale</b>. La regla es una sola: <b>sales a la hora del relevo del día en que sales</b>, porque es cuando entra el siguiente. Entre semana entras a tu jornada y la guardia empieza al acabarla; el fin de semana entras directamente a la hora del relevo. El pase de guardia son los minutos que te quedas de más al salir.</p>
@@ -26808,6 +26814,7 @@ document.addEventListener('change',e=>{
         :'sin etiqueta: cada descarga se verá como calendario suelto');break;}
     case 'guard-default':{setMonthService('default',null,store.rotation.monthService,num(el.value,6));save();render();break;}
     case 'vac-dias':{store.rotation.vacDias=Math.max(0,Math.min(60,num(el.value,22)));save();render();break;}
+    case 'quita-r1':{store.rotation.quitaR1=Math.max(0,Math.min(30,num(el.value,4)));save();render();break;}
     case 'fin-r1':{if(/^\d{4}-\d{2}-\d{2}$/.test(el.value)){store.rotation.finR1=el.value;save();render();}break;}
     case 'svc-edit':{const ix=+el.dataset.ix,v=(el.value||'').trim();
       if(v)store.rotation.servicios[ix]=v;save();break;}
@@ -27058,7 +27065,7 @@ window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,man
   openDrawer,closeDrawer,CAL_SET,isToday,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
   notaDia,eventosDelDia,eventosDelMes,agendaMesHTML,diasCorta,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
-  habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML,hoyBusDatos,finMin,guardiasR1,finR1,vacGastados,esVacacionSh,mesAbono,taxisMes,taxiEurDia,tiemposManana,mananaHTML,cafesDe,conductor:function(){return {c:_cond,d:_condDatos};}};
+  habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML,hoyBusDatos,finMin,guardiasR1,finR1,inicioR1,vacGastados,esVacacionSh,mesAbono,taxisMes,taxiEurDia,tiemposManana,mananaHTML,cafesDe,conductor:function(){return {c:_cond,d:_condDatos};}};
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */

@@ -12546,54 +12546,55 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /0\.55s/.test(r.antes.dur) && r.antes.n === 0 && r.izq.ftr === 'translateX(600px)' && r.izq.fx === 600 && r.izq.lx === 0 && r.izq.n > 0 && r.der.ftr === 'translateX(-600px)' && r.der.fx === -600 && r.der.lx === 0 &&
       r.vuelve.n > 0 && r.vuelve.ltr === 'translateX(600px)' && r.fin.fx === 0 && r.fin.n === 0, JSON.stringify(r));
   }
-  // 297) LAS GUARDIAS QUE QUEDAN DE R1, EN CADENA: en Ajustes se pone el último día de R1 (el fin del mes dentro de
-  // tres); en Mes, bajo el abono, sale «Quedan de R1» con el total y Urgencias y UMI por separado (los meses sin
-  // pintar cuentan su cupo); al pintar el mes siguiente con 1 Urg + 1 UMI, la cuenta usa esas dos; al poner dos
-  // semanas de vacaciones en un mes sin pintar, quita 2 de Urgencias y lo dice (−2 🏖️); y al tocarla se abre mes
-  // a mes, con «cupo» solo en los meses sin pintar. Fija: no había forma de ver cuántas guardias te quedan de R1.
+  // 297) LAS GUARDIAS DE R1, EN CADENA: el año de R1 son los 12 meses que acaban el último día puesto en Ajustes. (a) Con
+  // «te puedes quitar 4», en Mes sale «R1 llevas/toca · quedan»; al poner 6 en Ajustes, lo que toca baja 2 (de
+  // Urgencias). (b) Un mes pasado sin pintar cuenta su cupo entero; al pintarle 1 guardia, cuenta 1. (c) Un mes que
+  // viene sin pintar sale «sin poner» y, con las semanas tipo (el modo de serie), el ciclo no le pone guardias ni
+  // salientes; al pintarle 1 de Urgencias, pasa a «puestas» y «quedan» no cambia. Fija: la cuenta inventaba el cupo
+  // de los meses por venir y el ciclo rellenaba con guardias los meses que no habías pintado.
   {
-    const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), m = (n) => new Date(d.getFullYear(), d.getMonth() + n, 1), k = (x) => P.iso(x);
-      const fin = k(new Date(d.getFullYear(), d.getMonth() + 4, 0)), sig = m(1), vac = m(2);
-      /* el lunes de la segunda semana del mes de las vacaciones: dos semanas de lunes a domingo */
-      const lun = new Date(vac.getTime()); while (lun.getDay() !== 1) lun.setDate(lun.getDate() + 1); lun.setDate(lun.getDate() + 7);
-      const dom = new Date(lun.getTime()); dom.setDate(dom.getDate() + 13);
-      const sigK = k(sig).slice(0, 7), vacK = k(vac).slice(0, 7), d1 = sigK + '-10', d2 = sigK + '-20', SB = P.store.rotation.shiftByDay || {};
-      P.__t297 = { finR1: P.store.rotation.finR1, nVac: (P.store.rotation.vacaciones || []).length, mode: P.store.rotation.mode, tab: P.ui.tab,
-        sbd: JSON.stringify(Object.keys(SB).filter((x) => x.slice(0, 7) === sigK || x.slice(0, 7) === vacK).reduce((a, x) => (a[x] = SB[x], a), {})) };
-      /* los dos meses de la prueba, sin guardias puestas: el de las vacaciones tiene que contar por cupo */
-      P.store.rotation.mode = 'date'; Object.keys(SB).filter((x) => (x.slice(0, 7) === sigK || x.slice(0, 7) === vacK) && P.isGuardia(P.shiftById((SB[x] || {}).shift))).forEach((x) => P.setDayOverride(x, null, '')); P.save();
-      return { fin, d1, d2, sigK, vIni: k(lun), vFin: k(dom) }; });
+    const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), m = (n) => new Date(d.getFullYear(), d.getMonth() + n, 1), k = (x) => P.iso(x).slice(0, 7);
+      const fin = P.iso(new Date(d.getFullYear(), d.getMonth() + 6, 0));   /* el año: de hace 6 meses al que acaba dentro de 5 */
+      P.__t297 = { finR1: P.store.rotation.finR1, quita: P.store.rotation.quitaR1, mode: P.store.rotation.mode, tab: P.ui.tab, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}) };
+      const pas = k(m(-2)), fut = k(m(1)), lej = k(m(3));
+      /* los tres meses de la prueba, sin guardias puestas; y las semanas tipo, que es el modo de serie */
+      const SB = P.store.rotation.shiftByDay || {}; Object.keys(SB).filter((x) => [pas, fut, lej].indexOf(x.slice(0, 7)) >= 0).forEach((x) => P.setDayOverride(x, null, ''));
+      P.store.rotation.mode = 'template'; P.save();
+      return { fin, pas, fut, lej }; });
     await gotoTab('cfg', 'rotacion');
     await page.waitForTimeout(180);
-    await page.fill('#main input[data-a="fin-r1"]', ini.fin).catch(() => {});
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(150);
-    const lee = () => page.evaluate(() => { const e = document.querySelector('#main .r1g'); if (!e) return null; const n = (q) => { const x = e.querySelector(q); return x ? +x.textContent.replace(/\D/g, '') : null; };
-      return { total: n('.r1n'), urg: n('.r1p.urg b'), umi: n('.r1p.umi b'), vac: (e.querySelector('.r1f') || {}).textContent || '', abierto: e.open }; });
-    await gotoTab('month');
-    await page.click('[data-a="mon-today"]').catch(() => {});
-    await page.waitForTimeout(250);
-    const r = { fin: await page.evaluate(() => window.PG.finR1()), a: await lee() };
-    r.sig = await page.evaluate((k) => (window.PG.guardiasR1().meses.filter((m) => m.key === k)[0] || {}).por || {}, ini.sigK);   /* lo que contaba el mes que viene, por cupo */
-    // pinto el mes que viene: 1 Urgencias y 1 UMI (el resto del mes, nada)
-    await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.d1, 'sh-g', 'urg'); P.setDayOverride(x.d2, 'sh-g', 'umi'); P.save(); P.render(); }, ini);
+    await page.fill('#main input[data-a="fin-r1"]', ini.fin).catch(() => {}); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await page.fill('#main input[data-a="quita-r1"]', '4').catch(() => {}); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    const lee = () => page.evaluate(() => { const e = document.querySelector('#main .r1g'); if (!e) return null; const lt = ((e.querySelector('.r1l') || {}).textContent || '').split('/');
+      const g = window.PG.guardiasR1();
+      return { llevas: +lt[0], toca: +lt[1], quedan: +((e.querySelector('.r1n') || {}).textContent || NaN), urg: +((e.querySelector('.r1p.urg b') || {}).textContent || NaN), puestas: g.totPuestas, porPoner: g.totPorPoner,
+        filas: [...e.querySelectorAll('.r1d > span')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()) }; });
+    await gotoTab('month'); await page.click('[data-a="mon-today"]').catch(() => {}); await page.waitForTimeout(250);
+    const r = { a: await lee() };
+    await gotoTab('cfg', 'rotacion'); await page.waitForTimeout(150);
+    await page.fill('#main input[data-a="quita-r1"]', '6').catch(() => {}); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await gotoTab('month'); await page.waitForTimeout(200);
     r.b = await lee();
-    // dos semanas de vacaciones en un mes sin pintar
-    await page.evaluate((x) => { window.PG.addVacation(x.vIni, x.vFin, 'Vacaciones 297'); }, ini);
-    await page.waitForTimeout(150);
-    r.c = await lee();
-    await page.click('#main .r1g summary').catch(() => {});
-    await page.waitForTimeout(150);
-    r.d = await page.evaluate((k) => { const e = document.querySelector('#main .r1g'), rows = e ? [...e.querySelectorAll('.r1d > span')] : [];
-      return { abierto: !!(e && e.open), filas: rows.length, sinCupoSig: rows.some((s) => /^\D+1 \+ 1$/.test(s.textContent.trim())), conCupo: rows.filter((s) => /cupo/.test(s.textContent)).length }; }, ini.sigK);
-    await page.evaluate((x) => { const P = window.PG, t = P.__t297; P.store.rotation.vacaciones.length = t.nVac; if (t.finR1 == null) delete P.store.rotation.finR1; else P.store.rotation.finR1 = t.finR1;
-      P.setDayOverride(x.d1, null, ''); P.setDayOverride(x.d2, null, '');
-      const sb = JSON.parse(t.sbd); Object.keys(sb).forEach((k) => { P.store.rotation.shiftByDay[k] = sb[k]; }); P.store.rotation.mode = t.mode; P.ui.tab = t.tab; delete P.__t297; P.save(); P.render(); }, ini);
-    check('en Mes sale «Quedan de R1» hasta el día puesto en Ajustes, con Urgencias y UMI aparte; pintar el mes siguiente usa sus guardias; dos semanas de vacaciones quitan 2 de Urgencias; al tocar, mes a mes',
-      r.fin === ini.fin && !!r.a && r.a.total === r.a.urg + r.a.umi && r.a.total > 0 &&
-      !!r.b && r.b.urg === r.a.urg - ((r.sig.urg || 0) - 1) && r.b.umi === r.a.umi - ((r.sig.umi || 0) - 1) && (r.sig.urg || 0) + (r.sig.umi || 0) > 2 &&
-      !!r.c && r.c.urg === r.b.urg - 2 && r.c.umi === r.b.umi && /−2/.test(r.c.vac) &&
-      r.d.abierto && r.d.filas === 4 && r.d.sinCupoSig && r.d.conCupo >= 2, JSON.stringify({ ini, r }));
+    const mesDe = (key) => page.evaluate((key) => window.PG.guardiasR1().meses.filter((x) => x.key === key)[0], key);
+    r.pas0 = await mesDe(ini.pas);
+    // (b) el mes pasado: una guardia de Urgencias pintada
+    await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.pas + '-10', 'sh-g', 'urg'); P.save(); P.render(); }, ini);
+    r.c = await lee(); r.pas1 = await mesDe(ini.pas);
+    // (c) los meses que vienen: sin poner y sin guardias del ciclo; luego una de Urgencias el mes que viene
+    r.ciclo = await page.evaluate((x) => { const P = window.PG, n = new Date(+x.lej.slice(0, 4), +x.lej.slice(5, 7), 0).getDate(); let g = 0;
+      for (let i = 1; i <= n; i++) { const sh = P.shiftById(P.dayInfo(x.lej + '-' + String(i).padStart(2, '0')).shiftId); if (sh && (P.isGuardia(sh) || /saliente/i.test(sh.name))) g++; } return g; }, ini);
+    r.fut0 = await mesDe(ini.fut);
+    await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.fut + '-12', 'sh-g', 'urg'); P.save(); P.render(); }, ini);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG, t = P.__t297; P.store.rotation.shiftByDay = JSON.parse(t.sbd);
+      if (t.finR1 == null) delete P.store.rotation.finR1; else P.store.rotation.finR1 = t.finR1; if (t.quita == null) delete P.store.rotation.quitaR1; else P.store.rotation.quitaR1 = t.quita;
+      P.store.rotation.mode = t.mode; P.ui.tab = t.tab; delete P.__t297; P.save(); P.render(); });
+    const cupoPas = r.pas0 ? Object.values(r.pas0.por || {}).reduce((a, n) => a + n, 0) : 0;
+    check('R1: lo que toca baja con las que te quitas (Ajustes); un mes pasado sin pintar cuenta su cupo y, pintado, lo pintado; un mes por venir sin pintar sale «sin poner», sin guardias del ciclo, y al pintarlo pasa a puestas',
+      !!r.a && !!r.b && !!r.c && !!r.d && r.a.toca > 0 && r.a.quedan === r.a.toca - r.a.llevas && r.a.filas.length === 12 && r.b.toca === r.a.toca - 2 && r.b.urg === r.a.urg - 2 &&
+      !!r.pas0 && !r.pas0.pintado && cupoPas > 1 && !!r.pas1 && r.pas1.pintado && r.c.llevas === r.b.llevas - cupoPas + 1 && r.c.quedan === r.b.quedan + cupoPas - 1 &&
+      r.ciclo === 0 && !!r.fut0 && !r.fut0.pintado && Object.keys(r.fut0.por).length === 0 && r.a.filas.some((f) => /sin poner/.test(f)) &&
+      r.d.quedan === r.c.quedan && r.d.puestas === r.c.puestas + 1 && r.d.porPoner === r.c.porPoner - 1, JSON.stringify({ ini, r }));
   }
   // 298) ARRASTRAR HASTA LA CAMA PASADA LA MEDIANOCHE, EN CADENA (conduce Hoy): con la cama a las 00:45, desde las
   // 23:30 se avanza con la flecha → hasta pasar la medianoche y el conductor llega a la cama («EN CASA ·

@@ -878,3 +878,27 @@ todo el turno (desde dentro no parecía que estuvieras en la ciudad) y dibujar h
 **Supuestos:** la ida y la vuelta del Lloretazo ocupan como mucho 0,6 h cada una (el 27 % de lo que dure); el
 cartel azul deja de pintarse cuando lo tienes casi al lado (salía enorme y cortado); con más de 6 cosas, 7 hábitos
 o 4 eventos en la nevera sale «+N más».
+
+## Las guardias de R1 bien contadas y sin guardias del ciclo (2026-10-14)
+
+**Elegido:**
+- **El año de R1 son los 12 meses que acaban el último día de R1** (de serie, de junio de 2026 a mayo de 2027).
+  Lo que toca: el cupo de cada mes (4 Urgencias + 2 UMI → 48 + 24) **menos las 4 que te puedes quitar al año,
+  de Urgencias** → **44 + 24 = 68**. Las 4 se cambian en Ajustes → Rotación («Guardias que te puedes quitar al año»).
+- **Llevas:** los meses pasados cuentan lo que pintaste; uno pasado sin pintar cuenta **su cupo entero** (antes de
+  usar la app); el mes en curso, lo pintado hasta ayer. **Quedan** = lo que toca − lo que llevas, por tipo, y de
+  eso cuántas ya están **puestas** y cuántas faltan **por poner**.
+- **Un mes que viene sin pintar no se rellena:** sale «sin poner» en el mes a mes (antes contaba el cupo).
+- **El ciclo de semanas ya no pone guardias ni salientes en ningún modo.** Con las semanas tipo (el modo de
+  serie) seguía poniéndolas en los meses que aún no habías pintado; solo se quitaban en el modo por fecha.
+- En Mes: «🩺 R1 llevas/toca · quedan N» con Urgencias y UMI aparte; al tocar, el detalle por tipo y el mes a mes.
+- **Prueba 297 rehecha** (en cadena: Ajustes 4 → 6, mes pasado sin pintar y pintado, mes por venir sin pintar y
+  sin guardias del ciclo, y pintado). Al quitar solo el arreglo del ciclo cae solo ella; con el recuento anterior,
+  también solo ella.
+
+**Descartado:** seguir descontando una guardia por semana de vacaciones (las 4 que te quitas ya lo cubren) y
+contar 0 en los meses pasados sin pintar.
+
+**Supuestos:** las 4 que te quitas salen de Urgencias (si no hubiera, del siguiente tipo); una guardia del día
+de hoy cuenta como «puesta», no como hecha, hasta mañana; el cupo de cada mes es el de «Guardias este mes» (6 de
+serie, repartidas 4 + 2).
