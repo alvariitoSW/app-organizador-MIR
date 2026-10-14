@@ -12821,15 +12821,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.come && r.c.manos && !r.c2.come && !r.c2.manos && r.qui.ciudad && r.qui.ph === 6 && r.pos.hab === 7 &&
       r.d.casa && r.coc.cocina && !r.coc.ciudad && r.coc.ph === 6 && r.dor.dorm && r.dor.hab === 7, JSON.stringify(r));
   }
-  // 305) CONTINUIDAD A MEDIANOCHE, EN CADENA (conduce Hoy): hoy libre con la cama a las 00:30 y mañana guardia. Viendo
+  // 305) CONTINUIDAD A MEDIANOCHE, EN CADENA (conduce Hoy): hoy libre con la cama a las 00:30 y mañana también libre
+  // (te levantas a las 09:30, así que las 00:30 dejan tus horas de sueño). Viendo
   // hoy a las 00:15 estás despierto en casa; con la palanca en D (mañana), a las 00:15 se ve lo mismo y no durmiendo; a
   // la 01:00 de mañana, ya duermes. Fija: la noche de mañana empezaba a las 00:00 aunque te acostaras a las 00:30, y el
   // mismo instante salía despierto viendo un día y dormido viendo el otro.
   {
     await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
       P.__t305 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify((P.store.rhythm || {})['sh-l'] || null), mode: P.store.rotation.mode };
-      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-g', 'urg');
-      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '08:30' });
+      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-l', '');
+      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
     const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
@@ -12845,6 +12846,33 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('a medianoche el tiempo es continuo: a las 00:15 se ve lo mismo viendo hoy (cama a las 00:30) que viendo mañana, despierto en casa; a la 01:00 de mañana, durmiendo',
       r.dia === await page.evaluate(() => window.PG.iso(window.PG.addDays(new Date(), 1))) && r.hoy.casa && !/DURMIENDO/.test(r.hoy.nxl) && /00:30/.test(r.hoy.nxa) &&
       r.man.casa && !/DURMIENDO/.test(r.man.nxl) && r.man.nxa === r.hoy.nxa && /DURMIENDO/.test(r.man1.nxl), JSON.stringify(r));
+  }
+  // 306) LA CAMA ASEGURA TU MÍNIMO DE SUEÑO, EN CADENA (conduce Hoy): hoy libre con la cama de siempre a las 00:30 y
+  // mañana guardia (te levantas a las 06:45): la cama se adelanta a las 22:35 (8 h + 10 min para dormirte), así que a
+  // las 23:00 ya duermes; con la palanca en D, a las 00:15 de mañana también duermes; y si mañana es libre (te
+  // levantas a las 09:30), la cama vuelve a las 00:30. Fija: el día libre ponía la cama a las 00:30 aunque mañana
+  // madrugaras para la guardia (6 h 15 de sueño).
+  {
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.__t306 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify(P.store.rhythm['sh-l'] || null), rg: JSON.stringify(P.store.rhythm['sh-g'] || null), mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-g', 'urg');
+      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
+      P.store.rhythm['sh-g'] = Object.assign({}, P.store.rhythm['sh-g'] || {}, { wake: '06:45' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
+    const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
+      const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { nxl: q('nxl'), nxa: q('nxa') }; }, h);
+    const r = { cama: await page.evaluate(() => window.PG.sleepOf(window.PG.iso(new Date())).bed), h23: await ver(23) };
+    await page.click('#main .cd [data-o="marcha"][data-d="1"]').catch(() => {}); await page.waitForTimeout(400);
+    r.man = await ver(0.25);
+    await page.click('#main .cd [data-o="marcha"][data-d="0"]').catch(() => {}); await page.waitForTimeout(300);
+    r.libre = await page.evaluate(() => { const P = window.PG, man = P.iso(P.addDays(new Date(), 1)); P.setDayOverride(man, 'sh-l', ''); P.save(); P.render(); return P.sleepOf(P.iso(new Date())).bed; });
+    await page.evaluate(() => { const P = window.PG, t = P.__t306, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.setDayOverride(hoy, t.hoy ? t.hoy.shift : null, t.hoy ? t.hoy.guard : ''); P.setDayOverride(man, t.man ? t.man.shift : null, t.man ? t.man.guard : '');
+      const rh = JSON.parse(t.rh), rg = JSON.parse(t.rg); if (rh) P.store.rhythm['sh-l'] = rh; else delete P.store.rhythm['sh-l']; if (rg) P.store.rhythm['sh-g'] = rg; else delete P.store.rhythm['sh-g'];
+      P.store.rotation.mode = t.mode; P.ui.diaHoy = ''; delete P.__t306; P.save(); P.render(); });
+    check('la cama asegura tu mínimo de sueño: con guardia mañana a las 06:45, la del día libre pasa de las 00:30 a las 22:35 (a las 23:00 y a las 00:15 duermes); con mañana libre vuelve a las 00:30',
+      r.cama === '22:35' && /DURMIENDO/.test(r.h23.nxl) && /DURMIENDO/.test(r.man.nxl) && r.libre === '00:30', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

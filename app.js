@@ -1472,6 +1472,12 @@ function dayInfo(dateStr){
 function sleepOf(dateStr,infOpt){
   const inf=infOpt||dayInfo(dateStr);const rh=inf.rhythm||{};
   const o={bed:rh.sleep||'',wake:rh.wake||'',h:(rh.sleep&&rh.wake)?sleepHours(rh.sleep,rh.wake):null};
+  /* LA CAMA ASEGURA TU MÍNIMO DE SUEÑO hasta la hora de levantarte de mañana (salvo la noche de guardia): el día
+     libre a las 00:30 y mañana a trabajar a las 06:50 daba 6 h 20. Si tu hora de siempre no llega, se adelanta */
+  const shD=shiftById(inf.shiftId);
+  if(dateStr&&o.bed&&!(shD&&isGuardia(shD))){const sig=nextIso(dateStr),wS=wakeRitmo(sig);
+    if(wS!=null){const c=suenoCfg(),lim=wS*60+1440-(c.min*60+c.latencia);let bm=mins(o.bed);if(bm!=null&&bm<12*60)bm+=1440;
+      if(bm!=null&&bm>lim){o.bed=hm(((lim%1440)+1440)%1440);o.adelantada=true;}}}
   const sal=dateStr?salidaDeGuardia(dateStr):null;
   if(!sal)return o;
   /* El día de después de una guardia esa mañana no vienes de dormir: vienes de trabajar. Lo que
@@ -5694,7 +5700,7 @@ function conductorEscenas(key,sinAyer){
     /* las comidas que no caen dentro de un turno se hacen en casa: también se ven desde dentro */
     casa:(function(){const own=D.seg.filter(function(x){return CASA[x.e]||(x.e==='comida'&&!x.dentro);}).map(function(x){return x.e==='comida'?[x.a,x.b,'mesa',x.t||'']:[x.a,x.b,x.e];});
       /* lo de ayer que ya está en el día de hoy (la cama de las 00:30) no se repite */
-      return (sinAyer?[]:casaDeAyer(key).filter(function(y){return !own.some(function(o){return o[2]===y[2]&&Math.abs(o[0]-y[0])<0.02;});})).concat(own);})()};}
+      return (sinAyer?[]:casaDeAyer(key).filter(function(y){return !own.some(function(o){return o[2]===y[2]&&o[0]<y[1]&&y[0]<o[1];});})).concat(own);})()};}
 /* CONTINUIDAD: lo de casa de ayer que pasa de la medianoche (el sofá hasta las 00:30) sigue hoy de 00:00 en adelante,
    para que el mismo instante se vea igual desde los dos días */
 function casaDeAyer(key){const d=parseDate(key);if(!d)return [];
