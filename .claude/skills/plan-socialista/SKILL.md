@@ -14,15 +14,16 @@ Todo vive en `.claude/plan-socialista/`:
 
 | Archivo | Para qué | Quién lo escribe |
 |---|---|---|
-| `preferencias.md` | Las reglas: fuentes, destino, largo máximo, cuándo callar | **Solo el usuario.** Tú lo lees y no lo tocas |
+| `preferencias.md` | Las 4 partes: fuentes, destino, largo máximo, cuándo parar o callar | **Solo el usuario.** Tú lo lees y no lo tocas |
 | `marcadores.json` | Hasta dónde has leído cada fuente | Tú, al final (paso 8) |
-| `registro.md` | Lo ya contado y lo pendiente, con su id | Tú, al final (paso 8) |
+| `registro.md` | Encargos aparcados, supuestos sin confirmar y lo ya contado, con su id | Tú, al final (paso 8); el usuario puede tachar a mano |
 | `sesiones/<fecha>.md` | Cómo fue cada arranque: qué se leyó, qué falló, qué se dijo | Tú, al final (paso 8) |
 
 ## Los ocho pasos
 
-1. **Leer las preferencias** (`preferencias.md`) enteras, cada vez. Mandan sobre esta skill en
-   fuentes, largo y tono. Si algo de lo que te pide el usuario las contradice, gana el usuario y
+1. **Leer las preferencias** (`preferencias.md`) enteras, cada vez: 1. Fuentes, 2. Destino, 3. Largo
+   máximo, 4. Cuándo parar o callar. Mandan sobre esta skill. Las reglas de trabajo de siempre están
+   en `CLAUDE.md`, que ya se carga solo al abrir la sesión. Si algo de lo que te pide el usuario las contradice, gana el usuario y
    se lo dices en una línea, pero no editas el archivo.
 
 2. **Cargar marcadores y registro.** `marcadores.json` dice el último commit de `main` y de la
@@ -37,8 +38,11 @@ Todo vive en `.claude/plan-socialista/`:
      resultado y commit. Pages no se puede abrir desde el contenedor; el run es la prueba.
    - **El sello:** si hay código en `main` posterior al último `version.json` (el mismo criterio que
      `.claude/hooks/sella-antes-de-main.sh`): el móvil no se actualizaría.
-   - **Lo que quedó por decidir:** las entradas nuevas de `docs/DECISIONS.md` (desde la línea del
-     marcador) y sus «Supuestos»; los pendientes abiertos de `registro.md`.
+   - **Supuestos sin confirmar:** los «Supuestos» de las entradas nuevas de `docs/DECISIONS.md` (desde
+     la línea del marcador) más los que siguen abiertos en `registro.md`. Uno se cierra cuando el
+     usuario contesta que vale o que no; si no vale, pasa a ser un encargo.
+   - **Encargos aparcados:** la sección del mismo nombre en `registro.md`. Uno se cierra cuando se hace
+     (se ve en los commits) o el usuario lo descarta.
    - **GitHub:** issues y PRs abiertos (`gh api "repos/alvariitoSW/app-organizador-MIR/issues?state=open"`).
 
    Si una fuente falla (sin red, 403), **no avances su marcador** y anótala como hueco: saldrá en el
@@ -54,8 +58,9 @@ Todo vive en `.claude/plan-socialista/`:
    es verdad, fuera. Nunca cuentes de memoria.
 
 6. **Redactar dentro del largo máximo** de las preferencias. En español, sin jerga, cada línea con
-   su enlace o su archivo (`archivo:línea`, o el enlace al run). Primero lo que bloquea; luego lo
-   que espera una decisión suya; al final, en una línea, lo que está bien. Sin nada accionable,
+   su enlace o su archivo (`archivo:línea`, o el enlace al run). En el orden de las preferencias:
+   lo que bloquea → los supuestos que esperan su «vale/no vale» → lo aparcado → una línea de lo que
+   va bien. Sin nada accionable,
    **una sola línea** («Todo en orden: main desplegado y sellado, nada pendiente»): callarse bien
    también es un resultado.
 
@@ -66,7 +71,9 @@ Todo vive en `.claude/plan-socialista/`:
 8. **Guardar marcadores, registro y sesión.** Solo después de entregar el parte:
    - `marcadores.json`: avanza solo los de las fuentes que se leyeron bien.
    - `registro.md`: añade lo contado (con id estable, p. ej. `run-<id>`, `sup-<fecha>-<tema>`,
-     `issue-<n>`) y cierra los pendientes que ya están resueltos.
+     `aparc-<tema>`, `issue-<n>`), pasa los supuestos nuevos a «Supuestos sin confirmar» y cierra
+     los supuestos y aparcados ya resueltos. Si el usuario contestó a un supuesto en esta sesión,
+     apúntalo («vale» o «no vale → aparcado»).
    - `sesiones/<AAAA-MM-DD>.md`: fuentes leídas, huecos, lo que se dijo y lo que se calló.
    - Commit solo de `.claude/plan-socialista/` en la rama de trabajo y `git push -u origin <rama>`. No toca
      código, así que no hace falta sellar ni pasar por la suite.
