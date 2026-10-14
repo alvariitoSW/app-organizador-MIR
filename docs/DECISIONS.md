@@ -655,3 +655,20 @@ del módulo en cadena con Hoy; sin la clase cae solo ella).
 contador de minutos en el busca (no cabe y no aporta: la carretera ya enseña las señales de salida).
 
 **Supuestos:** la guardia es el turno `k:'guard'`; una guardia de día (sin noche) también enciende la cabina.
+
+## 2026-10-14 · Tanda E · La cabina alta: sueño, hábitos, eventos y lo que viene dentro del salpicadero (maqueta)
+
+**Medido antes (412 px, jornada con sesión, 11:00):** Hoy 1 580 px (1,73 pantallas), 50 botones. Debajo del
+conductor van tres tarjetas: check-in y asistente (399 px: «¿Cómo amaneces?» KSS, ánimo, propósito, señales),
+«Para hoy» (332 px: copia, recibos, notas, suplementos, hábitos con ✓) y «Lo que viene» (333 px: la carretera).
+
+**Propuesto (maquetas en `design/hoy-cabina/maqueta.html`, capturas en `shots/`):**
+- **E1 · Salpicadero largo:** debajo del volante el salpicadero continúa (600×330) con cuatro instrumentos:
+  **Anoche** (lo dormido como aguja, la deuda, y «¿cómo amaneces?» KSS 1–9 a un toque), **GPS** (los eventos de
+  hoy con hora y ✓, y «próximo importante»: el examen en 12 d, la guardia en 4 d), **Hábitos de hoy**
+  (interruptores con LED; el taxi en ámbar porque de serie cuenta) y **Para hoy** (copia, recibos, notas con su
+  casilla). Se van las tres tarjetas: la vista pasa de 1 580 a ≈ 1 050 px y la cabina ocupa 440 px más.
+- **E2 · Guantera:** lo mismo en una franja de 176 unidades (≈ 115 px): Anoche + KSS en una línea, el GPS con
+  el próximo evento y lo importante, los hábitos en una fila; «Para hoy» sigue como tarjeta. ≈ 1 250 px.
+
+**Pendiente:** el visto bueno (E1 o E2, o mezcla) antes de tocar `fig/conductor.js` y `renderHoy`.
