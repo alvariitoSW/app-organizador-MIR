@@ -629,3 +629,16 @@ la semana).
 contarlos dos veces) y meterlos como categoría de Fintonic (eso sale de la captura, no de la app).
 
 **Supuestos:** el precio es uno fijo por viaje; si un día cuesta otra cosa no hay dónde apuntarlo.
+
+## 2026-10-14 · Tanda C · La estación, más grande
+
+**Elegido:** la cámara encuadra la franja de delante (calzada, andén y casa) en vez de la placa entera, y el
+lienzo pasa de 600×400 a 600×480. Lo que mandaba el tamaño era el ancho de la placa (486 unidades): la casa salía
+diminuta y encima el cielo ocupaba un tercio. **Medido a 380 px de ancho:** escala 1,10 → 1,38; la casa 74 × 47
+px → 94 × 59 px; la figura 253 → 304 px de alto. Prueba 287 sigue en verde.
+
+**Descartado:** cambiar el azimut (cambiaba qué pared de la casa se ve y toda la composición) y recortar la
+placa (medio mundo con coordenadas colgando de ella).
+
+**Supuestos:** las esquinas de atrás de la placa se salen del marco a propósito, como una maqueta que sigue
+fuera de la foto.

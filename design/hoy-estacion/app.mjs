@@ -14,7 +14,7 @@ import * as G from "../../.claude/skills/anatomy/kit/lathe.mjs";
 import { persona } from "../hoy-escenas/piezas.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const WIDTH = 600, HEIGHT = 400;
+const WIDTH = 600, HEIGHT = 480;   /* más alto que antes (400): en el móvil la figura ocupa más pantalla y la casa se ve más grande */
 
 /* ---------- el mundo (unidades ~ px; x a lo largo de la calzada, y hacia quien mira, z arriba) ---------- */
 const PLATE = { x: -186, y: -152, w: 346, d: 186, r: 6 }, PLATE_H = 8, FOOT_H = 4;
@@ -31,8 +31,11 @@ const SLOT = { bay: 44, s0: -24, s1: -94, garage: -174, exit: 196 };
 const FONDO = { x: -182, y: -148, w: 338, d: 82, r: 3 };
 
 const ALTO = 104;
-const P = k.fitProjection([...k.boxCorners(PLATE, -PLATE_H - FOOT_H, 0), ...k.boxCorners({ x: FONDO.x, y: FONDO.y, w: FONDO.w, d: 40 }, 0, ALTO + 8), ...k.boxCorners(ROOF, 0, ROOF_Z + 4), ...k.boxCorners(GAR, 0, GAR_H + 3)],
-  WIDTH, HEIGHT, { pad: 10, azimuth: 50, elevation: 27 });
+/* la cámara encuadra la franja de delante (la calzada, el andén y la casa), no toda la placa: lo que
+   mandaba el tamaño era el ancho de la placa entera, y la casa salía diminuta. Las esquinas de atrás
+   de la placa se salen del marco a propósito, como una maqueta que sigue fuera de la foto. */
+const P = k.fitProjection([...k.boxCorners({ x: PLATE.x, y: -80, w: PLATE.w, d: 114, r: 0 }, -PLATE_H - FOOT_H, 0), ...k.boxCorners(ROOF, 0, ROOF_Z + 4), ...k.boxCorners(GAR, 0, ZF + ALTO_CASA + 2)],
+  WIDTH, HEIGHT, { pad: 4, azimuth: 50, elevation: 27 });
 
 const at = (p) => k.iso(p, P);
 const S = (paths, style) => k.solidSvg(paths, style);
