@@ -795,3 +795,13 @@ y UMI.
 
 **Supuestos:** una semana son 5 días laborables (lunes a viernes) del mismo periodo; las semanas sueltas de
 menos de 5 laborables no descuentan; las guardias de días ya pasados no cuentan como «quedan».
+
+## El conductor llega a la cama pasada la medianoche (2026-10-14)
+
+**Elegido:** la línea del día acaba media hora después de la cama de esta noche cuando es pasada la medianoche
+(cama a las 00:45 → se puede arrastrar hasta la 01:15); antes se cortaba a las 23:59 y, tras el Lloretazo, el
+conductor se quedaba en el sofá sin irse nunca a la cama. De paso, las flechas del teclado en el conductor ya no
+cambian también el día de la app. Prueba 298 (en cadena: 23:30 en el sofá → seis flechas → durmiendo pasada
+la medianoche sin cambiar de día → la hora 00:55 de los datos no se corta); con el conductor anterior cae solo ella.
+
+**Descartado:** seguir la línea hasta la mañana siguiente (eso ya es el día de mañana, con la palanca en D).

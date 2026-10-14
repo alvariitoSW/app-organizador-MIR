@@ -895,7 +895,10 @@
     }
     const run = () => { if (!frame && visible) { last = 0; frame = requestAnimationFrame(tick); } };
     const vuelve = () => { mirando = false; if (AHORA != null) target = AHORA; run(); draw(0); };
-    const steer = (to) => { target = clamp(to, 0, 23.99); mirando = AHORA != null && Math.abs(target - AHORA) > 0.05; clearTimeout(idle); idle = setTimeout(vuelve, 9000); run(); };
+    /* el día acaba cuando te acuestas: si la cama de esta noche es pasada la medianoche (00:45), se puede
+       arrastrar hasta verla; antes la línea se cortaba a las 23:59 y te dejaba en el sofá */
+    const finDia = () => { const n = (D.noches || []).find((x) => x.t === "noche" && x.a >= 20 && x.a < 30); return n && n.a > 23.99 ? Math.min(n.a + 0.5, 30) : 23.99; };
+    const steer = (to) => { target = clamp(to, 0, finDia()); mirando = AHORA != null && Math.abs(target - AHORA) > 0.05; clearTimeout(idle); idle = setTimeout(vuelve, 9000); run(); };
     if ("IntersectionObserver" in window) new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; if (visible) run(); }).observe(svg);
 
     /* ---------- tocar: un toque hace lo rápido (apuntar la comida, empezar el entreno); mantener abre la hoja ---------- */
@@ -940,7 +943,7 @@
     }
     svg.addEventListener("keydown", (ev) => {
       const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key];
-      if (d) { ev.preventDefault(); steer(Math.round(target * 4) / 4 + d * 0.25); return; }
+      if (d) { ev.preventDefault(); ev.stopPropagation(); steer(Math.round(target * 4) / 4 + d * 0.25); return; }
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); const st = estado(t), e = st.corto || st.sig[0] || st.turno; if (e) abrir({ tipo: "item", i: +e.i, rapida: false }); }
       if (ev.key === "Escape" || ev.key === "Home") { if (lado || radio) { radio = false; girar(null); draw(0); } else vuelve(); }
     });
@@ -949,7 +952,7 @@
     function actualiza(datos) {
       D = datos || { dia: [] }; R = ruta(D);
       el.classList.toggle("cd-claro", !!D.claro);
-      const nuevaHora = D.ahora != null ? clamp(D.ahora, 0, 23.99) : null;
+      const nuevaHora = D.ahora != null ? clamp(D.ahora, 0, finDia()) : null;
       if (!mirando || nuevaHora == null) { AHORA = nuevaHora; if (AHORA != null) { t = target = AHORA; } }
       else AHORA = nuevaHora;
       clearInterval(vivoT);

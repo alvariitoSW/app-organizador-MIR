@@ -12582,6 +12582,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!r.c && r.c.urg === r.b.urg - 2 && r.c.umi === r.b.umi && /−2/.test(r.c.vac) &&
       r.d.abierto && r.d.filas === 4 && r.d.sinCupoSig && r.d.conCupo >= 2, JSON.stringify({ ini, r }));
   }
+  // 298) ARRASTRAR HASTA LA CAMA PASADA LA MEDIANOCHE, EN CADENA (conduce Hoy): con la cama a las 00:45, desde las
+  // 23:30 se avanza con la flecha → hasta pasar la medianoche y el conductor llega a la cama («EN CASA ·
+  // DURMIENDO», «Te levantas a las 10:30»); los datos con la hora 00:55 tampoco se cortan a las 23:59. Fija: tras
+  // el Lloretazo la línea acababa a las 23:59 y el conductor se quedaba en el sofá sin irse nunca a la cama.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!(window.PG.conductor().c && document.querySelector('#main .cd svg')), null, { timeout: 8000 }).catch(() => {});
+    const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false, dia: [], noches: [{ a: -1.25, b: 10.5, t: 'noche' }, { a: 24.75, b: 34.5, t: 'noche' }],
+      esc: Object.assign({}, C.d.esc || {}, { casa: [[22.2, 24.25, 'salon'], [24.25, 24.75, 'movil'], [24.75, 34.5, 'cama']] }) })); }, h);
+    const lee = () => page.evaluate(() => { const cd = document.querySelector('#main .cd'), q = (s) => (cd.querySelector('[data-r="' + s + '"]') || {}).textContent || ''; return { casa: cd.classList.contains('casa'), nxl: q('nxl'), nxa: q('nxa'), clk: q('clk') }; });
+    await pon(23.5);
+    const r = { a: await lee() };
+    await page.focus('#main .cd svg').catch(() => {});
+    for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(1500);
+    r.b = await lee();
+    r.dia = await page.evaluate(() => window.PG.ui.diaHoy || '');   /* la flecha mueve la hora, no cambia de día */
+    await page.keyboard.press('Escape');   /* vuelve a la hora de los datos */
+    await pon(24.92); await page.waitForTimeout(100);
+    r.c = await lee();
+    await page.evaluate(() => { window.PG.render(); });
+    check('con la cama a las 00:45, arrastrar (→) desde las 23:30 llega a la cama pasada la medianoche sin cambiar de día, y la hora 00:55 no se corta a las 23:59',
+      /sofá/.test(r.a.nxa) && r.b.casa && r.b.nxl === 'EN CASA · DURMIENDO' && /Te levantas a las 10:30/.test(r.b.nxa) && /^00:/.test(r.b.clk) && r.dia === '' && r.c.clk === '00:55' && r.c.nxl === 'EN CASA · DURMIENDO', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
