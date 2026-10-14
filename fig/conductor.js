@@ -87,7 +87,8 @@
 .cd-ranura{stroke:#3a4458;stroke-width:7;stroke-linecap:round;fill:none}.cd-ml{fill:#8fa6c6;font:900 15px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-mw{fill:#5d7394;font:700 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-ml.on,.cd-mw.on{fill:#ffd66b}.cd-palo{stroke:#5d6676;stroke-width:9;stroke-linecap:round}.cd-pomo{fill:#2a3448;stroke:#ffd66b;stroke-width:2.5}
 [data-r="palanca"]{transition:transform .35s ease}@media (prefers-reduced-motion:reduce){[data-r="palanca"]{transition:none}}
-.cd-rpanel{fill:#10151f;stroke:#ffd66b;stroke-width:2.5}.cd-rtt{fill:#7cf0b0;font:900 16px ui-sans-serif,system-ui,sans-serif}.cd-rs1{fill:#c8ffe0;font:800 20px ui-sans-serif,system-ui,sans-serif}.cd-rs2{fill:#4ad08a;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
+.cd-rpanel{fill:#10151f;stroke:#ffd66b;stroke-width:2.5}.cd-rtt{fill:#7cf0b0;font:900 16px ui-sans-serif,system-ui,sans-serif}.cd-rs1{fill:#c8ffe0;font:800 20px ui-sans-serif,system-ui,sans-serif}.cd-rcaf{font:700 15px system-ui,sans-serif;fill:#ffd9a0}.cd-rcaf.tarde{fill:#ff6b6b}.cd-cfb{fill:#2a3442;stroke:#5c6b80;stroke-width:1.5;cursor:pointer}.cd-cfbt{font:800 17px system-ui,sans-serif;fill:#fff;text-anchor:middle;pointer-events:none}
+.cd-rs2{fill:#4ad08a;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
 .cd-rlink{fill:#0d2a1c;stroke:#4ad08a;stroke-width:1.5}.cd-rlinkt{fill:#7cf0b0;font:800 12px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-rlab{fill:#8fa6c6;font:800 11.5px ui-sans-serif,system-ui,sans-serif;letter-spacing:.04em}.cd-rmini{fill:#5d7394;font:700 11px ui-sans-serif,system-ui,sans-serif}
 .cd-kb rect{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-kb text{fill:#c9d4e4;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-kb.on rect{fill:#ffd66b;stroke:#ffd66b}.cd-kb.on text{fill:#06101a}
@@ -260,6 +261,7 @@
     <rect class="cd-rpanel" x="26" y="608" width="548" height="284" rx="22"/><rect class="cd-rdisp" x="46" y="626" width="508" height="104" rx="10"/>
     <text class="cd-rtt" x="62" y="652">📻 RADIO SUEÑO · 97.5 FM</text><g data-o="sueno"><rect x="420" y="634" width="128" height="26" rx="13" class="cd-rlink"/><text class="cd-rlinkt" x="484" y="652">abrir Sueño ›</text></g>
     <text data-r="rs1" class="cd-rs1" x="62" y="686"></text><text data-r="rs2" class="cd-rs2" x="62" y="714"></text>
+    <g class="cd-cafe"><text data-r="rcaf" class="cd-rcaf" x="474" y="714" text-anchor="end">☕ 2</text><g data-o="cafe" data-v="-"><circle cx="498" cy="709" r="13" class="cd-cfb"/><text class="cd-cfbt" x="498" y="714">−</text></g><g data-o="cafe" data-v="+"><circle cx="532" cy="709" r="13" class="cd-cfb"/><text class="cd-cfbt" x="532" y="714">+</text></g></g>
     <text class="cd-rlab" x="46" y="748">¿CÓMO AMANECES? · los botones de emisora</text><g data-o="kss" data-v="1" class="cd-kb"><rect x="46" y="756" width="50" height="40" rx="8"/><text x="71" y="783">1</text></g><g data-o="kss" data-v="2" class="cd-kb"><rect x="103" y="756" width="50" height="40" rx="8"/><text x="128" y="783">2</text></g><g data-o="kss" data-v="3" class="cd-kb"><rect x="160" y="756" width="50" height="40" rx="8"/><text x="185" y="783">3</text></g><g data-o="kss" data-v="4" class="cd-kb"><rect x="217" y="756" width="50" height="40" rx="8"/><text x="242" y="783">4</text></g><g data-o="kss" data-v="5" class="cd-kb"><rect x="274" y="756" width="50" height="40" rx="8"/><text x="299" y="783">5</text></g><g data-o="kss" data-v="6" class="cd-kb"><rect x="331" y="756" width="50" height="40" rx="8"/><text x="356" y="783">6</text></g><g data-o="kss" data-v="7" class="cd-kb"><rect x="388" y="756" width="50" height="40" rx="8"/><text x="413" y="783">7</text></g><g data-o="kss" data-v="8" class="cd-kb"><rect x="445" y="756" width="50" height="40" rx="8"/><text x="470" y="783">8</text></g><g data-o="kss" data-v="9" class="cd-kb"><rect x="502" y="756" width="50" height="40" rx="8"/><text x="527" y="783">9</text></g>
     <text class="cd-rmini" x="46" y="814">1 muy despierto</text><text class="cd-rmini" x="554" y="814" text-anchor="end">9 me caigo</text>
     <text class="cd-rlab" x="46" y="858">ÁNIMO</text><g data-o="animo" data-v="1" class="cd-ab"><circle cx="118" cy="852" r="17"/><text x="118" y="858">😣</text></g><g data-o="animo" data-v="2" class="cd-ab"><circle cx="158" cy="852" r="17"/><text x="158" y="858">😕</text></g><g data-o="animo" data-v="3" class="cd-ab"><circle cx="198" cy="852" r="17"/><text x="198" y="858">😐</text></g><g data-o="animo" data-v="4" class="cd-ab"><circle cx="238" cy="852" r="17"/><text x="238" y="858">🙂</text></g><g data-o="animo" data-v="5" class="cd-ab"><circle cx="278" cy="852" r="17"/><text x="278" y="858">😄</text></g>
@@ -642,7 +644,11 @@
       R_.tkv.textContent = ph.length ? ph.filter((x) => x.hecho).length + " de " + ph.length + " hechas" : "nada pendiente";
       /* la radio: lo dormido, la cama y el café; los botones de emisora son el «¿cómo amaneces?» */
       R_.rs1.textContent = s ? "Anoche dormiste " + coma(s.h) + " h de " + s.obj : "Anoche: sin apuntar · toca «abrir Sueño»";
-      R_.rs2.textContent = [rd.ayer != null ? "ayer " + coma(rd.ayer) + " h" : "", rd.cama ? "a la cama " + rd.cama : "", rd.cafe ? "último café " + rd.cafe : ""].filter(Boolean).join(" · ");
+      R_.rs2.textContent = [rd.ayer != null ? "ayer " + coma(rd.ayer) + " h" : "", rd.cama ? "a la cama " + rd.cama : "", rd.cafe ? "café hasta las " + rd.cafe : ""].filter(Boolean).join(" · ");
+      const cf = rd.cafes || { n: 0 };   /* los cafés de hoy (2 de serie por la mañana) y el último; en rojo si es tarde para dormir */
+      R_.rcaf.textContent = "☕ " + cf.n + (cf.ultimo ? " · " + cf.ultimo : "");
+      R_.rcaf.classList.toggle("tarde", !!cf.tarde);
+      cabe(R_.rs1, 480); cabe(R_.rs2, 300);   /* la segunda línea deja sitio a los cafés */
       svg.querySelectorAll('[data-o="kss"]').forEach((g) => g.classList.toggle("on", +g.getAttribute("data-v") === rd.kss));
       svg.querySelectorAll('[data-o="animo"]').forEach((g) => g.classList.toggle("on", +g.getAttribute("data-v") === rd.animo));
       R_.rint.textContent = rd.int ? "hoy: " + (rd.intTxt || "") : "¿qué te propones hoy?";
@@ -925,6 +931,7 @@
       if (o === "frente") { girar(null); draw(0); return; }
       if (o === "radio") { radio = !radio; draw(0); return; }
       const rd = (D.cab && D.cab.radio) || {}, cab = D.cab || {};
+      if (o === "cafe") return abrir({ tipo: "act", a: n.getAttribute("data-v") === "+" ? "cafe-mas" : "cafe-menos", ds: { k: rd.k || "" } });
       if (o === "kss" || o === "animo") return abrir({ tipo: "act", a: o === "kss" ? "asist-kss" : "asist-animo", ds: { k: rd.k || "", v: n.getAttribute("data-v") } });
       if (o === "int") { const L = rd.ints || []; if (!L.length) return; const j = L.findIndex((x) => x[0] === rd.int), x = L[(j + 1) % L.length];
         return abrir({ tipo: "act", a: "asist-int", ds: { k: rd.k || "", v: x[0], t: x[1] } }); }
@@ -938,7 +945,8 @@
       else if (o === "atras") e = st.previo;
       if (!e || e.i == null || e.i === "") return;
       /* lo rápido solo para lo que ya toca (desde una hora antes) y aún no está hecho */
-      const ahora = AHORA != null ? AHORA : t, rapida = !largo && e.m && !e.h && e.a <= ahora + 1 && D.modo === "hoy";
+      /* hoy, desde una hora antes; un día pasado, siempre (lo que se te olvidó apuntar) */
+      const ahora = AHORA != null ? AHORA : t, rapida = !largo && e.m && !e.h && (D.modo === "pasado" || (D.modo === "hoy" && e.a <= ahora + 1));
       abrir({ tipo: "item", i: +e.i, rapida: !!rapida });
     }
     svg.addEventListener("keydown", (ev) => {

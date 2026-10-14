@@ -955,7 +955,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     window.PG.setDayOverride(base + '-08', 'sh-f', '');    // entreno de fuerza
     window.PG.setDayOverride(base + '-09', 'sh-l', '');    // día libre (debe quedar fuera)
     window.PG.addVacation(base + '-10', base + '-11', 'test-export'); // vacaciones (deben quedar fuera)
+    /* la siesta del saliente se apunta a mano: con ella apuntada (6 h) va a Google */
+    const srAntes = window.PG.store.suenoReal[base + '-06']; window.PG.store.suenoReal[base + '-06'] = { guardia: true, h: 2, siesta: 6 };
     const evs = window.PG.calEventos(base + '-05', base + '-11');
+    if (srAntes) window.PG.store.suenoReal[base + '-06'] = srAntes; else delete window.PG.store.suenoReal[base + '-06'];
     const porFecha = {};
     evs.forEach((e) => { (porFecha[e.isoKey] = porFecha[e.isoKey] || []).push(e); });
     return porFecha;
@@ -2682,10 +2685,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
           Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)))),
       };
     });
-    check('con diez eventos en un día, la casilla enseña cuatro de UNA línea y «+7» (seis eventos y la nota), sin desbordarse',
-      aprieto.puntos === 4 && aprieto.masN === '+7' && aprieto.nota && aprieto.titulos === 4 &&
-      aprieto.maxLineas === 1 && !aprieto.desborda && aprieto.contenido < aprieto.altoCelda,
-      JSON.stringify(aprieto));
+    // «que se vean todos los eventos importantes del día»: los diez y la nota, cada uno en UNA línea, sin «+N»;
+    // la casilla (y su fila) crece lo que haga falta y no desborda
+    check('con diez eventos en un día, la casilla enseña los diez y la nota, cada uno en UNA línea, sin «+N» ni desbordarse',
+      aprieto.puntos === 10 && aprieto.masN === '' && !aprieto.nota && aprieto.titulos === 10 &&
+      aprieto.maxLineas === 1 && !aprieto.desborda, JSON.stringify(aprieto));
 
     // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
     const etiquetas = await page.evaluate(() => {
@@ -4751,7 +4755,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
           const k2 = sig.getFullYear() + '-' + String(sig.getMonth() + 1).padStart(2, '0') + '-' + String(sig.getDate()).padStart(2, '0');
           const sal = P.salidaDeGuardia(k2), sl = P.sleepOf(k2);
           out[tipo + ' ' + nm] = { entra: g.desde, guardia: g.guardia, sale: g.sale,
-            salienteHasta: sal ? sal.sale : null, siesta: sl.siesta ? sl.siesta.de + '–' + sl.siesta.a : null };
+            salienteHasta: sal ? sal.sale : null, siesta: sl.siesta ? sl.siesta.de + '–' + sl.siesta.a : (sl.siestaPend ? 'apúntala desde ' + sl.siestaPend.de : null) };   /* se apunta a mano: hasta entonces, un hueco al llegar */
           P.setDayOverride(k, null); P.render();
         });
       });
@@ -4776,7 +4780,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // el día de después: sigues trabajando hasta el relevo, y ahí empieza la siesta
     const salienteOk = Object.keys(esperado).every((k) => casos[k] && casos[k].salienteHasta === esperado[k].sale) &&
       Object.keys(esperado).every((k) => casos[k] && !!casos[k].siesta);
-    check('el día de después de la guardia trabaja hasta el relevo y luego duerme la siesta',
+    check('el día de después de la guardia trabaja hasta el relevo y luego queda la siesta (por apuntar)',
       salienteOk, JSON.stringify(casos));
 
     // …y ahora la cadena: cambiar la hora DESDE LA PANTALLA y que el mes se entere. El campo vive
@@ -4955,13 +4959,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const L = P.store.shifts.filter((x) => /libre/i.test(x.name || ''))[0];
       P.setDayOverride(d(0), G.id, 'umi');   // lunes de guardia
       P.setDayOverride(d(1), S.id);          // martes saliente: viene de la guardia del lunes
+      const srSal = P.store.suenoReal[d(1)]; P.store.suenoReal[d(1)] = { guardia: true, h: 2, siesta: 6 };   // con la siesta apuntada (6 h)
       P.setDayOverride(d(2), F.id);          // miércoles de fuerza
       P.setDayOverride(d(3), L.id);          // jueves libre
       // una rutina colgada del día de fuerza: eso es «ese día entrenas»
       P.store.gym.rutinas = [{ id: 'r-test', nombre: 'Torso A', dias: ['sh-f'], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }];
       P.save(); P.render();
       const mide = (n) => { const key = d(n), cp = P.comidaPrincipalDe(key); return cp ? { de: cp.de, a: cp.a, por: cp.por } : null; };
-      return { guardia: mide(0), saliente: mide(1), fuerza: mide(2), libre: mide(3), lunes: d(0) };
+      const res = { guardia: mide(0), saliente: mide(1), fuerza: mide(2), libre: mide(3), lunes: d(0) };
+      if (srSal) P.store.suenoReal[d(1)] = srSal; else delete P.store.suenoReal[d(1)]; P.save();
+      return res;
     });
     const conEntreno = horas.fuerza, saliente = horas.saliente, libre = horas.libre;
     // El día de fuerza entrena de 6:30 a 8:00 y trabaja de 8 a 15: la ventana de «post-entreno»
@@ -7421,6 +7428,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const k = P.diaLaborableCerca();
       P.setDayOverride(k, G.id, 'umi');
       const sig = P.nextIso(k);
+      const srSig = S.suenoReal[sig]; S.suenoReal[sig] = { guardia: true, h: 2, siesta: 6 };   // la siesta, apuntada
       P.save();
       const conAjuste = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
       // apagado, se vuelve a las horas del tipo de día (45 min): la reserva sigue ahí
@@ -7429,7 +7437,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // y cambiar el de Ajustes SÍ mueve la siesta, que es lo que antes no pasaba
       S.rotation.viaje.on = true; S.rotation.viaje.min = 50; P.save();
       const cambiado = { trayecto: P.trayectoMin(), siesta: (P.sleepOf(sig).siesta || {}).de || '' };
-      S.rotation.viaje = vGuard; S.rhythm['sh-g'] = rhGuard;
+      S.rotation.viaje = vGuard; S.rhythm['sh-g'] = rhGuard; if (srSig) S.suenoReal[sig] = srSig; else delete S.suenoReal[sig];
       P.setDayOverride(k, null); P.save(); P.render();
       return { conAjuste, apagado, cambiado }; });
     check('lo que tardas del trabajo a casa sale de un solo sitio, y mueve la siesta del saliente',
@@ -7715,8 +7723,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.setMonthService(2026, 9, 'Neumología', null);
       const trasRot = cmp(conUrg, uids(P.icsTexto(desde, hasta, {})));
       P.setMonthService(2026, 9, sv, null);
-      // el saliente del día siguiente a la guardia: bloque hasta el relevo Y la siesta
+      // el saliente del día siguiente a la guardia: bloque hasta el relevo Y la siesta (apuntada)
+      const srA = S.suenoReal['2026-10-20']; S.suenoReal['2026-10-20'] = { guardia: true, h: 2, siesta: 6 };
       const evs = P.calEventos(desde, hasta);
+      if (srA) S.suenoReal['2026-10-20'] = srA; else delete S.suenoReal['2026-10-20'];
       const sal = evs.filter((e) => /Saliente/.test(e.summ || ''))[0] || null;
       const sie = evs.filter((e) => /Siesta/.test(e.summ || ''))[0] || null;
       // los cuatro ficheros por categoría cubren todo y no se solapan: es lo que hace que
@@ -7895,7 +7905,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const umi = de('GUARDIA');
       // el saliente y la siesta son del día siguiente a la guardia
       const k2 = P.iso(P.addDays(P.parseDate(k), 1));
+      const srB = S.suenoReal[k2]; S.suenoReal[k2] = { guardia: true, h: 2, siesta: 6 };   // la siesta, apuntada
       const evs2 = P.calEventos(k2, k2);
+      if (srB) S.suenoReal[k2] = srB; else delete S.suenoReal[k2];
       const sal = (evs2.filter((e) => /Saliente/.test(e.summ || ''))[0] || {}).summ || '';
       const sie = (evs2.filter((e) => /Siesta/.test(e.summ || ''))[0] || {}).summ || '';
       // un día de trabajo cualquiera de ese mes, con la rotación puesta
@@ -12605,6 +12617,151 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { window.PG.render(); });
     check('con la cama a las 00:45, arrastrar (→) desde las 23:30 llega a la cama pasada la medianoche sin cambiar de día, y la hora 00:55 no se corta a las 23:59',
       /sofá/.test(r.a.nxa) && r.b.casa && r.b.nxl === 'EN CASA · DURMIENDO' && /Te levantas a las 10:30/.test(r.b.nxa) && /^00:/.test(r.b.clk) && r.dia === '' && r.c.clk === '00:55' && r.c.nxl === 'EN CASA · DURMIENDO', JSON.stringify(r));
+  }
+  // 299) LAS VACACIONES, SOLO A MANO, Y LOS DÍAS GASTADOS, EN CADENA (conduce Mes): «+ vacaciones» en la hoja del mes,
+  // toque en un lunes y en su viernes → «🏖️ 5 de 22 días» bajo «Quedan de R1»; pintar un miércoles como
+  // «Vacaciones» suma 1 (es tuyo); un día del ciclo con «V» NO cuenta ni se ve como vacaciones (la app no las
+  // inventa); y esos días de vacaciones no suman horas de servicio en el abono. Fija: el ciclo y el calendario de
+  // Google ponían vacaciones solas, no había cuenta de días gastados y el abono sumaba la jornada de días libres.
+  {
+    const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), m = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12);
+      const lun = new Date(m.getTime()); while (lun.getDay() !== 1) lun.setDate(lun.getDate() + 1); const vie = new Date(lun.getTime()); vie.setDate(vie.getDate() + 4);
+      const mie = new Date(lun.getTime()); mie.setDate(mie.getDate() + 9);
+      P.__t299 = { nVac: (P.store.rotation.vacaciones || []).length, mode: P.store.rotation.mode, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}), pats: JSON.stringify(P.store.patterns), anchor: P.store.rotation.anchor, idx: P.store.rotation.index, tab: P.ui.tab, mon: P.ui.monSel };
+      P.store.rotation.mode = 'date'; P.ui.tab = 'month'; P.ui.mesHoja = false; P.save(); P.render();
+      return { lun: P.iso(lun), vie: P.iso(vie), mie: P.iso(mie), y: m.getFullYear(), mo: m.getMonth() }; });
+    await gotoTab('month');
+    await page.evaluate((x) => { window.PG.ui.mesHoja = false; window.monthDate && (window.monthDate = new Date(x.y, x.mo, 1)); }, ini);
+    // ir al mes siguiente con la flecha de la cabecera
+    const antes = await page.evaluate(() => window.PG.vacGastados().n);
+    await page.evaluate((x) => { const P = window.PG; P.ui.mesHoja = true; P.render(); }, ini);
+    await page.click('[data-a="mes-vac"]').catch(() => {});
+    await page.waitForTimeout(150);
+    const toca = async (k) => { const e = await page.$('#main .dbox[data-key="' + k + '"]'); if (e) { await e.click().catch(() => {}); } else { await page.evaluate((k) => { window.PG.act && 0; }, k); } await page.waitForTimeout(150); return !!e; };
+    let vistos = 0;
+    if (!(await page.$('#main .dbox[data-key="' + ini.lun + '"]'))) { await page.click('[data-a="wk-next"]').catch(() => {}); await page.waitForTimeout(200); }
+    if (await toca(ini.lun)) vistos++; if (await toca(ini.vie)) vistos++;
+    const r = { vistos, a: await page.evaluate(() => ({ n: window.PG.vacGastados().n, txt: (document.querySelector('#main .r1v') || {}).textContent || '' })), antes };
+    // pintado a mano: cuenta; del ciclo: no
+    r.b = await page.evaluate((x) => { const P = window.PG, V = P.store.shifts.filter((s) => P.esVacacionSh(s))[0]; P.setDayOverride(x.mie, V.id, ''); P.save(); P.render();
+      const n1 = P.vacGastados().n;
+      /* el ciclo con una «V» un martes: ni vacaciones ni día gastado */
+      const mar = P.iso(P.addDays(P.parseDate(x.lun), 15)); P.store.patterns = [{ name: 'T', days: ['T', 'V', 'T', 'T', 'T', 'L', 'L'] }]; P.store.rotation.anchor = P.iso(P.mondayOf(P.parseDate(mar))); P.store.rotation.index = 0; P.save();
+      const inf = P.dayInfo(mar), n2 = P.vacGastados().n;
+      const d = P.parseDate(x.lun), ab = P.mesAbono(d.getFullYear(), d.getMonth(), P.monthDays(d.getFullYear(), d.getMonth()), P.monthService(d.getFullYear(), d.getMonth()));
+      const sinVac = (() => { const t = P.store.rotation.vacaciones.pop(); P.setDayOverride(x.mie, null, ''); P.save(); const a2 = P.mesAbono(d.getFullYear(), d.getMonth(), P.monthDays(d.getFullYear(), d.getMonth()), P.monthService(d.getFullYear(), d.getMonth())); P.store.rotation.vacaciones.push(t); return a2.h; })();
+      return { n1, cicloVac: P.esVacacionSh(P.shiftById(inf.shiftId)), n2, h: ab.h, hSinVac: sinVac }; }, ini);
+    await page.evaluate((x) => { const P = window.PG, t = P.__t299; P.store.rotation.vacaciones.length = t.nVac; P.store.rotation.shiftByDay = JSON.parse(t.sbd); P.store.patterns = JSON.parse(t.pats);
+      P.store.rotation.anchor = t.anchor; P.store.rotation.index = t.idx; P.store.rotation.mode = t.mode; P.ui.mesModo = null; P.ui.mesHoja = false; P.ui.tab = t.tab; P.ui.monSel = t.mon; delete P.__t299; P.save(); P.render(); }, ini);
+    check('vacaciones a mano: lunes→viernes son 5 días gastados («🏖️ … de 22»), pintar un día suma 1, el ciclo no pone vacaciones y esos días no suman horas de servicio',
+      r.vistos === 2 && r.a.n === r.antes + 5 && /de 22 días de vacaciones/.test(r.a.txt) && r.b.n1 === r.antes + 6 && !r.b.cicloVac && r.b.n2 === r.antes + 6 && r.b.hSinVac - r.b.h >= 6 * 7 - 1, JSON.stringify(r));
+  }
+  // 300) TODO LO QUE TIENE SU DÍA SE VE EN EL MES, EN CADENA (conduce Mes): con seis eventos con fecha y una nota el
+  // mismo día, la casilla enseña los seis y la nota (sin «+N»); un evento de cada semana sale aparte, como chapita
+  // con su inicial. Fija: a partir del cuarto evento se escondían en «+N».
+  {
+    const k = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 2); const k = P.iso(d);
+      P.__t300 = { nEv: P.eventosS().length, nN: (P.store.notas || []).length, tab: P.ui.tab };
+      ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis'].forEach((t, i) => P.eventosS().push({ id: 'e300' + i, titulo: t + ' 300', hora: String(8 + i).padStart(2, '0') + ':00', modo: 'fecha', fecha: k, dow: [], color: '#38bdf8', on: true }));
+      P.eventosS().push({ id: 'e300s', titulo: 'Zumba 300', hora: '19:00', modo: 'semanal', dow: [d.getDay()], color: '#7a5cf0', on: true });
+      if (!Array.isArray(P.store.notas)) P.store.notas = []; P.store.notas.push({ id: 'n300', txt: 'Nota 300', fecha: k, hecha: 0, ts: 1 });
+      P.ui.tab = 'month'; P.ui.mesV = 'plana'; P.save(); P.render(); return k; });
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]').catch(() => {});
+    await page.waitForTimeout(250);
+    const r = await page.evaluate((k) => { const c = document.querySelector('#main .dbox[data-key="' + k + '"]'); if (!c) return null;
+      return { ev: [...c.querySelectorAll('.dev:not(.nota)')].filter((x) => / 300$|300/.test(x.textContent)).length, nota: !!c.querySelector('.dev.nota'), mas: !!c.querySelector('.dmas'), sem: (c.querySelector('.dsem i') || {}).textContent || '', semTit: (c.querySelector('.dsem') || {}).title || '' }; }, k);
+    await page.evaluate(() => { const P = window.PG, t = P.__t300; P.eventosS().length = t.nEv; P.store.notas.length = t.nN; P.ui.tab = t.tab; delete P.__t300; P.save(); P.render(); });
+    check('en el Mes salen todos los eventos con fecha y las notas del día (sin «+N») y lo de cada semana como chapita con su inicial',
+      !!r && r.ev === 6 && r.nota && !r.mas && r.sem === 'Z' && /Zumba 300 \(cada semana\)/.test(r.semTit), JSON.stringify(r));
+  }
+  // 301) OTRO DÍA, A LA HORA DE LEVANTARTE, Y APUNTAR AYER CON UN TOQUE, EN CADENA (conduce Hoy): la palanca en R (ayer)
+  // abre el día a la hora de levantarte (no a las 23:59) y un toque en el cartel de una comida de ayer la apunta;
+  // en D (mañana) también abre a la hora de levantarte. Fija: ayer se abría al final del día y solo se podía
+  // apuntar con un toque lo de hoy.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="marcha"]'), null, { timeout: 8000 }).catch(() => {});
+    await page.click('#main .cd [data-o="marcha"][data-d="-1"]').catch(() => {});
+    await page.waitForTimeout(400);
+    /* la hora de levantarte de ese día: la de su noche o, si no la hay, la de su tipo de día */
+    const lev = () => page.evaluate(() => { const P = window.PG, C = P.conductor(), k = P.ui.diaHoy, n = (C.d.noches || []).filter((x) => x.a <= 0)[0], w = P.toMin((P.rhythmOf(P.dayInfo(k).shiftId, k) || {}).wake || '');
+      return { k, modo: C.d.modo, ahora: C.d.ahora, wake: n ? n.b : (w != null ? w / 60 : null) }; });
+    const r = { ayer: await lev() };
+    // la primera comida con platos de ayer, sin apuntar: un toque la apunta
+    const com = await page.evaluate(() => { const P = window.PG, k = P.ui.diaHoy; let e = P.conductor().d.dia.filter((x) => x.m === 'meal' && !x.h)[0];
+      if (!e) { let w = -1; for (let j = 0; j < 14; j++) if (P.sbFechaW(j) === k) { w = j; break; } const d = P.store.dishes.filter((x) => !x.hospital)[0];
+        if (w >= 0 && d) { P.mPoner(w, 'comida', [{ kind: 'dish', id: d.id, portions: 1 }], ''); P.save(); P.render(); } e = P.conductor().d.dia.filter((x) => x.m === 'meal' && !x.h)[0]; }
+      if (e) P.conductor().c.actualiza(Object.assign({}, P.conductor().d, { ahora: e.a + 0.05 })); return e ? { i: e.i, a: e.a } : null; });
+    if (com) { await page.waitForTimeout(150); await page.evaluate((i) => { const g = document.querySelector('#main .cd [data-o="ev"][data-i="' + i + '"]'); if (!g) return; g.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10 })); g.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 10 })); }, com.i); await page.waitForTimeout(250); }
+    r.hecha = com ? await page.evaluate((i) => { const P = window.PG, k = P.ui.diaHoy || P.iso(P.addDays(new Date(), -1)), x = P.hoyItems(k, P.dayInfo(k))[i]; return !!(x && x.hecha); }, com.i) : null;
+    r.hoja = await page.evaluate(() => !!window.PG.ui.hoyIt);
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.render(); });
+    await page.click('#main .cd [data-o="marcha"][data-d="1"]').catch(() => {});
+    await page.waitForTimeout(400);
+    r.man = await lev();
+    await page.evaluate(() => { const P = window.PG; P.ui.diaHoy = ''; P.render(); });
+    check('la palanca en R abre ayer a la hora de levantarte y un toque apunta una comida de ayer; en D, mañana también a la hora de levantarte',
+      r.ayer.modo === 'pasado' && Math.abs(r.ayer.ahora - r.ayer.wake) < 0.1 && (r.hecha === null || (r.hecha && !r.hoja)) && r.man.modo === 'futuro' && Math.abs(r.man.ahora - r.man.wake) < 0.1, JSON.stringify(r));
+  }
+  // 302) LA MAÑANA: BUS CON HORA REAL, TAXI CON SU PRECIO Y LOS TIEMPOS EN AJUSTES, EN CADENA: en Ajustes la ducha pasa
+  // a 30 min y el día de jornada la ducha dura 30; «fui en bus» deja la hora del plan para el hábito y se puede
+  // apuntar la hora real (07:41); un taxi de 14 € cuenta 14 € en el mes en vez del precio de siempre. Fija: los
+  // tiempos estaban fijos, «fui en bus» no guardaba la hora real y el taxi siempre costaba lo mismo.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = new Date();
+      const k = (() => { for (let i = 1; i < 10; i++) { const d = P.addDays(hoy, -i), w = d.getDay(); if (w >= 1 && w <= 5) return P.iso(d); } return P.iso(P.addDays(hoy, -1)); })();
+      P.__t302 = { viaje: JSON.stringify(P.store.rotation.viaje || null), man: JSON.stringify(P.store.manana || {}), ov: P.dayOverride(k), mode: P.store.rotation.mode };
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && /trabajo|diario|jornada/i.test(x.name || ''))[0]; P.store.rotation.mode = 'date'; if (T) P.setDayOverride(k, T.id, '');
+      P.store.rotation.viaje = Object.assign({}, P.store.rotation.viaje || {}, { on: true, bus: '07:35', antes: 4, min: 20, taxi: true, taxiEur: 10 }); P.save(); P.render(); return { k }; });
+    await gotoTab('cfg', 'viaje');
+    await page.waitForTimeout(150);
+    const campo = await page.$('#main input[data-a="viaje-f"][data-f="ducha"]');
+    if (campo) { await campo.fill('30'); await page.keyboard.press('Tab'); await page.waitForTimeout(150); }
+    /* la ducha de un día libre (por la tarde, sin prisa) dura lo que pongas en Ajustes */
+    r.ducha = await page.evaluate(() => { const P = window.PG, l = P.iso(P.addDays(new Date(), 9)), o = P.dayOverride(l); P.setDayOverride(l, 'sh-l', '');
+      const D = P.diaEscenas(l), d = D.seg.filter((x) => x.e === 'ducha')[0]; P.setDayOverride(l, o ? o.shift : null, o ? o.guard : '');
+      return d ? Math.round((d.b - d.a) * 60) : { tipo: D.tipo, seg: D.seg.map((x) => x.e).join(',') }; });
+    // la mañana de ese día: «fui en bus» y la hora real
+    await page.evaluate((k) => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.diaHoy = k; P.ui.hoyModo = 'reloj'; P.render(); const box = document.createElement('div'); box.id = 't302'; box.innerHTML = P.mananaHTML(k, false); document.querySelector('#main').prepend(box); }, r.k);
+    await page.click('#t302 [data-a="manana-sali"][data-bus="1"]').catch(() => {});
+    await page.waitForTimeout(150);
+    await page.evaluate((k) => { const P = window.PG; let b = document.getElementById('t302'); if (!b) { b = document.createElement('div'); b.id = 't302'; document.querySelector('#main').prepend(b); } b.innerHTML = P.mananaHTML(k, false); }, r.k);
+    const real = await page.$('#t302 input[data-a="manana-real"]');
+    if (real) { await real.fill('07:41'); await page.keyboard.press('Tab'); await page.waitForTimeout(150); }
+    r.bus = await page.evaluate((k) => ({ m: window.PG.store.manana[k], plan: window.PG.mananaDe(k).plan }), r.k);
+    // el taxi de ese día, 14 €
+    const eur0 = await page.evaluate((k) => { const P = window.PG; P.store.manana[k] = { eur: 14 }; P.save(); const mk = k.slice(0, 7); return P.taxisMes(mk); }, r.k);
+    r.taxi = { eur0, base: await page.evaluate((k) => { const P = window.PG; delete P.store.manana[k]; P.save(); return P.taxisMes(k.slice(0, 7)); }, r.k) };
+    await page.evaluate((k) => { const P = window.PG, t = P.__t302; P.store.rotation.viaje = JSON.parse(t.viaje); P.store.manana = JSON.parse(t.man); P.setDayOverride(k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : '');
+      P.store.rotation.mode = t.mode; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; delete P.__t302; const b = document.getElementById('t302'); if (b) b.remove(); P.save(); P.render(); }, r.k);
+    check('en Ajustes la ducha pasa a 30 min (y la de un día libre dura 30); «fui en bus» guarda la hora del plan y la real (07:41); un taxi de 14 € cuenta 14 € en el mes',
+      r.ducha === 30 && !!r.bus.m && r.bus.m.bus === 1 && r.bus.m.real === '07:41' && /^\d{2}:\d{2}$/.test(r.bus.m.salio || '') && r.taxi.eur0.n === r.taxi.base.n && Math.abs(r.taxi.eur0.eur - r.taxi.base.eur - 4) < 0.01, JSON.stringify(r));
+  }
+  // 303) CAFÉS, SIESTA A MANO Y PLATOS SIN PASOS INVENTADOS, EN CADENA: en la radio del conductor salen 2 cafés de serie,
+  // «+» suma uno y «−» lo quita; el saliente sin siesta apuntada tiene «Siesta · apúntala» sin hora de fin y, al
+  // apuntar 3 h, la siesta dura 3 h; «Pollo a la plancha con verduras» (no está en el recetario) se lee sin pasos.
+  // Fija: los cafés no se apuntaban, la siesta del saliente se inventaba (6 h) y los platos traían pasos genéricos.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.__t303 = JSON.stringify(P.store.cafes || {}); P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="radio"]'), null, { timeout: 8000 }).catch(() => {});
+    await page.locator('#main .cd g[data-o="radio"]').first().click().catch(() => {});
+    await page.waitForTimeout(150);
+    const caf = () => page.evaluate(() => (document.querySelector('#main .cd [data-r="rcaf"]') || {}).textContent || '');
+    const r = { c0: await caf() };
+    await page.click('#main .cd [data-o="cafe"][data-v="+"]').catch(() => {}); await page.waitForTimeout(200); r.c1 = await caf();
+    await page.click('#main .cd [data-o="cafe"][data-v="-"]').catch(() => {}); await page.waitForTimeout(200); r.c2 = await caf();
+    r.siesta = await page.evaluate(() => { const P = window.PG, hoy = new Date(), g = P.iso(P.addDays(hoy, 5)), s = P.iso(P.addDays(hoy, 6)), og = P.dayOverride(g), os = P.dayOverride(s), sr = P.store.suenoReal[s];
+      P.setDayOverride(g, 'sh-g', 'urg'); const a = P.sleepOf(s), ag = P.agendaDia(s, P.dayInfo(s)).filter((x) => /siesta/i.test(x.txt))[0];
+      P.store.suenoReal[s] = { h: 2, siesta: 3, guardia: true, tramos: [] }; const b = P.sleepOf(s);
+      if (sr) P.store.suenoReal[s] = sr; else delete P.store.suenoReal[s]; P.setDayOverride(g, og ? og.shift : null, og ? og.guard : ''); P.setDayOverride(s, os ? os.shift : null, os ? os.guard : ''); P.save();
+      return { sinApuntar: !a.siesta && !!a.siestaPend, ag: ag ? { fin: ag.fin, sub: ag.sub } : null, apuntada: b.siesta ? b.siesta.min : null }; });
+    r.plato = await page.evaluate(() => { const b = window.PG.tpLeer('Pollo a la plancha con verduras'); return { de: b.de, pasos: b.pasos.length, ing: b.ing.length }; });
+    await page.locator('#main .cd [data-r="radiob"] g[data-o="radio"]').first().click().catch(() => {});
+    await page.evaluate(() => { const P = window.PG; P.store.cafes = JSON.parse(P.__t303); delete P.__t303; P.save(); P.render(); });
+    const n = (t) => +((/☕ (\d+)/.exec(t) || [])[1]);
+    check('la radio cuenta 2 cafés de serie, «+» suma y «−» quita; el saliente sin siesta apuntada no la inventa (y con 3 h apuntadas dura 3 h); un plato fuera del recetario, sin pasos',
+      n(r.c0) === 2 && n(r.c1) === 3 && n(r.c2) === 2 && r.siesta.sinApuntar && !!r.siesta.ag && r.siesta.ag.fin === '' && r.siesta.apuntada === 180 && r.plato.de !== 'recetario' && r.plato.pasos === 0 && r.plato.ing > 0, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

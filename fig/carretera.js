@@ -124,10 +124,10 @@
     }
     /* lo que hay en la carretera, de atrás adelante */
     let nEv = 0;
-    const d0 = dias[0];
+    const c0 = D.cam0 || 0, d0 = dias[c0];   /* hoy: el día en el que arranca la cámara (en el mes natural, no siempre el primero) */
     /* HOY DE GUARDIA (o saliente): estás dentro del túnel. Su salida se acerca según pasan las horas, y en la pared
        va cada 3 m lo que falta para salir. Solo en la posición de hoy: si avanzas días, el túnel queda atrás */
-    if (cam === 0 && d0 && d0.tunel && d0.tunel.faltan != null) {
+    if (cam === c0 && d0 && d0.tunel && d0.tunel.faltan != null) {
       const T = d0.tunel, frac = T.total ? Math.max(0.1, Math.min(1, T.faltan / T.total)) : 1, z0 = NEAR - 0.3, z1 = NEAR + 4 + 9 * frac, o = [];
       const XL = -5.4, XR = 3.2, YT = 4.6;
       o.push('<rect class="ct-gceil" x="0" y="0" width="600" height="' + HY + '"/>');   /* dentro no hay cielo */
@@ -225,7 +225,8 @@
     svg.appendChild(gEsc); svg.appendChild(gCab); el.appendChild(svg);
     const sr = document.createElement("div"); sr.className = "ct-sr"; el.appendChild(sr);
     let D = { dias: [] }, cam = 0, arrastre = null, movido = false;
-    const maxCam = () => Math.max(0, (D.dias || []).length - 12);
+    const maxCam = () => Math.max(0, (D.dias || []).length - 12, D.cam0 || 0);
+    let mesVisto = null;
     function pinta() { gEsc.innerHTML = escena(D, cam); gCab.innerHTML = cabina(D, cam); }
     function abre(o) { if (!o || !opts.onAbrir) return; if (o.indexOf("chip:") === 0) opts.onAbrir({ tipo: "chip", o: o.slice(5) }); else opts.onAbrir({ tipo: "dia", k: o }); }
     /* arrastrar hacia arriba o hacia la izquierda = avanzar días; el toque corto abre lo tocado */
@@ -239,7 +240,9 @@
       else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { cam = clamp(cam - 1, 0, maxCam()); pinta(); e.preventDefault(); } else if (e.key === "Home") { cam = 0; pinta(); } });
     sr.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) abre(b.getAttribute("data-o")); });
     function actualiza(d) {
-      D = d || { dias: [] }; cam = clamp(cam, 0, maxCam());
+      D = d || { dias: [] };
+      if (D.mesTxt !== mesVisto) { mesVisto = D.mesTxt; cam = D.cam0 || 0; }   /* otro mes: la cámara vuelve a hoy (o al día 1) */
+      cam = clamp(cam, 0, maxCam());
       el.classList.toggle("ct-claro", !!D.claro);
       svg.setAttribute("aria-label", "La carretera del mes: " + ((D.dias || []).length) + " días por delante. " + (D.prox && D.prox.guardia ? "Próxima guardia " + D.prox.guardia.txt + ". " : "") + "Arrastra para avanzar días; toca un mojón o un cartel para abrir ese día.");
       sr.innerHTML = (D.dias || []).slice(1, 15).map((x) => '<button type="button" data-o="' + esc(x.k) + '">' + esc(DIAS[x.dow] + " " + x.d + " · " + x.tipo + ((x.evs || []).length ? " · " + x.evs.map((e) => e.t).join(", ") : "") +

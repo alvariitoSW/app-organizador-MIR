@@ -805,3 +805,44 @@ cambian también el día de la app. Prueba 298 (en cadena: 23:30 en el sofá →
 la medianoche sin cambiar de día → la hora 00:55 de los datos no se corta); con el conductor anterior cae solo ella.
 
 **Descartado:** seguir la línea hasta la mañana siguiente (eso ya es el día de mañana, con la palanca en D).
+
+## Repaso de supuestos, tanda 1: reglas y arreglos rápidos (2026-10-14)
+
+Del repaso de los 30 supuestos de la semana con el plan socialista: los que no valían pasan a esta tanda (lo
+visual va en la tanda 2, con maquetas primero).
+
+**Elegido:**
+- **Vacaciones solo a mano.** Las pones tú: un periodo en Mes (🏖️) o un día pintado como «Vacaciones». El ciclo
+  ya no pone vacaciones (un día «V» del ciclo es de trabajo, o libre en finde), el calendario de Google y el texto
+  pegado solo avisan («ponlas tú en Mes»). Bajo «Quedan de R1»: **«🏖️ N de 22 días de vacaciones · quedan M (L–V)»**,
+  contando de lunes a viernes, sin festivos, en el año de residencia que acaba el último día de R1; el 22 se
+  cambia en Ajustes → Rotación.
+- **Horas de servicio = solo trabajo:** la guardia desde que entras (con la jornada de ese día) hasta que sales, y
+  la jornada de los días de trabajo. Saliente, vacaciones, festivos y libres no suman.
+- **Mes: todo lo que tiene su día se ve.** Cada evento con fecha y cada nota del día en su línea, sin «+N» (la
+  casilla crece). Lo de cada semana va aparte, como chapitas de color con su inicial (el nombre al tocar).
+- **La carretera del mes es el mes natural** (del 1 al último día) y la cámara arranca en hoy.
+- **Otro día, a la hora de levantarte** (antes y después), y **la noche dura hasta la hora de levantarte** del
+  tipo de día de mañana, no tu objetivo de sueño.
+- **Un toque apunta también lo de días pasados** (las comidas que se te olvidaron); un entreno solo se empieza hoy.
+- **«Fui en bus»** guarda la hora del plan (para el hábito y la cuenta de taxis) **y se puede apuntar la hora
+  real**. **El taxi de cada día tiene su precio** (de serie el de Ajustes) y Dinero suma lo de cada día.
+- **Tiempos de la mañana en Ajustes → Ir y volver:** ducha, café, bici de vuelta y cuánto después pasa el último
+  bus. Si un paso no cabe entero (te levantas tarde), se acorta en vez de desaparecer.
+- **Cafés:** 2 de serie por la mañana (al levantarte y antes de la puerta) y los que sumes; en la radio del
+  conductor, «☕ N · hora del último» con − y +, en rojo si el último es a menos de 6 h de la cama.
+- **La siesta del saliente se apunta a mano:** hasta que la apuntas hay un hueco «Siesta · apúntala» al llegar,
+  sin hora de fin; con lo apuntado (p. ej. 3 h) dura eso. Al dibujar la noche ya no se rellena una siesta de 6 h.
+- **Platos fuera del recetario, sin pasos inventados:** solo sus ingredientes (los pasos, los del recetario o los
+  tuyos).
+- **Pruebas 299–303** (en cadena; al revertir cada arreglo cae solo la suya): vacaciones a mano y días gastados,
+  todos los eventos en el Mes, la palanca R/D a la hora de levantarte y el toque de ayer, la mañana (ducha en
+  Ajustes, bus con hora real, taxi de 14 €), cafés + siesta a mano + platos sin pasos.
+
+**Descartado:** contar las vacaciones por año natural (se cuentan por año de residencia, como «Quedan de R1»),
+borrar los periodos de vacaciones que ya trajo el calendario (siguen: los pusiste tú al importarlos), y planear
+una siesta «sugerida» con duración.
+
+**Supuestos:** los 2 cafés de serie van a la hora de levantarte (+6 min) y 9 min antes de salir (o media hora
+después de levantarte si no sales); un café sumado en un día que no es hoy se pone a las 14:00; el plan de las
+tres órdenes de guardia (Sueño) sigue proponiendo una siesta al llegar, como consejo, no como dato.
