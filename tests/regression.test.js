@@ -12357,6 +12357,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el precio del taxi se cambia en Ajustes → Ir y volver (12 €) y la tira de la mañana lo dice',
       r.b.precio === 12 && r.b.eur === r.b.n * 12 && r.b.n === r.n && r.b.tn >= 1 && new RegExp('este mes: ' + r.b.tn + ' taxis? \\(≈ ' + fmtMil(r.b.tn * 12) + ' €\\)').test(r.b.tira), JSON.stringify(r.b));
   }
+  // 291) LA CABINA DE GUARDIA, EN CADENA (módulo, cargado en Hoy): con una guardia de 15:00 a 8:00, a las 20:00 la
+  // cabina lleva la clase «guardia» (bata blanca en las mangas, panel rojo), el busca del salpicadero con las horas
+  // hechas y las que quedan, y el parasol dice «☾ GUARDIA · sales 08:00»; a las 10:00 nada de eso y el parasol
+  // vuelve a la rotación. Fija: la cabina era la misma de día que de guardia (solo se oscurecía de noche).
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForFunction(() => !!(window.Conductor && window.Conductor.crea), null, { timeout: 8000 }).catch(() => {});
+    const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.crea) return null;
+      const D = { dia: [{ a: 15, b: 32, t: 'Guardia', k: 'guard', i: 0 }, { a: 20.5, b: 21, t: 'Cena', k: 'meal', i: 1 }], noches: [{ a: -1.5, b: 6.83, t: 'noche' }], pendiente: [], senales: [], ph: 1, modo: 'hoy', vivo: true,
+        sueno: null, comida: { kc: 0, obj: 2000, pr: 0, prObj: 100 }, sol: [7.6, 19.2], manana: 6.83, claro: false, esc: { taxi: false, bici: [], parque: [], rot: '📷 RAYOS · RADIOLOGÍA' } };
+      const box = document.createElement('div'); box.id = 't291'; box.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px'; document.body.appendChild(box);
+      const c = C.crea({}); box.appendChild(c.el); const cd = c.el;
+      const at = (h) => { D.ahora = h; c.actualiza(D); return { guardia: cd.classList.contains('guardia'), busca: cd.querySelector('[data-r="busca"]').style.display === '', buscav: cd.querySelector('[data-r="buscav"]').textContent, rot: cd.querySelector('[data-r="rot"]').textContent,
+        manga: getComputedStyle(cd.querySelector('[data-r="volante"] .cd-manga')).fill, panel: getComputedStyle(cd).getPropertyValue('--cd-panel').trim() }; };
+      const out = { h20: at(20), h10: at(10) }; box.remove(); return out; });
+    check('de guardia a las 20:00 la cabina cambia: clase «guardia», bata blanca, panel rojo, busca «5 h · quedan 12 h» y parasol «☾ GUARDIA · sales 08:00»; a las 10:00 vuelve a la rotación',
+      !!r && r.h20.guardia && r.h20.busca && r.h20.buscav === '5 h · quedan 12 h' && r.h20.rot === '☾ GUARDIA · sales 08:00' && r.h20.manga === 'rgb(238, 242, 247)' && r.h20.panel === '#1c0a0f' &&
+      !r.h10.guardia && !r.h10.busca && r.h10.rot === '📷 RAYOS · RADIOLOGÍA' && r.h10.manga === 'rgb(47, 95, 179)' && r.h10.panel === '#04131a', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

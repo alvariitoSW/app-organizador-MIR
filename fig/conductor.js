@@ -66,6 +66,12 @@
 @media (prefers-reduced-motion:reduce){.cd-humo{animation:none;opacity:.35}.cd-ascua{animation:none}}
 .cd-hosp{fill:#c9d2de}.cd-hospe{fill:#9aa6b8}.cd-cross{fill:#e5484d}.cd-fly{fill:#e6ff8a}
 .cd-rot{fill:var(--cd-amb);font:800 10.5px ui-sans-serif,system-ui,sans-serif;letter-spacing:.02em}
+/* de guardia la cabina cambia: bata blanca en las mangas, el panel y el parasol en rojo, el busca en el salpicadero */
+.cd.guardia{--cd-panel:#1c0a0f;--cd-panele:#7a2a35;--cd-disp:#140608;--cd-cyan:#ff8c7a;--cd-visor:#3a1017}
+.cd.guardia .cd-manga{fill:#eef2f7}.cd.guardia .cd-rot{fill:#ffb3a7}.cd.guardia .cd-nxl{fill:#e07a6c}.cd.guardia .cd-nxb{fill:#ffb3a7}
+.cd-busca{fill:#1a1f2b;stroke:#3a4458;stroke-width:1.2}.cd-buscap{fill:#0a0d14}.cd-buscat{fill:#8fa6c6;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.08em}
+.cd-buscav{fill:#ffb3a7;font:800 11px ui-monospace,Menlo,monospace}.cd-led{fill:#ff3b3b;animation:cd-led 1.6s ease-in-out infinite}
+@keyframes cd-led{0%,100%{opacity:.25}50%{opacity:1}}@media (prefers-reduced-motion:reduce){.cd-led{animation:none;opacity:.9}}
 .cd-mano{fill:#e3b08e;stroke:#b07a52;stroke-width:1.1}.cd-manol{fill:none;stroke:#b07a52;stroke-width:.9}.cd-manga{fill:#2f5fb3}
 .cd-manillar{fill:none;stroke:#7d8ea8;stroke-width:11;stroke-linecap:round;paint-order:stroke;filter:drop-shadow(0 0 1px #05080e)}.cd-puno{fill:#0d1726;stroke:#7d8ea8;stroke-width:1.2}.cd-timbre{fill:#c9d4e4;stroke:#8fa6c6;stroke-width:1.2}.cd-timbrec{fill:#8fa6c6}
 .cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
@@ -203,6 +209,8 @@
     <text data-r="nxl" class="cd-nxl" x="294" y="326"></text><text data-r="nxb" class="cd-nxb" x="294" y="356"></text><text data-r="nxa" class="cd-nxa" x="294" y="381"></text></g>
   <g data-o="parahoy"><rect class="cd-tkb" x="452" y="404" width="124" height="34" rx="8"/><rect class="cd-tkp" x="462" y="398" width="104" height="22" rx="2"/>
     <text data-r="tk" class="cd-tkt" x="514" y="413.5"></text><circle cx="466" cy="430" r="2.4" fill="#38e1ff"/></g>
+  <g data-r="busca" style="display:none"><rect class="cd-busca" x="300" y="402" width="148" height="32" rx="6"/><rect class="cd-buscap" x="308" y="408" width="116" height="20" rx="3"/>
+    <text class="cd-buscat" x="313" y="416">GUARDIA</text><text data-r="buscav" class="cd-buscav" x="313" y="426"></text><circle class="cd-led" cx="436" cy="418" r="4"/></g>
   <g data-r="nota" data-o="nota" style="display:none"><path class="cd-note" d="M300 400 L440 398 L442 434 L302 437 Z"/><text data-r="notat" class="cd-notet" x="310" y="421"></text></g>
   <g data-r="volante"><circle class="cd-wheel" cx="150" cy="532" r="118"/><path class="cd-spoke" d="M50 470 Q150 444 250 470 L240 488 Q150 466 60 488Z"/><circle class="cd-horn" cx="150" cy="520" r="44"/>
     <g transform="translate(96 418)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manol" d="M-11 -3 Q-6 -7 -1 -3 M-8 3 Q-3 -1 2 3"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
@@ -608,6 +616,12 @@
       R_.garage.innerHTML = g;
       /* de guardia, la cabina en penumbra */
       R_.dim.setAttribute("opacity", st.guardia && L.d < 0.5 ? 0.32 : 0);
+      /* la cabina de guardia: clase en la raíz (bata, panel rojo), el busca con las horas hechas y las que
+         quedan, y el parasol dice GUARDIA en vez de la rotación */
+      el.classList.toggle("guardia", !!st.guardia);
+      R_.busca.style.display = st.guardia ? "" : "none";
+      if (st.guardia) R_.buscav.textContent = Math.floor(t - st.guardia.a) + " h · quedan " + Math.ceil(st.guardia.b - t) + " h";
+      R_.rot.textContent = st.guardia ? "☾ GUARDIA · sales " + hhmm(st.guardia.b) : (D.esc && D.esc.rot ? D.esc.rot : "");
       /* a casa en bici: el manillar en vez del volante */
       const bici = ((D.esc && D.esc.bici) || []).some((v) => t >= v[0] && t < v[1]);
       R_.volante.style.display = bici ? "none" : ""; R_.bici.style.display = bici ? "" : "none";
@@ -683,7 +697,6 @@
         }, 30000);
       }
       indicadores();
-      R_.rot.textContent = D.esc && D.esc.rot ? D.esc.rot : "";
       /* para el lector de pantalla y el teclado: las paradas como botones */
       R_.sr.innerHTML = (D.dia || []).filter((e) => e.b > e.a).sort((a, b) => a.a - b.a).map((e) => '<button type="button" data-i="' + e.i + '">' + hhmm(e.a) + " " + esc(cap(e.t)) + (e.h ? ", hecha" : e.m ? ", sin hacer" : "") + "</button>").join("");
       draw(0);

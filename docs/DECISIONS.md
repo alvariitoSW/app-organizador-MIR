@@ -642,3 +642,16 @@ placa (medio mundo con coordenadas colgando de ella).
 
 **Supuestos:** las esquinas de atrás de la placa se salen del marco a propósito, como una maqueta que sigue
 fuera de la foto.
+
+## 2026-10-14 · Tanda D · La cabina cambia con la guardia
+
+**Elegido:** dentro de la guardia la raíz del conductor lleva la clase `guardia`: las mangas pasan a bata blanca,
+el panel y la pantalla de la próxima parada se tiñen de rojo (los coches de guardia de noche), el parasol dice
+«☾ GUARDIA · sales 08:00» en vez de la rotación, y en el salpicadero aparece el busca con un LED que late y las
+horas hechas y las que quedan («5 h · quedan 12 h»). La penumbra de noche de antes se queda. Prueba 291 (banco
+del módulo en cadena con Hoy; sin la clase cae solo ella).
+
+**Descartado:** cambiar el paisaje (el hospital ya es el ambiente de la guardia desde la tanda del paisaje) y un
+contador de minutos en el busca (no cabe y no aporta: la carretera ya enseña las señales de salida).
+
+**Supuestos:** la guardia es el turno `k:'guard'`; una guardia de día (sin noche) también enciende la cabina.
