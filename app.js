@@ -1744,6 +1744,7 @@ function viajeCfg(){
   if(+o.antes>=0&&+o.antes<=30)d.antes=Math.round(+o.antes);
   if(o.on===false)d.on=false;
   d.taxi=o.taxi!==false;   /* de serie se da por hecho el taxi, hasta que lo cambies en el hábito o en Ajustes */
+  d.taxiEur=+o.taxiEur>=0&&+o.taxiEur<=100?Math.round(+o.taxiEur*100)/100:10;   /* lo que cuesta un taxi al hospital: con eso el taxi es un gasto en Dinero */
   return d;}
 function salirDeCasaTxt(){
   /* «salir de casa 7:30 · bus 7:35», que es exactamente lo que pidió y nada más */
@@ -5515,6 +5516,11 @@ function mananaMes(key){
     if(s==null){if(viajeCfg().taxi&&k<key&&mananaDiaDeBus(k)){out.n++;out.taxi++;}continue;}
     out.n++;if(s>P.ultimo+1e-6)out.taxi++;}
   return out;}
+function taxisMes(mk){
+  /* los taxis de un mes y lo que cuestan: el hábito que se quiere bajar, en euros, para Dinero */
+  const t=ahoYm(mk),hoy=iso(new Date());if(!t)return {n:0,eur:0};
+  const fin=iso(new Date(t.y,t.m+1,0,12)),key=fin<hoy?fin:hoy;if(key<ahoMk(t.y,t.m)+'-01')return {n:0,eur:0};
+  const n=mananaMes(key).taxi;return {n:n,eur:Math.round(n*viajeCfg().taxiEur*100)/100};}
 function mananaHTML(key,esHoy){
   const m=mananaDe(key);if(!m)return '';
   const ahora=new Date(),h=ahora.getHours()+ahora.getMinutes()/60;
@@ -5550,7 +5556,7 @@ function mananaHTML(key,esHoy){
     if(deSerie&&q>0)linea+='<br><small>De serie cuentas como taxi: si llegas al bus, apunta «he salido».</small>';
     /* pasado el último bus, lo que queda por apuntar es que fuiste en bus a tiempo (de serie ya cuenta taxi) */
     boton=deSerie&&h>m.ultimo?enBus:'<button class="btn '+(deSerie?'s':'p')+'" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>';}
-  const sem=mananaSemana(key),mes=mananaMes(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':'')+(mes.taxi?' · este mes: '+mes.taxi+(mes.taxi===1?' taxi':' taxis'):''):'';
+  const sem=mananaSemana(key),mes=mananaMes(key),semTxt=sem.n?'esta semana: '+sem.aTiempo+' de '+sem.n+' a tiempo'+(sem.taxi?' · '+sem.taxi+' taxi':'')+(mes.taxi?' · este mes: '+mes.taxi+(mes.taxi===1?' taxi':' taxis')+(viajeCfg().taxiEur?' (≈ '+fmtMil(mes.taxi*viajeCfg().taxiEur)+' €)':''):''):'';
   const ahoraPct=esHoy&&m.salio==null&&h>=h0&&h<=h1?'<i class="mnow" style="left:'+pct(h)+'%"></i>':'';
   return '<div class="manana" data-key="'+esc(key)+'"><div class="mnbar">'+tramo+marcas+ahoraPct+'</div>'+pasos+
     '<div class="mnlin"><span>'+linea+'</span>'+boton+'</div>'+(semTxt?'<p class="mini">'+esc(semTxt)+'</p>':'')+'</div>';}
@@ -19302,12 +19308,13 @@ function renderCfg(){
           '<label class="fld">hora del bus<input type="time" value="'+esc(vj.bus||'')+'" data-a="viaje-f" data-f="bus"></label>'+
           '<label class="fld">llegar a la parada (min antes)<input type="number" min="0" max="30" value="'+vj.antes+'" data-a="viaje-f" data-f="antes"></label>'+
           '<label class="fld">tardas en llegar (min)<input type="number" min="0" max="180" step="5" value="'+vj.min+'" data-a="viaje-f" data-f="min"></label>'+
+          '<label class="fld">un taxi al hospital (€)<input type="number" min="0" max="100" step="0.5" value="'+vj.taxiEur+'" data-a="viaje-f" data-f="eur"></label>'+
         '</div>'+
         '<div class="row" style="margin-top:10px">'+
           '<button class="btn s '+(vj.on?'g':'')+'" data-a="viaje-on">'+(vj.on?'✓':'○')+' tenerlo en cuenta</button>'+
           '<button class="btn s '+(vj.taxi?'g':'')+'" data-a="viaje-taxi">'+(vj.taxi?'✓':'○')+' 🚕 de serie voy en taxi</button>'+
         '</div>'+
-        '<p class="mini" style="margin:8px 0 0">Con «de serie voy en taxi», cada día de jornada cuenta como taxi salvo que apuntes en Hoy que saliste a tiempo. Quítalo cuando el bus sea lo normal.</p>'+
+        '<p class="mini" style="margin:8px 0 0">Con «de serie voy en taxi», cada día de jornada cuenta como taxi salvo que apuntes en Hoy que saliste a tiempo. Quítalo cuando el bus sea lo normal. Cada taxi cuenta como gasto en Dinero a '+esc(eur(vj.taxiEur))+'.</p>'+
         (b!=null?('<p class="mini" style="margin:10px 0 0">Los días de jornada saldrás de casa a las <b>'+
           hm(b-vj.antes)+'</b> para el bus de las <b>'+esc(fmtTimeOut(vj.bus))+'</b>, y estarás de vuelta '+
           vj.min+' min después de salir del trabajo.</p>')
@@ -20825,7 +20832,15 @@ function dinHoyHTML(){
   const semana='<div class="card"><div class="row"><span class="cap">ESTA SEMANA</span><span class="sp"></span><button class="dlink" data-a="dinero-vista" data-v="recibos">Recibos fijos ›</button></div>'+
     (sem.length?sem.map(function(r){return '<div class="drec"><span>'+esc(dinCatIco(r.g.cat))+' '+esc(r.g.nombre)+'</span><span class="mini'+(dn(r.f)==='mañana'||dn(r.f)==='hoy'?' warn':'')+'">'+esc(dn(r.f))+' · <b>'+esc(eur(r.v))+'</b></span></div>';}).join(''):
       '<p class="mini" style="margin:4px 0 0">'+(gastosFijos().length?'Ningún recibo esta semana.':'Apunta tus recibos fijos (alquiler, luz, móvil…) y te aviso antes de que salgan.')+'</p>')+'</div>';
-  return '<div class="grid dinv2 din6 din7 din8 mt">'+din8Tabs('')+hero+(t?'<div class="card asist dasis">'+asistTjHTML(t)+'</div>':'')+semana+'</div>';}
+  return '<div class="grid dinv2 din6 din7 din8 mt">'+din8Tabs('')+hero+(t?'<div class="card asist dasis">'+asistTjHTML(t)+'</div>':'')+semana+dinTaxisHTML(mkHoy)+'</div>';}
+function dinTaxisHTML(mk){
+  /* el taxi al hospital es un hábito que se quiere bajar, y aquí es lo que cuesta: tantos este mes, tantos euros,
+     frente al mes pasado. Sin viaje con bus apuntado no hay nada que contar */
+  if(!mananaPlan())return '';
+  const T=taxisMes(mk),A=taxisMes(mkSuma(mk,-1)),p=viajeCfg().taxiEur;
+  return '<div class="card dtaxi"><div class="row"><span class="cap">🚕 TAXIS AL HOSPITAL</span><span class="sp"></span><button class="dlink" data-a="ir-viaje">'+esc(eur(p))+' el viaje ›</button></div>'+
+    '<div class="row" style="align-items:flex-end;gap:10px;margin-top:4px"><div class="dbig'+(T.n?' ex':'')+'">'+T.n+' <small>este mes</small></div><span class="mini">≈ <b style="color:var(--ink)">'+fmtMil(T.eur)+' €</b>'+(A.n||A.eur?' · '+esc(dinMesNom(mkSuma(mk,-1)))+': '+A.n+' ('+fmtMil(A.eur)+' €)':'')+'</span></div>'+
+    '<p class="mini" style="margin:6px 0 0">'+(viajeCfg().taxi?'De serie cada jornada cuenta como taxi: en Hoy, «fui en bus» lo quita.':'Cuenta solo los días en que apuntas en Hoy que saliste después del último bus.')+'</p></div>';}
 function dinBolsillosHTML(){
   /* cada bolsillo con lo que tiene, lo que le falta y cuándo llega; el colchón, en meses de gastos */
   const bs=bolsillos(),P=puroHucha(),T=mesTipo();
@@ -20910,6 +20925,7 @@ function dinMes8HTML(){
   const nx=mkSuma(mkHoy,1),finH=(ahorroS().real||[]).filter(function(x){return x.mes===mkHoy;})[0];
   const este='<div class="card"><div class="cap">ESTE MES, '+esc(dinMesNom(mkHoy).toUpperCase())+'</div>'+
     '<p class="mini" style="margin:4px 0 8px">'+(finH?'Captura de Fintonic del '+esc(fechaCorta(finH.fecha))+'. ':'')+'El 1 de '+esc(dinMesNom(nx))+' te pido la de Fintonic. Sin ella, lo saco del banco o de tu cifra.</p>'+
+    (mananaPlan()&&taxisMes(mkHoy).n?fila('🚕 Taxis al hospital, '+taxisMes(mkHoy).n,'≈ '+fmtMil(taxisMes(mkHoy).eur)+' €'):'')+
     '<div class="d5two"><label class="btn">📊 Subir Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label><button class="btn" data-a="dinero-vista" data-v="hoja">📒 Excel del año</button></div></div>';
   return '<div class="grid dinv2 din6 din7 din8 mt">'+din8Tabs('mes')+dinCifraHTML()+cerrado+barras+este+dinCifrasHechasHTML()+'</div>';}
 function dinHojaHTML(){
@@ -26360,6 +26376,7 @@ document.addEventListener('change',e=>{
       if(f==='bus')store.rotation.viaje.bus=/^\d{1,2}:\d{2}$/.test(vv)?vv:'';
       else if(f==='antes')store.rotation.viaje.antes=Math.max(0,Math.min(30,Math.round(+vv||0)));
       else if(f==='min')store.rotation.viaje.min=Math.max(0,Math.min(180,Math.round(+vv||0)));
+      else if(f==='eur')store.rotation.viaje.taxiEur=Math.max(0,Math.min(100,Math.round((+vv||0)*100)/100));
       save();render();break;}
     /* los tres de abajo son <input>/<select>: puestos en act() no se disparan nunca */
     case 'dia-esp-kcal':flash(setDiaEspKcal(diaComer(),el.value));render();break;
@@ -26805,7 +26822,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

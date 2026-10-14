@@ -337,6 +337,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     drawerClosedState.ariaHidden === 'true' && drawerClosedState.focusEnBoton,
     JSON.stringify({ drawerOpenState, drawerClosedState }));
 
+  const fmtMil = (n) => { const v = Math.round(+n || 0); return (v < 0 ? '−' : '') + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
   // 1) el ciclo de servicios no vuelve a pintar "NaN" (bug del "+ +" en serviciosCard)
   await gotoTab('month');
   await page.waitForTimeout(200);
@@ -12322,6 +12323,39 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.bus.salio === '07:31' && r.bus.hab === '' && r.bus.e745 === 'bus' && r.bus.sem === r.sem.taxi - 1 && r.bus.deshacer, JSON.stringify(r.bus));
     check('«de serie voy en taxi» en Ajustes lo quita: sin hora apuntada ya no cuenta taxi en el hábito, la escena, la semana ni el mes',
       r.b.deSerie === false && !r.b.marcado && r.b.hab === '' && r.b.e745 === 'bus' && r.b.taxi === false && r.b.sem === 0 && r.b.mes === 0, JSON.stringify(r.b));
+  }
+  // 290) EL TAXI ES UN GASTO, EN CADENA: con el viaje puesto (taxi de serie, 8 € el viaje) y dos mañanas de este
+  // mes apuntadas con taxi, Dinero → Hoy enseña la tarjeta «Taxis al hospital» con la cuenta del mes y los euros
+  // (n × 8), y Dinero → Mes la línea; al cambiar el precio en Ajustes → Ir y volver (12 €, campo de cambio) la
+  // cuenta cambia y la tira de la mañana lo dice entre paréntesis. Fija: el taxi era un hábito sin precio.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), mk = hoy.slice(0, 7);
+      P.__t290 = { viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), tab: P.ui.tab };
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: true, taxiEur: 8 };
+      const k1 = mk + '-01', k2 = mk + '-02'; P.store.manana = {}; P.store.manana[k1] = { salio: '07:40' }; if (k2 <= hoy) P.store.manana[k2] = { salio: '07:41' };
+      P.save(); P.ui.hoyVista = ''; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.render();
+      const T = P.taxisMes(mk); return { mk, n: T.n, eur: T.eur, precio: P.viajeCfg().taxiEur }; });
+    await page.click('[data-a="drawer-toggle"]');
+    await page.waitForTimeout(200);
+    await page.click('[data-a="drawer-nav"][data-t="dinero"]');
+    await page.waitForTimeout(300);
+    r.hoy = await page.evaluate(() => { const e = document.querySelector('#main .dtaxi'); return e ? e.textContent.replace(/\s+/g, ' ') : ''; });
+    await page.evaluate(() => { const P = window.PG; P.ui.dinTab = 'mes'; P.render(); });
+    r.mes = await page.evaluate(() => (document.querySelector('#main') || {}).textContent.replace(/\s+/g, ' ').indexOf('Taxis al hospital') >= 0);
+    // Ajustes → Ir y volver: el precio es un campo de cambio (Tab para que dispare)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'cfg'; P.ui.cfgVista = 'viaje'; P.render(); });
+    await page.fill('#main input[data-a="viaje-f"][data-f="eur"]', '12');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(300);
+    r.b = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), mk = hoy.slice(0, 7), T = P.taxisMes(mk);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = mk + '-01'; P.render();
+      const e = document.querySelector('#main .manana');
+      const out = { precio: P.viajeCfg().taxiEur, n: T.n, eur: T.eur, tn: P.mananaMes(mk + '-01').taxi, tira: e ? e.textContent.replace(/\s+/g, ' ') : '' };   /* la tira cuenta hasta el día que miras */
+      const t = P.__t290; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.dinTab = ''; P.ui.tab = t.tab; delete P.__t290; P.save(); P.render(); return out; });
+    check('Dinero → Hoy enseña los taxis del mes y lo que cuestan (n × 8 €), y Dinero → Mes la línea',
+      r.n >= 1 && r.eur === r.n * 8 && r.precio === 8 && /TAXIS AL HOSPITAL/.test(r.hoy) && r.hoy.indexOf(r.n + ' este mes') >= 0 && r.hoy.indexOf(fmtMil(r.eur) + ' €') >= 0 && r.mes, JSON.stringify(r));
+    check('el precio del taxi se cambia en Ajustes → Ir y volver (12 €) y la tira de la mañana lo dice',
+      r.b.precio === 12 && r.b.eur === r.b.n * 12 && r.b.n === r.n && r.b.tn >= 1 && new RegExp('este mes: ' + r.b.tn + ' taxis? \\(≈ ' + fmtMil(r.b.tn * 12) + ' €\\)').test(r.b.tira), JSON.stringify(r.b));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

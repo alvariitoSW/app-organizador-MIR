@@ -614,3 +614,18 @@ cuando el taxi es lo normal (sin el botón no hay forma de que un día cuente co
 **Supuestos:** «fui en bus» apunta la hora del plan, no una real: el dato vale para el hábito y la cuenta, no para
 medir cuánto tardaste. La prueba 284 acepta la comida de las 14:00 dentro del hospital (según el menú del día de
 la semana).
+
+## 2026-10-14 · Tanda B · El taxi es un gasto
+
+**Elegido:**
+- **Un precio por viaje** en Ajustes → Ir y volver («un taxi al hospital (€)», `viajeCfg().taxiEur`, de serie
+  10 €). `taxisMes(mes)` cuenta los taxis del mes (los apuntados y los de serie) y los pasa a euros.
+- **Dinero → Hoy:** tarjeta «🚕 Taxis al hospital» con los del mes, lo que cuestan y el mes anterior, con el
+  precio como enlace a Ajustes. **Dinero → Mes:** una línea en «Este mes». **La tira de la mañana:** «este mes:
+  7 taxis (≈ 70 €)». Prueba 290 (en cadena: conduce el menú lateral → Dinero, Dinero → Mes y el campo del precio
+  en Ajustes; sin la tarjeta cae solo ella).
+
+**Descartado:** restar los taxis de «te queda para gastar» (el saldo del banco ya los lleva descontados: sería
+contarlos dos veces) y meterlos como categoría de Fintonic (eso sale de la captura, no de la app).
+
+**Supuestos:** el precio es uno fijo por viaje; si un día cuesta otra cosa no hay dónde apuntarlo.

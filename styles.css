@@ -3760,3 +3760,5 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .manana .mnp i{font-style:normal;font-size:15px}.manana .mnp b{font-size:10.5px;color:var(--ink)}.manana .mnp small{font-size:9px}
 .manana .mnp.hecho{opacity:.45}.manana .mnp.hecho b{text-decoration:line-through}
 .manana .mnp.ahora{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 16%,var(--card));box-shadow:0 0 0 1px var(--brand) inset}.manana .mnp.ahora small{color:var(--ink)}
+/* Dinero → Hoy: los taxis del mes como gasto (cifra más corta que la de «te queda») */
+.dtaxi .dbig{font-size:32px;margin:0}
