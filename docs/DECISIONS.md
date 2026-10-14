@@ -744,3 +744,32 @@ lados (la ventana enseña directamente la vista lateral: se lee mejor en un móv
 
 **Supuestos:** la palanca dice «ayer» y «mañana» aunque lleve al día anterior o siguiente al que miras; en el
 quiosco caben 3 cosas y en el poste 4 hábitos (el resto se cuenta como «+N»).
+
+## Tanda F · el conductor no se queda pillado, la casa en primera persona y la cámara que gira (2026-10-14)
+
+**Elegido:**
+- **La cama pasada la medianoche es la noche de hoy:** con «A la cama» a las 00:30 (24:30), `hoyBusDatos`
+  descartaba ese punto por caer después de las 24:00 y el día se quedaba sin noche: el autobús se paraba en el
+  último evento (el Lloretazo) hasta la mañana. Ahora la cama de hasta 12 h después de medianoche cuenta como la
+  noche de hoy y `diaEscenas` la usa como hora de acostarse.
+- **En casa, en primera persona:** cuando no hay nada en marcha (ni turno, ni evento; comer sí) y las escenas
+  del día dicen que estás en casa, el conductor deja la cabina: desaparecen marco, volante y retrovisores y la
+  ventana grande enseña la habitación de esa escena vista desde tus ojos — la cama (con el despertador y las
+  Z si duermes, el móvil en las manos antes de dormir), la ducha, el café, vestirte, el escritorio con el flexo,
+  el sofá con el mando y la mesa con el plato (desayuno con la taza). El cartel dice «EN CASA» y lo que haces
+  hasta qué hora; dormido, «Te levantas a las …». El salpicadero (radio, palanca, «Para hoy») sigue.
+- **Las comidas fuera de un turno se ven en casa** (escena «mesa»; en la estación, la cocina), y un día libre
+  empieza con el café al levantarte: la rutina de estudio de las 10 ya no pisa la cama si te levantas a las 10:30.
+- **La cámara gira al mirar a los lados:** el frente y la vista lateral se desplazan juntos en 0,55 s (la
+  ciudad entra por la izquierda, el campo por la derecha, y de un lado al otro la cámara cruza por el frente);
+  «volver al frente» la trae de vuelta. Con «reducir movimiento» el cambio es directo.
+- **Pruebas:** 295 (en cadena: día libre con cama a las 00:30 → noche a las 24:30 y escenas de casa → conductor
+  a las 21:00 en la carretera, a las 22:30 EN CASA y a las 3:00 durmiendo) y 296 (conduce Hoy: ◀ eventos →
+  entreno ▶ → volver al frente, midiendo la posición de la cámara). Revirtiendo cada arreglo cae solo su
+  comprobación. 294 adaptada (toca las etiquetas, no los retrovisores, que en casa no están; espera al giro).
+
+**Descartado:** un giro 3D de la cabina (en el móvil se lee peor que un barrido lateral) y enseñar la casa también
+de guardia (la guardia es trabajo aunque duermas allí).
+
+**Supuestos:** si una comida cae fuera del turno, la comes en casa; mirar a los lados desde casa sigue enseñando
+la ciudad y el campo (los eventos y el entreno), no otras habitaciones.

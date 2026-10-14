@@ -5387,7 +5387,10 @@ function hoyBusDatos(key,inf,esHoy){
   /* anoche: de tu hora de cama de ayer a la de levantarte, si no estabas de guardia */
   if(!deAyer.some(function(e){return e.k==='guard';})&&wake!=null)noches.push({a:camaAy?r3(Math.min(0,camaAy.m2/60-24)):0,b:r3(wake),t:'noche'});
   ag.forEach(function(x){
-    if(!(x.m2<1440)){if(x.tipo==='gym'&&x.rt&&!x.hecha)pendiente.push({i:x.i,txt:busNombre({txt:x.rt.nombre||'Entreno',tipo:'gym'})});return;}
+    /* la cama pasada la medianoche (00:30 → 24:30) también es la noche de hoy: sin ella no había cochera, el
+       autobús se quedaba pillado en la última parada y en casa no salía nadie */
+    const camaTarde=x.tipo==='sleep'&&/cama|dorm/i.test(x.txt||'')&&x.m2>=1440&&x.m2<1440+12*60;
+    if(!(x.m2<1440)&&!camaTarde){if(x.tipo==='gym'&&x.rt&&!x.hecha)pendiente.push({i:x.i,txt:busNombre({txt:x.rt.nombre||'Entreno',tipo:'gym'})});return;}
     let a=x.m2/60;const f=busFin(x);let b=f!=null?f/60:a+0.5;
     if(x.tipo==='sleep'){
       if(/cama|dorm/i.test(x.txt||'')){if(!dia.some(function(e){return e.k==='guard'&&a>=e.a&&a<e.b;})&&!ag.some(function(y){return y.tipo==='guard'&&y.m2/60<=a&&(busFin(y)||0)/60>a;}))
@@ -5454,7 +5457,7 @@ function diaEscenas(key){
   noches.forEach(function(n){add(n.a,n.b,n.t==='siesta'?'siesta':'cama');});
   const wake=(noches.filter(function(n){return n.t==='noche'&&n.a<=0;})[0]||{}).b,sl=sleepOf(key,inf);
   const nocheA=(noches.filter(function(n){return n.t==='noche'&&n.a>12;})[0]||{}).a;   /* la cama de esta noche manda sobre la hora del ritmo */
-  const W=wake!=null?wake:(sl.wake?mins(sl.wake)/60:7),BED=nocheA!=null?nocheA:(sl.bed?mins(sl.bed)/60:23);
+  const bedR=sl.bed?mins(sl.bed)/60:null,W=wake!=null?wake:(sl.wake?mins(sl.wake)/60:7),BED=nocheA!=null?nocheA:(bedR!=null?(bedR<12?bedR+24:bedR):23);   /* 00:30 es esta noche (24:30), no la de esta madrugada */
   /* 2) la mañana de un turno: ducha (si no es de libre), café, vestirse, puerta, parada, bus o taxi, hospital */
   const T0=bloques.filter(function(T){return !T.ayer&&T.a>W;})[0];
   if(T0){const A=T0.a;let busT=busH!=null&&busH+min<=A+1e-6&&A-(busH+min)<=1?busH:A-min-0.1;let salir=busT-antes;
@@ -5470,6 +5473,9 @@ function diaEscenas(key){
     add(salir,busT,'parada',{ultimo:ultimo,taxi:taxi,salio:salio});
     add(busT,Math.min(A,busT+Math.max(min,0.15)),taxi?'taxi':'bus',{taxi:taxi});
     if(A-(busT+min)>0.02)add(busT+min,A,'camino');}
+  /* 2b) la mañana sin turno: al levantarte, el café en casa (si el desayuno no cae justo después) */
+  let mananaFin=W;
+  if(!T0&&W<14&&!dia.some(function(x){return x.k==='meal'&&x.a>=W&&x.a<W+1;})){add(W,W+0.25,'cafe');mananaFin=W+0.25;}
   /* 3) después del turno: en bici a casa (y la ducha del saliente al llegar) */
   bloques.forEach(function(T){if(T.b>24)return;   /* acaba mañana: es la mañana del saliente, que tiene sus escenas */
     const sig=dia.filter(function(x){return !TURNO(x)&&x.a>=T.b-1e-6;})[0];
@@ -5481,7 +5487,8 @@ function diaEscenas(key){
   /* 5) la rutina del tipo de día: estudio, paseo, pantallas fuera */
   let pantallas=null;
   try{rutinaDia(key).forEach(function(a){const h=mins(a.h);if(h==null)return;const hh=h/60,d=/(\d+)\s*h/.exec(a.sub||'')?+RegExp.$1:(/(\d+)\s*min/.exec(a.sub||'')?+RegExp.$1/60:0.5);
-    if(/estud/i.test(a.txt))add(hh,hh+d,'escritorio',{rutina:1});else if(/pase|andar/i.test(a.txt))add(hh,hh+(d||0.75),'paseo',{rutina:1});
+    const h0=hh<mananaFin&&hh+Math.max(d,0.75)>W-1?mananaFin:hh;   /* la rutina de las 10 si te levantas a las 10:30: empieza después del café */
+    if(/estud/i.test(a.txt))add(h0,hh+d,'escritorio',{rutina:1});else if(/pase|andar/i.test(a.txt))add(h0,hh+(d||0.75),'paseo',{rutina:1});
     else if(/pantall/i.test(a.txt))pantallas=hh;});}catch(e){}
   const huecosDe=function(){seg.sort(function(x,y){return x.a-y.a||y.b-x.b;});const H=[];let c=0;seg.forEach(function(x){if(x.a>c+1e-6)H.push([c,x.a]);c=Math.max(c,x.b);});if(c<24)H.push([c,24]);return H;};
   /* 6) la ducha de un día libre, por la tarde-noche: en el último hueco en casa antes de la cama */
@@ -5599,7 +5606,8 @@ function conductorEscenas(key){
   /* fumar es cosa tuya si lo llevas como hábito o has apuntado 4:20 en las dos últimas semanas; si no, el conductor no fuma en el Lloretazo */
   let fuma=!!hab.fumar;if(!fuma)try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
   return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',fumar:fuma,
-    casa:D.seg.filter(function(x){return CASA[x.e];}).map(function(x){return [x.a,x.b,x.e];})};}
+    /* las comidas que no caen dentro de un turno se hacen en casa: también se ven desde dentro */
+    casa:D.seg.filter(function(x){return CASA[x.e]||(x.e==='comida'&&!x.dentro);}).map(function(x){return x.e==='comida'?[x.a,x.b,'mesa',x.t||'']:[x.a,x.b,x.e];})};}
 /* LO QUE SE VE AL MIRAR A LOS LADOS Y EN LA RADIO (la cabina con mandos): a la izquierda la ciudad, con los
    eventos del día en sus fachadas, las vallas de lo importante que viene y el quiosco de «Para hoy»; a la
    derecha el campo, con el entreno, la comida y el poste de los hábitos; la radio es el sueño y el check-in */

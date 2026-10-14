@@ -12439,19 +12439,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const toca = async (sel, ms) => { const e = await page.$(sel); if (!e) return false; await e.click().catch(() => {}); await page.waitForTimeout(ms || 250); return true; };
     const lado = () => page.evaluate(() => { const g = document.querySelector('#main .cd [data-r="lado"]'); return g ? g.textContent.replace(/\s+/g, ' ') : ''; });
     // (a) la ciudad
-    await toca('#main .cd g[data-o="mirai"]', 250);
+    await toca('#main .cd g[data-o="mirai"]:not(.cd-espejo)', 250);
     r.a = { txt: await lado(), ev: await page.evaluate(() => !!document.querySelector('#main .cd [data-r="lado"] [data-o="ev"]')) };
     const nota = await page.evaluate(() => { const ph = ((window.PG.conductor().d.cab || {}).izq || {}).ph || []; return ph.findIndex((x) => x.t === 'Llamar al tutor'); });
     if (nota >= 0) await toca('#main .cd [data-r="lado"] [data-o="ph"][data-n="' + nota + '"]', 300);
     r.a.hecha = await page.evaluate(() => !!(window.PG.store.notas.filter((x) => x.id === 'nt294')[0] || {}).hecha);
     r.a.sigue = /LA CIUDAD/.test(await lado());
     // (b) el campo
-    await toca('#main .cd g[data-o="mirad"]', 250);
+    await toca('#main .cd g[data-o="mirad"]:not(.cd-espejo)', 250);
     r.b = { txt: await lado() };
     const hb = await page.evaluate(() => (((window.PG.conductor().d.cab || {}).der || {}).habs || []).findIndex((x) => x.t === 'Estirar'));
     if (hb >= 0 && hb < 4) await toca('#main .cd [data-r="lado"] [data-o="hab"][data-n="' + hb + '"]', 300);
     r.b.marcado = await page.evaluate((k) => !!(window.PG.habitosS().registro[k] || {}).hb294, r.hoy);
-    await toca('#main .cd [data-r="lado"] [data-o="frente"]', 200);
+    await toca('#main .cd [data-r="lado"] [data-o="frente"]', 750);   /* la cámara tarda ~0,55 s en volver */
     r.b.frente = await lado();
     // (c) la radio
     await toca('#main .cd g[data-o="radio"]', 200);
@@ -12477,6 +12477,53 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la radio se abre, sus botones de emisora guardan «cómo amaneces» (6) y la cara el ánimo (4), sin cerrarse',
       r.c.abierta && r.c.kss === 6 && r.c.animo === 4 && r.c.sigue && r.c.on6, JSON.stringify(r.c));
     check('la palanca en D lleva al día siguiente y en N vuelve a hoy', r.d.manana === kM && r.d.modo === 'futuro' && r.d.hoy === '', JSON.stringify(r.d));
+  }
+  // 295) LA NOCHE PASADA LA MEDIANOCHE Y LA CASA EN PRIMERA PERSONA, EN CADENA: un día libre con «A la cama» a las
+  // 00:30 tiene su noche esta noche (24:30, no se pierde), sus escenas de casa (café al levantarte, la comida a la
+  // mesa, la cama a las 24:30) y, con esos datos, el conductor a las 22:30 (acabado el último evento) está EN CASA:
+  // sin cabina, con la habitación en vez de la carretera; durante el evento sigue en la carretera; dormido dice
+  // cuándo te levantas. Fija: tras el Lloretazo el autobús se quedaba pillado en la última parada porque la cama
+  // de las 00:30 se descartaba, y por la noche y por la mañana se veía la cabina en vez de la casa.
+  {
+    const r = await page.evaluate(() => { const P = window.PG, C = window.Conductor, d = new Date(); d.setDate(d.getDate() + 3); const k = P.iso(d);
+      const L = P.store.shifts.filter((x) => x.id === 'sh-l')[0] || P.store.shifts.filter((x) => /libre/i.test(x.name || ''))[0]; if (!L || !C || !C.crea) return null;
+      const ov = (P.store.rotation.shiftByDay || {})[k], rh = JSON.stringify((P.store.rhythm || {})[L.id] || null), mode = P.store.rotation.mode;
+      P.store.rotation.mode = 'date'; P.setDayOverride(k, L.id, ''); if (!P.store.rhythm) P.store.rhythm = {};
+      P.store.rhythm[L.id] = Object.assign({}, P.store.rhythm[L.id] || {}, { wake: '10:30', sleep: '00:30' });
+      const B = P.hoyBusDatos(k, P.dayInfo(k), false), E = P.conductorEscenas(k), casa = E.casa || [];
+      const out = { noche: (B.noches || []).filter((n) => n.t === 'noche' && n.a >= 24).map((n) => n.a), cama: casa.filter((x) => x[2] === 'cama' && x[0] >= 24).map((x) => x[0]),
+        cafe: casa.some((x) => x[2] === 'cafe' && x[0] < 11), mesa: casa.filter((x) => x[2] === 'mesa').map((x) => x[3]) };
+      /* el conductor con ese día: un evento de 20:00 a 22:10 y lo de casa */
+      const D = { dia: (B.dia || []).filter((x) => x.k !== 'plan').concat([{ a: 20, b: 22.17, t: 'Lloretazo', k: 'plan', i: 9, ll: 1 }]), noches: B.noches, pendiente: [], senales: [], ph: 0, modo: 'hoy', vivo: true,
+        sueno: null, comida: { kc: 0, obj: 2000, pr: 0, prObj: 100 }, sol: [7.6, 19.2], manana: 10.5, claro: false, esc: Object.assign({}, E, { casa: casa.filter((x) => !(x[0] < 22.17 && x[1] > 20)) }) };
+      const box = document.createElement('div'); box.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px'; document.body.appendChild(box);
+      const c = C.crea({}); box.appendChild(c.el); const cd = c.el, q = (s) => (cd.querySelector('[data-r="' + s + '"]') || {}).textContent || '';
+      const at = (h) => { D.ahora = h; c.actualiza(D); return { casa: cd.classList.contains('casa'), clip: cd.querySelector('[data-r="vent"]').getAttribute('clip-path'), nxl: q('nxl'), nxa: q('nxa'), volante: getComputedStyle(cd.querySelector('[data-r="volante"]')).display }; };
+      out.h21 = at(21); out.h2230 = at(22.5); out.h3 = at(3);
+      box.remove(); P.store.rotation.mode = mode; P.setDayOverride(k, ov ? ov.shift : null, ov ? ov.guard : ''); if (rh === 'null') delete P.store.rhythm[L.id]; else P.store.rhythm[L.id] = JSON.parse(rh); P.save();
+      return out; });
+    check('un día libre con la cama a las 00:30 tiene su noche esta noche (24:30) y sus escenas de casa: café al levantarte, la comida a la mesa y la cama a las 24:30',
+      !!r && r.noche.indexOf(24.5) >= 0 && r.cama.indexOf(24.5) >= 0 && r.cafe && r.mesa.length >= 1, JSON.stringify(r && { noche: r.noche, cama: r.cama, cafe: r.cafe, mesa: r.mesa }));
+    check('acabado el evento (22:30) el conductor está EN CASA, sin cabina ni carretera; durante el evento (21:00) sigue en la carretera; dormido dice cuándo te levantas',
+      !!r && !r.h21.casa && /cdwin/.test(r.h21.clip) && r.h2230.casa && /cdcasa/.test(r.h2230.clip) && r.h2230.nxl === 'EN CASA' && /^Ahora: /.test(r.h2230.nxa) && r.h2230.volante === 'none' &&
+      r.h3.casa && r.h3.nxl === 'EN CASA · DURMIENDO' && /Te levantas a las 10:30/.test(r.h3.nxa), JSON.stringify(r && { h21: r.h21, h2230: r.h2230, h3: r.h3 }));
+  }
+  // 296) LA CÁMARA GIRA AL MIRAR A LOS LADOS, EN CADENA (conduce Hoy): al tocar «◀ eventos» la ciudad entra desde la
+  // izquierda y el frente se va a la derecha con una transición (no salta), al tocar «entreno ▶» desde ahí la
+  // cámara cruza al otro lado, y «volver al frente» trae la carretera de vuelta y, acabado el giro, el lado queda
+  // vacío. Fija: mirar a un lado cambiaba la vista de golpe.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="frenteg"]'), null, { timeout: 8000 }).catch(() => {});
+    const tr = () => page.evaluate(() => { const cd = document.querySelector('#main .cd'), g = (n) => cd.querySelector('[data-r="' + n + '"]'), x = (e) => new DOMMatrix(getComputedStyle(e).transform === 'none' ? '' : getComputedStyle(e).transform).m41;
+      return { fx: Math.round(x(g('frenteg'))), lx: Math.round(x(g('lado'))), dur: getComputedStyle(g('frenteg')).transitionDuration, ftr: g('frenteg').style.transform, ltr: g('lado').style.transform, n: g('lado').childElementCount }; });
+    const r = { antes: await tr() };
+    await page.click('#main .cd g[data-o="mirai"]:not(.cd-espejo)'); await page.waitForTimeout(700); r.izq = await tr();
+    await page.click('#main .cd g[data-o="mirad"]:not(.cd-espejo)'); await page.waitForTimeout(700); r.der = await tr();
+    await page.click('#main .cd [data-r="lado"] [data-o="frente"]'); await page.waitForTimeout(80); r.vuelve = await tr(); await page.waitForTimeout(700); r.fin = await tr();
+    check('mirar a la izquierda mueve la cámara con transición (el frente se va a la derecha, la ciudad entra), a la derecha cruza al otro lado y «volver al frente» la trae de vuelta y vacía el lado',
+      /0\.55s/.test(r.antes.dur) && r.antes.n === 0 && r.izq.ftr === 'translateX(600px)' && r.izq.fx === 600 && r.izq.lx === 0 && r.izq.n > 0 && r.der.ftr === 'translateX(-600px)' && r.der.fx === -600 && r.der.lx === 0 &&
+      r.vuelve.n > 0 && r.vuelve.ltr === 'translateX(600px)' && r.fin.fx === 0 && r.fin.n === 0, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

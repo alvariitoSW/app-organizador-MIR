@@ -34,7 +34,7 @@
     const farol = $("farol"), farola = $("farola"), faro = $("faro"), focos = [...svg.querySelectorAll('[data-part="foco"]')];
     /* la casa por dentro: el conductor en una postura por escena, y lo que se enciende con él */
     const poses = [...svg.querySelectorAll("[data-pose]")], movil = $("movil"), lamparaM = $("lampara"), flexo = $("flexo"), tv = $("tv"), vapor = $("vapor"), taza = $("taza"), chaqueta = $("chaqueta"), manta = $("manta");
-    const POSE = { cama: "cama", movil: "cama", leer: "cama", siesta: "cama", ducha: "ducha", cafe: "cafe", vestir: "vestir", escritorio: "escritorio", salon: "salon", casa: "salon" };
+    const POSE = { cama: "cama", movil: "cama", leer: "cama", siesta: "cama", ducha: "ducha", cafe: "cafe", vestir: "vestir", escritorio: "escritorio", salon: "salon", casa: "salon", mesa: "cafe" };
     let poseSet = null;
     function enCasa(t) {
       const casa = (D.esc && D.esc.casa) || [], sg = casa.find((s) => t >= s[0] && t < s[1]), e = sg ? sg[2] : "", pose = POSE[e] || "";

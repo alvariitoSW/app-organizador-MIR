@@ -94,6 +94,9 @@
 .cd-ab circle{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-ab text{font-size:17px;text-anchor:middle}.cd-ab.on circle{fill:#3a2f0a;stroke:#ffd66b}
 .cd-dial{fill:#2a3448;stroke:#38e1ff;stroke-width:2}.cd-dialm{stroke:#38e1ff;stroke-width:3;stroke-linecap:round}.cd-rint{fill:#e9f2ff;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
 .cd-rx{fill:#1b2333;stroke:#ffd66b;stroke-width:2}.cd-rxt{fill:#ffd66b;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
+.cd.casa .cd-frame,.cd.casa .cd-seal,.cd.casa .cd-pillar,.cd.casa .cd-visor,.cd.casa [data-r="rot"],.cd.casa [data-o="atras"],.cd.casa .cd-espejo,.cd.casa [data-r="volante"]{display:none}
+.cd.casa{--cd-dash:#3b2a1f;--cd-dashe:#5c4330}
+.cd-pan{transition:transform .55s cubic-bezier(.45,.05,.25,1)}.cd-pan.sin{transition:none}@media (prefers-reduced-motion:reduce){.cd-pan{transition:none}}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}`;
@@ -201,14 +204,14 @@
 
   /* ---------- el dibujo fijo: marco, salpicadero, volante ---------- */
   const MARCO = `
-  <defs><clipPath id="cdwin__ID"><path d="M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/></clipPath>
+  <defs><clipPath id="cdwin__ID"><path d="M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/></clipPath><clipPath id="cdcasa__ID"><rect x="0" y="40" width="600" height="566"/></clipPath>
     <linearGradient id="cdsky__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="sky0" offset="0" stop-color="#5aa0e0"/><stop data-r="sky1" offset="1" stop-color="#bfe0ff"/></linearGradient>
     <linearGradient id="cdmar__ID" x1="0" y1="0" x2="0" y2="1"><stop data-r="mar0" offset="0" stop-color="#4c8fc4"/><stop data-r="mar1" offset="1" stop-color="#123a5e"/></linearGradient>
     <linearGradient id="cdrio__ID" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c8fc4"/><stop offset="1" stop-color="#1d5a8a"/></linearGradient>
     <linearGradient id="cdbeam__ID" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff3c4" stop-opacity=".42"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></linearGradient></defs>
-  <g clip-path="url(#cdwin__ID)">
+  <g data-r="vent" clip-path="url(#cdwin__ID)">
     <rect x="0" y="0" width="600" height="600" fill="url(#cdsky__ID)"/>
-    <g data-r="stars"></g><g data-r="scene"></g><g data-r="garage"></g><g data-r="lado"></g>
+    <g data-r="frenteg" class="cd-pan"><g data-r="stars"></g><g data-r="scene"></g><g data-r="garage"></g></g><g data-r="lado" class="cd-pan"></g>
     <g data-r="mirar" style="display:none" data-o="ahora"><rect class="cd-chip" x="214" y="520" width="172" height="28" rx="14"/><text data-r="mirart" class="cd-chipt" x="300" y="538.5"></text></g>
   </g>
   <path class="cd-frame" fill-rule="evenodd" d="M0 0H600V610H0Z M44 56 Q300 44 556 56 L574 560 Q300 580 26 560 Z"/>
@@ -251,6 +254,7 @@
     <g transform="translate(46 420)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
     <g transform="translate(254 420) scale(-1 1)"><path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>
     <text class="cd-bicit" x="150" y="396" text-anchor="middle">🚲 a casa en bici</text></g></g>
+  <g data-r="manosc" style="display:none;pointer-events:none"></g>
   <rect data-r="dim" class="cd-dimmer" x="0" y="604" width="600" height="296" opacity="0"/>
   <g data-r="radiob" style="display:none"><rect data-o="radio" x="0" y="580" width="600" height="320" fill="#000" opacity=".4"/>
     <rect class="cd-rpanel" x="26" y="608" width="548" height="284" rx="22"/><rect class="cd-rdisp" x="46" y="626" width="508" height="104" rx="10"/>
@@ -273,7 +277,23 @@
     const svg = el.querySelector("svg"), R_ = {};
     el.querySelectorAll("[data-r]").forEach((n) => { R_[n.getAttribute("data-r")] = n; });
     const still = matchMedia("(prefers-reduced-motion: reduce)");
-    let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false, lado = null, radio = false;
+    let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false, lado = null, radio = false, ladoVa = null, ladoT = 0;
+    /* girar la cabeza: la vista de frente se va hacia un lado y entra la del otro, como una cámara que gira */
+    const pon = (g, x, sin) => { g.classList.toggle("sin", !!sin); g.style.transform = x ? "translateX(" + x + "px)" : ""; };
+    function girar(nuevo) {
+      const antes = lado; if (antes === nuevo) return;
+      clearTimeout(ladoT); lado = nuevo; ladoVa = null;
+      const dir = (q) => (q === "izq" ? 1 : -1);
+      if (nuevo) {   /* entra la vista del lado nuevo desde ese lado; el frente (o el otro lado) se va al contrario */
+        if (!antes) pon(R_.frenteg, 0, true);
+        pon(R_.lado, -dir(nuevo) * 600, true); draw(0); void R_.lado.getBoundingClientRect();
+        pon(R_.lado, 0); pon(R_.frenteg, dir(nuevo) * 600);
+      } else {   /* vuelve el frente y el lado se va por donde vino */
+        ladoVa = antes; draw(0); void R_.lado.getBoundingClientRect();
+        pon(R_.lado, -dir(antes) * 600); pon(R_.frenteg, 0);
+        ladoT = setTimeout(() => { ladoVa = null; pon(R_.lado, 0, true); draw(0); }, still.matches ? 0 : 600);
+      }
+    }
 
     /* ---------- lo que se dibuja por el parabrisas ---------- */
     /* el Lloretazo: el conductor se baja, va hasta el borde del acantilado y se fuma un cigarro mirando
@@ -655,8 +675,12 @@
       if (!D) return false;
       const L = luz(t, D.sol || [7, 18.6]), c = camDe(R, t), st = estado(t);
       R_.sky0.setAttribute("stop-color", L.top); R_.sky1.setAttribute("stop-color", L.bot);
-      R_.stars.innerHTML = astro(t, D.sol || [7, 18.6], L) + (L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "");
-      R_.scene.innerHTML = escena(c.s, L, st);
+      const cs = casaEn(st);
+      el.classList.toggle("casa", !!cs);
+      R_.vent.setAttribute("clip-path", "url(#" + (cs ? "cdcasa" : "cdwin") + ID + ")");
+      R_.manosc.style.display = "none";
+      R_.stars.innerHTML = cs ? "" : astro(t, D.sol || [7, 18.6], L) + (L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "");
+      R_.scene.innerHTML = cs ? casaSVG(cs, L) : escena(c.s, L, st);
       /* la cochera: parada en una noche o siesta, con la persiana bajada; al salir sube y te alejas;
          al llegar a la siguiente, se funde */
       let g = "";
@@ -664,7 +688,7 @@
       if (e && e.dep && c.parado) g = cochera(0, t >= e.b - 0.02 ? 1 : 0, L.d);
       else if (e && e.dep && !c.parado) g = cochera(c.s - e.s, clamp(c.p / 0.3, 0, 1), L.d);
       else if (q && q.dep && !c.parado && c.p > 0.85) g = '<g style="opacity:' + clamp((c.p - 0.85) / 0.15, 0, 1).toFixed(2) + '">' + cochera(0, 1, L.d) + "</g>";
-      R_.garage.innerHTML = g;
+      R_.garage.innerHTML = cs ? "" : g;
       /* de guardia, la cabina en penumbra */
       R_.dim.setAttribute("opacity", st.guardia && L.d < 0.5 ? 0.32 : 0);
       /* la cabina de guardia: clase en la raíz (bata, panel rojo), el busca con las horas hechas y las que
@@ -681,9 +705,12 @@
       if (ah && !st.noche) { const f = clamp((t - ah.a) / Math.max(0.01, ah.b - ah.a), 0, 1);
         R_.arc.setAttribute("d", f > 0.005 ? "M222 684H" + (222 + 156 * f).toFixed(1) : ""); }
       else R_.arc.setAttribute("d", "");
+      if (cs) { R_.nxl.textContent = cs.e === "cama" && st.noche ? "EN CASA · DURMIENDO" : "EN CASA";
+        if (!(cs.e === "cama" && st.noche)) R_.nxa.textContent = "Ahora: " + (cs.e === "mesa" && cs.t ? cap(cs.t) : CASA_TXT[cs.e] || "en casa") + " · hasta " + hhmm(cs.b);
+        else R_.nxa.innerHTML = "Te levantas a las <tspan font-weight=\"800\">" + hhmm(st.noche.b) + "</tspan>"; }
       cabe(R_.nxl, 224); cabe(R_.nxa, 226); cabe(R_.nxb, 226);
       /* mirar a un lado: la ventana enseña la ciudad (izquierda) o el campo (derecha); la radio, encima del salpicadero */
-      R_.lado.innerHTML = lado ? ladoSVG(lado, st) : "";
+      R_.lado.innerHTML = lado || ladoVa ? ladoSVG(lado || ladoVa, st) : "";
       R_.mi.classList.toggle("on", lado === "izq"); R_.md.classList.toggle("on", lado === "der");
       R_.radiob.style.display = radio ? "" : "none";
       R_.mirar.style.display = mirando && !lado ? "" : "none";
@@ -691,6 +718,93 @@
       svg.setAttribute("aria-valuenow", String(Math.round(t * 100) / 100));
       svg.setAttribute("aria-valuetext", hhmm(t) + " · " + (st.noche ? "en la cochera" : (st.corto || st.turno) ? cap((st.corto || st.turno).t) + " hasta las " + hhmm((st.corto || st.turno).b) : "libre"));
       return false;
+    }
+    /* ---------- en casa, en primera persona ---------- */
+    const CASA_TXT = { cama: "en la cama", movil: "en la cama con el móvil", leer: "leyendo en la cama", siesta: "siesta", ducha: "en la ducha", cafe: "el café", vestir: "vistiéndote", escritorio: "en el escritorio", salon: "en el sofá", casa: "en casa", mesa: "a la mesa" };
+    /* lo de casa (sale de las escenas del día) cuando no hay nada en marcha: ni turno, ni comida, ni evento */
+    function casaEn(st) {
+      if (st.guardia || st.enCurso.some((x) => x.k !== "meal")) return null;   /* comer en casa sí es estar en casa */
+      const v = ((D.esc && D.esc.casa) || []).find((x) => t >= x[0] - 1e-6 && t < x[1]);
+      return v ? { e: v[2], a: v[0], b: v[1], t: v[3] || "" } : null;
+    }
+    function manoSVG(x, y, f, s, extra) {
+      return '<g transform="translate(' + x + " " + y + ") scale(" + (f * s) + " " + s + ')">' + (extra || "") + '<path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>';
+    }
+    function casaSVG(cs, L) {
+      const n = 1 - L.d, o = [], pose = cs.e === "siesta" ? "cama" : cs.e === "leer" ? "movil" : cs.e;
+      const duerme = pose === "cama", pal = {
+        cama: ["#6d7fa6", "#7a5a3e", "#8c9cc0"], movil: ["#6d7fa6", "#7a5a3e", "#8c9cc0"], ducha: ["#cfe3ea", "#9fb7c0", "#e3eef2"], cafe: ["#e8d9b5", "#b9a27c", "#f2ead6"],
+        vestir: ["#c7b9a6", "#8a6a4c", "#ddd2c2"], escritorio: ["#9fb0c8", "#7a5a3e", "#c3cfdf"], salon: ["#b98f6e", "#6b4a32", "#d7b99c"], casa: ["#b98f6e", "#6b4a32", "#d7b99c"] }[pose] || ["#b98f6e", "#6b4a32", "#d7b99c"];
+      const pared = pal[0], suelo = pal[1], techo = pal[2], B = [140, 150, 460, 420];
+      /* la habitación: techo, suelo, paredes y la del fondo, con su ventana al cielo de esa hora */
+      o.push(Pp([[0, 40], [600, 40], [B[2], B[1]], [B[0], B[1]]], techo), Pp([[B[0], B[3]], [B[2], B[3]], [600, 606], [0, 606]], suelo),
+        Pp([[0, 40], [B[0], B[1]], [B[0], B[3]], [0, 606]], mix(pared, "#000000", 0.12)), Pp([[600, 40], [B[2], B[1]], [B[2], B[3]], [600, 606]], mix(pared, "#000000", 0.18)), Rr(B[0], B[1], B[2] - B[0], B[3] - B[1], 0, pared));
+      for (let i = 1; i < 7; i++) { const f = i / 7; o.push('<path d="M' + (B[0] + (0 - B[0]) * f) + " " + (B[3] + (606 - B[3]) * f) + "L" + (B[2] + (600 - B[2]) * f) + " " + (B[3] + (606 - B[3]) * f) + '" stroke="' + mix(suelo, "#000000", 0.25) + '" stroke-width="1.5" opacity=".5"/>'); }
+      const ventana = (x, y, w, h) => { const sky = mix(L.top, L.bot, 0.55);
+        o.push(Rr(x - 6, y - 6, w + 12, h + 12, 3, "#e9e2d6"), Rr(x, y, w, h, 2, sky), '<path d="M' + (x + w / 2) + " " + y + "V" + (y + h) + "M" + x + " " + (y + h / 2) + "H" + (x + w) + '" stroke="#e9e2d6" stroke-width="4"/>');
+        o.push(L.d > 0.5 ? '<circle cx="' + (x + w * 0.7) + '" cy="' + (y + h * 0.3) + '" r="9" fill="#fff3b8"/>' : '<circle cx="' + (x + w * 0.7) + '" cy="' + (y + h * 0.3) + '" r="7" fill="#e8eefc"/><circle cx="' + (x + w * 0.25) + '" cy="' + (y + h * 0.2) + '" r="1.4" fill="#fff"/><circle cx="' + (x + w * 0.4) + '" cy="' + (y + h * 0.65) + '" r="1.2" fill="#fff"/>'); };
+      const luces = [];   /* lo que brilla va después de la penumbra */
+      if (pose === "cama" || pose === "movil") {
+        ventana(190, 200, 120, 100); o.push(Rr(176, 190, 18, 128, 3, "#8b5e8f"), Rr(306, 190, 18, 128, 3, "#8b5e8f"));
+        o.push(Rr(380, 210, 60, 46, 2, "#c9b38f", 'opacity=".9"'));   /* un cuadro */
+        /* la mesilla con la lámpara y el despertador */
+        o.push(Rr(470, 430, 100, 90, 4, "#5a3f2b"), Rr(470, 422, 100, 12, 3, "#6b4c34"), Pp([[492, 360], [538, 360], [548, 396], [482, 396]], "#e8d3a8"), Rr(512, 396, 6, 26, 0, "#7d7d7d"));
+        o.push(Rr(530, 400, 34, 20, 4, "#111"), '<text x="547" y="414.5" font-size="11" font-weight="800" fill="#ff4d4d" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">' + hhmm(t) + "</text>");
+        /* la manta, con las rodillas: estás tumbado mirando a los pies de la cama */
+        o.push('<path d="M0 606V500Q90 470 170 488Q240 440 320 470Q410 430 480 486Q560 476 600 500V606Z" fill="#3f5fa8"/><path d="M0 540Q150 520 300 548T600 540" stroke="#5a7bc4" stroke-width="5" fill="none" opacity=".7"/>');
+        if (duerme && n > 0.3) luces.push('<g font-weight="900" fill="#cfe0ff"><text x="250" y="170" font-size="26" opacity=".8">z</text><text x="280" y="140" font-size="34" opacity=".65">Z</text><text x="318" y="104" font-size="44" opacity=".5">Z</text></g>');
+        if (pose === "movil") { luces.push('<ellipse cx="320" cy="430" rx="190" ry="140" fill="#8fd3ff" opacity=".12"/>');
+          luces.push('<g transform="rotate(-8 320 470)">' + Rr(282, 400, 76, 130, 12, "#111") + Rr(288, 410, 64, 108, 6, "#bfe6ff") + Rr(296, 420, 48, 8, 3, "#4a90c4") + Rr(296, 434, 40, 6, 3, "#7fb6dd") + Rr(296, 446, 44, 6, 3, "#7fb6dd") + "</g>" + manoSVG(300, 520, 1, 1.6) + manoSVG(372, 500, -1, 1.5)); }
+      } else if (pose === "ducha") {
+        for (let x = B[0]; x <= B[2]; x += 32) o.push('<path d="M' + x + " " + B[1] + "V" + B[3] + '" stroke="#b5ccd4" stroke-width="1.5"/>');
+        for (let y = B[1]; y <= B[3]; y += 32) o.push('<path d="M' + B[0] + " " + y + "H" + B[2] + '" stroke="#b5ccd4" stroke-width="1.5"/>');
+        o.push('<path d="M430 150V190Q430 200 418 200H392" stroke="#9aa3b2" stroke-width="7" fill="none"/>', '<ellipse cx="384" cy="204" rx="26" ry="9" fill="#c9d1dc"/>');
+        for (let i = 0; i < 26; i++) { const x = 362 + hash(i) * 46 + (hash(i + 3) - 0.5) * 80 * hash(i + 9), y0 = 214 + hash(i + 5) * 40; o.push('<path d="M' + (362 + hash(i) * 46).toFixed(1) + " " + y0.toFixed(1) + "L" + x.toFixed(1) + " " + (y0 + 180 + hash(i + 7) * 200).toFixed(1) + '" stroke="#e6f6ff" stroke-width="2" opacity=".7"/>'); }
+        o.push(Rr(470, 60, 130, 546, 0, "#cfe9f5", 'opacity=".25"'), '<path d="M470 60V606" stroke="#e8f4fa" stroke-width="4" opacity=".7"/>');
+        o.push(Rr(40, 250, 70, 150, 6, "#e85d75"), Rr(36, 240, 78, 16, 6, "#9aa3b2"));   /* la toalla en su gancho */
+        luces.push('<g fill="#ffffff" opacity=".1"><ellipse cx="300" cy="120" rx="260" ry="60"/><ellipse cx="380" cy="190" rx="120" ry="34"/><ellipse cx="200" cy="170" rx="110" ry="28"/></g>');   /* el vaho, arriba, sin tapar la ducha */
+      } else if (pose === "cafe" || pose === "mesa") {
+        o.push(Rr(B[0], B[1] + 6, B[2] - B[0], 64, 3, "#f3efe6"), '<path d="M' + (B[0] + (B[2] - B[0]) / 2) + " " + (B[1] + 6) + "V" + (B[1] + 70) + '" stroke="#d9d1c2" stroke-width="2"/>');
+        ventana(230, 250, 140, 90);
+        o.push(Pp([[0, 476], [600, 476], [600, 500], [0, 500]], "#d7d2c8"), Rr(0, 500, 600, 106, 0, "#8a6a4c"));
+        o.push(Rr(100, 392, 86, 86, 8, "#2a2f38"), Rr(112, 404, 62, 30, 4, "#11141a"), '<circle cx="168" cy="452" r="5" fill="#ff5a4d"/>', Rr(124, 448, 28, 26, 3, "#f3efe6"));
+        o.push(Rr(250, 440, 40, 36, 6, "#c46a1a"), Rr(300, 452, 30, 24, 4, "#4a90c4"));   /* el bote y una taza */
+        if (pose === "mesa") {   /* sentado a la mesa: el plato delante, el tenedor y el cuchillo en las manos */
+          const desay = /desay/i.test(cs.t || "");
+          o.push('<ellipse cx="300" cy="566" rx="118" ry="34" fill="#e9e4da"/><ellipse cx="300" cy="562" rx="86" ry="22" fill="#f7f4ee"/>',
+            desay ? Rr(250, 540, 50, 20, 6, "#d9a35f") + Rr(306, 542, 46, 18, 6, "#c98a4a") + '<circle cx="290" cy="548" r="7" fill="#e85b3a"/>'
+              : '<ellipse cx="280" cy="556" rx="34" ry="12" fill="#e2b05a"/><ellipse cx="324" cy="560" rx="26" ry="10" fill="#5aa04a"/><ellipse cx="300" cy="566" rx="22" ry="8" fill="#b5562e"/>');
+          if (desay) o.push(Rr(430, 520, 44, 46, 8, "#f3efe6"));
+          luces.push((desay ? '<g stroke="#ffffff" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"><path d="M444 516c-8-12 8-18 0-30"/><path d="M460 516c-8-12 8-18 0-30"/></g>' : "") +
+            manoSVG(150, 580, 1, 1.5, '<path d="M14 -10L40 -70M34 -70v-16M40 -70v-18M46 -70v-16" stroke="#c9ced6" stroke-width="5" stroke-linecap="round" fill="none"/>') +
+            manoSVG(450, 580, -1, 1.5, '<path d="M14 -10L36 -78" stroke="#c9ced6" stroke-width="7" stroke-linecap="round"/>'));
+        } else luces.push('<g stroke="#ffffff" stroke-width="3" fill="none" opacity=".55" stroke-linecap="round"><path d="M440 452c-8-12 8-18 0-30"/><path d="M458 452c-8-12 8-18 0-30"/></g>' +
+          manoSVG(452, 540, -1, 1.6, Rr(-30, -64, 46, 52, 8, "#f3efe6") + '<path d="M16 -52q18 2 16 18q-2 14 -16 12" stroke="#f3efe6" stroke-width="7" fill="none"/>'));
+      } else if (pose === "vestir") {
+        o.push(Rr(180, 160, 240, 260, 4, "#6b4c34"), Rr(190, 170, 220, 240, 2, "#3b2a1f"), '<path d="M196 200H404" stroke="#9aa3b2" stroke-width="4"/>');
+        [["#2f5fb3", 210], ["#e9e2d6", 250], ["#3f8a4f", 290], ["#1d3a73", 330], ["#c46a1a", 370]].forEach(([c, x]) => o.push('<path d="M' + x + ' 200l-14 16h28z" fill="none" stroke="#9aa3b2" stroke-width="2"/>' + Rr(x - 16, 214, 32, 120, 4, c)));
+        o.push(Rr(30, 180, 90, 230, 6, "#d6dee8"), Rr(38, 188, 74, 214, 4, "#9fb3cf"), '<circle cx="75" cy="270" r="18" fill="#3a2a20"/>' + Rr(56, 250, 38, 10, 4, "#1d3a73") + Rr(54, 288, 42, 70, 10, "#2f5fb3"));   /* el espejo */
+        luces.push(manoSVG(220, 560, 1, 1.6, Rr(-10, -40, 220, 60, 8, "#1d3a73")) + manoSVG(400, 560, -1, 1.6));
+      } else if (pose === "escritorio") {
+        ventana(330, 200, 110, 100);
+        o.push(Rr(160, 190, 140, 10, 2, "#6b4c34"), Rr(166, 160, 14, 30, 1, "#c9302c"), Rr(182, 166, 12, 24, 1, "#2f5fb3"), Rr(196, 156, 16, 34, 1, "#3f8a4f"), Rr(214, 168, 12, 22, 1, "#c46a1a"));
+        o.push(Pp([[0, 470], [600, 470], [600, 606], [0, 606]], "#8a6a48"), Rr(0, 466, 600, 8, 0, "#a07650"));
+        o.push(Pp([[200, 520], [300, 500], [400, 520], [400, 590], [300, 572], [200, 590]], "#f3efe4"), '<path d="M300 500V572" stroke="#c9c2b2" stroke-width="2"/>');
+        for (let i = 0; i < 5; i++) o.push('<path d="M214 ' + (530 + i * 11) + "L288 " + (514 + i * 11) + "M314 " + (514 + i * 11) + "L388 " + (530 + i * 11) + '" stroke="#9aa3b2" stroke-width="2"/>');
+        o.push('<path d="M70 466L96 380L150 350" stroke="#3a4250" stroke-width="7" fill="none"/>', Pp([[136, 334], [176, 350], [160, 372], [124, 360]], "#2a3448"));
+        luces.push(Pp([[150, 360], [130, 470], [330, 470]], "#fff3c4", 'opacity=".28"') + manoSVG(470, 560, -1, 1.6, '<path d="M-20 -40L30 -90" stroke="#1d2b40" stroke-width="6" stroke-linecap="round"/>'));
+      } else {
+        o.push(Rr(210, 230, 180, 104, 6, "#11141a"), Rr(218, 238, 164, 88, 3, "#2a5fa3"), Rr(280, 334, 40, 10, 0, "#11141a"), Rr(200, 380, 200, 40, 4, "#5a3f2b"));
+        o.push('<path d="M70 420V250" stroke="#7a7a7a" stroke-width="5"/>', Pp([[46, 250], [94, 250], [104, 290], [36, 290]], "#e8d3a8"), Rr(470, 340, 40, 70, 6, "#6b4c34"), '<circle cx="490" cy="320" r="34" fill="#3f8a4f"/>');
+        o.push('<ellipse cx="300" cy="560" rx="230" ry="50" fill="#5a3f2b"/>', Rr(150, 530, 34, 30, 6, "#e9e2d6"));
+        luces.push('<ellipse cx="300" cy="290" rx="150" ry="90" fill="#7fb6ff" opacity=".14"/>' + Rr(232, 252, 50, 40, 4, "#9fd0ff", 'opacity=".55"') + Rr(300, 270, 66, 30, 4, "#ffd66b", 'opacity=".5"') +
+          (n > 0.3 ? '<circle cx="70" cy="270" r="60" fill="#fff3c4" opacity=".2"/>' : "") + manoSVG(260, 560, 1, 1.5) + manoSVG(340, 560, -1, 1.5) + Rr(250, 520, 100, 34, 16, "#1b2333"));
+      }
+      /* la penumbra de la noche (o de dormir), y luego lo que brilla */
+      const osc = duerme ? 0.35 + 0.5 * n : n * 0.55;
+      if (osc > 0.02) o.push(Rr(0, 40, 600, 566, 0, "#05070f", 'opacity="' + clamp(osc, 0, 0.85).toFixed(2) + '"'));
+      o.push(luces.join(""));
+      return o.join("");
     }
     /* ---------- mirar a los lados ---------- */
     const Rr = (x, y, w, h, rx, fill, extra) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + rx + '" fill="' + fill + '" ' + (extra || "") + "/>";
@@ -801,8 +915,8 @@
       if (o === "sueno") { radio = false; draw(0); return abrir({ tipo: D.sueno ? "sueno" : "anotar" }); }
       if (o === "comer") return abrir({ tipo: "comer" });
       /* mirar a un lado (los retrovisores y sus letreros), volver al frente; la máquina de billetes lleva al quiosco */
-      if (o === "mirai" || o === "mirad" || o === "parahoy") { const q = o === "mirad" ? "der" : "izq"; lado = lado === q && o !== "parahoy" ? null : q; radio = false; draw(0); return; }
-      if (o === "frente") { lado = null; draw(0); return; }
+      if (o === "mirai" || o === "mirad" || o === "parahoy") { const q = o === "mirad" ? "der" : "izq"; radio = false; girar(lado === q && o !== "parahoy" ? null : q); draw(0); return; }
+      if (o === "frente") { girar(null); draw(0); return; }
       if (o === "radio") { radio = !radio; draw(0); return; }
       const rd = (D.cab && D.cab.radio) || {}, cab = D.cab || {};
       if (o === "kss" || o === "animo") return abrir({ tipo: "act", a: o === "kss" ? "asist-kss" : "asist-animo", ds: { k: rd.k || "", v: n.getAttribute("data-v") } });
@@ -825,7 +939,7 @@
       const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key];
       if (d) { ev.preventDefault(); steer(Math.round(target * 4) / 4 + d * 0.25); return; }
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); const st = estado(t), e = st.corto || st.sig[0] || st.turno; if (e) abrir({ tipo: "item", i: +e.i, rapida: false }); }
-      if (ev.key === "Escape" || ev.key === "Home") { if (lado || radio) { lado = null; radio = false; draw(0); } else vuelve(); }
+      if (ev.key === "Escape" || ev.key === "Home") { if (lado || radio) { radio = false; girar(null); draw(0); } else vuelve(); }
     });
 
     /* ---------- los datos ---------- */
