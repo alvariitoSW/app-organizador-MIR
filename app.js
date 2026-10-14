@@ -5455,7 +5455,9 @@ function hoyBusDatos(key,inf,esHoy){
   const wake=lev(ag),wakeM=lev(man);
   const camaAy=ay.filter(function(y){return y.tipo==='sleep'&&/cama|dorm/i.test(y.txt||'');})[0];
   /* anoche: de tu hora de cama de ayer a la de levantarte, si no estabas de guardia */
-  if(!deAyer.some(function(e){return e.k==='guard';})&&wake!=null)noches.push({a:camaAy?r3(Math.min(0,camaAy.m2/60-24)):0,b:r3(wake),t:'noche'});
+  /* CONTINUIDAD: si anoche te acostaste pasada la medianoche (00:30), la noche de hoy empieza a las 00:30, no a las
+     00:00. Antes se recortaba a las 00:00 y el mismo instante salía despierto viendo ayer y dormido viendo hoy */
+  if(!deAyer.some(function(e){return e.k==='guard';})&&wake!=null)noches.push({a:camaAy?r3(Math.min(camaAy.m2/60-24,wake-0.25)):0,b:r3(wake),t:'noche'});
   ag.forEach(function(x){
     /* la cama pasada la medianoche (00:30 → 24:30) también es la noche de hoy: sin ella no había cochera, el
        autobús se quedaba pillado en la última parada y en casa no salía nadie */
@@ -5681,7 +5683,7 @@ function mananaRegleta(key){
   return out.sort(function(x,y){return x.h-y.h;});}
 /* lo que el conductor dibuja además de las paradas: el taxi (si hoy saliste tarde), los tramos en bici, el entreno
    y el cartel de la rotación. Se calcula aquí y no dentro de hoyBusDatos: las escenas leen hoyBusDatos */
-function conductorEscenas(key){
+function conductorEscenas(key,sinAyer){
   let D;try{D=diaEscenas(key);}catch(e){return {};}
   const iv=function(e){return D.seg.filter(function(x){return x.e===e;}).map(function(x){return [x.a,x.b];});};
   const d=parseDate(key),ms=d?monthService(d.getFullYear(),d.getMonth()):null,sv=ms&&ms.service?String(ms.service):'';
@@ -5690,7 +5692,14 @@ function conductorEscenas(key){
   let fuma=!!hab.fumar;if(!fuma)try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
   return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',fumar:fuma,
     /* las comidas que no caen dentro de un turno se hacen en casa: también se ven desde dentro */
-    casa:D.seg.filter(function(x){return CASA[x.e]||(x.e==='comida'&&!x.dentro);}).map(function(x){return x.e==='comida'?[x.a,x.b,'mesa',x.t||'']:[x.a,x.b,x.e];})};}
+    casa:(function(){const own=D.seg.filter(function(x){return CASA[x.e]||(x.e==='comida'&&!x.dentro);}).map(function(x){return x.e==='comida'?[x.a,x.b,'mesa',x.t||'']:[x.a,x.b,x.e];});
+      /* lo de ayer que ya está en el día de hoy (la cama de las 00:30) no se repite */
+      return (sinAyer?[]:casaDeAyer(key).filter(function(y){return !own.some(function(o){return o[2]===y[2]&&Math.abs(o[0]-y[0])<0.02;});})).concat(own);})()};}
+/* CONTINUIDAD: lo de casa de ayer que pasa de la medianoche (el sofá hasta las 00:30) sigue hoy de 00:00 en adelante,
+   para que el mismo instante se vea igual desde los dos días */
+function casaDeAyer(key){const d=parseDate(key);if(!d)return [];
+  const c=(conductorEscenas(iso(addDays(d,-1)),true).casa)||[];
+  return c.filter(function(x){return x[1]>24;}).map(function(x){return [Math.max(0,x[0]-24),x[1]-24].concat(x.slice(2));});}
 /* LO QUE SE VE AL MIRAR A LOS LADOS Y EN LA RADIO (la cabina con mandos): a la izquierda la ciudad, con los
    eventos del día en sus fachadas, las vallas de lo importante que viene y el quiosco de «Para hoy»; a la
    derecha el campo, con el entreno, la comida y el poste de los hábitos; la radio es el sueño y el check-in */

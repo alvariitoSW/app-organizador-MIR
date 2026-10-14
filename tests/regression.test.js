@@ -12821,6 +12821,31 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.come && r.c.manos && !r.c2.come && !r.c2.manos && r.qui.ciudad && r.qui.ph === 6 && r.pos.hab === 7 &&
       r.d.casa && r.coc.cocina && !r.coc.ciudad && r.coc.ph === 6 && r.dor.dorm && r.dor.hab === 7, JSON.stringify(r));
   }
+  // 305) CONTINUIDAD A MEDIANOCHE, EN CADENA (conduce Hoy): hoy libre con la cama a las 00:30 y mañana guardia. Viendo
+  // hoy a las 00:15 estás despierto en casa; con la palanca en D (mañana), a las 00:15 se ve lo mismo y no durmiendo; a
+  // la 01:00 de mañana, ya duermes. Fija: la noche de mañana empezaba a las 00:00 aunque te acostaras a las 00:30, y el
+  // mismo instante salía despierto viendo un día y dormido viendo el otro.
+  {
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.__t305 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify((P.store.rhythm || {})['sh-l'] || null), mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-g', 'urg');
+      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '08:30' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
+    const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
+      const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { casa: cd.classList.contains('casa'), nxl: q('nxl'), nxa: q('nxa') }; }, h);
+    const r = { hoy: await ver(24.25) };
+    await page.click('#main .cd [data-o="marcha"][data-d="1"]').catch(() => {}); await page.waitForTimeout(400);
+    r.dia = await page.evaluate(() => window.PG.ui.diaHoy);
+    r.man = await ver(0.25); r.man1 = await ver(1);
+    await page.click('#main .cd [data-o="marcha"][data-d="0"]').catch(() => {}); await page.waitForTimeout(300);
+    await page.evaluate(() => { const P = window.PG, t = P.__t305, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.setDayOverride(hoy, t.hoy ? t.hoy.shift : null, t.hoy ? t.hoy.guard : ''); P.setDayOverride(man, t.man ? t.man.shift : null, t.man ? t.man.guard : '');
+      const rh = JSON.parse(t.rh); if (rh) P.store.rhythm['sh-l'] = rh; else delete P.store.rhythm['sh-l']; P.store.rotation.mode = t.mode; P.ui.diaHoy = ''; delete P.__t305; P.save(); P.render(); });
+    check('a medianoche el tiempo es continuo: a las 00:15 se ve lo mismo viendo hoy (cama a las 00:30) que viendo mañana, despierto en casa; a la 01:00 de mañana, durmiendo',
+      r.dia === await page.evaluate(() => window.PG.iso(window.PG.addDays(new Date(), 1))) && r.hoy.casa && !/DURMIENDO/.test(r.hoy.nxl) && /00:30/.test(r.hoy.nxa) &&
+      r.man.casa && !/DURMIENDO/.test(r.man.nxl) && r.man.nxa === r.hoy.nxa && /DURMIENDO/.test(r.man1.nxl), JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
