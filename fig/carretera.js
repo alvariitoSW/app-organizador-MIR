@@ -140,9 +140,12 @@
       salidas(o, z0, z1, d0, T.faltan, 3, 3.5);
       out.push(o.join(""));
     }
-    for (let i = dias.length - 1; i >= 1; i--) {
+    /* los días se cuentan desde HOY (c0), no desde el día 1: con el mes natural, el 22 salía «en 21 días» el día 14 */
+    for (let i = dias.length - 1; i >= 0; i--) {
+      if (i === c0) continue;
       const d = dias[i], z = zDe(i); if (z - 3 > FAR || z + GAP * 1.6 < NEAR) continue;
-      const t = d.tipo, o = [], dow = DIAS[d.dow], fecha = dow + " " + d.d, en = i === 1 ? "mañana" : "en " + i + " días";
+      const r = i - c0, t = d.tipo, o = [], dow = DIAS[d.dow], fecha = dow + " " + d.d,
+        en = r === 1 ? "mañana" : r === -1 ? "ayer" : r > 0 ? "en " + r + " días" : "hace " + (-r) + " días";
       /* el mojón del día: un hito blanco con la cabeza del color del tipo y el número */
       const mx = 3.6, mh = 1.1, col = (D.col && D.col[t]) || COL[t] || COL.libre;   /* el color del tipo, el tuyo si lo has cambiado en Ajustes */
       o.push('<g data-o="' + esc(d.k) + '">' + poly([[mx - 0.25, 0, z - 0.25], [mx + 0.25, 0, z - 0.25], [mx + 0.25, mh, z - 0.25], [mx - 0.25, mh, z - 0.25]], "ct-mojon") +

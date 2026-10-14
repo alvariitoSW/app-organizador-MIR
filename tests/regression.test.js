@@ -12050,6 +12050,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForSelector('#main .calmes #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
     Object.assign(r.c, await page.evaluate(() => ({ hay: !!document.querySelector('#main .calmes #carrSlot .ct svg'), cal: !!document.querySelector('#main .cal.ext'), ls: localStorage.getItem('guardias-mesv'),
       eventos: [...document.querySelectorAll('#main .card h2')].some((h) => /^Eventos de/.test(h.textContent)), on: (document.querySelector('#main .mesv .on') || {}).textContent || '' })));
+    /* en Mes la carretera es el mes natural (empieza el día 1) pero los días se cuentan desde hoy: la guardia de pasado
+       mañana también dice «en 2 días» (decía «en 15 días» el día 14). Si pasado mañana ya es otro mes, no se mira */
+    r.c.en2 = await page.evaluate((k) => { if (k.slice(0, 7) !== window.PG.iso(new Date()).slice(0, 7)) return 'otro mes'; const svg = document.querySelector('#main .calmes #carrSlot .ct svg'); return !!svg && /en 2 días/.test(svg.textContent) && !/en (1[0-9]|2[0-9]|3[01]) días/.test([...svg.querySelectorAll('g[data-o="' + k + '"] text')].map((x) => x.textContent).join(' ')); }, kg);
     // (d) la tira: una marca por día del mes; tocar una abre ese día
     const t = await page.evaluate(() => { const l = [...document.querySelectorAll('#main #carrSlot .ct svg circle[data-o]')]; const m = l[Math.min(20, l.length - 1)]; if (!m) return null;
       m.scrollIntoView({ block: 'center' }); const b = m.getBoundingClientRect(); return [m.getAttribute('data-o'), b.x + b.width / 2, b.y + b.height / 2, l.length]; });
@@ -12072,8 +12075,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('en Hoy, «Lo que viene» es la carretera: sin cuenta atrás ni «Próximos», la guardia de pasado mañana en el salpicadero y como túnel con cartel, y el evento como señal',
       r.a.hay && !r.a.cuenta && !r.a.proximos && /en 2 días/.test(r.a.cab) && r.a.tunel && r.a.cartel && r.a.senal && r.a.mojones >= 10 && r.a.sr >= 10, JSON.stringify(r.a));
     check('tocar el cartel de la guardia en la carretera abre ese día en Hoy', !!c && esDia(r.b), JSON.stringify(r.b));
-    check('en Mes, el tercer chip pone la carretera (y se recuerda) y «Eventos de …» ya no está',
-      r.c.chips === '▦ Plana|🏗 Isométrica|🛣 Carretera' && r.c.hay && !r.c.cal && r.c.ls === 'ruta' && !r.c.eventos && /Carretera/.test(r.c.on), JSON.stringify(r.c));
+    check('en Mes, el tercer chip pone la carretera (y se recuerda), «Eventos de …» ya no está y los días se cuentan desde hoy',
+      r.c.chips === '▦ Plana|🏗 Isométrica|🛣 Carretera' && r.c.hay && !r.c.cal && r.c.ls === 'ruta' && !r.c.eventos && /Carretera/.test(r.c.on) && (r.c.en2 === true || r.c.en2 === 'otro mes'), JSON.stringify(r.c));
     check('la tira de arriba es el mes entero (28–31 marcas) y tocar una marca abre ese día en Hoy', r.d.marcas >= 28 && r.d.marcas <= 31 && !!r.d.k && esDia(r.d), JSON.stringify(r.d));
     check('la carretera no se imprime y «Plana» devuelve la cuadrícula', r.e.papel.slot && !r.e.papel.visible && r.e.plana.cal && !r.e.plana.ruta && r.e.plana.ls === 'plana', JSON.stringify(r.e));
   }
