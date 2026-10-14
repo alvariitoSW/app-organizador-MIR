@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es" data-theme="oscuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iconos vivos</title>
+<link rel="stylesheet" href="iconos.css">
+<style>
+  :root, [data-theme="oscuro"] {
+    --fondo: #070b14; --superficie: #0e1525; --superficie-2: #141d31; --borde: #22304b;
+    --texto: #e9f2ff; --texto-2: #9fb0cc; --marca: #38e1ff; --acento: #a3e635;
+    --ojo: #f5b33b; --guardia: #ff5d73; --marchito: #c39a55;
+    color-scheme: dark;
+  }
+  [data-theme="claro"] {
+    --fondo: #eef2f9; --superficie: #ffffff; --superficie-2: #f5f7fc; --borde: #d3dbea;
+    --texto: #0d1729; --texto-2: #4a5873; --marca: #2563eb; --acento: #15803d;
+    --ojo: #c2410c; --guardia: #dc2643; --marchito: #92651f;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--fondo); }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    max-width: 412px; margin-inline: auto; padding: 16px 16px 40px; }
+  h1 { font-size: 20px; font-weight: 800; margin: 0 0 4px; letter-spacing: -.2px; }
+  h2 { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-2); margin: 24px 0 8px; }
+  p.pie { color: var(--texto-2); font-size: 12.5px; margin: 0 0 12px; }
+  .barra-sup { display: flex; gap: 8px; margin: 8px 0 4px; flex-wrap: wrap; }
+  button, .btn { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--borde); background: var(--superficie);
+    color: var(--texto); font: 700 12.5px/1 inherit; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  button[aria-pressed="true"] { border-color: var(--marca); color: var(--marca); }
+  .card { background: var(--superficie); border: 1px solid var(--borde); border-radius: 16px; padding: 12px; }
+
+  /* rejilla de todos: 5 columnas, 24 y 32 lado a lado */
+  .todos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .celda { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 8px 2px 6px; text-align: center; min-width: 0; }
+  .celda .par { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 34px; }
+  .celda .nom { font-size: 11px; color: var(--texto-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* antes / después */
+  .antes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .ad { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--superficie); border: 1px solid var(--borde);
+    border-radius: 12px; height: 44px; }
+  .ad .emo { font-size: 20px; line-height: 1; filter: saturate(.9); }
+  .ad .fl { color: var(--texto-2); font-size: 11px; }
+
+  /* barra de secciones de ejemplo */
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--superficie); border: 1px solid var(--borde); border-radius: 16px; padding: 4px; }
+  .tab { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 12px; color: var(--texto-2);
+    font-size: 11px; font-weight: 700; }
+  .tab.on { color: var(--marca); background: color-mix(in srgb, var(--marca) 12%, transparent); }
+
+  /* estados en vivo */
+  .vivos { display: grid; gap: 8px; }
+  .vivo { display: grid; grid-template-columns: 136px 1fr; gap: 10px; align-items: center; }
+  .vivo .muestras { display: flex; align-items: flex-end; gap: 8px; }
+  .vivo .grande { width: 56px; height: 56px; }
+  .vivo .txt b { display: block; font-size: 14px; font-weight: 800; }
+  .vivo .txt span { color: var(--texto-2); font-size: 12.5px; }
+  .vivo .ctrl { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .vivo .ctrl input[type=range] { flex: 1; min-width: 120px; height: 44px; accent-color: var(--marca); }
+  .vivo .ctrl output { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 44px; text-align: right; }
+</style>
+</head>
+<body>
+  <h1>Iconos vivos</h1>
+  <p class="pie">Dirección «La jornada» · 46 iconos de línea pintados por <code>ico(nombre, estado)</code>. Se mueven solo cuando cambia algo; de guardia, el fonendo late.</p>
+  <div class="barra-sup">
+    <button id="bTema" aria-pressed="false">Tema claro</button>
+    <button id="bMov" aria-pressed="false">Movimiento reducido</button>
+  </div>
+
+  <h2>Antes → después</h2>
+  <div class="antes" id="antes"></div>
+
+  <h2>Barra de secciones (ejemplo)</h2>
+  <div class="tabbar" id="tabbar"></div>
+
+  <h2>Estados en vivo</h2>
+  <div class="vivos" id="vivos"></div>
+
+  <h2>Todos · 24 y 32 px</h2>
+  <div class="todos" id="todos"></div>
+
+<script src="iconos.js"></script>
+<script>
+(function () {
+  const $ = s => document.querySelector(s);
+  const q = new URLSearchParams(location.search);
+  if (q.get('tema') === 'claro') document.documentElement.dataset.theme = 'claro';
+  const pintaBoton = () => { const c = document.documentElement.dataset.theme === 'claro'; $('#bTema').setAttribute('aria-pressed', c); $('#bTema').textContent = c ? 'Tema oscuro' : 'Tema claro'; };
+  $('#bTema').onclick = () => { const h = document.documentElement; h.dataset.theme = h.dataset.theme === 'claro' ? 'oscuro' : 'claro'; pintaBoton(); };
+  $('#bMov').onclick = () => { const on = document.body.classList.toggle('sin-mov'); $('#bMov').setAttribute('aria-pressed', on); };
+  pintaBoton();
+
+  /* antes / después: los emojis de interfaz que se van */
+  const pares = [['🏠','hoy'],['📅','semana'],['🗓','mes'],['🍽','comer'],['🏋️','mancuerna'],['😴','luna'],['💶','hucha'],['🌱','planta'],
+    ['⚙️','ajustes'],['📝','notas'],['📚','libro'],['📌','eventos'],['🌿','hoja420'],['🩺','fonendo'],['☕','taza'],['🌙','luna'],
+    ['✅','hecho'],['⚠️','aviso'],['🔔','campana'],['🛌','cama'],['🚌','bus'],['🚕','taxi'],['🛒','carrito'],['📷','camara'],
+    ['🔒','candado'],['🎯','diana'],['⏰','reloj'],['🗑','borrar']];
+  $('#antes').innerHTML = pares.map(([e, n]) =>
+    '<div class="ad"><span class="emo" aria-hidden="true">' + e + '</span><span class="fl" aria-hidden="true">→</span>' + ico(n, { fase: .3 }) + '</div>').join('');
+
+  /* barra de ejemplo */
+  const tabs = [['hoy', 'Hoy', { hora: new Date().getHours() + new Date().getMinutes() / 60 }], ['semana', 'Semana', { dia: (new Date().getDay() + 6) % 7 }],
+    ['comer', 'Comer'], ['mancuerna', 'Entreno'], ['mas', 'Más']];
+  $('#tabbar').innerHTML = tabs.map((t, i) => '<div class="tab' + (i === 0 ? ' on' : '') + '">' + ico(t[0], Object.assign({ decorativo: true }, t[2] || {})) + t[1] + '</div>').join('');
+
+  /* estados en vivo: cada tarjeta tiene el icono a 24, 32 y 56 y sus controles */
+  const V = [
+    { n: 'hucha', t: 'Hucha · ahorro', d: 'Se llena hasta el nivel; al subir cae una moneda.', e: { nivel: .2 },
+      c: [{ r: 'nivel', min: 0, max: 1, step: .05, f: v => Math.round(v * 100) + ' %' }, { b: '+ Ahorro', k: e => ({ nivel: Math.min(1, e.nivel + .2) }) }] },
+    { n: 'planta', t: 'Planta · hábitos', d: 'Una hoja por hábito hecho hoy; mustia con dos fallos.', e: { nivel: 1 },
+      c: [{ r: 'nivel', min: 0, max: 1, step: .25, f: v => Math.round(v * 4) + ' de 4' }, { t: 'mustia', b: 'Mustia' }] },
+    { n: 'energia', t: 'Depósito · energía', d: 'Baja con el trabajo, sube al dormir; ámbar por debajo de 0,3.', e: { nivel: .65 },
+      c: [{ r: 'nivel', min: 0, max: 1, step: .05, f: v => Math.round(v * 100) + ' %' }, { b: 'Guardia (−40 %)', k: e => ({ nivel: Math.max(0, e.nivel - .4) }) }, { b: 'Dormir 8 h', k: () => ({ nivel: .9 }) }] },
+    { n: 'luna', t: 'Luna · sueño', d: 'Fase según las horas dormidas (8 h = llena).', e: { fase: 6.5 / 8, horas: 6.5 },
+      c: [{ r: 'horas', min: 0, max: 8, step: .5, f: v => v + ' h', k: v => ({ horas: v, fase: v / 8 }) }] },
+    { n: 'fonendo', t: 'Fonendo · guardia', d: 'Late despacio mientras estás de guardia.', e: { guardia: true }, c: [{ t: 'guardia', b: 'De guardia' }] },
+    { n: 'taza', t: 'Taza', d: 'Humea si está caliente; al enfriarse el vapor se va.', e: { caliente: true }, c: [{ t: 'caliente', b: 'Caliente' }] },
+    { n: 'hecho', t: 'Hecho', d: 'El check se dibuja al marcar (200 ms).', e: { on: false }, c: [{ t: 'on', b: 'Marcar' }] },
+    { n: 'campana', t: 'Campana · avisos', d: 'Se balancea una sola vez cuando llega un aviso.', e: { alerta: false }, c: [{ t: 'alerta', b: 'Aviso nuevo' }] },
+    { n: 'calendario', t: 'Calendario', d: 'Lleva el número del día de hoy.', e: { dia: new Date().getDate() },
+      c: [{ b: '‹ Día', k: e => ({ dia: e.dia > 1 ? e.dia - 1 : 31 }) }, { b: 'Día ›', k: e => ({ dia: e.dia < 31 ? e.dia + 1 : 1 }) }] },
+    { n: 'hoy', t: 'Hoy · arco del sol', d: 'El sol recorre la jornada (7–22 h) y deja trazado lo pasado.', e: { hora: 13 },
+      c: [{ r: 'hora', min: 6, max: 23, step: .5, f: v => Math.floor(v) + ':' + (v % 1 ? '30' : '00') }] },
+    { n: 'semana', t: 'Semana', d: 'Lo que va de semana queda relleno; hoy, un punto de marca.', e: { dia: 3 },
+      c: [{ r: 'dia', min: 0, max: 6, step: 1, f: v => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][v] }] },
+    { n: 'reloj', t: 'Reloj', d: 'Las agujas giran hasta la hora.', e: { hora: 8.5 },
+      c: [{ r: 'hora', min: 0, max: 24, step: .25, f: v => Math.floor(v) + ':' + String(Math.round((v % 1) * 60)).padStart(2, '0') }] },
+    { n: 'libro', t: 'Libro · estudio', d: 'Pasa una página al apuntar un rato.', e: { minutos: 40 }, c: [{ b: '+25 min', k: e => ({ minutos: e.minutos + 25 }) }] },
+    { n: 'cama', t: 'Cama', d: 'Zzz si estás durmiendo ahora.', e: { on: false }, c: [{ t: 'on', b: 'Durmiendo' }] },
+    { n: 'hoja420', t: '4:20', d: 'En modo discreto la hoja se cambia por un candado.', e: { discreto: false }, c: [{ t: 'discreto', b: 'Discreto' }] },
+    { n: 'aviso', t: 'Aviso', d: 'Sacudida corta cuando aparece.', e: { alerta: false }, c: [{ t: 'alerta', b: 'Lanzar aviso' }] },
+    { n: 'mancuerna', t: 'Mancuerna · entreno', d: 'Se levanta al apuntar una serie.', e: { series: 0 }, c: [{ b: '+ Serie', k: e => ({ series: e.series + 1 }) }] },
+    { n: 'taper', t: 'Táper', d: 'Lleno o vacío según las raciones que quedan.', e: { nivel: .7 },
+      c: [{ r: 'nivel', min: 0, max: 1, step: .25, f: v => Math.round(v * 4) + ' rac.' }] }
+  ];
+  const vivos = $('#vivos');
+  V.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = 'card vivo'; el.id = 'v-' + v.n;
+    el.innerHTML = '<div class="muestras">' + ico(v.n, Object.assign({}, v.e)) + ico(v.n, Object.assign({ tam: 32 }, v.e)) +
+      ico(v.n, Object.assign({ tam: 56, clase: 'grande' }, v.e)) + '</div>' +
+      '<div class="txt"><b>' + v.t + '</b><span>' + v.d + '</span></div><div class="ctrl"></div>';
+    const ctrl = el.querySelector('.ctrl');
+    let estado = Object.assign({}, v.e);
+    const pon = cambio => { Object.assign(estado, cambio); el.querySelectorAll('svg.ico').forEach(s => ico.actualiza(s, cambio)); sync(); };
+    const syncs = [];
+    const sync = () => syncs.forEach(f => f());
+    v.c.forEach(c => {
+      if (c.r) {
+        const inp = document.createElement('input'); inp.type = 'range'; inp.min = c.min; inp.max = c.max; inp.step = c.step;
+        inp.setAttribute('aria-label', v.t + ': ' + c.r); inp.dataset.k = c.r;
+        const out = document.createElement('output');
+        inp.oninput = () => { const x = +inp.value; pon(c.k ? c.k(x) : { [c.r]: x }); };
+        syncs.push(() => { inp.value = estado[c.r]; out.textContent = c.f(estado[c.r]); });
+        ctrl.append(inp, out);
+      } else if (c.t) {
+        const b = document.createElement('button'); b.textContent = c.b; b.dataset.k = c.t;
+        b.onclick = () => pon({ [c.t]: !estado[c.t] });
+        syncs.push(() => b.setAttribute('aria-pressed', !!estado[c.t]));
+        ctrl.append(b);
+      } else {
+        const b = document.createElement('button'); b.textContent = c.b;
+        b.onclick = () => pon(c.k(estado));
+        ctrl.append(b);
+      }
+    });
+    el._pon = pon; el._estado = () => estado;
+    sync();
+    vivos.append(el);
+  });
+
+  /* todos */
+  $('#todos').innerHTML = ico.nombres.map(n => '<div class="celda" title="' + n + '"><div class="par">' + ico(n) + ico(n, { tam: 32 }) + '</div><div class="nom">' + n + '</div></div>').join('');
+
+  /* para las capturas: window.pon('hucha', {nivel:.8}) */
+  window.pon = (n, cambio) => document.getElementById('v-' + n)._pon(cambio);
+})();
+</script>
+</body>
+</html>

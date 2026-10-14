@@ -48,9 +48,9 @@
       label: 'Hoy', emoji: '🏠',
       dibujo: (e, id) =>
         '<clipPath id="' + id + 'c"><rect x="0" y="0" width="24" height="18"/></clipPath>' +
-        P('M4.5 18A7.5 7.5 0 0 1 19.5 18', 'futuro') +
-        P('M4.5 18A7.5 7.5 0 0 1 19.5 18', 'huella', ' pathLength="1"') +
-        '<g clip-path="url(#' + id + 'c)"><g class="astro mv"><circle class="s" cx="12" cy="10.5" r="2.4"/><circle cx="12" cy="10.5" r="2.4"/></g></g>' +
+        P('M4 18A8 8 0 0 1 20 18', 'futuro') +
+        P('M4 18A8 8 0 0 1 20 18', 'huella', ' pathLength="1"') +
+        '<g clip-path="url(#' + id + 'c)"><g class="astro mv"><circle class="sol-hoy" cx="12" cy="10" r="3"/></g></g>' +
         P('M2.5 18h19M8 21h8'),
       vivo: e => {
         const h = num(e.hora, 13), p = lim((h - 7) / 15, 0, 1);
@@ -59,17 +59,13 @@
     },
     semana: {
       label: 'Semana', emoji: '📅',
-      firma: e => String(num(e.dia, 3)),
+      firma: e => String(lim(Math.round(num(e.dia, 3)), 0, 6)),
       dibujo: e => {
-        const dia = lim(Math.round(num(e.dia, 3)), 0, 6);
-        let s = P('M3 4.5h18');
-        for (let i = 0; i < 7; i++) {
-          const x = 3 + i * 3;
-          if (i < dia) s += P('M' + x + ' 10.5V19.5', 'pasado');
-          else if (i === dia) s += P('M' + x + ' 8V19.5', 'ahora');
-          else s += P('M' + x + ' 13v6.5', 'venidero');
-        }
-        return s;
+        const dia = lim(Math.round(num(e.dia, 3)), 0, 6), x = r3(7.4 + dia * 1.533);
+        return '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/>' + P('M3.5 10h17M8 3v3.5M16 3v3.5') +
+          '<rect class="sem-banda" x="6" y="12.6" width="12" height="4.4" rx="1.4"/>' +
+          (dia > 0 ? '<rect class="sem-hecho" x="6" y="12.6" width="' + r3(x - 6) + '" height="4.4" rx="1.4"/>' : '') +
+          '<circle class="sem-hoy" cx="' + x + '" cy="14.8" r="1.5"/>';
       },
       vivo: e => ({ label: 'Semana, ' + ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'][lim(Math.round(num(e.dia, 3)), 0, 6)] })
     },
@@ -94,7 +90,7 @@
     luna: {
       label: 'Sueño', emoji: '😴',
       dibujo: e => '<path class="luz" d="' + lunaLuz(num(e.fase, 0.3)) + '" style="d:path(\'' + lunaLuz(num(e.fase, 0.3)) + '\')"/>' +
-        '<circle cx="12" cy="12" r="8"/>' + P('M19.6 3.2v2.4M18.4 4.4h2.4', 'chispa'),
+        '<circle class="sombra" cx="12" cy="12" r="8"/>' + P('M19.6 3.2v2.4M18.4 4.4h2.4', 'chispa'),
       firma: () => '',
       vivo: e => {
         const f = lim(num(e.fase, 0.3), 0, 1);
@@ -126,7 +122,7 @@
       dibujo: () => {
         const hoja = (cls, d, ox, oy, lado) => '<g class="hj ' + cls + '" style="transform-origin:' + ox + 'px ' + oy + 'px;--lado:' + lado + '">' +
           '<path class="sa" d="' + d + '"/><path d="' + d + '"/></g>';
-        return '<g class="tallo mv">' + P('M12 15V5.8') +
+        return '<g class="tallo mv">' + P('M12 15V5.8', 'tronco') +
           hoja('h1', 'M12 13.2C9 13.4 7 11.8 6.6 9.2c2.8-.3 4.9 1.2 5.4 4z', 12, 13.2, -1) +
           hoja('h2', 'M12 11c3-.1 5-1.8 5.4-4.4-2.8-.3-4.9 1.3-5.4 4.4z', 12, 11, 1) +
           hoja('h3', 'M12 8.6c-2.2.1-3.6-1.1-3.9-3 2-.2 3.6.9 3.9 3z', 12, 8.6, -1) +
