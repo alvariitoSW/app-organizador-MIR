@@ -3106,7 +3106,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     /* con «Esta semana» la compra mira hasta la próxima salida: aquí, la semana entera, que el plato
        de prueba va en un día cualquiera */
-    const cada0 = await page.evaluate(() => { const v = window.PG.store.food.compraCada; window.PG.store.food.compraCada = 7; window.PG.save(); return v; });
+    const cada0 = await page.evaluate(() => { const P = window.PG, v = P.store.food.compraCada; P.store.food.compraCada = 7;
+      /* la guardia de esta semana la pintas tú (el ciclo ya no pone guardias): mañana, si la semana tipo empieza
+         por guardia, para que el menú de ese tipo de día cuente en la compra, como antes */
+      const shG = P.weekDays().map((d) => d.shiftId).filter(Boolean)[0], kG = P.iso(P.addDays(new Date(), 1)); P.__t47g = { k: kG, ov: P.dayOverride(kG) };
+      if (P.isGuardia(P.shiftById(shG))) P.setDayOverride(kG, shG, 'urg');
+      P.save(); return v; });
     await gotoTab('shop');
     await page.waitForTimeout(250);
     const antesC = await page.evaluate(() => ({
@@ -3165,7 +3170,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !/aguacate/i.test(antesC.txt) && despuesC.frescoConOrigen === despuesC.fresco &&
       despuesC.sinMediasPiezas && sinReceta.haySeccion && sinReceta.sale,
       JSON.stringify({ antes: antesC.lineas, despuesC, sinReceta }));
-    await page.evaluate((v) => { const P = window.PG; if (v == null) delete P.store.food.compraCada; else P.store.food.compraCada = v; P.save(); }, cada0);
+    await page.evaluate((v) => { const P = window.PG; if (v == null) delete P.store.food.compraCada; else P.store.food.compraCada = v;
+      const g = P.__t47g; if (g) { P.setDayOverride(g.k, g.ov ? g.ov.shift : null, g.ov ? g.ov.guard : ''); delete P.__t47g; } P.save(); }, cada0);
   }
 
   // 47g) el menú de un tipo de día no se sale de la pantalla. Fallo real medido antes del rediseño:
