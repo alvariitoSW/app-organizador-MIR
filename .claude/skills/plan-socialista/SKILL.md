@@ -1,16 +1,16 @@
 ---
-name: empezar
-description: Arrancar una sesión de trabajo con un parte corto de lo que pide atención, sin repetir lo que ya se dijo. Úsala cuando el usuario diga «empezamos», «/empezar», «¿cómo está todo?», «ponme al día» o «¿qué hay pendiente?», o al abrir una sesión nueva antes del primer encargo. Lee las preferencias, retoma desde los marcadores de la última vez, comprueba el estado real (main, Pages, la rama, lo pendiente) y guarda dónde se quedó. NO la uses a mitad de una tarea para dar un resumen de lo que acabas de hacer.
+name: plan-socialista
+description: Arrancar una sesión de trabajo con un parte corto de lo que pide atención, sin repetir lo que ya se dijo. Úsala cuando el usuario diga «empezamos», «/plan-socialista», «plan socialista», «¿cómo está todo?», «ponme al día» o «¿qué hay pendiente?», o al abrir una sesión nueva antes del primer encargo. Lee las preferencias, retoma desde los marcadores de la última vez, comprueba el estado real (main, Pages, la rama, lo pendiente) y guarda dónde se quedó. NO la uses a mitad de una tarea para dar un resumen de lo que acabas de hacer.
 ---
 
-# Empezar: el parte de cada sesión
+# Plan socialista: el parte de cada sesión
 
 Sigue el esquema de un agente con memoria persistente: **lee las preferencias, retoma desde
 los marcadores, trae solo lo nuevo, comprueba que lo que vas a contar sigue siendo verdad,
 redacta corto, entrega y guarda dónde te has quedado.** Así cada sesión empieza donde acabó la
 anterior aunque el contenedor sea nuevo y no recuerdes nada.
 
-Todo vive en `.claude/empezar/`:
+Todo vive en `.claude/plan-socialista/`:
 
 | Archivo | Para qué | Quién lo escribe |
 |---|---|---|
@@ -68,7 +68,7 @@ Todo vive en `.claude/empezar/`:
    - `registro.md`: añade lo contado (con id estable, p. ej. `run-<id>`, `sup-<fecha>-<tema>`,
      `issue-<n>`) y cierra los pendientes que ya están resueltos.
    - `sesiones/<AAAA-MM-DD>.md`: fuentes leídas, huecos, lo que se dijo y lo que se calló.
-   - Commit solo de `.claude/empezar/` en la rama de trabajo y `git push -u origin <rama>`. No toca
+   - Commit solo de `.claude/plan-socialista/` en la rama de trabajo y `git push -u origin <rama>`. No toca
      código, así que no hace falta sellar ni pasar por la suite.
 
    Si el push falla, dilo: la próxima sesión repetiría el parte.

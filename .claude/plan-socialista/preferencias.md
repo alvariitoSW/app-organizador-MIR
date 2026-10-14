@@ -1,4 +1,4 @@
-# Preferencias del parte de arranque
+# Preferencias del plan socialista (el parte de arranque)
 
 > Este archivo lo cambias tú. Claude lo lee al empezar cada sesión y no lo edita.
 
