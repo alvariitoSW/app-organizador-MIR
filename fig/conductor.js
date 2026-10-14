@@ -725,7 +725,8 @@
     function casaEn(st) {
       if (st.guardia || st.enCurso.some((x) => x.k !== "meal")) return null;   /* comer en casa sí es estar en casa */
       const v = ((D.esc && D.esc.casa) || []).find((x) => t >= x[0] - 1e-6 && t < x[1]);
-      return v ? { e: v[2], a: v[0], b: v[1], t: v[3] || "" } : null;
+      const m = st.enCurso.find((x) => x.k === "meal");   /* la comida que toca: el plato se toca como su cartel */
+      return v ? { e: v[2], a: v[0], b: v[1], t: v[3] || "", i: m ? m.i : null } : null;
     }
     function manoSVG(x, y, f, s, extra) {
       return '<g transform="translate(' + x + " " + y + ") scale(" + (f * s) + " " + s + ')">' + (extra || "") + '<path class="cd-mano" d="M-15 2 Q-16 -10 -7 -12 L8 -12 Q16 -10 15 -1 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/><path class="cd-manga" d="M-17 10 Q-18 20 -8 22 L8 22 Q18 20 17 10 L14 10 Q6 16 -7 13 Q-15 11 -15 2Z"/></g>';
@@ -771,9 +772,9 @@
         o.push(Rr(250, 440, 40, 36, 6, "#c46a1a"), Rr(300, 452, 30, 24, 4, "#4a90c4"));   /* el bote y una taza */
         if (pose === "mesa") {   /* sentado a la mesa: el plato delante, el tenedor y el cuchillo en las manos */
           const desay = /desay/i.test(cs.t || "");
-          o.push('<ellipse cx="300" cy="566" rx="118" ry="34" fill="#e9e4da"/><ellipse cx="300" cy="562" rx="86" ry="22" fill="#f7f4ee"/>',
-            desay ? Rr(250, 540, 50, 20, 6, "#d9a35f") + Rr(306, 542, 46, 18, 6, "#c98a4a") + '<circle cx="290" cy="548" r="7" fill="#e85b3a"/>'
-              : '<ellipse cx="280" cy="556" rx="34" ry="12" fill="#e2b05a"/><ellipse cx="324" cy="560" rx="26" ry="10" fill="#5aa04a"/><ellipse cx="300" cy="566" rx="22" ry="8" fill="#b5562e"/>');
+          o.push((cs.i != null ? '<g data-o="ev" data-i="' + esc(String(cs.i)) + '" style="cursor:pointer">' : "<g>") + '<ellipse cx="300" cy="566" rx="118" ry="34" fill="#e9e4da"/><ellipse cx="300" cy="562" rx="86" ry="22" fill="#f7f4ee"/>' +
+            (desay ? Rr(250, 540, 50, 20, 6, "#d9a35f") + Rr(306, 542, 46, 18, 6, "#c98a4a") + '<circle cx="290" cy="548" r="7" fill="#e85b3a"/>'
+              : '<ellipse cx="280" cy="556" rx="34" ry="12" fill="#e2b05a"/><ellipse cx="324" cy="560" rx="26" ry="10" fill="#5aa04a"/><ellipse cx="300" cy="566" rx="22" ry="8" fill="#b5562e"/>') + "</g>");
           if (desay) o.push(Rr(430, 520, 44, 46, 8, "#f3efe6"));
           luces.push((desay ? '<g stroke="#ffffff" stroke-width="3" fill="none" opacity=".5" stroke-linecap="round"><path d="M444 516c-8-12 8-18 0-30"/><path d="M460 516c-8-12 8-18 0-30"/></g>' : "") +
             manoSVG(150, 580, 1, 1.5, '<path d="M14 -10L40 -70M34 -70v-16M40 -70v-18M46 -70v-16" stroke="#c9ced6" stroke-width="5" stroke-linecap="round" fill="none"/>') +
