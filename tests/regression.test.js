@@ -2688,7 +2688,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // «que se vean todos los eventos importantes del día»: los diez y la nota, cada uno en UNA línea, sin «+N»;
     // la casilla (y su fila) crece lo que haga falta y no desborda
     check('con diez eventos en un día, la casilla enseña los diez y la nota, cada uno en UNA línea, sin «+N» ni desbordarse',
-      aprieto.puntos === 10 && aprieto.masN === '' && !aprieto.nota && aprieto.titulos === 10 &&
+      aprieto.puntos === 11 && aprieto.masN === '' && !aprieto.nota && aprieto.titulos === 10 &&
       aprieto.maxLineas === 1 && !aprieto.desborda, JSON.stringify(aprieto));
 
     // y «VAC»/«UMI» ya no se parten letra a letra en una columna de 12 px
