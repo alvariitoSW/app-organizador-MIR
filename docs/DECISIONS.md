@@ -672,3 +672,13 @@ conductor van tres tarjetas: check-in y asistente (399 px: «¿Cómo amaneces?»
   el próximo evento y lo importante, los hábitos en una fila; «Para hoy» sigue como tarjeta. ≈ 1 250 px.
 
 **Pendiente:** el visto bueno (E1 o E2, o mezcla) antes de tocar `fig/conductor.js` y `renderHoy`.
+
+## 2026-10-14 · Arreglo · La sesión que empieza a la vez que la jornada, y el día de mañana ya levantado
+
+**Elegido:** en la ruta del conductor, lo que empieza a la misma hora que el turno (la sesión general de las
+8:00 con la jornada de las 8:00) va primero y el cartel del turno se pone donde acaba: antes la vuelta solo se
+calculaba para lo que empezaba *después* del turno, y el autobús se quedaba en «8:00 Sesión general» hasta las
+15:00. Y al mirar otro día, el conductor arranca seis minutos después de levantarse (de camino al desayuno),
+no cinco minutos antes dentro de la cochera a oscuras. Prueba 292 (en cadena; revertida la ruta cae solo ella).
+
+**Supuestos:** si dos cosas empiezan a la vez que el turno, manda la que acaba más tarde.

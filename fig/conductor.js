@@ -123,6 +123,10 @@
        parada: sin esto, el autobús se quedaba en el cartel «10:00 Sesión» hasta las 15:00 */
     const vuelta = [];
     it.filter((T) => TURNO(T.k)).forEach((T) => {
+      /* lo que empieza a la vez que el turno (la sesión de las 8:00 con la jornada de las 8:00) va primero:
+         el cartel del turno se pone donde acaba. Sin esto el autobús se quedaba en «8:00 Sesión» todo el día */
+      const aLaVez = it.filter((c) => c !== T && !TURNO(c.k) && Math.abs(c.a - T.a) < 1e-6 && c.b < T.b - 1e-6).sort((x, y) => y.b - x.b)[0];
+      if (aLaVez) T.a = aLaVez.b;
       const dentro = it.filter((c) => c !== T && !TURNO(c.k) && c.a > T.a + 1e-6 && c.b < T.b - 1e-6).sort((x, y) => x.a - y.a);
       dentro.forEach((c, j) => { const fin = dentro[j + 1] ? dentro[j + 1].a : T.b; if (fin - c.b >= 0.25) vuelta.push(Object.assign({}, T, { a: c.b, b: fin, cont: true, padre: T.a })); });
     });

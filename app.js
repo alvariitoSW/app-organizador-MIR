@@ -5403,7 +5403,7 @@ function hoyBusDatos(key,inf,esHoy){
   const now=new Date(),modo=key===hoyK?'hoy':(key<hoyK?'pasado':'futuro');
   const primera=noches.filter(function(x){return x.a<=0;})[0];
   return {dia:dia,noches:noches,pendiente:pendiente,senales:senales,ph:ph,modo:modo,vivo:modo==='hoy',
-    ahora:modo==='hoy'?now.getHours()+now.getMinutes()/60:(modo==='pasado'?23.99:(primera?Math.max(0,primera.b-0.05):6)),
+    ahora:modo==='hoy'?now.getHours()+now.getMinutes()/60:(modo==='pasado'?23.99:(primera?Math.max(0,primera.b+0.1):6)),   /* otro día: ya levantado, de camino a lo primero (no dentro de la cochera a oscuras) */
     sueno:n&&n.h?{h:Math.round(n.h*10)/10,obj:suenoCfg().min}:null,
     comida:{kc:ft.kcal||0,obj:pl.kcal||0,pr:ft.prot||0,prObj:protObj()||0},
     sol:sol.sale&&sol.pone?[horaDecimal(sol.sale),horaDecimal(sol.pone)]:[7,19],manana:wakeM,

@@ -12376,6 +12376,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!r && r.h20.guardia && r.h20.busca && r.h20.buscav === '5 h · quedan 12 h' && r.h20.rot === '☾ GUARDIA · sales 08:00' && r.h20.manga === 'rgb(238, 242, 247)' && r.h20.panel === '#1c0a0f' &&
       !r.h10.guardia && !r.h10.busca && r.h10.rot === '📷 RAYOS · RADIOLOGÍA' && r.h10.manga === 'rgb(47, 95, 179)' && r.h10.panel === '#04131a', JSON.stringify(r));
   }
+  // 292) LA SESIÓN QUE EMPIEZA A LA VEZ QUE LA JORNADA, EN CADENA (módulo cargado en Hoy): con jornada 8–15 y
+  // sesión 8:00–8:30, el cartel de «Trabajo» se pone a las 8:30 y a las 11:00 el autobús está parado en «Trabajo»,
+  // no en la sesión; y mirando otro día (mañana), el conductor arranca ya levantado, de camino al desayuno, no en
+  // la cochera a oscuras. Fija: el autobús se quedaba en «8:00 Sesión general» hasta las 15:00 y el día de
+  // mañana se abría dentro del garaje.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.waitForFunction(() => !!(window.Conductor && window.Conductor.ruta), null, { timeout: 8000 }).catch(() => {});
+    const r = await page.evaluate(() => { const C = window.Conductor, P = window.PG; if (!C || !C.ruta) return null;
+      const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 8, b: 8.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 14, b: 14.5, t: 'Comida', k: 'meal', i: 2 }], noches: [{ a: -1.3, b: 6.75, t: 'noche' }] };
+      const R = C.ruta(D), E = R.est, c1 = C.camDe(R, 8.2), c2 = C.camDe(R, 11), trabajo = E.filter((e) => e.t === 'Trabajo' && !e.cont)[0];
+      const d = new Date(); d.setDate(d.getDate() + 1); const km = P.iso(d), Dm = P.hoyBusDatos(km, P.dayInfo(km), false), n0 = Dm.noches.filter((x) => x.a <= 0)[0];
+      return { trabajoA: trabajo && trabajo.a, en0812: E[c1.k] && E[c1.k].t, en11: E[c2.k] && E[c2.k].t, parado11: c2.parado, modo: Dm.modo, ahora: Dm.ahora, wake: n0 ? n0.b : null }; });
+    check('la sesión de las 8:00 va antes que la jornada: «Trabajo» se pone a las 8:30 y a las 11:00 el autobús está parado en «Trabajo»; mañana se abre ya levantado',
+      !!r && r.trabajoA === 8.5 && r.en0812 === 'Sesión general' && r.en11 === 'Trabajo' && r.parado11 && r.modo === 'futuro' && (r.wake == null || r.ahora > r.wake), JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
