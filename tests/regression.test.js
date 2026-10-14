@@ -12533,6 +12533,55 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /0\.55s/.test(r.antes.dur) && r.antes.n === 0 && r.izq.ftr === 'translateX(600px)' && r.izq.fx === 600 && r.izq.lx === 0 && r.izq.n > 0 && r.der.ftr === 'translateX(-600px)' && r.der.fx === -600 && r.der.lx === 0 &&
       r.vuelve.n > 0 && r.vuelve.ltr === 'translateX(600px)' && r.fin.fx === 0 && r.fin.n === 0, JSON.stringify(r));
   }
+  // 297) LAS GUARDIAS QUE QUEDAN DE R1, EN CADENA: en Ajustes se pone el último día de R1 (el fin del mes dentro de
+  // tres); en Mes, bajo el abono, sale «Quedan de R1» con el total y Urgencias y UMI por separado (los meses sin
+  // pintar cuentan su cupo); al pintar el mes siguiente con 1 Urg + 1 UMI, la cuenta usa esas dos; al poner dos
+  // semanas de vacaciones en un mes sin pintar, quita 2 de Urgencias y lo dice (−2 🏖️); y al tocarla se abre mes
+  // a mes, con «cupo» solo en los meses sin pintar. Fija: no había forma de ver cuántas guardias te quedan de R1.
+  {
+    const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), m = (n) => new Date(d.getFullYear(), d.getMonth() + n, 1), k = (x) => P.iso(x);
+      const fin = k(new Date(d.getFullYear(), d.getMonth() + 4, 0)), sig = m(1), vac = m(2);
+      /* el lunes de la segunda semana del mes de las vacaciones: dos semanas de lunes a domingo */
+      const lun = new Date(vac.getTime()); while (lun.getDay() !== 1) lun.setDate(lun.getDate() + 1); lun.setDate(lun.getDate() + 7);
+      const dom = new Date(lun.getTime()); dom.setDate(dom.getDate() + 13);
+      const sigK = k(sig).slice(0, 7), vacK = k(vac).slice(0, 7), d1 = sigK + '-10', d2 = sigK + '-20', SB = P.store.rotation.shiftByDay || {};
+      P.__t297 = { finR1: P.store.rotation.finR1, nVac: (P.store.rotation.vacaciones || []).length, mode: P.store.rotation.mode, tab: P.ui.tab,
+        sbd: JSON.stringify(Object.keys(SB).filter((x) => x.slice(0, 7) === sigK || x.slice(0, 7) === vacK).reduce((a, x) => (a[x] = SB[x], a), {})) };
+      /* los dos meses de la prueba, sin guardias puestas: el de las vacaciones tiene que contar por cupo */
+      P.store.rotation.mode = 'date'; Object.keys(SB).filter((x) => (x.slice(0, 7) === sigK || x.slice(0, 7) === vacK) && P.isGuardia(P.shiftById((SB[x] || {}).shift))).forEach((x) => P.setDayOverride(x, null, '')); P.save();
+      return { fin, d1, d2, sigK, vIni: k(lun), vFin: k(dom) }; });
+    await gotoTab('cfg', 'rotacion');
+    await page.waitForTimeout(180);
+    await page.fill('#main input[data-a="fin-r1"]', ini.fin).catch(() => {});
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(150);
+    const lee = () => page.evaluate(() => { const e = document.querySelector('#main .r1g'); if (!e) return null; const n = (q) => { const x = e.querySelector(q); return x ? +x.textContent.replace(/\D/g, '') : null; };
+      return { total: n('.r1n'), urg: n('.r1p.urg b'), umi: n('.r1p.umi b'), vac: (e.querySelector('.r1f') || {}).textContent || '', abierto: e.open }; });
+    await gotoTab('month');
+    await page.click('[data-a="mon-today"]').catch(() => {});
+    await page.waitForTimeout(250);
+    const r = { fin: await page.evaluate(() => window.PG.finR1()), a: await lee() };
+    r.sig = await page.evaluate((k) => (window.PG.guardiasR1().meses.filter((m) => m.key === k)[0] || {}).por || {}, ini.sigK);   /* lo que contaba el mes que viene, por cupo */
+    // pinto el mes que viene: 1 Urgencias y 1 UMI (el resto del mes, nada)
+    await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.d1, 'sh-g', 'urg'); P.setDayOverride(x.d2, 'sh-g', 'umi'); P.save(); P.render(); }, ini);
+    r.b = await lee();
+    // dos semanas de vacaciones en un mes sin pintar
+    await page.evaluate((x) => { window.PG.addVacation(x.vIni, x.vFin, 'Vacaciones 297'); }, ini);
+    await page.waitForTimeout(150);
+    r.c = await lee();
+    await page.click('#main .r1g summary').catch(() => {});
+    await page.waitForTimeout(150);
+    r.d = await page.evaluate((k) => { const e = document.querySelector('#main .r1g'), rows = e ? [...e.querySelectorAll('.r1d > span')] : [];
+      return { abierto: !!(e && e.open), filas: rows.length, sinCupoSig: rows.some((s) => /^\D+1 \+ 1$/.test(s.textContent.trim())), conCupo: rows.filter((s) => /cupo/.test(s.textContent)).length }; }, ini.sigK);
+    await page.evaluate((x) => { const P = window.PG, t = P.__t297; P.store.rotation.vacaciones.length = t.nVac; if (t.finR1 == null) delete P.store.rotation.finR1; else P.store.rotation.finR1 = t.finR1;
+      P.setDayOverride(x.d1, null, ''); P.setDayOverride(x.d2, null, '');
+      const sb = JSON.parse(t.sbd); Object.keys(sb).forEach((k) => { P.store.rotation.shiftByDay[k] = sb[k]; }); P.store.rotation.mode = t.mode; P.ui.tab = t.tab; delete P.__t297; P.save(); P.render(); }, ini);
+    check('en Mes sale «Quedan de R1» hasta el día puesto en Ajustes, con Urgencias y UMI aparte; pintar el mes siguiente usa sus guardias; dos semanas de vacaciones quitan 2 de Urgencias; al tocar, mes a mes',
+      r.fin === ini.fin && !!r.a && r.a.total === r.a.urg + r.a.umi && r.a.total > 0 &&
+      !!r.b && r.b.urg === r.a.urg - ((r.sig.urg || 0) - 1) && r.b.umi === r.a.umi - ((r.sig.umi || 0) - 1) && (r.sig.urg || 0) + (r.sig.umi || 0) > 2 &&
+      !!r.c && r.c.urg === r.b.urg - 2 && r.c.umi === r.b.umi && /−2/.test(r.c.vac) &&
+      r.d.abierto && r.d.filas === 4 && r.d.sinCupoSig && r.d.conCupo >= 2, JSON.stringify({ ini, r }));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

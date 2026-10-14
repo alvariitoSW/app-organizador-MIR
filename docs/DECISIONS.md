@@ -773,3 +773,25 @@ de guardia (la guardia es trabajo aunque duermas allí).
 
 **Supuestos:** si una comida cae fuera del turno, la comes en casa; mirar a los lados desde casa sigue enseñando
 la ciudad y el campo (los eventos y el entreno), no otras habitaciones.
+
+## Las guardias que te quedan de R1, en Mes (2026-10-14)
+
+**Elegido:**
+- **Una línea bajo el abono del mes:** «🩺 Quedan de R1 **43** · 28 Urg · 15 UMI · −2 🏖️». Al tocarla se abre
+  mes a mes (Urg + UMI, con «cupo» en los meses que aún no has pintado) y cómo se cuenta.
+- **Hasta el 31 de mayo de 2027**, cambiable en Ajustes → Rotación («Último día de R1»).
+- **Cómo se cuenta:** los meses que ya has pintado, las guardias puestas de hoy en adelante; los que no, el cupo
+  de ese mes repartido como lo repartes tú (4 Urgencias + 2 UMI); el mes en curso sin pintar, la parte que queda.
+- **Vacaciones:** cada 5 días laborables de un mismo periodo de vacaciones ya puesto en el calendario, en un mes
+  sin pintar, quitan una guardia de Urgencias (si no quedan, del siguiente tipo). En un mes pintado no se
+  descuenta: al pintarlo ya has puesto las que haces de verdad.
+- **Prueba 297** (en cadena: Ajustes fija el último día → Mes enseña la cuenta → pintar el mes siguiente con
+  1 Urg + 1 UMI la cambia → dos semanas de vacaciones quitan 2 de Urgencias → al tocar, mes a mes). Sin el
+  descuento o sin la línea, cae solo ella.
+
+**Descartado:** un total fijo de R1 a mano (hay que saberlo y mantenerlo), descontar ya las vacaciones aún no
+puestas o enseñar «si gastas tus 4 semanas» (preferiste solo lo puesto), y repartir el descuento entre Urgencias
+y UMI.
+
+**Supuestos:** una semana son 5 días laborables (lunes a viernes) del mismo periodo; las semanas sueltas de
+menos de 5 laborables no descuentan; las guardias de días ya pasados no cuentan como «quedan».

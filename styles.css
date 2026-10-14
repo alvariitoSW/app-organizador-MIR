@@ -3726,6 +3726,17 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .carne{display:block;width:100%;max-width:420px;border:0;background:none;padding:0;margin:6px 0 2px;cursor:pointer;border-radius:14px}
 .carne svg{display:block;width:100%;height:auto}
 .carne:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+/* las guardias que quedan de R1, bajo el abono: una línea; al tocar, mes a mes */
+.r1g{max-width:420px;margin:2px 0 6px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13px}
+.r1g summary{display:flex;align-items:baseline;gap:7px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;padding:7px 10px;cursor:pointer;list-style:none}
+.r1g summary::-webkit-details-marker{display:none}
+.r1g .r1t{color:var(--muted);font-weight:600}.r1g .r1n{font-size:17px}
+.r1g .r1p{padding:1px 7px;border-radius:999px;background:var(--chip,rgba(127,127,127,.12))}.r1g .r1p b{font-size:14px}
+.r1g .r1p.urg b{color:#e5484d}.r1g .r1p.umi b{color:#3b82f6}
+.r1g .r1f{margin-left:auto;color:var(--muted);font-size:12px}
+.r1g .r1d{display:flex;flex-wrap:wrap;gap:4px 12px;padding:0 10px 8px;font-variant-numeric:tabular-nums}
+.r1g .r1d i{font-style:normal;color:var(--muted);margin-right:4px}.r1g .r1d small{color:var(--muted)}
+.r1g .r1d p{flex-basis:100%;margin:4px 0 0;color:var(--muted);font-size:12px}.r1g .r1d p.r1h{margin:0 0 2px}
 .hoja .card.mesres{border:0;padding:0;background:none;box-shadow:none;margin:0}
 
 /* ============ Semana y Hoy con una fila de mandos; el asistente y los hábitos plegados ============ */
