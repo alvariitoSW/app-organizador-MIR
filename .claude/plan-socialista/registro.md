@@ -8,21 +8,12 @@ tú puedes añadir o tachar a mano.
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
 primero; tanda 2, lo visual con maquetas primero**.
 
-### Tanda 1 · reglas y arreglos rápidos
+### Tanda 1 · reglas y arreglos rápidos — HECHA (desplegada el 2026-10-14)
 
-- [enc-vac-mano] Vacaciones **solo a mano**: nada las pone sola (ni la app ni un tipo de día «Vacaciones»), y un **contador de días gastados** contando solo de lunes a viernes · sup. 4
-- [enc-horas-servicio] Horas de servicio del abono = **solo trabajo** (guardia y jornada); saliente, vacaciones, festivos y libres no suman · sup. 3
-- [enc-mes-eventos] Mes: una línea por evento, pero que **se vean todos los eventos importantes del día** · sup. 2
-- [enc-carretera-mes] La carretera del mes, **siempre el mes natural** (del 1 al último día) · sup. 5
-- [enc-otro-dia] Al mirar otro día, el conductor empieza **a la hora de levantarte** · sup. 11
-- [enc-noche] La noche dura **hasta la hora de levantarte** del tipo de día, no el objetivo de sueño · sup. 12
-- [enc-toque-pasado] «Apuntar con un toque» también en **días pasados** · sup. 14
-- [enc-bus-hora] «Fui en bus»: la hora del plan para el hábito **y además la hora real** (que se pueda corregir) · sup. 19
-- [enc-taxi-precio] Taxi: poder poner **lo que costó ese día** (va a Dinero) · sup. 20
-- [enc-tiempos-ajustes] Ducha, café, bici y margen del último bus, **editables en Ajustes** · sup. 21
-- [enc-cafes] **Apuntar los cafés**: suelen ser 2 por la mañana antes de salir y, algún día de guardia, uno en la comida; el reloj del sueño los tiene en cuenta. Ojo: fuma a diario (eso lo consume más que el café) · sup. 23
-- [enc-siesta-mano] La siesta del saliente **se pone a mano** (no la elige la app) · sup. 24
-- [enc-sin-pasos] Comer: si un plato no tiene receta, **sin pasos inventados** (solo ingredientes) · sup. 25
+Vacaciones a mano + días gastados, horas de servicio solo de trabajo, todos los eventos en el Mes, carretera
+del mes natural, otro día a la hora de levantarte, noche hasta levantarte, un toque en días pasados, bus con
+hora real, taxi con su precio, tiempos de la mañana en Ajustes, cafés, siesta del saliente a mano y platos sin
+pasos inventados. Ver docs/DECISIONS.md («Repaso de supuestos, tanda 1»).
 
 ### Tanda 2 · lo visual (maquetas primero)
 
@@ -55,3 +46,4 @@ _Ninguno: los 30 de la semana del 07 al 14 de octubre se repasaron el 2026-10-14
 - [rama-cfac5e9] 2026-10-14 · main y rama iguales · ok
 - [issues-0] 2026-10-14 · ningún issue ni PR abierto · ok
 - [aparc-parte-diario] 2026-10-14 · recordado: falta la hora · abierto
+- [tanda1-repaso] 2026-10-14 · tanda 1 del repaso desplegada (724/724 pruebas) · hecha
