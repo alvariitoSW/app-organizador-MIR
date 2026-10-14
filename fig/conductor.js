@@ -78,6 +78,9 @@
 .cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
 .cd-barra,.cd-barrap{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
 .cd-nxl{font-size:9.5px}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
+/* en los temas claros la pantallita es blanca: «Ahora: …» iba en blanco y lo siguiente en ámbar claro, y no se leían
+   (de guardia la pantallita sigue oscura, aunque el tema sea claro) */
+.cd.cd-claro:not(.guardia) .cd-nxa{fill:var(--cd-ink)}.cd.cd-claro:not(.guardia) .cd-nxb{fill:#9a6700}
 .cd-arc0{fill:none;stroke:#1f2a3d;stroke-width:5;stroke-linecap:round}.cd-arc{fill:none;stroke:var(--cd-cyan);stroke-width:5;stroke-linecap:round}
 .cd-esp{fill:#1b2333;stroke:#38e1ff;stroke-width:3}.cd-espd{stroke:#4ad08a}.cd-espc{fill:#5b6a8a}.cd-esp.on{stroke-width:6;filter:drop-shadow(0 0 6px #38e1ff)}.cd-espd.on{filter:drop-shadow(0 0 6px #4ad08a)}
 .cd-lado{fill:#0d1726;stroke-width:2}.cd-ladoi{stroke:#38e1ff}.cd-ladod{stroke:#4ad08a}.cd-ladot{font:800 13px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-ladoit{fill:#7fecff}.cd-ladodt{fill:#7cf0b0}
@@ -871,13 +874,15 @@
       const ahora = AHORA != null ? AHORA : t, cab = D.cab || {}, o = [];
       const cs = casaEn(st);
       if (cs) return casaLado(cual, ahora, cab);
-      const cielo = cual === "izq" ? ["#4f93d8", "#d7ebff"] : ["#5aa0e0", "#e3f1ff"];
+      /* el cielo de los lados, el mismo que el de frente (la luz de la hora que miras): era uno fijo de día y a las
+         21:40 salían el sol y el azul a los lados con la noche de frente */
+      const L = luz(t, D.sol || [7, 18.6]), cielo = [L.top, L.bot];
       o.push('<defs><linearGradient id="cdl' + cual + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + cielo[0] + '"/><stop offset="1" stop-color="' + cielo[1] + '"/></linearGradient></defs>');
       o.push(Rr(0, 0, 600, 600, 0, "url(#cdl" + cual + ")"));
       if (cual === "izq") {
         const izq = cab.izq || {}, viene = izq.viene || [], ph = izq.ph || [];
         const evs = (D.dia || []).filter((e) => e.k === "plan" && e.b > e.a).sort((a, b) => a.a - b.a);
-        o.push('<g fill="#fff" opacity=".8"><ellipse cx="460" cy="150" rx="56" ry="15"/><ellipse cx="486" cy="138" rx="28" ry="14"/></g><g transform="translate(0 26)">');
+        o.push('<g fill="#fff" opacity="' + (0.8 * Math.max(0.15, L.d)).toFixed(2) + '"><ellipse cx="460" cy="150" rx="56" ry="15"/><ellipse cx="486" cy="138" rx="28" ry="14"/></g><g transform="translate(0 26)">');
         /* al fondo, lo importante que viene: la torre y el hospital, con sus vallas */
         o.push(Rr(70, 150, 92, 330, 2, "#9fb3cf"), Rr(84, 136, 64, 18, 2, "#9fb3cf"));
         for (let y = 170; y < 470; y += 26) for (let x = 80; x < 156; x += 20) o.push(Rr(x, y, 12, 14, 1, "#b9c9de"));
@@ -907,7 +912,7 @@
         o.push('<path d="M520 496V330q0-14 14-14h18" stroke="#6c7686" stroke-width="6" fill="none"/>' + Rr(546, 310, 22, 10, 3, "#9aa3b2") + "</g>");
       } else {
         const der = cab.der || {}, habs = der.habs || [];
-        o.push('<circle cx="120" cy="130" r="34" fill="#fff6c8" opacity=".35"/><circle cx="120" cy="130" r="18" fill="#fff3b8"/>');
+        if (L.d > 0) o.push('<g class="cd-ladosol" opacity="' + L.d.toFixed(2) + '"><circle cx="120" cy="130" r="34" fill="#fff6c8" opacity=".35"/><circle cx="120" cy="130" r="18" fill="#fff3b8"/></g>');
         o.push(Pp([[0, 410], [120, 230], [190, 280], [300, 140], [430, 290], [520, 240], [600, 330], [600, 430], [0, 430]], "#6f8aa8"), Pp([[300, 140], [330, 180], [312, 176], [296, 190], [276, 172]], "#eef4fb"));
         o.push(Pp([[0, 430], [0, 360], [160, 330], [340, 350], [600, 320], [600, 430]], "#3d6b45"));
         /* el río */

@@ -12818,6 +12818,178 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.come && r.c.manos && !r.c2.come && !r.c2.manos && r.qui.ciudad && r.qui.ph === 6 && r.pos.hab === 7 &&
       r.d.casa && r.coc.cocina && !r.coc.ciudad && r.coc.ph === 6 && r.dor.dorm && r.dor.hab === 7, JSON.stringify(r));
   }
+  // 305) EN EL CAJÓN «MÁS» SE LEE EL RECUADRO DE LA SECCIÓN EN LA QUE ESTÁS, EN CADENA: tema Arena (por Ajustes) →
+  // Dinero por el cajón → se abre el cajón → luego Hábitos por el cajón y se vuelve a abrir. Fija: el cajón es un <nav> y
+  // le caía la regla de las pestañas `nav button.on` (degradado de marca con la línea gris encima: no se leía).
+  {
+    const vp305 = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('ajustes', 'aspecto');
+    const arena = await page.$('#main [data-a="tema-pre"][data-id="arena"]');
+    if (arena) { await arena.click(); await page.waitForTimeout(300); }
+    const mira = async (t) => {
+      await gotoTab(t);
+      await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(320);
+      const r = await page.evaluate((t) => {
+        const lum = (c) => { const m = String(c).match(/[\d.]+/g) || [0, 0, 0]; const v = m.slice(0, 3).map((x) => { x = +x / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+        const con = (a, b) => { const x = lum(a), y = lum(b); return Math.round((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05) * 10) / 10; };
+        const b = document.querySelector('#drawer .cti.on[data-t="' + t + '"]');
+        if (!b) return { hay: false };
+        const cs = getComputedStyle(b), fondo = cs.backgroundColor;
+        return { hay: true, imagen: cs.backgroundImage, t: con(getComputedStyle(b.querySelector('.t')).color, fondo), v: con(getComputedStyle(b.querySelector('.v')).color, fondo) };
+      }, t);
+      await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(320);
+      return r;
+    };
+    const r = { arena: !!arena, dinero: await mira('dinero'), habitos: await mira('habitos') };
+    check('en el cajón «Más» el recuadro de la sección en la que estás se lee (sin el degradado de las pestañas), también en Arena',
+      r.arena && ['dinero', 'habitos'].every((k) => r[k].hay && r[k].imagen === 'none' && r[k].t >= 4.5 && r[k].v >= 3), JSON.stringify(r));
+    await page.setViewportSize(vp305);
+  }
+
+  // 306) EN LOS TEMAS CLAROS NO HAY FRANJA GRIS EN EL BORDE DERECHO, EN CADENA (a 412×915, tema Arena de la 305): se abre
+  // y se cierra el cajón «Más» y en Dinero se compara el margen derecho con el izquierdo, píxel a píxel. Fija: la sombra del
+  // cajón cerrado (escondido fuera de la pantalla) asomaba por la derecha en todas las pantallas.
+  {
+    const vp306 = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('dinero');
+    await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(320);
+    const abierto = await page.evaluate(() => getComputedStyle(document.getElementById('drawer')).boxShadow);
+    await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(400);
+    await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(80);
+    const png = (await page.screenshot()).toString('base64');
+    const r = await page.evaluate(async (png) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + png; await img.decode();
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+      const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+      const col = (x) => { const d = cx.getImageData(x, 160, 1, 600).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; return Math.round(s / (d.length / 4)); };
+      return { claro: !document.documentElement.classList.contains('dark'), izq: col(4), der: col(img.width - 4), ancho: img.width };
+    }, png);
+    r.abierto = abierto !== 'none';
+    check('en un tema claro, con el cajón «Más» cerrado, el borde derecho es igual que el izquierdo (sin la sombra del cajón asomando)',
+      r.claro && r.ancho === 412 && r.abierto && Math.abs(r.izq - r.der) <= 6, JSON.stringify(r));
+    await page.setViewportSize(vp306);
+  }
+
+  // 307) EN LOS TEMAS CLAROS SE LEE LA PANTALLITA DEL CONDUCTOR, EN CADENA: tema Papel por Ajustes → Hoy (conductor a
+  // las 11:00) → tema Noche HUD por Ajustes → Hoy otra vez. Fija: «Ahora: Trabajo · hasta 15:00» iba en blanco sobre la
+  // pantallita blanca (y la línea de debajo, en ámbar claro); en oscuro tiene que seguir siendo clara.
+  {
+    const lcd = async () => {
+      await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
+      await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
+      return page.evaluate(() => {
+        const C = window.PG.conductor(); if (!C || !C.c) return { hay: false };
+        C.c.actualiza(Object.assign({}, C.d, { ahora: 11, vivo: false, esc: Object.assign({}, C.d.esc || {}, { casa: [] }) }));
+        const lum = (c) => { const m = String(c).match(/[\d.]+/g) || [0, 0, 0]; const v = m.slice(0, 3).map((x) => { x = +x / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+        const con = (a, b) => { const x = lum(a), y = lum(b); return Math.round((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05) * 10) / 10; };
+        const cd = document.querySelector('#main .cd'), f = (s) => getComputedStyle(cd.querySelector(s)).fill, panel = f('.cd-lcd');
+        return { hay: true, claro: cd.classList.contains('cd-claro'), txt: cd.querySelector('[data-r="nxa"]').textContent, a: con(f('[data-r="nxa"]'), panel), b: con(f('[data-r="nxb"]'), panel) };
+      });
+    };
+    const tema = async (id) => { await gotoTab('ajustes', 'aspecto'); const b = await page.$('#main [data-a="tema-pre"][data-id="' + id + '"]'); if (b) { await b.click(); await page.waitForTimeout(300); } return !!b; };
+    const r = { papel: await tema('papel') };
+    r.claro = await lcd();
+    r.hud = await tema('hud');
+    r.oscuro = await lcd();
+    check('la pantallita del conductor se lee en los temas claros («Ahora: …» y lo siguiente) y sigue leyéndose en los oscuros',
+      r.papel && r.hud && r.claro.hay && r.claro.claro && /^Ahora:/.test(r.claro.txt) && r.claro.a >= 4.5 && r.claro.b >= 3 &&
+      r.oscuro.hay && !r.oscuro.claro && r.oscuro.a >= 4.5 && r.oscuro.b >= 3, JSON.stringify(r));
+  }
+
+  // 308) MIRAR A LOS LADOS RESPETA LA HORA, EN CADENA (conduce Hoy, fuera de casa): a las 11:00 se mira a la izquierda
+  // (cielo de día) y se vuelve; a las 21:40 se mira a la izquierda y a la derecha. Fija: los lados tenían un cielo fijo de
+  // día y a las 21:40 salían el sol y el azul con la noche de frente.
+  {
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="scene"]'), null, { timeout: 8000 }).catch(() => {});
+    const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false, sol: [8, 19.5], esc: Object.assign({}, C.d.esc || {}, { casa: [] }) })); return true; }, h);
+    const lum = (hex) => { const v = [1, 3, 5].map((i) => { const x = parseInt(String(hex).slice(i, i + 2), 16) / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return Math.round((0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) * 1000) / 1000; };
+    const lado = async (cual) => {
+      const sel = '#main .cd g[data-o="' + (cual === 'izq' ? 'mirai' : 'mirad') + '"]:not(.cd-espejo)';
+      const b = await page.$(sel); if (!b) return { hay: false };
+      await page.click(sel); await page.waitForTimeout(650);
+      const r = await page.evaluate(() => { const l = document.querySelector('#main .cd [data-r="lado"]'), st = l.querySelector('linearGradient stop');
+        return { hay: true, cielo: st ? st.getAttribute('stop-color') : '', frente: document.querySelector('#main .cd [data-r="sky0"]').getAttribute('stop-color'), sol: l.querySelectorAll('circle[fill="#fff3b8"]').length }; });
+      const v = await page.$('#main .cd [data-r="lado"] [data-o="frente"]'); if (v) { await v.click(); await page.waitForTimeout(650); }
+      r.lum = lum(r.cielo); return r;
+    };
+    const r = {};
+    await pon(11); r.dia = await lado('izq');
+    await pon(21 + 40 / 60); r.izq = await lado('izq'); r.der = await lado('der');
+    check('al mirar a los lados el cielo es el de la hora: de día azul, a las 21:40 de noche y sin sol (como de frente)',
+      r.dia.hay && r.dia.lum > 0.15 && r.izq.hay && r.der.hay && r.izq.cielo === r.izq.frente && r.der.cielo === r.der.frente &&
+      r.izq.lum < 0.05 && r.der.lum < 0.05 && r.der.sol === 0, JSON.stringify(r));
+  }
+
+  // 309) LA BARRA DE ARRIBA CABE CON LA CHAPITA DE LAS SERIES, EN CADENA (a 412×915): se empieza una rutina, «✓ todas
+  // como están» en los dos ejercicios (8 series), se termina y se guarda. Fija: con «8 series» junto a «Entreno», «☰ Más»
+  // acababa en 425 px de 412 y se cortaba, durante la sesión y después de guardarla.
+  {
+    const vp309 = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    await gotoTab('gym');
+    const copia309 = await page.evaluate(() => { const P = window.PG, S = P.store, c = JSON.stringify({ r: S.gym.rutinas, g: S.gym.registro, s: S.gym.sesiones });
+      S.gym.rutinas = [{ id: 'rt309', nombre: 'Torso 309', notas: '', dias: [], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }, { ex: 'Remo con barra', series: 4, reps: 8 }] }];
+      const hoy = P.iso(new Date()); S.gym.registro = S.gym.registro.filter((x) => x.fecha !== hoy);
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.gymPanel = 'rutinas'; P.save(); P.render(); return c; });
+    await page.waitForTimeout(250);
+    const barra = () => page.evaluate(() => { const t = document.getElementById('tabs'), m = t.querySelector('[data-a="drawer-toggle"]');
+      return { chapa: (t.querySelector('.tb') || { textContent: '' }).textContent, mas: Math.round(m.getBoundingClientRect().right), ancho: innerWidth, sobra: t.scrollWidth - t.clientWidth }; });
+    const emp = await page.$('#main [data-a="ses-empezar"][data-id="rt309"]');
+    if (emp) { await emp.click(); await page.waitForTimeout(400); }
+    for (let i = 0; i < 2; i++) { const t = await page.$('#main [data-a="gv-todas"]'); if (t) { await t.click(); await page.waitForTimeout(350); } }
+    const r = { emp: !!emp, vivo: await barra() };
+    const fin = await page.$('#main [data-a="gv-terminar"]');
+    if (fin) { await fin.click(); await page.waitForTimeout(300); }
+    const siete = await page.$('#main [data-a="gv-rpe-fin"][data-d="7"]');
+    if (siete) { await siete.click(); await page.waitForTimeout(450); }
+    r.guardada = await barra();
+    check('con la chapita «8 series» junto a «Entreno», «☰ Más» cabe en la pantalla durante la sesión y después de guardarla',
+      r.emp && !!fin && !!siete && ['vivo', 'guardada'].every((k) => /^8 series$/.test(r[k].chapa) && r[k].mas <= r[k].ancho - 4 && r[k].sobra <= 0), JSON.stringify(r));
+    await page.evaluate((c) => { const P = window.PG, o = JSON.parse(c); P.store.gym.rutinas = o.r; P.store.gym.registro = o.g; P.store.gym.sesiones = o.s;
+      P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymVivo = null; P.ui.gymDesc = null; P.save(); P.render(); }, copia309);
+    await page.setViewportSize(vp309);
+  }
+
+  // 310) EN LA CARRETERA DEL MES LOS RÓTULOS NO SE PISAN, EN CADENA (conduce Mes → Carretera, a 412×915): se mira desde hoy
+  // y se avanza un día con la flecha. Fija: la línea de debajo («7:00 · 18:00 · 19:15») se salía de su placa, el título de
+  // los carteles largos tocaba los bordes y el cartel de comidas de mañana tapaba el de pasado mañana («…MIDAS»).
+  {
+    const vp310 = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    /* y un evento de nombre largo dentro de tres días: en un cartel lejano se corta con «…» en vez de salirse */
+    const copia310 = await page.evaluate(() => { const P = window.PG, ev = P.eventosS(), c = JSON.stringify(ev);
+      ev.push({ id: 'ev310', titulo: 'Un evento con un nombre bastante largo de verdad', hora: '17:00', modo: 'fecha', fecha: P.iso(P.addDays(new Date(), 3)), dow: [], color: '#38e1ff', on: true });
+      P.save(); return c; });
+    await gotoTab('month');
+    const ruta = await page.$('#main [data-a="cal-vista"][data-v="ruta"]');
+    if (ruta) { await ruta.click(); }
+    await page.waitForFunction(() => !!document.querySelector('#main .ct svg g'), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(200);
+    const mide = () => page.evaluate(() => {
+      const s = document.querySelector('#main .ct svg'); if (!s) return { hay: false };
+      const fuera = [], com = [];
+      s.querySelectorAll('g[data-o]').forEach((g) => { const r = g.querySelector(':scope>rect'); if (!r || !/^ct-(sig|pared)/.test(r.getAttribute('class') || '')) return;
+        const rb = r.getBBox(); if (rb.width < 40) return;   /* los de muy lejos son puntos: no se leen */
+        if (r.getAttribute('class') === 'ct-sigm') com.push(rb);
+        g.querySelectorAll(':scope>text').forEach((t) => { const tb = t.getBBox(); if (tb.x < rb.x - 1 || tb.x + tb.width > rb.x + rb.width + 1) fuera.push(t.textContent + ' ' + Math.round(tb.width) + '>' + Math.round(rb.width)); }); });
+      let pisan = 0;
+      for (let i = 0; i < com.length; i++) for (let j = i + 1; j < com.length; j++) { const a = com[i], b = com[j];
+        if (a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height) pisan++; }
+      return { hay: true, fuera, comidas: com.length, pisan };
+    });
+    const r = { ruta: !!ruta, hoy: await mide() };
+    const sv = await page.$('#main .ct svg');
+    if (sv) { await sv.focus(); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(200); }
+    r.manana = await mide();
+    check('en la carretera del mes cada rótulo cabe en su cartel y el cartel de comidas de mañana no tapa el de pasado mañana',
+      r.ruta && r.hoy.hay && r.hoy.comidas >= 2 && r.hoy.pisan === 0 && !r.hoy.fuera.length && r.manana.hay && r.manana.pisan === 0 && !r.manana.fuera.length,
+      JSON.stringify(r));
+    await page.evaluate((c) => { const P = window.PG, ev = P.eventosS(); ev.length = 0; JSON.parse(c).forEach((e) => ev.push(e)); P.save(); P.render(); }, copia310);
+    await page.setViewportSize(vp310);
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

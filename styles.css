@@ -46,10 +46,15 @@ nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px
 nav::-webkit-scrollbar{display:none}
 nav button{appearance:none;border:1px solid transparent;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12.5px;
   color:var(--ink2);border-radius:999px;cursor:pointer;white-space:nowrap;letter-spacing:.02em;transition:color .18s,background .18s,border-color .18s}
-nav button:hover{color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
-nav button.on{color:#04121c;background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 70%,var(--brand)));
+/* solo las pestañas de arriba: el cajón «Más» también es un <nav> y estas reglas le pintaban el recuadro
+   de la sección en la que estás (degradado de marca con su línea gris encima: no se leía) */
+#tabs button:hover{color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+#tabs button.on{color:#04121c;background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 70%,var(--brand)));
   border-color:color-mix(in srgb,var(--brand) 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,var(--brand) 85%,transparent)}
-html:not(.dark) nav button.on{color:#fff}
+html:not(.dark) #tabs button.on{color:#fff}
+/* con la chapita de las series junto a «Entreno», las cuatro pestañas no cabían en 392 px y «☰ Más» se salía de la
+   pantalla (acababa en 425 de 412): con chapita, un poco menos de relleno a los lados */
+#tabs:has(.tb) button{padding-left:9px;padding-right:9px}
 .wknav{display:inline-flex;align-items:center;gap:6px}
 .wknav[hidden]{display:none}
 .navrow{display:flex;flex-direction:column}
@@ -565,9 +570,11 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 #drawerScrim.on{opacity:1;pointer-events:auto}
 #drawer{display:block;position:fixed;top:0;right:0;bottom:0;width:min(330px,88vw);z-index:56;overflow-x:hidden;overflow-y:auto;
   background:color-mix(in srgb,var(--card) 97%,transparent);border-left:1px solid var(--line);
-  box-shadow:-18px 0 50px -20px rgba(0,0,0,.7);padding:16px 14px 30px;
+  padding:16px 14px 30px;
   transform:translateX(100%);transition:transform .2s ease}
-#drawer.on{transform:translateX(0)}
+/* la sombra, solo con el cajón abierto: escondido fuera de la pantalla, su sombra asomaba por el borde
+   derecho y en los temas claros dejaba una franja gris en TODAS las pantallas */
+#drawer.on{transform:translateX(0);box-shadow:-18px 0 50px -20px rgba(0,0,0,.7)}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .drawer-head strong{font-size:15px}
 #drawer button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}

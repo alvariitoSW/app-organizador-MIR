@@ -66,14 +66,23 @@
     const p = pr(a[0], a[1], a[2]), q = pr(b[0], b[1], b[2]), zw = Math.min(a[2], b[2]);
     return '<path class="' + cls + '" style="stroke-width:' + Math.max(0.6, w * F / zw).toFixed(2) + 'px" d="M' + f1(p[0]) + " " + f1(p[1]) + "L" + f1(q[0]) + " " + f1(q[1]) + '"/>';
   }
+  /* lo que ocupa un texto en negrita, en «em»: mayúsculas anchas, espacios estrechos y el resto como una minúscula */
+  const anchoEm = (s) => Math.max(3.5, Array.from(String(s)).reduce((a, c) => a + (c === " " ? 0.32 : /[A-ZÁÉÍÓÚÑÜ]/.test(c) ? 0.78 : 0.6), 0));
+  const corta = (s, sw, fmin) => { s = String(s); if (anchoEm(s) * fmin <= sw * 0.8) return s;   /* a letra mínima, con más margen: ocupa más */
+    while (s.length > 1 && anchoEm(s + "…") * fmin > sw * 0.8) s = s.slice(0, -1); return s.trimEnd() + "…"; };
   /* un cartel plano frente al conductor, con su texto a la medida del cartel */
   function cartel(x, y, z, w, h, cls, txt, sub, tcls, o) {
     if (z < NEAR) return "";
     const p = pr(x, y, z), q = pr(x + w, y + h, z), sw = q[0] - p[0], sh = p[1] - q[1]; if (sw < 7 || sw > 330) return "";
-    const fs = Math.max(4, Math.min(16, sw / Math.max(6, txt.length) * 1.7));
-    return '<g' + (o ? ' data-o="' + esc(o) + '"' : "") + '><rect class="' + cls + '" x="' + f1(p[0]) + '" y="' + f1(q[1]) + '" width="' + f1(sw) + '" height="' + f1(sh) + '" rx="' + f1(sh * 0.08) + '"/>' +
+    /* la letra, a la medida del cartel Y de lo que dice (las mayúsculas en negrita ocupan más): antes se calculaba con
+       un ancho por letra de minúscula y solo con el título, y «GUARDIA URG · vie 16» tocaba los bordes y la línea de
+       debajo («7:00 · 18:00 · 19:15») se salía de la placa */
+    const entero = txt + (sub ? " · " + sub : "");
+    txt = corta(txt, sw, 4); sub = sub ? corta(sub, sw, 3.5) : sub;   /* un nombre largo en un cartel lejano: se corta con «…» (entero, en su <title>) */
+    const fs = Math.max(4, Math.min(16, sw * 0.9 / anchoEm(txt))), fs2 = sub ? Math.max(3.5, Math.min(fs * 0.72, sw * 0.9 / anchoEm(sub))) : 0;
+    return '<g' + (o ? ' data-o="' + esc(o) + '"' : "") + '>' + (/…$/.test(txt) || /…$/.test(sub || "") ? "<title>" + esc(entero) + "</title>" : "") + '<rect class="' + cls + '" x="' + f1(p[0]) + '" y="' + f1(q[1]) + '" width="' + f1(sw) + '" height="' + f1(sh) + '" rx="' + f1(sh * 0.08) + '"/>' +
       '<text class="' + tcls + '" x="' + f1(p[0] + sw / 2) + '" y="' + f1(q[1] + sh * (sub ? 0.5 : 0.66)) + '" style="font-size:' + f1(fs) + 'px">' + esc(txt) + "</text>" +
-      (sub ? '<text class="' + tcls + '" x="' + f1(p[0] + sw / 2) + '" y="' + f1(q[1] + sh * 0.88) + '" style="font-size:' + f1(fs * 0.72) + 'px;opacity:.85">' + esc(sub) + "</text>" : "") + "</g>";
+      (sub ? '<text class="' + tcls + '" x="' + f1(p[0] + sw / 2) + '" y="' + f1(q[1] + sh * 0.88) + '" style="font-size:' + f1(fs2) + 'px;opacity:.85">' + esc(sub) + "</text>" : "") + "</g>";
   }
   const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
   const dur = (m) => { m = Math.max(0, Math.round(m)); return m >= 60 ? Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : "") : m + " min"; };
@@ -179,8 +188,11 @@
          a la izquierda, bajo) y los hábitos que tocan, como banderín en el mojón */
       if (d.gym) { o.push(seg([5.6, 0, z - 1.0], [5.6, 1.3, z - 1.0], "ct-post", 0.14));
         o.push(cartel(3.4, 1.3, z - 1.02, 5.2, 1.5, "ct-sigg", "ENTRENO" + (d.gym.h ? " · " + d.gym.h : ""), d.gym.t || fecha, "ct-sigtg", d.k)); }
-      if (d.com && d.com.length) { o.push(seg([-6.4, 0, z - 1.0], [-6.4, 1.3, z - 1.0], "ct-post", 0.14));
-        o.push(cartel(-9.4, 1.3, z - 1.02, 5.6, 1.5, "ct-sigm", d.com.length === 1 ? "COMIDA" : d.com.length + " COMIDAS", d.com.join(" · "), "ct-sigtm", d.k)); }
+      /* si el día siguiente también lleva cartel de comidas, éste va más bajo: a la misma altura tapaba el de detrás
+         y de él solo asomaba «…MIDAS» */
+      const yc = dias[i + 1] && dias[i + 1].com && dias[i + 1].com.length ? 0.15 : 1.3;
+      if (d.com && d.com.length) { o.push(seg([-6.4, 0, z - 1.0], [-6.4, yc, z - 1.0], "ct-post", 0.14));
+        o.push(cartel(-9.4, yc, z - 1.02, 5.6, 1.5, "ct-sigm", d.com.length === 1 ? "COMIDA" : d.com.length + " COMIDAS", d.com.join(" · "), "ct-sigtm", d.k)); }
       if (d.hab && z - 0.3 >= NEAR) { o.push(poly([[mx, mh, z - 0.3], [mx, mh + 0.7, z - 0.3], [mx + 0.9, mh + 0.5, z - 0.3]], "ct-pen"));
         const p = pr(mx + 0.3, mh + 0.42, z - 0.31), fs = Math.max(2.5, 0.3 * F / z); if (fs >= 3.5) o.push('<text class="ct-pent" x="' + f1(p[0]) + '" y="' + f1(p[1] + fs * 0.35) + '" style="font-size:' + f1(fs) + 'px">' + d.hab + "</text>"); }
       (d.evs || []).slice(0, 2).forEach((ev, j) => {   /* las señales de los eventos, azules, alternando de lado */

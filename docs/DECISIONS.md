@@ -902,3 +902,30 @@ contar 0 en los meses pasados sin pintar.
 **Supuestos:** las 4 que te quitas salen de Urgencias (si no hubiera, del siguiente tipo); una guardia del día
 de hoy cuenta como «puesta», no como hecha, hasta mañana; el cupo de cada mes es el de «Guardias este mes» (6 de
 serie, repartidas 4 + 2).
+
+## Fallos de la auditoría visual, arreglados con lo mínimo (2026-10-14)
+
+**Elegido:**
+- **Cajón «Más»:** las reglas de la pestaña activa (`nav button.on`, y su `:hover`) pasan a `#tabs`; el cajón también es
+  un `<nav>` y le pintaban el degradado de marca con la línea gris encima. El recuadro activo se queda con su borde.
+- **Franja gris a la derecha (temas claros):** comprobado quitando la sombra: era la del cajón cerrado. La sombra va
+  solo con el cajón abierto.
+- **Pantallita del conductor en temas claros:** «Ahora: …» en tinta oscura y lo siguiente en ámbar oscuro (#9a6700);
+  de guardia la pantallita sigue oscura y no cambia.
+- **Mirar a los lados:** el cielo es el de la hora (la misma `luz()` que de frente); el sol solo de día y las nubes se
+  apagan de noche.
+- **Barra con «8 series»:** con chapita, 9 px de relleno a los lados en vez de 13: «☰ Más» acaba en 393 px.
+- **Carretera:** la letra de cada cartel se calcula con el ancho real de lo que dice (también la línea de debajo); un
+  nombre que ni a letra mínima cabe se corta con «…» (entero en su `<title>`), y si pasado mañana también hay cartel
+  de comidas, el de mañana va más bajo para no taparlo.
+- **Pruebas 305–310**, una por arreglo; al quitar cada arreglo cae solo la suya.
+
+**Descartado:** reescribir los estilos de las pestañas por clase (rediseño), cambiar el texto de la chapita («8»),
+y separar todos los carteles de días seguidos (con perspectiva no hay una altura que valga para una cadena larga).
+
+**No son fallos (investigado):** el récord que no salió (60 × 8 dejando 2 reps vale 80 de 1RM estimado; 62,5 × 8 sin
+decir cuántas te quedaban, 79,2) y la comida a las 18:00 con el entreno a las 18:30 (es la ventana fija «si entrenas,
+18:00–18:30» de Sueño → a qué hora comes; queda pendiente de decidir si debe seguir al fin del entreno).
+
+**Supuestos:** «8 series» que sigue después de guardar es lo que se hizo hoy y está bien; los carteles de menos de
+40 px de ancho no se miran (son puntos lejanos).
