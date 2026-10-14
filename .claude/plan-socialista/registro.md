@@ -5,15 +5,47 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
+Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
+primero; tanda 2, lo visual con maquetas primero**.
+
+### Tanda 1 · reglas y arreglos rápidos
+
+- [enc-vac-mano] Vacaciones **solo a mano**: nada las pone sola (ni la app ni un tipo de día «Vacaciones»), y un **contador de días gastados** contando solo de lunes a viernes · sup. 4
+- [enc-horas-servicio] Horas de servicio del abono = **solo trabajo** (guardia y jornada); saliente, vacaciones, festivos y libres no suman · sup. 3
+- [enc-mes-eventos] Mes: una línea por evento, pero que **se vean todos los eventos importantes del día** · sup. 2
+- [enc-carretera-mes] La carretera del mes, **siempre el mes natural** (del 1 al último día) · sup. 5
+- [enc-otro-dia] Al mirar otro día, el conductor empieza **a la hora de levantarte** · sup. 11
+- [enc-noche] La noche dura **hasta la hora de levantarte** del tipo de día, no el objetivo de sueño · sup. 12
+- [enc-toque-pasado] «Apuntar con un toque» también en **días pasados** · sup. 14
+- [enc-bus-hora] «Fui en bus»: la hora del plan para el hábito **y además la hora real** (que se pueda corregir) · sup. 19
+- [enc-taxi-precio] Taxi: poder poner **lo que costó ese día** (va a Dinero) · sup. 20
+- [enc-tiempos-ajustes] Ducha, café, bici y margen del último bus, **editables en Ajustes** · sup. 21
+- [enc-cafes] **Apuntar los cafés**: suelen ser 2 por la mañana antes de salir y, algún día de guardia, uno en la comida; el reloj del sueño los tiene en cuenta. Ojo: fuma a diario (eso lo consume más que el café) · sup. 23
+- [enc-siesta-mano] La siesta del saliente **se pone a mano** (no la elige la app) · sup. 24
+- [enc-sin-pasos] Comer: si un plato no tiene receta, **sin pasos inventados** (solo ingredientes) · sup. 25
+
+### Tanda 2 · lo visual (maquetas primero)
+
+- [enc-ciudad-trabajo] Carretera: **el trabajo es una ciudad «Trabajo»** en la que entras y te mueves mientras trabajas; al acabar, sales con un cartel hacia **un pueblecito a comer** o **un parque rural a entrenar** · sup. 6 y 16
+- [enc-lloretazo-ruta] Lloretazo: **ida y vuelta en carretera**; el acantilado solo el rato de estar allí · sup. 17
+- [enc-comer-dibujo] En la parada de una comida fuera de casa, **que se vea al conductor comiendo** · sup. 18
+- [enc-casa-lados] Desde casa, mirar a los lados enseña **otras habitaciones** (cocina, dormitorio…) · sup. 7
+- [enc-quiosco-poste] **Más sitio** en el quiosco («Para hoy») y en el poste de hábitos: que quepa todo · sup. 8
+
+### A futuro (sin fecha)
+
+- [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
 - [aparc-parte-diario] Programar el parte para que salga solo cada mañana (falta decidir la hora) · desde 2026-10-14
 
 ## Supuestos sin confirmar
 
 <!-- - [sup-AAAA-MM-DD-tema] el supuesto · DECISIONS.md:línea · contado el AAAA-MM-DD -->
-- [sup-2026-10-14-r1] Guardias de R1: semana = 5 laborables del mismo periodo; guardias pasadas no cuentan · DECISIONS.md:796 · contado 2026-10-14
-- [sup-2026-10-14-casa] Comida fuera del turno = en casa; mirar a los lados desde casa = ciudad y campo · DECISIONS.md:774 · contado 2026-10-14
-- [sup-2026-10-14-cabina] Palanca «ayer/mañana» aunque mires otro día; quiosco 3, poste 4 · DECISIONS.md:745 · contado 2026-10-14
-- [sup-resto-2026-10-07a14] Otros 27 supuestos de DECISIONS.md (Tanda 3b → Tanda E, del 07 al 14 oct) · contados como «y 27 más» el 2026-10-14
+_Ninguno: los 30 de la semana del 07 al 14 de octubre se repasaron el 2026-10-14._
+
+## Cerrados
+
+- 2026-10-14 · **Valen:** 1 (R1: semana = 5 laborables), 9 (cabina de guardia también de día), 10 (manda lo que acaba más tarde), 13 (sin hora no es parada), 15 (taxi solo por la mañana), 26–30 (internos)
+- 2026-10-14 · **No valen → encargos de arriba:** 2, 3, 4, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
 
 ## Contado
 
