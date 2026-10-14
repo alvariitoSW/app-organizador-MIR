@@ -26,6 +26,8 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [enc-arte] Llevar el aspecto visual de la app a otro nivel con varios agentes: fase 0 auditoría (5 agentes) →
   fase 1 dirección de arte (estilo: «sorpréndeme») → fase 2 maquetas por sección (+ /anatomy) → fase 3 construir,
   empezando por **lo común de toda la app**. Iconos: «algo con vida propia, sorpréndeme».
+- [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
+  haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
 
 ### A futuro (sin fecha)
 
