@@ -697,3 +697,23 @@ solo ella); 46, 113 y 277 adaptadas (la marca del evento es el punto o la hora).
 
 **Supuestos:** el nombre del evento se recorta más («8:15 S. c…»): la hora es lo que no se adivina y el nombre
 entero está al tocar el día y en el título.
+
+## 2026-10-14 · Tanda E, segunda maqueta · La cabina con mandos de verdad (las de salpicadero, descartadas)
+
+**Lo que pidió:** ninguna de las dos (E1, E2): ventana más alta y no un salpicadero lleno de datos, sino una
+cabina que se parezca a la de verdad, con mandos que se tocan, y mirar a los lados para ver el resto del día.
+
+**Propuesto (`design/hoy-cabina2/`, capturas en `shots/`):**
+- **F · Al frente:** la ventana el doble de alta (la carretera llega al volante). Abajo solo mandos: el reloj del
+  cuadro (la hora y cuánto queda de lo de ahora), la máquina de los billetes con «Para hoy», la palanca de
+  cambios (R ayer · N hoy · D mañana), la radio y las dos manos en el volante.
+- **I · Retrovisor izquierdo:** mira a la izquierda, la ciudad: cada evento de hoy es un cartel en su edificio;
+  al fondo, más pálidas, las vallas de lo importante que viene (examen, guardia); en la acera, el quiosco de
+  «Para hoy».
+- **D · Retrovisor derecho:** mira a la derecha, el campo: el polideportivo en la ladera con el entreno y la
+  cuenta de la semana, el merendero junto al río con la comida y las kcal, y el poste de madera con una flecha
+  por hábito y su luz.
+- **R · La radio:** «Radio Sueño» con lo dormido; los botones de emisora 1–9 son el «¿cómo amaneces?», el
+  volumen el ánimo y el dial lo que te propones.
+
+**Pendiente:** el visto bueno antes de tocar `fig/conductor.js`.
