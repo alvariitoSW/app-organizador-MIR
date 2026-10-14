@@ -96,7 +96,7 @@
 .cd-dial{fill:#2a3448;stroke:#38e1ff;stroke-width:2}.cd-dialm{stroke:#38e1ff;stroke-width:3;stroke-linecap:round}.cd-rint{fill:#e9f2ff;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
 .cd-rx{fill:#1b2333;stroke:#ffd66b;stroke-width:2}.cd-rxt{fill:#ffd66b;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd.casa .cd-frame,.cd.casa .cd-seal,.cd.casa .cd-pillar,.cd.casa .cd-visor,.cd.casa [data-r="rot"],.cd.casa [data-o="atras"],.cd.casa .cd-espejo,.cd.casa [data-r="volante"]{display:none}
-.cd.casa{--cd-dash:#3b2a1f;--cd-dashe:#5c4330}
+.cd.casa{--cd-dash:#3b2a1f;--cd-dashe:#5c4330}.cd.come [data-r="volante"] .cd-mano,.cd.come [data-r="volante"] .cd-manga{display:none}
 .cd-pan{transition:transform .55s cubic-bezier(.45,.05,.25,1)}.cd-pan.sin{transition:none}@media (prefers-reduced-motion:reduce){.cd-pan{transition:none}}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -171,6 +171,7 @@
     if (e.k === "work") return "ciudad";
     if (e.k === "gym") return "deporte";
     const t = (it || []).find((x) => TURNO(x.k) && e.a >= x.a && e.a < x.b);
+    if (!t && e.k === "meal") return "pueblo";   /* a comer, al pueblo (donde está casa) */
     return t ? (t.k === "guard" ? "hospital" : "ciudad") : "bosque";
   }
   /* el ambiente de un trozo de carretera: el de su parada; entre dos, se mezclan con un fundido de
@@ -179,19 +180,29 @@
     const E = R.est, n = E.length; if (!n) return "bosque";
     const f = (w - ZSTOP) / GAP, i = Math.floor(f);
     if (i < 0) return E[0].amb; if (i >= n - 1) return E[n - 1].amb;
-    return hash(semilla) < ease((f - i - 0.3) / 0.4) ? E[i + 1].amb : E[i].amb;
+    let fr = f - i;
+    /* la ciudad del trabajo sigue hasta su cartel de salida (y el parque, alrededor del entreno); luego, el fundido con lo siguiente */
+    if (MUEVE(E[i]) || E[i].k === "gym") { const lim = (CITY + 8) / GAP; if (fr < lim) return E[i].amb; fr = (fr - lim) / (1 - lim); }
+    return hash(semilla) < ease((fr - 0.3) / 0.4) ? E[i + 1].amb : E[i].amb;
   }
   /* dónde va el autobús a una hora: parado en la última parada mientras haya algo en marcha; entre
      una y otra, de camino */
+  /* EN LA CIUDAD «TRABAJO» (y en la carretera del Lloretazo) el autobús no se queda parado: entra por el cartel y
+     va avanzando despacio entre los edificios mientras dura; al acabar sale por el otro cartel hacia lo siguiente */
+  const MUEVE = (e) => !!e && !e.dep && (e.k === "work" || esLL(e)), CITY = 0.5 * GAP;
   function camDe(R, t) {
     const E = R.est;
     if (!E.length) return { s: 0, k: -1, parado: true };
     if (t < E[0].a) return { s: E[0].s - GAP, k: -1, parado: false, p: 1, sig: 0 };
     let k = 0; for (let j = 0; j < E.length; j++) if (E[j].a <= t) k = j;
-    const e = E[k], q = E[k + 1];
-    if (t <= e.hold || !q) return { s: e.s, k, parado: true };
-    const p = (t - e.hold) / Math.max(0.01, q.a - e.hold);
-    return { s: e.s + (q.s - e.s) * ease(p), k, parado: false, p, sig: k + 1 };
+    const e = E[k], q = E[k + 1], mueve = MUEVE(e);
+    if (t <= e.hold || !q) {
+      if (!mueve) return { s: e.s, k, parado: true };
+      const f = clamp((t - e.a) / Math.max(0.01, (q ? e.hold : e.b) - e.a), 0, 1);
+      return { s: e.s + CITY * f, k, parado: true, dentro: f };
+    }
+    const p = (t - e.hold) / Math.max(0.01, q.a - e.hold), s0 = e.s + (mueve ? CITY : 0);
+    return { s: s0 + (q.s - s0) * ease(p), k, parado: false, p, sig: k + 1 };
   }
 
   /* ---------- la luz ---------- */
@@ -375,7 +386,8 @@
 
     function escena(cam, L, st) {
       const ll = !st.noche && st.enCurso.find(esLL);
-      if (ll) return mirador(L, clamp((t - ll.a) / Math.max(0.1, ll.b - ll.a), 0, 1));
+      if (ll) { const ida = Math.min(0.6, (ll.b - ll.a) * 0.27);
+        if (t >= ll.a + ida && t <= ll.b - ida) return mirador(L, clamp((t - ll.a - ida) / Math.max(0.1, ll.b - ll.a - 2 * ida), 0, 1)); }
       const out = [], noche = 1 - L.d;
       out.push('<rect class="cd-ground" x="0" y="' + HY + '" width="600" height="400"/>');
       out.push(poly([[-5.2, 0, NEAR], [3.0, 0, NEAR], [3.0, 0, FAR], [-5.2, 0, FAR]], "cd-road"));
@@ -397,15 +409,12 @@
         hoja: verde("#3f8a4f", "#123020"), hoja2: verde("#5aa865", "#1a4229"), campo: verde("#2e7d4a", "#123a22"), campo2: verde("#348a52", "#154226") };
       /* el suelo primero: hierba en el bosque, el campo en el polideportivo */
       for (const b of blq) {
-        if (b.amb !== "bosque" && b.amb !== "deporte") continue;
+        if (b.amb !== "bosque" && b.amb !== "deporte" && b.amb !== "pueblo") continue;
         const xa = b.lado > 0 ? 8.05 : -11.05, xb = b.lado > 0 ? 60 : -60, za = Math.max(NEAR, b.z0 - 2), zb = b.z0 + 11;
         out.push(poly([[xa, 0.02, za], [xb, 0.02, za], [xb, 0.02, zb], [xa, 0.02, zb]], "", ' style="fill:' + (b.j % 2 ? G.hierba : G.hierba2) + '"'));
         if (b.amb === "deporte" && b.lado > 0) {
-          out.push(poly([[9.6, 0.04, b.z0], [24, 0.04, b.z0], [24, 0.04, b.z0 + 9.6], [9.6, 0.04, b.z0 + 9.6]], "", ' style="fill:' + (b.j % 2 ? G.campo : G.campo2) + '"'));
-          const ln = (a, c) => out.push(seg(a, c, "cd-line", 0.05));
-          ln([10.2, 0.05, b.z0 + 0.4], [10.2, 0.05, b.z0 + 9.2]); ln([23.4, 0.05, b.z0 + 0.4], [23.4, 0.05, b.z0 + 9.2]);
-          ln([10.2, 0.05, b.z0 + 4.8], [23.4, 0.05, b.z0 + 4.8]);
-          if (b.z0 + 0.4 > NEAR) ln([10.2, 0.05, b.z0 + 0.4], [23.4, 0.05, b.z0 + 0.4]);
+          /* el parque rural: un camino de tierra entre la hierba */
+          out.push(poly([[10.4, 0.04, Math.max(NEAR, b.z0 - 2)], [12.6, 0.04, Math.max(NEAR, b.z0 - 2)], [12.6, 0.04, b.z0 + 11], [10.4, 0.04, b.z0 + 11]], "", ' style="fill:' + mix("#b89b6a", "#2d2a22", noche * 0.8) + '"'));
         }
       }
       const cls = ["cd-ba", "cd-bb", "cd-bc", "cd-bd"];
@@ -436,6 +445,21 @@
             o.push(poly([[9.4, 0, b.z0 + 1], [9.4, 0, b.z1 - 1], [12, h, b.z1 - 3], [13.5, h * 0.8, b.z0 + 3]], "", ' style="fill:' + mix("#7a6e60", "#1d1f27", noche * 0.85) + '"'));
           }
           cosas.push({ key: b.z0, svg: o.join("") });
+        } else if (b.amb === "pueblo") {
+          /* el pueblo: casas bajas encaladas con tejado de teja, persianas verdes y un árbol entre medias */
+          const o = [], h = 3 + hash(b.j * 9 + b.lado) * 1.6, x0 = b.lado > 0 ? 8.6 : -11.6, z0 = b.z0 + 0.4, z1 = b.z1 - 1.6;
+          const cal = mix("#f1ece2", "#3a3d46", noche * 0.8), cal2 = mix("#e2dccf", "#30333b", noche * 0.8), teja = mix("#c0573a", "#3a1f1a", noche * 0.7);
+          o.push(poly([[x0, 0, z0], [x0, 0, z1], [x0, h, z1], [x0, h, z0]], "", ' style="fill:' + cal + '"'));
+          if (z0 > NEAR) o.push(poly([[x0, 0, z0], [x0 + 6 * b.lado, 0, z0], [x0 + 6 * b.lado, h, z0], [x0, h, z0]], "", ' style="fill:' + cal2 + '"'));
+          o.push(poly([[x0 - 0.5 * b.lado, h, z0 - 0.3], [x0 - 0.5 * b.lado, h, z1 + 0.3], [x0 + 2.6 * b.lado, h + 1.7, z1 + 0.3], [x0 + 2.6 * b.lado, h + 1.7, z0 - 0.3]], "", ' style="fill:' + teja + '"'));
+          if (z0 < 80) for (let z = z0 + 1; z < z1 - 1.2; z += 2.6) { const x = x0 - 0.02 * b.lado, on = noche > 0.35 && hash(b.j * 13 + z) > 0.45;
+            o.push(poly([[x, 1.1, z], [x, 1.1, z + 1.1], [x, 2.3, z + 1.1], [x, 2.3, z]], on ? "cd-wino" : "", on ? "" : ' style="fill:' + mix("#2f6e4a", "#14261c", noche) + '"')); }
+          if (z0 < 80) { const zd = (z0 + z1) / 2, x = x0 - 0.02 * b.lado; o.push(poly([[x, 0, zd], [x, 0, zd + 1], [x, 2, zd + 1], [x, 2, zd]], "", ' style="fill:' + mix("#7a4b2a", "#2a1a10", noche) + '"')); }
+          /* el campanario, de vez en cuando */
+          if (b.lado < 0 && b.j % 5 === 0 && z0 > NEAR) { const xc = -14.5, zc = z0 + 2;
+            o.push(poly([[xc, 0, zc], [xc + 2, 0, zc], [xc + 2, 11, zc], [xc, 11, zc]], "", ' style="fill:' + mix("#d9c9a8", "#3a362c", noche * 0.8) + '"'),
+              poly([[xc - 0.2, 11, zc], [xc + 2.2, 11, zc], [xc + 1, 13.4, zc]], "", ' style="fill:' + teja + '"')); }
+          cosas.push({ key: b.z0, svg: o.join("") });
         } else if (b.amb === "bosque") {
           /* tres árboles por manzana: pinos y frondosos, cada uno con su tronco */
           for (let q = 0; q < 3; q++) {
@@ -455,31 +479,18 @@
               o.push('<circle class="cd-fly" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + Math.max(0.6, 0.07 * F / z).toFixed(1) + '" opacity="' + (al * (noche - 0.5) * 2).toFixed(2) + '"/>'); }
             cosas.push({ key: z, svg: o.join("") });
           }
-        } else if (b.lado > 0) {
-          /* el polideportivo: la valla del campo y una torre de focos que se enciende al caer la tarde */
-          const o = [];
-          for (let z = b.z0; z < b.z1 + 2; z += 1.6) if (z > NEAR + 0.2) o.push(seg([8.9, 0, z], [8.9, 1.9, z], "cd-fence", 0.05));
-          o.push(seg([8.9, 1.9, Math.max(NEAR + 0.2, b.z0)], [8.9, 1.9, b.z1 + 2], "cd-fence", 0.06));
-          const zt = b.z0 + 5;
-          if (zt > NEAR + 0.3 && b.j % 2 === 0) {
-            const enc = L.d < 0.75;
-            o.push(seg([25, 0, zt], [25, 11, zt], "cd-fence", 0.16));
-            o.push(poly([[23.6, 11, zt], [26.4, 11, zt], [26.4, 12.3, zt], [23.6, 12.3, zt]], enc ? "cd-floodo" : "cd-flood"));
-            if (enc) { const c = pr(25, 11.6, zt);
-              o.push('<circle class="cd-glow" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + (2.6 * F / zt).toFixed(1) + '" style="opacity:' + (0.3 * (1 - L.d)).toFixed(2) + '"/>',
-                poly([[23.8, 11, zt], [26.2, 11, zt], [24, 0.05, zt + 6], [12, 0.05, zt + 6]], "cd-floodo", ' style="opacity:' + (0.1 * (1 - L.d)).toFixed(2) + '"')); }
-          }
-          cosas.push({ key: b.z0, svg: o.join("") });
         } else {
-          /* el gimnasio: nave baja violeta con ventanales y su letrero de cara a la calle */
-          const o = [], h = 6;
-          o.push(poly([[b.x0, 0, b.z0], [b.x0, 0, b.z1], [b.x0, h, b.z1], [b.x0, h, b.z0]], "cd-gyma"));
-          if (b.z0 > NEAR) o.push(poly([[b.x0, 0, b.z0], [b.x1, 0, b.z0], [b.x1, h, b.z0], [b.x0, h, b.z0]], "cd-gymb"));
-          if (b.z0 < 90) for (let z = b.z0 + 0.8; z < b.z1 - 1; z += 3.1) { const x = b.x0 + 0.01;
-            o.push(poly([[x, 1, z], [x, 1, z + 2.5], [x, 4.4, z + 2.5], [x, 4.4, z]], noche > 0.25 ? "cd-gymgo" : "cd-gymg")); }
-          if (b.z0 > NEAR + 0.3) { const a = pr(b.x1 + 0.6, h + 1.9, b.z0), c = pr(b.x0 - 0.6, h + 0.2, b.z0), w = c[0] - a[0], hh = c[1] - a[1];
-            if (w > 6) o.push('<rect class="cd-gyms" x="' + a[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + (hh * 0.2).toFixed(1) + '"/>' +
-              '<text class="cd-gymt" x="' + (a[0] + w / 2).toFixed(1) + '" y="' + (a[1] + hh * 0.74).toFixed(1) + '" font-size="' + (hh * 0.7).toFixed(1) + '">▬●▬ GYM</text>'); }
+          /* EL PARQUE RURAL: valla de madera, árboles redondos y, a la derecha, las barras de calistenia */
+          const o = [], xv = b.lado > 0 ? 8.9 : -11.9, mad = mix("#9b7650", "#2c2219", noche * 0.8);
+          for (let z = b.z0; z < b.z1 + 2; z += 2.2) if (z > NEAR + 0.2) o.push(seg([xv, 0, z], [xv, 1.1, z], "", 0.09).replace("<path", '<path style="stroke:' + mad + '"'));
+          if (b.z0 > NEAR - 2) o.push(seg([xv, 0.9, Math.max(NEAR + 0.2, b.z0)], [xv, 0.9, b.z1 + 2], "", 0.07).replace("<path", '<path style="stroke:' + mad + '"'));
+          for (let q = 0; q < 2; q++) { const sd = b.j * 17 + q * 5 + (b.lado > 0 ? 0 : 40), z = b.z0 + 2 + q * 5.5; if (z < NEAR + 0.3) continue;
+            const x = b.lado > 0 ? 15 + hash(sd) * 6 : -15 - hash(sd) * 6, sc = 0.9 + hash(sd + 1) * 0.4, c = pr(x, 3.4 * sc, z), r = 2.1 * sc * F / z;
+            o.push(seg([x, 0, z], [x, 1.8 * sc, z], "cd-trunk", 0.25 * sc), '<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + r.toFixed(1) + '" style="fill:' + G.hoja + '"/>'); }
+          if (b.lado > 0 && b.j % 2 === 0) { const zb = b.z0 + 4; if (zb > NEAR + 0.3) [[10.6, 2.4], [11.6, 2.0], [12.6, 1.6]].forEach(([x, hh]) => { o.push(seg([x, 0, zb], [x, hh, zb], "cd-post", 0.07), seg([x, 0, zb + 1.2], [x, hh, zb + 1.2], "cd-post", 0.07), seg([x, hh, zb], [x, hh, zb + 1.2], "cd-barra", 0.05)); }); }
+          if (b.lado < 0 && b.j % 3 === 0 && b.z0 > NEAR + 0.3) { const a = pr(-6.2, 2.6, b.z0), c = pr(-9.6, 1.6, b.z0), w = c[0] - a[0], hh = c[1] - a[1];
+            if (w < -8) o.push(seg([-7.9, 0, b.z0], [-7.9, 1.6, b.z0], "", 0.12).replace("<path", '<path style="stroke:' + mad + '"') + '<rect x="' + c[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + (-w).toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2" style="fill:' + mad + '"/>' +
+              '<text x="' + ((a[0] + c[0]) / 2).toFixed(1) + '" y="' + (a[1] + hh * 0.72).toFixed(1) + '" font-size="' + (hh * 0.6).toFixed(1) + '" text-anchor="middle" fill="#fff6e6" font-weight="900">PARQUE</text>'); }
           cosas.push({ key: b.z0, svg: o.join("") });
         }
       }
@@ -506,6 +517,26 @@
       if (D.esc && D.esc.taxi && primera && t < primera.a) { const z0 = Math.max(4.2, primera.s - cam + ZSTOP - 7.5); if (z0 < 120) out.push(taxi(z0)); }
       const cc = camDe(R, t), enGym = cc.k >= 0 && R.est[cc.k] && R.est[cc.k].k === "gym" && cc.parado && t < R.est[cc.k].b;
       if (enGym) out.push(barra(ZSTOP + 2.2, t));
+      /* LOS CARTELES DE LA CIUDAD: el de entrada antes de la parada, el de salida (con la raya roja) al acabar el
+         recorrido y, detrás, el de dirección hacia lo siguiente: el pueblo a comer, el parque a entrenar o casa */
+      R.est.forEach((e, i) => { if (!MUEVE(e) || e.cont) return; const zc = e.s - cam + ZSTOP, nom = esLL(e) ? "LLORET" : "TRABAJO";
+        /* si dentro del turno hay otra parada (la comida, una sesión), el turno vuelve en trozos: la salida va al
+           final del último trozo, no del primero (se quedaba detrás del autobús) */
+        let iu = i; R.est.forEach((x, j) => { if (j > i && x.cont && x.padre === e.a && x.k === e.k) iu = j; });
+        const zf = R.est[iu].s - cam + ZSTOP, sig = R.est.slice(iu + 1).find((x) => !x.cont) || null;
+        const panel = (z, x0, x1, y0, y1, fondo, borde, l1, l2, raya) => { if (z < NEAR + 0.3 || z > 140) return;
+          const a = pr(x0, y1, z), b = pr(x1, y0, z), w = Math.abs(b[0] - a[0]), h = b[1] - a[1], xl = Math.min(a[0], b[0]); if (w < 3) return;
+          out.push(seg([(x0 + x1) / 2, 0.15, z], [(x0 + x1) / 2, y0, z], "cd-post", 0.07));
+          out.push('<g><rect x="' + xl.toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + (h * 0.1).toFixed(1) + '" fill="' + fondo + '" stroke="' + borde + '" stroke-width="' + Math.max(0.6, h * 0.07).toFixed(2) + '"/>' +
+            (w > 22 ? '<text x="' + (xl + w / 2).toFixed(1) + '" y="' + (a[1] + h * (l2 ? 0.46 : 0.66)).toFixed(1) + '" font-size="' + (h * (l2 ? 0.34 : 0.46)).toFixed(1) + '" text-anchor="middle" font-weight="900" fill="' + (fondo === "#ffffff" ? "#13213b" : "#fff") + '" textLength="' + (w * 0.86).toFixed(1) + '" lengthAdjust="spacingAndGlyphs">' + esc(l1) + "</text>" : "") +
+            (l2 && w > 22 ? '<text x="' + (xl + w / 2).toFixed(1) + '" y="' + (a[1] + h * 0.82).toFixed(1) + '" font-size="' + (h * 0.24).toFixed(1) + '" text-anchor="middle" font-weight="800" fill="' + (fondo === "#ffffff" ? "#13213b" : "#dfe9ff") + '">' + esc(l2) + "</text>" : "") +
+            (raya ? '<path d="M' + (xl + w * 0.06).toFixed(1) + " " + (a[1] + h * 0.88).toFixed(1) + "L" + (xl + w * 0.94).toFixed(1) + " " + (a[1] + h * 0.12).toFixed(1) + '" stroke="#e5484d" stroke-width="' + (h * 0.12).toFixed(1) + '"/>' : "") + "</g>"); };
+        panel(zc - 5, -6.0, -10.4, 1.7, 3.3, "#ffffff", "#1f5fbf", nom, esLL(e) ? "ida · 35 min" : "hasta las " + hhmm(e.b));
+        /* los de salida, solo en la última media hora: antes se veían desde que entrabas y no parecía que estuvieras dentro */
+        if (t < e.b - 0.5) return;
+        panel(zf + CITY + 4, -6.0, -10.4, 1.7, 3.3, "#ffffff", "#1f5fbf", nom, "", true);
+        if (sig && zf + CITY + 9 > 6) { const dest = sig.dep ? "🏠 CASA" : sig.k === "meal" ? "🍽 PUEBLO · " + String(sig.t).toUpperCase() : sig.k === "gym" ? "🌳 PARQUE · " + String(sig.t).toUpperCase() : String(sig.t).toUpperCase();
+          panel(zf + CITY + 9, 3.6, 8.8, 2.4, 4.4, "#1f5fbf", "#ffffff", "→ " + dest, sig.dep ? "" : "a las " + hhmm(sig.a)); } });
       /* las paradas: marquesina y letrero, de lejos a cerca */
       const ps = R.est.filter((e) => !e.dep).map((e) => ({ e, zc: e.s - cam + ZSTOP })).filter((o) => o.zc > -3 && o.zc < 170).sort((a, b) => b.zc - a.zc);
       for (const { e, zc } of ps) {
@@ -684,7 +715,13 @@
       const cs = casaEn(st);
       el.classList.toggle("casa", !!cs);
       R_.vent.setAttribute("clip-path", "url(#" + (cs ? "cdcasa" : "cdwin") + ID + ")");
-      R_.manosc.style.display = "none";
+      /* a la hora de comer fuera de casa (en el trabajo), las manos sueltan el volante y sujetan el táper */
+      const come = !cs && !st.noche && st.corto && st.corto.k === "meal";
+      el.classList.toggle("come", !!come);
+      R_.manosc.style.display = come ? "" : "none";
+      if (come) R_.manosc.innerHTML = '<g transform="translate(300 790)">' + Rr(-74, -30, 148, 58, 10, "#e9eef4", 'stroke="#9fb0c4" stroke-width="3"') + Rr(-66, -22, 132, 42, 6, "#f6c56a") +
+        '<ellipse cx="-30" cy="-2" rx="22" ry="9" fill="#e9a03d"/><ellipse cx="18" cy="-4" rx="24" ry="10" fill="#7bb661"/><ellipse cx="44" cy="4" rx="14" ry="7" fill="#c9562e"/>' +
+        '<path d="M60 -60L30 -6M66 -58l-8 14M72 -55l-8 14" stroke="#cfd6df" stroke-width="5" stroke-linecap="round"/></g>' + manoSVG(214, 820, 1, 2) + manoSVG(388, 820, -1, 2);
       R_.stars.innerHTML = cs ? "" : astro(t, D.sol || [7, 18.6], L) + (L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "");
       R_.scene.innerHTML = cs ? casaSVG(cs, L) : escena(c.s, L, st);
       /* la cochera: parada en una noche o siesta, con la persiana bajada; al salir sube y te alejas;
@@ -822,8 +859,18 @@
     const Pp = (pts, fill, extra) => '<path d="M' + pts.map((p) => p[0] + " " + p[1]).join("L") + 'Z" fill="' + fill + '" ' + (extra || "") + "/>";
     const cuando = (e, ahora) => D.modo !== "hoy" ? hhmm(e.a) + "–" + hhmm(e.b) : e.b <= ahora ? "✓ ya pasó" : e.a <= ahora ? "ahora · hasta " + hhmm(e.b) : "dentro de " + dura(e.a - ahora);
     const dentro = (d) => d === 1 ? "mañana" : "dentro de " + d + " días";
+    /* «Para hoy» y los hábitos caben enteros: hasta 6 cosas y 7 hábitos (antes 3 y 4, y el resto escondido) */
+    const PHMAX = 6, HABMAX = 7;
+    const phOrden = (ph) => ph.map((x, n) => Object.assign({ n }, x)).sort((a, b) => (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0) || (b.av ? 1 : 0) - (a.av ? 1 : 0)).slice(0, PHMAX);
+    const phFila = (x, X, y, w) => '<g data-o="ph" data-n="' + x.n + '"' + (x.hecho ? ' opacity=".6"' : "") + ">" + Rr(X, y, w, 26, 3, "#f3efe4") +
+      Rr(X + 6, y + 7, 12, 12, 3, x.hecho ? "#2f9e6b" : "none", 'stroke="' + (x.av ? "#c46a1a" : "#4a5d78") + '" stroke-width="2"') + (x.hecho ? Tt(X + 12, y + 17, "✓", 11, "#fff", 900, "middle") : "") +
+      (x.sub ? Tt(X + 24, y + 12, (x.ico ? x.ico + " " : "") + x.t, 11.5, "#1d2b40", 800, "start", w - 30) + Tt(X + 24, y + 22.5, x.sub, 9, "#4a5d78", 600, "start", w - 30)
+        : Tt(X + 24, y + 17, (x.ico ? x.ico + " " : "") + x.t, 12, "#1d2b40", 800, "start", w - 30)) + "</g>";
+    const luzHab = (hb) => hb.on ? "#4ad08a" : hb.est === "min" ? "#f2a33a" : "#2a3a55";
     function ladoSVG(cual, st) {
       const ahora = AHORA != null ? AHORA : t, cab = D.cab || {}, o = [];
+      const cs = casaEn(st);
+      if (cs) return casaLado(cual, ahora, cab);
       const cielo = cual === "izq" ? ["#4f93d8", "#d7ebff"] : ["#5aa0e0", "#e3f1ff"];
       o.push('<defs><linearGradient id="cdl' + cual + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + cielo[0] + '"/><stop offset="1" stop-color="' + cielo[1] + '"/></linearGradient></defs>');
       o.push(Rr(0, 0, 600, 600, 0, "url(#cdl" + cual + ")"));
@@ -848,28 +895,21 @@
         const cartel = (e, x, y, w, col, mas) => '<g data-o="ev" data-i="' + e.i + '">' + Rr(x, y, w, 56, 8, "#0b1020", 'stroke="' + col + '" stroke-width="2.5"') +
           Tt(x + 12, y + 24, hhmm(e.a) + " " + String(e.t).toUpperCase(), 15, "#e9f2ff", 900, "start", w - 22) + Tt(x + 12, y + 44, cuando(e, ahora) + (mas ? " · +" + mas + " más" : ""), 12.5, e.b <= ahora && D.modo === "hoy" ? "#4ad08a" : "#c9bfff", 700, "start", w - 22) + "</g>";
         if (a1) o.push(cartel(a1, 352, 210, 216, "#1fa6c4", 0)); else o.push(Rr(352, 210, 216, 46, 8, "#0b1020", 'stroke="#3a4458" stroke-width="2"'), Tt(366, 238, "Sin eventos este día", 14, "#8fa6c6", 800));
-        if (a2) o.push(cartel(a2, 44, 274, 196, "#7a5cf0", Math.max(0, evs.length - 2)));
+        if (a2) o.push(cartel(a2, 14, 248, 166, "#7a5cf0", Math.max(0, evs.length - 2)));
         /* la acera y el quiosco de «Para hoy» */
         o.push(Rr(0, 486, 600, 120, 0, "#59616f"), Rr(0, 486, 600, 6, 0, "#9aa3b2"));
-        const lista = ph.map((x, n) => Object.assign({ n }, x)).sort((a, b) => (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0) || (b.av ? 1 : 0) - (a.av ? 1 : 0)).slice(0, 3);
-        const hechas = ph.filter((x) => x.hecho).length, kh = 30 + Math.max(1, lista.length) * 34 + (ph.length > 3 ? 14 : 0);
+        const lista = phOrden(ph);
+        const hechas = ph.filter((x) => x.hecho).length, kh = 32 + Math.max(1, lista.length) * 28 + (ph.length > PHMAX ? 14 : 0);
         o.push('<g>' + Rr(186, 492 - kh, 196, kh, 10, "#1f6b4f") + Rr(176, 480 - kh, 216, 22, 6, "#2f9e6b") + Tt(284, 496 - kh, ph.length ? "PARA HOY · " + hechas + " de " + ph.length : "PARA HOY", 13, "#eafff4", 900, "middle") + "</g>");
-        if (!lista.length) o.push(Rr(196, 514 - kh, 176, 30, 3, "#f3efe4"), Tt(284, 534 - kh, "✓ nada pendiente", 12.5, "#1d2b40", 800, "middle"));
-        lista.forEach((x, j) => { const y = 506 - kh + j * 34;
-          o.push('<g data-o="ph" data-n="' + x.n + '"' + (x.hecho ? ' opacity=".6"' : "") + ">" + Rr(196, y, 176, 30, 3, "#f3efe4") + Rr(202, y + 8, 12, 12, 3, x.hecho ? "#2f9e6b" : "none", 'stroke="' + (x.av ? "#c46a1a" : "#4a5d78") + '" stroke-width="2"') +
-            (x.hecho ? Tt(208, y + 18, "✓", 11, "#fff", 900, "middle") : "") + Tt(220, y + 14, (x.ico ? x.ico + " " : "") + x.t, 12, "#1d2b40", 800, "start", 146) + Tt(220, y + 26, x.sub || "", 9.5, "#4a5d78", 600, "start", 146) + "</g>"); });
-        if (ph.length > 3) o.push(Tt(284, 500, "+" + (ph.length - 3) + " más · toca la máquina de billetes", 10, "#eafff4", 700, "middle"));
+        if (!lista.length) o.push(Rr(196, 512 - kh, 176, 26, 3, "#f3efe4"), Tt(284, 529 - kh, "✓ nada pendiente", 12.5, "#1d2b40", 800, "middle"));
+        lista.forEach((x, j) => o.push(phFila(x, 196, 506 - kh + j * 28, 176)));
+        if (ph.length > PHMAX) o.push(Tt(284, 486, "+" + (ph.length - PHMAX) + " más · toca la máquina", 10, "#eafff4", 700, "middle"));
         o.push('<path d="M520 496V330q0-14 14-14h18" stroke="#6c7686" stroke-width="6" fill="none"/>' + Rr(546, 310, 22, 10, 3, "#9aa3b2") + "</g>");
       } else {
         const der = cab.der || {}, habs = der.habs || [];
         o.push('<circle cx="120" cy="130" r="34" fill="#fff6c8" opacity=".35"/><circle cx="120" cy="130" r="18" fill="#fff3b8"/>');
         o.push(Pp([[0, 410], [120, 230], [190, 280], [300, 140], [430, 290], [520, 240], [600, 330], [600, 430], [0, 430]], "#6f8aa8"), Pp([[300, 140], [330, 180], [312, 176], [296, 190], [276, 172]], "#eef4fb"));
         o.push(Pp([[0, 430], [0, 360], [160, 330], [340, 350], [600, 320], [600, 430]], "#3d6b45"));
-        /* el polideportivo en la ladera, con el entreno de hoy */
-        const gym = (D.dia || []).filter((e) => e.k === "gym" && e.b > e.a).sort((a, b) => a.a - b.a)[0];
-        o.push(Rr(330, 266, 150, 70, 4, "#4b3f7a"), Pp([[322, 268], [405, 236], [488, 268]], "#3a3163"), Rr(392, 298, 26, 38, 2, "#ffe7a6"));
-        o.push('<g data-o="' + (gym ? 'ev" data-i="' + gym.i : "tabgym") + '">' + Rr(290, 196, 230, 54, 8, "#0b1020", 'stroke="#9c86ff" stroke-width="2.5"') +
-          Tt(304, 219, gym ? "🏋 " + hhmm(gym.a) + " " + String(gym.t).toUpperCase() : "🏋 Hoy no toca entrenar", 16, "#e9e4ff", 900, "start", 204) + Tt(304, 240, gym ? (gym.h ? "✓ hecho · " : cuando(gym, ahora) + " · ") + (der.sem || "") : der.sem || "toca para ver Entreno", 12, "#c9bfff", 700, "start", 204) + "</g>");
         /* el río */
         o.push(Pp([[0, 440], [600, 422], [600, 500], [0, 518]], "url(#cdrio" + ID + ")"));
         for (let i = 0; i < 18; i++) { const x = (i * 71) % 600, y = 450 + ((i * 29) % 56); o.push('<path d="M' + x + " " + y + "h" + (18 + (i % 3) * 8) + '" stroke="#bcd6ee" stroke-width="2" opacity=".55" stroke-linecap="round"/>'); }
@@ -880,16 +920,84 @@
         o.push('<g data-o="' + (m ? 'ev" data-i="' + m.i : "comer") + '">' + Rr(42, 420, 152, 56, 4, "#f3efe4") + Tt(118, 442, m ? "🍽 " + hhmm(m.a) + " " + String(m.t).toUpperCase() : "🍽 COMIDA", 13.5, "#1d2b40", 900, "middle", 140) +
           Tt(118, 464, m && m.h ? "✓ apuntada · " + Math.round(k.kc || 0) + " kcal" : Math.round(k.kc || 0) + (k.obj ? " / " + Math.round(k.obj) : "") + " kcal", 12, "#2f9e6b", 800, "middle", 140) + "</g>");
         /* el poste de madera: una flecha por hábito, con su luz */
-        const ver = habs.slice(0, 4), y0 = 372;
-        o.push(Rr(318, y0 - 4, 10, 160, 0, "#6b4c32"));
+        const ver = habs.slice(0, HABMAX), y0 = 262;
+        o.push(Rr(318, 240, 10, 300, 0, "#6b4c32"));
         if (!ver.length) o.push(Pp([[328, y0], [480, y0], [498, y0 + 13], [480, y0 + 26], [328, y0 + 26]], "#a07650"), Tt(342, y0 + 18, "sin hábitos hoy", 12.5, "#fff8ec", 800));
-        ver.forEach((hb, j) => { const y = y0 + j * 32, luz = hb.on ? "#4ad08a" : hb.est === "min" ? "#f2a33a" : "#2a3a55";
-          o.push('<g data-o="hab" data-n="' + j + '">' + Pp([[328, y], [488, y], [508, y + 13], [488, y + 26], [328, y + 26]], "#a07650") + '<circle cx="343" cy="' + (y + 13) + '" r="6" fill="' + luz + '"/>' + Tt(356, y + 18, (hb.ico ? hb.ico + " " : "") + hb.t, 12.5, "#fff8ec", 800, "start", 140) + "</g>"); });
-        if (habs.length > 4) o.push(Tt(418, y0 + 4 * 32 + 14, "+" + (habs.length - 4) + " más en Hábitos", 10.5, "#eafff4", 700, "middle"));
+        ver.forEach((hb, j) => { const y = y0 + j * 27;
+          o.push('<g data-o="hab" data-n="' + j + '">' + Pp([[328, y], [500, y], [518, y + 11.5], [500, y + 23], [328, y + 23]], "#a07650") + '<circle cx="342" cy="' + (y + 11.5) + '" r="5.5" fill="' + luzHab(hb) + '"/>' + Tt(354, y + 16, (hb.ico ? hb.ico + " " : "") + hb.t, 12, "#fff8ec", 800, "start", 150) + "</g>"); });
+        if (habs.length > HABMAX) o.push(Tt(418, y0 + HABMAX * 27 + 12, "+" + (habs.length - HABMAX) + " más en Hábitos", 10.5, "#eafff4", 700, "middle"));
+        /* en lo alto del poste, el cartel del entreno de hoy */
+        const gym = (D.dia || []).filter((e) => e.k === "gym" && e.b > e.a).sort((a, b) => a.a - b.a)[0];
+        o.push('<g data-o="' + (gym ? 'ev" data-i="' + gym.i : "tabgym") + '">' + Rr(290, 196, 230, 54, 8, "#0b1020", 'stroke="#9c86ff" stroke-width="2.5"') +
+          Tt(304, 219, gym ? "🏋 " + hhmm(gym.a) + " " + String(gym.t).toUpperCase() : "🏋 Hoy no toca entrenar", 16, "#e9e4ff", 900, "start", 204) + Tt(304, 240, gym ? (gym.h ? "✓ hecho · " : cuando(gym, ahora) + " · ") + (der.sem || "") : der.sem || "toca para ver Entreno", 12, "#c9bfff", 700, "start", 204) + "</g>");
       }
       /* el letrero de arriba y el botón para volver a mirar al frente */
       o.push(Rr(120, 92, 360, 22, 11, "#0b1020", 'opacity=".85"'), Tt(300, 107, cual === "izq" ? "◀ MIRANDO A LA IZQUIERDA · LA CIUDAD" : "MIRANDO A LA DERECHA · EL CAMPO ▶", 11.5, "#e9f2ff", 800, "middle"));
       o.push('<g data-o="frente">' + Rr(196, 524, 208, 32, 16, "#0d1726", 'stroke="#ffd66b" stroke-width="2.5"') + Tt(300, 545, cual === "izq" ? "volver al frente ▶" : "◀ volver al frente", 15, "#ffd66b", 800, "middle") + "</g>");
+      return o.join("");
+    }
+    /* desde casa, mirar a los lados enseña otras habitaciones: a la izquierda la cocina (la nevera con los eventos
+       de hoy en pósits, el calendario con lo que viene y la libreta de «Para hoy»); a la derecha la entrada y el
+       dormitorio (en la puerta, la bolsa del gimnasio y el táper; en la pared, la hoja de hábitos) */
+    function casaLado(cual, ahora, cab) {
+      const o = [], hab = (D.dia || []).filter((e) => e.b > e.a), aviso = (x, y, w, col) => Rr(x, y, w, 56, 4, col, 'transform="rotate(-1.5 ' + (x + w / 2) + " " + (y + 28) + ')"');
+      if (cual === "izq") {
+        const izq = cab.izq || {}, viene = izq.viene || [], ph = izq.ph || [];
+        o.push(Rr(0, 0, 600, 606, 0, "#efe3c8"));
+        for (let y = 330; y < 404; y += 18) for (let x = 190 + ((y / 18) % 2) * 14; x < 600; x += 28) o.push(Rr(x, y, 26, 16, 1, "#f7efdc", 'stroke="#e2d4b4" stroke-width="1"'));   /* los azulejos */
+        o.push(Rr(184, 0, 416, 50, 0, "#c9a77a"), Rr(184, 50, 416, 6, 0, "#a8875c"));   /* los armarios de arriba */
+        /* la encimera con el fuego y el fregadero, y los cajones */
+        o.push(Rr(184, 404, 416, 14, 2, "#8c8f96"), Rr(184, 418, 416, 106, 0, "#c9a77a"));
+        for (let x = 196; x < 590; x += 98) o.push(Rr(x, 428, 88, 86, 4, "#d8b98d"), Rr(x + 34, 440, 20, 5, 2, "#7d6a52"));
+        o.push(Rr(470, 392, 100, 12, 3, "#2a2f38"), '<circle cx="496" cy="398" r="7" fill="#3a4250"/><circle cx="544" cy="398" r="7" fill="#3a4250"/>');
+        /* la nevera, con los eventos de hoy en pósits */
+        o.push(Rr(18, 96, 162, 428, 12, "#f4f6f8", 'stroke="#c9d1dc" stroke-width="3"'), '<path d="M20 250H178" stroke="#c9d1dc" stroke-width="3"/>', Rr(154, 120, 8, 100, 3, "#9aa3b2"), Rr(154, 274, 8, 120, 3, "#9aa3b2"));
+        const evs = hab.filter((e) => e.k === "plan").sort((a, b) => a.a - b.a), pend = evs.filter((e) => e.b > ahora || D.modo !== "hoy");
+        const pos = (pend.length ? pend : evs).slice(0, 4), cols = ["#ffe27a", "#ffb4c8", "#b8f0c8", "#b8dcff"];
+        if (!pos.length) o.push(aviso(30, 270, 136, "#ffe27a"), Tt(98, 304, "Sin eventos hoy", 12.5, "#3a2a00", 800, "middle"));
+        pos.forEach((e, j) => { const y = 124 + j * 96 + (j > 1 ? 10 : 0);
+          o.push('<g data-o="ev" data-i="' + e.i + '">' + aviso(30, y, 136, cols[j]) + Tt(40, y + 22, hhmm(e.a) + " " + String(e.t).toUpperCase(), 12.5, "#3a2a00", 900, "start", 118) +
+            Tt(40, y + 42, cuando(e, ahora), 11, e.b <= ahora && D.modo === "hoy" ? "#1d7a4a" : "#5a4a1a", 700, "start", 118) + "</g>"); });
+        if (pend.length > 4) o.push(Tt(98, 512, "+" + (pend.length - 4) + " más", 10.5, "#4a5d78", 700, "middle"));
+        /* el calendario de la pared: lo importante que viene */
+        o.push(Rr(456, 124, 128, 192, 4, "#ffffff", 'stroke="#c9d1dc" stroke-width="2"'), Rr(456, 124, 128, 24, 4, "#e5484d"), Tt(520, 141, "LO QUE VIENE", 11, "#fff", 900, "middle"));
+        if (!viene.length) o.push(Tt(520, 200, "nada a la vista", 11.5, "#8fa6c6", 700, "middle"));
+        viene.slice(0, 2).forEach((v, j) => { const y = 156 + j * 80;
+          o.push('<g data-o="verdia" data-k="' + v.k + '">' + Rr(464, y, 112, 70, 4, "#f4f6f8", 'stroke="' + v.col + '" stroke-width="2"') + Tt(470, y + 22, v.t, 12, "#1d2b40", 800, "start", 100) + Tt(470, y + 44, dentro(v.dias), 11.5, "#c46a1a", 800, "start", 100) + "</g>"); });
+        /* la libreta de «Para hoy», colgada de un clavo */
+        const lista = phOrden(ph), hechas = ph.filter((x) => x.hecho).length, kh = 40 + Math.max(1, lista.length) * 28;
+        o.push('<circle cx="318" cy="118" r="4" fill="#6b5a3a"/><path d="M318 118L268 132M318 118L368 132" stroke="#6b5a3a" stroke-width="2"/>', Rr(200, 130, 236, kh, 6, "#2f9e6b"), Rr(206, 160, 224, kh - 36, 3, "#eafff4"), Tt(318, 151, ph.length ? "PARA HOY · " + hechas + " de " + ph.length : "PARA HOY", 13, "#eafff4", 900, "middle"));
+        if (!lista.length) o.push(Tt(318, 182, "✓ nada pendiente", 12.5, "#1d2b40", 800, "middle"));
+        lista.forEach((x, j) => o.push(phFila(x, 212, 164 + j * 28, 212)));
+        if (ph.length > PHMAX) o.push(Tt(318, 140 + kh, "+" + (ph.length - PHMAX) + " más · toca la libreta", 10, "#1d2b40", 700, "middle"));
+        o.push(Rr(0, 524, 600, 82, 0, "#b98f6e"));
+      } else {
+        const der = cab.der || {}, habs = der.habs || [], k = D.comida || {};
+        o.push(Rr(0, 0, 600, 606, 0, "#dfe6ef"), Rr(286, 0, 314, 606, 0, "#cdd6e6"), '<path d="M286 0V524" stroke="#b9c3d4" stroke-width="3"/>');
+        /* la puerta de la calle, con lo que hay que llevarse colgado en ella */
+        o.push(Rr(40, 70, 210, 454, 4, "#8a6a48"), Rr(52, 82, 186, 442, 2, "#9b7a55"), '<circle cx="226" cy="300" r="8" fill="#e0c46a"/>', Rr(30, 60, 230, 12, 2, "#e9e2d6"));
+        const gym = hab.filter((e) => e.k === "gym").sort((a, b) => a.a - b.a)[0];
+        const meals = hab.filter((e) => e.k === "meal").sort((a, b) => a.a - b.a), m = meals.find((e) => e.b > ahora) || meals[meals.length - 1];
+        o.push('<g data-o="' + (gym ? 'ev" data-i="' + gym.i : "tabgym") + '">' + Rr(56, 130, 178, 76, 6, "#0b1020", 'stroke="#9c86ff" stroke-width="2.5"') +
+          Tt(68, 156, gym ? "🏋 " + hhmm(gym.a) + " " + String(gym.t).toUpperCase() : "🏋 Hoy no toca entrenar", 13.5, "#e9e4ff", 900, "start", 156) +
+          Tt(68, 178, gym ? (gym.h ? "✓ hecho" : cuando(gym, ahora)) : "toca para ver Entreno", 11.5, "#c9bfff", 700, "start", 156) + Tt(68, 196, der.sem || "", 11, "#c9bfff", 600, "start", 156) + "</g>");
+        o.push('<g data-o="' + (m ? 'ev" data-i="' + m.i : "comer") + '">' + Rr(56, 222, 178, 66, 6, "#f3efe4", 'stroke="#2f9e6b" stroke-width="2.5"') + Tt(68, 246, m ? "🍽 " + hhmm(m.a) + " " + String(m.t).toUpperCase() : "🍽 COMIDA", 13, "#1d2b40", 900, "start", 156) +
+          Tt(68, 270, m && m.h ? "✓ apuntada · " + Math.round(k.kc || 0) + " kcal" : Math.round(k.kc || 0) + (k.obj ? " / " + Math.round(k.obj) : "") + " kcal", 12, "#2f9e6b", 800, "start", 156) + "</g>");
+        /* en el suelo, junto a la puerta: la bolsa del gimnasio y la fiambrera */
+        o.push(Rr(56, 440, 120, 70, 18, gym ? "#4b3f7a" : "#6b6f7a"), '<path d="M86 444Q116 404 146 444" stroke="#2a2440" stroke-width="7" fill="none"/>', Rr(186, 470, 70, 40, 8, "#e9eef4", 'stroke="#9fb0c4" stroke-width="2"'), Rr(192, 476, 58, 10, 3, "#2f9e6b"));
+        /* el dormitorio: la cama al fondo y, encima, la hoja de hábitos */
+        o.push(Rr(300, 440, 300, 84, 6, "#3f5fa8"), Rr(300, 424, 120, 30, 10, "#f4f6f8"), Rr(560, 380, 40, 144, 4, "#7a5a3e"));
+        const ver = habs.slice(0, HABMAX), kh = 44 + Math.max(1, ver.length) * 30;
+        o.push(Rr(312, 112, 262, kh, 4, "#ffffff", 'stroke="#c9d1dc" stroke-width="2"'), Rr(312, 112, 262, 28, 4, "#4a90c4"), Tt(443, 131, "HÁBITOS DE HOY · " + ver.filter((h) => h.on).length + " de " + habs.length, 12, "#fff", 900, "middle", 240));
+        if (!ver.length) o.push(Tt(443, 170, "sin hábitos hoy", 12.5, "#8fa6c6", 800, "middle"));
+        ver.forEach((hb, j) => { const y = 146 + j * 30;
+          o.push('<g data-o="hab" data-n="' + j + '">' + Rr(320, y, 246, 26, 3, j % 2 ? "#f4f6f8" : "#eaf0f7") + '<circle cx="334" cy="' + (y + 13) + '" r="7" fill="' + luzHab(hb) + '"/>' +
+            Tt(348, y + 18, (hb.ico ? hb.ico + " " : "") + hb.t, 12.5, "#1d2b40", 800, "start", 210) + "</g>"); });
+        if (habs.length > HABMAX) o.push(Tt(443, 112 + kh - 6, "+" + (habs.length - HABMAX) + " más en Hábitos", 10.5, "#4a5d78", 700, "middle"));
+        o.push(Rr(0, 524, 600, 82, 0, "#a8875c"));
+      }
+      o.push(Rr(120, 92 - 24, 360, 22, 11, "#0b1020", 'opacity=".85"'), Tt(300, 83, cual === "izq" ? "◀ MIRANDO A LA IZQUIERDA · LA COCINA" : "LA ENTRADA Y EL DORMITORIO ▶", 11.5, "#e9f2ff", 800, "middle"));
+      o.push('<g data-o="frente">' + Rr(196, 540, 208, 32, 16, "#0d1726", 'stroke="#ffd66b" stroke-width="2.5"') + Tt(300, 561, cual === "izq" ? "volver al frente ▶" : "◀ volver al frente", 15, "#ffd66b", 800, "middle") + "</g>");
       return o.join("");
     }
     function tick(now) {

@@ -11712,7 +11712,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.n = await page.evaluate(() => { const P = window.PG, C = P.conductor(), D = Object.assign({}, C.d, { vivo: false, esc: Object.assign({}, C.d.esc || {}, { fumar: true }), dia: C.d.dia.filter((e) => !e.ll).concat([{ a: 20, b: 22, t: 'Lloretazo', k: 'plan', i: '', ll: 1 }]) });   /* fuma solo si fumar es cosa tuya: aquí lo es */
       const mira = (h) => { C.c.actualiza(Object.assign({}, D, { ahora: h })); const sc = document.querySelector('#main .cd [data-r="scene"]');
         return { humo: sc.querySelectorAll('.cd-humo').length, brasa: !!sc.querySelector('.cd-ascua'), carretera: !!sc.querySelector('.cd-dash') }; };
-      const out = { andando: mira(20.05), fumando: mira(21), amb: window.Conductor.ambienteA(D, 21) };
+      /* la ida y la vuelta van por carretera (35 min cada una); el acantilado, solo el rato de estar allí */
+      const out = { ida: mira(20.05), andando: mira(20.6), fumando: mira(21), vuelta: mira(21.9), amb: window.Conductor.ambienteA(D, 21) };
       D.esc = Object.assign({}, D.esc, { fumar: false }); out.sinFumar = mira(21);   /* sin el hábito ni 4:20: el mismo mirador, sin cigarro */
       P.render(); return out; });
     // (c) la radio (el sueño): se enciende al tocarla y su «abrir Sueño» lleva a Sueño
@@ -11796,8 +11797,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.l.ciudad && r.l.noche.arboles > 0 && r.l.noche.luna && r.l.casa.en && r.l.casa.arboles === 0 && r.l.casa.nxl === 'EN CASA', JSON.stringify(r.l));
     check('el botón cambia a la estación isométrica, se recuerda, no se recarga al repintar, un toque en un autobús abre su hoja y vuelve al conductor',
       r.m.es && !r.m.cd && r.m.ls === 'estacion' && r.m.mismo && r.m.amb.length > 0 && r.m.hoja && r.m.vuelta.cd && !r.m.vuelta.es && r.m.vuelta.ls === 'conductor', JSON.stringify(r.m));
-    check('en el Lloretazo el conductor se baja al acantilado: llega andando y a mitad fuma mirando al mar; la estación pone el acantilado',
-      r.n.andando.humo === 0 && !r.n.andando.carretera && r.n.fumando.humo === 3 && r.n.fumando.brasa && !r.n.fumando.carretera && r.n.amb === 'acantilado' && r.n.sinFumar.humo === 0 && !r.n.sinFumar.brasa && !r.n.sinFumar.carretera, JSON.stringify(r.n));
+    check('en el Lloretazo la ida y la vuelta son carretera; allí el conductor se baja al acantilado: llega andando y a mitad fuma mirando al mar; la estación pone el acantilado',
+      r.n.ida.carretera && r.n.vuelta.carretera && r.n.ida.humo === 0 && r.n.andando.humo === 0 && !r.n.andando.carretera && r.n.fumando.humo === 3 && r.n.fumando.brasa && !r.n.fumando.carretera && r.n.amb === 'acantilado' && r.n.sinFumar.humo === 0 && !r.n.sinFumar.brasa && !r.n.sinFumar.carretera, JSON.stringify(r.n));
     check('en el conductor, la radio (el sueño) se abre y su «abrir Sueño» lleva a Sueño', r.c === 'sueno', JSON.stringify(r.c));
     check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
     check('con el conductor, «¿cómo amaneces?» y «Para hoy» no son tarjetas: van en la radio y en la máquina de billetes de la cabina', r.i.sinTarjeta && r.i.sinParaHoy && r.i.radio && r.i.quiosco, JSON.stringify(r.i));
@@ -12762,6 +12763,53 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const n = (t) => +((/☕ (\d+)/.exec(t) || [])[1]);
     check('la radio cuenta 2 cafés de serie, «+» suma y «−» quita; el saliente sin siesta apuntada no la inventa (y con 3 h apuntadas dura 3 h); un plato fuera del recetario, sin pasos',
       n(r.c0) === 2 && n(r.c1) === 3 && n(r.c2) === 2 && r.siesta.sinApuntar && !!r.siesta.ag && r.siesta.ag.fin === '' && r.siesta.apuntada === 180 && r.plato.de !== 'recetario' && r.plato.pasos === 0 && r.plato.ing > 0, JSON.stringify(r));
+  }
+  // 304) LA CIUDAD «TRABAJO», COMER EN LA CABINA, LAS HABITACIONES DE CASA Y MÁS SITIO, EN CADENA (conduce Hoy): con
+  // jornada (8–15 o la que quede), (a) a un tercio y a dos tercios el autobús está en sitios distintos dentro de la ciudad (avanza, no se queda
+  // parado) y a mitad aún no se ve la salida; (b) en el último cuarto de hora salen el cartel tachado y el azul de dirección,
+  // aunque el turno vaya en trozos (una sesión o la comida dentro); (c) con una comida dentro de la jornada, las manos sueltan el volante y sujetan el táper; (d) en casa,
+  // «◀ eventos» enseña la cocina (pósits en la nevera, «Para hoy» en la libreta) y «entreno ▶» el dormitorio (la hoja
+  // de hábitos); (e) en la cabina el quiosco enseña 6 cosas y el poste 7 hábitos. Fija: el bus se quedaba parado en
+  // el trabajo, comer fuera no se veía, desde casa se veía la calle y el quiosco y el poste cortaban a 3 y 4.
+  {
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.__t304 = P.dayOverride(hoy); P.setDayOverride(hoy, 'sh-t', '');
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="scene"]'), null, { timeout: 8000 }).catch(() => {});
+    const PH = Array.from({ length: 7 }, (_, i) => ({ ico: '', t: 'Cosa ' + (i + 1), sub: '', hecho: false, av: false, acc: null }));
+    const HB = Array.from({ length: 8 }, (_, i) => ({ ico: '', t: 'Hábito ' + (i + 1), on: false, est: '', acc: null }));
+    const pon = (h, extra) => page.evaluate(([h, extra, PH, HB]) => { const C = window.PG.conductor(), d0 = C.d;
+      const D = Object.assign({}, d0, { ahora: h, vivo: false, cab: Object.assign({}, d0.cab || {}, { izq: Object.assign({}, (d0.cab || {}).izq || {}, { ph: PH }), der: Object.assign({}, (d0.cab || {}).der || {}, { habs: HB }) }) }, extra || {});
+      if (extra && extra.comidaEn) D.dia = d0.dia.filter((e) => e.k !== 'meal').concat([{ a: extra.comidaEn, b: extra.comidaEn + 0.5, t: 'Comida', k: 'meal', i: 990, h: 0, m: 0, ll: 0 }]).sort((x, y) => x.a - y.a);
+      if (extra && extra.casaEn) D.esc = Object.assign({}, d0.esc || {}, { casa: [[h - 0.1, h + 1, 'salon']] });
+      C.c.actualiza(D); return true; }, [h, extra || null, PH, HB]);
+    const mira = () => page.evaluate(() => { const cd = document.querySelector('#main .cd'), sc = cd.querySelector('[data-r="scene"]'), txt = [...sc.querySelectorAll('text')].map((t) => t.textContent);
+      return { trabajo: txt.filter((x) => x === 'TRABAJO').length, raya: sc.querySelectorAll('path[stroke="#e5484d"]').length, dir: txt.filter((x) => /^→ /.test(x)).length, come: cd.classList.contains('come'),
+        manos: getComputedStyle(cd.querySelector('[data-r="manosc"]')).display !== 'none', casa: cd.classList.contains('casa') }; });
+    const r = {};
+    /* las horas, de la jornada de verdad (las pruebas de antes la mueven): dentro, a un tercio y a dos tercios; la salida, en el último cuarto de hora */
+    const J = await page.evaluate(() => { const w = window.PG.conductor().d.dia.filter((e) => e.k === 'work')[0]; return w ? [w.a, w.b] : [8, 15]; });
+    r.s = await page.evaluate((J) => { const C = window.PG.conductor(), R = window.Conductor.ruta(C.d); return [J[0] + (J[1] - J[0]) / 3, J[0] + 2 * (J[1] - J[0]) / 3].map((h) => Math.round(window.Conductor.camDe(R, h).s * 10) / 10); }, J);
+    await pon(J[0] + 2); r.a = await mira();
+    await pon(J[1] - 0.25); r.b = await mira();
+    await pon(J[1] - 0.25, { comidaEn: J[0] + 2 }); r.b2 = await mira();   /* con la comida dentro, el turno va en dos trozos */
+    await pon(J[0] + 2.2, { comidaEn: J[0] + 2 }); r.c = await mira();
+    await pon(J[0] + 1); r.c2 = await mira();
+    // (e) en la cabina: el quiosco y el poste
+    const lado = (o) => page.evaluate((o) => { const l = document.querySelector('#main .cd [data-r="lado"]'); return { txt: l.textContent.slice(0, 2000), ph: l.querySelectorAll('[data-o="ph"]').length, hab: l.querySelectorAll('[data-o="hab"]').length, ev: l.querySelectorAll('[data-o="ev"]').length }; }, o);
+    await page.click('#main .cd g[data-o="mirai"]:not(.cd-espejo)'); await page.waitForTimeout(650); r.qui = await lado();
+    await page.click('#main .cd g[data-o="mirad"]:not(.cd-espejo)'); await page.waitForTimeout(650); r.pos = await lado();
+    await page.click('#main .cd [data-r="lado"] [data-o="frente"]'); await page.waitForTimeout(650);
+    // (d) en casa: la cocina y el dormitorio
+    await pon(16.5, { casaEn: true }); r.d = await mira();
+    await page.click('#main .cd g[data-o="mirai"]:not(.cd-espejo)'); await page.waitForTimeout(650); r.coc = await lado();
+    await page.click('#main .cd g[data-o="mirad"]:not(.cd-espejo)'); await page.waitForTimeout(650); r.dor = await lado();
+    await page.click('#main .cd [data-r="lado"] [data-o="frente"]'); await page.waitForTimeout(650);
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), o = P.__t304; P.setDayOverride(hoy, o ? o.shift : null, o ? o.guard : ''); delete P.__t304; P.save(); P.render(); });
+    ['qui', 'pos', 'coc', 'dor'].forEach((k) => { r[k].cocina = /LA COCINA/.test(r[k].txt); r[k].dorm = /DORMITORIO/.test(r[k].txt); r[k].ciudad = /LA CIUDAD/.test(r[k].txt); delete r[k].txt; });
+    check('en el trabajo el autobús avanza por la ciudad «Trabajo» y sale con su cartel hacia lo siguiente; comiendo en el trabajo sujeta el táper; desde casa se ven la cocina y el dormitorio; el quiosco enseña 6 cosas y el poste 7 hábitos',
+      r.s[1] > r.s[0] && r.a.raya === 0 && r.a.dir === 0 && r.b.trabajo >= 1 && r.b.raya === 1 && r.b.dir === 1 && r.b2.raya === 1 && r.b2.dir === 1 &&
+      r.c.come && r.c.manos && !r.c2.come && !r.c2.manos && r.qui.ciudad && r.qui.ph === 6 && r.pos.hab === 7 &&
+      r.d.casa && r.coc.cocina && !r.coc.ciudad && r.coc.ph === 6 && r.dor.dorm && r.dor.hab === 7, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

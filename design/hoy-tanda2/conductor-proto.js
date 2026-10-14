@@ -520,7 +520,10 @@
       /* LOS CARTELES DE LA CIUDAD: el de entrada antes de la parada, el de salida (con la raya roja) al acabar el
          recorrido y, detrás, el de dirección hacia lo siguiente: el pueblo a comer, el parque a entrenar o casa */
       R.est.forEach((e, i) => { if (!MUEVE(e) || e.cont) return; const zc = e.s - cam + ZSTOP, nom = esLL(e) ? "LLORET" : "TRABAJO";
-        const sig = R.est.slice(i + 1).find((x) => !x.cont) || null;
+        /* si dentro del turno hay otra parada (la comida, una sesión), el turno vuelve en trozos: la salida va al
+           final del último trozo, no del primero (se quedaba detrás del autobús) */
+        let iu = i; R.est.forEach((x, j) => { if (j > i && x.cont && x.padre === e.a && x.k === e.k) iu = j; });
+        const zf = R.est[iu].s - cam + ZSTOP, sig = R.est.slice(iu + 1).find((x) => !x.cont) || null;
         const panel = (z, x0, x1, y0, y1, fondo, borde, l1, l2, raya) => { if (z < NEAR + 0.3 || z > 140) return;
           const a = pr(x0, y1, z), b = pr(x1, y0, z), w = Math.abs(b[0] - a[0]), h = b[1] - a[1], xl = Math.min(a[0], b[0]); if (w < 3) return;
           out.push(seg([(x0 + x1) / 2, 0.15, z], [(x0 + x1) / 2, y0, z], "cd-post", 0.07));
@@ -531,9 +534,9 @@
         panel(zc - 5, -6.0, -10.4, 1.7, 3.3, "#ffffff", "#1f5fbf", nom, esLL(e) ? "ida · 35 min" : "hasta las " + hhmm(e.b));
         /* los de salida, solo en la última media hora: antes se veían desde que entrabas y no parecía que estuvieras dentro */
         if (t < e.b - 0.5) return;
-        panel(zc + CITY + 4, -6.0, -10.4, 1.7, 3.3, "#ffffff", "#1f5fbf", nom, "", true);
-        if (sig && zc + CITY + 9 > 6) { const dest = sig.dep ? "🏠 CASA" : sig.k === "meal" ? "🍽 PUEBLO · " + String(sig.t).toUpperCase() : sig.k === "gym" ? "🌳 PARQUE · " + String(sig.t).toUpperCase() : String(sig.t).toUpperCase();
-          panel(zc + CITY + 9, 3.6, 8.8, 2.4, 4.4, "#1f5fbf", "#ffffff", "→ " + dest, sig.dep ? "" : "a las " + hhmm(sig.a)); } });
+        panel(zf + CITY + 4, -6.0, -10.4, 1.7, 3.3, "#ffffff", "#1f5fbf", nom, "", true);
+        if (sig && zf + CITY + 9 > 6) { const dest = sig.dep ? "🏠 CASA" : sig.k === "meal" ? "🍽 PUEBLO · " + String(sig.t).toUpperCase() : sig.k === "gym" ? "🌳 PARQUE · " + String(sig.t).toUpperCase() : String(sig.t).toUpperCase();
+          panel(zf + CITY + 9, 3.6, 8.8, 2.4, 4.4, "#1f5fbf", "#ffffff", "→ " + dest, sig.dep ? "" : "a las " + hhmm(sig.a)); } });
       /* las paradas: marquesina y letrero, de lejos a cerca */
       const ps = R.est.filter((e) => !e.dep).map((e) => ({ e, zc: e.s - cam + ZSTOP })).filter((o) => o.zc > -3 && o.zc < 170).sort((a, b) => b.zc - a.zc);
       for (const { e, zc } of ps) {

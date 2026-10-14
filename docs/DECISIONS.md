@@ -846,3 +846,35 @@ una siesta «sugerida» con duración.
 **Supuestos:** los 2 cafés de serie van a la hora de levantarte (+6 min) y 9 min antes de salir (o media hora
 después de levantarte si no sales); un café sumado en un día que no es hoy se pone a las 14:00; el plan de las
 tres órdenes de guardia (Sueño) sigue proponiendo una siesta al llegar, como consejo, no como dato.
+
+## Repaso de supuestos, tanda 2 · el conductor (2026-10-14)
+
+Maquetas primero (`design/hoy-tanda2/`, 13 capturas a 412×915) y visto bueno («Sube a la app»).
+
+**Elegido:**
+- **El trabajo es una ciudad, «Trabajo».** Mientras dura la jornada el autobús avanza despacio entre los
+  edificios (media manzana en todo el turno) en vez de quedarse parado. Cartel de entrada «TRABAJO · hasta las
+  HH:MM»; en la **última media hora**, el cartel tachado de salida y uno azul de dirección: «→ 🍽 PUEBLO · comida»,
+  «→ 🌳 PARQUE · entreno» o «→ 🏠 CASA». Si el turno va en trozos (una sesión o la comida dentro), la salida va al
+  final del último trozo.
+- **Comer fuera de la jornada es un pueblecito** (casas encaladas, teja, contraventanas verdes, campanario) y
+  **entrenar, un parque rural** (camino de tierra, valla, árboles y barras), que rodea también la parada del entreno.
+- **Lloretazo de ida y vuelta:** la ida y la vuelta son carretera de costa; el acantilado con el faro, solo el
+  rato de estar allí. Al acabar, «LLORET» tachado y «→ 🏠 CASA».
+- **Comer en la cabina:** en la parada de una comida dentro del trabajo o de la guardia, las manos sueltan el
+  volante y sujetan el táper con el tenedor.
+- **Desde casa, los lados son habitaciones:** a la izquierda la cocina (eventos de hoy en pósits en la nevera,
+  «Para hoy» en una libreta, «Lo que viene» en el calendario); a la derecha la entrada y el dormitorio (entreno y
+  comida en la puerta, con la bolsa y la fiambrera; la hoja de hábitos en la pared). Todo se toca como en la cabina.
+- **Más sitio:** el quiosco de «Para hoy» enseña 6 cosas (antes 3) y el poste 7 hábitos (antes 4); el cartel del
+  entreno, en lo alto del poste; el segundo evento se aparta a la izquierda del quiosco.
+- **Pruebas:** 304 nueva (en cadena: avanza dentro de la ciudad, salida al final aunque el turno vaya en trozos,
+  táper, cocina y dormitorio, 6 y 7) y 275 ampliada (Lloretazo: ida y vuelta en carretera). Con el conductor
+  anterior caen esas dos; quitando solo el arreglo de los trozos, cae solo la 304.
+
+**Descartado:** convertir también el Lloretazo en ciudad (es carretera y mirador), enseñar los carteles de salida
+todo el turno (desde dentro no parecía que estuvieras en la ciudad) y dibujar habitaciones distintas según la hora.
+
+**Supuestos:** la ida y la vuelta del Lloretazo ocupan como mucho 0,6 h cada una (el 27 % de lo que dure); el
+cartel azul deja de pintarse cuando lo tienes casi al lado (salía enorme y cortado); con más de 6 cosas, 7 hábitos
+o 4 eventos en la nevera sale «+N más».

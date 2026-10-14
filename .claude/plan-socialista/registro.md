@@ -15,13 +15,11 @@ del mes natural, otro día a la hora de levantarte, noche hasta levantarte, un t
 hora real, taxi con su precio, tiempos de la mañana en Ajustes, cafés, siesta del saliente a mano y platos sin
 pasos inventados. Ver docs/DECISIONS.md («Repaso de supuestos, tanda 1»).
 
-### Tanda 2 · lo visual (maquetas primero)
+### Tanda 2 · lo visual — HECHA (desplegada el 2026-10-14)
 
-- [enc-ciudad-trabajo] Carretera: **el trabajo es una ciudad «Trabajo»** en la que entras y te mueves mientras trabajas; al acabar, sales con un cartel hacia **un pueblecito a comer** o **un parque rural a entrenar** · sup. 6 y 16
-- [enc-lloretazo-ruta] Lloretazo: **ida y vuelta en carretera**; el acantilado solo el rato de estar allí · sup. 17
-- [enc-comer-dibujo] En la parada de una comida fuera de casa, **que se vea al conductor comiendo** · sup. 18
-- [enc-casa-lados] Desde casa, mirar a los lados enseña **otras habitaciones** (cocina, dormitorio…) · sup. 7
-- [enc-quiosco-poste] **Más sitio** en el quiosco («Para hoy») y en el poste de hábitos: que quepa todo · sup. 8
+Ciudad «Trabajo» con entrada y salida hacia el pueblo o el parque, Lloretazo de ida y vuelta, comer en la
+cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y el poste. Ver docs/DECISIONS.md
+(«Repaso de supuestos, tanda 2»).
 
 ### A futuro (sin fecha)
 
@@ -47,3 +45,4 @@ _Ninguno: los 30 de la semana del 07 al 14 de octubre se repasaron el 2026-10-14
 - [issues-0] 2026-10-14 · ningún issue ni PR abierto · ok
 - [aparc-parte-diario] 2026-10-14 · recordado: falta la hora · abierto
 - [tanda1-repaso] 2026-10-14 · tanda 1 del repaso desplegada (724/724 pruebas) · hecha
+- [tanda2-repaso] 2026-10-14 · tanda 2 del repaso (el conductor) desplegada · hecha
