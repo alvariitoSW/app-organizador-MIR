@@ -12515,7 +12515,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = await page.evaluate(() => { const P = window.PG, C = window.Conductor, d = new Date(); d.setDate(d.getDate() + 3); const k = P.iso(d);
       const L = P.store.shifts.filter((x) => x.id === 'sh-l')[0] || P.store.shifts.filter((x) => /libre/i.test(x.name || ''))[0]; if (!L || !C || !C.crea) return null;
       const ov = (P.store.rotation.shiftByDay || {})[k], rh = JSON.stringify((P.store.rhythm || {})[L.id] || null), mode = P.store.rotation.mode;
-      P.store.rotation.mode = 'date'; P.setDayOverride(k, L.id, ''); if (!P.store.rhythm) P.store.rhythm = {};
+      /* el día siguiente también libre: si se trabaja, la cama de las 00:30 se adelanta para dormir tu mínimo */
+      const d2 = new Date(d.getTime()); d2.setDate(d2.getDate() + 1); const k2 = P.iso(d2), ov2 = (P.store.rotation.shiftByDay || {})[k2];
+      P.store.rotation.mode = 'date'; P.setDayOverride(k, L.id, ''); P.setDayOverride(k2, L.id, ''); if (!P.store.rhythm) P.store.rhythm = {};
       P.store.rhythm[L.id] = Object.assign({}, P.store.rhythm[L.id] || {}, { wake: '10:30', sleep: '00:30' });
       const B = P.hoyBusDatos(k, P.dayInfo(k), false), E = P.conductorEscenas(k), casa = E.casa || [];
       const out = { noche: (B.noches || []).filter((n) => n.t === 'noche' && n.a >= 24).map((n) => n.a), cama: casa.filter((x) => x[2] === 'cama' && x[0] >= 24).map((x) => x[0]),
@@ -12531,7 +12533,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const c = C.crea({}); box.appendChild(c.el); const cd = c.el, q = (s) => (cd.querySelector('[data-r="' + s + '"]') || {}).textContent || '';
       const at = (h) => { D.ahora = h; c.actualiza(D); return { casa: cd.classList.contains('casa'), clip: cd.querySelector('[data-r="vent"]').getAttribute('clip-path'), nxl: q('nxl'), nxa: q('nxa'), volante: getComputedStyle(cd.querySelector('[data-r="volante"]')).display }; };
       out.h21 = at(out.hEv); out.h2230 = out.hCasa != null ? at(out.hCasa) : {}; out.h3 = at(3);
-      box.remove(); P.store.rotation.mode = mode; P.setDayOverride(k, ov ? ov.shift : null, ov ? ov.guard : ''); if (rh === 'null') delete P.store.rhythm[L.id]; else P.store.rhythm[L.id] = JSON.parse(rh); P.save();
+      box.remove(); P.store.rotation.mode = mode; P.setDayOverride(k, ov ? ov.shift : null, ov ? ov.guard : ''); P.setDayOverride(k2, ov2 ? ov2.shift : null, ov2 ? ov2.guard : ''); if (rh === 'null') delete P.store.rhythm[L.id]; else P.store.rhythm[L.id] = JSON.parse(rh); P.save();
       return out; });
     check('un día libre con la cama a las 00:30 tiene su noche esta noche (24:30) y sus escenas de casa: café al levantarte, la comida a la mesa y la cama a las 24:30',
       !!r && r.noche.indexOf(24.5) >= 0 && r.cama.indexOf(24.5) >= 0 && r.cafe && r.mesa.length >= 1, JSON.stringify(r && { noche: r.noche, cama: r.cama, cafe: r.cafe, mesa: r.mesa }));
