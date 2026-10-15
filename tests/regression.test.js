@@ -308,13 +308,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // a Días y menús, a Cocina en lote y a Importar receta, que eran cinco destinos para la misma
   // pregunta; lo que queda en el cajón es lo que no es ni calendario ni entreno ni comida.
   const navShape = await page.evaluate(() => ({
-    barra: [...document.querySelectorAll('#tabs button')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()),
+    barra: [...document.querySelectorAll('#tabs button')].map((b) => ((b.querySelector('span') || b).textContent).replace(/\s+/g, ' ').trim()),
     modos: (() => { document.querySelector('[data-a="nav-comer"]').click();
       return [...document.querySelectorAll('#calModes button')].map((b) => b.textContent.trim()); })(),
     cajon: [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].map((b) => b.dataset.t),
   }));
   check('la barra son tres grupos y «Comer» agrupa el día, el menú, la cocina y la compra',
-    navShape.barra.join('|') === 'Calendario|Entreno|Comer|☰ Más' &&
+    navShape.barra.join('|') === 'Calendario|Entreno|Comer|Más' &&
     navShape.modos.join('|') === 'Hoy|Semana|Nevera|Compra' &&
     ['food', 'shop', 'types', 'batches', 'import'].every((t) => navShape.cajon.indexOf(t) < 0),
     JSON.stringify(navShape));
@@ -13048,6 +13048,32 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       JSON.stringify(r));
     await page.evaluate((c) => { const P = window.PG, ev = P.eventosS(); ev.length = 0; JSON.parse(c).forEach((e) => ev.push(e)); P.save(); P.render(); }, copia310);
     await page.setViewportSize(vp310);
+  }
+  // 313) «LA JORNADA», TANDA 1, EN CADENA (a 412×915): la barra de secciones va abajo (pegada al borde, botones de 44 px
+  // o más, cada uno con su icono propio y el calendario con el número de hoy); con ella se va a Entreno y se vuelve al
+  // Calendario; el fondo es el cielo de la hora (los colores de ahora, distintos a mediodía y a medianoche); y de guardia
+  // (dentro de sus horas) la app se tiñe de rojo, fuera de ellas no. Fija: la barra arriba, lejos del pulgar, y un fondo
+  // fijo que no decía qué hora era.
+  {
+    const vp313 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.save(); P.render(); });
+    const barra = () => page.evaluate(() => { const t = document.querySelector('#tabs'), r = t.getBoundingClientRect(), bs = [...t.querySelectorAll('button')];
+      return { abajo: Math.abs(r.bottom - innerHeight) <= 1, enCabecera: !!t.closest('header'), minH: Math.min(...bs.map((b) => b.getBoundingClientRect().height)), icos: bs.filter((b) => b.querySelector('svg')).length, n: bs.length,
+        dia: ((t.querySelector('button[data-a="nav-cal"] svg') || {}).textContent || '').replace(/\D/g, ''), on: ((t.querySelector('button.on') || {}).textContent || '').trim(), tab: window.PG.ui.tab }; });
+    const r = { a: await barra() };
+    await page.click('#tabs button[data-t="gym"]'); await page.waitForTimeout(250); r.b = await barra();
+    await page.click('#tabs button[data-a="nav-cal"]'); await page.waitForTimeout(250); r.c = await barra();
+    r.cielo = await page.evaluate(() => { const P = window.PG, n = new Date(), c = P.cieloDe(n.getHours() + n.getMinutes() / 60), st = document.documentElement.style;
+      return { c1: st.getPropertyValue('--c1'), esperado: c.c1, mediodia: P.cieloDe(12).c1, medianoche: P.cieloDe(0).c1 }; });
+    r.guardia = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 9); const k = P.iso(d), ov = P.dayOverride(k);
+      P.setDayOverride(k, 'sh-g', 'urg'); const g = P.guardiaHoras(k, 'urg'); const at = (hh) => { const x = new Date(d.getTime()); x.setHours(hh, 0, 0, 0); return x; };
+      const out = { dentro: P.deGuardiaAhora(at(23)), madrugada: P.deGuardiaAhora(new Date(at(3).getTime() + 86400000)), antes: P.deGuardiaAhora(at(6)), entra: g && g.guardia };
+      P.setDayOverride(k, ov ? ov.shift : null, ov ? ov.guard : ''); P.save(); return out; });
+    await page.setViewportSize(vp313);
+    const hoy = String(new Date().getDate());
+    check('la barra de secciones va abajo con botones de 44 px y sus iconos (el calendario con el número de hoy), lleva a Entreno y vuelve; el fondo es el cielo de la hora; de guardia (en sus horas) se tiñe de rojo',
+      r.a.abajo && !r.a.enCabecera && r.a.minH >= 44 && r.a.icos === r.a.n && r.a.dia === hoy && r.b.tab === 'gym' && /Entreno/.test(r.b.on) && r.c.tab !== 'gym' && /Calendario/.test(r.c.on) &&
+      r.cielo.c1 === r.cielo.esperado && r.cielo.mediodia !== r.cielo.medianoche && r.guardia.dentro && r.guardia.madrugada && !r.guardia.antes, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

@@ -22801,6 +22801,33 @@ function buscaEnVivo(){
   mejoraAccesibilidad(m);
   ui._buscaMs=Math.round((performance.now()-t0)*10)/10;
   return true;}
+/* ===================== EL CIELO DE LA HORA («La jornada») =====================
+   El fondo de toda la app es el cielo de ahora, con los mismos colores que el cielo del conductor: alba, día,
+   tarde, anochecer y noche. Cambia solo (cada minuto), y de guardia se tiñe del rojo de la cabina (65 %). */
+const CIELO=[ /* hora, arriba, medio, horizonte */
+  [0,'#070d22','#0b1430','#1b2a4e'],[5.5,'#0b1430','#16204a','#2a3560'],[7,'#2d3a78','#6b5aa8','#f2a65a'],
+  [8.5,'#4f93d8','#86b8e6','#e6eef5'],[12,'#3f88d6','#6fb0ea','#bfe0ff'],[16.5,'#4f8fd0','#8db8e2','#e9dcc4'],
+  [18.5,'#3d4f98','#b0729a','#f2a65a'],[19.8,'#1c2658','#3f3a78','#a8606a'],[21.5,'#0b1430','#16224c','#2b3466'],
+  [24,'#070d22','#0b1430','#1b2a4e']];
+function cieloDe(h){
+  h=((h%24)+24)%24;let i=0;while(i<CIELO.length-1&&CIELO[i+1][0]<=h)i++;
+  const A=CIELO[i],B=CIELO[Math.min(i+1,CIELO.length-1)],k=B[0]===A[0]?0:(h-A[0])/(B[0]-A[0]);
+  const hx=function(c){return [1,3,5].map(function(j){return parseInt(c.slice(j,j+2),16);});};
+  const mx=function(a,b){const x=hx(a),y=hx(b);return '#'+x.map(function(v,j){return Math.round(v+(y[j]-v)*k).toString(16).padStart(2,'0');}).join('');};
+  const dia=h>=7&&h<=19.3,arco=dia?(h-7)/12.3:0,alto=dia?Math.sin(Math.PI*arco):0,crep=Math.max(0,1-Math.min(Math.abs(h-7.3),Math.abs(h-19))/1.4);
+  return {c1:mx(A[1],B[1]),c2:mx(A[2],B[2]),c3:mx(A[3],B[3]),solx:dia?Math.round(8+84*arco)+'%':'70%',soly:dia?Math.round(60-48*alto)+'%':'10%',
+    solc:dia?(crep>0.3?'rgb(255 190 120 / .35)':'rgb(255 248 220 / .3)'):'rgb(210 225 255 / .1)',estrellas:dia?0:((h>20.5||h<5.5)?0.7:0.3)};}
+function deGuardiaAhora(now){
+  /* dentro de la guardia de verdad (de su hora de empezar a la de salir, con el pase), no todo el día */
+  try{const k=iso(now),gk=snGuardiaAhora(k);if(!gk)return false;const gh=guardiaHoras(gk,dayInfo(gk).guard);if(!gh)return false;
+    const m=now.getHours()*60+now.getMinutes()+(gk===k?0:1440),ini=mins(gh.guardia),fin=mins(gh.sale);
+    return ini!=null&&fin!=null&&m>=ini&&m<fin+1440;}catch(e){return false;}}
+let _cieloT=0;
+function pintaCielo(){
+  const now=new Date(),c=cieloDe(now.getHours()+now.getMinutes()/60),r=document.documentElement;
+  [['--c1',c.c1],['--c2',c.c2],['--c3',c.c3],['--sol-x',c.solx],['--sol-y',c.soly],['--sol-c',c.solc],['--estrellas',String(c.estrellas)]].forEach(function(p){r.style.setProperty(p[0],p[1]);});
+  r.classList.toggle('de-guardia',deGuardiaAhora(now));
+  if(!_cieloT)_cieloT=setInterval(pintaCielo,60000);}
 function render(){
   /* EL CAMPO QUE SE ESTÁ EDITANDO HAY QUE SOLTARLO ANTES. renderNow() reemplaza #main.innerHTML
      entero; si dentro hay un <input> con el foco, el navegador dispara su blur EN MEDIO del
@@ -22899,11 +22926,14 @@ function renderNow(){
   /* las cifras de las pestañas: la del mes solo se ve dentro de Calendario */
   const gn=setsDe(hoyKey()).length,gc=inCal?guardCount(monthDate.getFullYear(),monthDate.getMonth()):null;
   const BADGE={gym:gn?gn+' series':'',month:(gc&&gc.any)?gc.any+' 🩺':''};
+  /* la barra de abajo, con los iconos vivos: el calendario lleva el número de hoy */
+  const tIco=function(n,e){return typeof window.ico==='function'?window.ico(n,Object.assign({decorativo:true},e||{})):'';};
   $('#tabs').innerHTML=
-    `<button class="${inCal?'on':''}" data-a="nav-cal"${inCal?' aria-current="true"':''}>Calendario</button>`+
-    `<button class="${ui.tab==='gym'?'on':''}" data-a="tab" data-t="gym"${ui.tab==='gym'?' aria-current="true"':''}>Entreno${BADGE.gym?'<span class="tb">'+BADGE.gym+'</span>':''}</button>`+
-    `<button class="${inComer?'on':''}" data-a="nav-comer"${inComer?' aria-current="true"':''}>Comer</button>`+
-    `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer" title="Más" aria-label="Más">☰ Más</button>`;
+    `<button class="${inCal?'on':''}" data-a="nav-cal"${inCal?' aria-current="true"':''}>${tIco('calendario',{dia:new Date().getDate()})}<span>Calendario</span></button>`+
+    `<button class="${ui.tab==='gym'?'on':''}" data-a="tab" data-t="gym"${ui.tab==='gym'?' aria-current="true"':''}>${tIco('mancuerna')}<span>Entreno</span>${BADGE.gym?'<span class="tb">'+BADGE.gym+'</span>':''}</button>`+
+    `<button class="${inComer?'on':''}" data-a="nav-comer"${inComer?' aria-current="true"':''}>${tIco('comer')}<span>Comer</span></button>`+
+    `<button data-a="drawer-toggle" aria-haspopup="true" aria-expanded="${ui.drawerOpen?'true':'false'}" aria-controls="drawer" title="Más" aria-label="Más">${tIco('mas')}<span>Más</span></button>`;
+  pintaCielo();
   const cm=$('#calModes');
   if(cm){cm.hidden=(!inCal&&!inComer)||(ui.tab==='food'&&(ui.foodVista==='eje'||ui.foodVista==='semp'));
     cm.innerHTML=inCal?CAL_MODES.map(t=>`<button class="${ui.tab===t[0]?'on':''}" data-a="tab" data-t="${t[0]}"${ui.tab===t[0]?' aria-current="true"':''}>${t[1]}${(t[0]==='month'&&BADGE.month)?'<span class="tb">'+BADGE.month+'</span>':''}</button>`).join(''):
@@ -27080,7 +27110,7 @@ window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,man
   openDrawer,closeDrawer,CAL_SET,isToday,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,
   notaDia,eventosDelDia,eventosDelMes,agendaMesHTML,diasCorta,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
-  habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML,hoyBusDatos,finMin,guardiasR1,finR1,inicioR1,vacGastados,esVacacionSh,mesAbono,taxisMes,taxiEurDia,tiemposManana,mananaHTML,cafesDe,conductor:function(){return {c:_cond,d:_condDatos};}};
+  habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML,hoyBusDatos,finMin,guardiasR1,finR1,inicioR1,cieloDe,deGuardiaAhora,vacGastados,esVacacionSh,mesAbono,taxisMes,taxiEurDia,tiemposManana,mananaHTML,cafesDe,conductor:function(){return {c:_cond,d:_condDatos};}};
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */

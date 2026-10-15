@@ -950,3 +950,23 @@ decir cuántas te quedaban, 79,2) y la comida a las 18:00 con el entreno a las 1
 
 **Supuestos:** «8 series» que sigue después de guardar es lo que se hizo hoy y está bien; los carteles de menos de
 40 px de ancho no se miran (son puntos lejanos).
+
+## «La jornada» · tanda 1 de lo común: el cielo de la hora y la barra abajo (2026-10-15)
+
+**Elegido:**
+- **El fondo de toda la app es el cielo de ahora**, con los colores del cielo del conductor (alba, día, tarde,
+  anochecer, noche), un sol que recorre el día y estrellas de noche. Lo pinta `pintaCielo()` al pintar y cada minuto.
+- **Un velo del fondo del tema** encima del cielo (52 % en los temas oscuros, 62 % en los claros: el cielo «lavado»)
+  para que el texto que va directamente sobre el fondo se lea a cualquier hora; así el tema sigue tiñendo el cielo.
+- **De guardia, rojo al 65 %**, solo dentro de las horas de la guardia (de que empieza a que sales, con el pase), no
+  todo el día; en los temas claros el rojo es un rosa claro para que el texto oscuro siga leyéndose.
+- **La barra de secciones, abajo**, fija y fuera de la cabecera (la cabecera se esconde al bajar y se la llevaría):
+  botones de 52 px con su icono vivo (`fig/iconos.js`, `ico(nombre, estado)`; el calendario lleva el número de hoy).
+- **Prueba 313** (en cadena): barra abajo con iconos y 44 px, ir a Entreno y volver, cielo de la hora y guardia en sus
+  horas. Al devolver la barra a la cabecera cae solo ella; al no pintar el cielo, también solo ella.
+
+**Descartado:** la rejilla «HUD» del fondo (la sustituye el cielo); teñir de rojo todo el día de guardia (solo sus
+horas); pasar ya todas las tarjetas a «piezas de maqueta» (es la tanda 2, componentes).
+
+**Supuestos:** las horas del sol son fijas (sale a las 7:00, se pone a las 19:20), como en la maqueta; las tarjetas
+siguen siendo las de antes hasta la tanda 2.
