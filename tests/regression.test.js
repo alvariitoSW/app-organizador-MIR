@@ -12918,16 +12918,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(400);
     await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(80);
     const png = (await page.screenshot()).toString('base64');
-    const r = await page.evaluate(async (png) => {
-      const img = new Image(); img.src = 'data:image/png;base64,' + png; await img.decode();
-      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-      const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
-      const col = (x) => { const d = cx.getImageData(x, 160, 1, 600).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; return Math.round(s / (d.length / 4)); };
-      return { claro: !document.documentElement.classList.contains('dark'), izq: col(4), der: col(img.width - 4), ancho: img.width };
-    }, png);
+    // la referencia: la misma pantalla sin el cajón (el cielo de la hora no es igual a los dos lados —por la mañana el
+    // sol está a la izquierda—, así que no vale comparar con el borde izquierdo)
+    await page.evaluate(() => { document.getElementById('drawer').style.display = 'none'; });
+    const antes = (await page.screenshot()).toString('base64');
+    await page.evaluate(() => { document.getElementById('drawer').style.display = ''; });
+    const r = await page.evaluate(async ([png, antes]) => {
+      const lee = async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+        const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+        const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+        const col = (x) => { const d = cx.getImageData(x, 160, 1, 600).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; return Math.round(s / (d.length / 4)); };
+        return { izq: col(4), der: col(img.width - 4), ancho: img.width }; };
+      const a = await lee(antes), d = await lee(png);
+      return { claro: !document.documentElement.classList.contains('dark'), izq: d.izq, der: d.der, derSinCajon: a.der, ancho: d.ancho };
+    }, [png, antes]);
     r.abierto = abierto !== 'none';
-    check('en un tema claro, con el cajón «Más» cerrado, el borde derecho es igual que el izquierdo (sin la sombra del cajón asomando)',
-      r.claro && r.ancho === 412 && r.abierto && Math.abs(r.izq - r.der) <= 6, JSON.stringify(r));
+    check('en un tema claro, con el cajón «Más» cerrado, el borde derecho es igual que sin cajón (sin la sombra del cajón asomando)',
+      r.claro && r.ancho === 412 && r.abierto && Math.abs(r.der - r.derSinCajon) <= 3, JSON.stringify(r));
     await page.setViewportSize(vp306);
   }
 
@@ -13074,6 +13081,51 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la barra de secciones va abajo con botones de 44 px y sus iconos (el calendario con el número de hoy), lleva a Entreno y vuelve; el fondo es el cielo de la hora; de guardia (en sus horas) se tiñe de rojo',
       r.a.abajo && !r.a.enCabecera && r.a.minH >= 44 && r.a.icos === r.a.n && r.a.dia === hoy && r.b.tab === 'gym' && /Entreno/.test(r.b.on) && r.c.tab !== 'gym' && /Calendario/.test(r.c.on) &&
       r.cielo.c1 === r.cielo.esperado && r.cielo.mediodia !== r.cielo.medianoche && r.guardia.dentro && r.guardia.madrugada && !r.guardia.antes, JSON.stringify(r));
+  }
+  // 314) «LA JORNADA», TANDA 2 (LO COMÚN), EN CADENA (a 412×915): con la barra de abajo se va a Comer, se pulsa «Apuntar»
+  // con la frase vacía (sale el aviso), se abre «Más» y se entra en Dinero, y se vuelve al Mes. En las tres pantallas, nada que se toque (botones,
+  // pestañas, chips, campos, enlaces) mide menos de 44 px de alto; las tarjetas son piezas opacas (el cielo no se ve a
+  // través del texto) con su cara lateral y sin el desenfoque de antes; el aviso que sale al marcar es un rectángulo de
+  // esquinas de 16 px y el 92 % del ancho; y la sombra de las piezas cae según el sol de la hora. Fija: botones de 26–38 px
+  // en casi todas las pantallas, ~20 pestañas distintas y el aviso en píldora que con tres líneas era un óvalo.
+  {
+    const vp314 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.save(); P.render(); });
+    const mide = () => page.evaluate(() => {
+      const vis = (e) => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 1 && r.height > 1 && s.visibility !== 'hidden' && s.display !== 'none'; };
+      const chicos = [...document.querySelectorAll('#main button,#main [data-a],#main select,#main input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),#main summary,#tabs button,header button')]
+        .filter((e) => vis(e) && !e.closest('.cd-sr,.ct-sr') && e.getBoundingClientRect().height < 43.5)
+        .map((e) => (e.dataset.a || e.className || e.tagName) + ':' + Math.round(e.getBoundingClientRect().height));
+      const cs = [...document.querySelectorAll('#main .card')].filter(vis).map((c) => getComputedStyle(c));
+      const opaca = (bg) => !/rgba\(.*,\s*0?\.\d+\)$/.test(bg) && bg !== 'transparent' && !/ \/ 0?\.\d+\)$/.test(bg);
+      return { tab: window.PG.ui.tab, chicos, cartas: cs.length, opacas: cs.filter((s) => opaca(s.backgroundColor) && s.boxShadow !== 'none' && (s.backdropFilter || 'none') === 'none').length };
+    });
+    const r = {};
+    await page.click('#tabs button[data-a="nav-comer"]'); await page.waitForTimeout(300); r.comer = await mide();
+    // a la pestaña Hoy de Comer; si la frase vive en la hoja de cada comida, se abre la primera (sube la hoja)
+    if (await page.$('#main [data-a="cje-tab"][data-v="hoy"]')) { await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(250); }
+    if (!(await page.$('#main [data-a="fr-leer"]'))) { await page.click('#main .cjmm .tx'); await page.waitForTimeout(350); }
+    r.hoja = await page.evaluate(() => { const h = document.querySelector('.hoja:not(.hojain)'); return h ? getComputedStyle(h).borderTopLeftRadius : 'sin hoja'; });
+    // «Apuntar» con la frase vacía: siempre avisa («escribe qué has comido…») y no toca los datos
+    if (await page.$('#frIn')) await page.fill('#frIn', '');
+    await page.click('[data-a="fr-leer"]'); await page.waitForTimeout(250);
+    r.aviso = await page.evaluate(() => { const f = document.querySelector('#flash'); if (!f) return null; const s = getComputedStyle(f), b = f.getBoundingClientRect();
+      return { radio: s.borderTopLeftRadius, ancho: Math.round(b.width), texto: f.textContent.trim().slice(0, 40) }; });
+    if (await page.$('.hscrim')) { await page.click('.hscrim', { position: { x: 200, y: 40 } }); await page.waitForTimeout(250); }
+    await page.click('#tabs button[data-a="drawer-toggle"]'); await page.waitForTimeout(300);
+    await page.click('#drawer [data-a="drawer-nav"][data-t="dinero"]'); await page.waitForTimeout(300); r.dinero = await mide();
+    await page.click('#tabs button[data-a="nav-cal"]'); await page.waitForTimeout(200);
+    const mes = await page.$('#calModes button[data-t="month"],#calModes button[data-m="month"]');
+    if (mes) { await mes.click(); await page.waitForTimeout(300); }
+    r.mes = await mide();
+    r.sol = await page.evaluate(() => { const P = window.PG, n = new Date(), c = P.cieloDe(n.getHours() + n.getMinutes() / 60);
+      return { dx: document.documentElement.style.getPropertyValue('--sol-dx'), esperado: String(c.soldx), manana: P.cieloDe(8.5).soldx, tarde: P.cieloDe(17.5).soldx, mediodia: P.cieloDe(13.15).soldx }; });
+    await page.setViewportSize(vp314);
+    const pant = [r.comer, r.dinero, r.mes];
+    check('lo común de «La jornada»: en Comer, Dinero y Mes nada tocable baja de 44 px, las tarjetas son piezas opacas con su cara, el aviso es un rectángulo de 16 px al 92 % y la sombra cae según el sol',
+      r.comer.tab === 'food' && r.dinero.tab === 'dinero' && r.mes.tab === 'month' && pant.every((x) => x.chicos.length === 0 && x.cartas > 0 && x.opacas === x.cartas) &&
+      (r.hoja === 'sin hoja' || r.hoja === '24px') && !!r.aviso && r.aviso.radio === '16px' && Math.abs(r.aviso.ancho - Math.round(412 * 0.92)) <= 2 &&
+      r.sol.dx === r.sol.esperado && r.sol.manana > 0 && r.sol.tarde < 0 && Math.abs(r.sol.mediodia) <= 1, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

@@ -970,3 +970,35 @@ horas); pasar ya todas las tarjetas a «piezas de maqueta» (es la tanda 2, comp
 
 **Supuestos:** las horas del sol son fijas (sale a las 7:00, se pone a las 19:20), como en la maqueta; las tarjetas
 siguen siendo las de antes hasta la tanda 2.
+
+## «La jornada» · tanda 2 de lo común: las piezas (2026-10-15)
+
+**Elegido:**
+- **Fichas del sistema** en `styles.css` (esquinas 4·8·12·16·24·redondo, letra 11·12,5·14·16·20·28·44, espacio,
+  movimiento 120·200·320 ms, `--toque: 44px`, superficies 1·2·3, cara, estados, sombras 1·2·3) **sacadas de las 9
+  variables de cada tema**, así siguen al tema y al rojo de guardia solas. Se definen por fin `--muted` y `--card2`,
+  que se usaban sin existir.
+- **La tarjeta es una pieza de maqueta**: opaca (el cielo nunca lleva texto), filo de luz arriba, cara lateral de 3 px y
+  sombra que cae según el sol (`cieloDe` da ahora `luz`, `soldx`, `soldy`; `pintaCielo` los pone cada minuto). Fuera el
+  brillo en diagonal, el desenfoque y la barrita de neón del título.
+- **Un solo botón** (normal · principal liso · verde · peligro · borrar · pequeño) con cara de tecla que se hunde; **un
+  solo selector** para las ~15 familias de pestañas (carril hundido y la elegida levantada con raya de la marca);
+  chips, campos, hoja de abajo (la primera `.hoja`, pisada entera por la segunda, fuera) y aviso (rectángulo de 16 px
+  al 92 %, en negativo) del mismo juego. Sin degradados cian→violeta en botones.
+- **Nada tocable por debajo de 44 px**: de 135 de 276 en 9 pantallas a 0; un recorrido por todas las secciones y sus
+  pestañas con datos deja solo un enlace dentro de una frase (Estudio) y una casilla dentro de su etiqueta (4:20).
+- Las filas de día de la Semana y el resumen de cada sesión de cocina son listas apretadas a propósito: su zona de toque
+  crece por fuera, invisible, sin engordar la fila (la Semana sigue cabiendo en poco más de dos pantallas).
+- **Prueba 314** (en cadena): Comer → Hoy → abrir la hoja de una comida → «Apuntar» vacío (sale el aviso) → Más →
+  Dinero → Mes: 44 px, piezas opacas, hoja de 24 px, aviso y sombra según el sol. Con el CSS de antes cae solo ella.
+- **La prueba 308 (borde derecho en tema claro) compara ahora con la misma pantalla sin cajón**, no con el borde
+  izquierdo: desde la tanda 1 el cielo lleva el sol, que por la mañana ilumina más la izquierda, y la prueba caía o no
+  según la hora. Con la sombra del cajón cerrado asomando sigue cayendo (146 frente a 208).
+
+**Descartado:** cambiar ya todos los tamaños de letra a la escala (39 tamaños, muchos dentro de dibujos y celdas del
+calendario: va sección a sección); agrandar las casillas de la cuadrícula de hábitos de la Semana y los bloques del
+carril de horas (su tamaño es dato: días y duración); el desplazamiento de sombra entero de la maqueta (con el sol
+bajo llegaba al borde y en los temas claros se veía como una franja gris).
+
+**Supuestos:** la cabecera crece unos 30 px por los botones de 44 (Hoy pasa de 1456 a 1508 px de alto); el aviso en
+negativo (claro sobre oscuro y al revés) como en la maqueta.

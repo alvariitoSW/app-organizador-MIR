@@ -22816,7 +22816,10 @@ function cieloDe(h){
   const mx=function(a,b){const x=hx(a),y=hx(b);return '#'+x.map(function(v,j){return Math.round(v+(y[j]-v)*k).toString(16).padStart(2,'0');}).join('');};
   const dia=h>=7&&h<=19.3,arco=dia?(h-7)/12.3:0,alto=dia?Math.sin(Math.PI*arco):0,crep=Math.max(0,1-Math.min(Math.abs(h-7.3),Math.abs(h-19))/1.4);
   return {c1:mx(A[1],B[1]),c2:mx(A[2],B[2]),c3:mx(A[3],B[3]),solx:dia?Math.round(8+84*arco)+'%':'70%',soly:dia?Math.round(60-48*alto)+'%':'10%',
-    solc:dia?(crep>0.3?'rgb(255 190 120 / .35)':'rgb(255 248 220 / .3)'):'rgb(210 225 255 / .1)',estrellas:dia?0:((h>20.5||h<5.5)?0.7:0.3)};}
+    solc:dia?(crep>0.3?'rgb(255 190 120 / .35)':'rgb(255 248 220 / .3)'):'rgb(210 225 255 / .1)',estrellas:dia?0:((h>20.5||h<5.5)?0.7:0.3),
+    /* la luz del filo de las piezas (cálida al alba y al atardecer, blanca de día, fría de noche) y hacia dónde cae su
+       sombra: con el sol a la izquierda (mañana) cae a la derecha, a mediodía corta y recta, de tarde a la izquierda */
+    luz:dia?(crep>0.3?'#ffc58a':'#ffffff'):'#9fb4ff',soldx:dia?Math.round(9*Math.cos(Math.PI*arco)):0,soldy:dia?Math.round(5+7*(1-alto)):7,sombra:dia?0.55:0.7};}
 function deGuardiaAhora(now){
   /* dentro de la guardia de verdad (de su hora de empezar a la de salir, con el pase), no todo el día */
   try{const k=iso(now),gk=snGuardiaAhora(k);if(!gk)return false;const gh=guardiaHoras(gk,dayInfo(gk).guard);if(!gh)return false;
@@ -22825,7 +22828,7 @@ function deGuardiaAhora(now){
 let _cieloT=0;
 function pintaCielo(){
   const now=new Date(),c=cieloDe(now.getHours()+now.getMinutes()/60),r=document.documentElement;
-  [['--c1',c.c1],['--c2',c.c2],['--c3',c.c3],['--sol-x',c.solx],['--sol-y',c.soly],['--sol-c',c.solc],['--estrellas',String(c.estrellas)]].forEach(function(p){r.style.setProperty(p[0],p[1]);});
+  [['--c1',c.c1],['--c2',c.c2],['--c3',c.c3],['--sol-x',c.solx],['--sol-y',c.soly],['--sol-c',c.solc],['--estrellas',String(c.estrellas)],['--luz',c.luz],['--sol-dx',String(c.soldx)],['--sol-dy',String(c.soldy)],['--sombra-a',String(c.sombra)]].forEach(function(p){r.style.setProperty(p[0],p[1]);});
   r.classList.toggle('de-guardia',deGuardiaAhora(now));
   if(!_cieloT)_cieloT=setInterval(pintaCielo,60000);}
 function render(){

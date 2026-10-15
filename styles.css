@@ -13,6 +13,41 @@ html:not(.dark){
   --glow:0 0 0 1px color-mix(in srgb,var(--brand) 18%,transparent),0 10px 24px -18px color-mix(in srgb,var(--brand) 40%,transparent);
   color-scheme:light;
 }
+/* ============ LAS FICHAS DEL SISTEMA («La jornada», tanda 2) ============
+   Una sola escala para todo lo común: esquinas, letra, espacio, movimiento y alturas. Los colores salen de las 9
+   variables de cada tema (las que escribe aplicarTema), así que siguen al tema solas; las que dependen de la hora
+   (la luz del borde y la sombra, que cae según el sol) las pone pintaCielo() cada minuto. */
+:root{
+  --r-4:4px;--r-8:8px;--r-12:12px;--r-16:16px;--r-24:24px;--r-redondo:999px;
+  --t-11:11px;--t-12:12.5px;--t-14:14px;--t-16:16px;--t-20:20px;--t-28:28px;--t-44:44px;
+  --e-4:4px;--e-8:8px;--e-12:12px;--e-16:16px;--e-24:24px;--e-32:32px;
+  --m-1:120ms;--m-2:200ms;--m-3:320ms;--curva-suave:cubic-bezier(.32,.72,0,1);--curva-muelle:cubic-bezier(.34,1.56,.64,1);
+  --toque:44px;
+  --texto:var(--ink);--texto-2:var(--ink2);--borde:var(--line);--borde-fuerte:color-mix(in srgb,var(--line),var(--ink) 22%);
+  --bien:var(--ok);--ojo:var(--warn);--mal:var(--bad);--info:#7cb4ff;
+  --base-1:var(--card);--base-2:color-mix(in srgb,var(--card),var(--bg) 45%);--base-3:color-mix(in srgb,var(--card),var(--ink) 4%);
+  --guardia-color:#7a1420;
+  --superficie-1:color-mix(in srgb,var(--base-1),var(--guardia-color) calc(var(--guardia-k) / 5));
+  --superficie-2:color-mix(in srgb,var(--base-2),var(--guardia-color) calc(var(--guardia-k) / 5));
+  --superficie-3:color-mix(in srgb,var(--base-3),var(--guardia-color) calc(var(--guardia-k) / 5));
+  --marca-suave:color-mix(in srgb,var(--brand) 16%,var(--superficie-1));
+  --bien-suave:color-mix(in srgb,var(--ok) 16%,var(--superficie-1));
+  --ojo-suave:color-mix(in srgb,var(--warn) 16%,var(--superficie-1));
+  --mal-suave:color-mix(in srgb,var(--bad) 16%,var(--superficie-1));
+  --cara:color-mix(in srgb,var(--card) 30%,#000);
+  --sobre-marca:#04121c;
+  --muted:var(--ink2);--card2:var(--superficie-2);
+  --luz:#9fb4ff;--luz-k:40%;--luz-borde:color-mix(in srgb,var(--luz) var(--luz-k),transparent);
+  --sol-dx:0;--sol-dy:7;--sombra-a:.7;--sombra-c:rgb(0 0 0 / var(--sombra-a));
+  /* el desplazamiento de lado es la mitad del de la maqueta: con el sol bajo, la sombra entera llegaba al borde de la
+     pantalla y en los temas claros se veía como una franja gris a un lado */
+  --sombra-1:calc(var(--sol-dx) * .25px) calc(var(--sol-dy) * .4px) 6px -3px var(--sombra-c);
+  --sombra-2:calc(var(--sol-dx) * .5px) calc(var(--sol-dy) * 1px) 18px -8px var(--sombra-c);
+  --sombra-3:calc(var(--sol-dx) * .6px) calc(var(--sol-dy) * 1.5px + 10px) 40px -12px var(--sombra-c);
+  --cara-lateral:0 3px 0 0 var(--cara);
+}
+html:not(.dark){--cara:color-mix(in srgb,var(--card) 80%,var(--ink));--sobre-marca:#fff;--info:#1d4ed8;
+  --luz-borde:color-mix(in srgb,#fff 80%,var(--luz));--sombra-c:rgb(25 35 70 / calc(var(--sombra-a) * .55))}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -66,9 +101,10 @@ nav button{appearance:none;border:1px solid transparent;background:none;padding:
 /* solo las pestañas de arriba: el cajón «Más» también es un <nav> y estas reglas le pintaban el recuadro
    de la sección en la que estás (degradado de marca con su línea gris encima: no se leía) */
 #tabs button:hover{color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
-#tabs button.on{color:#04121c;background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 70%,var(--brand)));
-  border-color:color-mix(in srgb,var(--brand) 60%,transparent);box-shadow:0 8px 22px -12px color-mix(in srgb,var(--brand) 85%,transparent)}
-html:not(.dark) #tabs button.on{color:#fff}
+/* la sección en la que estás: su nombre en el color del texto, el icono en el de la marca y una pestañita arriba */
+#tabs button.on{color:var(--ink);background:none;border-color:transparent;box-shadow:none}
+#tabs button.on .ico{color:var(--brand)}
+#tabs button.on::before{content:'';position:absolute;top:-6px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--brand)}
 /* con la chapita de las series junto a «Entreno», las cuatro pestañas no cabían en 392 px y «☰ Más» se salía de la
    pantalla (acababa en 425 de 412): con chapita, un poco menos de relleno a los lados */
 #tabs:has(.tb) button{padding-left:9px;padding-right:9px}
@@ -83,7 +119,6 @@ html:not(.dark) #tabs button.on{color:#fff}
 .calmodes button:hover{color:var(--ink);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
 .calmodes button.on{color:#04121c;background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 70%,var(--brand)));
   border-color:transparent}
-html:not(.dark) .calmodes button.on{color:#fff}
 .calmodes button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 @media(min-width:760px){
   .navrow{flex-direction:row;align-items:center;gap:16px}
@@ -111,37 +146,39 @@ main.in{animation:viewIn .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .grid{display:grid;gap:13px}
 @media(min-width:900px){.g2{grid-template-columns:1fr 1fr}}
-.card{position:relative;min-width:0;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--shadow);padding:14px 15px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 9%,transparent),transparent 42%)}
-@media(hover:hover){.card:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}}
-.card>h2{font-size:14px;margin:0 0 6px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;text-wrap:balance}
-.card>h2::before{content:'';width:3px;height:15px;border-radius:2px;flex:none;
-  background:linear-gradient(var(--brand),var(--brand2));box-shadow:0 0 12px color-mix(in srgb,var(--brand) 70%,transparent)}
+/* LA PIEZA DE MAQUETA («La jornada»): la tarjeta es opaca (el cielo nunca lleva texto: así se lee a cualquier
+   hora), con un filo de luz arriba, la cara lateral de 3 px que la levanta del cielo y la sombra que cae según el sol.
+   Sin el brillo en diagonal ni el desenfoque de antes (que además costaba en cada desplazamiento) */
+.card{position:relative;min-width:0;background:var(--superficie-1);border:0;border-radius:var(--r-16);
+  box-shadow:inset 0 1px 0 0 var(--luz-borde),var(--cara-lateral),var(--sombra-2);padding:14px 16px}
+.card .card{box-shadow:inset 0 0 0 1px var(--borde);background:var(--superficie-2)}
+.card>h2{font-size:var(--t-16);margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;line-height:1.3;text-wrap:balance}
 .note{color:var(--ink2);font-size:12.5px;margin:0 0 12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sp{flex:1 1 auto}
-.btn{appearance:none;font:inherit;font-weight:700;font-size:13px;padding:7px 13px;border-radius:11px;
-  border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink);cursor:pointer;
-  transition:border-color .16s,box-shadow .16s,transform .08s,background .16s}
-.btn:hover{border-color:color-mix(in srgb,var(--brand) 70%,var(--line));
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 28%,transparent),0 10px 24px -18px color-mix(in srgb,var(--brand) 90%,transparent)}
-.btn:active{transform:translateY(1px) scale(.995)}
-.btn.p{background:linear-gradient(94deg,var(--brand),color-mix(in srgb,var(--brand2) 80%,var(--brand)));
-  border-color:transparent;color:#051018;font-weight:800;
-  box-shadow:0 10px 26px -14px color-mix(in srgb,var(--brand) 90%,transparent)}
-html:not(.dark) .btn.p{color:#fff}
-.btn.g{background:linear-gradient(94deg,var(--ok),color-mix(in srgb,var(--accent) 80%,var(--ok)));border-color:transparent;color:#04140c;font-weight:800}
-html:not(.dark) .btn.g{color:#fff}
-.btn.bad{background:linear-gradient(94deg,var(--bad),color-mix(in srgb,var(--warn) 45%,var(--bad)));border-color:transparent;color:#1a0506;font-weight:800}
-html:not(.dark) .btn.bad{color:#fff}
-.btn.d{color:var(--bad);border-color:transparent;background:transparent;padding:5px 7px}
-.btn.d:hover{border-color:color-mix(in srgb,var(--bad) 45%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
-.btn.s{padding:5px 9px;font-size:12px;border-radius:9px}
-.btn:disabled{opacity:.4;cursor:default;box-shadow:none}
-input,select,textarea{font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line);border-radius:10px;
-  background:color-mix(in srgb,var(--bg) 55%,var(--card));color:var(--ink);min-width:0;transition:border-color .16s,box-shadow .16s}
+/* UN SOLO BOTÓN («La jornada»): una tecla con su filo de luz y su cara de 2 px que se hunde al pulsar. Variantes:
+   principal (.p, la marca lisa: sin el degradado cian→violeta), verde (.g), peligro (.bad), borrar (.d, sin fondo),
+   pequeño (.s, menos relleno y letra). Todos, también los pequeños, miden 44 px de alto: el dedo no encoge */
+.btn{appearance:none;font:inherit;font-weight:700;font-size:var(--t-14);line-height:1.2;min-height:var(--toque);padding:6px 14px;border-radius:var(--r-12);
+  border:0;background:var(--superficie-2);color:var(--ink);cursor:pointer;
+  box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 0 0 1px var(--borde);
+  transition:transform var(--m-1) var(--curva-suave),box-shadow var(--m-1),background var(--m-2)}
+.btn:hover{box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 0 0 1px color-mix(in srgb,var(--brand) 60%,var(--line))}
+.btn:active{transform:translateY(2px);box-shadow:inset 0 0 0 1px var(--borde)}
+.btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.btn.p{background:var(--brand);color:var(--sobre-marca);font-weight:800;
+  box-shadow:inset 0 1px 0 0 color-mix(in srgb,#fff 45%,transparent),0 2px 0 0 color-mix(in srgb,var(--brand) 45%,var(--cara))}
+.btn.g{background:var(--ok);color:var(--sobre-marca);font-weight:800;
+  box-shadow:inset 0 1px 0 0 color-mix(in srgb,#fff 40%,transparent),0 2px 0 0 color-mix(in srgb,var(--ok) 45%,var(--cara))}
+.btn.bad{background:var(--mal-suave);color:var(--bad);font-weight:800;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 45%,transparent),0 2px 0 0 var(--cara)}
+.btn.d{color:var(--bad);background:transparent;box-shadow:none;padding:6px 10px;min-width:var(--toque)}
+.btn.d:hover{background:var(--mal-suave);box-shadow:none}
+.btn.s{padding:4px 11px;font-size:var(--t-12);border-radius:var(--r-12)}
+.btn:disabled{opacity:.4;cursor:default;box-shadow:none;transform:none}
+input,select,textarea{font:inherit;font-size:var(--t-14);padding:6px 10px;border:1px solid var(--line);border-radius:var(--r-12);
+  background:var(--superficie-2);color:var(--ink);min-width:0;transition:border-color var(--m-1),box-shadow var(--m-1)}
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select{min-height:var(--toque)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:color-mix(in srgb,var(--brand) 70%,var(--line));
   box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
 input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
@@ -627,11 +664,13 @@ footer{max-width:1220px;margin:0 auto;padding:6px 14px 40px;color:var(--ink2);fo
 #daystrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 #daystrip label{flex:1 1 92px;font-size:10px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
 #daystrip select{width:100%;font-size:12px;font-weight:600;text-transform:none}
-#flash{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:99;max-width:min(92vw,560px);
-  background:color-mix(in srgb,var(--card) 92%,#000);color:var(--ink);border:1px solid color-mix(in srgb,var(--brand) 55%,transparent);
-  padding:10px 15px;border-radius:999px;font-size:12.5px;font-weight:600;text-align:center;
-  box-shadow:0 20px 50px -18px rgba(0,0,0,.8),0 0 24px -8px color-mix(in srgb,var(--brand) 80%,transparent);
-  animation:viewIn .2s ease}
+/* EL AVISO («La jornada»): un rectángulo de esquinas de 16 px y el 92 % del ancho, en negativo (el texto del tema
+   como fondo): ya no es una píldora que con tres líneas se volvía un óvalo de 206 px */
+#flash{position:fixed;left:0;right:0;margin:0 auto;width:92%;max-width:560px;bottom:18px;z-index:99;
+  background:var(--ink);color:var(--card);border:0;
+  padding:12px 16px;border-radius:var(--r-16);font-size:var(--t-14);font-weight:500;line-height:1.35;text-align:left;
+  box-shadow:var(--sombra-3);animation:avisoSube var(--m-2) var(--curva-suave)}
+@keyframes avisoSube{from{opacity:0;transform:translateY(8px)}}
 kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:5px;border:1px solid var(--line);
   background:color-mix(in srgb,var(--card) 60%,var(--bg));color:var(--ink2)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -703,7 +742,7 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 
   /* 6 · cajas legibles: blancas con borde, no la tarjeta oscura con letra oscura */
   .card,.day,.session,.drow,.tarj,.dbox{break-inside:avoid;page-break-inside:avoid;background:#fff}
-  .card,.day,.session,.drow,.tarj{border:1px solid #bbb}
+  .card,.day,.session,.drow,.tarj{border:1px solid #bbb;box-shadow:none}
   .kpis div,.dosdatos div,.tot div,.guarda div{background:#fff;border:1px solid #bbb}
   .kpis div b,.dosdatos div b,.tot div b{color:#000}
   .daylist{grid-template-columns:repeat(2,1fr)}
@@ -760,11 +799,10 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 .fuente.usda{border-color:color-mix(in srgb,var(--ok) 40%,var(--line));color:color-mix(in srgb,var(--ok) 80%,var(--ink))}
 .fuente.tuyo{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:color-mix(in srgb,var(--brand) 80%,var(--ink))}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chipx{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;
-  border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);
-  font-family:inherit;cursor:pointer;min-height:36px}
-.chipx.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);
-  background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.chipx{display:inline-flex;align-items:center;gap:6px;font-size:var(--t-14);font-weight:500;padding:6px 14px;border-radius:var(--r-redondo);
+  border:0;box-shadow:inset 0 0 0 1px var(--borde);background:var(--superficie-2);color:var(--ink);
+  font-family:inherit;cursor:pointer;min-height:var(--toque)}
+.chipx.on{box-shadow:inset 0 0 0 1.5px var(--brand);color:var(--ink);font-weight:700;background:var(--marca-suave)}
 .chipx .x{background:none;border:0;color:var(--ink2);font:inherit;cursor:pointer;padding:0 0 0 2px;line-height:1}
 .chipx .x:hover{color:var(--bad)}
 .idea{border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin-top:9px;
@@ -871,8 +909,6 @@ textarea.editor{border:1px solid var(--line);border-radius:13px;padding:12px;
   display:flex;align-items:center;justify-content:center}
 .hit .add:hover{background:color-mix(in srgb,var(--brand) 24%,transparent)}
 /* --- la hoja de cantidad --- */
-.hoja{position:relative;z-index:1;border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:18px;
-  padding:15px 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 10%,var(--card)),var(--card))}
 .pasos{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0 4px}
 .pasos button{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);
   background:color-mix(in srgb,var(--bg) 45%,var(--card));color:var(--ink);font:inherit;font-size:22px;font-weight:800;
@@ -1051,7 +1087,7 @@ ul.slots{list-style:none;margin:0;padding:0}
 .gfila.tarde .tx span{color:var(--warn)}
 .gfila .im{font-size:13.5px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 .gfila.ok .im{color:var(--ink2)}
-.card.avisa{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));
+.card.avisa{box-shadow:inset 0 2px 0 0 var(--ojo),var(--cara-lateral),var(--sombra-2);
   background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 9%,var(--card)),var(--card))}
 .prog .bar i.mal{background:linear-gradient(90deg,var(--warn),var(--bad))}
 /* el editor de los fijos: una fila por gasto, que quepa en 412 px */
@@ -2338,14 +2374,13 @@ body[data-tab="gym"] #main .gtb input{font-size:16px}
 .hscrim{position:fixed;inset:0;z-index:60;background:rgba(2,4,10,.62);animation:hfade .18s ease-out}
 .hoja{position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:88vh;overflow:auto;overscroll-behavior:contain;
   max-width:560px;margin:0 auto;padding:6px 14px calc(16px + env(safe-area-inset-bottom));
-  background:linear-gradient(var(--card),color-mix(in srgb,var(--card) 82%,var(--bg)));
-  border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-bottom:0;border-radius:22px 22px 0 0;
-  box-shadow:0 -20px 50px -20px color-mix(in srgb,var(--brand) 45%,transparent);animation:hsube .22s cubic-bezier(.2,.8,.2,1)}
+  background:var(--superficie-3);border:0;border-radius:var(--r-24) var(--r-24) 0 0;
+  box-shadow:inset 0 1px 0 0 var(--luz-borde),var(--sombra-3);animation:hsube var(--m-3) var(--curva-suave)}
 @keyframes hsube{from{transform:translateY(40%);opacity:.4}}
 @keyframes hfade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){.hoja,.hscrim{animation:none}.dbox.pulsando{transition:none}}
 .hgrab{width:60px;height:22px;margin:0 auto 4px;position:relative;cursor:pointer}
-.hgrab::before{content:'';position:absolute;left:9px;right:9px;top:8px;height:5px;border-radius:9px;background:var(--line)}
+.hgrab::before{content:'';position:absolute;left:10px;right:10px;top:8px;height:5px;border-radius:3px;background:var(--borde-fuerte)}
 .hcab{display:flex;align-items:flex-start;gap:10px}
 .hnum{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;align-content:center;font-weight:900;font-size:20px;line-height:1;
   background:color-mix(in srgb,var(--c) 18%,var(--bg2));border:1px solid color-mix(in srgb,var(--c) 55%,var(--line))}
@@ -2403,7 +2438,6 @@ body[data-tab="gym"] #main .gtb input{font-size:16px}
 .htg input:focus-visible+i{outline:2px solid var(--brand);outline-offset:2px}
 .hbig{display:block;width:100%;min-height:52px;border-radius:14px;border:0;margin-top:12px;cursor:pointer;
   background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04121c;font:inherit;font-weight:900;font-size:16px}
-html:not(.dark) .hbig{color:#fff}
 .mpincel{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:50;max-width:560px;margin:0 auto;
   box-shadow:0 14px 40px -10px #000;border-radius:16px;padding:10px 12px;background:color-mix(in srgb,var(--brand) 14%,var(--card));border:1px solid var(--brand)}
 .mpincel.g{background:color-mix(in srgb,var(--bad) 18%,var(--card));border-color:var(--bad)}
@@ -2451,7 +2485,6 @@ html.hoja-abierta #flash{bottom:auto!important;top:calc(14px + env(safe-area-ins
 .dseg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:3px}
 .dseg button{flex:1;min-height:38px;border:0;border-radius:99px;background:none;color:var(--ink2);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
 .dseg .on{background:var(--brand);color:#04121c}
-html:not(.dark) .dseg .on{color:#fff}
 .dxlw{overflow-x:auto;overscroll-behavior-x:contain}
 .dxl{border-collapse:separate;border-spacing:2px;font-size:11.5px;font-variant-numeric:tabular-nums;width:100%}
 .dxl td,.dxl th{border-bottom:0}
@@ -3125,8 +3158,8 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 /* tarjetas de pantalla (cantidad, menú de restaurante): NO son hojas que suben. Antes compartían
    clase con ellas, se quedaban fijas abajo, tapaban la cabecera y la página no se movía */
 .hoja.hojain{position:relative;left:auto;right:auto;bottom:auto;z-index:1;max-height:none;overflow:visible;max-width:none;margin:0;
-  padding:15px 14px;border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:18px;box-shadow:none;animation:none;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 10%,var(--card)),var(--card))}
+  padding:14px 16px;border:0;border-radius:var(--r-16);animation:none;background:var(--superficie-1);
+  box-shadow:inset 0 2px 0 0 var(--brand),var(--cara-lateral),var(--sombra-2)}
 .pasos .fcin{width:120px;text-align:center;font-size:34px;font-weight:900;background:transparent;border:0;border-bottom:2px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:0;color:var(--ink);padding:0 0 2px}
 .cjen{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}
 .cjeni{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;background:var(--bg2);max-width:100%}
@@ -3134,8 +3167,9 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjeni .n i{font-style:normal;color:var(--ink2)}
 .cjeni .x{background:none;border:0;color:var(--ink2);font-size:16px;padding:4px 10px 4px 4px;cursor:pointer}
 #flash.undo{pointer-events:auto;display:flex;align-items:center;gap:10px}
-#flash.undo button{flex:none;border:0;border-radius:10px;padding:7px 12px;font:inherit;font-weight:900;background:var(--brand);color:#04121c;cursor:pointer}
-#flash.undo{min-width:min(92vw,320px);border-radius:16px;justify-content:space-between;text-align:left}
+#flash.undo button{flex:none;border:0;border-radius:var(--r-12);min-height:var(--toque);padding:0 12px;font:inherit;font-weight:800;background:transparent;
+  color:var(--card);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#flash.undo{justify-content:space-between;padding:6px 6px 6px 16px}
 .cjracs{display:flex;align-items:center;gap:6px;margin:4px 0 8px}
 /* ===== semanas prototipo ===== */
 .sptabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
@@ -3771,7 +3805,7 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 /* ============ Semana y Hoy con una fila de mandos; el asistente y los hábitos plegados ============ */
 .semtog.t3{grid-template-columns:1fr 1fr 1fr}
 .hoyseg.h4 button{padding-left:4px;padding-right:4px;font-size:12.5px}
-.habsem h2 .dlink{font-size:12.5px;padding:0}
+.habsem h2 .dlink{font-size:12.5px;padding:0;margin:-10px 0}   /* sus 44 px de toque, sin engordar la cabecera */
 .astj.plegada{padding-top:0}
 .astj-cab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:9px 0 3px;font:inherit;color:var(--ink);cursor:pointer;min-height:40px}
 .astj-cab .t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}.astj-cab b{font-size:14px}
@@ -4013,3 +4047,60 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
   .ico, .ico * { animation: none !important; transition: none !important; }
 }
 .sin-mov .ico, .sin-mov .ico * { animation: none !important; transition: none !important; }
+
+/* ============ EL SELECTOR ÚNICO («La jornada», tanda 2) ============
+   Había ~20 familias de pestañas, cada una con su forma (píldoras con degradado, cuadros con borde, rejillas…).
+   Ahora todas son la misma pieza: un carril hundido y, encima, la opción elegida levantada como una tecla, con una
+   raya de la marca abajo. Cada familia conserva su reparto (fila, rejilla de 3 o 4, con salto de línea). 44 px. */
+:is(.calmodes,.gtabs3,.dseg,.cjseg,.cjseg2,.hoyseg,.snseg,.gseg,.fseg,.bwseg,.mseg,.d6seg,.hcseg,.cnseg,.semtog){
+  gap:4px;padding:4px;border:0;border-radius:var(--r-16);background:var(--superficie-2);
+  box-shadow:inset 0 1px 2px rgb(0 0 0 / .3),inset 0 0 0 1px var(--borde)}
+:is(.calmodes,.gtabs3,.dseg,.cjseg,.cjseg2,.hoyseg,.snseg,.gseg,.fseg,.bwseg,.mseg,.d6seg,.hcseg,.cnseg,.semtog) button{
+  appearance:none;border:0;background:transparent;box-shadow:none;min-height:var(--toque);border-radius:var(--r-12);
+  color:var(--ink2);font-family:inherit;font-size:var(--t-12);font-weight:700;line-height:1.2;cursor:pointer;
+  transition:background var(--m-1),color var(--m-1),box-shadow var(--m-1)}
+:is(.calmodes,.gtabs3,.dseg,.cjseg,.cjseg2,.hoyseg,.snseg,.gseg,.fseg,.bwseg,.mseg,.d6seg,.hcseg,.cnseg,.semtog) button:hover{color:var(--ink);background:transparent}
+:is(.calmodes,.gtabs3,.dseg,.cjseg,.cjseg2,.hoyseg,.snseg,.gseg,.fseg,.bwseg,.mseg,.d6seg,.hcseg,.cnseg,.semtog) :is(button.on,button.on:hover){
+  background:var(--superficie-1);color:var(--ink);border:0;
+  box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),var(--sombra-1),inset 0 -2px 0 0 var(--brand)}
+:is(.calmodes,.gtabs3,.dseg,.cjseg,.cjseg2,.hoyseg,.snseg,.gseg,.fseg,.bwseg,.mseg,.d6seg,.hcseg,.cnseg,.semtog) button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.calmodes{margin-bottom:8px}
+/* las pestañas que se desplazan de lado son chips */
+.sptabs button{min-height:var(--toque);border:0;border-radius:var(--r-redondo);background:var(--superficie-2);box-shadow:inset 0 0 0 1px var(--borde);
+  color:var(--ink2);font-size:var(--t-14);font-weight:500;padding:0 14px}
+.sptabs button.on{background:var(--marca-suave);color:var(--ink);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--brand)}
+@media (prefers-reduced-motion:reduce){.btn,.chipx,#flash,.hoja{transition:none;animation:none}}
+/* lo que quedaba por debajo de 44 px: marcar una comida (✓ y ±), los enlaces de texto, «Plato · Bowl · Bocata»,
+   el resumen de las guardias de R1 y la × de silenciar un consejo */
+.h2ok,.h2add{width:var(--toque);height:var(--toque);border-radius:var(--r-12)}
+.h2mom{grid-template-columns:1fr auto auto}
+.h2mom .t{min-height:var(--toque);justify-content:center}
+.dlink{min-height:var(--toque)}
+.qcway button{min-height:var(--toque)}
+.r1g summary{min-height:var(--toque);align-items:center}
+button.x{min-width:var(--toque);min-height:var(--toque)}
+/* los botones que son una <label> (subir una foto o un fichero): el texto, centrado en sus 44 px */
+label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+/* EL SUELO DE 44 PX: muchas pantallas encogían sus botones con reglas propias (34, 32, 30, 28 px de alto). Por encima
+   de todas, ninguno baja de 44 de alto ni de ancho (los cuadrados de icono pasan a 44×44); y los círculos de marcar
+   una comida, de 28 a 44 */
+:is(#main,#drawer,header,#overlay) .btn{min-height:var(--toque);min-width:var(--toque)}
+.cjq{width:var(--toque);height:var(--toque);margin-top:0;font-size:var(--t-16)}
+.cji{width:var(--toque);height:var(--toque)}
+/* el resto de cosas tocables con forma propia que se quedaban por debajo: las casillas de marcar (hábitos, notas,
+   comidas), los botones de la escala de sueño, las filas de día y de compra, las celdas del plan y los resúmenes que
+   se despliegan (los bloques del carril de horas no: su alto es su duración y ya llevan su zona de toque). Ninguno cambia de forma: solo crece su alto (y su ancho si era un cuadradito) */
+:is(.tick,.hck,.secmv,.hmin,.snkss button){min-width:var(--toque);min-height:var(--toque)}
+:is(.ssc,.pasillo,.snhoyc,.d6cat,.dfila,.cjmm .tx),.hoypie button.hoykcal{min-height:var(--toque)}
+#main summary.mini,.plegable>summary{min-height:var(--toque);display:flex;align-items:center}
+/* la fila de cada día de la Semana y el resumen de una sesión de cocina: listas apretadas a propósito (la semana cabe
+   en dos pantallas). Su zona de toque crece por fuera, invisible, sin engordar la fila */
+.drmain,details.cocm>summary.cocmh{position:relative}
+.drmain::after{content:'';position:absolute;inset:-6px 0}
+details.cocm>summary.cocmh::before{content:'';position:absolute;inset:-12px -10px}
+/* el botón grande (Crear rutina, Hecho en hábitos, el principal de Entreno): la marca lisa, sin el degradado
+   cian→violeta, con su cara de tecla; 52 px de alto */
+.gbig2,.hbig{background:var(--brand);color:var(--sobre-marca);font-weight:800;border-radius:var(--r-16);min-height:52px;
+  box-shadow:inset 0 1px 0 0 color-mix(in srgb,#fff 45%,transparent),0 3px 0 0 color-mix(in srgb,var(--brand) 45%,var(--cara))}
+.gbig2:active,.hbig:active{transform:translateY(2px);box-shadow:none}
+.hoychip{background:var(--brand);color:var(--sobre-marca)}
