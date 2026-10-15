@@ -13127,6 +13127,37 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       (r.hoja === 'sin hoja' || r.hoja === '24px') && !!r.aviso && r.aviso.radio === '16px' && Math.abs(r.aviso.ancho - Math.round(412 * 0.92)) <= 2 &&
       r.sol.dx === r.sol.esperado && r.sol.manana > 0 && r.sol.tarde < 0 && Math.abs(r.sol.mediodia) <= 1, JSON.stringify(r));
   }
+  // 315) LAS GUARDIAS DE R1 CUENTAN EL MES EN CURSO ENTERO, EN CADENA: el año de R1 empezó hace 4 meses (este es el 5.º);
+  // en Ajustes se pone el último día y «te puedes quitar 4», y en Mes «R1 llevas/toca» cuenta los 4 meses pasados MÁS el
+  // cupo de este (con 6 al mes, 30), y el mes en curso no sale «sin poner». Al pintarle 1 guardia al último día de este
+  // mes, cuenta lo pintado (los 4 meses + 1) aunque ese día aún no haya llegado. Fija: a mitad de octubre salía 24 en vez de 30.
+  {
+    const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), k = (n) => P.iso(new Date(d.getFullYear(), d.getMonth() + n, 1)).slice(0, 7);
+      P.__t315 = { finR1: P.store.rotation.finR1, quita: P.store.rotation.quitaR1, mode: P.store.rotation.mode, tab: P.ui.tab, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}) };
+      const meses = [-4, -3, -2, -1, 0].map(k), SB = P.store.rotation.shiftByDay || {};
+      Object.keys(SB).filter((x) => meses.indexOf(x.slice(0, 7)) >= 0).forEach((x) => P.setDayOverride(x, null, ''));
+      P.save();
+      return { fin: P.iso(new Date(d.getFullYear(), d.getMonth() + 8, 0)), mes: k(0), ultimo: P.iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) }; });
+    await gotoTab('cfg', 'rotacion'); await page.waitForTimeout(180);
+    await page.fill('#main input[data-a="fin-r1"]', ini.fin); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await page.fill('#main input[data-a="quita-r1"]', '4'); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    const lee = () => page.evaluate((mes) => { const e = document.querySelector('#main .r1g'); if (!e) return null; const lt = ((e.querySelector('.r1l') || {}).textContent || '').split('/');
+      const g = window.PG.guardiasR1(), n = (m) => Object.values((m && m.por) || {}).reduce((a, x) => a + x, 0);
+      const antes = g.meses.filter((m) => m.key < mes).reduce((a, m) => a + n(m), 0), esteMes = n(g.meses.filter((m) => m.key === mes)[0]);
+      const actual = [...e.querySelectorAll('.r1d > span.hoy')].map((x) => x.textContent.replace(/\s+/g, ' ').trim())[0] || '';
+      return { llevas: +lt[0], toca: +lt[1], quedan: +((e.querySelector('.r1n') || {}).textContent || NaN), antes, esteMes, ini: g.ini, actual }; }, ini.mes);
+    await gotoTab('month'); await page.click('[data-a="mon-today"]').catch(() => {}); await page.waitForTimeout(250);
+    const r = { a: await lee() };
+    await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.ultimo, 'sh-g', 'urg'); P.save(); P.render(); }, ini);
+    await page.waitForTimeout(150);
+    r.b = await lee();
+    await page.evaluate(() => { const P = window.PG, t = P.__t315; P.store.rotation.shiftByDay = JSON.parse(t.sbd);
+      if (t.finR1 == null) delete P.store.rotation.finR1; else P.store.rotation.finR1 = t.finR1; if (t.quita == null) delete P.store.rotation.quitaR1; else P.store.rotation.quitaR1 = t.quita;
+      P.store.rotation.mode = t.mode; P.ui.tab = t.tab; delete P.__t315; P.save(); P.render(); });
+    check('R1: el mes en curso cuenta entero (su cupo, o lo pintado) y no sale «sin poner»; pintado, cuenta lo pintado aunque el día no haya llegado',
+      !!r.a && !!r.b && r.a.antes > 0 && r.a.esteMes > 1 && r.a.llevas === r.a.antes + r.a.esteMes && r.a.quedan === r.a.toca - r.a.llevas && !/sin poner/.test(r.a.actual) &&
+      r.b.llevas === r.a.antes + 1 && r.b.quedan === r.b.toca - r.b.llevas, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

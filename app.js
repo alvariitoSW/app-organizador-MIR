@@ -1570,7 +1570,7 @@ function inicioR1(){const f=parseDate(finR1());return iso(new Date(f.getFullYear
 function quitaR1(){const q=(store.rotation||{}).quitaR1;return (typeof q==='number'&&q>=0)?Math.min(30,q):4;}
 function guardiasR1(hoyK){
   hoyK=hoyK||iso(new Date());const fin=finR1(),ini=inicioR1(),tipos=gTipos(),cero=function(){const o={};tipos.forEach(function(t){o[t.code]=0;});return o;};
-  const out={ini:ini,fin:fin,quita:quitaR1(),toca:cero(),llevas:cero(),quedan:cero(),puestas:cero(),porPoner:cero(),meses:[],total:0};
+  const out={ini:ini,fin:fin,quita:quitaR1(),toca:cero(),llevas:cero(),hoy:cero(),quedan:cero(),puestas:cero(),porPoner:cero(),meses:[],total:0};
   const i0=parseDate(ini),f=parseDate(fin),mesHoy=hoyK.slice(0,7),suma=function(o,c,n){o[c]=(o[c]||0)+n;};
   for(let y=i0.getFullYear(),m=i0.getMonth();y<f.getFullYear()||(y===f.getFullYear()&&m<=f.getMonth());m===11?(y++,m=0):m++){
     const key=y+'-'+String(m+1).padStart(2,'0'),cupo={};repartoTipos(monthService(y,m).guardias).forEach(function(c){suma(cupo,c,1);});
@@ -1578,10 +1578,12 @@ function guardiasR1(hoyK){
     const pint={},antes={};let any=0;
     monthDays(y,m).forEach(function(d){if(!d.shiftId||!isGuardia(shiftById(d.shiftId)))return;
       const c=d.guard?String(d.guard).toLowerCase():(tipos[0]||{}).code;any++;suma(pint,c,1);if(d.key<hoyK)suma(antes,c,1);});
-    const fila={key:key,pintado:any>0,pasado:key<mesHoy,actual:key===mesHoy,por:any?pint:(key<mesHoy?cupo:{})};
-    if(fila.pasado)Object.keys(fila.por).forEach(function(c){suma(out.llevas,c,fila.por[c]);});
-    else{Object.keys(antes).forEach(function(c){suma(out.llevas,c,antes[c]);});
-      Object.keys(pint).forEach(function(c){suma(out.puestas,c,pint[c]-(antes[c]||0));});}
+    /* el mes en curso cuenta entero, como los pasados: las guardias van por meses y a fin de mes estarán hechas (lo que
+       pintaste, o su cupo si aún no lo has pintado). Así, en octubre con 6 al mes desde junio: 30, no 24 */
+    const cuenta=key<=mesHoy,fila={key:key,pintado:any>0,pasado:key<mesHoy,actual:key===mesHoy,por:any?pint:(cuenta?cupo:{})};
+    if(cuenta){Object.keys(fila.por).forEach(function(c){suma(out.llevas,c,fila.por[c]);});
+      if(fila.actual)Object.keys(antes).forEach(function(c){suma(out.hoy,c,antes[c]);});}
+    else Object.keys(pint).forEach(function(c){suma(out.puestas,c,pint[c]);});
     out.meses.push(fila);}
   /* las que te puedes quitar salen de Urgencias (si no hubiera, del siguiente tipo) */
   let q=out.quita;['urg'].concat(tipos.map(function(t){return t.code;}).filter(function(c){return c!=='urg';})).forEach(function(c){
@@ -1599,17 +1601,18 @@ function guardiasR1HTML(){
   const hoyK=iso(new Date()),r=guardiasR1(hoyK);if(hoyK>r.fin||hoyK<r.ini)return '';
   const tipos=gTipos().filter(function(t){return r.toca[t.code]||(t.code==='urg'||t.code==='umi');}),corto=function(t){return t.code==='urg'?'Urg':t.label;};
   const fd=function(k){const d=parseDate(k);return MON[d.getMonth()]+' '+d.getFullYear();};
-  const lab='R1, de '+fd(r.ini)+' a '+fd(r.fin)+': llevas '+r.totLlevas+' de '+r.totToca+' guardias y quedan '+r.total+' ('+
+  const mesN=MONTH_FULL[parseDate(hoyK).getMonth()];
+  const lab='R1, de '+fd(r.ini)+' a '+fd(r.fin)+': a fin de '+mesN+' llevarás '+r.totLlevas+' de '+r.totToca+' guardias y quedarán '+r.total+' ('+
     tipos.map(function(t){return (r.quedan[t.code]||0)+' de '+t.label;}).join(' y ')+')';
   return '<details class="r1g"><summary aria-label="'+esc(lab)+'"><span class="r1t">🩺 R1 <span class="r1l">'+r.totLlevas+'/'+r.totToca+'</span> · quedan</span><b class="r1n">'+r.total+'</b>'+
       tipos.map(function(t){return '<span class="r1p '+esc(t.code)+'"><b>'+(r.quedan[t.code]||0)+'</b> '+esc(corto(t))+'</span>';}).join('')+'</summary>'+
     '<div class="r1d">'+tipos.map(function(t){const c=t.code;
-        return '<p class="r1x '+esc(c)+'"><b>'+esc(t.label)+'</b>: llevas '+(r.llevas[c]||0)+' de '+(r.toca[c]||0)+(c==='urg'&&r.quita?' ('+((r.toca[c]||0)+r.quita)+' − '+r.quita+' que te quitas)':'')+
+        return '<p class="r1x '+esc(c)+'"><b>'+esc(t.label)+'</b>: a fin de '+esc(mesN)+', '+(r.llevas[c]||0)+' de '+(r.toca[c]||0)+(c==='urg'&&r.quita?' ('+((r.toca[c]||0)+r.quita)+' − '+r.quita+' que te quitas)':'')+
           ' · quedan '+(r.quedan[c]||0)+' <small>('+(r.puestas[c]||0)+' puestas, '+(r.porPoner[c]||0)+' por poner)</small></p>';}).join('')+
       '<p class="r1h">Mes a mes ('+tipos.map(corto).join(' + ')+'):</p>'+r.meses.map(function(m){const d=parseDate(m.key+'-01');
       return '<span class="'+(m.pasado?'pas':m.actual?'hoy':'fut')+'"><i>'+esc(MONTH_FULL[d.getMonth()].slice(0,3))+'</i>'+
-        (m.pintado||m.pasado?tipos.map(function(t){return (m.por[t.code]||0);}).join(' + ')+(m.pintado?'':' <small>cupo</small>'):'<small>sin poner</small>')+'</span>';}).join('')+
-      '<p>Lo pasado: lo que pintaste (un mes sin pintar cuenta su cupo entero). Lo que viene: solo lo que tú pongas.</p></div></details>';}
+        (m.pintado||m.pasado||m.actual?tipos.map(function(t){return (m.por[t.code]||0);}).join(' + ')+(m.pintado?'':' <small>cupo</small>'):'<small>sin poner</small>')+'</span>';}).join('')+
+      '<p>Hasta este mes incluido: lo que pintaste (un mes sin pintar cuenta su cupo entero). Los que vienen: solo lo que tú pongas.</p></div></details>';}
 function svcMesesDe(nombre,porDefecto){
   /* cada rotación puede durar lo suyo: se busca por nombre para que valga aunque el orden venga de fuera */
   const r=store.rotation,ix=(r.servicios||[]).indexOf(nombre);

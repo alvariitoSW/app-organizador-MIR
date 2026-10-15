@@ -1002,3 +1002,15 @@ bajo llegaba al borde y en los temas claros se veía como una franja gris).
 
 **Supuestos:** la cabecera crece unos 30 px por los botones de 44 (Hoy pasa de 1456 a 1508 px de alto); el aviso en
 negativo (claro sobre oscuro y al revés) como en la maqueta.
+
+## Guardias de R1: el mes en curso cuenta entero (2026-10-15)
+
+**Elegido:** «R1 llevas/toca» cuenta los meses pasados **y el mes en curso entero**: lo que hayas pintado ese mes
+(aunque el día no haya llegado) o su cupo si aún no lo has pintado. Las guardias van por meses: a mitad de octubre, con
+6 al mes desde junio, sale 30 (no 24) y quedan 38. El texto lo dice: «a fin de octubre, 20 de 44 Urgencias…». Los meses
+que vienen siguen contando solo lo que tú pongas. Prueba 315 en cadena (Ajustes → Mes → pintar el último día del mes):
+con el código de antes cae solo ella.
+
+**Descartado:** contar solo las guardias de días ya pasados (era lo de antes: a mitad de mes faltaban las del resto).
+
+**Supuestos:** si a mitad de mes has pintado menos guardias que el cupo, cuenta lo pintado (lo que pintas manda).
