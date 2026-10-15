@@ -5372,7 +5372,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG;
       const k = '2027-03-10';
       P.store.rotation.vacaciones = (P.store.rotation.vacaciones || []).filter((v) => v.label !== 'medianoche');
-      P.addVacation(k, k, 'medianoche');
+      /* el día siguiente también de vacaciones: si mañana se trabaja, la cama de las 00:00 se adelanta para dormir tu mínimo */
+      P.addVacation(k, '2027-03-11', 'medianoche');
       const sh = P.dayInfo(k).shiftId;
       const r = P.store.rhythm[sh]; const antes = r.sleep; r.sleep = '00:00';
       const box = document.createElement('div'); box.innerHTML = P.timelineBar(k);
@@ -12050,6 +12051,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForSelector('#main .calmes #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
     Object.assign(r.c, await page.evaluate(() => ({ hay: !!document.querySelector('#main .calmes #carrSlot .ct svg'), cal: !!document.querySelector('#main .cal.ext'), ls: localStorage.getItem('guardias-mesv'),
       eventos: [...document.querySelectorAll('#main .card h2')].some((h) => /^Eventos de/.test(h.textContent)), on: (document.querySelector('#main .mesv .on') || {}).textContent || '' })));
+    /* en Mes la carretera es el mes natural (empieza el día 1) pero los días se cuentan desde hoy: la guardia de pasado
+       mañana también dice «en 2 días» (decía «en 15 días» el día 14). Si pasado mañana ya es otro mes, no se mira */
+    r.c.en2 = await page.evaluate((k) => { if (k.slice(0, 7) !== window.PG.iso(new Date()).slice(0, 7)) return 'otro mes'; const svg = document.querySelector('#main .calmes #carrSlot .ct svg'); return !!svg && /en 2 días/.test(svg.textContent) && !/en (1[0-9]|2[0-9]|3[01]) días/.test([...svg.querySelectorAll('g[data-o="' + k + '"] text')].map((x) => x.textContent).join(' ')); }, kg);
     // (d) la tira: una marca por día del mes; tocar una abre ese día
     const t = await page.evaluate(() => { const l = [...document.querySelectorAll('#main #carrSlot .ct svg circle[data-o]')]; const m = l[Math.min(20, l.length - 1)]; if (!m) return null;
       m.scrollIntoView({ block: 'center' }); const b = m.getBoundingClientRect(); return [m.getAttribute('data-o'), b.x + b.width / 2, b.y + b.height / 2, l.length]; });
@@ -12072,8 +12076,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('en Hoy, «Lo que viene» es la carretera: sin cuenta atrás ni «Próximos», la guardia de pasado mañana en el salpicadero y como túnel con cartel, y el evento como señal',
       r.a.hay && !r.a.cuenta && !r.a.proximos && /en 2 días/.test(r.a.cab) && r.a.tunel && r.a.cartel && r.a.senal && r.a.mojones >= 10 && r.a.sr >= 10, JSON.stringify(r.a));
     check('tocar el cartel de la guardia en la carretera abre ese día en Hoy', !!c && esDia(r.b), JSON.stringify(r.b));
-    check('en Mes, el tercer chip pone la carretera (y se recuerda) y «Eventos de …» ya no está',
-      r.c.chips === '▦ Plana|🏗 Isométrica|🛣 Carretera' && r.c.hay && !r.c.cal && r.c.ls === 'ruta' && !r.c.eventos && /Carretera/.test(r.c.on), JSON.stringify(r.c));
+    check('en Mes, el tercer chip pone la carretera (y se recuerda), «Eventos de …» ya no está y los días se cuentan desde hoy',
+      r.c.chips === '▦ Plana|🏗 Isométrica|🛣 Carretera' && r.c.hay && !r.c.cal && r.c.ls === 'ruta' && !r.c.eventos && /Carretera/.test(r.c.on) && (r.c.en2 === true || r.c.en2 === 'otro mes'), JSON.stringify(r.c));
     check('la tira de arriba es el mes entero (28–31 marcas) y tocar una marca abre ese día en Hoy', r.d.marcas >= 28 && r.d.marcas <= 31 && !!r.d.k && esDia(r.d), JSON.stringify(r.d));
     check('la carretera no se imprime y «Plana» devuelve la cuadrícula', r.e.papel.slot && !r.e.papel.visible && r.e.plana.cal && !r.e.plana.ruta && r.e.plana.ls === 'plana', JSON.stringify(r.e));
   }
@@ -12818,7 +12822,60 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.come && r.c.manos && !r.c2.come && !r.c2.manos && r.qui.ciudad && r.qui.ph === 6 && r.pos.hab === 7 &&
       r.d.casa && r.coc.cocina && !r.coc.ciudad && r.coc.ph === 6 && r.dor.dorm && r.dor.hab === 7, JSON.stringify(r));
   }
-  // 305) EN EL CAJÓN «MÁS» SE LEE EL RECUADRO DE LA SECCIÓN EN LA QUE ESTÁS, EN CADENA: tema Arena (por Ajustes) →
+  // 305) CONTINUIDAD A MEDIANOCHE, EN CADENA (conduce Hoy): hoy libre con la cama a las 00:30 y mañana también libre
+  // (te levantas a las 09:30, así que las 00:30 dejan tus horas de sueño). Viendo
+  // hoy a las 00:15 estás despierto en casa; con la palanca en D (mañana), a las 00:15 se ve lo mismo y no durmiendo; a
+  // la 01:00 de mañana, ya duermes. Fija: la noche de mañana empezaba a las 00:00 aunque te acostaras a las 00:30, y el
+  // mismo instante salía despierto viendo un día y dormido viendo el otro.
+  {
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.__t305 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify((P.store.rhythm || {})['sh-l'] || null), mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-l', '');
+      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
+    const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
+      const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { casa: cd.classList.contains('casa'), nxl: q('nxl'), nxa: q('nxa') }; }, h);
+    const r = { hoy: await ver(24.25) };
+    await page.click('#main .cd [data-o="marcha"][data-d="1"]').catch(() => {}); await page.waitForTimeout(400);
+    r.dia = await page.evaluate(() => window.PG.ui.diaHoy);
+    r.man = await ver(0.25); r.man1 = await ver(1);
+    await page.click('#main .cd [data-o="marcha"][data-d="0"]').catch(() => {}); await page.waitForTimeout(300);
+    await page.evaluate(() => { const P = window.PG, t = P.__t305, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.setDayOverride(hoy, t.hoy ? t.hoy.shift : null, t.hoy ? t.hoy.guard : ''); P.setDayOverride(man, t.man ? t.man.shift : null, t.man ? t.man.guard : '');
+      const rh = JSON.parse(t.rh); if (rh) P.store.rhythm['sh-l'] = rh; else delete P.store.rhythm['sh-l']; P.store.rotation.mode = t.mode; P.ui.diaHoy = ''; delete P.__t305; P.save(); P.render(); });
+    check('a medianoche el tiempo es continuo: a las 00:15 se ve lo mismo viendo hoy (cama a las 00:30) que viendo mañana, despierto en casa; a la 01:00 de mañana, durmiendo',
+      r.dia === await page.evaluate(() => window.PG.iso(window.PG.addDays(new Date(), 1))) && r.hoy.casa && !/DURMIENDO/.test(r.hoy.nxl) && /00:30/.test(r.hoy.nxa) &&
+      r.man.casa && !/DURMIENDO/.test(r.man.nxl) && r.man.nxa === r.hoy.nxa && /DURMIENDO/.test(r.man1.nxl), JSON.stringify(r));
+  }
+  // 306) LA CAMA ASEGURA TU MÍNIMO DE SUEÑO, EN CADENA (conduce Hoy): hoy libre con la cama de siempre a las 00:30 y
+  // mañana guardia (te levantas a las 06:45): la cama se adelanta a las 22:35 (8 h + 10 min para dormirte), así que a
+  // las 23:00 ya duermes; con la palanca en D, a las 00:15 de mañana también duermes; y si mañana es libre (te
+  // levantas a las 09:30), la cama vuelve a las 00:30. Fija: el día libre ponía la cama a las 00:30 aunque mañana
+  // madrugaras para la guardia (6 h 15 de sueño).
+  {
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.__t306 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify(P.store.rhythm['sh-l'] || null), rg: JSON.stringify(P.store.rhythm['sh-g'] || null), mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-g', 'urg');
+      P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
+      P.store.rhythm['sh-g'] = Object.assign({}, P.store.rhythm['sh-g'] || {}, { wake: '06:45' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
+    const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
+      const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { nxl: q('nxl'), nxa: q('nxa') }; }, h);
+    const r = { cama: await page.evaluate(() => window.PG.sleepOf(window.PG.iso(new Date())).bed), h23: await ver(23) };
+    await page.click('#main .cd [data-o="marcha"][data-d="1"]').catch(() => {}); await page.waitForTimeout(400);
+    r.man = await ver(0.25);
+    await page.click('#main .cd [data-o="marcha"][data-d="0"]').catch(() => {}); await page.waitForTimeout(300);
+    r.libre = await page.evaluate(() => { const P = window.PG, man = P.iso(P.addDays(new Date(), 1)); P.setDayOverride(man, 'sh-l', ''); P.save(); P.render(); return P.sleepOf(P.iso(new Date())).bed; });
+    await page.evaluate(() => { const P = window.PG, t = P.__t306, hoy = P.iso(new Date()), man = P.iso(P.addDays(new Date(), 1));
+      P.setDayOverride(hoy, t.hoy ? t.hoy.shift : null, t.hoy ? t.hoy.guard : ''); P.setDayOverride(man, t.man ? t.man.shift : null, t.man ? t.man.guard : '');
+      const rh = JSON.parse(t.rh), rg = JSON.parse(t.rg); if (rh) P.store.rhythm['sh-l'] = rh; else delete P.store.rhythm['sh-l']; if (rg) P.store.rhythm['sh-g'] = rg; else delete P.store.rhythm['sh-g'];
+      P.store.rotation.mode = t.mode; P.ui.diaHoy = ''; delete P.__t306; P.save(); P.render(); });
+    check('la cama asegura tu mínimo de sueño: con guardia mañana a las 06:45, la del día libre pasa de las 00:30 a las 22:35 (a las 23:00 y a las 00:15 duermes); con mañana libre vuelve a las 00:30',
+      r.cama === '22:35' && /DURMIENDO/.test(r.h23.nxl) && /DURMIENDO/.test(r.man.nxl) && r.libre === '00:30', JSON.stringify(r));
+  }
+  // 307) EN EL CAJÓN «MÁS» SE LEE EL RECUADRO DE LA SECCIÓN EN LA QUE ESTÁS, EN CADENA: tema Arena (por Ajustes) →
   // Dinero por el cajón → se abre el cajón → luego Hábitos por el cajón y se vuelve a abrir. Fija: el cajón es un <nav> y
   // le caía la regla de las pestañas `nav button.on` (degradado de marca con la línea gris encima: no se leía).
   {
@@ -12847,7 +12904,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp305);
   }
 
-  // 306) EN LOS TEMAS CLAROS NO HAY FRANJA GRIS EN EL BORDE DERECHO, EN CADENA (a 412×915, tema Arena de la 305): se abre
+  // 308) EN LOS TEMAS CLAROS NO HAY FRANJA GRIS EN EL BORDE DERECHO, EN CADENA (a 412×915, tema Arena de la 307): se abre
   // y se cierra el cajón «Más» y en Dinero se compara el margen derecho con el izquierdo, píxel a píxel. Fija: la sombra del
   // cajón cerrado (escondido fuera de la pantalla) asomaba por la derecha en todas las pantallas.
   {
@@ -12872,7 +12929,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp306);
   }
 
-  // 307) EN LOS TEMAS CLAROS SE LEE LA PANTALLITA DEL CONDUCTOR, EN CADENA: tema Papel por Ajustes → Hoy (conductor a
+  // 309) EN LOS TEMAS CLAROS SE LEE LA PANTALLITA DEL CONDUCTOR, EN CADENA: tema Papel por Ajustes → Hoy (conductor a
   // las 11:00) → tema Noche HUD por Ajustes → Hoy otra vez. Fija: «Ahora: Trabajo · hasta 15:00» iba en blanco sobre la
   // pantallita blanca (y la línea de debajo, en ámbar claro); en oscuro tiene que seguir siendo clara.
   {
@@ -12898,7 +12955,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.oscuro.hay && !r.oscuro.claro && r.oscuro.a >= 4.5 && r.oscuro.b >= 3, JSON.stringify(r));
   }
 
-  // 308) MIRAR A LOS LADOS RESPETA LA HORA, EN CADENA (conduce Hoy, fuera de casa): a las 11:00 se mira a la izquierda
+  // 310) MIRAR A LOS LADOS RESPETA LA HORA, EN CADENA (conduce Hoy, fuera de casa): a las 11:00 se mira a la izquierda
   // (cielo de día) y se vuelve; a las 21:40 se mira a la izquierda y a la derecha. Fija: los lados tenían un cielo fijo de
   // día y a las 21:40 salían el sol y el azul con la noche de frente.
   {
@@ -12923,7 +12980,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.izq.lum < 0.05 && r.der.lum < 0.05 && r.der.sol === 0, JSON.stringify(r));
   }
 
-  // 309) LA BARRA DE ARRIBA CABE CON LA CHAPITA DE LAS SERIES, EN CADENA (a 412×915): se empieza una rutina, «✓ todas
+  // 311) LA BARRA DE ARRIBA CABE CON LA CHAPITA DE LAS SERIES, EN CADENA (a 412×915): se empieza una rutina, «✓ todas
   // como están» en los dos ejercicios (8 series), se termina y se guarda. Fija: con «8 series» junto a «Entreno», «☰ Más»
   // acababa en 425 px de 412 y se cortaba, durante la sesión y después de guardarla.
   {
@@ -12953,7 +13010,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp309);
   }
 
-  // 310) EN LA CARRETERA DEL MES LOS RÓTULOS NO SE PISAN, EN CADENA (conduce Mes → Carretera, a 412×915): se mira desde hoy
+  // 312) EN LA CARRETERA DEL MES LOS RÓTULOS NO SE PISAN, EN CADENA (conduce Mes → Carretera, a 412×915): se mira desde hoy
   // y se avanza un día con la flecha. Fija: la línea de debajo («7:00 · 18:00 · 19:15») se salía de su placa, el título de
   // los carteles largos tocaba los bordes y el cartel de comidas de mañana tapaba el de pasado mañana («…MIDAS»).
   {

@@ -21,6 +21,16 @@ Ciudad «Trabajo» con entrada y salida hacia el pueblo o el parque, Lloretazo d
 cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y el poste. Ver docs/DECISIONS.md
 («Repaso de supuestos, tanda 2»).
 
+### Rediseño artístico (en marcha desde el 2026-10-14)
+
+- [enc-arte] Llevar el aspecto visual de la app a otro nivel con varios agentes: fase 0 auditoría (5 agentes) →
+  fase 1 dirección de arte (estilo: «sorpréndeme») → fase 2 maquetas por sección (+ /anatomy) → fase 3 construir,
+  empezando por **lo común de toda la app**. Iconos: «algo con vida propia, sorpréndeme».
+  · F0 y F1 hechas (2026-10-14): dirección «La jornada» con visto bueno; barra abajo, guardia 65 % rojo, claros
+    suavizados. Siguiente: construir lo común por tandas.
+- [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
+  haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
+
 ### A futuro (sin fecha)
 
 - [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
@@ -29,7 +39,10 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 ## Supuestos sin confirmar
 
 <!-- - [sup-AAAA-MM-DD-tema] el supuesto · DECISIONS.md:línea · contado el AAAA-MM-DD -->
-_Ninguno: los 30 de la semana del 07 al 14 de octubre se repasaron el 2026-10-14._
+- [sup-2026-10-14-quita-urg] las 4 guardias que te quitas salen de Urgencias · DECISIONS.md (guardias R1) · contado el 2026-10-14
+- [sup-2026-10-14-guardia-hoy] una guardia de hoy cuenta como «puesta» hasta mañana · DECISIONS.md (guardias R1) · contado el 2026-10-14
+- [sup-2026-10-14-sin-vac] ya no se resta una guardia por semana de vacaciones · DECISIONS.md (guardias R1) · contado el 2026-10-14
+- [sup-2026-10-14-t1t2] 6 más de las tandas 1 y 2 (cafés, café de otro día, siesta de guardia, Lloretazo 0,6 h, cartel azul, «+N más») · DECISIONS.md · contado el 2026-10-14 (solo el número)
 
 ## Cerrados
 
@@ -46,3 +59,4 @@ _Ninguno: los 30 de la semana del 07 al 14 de octubre se repasaron el 2026-10-14
 - [aparc-parte-diario] 2026-10-14 · recordado: falta la hora · abierto
 - [tanda1-repaso] 2026-10-14 · tanda 1 del repaso desplegada (724/724 pruebas) · hecha
 - [tanda2-repaso] 2026-10-14 · tanda 2 del repaso (el conductor) desplegada · hecha
+- [run-38642732419] 2026-10-14 · despliegue de main (adca9d1, guardias de R1) · success
