@@ -1036,3 +1036,33 @@ y de los ingredientes de los platos (se leen y suman por unidad; va aparte).
 
 **Supuestos:** qué es bebida lo dice el grupo «bebida» o el nombre (leche, zumo, batido, café, caldo, gazpacho…); los
 yogures líquidos y el kéfir siguen en g salvo «kéfir líquido».
+
+## Tu nutricionista, más presente (2026-10-17)
+
+**Elegido** (maquetas en `design/nutricionista/`, con visto bueno):
+- **Tu semana, siempre arriba en Comer → Hoy**: las kcal de cada día de lunes a domingo frente al objetivo (el pico en
+  rojo; lo que queda, rayado con lo que te propongo), el **techo de hoy** y cuatro indicadores: verdura al día,
+  legumbre, chocolate frente al tope y desayunos de solo café. El domingo, un botón para cerrar la semana.
+- **Compensar un pico repartiéndolo**: un día con más de max(300 kcal, 15 % del objetivo) de exceso se reparte en los
+  3 días siguientes, como mucho 300 kcal menos al día y nunca por debajo de un suelo (80 % del objetivo, mínimo
+  1.500). Lo dice con sus números: «Hoy, no pases de 1.900: el jueves te pasaste 950…».
+- **Chocolate con tope semanal** (2, ajustable en `food.nutChocoTope`): al ir a apuntarlo, «Te leo» dice qué vez sería
+  y ofrece el kit (yogur con fresas, palomitas, verdura con hummus); tocar una opción cambia la frase. Sin regañinas.
+- **Día de Lloret** (la rutina de cada noche que ya existe): antes de salir, «deja la cena hecha» con una cena que
+  llena y engorda poco (380–700 kcal, 22 g de proteína o más: lo cocinado en la nevera, uno de tus platos o una
+  propuesta con cantidades) y «Ponerla en la cena»; el kit para la vuelta con sus kcal y «el kit, a la compra». Al
+  volver, el aviso cambia a «primero la cena, luego el kit».
+- **El informe de la semana** (Tu nutricionista, con ‹ › por semanas): kcal/día, exceso de la semana, proteína, y
+  **bien · falta · a cambiar** con la causa (noches de Lloret frente a las otras —o frente al 45 % del día si vas casi
+  a diario—, desayunos de solo café y lo que cenas esos días, chocolate y a qué hora). **Dos metas** para la semana
+  siguiente a la que miras; «Ponerlas en el plan» escribe la cena saciante en las noches de Lloret que quedan y un
+  desayuno con proteína donde no hay. **Semana a semana**: 4 semanas de kcal, verdura, chocolate y desayunos.
+- Pruebas 318 (tu semana + techo + chocolate) y 319 (informe + metas al plan), en cadena; con el código de antes caen
+  solo ellas.
+
+**Descartado:** un presupuesto semanal (elegiste repartir en 2–3 días); avisos de chocolate durante el día (solo al
+apuntarlo); compensar bajando de golpe al día siguiente.
+
+**Supuestos:** el pico, el suelo y el tope son los de arriba; «chocolate» es lo que lo nombra (bombones, Nutella,
+Kinder…); «solo café» es no apuntar desayuno o solo café/infusión de menos de 150 kcal; la hora del chocolate es la
+de cuando lo apuntas.

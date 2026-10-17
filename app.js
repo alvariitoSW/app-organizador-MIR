@@ -10568,7 +10568,7 @@ function lecturaCardHTML(fr,ctx){
   if(nd){const r=lecRango(fr);
     h+='<div class="lecrg"><span>Falta'+(nd>1?'n '+nd+' respuestas':' 1 respuesta')+(r.sin?' · sin contar '+r.sin:'')+'</span><b>'+(r.lo===r.hi?fmtMil(r.lo):fmtMil(r.lo)+'–'+fmtMil(r.hi))+' kcal</b></div>';}
   else h+=bowlMacroCajas({kcal:fmtMil(m.kcal),p:Math.round(m.prot),c:Math.round(m.carb),gr:Math.round(m.gresa)});
-  h+=lecNutriHTML(fr,ctx,pos);
+  h+=nutChocoAvisoHTML(fr,ctx)+lecNutriHTML(fr,ctx,pos);
   if(fr.sin&&fr.sin.length)h+='<div class="mini warnt">sin macros (no lo encuentro en la tabla): '+esc(fr.sin.slice(0,4).join(', '))+(fr.sin.length>4?'…':'')+'</div>';
   const dest=esc((POS_TXT[pos]||pos||'la comida').toLowerCase())+(fr.ayer?' de ayer':'');
   h+='<div class="lecb">'+(ctx==='fb'?'<button class="btn p" data-a="fb-lec-ok"'+(nd?' disabled':'')+'>'+(nd?'Contesta y lo apunto':'＋ Apuntar en '+dest)+'</button>'+
@@ -11368,6 +11368,181 @@ function nutConsejosSemana(w){
   if(w.carne>NUT_OBJ.carne||w.emb>=2)out.push({t:'Carne: '+fmtC(nutRedondea(w.carne))+' raciones'+(w.emb?', '+w.emb+' con embutido':'')+'.',s:'Cambia el embutido por pollo, pavo o huevo: la misma proteína.'});
   if(w.fs<NUT_OBJ.fsecos)out.push({t:'Frutos secos: '+fmtC(nutRedondea(w.fs))+' de 3 puñados.',s:'Un puñado de nueces o almendras a media mañana.',f:'un puñado de nueces',l:'Apuntar un puñado'});
   return out;}
+
+/* ===== TU NUTRICIONISTA, MÁS PRESENTE (la semana arriba en Comer) =====
+   EL TECHO DE HOY. Un día que te pasas mucho (más de max(300 kcal, 15 % del objetivo)) se compensa
+   repartiendo el exceso en los 3 días siguientes, como mucho 300 kcal menos al día y nunca por debajo de
+   un suelo (el 80 % del objetivo, mínimo 1.500). Así un pico se paga en tres días suaves, no en uno de hambre. */
+/* el kit de la vuelta: lo que se escribe (con cantidades, para que el lector no ponga raciones grandes) y cómo se llama */
+const NUT_KIT=[['🍓','150 g de yogur griego desnatado con 100 g de fresas','Yogur griego con fresas'],['🍿','30 g de palomitas','Palomitas, 30 g'],
+  ['🥕','100 g de zanahoria y 100 g de pepino con 30 g de hummus','Zanahoria y pepino con hummus'],['🍫','2 onzas de chocolate negro','2 onzas de chocolate negro']];
+const NUT_CHOCO=/chocolat|bomb[oó]n|nutella|nocilla|kit ?kat|kinder|twix|snickers|\bmars\b|cacao|brownie|oreo|huesitos|filipinos|lacasitos|conguitos/i;
+function nutSuelo(obj){return Math.max(1500,Math.round(obj*0.8/50)*50);}
+function nutTecho(k){
+  const obj=kcalObj();if(!obj)return null;
+  const umbral=Math.max(300,obj*0.15),picos=[];let menos=0;
+  for(let i=1;i<=3;i++){const d=iso(addDays(parseDate(k),-i)),l=foodLog(d);if(!l.length)continue;
+    const exc=Math.round(foodTotals(d).kcal-obj);if(exc<=umbral)continue;
+    const r=Math.min(300,Math.round(exc/3/10)*10);picos.push({k:d,exc:exc,r:r});menos+=r;}
+  const suelo=nutSuelo(obj);
+  return {obj:obj,techo:Math.max(suelo,obj-menos),menos:menos,suelo:suelo,picos:picos};}
+function nutEsChoco(e){
+  const t=[e.nombre||'',(e.frase&&e.frase.txt)||''].concat(nutAlims(e).map(function(o){return o.a.n;})).join(' ');
+  return NUT_CHOCO.test(t);}
+function nutChocoTope(){const t=+(food().nutChocoTope||0);return t>0?t:2;}
+function nutSoloCafe(k){
+  /* un desayuno de «solo café»: nada apuntado en el desayuno, o solo café o infusión */
+  const d=foodLog(k).filter(function(e){return e.p==='desayuno';});
+  return !d.length||d.every(function(e){return /caf[eé]|cortado|capuchino|infusi|\bt[eé]\b/i.test(e.nombre||'')&&(+e.kcal||0)<150;});}
+function nutSemanaActual(hoyK){
+  /* la semana de lunes a domingo que contiene hoy: kcal de cada día, chocolate, desayunos, verdura y legumbre */
+  hoyK=hoyK||iso(new Date());const lun=mondayOf(parseDate(hoyK)),dias=[];let choco=0,cafe=0,conLog=0;const todas=[];
+  for(let w=0;w<7;w++){const k=iso(addDays(lun,w)),l=k<=hoyK?foodLog(k):[];
+    const v=l.length?Math.round(foodTotals(k).kcal):null;
+    if(l.length){conLog++;l.forEach(function(e){todas.push(e);if(nutEsChoco(e))choco++;});if(nutSoloCafe(k))cafe++;}
+    dias.push({k:k,v:v,fut:k>hoyK,hoy:k===hoyK,t:k>=hoyK?nutTecho(k):null});}
+  const s=nutSuma(todas);
+  return {dias:dias,choco:choco,tope:nutChocoTope(),cafe:cafe,conLog:conLog,verdura:conLog?(s.r.verdura||0)/conLog:0,leg:s.r.legumbre||0};}
+function nutSemHTML(hoyK){
+  const W=nutSemanaActual(hoyK),obj=kcalObj(),hoy=W.dias.filter(function(d){return d.hoy;})[0],T=hoy.t,llevas=Math.round(foodTotals(hoyK).kcal);
+  const max=Math.max(obj*1.5||0,2400,...W.dias.map(function(d){return d.v||0;}));
+  const col=function(v){return !obj?'bien':(v>obj*1.25?'mal':(v>obj*1.05?'ojo':'bien'));};
+  const barras='<div class="nsb" role="img" aria-label="kcal de cada día de la semana'+(obj?' frente a '+obj:'')+'">'+(obj?'<i class="nsobj" style="bottom:'+Math.round(obj/max*100)+'%"></i>':'')+
+    W.dias.map(function(d){const v=d.fut?(d.t?d.t.techo:obj):d.v,h=v?Math.max(4,Math.round(v/max*100)):0;
+      return '<span class="nsd'+(d.hoy?' hoy':'')+'"><em class="'+(d.fut?'':col(d.v||0))+'">'+(d.v?String(Math.round(d.v/100)/10).replace('.',','):'')+'</em>'+
+        '<i class="'+(d.fut?'fut':col(d.v||0))+'" style="height:'+h+'%"></i><b>'+DIA3[parseDate(d.k).getDay()]+'</b></span>';}).join('')+'</div>';
+  let techo;
+  if(!obj)techo='<div class="nstc"><b>Pon tu objetivo de kcal</b> (✎ objetivo, arriba) y cada día te digo hasta dónde llegar.</div>';
+  else if(T&&T.menos){const p=T.picos[0],dp=DIA3[parseDate(p.k).getDay()];
+    techo='<div class="nstc ojo"><b>Hoy, no pases de '+fmtMil(T.techo)+' kcal</b><span>El '+dp+' te pasaste '+fmtMil(p.exc)+(T.picos.length>1?' (y '+(T.picos.length-1)+' día más)':'')+
+      '. Lo repartimos en 3 días: −'+fmtMil(T.menos)+' hoy, sin bajar de '+fmtMil(T.suelo)+'. Llevas <b>'+fmtMil(llevas)+'</b>; te quedan '+fmtMil(Math.max(0,T.techo-llevas))+'.</span></div>';}
+  else techo='<div class="nstc"><b>Hoy: '+fmtMil(obj)+' kcal</b><span>Llevas <b>'+fmtMil(llevas)+'</b>; te quedan '+fmtMil(Math.max(0,obj-llevas))+'.</span></div>';
+  const t=function(e,n,v,c){return '<span class="nsi '+c+'"><small>'+e+' '+n+'</small><b>'+v+'</b></span>';};
+  const vd=Math.round(W.verdura*10)/10;
+  const domingo=parseDate(hoyK).getDay()===0;
+  return '<div class="card nsem"><div class="nsh"><span class="cap">TU SEMANA · NUTRICIONISTA</span><button class="dlink" data-a="food-vista" data-v="nutri">informe ›</button></div>'+barras+
+    (obj?'<div class="nsl"><span>- - objetivo '+fmtMil(obj)+'</span><span>rayado: lo que te propongo</span></div>':'')+techo+
+    '<div class="nsis">'+t('🥦','verdura',String(vd).replace('.',',')+' al día de 3',vd<2.5?'ojo':'bien')+t('🫘','legumbre',fmtC(nutRedondea(W.leg))+' de 4',W.leg<4?'ojo':'bien')+
+      t('🍫','chocolate',W.choco+' de '+W.tope+' esta sem.',W.choco>W.tope?'mal':(W.choco===W.tope?'ojo':'bien'))+
+      t('☕','desayuno',W.conLog?(W.cafe?'solo café '+W.cafe+' de '+W.conLog:'con algo más ✓'):'—',W.cafe>W.conLog/2?'mal':(W.cafe?'ojo':'bien'))+'</div>'+
+    (domingo?'<button class="btn p nscierra" data-a="food-vista" data-v="nutri">Hoy se cierra la semana · tu informe ›</button>':'')+'</div>';}
+function nutChocoAvisoHTML(fr,ctx){
+  /* al ir a apuntar chocolate: cuántas veces van esta semana frente al tope, y el kit para cambiarlo */
+  if(ctx!=='fr'||!fr||!NUT_CHOCO.test([fr.txt||''].concat((fr.items||[]).map(function(x){const a=x.id&&alimById(x.id);return a?a.n:'';})).join(' ')))return '';
+  const W=nutSemanaActual(),n=W.choco+1,top=W.tope;
+  return '<div class="nchoco'+(n>top?' mal':'')+'"><b>🍫 Sería la '+n+'.ª vez esta semana (tope: '+top+')</b>'+
+    '<span>'+(n>top?'¿Algo que sacie más antes? Si sigues con ganas, apúntalo: no pasa nada, cuenta para la semana y mañana se ajusta.':'Dentro de tu tope. Si es por hambre, esto llena más:')+'</span>'+
+    '<div class="nkit">'+NUT_KIT.filter(function(x){return !/chocolate/.test(x[1])||n<=top;}).map(function(x){const k=Math.round(fraseMacros(fraseLeer(x[1])).kcal);
+      return '<button class="chipx" data-a="nut-alt" data-t="'+esc(x[1])+'">'+x[0]+' '+esc(x[2])+(k?' · '+k:'')+'</button>';}).join('')+'</div></div>';}
+
+/* ===== EL DÍA DE LLORET: la cena hecha antes de salir y el kit para la vuelta =====
+   Al volver hay hambre (y lo que haya a mano se come): si la cena ya está hecha, comes eso. Una cena que llena
+   y engorda poco: 380–700 kcal, 22 g de proteína o más, mejor con verdura y legumbre. Primero lo que ya tienes
+   cocinado en la nevera; si no, uno de tus platos; si tampoco, una propuesta con cantidades. */
+const NUT_CENAS=[['300 g de lentejas cocidas con 150 g de verduras y 2 huevos','🥗','Bol de lentejas con verduras y 2 huevos'],
+  ['ensalada con 120 g de pollo, 100 g de garbanzos cocidos, tomate y lechuga','🥗','Ensalada de pollo y garbanzos'],
+  ['150 g de merluza con 250 g de verduras y 120 g de patata','🐟','Merluza con verduras y patata']];
+function nutCenaApta(d){return !!d&&!d.hospital&&!d.fuera&&!d.nada&&+d.kcal>=380&&+d.kcal<=700&&(+d.prot||0)>=22&&
+  (!Array.isArray(d.momentos)||!d.momentos.length||d.momentos.indexOf('cena')>=0);}
+function nutCenaLloret(){
+  const sc=function(d){const s=nutSuma([{dishId:d.id,rac:1}]);return (+d.prot||0)/Math.max(1,+d.kcal)*100+(s.r.verdura||0)*2+(s.r.legumbre||0)*2;};
+  const orden=function(l){return l.filter(nutCenaApta).sort(function(a,b){return sc(b)-sc(a);})[0];};
+  let d=orden(cocinadoS().map(function(c){return dishById(c.dishId);}).filter(Boolean));if(d)return {d:d,de:'ya cocinado en la nevera'};
+  d=orden((store.dishes||[]).filter(function(x){return x.tuyo&&!x.oculto;}));if(d)return {d:d,de:'tuyo'};
+  const c=NUT_CENAS[0],m=fraseMacros(fraseLeer(c[0]));
+  return {txt:c[0],icon:c[1],nombre:c[2],kcal:Math.round(m.kcal),prot:Math.round(m.prot),de:'propuesta'};}
+function nutCenaPon(k,cena){
+  /* la deja escrita en la cena de ese día (el plato; si es una propuesta, se hace plato con su frase) */
+  const d=cena.d||comboADish(fraseLeer(cena.txt),cena.icon);if(!d)return null;
+  if(!cena.d&&d.nevera){d.nevera=false;d.fabrica=true;}
+  sbPoner(k,'cena',d.id,{save:true});return d;}
+function nutKitHTML(){
+  return '<div class="nkitl">'+NUT_KIT.map(function(x){const m=fraseMacros(fraseLeer(x[1]));
+    return '<div class="nkiti"><span class="e">'+x[0]+'</span><span class="t">'+esc(x[2])+'<small>'+Math.round(m.kcal)+' kcal'+(/chocolate/.test(x[1])?' · cuenta para el tope':'')+'</small></span></div>';}).join('')+'</div>';}
+function nutLloretHTML(k){
+  const ev=lloretDe(k);if(!ev)return '';
+  const p=lloretPlan(k),now=new Date(),m=now.getHours()*60+now.getMinutes(),fin=p.vuelta+180;
+  if(m>fin)return '';
+  const cena=nutCenaLloret(),r=cjeComidas(k).filter(function(x){return x.p==='cena';})[0],plan=r&&r.d,yaComida=r&&r.e.length;
+  const puesta=plan&&(cena.d?plan.id===cena.d.id:alimTxt(plan.name)===alimTxt(cena.txt)||nutCenaApta(plan));
+  const vuelta=m>=p.de;
+  const nom=cena.d?cena.d.name:cena.nombre,kc=cena.d?Math.round(+cena.d.kcal||0):cena.kcal,pr=cena.d?Math.round(+cena.d.prot||0):cena.prot;
+  return '<div class="card nll'+(vuelta?' vuelta':'')+'"><span class="cap">🌿 '+(vuelta?'Al volver del Lloret':'Hoy hay Lloret · '+hm(p.de))+'</span>'+
+    (vuelta?'<b class="nllt">'+(yaComida?'Ya cenaste: si aún tienes hambre, el kit':'¿Hambre? Primero la cena, luego el kit')+'</b>':
+      '<b class="nllt">Deja la cena hecha antes de salir</b><p class="mini">Al volver vas a tener hambre: si la cena ya está, comes eso y no lo que pilles. Llena mucho y engorda poco:</p>')+
+    (!vuelta&&!yaComida?(puesta?'<div class="nllc ok">✓ En la cena: <b>'+esc(plan.name)+'</b>'+(plan.kcal?' · '+Math.round(+plan.kcal)+' kcal':'')+'</div>':
+      '<div class="nllc"><b>'+esc((cena.d&&cena.d.icon)||cena.icon||'🍽')+' '+esc(nom)+'</b><span>'+kc+' kcal · '+pr+' g prot · '+esc(cena.de)+'</span></div>'+
+      '<div class="row" style="margin-top:8px"><button class="btn p" data-a="nut-cena-ll" data-k="'+esc(k)+'">Ponerla en la cena</button></div>'):'')+
+    '<div class="nllk"><span class="cap">🎒 Kit para la vuelta</span>'+nutKitHTML()+
+      '<button class="dlink" data-a="nut-kit-compra">el kit, a la compra ›</button></div></div>';}
+/* ===== EL INFORME DE LA SEMANA (lunes a domingo; se cierra el domingo) ===== */
+function nutTarde(e){const t=+e.ts;if(!t)return false;const h=new Date(t).getHours();return h>=22||h<5;}
+function nutInforme(lunK){
+  const hoyK=iso(new Date()),obj=kcalObj(),pObj=protObj(),dias=[];
+  let k0=0,kn=0,exc=0,pr=0,choco=0,chocoK=0,chocoT=0,cafe=0,picos=0;const todas=[],ll=[],noLl=[],caf=[],noCaf=[];
+  for(let w=0;w<7;w++){const k=iso(addDays(parseDate(lunK),w));if(k>hoyK)break;const l=foodLog(k);if(!l.length)continue;
+    const t=foodTotals(k);kn++;k0+=t.kcal;pr+=t.prot;if(obj){exc+=t.kcal-obj;if(t.kcal>obj*1.25)picos++;}
+    const noche=l.filter(function(e){return e.p==='cena'||e.p==='monchis';}).reduce(function(a,e){return a+(+e.kcal||0);},0);
+    (lloretDe(k)?ll:noLl).push(noche);const sc=nutSoloCafe(k);if(sc)cafe++;(sc?caf:noCaf).push(noche);
+    l.forEach(function(e){todas.push(e);if(nutEsChoco(e)){choco++;chocoK+=+e.kcal||0;if(nutTarde(e))chocoT++;}});dias.push(k);}
+  const s=nutSuma(todas),med=function(a){return a.length?Math.round(a.reduce(function(x,y){return x+y;},0)/a.length):0;};
+  const verdCena=nutSuma(todas.filter(function(e){return e.p==='cena';})).r.verdura||0;
+  return {lun:lunK,n:kn,kMedia:kn?Math.round(k0/kn):0,obj:obj,exc:Math.round(exc),pMedia:kn?Math.round(pr/kn):0,pObj:pObj,picos:picos,
+    verdura:kn?(s.r.verdura||0)/kn:0,verdCena:verdCena,fruta:kn?(s.r.fruta||0)/kn:0,leg:s.r.legumbre||0,pes:s.r.pescado||0,
+    casero:(s.o.casero||0)+(s.o['tu plato']||0),tomas:todas.length,choco:choco,chocoK:Math.round(chocoK),chocoT:chocoT,tope:nutChocoTope(),
+    cafe:cafe,ll:{n:ll.length,m:med(ll)},noLl:{n:noLl.length,m:med(noLl)},caf:{n:caf.length,m:med(caf)},noCaf:{n:noCaf.length,m:med(noCaf)}};}
+function nutLectura(I){
+  /* bien · falta · a cambiar, con tus números y la causa; y las metas para la semana que viene */
+  const bien=[],falta=[],cambia=[],metas=[];
+  if(I.obj&&I.n){const d=Math.round(I.exc/I.n);if(Math.abs(d)<=I.obj*0.05)bien.push('<b>Kcal en tu objetivo</b>: '+fmtMil(I.kMedia)+' al día de '+fmtMil(I.obj)+'.');
+    else if(d>0)cambia.push('<b>'+fmtMil(I.kMedia)+' kcal al día</b> de '+fmtMil(I.obj)+': +'+fmtMil(I.exc)+' en la semana'+(I.picos?', '+I.picos+' día'+(I.picos>1?'s':'')+' de pico':'')+'.');}
+  if(I.pObj&&I.n)(I.pMedia>=I.pObj*0.9?bien:falta).push('<b>Proteína: '+I.pMedia+' g al día</b> de '+I.pObj+'.');
+  if(I.tomas&&I.casero>=I.tomas*0.6)bien.push('<b>Comida de casa</b> en '+I.casero+' de '+I.tomas+' tomas.');
+  if(I.leg>=4)bien.push('<b>Legumbre</b> '+fmtC(nutRedondea(I.leg))+' veces.');else if(I.n>=3)falta.push('<b>Legumbre: '+fmtC(nutRedondea(I.leg))+' de 4</b> a la semana.');
+  if(I.n>=3){const v=Math.round(I.verdura*10)/10;if(v>=2.5)bien.push('<b>Verdura</b> '+String(v).replace('.',',')+' al día.');
+    else{falta.push('<b>Verdura: '+String(v).replace('.',',')+' raciones al día</b> de 3'+(I.verdCena<1?' · nunca en la cena':'')+'.');metas.push(['verd','Verdura en la cena','Una ensalada o un salteado con la cena: una ración más al día.']);}}
+  if(I.n>=3&&I.cafe>=Math.ceil(I.n/2)){falta.push('<b>Desayuno: solo café '+I.cafe+' de '+I.n+' días</b>'+(I.caf.n&&I.noCaf.n&&I.caf.m-I.noCaf.m>=150?' · esos días cenas '+fmtMil(I.caf.m-I.noCaf.m)+' kcal más':'')+'.');
+    metas.push(['des','Algo de proteína por la mañana','Skyr o yogur con el café: 15 g de proteína en 2 minutos, para llegar con menos hambre a la noche.']);}
+  /* las noches de Lloret: frente a las otras noches o, si vas casi a diario, frente a lo que debería ser una cena (≈ 45 % del día como mucho) */
+  const llAlta=I.ll.n&&I.noLl.n?I.ll.m-I.noLl.m>=200:(I.ll.n>=2&&I.obj&&I.ll.m>I.obj*0.45);
+  if(llAlta){cambia.push('<b>Las '+I.ll.n+' noches de Lloret, entre cena y picoteo, '+fmtMil(I.ll.m)+' kcal de media</b>'+(I.noLl.n?' (las otras noches, '+fmtMil(I.noLl.m)+')':' (más del 45 % de tu día)')+'. El pico es esa vuelta, no el resto.');
+    metas.unshift(['ll','Cena hecha los días de Lloret','El plan pone una cena que llena y engorda poco en cada noche de Lloret, para hacerla antes de salir.']);}
+  if(I.choco>I.tope){cambia.push('<b>Chocolate '+I.choco+' veces · '+fmtMil(I.chocoK)+' kcal</b> (tope '+I.tope+')'+(I.chocoT?', '+I.chocoT+' de noche (después de las 22)':'')+'.');
+    metas.push(['choco','Chocolate: como mucho '+I.tope,'Ten el kit a mano: yogur con fresas o palomitas primero; si sigues con ganas, 2 onzas de negro.']);}
+  else if(I.n>=3)bien.push('<b>Chocolate dentro del tope</b> ('+I.choco+' de '+I.tope+').');
+  return {bien:bien,falta:falta,cambia:cambia,metas:metas.slice(0,2)};}
+function nutMetasPon(ids,lunInf){
+  /* las metas que se pueden escribir en el plan de la semana siguiente a la del informe (de hoy en adelante):
+     la cena de Lloret y el desayuno con proteína. El lunes, mirando la semana que se acaba de cerrar, van a esta */
+  const lun=addDays(parseDate(lunInf||iso(mondayOf(new Date()))),7),hoyK=iso(new Date()),out=[];
+  if(ids.indexOf('ll')>=0){const c=nutCenaLloret();let n=0;
+    for(let w=0;w<7;w++){const k=iso(addDays(lun,w));if(k>=hoyK&&lloretDe(k)&&nutCenaPon(k,c))n++;}if(n)out.push(n+' cena'+(n>1?'s':'')+' de Lloret');}
+  if(ids.indexOf('des')>=0){const d=cjeDesayunos().slice().sort(function(a,b){return (+b.prot||0)-(+a.prot||0);})[0];let n=0;
+    if(d)for(let w=0;w<7;w++){const k=iso(addDays(lun,w));if(k>=hoyK&&!sbCelda(k,'desayuno')){sbPoner(k,'desayuno',d.id);n++;}}if(n)out.push(n+' desayuno'+(n>1?'s':'')+' con proteína');}
+  food().nutMetas={lun:iso(lun),ids:ids.slice()};save();return out;}
+function nutHistoria(){
+  /* las 4 últimas semanas (la de hoy incluida): kcal al día, verdura al día, chocolate y desayunos con algo más que café */
+  const lun=mondayOf(new Date()),out=[];
+  for(let i=3;i>=0;i--){const I=nutInforme(iso(addDays(lun,-7*i)));out.push(I);}
+  return out;}
+function nutInformeHTML(lunK){
+  const I=nutInforme(lunK),L=nutLectura(I),lun=parseDate(lunK),dom=addDays(lun,6),esta=lunK===iso(mondayOf(new Date()));
+  const blq=function(t,c,l){return l.length?'<div class="card ninf '+c+'"><span class="cap">'+t+'</span>'+l.map(function(x){return '<p>'+x+'</p>';}).join('')+'</div>':'';};
+  const H=nutHistoria(),fil=function(n,f){return '<b>'+n+'</b>'+H.map(function(I){return '<span>'+(I.n?f(I):'—')+'</span>';}).join('');};
+  return '<div class="ninfh"><button class="cji" data-a="nut-sem" data-d="-1" aria-label="semana anterior">‹</button><b>'+(esta?'Esta semana':'Semana')+' · '+lun.getDate()+'–'+dom.getDate()+' '+MON[dom.getMonth()]+'</b>'+
+      '<button class="cji" data-a="nut-sem" data-d="1"'+(esta?' disabled':'')+' aria-label="semana siguiente">›</button></div>'+
+    (!I.n?'<div class="card"><div class="empty">Esa semana no apuntaste nada.</div></div>':
+    '<div class="card ninfc"><div><b>'+fmtMil(I.kMedia)+'</b><span>kcal/día'+(I.obj?' (obj. '+fmtMil(I.obj)+')':'')+'</span></div>'+
+      (I.obj?'<div><b class="'+(I.exc>I.obj*0.3?'w':'ok')+'">'+(I.exc>0?'+':'')+fmtMil(I.exc)+'</b><span>en la semana</span></div>':'')+
+      '<div><b>'+I.pMedia+' g</b><span>prot/día'+(I.pObj?' (obj. '+I.pObj+')':'')+'</span></div></div>'+
+    blq('BIEN','bien',L.bien)+blq('FALTA','falta',L.falta)+blq('A CAMBIAR','cambia',L.cambia)+
+    (lunK>=iso(addDays(mondayOf(new Date()),-7))&&L.metas.length?'<div class="card nmet"><span class="cap">'+(esta?'PARA LA SEMANA QUE VIENE':'PARA ESTA SEMANA')+'</span>'+L.metas.map(function(m,i){
+        return '<div class="nmeti"><b class="nmn">'+(i+1)+'</b><span><b>'+esc(m[1])+'</b><small>'+esc(m[2])+'</small></span></div>';}).join('')+
+      (L.metas.some(function(m){return m[0]==='ll'||m[0]==='des';})?'<button class="btn p" data-a="nut-metas" data-lun="'+esc(lunK)+'" data-ids="'+L.metas.map(function(m){return m[0];}).join(',')+'">Ponerlas en el plan</button>':'')+'</div>':''))+
+    '<div class="card nhis"><span class="cap">SEMANA A SEMANA</span><div class="nhg"><b></b>'+H.map(function(I){const d=parseDate(I.lun);return '<span class="h">'+d.getDate()+' '+MON[d.getMonth()]+'</span>';}).join('')+
+      fil('kcal',function(I){return fmtMil(I.kMedia);})+fil('verdura',function(I){return String(Math.round(I.verdura*10)/10).replace('.',',');})+
+      fil('chocolate',function(I){return String(I.choco);})+fil('desayuno',function(I){return (I.n-I.cafe)+'/'+I.n;})+'</div>'+
+      '<p class="mini">«desayuno»: días con algo más que café.</p></div>';}
 function renderNutri(){
   /* TU NUTRICIONISTA: la semana por grupos, de dónde salen tus comidas, guardia frente al resto y
      qué cambiar la semana que viene */
@@ -11378,7 +11553,8 @@ function renderNutri(){
   const cons=nutConsejosSemana(w);
   const tipo=Object.keys(w.porTipo);
   $('#main').innerHTML='<div class="grid nutr"><div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="eje">'+gymIco('atras','gico sm')+' Comer</button><h2 class="subtit">Tu nutricionista</h2></div>'+
-    '<p class="mini" style="margin:0 2px">Últimos 7 días · '+w.comidas+' toma'+(w.comidas===1?'':'s')+' en '+w.n+' día'+(w.n===1?'':'s')+'</p>'+
+    nutInformeHTML(ui.nutLun||iso(mondayOf(new Date())))+
+    '<p class="mini" style="margin:6px 2px 0">Por grupos, los últimos 7 días · '+w.comidas+' toma'+(w.comidas===1?'':'s')+' en '+w.n+' día'+(w.n===1?'':'s')+'</p>'+
     (!w.n?'<div class="card"><div class="empty">Apunta lo que comes unos días y aquí te digo cómo vas por grupos: verdura, fruta, legumbre, pescado, carne.</div></div>':
     '<div class="card"><div class="cap">LO QUE COMES, POR GRUPOS</div>'+
       fila('Fruta y verdura',w.fv,5,'5 al día',w.fv<5)+fila('Legumbre',w.leg,4,'4 o más a la semana',w.leg<4)+
@@ -11392,7 +11568,7 @@ function renderNutri(){
       (w.obj?'<div class="card"><span class="mini">proteína</span><b>'+w.pOk+'</b><small>de '+w.pDias+' días</small></div>':'')+'</div>'+
     (tipo.length>1?'<div class="card"><div class="cap">SEGÚN EL DÍA</div>'+['guardia','saliente','resto'].filter(function(t){return w.porTipo[t];}).map(function(t){const x=w.porTipo[t],m=Math.round(x.k/x.n);
       return '<div class="nutw"><div><span>'+(t==='resto'?'el resto':t)+'</span><b>'+fmtMil(m)+'</b> <small>kcal · '+x.n+' día'+(x.n>1?'s':'')+'</small></div><div class="bar"><i style="width:'+Math.min(100,Math.round(m/Math.max(1,w.kObj||2200)*100))+'%"></i></div></div>';}).join('')+'</div>':'')+
-    (cons.length?'<div class="cap" style="margin:6px 2px 0">PARA LA SEMANA QUE VIENE</div>'+cons.map(function(c,i){return '<div class="card nutci"><p><b>'+esc(c.t)+'</b> '+esc(c.s)+'</p>'+
+    (cons.length?'<div class="cap" style="margin:6px 2px 0">IDEAS POR GRUPO</div>'+cons.map(function(c,i){return '<div class="card nutci"><p><b>'+esc(c.t)+'</b> '+esc(c.s)+'</p>'+
       (c.f?'<button class="btn s" data-a="nut-semfr" data-i="'+i+'">'+esc(c.l)+'</button>':'')+'</div>';}).join(''):'<div class="card"><p style="margin:0">Esta semana vas bien en todos los grupos.</p></div>'))+
     '</div>';}
 const PROT_FABRICA=[['Yogur de proteínas',250,'yogur de proteínas'],['Atún en lata al natural',80,'una lata de atún'],
@@ -14203,6 +14379,7 @@ function renderComerEje(){
         '<b>'+(esHoy?'Hoy · ':'')+(esHoy?DIA3[dd.getDay()]:DIA3[dd.getDay()].replace(/^./,function(c){return c.toUpperCase();}))+' '+dd.getDate()+'</b>'+
         (esHoy?'':'<button class="dlink" data-a="food-today">hoy</button>')+
         '<button class="cji" data-a="food-next"'+(esHoy?' disabled':'')+' aria-label="día siguiente">›</button></div>'+
+      (esHoy?nutSemHTML(hoyK)+nutLloretHTML(hoyK):'')+
       (tar.length?'<div class="cap">PARA HACER HOY</div><div class="cjtodo">'+tar.map(function(o){
         return '<button class="cjtd" data-a="cje-hoja" data-v="'+o.v+'"><span class="e">'+o.e+'</span><span class="tx"><b>'+esc(o.t)+'</b><span>'+esc(o.s)+'</span></span>'+gymIco('chevron','gico sm')+'</button>';}).join('')+'</div>':'')+
       cjeMacrosHTML(ft)+nutHoyHTML(dk,esHoy)+
@@ -24239,6 +24416,12 @@ function act(a,el){
     case 'fr-tam':lecOp(el,function(fr){fraseReescala(fr,el.dataset.v||'m');});break;
     case 'fr-quita':lecOp(el,function(fr){fr.items.splice(+el.dataset.i,1);});break;
     case 'fr-alt':lecOp(el,function(fr){frCambiaItem(fr,+el.dataset.i,+el.dataset.j);});break;
+    case 'nut-sem':{const l=parseDate(ui.nutLun||iso(mondayOf(new Date()))),n=addDays(l,7*(+el.dataset.d||0)),h=mondayOf(new Date());
+      ui.nutLun=iso(n>h?h:n);render();break;}
+    case 'nut-cena-ll':{const k=el.dataset.k||iso(new Date()),d=nutCenaPon(k,nutCenaLloret());render();if(d)flash('En la cena: '+d.name+' · hazla antes de salir');break;}
+    case 'nut-kit-compra':flash(listaAMano('yogur griego desnatado\nfresas\nmaíz para palomitas\nhummus\nzanahorias\npepinos'));render();break;
+    case 'nut-metas':{const r=nutMetasPon(String(el.dataset.ids||'').split(','),el.dataset.lun);render();flash(r.length?'En el plan: '+r.join(' y '):'Metas guardadas para la semana que viene');break;}
+    case 'nut-alt':{const t=el.dataset.t||'',inp=document.getElementById('frIn');if(inp)inp.value=t;ui.frTxt=t;ui.frase=fraseLeer(t);frPintaLectura();break;}
     case 'fr-mas':lecOp(el,function(fr){const en=alimPorNombre('Ensalada de bolsa'),ac=frAceiteItem(5,'aliño',99);if(!en)return;
       fr.items.push({id:en.id,g:80,nom:'ensalada',pz:'ensalada',conf:1,papel:'acomp',fuente:'tabla',ord:98,corr:true});if(ac)fr.items.push(ac);});break;
     case 'fr-busca':ui.foodPos=(ui.frase&&ui.frase.pos)||ui.frPos||ui.foodPos;ui.frase=null;ui.frTxt=null;ui.foodVista='buscar';ui.foodBusca=el.dataset.q||'';render();window.scrollTo(0,0);break;
@@ -27152,7 +27335,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden){try
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{tpLeer,tpPropuesta,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+Object.assign(window.PG,{nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpPropuesta,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();

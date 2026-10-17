@@ -13230,6 +13230,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('las bebidas se cuentan en ml (la leche en «Te leo» y lo apuntado) y lo sólido sigue en g',
       /^ml$/.test(r.leche) && /\bg\b/.test(r.pollo) && !/ml/.test(r.pollo) && r.apuntado.ml, JSON.stringify(r));
   }
+  // 318) TU NUTRICIONISTA, ARRIBA EN COMER, EN CADENA: con objetivo de 2.200 kcal, ayer un pico (3.200) y hoy dos veces
+  // chocolate, en Comer → Hoy sale «tu semana» con el techo de hoy repartiendo el pico («no pases de 1.900») y el
+  // chocolate en 2 de 2; al escribir más chocolate, «Te leo» avisa de que sería la 3.ª vez y ofrece el kit; al tocar
+  // el yogur, la frase pasa a ser el yogur y el aviso se va. Fija: el nutricionista no compensaba los picos ni veía el
+  // chocolate.
+  {
+    const vp318 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, f = P.store.food; localStorage.setItem('__copia318', JSON.stringify(P.store));
+      f.objetivo = Object.assign({}, f.objetivo || {}, { kcal: 2200 }); delete f.nutChocoTope;
+      const hoy = new Date(), lun = P.mondayOf(hoy);
+      for (let d = P.addDays(lun < P.addDays(hoy, -3) ? lun : P.addDays(hoy, -3), 0); P.iso(d) <= P.iso(hoy); d = P.addDays(d, 1)) f.log[P.iso(d)] = [];
+      const m = (k, nom, kcal, pos) => P.addFoodEntry(k, { macro: { nombre: nom, kcal: kcal, prot: 10, carb: 30, gresa: 10, emoji: '🍽' }, pos: pos });
+      const ay = P.iso(P.addDays(hoy, -1)), hk = P.iso(hoy);
+      m(ay, 'Pasta', 1400, 'comida'); m(ay, 'Pizza', 1800, 'cena');
+      m(hk, 'Café con leche', 60, 'desayuno'); m(hk, 'Chocolate con leche', 260, 'merienda'); m(hk, 'Bombones', 200, 'monchis');
+      P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.click('#tabs [data-a="nav-comer"]'); await page.waitForTimeout(250);
+    if (await page.$('#main [data-a="cje-tab"][data-v="hoy"]')) { await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(200); }
+    const r = { sem: await page.evaluate(() => { const c = document.querySelector('#main .nsem'); return c ? { techo: (c.querySelector('.nstc b') || {}).textContent || '', choco: [...c.querySelectorAll('.nsi')].map((x) => x.textContent).filter((x) => /chocolate/.test(x))[0] || '', barras: c.querySelectorAll('.nsd').length } : null; }) };
+    if (!(await page.$('#frIn'))) { await page.click('#main .cjmm .tx'); await page.waitForTimeout(300); }
+    await page.fill('#frIn', 'media tableta de chocolate con leche'); await page.waitForTimeout(700);
+    r.aviso = await page.evaluate(() => { const a = document.querySelector('.nchoco'); return a ? { t: a.querySelector('b').textContent, kit: [...a.querySelectorAll('[data-a="nut-alt"]')].map((x) => x.textContent) } : null; });
+    const y = await page.$('.nchoco [data-a="nut-alt"]'); if (y) { await y.click(); await page.waitForTimeout(300); }
+    r.cambio = await page.evaluate(() => ({ v: (document.getElementById('frIn') || {}).value || '', aviso: !!document.querySelector('.nchoco') }));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia318')); localStorage.removeItem('__copia318'); P.save(); P.ui.cjeHoja = null; P.ui.frase = null; P.ui.frTxt = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.setViewportSize(vp318);
+    check('tu semana arriba en Comer: el techo de hoy reparte el pico de ayer (1.900), el chocolate va 2 de 2 y al apuntar más avisa de la 3.ª vez con el kit, que cambia la frase',
+      !!r.sem && /no pases de 1\.900/.test(r.sem.techo) && /2 de 2/.test(r.sem.choco) && r.sem.barras === 7 &&
+      !!r.aviso && /3\.ª vez/.test(r.aviso.t) && r.aviso.kit.length >= 3 && /yogur/.test(r.cambio.v) && !r.cambio.aviso, JSON.stringify(r));
+  }
+  // 319) EL INFORME DE LA SEMANA, EN CADENA: la semana pasada con desayunos de solo café, noches de Lloret de 1.300 kcal y
+  // chocolate 3 veces (tope 2). Desde Comer → «informe ›» y ‹ a la semana pasada: «Falta» dice lo del café, «A cambiar»
+  // las noches de Lloret y el chocolate, y salen metas «para esta semana»; «Ponerlas en el plan» deja en cada noche de
+  // Lloret que queda una cena que llena y engorda poco; y «semana a semana» lleva esa semana. Fija: el nutricionista
+  // no veía los patrones (Lloret, chocolate, desayunos) ni proponía nada concreto.
+  {
+    const vp319 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const ini = await page.evaluate(() => { const P = window.PG, f = P.store.food; localStorage.setItem('__copia319', JSON.stringify(P.store));
+      f.objetivo = Object.assign({}, f.objetivo || {}, { kcal: 2200 }); delete f.nutChocoTope; P.store.lloret = { diario: true };
+      const lun = P.addDays(P.mondayOf(new Date()), -7), m = (k, nom, kcal, pos) => P.addFoodEntry(k, { macro: { nombre: nom, kcal: kcal, prot: 20, carb: 40, gresa: 15, emoji: '🍽' }, pos: pos });
+      for (let w = 0; w < 7; w++) { const k = P.iso(P.addDays(lun, w)); f.log[k] = [];
+        m(k, 'Café con leche', 60, 'desayuno'); m(k, 'Arroz con pollo', 800, 'comida'); m(k, 'Pizza', 900, 'cena');
+        if (w < 3) m(k, 'Chocolate con leche', 400, 'monchis'); else m(k, 'Galletas', 400, 'monchis'); }
+      P.ui.nutLun = ''; P.ui.tab = 'hoy'; P.save(); P.render(); return { lun: P.iso(lun) }; });
+    await page.click('#tabs [data-a="nav-comer"]'); await page.waitForTimeout(250);
+    if (await page.$('#main [data-a="cje-tab"][data-v="hoy"]')) { await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(200); }
+    // tolerante: con el código de antes estos botones no existen y la prueba tiene que CAER, no colgarse
+    const toca319 = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(250); } };
+    await toca319('#main .nsem [data-a="food-vista"][data-v="nutri"]');
+    await toca319('#main [data-a="nut-sem"][data-d="-1"]');
+    const lee = () => page.evaluate(() => { const t = (s) => [...document.querySelectorAll('#main .ninf.' + s + ' p')].map((x) => x.textContent);
+      return { falta: t('falta'), cambia: t('cambia'), metas: [...document.querySelectorAll('#main .nmet .nmeti b:not(.nmn)')].map((x) => x.textContent),
+        boton: !!document.querySelector('#main [data-a="nut-metas"]'), his: [...document.querySelectorAll('#main .nhg span')].map((x) => x.textContent) }; });
+    const r = { inf: await lee() };
+    if (r.inf.boton) { await page.click('#main [data-a="nut-metas"]'); await page.waitForTimeout(300); }
+    r.plan = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), lun = P.mondayOf(new Date()), out = [];
+      for (let w = 0; w < 7; w++) { const k = P.iso(P.addDays(lun, w)); if (k < hoy || !P.lloretDe || !P.lloretDe(k)) continue;
+        const c = P.sbCeldaDia(k, 'cena'), d = c && c.items[0] && P.dishById(c.items[0].id); out.push(d ? Math.round(+d.kcal) + '/' + Math.round(+d.prot) : 'nada'); }
+      return out; });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia319')); localStorage.removeItem('__copia319'); P.save(); P.ui.nutLun = ''; P.ui.foodVista = 'eje'; P.ui.tab = 'hoy'; P.render(); });
+    await page.setViewportSize(vp319);
+    const cenasOk = r.plan.every((x) => { const [k, p] = x.split('/').map(Number); return k >= 380 && k <= 700 && p >= 22; });
+    check('el informe de la semana: falta el desayuno (solo café), a cambiar las noches de Lloret y el chocolate (3 de 2), metas que ponen en el plan una cena saciante en las noches de Lloret que quedan, y la semana en «semana a semana»',
+      r.inf.falta.some((x) => /solo café 7 de 7/.test(x)) && r.inf.cambia.some((x) => /noches de Lloret/.test(x)) && r.inf.cambia.some((x) => /Chocolate 3 veces/.test(x)) &&
+      r.inf.metas.some((x) => /Lloret/.test(x)) && r.inf.boton && cenasOk && r.inf.his.some((x) => x === '1.960' || x === '2.160') , JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -4104,3 +4104,51 @@ details.cocm>summary.cocmh::before{content:'';position:absolute;inset:-12px -10p
   box-shadow:inset 0 1px 0 0 color-mix(in srgb,#fff 45%,transparent),0 3px 0 0 color-mix(in srgb,var(--brand) 45%,var(--cara))}
 .gbig2:active,.hbig:active{transform:translateY(2px);box-shadow:none}
 .hoychip{background:var(--brand);color:var(--sobre-marca)}
+/* ===== tu semana · nutricionista (arriba en Comer → Hoy) ===== */
+.nsem .nsh{display:flex;align-items:center;gap:8px}.nsem .nsh .cap{flex:1}
+.nsb{position:relative;display:flex;gap:6px;align-items:flex-end;height:96px;margin:16px 0 4px}
+.nsb .nsobj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
+.nsd{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;position:relative}
+.nsd i{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--ok)}
+.nsd i.ojo{background:var(--warn)}.nsd i.mal{background:var(--bad)}
+.nsd i.fut{background:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--brand) 22%,transparent) 5px 10px);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.nsd em{font-style:normal;font-size:11px;font-weight:700;color:var(--ink2);min-height:14px}.nsd em.mal{color:var(--bad)}
+.nsd b{font-size:11px;font-weight:600;color:var(--ink2)}.nsd.hoy b{color:var(--ink);font-weight:800}
+.nsl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink2)}
+.nstc{margin-top:10px;padding:10px 12px;border-radius:var(--r-12);background:var(--superficie-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.nstc.ojo{background:var(--ojo-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 45%,transparent)}
+.nstc>b{display:block;font-size:var(--t-16)}.nstc>span{display:block;font-size:var(--t-12);margin-top:2px}
+.nsis{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.nsi{padding:8px 10px;border-radius:10px;background:var(--superficie-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.nsi small{display:block;font-size:11px;color:var(--ink2)}.nsi b{font-size:var(--t-14)}
+.nsi.ojo b{color:var(--warn)}.nsi.mal b{color:var(--bad)}.nsi.bien b{color:var(--ok)}
+.nchoco{margin:8px 0;padding:10px 12px;border-radius:var(--r-12);background:var(--ojo-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 45%,transparent)}
+.nchoco.mal{background:var(--mal-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 45%,transparent)}
+.nchoco>b{display:block}.nchoco>span{display:block;font-size:var(--t-12);margin-top:2px}
+.nkit{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.nsem .nscierra{width:100%;margin-top:10px}
+/* el día de Lloret */
+.nll{box-shadow:inset 0 2px 0 0 var(--brand),var(--cara-lateral),var(--sombra-2)}
+.nll.vuelta{box-shadow:inset 0 2px 0 0 var(--warn),var(--cara-lateral),var(--sombra-2)}
+.nllt{display:block;font-size:var(--t-16);margin-top:4px}.nll .mini{margin:2px 0 8px}
+.nllc{padding:10px 12px;border-radius:var(--r-12);background:var(--superficie-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.nllc>b{display:block}.nllc>span{display:block;font-size:var(--t-12);color:var(--ink2)}.nllc.ok{color:var(--ok)}
+.nllk{margin-top:12px}.nkitl{display:flex;flex-direction:column}
+.nkiti{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line)}.nkiti:first-child{border-top:0}
+.nkiti .e{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--superficie-2);font-size:17px}
+.nkiti .t{flex:1;font-size:var(--t-14)}.nkiti small{display:block;font-size:11px;color:var(--ink2)}
+/* el informe */
+.ninfh{display:flex;align-items:center;gap:8px;margin:4px 0}.ninfh b{flex:1;text-align:center;font-size:var(--t-16)}
+.ninfc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.ninfc b{display:block;font-size:var(--t-20)}.ninfc b.w{color:var(--warn)}.ninfc b.ok{color:var(--ok)}.ninfc span{font-size:11px;color:var(--ink2)}
+.ninf p{margin:0;padding:7px 0;border-top:1px solid var(--line);font-size:var(--t-12)}.ninf p:first-of-type{border-top:0}
+.ninf.bien{box-shadow:inset 3px 0 0 0 var(--ok),var(--cara-lateral),var(--sombra-2)}.ninf.bien .cap{color:var(--ok)}
+.ninf.falta{box-shadow:inset 3px 0 0 0 var(--warn),var(--cara-lateral),var(--sombra-2)}.ninf.falta .cap{color:var(--warn)}
+.ninf.cambia{box-shadow:inset 3px 0 0 0 var(--bad),var(--cara-lateral),var(--sombra-2)}.ninf.cambia .cap{color:var(--bad)}
+.nmeti{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.nmeti:first-of-type{border-top:0}
+.nmn{width:26px;height:26px;border-radius:50%;background:var(--brand);color:var(--sobre-marca);display:grid;place-items:center;flex:none}
+.nmeti small{display:block;font-size:var(--t-12);color:var(--ink2)}.nmet .btn{width:100%;margin-top:8px}
+.nhg{display:grid;grid-template-columns:72px repeat(4,1fr);gap:4px;font-size:11.5px;margin-top:8px;align-items:center}
+.nhg>b{color:var(--ink2);font-weight:700}.nhg span{padding:6px 2px;border-radius:7px;background:var(--superficie-2);text-align:center;font-weight:700}
+.nhg span.h{background:none;color:var(--ink2);font-weight:600}
+.ninf .cap,.nmet .cap,.nhis .cap,.nll .cap{display:block;margin-bottom:4px}
