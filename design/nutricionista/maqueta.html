@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tu nutricionista · maquetas</title>
+<style>
+/* Maqueta (no es la app): las fichas de «La jornada», tinte Noche HUD, cielo de las 11:30. Datos inventados. */
+:root{--r-8:8px;--r-12:12px;--r-16:16px;--r-24:24px;--t-11:11px;--t-12:12.5px;--t-14:14px;--t-16:16px;--t-20:20px;--t-28:28px;
+  --letra:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --base-1:#111a2b;--base-2:#18243a;--base-3:#1d2b45;--cara:#05080f;--borde:#24334f;--borde-fuerte:#3a5278;
+  --texto:#e9f2ff;--texto-2:#b0c2dc;--texto-3:#8ea3c2;--sobre-marca:#04121c;--marca:#38e1ff;--acento:#a3e635;
+  --bien:#34d399;--ojo:#fbbf24;--mal:#fb7185;--c-trabajo:#f0875a;--c-guardia:#ff5a5a;--c-comida:#34c38f;--c-entreno:#b08cff;
+  --leg:#d9a441;--pes:#5aa9ff;--car:#f0875a;--hue:#f3d36b;--ver:#5cd18b;
+  --luz-borde:color-mix(in srgb,#ffffff 40%,transparent);--sombra-2:3px 7px 18px -8px rgb(0 0 0/.55);--sombra-1:1px 3px 6px -3px rgb(0 0 0/.55);
+  --marca-suave:color-mix(in srgb,var(--marca) 16%,var(--base-1));--ojo-suave:color-mix(in srgb,var(--ojo) 16%,var(--base-1))}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:#0c0e13;color:#dfe6f2;font:15px/1.5 var(--letra);font-variant-numeric:tabular-nums}
+.lamina{padding:28px 28px 60px;max-width:2000px}
+.lamina>h1{margin:0 0 4px;font-size:28px}.lamina>p{margin:0 0 8px;color:#aab6c8;max-width:1100px;font-size:14px}
+.sec{margin-top:34px}.sec>h2{margin:0 0 4px;font-size:21px}.sec>p{margin:0 0 14px;color:#aab6c8;max-width:1100px;font-size:14px}
+.fila{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.pie{max-width:412px;font-size:12.5px;color:#aab6c8;margin-top:8px}.pie b{color:#e6edf7}
+/* el móvil */
+.marco{width:412px;height:915px;position:relative;overflow:hidden;border-radius:18px;color:var(--texto);font:var(--t-14)/1.4 var(--letra);
+  background:linear-gradient(180deg,#2f6db8 0%,#4c8ed6 50%,#9cc9f0 100%);isolation:isolate}
+.marco::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,#070b14 55%,transparent);z-index:0}
+.scroll{position:absolute;inset:0;padding:10px 12px 96px;overflow:hidden}
+.pieza{background:var(--base-1);border-radius:var(--r-16);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara),var(--sombra-2)}
+.cab{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cab h2{margin:0;flex:1;font-size:var(--t-20);font-weight:800}
+.btn{appearance:none;border:0;font:inherit;font-weight:700;font-size:var(--t-14);min-height:44px;padding:0 14px;border-radius:var(--r-12);color:var(--texto);
+  background:var(--base-2);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 0 0 1px var(--borde);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.p{background:var(--marca);color:var(--sobre-marca);box-shadow:inset 0 1px 0 0 #ffffff80,0 2px 0 0 #1a6a7a}
+.btn.ic{width:44px;padding:0}
+.sel{display:flex;gap:4px;padding:4px;border-radius:var(--r-16);background:var(--base-2);box-shadow:inset 0 1px 2px rgb(0 0 0/.3),inset 0 0 0 1px var(--borde)}
+.sel b{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-12);font-size:var(--t-12);color:var(--texto-2)}
+.sel b.on{background:var(--base-1);color:var(--texto);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 -2px 0 0 var(--marca)}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde);font-size:var(--t-12);font-weight:600}
+.chip.on{background:var(--marca-suave);box-shadow:inset 0 0 0 1.5px var(--marca)}
+.etq{font-size:var(--t-11);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto-2)}
+.tx2{color:var(--texto-2)}.tx3{color:var(--texto-3)}.s12{font-size:var(--t-12)}.s11{font-size:var(--t-11)}
+.barra{position:absolute;left:0;right:0;bottom:0;height:72px;z-index:3;display:flex;background:color-mix(in srgb,#070b14 88%,transparent);border-top:1px solid var(--borde)}
+.barra span{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--texto-2);gap:3px}
+.barra span.on{color:var(--texto)}.barra span.on i{background:var(--marca)}
+.barra i{width:22px;height:22px;border-radius:6px;background:var(--borde-fuerte);display:block}
+/* resumen */
+.res{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;margin-bottom:10px}
+.res div{text-align:center}.res b{display:block;font-size:var(--t-16);font-weight:800}.res span{font-size:var(--t-11);color:var(--texto-2)}
+.var{display:flex;gap:4px;align-items:flex-end;padding:8px 12px 10px;margin-bottom:10px}
+.var .g{flex:1;text-align:center;font-size:10.5px;color:var(--texto-2)}
+.var .g i{display:block;height:6px;border-radius:3px;margin:3px 2px 0}
+/* A · días */
+.dia{display:grid;grid-template-columns:22px 1fr;gap:0 8px;padding:8px 10px 8px 6px;margin-bottom:8px;position:relative}
+.dia .hilo{grid-row:1/span 4;position:relative}
+.dia .hilo::before{content:'';position:absolute;left:10px;top:-8px;bottom:-16px;width:2px;background:var(--borde-fuerte)}
+.dia h4{margin:0;font-size:var(--t-14);font-weight:800;display:flex;align-items:center;gap:6px}
+.dia h4 small{font-weight:600;color:var(--texto-2);font-size:var(--t-12)}
+.tag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px}
+.tag.tr{background:color-mix(in srgb,var(--c-trabajo) 22%,transparent);color:#ffc0a3}
+.tag.gu{background:color-mix(in srgb,var(--c-guardia) 25%,transparent);color:#ffb3b3}
+.tag.sa{background:color-mix(in srgb,var(--ojo) 20%,transparent);color:#ffe08a}
+.tag.li{background:color-mix(in srgb,var(--bien) 20%,transparent);color:#a6f0cf}
+.ml{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:6px;min-height:34px;border-top:1px solid var(--borde);font-size:var(--t-12)}
+.ml:first-of-type{border-top:0}
+.ml .k{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--texto-3)}
+.ml .n{font-weight:600;color:var(--texto);line-height:1.25}
+.sello{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.sello.co{background:color-mix(in srgb,var(--marca) 20%,transparent);color:var(--marca)}
+.sello.so{background:var(--base-2);color:var(--texto-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.sello.ta{background:color-mix(in srgb,var(--c-guardia) 22%,transparent);color:#ffb3b3}
+.sello.ho{background:var(--base-2);color:var(--texto-3)}
+.nodo{position:absolute;left:4px;width:14px;height:14px;border-radius:50%;border:3px solid var(--base-1);z-index:1}
+.cocina{display:flex;align-items:center;gap:8px;margin:2px 0 6px;padding:6px 8px;border-radius:var(--r-12);background:color-mix(in srgb,var(--marca) 10%,var(--base-2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--marca) 40%,transparent);font-size:var(--t-12)}
+.cocina b{color:var(--marca)}
+.plegado{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;margin-bottom:8px;font-size:var(--t-12);color:var(--texto-2)}
+/* hoja */
+.velo{position:absolute;inset:0;z-index:4;background:rgb(2 4 10/.55)}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--base-3);border-radius:24px 24px 0 0;padding:8px 14px 18px;box-shadow:inset 0 1px 0 0 var(--luz-borde),0 -12px 40px -12px #000}
+.asa{width:40px;height:5px;border-radius:3px;background:var(--borde-fuerte);margin:2px auto 10px}
+.op{display:flex;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--borde);font-size:var(--t-14)}
+.op:first-of-type{border-top:0}.op .e{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--base-2);font-size:18px}
+.op .t{flex:1}.op small{display:block;color:var(--texto-2);font-size:var(--t-11)}
+.op .p{font-size:var(--t-12);font-weight:800;color:var(--bien)}
+/* B · pasos */
+.pasos{display:flex;gap:6px;margin:0 0 10px}.pasos i{flex:1;height:5px;border-radius:3px;background:var(--borde)}.pasos i.on{background:var(--marca)}
+.cal7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0}
+.cal7 div{border-radius:10px;padding:6px 2px;text-align:center;font-size:11px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde);min-height:74px}
+.cal7 div b{display:block;font-size:13px}.cal7 div.no{opacity:.5;text-decoration:line-through}
+.cal7 div.si{background:var(--marca-suave);box-shadow:inset 0 0 0 1.5px var(--marca)}
+.cal7 em{display:block;font-style:normal;font-size:16px;margin-top:2px}
+.racion{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.racion span{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:7px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.sug{margin-top:8px;padding:10px;border-radius:var(--r-12);background:var(--ojo-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ojo) 45%,transparent);font-size:var(--t-12)}
+.mini7{display:grid;grid-template-columns:34px repeat(3,1fr);gap:3px;font-size:10px;margin-top:6px}
+.mini7 span{padding:4px 3px;border-radius:6px;background:var(--base-2);line-height:1.15;min-height:28px}
+.mini7 span.d{background:none;font-weight:800;color:var(--texto-2);padding-top:6px}
+.mini7 span.h{background:none;text-align:center;font-weight:800;color:var(--texto-3);min-height:0}
+</style></head>
+<body><div class="lamina">
+<h1>Tu nutricionista, más presente · maquetas</h1>
+<p>Con tus respuestas: compensar un pico repartiéndolo en 2–3 días, cena lista antes del Lloret y kit para la vuelta, chocolate con tope semanal y alternativas, y la semana siempre visible arriba en Comer → Hoy. Datos inventados (objetivo perder grasa, 2.200 kcal). No es la app: es para dar el visto bueno.</p>
+<div class="sec"><h2>1 · Arriba en Comer → Hoy: tu semana, siempre a la vista</h2><p>Una pieza fija con las kcal de cada día frente al objetivo (el pico en rojo), el «techo de hoy» que reparte el exceso, y lo que más pesa esta semana: verdura, legumbre, chocolate y desayunos. Toca para abrir el informe.</p><div class="fila" id="f1"></div></div>
+<div class="sec"><h2>2 · Día de Lloret: cena lista antes de ir y kit para la vuelta</h2><p>Si hay Lloret, por la tarde sale un aviso con una cena que llena y engorda poco (para dejarla hecha) y el kit de la vuelta. Al volver, si apuntas chocolate, te recuerda el kit y el tope.</p><div class="fila" id="f2"></div></div>
+<div class="sec"><h2>3 · El cierre del domingo: el informe de la semana</h2><p>Bien · falta · a cambiar, con números tuyos: las kcal de la semana, los patrones (Lloret y cenas, desayunos de solo café, chocolate) y dos metas para la semana que viene. Se guarda semana a semana para ver si mejoras.</p><div class="fila" id="f3"></div></div>
+</div>
+<script>
+const BAR='<div class="barra"><span><i></i>Calendario</span><span><i></i>Entreno</span><span class="on"><i></i>Comer</span><span><i></i>Más</span></div>';
+const movil=(h,p)=>'<div><div class="marco"><div class="scroll">'+h+'</div>'+BAR+'</div><div class="pie">'+p+'</div></div>';
+const sel='<div class="sel" style="margin-bottom:10px"><b class="on">Hoy</b><b>Cocina</b><b>Plan</b><b>Despensa</b></div>';
+const OBJ=2200,K=[['lun',2050],['mar',2380],['mié',1980],['jue',3150],['vie',2100],['sáb',null],['dom',null]];
+const barras=(alto)=>'<div style="display:flex;gap:6px;align-items:flex-end;height:'+alto+'px;position:relative;margin:24px 0 4px">'+
+  '<div style="position:absolute;left:0;right:0;bottom:'+Math.round(OBJ/3400*alto)+'px;border-top:1.5px dashed var(--texto-3)"></div>'+
+  K.map(d=>{const v=d[1],h=v?Math.round(v/3400*alto):Math.round(1950/3400*alto),pic=v&&v>OBJ*1.25,c=v?(pic?'var(--mal)':(v>OBJ*1.05?'var(--ojo)':'var(--bien)')):'transparent';
+   return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><span class="s11" style="color:'+(pic?'var(--mal)':'var(--texto-2)')+';font-weight:700">'+(v?(v/1000).toFixed(1).replace('.',','):'')+'</span><i style="display:block;width:100%;height:'+h+'px;border-radius:6px 6px 3px 3px;background:'+c+';'+(v?'':'box-shadow:inset 0 0 0 1.5px var(--marca);background:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--marca) 18%,transparent) 5px 10px)')+'"></i><span class="s11 tx2">'+d[0]+'</span></div>';}).join('')+'</div>';
+const sem='<div class="pieza" style="padding:12px 12px 10px;margin-bottom:10px"><div style="display:flex;align-items:baseline;gap:8px"><span class="etq" style="flex:1">Tu semana · nutricionista</span><span class="s12" style="color:var(--marca);font-weight:700">informe ›</span></div>'+
+  barras(92)+'<div class="s11 tx2" style="display:flex;justify-content:space-between"><span>- - objetivo 2.200</span><span>rayado: lo que te propongo</span></div>'+
+  '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--ojo-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ojo) 45%,transparent)">'+
+  '<b style="font-size:16px">Hoy, no pases de 1.950 kcal</b><div class="s12" style="margin-top:2px">El jueves (Lloret) te pasaste <b>950</b>. Lo repartimos: −250 hoy, sábado y domingo, sin bajar de 1.800. Llevas <b>840</b> hoy.</div></div>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">'+
+  [['🥦 verdura','1,3 al día de 3','ojo'],['🫘 legumbre','1 de 4','ojo'],['🍫 chocolate','4 de 2 esta sem.','mal'],['☕ desayuno','solo café 5 de 5','mal']].map(x=>'<div style="padding:8px 10px;border-radius:10px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde)"><div class="s11 tx2">'+x[0]+'</div><b style="color:var(--'+x[2]+')">'+x[1]+'</b></div>').join('')+'</div></div>';
+const comida=(k,n,v,s)=>'<div class="ml" style="grid-template-columns:72px 1fr auto"><span class="k">'+k+'</span><span class="n">'+n+(s?'<br><span class="s11 tx2" style="font-weight:500">'+s+'</span>':'')+'</span><span class="s12 tx2">'+v+'</span></div>';
+const h1='<div class="cab"><h2>Comer</h2><span class="tx2 s12">vie 24</span></div>'+sel+sem+
+ '<div class="pieza" style="padding:10px 12px"><div class="etq">Hoy</div>'+comida('desayuno','Café con leche','60')+comida('comida','Lentejas con verduras','520')+comida('merienda','—','')+comida('cena','Por decidir','≤ 1.370','te quedan para el techo de hoy')+'</div>';
+// 2 · Lloret
+const avisoL='<div class="pieza" style="padding:12px;margin-bottom:10px;box-shadow:inset 0 2px 0 0 var(--marca),0 3px 0 0 var(--cara)"><div class="etq">🌿 Hoy hay Lloret · 20:00</div>'+
+ '<b style="display:block;font-size:16px;margin-top:4px">Deja la cena hecha antes de salir</b><p class="s12 tx2" style="margin:2px 0 8px">Al volver vas a tener hambre: si la cena ya está, comes eso y no lo que pilles. Llena mucho y engorda poco:</p>'+
+ '<div style="padding:10px;border-radius:12px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde)"><b>🥗 Bol de lentejas con verduras y 2 huevos</b><div class="s12 tx2">560 kcal · 34 g prot · 15 g fibra · un bol grande</div>'+
+ '<div class="s11" style="margin-top:4px;color:var(--bien)">✓ tienes lentejas cocidas y huevos · 10 min</div></div>'+
+ '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn p" style="flex:1">Ponerla en la cena</button><button class="btn">Otra</button></div></div>'+
+ '<div class="pieza" style="padding:12px"><div class="etq">🎒 Kit para la vuelta (si aún tienes hambre)</div>'+
+ [['🍓','Yogur griego 0 % con fresas','150 kcal · muy saciante'],['🍿','Palomitas caseras, 30 g','110 kcal · mucho volumen'],['🥕','Zanahoria y pepino con hummus','140 kcal · crujiente'],['🍫','2 onzas de chocolate 85 %','110 kcal · cuenta para el tope']].map(x=>'<div class="op" style="min-height:48px"><span class="e">'+x[0]+'</span><span class="t">'+x[1]+'<small>'+x[2]+'</small></span></div>').join('')+
+ '<div class="s11 tx2" style="margin-top:6px">En la compra de esta semana: yogur, fresas, maíz para palomitas, hummus.</div></div>';
+const h2a='<div class="cab"><h2>Comer</h2><span class="tx2 s12">jue 23 · 17:30</span></div>'+sel+avisoL;
+const h2b='<div class="cab"><h2>Comer</h2><span class="tx2 s12">jue 23 · 23:40</span></div>'+sel+
+ '<div class="pieza" style="padding:12px;margin-bottom:10px"><div class="etq">Te leo</div><b style="font-size:16px">Tableta de chocolate con leche, media</b><div class="s12 tx2">50 g · 270 kcal</div>'+
+ '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--mal-suave,#3a1b26);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mal) 45%,transparent)"><b>🍫 Sería la 3.ª vez esta semana (tope: 2)</b><div class="s12" style="margin-top:2px">Las tres, al volver del Lloret. ¿Algo del kit antes? Si sigues con ganas, apúntalo: no pasa nada, cuenta para la semana.</div>'+
+ '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="chip on">🍓 Yogur con fresas · 150</span><span class="chip">🍿 Palomitas · 110</span><span class="chip">🍫 2 onzas 85 % · 110</span></div></div>'+
+ '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn p" style="flex:1">Apuntar el chocolate</button><button class="btn">Cambiar</button></div></div>'+
+ '<div class="pieza" style="padding:10px 12px"><div class="s12"><b>Hoy llevas 2.880</b> <span class="tx2">de 2.200. Mañana te propongo un techo de 1.950.</span></div></div>';
+// 3 · informe
+const lista=(t,c,items)=>'<div class="pieza" style="padding:10px 12px;margin-bottom:8px;box-shadow:inset 3px 0 0 0 var(--'+c+'),0 3px 0 0 var(--cara)"><div class="etq" style="color:var(--'+c+')">'+t+'</div>'+items.map(x=>'<div class="s12" style="padding:5px 0;border-top:1px solid var(--borde)">'+x+'</div>').join('')+'</div>';
+const h3a='<div class="cab"><button class="btn ic">‹</button><h2>Semana 13–19 oct</h2></div>'+
+ '<div class="pieza res" style="grid-template-columns:repeat(3,1fr)"><div><b>2.310</b><span>kcal/día (obj. 2.200)</span></div><div><b style="color:var(--ojo)">+770</b><span>en la semana</span></div><div><b>98 g</b><span>prot/día (obj. 140)</span></div></div>'+
+ lista('Bien','bien',['<b>Cocinaste la comida 5 de 7 días</b> · casero y con legumbre el lunes y el miércoles','<b>Proteína alta</b> los días de entreno (lun y mié)'])+
+ lista('Falta','ojo',['<b>Verdura: 1,3 raciones al día</b> de 3 · casi siempre en la comida, nunca en la cena','<b>Desayuno: solo café 6 de 7 días</b> · los días sin desayuno cenas 450 kcal más'])+
+ lista('A cambiar','mal',['<b>Los 3 días de Lloret cenaste 1.150 kcal de media</b> (los otros días, 620). El pico es esa vuelta, no el resto','<b>Chocolate 4 veces · 1.040 kcal</b>, las 4 después de las 23:00']);
+const h3b='<div class="cab"><button class="btn ic">‹</button><h2>Para la semana que viene</h2></div>'+
+ '<div class="pieza" style="padding:12px;margin-bottom:10px"><div class="etq">Dos metas (las pongo en el plan)</div>'+
+ [['1','Cena hecha los días de Lloret','El plan pone el bol de lentejas el martes y el jueves y te avisa a las 17:30.'],['2','Algo de proteína por la mañana','Skyr o yogur con el café: 15 g de proteína, 2 minutos. Para llegar con menos hambre a la noche.']].map(x=>'<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--borde)"><b style="width:26px;height:26px;border-radius:50%;background:var(--marca);color:var(--sobre-marca);display:grid;place-items:center;flex:none">'+x[0]+'</b><span class="s12"><b style="font-size:14px">'+x[1]+'</b><br><span class="tx2">'+x[2]+'</span></span></div>').join('')+
+ '<button class="btn p" style="width:100%;margin-top:8px">Ponerlas en el plan</button></div>'+
+ '<div class="pieza" style="padding:12px"><div class="etq">Semana a semana</div><div style="display:grid;grid-template-columns:64px repeat(4,1fr);gap:4px;font-size:11px;margin-top:8px">'+
+ '<span></span><span class="tx2">22 sep</span><span class="tx2">29 sep</span><span class="tx2">6 oct</span><span class="tx2">13 oct</span>'+
+ [['kcal','2.150','2.420','2.280','2.310'],['verdura','1,1','1,0','1,6','1,3'],['chocolate','2','5','3','4'],['desayuno','3/7','1/7','2/7','1/7']].map(r=>'<b class="tx2">'+r[0]+'</b>'+r.slice(1).map(v=>'<span style="padding:6px 4px;border-radius:7px;background:var(--base-2);text-align:center;font-weight:700">'+v+'</span>').join('')).join('')+
+ '</div><p class="s11 tx2" style="margin:8px 0 0">«desayuno»: días con algo más que café.</p></div>';
+document.getElementById('f1').innerHTML=movil(h1,'<b>Arriba en Comer → Hoy.</b> Las barras son tus kcal de cada día frente al objetivo (- - -); el pico del jueves, en rojo; el sábado y el domingo, rayados, son lo que te propongo. Debajo, el techo de hoy y los cuatro indicadores de la semana. La cena enseña cuánto te queda.');
+document.getElementById('f2').innerHTML=movil(h2a,'<b>La tarde de un día de Lloret.</b> Una cena saciante con lo que tienes en casa para dejarla hecha, y el kit de la vuelta (todo con sus kcal). Lo que falte del kit entra en la compra.')+
+ movil(h2b,'<b>Al volver, si apuntas chocolate.</b> Te dice cuántas veces van esta semana y frente a qué tope, te ofrece el kit, y si sigues con ganas lo apuntas sin regañinas: el techo de mañana se ajusta solo.');
+document.getElementById('f3').innerHTML=movil(h3a,'<b>El informe (se cierra el domingo).</b> Cifras de la semana y tres bloques: bien, falta, a cambiar, siempre con tus números y la causa (los días de Lloret, la hora del chocolate, los desayunos).')+
+ movil(h3b,'<b>Las metas y la historia.</b> Dos metas concretas que se meten solas en el plan, y una tabla semana a semana para ver si mejoras.');
+</script></body></html>
