@@ -31,6 +31,10 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
   haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
 
+- [enc-plan-comidas] Montar la semana de comidas: ideas de contenido y diseño dadas el 2026-10-17 (días pasados,
+  2 platos repetidos, desayuno vacío, sin cambiar casillas, cuándo cocinas, 4 formas de llenar la semana). Falta elegir
+  por dónde empezar las maquetas. Fallo visto: el aviso «Mantén pulsado un día» del Mes sale también en Comer.
+
 ### A futuro (sin fecha)
 
 - [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
@@ -60,3 +64,5 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [tanda1-repaso] 2026-10-14 · tanda 1 del repaso desplegada (724/724 pruebas) · hecha
 - [tanda2-repaso] 2026-10-14 · tanda 2 del repaso (el conductor) desplegada · hecha
 - [run-38642732419] 2026-10-14 · despliegue de main (adca9d1, guardias de R1) · success
+- [run-38709963353] 2026-10-17 · despliegue de main (0f2765e: «La jornada» tandas 1–2, R1 con el mes en curso) · success
+- [rama-0f2765e] 2026-10-17 · main y rama iguales, sellado · ok
