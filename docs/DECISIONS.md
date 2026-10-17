@@ -1014,3 +1014,25 @@ con el código de antes cae solo ella.
 **Descartado:** contar solo las guardias de días ya pasados (era lo de antes: a mitad de mes faltaban las del resto).
 
 **Supuestos:** si a mitad de mes has pintado menos guardias que el cupo, cuenta lo pintado (lo que pintas manda).
+
+## Montar la semana de comidas: arreglos sueltos y bebidas en ml (2026-10-17)
+
+**Elegido:**
+- **La semana con tus platos no propone los días que ya pasaron** ni los toca al usarla: el sábado proponía de lunes a
+  domingo (5 días ya comidos). Salen solo de hoy en adelante, con una línea «N días ya pasaron» y, si quedan pocos,
+  «La semana que viene ›».
+- **El desayuno lleva los de la casa** (los mismos de Comer → Hoy) si no has escrito ninguno tuyo, en vez de «—».
+- **El aviso «Mantén pulsado un día…» del Mes solo sale en el Mes**: salía a los 400 ms aunque ya estuvieras en Comer.
+- **Las bebidas se cuentan en ml** (leche, zumo, cerveza, café, refrescos, caldos…): la base va por 100 g y en un
+  líquido 1 g ≈ 1 ml, así que la cifra es la misma y cambia la unidad en «Te leo», en lo apuntado y en la ficha.
+- Pruebas 316 (semana con tus platos + aviso del Mes) y 317 (ml) en cadena; con el código de antes caen solo ellas.
+  Dos pruebas antiguas dependían del día: la 273 no aceptaba la «á» de «sáb» y la 274 suponía que toda la semana en
+  curso estaba por venir (ahora usa la semana que viene).
+- Maquetas de tres direcciones para montar la semana en `design/comer-plan/` (por cocinadas, asistente de 3 pasos,
+  nevera viva): esperan elección.
+
+**Descartado:** pintar los días pasados con «ya pasó» (ocupaban media pantalla); cambiar a ml las líneas de la compra
+y de los ingredientes de los platos (se leen y suman por unidad; va aparte).
+
+**Supuestos:** qué es bebida lo dice el grupo «bebida» o el nombre (leche, zumo, batido, café, caldo, gazpacho…); los
+yogures líquidos y el kéfir siguen en g salvo «kéfir líquido».
