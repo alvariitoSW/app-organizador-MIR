@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Montar la semana · tres direcciones</title>
+<style>
+/* Maqueta (no es la app): las fichas de «La jornada», tinte Noche HUD, cielo de las 11:30. Datos inventados. */
+:root{--r-8:8px;--r-12:12px;--r-16:16px;--r-24:24px;--t-11:11px;--t-12:12.5px;--t-14:14px;--t-16:16px;--t-20:20px;--t-28:28px;
+  --letra:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --base-1:#111a2b;--base-2:#18243a;--base-3:#1d2b45;--cara:#05080f;--borde:#24334f;--borde-fuerte:#3a5278;
+  --texto:#e9f2ff;--texto-2:#b0c2dc;--texto-3:#8ea3c2;--sobre-marca:#04121c;--marca:#38e1ff;--acento:#a3e635;
+  --bien:#34d399;--ojo:#fbbf24;--mal:#fb7185;--c-trabajo:#f0875a;--c-guardia:#ff5a5a;--c-comida:#34c38f;--c-entreno:#b08cff;
+  --leg:#d9a441;--pes:#5aa9ff;--car:#f0875a;--hue:#f3d36b;--ver:#5cd18b;
+  --luz-borde:color-mix(in srgb,#ffffff 40%,transparent);--sombra-2:3px 7px 18px -8px rgb(0 0 0/.55);--sombra-1:1px 3px 6px -3px rgb(0 0 0/.55);
+  --marca-suave:color-mix(in srgb,var(--marca) 16%,var(--base-1));--ojo-suave:color-mix(in srgb,var(--ojo) 16%,var(--base-1))}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:#0c0e13;color:#dfe6f2;font:15px/1.5 var(--letra);font-variant-numeric:tabular-nums}
+.lamina{padding:28px 28px 60px;max-width:2000px}
+.lamina>h1{margin:0 0 4px;font-size:28px}.lamina>p{margin:0 0 8px;color:#aab6c8;max-width:1100px;font-size:14px}
+.sec{margin-top:34px}.sec>h2{margin:0 0 4px;font-size:21px}.sec>p{margin:0 0 14px;color:#aab6c8;max-width:1100px;font-size:14px}
+.fila{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.pie{max-width:412px;font-size:12.5px;color:#aab6c8;margin-top:8px}.pie b{color:#e6edf7}
+/* el móvil */
+.marco{width:412px;height:915px;position:relative;overflow:hidden;border-radius:18px;color:var(--texto);font:var(--t-14)/1.4 var(--letra);
+  background:linear-gradient(180deg,#2f6db8 0%,#4c8ed6 50%,#9cc9f0 100%);isolation:isolate}
+.marco::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,#070b14 55%,transparent);z-index:0}
+.scroll{position:absolute;inset:0;padding:10px 12px 96px;overflow:hidden}
+.pieza{background:var(--base-1);border-radius:var(--r-16);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara),var(--sombra-2)}
+.cab{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cab h2{margin:0;flex:1;font-size:var(--t-20);font-weight:800}
+.btn{appearance:none;border:0;font:inherit;font-weight:700;font-size:var(--t-14);min-height:44px;padding:0 14px;border-radius:var(--r-12);color:var(--texto);
+  background:var(--base-2);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 0 0 1px var(--borde);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.p{background:var(--marca);color:var(--sobre-marca);box-shadow:inset 0 1px 0 0 #ffffff80,0 2px 0 0 #1a6a7a}
+.btn.ic{width:44px;padding:0}
+.sel{display:flex;gap:4px;padding:4px;border-radius:var(--r-16);background:var(--base-2);box-shadow:inset 0 1px 2px rgb(0 0 0/.3),inset 0 0 0 1px var(--borde)}
+.sel b{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-12);font-size:var(--t-12);color:var(--texto-2)}
+.sel b.on{background:var(--base-1);color:var(--texto);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 2px 0 0 var(--cara),inset 0 -2px 0 0 var(--marca)}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde);font-size:var(--t-12);font-weight:600}
+.chip.on{background:var(--marca-suave);box-shadow:inset 0 0 0 1.5px var(--marca)}
+.etq{font-size:var(--t-11);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto-2)}
+.tx2{color:var(--texto-2)}.tx3{color:var(--texto-3)}.s12{font-size:var(--t-12)}.s11{font-size:var(--t-11)}
+.barra{position:absolute;left:0;right:0;bottom:0;height:72px;z-index:3;display:flex;background:color-mix(in srgb,#070b14 88%,transparent);border-top:1px solid var(--borde)}
+.barra span{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--texto-2);gap:3px}
+.barra span.on{color:var(--texto)}.barra span.on i{background:var(--marca)}
+.barra i{width:22px;height:22px;border-radius:6px;background:var(--borde-fuerte);display:block}
+/* resumen */
+.res{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;margin-bottom:10px}
+.res div{text-align:center}.res b{display:block;font-size:var(--t-16);font-weight:800}.res span{font-size:var(--t-11);color:var(--texto-2)}
+.var{display:flex;gap:4px;align-items:flex-end;padding:8px 12px 10px;margin-bottom:10px}
+.var .g{flex:1;text-align:center;font-size:10.5px;color:var(--texto-2)}
+.var .g i{display:block;height:6px;border-radius:3px;margin:3px 2px 0}
+/* A · días */
+.dia{display:grid;grid-template-columns:22px 1fr;gap:0 8px;padding:8px 10px 8px 6px;margin-bottom:8px;position:relative}
+.dia .hilo{grid-row:1/span 4;position:relative}
+.dia .hilo::before{content:'';position:absolute;left:10px;top:-8px;bottom:-16px;width:2px;background:var(--borde-fuerte)}
+.dia h4{margin:0;font-size:var(--t-14);font-weight:800;display:flex;align-items:center;gap:6px}
+.dia h4 small{font-weight:600;color:var(--texto-2);font-size:var(--t-12)}
+.tag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px}
+.tag.tr{background:color-mix(in srgb,var(--c-trabajo) 22%,transparent);color:#ffc0a3}
+.tag.gu{background:color-mix(in srgb,var(--c-guardia) 25%,transparent);color:#ffb3b3}
+.tag.sa{background:color-mix(in srgb,var(--ojo) 20%,transparent);color:#ffe08a}
+.tag.li{background:color-mix(in srgb,var(--bien) 20%,transparent);color:#a6f0cf}
+.ml{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:6px;min-height:34px;border-top:1px solid var(--borde);font-size:var(--t-12)}
+.ml:first-of-type{border-top:0}
+.ml .k{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--texto-3)}
+.ml .n{font-weight:600;color:var(--texto);line-height:1.25}
+.sello{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.sello.co{background:color-mix(in srgb,var(--marca) 20%,transparent);color:var(--marca)}
+.sello.so{background:var(--base-2);color:var(--texto-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.sello.ta{background:color-mix(in srgb,var(--c-guardia) 22%,transparent);color:#ffb3b3}
+.sello.ho{background:var(--base-2);color:var(--texto-3)}
+.nodo{position:absolute;left:4px;width:14px;height:14px;border-radius:50%;border:3px solid var(--base-1);z-index:1}
+.cocina{display:flex;align-items:center;gap:8px;margin:2px 0 6px;padding:6px 8px;border-radius:var(--r-12);background:color-mix(in srgb,var(--marca) 10%,var(--base-2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--marca) 40%,transparent);font-size:var(--t-12)}
+.cocina b{color:var(--marca)}
+.plegado{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;margin-bottom:8px;font-size:var(--t-12);color:var(--texto-2)}
+/* hoja */
+.velo{position:absolute;inset:0;z-index:4;background:rgb(2 4 10/.55)}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--base-3);border-radius:24px 24px 0 0;padding:8px 14px 18px;box-shadow:inset 0 1px 0 0 var(--luz-borde),0 -12px 40px -12px #000}
+.asa{width:40px;height:5px;border-radius:3px;background:var(--borde-fuerte);margin:2px auto 10px}
+.op{display:flex;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--borde);font-size:var(--t-14)}
+.op:first-of-type{border-top:0}.op .e{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--base-2);font-size:18px}
+.op .t{flex:1}.op small{display:block;color:var(--texto-2);font-size:var(--t-11)}
+.op .p{font-size:var(--t-12);font-weight:800;color:var(--bien)}
+/* B · pasos */
+.pasos{display:flex;gap:6px;margin:0 0 10px}.pasos i{flex:1;height:5px;border-radius:3px;background:var(--borde)}.pasos i.on{background:var(--marca)}
+.cal7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0}
+.cal7 div{border-radius:10px;padding:6px 2px;text-align:center;font-size:11px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde);min-height:74px}
+.cal7 div b{display:block;font-size:13px}.cal7 div.no{opacity:.5;text-decoration:line-through}
+.cal7 div.si{background:var(--marca-suave);box-shadow:inset 0 0 0 1.5px var(--marca)}
+.cal7 em{display:block;font-style:normal;font-size:16px;margin-top:2px}
+.racion{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.racion span{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:7px;background:var(--base-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.sug{margin-top:8px;padding:10px;border-radius:var(--r-12);background:var(--ojo-suave);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ojo) 45%,transparent);font-size:var(--t-12)}
+.mini7{display:grid;grid-template-columns:34px repeat(3,1fr);gap:3px;font-size:10px;margin-top:6px}
+.mini7 span{padding:4px 3px;border-radius:6px;background:var(--base-2);line-height:1.15;min-height:28px}
+.mini7 span.d{background:none;font-weight:800;color:var(--texto-2);padding-top:6px}
+.mini7 span.h{background:none;text-align:center;font-weight:800;color:var(--texto-3);min-height:0}
+</style></head><body><div class="lamina"><h1>Montar la semana · las tres en una</h1>
+<p>A como pantalla de todos los días (los días por cocinadas), C como segunda vista de la misma pantalla (la nevera con los táperes), B como el botón «Montar la semana» (dos pasos en vez de tres) y el nutricionista dentro: el resumen para tu objetivo, la cena hecha de los días de Lloret y el kit en la compra. Datos inventados.</p>
+<div class="sec"><h2>Plan, todos los días</h2><p>Arriba, Días · Nevera · Compra (la compra deja de estar escondida en Despensa). El resumen, tu nutricionista en una línea y los días con su sello; el día de Lloret lleva su cena hecha y el kit. Abajo, «Montar la semana».</p><div class="fila" id="f1"></div></div>
+<div class="sec"><h2>Montar la semana, en dos pasos</h2><p>Paso 1: cuándo cocinas (con tus turnos) y qué cocinas en cada olla, con lo que dice el nutricionista. Paso 2: revisar con las cifras de tu objetivo y usarla (la compra ya lleva el kit del Lloret).</p><div class="fila" id="f2"></div></div></div>
+<script>
+const BAR='<div class="barra"><span><i></i>Calendario</span><span><i></i>Entreno</span><span class="on"><i></i>Comer</span><span><i></i>Más</span></div>';
+const COL={leg:'var(--leg)',pes:'var(--pes)',car:'var(--car)',hue:'var(--hue)'};
+const movil=(html,pie)=>'<div><div class="marco"><div class="scroll">'+html+'</div>'+BAR+'</div>'+(pie?'<div class="pie">'+pie+'</div>':'')+'</div>';
+const cab='<div class="cab"><button class="btn ic">‹</button><h2>Plan · 19–25 oct</h2><button class="btn ic">›</button></div>';
+const sel='<div class="sel" style="margin-bottom:10px"><b>Hoy</b><b>Cocina</b><b class="on">Plan</b><b>Despensa</b></div>';
+const res='<div class="pieza res"><div><b>3</b><span>cocinadas</span></div><div><b>1</b><span>táper</span></div><div><b>118 g</b><span>proteína/día</span></div><div><b>14</b><span>a comprar</span></div></div>';
+const variedad='<div class="pieza var">'+[['legumbre',4,'leg'],['pescado',4,'pes'],['carne',2,'car'],['huevo',3,'hue'],['verdura',8,'ver']].map(x=>'<div class="g">'+x[0]+' <b style="color:var(--texto)">'+x[1]+'</b>'+(x[0]==='verdura'?' <span style="color:var(--ojo)">/14</span>':'')+'<i style="background:var(--'+x[2]+');width:'+Math.min(100,x[1]*22)+'%"></i></div>').join('')+'</div>';
+const ML=(k,n,s,c)=>'<div class="ml"><span class="k">'+k+'</span><span class="n">'+n+'</span>'+(s?'<span class="sello '+c+'">'+s+'</span>':'<span></span>')+'</div>';
+const dia=(t,sub,tag,tc,col,filas,coc)=>'<div class="pieza dia"><div class="hilo">'+(col?'<i class="nodo" style="top:6px;background:'+col+'"></i>':'')+'</div><div><h4>'+t+' <span class="tag '+tc+'">'+tag+'</span> <small>'+sub+'</small></h4>'+(coc||'')+filas+'</div></div>';
+// A1: plan
+const A1=cab+res+variedad+
+ '<div class="pieza plegado">▸ Sáb 17 y dom 18 ya pasaron · el domingo cocinas lentejas (4)</div>'+
+ dia('Lun 20','8–15 · entreno 18:30','trabajo','tr','var(--pes)',ML('desayuno','Skyr con fruta y nueces','','')+ML('comida','Lentejas con verduras','♻️ del dom','so')+ML('cena','Merluza al horno con arroz','🍳 16:00','co'),
+   '<div class="cocina">🍳 <span><b>Cocinas al salir, 16:00</b> · merluza con arroz ×3 → lun cena, mar comida, jue táper</span></div>')+
+ dia('Mar 21','8–15','trabajo','tr','',ML('desayuno','Tostadas con huevo','','')+ML('comida','Merluza al horno con arroz','♻️','so')+ML('cena','Lentejas con verduras','♻️ del dom','so'))+
+ dia('Mié 22','8–15 · entreno 18:30','trabajo','tr','',ML('desayuno','Skyr con fruta y nueces','','')+ML('comida','Lentejas con verduras','♻️ última','so')+ML('cena','Arroz con atún, huevo y tomate','⚡ 15 min','co'))+
+ dia('Jue 23','8–15 + guardia','guardia','gu','',ML('comida','Merluza al horno con arroz','🥡 táper','ta')+ML('cena','Cena del hospital','🏥','ho'));
+// A2: hoja de cambiar
+const A2=cab+res+
+ dia('Vie 24','sales a las 9 · duermes','saliente','sa','',ML('desayuno','Lo que pilles al salir','','')+ML('comida','Lentejas (del congelador)','🧊 descongelar','so')+ML('cena','Tortilla francesa y ensalada','⚡ 5 min','co'))+
+ dia('Sáb 25','libre','libre','li','var(--car)',ML('desayuno','Tostadas con huevo','','')+ML('comida','Pollo al curry con boniato','🍳 12:00','co')+ML('cena','Arroz con atún, huevo y tomate','⚡','co'),
+   '<div class="cocina">🍳 <span><b>Cocinas a mediodía</b> · pollo al curry ×4 → sáb, dom y 2 al congelador</span></div>')+
+ '<div class="velo"></div><div class="hoja"><div class="asa"></div><div class="etq">Cambiar · comida del martes</div><h3 style="margin:2px 0 6px;font-size:18px">Merluza al horno con arroz <span class="tx2 s12">♻️ sobras del lunes</span></h3>'+
+ '<div class="op"><span class="e">🍲</span><span class="t">Lentejas con verduras<small>quedan 2 raciones en la nevera</small></span><span class="p">24 g</span></div>'+
+ '<div class="op"><span class="e">🍚</span><span class="t">Arroz con atún, huevo y tomate<small>tuyo · 15 min · lo tienes todo</small></span><span class="p">31 g</span></div>'+
+ '<div class="op"><span class="e">🥪</span><span class="t">Algo rápido con la nevera<small>bocata, bowl o plato</small></span><span class="p">›</span></div>'+
+ '<div class="op"><span class="e">🍽</span><span class="t">Como fuera<small>menú del día o cafetería</small></span><span class="p">›</span></div>'+
+ '<div class="op"><span class="e">📌</span><span class="t">Fijar este<small>«Otra combinación» no lo cambia</small></span><span class="p">○</span></div></div>';
+void movil(A1,'<b>Primera pantalla del Plan.</b> Resumen (cocinadas, táper, proteína media, compra) y variedad de la semana (la verdura avisa: 8 de 14). Lo pasado, en una línea. El hilo de la izquierda une cada cocinada con sus días.')+
+ movil(A2,'<b>Al bajar y al tocar una comida.</b> El saliente no cocina (congelador o 5 minutos); el sábado es día de olla. La hoja deja cambiar una sola casilla: lo que queda en la nevera primero, tus platos, algo rápido, fuera, o fijarla con 📌.');
+// B: tres pasos
+const cabB=(n,t)=>'<div class="cab"><button class="btn ic">✕</button><h2>Montar la semana</h2><span class="tx2 s12">'+n+'/3</span></div><div class="pasos">'+[1,2,3].map(i=>'<i class="'+(i<=n?'on':'')+'"></i>').join('')+'</div><div class="etq" style="margin-bottom:4px">'+t+'</div>';
+const B1=cabB(1,'¿Cuántas veces cocinas?')+'<div class="sel"><b>2</b><b class="on">3</b><b>4</b></div>'+
+ '<div class="pieza" style="padding:12px;margin-top:10px"><b style="font-size:16px">Te propongo estos días</b><p class="s12 tx2" style="margin:4px 0 0">Libre o al salir del trabajo. La guardia y el saliente, tachados.</p>'+
+ '<div class="cal7">'+[['dom','18','🍳','si'],['lun','20','🍳','si'],['mar','21','',''],['mié','22','',''],['jue','23','🏥','no'],['vie','24','😴','no'],['sáb','25','🍳','si']].map(x=>'<div class="'+x[3]+'"><b>'+x[1]+'</b>'+x[0]+'<em>'+x[2]+'</em></div>').join('')+'</div>'+
+ '<div class="s12"><b>Dom 18 · 18:00</b> <span class="tx2">· libre, tarde entera</span><br><b>Lun 20 · 16:00</b> <span class="tx2">· al salir; da para el táper del jueves</span><br><b>Sáb 25 · 12:00</b> <span class="tx2">· libre</span></div></div>'+
+ '<div class="pieza" style="padding:12px;margin-top:10px"><div class="etq">Y además</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><span class="chip on">guardia: táper</span><span class="chip on">saliente: sin cocinar</span><span class="chip">cenas rápidas</span><span class="chip on">entreno: +proteína</span></div></div>'+
+ '<button class="btn p" style="width:100%;margin-top:12px;min-height:52px">Siguiente: qué cocinas ›</button>';
+const olla=(d,p,col,r,ex)=>'<div class="pieza" style="padding:10px 12px;margin-bottom:8px;box-shadow:inset 3px 0 0 0 '+col+',inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara)"><div class="s12 tx2">'+d+'</div><b style="font-size:16px">'+p+'</b>'+(ex||'')+'<div class="racion">'+r.map(x=>'<span>'+x+'</span>').join('')+'</div></div>';
+const B2=cabB(2,'¿Qué cocinas en cada una?')+
+ olla('Dom 18 · 18:00 · da para 4','Lentejas con verduras','var(--leg)',['lun C','mar Cn','mié C','🧊 vie C'],' <span class="tx2 s11">· recetario</span>')+
+ olla('Lun 20 · 16:00 · da para 3','Merluza al horno con arroz','var(--pes)',['lun Cn','mar C','🥡 jue C'],' <span class="tx2 s11">· tuyo</span>')+
+ olla('Sáb 25 · 12:00 · da para 4','Pollo al curry con boniato','var(--car)',['sáb C','dom C','🧊 ×2'],' <span class="tx2 s11">· recetario</span>')+
+ '<div class="sug">⚠️ <b>Con tus 2 platos no había legumbre ni carne.</b> He puesto lentejas y pollo al curry del recetario. <u>Cambiar</u></div>'+
+ '<div class="pieza" style="padding:10px 12px;margin-top:8px"><div class="etq">Cenas rápidas que quedan libres</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><span class="chip on">🍚 Arroz con atún (tuyo)</span><span class="chip on">🍳 Tortilla y ensalada</span><span class="chip">🥗 Bowl de la nevera</span></div></div>'+
+ '<button class="btn p" style="width:100%;margin-top:12px;min-height:52px">Siguiente: revisar ›</button>';
+const m7=[['lun','Skyr','Lentejas ♻️','Merluza 🍳'],['mar','Tostadas','Merluza ♻️','Lentejas ♻️'],['mié','Skyr','Lentejas ♻️','Arroz atún ⚡'],['jue','Tostadas','Merluza 🥡','Hospital'],['vie','—','Lentejas 🧊','Tortilla ⚡'],['sáb','Tostadas','Pollo 🍳','Arroz atún ⚡'],['dom','Skyr','Pollo ♻️','Tortilla ⚡']];
+const B3=cabB(3,'Revisa y usa')+res+variedad+
+ '<div class="pieza" style="padding:10px"><div class="mini7"><span class="h"></span><span class="h">DES</span><span class="h">COMIDA</span><span class="h">CENA</span>'+m7.map(r=>'<span class="d">'+r[0]+'</span><span>'+r[1]+'</span><span>'+r[2]+'</span><span>'+r[3]+'</span>').join('')+'</div>'+
+ '<p class="s11 tx2" style="margin:8px 0 0">Toca una casilla para cambiarla. 🍳 cocinas · ♻️ sobras · 🥡 táper · 🧊 congelado · ⚡ rápido</p></div>'+
+ '<button class="btn p" style="width:100%;margin-top:12px;min-height:52px">Usar la semana y ver la compra (14) ›</button><button class="btn" style="width:100%;margin-top:8px">↻ Otra combinación (lo fijado se queda)</button>';
+void movil(B1,'<b>Paso 1.</b> Cuántas veces y qué días; la app tacha la guardia y el saliente y explica por qué propone cada día.')+
+ movil(B2,'<b>Paso 2.</b> Cada olla con sus raciones repartidas por días (🧊 al congelador, 🥡 al táper). Si con tus platos falta un grupo, lo dice y propone uno del recetario.')+
+ movil(B3,'<b>Paso 3.</b> La semana entera en pequeño, el resumen y la variedad. Usar → compra; «otra combinación» respeta lo fijado.');
+// C: nevera isométrica
+function iso(x,y,z){const c=Math.cos(Math.PI/6),s=Math.sin(Math.PI/6);return [200+(x-y)*c,150+(x+y)*s-z];}
+function pt(a){return a.map(p=>iso(...p).map(v=>v.toFixed(1)).join(',')).join(' ');}
+function caja(x,y,z,w,d,h,top,izq,der,trazo){return '<polygon points="'+pt([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]])+'" fill="'+izq+'" stroke="'+trazo+'" stroke-width=".6"/>'+
+ '<polygon points="'+pt([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]])+'" fill="'+der+'" stroke="'+trazo+'" stroke-width=".6"/>'+
+ '<polygon points="'+pt([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]])+'" fill="'+top+'" stroke="'+trazo+'" stroke-width=".6"/>';}
+function taper(x,y,z,col,et,apag){const op=apag?' opacity=".35"':'';const [lx,ly]=iso(x+18,y+30,z+14);
+ return '<g'+op+'>'+caja(x,y,z,36,30,12,'#e8eef8','#c9d3e2','#aebbd0','#7b8aa3')+caja(x-1,y-1,z+12,38,32,3,col,'color-mix(in srgb,'+col+' 70%,#000)','color-mix(in srgb,'+col+' 55%,#000)','#00000055')+
+ '<text x="'+lx.toFixed(1)+'" y="'+(ly+1).toFixed(1)+'" font-size="7.5" font-weight="800" fill="#1b2433" text-anchor="middle" font-family="system-ui">'+et+'</text></g>';}
+function nevera(){let s='<svg class="nev" width="388" style="display:block">';
+ // cuerpo: fondo, lados, baldas
+ const W=150,D=110,H=250;
+ s+='<polygon points="'+pt([[0,0,0],[W,0,0],[W,0,H],[0,0,H]])+'" fill="#d9e1ee" stroke="#8090a8"/>';            // pared del fondo (derecha)
+ s+='<polygon points="'+pt([[0,0,0],[0,D,0],[0,D,H],[0,0,H]])+'" fill="#c3cddd" stroke="#8090a8"/>';            // pared izquierda
+ s+='<polygon points="'+pt([[0,0,0],[W,0,0],[W,D,0],[0,D,0]])+'" fill="#b4c0d3" stroke="#8090a8"/>';            // suelo
+ [70,140,205].forEach(z=>{s+='<polygon points="'+pt([[0,0,z],[W,0,z],[W,D,z],[0,D,z]])+'" fill="#e9f3ff" fill-opacity=".55" stroke="#9fb3cc"/>';});
+ // luz
+ s+='<circle cx="'+iso(75,10,240)[0]+'" cy="'+iso(75,10,240)[1]+'" r="26" fill="#fff6c8" opacity=".35"/>';
+ // congelador (abajo): 2 de lentejas, 2 de pollo
+ s+=taper(8,14,4,'#d9a441','🧊 vie')+taper(56,14,4,'#f0875a','🧊')+taper(104,14,4,'#f0875a','🧊');
+ // balda 1: lentejas (dom) 
+ s+=taper(8,14,72,'#d9a441','mar Cn')+taper(56,14,72,'#d9a441','mié C')+taper(104,14,72,'#d9a441','lun C',true);
+ // balda 2: merluza (lun)
+ s+=taper(8,14,142,'#5aa9ff','mar C')+taper(56,14,142,'#5aa9ff','🥡 jue');
+ // balda 3: huevos, skyr
+ s+=caja(10,20,207,26,20,10,'#f6e7c8','#e2cfa8','#cbb58c','#8a7a5a')+caja(44,20,207,26,20,10,'#f6e7c8','#e2cfa8','#cbb58c','#8a7a5a')+caja(90,16,207,22,22,22,'#ffffff','#e2e8f1','#c9d2e0','#8090a8');
+ // puerta abierta (plano a la izquierda)
+ s+='<polygon points="'+pt([[0,D,0],[-70,D+62,0],[-70,D+62,H],[0,D,H]])+'" fill="#eef3fa" stroke="#8090a8"/>';
+ s+='<polygon points="'+pt([[-14,D+12,40],[-56,D+50,40],[-56,D+50,58],[-14,D+12,58]])+'" fill="#cfd8e6" stroke="#8090a8"/>';
+ s+='<polygon points="'+pt([[-14,D+12,130],[-56,D+50,130],[-56,D+50,148],[-14,D+12,148]])+'" fill="#cfd8e6" stroke="#8090a8"/>';
+ // etiquetas de balda
+ const lab=(z,t)=>{const [x,y]=iso(W,0,z+30);return '<text x="'+(x+8).toFixed(1)+'" y="'+y.toFixed(1)+'" font-size="11" fill="#e9f2ff" font-weight="700" font-family="system-ui">'+t+'</text>';};
+ s+=lab(4,'congelador')+lab(72,'lentejas · dom')+lab(142,'merluza · lun')+lab(207,'desayunos');
+ return s+'</svg>';}
+const C1='<div class="cab"><button class="btn ic">‹</button><h2>La nevera · mar 21</h2><button class="btn ic">›</button></div>'+sel+
+ '<div class="pieza" style="padding:6px 6px 2px">'+nevera()+'</div>'+
+ '<div class="pieza" style="padding:10px 12px;margin-top:10px"><div class="etq">Hoy sacas</div><div class="s12" style="margin-top:4px">☀️ comida: <b>merluza con arroz</b> (balda 2) · 🌙 cena: <b>lentejas</b> (balda 1)</div>'+
+ '<div class="s12" style="margin-top:6px;color:var(--ojo)">⚠️ Las lentejas del domingo aguantan hasta el jueves: la del viernes, mejor al congelador.</div></div>';
+const dias=[['lun','#d9a441','#5aa9ff'],['mar','#5aa9ff','#d9a441'],['mié','#d9a441','⚡'],['jue','#5aa9ff','🏥'],['vie','#d9a441','⚡'],['sáb','#f0875a','⚡'],['dom','#f0875a','⚡']];
+const C2='<div class="cab"><button class="btn ic">‹</button><h2>La semana en táperes</h2></div>'+
+ '<div class="pieza" style="padding:12px"><div class="etq">Cocinadas</div>'+
+ [['Dom 18 · lentejas con verduras','#d9a441',4],['Lun 20 · merluza al horno con arroz','#5aa9ff',3],['Sáb 25 · pollo al curry','#f0875a',4]].map(c=>'<div style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid var(--borde)"><span style="width:14px;height:14px;border-radius:4px;background:'+c[1]+'"></span><span style="flex:1" class="s12"><b>'+c[0]+'</b></span><span class="s12 tx2">'+'▮'.repeat(c[2])+' '+c[2]+'</span></div>').join('')+'</div>'+
+ '<div class="pieza" style="padding:12px;margin-top:10px"><div class="etq">Lo que sale cada día</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px">'+
+ dias.map((d,i)=>'<div style="text-align:center;font-size:11px;color:var(--texto-2)">'+d[0]+'<div style="margin-top:4px;display:flex;flex-direction:column;gap:3px;align-items:center">'+[d[1],d[2]].map(c=>c.startsWith('#')?'<i style="display:block;width:30px;height:18px;border-radius:4px;background:'+c+';box-shadow:inset 0 -3px 0 #0003"></i>':'<span style="font-size:15px">'+c+'</span>').join('')+'</div></div>').join('')+'</div>'+
+ '<div style="position:relative;height:18px;margin-top:8px"><div style="position:absolute;left:0;right:0;top:8px;height:2px;background:var(--borde-fuerte)"></div><div style="position:absolute;left:21%;top:2px;width:14px;height:14px;border-radius:50%;background:var(--marca);box-shadow:0 0 0 4px color-mix(in srgb,var(--marca) 30%,transparent)"></div></div>'+
+ '<p class="s11 tx2" style="margin:2px 0 0">El punto es hoy. Arriba, comida; abajo, cena. ⚡ rápido · 🏥 hospital</p></div>'+
+ '<div class="pieza" style="padding:12px;margin-top:10px;display:flex;gap:10px;align-items:center"><span style="font-size:22px">🛒</span><span class="s12" style="flex:1"><b>14 cosas</b> para estas tres ollas · 6 ya están en casa</span><button class="btn s">Compra ›</button></div>';
+void movil(C1,'<b>La nevera abierta</b> (figura isométrica; en la app se haría con /anatomy, viva). Cada balda es una cocinada; cada táper lleva su día. Lo ya comido, apagado. El congelador abajo. Debajo, qué sacas hoy y qué caduca.')+
+ movil(C2,'<b>La semana en táperes.</b> Las tres ollas con sus raciones y, día a día, lo que sale (comida arriba, cena abajo), con el «hoy» en la línea. La compra sale de las ollas.');
+/* encuadre: el dibujo entero, sin recortes */
+document.querySelectorAll('svg.nev').forEach(v=>{const b=v.getBBox();v.setAttribute('viewBox',(b.x-6)+' '+(b.y-6)+' '+(b.width+12)+' '+(b.height+12));v.setAttribute('height',Math.round(388*(b.height+12)/(b.width+12)));});
+
+const sel2=(on)=>'<div class="sel" style="margin-bottom:10px"><b class="'+(on==='d'?'on':'')+'">Días</b><b class="'+(on==='n'?'on':'')+'">Nevera</b><b class="'+(on==='c'?'on':'')+'">Compra</b></div>';
+const techo='<div class="pieza" style="padding:10px 12px;margin-bottom:10px;box-shadow:inset 0 2px 0 0 var(--ojo),0 3px 0 0 var(--cara)"><div style="display:flex;gap:8px;align-items:center"><span class="etq" style="flex:1">Tu nutricionista</span><span class="s12" style="color:var(--marca);font-weight:700">informe ›</span></div>'+
+ '<div class="s12" style="margin-top:4px"><b>Semana prevista: 2.180 kcal/día</b> <span class="tx2">(obj. 2.200)</span> · el jueves de Lloret ya lleva cena hecha. <span style="color:var(--ojo)">Verdura 8 de 14 cenas</span>.</div></div>';
+const diaL=dia('Jue 23','8–15 · 🌿 Lloret 20:00','trabajo','tr','',ML('desayuno','Skyr con café','','')+ML('comida','Merluza al horno con arroz','♻️','so')+ML('cena','Bol de lentejas con verduras y 2 huevos','🌿 hecha antes','co')+'<div class="s11" style="padding:4px 0 2px;color:var(--texto-2)">🎒 Kit de vuelta en casa: yogur con fresas · palomitas · 2 onzas 85 %</div>');
+const P1='<div class="cab"><button class="btn ic">‹</button><h2>Plan · 19–25 oct</h2><button class="btn ic">›</button></div>'+sel2('d')+res+techo+
+ '<div class="pieza plegado">▸ Sáb 17 y dom 18 ya pasaron · el domingo cocinas lentejas (4)</div>'+
+ dia('Lun 20','8–15 · entreno 18:30','trabajo','tr','var(--pes)',ML('desayuno','Skyr con café','','')+ML('comida','Lentejas con verduras','♻️ del dom','so')+ML('cena','Merluza al horno con arroz','🍳 16:00','co'),
+   '<div class="cocina">🍳 <span><b>Cocinas al salir, 16:00</b> · merluza con arroz ×3 → lun cena, mar comida, mié táper</span></div>')+
+ dia('Mar 21','8–15','trabajo','tr','',ML('desayuno','Tostadas con huevo','','')+ML('comida','Merluza al horno con arroz','♻️','so')+ML('cena','Lentejas con verduras','♻️ del dom','so'))+diaL+
+ '<button class="btn p" style="position:absolute;left:12px;right:12px;bottom:84px;min-height:52px;z-index:2">✨ Montar la semana</button>';
+const P2='<div class="cab"><button class="btn ic">‹</button><h2>Plan · 19–25 oct</h2><button class="btn ic">›</button></div>'+sel2('n')+
+ '<div class="pieza" style="padding:6px 6px 2px">'+nevera()+'</div>'+
+ '<div class="pieza" style="padding:10px 12px;margin-top:10px"><div class="etq">Mar 21 · hoy sacas</div><div class="s12" style="margin-top:4px">☀️ <b>merluza con arroz</b> (balda 2) · 🌙 <b>lentejas</b> (balda 1)</div>'+
+ '<div class="s12" style="margin-top:6px;color:var(--ojo)">⚠️ Las lentejas aguantan hasta el jueves: la del viernes, al congelador.</div></div>'+
+ '<div class="pieza" style="padding:10px 12px;margin-top:10px"><div class="etq">Lo que sale cada día</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px">'+
+ dias.map(d=>'<div style="text-align:center;font-size:11px;color:var(--texto-2)">'+d[0]+'<div style="margin-top:3px;display:flex;flex-direction:column;gap:3px;align-items:center">'+[d[1],d[2]].map(c=>c.startsWith('#')?'<i style="display:block;width:28px;height:14px;border-radius:4px;background:'+c+'"></i>':'<span style="font-size:13px">'+c+'</span>').join('')+'</div></div>').join('')+'</div></div>';
+const P3='<div class="cab"><button class="btn ic">✕</button><h2>Montar la semana</h2><span class="tx2 s12">1/2</span></div><div class="pasos"><i class="on"></i><i></i></div>'+
+ '<div class="etq" style="margin-bottom:4px">Cuándo cocinas</div><div class="sel"><b>2</b><b class="on">3</b><b>4</b></div>'+
+ '<div class="cal7">'+[['dom','18','🍳','si'],['lun','20','🍳','si'],['mar','21','',''],['mié','22','',''],['jue','23','🌿',''],['vie','24','😴','no'],['sáb','25','🍳','si']].map(x=>'<div class="'+x[3]+'"><b>'+x[1]+'</b>'+x[0]+'<em>'+x[2]+'</em></div>').join('')+'</div>'+
+ '<div class="etq" style="margin:8px 0 4px">Qué cocinas en cada una</div>'+
+ olla('Dom 18 · 18:00 · da para 4','Lentejas con verduras','var(--leg)',['lun C','mar Cn','jue Cn 🌿','🧊 vie C'],' <span class="tx2 s11">· recetario</span>')+
+ olla('Lun 20 · 16:00 · da para 3','Merluza al horno con arroz','var(--pes)',['lun Cn','mar C','mié C'],' <span class="tx2 s11">· tuyo</span>')+
+ olla('Sáb 25 · 12:00 · da para 4','Pollo al curry con boniato','var(--car)',['sáb C','dom C','🧊 ×2'],' <span class="tx2 s11">· recetario</span>')+
+ '<div class="sug">🩺 <b>Tu nutricionista:</b> con tus 2 platos no había legumbre ni carne; he puesto lentejas y pollo. El jueves hay Lloret: la cena va hecha (lentejas, 560 kcal) y el kit a la compra.</div>'+
+ '<button class="btn p" style="width:100%;margin-top:10px;min-height:52px">Siguiente: revisar ›</button>';
+const P4='<div class="cab"><button class="btn ic">‹</button><h2>Montar la semana</h2><span class="tx2 s12">2/2</span></div><div class="pasos"><i class="on"></i><i class="on"></i></div>'+res+variedad+
+ '<div class="pieza" style="padding:10px 12px;margin-bottom:10px"><div class="etq">Para tu objetivo</div><div class="s12" style="margin-top:4px"><b>2.180 kcal/día previstas</b> de 2.200 · <b>132 g</b> de proteína/día · desayunos con proteína 6 de 7.<br><span class="tx2">Si el jueves te pasas, el viernes y el sábado se ajustan solos.</span></div></div>'+
+ '<div class="pieza" style="padding:10px"><div class="mini7"><span class="h"></span><span class="h">DES</span><span class="h">COMIDA</span><span class="h">CENA</span>'+
+ [['lun','Skyr','Lentejas ♻️','Merluza 🍳'],['mar','Tostadas','Merluza ♻️','Lentejas ♻️'],['mié','Skyr','Merluza 🥡','Arroz atún ⚡'],['jue','Tostadas','Comida trabajo','Lentejas 🌿'],['vie','—','Lentejas 🧊','Tortilla ⚡'],['sáb','Tostadas','Pollo 🍳','Arroz atún ⚡'],['dom','Skyr','Pollo ♻️','Tortilla ⚡']].map(r=>'<span class="d">'+r[0]+'</span><span>'+r[1]+'</span><span>'+r[2]+'</span><span>'+r[3]+'</span>').join('')+'</div>'+
+ '<p class="s11 tx2" style="margin:6px 0 0">Toca una casilla para cambiarla o fijarla (📌).</p></div>'+
+ '<button class="btn p" style="width:100%;margin-top:10px;min-height:52px">Usar y ver la compra (17 · con el kit)</button>';
+
+document.getElementById('f1').innerHTML=movil(P1,'<b>Plan · Días.</b> Lo de A con el nutricionista en una línea y el día de Lloret con su cena hecha antes de salir y el kit de vuelta.')+movil(P2,'<b>Plan · Nevera.</b> La misma semana vista como táperes (lo de C): qué hay, qué sacas hoy, qué caduca, y la línea de la semana.');
+document.getElementById('f2').innerHTML=movil(P3,'<b>Montar · paso 1.</b> Cuándo y qué cocinas a la vez (lo de B en uno): la guardia y el saliente tachados, el Lloret marcado y las raciones repartidas.')+movil(P4,'<b>Montar · paso 2.</b> La semana en pequeño, con las cifras para tu objetivo. «Usar» la escribe y lleva a la compra.');
+document.querySelectorAll('svg.nev').forEach(v=>{const b=v.getBBox();v.setAttribute('viewBox',(b.x-6)+' '+(b.y-6)+' '+(b.width+12)+' '+(b.height+12));v.setAttribute('height',Math.round(388*(b.height+12)/(b.width+12)));});
+</script></body></html>
