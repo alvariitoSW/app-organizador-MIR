@@ -9,13 +9,18 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
 
 - Responde siempre en **español**, claro y sin jerga.
 - Al final de cada respuesta, los **«Supuestos»** que hayas hecho sin preguntar.
-- Para empezar una sesión: `/plan-socialista` (el parte de lo que pide atención).
+- **Una sesión por tarea.** Cada sesión arrastra todo lo hablado y cada mensaje lo vuelve a leer: una
+  sesión larga gasta mucho más. Al terminar una tarea, haz el **traspaso** (paso 7 de `cierra-y-despliega`)
+  y dile que la siguiente va en una sesión nueva. Si en la misma sesión pide otra tarea distinta, hazla, pero
+  recuérdaselo en una línea.
+- Para empezar una sesión: `/plan-socialista` (el parte de lo que pide atención y lo que quedó del traspaso).
 
 ## Ramas y despliegue
 
 - Trabaja en `claude/magical-clarke-dlp8mb`. Commit y `git push -u origin claude/magical-clarke-dlp8mb`.
 - Las pruebas, en corto: **`npm run test:corto`** (o `tools/pruebas-corto.sh tests/x.test.js`) enseña solo
-  lo que falla y un resumen por banco; el registro entero queda en `.claude/.ultima-suite.log`.
+  lo que falla y un resumen por banco; el registro entero queda en `.claude/.ultima-suite.log`. Mientras
+  trabajas, solo las tuyas: `tools/pruebas-corto.sh --solo 274 320` (menos de un minuto frente a ~12).
 - A `main` solo con la **suite completa en verde** (`npm run test:corto`), y antes **`npm run sella`** + commit de
   `version.json` (si no, el móvil no se actualiza; el hook `sella-antes-de-main` lo impide). Después,
   `git push origin HEAD:main` y comprobar que el run de Actions en `main` acaba en `success`.

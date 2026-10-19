@@ -6,11 +6,19 @@
 #
 #   tools/pruebas-corto.sh                      la suite completa (lo mismo que npm test, en corto)
 #   tools/pruebas-corto.sh tests/frases.test.js uno o varios bancos sueltos
+#   tools/pruebas-corto.sh --solo 274 320       solo esas pruebas de regression (tools/pruebas-sueltas.py)
 #
 # A diferencia de npm test, no para en el primer banco que falla: los pasa todos y sale con 1 si alguno falló.
 set -u
 cd "$(dirname "$0")/.." || exit 1
 LOG=.claude/.ultima-suite.log
+if [ "${1:-}" = "--solo" ]; then
+  shift
+  [ $# -gt 0 ] || { echo "uso: tools/pruebas-corto.sh --solo 274 320 …"; exit 2; }
+  python3 tools/pruebas-sueltas.py "$@" || exit 2
+  trap 'rm -f tests/zz-sueltas.test.js; rm -rf test-results' EXIT
+  set -- tests/zz-sueltas.test.js
+fi
 BANCOS=("$@")
 [ ${#BANCOS[@]} -gt 0 ] || BANCOS=(tests/regression.test.js tests/frases.test.js tests/compartir.test.js tests/enlaces.test.js
   tests/actualiza.test.js tests/worker-recetas.test.mjs tests/worker-calendario.test.mjs)

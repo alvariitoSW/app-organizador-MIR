@@ -16,3 +16,7 @@ design/nutricion/*.html
 .claude/skills/anatomy/tests/fixtures/*.png
 # capturas que hacen sus scripts al comprobar una figura
 .claude/skills/anatomy/**/shots/
+
+# las pruebas sueltas que monta tools/pruebas-sueltas.py (se borran solas)
+tests/zz-sueltas.test.js
+test-results/

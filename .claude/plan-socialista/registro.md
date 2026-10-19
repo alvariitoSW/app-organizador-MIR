@@ -27,10 +27,17 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
   fase 1 dirección de arte (estilo: «sorpréndeme») → fase 2 maquetas por sección (+ /anatomy) → fase 3 construir,
   empezando por **lo común de toda la app**. Iconos: «algo con vida propia, sorpréndeme».
   · F0 y F1 hechas (2026-10-14): dirección «La jornada» con visto bueno; barra abajo, guardia 65 % rojo, claros
-    suavizados. Siguiente: construir lo común por tandas.
+    suavizados. Tandas 1 (cielo de la hora y barra abajo) y 2 (las piezas, 44 px) de lo común: desplegadas
+    (0f2765e, 2026-10-17). Siguen por hacer:
+  · [aparc-arte-energia] tanda 3 de lo común: el cálculo de la energía del día (que se gasta y se recarga, ver
+    design/arte/continuidad.md).
+  · [aparc-arte-iconos] tanda 4 de lo común: los iconos con vida propia (design/arte/direccion/iconos).
 - [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
   haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
 
+- [aparc-comida-entreno] Los días de entreno a las 18:30 la comida sale a las 18:00 (ventana fija de Sueño): falta
+  decidir si debe ir después del entreno · DECISIONS.md:948 · desde 2026-10-15
+- [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
 - [enc-plan-comidas] Montar la semana de comidas: ideas de contenido y diseño dadas el 2026-10-17 (días pasados,
   2 platos repetidos, desayuno vacío, sin cambiar casillas, cuándo cocinas, 4 formas de llenar la semana). Maquetas de 3
   direcciones en design/comer-plan/; el usuario pidió combinarlas → design/comer-plan/combinada.png, aprobada y construida
@@ -54,6 +61,9 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [sup-2026-10-14-guardia-hoy] una guardia de hoy cuenta como «puesta» hasta mañana · DECISIONS.md (guardias R1) · contado el 2026-10-14
 - [sup-2026-10-14-sin-vac] ya no se resta una guardia por semana de vacaciones · DECISIONS.md (guardias R1) · contado el 2026-10-14
 - [sup-2026-10-14-t1t2] 6 más de las tandas 1 y 2 (cafés, café de otro día, siesta de guardia, Lloretazo 0,6 h, cartel azul, «+N más») · DECISIONS.md · contado el 2026-10-14 (solo el número)
+- [sup-2026-10-17-nutri] nutricionista: pico = más de 300 kcal o del 15 % sobre el objetivo, se compensa en 3 días (máx. 300/día), suelo 80 % (mín. 1.500), chocolate tope 2/semana, cena del Lloret 380–700 kcal y ≥22 g, «solo café» < 150 kcal · DECISIONS «Tu nutricionista, más presente» · contado el 2026-10-17
+- [sup-2026-10-19-plan] Plan: cocinas una hora después de salir (o a mediodía si libras), ollas de 2–6 raciones, los días de entreno valen para cocinar si no hay otros, se quitó «la semana con tus platos» · DECISIONS «El Plan, las tres en una» · contado el 2026-10-19
+- [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
 ## Cerrados
 
@@ -73,3 +83,5 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [run-38642732419] 2026-10-14 · despliegue de main (adca9d1, guardias de R1) · success
 - [run-38709963353] 2026-10-17 · despliegue de main (0f2765e: «La jornada» tandas 1–2, R1 con el mes en curso) · success
 - [rama-0f2765e] 2026-10-17 · main y rama iguales, sellado · ok
+- [run-39032390614] 2026-10-17 · despliegue de main (aaa1805, tu nutricionista) · success
+- [run-39275746140] 2026-10-19 · despliegue de main (acd3948, el Plan, las tres en una) · success

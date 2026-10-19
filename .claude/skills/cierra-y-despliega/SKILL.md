@@ -78,3 +78,21 @@ mire la versión que pone en «Datos».
 
 Una línea con qué hay ahora en el móvil y, si toca, qué tiene que hacer él
 («ábrela una vez con wifi para que se actualice el service worker»).
+
+## 7. Traspaso: que la sesión siguiente sepa dónde quedó
+
+Se trabaja **una sesión por tarea** (CLAUDE.md). La sesión nueva no recuerda nada: solo sabe lo que
+quede escrito en `.claude/plan-socialista/`, que lee `/plan-socialista`. Antes de despedirte:
+
+1. **`registro.md` → «Encargos aparcados»:** cierra el encargo de esta tarea (con el commit de `main`
+   y la fecha) y apunta, con id estable (`aparc-<tema>`), lo que quedó a medias o lo que el usuario
+   pidió para después. Una línea por cosa, con el archivo o la entrada de DECISIONS donde está el detalle.
+2. **`registro.md` → «Supuestos sin confirmar»:** los supuestos que le dijiste en esta tarea y no ha
+   contestado (`sup-<fecha>-<tema>`). No dependas de que el parte los saque de DECISIONS: si el marcador
+   de DECISIONS ya pasó de esa línea, se perderían.
+3. **`sesiones/<AAAA-MM-DD>.md`:** qué se hizo, qué se desplegó (commit y run) y qué queda.
+4. Commit de `.claude/plan-socialista/` en la rama y push (no toca código: sin suite ni sello).
+5. Última línea al usuario: **«Para lo siguiente, abre una sesión nueva y escribe `/plan-socialista`».**
+
+Si la tarea se queda a medias (sin desplegar), el traspaso es el mismo: lo hecho, en qué commit de la
+rama está y cuál es el siguiente paso, para retomarlo sin releer la conversación.
