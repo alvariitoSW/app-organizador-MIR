@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan de vuelta</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#05080f;color:#e9f2ff;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.tabla{width:412px;flex:none}
+.tabla h3{margin:0 0 4px;font-size:15px}
+.tabla>p{margin:0 0 10px;color:#8fa6c6;font-size:12.5px}
+.movil{width:412px;min-height:915px;background:linear-gradient(#0b1328,#070b14 40%);border:1px solid #1e2b44;border-radius:18px;overflow:hidden;padding:10px 10px 80px;position:relative}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.top i{font-style:normal;border:1px solid #1e2b44;border-radius:10px;padding:6px 12px;color:#8fa6c6;background:#0b1120;font-size:13px}
+.top b{font-size:16px}
+.card{background:#111a2b;border:1px solid #1e2b44;border-radius:16px;padding:12px;margin-bottom:10px}
+.cap{font-size:11px;font-weight:800;letter-spacing:.08em;color:#38e1ff}
+.big{font-size:20px;font-weight:900;margin:2px 0 4px}
+.mini{font-size:12px;color:#8fa6c6}
+.btn{display:block;width:100%;text-align:center;border-radius:14px;padding:13px;font-weight:800;font-size:15px;margin-top:10px;border:1px solid #38e1ff66;color:#04121c;background:linear-gradient(94deg,#38e1ff,#7c9cff)}
+.btn.s{background:#0b1120;color:#e9f2ff;border-color:#1e2b44;font-size:13px;padding:10px}
+.vuelta{background:linear-gradient(160deg,#16314a,#111a2b 60%);border-color:#38e1ff55}
+.esc{display:flex;gap:5px;margin:10px 0 4px}
+.esc div{flex:1;border-radius:10px;padding:7px 4px;text-align:center;background:#0b1120;border:1px solid #1e2b44}
+.esc div b{display:block;font-size:15px}
+.esc div span{font-size:10.5px;color:#8fa6c6}
+.esc div.on{border-color:#38e1ff;background:#0f2a3b}
+.esc div.ok{opacity:.55}
+.prog{height:8px;background:#0b1120;border-radius:99px;overflow:hidden;margin:8px 0 2px}
+.prog i{display:block;height:100%;width:25%;background:linear-gradient(90deg,#38e1ff,#7c9cff)}
+.fila{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #1e2b44}
+.fila:first-of-type{border-top:0}
+.fila .n{flex:1}
+.fila .n b{display:block;font-size:14px}
+.fila .kg{text-align:right;font-weight:900;font-size:16px}
+.fila .kg small{display:block;font-weight:600;font-size:11px;color:#8fa6c6}
+.listo{display:flex;gap:12px;align-items:center}
+.anillo{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#f5b942 0 75%,#1e2b44 75% 100%);flex:none}
+.anillo b{width:38px;height:38px;border-radius:50%;background:#111a2b;display:grid;place-items:center;font-size:15px}
+.chip{display:inline-block;border-radius:99px;padding:3px 9px;font-size:11.5px;font-weight:700;background:#0b1120;border:1px solid #1e2b44;margin:2px 3px 2px 0}
+.chip.on{border-color:#38e1ff;color:#38e1ff}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th{color:#8fa6c6;font-weight:700;text-align:left;font-size:11px;padding:4px 3px}
+td{padding:7px 3px;border-top:1px solid #1e2b44}
+tr.on td{background:#0f2a3b}
+td b{font-size:13.5px}
+.cien{font-size:12px;color:#c9d6ea;margin:6px 0 0;padding-left:16px}
+.cien li{margin:3px 0}
+.tag{font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;background:#f5b94222;color:#f5b942}
+.ok2{color:#4ade80}
+.barra{position:absolute;left:0;right:0;bottom:0;height:62px;border-top:1px solid #1e2b44;background:#070b14;display:flex;justify-content:space-around;align-items:center;color:#8fa6c6;font-size:12px;font-weight:700}
+.barra .on{color:#e9f2ff}
+</style></head>
+<body>
+
+<div class="tabla"><h3>1 · Portada de Entreno</h3><p>Al volver tras un parón, la app lo detecta y lo primero que ves es tu plan de vuelta: en qué semana estás, qué toca y con qué rutina. El «listo» ya no dice 100 %.</p>
+<div class="movil">
+  <div class="top"><b>Entreno</b></div>
+  <div class="card vuelta">
+    <div class="cap">TU VUELTA AL GIMNASIO</div>
+    <div class="big">Semana 1 de 4</div>
+    <div class="mini">Llevas <b style="color:#e9f2ff">8 semanas</b> sin entrenar (último día: 20 ago). Volvemos a tu rutina <b style="color:#e9f2ff">Torso A + Pierna B</b> en 4 semanas, sin lesionarte ni quemarte.</div>
+    <div class="esc">
+      <div class="on"><b>70 %</b><span>sem 1</span></div>
+      <div><b>80 %</b><span>sem 2</span></div>
+      <div><b>90 %</b><span>sem 3</span></div>
+      <div><b>100 %</b><span>sem 4</span></div>
+    </div>
+    <div class="mini">Esta semana: <b style="color:#e9f2ff">2 días</b> · 2 series por ejercicio · el 70 % de tu peso · que te sobren 4 repeticiones.</div>
+    <div class="prog"><i style="width:0%"></i></div>
+    <div class="mini">0 de 2 entrenos de esta semana</div>
+    <div class="btn">▶ Empezar Torso A (vuelta)</div>
+    <div class="btn s">ver el plan entero y el porqué ›</div>
+  </div>
+  <div class="card listo">
+    <div class="anillo"><b>75</b></div>
+    <div><b>Listo al 75 %</b><div class="mini">Vuelves de 8 semanas parado: hoy versión de vuelta, no tu sesión de siempre.</div></div>
+  </div>
+  <div class="card">
+    <div class="cap" style="color:#8fa6c6">TUS RUTINAS</div>
+    <div class="fila"><div class="n"><b>Torso A</b><span class="mini">4 ejercicios · en vuelta: 2 series cada uno</span></div><span class="chip on">sem 1</span></div>
+    <div class="fila"><div class="n"><b>Pierna B</b><span class="mini">3 ejercicios · en vuelta: 2 series cada uno</span></div><span class="chip on">sem 1</span></div>
+  </div>
+  <div class="barra"><span>Calendario</span><span class="on">Entreno</span><span>Comer</span><span>Más</span></div>
+</div></div>
+
+<div class="tabla"><h3>2 · El plan entero (y el porqué)</h3><p>Las cuatro semanas en una tabla, lo que se basa en ciencia en tres líneas, y tú decides el ritmo. Si un día no puedes, la semana se alarga sola: no se salta.</p>
+<div class="movil">
+  <div class="top"><i>‹ Entreno</i><b>Tu plan de vuelta</b></div>
+  <div class="card">
+    <div class="cap">8 SEMANAS PARADO → 4 SEMANAS DE VUELTA</div>
+    <table>
+      <tr><th>Semana</th><th>Días</th><th>Series</th><th>Peso</th><th>Te sobran</th></tr>
+      <tr class="on"><td><b>1</b> · ahora</td><td>2</td><td>2</td><td><b>70 %</b></td><td>4 reps</td></tr>
+      <tr><td><b>2</b></td><td>3</td><td>3</td><td><b>80 %</b></td><td>3 reps</td></tr>
+      <tr><td><b>3</b></td><td>3</td><td>3–4</td><td><b>90 %</b></td><td>2 reps</td></tr>
+      <tr><td><b>4</b></td><td>3</td><td>tus series</td><td><b>100 %</b></td><td>1–2 reps</td></tr>
+    </table>
+    <div class="mini" style="margin-top:8px">El 100 % es lo que movías antes de parar (press banca 82,5 kg, sentadilla 107,5 kg…). Desde la semana 5 vuelve tu progresión de siempre.</div>
+  </div>
+  <div class="card">
+    <div class="cap">EL RITMO</div>
+    <div style="margin-top:6px"><span class="chip">más suave · 6 sem</span><span class="chip on">normal · 4 sem</span><span class="chip">más rápido · 3 sem</span></div>
+    <div class="mini" style="margin-top:6px">Elige «más suave» si estás de guardias seguidas o durmiendo poco.</div>
+  </div>
+  <div class="card">
+    <div class="cap">EN QUÉ SE BASA</div>
+    <ul class="cien">
+      <li>Hasta ~3 semanas parado apenas se pierde fuerza; de 4 a 12 se pierde un 5–15 %, y más el aguante que la fuerza.</li>
+      <li>Volver de golpe al peso y al volumen de antes es cuando más agujetas fuertes y lesiones hay: la carga tiene que subir poco a poco.</li>
+      <li>La fuerza vuelve mucho antes de lo que costó ganarla («memoria muscular»): en unas semanas estás donde lo dejaste.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="cap">SI TE SALTAS DÍAS</div>
+    <div class="mini" style="margin-top:4px">La semana no avanza hasta que haces sus entrenos. Si vuelves a parar más de 2 semanas, el plan se rehace desde donde estés.</div>
+  </div>
+  <div class="barra"><span>Calendario</span><span class="on">Entreno</span><span>Comer</span><span>Más</span></div>
+</div></div>
+
+<div class="tabla"><h3>3 · La sesión, ya ajustada</h3><p>Al empezar Torso A en la semana 1, cada ejercicio trae el peso de vuelta y las series que tocan, y te dice por qué. Nada de «Sube a 85 kg» tras dos meses.</p>
+<div class="movil">
+  <div class="top"><i>‹ Entreno</i><b>Torso A · vuelta sem 1</b></div>
+  <div class="card">
+    <div class="cap">HOY</div>
+    <div class="mini" style="margin-top:2px">2 series por ejercicio · el 70 % · para con 4 repeticiones en la recámara (esfuerzo «cómodo»).</div>
+    <div class="fila"><div class="n"><b>Press banca (barra)</b><span class="mini">2 × 8 · antes 82,5 kg</span></div><div class="kg">57,5 kg<small>70 %</small></div></div>
+    <div class="fila"><div class="n"><b>Remo con barra</b><span class="mini">2 × 10 · antes 77,5 kg</span></div><div class="kg">55 kg<small>70 %</small></div></div>
+    <div class="fila"><div class="n"><b>Press militar (barra)</b><span class="mini">2 × 10 · antes 55 kg</span></div><div class="kg">37,5 kg<small>70 %</small></div></div>
+    <div class="fila"><div class="n"><b>Dominadas</b><span class="mini">2 × 4 · antes 3 × 8</span></div><div class="kg">4 reps<small>la mitad</small></div></div>
+  </div>
+  <div class="card">
+    <div class="cap">SI TE SALE MUY FÁCIL</div>
+    <div class="mini" style="margin-top:4px">No subas hoy: es normal, la fuerza está y lo que falta es costumbre. <span class="ok2">La semana que viene ya toca el 80 %.</span></div>
+  </div>
+  <div class="card">
+    <div class="cap">AL TERMINAR</div>
+    <div class="mini" style="margin-top:4px">Te pregunta cómo fue (fácil / justo / duro). Si fue «duro», la semana 2 se queda en el 75 % en vez del 80 %.</div>
+  </div>
+  <div class="btn">▶ Empezar</div>
+  <div class="barra"><span>Calendario</span><span class="on">Entreno</span><span>Comer</span><span>Más</span></div>
+</div></div>
+
+</body></html>
