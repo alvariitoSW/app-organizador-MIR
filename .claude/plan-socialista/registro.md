@@ -73,7 +73,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
   qué no, y cuánto puedes apartar cada mes para ellas; «una app dentro de la app». Hoy hay deseos dentro de cada
   hucha, pero no un plan de compras
 - [v3-gmail] **«La función de Gmail»:** sin aclarar qué es (¿la de Google Calendar?) · pendiente de que lo digas
-- [v3-plan-vuelta] **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
+- ~~[v3-plan-vuelta]~~ HECHO en la rama 2026-10-19 (2ac63d3, suite 720/720; sin desplegar hasta que lo pidas) · **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
   puedes hacerla tras un parón; la app te monta el camino («tantos días a la semana, tantas semanas, así») con
   seguimiento y continuidad, como un entrenador, no un menú de opciones
 - [v3-coach] **La app como entrenador de tu persona:** descansar, comer bien, verdura y fruta, entreno; que te guíe
