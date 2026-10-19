@@ -8,7 +8,7 @@ dir="${CLAUDE_PROJECT_DIR:-.}"
 marca="$dir/.claude/.pruebas-pendientes"
 [ -f "$marca" ] || exit 0
 cd "$dir" || exit 0
-if salida=$(node tests/compartir.test.js 2>&1 && node tests/enlaces.test.js 2>&1); then
+if salida=$(bash tools/pruebas-corto.sh tests/compartir.test.js tests/enlaces.test.js 2>&1); then
   rm -f "$marca"
   exit 0
 fi
@@ -18,5 +18,5 @@ if printf '%s' "$entrada" | jq -e '.stop_hook_active == true' >/dev/null 2>&1; t
   echo '{"systemMessage":"Las pruebas rápidas (compartir/enlaces) siguen fallando."}'
   exit 0
 fi
-printf 'Las pruebas rápidas fallan tras editar app.js/sw.js:\n%s\n' "$(printf '%s' "$salida" | tail -15)" >&2
+printf 'Las pruebas rápidas fallan tras editar app.js/sw.js:\n%s\n' "$salida" >&2
 exit 2

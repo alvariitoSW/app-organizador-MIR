@@ -4,6 +4,7 @@
   "description": "Guardias · rotación y cocina — app de una sola página, sin build.",
   "scripts": {
     "test": "node tests/regression.test.js && node tests/frases.test.js && node tests/compartir.test.js && node tests/enlaces.test.js && node tests/actualiza.test.js && node tests/worker-recetas.test.mjs && node tests/worker-calendario.test.mjs",
+    "test:corto": "bash tools/pruebas-corto.sh",
     "test:app": "node tests/regression.test.js",
     "test:compartir": "node tests/compartir.test.js",
     "test:enlaces": "node tests/enlaces.test.js",

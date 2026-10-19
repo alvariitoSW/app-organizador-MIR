@@ -46,9 +46,9 @@ pasa igual con el bug dentro no vale nada.
 
 ```bash
 # con el arreglo revertido a propósito
-npm test   # tiene que caer LA TUYA, y ninguna otra
+npm run test:corto   # tiene que caer LA TUYA, y ninguna otra
 # restaurado
-npm test   # todo verde
+npm run test:corto   # todo verde
 ```
 
 Di en el mensaje de commit cuántas caen al revertir («con el service worker

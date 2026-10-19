@@ -9,6 +9,8 @@ design/nutricion/*.html
 
 # marca del hook de pruebas
 .claude/.pruebas-pendientes
+# registro entero de la última pasada de tools/pruebas-corto.sh
+.claude/.ultima-suite.log
 
 # imágenes de referencia de los tests de React de la skill anatomy (aquí no se usan)
 .claude/skills/anatomy/tests/fixtures/*.png

@@ -12,8 +12,11 @@ primero). Por eso este paso no es mecánico del todo: es publicar.
 ## 1. Pruebas, enteras
 
 ```bash
-npm test        # regression + compartir + enlaces + lector
+npm run test:corto   # los 7 bancos; solo enseña fallos y un resumen por banco
 ```
+
+El registro entero de la pasada queda en `.claude/.ultima-suite.log` (solo hace falta abrirlo si
+el fallo no se entiende con lo que enseña).
 
 Verde del todo o no se sigue. Si algo falla, se arregla antes: no se despliega
 con una prueba en rojo ni se «desactiva un momento».

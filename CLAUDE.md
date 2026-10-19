@@ -14,7 +14,9 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
 ## Ramas y despliegue
 
 - Trabaja en `claude/magical-clarke-dlp8mb`. Commit y `git push -u origin claude/magical-clarke-dlp8mb`.
-- A `main` solo con la **suite completa en verde** (`npm test`), y antes **`npm run sella`** + commit de
+- Las pruebas, en corto: **`npm run test:corto`** (o `tools/pruebas-corto.sh tests/x.test.js`) enseña solo
+  lo que falla y un resumen por banco; el registro entero queda en `.claude/.ultima-suite.log`.
+- A `main` solo con la **suite completa en verde** (`npm run test:corto`), y antes **`npm run sella`** + commit de
   `version.json` (si no, el móvil no se actualiza; el hook `sella-antes-de-main` lo impide). Después,
   `git push origin HEAD:main` y comprobar que el run de Actions en `main` acaba en `success`.
 - El detalle está en la skill `cierra-y-despliega`.
