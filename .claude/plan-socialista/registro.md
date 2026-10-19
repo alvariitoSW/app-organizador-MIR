@@ -37,6 +37,8 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 
 - [aparc-comida-entreno] Los días de entreno a las 18:30 la comida sale a las 18:00 (ventana fija de Sueño): falta
   decidir si debe ir después del entreno · DECISIONS.md:948 · desde 2026-10-15
+- [aparc-aviso-mes] El aviso «Mantén pulsado un día…» del Mes se queda unos segundos tapando Hoy o Comer · Plan si
+  cambias de pantalla justo al abrir (lo vio la revisión de salud del 2026-10-19; se va solo a los ~9 s)
 - [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
 - [enc-plan-comidas] Montar la semana de comidas: ideas de contenido y diseño dadas el 2026-10-17 (días pasados,
   2 platos repetidos, desayuno vacío, sin cambiar casillas, cuándo cocinas, 4 formas de llenar la semana). Maquetas de 3
