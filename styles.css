@@ -3708,7 +3708,8 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cal.ext .dbox .dline.mtag{white-space:nowrap}
 .cal.ext .dbox .dline.gym{margin-top:auto;align-self:stretch;border-radius:4px;padding:1px 3px;background:#a8c9ff;color:#0b0f17}
 .cal.ext .dbox.mt-fuerza .dline.gym{background:none;padding:0}
-.cal.ext .dbox .dev{font-size:9.5px;font-weight:700;background:rgba(255,255,255,.85);color:#0b0f17;border-radius:4px;padding:1px 3px;border:0}
+.cal.ext .dbox .dev{font-size:9.5px;font-weight:700;background:rgba(255,255,255,.85);color:#0b0f17;border-radius:4px;padding:1px 3px;border:0;border-left:3px solid var(--ec,transparent)}
+/* la hora del evento, en oscuro para que se lea sobre la chapa blanca; su color va en el borde de la chapa */
 .cal.ext .dbox .dev b,.cal.ext .dbox .dev .dh{color:#0b0f17!important}
 .cal.ext .dbox .dsl,.cal.ext .dbox .dgasto{color:inherit;opacity:.8}
 .cal.ext .dbox.today{box-shadow:0 0 0 3px var(--ink),0 0 0 5px var(--bg);z-index:1}

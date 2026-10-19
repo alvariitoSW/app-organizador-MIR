@@ -975,8 +975,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     puertas: document.querySelectorAll('#main [data-a="aju-vista"]').length,
   }));
   check('la portada de Ajustes cabe en una pantalla y es una puerta por tarea',
-    // (1160: «Tu sueldo» vive aquí desde que Dinero es un asistente; se toca una vez al año)
-    portadaAjustes.alto < 1160 && portadaAjustes.puertas >= 5, JSON.stringify(portadaAjustes));
+    // (1160: «Tu sueldo» vive aquí desde que Dinero es un asistente; se toca una vez al año;
+    //  +60: «Mi rutina», que vivía en Semana, desde que Semana se quitó)
+    portadaAjustes.alto < 1220 && portadaAjustes.puertas >= 6, JSON.stringify(portadaAjustes));
 
   // 31) qué día "absorbe" el saliente es configurable (antes, sábado→lunes fijo en el código)
   const saltoTest = await page.evaluate(() => {
@@ -1494,12 +1495,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await gotoTab('month');
   await page.waitForTimeout(150);
   const dnmColor = await page.evaluate(() => {
-    // (la casilla ya no lleva el nombre: lleva su ficha; el número del día y las líneas heredan el color de la casilla)
-    const el = document.querySelector('.dbox');
-    return el ? getComputedStyle(el).color : null;
+    // (la casilla va entera de su color: el texto lleva el suyo, oscuro sobre los claros y claro sobre el saliente)
+    const el = document.querySelector('.dbox:not(.mt-saliente)'), sal = document.querySelector('.dbox.mt-saliente');
+    return el ? getComputedStyle(el).color + (sal ? ' | ' + getComputedStyle(sal).color : '') : null;
   });
-  check('"Mes": el nombre del tipo de día usa el color de texto del tema, no el negro por defecto del botón',
-    dnmColor === 'rgb(233, 242, 255)', String(dnmColor));
+  check('"Mes": el texto de la casilla lleva su color propio (oscuro sobre los colores claros, claro sobre el saliente), no el del botón',
+    /^rgb\(11, 15, 23\)( \| rgb\(233, 242, 255\))?$/.test(String(dnmColor)), String(dnmColor));
 
   // 49) Ajustes: además del arreglo de arriba, hay un color de texto configurable a mano (por si algún
   // móvil concreto sigue sin verse bien)
@@ -3816,7 +3817,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // pantallas, esto es exactamente el fallo mudo que hay que vigilar.
     const destinos = [
       ['ir-sol', 'sol'], ['ir-lector', 'lector'], ['ir-usda', 'usda'],
-      ['franja-cfg', 'franja'], ['ir-sueno', 'sueno'],
+      ['ir-sueno', 'sueno'],
     ];
     const llegadas = [];
     for (const [accion, cfg] of destinos) {
@@ -11922,14 +11923,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     Object.assign(r, await page.evaluate((r) => { const c = (k) => document.querySelector('#main .dbox[data-key="' + k + '"]'), L = c(r.lun), S = c(r.sig);
       const ev = L ? [...L.querySelectorAll('.dev')].find((x) => /Sesión clínica/.test(x.title)) : null, hr = L ? L.querySelector('.dline.hr') : null, gym = S ? S.querySelector('.dline.gym') : null;
       return { hr: hr ? hr.textContent : '', hrUna: hr ? hr.getBoundingClientRect().height <= parseFloat(getComputedStyle(hr).fontSize) * 1.7 : false,
-        evH: ev && ev.querySelector('.dh') ? ev.querySelector('.dh').textContent : '', evCol: ev && ev.querySelector('.dh') ? getComputedStyle(ev.querySelector('.dh')).color : '', evUna: ev ? ev.getBoundingClientRect().height <= parseFloat(getComputedStyle(ev).fontSize) * 1.7 : false,
+        evH: ev && ev.querySelector('.dh') ? ev.querySelector('.dh').textContent : '', evCol: ev ? getComputedStyle(ev).borderLeftColor : '', evUna: ev ? ev.getBoundingClientRect().height <= parseFloat(getComputedStyle(ev).fontSize) * 1.7 : false,
         gym: gym ? gym.textContent : '', gymTit: gym ? gym.title : '' }; }, r));
     await page.click('#main .dbox[data-key="' + r.lun + '"]');
     await page.waitForTimeout(300);
     r.hoja = await page.evaluate((k) => window.PG.ui.monSel === k && !!document.querySelector('#main .dbox.sel[data-key="' + k + '"]'), r.lun);
     await page.evaluate(() => { const P = window.PG, t = P.__t293; P.setDayOverride(t.lun, t.ovL ? t.ovL.shift : null, t.ovL ? t.ovL.guard : ''); P.setDayOverride(t.sig, t.ovS ? t.ovS.shift : null, t.ovS ? t.ovS.guard : '');
       P.store.rotation.jornada = t.jor; P.store.rotation.mode = t.mode; P.eventosS().length = t.nEv; P.ui.tab = t.tab; P.ui.monSel = ''; delete P.__t293; P.save(); P.render(); });
-    check('Mes enseña la hora del día en una línea («8–15»), el evento con su hora delante en su color («8:15») y el entreno con su hora («🏋 …»)',
+    check('Mes enseña la hora del día en una línea («8–15»), el evento con su hora delante y su color en el borde («8:15») y el entreno con su hora («🏋 …»)',
       r.hr === '8–15' && r.hrUna && r.evH === '8:15' && r.evCol === 'rgb(236, 72, 153)' && r.evUna && (!r.hayF || (/^🏋 \d{1,2}(:\d{2})?$/.test(r.gym) && / a las \d{2}:\d{2}$/.test(r.gymTit))) && r.hoja, JSON.stringify(r));
   }
   // 294) LA CABINA CON MANDOS, EN CADENA (conduce Hoy): con una nota para hoy, un evento a las 23:30 y un hábito,

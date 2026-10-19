@@ -8069,7 +8069,7 @@ function renderMonth(){
     const evLineas=evFecha.map(function(ev){
       const tit=esc((ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo),col=esc(ev.color||tlColor('evt'));
       /* con hora, la hora en su color va donde iba el punto («8 S. general»): es lo que no se adivina */
-      return '<span class="dev" title="'+tit+'">'+
+      return '<span class="dev" title="'+tit+'" style="--ec:'+col+'">'+
         (ev.hora&&hCorta(ev.hora)?'<b class="dh" style="color:'+col+'">'+esc(hCorta(ev.hora))+'</b>':'<i class="dpt" style="background:'+col+'" title="'+tit+'"></i>')+
         '<span class="n">'+esc(tituloCasilla(ev.titulo))+'</span></span>';}).join('');
     const semLinea=evSem.length?'<span class="dsem" title="'+esc(evSem.map(function(ev){return (ev.hora?evHoraTxt(ev)+' ':'')+ev.titulo+' (cada semana)';}).join(' · '))+'">'+
