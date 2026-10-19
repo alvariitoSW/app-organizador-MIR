@@ -14484,7 +14484,8 @@ function plmCands(){
   const ya={},out=[],P=cocinaPref();
   const mete=function(c){const k=alimTxt(c.n);if(ya[k])return;ya[k]=1;out.push(c);};
   tpTodos().forEach(function(d){if(platoVale(d)&&esTanda(d))mete(plmCandDish(d,'tuyo'));});
-  (store.dishes||[]).forEach(function(d){if(!d.tuyo&&platoVale(d)&&!d.nevera&&!esExtraProt(d)&&(+d.kcal||0)>=250&&esTanda(d))mete(plmCandDish(d,'recetario'));});
+  /* los demás platos de la app: solo los que saben qué llevan (sin ingredientes no hay compra ni grupo) */
+  (store.dishes||[]).forEach(function(d){if(!d.tuyo&&platoVale(d)&&!d.nevera&&!esExtraProt(d)&&(+d.kcal||0)>=250&&esTanda(d)&&((d.alims||[]).length>=2||(d.ingredients||[]).length>=2))mete(plmCandDish(d,'recetario'));});
   TP_RECETAS.forEach(function(r){if(r[3].indexOf('c')<0||!esTanda({name:r[0]}))return;
     if(!P.horno&&/horno/i.test(r[0]))return;
     const c=plmCandRec(r);if(c.alims.length<3)return;

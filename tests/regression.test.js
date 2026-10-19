@@ -9645,7 +9645,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const creado = await page.evaluate(() => (window.PG.store.dishes || []).some((d) => d.name === 'Pollo al curry con arroz' && !d.nevera && d.ingredients.length >= 2));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
     await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
-    await page.click('#main .cjwk .cjc'); await page.waitForTimeout(120);
+    // la comida del lunes (en el Plan nuevo el desayuno también es un .cjc, y pedía desayunos)
+    await page.click('#main .cjwk .cjc[data-c="comida"]'); await page.waitForTimeout(120);
     await page.click('#hojaDia [data-a="cje-platos"]'); await page.waitForTimeout(120);
     const lista = await page.$$eval('#hojaDia .cjpl b', (e) => e.map((x) => x.textContent));
     const destino = await page.evaluate(() => ({ w: window.PG.ui.cjeHoja.w, c: window.PG.ui.cjeHoja.c }));
@@ -9721,7 +9722,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       Object.keys(d).forEach((w) => ['comida', 'cena'].forEach((c) => { const it = (d[w][c] || { items: [] }).items[0]; if (it) ids.push(it.id); }));
       return { cambiada: ids.filter((id) => id !== window.__d0).length }; });
     await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(120);
-    const abre = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .cjwk .cjc')].find((x) => !/Hospital|Como fuera|Nada/.test(x.textContent)); if (!b) return null; b.click(); return { w: +b.dataset.w, c: b.dataset.c }; });
+    const abre = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .cjwk .cjc')].find((x) => x.dataset.c !== 'desayuno' && !/Hospital|Como fuera|Nada/.test(x.textContent)); if (!b) return null; b.click(); return { w: +b.dataset.w, c: b.dataset.c }; });
     await page.waitForTimeout(150);
     const racs = await page.evaluate(() => document.querySelectorAll('#hojaDia [data-a="cje-rac2"]').length);
     const r15 = await page.$('#hojaDia [data-a="cje-rac2"][data-v="1.5"]'); if (r15) { await r15.click(); await page.waitForTimeout(100); }
@@ -11648,7 +11649,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await toca('[data-a="tp-semana"]');
     r.c = await page.evaluate(() => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
       const fut = R.dia.filter((d) => !d.pas), g = R.dia[2];
-      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
+      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
         cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; });
     await toca('[data-a="plm-paso"][data-v="2"]', 150);
     r.c.paso2 = await page.evaluate(() => ({ paso: (window.PG.ui.plM || {}).paso, celdas: document.querySelectorAll('#main .plmini button').length }));
@@ -12345,7 +12346,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.manana = {};
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
       const e = document.querySelector('#main .manana');
-      return { kt, deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy), mes: P.mananaMes(hoy),
+      return { kt, mismaSem: P.iso(P.mondayOf(P.parseDate(kt))) === P.iso(P.mondayOf(new Date())), deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy), mes: P.mananaMes(hoy),
         fichas: e ? [...e.querySelectorAll('.mnp small')].map((x) => x.textContent) : [], horas: e ? [...e.querySelectorAll('.mnp b')].map((x) => x.textContent) : [], boton: !!(e && e.querySelector('[data-a="manana-sali"]')) }; });
     // «fui en bus» en ese día pasado apunta la hora del plan (7:31) y el taxi deja de contar; luego se deshace
     const bEnBus = await page.$('#main .manana [data-a="manana-sali"]');
@@ -12360,9 +12361,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.b = await page.evaluate((kt) => { const P = window.PG, hoy = P.iso(new Date()); return { deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy).taxi, mes: P.mananaMes(hoy).taxi, marcado: /✓/.test((document.querySelector('#main [data-a="viaje-taxi"]') || {}).textContent || '') }; }, r.kt);
     await page.evaluate(() => { const P = window.PG, t = P.__t289; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.tab = t.tab; delete P.__t289; P.save(); P.render(); });
     check('de serie vas en taxi: el hábito «taxi» se marca solo sin hora apuntada, a las 7:45 vas en taxi, la semana y el mes lo cuentan, y la tira lleva las fichas de los pasos con sus horas',
-      r.deSerie === true && r.hab === 'ok' && r.e745 === 'taxi' && r.taxi === true && r.sem.taxi >= 1 && r.mes.taxi >= 1 && r.fichas.indexOf('levantarse') >= 0 && r.fichas.indexOf('puerta') >= 0 && r.fichas.indexOf('taxi') >= 0 && r.horas.indexOf('7:31') >= 0 && r.boton, JSON.stringify(r));
+      r.deSerie === true && r.hab === 'ok' && r.e745 === 'taxi' && r.taxi === true && (!r.mismaSem || r.sem.taxi >= 1) && r.mes.taxi >= 1 && r.fichas.indexOf('levantarse') >= 0 && r.fichas.indexOf('puerta') >= 0 && r.fichas.indexOf('taxi') >= 0 && r.horas.indexOf('7:31') >= 0 && r.boton, JSON.stringify(r));
     check('«fui en bus» en un día pasado apunta la hora del plan (7:31): el hábito «taxi» se desmarca, a las 7:45 vas en bus y la semana baja un taxi',
-      r.bus.salio === '07:31' && r.bus.hab === '' && r.bus.e745 === 'bus' && r.bus.sem === r.sem.taxi - 1 && r.bus.deshacer, JSON.stringify(r.bus));
+      r.bus.salio === '07:31' && r.bus.hab === '' && r.bus.e745 === 'bus' && r.bus.sem === Math.max(0, r.sem.taxi - 1) && r.bus.deshacer, JSON.stringify(r.bus));
     check('«de serie voy en taxi» en Ajustes lo quita: sin hora apuntada ya no cuenta taxi en el hábito, la escena, la semana ni el mes',
       r.b.deSerie === false && !r.b.marcado && r.b.hab === '' && r.b.e745 === 'bus' && r.b.taxi === false && r.b.sem === 0 && r.b.mes === 0, JSON.stringify(r.b));
   }
@@ -13323,6 +13324,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.semBase = { on: true, d: {} }; P.store.gComida = {};
       P.ui.tpBorr = ['Lentejas con verduras', 'Merluza al horno con arroz', 'Arroz con atún, huevo y tomate'].map(P.tpLeer); P.tpGuardar();
       P.store.dishes.push({ id: 'd320', name: 'Tortilla con pavo', icon: '🍳', portions: 1, kcal: 420, prot: 32 });
+      // dos noches de Lloret seguras (otras pruebas pueden haber apagado el automático)
+      [1, 3].forEach((w) => { const k = P.iso(P.addDays(lun, w)); if (!P.lloretDe(k)) P.lloretPoner(k); });
       P.ui.cjeHoja = null; P.ui.plM = null; P.ui.plVista = ''; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'sem'; P.save(); P.render(); });
     await toca320('#main [data-a="cje-sem"][data-d="1"]', 200);
     const r = {};
