@@ -29,6 +29,10 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
 
 ## Cómo se construye
 
+- **Lo mínimo primero** (antes de escribir código, en este orden): ¿hace falta de verdad? → ¿ya hay algo en
+  `app.js` que lo haga? (búscalo antes de escribir otro) → ¿lo trae el navegador o JavaScript? → ¿basta con
+  cambiar una línea? Solo entonces, código nuevo. Sin recortar validación, accesibilidad ni pruebas: lo que
+  se ahorra es código repetido o que no hace falta, no cuidado.
 - **Rediseños: maquetas primero** y esperar el visto bueno antes de tocar `app.js` (skill `redisena-seccion`).
 - **Cada arreglo con su prueba encadenada** (dos gestos o más, conduciendo la interfaz) en
   `tests/regression.test.js`, y comprobar que **cae al revertir el arreglo** y ninguna otra (skill

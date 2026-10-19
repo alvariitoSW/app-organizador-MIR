@@ -1091,3 +1091,27 @@ línea del nutricionista).
 raciones según los días que quedan; los días que dijiste que no cocinas (⚙️) valen si no hay otros, salvo la guardia y
 el saliente; una cena de Lloret de una olla solo si llena y engorda poco (380–700 kcal y ≥22 g); el color de la olla
 es su proteína principal (legumbre, pescado, carne, huevo); la nevera dibuja hasta 3 baldas y 4 táperes por balda.
+
+## Lo mínimo primero y una auditoría de código muerto (2026-10-19)
+
+**Elegido.** De Ponytail (un complemento de Claude Code para escribir menos código) se copia la idea, no el
+complemento: una regla en `CLAUDE.md`, «Lo mínimo primero» (¿hace falta? → ¿ya existe en `app.js`? → ¿lo trae
+el navegador? → ¿basta una línea?), y una auditoría de lo que sobra:
+- `app.js`: 7 definiciones que nadie usaba (`hoyCuentaAtras`, `anilloHTML`, `jornadaDeSiempre`, `cjeCelda`,
+  `plmCand`, `COCINA_GUIA` y `consumoEfectos`, que solo usaba una prueba: ahora lee lo mismo de `cnAfecta`),
+  4 acciones que ningún botón disparaba (`hoy-busv`, `pulsar-visto`, `sem-ir`, `sem-pasados`) y 3 copias de la
+  misma función de pantalla de Ajustes (`ajuPantalla`, `datosPantalla` → `cfgPantalla`). 27 647 → 27 595 líneas.
+- `styles.css`: 404 reglas y 15 selectores que solo podían casar con clases que ya no pinta nadie (los
+  restos de la rejilla vieja del Plan, Dinero v4–v7, el banco del sueño, la guía de cocina…). 4 223 → 3 838
+  líneas, 361 → 328 KB.
+- Comprobado: 14 pantallas a 412×915 con el código de antes y el de ahora, **idénticas píxel a píxel**
+  (Mes, Semana, Hoy, Comer en sus cuatro pestañas, nutricionista, Entreno, Dinero, Hábitos, 4:20, Ajustes y
+  Datos), y la suite completa en verde.
+
+**Descartado.** Instalar Ponytail: su instrucción se carga en cada sesión (gasta lo que dice ahorrar), es de
+un tercero y puede traer hooks, y lo útil ya lo hacen `/simplify` y la regla nueva. Quitar el CSS «a ojo»:
+solo sale lo que se puede probar que no casa con nada.
+
+**Supuestos.** Una clase CSS está viva si su nombre aparece entero en `app.js`, `index.html`, `sw.js` o `fig/`;
+las que se componen al vuelo (`'t-'+tipo`, `'ev'+nivel`) se comprobaron a mano y se quedan. Un selector dentro
+de `:is()`, `:where()`, `:not()` o `:has()` no se toca aunque lleve una clase muerta.

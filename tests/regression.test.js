@@ -10537,7 +10537,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save();
       const F = {}; P.cnAfecta(28).forEach((f) => { F[f.id] = f; });
       out.kss = { ok: F.kss.ok, dif: F.kss.dif, n: [F.kss.nCon, F.kss.nSin] }; out.animoNC = F.animo.ok === false;
-      out.efectos = P.consumoEfectos(); out.tol = [P.cnTolerancia(3), P.cnTolerancia(28)]; out.abst = /pico/.test(P.cnAbstinencia(4));
+      out.efectos = { cama: F.cama && F.cama.dif != null ? Math.round(F.cama.dif) : null }; out.tol = [P.cnTolerancia(3), P.cnTolerancia(28)]; out.abst = /pico/.test(P.cnAbstinencia(4));
       out.cudit = P.cuditPuntos([4, 4, 3, 2, 1, 0, 0, 2]); out.thc = P.cnThc(0.25, 'dry');
       // privacidad: fuera de la copia
       c.priv.fueraCopia = true; out.copia = !('consumo' in P.storeParaCopia()); c.priv.fueraCopia = false;

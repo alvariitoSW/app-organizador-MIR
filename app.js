@@ -5349,18 +5349,6 @@ function _hrSuelta(e){
   ui.hoyCursor=null;hoyRelojRepinta();}
 document.addEventListener('pointerup',_hrSuelta);
 document.addEventListener('pointercancel',_hrSuelta);
-function hoyCuentaAtras(key){
-  /* lo que esperas, en días: el próximo finde libre entero, lo que marcaste con cuenta atrás y las vacaciones */
-  const out=[],d0=parseDate(key)||new Date(),hoyK=iso(new Date());
-  for(let i=0;i<70;i++){const d=addDays(d0,i);if(d.getDay()!==6)continue;
-    if(diaTipo(iso(d))==='libre'&&diaTipo(iso(addDays(d,1)))==='libre'){out.push({e:'🌿',t:i===0?'finde libre: hoy':'finde libre en',n:i});break;}}
-  eventosS().filter(function(e){return e.on!==false&&e.modo==='fecha'&&e.cuentaAtras&&e.fecha>=hoyK;})
-    .sort(function(a,b){return a.fecha.localeCompare(b.fecha);}).slice(0,2)
-    .forEach(function(e){const n=diasHasta(e.fecha);out.push({e:'📌',t:nombreCorto(e.titulo||'evento').toLowerCase()+(n?' en':' hoy'),n:n});});
-  const v=((store.rotation||{}).vacaciones||[]).filter(function(x){return x.start>hoyK;}).sort(function(a,b){return a.start.localeCompare(b.start);})[0];
-  if(v)out.push({e:'🏖️',t:'vacaciones en',n:diasHasta(v.start)});
-  if(!out.length)return '';
-  return '<div class="hoycta">'+out.map(function(x){return '<span>'+x.e+' '+esc(x.t)+(x.n?' <b>'+x.n+' d</b>':'')+'</span>';}).join('')+'</div>';}
 /* ===================== HOY: el reloj o la línea, y lo que queda =====================
    El día se contaba cuatro veces (reloj, «Ese día», carril y tarjetas de comidas y de entreno).
    Ahora: un interruptor entre el RELOJ (la forma del día, con ahora/luego/después y lo que queda por
@@ -7771,10 +7759,6 @@ function semTogHTML(v){
 /* la leyenda del tablón, detrás del ⓘ de la cabecera (los colores son los del conductor y los de Mes) */
 function semLeyendaHTML(){
   return '<div class="tb-ley"><span><i class="k-work"></i>jornada</span><span><i class="k-guard"></i>guardia</span><span><i class="k-noche"></i>dormir</span><span><i class="k-meal"></i>comida</span><span><i class="k-plan"></i>plan</span><span><i class="k-pend"></i>sin apuntar</span></div>';}
-function anilloHTML(p,size){
-  size=size||22;const st=2.8,r=(size-st)/2,c=2*Math.PI*r;
-  return '<svg class="anillo" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r.toFixed(1)+'" fill="none" stroke="var(--line)" stroke-width="'+st+'"/>'+
-    (p>0?'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r.toFixed(1)+'" fill="none" stroke="#34d399" stroke-width="'+st+'" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+(c*(1-p)).toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>':'')+'</svg>';}
 function rutinaIco(t){t=alimTxt(t);
   return /estudi|mir|repas|test|libro|leer/.test(t)?'📚':(/paseo|andar|caminar/.test(t)?'🚶':(/pantall|movil/.test(t)?'📵':(/medit|estir|yoga/.test(t)?'🧘':(/comer|cena|desayun/.test(t)?'🍽':(/agua/.test(t)?'💧':'•')))));}
 function habitosDelDia(key){return habitosS().items.filter(function(h){return habitoToca(h,key);});}
@@ -8451,7 +8435,6 @@ function mesFichaHTML(t,guard){
   const sym=t==='guardia'&&String(guard||'').toLowerCase()==='umi'?'guardiaUmi':F[2];
   return '<span class="mficha cf '+F[0]+'" title="'+tit+'"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym+'"/></svg></span>';}
 /* las horas de siempre no se escriben: la ficha de jornada ya dice «8–15». Solo salen cuando no son las de la jornada de diario */
-function jornadaDeSiempre(j){const jd=store.rotation.jornada||{};return !!(j&&jd.start&&jd.end&&j.start===jd.start&&j.end===jd.end);}
 /* EL ABONO DEL MES: guardias hechas de las que tocan (taladradas), horas de servicio y findes libres.
    Sale de las mismas cuentas que el resto de Mes; sustituye a la barra de guardias de «Este mes» */
 function mesAbono(y,mo,list,svc){
@@ -10949,10 +10932,6 @@ function cnAfecta0(dias){
     if(m>=22*60||m<6*60)tarde.push(+x.sento);else if(m>=12*60)pronto.push(+x.sento);});
   out.push(fila('sento','Cómo te sentó','de 5',1,tarde,pronto,['después de las 22:00','antes']));
   return out;}
-function consumoEfectos(){
-  /* lo de siempre (lo leen otras pantallas y las pruebas): diferencia de medias de 4 semanas */
-  const F=cnAfectaPor(28),r=function(f){return f&&f.dif!=null?Math.round(f.dif):null;};
-  return {monchis:r(F.monchis),prot:r(F.prot),cama:r(F.cama),sueno:r(F.sueno),dCon:F.prot?F.prot.nCon:0,dSin:F.prot?F.prot.nSin:0};}
 function cnLloret(ym){
   /* los Lloretazos del mes y cuántos fueron SIN sesión: la señal es el plan de las 20:00, no los gramos */
   const d0=parseDate(ym+'-01'),hoyK=iso(new Date());let n=0,sin=0;
@@ -13941,11 +13920,6 @@ function cjeAvisos(){
   const cd=compraDatos(),falta=cd.total-cd.marcados;   /* una sola cifra: la misma que la pantalla de la Compra (semana + tus listas de rutina) */
   const cad=despensaS().filter(function(x){const r=frescoDias(x);return r!=null&&r<=2;}).length;
   return {cocinar:pend.length?DL[parseDate(pend[0].key).getDay()]:'—',nCoc:pend.length,compra:falta,nevera:cad,T:T};}
-function cjeCelda(x,c,marca,i){
-  const it=x.cls[c].items[0],d=it&&dishById(it.id),m=marca[i+'|'+c]||'';
-  if(!d)return '<button class="cjc v" data-a="cje-plato" data-lp="plato" data-w="'+x.w+'" data-c="'+c+'">＋</button>';
-  return '<button class="cjc'+(d.hospital||d.fuera?' g':'')+'" data-a="cje-plato" data-lp="plato" data-w="'+x.w+'" data-c="'+c+'">'+(m?'<i class="dot '+m+'"></i>':'')+
-    '<span>'+esc(d.hospital?'Hospital':(guardiaCelda(x.key,c)?'🥡 ':'')+d.name.replace(/^Extra de proteína: /,'💪 '))+'</span></button>';}
 /* las comidas del día en Comer, las mismas en Hoy, en sus hojas y en el detalle: cada una junta los
    «momentos» del registro que le tocan (la media mañana va con el desayuno; la merienda y los monchis
    son el picoteo). El post-entreno sale los días que entrenas o si ya hay algo apuntado. */
@@ -14535,7 +14509,6 @@ function plmOllas(M){
     const viejo=prev.filter(function(o){return o.i===i;})[0];
     return {i:i,n:pick.n,rac:viejo&&viejo.n===pick.n?viejo.rac:rac};}).filter(Boolean);}
 function plmNuevo(){const M={paso:1,n:3,seed:0,fijo:{},lun:sbLun(),taper:true};M.dias=plmDiasProp(M.n);M.n=Math.max(M.dias.length,M.n);M.ollas=plmOllas(M);return M;}
-function plmCand(n){return plmCands().filter(function(c){return c.n===n;})[0]||null;}
 function plmReparto(M){
   /* reparte las raciones de cada olla desde el día que cocinas (si cocinas por la tarde, empieza por
      la cena), sin el mismo plato dos veces el mismo día; lo que pasa de los días que aguanta un táper,
@@ -19987,6 +19960,7 @@ function subPantalla(volverA,volverTxt,titulo,cuerpo,extra,cls){
       '<button class="btn s volver" data-a="'+volverA+'" data-v="">'+gymIco('atras','gico sm')+' '+volverTxt+'</button>'+
       '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra?('<span class="tag b2">'+esc(extra)+'</span>'):'')+'</div>'+
     cuerpo+'</div>';}
+/* una pantalla de Ajustes (Turno, Ajustes y Datos viven todos ahí) */
 function cfgPantalla(titulo,cuerpo,extra){subPantalla('aju-vista','Ajustes',titulo,cuerpo,extra);}
 
 /* ===================== render: ajustes ===================== */
@@ -22763,27 +22737,6 @@ function icsCatsHTML(desde,hasta){
       '</b> en ese rango. El <b style="color:var(--ink)">saliente</b> va con su bloque hasta el relevo y su siesta \u2014en Google, si no, '+
       'un saliente y un d\u00eda libre se ven igual\u2014. Las vacaciones y los d\u00edas libres '+
       '<b style="color:var(--ink)">no</b> salen: se quedan en la app.</p>';}
-const COCINA_GUIA=[
-  ['🛒','1 · Llena la nevera',[
-    'Sube la <b>foto del ticket</b> de Mercadona (Comer → Nevera → 📷 Foto del ticket): la app lee los productos, los mete en la nevera y te guarda la compra como <b>lista habitual</b>.',
-    'Sin ticket, «＋ A mano». Lo fresco lleva los días que le quedan (carne 2, pescado 1, verdura 5…): lo que caduca pronto sale primero.']],
-  ['📅','2 · Deja que monte la semana',[
-    'En <b>Semana</b>, «Móntamela» rellena desayunos, comidas y cenas con lo que ya tienes en la nevera y lo cocinado.',
-    'Toca un hueco para cambiarlo: buscas el plato o el alimento y queda puesto. Lo que falta para la semana pasa solo a <b>Compra</b>.',
-    '¿Quieres más control? «Más formas de montar»: rápido y sano, por prototipos o por macros.']],
-  ['🍳','3 · Cocina para varios días',[
-    '«Hoy cocino…» te propone qué hacer y para cuántos días (1, 2 o una tanda).',
-    'Cada plato dura lo que aguanta en la nevera: arroz 1 día, pescado 2, legumbres y guisos 4, lo demás 3. La app lo reparte en los huecos y te avisa antes de que caduque.']],
-  ['✍️','4 · Apunta sin pesar',[
-    'Lo más rápido: escribe en Hoy lo que has comido, como lo dirías («bocata de pavo con queso y mayo», «poke de salmón grande», «café con leche y 2 tostadas»). La app lo desglosa, pone pan sin gluten si eres celíaco, eliges tamaño y apuntas.',
-    '¿No sabes qué comer? Toca <b>Plato</b>, <b>Bowl</b> o <b>Bocata</b>: te propone combinaciones con lo que hay en tu nevera, lo que caduca antes primero. «Me lo hago» lo apunta y lo gasta de casa.',
-    'En <b>Hoy</b>, pulsa <b>✓</b> si comiste lo que tocaba. Si comiste más o menos, <b>±</b> y «＋ media ración» / «− media ración».',
-    'Si comiste fuera o algo distinto, «＋» y lo buscas: no hace falta báscula, las raciones van a ojo.',
-    'Tras el ✓ sale «¿qué tal?» (👎 😐 👍): con eso se hace la <b>Clasificación</b> de tus platos, y «Móntamela» pone más los mejores. En <b>Mi semana</b> ves días apuntados, kcal y proteína.']],
-  ['💡','Trucos',[
-    'El buscador entiende plurales y marcas (colacao, york…). Si algo no sale, créalo una vez y ya queda.',
-    'Las proteínas y kcal del día se ven arriba en Hoy: con el ✓ diario basta para que cuadren.']]];
-function ajuPantalla(titulo,cuerpo,extra){subPantalla('aju-vista','Ajustes',titulo,cuerpo,extra);}
 function renderAjustes(){
   const tm=store.tema||{};
   const v=ui.ajuVista||'';
@@ -22794,7 +22747,7 @@ function renderAjustes(){
        viene abierto solo hasta la primera vez que mandas algo. */
     const de=ui.calDesde||calRango().desde,ha=ui.calHasta||calRango().hasta,cs=calSyncCfg();
     const pleg=function(tit,abierto,cuerpo){return '<div class="card"><details class="plegable"'+(abierto?' open':'')+'><summary><b>'+tit+'</b></summary>'+cuerpo+'</details></div>';};
-    return ajuPantalla('\ud83d\udcc5 Calendario del m\u00f3vil',`<div class="card"><h2>Mandar a mi calendario</h2>
+    return cfgPantalla('\ud83d\udcc5 Calendario del m\u00f3vil',`<div class="card"><h2>Mandar a mi calendario</h2>
       <p class="note" style="margin:0 0 10px">Guardias, trabajo, entrenos y eventos, cada uno con su alarma: de avisarte
       se encarga el calendario del móvil, también con la app cerrada.</p>
       <div class="row">
@@ -22862,7 +22815,7 @@ function renderAjustes(){
         servidor): lee y escribe ficheros <code>.ics</code>, que es el idioma común de los calendarios. El
         <code>IMPORT_TAG</code> y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p>
       </details>`));}
-  if(v==='sol')return ajuPantalla('\u2600\ufe0f El sol y d\u00f3nde estoy',`<div class="card" data-cfg="sol">
+  if(v==='sol')return cfgPantalla('\u2600\ufe0f El sol y d\u00f3nde estoy',`<div class="card" data-cfg="sol">
       <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy» y en «Semana». Se calcula aquí,
       en el móvil, con la latitud y la longitud: no sale nada a internet y funciona sin cobertura. Las horas salen
       en el reloj de tu móvil y la precisión es de unos minutos.</p>
@@ -22886,7 +22839,7 @@ function renderAjustes(){
           '</b> y «'+esc(sitioActual().nombre)+'» va por <b>'+esc(t.sitio)+'</b>. Las horas se enseñan siempre en el '+
           '<b>reloj de tu móvil</b>, así que verás el sol de '+esc(sitioActual().nombre)+' puesto en tu hora: no es la hora '+
           'a la que allí amanece. Cambia el sitio, o la zona horaria del móvil.</p>';})()}</div>`,sitioActual().nombre);
-  if(v==='aspecto')return ajuPantalla('\ud83c\udfa8 C\u00f3mo se ve',`<div class="card" data-cfg="temas"><h2>Temas</h2>
+  if(v==='aspecto')return cfgPantalla('\ud83c\udfa8 C\u00f3mo se ve',`<div class="card" data-cfg="temas"><h2>Temas</h2>
       <p class="note">Cinco aspectos ya ajustados: fondo, texto, acento y los colores de la franja van juntos y se leen bien. Tocar uno cambia todo a la vez.</p>
       <div class="temas">${TEMAS.map(function(t){const on=(store.tema||{}).preset===t.id;
         return '<button class="tema'+(on?' on':'')+'" data-a="tema-pre" data-id="'+t.id+'" aria-pressed="'+(on?'true':'false')+'" '+
@@ -22963,7 +22916,7 @@ function renderAjustes(){
           return '<label class="fld'+(mio?' mio':'')+'"><span class="cfprev cf"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym[c[0]]+'"/></svg></span>'+esc(c[1])+
             '<input type="color" value="'+esc(calColor(c[0]))+'" data-a="cal-color" data-k="'+c[0]+'" aria-label="color de '+esc(c[1])+'" style="height:30px;padding:2px"></label>';}).join('')+'</div>';})()}
       <div class="row" style="margin-top:10px"><button class="btn s" data-a="cal-color-reset">colores de serie</button></div></div>`);
-  if(v==='lector')return ajuPantalla('\ud83d\udd17 Lector de enlaces',`<div class="card" data-cfg="lector">
+  if(v==='lector')return cfgPantalla('\ud83d\udd17 Lector de enlaces',`<div class="card" data-cfg="lector">
       <p class="note">Para que al mandarle un enlace de TikTok la app traiga sola la descripción y la convierta en receta.
       Primero lo intenta directamente con la plataforma; esto es para cuando el navegador no la deja.</p>
 
@@ -22988,7 +22941,7 @@ function renderAjustes(){
         '<li>Copia la dirección que te da (acaba en <code>.workers.dev</code>) y pégala aquí arriba. Dale a «probar».</li>' +
         '</ol><p class="mini" style="margin:8px 0 0">El Worker solo acepta enlaces de TikTok, YouTube e Instagram: no es un proxy abierto. ' +
         'La explicación larga está en <code>tools/LECTOR-DE-ENLACES.md</code>.</p>') : ''}</div>`,lectorPublicoOn()?'p\u00fablicos on':( (store.lector||{}).proxy?'el tuyo':'apagado'));
-  if(v==='comida')return ajuPantalla('\ud83e\udd57 Datos de los alimentos',`<div class="card" data-cfg="usda">
+  if(v==='comida')return cfgPantalla('\ud83e\udd57 Datos de los alimentos',`<div class="card" data-cfg="usda">
       <p class="note">La tabla de alimentos que trae la app son <b>${ALIMENTOS.length} valores de referencia aproximados</b>,
       escritos a partir de tablas de composición publicadas. Sirven para hacerte una idea, no son una base oficial.
       Con una clave gratuita de USDA FoodData Central, cada alimento que abras se corrige con el dato oficial y se guarda ya corregido.</p>
@@ -23052,10 +23005,9 @@ function renderAjustes(){
    Eran 7 tarjetas y 4 317 px, con el calendario de Google partido en dos (y una tercera copia en
    Ajustes) y 210 palabras explicando d\u00f3nde se guarda todo. Ahora: portada con tu copia arriba
    \u2014que es lo \u00fanico urgente de esta pantalla\u2014 y una pantalla por tarea. */
-function datosPantalla(titulo,cuerpo,extra){subPantalla('aju-vista','Ajustes',titulo,cuerpo,extra);}
 function renderData(){
   const v=ui.datosVista||'';
-  if(v==='planning'){datosPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
+  if(v==='planning'){cfgPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
       <p class="note">Pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
       <textarea id="pasteBox" rows="12" placeholder="1 ago · G 24h 08:00-08:00 guardia destino Sur&#10;2 ago · S 09:00-13:00 saliente&#10;3 ago · L libre&#10;4 ago · F fuerza 18:00&#10;5 ago · L asuntos propios&#10;6 ago · G 24h 08:00-08:00&#10;7 ago · S 09:00-13:00"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="draft">Analizar</button>
@@ -23067,7 +23019,7 @@ function renderData(){
         <input id="codeMap" value="G=Guardia 24 h,S=Saliente,F=Fuerza,L=Libre" title="formato: LETRA=Nombre del día. Las cuatro de siempre están reconocidas; si añades V=Noche en el cuarto, las líneas que digan «noche en el cuarto» se cuentan como V y se crea ese tipo de día con su horario."></label>
       <p class="mini" style="margin-top:6px">Los días que no aparezcan en tu texto se rellenan como día libre para cerrar la semana: luego los cambias en «Turno y rotación».</p></div>`);
     if(window._draftInfo)showDraft(window._draftInfo);return;}
-  if(v==='horas')return datosPantalla('\ud83d\udd50 Horas, servicios y vacaciones',`<div class="card">
+  if(v==='horas')return cfgPantalla('\ud83d\udd50 Horas, servicios y vacaciones',`<div class="card">
       <p class="note">Tres cosas a la vez: el horario fijo del día (levantarse, desayuno, salir, llegar, acostarse, trabajar), qué servicio rotas cada mes con su cupo de guardias y tus rangos de vacaciones. Se puede pegar tal cual, en plan nota.</p>
       <textarea id="rhythmBox" rows="7" placeholder="entre semana: me levanto 6:45-6:55, desayuno normal (café, fruta y nueces, whey y leche de proteínas), salgo de casa 7:30, llego 7:45, trabajo 8:00-15:00, me acuesto 23:00&#10;guardia: me acuesto 22:30&#10;libre: me levanto 8:30, duermo 23:45&#10;septiembre: urgencias (4+2) · octubre: umi · noviembre: urgencias 4+2&#10;vacaciones del 24/08 al 2/09"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="rhythm">Analizar horas, meses y vacaciones</button>
@@ -23077,7 +23029,7 @@ function renderData(){
       <label class="fld" style="margin-top:8px">Año en el que aplico los meses
         <input type="number" id="rhythmYear" value="${new Date().getFullYear()}" min="2000" max="2100" style="max-width:110px"></label>
       <p class="mini" style="margin-top:6px">Lo que no se entienda se ignora y se dice: no se toca ningún horario que no hayas mencionado y no se reparte ninguna guardia ni se da por hecho ningún servicio de mes si tú no lo escribes.</p></div>`);
-  if(v==='copia')return datosPantalla('\ud83d\udcbe Copias de seguridad',`<div class="card" data-cfg="copias"><h2>Copia de seguridad (JSON)</h2>
+  if(v==='copia')return cfgPantalla('\ud83d\udcbe Copias de seguridad',`<div class="card" data-cfg="copias"><h2>Copia de seguridad (JSON)</h2>
       <!-- lo que se viene a hacer, arriba; la explicación de dónde se guarda, plegada (era 1.286 px) -->
       <p class="note">Descárgalo y guárdalo donde quieras —Drive, el correo a ti mismo, lo que sea—. Sirve también para
       pasarte todo a otro móvil: lo bajas aquí y lo pegas allí en «Importar JSON».</p>
@@ -23114,7 +23066,7 @@ function renderData(){
       Para cualquiera de esas tres, la única red de seguridad es el JSON de aquí abajo.</p>
       </details>
       </div></div>${copiasCardHTML()}`);
-  if(v==='texto')return datosPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
+  if(v==='texto')return cfgPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
       <div class="row"><button class="btn" data-a="txt">Generar</button><button class="btn" data-a="txtcopy">Copiar</button></div>
       <textarea id="txtOut" rows="16" readonly style="margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"></textarea></div>`);
@@ -24268,7 +24220,6 @@ function act(a,el){
       break;}
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
-    case 'hoy-busv':ui.hoyBusV=el.dataset.v==='estacion'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}render();break;
     case 'hoy-modo':{const v=el.dataset.v;ui.hoyModo=/^(reloj|linea)$/.test(v)?v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}
       if(v==='bus'||v==='est'){ui.hoyBusV=v==='est'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}}render();break;}
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
@@ -24511,11 +24462,9 @@ function act(a,el){
     case 'ev-noguardia':{const ev=eventosS().filter(function(x){return x.id===el.dataset.id;})[0];if(!ev)break;
       ev.noGuardia=true;save();flash('«'+(ev.titulo||'evento')+'» ya no sale los días de guardia');render();break;}
     case 'sem-vista':ui.semVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
-    case 'sem-pasados':ui.semPasados=!ui.semPasados;render();break;
     case 'sem-sel':ui.semSel=el.dataset.k||'';render();break;
     case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':(el.dataset.v==='ruta'&&w==='mes'?'ruta':'plana');ui[w==='sem'?'semV':'mesV']=v;if(w==='sem')ui.semVista='';
       try{localStorage.setItem(w==='sem'?SEMV_KEY:MESV_KEY,v);}catch(e){}render();break;}
-    case 'sem-ir':{const c=document.getElementById('sd-'+el.dataset.k);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;
       const fase=habEnMarcha().length>=3?'espera':'marcha';
       habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
@@ -25450,7 +25399,6 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
     case 'pincel-fin':ui.mesModo=null;render();break;
     case 'pulsar-ms':{store.meta.pulsarMs=Math.max(250,Math.min(3000,+el.dataset.ms||600));save();render();
       flash('mantener pulsado: '+String(pulsarMs()/1000).replace('.',',')+' s');break;}
-    case 'pulsar-visto':store.meta.pulsarVisto=true;save();render();break;
     case 'gtipo-add':{const inp=document.getElementById('gtipoNuevo');const r=addGuardiaTipo(inp?inp.value:'');
       if(r.ok&&inp)inp.value='';flash(r.msg);break;}
     case 'gym-wipe':{const txts={log:'¿Borrar las series apuntadas? Tus pesos y tus marcas salen de ahí (luego se pueden deshacer).',
@@ -27531,7 +27479,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,consumoEfectos,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
