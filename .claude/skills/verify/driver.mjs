@@ -10,7 +10,7 @@
 //   EOF
 //
 // Órdenes:
-//   nav <cal|mes|semana|hoy|entreno|comer|menu|nevera|compra|consumo|dinero|…>  ir a una sección (por la UI)
+//   nav <cal|mes|hoy|entreno|comer|plan|cocina|despensa|consumo|dinero|…>  ir a una sección (por la UI)
 //   ui <clave>=<valor> [...]        poner campos de PG.ui y render() (valores JSON o texto)
 //   click <selector>                clic (por selector: no guarda el nodo, así no se «suelta»)
 //   fill <selector> <texto>         escribir y disparar change (fill solo no lo dispara)
@@ -66,10 +66,10 @@ if (!WIZARD) {
 
 const NAV = {
   cal: ['[data-a="nav-cal"]'], mes: ['[data-a="nav-cal"]', '#calModes button[data-t="month"]'],
-  semana: ['[data-a="nav-cal"]', '#calModes button[data-t="week"]'], hoy: ['[data-a="nav-cal"]', '#calModes button[data-t="hoy"]'],
+  hoy: ['[data-a="nav-cal"]', '#calModes button[data-t="hoy"]'],
   entreno: ['[data-a="tab"][data-t="gym"]'], comer: ['[data-a="nav-comer"]'],
-  menu: ['[data-a="nav-comer"]', '#calModes button[data-t="types"]'], compra: ['[data-a="nav-comer"]', '#calModes button[data-t="shop"]'],
-  nevera: ['[data-a="nav-comer"]', '#calModes button[data-v="nevera2"]'],
+  plan: ['[data-a="nav-comer"]', '[data-a="cje-tab"][data-v="sem"]'], cocina: ['[data-a="nav-comer"]', '[data-a="cje-tab"][data-v="coc"]'],
+  despensa: ['[data-a="nav-comer"]', '[data-a="cje-tab"][data-v="desp"]'],
 };
 const parseVal = (v) => { try { return JSON.parse(v); } catch { return v; } };
 const lines = fs.readFileSync(0, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));

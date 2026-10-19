@@ -30,7 +30,7 @@ eval PG.ui.tab
 FIN
 ```
 
-Órdenes: `nav <cal|mes|semana|hoy|entreno|comer|menu|nevera|compra>` (`menu` = la Semana de Comer) (o cualquier sección del cajón:
+Órdenes: `nav <cal|mes|hoy|entreno|comer|plan|cocina|despensa>` (las pestañas de Comer) (o cualquier sección del cajón:
 `consumo`, `dinero`, `habitos`, `notas`, `eventos`, `cfg`, `data`, `ajustes`…), `ui clave=valor …`
 (pone `PG.ui` y pinta), `click <sel>`, `fill <sel> <texto>` (dispara `change`), `press <sel> <tecla>`,
 `back` (atrás del móvil), `wait <ms>`, `eval <js>`, `text [sel]`, `ss <nombre>` (página completa,
@@ -81,24 +81,24 @@ de una orden normal.
 
 ## Navigating the real UI
 
-La barra son **tres grupos** y un cajón: «Calendario» (modos Mes/Semana/Hoy),
-«Entreno», «Comer» (modos **Hoy · Semana · Nevera · Compra**) y «☰ Más» para lo que no es
+La barra son **tres grupos** y un cajón: «Calendario» (modos Mes/Hoy; Semana se quitó),
+«Entreno», «Comer» (pestañas **Hoy · Cocina · Plan · Despensa**, `[data-a="cje-tab"][data-v=""|coc|sem|desp]`) y «☰ Más» para lo que no es
 ninguna de las tres. La segunda fila (`#calModes`) sirve a los dos grupos que
 tienen modos, y se oculta en Entreno y en el cajón.
 
 ```js
-// Calendario (hoy/week/month):
+// Calendario (month/hoy):
 await page.click('[data-a="nav-cal"]');
-await page.click('#calModes button[data-t="week"]'); // o "month" / "hoy"
+await page.click('#calModes button[data-t="month"]'); // o "hoy"
 
 // Entreno:
 await page.click('[data-a="tab"][data-t="gym"]');
 
-// Comer: portada (el día) y sus modos
+// Comer: Hoy y sus pestañas (ui.cjeTab)
 await page.click('[data-a="nav-comer"]');
-await page.click('#calModes button[data-t="types"]');   // Semana (ui.tab='types')
-await page.click('#calModes button[data-v="nevera2"]'); // Nevera (ui.foodVista='nevera2')
-await page.click('#calModes button[data-t="shop"]');    // Compra
+await page.click('[data-a="cje-tab"][data-v="sem"]');   // Plan (Días · Nevera · Compra dentro, ui.plVista)
+await page.click('[data-a="cje-tab"][data-v="coc"]');   // Cocina
+await page.click('[data-a="cje-tab"][data-v="desp"]');  // Despensa
 
 // El cajón, que ya solo lleva lo que no es calendario, entreno ni comida:
 await page.click('[data-a="drawer-toggle"]');
@@ -180,11 +180,8 @@ vacíos. Los días de fuera del mes son `.dbox.fuera`, clicables igual. Para con
 mes» filtra `:not(.fuera)`. Y `.cal.ext` tiene `min-height:100svh`: en `@media print` se anula,
 porque si no la tarjeta no cabe en la hoja y la primera página sale en blanco.
 
-**Semana va por días, no de lunes a domingo**: empieza en `ui.semDesde` (`''` = hoy) y enseña
-`store.rotation.semanaDias` días (5/7/10/14); el de antes va plegado en `.dayer` (no es `.drow`).
-`weekDays()` sigue siendo la semana de lunes de `weekDate` —la usan la cocina y la compra—; la lista
-de Semana sale de `semanaVentana()`. Una prueba que prepare días «de esta semana» tiene que poner
-`PG.ui.semDesde = lunes`, o la ventana empieza hoy y se los salta.
+**Semana ya no existe** (se quitó en la 3.0): `ui.tab='week'` cae en Mes. `weekDays()` sigue siendo la semana
+de lunes de `weekDate`: la usan la cocina y la compra.
 
 **Temas**: `PG.ponerTema(id)` (`hud|magenta|bosque|papel|arena`) cambia el modo claro/oscuro, las
 variables de color y los colores de la franja de golpe. Si una prueba deja uno puesto, las

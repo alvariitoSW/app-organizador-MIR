@@ -35,7 +35,6 @@ function tlHoras(){const h=+((store.franja||{}).horas);return [12,18,24].indexOf
 const FRANJA_ALTOS={bajo:290,medio:370,alto:460};
 function franjaAlto(){const k=String((store.franja||{}).alto||'medio');
   return FRANJA_ALTOS[k]||FRANJA_ALTOS.medio;}
-function franjaAltoSem(){return Math.max(220,franjaAlto()-40);}
 /* LOS COLORES DEL CALENDARIO: uno por tipo de día, para la ficha (el tren, los autobuses, el tejado de la casa, el
    árbol), la casilla de Mes, el tablero isométrico y el mojón de la carretera. Se cambian en Ajustes → Cómo se ve.
    Cada tipo lleva el material del kit que se tiñe (el tren «rojo» y su tono oscuro, el letrero del urbano «work»,
@@ -315,7 +314,7 @@ function avisarBackupSiToca(){
     localStorage.setItem(NKEY,String(Date.now()));}catch(e){}
   setTimeout(function(){flash('💾 hace tiempo que no guardas una copia fuera del móvil: en «Datos» → «Guardar en Drive / Archivos», un toque',6000);},900);}
 let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que quiere ver al entrar */
-  drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openDays:new Set(),openPickers:new Set(),
+  drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
   foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
@@ -334,7 +333,6 @@ let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que qu
 Object.defineProperty(ui,'gymSesionActiva',{enumerable:true,configurable:true,
   get:function(){return (store&&store.gym&&store.gym.activa&&typeof store.gym.activa==='object')?store.gym.activa:null;},
   set:function(v){if(!store)return;gymS().activa=v||null;}});
-const allOpen=()=>{const ds=semanaVentana();return ds.length>0&&ds.every(function(d){return ui.openDays.has(d.key||('tpl'+d.idx));});};
 function load(){
   let ok=false,raw=null,habiaAlgo=false;
   try{raw=localStorage.getItem(KEY);
@@ -584,7 +582,6 @@ function normalize(o){
   if(isNaN(o.rotation.saltoDia.to))o.rotation.saltoDia.to=1;
   if(typeof o.rotation.icsAvisoMin!=='number'||o.rotation.icsAvisoMin<0)o.rotation.icsAvisoMin=30;
   if(o.rotation.calWeekStart!=='lun'&&o.rotation.calWeekStart!=='dom')o.rotation.calWeekStart='lun';
-  if([5,7,10,14].indexOf(+o.rotation.semanaDias)<0)o.rotation.semanaDias=7;
   if(!o.tema||typeof o.tema!=='object')o.tema={brand:'',brand2:'',ink:''};
   ['brand','brand2','ink'].forEach(function(k){if(!esColor(o.tema[k]||''))o.tema[k]='';});
   /* LOS TEMAS TUYOS. Sin registrarlos aquí se perderían al recargar: normalize() tira todo lo
@@ -4976,7 +4973,7 @@ function modoAvisoHTML(){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
   if(store.rotation.mode==='date')return '';
-  return '<div class="row mini" style="gap:8px"><span style="flex:1">ℹ️ «Semana» está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
+  return '<div class="row mini" style="gap:8px"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
 }
 function daySleepLineHTML(dateStr,inf){
   const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr),r=suenoReal(dateStr);
@@ -5105,11 +5102,6 @@ function timelineBar(dateStr,inf,opt){
   return '<div class="tl-wrap'+(opt.grande?' grande':'')+'">'+(opt.sinEje?'':'<div class="tl-axis">'+ejes+'</div>')+
     '<div class="tl-bar" title="'+esc(sol.sale&&sol.pone?('luz de '+horaLocal(sol.sale)+' a '+horaLocal(sol.pone)):'')+
       '">'+segs.join('')+noche+dots+gymDot+evDots+now+'</div></div>';
-}
-function franjaLeyendaHTML(){
-  return '<div class="tlleg">'+TLCAT.map(function(c){
-    return '<span><i style="background:'+esc(tlColor(c[0]))+'"></i>'+esc(c[1])+'</span>';}).join('')+
-    '<span class="sp"></span><button class="btn s" data-a="franja-cfg" style="padding:2px 8px;font-size:10.5px">colores y horas ▸</button></div>';
 }
 /* ===================== EL DÍA SE CUENTA EN UN SITIO =====================
    El mismo día se leía entero en tres pantallas: al tocarlo en Mes, al desplegarlo en Semana y en
@@ -6019,85 +6011,6 @@ function carrilHTML(key,opt){
   return '<div class="carrilbox"'+(caja?(' style="height:'+caja+'px"'):'')+' data-scroll="'+scrollY+'">'+
     '<div class="carril" style="height:'+alto+'px">'+horas.join('')+
     '<div class="cbs">'+cuerpo+'</div>'+linea+'</div></div>';}
-function carrilSemanaHTML(days,opt){
-  /* LA SEMANA EN REJILLA: los 7 días en columnas y las horas como carriles. Es lo que deja ver de
-     un golpe dónde está el hueco de la semana —qué tarde tienes libre, cuándo cae la guardia—, y
-     eso una lista de siete tarjetas no lo enseña por muchos renglones que tenga. */
-  opt=opt||{};
-  const px=+opt.px||40;                 /* píxeles por hora */
-  const conFecha=days.filter(function(d){return !!d.key;});
-  if(!conFecha.length)return '';
-  const porDia=conFecha.map(function(d){return {d:d,bl:bloquesDelDia(d.key)};});
-  /* un rango común para las 7 columnas: si cada una tuviera el suyo, las horas no cuadrarían y la
-     rejilla dejaría de servir para comparar días, que es justo para lo que está */
-  let de=1440,a=0;
-  porDia.forEach(function(x){const r=rangoCarril(x.bl,x.d.key);if(r.de<de)de=r.de;if(r.a>a)a=r.a;});
-  if(a<=de){de=7*60;a=23*60;}
-  const alto=Math.round((a-de)/60*px);
-  const y=function(m){return Math.round((m-de)/60*px);};
-  const horas=[];
-  for(let m=de;m<a;m+=60)
-    horas.push('<div class="ch" style="top:'+y(m)+'px;height:'+px+'px"><span>'+
-      String(Math.floor(m/60)%24).padStart(2,'0')+'</span></div>');
-  const cols=porDia.map(function(x){
-    const hoy=isToday(x.d.key);
-    /* Lo que ocupa de verdad la hora: turno, guardia, entreno, eventos, cocina. Si dos se pisan
-       (el Lloretazo dentro de un día de trabajo), el más corto va a la mitad derecha para que se
-       vean los dos. Las comidas y los viajes eran puntos verdes sin explicación: fuera; el ir y
-       volver del gym se queda como la parte clara de la franja del entreno. */
-    const gord=x.bl.filter(function(b){return !b.fino;});
-    const cuerpo=x.bl.filter(function(b){return !b.fino||b.cat==='gym';}).map(function(b){
-      const h=Math.max(b.fino?4:20,y(b.a)-y(b.de));
-      const med=!b.fino&&gord.some(function(o){return o!==b&&o.de<b.a&&b.de<o.a&&((o.a-o.de)>(b.a-b.de)||((o.a-o.de)===(b.a-b.de)&&gord.indexOf(o)<gord.indexOf(b)));});
-      /* EL NOMBRE DEL BLOQUE. Se cortaba a 11 caracteres a pelo y encima en una sola línea: en una
-         columna de 52 px salía «Trabajo…», «Curso …», «Cocina…» —texto que parece que informa y
-         no informa— en bloques de 300 px de alto con todo el sitio del mundo debajo. Ahora se
-         abrevia como en el Mes y se deja partir en las líneas que quepan: manda lo alto que sea el
-         bloque, no un número fijo. En uno bajito (menos de 34 px) sigue en una línea. */
-      return '<button class="sb'+(b.fino?' fino':'')+(med?' med':'')+(!b.fino&&h<34?' baja':'')+'" style="top:'+y(b.de)+'px;height:'+h+'px;--c:'+tlColor(b.cat)+'"'+
-        ' data-a="sem-dia" data-k="'+esc(x.d.key)+'" title="'+esc(hm(b.de)+'–'+hm(b.a)+' '+b.tit)+'" aria-label="'+esc(hm(b.de)+' '+b.tit)+'">'+
-        (b.fino?'':'<span class="sbt">'+esc(tituloCasilla(b.tit.replace(/^[^\s]+\s/,'')))+'</span>')+'</button>';}).join('');
-    const pts='';
-    /* LAS HORAS QUE DUERMES, sombreadas en la columna. Es lo que deja ver de un golpe qué noche se
-       queda corta y dónde muerde la guardia, y es la única franja del día que no es un bloque con
-       nombre: pintarla como bloque taparía el turno. Se recorta al rango visible de la rejilla. */
-    const noche=(function(){
-      const band=function(p,q){
-        const u=Math.max(de,p),v=Math.min(a,q);
-        if(v<=u)return '';
-        return '<i class="tl-noche" style="top:'+y(u)+'px;height:'+(y(v)-y(u))+
-          'px;--c:'+tlColor('sleep')+'"></i>';};
-      let sl;try{sl=sleepOf(x.d.key,x.d.inf);}catch(e){sl=null;}
-      if(!sl)return '';
-      let out='';
-      if(sl.siesta){const ds=mins(sl.siesta.de),as=mins(sl.siesta.a);
-        if(ds!=null&&as!=null)out+=band(ds,as>ds?as:1440);}
-      const b=mins(sl.bed),w=mins(sl.wake);
-      if(w!=null&&!sl.siesta)out+=band(0,w);
-      /* la noche de guardia no se pinta «Dormir»: estás de guardia (como ya hacían el aviso de cama y la energía) */
-      if(b!=null&&!esDiaGuardia(x.d.key))out+=band(b,1440);
-      return out;})();
-    return '<div class="scol'+(hoy?' hoy':'')+'">'+noche+cuerpo+pts+'</div>';}).join('');
-  const cab=porDia.map(function(x){
-    const sh=x.d.shiftId?shiftById(x.d.shiftId):null;
-    const hoy=isToday(x.d.key);
-    return '<button class="sch'+(hoy?' hoy':'')+'" data-a="sem-dia" data-k="'+esc(x.d.key)+'">'+
-      '<span class="d">'+esc((x.d.short||'').toUpperCase())+'</span>'+
-      '<span class="n">'+(x.d.date?x.d.date.getDate():'')+'</span>'+
-      '<span class="e">'+esc(sh?(sh.icon||'🍽'):'·')+'</span></button>';}).join('');
-  const ahora=new Date(),nm=conFecha.some(function(d){return isToday(d.key);})
-    ?(ahora.getHours()*60+ahora.getMinutes()):null;
-  const linea=(nm!=null&&nm>=de&&nm<=a)?('<div class="cnow" style="top:'+y(nm)+'px"></div>'):'';
-  const caja=Math.max(200,+opt.caja||360);
-  const scrollY=Math.max(0,(nm!=null?y(nm):0)-Math.round(caja*0.35));
-  return '<div class="semrej">'+
-    '<div class="srcab"><span class="hcol"></span>'+cab+'</div>'+
-    '<div class="carrilbox" style="height:'+caja+'px" data-scroll="'+scrollY+'">'+
-      '<div class="carril srbody" style="height:'+alto+'px">'+horas.join('')+
-      '<div class="scols">'+cols+'</div>'+linea+'</div></div>'+
-    '<div class="srley">'+[['work','Trabajo'],['guard','Guardia'],['gym','Entreno'],['evt','Eventos'],['meal','Cocinar'],['sleep','Dormir']]
-      .map(function(c){return '<span><i style="--c:'+tlColor(c[0])+'"></i>'+c[1]+'</span>';}).join('')+'</div>'+
-    '</div>';}
 function carrilScroll(){
   /* el scroll se pone después de pintar: en el HTML no se puede */
   document.querySelectorAll('.carrilbox[data-scroll]').forEach(function(b){
@@ -7552,40 +7465,13 @@ function finMin(x){const f=mins(x.fin);if(f==null)return x.m2;/* la guardia sale
 /* los días que enseña «Semana»: desde hoy (o desde el día al que te hayas movido) los que elijas
    —5, 7, 10 o 14—, y aparte el de ayer, plegado. «La semana» ya no es de lunes a domingo: el
    lunes por la tarde no quieres ver el lunes, quieres ver lo que viene. */
-const SEM_DIAS=[5,7,10,14];
-function semDias(){const n=+store.rotation.semanaDias;return SEM_DIAS.indexOf(n)>=0?n:7;}
-function semDesde(){return parseDate(ui.semDesde||'')||parseDate(iso(new Date()));}
-function diaObj(d){
-  const k=iso(d),inf=dayInfo(k),r=store.rotation;
-  const legacy=(r.shiftByDay&&r.shiftByDay[k]!==undefined)?r.shiftByDay[k]:null;
-  return {date:d,key:k,label:DAYN[(d.getDay()+6)%7],short:DAYSH[(d.getDay()+6)%7],sub:d.getDate()+' '+MON[d.getMonth()],
-    shiftId:inf.shiftId||(typeof legacy==='string'?legacy:null),guard:inf.guard,inf:inf};}
-function semanaVentana(){
-  if(store.rotation.mode!=='date')return weekDays();
-  const a=semDesde(),n=semDias(),out=[];
-  for(let i=0;i<n;i++)out.push(diaObj(addDays(a,i)));
-  return out;}
-function semRangoTxt(){
-  const a=semDesde(),b=addDays(a,semDias()-1);
-  return DIA3[a.getDay()]+' '+a.getDate()+' '+MON[a.getMonth()]+' → '+DIA3[b.getDay()]+' '+b.getDate()+' '+MON[b.getMonth()];}
-function moverSemana(n){
-  const a=addDays(semDesde(),n);
-  ui.semDesde=iso(a)===iso(new Date())?'':iso(a);
-  weekDate=mondayOf(a);}
-/* ===================== render: semana ===================== */
-function resumenSemana(){
-  /* una línea en vez de la tarjeta entera: qué patrón se está aplicando y de dónde sale */
-  const r=store.rotation,p=store.patterns[r.pattern];
-  if(r.mode==='date')
-    return 'Por fecha · ciclo de '+store.patterns.length+' semana(s)'+(r.anchor?(', anclado al '+r.anchor):', sin anclar todavía')+'.';
-  return 'Plantilla'+(p?(' · '+p.name):'')+'. Los días no llevan fecha: para eso, «por fecha · rotación».';}
 function semanaConfigHTML(){
   /* Todo esto vivía encima de la semana y ocupaba el 110 % de la pantalla del móvil: había que
      hacer scroll de una pantalla entera de ajustes antes de ver el lunes. Es configuración, así que
      ahora vive en «Turno y rotación», que es donde el usuario la va a buscar. */
   const r=store.rotation;
   return '<div class="card" data-cfg="semana"><h2>Cómo se arma tu semana</h2>'+
-    '<p class="note">Lo que decide qué día es cada día en la vista «Semana».</p>'+
+    '<p class="note">Lo que decide qué día es cada día en el Mes y en Hoy.</p>'+
     '<div class="row">'+
       '<button class="btn s '+(r.mode==='template'?'p':'')+'" data-a="mode-template">Plantilla (1 o 2 guardias)</button>'+
       '<button class="btn s '+(r.mode==='date'?'p':'')+'" data-a="mode-date">Por fecha · rotación</button>'+
@@ -7600,165 +7486,18 @@ function semanaConfigHTML(){
     '</div>'+
     (store.patterns[r.pattern]&&r.mode==='template'
       ?('<p class="note" style="margin:10px 0 0">'+esc(store.patterns[r.pattern].note||'')+
-        ' Cambia cualquier día en «Semana» y todo se adapta: menús, tandas y compra.</p>')
+        ' Cambia cualquier día en «Mi semana» y todo se adapta: menús, tandas y compra.</p>')
       :(r.mode==='date'
         ?('<p class="note" style="margin:10px 0 0">Ciclo de '+store.patterns.length+' semana(s): <b>'+
           esc(store.patterns.map(function(p){return p.days.join('·');}).join('  |  '))+
           '</b>. Ancla la rotación al lunes de una semana con 1 guardia.</p>')
         :''))+
     (store.patterns.length>1?rotationStrip():'')+
-    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="week">ver mi semana →</button></div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn s" data-a="tab" data-t="month">ver el mes →</button></div>'+
   '</div>';}
-function semanaNavHTML(conFecha){
-  /* La misma navegación que ya tienen Mes («‹ septiembre 2026 › mes actual») y Hoy («‹ jue · volver
-     a hoy · sáb ›»), pero dentro de la pantalla. En «Semana» las flechas vivían SOLO en la barra de
-     arriba: si no mirabas ahí, no había manera de ver la semana que viene.
-     En modo plantilla los días no llevan fecha, así que no hay semana anterior ni siguiente: ahí lo
-     que se ofrece es pasarse a «por fecha», que es lo que hace falta para poder moverse. */
-  /* Va como TIRA FINA, no como tarjeta: «Semana empieza por los días» es una decisión tomada y hay
-     una prueba que la fija (menos de 60 px por delante del primer día). Una tarjeta con su relleno
-     metía 106 px y empujaba los siete días fuera de la primera pantalla. El rango del día no se
-     repite aquí: ya está en el rótulo de la barra de arriba. */
-  if(store.rotation.mode!=='date')
-    return '<div class="semnav">'+
-      '<span class="mini">Modo <b style="color:var(--ink)">plantilla</b>: los días no llevan fecha.</span>'+
-      '<span class="sp"></span>'+
-      '<button class="btn s" data-a="sem-vista" data-v="rutina" title="mi rutina por tipo de día">⏰ rutina</button>'+
-      '<button class="btn p s" data-a="mode-date">ver mi semana real</button></div>';
-  /* el rango se lee de un vistazo («vie 25 sep → jue 1 oct») y al tocarlo abre el calendario del
-     móvil para saltar a otra fecha: el <input type=date> va encima, transparente */
-  const n=semDias(),esHoy=!ui.semDesde;
-  return '<div class="semnav">'+
-    '<button class="btn s" data-a="wk-prev" title="'+n+' días antes" aria-label="'+n+' días antes">‹</button>'+
-    '<label class="semrango"><span>'+esc(semRangoTxt())+'</span>'+
-      '<input type="date" value="'+esc(iso(semDesde()))+'" data-a="wk-set" aria-label="empezar en otra fecha"></label>'+
-    '<button class="btn s" data-a="wk-next" title="'+n+' días después" aria-label="'+n+' días después">›</button>'+
-    (esHoy?'':'<button class="btn s" data-a="today">hoy</button>')+
-    /* cuántos días ver y la leyenda, en ESTA misma fila: eran una fila entera para sí solos */
-    (conFecha?semOpcHTML()+'<details class="dtip semlupa"><summary class="mini">ⓘ</summary>'+
-      franjaLeyendaHTML()+semLeyendaHTML()+
-      '<div class="row" style="margin-top:6px"><button class="btn s" data-a="sem-vista" data-v="rutina">⏰ mi rutina por tipo de día →</button></div></details>':'')+
-    '</div>';}
-function semOpcHTML(){
-  /* CUATRO BOTONES Y DOS PALABRAS → UN DESPLEGABLE. «ver 5 7 10 14 días» ocupaba una fila entera
-     de las dos que había antes de la semana, y es algo que se toca una vez cada mucho. En un
-     desplegable cabe al lado del rango y la semana sube esos ~60 px. */
-  const n=semDias();
-  return '<select class="semopc" data-a="sem-dias-sel" aria-label="cuántos días ver">'+
-    SEM_DIAS.map(function(x){
-      return '<option value="'+x+'"'+(x===n?' selected':'')+'>'+x+' días</option>';}).join('')+
-    '</select>';}
-function solSemanaHTML(){
-  /* «🌅 6:51–6:54 · 🌇 18:55–18:48»: el rango de la ventana que se está viendo. Si los siete días
-     caen a la misma hora se enseña una sola. */
-  const ds=semanaVentana().filter(function(d){return !!d.key;});
-  if(!ds.length)return '';
-  const ss=ds.map(function(d){return solDe(d.key);}).filter(function(s){return s&&!s.sinDatos&&!s.polar;});
-  if(!ss.length)return '';
-  const rango=function(pick){
-    const hs=ss.map(function(s){return horaLocal(pick(s));}).filter(Boolean).sort()
-      .map(function(h){return hCortaHM(h);});
-    const a=hs[0],b=hs[hs.length-1];
-    return a===b?a:(a+'–'+b);};
-  return '<span class="solsem"><span class="pie sol">🌅 '+rango(function(s){return s.sale;})+'</span>'+
-    '<span class="pie sol">🌇 '+rango(function(s){return s.pone;})+'</span></span>';}
-function semanaFilaHTML(d,i,anyDate){
-  /* un día: nombre y horas arriba, la franja con lo que es cada bloque escrito dentro, las dos
-     horas del sueño, las comidas con su hora y, en filas, lo que tiene hora de empezar y de acabar
-     (entreno, sesiones, eventos). Los números de la comida van dentro, al abrirlo. */
-  const sh=shiftById(d.shiftId);
-  const kk=d.key||('tpl'+d.idx);
-  const open=ui.openDays.has(kk);
-  const hh=horasCortasDia(d.key,d.inf||{},sh);
-  const head='<span class="drday">'+(d.key?(d.short+' '+d.date.getDate()):d.label)+'</span>'+
-    '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+
-      (sh?esc(sh.icon)+' '+esc(sh.name)+(d.guard?' '+esc(gTipo(d.guard).label):'')+(hh?'<span class="drh"> · '+esc(hh)+'</span>':''):'sin asignar')+'</span>'+
-    (isToday(d.key)?'<span class="hoychip">hoy</span>':'')+
-    '<span class="sp"></span><span class="mini">'+(open?'▴':'▾')+'</span>';
-  const tomas=tomasDelDia(d.key||'',d.inf,d.shiftId);
-  const comidas=tomas.length?('<div class="drcom">'+tomas.map(function(t){
-    return '<span class="pl com" title="'+esc(t.label)+'">'+t.ico+' <b>'+esc(hCortaHM(t.hora))+'</b></span>';}).join('')+'</div>'):'';
-  const filas=d.key?agendaDia(d.key,d.inf).filter(function(x){return (x.tipo==='gym'||x.tipo==='evt')&&!/^ll-auto-/.test(x.ev||'');}):[];
-  let est='';
-  if(d.key){try{const nr=estTocaHoy(d.key);if(nr&&nr.length)est='<div class="drev est"><i style="background:var(--brand2)"></i><span class="h">repaso</span><span class="pl est">📚 '+nr.length+' tema'+(nr.length===1?'':'s')+'</span></div>';}catch(e){}}
-  const evs=filas.map(function(x){
-    return '<div class="drev"><i style="background:'+esc(x.color)+'"></i>'+
-      '<span class="h">'+esc(hCortaHM(x.hora))+(x.fin?'–'+esc(hCortaHM(x.fin)):'')+'</span>'+
-      '<span class="pl '+(x.tipo==='gym'?'gym':'evt')+'">'+x.ico+' '+esc(x.txt)+'</span></div>';}).join('')+
-    /* y las notas con día de ese día, como aviso: antes no salían en Semana */
-    (d.key?notasAviso(d.key).map(function(x){
-      return '<div class="drev nota"><i></i><span class="h">📝</span>'+
-        '<span class="pl nota">'+esc(String(x.txt).split('\n')[0].slice(0,60))+'</span></div>';}).join(''):'');
-  /* Al desplegar un día salían las tres comidas ENTERAS —nombre largo, el menú del que salen, las
-     kcal, los gramos de proteína y la pastilla de la tanda— más cuatro botones. Lo mismo que
-     enseña «Hoy» y lo mismo que salía en Mes al tocar el día. Aquí se queda lo que es de la
-     SEMANA: a qué horas comes, las cifras y qué día es; el resto, en su pantalla. */
-  const det='<div class="drdet">'+
-      (sh?resumenDiaHTML(d.key,sh):'<div class="empty">Día sin asignar: elige qué es (y si toca guardia, de qué).</div>')+
-      '<div class="row" style="margin-top:9px">'+
-        (anyDate&&d.key?'<button class="btn s" data-a="mon-day" data-key="'+d.key+'">cambiar qué día es</button>':
-          ('<select data-a="day-pick" data-i="'+i+'" style="max-width:190px">'+
-            '<option value="">— sin día —</option>'+store.shifts.map(function(x){
-              return '<option value="'+x.id+'" '+(x.id===d.shiftId?'selected':'')+'>'+esc(x.icon)+' '+esc(x.name)+'</option>';}).join('')+'</select>'))+
-        (sh&&d.key?'<button class="btn s" data-a="day-rhythm" data-key="'+d.key+'">cambiar las horas de dormir</button>':'')+
-      '</div></div>';
-  /* CERRADO ES UNA LÍNEA. La rejilla de arriba ya enseña la semana entera con sus horas, así que
-     repetir aquí la franja, el sueño y las comidas de los siete días costaba 129 px POR DÍA con la
-     tarjeta cerrada: 900 px de repetición y tres pantallas de scroll para ver la semana. Lo de
-     dentro se ve al abrir el día, que es cuando lo estás mirando. */
-  return '<div class="drow'+(open?' open':'')+(isToday(d.key)?' today':'')+'" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
-    '<div class="drmain" data-a="day-open" data-key="'+kk+'" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+'">'+head+'</div>'+
-    /* la barra horizontal SOLO al abrir: es lo único que la rejilla de arriba ya enseña. El sueño,
-       el sol y las horas de comer se quedan siempre, que eso NO está en la rejilla y es justo lo
-       que se mira de un día sin abrirlo. */
-    (open&&d.key&&sh?timelineBar(d.key,d.inf,{grande:true}):'')+
-    /* el sueño, el sol y las comidas en UNA fila que envuelve, no en tres: es la misma
-       información en la mitad de alto, y con la rejilla arriba la semana cabe en pantalla y media
-       en vez de en tres. */
-    /* el sueño en UNA pastilla y las horas de comer al lado: una sola línea por día. El sol se
-       fue a la cabecera de la semana —cambia cuatro minutos de lunes a domingo, así que repetirlo
-       siete veces costaba un renglón por día y no decía nada nuevo. */
-    '<div class="drlinea">'+
-      '<span class="drsol">'+horasSuenoHTML(d.key||'',d.inf,d.shiftId,true)+'</span>'+
-      (comidas||'')+
-    '</div>'+
-    ((evs||est)?('<div class="drplan">'+evs+est+'</div>'):'')+
-    (open?det:'')+'</div>';}
 function hCortaHM(t){/* «6:55», «15:30», «21:00»: sin el cero delante, que es lo que más se lee */
   const m=mins(t);if(m==null)return t||'';return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
-function semanaAyerHTML(){
-  /* el día de antes de la ventana, plegado en una línea: para mirar qué hiciste sin que empuje hoy
-     hacia abajo. Tocarlo lo abre entero. */
-  if(store.rotation.mode!=='date')return '';
-  const d=diaObj(addDays(semDesde(),-1)),sh=shiftById(d.shiftId);
-  if(ui.semAyer)return '<div class="semayer-abierto">'+semanaFilaHTML(d,-1,true).replace('class="drow','class="drow ayer')+
-    '<button class="btn s" data-a="sem-ayer" style="margin-top:4px">plegar '+(ui.semDesde?'el día anterior':'ayer')+' ▴</button></div>';
-  const evs=eventosCalendario(d.key);
-  return '<button class="dayer" data-a="sem-ayer" style="border-left-color:'+(sh?sh.color:'var(--line)')+'">'+
-    '<span class="drday">'+(ui.semDesde?(d.short+' '+d.date.getDate()):('Ayer '+d.date.getDate()))+'</span>'+
-    '<span class="drtag" style="color:'+(sh?sh.color:'var(--ink2)')+'">'+(sh?esc(sh.icon)+' '+esc(sh.name):'sin asignar')+'</span>'+
-    (evs.length?'<span class="mini">· '+esc((evs[0].hora?hCortaHM(evs[0].hora)+' ':'')+evs[0].titulo)+(evs.length>1?' +'+(evs.length-1):'')+'</span>':'')+
-    '<span class="sp"></span><span class="mini">▸</span></button>';}
 
-function semanaKeyEntreno(days){
-  /* la semana que más enseña la rejilla (la ventana empieza ayer: el domingo es casi toda la siguiente) */
-  const ks=days.filter(function(d){return d.key;}).map(function(d){return d.key;});
-  return ks[Math.floor(ks.length/2)]||iso(new Date());}
-/* ===================== SEMANA: AGENDA, RUTINA Y HÁBITOS =====================
-   «Que sirva para ver los eventos del día, seguir rutinas y hábitos». Arriba la semana en una tira con
-   el anillo de hábitos de cada día; debajo una tarjeta por día con sus eventos, la rutina de su tipo
-   de día y los hábitos que tocan. Más abajo la rejilla de hábitos, que entiende las guardias. La vista
-   por horas de antes sigue a un toque. */
-function semTogHTML(v){
-  /* UNA FILA DE MANDOS. Eran tres seguidas (Agenda/Por horas, el botón a la isométrica y el rango): 118 px
-     de decisiones ya tomadas antes de ver nada. El tablón y la cochera son dos formas de la misma agenda */
-  const iso=calVista('sem')==='iso',ag=v!=='horas';
-  const b=function(on,a,extra,txt){return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="'+a+'"'+extra+'>'+txt+'</button>';};
-  return '<div class="semtog t3" role="tablist">'+b(ag&&!iso,'cal-vista',' data-w="sem" data-v="plana"','▦ Tablón')+b(ag&&iso,'cal-vista',' data-w="sem" data-v="iso"','🏗 Cochera')+
-    b(!ag,'sem-vista',' data-v="horas"','◷ Por horas')+'</div>';}
-/* la leyenda del tablón, detrás del ⓘ de la cabecera (los colores son los del conductor y los de Mes) */
-function semLeyendaHTML(){
-  return '<div class="tb-ley"><span><i class="k-work"></i>jornada</span><span><i class="k-guard"></i>guardia</span><span><i class="k-noche"></i>dormir</span><span><i class="k-meal"></i>comida</span><span><i class="k-plan"></i>plan</span><span><i class="k-pend"></i>sin apuntar</span></div>';}
 function rutinaIco(t){t=alimTxt(t);
   return /estudi|mir|repas|test|libro|leer/.test(t)?'📚':(/paseo|andar|caminar/.test(t)?'🚶':(/pantall|movil/.test(t)?'📵':(/medit|estir|yoga/.test(t)?'🧘':(/comer|cena|desayun/.test(t)?'🍽':(/agua/.test(t)?'💧':'•')))));}
 function habitosDelDia(key){return habitosS().items.filter(function(h){return habitoToca(h,key);});}
@@ -7774,72 +7513,16 @@ function habitoSugerencia(){
       c[t]=c[t]||{n:0,ok:0};c[t].n++;if(habitoHecho(h.id,k))c[t].ok++;}
     Object.keys(c).forEach(function(t){if(c[t].n>=3&&c[t].ok===0&&!no[h.id+'|'+t]&&(!mejor||c[t].n>mejor.n))mejor={h:h,t:t,n:c[t].n};});});
   return mejor;}
-function semDiaCardHTML(d,nowMin){
-  const k=d.key,inf=d.inf||dayInfo(k),t=diaTipo(k),ti=diaTipoInfo(t),sh=shiftById(inf.shiftId);
-  const col=sh&&!inf.vac?sh.color:'var(--line)',hoyK=iso(new Date()),esHoy=k===hoyK,pasado=k<hoyK;
-  const hh=horasCortasDia(k,inf,sh),ch=hoyChoques(k,inf).map(function(x){return x.e.id;});
-  const evs=eventosCalendario(k),rut=rutinaDia(k),habs=habitosDelDia(k);
-  const hechos=habs.filter(function(h){return habitoHecho(h.id,k);}).length;
-  return '<div class="sdc'+(esHoy?' hoy':'')+(pasado?' pas':'')+'" id="sd-'+k+'" style="--c:'+esc(col)+'">'+
-    '<button class="sdh" data-a="hoja-ver" data-k="'+k+'"><b>'+(esHoy?'Hoy · ':'')+esc(DIA3[d.date.getDay()])+' '+d.date.getDate()+'</b>'+
-      '<span class="t">'+ti[2]+' '+esc(inf.vac?'Vacaciones':(sh?nombreCorto(sh.name):ti[1]))+(hh?' · '+esc(hh):'')+'</span>'+gymIco('chevron','gico sm')+'</button>'+
-    (evs.length?evs.map(function(e){const x=ch.indexOf(e.id)>=0;
-      return '<div class="sde'+(x?' x':'')+'"><em>'+esc(e.hora?hCortaHM(e.hora):'todo el día')+'</em><span>'+(x?'⚠ ':'📌 ')+esc(e.titulo||'Evento')+(x?' <small>cae en '+(t==='guardia'?'la guardia':'la jornada')+'</small>':'')+'</span></div>';}).join('')
-      :'<div class="sde v"><em>—</em><span>sin eventos</span></div>')+
-    (rut.length?'<div class="sdr">'+rut.map(function(a){const ya=pasado||(esHoy&&mins(a.h)<=nowMin);
-      return '<span class="'+(ya?'ok':'')+(a.fijo?'':' mia')+'"'+(a.movido?' title="la mueve de '+esc(a.movido)+': a esa hora estás ocupado"':'')+'>'+a.ico+' '+esc(hCortaHM(a.h))+(a.fijo?'':' '+esc(a.txt))+(a.movido?' ↷':'')+'</span>';}).join('')+'</div>':'')+
-    (habs.length?'<div class="sdhb">'+habs.map(function(h){const on=habitoHecho(h.id,k),fut=k>hoyK;
-      return '<button class="'+(on?'on':'')+'" style="'+(on?'background:'+esc(h.color)+';border-color:'+esc(h.color):'')+'"'+(fut||h.auto?' disabled':' data-a="hab-mark" data-id="'+esc(h.id)+'" data-key="'+k+'"')+
-        ' aria-label="'+esc(h.nombre)+(on?' hecho':'')+'" title="'+esc(h.nombre)+(h.auto?' (se marca solo)':'')+'">'+esc(h.icono)+'</button>';}).join('')+
-      '<small>'+hechos+'/'+habs.length+' hábitos</small></div>':'')+
-  '</div>';}
-function semHabitosHTML(days){
-  const hb=habitosS(),hoyK=iso(new Date());
-  if(!hb.items.length)return '<div class="card"><h2>Hábitos</h2><p class="mini" style="margin:0 0 8px">Pon tus hábitos y se marcan aquí, día a día. Los que no tocan en guardia o saliente no te rompen la racha.</p>'+
-    '<div class="chips">'+HAB_PRESETS.map(function(p,i){return '<button class="chipx" data-a="hab-preset" data-i="'+i+'">＋ '+p.icono+' '+esc(p.nombre)+'</button>';}).join('')+'</div></div>';
-  const head='<span></span>'+days.map(function(d){return '<span class="hh">'+esc(DIA3[d.date.getDay()].charAt(0).toUpperCase())+'<br>'+diaTipoInfo(diaTipo(d.key))[2]+'</span>';}).join('')+'<span></span>';
-  let toca=0,ok=0;
-  const rows=hb.items.map(function(h){
-    return '<span class="nm" title="'+esc(h.nombre)+'">'+esc(h.icono)+' '+esc(h.nombre)+'</span>'+days.map(function(d){const k=d.key;
-      const dow=(h.dow||[]).indexOf(d.date.getDay())>=0,tc=habitoToca(h,k),on=tc&&habitoHecho(h.id,k);
-      if(tc&&k<=hoyK){toca++;if(on)ok++;}
-      if(!dow)return '<span class="c no"></span>';
-      if(!tc)return '<span class="c ex" title="no toca: '+esc(diaTipoInfo(diaTipo(k))[1].toLowerCase())+'"></span>';
-      return '<button class="c'+(on?' on':'')+(k===hoyK?' td':'')+'" style="'+(on?'background:'+esc(h.color)+';border-color:'+esc(h.color):'')+'"'+
-        (k>hoyK||h.auto?' disabled':' data-a="hab-mark" data-id="'+esc(h.id)+'" data-key="'+k+'"')+' aria-label="'+esc(h.nombre)+' '+k+'">'+(on?'✓':'')+'</button>';}).join('')+
-      '<span class="st">🔥'+rachaHabito(h)+'</span>';}).join('');
-  const sug=habitoSugerencia();
-  /* PLEGADO A UNA FILA POR HÁBITO: eran 273 px y 17 botones con leyenda, el texto de los que se marcan solos
-     y un botón para editar; los hábitos ya se marcan en «Para hoy» y en la tarjeta del día, y se editan en
-     Más › Hábitos. Lo rayado es «no toca» (guardia, saliente…), como en la hoja de cada hábito */
-  return '<div class="card habsem"><h2>Hábitos de la semana<span class="mini" style="margin-left:auto;font-weight:700">'+ok+' de '+toca+'</span>'+
-      '<button class="dlink" style="margin-left:10px" data-a="tab" data-t="habitos" aria-label="editar los hábitos">editar ›</button></h2>'+
-    '<div class="shm" style="grid-template-columns:minmax(80px,1.4fr) repeat('+days.length+',1fr) 34px">'+head+rows+'</div>'+
-    (sug?'<div class="semtip">💡 Los días de <b>'+esc(diaTipoInfo(sug.t)[1].toLowerCase())+'</b> no has hecho <b>'+esc(sug.h.nombre.toLowerCase())+'</b> ninguna vez ('+sug.n+' en 4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.'+
-      '<div class="row" style="gap:8px;margin-top:8px"><button class="btn s" data-a="hab-tip-no" data-id="'+esc(sug.h.id)+'" data-t="'+sug.t+'">Dejarlo</button><button class="btn p s" data-a="hab-noen" data-id="'+esc(sug.h.id)+'" data-t="'+sug.t+'">Sí, esos días no</button></div></div>':'')+
-    '</div>';}
 const HAB_PRESETS=[
   {nombre:'Agua 2 L',icono:'💧',color:'#38bdf8',noEn:[],auto:'agua',min:'1 vaso grande',ancla:{t:'tras',v:'despertar'}},
   {nombre:'Estudio',icono:'📚',color:'#f59e0b',noEn:['guardia','saliente'],auto:'estudio',min:'10 min de test',ancla:{}},
   {nombre:'Entreno',icono:'💪',color:'#22c55e',noEn:['guardia','saliente'],auto:'entreno',min:'',ancla:{}},
   {nombre:'Estirar',icono:'🧘',color:'#c084fc',noEn:[],auto:'',min:'3 posturas',ancla:{t:'tras',v:'cama'}},
   {nombre:'Cama a su hora',icono:'🛌',color:'#818cf8',noEn:['guardia'],auto:'cama',min:'',ancla:{}}];
-/* ===================== Semana y Mes con el lenguaje del conductor =====================
-   Dos vistas con un botón: la plana (de serie, es la que se toca y se edita) y la isométrica (el kit de
-   /anatomy, fig/calendario-iso.js, que se carga la primera vez que se elige). Mismos colores que las
-   paradas del conductor: jornada roja, guardia azul noche, comida verde, entreno violeta, planes turquesa. */
-const SEMV_KEY='guardias-semv',MESV_KEY='guardias-mesv';
-function calVista(w){const u=w==='sem'?'semV':'mesV';
-  if(!ui[u]){let v='';try{v=localStorage.getItem(w==='sem'?SEMV_KEY:MESV_KEY)||'';}catch(e){}ui[u]=v==='iso'?'iso':(v==='ruta'&&w==='mes'?'ruta':'plana');}return ui[u];}
-/* Mes: tres formas de ver el mes en una fila (la plana se edita; la isométrica y la carretera se miran) */
-function calVistaBtn(w){const v=calVista(w);
-  return '<div class="semtog t3 mesv" role="tablist">'+[['plana','▦ Plana'],['iso','🏗 Isométrica'],['ruta','🛣 Carretera']].map(function(o){
-    return '<button role="tab" aria-selected="'+(v===o[0])+'" class="'+(v===o[0]?'on':'')+'" data-a="cal-vista" data-w="'+w+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';}
-/* ===================== LA CARRETERA DEL MES (fig/carretera.js): lo que viene, desde el asiento =====================
-   En Hoy es la tarjeta «Lo que viene» (sustituye a la cuenta atrás y a «Próximos») y en Mes la tercera vista
-   (sustituye a «Eventos de …»). Los datos salen de los mismos sitios que la cuadrícula: el tipo de cada día,
+/* ===================== LA CARRETERA (fig/carretera.js): lo que viene, desde el asiento =====================
+   En Hoy es la tarjeta «Lo que viene» (sustituye a la cuenta atrás y a «Próximos»). Los datos salen de los mismos sitios que la cuadrícula: el tipo de cada día,
    las horas de la guardia, los eventos con fecha, las vacaciones y los findes libres. */
-let _carr={hoy:null,mes:null},_carrDatos={hoy:null,mes:null},_carrCarga=false;
+let _carr={hoy:null},_carrDatos={hoy:null},_carrCarga=false;
 function carreteraDatos(desde,nDias){
   const hoyK=iso(new Date()),d0=parseDate(desde||hoyK)||new Date(),hoyInf=dayInfo(hoyK),hoySh=shiftById(hoyInf.shiftId),N=nDias||31;
   const tipoDe=function(k,inf){const sh=shiftById(inf.shiftId);return inf.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(k);};
@@ -7898,101 +7581,13 @@ function loQueVieneHTML(){
   _carrDatos.hoy=carreteraDatos('');const g=_carrDatos.hoy.prox.guardia;
   return '<div class="card lqv"><h2>🛣️ Lo que viene<span class="mini" style="margin-left:auto;font-weight:400">'+(g?'próxima guardia '+esc(g.txt):'sin guardias a la vista')+'</span></h2>'+
     '<div id="carrSlot" class="carrslot"></div></div>';}
-let _calIso={sem:null,mes:null},_calIsoDatos={sem:null,mes:null},_calIsoCarga=false;
-function calIsoMonta(w){
-  const slot=document.getElementById('calIsoSlot');if(!slot||!_calIsoDatos[w])return;
-  if(!window.CalIso){if(!_calIsoCarga){_calIsoCarga=true;const sc=document.createElement('script');sc.src='fig/calendario-iso.js';
-      sc.onload=function(){calIsoMonta(w);};sc.onerror=function(){_calIsoCarga=false;};document.head.appendChild(sc);}
-    if(!slot.firstChild)slot.innerHTML='<p class="mini" style="padding:40px 0;text-align:center">montando la vista…</p>';return;}
-  if(!_calIso[w])_calIso[w]=window.CalIso[w==='sem'?'semana':'mes']({onDia:function(k){act('hoja-ver',{dataset:{k:k}});}});
-  if(_calIso[w].el.parentNode!==slot){slot.innerHTML='';slot.appendChild(_calIso[w].el);}
-  _calIso[w].actualiza(_calIsoDatos[w]);}
-/* una fila por día: el día del conductor (hoyBusDatos) y lo dormido (pasado) o lo que toca dormir */
-function semFila(k,hoyK){
-  let D={dia:[],noches:[]};try{D=hoyBusDatos(k,dayInfo(k),k===hoyK);}catch(e){}
-  const dt=parseDate(k),k1=iso(addDays(dt,1)),noche=(D.noches||[]).filter(function(n){return n.t==='noche'&&n.a>12;})[0];
-  let sn=null;
-  if(k<hoyK){const sc=suenoCuenta(k1);if(sc&&sc.h)sn={h:Math.round(sc.h*10)/10,real:1};}
-  if(!sn&&noche)sn={h:Math.round((noche.b-noche.a)*10)/10};
-  const hs=habitosDelDia(k);
-  return {k:k,date:dt,dow:dt.getDay(),dnum:dt.getDate(),tipo:diaTipo(k),hoy:k===hoyK,dia:D.dia||[],noches:D.noches||[],sueno:sn,
-    hab:k<=hoyK?hs.slice(0,4).map(function(h){return habitoHecho(h.id,k)?1:0;}):[]};}
-function semResumen(filas,obj){
-  const fut=filas.filter(function(f){return !f.ayer;}),g=fut.filter(function(f){return f.tipo==='guardia';}).length;let hs=0;
-  fut.forEach(function(f){f.dia.forEach(function(e){if((e.k==='work'||e.k==='guard')&&!e.ayer&&e.b-e.a>=1)hs+=e.b-e.a;});});
-  const sn=fut.filter(function(f){return f.sueno&&!f.sueno.real;}).map(function(f){return f.sueno.h;}),med=sn.length?sn.reduce(function(a,b){return a+b;},0)/sn.length:0,cortas=sn.filter(function(h){return h<obj;}).length;
-  return '<b>'+g+' guardia'+(g===1?'':'s')+'</b> · <b>'+Math.round(hs)+' h</b> de servicio'+(sn.length?' · noches de <b>'+String(Math.round(med*10)/10).replace('.',',')+' h</b> de media':'')+
-    (cortas?' · <b class="tb-corta">'+cortas+' corta'+(cortas===1?'':'s')+'</b>':'');}
-/* EL TABLÓN DE LA COCHERA: una fila por día, todas en la misma escala de 6 a 2 de la noche, así se
-   comparan de un vistazo. Al principio de la fila, el autobús del tipo de día y los sellos de los
-   hábitos; por la fila, la jornada (roja), la guardia (azul noche), las paradas y la noche; al final,
-   lo dormido o lo que toca dormir. Tocar una fila enseña su tarjeta debajo. */
-function semTablonHTML(filas,obj,sel){
-  const W=356,L=56,R=300,T0=6,T1=26,RH=46,TOP=26,AHORA=horaDecimal(new Date());
-  const x=function(h){return L+(Math.max(T0,Math.min(T1,h))-T0)/(T1-T0)*(R-L);},r1=function(v){return v.toFixed(1);};
-  const COL={work:'tb-work',guard:'tb-guard',meal:'tb-meal',gym:'tb-gym',plan:'tb-plan'};
-  const bus=function(t,cx,cy){const c={trabajo:'tb-work',guardia:'tb-guard',saliente:'tb-sal',fuerza:'tb-gym'}[t]||'tb-libre';
-    return '<g transform="translate('+(cx-11)+','+(cy-7)+')"><rect class="'+c+'" width="22" height="12" rx="3"/><rect class="tb-win" x="3" y="2.5" width="16" height="4" rx="1"/>'+
-      '<circle class="tb-rueda" cx="6" cy="12.5" r="1.8"/><circle class="tb-rueda" cx="16" cy="12.5" r="1.8"/>'+
-      (t==='guardia'?'<path class="tb-luna" d="M19.6 -3.4a3.2 3.2 0 1 0 2.4 4.6a2.6 2.6 0 1 1 -2.4 -4.6z"/>':'')+
-      (t==='saliente'?'<path class="tb-flecha" d="M24 6h5m-2 -2.4 2.4 2.4 -2.4 2.4"/>':'')+'</g>';};
-  const H=TOP+filas.length*RH+2;
-  let s='<svg class="tablon" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="La semana como siete líneas de autobús en la misma escala de horas">';
-  [6,12,18,24].forEach(function(h){s+='<text class="tb-eje" x="'+r1(x(h))+'" y="12">'+(h===24?'0':h)+'</text><line class="tb-guia" x1="'+r1(x(h))+'" y1="17" x2="'+r1(x(h))+'" y2="'+(H-2)+'"/>';});
-  s+='<text class="tb-eje" x="'+r1(R+6+(W-R-6)/2)+'" y="12" style="letter-spacing:.08em">NOCHE</text>';
-  filas.forEach(function(f,i){
-    const y=TOP+i*RH,yc=y+25,pas=f.k<iso(new Date());let g='';
-    g+='<rect class="tb-fondo'+(f.hoy?' hoy':'')+(sel===f.k?' sel':'')+'" x="0" y="'+y+'" width="'+W+'" height="'+(RH-2)+'" rx="9"/>';
-    g+='<text class="tb-dia'+(f.hoy?' hoy':'')+'" x="6" y="'+(y+17)+'">'+(f.ayer?'AYER':DIA3[f.dow].toUpperCase())+' <tspan>'+f.dnum+'</tspan></text>';
-    g+=bus(f.tipo,17,y+30);
-    f.hab.forEach(function(h,j){g+='<circle class="tb-sello'+(h?' on':'')+'" cx="'+(35+j*7)+'" cy="'+(y+31)+'" r="2.6"/>';});
-    g+='<line class="tb-via" x1="'+r1(x(T0))+'" y1="'+yc+'" x2="'+r1(x(T1))+'" y2="'+yc+'"/>';
-    f.noches.forEach(function(n){const a=Math.max(n.a,T0),b=Math.min(n.b,T1);if(b<=a)return;
-      g+='<rect class="tb-noche'+(n.t==='siesta'?' siesta':'')+'" x="'+r1(x(a))+'" y="'+(yc-7)+'" width="'+r1(x(b)-x(a))+'" height="14" rx="4"/>';
-      if(x(b)-x(a)>16)g+='<text class="tb-z" x="'+r1(x(a)+4)+'" y="'+(yc+3.5)+'">'+(n.t==='siesta'?'siesta':'z')+'</text>';});
-    f.dia.filter(function(e){return (e.k==='work'||e.k==='guard')&&(e.b-e.a>=1||e.ayer);}).forEach(function(e){const a=Math.max(e.a,T0),b=Math.min(e.b,T1);if(b<=a)return;
-      g+='<rect class="'+COL[e.k]+'" x="'+r1(x(a))+'" y="'+(yc-4)+'" width="'+r1(Math.max(4,x(b)-x(a)))+'" height="8" rx="4"/>';
-      g+='<text class="tb-lab '+(e.k==='guard'?'g':'w')+'" x="'+r1(x(a)+2)+'" y="'+(yc-8)+'">'+(e.k==='guard'?(e.ayer?'→ '+hm(e.b*60%1440):'☾ guardia '+hm(e.a*60)):hm(e.a*60)+'–'+hm(e.b*60))+'</text>';});
-    f.dia.filter(function(e){return e.k!=='work'&&e.k!=='guard'&&e.a>=T0&&e.a<=T1;}).forEach(function(e){
-      const pend=e.m&&!e.h&&(pas||(f.hoy&&e.b<AHORA)),hecho=e.h||(!pas&&!f.hoy)||(f.hoy&&e.a>=AHORA);
-      g+='<circle class="'+(hecho?(COL[e.k]||'tb-plan'):'tb-vacio')+(pend?' tb-pend':'')+'" cx="'+r1(x(e.a))+'" cy="'+yc+'" r="3.8"/>';});
-    if(f.hoy){g+='<line class="tb-ahora" x1="'+r1(x(AHORA))+'" y1="'+(y+4)+'" x2="'+r1(x(AHORA))+'" y2="'+(y+RH-6)+'"/>'+
-      '<g transform="translate('+r1(x(AHORA)-7)+','+(yc+7)+')"><rect class="tb-busahora" width="14" height="8" rx="2"/><rect class="tb-win2" x="2" y="1.6" width="10" height="2.6" rx=".6"/></g>';}
-    const gx=R+6,sn=f.sueno,cor=sn&&sn.h<obj;
-    g+='<path class="tb-garaje'+(sn?(cor?' corta':''):' guardia')+'" d="M'+gx+' '+(yc+12)+'V'+(yc-5)+'l'+((W-gx)/2)+' -9 l'+((W-gx)/2)+' 9V'+(yc+12)+'"/>';
-    g+='<text class="tb-horas'+(sn?(cor?' corta':''):' guardia')+'" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+5)+'">'+(sn?String(sn.h).replace('.',',')+' h':'☾')+'</text>';
-    if(sn&&sn.real)g+='<text class="tb-mini" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+14)+'">dormidas</text>';
-    else if(!sn)g+='<text class="tb-mini" x="'+r1(gx+(W-gx)/2)+'" y="'+(yc+14)+'">de guardia</text>';
-    s+='<g class="tb-fila" data-a="sem-sel" data-k="'+f.k+'" role="button" aria-label="'+esc(DIA3[f.dow]+' '+f.dnum)+'">'+g+'</g>';});
-  return s+'</svg>';}
-function renderSemanaAgenda(days){
-  const hoyK=iso(new Date()),now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),obj=suenoCfg().min,isoV=calVista('sem')==='iso';
-  const filas=[Object.assign(semFila(iso(addDays(days[0].date,-1)),hoyK),{ayer:true})].concat(days.map(function(d){return semFila(d.key,hoyK);}));
-  if(filas[0].k!==iso(addDays(new Date(),-1)))filas[0].ayer=false;
-  const enVentana=function(k){return days.some(function(d){return d.key===k;});};
-  const sel=ui.semSel&&(enVentana(ui.semSel)||ui.semSel===filas[0].k)?ui.semSel:(enVentana(hoyK)?hoyK:days[0].key);
-  const dSel=days.filter(function(d){return d.key===sel;})[0]||diaObj(parseDate(sel));
-  let cuerpo;
-  if(isoV){
-    const f7=filas.slice(1,8);
-    _calIsoDatos.sem={filas:f7,obj:obj,ahora:horaDecimal(now),claro:!document.documentElement.classList.contains('dark'),
-      pie:semResumen(filas.slice(1),obj)+' · toca un andén para abrir ese día'};
-    cuerpo='<div id="calIsoSlot" class="calisoslot"></div>';
-  }else cuerpo='<div class="card tablonc"><p class="tb-res">'+semResumen(filas,obj)+'</p>'+semTablonHTML(filas,obj,sel)+'</div>'+
-    semDiaCardHTML(dSel,nowMin);
-  /* la leyenda y «mi rutina» viven en el ⓘ de la cabecera; los hábitos van plegados a una fila por hábito */
-  $('#main').innerHTML='<div class="grid">'+
-    '<div class="semcab">'+semanaNavHTML(true)+'</div>'+semTogHTML('')+cuerpo+
-    semHabitosHTML(days)+
-  '</div>';
-  if(isoV)calIsoMonta('sem');}
 function renderRutina(){
   const t=ui.rutTipo||diaTipo(iso(new Date())),ti=diaTipoInfo(t),l=rutinaDe(t),propia=Array.isArray((store.rutinas||{})[t]);
   /* un día de muestra de ese tipo (el próximo), para enseñar lo que pone el calendario */
   let ej=null;for(let i=0;i<40;i++){const k=iso(addDays(new Date(),i));if(diaTipo(k)===t){ej=k;break;}}
   const fijos=ej?rutinaDia(ej).filter(function(a){return a.fijo;}):[];
   $('#main').innerHTML='<div class="grid">'+
-    '<div class="subcab"><button class="btn s volver" data-a="sem-vista" data-v="">'+gymIco('atras','gico sm')+' Semana</button><h2 class="subtit">Mi rutina</h2></div>'+
+    '<div class="subcab"><button class="btn s volver" data-a="aju-vista" data-v="">'+gymIco('atras','gico sm')+' Ajustes</button><h2 class="subtit">Mi rutina</h2></div>'+
     '<div class="chips">'+TIPOS_DIA.map(function(x){return '<button class="chipx'+(x[0]===t?' on':'')+'" data-a="rut-tipo" data-t="'+x[0]+'">'+x[2]+' '+x[1]+'</button>';}).join('')+'</div>'+
     '<div class="card"><h2>Un día de '+esc(ti[1].toLowerCase())+'</h2>'+
       fijos.map(function(a){return '<div class="rta fijo"><em>'+esc(hCortaHM(a.h))+'</em><span>'+a.ico+' '+esc(a.txt)+(a.sub?'<small>'+esc(a.sub)+'</small>':'')+'</span><span class="mini">del calendario</span></div>';}).join('')+
@@ -8002,69 +7597,8 @@ function renderRutina(){
       '<div class="row" style="margin-top:8px">'+(propia?'<button class="btn s" data-a="rut-reset">volver a la de serie</button>':'')+
         '<select data-a="rut-copia" style="width:auto"><option value="">copiar de…</option>'+TIPOS_DIA.filter(function(x){return x[0]!==t;}).map(function(x){return '<option value="'+x[0]+'">'+x[2]+' '+x[1]+'</option>';}).join('')+'</select></div>'+
     '</div>'+
-    '<p class="mini">La rutina de cada tipo de día sale sola en cada día de ese tipo, en Semana y en Hoy. Levantarte, la jornada o la guardia, el entreno y la cama los pone tu calendario.</p>'+
+    '<p class="mini">La rutina de cada tipo de día sale sola en cada día de ese tipo, en Hoy. Levantarte, la jornada o la guardia, el entreno y la cama los pone tu calendario.</p>'+
   '</div>';}
-function renderWeek(){
-  const v=ui.semVista||'';
-  if(v==='rutina')return renderRutina();
-  const d0=semanaVentana();
-  if(v!=='horas'&&d0.length&&d0.every(function(d){return !!d.date;}))return renderSemanaAgenda(d0);
-  return renderWeekHoras();}
-function renderWeekHoras(){
-  const days=semanaVentana();   /* la rotación ya no se toca aquí: vive en semanaConfigHTML() */
-  const anyDate=days.some(function(d){return !!d.date;});
-  const ss=(function(){let n=0,t=0,low=0;const min=suenoCfg().min;
-    days.forEach(function(d){if(!d.date)return;const sl=sleepOf(d.key,d.inf);
-      if(sl.h==null||!d.shiftId)return;n++;t+=sl.h;if(sl.h<min)low++;});
-    return {n:n,avg:n?Math.round(t/n*10)/10:null,low:low,min:min};})();
-  const rows=days.map(function(d,i){return semanaFilaHTML(d,i,anyDate);}).join('');
-    const pb=planBatches(weekDays()), used=Object.keys(pb).map(k=>pb[k]).filter(b=>b.hasNeed);
-  const g=days.filter(function(d){const sh=shiftById(d.shiftId);return sh&&isGuardia(sh);}).length;
-  const kcalSem=days.reduce(function(a,d){return a+dayTotals(d.shiftId).kcal;},0);
-  /* LA NAVEGACIÓN Y LAS OPCIONES, EN UNA FILA. Eran dos: el rango con sus flechas, y debajo otra
-     entera con «ver 5 7 10 14 días» y la leyenda de colores. Entre las dos se comían 140 px antes
-     de que empezara la semana —y el rango ya estaba, además, en el rótulo de la barra de arriba—. */
-  $('#main').innerHTML=`<div class="grid">
-    <div class="semcab">${semanaNavHTML(anyDate)}</div>${anyDate?semTogHTML('horas'):''}
-    ${anyDate?`<div class="card"><h2>La semana de un vistazo<span class="sp"></span>${solSemanaHTML()}</h2>${entrenoContadorHTML(semanaKeyEntreno(days))}${carrilSemanaHTML(days,{px:40,caja:franjaAltoSem()})}</div>`:''}
-    <div class="daylist">${semanaAyerHTML()}${rows}</div>
-    <div class="card"><h2>La semana en números</h2>
-      <div class="tot">
-        <div><b>${g}</b><span>guardia${g===1?'':'s'}</span></div>
-        <div><b>${used.length}</b><span>sesiones de cocina</span></div>
-        <div><b>${anyDate&&ss.avg!=null?ss.avg+' h':(g?Math.round(kcalSem/days.length):0)}</b><span>${anyDate&&ss.avg!=null?'sueño de media':'kcal/día de media'}</span></div>
-      </div>
-      <p class="mini" style="margin:10px 0 0">${esc(resumenSemana())}</p>
-      ${anyDate&&ss.low?`<p class="mini" style="margin:5px 0 0;color:var(--warn)">${ss.low} noche(s) por debajo de ${ss.min} h.</p>`:''}
-      ${g>0&&used.length===0?'<p class="note" style="margin:8px 0 0;color:var(--warn)">⚠ Hay días de guardia pero ningún plato marcado como lote: se comería cocinando de cero cada día.</p>':''}
-      <div class="row" style="margin-top:10px">
-        <button class="btn s" data-a="ir-semana-cfg">⚙️ patrón y rotación</button>
-        <button class="btn s" data-a="wk-expand-all">${allOpen()?'cerrar todos':'abrir todos'}</button>
-        ${anyDate?'':'<button class="btn s" data-a="mode-date">ver mi semana real</button>'}
-        <button class="btn s" data-a="tab" data-t="month">el mes →</button>
-      </div>
-    </div>
-    <div class="grid g2">
-      ${used.length?`<div class="card"><h2>La cocina de la semana<span class="mini" style="margin-left:auto">${used.length} sesion${used.length===1?'':'es'}</span></h2>
-        <div class="cocmini">${used.map(b=>`<details class="cocblq cocm">
-          <summary class="cocmh"><b>${esc(b.label)}</b><span>${esc(b.when||'')} · ${b.portions} rac.</span></summary>
-          <div class="platos">${b.items.filter(i=>i.runs>0).map(function(i){
-            const sobra=i.cooked>i.needPort?Math.round((i.cooked-i.needPort)*10)/10:0;
-            return '<span class="plato" title="'+esc(i.dish.name)+'">'+
-              '<span class="pic">'+esc(i.dish.icon||'🍽')+'</span>'+
-              '<b>'+esc(nombreCorto(i.dish.name))+'</b>'+
-              '<span class="mini">'+fmt(i.cooked)+' rac.</span>'+
-              (sobra?'<span class="tag b4">🧊 '+fmt(sobra)+'</span>':'')+
-              '</span>';}).join('')}</div>
-          <button class="btn s" data-a="tab" data-t="batches" style="margin-top:8px">abrir en Cocina →</button>
-          </details>`).join('')}</div>
-      </div>`:''}
-      <div class="card"><h2>Reglas de oro</h2>
-        <details class="dtip"><summary class="mini">las ${store.rules.length} reglas que sostienen la semana cuando se tuerce</summary>
-        <ul style="margin-top:8px">${store.rules.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-        <div class="row no-print" style="margin-top:10px"><button class="btn s" data-a="rules">Editar reglas</button></div></details></div>
-    </div></div>`;
-}
 
 /* ===================== render: mes (calendario y guardias) ===================== */
 let monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);
@@ -8412,28 +7946,12 @@ function mhintVigente(){
   /* el aviso de «mantén pulsado» se va solo a los tres días de verlo (o al primer mantener pulsado) */
   const m=store.meta,hoy=iso(new Date());if(!m.pulsarDesde)m.pulsarDesde=hoy;
   return (parseDate(hoy)-parseDate(m.pulsarDesde))/86400000<3;}
-/* LA FICHA DEL DÍA en el cuadrante del mes, con el diccionario del conductor: búho azul noche la
-   guardia, autobús rojo la jornada (violeta el día de fuerza), flecha a la cochera el saliente,
-   «F/S» (fuera de servicio) el libre y el autocar las vacaciones */
-const MES_BUS='<svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true"><rect width="13" height="7" rx="2" fill="currentColor"/><rect x="2" y="1.4" width="9" height="2.4" rx=".6" fill="rgba(255,255,255,.6)"/><circle cx="3.5" cy="7.6" r="1.3" fill="var(--bg)"/><circle cx="9.5" cy="7.6" r="1.3" fill="var(--bg)"/></svg>';
 function mesTipoDia(d){if(!d.key)return '';const sh=shiftById(d.shiftId);return d.vac||(sh&&/vacaci/i.test(sh.name||''))?'vac':diaTipo(d.key);}
-/* LAS FICHAS, ESTÁTICAS. Los seis objetos del tablero isométrico dibujados una vez con el kit de /anatomy
-   (design/calendario-propuestas/fichas.mjs → fig/calendario.js) y pintados como <use>: la ficha dice el tipo
-   sola, sin emoji ni texto. Si el dibujo no ha llegado, la ficha de texto de antes. */
-const MES_FICHAS={guardia:['f-guard','guardia','guardia'],trabajo:['f-work','jornada','jornada'],fuerza:['f-gym','día de fuerza','fuerza'],
-  saliente:['f-sal','saliente: vuelta a la cochera','saliente'],vac:['f-vac','vacaciones','vacaciones'],libre:['f-libre','libre: fuera de servicio','libre']};
 function calFigMonta(){
   /* el CSS del kit y los símbolos de las fichas, una vez en el documento */
   if(!window.CalFig||document.getElementById('cf-css'))return;
   const st=document.createElement('style');st.id='cf-css';st.textContent=window.CalFig.css;document.head.appendChild(st);
   const d=document.createElement('div');d.id='cf-syms';d.className='cf';d.setAttribute('aria-hidden','true');   /* con .cf: un <use> se tiñe según dónde está el símbolo original, no dónde se usa (así la piel clara y tus colores llegan a las fichas) */d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.innerHTML=window.CalFig.fichas;document.body.appendChild(d);}
-function mesFichaHTML(t,guard){
-  const F=MES_FICHAS[t];if(!F)return '';
-  const tit=F[1]+(t==='guardia'&&guard?' '+esc(String(guard).toUpperCase()):'');
-  if(!window.CalFig){const TXT={guardia:'☾'+(guard?' '+esc(String(guard).toUpperCase().slice(0,4)):''),trabajo:MES_BUS,fuerza:MES_BUS,saliente:'→⌂',vac:MES_BUS,libre:'F/S'};
-    return '<span class="mficha '+F[0]+'" title="'+tit+'">'+TXT[t]+'</span>';}
-  const sym=t==='guardia'&&String(guard||'').toLowerCase()==='umi'?'guardiaUmi':F[2];
-  return '<span class="mficha cf '+F[0]+'" title="'+tit+'"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym+'"/></svg></span>';}
 /* las horas de siempre no se escriben: la ficha de jornada ya dice «8–15». Solo salen cuando no son las de la jornada de diario */
 /* EL ABONO DEL MES: guardias hechas de las que tocan (taladradas), horas de servicio y findes libres.
    Sale de las mismas cuentas que el resto de Mes; sustituye a la barra de guardias de «Este mes» */
@@ -8485,8 +8003,8 @@ function renderMonth(){
      empieza en el día 1 con huecos vacíos delante, sino una semana entera antes, y acaba una semana
      entera después. Los días de fuera van en su color pero apagados (.fuera), y se pueden tocar
      igual. Las cuentas del mes (guardias, vacaciones, sueño) siguen saliendo de `list`, solo del mes. */
-  const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc),vM=calVista('mes'),isoM=vM==='iso',rutaM=vM==='ruta';
-  calFigMonta();
+  const rejilla=mesRejilla(y,mo,lead),abono=mesAbono(y,mo,list,svc);
+  calFigMonta();   /* el abono del mes se dibuja con el kit */
   rejilla.forEach(function(d){
     /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
        no salen al imprimir: el papel empieza en la semana en la que estás) */
@@ -8518,10 +8036,11 @@ function renderMonth(){
     /* el entreno con SU HORA (la misma que pinta Hoy: la del día de fuerza, al salir del trabajo o la del
        gym); el nombre de la rutina va en el título y al tocar el día */
     const rtDia=d.key?rutinaDeFecha(d.key):null;
+    let gymL='';
     if(d.key){let entD=null;try{entD=entrenoDe(d.key)||(rtDia?{tipo:rutTipo(rtDia)==='agua'?'pisc':'fuerza',rutina:rtDia}:null);}catch(e){entD=null;}
       const shE=shiftById(d.shiftId),esF=!!(shE&&/fuerza|entreno/i.test(shE.name||'')&&gymForzar()[d.key]!==false);
       if(entD||esF){const pisc=!!(entD&&entD.tipo==='pisc'),v=ventanaEntreno(d.key,pisc?'pisc':'fuerza',d.inf),nom=pisc?'piscina':(rtDia?rtDia.nombre:'fuerza');
-        lineas.push('<span class="dline gym" title="'+esc(nom)+' a las '+esc(v.hora)+'">'+(pisc?'🏊 ':'🏋 ')+esc(hCorta(v.hora))+'</span>');}}
+        gymL='<span class="dline gym" title="'+esc(nom)+' a las '+esc(v.hora)+'">'+(pisc?'🏊 ':'🏋 ')+esc(hCorta(v.hora))+'</span>';}}
     /* La casilla mide 53 px de ancho: ahí caben ocho caracteres. Poner el título del evento daba
        «Llegar a», «Vuelo de» —texto que aparenta informar y no informa— y además cada uno se comía
        una línea entera, así que con cuatro eventos la casilla reventaba. Un punto de color por
@@ -8563,17 +8082,18 @@ function renderMonth(){
     if(evLineas||ntLineas)lineas.push(evLineas+ntLineas);
     if(semLinea)lineas.push(semLinea);
     if(marcas.length)lineas.push('<span class="dline marcas">'+marcas.join('')+'</span>');
-    const tipoD=mesTipoDia(d);
-    cells.push('<button class="dbox'+(d.shiftId?' on':' blank')+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
-      ' style="border-top-color:'+(tipoD==='guardia'?calColor('guardia'):(d.color||'var(--line)'))+'" title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
-      '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?' '+MON[d.date.getMonth()]:'')+'</span>'+
+    /* EL DÍA ENTERO DE SU COLOR. «Que no solo salga la línea en rojo, sino el día entero rojo, con un
+       emoticono de peligro, y el número bien grande»: guardia roja con 🚨, saliente oscuro, trabajo marrón,
+       entreno azul, libre verde claro, vacaciones arena (colores suaves, design/mes-colores). El día de
+       trabajo con entreno va marrón con el entreno en una chapa azul: manda lo que te ocupa el día. */
+    const tipoD=mesTipoDia(d)||'libre',colD=tipoD==='fuerza'&&d.jor?'trabajo':tipoD;
+    const etiq=tipoD==='guardia'?'🚨 '+esc(String(d.guard||'guardia').toUpperCase()):tipoD==='saliente'?'saliente':tipoD==='vac'?'🏖️ vacaciones':'';
+    cells.push('<button class="dbox mt-'+colD+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
+      ' title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
+      '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?'<small>'+MON[d.date.getMonth()]+'</small>':'')+'</span>'+
 '</span>'+
-      (d.shiftId||d.vac?mesFichaHTML(tipoD,d.guard):'<span class="dnm">·</span>')+
-      /* El tipo de guardia ya no va apretado en la fila del número —ahí «UMI» salía partido letra a
-         letra, o cortado— sino en su propia línea. La etiqueta «VAC» se ha quitado: el 🏖️ y la
-         palabra debajo ya dicen que son vacaciones, y ocupaba un tercio del ancho de la casilla. */
-
-      lineas.join('')+
+      (etiq?'<span class="dline mtag">'+etiq+'</span>':'')+
+      lineas.join('')+gymL+
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<minS?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<minS?' ⚠':'')+'</span>':'')+
       '</button>');});
@@ -8595,26 +8115,19 @@ function renderMonth(){
         <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
-        <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada ficha" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
-      ${mesCarneHTML(abono,y,mo,svc)}${guardiasR1HTML()}${vacGastadosHTML()}${calVistaBtn('mes')}
-      ${isoM?'<div id="calIsoSlot" class="calisoslot"></div>':rutaM?'<div id="carrSlot" class="carrslot"></div>':`<div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>`}
-      ${ui.mesLey?'<div class="mleyenda">'+mesFichaHTML('guardia','')+' guardia · '+mesFichaHTML('trabajo')+' jornada · '+mesFichaHTML('fuerza')+' fuerza · '+mesFichaHTML('saliente')+' saliente · '+mesFichaHTML('libre')+' libre · '+mesFichaHTML('vac')+' vacaciones · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · las horas de la jornada de diario no se escriben · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
+        <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
+      ${mesCarneHTML(abono,y,mo,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
+      <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
+      ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
    </div>`;
-  /* la carretera del mes: desde hoy si es este mes, desde el día 1 si es otro */
-  if(rutaM){_carrDatos.mes=carreteraDatos(iso(new Date(y,mo,1,12)),new Date(y,mo+1,0).getDate());carrMonta('mes');}   /* siempre el mes natural, del 1 al último */
   /* el aviso de «mantén pulsado» era una caja de 76 px en la pantalla todos los días hasta cerrarla: ahora
      es un aviso que sale una vez y se va solo */
   if(!store.meta.pulsarVisto&&!ui.mesModo&&!ui.mhintDicho&&mhintVigente()){ui.mhintDicho=true;setTimeout(function(){
     /* sale a los 400 ms: si para entonces ya te has ido a otra sección, no sale allí (se veía en Comer) y queda para la próxima vez */
     if(ui.tab==='month')flash('💡 Mantén pulsado un día para cambiar qué es o añadir algo',4500);else ui.mhintDicho=false;},400);}
-  if(isoM){const hoyK=iso(new Date());
-    _calIsoDatos.mes={claro:!document.documentElement.classList.contains('dark'),
-      celdas:rejilla.slice(0,42).map(function(d){const fuera=rejilla.movil?false:d.date.getMonth()!==mo;
-        return {k:d.key,d:d.date.getDate(),tipo:mesTipoDia(d)||'libre',g:d.guard||'',hoy:d.key===hoyK,fuera:fuera};}),
-      abono:abono,pie:'<b>'+abono.hechas+' de '+abono.cupo+'</b> guardias · <b>'+abono.h+' h</b> de servicio · <b>'+abono.findes+'</b> findes libres · toca una baldosa para abrir ese día'};
-    calIsoMonta('mes');}}
+}
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
 const GYM_URL='https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json';
@@ -19828,7 +19341,7 @@ function renderCfg(){
   if(v==='semana')return cfgPantalla('Cómo se arma tu semana',
     semanaConfigHTML()+
     '<div class="card"><h2>Semanas tipo</h2><p class="note">Una tarjeta = una semana tipo. Ten una para <b>1 guardia</b> '+
-      'y otra para <b>2 guardias</b>: en «Semana» eliges cuál se aplica y todo se recalcula.</p>'+pats+
+      'y otra para <b>2 guardias</b>: en «Mi semana» eliges cuál se aplica y todo se recalcula.</p>'+pats+
       '<div class="row" style="margin-top:10px"><button class="btn s" data-a="pat-new">+ semana tipo</button>'+
       '<button class="btn s" data-a="autofill">autocompletar desde mi turno</button></div></div>',
     store.patterns.length+' semanas');
@@ -19871,7 +19384,7 @@ function renderCfg(){
     return cfgPantalla('Rotación por fecha',
     '<div class="card"><p class="note" style="margin:0 0 10px">Si tu calendario es un ciclo de semanas (1G·S → 2G·S·S → libre), '+
       'ordena las semanas del ciclo en «Cómo se arma tu semana» y pon aquí la fecha de un lunes que sepas qué semana era. '+
-      'La app repite el ciclo sola; y si un día se tuerce, lo cambias en «Semana» sin romper la rotación.</p>'+
+      'La app repite el ciclo sola; y si un día se tuerce, lo cambias en el Mes sin romper la rotación.</p>'+
       '<div class="row">'+
         '<label class="fld">lunes de una semana con 1 guardia<input type="date" value="'+esc(r.anchor||'')+'" data-a="rot-anchor"></label>'+
         '<label class="fld" style="flex:0 0 130px">semana del ciclo<input type="number" value="'+(r.index||0)+'" disabled></label>'+
@@ -22740,6 +22253,7 @@ function icsCatsHTML(desde,hasta){
 function renderAjustes(){
   const tm=store.tema||{};
   const v=ui.ajuVista||'';
+  if(v==='rutina')return renderRutina();
   if(v==='calendario'){
     /* «CALENDARIO DEL MÓVIL» OCUPABA 2,7 PANTALLAS (2 519 px, 18 campos) y se leía entero cada vez:
        el paso a paso de Google, cuatro ficheros con once colores cada uno, la suscripción y el
@@ -22816,7 +22330,7 @@ function renderAjustes(){
         <code>IMPORT_TAG</code> y los <code>UID</code> estables son lo que hace que Google actualice en vez de duplicar.</p>
       </details>`));}
   if(v==='sol')return cfgPantalla('\u2600\ufe0f El sol y d\u00f3nde estoy',`<div class="card" data-cfg="sol">
-      <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy» y en «Semana». Se calcula aquí,
+      <p class="note">A qué hora sale y se pone el sol cada día, en «Hoy». Se calcula aquí,
       en el móvil, con la latitud y la longitud: no sale nada a internet y funciona sin cobertura. Las horas salen
       en el reloj de tu móvil y la precisión es de unos minutos.</p>
       ${solHoyHTML()}
@@ -22910,7 +22424,7 @@ function renderAjustes(){
         <select data-a="cal-weekstart"><option value="lun" ${store.rotation.calWeekStart!=='dom'?'selected':''}>Lunes</option>
           <option value="dom" ${store.rotation.calWeekStart==='dom'?'selected':''}>Domingo</option></select></label>
       <p class="note" style="margin-top:12px">Los colores de cada tipo de día: el tren de la guardia, los autobuses, el tejado de la casa y el árbol.
-        Cambian la ficha en «Mes», el tablero isométrico y el mojón de la carretera.</p>
+        Cambian los dibujos, como el mojón de la carretera en Hoy. En «Mes» cada día va pintado entero con su color fijo.</p>
       ${(function(){calFigMonta();const sym={guardia:'guardia',trabajo:'jornada',fuerza:'fuerza',saliente:'saliente',vac:'vacaciones',libre:'libre'};
         return '<div class="colgrid calcol">'+CAL_TIPOS.map(function(c){const mio=esColor((store.calcol||{})[c[0]]);
           return '<label class="fld'+(mio?' mio':'')+'"><span class="cfprev cf"><svg viewBox="0 0 120 108" aria-hidden="true"><use href="#f-'+sym[c[0]]+'"/></svg></span>'+esc(c[1])+
@@ -22983,6 +22497,7 @@ function renderAjustes(){
     grupo('YO',[
       fila('ir-perfil',null,'🧍','Perfil',[pf.alturaCm?pf.alturaCm+' cm':'',pf.pesoKg?fmtKg(pf.pesoKg)+' kg':''].filter(Boolean).join(' · ')||'altura y peso'),
       fila('cfg-vista','horas','🛏️','Horas y sueño','mínimo '+fmt(sc.min)+' h'),
+      fila('aju-vista','rutina','⏰','Mi rutina','por tipo de día'),
       fila('din-sueldo',null,'💶','Tu sueldo',fmtMil(nominaMedia())+' € de media'),
       '<button class="ali" data-a="perf-celiaco" role="switch" aria-checked="'+esCeliaco()+'"><span class="e">🌾</span><b>Sin gluten</b>'+
         '<span class="asw'+(esCeliaco()?' on':'')+'"></span></button>',
@@ -23123,9 +22638,9 @@ ${pat||'—'}`;
   $('#applyBtn').disabled=false;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['week','Semana'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','4:20'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
-const CAL_SET=new Set(['hoy','week','month']);
-const CAL_MODES=[['month','Mes'],['week','Semana'],['hoy','Hoy']];
+const TABS=[['hoy','Hoy'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','4:20'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const CAL_SET=new Set(['hoy','month']);
+const CAL_MODES=[['month','Mes'],['hoy','Hoy']];
 /* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
    se nombraban entre ellos, aunque el código ya los encadena (el menú manda en las tandas y las
    tandas mandan en la compra). Son una sola sección con cuatro modos, como Calendario. */
@@ -23342,6 +22857,8 @@ window.addEventListener('popstate',function(){
   ui._navPushes=Math.max(0,(ui._navPushes||0)-1);
   navAtras(true);});
 function renderNow(){
+  /* «Semana» ya no existe («ni la uso»): quien llegue a ella (un enlace viejo, la última pestaña guardada) cae en Mes */
+  if(ui.tab==='week')ui.tab='month';
   try{document.body.dataset.tab=ui.tab;}catch(e0){}   /* para reglas de estilo por pestaña (44 px en Entreno) */
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
   /* los platos de texto pasan a llevar alimentos (una vez por plato): de ahí salen sus macros y la compra */
@@ -23379,17 +22896,14 @@ function renderNow(){
     ? `${weekDate.getDate()} ${MON[weekDate.getMonth()]} – ${d.getDate()} ${MON[d.getMonth()]}`
     : `plantilla · ${esc(store.patterns[store.rotation.pattern]?store.patterns[store.rotation.pattern].name:'—')}`;
   if(ui.tab==='month')$('#wkLabel').textContent=mlbl;
-  if(ui.tab==='week'&&store.rotation.mode==='date'){const a0=semDesde(),b0=addDays(a0,semDias()-1);
-    $('#wkLabel').textContent=a0.getDate()+' '+MON[a0.getMonth()]+' – '+b0.getDate()+' '+MON[b0.getMonth()];}
   if(ui.tab==='hoy'){const dh=parseDate(fechaHoy())||new Date();
     $('#wkLabel').textContent=DIA3[dh.getDay()]+' '+dh.getDate()+' '+MON[dh.getMonth()]+(ui.diaHoy?'':' · hoy');}
-  /* las flechas ‹ › solo tienen un efecto real en Mes (mueven el mes) o en Semana+«por fecha» (mueven la semana);
+  /* las flechas ‹ › solo tienen un efecto real en Mes (mueven el mes) y en Hoy (mueven el día);
      en cualquier otro caso (Hoy, Semana en plantilla, Entreno, Compra, cajón) se ocultan para no cambiar una fecha oculta sin avisar */
   const wkNav=$('#wkNav');
   if(wkNav){
-    const modoFecha=store.rotation.mode==='date';
-    wkNav.hidden=!(ui.tab==='month'||ui.tab==='hoy'||(ui.tab==='week'&&modoFecha));
-    const lbl=ui.tab==='month'?'mes':ui.tab==='hoy'?'día':'semana';
+    wkNav.hidden=!(ui.tab==='month'||ui.tab==='hoy');
+    const lbl=ui.tab==='month'?'mes':'día';
     const bPrev=document.querySelector('[data-a="wk-prev"]'),bNext=document.querySelector('[data-a="wk-next"]');
     if(bPrev){bPrev.title=lbl+' anterior';bPrev.setAttribute('aria-label',bPrev.title);}
     if(bNext){bNext.title=lbl+' siguiente';bNext.setAttribute('aria-label',bNext.title);}
@@ -23398,7 +22912,7 @@ function renderNow(){
     /* reiniciar la animación sin forzar un reflow síncrono (antes: void mm.offsetWidth) */
     requestAnimationFrame(function(){mm.classList.add('in');});}
   pintaBotonTema();
-  ({hoy:renderHoy,week:renderWeek,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,consumo:renderConsumo,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
+  ({hoy:renderHoy,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,consumo:renderConsumo,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
   if(hayVersionNueva()){const mn=$('#main');
@@ -23581,10 +23095,6 @@ function editMeal(id,opts){
      if(!store.meals.some(x=>x.id===o.id))store.meals.push(o);
      else Object.assign(mealById(o.id),o);
      draftMeal=null;});
-}
-function editRules(){
-  openModal('Reglas de oro (una por línea)','<textarea rows="12" data-k="rules">'+esc(store.rules.join('\n'))+'</textarea>',
-   ()=>{const v=fields();store.rules=String(v.rules||'').split('\n').map(x=>x.trim()).filter(Boolean);});
 }
 function editBatch(id){
   const b=batchById(id);if(!b)return;
@@ -24046,17 +23556,14 @@ function act(a,el){
       closeDrawer();render();window.scrollTo(0,0);break;
     case 'theme':ponModo(!document.documentElement.classList.contains('dark'));break;
     case 'wk-prev':case 'wk-next':{
-      /* en Mes mueven el mes, en «Hoy» el día y en Semana+por fecha la semana */
+      /* en Mes mueven el mes y en «Hoy» el día */
       if(ui.tab==='month'){monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+(a==='wk-next'?1:-1),1,12,0,0,0);}
       else if(ui.tab==='hoy'){moverDiaHoy(a==='wk-next'?1:-1);}
-      else if(store.rotation.mode==='date'){moverSemana((a==='wk-next'?1:-1)*semDias());}
-      else{weekDate=addDays(weekDate,a==='wk-next'?7:-7);}
       render();break;}
-    case 'sem-ayer':ui.semAyer=!ui.semAyer;render();break;
     case 'dia-prev':moverDiaHoy(-1);render();break;
     case 'dia-next':moverDiaHoy(1);render();break;
     case 'dia-hoy':ui.diaHoy='';render();break;
-    case 'today':weekDate=mondayOf(new Date());ui.semDesde='';render();break;
+    case 'today':weekDate=mondayOf(new Date());render();break;
     case 'print':imprimir();break;
     case 'mode-template':store.rotation.mode='template';save();render();break;
     case 'mode-date':store.rotation.mode='date';save();render();break;
@@ -24461,10 +23968,6 @@ function act(a,el){
       ev.salta=(ev.salta||[]).concat([el.dataset.k]);save();flash('«'+(ev.titulo||'evento')+'» quitado solo ese día');render();break;}
     case 'ev-noguardia':{const ev=eventosS().filter(function(x){return x.id===el.dataset.id;})[0];if(!ev)break;
       ev.noGuardia=true;save();flash('«'+(ev.titulo||'evento')+'» ya no sale los días de guardia');render();break;}
-    case 'sem-vista':ui.semVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
-    case 'sem-sel':ui.semSel=el.dataset.k||'';render();break;
-    case 'cal-vista':{const w=el.dataset.w==='mes'?'mes':'sem',v=el.dataset.v==='iso'?'iso':(el.dataset.v==='ruta'&&w==='mes'?'ruta':'plana');ui[w==='sem'?'semV':'mesV']=v;if(w==='sem')ui.semVista='';
-      try{localStorage.setItem(w==='sem'?SEMV_KEY:MESV_KEY,v);}catch(e){}render();break;}
     case 'hab-preset':{const p=HAB_PRESETS[+el.dataset.i];if(!p)break;
       const fase=habEnMarcha().length>=3?'espera':'marcha';
       habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
@@ -24940,7 +24443,6 @@ function act(a,el){
       break;}
     /* de Mes a donde se configuran los tipos de guardia y el ciclo, que ya no se repiten en Mes */
     case 'ir-rotacion':ui.mesHoja=false;irACard('cfg','rotaciones');break;
-    case 'franja-cfg':irACard('ajustes','franja');break;
     case 'sn-abrir':ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';ui.snTab=el.dataset.v||'';if(el.dataset.aj)ui.snAj=el.dataset.aj;render();window.scrollTo(0,0);break;
     case 'sn-banco':ui.snBanco=relojSrc(false);if(!ui.snBanco){flash('Apunta cómo dormiste para ver tu reloj');break;}render();break;
     case 'sn-avisa3':{const G=el.dataset.v;if(!G)break;
@@ -25277,10 +24779,6 @@ function act(a,el){
       flash(r.msg);render();break;}
     case 'nota-desenlaza':{flash(desenlazaNota(el.dataset.id));render();break;}
     case 'ir-eventos':ui.mesHoja=false;ui.tab='eventos';ui.evVista='';ui.evForm=null;render();window.scrollTo(0,0);break;
-    case 'ir-semana-cfg':
-      /* Turno y rotación ya no es una pantalla única: la tarjeta de la semana vive en su vista, así
-         que el atajo tiene que abrirla antes de ir a buscarla */
-      ui.cfgVista='semana';irACard('cfg','semana');break;
     case 'ir-sol':ui.solHoja='';irACard('ajustes','sol');break;
     case 'usda-probar':usdaProbar();break;
     case 'usda-guia':ui.usdaGuia=!ui.usdaGuia;render();break;
@@ -25495,15 +24993,9 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
       if(a==='day-quickbf'&&!sh){const dd=weekDays()[+el.dataset.i];sh=dd&&dd.shiftId;}
       if(!sh){flash('ese día aún no tiene tipo asignado');break;}
       flash(quickBreakfast(sh,null));save();render();break;}
-    case 'day-open':{const k=el.dataset.key;if(ui.openDays.has(k))ui.openDays.delete(k);else ui.openDays.add(k);
-      render();
-      const nx=document.querySelector('[data-a="day-open"][data-key="'+CSS.escape(k)+'"]');if(nx)nx.focus();break;}
     case 'toggle-picker':{const k=el.dataset.id;if(ui.openPickers.has(k))ui.openPickers.delete(k);else ui.openPickers.add(k);
       render();
       const nx=document.querySelector('[data-a="toggle-picker"][data-id="'+CSS.escape(k)+'"]');if(nx)nx.focus();break;}
-    case 'wk-expand-all':{if(allOpen())ui.openDays=new Set();
-      else ui.openDays=new Set(semanaVentana().map(function(d){return d.key||('tpl'+d.idx);}));render();break;}
-    case 'rules':editRules();break;
     case 'txt':$('#txtOut').value=toText();break;
     case 'txtcopy':copy($('#txtOut').value||toText());break;
     case 'day-edit':{if(!id)break;ui.tab='types';ui.typesVista=id;render();
@@ -25632,16 +25124,14 @@ function imprimir(){
      semana sin una sola comida, porque los siete días están cerrados por defecto. Así que antes de
      imprimir se abre todo, y al terminar se deja exactamente como estaba. */
   if(_imprimiendo)return;
-  _imprimiendo={openDays:new Set(ui.openDays),compraCerradas:new Set(ui.compraCerradas),
+  _imprimiendo={compraCerradas:new Set(ui.compraCerradas),
     compraAbiertas:new Set(ui.compraAbiertas||[]),compraSalida:ui.compraSalida,
-    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel,mesV:ui.mesV};
+    tandaAbierta:ui.tandaAbierta,microAbierto:ui.microAbierto,detalles:[],soloMes:false,monSel:ui.monSel};
   /* imprimir el Mes es para colgarlo en la pared: sale la cuadrícula sola, a toda la hoja y por
      una cara. Los KPI, las vacaciones, la agenda y los botones no pintan nada ahí colgados. */
   if(ui.tab==='month'){_imprimiendo.soloMes=true;
     ui.monSel=null;   /* el panel del día abierto se colaba en medio del calendario */
-    ui.mesV='plana';  /* a la pared va la cuadrícula aunque estés mirando el tablero isométrico */
     document.documentElement.classList.add('imp-mes');}
-  try{ui.openDays=new Set(semanaVentana().map(function(d){return d.key||('tpl'+d.idx);}));}catch(e){}
   ui.compraCerradas=new Set();
   /* y la lista entera de las DOS salidas: si te la llevas en papel, la del súper y la de la
      frutería van en la misma hoja */
@@ -25658,10 +25148,10 @@ function imprimir(){
   const restaurar=function(){
     const a=_imprimiendo;if(!a)return;_imprimiendo=null;
     a.detalles.forEach(function(d){if(d&&d.isConnected)d.open=false;});
-    ui.openDays=a.openDays;ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
+    ui.compraCerradas=a.compraCerradas;ui.compraAbiertas=a.compraAbiertas;
     ui.compraSalida=a.compraSalida;
     ui.tandaAbierta=a.tandaAbierta;ui.microAbierto=a.microAbierto;
-    if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;ui.mesV=a.mesV;}
+    if(a.soloMes){document.documentElement.classList.remove('imp-mes');ui.monSel=a.monSel;}
     window.removeEventListener('afterprint',restaurar);
     render();};
   window.addEventListener('afterprint',restaurar);
@@ -26799,6 +26289,8 @@ document.addEventListener('keydown',e=>{
   if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];if(CAL_SET.has(tb[0]))ui.calMode=tb[0];render();
     const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]')||document.querySelector('#calModes button[data-t="'+tb[0]+'"]');
     if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'center'});}return;}
+  /* la carretera de «Lo que viene» usa las flechas para avanzar (y lo marca con preventDefault): ahí no se cambia de día */
+  if((k==='ArrowRight'||k==='ArrowLeft')&&e.defaultPrevented)return;
   if(k==='ArrowRight'||k==='ArrowLeft'){const nav=$('#wkNav');if(nav&&nav.hidden)return;
     const b=document.querySelector('[data-a="'+(k==='ArrowRight'?'wk-next':'wk-prev')+'"]');
     if(b)b.click();return;}
@@ -27014,8 +26506,6 @@ document.addEventListener('change',e=>{
       else if(k==='nombre')h.nombre=String(el.value||'').trim().slice(0,30)||'Hucha';
       else h.meta=String(el.value||'').trim().slice(0,60);
       save();render();break;}
-    case 'wk-set':{const d=parseDate(el.value);if(d){weekDate=mondayOf(d);
-      ui.semDesde=iso(d)===iso(new Date())?'':iso(d);render();}break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
     case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
     case 'manana-real':{const k=el.dataset.key;if(!store.manana)store.manana={};const x=store.manana[k]=store.manana[k]||{};
@@ -27142,10 +26632,6 @@ document.addEventListener('change',e=>{
     case 'est-dias':{flash(setEstDias(el.dataset.n,el.value));render();break;}
     /* el color que tienes puesto en Google para cada calendario: <select>, así que aquí */
     case 'ics-color':{flash(setIcsColor(el.dataset.g||'',el.value));render();break;}
-    /* cuántos días enseña «Semana»: es un <select>, así que va AQUÍ. En act() no se dispararía */
-    case 'sem-dias-sel':{const v=+el.value||7;
-      if(SEM_DIAS.indexOf(v)>=0){store.rotation.semanaDias=v;save();render();}
-      break;}
     /* la dirección y el token del buzón de calendario: <input>, así que aquí */
     case 'calsync-f':{const c=calSyncCfg(),f=el.dataset.f;
       if(f==='url'){const u=String(el.value||'').trim();
@@ -27328,7 +26814,6 @@ document.addEventListener('change',e=>{
     case 'meta-notes':store.meta.notes=el.value;save();break;
   }
 });
-window.addEventListener('beforeprint',()=>{if(ui.tab!=='week')return;});
 document.addEventListener('visibilitychange',function(){
   /* el móvil se bloquea o se cambia de app a media lectura: apaga la cámara en vez de dejarla
      grabando en segundo plano sin que se vea (gasto de batería y de privacidad para nada) */
@@ -27502,13 +26987,13 @@ window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,man
   progresionDe,esEjercicioDeAbajo,esRecord,     
   informeSesion,esfuerzoTxt,diaCumplido,descansoCfg,arrancaDescanso,RPE_PAL,
   saltoDia,saltoDiaTxt,aplicarTema,avisoBackupD,renderAjustes,
-  TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaAltoSem,franjaVentana,timelineBar,franjaLeyendaHTML,
+  TLCAT,TLKEYS,tlColor,tlHoras,franjaAlto,franjaVentana,timelineBar,
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,secsOrdenadas,moverSeccion,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despClave,neveraSync,
   hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
-  bloquesDelDia,rangoCarril,carrilHTML,carrilSemanaHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
+  bloquesDelDia,rangoCarril,carrilHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,
   calSyncCfg,calSyncURL,calSyncPendiente,calSyncSubir,buzonNuevo,calSyncAuto,calSyncPide,calSyncAhoraSiToca,icsColorChoca,
   ticketLeer,ticketNombre,ticketAplicar,ticketSano,

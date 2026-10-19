@@ -1115,3 +1115,35 @@ solo sale lo que se puede probar que no casa con nada.
 **Supuestos.** Una clase CSS está viva si su nombre aparece entero en `app.js`, `index.html`, `sw.js` o `fig/`;
 las que se componen al vuelo (`'t-'+tipo`, `'ev'+nivel`) se comprobaron a mano y se quedan. Un selector dentro
 de `:is()`, `:where()`, `:not()` o `:has()` no se toca aunque lleve una clase muerta.
+
+## El Mes con el día entero de su color, y sin «Semana» (2026-10-19)
+
+**Elegido.** Lo primero de la versión 3.0. Con maquetas (`design/mes-colores/`), variante **B · colores suaves**:
+- Cada casilla del Mes va **entera** del color de lo que toca: guardia rojo suave con un borde rojo fuerte y
+  «🚨 UMI/URG», saliente gris oscuro (con el número en blanco), trabajo marrón, entreno azul, libre verde claro y
+  vacaciones arena. El número del día pasa de 11–13 px a **24 px** y en negro. El día de trabajo con entreno va
+  marrón con el entreno en una chapa azul. Los eventos, en chapas blancas legibles sobre cualquier color. La
+  leyenda del «?» enseña los seis colores. Las fichas dibujadas (el «coche rojo») salen de la casilla.
+- **Fuera la vista Semana** («ni la uso»): Calendario se queda en Mes · Hoy. Quien llegue a ella (un enlace
+  viejo, la última pestaña guardada) cae en Mes. Lo único suyo que no estaba en otro sitio, **«Mi rutina» por
+  tipo de día, pasa a Ajustes → YO**.
+- **Fuera las vistas Isométrica y Carretera del Mes** (elegido por ti al quitar Semana): el Mes es la cuadrícula.
+  La carretera sigue en Hoy («Lo que viene»). Se borra `fig/calendario-iso.js`.
+- Limpieza de lo que solo usaban esas vistas: unas 35 funciones y constantes (renderWeek, el tablón, la
+  cochera…), 11 acciones sin botón y 184 reglas de CSS. `app.js` 27 595 → 27 080 líneas; `styles.css` 3 838 → 3 719.
+- De paso, un fallo pequeño: con el teclado, la flecha sobre la carretera de «Lo que viene» cambiaba de día en
+  vez de avanzar la carretera.
+- Prueba encadenada 321 (Calendario solo con Mes y Hoy → tocar un día → «✏️ editar» → guardia → la casilla entera
+  de guardia con 🚨 y número ≥ 22 px y el día siguiente saliente → volver a Trabajo → la rutina desde Ajustes). Con
+  los colores quitados caen 2 de sus 4 comprobaciones. Las pruebas de Semana y de las vistas quitadas se retiran
+  o se pasan a Mes/Hoy.
+
+**Descartado.** Variante A (colores llenos): más chillona, sobre todo de noche. Dejar Isométrica y Carretera con
+la cuadrícula de colores. Hacer que los colores del Mes sigan los de Ajustes → Calendario (esos tiñen los
+dibujos): pediste colores concretos para cada tipo.
+
+**Supuestos.** Saliente = gris oscuro con el número en blanco (en negro no se leería). Vacaciones en arena (no
+lo dijiste). El día de trabajo con entreno manda el trabajo (marrón) y el entreno va en su chapa azul. Las
+«Reglas de oro», que solo se editaban desde Semana, se quedan guardadas y salen en «Exportar en texto», pero ya
+no se editan desde la app. El selector de mes sale en inglés solo en el navegador de pruebas: en tu móvil en
+español sale en español.

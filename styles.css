@@ -280,17 +280,6 @@ html:not(.dark) .slot .st{color:var(--ink2)}
   background:color-mix(in srgb,var(--brand) 20%,transparent);border:1px solid color-mix(in srgb,var(--brand) 32%,transparent);color:inherit}
 nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .daylist{display:grid;gap:6px}
-.drow{background:color-mix(in srgb,var(--card) 86%,transparent);border:1px solid var(--line);border-left:3px solid color-mix(in srgb,var(--brand) 30%,var(--line));
-  border-radius:12px;padding:7px 11px;box-shadow:var(--shadow);transition:border-color .18s,background .18s}
-.drow.open{border-left-color:var(--brand);background:color-mix(in srgb,var(--card) 96%,transparent);box-shadow:var(--glow)}
-.drow.today{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));border-left-color:var(--brand);
-  background:color-mix(in srgb,var(--brand) 10%,var(--card));
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 26%,transparent),0 14px 34px -20px color-mix(in srgb,var(--brand) 60%,transparent)}
-.drmain{display:flex;gap:9px;align-items:center;flex-wrap:wrap;cursor:pointer;padding:7px 0;border-radius:6px}
-.drmain:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-.drday{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);min-width:76px}
-.drtag{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700}
-.drdet{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
 .meal.compact{padding:5px 0;font-size:12.5px}
 .meal.next{background:color-mix(in srgb,var(--brand) 8%,transparent);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
 /* sin huecos entre columnas: las casillas comparten borde y se gana ancho para el texto */
@@ -307,7 +296,6 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
   color:var(--ink);font:inherit;text-align:left;overflow:hidden}
 .dbox:hover{background:color-mix(in srgb,var(--brand) 12%,var(--card));box-shadow:var(--glow)}
 .dbox.on{background:color-mix(in srgb,var(--card) 94%,transparent)}
-.dbox.blank{opacity:.5}
 .dbox.off{opacity:.35}
 .dbox.today{outline:2px solid var(--brand);outline-offset:-2px;box-shadow:var(--glow);z-index:1}
 .dbox.sel{border-top-color:var(--brand2)!important;outline:2px solid var(--brand2);outline-offset:-2px;z-index:1}
@@ -327,7 +315,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
      que sirve el sitio en un móvil — no en dejar la casilla medio vacía con letra de 8,5 px. */
   .dbox .dnum{font-size:13px}
   .dbox .dic{font-size:12px}
-  .dbox .dnm{font-size:11px;font-weight:800}
+  
   .dbox .dline{font-size:10px}
   .dbox .dev{font-size:9.5px;letter-spacing:-.01em}
   
@@ -455,8 +443,6 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 /* un KPI que se puede tocar para ir a donde se cambia ese número */
 /* cocina de la semana: cada plato como una ficha con su icono grande, en vez de una línea de texto
    con los nombres separados por puntos */
-.cocblq{border-top:1px dashed var(--line);padding:10px 0}
-.cocblq:first-of-type{border-top:none}
 .platos{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:9px}
 .plato{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;
   border:1px solid var(--line);border-radius:11px;padding:8px 9px;
@@ -471,8 +457,6 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 /* UNA LÍNEA. Partido, «Vacaciones» salía como «Vacacion / es» y se llevaba dos renglones de una
    casilla en la que cada renglón vale. Recortado con puntos suspensivos ocupa uno, y el nombre
    entero está en el title y al tocar el día. */
-.dnm{font-size:11.5px;font-weight:700;line-height:1.2;overflow:hidden;
-  white-space:nowrap;text-overflow:ellipsis}
 /* una línea por cosa del día: jornada, entreno, evento… cortas y con su color */
 .dline{display:flex;align-items:center;gap:3px;min-width:0;font-size:9.5px;font-weight:700;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
@@ -670,7 +654,7 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
 
   /* 4 · lo que se imprime en color porque el color ES el dato */
   .tl-bar,.tl-bar *,.dbox,.prog .bar,.prog .bar i,.fbar,.fbar i,.micbar,.micbar i,
-  .evdot,.agdot,.estfila .niv,.cats span i,.tag,.linea .box,.ring,.arco,
+  .evdot,.agdot,.estfila .niv,.cats span i,.tag,.linea .box,.arco,
   .arco *,.tl-seg,.tl-dot{
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   /* la noche de la franja era casi negra: en papel, una banda gris que deja leer lo de debajo */
@@ -685,8 +669,8 @@ kbd{font:inherit;font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:
   .card::before,.scanbox::before,.scanbox::after{display:none!important}
 
   /* 6 · cajas legibles: blancas con borde, no la tarjeta oscura con letra oscura */
-  .card,.day,.drow,.tarj,.dbox{break-inside:avoid;page-break-inside:avoid;background:#fff}
-  .card,.day,.drow,.tarj{border:1px solid #bbb;box-shadow:none}
+  .card,.day,.tarj,.dbox{break-inside:avoid;page-break-inside:avoid;background:#fff}
+  .card,.day,.tarj{border:1px solid #bbb;box-shadow:none}
   .kpis div,.dosdatos div,.tot div,.guarda div{background:#fff;border:1px solid #bbb}
   .kpis div b,.dosdatos div b,.tot div b{color:#000}
   .daylist{grid-template-columns:repeat(2,1fr)}
@@ -1134,10 +1118,10 @@ ul.slots{list-style:none;margin:0;padding:0}
   html.imp-mes .cal{margin-top:0;height:86vh;break-inside:auto;page-break-inside:auto;
     grid-auto-rows:minmax(0,1fr)}
   html.imp-mes .dbox{min-height:0;overflow:hidden}
-  html.imp-mes .abono,html.imp-mes .carne,html.imp-mes .mleyenda,html.imp-mes .mesv,html.imp-mes .calisoslot,html.imp-mes .carrslot{display:none!important}
+  html.imp-mes .abono,html.imp-mes .carne,html.imp-mes .mleyenda,html.imp-mes .carrslot{display:none!important}
   html.imp-mes .dbox .dsl{display:none}   /* las horas de sueño no se cuelgan en la pared */
   html.imp-mes .dnum{font-size:12px}
-  html.imp-mes .dnm{font-size:11px}
+  
   html.imp-mes .dline{font-size:10px}
 }
 
@@ -1145,39 +1129,16 @@ ul.slots{list-style:none;margin:0;padding:0}
    Igual que la fila de Mes y la de Hoy, pero SIN tarjeta: «Semana empieza por los días» está
    decidido y medido (menos de 60 px por delante del primer día). Con el relleno de una .card eran
    106 px y los siete días se salían de la primera pantalla. */
-.semnav{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0;margin-bottom:-6px}
 /* «ver 5 7 10 14 días» comparte fila con el rango; en el móvil cae a la segunda, pero sin la
    tarjeta de leyenda que había debajo son ~60 px menos antes de la semana */
-select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weight:700;
-  border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-.semlupa{flex:none;position:relative}
 /* la leyenda del ⓘ se abre como un globo bajo el botón, no dentro de una columna de 29 px de la que
    se salía «colores y horas ▸» hasta el píxel 492 */
-.semlupa>.tlleg{position:absolute;right:0;top:calc(100% + 6px);z-index:6;width:min(300px,calc(100vw - 32px));margin:0;
-  padding:9px 11px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.semlupa>summary{list-style:none;cursor:pointer;padding:0 4px}
-.semlupa>summary::-webkit-details-marker{display:none}
-.semnav .btn{min-height:34px;padding:4px 10px;flex:none}
-.semnav input[type=date]{flex:1 1 auto;min-width:0;height:34px;padding:2px 8px;font-size:13px}
 /* la pastilla del rango medía 70 px de alto para repetir lo que ya pone la barra de arriba */
-.semnav .semrango{min-height:34px;padding:4px 8px}
-.semnav .semrango>span{font-size:12.5px}
-.semnav .mini{flex:none;white-space:nowrap}
 
 /* ============ «Semana»: lo que vas a hacer ese día ============
    Una línea de etiquetas debajo de la franja, antes que nada de comer. Cada cosa con su color, el
    mismo que ya usa la franja de 24 h: trabajo ámbar, guardia rojo, entreno cian, eventos violeta.
    Se entra a «Semana» a ver qué toca, no a leer el menú. */
-.drplan{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.drplan .pl{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
-  padding:2px 8px;border-radius:999px;border:1px solid var(--line);
-  background:color-mix(in srgb,var(--card) 70%,var(--bg));color:var(--ink2);white-space:nowrap;max-width:100%;
-  overflow:hidden;text-overflow:ellipsis}
-.drplan .pl.trab{color:var(--ink);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
-.drplan .pl.gym{color:var(--brand);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
-.drplan .pl.evt{color:var(--brand2);border-color:color-mix(in srgb,var(--brand2) 40%,var(--line))}
-.drplan .pl.est{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
-.drplan .pl.com{color:var(--ink2)}
 
 /* ===== Entreno · la portada que hace cosas =====================================================
    La tira de la semana, el descanso por grupo muscular y el aviso con botón. Va al final del
@@ -1303,25 +1264,6 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
    Desde hoy los días que elijas (5/7/10/14), ayer plegado encima, el eje y la leyenda una sola vez,
    la franja más alta con el nombre dentro de cada bloque, y debajo el sueño, las comidas con su hora
    y lo que tiene hora de empezar y acabar. */
-.semrango{position:relative;flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;
-  background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:800;font-size:13px;
-  white-space:nowrap;overflow:hidden;cursor:pointer}
-.semrango span{overflow:hidden;text-overflow:ellipsis}
-.semrango input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
-.semopc{display:flex;gap:5px;align-items:center;margin-top:6px}
-.dayer{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;
-  background:color-mix(in srgb,var(--card) 70%,transparent);border:1px solid var(--line);border-left:3px solid var(--line);
-  border-radius:12px;padding:7px 10px;opacity:.7;margin-bottom:8px}
-.dayer .mini{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.drow .drh{font-weight:800}
-.drcom{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:6px}
-.drcom .pl.com{background:none;border:0;padding:0;font-size:12.5px;color:var(--ink2);font-weight:700}
-.drcom .pl.com b{color:var(--ink);font-variant-numeric:tabular-nums}
-.drev{display:flex;gap:8px;align-items:center;margin-top:5px;font-size:12.5px;min-width:0}
-.drev>i{width:3px;align-self:stretch;min-height:16px;border-radius:2px;flex:none}
-.drev .h{font-weight:800;font-variant-numeric:tabular-nums;min-width:78px;flex:none}
-.drev .pl{background:none;border:0;padding:0;font-size:12.5px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.drplan{display:block}
 /* la franja grande: más alta, con el nombre dentro, comidas como rayas y eventos como tira de abajo */
 .tl-wrap.grande .tl-bar{height:26px;border-radius:7px}
 .tl-wrap.grande .tl-seg{display:flex;align-items:center;overflow:hidden}
@@ -1331,12 +1273,7 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .tl-wrap.grande .tl-dot.meal{top:0;bottom:0;height:auto;width:3px;border:0;border-radius:0;transform:translateX(-1px)}
 .tl-wrap.grande .tl-dot.evt{top:auto;bottom:0}
 .drsol{margin-top:6px}
-.semcab{display:flex;flex-direction:column;gap:0;min-width:0}
-.semcab .semnav{margin-bottom:0}
-.drev .pl.pl{color:var(--ink)}
 .tl-wrap.grande .tl-dot.meal{width:2px;opacity:.85}
-.drow .drsol{row-gap:2px;column-gap:10px}
-.daylist .dayer{margin-bottom:0}
 
 /* ============ «Hoy» (maqueta aprobada): ahora/siguiente y la agenda del día por horas ============ */
 .hoyest{font-size:16px;font-weight:800;margin-top:6px;line-height:1.25}
@@ -1598,28 +1535,10 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
 .icsgf .btn{flex:0 0 auto}
 /* la cocina en Semana: solo cuándo toca ponerse. El detalle —pasos, tápers, lo que sobra— vive
    entero en Comer → Cocina, y repetirlo aquí costaba 999 px de la vista de la semana */
-.cocmini{display:flex;flex-direction:column;gap:6px}
-.cocm{padding:8px 10px;border:1px solid var(--line);border-radius:11px;
-  background:color-mix(in srgb,var(--bg2) 55%,transparent)}
-.cocmh{display:flex;align-items:baseline;gap:9px;border:0;background:transparent;cursor:pointer;
-  color:var(--ink);font:inherit;text-align:left;width:100%;padding:0}
-.cocmh:hover b{color:var(--brand)}
-.cocmh b{font-size:13px;font-weight:700}
-.cocmh span{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap}
 /* los platos, como fichas en una línea que envuelve: se ve QUÉ se cocina sin las tarjetas de
    antes, que costaban 999 px en la vista de la semana */
-.cocm .platos{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.cocm .plato{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;
-  background:var(--bg);border:1px solid var(--line);max-width:100%}
-.cocm .plato .pic{font-size:12px;line-height:1}
-.cocm .plato b{font-size:10.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cocm .plato .mini{font-size:9.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
-.cocm .plato .tag{font-size:9px;padding:1px 4px}
 /* el sueño, el sol y las comidas de un día de la semana, en una sola fila que envuelve: era la
    misma información en tres renglones, y con siete días eso son tres pantallas de scroll */
-.drlinea{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;padding:4px 10px 6px}
-.drlinea .drsol{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:0}
-.drlinea .drcom{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;padding:0;margin:0}
 
 /* ============ la semana, en pantalla y pico ============ */
 /* LAS HORAS DE DORMIR, sombreadas en la columna de cada día de la rejilla. `.tl-noche` nació para
@@ -1630,32 +1549,18 @@ select.semopc{flex:0 0 auto;height:34px;padding:2px 6px;font-size:12px;font-weig
   border-top:1px solid color-mix(in srgb,var(--c,#7c5cff) 34%,transparent)}
 /* el sol de la semana, UNA vez en la cabecera: sale y se pone casi a la misma hora los siete días,
    así que repetirlo en cada fila costaba un renglón por día y no decía nada nuevo */
-.solsem{display:inline-flex;align-items:center;gap:9px;flex:0 0 auto;margin-left:auto}
-.solsem .pie{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
-  white-space:nowrap;color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
 /* las sesiones de cocina, plegadas: cuándo toca ponerse siempre a la vista y los platos al abrir.
    Las fichas de los platos de las tres sesiones costaban 512 px de la vista de la semana, y el
    detalle —pasos, tápers, lo que sobra— vive entero en Comer → Cocina. */
-details.cocm>summary.cocmh{list-style:none;display:flex;align-items:baseline;gap:9px;cursor:pointer}
-details.cocm>summary.cocmh::-webkit-details-marker{display:none}
-details.cocm>summary.cocmh::after{content:'▾';font-size:10px;color:var(--ink2);margin-left:4px}
-details.cocm[open]>summary.cocmh::after{content:'▴'}
 /* el sueño de un día de la semana va en UNA pastilla, así que la fila entra en un renglón */
-.drlinea .drsol .pie.sue{white-space:nowrap}
-.drlinea .drsol .pie.sue.rec{white-space:normal}
 /* la fila de un día tiene que entrar en UN renglón a 412 px: con el sueño en una pastilla, las
    cuatro horas de comer sumaban 382 px en una caja de 370 y envolvía. Un punto menos de letra en
    las horas de comer y menos hueco entre pastillas y cabe, que es lo que ahorra 23 px por día. */
-.drlinea .drcom .pl.com{font-size:11.5px}
-.drlinea{column-gap:4px;padding-left:8px;padding-right:8px}
-.drlinea .drcom{gap:4px}
 /* el ✓ de apuntar una toma, a la derecha de la fila: cuatro botones de ancho completo debajo de
    cada comida costaban 140 px de «Hoy» y dejaban la cena fuera de la primera pantalla */
 .meal{grid-template-columns:46px 1fr auto}
 /* el sol de la semana va en el título de la propia rejilla: si envuelve a un segundo renglón
    empuja la rejilla fuera de la primera pantalla, que es justo lo que se estaba arreglando */
-.card h2 .solsem{gap:7px}
-.card h2 .solsem .pie{font-size:10px;line-height:1.1}
 
 /* ============ Cocina: el plato con alimentos (maqueta aprobada) ============ */
 .platomac{display:flex;gap:6px}
@@ -2230,8 +2135,6 @@ html.hoja-abierta #flash{bottom:auto!important;top:calc(14px + env(safe-area-ins
 /* la nota del día en la casilla es una línea como los eventos: sin el relleno ni la raya de la libreta (.nota) */
 .dbox .dev.nota{padding:0;border-top:0;gap:2px;align-items:center}
 .dbox .dev.nota .n{color:color-mix(in srgb,var(--warn) 80%,var(--ink))}
-.drev.nota i{background:var(--warn)}
-.drplan .pl.nota{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
 
 /* ============ Dinero v2: el mes de un vistazo, la hoja y las huchas ============ */
 .dinv2 .cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
@@ -2912,26 +2815,12 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 @media (prefers-reduced-motion:reduce){.hoyreloj .arc,.hoyreloj .mk{transition:none}}
 .hoychoque{margin:8px 0;padding:11px 12px;border-radius:14px;border:1px solid color-mix(in srgb,#ef4444 55%,var(--line));background:color-mix(in srgb,#ef4444 9%,var(--card));font-size:14px}
 /* ===== Semana: agenda, rutina y hábitos ===== */
-.semtog{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px}
-.semtog button{border:0;background:none;color:var(--ink2);font:inherit;font-size:13px;font-weight:800;padding:7px 0;border-radius:9px}.semtog .on{background:var(--card);color:var(--ink)}
-.sdc{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:16px;padding:9px 12px 10px;scroll-margin-top:110px}
-.sdc.hoy{box-shadow:0 0 0 1.5px var(--brand) inset}.sdc.pas{opacity:.7}
-.sdh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;color:var(--ink);font:inherit;padding:0;text-align:left}
-.sdh b{font-size:14.5px}.sdh .t{flex:1;min-width:0;font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sde{display:grid;grid-template-columns:48px 1fr;gap:8px;font-size:14px;margin-top:6px}.sde em{font-style:normal;font-weight:900;color:var(--brand);font-size:12.5px}
-.sde.x em{color:#f87171}.sde small{color:#f87171;font-size:11.5px}.sde.v{color:var(--ink2);font-size:12.5px}.sde.v em{color:var(--ink2)}
-.sdr{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.sdr span{font-size:11px;padding:3px 7px;border-radius:7px;background:var(--bg2);color:var(--ink2);white-space:nowrap}
-.sdr span.mia{color:var(--ink)}.sdr span.ok{background:color-mix(in srgb,#34d399 16%,var(--bg2));color:var(--ink)}
-.sdhb{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
-.sdhb button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:none;font-size:14px;padding:0;display:grid;place-items:center}
-.sdhb button[disabled]{opacity:.55}.sdhb small{margin-left:auto;font-size:11px;color:var(--ink2)}
 .shm{display:grid;gap:4px;align-items:center;font-size:12px}
 .shm .hh{font-size:10px;font-weight:900;color:var(--ink2);text-align:center;line-height:1.3}
 .shm .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .shm .c{height:24px;border-radius:7px;border:1.5px solid var(--line);background:none;color:#04121c;font-weight:900;font-size:11px;padding:0}
 .shm .c.no{border-color:transparent}.shm .c.ex{border:0;background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 6px)}
 .shm .c.td{border-color:var(--ink)}.shm .st{font-size:11.5px;font-weight:800;text-align:right}
-.semtip{margin-top:10px;padding:10px 12px;border-radius:13px;background:color-mix(in srgb,#f59e0b 10%,var(--card));border:1px solid color-mix(in srgb,#f59e0b 40%,var(--line));font-size:13.5px;line-height:1.45}
 .rta{display:grid;grid-template-columns:50px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
 .rta em{font-style:normal;font-weight:900;color:var(--brand)}.rta small{display:block;color:var(--ink2);font-size:11.5px}.rta.fijo{opacity:.65}
 .rta .x{border:0;background:none;color:var(--ink2);font-size:20px;padding:0 4px}
@@ -3173,7 +3062,7 @@ details[data-tg] .card{border:0;box-shadow:none;background:transparent;padding:1
   .nvb button{width:38px;height:38px}
   .cjq{width:36px;height:36px}
   .dmes button,.d4step button{min-width:40px;min-height:40px}
-  .sdhb button{min-width:40px;min-height:40px}
+  
 }
 /* Hoy en modo Línea: las marcas finas (comidas, ir y volver) miden lo que duran, 20 px; sin moverlas,
    la zona que se puede tocar crece 6 px arriba y abajo (32 px) */
@@ -3353,35 +3242,9 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .hoyseg button{white-space:nowrap}
 
 /* ===== Semana: el tablón de la cochera (mismos colores que las paradas del conductor) ===== */
-.tablonc{padding:10px 8px 8px}.tb-res{font-size:12.5px;color:var(--ink2);margin:0 2px 6px}.tb-res b{color:var(--ink)}.tb-res .tb-corta{color:var(--warn)}
-.tablon{display:block;width:100%;height:auto}.tablon text{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-.tb-eje{fill:var(--ink2);font-size:9.5px;font-weight:700;text-anchor:middle}.tb-guia{stroke:color-mix(in srgb,var(--ink2) 14%,transparent);stroke-dasharray:2 3}
-.tb-fila{cursor:pointer}.tb-fondo{fill:transparent}.tb-fila:hover .tb-fondo{fill:color-mix(in srgb,var(--brand) 6%,transparent)}
-.tb-fondo.hoy{fill:color-mix(in srgb,var(--warn) 8%,transparent);stroke:color-mix(in srgb,var(--warn) 55%,transparent)}.tb-fondo.sel{stroke:var(--brand);stroke-width:1.2}
-.tb-dia{fill:var(--ink);font-size:11px;font-weight:800;letter-spacing:.06em}.tb-dia tspan{fill:var(--ink2);font-weight:600}.tb-dia.hoy{fill:var(--warn)}
-.tb-work{fill:#d9573f}.tb-guard{fill:var(--cal-guardia,#ff2b3a);stroke:color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff)}.tb-sal{fill:#3c5590}.tb-gym{fill:#7a5cf0}.tb-meal{fill:#2f9e6b}.tb-plan{fill:#1fa6c4}
-.tb-libre{fill:none;stroke:#5a6b8c;stroke-dasharray:2 2}.tb-win{fill:rgba(255,255,255,.55)}.tb-rueda{fill:var(--bg);stroke:color-mix(in srgb,var(--ink2) 40%,transparent)}
-.tb-luna{fill:#e6ecff}.tb-flecha{stroke:#b9c7f3;stroke-width:1.3;fill:none}
-.tb-sello{fill:none;stroke:#5a6b8c}.tb-sello.on{fill:var(--ok);stroke:var(--ok)}
-.tb-via{stroke:color-mix(in srgb,var(--ink2) 30%,transparent);stroke-width:2;stroke-linecap:round}
-.tb-noche{fill:rgba(52,70,126,.35);stroke:rgba(125,147,224,.35)}.tb-noche.siesta{stroke-dasharray:3 2}.tb-z{fill:#9fb2ea;font-size:9px}
-.tb-lab{font-size:9px;font-weight:700}.tb-lab.w{fill:#e8826e}.tb-lab.g{fill:#8fa3e0}
-.tb-vacio{fill:var(--bg)}.tb-pend{stroke:var(--warn);stroke-width:1.6}
-.tb-ahora{stroke:var(--warn);stroke-width:1.5}.tb-busahora{fill:var(--warn)}.tb-win2{fill:#3b2a05}
-.tb-garaje{fill:var(--bg2);stroke:#3c5590;stroke-width:1.2}.tb-garaje.corta{stroke:var(--warn)}.tb-garaje.guardia{stroke:var(--cal-guardia,#ff2b3a)}
-.tb-horas{fill:var(--ink);font-size:11px;font-weight:800;text-anchor:middle}.tb-horas.corta{fill:var(--warn)}.tb-horas.guardia{fill:#9fb2ea;font-size:9.5px}
-.tb-mini{fill:var(--ink2);font-size:7.5px;text-anchor:middle}
-.tb-ley{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--ink2);margin:6px 2px 0}.tb-ley i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.tb-ley .k-work{background:#d9573f}.tb-ley .k-guard{background:var(--cal-guardia,#ff2b3a);box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff) inset}.tb-ley .k-noche{background:rgba(52,70,126,.5)}.tb-ley .k-meal{background:#2f9e6b;border-radius:50%}.tb-ley .k-plan{background:#1fa6c4;border-radius:50%}.tb-ley .k-pend{border:1.5px solid var(--warn);border-radius:50%}
-.calisoslot{min-height:120px}
 
 /* ===== Mes: la ficha de cada día y el abono (diccionario del conductor) ===== */
-.mficha{display:inline-flex;align-items:center;gap:2px;border-radius:6px;padding:1px 4px;font:800 9px/1.25 ui-sans-serif,system-ui,sans-serif;white-space:nowrap;max-width:100%;overflow:hidden;vertical-align:middle}
-.dbox .mficha{margin:2px 0 1px;align-self:flex-start}
-.f-guard{background:var(--cal-guardia,#ff2b3a);color:#fff;box-shadow:0 0 0 1px color-mix(in srgb,var(--cal-guardia,#ff2b3a) 60%,#fff) inset}.f-work{background:color-mix(in srgb,var(--cal-trabajo,#d9573f) 20%,transparent);color:var(--cal-trabajo,#d9573f)}
-.f-gym{background:color-mix(in srgb,var(--cal-fuerza,#7a5cf0) 22%,transparent);color:var(--cal-fuerza,#8f76f5)}.f-sal{background:color-mix(in srgb,#7d93e0 18%,transparent);color:#8fa3e0}
-.f-libre{border:1px dashed #5a6b8c;color:#6f84a6;font-weight:700}.f-vac{background:color-mix(in srgb,#e3a72f 22%,transparent);color:#e3a72f}
-.mleyenda .mficha{padding:0 4px}
+.f-libre{border:1px dashed #5a6b8c;color:#6f84a6;font-weight:700}
 .abono{position:relative;border-radius:16px;padding:11px 14px 11px 16px;margin:10px 0 4px;color:#1b1406;background:linear-gradient(100deg,#fcd34d,#fbbf24 60%,#f59e0b);box-shadow:0 14px 30px -18px #f59e0b}
 .abono::before,.abono::after{content:'';position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--card);transform:translateY(-50%)}
 .abono::before{left:-7px}.abono::after{right:-7px}
@@ -3393,15 +3256,9 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .abono .agujeros i.p{background:var(--card);border-color:var(--card)}
 
 /* ============ las fichas estáticas y el carné de abono (fig/calendario.js) ============ */
-.mficha.cf{background:none;padding:0;box-shadow:none;border:0;border-radius:0;overflow:visible}
-.mficha.cf svg{width:30px;height:27px;display:block;overflow:visible}
 /* el tren de la guardia, rojo chillón y mucho más grande que el resto: se sale de su baldosa y ocupa la casilla */
-.mficha.cf.f-guard svg{width:46px;height:41px;margin:-6px -8px -5px -4px}
-.mleyenda .mficha.cf svg{width:22px;height:20px}
-.mleyenda .mficha.cf.f-guard svg{width:34px;height:30px;margin:-4px -6px -3px -2px}
 /* Ajustes → Cómo se ve → Calendario: cada color con su ficha delante */
 .calcol .fld{position:relative;padding-left:38px}.calcol .cfprev{position:absolute;left:0;top:0}.calcol .cfprev svg{width:34px;height:31px;display:block;overflow:visible}.calcol .fld.mio{outline:1px solid var(--brand);outline-offset:2px;border-radius:8px}
-.mleyenda .mficha.cf{vertical-align:middle}
 .carne{display:block;width:100%;max-width:420px;border:0;background:none;padding:0;margin:6px 0 2px;cursor:pointer;border-radius:14px}
 .carne svg{display:block;width:100%;height:auto}
 .carne:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
@@ -3421,16 +3278,14 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .hoja .card.mesres{border:0;padding:0;background:none;box-shadow:none;margin:0}
 
 /* ============ Semana y Hoy con una fila de mandos; el asistente y los hábitos plegados ============ */
-.semtog.t3{grid-template-columns:1fr 1fr 1fr}
-.hoyseg.h4 button{padding-left:4px;padding-right:4px;font-size:12.5px}
-.habsem h2 .dlink{font-size:12.5px;padding:0;margin:-10px 0}   /* sus 44 px de toque, sin engordar la cabecera */
+.hoyseg.h4 button{padding-left:4px;padding-right:4px;font-size:12.5px}   /* sus 44 px de toque, sin engordar la cabecera */
 .astj.plegada{padding-top:0}
 .astj-cab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:9px 0 3px;font:inherit;color:var(--ink);cursor:pointer;min-height:40px}
 .astj-cab .t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}.astj-cab b{font-size:14px}
 .astj-cab small{color:var(--ink2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.astj-cab .ch{color:var(--ink2);font-size:16px}
 .astj-tit{background:none;border:0;padding:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
-.carrslot{margin-top:6px}.lqv h2{margin-bottom:4px}.mesv{margin:8px 0 6px}
-@media print{.carrslot,.calisoslot,.mesv{display:none!important}}
+.carrslot{margin-top:6px}.lqv h2{margin-bottom:4px}
+@media print{.carrslot{display:none!important}}
 
 /* la mañana en corto: la tira de levantarte a salir por la puerta, con el último bus en rojo y «he salido» */
 .manana{margin:6px 0 8px;padding:10px 12px 8px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--card) 80%,var(--bg))}
@@ -3710,9 +3565,6 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 #main summary.mini,.plegable>summary{min-height:var(--toque);display:flex;align-items:center}
 /* la fila de cada día de la Semana y el resumen de una sesión de cocina: listas apretadas a propósito (la semana cabe
    en dos pantallas). Su zona de toque crece por fuera, invisible, sin engordar la fila */
-.drmain,details.cocm>summary.cocmh{position:relative}
-.drmain::after{content:'';position:absolute;inset:-6px 0}
-details.cocm>summary.cocmh::before{content:'';position:absolute;inset:-12px -10px}
 /* el botón grande (Crear rutina, Hecho en hábitos, el principal de Entreno): la marca lisa, sin el degradado
    cian→violeta, con su cara de tecla; 52 px de alto */
 .gbig2,.hbig{background:var(--brand);color:var(--sobre-marca);font-weight:800;border-radius:var(--r-16);min-height:52px;
@@ -3836,3 +3688,32 @@ details.cocm>summary.cocmh::before{content:'';position:absolute;inset:-12px -10p
 .plmini button.pin{box-shadow:inset 0 0 0 1.5px var(--brand)}
 .plolh{display:flex;align-items:center;gap:6px}.plolh .pln{flex:1;min-width:0}.plolh .cji{flex:none}
 .plnut .plkit{margin-top:6px;padding-top:6px}
+
+/* EL MES CON EL DÍA ENTERO DE SU COLOR (design/mes-colores, variante B · colores suaves). Guardia roja con
+   su 🚨 y un borde rojo fuerte, saliente oscuro, trabajo marrón, entreno azul, libre verde claro y
+   vacaciones arena; el número grande y en negro (en blanco solo en el saliente, que es oscuro). Va al
+   final y con .cal.ext delante para ganar al bloque de móvil, que está encima de las reglas base. */
+.mt-guardia{--mt:#ff8f8f}.mt-saliente{--mt:#444b5a}.mt-trabajo{--mt:#cfa77c}
+.mt-fuerza{--mt:#a8c9ff}.mt-libre{--mt:#d2f5cc}.mt-vac{--mt:#f7e3a8}
+.cal.ext{gap:3px;background:none}
+.cal.ext .dbox{background:var(--mt,var(--card));color:#0b0f17;border:0;outline:0;border-radius:9px;
+  padding:3px 3px 4px;min-height:88px;gap:2px;opacity:1}
+.cal.ext .dbox:hover{background:var(--mt,var(--card));filter:brightness(1.05)}
+.cal.ext .dbox.mt-guardia{box-shadow:inset 0 0 0 2px #e5383b}
+.cal.ext .dbox.mt-saliente{color:#e9f2ff}
+.cal.ext .dbox .dtop{gap:0}
+.cal.ext .dbox .dnum{font-size:24px;line-height:1;font-weight:900;letter-spacing:-.03em;color:inherit}
+.cal.ext .dbox .dnum small{font-size:10px;font-weight:800;margin-left:2px;letter-spacing:0}
+.cal.ext .dbox .dline{font-size:10px;font-weight:800;line-height:1.15;color:inherit;letter-spacing:-.03em;white-space:nowrap}
+.cal.ext .dbox .dline.mtag{white-space:nowrap}
+.cal.ext .dbox .dline.gym{margin-top:auto;align-self:stretch;border-radius:4px;padding:1px 3px;background:#a8c9ff;color:#0b0f17}
+.cal.ext .dbox.mt-fuerza .dline.gym{background:none;padding:0}
+.cal.ext .dbox .dev{font-size:9.5px;font-weight:700;background:rgba(255,255,255,.85);color:#0b0f17;border-radius:4px;padding:1px 3px;border:0}
+.cal.ext .dbox .dev b,.cal.ext .dbox .dev .dh{color:#0b0f17!important}
+.cal.ext .dbox .dsl,.cal.ext .dbox .dgasto{color:inherit;opacity:.8}
+.cal.ext .dbox.today{box-shadow:0 0 0 3px var(--ink),0 0 0 5px var(--bg);z-index:1}
+.cal.ext .dbox.mt-guardia.today{box-shadow:inset 0 0 0 2px #e5383b,0 0 0 3px var(--ink),0 0 0 5px var(--bg)}
+.cal.ext .dbox.sel{outline:3px solid var(--brand2);outline-offset:1px}
+.cal.ext .dbox.fuera{opacity:.45;background:var(--mt,var(--card))}
+.mleyenda .mlc{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--mt)}
+.mt-guardia.mlc{box-shadow:inset 0 0 0 1.5px #e5383b}
