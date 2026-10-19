@@ -37,7 +37,7 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 
 - [aparc-comida-entreno] Los días de entreno a las 18:30 la comida sale a las 18:00 (ventana fija de Sueño): falta
   decidir si debe ir después del entreno · DECISIONS.md:948 · desde 2026-10-15
-- [aparc-aviso-mes] El aviso «Mantén pulsado un día…» del Mes se queda unos segundos tapando Hoy o Comer · Plan si
+- ~~[aparc-aviso-mes]~~ HECHO 2026-10-19 (prueba 322) · El aviso «Mantén pulsado un día…» del Mes se queda unos segundos tapando Hoy o Comer · Plan si
   cambias de pantalla justo al abrir (lo vio la revisión de salud del 2026-10-19; se va solo a los ~9 s)
 - [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
 - [enc-plan-comidas] Montar la semana de comidas: ideas de contenido y diseño dadas el 2026-10-17 (días pasados,
@@ -55,10 +55,10 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 
 Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-10-19: v3-mes-colores + v3-sin-semana.**
 
-- [v3-mes-colores] **Mes:** el día entero pintado por tipo, no solo la raya: guardia rojo entero con 🚨 y el número
+- ~~[v3-mes-colores]~~ HECHO y desplegado 2026-10-19 (main 4c09f09, variante B suaves) · **Mes:** el día entero pintado por tipo, no solo la raya: guardia rojo entero con 🚨 y el número
   grande en negro; saliente oscuro; libre verde claro; trabajo marrón; entreno azul. Los eventos, más visibles en el
   Mes. Y el selector de fecha en español (sale «October 2026» y pegado al icono, lo vio la revisión de salud)
-- [v3-sin-semana] **Quitar la vista Semana** del Calendario entera: no la usas
+- ~~[v3-sin-semana]~~ HECHO 2026-10-19 (también Isométrica y Carretera del Mes; «Mi rutina» a Ajustes) · **Quitar la vista Semana** del Calendario entera: no la usas
 - [v3-conductor] **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
   descripción más grande, no solo «se ve el autobús»
 - [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
@@ -96,6 +96,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
 
 ## Supuestos sin confirmar
+- [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
 
 <!-- - [sup-AAAA-MM-DD-tema] el supuesto · DECISIONS.md:línea · contado el AAAA-MM-DD -->
 - [sup-2026-10-14-quita-urg] las 4 guardias que te quitas salen de Urgencias · DECISIONS.md (guardias R1) · contado el 2026-10-14
@@ -130,3 +131,4 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - [enc-ponytail] 2026-10-19 · «Lo mínimo primero» en CLAUDE.md + auditoría: 7 funciones, 4 acciones, 2 copias y 404 reglas CSS fuera (main 84e7253) · hecha
 - [rama-b9adda8] 2026-10-19 · rama un commit por delante de main (solo el traspaso, sin código); main 84e7253 desplegado y sellado (run 39318216522 success) · ok
 - [enc-v3] 2026-10-19 · el usuario abre la «versión 3.0»: la parte isométrica (Comer · Plan) da por buena; quiere revisión a fondo (arte, visual, técnico), ampliar funcionalidad, mejorar procesos artísticos y valorar cambiar de tema visual. Propuesto: fase 0 de auditoría + decidir tema con maquetas, y recoger los aparcados (arte-energia, arte-iconos, comida-entreno, aviso-mes, png-design) · propuesto
+- [enc-mes-colores] 2026-10-19 · Mes con el día entero de color (B suaves), sin Semana, sin Isométrica ni Carretera del Mes, aviso del Mes arreglado (main 4c09f09, run 39334245811) · hecha
