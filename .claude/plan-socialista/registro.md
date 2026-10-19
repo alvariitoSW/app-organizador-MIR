@@ -132,3 +132,5 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - [rama-b9adda8] 2026-10-19 · rama un commit por delante de main (solo el traspaso, sin código); main 84e7253 desplegado y sellado (run 39318216522 success) · ok
 - [enc-v3] 2026-10-19 · el usuario abre la «versión 3.0»: la parte isométrica (Comer · Plan) da por buena; quiere revisión a fondo (arte, visual, técnico), ampliar funcionalidad, mejorar procesos artísticos y valorar cambiar de tema visual. Propuesto: fase 0 de auditoría + decidir tema con maquetas, y recoger los aparcados (arte-energia, arte-iconos, comida-entreno, aviso-mes, png-design) · propuesto
 - [enc-mes-colores] 2026-10-19 · Mes con el día entero de color (B suaves), sin Semana, sin Isométrica ni Carretera del Mes, aviso del Mes arreglado (main 4c09f09, run 39334245811) · hecha
+- [run-39334245811] 2026-10-19 · despliegue de main (4c09f09, Mes de colores) · success; sellado (version.json con b05d05e, último código) · ok
+- [rama-c993d4e] 2026-10-19 · rama un commit por delante de main (solo el traspaso, sin código); 0 issues/PR; DECISIONS sin líneas nuevas (1153) · ok
