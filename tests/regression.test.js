@@ -1842,6 +1842,387 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const duracionGuardada = await page.evaluate(() => window.PG.store.rotation.svcMeses[0]);
   check('cambiar los meses de una rotación en el desplegable se guarda', duracionGuardada === 3, String(duracionGuardada));
 
+  // 114-121) importar recetas de redes sociales: el lector propio, la pantalla, dónde va el plato,
+  // la validación de lo que devuelve Claude y la entrada por «Compartir»
+  const CAP_TIKTOK = [
+    'POLLO AL LIMÓN EN 15 MIN 🍋🔥 guardalo que lo vas a hacer seguro',
+    '#recetasfaciles #mealprep',
+    '',
+    'Ingredientes (para 4 personas):',
+    '- 600 g pechuga de pollo',
+    '- 2 limones',
+    '- 200 ml nata de cocinar',
+    '- sal y pimienta',
+    '',
+    'Preparación:',
+    '1. Salpimenta el pollo en tiras y dóralo 5 min a fuego fuerte.',
+    '2. Añade el ajo picado y el zumo de los limones, 2 min.',
+    '',
+    '420 kcal y 38 g de proteína por ración 💪',
+    'Sígueme para más 👉 @cocinafit',
+  ].join('\n');
+
+  const leida = await page.evaluate((t) => window.PG.parseReceta(t), CAP_TIKTOK);
+  check('el lector de la app saca de un pie de TikTok el nombre, las raciones y los macros',
+    leida && leida.name === 'Pollo al limón en 15 min' && leida.portions === 4 &&
+    leida.kcal === 420 && leida.prot === 38 && leida.icon === '🍗',
+    JSON.stringify(leida && { n: leida.name, p: leida.portions, k: leida.kcal, pr: leida.prot }));
+
+  check('separa ingredientes de pasos y tira los hashtags, el «(para 4 personas)» y el «sígueme»',
+    leida && leida.ingredients.length === 4 && leida.ingredients[0] === '600 g pechuga de pollo' &&
+    leida.steps.length === 2 && !leida.ingredients.some((x) => /personas|#/.test(x)) &&
+    !leida.steps.some((x) => /s[íi]gueme|kcal/i.test(x)),
+    JSON.stringify(leida && { i: leida.ingredients, s: leida.steps }));
+
+  // un pie sin encabezados, con la lista entera en un renglón y el método en prosa
+  const suelta = await page.evaluate(() => window.PG.parseReceta(
+    '🍝 PASTA CREMOSA DE ATÚN\n300g pasta, 2 latas de atún, 150 ml nata, 1 cebolla\n' +
+    'Cueces la pasta. Pochas la cebolla, añades el atún y la nata, remueves y listo en 12 minutos.'));
+  check('también lee un pie sin encabezados: parte la lista de un renglón y coge el método en prosa',
+    suelta && suelta.name === 'Pasta cremosa de atún' && suelta.ingredients.length === 4 &&
+    suelta.ingredients[1] === '2 latas de atún' && suelta.steps.length === 1,
+    JSON.stringify(suelta));
+
+  const nada = await page.evaluate(() => window.PG.parseReceta('me encanta esta receta 😍😍\n#viral #fyp'));
+  check('un pie sin receta no inventa un plato: devuelve null', nada === null, JSON.stringify(nada));
+
+  // lo que devuelve Claude no lo valida el contrato: recetaSana() lo comprueba campo a campo
+  const basura = await page.evaluate(() => [
+    window.PG.recetaSana(null),
+    window.PG.recetaSana({ name: 'X' }),
+    window.PG.recetaSana({ name: '', ingredients: ['a'] }),
+    window.PG.recetaSana({ name: 'Arroz', ingredients: ['200 g arroz'], portions: 999, kcal: -5, prot: 'x' }),
+  ]);
+  check('lo que devuelve Claude se valida: sin nombre o sin contenido se descarta, y los números se acotan',
+    basura[0] === null && basura[1] === null && basura[2] === null &&
+    basura[3] && basura[3].portions === 4 && basura[3].kcal === 0 && basura[3].prot === 0,
+    JSON.stringify(basura));
+
+  // la pantalla: pegar, leer y que salga la previa editable
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const sinClaude = await page.evaluate(() => ({
+    boton: !!document.querySelector('[data-a="imp-claude"]'),
+    local: !!document.querySelector('[data-a="imp-local"]'),
+  }));
+  check('fuera del Artifact no se ofrece el botón de Claude, solo el lector de la app',
+    !sinClaude.boton && sinClaude.local, JSON.stringify(sinClaude));
+
+  await page.fill('#impTxt', CAP_TIKTOK);
+  await page.click('[data-a="imp-local"]');
+  await page.waitForTimeout(250);
+  const previa = await page.evaluate(() => {
+    const t = document.querySelector('[data-imp="previa"]');
+    return t ? { nombre: t.querySelector('.tarj-nm').value, dia: !!t.querySelector('[data-f="destinoDia"]') } : null;
+  });
+  check('tras leerla sale una previa editable que pregunta dónde va el plato',
+    previa && previa.nombre === 'Pollo al limón en 15 min' && previa.dia, JSON.stringify(previa));
+
+  const primerDia = await page.evaluate(() => window.PG.store.shifts[0].id);
+  await page.selectOption('[data-a="imp-f"][data-f="destinoDia"]', primerDia);
+  await page.click('[data-a="imp-save"]');
+  await page.waitForTimeout(300);
+  const guardado = await page.evaluate((sid) => {
+    const d = window.PG.store.dishes.find((x) => x.name === 'Pollo al limón en 15 min');
+    const slot = (window.PG.store.menu[sid] || []).find((s) => (s.items || []).some((i) => d && i.id === d.id));
+    return { plato: !!d, ingredientes: d ? d.ingredients.length : 0, enMenu: !!slot, limpio: window.PG.ui.imp.receta === null };
+  }, primerDia);
+  check('al guardar entra en el catálogo con sus ingredientes y se coloca en el menú del día elegido',
+    guardado.plato && guardado.ingredientes === 4 && guardado.enMenu && guardado.limpio, JSON.stringify(guardado));
+
+  // «Compartir → Guardias» llega como ?title=&text=&url= en index.html
+  await page.goto(base + 'index.html?title=' + encodeURIComponent('Lentejas exprés') +
+    '&text=' + encodeURIComponent('250 g lenteja pardina\n1 cebolla\nCuece 20 min.') +
+    '&url=' + encodeURIComponent('https://www.tiktok.com/@x/video/1'));
+  await page.waitForTimeout(400);
+  const compartido = await page.evaluate(() => ({
+    tab: window.PG.ui.tab,
+    txt: window.PG.ui.imp.txt,
+    query: location.search,
+  }));
+  check('compartir desde otra app abre la importación con el texto ya puesto y limpia la barra de direcciones',
+    compartido.tab === 'import' && /Lentejas expr[ée]s/.test(compartido.txt) &&
+    /250 g lenteja/.test(compartido.txt) && compartido.query === '',
+    JSON.stringify(compartido));
+
+  // 122-124) el camino de Claude solo existe dentro del Artifact, así que aquí se prueba contra un
+  // doble que imita el contrato de la capacidad «sample» (claude.use → sample.json / sample.limits)
+  const STUB_OK = `window.__llamadas = [];
+    const s = function () {};
+    s.json = function (input, opts) {
+      window.__llamadas.push({ input: input, tier: opts && opts.modelTier });
+      return Promise.resolve({ name: 'Pollo con arroz', icon: '🍗', portions: 4, kcal: 530, prot: 42,
+        ingredients: ['400 g pollo', '300 g arroz'], steps: ['Dora el pollo.', 'Añade el arroz.'] });
+    };
+    s.limits = function () { return Promise.resolve({ maxPromptBytes: 65536,
+      images: { maxCount: 4, maxInputBytes: 20000000, mediaTypes: ['image/jpeg', 'image/png'] } }); };
+    window.claude = { use: function (n) { return Promise.resolve(n === 'sample' ? s : null); } };`;
+
+  const STUB_DENEGADO = `const s = function () {};
+    s.json = function () { return Promise.reject({ code: 'not_granted', message: 'nope' }); };
+    s.limits = function () { return Promise.resolve({ maxPromptBytes: 65536 }); };
+    window.claude = { use: function (n) { return Promise.resolve(n === 'sample' ? s : null); } };`;
+
+  async function conClaude(stub) {
+    const p2 = await context.newPage();
+    const errs2 = [];
+    p2.on('pageerror', (e) => errs2.push(String((e && e.message) || e)));
+    await p2.addInitScript(stub);
+    await p2.goto(base + 'index.html');
+    await p2.waitForFunction(() => window.PG);
+    await p2.waitForTimeout(400);   // claude.use() nunca resuelve dentro del primer script
+    await p2.evaluate(() => { window.PG.ui.tab = 'import'; window.PG.render(); });
+    await p2.waitForTimeout(200);
+    return { p2, errs2 };
+  }
+
+  {
+    const { p2, errs2 } = await conClaude(STUB_OK);
+    const ofrece = await p2.evaluate(() => ({
+      boton: !!document.querySelector('[data-a="imp-claude"]'),
+      imagen: !!document.querySelector('[data-a="imp-img"]'),
+    }));
+    await p2.fill('#impTxt', 'receta rica 😋 pollo con arroz, lo cuento en el vídeo');
+    await p2.click('[data-a="imp-claude"]');
+    await p2.waitForTimeout(400);
+    const res = await p2.evaluate(() => {
+      const t = document.querySelector('[data-imp="previa"]');
+      return {
+        llamadas: window.__llamadas.length,
+        tier: window.__llamadas[0] && window.__llamadas[0].tier,
+        pideJson: !!window.__llamadas[0] && /Responde SOLO con un objeto JSON/.test(window.__llamadas[0].input),
+        llevaTexto: !!window.__llamadas[0] && /pollo con arroz/.test(window.__llamadas[0].input),
+        nombre: t && t.querySelector('.tarj-nm').value,
+        marcada: t && /Claude/.test(t.textContent),
+      };
+    });
+    check('dentro del Artifact se ofrece leer la receta con Claude, y con captura si el visor lo permite',
+      ofrece.boton && ofrece.imagen, JSON.stringify(ofrece));
+    check('pulsarlo hace UNA llamada con el texto y el formato pedido, y pinta la receta que vuelve',
+      res.llamadas === 1 && res.tier === 'default' && res.pideJson && res.llevaTexto &&
+      res.nombre === 'Pollo con arroz' && res.marcada, JSON.stringify(res));
+    check('el camino de Claude no lanza errores de JavaScript', errs2.length === 0, JSON.stringify(errs2));
+    await p2.close();
+  }
+
+  {
+    const { p2 } = await conClaude(STUB_DENEGADO);
+    const sinImagen = await p2.evaluate(() => !!document.querySelector('[data-a="imp-img"]'));
+    await p2.fill('#impTxt', 'pollo con arroz');
+    await p2.click('[data-a="imp-claude"]');
+    await p2.waitForTimeout(400);
+    const tras = await p2.evaluate(() => {
+      const n = document.querySelector('#main .note[style*="warn"]');
+      return { aviso: n ? n.textContent : '', boton: !!document.querySelector('[data-a="imp-claude"]'),
+        local: !!document.querySelector('[data-a="imp-local"]') };
+    });
+    check('si el visor deniega el permiso se explica en español, se retira el botón y queda el lector propio',
+      !sinImagen && /No has dado permiso/.test(tras.aviso) && !tras.boton && tras.local, JSON.stringify(tras));
+    await p2.close();
+  }
+
+  // 127-132) pegar el enlace: traer la descripción sola, y decir la verdad cuando no se puede
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const campoEnlace = await page.evaluate(() => ({
+    campo: !!document.querySelector('#impUrl'),
+    boton: !!document.querySelector('[data-a="imp-traer"]'),
+  }));
+  check('la pantalla de importar tiene un campo para el enlace del vídeo',
+    campoEnlace.campo && campoEnlace.boton, JSON.stringify(campoEnlace));
+
+  // el navegador bloquea CORS: fetch rechaza con TypeError, sin estado. Es EL caso que justifica
+  // las salidas alternativas, así que el aviso tiene que explicarlo —no quedarse en «ha fallado»—
+  // y ofrecerlas ahí mismo, en vez de mandar al usuario a buscarlas por su cuenta.
+  await page.evaluate(() => {
+    window.__fetchReal = window.fetch;
+    window.fetch = () => Promise.reject(new TypeError('Failed to fetch'));
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@cocinafit/video/123');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const avisoCors = await page.evaluate(() => {
+    const n = document.querySelector('#main .note[style*="warn"]');
+    return n ? n.textContent : '';
+  });
+  const salidasCors = await page.evaluate(() => ({
+    publico: !!document.querySelector('[data-a="lector-publico"]'),
+    propio: !!document.querySelector('[data-a="ir-lector"]'),
+  }));
+  check('si el navegador no deja pedírsela a TikTok, se explica y se ofrecen las dos salidas',
+    /no permite CORS/.test(avisoCors) && salidasCors.publico && salidasCors.propio,
+    avisoCors.slice(0, 120) + ' ' + JSON.stringify(salidasCors));
+
+  // con oEmbed respondiendo, la descripción entra y se lee sola
+  await page.evaluate(() => {
+    window.__pedido = null;
+    window.fetch = (u) => {
+      window.__pedido = String(u);
+      return Promise.resolve({ ok: true, status: 200,
+        json: () => Promise.resolve({ title: 'LENTEJAS EXPRÉS 🍲\n250 g lenteja pardina\n1 cebolla\nCuece 20 min y listo.', author_name: 'cocinafit' }) });
+    };
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(350);
+  const traido = await page.evaluate(() => ({
+    pedido: window.__pedido,
+    txt: window.PG.ui.imp.txt,
+    nombre: (window.PG.ui.imp.receta || {}).name,
+    ingredientes: ((window.PG.ui.imp.receta || {}).ingredients || []).length,
+  }));
+  check('con la descripción traída, se pide a oEmbed con el enlace codificado',
+    /tiktok\.com\/oembed\?url=https%3A%2F%2Fwww\.tiktok\.com/.test(traido.pedido || ''), traido.pedido);
+  check('la descripción entra en el cuadro y se lee sola, sin tocar nada más',
+    /LENTEJAS/.test(traido.txt) && traido.nombre === 'Lentejas exprés' && traido.ingredientes === 2,
+    JSON.stringify(traido));
+
+  // con lector propio configurado se usa ese, no la plataforma
+  await page.evaluate(() => {
+    window.PG.store.lector = { proxy: 'https://recetas.ejemplo.workers.dev' };
+    window.PG.save();
+    window.PG.ui.imp.receta = null;
+    window.PG.render();
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(350);
+  const viaProxy = await page.evaluate(() => window.__pedido);
+  check('si has puesto tu lector en Ajustes, la petición va por él y no por la plataforma',
+    /^https:\/\/recetas\.ejemplo\.workers\.dev\?url=https%3A%2F%2Fwww\.tiktok\.com/.test(viaProxy || ''), viaProxy);
+
+  // un enlace que no es de ningún sitio conocido, sin lector propio
+  await page.evaluate(() => { window.PG.store.lector = { proxy: '' }; window.PG.save(); });
+  const rechazado = await page.evaluate(() => window.PG.traerDescripcion('https://ejemplo.com/receta')
+    .then(() => null).catch((e) => e.msg));
+  check('un enlace de un sitio que no conoce se rechaza explicando qué sitios lee',
+    /TikTok y de YouTube/.test(rechazado || ''), rechazado);
+
+  await page.evaluate(() => { if (window.__fetchReal) window.fetch = window.__fetchReal; });
+
+  // dentro del Artifact no hay red: se avisa antes de gastar un toque
+  {
+    const p3 = await context.newPage();
+    await p3.addInitScript(`window.claude = { use: function () { return Promise.resolve(null); } };`);
+    await p3.goto(base + 'index.html');
+    await p3.waitForFunction(() => window.PG);
+    await p3.waitForTimeout(300);
+    // la promesa hay que esperarla DENTRO de la página: al serializarla vuelve como {}
+    const enArt = await p3.evaluate(async () => ({
+      detecta: window.PG.enArtifact(),
+      tipo: await window.PG.traerDescripcion('https://www.tiktok.com/@x/video/1').then(() => null).catch((e) => e.tipo),
+    }));
+    check('dentro del Artifact ni lo intenta: avisa de que ahí no se puede salir a la red',
+      enArt.detecta === true && enArt.tipo === 'artifact', JSON.stringify(enArt));
+    await p3.close();
+  }
+
+  // 133-138) SECUENCIAS, no caminos sueltos. Las pruebas de arriba salían de un estado limpio y por
+  // eso no vieron ninguno de estos seis: todos aparecen al encadenar dos gestos.
+  await gotoTab('import');
+  await page.waitForTimeout(200);
+  const CAP_OK = 'LENTEJAS EXPRÉS 🍲\nIngredientes:\n250 g lenteja pardina\n1 cebolla\nPreparación:\nCuece 20 minutos.';
+
+  // leer una receta y luego darle a «limpiar»: la previa y su botón de guardar tienen que irse
+  await page.fill('#impTxt', CAP_OK);
+  await page.click('[data-a="imp-local"]');
+  await page.waitForTimeout(250);
+  await page.click('[data-a="imp-clear"]');
+  await page.waitForTimeout(250);
+  const trasLimpiar = await page.evaluate(() => ({
+    txt: document.querySelector('#impTxt').value,
+    previa: !!document.querySelector('[data-imp="previa"]'),
+    guardar: !!document.querySelector('[data-a="imp-save"]'),
+  }));
+  check('«limpiar» se lleva también la receta leída, no solo el texto',
+    trasLimpiar.txt === '' && !trasLimpiar.previa && !trasLimpiar.guardar, JSON.stringify(trasLimpiar));
+
+  // traer un enlace con receta y luego otro SIN receta: no puede quedarse la primera en pantalla,
+  // o acabas guardando el plato del enlace anterior
+  await page.evaluate(() => {
+    window.__fetchReal2 = window.fetch;
+    window.__n = 0;
+    window.fetch = () => {
+      window.__n++;
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(
+        window.__n === 1
+          ? { title: 'LENTEJAS EXPRÉS 🍲\nIngredientes:\n250 g lenteja pardina\n1 cebolla\nPreparación:\nCuece 20 minutos.' }
+          : { title: 'que rico todo 😍 #fyp' }) });
+    };
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@a/video/1');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const previa1 = await page.evaluate(() => {
+    const t = document.querySelector('[data-imp="previa"]'); return t ? t.querySelector('.tarj-nm').value : null;
+  });
+  await page.fill('#impUrl', 'https://www.tiktok.com/@a/video/2');
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const previa2 = await page.evaluate(() => !!document.querySelector('[data-imp="previa"]'));
+  check('un enlace nuevo sin receta se lleva por delante la receta del enlace anterior',
+    previa1 === 'Lentejas exprés' && previa2 === false, JSON.stringify({ previa1, previa2 }));
+
+  // una respuesta 200 que no es JSON no es un bloqueo de CORS: mandar ahí al usuario a montar un
+  // proxy es mandarlo a arreglar lo que no está roto
+  await page.evaluate(() => {
+    window.fetch = () => Promise.resolve({ ok: true, status: 200,
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')) });
+  });
+  await page.click('[data-a="imp-traer"]');
+  await page.waitForTimeout(300);
+  const avisoFormato = await page.evaluate(() => {
+    const n = document.querySelector('#main .note[style*="warn"]'); return n ? n.textContent : '';
+  });
+  check('un 200 con algo que no es JSON se explica como formato, no como CORS',
+    !/no permite CORS/.test(avisoFormato) && /formato|JSON/i.test(avisoFormato), avisoFormato.slice(0, 90));
+
+  // el lector sin https:// se completa al salir del campo, en vez de guardarse muerto
+  await gotoTab('ajustes', 'lector');
+  await page.waitForTimeout(250);
+  await page.fill('[data-a="lector-f"]', 'recetas.ejemplo.workers.dev');
+  await page.keyboard.press('Tab');   // fill() no dispara «change»; salir del campo sí
+  await page.waitForTimeout(250);
+  const lectorGuardado = await page.evaluate(() => window.PG.store.lector.proxy);
+  const sobreviveNormalize = await page.evaluate(() => {
+    const copia = JSON.parse(JSON.stringify(window.PG.store));
+    window.PG.store = copia;                      // pasa por normalize(), como al recargar
+    return window.PG.store.lector.proxy;
+  });
+  check('un lector escrito sin https:// se completa solo y sobrevive a recargar',
+    lectorGuardado === 'https://recetas.ejemplo.workers.dev' &&
+    sobreviveNormalize === 'https://recetas.ejemplo.workers.dev',
+    JSON.stringify({ lectorGuardado, sobreviveNormalize }));
+
+  // «probar» con una dirección equivocada que devuelve 404 no puede decir que va bien
+  await page.evaluate(() => {
+    window.fetch = () => Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('<html>404</html>') });
+  });
+  await page.click('[data-a="lector-probar"]');
+  await page.waitForTimeout(350);
+  const avisoProbar = await page.evaluate(() => {
+    const f = document.getElementById('flash'); return f ? f.textContent : '';
+  });
+  check('«probar» solo da el visto bueno si contesta tu lector, no ante cualquier 404',
+    /^✗/.test(avisoProbar.trim()), avisoProbar.slice(0, 80));
+  await page.evaluate(() => {
+    if (window.__fetchReal2) window.fetch = window.__fetchReal2;
+    window.PG.store.lector = { proxy: '' }; window.PG.save();
+  });
+
+  // compartir desde TikTok: el enlace va a su campo, no revuelto con el texto de la receta
+  await page.goto(base + 'index.html?title=' + encodeURIComponent('Lentejas') +
+    '&text=' + encodeURIComponent('250 g lenteja\n1 cebolla') +
+    '&url=' + encodeURIComponent('https://www.tiktok.com/@a/video/9'));
+  await page.waitForTimeout(400);
+  const compartido2 = await page.evaluate(() => ({
+    url: window.PG.ui.imp.url,
+    campo: (document.querySelector('#impUrl') || {}).value,
+    txt: window.PG.ui.imp.txt,
+  }));
+  check('al compartir, el enlace va al campo de enlace y el texto queda limpio de URLs',
+    compartido2.url === 'https://www.tiktok.com/@a/video/9' &&
+    compartido2.campo === compartido2.url && !/https?:\/\//.test(compartido2.txt),
+    JSON.stringify(compartido2));
+
   // ===================== La caja de importar el planning =====================
   {
     // El usuario escribió ahí sus sesiones semanales y se topó con «no he encontrado días» y, peor,
