@@ -53,7 +53,7 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 
 ### Versión 3.0 (lo que pediste el 2026-10-19)
 
-Cada uno, maquetas primero y una sesión por tarea. Orden aún sin decidir.
+Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-10-19: v3-mes-colores + v3-sin-semana.**
 
 - [v3-mes-colores] **Mes:** el día entero pintado por tipo, no solo la raya: guardia rojo entero con 🚨 y el número
   grande en negro; saliente oscuro; libre verde claro; trabajo marrón; entreno azul. Los eventos, más visibles en el
@@ -81,7 +81,7 @@ Cada uno, maquetas primero y una sesión por tarea. Orden aún sin decidir.
 - [v3-420-descanso] **4:20 que ayude a bajar:** que relacione lo que fumas con el descanso y la energía de la mañana
   («aunque duermas bien, puede que no descanses») y te ayude a reducir
 - [v3-420-clave] **4:20 con contraseña:** algo de esa parte con clave para entrar, que se puede cambiar desde dentro
-  · sin aclarar qué se protege y qué debe venir activado o desactivado de serie
+  · aclarado 2026-10-19: **solo la parte 4:20** pide la clave al entrar; se cambia desde dentro
 - [v3-antojos] **Antojo de chocolate:** que tenga en cuenta lo que ya cenaste y te proponga alternativas saciantes y
   proteicas hechas en casa solo con microondas, con pocas calorías pero buenas. Hoy hay un tope semanal de chocolate
   con un «kit para cambiarlo» del nutricionista: ampliarlo con recetas de verdad
