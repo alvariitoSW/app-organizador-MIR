@@ -803,6 +803,11 @@ function normalize(o){
         meta:Math.min(1000,Math.max(0.5,+x.meta)),desde:esFecha(String(x.desde))?x.desde:iso(new Date())};});
   /* el mínimo semanal, los trayectos y lo puesto/quitado a mano: sin esto se perdería al recargar */
   o.gym.minSemana=Math.max(0,Math.min(7,Math.round(+o.gym.minSemana||0)));
+  /* el plan de vuelta tras un parón: solo si sus fechas valen */
+  if(o.gym.regreso&&typeof o.gym.regreso==='object'&&esFecha(String(o.gym.regreso.desde))&&esFecha(String(o.gym.regreso.ultimo))){const v=o.gym.regreso;
+    o.gym.regreso={desde:v.desde,ultimo:v.ultimo,parado:Math.max(0,Math.min(3650,Math.round(+v.parado||0))),ritmo:['suave','normal','rapido'].indexOf(v.ritmo)>=0?v.ritmo:'normal'};
+    if(esFecha(String(v.fin)))o.gym.regreso.fin=v.fin;}
+  else delete o.gym.regreso;
   if(o.gym.ida!=null)o.gym.ida=Math.max(0,Math.min(120,Math.round(+o.gym.ida||0)));
   if(o.gym.vuelta!=null)o.gym.vuelta=Math.max(0,Math.min(120,Math.round(+o.gym.vuelta||0)));
   if(!o.gym.forzar||typeof o.gym.forzar!=='object'||Array.isArray(o.gym.forzar))o.gym.forzar={};
@@ -8601,8 +8606,10 @@ function empezarRutina(rid,fecha,corta){
      desde «Hoy», que es donde sale el aviso de que hoy toca: sin cambiar de pestaña, pulsabas
      «empezar» y no pasaba nada a la vista */
   ui.tab='gym';ui.gymPanel='vivo';
+  /* en la vuelta tras un parón (o en descarga) las series de hoy no son las de la rutina: se cuentan las de la sesión */
+  const nHoy=sesionFilas(ui.gymSesionActiva).reduce(function(a,q){return a+q.total;},0)||n;ui.gymSesionActiva.plan=nHoy;
   save();render();window.scrollTo(0,0);
-  return '«'+rt.nombre+'»: '+n+' series por delante. Apunta cada una según la hagas.';}
+  return '«'+rt.nombre+'»: '+nHoy+' series por delante. Apunta cada una según la hagas.';}
 function duracionTipica(rid){return historialRutina(rid).media||45;}
 function terminarSesion(minutos,completo,nota){
   /* «he terminado» de la pantalla de sesión: lo mismo que cerrar desde Entrenar (con hora de
@@ -14909,6 +14916,10 @@ function progresionDe(nombre,nser,tope,hoyKey){
        · dos veces seguidas atascado en el mismo peso                        -> bajas un 10 %
      Nunca mira el día de hoy: lo que interesa es de dónde vienes. */
   const reps=+tope||8,ns=+nser||0;
+  const vu=regresoDe(hoyKey||iso(new Date())),ref=vu?regresoRef(nombre,vu.desde):null;
+  if(ref&&ref.kg>0){const kgV=redondeaEj(nombre,ref.kg*vu.pct/100);
+    return {kg:kgV,cl:'vuelta',txt:'Vuelta, semana '+vu.sem+' de '+vu.de+': el '+vu.pct+' % de lo que movías antes de parar ('+fmtKg(ref.kg)+' kg). Que te sobren '+repsTxt(vu.rir)+
+      '; si va fácil, no subas aún: la semana que viene sube.'};}
   const dias=diasDeEjercicio(nombre).filter(function(f){return f!==hoyKey;});
   if(!dias.length)
     return {kg:0,cl:'nuevo',txt:'Primera vez con este ejercicio. Empieza cómodo y apunta lo que hagas: a partir de ahí la app te dice el peso.'};
@@ -15628,7 +15639,10 @@ function sesionFilas(sa){
     const dias=diasDeEjercicio(ej.ex).filter(function(f){return f!==sa.fecha;});
     const antes=dias.length?seriesDeDia(ej.ex,dias[0]).filter(function(s){return s.t!=='c';}):[];
     /* semana de descarga o versión corta: mitad de series de trabajo y −10 % */
-    const suave=!!sa.corta||bloqueDe(sa.fecha).descarga;
+    const vu=regresoDe(sa.fecha);
+    const suave=!vu&&(!!sa.corta||bloqueDe(sa.fecha).descarga);
+    if(vu){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=vu.series(w);let k2=0;
+      for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
     if(suave){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=Math.ceil(w/2);let k2=0;
       for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
     /* las que añades hoy van DESPUÉS de recortar a la mitad: si no, el recorte se las comía y «＋ serie»
@@ -15882,7 +15896,8 @@ function rutinaTarjetaHTML(rt){
   const lista=ejs.slice(0,6).map(function(e){return '<li><span>'+esc(e.ex)+'</span><b>×'+ejSets(e).length+'</b></li>';}).join('')+
     (ejs.length>6?'<li class="mas">+'+(ejs.length-6)+' más</li>':'')+(ejs.length?'':'<li class="mas">sin ejercicios: no se pone en la semana hasta que le añadas alguno (o bórrala)</li>');
   return '<div class="grt t-'+t+'"><button class="grtb" data-a="gym-rutv" data-id="'+esc(rt.id)+'">'+
-      '<span class="ty">'+({fuerza:'FUERZA',calistenia:'CALISTENIA',agua:'AGUA'})[t]+'</span><b>'+esc(rt.nombre)+'</b><ul>'+lista+'</ul></button>'+
+      '<span class="ty">'+({fuerza:'FUERZA',calistenia:'CALISTENIA',agua:'AGUA'})[t]+'</span><b>'+esc(rt.nombre)+'</b>'+
+      (function(){const vu=t!=='agua'?regresoDe(iso(new Date())):null;return vu?'<span class="gvch">vuelta · sem '+vu.sem+' · '+vu.pct+' %</span>':'';})()+'<ul>'+lista+'</ul></button>'+
     '<button class="grtm" data-a="rt-editar" data-id="'+esc(rt.id)+'" aria-label="editar '+esc(rt.nombre)+'">⋯</button></div>';}
 function renderGymPortada(){
   const c=gymCtx(),g=c.g;
@@ -15890,8 +15905,8 @@ function renderGymPortada(){
   $('#main').innerHTML='<div class="grid">'+cerr+
     gymSemanaCirculos(c.sel)+
     gymAvisoHTML(c.sel)+
-    avisosPuertaHTML()+
-    (c.sel===iso(new Date())&&!ui.gymSesionActiva&&gymCompleto()?listoHTML(c.sel):'')+
+    avisosPuertaHTML()+regresoCardHTML(c.sel)+
+    (c.sel===iso(new Date())&&!ui.gymSesionActiva&&(gymCompleto()||regresoDe(c.sel))?listoHTML(c.sel):'')+
     gymHeroHTML(c.sel)+pesoCorporalAvisoHTML()+
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="plannuevo">📋 plan</button><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
     (g.rutinas.length?('<div class="grts">'+g.rutinas.map(rutinaTarjetaHTML).join('')+'</div>'):'')+
@@ -16189,6 +16204,99 @@ function rmSerie(x){return Math.round(e1rm(cargaSerie(x),x&&x.reps,x&&x.rir)*10)
 function ejRango(ej){const lo=Math.max(1,+(ej&&ej.reps)||8),hi=Math.max(lo,+(ej&&ej.rmax)||lo);return [lo,hi];}
 function ejRir(ej){const n=+(ej&&ej.rir);if(n>=0&&n<=5&&ej&&ej.rir!==''&&ej.rir!=null)return n;const d=+((store&&store.gym&&store.gym.rirDef));return (d>=0&&d<=5&&store.gym.rirDef!=null)?d:2;}
 /* ---- bloques y descarga ---- */
+/* ===================== LA VUELTA TRAS UN PARÓN =====================
+   «Si llevo 2 meses sin entrenar no puedo hacer mi rutina: que la app me diga cuánto bajar y me suba poco a
+   poco hasta volver». Antes, tras dos meses parado, la portada decía «Listo al 100 %» y el press banca
+   «Sube a 85 kg» (de 82,5 hace dos meses). Con 2 semanas o más sin entrenar sale un plan de vuelta: empieza
+   al 70 % del peso de antes, con 2 series y 4 repeticiones en la recámara, y sube cada semana hasta el 100 %
+   en la mitad del tiempo parado (de 2 a 6 semanas). La semana no avanza hasta hacer sus entrenos.
+   La ciencia: hasta ~3 semanas apenas se pierde fuerza; de 4 a 12, un 5–15 % (Mujika y Padilla 2000;
+   McMaster 2013), y volver de golpe es cuando más lesiones hay (Gabbett 2016). design/entreno-vuelta.
+   Se guarda en gym.regreso (gym.vuelta son los minutos de volver a casa). */
+const REGRESO_DIAS=14;
+function repsTxt(n){return n+(n===1?' repetición':' repeticiones');}
+const REGRESO_RITMO={suave:{ini:60,mas:2,txt:'más suave'},normal:{ini:70,mas:0,txt:'normal'},rapido:{ini:75,mas:-1,txt:'más rápido'}};
+function diasEntreK(a,b){const x=parseDate(a),y=parseDate(b);return x&&y?Math.round((y-x)/864e5):0;}
+function ultimoEntreno(antes){
+  /* el último día con una serie apuntada antes de esa fecha */
+  let u='';gymS().registro.forEach(function(x){if(x.fecha&&x.fecha<antes&&x.fecha>u)u=x.fecha;});return u;}
+function regresoS(){
+  /* el plan de vuelta en marcha (o null). Se crea solo al pasar REGRESO_DIAS sin entrenar con historial
+     detrás, y se rehace si vuelves a parar otras dos semanas en mitad del plan */
+  const g=gymS(),hoy=iso(new Date()),ult=ultimoEntreno(hoy);
+  if(!ult)return null;
+  let v=g.regreso&&typeof g.regreso==='object'?g.regreso:null;
+  const parado=diasEntreK(ult,hoy);
+  if(parado>=REGRESO_DIAS&&(!v||ult>=v.desde))
+    v=g.regreso={desde:hoy,ultimo:ult,parado:parado,ritmo:(v&&REGRESO_RITMO[v.ritmo])?v.ritmo:'normal'};
+  return v&&!v.fin?v:null;}
+function regresoSemanas(v){
+  const r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,w=Math.floor((+v.parado||REGRESO_DIAS)/7);
+  return Math.max(2,Math.min(8,Math.max(2,Math.min(6,Math.round(w/2)))+r.mas));}
+function regresoDiasSem(i){return i===1?2:Math.max(2,Math.min(4,+gymS().minSemana||3));}
+function regresoDe(key){
+  /* en qué semana del plan cae ese día: cuenta los días entrenados desde que empezó (antes de ese día) */
+  const v=regresoS();if(!v||!key||key<v.desde)return null;
+  const N=regresoSemanas(v),r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,f={};
+  gymS().registro.forEach(function(x){if(x.fecha&&x.fecha>=v.desde&&x.fecha<key)f[x.fecha]=1;});
+  const hechos=Object.keys(f).length;
+  let acc=0,i=1;
+  for(;i<=N;i++){const d=regresoDiasSem(i);if(hechos<acc+d)break;acc+=d;}
+  if(i>N){if(key===iso(new Date())){v.fin=key;}return null;}
+  const t=N>1?(i-1)/(N-1):1;
+  let pct=Math.round((r.ini+(100-r.ini)*t)/5)*5;
+  /* si la última sesión del plan fue «dura», esta semana se queda un 5 % más abajo */
+  const ses=gymS().sesiones.filter(function(x){return x.fecha>=v.desde&&x.fecha<key;}).sort(function(a,b){return a.fecha<b.fecha?1:-1;})[0];
+  const duro=i>1&&ses&&+ses.rpe>=8;if(duro)pct-=5;
+  return {sem:i,de:N,pct:pct,rir:Math.round(4-3*t),dias:regresoDiasSem(i),hechos:hechos-acc,duro:duro,
+    semanasParado:Math.floor((+v.parado||0)/7),ultimo:v.ultimo,desde:v.desde,ritmo:v.ritmo,
+    series:function(full){return Math.max(1,Math.min(full,Math.round(2+(full-2)*t)));}};}
+function regresoRef(nombre,desde){
+  /* lo que movías antes de parar: el peso de trabajo más alto del último día de ese ejercicio antes del plan */
+  const d=diasDeEjercicio(nombre).filter(function(f){return f<desde;})[0];if(!d)return null;
+  const l=seriesDeDia(nombre,d).filter(function(x){return x.t!=='c';});
+  return {kg:l.reduce(function(a,x){return Math.max(a,+x.kg||0);},0),reps:l.reduce(function(a,x){return Math.max(a,+x.reps||0);},0),n:l.length,dia:d};}
+function regresoCardHTML(sel){
+  const vu=regresoDe(sel||iso(new Date()));if(!vu)return '';
+  const g=gymS(),fuerza=g.rutinas.filter(function(r){return rutTipo(r)!=='agua'&&r.ejercicios.length;});
+  const ultS=sesionesRecientes(1)[0],iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
+  const rt=rutinaDeFecha(sel)||(fuerza.length?fuerza[(iu+1)%fuerza.length]:null);
+  const pasos=[];for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal;
+    pasos.push('<div class="'+(i===vu.sem?'on':(i<vu.sem?'ok':''))+'"><b>'+(i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5)+' %</b><span>sem '+i+'</span></div>');}
+  const d=parseDate(vu.ultimo);
+  return '<div class="card gvuelta"><div class="cap">TU VUELTA AL GIMNASIO</div>'+
+    '<div class="big">Semana '+vu.sem+' de '+vu.de+'</div>'+
+    '<p class="mini">Llevabas <b>'+(vu.semanasParado>=2?vu.semanasParado+' semanas':diasEntreK(vu.ultimo,vu.desde)+' días')+'</b> sin entrenar'+(d?' (último día: '+d.getDate()+' '+MON[d.getMonth()]+')':'')+
+      '. Vuelves a tu rutina en '+vu.de+' semanas, sin lesionarte ni quemarte.</p>'+
+    '<div class="gvesc">'+pasos.join('')+'</div>'+
+    '<p class="mini">Esta semana: <b>'+vu.dias+' días</b> · '+(vu.sem===vu.de?'tus series':'2'+(vu.sem>1?'–3':'')+' series por ejercicio')+' · el '+vu.pct+' % de tu peso · que te sobren '+repsTxt(vu.rir)+(vu.duro?' · un 5 % menos porque la última fue dura':'')+'.</p>'+
+    '<div class="gvprog"><i style="width:'+Math.round(Math.min(1,vu.hechos/vu.dias)*100)+'%"></i></div>'+
+    '<p class="mini">'+vu.hechos+' de '+vu.dias+' entrenos de esta semana</p>'+
+    (rt&&!ui.gymSesionActiva?'<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(rt.nombre)+' (vuelta)</button>':'')+
+    '<button class="btn s gvplan" data-a="gym-panel" data-p="regreso">ver el plan entero y el porqué ›</button></div>';}
+function renderGymRegreso(){
+  const vu=regresoDe(iso(new Date()));
+  if(!vu){ui.gymPanel='';return renderGymPortada();}
+  const r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal,filas=[];
+  for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,pct=i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5;
+    filas.push('<tr class="'+(i===vu.sem?'on':'')+'"><td><b>'+i+'</b>'+(i===vu.sem?' · ahora':'')+'</td><td>'+regresoDiasSem(i)+'</td><td>'+(i===vu.de?'tus series':(i===1?'2':'2–3'))+
+      '</td><td><b>'+pct+' %</b></td><td>'+Math.round(4-3*t)+'</td></tr>');}
+  const refs=[];gymS().rutinas.forEach(function(rt){rt.ejercicios.forEach(function(e){const x=regresoRef(e.ex,vu.desde);if(x&&x.kg>0&&refs.length<3)refs.push(e.ex.toLowerCase()+' '+fmtKg(x.kg)+' kg');});});
+  $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu plan de vuelta')+
+    '<div class="card"><div class="cap gvcap">'+(vu.semanasParado>=2?vu.semanasParado+' SEMANAS':diasEntreK(vu.ultimo,vu.desde)+' DÍAS')+' PARADO → '+vu.de+' SEMANAS DE VUELTA</div>'+
+      '<table class="gvtab"><tr><th>Semana</th><th>Días</th><th>Series</th><th>Peso</th><th>Te sobran</th></tr>'+filas.join('')+'</table>'+
+      '<p class="mini">El 100 % es lo que movías antes de parar'+(refs.length?' ('+esc(refs.join(', '))+'…)':'')+'. Después vuelve tu progresión de siempre.</p></div>'+
+    '<div class="card"><div class="cap gvcap">EL RITMO</div><div class="chips">'+['suave','normal','rapido'].map(function(k){
+      const v2=Object.assign({},regresoS(),{ritmo:k});
+      return '<button class="chipx'+(vu.ritmo===k?' on':'')+'" data-a="regreso-ritmo" data-v="'+k+'">'+REGRESO_RITMO[k].txt+' · '+regresoSemanas(v2)+' sem</button>';}).join('')+'</div>'+
+      '<p class="mini">Elige «más suave» si estás de guardias seguidas o durmiendo poco.</p></div>'+
+    '<div class="card"><div class="cap gvcap">EN QUÉ SE BASA</div><ul class="gvcien">'+
+      '<li>Hasta ~3 semanas parado apenas se pierde fuerza; de 4 a 12 se pierde un 5–15 %, y más el aguante que la fuerza.</li>'+
+      '<li>Volver de golpe al peso y al volumen de antes es cuando más agujetas fuertes y lesiones hay: la carga tiene que subir poco a poco.</li>'+
+      '<li>La fuerza vuelve mucho antes de lo que costó ganarla («memoria muscular»): en unas semanas estás donde lo dejaste.</li></ul></div>'+
+    '<div class="card"><div class="cap gvcap">SI TE SALTAS DÍAS</div><p class="mini">La semana no avanza hasta que haces sus entrenos. Si vuelves a parar más de 2 semanas, el plan se rehace desde donde estés. Si al terminar una sesión dices que fue dura, la semana siguiente va un 5 % más abajo.</p>'+
+      '<button class="btn s" data-a="regreso-quitar">no lo necesito: quitar el plan</button></div>'+
+  '</div>';}
 function descargaCada(){const n=+gymS().descargaCada;return (n>=3&&n<=12)?Math.round(n):5;}
 function bloqueDesde(){
   /* el primer bloque empieza el lunes en que llega esta función, no el día de tu primer registro:
@@ -16230,10 +16338,12 @@ function listoDe0(key){
     if(cansados.length){v-=10;motivos.push(cansados.join(' y ').toLowerCase()+' aún cargad'+(cansados.length>1?'os':'o'));}}
   const a=acwrDe(key);
   if(a&&a.r>1.5){v-=10;motivos.push('la carga sube de golpe');}else if(a&&a.r>1.3){v-=5;}
+  const vu=regresoDe(key);
+  if(vu){v-=vu.sem===1?25:(vu.sem===2?15:5);motivos.push('vuelves de '+(vu.semanasParado>=2?vu.semanasParado+' semanas':'2 semanas')+' parado');}
   v=Math.max(20,Math.min(100,Math.round(v)));
-  const rec=v>=80?'normal':(v>=60?'ajusta':'corta');
+  const rec=vu?'vuelta':(v>=80?'normal':(v>=60?'ajusta':'corta'));
   return {v:v,motivos:motivos,rec:rec,hayDatos:s.h!=null,
-    txt:rec==='normal'?'Entrena normal.':(rec==='ajusta'?'Quita una serie a los básicos o baja un 5 %.':'Hoy, versión corta: mitad de series y −10 % de peso.')};}
+    txt:rec==='vuelta'?'Hoy versión de vuelta, no tu sesión de siempre.':rec==='normal'?'Entrena normal.':(rec==='ajusta'?'Quita una serie a los básicos o baja un 5 %.':'Hoy, versión corta: mitad de series y −10 % de peso.')};}
 function listoHTML(key){
   const l=listoDe(key);if(!l.hayDatos&&!l.motivos.length)return '';
   const col=l.v>=80?'var(--ok)':(l.v>=60?'var(--warn)':'var(--bad)');
@@ -16807,6 +16917,7 @@ function renderGym(){
   if(p==='plan')return renderGymPlan();
   if(p==='sup')return renderGymSup();
   if(p==='plannuevo')return renderGymPlanNuevo();
+  if(p==='regreso')return renderGymRegreso();
   if(ui.gymInforme)return renderGymInforme();
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
@@ -23221,6 +23332,9 @@ function act(a,el){
     case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
       store.rotation.viaje.on=!viajeCfg().on;save();render();
       flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
+    case 'regreso-ritmo':{const v=regresoS();if(v&&REGRESO_RITMO[el.dataset.v]){v.ritmo=el.dataset.v;save();render();
+      const vu=regresoDe(iso(new Date()));flash('ritmo '+REGRESO_RITMO[v.ritmo].txt+(vu?' · '+vu.de+' semanas, ahora al '+vu.pct+' %':''));}break;}
+    case 'regreso-quitar':{const v=regresoS();if(v){v.fin=iso(new Date());save();}ui.gymPanel='';render();flash('plan de vuelta quitado: vuelve tu progresión de siempre');break;}
     case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
       render();window.scrollTo(0,0);break;}
     case 'dia-add':{
@@ -26967,7 +27081,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

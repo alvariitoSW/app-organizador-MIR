@@ -1151,3 +1151,26 @@ lo dijiste). El día de trabajo con entreno manda el trabajo (marrón) y el entr
 «Reglas de oro», que solo se editaban desde Semana, se quedan guardadas y salen en «Exportar en texto», pero ya
 no se editan desde la app. El selector de mes sale en inglés solo en el navegador de pruebas: en tu móvil en
 español sale en español.
+
+## Entreno: el plan de vuelta tras un parón (2026-10-19)
+
+**Elegido.** Lo segundo de la 3.0 (v3-plan-vuelta), con las maquetas de `design/entreno-vuelta/` tal cual:
+- Con **2 semanas o más** sin apuntar una serie (y con historial detrás), Entreno abre con «Tu vuelta al gimnasio ·
+  Semana 1 de N»: la escalera de semanas (70 → 80 → 90 → 100 %), qué toca esta semana (días, series, % y cuántas
+  repeticiones te tienen que sobrar), el progreso y «Empezar … (vuelta)».
+- **N = la mitad de las semanas parado** (entre 2 y 6). Ritmo «más suave» (+2 semanas, desde el 60 %), «normal»
+  (desde el 70 %) o «más rápido» (−1 semana, desde el 75 %). Semana 1: 2 días; luego tu mínimo semanal (o 3).
+- **La sesión ya viene ajustada:** el peso es el % de lo que movías antes de parar (no lo de la última vez a secas),
+  con las series que tocan y su porqué. La semana no avanza hasta hacer sus entrenos; si la última sesión fue
+  «dura» (esfuerzo 8 o más), la semana va un 5 % más abajo; si vuelves a parar 2 semanas, el plan se rehace.
+- **El «listo» cuenta el parón:** −25 % la semana 1, −15 % la 2, −5 % después, con «Hoy versión de vuelta».
+- «Ver el plan entero y el porqué» (tabla, ritmo, la ciencia en tres líneas) y «no lo necesito: quitar el plan».
+- Antes, tras dos meses parado: «Listo al 100 % · Entrena normal» y «Sube a 85 kg» con lo de hace dos meses.
+- Prueba encadenada 323 (portada → plan → más suave → empezar → quitar). Sin el plan caen 3 de sus 4 comprobaciones.
+
+**Descartado.** Activarlo solo a mano; esperar a 3 semanas (elegiste 2). Que la descarga o la «versión corta» se
+sumen encima del plan (se recortaría dos veces).
+
+**Supuestos.** El peso de antes es el más alto de trabajo del último día de ese ejercicio antes de parar. La semana
+2 en adelante usa tu mínimo semanal de Entreno (o 3 días si no tienes). «Duro» = esfuerzo de la sesión 8 o más.
+Se guarda en `gym.regreso` (`gym.vuelta` ya eran los minutos de volver a casa).

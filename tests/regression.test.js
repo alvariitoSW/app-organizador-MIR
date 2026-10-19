@@ -12924,6 +12924,51 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el aviso de mantener pulsado sale en el Mes y no se queda encima al ir a Comer ni a Hoy',
       r.mes.tab === 'month' && r.mes.aviso && r.comer.tab === 'food' && !r.comer.aviso && r.hoy.tab === 'hoy' && !r.hoy.aviso, JSON.stringify(r));
   }
+  // 323) LA VUELTA AL GIMNASIO TRAS UN PARÓN, EN CADENA (a 412×915): con dos rutinas entrenadas 6 semanas y luego 8
+  // semanas sin entrenar, (a) la portada de Entreno abre con «Semana 1 de 4» al 70 % y el «listo» ya no está al 100 %;
+  // (b) «ver el plan» enseña las 4 semanas y «más suave» lo alarga a 6 y baja al 60 %; (c) volviendo a la portada,
+  // «Empezar … (vuelta)» monta la sesión con el 60 % del peso de antes y 2 series por ejercicio; (d) descartada la
+  // sesión, «quitar el plan» devuelve la progresión de siempre. Fija: tras dos meses parado decía «Listo al 100 %»
+  // y «Sube a 85 kg» con lo de hace dos meses.
+  {
+    const vp323 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia323 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r323a', nombre: 'Torso 323', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 4, reps: 6, rmax: 8 }, { ex: 'Remo con barra', series: 4, reps: 8, rmax: 10 }] },
+        { id: 'r323b', nombre: 'Pierna 323', dias: [], ejercicios: [{ ex: 'Sentadilla (barra)', series: 4, reps: 5, rmax: 7 }, { ex: 'Peso muerto rumano', series: 3, reps: 8, rmax: 10 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; P.ui.gymSesionActiva = null; P.ui.gymPanel = '';
+      const base = { 'Press banca (barra)': 70, 'Remo con barra': 65, 'Sentadilla (barra)': 95, 'Peso muerto rumano': 80 }, hoy = new Date();
+      for (let w = 0; w < 6; w++) for (const [dd, rt] of [[0, 'r323a'], [2, 'r323b'], [4, 'r323a']]) { const d = new Date(hoy); d.setDate(d.getDate() - 60 - (5 - w) * 7 - (4 - dd)); const k = P.iso(d);
+        g.rutinas.find((x) => x.id === rt).ejercicios.forEach((e) => { for (let i = 0; i < e.series; i++) g.registro.push({ id: 'g323' + Math.random(), fecha: k, ex: e.ex, kg: base[e.ex] + w * 2.5, reps: e.rmax, rpe: 7, ts: d.getTime() }); });
+        g.sesiones.push({ id: 's323' + k + rt, fecha: k, rutinaId: rt, rpe: 7 }); }
+      P.save(); P.ui.tab = 'hoy'; P.render(); });
+    await page.click('#tabs [data-a="tab"][data-t="gym"]'); await page.waitForTimeout(300);
+    const r = {}, clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
+    r.a = await page.evaluate(() => { const c = document.querySelector('#main .gvuelta'), l = document.querySelector('#main .glisto');
+      return { hay: !!c, sem: c ? (c.querySelector('.big') || {}).textContent : '', on: c ? (c.querySelector('.gvesc .on') || {}).textContent : '', listo: l ? l.textContent : '' }; });
+    await clic('#main .gvuelta [data-a="gym-panel"][data-p="regreso"]');
+    r.b = { filas: await page.evaluate(() => document.querySelectorAll('#main .gvtab tr').length - 1) };
+    await clic('#main [data-a="regreso-ritmo"][data-v="suave"]');
+    Object.assign(r.b, await page.evaluate(() => ({ filasSuave: document.querySelectorAll('#main .gvtab tr').length - 1, pct: (document.querySelector('#main .gvtab tr.on') || {}).textContent || '' })));
+    await clic('#main .volver[data-a="gym-panel"]');
+    await clic('#main .gvuelta [data-a="ses-empezar"]');
+    r.c = await page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva; if (!sa) return { sesion: false };
+      const rt = P.gymS().rutinas.find((x) => x.id === sa.rutinaId), ex = rt.ejercicios[0].ex, v = P.regresoDe(sa.fecha), ref = v ? P.regresoRef(ex, v.desde) : null;
+      if (!v || !ref) return { sesion: true, sinPlan: true };
+      const kg = +(document.querySelector('#main input[data-k="kg"]') || {}).value;
+      const filas = P.sesionFilas(sa).map((q) => q.filas.filter((f) => f.t !== 'c').length);
+      return { sesion: true, ex, kg, ref: ref.kg, pct: v.pct, esperado: P.redondeaEj(ex, ref.kg * v.pct / 100), filas: filas.join(',') }; });
+    await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.ui.tab = 'gym'; P.ui.gymPanel = 'regreso'; P.render(); });
+    await clic('#main [data-a="regreso-quitar"]');
+    r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main .gvuelta'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia323; delete window.__copia323; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp323);
+    check('tras 8 semanas sin entrenar, Entreno abre con «Semana 1 de 4» al 70 % y el «listo» no dice 100 %',
+      r.a.hay && /Semana 1 de 4/.test(r.a.sem) && /70 %/.test(r.a.on) && !/100/.test(r.a.listo) && /vuelta/.test(r.a.listo), JSON.stringify(r.a));
+    check('el plan enseña las 4 semanas y «más suave» lo alarga a 6 y empieza al 60 %', r.b.filas === 4 && r.b.filasSuave === 6 && /60 %/.test(r.b.pct), JSON.stringify(r.b));
+    check('«Empezar (vuelta)» monta la sesión con el 60 % del peso de antes y 2 series por ejercicio',
+      r.c.sesion && r.c.pct === 60 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
+    check('«quitar el plan» devuelve la progresión de siempre', !r.d.tarjeta && r.d.pr !== 'vuelta', JSON.stringify(r.d));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
