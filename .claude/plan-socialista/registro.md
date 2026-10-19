@@ -89,3 +89,5 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [run-39032390614] 2026-10-17 · despliegue de main (aaa1805, tu nutricionista) · success
 - [run-39275746140] 2026-10-19 · despliegue de main (acd3948, el Plan, las tres en una) · success
 - [enc-ponytail] 2026-10-19 · «Lo mínimo primero» en CLAUDE.md + auditoría: 7 funciones, 4 acciones, 2 copias y 404 reglas CSS fuera (main 84e7253) · hecha
+- [rama-b9adda8] 2026-10-19 · rama un commit por delante de main (solo el traspaso, sin código); main 84e7253 desplegado y sellado (run 39318216522 success) · ok
+- [enc-v3] 2026-10-19 · el usuario abre la «versión 3.0»: la parte isométrica (Comer · Plan) da por buena; quiere revisión a fondo (arte, visual, técnico), ampliar funcionalidad, mejorar procesos artísticos y valorar cambiar de tema visual. Propuesto: fase 0 de auditoría + decidir tema con maquetas, y recoger los aparcados (arte-energia, arte-iconos, comida-entreno, aviso-mes, png-design) · propuesto
