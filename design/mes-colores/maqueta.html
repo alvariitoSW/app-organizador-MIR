@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mes con colores</title>
+<link rel="stylesheet" href="../_base.css">
+<style>
+body{padding:16px;display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.tabla{width:412px;flex:none}
+.tabla>h3{margin:0 0 4px;font-size:15px}
+.tabla>p{margin:0 0 10px;color:#8fa6c6;font-size:12.5px;max-width:412px}
+.movil{width:412px;background:#070b14;border:1px solid #1e2b44;border-radius:18px;overflow:hidden;position:relative}
+.top{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px 6px}
+.top b{font-size:14px;color:#c9d6ea;min-width:120px;text-align:center}
+.top i{font-style:normal;border:1px solid #1e2b44;border-radius:10px;padding:6px 14px;color:#8fa6c6;background:#0b1120}
+.modos{display:flex;margin:4px 10px 10px;border:1px solid #1e2b44;border-radius:14px;padding:3px;background:#0b1120}
+.modos span{flex:1;text-align:center;padding:9px 0;font-weight:800;font-size:13px;color:#8fa6c6;border-radius:11px}
+.modos span.on{color:#e9f2ff;background:#111a2b;box-shadow:inset 0 0 0 1px #38e1ff55}
+.resto{margin:0 10px 10px;border:1px dashed #1e2b44;border-radius:12px;padding:10px;color:#5d7090;font-size:12px;text-align:center}
+.ley{display:flex;flex-wrap:wrap;gap:5px;margin:0 10px 8px}
+.ley span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#c9d6ea}
+.ley i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 6px 10px}
+.wd{font-size:10.5px;font-weight:800;text-align:center;color:#8fa6c6;letter-spacing:.06em;padding-bottom:2px}
+.d{position:relative;min-height:88px;border-radius:9px;padding:3px 3px 4px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:#0b0f17}
+.d .n{font-size:24px;line-height:1;font-weight:900;letter-spacing:-.03em}
+.d .n small{font-size:10px;font-weight:800;margin-left:2px;letter-spacing:0}
+.d .ico{font-size:13px;line-height:1;margin-right:2px}
+.d{overflow-wrap:normal;word-break:normal}
+.d .h{font-size:10.5px;font-weight:800;line-height:1.15}
+.d .ev{font-size:10px;font-weight:700;line-height:1.15;background:rgba(255,255,255,.82);color:#0b0f17;border-radius:4px;padding:1px 3px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:9.5px}
+.d .ev b{font-weight:900}
+.d .gym{margin-top:auto;font-size:10px;font-weight:900;border-radius:4px;padding:1px 3px;color:#0b0f17}
+.d.hoy{box-shadow:0 0 0 3px #fff,0 0 0 5px #070b14}
+.d.sal{color:#e9f2ff}
+.d.sal .h{color:#c9d6ea}
+.leyenda-nota{margin:0 10px 12px;color:#8fa6c6;font-size:11.5px}
+/* A · colores llenos */
+.A .gua{background:#e5383b}.A .tra{background:#a4733f}.A .lib{background:#9fe39a}.A .fue{background:#4d8df6}.A .sal{background:#2a2f3b}.A .vac{background:#f2d27a}
+.A .gym{background:#4d8df6}
+/* B · colores suaves */
+.B .gua{background:#ff8f8f}.B .tra{background:#cfa77c}.B .lib{background:#d2f5cc}.B .fue{background:#a8c9ff}.B .sal{background:#444b5a}.B .vac{background:#f7e3a8}
+.B .gym{background:#a8c9ff}
+.B .gua{box-shadow:inset 0 0 0 2px #e5383b}
+</style></head>
+<body>
+<script>
+// 5 semanas desde el lunes 19 de octubre de 2026 (hoy), con las guardias sembradas en la medición
+const G={'2026-10-21':'UMI','2026-10-27':'URG','2026-11-01':'UMI','2026-11-06':'URG','2026-11-12':'UMI'};
+const GYM={'2026-10-23':'6:30','2026-10-30':'6:30','2026-11-05':'6:30','2026-11-10':'6:30','2026-11-14':'11:00','2026-11-20':'6:30'};
+const EV={'2026-10-24':['','Cumple Ana'],'2026-10-29':['20:00','Lloretazo'],'2026-10-31':['','Halloween'],'2026-11-04':['17:30','Dentista'],'2026-11-15':['21:00','Cena R1'],'2026-11-19':['','Examen']};
+const VAC={};
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+function tipo(d){
+  const k=key(d),ay=key(add(d,-1)),dow=(d.getDay()+6)%7;
+  if(VAC[k])return 'vac';
+  if(G[k])return 'gua';
+  if(G[ay])return 'sal';
+  if(dow<5)return 'tra';
+  if(GYM[k])return 'fue';
+  return 'lib';}
+function celdas(){
+  const ini=new Date(2026,9,19,12),out=[];
+  for(let i=0;i<35;i++){
+    const d=add(ini,i),k=key(d),t=tipo(d),gym=GYM[k],ev=EV[k];
+    let h='';
+    if(t==='gua')h='<span class="ico">🚨</span>'+G[k]+'<br>15→9';else if(t==='sal')h='saliente<br>hasta 9:15';else if(t==='tra')h='8–15';
+    const n=d.getDate()+(d.getDate()===1?'<small>nov</small>':'');
+    out.push('<div class="d '+(t==='tra'&&gym?'tra':t)+(i===0?' hoy':'')+'">'+
+      '<span class="n">'+n+'</span>'+
+      
+      (h?'<span class="h">'+h+'</span>':'')+
+      (ev?'<span class="ev">'+(ev[0]?'<b>'+ev[0]+'</b> ':'')+ev[1]+'</span>':'')+
+      (gym&&t!=='fue'?'<span class="gym">🏋️ '+gym+'</span>':gym?'<span class="h">🏋️ '+gym+'</span>':'')+
+      '</div>');}
+  return out.join('');}
+function movil(clase){
+  return '<div class="movil '+clase+'">'+
+  '<div class="top"><i>‹</i><b>octubre 2026</b><i>›</i></div>'+
+  '<div class="modos"><span class="on">Mes</span><span>Hoy</span></div>'+
+  '<div class="resto">abono del mes · R1 · vacaciones · Plana / Isométrica / Carretera<br>(sin cambios)</div>'+
+  '<div class="ley">'+
+    [['gua','Guardia 🚨'],['sal','Saliente'],['tra','Trabajo'],['fue','Entreno'],['lib','Libre'],['vac','Vacaciones']]
+      .map(([c,t])=>'<span><i class="d '+c+'" style="min-height:0;padding:0"></i>'+t+'</span>').join('')+'</div>'+
+  '<div class="cal">'+['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(w=>'<span class="wd">'+w+'</span>').join('')+celdas()+'</div>'+
+  '</div>';}
+document.body.innerHTML=
+ '<div class="tabla"><h3>A · Colores llenos</h3><p>El día entero del color de lo que toca, el número grande en negro. Guardia en rojo con 🚨; saliente oscuro (el número en blanco, que en negro no se leería); trabajo marrón; entreno azul; libre verde claro. Si un día de trabajo tiene entreno, va marrón con una franja azul abajo.</p>'+movil('A')+'</div>'+
+ '<div class="tabla"><h3>B · Colores suaves</h3><p>Lo mismo con tonos más claros, más tranquilos de noche. La guardia lleva además un borde rojo fuerte para que siga saltando a la vista.</p>'+movil('B')+'</div>';
+</script>
+</body></html>
