@@ -2394,7 +2394,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // y el camino corto: marcar un periodo desde el día que estás mirando, sin bajar a la tarjeta.
     // El panel de un toque ya solo es para mirar: el periodo se marca desde la hoja del día
     // (mantener pulsado) → «más…» → «Vacaciones desde aquí hasta…» y tocando el último día
-    const desde = clave(new Date(y, m, 12)), hasta = clave(new Date(y, m, 16));
+    // también relativo a hoy (con el 12–16 del mes, a partir del día 17 el 16 ya no estaba en la cuadrícula)
+    const desde = clave(mas(16)), hasta = clave(mas(20));
     await page.evaluate((k) => { window.PG.ui.hojaDia = k; window.PG.render(); }, desde);
     await page.waitForTimeout(400);
     await page.click('#hojaDia [data-a="hoja-mas"]');
