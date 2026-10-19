@@ -11619,8 +11619,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia274', JSON.stringify(P.store));
       P.store.dishes.forEach((d) => { delete d.tuyo; });
       P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'sem'; P.ui.tpVista = ''; P.ui.tpTxt = ''; P.save(); P.render(); });
-    // la semana QUE VIENE (con ‹ ›): la semana con tus platos no propone los días que ya pasaron de esta
-    await toca('#main [data-a="cje-sem"][data-d="1"]', 150);
+    // de lunes a miércoles, ESTA semana (la compra mira de hoy a la próxima compra, 7 días como mucho: desde un lunes
+    // no llega a la semana que viene); de jueves a domingo, la que viene (con ‹ ›), que esta ya casi pasó
+    const dow274 = (new Date().getDay() + 6) % 7;
+    if (dow274 >= 3) await toca('#main [data-a="cje-sem"][data-d="1"]', 150);
     // días de trabajo (no el saliente, que era el primer turno sin guardia: en saliente no se cocina) y la guardia el miércoles
     await page.evaluate(() => { const P = window.PG, L = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0], G = P.store.shifts.filter(P.isGuardia)[0];
       for (let w = 0; w < 7; w++) P.setDayOverride(P.sbKey(w), w === 2 ? G.id : L.id, w === 2 ? 'urg' : ''); P.save(); P.render(); });
@@ -11645,7 +11647,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (await page.$('#tpTxt')) await page.fill('#tpTxt', 'lentejas con chorizo');
     await toca('[data-a="tp-leer"]'); await toca('[data-a="tp-guardar"]', 150);
     r.b.n2 = await page.evaluate(() => (window.PG.tpTodos ? window.PG.tpTodos().length : -1));
-    // (c)
+    // (c) la compra mira de hoy hasta la próxima compra: que llegue a la semana que viene (se restaura con la copia)
+    await page.evaluate(() => { window.PG.store.food.compraCada = 14; });
     await toca('[data-a="tp-semana"]');
     r.c = await page.evaluate(() => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
       const fut = R.dia.filter((d) => !d.pas), g = R.dia[2];
