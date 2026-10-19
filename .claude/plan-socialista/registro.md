@@ -65,6 +65,7 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [sup-2026-10-14-t1t2] 6 más de las tandas 1 y 2 (cafés, café de otro día, siesta de guardia, Lloretazo 0,6 h, cartel azul, «+N más») · DECISIONS.md · contado el 2026-10-14 (solo el número)
 - [sup-2026-10-17-nutri] nutricionista: pico = más de 300 kcal o del 15 % sobre el objetivo, se compensa en 3 días (máx. 300/día), suelo 80 % (mín. 1.500), chocolate tope 2/semana, cena del Lloret 380–700 kcal y ≥22 g, «solo café» < 150 kcal · DECISIONS «Tu nutricionista, más presente» · contado el 2026-10-17
 - [sup-2026-10-19-plan] Plan: cocinas una hora después de salir (o a mediodía si libras), ollas de 2–6 raciones, los días de entreno valen para cocinar si no hay otros, se quitó «la semana con tus platos» · DECISIONS «El Plan, las tres en una» · contado el 2026-10-19
+- [sup-2026-10-19-auditoria] limpieza: una clase CSS está viva si su nombre aparece en app.js/index/sw/fig; las compuestas al vuelo ('t-', 'ev') se quedan; lo de dentro de :is()/:not() no se toca · DECISIONS «Lo mínimo primero» · contado el 2026-10-19
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
 ## Cerrados
@@ -87,3 +88,4 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 - [rama-0f2765e] 2026-10-17 · main y rama iguales, sellado · ok
 - [run-39032390614] 2026-10-17 · despliegue de main (aaa1805, tu nutricionista) · success
 - [run-39275746140] 2026-10-19 · despliegue de main (acd3948, el Plan, las tres en una) · success
+- [enc-ponytail] 2026-10-19 · «Lo mínimo primero» en CLAUDE.md + auditoría: 7 funciones, 4 acciones, 2 copias y 404 reglas CSS fuera (main 84e7253) · hecha
