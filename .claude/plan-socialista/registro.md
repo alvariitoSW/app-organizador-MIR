@@ -51,6 +51,29 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
   visible arriba en Comer → Hoy e informe del domingo (bien · falta · a cambiar, metas, semana a semana). Maquetas en
   design/nutricionista/ aprobadas y construidas: desplegado en main (aaa1805). Bebidas en ml: hecho y desplegado.
 
+### Versión 3.0 (lo que pediste el 2026-10-19)
+
+Cada uno, maquetas primero y una sesión por tarea. Orden aún sin decidir.
+
+- [v3-mes-colores] **Mes:** el día entero pintado por tipo, no solo la raya: guardia rojo entero con 🚨 y el número
+  grande en negro; saliente oscuro; libre verde claro; trabajo marrón; entreno azul. Los eventos, más visibles en el
+  Mes. Y el selector de fecha en español (sale «October 2026» y pegado al icono, lo vio la revisión de salud)
+- [v3-sin-semana] **Quitar la vista Semana** del Calendario entera: no la usas
+- [v3-conductor] **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
+  descripción más grande, no solo «se ve el autobús»
+- [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
+  número, y cada cosa en su unidad (g, ml, mg: la leche en ml)
+- [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
+- [v3-boceto-semana] **Plan de comidas:** montar una semana a mano como **boceto** (poner, cambiar, quitar platos),
+  guardarla y que el asistente de la semana ayude sobre ese boceto
+- [v3-entrenador] **Entreno, otra vuelta entera:** como una app de entrenador propio basada en ciencia. Ejemplo: si
+  llevas 2 meses sin entrenar, que sobre tu rutina te diga «baja un X %» y te suba poco a poco hasta volver (hoy no
+  existe nada de vuelta tras un parón)
+- [v3-dinero-compras] **Dinero:** planear compras de los próximos meses (cosas que quizá compres), decidir qué sí y
+  qué no, y cuánto puedes apartar cada mes para ellas; «una app dentro de la app». Hoy hay deseos dentro de cada
+  hucha, pero no un plan de compras
+- [v3-gmail] **«La función de Gmail»:** sin aclarar qué es (¿la de Google Calendar?) · pendiente de que lo digas
+
 ### A futuro (sin fecha)
 
 - [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
