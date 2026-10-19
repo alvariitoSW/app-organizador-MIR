@@ -73,6 +73,18 @@ Cada uno, maquetas primero y una sesión por tarea. Orden aún sin decidir.
   qué no, y cuánto puedes apartar cada mes para ellas; «una app dentro de la app». Hoy hay deseos dentro de cada
   hucha, pero no un plan de compras
 - [v3-gmail] **«La función de Gmail»:** sin aclarar qué es (¿la de Google Calendar?) · pendiente de que lo digas
+- [v3-plan-vuelta] **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
+  puedes hacerla tras un parón; la app te monta el camino («tantos días a la semana, tantas semanas, así») con
+  seguimiento y continuidad, como un entrenador, no un menú de opciones
+- [v3-coach] **La app como entrenador de tu persona:** descansar, comer bien, verdura y fruta, entreno; que te guíe
+  y lo note, en vez de tener funciones sueltas. Y que cuente el día de Lloret, que también cambia las cosas
+- [v3-420-descanso] **4:20 que ayude a bajar:** que relacione lo que fumas con el descanso y la energía de la mañana
+  («aunque duermas bien, puede que no descanses») y te ayude a reducir
+- [v3-420-clave] **4:20 con contraseña:** algo de esa parte con clave para entrar, que se puede cambiar desde dentro
+  · sin aclarar qué se protege y qué debe venir activado o desactivado de serie
+- [v3-antojos] **Antojo de chocolate:** que tenga en cuenta lo que ya cenaste y te proponga alternativas saciantes y
+  proteicas hechas en casa solo con microondas, con pocas calorías pero buenas. Hoy hay un tope semanal de chocolate
+  con un «kit para cambiarlo» del nutricionista: ampliarlo con recetas de verdad
 
 ### A futuro (sin fecha)
 
