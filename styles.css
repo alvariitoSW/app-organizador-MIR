@@ -4152,3 +4152,72 @@ details.cocm>summary.cocmh::before{content:'';position:absolute;inset:-12px -10p
 .nhg>b{color:var(--ink2);font-weight:700}.nhg span{padding:6px 2px;border-radius:7px;background:var(--superficie-2);text-align:center;font-weight:700}
 .nhg span.h{background:none;color:var(--ink2);font-weight:600}
 .ninf .cap,.nmet .cap,.nhis .cap,.nll .cap{display:block;margin-bottom:4px}
+
+/* ===== PLAN, LAS TRES EN UNA: Días · Nevera · Compra y «Montar la semana» en dos pasos ===== */
+.cjseg2.c3{grid-template-columns:repeat(3,1fr)}.cjseg2.c3 button{min-height:40px}
+.plres{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;background:var(--superficie-1);border-radius:var(--r-16);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara)}
+.plres>*{text-align:center;background:none;border:0;font:inherit;color:inherit;padding:2px 0;min-height:44px}
+.plres b{display:block;font-size:16px;font-weight:800;color:var(--ink)}.plres span{font-size:11px;color:var(--ink2)}
+.plres button b{color:var(--brand)}
+.plnut{padding:10px 12px;border-radius:var(--r-16);background:var(--superficie-1);box-shadow:inset 0 2px 0 0 var(--warn),0 3px 0 0 var(--cara)}
+.plnut p{margin:4px 0 0;font-size:12.5px;line-height:1.4}.plnut .w,.plsale .w,.mini.w,.plrac .w,.plvar .w{color:var(--warn)}
+.plpleg{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:0;border-radius:var(--r-16);background:var(--superficie-1);color:var(--ink2);font:inherit;font-size:12.5px;text-align:left;width:100%}
+.pldias{padding:0;background:none;border:0;box-shadow:none;display:grid;gap:8px}
+.cjwk.pldia{display:grid;grid-template-columns:20px 1fr;gap:0 6px;align-items:stretch;padding:8px 10px 6px 4px;border:0;border-radius:var(--r-16);
+  background:var(--superficie-1);box-shadow:inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara);margin:0}
+.cjwk.pldia.hoy{box-shadow:inset 0 0 0 1.5px var(--brand),0 3px 0 0 var(--cara);margin:0;padding:8px 10px 6px 4px}
+.cjwk.pldia.pas{opacity:.55}
+.pldia .hilo{position:relative}.pldia .hilo::before{content:'';position:absolute;left:9px;top:-8px;bottom:-14px;width:2px;background:var(--line)}
+.pldia .nodo{position:absolute;left:3px;top:4px;width:14px;height:14px;border-radius:50%;border:3px solid var(--superficie-1);z-index:1}
+.plb{min-width:0}
+.plh{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:26px}
+.plh .d{font-size:14px;font-weight:800;color:var(--ink)}.plh .ty{font-size:10px;font-weight:900;padding:1px 6px;border-radius:999px}
+.plh small{flex:1;min-width:0;font-size:11.5px;color:var(--ink2)}.plh .p{font-size:11.5px;font-weight:800;color:var(--ink2)}
+.plh .p.ok{color:var(--ok)}.plh .p.bad{color:var(--bad)}
+.cjc.plml{display:grid;grid-template-columns:66px 1fr auto;align-items:center;gap:6px;width:100%;min-height:40px;padding:2px 0;border:0;border-top:1px solid var(--line);
+  border-radius:0;background:none;color:var(--ink);font:inherit;font-size:12.5px;text-align:left}
+.plml .k{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.plml .n{font-weight:600;line-height:1.25;min-width:0;overflow:hidden;text-overflow:ellipsis}.plml.v .n{color:var(--ink2);font-weight:500}
+.sello{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.sello.co{background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.sello.so{background:var(--bg2);color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
+.sello.ta{background:color-mix(in srgb,#ff5a5a 22%,transparent);color:#ff9b9b}
+.sello.ho{background:var(--bg2);color:var(--ink2)}
+.sello.ll{background:color-mix(in srgb,#5cd18b 20%,transparent);color:#5cd18b}
+.plcoc{display:flex;align-items:flex-start;gap:8px;margin:4px 0 6px;padding:6px 8px;border-radius:var(--r-12);font-size:12px;line-height:1.35;
+  background:color-mix(in srgb,var(--brand) 10%,var(--bg2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 40%,transparent)}
+.plcoc b{color:var(--brand)}
+.plkit{font-size:11.5px;color:var(--ink2);padding:6px 0 2px;border-top:1px solid var(--line)}
+.btn.plmontar{position:sticky;bottom:calc(var(--navh,72px) + 12px);z-index:3;width:100%;min-height:52px;box-shadow:0 10px 24px -10px rgb(0 0 0/.7)}
+/* nevera */
+.plnev{padding:6px}.pliso{display:block;width:100%;height:auto;max-height:420px}.plisot{fill:var(--ink2)}
+.plsale{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.plsale>div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink2);padding:4px 0;border-radius:8px}
+.plsale>div.hoy{background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--ink);font-weight:800}.plsale>div.pas{opacity:.45}
+.plsale i{display:block;width:28px;height:16px;border-radius:4px;box-shadow:inset 0 -3px 0 #0003}.plsale i.fz{outline:2px dashed #9fd3ff;outline-offset:-2px}
+.plsale span{font-size:13px;line-height:16px}
+/* montar */
+.plpasos{display:flex;gap:6px}.plpasos i{flex:1;height:5px;border-radius:3px;background:var(--line)}.plpasos i.on{background:var(--brand)}
+.plcal7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.plcal7 button{min-height:70px;border:0;border-radius:10px;padding:6px 2px;font:inherit;font-size:11px;color:var(--ink2);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center}
+.plcal7 b{font-size:14px;color:var(--ink)}.plcal7 em{font-style:normal;font-size:16px;margin-top:2px;min-height:20px}
+.plcal7 .si{background:var(--marca-suave,color-mix(in srgb,var(--brand) 16%,var(--bg2)));box-shadow:inset 0 0 0 1.5px var(--brand)}
+.plcal7 .no{opacity:.5}.plcal7 .no b{text-decoration:line-through}.plcal7 .pas{opacity:.3}
+.plolla{padding:10px 12px;border-radius:var(--r-16);background:var(--superficie-1);box-shadow:inset 3px 0 0 0 var(--col),inset 0 1px 0 0 var(--luz-borde),0 3px 0 0 var(--cara)}
+.plolla .pln{font-size:15px;color:var(--ink)}
+.plrac{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.plrac span{font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:7px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line)}
+.plrac .sp,.plrac .sp:empty{background:none;box-shadow:none;padding:0;flex:1}
+.plsug{padding:10px;border-radius:var(--r-12);font-size:12.5px;line-height:1.4;background:var(--ojo-suave,color-mix(in srgb,var(--warn) 14%,var(--bg2)));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 45%,transparent)}
+.btn.plsig{width:100%;min-height:52px}
+.plvar{display:flex;gap:4px;align-items:flex-end;padding:8px 12px 10px;border-radius:var(--r-16);background:var(--superficie-1)}
+.plvar .g{flex:1;text-align:center;font-size:10.5px;color:var(--ink2)}.plvar .g b{color:var(--ink)}
+.plvar .g i{display:block;height:6px;border-radius:3px;margin:3px 2px 0}
+.plobj p{margin:4px 0 0;font-size:12.5px}
+.plmini{display:grid;grid-template-columns:34px repeat(3,1fr);gap:3px;font-size:10.5px}
+.plmini .h{text-align:center;font-weight:800;color:var(--ink2);font-size:10px}
+.plmini .d{font-weight:800;color:var(--ink2);padding-top:8px;text-transform:capitalize}
+.plmini button{min-height:40px;border:0;border-radius:6px;padding:4px 3px;background:var(--bg2);color:var(--ink);font:inherit;font-size:10.5px;line-height:1.15;text-align:left}
+.plmini button.pin{box-shadow:inset 0 0 0 1.5px var(--brand)}
+.plolh{display:flex;align-items:center;gap:6px}.plolh .pln{flex:1;min-width:0}.plolh .cji{flex:none}
+.plnut .plkit{margin-top:6px;padding-top:6px}

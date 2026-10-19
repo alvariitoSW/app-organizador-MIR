@@ -33,8 +33,9 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
 
 - [enc-plan-comidas] Montar la semana de comidas: ideas de contenido y diseño dadas el 2026-10-17 (días pasados,
   2 platos repetidos, desayuno vacío, sin cambiar casillas, cuándo cocinas, 4 formas de llenar la semana). Maquetas de 3
-  direcciones en design/comer-plan/; el usuario pidió combinarlas → design/comer-plan/combinada.png (espera visto bueno).
-  Arreglos sueltos y el aviso del Mes en Comer: hechos y desplegados (5ec269c).
+  direcciones en design/comer-plan/; el usuario pidió combinarlas → design/comer-plan/combinada.png, aprobada y construida
+  (Plan · Días · Nevera · Compra, Montar en dos pasos, fijar con 📌): desplegada 2026-10-19. Arreglos sueltos y el aviso del
+  Mes en Comer: hechos y desplegados (5ec269c).
 
 - [enc-nutricionista] Nutricionista integral (2026-10-17): compensar picos repartiendo en 2–3 días con techo diario;
   días de Lloret cena saciante lista antes + kit de vuelta; chocolate con tope semanal y alternativas; la semana siempre

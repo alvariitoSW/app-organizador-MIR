@@ -1066,3 +1066,28 @@ apuntarlo); compensar bajando de golpe al día siguiente.
 **Supuestos:** el pico, el suelo y el tope son los de arriba; «chocolate» es lo que lo nombra (bombones, Nutella,
 Kinder…); «solo café» es no apuntar desayuno o solo café/infusión de menos de 150 kcal; la hora del chocolate es la
 de cuando lo apuntas.
+
+## El Plan, las tres en una (2026-10-19)
+
+**Elegido.** Plan tiene tres vistas con las flechas de la semana arriba: **Días** (resumen de 4 cifras —cocinadas,
+táperes, proteína/día, a comprar—, tu nutricionista en una línea con las kcal previstas, el Lloret y la verdura, y una
+tarjeta por día con sus tres comidas y su sello: 🍳 cocinas · ♻️ sobras · 🧊 descongelar · 🥡 táper · 🏥 · ⚡ rápido · 🌿
+cena del Lloret · 📌 fijada), **Nevera** (la semana vista como táperes en una nevera isométrica, una balda por
+cocinada, el congelador abajo, qué sacas hoy y qué caduca) y **Compra** (la de siempre, que estaba escondida en
+Despensa). «Montar la semana» va en dos pasos: cuándo y qué cocinas (los días propuestos entre los que puedes, la
+guardia y el saliente tachados, una olla por día con sus raciones repartidas y el nutricionista diciendo qué grupo
+faltaba y que la cena del Lloret va hecha) y revisar y usar (la semana en pequeño con las cifras para tu objetivo;
+tocar una casilla la fija). Lo fijado (📌, desde la hoja de cada comida o en el paso 2) no lo toca ni «Montar» ni
+«Rellenar huecos» ni «Otra combinación». Si cocinas por la tarde, la tanda se hace el día de antes que se pueda: la
+comida de ese día no puede ser la olla recién hecha. Las cenas propuestas por el nutricionista se guardan con su nombre
+de plato y con sus alimentos (la migración de platos de texto les quitaba el aceite y bajaban de las 380 kcal).
+
+**Descartado.** La rejilla de 7 filas con cocinas · compra · proteína arriba, el asistente de 3 pasos de la lámina B
+(cuántas veces y qué días ahora van juntos), la «semana con tus platos» (sus opciones «cocinar para 2 días», «sin
+repetir», «guardias: táper» se quedan dentro de Montar) y el kit del Lloret repetido en cada día (va una vez, en la
+línea del nutricionista).
+
+**Supuestos.** Cocinas una hora después de salir del trabajo, o a mediodía si libras; cada olla da para 2–6
+raciones según los días que quedan; los días que dijiste que no cocinas (⚙️) valen si no hay otros, salvo la guardia y
+el saliente; una cena de Lloret de una olla solo si llena y engorda poco (380–700 kcal y ≥22 g); el color de la olla
+es su proteína principal (legumbre, pescado, carne, huevo); la nevera dibuja hasta 3 baldas y 4 táperes por balda.
