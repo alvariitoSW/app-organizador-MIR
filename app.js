@@ -8126,7 +8126,7 @@ function renderMonth(){
      es un aviso que sale una vez y se va solo */
   if(!store.meta.pulsarVisto&&!ui.mesModo&&!ui.mhintDicho&&mhintVigente()){ui.mhintDicho=true;setTimeout(function(){
     /* sale a los 400 ms: si para entonces ya te has ido a otra sección, no sale allí (se veía en Comer) y queda para la próxima vez */
-    if(ui.tab==='month')flash('💡 Mantén pulsado un día para cambiar qué es o añadir algo',4500);else ui.mhintDicho=false;},400);}
+    if(ui.tab==='month'){flash('💡 Mantén pulsado un día para cambiar qué es o añadir algo',4500);const f=$('#flash');if(f)f.dataset.mes='1';}else ui.mhintDicho=false;},400);}
 }
 
 /* ===================== entreno: biblioteca de openGym, segundo día y registro ===================== */
@@ -22858,7 +22858,10 @@ window.addEventListener('popstate',function(){
   navAtras(true);});
 function renderNow(){
   /* «Semana» ya no existe («ni la uso»): quien llegue a ella (un enlace viejo, la última pestaña guardada) cae en Mes */
-  if(ui.tab==='week')ui.tab='month';
+  if(ui.tab==='week'){ui.tab='month';ui.calMode='month';}
+  /* el aviso de «mantén pulsado» es del Mes: si te vas a otra pantalla mientras se ve, se va contigo (se quedaba
+     unos segundos tapando Hoy o Comer) */
+  if(ui.tab!=='month'){const fm=document.querySelector('#flash[data-mes]');if(fm)fm.remove();}
   try{document.body.dataset.tab=ui.tab;}catch(e0){}   /* para reglas de estilo por pestaña (44 px en Entreno) */
   _renderTick++;   /* invalida la caché de weekDays()/monthDays() de este render: se recalculan como mucho una vez cada uno */
   /* los platos de texto pasan a llevar alimentos (una vez por plato): de ahí salen sus macros y la compra */
@@ -22923,7 +22926,7 @@ function renderNow(){
   mejoraAccesibilidad($('#main'));
 }
 function flash(msg,ms){let f=$('#flash');if(!f){f=document.createElement('div');f.id='flash';document.body.appendChild(f);}
-  f.textContent=msg;f.classList.remove('undo');clearTimeout(f._t);
+  f.textContent=msg;f.classList.remove('undo');clearTimeout(f._t);delete f.dataset.mes;
   /* recién apuntado o quitado: «Deshacer» a mano durante unos segundos */
   if(_ultimoCambio&&Date.now()-_ultimoCambio.ts<1500){const b=document.createElement('button');b.dataset.a='deshacer';b.textContent='Deshacer';
     f.appendChild(document.createTextNode(' '));f.appendChild(b);f.classList.add('undo');ms=Math.max(ms||0,6000);}

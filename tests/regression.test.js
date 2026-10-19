@@ -12905,6 +12905,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.t && /mt-trabajo/.test(r.t.cls) && !/🚨/.test(r.t.txt) && r.t.fondo === r.antes.fondo && r.t1 && !/mt-saliente/.test(r.t1.cls), JSON.stringify({ t: r.t, t1: r.t1 }));
     check('la rutina por tipo de día se abre desde Ajustes y vuelve a Ajustes', /Mi rutina/.test(r.rut.tit) && r.rut.chips === 5 && /Ajustes/.test(r.vuelta), JSON.stringify(r));
   }
+  // 322) EL AVISO DEL MES SE VA CON EL MES, EN CADENA: con el aviso «Mantén pulsado un día…» aún por ver, se abre el Mes
+  // y se espera a que salga; entonces se toca Comer y luego Calendario → Hoy: el aviso no aparece en ninguna de las dos.
+  // Fija: se quedaba hasta 4,5 s tapando Hoy o Comer si cambiabas de pantalla justo al abrir el Mes.
+  {
+    await page.evaluate(() => { const P = window.PG; P.__t322 = P.store.meta.pulsarVisto; P.store.meta.pulsarVisto = false; P.ui.mhintDicho = false; P.ui.mesModo = null;
+      P.ui.tab = 'hoy'; P.save(); P.render(); const f = document.querySelector('#flash'); if (f) f.remove(); });
+    await page.click('#tabs [data-a="nav-cal"]');
+    await page.click('#calModes button[data-t="month"]');
+    await page.waitForFunction(() => /Mantén pulsado/.test((document.querySelector('#flash') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
+    const aviso = () => page.evaluate(() => ({ tab: window.PG.ui.tab, aviso: /Mantén pulsado/.test((document.querySelector('#flash') || {}).textContent || '') }));
+    const r = { mes: await aviso() };
+    await page.click('#tabs [data-a="nav-comer"]'); await page.waitForTimeout(150);
+    r.comer = await aviso();
+    await page.click('#tabs [data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(150);
+    r.hoy = await aviso();
+    await page.evaluate(() => { const P = window.PG; P.store.meta.pulsarVisto = P.__t322; delete P.__t322; P.save(); P.render(); });
+    check('el aviso de mantener pulsado sale en el Mes y no se queda encima al ir a Comer ni a Hoy',
+      r.mes.tab === 'month' && r.mes.aviso && r.comer.tab === 'food' && !r.comer.aviso && r.hoy.tab === 'hoy' && !r.hoy.aviso, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

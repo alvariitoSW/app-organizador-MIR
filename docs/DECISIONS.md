@@ -1133,6 +1133,10 @@ de `:is()`, `:where()`, `:not()` o `:has()` no se toca aunque lleve una clase mu
   cochera…), 11 acciones sin botón y 184 reglas de CSS. `app.js` 27 595 → 27 080 líneas; `styles.css` 3 838 → 3 719.
 - De paso, un fallo pequeño: con el teclado, la flecha sobre la carretera de «Lo que viene» cambiaba de día en
   vez de avanzar la carretera.
+- Y el pendiente [aparc-aviso-mes]: el aviso «Mantén pulsado un día…» del Mes ya no se queda tapando Hoy o Comer
+  si cambias de pantalla mientras se ve (prueba 322: sin el arreglo, el aviso sigue en Comer y en Hoy).
+- El color de cada evento en el Mes va en el borde izquierdo de su chapa blanca (la hora, en oscuro, para que se
+  lea sobre cualquier color de evento).
 - Prueba encadenada 321 (Calendario solo con Mes y Hoy → tocar un día → «✏️ editar» → guardia → la casilla entera
   de guardia con 🚨 y número ≥ 22 px y el día siguiente saliente → volver a Trabajo → la rutina desde Ajustes). Con
   los colores quitados caen 2 de sus 4 comprobaciones. Las pruebas de Semana y de las vistas quitadas se retiran
