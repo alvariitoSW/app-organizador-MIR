@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoy contado</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#05080f;color:#e9f2ff;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.tabla{width:412px;flex:none}
+.tabla h3{margin:0 0 4px;font-size:15px}
+.tabla>p{margin:0 0 10px;color:#8fa6c6;font-size:12.5px}
+.movil{width:412px;background:linear-gradient(#0b1328,#070b14 40%);border:1px solid #1e2b44;border-radius:18px;overflow:hidden;padding:10px 10px 74px;position:relative;min-height:915px}
+.cab{display:flex;align-items:center;gap:8px;margin:2px 4px 8px}
+.cab b{font-size:16px}
+.tag{font-size:11px;font-weight:800;border-radius:99px;padding:2px 8px;background:#38e1ff;color:#04121c}
+.seg{display:flex;gap:4px;background:#0b1120;border:1px solid #1e2b44;border-radius:12px;padding:3px;margin-bottom:8px}
+.seg span{flex:1;text-align:center;font-size:12.5px;font-weight:700;color:#8fa6c6;padding:7px 0;border-radius:9px}
+.seg .on{background:#111a2b;color:#e9f2ff;box-shadow:inset 0 0 0 1px #38e1ff55}
+.esc{position:relative;border-radius:14px;overflow:hidden;border:1px solid #1e2b44}
+.esc img{display:block;width:100%}
+.senal{position:absolute;top:96px;left:50%;transform:translateX(-50%);background:#14532d;border:2px solid #e9f2ff;border-radius:6px;padding:4px 9px;text-align:center;font-weight:900;font-size:12px;line-height:1.15;color:#fff;box-shadow:0 4px 0 #0008}
+.senal small{display:block;font-weight:700;font-size:10px;opacity:.85}
+.poste{position:absolute;top:140px;left:50%;width:3px;height:40px;background:#cbd5e1;transform:translateX(-50%)}
+.sub{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(5,8,15,.82);border-radius:12px;padding:9px 52px 9px 12px;font-size:16px;line-height:1.3;font-weight:700;backdrop-filter:blur(4px)}
+.sub small{display:block;font-size:12px;font-weight:600;color:#8fa6c6;margin-top:3px}
+.sub .mas{position:absolute;right:10px;top:8px;font-size:11px;color:#38e1ff;font-weight:800}
+.card{background:#111a2b;border:1px solid #1e2b44;border-radius:16px;padding:12px;margin-top:10px}
+.cap{font-size:11px;font-weight:800;letter-spacing:.08em;color:#38e1ff}
+.narr{font-size:17.5px;line-height:1.38;margin:6px 0 2px;font-weight:600}
+.narr b{color:#38e1ff}
+.sig{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.sig div{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid #1e2b44;font-size:14.5px}
+.sig div:first-child{border-top:0}
+.sig em{font-style:normal;font-weight:900;min-width:46px;color:#e9f2ff}
+.sig span{flex:1}
+.sig i{font-style:normal;font-size:12px;color:#8fa6c6}
+.sig .ya{opacity:.45}
+.ves{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;margin-top:8px;font-size:13.5px;align-items:center}
+.ves b{font-size:18px;text-align:center}
+.ves span{color:#c9d6ea}
+.por{font-size:13px;color:#c9d6ea;margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#0b1120;border:1px solid #1e2b44}
+.por b{color:#f5b942}
+.barra{position:absolute;left:0;right:0;bottom:0;height:62px;border-top:1px solid #1e2b44;background:#070b14;display:flex;justify-content:space-around;align-items:center;color:#8fa6c6;font-size:12px;font-weight:700}
+.barra .on{color:#e9f2ff}
+</style></head>
+<body>
+
+<div class="tabla"><h3>A · El narrador (9:40, en el autobús)</h3><p>La escena igual, con la señal del próximo evento ya en la carretera. Debajo, una tarjeta que cuenta el momento en frases normales, lo que viene con la cuenta atrás y qué significa cada cosa que ves.</p>
+<div class="movil">
+  <div class="cab"><b>☀️ Hoy · martes 20</b><span class="tag">HOY</span></div>
+  <div class="seg"><span class="on">🚌 Conductor</span><span>🏗 Estación</span><span>◷ Reloj</span><span>☰ Línea</span></div>
+  <div class="esc"><img src="escena-0940.png" alt="">
+    <div class="senal">10:00 SESIÓN CLÍNICA<small>en 20 min</small></div><div class="poste"></div></div>
+  <div class="card">
+    <div class="cap">AHORA · 9:40</div>
+    <p class="narr">Vas al hospital: estás en <b>tu jornada</b> hasta las 15:00. En <b>20 minutos</b> tienes la <b>Sesión clínica</b> (hasta las 11:00); es la señal verde que se acerca por la carretera.</p>
+    <div class="sig">
+      <div><em>10:00</em><span>Sesión clínica</span><i>en 20 min</i></div>
+      <div><em>15:00</em><span>Sales del trabajo · a casa en bici</span><i>5 h 20</i></div>
+      <div><em>15:20</em><span>Comida en casa</span><i>sin apuntar</i></div>
+      <div><em>21:00</em><span>Cena con Laura</span><i>esta noche</i></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cap">¿QUÉ ESTOY VIENDO?</div>
+    <div class="ves">
+      <b>🏙</b><span>Ciudad: el tramo de tu jornada (hospital).</span>
+      <b>🟩</b><span>Señal verde: un evento con hora, con su cuenta atrás.</span>
+      <b>💬</b><span>Bocadillo: algo por apuntar (el desayuno).</span>
+      <b>🚇</b><span>Túnel rojo: una guardia (hoy no hay).</span>
+      <b>◀ ▶</b><span>Mira a los lados: eventos a la izquierda, entreno y comida a la derecha.</span>
+    </div>
+  </div>
+  <div class="barra"><span>Calendario</span><span class="on">Hoy</span><span>Entreno</span><span>Comer</span></div>
+</div></div>
+
+<div class="tabla"><h3>B · Subtítulos (9:40)</h3><p>La explicación va dentro de la escena, como un subtítulo grande. Tocarla abre lo mismo que el narrador. Ocupa menos, pero tapa un poco la carretera.</p>
+<div class="movil">
+  <div class="cab"><b>☀️ Hoy · martes 20</b><span class="tag">HOY</span></div>
+  <div class="seg"><span class="on">🚌 Conductor</span><span>🏗 Estación</span><span>◷ Reloj</span><span>☰ Línea</span></div>
+  <div class="esc"><img src="escena-0940.png" alt="">
+    <div class="senal">10:00 SESIÓN CLÍNICA<small>en 20 min</small></div><div class="poste"></div>
+    <div class="sub"><span class="mas">más ›</span>En 20 min, la Sesión clínica. Sigues en el trabajo hasta las 15:00.<small>luego: comida en casa 15:20 · cena con Laura 21:00</small></div></div>
+  <div class="card">
+    <div class="cap">LO QUE VIENE</div>
+    <div class="sig">
+      <div><em>10:00</em><span>Sesión clínica</span><i>en 20 min</i></div>
+      <div><em>15:00</em><span>Sales del trabajo</span><i>5 h 20</i></div>
+      <div><em>21:00</em><span>Cena con Laura</span><i>esta noche</i></div>
+    </div>
+  </div>
+  <div class="barra"><span>Calendario</span><span class="on">Hoy</span><span>Entreno</span><span>Comer</span></div>
+</div></div>
+
+<div class="tabla"><h3>A · El narrador (17:30, en casa)</h3><p>En casa, el mismo narrador: qué haces, hasta cuándo, qué toca después y, si hay algo que mire por ti (el sueño), el porqué en una línea.</p>
+<div class="movil">
+  <div class="cab"><b>☀️ Hoy · martes 20</b><span class="tag">HOY</span></div>
+  <div class="seg"><span class="on">🚌 Conductor</span><span>🏗 Estación</span><span>◷ Reloj</span><span>☰ Línea</span></div>
+  <div class="esc"><img src="escena-1730.png" alt=""></div>
+  <div class="card">
+    <div class="cap">AHORA · 17:30</div>
+    <p class="narr">Estás en casa, <b>en el escritorio</b> (tu rato de estudio) hasta las 18:00. A las 21:00 tienes la <b>Cena con Laura</b> y a las <b>22:40</b>, a la cama.</p>
+    <div class="por"><b>Por qué a la cama a las 22:40:</b> mañana entras a las 8 y te levantas a las 6:40; para dormir tus 8 h, la cena con Laura no debería alargarse mucho.</div>
+    <div class="sig">
+      <div class="ya"><em>15:20</em><span>Comida en casa</span><i>sin apuntar · apúntala</i></div>
+      <div><em>18:00</em><span>Fin del estudio</span><i>en 30 min</i></div>
+      <div><em>21:00</em><span>Cena con Laura</span><i>en 3 h 30</i></div>
+      <div><em>22:40</em><span>A la cama</span><i>para 8 h</i></div>
+    </div>
+  </div>
+  <div class="barra"><span>Calendario</span><span class="on">Hoy</span><span>Entreno</span><span>Comer</span></div>
+</div></div>
+
+</body></html>
