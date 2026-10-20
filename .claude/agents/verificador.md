@@ -21,7 +21,7 @@ mide con `getBoundingClientRect()` lo que te pidan. Prueba los botones nuevos y 
 errores de JavaScript que dé el driver.
 
 **B · Revisión de salud** (la lanza `/plan-socialista`, de fondo):
-1. `npm run test:corto` (≈12 min). Te quedas con sus líneas `✓`/`✗` y, si algo falla, con el fallo.
+1. `npm run test:corto` (≈5 min). Te quedas con sus líneas `✓`/`✗` y, si algo falla, con el fallo.
 2. Capturas a 412×915 de **Hoy**, **Mes** y **Comer → Plan** con los datos de serie (sin sembrar nada).
    Míralas: algo cortado, encima de otra cosa, vacío cuando debería tener algo, texto ilegible.
 3. Los errores de JavaScript que salgan al conducir.

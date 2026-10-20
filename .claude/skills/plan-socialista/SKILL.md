@@ -28,7 +28,7 @@ lo que leen y miran se queda en su lado y aquí solo vuelve el resultado.
    - el ayudante **`parte`**, en primer plano: «Haz el parte de /plan-socialista» (y «ensayo» si el
      usuario lo dijo). Hace los ocho pasos de abajo y devuelve el parte ya redactado.
    - el ayudante **`verificador`**, de fondo: «Revisión de salud (encargo B)». Pasa las pruebas en
-     corto y mira Hoy, Mes y Comer · Plan a 412×915 (unos 12 minutos).
+     corto y mira Hoy, Mes y Comer · Plan a 412×915 (unos 5 minutos).
 2. **Entrega el parte tal cual llega** (sin la línea `Guardado:`/`Ensayo:`, que es para ti; si es
    `Hueco:`, sí va). No lo reescribas ni lo alargues.
 3. **Cuando vuelva el verificador**, una sola línea más al usuario: «Salud: …». Si algo falla, es lo

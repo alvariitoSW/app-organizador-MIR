@@ -1232,3 +1232,18 @@ comprobaciones.
 frontera). Blanco para la línea: se confundía con el anillo de «hoy».
 
 **Supuestos.** Amarillo (el color de aviso de la app), 4 px. Vale en todos los meses, no solo en el actual.
+
+## La suite en 5 minutos: el banco grande en 3 trozos a la vez (2026-10-20)
+
+**Elegido.** `npm run test:corto` parte el banco grande (`regression`, ~11 min en fila) en 3 trozos seguidos que corren
+a la vez, cada uno en su navegador, junto con los 6 bancos pequeños: **de ~12 min a 308 s**, todo en verde, medido dos
+veces. Solo se corta donde las pruebas pasan arrancando de cero (delante de la 202 y de la 270), así que ninguna cadena
+de pruebas se rompe (`tools/pruebas-reparto.py`). `TROZOS=1` la vuelve a correr en fila. La 275 ya no depende de que la
+semana esté «con fechas» (lo pone ella si hace falta).
+
+**Descartado.** Acortar todas las esperas fijas a la vez (×0,4): se cae la lectura en vivo, que espera a propósito.
+Arrancar cada trozo con una «foto» de los datos del corte: los datos llevan fechas y la foto no valdría al día siguiente.
+Partir las 201 primeras: van en cadena (jornada 8–15, tipos de guardia, platos, menú) y habría que darles sus datos a mano.
+
+**Supuestos.** Las pruebas del arranque (antes de la 1) se repiten en cada trozo: por eso el total sale 746 y no 730.
+Para bajar a ~2 min falta que las 201 primeras preparen sus propios datos (se apunta para otra sesión).

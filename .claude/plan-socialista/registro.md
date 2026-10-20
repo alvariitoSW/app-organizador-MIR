@@ -62,6 +62,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - ~~[v3-conductor]~~ HECHO y desplegado 2026-10-20 (main e1aaeda, run 39453952330; A + B con cartel verde, porqué y «¿Qué estoy viendo?») · **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
   descripción más grande, no solo «se ve el autobús»
 - ~~[fallo-mes-pasado]~~ ARREGLADO y desplegado 2026-10-20 (main e1aaeda) · El Mes en curso no enseñaba del 1 al 18 (no podías ver las guardias de octubre para secretaría): botón «▲ Ver del 1 al N» y lista de guardias al tocar el abono · DECISIONS «Mes: lo ya pasado del mes en el que estás»
+- [aparc-suite-2min] La suite ya va en ~5 min (3 trozos a la vez, 2026-10-20). Para bajar a ~2: que las 201 primeras pruebas de regression preparen sus propios datos (jornada 8–15, tipos de guardia, platos, menú, despensa) y así poder partirlas; luego, acortar esperas fijas que no sean de lectura en vivo · DECISIONS «La suite en 5 minutos»
 - [aparc-auditoria-contexto] Gastar menos contexto: borrar las ~196 tareas ya hechas de la lista (se reenvía entera cada pocos pasos) y, si quieres, desactivar Google Drive y Claude Docs si no los usas. Headroom descartado (no aplica a sesiones en la nube y pasa todo por un tercero). Pedido el 2026-10-20
 - [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
   número, y cada cosa en su unidad (g, ml, mg: la leche en ml)
