@@ -9512,6 +9512,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await page.evaluate(() => { const P = window.PG; window.__copia239 = JSON.parse(JSON.stringify(P.store));
       const k = P.iso(new Date()), w = (new Date().getDay() + 6) % 7;
+      P.setDayOverride(k, 'sh-l', '');   /* libre: un día de trabajo la comida se cocina la víspera y la tanda no sería de hoy */
       P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.store.food.objetivo = { kcal: 2240, prot: 134 };
       P.store.semBase = { on: true, d: {} }; P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.food.log[k] = [];
       P.store.dishes.push({ id: 'd239', name: 'Lentejas con verdura', icon: '🫘', portions: 1, kcal: 450, prot: 25 }, { id: 'd239b', name: 'Tortilla con pavo', icon: '🍳', portions: 1, kcal: 420, prot: 32 });
@@ -11275,7 +11276,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await toca('[data-a="tp-semana"]');
     r.c = await page.evaluate(() => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
       const fut = R.dia.filter((d) => !d.pas), g = R.dia[2];
-      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
+      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, quedan: 7 - (new Date().getDay() + 6) % 7, ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
         cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; });
     await toca('[data-a="plm-paso"][data-v="2"]', 150);
     r.c.paso2 = await page.evaluate(() => ({ paso: (window.PG.ui.plM || {}).paso, celdas: document.querySelectorAll('#main .plmini button').length }));
@@ -11308,8 +11309,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.b.n === 3 && r.b.lent >= 6 && r.b.pasos >= 3 && r.b.duda && /3 ✓/.test(r.b.rev1) && !/por revisar/.test(r.b.rev1) &&
       r.b.g && r.b.g.n === 3 && r.b.g.nata && r.b.g.pasos >= 3 && r.b.g.des === 'desayuno' && r.b.g.ingr >= 5 && r.b.n2 === 3, JSON.stringify(r.b));
     check('«Montar la semana» en dos pasos: los días de cocinar marcados y sus ollas, el desayuno con tus platos, la cena de la guardia del hospital y la comida en táper; «Usar» escribe la semana y lleva a la compra del Plan',
-      r.c.paso === 1 && r.c.dias >= 2 && r.c.cal === r.c.dias && r.c.ollas === r.c.dias && r.c.filas === 7 && r.c.des && r.c.cenaG === 'ho' && r.c.comG &&
-      r.c.paso2.paso === 2 && r.c.paso2.celdas === 21 && r.c.compra.tab === 'sem' && r.c.compra.vista === 'compra' && /lenteja/i.test(r.c.compra.txt), JSON.stringify(r.c));
+      r.c.paso === 1 && r.c.dias >= 2 && r.c.cal === r.c.dias && r.c.ollas === r.c.dias && r.c.filas === r.c.quedan && r.c.des && r.c.cenaG === 'ho' && r.c.comG &&
+      r.c.paso2.paso === 2 && r.c.paso2.celdas === 3 * r.c.quedan && r.c.compra.tab === 'sem' && r.c.compra.vista === 'compra' && /lenteja/i.test(r.c.compra.txt), JSON.stringify(r.c));
     check('«Qué tener» lista lo de la semana sin cantidades y marcar ahí lo marca también en «Comprar»',
       r.d.n >= 5 && /Lenteja/.test(r.d.txt) && !/\d+\s*(g|kg|ml)\b/.test(r.d.txt) && !!r.d.id && r.d.enComprar.marca && r.d.enComprar.vista !== false, JSON.stringify(r.d));
     check('«atrás» desde la lectura de tus platos vuelve a Plan', r.e.antes === 'leer' && r.e.despues.v === '' && r.e.despues.tab === 'sem' && r.e.despues.f === 'food' && r.e.despues.card, JSON.stringify(r.e));
@@ -12968,6 +12969,61 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«Empezar (vuelta)» monta la sesión con el 60 % del peso de antes y 2 series por ejercicio',
       r.c.sesion && r.c.pct === 60 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
     check('«quitar el plan» devuelve la progresión de siempre', !r.d.tarjeta && r.d.pr !== 'vuelta', JSON.stringify(r.d));
+  }
+  // 324) EL CONDUCTOR CONTADO, EN CADENA (a 412×915): un día de trabajo con la «Sesión clínica» a las 10:00. (a) A las 9:40
+  // el parabrisas lleva el subtítulo («En 20 min, Sesión clínica…»), sobre la carretera cruza el cartel verde con «en 20 min»
+  // y debajo el narrador cuenta la jornada y que el cartel es la sesión; (b) se mueve la hora con el teclado a las 10:40 y
+  // TODO sigue a esa hora (el narrador, el subtítulo, el cartel ya no está); (c) al mirar a la izquierda el subtítulo se
+  // quita y vuelve con Escape; (d) «¿Qué estoy viendo?» se abre y no se cierra al moverse la hora; (e) tocar la sesión en
+  // «lo que viene» abre su hoja. Antes el dibujo solo decía «PRÓXIMA PARADA» y no explicaba nada.
+  {
+    const vp324 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false })); }, h);
+    const lee = () => page.evaluate(() => { const c = document.querySelector('#main #hoyBusSlot .cd'); if (!c) return { cd: false };
+      const s = c.querySelector('.cd-sub'), n = c.querySelector('[data-r="narr"]'), g = c.querySelector('.cd-gan');
+      return { cd: true, sub: s && !s.hidden ? s.textContent : '', narr: n ? n.textContent : '', cartel: g ? g.parentNode.textContent : '',
+        ley: !!(c.querySelector('.cd-ley') || {}).open, filas: [...c.querySelectorAll('.cd-nsig button')].map((b) => b.textContent) }; });
+    await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); const P = window.PG, k = P.iso(new Date());
+      window.__copia324 = { ev: JSON.parse(JSON.stringify(P.store.eventos || [])), ov: P.dayOverride(k) };
+      P.setDayOverride(k, 'sh-t', '');
+      P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || '')).concat([{ id: 'ev-324', titulo: 'Sesión clínica', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: k, dow: [], on: true }]);
+      P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.waitForSelector('#main #hoyBusSlot .cd svg', { timeout: 8000 }).catch(() => {});
+    await pon(9 + 40 / 60); await page.waitForTimeout(200);
+    const r = { a: await lee() };
+    // (b) cuatro flechas a la derecha = una hora más, como al arrastrar
+    await page.focus('#main #hoyBusSlot .cd svg').catch(() => {});
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(() => /A LAS 10:40/.test((document.querySelector('#main .cd [data-r="narr"]') || {}).textContent || ''), null, { timeout: 4000 }).catch(() => {});
+    r.b = await lee();
+    // (c) mirar a la izquierda y volver
+    await page.locator('#main .cd [data-o="mirai"]').first().click().catch(() => {});
+    await page.waitForTimeout(200); r.c = { mirando: (await lee()).sub };
+    await page.keyboard.press('Escape'); await page.waitForTimeout(900); r.c.vuelta = (await lee()).sub;
+    // (d) la leyenda abierta aguanta un cambio de hora
+    await page.locator('#main .cd .cd-ley summary').click().catch(() => {});
+    await page.focus('#main #hoyBusSlot .cd svg').catch(() => {});   /* fuera del dibujo, ← cambia de día */
+    await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(700);
+    r.d = { ley: (await lee()).ley };
+    // (e) volver a las 9:40 y tocar la sesión en «lo que viene»
+    await pon(9 + 40 / 60); await page.waitForTimeout(200);
+    const fila324 = page.locator('#main .cd .cd-nsig button', { hasText: 'Sesión clínica' }).first();
+    await fila324.evaluate((b) => b.scrollIntoView({ block: 'center' })).catch(() => {});   /* que no quede bajo la barra de abajo */
+    await fila324.click({ timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    r.e = await page.evaluate(() => ({ hoja: !!window.PG.ui.hoyIt, txt: ((document.querySelector('.sheet, .hoja, [role="dialog"]') || {}).textContent || '').slice(0, 200) }));
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), c = window.__copia324; P.store.eventos = c.ev; P.setDayOverride(k, c.ov || '', ''); delete window.__copia324;
+      P.ui.hoyIt = null; P.ui.tab = 'month'; P.save(); P.render(); });
+    await page.setViewportSize(vp324);
+    check('a las 9:40 el subtítulo dice «En 20 min, Sesión clínica» y hasta qué hora sigues en el trabajo',
+      /En 20 min, Sesión clínica/.test(r.a.sub) && /en el trabajo hasta las \d\d:\d\d/.test(r.a.sub), JSON.stringify(r.a));
+    check('el cartel verde cruza la carretera con «10:00 SESIÓN CLÍNICA · en 20 min» y el narrador explica que es la sesión',
+      /10:00\s+SESIÓN CLÍNICA/.test(r.a.cartel) && /en 20 min/.test(r.a.cartel) && /AHORA · 09:40/.test(r.a.narr) && /tu jornada/.test(r.a.narr) && /cartel verde/.test(r.a.narr), JSON.stringify(r.a));
+    check('al mover la hora a las 10:40 el narrador y el subtítulo cuentan la sesión en marcha y el cartel ya no está',
+      /A LAS 10:40/.test(r.b.narr) && /Sesión clínica hasta las 11:00/.test(r.b.narr) && /Sesión clínica hasta las 11:00/.test(r.b.sub) && !r.b.cartel, JSON.stringify(r.b));
+    check('al mirar a la izquierda el subtítulo se quita y vuelve con Escape', !r.c.mirando && !!r.c.vuelta, JSON.stringify(r.c));
+    check('«¿Qué estoy viendo?» se abre y sigue abierta al mover la hora', r.d.ley, JSON.stringify(r.d));
+    check('tocar la sesión en «lo que viene» abre su hoja', r.e.hoja, JSON.stringify(r.e));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

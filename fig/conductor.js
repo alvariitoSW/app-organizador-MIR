@@ -103,12 +103,36 @@
 .cd-pan{transition:transform .55s cubic-bezier(.45,.05,.25,1)}.cd-pan.sin{transition:none}@media (prefers-reduced-motion:reduce){.cd-pan{transition:none}}
 .cd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .cd-sr:focus-within{position:static;width:auto;height:auto;clip-path:none;white-space:normal;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}`;
+.cd-sr button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #2a3448;background:#0d1726;color:#e9f2ff}
+/* EL DÍA CONTADO: el subtítulo dentro del parabrisas y, debajo del dibujo, el narrador (qué haces, qué viene, por qué)
+   y la leyenda de lo que se ve. Sigue a la hora que mueves, no solo a la de ahora */
+.cd-vis{position:relative}
+.cd-sub{position:absolute;left:11%;right:11%;bottom:39.5%;display:block;text-align:left;border:0;border-radius:12px;padding:8px 46px 8px 11px;
+  background:rgba(5,8,15,.8);color:#f2f6ff;font:800 14.5px/1.28 ui-sans-serif,system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.cd-sub small{display:block;margin-top:3px;font-size:12px;font-weight:600;color:#a9bad3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-sub i{position:absolute;right:9px;top:8px;font-style:normal;font-size:11.5px;font-weight:800;color:#7fecff}
+.cd-sub[hidden]{display:none}
+.cd-narr{margin-top:10px;background:var(--superficie-1,var(--card,#111a2b));border:1px solid var(--borde,var(--line,#1e2b44));border-radius:16px;padding:12px;color:var(--texto,var(--ink,#e9f2ff))}
+.cd-ncap{font:800 11px ui-sans-serif,system-ui,sans-serif;letter-spacing:.08em;color:var(--brand,#38e1ff)}
+.cd-ntx{font-size:17px;line-height:1.38;font-weight:600;margin:6px 0 4px}.cd-ntx b{color:var(--brand,#38e1ff);font-weight:800}
+.cd-npor{font-size:13.5px;line-height:1.4;margin:8px 0 4px;padding:8px 10px;border-radius:10px;background:var(--bg2,#0b1120);border:1px solid var(--borde,var(--line,#1e2b44))}
+.cd-npor b{color:var(--warn,#fbbf24)}
+.cd-nsig{display:flex;flex-direction:column;margin-top:4px}
+.cd-nsig button{display:flex;gap:10px;align-items:center;min-height:44px;width:100%;padding:6px 0;border:0;border-top:1px solid var(--borde,var(--line,#1e2b44));background:none;color:inherit;font:inherit;font-size:14.5px;text-align:left;cursor:pointer}
+.cd-nsig button:first-child{border-top:0}
+.cd-nsig em{font-style:normal;font-weight:900;min-width:46px;font-variant-numeric:tabular-nums}.cd-nsig span{flex:1}.cd-nsig small{font-size:12.5px;color:var(--texto-2,var(--ink2,#8fa6c6));text-align:right}
+.cd-nsig .ya{color:var(--warn,#fbbf24)}.cd-nsig .ya small{color:var(--warn,#fbbf24)}
+.cd-ley{margin-top:8px;border-top:1px solid var(--borde,var(--line,#1e2b44))}
+.cd-ley summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:800 11px ui-sans-serif,system-ui,sans-serif;letter-spacing:.08em;color:var(--brand,#38e1ff)}
+.cd-ley dl{display:grid;grid-template-columns:28px 1fr;gap:7px 8px;margin:0 0 4px;font-size:13.5px;line-height:1.35}.cd-ley dt{text-align:center;font-size:17px}.cd-ley dd{margin:0;color:var(--texto-2,#c9d6ea)}
+.cd-gan{fill:#1d6b3a;stroke:#f3f7f2}.cd-gant{fill:#fff;font-weight:900;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-gans{fill:#d9f2e2;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}`;
 
   /* ---------- utilidades ---------- */
   const hhmm = (h) => { const m = Math.round(((h % 24) + 24) % 24 * 60) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
   const dura = (h) => { const m = Math.max(0, Math.round(h * 60)); return m >= 60 ? Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") : m + " min"; };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  /* «en 20 min», «en 1 h», «en 5 h 20» */
+  const falta = (h) => { const m = Math.max(0, Math.round(h * 60)); return m < 60 ? "en " + m + " min" : "en " + Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : ""); };
   const cap = (s) => { s = String(s || "").toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const ease = (p) => { p = clamp(p, 0, 1); return p * p * (3 - 2 * p); };
@@ -282,18 +306,35 @@
     <g data-o="int"><circle class="cd-dial" cx="352" cy="852" r="18"/><path data-r="rdial" class="cd-dialm" d="M352 852L342 840"/><text data-r="rint" class="cd-rint" x="378" y="857"></text></g>
     <g data-o="radio"><circle cx="556" cy="626" r="15" class="cd-rx"/><text class="cd-rxt" x="556" y="632">×</text></g></g>`;
 
+  /* «¿Qué estoy viendo?»: lo que significa cada cosa del dibujo, plegado debajo del narrador */
+  const LEYENDA = '<details class="cd-ley"><summary>¿QUÉ ESTOY VIENDO?</summary><dl>' + [
+    ["🏙", "La ciudad: tu jornada. Entras por el cartel azul y sales por el tachado."],
+    ["🏥", "El hospital con la cruz: la guardia. La cabina se pone roja y sale el busca."],
+    ["🟩", "El cartel verde sobre la carretera: tu próximo evento y cuánto falta."],
+    ["🚏", "Las marquesinas: cada cosa del día con su hora. Tócalas para abrirlas."],
+    ["🪞", "El retrovisor: lo último que hiciste. Si pregunta «¿Apuntas…?», te falta apuntarlo."],
+    ["•", "La línea de arriba: una bolita por parada (verde hecha, ámbar sin apuntar, amarilla la próxima)."],
+    ["☕", "Las señales redondas a la izquierda: el último café o las órdenes de la guardia."],
+    ["🌳", "El parque y el polideportivo: el entreno. El pueblo: comer fuera de casa."],
+    ["🌊", "El acantilado con el faro: el Lloretazo."],
+    ["🏠", "La cochera y la casa por dentro: dormir y lo que haces en casa."],
+    ["◀ ▶", "Mirar a los lados: eventos a la izquierda; entreno, comida y hábitos a la derecha. La radio es el sueño y la palanca R·N·D cambia de día."],
+  ].map((x) => "<dt>" + x[0] + "</dt><dd>" + x[1] + "</dd>").join("") + "</dl></details>";
+
   function crea(opts) {
     opts = opts || {};
     const ID = Math.random().toString(36).slice(2, 8);
     const el = document.createElement("div");
     el.className = "cd";
     if (!document.getElementById("cd-css")) { const st = document.createElement("style"); st.id = "cd-css"; st.textContent = CSS; document.head.appendChild(st); }
-    el.innerHTML = '<svg viewBox="0 0 600 900" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="24" aria-label="Tu día desde el asiento del conductor. Arrastra a lo ancho o usa las flechas para mover la hora; Intro abre la próxima parada.">' + MARCO.replace(/__ID/g, ID) + "</svg>" +
+    el.innerHTML = '<div class="cd-vis"><svg viewBox="0 0 600 900" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="24" aria-label="Tu día desde el asiento del conductor. Arrastra a lo ancho o usa las flechas para mover la hora; Intro abre la próxima parada.">' + MARCO.replace(/__ID/g, ID) + "</svg>" +
+      '<button type="button" class="cd-sub" data-r="sub" hidden></button></div>' +
+      '<div class="cd-narr"><div data-r="narr"></div>' + LEYENDA + "</div>" +
       '<div class="cd-sr" data-r="sr" aria-label="Paradas de hoy"></div>';
     const svg = el.querySelector("svg"), R_ = {};
     el.querySelectorAll("[data-r]").forEach((n) => { R_[n.getAttribute("data-r")] = n; });
     const still = matchMedia("(prefers-reduced-motion: reduce)");
-    let D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false, lado = null, radio = false, ladoVa = null, ladoT = 0;
+    let ganE = null, narrH = "", subH = "", D = null, R = null, t = 10, target = 10, AHORA = null, frame = 0, last = 0, idle = 0, vivoT = 0, visible = true, mirando = false, lado = null, radio = false, ladoVa = null, ladoT = 0;
     /* girar la cabeza: la vista de frente se va hacia un lado y entra la del otro, como una cámara que gira */
     const pon = (g, x, sin) => { g.classList.toggle("sin", !!sin); g.style.transform = x ? "translateX(" + x + "px)" : ""; };
     function girar(nuevo) {
@@ -542,7 +583,21 @@
           panel(zf + CITY + 9, 3.6, 8.8, 2.4, 4.4, "#1f5fbf", "#ffffff", "→ " + dest, sig.dep ? "" : "a las " + hhmm(sig.a)); } });
       /* las paradas: marquesina y letrero, de lejos a cerca */
       const ps = R.est.filter((e) => !e.dep).map((e) => ({ e, zc: e.s - cam + ZSTOP })).filter((o) => o.zc > -3 && o.zc < 170).sort((a, b) => b.zc - a.zc);
+      /* EL CARTEL VERDE: el próximo evento cruza la carretera por arriba, con lo que falta. Se acerca con el reloj (no con
+         la ruta: el autobús está parado en la ciudad mientras dura la jornada): tres horas antes asoma al fondo y a la hora
+         pasa por encima. Se pinta en su sitio entre las marquesinas (de lejos a cerca) para que lo cercano lo tape bien */
+      let gan = "";
+      const ev = R.est.find((e) => !e.dep && !e.cont && e.k === "plan" && e.a > t), zg = ev && ev.a - t <= 3 ? 6 + 14 * (ev.a - t) : -1;
+      if (ev && zg > 0) {
+        const a = pr(-4.4, 5.75, zg), b = pr(2.2, 3.95, zg), w = b[0] - a[0], h = b[1] - a[1], l1 = hhmm(ev.a) + "  " + String(ev.n || ev.t).toUpperCase(), f1 = h * 0.36;
+        gan = seg([-5.7, 0.15, zg], [-5.7, 5.6, zg], "cd-post", 0.12) + seg([3.4, 0.15, zg], [3.4, 5.6, zg], "cd-post", 0.12) + seg([-5.7, 5.45, zg], [3.4, 5.45, zg], "cd-post", 0.09) +
+          '<g data-o="ev" data-i="' + ev.i + '"><rect class="cd-gan" x="' + a[0].toFixed(1) + '" y="' + a[1].toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + (h * 0.1).toFixed(1) + '" style="stroke-width:' + Math.max(0.8, h * 0.05).toFixed(2) + 'px"/>' +
+          (w > 40 ? '<text class="cd-gant" x="' + (a[0] + w / 2).toFixed(1) + '" y="' + (a[1] + h * 0.47).toFixed(1) + '" font-size="' + f1.toFixed(1) + '"' + (l1.length * f1 * 0.62 > w * 0.9 ? ' textLength="' + (w * 0.9).toFixed(1) + '" lengthAdjust="spacingAndGlyphs"' : "") + ">" + esc(l1) + "</text>" : "") +
+          (w > 60 ? '<text class="cd-gans" x="' + (a[0] + w / 2).toFixed(1) + '" y="' + (a[1] + h * 0.82).toFixed(1) + '" font-size="' + (h * 0.26).toFixed(1) + '">' + falta(ev.a - t) + "</text>" : "") + "</g>";
+        ganE = ev;
+      }
       for (const { e, zc } of ps) {
+        if (gan && zc + 2.1 < zg) { out.push(gan); gan = ""; }
         const z0 = zc - 2.1, z1 = zc + 2.1;
         out.push(poly([[6.3, 0.2, z0], [6.3, 0.2, z1], [6.3, 2.45, z1], [6.3, 2.45, z0]], "cd-shglass"));
         out.push(poly([[5.4, 0.45, z0 + 0.6], [6.2, 0.45, z0 + 0.6], [6.2, 0.45, z1 - 0.6], [5.4, 0.45, z1 - 0.6]], "cd-shbench"));
@@ -563,6 +618,7 @@
             (e.h ? '<circle class="cd-tick" cx="' + (b[0] - h * 0.32).toFixed(1) + '" cy="' + (a[1] + h * 0.5).toFixed(1) + '" r="' + (h * 0.24).toFixed(1) + '"/><path class="cd-tickm" style="stroke-width:' + (h * 0.07).toFixed(2) + 'px" d="M' + (b[0] - h * 0.43).toFixed(1) + " " + (a[1] + h * 0.5).toFixed(1) + "l" + (h * 0.08).toFixed(1) + " " + (h * 0.09).toFixed(1) + "l" + (h * 0.16).toFixed(1) + " " + (-h * 0.18).toFixed(1) + '"/>' : "") + "</g>");
         }
       }
+      if (gan) out.push(gan);
       return out.join("");
     }
 
@@ -726,6 +782,7 @@
         '<ellipse cx="-30" cy="-2" rx="22" ry="9" fill="#e9a03d"/><ellipse cx="18" cy="-4" rx="24" ry="10" fill="#7bb661"/><ellipse cx="44" cy="4" rx="14" ry="7" fill="#c9562e"/>' +
         '<path d="M60 -60L30 -6M66 -58l-8 14M72 -55l-8 14" stroke="#cfd6df" stroke-width="5" stroke-linecap="round"/></g>' + manoSVG(214, 820, 1, 2) + manoSVG(388, 820, -1, 2);
       R_.stars.innerHTML = cs ? "" : astro(t, D.sol || [7, 18.6], L) + (L.d < 0.6 ? Array.from({ length: 26 }, (_, i) => '<circle cx="' + (40 + hash(i) * 520).toFixed(0) + '" cy="' + (52 + hash(i + 50) * 90).toFixed(0) + '" r="' + (0.6 + hash(i + 9) * 0.9).toFixed(1) + '" fill="#e9f2ff" opacity="' + ((1 - L.d) * 0.8).toFixed(2) + '"/>').join("") : "");
+      ganE = null;
       R_.scene.innerHTML = cs ? casaSVG(cs, L) : escena(c.s, L, st);
       /* la cochera: parada en una noche o siesta, con la persiana bajada; al salir sube y te alejas;
          al llegar a la siguiente, se funde */
@@ -763,7 +820,61 @@
       if (mirando) R_.mirart.textContent = "viendo las " + hhmm(t) + " · volver ⟲";
       svg.setAttribute("aria-valuenow", String(Math.round(t * 100) / 100));
       svg.setAttribute("aria-valuetext", hhmm(t) + " · " + (st.noche ? "en la cochera" : (st.corto || st.turno) ? cap((st.corto || st.turno).t) + " hasta las " + hhmm((st.corto || st.turno).b) : "libre"));
+      contar(st, cs, bici);
       return false;
+    }
+
+    /* ---------- el día contado: lo que ves, en frases ---------- */
+    /* a la hora que miras: qué haces y hasta cuándo, lo siguiente con su cuenta atrás, lo que falta apuntar, el porqué
+       de la hora de la cama o del último café y lo que viene. Arriba, en el parabrisas, lo mismo en una línea */
+    function contar(st, cs, bici) {
+      const B = (x) => "<b>" + esc(x) + "</b>", nom = (e) => e.n || cap(e.t), H = hhmm;
+      const nx = st.sig[0], pasado = D.modo === "pasado", hoy = D.modo === "hoy";
+      let ya = "", corta = "";
+      if (st.noche) { const sale = st.noche.b >= 24 && D.manana != null ? D.manana : st.noche.b;
+        if (st.noche.t === "siesta") { ya = "Estás echándote " + B("la siesta") + " hasta las " + H(st.noche.b) + "."; corta = "Siesta hasta las " + H(st.noche.b) + "."; }
+        else { ya = "Estás " + B("durmiendo") + ": te levantas a las " + H(sale) + "."; corta = "Durmiendo hasta las " + H(sale) + "."; } }
+      else if (cs) { const q = cs.e === "mesa" && cs.t ? "a la mesa (" + cs.t.replace(/\s+en casa$/i, "").toLowerCase() + ")" : CASA_TXT[cs.e] || "en casa";
+        ya = "Estás en casa, " + B(q) + " hasta las " + H(cs.b) + "."; corta = "En casa, " + q + " hasta las " + H(cs.b) + "."; }
+      else if (st.guardia) { ya = "Estás " + B("de guardia") + " hasta las " + H(st.guardia.b) + ": llevas " + dura(t - st.guardia.a) + "."; corta = "De guardia hasta las " + H(st.guardia.b) + "."; }
+      else if (st.corto && esLL(st.corto)) { ya = "Estás en " + B(nom(st.corto)) + " hasta las " + H(st.corto.b) + ": es el acantilado del faro."; corta = nom(st.corto) + " hasta las " + H(st.corto.b) + "."; }
+      else if (st.corto && st.turno) { ya = "Ahora toca " + B(nom(st.corto)) + " hasta las " + H(st.corto.b) + ", dentro de tu " + B("jornada") + " (hasta las " + H(st.turno.b) + ")."; corta = nom(st.corto) + " hasta las " + H(st.corto.b) + "."; }
+      else if (st.turno) { ya = "Estás en " + B("tu jornada") + " hasta las " + H(st.turno.b) + ": es la ciudad que cruzas."; corta = "Sigues en el trabajo hasta las " + H(st.turno.b) + "."; }
+      else if (st.corto) { ya = "Ahora toca " + B(nom(st.corto)) + " hasta las " + H(st.corto.b) + "."; corta = nom(st.corto) + " hasta las " + H(st.corto.b) + "."; }
+      else if (nx) { ya = "Vas de camino" + (bici ? " en bici" : "") + ": llegas a " + B(nom(nx)) + " " + falta(nx.a - t) + "."; corta = nom(nx) + " " + falta(nx.a - t) + "."; }
+      else { ya = st.dia.length ? "Ya no te queda nada con hora." : "No tienes nada con hora."; corta = ""; }
+      /* lo siguiente (si no se ha dicho ya), y si es el cartel verde, que se sepa */
+      let luego = "";
+      if (nx && !pasado && ya.indexOf(B(nom(nx))) < 0) luego = " " + cap(falta(nx.a - t)) + " tienes " + B(nom(nx)) + " (" + H(nx.a) + (nx.b - nx.a > 0.26 ? "–" + H(nx.b) : "") + ")" + (igual(ganE, nx) ? ": es el cartel verde de la carretera." : ".");
+      /* lo que falta apuntar: el bocadillo del retrovisor */
+      const pv = st.previo, pend = pv && pv.m && !pv.h && D.modo !== "futuro";
+      if (pend) luego += " Te falta apuntar " + B(nom(pv).toLowerCase()) + " (lo pregunta el retrovisor).";
+      if (pasado) luego = " " + (st.dia.filter((e) => e.m && e.h).length) + " de " + st.dia.filter((e) => e.m).length + " cosas por marcar, hechas.";
+      /* EL PORQUÉ: la hora de la cama sale de la de levantarte al día siguiente y de tus horas de sueño; el último café, 6 h antes */
+      const rd = (D.cab && D.cab.radio) || {}, obj = rd.obj || (D.sueno && D.sueno.obj) || 0;
+      const noche = (D.noches || []).find((n) => n.t === "noche" && n.a > 12 && n.a > t);
+      let por = "";
+      if (!pasado && noche && !st.noche && !st.guardia) { const caf = noche.a - 6, lev = noche.b >= 24 ? noche.b - 24 : null;
+        if (t >= caf - 1.5 && t < caf) por = "<b>Por qué el último café a las " + H(caf) + ":</b> a la cama vas a las " + H(noche.a) + " y el café tarda unas 6 h en dejar de quitarte el sueño.";
+        else if (t >= caf && lev != null) por = "<b>Por qué a la cama a las " + H(noche.a) + ":</b> " + (hoy ? "mañana" : "al día siguiente") + " te levantas a las " + H(lev) + (obj ? " y así duermes tus " + String(obj).replace(".", ",") + " h" : "") + "."; }
+      /* lo que viene: lo siguiente con su cuenta atrás, lo que quedó sin apuntar primero y la cama de esta noche */
+      const filas = [];
+      if (pend) filas.push('<button type="button" class="ya" data-i="' + esc(String(pv.i)) + '" data-rap="1"><em>' + H(pv.a) + "</em><span>" + esc(nom(pv)) + "</span><small>sin apuntar · apúntala</small></button>");
+      if (!pasado) {
+        const sig = st.sig.slice(0, 4).map((e) => ({ a: e.a, html: '<button type="button" data-i="' + esc(String(e.i)) + '"><em>' + H(e.a) + "</em><span>" + esc(nom(e)) + "</span><small>" + falta(e.a - t) + "</small></button>" }));
+        if (noche && !st.noche) sig.push({ a: noche.a, html: '<button type="button" data-sueno="1"><em>' + H(noche.a) + "</em><span>A la cama</span><small>" + (obj ? "para " + String(obj).replace(".", ",") + " h" : falta(noche.a - t)) + "</small></button>" });
+        sig.sort((x, y) => x.a - y.a).slice(0, 5).forEach((x) => filas.push(x.html));
+      }
+      const cabeza = pasado ? "ESTE DÍA A LAS " + H(t) : hoy && AHORA != null && Math.abs(t - AHORA) < 0.05 ? "AHORA · " + H(t) : "A LAS " + H(t);
+      const html = '<div class="cd-ncap">' + cabeza + '</div><p class="cd-ntx">' + ya + luego + "</p>" + (por ? '<p class="cd-npor">' + por + "</p>" : "") +
+        (filas.length ? '<div class="cd-nsig" aria-label="Lo que viene">' + filas.join("") + "</div>" : "");
+      if (html !== narrH) { narrH = html; R_.narr.innerHTML = html; }
+      /* el subtítulo: lo siguiente si queda poco (3 h) y lo de ahora; al mirar a los lados o con la radio, fuera */
+      const sub = (nx && !pasado && nx.a - t <= 3 && corta.indexOf(nom(nx)) < 0 ? cap(falta(nx.a - t)) + ", " + nom(nx) + ". " : "") + corta;
+      const mas = st.sig.slice(nx && nx.a - t <= 3 ? 1 : 0, 3).map((e) => nom(e) + " " + H(e.a)).join(" · ");
+      R_.sub.hidden = !sub || pasado || !!(lado || ladoVa || radio);
+      const sh = esc(sub) + (mas ? "<small>luego: " + esc(mas) + "</small>" : "") + "<i>más ›</i>";
+      if (sh !== subH) { subH = sh; R_.sub.innerHTML = sh; }
     }
     /* ---------- en casa, en primera persona ---------- */
     const CASA_TXT = { cama: "en la cama", movil: "en la cama con el móvil", leer: "leyendo en la cama", siesta: "siesta", ducha: "en la ducha", cafe: "el café", vestir: "vistiéndote", escritorio: "en el escritorio", salon: "en el sofá", casa: "en casa", mesa: "a la mesa" };
@@ -1090,6 +1201,9 @@
       R_.sr.innerHTML = (D.dia || []).filter((e) => e.b > e.a).sort((a, b) => a.a - b.a).map((e) => '<button type="button" data-i="' + e.i + '">' + hhmm(e.a) + " " + esc(cap(e.t)) + (e.h ? ", hecha" : e.m ? ", sin hacer" : "") + "</button>").join("");
       draw(0);
     }
+    R_.sub.addEventListener("click", () => { R_.narr.parentNode.scrollIntoView({ behavior: still.matches ? "auto" : "smooth", block: "nearest" }); });
+    R_.narr.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (!b) return;
+      if (b.hasAttribute("data-sueno")) abrir({ tipo: "sueno" }); else abrir({ tipo: "item", i: +b.getAttribute("data-i"), rapida: b.hasAttribute("data-rap") }); });
     R_.sr.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) abrir({ tipo: "item", i: +b.getAttribute("data-i"), rapida: false }); });
     return { el, actualiza, hora: () => t };
   }

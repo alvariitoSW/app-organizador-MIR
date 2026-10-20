@@ -1174,3 +1174,30 @@ sumen encima del plan (se recortaría dos veces).
 **Supuestos.** El peso de antes es el más alto de trabajo del último día de ese ejercicio antes de parar. La semana
 2 en adelante usa tu mínimo semanal de Entreno (o 3 días si no tienes). «Duro» = esfuerzo de la sesión 8 o más.
 Se guarda en `gym.regreso` (`gym.vuelta` ya eran los minutos de volver a casa).
+
+## Hoy: el conductor que cuenta lo que ves (2026-10-20)
+
+**Elegido.** Lo tercero de la 3.0 (v3-conductor), con las maquetas de `design/hoy-narrador/`: elegiste **A + B**
+y los tres extras.
+- **El cartel verde:** el próximo evento cruza la carretera por arriba con su hora, su nombre y lo que falta
+  («10:00 SESIÓN CLÍNICA · en 20 min»). Asoma 3 horas antes y se acerca con el reloj; tocarlo abre el evento.
+- **El subtítulo** dentro del parabrisas, en una o dos frases («En 20 min, Sesión clínica. Sigues en el trabajo hasta
+  las 15:00.») y una línea de lo de después. Se quita al mirar a los lados o con la radio; «más ›» baja al narrador.
+- **El narrador** debajo del dibujo: qué haces y hasta cuándo, en frases normales (y qué es lo que ves: la ciudad
+  es tu jornada, el acantilado el Lloretazo, el cartel verde el evento), lo que te falta apuntar (lo que pregunta el
+  retrovisor) y **lo que viene** con su cuenta atrás, incluida la cama de esta noche. Cada fila abre lo suyo.
+- **El porqué:** por la tarde, por qué a la cama a esa hora (la de levantarte al día siguiente y tus horas de
+  sueño); hora y media antes del último café, por qué ese café es el último (6 h antes de la cama).
+- **«¿Qué estoy viendo?»**, plegado: once líneas con lo que significa cada cosa del dibujo.
+- Todo sigue a la hora que mueves con el dedo o las flechas, no solo a la de ahora.
+- Prueba encadenada 324 (9:40 → flechas a las 10:40 → mirar a la izquierda y Escape → leyenda → tocar la sesión).
+  Sin el cambio caen sus 6 comprobaciones.
+- De paso, dos pruebas viejas que solo pasaban en lunes (239 y 274) ya no dependen del día de la semana.
+
+**Descartado.** Poner el cartel en su parada de la ruta (salía al fondo, diminuto: el autobús está parado en la
+ciudad toda la jornada). El narrador en la Estación (solo el Conductor, que es el que pediste). Leyenda abierta de
+serie (alarga la pantalla).
+
+**Supuestos.** El cartel es solo para eventos (no comidas, entreno ni turnos). El subtítulo nombra lo siguiente si
+falta 3 horas o menos. «¿Qué estoy viendo?» va plegado. En días pasados no hay subtítulo y el narrador cuenta
+cuántas cosas marcaste.
