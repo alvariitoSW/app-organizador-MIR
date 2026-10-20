@@ -1247,3 +1247,19 @@ Partir las 201 primeras: van en cadena (jornada 8–15, tipos de guardia, platos
 
 **Supuestos.** Las pruebas del arranque (antes de la 1) se repiten en cada trozo: por eso el total sale 746 y no 730.
 Para bajar a ~2 min falta que las 201 primeras preparen sus propios datos (se apunta para otra sesión).
+
+## El móvil en «modo ordenador» (2026-10-20)
+
+**Elegido.** Arreglo de un fallo que te pasó: con «Sitio de escritorio» activado en Brave (o Chrome), el navegador no hace
+caso al ancho del móvil y pinta la app a 980 px; todo salía diminuto y, con la app instalada, no había menú para
+quitarlo. Ahora la app lo detecta (pantalla de móvil táctil, de 600 px o menos, y ventana al menos un 30 % más ancha
+que ella), se amplía para caber justo (zoom ≈ 2,4) y decide las reglas de móvil de `styles.css` con el ancho de verdad
+de la pantalla. Se ve igual que en modo normal (comparado a 412×915) y los toques caen en su sitio. Al quitar el modo
+ordenador, todo vuelve a como siempre. Prueba encadenada 327 (980 en pantalla de 412 → tocar un día → volver a 412).
+Sin el arreglo cae.
+
+**Descartado.** Cambiar la etiqueta de ancho al vuelo (en modo ordenador el navegador la ignora). Solo un aviso con
+instrucciones (no arregla nada si no encuentras el menú).
+
+**Supuestos.** Un ordenador de verdad (pantalla ancha) o una tableta (más de 600 px) no se toca. Si amplías con dos
+dedos, la app no lo confunde con el modo ordenador (se mira la pantalla, no el zoom).

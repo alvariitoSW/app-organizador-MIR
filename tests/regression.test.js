@@ -13077,6 +13077,38 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       linea(r.a.uno) && (r.a.uno.l || ks.lunes) && linea(r.a.sig) && r.a.dentro && !r.a.dentro.l && !r.a.dentro.t, JSON.stringify({ r, ks }));
     check('con › al mes siguiente, su día 1 sigue marcando la frontera con el mes de antes', r.b.mes === (new Date().getMonth() + 1) % 12 && linea(r.b.sig), JSON.stringify(r));
   }
+  // 327) EL MÓVIL EN «MODO ORDENADOR», EN CADENA: con «Sitio de escritorio» (Brave/Chrome) el navegador pinta a 980 px
+  // aunque la pantalla sea de 412 y no hace caso al ancho del móvil: la app salía diminuta y, instalada, sin menú
+  // para quitarlo. (a) Con la ventana a 980 y la pantalla de 412 táctil, la app se amplía (zoom ≈ 2,38) y aplica las
+  // reglas de móvil; (b) un toque en un día del Mes cae en ese día y abre su panel; (c) al quitar el modo (la ventana
+  // vuelve a 412) todo vuelve a ser como siempre.
+  {
+    const c327 = await browser.newContext({ viewport: { width: 980, height: 2178 }, screen: { width: 412, height: 915 }, hasTouch: true, isMobile: false });
+    const p327 = await c327.newPage(), err327 = [];
+    p327.on('pageerror', (e) => err327.push(String(e)));
+    await p327.goto(base + 'index.html');
+    await p327.waitForFunction(() => window.PG && window.__arrancada, null, { timeout: 15000 }).catch(() => {});
+    // el asistente del primer arranque: «saltar» y confirmarlo
+    for (const t of [/saltar/i, /sí, saltar/i]) { await p327.evaluate((src) => { const re = new RegExp(src, 'i'), b = [...document.querySelectorAll('button')].find((x) => re.test(x.textContent)); if (b) b.click(); }, t.source); await p327.waitForTimeout(300); }
+    await p327.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.monSel = ''; P.render(); });
+    await p327.waitForTimeout(300);
+    const mira = () => p327.evaluate(() => { const de = document.documentElement, r = [...document.styleSheets].flatMap((h) => { try { return [...h.cssRules]; } catch (e) { return []; } })
+      .filter((x) => x instanceof CSSMediaRule && /max-width:\s*560px/.test(x.conditionText || '') || x instanceof CSSMediaRule && x.media.mediaText === 'all').length;
+      return { zoom: +de.style.zoom || 1, clase: de.classList.contains('modo-ordenador'), movil: [...document.styleSheets].some((h) => { try { return [...h.cssRules].some((x) => x instanceof CSSMediaRule && x.media.mediaText === 'all'); } catch (e) { return false; } }), r }; });
+    const r = { a: await mira() };
+    const k = await p327.evaluate(() => window.PG.iso(new Date()));
+    await p327.click('#main .cal [data-key="' + k + '"]', { timeout: 4000 }).catch(() => {});
+    await p327.waitForTimeout(300);
+    r.b = await p327.evaluate((k) => ({ sel: window.PG.ui.monSel, k }), k);
+    await p327.setViewportSize({ width: 412, height: 915 });
+    await p327.waitForTimeout(300);
+    r.c = await mira();
+    await c327.close();
+    check('en «modo ordenador» (ventana de 980 en una pantalla de móvil) la app se amplía a lo ancho del móvil y usa las reglas de móvil',
+      r.a.zoom > 2 && r.a.zoom < 2.6 && r.a.clase && r.a.movil, JSON.stringify(r));
+    check('con la ampliación, tocar un día del Mes abre ese día; al quitar el modo ordenador todo vuelve a como siempre',
+      r.b.sel === r.b.k && r.c.zoom === 1 && !r.c.clase && !r.c.movil && err327.length === 0, JSON.stringify({ r, err327 }));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

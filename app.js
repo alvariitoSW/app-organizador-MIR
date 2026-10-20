@@ -27190,6 +27190,29 @@ window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegl
   notaDia,eventosDelDia,eventosDelMes,agendaMesHTML,diasCorta,eventosTagsHTML,
   fechaCorta,diasHasta,cuentaAtrasTxt,eventosPuntualesDe,eventosPuntualesProximos,proximosPuntualesHTML,
   habitosS,habitoHecho,toggleHabito,rachaHabito,renderHabitos,habHojaHTML,hoyBusDatos,finMin,guardiasR1,finR1,inicioR1,cieloDe,deGuardiaAhora,vacGastados,esVacacionSh,mesAbono,taxisMes,taxiEurDia,tiemposManana,mananaHTML,cafesDe,conductor:function(){return {c:_cond,d:_condDatos};}};
+/* EL MÓVIL EN «MODO ORDENADOR»: con «Sitio de escritorio» activado (Brave, Chrome) el navegador no hace caso al
+   ancho del móvil (la etiqueta viewport) y pinta la app a 980 px: todo diminuto y, con la app instalada, sin menú
+   para quitarlo. Si la pantalla es de móvil (estrecha y táctil) y la ventana es mucho más ancha que ella, se
+   amplía la página (zoom) para que quepa justo, y las reglas por ancho de styles.css se deciden con el ancho de
+   verdad de la pantalla, no con los 980 px. Al quitar el modo ordenador, todo vuelve a estar como siempre */
+const _mediaOrig=new Map();
+function anchoMovil(){
+  const de=document.documentElement,sw=Math.min(screen.width||0,window.outerWidth||screen.width||0),w=window.innerWidth;
+  const tactil=navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches;
+  const k=tactil&&sw>0&&sw<=600&&w>sw*1.3?w/sw:1;
+  de.style.zoom=k>1?String(k):'';
+  de.classList.toggle('modo-ordenador',k>1);
+  for(const hoja of document.styleSheets){let reglas;try{reglas=hoja.cssRules;}catch(e){continue;}
+    for(const r of reglas){
+      if(!(r instanceof CSSMediaRule))continue;
+      if(!_mediaOrig.has(r))_mediaOrig.set(r,r.media.mediaText);
+      const m=_mediaOrig.get(r);if(!/width/.test(m))continue;
+      const mx=/max-width:\s*(\d+)px/.exec(m),mn=/min-width:\s*(\d+)px/.exec(m);
+      const t=k>1?((!mx||sw<=+mx[1])&&(!mn||sw>=+mn[1])?'all':'not all'):m;
+      if(r.media.mediaText!==t)r.media.mediaText=t;}}}
+anchoMovil();
+window.addEventListener('resize',anchoMovil);
+
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
