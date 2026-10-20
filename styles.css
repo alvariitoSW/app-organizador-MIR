@@ -3748,3 +3748,6 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .mgfila:first-of-type{border-top:0}
 .mgfila b{min-width:56px}.mgfila span{flex:1}.mgfila i{font-style:normal;font-size:12.5px;color:var(--ink2)}
 .mgfila.ok i{color:var(--ok)}
+/* la raya del mes: arriba de cada casilla, el color de su mes (--mes), con un filo oscuro para que se vea sobre cualquier tipo de día */
+.cal.ext .dbox::before{content:'';position:absolute;left:5px;right:5px;top:2px;height:5px;border-radius:3px;background:var(--mes,transparent);box-shadow:0 0 0 1px rgba(0,0,0,.35);pointer-events:none}
+.cal.ext .dbox .dtop{margin-top:4px}

@@ -1218,3 +1218,16 @@ la lista (de momento basta con enseñarla).
 
 **Supuestos.** El botón se queda como lo dejes mientras la app está abierta; al volver a abrirla, empieza en la semana
 de hoy. «Hecha» es una guardia de un día anterior a hoy, como en el abono.
+
+## Mes: la raya del color del mes (2026-10-20)
+
+**Elegido.** En cada casilla del Mes, arriba, una raya del color de su mes (12 colores, uno por mes, con un filo
+oscuro para que se vea sobre cualquier tipo de día). Así los días de septiembre o noviembre que salen junto a octubre se
+distinguen de un vistazo, y no solo por el «1 nov». La leyenda («?») lo dice. Prueba encadenada 326 (ver del 1 → días de
+dos meses → › al mes siguiente). Sin la raya caen sus 2 comprobaciones.
+
+**Descartado.** Pintar el fondo según el mes (el fondo ya es el tipo de día). Una raya gruesa entre meses (en la
+cuadrícula el cambio de mes cae a mitad de fila y quedaría en escalera).
+
+**Supuestos.** La raya va arriba de la casilla, de 5 px. Los colores son fijos por mes (octubre azul, noviembre verde
+lima, septiembre morado…), no elegibles.

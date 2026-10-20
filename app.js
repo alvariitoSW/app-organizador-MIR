@@ -7750,6 +7750,7 @@ function serviciosCard(){
       '<button class="btn s" data-a="svc-clear">quitar el reparto</button></div>'+
     '</details>'+
     '</div>';}
+const MES_COL=['#6366f1','#ec4899','#22c55e','#f59e0b','#14b8a6','#eab308','#f97316','#06b6d4','#a855f7','#0ea5e9','#84cc16','#ef4444'];
 function mesRejilla(y,mo,lead){
   /* los días que pinta la cuadrícula de Mes: la semana entera de antes del día 1, el mes, y la
      semana entera de después del último. Cada día sale de monthDays() de SU mes, así que trae lo
@@ -8108,7 +8109,9 @@ function renderMonth(){
        trabajo con entreno va marrón con el entreno en una chapa azul: manda lo que te ocupa el día. */
     const tipoD=mesTipoDia(d)||'libre',colD=tipoD==='fuerza'&&d.jor?'trabajo':tipoD;
     const etiq=tipoD==='guardia'?'🚨 '+esc(String(d.guard||'guardia').toUpperCase()):tipoD==='saliente'?'saliente':tipoD==='vac'?'🏖️ vacaciones':'';
-    cells.push('<button class="dbox mt-'+colD+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
+    /* LA RAYA DEL MES: arriba de cada casilla, un color por mes, para que los días de septiembre o noviembre que
+       salen junto a octubre se distingan de un vistazo (los colores del día ya los usa el tipo de día) */
+    cells.push('<button class="dbox mt-'+colD+(fuera?' fuera':'')+(isToday(d.key)?' today':'')+(ui.monSel===d.key?' sel':'')+'" style="--mes:'+MES_COL[d.date.getMonth()]+'" data-a="mon-day" data-lp="dia" data-key="'+d.key+'"'+
       ' title="'+esc(d.name)+(manual?' · puesto a mano':'')+(isToday(d.key)?' · hoy':'')+'">'+
       '<span class="dtop"><span class="dnum">'+d.date.getDate()+((fuera||d.date.getMonth()!==mo)&&d.date.getDate()===1?'<small>'+MON[d.date.getMonth()]+'</small>':'')+'</span>'+
 '</span>'+
@@ -8139,7 +8142,7 @@ function renderMonth(){
       ${mesCarneHTML(abono,y,mo,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
       ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+' del 1 al '+rejilla.oculto+' de '+MONTH_FULL[mo]+'</button>':''}
       <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
-      ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
+      ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · la raya de arriba es el color del mes'+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
    </div>`;
