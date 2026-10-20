@@ -66,14 +66,14 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
 - [v3-boceto-semana] **Plan de comidas:** montar una semana a mano como **boceto** (poner, cambiar, quitar platos),
   guardarla y que el asistente de la semana ayude sobre ese boceto
-- [v3-entrenador] **Entreno, otra vuelta entera:** como una app de entrenador propio basada en ciencia. Ejemplo: si
+- [v3-entrenador] (la parte de volver tras un parón ya está: v3-plan-vuelta) **Entreno, otra vuelta entera:** como una app de entrenador propio basada en ciencia. Ejemplo: si
   llevas 2 meses sin entrenar, que sobre tu rutina te diga «baja un X %» y te suba poco a poco hasta volver (hoy no
   existe nada de vuelta tras un parón)
 - [v3-dinero-compras] **Dinero:** planear compras de los próximos meses (cosas que quizá compres), decidir qué sí y
   qué no, y cuánto puedes apartar cada mes para ellas; «una app dentro de la app». Hoy hay deseos dentro de cada
   hucha, pero no un plan de compras
 - [v3-gmail] **«La función de Gmail»:** sin aclarar qué es (¿la de Google Calendar?) · pendiente de que lo digas
-- ~~[v3-plan-vuelta]~~ HECHO en la rama 2026-10-19 (2ac63d3, suite 720/720; sin desplegar hasta que lo pidas) · **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
+- ~~[v3-plan-vuelta]~~ HECHO y desplegado 2026-10-20 (main 28e97b3, run 39378000493; 2ac63d3, suite 720/720) · **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
   puedes hacerla tras un parón; la app te monta el camino («tantos días a la semana, tantas semanas, así») con
   seguimiento y continuidad, como un entrenador, no un menú de opciones
 - [v3-coach] **La app como entrenador de tu persona:** descansar, comer bien, verdura y fruta, entreno; que te guíe
@@ -97,6 +97,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 
 ## Supuestos sin confirmar
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
+- [sup-2026-10-20-plan-vuelta] plan de vuelta: el peso de antes es el más alto de trabajo del último día de ese ejercicio; de la semana 2 en adelante, tu mínimo semanal de Entreno (o 3 días); «duro» = esfuerzo 8 o más · DECISIONS.md:1174 · contado el 2026-10-20
 
 <!-- - [sup-AAAA-MM-DD-tema] el supuesto · DECISIONS.md:línea · contado el AAAA-MM-DD -->
 - [sup-2026-10-14-quita-urg] las 4 guardias que te quitas salen de Urgencias · DECISIONS.md (guardias R1) · contado el 2026-10-14
@@ -134,3 +135,6 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - [enc-mes-colores] 2026-10-19 · Mes con el día entero de color (B suaves), sin Semana, sin Isométrica ni Carretera del Mes, aviso del Mes arreglado (main 4c09f09, run 39334245811) · hecha
 - [run-39334245811] 2026-10-19 · despliegue de main (4c09f09, Mes de colores) · success; sellado (version.json con b05d05e, último código) · ok
 - [rama-c993d4e] 2026-10-19 · rama un commit por delante de main (solo el traspaso, sin código); 0 issues/PR; DECISIONS sin líneas nuevas (1153) · ok
+- [run-39378000493] 2026-10-20 · despliegue de main (28e97b3, plan de vuelta de Entreno) · success; sellado (version.json con 28d85cb, posterior al último código 2ac63d3) · ok
+- [enc-plan-vuelta] 2026-10-20 · Entreno: «Tu vuelta al gimnasio» tras 2+ semanas parado (prueba 323) · hecha y desplegada
+- [rama-28e97b3] 2026-10-20 · main y rama iguales; 0 issues/PR; DECISIONS 1176 líneas · ok
