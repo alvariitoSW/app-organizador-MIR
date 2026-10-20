@@ -59,8 +59,10 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
   grande en negro; saliente oscuro; libre verde claro; trabajo marrón; entreno azul. Los eventos, más visibles en el
   Mes. Y el selector de fecha en español (sale «October 2026» y pegado al icono, lo vio la revisión de salud)
 - ~~[v3-sin-semana]~~ HECHO 2026-10-19 (también Isométrica y Carretera del Mes; «Mi rutina» a Ajustes) · **Quitar la vista Semana** del Calendario entera: no la usas
-- [v3-conductor] **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
+- ~~[v3-conductor]~~ HECHO y desplegado 2026-10-20 (main e1aaeda, run 39453952330; A + B con cartel verde, porqué y «¿Qué estoy viendo?») · **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
   descripción más grande, no solo «se ve el autobús»
+- ~~[fallo-mes-pasado]~~ ARREGLADO y desplegado 2026-10-20 (main e1aaeda) · El Mes en curso no enseñaba del 1 al 18 (no podías ver las guardias de octubre para secretaría): botón «▲ Ver del 1 al N» y lista de guardias al tocar el abono · DECISIONS «Mes: lo ya pasado del mes en el que estás»
+- [aparc-auditoria-contexto] Gastar menos contexto: borrar las ~196 tareas ya hechas de la lista (se reenvía entera cada pocos pasos) y, si quieres, desactivar Google Drive y Claude Docs si no los usas. Headroom descartado (no aplica a sesiones en la nube y pasa todo por un tercero). Pedido el 2026-10-20
 - [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
   número, y cada cosa en su unidad (g, ml, mg: la leche en ml)
 - [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
@@ -97,6 +99,8 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 
 ## Supuestos sin confirmar
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
+- [sup-2026-10-20-conductor] conductor: el cartel verde solo para eventos (no comidas, entreno ni turnos), el subtítulo nombra lo siguiente si falta ≤ 3 h, «¿Qué estoy viendo?» plegado, narrador solo en el Conductor (no en la Estación) · DECISIONS «Hoy: el conductor que cuenta lo que ves» · contado el 2026-10-20
+- [sup-2026-10-20-mes-pasado] Mes: el botón «Ver del 1 al N» se recuerda mientras la app está abierta (al abrirla empieza en la semana de hoy); «hecha» = guardia de un día anterior a hoy; la lista de guardias sale en la hoja del abono de cualquier mes · DECISIONS «Mes: lo ya pasado…» · contado el 2026-10-20
 - [sup-2026-10-20-plan-vuelta] plan de vuelta: el peso de antes es el más alto de trabajo del último día de ese ejercicio; de la semana 2 en adelante, tu mínimo semanal de Entreno (o 3 días); «duro» = esfuerzo 8 o más · DECISIONS.md:1174 · contado el 2026-10-20
 
 <!-- - [sup-AAAA-MM-DD-tema] el supuesto · DECISIONS.md:línea · contado el AAAA-MM-DD -->
