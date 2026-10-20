@@ -1201,3 +1201,20 @@ serie (alarga la pantalla).
 **Supuestos.** El cartel es solo para eventos (no comidas, entreno ni turnos). El subtítulo nombra lo siguiente si
 falta 3 horas o menos. «¿Qué estoy viendo?» va plegado. En días pasados no hay subtítulo y el narrador cuenta
 cuántas cosas marcaste.
+
+## Mes: lo ya pasado del mes en el que estás, y la lista de guardias (2026-10-20)
+
+**Elegido.** Arreglo de un fallo que te pasó de verdad: en secretaría te preguntaron por las guardias de octubre y la
+app no las enseñaba. El Mes del mes en el que estás empieza en la semana de hoy, y septiembre llega solo hasta el 4
+de octubre: **del 5 al 18 de octubre no salía en ningún sitio.**
+- Encima de la cuadrícula, **«▲ Ver del 1 al 18 de octubre»** hace que empiece en la semana del día 1 (los días del mes
+  anterior van apagados). «▼ Ocultar» vuelve a empezar en la semana de hoy. Elegiste esto frente al mes entero del 1 al 31.
+- **Al tocar el abono**, la hoja del mes empieza con «GUARDIAS DE OCTUBRE · 3 hechas de 4» y una línea por guardia:
+  día, tipo, horas y «✓ hecha» o «por hacer». Se puede enseñar tal cual.
+- Prueba encadenada 325 (ver del 1 al N → abono → lista → ocultar). Sin el arreglo caen sus 2 comprobaciones.
+
+**Descartado.** El mes entero del 1 al 31 y «del 1 hasta 4 semanas por delante» (elegiste el botón). Un botón de copiar
+la lista (de momento basta con enseñarla).
+
+**Supuestos.** El botón se queda como lo dejes mientras la app está abierta; al volver a abrirla, empieza en la semana
+de hoy. «Hecha» es una guardia de un día anterior a hoy, como en el abono.

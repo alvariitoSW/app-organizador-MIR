@@ -7772,15 +7772,19 @@ function mesRejilla(y,mo,lead){
      para mirar hacia atrás. Con una sola fila, y encogida por CSS, las cinco que quedan pasan de
      118 a ~158 px de alto cada una. Se sigue viendo la semana pasada, que es para lo que está. */
   const hoy=new Date(),movil=(y===hoy.getFullYear()&&mo===hoy.getMonth());
-  let semHoy='';
+  let semHoy='',oculto=0;
   if(movil){
     const domFirst=store.rotation.calWeekStart==='dom';
     const h=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12,0,0,0);
     const inicio=addDays(h,-(domFirst?h.getDay():(h.getDay()+6)%7));
     semHoy=iso(inicio);
-    ini=inicio;fin=addDays(inicio,5*7-1);}
+    /* LO YA PASADO DEL MES NO SE PIERDE: con la cuadrícula empezando en la semana de hoy, del 1 al 18 de octubre
+       no salía en ningún sitio (septiembre llega hasta el 4) y no había forma de ver qué guardias llevabas. El
+       botón «▲ Ver del 1 al 18» (ui.mesAtras) hace que empiece en la semana del día 1 */
+    oculto=inicio.getMonth()===mo&&inicio.getDate()>1?inicio.getDate()-1:0;
+    ini=oculto&&ui.mesAtras?ini:inicio;fin=addDays(inicio,5*7-1);}
   const out=[];
-  out.movil=movil;out.semHoy=semHoy;
+  out.movil=movil;out.semHoy=semHoy;out.oculto=oculto;
   for(let d=new Date(ini.getTime());d<=fin;d=addDays(d,1)){
     const x=monthDays(d.getFullYear(),d.getMonth())[d.getDate()-1];
     if(x)out.push(x);}
@@ -7993,7 +7997,17 @@ function mesCarneHTML(a,y,mo,svc){
   return '<button class="carne cf" data-a="mes-hoja" aria-label="'+esc(lab)+'" title="'+esc(lab)+'">'+svg+'</button>';}
 function hojaMesHTML(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),list=monthDays(y,mo);
-  return hojaMarco('hoja-cerrar','',MONTH_FULL[mo]+' '+y,'<h3 class="sh">🗓️ '+esc(MONTH_FULL[mo])+' '+y+'</h3>'+mesResumenHTML(y,mo,list,svc,g));}
+  return hojaMarco('hoja-cerrar','',MONTH_FULL[mo]+' '+y,'<h3 class="sh">🗓️ '+esc(MONTH_FULL[mo])+' '+y+'</h3>'+mesGuardiasHTML(y,mo,list)+mesResumenHTML(y,mo,list,svc,g));}
+/* LAS GUARDIAS DEL MES, UNA POR LÍNEA: «¿qué guardias has hecho en octubre y qué días?» (lo preguntan en secretaría).
+   Con su día, su tipo, sus horas y si ya está hecha; se puede enseñar tal cual */
+function mesGuardiasHTML(y,mo,list){
+  const hoyK=iso(new Date()),gs=list.filter(function(d){return mesTipoDia(d)==='guardia';});
+  if(!gs.length)return '';
+  const hechas=gs.filter(function(d){return d.key<hoyK;}).length;
+  return '<div class="card mesgu"><div class="cap">GUARDIAS DE '+esc(MONTH_FULL[mo].toUpperCase())+' · '+hechas+' hecha'+(hechas===1?'':'s')+' de '+gs.length+'</div>'+
+    gs.map(function(d){const g=guardiaHoras(d.key,d.guard),dt=d.date,est=d.key<hoyK?'✓ hecha':d.key===hoyK?'hoy':'por hacer';
+      return '<div class="mgfila'+(d.key<hoyK?' ok':'')+'"><b>'+DIA3[dt.getDay()]+' '+dt.getDate()+'</b><span>'+esc(g&&g.tipo&&g.tipo.label||'Guardia')+
+        (g?' · '+hCorta(g.guardia)+'→'+hCorta(g.sale):'')+'</span><i>'+est+'</i></div>';}).join('')+'</div>';}
 function mesAbonoHTML(a,mo){
   return '<div class="abono"><div class="t">ABONO DE '+esc(MONTH_FULL[mo].toUpperCase())+'</div><div class="nums">'+
     '<div><b>'+a.hechas+' <small>de</small> '+a.cupo+'</b><small>guardias hechas</small><span class="agujeros">'+
@@ -8014,7 +8028,7 @@ function renderMonth(){
   rejilla.forEach(function(d){
     /* en el mes que se mueve con la semana, lo apagado son las dos semanas ya pasadas (y son las que
        no salen al imprimir: el papel empieza en la semana en la que estás) */
-    const fuera=rejilla.movil?false:d.date.getMonth()!==mo;
+    const fuera=rejilla.movil?d.date<new Date(y,mo,1):d.date.getMonth()!==mo;
     const manual=d.over||(store.rotation.shiftByDay[d.key]!==undefined);
     const seg=d.key?diaSegundo(d.key,d.inf):null;
     const evsDia=d.key?eventosCalendario(d.key):[];
@@ -8123,6 +8137,7 @@ function renderMonth(){
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
         <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
       ${mesCarneHTML(abono,y,mo,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
+      ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+' del 1 al '+rejilla.oculto+' de '+MONTH_FULL[mo]+'</button>':''}
       <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
@@ -23971,6 +23986,7 @@ function act(a,el){
         save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
     case 'mes-hoja':ui.mesHoja=!ui.mesHoja;render();break;
     case 'mes-ley':ui.mesLey=!ui.mesLey;render();break;
+    case 'mes-atras':ui.mesAtras=!ui.mesAtras;render();break;
     case 'mes-vac':ui.mesModo={tipo:'vac',de:''};ui.monSel='';ui.mesHoja=false;render();
       {const c=document.querySelector('#main .calmes');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});}break;
     case 'mon-guard-d':{const y=monthDate.getFullYear(),m=monthDate.getMonth(),sv=monthService(y,m);

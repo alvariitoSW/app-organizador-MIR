@@ -13025,6 +13025,34 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«¿Qué estoy viendo?» se abre y sigue abierta al mover la hora', r.d.ley, JSON.stringify(r.d));
     check('tocar la sesión en «lo que viene» abre su hoja', r.e.hoja, JSON.stringify(r.e));
   }
+  // 325) LO YA PASADO DEL MES EN EL QUE ESTÁS, EN CADENA: con una guardia el día 1 del mes (o el 2), el Mes de este mes empieza
+  // en la semana de hoy y esa guardia no salía en NINGÚN sitio (el mes anterior llega solo a su última semana): en
+  // secretaría preguntaron por las guardias de octubre y no se podían ver. (a) «▲ Ver del 1 al N» enseña la casilla del
+  // día 1; (b) tocar el abono abre la hoja con «GUARDIAS DE …» y esa guardia «✓ hecha»; (c) «▼ Ocultar» vuelve a la
+  // semana de hoy. Solo tiene sentido pasado el día 7 (antes, la semana de hoy ya incluye el día 1).
+  {
+    const hoy325 = await page.evaluate(() => new Date().getDate());
+    if (hoy325 > 7) {
+      const clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
+      const k1 = await page.evaluate(() => { const P = window.PG, d = new Date(), k = P.iso(new Date(d.getFullYear(), d.getMonth(), 2, 12));
+        window.__copia325 = { ov: P.dayOverride(k), atras: P.ui.mesAtras };
+        P.setDayOverride(k, 'sh-g', ''); P.ui.mesAtras = false; P.ui.mesHoja = false; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.monSel = '';
+        P.monthDate = new Date(d.getFullYear(), d.getMonth(), 1); P.save(); P.render(); return k; });
+      const r = { antes: await page.evaluate((k) => ({ dia: !!document.querySelector('#main .cal [data-key="' + k + '"]'), btn: (document.querySelector('#main .mesatras') || {}).textContent || '' }), k1) };
+      await clic('#main .mesatras');
+      r.a = await page.evaluate((k) => ({ dia: !!document.querySelector('#main .cal [data-key="' + k + '"]'), btn: (document.querySelector('#main .mesatras') || {}).textContent || '' }), k1);
+      await clic('#main [data-a="mes-hoja"]');
+      r.b = await page.evaluate(() => (document.querySelector('.mesgu') || {}).textContent || '');
+      await page.evaluate(() => { const b = document.querySelector('[data-a="hoja-cerrar"]'); if (b) b.click(); }); await page.waitForTimeout(200);
+      await clic('#main .mesatras');
+      r.c = await page.evaluate((k) => ({ dia: !!document.querySelector('#main .cal [data-key="' + k + '"]'), btn: (document.querySelector('#main .mesatras') || {}).textContent || '' }), k1);
+      await page.evaluate((k) => { const P = window.PG, c = window.__copia325; P.setDayOverride(k, c.ov || '', ''); P.ui.mesAtras = c.atras; P.ui.mesHoja = false; delete window.__copia325; P.save(); P.render(); }, k1);
+      check('en el mes en el que estás, «▲ Ver del 1 al …» enseña los días ya pasados (la guardia del día 2) que antes no salían en ningún sitio',
+        !r.antes.dia && /▲ Ver del 1 al \d+/.test(r.antes.btn) && r.a.dia && /▼ Ocultar/.test(r.a.btn), JSON.stringify(r));
+      check('tocar el abono lista las guardias del mes con su día y «✓ hecha»; «▼ Ocultar» vuelve a la semana de hoy',
+        /GUARDIAS DE/.test(r.b) && /\s2(?!\d)/.test(r.b) && /✓ hecha/.test(r.b) && !r.c.dia && /▲ Ver/.test(r.c.btn), JSON.stringify(r));
+    }
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
