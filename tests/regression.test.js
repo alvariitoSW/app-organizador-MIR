@@ -13053,25 +13053,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         /GUARDIAS DE/.test(r.b) && /\s2(?!\d)/.test(r.b) && /✓ hecha/.test(r.b) && !r.c.dia && /▲ Ver/.test(r.c.btn), JSON.stringify(r));
     }
   }
-  // 326) LA RAYA DEL MES, EN CADENA: en el Mes salen días de otro mes (la semana del día 1 con días del anterior, y
-  // las semanas siguientes ya en el mes que viene) y solo se distinguían por el número «1 nov». Ahora cada casilla
-  // lleva arriba una raya del color de su mes: (a) con «▲ Ver del 1 al …», el último día del mes anterior y el día 1
-  // van de colores distintos; (b) con › al mes siguiente, su día 1 lleva el color de ese mes y no el del anterior.
+  // 326) LA FRONTERA ENTRE MESES, EN CADENA: en el Mes salen días de otro mes (la semana del día 1 con días del anterior,
+  // y las semanas siguientes ya en el mes que viene) y solo se distinguían por el «1 nov». Ahora una línea amarilla en
+  // escalera separa los meses: (a) con «▲ Ver del 1 al …», el día 1 la lleva a su izquierda (si no cae en lunes) y los
+  // días que tienen encima el mes anterior, arriba; (b) el 1 del mes siguiente también la lleva, y con › a ese mes sigue.
   {
-    const raya = (k) => page.evaluate((k) => { const b = document.querySelector('#main .cal [data-key="' + k + '"]'); return b ? getComputedStyle(b, '::before').backgroundColor : ''; }, k);
+    const fr = (k) => page.evaluate((k) => { const b = document.querySelector('#main .cal [data-key="' + k + '"]'); if (!b) return null;
+      const cs = getComputedStyle(b).boxShadow; return { l: b.classList.contains('frl'), t: b.classList.contains('frt'), sombra: /-4px 0px 0px 1px|0px -4px 0px 1px/.test(cs) }; }, k);
     const ks = await page.evaluate(() => { const P = window.PG, d = new Date(); window.__copia326 = P.ui.mesAtras;
       P.ui.mesAtras = false; P.ui.mesHoja = false; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.monthDate = new Date(d.getFullYear(), d.getMonth(), 1); P.render();
-      return { ant: P.iso(new Date(d.getFullYear(), d.getMonth(), 0, 12)), uno: P.iso(new Date(d.getFullYear(), d.getMonth(), 1, 12)), sig: P.iso(new Date(d.getFullYear(), d.getMonth() + 1, 1, 12)) }; });
+      const uno = new Date(d.getFullYear(), d.getMonth(), 1, 12), sig = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12);
+      return { uno: P.iso(uno), lunes: (uno.getDay() + 6) % 7 === 0, bajo: P.iso(new Date(d.getFullYear(), d.getMonth(), 1 + (7 - (uno.getDay() + 6) % 7) % 7 || 8, 12)), sig: P.iso(sig), dentro: P.iso(new Date(d.getFullYear(), d.getMonth(), 15, 12)) }; });
     const b = await page.$('#main .mesatras'); if (b) { await b.click(); await page.waitForTimeout(250); }
-    const r = { a: { ant: await raya(ks.ant), uno: await raya(ks.uno) } };
+    const r = { a: { uno: await fr(ks.uno), dentro: await fr(ks.dentro), sig: await fr(ks.sig) } };
     await page.click('[data-a="wk-next"][aria-label="mes siguiente"]', { timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(250);
-    r.b = { sig: await raya(ks.sig), mes: await page.evaluate(() => window.PG.monthDate.getMonth()) };
+    r.b = { sig: await fr(ks.sig), mes: await page.evaluate(() => window.PG.monthDate.getMonth()) };
     await page.evaluate(() => { const P = window.PG, d = new Date(); P.ui.mesAtras = window.__copia326; delete window.__copia326; P.monthDate = new Date(d.getFullYear(), d.getMonth(), 1); P.ui.tab = 'month'; P.render(); });
-    const vale = (c) => /^rgb/.test(c) && c !== 'rgba(0, 0, 0, 0)';
-    check('cada casilla del Mes lleva arriba la raya del color de su mes: el día anterior al 1 y el día 1 se distinguen',
-      vale(r.a.ant) && vale(r.a.uno) && r.a.ant !== r.a.uno, JSON.stringify(r));
-    check('con › al mes siguiente, su día 1 lleva el color de ese mes, distinto del de este', r.b.mes === (new Date().getMonth() + 1) % 12 && vale(r.b.sig) && r.b.sig !== r.a.uno, JSON.stringify(r));
+    const linea = (x) => !!x && (x.l || x.t) && x.sombra;
+    check('una línea en escalera separa los meses del Mes: el día 1 la lleva (y el 1 del mes siguiente) y un día de en medio no',
+      linea(r.a.uno) && (r.a.uno.l || ks.lunes) && linea(r.a.sig) && r.a.dentro && !r.a.dentro.l && !r.a.dentro.t, JSON.stringify({ r, ks }));
+    check('con › al mes siguiente, su día 1 sigue marcando la frontera con el mes de antes', r.b.mes === (new Date().getMonth() + 1) % 12 && linea(r.b.sig), JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

@@ -3699,7 +3699,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cal.ext .dbox{background:var(--mt,var(--card));color:#0b0f17;border:0;outline:0;border-radius:9px;
   padding:3px 3px 4px;min-height:88px;gap:2px;opacity:1}
 .cal.ext .dbox:hover{background:var(--mt,var(--card));filter:brightness(1.05)}
-.cal.ext .dbox.mt-guardia{box-shadow:inset 0 0 0 2px #e5383b}
+.cal.ext .dbox.mt-guardia{--sg:inset 0 0 0 2px #e5383b}
 .cal.ext .dbox.mt-saliente{color:#e9f2ff}
 .cal.ext .dbox .dtop{gap:0}
 .cal.ext .dbox .dnum{font-size:24px;line-height:1;font-weight:900;letter-spacing:-.03em;color:inherit}
@@ -3712,8 +3712,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 /* la hora del evento, en oscuro para que se lea sobre la chapa blanca; su color va en el borde de la chapa */
 .cal.ext .dbox .dev b,.cal.ext .dbox .dev .dh{color:#0b0f17!important}
 .cal.ext .dbox .dsl,.cal.ext .dbox .dgasto{color:inherit;opacity:.8}
-.cal.ext .dbox.today{box-shadow:0 0 0 3px var(--ink),0 0 0 5px var(--bg);z-index:1}
-.cal.ext .dbox.mt-guardia.today{box-shadow:inset 0 0 0 2px #e5383b,0 0 0 3px var(--ink),0 0 0 5px var(--bg)}
+.cal.ext .dbox.today{--shoy:0 0 0 3px var(--ink),0 0 0 5px var(--bg);z-index:1}
 .cal.ext .dbox.sel{outline:3px solid var(--brand2);outline-offset:1px}
 .cal.ext .dbox.fuera{opacity:.45;background:var(--mt,var(--card))}
 .mleyenda .mlc{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--mt)}
@@ -3748,6 +3747,9 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .mgfila:first-of-type{border-top:0}
 .mgfila b{min-width:56px}.mgfila span{flex:1}.mgfila i{font-style:normal;font-size:12.5px;color:var(--ink2)}
 .mgfila.ok i{color:var(--ok)}
-/* la raya del mes: arriba de cada casilla, el color de su mes (--mes), con un filo oscuro para que se vea sobre cualquier tipo de día */
-.cal.ext .dbox::before{content:'';position:absolute;left:5px;right:5px;top:2px;height:5px;border-radius:3px;background:var(--mes,transparent);box-shadow:0 0 0 1px rgba(0,0,0,.35);pointer-events:none}
-.cal.ext .dbox .dtop{margin-top:4px}
+/* LA FRONTERA ENTRE MESES: el primer día de cada mes y los que tienen encima otro mes pintan, con su sombra, el hueco
+   de su izquierda o de arriba (la sombra de la casilla no la recorta su overflow); juntas hacen la escalera. Las
+   sombras de la guardia (borde rojo) y de hoy (anillo) van en variables para poder sumarse */
+.cal.ext .dbox{box-shadow:var(--sg,0 0 #0000),var(--shoy,0 0 #0000),var(--sfl,0 0 #0000),var(--sft,0 0 #0000)}
+.cal.ext .dbox.frl{--sfl:-4px 0 0 1px var(--warn)}
+.cal.ext .dbox.frt{--sft:0 -4px 0 1px var(--warn)}

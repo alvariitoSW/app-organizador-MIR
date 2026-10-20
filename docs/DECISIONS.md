@@ -1219,15 +1219,16 @@ la lista (de momento basta con enseñarla).
 **Supuestos.** El botón se queda como lo dejes mientras la app está abierta; al volver a abrirla, empieza en la semana
 de hoy. «Hecha» es una guardia de un día anterior a hoy, como en el abono.
 
-## Mes: la raya del color del mes (2026-10-20)
+## Mes: la frontera entre meses (2026-10-20)
 
-**Elegido.** En cada casilla del Mes, arriba, una raya del color de su mes (12 colores, uno por mes, con un filo
-oscuro para que se vea sobre cualquier tipo de día). Así los días de septiembre o noviembre que salen junto a octubre se
-distinguen de un vistazo, y no solo por el «1 nov». La leyenda («?») lo dice. Prueba encadenada 326 (ver del 1 → días de
-dos meses → › al mes siguiente). Sin la raya caen sus 2 comprobaciones.
+**Elegido.** Una línea amarilla en escalera que dibuja la frontera entre meses en la cuadrícula del Mes: a la izquierda
+del día 1 (si no cae en lunes) y encima de los días que tienen arriba el mes anterior. Así se ve de un vistazo dónde
+acaba septiembre, octubre o noviembre. El color de cada casilla sigue siendo el tipo de día. La leyenda («?») lo dice.
+Se pinta en el hueco entre casillas (con su sombra), y la sombra de la guardia y la de hoy van en variables para poder
+sumarse. Prueba encadenada 326 (ver del 1 → frontera de los dos meses → › al mes siguiente). Sin la línea caen sus 2
+comprobaciones.
 
-**Descartado.** Pintar el fondo según el mes (el fondo ya es el tipo de día). Una raya gruesa entre meses (en la
-cuadrícula el cambio de mes cae a mitad de fila y quedaría en escalera).
+**Descartado.** Una raya de color por mes arriba de cada casilla (la primera versión: no era lo que pedías, que era la
+frontera). Blanco para la línea: se confundía con el anillo de «hoy».
 
-**Supuestos.** La raya va arriba de la casilla, de 5 px. Los colores son fijos por mes (octubre azul, noviembre verde
-lima, septiembre morado…), no elegibles.
+**Supuestos.** Amarillo (el color de aviso de la app), 4 px. Vale en todos los meses, no solo en el actual.
