@@ -99,7 +99,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 ## Para recordarte
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
-- [rec-2026-10-23-leanrea] Guardar el repositorio https://github.com/aicodeking/leanrea (lo pediste para más adelante; sin mirar aún qué es) · 2026-10-23
+- ~~[rec-2026-10-23-leanrea]~~ HECHO 2026-10-23 · Repositorio https://github.com/aicodeking/leanrea guardado e instalado como skill `/ingenieria-reversa` (`.claude/skills/ingenieria-reversa/`, commit 09ba4aa del original, MIT)
 
 ## Supuestos sin confirmar
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
