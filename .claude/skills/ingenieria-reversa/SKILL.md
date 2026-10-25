@@ -5,7 +5,7 @@ description: Reverse engineer shipped software with plain local CLI tools, no MC
 
 # leanrea: fast path
 
-<!-- Copia de https://github.com/aicodeking/leanrea (commit 09ba4aa, licencia MIT: ver LICENSE), instalada el 2026-10-23 con el nombre «ingenieria-reversa». Solo cambian el nombre y la línea en español de la descripción. -->
+<!-- Copia de https://github.com/aicodeking/leanrea (commit 09ba4aa, licencia MIT: ver LICENSE), instalada el 2026-10-23 con el nombre «ingenieria-reversa». Cambian el nombre, la línea en español de la descripción y la sección «En este contenedor» del final (añadida el 2026-10-25); el resto es el original. -->
 
 You already know these tools. This file only lists the fastest command for each target, and the traps.
 
@@ -66,3 +66,18 @@ Go: `go version -m T` alone usually answers the question.
 
 ## Install (only on request)
 `brew install jadx apktool radare2 binwalk wabt wireshark ghidra` · `npm i -g @electron/asar` · `dotnet tool install -g ilspycmd` · `cargo install cargo-audit`.
+
+## En este contenedor (Linux en la nube) · añadido
+La guía de arriba es de Mac. Aquí (Ubuntu, sin `brew`) se ha comprobado esto:
+- **Hay:** `file`, `rg`, `jq`, `strings`, `od`, `readelf`, `objdump`, `nm`, LLVM 18 (`llvm-objdump`, `llvm-nm`, `llvm-readobj`, `llvm-strings`, `llvm-cxxfilt`), `node`/`npx` (`npx -y @electron/asar` funciona), `go`, `python3` (con `sqlite3`) y Chromium en `/opt/pw-browsers/chromium` con Playwright en `node_modules/` del proyecto.
+- **No hay:** `otool`, `lipo`, `codesign`, `plutil`, `xcrun`, `sqlite3` (la orden), `tshark`, `binwalk`, `jadx`, `apktool`, `r2`, WABT ni Ghidra. Instalar (`apt-get`, `pip3`) solo si el usuario lo permite.
+- **`$TMPDIR` está vacío:** extrae en la carpeta temporal de la sesión (scratchpad) o en `/tmp/re/<nombre>`.
+- **Equivalencias:**
+  - Bytes mágicos: `head -c 16 T | od -An -tx1`.
+  - Mach-O (de un `.app` que te pasen): `llvm-objdump --macho --universal-headers T` (en vez de `lipo -info`); `llvm-objdump --macho --dylibs-used T` (`otool -L`); `llvm-objdump --macho --exports-trie --bind T` (`dyld_info -exports -imports`); `llvm-nm -gU T` / `llvm-nm -u T`; `llvm-objdump --macho -d --no-show-raw-insn T > $D/dis.txt` (`otool -tV`); `llvm-objdump --macho --private-headers T | rg -A3 'LC_(RPATH|BUILD_VERSION)'`; `llvm-objdump --macho --objc-meta-data T`. Las firmas y permisos (`codesign`) no se pueden leer aquí: márcalo como **desconocido**.
+  - ELF: la fila «ELF / PE» funciona tal cual (`readelf -dW`, `nm -D --defined-only`, `objdump -d --no-show-raw-insn -C`).
+  - SQLite sin la orden: `python3 -c "import sqlite3,sys;c=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True);print(c.execute('select name,sql from sqlite_master').fetchall())" C`; luego `select * from t limit 20` igual.
+  - plist: `python3 -c "import plistlib,sys,pprint;pprint.pprint(plistlib.load(open(sys.argv[1],'rb')))" Info.plist`.
+- **La red solo deja salir a algunos sitios** (npm y GitHub sí; webs normales no). Si `curl` dice `CONNECT tunnel failed, response 403` o Chromium `ERR_TUNNEL_CONNECTION_FAILED`, no es la web: es la red del entorno. No insistas: pide al usuario el archivo (la app, el `.apk`, el HAR guardado desde su navegador) o que permita ese dominio en la red del entorno.
+- **Responde en español:** cada afirmación, **visto** (archivo:posición, símbolo o texto), **deducido** o **desconocido**.
+- **Lo que se extrae se queda en la carpeta temporal:** nunca al repositorio. Nada de datos personales del usuario (ver `CLAUDE.md`).
