@@ -173,3 +173,8 @@ OFF/USDA las pega el usuario (una muestra pesa poco: barato).
 - [run-39378000493] 2026-10-20 · despliegue de main (28e97b3, plan de vuelta de Entreno) · success; sellado (version.json con 28d85cb, posterior al último código 2ac63d3) · ok
 - [enc-plan-vuelta] 2026-10-20 · Entreno: «Tu vuelta al gimnasio» tras 2+ semanas parado (prueba 323) · hecha y desplegada
 - [rama-28e97b3] 2026-10-20 · main y rama iguales; 0 issues/PR; DECISIONS 1176 líneas · ok
+- [main-12-nuevos] 2026-10-26 · main sumó 12 commits desde 28e97b3: Mes (raya y frontera entre meses), suite completa en 5 min y «modo ordenador» · hecha y desplegada
+- [run-39489124341] 2026-10-26 · despliegue de main (bfa711c, «modo ordenador») · success; main sellado (version.json 18a4f04 = último código) · ok
+- [rama-beaad8a] 2026-10-26 · rama 6 commits por delante de main: skills /ingenieria-reversa (leanrea) y revisa-seguridad + enc-comida-ri + traspaso; son herramientas, no van a Pages · ok
+- [issues-0] 2026-10-26 · 0 issues/PR · ok
+- [parte-comer-2026-10-26] 2026-10-26 · parte enfocado en Comer (sesión nueva): enc-comida-ri abierto para esta sesión; supuestos nutri (17-10) y plan (19-10) sin cerrar; aparcados v3-comer-perdido, v3-cantidades, v3-boceto-semana, v3-antojos y aparc-comida-entreno · contado; salud sin pasar (verificador no cargado en esta sesión)
