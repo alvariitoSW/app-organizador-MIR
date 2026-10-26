@@ -2632,19 +2632,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       etiquetas.hay && /🚨/.test(etiquetas.texto) && /UMI/.test(etiquetas.texto) && etiquetas.alto < 20,
       JSON.stringify(etiquetas));
 
-    // se deja el mes como estaba antes de este aprieto: la prueba siguiente cuenta con esos dos
+    // se deja el mes como estaba antes de este aprieto: la prueba siguiente cuenta con esos dos.
+    // Los eventos van en días VISIBLES del mes (el Mes arranca en la semana de hoy y oculta lo ya
+    // pasado): con días fijos (9 y 25) la prueba caía según la fecha de hoy (p. ej. el 26, ambos quedaban
+    // detrás y no se podían tocar). Se leen las casillas pintadas y se usa una de ellas.
     await page.evaluate(() => {
-      const y = new Date().getFullYear(), m = new Date().getMonth();
-      const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      const ev = window.PG.eventosS();
+      const P = window.PG;
+      const vis = [...document.querySelectorAll('.dbox')].filter((x) => x.dataset.key).map((x) => x.dataset.key);
+      const d1 = vis[Math.min(1, vis.length - 1)] || P.iso(new Date());
+      const d2 = vis[Math.min(8, vis.length - 1)] || d1;
+      const ev = P.eventosS();
       ev.length = 0;
-      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: iso(new Date(y, m, 9)), color: '#a855f7', dow: [], on: true });
-      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: iso(new Date(y, m, 25)), color: '#38e1ff', dow: [], on: true });
-      window.PG.store.notasDia = {};
-      window.PG.store.notas.length = 0;
-      window.PG.store.rotation.daySet = {};
-      window.PG.save();
-      window.PG.render();
+      ev.push({ id: 'ev-a', titulo: 'Sesión clínica', hora: '08:00', modo: 'fecha', fecha: d1, color: '#a855f7', dow: [], on: true });
+      ev.push({ id: 'ev-b', titulo: 'Congreso SEMES', hora: '09:00', modo: 'fecha', fecha: d2, color: '#38e1ff', dow: [], on: true });
+      P.store.notasDia = {};
+      P.store.notas.length = 0;
+      P.store.rotation.daySet = {};
+      P.save();
+      P.render();
     });
     await page.waitForTimeout(300);
 
@@ -10499,6 +10504,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // de verdad sobre una captura dibujada, el lector de texto con tres bancos y lo gastado con dos capturas.
   {
     const r = {};
+    // esta prueba es una «foto» financiera: recibos hasta la nómina, mes cerrado y gasto se miden contra la
+    // fecha de hoy. Para que no caiga según el día real (p. ej. la víspera de la nómina, el recibo de mañana
+    // coincide con el cobro y no cuenta), se congela «hoy» al día 15 del mes en curso durante todo el bloque
+    // y se restaura al final (mismo patrón que la prueba 69).
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const frozen = new Orig(n.getFullYear(), n.getMonth(), 15, 12, 0, 0).getTime();
+      window.__origDate263 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
     r.ini = await page.evaluate(() => { const P = window.PG, s = P.store, h = new Date(), mañana = P.addDays(h, 1);
       window.__copia263 = JSON.parse(JSON.stringify(s));
       const mk = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
@@ -10577,7 +10589,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (inp) { await inp.setInputFiles({ name: 'banco.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
       try { await page.waitForFunction(() => window.PG.ui.bk && window.PG.ui.bk.estado !== 'leyendo', null, { timeout: 120000 }); } catch (e) { /* abajo */ } }
     r.ocr = await page.evaluate(() => { const B = window.PG.ui.bk || {}; return { estado: B.estado, msg: B.msg, c: (B.cuentas || []).map((c) => c.num + ':' + c.v + ':' + c.rol) }; });
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia263; P.save(); P.ui.bk = null; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.ajuVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; if (window.__origDate263) { window.Date = window.__origDate263; delete window.__origDate263; } P.store = window.__copia263; P.save(); P.ui.bk = null; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.ajuVista = ''; P.ui.tab = 'hoy'; P.render(); });
     const Hq = r.hoy;
     check('Dinero sin banco estima lo del día con tu nómina y tus recibos, pide una captura y no pide apuntar gastos',
       r.ini.estima && r.ini.pide && !r.ini.apunta, JSON.stringify(r.ini));
