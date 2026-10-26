@@ -178,3 +178,4 @@ OFF/USDA las pega el usuario (una muestra pesa poco: barato).
 - [rama-beaad8a] 2026-10-26 · rama 6 commits por delante de main: skills /ingenieria-reversa (leanrea) y revisa-seguridad + enc-comida-ri + traspaso; son herramientas, no van a Pages · ok
 - [issues-0] 2026-10-26 · 0 issues/PR · ok
 - [parte-comer-2026-10-26] 2026-10-26 · parte enfocado en Comer (sesión nueva): enc-comida-ri abierto para esta sesión; supuestos nutri (17-10) y plan (19-10) sin cerrar; aparcados v3-comer-perdido, v3-cantidades, v3-boceto-semana, v3-antojos y aparc-comida-entreno · contado; salud sin pasar (verificador no cargado en esta sesión)
+- [parte-comer-2026-10-26b] 2026-10-26 · segundo parte de Comer: sin cambios desde el anterior (main bfa711c sellado y success; rama a4e52bf, 7 por delante, solo .claude/tools/docs; 0 issues); no se repiten los abiertos de Comer · ok
