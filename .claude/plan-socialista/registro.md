@@ -96,6 +96,31 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
 - [aparc-parte-diario] Programar el parte para que salga solo cada mañana (falta decidir la hora) · desde 2026-10-14
 
+### Comida: ingeniería inversa para mejorar SOLO ese apartado  ·  [enc-comida-ri]  (pedido el 2026-10-26)
+
+Usar la skill `/ingenieria-reversa` para estudiar fuentes de alimentación y mejorar **únicamente** la parte de
+Comer. Pediste prepararlo en una sesión nueva con el coste que supondría.
+
+**Qué se estudia (y nada más):**
+- Una **respuesta real** de Open Food Facts y de USDA (campos que hoy no se usan: nutriscore_grade, nova_group,
+  additives_tags, micros de `nutriments`, `serving_size`, `quantity`).
+- El worker de recetas (`*.workers.dev`), su forma.
+- 1–2 **repos abiertos** de apps de nutrición en GitHub: cómo modelan alimento, ración y el orden del buscador
+  (aprender el patrón, no copiar código; respetar su licencia).
+
+**Límites (no negociables):**
+- Solo Comer. No se toca Entreno, Dinero, Sueño, Hábitos ni Notificaciones en este encargo.
+- Ningún dato del usuario sale del móvil: se estudian las APIs/formatos/repos, nunca tu registro de comida.
+- Solo APIs públicas dentro de su ToS, datos abiertos y archivos tuyos. Nada de atacar ni saltarse nada.
+- Cada mejora, con su maqueta si cambia lo que ves (redisena-seccion), su prueba encadenada y la suite en verde.
+
+**Coste estimado (gasto):** una sola sesión enfocada, ~150–250k tokens de trabajo. Referencia dura: el propio
+benchmark de leanrea (~2,17 $ por 4 tareas de ingeniería inversa completas en Sonnet). Aquí son 3–4 fuentes más
+ligeras y con muestras pegadas, así que: **del orden de 0,5–2 € en Sonnet, bastante más en Opus**, como
+estimación, no presupuesto. Lo que más sube el coste es leer un repo de GitHub grande: acotar a 1–2 y a los
+archivos del buscador/modelo de alimento. La red de aquí solo llega a npm y GitHub, así que las respuestas de
+OFF/USDA las pega el usuario (una muestra pesa poco: barato).
+
 ## Para recordarte
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
