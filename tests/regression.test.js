@@ -13109,6 +13109,33 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('con la ampliación, tocar un día del Mes abre ese día; al quitar el modo ordenador todo vuelve a como siempre',
       r.b.sel === r.b.k && r.c.zoom === 1 && !r.c.clase && !r.c.movil && err327.length === 0, JSON.stringify({ r, err327 }));
   }
+  // 328) EL BUSCADOR DE OPEN FOOD FACTS, REORDENADO POR POPULARIDAD, EN CADENA: OFF devuelve primero por
+  // relevancia, lo que entierra productos muy usados bajo fichas casi vacías o duplicadas. (a) Se escribe
+  // un término en el buscador y (b) se pulsa «🌐 buscar en Open Food Facts»: el producto popular
+  // (popularity_key alto) sube por encima del que OFF puso primero pero casi nadie usa. Sin el reordenado
+  // (offOrdena) saldrían en el orden crudo de OFF y el popular quedaría debajo. Se comprueba además que la
+  // consulta pide popularity_key. No toca el «Hacendado primero», que lo da la doble consulta.
+  {
+    const r = {};
+    const resp = { products: [
+      { code: '3280328000111', product_name: 'Yogur natural marca rara', brands: 'DesconocidaX', quantity: '125 g', nutriments: { 'energy-kcal_100g': 60, proteins_100g: 4 } },
+      { code: '3280328000222', product_name: 'Yogur natural popular', brands: 'Hacendado', quantity: '500 g', nutriments: { 'energy-kcal_100g': 59, proteins_100g: 4.2 }, popularity_key: 9000000 } ] };
+    let pidioPop = false;
+    await page.route('https://world.openfoodfacts.org/**', (route) => {
+      if (/popularity_key/.test(route.request().url())) pidioPop = true;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) }); });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia328', JSON.stringify(P.store)); P.ui.off = null; P.ui.offCache = {}; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.save(); });
+    await gotoFood('add');
+    await page.fill('#fbQ', 'yogur natural'); await page.waitForTimeout(150);
+    // la red no se gasta sola: hay que pulsar «🌐 buscar en Open Food Facts»
+    await page.click('[data-a="off-buscar"]'); await page.waitForTimeout(500);
+    r.orden = await page.evaluate(() => ((window.PG.ui.off && window.PG.ui.off.list) || []).map((p) => p.nombre));
+    r.pidioPop = pidioPop;
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia328')); localStorage.removeItem('__copia328'); P.ui.off = null; P.ui.offCache = {}; P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('el buscador de Open Food Facts pone el producto más usado por encima del que OFF devuelve primero pero casi nadie usa, y pide popularity_key',
+      r.orden[0] === 'Yogur natural popular' && r.orden.indexOf('Yogur natural marca rara') > 0 && r.pidioPop, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

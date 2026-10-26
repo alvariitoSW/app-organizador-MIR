@@ -1294,3 +1294,27 @@ en esta sesión (el estudio no construye nada).
 Los dos repos quedaron clonados fuera del repositorio (`/home/user/...`), no se suben y se borran al cerrar. Las mejoras
 concretas que salgan (ver registro, [enc-comida-ri]) irán cada una en su sesión, con maqueta si cambian lo que se ve,
 prueba encadenada, suite en verde y sello antes de main.
+
+## Comer: el buscador de Open Food Facts, ordenado por popularidad (2026-10-26)
+
+Primera mejora del estudio [enc-comida-ri] (la «C»). Open Food Facts devolvía los resultados solo por relevancia del
+endpoint clásico (`/cgi/search.pl`), que es flojo: entierra productos muy usados y bien cuidados bajo fichas casi vacías
+o duplicadas. Lección de las apps abiertas estudiadas (OpenNutriTracker): pedir un pool mayor y reordenar fusionando
+relevancia con `popularity_key` (cuánto se escanea un producto).
+
+**Elegido.** `buscarOffNombre` ahora pide 50 candidatos (antes 16) y el campo `popularity_key`, y los reordena con
+`offOrdena`: puntuación = rango de relevancia + rango de popularidad (menor, mejor); al empatar gana el más popular, y
+si aún empatan, el orden original. Así un producto muy usado sube aunque OFF no lo pusiera primero, sin que un producto
+popular pero poco relevante arrase (ambas señales pesan igual). Una ficha nueva sin `popularity_key` cuenta como poco
+popular y baja. Cambio localizado: **no toca** el «Hacendado primero», que lo sigue dando la doble consulta de
+`offBuscarEnVivo` (primero con filtro de marca, luego el resto); `offOrdena` solo ordena dentro de cada consulta.
+Prueba encadenada 328 (escribir en el buscador → pulsar «buscar en Open Food Facts» con OFF fingido: el popular sube).
+Cae solo ella al revertir el reordenado.
+
+**Descartado.** Ordenar solo por popularidad (un producto popular pero que no es lo que buscas arrasaría). Mover la
+búsqueda de texto a Search-a-licious (lo que hace OFF hoy): es más cambio del que pide esta mejora; se deja anotado
+como posible siguiente paso. Tocar `mapOffProduct` (el reordenado va sobre el crudo, antes de mapear).
+
+**Supuestos.** El endpoint clásico devuelve `popularity_key` cuando se pide en `fields`; si no llega (ficha sin él),
+cuenta como 0 y el orden queda como la relevancia de OFF (sin empeorar nada). No desplegado a main en esta sesión: la
+suite tiene 2 rojos ajenos sensibles a la fecha (Mes y Dinero, víspera de nómina) y a main solo se pasa con todo verde.

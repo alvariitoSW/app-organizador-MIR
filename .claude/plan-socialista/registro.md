@@ -91,6 +91,11 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
   proteicas hechas en casa solo con microondas, con pocas calorías pero buenas. Hoy hay un tope semanal de chocolate
   con un «kit para cambiarlo» del nutricionista: ampliarlo con recetas de verdad
 
+- [aparc-pruebas-fecha] **2 pruebas en rojo sensibles a la fecha** (vistas por la salud el 2026-10-26, víspera de
+  nómina/alquiler del 27): «tocar un evento abre su día» (Mes, `monSel` vacío) y «te queda = saldo − recibos…» (Dinero:
+  da el alquiler de mañana como «ya descontado»). No son del encargo de Comer. El usuario pidió verlas en sesión aparte
+  (Dinero y Mes) · desde 2026-10-26
+
 ### A futuro (sin fecha)
 
 - [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
@@ -128,8 +133,9 @@ llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estu
 - (A) **Micros de OFF/USDA en la ficha**: pedir y mostrar vitaminas/minerales. OJO: convertir g→mg/µg o se guardan mal.
 - (B) **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
   / por ración». Enlaza con [v3-cantidades].
-- (C) **Buscador mejor**: reordenar por relevancia + `popularity_key` en vez de solo «Mercadona primero» (app.js:4601).
-  Enlaza con [v3-comer-perdido].
+- ~~(C) **Buscador mejor**~~: HECHA EN RAMA (2026-10-26), SIN DESPLEGAR. `offOrdena` reordena OFF por relevancia +
+  `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
+  «Comer: el buscador… ordenado por popularidad». No pasó a main: 2 rojos de fecha ajenos (ver abajo). Enlaza con [v3-comer-perdido].
 - (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
 Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
 

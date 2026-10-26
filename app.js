@@ -4626,6 +4626,19 @@ function offAutoProgramar(){
   if(t.length<3||(ui.foodTab||'')!==''||navigator.onLine===false)return;
   if(((_buscarQ===t&&_buscarR)||foodBuscar(t,'')).length>=3)return;
   _offAuto=setTimeout(function(){if(String(ui.foodBusca||'').trim()===t)offBuscarEnVivo(t);},900);}
+function offOrdena(prods){
+  /* Reordena los resultados de Open Food Facts fusionando dos señales: lo que OFF cree más relevante
+     (el orden en que llegan) y lo más popular (popularity_key, cuánto se escanea el producto). Lo
+     aprendí de apps abiertas de nutrición: el orden de relevancia a secas entierra productos populares
+     y bien cuidados bajo fichas casi vacías o duplicadas. Una ficha nueva sin popularity_key cuenta
+     como poco popular y baja. NO toca el «Hacendado primero»: eso lo da la doble consulta de
+     offBuscarEnVivo (primero con filtro de marca, luego el resto), aquí solo se ordena dentro de cada una. */
+  const a=(prods||[]).map(function(p,i){return {p:p,i:i,pk:parseFloat(p&&p.popularity_key)||0,pr:0};});
+  a.slice().sort(function(x,y){return y.pk-x.pk||x.i-y.i;}).forEach(function(o,r){o.pr=r;});   /* rango por popularidad */
+  /* puntuación = rango de relevancia + rango de popularidad (menor es mejor); si empatan, gana el más
+     popular, y si aún empatan, el orden original. Así un producto muy usado sube aunque OFF no lo pusiera
+     primero, sin dejar que un producto popular pero poco relevante arrase (ambas señales pesan igual). */
+  return a.slice().sort(function(x,y){return (x.i+x.pr)-(y.i+y.pr)||(x.pr-y.pr)||(x.i-y.i);}).map(function(o){return o.p;});}
 function buscarOffNombre(txt,marca){
   /* búsqueda por nombre en Open Food Facts; con "marca" (p. ej. "mercadona") se filtra a esa marca
      -sus propias etiquetas Hacendado, Deliplus, etc. van con el nombre "Mercadona" en Open Food Facts-,
@@ -4634,13 +4647,14 @@ function buscarOffNombre(txt,marca){
   if(t.length<3)return Promise.resolve({ok:false,msg:'escribe al menos 3 letras del producto'});
   if(typeof fetch!=='function')return Promise.resolve({ok:false,msg:'este navegador no sale a la red'});
   const filtroMarca=marca?('&tagtype_0=brands&tag_contains_0=contains&tag_0='+encodeURIComponent(marca)):'';
+  /* se pide un pool mayor (50) y popularity_key para poder reordenar bien antes de recortar a 10 */
   const url=offUrl('cgi/search.pl?search_terms='+encodeURIComponent(t)+
-    '&search_simple=1&action=process&json=1&page_size=16&fields='+OFF_CAMPOS+filtroMarca);
+    '&search_simple=1&action=process&json=1&page_size=50&fields='+OFF_CAMPOS+',popularity_key'+filtroMarca);
   /* con tope de 8 s y cancelable: en el hospital la red cuelga y la búsqueda vieja seguía viva */
   const ac=typeof AbortController==='function'?new AbortController():null;
   if(ac){_offAbort=ac;setTimeout(function(){try{ac.abort();}catch(e){}},8000);}
   return fetch(url,ac?{signal:ac.signal}:undefined).then(function(r){return r.json();})
-    .then(function(j){const list=((j&&j.products)||[]).map(mapOffProduct).filter(Boolean).slice(0,10);
+    .then(function(j){const list=offOrdena((j&&j.products)||[]).map(mapOffProduct).filter(Boolean).slice(0,10);
       return {ok:list.length>0,list:list,
         msg:list.length?(list.length+' producto(s) para «'+t+'»'+(marca?' en '+marca:'')):
           'nada por ahí con «'+t+'»'+(marca?' en '+marca+(': prueba a quitar el filtro de marca o'):':')+' prueba con el código de barras'};})
