@@ -121,6 +121,18 @@ estimación, no presupuesto. Lo que más sube el coste es leer un repo de GitHub
 archivos del buscador/modelo de alimento. La red de aquí solo llega a npm y GitHub, así que las respuestas de
 OFF/USDA las pega el usuario (una muestra pesa poco: barato).
 
+**Estudio HECHO (2026-10-26, en Opus, visto bueno del usuario a las 4 fuentes).** Ver DECISIONS «Comer: estudio de
+fuentes… (2026-10-26)». Evidencia vista: repos (OpenNutriTracker GPLv3, FitBook MIT; patrón, sin copiar) y el worker
+propio (`tools/worker-recetas.js`). OFF y USDA: por documentación + el propio código (sin muestra en vivo; la red no
+llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estudio (cada una en su sesión):**
+- (A) **Micros de OFF/USDA en la ficha**: pedir y mostrar vitaminas/minerales. OJO: convertir g→mg/µg o se guardan mal.
+- (B) **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
+  / por ración». Enlaza con [v3-cantidades].
+- (C) **Buscador mejor**: reordenar por relevancia + `popularity_key` en vez de solo «Mercadona primero» (app.js:4601).
+  Enlaza con [v3-comer-perdido].
+- (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
+Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
+
 ## Para recordarte
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->

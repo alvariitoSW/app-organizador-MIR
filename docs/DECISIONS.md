@@ -1263,3 +1263,34 @@ instrucciones (no arregla nada si no encuentras el menú).
 
 **Supuestos.** Un ordenador de verdad (pantalla ancha) o una tableta (más de 600 px) no se toca. Si amplías con dos
 dedos, la app no lo confunde con el modo ordenador (se mira la pantalla, no el zoom).
+
+## Comer: estudio de fuentes de alimentación con ingeniería inversa (2026-10-26)
+
+Encargo [enc-comida-ri]. Solo estudio (ni una línea de `app.js`): entender bien las fuentes que ya usa Comer para
+proponer mejoras después, cada una en su sesión con maqueta y prueba. Con el visto bueno del usuario (4 fuentes, en
+Opus). La red del contenedor solo llega a npm y GitHub, así que OFF/USDA no se pudieron pedir en vivo.
+
+**Elegido.** Estudiar cuatro fuentes y quedarnos con estos patrones:
+- **Repos abiertos** (fuente con evidencia vista): `simonoppowa/OpenNutriTracker` (GPLv3) y `brandonp2412/FitBook`
+  (MIT), ambos usan OFF + USDA FDC. Solo se aprendió el patrón, sin copiar código. Lecciones: (a) el buscador de texto
+  de OFF moderno es Search-a-licious (`search.openfoodfacts.org/search`), con `/cgi/search.pl` de reserva, y el código
+  de barras rehidrata desde `api/v2/product`; (b) conviene pedir ~100 candidatos y reordenar fusionando relevancia con
+  `popularity_key`, no quedarse con el orden crudo; (c) **los micros de OFF llegan en gramos**: los minerales hay que
+  pasarlos ×1000 (mg) y las vitaminas A/D/B12 ×1.000.000 (µg), o se guardan ridículamente pequeños; (d) modelo de
+  ración = base por 100 g + lista de porciones (de FDC `foodPortions`: descripción + gramaje), con conmutador «por
+  100 g / por ración».
+- **Worker de recetas** (evidencia vista, `tools/worker-recetas.js`): es del usuario, lista blanca de sitios (no es
+  proxy abierto), oEmbed con reserva `og:description`, devuelve `{texto, autor, via}` en crudo; el troceado lo hace la app.
+- **OFF y USDA** (sabido por documentación + el propio código de la app, sin muestra en vivo): se documentó la forma de
+  los campos que hoy no se usan (`nutriscore_grade`, `nova_group`, `additives_tags`, micros de `nutriments`,
+  `serving_size`/`serving_quantity`, `quantity`; en USDA `foodNutrients`, `servingSize`/`servingSizeUnit`, `foodPortions`).
+
+**Descartado.** Ingeniería inversa de apps propietarias de terceros (MyFitnessPal y similares): descompilar, interceptar
+su API privada o copiar su base — lo prohíbe el disclaimer de la propia skill y choca con la privacidad de esta app.
+Instalar el toolkit MCP `morluto/rea` (necesita Ghidra/IDA y no funciona en este contenedor). Tocar algo de `app.js`
+en esta sesión (el estudio no construye nada).
+
+**Supuestos.** Ningún dato del usuario entró en el estudio: solo formatos públicos, código abierto y el worker propio.
+Los dos repos quedaron clonados fuera del repositorio (`/home/user/...`), no se suben y se borran al cerrar. Las mejoras
+concretas que salgan (ver registro, [enc-comida-ri]) irán cada una en su sesión, con maqueta si cambian lo que se ve,
+prueba encadenada, suite en verde y sello antes de main.
