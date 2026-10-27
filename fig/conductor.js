@@ -276,7 +276,7 @@
   <g data-o="radio"><rect class="cd-tkb" x="440" y="632" width="142" height="92" rx="12"/><rect class="cd-rdisp" x="452" y="644" width="118" height="32" rx="5"/>
     <text class="cd-rt" x="511" y="659">📻 RADIO SUEÑO</text><text data-r="rdl" class="cd-rl" x="511" y="671"></text>
     <circle class="cd-knob" cx="472" cy="700" r="12"/><circle class="cd-knob" cx="550" cy="700" r="12"/><rect x="490" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="502" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="514" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/><rect x="526" y="694" width="8" height="12" rx="2" fill="#1f2a3d"/>
-    <text class="cd-rh" x="511" y="740">toca para oírla</text></g>
+    <text data-r="rh" class="cd-rh" x="511" y="740">toca para oírla</text></g>
   <g data-r="busca" style="display:none"><rect class="cd-busca" x="432" y="752" width="156" height="32" rx="6"/><rect class="cd-buscap" x="440" y="758" width="124" height="20" rx="3"/>
     <text class="cd-buscat" x="445" y="766">GUARDIA</text><text data-r="buscav" class="cd-buscav" x="445" y="776"></text><circle class="cd-led" cx="576" cy="768" r="4"/></g>
   <g data-r="nota" data-o="nota" style="display:none"><path class="cd-note" d="M428 796 L588 794 L590 830 L430 833 Z"/><text data-r="notat" class="cd-notet" x="438" y="817"></text></g>
@@ -296,9 +296,9 @@
   <g data-r="manosc" style="display:none;pointer-events:none"></g>
   <rect data-r="dim" class="cd-dimmer" x="0" y="604" width="600" height="296" opacity="0"/>
   <g data-r="radiob" style="display:none"><rect data-o="radio" x="0" y="580" width="600" height="320" fill="#000" opacity=".4"/>
-    <rect class="cd-rpanel" x="26" y="608" width="548" height="284" rx="22"/><rect class="cd-rdisp" x="46" y="626" width="508" height="104" rx="10"/>
+    <rect class="cd-rpanel" x="26" y="608" width="548" height="284" rx="22"/><rect data-o="sueno" class="cd-rdisp" x="46" y="626" width="508" height="104" rx="10"/>
     <text class="cd-rtt" x="62" y="652">📻 RADIO SUEÑO · 97.5 FM</text><g data-o="sueno"><rect x="420" y="634" width="128" height="26" rx="13" class="cd-rlink"/><text class="cd-rlinkt" x="484" y="652">abrir Sueño ›</text></g>
-    <text data-r="rs1" class="cd-rs1" x="62" y="686"></text><text data-r="rs2" class="cd-rs2" x="62" y="714"></text>
+    <text data-r="rs1" data-o="sueno" class="cd-rs1" x="62" y="686"></text><text data-r="rs2" data-o="sueno" class="cd-rs2" x="62" y="714"></text>
     <g class="cd-cafe"><text data-r="rcaf" class="cd-rcaf" x="474" y="714" text-anchor="end">☕ 2</text><g data-o="cafe" data-v="-"><circle cx="498" cy="709" r="13" class="cd-cfb"/><text class="cd-cfbt" x="498" y="714">−</text></g><g data-o="cafe" data-v="+"><circle cx="532" cy="709" r="13" class="cd-cfb"/><text class="cd-cfbt" x="532" y="714">+</text></g></g>
     <text class="cd-rlab" x="46" y="748">¿CÓMO AMANECES? · los botones de emisora</text><g data-o="kss" data-v="1" class="cd-kb"><rect x="46" y="756" width="50" height="40" rx="8"/><text x="71" y="783">1</text></g><g data-o="kss" data-v="2" class="cd-kb"><rect x="103" y="756" width="50" height="40" rx="8"/><text x="128" y="783">2</text></g><g data-o="kss" data-v="3" class="cd-kb"><rect x="160" y="756" width="50" height="40" rx="8"/><text x="185" y="783">3</text></g><g data-o="kss" data-v="4" class="cd-kb"><rect x="217" y="756" width="50" height="40" rx="8"/><text x="242" y="783">4</text></g><g data-o="kss" data-v="5" class="cd-kb"><rect x="274" y="756" width="50" height="40" rx="8"/><text x="299" y="783">5</text></g><g data-o="kss" data-v="6" class="cd-kb"><rect x="331" y="756" width="50" height="40" rx="8"/><text x="356" y="783">6</text></g><g data-o="kss" data-v="7" class="cd-kb"><rect x="388" y="756" width="50" height="40" rx="8"/><text x="413" y="783">7</text></g><g data-o="kss" data-v="8" class="cd-kb"><rect x="445" y="756" width="50" height="40" rx="8"/><text x="470" y="783">8</text></g><g data-o="kss" data-v="9" class="cd-kb"><rect x="502" y="756" width="50" height="40" rx="8"/><text x="527" y="783">9</text></g>
     <text class="cd-rmini" x="46" y="814">1 muy despierto</text><text class="cd-rmini" x="554" y="814" text-anchor="end">9 me caigo</text>
@@ -729,11 +729,12 @@
     function indicadores() {
       const s = D.sueno, cab = D.cab || {}, rd = cab.radio || {}, ph = (cab.izq && cab.izq.ph) || [];
       R_.rdl.textContent = s ? "anoche " + coma(s.h) + " h" : "anoche: sin apuntar";
+      R_.rh.textContent = s ? "toca para oírla" : "toca para apuntar";
       const pend = ph.filter((x) => !x.hecho).length;
       R_.tk.textContent = pend ? "PARA HOY · " + pend : "PARA HOY ✓";
       R_.tkv.textContent = ph.length ? ph.filter((x) => x.hecho).length + " de " + ph.length + " hechas" : "nada pendiente";
       /* la radio: lo dormido, la cama y el café; los botones de emisora son el «¿cómo amaneces?» */
-      R_.rs1.textContent = s ? "Anoche dormiste " + coma(s.h) + " h de " + s.obj : "Anoche: sin apuntar · toca «abrir Sueño»";
+      R_.rs1.textContent = s ? "Anoche dormiste " + coma(s.h) + " h de " + s.obj : "Anoche: sin apuntar · toca aquí para apuntarla";
       R_.rs2.textContent = [rd.ayer != null ? "ayer " + coma(rd.ayer) + " h" : "", rd.cama ? "a la cama " + rd.cama : "", rd.cafe ? "café hasta las " + rd.cafe : ""].filter(Boolean).join(" · ");
       const cf = rd.cafes || { n: 0 };   /* los cafés de hoy (2 de serie por la mañana) y el último; en rojo si es tarde para dormir */
       R_.rcaf.textContent = "☕ " + cf.n + (cf.ultimo ? " · " + cf.ultimo : "");
@@ -1144,6 +1145,14 @@
       toca(d.el, Date.now() - d.at > 450);
     });
     svg.addEventListener("pointercancel", () => { down = null; });
+    /* LA RADIO, ENTERA A LA VISTA. Se abre sobre el salpicadero, que es lo de abajo del dibujo: sin
+       desplazar, la barra de la app tapaba media radio («está como medio escondido»). */
+    function radioALaVista() {
+      const p = svg.querySelector(".cd-rpanel"), tb = document.getElementById("tabs");
+      if (!p) return;
+      const lim = tb && tb.getClientRects().length ? tb.getBoundingClientRect().top : innerHeight, d = p.getBoundingClientRect().bottom - lim + 8;
+      if (d > 0) window.scrollBy({ top: d, behavior: still.matches ? "auto" : "smooth" });
+    }
     function toca(n, largo) {
       const o = n.getAttribute("data-o"), i = n.getAttribute("data-i"), st = estado(t);
       const item = (idx) => (D.dia || []).find((e) => String(e.i) === String(idx));
@@ -1153,7 +1162,7 @@
       /* mirar a un lado (los retrovisores y sus letreros), volver al frente; la máquina de billetes lleva al quiosco */
       if (o === "mirai" || o === "mirad" || o === "parahoy") { const q = o === "mirad" ? "der" : "izq"; radio = false; girar(lado === q && o !== "parahoy" ? null : q); draw(0); return; }
       if (o === "frente") { girar(null); draw(0); return; }
-      if (o === "radio") { radio = !radio; draw(0); return; }
+      if (o === "radio") { radio = !radio; draw(0); if (radio) radioALaVista(); return; }
       const rd = (D.cab && D.cab.radio) || {}, cab = D.cab || {};
       if (o === "cafe") return abrir({ tipo: "act", a: n.getAttribute("data-v") === "+" ? "cafe-mas" : "cafe-menos", ds: { k: rd.k || "" } });
       if (o === "kss" || o === "animo") return abrir({ tipo: "act", a: o === "kss" ? "asist-kss" : "asist-animo", ds: { k: rd.k || "", v: n.getAttribute("data-v") } });

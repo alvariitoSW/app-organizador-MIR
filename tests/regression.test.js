@@ -13148,6 +13148,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el buscador de Open Food Facts pone el producto más usado por encima del que OFF devuelve primero pero casi nadie usa, y pide popularity_key',
       r.orden[0] === 'Yogur natural popular' && r.orden.indexOf('Yogur natural marca rara') > 0 && r.pidioPop, JSON.stringify(r));
   }
+  // 329) ANOTAR EL SUEÑO DESDE LA RADIO DEL CONDUCTOR, EN CADENA, a 412×915: (a) al abrir la radio, el panel queda
+  // entero por encima de la barra de abajo; (b) tocar la línea grande «Anoche: sin apuntar…» (no la pastilla
+  // «abrir Sueño ›») abre la hoja de anotar; (c) se cambian las dos horas y se guarda: la noche queda apuntada
+  // y la pista de la radio pasa de «toca para apuntar» a «toca para oírla». Fija: la radio quedaba medio tapada
+  // por la barra y solo abría la hoja una pastilla de 81×16 px; un dedo un poco fuera no hacía nada.
+  {
+    const r = {}, vp = page.viewportSize();
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.__t329 = JSON.stringify(P.store.suenoReal[k] || null); P.__t329m = [P.ui.hoyModo, P.ui.hoyBusV]; delete P.store.suenoReal[k];
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.snHoja = ''; P.save(); P.render(); window.scrollTo(0, 0); });
+    await page.waitForFunction(() => !!document.querySelector('#main .cd g[data-o="radio"]'), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(200);
+    r.pista0 = await page.evaluate(() => (document.querySelector('#main .cd [data-r="rh"]') || {}).textContent || '');
+    const caja = (sel) => page.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, bottom: b.bottom }; }, sel);
+    let c = await caja('#main .cd g[data-o="radio"] rect.cd-tkb');
+    if (c) await page.mouse.click(c.x + c.w / 2, c.y + c.h / 2);
+    await page.waitForTimeout(400);
+    // (a) el panel, entero por encima de la barra
+    const pan = await caja('#main .cd .cd-rpanel'), tabs = await caja('#tabs');
+    r.a = { panel: pan && Math.round(pan.bottom), barra: tabs && Math.round(tabs.y) };
+    // (b) la línea grande, por su izquierda (lejos de la pastilla)
+    c = await caja('#main .cd [data-r="rs1"]');
+    if (c) await page.mouse.click(c.x + 40, c.y + c.h / 2);
+    await page.waitForTimeout(400);
+    r.b = await page.evaluate(() => ({ hoja: window.PG.ui.snHoja || '', inputs: document.querySelectorAll('input[data-a="sn-tt"]').length }));
+    // (c) las horas y guardar
+    if (r.b.inputs) {
+      await page.fill('input[data-a="sn-tt"][data-k="0"]', '23:15'); await page.dispatchEvent('input[data-a="sn-tt"][data-k="0"]', 'change'); await page.waitForTimeout(150);
+      await page.fill('input[data-a="sn-tt"][data-k="1"]', '06:45'); await page.dispatchEvent('input[data-a="sn-tt"][data-k="1"]', 'change'); await page.waitForTimeout(150);
+      await page.click('[data-a="sn-tguardar"]').catch(() => {}); await page.waitForTimeout(400);
+    }
+    r.c = await page.evaluate(() => { const P = window.PG, x = P.store.suenoReal[P.iso(new Date())] || {};
+      return { h: x.h, acostar: x.acostar, desp: x.desp, pista: (document.querySelector('#main .cd [data-r="rh"]') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), v = JSON.parse(P.__t329); if (v) P.store.suenoReal[k] = v; else delete P.store.suenoReal[k]; delete P.__t329;
+      P.ui.snHoja = ''; P.ui.hoyModo = P.__t329m[0]; P.ui.hoyBusV = P.__t329m[1]; delete P.__t329m; P.save(); P.render(); window.scrollTo(0, 0); });
+    if (vp) await page.setViewportSize(vp);
+    check('la radio del conductor se abre entera por encima de la barra, tocar «Anoche: sin apuntar» abre la hoja y las horas cambiadas se guardan',
+      r.pista0 === 'toca para apuntar' && r.a.panel != null && r.a.barra != null && r.a.panel <= r.a.barra && r.b.hoja !== '' && r.b.inputs > 0 &&
+      r.c.h === 7.5 && r.c.acostar === '23:15' && r.c.desp === '06:45' && r.c.pista === 'toca para oírla', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
