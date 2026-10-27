@@ -143,6 +143,7 @@ Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-
 Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/informe-sueno-2026-10.md`, DECISIONS «Apuntar el sueño desde la radio del conductor»).
 - [aparc-sueno-vistas] Revisar si en Estación, Reloj y Línea apuntar el sueño también está escondido · desde 2026-10-27
 - [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
+- ~~[enc-rea]~~ HECHO 2026-10-27 · REA (morluto/rea 6.8.0) instalado como servidor MCP `rea` (`.mcp.json`) + skill `reverse-engineer-anything` · main 3bce73b
 
 ## Para recordarte
 
