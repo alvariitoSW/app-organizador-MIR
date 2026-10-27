@@ -66,7 +66,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - ~~[mes-frontera]~~ HECHO y desplegado 2026-10-20 (main 008fd0d) · Línea amarilla en escalera entre meses en el Mes
 - [aparc-suite-2min] La suite ya va en ~5 min (3 trozos a la vez, 2026-10-20). Para bajar a ~2: que las 201 primeras pruebas de regression preparen sus propios datos (jornada 8–15, tipos de guardia, platos, menú, despensa) y así poder partirlas; luego, acortar esperas fijas que no sean de lectura en vivo · DECISIONS «La suite en 5 minutos»
 - ~~[aparc-auditoria-contexto]~~ HECHO 2026-10-27 (REA fuera de cada sesión, «Gasto» en el parte, salud solo si cambia main; la lista de tareas ya estaba vacía; Drive y Claude Docs se apagan en claude.ai si quieres) · Gastar menos contexto: borrar las ~196 tareas ya hechas de la lista (se reenvía entera cada pocos pasos) y, si quieres, desactivar Google Drive y Claude Docs si no los usas. Headroom descartado (no aplica a sesiones en la nube y pasa todo por un tercero). Pedido el 2026-10-20
-- ~~[v3-cantidades]~~ HECHO EN RAMA 2026-10-27, SIN DESPLEGAR (pasos 10·50·100, mantener pulsado, rueda, g/ml, ración de la etiqueta; prueba 330) · DECISIONS «Comer: la hoja de cantidad con pasos, rueda, unidad y ración de verdad (2026-10-27)» · Comer · apuntar: cantidades con pasos, rueda o mantener pulsado, cada cosa en su unidad
+- ~~[v3-cantidades]~~ HECHO y desplegado 2026-10-27 (main 3b7a617, run 40583207598) (pasos 10·50·100, mantener pulsado, rueda, g/ml, ración de la etiqueta; prueba 330) · DECISIONS «Comer: la hoja de cantidad con pasos, rueda, unidad y ración de verdad (2026-10-27)» · Comer · apuntar: cantidades con pasos, rueda o mantener pulsado, cada cosa en su unidad
 - [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
 - [v3-boceto-semana] **Plan de comidas:** montar una semana a mano como **boceto** (poner, cambiar, quitar platos),
   guardarla y que el asistente de la semana ayude sobre ese boceto
@@ -130,9 +130,9 @@ fuentes… (2026-10-26)». Evidencia vista: repos (OpenNutriTracker GPLv3, FitBo
 propio (`tools/worker-recetas.js`). OFF y USDA: por documentación + el propio código (sin muestra en vivo; la red no
 llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estudio (cada una en su sesión):**
 - (A) **Micros de OFF/USDA en la ficha**: pedir y mostrar vitaminas/minerales. OJO: convertir g→mg/µg o se guardan mal.
-- ~~(B)~~ HECHA EN RAMA 2026-10-27, SIN DESPLEGAR (con [v3-cantidades], prueba 330). **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
+- ~~(B)~~ HECHA y desplegada 2026-10-27 (3b7a617) (con [v3-cantidades], prueba 330). **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
   / por ración». Enlaza con [v3-cantidades].
-- ~~(C) **Buscador mejor**~~: HECHA EN RAMA (2026-10-26), SIN DESPLEGAR. `offOrdena` reordena OFF por relevancia +
+- ~~(C) **Buscador mejor**~~: HECHA y desplegada 2026-10-27 (3b7a617). `offOrdena` reordena OFF por relevancia +
   `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
   «Comer: el buscador… ordenado por popularidad». No pasó a main: 2 rojos de fecha ajenos (ver abajo). Enlaza con [v3-comer-perdido].
 - (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
@@ -207,3 +207,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40510302838] 2026-10-27 · despliegue de main (3bce73b, REA instalado) · success; main sellado y rama = main; 0 issues/PR · ok
 - [parte-lista-2026-10-27] 2026-10-27 · parte enfocado en hacer TODA la lista de la bitácora; propuesto orden (cantidades+ración → Nutri-Score → micros → Comer perdido → boceto → antojos → entrenador → dinero → coach → 4:20 ×2 → gmail → bienestar → continuidad → parte diario) · propuesto
 - [parte-cantidades-2026-10-27] 2026-10-27 · parte con tarea ya elegida: v3-cantidades + mejora B (ración) de enc-comida-ri; main = 3bce73b sin cambios (run 40510302838 success), rama 555c3f6 (3 commits de ahorro de tokens sin pasar a main), 0 issues; cierre con «Gasto» · ok
+- [run-40583207598] 2026-10-27 · despliegue de main (3b7a617: cantidades, ración y buscador) · success; sellado (version.json = último código); 0 issues/PR · ok
+- [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
