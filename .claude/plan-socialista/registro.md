@@ -203,3 +203,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [issues-0] 2026-10-26 · 0 issues/PR · ok
 - [parte-comer-2026-10-26] 2026-10-26 · parte enfocado en Comer (sesión nueva): enc-comida-ri abierto para esta sesión; supuestos nutri (17-10) y plan (19-10) sin cerrar; aparcados v3-comer-perdido, v3-cantidades, v3-boceto-semana, v3-antojos y aparc-comida-entreno · contado; salud sin pasar (verificador no cargado en esta sesión)
 - [parte-comer-2026-10-26b] 2026-10-26 · segundo parte de Comer: sin cambios desde el anterior (main bfa711c sellado y success; rama a4e52bf, 7 por delante, solo .claude/tools/docs; 0 issues); no se repiten los abiertos de Comer · ok
+- [run-40510302838] 2026-10-27 · despliegue de main (3bce73b, REA instalado) · success; main sellado y rama = main; 0 issues/PR · ok
+- [parte-lista-2026-10-27] 2026-10-27 · parte enfocado en hacer TODA la lista de la bitácora; propuesto orden (cantidades+ración → Nutri-Score → micros → Comer perdido → boceto → antojos → entrenador → dinero → coach → 4:20 ×2 → gmail → bienestar → continuidad → parte diario) · propuesto
