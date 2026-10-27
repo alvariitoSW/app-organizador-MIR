@@ -2380,6 +2380,28 @@ html:not(.dark) .h2,html:not(.dark) .mt,html:not(.dark) .sano,html:not(.dark) .f
 .fbchips{margin:0 0 8px}.fbchips .chipx b{color:var(--ink2);font-weight:800;margin-left:2px}
 .fbmas{display:block;width:100%;padding:10px 0 2px;border:0;background:none;color:var(--brand);font:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .hit .nm b .fbsrc{display:inline-block;font-size:9.5px;line-height:1.4;margin:0 0 0 5px;white-space:nowrap}
+/* el sello de Open Food Facts: Nutri-Score (colores oficiales), NOVA y aditivos */
+.nA{background:#038141}.nB{background:#85bb2f}.nC{background:#fecb02;color:#3a2a00!important}.nD{background:#ee8100}.nE{background:#e63e11}
+.hit .nm b .nsm,.nsm{display:inline-block;width:17px;height:19px;line-height:19px;border-radius:4px;font-size:11px;font-weight:900;color:#fff;text-align:center;margin-left:6px;vertical-align:1px}
+.sello{display:flex;gap:7px;margin-top:12px}
+.sello>div,.sello>.adi{flex:1;min-width:0;border:1px solid var(--line);border-radius:11px;padding:7px 6px 6px;background:color-mix(in srgb,var(--bg) 42%,var(--card));text-align:center;color:var(--ink);font:inherit}
+.sello>.sin{border-style:dashed}
+.sello em{display:block;font-style:normal;font-size:8.5px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.sello .ns{display:inline-flex;gap:2px;align-items:center}
+.sello .ns i{font-style:normal;width:15px;height:18px;line-height:18px;border-radius:4px;font-size:10px;font-weight:900;color:#fff;opacity:.35}
+.sello .ns i.on{width:22px;height:26px;line-height:26px;font-size:15px;opacity:1;box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--ink)}
+.sello .nova{display:inline-flex;align-items:center;gap:6px}
+.sello .nova b{flex:none;width:24px;height:26px;line-height:26px;border-radius:6px;font-size:15px;font-weight:900;color:#fff}
+.v1{background:#00aa00}.v2{background:#c9a400}.v3{background:#ff6600}.v4{background:#e00000}
+.sello .nova span{font-size:10.5px;font-weight:700;text-align:left;line-height:1.15}
+.sello .adi b{display:block;font-size:19px;font-weight:800;line-height:26px}
+.sello .adi span{display:block;font-size:10.5px;color:var(--brand);font-weight:700}
+.sello .sd{display:block;font-size:12px;font-weight:700;color:var(--ink2);line-height:26px}
+.adil{margin-top:7px;border:1px solid var(--line);border-radius:11px;background:var(--bg2);padding:4px 10px}
+.adil div{display:flex;gap:9px;padding:6px 0;border-top:1px dashed var(--line);font-size:12.5px}
+.adil div:first-child{border-top:0}
+.adil code{font:800 11.5px ui-monospace,monospace;color:var(--brand);min-width:44px}
+.trae{margin-top:12px;border:1px dashed var(--line);border-radius:11px;padding:9px;text-align:center;font-size:12px;color:var(--ink2)}
 .hit .kc .fbp{display:block}
 /* ===== menú v2: montar comidas ===== */
 .mway{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit;text-align:left;cursor:pointer}

@@ -13261,6 +13261,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.f === esperado &&
       /ración · 250 ml/.test(r.g.lab) && r.g.cant === 250, JSON.stringify(r));
   }
+  // 331) EL SELLO DE OPEN FOOD FACTS (NUTRI-SCORE · NOVA · ADITIVOS), EN CADENA: (a) un producto guardado antes
+  // (sin sello) se busca y su fila no lleva letra; (b) al abrir su ficha dice «trayendo…» y el sello se pide solo a
+  // OFF, se guarda y aparece: E, NOVA 4 y «3» aditivos; (c) tocar «3» despliega los códigos con su nombre (y el que
+  // no está en la tabla, solo el código) y otro toque lo cierra; (d) de vuelta al buscador, su fila ya lleva la «E»;
+  // (e) buscar en OFF trae la letra en la lista y la ficha sale con A, NOVA 1 y 0 aditivos; (f) el que no trae NOVA
+  // dice «sin dato». Sin el arreglo, ni se pedían los campos ni había sello en ningún sitio.
+  {
+    const r = {};
+    const EAN = '8410000000017';
+    const resp = { products: [
+      { code: '3300330000333', product_name: 'Yogur sello natural', brands: 'Hacendado', nutriscore_grade: 'a', nova_group: 1, additives_tags: [], nutriments: { 'energy-kcal_100g': 60, proteins_100g: 4 }, popularity_key: 9000000 },
+      { code: '3300330000444', product_name: 'Yogur sello fresa', brands: 'Hacendado', nutriscore_grade: 'c', additives_tags: ['en:e120'], nutriments: { 'energy-kcal_100g': 95, proteins_100g: 3 }, popularity_key: 8000000 } ] };
+    let pidioCampos = false, pidioSello = 0;
+    await page.route('https://world.openfoodfacts.org/**', async (route) => {
+      const u = route.request().url();
+      if (u.indexOf('/api/v2/product/' + EAN) >= 0) {
+        pidioSello++; await new Promise((ok) => setTimeout(ok, 300));
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ product: { code: EAN, nutriscore_grade: 'e', nova_group: 4, additives_tags: ['en:e322', 'en:e500ii', 'en:e999'] } }) }); }
+      if (/nutriscore_grade/.test(u) && /nova_group/.test(u) && /additives_tags/.test(u)) pidioCampos = true;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) }); });
+    await page.evaluate((ean) => { const P = window.PG; localStorage.setItem('__copia331', JSON.stringify(P.store));
+      P.store.food.eans[ean] = { ean: ean, nombre: 'Galletuca vieja', marca: 'Hacendado', kcal: 450, prot: 6, carb: 70, gresa: 15, fuente: 'Open Food Facts', ts: 1 };
+      P.ui.off = null; P.ui.offCache = {}; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.foodDest = ''; P.ui.selloPedido = {}; P.ui.foodAdit = ''; P.save(); }, EAN);
+    const fila = () => page.evaluate((ean) => { const b = document.querySelector('[data-a="food-abrir"][data-v="ean:' + ean + '"]');
+      return b ? ((b.querySelector('.nsm') || {}).textContent || '-') : 'sin fila'; }, EAN);
+    const sello = () => page.evaluate(() => { const n = document.getElementById('fcSello');
+      return { trae: !!(n && n.classList.contains('trae')), ns: (document.querySelector('#fcSello .ns i.on') || {}).textContent || '',
+        nova: (document.querySelector('#fcSello .nova b') || {}).textContent || '',
+        adi: (document.querySelector('#fcSello .adi b') || {}).textContent || '',
+        sd: document.querySelectorAll('#fcSello .sd').length,
+        lista: Array.prototype.map.call(document.querySelectorAll('#fcSello .adil div'), (d) => d.textContent) }; });
+    await gotoFood('add');
+    await page.fill('#fbQ', 'galletuca'); await page.waitForTimeout(250);
+    r.a = await fila();
+    await page.click(`[data-a="food-abrir"][data-v="ean:${EAN}"]`); await page.waitForTimeout(80);
+    r.b0 = await sello();
+    await page.waitForTimeout(600);
+    r.b = await sello(); r.b.guardado = await page.evaluate((ean) => { const p = window.PG.store.food.eans[ean]; return p.sello + '|' + p.ns + '|' + p.nova; }, EAN);
+    await page.click('#fcSello [data-a="food-adit"]'); await page.waitForTimeout(100);
+    r.c = await sello(); r.c.exp = await page.evaluate(() => document.querySelector('#fcSello .adi').getAttribute('aria-expanded'));
+    await page.click('#fcSello [data-a="food-adit"]'); await page.waitForTimeout(100);
+    r.c2 = (await sello()).lista.length;
+    await page.click('.subcab [data-a="food-vista"]'); await page.waitForTimeout(150);
+    await page.fill('#fbQ', 'galletuca'); await page.waitForTimeout(250);
+    r.d = await fila();
+    await page.fill('#fbQ', 'yogur'); await page.waitForTimeout(150);
+    await page.click('[data-a="off-buscar"]'); await page.waitForTimeout(500);
+    r.e0 = await page.evaluate(() => Array.prototype.map.call(document.querySelectorAll('[data-a="off-usar"] .nsm'), (b) => b.textContent).join(''));
+    const usa = async (n) => { const i = await page.evaluate((x) => ((window.PG.ui.off && window.PG.ui.off.list) || []).findIndex((p) => p.nombre === x), n);
+      await page.click(`[data-a="off-usar"][data-i="${i}"]`); await page.waitForTimeout(200); };
+    await usa('Yogur sello natural');
+    r.e = await sello();
+    await page.click('.subcab [data-a="food-vista"]'); await page.waitForTimeout(150);
+    await page.fill('#fbQ', 'yogur'); await page.waitForTimeout(250);   /* ya buscado: la lista sale de memoria */
+    await usa('Yogur sello fresa');
+    r.f = await sello();
+    r.pidioCampos = pidioCampos; r.pidioSello = pidioSello;
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia331')); localStorage.removeItem('__copia331'); P.ui.off = null; P.ui.offCache = {}; P.ui.foodBusca = ''; P.ui.foodSel = ''; P.ui.foodAdit = ''; P.ui.selloPedido = {}; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('el sello de OFF: el guardado de antes lo pide solo al abrirlo (E · NOVA 4 · 3 aditivos con nombre), su fila gana la letra, y lo buscado trae A · NOVA 1 · 0 o «sin dato»',
+      r.pidioCampos && r.a === '-' && r.b0.trae && !r.b.trae && r.b.ns === 'E' && r.b.nova === '4' && r.b.adi === '3' && r.b.guardado === '1|E|4' &&
+      r.b.lista.length === 0 && r.c.exp === 'true' && r.c.lista.join('|') === 'E322Lecitinas|E500iiCarbonatos de sodio|E999' && r.c2 === 0 &&
+      r.d === 'E' && r.pidioSello === 1 && r.e0 === 'AC' &&
+      r.e.ns === 'A' && r.e.nova === '1' && r.e.adi === '0' && r.e.sd === 0 &&
+      r.f.ns === 'C' && r.f.nova === '' && r.f.sd === 1 && r.f.adi === '1', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -1374,3 +1374,29 @@ ficha en mg; si llega una ración en mg se ignora. Los productos guardados antes
 vuelvan a traer de OFF (los que se llaman «leche…», «zumo…» ya salen en ml por el nombre). Las porciones de USDA solo
 llegan al volver a consultar un alimento. La guarda contra el click de más al soltar tras mantener es defensiva:
 Chromium no manda ese click (el botón se repinta), así que la prueba no la puede hacer caer.
+
+## Comer: el sello de Open Food Facts, Nutri-Score · NOVA · aditivos — mejora D (2026-10-27)
+
+Contexto: OFF ya daba `nutriscore_grade`, `nova_group` y `additives_tags`, pero la app no los pedía. El usuario eligió
+de una vez, al abrir la sesión: sello en la ficha y en el buscador (solo la letra), aditivos «cuántos y al tocar, la
+lista», los guardados se completan al abrir su ficha y, si falta un dato, «sin dato». Maquetas en
+`maquetas/comer-sello.html`, con visto bueno.
+
+**Elegido.** (1) `OFF_CAMPOS` pide los tres campos; `selloDe()` los pasa a `ns` (A–E), `nova` (1–4) y `adit`
+(«en:e322i» → «E322i»); `sello:1` marca que ya se preguntó. (2) En la hoja de cantidad de un producto, bajo el nombre,
+tres casillas: Nutri-Score (las cinco letras con la suya grande, colores oficiales), Procesado (NOVA con su palabra) y
+Aditivos (cuántos; si hay, es un botón que despliega código + nombre en castellano y otro toque lo cierra). Lo que OFF
+no sabe: «sin dato» con borde a rayas. (3) Un producto guardado antes, con código de barras de verdad, pide el sello a
+OFF al abrir su ficha (solo los tres campos), lo guarda y repinta solo el sello; mientras, «trayendo…»; sin red, lo dice
+y vuelve a intentarlo al abrirlo otra vez pasado un minuto. Si OFF no lo conoce (404), queda como «sin dato» y no se
+vuelve a pedir. (4) En el buscador, la letra pequeña junto al nombre en tus productos y en la lista de OFF. Prueba
+encadenada 331; cae al revertir.
+
+**Descartado.** NOVA y aditivos también en la lista del buscador (más ruido por fila). «Sin dato» en las filas del
+buscador. Pedir los nombres de los aditivos a la taxonomía de OFF (otra consulta a la red por producto). Un botón
+«Actualizar de OFF» (se eligió que se complete solo).
+
+**Supuestos.** Los nombres de los aditivos salen de una tabla de los 113 más comunes (`ADITIVOS` en `app.js`); el que
+no está sale solo con el código. Si OFF no trae `additives_tags`, es «sin dato»; si trae la lista vacía, «0». Los
+productos sin código de barras real (catálogo local sin EAN, creados a mano) salen con las tres casillas en «sin dato».
+Los alimentos de la tabla y los platos no llevan sello (no son de OFF).
