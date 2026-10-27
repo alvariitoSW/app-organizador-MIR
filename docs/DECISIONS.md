@@ -3,6 +3,13 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-27 · REA instalado para las sesiones futuras
+
+**Elegido** (lo eligió el usuario): REA como servidor siempre conectado (`.mcp.json`, `rea-agents@6.8.0`)
+y su skill `reverse-engineer-anything` copiada en `.claude/skills/`. **Descartado:** usarlo solo por terminal
+desde `/ingenieria-reversa` (no gastaba nada hasta usarlo). **Supuestos:** activarlo sin que pregunte
+(`enabledMcpjsonServers` en `.claude/settings.json`) lo decide el usuario; no se ha tocado.
+
 ## 2026-10-27 · Apuntar el sueño desde la radio del conductor
 
 **Elegido:** que toda la pantalla verde de la radio abra la hoja de anotar (antes solo una pastilla de
