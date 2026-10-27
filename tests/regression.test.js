@@ -9310,6 +9310,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     const dv = await page.evaluate(() => { const d = (window.PG.store.dishes || []).find((x) => (+x.kcal || 0) > 200 && !x.hospital); return 'dish:' + d.id; });
     await page.evaluate((v) => { const P = window.PG; P.ui.foodSel = v; P.ui.foodCant = 1; P.ui.foodPos = 'comida'; P.ui.foodVista = 'cantidad'; P.render(); }, dv);
+    // el número se toca para abrir la rueda, y con ella abierta se escribe (prueba 330)
+    await page.click('#main .fcnum'); await page.waitForTimeout(100);
     const cant = await page.evaluate(() => { const h = document.querySelector('#main .hoja'); return { pos: h ? getComputedStyle(h).position : '', alto: document.body.scrollHeight, input: !!document.querySelector('#fcVal[data-a="food-cant-in"]') }; });
     const fi = await page.$('#fcVal'); if (fi) { await fi.fill('1.5'); await fi.dispatchEvent('change'); await page.waitForTimeout(100); }
     const c15 = await page.evaluate(() => window.PG.ui.foodCant);
@@ -13194,6 +13196,70 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la radio del conductor se abre entera por encima de la barra, tocar «Anoche: sin apuntar» abre la hoja y las horas cambiadas se guardan',
       r.pista0 === 'toca para apuntar' && r.a.panel != null && r.a.barra != null && r.a.panel <= r.a.barra && r.b.hoja !== '' &&
       r.c.h === 7.5 && r.c.acostar === '23:15' && r.c.desp === '06:45' && r.c.pista === 'toca para oírla', JSON.stringify(r));
+  }
+  // 330) LA HOJA DE CANTIDAD CON RACIÓN DE VERDAD, PASOS, MANTENER PULSADO Y RUEDA, EN CADENA: (a) se busca en
+  // Open Food Facts y se usa un yogur cuya etiqueta dice «1 ración = 125 g» (serving_quantity): la hoja abre en
+  // «1 · ración · 125 g», con el conmutador en «por ración»; (b) + suma media ración; (c) «por 100 g» pasa a
+  // gramos, se elige el paso 50 y + suma 50 (y el paso se recuerda); (d) mantener + pulsado corre varios pasos y
+  // al soltar no suma uno de más; (e) tocar el número abre la rueda, que al deslizar dos puestos deja la cantidad
+  // dos pasos más arriba; (f) se apunta lo que dice la hoja; (g) la leche, que OFF da en ml, se cuenta en ml.
+  // Sin la ración de la etiqueta abría en 150 g; sin el paso, ± iba de 10 en 10; sin la rueda ni el mantener, no corre.
+  {
+    const r = {};
+    const resp = { products: [
+      { code: '3300330000111', product_name: 'Yogur griego ración', brands: 'Hacendado', quantity: '4 x 125 g', serving_size: '1 yogur (125 g)', serving_quantity: 125, serving_quantity_unit: 'g', nutriments: { 'energy-kcal_100g': 120, proteins_100g: 4 }, popularity_key: 9000000 },
+      { code: '3300330000222', product_name: 'Semidesnatada ración', brands: 'Hacendado', serving_size: '250', serving_quantity: 250, product_quantity_unit: 'ml', nutriments: { 'energy-kcal_100g': 46, proteins_100g: 3.2 }, popularity_key: 8000000 } ] };
+    let pidioRacion = false;
+    await page.route('https://world.openfoodfacts.org/**', (route) => {
+      if (/serving_quantity/.test(route.request().url())) pidioRacion = true;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) }); });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia330', JSON.stringify(P.store)); P.ui.off = null; P.ui.offCache = {}; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.foodDest = ''; P.store.food.pasoCant = 10; P.save(); });
+    const hoja = () => page.evaluate(() => ({ num: (document.querySelector('#main .pasos .val .fcnum') || {}).textContent || '',
+      lab: (document.querySelector('#main .pasos .val > span') || {}).textContent || '', cant: window.PG.ui.foodCant,
+      seg: Array.prototype.map.call(document.querySelectorAll('#main .seg button.on'), (b) => b.textContent).join('|'),
+      kcal: (document.querySelector('#fcPrevia b') || {}).textContent }));
+    const usar = async (nombre) => {
+      await gotoFood('add');
+      await page.fill('#fbQ', nombre.split(' ')[0].toLowerCase()); await page.waitForTimeout(150);
+      await page.click('[data-a="off-buscar"]'); await page.waitForTimeout(500);
+      const i = await page.evaluate((n) => ((window.PG.ui.off && window.PG.ui.off.list) || []).findIndex((p) => p.nombre === n), nombre);
+      await page.click(`[data-a="off-usar"][data-i="${i}"]`); await page.waitForTimeout(200); };
+    await usar('Yogur griego ración');
+    r.a = await hoja();
+    await page.click('#main .cpaso[aria-label="más"]'); await page.waitForTimeout(120);
+    r.b = await hoja();
+    await page.click('#main .seg [data-m="100"]'); await page.waitForTimeout(100);
+    await page.click('#main .pasoc [data-n="50"]'); await page.waitForTimeout(100);
+    await page.click('#main .cpaso[aria-label="más"]'); await page.waitForTimeout(120);
+    r.c = await hoja(); r.c.paso = await page.evaluate(() => window.PG.store.food.pasoCant);
+    const bx = await (await page.$('#main .cpaso[aria-label="más"]')).boundingBox();
+    await page.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await page.mouse.down();
+    await page.waitForTimeout(1300); await page.mouse.up(); await page.waitForTimeout(250);
+    r.d = await hoja();
+    await page.waitForTimeout(500); r.d.quieto = await page.evaluate(() => window.PG.ui.foodCant);
+    await page.click('#main .fcnum'); await page.waitForTimeout(120);
+    r.e0 = await page.evaluate(() => ({ rueda: !!document.getElementById('fcRueda'), input: !!document.querySelector('#fcVal[data-a="food-cant-in"]') }));
+    await page.evaluate(() => { const w = document.getElementById('fcRueda'); w.scrollTop += 80; });
+    await page.waitForTimeout(450);
+    r.e = await hoja();
+    const hoyK = new Date().toISOString().slice(0, 10);
+    const antes = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyK);
+    const esperado = Math.round(120 * r.e.cant / 100);
+    await page.click('[data-a="food-apuntar"]'); await page.waitForTimeout(250);
+    r.f = (await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyK)) - antes;
+    await usar('Semidesnatada ración');
+    r.g = await hoja();
+    r.pidioRacion = pidioRacion;
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia330')); localStorage.removeItem('__copia330'); P.ui.off = null; P.ui.offCache = {}; P.ui.foodBusca = ''; P.ui.foodSel = ''; P.ui.foodRueda = false; P.ui.foodModo = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('la hoja de cantidad abre en la ración de la etiqueta, pasa a 100 g con paso 50, corre al mantener pulsado, la rueda mueve dos pasos, apunta lo que dice y la leche va en ml',
+      r.pidioRacion && r.a.num === '1' && /ración · 125 g/.test(r.a.lab) && r.a.seg === 'por ración' && r.a.kcal === '150' &&
+      r.b.cant === 187.5 && r.b.num === '1.5' &&
+      r.c.cant === 237.5 && r.c.paso === 50 && r.c.lab === 'g' && /100 g/.test(r.c.seg) &&
+      r.d.cant >= 237.5 + 150 && r.d.quieto === r.d.cant && (r.d.cant - 237.5) % 50 === 0 &&
+      r.e0.rueda && r.e0.input && r.e.cant === r.d.cant + 100 &&
+      r.f === esperado &&
+      /ración · 250 ml/.test(r.g.lab) && r.g.cant === 250, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

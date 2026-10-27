@@ -1346,3 +1346,31 @@ como posible siguiente paso. Tocar `mapOffProduct` (el reordenado va sobre el cr
 **Supuestos.** El endpoint clásico devuelve `popularity_key` cuando se pide en `fields`; si no llega (ficha sin él),
 cuenta como 0 y el orden queda como la relevancia de OFF (sin empeorar nada). No desplegado a main en esta sesión: la
 suite tiene 2 rojos ajenos sensibles a la fecha (Mes y Dinero, víspera de nómina) y a main solo se pasa con todo verde.
+
+## Comer: la hoja de cantidad con pasos, rueda, unidad y ración de verdad (2026-10-27)
+
+Contexto: ± iba siempre de 10 en 10 (o de 5 por debajo de 30) y en «gramos» para todo, la leche incluida; un producto
+de Open Food Facts abría en 150 g aunque la etiqueta dijera «1 yogur = 125 g». Maquetas en `maquetas/comer-cantidad.html`,
+con visto bueno.
+
+**Elegido.** (1) Debajo del número, «paso 10 · 50 · 100»; el último elegido se recuerda (`food().pasoCant`).
+(2) Mantener ± pulsado: a los 0,45 s empieza a correr, y cada vez más rápido (260 → 130 → 60 ms). (3) Tocar el número
+abre una rueda (41 valores con el paso elegido, el actual en medio); al parar de deslizar se queda el del centro, y
+con la rueda abierta el número pasa a escribirse a mano como antes. (4) Cada cosa en su unidad: ml para lo que se bebe
+(la etiqueta de OFF manda: `serving_quantity_unit`/`product_quantity_unit`, o «ml/cl/l» en el envase; si no, el
+nombre o el grupo «bebida» de la tabla), g para lo demás; también en el mensaje de «añadido». (5) Ración de verdad:
+OFF pide `serving_size` y `serving_quantity`; si hay ración, la hoja empieza en «1 · ración · 125 g» con el conmutador
+«por ración / por 100 g» (± de media ración; los botones ½ · 1 · 1½ · 2) y el + rápido del buscador apunta una
+ración. De USDA se guardan hasta 3 porciones (`foodPortions` o `foodMeasures`, traducidas lo justo: «1 taza · 158 g»)
+y se suman a los botones del alimento. La cantidad se sigue guardando en g/ml: el modo solo cambia cómo se cuenta.
+Prueba encadenada 330; la 233 ahora toca el número antes de escribir. Caen al revertir la ración, el mantener pulsado,
+la rueda y la unidad de OFF.
+
+**Descartado.** Seis botones −100 −50 −10 / +10 +50 +100 (no caben a 412 px junto al número). Una rueda a pantalla
+completa (tapa la previa de macros). Un selector g/ml/mg en cada ficha (se eligió «según el producto»).
+
+**Supuestos.** mg no aparece en los datos de la app (ni OFF ni la tabla traen cosas en mg para apuntar), así que no hay
+ficha en mg; si llega una ración en mg se ignora. Los productos guardados antes no tienen ración ni unidad hasta que se
+vuelvan a traer de OFF (los que se llaman «leche…», «zumo…» ya salen en ml por el nombre). Las porciones de USDA solo
+llegan al volver a consultar un alimento. La guarda contra el click de más al soltar tras mantener es defensiva:
+Chromium no manda ese click (el botón se repinta), así que la prueba no la puede hacer caer.

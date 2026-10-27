@@ -3753,3 +3753,25 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cal.ext .dbox{box-shadow:var(--sg,0 0 #0000),var(--shoy,0 0 #0000),var(--sfl,0 0 #0000),var(--sft,0 0 #0000)}
 .cal.ext .dbox.frl{--sfl:-4px 0 0 1px var(--warn)}
 .cal.ext .dbox.frt{--sft:0 -4px 0 1px var(--warn)}
+/* --- la hoja de cantidad: por ración / por 100 g, el paso, mantener pulsado y la rueda --- */
+.seg{display:flex;margin:13px auto 0;border:1px solid var(--line);border-radius:999px;padding:3px;width:max-content;max-width:100%;
+  background:color-mix(in srgb,var(--bg) 45%,var(--card))}
+.seg button{font:inherit;font-size:12.5px;font-weight:800;padding:8px 14px;min-height:36px;border-radius:999px;border:0;background:transparent;
+  color:var(--ink2);cursor:pointer}
+.seg button.on{background:color-mix(in srgb,var(--brand) 18%,var(--card));color:var(--brand)}
+.pasos .cpaso{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pasos .fcnum{display:block;margin:0 auto;min-width:112px;font:inherit;font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.1;
+  font-variant-numeric:tabular-nums;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed var(--line);padding:0 4px 3px;cursor:pointer}
+.pasoc{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:9px}
+.pasoc em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--ink2);letter-spacing:.06em;text-transform:uppercase;margin-right:2px}
+.pasoc button{font:inherit;min-width:48px;min-height:36px;border-radius:9px;border:1px solid var(--line);font-size:12.5px;font-weight:800;
+  background:color-mix(in srgb,var(--bg) 42%,var(--card));color:var(--ink);cursor:pointer}
+.pasoc button.on{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));color:var(--brand);background:color-mix(in srgb,var(--brand) 12%,var(--card))}
+.rueda{position:relative;margin-top:10px;height:160px;overflow-y:auto;scroll-snap-type:y mandatory;padding:60px 0;border:1px solid var(--line);
+  border-radius:14px;background:color-mix(in srgb,var(--bg) 60%,var(--card));scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.rueda::-webkit-scrollbar{display:none}
+.rueda button{display:block;width:100%;height:40px;scroll-snap-align:center;font:inherit;font-size:16px;font-weight:700;border:0;background:transparent;
+  color:var(--ink2);font-variant-numeric:tabular-nums;cursor:pointer}
+.rueda button.c{font-size:24px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,transparent);border-radius:10px}
+.ruedap{display:flex;justify-content:space-between;align-items:center;margin-top:7px}

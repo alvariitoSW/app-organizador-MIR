@@ -66,8 +66,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
 - ~~[mes-frontera]~~ HECHO y desplegado 2026-10-20 (main 008fd0d) · Línea amarilla en escalera entre meses en el Mes
 - [aparc-suite-2min] La suite ya va en ~5 min (3 trozos a la vez, 2026-10-20). Para bajar a ~2: que las 201 primeras pruebas de regression preparen sus propios datos (jornada 8–15, tipos de guardia, platos, menú, despensa) y así poder partirlas; luego, acortar esperas fijas que no sean de lectura en vivo · DECISIONS «La suite en 5 minutos»
 - ~~[aparc-auditoria-contexto]~~ HECHO 2026-10-27 (REA fuera de cada sesión, «Gasto» en el parte, salud solo si cambia main; la lista de tareas ya estaba vacía; Drive y Claude Docs se apagan en claude.ai si quieres) · Gastar menos contexto: borrar las ~196 tareas ya hechas de la lista (se reenvía entera cada pocos pasos) y, si quieres, desactivar Google Drive y Claude Docs si no los usas. Headroom descartado (no aplica a sesiones en la nube y pasa todo por un tercero). Pedido el 2026-10-20
-- [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
-  número, y cada cosa en su unidad (g, ml, mg: la leche en ml)
+- ~~[v3-cantidades]~~ HECHO EN RAMA 2026-10-27, SIN DESPLEGAR (pasos 10·50·100, mantener pulsado, rueda, g/ml, ración de la etiqueta; prueba 330) · DECISIONS «Comer: la hoja de cantidad con pasos, rueda, unidad y ración de verdad (2026-10-27)» · Comer · apuntar: cantidades con pasos, rueda o mantener pulsado, cada cosa en su unidad
 - [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
 - [v3-boceto-semana] **Plan de comidas:** montar una semana a mano como **boceto** (poner, cambiar, quitar platos),
   guardarla y que el asistente de la semana ayude sobre ese boceto
@@ -131,7 +130,7 @@ fuentes… (2026-10-26)». Evidencia vista: repos (OpenNutriTracker GPLv3, FitBo
 propio (`tools/worker-recetas.js`). OFF y USDA: por documentación + el propio código (sin muestra en vivo; la red no
 llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estudio (cada una en su sesión):**
 - (A) **Micros de OFF/USDA en la ficha**: pedir y mostrar vitaminas/minerales. OJO: convertir g→mg/µg o se guardan mal.
-- (B) **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
+- ~~(B)~~ HECHA EN RAMA 2026-10-27, SIN DESPLEGAR (con [v3-cantidades], prueba 330). **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
   / por ración». Enlaza con [v3-cantidades].
 - ~~(C) **Buscador mejor**~~: HECHA EN RAMA (2026-10-26), SIN DESPLEGAR. `offOrdena` reordena OFF por relevancia +
   `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
@@ -151,6 +150,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
 - [sup-2026-10-20-conductor] conductor: el cartel verde solo para eventos (no comidas, entreno ni turnos), el subtítulo nombra lo siguiente si falta ≤ 3 h, «¿Qué estoy viendo?» plegado, narrador solo en el Conductor (no en la Estación) · DECISIONS «Hoy: el conductor que cuenta lo que ves» · contado el 2026-10-20
