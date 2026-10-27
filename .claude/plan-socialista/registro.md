@@ -90,7 +90,7 @@ Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-1
   proteicas hechas en casa solo con microondas, con pocas calorías pero buenas. Hoy hay un tope semanal de chocolate
   con un «kit para cambiarlo» del nutricionista: ampliarlo con recetas de verdad
 
-- [aparc-pruebas-fecha] **2 pruebas en rojo sensibles a la fecha** (vistas por la salud el 2026-10-26, víspera de
+- ~~[aparc-pruebas-fecha]~~ VERDES el 2026-10-27 (suite completa 751/751, pasadas las fechas) · **2 pruebas en rojo sensibles a la fecha** (vistas por la salud el 2026-10-26, víspera de
   nómina/alquiler del 27): «tocar un evento abre su día» (Mes, `monSel` vacío) y «te queda = saldo − recibos…» (Dinero:
   da el alquiler de mañana como «ya descontado»). No son del encargo de Comer. El usuario pidió verlas en sesión aparte
   (Dinero y Mes) · desde 2026-10-26

@@ -2826,14 +2826,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click(`[data-a="food-abrir"][data-v="${primerPlatoCm}"]`);
   await page.waitForTimeout(250);
   const hojaUna = await page.evaluate(() => ({
-    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal') || document.querySelector('#main .fcnum')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
     raciones: Array.prototype.map.call(document.querySelectorAll('#main .racb'), (x) => x.textContent),
   }));
   await page.click('[data-a="food-cant-set"][data-n="2"]');
   await page.waitForTimeout(200);
   const hojaDos = await page.evaluate(() => ({
-    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal') || document.querySelector('#main .fcnum')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
   }));
   const hoyKCm = new Date().toISOString().slice(0, 10);
