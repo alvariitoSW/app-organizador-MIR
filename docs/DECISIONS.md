@@ -3,6 +3,17 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-27 · Apuntar el sueño desde la radio del conductor
+
+**Elegido:** que toda la pantalla verde de la radio abra la hoja de anotar (antes solo una pastilla de
+81×16 px), y que al abrirse la radio la página baje lo justo para que no la tape la barra de abajo.
+La pista dice «toca para apuntar» cuando falta la noche. Informe completo: `docs/informe-sueno-2026-10.md`.
+**Descartado:** que tocar la radio cerrada abra directamente la hoja (se perderían el café y el
+«¿cómo amaneces?» de un toque), y rediseñar dónde vive el sueño en Hoy (es un rediseño: maquetas primero).
+**Supuestos:** el fallo al pulsar era el dedo cayendo fuera de la pastilla. La hoja en sí funcionaba
+(lo comprobado). También se arregló la prueba 221 de Dinero, que caía en `main` a final de mes por la
+fecha (con la nómina ya cobrada, el mes en curso cuenta como cerrado): congela «hoy» al día 15, como la 263.
+
 ## 2026-10-11 · Las cuatro decisiones pendientes del informe
 
 **Hábitos que no existían.** Elegido: un hábito «toca» desde que existe, que es el día en que se

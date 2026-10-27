@@ -8790,6 +8790,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // el ahorro, entre los días que faltan), cada categoría contra tu media, consejos con lo que ganas,
   // la meta de una categoría y la revisión 50/30/20
   {
+    // con la nómina ya cobrada (de finales de mes en adelante) el mes en curso pasa a «cerrado» y el consejo sale de
+    // él, no del anterior: se congela «hoy» al día 15 durante el bloque (como la 263) para que no dependa del día real
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const frozen = new Orig(n.getFullYear(), n.getMonth(), 15, 12, 0, 0).getTime();
+      window.__origDate221 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
     const d6 = await page.evaluate(() => { const P = window.PG, a = P.ahorroS(); a.real = []; const hoy = new Date();
       const cats = [['Alquiler y casa', 640, 640, 640, 640, 640], ['Supermercado', 270, 295, 284, 279, 191], ['Restaurantes', 160, 210, 198, 238, 150], ['Ocio', 90, 110, 95, 97, 134], ['Suscripciones', 42, 42, 42, 42, 42]];
       for (let i = 4; i >= 0; i--) { const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, i ? 28 : 1, 12), mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -8818,7 +8823,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); });
     const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
       return { ahorro: /TIENES AHORRADO/.test(t), colchon: /meses de gastos/.test(t), vista: window.PG.ui.dineroVista }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; if (window.__origDate221) { window.Date = window.__origDate221; delete window.__origDate221; } P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Salud lleva a Ahorro',
       an.n >= 3 && !an.cats.includes('Alquiler y casa') && an.tips.some((t) => /Restaurantes a \d+ €/.test(t)) && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
       sal.ahorro && sal.colchon && sal.vista === '', JSON.stringify({ an, cat: { barras: cat.barras, meta: cat.meta }, sal }));
@@ -11382,7 +11387,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.hoyIt = null; P.render(); });
     await page.locator('#main .cd g[data-o="radio"]').first().click().catch(() => {});
     await page.waitForTimeout(150);
-    await page.locator('#main .cd [data-o="sueno"]').click().catch(() => {});
+    await page.locator('#main .cd [data-r="radiob"] g[data-o="sueno"]').click().catch(() => {});   /* la pastilla; la pantalla de la radio también lleva a Sueño (329) */
     await page.waitForTimeout(150);
     r.c = await page.evaluate(() => window.PG.ui.hoyVista);
     // (d) volver a Hoy y pintar dos veces: el mismo conductor, no uno nuevo
@@ -13174,7 +13179,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(400);
     r.b = await page.evaluate(() => ({ hoja: window.PG.ui.snHoja || '', inputs: document.querySelectorAll('input[data-a="sn-tt"]').length }));
     // (c) las horas y guardar
-    if (r.b.inputs) {
+    // sin plan de sueño para ese día, la hoja sale vacía: se añade el trozo como lo haría él
+    if (!r.b.inputs) { await page.click('[data-a="sn-tmas"][data-v="ok"]').catch(() => {}); await page.waitForTimeout(200); }
+    if (await page.$('input[data-a="sn-tt"]')) {
       await page.fill('input[data-a="sn-tt"][data-k="0"]', '23:15'); await page.dispatchEvent('input[data-a="sn-tt"][data-k="0"]', 'change'); await page.waitForTimeout(150);
       await page.fill('input[data-a="sn-tt"][data-k="1"]', '06:45'); await page.dispatchEvent('input[data-a="sn-tt"][data-k="1"]', 'change'); await page.waitForTimeout(150);
       await page.click('[data-a="sn-tguardar"]').catch(() => {}); await page.waitForTimeout(400);
@@ -13185,7 +13192,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.snHoja = ''; P.ui.hoyModo = P.__t329m[0]; P.ui.hoyBusV = P.__t329m[1]; delete P.__t329m; P.save(); P.render(); window.scrollTo(0, 0); });
     if (vp) await page.setViewportSize(vp);
     check('la radio del conductor se abre entera por encima de la barra, tocar «Anoche: sin apuntar» abre la hoja y las horas cambiadas se guardan',
-      r.pista0 === 'toca para apuntar' && r.a.panel != null && r.a.barra != null && r.a.panel <= r.a.barra && r.b.hoja !== '' && r.b.inputs > 0 &&
+      r.pista0 === 'toca para apuntar' && r.a.panel != null && r.a.barra != null && r.a.panel <= r.a.barra && r.b.hoja !== '' &&
       r.c.h === 7.5 && r.c.acostar === '23:15' && r.c.desp === '06:45' && r.c.pista === 'toca para oírla', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
