@@ -211,3 +211,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-cantidades-2026-10-27] 2026-10-27 · parte con tarea ya elegida: v3-cantidades + mejora B (ración) de enc-comida-ri; main = 3bce73b sin cambios (run 40510302838 success), rama 555c3f6 (3 commits de ahorro de tokens sin pasar a main), 0 issues; cierre con «Gasto» · ok
 - [run-40583207598] 2026-10-27 · despliegue de main (3b7a617: cantidades, ración y buscador) · success; sellado (version.json = último código); 0 issues/PR · ok
 - [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
+- [run-40591125346] 2026-10-27 · despliegue de main (2416c99, sello Nutri-Score/NOVA/aditivos) · success; sellado (version.json 2416c99); rama 2 por delante solo con registro y traspaso; 0 issues/PR · ok
+- [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
