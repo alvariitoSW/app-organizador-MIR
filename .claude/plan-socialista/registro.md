@@ -51,50 +51,10 @@ cabina, habitaciones de casa al mirar a los lados y más sitio en el quiosco y e
   visible arriba en Comer → Hoy e informe del domingo (bien · falta · a cambiar, metas, semana a semana). Maquetas en
   design/nutricionista/ aprobadas y construidas: desplegado en main (aaa1805). Bebidas en ml: hecho y desplegado.
 
-### Versión 3.0 (lo que pediste el 2026-10-19)
+### Versión 3.0
 
-Cada uno, maquetas primero y una sesión por tarea. **Primero, elegido el 2026-10-19: v3-mes-colores + v3-sin-semana.**
-
-- ~~[v3-mes-colores]~~ HECHO y desplegado 2026-10-19 (main 4c09f09, variante B suaves) · **Mes:** el día entero pintado por tipo, no solo la raya: guardia rojo entero con 🚨 y el número
-  grande en negro; saliente oscuro; libre verde claro; trabajo marrón; entreno azul. Los eventos, más visibles en el
-  Mes. Y el selector de fecha en español (sale «October 2026» y pegado al icono, lo vio la revisión de salud)
-- ~~[v3-sin-semana]~~ HECHO 2026-10-19 (también Isométrica y Carretera del Mes; «Mi rutina» a Ajustes) · **Quitar la vista Semana** del Calendario entera: no la usas
-- ~~[v3-conductor]~~ HECHO y desplegado 2026-10-20 (main e1aaeda, run 39453952330; A + B con cartel verde, porqué y «¿Qué estoy viendo?») · **Hoy / el conductor:** más arte y que explique lo que se ve (eventos, qué toca y por qué), con una
-  descripción más grande, no solo «se ve el autobús»
-- ~~[fallo-mes-pasado]~~ ARREGLADO y desplegado 2026-10-20 (main e1aaeda) · El Mes en curso no enseñaba del 1 al 18 (no podías ver las guardias de octubre para secretaría): botón «▲ Ver del 1 al N» y lista de guardias al tocar el abono · DECISIONS «Mes: lo ya pasado del mes en el que estás»
-- ~~[fallo-modo-ordenador]~~ ARREGLADO y desplegado 2026-10-20 (main bfa711c, run 39489124341) · Con «Sitio de escritorio» en Brave la app se veía a 980 px y sin forma de quitarlo: ahora se amplía y usa las reglas de móvil · DECISIONS «El móvil en modo ordenador»
-- ~~[mes-frontera]~~ HECHO y desplegado 2026-10-20 (main 008fd0d) · Línea amarilla en escalera entre meses en el Mes
-- [aparc-suite-2min] La suite ya va en ~5 min (3 trozos a la vez, 2026-10-20). Para bajar a ~2: que las 201 primeras pruebas de regression preparen sus propios datos (jornada 8–15, tipos de guardia, platos, menú, despensa) y así poder partirlas; luego, acortar esperas fijas que no sean de lectura en vivo · DECISIONS «La suite en 5 minutos»
-- [aparc-auditoria-contexto] Gastar menos contexto: borrar las ~196 tareas ya hechas de la lista (se reenvía entera cada pocos pasos) y, si quieres, desactivar Google Drive y Claude Docs si no los usas. Headroom descartado (no aplica a sesiones en la nube y pasa todo por un tercero). Pedido el 2026-10-20
-- [v3-cantidades] **Comer · apuntar:** cantidades con pasos (5, 20, 50), rueda o mantener pulsado para que corra el
-  número, y cada cosa en su unidad (g, ml, mg: la leche en ml)
-- [v3-comer-perdido] **Comer:** funciona pero está «muy perdido»: ordenar para que se encuentre cada función
-- [v3-boceto-semana] **Plan de comidas:** montar una semana a mano como **boceto** (poner, cambiar, quitar platos),
-  guardarla y que el asistente de la semana ayude sobre ese boceto
-- [v3-entrenador] (la parte de volver tras un parón ya está: v3-plan-vuelta) **Entreno, otra vuelta entera:** como una app de entrenador propio basada en ciencia. Ejemplo: si
-  llevas 2 meses sin entrenar, que sobre tu rutina te diga «baja un X %» y te suba poco a poco hasta volver (hoy no
-  existe nada de vuelta tras un parón)
-- [v3-dinero-compras] **Dinero:** planear compras de los próximos meses (cosas que quizá compres), decidir qué sí y
-  qué no, y cuánto puedes apartar cada mes para ellas; «una app dentro de la app». Hoy hay deseos dentro de cada
-  hucha, pero no un plan de compras
-- [v3-gmail] **«La función de Gmail»:** sin aclarar qué es (¿la de Google Calendar?) · pendiente de que lo digas
-- ~~[v3-plan-vuelta]~~ HECHO y desplegado 2026-10-20 (main 28e97b3, run 39378000493; 2ac63d3, suite 720/720) · **Entreno · plan para volver a tu rutina** (va con v3-entrenador): tienes una rutina pero ahora no
-  puedes hacerla tras un parón; la app te monta el camino («tantos días a la semana, tantas semanas, así») con
-  seguimiento y continuidad, como un entrenador, no un menú de opciones
-- [v3-coach] **La app como entrenador de tu persona:** descansar, comer bien, verdura y fruta, entreno; que te guíe
-  y lo note, en vez de tener funciones sueltas. Y que cuente el día de Lloret, que también cambia las cosas
-- [v3-420-descanso] **4:20 que ayude a bajar:** que relacione lo que fumas con el descanso y la energía de la mañana
-  («aunque duermas bien, puede que no descanses») y te ayude a reducir
-- [v3-420-clave] **4:20 con contraseña:** algo de esa parte con clave para entrar, que se puede cambiar desde dentro
-  · aclarado 2026-10-19: **solo la parte 4:20** pide la clave al entrar; se cambia desde dentro
-- [v3-antojos] **Antojo de chocolate:** que tenga en cuenta lo que ya cenaste y te proponga alternativas saciantes y
-  proteicas hechas en casa solo con microondas, con pocas calorías pero buenas. Hoy hay un tope semanal de chocolate
-  con un «kit para cambiarlo» del nutricionista: ampliarlo con recetas de verdad
-
-- [aparc-pruebas-fecha] **2 pruebas en rojo sensibles a la fecha** (vistas por la salud el 2026-10-26, víspera de
-  nómina/alquiler del 27): «tocar un evento abre su día» (Mes, `monSel` vacío) y «te queda = saldo − recibos…» (Dinero:
-  da el alquiler de mañana como «ya descontado»). No son del encargo de Comer. El usuario pidió verlas en sesión aparte
-  (Dinero y Mes) · desde 2026-10-26
+Todo lo de la 3.0 (lo que está en marcha, el orden de lo que falta, las ideas y lo hecho) vive ahora en
+**`plan-v3.md`**, desde el 2026-10-27. Aquí ya no se apunta: así no hay dos listas que se contradigan.
 
 ### A futuro (sin fecha)
 

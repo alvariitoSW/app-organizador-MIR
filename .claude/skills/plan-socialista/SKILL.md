@@ -18,6 +18,8 @@ Todo vive en `.claude/plan-socialista/`:
 | `marcadores.json` | Hasta dónde has leído cada fuente | Tú, al final (paso 8) |
 | `registro.md` | Encargos aparcados, supuestos sin confirmar y lo ya contado, con su id | Tú, al final (paso 8); el usuario puede tachar a mano |
 | `sesiones/<fecha>.md` | Cómo fue cada arranque: qué se leyó, qué falló, qué se dijo | Tú, al final (paso 8) |
+| `plan-v3.md` | El tablero de la 3.0: en marcha, por hacer (en orden), ideas, hecho | Tú, al cerrar cada tarea y cuando el usuario dice algo nuevo (`/bitacora`) |
+| `gastos.md` | Lo que costó cada tarea y el presupuesto de la siguiente de su tipo | Tú, al cerrar cada tarea (`node tools/gasto.mjs --apunta …`) |
 
 ## Cómo se lanza (la conversación principal)
 
@@ -64,6 +66,9 @@ Los hace el ayudante `parte` (o tú, si no está).
    - **Encargos aparcados:** la sección del mismo nombre en `registro.md`. Uno se cierra cuando se hace
      (se ve en los commits) o el usuario lo descarta.
    - **GitHub:** issues y PRs abiertos (`gh api "repos/alvariitoSW/app-organizador-MIR/issues?state=open"`).
+   - **El plan 3.0:** `plan-v3.md`, lo que está «En marcha» y la primera de «Por hacer» (la siguiente).
+   - **El gasto:** en `gastos.md`, las filas de «Tareas medidas» nuevas desde el marcador `gastosFila` y el
+     presupuesto del tipo de la tarea siguiente («Presupuestos vigentes»).
 
    Si una fuente falla (sin red, 403), **no avances su marcador** y anótala como hueco: saldrá en el
    parte como «no he podido mirar X».
@@ -80,7 +85,10 @@ Los hace el ayudante `parte` (o tú, si no está).
 6. **Redactar dentro del largo máximo** de las preferencias. En español, sin jerga, cada línea con
    su enlace o su archivo (`archivo:línea`, o el enlace al run). En el orden de las preferencias:
    lo que bloquea → los supuestos que esperan su «vale/no vale» → lo aparcado → una línea de lo que
-   va bien. Sin nada accionable,
+   va bien. Siempre que haya plan 3.0, una línea con **la siguiente tarea y su presupuesto** («Lo siguiente:
+   Comer ordenado · maqueta · ~1,2 M en sonnet») y, si hay tarea medida nueva, **una línea de gasto**: lo que
+   costó frente a su presupuesto y lo que más gastó («La última: 1,4 M de 1,2 M; el 60 % las capturas»).
+   Sin nada accionable,
    **una sola línea** («Todo en orden: main desplegado y sellado, nada pendiente»): callarse bien
    también es un resultado.
 
@@ -89,7 +97,8 @@ Los hace el ayudante `parte` (o tú, si no está).
    usuario dijo «ensayo» o «sin guardar», es un **ensayo**: entrega el parte y no hagas el paso 8.
 
 8. **Guardar marcadores, registro y sesión.** Solo después de entregar el parte:
-   - `marcadores.json`: avanza solo los de las fuentes que se leyeron bien.
+   - `marcadores.json`: avanza solo los de las fuentes que se leyeron bien (`gastosFila`: cuántas filas
+     tiene ya «Tareas medidas»).
    - `registro.md`: añade lo contado (con id estable, p. ej. `run-<id>`, `sup-<fecha>-<tema>`,
      `aparc-<tema>`, `issue-<n>`), pasa los supuestos nuevos a «Supuestos sin confirmar» y cierra
      los supuestos y aparcados ya resueltos. Si el usuario contestó a un supuesto en esta sesión,
@@ -99,6 +108,31 @@ Los hace el ayudante `parte` (o tú, si no está).
      código, así que no hace falta sellar ni pasar por la suite.
 
    Si el push falla, dilo: la próxima sesión repetiría el parte.
+
+## Gastos: que cada tarea cueste un poco menos
+
+Idea traída de `fiebres-neutropenias` (REGLAS §4.7): **cada tarea que se mide pone el listón de la siguiente
+del mismo tipo**. Todo vive en `gastos.md` y lo mide `tools/gasto.mjs` (lee las transcripciones de la sesión:
+la principal y cada ayudante, con sus tokens y su modelo).
+
+1. **Al empezar una tarea** (después del parte, cuando el usuario elige qué hacer): dile en una línea el
+   **presupuesto** de su tipo (`gastos.md` → «Presupuestos vigentes»: el 90 % de la última medida). Si no
+   hay medida de ese tipo, «sin presupuesto todavía: esta la medimos».
+2. **Al lanzar un ayudante**, el encargo lleva el modelo que toca y su tope: «para en ~N pasos y entrega lo
+   que tengas con lo que falta». Sonnet o haiku para lo mecánico (construir con maqueta aprobada, arreglos
+   localizados, capturas, pruebas); opus solo para decidir o diseñar algo nuevo. La descripción del ayudante,
+   corta y clara (sale tal cual en la tabla del gasto).
+3. **Al cerrar la tarea** (traspaso, paso 7 de `cierra-y-despliega`), **antes del último commit**:
+   `node tools/gasto.mjs --apunta <id-de-la-tarea> --tipo <tipo> --nota "<qué encareció · cómo ahorrar>"`.
+   Añade la fila a «Tareas medidas»; tú actualizas a mano la fila de su tipo en «Presupuestos vigentes» (90 %
+   de lo medido) y, si aprendiste un ahorro que funciona, una línea en «Ahorros que funcionan». Al usuario,
+   una línea: «Esta tarea: X equivalentes (presupuesto Y); lo que más gastó: Z».
+4. **Hay que medir antes de despedirse:** el contenedor es nuevo en cada sesión y la transcripción se pierde.
+   Si una tarea se cerró sin medir, queda como «sin medir» en el traspaso y no se inventa la cifra.
+
+Tipos (los mismos que en `plan-v3.md`): `arreglo` · `maqueta` · `construir` · `estudio` · `herramientas` ·
+`parte`. «Equivalente» pondera los tokens por su precio (salida ×5, caché leída ×0,1…); no mezcla modelos,
+así que se compara siempre con la misma tarea en el mismo modelo.
 
 ## Reglas
 

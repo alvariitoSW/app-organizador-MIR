@@ -1336,3 +1336,19 @@ como posible siguiente paso. Tocar `mapOffProduct` (el reordenado va sobre el cr
 **Supuestos.** El endpoint clásico devuelve `popularity_key` cuando se pide en `fields`; si no llega (ficha sin él),
 cuenta como 0 y el orden queda como la relevancia de OFF (sin empeorar nada). No desplegado a main en esta sesión: la
 suite tiene 2 rojos ajenos sensibles a la fecha (Mes y Dinero, víspera de nómina) y a main solo se pasa con todo verde.
+
+## Plan global de la 3.0 y gasto por tarea (2026-10-27)
+
+**Elegido.** Un tablero único de la 3.0 en `.claude/plan-socialista/plan-v3.md` (en marcha · por hacer en orden ·
+ideas · hecha), que cuenta `/bitacora` y al que van las cosas nuevas que diga el usuario. El apartado **Gastos** en
+`/plan-socialista`, traído de `fiebres-neutropenias` (REGLAS §4.7 y `autonomo/gasto.mjs`): `tools/gasto.mjs` mide la
+sesión (principal y cada ayudante, en tokens equivalentes por modelo) y con `--apunta` deja la fila en
+`.claude/plan-socialista/gastos.md`; el presupuesto de la siguiente tarea de un tipo es el 90 % de la última. Se mide en
+el traspaso (paso 7 de `cierra-y-despliega`) y el parte dice la siguiente tarea con su presupuesto.
+
+**Descartado.** Repartir el gasto por claves `[tarea]` como en el otro repositorio: aquí es una sesión por tarea. Dar
+el gasto en euros: los precios cambian y no se deben dar de memoria; se compara en equivalentes y siempre en el mismo
+modelo. Dejar la lista de la 3.0 también en `registro.md`: dos listas acabarían diciendo cosas distintas.
+
+**Supuestos.** El orden de «Por hacer» lo propuse yo (lo que bloquea, luego Comer, luego lo grande) y lo cambia el
+usuario. Solo se puede medir la sesión en curso (el contenedor es nuevo cada vez): si no se mide al cerrar, se pierde.

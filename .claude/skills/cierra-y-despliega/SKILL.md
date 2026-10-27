@@ -90,9 +90,13 @@ quede escrito en `.claude/plan-socialista/`, que lee `/plan-socialista`. Antes d
 2. **`registro.md` → «Supuestos sin confirmar»:** los supuestos que le dijiste en esta tarea y no ha
    contestado (`sup-<fecha>-<tema>`). No dependas de que el parte los saque de DECISIONS: si el marcador
    de DECISIONS ya pasó de esa línea, se perderían.
-3. **`sesiones/<AAAA-MM-DD>.md`:** qué se hizo, qué se desplegó (commit y run) y qué queda.
-4. Commit de `.claude/plan-socialista/` en la rama y push (no toca código: sin suite ni sello).
-5. Última línea al usuario: **«Para lo siguiente, abre una sesión nueva y escribe `/plan-socialista`».**
+3. **`plan-v3.md`:** la tarea pasa de «En marcha» a «Hecha» (con commit de `main` y fecha), lo que quedó a
+   medias o salió nuevo va a «Ideas», y la siguiente de «Por hacer» queda la primera.
+4. **El gasto** (skill `plan-socialista`, «Gastos»): `node tools/gasto.mjs --apunta <id> --tipo <tipo> --nota
+   "…"`, actualiza «Presupuestos vigentes» en `gastos.md` y dile al usuario en una línea lo que costó.
+5. **`sesiones/<AAAA-MM-DD>.md`:** qué se hizo, qué se desplegó (commit y run), lo que costó y qué queda.
+6. Commit de `.claude/plan-socialista/` en la rama y push (no toca código: sin suite ni sello).
+7. Última línea al usuario: **«Para lo siguiente, abre una sesión nueva y escribe `/plan-socialista`».**
 
 Si la tarea se queda a medias (sin desplegar), el traspaso es el mismo: lo hecho, en qué commit de la
 rama está y cuál es el siguiente paso, para retomarlo sin releer la conversación.
