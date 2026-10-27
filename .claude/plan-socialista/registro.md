@@ -139,12 +139,18 @@ llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estu
 - (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
 Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
 
+### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
+Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/informe-sueno-2026-10.md`, DECISIONS «Apuntar el sueño desde la radio del conductor»).
+- [aparc-sueno-vistas] Revisar si en Estación, Reloj y Línea apuntar el sueño también está escondido · desde 2026-10-27
+- [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
+
 ## Para recordarte
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
 - ~~[rec-2026-10-23-leanrea]~~ HECHO 2026-10-23 · Repositorio https://github.com/aicodeking/leanrea guardado e instalado como skill `/ingenieria-reversa` (`.claude/skills/ingenieria-reversa/`, commit 09ba4aa del original, MIT)
 
 ## Supuestos sin confirmar
+- [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
 - [sup-2026-10-20-conductor] conductor: el cartel verde solo para eventos (no comidas, entreno ni turnos), el subtítulo nombra lo siguiente si falta ≤ 3 h, «¿Qué estoy viendo?» plegado, narrador solo en el Conductor (no en la Estación) · DECISIONS «Hoy: el conductor que cuenta lo que ves» · contado el 2026-10-20
 - [sup-2026-10-20-mes-pasado] Mes: el botón «Ver del 1 al N» se recuerda mientras la app está abierta (al abrirla empieza en la semana de hoy); «hecha» = guardia de un día anterior a hoy; la lista de guardias sale en la hoja del abono de cualquier mes · DECISIONS «Mes: lo ya pasado…» · contado el 2026-10-20
