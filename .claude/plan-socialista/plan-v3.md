@@ -16,27 +16,47 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
   montado el 2026-10-27 (439 k); la sesión sigue abierta para ir apuntando lo que digas y ordenar el plan ·
   sesión del 2026-10-27
 
-## Por hacer (orden propuesto: lo que bloquea, luego lo de cada día, luego lo grande)
+## Por hacer
 
-Cada una con maquetas primero si cambia lo que ves.
+### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27, falta tu visto bueno
 
-1. [aparc-pruebas-fecha] Las pruebas que caen según el día del mes (Mes «tocar un evento abre su día» y Dinero
-   «te queda»): que no dependan de la fecha · arreglo
-2. [v3-cantidades] Comer · apuntar: cantidades con pasos (5, 20, 50), rueda o mantener pulsado, cada cosa en su
-   unidad (la leche en ml). Va con la ración de verdad (B) del estudio de Comer · maqueta → construir
-3. [v3-comer-perdido] Comer: ordenarlo para que se encuentre cada función · maqueta → construir
-4. [v3-boceto-semana] Plan de comidas: montar una semana a mano como boceto y que el asistente ayude sobre él ·
-   maqueta → construir
-5. [v3-antojos] Antojo de chocolate: alternativas saciantes de microondas según lo que ya cenaste · maqueta → construir
-6. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
-7. [v3-420-descanso] 4:20 que relacione lo que fumas con el descanso y la energía, y ayude a bajar · maqueta → construir
-8. [v3-entrenador] Entreno como entrenador propio basado en ciencia (la vuelta tras un parón ya está) · maqueta → construir
-9. [v3-dinero-compras] Dinero: plan de compras de los próximos meses y cuánto apartar · maqueta → construir
-10. [v3-coach] La app como entrenador de tu persona (descanso, comida, entreno, el día de Lloret) · maqueta → construir
-11. [aparc-arte-energia] Arte: la energía del día que se gasta y se recarga · maqueta → construir
-12. [aparc-arte-iconos] Arte: los iconos con vida propia · maqueta → construir
-13. [comida-ri-A/B/D] Comer, del estudio: (A) vitaminas y minerales, (B) ración de verdad, (D) Nutri-Score y NOVA ·
-    construir (B va con v3-cantidades)
+Las tareas 1, 2, 3, 4, 5, 9 y 13 de la lista anterior, agrupadas en **8 sesiones** para gastar menos. Cada una
+empieza con su ficha (skill `ficha-de-tarea`) y se mide al cerrar. Presupuestos en equivalentes (ver `gastos.md`):
+son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el resto.
+
+| # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|---|
+| S1 | Las pruebas de la fecha | [aparc-pruebas-fecha] | arreglo | sesión en sonnet, sin ayudantes; suite con `verificador` | ~0,4 M |
+| S2 | **El mapa de Comer** (maquetas de todo junto) | [v3-comer-perdido] + dónde van [v3-cantidades], [v3-boceto-semana], [v3-antojos] y [comida-ri-A/D] | maqueta | `Explore` haiku hace el mapa de lo que hay; opus diseña 2–3 maquetas de Comer entero; `verificador` las mide | ~1,5 M |
+| S3 | Construir el Comer ordenado | [v3-comer-perdido] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M |
+| S4 | Cantidades y ración de verdad | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
+| S5 | Vitaminas, minerales y Nutri-Score | [comida-ri-A] + [comida-ri-D] | construir | constructor sonnet (necesita una muestra de Open Food Facts que pegas tú) | ~0,9 M |
+| S6 | La semana en borrador | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
+| S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
+| S8 | Dinero: plan de compras | [v3-dinero-compras] | maqueta → construir | opus maquetas; constructor sonnet | ~2,0 M |
+
+**Total: ~10 M** frente a **~14 M** haciéndolas una a una (cinco rondas de maquetas por separado y cada sesión
+descubriendo Comer desde cero).
+
+De dónde sale el ahorro:
+- **S1 primero:** con la suite en rojo no se puede pasar nada a `main`; cada sesión acabaría rehaciendo pruebas.
+- **Una sola ronda de maquetas (S2) para todo Comer** en vez de cinco: ordenar Comer después de meterle cosas
+  obligaría a rediseñarlas. Ahorra ~3 M.
+- **Juntar lo que toca lo mismo:** cantidades con ración (S4), vitaminas con Nutri-Score (S5, la misma petición a
+  Open Food Facts).
+- **La ficha de cada tarea** guarda lo descubierto: quien construye no relee `app.js`.
+- **Sonnet para construir, haiku para buscar, opus solo para diseñar y dirigir.** Y las sesiones mecánicas (S1)
+  se pueden abrir directamente en sonnet.
+- Pruebas solo las tuyas mientras se trabaja; la suite completa una vez, al final, con el `verificador`.
+
+### Después (sin planificar todavía)
+
+1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
+2. [v3-420-descanso] 4:20 que relacione lo que fumas con el descanso y la energía, y ayude a bajar · maqueta → construir
+3. [v3-entrenador] Entreno como entrenador propio basado en ciencia (la vuelta tras un parón ya está) · maqueta → construir
+4. [v3-coach] La app como entrenador de tu persona (descanso, comida, entreno, el día de Lloret) · maqueta → construir
+5. [aparc-arte-energia] Arte: la energía del día que se gasta y se recarga · maqueta → construir
+6. [aparc-arte-iconos] Arte: los iconos con vida propia · maqueta → construir
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 

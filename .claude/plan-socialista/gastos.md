@@ -44,3 +44,7 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
 - Pruebas solo las tuyas mientras trabajas (`tools/pruebas-corto.sh --solo …`); la completa, una vez al final.
 - Ayudantes de trabajo mecánico en sonnet o haiku; opus solo para decidir o diseñar algo nuevo.
 - Un arreglo de una línea con el sitio ya localizado: sin ayudantes (lanzar uno cuesta más que hacerlo).
+- Una ficha por tarea (skill `ficha-de-tarea`, idea de spec-kit): lo descubierto se escribe una vez y el
+  constructor recibe la ficha, no la conversación.
+- Una ronda de maquetas para una sección entera antes que una por cada función (plan de Comer, 2026-10-27).
+- Abrir en sonnet las sesiones mecánicas (arreglos localizados, construir con ficha y maqueta aprobada).

@@ -1352,3 +1352,18 @@ modelo. Dejar la lista de la 3.0 también en `registro.md`: dos listas acabaría
 
 **Supuestos.** El orden de «Por hacer» lo propuse yo (lo que bloquea, luego Comer, luego lo grande) y lo cambia el
 usuario. Solo se puede medir la sesión en curso (el contenedor es nuevo cada vez): si no se mide al cerrar, se pierde.
+
+## spec-kit y el plan de la tanda de Comer (2026-10-27)
+
+**Elegido.** De [spec-kit](https://github.com/github/spec-kit) (MIT) solo la forma de trabajar, en una skill corta en
+español, `ficha-de-tarea`: qué y cómo se sabe que está bien (Dado/cuando/entonces), como mucho 3 dudas, dónde se toca,
+pasos con archivo, ayudante, modelo y tope, y una comprobación antes de construir. Las tareas 1, 2, 3, 4, 5, 9 y 13 del
+plan, agrupadas en 8 sesiones (S1–S8 en `plan-v3.md`) con una sola ronda de maquetas para todo Comer: ~10 M
+equivalentes estimados frente a ~14 M una a una.
+
+**Descartado.** Instalar `specify` (programa en Python) y sus plantillas: unas 3.000 líneas en inglés pensadas para
+proyectos con varias carpetas y contratos de API; leerlas en cada tarea costaría más de lo que ahorran y repiten lo que
+ya hacen `tarea-a-fondo`, `redisena-seccion` y DECISIONS.
+
+**Supuestos.** Los presupuestos son estimaciones (solo hay una tarea medida); se corrigen con S1 y S2. Las tareas 1
+(pruebas) y 9 (Dinero) no son de Comer pero entran en la tanda porque las pediste en la misma lista.
