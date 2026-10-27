@@ -4,7 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
-- [aparc-desplegar-sello] Pasar a main el sello de OFF (rama 66a7d0d, suite en verde): `cierra-y-despliega` cuando lo pidas · desde 2026-10-27
+- ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
 primero; tanda 2, lo visual con maquetas primero**.
@@ -136,7 +136,7 @@ llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estu
 - ~~(C) **Buscador mejor**~~: HECHA y desplegada 2026-10-27 (3b7a617). `offOrdena` reordena OFF por relevancia +
   `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
   «Comer: el buscador… ordenado por popularidad». No pasó a main: 2 rojos de fecha ajenos (ver abajo). Enlaza con [v3-comer-perdido].
-- ~~(D)~~ HECHA 2026-10-27 en la rama (66a7d0d), **SIN desplegar a main** (suite 752/752 en verde; falta `cierra-y-despliega` cuando lo pida). Sello Nutri-Score · NOVA · aditivos en la ficha + letra en el buscador; los guardados lo piden solos al abrirlos. Prueba 331. DECISIONS «Comer: el sello de Open Food Facts… (2026-10-27)», maquetas `maquetas/comer-sello.html`.
+- ~~(D)~~ HECHA y desplegada 2026-10-27 (main 2416c99, run 40591125346; suite 752/752). Sello Nutri-Score · NOVA · aditivos en la ficha + letra en el buscador; los guardados lo piden solos al abrirlos. Prueba 331. DECISIONS «Comer: el sello de Open Food Facts… (2026-10-27)», maquetas `maquetas/comer-sello.html`.
 Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
 
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
