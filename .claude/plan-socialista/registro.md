@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- [aparc-desplegar-sello] Pasar a main el sello de OFF (rama 66a7d0d, suite en verde): `cierra-y-despliega` cuando lo pidas · desde 2026-10-27
 
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
 primero; tanda 2, lo visual con maquetas primero**.
@@ -135,7 +136,7 @@ llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estu
 - ~~(C) **Buscador mejor**~~: HECHA y desplegada 2026-10-27 (3b7a617). `offOrdena` reordena OFF por relevancia +
   `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
   «Comer: el buscador… ordenado por popularidad». No pasó a main: 2 rojos de fecha ajenos (ver abajo). Enlaza con [v3-comer-perdido].
-- (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
+- ~~(D)~~ HECHA 2026-10-27 en la rama (66a7d0d), **SIN desplegar a main** (suite 752/752 en verde; falta `cierra-y-despliega` cuando lo pida). Sello Nutri-Score · NOVA · aditivos en la ficha + letra en el buscador; los guardados lo piden solos al abrirlos. Prueba 331. DECISIONS «Comer: el sello de Open Food Facts… (2026-10-27)», maquetas `maquetas/comer-sello.html`.
 Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
 
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
@@ -150,6 +151,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-27-sello] Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
 - [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
