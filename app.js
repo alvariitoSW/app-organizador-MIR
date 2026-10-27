@@ -11816,7 +11816,7 @@ function offBloqueHTML(q){
 function nsMiniHTML(l){
   /* en el buscador, solo la letra del Nutri-Score; sin dato no se pone nada (en cada fila sería ruido) */
   return /^[A-E]$/.test(l||'')?'<span class="nsm n'+l+'" title="Nutri-Score '+l+'">'+l+'</span>':'';}
-const NOVA_TXT=['','sin procesar','ingrediente culinario','procesado','ultraprocesado'];
+const NOVA_TXT=['','sin procesar','ingrediente culinario','procesado','ultra\u00adprocesado'];   /* con guion suave: en 112 px no cabe entero */
 function selloHTML(ean){
   /* la ficha del producto: Nutri-Score · NOVA · aditivos, bajo el nombre. Uno guardado antes de pedir
      estos datos se completa solo al abrirlo (selloTraer); mientras, lo dice */
