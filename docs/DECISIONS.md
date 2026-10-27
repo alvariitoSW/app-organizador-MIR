@@ -3,6 +3,16 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-27 · Gastar menos tokens por sesión
+
+**Elegido** (visto bueno del usuario): REA deja de cargarse en cada sesión (`.mcp.json` → `tools/rea.mcp.json`;
+se usa por terminal con `npx -y rea-agents@6.8.0` o se vuelve a activar para una sesión de ingeniería inversa);
+el parte cierra con «Gasto» (tokens estimados, qué decidir antes, con qué juntar) y la revisión de salud solo
+corre si `main` cambió; reglas de «Gastar poco» en `CLAUDE.md`. **Descartado:** borrar la lista de tareas (en
+esta sesión ya estaba vacía: es de cada sesión) y quitar Google Drive y Claude Docs desde el repositorio (son
+conectores de la cuenta: se apagan en claude.ai). **Supuestos:** las cifras de gasto son estimaciones a partir
+del estudio de Comer (~150–250 mil por sesión), no mediciones.
+
 ## 2026-10-27 · REA instalado para las sesiones futuras
 
 **Elegido** (lo eligió el usuario): REA como servidor siempre conectado (`.mcp.json`, `rea-agents@6.8.0`)

@@ -27,7 +27,8 @@ lo que leen y miran se queda en su lado y aquí solo vuelve el resultado.
 1. **A la vez, en el mismo mensaje:**
    - el ayudante **`parte`**, en primer plano: «Haz el parte de /plan-socialista» (y «ensayo» si el
      usuario lo dijo). Hace los ocho pasos de abajo y devuelve el parte ya redactado.
-   - el ayudante **`verificador`**, de fondo: «Revisión de salud (encargo B)». Pasa las pruebas en
+   - el ayudante **`verificador`**, de fondo, **solo si `main` cambió** desde el marcador de
+     `marcadores.json` (si no, «Salud: sin cambios en main desde la última revisión»; ahorra tokens): «Revisión de salud (encargo B)». Pasa las pruebas en
      corto y mira Hoy, Mes y Comer · Plan a 412×915 (unos 5 minutos).
 2. **Entrega el parte tal cual llega** (sin la línea `Guardado:`/`Ensayo:`, que es para ti; si es
    `Hueco:`, sí va). No lo reescribas ni lo alargues.
@@ -80,7 +81,9 @@ Los hace el ayudante `parte` (o tú, si no está).
 6. **Redactar dentro del largo máximo** de las preferencias. En español, sin jerga, cada línea con
    su enlace o su archivo (`archivo:línea`, o el enlace al run). En el orden de las preferencias:
    lo que bloquea → los supuestos que esperan su «vale/no vale» → lo aparcado → una línea de lo que
-   va bien. Sin nada accionable,
+   va bien. Si se propone trabajo, cierra con **«Gasto»**: tokens estimados de la tarea propuesta
+   (pequeña 80–150 mil · media 200–350 mil · grande 400–700 mil, mejor en 2 sesiones), qué conviene
+   decidir antes para no ir y volver, y con qué se puede juntar. Sin nada accionable,
    **una sola línea** («Todo en orden: main desplegado y sellado, nada pendiente»): callarse bien
    también es un resultado.
 

@@ -5,7 +5,7 @@ metadata:
   version: "49"
 ---
 
-<!-- Copia de https://github.com/morluto/rea (etiqueta rea-agents-6.8.0, commit 160d821, licencia MIT: ver LICENSE), instalada el 2026-10-27. El servidor MCP «rea» va en `.mcp.json` (fijado a 6.8.0); para cambiar de versión, la de `.mcp.json` y esta copia a la vez. En este contenedor: Node 22.22 da un aviso EBADENGINE que no impide funcionar; la red deja bajar de npm. El análisis de JavaScript corta cada archivo a los 5 min: `app.js` de esta app (27 000 líneas) no termina, `fig/*.js` sí. Lo que extraiga REA, a la carpeta temporal, nunca al repositorio. Responde en español. -->
+<!-- Copia de https://github.com/morluto/rea (etiqueta rea-agents-6.8.0, commit 160d821, licencia MIT: ver LICENSE), instalada el 2026-10-27. El servidor MCP «rea» ya no se carga siempre: su configuración está en `tools/rea.mcp.json` (fijado a 6.8.0); sin él, por terminal con `npx -y rea-agents@6.8.0 …`. Para cambiar de versión, la de `tools/rea.mcp.json` y esta copia a la vez. En este contenedor: Node 22.22 da un aviso EBADENGINE que no impide funcionar; la red deja bajar de npm. El análisis de JavaScript corta cada archivo a los 5 min: `app.js` de esta app (27 000 líneas) no termina, `fig/*.js` sí. Lo que extraiga REA, a la carpeta temporal, nunca al repositorio. Responde en español. -->
 
 # REA
 
