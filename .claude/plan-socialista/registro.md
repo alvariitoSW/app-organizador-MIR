@@ -151,7 +151,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
-- [sup-2026-10-27-sello] Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
 - [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
@@ -172,6 +171,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
 ## Cerrados
+- ~~[sup-2026-10-27-sello]~~ VALE (usuario, 2026-10-27) Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
 
 - 2026-10-14 · **Valen:** 1 (R1: semana = 5 laborables), 9 (cabina de guardia también de día), 10 (manda lo que acaba más tarde), 13 (sin hora no es parada), 15 (taxi solo por la mañana), 26–30 (internos)
 - 2026-10-14 · **No valen → encargos de arriba:** 2, 3, 4, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
