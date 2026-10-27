@@ -148,6 +148,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
 - ~~[rec-2026-10-23-leanrea]~~ HECHO 2026-10-23 · Repositorio https://github.com/aicodeking/leanrea guardado e instalado como skill `/ingenieria-reversa` (`.claude/skills/ingenieria-reversa/`, commit 09ba4aa del original, MIT)
+- [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
