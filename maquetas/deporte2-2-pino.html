@@ -73,7 +73,7 @@ svg text{font-family:Georgia,'Times New Roman',serif}
 <section class="pant" id="p2"><svg id="sv2" viewBox="0 0 412 1240" width="412" height="1240" role="img" aria-label="La vuelta es un pino que rebrota: ocho brotes del 35 al 100 por ciento, uno por semana. Semanas 1 y 2 hechas, la 3 es ahora al 55 por ciento con sentadilla 45, banca 32,5, muerto 50, remo 27,5 y militar 20 kilos. Si fallas una semana, el brote espera y repites al mismo porcentaje; si fallas dos, bajas un escalón. Racha: 2 semanas."></svg></section>
 
 <p class="rotulo">Pantalla 3 · Tu objetivo de peso</p>
-<section class="pant" id="p3"><svg id="sv3" viewBox="0 0 412 1210" width="412" height="1210" role="img" aria-label="De 82 a 75 kilos, menos medio kilo por semana, 14 semanas, hacia el 8 de febrero de 2027. Hoy 81,4 kilos, semana 2. Cada día unas 2.000 kcal y 140 gramos de proteína. El plan semanal de comidas: lunes 1.980, guardia y saliente no cuentan, jueves 2.150 se pasa, viernes 1.960, sábado 2.010, domingo 1.990."></svg></section>
+<section class="pant" id="p3"><svg id="sv3" viewBox="0 0 412 1230" width="412" height="1230" role="img" aria-label="De 82 a 75 kilos, menos medio kilo por semana, 14 semanas, hacia el 8 de febrero de 2027. Hoy 81,4 kilos, semana 2. Cada día unas 2.000 kcal y 140 gramos de proteína. El plan semanal de comidas: lunes 1.980, guardia y saliente no cuentan, jueves 2.150 se pasa, viernes 1.960, sábado 2.010, domingo 1.990."></svg></section>
 
 <script>
 (function(){
@@ -126,9 +126,9 @@ var mod=['g','n','f','g','m','s','d'],cap=[['15:00',''],['Guardia',''],['Salida'
  o+=badge(270,355,3)+'</g>';
  o+='<g class="z" id="z4">';
  for(var j=0;j<14;j++){var nx=368+r()*34,ny=130+r()*210;o+='<path d="M'+nx.toFixed(1)+' '+ny.toFixed(1)+'l-6 12" stroke="'+K+'" stroke-width="1.8" stroke-linecap="round"/>'}
- o+='<path d="M312 372Q330 340 352 346Q372 328 396 346Q410 352 412 372Z" fill="url(#gub)" stroke="'+K+'" stroke-width="2"/><text x="304" y="226" font-size="17" font-weight="700" fill="'+K+'"'+HL+'>82 → 75 kg</text>'+
- '<path d="M318 388q-7 10 0 15a7 7 0 0 0 14 0q7 -5 -7 -17z" fill="'+G+'"/><text x="338" y="400" font-size="12" font-weight="700" fill="'+K+'">2.000 kcal · 140 g</text>'+badge(386,262,4)+'</g>';
- o+='<g class="z" id="z1">'+semana(10,396,.4,mod,cap,3)+badge(16,414,1).replace('cx="16"','cx="8"')+'</g>';
+ o+='<path d="M312 372Q330 340 352 346Q372 328 396 346Q410 352 412 372Z" fill="url(#gub)" stroke="'+K+'" stroke-width="2"/><text x="300" y="206" font-size="17" font-weight="700" fill="'+K+'"'+HL+'>82 → 75 kg</text>'+
+ '<path d="M308 255q-8 11 0 17a8 8 0 0 0 16 0q8 -6 -8 -19z" fill="'+G+'"/><text x="332" y="268" font-size="13" font-weight="700" fill="'+K+'"'+HL+'>2.000 kcal</text><text x="302" y="286" font-size="13" font-weight="700" fill="'+K+'"'+HL+'>140 g proteína</text>'+badge(388,150,4)+'</g>';
+ o+='<g class="z" id="z1">'+semana(10,396,.4,mod,cap,3)+badge(13,474,1)+'</g>';
  document.getElementById('sv0').innerHTML=o+'<g id="b5">'+badge(396,22,5)+'</g>'})();
 
 /* ---------- Pantalla 1 ---------- */
@@ -149,25 +149,25 @@ var mod=['g','n','f','g','m','s','d'],cap=[['15:00',''],['Guardia',''],['Salida'
  o+='<g><path d="M340 20q-12 4 -12 18q0 18 12 22q12 -4 12 -22q0 -14 -12 -18z" fill="'+G+'" stroke="'+K+'" stroke-width="1.8"/><path d="M372 20q-12 4 -12 18q0 18 12 22q12 -4 12 -22q0 -14 -12 -18z" fill="'+G+'" stroke="'+K+'" stroke-width="1.8"/><text x="362" y="80" text-anchor="middle" font-size="14" font-weight="700" fill="'+K+'">Racha: 2</text></g>';
  o+=tronco(cx,170,1100,52,26)+copa(cx,150,110,50)+'<text x="'+cx+'" y="152" text-anchor="middle" font-size="20" font-weight="700" fill="'+P+'">100%</text><text x="'+cx+'" y="172" text-anchor="middle" font-size="13" fill="'+P+'">semana 8</text>';
  var est=['hecha','hecha','ahora','luego','luego','luego','luego'],pc=[35,45,55,65,75,85,95];
- for(var n=1;n<=7;n++){var y=1040-(n-1)*118,d=n%2?-1:1,e=est[n-1],sc=.8+n*.06,bx=cx+d*18,tx=bx+d*(30*sc+10);
+ for(var n=1;n<=7;n++){var y=1040-(n-1)*118,d=n%2?-1:1,e=est[n-1],sc=.8+n*.06,bx=cx+d*18,off=56*sc+8;
   o+=brote(bx,y,d,sc,e);
-  o+='<text x="'+(bx+d*(30*sc+14))+'" y="'+(y-12)+'" text-anchor="'+(d>0?'start':'end')+'" font-size="15" font-weight="700" fill="'+K+'">Sem. '+n+' · '+pc[n-1]+'%</text>';
+  o+='<text x="'+(bx+d*off)+'" y="'+(y-12)+'" text-anchor="'+(d>0?'start':'end')+'" font-size="15" font-weight="700" fill="'+K+'">Sem. '+n+' · '+pc[n-1]+'%</text>';
   var tag=e==='hecha'?'hecha ✓':e==='ahora'?'AHORA':'luego';
-  o+='<text x="'+(bx+d*(30*sc+14))+'" y="'+(y+6)+'" text-anchor="'+(d>0?'start':'end')+'" font-size="13" fill="'+K+'"'+(e==='ahora'?' font-weight="700"':'')+'>'+tag+'</text>';
-  if(e==='ahora')o+='<rect x="'+(bx+d*(30*sc+10)-(d>0?0:78))+'" y="'+(y-30)+'" width="78" height="42" rx="6" fill="none" stroke="'+K+'" stroke-width="3"/>'}
+  o+='<text x="'+(bx+d*off)+'" y="'+(y+6)+'" text-anchor="'+(d>0?'start':'end')+'" font-size="13" fill="'+K+'"'+(e==='ahora'?' font-weight="700"':'')+'>'+tag+'</text>';
+  if(e==='ahora')o+='<rect x="'+(Math.min(bx,bx+d*52*sc)-6)+'" y="'+(y-44*sc)+'" width="'+(52*sc+12)+'" height="'+(44*sc+10)+'" rx="6" fill="none" stroke="'+K+'" stroke-width="3" stroke-dasharray="7 4"/>'}
  /* tarjeta cargas, semana 3 (y=804), a la izquierda del tronco */
- o+='<g><rect x="10" y="738" width="164" height="150" rx="6" fill="'+P+'" stroke="'+K+'" stroke-width="3"/><text x="20" y="760" font-size="13.5" font-weight="700" fill="'+G+'">Esta semana · 55%</text><text x="20" y="777" font-size="12" fill="'+K+'">2 series, sobran ~4 reps</text>';
+ o+='<g><rect x="238" y="738" width="164" height="150" rx="6" fill="'+P+'" stroke="'+K+'" stroke-width="3"/><text x="248" y="760" font-size="13.5" font-weight="700" fill="'+G+'">Esta semana · 55%</text><text x="248" y="777" font-size="12" fill="'+K+'">2 series, sobran ~4 reps</text>';
  var ex=[['Sentadilla','45'],['Banca','32,5'],['Muerto','50'],['Remo','27,5'],['Militar','20']];
- ex.forEach(function(e,i){o+='<text x="20" y="'+(800+i*17)+'" font-size="13.5" fill="'+K+'">'+e[0]+'</text><text x="164" y="'+(800+i*17)+'" text-anchor="end" font-size="13.5" font-weight="700" fill="'+K+'">'+e[1]+' kg</text>'});
+ ex.forEach(function(e,i){o+='<text x="248" y="'+(800+i*17)+'" font-size="13.5" fill="'+K+'">'+e[0]+'</text><text x="392" y="'+(800+i*17)+'" text-anchor="end" font-size="13.5" font-weight="700" fill="'+K+'">'+e[1]+' kg</text>'});
  o+='</g>';
  /* suelo y regla */
- o+='<path d="M0 1100Q100 1088 206 1100T412 1098V1240H0Z" fill="'+K+'" filter="url(#corte)"/>';
- o+=brote(40,1160,1,.9,'luego')+'<text x="100" y="1138" font-size="15" font-weight="700" fill="'+P+'">Si fallas una semana</text><text x="100" y="1157" font-size="14" fill="'+P+'">el brote espera, no muere.</text><text x="100" y="1176" font-size="14" fill="'+P+'">Repites al mismo %.</text>'+
- '<text x="22" y="1204" font-size="14" fill="'+P+'">Si fallas dos, bajas un escalón.</text><text x="22" y="1226" font-size="13" fill="'+P+'">Cuenta la semana con 2 sesiones (con guardia, 1). La mínima cuenta.</text>';
+ o+='<path d="M0 1100Q100 1090 206 1100T412 1098V1112Q300 1120 206 1112T0 1114Z" fill="'+K+'" filter="url(#corte)"/>';
+ o+=brote(40,1170,1,.9,'luego')+'<text x="100" y="1148" font-size="15" font-weight="700" fill="'+K+'">Si fallas una semana</text><text x="100" y="1167" font-size="14" fill="'+K+'">el brote espera, no muere.</text><text x="100" y="1186" font-size="14" fill="'+K+'">Repites al mismo %.</text>'+
+ '<text x="22" y="1212" font-size="14" font-weight="700" fill="'+K+'">Si fallas dos, bajas un escalón.</text><text x="22" y="1232" font-size="12.5" fill="'+K+'">Cuenta la semana con 2 sesiones (con guardia, 1). La mínima cuenta.</text>';
  document.getElementById('sv2').innerHTML=o})();
 
 /* ---------- Pantalla 3 ---------- */
-(function(){var o=bg(412,1210);
+(function(){var o=bg(412,1230);
  o+='<text x="16" y="52" font-size="44" font-weight="700" fill="'+K+'">82 → 75 kg</text><text x="16" y="76" font-size="14" fill="'+K+'">Menos medio kilo por semana · 14 semanas</text><text x="16" y="96" font-size="14" font-weight="700" fill="'+G+'">Meta: 8 de febrero de 2027</text>';
  o+=tronco(90,140,742,24,16)+copa(90,126,48,20);
  for(var k=82;k>=75;k--){var y=150+(82-k)*80,w=(82-k)*2;
@@ -182,7 +182,7 @@ var mod=['g','n','f','g','m','s','d'],cap=[['15:00',''],['Guardia',''],['Salida'
  o+='<text x="16" y="1006" font-size="13.5" fill="'+K+'">La savia del pino. Lo que gastas entrenando no se suma</text><text x="16" y="1024" font-size="13.5" fill="'+K+'">para comer más. Guardia y saliente no cuentan en la media.</text>';
  o+='<text x="16" y="1062" font-size="17" font-weight="700" fill="'+G+'">Plan semanal de comidas</text><text x="16" y="1080" font-size="13.5" fill="'+K+'">Cada día cuadra con ~2.000 kcal; se marca el que se pasa.</text>';
  o+=semana(10,1094,.5,['g','n','f','g','g','s','g'],[['1.980','cuadra'],['guardia','no cuenta'],['saliente','no cuenta'],['2.150','se pasa'],['1.960','cuadra'],['2.010','cuadra'],['1.990','cuadra']],-1,3);
- o+='<text x="16" y="1196" font-size="13.5" fill="'+K+'">Media de los días que cuentan: 2.018 ≈ 2.000 kcal.</text>';
+ o+='<text x="16" y="1214" font-size="13.5" fill="'+K+'">Media de los días que cuentan: 2.018 ≈ 2.000 kcal.</text>';
  document.getElementById('sv3').innerHTML=o})();
 
 /* ---------- Texto y recorrido ---------- */

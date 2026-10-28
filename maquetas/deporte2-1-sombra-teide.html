@@ -45,11 +45,11 @@ svg{display:block;max-width:100%}
 .hoy{margin:2px 6px 10px}
 .hoy b{display:block;font-size:30px;line-height:1.05;font-weight:normal}
 .hoy span{display:block;font:600 15px system-ui,sans-serif;color:var(--viol);margin-top:4px}
-.ejs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 6px 0}
-.ej{min-height:76px;text-align:left;padding:8px 10px;background:var(--papel2);border:1px solid #8a6b4a;border-radius:4px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--papel2),inset 0 0 0 4px #b9a27c;position:relative}
+.ejs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 6px 0}
+.ej{min-height:64px;text-align:left;padding:8px 10px;background:var(--papel2);border:1px solid #8a6b4a;border-radius:4px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--papel2),inset 0 0 0 4px #b9a27c;position:relative}
 .ej b{display:block;font-size:15px;font-weight:600;line-height:1.2}
 .ej i{display:block;font:normal 14px system-ui,sans-serif;color:var(--sepia);margin-top:2px}
-.ej em{display:block;font:italic 12px/1.2 system-ui,sans-serif;color:var(--viol);margin-top:2px}
+.ej em{display:none}
 .nota{margin:8px 6px 0;font:13px/1.35 system-ui,sans-serif;color:#4a3a2a}
 #btnMin{display:block;width:calc(100% - 12px);margin:12px 6px 0;min-height:56px;padding:6px 12px;border:2px solid var(--tinta);background:var(--viol);color:#fff;border-radius:6px;font:700 16px/1.2 system-ui,sans-serif;cursor:pointer;text-align:center}
 #btnMin small{display:block;font-weight:400;font-size:13px}
@@ -98,7 +98,7 @@ svg{display:block;max-width:100%}
   <p class="sub">La app, explicada con este dibujo.</p>
   <div class="lamina" id="lam0"></div>
   <div class="zona-texto">
-    <p id="texto45"><span class="p" data-p="1">Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.</span> <span class="p" data-p="2">Al abrirla ves qué toca hoy, a qué hora y dónde. Te da la sesión con sus cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El fin de semana, parque.</span> <span class="p" data-p="3">Si lo dejas dos semanas, la app arranca la vuelta al 35 % y subes diez puntos cada semana. Si fallas, repites sin castigo; la racha se cuenta por semanas.</span> <span class="p" data-p="4">El peso baja de 82 a 75 kilos con unas 2.000 kilocalorías y 140 gramos de proteína. El plan semanal de comidas ya cuadra con eso.</span> <span class="p" data-p="5">En el dibujo, la sombra del Teide es la hora, los roques son tu semana, el camino es la vuelta y las nubes son tu peso. Verlo así ayuda a seguir.</span></p>
+    <p id="texto45"><span class="p" data-p="1">Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.</span> <span class="p" data-p="2">Al abrirla ves qué toca hoy, a qué hora y dónde, con sus cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El fin de semana, parque.</span> <span class="p" data-p="3">Si lo dejas dos semanas, la vuelta arranca al 35 % y sube diez puntos por semana. Si fallas, repites sin castigo; la racha cuenta semanas.</span> <span class="p" data-p="4">El peso baja de 82 a 75 kilos con 2.000 kilocalorías y 140 gramos de proteína; el plan de comidas cuadra.</span> <span class="p" data-p="5">Aquí, la sombra es la hora, los roques son tu semana, el camino es la vuelta y las nubes son tu peso. Así se sigue mejor.</span></p>
   </div>
   <div class="fila-boton">
     <button id="btnTour" type="button" aria-pressed="false">Explícamelo · 45 s</button>
@@ -112,9 +112,8 @@ svg{display:block;max-width:100%}
   <h2 id="t1">Hoy toca</h2>
   <div class="hoy"><b>Gimnasio · 15:00 a 16:00</b><span>Jueves · semana 3 de la vuelta, al 55 %</span></div>
   <div class="lamina" id="lam1"></div>
-  <p class="nota">La sombra del Teide ya toca la marca de las 15 h. Toca un ejercicio para cambiarlo por otro del mismo músculo.</p>
-  <div class="ejs" id="ejs"></div>
-  <p class="nota">2 series de cada uno, esfuerzo suave: que te sobren unas 4 repeticiones. Entre series suena el aviso de descanso.</p>
+    <div class="ejs" id="ejs"></div>
+  <p class="nota">2 series de cada uno, esfuerzo suave (sobran ~4 repeticiones). Entre series suena el descanso. Toca un ejercicio para cambiarlo por otro del mismo músculo.</p>
   <button id="btnMin" type="button" aria-expanded="false" aria-controls="minima">Voy justo · sesión mínima<small>25 min a las 15:30 · toca para verla</small></button>
   <div id="minima" hidden><b>Mínima, 25 min a las 15:30</b><br>3 ejercicios × 2 series: sentadilla 45 kg, press de banca 32,5 kg y remo 27,5 kg. Cuenta igual para la racha.</div>
   <div class="semana" id="sem" aria-label="Tu semana"></div>
@@ -236,7 +235,7 @@ var ALT=[48,52,42,50,46,56,40];
 
 // ---------- Pantalla 1: reloj + ejercicios + semana ----------
 (function(){
-  var s='<svg viewBox="0 0 412 340" width="412" height="340" role="img" aria-labelledby="ti1"><title id="ti1">La sombra del Teide toca la marca de las 15 horas: toca gimnasio</title>';
+  var s='<svg viewBox="0 28 412 304" width="412" height="304" role="img" aria-labelledby="ti1"><title id="ti1">La sombra del Teide toca la marca de las 15 horas: toca gimnasio</title>';
   s+=cielo(340,240,48,118,240)+sombra(240,300,true)+'</svg>';
   $('lam1').innerHTML=s;
   var EJ=[['Sentadilla','45 kg','Prensa de piernas'],['Press de banca','32,5 kg','Press con mancuernas'],['Peso muerto','50 kg','Peso muerto rumano'],['Remo','27,5 kg','Remo con mancuerna'],['Press militar','20 kg','Press de hombro sentado']];
@@ -253,8 +252,9 @@ var ALT=[48,52,42,50,46,56,40];
   var tx=['Gimnasio 15:00','Guardia','Saliente','Hoy · gimnasio','Mínima 15:30','Parque 10:00','Descanso'];
   var w='';
   for(var i=0;i<7;i++){
-    var sv='<svg viewBox="0 0 52 62" width="48" height="58" aria-hidden="true">'+fila(56,[34+ (i%3)*4],[TIP[i]],[LET[i]],26,0,34).replace(/<g stroke[\s\S]*?<\/g>/,function(m){return m}) +'</svg>';
-    if(TIP[i]=='pinar')sv='<svg viewBox="0 0 52 62" width="48" height="58" aria-hidden="true"><path d="M26 12 l-12 18 h8 l-11 16 h12 l-12 14 h38 l-12 -14 h12 l-11 -16 h8 Z" fill="#44532f" stroke="#2b1d33" stroke-width="1.2"/>'+pastilla(15,38,22,'S',12)+'</svg>';
+    var fl=TIP[i]=='noche'?'#1f1428':(TIP[i]=='pen'?'#7a5f94':(TIP[i]=='desc'?'#d3bd92':'#3a2a46'));
+    var sv='<svg viewBox="0 0 52 50" width="48" height="46" aria-hidden="true"><path d="'+roque(26,46,34+(i%3)*4,34)+'" fill="'+fl+'" stroke="#2b1d33" stroke-width="1.2"/><path d="'+roque(26,46,34+(i%3)*4,34)+'" fill="url(#'+(TIP[i]=='pen'||TIP[i]=='desc'?'hat':'hat2')+')"/>'+pastilla(15,26,22,LET[i],12)+'</svg>';
+    if(TIP[i]=='pinar')sv='<svg viewBox="0 0 52 50" width="48" height="46" aria-hidden="true"><path d="M26 4 l-12 18 h8 l-11 16 h12 l-12 14 h38 l-12 -14 h12 l-11 -16 h8 Z" fill="#44532f" stroke="#2b1d33" stroke-width="1.2"/>'+pastilla(15,26,22,'S',12)+'</svg>';
     w+='<div'+(i==3?' class="hoyd"':'')+'>'+sv+'<br>'+tx[i].replace(' ','<br>')+'</div>';
   }
   $('sem').innerHTML=w;

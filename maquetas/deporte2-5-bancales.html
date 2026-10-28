@@ -33,7 +33,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .pasos i{font-style:normal;width:22px;height:22px;border-radius:11px;background:#fbf5e2;border:2px solid #7a5a36;text-align:center;line-height:18px;font-weight:700}
 .pasos i.on{background:#b45a12;color:#fff;border-color:#7a3b09}
 .part{transition:opacity .4s}
-svg.tour .part{opacity:.28}
+svg.tour .part{opacity:.38}
 svg.tour .part.on{opacity:1}
 .ring{fill:none;stroke:#b45a12;stroke-width:4;stroke-dasharray:7 5;opacity:0;pointer-events:none}
 .part.on .ring{opacity:1}
@@ -229,7 +229,7 @@ var DIAS=[
  {l:'L',n:'Lunes',t:'15:00',d:'Gimnasio · 15:00 a 16:00',b:2,k:'s',sm:'15:00'},
  {l:'M',n:'Martes',t:'Hoy no',d:'Guardia: hoy no se entrena. Descansa.',b:-1,k:'g',sm:'guardia'},
  {l:'X',n:'Miércoles',t:'Paseo',d:'Saliente: paseo de 20 min o nada.',b:-1,k:'n',sm:'saliente'},
- {l:'J',n:'Jueves',t:'15:00',d:'Hoy, jueves: gimnasio de 15:00 a 16:00',b:2,k:'s',sm:'hoy'},
+ {l:'J',n:'Jueves',t:'15:00',d:'Gimnasio · de 15:00 a 16:00',b:2,k:'s',sm:'hoy'},
  {l:'V',n:'Viernes',t:'15:30',d:'Si no llegas a las 15:00: mínima de 25 min a las 15:30',b:2.5,k:'s',sm:'mínima'},
  {l:'S',n:'Sábado',t:'10:00',d:'Parque · 10:00 · 40 min sin material',b:-2,k:'p',sm:'parque'},
  {l:'D',n:'Domingo',t:'Libre',d:'Descanso. Hoy no toca nada.',b:-1,k:'r',sm:'libre'}
@@ -243,9 +243,9 @@ function hillScene(day){
     var y=40+i*42,x=150+i*0;
     var lit=day.b>=2&&day.b<3&&i==2;
     o+=terr(130,y,282,30,i<2?'#cfa070':'#e0b27a','#c98a5a',true);
-    o+='<text x="140" y="'+(y+30)+'" font-size="15" font-weight="800" fill="#2a1d12">'+hs[i]+' h</text>';
+    o+='<rect x="136" y="'+(y+12)+'" width="46" height="24" rx="6" fill="#fbf5e2"/><text x="142" y="'+(y+30)+'" font-size="15" font-weight="800" fill="#2a1d12">'+hs[i]+' h</text>';
     o+=palm(380-i*20,y+4,.5+i*.1,G2,G1);
-    if(lit)o+='<rect x="128" y="'+(y-2)+'" width="286" height="46" rx="8" fill="none" stroke="#b45a12" stroke-width="4" stroke-dasharray="8 5"/>';
+    if(lit)o+='<rect x="128" y="'+(y-2)+'" width="280" height="46" rx="8" fill="none" stroke="#b45a12" stroke-width="4" stroke-dasharray="8 5"/>';
   }
   if(day.k=='g'){o+='<rect x="0" y="0" width="412" height="250" fill="#2a2147" opacity=".6"/>'+moon(330,60,26,'#ffe9a8')+'<text x="206" y="150" text-anchor="middle" font-size="22" font-weight="800" fill="#fff">Guardia: bancal en sombra</text>';}
   else if(day.k=='n'){o+='<rect x="0" y="0" width="412" height="250" fill="#e8eeee" opacity=".62"/>'+mist(130,60,282)+mist(130,120,282)+mist(130,180,282)+'<text x="206" y="150" text-anchor="middle" font-size="22" font-weight="800" fill="#2a1d12">Saliente: bancal en neblina</text>';}
@@ -306,8 +306,8 @@ function barranco(){
     }else{
       o+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+full+'" rx="4" fill="#f7efd6" fill-opacity=".55" stroke="#8a6a44" stroke-width="1.6" stroke-dasharray="5 4"/>'+palm(x+w/2,y+4,.35,'#8fb58a','#a9c9a2');
     }
-    o+='<text x="'+(x+w/2)+'" y="'+(y-30)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#2a1d12">'+PCT[i]+'%</text>';
-    o+='<text x="'+(x+w/2)+'" y="'+(y-16)+'" text-anchor="middle" font-size="11" font-weight="600" fill="#4a3420">sem. '+(i+1)+'</text>';
+    o+='<text x="'+(x+w/2)+'" y="'+(y-52)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#2a1d12">'+PCT[i]+'%</text>';
+    o+='<text x="'+(x+w/2)+'" y="'+(y-38)+'" text-anchor="middle" font-size="11" font-weight="600" fill="#4a3420">sem. '+(i+1)+'</text>';
   }
   o+='<g><rect x="190" y="458" width="200" height="40" rx="8" fill="#fbf5e2" filter="url(#sh2)"/><text x="290" y="483" text-anchor="middle" font-size="13" font-weight="700" fill="#2a1d12">Esta semana: 3 · al 55%</text></g>';
   return o;
@@ -332,9 +332,9 @@ pinta2();
   var kg=[82,81,80,79,78,77,76,75];
   for(var i=0;i<7;i++){
     var y=30+i*62,x=80+i*34;
-    o+=terr(x,y+34,330-i*34+8,28,'#e0b27a','#c98a5a',true);
-    o+='<g filter="url(#sh2)"><rect x="'+x+'" y="'+(y+18)+'" width="'+(330-i*34)+'" height="18" rx="9" fill="#3a8fb7"/></g><path d="M'+(x+8)+' '+(y+24)+'H'+(x+300-i*34)+'" stroke="#d9f2fb" stroke-width="2"/>';
-    o+='<rect x="'+(x+330-i*34-6)+'" y="'+(y+20)+'" width="14" height="'+(62-6)+'" fill="#4aa3c9"/>';
+    o+=terr(x,y+34,322-i*34,28,'#e0b27a','#c98a5a',true);
+    o+='<g filter="url(#sh2)"><rect x="'+x+'" y="'+(y+18)+'" width="'+(322-i*34)+'" height="18" rx="9" fill="#3a8fb7"/></g><path d="M'+(x+8)+' '+(y+24)+'H'+(x+292-i*34)+'" stroke="#d9f2fb" stroke-width="2"/>';
+    o+='<rect x="'+(x+322-i*34-6)+'" y="'+(y+20)+'" width="14" height="'+(62-6)+'" fill="#4aa3c9"/>';
     o+='<text x="14" y="'+(y+34)+'" font-size="17" font-weight="800" fill="#2a1d12">'+kg[i]+' kg</text>';
     o+=palm(x+30,y+14,.55,G2,G1);
   }
