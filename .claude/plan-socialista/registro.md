@@ -174,3 +174,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
 - [run-40591125346] 2026-10-27 · despliegue de main (2416c99, sello Nutri-Score/NOVA/aditivos) · success; sellado (version.json 2416c99); rama 2 por delante solo con registro y traspaso; 0 issues/PR · ok
 - [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
+- [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, sello del lector de frases) · success; sellado; 0 issues/PR · ok
+- [rama-ebe7052] 2026-10-28 · rama ccr-c4997bb6-02fys3: 14 commits por detrás de main (Comer S2/S2b, app.js tocado) y 28 por delante (Dinero/Consejo); traer main antes de construir D1 · abierto
+- [parte-dinero-2026-10-28] 2026-10-28 · parte de la Tanda Dinero (D1-D6 delegada en el Consejo): pendiente qué se quita de Dinero; siguiente D1 ~0,4 M sonnet · propuesto
