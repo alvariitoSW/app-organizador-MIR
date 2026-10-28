@@ -1520,3 +1520,19 @@ las D3-D6. Limpieza mínima en `app.js`: se quitan las vistas `cierre` y `analis
 **Descartado.** Quitar `salud` (dos pruebas la usan); tocar saneados y migraciones de lectura (son datos guardados); borrar
 acciones o funciones de Dinero (todas tienen emisor y lector).
 **Supuestos.** Las cifras de la 332 son inventadas. Lo que ve el usuario no cambia en nada.
+
+## 2026-10-28 · Dinero D3: Portada (el Bosque), Gastos y datos nuevos
+
+**Elegido.** `store.dinero3` {v, ahorro{guardado, objetivoMeses, plazoMeses, desde}, compras[], migrado}, con una migración que
+copia una sola vez y no toca `store.dinero` ni `store.ahorro` (colchón y huchas sin objetivo → lo guardado; hucha con objetivo →
+compra en plan; deseos sin hacer → compras en espera; la meta antigua propone el objetivo en meses; si falla, la app sigue con lo
+viejo). Entra en la copia de seguridad con el resto del store. Pestañas Bosque · Gastos · Ahorro · Compras (el cierre del mes
+cuelga de Gastos). Bosque = maqueta Laurisilva: copa = meses de vida (guardado ÷ gasto de `mesTipo`), «Vas por delante/detrás»
+comparando tu ritmo real (media de lo ahorrado, o tu meta sobre lo que entra) con lo que pide el plazo. Gastos = maqueta del puesto 3
+con cifras reales y enlaces a recibos, fijos, hoja, Fintonic, categoría, taxis y la semana. Tokens `--lau-*` con versión `html.dark`.
+**Descartado.** Mover el guardado a un cálculo automático desde las huchas (Ahorro/Compras aún enseñan lo de antes: lo rehacen D4/D5);
+añadir acciones al switch de `change` (todo son botones); borrar `dinHoyHTML` ahora (queda sin llamadas hasta la D6).
+**Supuestos.** El «guardado» nuevo es una cifra que se puede editar en el Bosque y puede diferir de la suma de huchas hasta la D4.
+Sin gasto conocido el Bosque pide contar los gastos. Las pruebas 221, 263, 266, 216 y 290 miraban el «Te queda / Puedes gastar hoy»
+y los botones de esa tarjeta: se conserva el cálculo (d6Mes, bkQueda) y se cambia el camino; lo que comprobaba el texto de esa
+tarjeta se quita (acta del 28/10). Las cifras de las pruebas 333-334 son inventadas.

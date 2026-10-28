@@ -902,6 +902,7 @@ function normalize(o){
    else e.dias=EST_NIVELES.map(function(n,i){
      const v=+e.dias[i];return (v>=1&&v<=365)?Math.round(v):n.dias;});}
   ahorroLimpia(o);
+  dinero3Limpia(o);
   /* 🌿 consumo: sesiones con su forma, cantidad y contexto; objetivo semanal y €/g */
   if(o.consumo&&typeof o.consumo==='object'){const c=o.consumo;
     c.ses=(Array.isArray(c.ses)?c.ses:[]).filter(function(x){return x&&esFecha(x.fecha||'');}).slice(0,2000).map(function(x){return {id:String(x.id||uid('cn')),ts:+x.ts||0,fecha:x.fecha,
@@ -20038,9 +20039,9 @@ function renderDinero(){
   if(v==='categoria')return renderDinCategoria();
   /* la salud financiera ya no es pantalla: su ruta vieja lleva a Ahorro (el cierre y el análisis viven en Mes) */
   if(v==='salud'){ui.dineroVista='';ui.dinTab='ahorro';}
-  /* tres pestañas: Hoy (lo que te queda), Ahorro (lo que tienes y cuándo llega cada meta) y Mes */
+  /* cuatro pestañas: Bosque (portada), Gastos, Ahorro y Compras; el cierre del mes (`mes`) cuelga de Gastos */
   const t=dinTabDe();
-  $('#main').innerHTML=t==='ahorro'?dinAhorroHTML():(t==='mes'?dinMes8HTML():dinHoyHTML());}
+  $('#main').innerHTML=t==='ahorro'?dinAhorroHTML():(t==='mes'?dinMes8HTML():(t==='gastos'?dinGastosHTML():(t==='compras'?dinComprasHTML():dinBosqueHTML())));}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
   return '<div class="subcab">'+
@@ -20151,6 +20152,55 @@ function ahorroS(){
   if(!a.meses||typeof a.meses!=='object'||Array.isArray(a.meses))a.meses={};
   if(!Array.isArray(a.movs))a.movs=[];
   return a;}
+/* ===================== DINERO 3.0 · datos nuevos (tanda Dinero, D3) =====================
+   store.dinero3 = {v:1, ahorro:{guardado,objetivoMeses,plazoMeses,desde}, compras:[{id,nombre,precio,llevas,mes,estado,alta,tipo}], migrado}
+   estado: 'espera' | 'plan' | 'comprada' | 'no'. NADA de lo viejo (store.dinero, store.ahorro) se borra ni se toca: la
+   migración COPIA una vez y, si falla, la app sigue con lo viejo. Entra en la copia de seguridad con el resto del store. */
+const D3_ESTADOS=['espera','plan','comprada','no'];
+function d3Num(v,mn,mx,def){const n=+v;return isFinite(n)&&n>=mn&&n<=mx?n:def;}
+function dinero3Limpia(o){
+  /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
+  const d=o.dinero3;if(d==null)return;
+  if(typeof d!=='object'||Array.isArray(d)){delete o.dinero3;return;}
+  const A=d.ahorro&&typeof d.ahorro==='object'?d.ahorro:{};
+  o.dinero3={v:1,migrado:!!d.migrado,
+    ahorro:{guardado:Math.max(0,Math.round((+A.guardado||0)*100)/100),objetivoMeses:Math.round(d3Num(A.objetivoMeses,1,36,6)),
+      plazoMeses:Math.round(d3Num(A.plazoMeses,1,60,12)),desde:esFecha(A.desde||'')?A.desde:''},
+    compras:(Array.isArray(d.compras)?d.compras:[]).filter(function(c){return c&&c.id;}).slice(0,300).map(function(c){
+      return {id:String(c.id).slice(0,40),nombre:String(c.nombre||'').slice(0,60),precio:Math.max(0,+c.precio||0),llevas:Math.max(0,+c.llevas||0),
+        mes:/^\d{4}-\d{2}$/.test(c.mes||'')?c.mes:'',estado:D3_ESTADOS.indexOf(c.estado)>=0?c.estado:'espera',
+        alta:esFecha(c.alta||'')?c.alta:'',tipo:String(c.tipo||'').slice(0,20)};})};}
+function dinero3Migra(){
+  /* copia, no toca: el colchón y las huchas sin objetivo → lo guardado; cada hucha con objetivo → una compra en plan;
+     sus deseos sin hacer → compras en espera; la meta antigua propone el objetivo en meses */
+  const a=ahorroS(),hoy=iso(new Date()),res={guardado:0,objetivoMeses:6,compras:[]};
+  a.huchas.forEach(function(h){
+    if(!h||typeof h!=='object')return;
+    const saldo=Math.max(0,+h.saldo||0),puro=h.id===a.puroId||h.id==='hu-colchon',obj=puro?0:Math.round((metaObjetivo(h)||0)*100)/100;
+    if(!obj)res.guardado+=saldo;
+    else res.compras.push({id:uid('co'),nombre:String(h.nombre||'Compra').slice(0,60),precio:obj,llevas:saldo,
+      mes:/^\d{4}-\d{2}$/.test(h.para||'')?h.para:'',estado:'plan',alta:hoy,tipo:String(h.tipo||'').slice(0,20)});
+    (Array.isArray(h.deseos)?h.deseos:[]).filter(function(x){return x&&!x.hecho&&+x.precio>0;}).forEach(function(x){
+      res.compras.push({id:uid('co'),nombre:String(x.txt||'Deseo').slice(0,60),precio:+x.precio,llevas:0,mes:'',estado:'espera',alta:hoy,tipo:String(h.tipo||'').slice(0,20)});});});
+  res.guardado=Math.round(res.guardado*100)/100;
+  const g=mesTipo().gasto;
+  if(a.meta&&+a.meta.importe>0&&g>0)res.objetivoMeses=Math.max(1,Math.min(24,Math.round(+a.meta.importe/g)));
+  return res;}
+function dinero3S(){
+  if(!store.dinero3||typeof store.dinero3!=='object'||Array.isArray(store.dinero3))store.dinero3={};
+  const d=store.dinero3;
+  if(!d.ahorro||typeof d.ahorro!=='object')d.ahorro={};
+  const A=d.ahorro;
+  A.guardado=Math.max(0,+A.guardado||0);A.objetivoMeses=Math.round(d3Num(A.objetivoMeses,1,36,6));
+  A.plazoMeses=Math.round(d3Num(A.plazoMeses,1,60,12));if(!esFecha(A.desde||''))A.desde=iso(new Date());
+  if(!Array.isArray(d.compras))d.compras=[];
+  d.v=1;
+  if(!d.migrado){
+    d.migrado=true;   /* una sola vez, salga bien o mal */
+    try{const r=dinero3Migra();A.guardado=r.guardado;A.objetivoMeses=r.objetivoMeses;d.compras=d.compras.concat(r.compras);}
+    catch(e){console.warn('la migración de Dinero no ha podido; se sigue con lo de antes',e);}
+    save();}
+  return d;}
 function ahorroLimpia(o){
   /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
   if(!o.ahorro||typeof o.ahorro!=='object')return;
@@ -21323,11 +21373,211 @@ function asistTjHTML(t,cls,plegable){
         '<button class="btn '+(a[3]?'p ':'')+'s" data-a="'+a[1]+'"'+a[2]+'>'+esc(a[0])+'</button>';}).join('')+
       (t.nada?'':'<span class="sp"></span><button class="dlink" data-a="asist-nunca" data-id="'+esc(t.id)+'">no me lo digas más</button>')+'</div>':'')+'</div>';}
 
-/* ---------- las tres pestañas ---------- */
+/* ===================== DINERO 3.0 · Bosque y Gastos (tanda Dinero, D3) =====================
+   Portada = el bosque (maquetas/dinero-rara2-laurisilva.html): la copa llega a los MESES DE VIDA (guardado ÷ gasto de un mes
+   típico, mesTipo), la copa de puntos es el objetivo, el musgo lo guardado, el tocón el gasto variable más grande y los frutos
+   las compras planificadas. Gastos = maquetas/dinero-laurisilva-gastos.html con cifras reales. Ahorro y Compras, de momento, las
+   pantallas de antes (las rehacen la D4 y la D5). */
+function d3Ritmo(){
+  /* lo que ahorras de verdad al mes: la media de los últimos meses con cifra; si no, tu meta sobre lo que entra */
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),v=[];
+  for(let i=1;i<=3;i++){const x=ahorroDeMes(mkSuma(mkHoy,-i));if(x&&x.ahorro>0)v.push(x.ahorro);}
+  return v.length?Math.round(v.reduce(function(s,x){return s+x;},0)/v.length):Math.round(nominaMedia()*metaPct()/100);}
+function d3Claro(){
+  /* el gasto variable más grande del mes (o del último mes con cifras) */
+  const hoy=new Date();let mk=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  if(!gastoMes(mk))mk=dinMesCerrado();
+  const p=mk?mesPartes(mk):null;if(!p)return null;
+  let mejor=null;p.V.forEach(function(k){const v=+p.g.cats[k]||0;if(!mejor||v>mejor.v)mejor={k:k,v:Math.round(v)};});
+  return mejor&&mejor.v>=1?{mk:mk,k:mejor.k,v:mejor.v}:null;}
+function d3Datos(){
+  const d=dinero3S(),A=d.ahorro,g=mesTipo().gasto||0,hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const vida=g>0?Math.round(A.guardado/g*10)/10:0,objE=Math.round(A.objetivoMeses*g/10)*10,falta=Math.max(0,objE-Math.round(A.guardado));
+  const dd=parseDate(A.desde),mk0=dd?ahoMk(dd.getFullYear(),dd.getMonth()):mkHoy,llega=mkSuma(mk0,A.plazoMeses),rest=Math.max(1,mkEntre(mkHoy,llega));
+  const ritmo=d3Ritmo();
+  return {A:A,g:g,vida:vida,objE:objE,falta:falta,llega:llega,futuro:mkEntre(mkHoy,llega)>0,rest:rest,ritmo:ritmo,
+    pide:falta?Math.ceil(falta/rest/10)*10:0,delante:ritmo>=falta/rest,
+    frutos:d.compras.filter(function(c){return c.estado==='plan';}).length,claro:d3Claro()};}
+const D3_COMA=function(n){return String(n).replace('.',',');};
+let _d3Hojas='';
+function d3Hojas(){
+  /* las hojas de la copa, siempre en el mismo sitio (determinista) */
+  if(_d3Hojas)return _d3Hojas;
+  let s=7;const r=function(){s=(s*9301+49297)%233280;return s/233280;},C=[[270,519,52],[218,548,46],[322,548,46],[245,575,40],[295,575,40]];
+  for(let i=0;i<70;i++){const c=C[i%5],a=r()*6.283,d=Math.sqrt(r())*c[2]*.85,x=(c[0]+Math.cos(a)*d).toFixed(1),y=(c[1]+Math.sin(a)*d).toFixed(1);
+    _d3Hojas+='<ellipse cx="'+x+'" cy="'+y+'" rx="6" ry="2.6" transform="rotate('+Math.round(r()*180)+' '+x+' '+y+')"/>';}
+  return _d3Hojas;}
+function d3EscenaSVG(D){
+  const A=D.A,maxM=Math.max(A.objetivoMeses,D.vida,1),u=456/maxM,Y=function(m){return 680-u*m;};
+  const objTop=Y(A.objetivoMeses),k=Math.max(.4,Math.min(1,.4+D.vida*.25)),topY=Math.min(Y(D.vida),660-148*k),yt=topY+113*k;
+  const f=function(x){return Math.round(x*10)/10;};
+  const C=[[270,519,52],[218,548,46],[322,548,46],[245,575,40],[295,575,40]];
+  const paso=Math.ceil(maxM/8);let regla='';
+  for(let m=paso;m<=Math.floor(maxM);m+=paso)regla+='<path d="M38 '+f(Y(m))+'h14"/><text x="4" y="'+f(Y(m)+5)+'" stroke="none">'+m+'</text>';
+  const copa='<g transform="translate(270 '+f(topY)+') scale('+k+') translate(-270 -467)">'+
+    '<g fill="var(--lau-copa)">'+C.map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'"/>';}).join('')+'</g><g fill="var(--lau-hoja)">'+d3Hojas()+'</g></g>';
+  const meta='<g transform="translate(0 '+f(objTop-224)+')" fill="var(--lau-pastel)" fill-opacity=".55" stroke="var(--lau-verde)" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round">'+
+    C.map(function(c){return '<circle cx="'+c[0]+'" cy="'+(c[1]-243)+'" r="'+c[2]+'"/>';}).join('')+'</g>';
+  const y1=objTop+156,y2=topY+4,union=y1<y2-10?'<path d="M262 '+f(y1)+'V'+f(y2)+'M278 '+f(y1)+'V'+f(y2)+'" stroke="var(--lau-verde)" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round" fill="none"/>':'';
+  const FR=[[322,68],[348,80],[376,62],[306,96],[334,104],[362,94],[290,70],[392,84]],fr=FR.slice(0,Math.min(D.frutos,FR.length));
+  const frutos=fr.length?'<path d="M412 14 C370 14 330 22 296 48" stroke="var(--lau-tronco)" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+    '<g stroke="var(--lau-tronco)" stroke-width="2.5" stroke-linecap="round">'+fr.map(function(q){return '<path d="M'+q[0]+' '+(q[1]-34)+'V'+(q[1]-10)+'"/>';}).join('')+'</g>'+
+    '<g fill="var(--lau-fruta)" stroke="var(--lau-fruta-borde)" stroke-width="2">'+fr.map(function(q){return '<circle cx="'+q[0]+'" cy="'+q[1]+'" r="11"/>';}).join('')+'</g>'+
+    '<g fill="#fff" fill-opacity=".6">'+fr.map(function(q){return '<circle cx="'+(q[0]-4)+'" cy="'+(q[1]-4)+'" r="3"/>';}).join('')+'</g>':'';
+  const tit='Bosque de laurisilva en la niebla. Un árbol con la copa a '+D3_COMA(D.vida)+' de '+A.objetivoMeses+' meses de la regla de madera; la copa de puntos, arriba, es el objetivo de '+
+    A.objetivoMeses+' meses'+(D.g?' ('+fmtMil(D.objE)+' euros)':'')+'. Debajo, el musgo guarda '+fmtMil(A.guardado)+' euros. '+
+    (D.claro?'A la izquierda, un tocón es el gasto de '+D.claro.k+': '+fmtMil(D.claro.v)+' euros al mes. ':'')+
+    (D.frutos?'Arriba a la derecha cuelgan '+D.frutos+(D.frutos===1?' fruto, una compra planificada.':' frutos, las compras planificadas.'):'Aún no hay compras planificadas.');
+  return '<svg class="lau-svg" viewBox="0 0 412 900" role="img" aria-labelledby="lauT" preserveAspectRatio="xMidYMid slice">'+
+    '<title id="lauT">'+esc(tit)+'</title>'+
+    '<defs><linearGradient id="lauCielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--lau-cielo1)"/><stop offset="1" stop-color="var(--lau-cielo2)"/></linearGradient>'+
+    '<filter id="lauBl"><feGaussianBlur stdDeviation="9"/></filter></defs>'+
+    '<rect width="412" height="900" fill="url(#lauCielo)"/>'+
+    '<path d="M0 640 q20 -34 44 -10 q16 -30 44 -4 q22 -34 50 -6 q20 -26 46 -2 q24 -30 50 -4 q22 -28 48 0 q26 -26 52 -2 q24 -22 78 -4 V690 H0Z" fill="var(--lau-lomo1)"/>'+
+    '<path d="M0 664 q24 -30 50 -8 q20 -26 48 -2 q24 -30 50 -4 q26 -24 52 0 q22 -26 50 -2 q24 -24 50 0 q30 -22 62 -6 V700 H0Z" fill="var(--lau-lomo2)"/>'+
+    '<rect x="26" y="'+f(objTop-10)+'" width="12" height="'+f(684-objTop+10)+'" rx="6" fill="var(--lau-madera)"/>'+
+    '<g stroke="var(--lau-madera-osc)" stroke-width="3" stroke-linecap="round" fill="var(--lau-ink)" font-size="13" font-weight="700">'+regla+'</g>'+
+    '<text x="4" y="'+f(objTop-22)+'" font-size="12" fill="var(--lau-ink2)">meses</text>'+
+    '<path d="M62 '+f(objTop)+'H400" stroke="var(--lau-ink2)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>'+
+    '<text x="402" y="'+f(objTop-10)+'" font-size="13" font-weight="700" fill="var(--lau-ink)" text-anchor="end">Objetivo · '+A.objetivoMeses+' meses · '+esc(mkCorto(D.llega)+' '+ahoYm(D.llega).y)+'</text>'+
+    meta+union+
+    '<g class="lau-nb" filter="url(#lauBl)"><ellipse cx="120" cy="'+f(Math.min(Math.max(topY+110,300),640))+'" rx="150" ry="16" fill="#fff" fill-opacity=".7"/><ellipse cx="330" cy="'+f(Math.min(Math.max(topY+140,320),650))+'" rx="130" ry="13" fill="#fff" fill-opacity=".65"/></g>'+
+    '<path d="M258 690 C261 '+f(yt+(690-yt)*.55)+' 261 '+f(yt+(690-yt)*.2)+' 260 '+f(yt)+' H282 C281 '+f(yt+(690-yt)*.2)+' 281 '+f(yt+(690-yt)*.55)+' 286 690Z" fill="var(--lau-tronco)"/>'+
+    '<path d="M270 '+f(yt+55)+' L238 '+f(yt+18)+' M272 '+f(yt+44)+' L306 '+f(yt+14)+'" stroke="var(--lau-tronco)" stroke-width="7" stroke-linecap="round"/>'+
+    copa+
+    '<path d="M52 '+f(topY)+'H220" stroke="var(--lau-ink)" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>'+
+    '<rect x="56" y="'+f(topY-27)+'" width="68" height="24" rx="12" fill="var(--lau-ink)"/><text x="90" y="'+f(topY-10)+'" font-size="13" font-weight="700" fill="var(--lau-fondo)" text-anchor="middle">hoy '+D3_COMA(D.vida)+'</text>'+
+    '<g fill="var(--lau-agua-clara)" stroke="var(--lau-ink)" stroke-width="1"><path class="lau-gt" d="M246 640q-5 8 0 11q5 -3 0 -11z"/><path class="lau-gt" style="animation-delay:1s" d="M282 644q-5 8 0 11q5 -3 0 -11z"/><path class="lau-gt" style="animation-delay:2s" d="M264 648q-5 8 0 11q5 -3 0 -11z"/></g>'+
+    '<ellipse cx="110" cy="690" rx="44" ry="8" fill="var(--lau-tocon-suelo)" fill-opacity=".6"/>'+
+    '<path d="M78 648 L80 686 Q110 696 140 686 L142 648Z" fill="var(--lau-tronco)"/>'+
+    '<ellipse cx="110" cy="648" rx="32" ry="10" fill="var(--lau-tocon)" stroke="var(--lau-madera-osc)" stroke-width="2"/><ellipse cx="110" cy="648" rx="20" ry="6" fill="none" stroke="var(--lau-madera)" stroke-width="1.5"/><ellipse cx="110" cy="648" rx="9" ry="3" fill="none" stroke="var(--lau-madera)" stroke-width="1.5"/>'+
+    frutos+
+    '<path d="M0 684 q14 -12 30 -2 q16 -14 34 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q10 -8 26 -2 V704 H0Z" fill="var(--lau-musgo)"/>'+
+    '<path d="M0 700 q50 -9 100 0 t100 0 t100 0 t112 0 V744 H0Z" fill="var(--lau-agua)"/>'+
+    '</svg>';}
+function d3GuardarHTML(D,vacio){
+  const A=D.A;
+  return '<div class="card lau-card"><label class="lau-e" for="d3Guardado">'+(vacio?'¿CUÁNTO TIENES GUARDADO?':'LO QUE TIENES GUARDADO (€)')+'</label>'+
+    '<div class="lau-fila"><input id="d3Guardado" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="4.200" value="'+(A.guardado>0?esc(String(A.guardado).replace('.',',')):'')+'">'+
+    '<button class="lau-btn p" data-a="d3-guardar">'+(vacio?'Plantar el bosque':'Apuntar')+'</button></div>'+
+    '<p class="lau-mini">Lo que hay en tu cuenta de ahorro y en tus huchas, sumado. Solo vive en tu móvil.</p></div>';}
+function dinBosqueHTML(){
+  const D=d3Datos(),A=D.A;
+  if(A.guardado<=0){
+    return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('')+
+      '<div class="card lau-card lau-vacio"><svg viewBox="0 0 120 90" width="120" height="90" role="img" aria-label="un brote de laurisilva en la niebla"><ellipse cx="60" cy="80" rx="46" ry="7" fill="var(--lau-musgo)"/><path d="M57 80C58 66 58 58 60 50H64C63 58 63 68 66 80Z" fill="var(--lau-tronco)"/><circle cx="62" cy="40" r="16" fill="var(--lau-copa)"/><circle cx="48" cy="48" r="11" fill="var(--lau-copa)"/><circle cx="76" cy="48" r="11" fill="var(--lau-copa)"/></svg>'+
+      '<h3 class="lau-h">Tu bosque aún está por plantar</h3>'+
+      '<p class="lau-p">Escribe cuánto tienes guardado y verás cuántos meses de vida te da: esa es la altura de la copa.</p></div>'+
+      d3GuardarHTML(D,true)+
+      (dinero3S().compras.length?'<button class="lau-btn" data-a="d6-tab" data-v="compras">Ver mis compras ('+dinero3S().compras.length+')</button>':'')+'</div>';}
+  const sin=D.g<=0,pil=sin?'':(D.falta===0?'✓ La copa ya llega':(D.delante?'▲ Vas por delante':'▼ Vas por detrás'));
+  const hacer=sin?['Cuéntame lo que gastas','para saber cuántos meses de vida guardas']:
+    (D.falta===0?['Ya llegaste','la copa llega al objetivo de '+A.objetivoMeses+' meses']:
+      ['Este mes, sube '+fmtMil(D.pide)+' €',D.futuro?'para que la copa llegue arriba en '+mkLargo(D.llega):'para llegar a tu objetivo cuanto antes']);
+  const cl=D.claro;
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('')+
+    '<div class="lau-esc">'+d3EscenaSVG(D)+
+      '<div class="lau-ini"><div class="lau-peq">tu bosque hoy</div><div class="lau-gran">'+(sin?'—':D3_COMA(D.vida))+' <small>'+(sin?'meses de vida':'de '+A.objetivoMeses+' meses')+'</small></div>'+
+        '<div class="lau-sub">'+fmtMil(A.guardado)+' €'+(sin?'':' de '+fmtMil(D.objE)+' €')+'</div>'+(pil?'<span class="lau-pil">'+pil+'</span>':'')+'</div>'+
+      '<button class="lau-baya" data-a="d6-tab" data-v="compras" aria-label="Compras: '+(D.frutos?D.frutos+(D.frutos===1?' compra planificada':' compras planificadas'):'ninguna planificada todavía')+'"><span>Compras · '+D.frutos+(D.frutos===1?' fruto':' frutos')+'</span></button>'+
+      (cl?'<button class="lau-claro" data-a="d3-claro" data-mk="'+esc(cl.mk)+'" aria-label="Gastos: el claro del bosque. '+esc(cl.k)+', '+fmtMil(cl.v)+' euros al mes"><span><b>El claro</b>'+esc(cl.k)+'<br>'+fmtMil(cl.v)+' € al mes</span></button>':
+        '<button class="lau-claro" data-a="d6-tab" data-v="gastos" aria-label="Gastos: aún sin cifras de gasto"><span><b>El claro</b>mira tus gastos</span></button>')+
+      '<div class="lau-musgo">Musgo: '+fmtMil(A.guardado)+' € guardados<small>el agua que el suelo retiene</small></div>'+
+      '<div class="lau-hacer"><p class="lau-g">'+esc(hacer[0])+'</p><p>'+esc(hacer[1])+'</p></div>'+
+      '<button class="lau-ir" data-a="d6-tab" data-v="ahorro">Ver el bosque mes a mes ↓</button></div>'+
+    d3GuardarHTML(D,false)+'</div>';}
+function dinSemanaHTML(){
+  /* los recibos de la semana (de la antigua pestaña Hoy), ahora dentro de Gastos */
+  const hoy=new Date(),sem=recibosEntre(iso(addDays(hoy,-1)),iso(addDays(hoy,8)));
+  const dn=function(f){const d=Math.round((parseDate(f)-parseDate(iso(hoy)))/864e5);return d===0?'hoy':(d===1?'mañana':DOWN0[parseDate(f).getDay()]);};
+  return '<div class="card lau-card"><div class="lau-fila"><span class="lau-e">ESTA SEMANA</span><span class="lau-sp"></span><button class="lau-link" data-a="dinero-vista" data-v="recibos">Recibos fijos ›</button></div>'+
+    (sem.length?sem.map(function(r){return '<div class="lau-li"><div class="lau-t"><b>'+esc(dinCatIco(r.g.cat))+' '+esc(r.g.nombre)+'</b></div><div class="lau-n"><span class="'+(dn(r.f)==='mañana'||dn(r.f)==='hoy'?'lau-up':'')+'">'+esc(dn(r.f))+'</span> · <b>'+esc(eur(r.v))+'</b></div></div>';}).join(''):
+      '<p class="lau-mini">'+(gastosFijos().length?'Ningún recibo esta semana.':'Apunta tus recibos fijos (alquiler, luz, móvil…) y te aviso antes de que salgan.')+'</p>')+'</div>';}
+const D3_SUS=/suscrip|streaming|spotify|netflix|gimnas|seguro|cuota|plataforma|abono|hbo|disney|prime/i;
+function d3Truco(k,v){
+  /* un truco por tipo de gasto y lo que se ahorraría: (txt, parte que se recorta) */
+  if(/super|aliment|mercad/i.test(k))return {t:'Lista cerrada antes de ir y marca blanca en lo básico.',f:.1};
+  if(/comer fuera|restaur|\bbar\b|caf[eé]|delivery|comida/i.test(k))return {t:'Con 2 tuppers más a la semana (unas 8 comidas al mes a menos precio) recortas un buen trozo.',f:.28};
+  if(/taxi|transp|guagua|gasolin|parking/i.test(k))return {t:'Si la mitad de los viajes los haces en guagua o compartiendo coche, bajas a la mitad.',f:.5};
+  if(/compra|online|ropa|amazon|moda/i.test(k))return {t:'Regla de espera: lo metes en el carrito y esperas 48 h. Con quitar un tercio, ya está.',f:.33};
+  if(/ocio|entreten|cine|salidas|copas/i.test(k))return {t:'Un plan gratis de cada tres: senderismo, playa, casa de amigos.',f:.2};
+  return {t:'Ponle un tope semanal y mira el sábado cómo vas.',f:.15};}
+function dinGastosHTML(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const mks=[mkHoy,mkSuma(mkHoy,-1),mkSuma(mkHoy,-2)];
+  const mk=/^\d{4}-\d{2}$/.test(ui.d3Mes||'')?ui.d3Mes:mkHoy;if(mks.indexOf(mk)<0)mks.push(mk);
+  const sel='<div class="lau-sw" role="group" aria-label="Mes">'+mks.map(function(m){return '<button data-a="d3-mes" data-mk="'+m+'" aria-pressed="'+(m===mk)+'">'+esc(MONTH_FULL[ahoYm(m).m].replace(/^./,function(c){return c.toUpperCase();}))+'</button>';}).join('')+'</div>';
+  const p=mesPartes(mk),mn=dinMesNom(mk);
+  let cuerpo,ideas='',sus='',comp='';
+  if(!p){
+    cuerpo='<div class="card lau-card">'+sel+'<p class="lau-msg">No tengo gastos de '+esc(mn)+' todavía.</p><p class="lau-mini">Trae la captura de Fintonic o apunta un gasto y aquí verás en qué se va.</p></div>';
+  }else{
+    const pf=Math.round(p.fijos/Math.max(1,p.fijos+p.vars)*100);
+    const fijos=p.F.map(function(k){return [k,+p.g.cats[k]||0];}).sort(function(a,b){return b[1]-a[1];});
+    const vars=p.V.map(function(k){return [k,+p.g.cats[k]||0];}).concat(p.resto?[['Sin categoría',p.resto]]:[]).sort(function(a,b){return b[1]-a[1];});
+    const mx=Math.max(1,vars.length?vars[0][1]:1);
+    const fu=p.g.fuente==='Fintonic'?'de Fintonic'+(p.g.fecha?' ('+fechaCorta(p.g.fecha)+')':''):(p.g.fuente==='tu cifra'?'con tu cifra del mes':(p.g.fuente==='banco'?'del banco (aprox.)':'lo que has apuntado'));
+    cuerpo='<div class="card lau-card">'+sel+
+      '<p class="lau-msg">De cada 100 € que gastas, '+pf+' € no los puedes tocar: son fijos.</p>'+
+      '<div class="lau-fila" style="align-items:baseline"><span class="lau-big">'+fmtMil(p.total)+' €</span><span class="lau-e">GASTADO EN '+esc(mn.toUpperCase())+'</span></div>'+
+      '<p class="lau-mini" style="margin:2px 0 0">'+esc(fu)+'</p>'+
+      '<div class="lau-parte" role="img" aria-label="Fijos '+fmtMil(p.fijos)+' euros, variables '+fmtMil(p.vars)+' euros"><i class="f" style="width:'+pf+'%"></i><i class="v" style="width:'+(100-pf)+'%"></i></div>'+
+      '<div class="lau-leg"><span><span class="lau-sq f"></span>Fijos <b>'+fmtMil(p.fijos)+' €</b></span><span><span class="lau-sq v"></span>Variables <b>'+fmtMil(p.vars)+' €</b></span></div>'+
+      '<div class="lau-e" style="margin-top:16px">FIJOS · SALEN CADA MES ('+fmtMil(p.fijos)+' €)</div>'+
+      (fijos.length?fijos.map(function(r){return '<div class="lau-li"><div class="lau-t"><b>'+esc(r[0])+'</b></div><div class="lau-n"><b>'+fmtMil(r[1])+' €</b></div></div>';}).join(''):'<p class="lau-mini">Ninguno todavía.</p>')+
+      '<div class="lau-e" style="margin-top:16px">VARIABLES · SE PUEDEN MOVER</div>'+
+      vars.map(function(r){const pu=r[0]!=='Sin categoría'&&r[0]!==DIN_DIA,cab='<div class="lau-fila"><b class="lau-vn">'+esc(r[0])+(pu?' ›':'')+'</b><b>'+fmtMil(r[1])+' €</b></div><div class="lau-mb"><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></div>';
+        return pu?'<button class="lau-li lau-bl" data-a="d6-cat" data-c="'+esc(r[0])+'" aria-label="'+esc(r[0])+', '+fmtMil(r[1])+' euros. Ver el detalle">'+cab+'</button>':'<div class="lau-li lau-bl">'+cab+'</div>';}).join('')+'</div>';
+    /* dónde ahorrar: los tres variables más grandes con un truco por tipo */
+    const top=vars.filter(function(r){return r[1]>=10;}).slice(0,3).map(function(r){const t=d3Truco(r[0],r[1]),mes=Math.round(r[1]*t.f);return {k:r[0],v:r[1],t:t.t,mes:mes,anio:Math.round(mes*12/10)*10};});
+    if(top.length){const tot=top.reduce(function(s,x){return s+x.anio;},0);
+      ideas='<div class="card lau-card"><p class="lau-msg">Con '+(top.length===1?'1 cambio pequeño':top.length+' cambios pequeños')+' podrías quedarte unos <span class="lau-dn">'+fmtMil(tot)+' € al año</span>.</p>'+
+        '<p class="lau-mini">Salen de tus gastos de '+esc(mn)+'. Tú decides cuáles probar.</p>'+
+        top.map(function(x,i){return '<div class="lau-idea"><div class="lau-fila"><span class="lau-num">'+(i+1)+'</span><h3>'+esc(x.k)+'</h3><span class="lau-ah">~'+fmtMil(x.anio)+' €/año</span></div>'+
+          '<p>Gastas <b>'+fmtMil(x.v)+' €/mes</b>. '+esc(x.t)+' Unos <b>'+fmtMil(x.mes)+' € al mes</b>.</p></div>';}).join('')+'</div>';}
+    /* suscripciones y cuotas: los fijos que suelen colarse sin revisar */
+    const nom={};const ss=[];
+    fijos.forEach(function(r){if(D3_SUS.test(r[0])){nom[r[0]]=1;ss.push(r);}});
+    gastosFijos().forEach(function(g){if(D3_SUS.test(g.nombre)&&!nom[g.nombre]){nom[g.nombre]=1;ss.push([g.nombre,+g.importe||0]);}});
+    if(ss.length){const t=ss.reduce(function(s,r){return s+r[1];},0);
+      sus='<div class="card lau-card"><div class="lau-e">SUSCRIPCIONES Y CUOTAS A REVISAR</div>'+
+        ss.map(function(r){const gim=/gimnas/i.test(r[0]),seg=/seguro/i.test(r[0]);
+          return '<div class="lau-li"><div class="lau-t"><b>'+esc(r[0])+'</b><span>'+(gim?'¿Cuántas veces fuiste este mes?':(seg?'Pide otro precio: suelen subir sin avisar':'¿Las usas todas?'))+'</span></div>'+
+            '<div class="lau-n"><b>'+fmtMil(r[1])+' €/mes</b><span class="lau-tag">'+(gim?'¿lo usas?':(seg?'comparar':'revisar'))+'</span></div></div>';}).join('')+
+        '<p class="lau-mini" style="margin-top:8px">Juntas son '+fmtMil(t)+' € al mes, unos '+fmtMil(t*12)+' € al año.</p></div>';}
+    /* comparado con el mes anterior (lo variable) */
+    const mk2=mkSuma(mk,-1),p2=mesPartes(mk2),n2=dinMesNom(mk2);
+    if(p2){const t1={},t2={},ks=[];
+      p.V.forEach(function(k){t1[k]=+p.g.cats[k]||0;if(ks.indexOf(k)<0)ks.push(k);});p2.V.forEach(function(k){t2[k]=+p2.g.cats[k]||0;if(ks.indexOf(k)<0)ks.push(k);});
+      ks.sort(function(a,b){return Math.max(t2[b]||0,t1[b]||0)-Math.max(t2[a]||0,t1[a]||0);});
+      const fl=function(d){return d>0?'<span class="lau-up">▲ '+fmtMil(d)+'</span>':(d<0?'<span class="lau-dn">▼ '+fmtMil(-d)+'</span>':'=');};
+      const dt=Math.round(p.vars)-Math.round(p2.vars);
+      comp='<div class="card lau-card"><div class="lau-e">COMPARADO CON '+esc(n2.toUpperCase())+' (VARIABLES)</div><div class="lau-cmp">'+
+        '<div class="h">&nbsp;</div><div class="h r">'+esc(mkCorto(mk2).toUpperCase())+'</div><div class="h r">'+esc(mkCorto(mk).toUpperCase())+'</div><div class="h r">DIF.</div>'+
+        ks.slice(0,6).map(function(k){return '<div>'+esc(k)+'</div><div class="r">'+fmtMil(t2[k]||0)+'</div><div class="r">'+fmtMil(t1[k]||0)+'</div><div class="r">'+fl(Math.round(t1[k]||0)-Math.round(t2[k]||0))+'</div>';}).join('')+
+        '<div><b>Total</b></div><div class="r"><b>'+fmtMil(p2.vars)+'</b></div><div class="r"><b>'+fmtMil(p.vars)+'</b></div><div class="r"><b>'+fl(dt)+'</b></div></div>'+
+        '<p class="lau-msg" style="font-size:14px;margin-top:10px">'+(dt===0?'Lo variable fue igual que en '+esc(n2)+'.':esc(mn.replace(/^./,function(c){return c.toUpperCase();}))+' costó '+fmtMil(Math.abs(dt))+' € '+(dt>0?'más':'menos')+' que '+esc(n2)+' en lo variable.')+'</p></div>';}
+  }
+  const origen='<div class="card lau-card"><div class="lau-e">¿DE DÓNDE SALEN ESTOS GASTOS?</div><div class="lau-fila" style="margin-top:8px">'+
+    '<label class="lau-btn p">Traer de Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
+    '<button class="lau-btn" data-a="dinero-apuntar">Apuntar a mano</button></div></div>';
+  const mas='<div class="card lau-card"><div class="lau-e">MÁS DE TUS GASTOS</div><div class="lau-enl">'+
+    '<button data-a="dinero-vista" data-v="recibos">Recibos del mes</button><button data-a="dinero-vista" data-v="fijos">Gastos fijos</button>'+
+    '<button data-a="d6-tab" data-v="mes">Cierre del mes</button><button data-a="dinero-vista" data-v="hoja">Excel del año</button>'+
+    '<button data-a="dinero-vista" data-v="fintonic">Lo leído de Fintonic</button></div></div>';
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('gastos')+cuerpo+ideas+sus+comp+origen+dinSemanaHTML()+dinTaxisHTML(mkHoy)+mas+'</div>';}
+function dinComprasHTML(){
+  /* de momento, lo de las huchas de antes: la D5 lo rehace con las compras nuevas */
+  return '<div class="grid dinv2 din6 din7 din8 mt lau">'+din8Tabs('compras')+dinBolsillosHTML()+
+    '<div class="d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de mis ahorros</button><button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button></div></div>';}
+/* ---------- las cuatro pestañas: Bosque · Gastos · Ahorro · Compras ---------- */
 function din8Tabs(on){
-  return '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><span class="sp"></span><div class="d6seg d7seg" role="tablist">'+
-    [['','Hoy'],['ahorro','Ahorro'],['mes','Mes']].map(function(t){return '<button role="tab"'+(t[0]===on?' class="on" aria-selected="true"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"')+'>'+t[1]+'</button>';}).join('')+'</div></div>';}
-function dinTabDe(){const t=ui.dinTab||'';return (t==='metas'||t==='ahorros'||t==='plan')?'ahorro':(t==='mes'?'mes':(t==='ahorro'?'ahorro':''));}
+  /* «mes» (el cierre del mes) cuelga de Gastos */
+  const o=on==='mes'?'gastos':on;
+  return '<div class="dtop"><h2 class="subtit">💶 Dinero</h2></div><div class="d6seg d7seg lau-tabs" role="tablist" aria-label="Dinero">'+
+    [['','Bosque'],['gastos','Gastos'],['ahorro','Ahorro'],['compras','Compras']].map(function(t){
+      return '<button role="tab"'+(t[0]===o&&on!=='mes'?' class="on" aria-selected="true"':(t[0]===o?' class="on" aria-selected="true" data-a="d6-tab" data-v="gastos"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"'))+'>'+t[1]+'</button>';}).join('')+'</div>';}
+function dinTabDe(){const t=ui.dinTab||'';return (t==='metas'||t==='ahorros'||t==='plan'||t==='ahorro')?'ahorro':(t==='mes'||t==='gastos'||t==='compras'?t:'');}
 function bkFuenteHTML(c,txt){
   const e=bkEdad(c),viejo=e>7;
   return '<div class="bkfu'+(viejo?' viejo':'')+'"><span>'+txt+(e===0?'hoy'+(c.hora?', '+esc(c.hora):''):(e===1?'ayer':'hace '+e+' días ('+esc(fechaCorta(c.fecha))+')'))+'</span>'+
@@ -24332,6 +24582,11 @@ function act(a,el){
     case 'nav-atras':navAtras();break;   /* el «‹ atrás» de la cabecera (index.html) */
     /* también desde las tarjetas del asistente en Hoy: llevan a Dinero (antes solo cambiaban algo por detrás) */
     case 'd6-tab':ui.tab='dinero';ui.dinTab=el.dataset.v||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
+    case 'd3-guardar':{const v=leeImporte((document.getElementById('d3Guardado')||{}).value);
+      if(!isFinite(v)||v<0){flash('escribe cuánto tienes guardado, por ejemplo 4.200');break;}
+      dinero3S().ahorro.guardado=v;save();render();flash('apuntado: '+fmtMil(v)+' € guardados');break;}
+    case 'd3-mes':ui.d3Mes=el.dataset.mk||'';render();break;
+    case 'd3-claro':ui.tab='dinero';ui.dinTab='gastos';ui.d3Mes=el.dataset.mk||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
     case 'd6-cat':ui.tab='dinero';ui.dinCat=el.dataset.c||'';ui.dineroVista='categoria';render();window.scrollTo(0,0);break;
     case 'ss-celda':ui.elegir={modo:'sb',w:+el.dataset.w,c:el.dataset.c||'comida',q:'',f:el.dataset.c||'comida'};ui.tab='types';ui.typesVista='elegir';render();window.scrollTo(0,0);break;
     case 'ss-auto':flash(sbAuto());render();break;
@@ -27387,7 +27642,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
