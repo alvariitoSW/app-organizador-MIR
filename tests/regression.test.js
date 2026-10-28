@@ -8523,7 +8523,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
     // v8: tres pestañas. Hoy = lo que puedes gastar y los recibos de la semana; Ahorro = lo que tienes y
     // cada bolsillo; Mes = el mes cerrado, en qué se fue y lo ahorrado mes a mes
-    const pestana = async (v) => { if (v === 'mes') { await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); }); await clic('#main [data-a="d6-tab"][data-v="mes"]'); } else await clic(`#main .d7seg [data-v="${v}"]`); return page.evaluate(() => { const m = document.querySelector('#main');
+    const pestana = async (v) => { if (v === 'mes') { await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); }); await clic('#main [data-a="d6-tab"][data-v="mes"]'); } else { await clic(`#main .d7seg [data-v="${v}"]`); if (v === 'compras') await page.evaluate(() => { window.PG.ui.dinViejo = true; window.PG.render(); }); } return page.evaluate(() => { const m = document.querySelector('#main');
       return { txt: m.innerText.replace(/\s+/g, ' '), metas: m.querySelectorAll('.d7meta').length, cats: m.querySelectorAll('.d6cat').length,
         apartar: !!m.querySelector('[data-v="apartar"]'), alto: m.scrollHeight }; }); };
     const portada = await page.evaluate(() => { const m = document.querySelector('#main');
@@ -8575,7 +8575,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     let deseo = null;
     if (h) {
       // creada, vuelve a Metas (D4: están en Compras); su fila abre la hoja encima
-      await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.render(); });
+      await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.ui.dinViejo = true; window.PG.render(); });
       await clic(`#main .d7meta[data-id="${h.id}"]`);
       await clic(`.din4h [data-a="deseo-nuevo"][data-h="${h.id}"]`);
       await page.evaluate(() => { const t = document.getElementById('dsTxt'), p = document.getElementById('dsPre'); if (t) t.value = 'Vuelos 216'; if (p) p.value = '900'; });
@@ -8698,7 +8698,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
         { id: 'hu-v', nombre: 'Viajes', ico: '✈️', color: '#38bdf8', pct: 60, objetivo: 0, meta: '', saldo: 800, mensual: 0, deseos: [] },
         { id: 'hu-c', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 40, objetivo: 0, meta: '', saldo: 300, mensual: 0, deseos: [] }];
-      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dineroVista = ''; P.render();
+      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dinViejo = true; P.ui.dineroVista = ''; P.render();
       return { total: [...document.querySelectorAll('.d7meta .v')].map((e) => e.textContent).join('|'), filas: document.querySelectorAll('.d7meta').length }; });
     await page.click('[data-a="din-hoja"][data-h="gaste"]'); await page.waitForTimeout(120);
     await page.click('.hoja [data-a="din-gaste-de"][data-id="hu-v"]'); await page.waitForTimeout(80);
@@ -9127,7 +9127,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { p: c, suma: Object.values(c).reduce((a, b) => a + b, 0), rec: r, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ') }; });
     const rec = /coincide con lo recomendado/.test(plan.txt) && !plan.txt.includes('LA APP TE SUGIERE');
     await page.click('#main .subcab .volver'); await page.waitForTimeout(100);
-    await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.render(); });   // D4: los bolsillos con sus saldos viven en Compras hasta la D5
+    await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.ui.dinViejo = true; window.PG.render(); });   // D4: los bolsillos con sus saldos viven en Compras hasta la D5
     const meta = await page.$('.d7meta[data-h="hucha"]'); if (meta) { await meta.click(); await page.waitForTimeout(120); }
     const inp = await page.$('input[data-a="din-hu-campo"][data-k="saldo"]');
     if (inp) { await inp.fill('1234,5'); await inp.dispatchEvent('change'); await page.waitForTimeout(120); }
@@ -13508,6 +13508,62 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('Dinero 3.0 · «Hecho» sube el musgo (2.000 → 2.640 €), apunta el mes y se guarda; «Deshacer» lo deja en 2.000 € y sin mes apuntado',
       r.hecho.g === 2640 && r.hecho.ap === 640 && /2\.640 €/.test(r.hecho.musgo) && /apartada/.test(r.hecho.card) && r.hecho.recarga === '2640/640' && r.x.g === 2000 && r.x.ap === 0 && /2\.000 €/.test(r.x.musgo) && r.x.recarga === '2000/0',
       JSON.stringify({ hecho: r.hecho, x: r.x }));
+  }
+  // 337) DINERO 3.0 · D5 · COMPRAS: LA ESPERA DE 30 DÍAS, EN CADENA: «+ Añadir algo que quiero» (una de ilusión, con el nombre con HTML) → sale
+  //      EN ESPERA con su cuenta atrás de 30 días y no cuenta en el «al mes» ni en los frutos → pasan 31 días → sola pasa a planificada con su €/mes y el fruto cuelga.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia337 = JSON.parse(JSON.stringify(P.store));
+      P.store.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 1000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dinViejo = false; P.ui.d5Nuevo = false; P.ui.d5Abre = ''; P.render(); });
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), t = m.innerText.replace(/\s+/g, ' ');
+      return { total: (document.getElementById('d5Total') || {}).textContent, espera: /en espera 30 días/i.test(t), cuenta: /\b30 días\b/.test(t), filas: m.querySelectorAll('.lau-compra').length,
+        frutos: P.d3Datos().frutos, estados: P.store.dinero3.compras.map((c) => c.estado).join(), fila: ((m.querySelector('.lau-compra') || {}).innerText || '').replace(/\s+/g, ' '),
+        html: !!m.querySelector('.lau-compra img, .lau-compra b > i'), ancho: m.scrollWidth - m.clientWidth }; });
+    await page.click('#main [data-a="d5-nuevo"]'); await page.waitForTimeout(100);
+    await page.fill('#d5Nom', 'Auriculares <img src=x onerror=1>'); await page.fill('#d5Pre', '120');
+    await page.selectOption('#d5Tip', 'ilu');
+    await page.evaluate(() => { const d = new Date(); d.setMonth(d.getMonth() + 6); document.getElementById('d5Mes').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
+    await page.click('#main [data-a="d5-add"]'); await page.waitForTimeout(150);
+    r.espera = await lee();
+    await page.evaluate(() => { const P = window.PG, c = P.store.dinero3.compras[0], d = P.parseDate(c.alta); d.setDate(d.getDate() - 31); c.alta = P.iso(d); P.save(); P.render(); });
+    r.plan = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia337; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.render(); });
+    check('Dinero 3.0 · Compras: lo nuevo que me hace ilusión entra EN ESPERA con 30 días, sin contar en el «al mes» ni en los frutos, y el nombre con HTML sale como texto',
+      r.espera.estados === 'espera' && r.espera.espera && r.espera.cuenta && /^0 € al mes · 0 compras/.test(r.espera.total) && r.espera.frutos === 0 && !r.espera.html && r.espera.ancho <= 1, JSON.stringify(r.espera));
+    check('Dinero 3.0 · Compras: a los 31 días lo que esperaba pasa solo a planificada, con su €/mes (120 € en 6 meses = 20 €) y el fruto del Bosque cuelga',
+      r.plan.estados === 'plan' && !r.plan.espera && r.plan.frutos === 1 && /20 €/.test(r.plan.fila) && /^20 € al mes · 1 compra/.test(r.plan.total), JSON.stringify(r.plan));
+  }
+  // 338) DINERO 3.0 · D5 · COMPRAS: APARTAR, DESHACER Y «LO COMPRÉ», EN CADENA: abrir una planificada → «Aparté 50 €» (llevas 50 y el fruto madura) →
+  //      deshacer (vuelve a 0) → «Lo compré»: aparece en los gastos del mes, sale de la lista y los frutos del Bosque bajan; «Ya no lo quiero» no borra.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia338 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()), d = new Date(); d.setMonth(d.getMonth() + 4);
+      const mes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      P.store.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 1000, objetivoMeses: 6, plazoMeses: 12, desde: hoy, apartado: {} }, compras: [
+        { id: 'c338', nombre: 'Fonendo 338', precio: 200, llevas: 0, mes, estado: 'plan', alta: hoy, tipo: 'nec' },
+        { id: 'c338b', nombre: 'Curso 338', precio: 300, llevas: 0, mes, estado: 'plan', alta: hoy, tipo: 'util' }] };
+      window.__pagos338 = P.store.dinero.pagos.length; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dinViejo = false; P.ui.d5Abre = ''; P.render(); });
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), c = P.store.dinero3.compras;
+      return { llevas: c[0].llevas, estado: c.map((x) => x.estado).join(), frutos: P.d3Datos().frutos, filas: m.querySelectorAll('.lau-compra').length,
+        pagos: P.store.dinero.pagos.filter((p) => p.nombre === 'Fonendo 338').map((p) => p.importe).join(), fr: (m.querySelector('.lau-fr') ? m.querySelector('.lau-fr').getAttribute('style') : '') }; });
+    await page.click('#main [data-a="d5-abre"][data-id="c338"]'); await page.waitForTimeout(100);
+    r.det = await page.evaluate(() => /Llevas 0 € de 200 · faltan 200 €/.test(document.querySelector('#main').innerText.replace(/\s+/g, ' ')));
+    await page.fill('#d5Apar', '50'); await page.click('#main [data-a="d5-aparte"]'); await page.waitForTimeout(120);
+    r.aparte = await lee();
+    await page.click('#main [data-a="d5-deshacer"]'); await page.waitForTimeout(120);
+    r.deshecho = await lee();
+    await page.click('#main [data-a="d5-compre"][data-id="c338"]'); await page.waitForTimeout(150);
+    r.compro = await lee();
+    r.gastos = await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); return /Fonendo 338/.test(document.querySelector('#main').innerText) || window.PG.store.dinero.pagos.some((p) => p.nombre === 'Fonendo 338'); });
+    await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.ui.d5Abre = 'c338b'; window.PG.render(); });
+    await page.click('#main [data-a="d5-no"][data-id="c338b"]'); await page.waitForTimeout(120);
+    r.no = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia338; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.render(); });
+    check('Dinero 3.0 · Compras: abrir una planificada → «Aparté 50 €» suma a «llevas» (el fruto madura) → «Deshacer» lo deja en 0',
+      r.det && r.aparte.llevas === 50 && /25%/.test(r.aparte.fr) && r.deshecho.llevas === 0, JSON.stringify({ det: r.det, a: r.aparte, d: r.deshecho }));
+    check('Dinero 3.0 · Compras: «Lo compré» lo apunta como gasto (200 €), lo saca de la lista y baja los frutos del Bosque; «Ya no lo quiero» no borra nada',
+      r.deshecho.frutos === 2 && r.compro.estado === 'comprada,plan' && r.compro.pagos === '200' && r.compro.filas === 1 && r.compro.frutos === 1 && r.gastos && r.no.estado === 'comprada,no' && r.no.frutos === 0, JSON.stringify({ c: r.compro, g: r.gastos, n: r.no }));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

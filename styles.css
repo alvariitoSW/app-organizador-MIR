@@ -3883,3 +3883,21 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .lau-enl{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .lau-enl button{min-height:44px;padding:8px 14px;border-radius:24px;background:var(--lau-pastel);color:var(--lau-ink);border:0;font:inherit;font-size:14px;cursor:pointer}
 .lau-card button:focus-visible{outline:3px solid var(--lau-verde);outline-offset:2px}
+
+/* ===== DINERO 3.0 · D5 · Compras (los frutos) ===== */
+.lau-cols,.lau-cab{display:grid;grid-template-columns:1fr 58px 52px 72px;gap:6px;align-items:center}
+.lau-cols{padding:0 12px;margin:14px 0 4px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--lau-ink2);text-transform:uppercase}
+.lau-cols span:not(:first-child){text-align:right}
+.lau-compra{background:var(--lau-panel);color:var(--lau-ink);border:1px solid var(--lau-borde);border-radius:20px;margin-bottom:8px;overflow:hidden}
+.lau-compra.espera{border-style:dashed;background:var(--lau-fondo)}
+.lau-cab{width:100%;min-height:56px;padding:8px 12px;appearance:none;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.lau-cab:focus-visible,.lau-ie:focus-visible{outline:3px solid var(--lau-verde);outline-offset:-3px}
+.lau-nm{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;min-width:0;line-height:1.2;overflow-wrap:anywhere}
+.lau-fr{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--lau-fruta-borde);background:linear-gradient(to top,var(--lau-fruta) var(--p),var(--lau-pastel) var(--p))}
+.lau-compra.espera .lau-fr{border-style:dashed;border-color:var(--lau-marron);background:var(--lau-fondo)}
+.lau-num{font-size:13px;font-weight:700;text-align:right;white-space:nowrap}.lau-num.sec{color:var(--lau-ink2);font-weight:400}.lau-num.cuenta{color:var(--lau-marron);font-weight:700}
+.lau-barra{height:5px;background:var(--lau-pastel)}.lau-barra i{display:block;height:100%;background:var(--lau-verde)}.lau-compra.espera .lau-barra i{background:var(--lau-madera)}
+.lau-det{padding:10px 12px 12px;border-top:1px solid var(--lau-borde);font-size:14px;color:var(--lau-ink2)}.lau-det b{color:var(--lau-ink)}
+.lau-det .lau-in{min-width:0;width:100%}
+.lau-ie{border:2px solid var(--lau-borde);border-radius:99px;width:44px;height:44px;font-size:16px;font-weight:700;background:none;color:var(--lau-ink);cursor:pointer}
+.lau-nota{font-size:14px;color:var(--lau-ink2);margin:8px 0 0;padding:10px 14px;background:var(--lau-pastel);border-radius:18px}

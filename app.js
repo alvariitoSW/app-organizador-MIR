@@ -20206,7 +20206,14 @@ function dinero3S(){
     try{const r=dinero3Migra();A.guardado=r.guardado;A.objetivoMeses=r.objetivoMeses;d.compras=d.compras.concat(r.compras);}
     catch(e){console.warn('la migración de Dinero no ha podido; se sigue con lo de antes',e);}
     save();}
+  d5Madura(d);
   return d;}
+/* ---- D5 · Compras: la espera de 30 días ---- */
+function d5Dias(c){const a=parseDate(c.alta),h=new Date();if(!a)return 0;h.setHours(12,0,0,0);a.setHours(12,0,0,0);return Math.round((h-a)/864e5);}
+function d5Madura(d){
+  /* lo que entró en espera y lleva 30 días pasa solo a planificada (no aparta nada hasta entonces) */
+  let ch=false;d.compras.forEach(function(c){if(c.estado==='espera'&&d5Dias(c)>=30){c.estado='plan';ch=true;}});
+  if(ch)save();}
 function ahorroLimpia(o){
   /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
   if(!o.ahorro||typeof o.ahorro!=='object')return;
@@ -21656,10 +21663,55 @@ function dinGastosHTML(){
     '<button data-a="d6-tab" data-v="mes">Cierre del mes</button><button data-a="dinero-vista" data-v="hoja">Excel del año</button>'+
     '<button data-a="dinero-vista" data-v="fintonic">Lo leído de Fintonic</button></div></div>';
   return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('gastos')+cuerpo+ideas+sus+comp+origen+dinSemanaHTML()+dinTaxisHTML(mkHoy)+mas+'</div>';}
+const D5_TIPOS=[['nec','Necesario'],['util','Útil para el trabajo'],['ilu','Me hace ilusión']];
+function d5Tipo(c){return c.tipo==='nec'||c.tipo==='util'?c.tipo:'ilu';}
+function d5Fila(c,mkH){
+  const t=d5Tipo(c),en=c.estado==='espera',pr=Math.max(0,+c.precio||0),ll=Math.min(pr,+c.llevas||0),pct=pr>0?Math.round(ll/pr*100):0,falta=Math.max(0,pr-ll),
+    m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0,mes=en||!m?0:Math.ceil(falta/m),abierta=ui.d5Abre===c.id,dias=Math.max(0,30-d5Dias(c)),
+    tn=D5_TIPOS.filter(function(x){return x[0]===t;})[0][1];
+  let det='';
+  if(abierta){
+    det='<div class="lau-det"><span class="lau-tag">'+(en?'En espera 30 días':esc(tn))+'</span> '+
+      (en?'Si en '+dias+(dias===1?' día':' días')+' sigues queriéndolo, pasa a la lista. Hasta entonces no se aparta nada.':'Llevas <b>'+fmtMil(ll)+' €</b> de '+fmtMil(pr)+' · faltan '+fmtMil(falta)+' €.')+
+      (en?'':'<div class="lau-fila" style="margin-top:8px"><input id="d5Apar" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="50" aria-label="Cuánto has apartado, en euros"><button class="lau-btn p" data-a="d5-aparte" data-id="'+esc(c.id)+'">Aparté</button></div>'+
+        (ui.d5Deshacer&&ui.d5Deshacer.id===c.id?'<button class="lau-btn" style="width:100%;margin-top:8px" data-a="d5-deshacer">Deshacer: quitar '+fmtMil(ui.d5Deshacer.v)+' €</button>':''))+
+      '<div class="lau-fila" style="margin-top:8px"><label class="lau-mini" style="margin:0">precio €<input class="lau-in" inputmode="decimal" autocomplete="off" data-a="d5-precio" data-id="'+esc(c.id)+'" value="'+pr+'"></label>'+
+        '<label class="lau-mini" style="margin:0">mes<input class="lau-in" type="month" data-a="d5-mes" data-id="'+esc(c.id)+'" value="'+esc(c.mes)+'"></label></div>'+
+      '<label class="lau-mini" style="display:block">tipo<select class="lau-in" style="width:100%" data-a="d5-tipo" data-id="'+esc(c.id)+'">'+D5_TIPOS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===t?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select></label>'+
+      (en?'':'<button class="lau-btn p" style="width:100%;margin-top:8px" data-a="d5-compre" data-id="'+esc(c.id)+'">Lo compré</button>')+
+      '<button class="lau-btn" style="width:100%;margin-top:8px" data-a="d5-no" data-id="'+esc(c.id)+'">Ya no lo quiero</button></div>';}
+  return '<div class="lau-compra'+(en?' espera':'')+'"><button class="lau-cab" data-a="d5-abre" data-id="'+esc(c.id)+'" aria-expanded="'+abierta+'">'+
+    '<span class="lau-nm"><span class="lau-fr" style="--p:'+pct+'%" role="img" aria-label="Fruto al '+pct+' % de madurez"></span><span>'+esc(c.nombre)+'</span></span>'+
+    '<span class="lau-num">'+fmtMil(pr)+' €</span><span class="lau-num sec">'+(en||!m?'—':fmtMil(mes)+' €')+'</span>'+
+    '<span class="lau-num sec'+(en?' cuenta':'')+'">'+(en?dias+(dias===1?' día':' días'):(c.mes?esc(mkCorto(c.mes)+' '+c.mes.slice(0,4)):'sin mes'))+'</span></button>'+
+    '<div class="lau-barra" aria-hidden="true"><i style="width:'+pct+'%"></i></div>'+det+'</div>';}
+function d5ListaHTML(){
+  const d=dinero3S(),hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth()),o={nec:0,util:1,ilu:2},
+    L=d.compras.filter(function(c){return c.estado==='plan'||c.estado==='espera';});
+  const ord=function(a,b){return o[d5Tipo(a)]-o[d5Tipo(b)]||String(a.mes||'9999').localeCompare(String(b.mes||'9999'));};
+  const plan=L.filter(function(c){return c.estado==='plan';}).sort(ord),esp=L.filter(function(c){return c.estado==='espera';}).sort(ord);
+  const tot=plan.reduce(function(s,c){const m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0;return s+(m?Math.ceil(Math.max(0,c.precio-c.llevas)/m):0);},0);
+  const ep=epocaDe(mkH),base=ep?Math.round(ep.neto):nominaMedia(),g=mesTipo().gasto||0,sobra=base-g;
+  const nota=ui.d5Nota?'<p class="lau-nota" id="d5Nota">'+(base>0?'Con la nómina base ('+fmtMil(base)+' €)'+(g>0?' y lo que gastas ('+fmtMil(g)+' €)':'')+(tot<=sobra||(!g&&tot<=base)?' <b>cabe</b>.':' <b>no cabe entera</b>.'):'Aún no sé tu nómina base.')+
+    ' Si un mes cobras poco, se pausa primero lo de «me hace ilusión». Lo necesario no se toca.</p>':'';
+  const nuevo=ui.d5Nuevo?'<div class="card lau-card"><div class="lau-e">Algo que quiero</div>'+
+    '<label class="lau-mini" style="display:block">¿Qué es?<input id="d5Nom" class="lau-in" style="width:100%" autocomplete="off" maxlength="60"></label>'+
+    '<label class="lau-mini" style="display:block">Precio (€)<input id="d5Pre" class="lau-in" style="width:100%" inputmode="decimal" autocomplete="off"></label>'+
+    '<label class="lau-mini" style="display:block">Tipo<select id="d5Tip" class="lau-in" style="width:100%">'+D5_TIPOS.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('')+'</select></label>'+
+    '<label class="lau-mini" style="display:block">Para qué mes (opcional)<input id="d5Mes" class="lau-in" style="width:100%" type="month"></label>'+
+    '<div class="lau-fila" style="margin-top:10px"><button class="lau-btn p" data-a="d5-add">Guardar</button><button class="lau-btn" data-a="d5-nuevo">Cancelar</button></div></div>':
+    '<button class="lau-btn p" style="width:100%" data-a="d5-nuevo">+ Añadir algo que quiero</button>';
+  return '<div class="card lau-card"><h3 class="lau-h">Los frutos</h3><p class="lau-p">Lo que quiero comprar. Cuanto más llevas, más madura el fruto. Toca una fila.</p>'+
+    '<div class="lau-fila" style="margin-top:8px"><span class="lau-t"><b id="d5Total">'+fmtMil(tot)+' € al mes · '+plan.length+(plan.length===1?' compra':' compras')+'</b></span>'+
+    '<button class="lau-ie" data-a="d5-nota" aria-expanded="'+!!ui.d5Nota+'" aria-label="Ver si cabe con tu nómina">ⓘ</button></div>'+nota+'</div>'+
+    (plan.length?'<div class="lau-cols" aria-hidden="true"><span>Compra</span><span>Precio</span><span>Al mes</span><span>Llega</span></div>'+plan.map(function(c){return d5Fila(c,mkH);}).join(''):
+      '<div class="card lau-card"><p class="lau-p">Aún no hay compras planificadas. Añade algo que quieras y aquí verás cuánto apartar al mes.</p></div>')+
+    (esp.length?'<p class="lau-e" style="margin:12px 8px 4px">En espera 30 días</p>'+esp.map(function(c){return d5Fila(c,mkH);}).join(''):'')+nuevo;}
 function dinComprasHTML(){
-  /* de momento, lo de las huchas de antes: la D5 lo rehace con las compras nuevas */
-  return '<div class="grid dinv2 din6 din7 din8 mt lau">'+din8Tabs('compras')+dinBolsillosHTML()+
-    '<div class="d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de mis ahorros</button><button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button></div></div>';}
+  /* ui.dinViejo: solo lo pone una prueba, para llegar a las huchas de antes hasta que la D6 las quite con su código */
+  if(ui.dinViejo)return '<div class="grid dinv2 din6 din7 din8 mt lau">'+din8Tabs('compras')+dinBolsillosHTML()+
+    '<div class="d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de mis ahorros</button><button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button></div></div>';
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('compras')+d5ListaHTML()+'</div>';}
 /* ---------- las cuatro pestañas: Bosque · Gastos · Ahorro · Compras ---------- */
 function din8Tabs(on){
   /* «mes» (el cierre del mes) cuelga de Gastos */
@@ -24671,7 +24723,7 @@ function act(a,el){
     case 'compra-todo':ui.compraTodo=!ui.compraTodo;render();break;
     case 'nav-atras':navAtras();break;   /* el «‹ atrás» de la cabecera (index.html) */
     /* también desde las tarjetas del asistente en Hoy: llevan a Dinero (antes solo cambiaban algo por detrás) */
-    case 'd6-tab':ui.tab='dinero';ui.dinTab=el.dataset.v||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
+    case 'd6-tab':ui.tab='dinero';ui.dinTab=el.dataset.v||'';ui.dinViejo=false;ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
     case 'd3-guardar':{const v=leeImporte((document.getElementById('d3Guardado')||{}).value);
       if(!isFinite(v)||v<0){flash('escribe cuánto tienes guardado, por ejemplo 4.200');break;}
       dinero3S().ahorro.guardado=v;save();render();flash('apuntado: '+fmtMil(v)+' € guardados');break;}
@@ -24689,6 +24741,25 @@ function act(a,el){
     case 'd4-nom-x':{const A=dinero3S().ahorro,x=A.apartado[el.dataset.mk];
       if(!x){flash('no había nada apartado');break;}
       A.guardado=Math.max(0,Math.round((A.guardado-x.v)*100)/100);delete A.apartado[el.dataset.mk];save();render();flash('deshecho: el bosque vuelve a lo de antes');break;}
+    case 'd5-abre':ui.d5Abre=ui.d5Abre===el.dataset.id?'':el.dataset.id;ui.d5Deshacer=null;render();break;
+    case 'd5-nota':ui.d5Nota=!ui.d5Nota;render();break;
+    case 'd5-nuevo':ui.d5Nuevo=!ui.d5Nuevo;render();break;
+    case 'd5-add':{const nom=String((document.getElementById('d5Nom')||{}).value||'').trim().slice(0,60),pre=leeImporte((document.getElementById('d5Pre')||{}).value),
+      tip=(document.getElementById('d5Tip')||{}).value,mes=(document.getElementById('d5Mes')||{}).value;
+      if(!nom){flash('ponle un nombre');break;}
+      if(!isFinite(pre)||!(pre>0)){flash('escribe el precio, por ejemplo 120');break;}
+      const t=tip==='nec'||tip==='util'?tip:'ilu';
+      dinero3S().compras.push({id:uid('co'),nombre:nom,precio:pre,llevas:0,mes:/^\d{4}-\d{2}$/.test(mes||'')?mes:'',estado:t==='nec'?'plan':'espera',alta:iso(new Date()),tipo:t});
+      ui.d5Nuevo=false;save();render();flash(t==='nec'?'apuntado: '+nom:'«'+nom+'» espera 30 días antes de entrar en la lista');break;}
+    case 'd5-aparte':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;}),v=leeImporte((document.getElementById('d5Apar')||{}).value);
+      if(!c)break;if(!isFinite(v)||!(v>0)){flash('escribe cuánto has apartado, por ejemplo 50');break;}
+      const n=Math.min(c.precio,c.llevas+v)-c.llevas;c.llevas=Math.round((c.llevas+n)*100)/100;ui.d5Deshacer={id:c.id,v:n};save();render();flash('apartados '+fmtMil(n)+' € para '+c.nombre);break;}
+    case 'd5-deshacer':{const u=ui.d5Deshacer,c=u&&dinero3S().compras.find(function(x){return x.id===u.id;});
+      if(c){c.llevas=Math.max(0,Math.round((c.llevas-u.v)*100)/100);save();}ui.d5Deshacer=null;render();break;}
+    case 'd5-compre':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      addPago({nombre:c.nombre,importe:c.precio,cat:'otros'});c.estado='comprada';ui.d5Abre='';ui.d5Deshacer=null;save();render();flash('apuntado como gasto: '+c.nombre);break;}
+    case 'd5-no':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      c.estado='no';ui.d5Abre='';save();render();flash('«'+c.nombre+'» fuera de la lista (no se borra nada)');break;}
     case 'd3-mes':ui.d3Mes=el.dataset.mk||'';render();break;
     case 'd3-claro':ui.tab='dinero';ui.dinTab='gastos';ui.d3Mes=el.dataset.mk||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
     case 'd6-cat':ui.tab='dinero';ui.dinCat=el.dataset.c||'';ui.dineroVista='categoria';render();window.scrollTo(0,0);break;
@@ -27251,6 +27322,11 @@ document.addEventListener('change',e=>{
     case 'fin-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';finLeer(fs);}break;}
     case 'bk-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';bkLeer(fs);}break;}
     case 'dinero-f':render();break;
+    case 'd5-precio':case 'd5-mes':case 'd5-tipo':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      if(a==='d5-precio'){const v=leeImporte(el.value);if(!isFinite(v)||!(v>0)){flash('escribe un precio válido');render();break;}c.precio=v;}
+      else if(a==='d5-mes')c.mes=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';
+      else c.tipo=el.value==='nec'||el.value==='util'?el.value:'ilu';
+      save();render();break;}
     case 'd4-otro':{const k=el.dataset.k==='plazoMeses'?'plazoMeses':'objetivoMeses',v=leeImporte(el.value),mx=k==='plazoMeses'?60:36;
       if(!isFinite(v)||v<1||v>mx){flash('escribe un número de meses entre 1 y '+mx);break;}
       const A=dinero3S().ahorro;A[k]=Math.round(v);if(k==='plazoMeses')A.desde=iso(new Date());save();render();break;}

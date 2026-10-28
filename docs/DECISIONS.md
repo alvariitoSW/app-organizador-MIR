@@ -1552,3 +1552,16 @@ cálculo de otros meses); borrar `dinAhorroHTML`, `apartarAlCobrar` y sus accion
 **Supuestos.** Sin meses con dato la gráfica enseña solo hoy y el plan. Si el plan ya se cumple, «Hecho» propone tu % de ahorro. El
 árbol de cada mes pasado es el estado al empezarlo (guardado menos lo ahorrado desde entonces). Cifras de las pruebas 335-336 inventadas.
 No he sacado capturas a 412×915 (las hace el verificador); sí comprobado por prueba: sin scroll horizontal y controles ≥44 px.
+
+## 2026-10-28 · Dinero D5: Compras («Los frutos»)
+
+**Elegido.** La pestaña Compras (`dinComprasHTML` → `d5ListaHTML`, `d5Fila`) lista `dinero3.compras` planificadas (necesario → útil → ilusión,
+luego por mes) con precio, «al mes» (lo que falta ÷ meses hasta su mes), cuándo llega y un fruto que madura según llevas/precio; cabecera
+«X € al mes · N compras» y nota ⓘ (nómina base de la época, o la media, menos lo que gastas). Detalle: «Llevas X de Y · faltan Z», «Aparté»
+(con «Deshacer»), precio/mes/tipo editables (listener de `change`), «Lo compré» (`addPago`, estado `comprada`) y «Ya no lo quiero» (estado `no`).
+«+ Añadir algo que quiero»: lo necesario entra en el plan; lo demás, **en espera 30 días** sin apartar nada, y `d5Madura` (dentro de
+`dinero3S`) lo pasa solo a planificada al cumplirse. Los frutos del Bosque ya contaban las `plan`. Las huchas viejas no se enseñan en Compras.
+**Descartado.** Botón «Sigo queriéndolo» (a los 30 días pasa solo, no queda nada que confirmar); borrar las huchas viejas y sus pantallas (D6).
+**Supuestos.** Sin mes, la compra sale con «sin mes» y no suma al «al mes». Las pruebas 216, 218 y el reparto/hucha de la 228 miraban las huchas
+y «Gasté de mis ahorros», que el acta quita: llegan por `ui.dinViejo` (solo lo pone la prueba) hasta que la D6 borre ese código y esas
+comprobaciones. «Pasan 31 días» en la prueba 337 = se retrasa `alta` 31 días. Sin capturas a 412×915 (las hace el verificador).
