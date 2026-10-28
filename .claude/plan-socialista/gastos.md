@@ -36,6 +36,7 @@ traspaso explica por qué.
 | 2026-10-28 | v3-plan-global-2 | herramientas | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | spec-kit, plan de Comer, puesta al día y unir ramas; sin ayudantes. Ahorro: no releer skills enteras |
 | 2026-10-28 | consejo-dinero | estudio | opus-5-5 + sonnet-5-5 | 3 | 48 | **990 k** | sesión principal (56 %) | instalar el gobierno + 1.er Consejo; leer el otro repo por trozos; mapa en sonnet evitó releer app.js |
 | 2026-10-28 | feria-dinero | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 13 | 153 | **3,5 M** | sesión principal (44 %) | 10 maquetas en sonnet/haiku (~120-180 k cada una); la sesión larga encareció la principal: la feria debió ir en sesión nueva |
+| 2026-10-28 | la-rara | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 27 | 331 | **8,9 M** | sesión principal (35 %) | concurso de 6 escuelas + 4 de mejora; haiku sacó 1,1,3 en diseño libre: para maquetas raras, sonnet |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
@@ -51,3 +52,4 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
   constructor recibe la ficha, no la conversación.
 - Una ronda de maquetas para una sección entera antes que una por cada función (plan de Comer, 2026-10-27).
 - Abrir en sonnet las sesiones mecánicas (arreglos localizados, construir con ficha y maqueta aprobada).
+- Concursos de diseño libre: sonnet, no haiku (haiku sacó 1, 1 y 3 de 5 en La Rara; sonnet ganó con 5/5). (la-rara, 2026-10-28)

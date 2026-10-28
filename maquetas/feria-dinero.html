@@ -43,7 +43,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outli
 <div class="wrap">
   <header>
     <h1>Feria de maquetas · Dinero</h1>
-    <p class="lead"><b>Concurso «La Rara»</b> (Portada + Ahorro): seis escuelas opuestas; gana la más extraña que siga sirviendo para ahorrar. Ponles nota. Detrás, el modelo final y las rondas anteriores. Cifras inventadas.</p>
+    <p class="lead"><b>La Rara · ronda 2</b> (Portada + Ahorro): La Marea pulida contra tres rivales nuevos con lo que te gustó de ella. Ponles nota. Detrás, el modelo final y las rondas anteriores. Cifras inventadas.</p>
   </header>
 
   <nav class="tira" id="tira" aria-label="Puestos"></nav>
@@ -72,6 +72,10 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outli
 
 <script>
 const P=[
+ {id:'M1',f:'dinero-rara2-marea.html',m:'sonnet',r:4,t:'La Marea pulida',i:'Tu 5/5 con lo que pediste: la portada igual y en Ahorro una tabla de mareas con meta y plazo que eliges; te dice cuánto subir al mes y si a tu ritmo llegas. Sin invertir.'},
+ {id:'M2',f:'dinero-rara2-salinas.html',m:'sonnet',r:4,t:'Las Salinas',i:'Salinas de Lanzarote desde arriba: seis cocederos, uno por mes de vida; la sal es lo ahorrado, la fuga de salmuera los gastos y el barco con sacos las compras.'},
+ {id:'M3',f:'dinero-rara2-laurisilva.html',m:'sonnet',r:4,t:'La Laurisilva',i:'Un árbol de Anaga: la niebla que atrapan las hojas es la nómina y la altura de la copa los meses de vida; el claro es el gasto y los frutos las compras.'},
+ {id:'M4',f:'dinero-rara2-aljibe.html',m:'sonnet',r:4,t:'El Aljibe',i:'Una casa de Fuerteventura en corte: la lluvia de cada nómina baja al aljibe; el nivel es el colchón y la marca de cal el objetivo; el cubo son los gastos y la huerta las compras.'},
  {id:'R1',f:'dinero-rara-1-marea.html',m:'sonnet',r:3,t:'La Marea',i:'«La Rara». El ahorro es el agua de un charco de marea en Canarias; la pleamar es el objetivo, las grietas los gastos y los barcos las compras.'},
  {id:'R2',f:'dinero-rara-2-teletexto.html',m:'haiku',r:3,t:'Teletexto',i:'«La Rara». Dinero como una emisión de teletexto de los 80: páginas 300-303, titulares y gráfico de bloques.'},
  {id:'R3',f:'dinero-rara-3-tablero.html',m:'sonnet',r:3,t:'El Tablero',i:'«La Rara». Una oca de 60 casillas a 148 € cada una; tu ficha va en la 28 y la meta es octubre de 2027.'},
@@ -99,7 +103,7 @@ function pintaTira(){
   tira.innerHTML='';
   P.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',i===cur);
     const n=(notas[p.id]||{}).n;
-    b.innerHTML='<span>'+(p.r===3?'La Rara · ':p.r?'Nuevo · ':'')+'Puesto '+p.id+'</span><small>'+p.t+'</small>'+(n?'<span class="nota">'+'★'.repeat(n)+'</span>':'');
+    b.innerHTML='<span>'+(p.r===4?'Ronda 2 · ':p.r===3?'La Rara · ':p.r?'Nuevo · ':'')+'Puesto '+p.id+'</span><small>'+p.t+'</small>'+(n?'<span class="nota">'+'★'.repeat(n)+'</span>':'');
     b.onclick=()=>abre(i);tira.appendChild(b);});
 }
 function pintaEstrellas(){
