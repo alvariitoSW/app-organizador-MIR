@@ -158,7 +158,7 @@ var G1='#4f8a4a',G2='#2f6b3a';
   // p3 escalera de 8 bancales
   o+='<g class="part p3" data-p="3">';
   for(var i=7;i>=0;i--){
-    var x=146+i*33,y=190-i*17,done=i<2,cur=i==2;
+    var x=146+i*32,y=190-i*17,done=i<2,cur=i==2;
     var wall=done?'#c98a5a':cur?'#d9a574':'#e6d6b0';
     o+=terr(x,y,40,240-y,done||cur?'#e0b27a':'#efe3c2',wall,done||cur);
     if(!done&&!cur)o+='<rect x="'+x+'" y="'+y+'" width="40" height="'+(240-y)+'" rx="4" fill="none" stroke="#8a6a44" stroke-width="1.5" stroke-dasharray="4 3"/>';
