@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teletexto · La Rara</title>
+<style>
+*{box-sizing:border-box}
+html,body{background:#111;margin:0}
+body{width:412px;margin:0;color:#eee;font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.cartel{padding:12px 16px;border-bottom:1px solid #444}
+.cartel p{margin:4px 0}
+.rot{font:600 14px/1.2 system-ui,-apple-system,sans-serif;color:#eee;padding:12px 16px 6px}
+.tv{width:412px;background:#000;color:#fff;font-family:"Courier New",Courier,ui-monospace,monospace;font-size:17px;line-height:1.25;padding-bottom:12px;overflow:hidden}
+.hdr{display:flex;justify-content:space-between;align-items:center;background:#00f;color:#fff;font-weight:bold;padding:0 8px;min-height:32px}
+.hdr span:first-child{color:#ff0}
+.moneda{margin:10px 8px 0;color:#ff0;font:17px/1 "Courier New",Courier,monospace}
+.tit{margin:8px 0 0;padding:0 8px;color:#ff0;font-weight:normal;font-size:30px;line-height:1.15}
+.tit span{display:block}
+.tit .grande{font-size:40px}
+.tit .sm{font-size:17px;color:#fff}
+.l{margin:0;padding:0 8px}
+.ok{color:#0f0}
+.box{margin:10px 8px 0;padding:8px;background:#0ff;color:#000;font-weight:bold}
+.box .big{font-size:24px;display:block}
+.box p{margin:0 0 4px}
+.box p:last-child{margin:0}
+.btn{display:flex;align-items:center;width:calc(100% - 16px);min-height:44px;margin:6px 8px 0;padding:6px 10px;border:0;font:inherit;font-weight:bold;text-align:left;text-decoration:none;color:#000;cursor:pointer}
+.btn.gn{background:#0f0}
+.btn.mg{background:#f0f}
+.btn.bl{background:#00f;color:#fff}
+a:focus-visible,button:focus-visible{outline:3px solid #ff0;outline-offset:2px}
+.pie{margin:12px 8px 0;color:#fff}
+.aviso{margin:10px 8px 0;padding:8px;border:2px solid #ff0;color:#ff0}
+.aviso:empty{display:none}
+.sub{margin:12px 8px 0;font-size:17px;color:#0f0;font-weight:bold}
+.meta{margin:4px 8px 0;color:#ff0}
+.grafico{margin:0 8px;font:17px/18px "Courier New",Courier,monospace;color:#0ff;white-space:pre}
+.tele{list-style:none;margin:0;padding:0 8px}
+.tele li{margin:6px 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="cartel">
+  <p><strong>Escuela Teletexto · concurso La Rara</strong></p>
+  <p>La idea: el dinero como una emisión de teletexto de los 80, con fondo negro, colores puros y páginas numeradas.</p>
+  <p>La portada da el colchón y lo que toca este mes; la página 301 es su previsión del tiempo hasta octubre de 2027.</p>
+</header>
+
+<div class="rot">Pantalla 1 · Portada</div>
+<section class="tv" id="portada" aria-label="Pantalla 1: portada">
+  <div class="hdr"><span>P300 DINERO</span><span>25 OCT</span></div>
+
+  <pre class="moneda" aria-hidden="true"> ▄███▄
+█  €  █
+ ▀███▀</pre>
+
+  <h2 class="tit"><span>EL COLCHÓN LLEGA</span><span class="grande">A 2,8 MESES</span></h2>
+  <p class="l" style="margin-top:6px">DE 6 MESES · 4.200 DE 8.870 €</p>
+  <p class="l ok">VAS POR DELANTE (META: OCT 2027)</p>
+
+  <div class="box"><span class="big">ESTE MES: APARTA 390 €</span></div>
+
+  <nav aria-label="Otras páginas">
+    <a class="btn gn" href="#ahorro">301 AHORRO: CUÁNTO APARTAR</a>
+    <button class="btn mg" type="button" data-aviso="302 EN QUÉ SE ME VA: aquí se abriría la lista de gastos de octubre (comer fuera, 180 € al mes).">302 EN QUÉ SE ME VA</button>
+    <button class="btn bl" type="button" data-aviso="303 LO QUE QUIERO COMPRAR: aquí se abriría la lista de deseos (portátil 1.100 €, viaje a Japón 2.500 €).">303 LO QUE QUIERO COMPRAR</button>
+  </nav>
+
+  <p id="aviso" class="aviso" role="status"></p>
+  <p class="pie">GASTO NORMAL: 1.478 €/MES</p>
+</section>
+
+<div class="rot">Pantalla 2 · Ahorro</div>
+<section class="tv" id="ahorro" aria-label="Pantalla 2: ahorro">
+  <div class="hdr"><span>P301 AHORRO</span><span>25 OCT</span></div>
+
+  <h2 class="tit"><span>APARTA 390 €/MES</span><span class="sm">HASTA OCTUBRE DE 2027</span></h2>
+  <p class="l" style="margin-top:6px">PARA LLEGAR A 6 MESES: 8.870 €.</p>
+  <p class="l">COLCHÓN DE OCTUBRE: 4.200 €.</p>
+  <p class="l">FALTAN 4.670 €: 390 € × 12 MESES.</p>
+
+  <div class="box">
+    <p>TU RITMO DE LOS 3 ÚLTIMOS MESES: 650&nbsp;€/MES.</p>
+    <p>A ESE RITMO LLEGAS EN JUNIO DE 2027, 4 MESES ANTES.</p>
+  </div>
+
+  <h3 class="sub">COLCHÓN A FIN DE MES, DE MAYO A OCTUBRE</h3>
+  <p class="meta">┄┄ META: 8.870 € (6 MESES)</p>
+  <pre id="grafico" class="grafico" aria-hidden="true"></pre>
+  <p class="sr">Colchón a fin de mes: mayo 2.200 €, junio 2.200 €, julio 2.300 €, agosto 2.750 €, septiembre 3.550 €, octubre 4.200 €.</p>
+
+  <h3 class="sub">TELETIPO</h3>
+  <ul class="tele">
+    <li>· 25 OCT: LLEGA LA NÓMINA, 2.800 €</li>
+    <li>· EL COLCHÓN SUBE 650 € EN UN MES</li>
+    <li>· GASTO NORMAL: 1.478 € AL MES</li>
+    <li>· COMER FUERA: 180 €/MES (PÁG. 302)</li>
+    <li>· META: 8.870 € EN OCTUBRE DE 2027</li>
+  </ul>
+
+  <a class="btn gn" href="#portada">300 PORTADA</a>
+</section>
+
+<script>
+(function(){
+  var aviso = document.getElementById('aviso');
+  document.querySelectorAll('[data-aviso]').forEach(function(b){
+    b.addEventListener('click', function(){ aviso.textContent = b.getAttribute('data-aviso'); });
+  });
+
+  // Gráfico de bloques: 1 fila = 1.000 €; media fila (▄) = 500 €.
+  var datos = [['MAY',2200],['JUN',2200],['JUL',2300],['AGO',2750],['SEP',3550],['OCT',4200]];
+  var PASO = 1000, ALTO = 10, META = 8870;
+  var medios = datos.map(function(d){ return Math.round(d[1] / 500); });
+  var filaMeta = Math.ceil(META / PASO);
+  var lineas = [];
+  for (var r = ALTO; r >= 1; r--) {
+    var s = '  ';
+    medios.forEach(function(h){
+      var c = h >= 2*r ? '██' : (h === 2*r - 1 ? '▄▄' : (r === filaMeta ? '┄┄' : '  '));
+      s += '  ' + c + '  ';
+    });
+    lineas.push(s);
+  }
+  function centra(t){ var l = Math.floor((6 - t.length) / 2); return ' '.repeat(l) + t + ' '.repeat(6 - l - t.length); }
+  function miles(v){ return String(v).replace(/(\d)(\d{3})$/, '$1.$2'); }
+  lineas.push('  ' + datos.map(function(d){ return centra(d[0]); }).join(''));
+  lineas.push('  ' + datos.map(function(d){ return centra(miles(d[1])); }).join(''));
+  document.getElementById('grafico').textContent = lineas.join('\n');
+})();
+</script>
+</body>
+</html>
