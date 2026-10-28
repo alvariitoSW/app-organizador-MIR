@@ -1,6 +1,6 @@
 ---
 name: bitacora
-description: La bitácora del proyecto: el plan de la versión 3.0 (en marcha, lo siguiente, ideas) y tres listas cortas (lo hecho, lo que falta pulir y lo que el usuario ha dicho que hay que hacer). Úsala cuando el usuario escriba «/bitacora», «/bitácora», «bitácora», «¿cuál es el plan?», «¿qué hemos hecho?», «¿qué nos queda?», «¿qué toca ahora?» o «recuérdame lo que te dije», normalmente después de un /plan-socialista o tras unos días sin tocar la app. También cuando diga algo nuevo que hacer en la app («apunta en el plan…», «para la 3.0…», «quiero que…» fuera de una tarea): va a «Ideas» de plan-v3.md; y «apúntame…» o «recuérdame…» algo que no es de la app: va a «Para recordarte» del registro. NO es el parte: no mira despliegues, ramas ni pruebas (eso es /plan-socialista).
+description: La bitácora del proyecto: el plan de la versión 3.0 (en marcha, lo siguiente, ideas) y tres listas cortas (lo hecho, lo que falta pulir y lo que el usuario ha dicho que hay que hacer). Úsala cuando el usuario escriba «/bitacora», «/bitácora», «bitácora», «¿cuál es el plan?», «¿qué hemos hecho?», «¿qué nos queda?», «¿qué toca ahora?» o «recuérdame lo que te dije», normalmente después de un /plan-socialista o tras unos días sin tocar la app. También cuando diga algo nuevo que hacer en la app («apunta en el plan…», «para la 3.0…», «quiero que…» fuera de una tarea): va a «Ideas» de plan-v3.md; y «apúntame…» o «recuérdame…» algo que no es de la app: va a «Para recordarte» del registro. También cuando diga «Consejo de Ministros», «convoca el Consejo» o «consejo de ministros sobre X»: preside la reunión (sección «El Consejo de Ministros»). NO es el parte: no mira despliegues, ramas ni pruebas (eso es /plan-socialista).
 ---
 
 # Bitácora: el plan, lo hecho, lo que falta y lo que dijiste
@@ -60,7 +60,23 @@ sección **«Para recordarte»**, con id `[rec-<AAAA-MM-DD>-<tema>]`, la frase c
 larga) y la fecha. Se tacha cuando se hace o lo descarta. Commit solo de `.claude/plan-socialista/` en la
 rama de trabajo y push.
 
+## El Consejo de Ministros
+
+La bitácora es **Transportes** en el gobierno del repositorio (`.claude/plan-socialista/gobierno.md`): convoca el
+Consejo, lo preside y escribe el acta. Pasos:
+1. **Orden del día**: los asuntos, uno por línea (lo que pide el usuario o lo que en `plan-v3.md` está esperando
+   decisión).
+2. **Mapa**: un ayudante `Explore` en sonnet o haiku resume lo que ya hay (≤70 líneas). Nadie más relee `app.js`.
+3. **Dictámenes**, en paralelo y con el mapa en el encargo: un agente para el ministerio del asunto + Bienestar
+   (opus si hay que diseñar) y otro para Interior + Justicia (sonnet). ≤15 líneas por asunto, con voto.
+   Hacienda y Transportes los das tú, sin agente.
+4. **Acta** en `.claude/plan-socialista/consejo/AAAA-MM-DD.md` (formato en su `LEEME.md`): acuerdos, lo que entra en
+   `plan-v3.md` con «(Consejo, fecha)» y lo reservado al usuario como preguntas con opciones (≤3).
+5. Al usuario: el resumen corto y las preguntas. Lo reservado no se construye hasta que conteste.
+Gasto de la reunión ≤0,6 M; se mide al cerrar (`node tools/gasto.mjs --apunta consejo-<tema> --tipo estudio`).
+
 ## Límites
 
 - Solo lee y cuenta; no cambia el estado de nada salvo para apuntar un recordatorio o algo nuevo del plan.
 - No toca `preferencias.md` ni código.
+- En el Consejo escribe el acta y `plan-v3.md`; no construye.

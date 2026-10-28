@@ -17,6 +17,10 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
   material; capturas siempre por el ayudante `verificador`; lo mecánico (textos, pruebas, la hora del parte)
   vale en un modelo más barato.
 - Para empezar una sesión: `/plan-socialista` (el parte de lo que pide atención y lo que quedó del traspaso).
+- **El gobierno del repositorio** (`.claude/plan-socialista/gobierno.md`, copiado de fiebres-neutropenias): el
+  usuario es el gobierno central; `/bitacora` preside el **Consejo de Ministros** (Interior, Hacienda, Justicia,
+  Bienestar y el ministerio del asunto) que estudia y decide antes de construir. Lo que cambia lo que ve, el
+  presupuesto total, los datos y pasar a `main` siguen siendo del usuario. Actas en `.claude/plan-socialista/consejo/`.
 - **El plan de la 3.0** está en `.claude/plan-socialista/plan-v3.md` (lo cuenta `/bitacora`). **Cada tarea se mide
   al cerrarla** (`node tools/gasto.mjs --apunta …`, en `gastos.md`) para que la siguiente del mismo tipo cueste menos.
 
