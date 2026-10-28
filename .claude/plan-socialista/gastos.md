@@ -43,6 +43,7 @@ traspaso explica por qué.
 | 2026-10-28 | v3-lector | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 99 | **2,3 M** | sesión principal (78 %) | clasificar 230 fallos y revisar kcal a mano · ajustar expectativas por script y mirar solo lecturas raras |
 | 2026-10-28 | v3-dinero-d1-d6 | construir | opus-5-5 + sonnet-5-5 | 13 | 498 | **9,9 M** | D6 · quitar lo viejo de Dinero (31 %) | 6 piezas en sonnet; D6 3,1 M (quitar al final, sin cortar al pasar el tope) · quitar lo viejo dentro de cada D y vigilar a los de fondo |
 | 2026-10-28 | v3-comer-reloj-1 | construir | opus-5-5 + sonnet-5-5 | 6 | 190 | **3,1 M** | P2 escribir con rueda por fila (41 %) | dos constructores sonnet a la vez (línea y escribir) + uno para quitar la lista repetida que dejó el primero · ahorro: en la ficha, decir qué se QUITA, no solo qué se añade |
+| 2026-10-28 | consejo-deporte | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 10 | 138 | **3,9 M** | sesión principal (21 %) | Consejo + concurso de 6 (4 sonnet, 2 haiku): las haiku gastaron casi el doble que las sonnet (580-626 k frente a 150-350 k); el jurado con capturas de página entera, 337 k |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
