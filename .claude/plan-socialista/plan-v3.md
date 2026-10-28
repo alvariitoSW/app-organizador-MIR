@@ -25,7 +25,7 @@ que lo que queda de Comer.
 |---|---|---|---|---|
 | D1 | Limpieza invisible + las 2 pruebas de fecha + prueba «foto» de cifras | arreglo | sonnet | ~0,4 M |
 | D2 | Datos nuevos + portada nueva + En qué se me va | construir | sonnet con ficha; `verificador` | ~1,2 M |
-| D3 | Ahorro con invertir dentro + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
+| D3 | Ahorro con objetivo a fecha y su gráfica + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
 | D4 | Lo que quiero comprar [v3-dinero-compras] | construir | sonnet; `verificador` | ~0,8 M |
 | D5 | Quitar lo viejo que apruebes (con migración) | arreglo | sonnet | ~0,6 M |
 
