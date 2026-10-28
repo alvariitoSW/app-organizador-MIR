@@ -5844,5 +5844,3138 @@
 40
 ]
 },
-  {"f": "un serranito y una cocacola", "tiene": ["pan", "lomo", "pimiento", "refresco de cola"], "dudas": 0, "kcal": [550, 800]}
+{
+"f": "un serranito y una cocacola",
+"tiene": [
+"pan",
+"lomo",
+"pimiento",
+"refresco de cola"
+],
+"dudas": 0,
+"kcal": [
+550,
+800
+]
+},
+{
+"f": "un pincho de tortilla y una caña",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "una tostada con tomate y aceite y un cortado",
+"tiene": [
+"tostada|pan",
+"cortado"
+],
+"kcal": [
+104,
+216
+]
+},
+{
+"f": "una ración de bravas a medias",
+"tiene": [
+"bravas"
+],
+"kcal": [
+250,
+400
+]
+},
+{
+"f": "un bocadillo de calamares en el bar",
+"tiene": [
+"calamar"
+],
+"kcal": [
+450,
+650
+]
+},
+{
+"f": "un café con leche y una napolitana de chocolate",
+"tiene": [
+"napolitana",
+"cafe"
+],
+"kcal": [
+330,
+480
+]
+},
+{
+"f": "media tostada con mantequilla y un zumo de naranja natural",
+"tiene": [
+"tostada|pan",
+"zumo de naranja"
+],
+"kcal": [
+104,
+216
+]
+},
+{
+"f": "un croissant a la plancha y un cortado",
+"tiene": [
+"croissant"
+],
+"kcal": [
+280,
+400
+]
+},
+{
+"f": "una porción de tarta de queso del bar",
+"tiene": [
+"tarta de queso"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "unas croquetas de jamón, cuatro",
+"tiene": [
+"croqueta"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "un bocata de lomo con queso",
+"tiene": [
+"lomo"
+],
+"kcal": [
+450,
+650
+]
+},
+{
+"f": "unas aceitunas y un vermut",
+"tiene": [
+"aceituna"
+],
+"kcal": [
+120,
+200
+]
+},
+{
+"f": "un pincho moruno y un tinto de verano",
+"tiene": [
+"moruno"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "una cerveza sin alcohol y unas aceitunas",
+"tiene": [
+"aceituna"
+],
+"kcal": [
+100,
+180
+]
+},
+{
+"f": "tostada de aguacate con huevo poché en el bar",
+"tiene": [
+"aguacate"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "un café solo y medio bocadillo de jamón serrano",
+"tiene": [
+"jamon"
+],
+"kcal": [
+125,
+259
+]
+},
+{
+"f": "un zumo de naranja recién exprimido",
+"tiene": [
+"zumo de naranja"
+],
+"kcal": [
+90,
+140
+]
+},
+{
+"f": "una ensaladilla rusa de tapa",
+"tiene": [
+"ensaladilla"
+],
+"kcal": [
+124,
+257
+]
+},
+{
+"f": "dos gildas y una cerveza",
+"tiene": [
+"gilda"
+],
+"kcal": [
+103,
+213
+]
+},
+{
+"f": "una porción de pulpo a la gallega con pimentón",
+"tiene": [
+"pulpo"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "un montadito de pringá",
+"tiene": [
+"montadito|pan"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un plato de patatas con alioli para compartir",
+"tiene": [
+"alioli"
+],
+"kcal": [
+168,
+350
+]
+},
+{
+"f": "un cortado y una magdalena",
+"tiene": [
+"magdalena"
+],
+"kcal": [
+94,
+194
+]
+},
+{
+"f": "un bocadillo de tortilla de patatas a media tarde en el bar",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+450,
+650
+],
+"pos": "merienda"
+},
+{
+"f": "un pincho de pollo al curry y una coca cola",
+"tiene": [
+"pollo",
+"cola|coca"
+],
+"kcal": [
+413,
+857
+]
+},
+{
+"f": "tostas de pan de cristal con tomate y jamón",
+"tiene": [
+"tomate"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un café con hielo y una ensaimada",
+"tiene": [
+"ensaimada"
+],
+"kcal": [
+300,
+420
+]
+},
+{
+"f": "un plato de jamón ibérico y un poco de pan",
+"tiene": [
+"jamon"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "una ración de chopitos",
+"tiene": [
+"chopito"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un bocadillo de pavo y queso en el bar de la esquina",
+"tiene": [
+"pavo"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "dos cervezas y una tapa de salmorejo",
+"tiene": [
+"salmorejo"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un plato de ensalada mixta de la terraza",
+"tiene": [
+"ensalada mixta"
+],
+"kcal": [
+194,
+404
+]
+},
+{
+"f": "un sándwich mixto y un zumo de melocotón",
+"tiene": [
+"sandwich mixto|jamon cocido"
+],
+"kcal": [
+339,
+705
+]
+},
+{
+"f": "un bocadillo de atún con tomate",
+"tiene": [
+"atun"
+],
+"kcal": [
+226,
+470
+]
+},
+{
+"f": "un café americano y una tostada de mermelada",
+"tiene": [
+"mermelada"
+],
+"kcal": [
+86,
+178
+]
+},
+{
+"f": "un vaso de agua con gas y una tapa de queso",
+"tiene": [
+"queso"
+],
+"kcal": [
+49,
+103
+]
+},
+{
+"f": "una hamburguesa de la barra con patatas fritas",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+650,
+950
+]
+},
+{
+"f": "unos boquerones en vinagre y pan",
+"tiene": [
+"boquerone"
+],
+"kcal": [
+230,
+478
+]
+},
+{
+"f": "un pincho de gambas al ajillo",
+"tiene": [
+"gamba"
+],
+"kcal": [
+200,
+320
+]
+},
+{
+"f": "una caña y una ración de alitas de pollo",
+"tiene": [
+"alita"
+],
+"kcal": [
+254,
+528
+]
+},
+{
+"f": "unos churros con chocolate, para desayunar",
+"tiene": [
+"churro"
+],
+"kcal": [
+257,
+535
+],
+"pos": "desayuno"
+},
+{
+"f": "dos churros con chocolate espeso en la churrería",
+"tiene": [
+"churro"
+],
+"kcal": [
+211,
+437
+]
+},
+{
+"f": "un pincho de chorizo a la sidra",
+"tiene": [
+"chorizo"
+],
+"kcal": [
+355,
+737
+]
+},
+{
+"f": "una tapa de champiñones al ajillo",
+"tiene": [
+"champinon|setas"
+],
+"kcal": [
+49,
+101
+]
+},
+{
+"f": "un plato de migas con huevo frito",
+"tiene": [
+"migas"
+],
+"kcal": [
+569,
+1181
+]
+},
+{
+"f": "una tortilla francesa en el bar y un vino",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "un café con leche de avena en la cafetería",
+"tiene": [
+"avena|cafe"
+],
+"kcal": [
+70,
+140
+]
+},
+{
+"f": "un té verde y un bollo de crema",
+"tiene": [
+"bollo|napolitana"
+],
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "dos empanadillas de atún del bar",
+"tiene": [
+"empanadilla"
+],
+"kcal": [
+226,
+470
+]
+},
+{
+"f": "una ración de croquetas de pollo y una caña",
+"tiene": [
+"croqueta"
+],
+"kcal": [
+348,
+724
+]
+},
+{
+"f": "un plato de pimientos de padrón",
+"tiene": [
+"pimiento"
+],
+"kcal": [
+150,
+250
+]
+},
+{
+"f": "de primero lentejas, de segundo merluza con patatas y de postre fruta",
+"tiene": [
+"lenteja",
+"merluza"
+],
+"kcal": [
+261,
+541
+],
+"pos": "comida"
+},
+{
+"f": "en la guardia unas galletas de la máquina y un café",
+"tiene": [
+"galleta",
+"cafe"
+],
+"kcal": [
+81,
+167
+]
+},
+{
+"f": "en el comedor del hospital, pasta a la boloñesa y yogur",
+"tiene": [
+"pasta",
+"yogur"
+],
+"kcal": [
+255,
+529
+]
+},
+{
+"f": "de segundo, pollo asado con arroz y pan",
+"tiene": [
+"pollo"
+],
+"kcal": [
+500,
+700
+]
+},
+{
+"f": "a las 3 de la mañana en la guardia, un bocadillo de jamón que traje de casa",
+"tiene": [
+"jamon"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "cena de la guardia: un tupper de garbanzos con espinacas",
+"tiene": [
+"garbanzo"
+],
+"kcal": [
+234,
+486
+],
+"pos": "cena"
+},
+{
+"f": "para comer en el hospital, ensalada de pasta y un plátano",
+"tiene": [
+"pasta",
+"platano"
+],
+"kcal": [
+290,
+602
+],
+"pos": "comida"
+},
+{
+"f": "en el office de planta un café de máquina y dos tostadas integrales",
+"tiene": [
+"cafe",
+"tostada|pan"
+],
+"kcal": [
+122,
+252
+]
+},
+{
+"f": "en la guardia, sopa de fideos del comedor y un trozo de pan",
+"tiene": [
+"fideos"
+],
+"kcal": [
+147,
+305
+]
+},
+{
+"f": "bandeja del comedor: arroz tres delicias y un flan",
+"tiene": [
+"arroz",
+"flan"
+],
+"kcal": [
+600,
+800
+]
+},
+{
+"f": "comida del hospital: crema de calabacín y tortilla de calabacín",
+"tiene": [
+"calabacin"
+],
+"kcal": [
+215,
+446
+],
+"pos": "comida"
+},
+{
+"f": "de postre en el comedor, un yogur natural y una manzana",
+"tiene": [
+"yogur",
+"manzana"
+],
+"kcal": [
+120,
+200
+]
+},
+{
+"f": "desayuno en la residencia, dos tostadas con mermelada y leche",
+"tiene": [
+"tostada|pan",
+"leche"
+],
+"kcal": [
+300,
+430
+],
+"pos": "desayuno"
+},
+{
+"f": "en la guardia me comí un sándwich de pollo de la cafetería del hospital",
+"tiene": [
+"sandwich|pan",
+"pollo"
+],
+"kcal": [
+194,
+402
+]
+},
+{
+"f": "cena rápida en la guardia: sopa de sobre y medio pan",
+"tiene": [
+"sopa"
+],
+"kcal": [
+104,
+216
+],
+"pos": "cena"
+},
+{
+"f": "de segundo en el comedor, filete de ternera con ensalada",
+"tiene": [
+"ternera"
+],
+"kcal": [
+200,
+414
+]
+},
+{
+"f": "de primero garbanzos con chorizo y de segundo pescado al horno",
+"tiene": [
+"garbanzo"
+],
+"pregunta": [
+"pescado"
+]
+},
+{
+"f": "un bollo de chocolate de la máquina de vending",
+"tiene": [
+"bollo|napolitana"
+],
+"kcal": [
+246,
+510
+]
+},
+{
+"f": "a las 2 de la madrugada, unas nueces y un café",
+"tiene": [
+"nuez",
+"cafe"
+],
+"kcal": [
+150,
+250
+]
+},
+{
+"f": "comida en el hospital: merluza en salsa verde con guisantes",
+"tiene": [
+"merluza"
+],
+"kcal": [
+238,
+494
+],
+"pos": "comida"
+},
+{
+"f": "en el comedor, arroz con pollo y una naranja",
+"tiene": [
+"arroz",
+"naranja"
+],
+"kcal": [
+550,
+750
+]
+},
+{
+"f": "de primero una ensalada variada y de segundo unos huevos revueltos",
+"tiene": [
+"huevo"
+],
+"kcal": [
+194,
+402
+]
+},
+{
+"f": "de postre, una pera y un café del comedor",
+"tiene": [
+"pera",
+"cafe"
+],
+"kcal": [
+64,
+132
+]
+},
+{
+"f": "cena en el comedor de guardia: espaguetis carbonara y un yogur",
+"tiene": [
+"espagueti|pasta",
+"carbonara"
+],
+"kcal": [
+420,
+872
+],
+"pos": "cena"
+},
+{
+"f": "en la guardia, dos mini bocadillos que me dieron en la sala",
+"tiene": [
+"bocadillo|pan"
+],
+"kcal": [
+300,
+450
+]
+},
+{
+"f": "unas barritas de cereales y un café de la máquina",
+"tiene": [
+"barrita",
+"cafe"
+],
+"kcal": [
+68,
+140
+]
+},
+{
+"f": "para cenar en el hospital, tortilla francesa y pan integral",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+350,
+500
+],
+"pos": "cena"
+},
+{
+"f": "de segundo, lomo de cerdo con puré de manzana",
+"tiene": [
+"lomo"
+],
+"kcal": [
+167,
+347
+]
+},
+{
+"f": "sopa de pollo con fideos del comedor y una mandarina",
+"tiene": [
+"sopa",
+"mandarina"
+],
+"kcal": [
+130,
+270
+]
+},
+{
+"f": "en la guardia de noche, plátano y un vaso de leche",
+"tiene": [
+"platano",
+"leche"
+],
+"kcal": [
+200,
+300
+]
+},
+{
+"f": "comida del comedor: judías verdes con patata cocida y un filete de pescado",
+"tiene": [
+"judia"
+],
+"kcal": [
+107,
+223
+],
+"pos": "comida"
+},
+{
+"f": "en la sala de descanso, un bocadillo de atún que me sobró del turno",
+"tiene": [
+"atun"
+],
+"kcal": [
+223,
+463
+]
+},
+{
+"f": "de postre flan de vainilla y de primero crema de verduras",
+"tiene": [
+"flan",
+"verdura"
+],
+"kcal": [
+166,
+344
+]
+},
+{
+"f": "unas pipas y un refresco de limón en la guardia",
+"tiene": [
+"pipa",
+"refresco"
+],
+"kcal": [
+200,
+414
+]
+},
+{
+"f": "en el comedor de médicos, paella mixta y un café",
+"tiene": [
+"paella",
+"cafe"
+],
+"kcal": [
+313,
+649
+]
+},
+{
+"f": "un tupper de pasta con atún que preparé ayer",
+"tiene": [
+"pasta",
+"atun"
+],
+"kcal": [
+248,
+514
+]
+},
+{
+"f": "en la guardia, un café con leche y dos galletas maría",
+"tiene": [
+"galleta"
+],
+"kcal": [
+92,
+192
+]
+},
+{
+"f": "de primero ensalada de garbanzos y de segundo pollo al limón",
+"tiene": [
+"garbanzo",
+"pollo"
+],
+"kcal": [
+600,
+800
+]
+},
+{
+"f": "bandeja de cena de la residencia: puré de verduras y tortilla",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+300,
+450
+],
+"pos": "cena"
+},
+{
+"f": "un zumo de piña y un bocadillo de queso del comedor",
+"tiene": [
+"pina",
+"queso"
+],
+"kcal": [
+400,
+550
+]
+},
+{
+"f": "de segundo, hamburguesa de pavo con ensalada en el hospital",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+218,
+452
+]
+},
+{
+"f": "en la guardia, sopa de cocido y un poco de pan",
+"tiene": [
+"cocido|sopa"
+],
+"kcal": [
+182,
+378
+]
+},
+{
+"f": "para cenar en guardia, un yogur griego y dos kiwis",
+"tiene": [
+"yogur",
+"kiwi"
+],
+"kcal": [
+180,
+260
+],
+"pos": "cena"
+},
+{
+"f": "comida del hospital, arroz a la cubana con huevo frito y plátano",
+"tiene": [
+"arroz",
+"platano"
+],
+"kcal": [
+750,
+950
+],
+"pos": "comida"
+},
+{
+"f": "un bocadillo de lomo que compré en la cafetería de planta",
+"tiene": [
+"lomo"
+],
+"kcal": [
+239,
+497
+]
+},
+{
+"f": "un Big Mac con patatas medianas y una coca cola",
+"tiene": [
+"big mac",
+"cola|coca"
+],
+"kcal": [
+900,
+1200
+]
+},
+{
+"f": "un Whopper con queso y patatas grandes de Burger King",
+"tiene": [
+"whopper"
+],
+"kcal": [
+900,
+1200
+]
+},
+{
+"f": "seis alitas de KFC y una ensalada",
+"tiene": [
+"alita"
+],
+"kcal": [
+500,
+700
+]
+},
+{
+"f": "pizza barbacoa mediana de Telepizza",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "dos porciones de pizza pepperoni de Domino's",
+"tiene": [
+"pizza"
+],
+"kcal": [
+358,
+743
+]
+},
+{
+"f": "una hamburguesa Five Guys con todos los toppings y patatas",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+1164,
+2417
+]
+},
+{
+"f": "un bocata de pollo de Goiko con cheddar",
+"kcal": [
+272,
+564
+]
+},
+{
+"f": "un café latte grande de Starbucks y un cookie",
+"tiene": [
+"latte",
+"cookie"
+],
+"kcal": [
+400,
+550
+]
+},
+{
+"f": "tacos de pollo de Taco Bell, tres",
+"tiene": [
+"taco"
+],
+"kcal": [
+500,
+700
+]
+},
+{
+"f": "un bocadillo de Foster's de pollo con patatas",
+"kcal": [
+254,
+527
+]
+},
+{
+"f": "un sub de pavo de Subway de 15 cm con tomate",
+"kcal": [
+196,
+408
+]
+},
+{
+"f": "pollo frito de Popeyes, dos piezas y puré",
+"tiene": [
+"pollo"
+],
+"kcal": [
+281,
+585
+]
+},
+{
+"f": "una hamburguesa de Rodilla con queso azul y una caña",
+"kcal": [
+700,
+950
+]
+},
+{
+"f": "un donut de Dunkin' y un café solo",
+"kcal": [
+163,
+338
+]
+},
+{
+"f": "nuggets de pollo de McDonald's, diez",
+"tiene": [
+"nugget"
+],
+"kcal": [
+450,
+600
+]
+},
+{
+"f": "un McFlurry de oreo tras la guardia",
+"tiene": [
+"mcflurry"
+],
+"kcal": [
+221,
+459
+]
+},
+{
+"f": "medio pollo asado de Telepizza",
+"tiene": [
+"pollo"
+],
+"kcal": [
+510,
+1060
+]
+},
+{
+"f": "una caja de alitas barbacoa de Burger King",
+"pregunta": [
+"alitas"
+]
+},
+{
+"f": "un Whopper Jr. y unas onion rings",
+"tiene": [
+"whopper"
+],
+"kcal": [
+680,
+1412
+]
+},
+{
+"f": "un café mocha grande de Starbucks con leche de avena",
+"tiene": [
+"mocha"
+],
+"kcal": [
+300,
+400
+]
+},
+{
+"f": "un frappuccino de caramelo de Starbucks",
+"tiene": [
+"frappuccino"
+],
+"kcal": [
+350,
+480
+]
+},
+{
+"f": "una pizza de jamón y queso de Telepizza, cuatro porciones",
+"tiene": [
+"pizza"
+],
+"kcal": [
+900,
+1200
+]
+},
+{
+"f": "dos hamburguesas dobles de Five Guys y un batido de vainilla",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+1500,
+2400
+]
+},
+{
+"f": "un sándwich de pavo de Subway con mucho pepino y una galleta",
+"kcal": [
+218,
+452
+]
+},
+{
+"f": "un café con leche de Starbucks y un croissant de jamón y queso",
+"tiene": [
+"croissant"
+],
+"kcal": [
+500,
+650
+]
+},
+{
+"f": "alitas picantes de Goiko con patatas",
+"kcal": [
+423,
+878
+]
+},
+{
+"f": "una pizza de atún de Domino's y una Coca-Cola zero",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "un menú de VIPS con tostada y zumo",
+"kcal": [
+96,
+200
+]
+},
+{
+"f": "un café de Dunkin' con un bagel de queso crema",
+"tiene": [
+"bagel"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "un wrap de pollo de Starbucks y un café americano",
+"tiene": [
+"wrap"
+],
+"kcal": [
+216,
+450
+]
+},
+{
+"f": "un burrito de pollo de Taco Bell con guacamole",
+"tiene": [
+"burrito"
+],
+"kcal": [
+600,
+800
+]
+},
+{
+"f": "una hamburguesa de pollo de KFC con patatas y ensalada",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+260,
+540
+]
+},
+{
+"f": "tiras de pollo de KFC, cuatro",
+"tiene": [
+"pollo"
+],
+"kcal": [
+380,
+790
+]
+},
+{
+"f": "un plato de rigatoni de Foster's",
+"tiene": [
+"macarron|pasta"
+],
+"kcal": [
+205,
+427
+]
+},
+{
+"f": "una porción de tarta de queso de Starbucks",
+"tiene": [
+"tarta de queso"
+],
+"kcal": [
+400,
+550
+]
+},
+{
+"f": "un sándwich de jamón de Starbucks calentito",
+"tiene": [
+"sandwich|pan"
+],
+"kcal": [
+197,
+409
+]
+},
+{
+"f": "una ensalada César de Foster's y pan de ajo",
+"tiene": [
+"cesar"
+],
+"kcal": [
+600,
+800
+]
+},
+{
+"f": "ración de nachos de Rodilla con guacamole",
+"tiene": [
+"nacho"
+],
+"kcal": [
+341,
+707
+]
+},
+{
+"f": "un batido de fresa de McDonald's",
+"tiene": [
+"batido"
+],
+"kcal": [
+122,
+252
+]
+},
+{
+"f": "una ensalada de pasta de Mercadona",
+"tiene": [
+"pasta"
+],
+"kcal": [
+161,
+335
+]
+},
+{
+"f": "un yogur proteico de Hacendado",
+"tiene": [
+"yogur"
+],
+"kcal": [
+48,
+100
+]
+},
+{
+"f": "una tortilla de patatas de Mercadona",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+148,
+308
+]
+},
+{
+"f": "pan de molde integral de Hacendado, dos rebanadas con aguacate",
+"tiene": [
+"pan de molde"
+],
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "un bote de garbanzos cocidos de Hacendado",
+"tiene": [
+"garbanzo"
+],
+"kcal": [
+361,
+751
+]
+},
+{
+"f": "una lata de atún en aceite de girasol de Hacendado",
+"tiene": [
+"atun"
+],
+"kcal": [
+72,
+150
+]
+},
+{
+"f": "medio pollo asado del súper",
+"tiene": [
+"pollo"
+],
+"kcal": [
+510,
+1060
+]
+},
+{
+"f": "una bolsa de espinacas baby de Mercadona",
+"tiene": [
+"espinaca"
+],
+"kcal": [
+50,
+80
+]
+},
+{
+"f": "queso fresco de Hacendado, un bote",
+"tiene": [
+"queso fresco"
+],
+"kcal": [
+255,
+529
+]
+},
+{
+"f": "una tableta de chocolate negro 85% de Mercadona, dos cuadraditos",
+"tiene": [
+"chocolate"
+],
+"kcal": [
+100,
+150
+]
+},
+{
+"f": "cuatro huevos camperos de Mercadona",
+"tiene": [
+"huevo"
+],
+"kcal": [
+220,
+400
+]
+},
+{
+"f": "un paquete de pechugas de pollo de Hacendado, 200 g",
+"tiene": [
+"pechuga"
+],
+"kcal": [
+180,
+280
+]
+},
+{
+"f": "una bolsa de ensalada de Mercadona y una lata de maíz",
+"tiene": [
+"maiz"
+],
+"kcal": [
+156,
+324
+]
+},
+{
+"f": "unos mejillones en escabeche de Hacendado",
+"tiene": [
+"mejillon"
+],
+"kcal": [
+104,
+216
+]
+},
+{
+"f": "un bote de pesto de Hacendado para la pasta",
+"tiene": [
+"pesto"
+],
+"kcal": [
+168,
+348
+]
+},
+{
+"f": "leche semidesnatada de Hacendado, medio litro",
+"tiene": [
+"leche"
+],
+"kcal": [
+160,
+260
+]
+},
+{
+"f": "un paquete de copos de avena de Hacendado con leche",
+"tiene": [
+"avena|cafe"
+],
+"kcal": [
+332,
+690
+]
+},
+{
+"f": "mango troceado de Mercadona de postre",
+"tiene": [
+"mango"
+],
+"kcal": [
+117,
+243
+]
+},
+{
+"f": "un cartón de bebida de soja de Hacendado",
+"tiene": [
+"soja"
+],
+"kcal": [
+60,
+110
+]
+},
+{
+"f": "un brick de zumo de naranja de Hacendado",
+"tiene": [
+"zumo de naranja"
+],
+"kcal": [
+59,
+122
+]
+},
+{
+"f": "una bandeja de salmón ahumado de Mercadona, unas cuatro lonchas",
+"tiene": [
+"salmon"
+],
+"kcal": [
+51,
+105
+]
+},
+{
+"f": "un paquete de palomitas de microondas de Hacendado",
+"tiene": [
+"palomitas"
+],
+"kcal": [
+156,
+324
+]
+},
+{
+"f": "unas barritas de cereales de Hacendado, dos",
+"tiene": [
+"barrita"
+],
+"kcal": [
+150,
+250
+]
+},
+{
+"f": "un bote de tomate frito de Hacendado con pasta",
+"tiene": [
+"tomate frito"
+],
+"kcal": [
+345,
+716
+]
+},
+{
+"f": "una lata de tomate triturado de Hacendado",
+"tiene": [
+"tomate"
+],
+"kcal": [
+17,
+35
+]
+},
+{
+"f": "un paquete de tortitas de maíz de Hacendado con aguacate",
+"tiene": [
+"tortita"
+],
+"kcal": [
+92,
+192
+]
+},
+{
+"f": "un plato de sushi del súper, cinco piezas",
+"tiene": [
+"sushi"
+],
+"kcal": [
+142,
+294
+]
+},
+{
+"f": "una bolsa de cacahuetes tostados de Mercadona",
+"tiene": [
+"cacahuete"
+],
+"kcal": [
+369,
+765
+]
+},
+{
+"f": "medio kilo de fresas de Mercadona",
+"tiene": [
+"fresa"
+],
+"kcal": [
+120,
+200
+]
+},
+{
+"f": "un brick de caldo de pollo de Hacendado con un huevo cocido",
+"tiene": [
+"caldo"
+],
+"kcal": [
+200,
+320
+]
+},
+{
+"f": "una ración de lomo embuchado de Mercadona con pan",
+"tiene": [
+"lomo"
+],
+"kcal": [
+166,
+346
+]
+},
+{
+"f": "un yogur griego natural de Hacendado con miel",
+"tiene": [
+"yogur",
+"miel"
+],
+"kcal": [
+102,
+212
+]
+},
+{
+"f": "hummus de Hacendado con zanahoria",
+"tiene": [
+"hummus"
+],
+"kcal": [
+357,
+741
+]
+},
+{
+"f": "una ensalada de quinoa de Mercadona",
+"tiene": [
+"quinoa"
+],
+"kcal": [
+318,
+660
+]
+},
+{
+"f": "dos plátanos de Canarias del súper",
+"tiene": [
+"platano"
+],
+"kcal": [
+180,
+250
+]
+},
+{
+"f": "un paquete de tiras de pollo empanadas de Hacendado al horno",
+"tiene": [
+"pollo"
+],
+"kcal": [
+181,
+375
+]
+},
+{
+"f": "unas pizzas congeladas de Hacendado, media",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "un bote de mermelada de fresa de Hacendado en la tostada",
+"tiene": [
+"mermelada"
+],
+"kcal": [
+85,
+177
+]
+},
+{
+"f": "unas lentejas cocidas de bote de Hacendado",
+"tiene": [
+"lenteja"
+],
+"kcal": [
+117,
+243
+]
+},
+{
+"f": "una bolsa de aceitunas verdes del súper",
+"tiene": [
+"aceituna"
+],
+"kcal": [
+100,
+180
+]
+},
+{
+"f": "unas ciruelas pasas de Mercadona, un puñado",
+"tiene": [
+"ciruela"
+],
+"kcal": [
+125,
+259
+]
+},
+{
+"f": "un bote de atún en aceite de oliva de Hacendado y un tomate",
+"tiene": [
+"atun"
+],
+"kcal": [
+532,
+1106
+]
+},
+{
+"f": "un paquete de nachos de Hacendado con guacamole",
+"tiene": [
+"nacho"
+],
+"kcal": [
+400,
+550
+]
+},
+{
+"f": "un pack de tres yogures naturales de Hacendado y me comí uno",
+"tiene": [
+"yogur"
+],
+"kcal": [
+49,
+103
+]
+},
+{
+"f": "desayuno: café con leche, 2 tostadas con aguacate, un zumo de naranja",
+"tiene": [
+"tostada|pan",
+"aguacate"
+],
+"kcal": [
+304,
+632
+],
+"pos": "desayuno"
+},
+{
+"f": "comida: arroz integral, pollo a la plancha, ensalada, un yogur y una manzana",
+"tiene": [
+"arroz",
+"pollo",
+"manzana"
+],
+"kcal": [
+650,
+900
+],
+"pos": "comida"
+},
+{
+"f": "cena: sopa de verduras, tortilla de espinacas, pan y un plátano",
+"tiene": [
+"sopa",
+"tortilla",
+"platano"
+],
+"kcal": [
+600,
+850
+],
+"pos": "cena"
+},
+{
+"f": "merienda: un plátano, 30 g de almendras y un café solo",
+"tiene": [
+"platano",
+"almendra"
+],
+"kcal": [
+230,
+340
+],
+"pos": "merienda"
+},
+{
+"f": "de comida: lentejas con chorizo, pan, un café y una galleta de limón",
+"tiene": [
+"lenteja",
+"chorizo"
+],
+"kcal": [
+325,
+675
+],
+"pos": "comida"
+},
+{
+"f": "cena: pizza de jamón, una coca cola, una ensalada pequeña",
+"tiene": [
+"cola|coca"
+],
+"pos": "cena",
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "desayuno: dos tostadas con mantequilla, un vaso de leche, un kiwi, un cortado",
+"tiene": [
+"tostada|pan",
+"kiwi"
+],
+"kcal": [
+400,
+560
+],
+"pos": "desayuno"
+},
+{
+"f": "merienda: pan con tomate, una lata de atún, un zumo de piña",
+"tiene": [
+"atun"
+],
+"kcal": [
+266,
+552
+],
+"pos": "merienda"
+},
+{
+"f": "para cenar: crema de calabacín, un huevo cocido, 2 rebanadas de pan integral",
+"tiene": [
+"calabacin",
+"huevo"
+],
+"kcal": [
+350,
+500
+],
+"pos": "cena"
+},
+{
+"f": "comida de hoy: garbanzos con espinacas, un filete de merluza, pan y un yogur",
+"tiene": [
+"garbanzo",
+"merluza"
+],
+"kcal": [
+650,
+900
+],
+"pos": "comida"
+},
+{
+"f": "desayuno: 3 magdalenas, un café con leche y un vaso de agua",
+"tiene": [
+"magdalena",
+"cafe"
+],
+"kcal": [
+298,
+618
+],
+"pos": "desayuno"
+},
+{
+"f": "cena: hamburguesa de ternera, patatas fritas al horno, lechuga y tomate",
+"tiene": [
+"hamburguesa",
+"patata"
+],
+"kcal": [
+700,
+950
+],
+"pos": "cena"
+},
+{
+"f": "comida: pasta integral con pesto, pollo a la plancha y una manzana",
+"tiene": [
+"pasta",
+"pollo"
+],
+"kcal": [
+417,
+867
+],
+"pos": "comida"
+},
+{
+"f": "de cena: un bocadillo de pavo, un yogur, y un puñado de nueces",
+"tiene": [
+"pavo",
+"nuez"
+],
+"kcal": [
+500,
+700
+],
+"pos": "cena"
+},
+{
+"f": "merienda: tostada de aceite con tomate, un café con leche sin azúcar",
+"tiene": [
+"tostada|pan",
+"cafe"
+],
+"kcal": [
+144,
+300
+],
+"pos": "merienda"
+},
+{
+"f": "desayuno: yogur natural con avena, arándanos y una nuez",
+"tiene": [
+"avena|cafe",
+"arandano"
+],
+"kcal": [
+194,
+404
+],
+"pos": "desayuno"
+},
+{
+"f": "comida: arroz con verduras, medio aguacate, tres langostinos y un flan",
+"tiene": [
+"arroz",
+"langostino"
+],
+"kcal": [
+650,
+850
+],
+"pos": "comida"
+},
+{
+"f": "cena en guardia: sopa de fideos, tortilla de patata, una galleta y agua",
+"tiene": [
+"sopa",
+"tortilla"
+],
+"kcal": [
+246,
+512
+],
+"pos": "cena"
+},
+{
+"f": "a media mañana: un bollo de chocolate, un café solo y una naranja",
+"tiene": [
+"bollo|napolitana",
+"naranja"
+],
+"kcal": [
+307,
+639
+]
+},
+{
+"f": "comida: pollo al curry con arroz basmati, naan y agua",
+"tiene": [
+"pollo",
+"arroz"
+],
+"kcal": [
+499,
+1037
+],
+"pos": "comida"
+},
+{
+"f": "desayuno: cuatro galletas María, leche entera y medio plátano",
+"tiene": [
+"galleta",
+"platano"
+],
+"kcal": [
+214,
+444
+],
+"pos": "desayuno"
+},
+{
+"f": "merienda: un bocadillo de nocilla, un vaso de leche y un zumo",
+"tiene": [
+"nocilla|cacao",
+"leche"
+],
+"kcal": [
+367,
+763
+],
+"pos": "merienda"
+},
+{
+"f": "cena: revuelto de champiñones con dos huevos, pan de centeno y un tomate",
+"tiene": [
+"champinon|setas",
+"huevo"
+],
+"kcal": [
+392,
+814
+],
+"pos": "cena"
+},
+{
+"f": "comida: estofado de ternera, pan y una pera de postre",
+"tiene": [
+"ternera",
+"pera"
+],
+"kcal": [
+439,
+913
+],
+"pos": "comida"
+},
+{
+"f": "desayuno: pan con aceite y jamón, un café con leche y un naranja",
+"tiene": [
+"jamon",
+"cafe"
+],
+"kcal": [
+409,
+849
+],
+"pos": "desayuno"
+},
+{
+"f": "cena: ensalada de atún, huevo duro, aceitunas y pan",
+"tiene": [
+"atun",
+"huevo"
+],
+"kcal": [
+451,
+937
+],
+"pos": "cena"
+},
+{
+"f": "merienda: 2 barritas de cereales, un yogur, un plátano",
+"tiene": [
+"barrita",
+"platano"
+],
+"kcal": [
+330,
+450
+],
+"pos": "merienda"
+},
+{
+"f": "comida: sopa de cocido, garbanzos, carne, y un café de postre",
+"tiene": [
+"cocido|sopa"
+],
+"kcal": [
+311,
+647
+],
+"pos": "comida"
+},
+{
+"f": "desayuno: tostada de pavo con queso, zumo de naranja y un café",
+"tiene": [
+"pavo",
+"zumo de naranja"
+],
+"kcal": [
+148,
+308
+],
+"pos": "desayuno"
+},
+{
+"f": "cena: pescado al horno, puré de patata, pan y un vaso de vino",
+"pos": "cena",
+"pregunta": [
+"pescado"
+]
+},
+{
+"f": "para cenar: wok de tofu con verduras, arroz y un té",
+"tiene": [
+"tofu",
+"arroz"
+],
+"kcal": [
+261,
+541
+],
+"pos": "cena"
+},
+{
+"f": "comida: hamburguesa de pollo, patatas, ensalada y una coca cola zero",
+"tiene": [
+"hamburguesa",
+"patata"
+],
+"kcal": [
+357,
+741
+],
+"pos": "comida"
+},
+{
+"f": "desayuno: café con leche, tostada de aguacate, dos huevos revueltos y naranja",
+"tiene": [
+"aguacate",
+"huevo"
+],
+"kcal": [
+335,
+695
+],
+"pos": "desayuno"
+},
+{
+"f": "merienda: 3 galletas integrales, un café y medio plátano",
+"tiene": [
+"galleta",
+"platano"
+],
+"kcal": [
+97,
+201
+],
+"pos": "merienda"
+},
+{
+"f": "comida de guardia: macarrones con tomate, un filete empanado, un flan",
+"tiene": [
+"macarron|pasta",
+"filete|pechuga"
+],
+"kcal": [
+551,
+1143
+],
+"pos": "comida"
+},
+{
+"f": "cena: crema de verduras, pollo asado y un trozo de pan",
+"tiene": [
+"verdura",
+"pollo"
+],
+"kcal": [
+500,
+700
+],
+"pos": "cena"
+},
+{
+"f": "merienda: pan integral con hummus, un pepino y un café",
+"tiene": [
+"hummus"
+],
+"kcal": [
+311,
+647
+],
+"pos": "merienda"
+},
+{
+"f": "desayuno: bol de muesli con leche de soja y un puñado de fresas",
+"tiene": [
+"muesli",
+"fresa"
+],
+"kcal": [
+220,
+456
+],
+"pos": "desayuno"
+},
+{
+"f": "comida: paella de marisco, pan, una cerveza sin alcohol y un café",
+"tiene": [
+"paella"
+],
+"kcal": [
+459,
+953
+],
+"pos": "comida"
+},
+{
+"f": "cena: quesadilla de pollo, guacamole y un vaso de agua",
+"tiene": [
+"quesadilla",
+"guacamole"
+],
+"kcal": [
+259,
+537
+],
+"pos": "cena"
+},
+{
+"f": "a las 11, un bocadillo de tortilla, un zumo de melocotón, dos galletas",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+500,
+700
+]
+},
+{
+"f": "comida: lubina a la plancha, patatas cocidas, una ensalada verde y pan",
+"tiene": [
+"lubina",
+"patata"
+],
+"kcal": [
+350,
+728
+],
+"pos": "comida"
+},
+{
+"f": "cena: sándwich de jamón y queso, un café y una manzana",
+"tiene": [
+"sandwich|pan",
+"manzana"
+],
+"kcal": [
+382,
+794
+],
+"pos": "cena"
+},
+{
+"f": "merienda: un vaso de leche con cacao, galletas de avena y un plátano",
+"tiene": [
+"galleta",
+"platano"
+],
+"kcal": [
+400,
+550
+],
+"pos": "merienda"
+},
+{
+"f": "desayuno: colacao con galletas, un plátano y un vaso de agua",
+"tiene": [
+"cola cao",
+"platano"
+],
+"kcal": [
+350,
+500
+],
+"pos": "desayuno"
+},
+{
+"f": "cena: espaguetis con tomate, parmesano, un yogur y una mandarina",
+"tiene": [
+"espagueti|pasta",
+"mandarina"
+],
+"kcal": [
+550,
+750
+],
+"pos": "cena"
+},
+{
+"f": "comida: ensalada de lentejas, dos huevos cocidos, pan y un café",
+"tiene": [
+"lenteja",
+"huevo"
+],
+"kcal": [
+550,
+750
+],
+"pos": "comida"
+},
+{
+"f": "de postre: un helado de vainilla, una cucharada de nata y un café",
+"tiene": [
+"helado"
+],
+"kcal": [
+114,
+238
+]
+},
+{
+"f": "cena: sopa de miso, arroz integral, salmón a la plancha y un té verde",
+"tiene": [
+"miso",
+"salmon"
+],
+"kcal": [
+550,
+750
+],
+"pos": "cena"
+},
+{
+"f": "merienda y luego cena: pizza de atún, un refresco de limón y una pera",
+"tiene": [
+"refresco"
+],
+"pregunta": [
+"pizza"
+]
+},
+{
+"f": "un platazo de macarrones",
+"tiene": [
+"macarron|pasta"
+],
+"kcal": [
+205,
+427
+]
+},
+{
+"f": "media lata de atún",
+"tiene": [
+"atun"
+],
+"kcal": [
+21,
+43
+]
+},
+{
+"f": "un par de huevos fritos",
+"tiene": [
+"huevo"
+],
+"kcal": [
+180,
+280
+]
+},
+{
+"f": "un chorrito de leche en el café",
+"tiene": [
+"leche",
+"cafe"
+],
+"kcal": [
+2,
+30
+]
+},
+{
+"f": "un cacho de tortilla",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+247,
+513
+]
+},
+{
+"f": "un montón de arroz con un huevo",
+"tiene": [
+"arroz",
+"huevo"
+],
+"kcal": [
+225,
+467
+]
+},
+{
+"f": "un pedazo de pollo con patatas",
+"tiene": [
+"pollo",
+"patata"
+],
+"kcal": [
+177,
+367
+]
+},
+{
+"f": "un tazón de cereales con leche fría",
+"tiene": [
+"cereal",
+"leche"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "un puñado de pistachos con sal",
+"tiene": [
+"pistacho"
+],
+"kcal": [
+91,
+189
+]
+},
+{
+"f": "unas cucharadas de garbanzos de la olla",
+"tiene": [
+"garbanzo"
+],
+"kcal": [
+27,
+57
+]
+},
+{
+"f": "ayer cené un plato de sopa",
+"pos": "cena",
+"pregunta": [
+"sopa"
+]
+},
+{
+"f": "dos cucharones de lentejas",
+"tiene": [
+"lenteja"
+],
+"kcal": [
+176,
+365
+]
+},
+{
+"f": "medio bocata de chorizo y un trago de cerveza",
+"tiene": [
+"chorizo"
+],
+"kcal": [
+181,
+375
+]
+},
+{
+"f": "un trozo de melón, de los grandes",
+"tiene": [
+"melon"
+],
+"kcal": [
+44,
+92
+]
+},
+{
+"f": "un buen plato de judías con chorizo",
+"tiene": [
+"judia",
+"chorizo"
+],
+"kcal": [
+159,
+329
+]
+},
+{
+"f": "unas cuatro galletitas de las de siempre",
+"tiene": [
+"galleta"
+],
+"kcal": [
+80,
+166
+]
+},
+{
+"f": "un bol de sopa de fideos casera",
+"tiene": [
+"sopa"
+],
+"kcal": [
+78,
+162
+]
+},
+{
+"f": "lo típico: un filete a la plancha con patatas fritas",
+"tiene": [
+"patata"
+],
+"pregunta": [
+"filete|pechuga"
+]
+},
+{
+"f": "un tomate aliñado con cebolla y atún de lata",
+"tiene": [
+"tomate",
+"atun"
+],
+"kcal": [
+91,
+189
+]
+},
+{
+"f": "un trocito de queso manchego y dos nueces",
+"tiene": [
+"manchego",
+"nuez"
+],
+"kcal": [
+151,
+315
+]
+},
+{
+"f": "un vasito de yogur de los pequeños",
+"tiene": [
+"yogur"
+],
+"kcal": [
+80,
+130
+]
+},
+{
+"f": "el resto del puchero de ayer",
+"tiene": [
+"cocido"
+],
+"kcal": [
+400,
+600
+]
+},
+{
+"f": "una sobrasada untada en pan",
+"tiene": [
+"sobrasada"
+],
+"kcal": [
+331,
+687
+]
+},
+{
+"f": "un cuenco de cereales, un poco de azúcar y leche",
+"tiene": [
+"cereal"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "un huevo duro de postre",
+"tiene": [
+"huevo"
+],
+"kcal": [
+70,
+110
+]
+},
+{
+"f": "cuatro bolitas de albóndigas con tomate",
+"tiene": [
+"albondiga"
+],
+"kcal": [
+201,
+417
+]
+},
+{
+"f": "medio plato de paella de la abuela",
+"tiene": [
+"paella"
+],
+"kcal": [
+156,
+324
+]
+},
+{
+"f": "una rebanada gorda de pan con aceite",
+"tiene": [
+"pan"
+],
+"kcal": [
+109,
+227
+]
+},
+{
+"f": "un buen trozo de bizcocho casero",
+"tiene": [
+"bizcocho"
+],
+"kcal": [
+101,
+211
+]
+},
+{
+"f": "unos pimientos del piquillo con un poco de bonito",
+"tiene": [
+"piquillo",
+"bonito"
+],
+"kcal": [
+101,
+211
+]
+},
+{
+"f": "un cacharro de guiso de lentejas",
+"tiene": [
+"lenteja"
+],
+"kcal": [
+117,
+243
+]
+},
+{
+"f": "una mazorca de maíz hervida",
+"tiene": [
+"maiz"
+],
+"kcal": [
+59,
+122
+]
+},
+{
+"f": "tres cucharadas de hummus con zanahorias crudas",
+"tiene": [
+"hummus",
+"zanahoria"
+],
+"kcal": [
+60,
+124
+]
+},
+{
+"f": "macarones con tomate",
+"tiene": [
+"macarron|pasta"
+],
+"kcal": [
+239,
+495
+]
+},
+{
+"f": "2 tostd",
+"tiene": [
+"pan|tostada"
+],
+"kcal": [
+180,
+280
+]
+},
+{
+"f": "cafe c leche",
+"tiene": [
+"cafe"
+],
+"kcal": [
+80,
+140
+]
+},
+{
+"f": "yogurt",
+"tiene": [
+"yogur"
+],
+"kcal": [
+49,
+103
+]
+},
+{
+"f": "bocata d jamon",
+"tiene": [
+"jamon"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "pollo con arros",
+"tiene": [
+"arroz"
+],
+"kcal": [
+218,
+454
+]
+},
+{
+"f": "ensalda mixta",
+"tiene": [
+"ensalada"
+],
+"kcal": [
+150,
+260
+]
+},
+{
+"f": "crema d calabasin",
+"tiene": [
+"calabacin"
+],
+"kcal": [
+88,
+182
+]
+},
+{
+"f": "lentejas c chorizo",
+"tiene": [
+"lenteja",
+"chorizo"
+],
+"kcal": [
+235,
+489
+]
+},
+{
+"f": "tortila d patata",
+"tiene": [
+"tortilla"
+],
+"kcal": [
+148,
+308
+]
+},
+{
+"f": "un platano y 1 pera",
+"tiene": [
+"platano",
+"pera"
+],
+"kcal": [
+170,
+260
+]
+},
+{
+"f": "pasta con atun y tomate frito",
+"tiene": [
+"pasta",
+"atun"
+],
+"kcal": [
+281,
+583
+]
+},
+{
+"f": "filete d ternera",
+"tiene": [
+"filete|pechuga",
+"ternera"
+],
+"kcal": [
+128,
+266
+]
+},
+{
+"f": "fruta x la tarde",
+"pregunta": [
+"fruta"
+]
+},
+{
+"f": "sandwich d pavo",
+"tiene": [
+"sandwich|pan",
+"pavo"
+],
+"kcal": [
+194,
+404
+]
+},
+{
+"f": "hamburguesa c queso",
+"tiene": [
+"hamburguesa"
+],
+"kcal": [
+195,
+405
+]
+},
+{
+"f": "zumo d naranja",
+"tiene": [
+"zumo"
+],
+"kcal": [
+90,
+140
+]
+},
+{
+"f": "aguacte con huevo",
+"tiene": [
+"aguacate"
+],
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "bollo d crema",
+"tiene": [
+"bollo|napolitana"
+],
+"kcal": [
+250,
+350
+]
+},
+{
+"f": "salmon ahumado con pan",
+"tiene": [
+"salmon"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "pizaa barbacoa",
+"pregunta": [
+"pizaa"
+]
+},
+{
+"f": "ceral con leche",
+"tiene": [
+"cereal"
+],
+"kcal": [
+250,
+380
+]
+},
+{
+"f": "mantekilla con tostada",
+"tiene": [
+"tostada|pan"
+],
+"kcal": [
+84,
+174
+]
+},
+{
+"f": "sopa de fideos x cena",
+"tiene": [
+"sopa"
+],
+"kcal": [
+78,
+162
+],
+"pos": "cena"
+},
+{
+"f": "galletas marias",
+"tiene": [
+"galleta"
+],
+"kcal": [
+80,
+166
+]
+},
+{
+"f": "pan con tomate i aceite",
+"tiene": [
+"tomate"
+],
+"kcal": [
+200,
+320
+]
+},
+{
+"f": "huevos rebueltos",
+"tiene": [
+"huevo"
+],
+"kcal": [
+125,
+259
+]
+},
+{
+"f": "pollo asao con patatas",
+"tiene": [
+"pollo",
+"patata"
+],
+"kcal": [
+488,
+1013
+]
+},
+{
+"f": "chocolatina d la maquina",
+"tiene": [
+"chocolate"
+],
+"kcal": [
+150,
+280
+]
+},
+{
+"f": "cafe solo y bizcocho",
+"tiene": [
+"cafe",
+"bizcocho"
+],
+"kcal": [
+200,
+300
+]
+},
+{
+"f": "dos tostadas de pan integral con pavo y una manzana",
+"tiene": [
+"tostada|pan",
+"pavo",
+"manzana"
+],
+"kcal": [
+350,
+500
+]
+},
+{
+"f": "tres huevos cocidos",
+"tiene": [
+"huevo"
+],
+"seguro": [
+"huevo"
+],
+"dudas": 0
+},
+{
+"f": "180 g de salmón a la plancha",
+"tiene": [
+"salmon"
+],
+"seguro": [
+"salmon"
+],
+"dudas": 0
+},
+{
+"f": "lubina con patatas",
+"tiene": [
+"lubina",
+"patata"
+],
+"supuesto": [
+"lubina",
+"patata"
+],
+"dudas": 0
+},
+{
+"f": "un bocata de lomo",
+"tiene": [
+"pan",
+"lomo"
+],
+"supuesto": [
+"pan",
+"lomo"
+],
+"dudas": 0
+},
+{
+"f": "un big mac en el mc",
+"tiene": [
+"big mac"
+],
+"seguro": [
+"big mac"
+],
+"dudas": 0
+},
+{
+"f": "tortila de patata",
+"tiene": [
+"tortilla"
+],
+"supuesto": [
+"tortilla"
+],
+"dudas": 0
+},
+{
+"f": "dos huevos fritos",
+"tiene": [
+"huevo",
+"aceite"
+],
+"seguro": [
+"huevo"
+],
+"supuesto": [
+"aceite"
+],
+"dudas": 0
+},
+{
+"f": "una ensalada verde",
+"tiene": [
+"ensalada",
+"aceite"
+],
+"supuesto": [
+"aceite"
+],
+"dudas": 0
+},
+{
+"f": "un poke de atún",
+"tiene": [
+"atun"
+],
+"seguro": [
+"atun"
+],
+"dudas": 0
+},
+{
+"f": "pescado al vapor",
+"pregunta": [
+"pescado"
+]
+}
 ]

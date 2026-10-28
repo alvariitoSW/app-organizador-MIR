@@ -23,8 +23,8 @@ traspaso explica por qué.
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | — | sin medir | — | — |
-| maqueta | — | sin medir | — | — |
-| construir | — | sin medir | — | — |
+| maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
+| construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | estudio | — | sin medir | — | — |
 | parte (/plan-socialista) | — | sin medir | — | — |
 
@@ -37,6 +37,8 @@ traspaso explica por qué.
 | 2026-10-28 | consejo-dinero | estudio | opus-5-5 + sonnet-5-5 | 3 | 48 | **990 k** | sesión principal (56 %) | instalar el gobierno + 1.er Consejo; leer el otro repo por trozos; mapa en sonnet evitó releer app.js |
 | 2026-10-28 | feria-dinero | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 13 | 153 | **3,5 M** | sesión principal (44 %) | 10 maquetas en sonnet/haiku (~120-180 k cada una); la sesión larga encareció la principal: la feria debió ir en sesión nueva |
 | 2026-10-28 | la-rara | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 27 | 331 | **8,9 M** | sesión principal (35 %) | concurso de 6 escuelas + 4 de mejora; haiku sacó 1,1,3 en diseño libre: para maquetas raras, sonnet |
+| 2026-10-28 | v3-comer-mapa | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 8 | 192 | **3,6 M** | sesión principal (41 %) | concurso de 4 diseñadores sonnet + 2 rondas + ronda final y escribir (pedido por el usuario); principal opus 40 %. Ahorro: el concurso en 1 ronda con críticas cruzadas basta; capturas por guion, no por ayudante |
+| 2026-10-28 | v3-lector | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 99 | **2,3 M** | sesión principal (78 %) | clasificar 230 fallos y revisar kcal a mano · ajustar expectativas por script y mirar solo lecturas raras |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
@@ -48,8 +50,12 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
 - Pruebas solo las tuyas mientras trabajas (`tools/pruebas-corto.sh --solo …`); la completa, una vez al final.
 - Ayudantes de trabajo mecánico en sonnet o haiku; opus solo para decidir o diseñar algo nuevo.
 - Un arreglo de una línea con el sitio ya localizado: sin ayudantes (lanzar uno cuesta más que hacerlo).
+- Un banco de frases que escribe haiku sale barato (0,4 M las 300), pero sus kcal y nombres esperados fallan mucho: se
+  ajustan por script a lo que lee la app, revisando a mano solo las lecturas raras (v3-lector).
+- Pasar las frases con `--vuelca` y agrupar los fallos por tipo antes de tocar nada: 5 tandas de arreglos en vez de 200.
 - Una ficha por tarea (skill `ficha-de-tarea`, idea de spec-kit): lo descubierto se escribe una vez y el
   constructor recibe la ficha, no la conversación.
 - Una ronda de maquetas para una sección entera antes que una por cada función (plan de Comer, 2026-10-27).
+- Un concurso de diseñadores sonnet con escuelas opuestas y críticas cruzadas da ideas que una sola mano no saca (los tres robaron «Ahora toca»); los diseñadores se continúan con SendMessage, no se relanzan (v3-comer-mapa).
 - Abrir en sonnet las sesiones mecánicas (arreglos localizados, construir con ficha y maqueta aprobada).
 - Concursos de diseño libre: sonnet, no haiku (haiku sacó 1, 1 y 3 de 5 en La Rara; sonnet ganó con 5/5). (la-rara, 2026-10-28)

@@ -11,8 +11,10 @@
  *   dudas    cuántas preguntas exactamente (0 = lo entiende todo)
  *   kcal     [mín, máx] de lo apuntado
  *   pos      la comida que sale de la frase («de cena…» → cena)
+ *   seguro   trozos que tienen que salir con ✓ (lo dijiste: qué y cuánto, o un plato conocido)
+ *   supuesto trozos que tienen que salir con ≈ (la app puso algo: los gramos, el pan, una errata)
  *
- * Uso: node tests/frases.test.js  (o npm run test:frases)
+ * Uso: node tests/frases.test.js  (o npm run test:frases); -v enseña lo leído en las que fallan; --lee, en todas; --vuelca x.json guarda lo leído; --banco otro.json lee otro archivo
  */
 'use strict';
 const http = require('http');
@@ -22,7 +24,8 @@ const { chromium } = require('playwright');
 
 const ROOT = path.join(__dirname, '..');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
-const CASOS = JSON.parse(fs.readFileSync(path.join(__dirname, 'frases.json'), 'utf8'));
+const iB = process.argv.indexOf('--banco');
+const CASOS = JSON.parse(fs.readFileSync(iB > 0 ? path.resolve(process.argv[iB + 1]) : path.join(__dirname, 'frases.json'), 'utf8'));
 const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 (async () => {
@@ -62,7 +65,7 @@ const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(
         const m = P.fraseMacros(fr);
         return {
           f, pos: fr.pos || '', kcal: m.kcal,
-          items: fr.items.map((x) => ({ n: nombreDe(x), g: x.g || 0, rac: x.rac || 0 })),
+          items: fr.items.map((x) => ({ n: nombreDe(x), g: x.g || 0, rac: x.rac || 0, s: P.frSeg(x).s })),
           dudas: (fr.dudas || []).map((d) => ({ txt: d.txt, nopc: (d.opc || []).length })),
           nombre: P.fraseNombre(fr),
         };
@@ -87,6 +90,10 @@ const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(
         const d = r.dudas.find((x) => t.split('|').some((u) => sinTildes(x.txt).includes(sinTildes(u))));
         if (!d) mal.push('no pregunta «' + t + '»'); else if (!d.nopc) mal.push('pregunta «' + t + '» sin opciones');
       });
+      [['seguro', '✓'], ['supuesto', '≈']].forEach(([k, s]) => (c[k] || []).forEach((t) => {
+        const x = r.items.find((y) => t.split('|').some((u) => sinTildes(y.n).includes(sinTildes(u))));
+        if (!x) mal.push('falta «' + t + '» (para ' + s + ')'); else if (x.s !== s) mal.push('«' + t + '» sale ' + x.s + ' (esperaba ' + s + ')');
+      }));
       if (c.dudas != null && r.dudas.length !== c.dudas) mal.push(r.dudas.length + ' preguntas (esperaba ' + c.dudas + ': ' + r.dudas.map((d) => d.txt).join(', ') + ')');
       if (c.kcal && (r.kcal < c.kcal[0] || r.kcal > c.kcal[1])) mal.push(r.kcal + ' kcal (esperaba ' + c.kcal[0] + '–' + c.kcal[1] + ')');
       if (c.pos != null && r.pos !== c.pos) mal.push('va a «' + r.pos + '» (esperaba «' + c.pos + '»)');
@@ -97,9 +104,14 @@ const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(
   const verbose = process.argv.includes('-v');
   fallos.forEach(({ c, r, mal }) => {
     console.log('✗ «' + c.f + '»  →  ' + mal.join(' · '));
-    if (verbose && r && r.items) console.log('    lee: ' + r.items.map((x) => x.n + (x.g ? ' ' + x.g + 'g' : '') + (x.rac ? ' ×' + x.rac : '')).join(' | ') +
+    if (verbose && r && r.items) console.log('    lee: ' + r.items.map((x) => x.n + (x.g ? ' ' + x.g + 'g' : '') + (x.rac ? ' ×' + x.rac : '') + ' ' + x.s).join(' | ') +
       (r.dudas.length ? '  ¿? ' + r.dudas.map((d) => d.txt + '(' + d.nopc + ')').join(', ') : '') + '  = ' + r.kcal + ' kcal');
   });
+  const iV = process.argv.indexOf('--vuelca');
+  if (iV > 0) fs.writeFileSync(process.argv[iV + 1], JSON.stringify(leidos));
+  if (process.argv.includes('--lee')) leidos.forEach((r) => r.items && console.log('· «' + r.f + '» → ' +
+    r.items.map((x) => x.n + ' ' + (x.g ? x.g + 'g' : '×' + (x.rac || 1)) + ' ' + x.s).join(' | ') +
+    (r.dudas.length ? '  ¿? ' + r.dudas.map((d) => d.txt).join(', ') : '') + '  = ' + r.kcal + ' kcal'));
   if (errores.length) console.log('Errores de JavaScript: ' + errores.join(' | '));
   console.log('\n' + (CASOS.length - fallos.length) + '/' + CASOS.length + ' frases del banco OK');
   await browser.close();

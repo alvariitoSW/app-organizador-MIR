@@ -4,6 +4,9 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+
+- [aparc-s2b-a-main] El lector de frases (S2b) está en la rama (f7dc69b), sin pasar a main: falta que digas «despliégalo» · desde 2026-10-28
+- ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
@@ -112,6 +115,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
+- [sup-2026-10-28-comer-mapa] Comer (maquetas S2): cifras de ejemplo; % de vitaminas sobre la referencia europea; «investigar» sin IA externa (solo Open Food Facts y tablas propias); dictado del teclado del móvil; las pantallas que solo se abren desde el «Hoy» antiguo se recolocan, no se quitan · DECISIONS «El mapa de Comer» · contado el 2026-10-28
 - [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
@@ -177,3 +182,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, sello del lector de frases) · success; sellado; 0 issues/PR · ok
 - [rama-ebe7052] 2026-10-28 · rama ccr-c4997bb6-02fys3: 14 commits por detrás de main (Comer S2/S2b, app.js tocado) y 28 por delante (Dinero/Consejo); traer main antes de construir D1 · abierto
 - [parte-dinero-2026-10-28] 2026-10-28 · parte de la Tanda Dinero (D1-D6 delegada en el Consejo): pendiente qué se quita de Dinero; siguiente D1 ~0,4 M sonnet · propuesto
+- [run-40714087144] 2026-10-28 · despliegue de main (7d874f8, plan 3.0 y gastos; solo herramientas) · success; código sellado (version.json 2416c99 posterior al último código 66a7d0d); rama = main; 0 issues/PR · ok
+- [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
+- [run-40725644165] 2026-10-28 · despliegue de main (eddb09d, maquetas S2 y plan; sin código de app) · success; sellado (version.json 2416c99 posterior al último código); rama 7d874f8 = 10 commits por detrás de main; 0 issues/PR · ok
+- [parte-s2b-2026-10-28] 2026-10-28 · parte: siguiente S2b (lector de frases), sin presupuesto medido de construir · propuesto

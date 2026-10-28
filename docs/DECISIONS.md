@@ -1432,6 +1432,61 @@ ya hacen `tarea-a-fondo`, `redisena-seccion` y DECISIONS.
 **Supuestos.** Los presupuestos son estimaciones (solo hay una tarea medida); se corrigen con S1 y S2. Las tareas 1
 (pruebas) y 9 (Dinero) no son de Comer pero entran en la tanda porque las pediste en la misma lista.
 
+## El mapa de Comer: concurso de cuatro escuelas, gana «El reloj» (2026-10-28 · S2)
+
+**Elegido.** Comer entero como una **línea de tiempo** que va de ahora hacia delante (`maquetas/comer-debate-1-reloj.html`,
+6 pantallas): arriba «Lo siguiente · ✓ Hecho / Otra cosa» (idea de «Una pregunta», que los tres rivales robaron), las
+paradas a su hora (antojo a las 23 h, vitaminas al cierre) y al pie la semana de un vistazo (7 días con 🍳 cocino · 📦
+táper · 🏥 guardia · 🍽️ fuera). **La semana la monta el usuario a mano**: cada hueco se apunta (plato suyo, texto libre,
+táper, fuera, hospital, «cocino ese día»), las cenas destacadas, y **la compra sale de lo apuntado** menos lo que hay en
+la nevera; el borrador de la app es solo un botón «¿Me la propones?». La parada de casa es la **nevera dibujada** de «La
+nevera» (huecos con rayas = compra). El buscador y la ficha del alimento (`maquetas/comer-mapa.html`, BUSCADOR y FICHA:
+letra Nutri-Score en la lista, sello grande, NOVA, aditivos y vitaminas/minerales con % del día o «sin datos») van igual.
+**Escribir lo comido** (`maquetas/comer-escribir.html`): un solo campo que es buscador con una palabra y lector con una
+frase, cada cosa con su seguridad (✓ / ≈ supuesto / ?), «investigar» lo desconocido (Open Food Facts, carta de la
+cadena, parecido a…, a ojo, «enséñamelo una vez») y listas largas con las dudas en la misma fila.
+Ranking del usuario: 1 Reloj · 2 La nevera (su portada) · 3 Una pregunta · 4 El tablero (descartado: muy denso).
+
+**Descartado.** Las tres opciones A/B/C de `comer-mapa.html` (solo cambiaban la portada; semana y casa iguales). «El
+tablero», «La nevera» y «Una pregunta» como base. Que la app monte la semana sola como lo principal.
+
+**Supuestos.** Todas las cifras de las maquetas son de ejemplo (el contenedor no llega a Open Food Facts: 403). El %
+de vitaminas sobre los valores de referencia de la etiqueta europea. «Investigar» no usa ninguna IA externa: solo Open
+Food Facts (que ya se consulta) y tablas propias. El dictado es el del teclado del móvil. El lector de frases tiene
+muchos fallos (probado: «pizza barbacoa del telepizza, 3 trozos» no apunta nada; el menú del hospital pierde lentejas y
+filete; «macarrones con tomate y atún» da tortilla de atún): va en una tarea propia antes de construir.
+
+## El lector de frases a fondo (2026-10-28 · S2b)
+
+**Elegido.** Un banco de **300 frases nuevas** de verdad (bar, comedor y guardia, 15 cadenas, Mercadona, listas con comas,
+caseras, con faltas) pasado por `fraseLeer`: entendía bien **61 de 299**. Los fallos se clasificaron por tipo y se
+arreglaron por tipo, no frase a frase: el **lugar** se quita («en el bar de la esquina», «de la máquina de vending», «del
+comedor», «que traje de casa», «a medias»); cualquier **etiqueta con dos puntos** se quita y, si nombra la comida, cuenta
+(«cena de la guardia:», «para cenar:», «lo típico:»; las de cadena o menú se quedan); la **hora** no es comida («a las 3 de
+la mañana»); **abreviaturas** («bocata d jamon», «c leche», «x la tarde»); **cantidades de andar por casa** («un buen
+plato», «un cacho», «un montón», «dos cucharones», «unas cuatro lonchas», «una bolsa de», «medio pollo asado»); un
+**número suelto al final** cuenta lo anterior («nuggets, diez»; «tiras de KFC, cuatro» son 4 tiras, no 4 cajas); el
+**bocadillo que no va primero** («un café y medio bocadillo») ya no pone el pan dos veces; «**cuatro albóndigas**» son
+piezas del plato, no 4 raciones; «grandes» suelto ya no casa con una hamburguesa «Grand…»; **27 alimentos** que faltaban
+(ensaimada, gilda, bravas, chopitos, alioli, sobrasada, naan, parmesano, zumo de piña…) y sinónimos (nocilla, pesto,
+puchero, café americano…). Resultado: **292/292** nuevas y las 536 de antes, **838** en `tests/frases.json` (con el
+lector viejo caen 121).
+**La seguridad de cada trozo** (`frSeg(x)`, para la pantalla de la S3): **✓** dijiste qué y cuánto, o es un plato conocido
+o de cadena, o lo corregiste tú; **≈** algo lo puso la app, con su «por»: «supuse 200 g», «supuse el pan», «supuse el
+aceite (frito)», «leí «tortila» como…», «lo más parecido», «lo de tu nevera»; **?** lo que pregunta (`fr.dudas`).
+Elegido por el usuario: «≈ si adivina algo», y ~300 frases.
+
+**Descartado.** «≈ solo si duda del alimento» (escondía los gramos inventados) y «casi todo ≈». Quitar «de Dia» como marca
+(se comía «menú del día»). Una «Chocolatina» propia en la tabla (le robaba el sitio al chocolate: es chocolate con leche,
+40 g). Seis frases fuera del banco por no estar en la carta de la cadena o ser ambiguas: Happy Meal, Big Tasty, Double
+Cheeseburger, tacos de carne asada de Taco Bell, «menú del día de VIPS: sándwich club» (cuenta el pan dos veces) y «un
+paquete de galletas» (¿entero?); y «un mazazo», «migajas».
+
+**Supuestos.** Las kcal esperadas que escribió el banco se corrigieron a lo que lee la app (±35 %) cuando la lectura era
+buena: la app suele tener razón (un cortado y una magdalena son ~145 kcal, no 200). Los valores de los alimentos nuevos son
+de tablas típicas españolas por 100 g. «Un cacho / un pedazo» es una ración; «un trocito», un trozo. «De primero…, de
+segundo…» es la comida. La seguridad se calcula al momento (no se guarda), así que al cambiar los gramos en la S3 cambiará.
+
 ## 2026-10-28 · El gobierno del repositorio y el Consejo de Dinero
 
 **Elegido.** Copiar de fiebres-neutropenias el gobierno (papeles por skill) y el Consejo de Ministros, adaptados:
