@@ -2802,8 +2802,8 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjmm .cjhr{width:44px;flex:none;font-size:12px;font-weight:800;color:var(--ink2);padding-top:7px;font-variant-numeric:tabular-nums}
 .cjmm .cjcu{flex:1;min-width:0}.cjmm .cjfila{display:flex;gap:10px;align-items:flex-start}
 .cjmm:not(.hecho):not(.cjsig) .tx .n{opacity:.7}
-.cjmm.cjsig{background:color-mix(in srgb,var(--ok) 9%,transparent);border-radius:14px;margin:2px -8px;padding:12px 8px}
-.cjmm.cjsig::before{left:calc(44px + 9px + 13px + 8px)}
+.cjmm.cjsig{background:color-mix(in srgb,var(--ok) 9%,transparent);border-radius:14px;margin:2px 0;padding:12px 6px}
+.cjmm.cjsig::before{left:calc(44px + 9px + 13px + 6px)}
 .cjmm.cjsig .k{color:var(--ok)}.cjmm.cjsig .cjsigb{margin-top:8px}
 .cjq{width:28px;height:28px;flex:none;border-radius:50%;border:2px dashed var(--ink2);background:none;color:#04121c;font:inherit;font-weight:900;font-size:14px;margin-top:2px;display:grid;place-items:center;padding:0;opacity:.8}
 .cjq.on{background:#34d399;border:2px solid #34d399;opacity:1}

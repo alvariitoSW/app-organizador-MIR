@@ -10171,12 +10171,13 @@ function repetirAyer(pos){
   l.forEach(function(e){const c=JSON.parse(JSON.stringify(e));c.id=uid('fe');c.ts=Date.now();delete c.tap;dest.push(c);ids.push(c.id);});
   _ultimoCambio={tipo:'add',k:key,ids:ids,ts:Date.now()};save();
   return 'repetido lo de ayer: '+l.map(function(e){return e.nombre;}).join(', ');}
-function fraseRecientes(n){
-  /* las últimas frases distintas que escribiste (14 días), y antes las que sueles poner a esta hora */
+function fraseRecientes(n,ps){
+  /* las últimas frases distintas que escribiste (14 días), y antes las que sueles poner a esta hora;
+     con ps, solo las de esos momentos (para la cena no vale la tostada del desayuno) */
   const out=[],vis={},h=new Date().getHours();
   const cand=[];
   for(let i=0;i<14;i++){const l=[].concat(logDe(iso(addDays(new Date(),-i)))).reverse();   /* leer sin crear 14 días vacíos */
-    l.forEach(function(e){if(!e.frase)return;const hh=e.ts?new Date(e.ts).getHours():-9;cand.push({e:e,i:i,cerca:Math.abs(hh-h)<=2&&i>0});});}
+    l.forEach(function(e){if(!e.frase||(ps&&ps.indexOf(e.p||'comida')<0))return;const hh=e.ts?new Date(e.ts).getHours():-9;cand.push({e:e,i:i,cerca:Math.abs(hh-h)<=2&&i>0});});}
   cand.filter(function(c){return c.cerca;}).concat(cand).forEach(function(c){const k=c.e.frase.txt||c.e.nombre;
     if(out.length>=(n||3)||vis[k])return;vis[k]=1;out.push(c.e);});
   return out;}
@@ -13807,7 +13808,7 @@ function cjeComidaHTML(r,k,sig){
   const S=cjeSuma(r.e),pk=d&&!d.fuera&&!d.nada?Math.round((+d.kcal||0)*num(r.pl[0].portions,1)):0;
   const sub=st==='otro'&&d&&!d.nada&&!d.fuera?'en vez de <s>'+esc(cjeNomPlan(d))+'</s>'+(cocinadoS().some(function(c){return c.dishId===d.id;})?' · <span class="tpv">🥡 te queda el táper</span>':''):'';
   /* LO SIGUIENTE vive en la línea, en el sitio de su momento: con plan, «✓ Hecho»; sin plan, lo de siempre a esta hora */
-  const rec=sig&&st==='no'&&!(d&&!d.nada)?fraseRecientes(1)[0]:null,nom=rec?rec.nombre:(r.e.length?r.e.map(function(x){return x.nombre;}).join(' + '):(d?cjeNomPlan(d):'sin plan · toca para apuntar'));
+  const rec=sig&&st==='no'&&!(d&&!d.nada)?fraseRecientes(1,cjeMom(r.p)[2])[0]:null,nom=rec?rec.nombre:(r.e.length?r.e.map(function(x){return x.nombre;}).join(' + '):(d?cjeNomPlan(d):'sin plan · toca para apuntar'));
   const sb=sig?'<div class="cjsigb">'+(d&&!d.nada?'<button class="btn p" data-a="cje-ok" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':(rec?'<button class="btn p" data-a="cje-siempre" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':''))+
     '<button class="btn" data-a="cje-mom" data-p="'+r.p+'"'+K+'>Otra cosa</button></div>':'';
   return '<div class="cjmm'+(sig?' cjsig':'')+(st==='no'?'':' hecho')+'" data-p="'+r.p+'"><span class="cjhr">'+cjeHoraMom(r.p,k)+'</span>'+q+'<div class="cjcu"><div class="cjfila"><button class="tx" data-a="cje-mom" data-lp="mom" data-p="'+r.p+'"'+K+'><span class="k">'+(sig?'LO SIGUIENTE · ':'')+esc(r.lbl.toUpperCase())+'</span>'+
@@ -24544,7 +24545,7 @@ function act(a,el){
       const pl=cjeHoyPlan(k)[p]||[];let m='';
       pl.forEach(function(x){const d=dishById(x.id);if(!d)return;m=addFoodEntry(k,{dishId:x.id,rac:num(x.portions,1),pos:p,plan:true});});   /* addFoodEntry ya gasta del táper */
       save();flash(m||'apuntado');render();break;}
-    case 'cje-siempre':{const k=el.dataset.k||iso(new Date()),e=fraseRecientes(1)[0];if(!e||!e.frase)break;
+    case 'cje-siempre':{const k=el.dataset.k||iso(new Date()),e=fraseRecientes(1,cjeMom(el.dataset.p)[2])[0];if(!e||!e.frase)break;
       const fr=frDeReciente(e);if(!fr||(fr.dudas||[]).length){ui.foodBusca=e.frase.txt||e.nombre;render();break;}
       flash(fraseApuntar(fr,el.dataset.p));render();break;}
     case 'cje-tanda':{const h=ui.cjeHoja||{};h.abre=h.abre===+el.dataset.i?-1:+el.dataset.i;render();break;}
