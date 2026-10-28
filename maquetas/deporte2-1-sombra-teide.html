@@ -19,7 +19,7 @@ button{font:inherit;color:inherit}
   box-shadow:inset 0 0 0 7px var(--papel),inset 0 0 0 8px #8a6b4a,inset 0 0 0 11px var(--papel),inset 0 0 0 12px #b9a27c}
 .pantalla h2{margin:6px 6px 2px;font-size:25px;font-weight:normal;line-height:1.15;color:var(--tinta)}
 .pantalla .sub{margin:0 6px 10px;color:var(--sepia);font-size:14px}
-svg{display:block;max-width:100%}
+svg{display:block;max-width:100%;height:auto}
 .lamina{margin:0 -6px;border:1px solid #8a6b4a;background:#d9c69b}
 .sin-texto{position:absolute;width:0;height:0;overflow:hidden}
 /* pantalla 0 */
@@ -334,8 +334,8 @@ var ALT=[48,52,42,50,46,56,40];
     t+='<path d="'+roque(cx,base,h,36)+'" fill="'+fill+'" stroke="#2b1d33" stroke-width="1.2"/><path d="'+roque(cx,base,h,36)+'" fill="url(#'+(kc[i]?'hat2':'hat')+')"/>';
     t+=pastilla(cx-10,base-24,20,LET[i],12);
     var tag=kc[i]?kc[i].toLocaleString('es-ES'):(i==1?'guardia':'saliente');
-    t+='<text x="'+cx+'" y="168" text-anchor="middle" font-size="12" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">'+tag+'</text>';
-    t+='<text x="'+cx+'" y="183" text-anchor="middle" font-size="11" font-family="system-ui,sans-serif" fill="#2b1d33">'+(kc[i]?(kc[i]>2100?'se pasa ▲':'cuadra'):'no cuenta')+'</text>';}
+    t+='<text x="'+cx+'" y="168" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">'+tag+'</text>';
+    t+='<text x="'+cx+'" y="183" text-anchor="middle" font-size="9.5" font-family="system-ui,sans-serif" fill="#2b1d33">'+(kc[i]?(kc[i]>2100?'se pasa ▲':'cuadra'):'fuera de la media')+'</text>';}
   t+='</svg>';
   $('lam3b').innerHTML=t;
 })();
