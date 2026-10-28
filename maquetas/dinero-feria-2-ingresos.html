@@ -107,8 +107,8 @@ function pinta(){
  N.forEach(function(x){s+=x[1];mx=Math.max(mx,x[1]);mn=Math.min(mn,x[1])});
  var med=Math.round(s/N.length/10)*10;
  N.forEach(function(x){var b=Math.min(x[1],BASE),e=x[1]-b,k=H*1.0/TOP*1.0;
-  h+='<div class="col'+(x[1]==mx?' max':'')+(x[1]==mn?' min':'')+'"><div class="t">'+x[1].toLocaleString('es-ES')+'</div><div class="st" style="height:'+Math.round(x[1]*k*1.4)+'px"><div class="ex" style="flex:'+e+'"></div><div class="ba" style="flex:'+b+'"></div></div><div class="m">'+x[0]+'</div><div class="g">'+(x[2]?x[2]+' guard.':'sin guard.')+'</div></div>';});
- g.innerHTML=h+'<div class="med" style="bottom:'+(Math.round(med*H/TOP*1.4)+34)+'px"><span>media '+f(med)+'</span></div>';
+  h+='<div class="col'+(x[1]==mx?' max':'')+(x[1]==mn?' min':'')+'"><div class="t">'+x[1].toLocaleString('es-ES')+'</div><div class="st" style="height:'+Math.round(x[1]*k)+'px"><div class="ex" style="flex:'+e+'"></div><div class="ba" style="flex:'+b+'"></div></div><div class="m">'+x[0]+'</div><div class="g">'+(x[2]?x[2]+' guard.':'sin guard.')+'</div></div>';});
+ g.innerHTML=h+'<div class="med" style="bottom:'+(Math.round(med*H/TOP)+32)+'px"><span>media '+f(med)+'</span></div>';
  document.getElementById('media').textContent=f(med);
 }
 function edit(v){document.getElementById('edit').hidden=!v;document.getElementById('corr').hidden=v}

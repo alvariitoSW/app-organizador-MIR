@@ -16,9 +16,8 @@ body{width:412px;padding-bottom:24px}
 .mini b{color:var(--ink)}
 /* meses: barra con 6 tramos */
 .meses{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:12px}
-.meses div{height:16px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;position:relative}
-.meses div i{position:absolute;left:0;top:0;bottom:0;background:var(--brand2)}
-.meses div.llena i{width:100%}
+.meses .c{height:16px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;position:relative}
+.meses .c i{position:absolute;left:0;top:0;bottom:0;background:var(--brand2)}
 .ejem{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;font-size:10.5px;color:var(--ink2);font-weight:700;text-align:center;margin-top:4px}
 .pastilla{display:inline-block;font-size:11px;font-weight:900;padding:3px 9px;border-radius:99px;border:1px solid var(--ok,#34d399);color:var(--ok,#34d399);background:color-mix(in srgb,var(--ok,#34d399) 12%,transparent)}
 .racha{display:flex;gap:6px;margin-top:10px}
@@ -27,12 +26,12 @@ body{width:412px;padding-bottom:24px}
 .racha span.on{background:color-mix(in srgb,var(--ok,#34d399) 16%,transparent);border-color:var(--ok,#34d399);color:var(--ink)}
 .racha span.no{border-style:dashed}
 /* gráfico nóminas vs mes normal */
-.gr{position:relative;height:120px;display:flex;gap:8px;align-items:flex-end;margin-top:14px;padding-top:14px}
+.gr{position:relative;height:150px;display:flex;gap:8px;align-items:flex-end;margin-top:14px}
 .gr .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--ink2);font-weight:700}
 .gr .col i{display:block;width:100%;border-radius:6px 6px 0 0;background:var(--brand2)}
 .gr .col.flojo i{background:var(--bad,#fb7185)}
 .gr .col b{font-size:10.5px;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:3px}
-.gr .norm{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);}
+.gr .norm{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);z-index:1}
 .gr .norm span{position:absolute;right:0;top:-16px;font-size:10px;font-weight:800;color:var(--ink2);background:var(--card);padding:0 3px}
 .nota{font-size:13px;margin:10px 0 0}
 .bot{display:block;width:100%;min-height:48px;margin-top:14px;border:0;border-radius:12px;font:inherit;font-weight:900;font-size:15px;color:#12081a;background:linear-gradient(90deg,var(--brand),var(--brand2));cursor:pointer}
@@ -91,11 +90,11 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
     </div>
     <div class="mini" style="margin-top:6px">Si no cobraras nada, tu colchón (4.200 €) pagaría tu vida de siempre durante casi tres meses.</div>
 
-    <div class="meses" aria-label="2,8 de 6 meses">
-      <div class="llena"><i></i></div>
-      <div class="llena"><i></i></div>
-      <div style="position:relative"><i style="position:absolute;left:0;top:0;bottom:0;width:80%;background:var(--brand2)"></i></div>
-      <div></div><div></div><div></div>
+    <div class="meses" role="img" aria-label="2,8 de 6 meses cubiertos">
+      <div class="c"><i style="width:100%"></i></div>
+      <div class="c"><i style="width:100%"></i></div>
+      <div class="c"><i style="width:84%"></i></div>
+      <div class="c"></div><div class="c"></div><div class="c"></div>
     </div>
     <div class="ejem"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
 
@@ -119,12 +118,12 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
   <div class="card">
     <div class="e">TUS NÓMINAS, FRENTE AL MES NORMAL</div>
     <div class="gr" aria-label="Nóminas de jun a oct frente a 1.478 euros">
-      <div class="norm" style="bottom:calc(120px * 3100 / 3400 * 0 + 0px);top:auto;bottom:calc(14px + (120px - 14px) * 1478 / 3100 * 0 + 0px)"></div>
-      <div class="col flojo"><b>1.350</b><i style="height:62px"></i>jun</div>
-      <div class="col"><b>1.600</b><i style="height:72px"></i>jul</div>
-      <div class="col"><b>2.450</b><i style="height:86px"></i>ago</div>
-      <div class="col"><b>3.100</b><i style="height:100px"></i>sep</div>
-      <div class="col"><b>2.800</b><i style="height:94px"></i>oct</div>
+      <div class="norm" style="bottom:66px"><span>mes normal 1.478</span></div>
+      <div class="col flojo"><b>1.350</b><i style="height:48px"></i>jun</div>
+      <div class="col"><b>1.600</b><i style="height:57px"></i>jul</div>
+      <div class="col"><b>2.450</b><i style="height:87px"></i>ago</div>
+      <div class="col"><b>3.100</b><i style="height:110px"></i>sep</div>
+      <div class="col"><b>2.800</b><i style="height:99px"></i>oct</div>
     </div>
     <p class="nota">La línea punteada es un mes normal (1.478 €). En junio te faltaron <b class="bad">128 €</b>: los meses de guardias cubren esos huecos. Lo que sobra de un mes bueno es lo que engorda el colchón.</p>
   </div>
@@ -153,10 +152,10 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
     </div>
 
     <div class="res">
-      <div class="tile"><div class="k">TU COLCHÓN QUEDARÍA</div><div class="v" id="meses">3,7 <small>meses</small></div><div class="s" id="dias">Con eso, unos 111 días cubiertos</div></div>
+      <div class="tile"><div class="k">TU COLCHÓN QUEDARÍA</div><div class="v" id="meses">3,7 <small>meses</small></div><div class="s" id="dias">Con eso, unos 112 días cubiertos</div></div>
       <div class="tile"><div class="k">TOTAL AHORRADO</div><div class="v" id="tot">5.520 €</div><div class="s">antes: 4.200 €</div></div>
     </div>
-    <div class="mini" style="margin-top:10px" id="prox">Te faltan 0,3 meses (400 €) para tu 4.º mes.</div>
+    <div class="mini" style="margin-top:10px" id="prox">Te faltan 0,3 meses (392 €) para tu 4.º mes.</div>
     <div class="mb" aria-hidden="true"><i id="barra" style="width:62%"></i></div>
   </div>
 
@@ -166,8 +165,8 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
       <div class="hito hecho"><span class="ic">1</span><div class="t"><b>1 mes cubierto</b><span>1.478 €</span></div><span class="n">hecho</span></div>
       <div class="hito hecho"><span class="ic">2</span><div class="t"><b>2 meses cubiertos</b><span>2.956 €</span></div><span class="n">hecho</span></div>
       <div class="hito hecho"><span class="ic">3</span><div class="t"><b>3 meses cubiertos</b><span>4.434 €</span></div><span class="n">hecho</span></div>
-      <div class="hito sig"><span class="ic">4</span><div class="t"><b>4 meses cubiertos</b><span>5.912 € · el siguiente</span></div><span class="n" id="n4">faltan 1.712 €</span></div>
-      <div class="hito"><span class="ic">6</span><div class="t"><b>6 meses: tu meta</b><span>8.868 €</span></div><span class="n">faltan 4.668 €</span></div>
+      <div class="hito sig"><span class="ic">4</span><div class="t"><b>4 meses cubiertos</b><span>5.912 € · el siguiente</span></div><span class="n" id="n4">faltan 392 €</span></div>
+      <div class="hito"><span class="ic">6</span><div class="t"><b>6 meses: tu meta</b><span>8.868 €</span></div><span class="n" id="n6">faltan 3.348 €</span></div>
     </div>
   </div>
 
@@ -195,7 +194,7 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
   var sl=document.getElementById('sl'), val=document.getElementById('val'),
       meses=document.getElementById('meses'), dias=document.getElementById('dias'),
       tot=document.getElementById('tot'), prox=document.getElementById('prox'),
-      barra=document.getElementById('barra'), n4=document.getElementById('n4');
+      barra=document.getElementById('barra'), n4=document.getElementById('n4'), n6=document.getElementById('n6');
   var fmt=function(n){return Math.round(n).toLocaleString('es-ES');};
   var fm1=function(n){return n.toFixed(1).replace('.',',');};
   var chips=document.querySelectorAll('.chip');
@@ -209,6 +208,7 @@ details p{font-size:12.5px;color:var(--ink2);margin:6px 0 0}
     prox.textContent='Te faltan '+fm1(falta/NORM)+' meses ('+fmt(falta)+' €) para tu '+sig+'.º mes.';
     barra.style.width=Math.min(100,(m/sig)*100).toFixed(0)+'%';
     n4.textContent='faltan '+fmt(Math.max(0,4*NORM-t))+' €';
+    n6.textContent='faltan '+fmt(Math.max(0,6*NORM-t))+' €';
     chips.forEach(function(c){c.setAttribute('aria-pressed',String(+c.dataset.v===x));});
   }
   sl.addEventListener('input',pinta);
