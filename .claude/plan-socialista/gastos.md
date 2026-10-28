@@ -24,7 +24,7 @@ traspaso explica por qué.
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | — | sin medir | — | — |
 | maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
-| construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
+| construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
 | estudio | — | sin medir | — | — |
 | parte (/plan-socialista) | — | sin medir | — | — |
 
@@ -37,10 +37,12 @@ traspaso explica por qué.
 | 2026-10-28 | v3-comer-mapa | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 8 | 192 | **3,6 M** | sesión principal (41 %) | concurso de 4 diseñadores sonnet + 2 rondas + ronda final y escribir (pedido por el usuario); principal opus 40 %. Ahorro: el concurso en 1 ronda con críticas cruzadas basta; capturas por guion, no por ayudante |
 | 2026-10-28 | v3-lector | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 99 | **2,3 M** | sesión principal (78 %) | clasificar 230 fallos y revisar kcal a mano · ajustar expectativas por script y mirar solo lecturas raras |
 | 2026-10-28 | v3-comer-reloj-1 | construir | opus-5-5 + sonnet-5-5 | 6 | 190 | **3,1 M** | P2 escribir con rueda por fila (41 %) | dos constructores sonnet a la vez (línea y escribir) + uno para quitar la lista repetida que dejó el primero · ahorro: en la ficha, decir qué se QUITA, no solo qué se añade |
+| 2026-10-28 | v3-comer-reloj-s2 | construir | opus-5-5 + sonnet-5-5 | 6 | 402 | **12,1 M** | S3b P1: Semana y Casa (61 %) | 4 historias + quitar 3 pestañas en una sesión: P1 Semana+Casa 7,4 M (167 pasos, caché leída 40 M al ir quitando y reescribiendo 13 pruebas viejas), P2 vitaminas+investigar 2,4 M, pulido tras capturas 1,1 M · ahorro: partir lo que quita pestañas en su propio encargo y tope duro de pasos; el worktree nace en main viejo, dar el commit base en el encargo |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
 
+- Un constructor que además QUITA pestañas y reescribe pruebas viejas se dispara (S3b P1: 7,4 M, 167 pasos): lo de quitar va en su encargo aparte, con tope de pasos.
 - La ficha dice qué se **quita** además de qué se añade: sin eso el constructor deja lo viejo debajo y hace falta otra vuelta (S3, ~250 k).
 
 Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las siguientes.

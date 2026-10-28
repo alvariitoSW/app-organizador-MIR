@@ -12,11 +12,11 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**S3, sesión 1 hecha** en la rama `claude/magical-clarke-dlp8mb` (línea del día + escribir lo comido con rueda por fila; suite 754/754), **sin pasar a main**. Ficha: `fichas/v3-comer-reloj.md`. **La siguiente: S3b** (sesión nueva: «/plan-socialista y haz la S3b»): Mi semana a mano, compra de lo apuntado, nevera dibujada, vitaminas, e «investigar» lo desconocido.
+Nada en marcha: la S3 (Comer del reloj) quedó hecha y en main. La siguiente es la primera de «Por hacer».
 
 ## Por hacer
 
-### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 5 de 9 hechas
+### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 7 de 9 hechas
 
 Las tareas 1, 2, 3, 4, 5, 9 y 13 de la lista anterior, agrupadas en **8 sesiones** para gastar menos. Cada una
 empieza con su ficha (skill `ficha-de-tarea`) y se mide al cerrar. Presupuestos en equivalentes (ver `gastos.md`):
@@ -27,10 +27,10 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 | ~~S1~~ | ✅ Las pruebas de la fecha: se pusieron verdes solas al pasar el día 27 (751/751) | [aparc-pruebas-fecha] | arreglo | sesión en sonnet, sin ayudantes; suite con `verificador` | ~0,4 M |
 | ~~S2~~ | ✅ El mapa de Comer: concurso de 4 escuelas, gana **El reloj** (`maquetas/comer-debate-1-reloj.html` + `comer-escribir.html`; buscador y ficha de `comer-mapa.html`) · DECISIONS «El mapa de Comer» · 3,5 M (el concurso lo pidió el usuario) | [v3-comer-perdido] + dónde van [v3-cantidades], [v3-boceto-semana], [v3-antojos] y [comida-ri-A/D] | maqueta | — | ~1,5 M |
 | ~~S2b~~ | ✅ main 2e30a00 · 2,3 M · **El lector de frases a fondo**: lo que escribes («he comido…») lo entiende casi siempre; banco de ~300 frases reales (bares, hospital, cadenas, Mercadona, listas con comas), clasificar fallos y arreglarlos por tipo, cada uno con su caso en `tests/frases.json`; que cada cosa diga su seguridad (✓ / ≈ / ?) para la pantalla de `comer-escribir.html` | [v3-lector] | construir | haiku escribe las frases; opus clasifica y decide; constructor sonnet arregla `fraseLeer` (app.js:9795) por tipos; `verificador` pasa `npm run test:frases` | ~2,0 M |
-| S3 | Construir el Comer del reloj (línea del día, semana a mano con compra sacada de lo apuntado, nevera dibujada, escribir lo comido; buscador y ficha con vitaminas) — empieza con su ficha (`ficha-de-tarea`); quizá en 2 sesiones | [v3-comer-perdido] + [v3-boceto-semana] + [comida-ri-A] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M ×2 |
+| ~~S3~~ | ✅ main 9b53fd3 · 3,1 M + 12,1 M · Construir el Comer del reloj (línea del día, semana a mano con compra sacada de lo apuntado, nevera dibujada, escribir lo comido; buscador y ficha con vitaminas) — empieza con su ficha (`ficha-de-tarea`); quizá en 2 sesiones | [v3-comer-perdido] + [v3-boceto-semana] + [comida-ri-A] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M ×2 |
 | ~~S4~~ | ✅ Cantidades y ración de verdad · main 3b7a617 · sin medir | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
-| S5 | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir — **falta (A) vitaminas y minerales** | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
-| S6 | La semana en borrador | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
+| ~~S5~~ | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir; (A) vitaminas y minerales hechas en la S3b | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
+| S6 | La semana en borrador (ojo: la S3b ya hizo la semana a mano y «¿Me la propones?»; al abrir, decidir qué queda) | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
 | S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
 | S8 | Dinero: plan de compras | [v3-dinero-compras] | **informe primero** (tú das tus ideas → informe de cómo resolverlo → tu visto bueno) → maqueta → construir | informe y maquetas opus; constructor sonnet | ~0,4 M informe + ~2,0 M |
 
@@ -59,6 +59,7 @@ De dónde sale el ahorro:
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
 - [v3-gmail] «La función de Gmail»: falta que digas qué es
@@ -71,6 +72,7 @@ De dónde sale el ahorro:
 
 ## Hecha
 
+- [v3-comer-reloj] S3 · El Comer del reloj en 2 sesiones: línea del día, escribir lo comido con rueda por fila; Comer en Hoy · Semana · Casa (semana a mano, compra con origen, nevera dibujada), vitaminas «% diario» e investigar · main 9b53fd3 (run 40759212824) · 3,1 M + 12,1 M · 2026-10-28
 - [v3-lector] S2b · El lector de frases a fondo: 838 frases en el banco (antes entendía 61 de 299 nuevas) y `frSeg` (✓/≈/?) para la S3 · main 2e30a00 (run 40732849988) · 2,3 M · 2026-10-28
 
 - [v3-comer-mapa] S2 · El mapa de Comer: gana El reloj (concurso de 4 escuelas) · maquetas en la rama `claude/plan-socialista-s2-hl27a0` · 2026-10-28

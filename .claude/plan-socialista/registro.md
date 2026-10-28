@@ -5,6 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
+- ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
@@ -115,6 +116,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-28-comer-reloj2] Comer del reloj (S3b): el montar sigue de lunes a domingo; «Cocino ese día» solo marca el 🍳; en guardia no hay texto libre; el pie de Semana cuenta solo cenas; «a ojo» = 250/450/700 kcal con 15/50/35 y no se memoriza; sin nevera la sugerencia de vitaminas propone el alimento más rico; el congelador dibuja una caja por plato; la barra Hoy·Semana·Casa solo en pantallas sueltas · DECISIONS «El Comer del reloj, sesión 2» · contado el 2026-10-28
 - [sup-2026-10-28-comer-reloj1] Comer del reloj (S3 sesión 1): horas fijas sin ajuste (desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00); merienda y picoteo no son «lo siguiente»; teclear gramos pone la fila en ✓; la cantidad de la rueda no se recuerda; «investigar» sin cambios hasta la S3b · DECISIONS.md:1505 · contado el 2026-10-28
 - [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
 - [sup-2026-10-28-comer-mapa] Comer (maquetas S2): cifras de ejemplo; % de vitaminas sobre la referencia europea; «investigar» sin IA externa (solo Open Food Facts y tablas propias); dictado del teclado del móvil; las pantallas que solo se abren desde el «Hoy» antiguo se recolocan, no se quitan · DECISIONS «El mapa de Comer» · contado el 2026-10-28
