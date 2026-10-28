@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>La Laurisilva</title>
+<style>
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#dfe9e2;color:#16301f;font-family:"Trebuchet MS","Gill Sans",system-ui,sans-serif;line-height:1.3;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left;padding:0}
+button:focus-visible{outline:3px solid #0b3d2a;outline-offset:2px}
+.cartel{padding:16px 20px 16px;background:#0f2e1e;color:#e9f3ea}
+.cartel h1{margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:.02em}
+.cartel p{margin:0;font-size:14px}
+.rot{margin:14px 20px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#2d4a38}
+.pant{position:relative;width:412px;overflow:hidden;background:#e4eee7}
+#p1{height:900px}
+#p1>svg.esc{position:absolute;left:0;top:0}
+.ini{position:absolute;left:20px;top:12px;width:240px}
+.ini .peq{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#2d4a38}
+.ini .gran{font-size:54px;line-height:1;font-weight:700;color:#0b3d2a}
+.ini .gran small{font-size:20px;font-weight:400}
+.ini .sub{font-size:16px;margin:2px 0 6px}
+.pil{display:inline-block;padding:5px 14px;border-radius:20px;background:#1f5c3f;color:#fff;font-size:14px;font-weight:700}
+.baya{position:absolute;left:262px;top:0;width:150px;height:134px}
+.baya span{white-space:nowrap;position:absolute;right:10px;bottom:4px;font-size:13px;font-weight:700;background:rgba(240,246,242,.93);color:#2b1a3a;padding:5px 11px;border-radius:16px}
+.claro{position:absolute;left:52px;top:572px;width:122px;height:112px}
+.claro span{position:absolute;left:0;top:0;width:122px;padding:5px 9px;font-size:14px;border-radius:14px;background:rgba(240,246,242,.93);color:#5a2410;line-height:1.25}
+.claro b{display:block;font-size:15px}
+.musgo{position:absolute;left:0;right:0;top:696px;text-align:center;color:#fff;font-size:15px;font-weight:700;pointer-events:none;line-height:1.25}
+.musgo small{display:block;font-size:13px;font-weight:400}
+.hacer{position:absolute;left:16px;right:16px;top:754px;text-align:center}
+.hacer .gran{font-size:30px;font-weight:700;margin:0;color:#0b3d2a}
+.hacer p{margin:0;font-size:14px;color:#2d4a38}
+.ir{position:absolute;left:16px;right:16px;top:836px;min-height:52px;padding:12px 20px;border-radius:30px;background:#1f5c3f;color:#fff;font-size:17px;font-weight:700;text-align:center}
+#p2{padding:16px 12px 24px}
+.volver{min-height:44px;padding:8px 18px;border-radius:24px;background:#c9dccd;font-size:15px}
+#p2 h2{font-size:26px;margin:12px 8px 0;color:#0b3d2a}
+.cifra{margin:4px 8px 0;font-size:42px;line-height:1.05;font-weight:700}
+.cifra small{font-size:18px;font-weight:400}
+.dice{margin:2px 8px 10px;font-size:15px}
+.qs{margin:6px 8px 2px;font-size:13px;color:#2d4a38}
+.sw{display:flex;gap:8px;margin:0 8px 8px}
+.sw button{flex:1;min-height:48px;padding:6px 8px;border-radius:24px;background:#cfe0d3;font-size:14px;border:2px solid transparent;text-align:center}
+.sw button[aria-pressed=true]{background:#1f5c3f;color:#fff;border-color:#0b3d2a;font-weight:700}
+.sw button[aria-pressed=true]::before{content:"● "}
+.sw button[aria-pressed=false]::before{content:"○ "}
+#res{margin:4px 8px 6px;font-size:16px;min-height:66px}
+.ya{margin:6px 8px 0;font-size:13px;color:#2d4a38}
+.nota{margin:10px 8px 6px;padding:12px 16px;border-radius:22px;background:#cfe0d3;font-size:15px}
+.nota button{display:block;margin-top:6px;min-height:44px;padding:10px 16px;border-radius:22px;background:#1f5c3f;color:#fff;font-size:15px;font-weight:700}
+.inv{margin:8px 8px 0;font-size:13px;color:#2d4a38}
+.aviso{position:absolute;left:16px;right:16px;bottom:8px;min-height:48px;padding:10px 18px;border-radius:22px;background:#0f2e1e;color:#e9f3ea;font-size:14px;display:none;z-index:5}
+.aviso.on{display:block}
+@keyframes nieb{from{transform:translateX(-34px)}to{transform:translateX(34px)}}
+@keyframes gota{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(62px);opacity:0}}
+.nb{animation:nieb 9s ease-in-out infinite alternate}
+.gt{animation:gota 3.2s ease-in infinite}
+@media (prefers-reduced-motion:reduce){.nb,.gt{animation:none}}
+</style></head><body>
+<header class="cartel"><h1>La Laurisilva</h1><p>Tu ahorro es un bosque de laurisilva de Anaga: la niebla que llega (tu nómina) la atrapan las hojas y el musgo la guarda.<br>La altura de la copa son los meses de vida; la copa de puntos, tu objetivo.</p></header>
+
+<div class="rot">Pantalla 1 · Portada</div>
+<section class="pant" id="p1" aria-label="Portada">
+<svg class="esc" viewBox="0 0 412 900" width="412" height="900" role="img" aria-labelledby="et">
+<title id="et">Bosque de laurisilva en la niebla. Un árbol con la copa a 2,8 de las 6 marcas de meses de la regla de madera; la copa de puntos, arriba, es el objetivo de 6 meses en octubre de 2027. Debajo, el musgo guarda 4.200 euros. A la izquierda, un tocón es el gasto de comer fuera; arriba a la derecha cuelgan cuatro frutos, las compras.</title>
+<defs>
+<linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe0d8"/><stop offset="1" stop-color="#eaf1ec"/></linearGradient>
+<filter id="bl"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<rect width="412" height="900" fill="url(#cielo)"/>
+<path d="M0 640 q20 -34 44 -10 q16 -30 44 -4 q22 -34 50 -6 q20 -26 46 -2 q24 -30 50 -4 q22 -28 48 0 q26 -26 52 -2 q24 -22 78 -4 V690 H0Z" fill="#b6cfc0"/>
+<path d="M0 664 q24 -30 50 -8 q20 -26 48 -2 q24 -30 50 -4 q26 -24 52 0 q22 -26 50 -2 q24 -24 50 0 q30 -22 62 -6 V700 H0Z" fill="#8fb39f"/>
+<!-- regla de madera -->
+<rect x="26" y="214" width="12" height="470" rx="6" fill="#8a5a2b"/>
+<g stroke="#5b3a18" stroke-width="3" stroke-linecap="round" fill="#16301f" font-size="13" font-weight="700">
+<path d="M38 604h14M38 528h14M38 452h14M38 376h14M38 300h14M38 224h20"/>
+<text x="4" y="609" stroke="none">1</text><text x="4" y="533" stroke="none">2</text><text x="4" y="457" stroke="none">3</text><text x="4" y="381" stroke="none">4</text><text x="4" y="305" stroke="none">5</text><text x="4" y="229" stroke="none">6</text></g>
+<text x="4" y="204" font-size="12" fill="#2d4a38">meses</text>
+<!-- objetivo -->
+<path d="M62 224H400" stroke="#2d4a38" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>
+<text x="402" y="214" font-size="13" font-weight="700" fill="#16301f" text-anchor="end">Objetivo · 6 meses · oct 2027</text>
+<g fill="#cfe0d3" fill-opacity=".55" stroke="#1f5c3f" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round">
+<circle cx="270" cy="276" r="52"/><circle cx="218" cy="305" r="46"/><circle cx="322" cy="305" r="46"/><circle cx="245" cy="332" r="40"/><circle cx="295" cy="332" r="40"/></g>
+<path d="M262 380V470M278 380V470" stroke="#1f5c3f" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round" fill="none"/>
+<!-- niebla -->
+<g class="nb" filter="url(#bl)"><ellipse cx="120" cy="412" rx="150" ry="16" fill="#fff" fill-opacity=".8"/><ellipse cx="330" cy="440" rx="130" ry="13" fill="#fff" fill-opacity=".75"/></g>
+<text x="56" y="414" font-size="13" font-weight="700" fill="#16301f">niebla = tu nómina (el 25)</text>
+<!-- árbol real -->
+<path d="M258 690 C262 640 262 610 260 580 H282 C280 610 280 640 286 690Z" fill="#6b4423"/>
+<path d="M270 640 L238 600 M272 628 L306 596" stroke="#6b4423" stroke-width="7" stroke-linecap="round"/>
+<g fill="#1f5c3f"><circle cx="270" cy="519" r="52"/><circle cx="218" cy="548" r="46"/><circle cx="322" cy="548" r="46"/><circle cx="245" cy="575" r="40"/><circle cx="295" cy="575" r="40"/></g>
+<g id="hojas" fill="#4d9a5e"></g>
+<!-- tag hoy -->
+<path d="M52 467H220" stroke="#16301f" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+<rect x="56" y="440" width="64" height="24" rx="12" fill="#16301f"/><text x="88" y="457" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">hoy 2,8</text>
+<!-- gotas -->
+<g fill="#7fc4d6" stroke="#16301f" stroke-width="1"><path class="gt" d="M246 612q-5 8 0 11q5 -3 0 -11z"/><path class="gt" style="animation-delay:1s" d="M282 616q-5 8 0 11q5 -3 0 -11z"/><path class="gt" style="animation-delay:2s" d="M264 622q-5 8 0 11q5 -3 0 -11z"/><path class="gt" style="animation-delay:.5s" d="M302 606q-5 8 0 11q5 -3 0 -11z"/></g>
+<!-- tocón -->
+<ellipse cx="110" cy="690" rx="44" ry="8" fill="#a98b5c" fill-opacity=".6"/>
+<path d="M78 648 L80 686 Q110 696 140 686 L142 648Z" fill="#6b4423"/>
+<ellipse cx="110" cy="648" rx="32" ry="10" fill="#d9b779" stroke="#5b3a18" stroke-width="2"/><ellipse cx="110" cy="648" rx="20" ry="6" fill="none" stroke="#8a5a2b" stroke-width="1.5"/><ellipse cx="110" cy="648" rx="9" ry="3" fill="none" stroke="#8a5a2b" stroke-width="1.5"/>
+<path d="M60 684 l8 -3 M150 686 l9 -3 M72 692 l-6 3" stroke="#a98b5c" stroke-width="3" stroke-linecap="round"/>
+<!-- frutos -->
+<path d="M412 14 C370 14 330 22 296 48" stroke="#6b4423" stroke-width="7" fill="none" stroke-linecap="round"/>
+<g stroke="#6b4423" stroke-width="2.5" stroke-linecap="round"><path d="M322 36V58M348 28V70M376 20V52M306 46V86"/></g>
+<g fill="#5a2f6e" stroke="#2b1a3a" stroke-width="2"><circle cx="322" cy="68" r="11"/><circle cx="348" cy="80" r="11"/><circle cx="376" cy="62" r="11"/><circle cx="306" cy="96" r="11"/></g>
+<g fill="#fff" fill-opacity=".6"><circle cx="318" cy="64" r="3"/><circle cx="344" cy="76" r="3"/><circle cx="372" cy="58" r="3"/><circle cx="302" cy="92" r="3"/></g>
+<!-- suelo: musgo y agua guardada -->
+<path d="M0 684 q14 -12 30 -2 q16 -14 34 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q10 -8 26 -2 V704 H0Z" fill="#3e8a45"/>
+<path d="M0 700 q50 -9 100 0 t100 0 t100 0 t112 0 V744 H0Z" fill="#276f83"/>
+<g fill="#7fc4d6" fill-opacity=".5"><circle cx="30" cy="728" r="5"/><circle cx="380" cy="722" r="6"/><circle cx="60" cy="716" r="3"/><circle cx="350" cy="734" r="4"/></g>
+</svg>
+<div class="ini"><div class="peq">tu bosque hoy</div><div class="gran">2,8 <small>de 6 meses</small></div><div class="sub">4.200 € de 8.870 €</div><span class="pil">▲ Vas por delante</span></div>
+<button class="baya" data-av="Compras: aquí se abre «Lo que quiero comprar» (portátil, fonendo, viaje a Japón, curso de eco)." aria-label="Compras: lo que quiero comprar, cuatro frutos maduros del laurel"><span>Compras · 4 frutos</span></button>
+<button class="claro" data-av="Gastos: aquí se abre «En qué se me va». Lo que más se puede recortar: comer fuera, 180 € al mes." aria-label="Gastos: el claro del bosque. Comer fuera, 180 euros al mes"><span><b>El claro</b>comer fuera<br>−180 € al mes</span></button>
+<div class="musgo">Musgo: 4.200 € guardados<small>el agua que el suelo retiene</small></div>
+<div class="hacer"><p class="gran">Este mes, sube 390 €</p><p>para que la copa llegue arriba en octubre de 2027</p></div>
+<button class="ir" id="ir">Ver el bosque mes a mes ↓</button>
+<div class="aviso" role="status"></div>
+</section>
+
+<div class="rot" id="r2">Pantalla 2 · Ahorro</div>
+<section class="pant" id="p2" aria-label="Ahorro" tabindex="-1">
+<button class="volver" id="vol">← Volver al bosque</button>
+<h2>Tu bosque, mes a mes</h2>
+<p class="cifra" id="cif">~390 € <small>al mes</small></p>
+<p class="dice" id="dice"></p>
+<p class="qs" id="q1">¿Cuántos meses de vida quieres guardar?</p>
+<div class="sw" role="group" aria-labelledby="q1" id="gm"><button data-m="3" aria-pressed="false">3 meses</button><button data-m="6" aria-pressed="true">6 meses</button><button data-m="9" aria-pressed="false">9 meses</button></div>
+<p class="qs" id="q2">¿En cuánto tiempo?</p>
+<div class="sw" role="group" aria-labelledby="q2" id="gp"><button data-p="6" aria-pressed="false">6 meses</button><button data-p="12" aria-pressed="true">12 meses</button><button data-p="18" aria-pressed="false">18 meses</button></div>
+<p id="res" aria-live="polite"></p>
+<svg id="graf" viewBox="0 0 412 330" width="388" role="img" aria-labelledby="gt" style="display:block;margin:0 auto"><title id="gt">Gráfica</title></svg>
+<p class="ya">Árboles llenos: lo ya crecido (may 1,5 · jun 1,5 · jul 1,6 · ago 1,9 · sep 2,4 · oct 2,8 meses). Árboles de puntos: el plan. Línea de puntos con cuadrado: tu ritmo, 650 €/mes.</p>
+<div class="nota">Un empujón fácil: si comer fuera baja de 180 € a 90 €, el bosque gana 90 € más cada mes.<button data-av="Gastos: aquí se abre «En qué se me va».">Ver el claro (Gastos)</button></div>
+<p class="inv">Invertir fuera: opcional; primero, la copa a 6 meses.</p>
+<div class="aviso" role="status"></div>
+</section>
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg',MES=1478,ACT=4200,RIT=650,H=[1.5,1.5,1.6,1.9,2.4,2.8];
+var NM=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],NF=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fmt(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function r10(n){return Math.round(n/10)*10}
+function nom(i,corto){var m=(4+i)%12,y=26+Math.floor((4+i)/12);return NM[m]+(corto?'':' '+y)}
+function nomL(i){var m=(4+i)%12,y=2026+Math.floor((4+i)/12);return NF[m]+' de '+y}
+function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+// hojas del árbol grande (determinista)
+(function(){var g=document.getElementById('hojas'),s=7;function r(){s=(s*9301+49297)%233280;return s/233280}
+var C=[[270,519,52],[218,548,46],[322,548,46],[245,575,40],[295,575,40]];
+for(var i=0;i<70;i++){var c=C[i%5],a=r()*6.283,d=Math.sqrt(r())*c[2]*.85,x=c[0]+Math.cos(a)*d,y=c[1]+Math.sin(a)*d;
+el('ellipse',{cx:x.toFixed(1),cy:y.toFixed(1),rx:6,ry:2.6,transform:'rotate('+Math.round(r()*180)+' '+x.toFixed(1)+' '+y.toFixed(1)+')'},g)}})();
+var meta=6,plazo=12,svg=document.getElementById('graf');
+function calc(){
+ var metaE=r10(meta*MES),falta=Math.max(0,metaE-ACT),mes=r10(falta/plazo),mr=falta?Math.ceil(falta/RIT):0;
+ document.getElementById('cif').innerHTML='~'+fmt(mes)+' € <small>al mes</small>';
+ document.getElementById('dice').textContent='hasta '+nomL(5+plazo)+' para tener '+meta+' meses de vida ('+fmt(metaE)+' €). Faltan '+fmt(falta)+' €.';
+ var t;
+ if(!falta)t='Ya tienes esos meses: la copa ya llega al objetivo.';
+ else if(mr<=plazo){var d=plazo-mr;t='A tu ritmo (650 €/mes) llegas en '+nomL(5+mr)+': '+(d?'vas por delante, '+d+(d==1?' mes':' meses')+' antes.':'justo a tiempo.')}
+ else t='A tu ritmo (650 €/mes) llegarías en '+nomL(5+mr)+', '+(mr-plazo)+(mr-plazo==1?' mes':' meses')+' tarde. Para llegar a tiempo, aparta ~'+fmt(mes)+' € al mes.';
+ document.getElementById('res').textContent=t;
+ dib(metaE,falta,mes,mr,t);
+}
+function dib(metaE,falta,mes,mr,t){
+ while(svg.lastChild)svg.removeChild(svg.lastChild);
+ var K=Math.max(plazo,mr),N=5+K,x0=36,x1=398,st=(x1-x0)/N,yb=282,yt=24,ym=Math.max(meta,3)+.4;
+ function X(i){return x0+i*st}function Y(h){return yb-h/ym*(yb-yt)}
+ var tt=el('title',{},svg);tt.textContent='Gráfica del bosque: los árboles llenos crecen de 1,5 meses en mayo a 2,8 en octubre. Los árboles de puntos son el plan de '+fmt(mes)+' euros al mes hasta '+meta+' meses en '+nomL(5+plazo)+'. '+t;
+ var r=Math.min(8,st*.42);
+ // objetivo
+ el('path',{d:'M'+x0+' '+Y(meta)+'H'+x1,stroke:'#2d4a38','stroke-width':2,'stroke-dasharray':'2 7','stroke-linecap':'round'},svg);
+ var l=el('text',{x:x0,y:Y(meta)-7,'font-size':12,'font-weight':700,fill:'#16301f'},svg);l.textContent='objetivo: '+meta+' meses ('+fmt(metaE)+' €)';
+ // suelo
+ el('path',{d:'M'+(x0-8)+' '+yb+'H'+(x1+6),stroke:'#3e8a45','stroke-width':6,'stroke-linecap':'round'},svg);
+ // pasado
+ for(var i=0;i<6;i++){el('path',{d:'M'+X(i)+' '+yb+'V'+Y(H[i]),stroke:'#6b4423','stroke-width':2.5},svg);el('circle',{cx:X(i),cy:Y(H[i]),r:r,fill:'#1f5c3f'},svg)}
+ // plan
+ for(i=1;i<=plazo;i++){var h=2.84+(meta-2.84)*i/plazo;el('path',{d:'M'+X(5+i)+' '+yb+'V'+Y(h),stroke:'#1f5c3f','stroke-width':1.3,'stroke-dasharray':'2 3'},svg);el('circle',{cx:X(5+i),cy:Y(h),r:r,fill:'#e4eee7',stroke:'#1f5c3f','stroke-width':1.8,'stroke-dasharray':'3 3'},svg)}
+ // ritmo
+ if(falta){var pts='M'+X(5)+' '+Y(2.84);for(i=1;i<=mr;i++){var hr=Math.min(meta,2.84+RIT*i/MES);pts+=' L'+X(5+i)+' '+Y(hr)}
+  el('path',{d:pts,fill:'none',stroke:'#7a3b12','stroke-width':3,'stroke-dasharray':'1 6','stroke-linecap':'round'},svg);
+  el('rect',{x:X(5+mr)-6,y:Y(meta)-6,width:12,height:12,fill:'#fff',stroke:'#7a3b12','stroke-width':3},svg);
+  var q=el('text',{x:X(5+mr)+(X(5+mr)<200?10:-10),y:Y(meta)-9,'font-size':12,'font-weight':700,fill:'#7a3b12','text-anchor':X(5+mr)<200?'start':'end'},svg);q.textContent='tu ritmo: '+nom(5+mr)}
+ // ejes
+ function eje(i,s,a){var e=el('text',{x:X(i),y:306,'font-size':12,'text-anchor':a||'middle',fill:'#16301f'},svg);e.textContent=s;el('path',{d:'M'+X(i)+' '+(yb+6)+'v5',stroke:'#16301f','stroke-width':1.5},svg)}
+ eje(0,'may 26','start');eje(5,'hoy');eje(5+plazo,nom(5+plazo),'end');
+ var y0=el('text',{x:0,y:yb+4,'font-size':11,fill:'#2d4a38'},svg);y0.textContent='0';
+}
+[].forEach.call(document.querySelectorAll('#gm button'),function(b){b.onclick=function(){meta=+b.dataset.m;[].forEach.call(document.querySelectorAll('#gm button'),function(o){o.setAttribute('aria-pressed',o===b)});calc()}});
+[].forEach.call(document.querySelectorAll('#gp button'),function(b){b.onclick=function(){plazo=+b.dataset.p;[].forEach.call(document.querySelectorAll('#gp button'),function(o){o.setAttribute('aria-pressed',o===b)});calc()}});
+calc();
+document.getElementById('ir').onclick=function(){var p=document.getElementById('p2');p.scrollIntoView({behavior:'smooth'});p.focus({preventScroll:true})};
+document.getElementById('vol').onclick=function(){document.getElementById('p1').scrollIntoView({behavior:'smooth'})};
+var tm;[].forEach.call(document.querySelectorAll('[data-av]'),function(b){b.addEventListener('click',function(){var a=b.closest('.pant').querySelector('.aviso');a.textContent=b.getAttribute('data-av');a.className='aviso on';clearTimeout(tm);tm=setTimeout(function(){a.className='aviso'},3500)})});
+})();
+</script>
+</body></html>
