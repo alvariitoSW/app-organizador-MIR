@@ -12,8 +12,8 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada. **La siguiente: D1, la limpieza invisible de Dinero** (sesión nueva, en sonnet: «/plan-socialista y haz la D1»).
-Antes de la D3, contesta qué se quita de Dinero (lista en `consejo/2026-10-28-feria.md`, «Se quitaría»).
+**Tanda Dinero, D1→D6, por delegación** (acta `consejo/2026-10-28-dinero-ejecucion.md`: presupuesto 4,3 M + ~0,6 M de
+dirección; qué se quita, decidido sin perder datos). Rama `ccr-c4997bb6-02fys3`, ya con `main` dentro.
 
 ## Por hacer
 
