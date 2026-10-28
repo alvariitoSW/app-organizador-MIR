@@ -3895,7 +3895,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .lau-nm{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;min-width:0;line-height:1.2;overflow-wrap:anywhere}
 .lau-fr{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--lau-fruta-borde);background:linear-gradient(to top,var(--lau-fruta) var(--p),var(--lau-pastel) var(--p))}
 .lau-compra.espera .lau-fr{border-style:dashed;border-color:var(--lau-marron);background:var(--lau-fondo)}
-.lau-num{font-size:13px;font-weight:700;text-align:right;white-space:nowrap}.lau-num.sec{color:var(--lau-ink2);font-weight:400}.lau-num.cuenta{color:var(--lau-marron);font-weight:700}
+.lau-cifra{font-size:13px;font-weight:700;text-align:right;white-space:nowrap}.lau-cifra.sec{color:var(--lau-ink2);font-weight:400}.lau-cifra.cuenta{color:var(--lau-marron);font-weight:700}
 .lau-barra{height:5px;background:var(--lau-pastel)}.lau-barra i{display:block;height:100%;background:var(--lau-verde)}.lau-compra.espera .lau-barra i{background:var(--lau-madera)}
 .lau-det{padding:10px 12px 12px;border-top:1px solid var(--lau-borde);font-size:14px;color:var(--lau-ink2)}.lau-det b{color:var(--lau-ink)}
 .lau-det .lau-in{min-width:0;width:100%}

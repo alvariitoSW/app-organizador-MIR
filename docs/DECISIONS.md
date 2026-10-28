@@ -1565,3 +1565,19 @@ luego por mes) con precio, «al mes» (lo que falta ÷ meses hasta su mes), cuá
 **Supuestos.** Sin mes, la compra sale con «sin mes» y no suma al «al mes». Las pruebas 216, 218 y el reparto/hucha de la 228 miraban las huchas
 y «Gasté de mis ahorros», que el acta quita: llegan por `ui.dinViejo` (solo lo pone la prueba) hasta que la D6 borre ese código y esas
 comprobaciones. «Pasan 31 días» en la prueba 337 = se retrasa `alta` 31 días. Sin capturas a 412×915 (las hace el verificador).
+
+## 2026-10-28 · Dinero D6: quitar código y vistas, nunca datos
+
+**Elegido.** Se quita lo que la reforma dejó sin botón (acta, punto 2): «Te queda / Puedes gastar hoy» (`dinHoyHTML`), las huchas por % o €
+con su reparto, «Repartir X €», «Gasté de mis ahorros», las pantallas de huchas / hucha nueva / plan, `dinBolsillosHTML`, `dinAhorroHTML`,
+`ui.dinViejo`, la pantalla de capturas del banco con su lector, la vista `salud`, y ~40 acciones de los dos switches sin emisor. Unas
+~680 líneas de `app.js` (27.964 → 27.300). **No se toca ningún dato:** `store.dinero` y `store.ahorro` (huchas, meta, banco, épocas, festivos,
+movs) siguen en el store, en la copia y en la exportación; `dinero3Migra` y las migraciones de lectura quedan. Prueba 339: un móvil viejo
+sembrado recorre Bosque/Gastos/Ahorro/Compras y la copia de seguridad lleva lo viejo intacto y lo migrado. En `d4AjustesHTML` se van
+«Cambiar el reparto» (era de huchas por %) y «Cuadrarlo» (con la pantalla del banco); el % de ahorro se queda. Retoques: la etiqueta del
+objetivo en la gráfica ya no la pisa «tu ritmo», «← Volver al bosque» es píldora, y en Compras las cifras dejan de ser insignias redondas.
+**Descartado.** Quitar la pestaña Mes («Cierre del mes»): Gastos enlaza a ella y es donde se escribe «tu cifra» del mes sin Fintonic. Quitar
+`bkQueda` y lo del banco: el asistente y `gastoMes` los usan. Quitar épocas/festivos: Ajustes, Hoy, Mes y el .ics los usan.
+**Supuestos.** Las comprobaciones de las pruebas 204, 216, 218, 223, 228, 263, 266, 270 y 272 que miraban lo quitado se quitaron (el acta lo
+manda), dejando las del resto; 221 y 262 pasan de la vista `salud` a la pestaña Ahorro. Se quitan también dos reglas del asistente que
+hablaban de huchas y de la pantalla del banco. Mi script de código muerto quitó `frSeg` por error (la usa `frases.test.js`): restaurada.
