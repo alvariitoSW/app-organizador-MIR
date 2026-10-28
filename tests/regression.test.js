@@ -9848,15 +9848,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const lib = P.store.shifts.find((s) => /libre/i.test(s.name)); P.store.rotation.mode = 'date'; P.setDayOverride(sab, lib.id, '');
       const g = P.gymS(); g.hora = ''; g.piscinaSal = {}; g.forzar = {}; g.forzar[sab] = true;
       g.rutinas = [{ id: 'rv', nombre: 'Vacía', notas: '', ejercicios: [] }, { id: 'rf', nombre: 'Fuerza', notas: '', ejercicios: [{ ex: 'Sentadilla', sets: [{ kg: 60, reps: 8 }] }] }];
-      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '17:00', fin: '18:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
+      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
       P.render();
       const s = P.entrenoSemana(sab), x = s.dias.find((d) => d.k === sab);
       const out = { hora: x.hora, movido: !!x.movido, choca: !!x.choca, perdido: !!x.perdido,
         agenda: P.agendaDia(sab).filter((a) => a.tipo === 'gym').map((a) => a.hora),
         asig: Object.values(s.asig).map((q) => q.nombre), pisc: P.entrenoCfg().pisc.hora };
       P.store = c; P.save(); P.render(); return out; });
-    check('el entreno del sábado con dentista a las 17:00 se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
-      r.hora !== '17:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
+    check('el entreno del sábado con dentista a las 10:00 (la hora fija del fin de semana) se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
+      r.hora !== '10:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
       r.asig.indexOf('Vacía') < 0 && r.asig.indexOf('Fuerza') >= 0 && r.pisc === '18:00', JSON.stringify(r));
   }
 
@@ -12792,7 +12792,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.c = await page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva; if (!sa) return { sesion: false };
       const rt = P.gymS().rutinas.find((x) => x.id === sa.rutinaId), ex = rt.ejercicios[0].ex, v = P.regresoDe(sa.fecha), ref = v ? P.regresoRef(ex, v.desde) : null;
       if (!v || !ref) return { sesion: true, sinPlan: true };
-      const kg = +(document.querySelector('#main input[data-k="kg"]') || {}).value;
+      const kg = +String((document.querySelector('#main input[data-k="kg"]') || {}).value).replace(',', '.');   // 32,5 sale con coma
       const filas = P.sesionFilas(sa).map((q) => q.filas.filter((f) => f.t !== 'c').length);
       return { sesion: true, ex, kg, ref: ref.kg, pct: v.pct, esperado: P.redondeaEj(ex, ref.kg * v.pct / 100), filas: filas.join(',') }; });
     await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.ui.tab = 'gym'; P.ui.gymPanel = 'regreso'; P.render(); });
@@ -12800,11 +12800,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main .gvuelta'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia323; delete window.__copia323; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp323);
-    check('tras 8 semanas sin entrenar, Entreno abre con «Semana 1 de 4» al 70 % y el «listo» no dice 100 %',
-      r.a.hay && /Semana 1 de 4/.test(r.a.sem) && /70 %/.test(r.a.on) && !/100/.test(r.a.listo) && /vuelta/.test(r.a.listo), JSON.stringify(r.a));
-    check('el plan enseña las 4 semanas y «más suave» lo alarga a 6 y empieza al 60 %', r.b.filas === 4 && r.b.filasSuave === 6 && /60 %/.test(r.b.pct), JSON.stringify(r.b));
-    check('«Empezar (vuelta)» monta la sesión con el 60 % del peso de antes y 2 series por ejercicio',
-      r.c.sesion && r.c.pct === 60 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
+    check('tras 8 semanas sin entrenar, Entreno abre con «Semana 1 de 8» al 35 % y el «listo» no dice 100 %',
+      r.a.hay && /Semana 1 de 8/.test(r.a.sem) && /35 %/.test(r.a.on) && !/100/.test(r.a.listo) && /vuelta/.test(r.a.listo), JSON.stringify(r.a));
+    check('el plan enseña las 8 semanas y «más suave» (la vuelta nueva) empieza al 30 %', r.b.filas === 8 && r.b.filasSuave === 8 && /30 %/.test(r.b.pct), JSON.stringify(r.b));
+    check('«Empezar (vuelta)» monta la sesión con el 30 % del peso de antes y 2 series por ejercicio',
+      r.c.sesion && r.c.pct === 30 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
     check('«quitar el plan» devuelve la progresión de siempre', !r.d.tarjeta && r.d.pr !== 'vuelta', JSON.stringify(r.d));
   }
   // 324) EL CONDUCTOR CONTADO, EN CADENA (a 412×915): un día de trabajo con la «Sesión clínica» a las 10:00. (a) A las 9:40
@@ -13753,6 +13753,127 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /^\d+ cosas$/.test(r.c.faltan) && +r.c.faltan.split(' ')[0] > 6 && r.c.huecos === 6 && r.c.mas === 'y ' + (+r.c.faltan.split(' ')[0] - 6) + ' más ›' && r.c.fz >= 1 && /CONGELADOR · [1-9]/.test(r.c.fzCab) && r.c.ancho >= 110 &&
       r.c2.vista === 'eje' && r.c2.cjeTab === 'casa', JSON.stringify({ c: r.c, c2: r.c2 }));
     check('«pizza barbacoa del telepizza, 3 trozos»: 3 trozos cuentan como raciones de pizza y ya no pregunta «¿Cuánta?»', r.d.dudas === 0 && r.d.items === 1 && r.d.rac === 3, JSON.stringify(r.d));
+  }
+  // 348) LA FRANJA Y EL LUGAR DEL ENTRENO, EN CADENA (A1-A3, a 412×915): sin hora puesta a mano, (a) un lunes libre forzado a
+  // entrenar sale a las 15:00, 50 min, en el gimnasio; (b) al pulsar el sábado en la semana, la portada dice parque a las
+  // 10:00 (40 min) y su rutina es la de sin material; (c) con una reunión que acaba a las 15:10 el lunes, la hora libre es la sesión
+  // mínima de las 15:30 (25 min) y nunca de tarde-noche; (d) una hora puesta a mano en el gym manda. Fija: salía a las
+  // 17:00 y 75 min, y el fin de semana también en el gimnasio.
+  {
+    const vp348 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia348 = JSON.parse(JSON.stringify(P.store));
+      const d = new Date(); d.setDate(d.getDate() + 14); while (d.getDay() !== 1) d.setDate(d.getDate() + 1); window.__lun348 = P.iso(d);
+      g.rutinas = [{ id: 'r348', nombre: 'Torso 348', dias: [], ejercicios: ['Press banca (barra)', 'Remo con barra', 'Sentadilla (barra)', 'Peso muerto rumano'].map((ex) => ({ ex, series: 3, reps: 8, rmax: 10 })) }];
+      delete g.hora; delete g.duracion; delete g.franja; delete g.regreso; g.registro = []; g.sesiones = []; P.ui.gymSesionActiva = null; P.ui.gymPanel = '';
+      P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || ''));
+      const T = P.store.shifts.find((x) => /libre/i.test(x.name));   // días libres: sin trabajo que pise las 15:00
+      for (let i = 0; i < 7; i++) P.setDayOverride(P.iso(P.addDays(d, i)), T.id, '');
+      for (const i of [0, 5]) P.gymForzar()[P.iso(P.addDays(d, i))] = true;
+      P.ui.gymDate = window.__lun348; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const P = window.PG, k = P.ui.gymDate; return { k, tira: (document.querySelector('#main .gtiraq') || {}).textContent || '', hero: (document.querySelector('#main .ghero2 .k') || {}).textContent || '',
+      hora: P.gymHoraDe(k), lugar: P.lugarEntreno(k), dur: P.ventanaEntreno(k, 'fuerza', P.dayInfo(k)).dur }; });
+    const r = { a: await lee() };
+    await page.click('#main [data-a="gym-dia"][data-key="' + await page.evaluate(() => window.PG.iso(window.PG.addDays(window.PG.parseDate(window.__lun348), 5))) + '"]'); await page.waitForTimeout(250);
+    r.b = await lee(); r.b.rt = await page.evaluate(() => window.PG.rutinaParque().ejercicios.map((e) => e.ex).join('|'));
+    r.c = await page.evaluate(() => { const P = window.PG, lun = window.__lun348, inf = P.dayInfo(lun);
+      P.eventosS().push({ id: 'ev348', titulo: 'Reunión 348', hora: '14:30', fin: '15:10', modo: 'fecha', fecha: lun, dow: [], on: true });
+      const l = P.horaLibreEntreno(lun, 'fuerza', inf, P.ventanaEntreno(lun, 'fuerza', inf)); return { hora: l && l.hora, dur: l && l.dur }; });
+    r.d = await page.evaluate(() => { const P = window.PG; P.gymS().hora = '19:30'; return P.gymHoraDe(window.__lun348); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia348; delete window.__copia348; delete window.__lun348; P.save(); P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp348);
+    check('entre semana, sin hora puesta, el entreno es a las 15:00, 50 min, en el gimnasio y la portada lo dice',
+      r.a.hora === '15:00' && r.a.lugar === 'gimnasio' && r.a.dur === 50 && /15:00/.test(r.a.hero), JSON.stringify(r.a));
+    check('al pulsar el sábado: parque a las 10:00, 40 min, con la rutina de 6 ejercicios sin material',
+      r.b.k !== r.a.k && r.b.hora === '10:00' && r.b.lugar === 'parque' && r.b.dur === 40 && /10:00/.test(r.b.hero) && /Sentadilla/.test(r.b.rt) && /Plancha/.test(r.b.rt) && r.b.rt.split('|').length === 6, JSON.stringify(r.b));
+    check('si un evento pisa las 15:00 (ida incluida), la hora libre es la sesión mínima de las 15:30 (25 min), nunca de tarde-noche', r.c.hora === '15:30' && r.c.dur === 25, JSON.stringify(r.c));
+    check('una hora puesta a mano en el gym manda sobre la franja', r.d === '19:30', JSON.stringify(r.d));
+  }
+  // 349) LA SESIÓN MÍNIMA, EN CADENA (A4, a 412×915): con una rutina de 4 ejercicios × 3 series, (a) «mínima · 25 min» en la
+  // portada abre el entreno con 3 ejercicios y 2 series cada uno (6 series); (b) tras descartarla, «Empezar» normal monta
+  // las 12 series enteras. Fija: no había forma de hacer solo un rato; y la mínima no puede quedarse pegada a la siguiente.
+  {
+    const vp349 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia349 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r349', nombre: 'Torso 349', dias: [], ejercicios: ['Press banca (barra)', 'Remo con barra', 'Sentadilla (barra)', 'Peso muerto rumano'].map((ex) => ({ ex, series: 3, reps: 8, rmax: 10 })) }];
+      delete g.regreso; g.registro = []; g.sesiones = []; P.ui.gymSesionActiva = null; P.ui.gymPanel = '';
+      // un lunes libre y forzado: el estado de hoy (guardia, saliente…) no decide si sale el botón
+      const d = new Date(); d.setDate(d.getDate() + 14); while (d.getDay() !== 1) d.setDate(d.getDate() + 1); const lk = P.iso(d);
+      P.setDayOverride(lk, P.store.shifts.find((x) => /libre/i.test(x.name)).id, ''); P.gymForzar()[lk] = true; P.ui.gymDate = lk;
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const plan = () => page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva; if (!sa) return { sesion: false };
+      const pl = P.sesionFilas(sa); return { sesion: true, min: !!sa.min, ej: pl.length, series: pl.reduce((a, q) => a + q.total, 0), panel: P.ui.gymPanel }; });
+    const r = {};
+    await page.click('#main .ghero2 [data-a="ses-empezar"][data-min="1"]'); await page.waitForTimeout(250); r.a = await plan();
+    await page.evaluate(() => { window.PG.descartarSesion(); window.PG.ui.tab = 'gym'; window.PG.ui.gymPanel = ''; window.PG.render(); }); await page.waitForTimeout(200);
+    await page.click('#main .ghero2 .gbig2[data-a="ses-empezar"]'); await page.waitForTimeout(250); r.b = await plan();
+    await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.store = window.__copia349; delete window.__copia349; P.save(); P.ui.gymPanel = ''; P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp349);
+    check('«mínima · 25 min» abre el entreno con 3 ejercicios y 2 series cada uno', r.a.sesion && r.a.min && r.a.ej === 3 && r.a.series === 6 && r.a.panel === 'vivo', JSON.stringify(r.a));
+    check('tras descartar la mínima, «Empezar» monta la rutina entera (4 ejercicios, 12 series)', r.b.sesion && !r.b.min && r.b.ej === 4 && r.b.series === 12, JSON.stringify(r.b));
+  }
+  // 350) LA VUELTA AL 35 % Y EL PLAN VIEJO INTACTO, EN CADENA (A5, a 412×915): (a) tras 8 semanas parado, el plan nuevo
+  // arranca al 35 % y «ver el plan» enseña 35·45·…·95·100 (8 filas); (b) «más rápido» lo recorta (empieza al 40 %, 7
+  // filas); (c) un plan guardado SIN `ini` (de antes) sigue con su 70 % y sus 4 semanas. Fija: la vuelta nueva era lineal
+  // desde el 70 %, y no puede cambiar las cifras de quien ya tiene un plan en curso.
+  {
+    const vp350 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia350 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r350', nombre: 'Torso 350', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 4, reps: 6, rmax: 8 }, { ex: 'Remo con barra', series: 4, reps: 8, rmax: 10 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.ui.gymDate = '';
+      const hoy = new Date(); for (let w = 0; w < 6; w++) for (const dd of [0, 2, 4]) { const d = new Date(hoy); d.setDate(d.getDate() - 60 - (5 - w) * 7 - (4 - dd)); const k = P.iso(d);
+        g.rutinas[0].ejercicios.forEach((e) => { for (let i = 0; i < e.series; i++) g.registro.push({ id: 'g350' + Math.random(), fecha: k, ex: e.ex, kg: 60 + w * 2.5, reps: e.rmax, rpe: 7, t: 'n' }); });
+        g.sesiones.push({ id: 's350' + k, fecha: k, rutinaId: 'r350', rpe: 7 }); }
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
+    const tabla = () => page.evaluate(() => ({ filas: document.querySelectorAll('#main .gvtab tr').length - 1, pcts: [...document.querySelectorAll('#main .gvtab tr td:nth-child(4)')].map((t) => t.textContent.replace(/\D/g, '')).join(','),
+      ahora: ((document.querySelector('#main .gvtab tr.on') || {}).textContent || '') }));
+    const r = {};
+    await clic('#main .gvuelta [data-a="gym-panel"][data-p="regreso"]'); r.a = await tabla();
+    r.a.guardado = await page.evaluate(() => { const v = window.PG.gymS().regreso; return { ini: v.ini, paso: v.paso }; });
+    await clic('#main [data-a="regreso-ritmo"][data-v="rapido"]'); r.b = await tabla();
+    r.b.ini = await page.evaluate(() => window.PG.gymS().regreso.ini);
+    await page.evaluate(() => { const P = window.PG, v = P.gymS().regreso; delete v.ini; delete v.paso; v.ritmo = 'normal'; P.ui.gymPanel = 'regreso'; P.render(); });
+    r.c = await tabla(); r.c.sinIni = await page.evaluate(() => window.PG.gymS().regreso.ini == null);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia350; delete window.__copia350; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp350);
+    check('el plan de vuelta nuevo arranca al 35 % y sube de 10 en 10 (35·45·…·95·100), y guarda ini y paso',
+      r.a.filas === 8 && r.a.pcts === '35,45,55,65,75,85,95,100' && /35 %/.test(r.a.ahora) && r.a.guardado.ini === 35 && r.a.guardado.paso === 10, JSON.stringify(r.a));
+    check('«más rápido» empieza al 40 % y lo acorta a 7 semanas', r.b.filas === 7 && /^40,50,/.test(r.b.pcts) && r.b.ini === 40, JSON.stringify(r.b));
+    check('un plan guardado sin ini sigue con la fórmula vieja: 4 semanas desde el 70 %', r.c.sinIni && r.c.filas === 4 && /^70,/.test(r.c.pcts) && /70 %/.test(r.c.ahora), JSON.stringify(r.c));
+  }
+  // 351) EL OBJETIVO DE PESO CON SUS TOPES, EN CADENA (A6, a 412×915): con 80 kg, 175 cm, 28 años, hombre, (a) la ficha
+  // «Objetivo de peso» de la portada abre la pantalla; (b) meta 72 kg al ritmo 0,5 da kcal ≥1.500 y ≥ basal, proteína 160 g
+  // y una fecha; (c) a 1 kg/semana con 60 kg de partida el ritmo se recorta al 1 % (0,6) y lo dice; (d) una meta de 50 kg
+  // se sube a la de IMC 18,5; (e) «usar estas kcal» con meta «perder» manda en Comer (kcalSugeridas). Fija: no había objetivo.
+  {
+    const vp351 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, p = P.perfilS(); window.__copia351 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 175, pesoKg: 80, sexo: 'h', nacido: new Date().getFullYear() - 28, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] }); delete p.objetivo;
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 80 });
+      P.ui.gymPanel = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    await page.click('#main [data-a="gym-panel"][data-p="peso"]'); await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => ({ panel: window.PG.ui.gymPanel, tit: (document.querySelector('#main .subtit') || {}).textContent, aviso: /médico/.test(document.getElementById('main').textContent) }));
+    await page.fill('#main [data-a="obj-kg"]', '72'); await page.keyboard.press('Tab'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="obj-ritmo"][data-v="0.5"]'); await page.waitForTimeout(250);
+    r.b = await page.evaluate(() => { const P = window.PG, o = P.objetivoPeso(); return { o, basal: P.metabolismoBasal(), svg: !!document.querySelector('#main svg.gline'), txt: (document.querySelector('#main .big') || {}).textContent || '' }; });
+    r.c = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 60 }]; p.pesoKg = 60; p.objetivo = { kg: 55, ritmo: 1 }; const o = P.objetivoPeso(); return { ritmo: o.ritmo, topes: o.topes, kcal: o.kcal }; });
+    r.d = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 50, ritmo: 0.5 }; P.ui.gymPanel = 'peso'; P.render(); const o = P.objetivoPeso(); return { meta: o.meta, topes: o.topes, nota: /IMC/.test(document.getElementById('main').textContent) }; });
+    r.e = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 72, ritmo: 0.5 }; p.meta = 'mantener'; const antes = P.kcalSugeridas(); P.render(); return { antes }; });
+    await page.click('#main [data-a="obj-usar"]'); await page.waitForTimeout(250);
+    r.e.despues = await page.evaluate(() => ({ k: window.PG.kcalSugeridas(), o: window.PG.objetivoPeso().kcal, meta: window.PG.perfilS().meta }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia351; delete window.__copia351; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp351);
+    check('la ficha «Objetivo de peso» de la portada abre su pantalla, con el aviso de hablar con el médico', r.a.panel === 'peso' && /objetivo de peso/i.test(r.a.tit) && r.a.aviso, JSON.stringify(r.a));
+    check('meta 72 kg a 0,5 kg/semana: kcal ≥ basal y ≥1.500, proteína 160 g, semanas, fecha, gráfica y cifra en pantalla',
+      r.b.o && r.b.o.perder && r.b.o.kcal >= 1500 && r.b.o.kcal >= r.b.basal && r.b.o.prot === 160 && r.b.o.semanas >= 10 && /^\d{4}-/.test(r.b.o.fecha) && r.b.svg && r.b.txt.indexOf(String(r.b.o.kcal)) >= 0, JSON.stringify(r.b));
+    check('1 kg/semana con 60 kg de partida se recorta al 1 % del peso (0,6 kg/semana)', r.c.ritmo <= 0.6 && r.c.topes.indexOf('ritmo') >= 0 && r.c.kcal >= 1500, JSON.stringify(r.c));
+    check('una meta de 50 kg con 175 cm se sube a la del IMC 18,5 (56,7 kg) y lo dice', r.d.meta >= 56.6 && r.d.topes.indexOf('imc') >= 0 && r.d.nota, JSON.stringify(r.d));
+    check('«usar estas kcal» pone la meta en perder y kcalSugeridas pasa a las del objetivo', r.e.despues.meta === 'perder' && r.e.despues.k === r.e.despues.o && r.e.despues.k !== r.e.antes, JSON.stringify(r.e));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

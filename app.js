@@ -1870,7 +1870,7 @@ function finEntrenoDe(dateStr,infOpt){
     const hi=propias?sh.start:((gymS()||{}).hora||'');
     const m=mins(hi);
     if(m!=null){
-      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+(+(gymS()||{}).duracion||75));
+      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+gymDur(dateStr));
       if(f!=null&&(fin==null||f>fin))fin=f;}}
   const g2=diaSegundo(dateStr,inf);
   if(g2&&g2.on){const m=mins(g2.hora||'15:30');
@@ -7511,7 +7511,7 @@ function agendaDia0(key,inf){
   /* a la hora del plan de la semana: si chocaba con algo, la app ya le ha buscado otra */
   const en=hayEntreno?null:entrenoDe(key),hE=(en&&en.hora)||gymS().hora;
   if(rt&&!hayEntreno&&hE)
-    add(hE,hm(mins(hE)+((en&&en.dur)||+gymS().duracion||75)),'💪','Entreno · '+rt.nombre,'','gym',tlColor('gym'));
+    add(hE,hm(mins(hE)+((en&&en.dur)||gymDur(key))),'💪','Entreno · '+rt.nombre,'','gym',tlColor('gym'));
   else if(en&&en.tipo==='pisc'&&en.hora)add(en.hora,hm(mins(en.hora)+en.dur),'🏊','Piscina','','gym',tlColor('gym'));
   const s2=diaSegundo(key,inf);
   if(s2&&s2.on)add(s2.hora,'','🏊',(s2.tipo||'entreno').replace(/^./,function(c){return c.toUpperCase();}),'segundo entreno','gym',tlColor('gym'));
@@ -8425,21 +8425,36 @@ function entrenoCfg(){const g=gymS(),p=(g.piscinaSal&&typeof g.piscinaSal==='obj
     fuerza:(g.fuerzaMin!=null&&+g.fuerzaMin>=0)?Math.min(7,Math.round(+g.fuerzaMin)):2,
     pisc:{on:p.on!==false,hora:/^\d{1,2}:\d{2}$/.test(String(p.hora||''))?p.hora:'18:00',dur:(+p.dur>=30&&+p.dur<=240)?Math.round(+p.dur):90}};}
 function gymForzar(){const g=gymS();if(!g.forzar||typeof g.forzar!=='object'||Array.isArray(g.forzar))g.forzar={};return g.forzar;}
+function franja(){
+  /* LA FRANJA DEL ENTRENO. Entre semana, a las 15:00 (50 min) y, si algo la pisa, la sesión mínima de 25 min a
+     las 15:30: nunca de tarde-noche, que es cuando se come, se descansa y se duerme. Sábado y domingo, al
+     parque a las 10:00 (40 min). Se lee de gym.franja con estos valores por defecto: nada que migrar. */
+  const f=(gymS().franja&&typeof gymS().franja==='object')?gymS().franja:{},ok=function(h){return /^\d{1,2}:\d{2}$/.test(String(h||''));},
+    d=function(x,v){return (+x>=15&&+x<=240)?Math.round(+x):v;};
+  return {sem:ok(f.sem)?f.sem:'15:00',fin:ok(f.fin)?f.fin:'10:00',durSem:d(f.durSem,50),durFin:d(f.durFin,40),min:'15:30',durMin:25};}
+function esFinDeSemana(key){const d=parseDate(key);return !!d&&(d.getDay()===0||d.getDay()===6);}
+function lugarEntreno(key){return esFinDeSemana(key)?'parque':'gimnasio';}
+const PARQUE_RUTINA=['Sentadilla','Flexiones inclinadas','Remo invertido','Zancadas','Plancha','Subir escalones'];
+function rutinaParque(){
+  /* la rutina del parque, sin material: se crea una vez y se reutiliza (addRutina ya mete los ejercicios) */
+  const g=gymS();let rt=g.rutinas.filter(function(r){return r.parque;})[0];
+  if(rt)return rt;
+  rt={id:uid('rt'),nombre:'Parque · sin material',notas:'',ejercicios:[],parque:true};g.rutinas.push(rt);
+  PARQUE_RUTINA.forEach(function(n){addRutina(rt.id,n,{series:3,reps:n==='Plancha'?30:10,descansoSeg:60});});
+  return rt;}
 function gymHoraDe(key,infOpt){
-  /* a qué hora entrenas ese día. Sin hora puesta en el gym la franja no se pintaba en ningún
-     sitio: ahora sale del día —al salir del trabajo, lo que tardas en llegar; en un libre, a las 17—. */
+  /* a qué hora entrenas ese día: la que pongas tú en el gym o, si no, la franja fija (15:00 entre semana,
+     10:00 el fin de semana). Antes salía de la hora de salir del trabajo y a veces caía por la tarde-noche. */
   const h=gymS().hora;if(h)return h;
-  const inf=infOpt||dayInfo(key),jor=jornadaOf(key,inf);
-  const f=jor&&jor.end?mins(jor.end):null;
-  if(f!=null&&f<20*60)return hm(f+entrenoCfg().ida);
-  return '17:00';}
+  return esFinDeSemana(key)?franja().fin:franja().sem;}
+function gymDur(key){return +gymS().duracion>0?+gymS().duracion:(esFinDeSemana(key)?franja().durFin:franja().durSem);}
 function ventanaEntreno(key,tipo,inf){
   /* el rato que te ocupa entrenar, con ir y volver: es lo que no puede pisar un evento */
   const c=entrenoCfg();
   if(tipo==='pisc'){const d=mins(c.pisc.hora);return {de:d-c.ida,a:d+c.pisc.dur+c.vuelta,hora:c.pisc.hora,dur:c.pisc.dur};}
   const sh=shiftById((inf||dayInfo(key)).shiftId),jor=jornadaOf(key,inf);
   const propias=sh&&sh.start&&/fuerza|entreno/i.test(sh.name||'')&&!(jor&&jor.start===sh.start);
-  const hi=propias?sh.start:gymHoraDe(key,inf),d=mins(hi),dur=(propias&&sh.end&&sh.end>sh.start)?(mins(sh.end)-d):(+gymS().duracion||75);
+  const hi=propias?sh.start:gymHoraDe(key,inf),d=mins(hi),dur=(propias&&sh.end&&sh.end>sh.start)?(mins(sh.end)-d):gymDur(key);
   return {de:d-c.ida,a:d+dur+c.vuelta,hora:hi,dur:dur};}
 function eventoQueChoca(key,v){
   /* el Lloretazo de cada noche es rutina (ir a fumar, no deporte): cede ante el entreno y no lo
@@ -8454,16 +8469,19 @@ function llChoca(key,v){
   const ll=lloretDe(key),de=ll&&mins(ll.hora||'');if(de==null)return null;
   let a=mins(ll.fin||'');if(a==null||a<=de)a=de+60;
   return (de<v.a&&v.de<a)?ll:null;}
+/* fuerza entre semana: solo las 15:00 y la sesión mínima de las 15:30; el fin de semana, el parque a las 10:00 primero */
 const ENT_HORAS={pisc:['18:00','17:00','17:30','16:30','19:00','10:00','11:00','12:00'],
-  fuerza:['17:00','18:00','10:00','11:00','12:00','16:00','19:00','09:00']};
+  fuerza:['10:00','11:00','12:00','17:00','18:00','16:00','19:00','09:00'],fuerzaSem:['15:00','15:30']};
 function horaLibreEntreno(key,tipo,inf,v0){
   /* la primera hora de la lista que no pisa trabajo, siesta, eventos ni el Lloretazo, y acaba antes
      de las 22:00 (luego toca cenar y dormir) */
   const c=entrenoCfg(),dur=v0.dur,sl=sleepOf(key,inf),sie=sl&&sl.siesta?[mins(sl.siesta.de),mins(sl.siesta.a)+30]:null;
   const bs=bloquesTrabajo(key,inf);
-  const hs=[tipo==='pisc'?c.pisc.hora:null].concat(ENT_HORAS[tipo==='pisc'?'pisc':'fuerza']).filter(Boolean);
+  const fz=esFinDeSemana(key)?ENT_HORAS.fuerza:ENT_HORAS.fuerzaSem,fr=franja();
+  const hs=[tipo==='pisc'?c.pisc.hora:null].concat(tipo==='pisc'?ENT_HORAS.pisc:fz).filter(Boolean);
   for(let i=0;i<hs.length;i++){const h=mins(hs[i]);if(h==null||hs[i]===v0.hora)continue;
-    const v={de:h-c.ida,a:h+dur+c.vuelta,hora:hs[i],dur:dur};
+    const dm=tipo!=='pisc'&&hs[i]===fr.min?Math.min(dur,fr.durMin):dur;   /* a las 15:30 solo cabe la sesión mínima */
+    const v={de:h-c.ida,a:h+dm+c.vuelta,hora:hs[i],dur:dm};
     if(v.a>22*60)continue;
     if(sie&&sie[0]!=null&&v.de<sie[1]&&sie[0]<v.a)continue;
     if(bs.some(function(b){return v.de<b.a&&b.de<v.a;}))continue;
@@ -8667,7 +8685,7 @@ function fechaCortaTxt(key){
   const d=parseDate(key);
   return d?(DAYN[(d.getDay()+6)%7].toLowerCase()+' '+d.getDate()):key;}
 /* ===================== empezar/terminar una rutina = una sesión ===================== */
-function empezarRutina(rid,fecha,corta){
+function empezarRutina(rid,fecha,corta,minima){
   /* monta las series de esa rutina con el último peso que usaste en cada ejercicio (misma idea que
      antes pasarRutina(), pero ahora sabiendo de qué rutina se trata) y abre una "sesión en curso":
      hasta que no le des a «he terminado» (o «descartar»), no hay una sola sesión más que empezar. */
@@ -8681,7 +8699,7 @@ function empezarRutina(rid,fecha,corta){
      peso de la última vez; como ui.gymSesionActiva no se guarda, cerrar la app a mitad dejaba en tu
      historial 17 series que no habías hecho. Ahora cada serie entra cuando la apuntas. */
   const n=rt.ejercicios.reduce(function(a,ej){return a+ejSets(ej).length;},0);
-  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
+  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta,min:!!minima};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
   ui.gymDesc=null;ui.gymInforme='';
   /* empezar una rutina te deja DENTRO del entreno, no en un formulario — y también cuando le das
      desde «Hoy», que es donde sale el aviso de que hoy toca: sin cambiar de pestaña, pulsabas
@@ -9033,9 +9051,42 @@ function setMetaNum(campo,val){
     p.metaProt[m]=n;save();
     return fmt(n)+' g de proteína por kilo';}
   return '';}
+const OBJ_RITMOS=[0.25,0.5,0.75,1];
+function pesoPartida(){
+  /* de dónde partes: la media de los pesos de los últimos 7 días apuntados (el del día sube y baja con la sal y el agua) */
+  const p=perfilS(),u=p.pesos.length?p.pesos[p.pesos.length-1].k:'';
+  if(!u)return +p.pesoKg||0;
+  const d=iso(addDays(parseDate(u),-6)),t=p.pesos.filter(function(x){return x.k>=d;});
+  return Math.round(t.reduce(function(a,x){return a+x.kg;},0)/t.length*10)/10;}
+function objetivoPeso(){
+  /* OBJETIVO DE PESO: kg de meta + ritmo (kg/semana) → kcal al día, proteína, semanas y fecha. Con topes para que
+     no sea nunca una dieta agresiva: ritmo ≤1 % del peso por semana, déficit ≤25 % de lo que gastas, kcal ≥ tu basal y
+     ≥1.500, y meta con IMC ≥18,5. `topes` dice cuáles se han aplicado. Sin objetivo o sin perfil: null. */
+  const p=perfilS(),o=p.objetivo,g=gastoDiario(),b=metabolismoBasal(),par=pesoPartida();
+  if(!o||!(+o.kg>0)||!g||!par)return null;
+  const topes=[],imcMin=+p.alturaCm>0?Math.ceil(18.5*Math.pow(p.alturaCm/100,2)*10)/10:0;
+  let meta=+o.kg;
+  if(imcMin&&meta<imcMin){meta=imcMin;topes.push('imc');}
+  if(!(meta<par))return {meta:meta,partida:par,perder:false,topes:topes,kcal:0,prot:0,semanas:0,fecha:'',ritmo:0};
+  let rit=OBJ_RITMOS.indexOf(+o.ritmo)>=0?+o.ritmo:0.5;
+  if(rit>par*0.01){rit=Math.floor(par*0.01*100)/100;topes.push('ritmo');}
+  let def=rit*7700/7;
+  if(def>g*0.25){def=g*0.25;topes.push('deficit');}
+  let kcal=Math.round((g-def)/10)*10;
+  if(kcal<Math.max(b,1500)){kcal=Math.max(b,1500);topes.push('basal');}
+  const real=Math.max(0,g-kcal),sem=real>0?Math.ceil((par-meta)/(real*7/7700)):0;
+  return {meta:meta,partida:par,perder:true,topes:topes,kcal:kcal,prot:Math.round(par*2/5)*5,semanas:sem,
+    fecha:sem?iso(addDays(new Date(),sem*7)):'',ritmo:Math.round(real*7/7700*100)/100};}
+function setObjetivoPeso(kg,ritmo){
+  const p=perfilS(),v=Math.round((+kg||0)*10)/10;
+  if(!(v>=30&&v<=300))return 'esa meta no puede ser';
+  p.objetivo={kg:v,ritmo:OBJ_RITMOS.indexOf(+ritmo)>=0?+ritmo:((p.objetivo&&p.objetivo.ritmo)||0.5)};
+  save();render();return 'objetivo guardado: '+fmtKg(v)+' kg';}
 function kcalSugeridas(){
   const g=gastoDiario();
   if(!g)return 0;
+  const ob=perfilS().meta==='perder'?objetivoPeso():null;
+  if(ob&&ob.perder)return ob.kcal;   /* con objetivo de peso, manda su cuenta (ya respeta basal y 1.500) */
   const k=Math.round(g*(1+ajusteMeta())/10)*10;
   /* nunca por debajo del metabolismo basal: comer menos de lo que gastas en reposo no es un plan */
   return Math.max(metabolismoBasal(),k);}
@@ -15949,7 +16000,8 @@ function sesionFilas(sa){
   if(!rt)return [];
   const hechas=seriesDeSesion(sa.id);
   const edit=ui.gymFila||{},extra=(sa.extra&&typeof sa.extra==='object')?sa.extra:{};
-  return rt.ejercicios.map(function(ej,x){
+  /* sesión mínima: los 3 primeros ejercicios con 2 series cada uno (unos 25 min) */
+  return (sa.min?rt.ejercicios.slice(0,3):rt.ejercicios).map(function(ej,x){
     const med=ejMedida(ej),plan=ejSets(ej).map(function(s){return Object.assign({},s);});
     const ultima=Object.assign({},plan[plan.length-1]||{t:'n',kg:0,reps:8});
     /* la vez anterior, serie a serie (solo las de trabajo) */
@@ -15957,17 +16009,17 @@ function sesionFilas(sa){
     const antes=dias.length?seriesDeDia(ej.ex,dias[0]).filter(function(s){return s.t!=='c';}):[];
     /* semana de descarga o versión corta: mitad de series de trabajo y −10 % */
     const vu=regresoDe(sa.fecha);
-    const suave=!vu&&(!!sa.corta||bloqueDe(sa.fecha).descarga);
+    const suave=!vu&&(!!sa.corta||!!sa.min||bloqueDe(sa.fecha).descarga);
     if(vu){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=vu.series(w);let k2=0;
       for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
-    if(suave){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=Math.ceil(w/2);let k2=0;
+    if(suave){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=sa.min?Math.min(2,w):Math.ceil(w/2);let k2=0;
       for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
     /* las que añades hoy van DESPUÉS de recortar a la mitad: si no, el recorte se las comía y «＋ serie»
        no salía hasta pulsarlo dos veces */
     for(let k=0;k<(+extra[x]||0);k++)plan.push(Object.assign({},ultima));
     const nw=plan.filter(function(s){return s.t!=='c';}).length;
     const pr0=(med==='kg'||med==='lastre')?progresionDe(ej.ex,nw,ejRango(ej)[1],sa.fecha):null;
-    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*0.9),cl:'baja',txt:(sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*0.9))+' kg y la mitad de series. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
+    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*0.9),cl:'baja',txt:(sa.min?'Sesión mínima':sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*0.9))+' kg y '+(sa.min?'2 series':'la mitad de series')+'. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
     const kgHoy=(pr&&pr.kg>0)?pr.kg:null;
     let wi=0;
     const filas=plan.map(function(s,si){
@@ -16192,6 +16244,7 @@ function gymHeroHTML(sel){
       '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+(pk?(' · <b style="color:var(--ink)">'+esc(pk)+'</b>'):'')+'</div>'+
       '<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?' data-corta="1"':'')+'>▶ Empezar '+esc(rt.nombre)+'</button>'+
       '<div class="glnk"><button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?'':' data-corta="1"')+'>'+(corta?'versión completa':'versión corta')+'</button><span>·</span>'+
+        '<button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'" data-min="1">mínima · 25 min</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="rutinas">otra rutina</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
   const txt=e&&e.tipo==='pisc'?('Toca piscina'+(e.hora?(' a las '+e.hora):'')+'.'):
@@ -16230,6 +16283,7 @@ function renderGymPortada(){
     (gymCompleto()?musculosHTML(c.sel):'')+
     '<div class="gtiles">'+
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
+      gymFicha('peso','barras','Objetivo de peso',(perfilS().objetivo||{}).kg>0?fmtKg(perfilS().objetivo.kg)+' kg':'—',(perfilS().objetivo||{}).kg>0?'tu meta':'ponte una meta')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
       gymFicha('biblioteca','lupa','Biblioteca',gymS().biblioteca.length||'—','ejercicios · limpiar')+
@@ -16532,7 +16586,17 @@ function ejRir(ej){const n=+(ej&&ej.rir);if(n>=0&&n<=5&&ej&&ej.rir!==''&&ej.rir!
    Se guarda en gym.regreso (gym.vuelta son los minutos de volver a casa). */
 const REGRESO_DIAS=14;
 function repsTxt(n){return n+(n===1?' repetición':' repeticiones');}
-const REGRESO_RITMO={suave:{ini:60,mas:2,txt:'más suave'},normal:{ini:70,mas:0,txt:'normal'},rapido:{ini:75,mas:-1,txt:'más rápido'}};
+/* plan nuevo: arranca en `ini` % y sube 10 puntos por semana hasta el 100 (35·45·…·95·100). `vi`/`mas` son la
+   fórmula vieja (lineal desde 60/70/75): la siguen usando los planes guardados sin `ini`, para no cambiarles las cifras */
+const REGRESO_RITMO={suave:{ini:30,vi:60,mas:2,txt:'más suave'},normal:{ini:35,vi:70,mas:0,txt:'normal'},rapido:{ini:40,vi:75,mas:-1,txt:'más rápido'}};
+function regresoPct(v,i,N){
+  /* el % de peso de la semana i: sube por pasos si el plan trae `ini`; si no, la fórmula lineal de antes */
+  if(+v.ini>0)return Math.min(100,Math.round(+v.ini+(+v.paso||10)*(i-1)));
+  const r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,t=N>1?(i-1)/(N-1):1;
+  return Math.round((r.vi+(100-r.vi)*t)/5)*5;}
+function regresoCon(v,k){
+  /* ese plan con otro ritmo (sin guardarlo): el `ini` del plan nuevo cambia con el ritmo, el del viejo no existe */
+  const o=Object.assign({},v,{ritmo:k});if(+v.ini>0)o.ini=REGRESO_RITMO[k].ini;return o;}
 function diasEntreK(a,b){const x=parseDate(a),y=parseDate(b);return x&&y?Math.round((y-x)/864e5):0;}
 function ultimoEntreno(antes){
   /* el último día con una serie apuntada antes de esa fecha */
@@ -16545,23 +16609,25 @@ function regresoS(){
   let v=g.regreso&&typeof g.regreso==='object'?g.regreso:null;
   const parado=diasEntreK(ult,hoy);
   if(parado>=REGRESO_DIAS&&(!v||ult>=v.desde))
-    v=g.regreso={desde:hoy,ultimo:ult,parado:parado,ritmo:(v&&REGRESO_RITMO[v.ritmo])?v.ritmo:'normal'};
+    {const rit=(v&&REGRESO_RITMO[v.ritmo])?v.ritmo:'normal';
+      v=g.regreso={desde:hoy,ultimo:ult,parado:parado,ritmo:rit,ini:REGRESO_RITMO[rit].ini,paso:10};}
   return v&&!v.fin?v:null;}
 function regresoSemanas(v){
+  if(+v.ini>0)return 1+Math.max(1,Math.ceil((100-v.ini)/(+v.paso||10)));   /* semanas hasta llegar al 100 */
   const r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,w=Math.floor((+v.parado||REGRESO_DIAS)/7);
   return Math.max(2,Math.min(8,Math.max(2,Math.min(6,Math.round(w/2)))+r.mas));}
 function regresoDiasSem(i){return i===1?2:Math.max(2,Math.min(4,+gymS().minSemana||3));}
 function regresoDe(key){
   /* en qué semana del plan cae ese día: cuenta los días entrenados desde que empezó (antes de ese día) */
   const v=regresoS();if(!v||!key||key<v.desde)return null;
-  const N=regresoSemanas(v),r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,f={};
+  const N=regresoSemanas(v),f={};
   gymS().registro.forEach(function(x){if(x.fecha&&x.fecha>=v.desde&&x.fecha<key)f[x.fecha]=1;});
   const hechos=Object.keys(f).length;
   let acc=0,i=1;
   for(;i<=N;i++){const d=regresoDiasSem(i);if(hechos<acc+d)break;acc+=d;}
   if(i>N){if(key===iso(new Date())){v.fin=key;}return null;}
   const t=N>1?(i-1)/(N-1):1;
-  let pct=Math.round((r.ini+(100-r.ini)*t)/5)*5;
+  let pct=regresoPct(v,i,N);
   /* si la última sesión del plan fue «dura», esta semana se queda un 5 % más abajo */
   const ses=gymS().sesiones.filter(function(x){return x.fecha>=v.desde&&x.fecha<key;}).sort(function(a,b){return a.fecha<b.fecha?1:-1;})[0];
   const duro=i>1&&ses&&+ses.rpe>=8;if(duro)pct-=5;
@@ -16578,8 +16644,8 @@ function regresoCardHTML(sel){
   const g=gymS(),fuerza=g.rutinas.filter(function(r){return rutTipo(r)!=='agua'&&r.ejercicios.length;});
   const ultS=sesionesRecientes(1)[0],iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
   const rt=rutinaDeFecha(sel)||(fuerza.length?fuerza[(iu+1)%fuerza.length]:null);
-  const pasos=[];for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal;
-    pasos.push('<div class="'+(i===vu.sem?'on':(i<vu.sem?'ok':''))+'"><b>'+(i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5)+' %</b><span>sem '+i+'</span></div>');}
+  const pasos=[];for(let i=1;i<=vu.de;i++){const v0=regresoS();
+    pasos.push('<div class="'+(i===vu.sem?'on':(i<vu.sem?'ok':''))+'"><b>'+(i===vu.sem?vu.pct:regresoPct(v0,i,vu.de))+' %</b><span>sem '+i+'</span></div>');}
   const d=parseDate(vu.ultimo);
   return '<div class="card gvuelta"><div class="cap">TU VUELTA AL GIMNASIO</div>'+
     '<div class="big">Semana '+vu.sem+' de '+vu.de+'</div>'+
@@ -16591,11 +16657,38 @@ function regresoCardHTML(sel){
     '<p class="mini">'+vu.hechos+' de '+vu.dias+' entrenos de esta semana</p>'+
     (rt&&!ui.gymSesionActiva?'<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(rt.nombre)+' (vuelta)</button>':'')+
     '<button class="btn s gvplan" data-a="gym-panel" data-p="regreso">ver el plan entero y el porqué ›</button></div>';}
+function renderGymPeso(){
+  /* «Tu objetivo de peso»: meta, ritmo, lo que sale (kcal, proteína, fecha) y la gráfica del peso. Todo en el móvil. */
+  const p=perfilS(),o=p.objetivo||{},ob=objetivoPeso(),ps=p.pesos.slice(-60);
+  const TOPE={imc:'tu meta quedaba por debajo de un IMC de 18,5: la he subido',ritmo:'el ritmo pasaba del 1 % de tu peso por semana: lo he bajado',
+    deficit:'el déficit pasaba del 25 % de lo que gastas: lo he recortado',basal:'las kcal bajaban de tu metabolismo basal o de 1.500: me quedo ahí'};
+  let svg='';
+  if(ps.length>=2){const W=300,H=90,v=ps.map(function(x){return x.kg;}).concat(ob?[ob.meta]:[]),lo=Math.min.apply(null,v)-1,hi=Math.max.apply(null,v)+1,
+      px=function(i){return Math.round(i/(ps.length-1)*W);},py=function(k){return Math.round(H-6-(k-lo)/(hi-lo)*(H-12));};
+    svg='<svg class="gline" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Tu peso apuntado">'+
+      (ob?'<line x1="0" x2="'+W+'" y1="'+py(ob.meta)+'" y2="'+py(ob.meta)+'" stroke="var(--ok)" stroke-dasharray="4 4"></line>':'')+
+      '<polyline fill="none" stroke="var(--brand)" stroke-width="3" stroke-linejoin="round" points="'+ps.map(function(x,i){return px(i)+','+py(x.kg);}).join(' ')+'"></polyline></svg>';}
+  const sin=!gastoDiario();
+  $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu objetivo de peso')+
+    '<div class="card"><div class="cap gvcap">TU META</div>'+
+      (sin?'<p class="mini">Para calcularlo faltan tu peso, altura, edad y sexo (Ajustes → perfil).</p>':'')+
+      '<label class="fld">peso de meta (kg)<input type="number" inputmode="decimal" min="30" max="300" step="0.5" value="'+(+o.kg>0?o.kg:'')+'" data-a="obj-kg"></label>'+
+      '<div class="cap gvcap" style="margin-top:10px">RITMO (kg por semana)</div><div class="chips">'+OBJ_RITMOS.map(function(r){
+        return '<button class="chipx'+((+o.ritmo||0.5)===r?' on':'')+'" data-a="obj-ritmo" data-v="'+r+'">'+fmtC(r)+'</button>';}).join('')+'</div></div>'+
+    (ob&&ob.perder?'<div class="card"><div class="cap gvcap">TU CUENTA</div><div class="big">'+ob.kcal+' kcal al día</div>'+
+      '<p class="mini">Proteína: <b>'+ob.prot+' g</b> al día · de '+fmtKg(ob.partida)+' a '+fmtKg(ob.meta)+' kg a '+fmtC(ob.ritmo)+' kg por semana: <b>'+ob.semanas+' semanas</b>, hacia el '+esc(fechaCortaTxt(ob.fecha))+'.</p>'+
+      (ob.topes.length?'<p class="mini" style="color:var(--warn,var(--ink2))">'+ob.topes.map(function(t){return esc(TOPE[t]);}).join('. ')+'.</p>':'')+
+      (p.meta!=='perder'?'<button class="btn s" data-a="obj-usar">usar estas kcal (poner mi meta en «perder»)</button>':'<p class="mini">Estas son ya tus kcal de Comer.</p>')+'</div>':
+     (ob?'<div class="card"><p class="mini">Tu meta no está por debajo de tu peso de ahora ('+fmtKg(ob.partida)+' kg): no hay déficit que calcular.</p></div>':''))+
+    '<div class="card"><div class="cap gvcap">TU PESO</div>'+(svg||'<p class="mini">Apunta tu peso un par de días y sale la gráfica.</p>')+
+      '<p class="mini">Partes de '+(pesoPartida()?fmtKg(pesoPartida())+' kg (media de tus últimos 7 días apuntados)':'—')+'.</p></div>'+
+    '<div class="card"><p class="mini">Si has tenido problemas con la comida, habla antes con tu médico/a. Estos números son una guía, no una dieta. Todo se queda en tu móvil.</p>'+
+      (+o.kg>0?'<button class="btn s" data-a="obj-quitar">quitar el objetivo</button>':'')+'</div></div>';}
 function renderGymRegreso(){
   const vu=regresoDe(iso(new Date()));
   if(!vu){ui.gymPanel='';return renderGymPortada();}
-  const r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal,filas=[];
-  for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,pct=i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5;
+  const v0=regresoS(),filas=[];
+  for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,pct=i===vu.sem?vu.pct:regresoPct(v0,i,vu.de);
     filas.push('<tr class="'+(i===vu.sem?'on':'')+'"><td><b>'+i+'</b>'+(i===vu.sem?' · ahora':'')+'</td><td>'+regresoDiasSem(i)+'</td><td>'+(i===vu.de?'tus series':(i===1?'2':'2–3'))+
       '</td><td><b>'+pct+' %</b></td><td>'+Math.round(4-3*t)+'</td></tr>');}
   const refs=[];gymS().rutinas.forEach(function(rt){rt.ejercicios.forEach(function(e){const x=regresoRef(e.ex,vu.desde);if(x&&x.kg>0&&refs.length<3)refs.push(e.ex.toLowerCase()+' '+fmtKg(x.kg)+' kg');});});
@@ -16604,7 +16697,7 @@ function renderGymRegreso(){
       '<table class="gvtab"><tr><th>Semana</th><th>Días</th><th>Series</th><th>Peso</th><th>Te sobran</th></tr>'+filas.join('')+'</table>'+
       '<p class="mini">El 100 % es lo que movías antes de parar'+(refs.length?' ('+esc(refs.join(', '))+'…)':'')+'. Después vuelve tu progresión de siempre.</p></div>'+
     '<div class="card"><div class="cap gvcap">EL RITMO</div><div class="chips">'+['suave','normal','rapido'].map(function(k){
-      const v2=Object.assign({},regresoS(),{ritmo:k});
+      const v2=regresoCon(regresoS(),k);
       return '<button class="chipx'+(vu.ritmo===k?' on':'')+'" data-a="regreso-ritmo" data-v="'+k+'">'+REGRESO_RITMO[k].txt+' · '+regresoSemanas(v2)+' sem</button>';}).join('')+'</div>'+
       '<p class="mini">Elige «más suave» si estás de guardias seguidas o durmiendo poco.</p></div>'+
     '<div class="card"><div class="cap gvcap">EN QUÉ SE BASA</div><ul class="gvcien">'+
@@ -17235,6 +17328,7 @@ function renderGym(){
   if(p==='sup')return renderGymSup();
   if(p==='plannuevo')return renderGymPlanNuevo();
   if(p==='regreso')return renderGymRegreso();
+  if(p==='peso')return renderGymPeso();
   if(ui.gymInforme)return renderGymInforme();
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
@@ -22540,7 +22634,7 @@ function renderAjustes(){
         <label class="fld" style="flex:0 0 150px">Hora de ir a entrenar
           <input type="time" value="${esc(gymS().hora||'')}" data-a="gym-hora"></label>
         <label class="fld" style="flex:0 0 130px">Dura (min)
-          <input type="number" min="15" max="240" step="5" value="${+gymS().duracion||75}" data-a="gym-duracion"></label></div>
+          <input type="number" min="15" max="240" step="5" value="${gymDur(iso(new Date()))}" data-a="gym-duracion"></label></div>
       <p class="mini" style="margin:6px 0 0">Para los días con rutina que no traen hora propia. El «Día de fuerza» manda con sus horas (${esc(((shiftById('sh-f')||{}).start||'—')+'–'+((shiftById('sh-f')||{}).end||'—'))}); sin ninguna de las dos, el entreno va como aviso de todo el día.</p>
       ${`<div style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">
         <p class="mini" style="margin:0 0 4px"><b style="color:var(--ink)">Un fichero por color.</b>
@@ -23478,8 +23572,11 @@ function act(a,el){
     case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
       store.rotation.viaje.on=!viajeCfg().on;save();render();
       flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
-    case 'regreso-ritmo':{const v=regresoS();if(v&&REGRESO_RITMO[el.dataset.v]){v.ritmo=el.dataset.v;save();render();
+    case 'regreso-ritmo':{const v=regresoS();if(v&&REGRESO_RITMO[el.dataset.v]){v.ritmo=el.dataset.v;if(+v.ini>0)v.ini=REGRESO_RITMO[v.ritmo].ini;save();render();
       const vu=regresoDe(iso(new Date()));flash('ritmo '+REGRESO_RITMO[v.ritmo].txt+(vu?' · '+vu.de+' semanas, ahora al '+vu.pct+' %':''));}break;}
+    case 'obj-ritmo':{const p=perfilS(),o=p.objetivo||(p.objetivo={kg:0});o.ritmo=+el.dataset.v;save();render();break;}
+    case 'obj-usar':perfilS().meta='perder';save();render();flash('listo: Comer usa las kcal de tu objetivo');break;
+    case 'obj-quitar':delete perfilS().objetivo;save();render();flash('objetivo quitado');break;
     case 'regreso-quitar':{const v=regresoS();if(v){v.fin=iso(new Date());save();}ui.gymPanel='';render();flash('plan de vuelta quitado: vuelve tu progresión de siempre');break;}
     case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
       render();window.scrollTo(0,0);break;}
@@ -24584,7 +24681,7 @@ function act(a,el){
     case 'rt-borrar':{const nm=((rutinaPorId(el.dataset.id))||{}).nombre||'';
       confirmar('¿Eliminar la rutina «'+nm+'» entera? Las sesiones ya guardadas con ella se quedan en el historial.').then(function(ok){
         if(!ok)return;flash(delRutinaCard(el.dataset.id));});break;}
-    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1'));break;
+    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1',el.dataset.min==='1'));break;
     case 'gv-ir':{const sa=ui.gymSesionActiva;if(!sa)break;
       sa.ix=+el.dataset.ix||0;ui.gymPanel='vivo';render();window.scrollTo(0,0);break;}
     case 'gv-cambiar':ui.gymPanel='cambiar';render();window.scrollTo(0,0);break;
@@ -26177,7 +26274,7 @@ function calEventos(desde,hasta){
       /* sin hora puesta en el gym, la del plan (al salir del trabajo, o las 17 en un libre) */
       const entP=entrenoDe(k),hG=gymS().hora||(entP&&entP.hora)||'';
       const hIni=propias?st:(hG?icsHM(hG):''),hFin=propias?((en&&en>st)?en:''):'';
-      out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:(+gymS().duracion||75),
+      out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:gymDur(k),
         uid:icsUID('entreno|'+k),
         /* con rutina puesta, el nombre de la rutina ES lo que quieres leer: «💪 Torso A», no
            «💪 Entreno · Torso A» cortado en «💪 Entreno ·…» */
@@ -26932,7 +27029,8 @@ document.addEventListener('change',e=>{
       const v=Math.round(+el.value||0);if(s2&&v>=1&&v<=600){s2.duracionMin=v;s2.fin=(+s2.inicio||Date.now())+v*60000;if(s2.rpe)s2.carga=s2.rpe*v;save();}render();break;}
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
-    case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
+    case 'obj-kg':flash(setObjetivoPeso(el.value,(perfilS().objetivo||{}).ritmo));break;
+    case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||franja().durSem));save();render();break;}
     case 'ics-aviso-min':{const v=String(el.value).trim()===''?30:+el.value;store.rotation.icsAvisoMin=Math.max(0,Math.min(180,isFinite(v)?Math.round(v):30));save();render();break;}
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
     case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
@@ -27221,7 +27319,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={franja,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
