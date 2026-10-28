@@ -7900,7 +7900,7 @@ function abrirHojaDia(k){
    hoja de Comer. */
 const HOJAS={
   dia:{abierta:function(){return ui.tab==='month'&&ui.hojaDia;},html:function(){return hojaDiaHTML();},cerrar:function(){ui.hojaDia='';ui.hojaVista='';ui.hojaRec=false;ui.hojaMas=false;}},
-  dinero:{abierta:function(){return ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';ui.deseoNuevo='';}},
+  dinero:{abierta:function(){return ui.tab==='dinero'&&!ui.dineroVista&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';ui.deseoNuevo='';}},
   sol:{abierta:function(){return ui.tab==='hoy'&&!!ui.solHoja;},html:function(){return solHojaHTML();},cerrar:function(){ui.solHoja='';}},
   cien:{abierta:function(){return ui.tab==='hoy'&&ui.hoyVista==='sueno'&&!!ui.snCienH&&!ui.snHoja;},html:function(){return suenoCienciaHTML();},cerrar:function(){ui.snCienH=false;ui.snCien='';}},
   sueno:{abierta:function(){return ui.tab==='hoy'&&!!ui.snHoja;},html:function(){return suenoHojaHTML();},cerrar:function(){if(ui.snHoja){ui.snHoja='';ui.snTr=null;}}},
@@ -20036,16 +20036,15 @@ function renderDinero(){
   if(v==='banco')return renderBanco();
   if(v==='plan')return renderDinPlan();
   if(v==='categoria')return renderDinCategoria();
-  /* el cierre, el análisis y la salud financiera ya no son pantallas: viven en Mes y en el asistente */
-  if(v==='cierre'||v==='analisis'){ui.dineroVista='';ui.dinTab='mes';}
-  else if(v==='salud'){ui.dineroVista='';ui.dinTab='ahorro';}
+  /* la salud financiera ya no es pantalla: su ruta vieja lleva a Ahorro (el cierre y el análisis viven en Mes) */
+  if(v==='salud'){ui.dineroVista='';ui.dinTab='ahorro';}
   /* tres pestañas: Hoy (lo que te queda), Ahorro (lo que tienes y cuándo llega cada meta) y Mes */
   const t=dinTabDe();
   $('#main').innerHTML=t==='ahorro'?dinAhorroHTML():(t==='mes'?dinMes8HTML():dinHoyHTML());}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas',analisis:'Análisis'}[vv]||'Dinero')+'</button>'+
+    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas'}[vv]||'Dinero')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function renderDineroMes(){
   const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth();

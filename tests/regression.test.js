@@ -4436,6 +4436,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // uno como pagado y se comprueba que lo pendiente baja y lo pagado sube. Encadenado a propósito:
   // el fallo que se busca es el del estado que queda de un gesto al siguiente.
   {
+    // los fijos caen el 1 y el 3: con «hoy» en esos días la fila marcada cambiaba y la prueba caía según el día real;
+    // se congela «hoy» al día 15 del mes en curso durante el bloque (mismo patrón que la 221) y se restaura al final
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const frozen = new Orig(n.getFullYear(), n.getMonth(), 15, 12, 0, 0).getTime();
+      window.__origDate75 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
     await gotoTab('dinero');
     await page.waitForTimeout(200);
     // los recibos siguen en su pantalla (Dinero v7 ya no la enseña en la portada: lo del día a día
@@ -4475,6 +4480,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const n = new Date(), d = window.PG.mesDinero(n.getFullYear(), n.getMonth());
       return { pend: d.pend, pagado: d.pagado, pagos: d.pagos.length };
     });
+    await page.evaluate(() => { if (window.__origDate75) { window.Date = window.__origDate75; delete window.__origDate75; } });
     check('los gastos fijos: el mes suma, marcar uno pagado baja lo pendiente y desmarcarlo lo deshace',
       mes0.fijoTotal === 682.5 && mes0.pend === 682.5 && mes0.pagado === 0 &&
       mes1.pagado === 650 && mes1.pend === 32.5 && mes1.pagos === 1 && mes1.marcada === 1 &&
@@ -13326,6 +13332,42 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.d === 'E' && r.pidioSello === 1 && r.e0 === 'AC' &&
       r.e.ns === 'A' && r.e.nova === '1' && r.e.adi === '0' && r.e.sd === 0 &&
       r.f.ns === 'C' && r.f.nova === '' && r.f.sd === 1 && r.f.adi === '1', JSON.stringify(r));
+  }
+  // 332) DINERO, FOTO DE CIFRAS (tanda Dinero · D1): red para rehacer la pantalla sin cambiar lo que sale. Con
+  //      «hoy» congelado en una fecha ABSOLUTA (15/03/2026) y datos conocidos (nómina sin guardias de finde, dos recibos, dos
+  //      pagos, tres meses con gasto de las tres fuentes, huchas, una captura del banco) se miden las FUNCIONES de cálculo,
+  //      no el HTML: gastoMes (Fintonic · tu cifra · apuntado), ahorroDeMes, mesDinero, d6Mes (lo de Hoy y Mes), repartoDe y
+  //      llegadaHucha (Ahorro), bkQueda (lo que te queda hasta la nómina). Si un rediseño toca una cifra, cae esta.
+  {
+    await page.evaluate(() => { const Orig = Date, frozen = new Orig(2026, 2, 15, 12, 0, 0).getTime();
+      window.__origDate332 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
+    const f = await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia332 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), d = P.dineroS();
+      a.epocas = [{ id: 'e332', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
+      a.real = [{ fecha: '2026-02-27', hora: '10:00', mes: '2026-02', banco: null, ingresos: 2000, gastos: 1300, cats: { Alquiler: 650, Gimnasio: 30, Supermercado: 300, Ocio: 150, Otros: 170 } }];
+      a.gastado = { '2026-01': 1100 }; a.meses = {}; a.metaPct = 30; delete a.banco; delete a.meta;
+      a.huchas = [{ id: 'hu-c', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 60, objetivo: 0, meta: '', saldo: 3000 },
+        { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#10b981', pct: 40, objetivo: 2000, meta: '', saldo: 500 }];
+      a.puroId = 'hu-c'; a.puroPct = 50;
+      d.gastos = [{ id: 'g332a', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }, { id: 'g332b', nombre: 'Gimnasio', importe: 30, dia: 5, cat: 'salud', on: true }];
+      d.pagos = [{ id: 'p332a', fecha: '2026-03-01', nombre: 'Alquiler', importe: 650, cat: 'casa', gastoId: 'g332a', ts: 1 },
+        { id: 'p332b', fecha: '2026-03-10', nombre: 'cena', importe: 40, cat: 'ocio', ts: 2 }, { id: 'p332c', fecha: '2026-03-12', nombre: 'compra', importe: 25.5, cat: 'compra', ts: 3 }];
+      d.presupuesto = 0;
+      const B = P.bancoS(); B.cuentas = [{ id: 'c332', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: '2026-03-14', hora: '10:00', s: { c332: 1500 } }];
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      const g = (mk) => { const x = P.gastoMes(mk); return x ? [x.fuente, x.total, JSON.stringify(x.cats)].join('|') : null; };
+      const M = P.d6Mes(), md = P.mesDinero(2026, 2), t = P.mesTipo(), Q = P.bkQueda(), ah = P.ahorroDeMes('2026-02');
+      return { ene: g('2026-01'), feb: g('2026-02'), mar: g('2026-03'),
+        entra: P.entraMes('2026-03').neto, ahorroFeb: ah && [ah.entra, ah.sale, ah.ahorro].join('|'), restoFeb: P.restoPorRepartir('2026-02'),
+        mes: [md.fijoTotal, md.pend, md.pagado, md.previsto, JSON.stringify(md.porCat)].join('|'),
+        d6: [M.ingreso, M.fijos, M.ahorro, M.presu, M.gastado, M.queda, M.dias, M.hoyMax, M.est].join('|'),
+        tipo: [t.n, t.ingreso, t.fijos, t.vars, t.gasto, t.libre].join('|'),
+        reparto: JSON.stringify(P.repartoDe(600)), llega: JSON.stringify(P.llegadaHucha(2000, 500, 240)), colchon: P.puroPct(),
+        bk: [Q.caducada, Q.ap, Q.mk0].join('|') }; });
+    await page.evaluate(() => { const P = window.PG; if (window.__origDate332) { window.Date = window.__origDate332; delete window.__origDate332; } P.store = window.__copia332; P.save(); P.ui.tab = 'hoy'; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.render(); });
+    check('FOTO de cifras de Dinero con «hoy» fijo al 15/03/2026: gasto por fuente, ahorro, recibos, Hoy/Mes, reparto y llegada de la hucha',
+      JSON.stringify(f) === JSON.stringify({"ene": "tu cifra|1100|{\"Alquiler\":650,\"Gimnasio\":30,\"Día a día\":420}", "feb": "Fintonic|1300|{\"Alquiler\":650,\"Gimnasio\":30,\"Supermercado\":300,\"Ocio\":150,\"Otros\":170}", "mar": "apuntado|745.5|{\"compra\":25.5,\"ocio\":40,\"Alquiler\":650,\"Gimnasio\":30}", "entra": 2000, "ahorroFeb": "2000|1300|700", "restoFeb": 700, "mes": "680|30|715.5|745.5|{\"compra\":25.5,\"ocio\":40,\"casa\":650}", "d6": "2000|680|600|720|66|654|17|38|bien", "tipo": "2|2000|680|520|1200|800", "reparto": "{\"hu-c\":300,\"hu-j\":300}", "llega": "{\"falta\":1500,\"meses\":7,\"mk\":\"2026-10\"}", "colchon": 50, "bk": "false|600|2026-02"}), JSON.stringify(f));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

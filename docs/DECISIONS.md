@@ -1510,3 +1510,13 @@ estas dos con la piel de la Laurisilva. Ahorro con objetivo a fecha y su gráfic
 de truco sin dibujo que informe (teletexto, oca, cartas: 1/5). Reserva: El Aljibe.
 **Supuestos.** Las cifras de todas las maquetas son inventadas (el repositorio es público). Lo que se quita de la
 Dinero actual lo decide el usuario antes de la D3.
+
+## 2026-10-28 · Dinero D1: pruebas por fecha, «foto» de cifras y limpieza invisible
+
+**Elegido.** La prueba 75 (fijos del día 1 y 3) congela «hoy» al día 15 (la 221 y la 263 ya lo hacían): se probó la tanda
+de Dinero en todo noviembre con el reloj movido y solo caía esa, el día 3. Prueba nueva 332: foto de cifras (gasto por
+fuente, ahorro, recibos, Hoy/Mes, reparto, llegada, lo que queda hasta la nómina) sobre funciones y con fecha absoluta, para
+las D3-D6. Limpieza mínima en `app.js`: se quitan las vistas `cierre` y `analisis` (nadie las abre) y su etiqueta.
+**Descartado.** Quitar `salud` (dos pruebas la usan); tocar saneados y migraciones de lectura (son datos guardados); borrar
+acciones o funciones de Dinero (todas tienen emisor y lector).
+**Supuestos.** Las cifras de la 332 son inventadas. Lo que ve el usuario no cambia en nada.
