@@ -43,7 +43,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outli
 <div class="wrap">
   <header>
     <h1>Feria de maquetas · Dinero</h1>
-    <p class="lead">7 puestos, cada uno hecho por un modelo barato. Todas las cifras son inventadas. Toca un puesto, prueba la maqueta (se puede tocar) y ponle nota. Al final, «Copiar mis notas» y pégamelas en el chat.</p>
+    <p class="lead"><b>Ronda 2</b>: los tres primeros puestos son las mejoras con tus notas; el 3 es la referencia (5/5). Detrás siguen los de la ronda 1 con tu nota. Cifras inventadas. Ponle nota a los nuevos y «Copiar mis notas».</p>
   </header>
 
   <nav class="tira" id="tira" aria-label="Puestos"></nav>
@@ -72,11 +72,14 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outli
 
 <script>
 const P=[
+ {id:'R2-A',f:'dinero-feria-r2-portada.html',m:'sonnet',r:2,t:'Portada compacta',i:'Ronda 2. Una sola pantalla con la filosofía del 3: la conclusión del mes arriba y una fila por parte (ahorro, gastos, compras, invertir). Lo que cobro, en una línea.'},
+ {id:'R2-B',f:'dinero-feria-r2-ahorro.html',m:'sonnet',r:2,t:'Ahorro con invertir dentro',i:'Ronda 2. Meses de vida cubiertos (del 1b) + la pantalla 1 del 1 que te gustó; invertir reducido a lo que sobra cuando el colchón llega a la meta.'},
+ {id:'R2-C',f:'dinero-feria-r2-compras.html',m:'haiku',r:2,t:'Compras compactas',i:'Ronda 2. Cada compra en una fila con precio, cuota, fecha y barra; el detalle se despliega en la misma fila.'},
+ {id:'3',f:'dinero-feria-3-gastos.html',m:'sonnet',t:'En qué se me va y dónde ahorrar · 5/5',i:'La referencia: le diste 5/5 y se queda tal cual. Fijos frente a variables, tres recortes con euros al año y suscripciones que revisar.'},
  {id:'6',f:'dinero-feria-6-portada.html',m:'sonnet',t:'La portada de Dinero',i:'«Cobro, reparto y ya»: un mensaje del mes, el botón «Ya ha llegado la nómina» que reparte entre ahorro, compras e invertir, y las cinco partes en fila. Pantalla 2: el cierre del mes.'},
  {id:'1',f:'dinero-feria-1-ahorro.html',m:'sonnet',t:'Ahorro · una hucha, una regla',i:'La base paga la vida y de lo que cobras de más por guardias apartas la mitad (30/50/70 %). Primero el colchón de 3 meses, luego las metas en cola. El día 25 escribes la nómina y te dice cuánto pasar a ahorro.'},
  {id:'1b',f:'dinero-feria-1b-ahorro.html',m:'haiku',t:'Ahorro · meses de vida',i:'El ahorro medido en meses de vida cubiertos (meta 6), con racha de meses ahorrando. Un deslizador te dice cuántos días de tranquilidad da cada 100 € y cuánto colchón cuesta cada compra.'},
  {id:'2',f:'dinero-feria-2-ingresos.html',m:'sonnet',t:'Lo que cobro',i:'Cada nómina partida en base y guardias, la media y el mes flojo frente al bueno. Con el calendario de guardias te avisa: «en septiembre hiciste 6 → en noviembre cobrarás unos 2.820 €», y cuánto apartar.'},
- {id:'3',f:'dinero-feria-3-gastos.html',m:'sonnet',t:'En qué se me va y dónde ahorrar',i:'Fijos frente a variables, tres sitios concretos donde recortar con euros al año, suscripciones a revisar y comparación con el mes anterior. Los datos, de Fintonic o a mano.'},
  {id:'4',f:'dinero-feria-4-compras.html',m:'haiku',t:'Lo que quiero comprar',i:'Cada compra con precio, fecha y cuota al mes; lo no necesario espera 30 días. Al comprarlo, sus cuotas pasan a la siguiente de la lista.'},
  {id:'5',f:'dinero-feria-5-invertir.html',m:'sonnet',t:'Qué puedo invertir',i:'Primero el colchón (3, 4 o 6 meses); solo lo que sobra se invierte. Opciones generales explicadas en llano y un simulador de «X € al mes durante N años». Orientativo.'}
 ];
@@ -89,7 +92,7 @@ function pintaTira(){
   tira.innerHTML='';
   P.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',i===cur);
     const n=(notas[p.id]||{}).n;
-    b.innerHTML='<span>Puesto '+p.id+'</span><small>'+p.t+'</small>'+(n?'<span class="nota">'+'★'.repeat(n)+'</span>':'');
+    b.innerHTML='<span>'+(p.r?'Nuevo · ':'')+'Puesto '+p.id+'</span><small>'+p.t+'</small>'+(n?'<span class="nota">'+'★'.repeat(n)+'</span>':'');
     b.onclick=()=>abre(i);tira.appendChild(b);});
 }
 function pintaEstrellas(){
