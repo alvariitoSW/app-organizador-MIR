@@ -1,0 +1,134 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><link rel=stylesheet href=comun.css>
+<title>Feria R2-C · Lo que quiero comprar</title>
+<style>
+body{width:412px}
+.wrap{padding:8px 10px 12px}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:14px;padding:9px 12px}
+.cartel .mini{letter-spacing:.12em;font-weight:800}
+.cartel h2{margin:2px 0 3px;font-size:16px}
+.cartel p{margin:0;font-size:12px;color:var(--ink)}
+.mini{font-size:11px;color:var(--ink2)}
+.total{display:flex;align-items:center;gap:8px;margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 6px 0 12px;min-height:44px;font-size:13px}
+.total b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.total span{color:var(--ink2);font-weight:700;flex:1}
+.ie{background:transparent;border:1px solid var(--line);color:var(--ink2);border-radius:99px;width:44px;height:44px;min-height:44px;font:inherit;font-size:13px;font-weight:900;padding:0;cursor:pointer}
+.nota{font-size:12px;color:var(--ink2);margin:4px 2px 0;padding:8px 10px;background:var(--bg2);border-radius:10px}
+.nota b{color:var(--ink)}
+.warn{color:#fde38a}
+.cols{display:grid;grid-template-columns:1fr 64px 60px 74px;gap:6px;padding:0 10px;margin:10px 0 4px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--ink2);text-transform:uppercase}
+.cols span:not(:first-child){text-align:right}
+.fila{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;overflow:hidden}
+.fila.espera{border-style:dashed;background:var(--bg2)}
+.cab{width:100%;background:none;border:0;color:var(--ink);font:inherit;text-align:left;display:grid;grid-template-columns:1fr 64px 60px 74px;gap:6px;align-items:center;min-height:44px;padding:8px 10px;cursor:pointer}
+.nm{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.num{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.num.sec{color:var(--ink2);font-weight:700;font-size:12px}
+.num.cuenta{color:#fde38a}
+.barra{height:4px;background:var(--bg2)}
+.barra i{display:block;height:100%;background:var(--brand2)}
+.espera .barra i{background:var(--accent)}
+.det{padding:8px 10px 10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+.det b{color:var(--ink)}
+.btn{display:flex;align-items:center;justify-content:center;min-height:44px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:8px 12px;font:inherit;font-size:13.5px;font-weight:800;width:100%;margin-top:8px}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#12081a}
+.pill{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px;border:1px solid;white-space:nowrap;margin-right:4px}
+.pill.nec{border-color:#34d39999;background:#34d3991f;color:#8ef0c4}
+.pill.util{border-color:#38bdf899;background:#38bdf81f;color:#9fdcf7}
+.pill.ilu{border-color:#f050c899;background:#f050c81f;color:#f7a6e6}
+.pill.esp{border-color:#fbbf2499;background:#fbbf241f;color:#fde38a}
+</style>
+<body>
+
+<div class="wrap">
+
+<div class="cartel" id="cartel">
+  <div class="mini">R2-C · LO QUE QUIERO COMPRAR</div>
+  <h2>Una fila por compra</h2>
+  <p>Cuánto apartar al mes y cuándo llega cada cosa. Toca una fila para ver el detalle.</p>
+</div>
+
+<div class="total">
+  <b>460 €</b><span>al mes · 4 compras</span>
+  <button class="ie" aria-expanded="false" aria-controls="nota-nomina" title="Ver cuándo cabe">ⓘ</button>
+</div>
+<div class="nota" id="nota-nomina" hidden>
+  Con la nómina base (1.350 €) <b class="warn">no cabe entera</b>; con una con guardias (oct, 2.800 €) sí. Si un mes cobras poco, se pausa primero el viaje. El fonendo no se toca.
+</div>
+
+<div class="cols" aria-hidden="true"><span>Compra</span><span>Precio</span><span>Al mes</span><span>Llega</span></div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm">Fonendo Littmann</span><span class="num">190 €</span><span class="num sec">20 €</span><span class="num sec">dic 2026</span>
+  </button>
+  <div class="barra"><i style="width:79%"></i></div>
+  <div class="det" hidden>
+    <span class="pill nec">Necesario</span> Llevas <b>150 €</b> de 190 · faltan 40 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm">Portátil</span><span class="num">1.100 €</span><span class="num sec">115 €</span><span class="num sec">may 2027</span>
+  </button>
+  <div class="barra"><i style="width:27%"></i></div>
+  <div class="det" hidden>
+    <span class="pill nec">Necesario</span> Llevas <b>300 €</b> de 1.100 · faltan 800 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm">Curso de ecografía</span><span class="num">350 €</span><span class="num sec">90 €</span><span class="num sec">feb 2027</span>
+  </button>
+  <div class="barra"><i style="width:0%"></i></div>
+  <div class="det" hidden>
+    <span class="pill util">Útil para el trabajo</span> Llevas <b>0 €</b> de 350 · faltan 350 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm">Viaje a Japón</span><span class="num">2.500 €</span><span class="num sec">235 €</span><span class="num sec">jul 2027</span>
+  </button>
+  <div class="barra"><i style="width:16%"></i></div>
+  <div class="det" hidden>
+    <span class="pill ilu">Me hace ilusión</span> Llevas <b>400 €</b> de 2.500 · faltan 2.100 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila espera">
+  <button class="cab" aria-expanded="false">
+    <span class="nm">Auriculares nuevos</span><span class="num">120 €</span><span class="num sec">—</span><span class="num cuenta">18 días</span>
+  </button>
+  <div class="barra"><i style="width:40%"></i></div>
+  <div class="det" hidden>
+    <span class="pill esp">En espera 30 días</span> Si en 30 días sigues queriéndolo, pasa a la lista. Hasta entonces no se aparta nada.
+    <button class="btn">Ya no lo quiero</button>
+  </div>
+</div>
+
+<button class="btn p" style="margin-top:8px">+ Añadir algo que quiero</button>
+
+</div>
+
+<script>
+document.querySelectorAll('.cab').forEach(function(b){
+  b.addEventListener('click',function(){
+    var abierto=b.getAttribute('aria-expanded')==='true';
+    b.setAttribute('aria-expanded',String(!abierto));
+    b.parentElement.querySelector('.det').hidden=abierto;
+  });
+});
+var ie=document.querySelector('.ie'), nota=document.getElementById('nota-nomina');
+ie.addEventListener('click',function(){
+  var abierto=ie.getAttribute('aria-expanded')==='true';
+  ie.setAttribute('aria-expanded',String(!abierto));
+  nota.hidden=abierto;
+});
+</script>
+</body></html>
