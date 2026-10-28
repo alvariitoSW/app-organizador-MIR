@@ -1431,3 +1431,16 @@ ya hacen `tarea-a-fondo`, `redisena-seccion` y DECISIONS.
 
 **Supuestos.** Los presupuestos son estimaciones (solo hay una tarea medida); se corrigen con S1 y S2. Las tareas 1
 (pruebas) y 9 (Dinero) no son de Comer pero entran en la tanda porque las pediste en la misma lista.
+
+## 2026-10-28 · El gobierno del repositorio y el Consejo de Dinero
+
+**Elegido.** Copiar de fiebres-neutropenias el gobierno (papeles por skill) y el Consejo de Ministros, adaptados:
+Educación pasa a ser **Bienestar** (si le sirve al R1 en el móvil); un **ministerio del asunto** se invita según el tema
+(Economía para Dinero); Hacienda cuenta tokens con `tools/gasto.mjs`; tope por reunión 0,6 M. Reservado al usuario:
+presupuesto total, lo que cambia lo que ve, los datos y pasar a `main`. Primer Consejo: reforma de Dinero en 6
+sesiones (D1-D6, ≈5,0 M), método «págate primero + bolsillos» con un solo disponible; acta en
+`.claude/plan-socialista/consejo/2026-10-28.md`.
+**Descartado.** Copiar Exteriores (`/radar`) y los jueces automáticos (aquí no existen; Justicia es la suite, los hooks
+y `/revisa-seguridad`). Hacer el informe de la S8 aparte (el acta lo sustituye).
+**Supuestos.** Que «el repositorio de fiebres neutropenias» es `fiebres-neutropenias` (el más reciente) y no
+`urgencias-fiebre-neutropenica`. Que pedir instalarlo equivale a aprobar la constitución adaptada.

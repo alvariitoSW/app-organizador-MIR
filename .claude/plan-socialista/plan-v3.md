@@ -12,9 +12,22 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada. **La siguiente: S2, el mapa de Comer** (sesión nueva: «/plan-socialista y haz la S2»).
+Nada. **La siguiente: D1, la limpieza invisible de Dinero** (sesión nueva, en sonnet: «/plan-socialista y haz la D1»).
 
 ## Por hacer
+
+### Tanda Dinero · Consejo de Ministros del 2026-10-28 · ≈5,0 M · espera tu sí al presupuesto
+
+Acta: `.claude/plan-socialista/consejo/2026-10-28.md`. Sustituye a la S8. Va antes que lo que queda de Comer.
+
+| # | Sesión | Tipo | Quién | Presupuesto |
+|---|---|---|---|---|
+| D1 | Limpieza invisible + prueba «foto» de cifras + las 2 pruebas de fecha | arreglo | sonnet; haiku localiza | ~0,4 M |
+| D2 | Maquetas de Dinero entero (A «Un número», B «Bolsillos», C «Calendario de la nómina») con el plan de compras | maqueta | opus; `verificador` | ~1,0 M |
+| D3 | Un solo disponible («de dónde sale», guardias fuera hasta cobrarlas) | construir | sonnet con ficha | ~0,9 M |
+| D4 | Metas en un solo sistema + migración de la meta antigua | construir | sonnet; opus revisa la regla | ~0,8 M |
+| D5 | Huchas sin duplicado, marcar pagado en un sitio, esconder lo de «Más» | construir | sonnet; `verificador` | ~0,7 M |
+| D6 | Plan de compras [v3-dinero-compras] | construir | sonnet con ficha | ~1,2 M |
 
 ### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 3 de 8 hechas
 
@@ -31,7 +44,7 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 | S5 | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir — **falta (A) vitaminas y minerales** | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
 | S6 | La semana en borrador | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
 | S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
-| S8 | Dinero: plan de compras | [v3-dinero-compras] | **informe primero** (tú das tus ideas → informe de cómo resolverlo → tu visto bueno) → maqueta → construir | informe y maquetas opus; constructor sonnet | ~0,4 M informe + ~2,0 M |
+| ~~S8~~ | → **Tanda Dinero** (D1-D6, Consejo 28/10) | [v3-dinero-compras] | **informe primero** (tú das tus ideas → informe de cómo resolverlo → tu visto bueno) → maqueta → construir | informe y maquetas opus; constructor sonnet | ~0,4 M informe + ~2,0 M |
 
 **Total: ~10 M** frente a **~14 M** haciéndolas una a una (cinco rondas de maquetas por separado y cada sesión
 descubriendo Comer desde cero).
@@ -67,6 +80,9 @@ De dónde sale el ahorro:
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-gobierno] El gobierno del repositorio y el Consejo de Ministros (copiado de fiebres-neutropenias); primer
+  Consejo: la reforma de Dinero · 2026-10-28
 
 - [v3-plan-global] El plan 3.0, los gastos (`tools/gasto.mjs`) y la skill `ficha-de-tarea`, en main · 2026-10-28
 
