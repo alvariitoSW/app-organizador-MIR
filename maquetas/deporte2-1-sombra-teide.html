@@ -303,7 +303,7 @@ var ALT=[48,52,42,50,46,56,40];
 
 // ---------- Pantalla 3: el mar de nubes baja ----------
 (function(){
-  var H=560,y0=230,k=40,s='<svg viewBox="0 0 412 '+H+'" width="412" height="'+H+'" role="img" aria-labelledby="ti3 de3"><title id="ti3">El mar de nubes baja de 82 a 75 kilos</title><desc id="de3">Hoy el mar de nubes está en 81,4 kilos, en la semana 2 de 14. La línea de abajo marca los 75 kilos, el 8 de febrero de 2027. Al bajar, el Teide se descubre más.</desc>';
+  var H=582,y0=230,k=40,s='<svg viewBox="0 0 412 '+H+'" width="412" height="'+H+'" role="img" aria-labelledby="ti3 de3"><title id="ti3">El mar de nubes baja de 82 a 75 kilos</title><desc id="de3">Hoy el mar de nubes está en 81,4 kilos, en la semana 2 de 14. La línea de abajo marca los 75 kilos, el 8 de febrero de 2027. Al bajar, el Teide se descubre más.</desc>';
   var yHoy=y0+Math.round((82-81.4)*k);
   s+='<rect width="412" height="'+y0+'" fill="url(#cielo)"/>';
   for(var i=0;i<12;i++)s+='<line x1="0" x2="412" y1="'+(10+i*19)+'" y2="'+(10+i*19)+'" stroke="#2b1d33" stroke-width=".6" opacity=".12"/>';
@@ -335,7 +335,7 @@ var ALT=[48,52,42,50,46,56,40];
     t+=pastilla(cx-10,base-24,20,LET[i],12);
     var tag=kc[i]?kc[i].toLocaleString('es-ES'):(i==1?'guardia':'saliente');
     t+='<text x="'+cx+'" y="168" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">'+tag+'</text>';
-    t+='<text x="'+cx+'" y="183" text-anchor="middle" font-size="9.5" font-family="system-ui,sans-serif" fill="#2b1d33">'+(kc[i]?(kc[i]>2100?'se pasa ▲':'cuadra'):'fuera de la media')+'</text>';}
+    t+='<text x="'+cx+'" y="183" text-anchor="middle" font-size="9.5" font-family="system-ui,sans-serif" fill="#2b1d33">'+(kc[i]?(kc[i]>2100?'se pasa ▲':'cuadra'):'fuera')+'</text>';}
   t+='</svg>';
   $('lam3b').innerHTML=t;
 })();

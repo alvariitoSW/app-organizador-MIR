@@ -37,7 +37,7 @@ h1,h2,p{margin:0}
 .hoy b{font-size:22px;display:block}
 .hoy span{font-size:15px}
 .lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.lista li{background:var(--piedra);border:3px solid var(--ink);padding:4px 8px;min-height:54px}.lista li:last-child{grid-column:1/-1}.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lista li{background:var(--piedra);border:3px solid var(--ink);padding:4px 8px;min-height:50px;display:flex;justify-content:space-between;align-items:center;gap:6px}.lista li:last-child{grid-column:1/-1}.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .lista .nom{font-weight:700;font-size:14px}
 .lista .nom small{display:block;font-weight:400;color:var(--muted);font-size:13px}
 .lista .kg{font-weight:800;font-size:18px}
@@ -217,8 +217,8 @@ ${agujero(300,36)}
 </svg>`;
 
 // ---------- Pantalla 1 ----------
-document.getElementById('d1').innerHTML=`<svg viewBox="0 0 412 470" height="470" role="img" aria-label="La luz entra por el agujero del techo y cae sobre el grabado de las 15 a 16 horas: hoy gimnasio. Debajo, la semana en siete triángulos">
-<title>Hoy toca gimnasio: la mancha de luz en las 15 h</title>${wall(412,470)}
+document.getElementById('d1').innerHTML=`<svg viewBox="0 0 412 450" height="450" role="img" aria-label="La luz entra por el agujero del techo y cae sobre el grabado de las 15 a 16 horas: hoy gimnasio. Debajo, la semana en siete triángulos">
+<title>Hoy toca gimnasio: la mancha de luz en las 15 h</title>${wall(412,450)}
 ${zig(0,6,412,10,34,INK,3)}${agujero(206,48)}
 <polygon points="168,10 244,10 300,215 112,215" fill="${LUZ}" opacity=".9"/>
 <polyline points="168,10 112,215" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/><polyline points="244,10 300,215" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
@@ -232,10 +232,10 @@ ${[13,14,15,16,17,18].map((h,i)=>{const x=40+i*66;return `<line x1="${x}" y1="25
 <line x1="106" y1="262" x2="172" y2="262" stroke="${INK}" stroke-width="7"/>
 ${T(139,318,'sol en el gimnasio',{fs:13})}
 <g>${semana(398,true)}</g>
-${zig(0,458,412,-10,34,ALM,3)}
+${zig(0,438,412,-10,34,ALM,3)}
 </svg>`;
 const EJ=[['Sentadilla','45 kg','2 × 8'],['Press de banca','32,5 kg','2 × 8'],['Peso muerto','50 kg','2 × 5'],['Remo','27,5 kg','2 × 10'],['Press militar','20 kg','2 × 8']];
-document.getElementById('ej').innerHTML=EJ.map(e=>`<li><span class="nom">${e[0]}<small>${e[2]} · con descanso</small></span><span class="kg">${e[1]}</span></li>`).join('');
+document.getElementById('ej').innerHTML=EJ.map(e=>`<li><span class="nom">${e[0]}<small>${e[2]}</small></span><span class="kg">${e[1]}</span></li>`).join('');
 document.getElementById('btncambia').onclick=(()=>{document.getElementById('cambio-nota').innerHTML='<b>Cambiado</b> por otro ejercicio del mismo músculo, de la biblioteca openGym. Las series y el % se quedan igual.'});
 document.getElementById('btnmin').onclick=function(){const m=document.getElementById('minimo');m.hidden=!m.hidden;this.setAttribute('aria-expanded',String(!m.hidden))};
 const NOTAS=['<b>Lunes:</b> gimnasio a las 15:00.','<b>Martes:</b> guardia. Hoy no se entrena, descansa.','<b>Miércoles:</b> saliente. Paseo de 20 min o nada.','<b>Jueves (hoy):</b> gimnasio de 15:00 a 16:00.','<b>Viernes:</b> sesión mínima de 25 min a las 15:30.','<b>Sábado:</b> parque a las 10:00, 40 min, sin material.','<b>Domingo:</b> descanso.'];
