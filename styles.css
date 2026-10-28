@@ -2590,7 +2590,7 @@ html,body{overscroll-behavior-y:none}
 .lecrb.on{border-color:var(--brand);color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
 .lecit .rueda.ruedafila,.lecit .lecd.dd{grid-column:1/-1}
 .rueda.ruedafila{height:120px;padding:40px 0;margin-top:2px}
-.lecit .lecd.dd{margin:-2px 0 2px}.lecd.dd .lecop .chipx{min-height:36px}
+.lecit .lecd.dd{margin:-2px 0 2px}.lecd.dd .lecop .chipx{min-height:44px}
 .lecit.lecdu .k{color:var(--ink2)}
 /* campo vacío de «¿Qué has comido?»: lo de siempre a esta hora y repetir lo de ayer */
 .siempre{padding:8px 12px}.siempre .cap{margin-bottom:2px}
@@ -2598,7 +2598,7 @@ html,body{overscroll-behavior-y:none}
 .lesi:first-of-type{border-top:0}.lesi b{font-size:13.5px}.lesi .k{font-size:12px;font-weight:800;color:var(--ink2)}
 .lesb{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:18px;font-weight:900;cursor:pointer;padding:0}
 .ayu{display:flex;gap:6px;margin-bottom:8px}.ayu .btn{flex:1;min-height:44px;font-size:12.5px}
-.lecop{display:flex;flex-wrap:wrap;gap:6px}.lecop .chipx{min-height:36px;font-size:13px}.lecop .chipx.x{color:var(--ink2)}
+.lecop{display:flex;flex-wrap:wrap;gap:6px}.lecop .chipx{min-height:44px;font-size:13px}.lecop .chipx.x{color:var(--ink2)}
 .lectam{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .lectam button{min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .lectam button.on{border-color:var(--brand);color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
@@ -3790,7 +3790,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cs-cocino .chk{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;flex:none}
 .cs-cocino .chk.on{background:var(--ok);border-color:var(--ok);color:#04121c;font-weight:900}
 .cs-cocino .mini{margin-left:auto;text-align:right}
-.cs-fr{display:grid;grid-template-columns:1fr 96px;gap:8px;padding:8px;border-radius:22px;border:2px solid var(--line);background:linear-gradient(180deg,var(--card),var(--bg2))}
+.cs-fr{display:grid;grid-template-columns:1fr 120px;gap:8px;padding:8px;border-radius:22px;border:2px solid var(--line);background:linear-gradient(180deg,var(--card),var(--bg2))}
 .cs-izq{display:flex;flex-direction:column;gap:6px;min-width:0}
 .cs-der{display:flex;flex-direction:column;gap:6px;padding-left:8px;border-left:2px solid var(--line);min-width:0}
 .cs-sh{padding:3px 2px 8px;border-bottom:4px solid var(--line)}.cs-sh.cs-ult{border-bottom:0;padding-bottom:2px}
@@ -3802,7 +3802,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cs-tp .dot{position:absolute;right:-5px;top:-10px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center}
 .cs-bote{flex:1 1 70px;min-width:0;min-height:48px;padding:4px 2px;border-radius:8px;border:2px solid var(--line);background:var(--bg2);font-size:11px;font-weight:800;line-height:1.15;text-align:center;display:flex;align-items:center;justify-content:center;flex-direction:column}
 .cs-bote span{font-size:11px;font-weight:700;color:var(--ink2)}.cs-bote.hu{border-style:dashed;color:var(--ink2)}
-.cs-piz{padding:6px;border-radius:6px;border:3px solid var(--line);background:var(--bg2);font-size:12px;font-weight:800;line-height:1.25}
+.cs-fz{border-color:var(--info,#4a90d9);background:color-mix(in srgb,var(--info,#4a90d9) 14%,var(--bg2));flex:1 1 90px}.cs-mas{min-height:44px;border:0;background:none;font-weight:800;font-size:12px;color:var(--brand2);text-align:left;padding:0 4px}.cs-piz{padding:6px;border-radius:6px;border:3px solid var(--line);background:var(--bg2);font-size:12px;font-weight:800;line-height:1.25}
 .cs-compra{margin-top:8px;border-color:var(--warn)}.cs-compra .row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .cs-compra .cs-or{font-size:11.5px;color:var(--ink2);text-align:right;white-space:nowrap}.cs-ya{margin-top:6px}
 /* S3b · vitaminas (parada «cierre» de la línea y hoja «% diario») e investigar lo que no conoce */

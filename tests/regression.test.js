@@ -310,9 +310,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return [...document.querySelectorAll('#calModes button')].map((b) => b.textContent.trim()); })(),
     cajon: [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].map((b) => b.dataset.t),
   }));
-  check('la barra son tres grupos y «Comer» agrupa el día, el menú, la cocina y la compra',
+  check('la barra son tres grupos y «Comer» agrupa el día, la semana y la casa (Hoy · Semana · Casa)',
     navShape.barra.join('|') === 'Calendario|Entreno|Comer|Más' &&
-    navShape.modos.join('|') === 'Hoy|Semana|Nevera|Compra' &&
+    navShape.modos.join('|') === 'Hoy|Semana|Casa' &&
     ['food', 'shop', 'types', 'batches', 'import'].every((t) => navShape.cajon.indexOf(t) < 0),
     JSON.stringify(navShape));
 
@@ -8852,8 +8852,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.semBase = { on: true, d: {} };
       ['500 g pechuga de pollo', '1 kg patata', '12 huevos', '1 bolsa espinacas', '500 g lentejas', '1 cebolla', '1 kg arroz'].forEach((t) => P.despensaAdd(t));
       P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); });
+    // la barra de Comer es Hoy · Semana · Casa (se ve en las pantallas sueltas que cuelgan de Comer); Nevera y Compra ya no son pestañas
+    await page.evaluate(() => { window.PG.ui.tab = 'shop'; window.PG.render(); });
     const tabs = await page.$$eval('#calModes button', (e) => e.map((x) => x.textContent.trim()));
-    await page.click('#calModes button[data-t="types"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.PG.ui.tab = 'types'; window.PG.render(); }); await page.waitForTimeout(150);
     const vacias = await page.$$eval('.ssc', (e) => e.filter((x) => /＋/.test(x.textContent)).length);
     await page.click('[data-a="ss-auto"]'); await page.waitForTimeout(200);
     const trasAuto = await page.$$eval('.ssc', (e) => e.filter((x) => /＋/.test(x.textContent)).length);
@@ -8862,9 +8864,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const okb = await page.$('[data-a="hc-ok"]'); if (okb) { await okb.click(); await page.waitForTimeout(200); }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).map((x) => ({ total: x.total, dias: Math.round((new Date(x.hasta) - new Date(x.fecha)) / 86400000) })));
     const aguanta = await page.evaluate(() => { const P = window.PG; return ['Arroz con pollo', 'Merluza al horno', 'Lentejas estofadas', 'Pollo asado'].map((n) => P.diasAguanta({ name: n })); });
-    await page.click('#calModes button[data-v="nevera2"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.render(); }); await page.waitForTimeout(150);
     const nevera = await page.evaluate(() => ({ txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), foto: !!document.querySelector('#main [data-a="ticket-foto"]') }));
-    await page.click('#calModes button[data-v=""]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); }); await page.waitForTimeout(150);
     const ok1 = await page.$('#main .h2ok'); if (ok1) { await ok1.click(); await page.waitForTimeout(150); }
     const log1 = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date())).length);
     const tk = await page.evaluate(() => { const P = window.PG;
@@ -8886,7 +8888,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         japon: hs.filter((h) => h.id === 'hu-j')[0].mensual, suma: Object.values(P.repartoDe(1000)).reduce((s, v) => s + v, 0) }; });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia223; P.save(); P.ui.ajuVista = ''; P.ui.dinTab = ''; P.ui.foodVista = ''; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Cocina simple: Hoy · Semana · Nevera · Compra; «Móntamela» llena huecos con lo que hay; «Hoy cocino» guarda raciones con los días que aguanta; ✓ apunta el día',
-      tabs.length === 4 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Nevera/.test(tabs[2]) && /Compra/.test(tabs[3]) &&
+      tabs.length === 3 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Casa/.test(tabs[2]) &&
       // sin guardias del ciclo puede no quedar ningún hueco: «Móntamela» nunca deja más de los que había
       trasAuto <= vacias && (vacias === 0 || trasAuto < vacias) && opciones > 0 && coc.length >= 1 && coc[coc.length - 1].total > 1 && coc[coc.length - 1].dias >= 1 &&
       aguanta.join() === '1,2,4,3' && nevera.foto && log1 > 0, JSON.stringify({ tabs, vacias, trasAuto, opciones, coc, aguanta, log1, nevera: nevera.txt.slice(0, 160) }));
@@ -13505,7 +13507,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.d.vista === 'eje' && r.d.parada &&
       r.e.length === 9 && r.e.filter((m) => /sin datos/.test(m.v)).length === sinK.length && r.e.filter((m) => /(mg|µg) · \d+ %$/.test(m.v)).length === conK.length, JSON.stringify(r));
   }
-  // 335) INVESTIGAR LO QUE NO CONOCE, EN CADENA: (a) «pizza barbacoa del telepizza, 3 trozos» no se conoce bien y bajo la fila
+  // 335) INVESTIGAR LO QUE NO CONOCE, EN CADENA: (a) «pizza barbacoa del telepizza» (sin decir cuánta) no se conoce bien y bajo la fila
   // sale «NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA» con las 5 fuentes, la 2 con la carta de Telepizza y SIN el botón
   // suelto «buscar»; y no ha salido nada del móvil; (b) «lentejas y zumbaflix»: se toca la fuente 1 (ahora sí sale SOLO
   // el nombre a Open Food Facts), se elige un producto y la fila queda resuelta (≈) con su total; (c) otra frase
@@ -13523,10 +13525,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150);
     await page.click('#main [data-a="cje-busca"]'); await page.waitForTimeout(250);
     const inv = () => page.evaluate(() => ({ n: document.querySelectorAll('#fbRes .inv .ex').length, cap: (document.querySelector('#fbRes .inv .cap') || {}).textContent || '',
-      filas: Array.prototype.map.call(document.querySelectorAll('#fbRes .inv .ex'), (e) => e.textContent), buscar: !!document.querySelector('#fbRes [data-a="fr-busca"]'),
+      filas: Array.prototype.map.call(document.querySelectorAll('#fbRes .inv .ex'), (e) => e.textContent), nums: Array.prototype.map.call(document.querySelectorAll('#fbRes .inv .ex .n'), (e) => e.textContent).join(','),
+      chips: Array.prototype.map.call(document.querySelectorAll('#fbRes .lecd .chipx'), (e) => Math.round(e.getBoundingClientRect().height)), buscar: !!document.querySelector('#fbRes [data-a="fr-busca"]'),
       sg: Array.prototype.map.call(document.querySelectorAll('#fbRes .lecit'), (f) => ({ s: (f.querySelector('.sg') || {}).textContent || '', n: (f.querySelector('.n b') || {}).textContent || '', por: (f.querySelector('.n span') || {}).textContent || '', k: (f.querySelector('.k') || {}).textContent || '' })),
       total: ((document.querySelector('#fbRes .lecrg b') || {}).textContent || '').trim(), cajas: !!document.querySelector('#fbRes .bwmac, #fbRes .lecm, #fbRes .bowlmac') }));
-    await page.fill('#fbQ', 'de cena pizza barbacoa del telepizza, 3 trozos'); await page.waitForTimeout(450);
+    await page.fill('#fbQ', 'de cena pizza barbacoa del telepizza'); await page.waitForTimeout(450);
     r.a = await inv(); r.a.off = pidioOff;
     await page.fill('#fbQ', 'lentejas y zumbaflix'); await page.waitForTimeout(450);
     r.b0 = await inv(); r.b0.off = pidioOff;
@@ -13546,7 +13549,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia334')); localStorage.removeItem('__copia334'); P.ui.frInv = null; P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     const fz = (x) => x.sg.filter((f) => /zumbaflix|crispolines/i.test(f.n))[0];
     check('investigar: la duda desconocida saca las 5 fuentes (la carta de Telepizza si la frase la nombra, sin el botón «buscar»), Open Food Facts solo al tocar y con solo el nombre, y «a ojo · mediana» resuelve la fila y cierra el total',
-      r.a.n === 4 && /NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA/.test(r.a.cap) && /Carta de Telepizza/.test(r.a.filas[1]) && !r.a.buscar && r.a.off === 0 &&
+      r.a.n === 4 && r.a.nums === '1,2,3,4' && r.a.chips.length >= 3 && r.a.chips.every((h) => h >= 44) && /NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA/.test(r.a.cap) && /Carta de Telepizza/.test(r.a.filas[1]) && !r.a.buscar && r.a.off === 0 &&
       r.b0.n === 3 && r.b0.sg[1].s === '?' && !r.b0.filas.some((f) => /Carta de/.test(f)) && r.b0.off === 0 &&
       r.b1.off >= 1 && r.b1.urls.every((u) => /zumbaflix/.test(u) && !/lentejas/i.test(u)) && r.b1.opc.length === 1 &&
       fz(r.b) && fz(r.b).s === '≈' && /Zumbaflix/i.test(fz(r.b).n) && r.b.n === 0 && +fz(r.b).k > 0 && r.b0.total !== r.b.total &&
@@ -13592,6 +13595,45 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; window.Date = window.__DateReal; P.store = JSON.parse(localStorage.getItem('__copia336')); localStorage.removeItem('__copia336'); P.ui.foodBusca = ''; P.ui.foodPos = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     check('por la tarde «¿Qué has comido?» abre en lo que la línea llama LO SIGUIENTE (la cena), no en la merienda del reloj, y lo apuntado va a la cena',
       r.a.reloj === 'merienda' && r.a.sig === 'cena' && /Cena/.test(r.b.cab) && !/Merienda/.test(r.b.cab) && r.b.pos === 'cena' && /cena/i.test(r.c0) && r.c === 'cena', JSON.stringify(r));
+  }
+  // 338) PULIDO DE COMER (S3b), EN CADENA: (a) con un día que solo trae vitamina C, la hoja de vitaminas no lleva la barra vieja
+  // (Nevera · Compra), dice «Falta vitamina C:» bien escrito y «‹ Comer» vuelve; (b) Semana sin cenas dice «Apunta una cena…» y no
+  // «De tus 0 cenas»; (c) Casa con un plato en 6 cenas y 29 cosas por comprar enseña 6 huecos + «y N más ›» y el congelador dibuja
+  // sus raciones; (d) «pizza barbacoa del telepizza, 3 trozos» se entiende (3 trozos = raciones de pizza, ya no pregunta cuánta).
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia337', JSON.stringify(P.store));
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0];
+      for (let i = 0; i < 9; i++) P.setDayOverride(P.iso(P.addDays(new Date(), i)), T.id, '');
+      P.store.semBase = { on: true, d: {} }; P.store.gComida = {}; P.store.food.despensa = []; P.store.food.cocinado = [];
+      P.store.food.log[P.iso(new Date())] = [{ id: 'x338', nombre: 'zumo', kcal: 100, prot: 1, carb: 20, gresa: 0, mi: { vc: 5 } }];
+      P.ui.cjeHoja = null; P.ui.plM = null; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    await page.click('#main .cjvit'); await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden || !/Nevera|Compra/.test(document.getElementById('calModes').textContent),
+      sug: ((document.querySelector('#main .vitsug b') || {}).textContent || '') }));
+    await page.click('#main .subcab [data-a="food-vista"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(250);
+    r.b = await page.evaluate(() => ({ pie: ((document.querySelector('#main .cs-pie') || {}).textContent || '').replace(/\s+/g, ' ') }));
+    await page.evaluate(() => { const P = window.PG;
+      P.store.dishes.push({ id: 'd338', name: 'Guiso 338', icon: '🍲', portions: 1, kcal: 500, prot: 30, tuyo: 1, ingredients: Array.from({ length: 29 }, (_, i) => '100 g cosarara' + String.fromCharCode(97 + i % 26) + (i > 25 ? 'x' : '')) });
+      for (let i = 1; i <= 6; i++) P.sbPoner(P.iso(P.addDays(new Date(), i)), 'cena', 'd338');
+      P.save(); P.render(); });
+    await page.click('#main [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(300);
+    r.c = await page.evaluate(() => { const q = (s) => document.querySelectorAll('#main ' + s);
+      return { faltan: ((document.querySelector('#main .cs-piz b') || {}).textContent || ''), huecos: q('.cs-der .cs-bote').length, mas: ((document.querySelector('#main .cs-mas') || {}).textContent || ''),
+        fz: q('.cs-fz').length, fzCab: ((document.querySelector('#main .cs-ult .cs-nm') || {}).textContent || ''), ancho: Math.round(document.querySelector('#main .cs-der').getBoundingClientRect().width) }; });
+    await page.click('#main .cs-mas'); await page.waitForTimeout(300);
+    r.c2 = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, cjeTab: window.PG.ui.cjeTab }));
+    r.d = await page.evaluate(() => { const x = window.PG.fraseLeer('pizza barbacoa del telepizza, 3 trozos'); return { dudas: x.dudas.length, items: x.items.length, rac: x.items[0] && x.items[0].rac }; });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia337')); localStorage.removeItem('__copia337'); P.ui.cjeTab = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('vitaminas: sin la barra vieja (Nevera · Compra), «Falta vitamina C:» bien escrito y «‹ Comer» vuelve a la línea',
+      r.a.vista === 'vitaminas' && r.a.modos && /^Falta vitamina C:/.test(r.a.sug), JSON.stringify(r.a));
+    check('Semana sin cenas apuntadas dice «Apunta una cena y su compra sale aquí», no «De tus 0 cenas»', /Apunta una cena y su compra sale aquí/.test(r.b.pie) && !/De tus 0/.test(r.b.pie), JSON.stringify(r.b));
+    check('Casa: FALTAN enseña 6 huecos y «y N más ›» (que baja a la compra) y el congelador dibuja sus raciones',
+      /^\d+ cosas$/.test(r.c.faltan) && +r.c.faltan.split(' ')[0] > 6 && r.c.huecos === 6 && r.c.mas === 'y ' + (+r.c.faltan.split(' ')[0] - 6) + ' más ›' && r.c.fz >= 1 && /CONGELADOR · [1-9]/.test(r.c.fzCab) && r.c.ancho >= 110 &&
+      r.c2.vista === 'eje' && r.c2.cjeTab === 'casa', JSON.stringify({ c: r.c, c2: r.c2 }));
+    check('«pizza barbacoa del telepizza, 3 trozos»: 3 trozos cuentan como raciones de pizza y ya no pregunta «¿Cuánta?»', r.d.dudas === 0 && r.d.items === 1 && r.d.rac === 3, JSON.stringify(r.d));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

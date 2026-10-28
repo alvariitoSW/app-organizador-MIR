@@ -8977,5 +8977,27 @@
 "pregunta": [
 "pescado"
 ]
+},
+{
+"f": "pizza barbacoa del telepizza, 3 trozos",
+"tiene": [
+"pizza barbacoa"
+],
+"dudas": 0,
+"kcal": [
+450,
+900
+]
+},
+{
+"f": "pizza barbacoa, 2 porciones",
+"tiene": [
+"pizza barbacoa"
+],
+"dudas": 0,
+"kcal": [
+300,
+700
+]
 }
 ]
