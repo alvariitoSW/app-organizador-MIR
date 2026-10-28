@@ -16,18 +16,18 @@ Nada. **La siguiente: D1, la limpieza invisible de Dinero** (sesión nueva, en s
 
 ## Por hacer
 
-### Tanda Dinero · Consejo de Ministros del 2026-10-28 · ≈5,0 M · **en revisión**: el usuario quitó «cuánto me queda» y pidió una feria de maquetas por partes antes de seguir (acta)
+### Tanda Dinero · Consejo + feria del 2026-10-28 · ≈3,9 M · espera tu visto bueno (modelo final, qué se quita, presupuesto)
 
-Acta: `.claude/plan-socialista/consejo/2026-10-28.md`. Sustituye a la S8. Va antes que lo que queda de Comer.
+Actas: `consejo/2026-10-28.md` y `consejo/2026-10-28-feria.md`. Modelo final: `maquetas/dinero-final.html`. Va antes
+que lo que queda de Comer.
 
 | # | Sesión | Tipo | Quién | Presupuesto |
 |---|---|---|---|---|
-| D1 | Limpieza invisible + prueba «foto» de cifras + las 2 pruebas de fecha | arreglo | sonnet; haiku localiza | ~0,4 M |
-| D2 | Maquetas de Dinero entero (A «Un número», B «Bolsillos», C «Calendario de la nómina») con el plan de compras | maqueta | opus; `verificador` | ~1,0 M |
-| D3 | Un solo disponible («de dónde sale», guardias fuera hasta cobrarlas) | construir | sonnet con ficha | ~0,9 M |
-| D4 | Metas en un solo sistema + migración de la meta antigua | construir | sonnet; opus revisa la regla | ~0,8 M |
-| D5 | Huchas sin duplicado, marcar pagado en un sitio, esconder lo de «Más» | construir | sonnet; `verificador` | ~0,7 M |
-| D6 | Plan de compras [v3-dinero-compras] | construir | sonnet con ficha | ~1,2 M |
+| D1 | Limpieza invisible + las 2 pruebas de fecha + prueba «foto» de cifras | arreglo | sonnet | ~0,4 M |
+| D2 | Datos nuevos + portada nueva + En qué se me va | construir | sonnet con ficha; `verificador` | ~1,2 M |
+| D3 | Ahorro con invertir dentro + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
+| D4 | Lo que quiero comprar [v3-dinero-compras] | construir | sonnet; `verificador` | ~0,8 M |
+| D5 | Quitar lo viejo que apruebes (con migración) | arreglo | sonnet | ~0,6 M |
 
 ### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 3 de 8 hechas
 
