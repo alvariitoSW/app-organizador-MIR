@@ -49,6 +49,17 @@ De dónde sale el ahorro:
   se pueden abrir directamente en sonnet.
 - Pruebas solo las tuyas mientras se trabaja; la suite completa una vez, al final, con el `verificador`.
 
+### Tanda La Vuelta (Entreno + objetivo de peso) · Consejo 2026-10-28 · acta `consejo/2026-10-28-deporte.md`
+
+| # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|---|
+| V0 | Concurso «La Vuelta» (6 escuelas: 4 sonnet + 2 haiku) · bases `consejo/2026-10-28-la-vuelta-bases.md` · en marcha 2026-10-28 | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
+| V1 | Entreno: franja fija 15:00-16:00 entre semana (`gymHoraDe`, `ENT_HORAS`), parque el finde con rutina sin material de openGym, sesión mínima de 25 min, guardia/saliente sin fallo; la vuelta al 35 % +10/semana (`REGRESO_RITMO`, sin romper un plan en curso) y racha por semanas | [v3-entreno-franja] + [v3-vuelta-35] | construir | sonnet con ficha; `verificador` | ~1,8 M |
+| V2 | Comer: objetivo de peso (kg y fecha, 0,5 kg/sem por defecto, tope 1 %/sem, suelo basal y 1.500 kcal, media de 7 días, sin sumar kcal del entreno) atado al plan semanal; gráfica del peso; `/revisa-seguridad` | [v3-peso-objetivo] | construir | sonnet con ficha; `verificador` | ~1,0 M |
+
+Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) → V1 → V2. [aparc-comida-entreno] se cierra en V1
+(con entreno a las 15:00 la comida de después pasa a ~16:30). V1 es el primer trozo de [v3-entrenador].
+
 ### Después (sin planificar todavía)
 
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
