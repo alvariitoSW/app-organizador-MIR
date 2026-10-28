@@ -53,7 +53,7 @@ De dónde sale el ahorro:
 
 | # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|---|
-| V0 | Concurso «La Vuelta» hecho: jurado 1.º La Sobremesa (10), luego Reloj de Sol, Tortuga y Sofá (9) · escaparate artifact · **espera tus notas** · 3,9 M | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
+| V0 | Concurso «La Vuelta» hecho: jurado 1.º La Sobremesa (10), luego Reloj de Sol, Tortuga y Sofá (9) · 2.ª ronda (6 sonnet, explicación en 45 s, bases `consejo/2026-10-28-la-vuelta-ronda2.md`) · **espera tus notas** · 3,9 M + ~2,4 M | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
 | V1 | Entreno: franja fija 15:00-16:00 entre semana (`gymHoraDe`, `ENT_HORAS`), parque el finde con rutina sin material de openGym, sesión mínima de 25 min, guardia/saliente sin fallo; la vuelta al 35 % +10/semana (`REGRESO_RITMO`, sin romper un plan en curso) y racha por semanas | [v3-entreno-franja] + [v3-vuelta-35] | construir | sonnet con ficha; `verificador` | ~1,8 M |
 | V2 | Comer: objetivo de peso (kg y fecha, 0,5 kg/sem por defecto, tope 1 %/sem, suelo basal y 1.500 kcal, media de 7 días, sin sumar kcal del entreno) atado al plan semanal; gráfica del peso; `/revisa-seguridad` | [v3-peso-objetivo] | construir | sonnet con ficha; `verificador` | ~1,0 M |
 
