@@ -62,3 +62,92 @@ H1→P1 · H2/H3/H4→P2 · cada paso con prueba que cae al revertir · maquetas
 sin [ACLARAR] abiertas. Presupuesto: ~2,1 M (construir, 90 % de la última).
 
 Medido: 3,1 M frente a ~2,1 M (P2 41 %; una vuelta más para quitar la lista repetida).
+
+---
+
+# S3b · El Comer del reloj — sesión 2 de 2 (Mi semana, Casa, vitaminas, investigar)
+
+Maquetas aprobadas: `maquetas/comer-debate-1-reloj.html` pantallas 2 (MI SEMANA), 3 (APUNTAR UN HUECO), 5 (NEVERA Y
+COMPRA) y 6 (VITAMINAS); `maquetas/comer-mapa.html` (FICHA, bloque «Vitaminas y minerales · por lata»);
+`maquetas/comer-escribir.html` pantalla 3 (FRASE + INVESTIGAR).
+
+## 1 · Qué y para qué
+- **H5 Mi semana a mano.** Dado que abro Comer › Semana, entonces veo los 7 días (desde hoy) con su icono 🍳/📦/🏥/🍽️, y
+  por día «comida: X» y la cena apuntada o «＋ apunta la cena». Arriba, «¿Me la propones?» rellena **solo los huecos
+  vacíos**. Al pie, «🛒 De tus N cenas: M cosas · K ya las tienes · J sin apuntar · Ver compra ›».
+- **H6 Apuntar un hueco.** Dado que toco «＋ apunta la cena» del jueves, se abre la hoja «Jueves · cena» con campo
+  «Escribe lo que sea…», TUS PLATOS (chips), «📦 Táper de… · 🍽️ Fuera · 🏥 Hospital», «✓ Cocino ese día» (🍳 solo si es
+  plato) y «Apuntar / Dejar vacío». Un plato pasa sus ingredientes a la compra menos lo que hay; el texto libre entra
+  tal cual en la lista («“Algo de fruta” tu nota»).
+- **H7 Casa: la nevera dibujada y la compra.** Dado que abro Comer › Casa, veo PARA ESTA SEMANA (táperes con «caduca
+  mañana» / raciones), CRUDO Y VERDURA (lo que hay y lo que «falta»), CONGELADOR, «🛒 FALTAN N cosas», la compra con el
+  **origen** de cada cosa («cena jue», «crema dom», «tu nota»), «Ya en casa, no entran: …», la barra «＋ A mano · ▥ Código
+  · 🧾 Ticket» y al pie los botones 🍲 Lote · 📖 Recetas · ¿Qué cocino? · Comer fuera.
+- **H8 Vitaminas.** Dado que toco «💊 Vitaminas de hoy» (parada «cierre» al final de la línea del día), veo la hoja «%
+  diario» de los 9 que ya se cuentan (hierro, calcio, potasio, magnesio, C, D, B12, B6, fólico) sobre la referencia
+  europea (`ALIM_VRN`), **«sin datos» y nunca 0** cuando ningún apunte lo trae, la sugerencia de la próxima comida que
+  más lo sube («Falta vitamina D: la cena con huevos te sube un 20 %») y la media de 7 días. En la ficha del alimento,
+  cada fila con su cantidad (µg/mg) y su %.
+- **H9 Investigar.** Dado que escribo «pizza barbacoa del telepizza, 3 trozos» y no la conoce bien, debajo de la fila sale
+  «NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA» con 5 fuentes: Open Food Facts por marca · carta de la cadena · parecido
+  genérico (usar) · a ojo (pequeña/mediana/grande o kcal) · «enséñamelo una vez» (lo guarda como plato tuyo).
+- **Arreglos de la sesión 1.** (a) En la frase del hospital el título de la tarjeta incluye el filete aunque no se haya
+  elegido cuál (`fraseNombre` cuenta también `fr.dudas`). (b) «¿Qué has comido?» por la tarde abre en el momento que la
+  línea llama LO SIGUIENTE (cena), no en «Merienda».
+
+## 2 · Dudas (resueltas el 2026-10-28)
+- Pestañas: **Hoy · Semana · Casa**.
+- «¿Me la propones?»: **sí, solo rellena huecos vacíos**; nunca pisa lo apuntado a mano.
+- Investigar: **las 5 fuentes** de la maqueta.
+- Vitaminas: **los 9 que ya se cuentan** (sin zinc, yodo, selenio, fósforo ni sal).
+
+## 3 · Qué se QUITA
+- Pestañas **Cocina, Plan y Despensa** (`cje-tab` coc/sem/desp) y sus pintores: `plDiasHTML`, `plDiaHTML`, `plResHTML`,
+  `plNutriHTML` (Plan › Días), `plIsoSVG` + `plNeveraHTML` (Plan › Nevera isométrica), el segmento Plan › Compra,
+  `cjeDespensaHTML` (Despensa), `cjeCocinaHTML` como pestaña (sus botones pasan al pie de Casa), `cjeSemana7HTML` suelto
+  (se queda la tira como «la semana de un vistazo» en Hoy, que ahora lleva a Semana).
+- Botones **«Por macros»** (`cje-macros`) y **«Copiar a la siguiente»** (`cje-copiar`) de la semana.
+- `compraSemanaHTML`/`semanaCubierta` (la cuenta paralela «qué semana sale de lo que tienes»): la sustituye el pie
+  «De tus N cenas».
+- La **vista vieja de micros** (`renderFoodMicros`) y el desplegable «micros de hoy» de Hoy (`micro6HTML` en `cjmic`):
+  los sustituye la hoja «% diario».
+- El botón suelto **«buscar»** (`fr-busca`) de la duda «No conozco»: lo sustituye Investigar.
+- Las pruebas que miraban solo lo quitado se reescriben contra lo nuevo (no se saltan): se dice cuáles en DECISIONS.
+
+## Supuestos
+- Mi semana empieza **hoy** y enseña 7 días; el dato sigue en `store.semBase` (`sbPoner`). El texto libre es un item
+  nuevo `{kind:'txt',t}` en el hueco; «Táper de…» reutiliza `cje-guardia`/táper, «Fuera» `dishFuera`, «Hospital» `dishHospital`.
+- La compra sigue saliendo de `compraDatos` (necesidadProximos); lo nuevo es guardar el **origen** (día y comida) de cada
+  ingrediente y añadir las notas de texto libre.
+- La parada 💊 va al final de la línea («cierre»), con los 3 más bajos; la hoja «% diario» es una vista de Comer.
+- Investigar reutiliza `buscarOffNombre`, `FUERA_CADENAS`, `r.sug`, `FUERA_OJO` y `fb-lec-receta`; Open Food Facts solo
+  se consulta al tocar esa fuente (nada sale del móvil sin un toque, y solo el nombre del producto).
+- Antojo (pantalla 4): fuera, va en la S7.
+
+## 4 · Dónde se toca
+- Pestañas y Hoy: `renderComerEje` (app.js:14502), `cje-tab` (24483), `cjeSemana7HTML` (14566), `cjeSiguiente` (14559).
+- Semana: `store.semBase` y `sbPoner/sbPonerItems/sbCelda` (2055–2100), `cjeSemana` (13629), hoja `cjeHojaPlato`/
+  `cjeHojaHTML` (14682…), montar `pl-montar`/`plmHTML`, `cje-guardia`, `cje-cambia`, `dishHospital/dishFuera` (10869).
+- Casa: `compraDatos/compraDatos0` (19101), `necesidadProximos` (19089), `compraLineaHTML` (19347), `cjeHojaCompra`
+  (14746), `despensaS` (4175), `cocinadoS` (12423), `frescoDias` (12248), `renderNevera2` (12341), barra ticket/código/a mano
+  de `cjeDespensaHTML` (13833), `cjeCocinaHTML` (13818).
+- Vitaminas: `ALIM_MICROS/ALIM_VRN` (2690/2696), `microTotales/microPct/microCortos` (4150–4167), `micro6HTML` (10431),
+  `renderFoodMicros` (12674), `micHTML` (12893), ficha `renderAlimFicha` (12951), `alimRicosEn` (4167).
+- Investigar: `fraseLeer` duda desconocido (9975), `lecturaCardHTML` (10207), `fr-busca` (24679), `buscarOffNombre` (4722),
+  `FUERA_CADENAS` (3375) y `FR_CADENAS` (9547), `fb-lec-receta`/`fbLecturaReceta` (11795).
+- Arreglos: `fraseNombre` (10087); `cje-busca` (24484) y `momentoAhora` (9340) frente a `cjeSiguiente` (14559).
+
+## 5 · Pasos
+- [x] P0 Ficha y dudas · esta ficha · opus (sesión principal)
+- [ ] P1 [P] H5+H6+H7 + quitar pestañas: pruebas encadenadas que fallan → Semana y Casa · general-purpose sonnet, en
+  worktree · ~70 pasos. Pruebas nuevas justo antes de `check('sin errores de JavaScript…`.
+- [ ] P2 [P] H8+H9 + arreglos (a) y (b): pruebas encadenadas que fallan → vitaminas, investigar y los dos arreglos ·
+  general-purpose sonnet, en worktree · ~60 pasos. Pruebas nuevas justo antes de la `check('sin errores…` también
+  (al juntar, P2 va detrás de P1).
+- [ ] P3 Juntar P1+P2, `--solo` de las nuevas y suite completa · opus · ~10 pasos
+- [ ] P4 Capturas a 412×915 (Semana, hoja del hueco, Casa, % diario, investigar) · verificador sonnet · ~25 pasos
+- [ ] P5 DECISIONS, plan, gasto, sellar y pasar a main (`cierra-y-despliega`) · opus · ~15 pasos
+
+## 6 · Comprobación
+H5/H6/H7→P1 · H8/H9/arreglos→P2 · cada paso con prueba que cae al revertir · maquetas aprobadas · medido a 412×915 en
+P4 · sin [ACLARAR] abiertas. Presupuesto: ~2,8 M (construir, 90 % de la última).
