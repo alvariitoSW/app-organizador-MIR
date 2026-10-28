@@ -174,3 +174,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
 - [run-40591125346] 2026-10-27 · despliegue de main (2416c99, sello Nutri-Score/NOVA/aditivos) · success; sellado (version.json 2416c99); rama 2 por delante solo con registro y traspaso; 0 issues/PR · ok
 - [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
+- [run-40714087144] 2026-10-28 · despliegue de main (7d874f8, plan 3.0 y gastos; solo herramientas) · success; código sellado (version.json 2416c99 posterior al último código 66a7d0d); rama = main; 0 issues/PR · ok
+- [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
