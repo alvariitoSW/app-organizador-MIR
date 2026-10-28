@@ -5,7 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
-- ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: en main (2e30a00) · El lector de frases (S2b) está en la rama (f7dc69b), sin pasar a main: falta que digas «despliégalo» · desde 2026-10-28
+- ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
@@ -116,6 +116,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 
 ## Supuestos sin confirmar
 - [sup-2026-10-28-dinero] Dinero (D1-D6, Consejo por delegación): lo viejo (huchas, meta, banco, épocas) se queda guardado sin enseñarse; el colchón y las huchas sin objetivo → «guardado», las huchas con objetivo → compras planificadas, los deseos sin hacer → compras en espera; objetivo por defecto 6 meses en 12; lo no necesario espera 30 días y pasa solo a planificado (sin «Sigo queriéndolo»); una compra sin mes no suma al «al mes»; la pantalla del banco (capturas) ya no existe y «Cuadrarlo» se fue; la pestaña Mes vieja sigue colgando de Gastos («Cierre del mes») · DECISIONS D1-D6 y acta `consejo/2026-10-28-dinero-ejecucion.md` · contado el 2026-10-28
+- [sup-2026-10-28-comer-reloj1] Comer del reloj (S3 sesión 1): horas fijas sin ajuste (desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00); merienda y picoteo no son «lo siguiente»; teclear gramos pone la fila en ✓; la cantidad de la rueda no se recuerda; «investigar» sin cambios hasta la S3b · DECISIONS.md:1505 · contado el 2026-10-28
 - [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
 - [sup-2026-10-28-comer-mapa] Comer (maquetas S2): cifras de ejemplo; % de vitaminas sobre la referencia europea; «investigar» sin IA externa (solo Open Food Facts y tablas propias); dictado del teclado del móvil; las pantallas que solo se abren desde el «Hoy» antiguo se recolocan, no se quitan · DECISIONS «El mapa de Comer» · contado el 2026-10-28
 - [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
@@ -187,3 +188,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
 - [run-40725644165] 2026-10-28 · despliegue de main (eddb09d, maquetas S2 y plan; sin código de app) · success; sellado (version.json 2416c99 posterior al último código); rama 7d874f8 = 10 commits por detrás de main; 0 issues/PR · ok
 - [parte-s2b-2026-10-28] 2026-10-28 · parte: siguiente S2b (lector de frases), sin presupuesto medido de construir · propuesto
+- [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, lector de frases S2b) · success; sellado (version.json 2e30a00 posterior al código f7dc69b); rama 1 por delante (solo plan); 0 issues/PR · ok
+- [parte-s3-2026-10-28] 2026-10-28 · parte con la S3 (Comer del reloj) elegida; presupuesto ~2,1 M medido (plan 1,8 M ×2); propuesto decidir antes qué entra en la sesión 1 · propuesto
+- [parte-s3b-2026-10-28] 2026-10-28 · parte: rama con la S3 sesión 1 (12 commits, app.js/styles.css sin sellar, suite 754/754) sin pasar a main; main 2e30a00 success; siguiente S3b (~2,8 M); el usuario pide S3b y luego pasar todo a main · propuesto

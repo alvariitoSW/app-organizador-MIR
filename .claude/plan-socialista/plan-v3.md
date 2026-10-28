@@ -12,8 +12,8 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada. **La Tanda Dinero está hecha y en main** (D1-D6, por delegación; acta `consejo/2026-10-28-dinero-ejecucion.md`).
-**La siguiente: S3, construir el Comer del reloj** (sesión nueva: «/plan-socialista y haz la S3»).
+**La Tanda Dinero está hecha y en main** (D1-D6, por delegación; acta `consejo/2026-10-28-dinero-ejecucion.md`).
+**S3, sesión 1 hecha** en la rama `claude/magical-clarke-dlp8mb` (línea del día + escribir lo comido con rueda por fila; suite 754/754), **sin pasar a main**. Ficha: `fichas/v3-comer-reloj.md`. **La siguiente: S3b** (sesión nueva: «/plan-socialista y haz la S3b»): Mi semana a mano, compra de lo apuntado, nevera dibujada, vitaminas, e «investigar» lo desconocido.
 
 ## Por hacer
 
@@ -27,7 +27,7 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 |---|---|---|---|---|---|
 | ~~S1~~ | ✅ Las pruebas de la fecha: se pusieron verdes solas al pasar el día 27 (751/751) | [aparc-pruebas-fecha] | arreglo | sesión en sonnet, sin ayudantes; suite con `verificador` | ~0,4 M |
 | ~~S2~~ | ✅ El mapa de Comer: concurso de 4 escuelas, gana **El reloj** (`maquetas/comer-debate-1-reloj.html` + `comer-escribir.html`; buscador y ficha de `comer-mapa.html`) · DECISIONS «El mapa de Comer» · 3,5 M (el concurso lo pidió el usuario) | [v3-comer-perdido] + dónde van [v3-cantidades], [v3-boceto-semana], [v3-antojos] y [comida-ri-A/D] | maqueta | — | ~1,5 M |
-| ~~S2b~~ | ✅ rama f7dc69b (sin main) · 2,3 M · **El lector de frases a fondo**: lo que escribes («he comido…») lo entiende casi siempre; banco de ~300 frases reales (bares, hospital, cadenas, Mercadona, listas con comas), clasificar fallos y arreglarlos por tipo, cada uno con su caso en `tests/frases.json`; que cada cosa diga su seguridad (✓ / ≈ / ?) para la pantalla de `comer-escribir.html` | [v3-lector] | construir | haiku escribe las frases; opus clasifica y decide; constructor sonnet arregla `fraseLeer` (app.js:9795) por tipos; `verificador` pasa `npm run test:frases` | ~2,0 M |
+| ~~S2b~~ | ✅ main 2e30a00 · 2,3 M · **El lector de frases a fondo**: lo que escribes («he comido…») lo entiende casi siempre; banco de ~300 frases reales (bares, hospital, cadenas, Mercadona, listas con comas), clasificar fallos y arreglarlos por tipo, cada uno con su caso en `tests/frases.json`; que cada cosa diga su seguridad (✓ / ≈ / ?) para la pantalla de `comer-escribir.html` | [v3-lector] | construir | haiku escribe las frases; opus clasifica y decide; constructor sonnet arregla `fraseLeer` (app.js:9795) por tipos; `verificador` pasa `npm run test:frases` | ~2,0 M |
 | S3 | Construir el Comer del reloj (línea del día, semana a mano con compra sacada de lo apuntado, nevera dibujada, escribir lo comido; buscador y ficha con vitaminas) — empieza con su ficha (`ficha-de-tarea`); quizá en 2 sesiones | [v3-comer-perdido] + [v3-boceto-semana] + [comida-ri-A] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M ×2 |
 | ~~S4~~ | ✅ Cantidades y ración de verdad · main 3b7a617 · sin medir | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
 | S5 | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir — **falta (A) vitaminas y minerales** | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
@@ -76,7 +76,7 @@ De dónde sale el ahorro:
 
 - [v3-gobierno] El gobierno del repositorio y el Consejo de Ministros (copiado de fiebres-neutropenias); primer
   Consejo: la reforma de Dinero; feria (3 rondas) y concurso «La Rara» (2 rondas): gana La Laurisilva · 2026-10-28
-- [v3-lector] S2b · El lector de frases a fondo: 838 frases en el banco (antes entendía 61 de 299 nuevas) y `frSeg` (✓/≈/?) para la S3 · rama f7dc69b, sin main · 2,3 M · 2026-10-28
+- [v3-lector] S2b · El lector de frases a fondo: 838 frases en el banco (antes entendía 61 de 299 nuevas) y `frSeg` (✓/≈/?) para la S3 · main 2e30a00 (run 40732849988) · 2,3 M · 2026-10-28
 
 - [v3-comer-mapa] S2 · El mapa de Comer: gana El reloj (concurso de 4 escuelas) · maquetas en la rama `claude/plan-socialista-s2-hl27a0` · 2026-10-28
 

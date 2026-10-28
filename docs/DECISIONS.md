@@ -1581,3 +1581,50 @@ objetivo en la gráfica ya no la pisa «tu ritmo», «← Volver al bosque» es 
 **Supuestos.** Las comprobaciones de las pruebas 204, 216, 218, 223, 228, 263, 266, 270 y 272 que miraban lo quitado se quitaron (el acta lo
 manda), dejando las del resto; 221 y 262 pasan de la vista `salud` a la pestaña Ahorro. Se quitan también dos reglas del asistente que
 hablaban de huchas y de la pantalla del banco. Mi script de código muerto quitó `frSeg` por error (la usa `frases.test.js`): restaurada.
+## El Comer del reloj, sesión 1: la línea del día y escribir lo comido (2026-10-28 · S3)
+
+**Elegido.** Comer › Hoy es **una sola línea** (`maquetas/comer-debate-1-reloj.html`, pantalla 1): la lupa «¿Qué has
+comido? o busca…», «Ahora» con kcal/P/HC/G frente al objetivo, y cada comida **una vez**, a su hora (`cjeHoraMom`), unidas
+por una raya: lo apuntado con ✓, lo que queda en gris y **LO SIGUIENTE** resaltado en el sitio de su comida, con «✓ Hecho»
+(lo que tocaba o, sin plan, lo de siempre de ese momento) y «Otra cosa» (escribir, ya dirigido a esa comida). Al pie, **la
+semana de un vistazo** (🍳 · 📦 · 🏥 · 🍽️) que lleva a Plan. Cocina, Plan y Despensa siguen como pestañas.
+**Escribir lo comido** (`maquetas/comer-escribir.html`): una fila por cosa con su marca ✓ / ≈ / ? (`frSeg`) y el «por» de
+lo supuesto, las preguntas con sus chips dentro de su fila y **la rueda de cantidad en cada fila** (⇅): al moverla, kcal y
+total cambian y la fila pasa a ✓. Con el campo vacío: «lo de siempre a esta hora», «↺ Repetir lo de ayer» y «📖 Mis platos».
+Elegido por el usuario: línea + escribir en esta sesión, rueda en cada fila, la línea sustituye «Hoy».
+
+**Descartado.** Una tarjeta LO SIGUIENTE aparte encima de la lista de comidas (las repetía). Ordenar las filas de
+escribir intercalando las preguntas (rompía la lectura por índice). Cambiar las pestañas de Comer ya (sesión 2).
+
+**Supuestos.** Horas fijas cuando no hay ajuste: desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00 (la comida
+sale de `comidasCfg`). Merienda y picoteo no son «lo siguiente». Teclear los gramos de una fila también la pone en ✓, y el
+pan supuesto pasa a ✓ al tocarlo. Si la app duda del alimento («lo más parecido», una errata), la fila sigue en ≈ aunque
+muevas la rueda. La cantidad de la rueda no se recuerda para la próxima vez. «Investigar» lo desconocido se queda en lo que
+había (opciones, buscar, a ojo); las cinco fuentes de la maqueta, a la sesión 2. Antojo y vitaminas, todavía no.
+
+## El Comer del reloj, sesión 2: Semana, Casa, vitaminas e investigar (2026-10-28 · S3b)
+
+**Elegido.** Comer queda en **Hoy · Semana · Casa** (`maquetas/comer-debate-1-reloj.html`, pantallas 2, 3, 5 y 6).
+**Semana** es la semana a mano: 7 días desde hoy con su icono, «comida: X» y la cena apuntada o «＋ apunta la cena»; el
+hueco se apunta en una hoja con texto libre (item `{kind:'txt'}`), tus platos, táper, fuera u hospital y «Cocino ese día».
+«¿Me la propones?» usa el montar de siempre, pero **solo rellena huecos vacíos** (lo apuntado a mano cuenta como fijo). Al
+pie, «🛒 De tus N cenas…» lleva a Casa. **Casa** es la nevera dibujada (para esta semana, crudo y verdura, congelador,
+faltan) y la compra **con el origen** de cada cosa («cena jue», «tu nota»), «Ya en casa, no entran: …», la barra A mano /
+Código / Ticket y al pie Lote, Recetas, ¿Qué cocino? y Comer fuera. **Vitaminas**: parada «💊 Vitaminas de hoy» al final de
+la línea y la hoja «% diario» de los 9 que ya se cuentan, con **«sin datos» y nunca 0**, la sugerencia («Falta vitamina D:
+… te sube un N %») y la media de 7 días; la ficha del alimento enseña cantidad y %. **Investigar**: bajo la fila que no
+conoce, «NO LA CONOZCO BIEN» con sus fuentes (Open Food Facts solo al tocar y solo con el nombre, carta de la cadena,
+parecido, a ojo, enséñamelo una vez). Arreglos de la sesión 1: el título cuenta lo que aún se pregunta (el filete) y
+«¿Qué has comido?» por la tarde abre en lo que la línea llama LO SIGUIENTE (`momentoEscribir`).
+Elegido por el usuario: Hoy · Semana · Casa; proponer solo en huecos vacíos; las 5 fuentes; los 9 micros de siempre.
+
+**Descartado (y quitado).** Las pestañas Cocina, Plan y Despensa con Plan › Días, la nevera isométrica, Plan › Compra,
+«Por macros», «Copiar a la siguiente» y la cuenta «qué semana sale de lo que tienes»; la vista vieja de micros y su
+desplegable en Hoy; el botón suelto «buscar» de la duda. Las pruebas que solo miraban eso se reescribieron contra lo nuevo
+(231, 232, 235, 238, 258, 259, 274, 316, 320, 59 y la de la hoja de una toma) o se recortaron (229, 239, 240, 255); ninguna
+se saltó. Zinc, yodo, selenio, fósforo y sal (casi siempre «sin datos»). El antojo (S7).
+
+**Supuestos.** El montar sigue yendo de lunes a domingo (con ‹ › para otra semana). «Cocino ese día» solo marca el 🍳; no
+cambia las tandas. En un día de guardia no se apunta texto libre (ofrece hospital o táper). El pie de Semana cuenta solo
+cenas. «A ojo» es pequeña 250 / mediana 450 / grande 700 kcal, con reparto supuesto 15 % P · 50 % HC · 35 % G, y no se
+memoriza. Si no hay nada en la nevera, la sugerencia de vitaminas propone el alimento más rico en ese micro.
