@@ -1,0 +1,211 @@
+<!doctype html><meta charset=utf-8>
+<title>Comer · debate 2 · La nevera</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.sec{flex-basis:100%;max-width:1250px;margin:18px 0 -8px}
+.sec h2{margin:0 0 4px;font-size:22px}.sec p{margin:0;color:var(--ink2);max-width:900px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 70px}
+.lbl{position:absolute;top:-1px;right:14px;font-size:10px;font-weight:900;letter-spacing:.12em;color:#04121c;background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}.back{font-size:18px;color:var(--ink2)}
+.ic{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);display:grid;place-items:center;font-size:17px}
+.seg{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:5px;margin-bottom:8px}
+.seg div{text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg div.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.busca{display:flex;align-items:center;gap:8px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);padding:0 12px;color:var(--ink2);margin-bottom:8px}
+.mac{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mac div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center}
+.mac b{display:block;font-size:16px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.mac i{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}.mac i::after{content:"";display:block;height:100%;width:var(--w);background:var(--ok)}
+.com{display:grid;grid-template-columns:26px 1fr auto;gap:0 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.com:first-of-type{border-top:0}
+.chk{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#04121c;font-weight:900}
+.com b{font-size:13.5px}.com .s{font-size:11px;color:var(--ink2)}.com .k{font-size:12px;font-weight:800;color:var(--ink2);text-align:right}
+.mic{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.mic div{min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px 8px}
+.mic b{font-size:14px}.mic span{display:block;font-size:10px;color:var(--ink2);font-weight:800}
+.lo{color:var(--warn)}.hi{color:var(--ok)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:13px;padding:0 10px}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:#04121c;border:0}
+.btn.s{min-height:38px;font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:78px;display:flex;flex-direction:column;gap:3px}
+.tile .e{font-size:20px}.tile b{font-size:13px}.tile .mini{font-size:10.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 10px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);font-size:12px;font-weight:700}
+.chip.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--bg2))}
+.rec{display:grid;grid-template-columns:46px 1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rec:first-of-type{border-top:0}
+.rec .e{width:46px;height:46px;border-radius:13px;background:var(--bg2);display:grid;place-items:center;font-size:23px;grid-row:span 2}
+.rec b{font-size:13.5px}.rec .s{font-size:11px;color:var(--ink2)}
+.pill{font-size:11px;font-weight:900;padding:3px 7px;border-radius:99px;grid-row:span 2;background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.wk{display:grid;grid-template-columns:44px 1fr 1fr;gap:5px;font-size:11.5px}
+.wk .d{font-weight:900;color:var(--ink2);display:flex;flex-direction:column;justify-content:center}
+.wk .d small{font-weight:700;font-size:9.5px}
+.wk .c{border:1px dashed color-mix(in srgb,var(--brand2) 60%,var(--line));background:color-mix(in srgb,var(--brand2) 8%,var(--bg2));border-radius:9px;padding:6px 7px;min-height:38px}
+.wk .c.ok{border:1px solid var(--line);background:var(--bg2)}
+.wk .c.g{border-style:solid;border-color:color-mix(in srgb,var(--warn) 50%,var(--line));background:color-mix(in srgb,var(--warn) 8%,var(--bg2))}
+.wk .c small{display:block;color:var(--ink2);font-size:9.5px}
+.wk .h{font-size:9.5px;font-weight:900;letter-spacing:.12em;color:var(--ink2);text-align:center}
+.ban{border-radius:12px;padding:9px 11px;font-size:12px;border:1px solid color-mix(in srgb,var(--brand2) 55%,var(--line));background:color-mix(in srgb,var(--brand2) 14%,var(--bg2));margin-bottom:8px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:60px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:10px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.sheet{position:absolute;left:0;right:0;bottom:0;border-radius:22px 22px 0 0;border-top:1px solid var(--line);background:var(--card);padding:14px 14px 22px;box-shadow:0 -20px 60px #000a}
+.dim{position:absolute;inset:0;background:#0009}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
+.ns{display:inline-flex;border-radius:9px;overflow:hidden;font-weight:900;font-size:13px}
+.ns span{width:26px;height:30px;display:grid;place-items:center;color:#0008;opacity:.45}
+.ns .on{opacity:1;color:#fff;transform:scale(1.18);border-radius:6px;box-shadow:0 0 0 2px #fff}
+.nA{background:#038141}.nB{background:#85bb2f}.nC{background:#fecb02}.nD{background:#ee8100}.nE{background:#e63e11}
+.nsm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;font-size:11px;font-weight:900;color:#fff}
+.nova{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:900;background:#ee8100;color:#fff}
+.vit{display:grid;grid-template-columns:96px 1fr 58px;gap:6px;align-items:center;font-size:12px;margin-top:6px}
+.vit .b{height:7px;border-radius:7px;background:var(--line);overflow:hidden}.vit .b i{display:block;height:100%;background:var(--ok)}
+.vit em{font-style:normal;font-weight:800;text-align:right;color:var(--ink2);font-size:11px}
+.res{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res b{font-size:13px}.res .s{font-size:11px;color:var(--ink2)}
+.tag{font-size:9.5px;font-weight:900;letter-spacing:.08em;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.ej{position:absolute;bottom:66px;left:12px;font-size:10px;color:var(--ink2);opacity:.8}
+
+/* ===== LA NEVERA ===== */
+.fr{position:relative;border-radius:22px;border:2px solid #2a3b5c;background:linear-gradient(180deg,#0f1a2e,#0b1424);padding:8px;display:grid;grid-template-columns:1fr 92px;gap:8px;box-shadow:inset 0 0 40px #38e1ff10}
+.fr .in{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fr .dr{display:flex;flex-direction:column;gap:6px;border-left:2px solid #2a3b5c;padding-left:8px}
+.sh{position:relative;border-bottom:4px solid #2c4468;border-radius:2px;padding:0 2px 5px;background:linear-gradient(180deg,transparent 70%,#38e1ff0f)}
+.sh .nm{font-size:9.5px;font-weight:900;letter-spacing:.12em;color:var(--ink2);display:flex;gap:6px;margin-bottom:3px}
+.sh .nm i{font-style:normal;color:var(--brand);margin-left:auto;letter-spacing:0}
+.stack{display:flex;gap:6px;align-items:flex-end}
+.tp{position:relative;flex:1;min-width:0;min-height:50px;border-radius:5px 5px 9px 9px;border:2px solid var(--c1,#4a79b8);background:color-mix(in srgb,var(--c1,#4a79b8) 18%,var(--bg2));padding:13px 4px 3px;font-size:10px;font-weight:800;line-height:1.15;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.tp::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;height:9px;border-radius:5px;background:var(--c1,#4a79b8)}
+.tp small{display:block;font-weight:700;font-size:9px;color:var(--ink2)}
+.tp.cad{--c1:#fbbf24}.tp.mal{--c1:#fb7185}.tp.ver{--c1:#34d399}.tp.mor{--c1:#7c5cff}.tp.cy{--c1:#38e1ff}
+.tp .dot{position:absolute;right:-5px;top:-9px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center;padding:0 4px}
+.tp.hu{border-style:dashed;background:transparent;--c1:#55688a;color:var(--ink2)}
+.tp.hu::before{background:#55688a55}
+.bote{border-radius:8px;border:2px solid #3b5278;background:var(--bg2);padding:5px 4px;font-size:9.5px;font-weight:800;text-align:center;line-height:1.15;min-height:44px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.bote.hu{border-style:dashed;color:var(--ink2);border-color:#55688a}
+.post{border-radius:4px;background:#fde68a;color:#3b2f00;font-size:10px;font-weight:800;padding:6px 6px;transform:rotate(-2deg);line-height:1.2;box-shadow:0 3px 8px #0008}
+.pizarra{border-radius:6px;border:3px solid #55688a;background:#0c1626;font-size:10px;font-weight:800;padding:5px;line-height:1.25;color:#cfe}
+.cuad{background:repeating-linear-gradient(90deg,transparent 0 8px,#ffffff08 8px 9px)}
+.fz{border-radius:12px;border:2px solid #4a79b8;background:linear-gradient(180deg,#16365a,#0f2440);padding:6px 8px;display:flex;gap:6px;align-items:center;font-size:10.5px;font-weight:800}
+.hoyst{display:flex;gap:8px;align-items:center;border-radius:14px;border:1px solid var(--line);background:var(--card);padding:8px 10px}
+.mw{position:relative;border-radius:16px;border:2px solid #55688a;background:linear-gradient(180deg,#1a2740,#101a2e);padding:10px;display:grid;grid-template-columns:1fr 70px;gap:10px;margin-bottom:8px}
+.mw .vent{border-radius:10px;border:2px solid #2c4468;background:radial-gradient(circle at 50% 60%,#fbbf2422,#0a0f1c);min-height:92px;display:grid;place-items:center;font-size:34px}
+.mw .pan{display:flex;flex-direction:column;gap:5px}
+.mw .pan div{border-radius:8px;border:1px solid var(--line);background:var(--bg2);text-align:center;font-size:11px;font-weight:900;padding:7px 2px}
+.cv{display:grid;grid-template-columns:44px 1fr;gap:3px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cv .e{width:44px;height:44px;border-radius:12px;background:var(--bg2);display:grid;place-items:center;font-size:22px;grid-row:span 2}
+.cv b{font-size:13px}.cv .s{font-size:11px;color:var(--ink2)}
+.ok2{color:var(--ok);font-weight:800}.no2{color:var(--bad);font-weight:800}
+.lin{display:grid;grid-template-columns:34px 1fr 1fr;gap:4px;margin-bottom:4px;align-items:stretch}
+.lin .d{font-size:11px;font-weight:900;color:var(--ink2);display:flex;flex-direction:column;justify-content:center}
+.lin .d small{font-size:9px;font-weight:700}
+.sl{border-radius:8px;border:2px dashed #7c5cff99;background:color-mix(in srgb,var(--brand2) 9%,var(--bg2));padding:4px 6px;min-height:46px;font-size:10.5px;font-weight:800;line-height:1.15;display:flex;flex-direction:column;justify-content:center}
+.sl small{font-size:9px;font-weight:700;color:var(--ink2)}
+.sl.t{border-style:solid;border-color:var(--c1,#4a79b8);background:color-mix(in srgb,var(--c1,#4a79b8) 16%,var(--bg2))}
+.sl.f{border:2px dashed var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--bg2))}
+.sl.g{border:1px solid #fbbf2477;background:color-mix(in srgb,var(--warn) 8%,var(--bg2));color:var(--ink2)}
+.hole{border-radius:10px;border:2px dashed #55688a;background:#ffffff05;min-height:48px;padding:5px 6px;font-size:10.5px;font-weight:800;line-height:1.15;display:flex;flex-direction:column;justify-content:center}
+.hole small{font-size:9px;font-weight:700;color:var(--ink2)}
+.hole.u{border-color:var(--bad)}
+.pat{display:flex;align-items:flex-end;gap:5px;height:54px}
+.pat i{flex:1;border-radius:4px 4px 0 0;background:var(--brand2);display:block}
+.mt{font-size:10px;color:var(--ink2)}
+</style>
+
+<div class=sec><h2>LA NEVERA · Comer es abrir la nevera</h2>
+<p><b>Manifiesto.</b> Nadie cocina «a un plan»: cocina a lo que tiene en casa. Por eso Comer es una nevera dibujada: cada táper, cada bote y cada hueco vacío es un botón. Lo que sacas es lo que has comido (el registro y las vitaminas se rellenan solos), lo que vas a cocinar sale de lo que hay, y lo que falta es un hueco con borde de rayas: eso es la compra. Un solo sitio para la comida, ningún repetido, nada a más de dos toques.</p>
+<p class=mini style="margin-top:6px">Buscador: se llega desde la lupa de la portada (y desde el «+» de cada hueco). Ficha de alimento: al tocar cualquier resultado. Ambos, tal cual están aprobados en comer-mapa.html. Miércoles 28 oct · cifras de ejemplo.</p></div>
+<div class=ab><div class=lbl>1 · PORTADA · LA NEVERA</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>📖</div><div class=ic>⚙️</div></div>
+<div class=busca>🔍 Busca o añade un alimento…</div>
+<div class=fr>
+ <div class=in>
+  <div class=fz>🧊 Congelador <span class=sp></span><span class=mini>4 raciones · ragú, merluza</span></div>
+  <div class="sh"><div class=nm>PARA HOY <i>toca = sacar</i></div>
+   <div class=stack><div class="tp cad"><span class=dot>!</span>Lentejas<small>caduca mañana</small></div><div class="tp cy">Pollo curry<small>2 raciones</small></div><div class="tp ver">Ensalada<small>1 ración</small></div></div></div>
+  <div class="sh"><div class=nm>ESTA SEMANA</div>
+   <div class=stack><div class="tp mor">Pasta boloñesa<small>3 raciones</small></div><div class="tp cy">Arroz y pavo<small>4 raciones</small></div><div class="tp hu">hueco<small>＋ cocinar</small></div></div></div>
+  <div class="sh"><div class=nm>CRUDO</div>
+   <div class=stack><div class="bote" style="flex:1">🥚 Huevos<span class=mini>6 · 9 días</span></div><div class="bote" style="flex:1">🍗 Pechuga<span class=mini>400 g</span></div><div class="bote hu" style="flex:1">🧀 Queso<span class=mini>sin stock</span></div></div></div>
+  <div class="sh" style="border-bottom:0"><div class=nm>CAJÓN DE VERDURA</div>
+   <div class=stack><div class="bote" style="flex:1">🥦 Brócoli</div><div class="bote" style="flex:1">🍅 Tomate</div><div class="bote hu" style="flex:1">🥕 Zanahoria</div></div></div>
+ </div>
+ <div class=dr>
+  <div class=post>🗓️ Semana en borrador<br><u>revisar y aceptar</u></div>
+  <div class=pizarra>🛒 FALTAN<br>11 cosas<br><span style="color:var(--bad)">3 urgentes</span></div>
+  <div class=bote>🥛 Leche<span class=mini>1 L</span></div>
+  <div class="bote hu">🫒 Aceite<span class=mini>queda poco</span></div>
+  <div class=bote>🍯 Salsas</div>
+  <div class="bote" style="border-color:var(--warn)">😋 Antojo<span class=mini>microondas</span></div>
+ </div>
+</div>
+<div class="hoyst" style="margin-top:8px"><div style="flex:1"><div class=row><b>Has sacado hoy</b><span class=mini>1.480 / 2.400 kcal</span></div><div class=mini>98 P · 160 HC · 48 G · <span class=lo>falta vit. D</span></div></div><div class=btn style="min-height:44px">Ver día ›</div></div>
+<div class=mt style="margin-top:6px;text-align:center">Libro 📖 arriba: cocinar · recetas · comer fuera · objetivos</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>2 · SEMANA EN BORRADOR</div>
+<div class=top><span class=back>‹</span><h1>Semana en borrador</h1><span class=sp></span><div class=ic>🧊</div></div>
+<div class=ban>Esto es una <b>propuesta</b>: con tus guardias y tus platos favoritos. <b>No cuenta en la compra</b> hasta que la aceptes.</div>
+<div class=row style="margin-bottom:6px;font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--ink2)"><span style="width:34px"></span><span style="flex:1">COMIDA</span><span style="flex:1">CENA</span></div>
+<div class=lin><div class=d>Mié<small>28 · G</small></div><div class="sl t" style="--c1:#38e1ff">Pollo curry<small>táper · hecha</small></div><div class="sl g">Guardia<small>cena en el hospital</small></div></div><div class=lin><div class=d>Jue<small>29 · sal.</small></div><div class="sl g">Saliente<small>descanso, algo ligero</small></div><div class=sl>Tortilla + ensalada<small>con lo que hay</small></div></div><div class=lin><div class=d>Vie<small>30 · libre</small></div><div class="sl t" style="--c1:#fbbf24">Lentejas<small>táper · caduca</small></div><div class=sl>Salmón al horno<small>falta salmón</small></div></div><div class=lin><div class=d>Sáb<small>31 · libre</small></div><div class=sl>Pasta boloñesa<small>cocinar lote</small></div><div class="sl t" style="--c1:#7c5cff">Boloñesa<small>táper</small></div></div><div class=lin><div class=d>Dom<small>1 · libre</small></div><div class=sl>Arroz con pavo<small>con lo que hay</small></div><div class="sl f">Pizza casera<small>faltan 3 cosas</small></div></div><div class=lin><div class=d>Lun<small>2 · mañ.</small></div><div class="sl t" style="--c1:#38e1ff">Arroz y pavo<small>táper</small></div><div class=sl>Crema verduras<small>con lo que hay</small></div></div><div class=lin><div class=d>Mar<small>3 · mañ.</small></div><div class="sl t" style="--c1:#38e1ff">Arroz y pavo<small>táper</small></div><div class="sl f">Wok de pollo<small>faltan 2 cosas</small></div></div>
+<div class=mt style="margin:2px 0 6px"><span style="color:#7c5cff">▭ rayas violeta</span> = por decidir · <span class=no2>▭ rayas rojas</span> = falta algo · lleno = táper que ya tienes</div>
+<div class=two><div class=btn>Cambiar un plato</div><div class="btn p">Aceptar semana</div></div>
+<div class=mt style="margin-top:6px;text-align:center">Al aceptar, los 5 huecos rojos pasan a la compra · toca un plato para cambiarlo</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>3 · ANTOJO · MICROONDAS</div>
+<div class=top><span class=back>‹</span><h1>Antojo</h1><span class=sp></span><div class=ic>🧊</div></div>
+<div class=mw><div><div class=cap>¿QUÉ TE APETECE?</div><div class=chips><span class="chip on">🍫 Dulce</span><span class=chip>🧂 Salado</span><span class=chip>🥣 Caliente</span><span class=chip>🧁 Crujiente</span></div>
+ <div class=mini style="margin-top:8px">Te quedan <b>720 kcal</b> y <b>42 g</b> de proteína. Con lo que hay en casa:</div></div><div class=vent>🍽️</div></div>
+<div class=card style="padding:4px 12px">
+ <div class=cv><div class=e>🫐</div><b>Mugcake de cacao y plátano</b><div class=s><span class=ok2>Lo tienes todo</span> · 2 min · 210 kcal · 9 P</div></div>
+ <div class=cv><div class=e>🍎</div><b>Manzana asada con canela y yogur</b><div class=s><span class=ok2>Lo tienes todo</span> · 4 min · 150 kcal · 7 P</div></div>
+ <div class=cv><div class=e>🍫</div><b>Natillas proteicas de chocolate</b><div class=s><span class=no2>Te falta cacao</span> · 3 min · 180 kcal · 20 P</div></div>
+</div>
+<div class=two style="margin-bottom:8px"><div class="btn p">Hacerlo: lo saco de la nevera</div><div class=btn>Solo apuntar el antojo</div></div>
+<div class=card><div class=row><div class=cap style="margin:0">TU PATRÓN · ÚLTIMOS 30 DÍAS</div></div>
+ <div class=pat style="margin-top:8px"><i style="height:90%"></i><i style="height:60%;background:var(--warn)"></i><i style="height:35%;background:var(--ok)"></i><i style="height:25%;background:var(--brand)"></i></div>
+ <div class=row style="margin-top:3px"><span class=mt style="flex:1;text-align:center">Dulce 14</span><span class=mt style="flex:1;text-align:center">Salado 9</span><span class=mt style="flex:1;text-align:center">Caliente 5</span><span class=mt style="flex:1;text-align:center">Crujiente 3</span></div>
+ <div class=mini style="margin-top:6px">Casi siempre <b>dulce</b> después de una guardia, sobre las 17:00.</div></div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>4 · COMPRA · LOS HUECOS</div>
+<div class=top><span class=back>‹</span><h1>Los huecos</h1><span class=sp></span><div class=ic>🧊</div></div>
+<div class=ban style="border-color:var(--line);background:var(--card)">La compra es lo que le falta a la nevera: <b>11 huecos</b> · del plan aceptado y de lo que se acaba. Borrador no incluido.</div>
+<div class=cap style="margin-top:4px">URGENTES · NECESITAS ANTES DEL VIERNES</div>
+<div class=three style="margin-bottom:8px"><div class="hole u">🐟 Salmón<small>2 lomos</small></div><div class="hole u">🧀 Queso<small>sin stock</small></div><div class="hole u">🫒 Aceite<small>1 L</small></div></div>
+<div class=cap>PARA LA SEMANA</div>
+<div class=three style="margin-bottom:8px"><div class=hole>🍅 Tomate triturado<small>2 botes</small></div><div class=hole>🥕 Zanahoria<small>1 kg</small></div><div class=hole>🍚 Arroz<small>1 kg</small></div><div class=hole>🥛 Leche<small>6 L</small></div><div class=hole>🍞 Pan<small>1 barra</small></div><div class=hole>🍫 Cacao<small>1 bote</small></div></div>
+<div class=cap>CÓMO LLENAR UN HUECO</div>
+<div class=three>
+ <div class=tile><span class=e>🧾</span><b>Ticket</b><span class=mini>foto de la compra</span></div>
+ <div class=tile><span class=e>▮▯▮</span><b>Código</b><span class=mini>de barras</span></div>
+ <div class=tile><span class=e>✍️</span><b>A mano</b><span class=mini>o buscar 🔍</span></div></div>
+<div class=mt style="margin:8px 0 6px;text-align:center">Al llenar el hueco, el producto aparece en su estante de la nevera</div>
+<div class="btn p">Marcar la compra como hecha</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>5 · HOY + VITAMINAS</div>
+<div class=top><span class=back>‹</span><h1>Lo que has sacado hoy</h1><span class=sp></span><div class=ic>🧊</div></div>
+<div class=card><div class=row><b>Miércoles 28</b><span class=mini>· guardia de 17 h</span><span class=sp></span><span class=mini>‹ hoy ›</span></div>
+ <div class=mac style="margin-top:8px"><div style="--w:62%"><b>1.480</b><span>de 2.400 kcal</span><i></i></div><div style="--w:71%"><b>98</b><span>de 140 P</span><i></i></div><div style="--w:55%"><b>160</b><span>de 290 HC</span><i></i></div><div style="--w:60%"><b>48</b><span>de 80 G</span><i></i></div></div></div>
+<div class=card><div class=stack style="margin-top:6px"><div class="tp cy">Desayuno<small>avena y yogur</small></div><div class="tp cy">Comida<small>pollo curry</small></div><div class="tp hu">Cena<small>＋ sacar</small></div><div class="tp hu">Picoteo<small>＋ sacar</small></div></div>
+ <div class=mini style="margin-top:8px">Cada táper o producto que sacas se apunta solo. Fuera de casa: «comer fuera» desde el libro 📖.</div></div>
+<div class=card><div class=cap>VITAMINAS Y MINERALES · % DE LA CANTIDAD DIARIA</div>
+<div class=vit><span>Vitamina D</span><div class=b><i style="width:34%;background:var(--warn)"></i></div><em>34 %</em></div><div class=vit><span>Hierro</span><div class=b><i style="width:41%;background:var(--warn)"></i></div><em>41 %</em></div><div class=vit><span>Calcio</span><div class=b><i style="width:58%;background:var(--ok)"></i></div><em>58 %</em></div><div class=vit><span>Vitamina C</span><div class=b><i style="width:100%;background:var(--ok)"></i></div><em>112 %</em></div><div class=vit><span>Vitamina B12</span><div class=b><i style="width:100%;background:var(--ok)"></i></div><em>140 %</em></div><div class=vit><span>Magnesio</span><div class=b><i style="width:72%;background:var(--ok)"></i></div><em>72 %</em></div><div class=vit><span>Yodo</span><div class=b></div><em>sin datos</em></div>
+ <div class=mini style="margin-top:8px">Te falta sobre todo <b>vitamina D</b>: huevos o salmón de la nevera te suben un 20 %.</div></div>
+<div class=btn>Ver qué hay en la nevera para subirlas</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>

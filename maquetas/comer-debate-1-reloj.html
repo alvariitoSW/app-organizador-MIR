@@ -1,0 +1,201 @@
+<!doctype html><meta charset=utf-8>
+<title>Comer · debate 1 · El reloj</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.sec{flex-basis:100%;max-width:1250px;margin:18px 0 -8px}
+.sec h2{margin:0 0 4px;font-size:22px}.sec p{margin:0;color:var(--ink2);max-width:900px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 70px}
+.lbl{position:absolute;top:-1px;right:14px;font-size:10px;font-weight:900;letter-spacing:.12em;color:#04121c;background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}.back{font-size:18px;color:var(--ink2)}
+.ic{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);display:grid;place-items:center;font-size:17px}
+.seg{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:5px;margin-bottom:8px}
+.seg div{text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg div.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.busca{display:flex;align-items:center;gap:8px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);padding:0 12px;color:var(--ink2);margin-bottom:8px}
+.mac{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mac div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center}
+.mac b{display:block;font-size:16px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.mac i{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}.mac i::after{content:"";display:block;height:100%;width:var(--w);background:var(--ok)}
+.com{display:grid;grid-template-columns:26px 1fr auto;gap:0 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.com:first-of-type{border-top:0}
+.chk{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#04121c;font-weight:900}
+.com b{font-size:13.5px}.com .s{font-size:11px;color:var(--ink2)}.com .k{font-size:12px;font-weight:800;color:var(--ink2);text-align:right}
+.mic{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.mic div{min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px 8px}
+.mic b{font-size:14px}.mic span{display:block;font-size:10px;color:var(--ink2);font-weight:800}
+.lo{color:var(--warn)}.hi{color:var(--ok)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:13px;padding:0 10px}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:#04121c;border:0}
+.btn.s{min-height:38px;font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:78px;display:flex;flex-direction:column;gap:3px}
+.tile .e{font-size:20px}.tile b{font-size:13px}.tile .mini{font-size:10.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 10px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);font-size:12px;font-weight:700}
+.chip.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--bg2))}
+.rec{display:grid;grid-template-columns:46px 1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rec:first-of-type{border-top:0}
+.rec .e{width:46px;height:46px;border-radius:13px;background:var(--bg2);display:grid;place-items:center;font-size:23px;grid-row:span 2}
+.rec b{font-size:13.5px}.rec .s{font-size:11px;color:var(--ink2)}
+.pill{font-size:11px;font-weight:900;padding:3px 7px;border-radius:99px;grid-row:span 2;background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.wk{display:grid;grid-template-columns:44px 1fr 1fr;gap:5px;font-size:11.5px}
+.wk .d{font-weight:900;color:var(--ink2);display:flex;flex-direction:column;justify-content:center}
+.wk .d small{font-weight:700;font-size:9.5px}
+.wk .c{border:1px dashed color-mix(in srgb,var(--brand2) 60%,var(--line));background:color-mix(in srgb,var(--brand2) 8%,var(--bg2));border-radius:9px;padding:6px 7px;min-height:38px}
+.wk .c.ok{border:1px solid var(--line);background:var(--bg2)}
+.wk .c.g{border-style:solid;border-color:color-mix(in srgb,var(--warn) 50%,var(--line));background:color-mix(in srgb,var(--warn) 8%,var(--bg2))}
+.wk .c small{display:block;color:var(--ink2);font-size:9.5px}
+.wk .h{font-size:9.5px;font-weight:900;letter-spacing:.12em;color:var(--ink2);text-align:center}
+.ban{border-radius:12px;padding:9px 11px;font-size:12px;border:1px solid color-mix(in srgb,var(--brand2) 55%,var(--line));background:color-mix(in srgb,var(--brand2) 14%,var(--bg2));margin-bottom:8px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:60px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:10px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.sheet{position:absolute;left:0;right:0;bottom:0;border-radius:22px 22px 0 0;border-top:1px solid var(--line);background:var(--card);padding:14px 14px 22px;box-shadow:0 -20px 60px #000a}
+.dim{position:absolute;inset:0;background:#0009}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
+.ns{display:inline-flex;border-radius:9px;overflow:hidden;font-weight:900;font-size:13px}
+.ns span{width:26px;height:30px;display:grid;place-items:center;color:#0008;opacity:.45}
+.ns .on{opacity:1;color:#fff;transform:scale(1.18);border-radius:6px;box-shadow:0 0 0 2px #fff}
+.nA{background:#038141}.nB{background:#85bb2f}.nC{background:#fecb02}.nD{background:#ee8100}.nE{background:#e63e11}
+.nsm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;font-size:11px;font-weight:900;color:#fff}
+.nova{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:900;background:#ee8100;color:#fff}
+.vit{display:grid;grid-template-columns:96px 1fr 58px;gap:6px;align-items:center;font-size:12px;margin-top:6px}
+.vit .b{height:7px;border-radius:7px;background:var(--line);overflow:hidden}.vit .b i{display:block;height:100%;background:var(--ok)}
+.vit em{font-style:normal;font-weight:800;text-align:right;color:var(--ink2);font-size:11px}
+.res{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res b{font-size:13px}.res .s{font-size:11px;color:var(--ink2)}
+.tag{font-size:9.5px;font-weight:900;letter-spacing:.08em;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.ej{position:absolute;bottom:66px;left:12px;font-size:10px;color:var(--ink2);opacity:.8}
+
+/* ===== EL RELOJ ===== */
+.tl{position:relative;margin-left:50px;padding-left:20px}
+.tl::before{content:"";position:absolute;left:0;top:4px;bottom:0;width:2px;background:linear-gradient(var(--brand),var(--brand2) 55%,var(--line))}
+.st{position:relative;margin-bottom:7px}
+.st::before{content:"";position:absolute;left:-25px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--bg2);border:2px solid var(--ink2)}
+.st .t{position:absolute;left:-70px;top:8px;width:36px;text-align:right;font-size:11px;font-weight:900;color:var(--ink2)}
+.st.ya::before{background:var(--ok);border-color:var(--ok)}
+.st.now::before{left:-28px;top:8px;width:16px;height:16px;background:var(--brand);border-color:#fff;box-shadow:0 0 0 5px color-mix(in srgb,var(--brand) 25%,transparent)}
+.st.now .t{color:var(--brand);top:9px}
+.st.cmp::before{border-color:var(--warn);background:var(--warn)}
+.st.ant::before{border-color:var(--brand2);background:var(--brand2)}
+.st.vit2::before{border-color:var(--ok)}
+.st .card{margin:0;padding:9px 11px}
+.st.now .card{border-color:var(--brand)}
+.st.ant .card{border-color:color-mix(in srgb,var(--brand2) 60%,var(--line))}
+.st.cmp .card{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+.dia{position:relative;margin:10px 0 6px;font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2)}
+.dia::before{content:"";position:absolute;left:-24px;top:2px;width:8px;height:8px;background:var(--ink2);transform:rotate(45deg)}
+.dia b{color:var(--brand)}
+.hr{height:1px;background:var(--line);margin:6px 0}
+.mini2{font-size:11px;color:var(--ink2)}
+.bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+.stk{position:absolute;left:12px;right:12px;top:12px;display:flex;gap:8px;align-items:center}
+.qa{display:flex;gap:6px}.qa .btn{flex:1;min-height:44px}
+.lin{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;min-height:36px;border-top:1px solid var(--line);font-size:12.5px}
+.lin:first-of-type{border-top:0}
+.x{width:22px;height:22px;border-radius:7px;border:2px solid var(--line)}
+.cad{color:var(--warn);font-weight:800;font-size:11px}
+</style>
+<div class=sec><h2>EL RELOJ · Comer se organiza por el tiempo</h2>
+<p><b>Manifiesto.</b> Comer no es una lista de pestañas: es una línea que va de ahora hacia delante. Lo que comes ahora, esta tarde, mañana y el domingo cuelgan de la misma línea, y la semana es su continuación, no una tabla. La compra, la nevera, el antojo y las vitaminas no tienen sitio propio: son paradas que aparecen en la hora en que tocan (jueves 19 h compra, 23 h tu antojo). Nada está duplicado porque cada cosa solo existe en su momento.</p>
+<p class=mini style="margin-top:6px">Buscador y ficha del alimento: los de comer-mapa.html (BUSCADOR y FICHA), sin cambios. Se llega con la lupa fija arriba de la pantalla 1 (y ▥ para escanear), a un toque desde cualquier parada.  Cifras de ejemplo.</p></div>
+<div class=ab><div class=lbl>1 · AHORA</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div><div class=busca style="margin-bottom:6px">🔍 Busca un alimento o escanea… <span class=sp></span>▥</div>
+<div class=tl>
+ <div class="st now"><div class=t>14:10</div><div class=card><div class=row><b>Ahora · miércoles 28</b><span class=sp></span><span class=mini>guardia 17 h</span></div>
+  <div class=mac style="margin-top:7px"><div style="--w:62%"><b>1.480</b><span>de 2.400</span><i></i></div><div style="--w:71%"><b>98</b><span>de 140 P</span><i></i></div><div style="--w:55%"><b>160</b><span>de 290 HC</span><i></i></div><div style="--w:60%"><b>48</b><span>de 80 G</span><i></i></div></div></div></div>
+ <div class="st ya"><div class=t>9:00</div><div class=card style="padding:7px 11px"><div class=row><span class=mini>✓ Desayuno · avena y plátano</span><span class=sp></span><span class=mini>520</span></div><div class=hr style="margin:4px 0"></div><div class=row><span class=mini>✓ Comida · pollo al curry (táper)</span><span class=sp></span><span class=mini>760</span></div></div></div>
+ <div class="st"><div class=t>16:30</div><div class=card><div class=row><div><b>Merienda antes de la guardia</b><div class=mini>Yogur proteico + fruta · 200 kcal</div></div><span class=sp></span><div class=chk>＋</div></div></div></div>
+ <div class="st"><div class=t>21:30</div><div class=card><div class=row><div><b>Cena en el hospital</b><div class=mini>Táper de lentejas · lo llevas en la nevera</div></div><span class=sp></span><div class=chk>＋</div></div></div></div>
+ <div class="st ant"><div class=t>23:00</div><div class=card><b>😋 Hora de tu antojo</b><div class=mini>9 antojos este mes, casi todos dulces</div><div class="btn s" style="margin-top:6px">Ver qué encaja en 3 min ›</div></div></div>
+ <div class="st vit2"><div class=t>cierre</div><div class=card><div class=row><b>💊 Vitaminas de hoy</b><span class=sp></span><span class=mini>ver ›</span></div><div class=mini><span class=lo>Vit. D 34 %</span> · <span class=lo>Hierro 41 %</span> · Calcio 58 %</div></div></div>
+ <div class=dia>MAÑANA · JUEVES 29 <b>↓</b></div>
+</div>
+<div class=mini style="text-align:center;margin-top:2px">Sigue bajando: la línea continúa toda la semana</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>2 · MAÑANA Y LA SEMANA</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=ban style="margin-bottom:6px">✏️ <b>Semana en borrador</b> · guardias + tus platos favoritos. No cuenta en la compra hasta aceptar.</div>
+<div class=tl style="margin-left:50px">
+ <div class=dia style="margin-top:2px">JUEVES 29 · <span class=mini2>saliente</span></div>
+ <div class=st><div class=t>14:00</div><div class="card" style="border-style:dashed"><b>Bowl de arroz y atún</b> <span class=mini>5 min</span><div class=mini>Cena: tortilla francesa + ensalada</div></div></div>
+ <div class="st cmp"><div class=t>19:00</div><div class=card><div class=row><div><b>🛒 Compra</b><div class=mini>14 productos · 52 € · 2 ya en nevera</div></div><span class=sp></span><span class=mini>abrir ›</span></div></div></div>
+ <div class=dia>VIERNES 30 · <span class=mini2>mañana</span></div>
+ <div class=st><div class=t>14:00</div><div class=card style="border-style:dashed"><b>Pollo al curry</b> <span class=mini>táper</span><div class=mini>Cena: fuera · elige al llegar</div></div></div>
+ <div class=dia>SÁBADO 31 y DOMINGO 1 · <span class=mini2>libres</span></div>
+ <div class=st><div class=t>sáb</div><div class=card style="border-style:dashed"><b>Paella</b> · cena: pizza casera</div></div>
+ <div class="st cmp"><div class=t>dom 11</div><div class=card style="border-style:dashed;border-color:var(--warn)"><b>🍲 Cocinar en lote</b><div class=mini>Lentejas y pollo al curry · 8 táperes para L–J</div></div></div>
+ <div class=dia>LUNES 2 · MARTES 3 · <span class=mini2>toca el hueco para cambiarlo</span></div>
+ <div class=st><div class=t>lun</div><div class=card style="border-style:dashed"><b>Lentejas</b> · cena: salmón y patata</div></div>
+ <div class="st"><div class=t>mar</div><div class="card" style="border-style:dashed"><b>Guardia</b> · táper de lentejas</div></div>
+</div>
+<div class=two style="position:absolute;left:12px;right:12px;bottom:70px"><div class="btn p">✓ Aceptar semana</div><div class=btn>🔄 Otro borrador</div></div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>3 · PARADA: ANTOJO</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=tl style="margin-top:2px">
+ <div class="st now"><div class=t>23:00</div><div class=card style="border-color:var(--brand2)"><div class=cap style="margin:0 0 4px">😋 ¿QUÉ TE APETECE?</div>
+  <div class=chips><div class="chip on">Dulce</div><div class=chip>Salado</div><div class=chip>Chocolate</div><div class=chip>Crujiente</div><div class=chip>Caliente</div></div></div></div>
+ <div class="st ant"><div class=t>+3 min</div><div class=card><div class=cap>QUEDAN 420 KCAL Y 22 P · ENCAJAN</div>
+  <div class=rec><div class=e>🧁</div><b>Bizcocho de taza proteico</b><span class=pill>3 min</span><div class=s>microondas · 230 kcal · 20 P</div></div>
+  <div class=rec><div class=e>🍫</div><b>Mug de cacao y avena</b><span class=pill>2 min</span><div class=s>microondas · 190 kcal · 12 P</div></div>
+  <div class=rec><div class=e>🍎</div><b>Manzana asada con canela</b><span class=pill>4 min</span><div class=s>microondas · 120 kcal · 1 P</div></div></div></div>
+ <div class=st><div class=t>solo apuntar</div><div class=card><div class=row><b>Apuntar sin comer</b><span class=sp></span><div class="btn s" style="min-height:44px">＋ Antojo</div></div></div></div>
+</div>
+<div class=card style="margin-left:0"><div class=cap>TU PATRÓN · ÚLTIMOS 30 DÍAS</div>
+ <div class=row style="align-items:flex-end;height:54px;gap:5px">
+  <div style="flex:1;height:8px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:10px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:14px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:22px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:48px;background:var(--brand2);border-radius:4px"></div><div style="flex:1;height:40px;background:var(--brand2);border-radius:4px"></div><div style="flex:1;height:12px;background:var(--line);border-radius:4px"></div></div>
+ <div class=row mini style="justify-content:space-between"><span class=mini>8 h</span><span class=mini>12</span><span class=mini>16</span><span class=mini>18</span><span class=mini>22</span><span class=mini>23</span><span class=mini>0</span></div>
+ <div class=mini style="margin-top:6px">9 antojos: 7 dulces, 6 después de las 22 h, 5 tras guardia. Lo más pedido: chocolate.</div></div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>4 · PARADA: COMPRA, NEVERA, RECETAS</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=tl style="margin-top:2px">
+ <div class="st cmp now"><div class=t>jue 19</div><div class=card style="border-color:var(--warn)"><div class=row><b>🛒 Compra · 14 productos</b><span class=sp></span><b>52 €</b></div>
+  <div class=lin><div class=x></div><span>Pollo, 1,2 kg</span><span class=mini>lote dom.</span></div>
+  <div class=lin><div class=x></div><span>Arroz integral</span><span class=mini>bowl X</span></div>
+  <div class=lin><div class=x></div><span>Atún en lata ×4</span><span class=mini>bowl X</span></div>
+  <div class=lin><div class=x></div><span>Calabaza</span><span class=mini>crema D</span></div>
+  <div class=row style="margin-top:6px"><div class="btn s sp">＋ A mano</div><div class="btn s sp">▥ Código</div><div class="btn s sp">🧾 Ticket</div></div>
+  <div class=mini style="margin-top:5px">Solo cuenta la semana aceptada. No hay otra lista en ningún sitio.</div></div></div>
+ <div class="st ya"><div class=t>en casa</div><div class=card><div class=cap>🧊 NEVERA · CADUCA PRONTO</div>
+  <div class=lin><span>🍲</span><span>Táper pollo al curry ×2</span><span class=cad>vie 30</span></div>
+  <div class=lin><span>🥛</span><span>Yogur proteico ×3</span><span class=cad>sáb 31</span></div>
+  <div class=lin><span>🥚</span><span>Huevos ×6</span><span class=mini>2 nov</span></div></div></div>
+ <div class="st"><div class=t>dom 1</div><div class=card><div class=cap>CON LO QUE TIENES</div>
+  <div class=two><div class="btn s">🍲 Cocinar en lote</div><div class="btn s">📖 Recetas · 24</div></div>
+  <div class=two style="margin-top:6px"><div class="btn s">🍽️ Comer fuera</div><div class="btn s">📦 Despensa</div></div></div></div>
+</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+<div class=ab><div class=lbl>5 · PARADA: VITAMINAS</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=tl style="margin-top:2px">
+ <div class="st now"><div class=t>cierre</div><div class=card><div class=row><b>💊 Vitaminas y minerales</b><span class=sp></span><span class=mini>% diario</span></div>
+  <div class=vit><span>Vitamina D</span><div class=b><i style="width:34%;background:var(--warn)"></i></div><em class=lo>34 %</em></div>
+  <div class=vit><span>Hierro</span><div class=b><i style="width:41%;background:var(--warn)"></i></div><em class=lo>41 %</em></div>
+  <div class=vit><span>Calcio</span><div class=b><i style="width:58%"></i></div><em>58 %</em></div>
+  <div class=vit><span>Magnesio</span><div class=b><i style="width:72%"></i></div><em>72 %</em></div>
+  <div class=vit><span>Vitamina C</span><div class=b><i style="width:100%"></i></div><em class=hi>112 %</em></div>
+  <div class=vit><span>Vitamina B12</span><div class=b><i style="width:100%"></i></div><em class=hi>140 %</em></div>
+  <div class=vit><span>Zinc</span><div class=b></div><em>sin datos</em></div>
+  <div class=vit><span>Yodo</span><div class=b></div><em>sin datos</em></div></div></div>
+ <div class="st ant"><div class=t>21:30</div><div class=card><b>Falta vitamina D</b><div class=mini>La cena con huevos te sube un 20 %. El salmón del lunes, un 80 %.</div><div class="btn s" style="margin-top:6px">Cambiar la cena por huevos</div></div></div>
+ <div class="st"><div class=t>semana</div><div class=card><div class=mini>Media de 7 días: D 41 % · hierro 55 % · calcio 63 %. Los «sin datos» no cuentan.</div></div></div>
+</div>
+<div class=ej>cifras de ejemplo</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
