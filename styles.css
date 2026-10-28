@@ -2572,7 +2572,7 @@ html,body{overscroll-behavior-y:none}
 .lecfr .lp.dd{box-shadow:inset 0 -2px 0 var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
 .lecfr .lp i{font-style:normal;font-size:12px;color:var(--ink2)}
 .lecl{border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--bg) 40%,var(--card));padding:0 10px}
-.lecit{display:grid;grid-template-columns:1fr auto 38px 30px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.lecit{display:grid;grid-template-columns:24px 1fr auto 38px 30px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .lecit:first-child{border-top:0}
 .lecit .n{display:flex;flex-direction:column;min-width:0}.lecit .n b{font-size:14px}.lecit .n span{font-size:12px;color:var(--ink2)}
 .lecit.impl .n b{font-weight:600;color:var(--ink2)}
@@ -2582,6 +2582,22 @@ html,body{overscroll-behavior-y:none}
 .lecg{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--ink2);font-weight:700}
 .lecg input{width:58px;min-height:34px;border:1px solid var(--line);border-radius:9px;background:var(--bg2);color:var(--ink);font:inherit;font-size:13px;font-weight:800;text-align:right;padding:0 6px}
 .lecd{display:flex;flex-direction:column;gap:6px}.lecd b{font-size:13.5px}
+/* escribir lo comido: la marca de cada fila (✓ entendido · ≈ supuesto · ? falta saberlo), la rueda de la fila y las dudas en su fila */
+.sg{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;color:#04121c;flex:none}
+.sg.ok{background:var(--ok)}.sg.su{background:var(--warn)}.sg.no{background:var(--bad)}
+.lecq{display:flex;align-items:center;gap:4px}
+.lecrb{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:15px;font-weight:900;cursor:pointer;padding:0}
+.lecrb.on{border-color:var(--brand);color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
+.lecit .rueda.ruedafila,.lecit .lecd.dd{grid-column:1/-1}
+.rueda.ruedafila{height:120px;padding:40px 0;margin-top:2px}
+.lecit .lecd.dd{margin:-2px 0 2px}.lecd.dd .lecop .chipx{min-height:36px}
+.lecit.lecdu .k{color:var(--ink2)}
+/* campo vacío de «¿Qué has comido?»: lo de siempre a esta hora y repetir lo de ayer */
+.siempre{padding:8px 12px}.siempre .cap{margin-bottom:2px}
+.lesi{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;min-height:48px;border-top:1px solid var(--line)}
+.lesi:first-of-type{border-top:0}.lesi b{font-size:13.5px}.lesi .k{font-size:12px;font-weight:800;color:var(--ink2)}
+.lesb{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:18px;font-weight:900;cursor:pointer;padding:0}
+.ayu{display:flex;gap:6px;margin-bottom:8px}.ayu .btn{flex:1;min-height:44px;font-size:12.5px}
 .lecop{display:flex;flex-wrap:wrap;gap:6px}.lecop .chipx{min-height:36px;font-size:13px}.lecop .chipx.x{color:var(--ink2)}
 .lectam{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .lectam button{min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
