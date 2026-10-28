@@ -36,11 +36,11 @@ h1,h2,p{margin:0}
 .hoy{background:var(--ink);color:var(--blanco);padding:12px 16px;border-top:6px solid var(--ocre)}
 .hoy b{font-size:22px;display:block}
 .hoy span{font-size:15px}
-.lista{list-style:none;margin:0;padding:0}
-.lista li{display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:3px double var(--muted);padding:4px 0}
-.lista .nom{flex:1;font-weight:700}
+.lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.lista li{background:var(--piedra);border:3px solid var(--ink);padding:4px 8px;min-height:54px}.lista li:last-child{grid-column:1/-1}.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lista .nom{font-weight:700;font-size:14px}
 .lista .nom small{display:block;font-weight:400;color:var(--muted);font-size:13px}
-.lista .kg{font-weight:800;font-size:20px;text-align:right}
+.lista .kg{font-weight:800;font-size:18px}
 .lista .kg small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
 .nota{font-size:14px;color:var(--muted);margin-top:8px}
 .nota b{color:var(--ink)}
@@ -102,7 +102,7 @@ h1,h2,p{margin:0}
  <div class="pad">
   <ul class="lista" id="ej"></ul>
   <p class="nota" id="cambio-nota" aria-live="polite">Entre series la app cuenta el descanso. Si sacas todas las series, la próxima vez sube el peso.</p>
-  <button class="btn grande" id="btnmin" aria-expanded="false" style="margin-top:12px">¿Vas justo? Sesión mínima · 25 min</button>
+  <div class="dos"><button class="btn" id="btncambia">Cambiar un ejercicio</button><button class="btn" id="btnmin" aria-expanded="false">¿Vas justo? Mínima · 25 min</button></div>
   <div id="minimo" hidden><b>Mínima a las 15:30:</b> 3 ejercicios × 2 series. Sentadilla 45 kg, press de banca 32,5 kg y remo 27,5 kg. Cuenta igual para la racha.</div>
   <p class="nota" id="dia-nota" aria-live="polite" style="margin-top:12px"><b>Toca un triángulo</b> de la semana para ver su día.</p>
  </div>
@@ -213,7 +213,7 @@ ${agujero(300,36)}
 </g>
 <g class="part" id="p-semana">${semana(232,false)}</g>
 <g class="part" id="p-vuelta">${cuadricula(20,290,210,12,8,'normal',false)}${T(125,284,'La vuelta',{fs:13})}</g>
-<g class="part" id="p-peso">${marcas(290,298,11,8,1,50)}${T(352,302,'82 kg',{a:'start',fs:13})}${T(352,380,'75 kg',{a:'start',fs:13})}${T(330,284,'Peso',{fs:13})}<path d="M284 305l-14 -7v14z" fill="${ALM}" stroke="${INK}" stroke-width="2"/></g>
+<g class="part" id="p-peso">${marcas(290,298,11,8,1,50)}${T(352,302,'82 kg',{a:'start',fs:13})}${T(352,380,'75 kg',{a:'start',fs:13})}${T(380,286,'Peso',{fs:13})}<path d="M284 305l-14 -7v14z" fill="${ALM}" stroke="${INK}" stroke-width="2"/></g>
 </svg>`;
 
 // ---------- Pantalla 1 ----------
@@ -235,8 +235,8 @@ ${T(139,318,'sol en el gimnasio',{fs:13})}
 ${zig(0,458,412,-10,34,ALM,3)}
 </svg>`;
 const EJ=[['Sentadilla','45 kg','2 × 8'],['Press de banca','32,5 kg','2 × 8'],['Peso muerto','50 kg','2 × 5'],['Remo','27,5 kg','2 × 10'],['Press militar','20 kg','2 × 8']];
-document.getElementById('ej').innerHTML=EJ.map(e=>`<li><span class="nom">${e[0]}<small>${e[2]} · con descanso</small></span><span class="kg">${e[1]}</span><button class="btn cambia" aria-label="Cambiar ${e[0]} por otro del mismo músculo">Cambiar</button></li>`).join('');
-document.querySelectorAll('.cambia').forEach(b=>b.onclick=()=>{document.getElementById('cambio-nota').innerHTML='<b>Cambiado</b> por otro ejercicio del mismo músculo, de la biblioteca openGym. Las series y el % se quedan igual.'});
+document.getElementById('ej').innerHTML=EJ.map(e=>`<li><span class="nom">${e[0]}<small>${e[2]} · con descanso</small></span><span class="kg">${e[1]}</span></li>`).join('');
+document.getElementById('btncambia').onclick=(()=>{document.getElementById('cambio-nota').innerHTML='<b>Cambiado</b> por otro ejercicio del mismo músculo, de la biblioteca openGym. Las series y el % se quedan igual.'});
 document.getElementById('btnmin').onclick=function(){const m=document.getElementById('minimo');m.hidden=!m.hidden;this.setAttribute('aria-expanded',String(!m.hidden))};
 const NOTAS=['<b>Lunes:</b> gimnasio a las 15:00.','<b>Martes:</b> guardia. Hoy no se entrena, descansa.','<b>Miércoles:</b> saliente. Paseo de 20 min o nada.','<b>Jueves (hoy):</b> gimnasio de 15:00 a 16:00.','<b>Viernes:</b> sesión mínima de 25 min a las 15:30.','<b>Sábado:</b> parque a las 10:00, 40 min, sin material.','<b>Domingo:</b> descanso.'];
 document.querySelectorAll('[data-dia]').forEach(g=>{const f=()=>{document.getElementById('dia-nota').innerHTML=NOTAS[g.dataset.dia]};g.onclick=f;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
