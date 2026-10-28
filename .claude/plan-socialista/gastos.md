@@ -24,7 +24,7 @@ traspaso explica por qué.
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | — | sin medir | — | — |
 | maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
-| construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
+| construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | estudio | — | sin medir | — | — |
 | parte (/plan-socialista) | — | sin medir | — | — |
 
@@ -36,9 +36,12 @@ traspaso explica por qué.
 | 2026-10-28 | v3-plan-global-2 | herramientas | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | spec-kit, plan de Comer, puesta al día y unir ramas; sin ayudantes. Ahorro: no releer skills enteras |
 | 2026-10-28 | v3-comer-mapa | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 8 | 192 | **3,6 M** | sesión principal (41 %) | concurso de 4 diseñadores sonnet + 2 rondas + ronda final y escribir (pedido por el usuario); principal opus 40 %. Ahorro: el concurso en 1 ronda con críticas cruzadas basta; capturas por guion, no por ayudante |
 | 2026-10-28 | v3-lector | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 99 | **2,3 M** | sesión principal (78 %) | clasificar 230 fallos y revisar kcal a mano · ajustar expectativas por script y mirar solo lecturas raras |
+| 2026-10-28 | v3-comer-reloj-1 | construir | opus-5-5 + sonnet-5-5 | 6 | 190 | **3,1 M** | P2 escribir con rueda por fila (41 %) | dos constructores sonnet a la vez (línea y escribir) + uno para quitar la lista repetida que dejó el primero · ahorro: en la ficha, decir qué se QUITA, no solo qué se añade |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
+
+- La ficha dice qué se **quita** además de qué se añade: sin eso el constructor deja lo viejo debajo y hace falta otra vuelta (S3, ~250 k).
 
 Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las siguientes.
 

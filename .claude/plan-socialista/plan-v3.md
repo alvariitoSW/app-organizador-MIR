@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada. La S2b está en main (2e30a00). **La siguiente: S3, construir el Comer del reloj** (sesión nueva: «/plan-socialista y haz la S3»).
+**S3, sesión 1 hecha** en la rama `claude/magical-clarke-dlp8mb` (línea del día + escribir lo comido con rueda por fila; suite 754/754), **sin pasar a main**. Ficha: `fichas/v3-comer-reloj.md`. **La siguiente: S3b** (sesión nueva: «/plan-socialista y haz la S3b»): Mi semana a mano, compra de lo apuntado, nevera dibujada, vitaminas, e «investigar» lo desconocido.
 
 ## Por hacer
 

@@ -1486,3 +1486,24 @@ paquete de galletas» (¿entero?); y «un mazazo», «migajas».
 buena: la app suele tener razón (un cortado y una magdalena son ~145 kcal, no 200). Los valores de los alimentos nuevos son
 de tablas típicas españolas por 100 g. «Un cacho / un pedazo» es una ración; «un trocito», un trozo. «De primero…, de
 segundo…» es la comida. La seguridad se calcula al momento (no se guarda), así que al cambiar los gramos en la S3 cambiará.
+
+## El Comer del reloj, sesión 1: la línea del día y escribir lo comido (2026-10-28 · S3)
+
+**Elegido.** Comer › Hoy es **una sola línea** (`maquetas/comer-debate-1-reloj.html`, pantalla 1): la lupa «¿Qué has
+comido? o busca…», «Ahora» con kcal/P/HC/G frente al objetivo, y cada comida **una vez**, a su hora (`cjeHoraMom`), unidas
+por una raya: lo apuntado con ✓, lo que queda en gris y **LO SIGUIENTE** resaltado en el sitio de su comida, con «✓ Hecho»
+(lo que tocaba o, sin plan, lo de siempre de ese momento) y «Otra cosa» (escribir, ya dirigido a esa comida). Al pie, **la
+semana de un vistazo** (🍳 · 📦 · 🏥 · 🍽️) que lleva a Plan. Cocina, Plan y Despensa siguen como pestañas.
+**Escribir lo comido** (`maquetas/comer-escribir.html`): una fila por cosa con su marca ✓ / ≈ / ? (`frSeg`) y el «por» de
+lo supuesto, las preguntas con sus chips dentro de su fila y **la rueda de cantidad en cada fila** (⇅): al moverla, kcal y
+total cambian y la fila pasa a ✓. Con el campo vacío: «lo de siempre a esta hora», «↺ Repetir lo de ayer» y «📖 Mis platos».
+Elegido por el usuario: línea + escribir en esta sesión, rueda en cada fila, la línea sustituye «Hoy».
+
+**Descartado.** Una tarjeta LO SIGUIENTE aparte encima de la lista de comidas (las repetía). Ordenar las filas de
+escribir intercalando las preguntas (rompía la lectura por índice). Cambiar las pestañas de Comer ya (sesión 2).
+
+**Supuestos.** Horas fijas cuando no hay ajuste: desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00 (la comida
+sale de `comidasCfg`). Merienda y picoteo no son «lo siguiente». Teclear los gramos de una fila también la pone en ✓, y el
+pan supuesto pasa a ✓ al tocarlo. Si la app duda del alimento («lo más parecido», una errata), la fila sigue en ≈ aunque
+muevas la rueda. La cantidad de la rueda no se recuerda para la próxima vez. «Investigar» lo desconocido se queda en lo que
+había (opciones, buscar, a ojo); las cinco fuentes de la maqueta, a la sesión 2. Antojo y vitaminas, todavía no.

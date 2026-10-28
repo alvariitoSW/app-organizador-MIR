@@ -48,15 +48,17 @@ la compra de lo apuntado, la nevera dibujada y las vitaminas (pantallas 2, 3, 5 
 
 ## 4 · Pasos
 - [x] P0 Ficha y dudas · esta ficha · opus (sesión principal)
-- [ ] P1 [P] H1: prueba encadenada que falla → la línea en `renderComerEje` (tab hoy) + CSS · general-purpose
+- [x] P1 [P] H1: prueba encadenada que falla → la línea en `renderComerEje` (tab hoy) + CSS · general-purpose
   sonnet · ~45 pasos. Prueba nueva justo antes de la línea `check('sin errores de JavaScript…` (13330).
-- [ ] P2 [P] H2+H3+H4: prueba encadenada que falla → filas con marca y rueda por fila en `lecturaCardHTML`,
+- [x] P2 [P] H2+H3+H4: prueba encadenada que falla → filas con marca y rueda por fila en `lecturaCardHTML`,
   `cantRuedaHTML` generalizada, cabecera «¿Qué has comido?» y campo vacío · general-purpose sonnet, en worktree ·
   ~50 pasos. Prueba nueva justo después del `check('la hoja de cantidad…` (13255–13262).
-- [ ] P3 Juntar P1+P2, `tools/pruebas-corto.sh --solo` de las nuevas y la 330 · opus · ~8 pasos
-- [ ] P4 Capturas a 412×915 (línea, frase del hospital, rueda movida) y suite completa · verificador sonnet · ~25 pasos
-- [ ] P5 DECISIONS (una entrada), plan, gasto y traspaso · opus · ~10 pasos
+- [x] P3 Juntar P1+P2, `tools/pruebas-corto.sh --solo` de las nuevas y la 330 · opus · ~8 pasos
+- [x] P4 Capturas a 412×915 (línea, frase del hospital, rueda movida) y suite completa · verificador sonnet · ~25 pasos
+- [x] P5 DECISIONS (una entrada), plan, gasto y traspaso · opus · ~10 pasos
 
 ## 5 · Comprobación
 H1→P1 · H2/H3/H4→P2 · cada paso con prueba que cae al revertir · maquetas aprobadas · medido a 412×915 en P4 ·
 sin [ACLARAR] abiertas. Presupuesto: ~2,1 M (construir, 90 % de la última).
+
+Medido: 3,1 M frente a ~2,1 M (P2 41 %; una vuelta más para quitar la lista repetida).
