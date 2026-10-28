@@ -101,9 +101,35 @@ body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-appl
 .lin:first-of-type{border-top:0}
 .x{width:22px;height:22px;border-radius:7px;border:2px solid var(--line)}
 .cad{color:var(--warn);font-weight:800;font-size:11px}
+
+.sem7{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:7px 8px;margin-bottom:6px}
+.d7{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.d7 div{text-align:center;border-radius:10px;background:var(--bg2);border:1px solid var(--line);padding:3px 0;font-size:18px;line-height:1.2}
+.d7 b{display:block;font-size:11px;color:var(--ink2)}
+.d7 .hoy{border-color:var(--brand)}.d7 .sel{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--bg2))}
+.sem7 .lg{font-size:11px;color:var(--ink2);margin-top:4px;text-align:center}
+.cena{font-size:16px;font-weight:900;margin-top:4px;line-height:1.2}.cena small{display:block;font-size:11px;font-weight:700;color:var(--ink2)}
+.hueco{margin-top:5px;min-height:44px;border:2px dashed var(--brand2);border-radius:11px;display:grid;place-items:center;color:var(--brand);font-weight:800;font-size:13px}
+.fr{border-radius:22px;border:2px solid #2a3b5c;background:linear-gradient(180deg,#0f1a2e,#0b1424);padding:8px;display:grid;grid-template-columns:1fr 100px;gap:8px}
+.fr .in{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fr .dr{display:flex;flex-direction:column;gap:6px;border-left:2px solid #2a3b5c;padding-left:8px}
+.sh{border-bottom:4px solid #2c4468;padding:3px 2px 8px}
+.sh .nm{font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--ink2);display:flex;margin-bottom:5px}.sh .nm i{font-style:normal;margin-left:auto;color:var(--brand);letter-spacing:0}
+.stack{display:flex;gap:6px;align-items:flex-end}
+.tp{position:relative;flex:1;min-width:0;min-height:62px;border-radius:5px 5px 9px 9px;border:2px solid var(--c1,#4a79b8);background:color-mix(in srgb,var(--c1,#4a79b8) 18%,var(--bg2));padding:12px 3px 3px;font-size:11.5px;font-weight:800;line-height:1.15;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.tp::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;height:9px;border-radius:5px;background:var(--c1,#4a79b8)}
+.tp small{display:block;font-weight:700;font-size:11px;color:var(--ink2)}
+.tp.cad{--c1:#fbbf24}.tp.mor{--c1:#7c5cff}.tp.cy{--c1:#38e1ff}
+.tp .dot{position:absolute;right:-5px;top:-10px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center}
+.bote{border-radius:8px;border:2px solid #3b5278;background:var(--bg2);padding:4px 2px;font-size:11px;font-weight:800;text-align:center;line-height:1.15;min-height:48px;display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0}
+.bote span{font-size:11px;color:var(--ink2);font-weight:700}
+.bote.hu{border-style:dashed;color:var(--ink2);border-color:#55688a}
+.pizarra{border-radius:6px;border:3px solid #55688a;background:#0c1626;font-size:12px;font-weight:800;padding:6px;line-height:1.25;color:#cfe}
+.lbl,.ej,.nav,.cap,.mac span,.mic span,.tag{font-size:11px}
+.mini{font-size:11.5px}.st .t{font-size:11px}.seg div,.tile .mini{font-size:11.5px}.mac span{letter-spacing:0}
 </style>
 <div class=sec><h2>EL RELOJ · Comer se organiza por el tiempo</h2>
-<p><b>Manifiesto.</b> Comer no es una lista de pestañas: es una línea que va de ahora hacia delante. Lo que comes ahora, esta tarde, mañana y el domingo cuelgan de la misma línea, y la semana es su continuación, no una tabla. La compra, la nevera, el antojo y las vitaminas no tienen sitio propio: son paradas que aparecen en la hora en que tocan (jueves 19 h compra, 23 h tu antojo). Nada está duplicado porque cada cosa solo existe en su momento.</p>
+<p><b>Manifiesto.</b> La semana la montas tú: apuntas lo que cenas y comes (un plato, «lo que sea», táper, fuera, hospital) y la compra sale de eso.  Comer no es una lista de pestañas: es una línea que va de ahora hacia delante. Lo que comes ahora, esta tarde, mañana y el domingo cuelgan de la misma línea, y la semana es su continuación, no una tabla. La compra, la nevera, el antojo y las vitaminas no tienen sitio propio: son paradas que aparecen en la hora en que tocan (jueves 19 h compra, 23 h tu antojo). Nada está duplicado porque cada cosa solo existe en su momento.</p>
 <p class=mini style="margin-top:6px">Buscador y ficha del alimento: los de comer-mapa.html (BUSCADOR y FICHA), sin cambios. Se llega con la lupa fija arriba de la pantalla 1 (y ▥ para escanear), a un toque desde cualquier parada.  Cifras de ejemplo.</p></div>
 <div class=ab><div class=lbl>1 · AHORA</div>
 <div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div><div class=busca style="margin-bottom:6px">🔍 Busca un alimento o escanea… <span class=sp></span>▥</div>
@@ -112,36 +138,51 @@ body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-appl
   <div class=mac style="margin-top:7px"><div style="--w:62%"><b>1.480</b><span>de 2.400</span><i></i></div><div style="--w:71%"><b>98</b><span>de 140 P</span><i></i></div><div style="--w:55%"><b>160</b><span>de 290 HC</span><i></i></div><div style="--w:60%"><b>48</b><span>de 80 G</span><i></i></div></div></div></div>
  <div class="st ya"><div class=t>9:00</div><div class=card style="padding:7px 11px"><div class=row><span class=mini>✓ Desayuno · avena y plátano</span><span class=sp></span><span class=mini>520</span></div><div class=hr style="margin:4px 0"></div><div class=row><span class=mini>✓ Comida · pollo al curry (táper)</span><span class=sp></span><span class=mini>760</span></div></div></div>
  <div class="st"><div class=t>16:30</div><div class=card style="border-color:var(--ok);padding:11px"><div class=cap style="margin:0 0 3px;color:var(--ok)">LO SIGUIENTE · ANTES DE LA GUARDIA</div><div style="font-size:17px;font-weight:900">¿Merienda?</div><div class=mini>Yogur proteico y fruta · 200 kcal · 18 P</div><div class=two style="margin-top:8px"><div class="btn p">✓ Hecho</div><div class=btn>Otra cosa</div></div></div></div>
- <div class="st"><div class=t>21:30</div><div class=card><div class=row><div><b>Cena en el hospital</b><div class=mini>Táper de lentejas · lo llevas en la nevera</div></div><span class=sp></span><div class="btn s" style="min-width:64px">Otra</div></div></div></div>
+ <div class="st"><div class=t>21:30</div><div class=card><div class=row><div><b>Cena en el hospital</b><div class=mini>Táper de lentejas · en la nevera</div></div><span class=sp></span><div class="btn s" style="min-width:64px">Otra</div></div></div></div>
  <div class="st ant"><div class=t>23:00</div><div class=card><b>😋 Hora de tu antojo</b><div class=mini>9 antojos este mes, casi todos dulces</div><div class="btn s" style="margin-top:6px">Ver qué encaja en 3 min ›</div></div></div>
  <div class="st vit2"><div class=t>cierre</div><div class=card><div class=row><b>💊 Vitaminas de hoy</b><span class=sp></span><span class=mini>ver ›</span></div><div class=mini><span class=lo>Vit. D 34 %</span> · <span class=lo>Hierro 41 %</span> · Calcio 58 %</div></div></div>
- <div class=dia>MAÑANA · JUEVES 29 <b>↓</b></div>
-</div>
-<div class=mini style="text-align:center;margin-top:2px">Sigue bajando: la línea continúa toda la semana</div>
+ </div>
+<div class=sem7 style="margin-top:2px"><div class=cap style="margin:0 0 3px">LA SEMANA DE UN VISTAZO</div><div class=d7><div class=hoy><b>X</b>🏥</div><div><b>J</b>🍳</div><div><b>V</b>📦</div><div><b>S</b>🍽️</div><div><b>D</b>🍳</div><div><b>L</b>📦</div><div><b>M</b>🏥</div></div></div>
 <div class=ej>cifras de ejemplo</div>
 <div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
 </div>
-<div class=ab><div class=lbl>2 · MAÑANA Y LA SEMANA</div>
-<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
-<div class=ban style="margin-bottom:6px">✏️ <b>Semana en borrador</b> · guardias + tus platos favoritos. No cuenta en la compra hasta aceptar.</div>
-<div class=tl style="margin-left:50px">
- <div class=dia style="margin-top:2px">JUEVES 29 · <span class=mini2>saliente</span></div>
- <div class=st><div class=t>14:00</div><div class="card" style="border-style:dashed"><b>Bowl de arroz y atún</b> <span class=mini>5 min</span><div class=mini>Cena: tortilla francesa + ensalada</div></div></div>
- <div class="st cmp"><div class=t>19:00</div><div class=card><div class=row><div><b>🛒 Compra</b><div class=mini>14 productos · 52 € · 2 ya en nevera</div></div><span class=sp></span><span class=mini>abrir ›</span></div></div></div>
- <div class=dia>VIERNES 30 · <span class=mini2>mañana</span></div>
- <div class=st><div class=t>14:00</div><div class=card style="border-style:dashed"><b>Pollo al curry</b> <span class=mini>táper</span><div class=mini>Cena: fuera · elige al llegar</div></div></div>
- <div class=dia>SÁBADO 31 y DOMINGO 1 · <span class=mini2>libres</span></div>
- <div class=st><div class=t>sáb</div><div class=card style="border-style:dashed"><b>Paella</b> · cena: pizza casera</div></div>
- <div class="st cmp"><div class=t>dom</div><div class=card style="border-style:dashed;border-color:var(--warn)"><b>🍲 Cocinar en lote</b><div class=mini>Lentejas y pollo al curry · 8 táperes para L–J</div></div></div>
- <div class=dia>LUNES 2 · MARTES 3 · <span class=mini2>toca el hueco para cambiarlo</span></div>
- <div class=st><div class=t>lun</div><div class=card style="border-style:dashed"><b>Lentejas</b> · cena: salmón y patata</div></div>
- <div class="st"><div class=t>mar</div><div class="card" style="border-style:dashed"><b>Guardia</b> · táper de lentejas</div></div>
+<div class=ab><div class=lbl>2 · MI SEMANA</div>
+<div class=top><h1>Mi semana</h1><span class=sp></span><div class="btn s" style="padding:0 10px">¿Me la propones?</div></div>
+<div class=sem7><div class=d7><div class=hoy><b>X</b>🏥</div><div><b>J</b>🍳</div><div><b>V</b>📦</div><div><b>S</b>🍽️</div><div><b>D</b>🍳</div><div><b>L</b>📦</div><div><b>M</b>🏥</div></div><div class=lg>🍳 cocinas · 📦 táper · 🏥 guardia · 🍽️ fuera</div></div>
+<div class=tl style="margin-top:6px">
+<div class="st "><div class=t>jue</div><div class=card><div class=row><b style="font-size:12px">🍳 Jue 29</b><span class=mini>comida: bowl</span></div><div class=cena>Salmón al horno con patata<small>lo apuntaste · cocinas</small></div></div></div>
+<div class="st "><div class=t>vie</div><div class=card><div class=row><b style="font-size:12px">📦 Vie 30</b><span class=mini>comida: pollo al curry</span></div><div class=hueco>＋ apunta la cena</div></div></div>
+<div class="st "><div class=t>sáb</div><div class=card><div class=row><b style="font-size:12px">🍽️ Sáb 31</b><span class=mini>comida: paella</span></div><div class=cena>Cena con amigos<small>fuera · sin comprar</small></div></div></div>
+<div class="st "><div class=t>dom</div><div class=card><div class=row><b style="font-size:12px">🍳 Dom 1</b><span class=mini>comida: lote</span></div><div class=cena>Crema de calabaza<small>lo apuntaste · 4 raciones</small></div></div></div>
+<div class="st "><div class=t>lun</div><div class=card><div class=row><b style="font-size:12px">📦 Lun 2</b><span class=mini>comida: táper de lentejas</span></div><div class=hueco>＋ apunta la cena</div></div></div>
+<div class="st "><div class=t>mar</div><div class=card><div class=row><b style="font-size:12px">🏥 Mar 3</b><span class=mini>comida: táper</span></div><div class=cena>Cena del hospital<small>hospital · sin comprar</small></div></div></div>
+
 </div>
-<div class=two style="position:absolute;left:12px;right:12px;bottom:88px"><div class="btn p">✓ Aceptar semana</div><div class=btn>🔄 Otro borrador</div></div>
+<div class="card cmpr" style="position:absolute;left:12px;right:12px;bottom:78px;margin:0;border-color:var(--warn)"><div class=row><div><b>🛒 De tus 3 cenas: 9 cosas</b><div class=mini>3 ya las tienes · 2 cenas sin apuntar</div></div><span class=sp></span><div class="btn s">Ver compra ›</div></div></div>
 <div class=ej>cifras de ejemplo</div>
 <div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
 </div>
-<div class=ab><div class=lbl>3 · PARADA: ANTOJO</div>
+<div class=ab><div class=lbl>3 · APUNTAR UN HUECO</div>
+<div style="opacity:.35"><div class=top><h1>Mi semana</h1></div>
+<div class=sem7><div class=d7><div class=hoy><b>X</b>🏥</div><div class=sel><b>J</b>🍳</div><div><b>V</b>📦</div><div><b>S</b>🍽️</div><div><b>D</b>🍳</div><div><b>L</b>📦</div><div><b>M</b>🏥</div></div></div>
+<div class=tl style="margin-top:6px"><div class="st "><div class=t>jue</div><div class=card><div class=row><b style="font-size:12px">🍳 Jueves 29</b><span class=mini>comida: bowl</span></div><div class=cena>Salmón al horno con patata<small></small></div></div></div>
+<div class="st "><div class=t>vie</div><div class=card><div class=row><b style="font-size:12px">📦 Viernes 30</b><span class=mini>comida: pollo al curry</span></div><div class=hueco>＋ apunta la cena</div></div></div>
+</div></div>
+<div class=dim></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+<div class=sheet style="bottom:60px"><div class=grab></div>
+<div class=row><b style="font-size:17px">Jueves · cena</b><span class=sp></span><span class=mini>cerrar ✕</span></div>
+<div class=busca style="margin:8px 0 6px;border-color:var(--brand)">✏️ Escribe lo que sea… <span class=sp></span><span style="color:var(--ink)">Salmón con patata</span></div>
+<div class=cap style="margin:6px 0 4px">TUS PLATOS</div>
+<div class=chips><div class="chip on">Salmón al horno</div><div class=chip>Tortilla de patata</div><div class=chip>Crema de calabaza</div><div class=chip>Pasta con atún</div><div class=chip>Wok de pollo</div></div>
+<div class=cap style="margin:10px 0 4px">O MÁS RÁPIDO</div>
+<div class=three><div class="btn s">📦 Táper de…</div><div class="btn s">🍽️ Fuera</div><div class="btn s">🏥 Hospital</div></div>
+<div class=row style="margin-top:10px;min-height:44px"><div class="chk on">✓</div><b style="font-size:13px">Cocino ese día 🍳</b><span class=sp></span><span class=mini>lo marca solo si es un plato</span></div>
+<div class=mini style="margin:4px 0 8px">Sus ingredientes pasan a la compra menos lo que ya tienes. Si es texto libre, entra tal cual en la lista.</div>
+<div class=two><div class="btn p">Apuntar</div><div class=btn>Dejar vacío</div></div>
+</div>
+</div>
+<div class=ab><div class=lbl>4 · PARADA: ANTOJO</div>
 <div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
 <div class=tl style="margin-top:2px">
  <div class="st now"><div class=t>23:00</div><div class=card style="border-color:var(--brand2)"><div class=cap style="margin:0 0 4px">😋 ¿QUÉ TE APETECE?</div>
@@ -150,38 +191,43 @@ body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-appl
   <div class=rec><div class=e>🧁</div><b>Bizcocho de taza proteico</b><span class=pill>3 min</span><div class=s>microondas · 230 kcal · 20 P</div></div>
   <div class=rec><div class=e>🍫</div><b>Mug de cacao y avena</b><span class=pill>2 min</span><div class=s>microondas · 190 kcal · 12 P</div></div>
   <div class=rec><div class=e>🍎</div><b>Manzana asada con canela</b><span class=pill>4 min</span><div class=s>microondas · 120 kcal · 1 P</div></div></div></div>
- <div class=st><div class=t>solo apuntar</div><div class=card><div class=row><b>Apuntar sin comer</b><span class=sp></span><div class="btn s" style="min-height:44px">＋ Antojo</div></div></div></div>
+ <div class=st><div class=t>solo apuntar</div><div class=card><div class=row><b>Apuntar sin comer</b><span class=sp></span><div class="btn s">＋ Antojo</div></div></div></div>
 </div>
-<div class=card style="margin-left:0"><div class=cap>TU PATRÓN · ÚLTIMOS 30 DÍAS</div>
+<div class=card><div class=cap>TU PATRÓN · ÚLTIMOS 30 DÍAS</div>
  <div class=row style="align-items:flex-end;height:54px;gap:5px">
   <div style="flex:1;height:8px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:10px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:14px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:22px;background:var(--line);border-radius:4px"></div><div style="flex:1;height:48px;background:var(--brand2);border-radius:4px"></div><div style="flex:1;height:40px;background:var(--brand2);border-radius:4px"></div><div style="flex:1;height:12px;background:var(--line);border-radius:4px"></div></div>
- <div class=row mini style="justify-content:space-between"><span class=mini>8 h</span><span class=mini>12</span><span class=mini>16</span><span class=mini>18</span><span class=mini>22</span><span class=mini>23</span><span class=mini>0</span></div>
+ <div class=row style="justify-content:space-between"><span class=mini>8 h</span><span class=mini>12</span><span class=mini>16</span><span class=mini>18</span><span class=mini>22</span><span class=mini>23</span><span class=mini>0</span></div>
  <div class=mini style="margin-top:6px">9 antojos: 7 dulces, 6 después de las 22 h, 5 tras guardia. Lo más pedido: chocolate.</div></div>
 <div class=ej>cifras de ejemplo</div>
 <div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
 </div>
-<div class=ab><div class=lbl>4 · PARADA: COMPRA, NEVERA, RECETAS</div>
-<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
-<div class=tl style="margin-top:2px">
- <div class="st cmp now"><div class=t>jue 19</div><div class=card style="border-color:var(--warn)"><div class=row><b>🛒 Compra · 14 productos</b><span class=sp></span><b>52 €</b></div>
-  <div class=lin><div class=x></div><span>Pollo, 1,2 kg</span><span class=mini>lote dom.</span></div>
-  <div class=lin><div class=x></div><span>Arroz integral</span><span class=mini>bowl X</span></div>
-  <div class=lin><div class=x></div><span>Atún en lata ×4</span><span class=mini>bowl X</span></div>
-  <div class=lin><div class=x></div><span>Calabaza</span><span class=mini>crema D</span></div>
-  <div class=row style="margin-top:6px"><div class="btn s sp">＋ A mano</div><div class="btn s sp">▥ Código</div><div class="btn s sp">🧾 Ticket</div></div>
-  <div class=mini style="margin-top:5px">Solo cuenta la semana aceptada. No hay otra lista en ningún sitio.</div></div></div>
- <div class="st ya"><div class=t>en casa</div><div class=card><div class=cap>🧊 NEVERA · CADUCA PRONTO</div>
-  <div class=lin><span>🍲</span><span>Táper pollo al curry ×2</span><span class=cad>vie 30</span></div>
-  <div class=lin><span>🥛</span><span>Yogur proteico ×3</span><span class=cad>sáb 31</span></div>
-  <div class=lin><span>🥚</span><span>Huevos ×6</span><span class=mini>2 nov</span></div></div></div>
- <div class="st"><div class=t>dom 1</div><div class=card><div class=cap>CON LO QUE TIENES</div>
-  <div class=two><div class="btn s">🍲 Cocinar en lote</div><div class="btn s">📖 Recetas · 24</div></div>
-  <div class=two style="margin-top:6px"><div class="btn s">🍽️ Comer fuera</div><div class="btn s">📦 Despensa</div></div></div></div>
+<div class=ab><div class=lbl>5 · PARADA: NEVERA Y COMPRA</div>
+<div class=top style="margin-bottom:6px"><h1>Casa</h1><span class=sp></span></div>
+<div class=fr>
+ <div class=in>
+  <div class=sh><div class=nm>PARA ESTA SEMANA <i>toca = sacar</i></div>
+   <div class=stack><div class="tp cad"><span class=dot>!</span>Lentejas<small>caduca mañana</small></div><div class="tp cy">Pollo curry<small>2 raciones</small></div><div class="tp mor">Boloñesa<small>3 raciones</small></div></div></div>
+  <div class=sh><div class=nm>CRUDO Y VERDURA</div>
+   <div class=stack><div class=bote style="flex:1">🥚 Huevos<span>6</span></div><div class=bote style="flex:1">🍅 Tomate</div><div class="bote hu" style="flex:1">🥕 Zanahoria<span>falta</span></div><div class="bote hu" style="flex:1">🧀 Queso<span>falta</span></div></div></div>
+  <div class="sh" style="border-bottom:0;padding-bottom:2px"><div class=nm>CONGELADOR · 4 RACIONES</div></div>
+ </div>
+ <div class=dr>
+  <div class=pizarra>🛒 FALTAN<br>6 cosas<br><span style="color:var(--bad)">2 urgentes</span></div>
+  <div class="bote hu">🫒 Aceite<span>queda poco</span></div>
+  <div class="bote hu">🥛 Leche<span>1 L</span></div>
+ </div>
 </div>
+<div class="card" style="margin:8px 0 0;border-color:var(--warn)"><div class=row><b>🛒 Compra · de tus cenas y comidas</b></div>
+ <div class=lin><div class=x></div><span>Salmón 400 g</span><span class=mini>cena jue</span></div>
+ <div class=lin><div class=x></div><span>Calabaza</span><span class=mini>crema dom</span></div>
+ <div class=lin><div class=x></div><span>«Algo de fruta»</span><span class=mini>tu nota</span></div>
+ <div class=mini style="margin-top:2px">Ya en casa, no entran: huevos, pollo, lentejas.</div>
+ <div class=row style="margin-top:6px"><div class="btn s sp">＋ A mano</div><div class="btn s sp">▥ Código</div><div class="btn s sp">🧾 Ticket</div></div></div>
+<div class=two style="margin-top:8px"><div class="btn s">🍲 Lote</div><div class="btn s">📖 Recetas · 24</div></div>
 <div class=ej>cifras de ejemplo</div>
 <div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
 </div>
-<div class=ab><div class=lbl>5 · PARADA: VITAMINAS</div>
+<div class=ab><div class=lbl>6 · PARADA: VITAMINAS</div>
 <div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
 <div class=tl style="margin-top:2px">
  <div class="st now"><div class=t>cierre</div><div class=card><div class=row><b>💊 Vitaminas y minerales</b><span class=sp></span><span class=mini>% diario</span></div>
