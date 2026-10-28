@@ -22,9 +22,10 @@ traspaso explica por qué.
 | Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | — | sin medir | — | — |
+| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) | ~0,8 M uno pequeño · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
 | maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
+| construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
 | estudio | — | sin medir | — | — |
 | parte (/plan-socialista) | — | sin medir | — | — |
 
@@ -39,6 +40,7 @@ traspaso explica por qué.
 | 2026-10-28 | la-rara | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 27 | 331 | **8,9 M** | sesión principal (35 %) | concurso de 6 escuelas + 4 de mejora; haiku sacó 1,1,3 en diseño libre: para maquetas raras, sonnet |
 | 2026-10-28 | v3-comer-mapa | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 8 | 192 | **3,6 M** | sesión principal (41 %) | concurso de 4 diseñadores sonnet + 2 rondas + ronda final y escribir (pedido por el usuario); principal opus 40 %. Ahorro: el concurso en 1 ronda con críticas cruzadas basta; capturas por guion, no por ayudante |
 | 2026-10-28 | v3-lector | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 99 | **2,3 M** | sesión principal (78 %) | clasificar 230 fallos y revisar kcal a mano · ajustar expectativas por script y mirar solo lecturas raras |
+| 2026-10-28 | v3-dinero-d1-d6 | construir | opus-5-5 + sonnet-5-5 | 13 | 498 | **9,9 M** | D6 · quitar lo viejo de Dinero (31 %) | 6 piezas en sonnet; D6 3,1 M (quitar al final, sin cortar al pasar el tope) · quitar lo viejo dentro de cada D y vigilar a los de fondo |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan

@@ -65,3 +65,6 @@ Nada para construir. Puede reabrir cualquier punto de esta acta.
 - **Comparecencia (Hacienda):** D1 costó 0,93 M (presupuesto 0,4) y D3 1,8 M (1,2): lo que más pesa es la caché leída de
   `app.js` en contextos largos. Previsión de la tanda ~5,7 M frente a 4,9 M aprobados (+16 %). **Acuerdo:** se sigue; D4 y
   D5 con encargos que dan las líneas exactas y piden leer solo esos trozos; la suite completa solo al final de cada D.
+- **Cierre (Consejo por delegación):** D1-D6 hechas; revisión final a 412×915 con un móvil viejo sembrado: migración bien,
+  Hoy/Mes/Ajustes bien. Suite 754/754 + bancos en verde → **a main** con `npm run sella`. Gasto final ~10 M (D6 3,1 M fue
+  la que se disparó: nadie la cortó al pasar el tope). La delegación se acaba aquí.

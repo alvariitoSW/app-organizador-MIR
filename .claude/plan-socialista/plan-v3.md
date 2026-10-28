@@ -12,25 +12,10 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Tanda Dinero, D1→D6, por delegación** (acta `consejo/2026-10-28-dinero-ejecucion.md`: presupuesto 4,3 M + ~0,6 M de
-dirección; qué se quita, decidido sin perder datos). Rama `ccr-c4997bb6-02fys3`, ya con `main` dentro.
+Nada. **La Tanda Dinero está hecha y en main** (D1-D6, por delegación; acta `consejo/2026-10-28-dinero-ejecucion.md`).
+**La siguiente: S3, construir el Comer del reloj** (sesión nueva: «/plan-socialista y haz la S3»).
 
 ## Por hacer
-
-### Tanda Dinero · Consejo, feria y concurso «La Rara» del 2026-10-28 · ≈4,3 M · **delegada en el Consejo** (gobierno.md, 28/10): decide, construye y sube a main
-
-Actas en `consejo/` (2026-10-28, -feria, -la-rara). **Diseño elegido:** Portada + Ahorro en el mundo de **La
-Laurisilva** (`maquetas/dinero-rara2-laurisilva.html`, 5/5); Gastos = el puesto 3 (5/5); Compras = R2-C (5/5); las dos
-con la piel de la Laurisilva. «Cuánto me queda» fuera; invertir fuera (una línea). Va antes que lo que queda de Comer.
-
-| # | Sesión | Tipo | Quién | Presupuesto |
-|---|---|---|---|---|
-| D1 | Limpieza invisible + las 2 pruebas de fecha + prueba «foto» de cifras | arreglo | sonnet | ~0,4 M |
-| D2 | Ficha + maqueta de Gastos y Compras con la piel de la Laurisilva (una ronda, sin concurso) | maqueta | sonnet; `verificador` | ~0,4 M |
-| D3 | Datos nuevos (sin borrar nada) + Portada Laurisilva + Gastos | construir | sonnet con ficha; `verificador` | ~1,2 M |
-| D4 | Ahorro Laurisilva (objetivo a fecha y su gráfica) + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
-| D5 | Lo que quiero comprar [v3-dinero-compras] | construir | sonnet; `verificador` | ~0,8 M |
-| D6 | Quitar lo viejo que apruebes (con migración) | arreglo | sonnet | ~0,6 M |
 
 ### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 5 de 9 hechas
 
@@ -86,6 +71,8 @@ De dónde sale el ahorro:
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-dinero] Tanda Dinero D1-D6 por delegación al Consejo: el Bosque (portada), Gastos, Ahorro con objetivo a fecha y «Ya ha llegado la nómina», Compras con espera de 30 días; lo viejo quitado (−664 líneas) sin borrar datos; migración `dinero3Migra` · main · ~10 M (presupuesto 4,9) · 2026-10-28
 
 - [v3-gobierno] El gobierno del repositorio y el Consejo de Ministros (copiado de fiebres-neutropenias); primer
   Consejo: la reforma de Dinero; feria (3 rondas) y concurso «La Rara» (2 rondas): gana La Laurisilva · 2026-10-28

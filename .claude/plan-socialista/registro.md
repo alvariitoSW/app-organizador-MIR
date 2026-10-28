@@ -5,7 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
-- [aparc-s2b-a-main] El lector de frases (S2b) está en la rama (f7dc69b), sin pasar a main: falta que digas «despliégalo» · desde 2026-10-28
+- ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: en main (2e30a00) · El lector de frases (S2b) está en la rama (f7dc69b), sin pasar a main: falta que digas «despliégalo» · desde 2026-10-28
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
@@ -115,6 +115,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-28-dinero] Dinero (D1-D6, Consejo por delegación): lo viejo (huchas, meta, banco, épocas) se queda guardado sin enseñarse; el colchón y las huchas sin objetivo → «guardado», las huchas con objetivo → compras planificadas, los deseos sin hacer → compras en espera; objetivo por defecto 6 meses en 12; lo no necesario espera 30 días y pasa solo a planificado (sin «Sigo queriéndolo»); una compra sin mes no suma al «al mes»; la pantalla del banco (capturas) ya no existe y «Cuadrarlo» se fue; la pestaña Mes vieja sigue colgando de Gastos («Cierre del mes») · DECISIONS D1-D6 y acta `consejo/2026-10-28-dinero-ejecucion.md` · contado el 2026-10-28
 - [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
 - [sup-2026-10-28-comer-mapa] Comer (maquetas S2): cifras de ejemplo; % de vitaminas sobre la referencia europea; «investigar» sin IA externa (solo Open Food Facts y tablas propias); dictado del teclado del móvil; las pantallas que solo se abren desde el «Hoy» antiguo se recolocan, no se quitan · DECISIONS «El mapa de Comer» · contado el 2026-10-28
 - [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
