@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>El Tablero · Dinero</title>
+<style>
+:root{--crema:#fbf1d8;--papel:#fffaf0;--tinta:#20203a;--rojo:#ff6b57;--amar:#ffd23f;--azul:#5aa0ff;--verde:#4fd18b;--tinta2:#4a4a63}
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#e9dcb8;color:var(--tinta);font-family:"Arial Rounded MT Bold","Nunito","Trebuchet MS",ui-rounded,system-ui,sans-serif;font-weight:700;font-size:15px;line-height:1.3}
+.cartel{background:var(--tinta);color:var(--crema);padding:8px 16px;border-bottom:6px solid var(--amar)}
+.cartel b{display:block;font-size:17px;font-weight:900;letter-spacing:.5px;color:var(--amar)}
+.cartel span{display:block;font-size:12px;font-weight:700;margin-top:2px}
+.rotulo{margin:0;padding:6px 16px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--tinta);background:var(--amar);border-top:3px solid var(--tinta)}
+.scr{background:var(--crema);padding:10px 16px 14px;position:relative}
+#p1{overflow:hidden}
+.estado{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.grande{font-size:38px;font-weight:900;line-height:1;white-space:nowrap}
+.grande small{font-size:16px}
+.estado p{margin:0;font-size:13px;font-weight:700;color:var(--tinta2)}
+.delante{display:inline-block;background:var(--verde);border:3px solid var(--tinta);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:900;color:var(--tinta)}
+svg{display:block}
+.tirada{background:var(--tinta);color:#fff;border-radius:18px;padding:8px 14px;margin:6px 0;border:3px solid var(--tinta);display:flex;align-items:center;gap:10px;box-shadow:0 4px 0 var(--rojo)}
+.tirada b{font-size:18px;font-weight:900;color:var(--amar);display:block}
+.tirada span{font-size:13px}
+.tres{display:flex;gap:6px;margin-top:8px}
+.btn{flex:1;min-height:52px;border:3px solid var(--tinta);border-radius:16px;font:inherit;font-weight:900;font-size:13px;color:var(--tinta);cursor:pointer;padding:4px;box-shadow:0 4px 0 var(--tinta);line-height:1.15}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tinta)}
+.btn:focus-visible,[role=button]:focus-visible{outline:4px solid var(--tinta);outline-offset:2px}
+.b-ahorro{background:var(--verde)}.b-pozo{background:var(--azul)}.b-tienda{background:var(--amar)}
+.btn i{font-style:normal;display:block;font-size:11px;font-weight:700}
+.aviso{position:absolute;left:16px;right:16px;bottom:10px;background:var(--rojo);color:var(--tinta);border:3px solid var(--tinta);border-radius:14px;padding:8px 12px;font-size:13px;font-weight:900;display:none;z-index:3}
+.aviso.on{display:block}
+#p2{padding-bottom:22px}
+h2{font-size:22px;font-weight:900;margin:4px 0 6px}
+h3{font-size:16px;font-weight:900;margin:16px 0 6px;background:var(--tinta);color:var(--crema);display:inline-block;padding:3px 12px;border-radius:999px}
+.caja{background:var(--papel);border:3px solid var(--tinta);border-radius:18px;padding:12px;margin:8px 0}
+.caja p{margin:4px 0;font-size:14px}
+.veredicto{background:var(--verde);box-shadow:0 4px 0 var(--tinta)}
+.veredicto .grande{font-size:30px}
+.toggle{display:flex;gap:8px;margin:8px 0}
+.toggle .btn{font-size:13px;background:var(--papel)}
+.toggle .btn[aria-pressed=true]{background:var(--amar)}
+.toggle .btn[aria-pressed=true]::before{content:"● "}
+.toggle .btn[aria-pressed=false]::before{content:"○ "}
+.volver{min-height:48px;padding:0 14px;background:var(--azul);flex:none;width:auto}
+.dados{display:flex;gap:4px;justify-content:space-between}
+.dado{flex:1;text-align:center;font-size:11px;font-weight:700}
+.dado b{display:block;font-size:13px;font-weight:900}
+.fut{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.fut span{width:34px;height:40px;border:3px dashed var(--tinta);border-radius:8px;text-align:center;font-size:10px;line-height:1.05;padding-top:4px;font-weight:900;background:var(--papel)}
+.fut span.fin{background:var(--amar);border-style:solid}
+.peq{font-size:12px;color:var(--tinta2)}
+</style>
+</head>
+<body>
+
+<div class="cartel"><b>EL TABLERO</b><span>Ahorrar es una oca de cartón: 60 casillas, cada una vale 148 € (una décima de mes).</span><span>Tu ficha avanza cada 25; la meta es «Octubre 2027».</span></div>
+
+<p class="rotulo">Pantalla 1 · Portada</p>
+<section class="scr" id="p1" aria-label="Portada del tablero">
+  <div class="estado">
+    <div class="grande">2,8<small> de 6 meses</small></div>
+    <div>
+      <span class="delante">▲ Vas por delante</span>
+      <p>Casilla 28 de 60 · 4.200 de 8.870 €</p>
+    </div>
+  </div>
+  <svg id="tab" width="380" height="470" viewBox="0 0 380 470" role="group" aria-label="Tablero en espiral de 60 casillas. Tu ficha está en la casilla 28."><title>Tablero de 60 casillas en espiral; tu ficha está en la 28</title></svg>
+  <div class="tirada">
+    <svg width="44" height="44" viewBox="0 0 44 44" role="img" aria-label="Dado con tres puntos"><title>Dado: 3 casillas</title><rect x="3" y="3" width="38" height="38" rx="9" fill="#fffaf0" stroke="#fff" stroke-width="3"/><circle cx="14" cy="14" r="4" fill="#20203a"/><circle cx="22" cy="22" r="4" fill="#20203a"/><circle cx="30" cy="30" r="4" fill="#20203a"/></svg>
+    <div><b>Esta tirada: avanza 3 casillas (390 €)</b><span>El 25, aparta 390 € y llegas a la casilla 31.</span></div>
+  </div>
+  <div class="tres">
+    <button class="btn b-ahorro" data-go="ahorro">▶ Mi ficha<i>Ahorro</i></button>
+    <button class="btn b-pozo" data-aviso="Aquí se abre «En qué se me va»: comer fuera, 180 € al mes.">◯ El pozo<i>En qué se me va</i></button>
+    <button class="btn b-tienda" data-aviso="Aquí se abre «Lo que quiero comprar»: portátil, fonendo, Japón, curso.">▣ La tienda<i>Lo que quiero comprar</i></button>
+  </div>
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+</section>
+
+<p class="rotulo">Pantalla 2 · Ahorro</p>
+<section class="scr" id="p2" aria-label="Ahorro">
+  <button class="btn volver" data-go="portada" style="box-shadow:0 3px 0 var(--tinta)">◀ Volver al tablero</button>
+  <h2>Tu próxima tirada</h2>
+  <div class="caja veredicto">
+    <div class="grande">390 € <small>al mes</small></div>
+    <p>Aparta 390 € cada día 25 = <b>3 casillas</b> por tirada. Meta: casilla 60, <b>octubre de 2027</b>.</p>
+    <p>✔ <b>Sí llegas.</b> Con lo que has apartado estos 3 meses (650 € al mes, unas 4 casillas) llegarías hacia <b>junio de 2027</b>.</p>
+  </div>
+
+  <h3>Cuándo llegas</h3>
+  <div class="toggle" role="group" aria-label="Elige el ritmo">
+    <button class="btn" id="r650" aria-pressed="true">Mi ritmo<i>650 € · 4,4 casillas</i></button>
+    <button class="btn" id="r390" aria-pressed="false">Lo justo<i>390 € · 2,6 casillas</i></button>
+  </div>
+  <div class="caja">
+    <p id="proy"></p>
+    <div class="fut" id="fut" aria-hidden="true"></div>
+    <p class="peq">Faltan 32 casillas (4.670 €). Cada cuadro de línea discontinua es una tirada futura.</p>
+  </div>
+
+  <h3>Tus tiradas, mayo a octubre</h3>
+  <div class="caja">
+    <div class="dados" id="dados"></div>
+    <p class="peq">Cada dado = casillas que avanzaste ese 25. En junio el dado salió vacío: te quedaste quieto.</p>
+  </div>
+
+  <h3>La escalera del colchón</h3>
+  <div class="caja">
+    <svg id="esc" width="354" height="190" viewBox="0 0 354 190" role="img" aria-label="Colchón por mes: mayo 2.200 euros, junio 2.200, julio 2.300, agosto 2.750, septiembre 3.550, octubre 4.200"><title>Colchón a fin de mes, de mayo a octubre</title></svg>
+  </div>
+
+  <h3>Un empujón</h3>
+  <div class="caja">
+    <p>Si comer fuera baja de 180 € a la mitad, ganas 90 € al mes: <b>media casilla más</b> por tirada.</p>
+    <button class="btn b-pozo" style="width:100%;margin-top:6px" data-aviso="Aquí se abre «En qué se me va»: comer fuera, 180 € al mes.">◯ Ir al pozo (gastos)</button>
+  </div>
+  <p class="peq">Casilla = 148 €, una décima de tu gasto normal (1.478 € al mes). 60 casillas = 6 meses ≈ 8.870 €.</p>
+  <div class="aviso" id="aviso2" role="status" aria-live="polite" style="position:static;margin-top:8px"></div>
+</section>
+
+<script>
+(function(){
+var C=['#ff6b57','#ffd23f','#5aa0ff','#4fd18b'],INK='#20203a',NS='http://www.w3.org/2000/svg';
+function el(n,a,p,t){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;if(p)p.appendChild(e);return e}
+// espiral 6x10
+var W=6,H=10,pos=[],t=0,l=0,r=W-1,b=H-1;
+while(t<=b&&l<=r){for(var c=l;c<=r;c++)pos.push([c,t]);t++;for(var q=t;q<=b;q++)pos.push([r,q]);r--;if(t<=b){for(c=r;c>=l;c--)pos.push([c,b]);b--}if(l<=r){for(q=b;q>=t;q--)pos.push([l,q]);l++}}
+var svg=document.getElementById('tab'),CW=60,CH=46,X0=10,Y0=5,FICHA=28,POZO=26,TIENDA=33;
+el('rect',{x:2,y:0,width:376,height:470,rx:20,fill:'#fffaf0',stroke:INK,'stroke-width':4},svg);
+pos.forEach(function(p,i){
+  var n=i+1,x=X0+p[0]*CW,y=Y0+p[1]*CH,col=C[(n-1)%4],pas=n<=FICHA;
+  var g=el('g',{},svg);
+  el('rect',{x:x+2,y:y+2,width:CW-4,height:CH-4,rx:9,fill:pas?col:'#fffaf0',stroke:INK,'stroke-width':2.5},g);
+  if(!pas)el('rect',{x:x+6,y:y+5,width:CW-12,height:6,rx:3,fill:col,stroke:INK,'stroke-width':1},g);
+  if(n>FICHA&&n<=FICHA+3)el('rect',{x:x+1,y:y+1,width:CW-2,height:CH-2,rx:10,fill:'none',stroke:INK,'stroke-width':3.5,'stroke-dasharray':'6 4'},g);
+  if(n===1)el('text',{x:x+CW/2,y:y+CH/2+4,'text-anchor':'middle','font-size':11,'font-weight':900,fill:INK},g,'SALIDA');
+  if(n!==1&&n!==FICHA&&n!==POZO&&n!==TIENDA&&n!==60)el('text',{x:x+CW/2,y:y+CH/2+6,'text-anchor':'middle','font-size':16,'font-weight':900,fill:INK},g,n);
+});
+function cell(n){var p=pos[n-1];return [X0+p[0]*CW,Y0+p[1]*CH]}
+function boton(n,fill,label,aria,act){
+  var p=cell(n),g=el('g',{role:'button',tabindex:0,'aria-label':aria,style:'cursor:pointer'},svg);
+  el('rect',{x:p[0]+2,y:p[1]+2,width:CW-4,height:CH-4,rx:9,fill:fill,stroke:INK,'stroke-width':4},g);
+  el('text',{x:p[0]+CW/2,y:p[1]+19,'text-anchor':'middle','font-size':11,'font-weight':900,fill:INK},g,label);
+  el('text',{x:p[0]+CW/2,y:p[1]+CH-8,'text-anchor':'middle','font-size':9,'font-weight':900,fill:INK},g,n);
+  g.addEventListener('click',act);g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();act()}});
+  return g;
+}
+boton(POZO,'#5aa0ff','◯ POZO','El pozo, casilla 26: abrir En qué se me va',function(){aviso('Aquí se abre «En qué se me va»: comer fuera, 180 € al mes.')});
+boton(TIENDA,'#ffd23f','▣ TIENDA','La tienda, casilla 33: abrir Lo que quiero comprar',function(){aviso('Aquí se abre «Lo que quiero comprar»: portátil, fonendo, Japón, curso.')});
+// ficha
+(function(){var p=cell(FICHA),g=el('g',{role:'button',tabindex:0,'aria-label':'Tu ficha, casilla 28: abrir Ahorro',style:'cursor:pointer'},svg);
+ el('rect',{x:p[0]+2,y:p[1]+2,width:CW-4,height:CH-4,rx:9,fill:'#4fd18b',stroke:INK,'stroke-width':4},g);
+ el('circle',{cx:p[0]+CW/2,cy:p[1]+14,r:7,fill:'#ff6b57',stroke:INK,'stroke-width':3},g);
+ el('path',{d:'M'+(p[0]+CW/2-9)+' '+(p[1]+31)+'Q'+(p[0]+CW/2)+' '+(p[1]+16)+' '+(p[0]+CW/2+9)+' '+(p[1]+31)+'Z',fill:'#ff6b57',stroke:INK,'stroke-width':3,'stroke-linejoin':'round'},g);
+ el('text',{x:p[0]+CW/2,y:p[1]+CH-6,'text-anchor':'middle','font-size':9,'font-weight':900,fill:INK},g,'TÚ · 28');
+ function go(){ir('p2')}
+ g.addEventListener('click',go);g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});})();
+// meta
+(function(){var p=cell(60);el('rect',{x:p[0]+2,y:p[1]+2,width:CW-4,height:CH-4,rx:9,fill:'#ffd23f',stroke:INK,'stroke-width':4},svg);
+ el('path',{d:'M'+(p[0]+30)+' '+(p[1]+6)+'l4 8 9 1-7 6 3 9-9-5-9 5 3-9-7-6 9-1z',fill:'#ff6b57',stroke:INK,'stroke-width':2},svg);
+ el('text',{x:p[0]+30,y:p[1]+CH-6,'text-anchor':'middle','font-size':8,'font-weight':900,fill:INK},svg,'META·60');})();
+// rótulos del tablero
+
+// textos en el centro (hueco del cartel de meta)
+var m=cell(59);
+function aviso(t){var a=document.getElementById('aviso'),a2=document.getElementById('aviso2');[a,a2].forEach(function(x){x.textContent=t;x.classList.add('on')});clearTimeout(aviso.t);aviso.t=setTimeout(function(){a.classList.remove('on');a2.classList.remove('on')},3500)}
+function ir(id){var e=document.getElementById(id);e.scrollIntoView({behavior:'smooth',block:'start'});if(id==='p2')e.setAttribute('tabindex','-1'),e.focus({preventScroll:true})}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-go],[data-aviso]');if(!b)return;if(b.dataset.go==='ahorro')ir('p2');else if(b.dataset.go==='portada')ir('p1');else aviso(b.dataset.aviso)});
+// dados
+function dado(n,s){var g='<svg width="'+s+'" height="'+s+'" viewBox="0 0 40 40" role="img" aria-label="Dado con '+n+' puntos"><rect x="2" y="2" width="36" height="36" rx="8" fill="#fffaf0" stroke="#20203a" stroke-width="3"/>',P={tl:[11,11],tr:[29,11],c:[20,20],bl:[11,29],br:[29,29]},L={0:[],1:['c'],3:['tl','c','br'],4:['tl','tr','bl','br'],5:['tl','tr','c','bl','br']}[n];L.forEach(function(k){g+='<circle cx="'+P[k][0]+'" cy="'+P[k][1]+'" r="3.6" fill="#20203a"/>'});if(n===0)g+='<path d="M12 20h16" stroke="#20203a" stroke-width="3" stroke-linecap="round"/>';return g+'</svg>'}
+var H2=[['jun',0,'2.200','casilla 15'],['jul',1,'2.300','casilla 16'],['ago',3,'2.750','casilla 19'],['sep',5,'3.550','casilla 24'],['oct',4,'4.200','casilla 28']];
+document.getElementById('dados').innerHTML=H2.map(function(h){return '<div class="dado">'+dado(h[1],52)+'<b>'+h[0]+' +'+h[1]+'</b>'+h[2]+' €<br>'+h[3]+'</div>'}).join('');
+// escalera
+var E=[['may',2200],['jun',2200],['jul',2300],['ago',2750],['sep',3550],['oct',4200]],es=document.getElementById('esc'),bw=50;
+E.forEach(function(d,i){var h=d[1]/4200*120,x=8+i*57,y=150-h,col=C[i%4];
+ el('rect',{x:x,y:y,width:bw,height:h,rx:6,fill:col,stroke:INK,'stroke-width':3},es);
+ el('text',{x:x+bw/2,y:y-14,'text-anchor':'middle','font-size':11,'font-weight':900,fill:INK},es,(d[1]/1000).toFixed(1).replace('.',',')+'k');
+ el('text',{x:x+bw/2,y:y-3,'text-anchor':'middle','font-size':10,'font-weight':700,fill:INK},es,'c.'+Math.round(d[1]/148));
+ el('text',{x:x+bw/2,y:168,'text-anchor':'middle','font-size':12,'font-weight':900,fill:INK},es,d[0]);
+ el('text',{x:x+bw/2,y:183,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'#4a4a63'},es,d[1].toLocaleString('es-ES')+' €');});
+// proyección
+function proy(v){var tir=v===650?8:12,fut=document.getElementById('fut'),M=['nov','dic','ene','feb','mar','abr','may','jun','jul','ago','sep','oct'],h='';
+ for(var i=0;i<tir;i++)h+='<span'+(i===tir-1?' class="fin"':'')+'>'+M[i]+(i===tir-1?'<br>META':'')+'</span>';fut.innerHTML=h;
+ document.getElementById('proy').innerHTML=v===650?'A <b>650 € al mes</b> haces 8 tiradas más y llegas a la casilla 60 en <b>junio de 2027</b>: 4 meses antes.':'A <b>390 € al mes</b> haces 12 tiradas más y llegas justo en <b>octubre de 2027</b>. Es el mínimo para no retrasarte.';
+ document.getElementById('r650').setAttribute('aria-pressed',v===650);document.getElementById('r390').setAttribute('aria-pressed',v===390)}
+document.getElementById('r650').onclick=function(){proy(650)};document.getElementById('r390').onclick=function(){proy(390)};proy(650);
+})();
+</script>
+</body>
+</html>
