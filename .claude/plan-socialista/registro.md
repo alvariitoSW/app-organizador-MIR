@@ -5,7 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
-- [aparc-s2b-a-main] El lector de frases (S2b) está en la rama (f7dc69b), sin pasar a main: falta que digas «despliégalo» · desde 2026-10-28
+- ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
