@@ -1536,3 +1536,19 @@ añadir acciones al switch de `change` (todo son botones); borrar `dinHoyHTML` a
 Sin gasto conocido el Bosque pide contar los gastos. Las pruebas 221, 263, 266, 216 y 290 miraban el «Te queda / Puedes gastar hoy»
 y los botones de esa tarjeta: se conserva el cálculo (d6Mes, bkQueda) y se cambia el camino; lo que comprobaba el texto de esa
 tarjeta se quita (acta del 28/10). Las cifras de las pruebas 333-334 son inventadas.
+
+## 2026-10-28 · Dinero D4: Ahorro («Tu bosque, mes a mes») y «Ya ha llegado la nómina»
+
+**Elegido.** La pestaña Ahorro enseña la pantalla 2 de la maqueta Laurisilva (`d4AhorroHTML`): «← Volver al bosque», «~X €/mes» (lo que ya
+calcula `d3Datos().pide`), objetivo 3/6/9 meses y plazo 6/12/18 (más un campo «u otro»), guardados en `dinero3.ahorro`; gráfica de
+árboles (llenos = meses ya crecidos, solo con meses que tienen dato: lo apartado al cobrar o `ahorroDeMes`; de puntos = el plan; línea
+del ritmo real de `d3Ritmo`), tres filas, «Un empujón fácil» (`d3Claro`) con enlace a Gastos e invertir fuera en una línea. Cambiar el
+plazo lo cuenta desde hoy (`desde`). «Ya ha llegado la nómina» (`d4NominaHTML`, en Bosque y Ahorro; tarjeta con aviso en los 10 días
+de cobro, enlace discreto el resto): ¿cuánto has cobrado? (prefijado con `nominaMes`) → propone lo que pide el plan, nunca más de lo
+cobrado → «Hecho» suma a `ahorro.guardado` y apunta `ahorro.apartado[mes]={cobrado,v}` (no repite el mes) → «Deshacer». Sustituye
+«ya lo he apartado» (la 266 pasa a este camino).
+**Descartado.** Mover dinero a las huchas viejas (sus datos no se tocan); guardar el cobrado real en `ahorro.cobrado` (cambiaría el
+cálculo de otros meses); borrar `dinAhorroHTML`, `apartarAlCobrar` y sus acciones (la D6 las limpia).
+**Supuestos.** Sin meses con dato la gráfica enseña solo hoy y el plan. Si el plan ya se cumple, «Hecho» propone tu % de ahorro. El
+árbol de cada mes pasado es el estado al empezarlo (guardado menos lo ahorrado desde entonces). Cifras de las pruebas 335-336 inventadas.
+No he sacado capturas a 412×915 (las hace el verificador); sí comprobado por prueba: sin scroll horizontal y controles ≥44 px.

@@ -8530,7 +8530,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { txt: m.innerText.replace(/\s+/g, ' '), apartar: !!m.querySelector('[data-v="apartar"]'), apunta: !!m.querySelector('[data-a="dinero-apuntar"]'), alto: m.scrollHeight }; });
     // tanda Dinero D3: la portada es el Bosque; los recibos de la semana viven ahora en Gastos
     const semana = await page.evaluate(() => { const P = window.PG; P.ui.dinTab = 'gastos'; P.render(); return /ESTA SEMANA/.test(document.querySelector('#main').innerText); });
-    const metas = await pestana('ahorro');
+    const metas = await pestana('compras');   // D4: los bolsillos con sus saldos viven en Compras hasta la D5; Ahorro es el nuevo
     const mes = await pestana('mes');
     // fijo / variable y meta, desde la hoja de gastos que sube encima (la fila «Fijo» del mes cerrado)
     const hojaGastos = await clic('#main [data-a="din-hoja"][data-h="gastos"]');
@@ -8574,7 +8574,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return x ? { id: x.id, saldo: x.saldo, objetivo: x.objetivo, mensual: x.mensual, reparto: P.repartoDe(600)[x.id], puro: P.repartoDe(600)['hu-colchon'] } : null; });
     let deseo = null;
     if (h) {
-      // creada, vuelve a Metas; su fila abre la hoja encima
+      // creada, vuelve a Metas (D4: están en Compras); su fila abre la hoja encima
+      await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.render(); });
       await clic(`#main .d7meta[data-id="${h.id}"]`);
       await clic(`.din4h [data-a="deseo-nuevo"][data-h="${h.id}"]`);
       await page.evaluate(() => { const t = document.getElementById('dsTxt'), p = document.getElementById('dsPre'); if (t) t.value = 'Vuelos 216'; if (p) p.value = '900'; });
@@ -8589,7 +8590,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia216; P.save(); P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Dinero v8 (D3): la portada es el Bosque y no dice «puedes gastar»; Gastos enseña los recibos de la semana; Ahorro, cada bolsillo; Mes, en qué se fue; el reparto, con su sugerencia',
       /bosque/i.test(portada.txt) && !/PUEDES GASTAR/.test(portada.txt) && semana && portada.alto < 1000 &&
-      /TIENES AHORRADO/.test(metas.txt) && metas.metas >= 3 && /no se toca/.test(metas.txt) && metas.alto < 1000 &&
+      metas.metas >= 3 && /no se toca/.test(metas.txt) && metas.alto < 1000 &&
       /CERRADO/.test(mes.txt) && /EN QUÉ SE FUE/.test(mes.txt) && mes.cats >= 2 &&
       plan7.rep >= 2 && (/Aplicar la sugerencia/.test(plan7.txt) || /coincide con lo recomendado/.test(plan7.txt)) &&
       !portada.apartar && !metas.apartar, JSON.stringify({ portada: [portada.alto, portada.apunta, portada.txt.slice(0, 120)], metas: [metas.metas, metas.alto], mes: [mes.cats, mes.txt.slice(0, 120)], plan7: plan7.rep }));
@@ -8697,7 +8698,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
         { id: 'hu-v', nombre: 'Viajes', ico: '✈️', color: '#38bdf8', pct: 60, objetivo: 0, meta: '', saldo: 800, mensual: 0, deseos: [] },
         { id: 'hu-c', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 40, objetivo: 0, meta: '', saldo: 300, mensual: 0, deseos: [] }];
-      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorros'; P.ui.dineroVista = ''; P.render();
+      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dineroVista = ''; P.render();
       return { total: [...document.querySelectorAll('.d7meta .v')].map((e) => e.textContent).join('|'), filas: document.querySelectorAll('.d7meta').length }; });
     await page.click('[data-a="din-hoja"][data-h="gaste"]'); await page.waitForTimeout(120);
     await page.click('.hoja [data-a="din-gaste-de"][data-id="hu-v"]'); await page.waitForTimeout(80);
@@ -8830,7 +8831,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // la salud financiera ya no es pantalla: su ruta vieja lleva a Ahorro, donde el colchón dice cuántos meses cubre
     await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); });
     const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { ahorro: /TIENES AHORRADO/.test(t), colchon: /meses de gastos/.test(t), vista: window.PG.ui.dineroVista }; });
+      return { ahorro: /Tu bosque, mes a mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
     await page.evaluate(() => { const P = window.PG; if (window.__origDate221) { window.Date = window.__origDate221; delete window.__origDate221; } P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Salud lleva a Ahorro',
       an.n >= 3 && !an.cats.includes('Alquiler y casa') && an.tips.some((t) => /Restaurantes a \d+ €/.test(t)) && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
@@ -9126,6 +9127,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { p: c, suma: Object.values(c).reduce((a, b) => a + b, 0), rec: r, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ') }; });
     const rec = /coincide con lo recomendado/.test(plan.txt) && !plan.txt.includes('LA APP TE SUGIERE');
     await page.click('#main .subcab .volver'); await page.waitForTimeout(100);
+    await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.render(); });   // D4: los bolsillos con sus saldos viven en Compras hasta la D5
     const meta = await page.$('.d7meta[data-h="hucha"]'); if (meta) { await meta.click(); await page.waitForTimeout(120); }
     const inp = await page.$('input[data-a="din-hu-campo"][data-k="saldo"]');
     if (inp) { await inp.fill('1234,5'); await inp.dispatchEvent('change'); await page.waitForTimeout(120); }
@@ -10618,7 +10620,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«ya lo he apartado» mete lo del mes en los bolsillos y deja de restarse de lo que te queda',
       r.apartado.ap === 0 && r.apartado.hecho && r.apartado.queda === Hq.queda + Hq.ap && r.apartado.total === 4810 + 602 && r.apartado.ok, JSON.stringify(r.apartado));
     check('Ahorro dice lo que hay en el banco y avisa si no cuadra con los bolsillos; «Cuadrarlo» abre el cuadre',
-      /TIENES AHORRADO 4\.810/.test(r.ahorro.txt) && /faltan 602 €/.test(r.ahorro.txt) && r.ahorro.cuadrar && r.cuadrar.vista === 'banco' && /Faltan 602 €/.test(r.cuadrar.txt), JSON.stringify({ a: r.ahorro.txt.slice(0, 260), c: r.cuadrar }));
+      /faltan 602 €/.test(r.ahorro.txt) && r.ahorro.cuadrar && r.cuadrar.vista === 'banco' && /Faltan 602 €/.test(r.cuadrar.txt), JSON.stringify({ a: r.ahorro.txt.slice(0, 260), c: r.cuadrar }));
     check('Mes enseña el mes cerrado con Fintonic y en qué se fue el día a día',
       /CERRADO/.test(r.mes.txt) && /Ahorraste 585 €/.test(r.mes.txt) && r.mes.cats >= 3, r.mes.txt.slice(0, 300));
     check('las cuentas y sus saldos sobreviven a recargar y la frase de dinero sale también en Hoy',
@@ -10831,11 +10833,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); });
     r.d0 = await page.evaluate(() => { const Q = window.PG.bkQueda(); return { ap: Q.ap, mk: Q.mk0, cad: Q.caducada }; });
     const pulsa = async (sel) => { const b = await page.$(sel); if (b) { await b.click(); await page.waitForTimeout(120); } return !!b; };
-    r.d1 = await page.evaluate(() => { const b = document.createElement('button'); b.dataset.a = 'din-apartar-meta'; b.dataset.mk = window.PG.bkQueda().mk0; document.getElementById('main').appendChild(b); b.click(); return true; }); await page.waitForTimeout(120);   // D3: el botón vivía en la tarjeta «Te queda» de Hoy, que ya no se enseña
-    r.d2 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(), x = P.ahorroMes(Q.mk0, false) || {};
-      return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho }; });
-    r.d3 = await page.evaluate(() => { const b = document.createElement('button'); b.dataset.a = 'din-apartar-ini-x'; b.dataset.mk = window.PG.bkQueda().mk0; document.getElementById('main').appendChild(b); b.click(); return true; }); await page.waitForTimeout(120);
-    r.d4 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(); return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo }; });
+    // D4: el botón «ya lo he apartado» de la tarjeta vieja se sustituye por «Ya ha llegado la nómina» del Bosque: cobrado → Hecho → deshacer, con gestos reales
+    const musgo = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, x = P.ahorroMes(P.d4Cobro().mk, false) || {};
+      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.huchaDe('hu-a').saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .lau-musgo') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.d4Nom = null; P.render(); });
+    r.d1m = await musgo();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    r.d1 = await pulsa('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(120);
+    r.d1p = await page.evaluate(() => (document.querySelector('#d4Nom') || {}).innerText || '');
+    r.d1h = await pulsa('#main [data-a="d4-nom-hecho"]'); await page.waitForTimeout(120);
+    r.d2 = await musgo();
+    r.d3 = await pulsa('#main [data-a="d4-nom-x"]'); await page.waitForTimeout(120);
+    r.d4 = await musgo();
     // (e) sin datos de gasto de verdad no hay ahorro del mes
     r.e = await page.evaluate(() => { const P = window.PG, h = new Date(), mk = h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0'); return P.ahorroDeMes(mk); });
     // (f) la captura de hace 40 días, de antes de la última nómina
@@ -10853,10 +10862,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('en una hucha «1.500» son 1.500 € y «-200» o letras no la ponen a 0', r.h1 === 1500 && r.h2 === 1500 && r.h3 === 1500, [r.h1, r.h2, r.h3].join(','));
     check('la captura del banco no lee letras como cifras ni pega el número de cuenta, y cada cuenta tiene el suyo',
       r.bk === '850|300|2|4821/-', r.bk);
-    check('«ya lo he apartado» al cobrar: a la hucha, deja de restarse y no marca el cierre del mes como repartido',
-      r.d0.ap > 0 && r.d1 && r.d2.ap === 0 && r.d2.hecho && r.d2.ini === r.d0.ap && r.d2.saldo === 1500 + r.d0.ap && !r.d2.cierre, JSON.stringify({ d0: r.d0, d2: r.d2 }));
-    check('y tiene «deshacer»: vuelve a contar como lo que apartas y la hucha queda como estaba',
-      r.d3 && r.d4.ap === r.d0.ap && !r.d4.hecho && r.d4.saldo === 1500, JSON.stringify(r.d4));
+    check('«Ya ha llegado la nómina» (Bosque): cobrado → «Hecho» suma al bosque lo que pide el plan (nunca más de lo cobrado), apunta el mes y no marca el cierre del mes como repartido ni toca las huchas',
+      r.d0.ap > 0 && r.d1 && r.d1h && /Aparta/.test(r.d1p) && r.d2.ap > 0 && r.d2.ap <= 2000 && r.d2.g === r.d1m.g + r.d2.ap && r.d2.txt.includes(String(r.d2.g).replace(/\B(?=(\d{3})+(?!\d))/g, '.')) && r.d2.saldo === r.d1m.saldo && !r.d2.cierre && r.d2.ini === 0, JSON.stringify({ d0: r.d0, d1m: r.d1m, p: r.d1p, d2: r.d2 }));
+    check('y tiene «deshacer»: el musgo vuelve a lo de antes, el mes queda sin apuntar y las huchas viejas no se han movido',
+      r.d3 && r.d4.g === r.d1m.g && r.d4.ap === 0 && r.d4.saldo === r.d1m.saldo, JSON.stringify(r.d4));
     check('sin Fintonic, banco ni tu cifra no hay «has ahorrado» inventado', r.e === null, JSON.stringify(r.e));
     check('una captura de antes de la última nómina pide otra en vez de contar hasta una nómina pasada',
       r.f.cad === true && !/HA LLEGADO LA NÓMINA/.test(r.f.txt), JSON.stringify(r.f));
@@ -13436,6 +13445,69 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /Comer fuera/.test(r.bosque) && /320/.test(r.bosque) && r.actual.tab === 'gastos' && r.actual.mes === r.actual.mes && r.actual.total && r.actual.fijos && r.actual.vars && r.actual.top && r.actual.ahorrar && r.actual.comp, JSON.stringify(r));
     check('Dinero 3.0 · Gastos: el selector pasa al mes anterior con sus cifras, y desde Gastos se llega a Recibos y se vuelve a Gastos',
       r.previo.total && r.previo.sinComp && r.previo.pressed && r.recibos && r.vuelta === 'gastos|true', JSON.stringify({ p: r.previo, rec: r.recibos, v: r.vuelta }));
+  }
+  // 335) DINERO 3.0 · D4 · BOSQUE → AHORRO → OBJETIVO Y PLAZO, EN CADENA: con 2.000 € guardados y 1.600 € de gasto al mes, el Bosque lleva a
+  //      «Tu bosque, mes a mes»; cambiar el objetivo (9 meses), el plazo (6 meses) y escribir otro objetivo cambia la cifra «aparta X €/mes»
+  //      (y la gráfica la lleva en su descripción); todo se guarda (sobrevive a recargar) y «Volver al bosque» vuelve al Bosque.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia335 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
+      a.gastado = {}; delete a.meta;
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.ui.bk = null; P.render(); });
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), c = (m.querySelector('#d4Cifra') || {}).textContent || '', d = window.PG.store.dinero3.ahorro;
+      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('#d4Graf') || {}).getAttribute('aria-label') || ''), ancho: document.documentElement.scrollWidth,
+        peq: [...m.querySelectorAll('.lau-card button, .lau-card input')].filter((b) => b.getBoundingClientRect().height < 43.5).map((b) => b.className + ':' + b.textContent.slice(0, 12) + ':' + Math.round(b.getBoundingClientRect().height)).join('|') }; });
+    const vp335 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.click('#main .lau-ir'); await page.waitForTimeout(150);
+    r.a = await lee();
+    await page.click('#main [data-a="d4-obj"][data-v="9"]'); await page.waitForTimeout(100); r.b = await lee();
+    await page.click('#main [data-a="d4-plazo"][data-v="6"]'); await page.waitForTimeout(100); r.c = await lee();
+    await page.fill('#d4o-objetivoMeses', '4'); await page.press('#d4o-objetivoMeses', 'Tab'); await page.waitForTimeout(120); r.d = await lee();
+    r.rec = await page.evaluate(() => { const P = window.PG, o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.objetivoMeses + '/' + o.plazoMeses; });
+    await page.click('#main .lau-link[data-a="d6-tab"]'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .lau-esc') && window.PG.ui.dinTab === '');
+    await page.setViewportSize(vp335);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia335; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · Bosque → Ahorro: cambiar objetivo y plazo cambia «aparta X €/mes» (6 meses/12: menos que 9/12; 9/6: más) y la gráfica lo cuenta',
+      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /plan de \d/.test(r.c.svg) && /9 meses/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
+    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y «Volver al bosque» vuelve al Bosque; a 412 sin scroll horizontal y con todo ≥44 px',
+      r.d.obj === 4 && r.d.cifra < r.c.cifra && r.rec === '4/6' && r.vuelta && r.a.ancho <= 412 && r.a.peq === '', JSON.stringify({ d: r.d, rec: r.rec, v: r.vuelta, a: r.a.ancho, peq: r.a.peq }));
+  }
+
+  // 336) DINERO 3.0 · D4 · «YA HA LLEGADO LA NÓMINA», EN CADENA: desde el Bosque, un toque → «¿Cuánto has cobrado?» → propone apartar lo que pide
+  //      el plan (nunca más de lo cobrado: con 300 € cobrados, 300) → «Hecho» sube el musgo y apunta el mes → «Deshacer» lo deja como estaba.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia336 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
+      a.gastado = {}; delete a.meta; a.epocas = [{ id: 'e336', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.ui.bk = null; P.render(); });
+    const est = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, mk = P.d4Cobro().mk;
+      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .lau-musgo') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
+        recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.guardado + '/' + (o.apartado[mk] ? o.apartado[mk].v : 0); })() }; });
+    r.a = await est();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    r.pide = await page.evaluate(() => document.querySelector('#d4Cobrado').value);
+    await page.fill('#d4Cobrado', '300'); await page.click('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(100);
+    r.poco = await est();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    await page.fill('#d4Cobrado', '1.800'); await page.click('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(100);
+    r.plan = await est();
+    await page.click('#main [data-a="d4-nom-hecho"]'); await page.waitForTimeout(150);
+    r.hecho = await est();
+    await page.click('#main [data-a="d4-nom-x"]'); await page.waitForTimeout(150);
+    r.x = await est();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia336; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · «Ya ha llegado la nómina»: pregunta cuánto has cobrado (prefijado con lo esperado, 2000) y propone apartar lo que pide el plan, y nunca más de lo cobrado (con 300 €, 300)',
+      r.pide === '2000' && /Aparta 300 €/.test(r.poco.card) && /Aparta 640 €/.test(r.plan.card) && r.a.ap === 0, JSON.stringify({ pide: r.pide, poco: r.poco.card, plan: r.plan.card }));
+    check('Dinero 3.0 · «Hecho» sube el musgo (2.000 → 2.640 €), apunta el mes y se guarda; «Deshacer» lo deja en 2.000 € y sin mes apuntado',
+      r.hecho.g === 2640 && r.hecho.ap === 640 && /2\.640 €/.test(r.hecho.musgo) && /apartada/.test(r.hecho.card) && r.hecho.recarga === '2640/640' && r.x.g === 2000 && r.x.ap === 0 && /2\.000 €/.test(r.x.musgo) && r.x.recarga === '2000/0',
+      JSON.stringify({ hecho: r.hecho, x: r.x }));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
