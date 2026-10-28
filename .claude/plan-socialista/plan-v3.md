@@ -18,7 +18,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
-### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27, falta tu visto bueno
+### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 3 de 8 hechas
 
 Las tareas 1, 2, 3, 4, 5, 9 y 13 de la lista anterior, agrupadas en **8 sesiones** para gastar menos. Cada una
 empieza con su ficha (skill `ficha-de-tarea`) y se mide al cerrar. Presupuestos en equivalentes (ver `gastos.md`):
@@ -26,11 +26,11 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 
 | # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|---|
-| S1 | Las pruebas de la fecha | [aparc-pruebas-fecha] | arreglo | sesión en sonnet, sin ayudantes; suite con `verificador` | ~0,4 M |
+| ~~S1~~ | ✅ Las pruebas de la fecha: se pusieron verdes solas al pasar el día 27 (751/751) | [aparc-pruebas-fecha] | arreglo | sesión en sonnet, sin ayudantes; suite con `verificador` | ~0,4 M |
 | S2 | **El mapa de Comer** (maquetas de todo junto) | [v3-comer-perdido] + dónde van [v3-cantidades], [v3-boceto-semana], [v3-antojos] y [comida-ri-A/D] | maqueta | `Explore` haiku hace el mapa de lo que hay; opus diseña 2–3 maquetas de Comer entero; `verificador` las mide | ~1,5 M |
 | S3 | Construir el Comer ordenado | [v3-comer-perdido] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M |
-| S4 | Cantidades y ración de verdad | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
-| S5 | Vitaminas, minerales y Nutri-Score | [comida-ri-A] + [comida-ri-D] | construir | constructor sonnet (necesita una muestra de Open Food Facts que pegas tú) | ~0,9 M |
+| ~~S4~~ | ✅ Cantidades y ración de verdad · main 3b7a617 · sin medir | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
+| S5 | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir — **falta (A) vitaminas y minerales** | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
 | S6 | La semana en borrador | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
 | S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
 | S8 | Dinero: plan de compras | [v3-dinero-compras] | maqueta → construir | opus maquetas; constructor sonnet | ~2,0 M |
@@ -67,9 +67,14 @@ De dónde sale el ahorro:
 - [aparc-parte-diario] El parte cada mañana solo (falta la hora)
 - [aparc-suite-2min] La suite en ~2 minutos
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
-- [aparc-auditoria-contexto] Gastar menos contexto: limpiar la lista de tareas hechas; desactivar Google Drive y Claude Docs si no se usan
 
 ## Hecha
+
+- [comida-ri-D] Comer: sello Nutri-Score, NOVA y aditivos en la ficha y la letra en el buscador · main 2416c99 · 2026-10-27
+- [v3-cantidades] + [comida-ri-B] Comer: hoja de cantidad (pasos 10·50·100, mantener pulsado, rueda, g/ml, ración de
+  la etiqueta) · main 3b7a617 · 2026-10-27
+- [aparc-pruebas-fecha] Las 2 pruebas de la fecha, en verde (751/751) · 2026-10-27
+- [aparc-auditoria-contexto] Menos contexto: REA fuera de cada sesión, salud solo si cambia main · 2026-10-27
 
 - [comida-ri-C] Comer: el buscador ordenado por popularidad · en main (3bce73b) · 2026-10-27
 - [enc-sueno-radio] Sueño: apuntar desde la radio del conductor · main a5bec28 · 2026-10-27
