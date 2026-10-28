@@ -17,7 +17,7 @@ Antes de la D3, contesta qué se quita de Dinero (lista en `consejo/2026-10-28-f
 
 ## Por hacer
 
-### Tanda Dinero · Consejo, feria y concurso «La Rara» del 2026-10-28 · ≈4,3 M · espera tu sí a qué se quita y al presupuesto
+### Tanda Dinero · Consejo, feria y concurso «La Rara» del 2026-10-28 · ≈4,3 M · **delegada en el Consejo** (gobierno.md, 28/10): decide, construye y sube a main
 
 Actas en `consejo/` (2026-10-28, -feria, -la-rara). **Diseño elegido:** Portada + Ahorro en el mundo de **La
 Laurisilva** (`maquetas/dinero-rara2-laurisilva.html`, 5/5); Gastos = el puesto 3 (5/5); Compras = R2-C (5/5); las dos

@@ -45,6 +45,12 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   3. la arquitectura y los datos: sin build, `localStorage` en el móvil, nada que salga de él;
   4. quitar algo que ya usa, y pasar a `main`.
   En esos asuntos el Consejo **estudia y recomienda** (con opciones concretas, como mucho 3 preguntas).
+- **Delegación del 28/10/2026 · reforma de Dinero (D1-D6).** El usuario: «mi potestad en esto la tiene el consejo de
+  ministros, que actúe». Para esta tanda, el Consejo decide también lo reservado: el presupuesto, qué se quita de la
+  Dinero actual (con migración, sin perder datos guardados), lo que cambia lo que ve (dentro del diseño ya elegido:
+  La Laurisilva + el puesto 3 + Compras R2-C) y **pasar a `main`**. No cambia el cómo: suite completa en verde,
+  `npm run sella` + `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`.
+  Cada decisión que antes era del usuario va al acta con «(Consejo por delegación)». Se acaba al cerrar la D6.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.
