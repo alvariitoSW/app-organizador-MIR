@@ -5,7 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
-- [aparc-s2-a-main] Las maquetas de la S2 y el estado del plan están en la rama `claude/plan-socialista-s2-hl27a0`, no en `main`: la sesión siguiente tiene que partir de ella (o pasarla a main antes) · 2026-10-28
+- ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
 - ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
@@ -179,3 +179,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
 - [run-40714087144] 2026-10-28 · despliegue de main (7d874f8, plan 3.0 y gastos; solo herramientas) · success; código sellado (version.json 2416c99 posterior al último código 66a7d0d); rama = main; 0 issues/PR · ok
 - [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
+- [run-40725644165] 2026-10-28 · despliegue de main (eddb09d, maquetas S2 y plan; sin código de app) · success; sellado (version.json 2416c99 posterior al último código); rama 7d874f8 = 10 commits por detrás de main; 0 issues/PR · ok
+- [parte-s2b-2026-10-28] 2026-10-28 · parte: siguiente S2b (lector de frases), sin presupuesto medido de construir · propuesto
