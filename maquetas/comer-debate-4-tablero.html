@@ -1,0 +1,199 @@
+<!doctype html><meta charset=utf-8>
+<title>Comer · debate 4 · El tablero</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+ --p:#3987e5;--c:#c98500;--g:#199e70}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:28px;padding:24px}
+.sec{flex-basis:100%;max-width:1250px;margin:18px 0 -8px}
+.sec h2{margin:0 0 4px;font-size:22px}.sec p{margin:0;color:var(--ink2);max-width:900px}
+.ab{width:390px;height:844px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #1b2436;background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 70px}
+.lbl{position:absolute;top:-1px;right:14px;font-size:10px;font-weight:900;letter-spacing:.12em;color:#04121c;background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:11.5px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:19px;margin:0}.back{font-size:18px;color:var(--ink2)}
+.ic{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);display:grid;place-items:center;font-size:17px}
+.seg{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:5px;margin-bottom:8px}
+.seg div{text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:11.5px;font-weight:800;color:var(--ink2)}
+.seg div.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.busca{display:flex;align-items:center;gap:8px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);padding:0 12px;color:var(--ink2);margin-bottom:8px}
+.mac{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mac div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px;text-align:center}
+.mac b{display:block;font-size:16px}.mac span{font-size:10px;color:var(--ink2);font-weight:800}
+.mac i{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}.mac i::after{content:"";display:block;height:100%;width:var(--w);background:var(--ok)}
+.com{display:grid;grid-template-columns:26px 1fr auto;gap:0 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.com:first-of-type{border-top:0}
+.chk{width:24px;height:24px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#04121c;font-weight:900}
+.com b{font-size:13.5px}.com .s{font-size:11px;color:var(--ink2)}.com .k{font-size:12px;font-weight:800;color:var(--ink2);text-align:right}
+.mic{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.mic div{min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px 8px}
+.mic b{font-size:14px}.mic span{display:block;font-size:10px;color:var(--ink2);font-weight:800}
+.lo{color:var(--warn)}.hi{color:var(--ok)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);font-weight:800;font-size:13px;padding:0 10px}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:#04121c;border:0}
+.btn.s{min-height:38px;font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:78px;display:flex;flex-direction:column;gap:3px}
+.tile .e{font-size:20px}.tile b{font-size:13px}.tile .mini{font-size:10.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 10px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);font-size:12px;font-weight:700}
+.chip.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--bg2))}
+.rec{display:grid;grid-template-columns:46px 1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rec:first-of-type{border-top:0}
+.rec .e{width:46px;height:46px;border-radius:13px;background:var(--bg2);display:grid;place-items:center;font-size:23px;grid-row:span 2}
+.rec b{font-size:13.5px}.rec .s{font-size:11px;color:var(--ink2)}
+.pill{font-size:11px;font-weight:900;padding:3px 7px;border-radius:99px;grid-row:span 2;background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.wk{display:grid;grid-template-columns:44px 1fr 1fr;gap:5px;font-size:11.5px}
+.wk .d{font-weight:900;color:var(--ink2);display:flex;flex-direction:column;justify-content:center}
+.wk .d small{font-weight:700;font-size:9.5px}
+.wk .c{border:1px dashed color-mix(in srgb,var(--brand2) 60%,var(--line));background:color-mix(in srgb,var(--brand2) 8%,var(--bg2));border-radius:9px;padding:6px 7px;min-height:38px}
+.wk .c.ok{border:1px solid var(--line);background:var(--bg2)}
+.wk .c.g{border-style:solid;border-color:color-mix(in srgb,var(--warn) 50%,var(--line));background:color-mix(in srgb,var(--warn) 8%,var(--bg2))}
+.wk .c small{display:block;color:var(--ink2);font-size:9.5px}
+.wk .h{font-size:9.5px;font-weight:900;letter-spacing:.12em;color:var(--ink2);text-align:center}
+.ban{border-radius:12px;padding:9px 11px;font-size:12px;border:1px solid color-mix(in srgb,var(--brand2) 55%,var(--line));background:color-mix(in srgb,var(--brand2) 14%,var(--bg2));margin-bottom:8px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:60px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:10px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.sheet{position:absolute;left:0;right:0;bottom:0;border-radius:22px 22px 0 0;border-top:1px solid var(--line);background:var(--card);padding:14px 14px 22px;box-shadow:0 -20px 60px #000a}
+.dim{position:absolute;inset:0;background:#0009}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
+.ns{display:inline-flex;border-radius:9px;overflow:hidden;font-weight:900;font-size:13px}
+.ns span{width:26px;height:30px;display:grid;place-items:center;color:#0008;opacity:.45}
+.ns .on{opacity:1;color:#fff;transform:scale(1.18);border-radius:6px;box-shadow:0 0 0 2px #fff}
+.nA{background:#038141}.nB{background:#85bb2f}.nC{background:#fecb02}.nD{background:#ee8100}.nE{background:#e63e11}
+.nsm{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;font-size:11px;font-weight:900;color:#fff}
+.nova{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:900;background:#ee8100;color:#fff}
+.vit{display:grid;grid-template-columns:96px 1fr 58px;gap:6px;align-items:center;font-size:12px;margin-top:6px}
+.vit .b{height:7px;border-radius:7px;background:var(--line);overflow:hidden}.vit .b i{display:block;height:100%;background:var(--ok)}
+.vit em{font-style:normal;font-weight:800;text-align:right;color:var(--ink2);font-size:11px}
+.res{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.res:first-of-type{border-top:0}.res b{font-size:13px}.res .s{font-size:11px;color:var(--ink2)}
+.tag{font-size:9.5px;font-weight:900;letter-spacing:.08em;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.ej{position:absolute;bottom:66px;left:12px;font-size:10px;color:var(--ink2);opacity:.8}
+
+.tb{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:6px;margin-bottom:6px}
+.med{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.med>div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:6px 7px;min-height:62px;position:relative}
+.med .n{font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--ink2)}
+.med b{display:block;font-size:17px;line-height:1.15}
+.med small{display:block;font-size:10px;color:var(--ink2);line-height:1.2}
+.med i{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}.med i::after{content:"";display:block;height:100%;width:var(--w);background:var(--m,var(--ok))}
+.gr{display:grid;grid-template-columns:30px repeat(4,1fr);gap:3px;font-size:10px}
+.gr .h{font-size:10px;font-weight:900;letter-spacing:.06em;color:var(--ink2);text-align:center;padding:2px 0}
+.gr .d{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-weight:900;font-size:12px;line-height:1.05;border:1px solid var(--line);background:var(--bg2)}
+.gr .d small{font-size:10px;font-weight:800}
+.t-l{color:var(--ok)}.t-g{color:var(--warn)}.t-s{color:#b9a8ff}.t-m{color:var(--brand)}
+.gr .d.hoy{box-shadow:0 0 0 2px var(--brand)}
+.k{--dc:var(--p)}
+.cel{height:41px;border-radius:8px;padding:3px 5px;min-width:0;display:flex;flex-direction:column;justify-content:space-between;border:1px solid color-mix(in srgb,var(--dc) 55%,var(--line));background:color-mix(in srgb,var(--dc) 20%,var(--bg2))}
+.cel span{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+.cel em{font-style:normal;font-size:10px;color:var(--ink2);font-weight:800;line-height:1}
+.cel u{display:flex;height:4px;border-radius:3px;overflow:hidden;text-decoration:none;gap:1px}
+.cel u s{display:block;background:var(--p)}.cel u s+s{background:var(--c)}.cel u s+s+s{background:var(--g)}
+.cel.bor{border-style:dashed;border-color:color-mix(in srgb,var(--brand2) 75%,var(--line));background:color-mix(in srgb,var(--dc) 9%,var(--bg2))}
+.cel.hec{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 22%,var(--bg2))}
+.cel.hos{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 14%,var(--bg2)) 0 6px,var(--bg2) 6px 12px)}
+.cel.vac{border:1px dashed var(--line);background:transparent;color:var(--ink2);align-items:center;justify-content:center;font-size:12px}
+.cel.sel{box-shadow:0 0 0 2px var(--brand)}
+.leg{display:flex;flex-wrap:wrap;gap:3px 9px;font-size:10px;color:var(--ink2);margin-top:6px}
+.leg b{display:inline-block;width:9px;height:9px;border-radius:3px;vertical-align:-1px;margin-right:3px}
+.dr{display:flex;align-items:center;gap:8px;border-radius:13px;padding:7px 8px 7px 11px;border:1px dashed color-mix(in srgb,var(--brand2) 80%,var(--line));background:color-mix(in srgb,var(--brand2) 14%,var(--bg2));margin-top:6px;font-size:11.5px}
+.dr .btn{min-height:44px;padding:0 12px;white-space:nowrap}
+.bar2{display:flex;height:8px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0}
+.bar2 s{display:block;text-decoration:none}
+.ln{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;min-height:34px}
+.ln:first-of-type{border-top:0}.ln .s{font-size:10.5px;color:var(--ink2)}
+.ln .dl{font-size:10.5px;font-weight:900;padding:2px 6px;border-radius:6px}
+.dl.u{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}.dl.o{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}.dl.k2{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.pat{display:grid;grid-template-columns:34px repeat(7,1fr);gap:3px;font-size:10px;color:var(--ink2);align-items:center}
+.pat i{display:block;height:15px;border-radius:4px;background:color-mix(in srgb,var(--brand2) calc(var(--a)*1%),var(--bg2));border:1px solid var(--line)}
+.vg{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.vg>div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:5px 8px;min-height:44px}
+.vg .r{display:flex;justify-content:space-between;font-size:11.5px;font-weight:800}
+.vg .r em{font-style:normal}
+.vg i{display:block;height:5px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}.vg i::after{content:"";display:block;height:100%;width:var(--w);background:var(--c2,var(--ok))}
+.vg .sd{opacity:.65;border-style:dashed}.vg .sd i::after{display:none}
+.flecha{position:absolute;font-size:10px;font-weight:900;color:#04121c;background:var(--brand);padding:2px 6px;border-radius:6px}
+.donde{font-size:10px;color:var(--ink2);margin:4px 2px 0}
+.donde b{color:var(--brand)}
+</style>
+<div class=sec><h2>Escuela 4 · EL TABLERO</h2>
+<p><b>Manifiesto.</b> Si lo que necesitas saber cabe en una pantalla, no debería costarte un toque. La portada de Comer es la semana entera: siete días por cuatro momentos, cada casilla pintada con sus macros y el borrador en trazo discontinuo. Alrededor, cuatro medidores (nevera, compra, antojos y vitaminas) te dicen qué va mal sin abrir nada. Tocas una casilla o un medidor y se abre una hoja con todo lo de ese momento: nada a más de dos toques. <span style="opacity:.8">Buscador: lupa de arriba a la derecha de la portada (y «＋ Buscar» dentro de cada casilla). Hay una sola compra y un solo «Hoy»: la fila del día.</span></p></div>
+<div class=ab><div class=lbl>1 · PORTADA</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>🔍</div><div class=ic>⚙️</div></div>
+<div class=tb><div class=row><b>Hoy · mié 28</b><span class=mini>saliente · 2 comidas hechas</span><span class=sp></span><span class="mini t-s">fila marcada ↓</span></div>
+<div style="margin-top:6px"><div class=mac><div style="--w:62%"><b>1.480</b><span>/ 2.400 kcal</span><i></i></div><div style="--w:71%"><b>98</b><span>/ 140 P</span><i></i></div><div style="--w:55%"><b>160</b><span>/ 290 HC</span><i></i></div><div style="--w:60%"><b>48</b><span>/ 80 G</span><i></i></div></div></div></div>
+<div class=med>
+ <div style="--w:45%;--m:var(--warn)"><span class=n>❄️ NEVERA</span><b>5 <small style="display:inline">táperes</small></b><small>2 caducan ya</small><i></i></div>
+ <div style="--w:30%;--m:var(--brand)"><span class=n>🛒 COMPRA</span><b>11 <small style="display:inline">cosas</small></b><small>+7 si aceptas</small><i></i></div>
+ <div style="--w:60%;--m:var(--brand2)"><span class=n>😋 ANTOJOS</span><b>9 <small style="display:inline">mes</small></b><small>dulce, de noche</small><i></i></div>
+ <div style="--w:41%;--m:var(--bad)"><span class=n>💊 VITAM.</span><b class=lo>3 <small style="display:inline">bajas</small></b><small>D · hierro · Ca</small><i></i></div>
+</div>
+<div class=row style="margin:2px 0 4px"><b style="font-size:13px">Semana 26 oct – 1 nov</b><span class=sp></span><span class=mini>‹ ›</span></div>
+<div class=gr><div></div><div class=h>DESAY.</div><div class=h>COMIDA</div><div class=h>CENA</div><div class=h>EXTRA</div><div class="d"><span class=t-l>L</span><small class=t-l>lib</small></div><div class="cel k " style="--dc:var(--c)"><span>Avena</span><u><s style="flex:20"></s><s style="flex:55"></s><s style="flex:25"></s></u><em>480</em></div><div class="cel k " style="--dc:var(--c)"><span>Lentejas</span><u><s style="flex:25"></s><s style="flex:55"></s><s style="flex:20"></s></u><em>720</em></div><div class="cel k " style="--dc:var(--p)"><span>Salmón</span><u><s style="flex:40"></s><s style="flex:25"></s><s style="flex:35"></s></u><em>650</em></div><div class="cel vac">＋</div><div class="d"><span class=t-g>M</span><small class=t-g>gua</small></div><div class="cel k " style="--dc:var(--c)"><span>Tostada</span><u><s style="flex:15"></s><s style="flex:60"></s><s style="flex:25"></s></u><em>380</em></div><div class="cel hos k"><span>🏥 Hospital</span><em>—</em></div><div class="cel hos k"><span>🏥 Hospital</span><em>—</em></div><div class="cel k " style="--dc:var(--g)"><span>Barrita</span><u><s style="flex:10"></s><s style="flex:50"></s><s style="flex:40"></s></u><em>210</em></div><div class="d hoy"><span class=t-s>X</span><small class=t-s>sal</small></div><div class="cel k " style="--dc:var(--c)"><span>Avena</span><u><s style="flex:22"></s><s style="flex:55"></s><s style="flex:23"></s></u><em>520</em></div><div class="cel k " style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Tortilla</span><u><s style="flex:25"></s><s style="flex:35"></s><s style="flex:40"></s></u><em>640</em></div><div class="cel vac">＋</div><div class="d"><span class=t-m>J</span><small class=t-m>mañ</small></div><div class="cel k bor" style="--dc:var(--p)"><span>Yogur+fruta</span><u><s style="flex:30"></s><s style="flex:50"></s><s style="flex:20"></s></u><em>350</em></div><div class="cel k bor" style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Pasta atún</span><u><s style="flex:30"></s><s style="flex:55"></s><s style="flex:15"></s></u><em>690</em></div><div class="cel vac">＋</div><div class="d"><span class=t-m>V</span><small class=t-m>mañ</small></div><div class="cel k bor" style="--dc:var(--c)"><span>Avena</span><u><s style="flex:20"></s><s style="flex:55"></s><s style="flex:25"></s></u><em>480</em></div><div class="cel k bor" style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Fuera</span><u><s style="flex:20"></s><s style="flex:40"></s><s style="flex:40"></s></u><em>900</em></div><div class="cel vac">＋</div><div class="d"><span class=t-l>S</span><small class=t-l>lib</small></div><div class="cel k bor" style="--dc:var(--g)"><span>Tostada</span><u><s style="flex:18"></s><s style="flex:50"></s><s style="flex:32"></s></u><em>420</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Paella</span><u><s style="flex:25"></s><s style="flex:60"></s><s style="flex:15"></s></u><em>820</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Pizza casera</span><u><s style="flex:20"></s><s style="flex:50"></s><s style="flex:30"></s></u><em>780</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Helado</span><u><s style="flex:5"></s><s style="flex:50"></s><s style="flex:45"></s></u><em>220</em></div><div class="d"><span class=t-l>D</span><small class=t-l>lib</small></div><div class="cel k bor" style="--dc:var(--g)"><span>Huevos</span><u><s style="flex:35"></s><s style="flex:10"></s><s style="flex:55"></s></u><em>450</em></div><div class="cel k bor" style="--dc:var(--p)"><span>🍲 Cocinar lote</span><u><s style="flex:1"></s><s style="flex:1"></s><s style="flex:1"></s></u><em>3 táper</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Crema calabaza</span><u><s style="flex:10"></s><s style="flex:60"></s><s style="flex:30"></s></u><em>420</em></div><div class="cel vac">＋</div></div>
+<div class=leg><span><b style="background:var(--p)"></b>proteína</span><span><b style="background:var(--c)"></b>hidratos</span><span><b style="background:var(--g)"></b>grasa</span><span><b style="background:transparent;border:1px dashed var(--brand2)"></b>borrador</span><span><b style="background:var(--warn)"></b>hospital</span></div>
+<div class=dr><div style="flex:1"><b>Borrador</b> de J a D con tus favoritos y 3 guardias.<br><span class=mini>No cuenta en la compra hasta aceptar.</span></div><div class="btn p">✓ Aceptar</div></div>
+<div class=donde>Toca una <b>casilla</b> → hoja del momento · un <b>medidor</b> → su hoja · <b>🔍</b> → buscador.</div>
+<div class=ej>cifras de ejemplo</div><div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div></div>
+<div class=ab><div class=lbl>2 · CASILLA</div>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>🔍</div><div class=ic>⚙️</div></div>
+<div style="opacity:.55"><div class=gr><div></div><div class=h>DESAY.</div><div class=h>COMIDA</div><div class=h>CENA</div><div class=h>EXTRA</div><div class="d"><span class=t-l>L</span><small class=t-l>lib</small></div><div class="cel k " style="--dc:var(--c)"><span>Avena</span><u><s style="flex:20"></s><s style="flex:55"></s><s style="flex:25"></s></u><em>480</em></div><div class="cel k " style="--dc:var(--c)"><span>Lentejas</span><u><s style="flex:25"></s><s style="flex:55"></s><s style="flex:20"></s></u><em>720</em></div><div class="cel k " style="--dc:var(--p)"><span>Salmón</span><u><s style="flex:40"></s><s style="flex:25"></s><s style="flex:35"></s></u><em>650</em></div><div class="cel vac">＋</div><div class="d"><span class=t-g>M</span><small class=t-g>gua</small></div><div class="cel k " style="--dc:var(--c)"><span>Tostada</span><u><s style="flex:15"></s><s style="flex:60"></s><s style="flex:25"></s></u><em>380</em></div><div class="cel hos k"><span>🏥 Hospital</span><em>—</em></div><div class="cel hos k"><span>🏥 Hospital</span><em>—</em></div><div class="cel k " style="--dc:var(--g)"><span>Barrita</span><u><s style="flex:10"></s><s style="flex:50"></s><s style="flex:40"></s></u><em>210</em></div><div class="d hoy"><span class=t-s>X</span><small class=t-s>sal</small></div><div class="cel k " style="--dc:var(--c)"><span>Avena</span><u><s style="flex:22"></s><s style="flex:55"></s><s style="flex:23"></s></u><em>520</em></div><div class="cel k " style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Tortilla</span><u><s style="flex:25"></s><s style="flex:35"></s><s style="flex:40"></s></u><em>640</em></div><div class="cel vac">＋</div><div class="d"><span class=t-m>J</span><small class=t-m>mañ</small></div><div class="cel k bor" style="--dc:var(--p)"><span>Yogur+fruta</span><u><s style="flex:30"></s><s style="flex:50"></s><s style="flex:20"></s></u><em>350</em></div><div class="cel sel k bor" style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Pasta atún</span><u><s style="flex:30"></s><s style="flex:55"></s><s style="flex:15"></s></u><em>690</em></div><div class="cel vac">＋</div><div class="d"><span class=t-m>V</span><small class=t-m>mañ</small></div><div class="cel k bor" style="--dc:var(--c)"><span>Avena</span><u><s style="flex:20"></s><s style="flex:55"></s><s style="flex:25"></s></u><em>480</em></div><div class="cel k bor" style="--dc:var(--p)"><span>Pollo curry</span><u><s style="flex:40"></s><s style="flex:45"></s><s style="flex:15"></s></u><em>760</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Fuera</span><u><s style="flex:20"></s><s style="flex:40"></s><s style="flex:40"></s></u><em>900</em></div><div class="cel vac">＋</div><div class="d"><span class=t-l>S</span><small class=t-l>lib</small></div><div class="cel k bor" style="--dc:var(--g)"><span>Tostada</span><u><s style="flex:18"></s><s style="flex:50"></s><s style="flex:32"></s></u><em>420</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Paella</span><u><s style="flex:25"></s><s style="flex:60"></s><s style="flex:15"></s></u><em>820</em></div><div class="cel k bor" style="--dc:var(--c)"><span>Pizza casera</span><u><s style="flex:20"></s><s style="flex:50"></s><s style="flex:30"></s></u><em>780</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Helado</span><u><s style="flex:5"></s><s style="flex:50"></s><s style="flex:45"></s></u><em>220</em></div><div class="d"><span class=t-l>D</span><small class=t-l>lib</small></div><div class="cel k bor" style="--dc:var(--g)"><span>Huevos</span><u><s style="flex:35"></s><s style="flex:10"></s><s style="flex:55"></s></u><em>450</em></div><div class="cel k bor" style="--dc:var(--p)"><span>🍲 Cocinar lote</span><u><s style="flex:1"></s><s style="flex:1"></s><s style="flex:1"></s></u><em>3 táper</em></div><div class="cel k bor" style="--dc:var(--g)"><span>Crema calabaza</span><u><s style="flex:10"></s><s style="flex:60"></s><s style="flex:30"></s></u><em>420</em></div><div class="cel vac">＋</div></div></div>
+<div class=dim></div>
+<div class=sheet style="bottom:60px"><div class=grab></div>
+<div class=row><div><b style="font-size:16px">Jueves · comida</b><div class=mini>mañana · borrador</div></div><span class=sp></span><span class="tag" style="background:color-mix(in srgb,var(--brand2) 22%,transparent);color:#b9a8ff">BORRADOR</span></div>
+<div class=rec style="margin-top:6px"><div class=e>🍛</div><b>Pollo al curry con arroz</b><span class=pill>táper</span><div class=s>del lote del domingo · 760 kcal</div></div>
+<div class=mac style="margin-top:4px"><div><b>760</b><span>kcal</span></div><div><b>52</b><span>P</span></div><div><b>78</b><span>HC</span></div><div><b>22</b><span>G</span></div></div>
+<div class=mini style="margin:6px 0">Con esta comida el día queda en <b style="color:var(--ink)">2.310 kcal</b> y <b style="color:var(--ink)">139 P</b>: dentro de objetivo.</div>
+<div class=two><div class="btn p">✓ Aceptar este</div><div class=btn>🔄 Cambiar plato</div></div>
+<div class=two style="margin-top:7px"><div class=btn>🔍 Buscar alimento</div><div class=btn>🍽️ Comer fuera</div></div>
+<div class=two style="margin-top:7px"><div class=btn>🍳 Cocinar ahora</div><div class=btn>🗑️ Vaciar casilla</div></div>
+<div class=mini style="margin-top:8px">Cambiar muestra tus recetas y táperes que encajan; si eliges una receta nueva, la compra se actualiza al aceptar.</div>
+</div><div class=ej>cifras de ejemplo</div><div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div></div>
+<div class=ab><div class=lbl>3 · ANTOJOS</div>
+<div class=top><span class=back>‹</span><h1>¿Qué te apetece?</h1><span class=sp></span><span class="tag">MEDIDOR 😋</span></div>
+<div class=card style="padding:10px"><div class=chips><div class="chip on">🍫 Dulce</div><div class=chip>🧂 Salado</div><div class=chip>🥨 Crujiente</div><div class=chip>🔥 Caliente</div><div class=chip>🧊 Fresco</div></div>
+<div class=mini style="margin-top:7px">Te quedan <b style="color:var(--ink)">920 kcal · 42 P</b> hoy: todo esto entra.</div></div>
+<div class=card style="padding:10px"><div class=cap>AL MICROONDAS · 3 MIN O MENOS</div>
+ <div class=rec><div class=e>🧁</div><b>Bizcocho de taza proteico</b><span class=pill>3 min</span><div class=s>230 kcal · 20 P · huevo, avena, cacao</div></div>
+ <div class=rec><div class=e>🍫</div><b>Mug de cacao y avena</b><span class=pill>2 min</span><div class=s>190 kcal · 12 P · lo tienes en casa</div></div>
+ <div class=rec><div class=e>🍎</div><b>Manzana asada con canela</b><span class=pill>4 min</span><div class=s>120 kcal · 1 P</div></div>
+ <div class=rec><div class=e>🥣</div><b>Natillas de yogur y cacao</b><span class=pill>0 min</span><div class=s>150 kcal · 14 P · sin cocinar</div></div></div>
+<div class=card style="padding:10px"><div class=row><div class=cap style="margin:0">TU PATRÓN · ÚLTIMAS 4 SEMANAS</div><span class=sp></span><div class="btn s" style="min-height:44px">＋ Apuntar antojo</div></div>
+<div class=pat style="margin-top:8px"><span></span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+<span>mañ</span><i style="--a:5"></i><i style="--a:0"></i><i style="--a:10"></i><i style="--a:0"></i><i style="--a:5"></i><i style="--a:15"></i><i style="--a:20"></i>
+<span>tarde</span><i style="--a:20"></i><i style="--a:10"></i><i style="--a:30"></i><i style="--a:20"></i><i style="--a:15"></i><i style="--a:30"></i><i style="--a:25"></i>
+<span>noche</span><i style="--a:55"></i><i style="--a:90"></i><i style="--a:70"></i><i style="--a:60"></i><i style="--a:65"></i><i style="--a:40"></i><i style="--a:50"></i></div>
+<div class=mini style="margin-top:8px">9 antojos este mes, 7 dulces, casi todos después de las 22 h. Sobre todo tras guardia (martes).</div></div>
+<div class=ej>cifras de ejemplo</div><div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div></div>
+<div class=ab><div class=lbl>4 · NEVERA · COMPRA · RECETAS</div>
+<div class=top><span class=back>‹</span><h1>En casa</h1><span class=sp></span><span class="tag">MEDIDORES ❄️ 🛒</span></div>
+<div class=card style="padding:10px"><div class=row><div class=cap style="margin:0">❄️ NEVERA · 5 TÁPERES</div><span class=sp></span><span class=mini>asignados a casillas</span></div>
+ <div class=ln><span>🍛</span><div><b>Pollo al curry ×3</b><div class=s>→ X comida, J comida, V comida</div></div><span class="dl u">hoy</span><span class=mini>2 p</span></div>
+ <div class=ln><span>🥘</span><div><b>Lentejas ×2</b><div class=s>→ M comida (guardia)</div></div><span class="dl o">2 d</span><span class=mini>1 p</span></div>
+ <div class=ln><span>🥛</span><div><b>Yogur proteico ×4</b><div class=s>productos · sin casilla</div></div><span class="dl k2">9 d</span><span class=mini>＋</span></div>
+</div>
+<div class=card style="padding:10px"><div class=row><div class=cap style="margin:0">🛒 COMPRA · 11 + 7 DEL BORRADOR</div><span class=sp></span><div class="btn s" style="min-height:44px">＋ Añadir</div></div>
+ <div class=ln><div class=chk></div><div><b>Salmón 400 g</b><div class=s>Semana aceptada · L cena</div></div><span class=mini>2,0 €</span><span></span></div>
+ <div class=ln><div class=chk></div><div><b>Huevos ×12</b><div class=s>Semana aceptada · X cena</div></div><span class=mini>2,6 €</span><span></span></div>
+ <div class=ln><div class=chk on></div><div><b>Avena 1 kg</b><div class=s>Semana aceptada</div></div><span class=mini>1,9 €</span><span></span></div>
+ <div class=ln style="opacity:.75"><div class=chk style="border-style:dashed;border-color:var(--brand2)"></div><div><b>Calabaza + arroz bomba</b><div class=s>Solo si aceptas el borrador</div></div><span class="tag" style="background:color-mix(in srgb,var(--brand2) 22%,transparent);color:#b9a8ff">BORR.</span><span></span></div>
+ <div class=row style="margin-top:6px"><span class=mini>Total aceptado 24,30 €</span><span class=sp></span><div class="btn s" style="min-height:44px">🧾 Ticket</div><div class="btn s" style="min-height:44px">▥ Código</div></div>
+</div>
+<div class=card style="padding:10px"><div class=row><div class=cap style="margin:0">📖 RECETAS · 24</div><span class=sp></span><div class="btn s" style="min-height:44px">＋ Cocinar</div></div>
+ <div class=chips style="margin-top:4px"><div class="chip on">⭐ Favoritas 9</div><div class=chip>Lote 6</div><div class=chip>Rápidas 8</div><div class=chip>Con nota 5</div></div>
+ <div class=mini style="margin-top:6px">Toca una receta: la ves, la cocinas o la pones en una casilla del tablero.</div></div>
+<div class=ej>cifras de ejemplo</div><div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div></div>
+<div class=ab><div class=lbl>5 · VITAMINAS</div>
+<div class=top><span class=back>‹</span><h1>Vitaminas y minerales</h1><span class=sp></span><span class="tag">MEDIDOR 💊</span></div>
+<div class=card style="padding:10px"><div class=row><b>Hoy · mié 28</b><span class=sp></span><div class=seg style="margin:0;--n:3;width:170px"><div class=on>Hoy</div><div>Semana</div><div>Borrador</div></div></div>
+<div class=mini style="margin:4px 0 8px">% de la cantidad diaria recomendada · con lo registrado hasta ahora.</div>
+<div class=vg><div><div class=r><span>Vitamina D</span><em class=lo>34%</em></div><i style="--w:34%;--c2:var(--bad)"></i></div><div><div class=r><span>Hierro</span><em class=lo>41%</em></div><i style="--w:41%;--c2:var(--warn)"></i></div><div><div class=r><span>Calcio</span><em class=>58%</em></div><i style="--w:58%;--c2:var(--warn)"></i></div><div><div class=r><span>Vitamina C</span><em class=hi>112%</em></div><i style="--w:100%;--c2:var(--ok)"></i></div><div><div class=r><span>B12</span><em class=hi>140%</em></div><i style="--w:100%;--c2:var(--ok)"></i></div><div><div class=r><span>Magnesio</span><em class=>72%</em></div><i style="--w:72%;--c2:var(--ok)"></i></div><div><div class=r><span>Zinc</span><em class=>66%</em></div><i style="--w:66%;--c2:var(--ok)"></i></div><div><div class=r><span>Potasio</span><em class=lo>49%</em></div><i style="--w:49%;--c2:var(--warn)"></i></div><div><div class=r><span>Vitamina A</span><em class=>88%</em></div><i style="--w:88%;--c2:var(--ok)"></i></div><div><div class=r><span>Folato</span><em class=>94%</em></div><i style="--w:94%;--c2:var(--ok)"></i></div><div class=sd><div class=r><span>Vitamina E</span><em class=mini>sin datos</em></div><i></i></div><div class=sd><div class=r><span>Yodo</span><em class=mini>sin datos</em></div><i></i></div></div>
+<div class=mini style="margin-top:7px">«Sin datos»: el alimento no trae ese dato; no cuenta como 0.</div></div>
+<div class=card style="padding:10px"><div class=cap>QUÉ TE LO SUBE (CASILLAS DE HOY Y MAÑANA)</div>
+ <div class=ln style="grid-template-columns:30px 1fr auto"><span style="font-size:20px">🥚</span><div><b>Cena de hoy: añadir 2 huevos</b><div class=s>Vitamina D +20 % · B12 +25 %</div></div><div class="btn s" style="min-height:44px">Aplicar</div></div>
+ <div class=ln style="grid-template-columns:30px 1fr auto"><span style="font-size:20px">🥬</span><div><b>Jueves comida: lentejas en vez de pasta</b><div class=s>Hierro +30 % · Potasio +12 %</div></div><div class="btn s" style="min-height:44px">Aplicar</div></div>
+ <div class=ln style="grid-template-columns:30px 1fr auto"><span style="font-size:20px">🐟</span><div><b>Sardinas en el extra de hoy</b><div class=s>Vitamina D +45 % · Calcio +15 %</div></div><div class="btn s" style="min-height:44px">Aplicar</div></div></div>
+<div class=donde>En la portada, el medidor 💊 pasa a rojo si hay 3 o más por debajo del 50 %.</div>
+<div class=ej>cifras de ejemplo</div><div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div></div>
