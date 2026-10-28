@@ -19,6 +19,9 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   datos no salen del móvil) o con lo ya decidido en `docs/DECISIONS.md`. Hacienda no puede recortarla ni saltarla.
 - **Bienestar = `/redisena-seccion` + el ayudante `verificador`.** Si le sirve al usuario: un R1 con guardias, en el
   móvil a 412×915, con poco tiempo y cansado. Es lo que en el otro repositorio hace Educación.
+- **Educación y Artes Visuales = `/redisena-seccion` (diseño) + `artifact-design`.** Decide el modelo final de un
+  concurso de maquetas con las notas del usuario y lo deja en una maqueta navegable con un solo lenguaje visual
+  (creado por el usuario el 28/10/2026 para la feria de Dinero).
 - **Ciencia = `/ingenieria-reversa`.** Estudiar cómo lo resuelven otras apps, si el asunto lo pide.
 - **El ministerio del asunto.** Cuando un tema pide saber de algo concreto, el Consejo lo invita: **Economía** para
   Dinero (finanzas personales: qué método ayuda de verdad a gastar menos y ahorrar), **Sanidad** para sueño, comida o
