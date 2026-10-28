@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>Los frutos · Compras</title>
+<style>
+*{box-sizing:border-box}
+html{background:#dfe9e2}
+body{width:412px;margin:0;background:#dfe9e2;color:#16301f;font-family:"Trebuchet MS","Gill Sans",system-ui,sans-serif;line-height:1.3;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left;padding:0}
+button:focus-visible,a:focus-visible{outline:3px solid #0b3d2a;outline-offset:2px}
+.cartel{padding:14px 20px;background:#0f2e1e;color:#e9f3ea;display:flex;gap:12px;align-items:center}
+.cartel svg{flex:none}
+.cartel h1{margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:.02em}
+.cartel p{margin:0;font-size:14px}
+.volver{display:inline-flex;align-items:center;min-height:44px;padding:8px 18px;border-radius:24px;background:#c9dccd;font-size:15px;color:#16301f;text-decoration:none;margin:12px 12px 4px}
+.wrap{padding:4px 12px 24px}
+.rot{margin:14px 8px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#2d4a38}
+.card{background:#e9f1ec;border:1px solid #b9cfbf;border-radius:22px;padding:14px}
+.card+.card{margin-top:10px}
+.e{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#2d4a38;font-weight:700}
+.msg{font-size:17px;font-weight:700;line-height:1.3;margin:0 0 4px;color:#0b3d2a}
+.big{font-size:34px;line-height:1.05;font-weight:700;color:#0b3d2a;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.btn2{min-height:48px;padding:10px 18px;border-radius:26px;background:#cfe0d3;font-size:15px;text-align:center;border:2px solid transparent}
+.btn2.p{background:#1f5c3f;color:#fff;font-weight:700}
+.tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;border:1.5px solid #7a3b12;color:#7a3b12;white-space:nowrap}
+.up{color:#7a3b12;font-weight:700}.dn{color:#1f5c3f;font-weight:700}
+.mini{font-size:13px;color:#2d4a38}
+.nav{position:sticky;bottom:0;display:flex;width:412px;background:#0f2e1e;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:4px;z-index:9}
+.nav a{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:18px;color:#c9dccd;text-decoration:none;font-size:13px}
+.nav a[aria-current=page]{background:#1f5c3f;color:#fff;font-weight:700}
+.nav svg{width:22px;height:22px}
+
+.wrap2{padding:4px 12px 24px}
+.total{display:flex;align-items:center;gap:8px;margin-top:4px;background:#e9f1ec;border:1px solid #b9cfbf;border-radius:22px;padding:0 6px 0 16px;min-height:52px;font-size:15px}
+.total b{font-size:24px;font-weight:700;color:#0b3d2a;font-variant-numeric:tabular-nums}
+.total span{color:#2d4a38;flex:1}
+.ie{border:2px solid #7f9c88;border-radius:99px;width:44px;height:44px;font-size:16px;font-weight:700;text-align:center}
+.nota{font-size:14px;color:#2d4a38;margin:6px 0 0;padding:10px 14px;background:#cfe0d3;border-radius:18px}
+.nota b{color:#16301f}.warn{color:#7a3b12}
+.cols{display:grid;grid-template-columns:1fr 58px 52px 72px;gap:6px;padding:0 12px;margin:14px 0 4px;font-size:11px;font-weight:700;letter-spacing:.06em;color:#2d4a38;text-transform:uppercase}
+.cols span:not(:first-child){text-align:right}
+.fila{background:#e9f1ec;border:1px solid #b9cfbf;border-radius:20px;margin-bottom:8px;overflow:hidden}
+.fila.espera{border-style:dashed;background:#dfe9e2}
+.cab{width:100%;display:grid;grid-template-columns:1fr 58px 52px 72px;gap:6px;align-items:center;min-height:56px;padding:8px 12px}
+.nm{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;min-width:0;line-height:1.2}
+.fr{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #2b1a3a;position:relative;background:linear-gradient(to top,#5a2f6e var(--p),#cfe0d3 var(--p))}
+.fr::before{content:"";position:absolute;left:10px;top:-7px;width:2px;height:6px;background:#6b4423}
+.fila.espera .fr{border-style:dashed;border-color:#7a3b12;background:#dfe9e2}
+.num{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.num.sec{color:#2d4a38;font-weight:400;font-size:13px}
+.num.cuenta{color:#7a3b12}
+.barra{height:5px;background:#cfe0d3}
+.barra i{display:block;height:100%;background:#1f5c3f}
+.espera .barra i{background:#8a5a2b}
+.det{padding:10px 12px 12px;border-top:1px solid #b9cfbf;font-size:14px;color:#2d4a38}
+.det b{color:#16301f}
+.btn{display:flex;align-items:center;justify-content:center;min-height:48px;background:#cfe0d3;border-radius:26px;padding:10px 18px;font-size:15px;width:100%;margin-top:8px;text-align:center}
+.btn.p{background:#1f5c3f;color:#fff;font-weight:700}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;border:1.5px solid;white-space:nowrap;margin-right:4px}
+.pill.nec{border-color:#1f5c3f;color:#1f5c3f}
+.pill.util{border-color:#276f83;color:#276f83}
+.pill.ilu{border-color:#5a2f6e;color:#5a2f6e}
+.pill.esp{border-color:#7a3b12;color:#7a3b12}
+</style></head><body>
+<header class="cartel"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><path d="M56 6 C40 6 24 12 8 26" stroke="#8a5a2b" stroke-width="5" fill="none" stroke-linecap="round"/><g stroke="#8a5a2b" stroke-width="2"><path d="M20 20V34M32 14V38M44 9V28"/></g><g fill="#5a2f6e" stroke="#e9f3ea" stroke-width="2"><circle cx="20" cy="38" r="7"/><circle cx="32" cy="42" r="7"/><circle cx="44" cy="32" r="7"/></g></svg><div><h1>Los frutos</h1><p>Lo que quiero comprar: una fila por compra. Cuánto apartar al mes y cuándo llega cada cosa. Cuanto más llevas, más madura el fruto. Toca una fila para ver el detalle.</p></div></header>
+<a class="volver" href="dinero-rara2-laurisilva.html">← Volver al bosque</a>
+<div class="wrap2">
+<div class="total">
+  <b>460 €</b><span>al mes · 4 compras</span>
+  <button class="ie" aria-expanded="false" aria-controls="nota-nomina" title="Ver cuándo cabe">ⓘ</button>
+</div>
+<div class="nota" id="nota-nomina" hidden>
+  Con la nómina base (1.350 €) <b class="warn">no cabe entera</b>; con una con guardias (oct, 2.800 €) sí. Si un mes cobras poco, se pausa primero el viaje. El fonendo no se toca.
+</div>
+
+<div class="cols" aria-hidden="true"><span>Compra (fruto: lo que llevas)</span><span>Precio</span><span>Al mes</span><span>Llega</span></div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm"><span class="fr" style="--p:79%" aria-hidden="true"></span><span>Fonendo Littmann</span></span><span class="num">190 €</span><span class="num sec">20 €</span><span class="num sec">dic 2026</span>
+  </button>
+  <div class="barra" aria-hidden="true"><i style="width:79%"></i></div>
+  <div class="det" hidden>
+    <span class="pill nec">Necesario</span> Llevas <b>150 €</b> de 190 · faltan 40 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm"><span class="fr" style="--p:27%" aria-hidden="true"></span><span>Portátil</span></span><span class="num">1.100 €</span><span class="num sec">115 €</span><span class="num sec">may 2027</span>
+  </button>
+  <div class="barra" aria-hidden="true"><i style="width:27%"></i></div>
+  <div class="det" hidden>
+    <span class="pill nec">Necesario</span> Llevas <b>300 €</b> de 1.100 · faltan 800 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm"><span class="fr" style="--p:0%" aria-hidden="true"></span><span>Curso de ecografía</span></span><span class="num">350 €</span><span class="num sec">90 €</span><span class="num sec">feb 2027</span>
+  </button>
+  <div class="barra" aria-hidden="true"><i style="width:0%"></i></div>
+  <div class="det" hidden>
+    <span class="pill util">Útil para el trabajo</span> Llevas <b>0 €</b> de 350 · faltan 350 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila">
+  <button class="cab" aria-expanded="false">
+    <span class="nm"><span class="fr" style="--p:16%" aria-hidden="true"></span><span>Viaje a Japón</span></span><span class="num">2.500 €</span><span class="num sec">235 €</span><span class="num sec">jul 2027</span>
+  </button>
+  <div class="barra" aria-hidden="true"><i style="width:16%"></i></div>
+  <div class="det" hidden>
+    <span class="pill ilu">Me hace ilusión</span> Llevas <b>400 €</b> de 2.500 · faltan 2.100 €.
+    <button class="btn p">Lo compré</button>
+  </div>
+</div>
+
+<div class="fila espera">
+  <button class="cab" aria-expanded="false">
+    <span class="nm"><span class="fr" style="--p:40%" aria-hidden="true"></span><span>Auriculares nuevos</span></span><span class="num">120 €</span><span class="num sec">—</span><span class="num cuenta">18 días</span>
+  </button>
+  <div class="barra" aria-hidden="true"><i style="width:40%"></i></div>
+  <div class="det" hidden>
+    <span class="pill esp">En espera 30 días</span> Si en 30 días sigues queriéndolo, pasa a la lista. Hasta entonces no se aparta nada.
+    <button class="btn">Ya no lo quiero</button>
+  </div>
+</div>
+
+<button class="btn p" style="margin-top:8px">+ Añadir algo que quiero</button>
+</div>
+<script>
+document.querySelectorAll('.cab').forEach(function(b){
+  b.addEventListener('click',function(){
+    var abierto=b.getAttribute('aria-expanded')==='true';
+    b.setAttribute('aria-expanded',String(!abierto));
+    b.parentElement.querySelector('.det').hidden=abierto;
+  });
+});
+var ie=document.querySelector('.ie'), nota=document.getElementById('nota-nomina');
+ie.addEventListener('click',function(){
+  var abierto=ie.getAttribute('aria-expanded')==='true';
+  ie.setAttribute('aria-expanded',String(!abierto));
+  nota.hidden=abierto;
+});
+</script>
+<nav class="nav" aria-label="Secciones">
+<a href="dinero-rara2-laurisilva.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="9" r="7"/><rect x="10.5" y="14" width="3" height="8"/></svg>Bosque</a>
+<a href="dinero-laurisilva-gastos.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 10l1 8q6 3 12 0l1-8z"/><ellipse cx="12" cy="10" rx="7" ry="3"/></svg>Gastos</a>
+<a href="dinero-rara2-laurisilva.html#r2"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 17q5-4 10 0t10 0v4H2z"/><circle cx="12" cy="8" r="5"/></svg>Ahorro</a>
+<a href="dinero-laurisilva-compras.html" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="15" r="5"/><circle cx="16" cy="11" r="4"/><path d="M12 3q3 1 3 4" stroke="currentColor" stroke-width="2" fill="none"/></svg>Compras</a>
+</nav>
+</body></html>
