@@ -13,6 +13,9 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
   sesión larga gasta mucho más. Al terminar una tarea, haz el **traspaso** (paso 7 de `cierra-y-despliega`)
   y dile que la siguiente va en una sesión nueva. Si en la misma sesión pide otra tarea distinta, hazla, pero
   recuérdaselo en una línea.
+- **Gastar poco:** las decisiones de la tarea, al abrir la sesión (no a mitad); juntar lo que comparte
+  material; capturas siempre por el ayudante `verificador`; lo mecánico (textos, pruebas, la hora del parte)
+  vale en un modelo más barato.
 - Para empezar una sesión: `/plan-socialista` (el parte de lo que pide atención y lo que quedó del traspaso).
 - **El plan de la 3.0** está en `.claude/plan-socialista/plan-v3.md` (lo cuenta `/bitacora`). **Cada tarea se mide
   al cerrarla** (`node tools/gasto.mjs --apunta …`, en `gastos.md`) para que la siguiente del mismo tipo cueste menos.

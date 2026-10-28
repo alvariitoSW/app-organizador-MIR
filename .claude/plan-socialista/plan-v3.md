@@ -12,9 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-- [v3-plan-global] Montar el plan 3.0 (este tablero) y el apartado de gastos del plan socialista · herramientas ·
-  montado el 2026-10-27 (439 k); la sesión sigue abierta para ir apuntando lo que digas y ordenar el plan ·
-  sesión del 2026-10-27
+Nada. **La siguiente: S2, el mapa de Comer** (sesión nueva: «/plan-socialista y haz la S2»).
 
 ## Por hacer
 
@@ -33,7 +31,7 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 | S5 | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir — **falta (A) vitaminas y minerales** | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
 | S6 | La semana en borrador | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
 | S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
-| S8 | Dinero: plan de compras | [v3-dinero-compras] | maqueta → construir | opus maquetas; constructor sonnet | ~2,0 M |
+| S8 | Dinero: plan de compras | [v3-dinero-compras] | **informe primero** (tú das tus ideas → informe de cómo resolverlo → tu visto bueno) → maqueta → construir | informe y maquetas opus; constructor sonnet | ~0,4 M informe + ~2,0 M |
 
 **Total: ~10 M** frente a **~14 M** haciéndolas una a una (cinco rondas de maquetas por separado y cada sesión
 descubriendo Comer desde cero).
@@ -69,6 +67,8 @@ De dónde sale el ahorro:
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-plan-global] El plan 3.0, los gastos (`tools/gasto.mjs`) y la skill `ficha-de-tarea`, en main · 2026-10-28
 
 - [comida-ri-D] Comer: sello Nutri-Score, NOVA y aditivos en la ficha y la letra en el buscador · main 2416c99 · 2026-10-27
 - [v3-cantidades] + [comida-ri-B] Comer: hoja de cantidad (pasos 10·50·100, mantener pulsado, rueda, g/ml, ración de

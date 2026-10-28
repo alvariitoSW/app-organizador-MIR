@@ -2826,14 +2826,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.click(`[data-a="food-abrir"][data-v="${primerPlatoCm}"]`);
   await page.waitForTimeout(250);
   const hojaUna = await page.evaluate(() => ({
-    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal') || document.querySelector('#main .fcnum')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
     raciones: Array.prototype.map.call(document.querySelectorAll('#main .racb'), (x) => x.textContent),
   }));
   await page.click('[data-a="food-cant-set"][data-n="2"]');
   await page.waitForTimeout(200);
   const hojaDos = await page.evaluate(() => ({
-    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal')),
+    val: ((e) => e ? (e.tagName === 'INPUT' ? String(+e.value) : e.textContent) : undefined)(document.getElementById('fcVal') || document.querySelector('#main .fcnum')),
     kcal: (document.querySelector('#fcPrevia b') || {}).textContent,
   }));
   const hoyKCm = new Date().toISOString().slice(0, 10);
@@ -9310,6 +9310,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
     const dv = await page.evaluate(() => { const d = (window.PG.store.dishes || []).find((x) => (+x.kcal || 0) > 200 && !x.hospital); return 'dish:' + d.id; });
     await page.evaluate((v) => { const P = window.PG; P.ui.foodSel = v; P.ui.foodCant = 1; P.ui.foodPos = 'comida'; P.ui.foodVista = 'cantidad'; P.render(); }, dv);
+    // el número se toca para abrir la rueda, y con ella abierta se escribe (prueba 330)
+    await page.click('#main .fcnum'); await page.waitForTimeout(100);
     const cant = await page.evaluate(() => { const h = document.querySelector('#main .hoja'); return { pos: h ? getComputedStyle(h).position : '', alto: document.body.scrollHeight, input: !!document.querySelector('#fcVal[data-a="food-cant-in"]') }; });
     const fi = await page.$('#fcVal'); if (fi) { await fi.fill('1.5'); await fi.dispatchEvent('change'); await page.waitForTimeout(100); }
     const c15 = await page.evaluate(() => window.PG.ui.foodCant);
@@ -13194,6 +13196,136 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la radio del conductor se abre entera por encima de la barra, tocar «Anoche: sin apuntar» abre la hoja y las horas cambiadas se guardan',
       r.pista0 === 'toca para apuntar' && r.a.panel != null && r.a.barra != null && r.a.panel <= r.a.barra && r.b.hoja !== '' &&
       r.c.h === 7.5 && r.c.acostar === '23:15' && r.c.desp === '06:45' && r.c.pista === 'toca para oírla', JSON.stringify(r));
+  }
+  // 330) LA HOJA DE CANTIDAD CON RACIÓN DE VERDAD, PASOS, MANTENER PULSADO Y RUEDA, EN CADENA: (a) se busca en
+  // Open Food Facts y se usa un yogur cuya etiqueta dice «1 ración = 125 g» (serving_quantity): la hoja abre en
+  // «1 · ración · 125 g», con el conmutador en «por ración»; (b) + suma media ración; (c) «por 100 g» pasa a
+  // gramos, se elige el paso 50 y + suma 50 (y el paso se recuerda); (d) mantener + pulsado corre varios pasos y
+  // al soltar no suma uno de más; (e) tocar el número abre la rueda, que al deslizar dos puestos deja la cantidad
+  // dos pasos más arriba; (f) se apunta lo que dice la hoja; (g) la leche, que OFF da en ml, se cuenta en ml.
+  // Sin la ración de la etiqueta abría en 150 g; sin el paso, ± iba de 10 en 10; sin la rueda ni el mantener, no corre.
+  {
+    const r = {};
+    const resp = { products: [
+      { code: '3300330000111', product_name: 'Yogur griego ración', brands: 'Hacendado', quantity: '4 x 125 g', serving_size: '1 yogur (125 g)', serving_quantity: 125, serving_quantity_unit: 'g', nutriments: { 'energy-kcal_100g': 120, proteins_100g: 4 }, popularity_key: 9000000 },
+      { code: '3300330000222', product_name: 'Semidesnatada ración', brands: 'Hacendado', serving_size: '250', serving_quantity: 250, product_quantity_unit: 'ml', nutriments: { 'energy-kcal_100g': 46, proteins_100g: 3.2 }, popularity_key: 8000000 } ] };
+    let pidioRacion = false;
+    await page.route('https://world.openfoodfacts.org/**', (route) => {
+      if (/serving_quantity/.test(route.request().url())) pidioRacion = true;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) }); });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia330', JSON.stringify(P.store)); P.ui.off = null; P.ui.offCache = {}; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.foodDest = ''; P.store.food.pasoCant = 10; P.save(); });
+    const hoja = () => page.evaluate(() => ({ num: (document.querySelector('#main .pasos .val .fcnum') || {}).textContent || '',
+      lab: (document.querySelector('#main .pasos .val > span') || {}).textContent || '', cant: window.PG.ui.foodCant,
+      seg: Array.prototype.map.call(document.querySelectorAll('#main .seg button.on'), (b) => b.textContent).join('|'),
+      kcal: (document.querySelector('#fcPrevia b') || {}).textContent }));
+    const usar = async (nombre) => {
+      await gotoFood('add');
+      await page.fill('#fbQ', nombre.split(' ')[0].toLowerCase()); await page.waitForTimeout(150);
+      await page.click('[data-a="off-buscar"]'); await page.waitForTimeout(500);
+      const i = await page.evaluate((n) => ((window.PG.ui.off && window.PG.ui.off.list) || []).findIndex((p) => p.nombre === n), nombre);
+      await page.click(`[data-a="off-usar"][data-i="${i}"]`); await page.waitForTimeout(200); };
+    await usar('Yogur griego ración');
+    r.a = await hoja();
+    await page.click('#main .cpaso[aria-label="más"]'); await page.waitForTimeout(120);
+    r.b = await hoja();
+    await page.click('#main .seg [data-m="100"]'); await page.waitForTimeout(100);
+    await page.click('#main .pasoc [data-n="50"]'); await page.waitForTimeout(100);
+    await page.click('#main .cpaso[aria-label="más"]'); await page.waitForTimeout(120);
+    r.c = await hoja(); r.c.paso = await page.evaluate(() => window.PG.store.food.pasoCant);
+    const bx = await (await page.$('#main .cpaso[aria-label="más"]')).boundingBox();
+    await page.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await page.mouse.down();
+    await page.waitForTimeout(1300); await page.mouse.up(); await page.waitForTimeout(250);
+    r.d = await hoja();
+    await page.waitForTimeout(500); r.d.quieto = await page.evaluate(() => window.PG.ui.foodCant);
+    await page.click('#main .fcnum'); await page.waitForTimeout(120);
+    r.e0 = await page.evaluate(() => ({ rueda: !!document.getElementById('fcRueda'), input: !!document.querySelector('#fcVal[data-a="food-cant-in"]') }));
+    await page.evaluate(() => { const w = document.getElementById('fcRueda'); w.scrollTop += 80; });
+    await page.waitForTimeout(450);
+    r.e = await hoja();
+    const hoyK = new Date().toISOString().slice(0, 10);
+    const antes = await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyK);
+    const esperado = Math.round(120 * r.e.cant / 100);
+    await page.click('[data-a="food-apuntar"]'); await page.waitForTimeout(250);
+    r.f = (await page.evaluate((k) => window.PG.foodTotals(k).kcal, hoyK)) - antes;
+    await usar('Semidesnatada ración');
+    r.g = await hoja();
+    r.pidioRacion = pidioRacion;
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia330')); localStorage.removeItem('__copia330'); P.ui.off = null; P.ui.offCache = {}; P.ui.foodBusca = ''; P.ui.foodSel = ''; P.ui.foodRueda = false; P.ui.foodModo = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('la hoja de cantidad abre en la ración de la etiqueta, pasa a 100 g con paso 50, corre al mantener pulsado, la rueda mueve dos pasos, apunta lo que dice y la leche va en ml',
+      r.pidioRacion && r.a.num === '1' && /ración · 125 g/.test(r.a.lab) && r.a.seg === 'por ración' && r.a.kcal === '150' &&
+      r.b.cant === 187.5 && r.b.num === '1.5' &&
+      r.c.cant === 237.5 && r.c.paso === 50 && r.c.lab === 'g' && /100 g/.test(r.c.seg) &&
+      r.d.cant >= 237.5 + 150 && r.d.quieto === r.d.cant && (r.d.cant - 237.5) % 50 === 0 &&
+      r.e0.rueda && r.e0.input && r.e.cant === r.d.cant + 100 &&
+      r.f === esperado &&
+      /ración · 250 ml/.test(r.g.lab) && r.g.cant === 250, JSON.stringify(r));
+  }
+  // 331) EL SELLO DE OPEN FOOD FACTS (NUTRI-SCORE · NOVA · ADITIVOS), EN CADENA: (a) un producto guardado antes
+  // (sin sello) se busca y su fila no lleva letra; (b) al abrir su ficha dice «trayendo…» y el sello se pide solo a
+  // OFF, se guarda y aparece: E, NOVA 4 y «3» aditivos; (c) tocar «3» despliega los códigos con su nombre (y el que
+  // no está en la tabla, solo el código) y otro toque lo cierra; (d) de vuelta al buscador, su fila ya lleva la «E»;
+  // (e) buscar en OFF trae la letra en la lista y la ficha sale con A, NOVA 1 y 0 aditivos; (f) el que no trae NOVA
+  // dice «sin dato». Sin el arreglo, ni se pedían los campos ni había sello en ningún sitio.
+  {
+    const r = {};
+    const EAN = '8410000000017';
+    const resp = { products: [
+      { code: '3300330000333', product_name: 'Yogur sello natural', brands: 'Hacendado', nutriscore_grade: 'a', nova_group: 1, additives_tags: [], nutriments: { 'energy-kcal_100g': 60, proteins_100g: 4 }, popularity_key: 9000000 },
+      { code: '3300330000444', product_name: 'Yogur sello fresa', brands: 'Hacendado', nutriscore_grade: 'c', additives_tags: ['en:e120'], nutriments: { 'energy-kcal_100g': 95, proteins_100g: 3 }, popularity_key: 8000000 } ] };
+    let pidioCampos = false, pidioSello = 0;
+    await page.route('https://world.openfoodfacts.org/**', async (route) => {
+      const u = route.request().url();
+      if (u.indexOf('/api/v2/product/' + EAN) >= 0) {
+        pidioSello++; await new Promise((ok) => setTimeout(ok, 300));
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ product: { code: EAN, nutriscore_grade: 'e', nova_group: 4, additives_tags: ['en:e322', 'en:e500ii', 'en:e999'] } }) }); }
+      if (/nutriscore_grade/.test(u) && /nova_group/.test(u) && /additives_tags/.test(u)) pidioCampos = true;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) }); });
+    await page.evaluate((ean) => { const P = window.PG; localStorage.setItem('__copia331', JSON.stringify(P.store));
+      P.store.food.eans[ean] = { ean: ean, nombre: 'Galletuca vieja', marca: 'Hacendado', kcal: 450, prot: 6, carb: 70, gresa: 15, fuente: 'Open Food Facts', ts: 1 };
+      P.ui.off = null; P.ui.offCache = {}; P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.foodDest = ''; P.ui.selloPedido = {}; P.ui.foodAdit = ''; P.save(); }, EAN);
+    const fila = () => page.evaluate((ean) => { const b = document.querySelector('[data-a="food-abrir"][data-v="ean:' + ean + '"]');
+      return b ? ((b.querySelector('.nsm') || {}).textContent || '-') : 'sin fila'; }, EAN);
+    const sello = () => page.evaluate(() => { const n = document.getElementById('fcSello');
+      return { trae: !!(n && n.classList.contains('trae')), ns: (document.querySelector('#fcSello .ns i.on') || {}).textContent || '',
+        nova: (document.querySelector('#fcSello .nova b') || {}).textContent || '',
+        adi: (document.querySelector('#fcSello .adi b') || {}).textContent || '',
+        sd: document.querySelectorAll('#fcSello .sd').length,
+        lista: Array.prototype.map.call(document.querySelectorAll('#fcSello .adil div'), (d) => d.textContent) }; });
+    await gotoFood('add');
+    await page.fill('#fbQ', 'galletuca'); await page.waitForTimeout(250);
+    r.a = await fila();
+    await page.click(`[data-a="food-abrir"][data-v="ean:${EAN}"]`); await page.waitForTimeout(80);
+    r.b0 = await sello();
+    await page.waitForTimeout(600);
+    r.b = await sello(); r.b.guardado = await page.evaluate((ean) => { const p = window.PG.store.food.eans[ean]; return p.sello + '|' + p.ns + '|' + p.nova; }, EAN);
+    await page.click('#fcSello [data-a="food-adit"]'); await page.waitForTimeout(100);
+    r.c = await sello(); r.c.exp = await page.evaluate(() => document.querySelector('#fcSello .adi').getAttribute('aria-expanded'));
+    await page.click('#fcSello [data-a="food-adit"]'); await page.waitForTimeout(100);
+    r.c2 = (await sello()).lista.length;
+    await page.click('.subcab [data-a="food-vista"]'); await page.waitForTimeout(150);
+    await page.fill('#fbQ', 'galletuca'); await page.waitForTimeout(250);
+    r.d = await fila();
+    await page.fill('#fbQ', 'yogur'); await page.waitForTimeout(150);
+    await page.click('[data-a="off-buscar"]'); await page.waitForTimeout(500);
+    r.e0 = await page.evaluate(() => Array.prototype.map.call(document.querySelectorAll('[data-a="off-usar"] .nsm'), (b) => b.textContent).join(''));
+    const usa = async (n) => { const i = await page.evaluate((x) => ((window.PG.ui.off && window.PG.ui.off.list) || []).findIndex((p) => p.nombre === x), n);
+      await page.click(`[data-a="off-usar"][data-i="${i}"]`); await page.waitForTimeout(200); };
+    await usa('Yogur sello natural');
+    r.e = await sello();
+    await page.click('.subcab [data-a="food-vista"]'); await page.waitForTimeout(150);
+    await page.fill('#fbQ', 'yogur'); await page.waitForTimeout(250);   /* ya buscado: la lista sale de memoria */
+    await usa('Yogur sello fresa');
+    r.f = await sello();
+    r.pidioCampos = pidioCampos; r.pidioSello = pidioSello;
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia331')); localStorage.removeItem('__copia331'); P.ui.off = null; P.ui.offCache = {}; P.ui.foodBusca = ''; P.ui.foodSel = ''; P.ui.foodAdit = ''; P.ui.selloPedido = {}; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('el sello de OFF: el guardado de antes lo pide solo al abrirlo (E · NOVA 4 · 3 aditivos con nombre), su fila gana la letra, y lo buscado trae A · NOVA 1 · 0 o «sin dato»',
+      r.pidioCampos && r.a === '-' && r.b0.trae && !r.b.trae && r.b.ns === 'E' && r.b.nova === '4' && r.b.adi === '3' && r.b.guardado === '1|E|4' &&
+      r.b.lista.length === 0 && r.c.exp === 'true' && r.c.lista.join('|') === 'E322Lecitinas|E500iiCarbonatos de sodio|E999' && r.c2 === 0 &&
+      r.d === 'E' && r.pidioSello === 1 && r.e0 === 'AC' &&
+      r.e.ns === 'A' && r.e.nova === '1' && r.e.adi === '0' && r.e.sd === 0 &&
+      r.f.ns === 'C' && r.f.nova === '' && r.f.sd === 1 && r.f.adi === '1', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

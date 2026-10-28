@@ -317,7 +317,7 @@ let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que qu
   drawerOpen:false,monSel:'',marks:new Set(),draftPattern:null,openPickers:new Set(),
   calDesde:'',calHasta:'',icsDesde:'',icsHasta:'',calView:false,calTxt:'',calFile:'',calUrl:'',icsPrev:null,
   icsTxt:'',icsEncima:false,
-  foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
+  foodPanel:'',foodObjOpen:false,foodTipo:'',foodCant:0,foodModo:'',foodRueda:false,foodPos:'',cocinaTab:'',platosTab:'',antojo:null,prodMarca:'',
   menuAuto:null,shopVista:'',compraCerradas:new Set(['rutina','basicos','casa']),compraAbiertas:new Set(),tandaAbierta:'',dineroVista:'',notaProy:'',cfgVista:'',
   evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
@@ -3709,13 +3709,44 @@ function food(){
   if(typeof f.catalogoFuente!=='string')f.catalogoFuente='';
   if(!Array.isArray(f.alimentos))f.alimentos=[];   /* alimentos tuyos, los que no están en la tabla */
   if(!f.usda||typeof f.usda!=='object')f.usda={};  /* correcciones traídas de FoodData Central, por id */
+  if([10,50,100].indexOf(f.pasoCant)<0)f.pasoCant=10;   /* el paso de ± en la hoja de cantidad: el último que usaste */
   if(!Array.isArray(f.nevera))f.nevera=[];         /* lo que tienes en casa ahora mismo */
   if(!Array.isArray(f.despensa))f.despensa=[];     /* …y cuánto hay de cada cosa */
   if(!Array.isArray(f.neveraMano))f.neveraMano=[];
   return f;}
 const OFF_NOMBRES=['product_name_es','generic_name_es','product_name','product_name_en','product_name_fr','product_name_it',
   'product_name_pt','product_name_de','abbreviated_product_name','generic_name'];
-const OFF_CAMPOS='code,'+OFF_NOMBRES.join(',')+',brands,quantity,nutriments';
+const OFF_CAMPOS='code,'+OFF_NOMBRES.join(',')+',brands,quantity,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity_unit,nutriscore_grade,nova_group,additives_tags';
+/* EL SELLO de Open Food Facts: Nutri-Score (A–E), NOVA (1 sin procesar … 4 ultraprocesado) y los aditivos.
+   Lo que OFF no sabe se queda vacío ('' · 0 · null) y la ficha dice «sin dato»; sello:1 = ya se preguntó */
+const ADITIVOS={e100:'Curcumina',e101:'Riboflavina',e120:'Cochinilla',e129:'Rojo allura',e133:'Azul brillante',e140:'Clorofilas',
+  e150a:'Caramelo natural',e150c:'Caramelo amónico',e150d:'Caramelo de sulfito amónico',e160a:'Carotenos',e160b:'Annato',e160c:'Extracto de pimentón',
+  e162:'Rojo de remolacha',e163:'Antocianinas',e170:'Carbonato cálcico',e171:'Dióxido de titanio',e200:'Ácido sórbico',e202:'Sorbato potásico',
+  e210:'Ácido benzoico',e211:'Benzoato sódico',e220:'Dióxido de azufre',e223:'Metabisulfito sódico',e224:'Metabisulfito potásico',
+  e250:'Nitrito sódico',e251:'Nitrato sódico',e252:'Nitrato potásico',e260:'Ácido acético',e270:'Ácido láctico',e281:'Propionato sódico',
+  e282:'Propionato cálcico',e290:'Dióxido de carbono',e296:'Ácido málico',e300:'Ácido ascórbico',e301:'Ascorbato sódico',e306:'Tocoferoles',
+  e307:'Alfa-tocoferol',e316:'Eritorbato sódico',e322:'Lecitinas',e325:'Lactato sódico',e326:'Lactato potásico',e327:'Lactato cálcico',
+  e330:'Ácido cítrico',e331:'Citratos de sodio',e332:'Citratos de potasio',e333:'Citratos de calcio',e334:'Ácido tartárico',
+  e338:'Ácido fosfórico',e339:'Fosfatos de sodio',e340:'Fosfatos de potasio',e341:'Fosfatos de calcio',e392:'Extracto de romero',
+  e400:'Ácido algínico',e401:'Alginato sódico',e406:'Agar',e407:'Carragenanos',e410:'Goma garrofín',e412:'Goma guar',e414:'Goma arábiga',
+  e415:'Goma xantana',e418:'Goma gellan',e420:'Sorbitol',e421:'Manitol',e422:'Glicerol',e440:'Pectinas',e450:'Difosfatos',e451:'Trifosfatos',
+  e452:'Polifosfatos',e460:'Celulosa',e461:'Metilcelulosa',e464:'Hidroxipropilmetilcelulosa',e466:'Carboximetilcelulosa',
+  e471:'Mono- y diglicéridos de ácidos grasos',e472e:'Ésteres de mono- y diglicéridos',e475:'Ésteres de poliglicerol',
+  e476:'Polirricinoleato de poliglicerol',e481:'Estearoil lactilato sódico',e500:'Carbonatos de sodio',e501:'Carbonatos de potasio',
+  e503:'Carbonatos de amonio',e504:'Carbonatos de magnesio',e508:'Cloruro potásico',e509:'Cloruro cálcico',e516:'Sulfato cálcico',
+  e524:'Hidróxido sódico',e551:'Dióxido de silicio',e575:'Glucono-delta-lactona',e621:'Glutamato monosódico',e627:'Guanilato disódico',
+  e631:'Inosinato disódico',e635:'Ribonucleótidos disódicos',e901:'Cera de abejas',e903:'Cera carnauba',e904:'Goma laca',
+  e920:'L-cisteína',e941:'Nitrógeno',e950:'Acesulfamo K',e951:'Aspartamo',e952:'Ciclamato',e954:'Sacarina',e955:'Sucralosa',
+  e960:'Glucósidos de esteviol',e965:'Maltitol',e967:'Xilitol',e968:'Eritritol',e1400:'Dextrina',e1404:'Almidón oxidado',
+  e1412:'Fosfato de dialmidón',e1414:'Fosfato de dialmidón acetilado',e1420:'Almidón acetilado',e1422:'Adipato de dialmidón acetilado',
+  e1442:'Fosfato de dialmidón hidroxipropilado',e1450:'Octenilsuccinato sódico de almidón',e1520:'Propilenglicol'};
+function selloDe(p){
+  /* de la ficha de OFF a {ns,nova,adit}: «en:e322i» → «E322i» */
+  const g=String((p&&p.nutriscore_grade)||'').toLowerCase(),nv=parseInt(p&&p.nova_group,10);
+  const t=p&&p.additives_tags;
+  return {ns:/^[a-e]$/.test(g)?g.toUpperCase():'',nova:nv>=1&&nv<=4?nv:0,
+    adit:Array.isArray(t)?t.map(function(c){const m=/e(\d+)([a-z]*)/i.exec(String(c));return m?('E'+m[1]+m[2].toLowerCase()):'';}).filter(Boolean):null,sello:1};}
+function aditNombre(c){const k=String(c).toLowerCase();return ADITIVOS[k]||ADITIVOS[k.replace(/[a-z]+$/,'')]||'';}
 function offNum(v){const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?Math.round(n*10)/10:0;}
 function mapOffProduct(p){
   /* de la ficha de Open Food Facts a nuestro producto: siempre por 100 g, que es como se cuentan las raciones */
@@ -3736,7 +3767,15 @@ function mapOffProduct(p){
     kcal:kcal,prot:per('proteins'),carb:per('carbohydrates'),gresa:per('fat'),
     azucar:per('sugars'),fibra:per('fiber'),sal:per('salt'),
     envase:String(p.quantity||'').trim().slice(0,28),fuente:'Open Food Facts',ts:Date.now()};
+  /* LA RACIÓN DE LA ETIQUETA («1 yogur = 125 g») y si se cuenta en ml: con ella la hoja de cantidad
+     empieza en «1 ración» de verdad, no en 150 g para todo */
+  const sq=offNum(p.serving_quantity),su=String(p.serving_quantity_unit||p.product_quantity_unit||'').trim().toLowerCase();
+  if(sq>0&&sq<=3000&&su!=='mg'){out.racion=Math.round(sq);
+    const st=String(p.serving_size||'').trim().slice(0,40);if(st)out.racionTxt=st;}
+  if(su==='ml'||su==='g')out.ml=su==='ml';
+  else if(/\d\s*(ml|cl|l)\b/i.test(out.envase))out.ml=true;
   if(!name)out.sinNombre=true;
+  Object.assign(out,selloDe(p));
   if(!out.kcal&&!out.prot)return null;   /* sin datos no lo guardamos: la app no inventa lo que comes */
   return out;}
 function addEanProduct(o){
@@ -4029,10 +4068,23 @@ function mapUsdaFood(fd){
     const k=USDA_NUM[id];if(!k)return;
     o[k]=(k==='kcal')?Math.round(v):Math.round(v*100)/100;});
   if(!o.kcal&&!o.pr)return null;
+  /* las porciones que trae («1 cup = 158 g»): se suman a los botones de la hoja de cantidad */
+  const porc=(fd.foodPortions||fd.foodMeasures||[]).map(function(q){
+    const g=Math.round(+q.gramWeight||0);
+    const t=String(q.portionDescription||q.disseminationText||(((+q.amount||1)+' '+(q.modifier||(q.measureUnit&&q.measureUnit.name)||''))).trim());
+    return [usdaPorcionTxt(t),g];}).filter(function(q){return q[1]>0&&q[1]<=2000&&q[0]&&!/not specified/i.test(q[0]);});
+  if(porc.length)o.porc=porc.slice(0,3);
   o.usdaDesc=String(fd.description||'').slice(0,80);
   o.usdaId=fd.fdcId||0;
   o.ts=Date.now();
   return o;}
+const USDA_PORC_ES={cup:'taza',cups:'tazas',tbsp:'cucharada',tablespoon:'cucharada',tsp:'cucharadita',teaspoon:'cucharadita',
+  slice:'rebanada',slices:'rebanadas',piece:'pieza',pieces:'piezas',medium:'mediano',large:'grande',small:'pequeño',
+  oz:'onza',serving:'ración',fruit:'pieza',whole:'entero',egg:'huevo',fillet:'filete',breast:'pechuga',glass:'vaso'};
+function usdaPorcionTxt(t){
+  /* lo justo para que se lea en español; lo que no está en la lista se queda como viene */
+  return String(t).replace(/[()]/g,'').replace(/\b[a-z]+\b/gi,function(w){return USDA_PORC_ES[w.toLowerCase()]||w;})
+    .replace(/\s+/g,' ').trim().slice(0,28);}
 function usdaBuscar(id){
   /* consulta un alimento concreto y guarda el resultado: a partir de ahí ya está corregido y no se
      vuelve a salir a la red por él. Lo único que sale del móvil es el nombre del alimento en inglés. */
@@ -4499,13 +4551,13 @@ function addFoodEntry0(dateStr,opt){
     const g=Math.max(1,+opt.grams||100),pc=porcionDe(p,g);
     list.push({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:p.nombre,marca:p.marca,ean:p.ean,g:g,
       kcal:pc.kcal,prot:pc.prot,carb:pc.carb,gresa:pc.gresa,azucar:pc.azucar,fibra:pc.fibra,sal:pc.sal,ts:Date.now()});
-    save();return 'añadido: '+p.nombre+' · '+g+' g · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
+    save();return 'añadido: '+p.nombre+' · '+g+' '+unidadDe({v:'ean:'+p.ean,nombre:p.nombre})+' · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
   if(opt.alim){
     const a=alimById(opt.alim);if(!a)return 'ese alimento ya no está en la tabla';
     const g=Math.max(1,+opt.grams||100),pc=alimEntrada(a,g);
     list.push(Object.assign({id:uid('fe'),when:opt.when||'',p:opt.pos||'comida',nombre:a.n,marca:a.nota||'',
       alim:a.id,emoji:a.e||'',g:g,ts:Date.now()},pc));
-    save();return 'añadido: '+a.n+' · '+g+' g · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
+    save();return 'añadido: '+a.n+' · '+g+' '+unidadDe({v:'alim:'+a.id})+' · '+pc.kcal+' kcal · '+pc.prot+' g prot';}
   if(opt.dishId){
     const d=dishById(opt.dishId);if(!d)return 'ese plato ya no está en el catálogo';
     const rac=Math.max(0.1,Math.round((+opt.rac||1)*4)/4);
@@ -11421,7 +11473,7 @@ function foodBuscablesCrea(){
   Object.keys(f.eans).forEach(function(k){const x=f.eans[k];
     const merca=/mercadona|hacendado|deliplus|bosque verde|compy/i.test((x.marca||'')+' '+(x.fuente||''));
     out.push({v:'ean:'+x.ean,nombre:x.nombre||'',busca:alimTxt(x.nombre+' '+(x.marca||'')+' '+x.ean),
-      kcal:+x.kcal||0,prot:+x.prot||0,base:100,porDefecto:150,unidad:'/100 g',etiqueta:'producto',
+      kcal:+x.kcal||0,prot:+x.prot||0,base:100,porDefecto:+x.racion||150,racion:+x.racion||0,unidad:'/100 g',etiqueta:'producto',
       tipo:'ean',em:merca?'🛒':'📦',merca:merca,creado:!/cat[aá]logo/i.test(x.fuente||''),
       sub:(x.marca||'')+(x.envase?(' · '+x.envase):'')});});
   (store.dishes||[]).forEach(function(d){
@@ -11541,7 +11593,8 @@ function hitProt(x){
 function hitOrigen(x){
   if(x.tipo==='dish')return '<span class="fbsrc t">tuyo</span>';
   if(x.tipo==='fuera')return '';   /* la cadena ya va debajo del nombre */
-  if(x.tipo==='ean')return x.merca?'<span class="fbsrc m">Hacendado</span>':'<span class="fbsrc">producto</span>';
+  if(x.tipo==='ean'){const p=food().eans[x.v.slice(4)];
+    return (x.merca?'<span class="fbsrc m">Hacendado</span>':'<span class="fbsrc">producto</span>')+nsMiniHTML(p&&p.ns);}
   return x.creado?'<span class="fbsrc t">tuyo</span>':'';}
 function hitHTML(x,sel){
   /* dos gestos en la misma fila: el + apunta con la cantidad de siempre, y tocar el nombre abre la
@@ -11758,8 +11811,48 @@ function offBloqueHTML(q){
     const merca=/mercadona|hacendado|deliplus/i.test(p.marca||'');
     return '<div class="hit"><button class="hitnom" data-a="off-usar" data-i="'+i+'">'+
       '<span class="em">'+(merca?'🛒':'📦')+'</span>'+
-      '<span class="nm"><b>'+esc(p.nombre)+'</b><span>'+esc((p.marca||'')+(p.envase?' · '+p.envase:''))+'</span></span>'+
+      '<span class="nm"><b>'+esc(p.nombre)+nsMiniHTML(p.ns)+'</b><span>'+esc((p.marca||'')+(p.envase?' · '+p.envase:''))+'</span></span>'+
       '<span class="kc rac"><b>100 g</b>'+(p.kcal||0)+' kcal</span></button></div>';}).join('')+'</div>';}
+function nsMiniHTML(l){
+  /* en el buscador, solo la letra del Nutri-Score; sin dato no se pone nada (en cada fila sería ruido) */
+  return /^[A-E]$/.test(l||'')?'<span class="nsm n'+l+'" title="Nutri-Score '+l+'">'+l+'</span>':'';}
+const NOVA_TXT=['','sin procesar','ingrediente culinario','procesado','ultra\u00adprocesado'];   /* con guion suave: en 112 px no cabe entero */
+function selloHTML(ean){
+  /* la ficha del producto: Nutri-Score · NOVA · aditivos, bajo el nombre. Uno guardado antes de pedir
+     estos datos se completa solo al abrirlo (selloTraer); mientras, lo dice */
+  const p=food().eans[ean];if(!p)return '';
+  const est=(ui.selloPedido||{})[ean];
+  if(!p.sello&&selloSePuede(ean))return '<div class="trae" id="fcSello">'+(est&&est.e==='sinred'?
+    'sin red: el sello lo traigo la próxima vez que lo abras':'<span class="girando" aria-hidden="true"></span> trayendo el sello de Open Food Facts…')+'</div>';
+  const SD='<span class="sd">sin dato</span>',adit=Array.isArray(p.adit)?p.adit:null,ab=adit&&adit.length&&ui.foodAdit===ean;
+  const cel=function(t,h,sin){return '<div class="'+(sin?'sin':'')+'"><em>'+t+'</em>'+h+'</div>';};
+  return '<div id="fcSello"><div class="sello">'+
+    cel('Nutri-Score',p.ns?('<span class="ns" aria-label="Nutri-Score '+p.ns+'">'+'ABCDE'.split('').map(function(l){
+      return '<i class="n'+l+(l===p.ns?' on':'')+'" aria-hidden="true">'+l+'</i>';}).join('')+'</span>'):SD,!p.ns)+
+    cel('Procesado',p.nova?('<span class="nova"><b class="v'+p.nova+'">'+p.nova+'</b><span>'+NOVA_TXT[p.nova]+'</span></span>'):SD,!p.nova)+
+    (adit&&adit.length?('<button class="adi" data-a="food-adit" data-e="'+esc(ean)+'" aria-expanded="'+(ab?'true':'false')+'"><em>Aditivos</em>'+
+        '<b>'+adit.length+'</b><span>'+(ab?'ocultar ▴':'ver ▾')+'</span></button>'):
+      cel('Aditivos',adit?'<span class="adi"><b>0</b></span>':SD,!adit))+
+    '</div>'+
+    (ab?('<div class="adil">'+adit.map(function(c){return '<div><code>'+esc(c)+'</code>'+esc(aditNombre(c))+'</div>';}).join('')+'</div>'):'')+
+    '</div>';}
+function selloSePuede(ean){return /^\d{8,14}$/.test(String(ean));}
+function selloTraer(ean){
+  /* una vez por producto: al abrir uno guardado antes, se pide su sello a OFF en silencio y se guarda.
+     Sin red se vuelve a intentar al abrirlo otra vez (pasado un minuto, para no insistir en cada toque) */
+  const p=food().eans[ean];if(!p||p.sello||!selloSePuede(ean))return;
+  if(!ui.selloPedido)ui.selloPedido={};
+  const est=ui.selloPedido[ean];
+  if(est&&(est.e==='trae'||Date.now()-est.t<60000))return;
+  const pinta=function(){const n=document.getElementById('fcSello');
+    if(n&&ui.foodVista==='cantidad'&&ui.foodSel==='ean:'+ean)n.outerHTML=selloHTML(ean);};
+  if(typeof fetch!=='function'||navigator.onLine===false){ui.selloPedido[ean]={e:'sinred',t:Date.now()};return;}
+  ui.selloPedido[ean]={e:'trae',t:Date.now()};
+  fetch(offUrl('api/v2/product/'+ean+'.json?fields=code,nutriscore_grade,nova_group,additives_tags'))
+    .then(function(r){if(r.status===404)return {};if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(function(j){const q=food().eans[ean];if(q){Object.assign(q,selloDe((j&&j.product)||{}));save();}
+      delete ui.selloPedido[ean];pinta();})
+    .catch(function(){ui.selloPedido[ean]={e:'sinred',t:Date.now()};pinta();});}
 /* ---------- la hoja de cantidad ----------
    Un toque en el nombre trae aquí. Raciones de verdad en vez de un número pelado, la previa de kcal
    y macros mientras tocas, y en el propio botón lo que te va a quedar del día. */
@@ -11768,16 +11861,23 @@ function buscableDe(v){
   if(!todo._porV){const m={};todo.forEach(function(x){if(!m[x.v])m[x.v]=x;});todo._porV=m;}
   return todo._porV[v]||null;}
 function racionesDe(x){
-  /* cantidades que una persona usa de verdad, no «100 g» a secas */
+  /* cantidades que una persona usa de verdad, no «100 g» a secas; y las porciones de USDA detrás */
+  const out=racionesBase(x),m=/^alim:(.+)$/.exec((x&&x.v)||''),a=m?alimById(m[1]):null;
+  if(a&&Array.isArray(a.porc))a.porc.forEach(function(q){
+    if(out.length<6&&!out.some(function(r){return Math.abs(((r.length>2)?r[2]:r[0])-q[1])<1;}))out.push([q[1],q[0]+' · '+q[1]+' '+unidadDe(x)]);});
+  return out;}
+function racionesBase(x){
   if(!x)return [];
   if(x.tipo==='fuera')return x.ojo?[[0.7,'pequeño'],[1,'normal'],[1.4,'grande'],[2,'2 raciones']]:
     [[0.5,'la mitad'],[1,'1 · '+x.u],[2,'2'],[3,'3']];
   if(x.base===1)return [[0.5,'media ración'],[1,'1 ración'],[1.5,'1 ración y media'],[2,'2 raciones']];
   const m=/^alim:(.+)$/.exec(x.v),a=m?alimById(m[1]):null;
   /* las raciones propias del alimento («1 filete · 120 g», «bandeja · 500 g»), y 100 g al final */
-  if(a&&a.r&&a.r.length){const out=a.r.slice(0,3).map(function(q){return [q[1],q[0]+' · '+q[1]+' g'];});
-    if(!a.r.some(function(q){return q[1]===100;}))out.push([100,'100 g']);return out;}
+  const u=unidadDe(x);
+  if(a&&a.r&&a.r.length){const out=a.r.slice(0,3).map(function(q){return [q[1],q[0]+' · '+q[1]+' '+u];});
+    if(!a.r.some(function(q){return q[1]===100;}))out.push([100,'100 '+u]);return out;}
   const g=a?a.g:'';
+  if(u==='ml')return [[200,'1 vaso · 200 ml'],[250,'250 ml'],[330,'1 lata · 330 ml'],[100,'100 ml']];
   if(g==='fruta')return [[1,'1 pieza',120],[80,'80 g'],[120,'120 g'],[200,'200 g']];
   if(g==='carne'||g==='pescado')return [[120,'1 filete · 120 g'],[150,'150 g'],[180,'180 g'],[250,'1 pieza · 250 g']];
   if(g==='cereal'||g==='legumbre')return [[60,'60 g en crudo'],[80,'80 g'],[100,'100 g'],[150,'150 g']];
@@ -11785,6 +11885,38 @@ function racionesDe(x){
   if(g==='graso')return [[10,'1 cucharada · 10 g'],[15,'15 g'],[30,'30 g'],[5,'5 g']];
   if(g==='verdura')return [[100,'100 g'],[150,'150 g'],[200,'200 g'],[250,'1 plato · 250 g']];
   return [[100,'100 g'],[150,'150 g'],[200,'200 g'],[50,'50 g']];}
+function cantRacion(x){
+  /* la ración de la etiqueta, si la hay y no se ha pasado a «por 100 g» */
+  return x&&x.tipo==='ean'&&x.racion>0?x.racion:0;}
+function cantPasoDe(x,cant){
+  /* lo que mueve un toque de ± (en la misma unidad que ui.foodCant: g, ml o raciones) */
+  const R=cantRacion(x);
+  if(R&&ui.foodModo!=='100')return R/2;
+  if(x.base===1)return 0.25;
+  return food().pasoCant;}
+function cantNumTxt(x,cant){
+  /* el número grande y lo que va debajo: «1 · ración · 125 g», «350 · ml», «2 · raciones» */
+  const R=cantRacion(x),u=unidadDe(x);
+  if(R&&ui.foodModo!=='100'){const n=Math.round(cant/R*100)/100;return [fmt(n),(n===1?'ración':'raciones')+' · '+Math.round(cant)+' '+u];}
+  return [String(Math.round(cant*100)/100),x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':u)];}
+function cantRuedaHTML(x,cant){
+  /* la rueda: el número que tienes en medio y 20 pasos a cada lado; se desliza y se queda donde
+     paras (o se toca uno). Los valores van en la misma unidad que ui.foodCant */
+  const p=cantPasoDe(x,cant),min=x.base===1?0.25:5,vs=[];
+  for(let i=-20;i<=20;i++){const v=Math.round((cant+i*p)*100)/100;if(v>=min-1e-9)vs.push(v);}
+  return '<div class="rueda" id="fcRueda" role="listbox" aria-label="cantidad">'+vs.map(function(v){
+    const on=Math.abs(v-cant)<0.001;
+    return '<button role="option" aria-selected="'+on+'" class="'+(on?'c':'')+'" data-a="food-cant-set" data-n="'+v+'">'+esc(cantNumTxt(x,v)[0])+'</button>';}).join('')+
+    '</div><div class="ruedap"><span class="mini">desliza; va de '+(cantRacion(x)&&ui.foodModo!=='100'?'media en media':(fmt(p)+' en '+fmt(p)))+'</span>'+
+    '<button class="btn s" data-a="food-rueda">listo</button></div>';}
+/* EN QUÉ SE CUENTA: la leche, los zumos y lo que se bebe en ml; lo demás en g. Un producto lo dice
+   su etiqueta (Open Food Facts); si no, el nombre o el grupo de la tabla */
+const LIQUIDO_RE=/^(leche|bebida|zumo|batido|caldo|agua|refresco|horchata|gazpacho|licuado|cerveza|vino|kefir liquido|cafe|te|infusion)\b/;
+function unidadDe(x){
+  const m=/^(alim|ean):(.+)$/.exec((x&&x.v)||'');if(!m)return 'g';
+  if(m[1]==='ean'){const p=food().eans[m[2]];if(p&&typeof p.ml==='boolean')return p.ml?'ml':'g';
+    return LIQUIDO_RE.test(alimTxt((p&&p.nombre)||x.nombre))?'ml':'g';}
+  const a=alimById(m[2]);return a&&(a.g==='bebida'||LIQUIDO_RE.test(alimTxt(a.n)))?'ml':'g';}
 function previaDe(x,cant){
   const q=cant/(x.base||100);
   return {kcal:Math.round((x.kcal||0)*q),prot:Math.round((x.prot||0)*q*10)/10};}
@@ -11800,13 +11932,44 @@ function previaMacrosDe(x,cant){
   if(m[1]==='ean'){const pr=food().eans[m[2]];if(!pr)return null;
     const p=porcionDe(pr,cant);return {kcal:p.kcal,prot:p.prot,carb:p.carb,gresa:p.gresa};}
   const b=previaDe(x,cant);return {kcal:b.kcal,prot:b.prot};}
+function cantPaso(d){
+  const x=buscableDe(ui.foodSel||'');if(!x)return;
+  const min=x.base===1?0.25:5;
+  ui.foodCant=Math.max(min,Math.round(((+ui.foodCant||x.porDefecto)+d)*100)/100);
+  render();}
+/* MANTENER PULSADO ± : a los 0,45 s empieza a correr, y cuanto más rato, más rápido. Al soltar llega
+   el click de siempre, que no debe sumar otro paso (_cantHoldHizo) */
+let _cantHoldT=null,_cantHoldHizo=false,_cantRuedaT=null;
+document.addEventListener('pointerdown',function(e){
+  const b=e.target&&e.target.closest?e.target.closest('#main .cpaso'):null;
+  clearTimeout(_cantHoldT);_cantHoldT=null;
+  if(!b||(e.pointerType==='mouse'&&e.button!==0))return;
+  _cantHoldHizo=false;
+  const d=+b.dataset.d||0;let n=0;
+  const tick=function(){_cantHoldHizo=true;n++;cantPaso(d);_cantHoldT=setTimeout(tick,n<4?260:(n<12?130:60));};
+  _cantHoldT=setTimeout(tick,450);});
+['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(){
+  if(!_cantHoldT)return;clearTimeout(_cantHoldT);_cantHoldT=null;
+  /* si al soltar no llega click (el botón se repintó), que no se coma el siguiente toque */
+  if(_cantHoldHizo)setTimeout(function(){_cantHoldHizo=false;},400);});});
+document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cpaso'))e.preventDefault();});
+/* la rueda: al parar de deslizar, la cantidad es la que queda en medio */
+document.addEventListener('scroll',function(e){
+  const w=e.target;if(!w||w.id!=='fcRueda')return;
+  clearTimeout(_cantRuedaT);
+  _cantRuedaT=setTimeout(function(){
+    if(!document.body.contains(w))return;
+    const mid=w.scrollTop+w.clientHeight/2;let best=null,bd=1e9;
+    w.querySelectorAll('button').forEach(function(b){const c=b.offsetTop+b.offsetHeight/2,dd=Math.abs(c-mid);if(dd<bd){bd=dd;best=b;}});
+    if(!best)return;const v=+best.dataset.n;
+    if(Math.abs(v-(+ui.foodCant||0))>0.001){ui.foodCant=v;render();}},140);},true);
 function renderFoodCantidad(){
   const x=buscableDe(ui.foodSel||'');
   if(!x){ui.foodVista='buscar';return renderFoodBuscar();}
   const c=foodCtx(),sel=c.sel,ob=objetivoMacros();
   const cant=+ui.foodCant||x.porDefecto;
   const mac=previaMacrosDe(x,cant)||{kcal:0,prot:0};
-  const paso=x.base===1?0.25:(cant<30?5:10);
+  const paso=cantPasoDe(x,cant),R=cantRacion(x),porRac=R&&ui.foodModo!=='100',u=unidadDe(x),num=cantNumTxt(x,cant);
   const restan=ob.kcal?(ob.kcal-c.ft.kcal-mac.kcal):null;
   const pctProt=ob.prot?Math.round(mac.prot/ob.prot*100):0;
   const cajas=[['kcal',mac.kcal],['prot. g',fmt(mac.prot)]]
@@ -11819,14 +11982,28 @@ function renderFoodCantidad(){
       '<div class="row" style="align-items:flex-start;gap:11px">'+
         '<span style="font-size:34px;line-height:1">'+esc(foodEmoji(x))+'</span>'+
         '<span style="flex:1;min-width:0"><b style="font-size:16px;display:block">'+esc(x.nombre)+'</b>'+
-        '<span class="mini">'+esc(x.etiqueta)+(x.sub?(' · '+esc(x.sub)):'')+' · '+(x.kcal||0)+' kcal '+esc(x.unidad)+'</span></span>'+
+        '<span class="mini">'+esc(x.etiqueta)+(x.sub?(' · '+esc(x.sub)):'')+' · '+(x.kcal||0)+' kcal '+esc(x.base===100?('/100 '+u):x.unidad)+
+        (R?(' · 1 ración = '+R+' '+u+' (etiqueta)'):'')+'</span></span>'+
       '</div>'+
+      (x.tipo==='ean'?selloHTML(x.v.slice(4)):'')+
+      /* con ración en la etiqueta, se elige cómo contar: por ración (lo primero) o por 100 g */
+      (R?('<div class="seg" role="group" aria-label="cómo contar">'+[['','por ración'],['100','por 100 '+u]].map(function(o){
+        const on=(ui.foodModo==='100')===(o[0]==='100');
+        return '<button class="'+(on?'on':'')+'" aria-pressed="'+on+'" data-a="food-modo" data-m="'+o[0]+'">'+esc(o[1])+'</button>';}).join('')+'</div>'):'')+
+      /* ± (manteniendo pulsado corre), y el número: un toque abre la rueda; con la rueda abierta, se escribe */
       '<div class="pasos">'+
-        '<button data-a="food-cant-paso" data-d="-'+paso+'" aria-label="menos">−</button>'+
-        '<span class="val"><input id="fcVal" class="fcin" type="number" inputmode="decimal" step="any" min="0" value="'+(Math.round(cant*100)/100)+'" data-a="food-cant-in" aria-label="cantidad"><span>'+(x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':'gramos'))+'</span></span>'+
-        '<button data-a="food-cant-paso" data-d="'+paso+'" aria-label="más">+</button>'+
+        '<button class="cpaso" data-a="food-cant-paso" data-d="-'+paso+'" aria-label="menos">−</button>'+
+        '<span class="val">'+(ui.foodRueda?
+          ('<input id="fcVal" class="fcin" type="number" inputmode="decimal" step="any" min="0" value="'+(porRac?Math.round(cant/R*100)/100:(Math.round(cant*100)/100))+'" data-a="food-cant-in" aria-label="cantidad en '+esc(porRac?'raciones':num[1])+'">'):
+          ('<button class="fcnum" data-a="food-rueda" aria-label="'+esc(num[0]+' '+num[1])+': toca para la rueda">'+esc(num[0])+'</button>'))+
+          '<span>'+esc(num[1])+'</span></span>'+
+        '<button class="cpaso" data-a="food-cant-paso" data-d="'+paso+'" aria-label="más">+</button>'+
       '</div>'+
-      '<div class="rac">'+racionesDe(x).map(function(r){
+      (x.base===100&&!porRac?('<div class="pasoc" role="group" aria-label="de cuánto en cuánto"><em>paso</em>'+[10,50,100].map(function(n){
+        const on=food().pasoCant===n;
+        return '<button class="'+(on?'on':'')+'" aria-pressed="'+on+'" data-a="food-paso" data-n="'+n+'">'+n+'</button>';}).join('')+'</div>'):'')+
+      (ui.foodRueda?cantRuedaHTML(x,cant):'')+
+      '<div class="rac">'+(porRac?[[R/2,'½'],[R,'1 ración'],[R*1.5,'1 ½'],[R*2,'2 raciones']]:racionesDe(x)).map(function(r){
         const v=(r.length>2)?r[2]:r[0];
         return '<button class="racb'+(Math.abs(v-cant)<0.001?' on':'')+'" data-a="food-cant-set" data-n="'+v+'">'+
           esc(r[1])+'</button>';}).join('')+'</div>'+
@@ -11854,7 +12031,12 @@ function renderFoodCantidad(){
         pctProt+' %</b> de tu proteína del día.</p>'):'')+
       fueraFixHTML(x)+
     '</div></div>';
+  if(x.tipo==='ean')selloTraer(x.v.slice(4));
+  cantRuedaCentra();
 }
+function cantRuedaCentra(){
+  const w=document.getElementById('fcRueda');if(!w)return;
+  const c=w.querySelector('.c');if(c)w.scrollTop=c.offsetTop-(w.clientHeight-c.offsetHeight)/2;}
 function fueraFixHTML(x){
   /* los datos de las cadenas son aproximados: si tienes el de verdad, se corrige aquí y se queda */
   if(!x||x.tipo!=='fuera'||x.menu)return '';
@@ -24745,7 +24927,7 @@ function act(a,el){
       if(x&&x.menu){const mm=/^fuera:([^:]+):(.+)$/.exec(x.v);
         ui.fueraMenu={cid:mm[1],mid:mm[2],sel:{},extra:[],n:1};ui.foodPos=ui.foodPos||momentoAhora();
         ui.foodVista='fueramenu';render();window.scrollTo(0,0);break;}
-      ui.foodCant=x?x.porDefecto:0;
+      ui.foodCant=x?x.porDefecto:0;ui.foodModo='';ui.foodRueda=false;
       ui.foodPos=ui.foodPos||momentoAhora();
       ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
     case 'fb-lec-ok':{const fr=fbLectura(ui.foodBusca||'');if(!fr)break;flash(fraseApuntar(fr,fr.pos||ui.foodPos||momentoAhora()));ui.foodBusca='';render();break;}
@@ -24767,10 +24949,13 @@ function act(a,el){
       flash(apuntaBuscable(el.dataset.key,x,+ui.foodCant||x.porDefecto,ui.foodPos||momentoAhora()));
       ui.foodSel='';ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'food-cant-paso':{
-      const x=buscableDe(ui.foodSel||'');if(!x)break;
-      const d=+el.dataset.d||0,min=x.base===1?0.25:5;
-      ui.foodCant=Math.max(min,Math.round(((+ui.foodCant||x.porDefecto)+d)*100)/100);
-      render();break;}
+      if(_cantHoldHizo){_cantHoldHizo=false;break;}   /* el click de soltar tras mantener pulsado: ya contó */
+      cantPaso(+el.dataset.d||0);break;}
+    case 'food-modo':{
+      /* por ración ↔ por 100 g: la cantidad se queda (en g o ml), cambia cómo se cuenta y lo que mueve ± */
+      ui.foodModo=el.dataset.m==='100'?'100':'';render();break;}
+    case 'food-paso':{const n=+el.dataset.n;if([10,50,100].indexOf(n)>=0){food().pasoCant=n;save();}render();break;}
+    case 'food-rueda':{ui.foodRueda=!ui.foodRueda;render();break;}
     case 'food-cant-set':{ui.foodCant=+el.dataset.n||0;render();break;}
     case 'food-pos-b':{ui.foodPos=el.dataset.p||'';render();break;}
     case 'fuera-cad':{ui.fueraCad=el.dataset.c||'';ui.fueraCat='';ui.foodVista='fueracad';render();window.scrollTo(0,0);break;}
@@ -24797,6 +24982,8 @@ function act(a,el){
     case 'fuera-fix-reset':{delete fueraMio()[String(el.dataset.v||'').replace(/^fuera:/,'')];save();flash('vuelve el dato de la cadena');render();break;}
     case 'food-tab':{ui.foodTab=el.dataset.t||'';render();break;}
     case 'food-dest':{ui.foodDest=el.dataset.d||'hoy';if(ui.foodDest==='plato'&&!ui.foodDestPlato)ui.foodDestPlato=ui.plato?'__abierto':((store.dishes[0]||{}).id||'');render();break;}
+    case 'food-adit':{const e=el.dataset.e||'';ui.foodAdit=ui.foodAdit===e?'':e;
+      const n=document.getElementById('fcSello');if(n)n.outerHTML=selloHTML(e);else render();break;}
     case 'food-fav':{const v=el.dataset.v||'',l=favV(),k=l.indexOf(v);
       if(k>=0)l.splice(k,1);else l.push(v);
       if(/^ean:/.test(v)){const fe=food().fav,e=v.slice(4),j=fe.indexOf(e);if(k>=0&&j>=0)fe.splice(j,1);}
@@ -24804,7 +24991,7 @@ function act(a,el){
     case 'off-buscar':{const t=String(ui.foodBusca||'').trim();if(t.length<3)break;offBuscarEnVivo(t);break;}
     case 'off-usar':{const o=ui.off,p2=o&&o.list&&o.list[+el.dataset.i];if(!p2)break;
       const f=food(),code=p2.ean||('off-'+Date.now());p2.ean=code;f.eans[code]=Object.assign({},p2,{fuente:'Open Food Facts'});save();
-      ui.foodSel='ean:'+code;const x=buscableDe(ui.foodSel);ui.foodCant=x?x.porDefecto:100;ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
+      ui.foodSel='ean:'+code;const x=buscableDe(ui.foodSel);ui.foodCant=x?x.porDefecto:100;ui.foodModo='';ui.foodRueda=false;ui.foodVista='cantidad';render();window.scrollTo(0,0);break;}
     case 'food-busca-clear':{ui.foodBusca='';render();
       setTimeout(function(){const i=document.getElementById('fbQ');if(i)i.focus();},40);break;}
     case 'food-panel2':{ui.foodPanel=el.dataset.k||'scan';ui.foodVista='add';render();window.scrollTo(0,0);break;}
@@ -26711,7 +26898,10 @@ document.addEventListener('change',e=>{
     case 'fr-pos':{ui.frPos=el.value||'';if(ui.frase)ui.frase.pos=ui.frPos;lecRepinta('fr');break;}
     case 'rut-copia':{if(!el.value)break;const t=ui.rutTipo||diaTipo(iso(new Date())),r=store.rutinas||(store.rutinas={});
       r[t]=rutinaDe(el.value).map(function(a){return Object.assign({},a);});save();flash('copiada la rutina de '+diaTipoInfo(el.value)[1].toLowerCase());render();break;}
-    case 'food-cant-in':{const v=+String(el.value).replace(',','.');if(v>0)ui.foodCant=v;render();break;}
+    case 'food-cant-in':{const v=+String(el.value).replace(',','.');
+      /* con «por ración» se escriben raciones; la cantidad se guarda en g o ml */
+      const x=buscableDe(ui.foodSel||''),R=cantRacion(x);
+      if(v>0)ui.foodCant=(R&&ui.foodModo!=='100')?Math.round(v*R*100)/100:v;render();break;}
     case 'fr-gset':{const c=el.dataset.c,fr=lecFr(c),x=fr&&fr.items[+el.dataset.i];
       if(x){if(x.dish||x.fuera)x.rac=Math.max(0.25,Math.min(10,Math.round((+el.value||x.rac||1)*4)/4));
         else{x.g=Math.max(1,Math.min(2000,Math.round(+el.value||x.g)));x.gCorr=true;}x.corr=true;}lecRepinta(c);break;}

@@ -3,6 +3,16 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-27 · Gastar menos tokens por sesión
+
+**Elegido** (visto bueno del usuario): REA deja de cargarse en cada sesión (`.mcp.json` → `tools/rea.mcp.json`;
+se usa por terminal con `npx -y rea-agents@6.8.0` o se vuelve a activar para una sesión de ingeniería inversa);
+el parte cierra con «Gasto» (tokens estimados, qué decidir antes, con qué juntar) y la revisión de salud solo
+corre si `main` cambió; reglas de «Gastar poco» en `CLAUDE.md`. **Descartado:** borrar la lista de tareas (en
+esta sesión ya estaba vacía: es de cada sesión) y quitar Google Drive y Claude Docs desde el repositorio (son
+conectores de la cuenta: se apagan en claude.ai). **Supuestos:** las cifras de gasto son estimaciones a partir
+del estudio de Comer (~150–250 mil por sesión), no mediciones.
+
 ## 2026-10-27 · REA instalado para las sesiones futuras
 
 **Elegido** (lo eligió el usuario): REA como servidor siempre conectado (`.mcp.json`, `rea-agents@6.8.0`)
@@ -1336,6 +1346,60 @@ como posible siguiente paso. Tocar `mapOffProduct` (el reordenado va sobre el cr
 **Supuestos.** El endpoint clásico devuelve `popularity_key` cuando se pide en `fields`; si no llega (ficha sin él),
 cuenta como 0 y el orden queda como la relevancia de OFF (sin empeorar nada). No desplegado a main en esta sesión: la
 suite tiene 2 rojos ajenos sensibles a la fecha (Mes y Dinero, víspera de nómina) y a main solo se pasa con todo verde.
+
+## Comer: la hoja de cantidad con pasos, rueda, unidad y ración de verdad (2026-10-27)
+
+Contexto: ± iba siempre de 10 en 10 (o de 5 por debajo de 30) y en «gramos» para todo, la leche incluida; un producto
+de Open Food Facts abría en 150 g aunque la etiqueta dijera «1 yogur = 125 g». Maquetas en `maquetas/comer-cantidad.html`,
+con visto bueno.
+
+**Elegido.** (1) Debajo del número, «paso 10 · 50 · 100»; el último elegido se recuerda (`food().pasoCant`).
+(2) Mantener ± pulsado: a los 0,45 s empieza a correr, y cada vez más rápido (260 → 130 → 60 ms). (3) Tocar el número
+abre una rueda (41 valores con el paso elegido, el actual en medio); al parar de deslizar se queda el del centro, y
+con la rueda abierta el número pasa a escribirse a mano como antes. (4) Cada cosa en su unidad: ml para lo que se bebe
+(la etiqueta de OFF manda: `serving_quantity_unit`/`product_quantity_unit`, o «ml/cl/l» en el envase; si no, el
+nombre o el grupo «bebida» de la tabla), g para lo demás; también en el mensaje de «añadido». (5) Ración de verdad:
+OFF pide `serving_size` y `serving_quantity`; si hay ración, la hoja empieza en «1 · ración · 125 g» con el conmutador
+«por ración / por 100 g» (± de media ración; los botones ½ · 1 · 1½ · 2) y el + rápido del buscador apunta una
+ración. De USDA se guardan hasta 3 porciones (`foodPortions` o `foodMeasures`, traducidas lo justo: «1 taza · 158 g»)
+y se suman a los botones del alimento. La cantidad se sigue guardando en g/ml: el modo solo cambia cómo se cuenta.
+Prueba encadenada 330; la 233 ahora toca el número antes de escribir. Caen al revertir la ración, el mantener pulsado,
+la rueda y la unidad de OFF.
+
+**Descartado.** Seis botones −100 −50 −10 / +10 +50 +100 (no caben a 412 px junto al número). Una rueda a pantalla
+completa (tapa la previa de macros). Un selector g/ml/mg en cada ficha (se eligió «según el producto»).
+
+**Supuestos.** mg no aparece en los datos de la app (ni OFF ni la tabla traen cosas en mg para apuntar), así que no hay
+ficha en mg; si llega una ración en mg se ignora. Los productos guardados antes no tienen ración ni unidad hasta que se
+vuelvan a traer de OFF (los que se llaman «leche…», «zumo…» ya salen en ml por el nombre). Las porciones de USDA solo
+llegan al volver a consultar un alimento. La guarda contra el click de más al soltar tras mantener es defensiva:
+Chromium no manda ese click (el botón se repinta), así que la prueba no la puede hacer caer.
+
+## Comer: el sello de Open Food Facts, Nutri-Score · NOVA · aditivos — mejora D (2026-10-27)
+
+Contexto: OFF ya daba `nutriscore_grade`, `nova_group` y `additives_tags`, pero la app no los pedía. El usuario eligió
+de una vez, al abrir la sesión: sello en la ficha y en el buscador (solo la letra), aditivos «cuántos y al tocar, la
+lista», los guardados se completan al abrir su ficha y, si falta un dato, «sin dato». Maquetas en
+`maquetas/comer-sello.html`, con visto bueno.
+
+**Elegido.** (1) `OFF_CAMPOS` pide los tres campos; `selloDe()` los pasa a `ns` (A–E), `nova` (1–4) y `adit`
+(«en:e322i» → «E322i»); `sello:1` marca que ya se preguntó. (2) En la hoja de cantidad de un producto, bajo el nombre,
+tres casillas: Nutri-Score (las cinco letras con la suya grande, colores oficiales), Procesado (NOVA con su palabra) y
+Aditivos (cuántos; si hay, es un botón que despliega código + nombre en castellano y otro toque lo cierra). Lo que OFF
+no sabe: «sin dato» con borde a rayas. (3) Un producto guardado antes, con código de barras de verdad, pide el sello a
+OFF al abrir su ficha (solo los tres campos), lo guarda y repinta solo el sello; mientras, «trayendo…»; sin red, lo dice
+y vuelve a intentarlo al abrirlo otra vez pasado un minuto. Si OFF no lo conoce (404), queda como «sin dato» y no se
+vuelve a pedir. (4) En el buscador, la letra pequeña junto al nombre en tus productos y en la lista de OFF. Prueba
+encadenada 331; cae al revertir.
+
+**Descartado.** NOVA y aditivos también en la lista del buscador (más ruido por fila). «Sin dato» en las filas del
+buscador. Pedir los nombres de los aditivos a la taxonomía de OFF (otra consulta a la red por producto). Un botón
+«Actualizar de OFF» (se eligió que se complete solo).
+
+**Supuestos.** Los nombres de los aditivos salen de una tabla de los 113 más comunes (`ADITIVOS` en `app.js`); el que
+no está sale solo con el código. Si OFF no trae `additives_tags`, es «sin dato»; si trae la lista vacía, «0». Los
+productos sin código de barras real (catálogo local sin EAN, creados a mano) salen con las tres casillas en «sin dato».
+Los alimentos de la tabla y los platos no llevan sello (no son de OFF).
 
 ## Plan global de la 3.0 y gasto por tarea (2026-10-27)
 

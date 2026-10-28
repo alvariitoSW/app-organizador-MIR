@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- ~~[aparc-desplegar-sello]~~ HECHO 2026-10-27: en main 2416c99 (run 40591125346) · Pasar a main el sello de OFF
 
 Del repaso de supuestos del 2026-10-14 (respuestas del usuario). Orden elegido: **tanda 1, lo rápido
 primero; tanda 2, lo visual con maquetas primero**.
@@ -91,12 +92,12 @@ fuentes… (2026-10-26)». Evidencia vista: repos (OpenNutriTracker GPLv3, FitBo
 propio (`tools/worker-recetas.js`). OFF y USDA: por documentación + el propio código (sin muestra en vivo; la red no
 llega y el usuario no tiene clave USDA). **Mejoras candidatas que salen del estudio (cada una en su sesión):**
 - (A) **Micros de OFF/USDA en la ficha**: pedir y mostrar vitaminas/minerales. OJO: convertir g→mg/µg o se guardan mal.
-- (B) **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
+- ~~(B)~~ HECHA y desplegada 2026-10-27 (3b7a617) (con [v3-cantidades], prueba 330). **Ración de verdad**: usar `serving_size`/`serving_quantity` (OFF) y `foodPortions` (USDA) + conmutador «por 100 g
   / por ración». Enlaza con [v3-cantidades].
-- ~~(C) **Buscador mejor**~~: HECHA EN RAMA (2026-10-26), SIN DESPLEGAR. `offOrdena` reordena OFF por relevancia +
+- ~~(C) **Buscador mejor**~~: HECHA y desplegada 2026-10-27 (3b7a617). `offOrdena` reordena OFF por relevancia +
   `popularity_key` (pool 50); conserva «Hacendado primero». Prueba encadenada 328 (cae al revertir). Ver DECISIONS
   «Comer: el buscador… ordenado por popularidad». No pasó a main: 2 rojos de fecha ajenos (ver abajo). Enlaza con [v3-comer-perdido].
-- (D) **Nutri-Score / NOVA / aditivos**: pedir `nutriscore_grade`, `nova_group`, `additives_tags` y enseñarlos como sello.
+- ~~(D)~~ HECHA y desplegada 2026-10-27 (main 2416c99, run 40591125346; suite 752/752). Sello Nutri-Score · NOVA · aditivos en la ficha + letra en el buscador; los guardados lo piden solos al abrirlos. Prueba 331. DECISIONS «Comer: el sello de Open Food Facts… (2026-10-27)», maquetas `maquetas/comer-sello.html`.
 Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-Score reales, pegar una muestra de OFF.
 
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
@@ -108,8 +109,10 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
 - ~~[rec-2026-10-23-leanrea]~~ HECHO 2026-10-23 · Repositorio https://github.com/aicodeking/leanrea guardado e instalado como skill `/ingenieria-reversa` (`.claude/skills/ingenieria-reversa/`, commit 09ba4aa del original, MIT)
+- [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-27-cantidad] Cantidad: en mg no hay ficha (los datos no traen nada en mg); por ración, ± de media ración; la rueda se abre dentro de la ficha; el paso se recuerda; sin unidad en la etiqueta va en g (salvo nombres tipo leche/zumo); los productos ya guardados no tienen ración hasta volver a traerlos de OFF · DECISIONS «Comer: la hoja de cantidad…» · contado el 2026-10-27
 - [sup-2026-10-27-sueno-radio] Sueño: toda la pantalla verde de la radio abre la hoja de anotar, la radio baja a la vista al abrirse y la pista dice «toca para apuntar» si falta la noche · DECISIONS «Apuntar el sueño desde la radio del conductor» · contado el 2026-10-27
 - [sup-2026-10-19-mes-colores] Mes: saliente gris oscuro con número blanco, vacaciones en arena, el día de trabajo con entreno va marrón con chapa azul, el color de cada evento en el borde de su chapa, y las «Reglas de oro» (solo se editaban en Semana) quedan guardadas pero sin editar · DECISIONS «El Mes con el día entero de su color» · contado el 2026-10-19
 - [sup-2026-10-20-conductor] conductor: el cartel verde solo para eventos (no comidas, entreno ni turnos), el subtítulo nombra lo siguiente si falta ≤ 3 h, «¿Qué estoy viendo?» plegado, narrador solo en el Conductor (no en la Estación) · DECISIONS «Hoy: el conductor que cuenta lo que ves» · contado el 2026-10-20
@@ -129,6 +132,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
 ## Cerrados
+- ~~[sup-2026-10-27-sello]~~ VALE (usuario, 2026-10-27) Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
 
 - 2026-10-14 · **Valen:** 1 (R1: semana = 5 laborables), 9 (cabina de guardia también de día), 10 (manda lo que acaba más tarde), 13 (sin hora no es parada), 15 (taxi solo por la mañana), 26–30 (internos)
 - 2026-10-14 · **No valen → encargos de arriba:** 2, 3, 4, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
@@ -163,3 +167,10 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [issues-0] 2026-10-26 · 0 issues/PR · ok
 - [parte-comer-2026-10-26] 2026-10-26 · parte enfocado en Comer (sesión nueva): enc-comida-ri abierto para esta sesión; supuestos nutri (17-10) y plan (19-10) sin cerrar; aparcados v3-comer-perdido, v3-cantidades, v3-boceto-semana, v3-antojos y aparc-comida-entreno · contado; salud sin pasar (verificador no cargado en esta sesión)
 - [parte-comer-2026-10-26b] 2026-10-26 · segundo parte de Comer: sin cambios desde el anterior (main bfa711c sellado y success; rama a4e52bf, 7 por delante, solo .claude/tools/docs; 0 issues); no se repiten los abiertos de Comer · ok
+- [run-40510302838] 2026-10-27 · despliegue de main (3bce73b, REA instalado) · success; main sellado y rama = main; 0 issues/PR · ok
+- [parte-lista-2026-10-27] 2026-10-27 · parte enfocado en hacer TODA la lista de la bitácora; propuesto orden (cantidades+ración → Nutri-Score → micros → Comer perdido → boceto → antojos → entrenador → dinero → coach → 4:20 ×2 → gmail → bienestar → continuidad → parte diario) · propuesto
+- [parte-cantidades-2026-10-27] 2026-10-27 · parte con tarea ya elegida: v3-cantidades + mejora B (ración) de enc-comida-ri; main = 3bce73b sin cambios (run 40510302838 success), rama 555c3f6 (3 commits de ahorro de tokens sin pasar a main), 0 issues; cierre con «Gasto» · ok
+- [run-40583207598] 2026-10-27 · despliegue de main (3b7a617: cantidades, ración y buscador) · success; sellado (version.json = último código); 0 issues/PR · ok
+- [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
+- [run-40591125346] 2026-10-27 · despliegue de main (2416c99, sello Nutri-Score/NOVA/aditivos) · success; sellado (version.json 2416c99); rama 2 por delante solo con registro y traspaso; 0 issues/PR · ok
+- [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
