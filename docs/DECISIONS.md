@@ -1431,3 +1431,27 @@ ya hacen `tarea-a-fondo`, `redisena-seccion` y DECISIONS.
 
 **Supuestos.** Los presupuestos son estimaciones (solo hay una tarea medida); se corrigen con S1 y S2. Las tareas 1
 (pruebas) y 9 (Dinero) no son de Comer pero entran en la tanda porque las pediste en la misma lista.
+
+## El mapa de Comer: concurso de cuatro escuelas, gana «El reloj» (2026-10-28 · S2)
+
+**Elegido.** Comer entero como una **línea de tiempo** que va de ahora hacia delante (`maquetas/comer-debate-1-reloj.html`,
+6 pantallas): arriba «Lo siguiente · ✓ Hecho / Otra cosa» (idea de «Una pregunta», que los tres rivales robaron), las
+paradas a su hora (antojo a las 23 h, vitaminas al cierre) y al pie la semana de un vistazo (7 días con 🍳 cocino · 📦
+táper · 🏥 guardia · 🍽️ fuera). **La semana la monta el usuario a mano**: cada hueco se apunta (plato suyo, texto libre,
+táper, fuera, hospital, «cocino ese día»), las cenas destacadas, y **la compra sale de lo apuntado** menos lo que hay en
+la nevera; el borrador de la app es solo un botón «¿Me la propones?». La parada de casa es la **nevera dibujada** de «La
+nevera» (huecos con rayas = compra). El buscador y la ficha del alimento (`maquetas/comer-mapa.html`, BUSCADOR y FICHA:
+letra Nutri-Score en la lista, sello grande, NOVA, aditivos y vitaminas/minerales con % del día o «sin datos») van igual.
+**Escribir lo comido** (`maquetas/comer-escribir.html`): un solo campo que es buscador con una palabra y lector con una
+frase, cada cosa con su seguridad (✓ / ≈ supuesto / ?), «investigar» lo desconocido (Open Food Facts, carta de la
+cadena, parecido a…, a ojo, «enséñamelo una vez») y listas largas con las dudas en la misma fila.
+Ranking del usuario: 1 Reloj · 2 La nevera (su portada) · 3 Una pregunta · 4 El tablero (descartado: muy denso).
+
+**Descartado.** Las tres opciones A/B/C de `comer-mapa.html` (solo cambiaban la portada; semana y casa iguales). «El
+tablero», «La nevera» y «Una pregunta» como base. Que la app monte la semana sola como lo principal.
+
+**Supuestos.** Todas las cifras de las maquetas son de ejemplo (el contenedor no llega a Open Food Facts: 403). El %
+de vitaminas sobre los valores de referencia de la etiqueta europea. «Investigar» no usa ninguna IA externa: solo Open
+Food Facts (que ya se consulta) y tablas propias. El dictado es el del teclado del móvil. El lector de frases tiene
+muchos fallos (probado: «pizza barbacoa del telepizza, 3 trozos» no apunta nada; el menú del hospital pierde lentejas y
+filete; «macarrones con tomate y atún» da tortilla de atún): va en una tarea propia antes de construir.
