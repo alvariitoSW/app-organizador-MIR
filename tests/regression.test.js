@@ -13327,6 +13327,43 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.e.ns === 'A' && r.e.nova === '1' && r.e.adi === '0' && r.e.sd === 0 &&
       r.f.ns === 'C' && r.f.nova === '' && r.f.sd === 1 && r.f.adi === '1', JSON.stringify(r));
   }
+  // 332) LA LÍNEA DEL DÍA EN COMER › HOY, EN CADENA: (a) se abre Comer y salen la lupa, «Ahora» con kcal/P/HC/G, LO SIGUIENTE
+  // (el primer momento sin apuntar desde ahora, con «✓ Hecho» y «Otra cosa») y la semana de un vistazo (7 días, cada uno con
+  // su icono); (b) «✓ Hecho» apunta lo que tocaba y LO SIGUIENTE pasa al momento siguiente (o desaparece tras la cena);
+  // (c) «Otra cosa» abre escribir dirigido a ese momento; (d) un toque en la semana lleva a Plan.
+  // Sin la línea no hay LO SIGUIENTE ni semana de un vistazo, y ✓ Hecho no existe.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia332', JSON.stringify(P.store));
+      const d = { id: 'd332', name: 'Arroz con pollo 332', icon: '🍚', portions: 1, kcal: 500, prot: 30 }; P.store.dishes.push(d);
+      const w = (new Date().getDay() + 6) % 7;
+      ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(w, c, 'd332'));
+      P.store.food.log[P.iso(new Date())] = [];
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const lee = () => page.evaluate(() => ({ lupa: !!document.querySelector('#main .cjbusca'),
+      mac: Array.prototype.map.call(document.querySelectorAll('#main .cjahora .cjmac > span'), (x) => x.className).join(''),
+      sig: (document.querySelector('#main .cjsig') || {}).dataset ? document.querySelector('#main .cjsig').dataset.p : '',
+      hecho: !!document.querySelector('#main .cjsig [data-a="cje-ok"]'), otra: !!document.querySelector('#main .cjsig [data-a="cje-mom"]'),
+      dias: document.querySelectorAll('#main .cjs7 span').length, iconos: Array.prototype.every.call(document.querySelectorAll('#main .cjs7 i'), (i) => i.textContent.trim().length > 0) }));
+    r.a = await lee();
+    if (r.a.hecho) { await page.click('#main .cjsig [data-a="cje-ok"]'); await page.waitForTimeout(250); }
+    const ord = ['desayuno', 'comida', 'cena'];
+    r.b = await lee();
+    r.b.apuntado = await page.evaluate((p) => (window.PG.foodLog(window.PG.iso(new Date())) || []).filter((e) => (e.p || 'comida') === p && e.plan).length, r.a.sig);
+    r.b.esperado = ord[ord.indexOf(r.a.sig) + 1] || '';
+    if (r.b.sig) {
+      await page.click('#main .cjsig [data-a="cje-mom"]'); await page.waitForTimeout(250);
+      r.c = await page.evaluate(() => ({ p: window.PG.ui.cjeHoja && window.PG.ui.cjeHoja.p, frPos: window.PG.ui.frPos, campo: !!document.getElementById('frIn') }));
+      await page.evaluate(() => { window.PG.ui.cjeHoja = null; window.PG.render(); });
+    }
+    if (r.a.dias) { await page.click('#main .cjs7'); await page.waitForTimeout(200); }
+    r.d = await page.evaluate(() => window.PG.ui.cjeTab);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia332')); localStorage.removeItem('__copia332'); P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.frase = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('Comer › Hoy es una línea: lupa, Ahora con kcal/P/HC/G, LO SIGUIENTE con ✓ Hecho (apunta y pasa al momento siguiente) y Otra cosa (escribir dirigido), y la semana de 7 días con icono lleva a Plan',
+      r.a.lupa && r.a.mac === 'kcalpcg' && ord.indexOf(r.a.sig) >= 0 && r.a.hecho && r.a.otra && r.a.dias === 7 && r.a.iconos &&
+      r.b.apuntado === 1 && r.b.sig === r.b.esperado && (!r.b.sig || (r.c && r.c.p === r.b.sig && r.c.campo)) && r.d === 'sem', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

@@ -3797,3 +3797,12 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
   color:var(--ink2);font-variant-numeric:tabular-nums;cursor:pointer}
 .rueda button.c{font-size:24px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,transparent);border-radius:10px}
 .ruedap{display:flex;justify-content:space-between;align-items:center;margin-top:7px}
+/* Comer › Hoy: la línea del día (Ahora · Lo siguiente · la semana de un vistazo) */
+.cjahora{padding:10px 12px;margin-bottom:8px}.cjahora .row{margin-bottom:7px}
+.cjsig{border-color:var(--ok)}.cjsig .cap{color:var(--ok);margin-bottom:3px}
+.cjsigt{font-size:17px;font-weight:900}
+.cjsigb{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.cjsigb .btn:only-child{grid-column:1/-1}
+.cjs7c{margin:6px 0 4px}
+.cjs7{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;width:100%;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.cjs7 span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--bg2)}
+.cjs7 span.hoy{border-color:var(--brand)}.cjs7 b{font-size:10.5px;color:var(--ink2)}.cjs7 i{font-style:normal;font-size:16px}

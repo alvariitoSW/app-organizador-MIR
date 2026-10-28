@@ -14469,14 +14469,16 @@ function renderComerEje(){
         '<b>'+(esHoy?'Hoy · ':'')+(esHoy?DIA3[dd.getDay()]:DIA3[dd.getDay()].replace(/^./,function(c){return c.toUpperCase();}))+' '+dd.getDate()+'</b>'+
         (esHoy?'':'<button class="dlink" data-a="food-today">hoy</button>')+
         '<button class="cji" data-a="food-next"'+(esHoy?' disabled':'')+' aria-label="día siguiente">›</button></div>'+
+      cjeAhoraHTML(dk,esHoy,ft)+
       (esHoy?nutSemHTML(hoyK)+nutLloretHTML(hoyK):'')+
       (tar.length?'<div class="cap">PARA HACER HOY</div><div class="cjtodo">'+tar.map(function(o){
         return '<button class="cjtd" data-a="cje-hoja" data-v="'+o.v+'"><span class="e">'+o.e+'</span><span class="tx"><b>'+esc(o.t)+'</b><span>'+esc(o.s)+'</span></span>'+gymIco('chevron','gico sm')+'</button>';}).join('')+'</div>':'')+
-      cjeMacrosHTML(ft)+nutHoyHTML(dk,esHoy)+
-      (esHoy?montar:'')+
-      '<details class="cjmic"><summary class="mini">micros de '+(esHoy?'hoy':'ese día')+' ▾</summary>'+micro6HTML(dk)+'</details>'+
+      (esHoy?cjeSiguienteHTML(dk):'')+
       '<div class="card cjml">'+cjeComidas(dk).map(function(r){return cjeComidaHTML(r,dk);}).join('')+
-        '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button></div>';}
+        '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button></div>'+
+      (esHoy?montar:'')+nutHoyHTML(dk,esHoy)+
+      '<details class="cjmic"><summary class="mini">micros de '+(esHoy?'hoy':'ese día')+' ▾</summary>'+micro6HTML(dk)+'</details>'+
+      (esHoy?cjeSemana7HTML():'');}
   else if(tab==='coc')body=cjeCocinaHTML();
   else if(tab==='desp')body=cjeDespensaHTML();
   else if(ui.plM){$('#main').innerHTML='<div class="grid cje">'+plmHTML()+'</div>';return;}
@@ -14494,6 +14496,33 @@ function renderComerEje(){
         return '<button class="'+(v===x[0]?'on':'')+'" data-a="pl-vista" data-v="'+x[0]+'"'+(v===x[0]?' aria-pressed="true"':'')+'>'+x[1]+'</button>';}).join('')+'</div>'+
       (v==='nev'?plNeveraHTML(A):(v==='compra'?'<div class="card cjdsph">'+cjeHojaCompra(compraH())+'</div>':plDiasHTML(A)));}
   $('#main').innerHTML='<div class="grid cje">'+cab+body+'</div>';}
+function cjeHoraMom(p,k){
+  /* la hora de cada momento en la línea del día: la comida, la de tu ajuste (con o sin entreno) */
+  if(p==='comida')return comidasCfg()[entrenoDe(k)?'conEntreno':'sinEntreno'].de;
+  return {desayuno:'9:00',cena:'21:30','post-entreno':'18:30'}[p]||'17:00';}
+function cjeAhoraHTML(dk,esHoy,ft){
+  /* «AHORA» de la línea del día: la hora, el día (con guardia si la hay) y kcal/P/HC/G frente al objetivo */
+  const n=new Date(),dd=parseDate(dk),g=cjeDia(dk).guardia;
+  return '<div class="card cjahora"><div class="row"><b>'+(esHoy?'Ahora · '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' · ':'')+
+    DIA3[dd.getDay()]+' '+dd.getDate()+'</b><span class="sp"></span>'+(g?'<span class="mini">guardia</span>':'')+'</div>'+cjeMacrosHTML(ft)+'</div>';}
+function cjeSiguiente(k){
+  /* LO SIGUIENTE: el primer momento (desayuno, comida o cena) sin nada apuntado, a partir del que toca ahora */
+  const ord=['desayuno','comida','cena'],i=ord.indexOf(cjeGrupo(momentoAhora())),rs=cjeComidas(k);
+  for(let j=i<0?2:i;j<3;j++){const r=rs.filter(function(x){return x.p===ord[j];})[0];if(r&&!r.e.length)return r;}
+  return null;}
+function cjeSiguienteHTML(k){
+  const r=cjeSiguiente(k);if(!r)return '';
+  const d=r.d,K=' data-k="'+esc(k)+'"',tiene=d&&!d.nada;
+  return '<div class="card cjsig" data-p="'+r.p+'"><div class="cap">LO SIGUIENTE · '+esc(r.lbl.toUpperCase())+' · '+cjeHoraMom(r.p,k)+'</div>'+
+    '<div class="cjsigt">'+esc(d?cjeNomPlan(d):'¿'+r.lbl+'?')+'</div>'+(d&&!d.nada&&!d.fuera&&+d.kcal?'<div class="mini">'+fmtMil(Math.round(+d.kcal*num(r.pl[0].portions,1)))+' kcal</div>':'')+
+    '<div class="cjsigb">'+(tiene?'<button class="btn p" data-a="cje-ok" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':'')+
+      '<button class="btn" data-a="cje-mom" data-p="'+r.p+'"'+K+'>Otra cosa</button></div></div>';}
+function cjeSemana7HTML(){
+  /* la semana de un vistazo: una letra y un icono por día (🏥 guardia · 🍽️ fuera · 🍳 cocinas · 📦 táper); un toque lleva a Plan */
+  const hoyK=iso(new Date());
+  return '<div class="cap cjs7c">LA SEMANA DE UN VISTAZO</div><button class="cjs7" data-a="cje-tab" data-v="sem" aria-label="ver el plan de la semana">'+
+    cjeSemana().map(function(x,i){const e=diaEspDe(x.key),ic=x.tipo.guardia?'🏥':(e&&e.tipo==='fuera'?'🍽️':(x.tipo.cocina?'🍳':'📦'));
+      return '<span'+(x.key===hoyK?' class="hoy"':'')+'><b>'+'LMXJVSD'.charAt(i)+'</b><i>'+ic+'</i></span>';}).join('')+'</button>';}
 function cjeMacrosHTML(ft){
   /* LO COMIDO FRENTE AL OBJETIVO, LOS CUATRO: kcal, proteína, hidratos y grasa. Antes solo estaban
      proteína y kcal; hidratos y grasa existían en cada apunte pero no se veían en ningún sitio. Sin
