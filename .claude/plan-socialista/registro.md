@@ -183,3 +183,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
 - [run-40725644165] 2026-10-28 · despliegue de main (eddb09d, maquetas S2 y plan; sin código de app) · success; sellado (version.json 2416c99 posterior al último código); rama 7d874f8 = 10 commits por detrás de main; 0 issues/PR · ok
 - [parte-s2b-2026-10-28] 2026-10-28 · parte: siguiente S2b (lector de frases), sin presupuesto medido de construir · propuesto
+- [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, lector de frases S2b) · success; sellado (version.json 2e30a00 posterior al código f7dc69b); rama 1 por delante (solo plan); 0 issues/PR · ok
+- [parte-s3-2026-10-28] 2026-10-28 · parte con la S3 (Comer del reloj) elegida; presupuesto ~2,1 M medido (plan 1,8 M ×2); propuesto decidir antes qué entra en la sesión 1 · propuesto
