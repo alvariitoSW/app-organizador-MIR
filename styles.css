@@ -3826,3 +3826,18 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cjs7{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;width:100%;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
 .cjs7 span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--bg2)}
 .cjs7 span.hoy{border-color:var(--brand)}.cjs7 b{font-size:10.5px;color:var(--ink2)}.cjs7 i{font-style:normal;font-size:16px}
+/* S3b · vitaminas (parada «cierre» de la línea y hoja «% diario») e investigar lo que no conoce */
+.cjvit{display:flex;gap:9px;align-items:flex-start;width:100%;padding:12px 0 4px;border:0;border-top:1px dashed var(--line);background:none;color:var(--ink);font:inherit;text-align:left;--bx:#d95926;min-height:var(--toque,44px)}
+.cjvit .vh{width:44px;flex:none;font-size:12px;font-weight:800;color:var(--ink2);padding-top:2px}
+.cjvit .vcu{flex:1;min-width:0}.cjvit .vfila{display:flex;gap:10px;align-items:baseline}.cjvit .sp{flex:1}.cjvit .mini{display:block}.cjvit .lo{color:var(--bx);font-weight:700}
+.femic.vit{grid-template-columns:104px 1fr 70px}.femic.vit em{font-style:normal;text-align:right;color:var(--ink2);font-size:11.5px}
+.femic.vit b.lo{color:var(--bx)}.femic.vit b.hi{color:var(--brand)}.vitsug b{font-size:14.5px}
+.inv{display:flex;flex-direction:column;gap:2px;margin-top:6px;padding:10px 12px;border-top:1px dashed var(--line)}
+.inv .cap{margin:0 0 4px;color:var(--bx,var(--warn))}
+.inv .ex{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;min-height:var(--toque,44px);width:100%;padding:6px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left}
+.inv .ex:first-of-type{border-top:0}
+.inv .ex .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--bg2);color:var(--ink2)}
+.inv .ex b{display:block;font-size:13.5px}.inv .ex .s{display:block;font-size:12px;color:var(--ink2);font-weight:500}
+.inv .ex .mini{color:var(--brand);font-weight:700}.inv .ojo{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 6px 32px}
+.inv .ojo input{width:90px}
+.lecit .inv{grid-column:1/-1;--bx:#d95926}.lecit .inv .ojo input[type=text]{flex:1;min-width:140px;width:auto}
