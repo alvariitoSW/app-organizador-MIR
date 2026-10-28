@@ -3375,24 +3375,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       diaMic.puertas.join('|') === 'platos|nevera2|alimentos', JSON.stringify(diaMic));
   }
 
-  // 59) la línea de micros abre su pantalla, y ahí tocar uno enseña con qué alimentos se cubre
+  // 59) la línea de micros abre la hoja «Vitaminas y minerales · % diario» (la vista vieja de micros ya no existe): los 9
+  //     de siempre en filas con su %, y la sugerencia de qué comer para subir el que más falta
   {
     await page.click('#main .h2mic');
     await page.waitForTimeout(250);
     const pantallaMicros = await page.evaluate(() => ({
       vista: window.PG.ui.foodVista,
-      casillas: document.querySelectorAll('#main .micros .mic').length,
-      cubrir: document.querySelectorAll('#main .hit [data-a="alim-pick"]').length,
+      filas: document.querySelectorAll('#main .femic.vit').length,
+      sug: /^Falta [^:]+:.*te sube un \d+ %/.test((document.querySelector('#main .vitsug') || {}).textContent || ''),
+      viejo: document.querySelectorAll('#main .micros .mic').length,
     }));
-    await page.click('#main .micros .mic');
-    await page.waitForTimeout(200);
-    const abierto = await page.evaluate(() => ({
-      k: window.PG.ui.microAbierto,
-      sugeridos: [...document.querySelectorAll('#main .chips .chipx[data-a="alim-pick"]')].map((x) => x.textContent.trim()),
-    }));
-    check('la línea de micros abre su pantalla y ahí cada micronutriente propone los alimentos que más lo traen',
-      pantallaMicros.vista === 'micros' && pantallaMicros.casillas === 9 && pantallaMicros.cubrir > 0 &&
-      !!abierto.k && abierto.sugeridos.length >= 3, JSON.stringify({ pantallaMicros, abierto }));
+    check('la línea de micros abre la hoja «% diario» con los 9 micronutrientes y qué comer para subir el que más falta',
+      pantallaMicros.vista === 'vitaminas' && pantallaMicros.filas === 9 && pantallaMicros.sug && pantallaMicros.viejo === 0, JSON.stringify(pantallaMicros));
   }
 
   // 60) la nevera guarda, e Ideas propone combinaciones de UNA comida, sin repetir alimento
@@ -9030,8 +9025,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const mas = await page.evaluate(() => { const e = window.PG.foodLog(window.PG.iso(new Date()))[0]; return { kcal: e.kcal, ca: (e.mi || {}).ca, rac: e.rac }; });
     await page.selectOption('.fehoja select', 'cena'); await page.waitForTimeout(100);
     const p = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date()))[0].p);
-    await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'micros'; P.render(); });
-    const mic = await page.evaluate(() => ({ falta: /LO QUE MÁS TE FALTA/.test(document.querySelector('#main').innerText), con: /en tu nevera/.test(document.querySelector('#main').innerText) }));
+    await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'vitaminas'; P.render(); });
+    /* la vista vieja de micros («LO QUE MÁS TE FALTA») la sustituye la hoja «% diario» con su sugerencia */
+    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|la (cena|comida|desayuno)/.test(s) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); P.ui.feVer = P.foodLog(P.iso(new Date()))[0].id; P.render(); });
     await page.click('.fehoja [data-a="fe-borrar"]'); await page.waitForTimeout(120);
     const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
@@ -9239,7 +9235,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.frase = null; P.ui.cjeHoja = { v: 'dia' }; P.render(); }); await page.waitForTimeout(100);
     // ya no hay «registro completo»: el Hoy de Comer lleva las flechas de día y los micros
     await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = null; P.render(); }); await page.waitForTimeout(100);
-    const reg = await page.evaluate(() => window.PG.ui.foodVista === 'eje' && !!document.querySelector('#main .cjdia [data-a="food-prev"]') && !!document.querySelector('#main .cjmic .h2mic'));
+    const reg = await page.evaluate(() => window.PG.ui.foodVista === 'eje' && !!document.querySelector('#main .cjdia [data-a="food-prev"]') && !!document.querySelector('#main .cjml .cjvit'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia231; P.save(); P.ui.cjeHoja = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('«Comer» es una pantalla: Hoy · Semana · Casa, hoy con sus comidas, la semana con sus 7 días, sin fila de modos',
       entra.v === 'eje' && entra.modos && entra.seg === 3 && entra.comidas >= 3 && sem.dias === 7, JSON.stringify({ entra, sem }));
@@ -9249,7 +9245,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('celíaco: la compra pide pan y pasta sin gluten; ⚙️ guarda días sin cocinar y táper, y sobrevive a recargar',
       sg[0] === 'Pan sin gluten' && sg[1] === 'Pasta sin gluten' && sg[2] === 'Leche' && pref && pref.noCocinar.includes('saliente') && pref.noCocinar.includes('trabajo') && pref.taper === 4 && pref.horno === false,
       JSON.stringify({ sg, pref }));
-    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el Hoy de Comer trae las flechas de día y los micros',
+    check('hoy: ✓ apunta el desayuno del plan, los gramos de la frase (en la hoja de la comida) se escriben y el Hoy de Comer trae las flechas de día y la parada de vitaminas',
       des >= 1 && gr === 130 && reg, JSON.stringify({ des, gr, reg }));
   }
 
@@ -9425,7 +9421,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await page.evaluate(() => { const P = window.PG; P.ui.navHist = []; P.ui.tab = 'dinero'; P.ui.dineroVista = ''; P.render(); });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = ''; P.render(); });
-    for (const v of ['quecomo', 'micros', '']) await page.evaluate((v) => { const P = window.PG; P.ui.foodVista = v; P.render(); }, v);
+    for (const v of ['quecomo', 'vitaminas', '']) await page.evaluate((v) => { const P = window.PG; P.ui.foodVista = v; P.render(); }, v);
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'types'; P.ui.typesVista = 'montar'; P.render(); });
     await page.evaluate(() => { const P = window.PG; P.ui.typesVista = 'protos'; P.render(); });
     const antes = await page.evaluate(() => ({ visible: !document.getElementById('navAtras').hidden, os: getComputedStyle(document.documentElement).overscrollBehaviorY }));
@@ -13460,6 +13456,142 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !r.b5.lineas.some((l) => /huevo/i.test(l)) && /Ya en casa, no entran:.*huevo/i.test(r.b5.ya) && /De tus 2 cenas/.test(r.pie), JSON.stringify({ b4: r.b4, b5: r.b5, pie: r.pie }));
     check('«¿Me la propones?» solo rellena huecos vacíos: la cena apuntada a mano (texto y plato) sigue igual y se escribe lo demás',
       r.c1 && /Cena con Marta/.test(r.c2.txt) && /"kind":"txt"/.test(r.c2.txt) && /Algo de fruta/.test(r.c2.nota) && /d332/.test(r.c2.plato) && r.c2.otras >= 2 && r.c2.tab === 'casa', JSON.stringify(r.c2));
+  }
+  // 334) VITAMINAS: LA PARADA «CIERRE 💊» DE LA LÍNEA Y LA HOJA «% DIARIO», EN CADENA: (a) con el día vacío la parada dice
+  // «aún sin datos»; (b) se apunta una frase con la lupa (200 g de un alimento que trae unos micros y no otros) y la
+  // parada enseña los tres % más bajos CON dato; (c) un toque abre «Vitaminas y minerales» con los 9 de siempre, % y barra
+  // donde hay dato y «sin datos» (NUNCA 0 %) donde ningún apunte lo trae, la sugerencia «Falta …» y la media de 7 días;
+  // (d) atrás vuelve a la línea con su parada; (e) la ficha del alimento enseña cantidad con unidad y %, y «sin datos».
+  // Sin la hoja, la parada no existía, el micro sin dato salía como 0 % y la ficha no decía el %.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia333', JSON.stringify(P.store));
+      P.store.food.log[P.iso(new Date())] = [];
+      const a = P.alimTodos().filter((x) => typeof x.fe === 'number' && typeof x.ca === 'number' && typeof x.vd !== 'number' && /^[a-zñáéíóú ]+$/i.test(x.n) && x.n.split(' ').length === 1)[0];
+      window.__a333 = a ? { id: a.id, n: a.n, sin: window.PG.ALIM_MICROS.filter((k) => typeof a[k] !== 'number') } : null;
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.ui.foodBusca = ''; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    r.a = await page.evaluate(() => ({ parada: !!document.querySelector('#main .cjml .cjvit'), txt: ((document.querySelector('#main .cjvit .vcu > .mini') || {}).textContent || ''),
+      viejo: !!document.querySelector('#main .cjmic') }));
+    r.alim = await page.evaluate(() => window.__a333);
+    await page.click('#main [data-a="cje-busca"]'); await page.waitForTimeout(250);
+    await page.fill('#fbQ', '200 g de ' + r.alim.n.toLowerCase()); await page.waitForTimeout(450);
+    await page.click('#fbRes [data-a="fb-lec-ok"]'); await page.waitForTimeout(300);
+    r.tot = await page.evaluate(() => window.PG.microTotales(window.PG.iso(new Date())));
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'eje'; P.ui.foodBusca = ''; P.render(); });
+    await page.waitForTimeout(200);
+    r.b = await page.evaluate(() => ({ txt: ((document.querySelector('#main .cjvit .vcu > .mini') || {}).textContent || ''), n: document.querySelectorAll('#main .cjvit .vcu > .mini > span').length,
+      ultima: !!document.querySelector('#main .cjml > .cjvit:last-child') }));
+    await page.click('#main .cjvit'); await page.waitForTimeout(250);
+    r.c = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, tit: (document.querySelector('#main .subtit') || {}).textContent || '',
+      filas: Array.prototype.map.call(document.querySelectorAll('#main .femic.vit'), (f) => ({ k: f.dataset.k, p: (f.querySelector('b') || {}).textContent || '', sd: (f.querySelector('em') || {}).textContent || '', barra: !!f.querySelector('.t i') })),
+      sug: (document.querySelector('#main .vitsug') || {}).textContent || '', cuerpo: document.getElementById('main').textContent }));
+    await page.click('#main .subcab [data-a="food-vista"]'); await page.waitForTimeout(250);
+    r.d = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, parada: !!document.querySelector('#main .cjml .cjvit') }));
+    await page.evaluate((id) => { const P = window.PG; P.ui.alimSel = id; P.ui.alimG = 100; P.ui.foodVista = 'ficha'; P.render(); }, r.alim.id);
+    await page.waitForTimeout(200);
+    r.e = await page.evaluate(() => Array.prototype.map.call(document.querySelectorAll('#main .micros .mic'), (m) => ({ n: m.querySelector('.mn').textContent, v: m.querySelector('.mv').textContent })));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia333')); localStorage.removeItem('__copia333'); P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.ui.alimSel = ''; P.save(); P.render(); });
+    const sinK = r.alim.sin, conK = ['fe', 'ca', 'k', 'mg', 'vc', 'vd', 'b12', 'b6', 'fo'].filter((k) => sinK.indexOf(k) < 0);
+    check('vitaminas: la parada «cierre 💊» al final de la línea enseña los más bajos con dato, abre el % diario de los 9 con «sin datos» (nunca 0 %), la sugerencia y la media de 7 días, y la ficha dice cantidad y %',
+      r.a.parada && /sin datos/.test(r.a.txt) && !r.a.viejo && Object.keys(r.tot).length > 0 &&
+      r.b.n >= 1 && r.b.n <= 3 && /\d+ %/.test(r.b.txt) && r.b.ultima &&
+      r.c.vista === 'vitaminas' && /Vitaminas y minerales/.test(r.c.tit) && r.c.filas.length === 9 &&
+      r.c.filas.filter((f) => f.sd === 'sin datos').length === sinK.length && sinK.length > 0 &&
+      r.c.filas.filter((f) => f.sd === 'sin datos').every((f) => f.p === '' && !f.barra) &&
+      r.c.filas.filter((f) => f.sd === '').length === conK.length && r.c.filas.filter((f) => f.sd === '').every((f) => /^\d+ %$/.test(f.p) && f.barra) &&
+      !r.c.filas.some((f) => f.p === '0 %' && f.sd === 'sin datos') &&
+      /Falta [^:]+:.*te sube un \d+ %/.test(r.c.sug) && /MEDIA DE 7 DÍAS/.test(r.c.cuerpo) && /Los «sin datos» no cuentan/.test(r.c.cuerpo) &&
+      r.d.vista === 'eje' && r.d.parada &&
+      r.e.length === 9 && r.e.filter((m) => /sin datos/.test(m.v)).length === sinK.length && r.e.filter((m) => /(mg|µg) · \d+ %$/.test(m.v)).length === conK.length, JSON.stringify(r));
+  }
+  // 335) INVESTIGAR LO QUE NO CONOCE, EN CADENA: (a) «pizza barbacoa del telepizza, 3 trozos» no se conoce bien y bajo la fila
+  // sale «NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA» con las 5 fuentes, la 2 con la carta de Telepizza y SIN el botón
+  // suelto «buscar»; y no ha salido nada del móvil; (b) «lentejas y zumbaflix»: se toca la fuente 1 (ahora sí sale SOLO
+  // el nombre a Open Food Facts), se elige un producto y la fila queda resuelta (≈) con su total; (c) otra frase
+  // desconocida: «a ojo · mediana» resuelve la fila (≈ «a ojo: mediana»), el rango de kcal se cierra en un total
+  // y apunta lo suyo. Sin esto la duda solo ofrecía «buscar», que te sacaba de la frase.
+  {
+    const r = {};
+    let pidioOff = 0; const urls = [];
+    await page.route('https://world.openfoodfacts.org/**', async (route) => {
+      pidioOff++; urls.push(route.request().url());
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ products: [
+        { code: '3300330099991', product_name: 'Zumbaflix Pizza barbacoa congelada', brands: 'Telepizza', nutriments: { 'energy-kcal_100g': 240, proteins_100g: 10, carbohydrates_100g: 30, fat_100g: 9 }, popularity_key: 9000000, serving_quantity: 150 } ] }) }); });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia334', JSON.stringify(P.store)); P.store.food.log[P.iso(new Date())] = [];
+      P.ui.frInv = null; P.ui.foodBusca = ''; P.ui.foodPos = ''; P.ui.foodVista = 'eje'; P.ui.tab = 'food'; P.render(); });
+    await page.waitForTimeout(150);
+    await page.click('#main [data-a="cje-busca"]'); await page.waitForTimeout(250);
+    const inv = () => page.evaluate(() => ({ n: document.querySelectorAll('#fbRes .inv .ex').length, cap: (document.querySelector('#fbRes .inv .cap') || {}).textContent || '',
+      filas: Array.prototype.map.call(document.querySelectorAll('#fbRes .inv .ex'), (e) => e.textContent), buscar: !!document.querySelector('#fbRes [data-a="fr-busca"]'),
+      sg: Array.prototype.map.call(document.querySelectorAll('#fbRes .lecit'), (f) => ({ s: (f.querySelector('.sg') || {}).textContent || '', n: (f.querySelector('.n b') || {}).textContent || '', por: (f.querySelector('.n span') || {}).textContent || '', k: (f.querySelector('.k') || {}).textContent || '' })),
+      total: ((document.querySelector('#fbRes .lecrg b') || {}).textContent || '').trim(), cajas: !!document.querySelector('#fbRes .bwmac, #fbRes .lecm, #fbRes .bowlmac') }));
+    await page.fill('#fbQ', 'de cena pizza barbacoa del telepizza, 3 trozos'); await page.waitForTimeout(450);
+    r.a = await inv(); r.a.off = pidioOff;
+    await page.fill('#fbQ', 'lentejas y zumbaflix'); await page.waitForTimeout(450);
+    r.b0 = await inv(); r.b0.off = pidioOff;
+    await page.click('#fbRes .inv [data-a="fr-inv"][data-f="off"]'); await page.waitForTimeout(500);
+    r.b1 = await page.evaluate(() => ({ opc: Array.prototype.map.call(document.querySelectorAll('#fbRes .inv [data-a="fr-inv-pon"]'), (b) => b.textContent) }));
+    r.b1.off = pidioOff; r.b1.urls = urls.slice();
+    await page.click('#fbRes .inv [data-a="fr-inv-pon"]'); await page.waitForTimeout(350);
+    r.b = await inv();
+    await page.fill('#fbQ', 'lentejas y crispolines'); await page.waitForTimeout(450);
+    r.c0 = await inv();
+    await page.click('#fbRes .inv [data-a="fr-inv"][data-f="ojo"]'); await page.waitForTimeout(250);
+    await page.click('#fbRes .inv [data-a="fr-inv-ojo"][data-v="m"]'); await page.waitForTimeout(350);
+    r.c = await inv();
+    await page.click('#fbRes [data-a="fb-lec-ok"]'); await page.waitForTimeout(300);
+    r.ap = await page.evaluate(() => { const l = window.PG.foodLog(window.PG.iso(new Date())), e = l[l.length - 1]; return { n: l.length, k: Math.round(e.kcal), nom: e.nombre }; });
+    await page.unroute('https://world.openfoodfacts.org/**');
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia334')); localStorage.removeItem('__copia334'); P.ui.frInv = null; P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    const fz = (x) => x.sg.filter((f) => /zumbaflix|crispolines/i.test(f.n))[0];
+    check('investigar: la duda desconocida saca las 5 fuentes (la carta de Telepizza si la frase la nombra, sin el botón «buscar»), Open Food Facts solo al tocar y con solo el nombre, y «a ojo · mediana» resuelve la fila y cierra el total',
+      r.a.n === 4 && /NO LA CONOZCO BIEN · ELIGE DE DÓNDE SACARLA/.test(r.a.cap) && /Carta de Telepizza/.test(r.a.filas[1]) && !r.a.buscar && r.a.off === 0 &&
+      r.b0.n === 3 && r.b0.sg[1].s === '?' && !r.b0.filas.some((f) => /Carta de/.test(f)) && r.b0.off === 0 &&
+      r.b1.off >= 1 && r.b1.urls.every((u) => /zumbaflix/.test(u) && !/lentejas/i.test(u)) && r.b1.opc.length === 1 &&
+      fz(r.b) && fz(r.b).s === '≈' && /Zumbaflix/i.test(fz(r.b).n) && r.b.n === 0 && +fz(r.b).k > 0 && r.b0.total !== r.b.total &&
+      r.c0.sg[1].s === '?' && !r.c0.cajas && r.c.cajas && fz(r.c) && fz(r.c).s === '≈' && fz(r.c).por === 'a ojo: mediana' && fz(r.c).k === '450' && r.c.n === 0 &&
+      r.ap.n === 1 && r.ap.k > 450, JSON.stringify(r));
+  }
+  // 336) EL TÍTULO DE LA TARJETA CUENTA LO QUE AÚN SE PREGUNTA, EN CADENA: (a) «menú del día del hospital: lentejas, filete
+  // con patatas y flan» deja el filete en el título aunque no se haya dicho de qué, y en su sitio (antes de las patatas);
+  // (b) se contesta el filete y el título sigue llevándolo, en el mismo orden. Sin el arreglo el título era «Lentejas con
+  // patata y flan» hasta contestar.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia335', JSON.stringify(P.store)); P.ui.foodBusca = ''; P.ui.foodVista = 'eje'; P.ui.tab = 'food'; P.render(); });
+    await page.waitForTimeout(150);
+    await page.click('#main [data-a="cje-busca"]'); await page.waitForTimeout(250);
+    await page.fill('#fbQ', 'menú del día del hospital: lentejas, filete con patatas y flan'); await page.waitForTimeout(450);
+    const tit = () => page.evaluate(() => ((document.querySelector('#fbRes .lecn') || {}).textContent || ''));
+    r.a = await tit();
+    await page.click('#fbRes .lecit .lecd .chipx'); await page.waitForTimeout(350);
+    r.b = await tit();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia335')); localStorage.removeItem('__copia335'); P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('el título de la tarjeta de «menú del día del hospital: lentejas, filete con patatas y flan» lleva el filete aunque aún no se haya elegido de qué (en su sitio), y lo sigue llevando al elegir',
+      /filete/i.test(r.a) && /lentejas/i.test(r.a) && /flan/i.test(r.a) && r.a.toLowerCase().indexOf('filete') < r.a.toLowerCase().indexOf('patata') &&
+      /filete|ternera|pollo|cerdo|pavo/i.test(r.b) && /lentejas/i.test(r.b) && /flan/i.test(r.b), JSON.stringify(r));
+  }
+  // 337) «¿QUÉ HAS COMIDO?» POR LA TARDE ABRE EN LO QUE LA LÍNEA LLAMA LO SIGUIENTE, EN CADENA: (a) a las 16:30 el reloj dice
+  // «merienda» pero la línea de Hoy dice que LO SIGUIENTE es la cena; (b) se toca la lupa y «¿Qué has comido?» dice Cena
+  // (no Merienda); (c) se escribe una frase y el botón y lo apuntado van a la cena. Sin el arreglo abría en Merienda.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia336', JSON.stringify(P.store)); P.store.food.log[P.iso(new Date())] = [];
+      const R = window.__DateReal || Date; window.__DateReal = R; const d = new R(); d.setHours(16, 30, 0, 0); const t = d.getTime();
+      window.Date = class extends R { constructor(...a) { if (a.length) super(...a); else super(t); } static now() { return t; } };
+      P.ui.foodBusca = ''; P.ui.foodPos = ''; P.ui.frPos = ''; P.ui.foodVista = 'eje'; P.ui.tab = 'food'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.render(); });
+    await page.waitForTimeout(200);
+    r.a = await page.evaluate(() => ({ reloj: window.PG.momentoAhora(), sig: (document.querySelector('#main .cjsig') || {}).dataset ? document.querySelector('#main .cjsig').dataset.p : '' }));
+    await page.click('#main [data-a="cje-busca"]'); await page.waitForTimeout(250);
+    r.b = await page.evaluate(() => ({ cab: ((document.querySelector('#main .subcab') || {}).textContent || ''), pos: window.PG.ui.foodPos }));
+    await page.fill('#fbQ', 'yogur'); await page.waitForTimeout(100); await page.fill('#fbQ', 'yogur natural 125 g'); await page.waitForTimeout(450);
+    r.c0 = await page.evaluate(() => ((document.querySelector('#fbRes [data-a="fb-lec-ok"]') || {}).textContent || ''));
+    if (r.c0) { await page.click('#fbRes [data-a="fb-lec-ok"]'); await page.waitForTimeout(300); }
+    r.c = await page.evaluate(() => { const l = window.PG.foodLog(window.PG.iso(new Date())), e = l[l.length - 1]; return e ? e.p || e.pos || e.when : ''; });
+    await page.evaluate(() => { const P = window.PG; window.Date = window.__DateReal; P.store = JSON.parse(localStorage.getItem('__copia336')); localStorage.removeItem('__copia336'); P.ui.foodBusca = ''; P.ui.foodPos = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('por la tarde «¿Qué has comido?» abre en lo que la línea llama LO SIGUIENTE (la cena), no en la merienda del reloj, y lo apuntado va a la cena',
+      r.a.reloj === 'merienda' && r.a.sig === 'cena' && /Cena/.test(r.b.cab) && !/Merienda/.test(r.b.cab) && r.b.pos === 'cena' && /cena/i.test(r.c0) && r.c === 'cena', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
