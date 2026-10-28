@@ -16,14 +16,14 @@ h1,h2,p{margin:0}
 .cartel p{font-size:15px;margin-top:6px}
 .rot{background:var(--alm);color:var(--blanco);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px}
 .pant{background:var(--piedra2);position:relative}
-.pad{padding:12px 16px}
+.pad{padding:8px 16px}
 .btn{min-height:44px;min-width:44px;border:3px solid var(--ink);background:var(--blanco);color:var(--ink);font:700 16px "Trebuchet MS",Verdana,sans-serif;padding:8px 14px;cursor:pointer;border-radius:0}
 .btn:focus-visible,[role=button]:focus-visible{outline:4px solid var(--alm);outline-offset:2px}
 .btn.grande{width:100%;background:var(--alm);color:var(--blanco);border-color:var(--ink)}
 .btn.grande[aria-pressed=true]{background:var(--ink)}
 /* pantalla 0 */
-#texto{margin-top:12px}
-#texto .s{padding:6px 8px;margin:0 -8px;border-left:6px solid transparent;font-size:16px;line-height:1.4}
+#texto{margin-top:6px}
+#texto .s{padding:4px 8px;margin:0 -8px;border-left:6px solid transparent;font-size:15px;line-height:1.35}
 #texto.tour .s{opacity:.3}
 #texto.tour .s.done{opacity:.8}
 #texto.tour .s.on{opacity:1;background:var(--luz);border-left-color:var(--alm)}
@@ -86,10 +86,10 @@ h1,h2,p{margin:0}
   <p id="punto" aria-live="polite"></p>
   <div id="texto">
    <p class="s" data-i="0">Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.</p>
-   <p class="s" data-i="1">Al abrirla ves qué toca hoy, a qué hora y dónde. Cada sesión trae sus cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El finde, parque.</p>
+   <p class="s" data-i="1">Al abrirla ves qué toca hoy, a qué hora y dónde. La sesión trae cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El finde, parque.</p>
    <p class="s" data-i="2">Si lo dejas dos semanas, la vuelta empieza al 35% y sube diez puntos por semana. Si fallas, repites sin castigo. La racha cuenta semanas.</p>
    <p class="s" data-i="3">Tu meta: de 82 a 75 kilos, con unas 2.000 kcal y 140 g de proteína. El plan semanal de comidas cuadra con eso.</p>
-   <p class="s" data-i="4">El dibujo es una cueva: la luz es la hora, los triángulos son tu semana y la cuadrícula pintada es la vuelta. Así se ve sin leer.</p>
+   <p class="s" data-i="4">El dibujo es una cueva: la luz es la hora, los triángulos son tu semana y la cuadrícula pintada es la vuelta. Se entiende sin leer.</p>
   </div>
  </div>
 </section>
@@ -200,9 +200,9 @@ function marcas(x,y,paso,n,hecho,len){ // peso: n marcas, la 0 arriba
 function agujero(cx,w){return `<ellipse cx="${cx}" cy="0" rx="${w}" ry="${w*0.55}" fill="${LUZ}" stroke="${INK}" stroke-width="4"/>`}
 
 // ---------- Pantalla 0 ----------
-document.getElementById('d0').innerHTML=`<svg id="sv0" viewBox="0 0 412 430" height="430" role="img" aria-label="Pared de la cueva: la luz de las 15 horas, siete triángulos que son la semana, una cuadrícula que se pinta y marcas talladas del peso">
-<title>Pared de la cueva de Risco Caído</title>${wall(412,430)}
-<g>${zig(0,6,412,10,34,INK,3)}${zig(0,418,412,-10,34,ALM,3)}</g>
+document.getElementById('d0').innerHTML=`<svg id="sv0" viewBox="0 0 412 412" height="412" role="img" aria-label="Pared de la cueva: la luz de las 15 horas, siete triángulos que son la semana, una cuadrícula que se pinta y marcas talladas del peso">
+<title>Pared de la cueva de Risco Caído</title>${wall(412,412)}
+<g>${zig(0,6,412,10,34,INK,3)}${zig(0,400,412,-10,34,ALM,3)}</g>
 ${agujero(300,36)}
 <g class="part" id="p-luz">
  <polygon points="270,8 330,8 190,150 60,150" fill="${LUZ}" opacity=".85"/>
@@ -212,8 +212,8 @@ ${agujero(300,36)}
  ${T(260,150,'15 h · HOY TOCA',{fs:15})}${T(260,168,'gimnasio',{fs:13})}
 </g>
 <g class="part" id="p-semana">${semana(262,false)}</g>
-<g class="part" id="p-vuelta">${cuadricula(20,298,210,14,8,'normal',false)}${T(125,292,'La vuelta',{fs:13})}</g>
-<g class="part" id="p-peso">${marcas(290,306,13,8,1,50)}${T(352,318,'82 kg',{a:'start',fs:13})}${T(352,397,'75 kg',{a:'start',fs:13})}${T(330,296,'Peso',{fs:13})}<path d="M284 311l-14 -7v14z" fill="${ALM}" stroke="${INK}" stroke-width="2"/></g>
+<g class="part" id="p-vuelta">${cuadricula(20,298,210,12,8,'normal',false)}${T(125,292,'La vuelta',{fs:13})}</g>
+<g class="part" id="p-peso">${marcas(290,306,11,8,1,50)}${T(352,310,'82 kg',{a:'start',fs:13})}${T(352,388,'75 kg',{a:'start',fs:13})}${T(330,296,'Peso',{fs:13})}<path d="M284 313l-14 -7v14z" fill="${ALM}" stroke="${INK}" stroke-width="2"/></g>
 </svg>`;
 
 // ---------- Pantalla 1 ----------
@@ -279,7 +279,7 @@ document.getElementById('btnfallo').onclick=function(){
 <title>El peso: marcas que bajan de 82 a 75 kg</title>${wall(412,640)}${zig(0,6,412,10,34,INK,3)}${zig(0,628,412,-10,34,ALM,3)}
 ${T(206,42,'De 82 a 75 kg, una marca cada medio kilo',{fs:16,fw:800})}${s}</svg>`;
 })();
-const PLAN=[['L','1.980',0],['M','guardia',2],['X','saliente',2],['J','2.000',0],['V','2.020',0],['S','2.180',1],['D','1.970',0]];
+const PLAN=[['L','1.980',0],['M','—',2],['X','—',2],['J','2.000',0],['V','2.020',0],['S','2.180',1],['D','1.970',0]];
 document.getElementById('plan').innerHTML=PLAN.map(p=>`<div class="dia ${p[2]===1?'pasa':p[2]===2?'nc':''}" role="listitem"><b>${p[0]}</b>${p[1]}${p[2]===1?'<br>se pasa':''}${p[2]===2?'<br>no cuenta':''}</div>`).join('');
 
 // ---------- Recorrido de 45 s ----------

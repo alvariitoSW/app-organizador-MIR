@@ -96,7 +96,7 @@ button:focus-visible{outline:3px solid #0b57d0;outline-offset:2px}
 <section id="s3">
 <p class="rot">Pantalla 3 · Tu objetivo de peso</p>
 <h2>La vendimia: de 82 a 75 kg</h2>
-<svg id="d3" viewBox="0 0 380 330" role="img" aria-label="Ocho cestos de uvas que se aligeran, de 82 a 75 kilos. Hoy estás en 81,4 kilos, semana 2 de 14. Vendimia el 8 de febrero de 2027"><title>Cestos de la vendimia</title></svg>
+<svg id="d3" viewBox="0 0 380 384" role="img" aria-label="Ocho cestos de uvas que se aligeran, de 82 a 75 kilos. Hoy estás en 81,4 kilos, semana 2 de 14. Vendimia el 8 de febrero de 2027"><title>Cestos de la vendimia</title></svg>
 <div class="cifras">
 <div class="cifra"><b>2.000</b>kcal al día</div>
 <div class="cifra"><b>140 g</b>de proteína</div>
@@ -203,19 +203,19 @@ function cargas(i){var p=P[i],c=document.getElementById('cargas');c.innerHTML=''
 cargas(2);
 document.querySelectorAll('#d2 [data-b]').forEach(function(n){function go(){cargas(+n.dataset.b)}n.addEventListener('click',go);n.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
 var r='<rect width="380" height="70" fill="'+ASH+'"/>';
-for(var k=0;k<2;k++)r+='<rect x="'+(20+k*74)+'" y="16" width="66" height="38" rx="8" fill="'+STONE+'" stroke="#6b6a63" stroke-width="2"/><text x="'+(53+k*74)+'" y="40" font-size="13" font-weight="700" text-anchor="middle" fill="#1d1b1a">sem '+(k+1)+'</text>';
-r+='<rect x="168" y="16" width="66" height="38" rx="8" fill="none" stroke="'+DORM+'" stroke-width="2" stroke-dasharray="4 3"/>'+T(201,40,'sem 3',13,LIGHT,'middle')+T(250,30,'Racha: 2 semanas',15,LIGHT,'start',1)+T(250,48,'la mínima también cuenta',12,LIGHT);
+for(var k=0;k<2;k++)r+='<rect x="'+(12+k*62)+'" y="16" width="56" height="38" rx="8" fill="'+STONE+'" stroke="#6b6a63" stroke-width="2"/><text x="'+(40+k*62)+'" y="40" font-size="13" font-weight="700" text-anchor="middle" fill="#1d1b1a">sem '+(k+1)+'</text>';
+r+='<rect x="136" y="16" width="56" height="38" rx="8" fill="none" stroke="'+DORM+'" stroke-width="2" stroke-dasharray="4 3"/>'+T(164,40,'sem 3',13,LIGHT,'middle')+T(206,30,'Racha: 2 semanas',15,LIGHT,'start',1)+T(206,48,'la mínima también cuenta',12,LIGHT);
 document.getElementById('dracha').innerHTML=r;
 
 /* ---------- Pantalla 3 ---------- */
-var c='<rect width="380" height="330" fill="'+ASH+'"/>'+lapilli(380,330,100,19);
-for(var j=0;j<8;j++){var kgv=82-j,x=12+(j%4)*92,y=j<4?40:190;
+var c='<rect width="380" height="384" fill="'+ASH+'"/>'+lapilli(380,384,100,19);
+for(var j=0;j<8;j++){var kgv=82-j,x=12+(j%4)*92,y=j<4?56:226;
   c+='<g><path d="M'+x+' '+(y+60)+'L'+(x+80)+' '+(y+60)+'L'+(x+70)+' '+(y+112)+'L'+(x+10)+' '+(y+112)+'Z" fill="#8a6a3c" stroke="#d2b07a" stroke-width="2"/>';
   for(var k2=0;k2<8-j;k2++){c+='<circle cx="'+(x+14+(k2%5)*13)+'" cy="'+(y+54-Math.floor(k2/5)*12)+'" r="6.5" fill="#7a3d8c" stroke="#d9b6e6" stroke-width="1"/>'}
   c+=T(x+40,y+135,kgv+' kg',14,LIGHT,'middle',1)+'</g>';
   if(j===0)c+='<rect x="'+(x-4)+'" y="'+(y-14)+'" width="88" height="152" rx="8" fill="none" stroke="'+RED+'" stroke-width="3" stroke-dasharray="6 3"/>'+T(x+40,y-20,'Hoy 81,4 kg',13,'#ffb59e','middle',1);
   if(j===7)c+=T(x+40,y-20,'8 feb 2027',13,'#b9e29a','middle',1)}
-c+=T(10,20,'Cada cesto, un kilo menos (≈ 2 semanas)',13,LIGHT,'start',1)+T(370,322,'Semana 2 de 14',12,LIGHT,'end');
+c+=T(10,20,'Cada cesto, un kilo menos (≈ 2 semanas)',13,LIGHT,'start',1)+T(370,378,'Semana 2 de 14',12,LIGHT,'end');
 document.getElementById('d3').innerHTML=c;
 var PL=[['L','1.980',0],['M','guardia',1],['X','saliente',1],['J','2.010',0],['V','2.150',2],['S','1.990',0],['D','2.020',0]],pl=document.getElementById('plan');
 PL.forEach(function(p){var d=document.createElement('div');d.className='dia'+(p[2]===1?' no':p[2]===2?' pasa':'');d.innerHTML='<b>'+p[0]+'</b>'+(p[2]===1?'no cuenta':p[1]+' kcal')+(p[2]===2?'<br>se pasa':'');pl.appendChild(d)});
