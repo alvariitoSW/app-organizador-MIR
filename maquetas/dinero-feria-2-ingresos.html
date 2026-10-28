@@ -1,0 +1,123 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412"><title>Feria 2 · Lo que cobro</title><link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.wrap{padding:10px 12px 30px}
+.rot{font-size:11px;letter-spacing:.12em;color:var(--ink2);font-weight:800;margin:18px 2px 8px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand2) 28%,var(--card)),var(--card));border-color:var(--brand2)}
+.cartel b{font-size:16px}.cartel p{margin:4px 0 0;color:var(--ink2);font-size:13px}
+.msg{font-size:17px;font-weight:800;line-height:1.3;margin:0}
+.msg em{font-style:normal;color:var(--accent)}
+.card+.card{margin-top:10px}
+.e{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.big{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.b44{min-height:44px;padding:0 14px;font-size:14px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+/* barras */
+.graf{position:relative;height:190px;margin-top:14px;display:flex;gap:8px;align-items:flex-end;padding-bottom:0}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-variant-numeric:tabular-nums}
+.col .t{font-size:11px;font-weight:900;margin-bottom:3px}
+.col .st{width:100%;display:flex;flex-direction:column;border-radius:6px 6px 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0}
+.col .ba{background:var(--brand2)}
+.col .ex{background:repeating-linear-gradient(45deg,var(--accent) 0 3px,#8a6a10 3px 6px)}
+.col .m{font-size:11px;font-weight:800;margin-top:5px;color:var(--ink2)}
+.col .g{font-size:10px;color:var(--ink2)}
+.col.max .m,.col.min .m{color:var(--ink)}
+.med{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);pointer-events:none}
+.med span{position:absolute;right:0;top:-18px;font-size:10.5px;font-weight:900;background:var(--card);padding:0 4px;border-radius:4px}
+.ley{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);font-weight:700;margin-top:10px;flex-wrap:wrap}
+.ley i{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.ley .a{background:var(--brand2)}.ley .b{background:repeating-linear-gradient(45deg,var(--accent) 0 3px,#8a6a10 3px 6px)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.tile .k{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--ink2)}
+.tile .v{font-size:22px;font-weight:900;margin-top:2px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:12px;color:var(--ink2);margin-top:2px}
+.fld{background:var(--bg2);border:1px solid var(--brand);border-radius:12px;color:var(--ink);font:inherit;font-size:22px;font-weight:900;padding:0 12px;min-height:52px;width:100%;margin-top:8px}
+/* pantalla 2 */
+.fila{display:flex;gap:10px;align-items:center;padding:12px 0;border-top:1px dashed var(--line)}.fila:first-of-type{border-top:0}
+.fila .n{width:48px;text-align:center;font-weight:900;font-size:22px;line-height:1}.fila .n small{display:block;font-size:10px;color:var(--ink2);font-weight:700;margin-top:2px}
+.fila .t{flex:1;min-width:0}.fila .t b{display:block;font-size:14px}.fila .t span{font-size:12px;color:var(--ink2)}
+.fila .r{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}.fila .r small{display:block;font-size:11px;color:var(--ink2);font-weight:700}
+.pill{font-size:11px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink2)}
+.pill.cob{border-color:var(--ok);color:var(--ok)}
+.seg{display:flex;gap:6px;margin-top:10px}
+.seg button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-size:15px;font-weight:900;cursor:pointer}
+.seg button.on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.seg button.on:before{content:"✓ "}
+.nota{font-size:12.5px;color:var(--ink2);margin-top:8px}
+</style><body><div class="wrap">
+
+<div class="card cartel"><b>«Tu nómina, con antelación»</b>
+<p>Ves cuánto de cada nómina es sueldo fijo y cuánto son guardias, y la app te avisa de la que viene usando tu calendario.</p>
+<p>Y te dice cuánto de lo «extra» apartar antes de que se vaya.</p></div>
+
+<div class="rot">PANTALLA 1 · LO QUE HE COBRADO</div>
+<div class="card">
+ <p class="msg">Tu nómina media es <em id="media">2.260 €</em>, pero va de <em>1.350</em> a <em>3.100 €</em>.</p>
+ <div class="graf" id="graf"></div>
+ <div class="ley"><span><i class="a"></i>Sueldo base</span><span><i class="b"></i>Guardias</span><span>- - media</span></div>
+</div>
+
+<div class="tiles" style="margin-top:10px">
+ <div class="tile"><div class="k">MES FLOJO</div><div class="v">1.350 €</div><div class="s">junio · sin guardias</div></div>
+ <div class="tile"><div class="k">MES BUENO</div><div class="v">3.100 €</div><div class="s">septiembre · +1.750 € de guardias</div></div>
+</div>
+
+<div class="card" style="margin-top:10px">
+ <div class="e">NÓMINA DE OCTUBRE</div>
+ <div class="row" style="margin-top:4px"><span class="big" id="octv">2.800 €</span><span class="sp"></span><span class="pill cob" id="octp">✓ Apuntada</span></div>
+ <div id="edit" hidden>
+  <input class="fld" id="inp" inputmode="numeric" value="2800" aria-label="Importe de la nómina en euros">
+  <div class="row" style="margin-top:8px"><button class="btn p b44 sp" onclick="guarda()">Guardar nómina</button><button class="btn b44" onclick="edit(false)">Cancelar</button></div>
+ </div>
+ <button class="btn b44" id="corr" style="width:100%;margin-top:10px" onclick="edit(true)">Cambiar importe</button>
+ <div class="nota">Cada día 25 te preguntamos una sola cosa: «¿cuánto te ha entrado?». Escribes el número y listo.</div>
+</div>
+
+<div class="rot">PANTALLA 2 · LO QUE VIENE Y CUÁNTO APARTAR</div>
+<div class="card">
+ <p class="msg">En noviembre cobrarás más: unos <em>2.820 €</em>.</p>
+ <div class="nota" style="margin-top:6px">Porque en septiembre hiciste 6 guardias, y las guardias se cobran dos meses después.</div>
+</div>
+
+<div class="card">
+ <div class="e">TUS GUARDIAS (DE TU CALENDARIO) → CUÁNDO LAS COBRAS</div>
+ <div class="fila" style="margin-top:6px"><div class="n">6<small>guardias</small></div><div class="t"><b>Agosto → nómina de octubre</b><span>+1.450 € extra</span></div><span class="pill cob">✓ Cobrado</span></div>
+ <div class="fila"><div class="n">6<small>guardias</small></div><div class="t"><b>Septiembre → nómina de noviembre</b><span>cobras el 25 de noviembre</span></div><div class="r">+1.470 €<small>aprox.</small></div></div>
+ <div class="fila"><div class="n">4<small>van 4</small></div><div class="t"><b>Octubre → nómina de diciembre</b><span>el mes aún no ha acabado</span></div><div class="r">+980 €<small>aprox.</small></div></div>
+ <div class="nota">Cálculo: unos 245 € netos por guardia, sacado de tus últimas nóminas. Es una estimación, no una promesa.</div>
+</div>
+
+<div class="card">
+ <div class="e">DE LA NÓMINA DE NOVIEMBRE, APARTA</div>
+ <div class="seg" id="seg"><button data-p="0.5">la mitad</button><button data-p="0.7" class="on">70 %</button><button data-p="1">todo</button></div>
+ <div class="row" style="align-items:baseline;margin-top:12px"><span class="big" id="ap">1.030 €</span><span class="nota" style="margin:0">del extra de 1.470 €</span></div>
+ <div class="nota" id="rest">Te quedan 440 € de «propina» para ti este mes.</div>
+ <div class="nota" style="border-top:1px dashed var(--line);padding-top:8px">¿Por qué? Tu mes normal cuesta unos <b style="color:var(--ink)">1.480 €</b> y tu sueldo base es 1.350 €: en un mes flojo te faltan unos <b style="color:var(--ink)">130 €</b>. Lo que apartas hoy tapa esos meses y el resto es ahorro.</div>
+ <button class="btn p b44" style="width:100%;margin-top:10px">Recordármelo el 25 de noviembre</button>
+</div>
+
+</div>
+<script>
+var N=[['jun',1350,0],['jul',1600,1],['ago',2450,4],['sep',3100,7],['oct',2800,6]]; // mes, nómina, guardias que la generan
+var BASE=1350,H=120,TOP=3200;
+function f(n){return n.toLocaleString('es-ES')+' €'}
+function pinta(){
+ var g=document.getElementById('graf'),h='',s=0,mx=0,mn=1e9;
+ N.forEach(function(x){s+=x[1];mx=Math.max(mx,x[1]);mn=Math.min(mn,x[1])});
+ var med=Math.round(s/N.length/10)*10;
+ N.forEach(function(x){var b=Math.min(x[1],BASE),e=x[1]-b,k=H*1.0/TOP*1.0;
+  h+='<div class="col'+(x[1]==mx?' max':'')+(x[1]==mn?' min':'')+'"><div class="t">'+x[1].toLocaleString('es-ES')+'</div><div class="st" style="height:'+Math.round(x[1]*k*1.4)+'px"><div class="ex" style="flex:'+e+'"></div><div class="ba" style="flex:'+b+'"></div></div><div class="m">'+x[0]+'</div><div class="g">'+(x[2]?x[2]+' guard.':'sin guard.')+'</div></div>';});
+ g.innerHTML=h+'<div class="med" style="bottom:'+(Math.round(med*H/TOP*1.4)+34)+'px"><span>media '+f(med)+'</span></div>';
+ document.getElementById('media').textContent=f(med);
+}
+function edit(v){document.getElementById('edit').hidden=!v;document.getElementById('corr').hidden=v}
+function guarda(){var v=parseInt(document.getElementById('inp').value.replace(/\D/g,''),10);if(!v)return;N[4][1]=v;
+ document.getElementById('octv').textContent=f(v);document.getElementById('octp').textContent='✓ Apuntada';edit(false);pinta()}
+document.querySelectorAll('#seg button').forEach(function(b){b.onclick=function(){
+ document.querySelectorAll('#seg button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');
+ var a=Math.round(1470*parseFloat(b.dataset.p)/10)*10;
+ document.getElementById('ap').textContent=f(a);
+ document.getElementById('rest').textContent=a>=1470?'Todo el extra va al ahorro; vives con tu mes normal.':'Te quedan '+f(1470-a)+' de «propina» para ti este mes.'}});
+pinta();
+</script></html>
