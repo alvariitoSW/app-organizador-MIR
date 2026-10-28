@@ -16,7 +16,7 @@ Nada. **La siguiente: D1, la limpieza invisible de Dinero** (sesión nueva, en s
 
 ## Por hacer
 
-### Tanda Dinero · Consejo de Ministros del 2026-10-28 · ≈5,0 M · espera tu sí al presupuesto
+### Tanda Dinero · Consejo de Ministros del 2026-10-28 · ≈5,0 M · **en revisión**: el usuario quitó «cuánto me queda» y pidió una feria de maquetas por partes antes de seguir (acta)
 
 Acta: `.claude/plan-socialista/consejo/2026-10-28.md`. Sustituye a la S8. Va antes que lo que queda de Comer.
 
