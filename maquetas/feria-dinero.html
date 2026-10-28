@@ -1,0 +1,120 @@
+<title>Feria de Dinero</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Una sola mirada oscura, la de la app: una tira de puestos arriba y la maqueta a tamaño móvil debajo */
+:root{
+  --bg:#070b14; --bg2:#0b1120; --card:#111a2b; --ink:#e9f2ff; --ink2:#8fa6c6; --line:#1e2b44;
+  --brand:#38e1ff; --brand2:#7c5cff; --ok:#34d399; --warn:#fbbf24;
+  --f:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 var(--f);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px;margin:0;text-wrap:balance}
+.lead{color:var(--ink2);margin:0;font-size:14px}
+.tira{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.tira button{flex:0 0 auto;min-height:44px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:12px;padding:6px 12px;font:600 13px var(--f);text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.tira button small{color:var(--ink2);font-weight:500;font-size:11px}
+.tira button[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card))}
+.tira button .nota{color:var(--warn);font-size:11px}
+.ficha{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.ficha h2{font-size:16px;margin:0}
+.ficha p{margin:0;color:var(--ink2);font-size:13.5px}
+.modelo{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:700}
+.marco{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--bg)}
+iframe{display:block;width:100%;border:0;height:900px;background:var(--bg)}
+.voto{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.voto label{font-weight:700;font-size:14px}
+.estrellas{display:flex;gap:6px}
+.estrellas button{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:700 16px var(--f);cursor:pointer}
+.estrellas button[aria-pressed=true]{background:var(--warn);color:#1a1200;border-color:var(--warn)}
+textarea{width:100%;min-height:70px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;font:14px var(--f);resize:vertical}
+.acc{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:44px;border-radius:12px;border:1px solid var(--brand);background:var(--brand);color:#04121a;font:700 14px var(--f);padding:0 16px;cursor:pointer}
+.btn.sec{background:transparent;color:var(--ink)}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+#resumen{white-space:pre-wrap;font:12.5px/1.45 ui-monospace,Menlo,monospace;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--ink2)}
+.aviso{font-size:12px;color:var(--ink2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Feria de maquetas · Dinero</h1>
+    <p class="lead">7 puestos, cada uno hecho por un modelo barato. Todas las cifras son inventadas. Toca un puesto, prueba la maqueta (se puede tocar) y ponle nota. Al final, «Copiar mis notas» y pégamelas en el chat.</p>
+  </header>
+
+  <nav class="tira" id="tira" aria-label="Puestos"></nav>
+
+  <section class="ficha" aria-live="polite">
+    <span class="modelo" id="fModelo"></span>
+    <h2 id="fTit"></h2>
+    <p id="fIdea"></p>
+  </section>
+
+  <div class="marco"><iframe id="ifr" title="Maqueta del puesto"></iframe></div>
+
+  <section class="voto">
+    <label id="lblNota">¿Qué nota le pones?</label>
+    <div class="estrellas" id="estrellas" role="group" aria-labelledby="lblNota"></div>
+    <label for="coment">Lo que te gusta, lo que no, lo que cogerías de aquí</label>
+    <textarea id="coment" placeholder="Ej.: me gusta lo de apartar la mitad de las guardias, sobra la racha"></textarea>
+    <div class="acc">
+      <button class="btn" id="sig">Siguiente puesto →</button>
+      <button class="btn sec" id="copiar">Copiar mis notas</button>
+    </div>
+    <div id="resumen" hidden></div>
+    <p class="aviso">Las notas se quedan solo en este móvil hasta que me las pegues.</p>
+  </section>
+</div>
+
+<script>
+const P=[
+ {id:'6',f:'dinero-feria-6-portada.html',m:'sonnet',t:'La portada de Dinero',i:'«Cobro, reparto y ya»: un mensaje del mes, el botón «Ya ha llegado la nómina» que reparte entre ahorro, compras e invertir, y las cinco partes en fila. Pantalla 2: el cierre del mes.'},
+ {id:'1',f:'dinero-feria-1-ahorro.html',m:'sonnet',t:'Ahorro · una hucha, una regla',i:'La base paga la vida y de lo que cobras de más por guardias apartas la mitad (30/50/70 %). Primero el colchón de 3 meses, luego las metas en cola. El día 25 escribes la nómina y te dice cuánto pasar a ahorro.'},
+ {id:'1b',f:'dinero-feria-1b-ahorro.html',m:'haiku',t:'Ahorro · meses de vida',i:'El ahorro medido en meses de vida cubiertos (meta 6), con racha de meses ahorrando. Un deslizador te dice cuántos días de tranquilidad da cada 100 € y cuánto colchón cuesta cada compra.'},
+ {id:'2',f:'dinero-feria-2-ingresos.html',m:'sonnet',t:'Lo que cobro',i:'Cada nómina partida en base y guardias, la media y el mes flojo frente al bueno. Con el calendario de guardias te avisa: «en septiembre hiciste 6 → en noviembre cobrarás unos 2.820 €», y cuánto apartar.'},
+ {id:'3',f:'dinero-feria-3-gastos.html',m:'sonnet',t:'En qué se me va y dónde ahorrar',i:'Fijos frente a variables, tres sitios concretos donde recortar con euros al año, suscripciones a revisar y comparación con el mes anterior. Los datos, de Fintonic o a mano.'},
+ {id:'4',f:'dinero-feria-4-compras.html',m:'haiku',t:'Lo que quiero comprar',i:'Cada compra con precio, fecha y cuota al mes; lo no necesario espera 30 días. Al comprarlo, sus cuotas pasan a la siguiente de la lista.'},
+ {id:'5',f:'dinero-feria-5-invertir.html',m:'sonnet',t:'Qué puedo invertir',i:'Primero el colchón (3, 4 o 6 meses); solo lo que sobra se invierte. Opciones generales explicadas en llano y un simulador de «X € al mes durante N años». Orientativo.'}
+];
+const K='feria-dinero-notas';
+let notas={};try{notas=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
+function guarda(){try{localStorage.setItem(K,JSON.stringify(notas))}catch(e){}}
+let cur=0;
+const tira=document.getElementById('tira'),ifr=document.getElementById('ifr'),est=document.getElementById('estrellas'),com=document.getElementById('coment');
+function pintaTira(){
+  tira.innerHTML='';
+  P.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',i===cur);
+    const n=(notas[p.id]||{}).n;
+    b.innerHTML='<span>Puesto '+p.id+'</span><small>'+p.t+'</small>'+(n?'<span class="nota">'+'★'.repeat(n)+'</span>':'');
+    b.onclick=()=>abre(i);tira.appendChild(b);});
+}
+function pintaEstrellas(){
+  est.innerHTML='';const n=(notas[P[cur].id]||{}).n||0;
+  for(let k=1;k<=5;k++){const b=document.createElement('button');b.type='button';b.textContent=k;b.setAttribute('aria-pressed',k===n);b.setAttribute('aria-label',k+' de 5');
+    b.onclick=()=>{notas[P[cur].id]=Object.assign(notas[P[cur].id]||{},{n:k});guarda();pintaEstrellas();pintaTira();};est.appendChild(b);}
+}
+function abre(i){
+  cur=i;const p=P[i];
+  document.getElementById('fModelo').textContent='Puesto '+p.id+' · hecho con '+p.m;
+  document.getElementById('fTit').textContent=p.t;
+  document.getElementById('fIdea').textContent=p.i;
+  ifr.src=p.f;com.value=(notas[p.id]||{}).c||'';
+  pintaTira();pintaEstrellas();
+  try{location.hash='p'+p.id}catch(e){}
+}
+ifr.addEventListener('load',()=>{try{ifr.style.height=ifr.contentDocument.documentElement.scrollHeight+'px'}catch(e){}});
+com.addEventListener('input',()=>{notas[P[cur].id]=Object.assign(notas[P[cur].id]||{},{c:com.value});guarda();});
+document.getElementById('sig').onclick=()=>{abre((cur+1)%P.length);window.scrollTo({top:0,behavior:'smooth'});};
+document.getElementById('copiar').onclick=()=>{
+  const txt='Notas de la feria de Dinero\n'+P.map(p=>{const x=notas[p.id]||{};return 'Puesto '+p.id+' ('+p.t+'): '+(x.n?x.n+'/5':'sin nota')+(x.c?' · '+x.c:'');}).join('\n');
+  const r=document.getElementById('resumen');r.textContent=txt;r.hidden=false;
+  const ok=()=>{document.getElementById('copiar').textContent='Copiadas ✓';};
+  try{navigator.clipboard.writeText(txt).then(ok,()=>{const s=getSelection(),rg=document.createRange();rg.selectNodeContents(r);s.removeAllRanges();s.addRange(rg);});}catch(e){}
+};
+const h=(location.hash||'').replace('#p','');const ini=P.findIndex(p=>p.id===h);
+abre(ini>=0?ini:0);
+</script>
