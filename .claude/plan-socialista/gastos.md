@@ -33,6 +33,7 @@ traspaso explica por qué.
 | Fecha | Tarea | Tipo | Modelos | Ayudantes | Pasos | Equivalente | Lo que más gastó | Qué encareció · cómo ahorrar |
 |---|---|---|---|---|---|---|---|---|
 | 2026-10-27 | v3-plan-global | herramientas | opus-5-5 | 0 | 26 | **439 k** | sesión principal (100 %) | leer el otro repositorio y las skills enteras; sin ayudantes |
+| 2026-10-28 | v3-plan-global-2 | herramientas | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | spec-kit, plan de Comer, puesta al día y unir ramas; sin ayudantes. Ahorro: no releer skills enteras |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
