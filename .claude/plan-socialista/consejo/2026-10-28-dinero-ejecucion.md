@@ -59,3 +59,9 @@ Nada para construir. Puede reabrir cualquier punto de esta acta.
 
 ## Gasto de la reunión
 ~0,35 M hasta aquí (parte, revisión de salud, traer `main` y esta acta).
+
+## Seguimiento
+- **D2 aprobada (Consejo por delegación):** maquetas `dinero-laurisilva-gastos.html` (4/5) y `-compras.html` (5/5), medidas a 412×915.
+- **Comparecencia (Hacienda):** D1 costó 0,93 M (presupuesto 0,4) y D3 1,8 M (1,2): lo que más pesa es la caché leída de
+  `app.js` en contextos largos. Previsión de la tanda ~5,7 M frente a 4,9 M aprobados (+16 %). **Acuerdo:** se sigue; D4 y
+  D5 con encargos que dan las líneas exactas y piden leer solo esos trozos; la suite completa solo al final de cada D.
