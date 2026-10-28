@@ -10080,8 +10080,8 @@ function frSeg(x){
   if(x.impl)return sup('supuse el aceite ('+x.impl+'), '+x.g+' g');
   if((+x.conf||0)<0.9)return sup(x.casa?'lo de tu nevera: '+x.casa:'lo más parecido');
   if(x.pl||x.dish||x.fuera)return {s:'✓',por:''};
-  if(x.pan)return sup('supuse el pan, '+x.g+' g');
-  if(!x.cant)return sup('supuse '+x.g+' g');
+  if(x.pan&&!x.gCorr)return sup('supuse el pan, '+x.g+' g');
+  if(!x.cant&&!x.gCorr)return sup('supuse '+x.g+' g');
   return {s:'✓',por:''};}
 function frLista(l){l=l.filter(Boolean);if(l.length>4)l=l.slice(0,3).concat(['más']);return l.length>1?l.slice(0,-1).join(', ')+' y '+l[l.length-1]:(l[0]||'');}
 function fraseNombre(fr){
@@ -10159,6 +10159,18 @@ function fraseADish(p){
   const d={id:uid('d'),name:p.n,icon:p.e,portions:1,kcal:m.kcal,prot:m.prot,carb:m.carb,fat:m.fat,frase:true,
     ingredients:it.map(function(y){const a=alimById(y[0]);return y[1]+' g '+(a?a.n.toLowerCase():'');}),steps:[]};
   store.dishes.push(d);save();return d;}
+function frDeReciente(e){
+  /* lo de otro día: con sus mismas piezas y gramos (o, si llevaba un plato tuyo o algo de fuera, se vuelve a leer) */
+  const tx=e.frase.txt||e.nombre;
+  return (e.frase.ot&&e.frase.ot.length)||!e.frase.it.length?fraseLeer(tx):{txt:tx,tipo:e.frase.tipo,tam:e.frase.tam||'m',items:e.frase.it.map(function(y){const a=alimById(y[0]);return {id:y[0],g:y[1],papel:'principal',nom:a?frCorto(a.n,e.frase.tipo):'',fuente:'tabla'};}),dudas:[]};}
+function repetirAyer(pos){
+  /* «↺ Repetir lo de ayer»: lo que apuntaste ayer en esta misma comida, copiado a hoy (se deshace como lo demás) */
+  const l=[].concat(logDe(iso(addDays(new Date(),-1)))).filter(function(e){return e.p===pos;});
+  if(!l.length)return 'ayer no apuntaste '+(POS_TXT[pos]||pos).toLowerCase();
+  const key=foodCtx().sel,dest=foodLog(key),ids=[];
+  l.forEach(function(e){const c=JSON.parse(JSON.stringify(e));c.id=uid('fe');c.ts=Date.now();delete c.tap;dest.push(c);ids.push(c.id);});
+  _ultimoCambio={tipo:'add',k:key,ids:ids,ts:Date.now()};save();
+  return 'repetido lo de ayer: '+l.map(function(e){return e.nombre;}).join(', ');}
 function fraseRecientes(n){
   /* las últimas frases distintas que escribiste (14 días), y antes las que sueles poner a esta hora */
   const out=[],vis={},h=new Date().getHours();
@@ -10212,26 +10224,36 @@ function lecturaCardHTML(fr,ctx){
   if(fr.receta)h+='<div class="fbln"><span class="em">'+esc(fr.e)+'</span><b>'+esc(fr.nomL)+'</b></div>';
   else{if(pills.length)h+='<div class="lecfr">'+pills.map(function(p){return p.h;}).join(' ')+'</div>';
     if(it.length)h+='<b class="lecn">'+esc(fraseNombre(fr))+'</b>';}
-  /* lo que va a apuntar */
-  if(it.length)h+='<div class="lecl">'+it.map(function(x,i){
-    const a=x.id?alimById(x.id):null,q=frItemMac(x)||{kcal:0};
+  /* lo que va a apuntar: una fila por cosa, con su marca (✓ lo dijiste · ≈ lo supuse · ? lo pregunto), su «por»,
+     su cantidad con la rueda y sus kcal; la pregunta de una cosa va con sus chips EN SU fila */
+  const fila=[],ro=ui.lecRueda&&ui.lecRueda.c===ctx&&ui.lecRueda.t===fr.txt?ui.lecRueda.i:-1;
+  it.forEach(function(x,i){
+    const a=x.id?alimById(x.id):null,q=frItemMac(x)||{kcal:0},sg=frSeg(x);
     /* «Macarrones · pasta cocida»: lo que dijiste, y lo que cuenta si no es lo mismo */
     const nb=a&&x.nom&&!x.impl&&alimTxt(a.n).indexOf(alimTxt(String(x.nom).replace(FR_COCCION,'')))<0?x.nom.charAt(0).toUpperCase()+x.nom.slice(1)+' · '+a.n.toLowerCase():'';
     const nm=x.dish||x.fuera||x.ean?frNomItem(x,fr.tipo):(nb||(a?a.n+(x.coc?' '+x.coc:''):''));
-    const sub=x.impl?'lo pongo yo: '+(x.impl==='aliño'?'una ensalada lleva aliño':'lo que va '+x.impl+' lleva aceite'):
+    const sub0=x.impl?'lo pongo yo: '+(x.impl==='aliño'?'una ensalada lleva aliño':'lo que va '+x.impl+' lleva aceite'):
       (x.pl?'de «'+x.pl.toLowerCase()+'»':(x.dish?'tu plato':(x.fuera?'fuera'+(x.ojo?', a ojo':''):(x.casa?'de tu nevera':''))));
-    const cant=x.dish||x.fuera?'<label class="lecg"><input type="number" inputmode="decimal" min="0.25" max="10" step="0.25" value="'+(+x.rac||1)+'" data-a="fr-gset" data-i="'+i+'"'+c+' aria-label="raciones de '+esc(nm)+'"> rac</label>':
-      '<label class="lecg"><input type="number" inputmode="numeric" min="1" max="2000" value="'+x.g+'" data-a="fr-gset" data-i="'+i+'"'+c+' aria-label="'+(uniDe(alimById(x.id)||nm)==='ml'?'mililitros':'gramos')+' de '+esc(nm)+'"> '+uniDe(alimById(x.id)||nm)+'</label>';
-    return '<div class="lecit'+(x.impl?' impl':'')+'"><div class="n"><b>'+esc(nm)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+
+    const sub=!x.impl&&sg.s==='≈'&&sg.por?sg.por:sub0;
+    const rac=x.dish||x.fuera,cu=rac?'rac':uniDe(alimById(x.id)||nm);
+    const cant=rac?'<label class="lecg"><input type="number" inputmode="decimal" min="0.25" max="10" step="0.25" value="'+(+x.rac||1)+'" data-a="fr-gset" data-i="'+i+'"'+c+' aria-label="raciones de '+esc(nm)+'"> rac</label>':
+      '<label class="lecg"><input type="number" inputmode="numeric" min="1" max="2000" value="'+x.g+'" data-a="fr-gset" data-i="'+i+'"'+c+' aria-label="'+(cu==='ml'?'mililitros':'gramos')+' de '+esc(nm)+'"> '+cu+'</label>';
+    const cf=lecRuedaCfg(x);
+    fila.push({o:x.ord==null?99:x.ord,h:'<div class="lecit'+(x.impl?' impl':'')+(ro===i?' conrueda':'')+'"><span class="sg '+(sg.s==='✓'?'ok':'su')+'" title="'+(sg.s==='✓'?'entendido':'supuesto')+'" aria-label="'+(sg.s==='✓'?'entendido':'supuesto')+'">'+sg.s+'</span>'+
+      '<div class="n"><b>'+esc(nm)+'</b>'+(sub?'<span>'+esc(sub)+'</span>':'')+
       ((x.alt||[]).length&&!x.pl?'<button class="lecalt" data-a="fr-alt" data-i="'+i+'" data-j="0"'+c+'>¿era '+esc(String(x.alt[0].nom).toLowerCase())+'? cambiar</button>':'')+'</div>'+
-      cant+'<span class="k">'+Math.round(q.kcal)+'</span><button class="x" data-a="fr-quita" data-i="'+i+'"'+c+' aria-label="quitar '+esc(nm)+'">×</button></div>';}).join('')+'</div>';
-  /* las preguntas: con botones, sin inventarse nada */
+      '<span class="lecq">'+cant+'<button class="lecrb'+(ro===i?' on':'')+'" data-a="fr-rueda" data-i="'+i+'"'+c+' aria-expanded="'+(ro===i)+'" aria-label="rueda de cantidad de '+esc(nm)+'">⇅</button></span>'+
+      '<span class="k">'+Math.round(q.kcal)+'</span><button class="x" data-a="fr-quita" data-i="'+i+'"'+c+' aria-label="quitar '+esc(nm)+'">×</button>'+
+      (ro===i?cantRuedaHTML(x,cf.v,{c:ctx,i:i,p:cf.p,min:cf.min,nom:nm}):'')+'</div>'});});
   du.forEach(function(d,i){
     const q=d.cuanto?'¿Cuánta '+d.txt+'?':(d.txt==='menú'?'¿Qué menú?':(d.fam?'¿Qué '+d.txt.replace(/(es|s)$/,'')+'?':'No conozco «'+d.txt+'»'));
-    h+='<div class="lecd"><b>'+esc(q)+'</b><div class="lecop">'+d.opc.slice(0,4).map(function(o,j){
-      return '<button class="chipx" data-a="fr-elige" data-d="'+i+'" data-o="'+j+'"'+c+'>'+esc(o.nom)+'</button>';}).join('')+
-      '<button class="chipx" data-a="fr-busca" data-q="'+esc(d.txt)+'"'+c+'>buscar</button>'+
-      '<button class="chipx x" data-a="fr-quitad" data-d="'+i+'"'+c+' aria-label="quitar «'+esc(d.txt)+'»">quitar</button></div></div>';});
+    fila.push({o:d.ord==null?99:d.ord,h:'<div class="lecit lecdu"><span class="sg no" title="no lo sé" aria-label="falta saberlo">?</span>'+
+      '<div class="n"><b>'+esc(d.txt.charAt(0).toUpperCase()+d.txt.slice(1))+'</b><span>falta saberlo</span></div><span></span><span class="k">—</span><span></span>'+
+      '<div class="lecd dd"><b>'+esc(q)+'</b><div class="lecop">'+d.opc.slice(0,4).map(function(o,j){
+        return '<button class="chipx" data-a="fr-elige" data-d="'+i+'" data-o="'+j+'"'+c+'>'+esc(o.nom)+'</button>';}).join('')+
+        '<button class="chipx" data-a="fr-busca" data-q="'+esc(d.txt)+'"'+c+'>buscar</button>'+
+        '<button class="chipx x" data-a="fr-quitad" data-d="'+i+'"'+c+' aria-label="quitar «'+esc(d.txt)+'»">quitar</button></div></div></div>'});});
+  if(fila.length)h+='<div class="lecl">'+fila.map(function(f){return f.h;}).join('')+'</div>';
   /* el tamaño: poco, normal, mucho (lo que escribiste con cantidad no se toca) */
   if(it.some(function(x){return !x.cant&&!x.dish&&!x.fuera&&!x.impl&&!x.corr;})&&fr.tipo!=='tostada')
     h+='<div class="lectam">'+[['s','Poco'],['m','Normal'],['l','Mucho']].map(function(z){const on=(fr.tam==='xl'?'l':fr.tam)===z[0];
@@ -10251,7 +10273,17 @@ function fraseLecturaHTML(fr){return lecturaCardHTML(fr,'fr');}
 function lecFr(c){return c==='fb'?fbLectura(ui.foodBusca||''):ui.frase;}
 /* fuera de la pila del evento: cambiar los gramos y tocar fuera dispara «change» al perder el foco, y
    repintar ahí mismo quitaba el campo que se estaba quitando (NotFoundError en innerHTML) */
-function lecRepinta(c){setTimeout(function(){if(c==='fb')buscarRepinta();else frPintaLectura();},0);}
+function lecRepinta(c){setTimeout(function(){if(c==='fb')buscarRepinta();else frPintaLectura();lecRuedaCentra();},0);}
+function lecRuedaCfg(x){
+  /* la rueda de una fila: dónde está (g, ml o raciones), de cuánto en cuánto y el mínimo */
+  if(x.dish||x.fuera)return {v:+x.rac||1,p:0.25,min:0.25};
+  const g=Math.round(+x.g||0);return {v:g,p:g<60?5:(g<300?10:25),min:5};}
+function frRuedaSet(c,i,v){
+  /* un puesto de la rueda de una fila: es una cantidad dicha por ti (✓), no una suposición */
+  const fr=lecFr(c),x=fr&&fr.items[i];if(!x||!(v>0))return;
+  if(Math.abs(v-lecRuedaCfg(x).v)<0.001)return;
+  if(x.dish||x.fuera)x.rac=v;else{x.g=Math.max(1,Math.min(2000,Math.round(v)));x.gCorr=true;}
+  x.corr=true;x.cant=true;lecRepinta(c);}
 /* un botón de la tarjeta: toca la lectura de su sitio (frase o buscador) y la repinta */
 function lecOp(el,f){const c=el.dataset.c,fr=lecFr(c);if(fr)f(fr);lecRepinta(c);}
 function frEligeDuda(fr,i,j){
@@ -11796,8 +11828,12 @@ function buscarResultadosHTML(){
       return k.length?('<div class="grp">'+esc(gg[1])+'</div>'+k.slice(0,30).map(function(x){return hitHTML(x,sel);}).join('')):'';}).join(''):
       '<div class="empty">Aquí salen tus platos, los alimentos que crees y los productos que escanees.</div>')+'</div>';
   }else if(!hay){
-    const fr=frecuentes(6);
-    cuerpo='<div class="card"><div class="sec">RECIENTES</div>'+
+    const fr=frecuentes(6),pos0=ui.foodPos||momentoAhora(),sie=fraseRecientes(3);
+    /* H4 · campo vacío: lo de siempre a esta hora (un toque lo apunta), lo de ayer y «Mis platos» */
+    cuerpo=(sie.length?'<div class="card siempre"><div class="cap">LO DE SIEMPRE A ESTA HORA · '+esc((POS_TXT[pos0]||pos0).toUpperCase())+'</div>'+sie.map(function(e,i){
+      return '<div class="lesi"><button class="lesb" data-a="fb-siempre" data-i="'+i+'" aria-label="apuntar '+esc(e.nombre)+'">＋</button><div><b>'+esc(e.nombre)+'</b></div><span class="k">'+fmtMil(e.kcal||0)+' kcal</span></div>';}).join('')+'</div>':'')+
+      '<div class="ayu"><button class="btn" data-a="fb-ayer">↺ Repetir lo de ayer</button><button class="btn" data-a="food-tab" data-t="creados">📖 Mis platos</button></div>'+
+      '<div class="card"><div class="sec">RECIENTES</div>'+
       fr.map(function(x){return hitHTML(x,sel);}).join('')+
       '<p class="mini" style="margin:11px 0 0">Escribe arriba para buscar entre <b style="color:var(--ink)">'+
         foodBuscables().length+'</b> alimentos, platos y productos.</p></div>';
@@ -11857,10 +11893,10 @@ function renderFoodBuscar(){
   const c=foodCtx(),q=ui.foodBusca||'',tab=ui.foodTab||'';
   const cuerpo='<div id="fbRes">'+buscarResultadosHTML()+'</div>';
   $('#main').innerHTML='<div class="grid">'+
-    foodSubcab('Añadir','<span class="mini">a <b style="color:var(--ink)">'+esc((POS_ICO[ui.foodPos||momentoAhora()]||'')+' '+(POS_TXT[ui.foodPos||momentoAhora()]||''))+'</b></span>'+
+    foodSubcab('¿Qué has comido?','<span class="mini">a <b style="color:var(--ink)">'+esc((POS_ICO[ui.foodPos||momentoAhora()]||'')+' '+(POS_TXT[ui.foodPos||momentoAhora()]||''))+'</b></span>'+
       '<span class="tag b2">'+c.ft.kcal+(objetivoMacros().kcal?' / '+objetivoMacros().kcal:'')+' kcal</span>')+
     '<div class="buscador">'+gymIco('lupa','gico sm')+
-      '<input id="fbQ" value="'+esc(q)+'" data-a="food-busca" placeholder="pollo, yogur, lentejas, Hacendado…" '+
+      '<input id="fbQ" value="'+esc(q)+'" data-a="food-busca" placeholder="Escribe lo que sea… o dicta" '+
       'autocomplete="off" autocapitalize="none">'+
       (q?('<button class="btn s" data-a="food-busca-clear" style="margin-right:6px" aria-label="borrar">×</button>'):'')+
     '</div>'+
@@ -11980,11 +12016,16 @@ function cantNumTxt(x,cant){
   const R=cantRacion(x),u=unidadDe(x);
   if(R&&ui.foodModo!=='100'){const n=Math.round(cant/R*100)/100;return [fmt(n),(n===1?'ración':'raciones')+' · '+Math.round(cant)+' '+u];}
   return [String(Math.round(cant*100)/100),x.tipo==='fuera'?(x.ojo?'raciones':'unidades'):(x.base===1?'raciones':u)];}
-function cantRuedaHTML(x,cant){
+function cantRuedaHTML(x,cant,fila){
   /* la rueda: el número que tienes en medio y 20 pasos a cada lado; se desliza y se queda donde
-     paras (o se toca uno). Los valores van en la misma unidad que ui.foodCant */
-  const p=cantPasoDe(x,cant),min=x.base===1?0.25:5,vs=[];
+     paras (o se toca uno). Los valores van en la misma unidad que ui.foodCant. Con «fila»
+     ({c,i,p,min,nom}) es la de una fila de lo leído en una frase: sin id, sin pie, y cada puesto
+     llama a fr-rueda-set (la hoja de cantidad no cambia) */
+  const p=fila?fila.p:cantPasoDe(x,cant),min=fila?fila.min:(x.base===1?0.25:5),vs=[];
   for(let i=-20;i<=20;i++){const v=Math.round((cant+i*p)*100)/100;if(v>=min-1e-9)vs.push(v);}
+  if(fila)return '<div class="rueda ruedafila" data-fc="'+fila.c+'" data-fi="'+fila.i+'" role="listbox" aria-label="cantidad de '+esc(fila.nom)+'">'+vs.map(function(v){
+    const on=Math.abs(v-cant)<0.001;
+    return '<button role="option" aria-selected="'+on+'" class="'+(on?'c':'')+'" data-a="fr-rueda-set" data-c="'+fila.c+'" data-i="'+fila.i+'" data-n="'+v+'">'+fmt(v)+'</button>';}).join('')+'</div>';
   return '<div class="rueda" id="fcRueda" role="listbox" aria-label="cantidad">'+vs.map(function(v){
     const on=Math.abs(v-cant)<0.001;
     return '<button role="option" aria-selected="'+on+'" class="'+(on?'c':'')+'" data-a="food-cant-set" data-n="'+v+'">'+esc(cantNumTxt(x,v)[0])+'</button>';}).join('')+
@@ -12036,13 +12077,14 @@ document.addEventListener('pointerdown',function(e){
 document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('#main .cpaso'))e.preventDefault();});
 /* la rueda: al parar de deslizar, la cantidad es la que queda en medio */
 document.addEventListener('scroll',function(e){
-  const w=e.target;if(!w||w.id!=='fcRueda')return;
+  const w=e.target,fila=!!(w&&w.classList&&w.classList.contains('ruedafila'));if(!w||(w.id!=='fcRueda'&&!fila))return;
   clearTimeout(_cantRuedaT);
   _cantRuedaT=setTimeout(function(){
     if(!document.body.contains(w))return;
     const mid=w.scrollTop+w.clientHeight/2;let best=null,bd=1e9;
     w.querySelectorAll('button').forEach(function(b){const c=b.offsetTop+b.offsetHeight/2,dd=Math.abs(c-mid);if(dd<bd){bd=dd;best=b;}});
     if(!best)return;const v=+best.dataset.n;
+    if(fila){frRuedaSet(w.dataset.fc,+w.dataset.fi,v);return;}
     if(Math.abs(v-(+ui.foodCant||0))>0.001){ui.foodCant=v;render();}},140);},true);
 function renderFoodCantidad(){
   const x=buscableDe(ui.foodSel||'');
@@ -12118,6 +12160,10 @@ function renderFoodCantidad(){
 function cantRuedaCentra(){
   const w=document.getElementById('fcRueda');if(!w)return;
   const c=w.querySelector('.c');if(c)w.scrollTop=c.offsetTop-(w.clientHeight-c.offsetHeight)/2;}
+function lecRuedaCentra(){
+  /* las ruedas de fila, tras repintar la lectura: cada una con su número en medio */
+  document.querySelectorAll('.ruedafila').forEach(function(w){
+    const c=w.querySelector('.c');if(c)w.scrollTop=c.offsetTop-(w.clientHeight-c.offsetHeight)/2;});}
 function fueraFixHTML(x){
   /* los datos de las cadenas son aproximados: si tienes el de verdad, se corrige aquí y se queda */
   if(!x||x.tipo!=='fuera'||x.menu)return '';
@@ -24550,10 +24596,17 @@ function act(a,el){
     case 'cje-taper':cocinaPref().taper=+el.dataset.v||3;save();render();break;
     case 'cje-des':{const P=cocinaPref(),id=el.dataset.id,i=P.desayunos.indexOf(id);if(i>=0)P.desayunos.splice(i,1);else if(P.desayunos.length<3)P.desayunos.push(id);else flash('máximo 3');save();render();break;}
     case 'fr-rec':{const e=fraseRecientes()[+el.dataset.i];if(!e||!e.frase)break;
-      /* lo de otro día: con sus mismas piezas y gramos (o, si llevaba un plato tuyo o algo de fuera, se vuelve a leer) */
-      const tx=e.frase.txt||e.nombre;ui.frTxt=tx;
-      ui.frase=(e.frase.ot&&e.frase.ot.length)||!e.frase.it.length?fraseLeer(tx):{txt:tx,tipo:e.frase.tipo,tam:e.frase.tam||'m',items:e.frase.it.map(function(y){const a=alimById(y[0]);return {id:y[0],g:y[1],papel:'principal',nom:a?frCorto(a.n,e.frase.tipo):'',fuente:'tabla'};}),dudas:[]};
+      ui.frTxt=e.frase.txt||e.nombre;ui.frase=frDeReciente(e);
       render();break;}
+    /* campo vacío de «¿Qué has comido?»: lo de siempre a esta hora, a un toque, y lo de ayer */
+    case 'fb-siempre':{const e=fraseRecientes(3)[+el.dataset.i];if(!e||!e.frase)break;
+      const fr=frDeReciente(e);if(!fr||(fr.dudas||[]).length){ui.foodBusca=e.frase.txt||e.nombre;render();break;}
+      flash(fraseApuntar(fr,ui.foodPos||momentoAhora()));render();break;}
+    case 'fb-ayer':flash(repetirAyer(ui.foodPos||momentoAhora()));render();break;
+    /* la rueda de una fila de lo leído: se abre / se cierra, y al elegir un puesto la fila pasa a ✓ */
+    case 'fr-rueda':{const c=el.dataset.c,i=+el.dataset.i,fr=lecFr(c),o=ui.lecRueda;
+      ui.lecRueda=o&&o.c===c&&o.i===i?null:{c:c,i:i,t:fr?fr.txt:''};lecRepinta(c);break;}
+    case 'fr-rueda-set':frRuedaSet(el.dataset.c,+el.dataset.i,+el.dataset.n);break;
     case 'prot-extra':{const w=+el.dataset.w,gu=!!guardiaCelda(sbKey(w),'cena'),r=protExtraPoner(w);save();
       flash(r?((gu?'para llevar a la guardia: ':'puesto: ')+r.d.name.replace(/^Extra de proteína: /,'')+' (+'+Math.round(r.prot)+' g) '+(gu?'con el desayuno':'en el '+r.cls)+' del '+SB_DIAS_L[w]):
         (gu?'el desayuno de la guardia ya lleva tres cosas: llévate el extra aparte':'no queda nada en la nevera que sume proteína'));render();break;}
@@ -24613,7 +24666,7 @@ function act(a,el){
     case 'fr-elige':lecOp(el,function(fr){frEligeDuda(fr,+el.dataset.d,+el.dataset.o);});break;
     case 'fr-quitad':lecOp(el,function(fr){(fr.dudas||[]).splice(+el.dataset.d,1);});break;
     case 'fr-tam':lecOp(el,function(fr){fraseReescala(fr,el.dataset.v||'m');});break;
-    case 'fr-quita':lecOp(el,function(fr){fr.items.splice(+el.dataset.i,1);});break;
+    case 'fr-quita':ui.lecRueda=null;lecOp(el,function(fr){fr.items.splice(+el.dataset.i,1);});break;
     case 'fr-alt':lecOp(el,function(fr){frCambiaItem(fr,+el.dataset.i,+el.dataset.j);});break;
     case 'nut-sem':{const l=parseDate(ui.nutLun||iso(mondayOf(new Date()))),n=addDays(l,7*(+el.dataset.d||0)),h=mondayOf(new Date());
       ui.nutLun=iso(n>h?h:n);render();break;}

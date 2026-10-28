@@ -13261,6 +13261,50 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.f === esperado &&
       /ración · 250 ml/.test(r.g.lab) && r.g.cant === 250, JSON.stringify(r));
   }
+  // 330e) ESCRIBIR LO COMIDO CON MARCA EN CADA FILA Y LA RUEDA DE CANTIDAD POR FILA, EN CADENA: (a) en «¿Qué has
+  // comido?» se escribe «menú del día del hospital: lentejas, filete con patatas y flan»: cada cosa sale en su
+  // fila con ✓ / ≈ (con su «por»: «supuse 200 g») y el filete, que no sabe de qué, sale con «?» y sus chips EN
+  // LA MISMA fila; (b) se abre la rueda de las lentejas y se desliza dos puestos: sus kcal y el total bajan, la
+  // marca pasa a ✓ y las demás filas no se tocan; (c) se contesta el filete y se apunta: lo apuntado lleva
+  // los gramos de la rueda. Sin la rueda por fila, la cantidad solo se cambiaba tecleando y la marca no pasaba a ✓.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia330e', JSON.stringify(P.store)); P.ui.foodTab = ''; P.ui.foodBusca = ''; P.ui.foodPos = ''; });
+    await gotoFood('add');
+    r.cab = await page.evaluate(() => (document.querySelector('#main .subtit') || {}).textContent || '');
+    await page.fill('#fbQ', 'menú del día del hospital: lentejas, filete con patatas y flan'); await page.waitForTimeout(450);
+    const filas = () => page.evaluate(() => Array.prototype.map.call(document.querySelectorAll('#fbRes .lecit'), (f) => ({
+      s: (f.querySelector('.sg') || {}).textContent || '', n: (f.querySelector('.n b') || {}).textContent || '',
+      por: (f.querySelector('.n span') || {}).textContent || '', chips: f.querySelectorAll('.lecd .chipx').length,
+      g: (f.querySelector('input[data-a="fr-gset"]') || {}).value || '', k: (f.querySelector('.k') || {}).textContent || '',
+      rueda: !!f.querySelector('.ruedafila') })));
+    const total = () => page.evaluate(() => ((document.querySelector('#fbRes .lecrg b') || {}).textContent || '').trim());
+    r.a = await filas(); r.t0 = await total();
+    // la fila de la rueda: la primera con «supuse N g» (las lentejas, si la prueba anterior no dejó un plato parecido)
+    const fi = r.a.findIndex((f) => f.s === '≈' && /^supuse \d+ g$/.test(f.por)); r.fi = fi;
+    await page.click(`#fbRes [data-a="fr-rueda"][data-i="${fi}"]`); await page.waitForTimeout(250);
+    r.a2 = await filas();
+    await page.evaluate(() => { const w = document.querySelector('#fbRes .ruedafila'); w.scrollTop -= 80; });
+    await page.waitForTimeout(600);
+    r.b = await filas(); r.t1 = await total();
+    r.mov = await page.evaluate(() => window.PG.fbLectura(window.PG.ui.foodBusca).items.map((x) => x.g));
+    r.nom = r.a[fi].n;
+    await page.click('#fbRes .lecit .lecd .chipx'); await page.waitForTimeout(250);
+    const hoyK = new Date().toISOString().slice(0, 10);
+    await page.click('#fbRes [data-a="fb-lec-ok"]'); await page.waitForTimeout(300);
+    r.c = await page.evaluate((k) => { const l = window.PG.foodLog(k), e = l[l.length - 1];
+      return { it: ((e.frase || {}).it || []).map((y) => y.join(':')), k: e.kcal }; }, hoyK);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia330e')); localStorage.removeItem('__copia330e'); P.ui.foodBusca = ''; P.ui.foodSel = ''; P.save(); });
+    const g0 = +r.a[fi].g;
+    check('«¿Qué has comido?» lee el menú del hospital con ✓/≈/? por fila (el ? con sus chips en la fila), la rueda de una fila ≈ baja dos puestos, pasa a ✓, cambia sus kcal y el total, y se apunta con esos gramos',
+      /Qué has comido/.test(r.cab) && r.a.length === 4 && fi >= 0 &&
+      r.a.some((f) => /filete/i.test(f.n) && f.s === '?' && f.chips >= 3) &&
+      r.a.filter((f) => f.s === '≈').length === 3 && r.a.every((f) => f.s !== '≈' || f.por.length > 0) &&
+      !r.a.some((f) => f.rueda) && r.a2[fi].rueda && r.a2.filter((f) => f.rueda).length === 1 &&
+      r.mov[fi] < g0 && r.b[fi].g === String(r.mov[fi]) && r.b[fi].s === '✓' && +r.b[fi].k < +r.a[fi].k &&
+      r.b.filter((f) => f.s === '≈').length === 2 && r.t1 !== r.t0 &&
+      r.c.it.some((y) => y.endsWith(':' + r.mov[fi])), JSON.stringify(r));
+  }
   // 331) EL SELLO DE OPEN FOOD FACTS (NUTRI-SCORE · NOVA · ADITIVOS), EN CADENA: (a) un producto guardado antes
   // (sin sello) se busca y su fila no lleva letra; (b) al abrir su ficha dice «trayendo…» y el sello se pide solo a
   // OFF, se guarda y aparece: E, NOVA 4 y «3» aditivos; (c) tocar «3» despliega los códigos con su nombre (y el que
