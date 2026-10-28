@@ -3308,7 +3308,35 @@ const ALIMENTOS_MAS=[
 {n:'Pastilla de caldo',e:'🧂',g:'salsa',kcal:250,pr:10,ch:20,az:2,fi:0,gr:15,sa:50,r:[['1 pastilla', 10]]},
 {n:'Tomate natural triturado',e:'🍅',g:'otro',kcal:25,pr:1.2,ch:4,az:3.5,fi:1.5,gr:0.2,sa:0.3,r:[['1 bote', 400]]},
 {n:'Gelatina',e:'🍮',g:'dulce',kcal:60,pr:1.5,ch:14,az:14,fi:0,gr:0,sa:0.1,r:[['1 tarrina', 100]]},
-{n:'Sirope de agave',e:'🍯',g:'dulce',kcal:310,pr:0,ch:76,az:68,fi:0,gr:0,sa:0,r:[['1 cucharada', 20]]}];
+{n:'Sirope de agave',e:'🍯',g:'dulce',kcal:310,pr:0,ch:76,az:68,fi:0,gr:0,sa:0,r:[['1 cucharada', 20]]},
+/* lo que se pide en el bar, la cafetería o la máquina y no estaba (el banco de frases de la S2b) */
+{n:'Ensaimada',e:'🥐',g:'dulce',kcal:410,pr:7,ch:50,az:18,fi:1.5,gr:20,sa:0.5,r:[['1 ensaimada',80]]},
+{n:'Bollo relleno de crema',e:'🥐',g:'dulce',kcal:380,pr:6,ch:48,az:22,fi:1,gr:18,sa:0.6,r:[['1 bollo',90]]},
+{n:'Galletas de avena',e:'🍪',g:'dulce',kcal:450,pr:7,ch:65,az:22,fi:5,gr:18,sa:0.8,r:[['1 galleta',12]]},
+{n:'Chocolate a la taza',e:'☕',g:'bebida',kcal:120,pr:3.5,ch:17,az:12,fi:1,gr:4,sa:0.1,r:[['1 taza',200]]},
+{n:'Café mocha',e:'☕',g:'bebida',kcal:70,pr:2.5,ch:9,az:8,fi:0.3,gr:3,sa:0.1,r:[['1 vaso',350]]},
+{n:'Zumo de piña',e:'🧃',g:'bebida',kcal:50,pr:0.3,ch:12,az:10,fi:0.2,gr:0.1,sa:0,r:[['1 vaso',200]]},
+{n:'Zumo de melocotón',e:'🧃',g:'bebida',kcal:55,pr:0.3,ch:13,az:12,fi:0.3,gr:0,sa:0,r:[['1 vaso',200]]},
+{n:'Refresco de limón',e:'🥤',g:'bebida',kcal:40,pr:0,ch:10,az:10,fi:0,gr:0,sa:0,r:[['1 lata',330]]},
+{n:'Gilda',e:'🫒',g:'preparado',kcal:180,pr:6,ch:3,az:1,fi:2,gr:16,sa:5,r:[['1 gilda',20]]},
+{n:'Chopitos fritos',e:'🦑',g:'preparado',kcal:250,pr:15,ch:15,az:0,fi:0.5,gr:14,sa:1,r:[['1 ración',150]]},
+{n:'Patatas bravas',e:'🍟',g:'preparado',kcal:180,pr:2,ch:20,az:1.5,fi:2,gr:10,sa:1,r:[['1 ración',250]]},
+{n:'Aros de cebolla',e:'🧅',g:'preparado',kcal:410,pr:5,ch:40,az:5,fi:2,gr:25,sa:1,r:[['1 ración',100]]},
+{n:'Nachos',e:'🌮',g:'preparado',kcal:500,pr:7,ch:60,az:1,fi:4,gr:25,sa:1,r:[['1 ración',100]]},
+{n:'Estofado de ternera',e:'🍲',g:'preparado',kcal:140,pr:14,ch:6,az:2,fi:1.5,gr:7,sa:0.8,r:[['1 plato',300]]},
+{n:'Tortilla de calabacín',e:'🍳',g:'preparado',kcal:130,pr:7,ch:4,az:2,fi:1,gr:10,sa:0.6,r:[['1 ración',150]]},
+{n:'Sopa de miso',e:'🍜',g:'preparado',kcal:20,pr:1.5,ch:2,az:0.5,fi:0.5,gr:0.7,sa:0.9,r:[['1 cuenco',250]]},
+{n:'Pringá',e:'🥩',g:'preparado',kcal:300,pr:20,ch:2,az:0,fi:0,gr:24,sa:1.5,r:[['1 ración',60]]},
+{n:'Hamburguesa de pavo',e:'🍔',g:'carne',kcal:150,pr:18,ch:3,az:1,fi:0.5,gr:7,sa:1,r:[['1 hamburguesa',100]]},
+{n:'Sobrasada',e:'🌭',g:'carne',kcal:450,pr:13,ch:2,az:1,fi:0,gr:44,sa:2.5,r:[['1 cucharada',15]]},
+{n:'Queso parmesano',e:'🧀',g:'lacteo',kcal:390,pr:35,ch:3,az:0.8,fi:0,gr:28,sa:1.6,r:[['1 cucharada',6]]},
+{n:'Queso cheddar',e:'🧀',g:'lacteo',kcal:400,pr:25,ch:1,az:0.5,fi:0,gr:33,sa:1.8,r:[['1 loncha',20]]},
+{n:'Puré de manzana',e:'🍎',g:'fruta',kcal:70,pr:0.2,ch:17,az:15,fi:1.5,gr:0.1,sa:0,r:[['1 tarrina',100]]},
+{n:'Pimientos del piquillo',e:'🫑',g:'verdura',kcal:30,pr:1,ch:5,az:3,fi:1.5,gr:0.3,sa:0.5,r:[['1 pimiento',25]]},
+{n:'Alioli',e:'🧄',g:'salsa',kcal:700,pr:1,ch:1,az:0.5,fi:0,gr:75,sa:1,r:[['1 cucharada',15]]},
+{n:'Pan de cristal',e:'🍞',g:'cereal',kcal:270,pr:9,ch:53,az:2,fi:2.5,gr:2,sa:1.2,r:[['1 rebanada',30]]},
+{n:'Pan naan',e:'🫓',g:'cereal',kcal:290,pr:9,ch:50,az:3,fi:2,gr:6,sa:1.2,r:[['1 pan',90]]},
+{n:'Bagel',e:'🥯',g:'cereal',kcal:260,pr:10,ch:50,az:6,fi:2.5,gr:1.5,sa:1.1,r:[['1 bagel',90]]}];
 /* raciones naturales de los alimentos de la tabla original */
 const RACIONES_BASE={'Manzana': [['1 manzana', 180]], 'Plátano': [['1 plátano', 120]], 'Naranja': [['1 naranja', 200]], 'Mandarina': [['1 mandarina', 80]], 'Fresa': [['1 puñado (8)', 100]], 'Kiwi': [['1 kiwi', 75]], 'Uva': [['1 racimo pequeño', 100]], 'Pera': [['1 pera', 170]], 'Melocotón': [['1 melocotón', 150]], 'Sandía': [['1 tajada', 250]], 'Melón': [['1 tajada', 200]], 'Piña': [['1 rodaja', 100]], 'Aguacate': [['1 aguacate', 150], ['medio', 75]], 'Arándano': [['1 puñado', 60]], 'Limón': [['1 limón', 100], ['zumo de medio', 20]], 'Ciruela': [['1 ciruela', 60]], 'Brócoli': [['1 ración', 200]], 'Espinaca': [['1 ración', 150], ['1 bolsa', 300]], 'Tomate': [['1 tomate', 150]], 'Cebolla': [['1 cebolla', 150]], 'Zanahoria': [['1 zanahoria', 80]], 'Pimiento rojo': [['1 pimiento', 180]], 'Calabacín': [['1 calabacín', 250]], 'Berenjena': [['1 berenjena', 300]], 'Patata': [['1 patata mediana', 200], ['1 patata pequeña', 120]], 'Boniato': [['1 boniato', 250]], 'Lechuga': [['1 ración', 80]], 'Ajo': [['1 diente', 5], ['1 cabeza', 50]], 'Champiñón': [['1 bandeja', 250], ['1 ración', 150]], 'Judía verde': [['1 ración', 200]], 'Guisante': [['1 ración', 100]], 'Pepino': [['1 pepino', 200]], 'Coliflor': [['1 ración', 200]], 'Espárrago': [['1 manojo', 250], ['1 ración', 150]], 'Puerro': [['1 puerro', 150]], 'Calabaza': [['1 ración', 200]], 'Pimiento verde': [['1 pimiento', 150]], 'Pechuga de pollo': [['1 filete', 120], ['1 pechuga', 250], ['1 bandeja', 500]], 'Muslo de pollo': [['1 muslo', 110]], 'Pechuga de pavo': [['1 filete', 120]], 'Ternera magra': [['1 filete', 150]], 'Lomo de cerdo': [['1 filete', 100], ['1 ración', 150]], 'Huevo': [['1 huevo', 60], ['2 huevos', 120]], 'Jamón serrano': [['1 loncha', 15], ['1 ración', 50]], 'Jamón cocido': [['1 loncha', 20]], 'Chorizo': [['1 ración', 40]], 'Salmón': [['1 lomo', 150]], 'Merluza': [['1 filete', 150]], 'Atún en lata al natural': [['1 lata', 56], ['1 lata grande', 120]], 'Sardina': [['1 ración', 150]], 'Bacalao': [['1 lomo', 150]], 'Gamba': [['1 ración', 100]], 'Boquerón': [['1 ración', 150]], 'Lenteja': [['1 ración (seco)', 70]], 'Lenteja cocida': [['1 bote', 400], ['1 ración', 200]], 'Garbanzo': [['1 ración (seco)', 70]], 'Garbanzo de bote': [['1 bote', 400], ['1 ración', 200]], 'Alubia blanca': [['1 ración (seco)', 70]], 'Tofu': [['1 bloque', 250], ['1 ración', 125]], 'Arroz blanco': [['1 ración (seco)', 80]], 'Arroz integral': [['1 ración (seco)', 80]], 'Pasta': [['1 ración (seco)', 80]], 'Pan integral': [['1 rebanada', 30], ['1 bocadillo', 80]], 'Pan blanco': [['1 rebanada', 30], ['1 bocadillo', 80]], 'Copos de avena': [['1 ración', 40]], 'Quinoa': [['1 ración (seco)', 70]], 'Harina de trigo': [['1 cucharada', 10]], 'Leche entera': [['1 vaso', 250]], 'Leche desnatada': [['1 vaso', 250]], 'Yogur natural': [['1 yogur', 125]], 'Yogur griego': [['1 yogur', 125]], 'Queso fresco': [['1 tarrina', 100]], 'Queso curado': [['1 cuña', 40], ['1 loncha', 20]], 'Mantequilla': [['1 porción', 10]], 'Aceite de oliva': [['1 cucharada', 10], ['1 chorrito', 5]], 'Nuez': [['1 puñado', 25]], 'Almendra': [['1 puñado', 25]], 'Cacahuete': [['1 puñado', 25]], 'Semilla de chía': [['1 cucharada', 10]], 'Aceituna': [['10 aceitunas', 40]], 'Miel': [['1 cucharada', 20]], 'Chocolate negro 70%': [['1 onza', 10]], 'Tomate triturado': [['1 bote', 400]], 'Leche de coco': [['1 lata', 400]], 'Caldo de pollo': [['1 vaso', 250], ['1 brick', 1000]], 'Proteína whey': [['1 cazo', 30]], 'Azúcar': [['1 sobre', 8], ['1 cucharadita', 5]],
   'Bebida energética': [['1 lata', 250]], 'Refresco de cola': [['1 lata', 330]], 'Refresco zero': [['1 lata', 330]],
@@ -9357,7 +9385,7 @@ const FR_TAM=[['s','Pequeño',0.75],['m','Mediano',1],['l','Grande',1.35],['xl',
 const FR_TIPOS={bocata:['🥪','Bocata'],bowl:['🥗','Bowl'],plato:['🍳','Plato'],tostada:['🍞','Tostada'],libre:['🍽','Comida']};
 function frTamK(t){return (FR_TAM.filter(function(x){return x[0]===t;})[0]||[0,0,1])[2];}
 function frTipoDe(t){
-  if(/\b(bocata|bocatas|bocadillo|bocadillos|sandwich|sandwiches|montadito|pepito|mollete|wrap|burrito|serranito)\b/.test(t)||/^pan (con|de) /.test(t))return 'bocata';
+  if(/\b(bocata|bocatas|bocadillo|bocadillos|sandwich|sandwiches|montadito|pepito|mollete|wrap|burrito|serranito)\b/.test(t)||/^pan (con|de) (?!molde)/.test(t))return 'bocata';
   if(/\b(tostada|tostadas)\b/.test(t))return 'tostada';
   /* «ensalada» sola es comida («una ensalada césar», «con ensalada»); «ensalada de pollo y…» es un bowl */
   if(/\b(pokes?|bowls?)( bowls?)? de\b/.test(t)||/\bensaladas? de\b/.test(t))return 'bowl';
@@ -9397,18 +9425,27 @@ const FR_COMBOS_RE=Object.keys(FR_COMBOS).map(function(c){return [c,new RegExp('
 /* ---------- 2 · momento, relleno y cantidades ---------- */
 const FR_MOM_W={desayuno:'desayuno',mediamanana:'media',almuerzo:'media',comida:'comida',merienda:'merienda',cena:'cena',monchis:'monchis',postentreno:'post-entreno'};
 const FR_MOM_V=[[/\b(he desayunado|desayune|de desayuno|para desayunar|en el desayuno)\b/,'desayuno'],
-  [/\b(he cenado|cene|de cena|para cenar|en la cena)\b/,'cena'],[/\b(he merendado|merende|de merienda|para merendar)\b/,'merienda'],
+  [/\b(he cenado|cene|de cena|para cenar|en la cena|por la cena|por cena)\b/,'cena'],[/\b(he merendado|merende|de merienda|para merendar|a media tarde|por la tarde)\b/,'merienda'],
   [/\b(a media manana|de almuerzo|para almorzar)\b/,'media'],[/\b(despues de entrenar|tras entrenar|despues del gym|tras el gym)\b/,'post-entreno'],
   [/\b(de comida|para comer|a mediodia|al mediodia)\b/,'comida']];
 function frMomento(t){
   /* «cena: merluza…», «de desayuno…», «he cenado…»: la comida en la que se apunta sale de la frase */
   let pos='';
-  t=t.replace(/^(desayuno|media manana|almuerzo|comida|merienda|cena|monchis|post ?-?entreno)\s*[:\-–]\s*/,function(m0,w){pos=FR_MOM_W[w.replace(/[\s-]/g,'')]||'';return '';});
+  t=t.replace(/^(desayuno|media manana|almuerzo|comida|merienda|cena|monchis|post ?-?entreno)(?:\s+(?:rapid[ao]|liger[ao]|tardi[ao]))?\s*[:\-–,]\s*/,function(m0,w){pos=FR_MOM_W[w.replace(/[\s-]/g,'')]||'';return '';});
+  t=t.replace(/(^|,)\s*([a-z ]{0,30}?)\s*:\s*(?=\S)/g,function(m0,a,et){
+    if(/\bmenu\b/.test(et)||FR_CADENAS.some(function(x){return x[1].test(et);}))return a+et+' , ';
+    const w=/\b(desayuno|almuerzo|comida|merienda|cena|monchis)\b/.exec(et);if(w&&!pos)pos=FR_MOM_W[w[1]];
+    FR_MOM_V.forEach(function(v){if(!pos&&v[0].test(et))pos=v[1];});return a+' ';});
+  /* «de primero…, de segundo…» es la comida (el menú del mediodía) */
+  if(!pos&&/\bde (?:primero|segundo)\b/.test(t))pos='comida';
   FR_MOM_V.forEach(function(v){if(v[0].test(t)){if(!pos)pos=v[1];t=t.replace(v[0],' ');}});
-  return {pos:pos,t:t.replace(/\s+/g,' ').trim()};}
+  t=t.replace(/(^|,)\s*(?=:)/g,'$1');
+  return {pos:pos,t:t.replace(/\s+/g,' ').replace(/^[\s,]+|[\s,]+$/g,'').trim()};}
+/* dónde o con quién, que no es comida: «en el bar de la esquina», «de la máquina de vending», «a medias» */
+const FR_LUGAR=/(?:\s*,)?\s*\b(?:(?:en|de|del|desde)\s+(?:(?:el|la|los|las|mi|un|una)\s+)?(?:bar|terraza|cafeteria|comedor|hospital|guardia|office|planta|maquina|vending|churreria|residencia|barra|trabajo|curro|facultad|biblioteca|esquina|calle|tren|kiosko|quiosco|urgencias)\b(?:\s+(?:de|del)\s+(?:(?:la|el)\s+)?(?:esquina|hospital|planta|vending|guardia|trabajo|al lado))*|bandeja del comedor|(?:en la )?sala(?: de descanso)?|de la olla|(?:de|del) (?:ayer|anoche)$|del turno|de medicos|(?:tras|despues de|al salir de) la guardia|(?:de|del) (?:mercadona|hacendado|lidl|carrefour|super|supermercado)|de las de siempre|que (?:me )?(?:compre|traje|lleve|trajo|dieron|dio|sobro|sobraron)(?: de casa)?|para compartir|a medias|de tapa)\b\s*/g;
 const FR_RELLENO=/^(?:(?:hoy|ayer|esta manana|esta tarde|esta noche)\s+)?(?:(?:he|me he)\s+(?:comido|tomado|picado|bebido|hecho|preparado|pillado)|me (?:comi|tome|hice|pille)|comi|tome)\s+/;
 const FR_NUMS={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,medio:0.5,media:0.5,cuarto:0.25};
-const FR_UNIS='g|gr|grs|gramos?|kg|kilos?|ml|cl|l|litros?|piezas?|unidades?|uds?|rebanadas?|lonchas?|vasos?|vasitos?|tazas?|tazon(?:es)?|cuencos?|bol(?:es)?|raciones?|racion|cucharadas?|cucharaditas?|cdas?|punados?|latas?|botes?|trozos?|onzas?|bolas?|filetes?|porciones?|porcion|chorritos?|chorros?|copas?|botellas?|bricks?|tarrinas?|platos?|pinchos?|tercios?|canas?|racimos?|tabletas?|tapas?|cuartos?|rajas?|rodajas?|botellin(?:es)?|docenas?';
+const FR_UNIS='bolsas?|cucharon(?:es)?|cazos?|tragos?|g|gr|grs|gramos?|kg|kilos?|ml|cl|l|litros?|piezas?|unidades?|uds?|rebanadas?|lonchas?|vasos?|vasitos?|tazas?|tazon(?:es)?|cuencos?|bol(?:es)?|raciones?|racion|cucharadas?|cucharaditas?|cdas?|punados?|latas?|botes?|trozos?|onzas?|bolas?|filetes?|porciones?|porcion|chorritos?|chorros?|copas?|botellas?|bricks?|tarrinas?|platos?|pinchos?|tercios?|canas?|racimos?|tabletas?|tapas?|cuartos?|rajas?|rodajas?|botellin(?:es)?|docenas?';
 /* las palabras-número tienen que ir sueltas: antes «una cucharada» se leía «un» + «a cucharada» (el
    «un» casaba primero y se comía la «a»), y lo mismo «una onza», «unas natillas», «una ensalada…» */
 const FR_CANT=new RegExp('^(\\d+\\/\\d+|\\d+(?:[.,]\\d+)?|(?:un par de|un poco de|algo de|'+Object.keys(FR_NUMS).sort(function(a,b){return b.length-a.length;}).join('|')+')(?=[\\s_]))(?:_y_medi[oa])?\\s*(?:('+FR_UNIS+')\\b\\s*)?(?:de\\s+|del\\s+)?');
@@ -9473,7 +9510,12 @@ function frConf(P,ptxt,t,C){
   if(S===C.length)return 0.75-0.05*(P.length-S);
   return 0.35+0.2*S/P.length;}
 /* lo que dice la gente → el alimento (solo para la frase; ALIM_SINONIMOS sirve también a las recetas) */
-const FR_SINON={hamburguesa:'Hamburguesa completa',hamburguesas:'Hamburguesa completa',burger:'Hamburguesa completa',
+const FR_SINON={'wok de tofu':'Tofu',pesto:'Salsa pesto','revuelto de champinones':'Revuelto de setas','revuelto de setas':'Revuelto de setas',
+  puchero:'Cocido madrileño',cocido:'Cocido madrileño','galleta de limon':'Galletas María',cereal:'Cereales de desayuno',ceral:'Cereales de desayuno',nocilla:'Crema de cacao',nutella:'Crema de cacao','bollo de chocolate':'Napolitana de chocolate','bollo de crema':'Bollo relleno de crema',
+  'cafe americano':'Café solo',americano:'Café solo',bravas:'Patatas bravas',chopitos:'Chopitos fritos',gildas:'Gilda',pringa:'Pringá',naan:'Pan naan',
+  parmesano:'Queso parmesano',cheddar:'Queso cheddar','queso azul':'Queso roquefort','queso crema':'Queso de untar',rigatoni:'Macarrones',
+  'sopa de sobre':'Sopa de fideos','chocolate espeso':'Chocolate a la taza','chocolate a la taza':'Chocolate a la taza',
+  'filete empanado':'Pechuga empanada','filetes empanados':'Pechuga empanada',chocolatina:'Chocolate con leche',chocolatinas:'Chocolate con leche',hamburguesa:'Hamburguesa completa',hamburguesas:'Hamburguesa completa',burger:'Hamburguesa completa',
   'patatas fritas':'Patatas fritas congeladas','patatas fritas caseras':'Patatas fritas congeladas',fritas:'Patatas fritas congeladas',
   verdura:'Verduras a la plancha',verduras:'Verduras a la plancha','verduras al horno':'Verduras a la plancha','verduras salteadas':'Salteado de verduras congelado',
   ensalada:'Ensalada de bolsa','ensalada verde':'Ensalada de bolsa',lechuga:'Ensalada de bolsa',
@@ -9496,7 +9538,7 @@ const FR_SINON={hamburguesa:'Hamburguesa completa',hamburguesas:'Hamburguesa com
 /* cómo se escribe a veces: se cambia antes de leer (erratas de verdad las arregla frCorrige) */
 /* cómo está hecho: se quita para buscar («pechuga a la plancha» → pechuga) y se recuerda; lo que va a
    la plancha, frito o rebozado lleva su aceite aunque no lo digas */
-const FR_COCCION=/\s+(a la plancha|a la parrilla|a la brasa|al horno|al vapor|al microondas|a la sal|a la romana|a la gallega|al ajillo|en salsa|asad[oa]s?|cocid[oa]s?|hervid[oa]s?|frit[oa]s?|rebozad[oa]s?|empanad[oa]s?|guisad[oa]s?|estofad[oa]s?|saltead[oa]s?)$/;
+const FR_COCCION=/\s+(a la plancha|a la parrilla|a la brasa|al horno|al vapor|al microondas|a la sal|a la romana|a la gallega|al ajillo|en salsa|asad[oa]s?|cocid[oa]s?|hervid[oa]s?|frit[oa]s?|rebozad[oa]s?|empanad[oa]s?|guisad[oa]s?|estofad[oa]s?|saltead[oa]s?|poche)$/;
 function frAceiteItem(g,impl,ord){const ac=alimPorNombre('Aceite de oliva');return ac?{id:ac.id,g:g,nom:'aceite',pz:'',conf:0.9,papel:'toque',fuente:'tabla',impl:impl,ord:ord}:null;}
 function frAceiteDe(coc){return /plancha|parrilla|brasa|saltead|ajillo|horno/.test(coc)?5:(/frit/.test(coc)?10:(/rebozad|empanad|romana/.test(coc)?15:0));}
 /* una unidad sola ya dice lo que es: «un tercio», «una caña», «una copa» */
@@ -9510,8 +9552,26 @@ const FR_PALABRAS=[[/\byog(?:h)?ur(?:t|th)\b/g,'yogur'],[/\byog(?:h)?ur(?:ts|ths
   [/\bcola ?cao\b/g,'cola cao'],[/\bsand?wi(?:c|ch|tch)\b/g,'sandwich'],[/\bjamon de york\b/g,'jamon york'],[/\bcoca ?colas?\b/g,'coca cola'],[/\bpoyo\b/g,'pollo'],[/\buna pizza familiar\b/g,'1.5 pizza'],
   [/\bmc ?menu\b/g,'menu del mcdonalds'],[/\bdescafeinado\b/g,'cafe'],[/\bcafes con leche\b/g,'cafe con leche'],
   /* «tostadas x2», «un yogur y medio», «doble de pollo», «plato hondo» */
-  [/\b([a-z]+)\s*x\s?(\d+)\b/g,'$2 $1'],[/\b(?:un|una) ([a-z]+) y medi[oa]\b/g,'1.5 $1'],[/\b(?:(?:una )?racion |un plato )?doble de\b/g,'2 racion de'],
-  [/\bplato hondo\b/g,'plato grande'],[/\b(?:y )?nada mas\b/g,''],
+  [/\b([a-z]+)\s*x\s?(\d+)\b/g,'$2 $1'],[/\b(?:un|una) ([a-z]+) y medi[oa]\b(?! [a-z]{4})/g,'1.5 $1'],[/\b(?:(?:una )?racion |un plato )?doble de\b/g,'2 racion de'],
+  [/\bplato hondo\b/g,'plato grande'],
+  /* lo que se abrevia al teclear («bocata d jamon», «cafe c leche», «fruta x la tarde»), y las cantidades
+     de andar por casa: «un buen plato», «un cacho de tortilla», «un montón de arroz», «mucho pepino» */
+  [/\bd\b(?= [a-z])/g,'de'],[/(?<=[a-z] )c\b(?= [a-z])/g,'con'],[/\bx\b(?= [a-z])/g,'por'],[/\bq\b/g,'que'],[/\btostd\w*/g,'tostada'],
+  [/\b(un|una|unos|unas) (?:buen|buena|buenos|buenas|gran) /g,'$1 '],[/\b(?:cachos?|pedazos?)\b/g,'racion'],[/\b(?:trocitos?|trozitos?)\b/g,'trozo'],
+  [/^(?:un[oa]? )?([a-z ]+?) untad[oa]s? en (?:el |un )?pan\b/g,'pan con $1'],[/\basao\b/g,'asado'],[/\s+en el cafe\b/g,' , cafe'],[/(?:\b(?:una|la) |^)chocolatina\b/g,'40 g de chocolatina'],[/\bpescao\b/g,'pescado'],[/\brebuelt/g,'revuelt'],
+  [/\bmedio pollo asado\b/g,'2 cuartos de pollo asado'],[/\s*,?\s*\bde l[oa]s (?:grandes|pequen[oa]s|buen[oa]s|gord[oa]s)\b/g,''],
+  [/\b(?:platazo|platito|monton|montonazo)\b/g,'plato'],[/\b(?:cucharones|cazos)\b/g,'cucharones'],[/\bcarton(?:es)?\b/g,'brick'],
+  [/\b(?:un )?pack de\s+/g,''],[/\b(?:una|la) caja de\b/g,'una racion de'],[/\bcuadraditos?\b/g,'onzas'],[/\btostas?\b/g,'tostada'],[/\bjr\b/g,''],
+  [/\bfiletes? empanados?\b/g,'pechuga empanada'],[/\bgalletitas?\b/g,'galletas'],[/\bbolitas de\s+/g,''],[/\bcrud[oa]s\b/g,''],
+  [/\b(?:el |lo )?(?:resto|que quedaba|que sobro|sobras) del?\s+/g,''],[/\bguiso de\s+(?=lentej|garbanz|alubi|judi)/g,''],[/\bcacharro\b/g,'plato'],
+  [/\bun[oa]s (?=\d|dos |tres |cuatro |cinco |seis |siete |ocho )/g,''],[/\bun[oa]s (?=(?:cucharadas|cucharaditas|lonchas|rebanadas|onzas|piezas|rodajas)\b)/g,'3 '],
+  [/\b(rebanadas?|lonchas?|trozos?|filetes?) (?:gord[oa]s?|fin[oa]s?|buen[oa]s?|generos[oa]s?)\b/g,'$1'],
+  /* «bol de muesli», «vaso de leche» al empezar: es uno */
+  [/(^|[,:]\s*|\by\s+|\bcon\s+)(bol|vaso|taza|tazon|cuenco|plato|lata|racion|vasito) de\b/g,'$1un $2 de'],[/\b(?:con )?todos los (?:toppings|ingredientes|extras)\b/g,''],[/\s*\b(?:y )?me comi (?=uno|una|dos|tres|la mitad)/g,' , '],
+  /* «un bote de mermelada en la tostada», «un bote de pesto para la pasta»: es lo que lleva, no el bote */
+  [/\b(?:un|una) (?:bote|tarro|frasco) de ([a-z ]+?) (?:para|en) (?:la|el|las|los) /g,'$1 con '],[/\b(?:una|la) bandeja de\s+/g,''],
+  /* la hora no es comida: «a las 2 de la madrugada», «de madrugada» */
+  [/\b(?:a eso de |sobre |a )?las? \d+(?:[:.]\d+)?(?: y (?:media|cuarto))?(?: de la (?:manana|tarde|noche|madrugada))?\b/g,''],[/\bde (?:la )?madrugada\b/g,''],[/\b(?:mucho|mucha|muchos|muchas|bastante)\s+(?=[a-z]{3})/g,''],[/\bonion rings\b/g,'aros de cebolla'],[/\b(?:y )?nada mas\b/g,''],
   [/^(?:en|durante) (?:la guardia|el trabajo|el hospital|el curro|casa|el gym|el gimnasio|clase)\s*,?\s*/,''],[/\s*\b(?:de la maquina|de maquina|del bar|de casa|caser[oa]s?|del super)\b/g,'']];
 /* lo que es una familia, no un alimento: se pregunta cuál, con lo de tu nevera primero */
 const FR_DUDA={fruta:['fruta',['Manzana','Plátano','Naranja','Mandarina']],frutas:['fruta',['Manzana','Plátano','Naranja','Mandarina']],
@@ -9688,7 +9748,8 @@ function frBusca(pz,tipo,opt){
     const porc=/porci|trozo/.test(ptxt)||!!(opt&&opt.porc),cad=opt&&opt.cad;
     /* los menús de cadena, solo si dices «menú» («big mac» es la hamburguesa, no el menú) */
     const pideMenu=/\bmenu\b/.test(ptxt);
-    fx.fuera.forEach(function(o){if(!!o.x.menu!==pideMenu)return;let c=frConf(P,ptxt,o.t,o.rz);
+    const soloVar=P.every(function(w){return FR_VARIANTE.indexOf(w)>=0;});
+    fx.fuera.forEach(function(o){if(!!o.x.menu!==pideMenu||soloVar)return;let c=frConf(P,ptxt,o.t,o.rz);
       /* en su cadena vale con que cada palabra esté dentro («nuggets» → McNuggets) */
       if(cad&&o.x.cid===cad&&c<0.8&&P.every(function(w){return o.t.indexOf(w)>=0;}))c=0.8;
       if(c<0.3)return;
@@ -9757,7 +9818,7 @@ function frRacionDe(a,u){
   if(!r)return 0;const l=alimTxt(r[0]),n0=/^\d+/.test(l)?+(/^\d+/.exec(l)[0]):1;return r[1]/(n0||1);}
 const FR_UGR={vaso:250,vasito:150,taza:200,tazon:300,cuenco:300,bol:300,cucharada:10,cucharadita:5,cda:10,punado:30,lata:80,bote:400,
   trozo:40,onza:10,bola:60,filete:120,loncha:20,rebanada:30,chorrito:5,chorro:5,copa:150,botella:330,brick:200,tarrina:125,pincho:120,tercio:330,cana:200,
-  racimo:150,tableta:100,tapa:80,cuarto:180,raja:250,rodaja:100,botellin:200};
+  racimo:150,tableta:100,tapa:80,cuarto:180,raja:250,rodaja:100,botellin:200,bolsa:100,cucharon:150,cucharone:150,cazo:150,trago:50};
 function frGramosCant(c,a,papelG){
   const n=c.n,u=c.u;
   if(!u)return n*(frUnidad(a));
@@ -9798,6 +9859,7 @@ function fraseLeer(txt,opt){
   t00=t00.replace(/^(ayer|anoche|hoy|esta manana|esta tarde|esta noche)\b\s*,?\s*/,function(m0,w){if(/ayer|anoche/.test(w))ayer=true;return '';});
   let taper=false;t00=t00.replace(/\b(?:el |un |mi )?t(?:a|u)p+er(?:es)? de\s+/g,function(){taper=true;return '';});
   FR_PALABRAS.forEach(function(w){t00=t00.replace(w[0],w[1]);});
+  t00=t00.replace(FR_LUGAR,' , ').replace(/(\s*,)+/g,' ,').replace(/\s*,\s*:/g,':').replace(/^[\s,]+|[\s,]+$/g,'').replace(/\s+/g,' ');
   if(!t00)return null;
   const mo=frMomento(t00),fx=frIdx(),PL=[];let t0=mo.t.replace(FR_RELLENO,'').trim();
   /* «menú del día: sopa y filete…» se lee plato a plato; «menú del día» solo es el menú del bar */
@@ -9813,21 +9875,21 @@ function fraseLeer(txt,opt){
   const tam=frTamDe(t0);let tipo=frTipoDe(t0),k=frTamK(tam);
   /* «ensalada de pasta» es un plato que ya existe: no se trocea como bowl */
   if(tipo==='bowl'&&alimIdx().porT[t0.replace(/^(un|una|unos|unas)\s+/,'')])tipo='libre';
-  const mb=tipo==='bocata'&&/^(\d+(?:\.\d+)?|medi[oa]|dos|tres)\s+(?=bocat|bocadill|sandwich|montadit|wrap|burrit)/.exec(t0);
-  if(mb){k*=/^medi/.test(mb[1])?0.5:(FR_NUMS[mb[1]]||+mb[1]||1);t0=t0.slice(mb[0].length);}
+  const mb=tipo==='bocata'&&/(^|,\s*|\by\s+)(\d+(?:\.\d+)?|medi[oa]|dos|tres)\s+(?:mini\s+)?(?=bocat|bocadill|sandwich|montadit|wrap|burrit)/.exec(t0);
+  if(mb){k*=/^medi/.test(mb[2])?0.5:(FR_NUMS[mb[2]]||+mb[2]||1);t0=t0.slice(0,mb.index)+mb[1]+t0.slice(mb.index+mb[0].length);}
   let t=t0.replace(/\b(muy grande|grande|mediano|mediana|pequeno|pequena|mini|enorme|gigante)\b/g,' ');
   /* la plantilla fija el tipo; la palabra se va solo si es plantilla de verdad («bocata de…») */
   let nt=1;
-  if(tipo==='tostada'){const mt=/\b(\d+|una|dos|tres|cuatro)\s+tostadas?\b/.exec(t);nt=mt?(+mt[1]||FR_NUMS[mt[1]]||1):1;
-    t=t.replace(/\b((\d+|una|dos|tres|cuatro)\s+)?tostadas?\s*(de\s+)?/g,' , ');}
-  if(tipo==='bocata')t=t.replace(/^(un |una |medio |media )?(bocatas?|bocadillos?|sandwich(es)?|montaditos?|pepitos?|molletes?|wraps?|burritos?)\s*(de\s+)?/,'').replace(/^pan (con|de)\s+/,'');
+  if(tipo==='tostada'){const mt=/\b(\d+|una|dos|tres|cuatro|media)\s+tostadas?\b/.exec(t);nt=mt?(+mt[1]||FR_NUMS[mt[1]]||1):1;
+    t=t.replace(/\b((\d+|una|dos|tres|cuatro|media)\s+)?tostadas?\s*(?:integral(?:es)?\s*)?(de\s+)?/g,' , ');}
+  if(tipo==='bocata')t=t.replace(/(^|,\s*|\by\s+)(un |una |medio |media )?(bocatas?|bocadillos?|sandwich(es)?|montaditos?|pepitos?|molletes?|wraps?|burritos?)\s*(de\s+)?/,'$1').replace(/^pan (con|de)\s+/,'');
   if(tipo==='bowl')t=t.replace(/^(un |una )?(pokes?|bowls?)\s*(de\s+)?/,'').replace(/^(un |una )?ensaladas? de\s+/,'ensalada , ');
   t=t.replace(/^\s*(de|del)\s+/,'').replace(/\s+/g,' ').trim();
   /* «mixto», «vegetal», «serranito» son rellenos de bocadillo: en otra cosa no se despliegan */
   FR_COMBOS_RE.forEach(function(c){if(c[0]!=='caprese'&&tipo!=='bocata'&&tipo!=='tostada')return;
     t=t.replace(c[1],FR_COMBOS[c[0]].join(' , '));});
   /* lo que no se parte: «café con leche», tus platos («lentejas con chorizo»), «1 y medio» */
-  t=t.replace(/ y (medi[oa])\b/g,'_y_$1');
+  t=t.replace(/ y (medi[oa])\b(?=$|\s*[,+]|\s+(?:y|e|con|de)\b)/g,'_y_$1');
   const plant=/bocadillo|bocata|sandwich|tostada|montadito|pizza/;
   fx.comp.forEach(function(c){if((tipo==='bocata'||tipo==='tostada')&&plant.test(c))return;
     if((' '+t+' ').indexOf(' '+c+' ')>=0)t=t.replace(c,c.replace(/ /g,'_'));});
@@ -9836,7 +9898,7 @@ function fraseLeer(txt,opt){
   const trozos=[];let enCon=false;
   t.split(/((?:\s*(?:,|\+|\by\b|\be\b|\bcon\b)\s*)+)/).forEach(function(w,i){
     if(i%2){if(/\bcon\b/.test(w))enCon=true;return;}
-    w=w.replace(/_/g,' ').replace(/ y (medi[oa])\b/g,'_y_$1').trim();
+    w=w.replace(/_/g,' ').replace(/ y (medi[oa])\b(?=$|\s+(?:de|con)\b)/g,'_y_$1').trim();
     if(!w)return;
     trozos.push({txt:w,con:enCon});});
   const items=[],dudas=[];
@@ -9856,13 +9918,20 @@ function fraseLeer(txt,opt){
       if(prev&&!prev.pan){if(prev.dish||prev.fuera)prev.rac=c.n;
         else{const a=frItemAlim(prev);if(a){prev.g=Math.max(1,Math.round(frGramosCant(c,a,prev.g)));prev.cant=true;}}}
       return;}
+    const nSolo=!c.u&&FR_NUMS[pz]!=null&&ti>0&&items.length&&!items[items.length-1].pan&&items[items.length-1].ord===ti-1;
+    if(nSolo){const prev=items[items.length-1],nn=FR_NUMS[pz];
+      if(prev.fuera){const b=buscableDe(prev.fuera);prev.rac=b?frFueraRac(b,{n:nn,u:''}):nn;}else if(prev.dish)prev.rac=nn;else{const a=frItemAlim(prev),u=a&&frUnidad(a);if(a){prev.g=Math.max(1,Math.round(u?u*nn:prev.g*nn));prev.cant=true;}}
+      return;}
+    /* «al horno» suelto, de algo ya dicho, no es otra cosa */
+    if(/^(?:al|a la) (?:horno|plancha|microondas|parrilla|brasa)$/.test(pz))return;
     if(!pz)return;
-    const mPl=/^§(\d+)$/.exec(pz.replace(/^(un|una|unos|unas)\s+/,''));
+    const mPl=/^§(\d+)$/.exec(pz.replace(/^(un|una|unos|unas)\s+/,'').replace(FR_COCCION,''));
     if(mPl&&PL[+mPl[1]]){const pl=PL[+mPl[1]].p,al=frPlatoAlims(pl),tot=al.reduce(function(a,x){return a+x.g;},0)||1;
       /* «2 huevos turcos» son dos raciones; «300 g de poke», el plato a esos gramos */
       /* «3 huevos fritos con patatas»: el número son los huevos del plato, no raciones */
       const hu=/^huevo/.test(PL[+mPl[1]].txt)&&!c.u&&al.filter(function(x){return x.a.n==='Huevo';})[0];
-      const f=(c.n!=null?(c.u==='g'?c.n/tot:(hu?c.n*60/hu.g:c.n)):1)*(tr.con?1:k);
+      const pzs=!c.u&&c.n>2&&/^(albondig|croquet|nugget|alita|gamba|langostin|mejillon|calamar|chopito|empanadill)/.test(PL[+mPl[1]].txt);
+      const f=(c.n!=null?(c.u==='g'?c.n/tot:(hu?c.n*60/hu.g:(pzs?c.n/6:(FR_UGR[c.u]&&!/^(racion|plato)$/.test(c.u)?c.n*FR_UGR[c.u]/(al[0]&&al[0].g||tot):c.n)))):1)*(tr.con?1:k);
       al.forEach(function(x){items.push({id:x.a.id,g:Math.max(1,Math.round(x.g*f)),nom:frCorto(x.a.n,'libre'),pz:'',conf:0.95,papel:tr.con?'acomp':'principal',
         fuente:'plato',pl:pl[0],plE:pl[1],cant:c.n!=null,ord:ti});});
       if(!prinCat)prinCat='plato';return;}
@@ -10002,6 +10071,18 @@ function frNomItem(x,tipo){
   if(x.fuera)return x.nom||'';
   if(x.ean||x.nom)return String(x.nom||'');
   const a=alimById(x.id);return a?frCorto(a.n,tipo):'';}
+function frSeg(x){
+  /* lo segura que está la app de un trozo leído: «✓» lo dijiste (qué y cuánto), es tu plato o un plato
+     conocido; «≈» algo lo puso ella, y «por» dice qué («supuse 200 g»). Lo que pregunta (fr.dudas) es «?» */
+  const sup=function(por){return {s:'≈',por:por};};
+  if(x.memo)return {s:'✓',por:'como lo corregiste'};
+  if(x.errata)return sup('leí «'+x.errata+'» como '+(x.nom||frNomItem(x)));
+  if(x.impl)return sup('supuse el aceite ('+x.impl+'), '+x.g+' g');
+  if((+x.conf||0)<0.9)return sup(x.casa?'lo de tu nevera: '+x.casa:'lo más parecido');
+  if(x.pl||x.dish||x.fuera)return {s:'✓',por:''};
+  if(x.pan)return sup('supuse el pan, '+x.g+' g');
+  if(!x.cant)return sup('supuse '+x.g+' g');
+  return {s:'✓',por:''};}
 function frLista(l){l=l.filter(Boolean);if(l.length>4)l=l.slice(0,3).concat(['más']);return l.length>1?l.slice(0,-1).join(', ')+' y '+l[l.length-1]:(l[0]||'');}
 function fraseNombre(fr){
   /* una frase: lo principal, y «con» lo que lo acompaña; sin el aceite ni la sal */
@@ -27307,7 +27388,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
