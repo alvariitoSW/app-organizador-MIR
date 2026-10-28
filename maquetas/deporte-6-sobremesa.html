@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6 · La Sobremesa</title>
+<style>
+:root{--ink:#2a1812;--crema:#fff8ea;--barro:#b4572f;--barro-osc:#7e3516;--barro-txt:#9c4a26;--marco:#5e2a12;--tarjeta:#fffdf7}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{width:412px;background:#efe2c9;color:var(--ink);font:16px/1.35 system-ui,"Trebuchet MS",Arial,sans-serif;overflow-x:hidden}
+.cartel{padding:14px;background:repeating-conic-gradient(#c93a32 0 25%,var(--crema) 0 50%) 0 0/24px 24px}
+.cartel div{background:var(--crema);border:3px solid var(--ink);border-radius:14px;padding:12px 14px}
+.cartel h1{margin:0 0 6px;font-size:22px;line-height:1.15}
+.cartel p{margin:0 0 6px;font-size:15px}
+.cartel p:last-child{margin:0}
+.rotulo{display:block;margin:22px 16px 8px;font-size:15px;font-weight:800}
+.pantalla{width:412px;background:var(--crema);overflow:hidden;position:relative;border-top:4px solid var(--ink)}
+.cab{padding:14px 16px 4px}
+.cab h2{margin:0;font-size:30px;line-height:1.1}
+.cab p{margin:4px 0 0}
+/* P1 */
+.mesa{position:relative;width:412px;height:700px}
+.mesa svg{display:block}
+#cafe{position:absolute;left:259px;top:282px;width:96px;height:96px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
+#cafe:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.pie{margin:10px 16px 14px;padding:10px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--tarjeta);font-size:16px}
+/* P2 */
+.carta{list-style:none;margin:6px 16px 0;padding:0}
+.fila{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:2px dotted var(--barro-osc)}
+.fila:last-child{border-bottom:0}
+.pl{flex:0 0 124px;height:124px;display:flex;align-items:center;justify-content:center}
+.pl i{display:block;width:var(--d);height:var(--d);border-radius:50%;background:radial-gradient(circle closest-side,#e4b25a 0 30%,var(--barro) 34%);box-shadow:0 0 0 4px var(--barro-osc)}
+.txt{flex:1;min-width:0}
+.txt b{display:block;font-size:30px;line-height:1}
+.txt small{font-size:16px}
+.actual{background:var(--tarjeta);border:3px solid var(--ink);border-radius:16px;padding:8px 12px;border-bottom:3px solid var(--ink)}
+.actual small{font-weight:800}
+.cargas{list-style:none;margin:8px 0 4px;padding:0}
+.cargas li{display:flex;justify-content:space-between;border-bottom:1px solid #d9c9a6;padding:3px 0;font-size:17px}
+.cargas b{display:inline;font-size:17px}
+.reps{margin:4px 0 0;font-size:15px}
+.nota{margin:14px 16px 0;padding:10px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--tarjeta);font-size:16px}
+.racha{margin:12px 16px 16px}
+.racha span{display:inline-block;padding:8px 14px;border:2px solid var(--ink);border-radius:99px;font-weight:800;background:var(--tarjeta)}
+/* P3 */
+.balanza{display:block;width:412px;height:330px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 16px 0}
+.chips p{margin:0;padding:10px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--tarjeta);font-size:15px}
+.chips b{display:block;font-size:22px;line-height:1.2}
+.hilo{margin:14px 16px 0;font-size:16px;font-weight:800}
+.dots{display:flex;justify-content:space-between;align-items:center;list-style:none;margin:8px 16px 0;padding:0}
+.dots li{width:16px;height:16px;border:2px solid var(--ink);border-radius:50%}
+.dots li.hecho{background:var(--ink)}
+.dots li.hoy{width:24px;height:24px;background:var(--tarjeta);box-shadow:0 0 0 3px var(--crema),0 0 0 5px var(--ink)}
+.kcal{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 16px 0}
+.kcal p{margin:0;padding:12px;border:3px solid var(--ink);border-radius:16px;background:var(--tarjeta);font-size:16px}
+.kcal b{display:block;font-size:40px;line-height:1}
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;list-style:none;margin:6px 10px 0;padding:0;text-align:center}
+.semana li{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px}
+.semana .d{font-weight:800}
+.pl2{width:50px;height:50px;border-radius:50%;background:var(--barro-txt);color:#fffdf7;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px var(--marco)}
+.pl2.nc{background:var(--tarjeta);color:var(--ink);box-shadow:none;border:2px dashed var(--ink)}
+.semana em{font-style:normal;font-weight:800;border:2px solid var(--ink);border-radius:99px;padding:0 6px;font-size:13px;background:var(--tarjeta);min-height:22px;line-height:18px}
+.semana em:empty{border:0;background:none}
+.nota2{margin:14px 16px 16px;padding:10px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--tarjeta);font-size:15px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="mantel" width="28" height="28" patternUnits="userSpaceOnUse">
+      <rect width="28" height="28" fill="#fff8ea"/>
+      <rect width="14" height="14" fill="#c93a32"/>
+      <rect x="14" y="14" width="14" height="14" fill="#c93a32"/>
+    </pattern>
+  </defs>
+</svg>
+
+<header class="cartel">
+  <div>
+    <h1>6 · La Sobremesa</h1>
+    <p>Una mesa de comida canaria vista desde arriba: cada día es un cubierto, y la guardia, el café y el picnic se leen de un vistazo.</p>
+    <p>La vuelta es un menú que crece de tapa a plato lleno, y el peso baja como una balanza antigua hacia el 8 de febrero de 2027.</p>
+  </div>
+</header>
+
+<!-- ============ PANTALLA 1 ============ -->
+<span class="rotulo">Pantalla 1 · Hoy toca / la semana</span>
+<section class="pantalla" id="p1" aria-labelledby="h-p1">
+  <div class="cab">
+    <h2 id="h-p1">Hoy, jueves</h2>
+    <p>Semana 3 de la vuelta</p>
+  </div>
+
+  <div class="mesa">
+    <svg viewBox="0 0 412 700" width="412" height="700" role="img" aria-labelledby="mesa-t mesa-d">
+      <title id="mesa-t">Mesa con siete cubiertos, uno por día</title>
+      <desc id="mesa-d">Lunes, gimnasio a las 15:00. Martes, guardia con bandeja del hospital. Miércoles, taza de café: paseo o nada. Jueves, hoy: gimnasio a las 15:00, con la servilleta. Viernes, el cafecito a las 15:30. Sábado, cesta de picnic: parque a las 10:00, 40 minutos. Domingo, descanso.</desc>
+
+      <!-- mantel -->
+      <rect x="18" y="10" width="376" height="680" rx="32" fill="url(#mantel)" stroke="#5e2a12" stroke-width="10"/>
+
+      <!-- centro de la mesa -->
+      <circle cx="206" cy="170" r="20" fill="#a8232b" stroke="#6b1419" stroke-width="3"/>
+      <circle cx="206" cy="250" r="18" fill="#e2cfa0" stroke="#8a6a2a" stroke-width="3"/>
+      <circle cx="206" cy="330" r="34" fill="#8f3f1e" stroke="#5e2a12" stroke-width="4"/>
+      <g fill="#e4b25a" stroke="#8a5f1c" stroke-width="2">
+        <circle cx="194" cy="322" r="8"/><circle cx="212" cy="318" r="8"/><circle cx="204" cy="336" r="8"/><circle cx="220" cy="336" r="7"/><circle cx="192" cy="338" r="7"/>
+      </g>
+      <circle cx="206" cy="480" r="20" fill="#4d7a2e" stroke="#2f4f1a" stroke-width="3"/>
+
+      <!-- servilleta doblada junto al plato de hoy -->
+      <path d="M186 92 L180 40 L384 26 L372 92 Z" fill="#fffdf7" stroke="#5e2a12" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M190 62 L380 52" stroke="#c9b08a" stroke-width="2" fill="none"/>
+      <text x="282" y="83" text-anchor="middle" font-size="20" font-weight="800" fill="#2a1812" textLength="170" lengthAdjust="spacingAndGlyphs">15:00 · gimnasio</text>
+
+      <!-- Lunes: gimnasio -->
+      <circle cx="105" cy="170" r="48" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="105" cy="170" r="37" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(105 170)">
+        <rect x="-26" y="-3" width="52" height="6" rx="3" fill="#fff8ea"/>
+        <rect x="-34" y="-12" width="9" height="24" rx="3" fill="#fff8ea"/>
+        <rect x="25" y="-12" width="9" height="24" rx="3" fill="#fff8ea"/>
+      </g>
+
+      <!-- Jueves: hoy, gimnasio (más grande y con anillo) -->
+      <circle cx="307" cy="170" r="68" fill="none" stroke="#2a1812" stroke-width="4" stroke-dasharray="10 7"/>
+      <circle cx="307" cy="170" r="58" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="307" cy="170" r="47" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(307 170) scale(1.2)">
+        <rect x="-26" y="-3" width="52" height="6" rx="3" fill="#fff8ea"/>
+        <rect x="-34" y="-12" width="9" height="24" rx="3" fill="#fff8ea"/>
+        <rect x="25" y="-12" width="9" height="24" rx="3" fill="#fff8ea"/>
+      </g>
+
+      <!-- Martes: guardia, bandeja del hospital -->
+      <circle cx="105" cy="330" r="48" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="105" cy="330" r="37" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(105 330)">
+        <rect x="-38" y="-26" width="76" height="52" rx="8" fill="#e8ecf1" stroke="#4a5563" stroke-width="3"/>
+        <rect x="-4" y="-14" width="8" height="28" fill="#1f5f99"/>
+        <rect x="-14" y="-4" width="28" height="8" fill="#1f5f99"/>
+      </g>
+
+      <!-- Miércoles: saliente, taza de café -->
+      <circle cx="105" cy="490" r="48" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="105" cy="490" r="37" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(105 490)">
+        <circle r="32" fill="#fffdf7" stroke="#4a5563" stroke-width="3"/>
+        <circle r="21" fill="#fffdf7" stroke="#4a5563" stroke-width="3"/>
+        <circle r="13" fill="#6b3a1f"/>
+        <circle cx="27" cy="0" r="6" fill="none" stroke="#4a5563" stroke-width="3"/>
+      </g>
+
+      <!-- Viernes: el cafecito (se marca con un toque) -->
+      <circle cx="307" cy="330" r="48" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="307" cy="330" r="37" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(307 330)">
+        <circle r="24" fill="#fffdf7" stroke="#4a5563" stroke-width="3"/>
+        <circle r="15" fill="#fffdf7" stroke="#4a5563" stroke-width="3"/>
+        <circle r="8" fill="#6b3a1f"/>
+      </g>
+      <g id="ok" transform="translate(339 298)" visibility="hidden">
+        <circle r="12" fill="#2a1812"/>
+        <path d="M-5 0 L-1 4 L6 -4" stroke="#fffdf7" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- Sábado: cesta de picnic (parque) -->
+      <circle cx="307" cy="490" r="48" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="307" cy="490" r="37" fill="none" stroke="#d98a5f" stroke-width="3"/>
+      <g transform="translate(307 490)">
+        <path d="M-30 -6 Q0 -44 30 -6" fill="none" stroke="#3d2a1e" stroke-width="5" stroke-linecap="round"/>
+        <path d="M-34 -4 H34 L27 24 H-27 Z" fill="#c9965a" stroke="#6b4423" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M-31 6 H31 M-28 15 H28" stroke="#6b4423" stroke-width="2"/>
+        <path d="M-38 -4 L-19 -20 L0 -4 L19 -20 L38 -4 Z" fill="url(#mantel)" stroke="#5e2a12" stroke-width="2" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Domingo: descanso, plato vacío -->
+      <circle cx="206" cy="612" r="32" fill="#b4572f" stroke="#7e3516" stroke-width="5"/>
+      <circle cx="206" cy="612" r="22" fill="none" stroke="#d98a5f" stroke-width="3"/>
+
+      <!-- rótulos de cada cubierto -->
+      <rect x="37" y="224" width="136" height="46" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="105" y="243" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Lun</text>
+      <text x="105" y="262" text-anchor="middle" font-size="13.5" fill="#2a1812">15:00 gimnasio</text>
+
+      <rect x="239" y="242" width="136" height="30" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="307" y="262" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Jue · hoy</text>
+
+      <rect x="37" y="384" width="136" height="46" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="105" y="403" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Mar</text>
+      <text x="105" y="422" text-anchor="middle" font-size="13.5" fill="#2a1812">guardia</text>
+
+      <rect x="239" y="384" width="136" height="46" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="307" y="403" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Vie</text>
+      <text id="vie-det" x="307" y="422" text-anchor="middle" font-size="13.5" fill="#2a1812">cafecito 15:30</text>
+
+      <rect x="37" y="544" width="136" height="46" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="105" y="563" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Mié</text>
+      <text x="105" y="582" text-anchor="middle" font-size="13.5" fill="#2a1812">paseo o nada</text>
+
+      <rect x="239" y="544" width="136" height="46" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="307" y="563" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1812">Sáb</text>
+      <text x="307" y="582" text-anchor="middle" font-size="13.5" fill="#2a1812">10:00 parque 40 min</text>
+
+      <rect x="136" y="652" width="140" height="30" rx="14" fill="#fffdf7" stroke="#2a1812" stroke-width="2"/>
+      <text x="206" y="672" text-anchor="middle" font-size="15" font-weight="800" fill="#2a1812">Dom · descanso</text>
+    </svg>
+
+    <button id="cafe" type="button" aria-pressed="false" aria-label="Viernes: el cafecito de 25 minutos a las 15:30. Toca para marcarlo como hecho"></button>
+  </div>
+
+  <p class="pie">Si no llegas a las 15:00: el cafecito, 25 min a las 15:30.</p>
+</section>
+
+<!-- ============ PANTALLA 2 ============ -->
+<span class="rotulo">Pantalla 2 · La vuelta</span>
+<section class="pantalla" id="p2" aria-labelledby="h-p2">
+  <div class="cab">
+    <h2 id="h-p2">La vuelta</h2>
+    <p>Ocho platos, de la tapa al plato lleno. Esta semana, el 3.º.</p>
+  </div>
+
+  <ol class="carta" aria-label="Los ocho platos de la vuelta">
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:44px"></i></span>
+      <span class="txt"><b>35 %</b><small>semana 1</small></span></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:56px"></i></span>
+      <span class="txt"><b>45 %</b><small>semana 2</small></span></li>
+    <li class="fila actual" aria-current="step"><span class="pl" aria-hidden="true"><i style="--d:69px"></i></span>
+      <div class="txt">
+        <b>55 %</b>
+        <small>semana 3 · estás aquí</small>
+        <ul class="cargas">
+          <li>Sentadilla <b>45 kg</b></li>
+          <li>Banca <b>32,5 kg</b></li>
+          <li>Peso muerto <b>50 kg</b></li>
+          <li>Remo <b>27,5 kg</b></li>
+          <li>Press militar <b>20 kg</b></li>
+        </ul>
+        <p class="reps">2 series · que sobren unas 4 repeticiones</p>
+      </div></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:81px"></i></span>
+      <span class="txt"><b>65 %</b><small>semana 4</small></span></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:93px"></i></span>
+      <span class="txt"><b>75 %</b><small>semana 5</small></span></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:106px"></i></span>
+      <span class="txt"><b>85 %</b><small>semana 6</small></span></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:118px"></i></span>
+      <span class="txt"><b>95 %</b><small>semana 7</small></span></li>
+    <li class="fila"><span class="pl" aria-hidden="true"><i style="--d:124px"></i></span>
+      <span class="txt"><b>100 %</b><small>semana 8</small></span></li>
+  </ol>
+
+  <p class="nota">Si una semana no sale, se repite el plato. Si fallan dos seguidas, baja uno.</p>
+  <p class="racha"><span>Racha: 2 semanas seguidas</span></p>
+</section>
+
+<!-- ============ PANTALLA 3 ============ -->
+<span class="rotulo">Pantalla 3 · Tu objetivo de peso</span>
+<section class="pantalla" id="p3" aria-labelledby="h-p3">
+  <div class="cab">
+    <h2 id="h-p3">Tu objetivo de peso</h2>
+    <p>De 82 a 75 kg, sin prisa: medio kilo a la semana.</p>
+  </div>
+
+  <svg class="balanza" viewBox="0 0 412 330" width="412" height="330" role="img" aria-labelledby="bal-t bal-d">
+    <title id="bal-t">Balanza de cocina antigua</title>
+    <desc id="bal-d">La aguja marca 81,4 kilos. El inicio fue 82 y la meta 75, hacia el 8 de febrero de 2027.</desc>
+    <ellipse cx="206" cy="46" rx="118" ry="16" fill="#fffdf7" stroke="#4a5563" stroke-width="3"/>
+    <rect x="198" y="46" width="16" height="70" fill="#9aa5b1"/>
+    <rect x="96" y="112" width="220" height="200" rx="44" fill="#d9e3d0" stroke="#4a5563" stroke-width="4"/>
+    <circle cx="206" cy="200" r="76" fill="#fffdf7" stroke="#4a5563" stroke-width="4"/>
+
+    <g transform="translate(206 200)" stroke="#2a1812" stroke-linecap="round" fill="none">
+      <line transform="rotate(-120)" x1="0" y1="-70" x2="0" y2="-56" stroke-width="3"/>
+      <line transform="rotate(-105)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(-90)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(-75)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(-60)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(-45)" x1="0" y1="-70" x2="0" y2="-56" stroke-width="3"/>
+      <line transform="rotate(-30)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(-15)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(0)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(15)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(30)" x1="0" y1="-70" x2="0" y2="-56" stroke-width="3"/>
+      <line transform="rotate(45)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(60)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(75)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(90)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+      <line transform="rotate(105)" x1="0" y1="-70" x2="0" y2="-56" stroke-width="3"/>
+      <line transform="rotate(120)" x1="0" y1="-70" x2="0" y2="-64" stroke-width="2"/>
+    </g>
+    <text x="164" y="229" text-anchor="middle" font-size="15" font-weight="800" fill="#2a1812">70</text>
+    <text x="172" y="171" text-anchor="middle" font-size="15" font-weight="800" fill="#2a1812">75</text>
+    <text x="230" y="163" text-anchor="middle" font-size="15" font-weight="800" fill="#2a1812">80</text>
+    <text x="252" y="217" text-anchor="middle" font-size="15" font-weight="800" fill="#2a1812">85</text>
+    <text x="206" y="262" text-anchor="middle" font-size="15" fill="#2a1812">kg</text>
+
+    <path d="M143.8 137.8 A88 88 0 0 1 282.2 156" fill="none" stroke="#9c4a26" stroke-width="5" stroke-dasharray="1 10" stroke-linecap="round"/>
+    <g transform="translate(206 200) rotate(-45)"><circle cx="0" cy="-88" r="8" fill="#fffdf7" stroke="#2a1812" stroke-width="3"/></g>
+    <g transform="translate(206 200) rotate(60)"><circle cx="0" cy="-88" r="7" fill="#2a1812"/></g>
+
+    <g transform="translate(206 200) rotate(51)"><line x1="0" y1="8" x2="0" y2="-60" stroke="#2a1812" stroke-width="4" stroke-linecap="round"/></g>
+    <circle cx="206" cy="200" r="7" fill="#2a1812"/>
+  </svg>
+
+  <div class="chips">
+    <p>Inicio <b>82 kg</b></p>
+    <p>Hoy <b>81,4 kg</b></p>
+    <p>Meta <b>75 kg</b></p>
+    <p>Ritmo <b>−0,5 kg a la semana</b></p>
+  </div>
+
+  <p class="hilo">Semana 2 de 14 · llegas hacia el 8 de febrero de 2027</p>
+  <ol class="dots" aria-label="Catorce semanas: la 1 hecha, la 2 es hoy">
+    <li class="hecho"></li><li class="hoy" aria-label="semana 2, hoy"></li><li></li><li></li><li></li><li></li><li></li>
+    <li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+  </ol>
+
+  <div class="kcal">
+    <p><b>2.000</b> kcal al día</p>
+    <p><b>140 g</b> de proteína al día</p>
+  </div>
+
+  <h3 class="hilo">Tu semana de comidas · kcal del día</h3>
+  <ol class="semana" aria-label="Plan de la semana">
+    <li><span class="d">Lun</span><span class="pl2">1.980</span><em></em><small>140 g</small></li>
+    <li><span class="d">Mar</span><span class="pl2 nc">—</span><em></em><small>guardia</small></li>
+    <li><span class="d">Mié</span><span class="pl2 nc">—</span><em></em><small>saliente</small></li>
+    <li><span class="d">Jue</span><span class="pl2">2.030</span><em>+30</em><small>140 g</small></li>
+    <li><span class="d">Vie</span><span class="pl2">1.990</span><em></em><small>140 g</small></li>
+    <li><span class="d">Sáb</span><span class="pl2">2.010</span><em>+10</em><small>140 g</small></li>
+    <li><span class="d">Dom</span><span class="pl2">1.990</span><em></em><small>140 g</small></li>
+  </ol>
+
+  <p class="nota2">Los 5 días que cuentan suman 10.000 kcal: 2.000 de media. El + marca el día que se pasa. Guardia y saliente no cuentan. Las kcal del entreno no se suman.</p>
+</section>
+
+<script>
+(function () {
+  var b = document.getElementById('cafe');
+  var ok = document.getElementById('ok');
+  var det = document.getElementById('vie-det');
+  b.addEventListener('click', function () {
+    var on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    ok.setAttribute('visibility', on ? 'visible' : 'hidden');
+    det.textContent = on ? 'cafecito hecho' : 'cafecito 15:30';
+  });
+})();
+</script>
+</body>
+</html>
