@@ -13,21 +13,24 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 ## En marcha
 
 Nada. **La siguiente: D1, la limpieza invisible de Dinero** (sesión nueva, en sonnet: «/plan-socialista y haz la D1»).
+Antes de la D3, contesta qué se quita de Dinero (lista en `consejo/2026-10-28-feria.md`, «Se quitaría»).
 
 ## Por hacer
 
-### Tanda Dinero · Consejo + feria del 2026-10-28 · ≈3,9 M · espera tu visto bueno (modelo final, qué se quita, presupuesto)
+### Tanda Dinero · Consejo, feria y concurso «La Rara» del 2026-10-28 · ≈4,3 M · espera tu sí a qué se quita y al presupuesto
 
-Actas: `consejo/2026-10-28.md` y `consejo/2026-10-28-feria.md`. Modelo final: `maquetas/dinero-final.html`. Va antes
-que lo que queda de Comer.
+Actas en `consejo/` (2026-10-28, -feria, -la-rara). **Diseño elegido:** Portada + Ahorro en el mundo de **La
+Laurisilva** (`maquetas/dinero-rara2-laurisilva.html`, 5/5); Gastos = el puesto 3 (5/5); Compras = R2-C (5/5); las dos
+con la piel de la Laurisilva. «Cuánto me queda» fuera; invertir fuera (una línea). Va antes que lo que queda de Comer.
 
 | # | Sesión | Tipo | Quién | Presupuesto |
 |---|---|---|---|---|
 | D1 | Limpieza invisible + las 2 pruebas de fecha + prueba «foto» de cifras | arreglo | sonnet | ~0,4 M |
-| D2 | Datos nuevos + portada nueva + En qué se me va | construir | sonnet con ficha; `verificador` | ~1,2 M |
-| D3 | Ahorro con objetivo a fecha y su gráfica + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
-| D4 | Lo que quiero comprar [v3-dinero-compras] | construir | sonnet; `verificador` | ~0,8 M |
-| D5 | Quitar lo viejo que apruebes (con migración) | arreglo | sonnet | ~0,6 M |
+| D2 | Ficha + maqueta de Gastos y Compras con la piel de la Laurisilva (una ronda, sin concurso) | maqueta | sonnet; `verificador` | ~0,4 M |
+| D3 | Datos nuevos (sin borrar nada) + Portada Laurisilva + Gastos | construir | sonnet con ficha; `verificador` | ~1,2 M |
+| D4 | Ahorro Laurisilva (objetivo a fecha y su gráfica) + «Ya ha llegado la nómina» | construir | sonnet; `verificador` | ~0,9 M |
+| D5 | Lo que quiero comprar [v3-dinero-compras] | construir | sonnet; `verificador` | ~0,8 M |
+| D6 | Quitar lo viejo que apruebes (con migración) | arreglo | sonnet | ~0,6 M |
 
 ### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 3 de 8 hechas
 
@@ -82,7 +85,7 @@ De dónde sale el ahorro:
 ## Hecha
 
 - [v3-gobierno] El gobierno del repositorio y el Consejo de Ministros (copiado de fiebres-neutropenias); primer
-  Consejo: la reforma de Dinero · 2026-10-28
+  Consejo: la reforma de Dinero; feria (3 rondas) y concurso «La Rara» (2 rondas): gana La Laurisilva · 2026-10-28
 
 - [v3-plan-global] El plan 3.0, los gastos (`tools/gasto.mjs`) y la skill `ficha-de-tarea`, en main · 2026-10-28
 

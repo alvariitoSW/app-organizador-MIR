@@ -1444,3 +1444,14 @@ sesiones (D1-D6, ≈5,0 M), método «págate primero + bolsillos» con un solo 
 y `/revisa-seguridad`). Hacer el informe de la S8 aparte (el acta lo sustituye).
 **Supuestos.** Que «el repositorio de fiebres neutropenias» es `fiebres-neutropenias` (el más reciente) y no
 `urgencias-fiebre-neutropenica`. Que pedir instalarlo equivale a aprobar la constitución adaptada.
+
+## 2026-10-28 · Dinero: la feria y el concurso «La Rara»
+
+**Elegido.** Dinero deja de decir «cuánto me queda» (lo da el banco) y pasa a ayudar a ahorrar. Tras tres rondas de
+feria (17 maquetas por partes) y dos de concurso de ideas opuestas (10 maquetas), el diseño es: **Portada + Ahorro en
+el mundo de La Laurisilva** (5/5), **Gastos = «En qué se me va y dónde ahorrar»** (5/5) y **Compras compactas** (5/5),
+estas dos con la piel de la Laurisilva. Ahorro con objetivo a fecha y su gráfica; invertir fuera. Tanda D1-D6 ≈4,3 M.
+**Descartado.** Un solo número arriba (el banco ya lo da); huchas por %; la lista larga de cobros (2/5); los estilos
+de truco sin dibujo que informe (teletexto, oca, cartas: 1/5). Reserva: El Aljibe.
+**Supuestos.** Las cifras de todas las maquetas son inventadas (el repositorio es público). Lo que se quita de la
+Dinero actual lo decide el usuario antes de la D3.
