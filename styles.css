@@ -2796,9 +2796,15 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjtd{display:flex;align-items:center;gap:11px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left}
 .cjtd:first-child{border-top:0}.cjtd .e{font-size:20px;width:26px;text-align:center;flex:none}
 .cjtd .tx{flex:1;min-width:0}.cjtd .tx b{display:block;font-size:14.5px;font-weight:700}.cjtd .tx span{font-size:12px;color:var(--ink2)}
-.cjml{padding:2px 14px}
-.cjmm{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
-.cjmm:first-child{border-top:0}
+.cjml{padding:2px 14px;position:relative}
+.cjmm{display:flex;gap:9px;align-items:flex-start;padding:12px 0;position:relative}
+.cjmm+.cjmm::before{content:"";position:absolute;left:calc(44px + 9px + 13px);top:-14px;height:28px;border-left:2px solid var(--line)}
+.cjmm .cjhr{width:44px;flex:none;font-size:12px;font-weight:800;color:var(--ink2);padding-top:7px;font-variant-numeric:tabular-nums}
+.cjmm .cjcu{flex:1;min-width:0}.cjmm .cjfila{display:flex;gap:10px;align-items:flex-start}
+.cjmm:not(.hecho):not(.cjsig) .tx .n{opacity:.7}
+.cjmm.cjsig{background:color-mix(in srgb,var(--ok) 9%,transparent);border-radius:14px;margin:2px -8px;padding:12px 8px}
+.cjmm.cjsig::before{left:calc(44px + 9px + 13px + 8px)}
+.cjmm.cjsig .k{color:var(--ok)}.cjmm.cjsig .cjsigb{margin-top:8px}
 .cjq{width:28px;height:28px;flex:none;border-radius:50%;border:2px dashed var(--ink2);background:none;color:#04121c;font:inherit;font-weight:900;font-size:14px;margin-top:2px;display:grid;place-items:center;padding:0;opacity:.8}
 .cjq.on{background:#34d399;border:2px solid #34d399;opacity:1}
 .cjq.otro{background:var(--brand);border:2px solid var(--brand);opacity:1}
@@ -3815,8 +3821,6 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .ruedap{display:flex;justify-content:space-between;align-items:center;margin-top:7px}
 /* Comer › Hoy: la línea del día (Ahora · Lo siguiente · la semana de un vistazo) */
 .cjahora{padding:10px 12px;margin-bottom:8px}.cjahora .row{margin-bottom:7px}
-.cjsig{border-color:var(--ok)}.cjsig .cap{color:var(--ok);margin-bottom:3px}
-.cjsigt{font-size:17px;font-weight:900}
 .cjsigb{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.cjsigb .btn:only-child{grid-column:1/-1}
 .cjs7c{margin:6px 0 4px}
 .cjs7{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;width:100%;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}

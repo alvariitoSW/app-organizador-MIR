@@ -9533,7 +9533,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.addFoodEntry(k, { macro: { nombre: 'Comí fuera', kcal: 270, prot: 15 }, pos: 'comida' });
       P.ui.cjeHoja = null; P.ui.cjeTab = ''; P.ui.frase = null; P.ui.foodDate = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.save(); P.render(); });
     const hoy = await page.evaluate(() => { const fs = [...document.querySelectorAll('#main .cjmm')];
-      const f = (n) => fs.find((x) => x.querySelector('.k').textContent === n);
+      const f = (n) => fs.find((x) => x.dataset.p === n.toLowerCase());
       return { todo: [...document.querySelectorAll('#main .cjtd b')].map((b) => b.textContent),
         comida: { q: f('COMIDA').querySelector('.cjq').className, n: f('COMIDA').querySelector('.n').textContent, pl: (f('COMIDA').querySelector('.pl') || {}).textContent || '' },
         cena: { q: f('CENA').querySelector('.cjq').className, plan: f('CENA').querySelector('.n').classList.contains('plan') } }; });
@@ -13389,6 +13389,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       mac: Array.prototype.map.call(document.querySelectorAll('#main .cjahora .cjmac > span'), (x) => x.className).join(''),
       sig: (document.querySelector('#main .cjsig') || {}).dataset ? document.querySelector('#main .cjsig').dataset.p : '',
       hecho: !!document.querySelector('#main .cjsig [data-a="cje-ok"]'), otra: !!document.querySelector('#main .cjsig [data-a="cje-mom"]'),
+      filas: Array.prototype.map.call(document.querySelectorAll('#main .cjml .cjmm'), (f) => f.dataset.p).join(','),
+      orden: Array.prototype.map.call(document.querySelectorAll('#main .cjml .cjmm'), (f) => (f.classList.contains('cjsig') ? 'S' : (f.classList.contains('hecho') ? 'H' : 'g'))).join(''),
+      horas: Array.prototype.every.call(document.querySelectorAll('#main .cjml .cjmm'), (f) => /^\d{1,2}:\d\d$/.test((f.querySelector('.cjhr') || {}).textContent || '')),
+      dup: document.querySelectorAll('#main .cjsig:not(.cjmm)').length + (document.querySelectorAll('#main .cjml').length === 1 ? 0 : 1),
       dias: document.querySelectorAll('#main .cjs7 span').length, iconos: Array.prototype.every.call(document.querySelectorAll('#main .cjs7 i'), (i) => i.textContent.trim().length > 0) }));
     r.a = await lee();
     if (r.a.hecho) { await page.click('#main .cjsig [data-a="cje-ok"]'); await page.waitForTimeout(250); }
@@ -13403,9 +13407,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     }
     if (r.a.dias) { await page.click('#main .cjs7'); await page.waitForTimeout(200); }
     r.d = await page.evaluate(() => window.PG.ui.cjeTab);
+    // (e) sin plan para el siguiente pero con algo reciente: LO SIGUIENTE propone lo de siempre y «✓ Hecho» lo apunta
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), w = (new Date().getDay() + 6) % 7;
+      ['desayuno', 'comida', 'cena'].forEach((c) => P.sbPoner(w, c, P.dishNada().id));
+      P.store.food.log[P.iso(addD(-1))] = [{ id: 'r332', p: 'cena', nombre: 'Yogur 332', kcal: 100, prot: 10, rac: 1, ts: Date.now() - 864e5, frase: { txt: 'yogur 332', tipo: 'otro', it: [], ot: [] } }];
+      function addD(n) { const d = new Date(); d.setDate(d.getDate() + n); return d; }
+      P.store.food.log[k] = []; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    r.e = await page.evaluate(() => { const f = document.querySelector('#main .cjmm.cjsig'); return { n: document.querySelectorAll('#main .cjmm.cjsig').length, txt: f ? f.querySelector('.n').textContent : '',
+      hecho: f ? !!f.querySelector('[data-a="cje-siempre"]') : false, otra: f ? !!f.querySelector('[data-a="cje-mom"].btn') : false }; });
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia332')); localStorage.removeItem('__copia332'); P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.frase = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     check('Comer › Hoy es una línea: lupa, Ahora con kcal/P/HC/G, LO SIGUIENTE con ✓ Hecho (apunta y pasa al momento siguiente) y Otra cosa (escribir dirigido), y la semana de 7 días con icono lleva a Plan',
       r.a.lupa && r.a.mac === 'kcalpcg' && ord.indexOf(r.a.sig) >= 0 && r.a.hecho && r.a.otra && r.a.dias === 7 && r.a.iconos &&
+      r.a.filas === r.a.filas.split(',').filter((x, i, a) => a.indexOf(x) === i).join(',') && r.a.horas && r.a.dup === 0 &&
+      /^[Hg]*S[g]*$/.test(r.a.orden) && !/S.*H/.test(r.b.orden) && (r.b.orden.match(/S/g) || []).length === (r.b.sig ? 1 : 0) &&
+      r.e.n === 1 && r.e.txt === 'Yogur 332' && r.e.hecho && r.e.otra &&
       r.b.apuntado === 1 && r.b.sig === r.b.esperado && (!r.b.sig || (r.c && r.c.p === r.b.sig && r.c.campo)) && r.d === 'sem', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
