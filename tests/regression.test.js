@@ -10097,6 +10097,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     for (let i = 0; i < 8; i++) pasos.push(await cl('[data-a="cn-cudit-r"][data-v="1"]'));
     pasos.push(await cl('[data-a="cn-tb"][data-v="7"]'));
     const plan = await page.evaluate(() => { const c = window.PG.consumoS(); return { cudit: c.cudit.length && c.cudit[0].p, tb: !!(c.plan.tb && c.plan.tb.dias === 7) }; });
+    // el check-in de la mañana no sale antes de las 5: se fija la hora a las 12:00 de hoy (mismo patrón que la 75) para que no dependa de cuándo corre la suite
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const fijo = new Orig(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0).getTime();
+      window.__origDate257 = Orig; window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fijo); else super(...a); } static now() { return fijo; } }; });
     // asistente en Hoy: check-in y una sola tarjeta; × la silencia
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
     const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj:not(.din):not(.cn)').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
@@ -10105,6 +10108,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const antes = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
     pasos.push(await cl('#main .astj [data-a="asist-sil"]'));
     const despues = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
+    await page.evaluate(() => { window.Date = window.__origDate257; });
     // hábitos: Tu semana y un experimento
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = ''; P.render(); });
     pasos.push(await cl('[data-a="hab-vista"][data-v="rev"]'));
@@ -11119,10 +11123,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { window.PG.store.food.compraCada = 14; });
     await toca('[data-a="tp-semana"]');
     if (dow274 >= 3) await toca('#main [data-a="cje-sem"][data-d="1"]', 200);
-    r.c = await page.evaluate(() => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
+    r.c = await page.evaluate((sig) => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
       const fut = R.dia.filter((d) => !d.pas), g = R.dia[2];
-      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, quedan: 7 - (new Date().getDay() + 6) % 7, ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
-        cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; });
+      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, quedan: 7 - (sig ? 0 : (new Date().getDay() + 6) % 7), ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
+        cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; }, dow274 >= 3);
     await toca('[data-a="plm-paso"][data-v="2"]', 150);
     r.c.paso2 = await page.evaluate(() => ({ paso: (window.PG.ui.plM || {}).paso, celdas: document.querySelectorAll('#main .plmini button').length }));
     await toca('[data-a="plm-usar"]', 200);
@@ -12701,9 +12705,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Fija: «que no solo salga la línea en rojo, sino el día entero», y que lo de Semana no se pierda al quitarla.
   {
     const r = {};
-    const K = await page.evaluate(() => { const P = window.PG, d = P.addDays(new Date(), 3), k = P.iso(d), k1 = P.iso(P.addDays(d, 1));
-      P.__t321 = { k, k1, ov: (P.store.rotation.shiftByDay || {})[k], ov1: (P.store.rotation.shiftByDay || {})[k1], mode: P.store.rotation.mode };
-      P.store.rotation.mode = 'date'; P.setDayOverride(k, 'sh-t', ''); P.setDayOverride(k1, 'sh-t', '');
+    const K = await page.evaluate(() => { const P = window.PG, d = P.addDays(new Date(), 3), k = P.iso(d), k1 = P.iso(P.addDays(d, 1)), k0 = P.iso(P.addDays(d, -1));
+      // el día de ANTES también se fija a trabajo: si cae en guardia (el sábado de la rotación de prueba), el día k saldría «saliente» y no «trabajo»
+      P.__t321 = { k, k1, k0, ov: (P.store.rotation.shiftByDay || {})[k], ov1: (P.store.rotation.shiftByDay || {})[k1], ov0: (P.store.rotation.shiftByDay || {})[k0], mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(k0, 'sh-t', ''); P.setDayOverride(k, 'sh-t', ''); P.setDayOverride(k1, 'sh-t', '');
       P.ui.monSel = ''; P.ui.hojaDia = ''; P.ui.mesModo = null; P.store.meta.pulsarVisto = true; P.save(); P.render(); return { k, k1 }; });
     await page.click('[data-a="nav-cal"]');
     await page.click('#calModes button[data-t="month"]');
@@ -12733,7 +12738,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .volver[data-a="aju-vista"]');
     r.vuelta = await page.evaluate(() => (document.querySelector('#main .subtit') || {}).textContent || '');
     await page.evaluate(() => { const P = window.PG, t = P.__t321;
-      P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.setDayOverride(t.k1, t.ov1 ? t.ov1.shift : null, t.ov1 ? t.ov1.guard : '');
+      P.setDayOverride(t.k0, t.ov0 ? t.ov0.shift : null, t.ov0 ? t.ov0.guard : ''); P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.setDayOverride(t.k1, t.ov1 ? t.ov1.shift : null, t.ov1 ? t.ov1.guard : '');
       P.store.rotation.mode = t.mode; P.ui.monSel = ''; P.ui.hojaDia = ''; P.ui.tab = 'month'; delete P.__t321; P.save(); P.render(); });
     check('Calendario solo tiene Mes y Hoy (sin Semana)', r.modos === 'month,hoy', r.modos);
     check('poner guardia desde la hoja pinta la casilla entera de guardia, con 🚨 y el número grande, y el día siguiente queda saliente',
