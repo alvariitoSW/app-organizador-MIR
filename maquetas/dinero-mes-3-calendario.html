@@ -63,7 +63,7 @@ h1,h2{margin:0;font-weight:800}
 .cal li.pasado{background:var(--pasado);border-color:#9C9480}
 .cal li.pasado .m{font-size:11px;top:24px;color:var(--suave);letter-spacing:0}
 .cal li.hoy{background:var(--amarillo);box-shadow:0 0 0 3px var(--tinta)}
-.cal li.hoy .d b::after{content:" HOY";font-size:9px;letter-spacing:.3px}
+.cal li.hoy .d i{font-weight:800;color:var(--tinta)}
 .cal li.nota{grid-column:1/6;background:var(--lila);transform:rotate(-.6deg);padding:6px 10px;border-radius:16px;display:flex;flex-direction:column;justify-content:center}
 .cal li.nota b{font-size:14px;font-weight:800}
 .cal li.nota span{font-size:12px;font-weight:700}
@@ -76,7 +76,7 @@ h1,h2{margin:0;font-weight:800}
 .cal li.ultimo{background:var(--menta)}
 .st{position:absolute;left:2px;right:2px;bottom:2px;height:17px;border-radius:6px;font-size:10px;font-weight:800;line-height:15px;text-align:center;white-space:nowrap;border:1.5px solid var(--tinta);transform-origin:0 100%;transition:transform .55s cubic-bezier(.5,-.3,.6,1),opacity .45s}
 .st.por{background:var(--coral);box-shadow:1px 2px 0 var(--tinta)}
-.st.ya{background:transparent;border-style:dashed;text-decoration:line-through;transform:rotate(-5deg);color:var(--suave);border-color:var(--suave)}
+.st.ya{font-size:9px;background:transparent;border-style:dashed;text-decoration:line-through;transform:rotate(-5deg);color:var(--suave);border-color:var(--suave)}
 .peeled .st{transform:translate(10px,-26px) rotate(28deg);opacity:0}
 
 /* diciembre */
@@ -276,15 +276,14 @@ h1,h2{margin:0;font-weight:800}
   h+='<li class="nota"><b>Cada casilla = tu dinero del día</b><span>~30 € al día hasta el 24, sin tocar tu ahorro (812 €)</span></li>';
   for(var i=0;i<31;i++){
     var dia=i<7?25+i:i-6, mes=i<7?'oct':'nov', clave=dia+' '+mes;
-    var pas=(mes==='oct'&&dia<29), hoy=(mes==='oct'&&dia===29);
-    var f=fijos[clave], cl=pas?'pasado':(hoy?'hoy':'');
-    var etq=(dia===25||dia===1)?'<i>'+mes+'</i>':'';
+    var pas=(mes==='oct'&&dia<29), hoy=(mes==='oct'&&dia===29), ult=(mes==='nov'&&dia===24);
+    var f=fijos[clave], cl=pas?'pasado':(hoy?'hoy':(ult?'ultimo':''));
+    var etq=(dia===25||dia===1||ult)?'<i>'+mes+'</i>':(hoy?'<i>hoy</i>':'');
     var aria=dia+' de '+(mes==='oct'?'octubre':'noviembre')+(hoy?', hoy':'')+(pas?', ya gastado':', 30 euros para gastar')+(f?', pegatina: '+f.n+(f.ya?' (pagado)':' (por pagar)'):'');
     h+='<li class="'+cl+'" aria-label="'+aria+'"><span class="d"><b>'+dia+'</b>'+etq+'</span>'
-      +'<span class="m">'+(pas?'gastado':'30<u>€</u>')+'</span>'
+      +'<span class="m">'+(pas?'gastado':(ult?'30<u>€</u>':'30<u>€</u>'))+'</span>'
       +(f?'<span class="st '+(f.ya?'ya':'por')+'">'+(f.ya?'✓ ':'')+f.t+'</span>':'')+'</li>';
   }
-  h+='<li class="ultimo" aria-label="24 de noviembre, última casilla"><span class="d"><b>24</b><i>nov</i></span><span class="m" style="font-size:11px;top:26px">nómina</span></li>';
   h+='<li class="hucha" id="hucha"></li>';
   cal.innerHTML=h;
 
