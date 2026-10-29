@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>Risco Caído · La Vuelta, 2.ª ronda</title>
+<style>
+:root{--ink:#1b1410;--muted:#5a4631;--piedra:#d8b887;--piedra2:#e9d3a8;--ocre:#c98a2e;--alm:#8b2e1c;--blanco:#f6eedc;--luz:#fff1bf}
+*{box-sizing:border-box}
+html{background:#2b1f16}
+body{width:412px;margin:0;background:var(--piedra2);color:var(--ink);font:16px/1.4 "Trebuchet MS",Verdana,Arial,sans-serif;overflow-x:hidden}
+svg{display:block;width:412px}
+h1,h2,p{margin:0}
+.cartel{background:var(--ink);color:var(--blanco);padding:16px}
+.cartel h1{font-size:24px;letter-spacing:.5px}
+.cartel p{font-size:15px;margin-top:6px}
+.rot{background:var(--alm);color:var(--blanco);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px}
+.pant{background:var(--piedra2);position:relative}
+.pad{padding:8px 16px}
+.btn{min-height:44px;min-width:44px;border:3px solid var(--ink);background:var(--blanco);color:var(--ink);font:700 16px "Trebuchet MS",Verdana,sans-serif;padding:8px 14px;cursor:pointer;border-radius:0}
+.btn:focus-visible,[role=button]:focus-visible{outline:4px solid var(--alm);outline-offset:2px}
+.btn.grande{width:100%;background:var(--alm);color:var(--blanco);border-color:var(--ink)}
+.btn.grande[aria-pressed=true]{background:var(--ink)}
+/* pantalla 0 */
+#texto{margin-top:6px}
+#texto .s{padding:4px 8px;margin:0 -8px;border-left:6px solid transparent;font-size:15px;line-height:1.35}
+#texto.tour .s{opacity:.3}
+#texto.tour .s.done{opacity:.8}
+#texto.tour .s.on{opacity:1;background:var(--luz);border-left-color:var(--alm)}
+#punto{font-size:13px;font-weight:700;color:var(--muted);margin-top:8px;min-height:20px}
+.halo{fill:none;stroke:var(--alm);stroke-width:4;stroke-dasharray:10 5}
+.touring .part{opacity:.3}
+.touring .part.on{opacity:1}
+@media (prefers-reduced-motion:reduce){#btn45,#punto{display:none}}
+/* pantalla 1 */
+.hoy{background:var(--ink);color:var(--blanco);padding:12px 16px;border-top:6px solid var(--ocre)}
+.hoy b{font-size:22px;display:block}
+.hoy span{font-size:15px}
+.lista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.lista li{background:var(--piedra);border:3px solid var(--ink);padding:4px 8px;min-height:50px;display:flex;justify-content:space-between;align-items:center;gap:6px}.lista li:last-child{grid-column:1/-1}.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lista .nom{font-weight:700;font-size:14px}
+.lista .nom small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.lista .kg{font-weight:800;font-size:18px}
+.lista .kg small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+.nota{font-size:14px;color:var(--muted);margin-top:8px}
+.nota b{color:var(--ink)}
+#minimo{background:var(--blanco);border:3px solid var(--ink);padding:10px 12px;margin-top:8px;font-size:15px}
+#minimo[hidden]{display:none}
+.tabla{width:100%;border-collapse:collapse;font-size:15px}
+.tabla th,.tabla td{border-bottom:2px solid var(--muted);padding:6px 4px;text-align:left}
+.tabla th{font-size:13px;color:var(--muted)}
+.tabla td.n{text-align:right;font-weight:800}
+.losas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.losa{background:var(--piedra);border:3px solid var(--ink);padding:8px 10px;min-height:64px}
+.losa b{display:block;font-size:20px}
+.losa span{font-size:14px}
+.dias{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.dia{background:var(--piedra);border:3px solid var(--ink);padding:4px 0;text-align:center;font-size:13px;font-weight:700;min-height:64px}
+.dia b{display:block;font-size:14px}
+.dia.pasa{background:var(--alm);color:var(--blanco)}
+.dia.nc{background:var(--blanco);color:var(--muted)}
+.fin{padding:12px 16px;background:var(--ink);color:var(--blanco);font-size:13px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+ <defs>
+  <filter id="grano" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .25  0 0 0 0 .15  0 0 0 0 .06  0 0 0 .9 -.25"/></filter>
+  <filter id="mancha" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".012 .03" numOctaves="3" seed="9"/><feColorMatrix values="0 0 0 0 .45  0 0 0 0 .28  0 0 0 0 .1  0 0 0 1.1 -.35"/></filter>
+  <pattern id="rayas" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#d8b887"/><rect width="3" height="7" fill="#1b1410"/></pattern>
+ </defs>
+</svg>
+
+<header class="cartel">
+ <h1>Risco Caído · Artenara</h1>
+ <p>Una cueva de Gran Canaria donde la luz entra por un agujero del techo y recorre los grabados de la pared. Aquí, la mancha de luz es la hora de hoy; la semana son siete triángulos y la vuelta se pinta hilera a hilera.</p>
+</header>
+
+<!-- PANTALLA 0 -->
+<p class="rot">Pantalla 0 · En 45 segundos</p>
+<section class="pant" id="s0" aria-label="En 45 segundos">
+ <div id="d0"></div>
+ <div class="pad">
+  <button class="btn grande" id="btn45" aria-pressed="false">Explícamelo · 45 s</button>
+  <p id="punto" aria-live="polite"></p>
+  <div id="texto">
+   <p class="s" data-i="0">Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.</p>
+   <p class="s" data-i="1">Al abrirla ves qué toca hoy, a qué hora y dónde. La sesión trae cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El finde, parque.</p>
+   <p class="s" data-i="2">Si lo dejas dos semanas, la vuelta empieza al 35% y sube diez puntos por semana. Si fallas, repites sin castigo. La racha cuenta semanas.</p>
+   <p class="s" data-i="3">Tu meta: de 82 a 75 kilos, con unas 2.000 kcal y 140 g de proteína. El plan semanal de comidas cuadra con eso.</p>
+   <p class="s" data-i="4">El dibujo es una cueva: la luz es la hora, los triángulos son tu semana y la cuadrícula pintada es la vuelta. Se entiende sin leer.</p>
+  </div>
+ </div>
+</section>
+
+<!-- PANTALLA 1 -->
+<p class="rot">Pantalla 1 · Hoy toca</p>
+<section class="pant" id="s1" aria-label="Hoy toca">
+ <div id="d1"></div>
+ <div class="hoy"><b>Jueves · Gimnasio · 15:00–16:00</b><span>Semana 3 de la vuelta, al 55%. Dos series, esfuerzo suave: que te sobren unas 4 repeticiones.</span></div>
+ <div class="pad">
+  <ul class="lista" id="ej"></ul>
+  <p class="nota" id="cambio-nota" aria-live="polite">Entre series la app cuenta el descanso. Si sacas todas las series, la próxima vez sube el peso.</p>
+  <div class="dos"><button class="btn" id="btncambia">Cambiar un ejercicio</button><button class="btn" id="btnmin" aria-expanded="false">¿Vas justo? Mínima · 25 min</button></div>
+  <div id="minimo" hidden><b>Mínima a las 15:30:</b> 3 ejercicios × 2 series. Sentadilla 45 kg, press de banca 32,5 kg y remo 27,5 kg. Cuenta igual para la racha.</div>
+  <p class="nota" id="dia-nota" aria-live="polite" style="margin-top:12px"><b>Toca un triángulo</b> de la semana para ver su día.</p>
+ </div>
+</section>
+
+<!-- PANTALLA 2 -->
+<p class="rot">Pantalla 2 · La vuelta</p>
+<section class="pant" id="s2" aria-label="La vuelta">
+ <div id="d2"></div>
+ <div class="pad">
+  <button class="btn grande" id="btnfallo" aria-pressed="false">Simular: esta semana no llego</button>
+  <p class="nota" id="fallo-nota" aria-live="polite"><b>Esta semana, la 3.ª, al 55%.</b> Cada sesión pinta un trozo de la hilera. Racha: 2 semanas cumplidas seguidas.</p>
+  <table class="tabla" style="margin-top:12px">
+   <caption style="text-align:left;font-weight:700;padding-bottom:4px">Tus cargas: antes (100%) y esta semana (55%)</caption>
+   <thead><tr><th scope="col">Ejercicio</th><th scope="col" class="n">100%</th><th scope="col" class="n">55%</th></tr></thead>
+   <tbody>
+    <tr><td>Sentadilla</td><td class="n">80 kg</td><td class="n">45 kg</td></tr>
+    <tr><td>Press de banca</td><td class="n">60 kg</td><td class="n">32,5 kg</td></tr>
+    <tr><td>Peso muerto</td><td class="n">90 kg</td><td class="n">50 kg</td></tr>
+    <tr><td>Remo</td><td class="n">50 kg</td><td class="n">27,5 kg</td></tr>
+    <tr><td>Press militar</td><td class="n">35 kg</td><td class="n">20 kg</td></tr>
+   </tbody>
+  </table>
+  <p class="nota">Si una semana falla, la hilera espera a medio pintar y se repite al mismo %. Si fallan dos, bajas un escalón. Nada se borra.</p>
+ </div>
+</section>
+
+<!-- PANTALLA 3 -->
+<p class="rot">Pantalla 3 · Tu objetivo de peso</p>
+<section class="pant" id="s3" aria-label="Tu objetivo de peso">
+ <div id="d3"></div>
+ <div class="pad">
+  <div class="losas">
+   <div class="losa"><b>~2.000 kcal</b><span>al día</span></div>
+   <div class="losa"><b>140 g</b><span>de proteína al día</span></div>
+   <div class="losa"><b>−0,5 kg</b><span>por semana</span></div>
+   <div class="losa"><b>14 semanas</b><span>hasta el 8 de febrero de 2027</span></div>
+  </div>
+  <p class="nota">Las kcal del entreno no se suman para comer más. Guardia y saliente no cuentan en la media.</p>
+  <h2 style="font-size:17px;margin-top:14px">Plan de comidas de la semana</h2>
+  <div class="dias" id="plan" role="list"></div>
+  <p class="nota" id="plan-nota"><b>Media de los días que cuentan: 2.030 kcal.</b> El sábado se pasa: el plan lo marca para ajustarlo.</p>
+ </div>
+</section>
+
+<div class="fin">Maqueta con datos inventados. Nada se guarda.</div>
+
+<script>
+const INK='#1b1410',OCRE='#c98a2e',ALM='#8b2e1c',BLA='#f6eedc',PIE='#d8b887',LUZ='#fff1bf';
+const NS='http://www.w3.org/2000/svg';
+const wall=(w,h)=>`<rect width="${w}" height="${h}" fill="${PIE}"/><rect width="${w}" height="${h}" filter="url(#mancha)" opacity=".5"/><rect width="${w}" height="${h}" filter="url(#grano)" opacity=".5"/>`;
+const zig=(x,y,w,a,n,col,sw)=>{let p=[];for(let i=0;i<=n;i++)p.push((x+i*w/n)+','+(y+(i%2?a:0)));return `<polyline points="${p.join(' ')}" fill="none" stroke="${col}" stroke-width="${sw||3}" stroke-linejoin="miter"/>`};
+const tri=(cx,by,w,h)=>`M${cx-w/2} ${by}L${cx+w/2} ${by}L${cx} ${by-h}Z`;
+const T=(x,y,s,o={})=>`<text x="${x}" y="${y}" font-size="${o.fs||13}" font-weight="${o.fw||700}" text-anchor="${o.a||'middle'}" fill="${o.c||INK}" font-family="Trebuchet MS,Verdana,sans-serif">${s}</text>`;
+const DIAS=[['L','Gimnasio','luz'],['M','Guardia','osc'],['X','Saliente','media'],['J','HOY','luz'],['V','Mínima','min'],['S','Parque','aire'],['D','Reposo','desc']];
+function semana(y,tap){ // y = base de los triángulos
+  let s='';
+  DIAS.forEach((d,i)=>{
+    const cx=31+i*58.3,k=d[2];let g='';
+    const lu=k==='luz'||k==='min';
+    if(k==='luz')g=`<path d="${tri(cx,y,44,40)}" fill="${OCRE}" stroke="${INK}" stroke-width="3"/><path d="${tri(cx,y-6,18,16)}" fill="${LUZ}" stroke="${INK}" stroke-width="2"/>`;
+    if(k==='osc')g=`<path d="${tri(cx,y,44,40)}" fill="${INK}" stroke="${INK}" stroke-width="3"/>`;
+    if(k==='media')g=`<path d="${tri(cx,y,44,40)}" fill="url(#rayas)" stroke="${INK}" stroke-width="3"/>`;
+    if(k==='min')g=`<path d="${tri(cx,y,44,40)}" fill="${BLA}" stroke="${INK}" stroke-width="3"/><path d="${tri(cx,y-2,22,20)}" fill="${OCRE}" stroke="${INK}" stroke-width="2"/>`;
+    if(k==='aire')g=`<path d="${tri(cx,y-6,44,40)}" fill="${BLA}" stroke="${INK}" stroke-width="3" stroke-dasharray="6 4"/><circle cx="${cx+18}" cy="${y-48}" r="6" fill="${OCRE}" stroke="${INK}" stroke-width="2"/>`+[[0,-12],[10,-9],[-10,-9]].map(r=>`<line x1="${cx+18}" y1="${y-48}" x2="${cx+18+r[0]*1.5}" y2="${y-48+r[1]*0.3-6}" stroke="${INK}" stroke-width="0"/>`).join('');
+    if(k==='desc')g=`<path d="${tri(cx,y,44,40)}" fill="none" stroke="${INK}" stroke-width="3"/>`;
+    if(i===3)g=`<path d="${tri(cx,y+5,58,56)}" fill="none" stroke="${ALM}" stroke-width="4" stroke-dasharray="8 4"/>`+g;
+    s+=`<g ${tap?`role="button" tabindex="0" aria-label="${d[0]}: ${d[1]}" data-dia="${i}" style="cursor:pointer"`:''}><rect x="${cx-29}" y="${y-60}" width="58" height="${tap?106:92}" fill="transparent"/>${g}${T(cx,y+20,d[0],{fs:15})}${T(cx,y+35,d[1],{fs:12})}</g>`;
+  });
+  return s;
+}
+function cuadricula(x,y,w,rh,cols,estado,lab){ // 8 hileras, la 1 abajo
+  let s='';const pc=[35,45,55,65,75,85,95,100];
+  for(let r=0;r<8;r++){
+    const yy=y+(7-r)*rh,cw=w/cols;
+    for(let c=0;c<cols;c++){
+      let fill='none';
+      if(r<2)fill=ALM;
+      else if(r===2){const f=estado==='fallo'?0.5:0.34;if(c<Math.round(cols*f))fill=estado==='fallo'?OCRE:OCRE}
+      s+=`<rect x="${x+c*cw}" y="${yy}" width="${cw}" height="${rh}" fill="${fill}" stroke="${INK}" stroke-width="2"/>`;
+      if(fill===ALM&&(c+r)%2===0)s+=`<path d="M${x+c*cw+3} ${yy+rh-3}L${x+c*cw+cw/2} ${yy+3}L${x+c*cw+cw-3} ${yy+rh-3}" fill="none" stroke="${BLA}" stroke-width="2"/>`;
+    }
+    if(lab)s+=T(x+w+8,yy+rh/2+5,pc[r]+'%',{a:'start',fs:14,fw:r===2?800:600})+(r===2?T(x+w+8,yy+rh/2+19,estado==='fallo'?'espera':'esta semana',{a:'start',fs:12,fw:600}):'');
+  }
+  return s;
+}
+function marcas(x,y,paso,n,hecho,len){ // peso: n marcas, la 0 arriba
+  let s=`<line x1="${x}" y1="${y-10}" x2="${x}" y2="${y+paso*(n-1)+10}" stroke="${INK}" stroke-width="3"/>`;
+  for(let i=0;i<n;i++){
+    const largo=len&&i%2===0,yy=y+i*paso,d=i<hecho;
+    s+=`<line x1="${x}" y1="${yy}" x2="${x+(largo?len:len*0.55)}" y2="${yy}" stroke="${INK}" stroke-width="${d?7:3}" ${d?'':'stroke-dasharray="5 4"'}/>`;
+  }
+  return s;
+}
+function agujero(cx,w){return `<ellipse cx="${cx}" cy="0" rx="${w}" ry="${w*0.55}" fill="${LUZ}" stroke="${INK}" stroke-width="4"/>`}
+
+// ---------- Pantalla 0 ----------
+document.getElementById('d0').innerHTML=`<svg id="sv0" viewBox="0 0 412 412" height="412" role="img" aria-label="Pared de la cueva: la luz de las 15 horas, siete triángulos que son la semana, una cuadrícula que se pinta y marcas talladas del peso">
+<title>Pared de la cueva de Risco Caído</title>${wall(412,412)}
+<g>${zig(0,6,412,10,34,INK,3)}${zig(0,400,412,-10,34,ALM,3)}</g>
+${agujero(300,36)}
+<g class="part" id="p-luz">
+ <polygon points="270,8 330,8 190,100 60,100" fill="${LUZ}" opacity=".85"/>
+ <polyline points="270,8 60,100" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/><polyline points="330,8 190,100" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+ <g transform="translate(0,-50)"><path d="M70 168L125 132L180 168L125 204Z" fill="${OCRE}" stroke="${INK}" stroke-width="4"/>
+ <path d="M90 168L125 144L160 168L125 192Z" fill="none" stroke="${INK}" stroke-width="3"/><line x1="125" y1="144" x2="125" y2="192" stroke="${INK}" stroke-width="3"/><line x1="90" y1="168" x2="160" y2="168" stroke="${INK}" stroke-width="3"/>
+ ${T(260,150,'15 h · HOY TOCA',{fs:15})}${T(260,168,'gimnasio',{fs:13})}</g>
+</g>
+<g class="part" id="p-semana">${semana(232,false)}</g>
+<g class="part" id="p-vuelta">${cuadricula(20,290,210,12,8,'normal',false)}${T(125,284,'La vuelta',{fs:13})}</g>
+<g class="part" id="p-peso">${marcas(290,298,11,8,1,50)}${T(352,302,'82 kg',{a:'start',fs:13})}${T(352,380,'75 kg',{a:'start',fs:13})}${T(380,286,'Peso',{fs:13})}<path d="M284 305l-14 -7v14z" fill="${ALM}" stroke="${INK}" stroke-width="2"/></g>
+</svg>`;
+
+// ---------- Pantalla 1 ----------
+document.getElementById('d1').innerHTML=`<svg viewBox="0 0 412 450" height="450" role="img" aria-label="La luz entra por el agujero del techo y cae sobre el grabado de las 15 a 16 horas: hoy gimnasio. Debajo, la semana en siete triángulos">
+<title>Hoy toca gimnasio: la mancha de luz en las 15 h</title>${wall(412,450)}
+${zig(0,6,412,10,34,INK,3)}${agujero(206,48)}
+<polygon points="168,10 244,10 300,215 112,215" fill="${LUZ}" opacity=".9"/>
+<polyline points="168,10 112,215" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/><polyline points="244,10 300,215" stroke="${INK}" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+<path d="M156 180L206 138L256 180L206 222Z" fill="${OCRE}" stroke="${INK}" stroke-width="5"/>
+<path d="M180 180L206 160L232 180L206 202Z" fill="none" stroke="${INK}" stroke-width="3"/><line x1="206" y1="160" x2="206" y2="202" stroke="${INK}" stroke-width="3"/><line x1="180" y1="180" x2="232" y2="180" stroke="${INK}" stroke-width="3"/>
+${zig(20,196,100,12,8,INK,3)}${zig(292,196,100,12,8,INK,3)}
+<!-- reglilla de horas -->
+<line x1="20" y1="262" x2="392" y2="262" stroke="${INK}" stroke-width="4"/>
+${[13,14,15,16,17,18].map((h,i)=>{const x=40+i*66;return `<line x1="${x}" y1="250" x2="${x}" y2="274" stroke="${INK}" stroke-width="4"/>`+T(x,296,h+' h',{fs:h===15||h===16?16:14,fw:h===15||h===16?800:600})}).join('')}
+<rect x="106" y="241" width="66" height="42" fill="none" stroke="${ALM}" stroke-width="4"/><rect x="106" y="241" width="66" height="42" fill="${LUZ}" opacity=".5"/>
+<line x1="106" y1="262" x2="172" y2="262" stroke="${INK}" stroke-width="7"/>
+${T(139,318,'sol en el gimnasio',{fs:13})}
+<g>${semana(398,true)}</g>
+${zig(0,438,412,-10,34,ALM,3)}
+</svg>`;
+const EJ=[['Sentadilla','45 kg','2 × 8'],['Press de banca','32,5 kg','2 × 8'],['Peso muerto','50 kg','2 × 5'],['Remo','27,5 kg','2 × 10'],['Press militar','20 kg','2 × 8']];
+document.getElementById('ej').innerHTML=EJ.map(e=>`<li><span class="nom">${e[0]}<small>${e[2]}</small></span><span class="kg">${e[1]}</span></li>`).join('');
+document.getElementById('btncambia').onclick=(()=>{document.getElementById('cambio-nota').innerHTML='<b>Cambiado</b> por otro ejercicio del mismo músculo, de la biblioteca openGym. Las series y el % se quedan igual.'});
+document.getElementById('btnmin').onclick=function(){const m=document.getElementById('minimo');m.hidden=!m.hidden;this.setAttribute('aria-expanded',String(!m.hidden))};
+const NOTAS=['<b>Lunes:</b> gimnasio a las 15:00.','<b>Martes:</b> guardia. Hoy no se entrena, descansa.','<b>Miércoles:</b> saliente. Paseo de 20 min o nada.','<b>Jueves (hoy):</b> gimnasio de 15:00 a 16:00.','<b>Viernes:</b> sesión mínima de 25 min a las 15:30.','<b>Sábado:</b> parque a las 10:00, 40 min, sin material.','<b>Domingo:</b> descanso.'];
+document.querySelectorAll('[data-dia]').forEach(g=>{const f=()=>{document.getElementById('dia-nota').innerHTML=NOTAS[g.dataset.dia]};g.onclick=f;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
+
+// ---------- Pantalla 2 ----------
+function pinta2(estado){
+  document.getElementById('d2').innerHTML=`<svg viewBox="0 0 412 560" height="560" role="img" aria-label="Cuadrícula de ocho hileras, una por semana, del 35 al 100 por ciento. Dos hileras pintadas, la tercera a medio pintar, las demás por pintar">
+<title>La vuelta: ocho hileras pintadas poco a poco</title>${wall(412,560)}
+${zig(0,6,412,10,34,INK,3)}${zig(0,548,412,-10,34,ALM,3)}
+${T(206,50,'Cada semana, una hilera más',{fs:17,fw:800})}
+${cuadricula(24,76,260,50,8,estado,true)}
+${T(24,498,'Semana 1 abajo, semana 8 arriba',{a:'start',fs:13})}
+<path d="M300 20l0 0" stroke="none"/>
+${T(206,522,estado==='fallo'?'La hilera espera a medio pintar':'Racha: 2 semanas seguidas',{fs:15,fw:800})}
+</svg>`;
+}
+pinta2('normal');
+document.getElementById('btnfallo').onclick=function(){
+  const f=this.getAttribute('aria-pressed')!=='true';
+  this.setAttribute('aria-pressed',String(f));
+  this.textContent=f?'Volver a como estaba':'Simular: esta semana no llego';
+  pinta2(f?'fallo':'normal');
+  document.getElementById('fallo-nota').innerHTML=f?'<b>No pasa nada.</b> La hilera se queda a medio pintar y espera: la semana que viene repites el 55% y la acabas. La racha se pausa, no se borra.':'<b>Esta semana, la 3.ª, al 55%.</b> Cada sesión pinta un trozo de la hilera. Racha: 2 semanas cumplidas seguidas.';
+};
+
+// ---------- Pantalla 3 ----------
+(function(){
+  const n=15,paso=34,y0=70,x0=96;let s='';
+  s+=marcas(x0,y0,paso,n,2,64);
+  for(let i=0;i<n;i+=2){s+=T(x0-14,y0+i*paso+5,(82-i/2)+'',{a:'end',fs:16,fw:800})}
+  const py=y0+1*paso+0.2*paso*0.5*2; // 81,4: justo bajo la marca 81,5
+  s+=`<path d="M${x0+82} ${y0+paso+7}l22 -12v24z" fill="${ALM}" stroke="${INK}" stroke-width="2"/>`;
+  s+=T(x0+112,y0+paso+8,'Hoy 81,4 kg',{a:'start',fs:16,fw:800,c:ALM});
+  s+=T(x0+112,y0+paso+25,'semana 2 de 14',{a:'start',fs:13});
+  s+=T(x0+82,y0+14*paso+5,'Meta: 75 kg',{a:'start',fs:16,fw:800});
+  s+=T(x0+82,y0+14*paso+22,'8 feb 2027',{a:'start',fs:13});
+  s+=T(x0+82,y0+7*paso+5,'cada marca = media semana',{a:'start',fs:13,fw:600});
+  s+=T(x0+82,y0+7*paso+21,'−0,5 kg',{a:'start',fs:13,fw:600});
+  document.getElementById('d3').innerHTML=`<svg viewBox="0 0 412 640" height="640" role="img" aria-label="Marcas talladas que bajan de 82 a 75 kilos, una cada medio kilo. Hoy 81,4 kilos, semana 2 de 14">
+<title>El peso: marcas que bajan de 82 a 75 kg</title>${wall(412,640)}${zig(0,6,412,10,34,INK,3)}${zig(0,628,412,-10,34,ALM,3)}
+${T(206,42,'De 82 a 75 kg, una marca cada medio kilo',{fs:16,fw:800})}${s}</svg>`;
+})();
+const PLAN=[['L','1.980',0],['M','—',2],['X','—',2],['J','2.000',0],['V','2.020',0],['S','2.180',1],['D','1.970',0]];
+document.getElementById('plan').innerHTML=PLAN.map(p=>`<div class="dia ${p[2]===1?'pasa':p[2]===2?'nc':''}" role="listitem"><b>${p[0]}</b>${p[1]}${p[2]===1?'<br>se pasa':''}${p[2]===2?'<br>no cuenta':''}</div>`).join('');
+
+// ---------- Recorrido de 45 s ----------
+(function(){
+  const PASO=9000,partes=[['p-semana'],['p-luz'],['p-vuelta'],['p-peso'],['p-semana','p-luz','p-vuelta','p-peso']];
+  const btn=document.getElementById('btn45'),tx=document.getElementById('texto'),sv=document.getElementById('sv0'),pu=document.getElementById('punto');
+  const ss=[...tx.querySelectorAll('.s')];let timer=null,t0=0,i=-1;
+  const limpia=()=>{sv.classList.remove('touring');sv.querySelectorAll('.part').forEach(p=>p.classList.remove('on'));sv.querySelectorAll('.halo').forEach(h=>h.remove())};
+  function paso(k){
+    limpia();i=k;
+    ss.forEach((s,j)=>{s.classList.toggle('on',j===k);s.classList.toggle('done',j<k)});
+    pu.textContent='Punto '+(k+1)+' de 5';
+    sv.classList.add('touring');
+    partes[k].forEach(id=>{const g=sv.querySelector('#'+id);g.classList.add('on');const b=g.getBBox(),r=document.createElementNS(NS,'rect');r.setAttribute('class','halo');r.setAttribute('x',Math.max(2,b.x-6));r.setAttribute('y',Math.max(2,b.y-8));r.setAttribute('width',Math.min(408,b.width+12));r.setAttribute('height',b.height+16);sv.appendChild(r)});
+    if(k===4)sv.classList.remove('touring');
+    timer=setTimeout(()=>k<4?paso(k+1):fin(true),PASO);
+  }
+  function fin(ok){
+    clearTimeout(timer);limpia();
+    tx.classList.remove('tour');ss.forEach(s=>s.classList.remove('on','done'));
+    btn.setAttribute('aria-pressed','false');btn.textContent='Explícamelo · 45 s';
+    pu.textContent=ok?'Hecho. Pulsa de nuevo para repetirlo.':'';
+    document.body.dataset.tourMs=String(Math.round(performance.now()-t0));document.body.dataset.tourFin=ok?'1':'0';
+  }
+  btn.onclick=()=>{
+    if(btn.getAttribute('aria-pressed')==='true'){fin(false);return}
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    btn.setAttribute('aria-pressed','true');btn.textContent='Parar';tx.classList.add('tour');
+    t0=performance.now();document.body.dataset.tourFin='';paso(0);
+  };
+})();
+</script>
+</body>
+</html>

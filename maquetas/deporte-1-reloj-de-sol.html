@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>El Reloj de Sol · maqueta Entreno y Peso</title>
+<style>
+:root{--cal:#efe9da;--losa:#ddd3bd;--junta:#b9ad92;--tinta:#1f2a3d;--sombra:#2c4573;--pen:#8fa3c4;--oro:#7a4d00;--sol:#f2b632}
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:var(--losa);color:var(--tinta);font:15px/1.35 Georgia,"Times New Roman",serif;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+.cartel{background:var(--sombra);color:#fff;padding:14px 16px}
+.cartel b{display:block;font-size:19px;letter-spacing:.04em}
+.cartel span{display:block;font-size:13px;margin-top:3px}
+.rotulo{font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:12px 16px 6px;color:var(--tinta);background:#cfc4aa}
+.pant{position:relative;overflow:hidden;background-color:var(--losa);
+ background-image:linear-gradient(var(--junta) 1px,transparent 1px),linear-gradient(90deg,var(--junta) 1px,transparent 1px);background-size:103px 103px}
+#p1{height:880px}#p2{height:1180px}#p3{height:1180px}
+.placa{margin:12px 16px 0;background:var(--cal);border:2px solid var(--tinta);padding:10px 14px;display:flex;align-items:center;gap:12px}
+.placa .hora{font:700 44px/1 Georgia,serif}
+.placa .quien{font-size:13px}.placa .quien b{display:block;font-size:22px;letter-spacing:.03em}
+svg{display:block}
+.minima{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:8px 16px 0;min-height:60px;background:var(--cal);border:2px solid var(--tinta);padding:6px 14px;text-align:left}
+.minima[aria-pressed=true]{background:var(--tinta);color:#fff}
+.minima .t{font-size:16px;font-weight:700;display:block}.minima .s{font-size:13px;display:block}
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:10px 6px 0}
+.losa{min-height:118px;padding:0;background:var(--cal);border:1.5px solid var(--junta)}
+.losa[aria-current=true]{border:3px solid var(--tinta)}
+.nota{margin:8px 16px 0;font-size:13px}
+.racha{margin:10px 16px 0;display:flex;align-items:center;gap:10px;font-size:14px}
+.piedra{margin:0 16px;background:var(--cal);border:2px solid var(--tinta)}
+.carga{display:flex;justify-content:space-between;align-items:center;min-height:46px;padding:6px 14px;border-top:1px solid var(--junta);text-shadow:0 1px 0 #fff}
+.carga:first-child{border-top:0}.carga b{font-size:17px}
+.sub{margin:10px 16px 4px;font-weight:700;font-size:15px}
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 16px}
+.caso{background:var(--cal);border:1.5px solid var(--tinta);padding:8px;font-size:13px;min-height:96px}
+.caso b{display:block;font-size:14px}
+.banco{margin-top:4px}.plato{background:none;border:0;padding:0;min-width:48px;min-height:48px}
+.det{margin:6px 16px 0;background:var(--cal);border:2px solid var(--tinta);padding:8px 12px;min-height:58px;font-size:14px}
+</style></head><body>
+
+<div class="cartel"><b>1 · EL RELOJ DE SOL</b>
+<span>La hora de la siesta convertida en hora de moverse: una plaza de La Laguna vista desde arriba.</span>
+<span>La sombra te dice qué toca; tú solo la sigues.</span></div>
+
+<!-- ============ P1 ============ -->
+<div class="rotulo">Pantalla 1 · Hoy toca</div>
+<section class="pant" id="p1" aria-label="Hoy toca">
+ <div class="placa"><div class="hora">15:00</div><div class="quien"><b>HOY · GIMNASIO</b>jueves · hasta las 16:00</div></div>
+ <svg width="412" height="296" viewBox="0 0 412 296" role="img" aria-label="Reloj de sol visto desde arriba. La sombra cae entre las marcas XV y XVI: hoy toca gimnasio, a las 15:00.">
+  <title>La sombra cae entre XV y XVI: hoy gimnasio a las 15:00</title>
+  <defs><radialGradient id="luz" cx="50%" cy="100%" r="100%"><stop offset="0" stop-color="#fff7e0"/><stop offset="1" stop-color="#efe9da"/></radialGradient></defs>
+  <path d="M26 280 A180 180 0 0 1 386 280 Z" fill="url(#luz)" stroke="#1f2a3d" stroke-width="3"/>
+  <path d="M60 280 A146 146 0 0 1 352 280" fill="none" stroke="#b9ad92" stroke-width="2"/>
+  <g id="marcas"></g>
+  <!-- sombra: de la base hacia -77,5 grados -->
+  <polygon points="199,280 213,280 232,150" fill="#2c4573" opacity=".9"/>
+  <polygon points="199,280 213,280 222,222 206,222" fill="#1f2a3d"/>
+  <path d="M206 280 L206 262 L218 280 Z" fill="#8c8f99" stroke="#1f2a3d" stroke-width="1.5"/>
+  <circle cx="232" cy="148" r="9" fill="#f2b632" stroke="#1f2a3d" stroke-width="2"/>
+  <text x="206" y="294" text-anchor="middle" font-size="12" font-family="system-ui" fill="#1f2a3d">15:30 la sombra · piedra del gnomon</text>
+ </svg>
+ <button class="minima" id="min" aria-pressed="false">
+  <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 20 L20 6 M20 20 A14 14 0 0 1 34 20 Z" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>
+  <span><span class="t" id="mint">¿No llegas a las 15:00? Media hora a las 15:30</span><span class="s" id="mins">Sesión mínima · 25 min · un toque y queda grabada</span></span>
+ </button>
+ <div class="semana" id="sem"></div>
+ <p class="nota">Losa cubierta = guardia · penumbra = saliente · árbol = parque. Toca una losa.</p>
+ <div class="racha"><svg width="76" height="34" viewBox="0 0 76 34" role="img" aria-label="Racha: 2 semanas cumplidas seguidas"><title>2 semanas cumplidas</title><g fill="#f2b632" stroke="#1f2a3d" stroke-width="2"><circle cx="17" cy="17" r="12"/><circle cx="53" cy="17" r="12"/></g><path d="M11 17l4 4 7-8M47 17l4 4 7-8" fill="none" stroke="#1f2a3d" stroke-width="2.5"/></svg><span><b>2 semanas seguidas.</b> La mínima también cuenta.</span></div>
+ <p class="nota" id="dia" style="min-height:36px"></p>
+</section>
+
+<!-- ============ P2 ============ -->
+<div class="rotulo">Pantalla 2 · La vuelta</div>
+<section class="pant" id="p2" aria-label="La vuelta">
+ <svg id="s2" width="412" height="650" viewBox="0 0 412 650" role="img" aria-label="Una sombra que se alarga en 8 marcas, del 35 por ciento al 100 por ciento. Vas por la semana 3, al 55 por ciento."><title>La sombra se alarga ocho semanas, del 35 al 100 por ciento; ahora estás al 55 por ciento</title></svg>
+ <div class="sub">Grabado en la piedra · esta semana al 55 %</div>
+ <div class="piedra">
+  <div class="carga"><span>Sentadilla <small>(antes 80)</small></span><b>45 kg</b></div>
+  <div class="carga"><span>Press de banca <small>(antes 60)</small></span><b>32,5 kg</b></div>
+  <div class="carga"><span>Peso muerto <small>(antes 90)</small></span><b>50 kg</b></div>
+  <div class="carga"><span>Remo <small>(antes 50)</small></span><b>27,5 kg</b></div>
+  <div class="carga"><span>Press militar <small>(antes 35)</small></span><b>20 kg</b></div>
+ </div>
+ <div class="sub">2 series · suave: que te sobren unas 4 repeticiones</div>
+ <div class="tres">
+  <div class="caso"><b>Si se tuerce una semana</b>La sombra espera: se repite al 55 %.</div>
+  <div class="caso"><b>Si son dos</b>Un escalón atrás: 45 %. Sin drama.</div>
+  <div class="caso"><b>Si va bien</b>Semana que viene, 65 %.</div>
+ </div>
+</section>
+
+<!-- ============ P3 ============ -->
+<div class="rotulo">Pantalla 3 · Tu objetivo de peso</div>
+<section class="pant" id="p3" aria-label="Tu objetivo de peso">
+ <svg id="s3" width="412" height="330" viewBox="0 0 412 330" role="img" aria-label="La sombra del peso se acorta de 82 a 75 kilos. Hoy 81,4 kilos, semana 2 de 14, meta el 8 de febrero de 2027."><title>La sombra del peso se acorta: de 82 a 75 kilos, 0,5 kilos por semana</title></svg>
+ <div class="sub">La luz de cada día</div>
+ <svg id="s3b" width="412" height="270" viewBox="0 0 412 270" role="img" aria-label="Un sol de 2.000 calorías con 14 rayos de 10 gramos: 140 gramos de proteína al día."><title>2.000 kcal y 140 g de proteína al día</title></svg>
+ <div class="sub">La semana en el banco de la plaza</div>
+ <svg id="s3c" width="412" height="130" viewBox="0 0 412 130" aria-hidden="true"></svg>
+ <div class="det" id="det" aria-live="polite">Toca un plato.</div>
+</section>
+
+<script>
+var NS='http://www.w3.org/2000/svg';
+function el(p,n,a,t){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;p.appendChild(e);return e}
+var TINTA='#1f2a3d';
+/* P1 marcas XII..XVIII, 25 grados por hora, XV arriba */
+(function(){var g=document.getElementById('marcas'),r=['XII','XIII','XIV','XV','XVI','XVII','XVIII'];
+ r.forEach(function(n,i){var a=(-165+25*i)*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hot=(n=='XV'||n=='XVI');
+  el(g,'line',{x1:206+120*c,y1:280+120*s,x2:206+146*c,y2:280+146*s,stroke:TINTA,'stroke-width':hot?5:3});
+  var t=el(g,'text',{x:206+163*c,y:280+163*s+5,'text-anchor':'middle','font-size':hot?18:14,'font-weight':hot?700:400,'font-family':'Georgia,serif',fill:TINTA},n);});
+ var t=el(g,'text',{x:206,y:196,'text-anchor':'middle','font-size':11,'font-family':'system-ui',fill:'#7a4d00','font-weight':700,'letter-spacing':'2'},'');
+ /* flecha grabada */
+ el(g,'path',{d:'M226 110 L226 98 M220 104 L226 96 L232 104',stroke:'#7a4d00','stroke-width':2.5,fill:'none'});
+})();
+/* semana */
+var D=[['L','gimnasio','15:00','g','hecho'],['M','guardia','noche','n'],['X','saliente','paseo','p'],['J','HOY','15:00','h'],['V','mínima','15:30','m'],['S','parque','10:00','a'],['D','descanso','','d']];
+var TXT={L:'Lunes: gimnasio 15:00. Hecho.',M:'Martes: guardia. Hoy no se entrena; la sombra de la noche cubre la losa.',X:'Miércoles: saliente. Paseo de 20 minutos o nada.',J:'Jueves, hoy: gimnasio a las 15:00, hasta las 16:00.',V:'Viernes: sesión mínima, 25 minutos a las 15:30.',S:'Sábado: parque a las 10:00, 40 minutos sin material.',D:'Domingo: descanso.'};
+var sem=document.getElementById('sem');
+D.forEach(function(d){var b=document.createElement('button');b.className='losa';b.setAttribute('aria-label',TXT[d[0]]);if(d[3]=='h')b.setAttribute('aria-current','true');
+ var s=document.createElementNS(NS,'svg');s.setAttribute('width',52);s.setAttribute('height',116);s.setAttribute('viewBox','0 0 52 116');s.setAttribute('aria-hidden','true');b.appendChild(s);
+ var df=el(s,'defs',{});var p=el(df,'pattern',{id:'h'+d[0],width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});el(p,'rect',{width:6,height:6,fill:'#c9d3e6'});el(p,'line',{x1:0,y1:0,x2:0,y2:6,stroke:'#2c4573','stroke-width':2});
+ if(d[3]=='n'){el(s,'rect',{x:0,y:0,width:52,height:116,fill:'#2c4573'});el(s,'path',{d:'M32 34a14 14 0 1 0 6 22a11 11 0 0 1-6-22z',fill:'#fff'});}
+ if(d[3]=='p'){el(s,'rect',{x:0,y:0,width:52,height:116,fill:'url(#h'+d[0]+')'});}
+ var tc=(d[3]=='n')?'#fff':TINTA;
+ el(s,'text',{x:26,y:20,'text-anchor':'middle','font-size':17,'font-weight':700,fill:tc,'font-family':'Georgia,serif',stroke:(d[3]=='p')?'#fff':'none','stroke-width':4,'paint-order':'stroke'},d[0]);
+ if(d[3]=='g'||d[3]=='h'||d[3]=='m'){var L=d[3]=='m'?18:d[3]=='h'?40:30;el(s,'polygon',{points:'22,86 30,86 '+(32+L/3)+','+(86-L)+' '+(28+L/3)+','+(86-L),fill:'#2c4573'});el(s,'rect',{x:21,y:84,width:10,height:6,fill:'#8c8f99',stroke:TINTA});
+  if(d[3]=='g')el(s,'path',{d:'M12 52l6 6 12-14',stroke:TINTA,'stroke-width':3,fill:'none'});}
+ if(d[3]=='a'){el(s,'rect',{x:23,y:70,width:6,height:20,fill:'#6b4a1e'});el(s,'circle',{cx:26,cy:58,r:17,fill:'#2f6b3a'});el(s,'circle',{cx:20,cy:64,r:8,fill:'#3d8a4b'});}
+ if(d[3]=='d')el(s,'path',{d:'M16 70h20M16 78h14',stroke:TINTA,'stroke-width':2.5});
+ var w=(d[3]=='p')?'#fff':'none';
+ el(s,'text',{x:26,y:102,'text-anchor':'middle','font-size':11,fill:tc,'font-family':'system-ui','font-weight':700,stroke:w,'stroke-width':3,'paint-order':'stroke'},d[1]);
+ if(d[2])el(s,'text',{x:26,y:113,'text-anchor':'middle','font-size':11,fill:tc,'font-family':'system-ui',stroke:w,'stroke-width':3,'paint-order':'stroke'},d[2]);
+ b.onclick=function(){document.getElementById('dia').textContent=TXT[d[0]]};
+ sem.appendChild(b)});
+document.getElementById('dia').textContent=TXT.J;
+var mn=document.getElementById('min');
+mn.onclick=function(){var on=mn.getAttribute('aria-pressed')!='true';mn.setAttribute('aria-pressed',on);
+ document.getElementById('mint').textContent=on?'Grabada: media hora a las 15:30':'¿No llegas a las 15:00? Media hora a las 15:30';
+ document.getElementById('mins').textContent=on?'Sesión mínima de 25 min · toca otra vez para quitarla':'Sesión mínima · 25 min · un toque y queda grabada';};
+
+/* P2: sombra que se alarga */
+(function(){var s=document.getElementById('s2'),P=[35,45,55,65,75,85,95,100],y0=60,k=5.5,x=96;
+ var df=el(s,'defs',{}),pt=el(df,'pattern',{id:'fut',width:7,height:7,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});el(pt,'rect',{width:7,height:7,fill:'#efe9da'});el(pt,'line',{x1:0,y1:0,x2:0,y2:7,stroke:'#8fa3c4','stroke-width':2});
+ el(s,'rect',{x:x-20,y:y0,width:40,height:100*k+12,fill:'#efe9da',opacity:.6});
+ el(s,'polygon',{points:(x-11)+','+y0+' '+(x+11)+','+y0+' '+(x+5)+','+(y0+100*k)+' '+(x-5)+','+(y0+100*k),fill:'url(#fut)',stroke:'#2c4573','stroke-width':1.5,'stroke-dasharray':'5 4'});
+ el(s,'polygon',{points:(x-11)+','+y0+' '+(x+11)+','+y0+' '+(x+8)+','+(y0+55*k)+' '+(x-8)+','+(y0+55*k),fill:'#2c4573'});
+ el(s,'path',{d:'M'+(x-14)+' '+(y0-8)+'L'+x+' '+(y0-44)+'L'+(x+14)+' '+(y0-8)+'Z',fill:'#8c8f99',stroke:TINTA,'stroke-width':2});
+ el(s,'text',{x:x+30,y:y0-14,'font-size':12,'font-family':'system-ui',fill:TINTA},'gnomon = tu constancia');
+ P.forEach(function(p,i){var y=y0+p*k,now=p==55,done=p<55;
+  el(s,'line',{x1:x-26,y1:y,x2:x+26,y2:y,stroke:now?'#f2b632':TINTA,'stroke-width':now?5:3});
+  if(now)el(s,'line',{x1:x-26,y1:y,x2:x+26,y2:y,stroke:TINTA,'stroke-width':1.5});
+  var lbl=(done?'✓ ':'')+'Sem '+(i+1)+' · '+p+' %'+(done?' hecha':now?' · AHORA':'');
+  el(s,'text',{x:x+38,y:y+5,'font-size':now?17:14,'font-weight':now?700:400,'font-family':'Georgia,serif',fill:TINTA},lbl);});
+ var cy=y0+55*k;
+ /* tarjeta esta semana */
+ el(s,'rect',{x:150,y:y0+10,width:246,height:104,fill:'#efe9da',stroke:TINTA,'stroke-width':2});
+ el(s,'text',{x:162,y:y0+36,'font-size':20,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},'Semana 3 de 8');
+ el(s,'text',{x:162,y:y0+60,'font-size':14,'font-family':'Georgia,serif',fill:TINTA},'Hoy llevas el 55 % de tus cargas');
+ el(s,'text',{x:162,y:y0+82,'font-size':14,'font-family':'Georgia,serif',fill:TINTA},'de antes. Suave y sin prisa.');
+ el(s,'text',{x:162,y:y0+104,'font-size':12,'font-family':'system-ui',fill:'#7a4d00','font-weight':700},'Racha: 2 semanas seguidas');
+ el(s,'text',{x:206,y:y0+100*k+30,'font-size':13,'font-family':'system-ui',fill:TINTA},'Rayado = lo que aún no toca');
+})();
+
+/* P3 sombra del peso */
+(function(){var s=document.getElementById('s3'),gy=170,gx=36,f=function(kg){return gx+(kg-65)*19};
+ el(s,'rect',{x:0,y:gy,width:412,height:6,fill:'#b9ad92'});
+ el(s,'polygon',{points:gx+','+(gy-8)+' '+f(82)+','+(gy-3)+' '+f(82)+','+(gy+3)+' '+gx+','+(gy+8),fill:'#8fa3c4',opacity:.55});
+ var df=el(s,'defs',{}),pt=el(df,'pattern',{id:'fut3',width:7,height:7,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});el(pt,'rect',{width:7,height:7,fill:'#efe9da'});el(pt,'line',{x1:0,y1:0,x2:0,y2:7,stroke:'#2c4573','stroke-width':2});
+ el(s,'polygon',{points:f(81.4)+','+(gy-3)+' '+f(75)+','+(gy-3)+' '+f(75)+','+(gy+3)+' '+f(81.4)+','+(gy+3),fill:'url(#fut3)'});
+ el(s,'polygon',{points:gx+','+(gy-9)+' '+f(81.4)+','+(gy-3)+' '+f(81.4)+','+(gy+3)+' '+gx+','+(gy+9),fill:'#2c4573'});
+ el(s,'rect',{x:gx-14,y:gy-60,width:22,height:66,fill:'#8c8f99',stroke:TINTA,'stroke-width':2});
+ el(s,'text',{x:22,y:gy-70,'font-size':12,'font-family':'system-ui',fill:TINTA,'font-weight':700},'tú');
+ for(var kg=82;kg>=75;kg--){var x=f(kg),w=(82-kg)*2,big=kg==82||kg==75;
+  el(s,'line',{x1:x,y1:gy-12,x2:x,y2:gy+12,stroke:TINTA,'stroke-width':big?4:2});
+  el(s,'text',{x:x,y:gy+30,'text-anchor':'middle','font-size':big?16:13,'font-weight':big?700:400,'font-family':'Georgia,serif',fill:TINTA},kg);
+  el(s,'text',{x:x,y:gy+46,'text-anchor':'middle','font-size':11,'font-family':'system-ui',fill:TINTA},w%2==0?'s'+w:'');}
+ el(s,'text',{x:206,y:gy+66,'text-anchor':'middle','font-size':12,'font-family':'system-ui',fill:TINTA},'kg arriba · semana (s) abajo, de dos en dos');
+ var x=f(81.4);
+ el(s,'circle',{cx:x,cy:gy,r:11,fill:'#f2b632',stroke:TINTA,'stroke-width':2.5});
+ el(s,'path',{d:'M'+x+' '+(gy-14)+'L'+x+' '+(gy-62)+'',stroke:TINTA,'stroke-width':2});
+ el(s,'text',{x:x+6,y:gy-68,'text-anchor':'end','font-size':20,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},'Hoy 81,4 kg');
+ var m=f(75);
+ el(s,'path',{d:'M'+m+' '+(gy-14)+'L'+m+' '+(gy-52),stroke:'#7a4d00','stroke-width':2});
+ el(s,'text',{x:m+4,y:gy-58,'text-anchor':'middle','font-size':14,'font-weight':700,'font-family':'Georgia,serif',fill:'#7a4d00'},'meta 75');
+ el(s,'text',{x:206,y:28,'text-anchor':'middle','font-size':24,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},'82 → 75 kg');
+ el(s,'text',{x:206,y:52,'text-anchor':'middle','font-size':14,'font-family':'Georgia,serif',fill:TINTA},'La sombra se acorta como después del solsticio de invierno');
+ el(s,'text',{x:206,y:72,'text-anchor':'middle','font-size':14,'font-family':'Georgia,serif',fill:TINTA},'−0,5 kg por semana · semana 2 de 14');
+ el(s,'rect',{x:60,y:gy+82,width:292,height:50,fill:'#efe9da',stroke:TINTA,'stroke-width':2});
+ el(s,'text',{x:206,y:gy+104,'text-anchor':'middle','font-size':17,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},'Llegada: 8 de febrero de 2027');
+ el(s,'text',{x:206,y:gy+123,'text-anchor':'middle','font-size':12,'font-family':'system-ui',fill:TINTA},'Si una semana se tuerce, la sombra espera.');
+})();
+/* sol */
+(function(){var s=document.getElementById('s3b'),cx=206,cy=132;
+ for(var i=0;i<14;i++){var a=(i/14)*2*Math.PI-Math.PI/2,c=Math.cos(a),n=Math.sin(a);
+  el(s,'line',{x1:cx+72*c,y1:cy+72*n,x2:cx+110*c,y2:cy+110*n,stroke:'#7a4d00','stroke-width':9,'stroke-linecap':'round'});}
+ el(s,'circle',{cx:cx,cy:cy,r:62,fill:'#f2b632',stroke:TINTA,'stroke-width':3});
+ el(s,'text',{x:cx,y:cy+4,'text-anchor':'middle','font-size':30,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},'2.000');
+ el(s,'text',{x:cx,y:cy+26,'text-anchor':'middle','font-size':15,'font-family':'Georgia,serif',fill:TINTA},'kcal al día');
+ el(s,'text',{x:cx,y:cy-24,'text-anchor':'middle','font-size':13,'font-family':'system-ui',fill:TINTA},'comes');
+ el(s,'text',{x:206,y:262,'text-anchor':'middle','font-size':14,'font-family':'Georgia,serif',fill:TINTA},'14 rayos × 10 g = 140 g de proteína · gastas 2.500');
+ el(s,'text',{x:206,y:16,'text-anchor':'middle','font-size':12,'font-family':'system-ui',fill:TINTA},'Lo que gastas entrenando no se come · guardia y saliente no cuentan');
+})();
+/* banco */
+var PL=[['L','Lentejas con pollo y fruta',1990,142],['M','Tupper de guardia',null,0],['X','Lo que haya de saliente',null,0],['J','Arroz con atún y huevo',2010,138],['V','Pescado con papas arrugadas',2000,140],['S','Bocadillo grande en el parque',2180,135],['D','Potaje y tortilla francesa',1960,145]];
+(function(){var s=document.getElementById('s3c'),h=document.getElementById('det');
+ el(s,'rect',{x:8,y:66,width:396,height:14,fill:'#8a6a3a',stroke:TINTA,'stroke-width':2});
+ el(s,'rect',{x:24,y:80,width:10,height:40,fill:'#6b4a1e'});el(s,'rect',{x:378,y:80,width:10,height:40,fill:'#6b4a1e'});
+ var box=document.createElement('div');box.style.cssText='position:absolute;left:0;width:412px;display:grid;grid-template-columns:repeat(7,1fr)';
+ box.style.background='linear-gradient(#8a6a3a,#8a6a3a) 8px 52px/396px 14px no-repeat, linear-gradient(#6b4a1e,#6b4a1e) 24px 66px/10px 40px no-repeat, linear-gradient(#6b4a1e,#6b4a1e) 378px 66px/10px 40px no-repeat';
+ PL.forEach(function(p,i){var ok=p[2]!=null,over=ok&&p[2]>2050,cx=58*i+30;
+  var b=document.createElement('button');b.className='plato';b.style.cssText='height:130px';
+  var v=document.createElementNS(NS,'svg');v.setAttribute('width',58);v.setAttribute('height',130);v.setAttribute('viewBox','0 0 58 130');b.appendChild(v);
+  var d=ok?'':'3 3';
+  el(v,'ellipse',{cx:29,cy:62,rx:24,ry:10,fill:ok?'#fff':'#efe9da',stroke:TINTA,'stroke-width':ok?2:1.5,'stroke-dasharray':d});
+  if(ok)el(v,'ellipse',{cx:29,cy:60,rx:14,ry:6,fill:over?'#c0573a':'#6a9a5b',stroke:TINTA});
+  if(over){el(v,'ellipse',{cx:29,cy:62,rx:27,ry:13,fill:'none',stroke:'#7a4d00','stroke-width':3});el(v,'path',{d:'M29 22v-12M23 16h12',stroke:'#7a4d00','stroke-width':3});}
+  el(v,'text',{x:29,y:40,'text-anchor':'middle','font-size':16,'font-weight':700,'font-family':'Georgia,serif',fill:TINTA},p[0]);
+  el(v,'text',{x:29,y:98,'text-anchor':'middle','font-size':ok?13:11,'font-weight':700,'font-family':'system-ui',fill:TINTA},ok?(p[2]+'').replace(/(\d)(\d{3})/,'$1.$2'):'no cuenta');
+  el(v,'text',{x:29,y:113,'text-anchor':'middle','font-size':11,'font-family':'system-ui',fill:TINTA},ok?p[3]+' g':(p[0]=='M'?'guardia':'saliente'));
+  b.setAttribute('aria-label',p[0]+': '+p[1]+(ok?', '+p[2]+' kilocalorías, '+p[3]+' gramos de proteína'+(over?', se pasa 180':''):', no cuenta en la media'));
+  b.onclick=function(){h.textContent=p[0]+' · '+p[1]+(ok?' · '+p[2]+' kcal · '+p[3]+' g proteína'+(over?' · se pasa 180 kcal (la cruz): mañana se compensa, no pasa nada':''):' · no cuenta en la media');};
+  box.appendChild(b)});
+ s.parentNode.insertBefore(box,s);box.style.position='static';s.style.display='none';
+ var t=document.createElement('p');t.className='nota';t.textContent='Media de los 5 días que cuentan: 2.028 kcal y 140 g de proteína. Plato rojo con cruz = ese día se pasa.';box.after(t);
+})();
+document.getElementById('det').textContent='Toca un plato para ver qué toca comer.';
+</script>
+</body></html>

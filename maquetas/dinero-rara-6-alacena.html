@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Alacena · Dinero</title>
+<style>
+:root{
+  --crema:#f4ead2;
+  --papel:#fffaf0;
+  --tinta:#2e1c0e;
+  --tinta2:#5a4630;
+  --tomate:#9e2f1f;
+  --linea:#2e1c0e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  width:412px;
+  background:var(--crema);
+  color:var(--tinta);
+  font:16px/1.45 system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  overflow-x:hidden;
+}
+.slab{font-family:Rockwell,"Roboto Slab","Bitter",Georgia,"Times New Roman",serif;font-weight:800}
+.pantalla{width:412px;padding:16px;overflow:hidden}
+.rotulo{
+  margin:0 0 8px;font:700 12px/1.2 system-ui,Arial,sans-serif;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--tinta2);
+}
+.cartel{
+  background:var(--papel);border:3px solid var(--linea);border-radius:6px;
+  padding:10px 14px;margin:0 0 12px;
+}
+.cartel .escuela{margin:0 0 2px;font-size:24px;line-height:1.1}
+.cartel .idea{margin:0;font-size:14px;line-height:1.35}
+.cartel .idea + .idea{margin-top:4px}
+.cartel .pie{margin:8px 0 0;font-size:12px;color:var(--tinta2)}
+
+.cifra{margin:0;font-size:40px;line-height:1.05}
+.sub{margin:4px 0 0;font-size:15px}
+.hacer{
+  margin:10px 0;background:var(--papel);border:2px solid var(--linea);border-radius:6px;
+  padding:10px 14px;
+}
+.hacer p{margin:0}
+.hacer .grande{font-size:20px;font-weight:700;line-height:1.25}
+.hacer .peq{font-size:14px;color:var(--tinta2);margin-top:4px}
+
+svg.alacena{display:block;width:352px;max-width:100%;height:auto;margin:0 auto}
+svg.alacena a{cursor:pointer}
+
+.bot{
+  display:flex;align-items:center;gap:10px;justify-content:flex-start;
+  min-height:52px;width:100%;margin:0;padding:10px 12px;
+  font:inherit;color:var(--tinta);background:var(--papel);
+  border:2px solid var(--linea);border-radius:6px;text-decoration:none;
+  text-align:left;cursor:pointer;
+}
+.bot strong{display:block;font-size:16px;line-height:1.2}
+.bot small{display:block;font-size:13px;line-height:1.3;color:var(--tinta2)}
+.bot.principal{background:var(--tomate);color:#fff8e8;border-color:var(--tomate);justify-content:center;text-align:center;font-weight:700;font-size:17px}
+.bot:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.fila{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.fila .bot{min-height:64px;align-items:flex-start;flex-direction:column;gap:4px}
+.fila .bot svg{flex:none}
+.principal-wrap{margin-top:10px}
+
+.aviso{
+  margin:12px 0 0;padding:12px 14px;border:2px dashed var(--linea);border-radius:6px;
+  background:var(--papel);font-size:15px;
+}
+.aviso[hidden]{display:none}
+
+/* Pantalla 2 */
+.pantalla h2{margin:0 0 6px;font-size:28px;line-height:1.1}
+.intro{margin:0 0 14px;color:var(--tinta2)}
+.receta{background:var(--papel);border:2px solid var(--linea);border-radius:6px;padding:14px 16px;margin:0 0 14px}
+.receta h3{margin:0 0 8px;font-size:19px}
+.receta ol{margin:0;padding-left:22px}
+.receta li{margin:0 0 6px}
+.receta .resultado{margin:10px 0 0;padding-top:10px;border-top:2px solid var(--linea)}
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 14px}
+.trio div{background:var(--papel);border:2px solid var(--linea);border-radius:6px;padding:10px 8px;text-align:center}
+.trio b{display:block;font-size:22px;line-height:1.1}
+.trio span{display:block;font-size:13px;line-height:1.3;color:var(--tinta2);margin-top:4px}
+.libro{width:100%;border-collapse:collapse;background:var(--papel);border:2px solid var(--linea);border-radius:6px}
+.libro caption{text-align:left;font-weight:700;padding:0 0 8px;font-size:16px}
+.libro th,.libro td{padding:10px 8px;border-bottom:1px solid var(--linea);text-align:right;font-variant-numeric:tabular-nums}
+.libro th{font-size:13px;color:var(--tinta2);font-weight:700}
+.libro th:first-child,.libro td:first-child{text-align:left}
+.libro tr:last-child td{border-bottom:0}
+.libro td.echado{font-weight:700}
+.nota{font-size:14px;color:var(--tinta2);margin:12px 0 14px}
+.volver{margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- Cartel de la escuela -->
+<div style="padding:16px 16px 0">
+  <div class="cartel" role="note">
+    <p class="escuela slab">La Alacena</p>
+    <p class="idea">Ahorrar es hacer conservas para el invierno.</p>
+    <p class="idea">Cada tarro es un mes de gasto normal (1.478 €). Llenos los seis, tienes seis meses cubiertos.</p>
+  </div>
+</div>
+
+<!-- ===================== PANTALLA 1 · PORTADA ===================== -->
+<section id="portada" class="pantalla" aria-label="Pantalla 1 · Portada" style="padding-top:12px">
+  <p class="rotulo">Pantalla 1 · Portada</p>
+
+  <h1 class="cifra slab" >2,8 de 6 meses</h1>
+  <p class="sub">Tu colchón (dinero guardado para imprevistos): <strong>4.200 €</strong> de 8.870 €. Vas por delante.</p>
+
+  <div class="hacer">
+    <p class="grande">Este mes, llena 390 € del tarro 3.</p>
+    <p class="peq">Así llegas a los seis tarros en octubre de 2027.</p>
+  </div>
+
+  <!-- Alacena: seis tarros, uno por mes de vida. Tocar un tarro = Ahorro. -->
+  <svg class="alacena" viewBox="0 0 400 330" role="img" aria-labelledby="alacena-t alacena-d">
+    <title id="alacena-t">Alacena con seis tarros</title>
+    <desc id="alacena-d">Dos tarros llenos (1 mes y 2 meses), el tercero lleno en 2,8 meses, y tres vacíos: 4 meses, 5 meses y 6 meses (octubre de 2027). Cada tarro lleva a la pantalla de Ahorro.</desc>
+
+    <!-- Mueble -->
+    <rect x="4" y="4" width="392" height="322" rx="10" fill="#8a5a34"/>
+    <rect x="4" y="4" width="392" height="18" rx="10" fill="#6e4426"/>
+    <rect x="22" y="22" width="356" height="286" rx="4" fill="#e9d7ae"/>
+    <path d="M34 60 H366 M34 96 H366 M34 228 H366 M34 262 H366" stroke="#c9a46e" stroke-width="1.5" opacity=".7"/>
+    <rect x="14" y="150" width="372" height="12" rx="2" fill="#5a3a20"/>
+    <rect x="14" y="292" width="372" height="12" rx="2" fill="#5a3a20"/>
+
+    <!-- Fila de arriba: tarros 1, 2 y 3 (2,8) -->
+    <a href="#ahorro">
+      <title>Tarro 1: 1 mes lleno. Abrir Ahorro</title>
+      <g transform="translate(44,44)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2"/>
+        <path d="M9 18 H81 V92 Q81 102 71 102 H19 Q9 102 9 92 Z" fill="#c9922b"/>
+        <path d="M14 26 V90" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">1 mes</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">lleno</text>
+      </g>
+    </a>
+    <a href="#ahorro">
+      <title>Tarro 2: 2 meses llenos. Abrir Ahorro</title>
+      <g transform="translate(155,44)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2"/>
+        <path d="M9 18 H81 V92 Q81 102 71 102 H19 Q9 102 9 92 Z" fill="#b5402c"/>
+        <path d="M14 26 V90" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">2 meses</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">lleno</text>
+      </g>
+    </a>
+    <a href="#ahorro">
+      <title>Tarro 3: 2,8 meses, casi lleno. Abrir Ahorro</title>
+      <g transform="translate(266,44)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2"/>
+        <path d="M9 35 H81 V92 Q81 102 71 102 H19 Q9 102 9 92 Z" fill="#6b7a2e"/>
+        <path d="M14 42 V90" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">2,8 meses</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">casi lleno</text>
+      </g>
+    </a>
+
+    <!-- Fila de abajo: tarros 4, 5 y 6 (vacíos) -->
+    <a href="#ahorro">
+      <title>Tarro 4: vacío, 3 meses. Abrir Ahorro</title>
+      <g transform="translate(44,186)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2" stroke-dasharray="5 4"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">3 meses</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">vacío</text>
+      </g>
+    </a>
+    <a href="#ahorro">
+      <title>Tarro 5: vacío, 4 meses. Abrir Ahorro</title>
+      <g transform="translate(155,186)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2" stroke-dasharray="5 4"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">4 meses</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">vacío</text>
+      </g>
+    </a>
+    <a href="#ahorro">
+      <title>Tarro 6: vacío, meta de octubre de 2027. Abrir Ahorro</title>
+      <g transform="translate(266,186)">
+        <rect x="10" y="0" width="70" height="12" rx="3" fill="#3b2412"/>
+        <rect x="4" y="12" width="82" height="94" rx="16" fill="#fbf6ea" stroke="#2e1c0e" stroke-width="2" stroke-dasharray="5 4"/>
+        <rect x="17" y="46" width="56" height="34" rx="3" fill="#fffaf0" stroke="#2e1c0e" stroke-width="1.5"/>
+        <text x="45" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1c0e">6 meses</text>
+        <text x="45" y="73" text-anchor="middle" font-size="10" fill="#2e1c0e">oct 2027</text>
+      </g>
+    </a>
+  </svg>
+
+  <!-- Botones a Ahorro, Gastos y Compras -->
+  <div class="principal-wrap">
+    <a class="bot principal" href="#ahorro">Ver el libro de Ahorro</a>
+  </div>
+  <div class="fila">
+    <button type="button" class="bot" data-aviso="Aquí se abriría «En qué se me va». Lo que más se puede recortar: comer fuera, 180 € al mes.">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" focusable="false">
+        <path d="M4 6h12" stroke="#2e1c0e" stroke-width="3" stroke-linecap="round"/>
+        <path d="M10 6v7h8v4" fill="none" stroke="#2e1c0e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 22c0 1.8-1.3 3-3 3s-3-1.2-3-3c0-2.4 3-5 3-5s3 2.6 3 5z" fill="#c9922b" stroke="#2e1c0e" stroke-width="1.5"/>
+      </svg>
+      <span><strong>En qué se me va</strong><small>Grifo que gotea: comer fuera, 180 € al mes</small></span>
+    </button>
+    <button type="button" class="bot" data-aviso="Aquí se abriría «Lo que quiero comprar»: portátil 1.100 €, fonendo 190 €, viaje a Japón 2.500 € (verano), curso de eco 350 €.">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" focusable="false">
+        <rect x="6" y="5" width="18" height="22" rx="2" fill="#fffaf0" stroke="#2e1c0e" stroke-width="2"/>
+        <path d="M10 12h10M10 17h10M10 22h6" stroke="#2e1c0e" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="22" cy="5" r="3.5" fill="#9e2f1f" stroke="#2e1c0e" stroke-width="1"/>
+      </svg>
+      <span><strong>Lo que quiero comprar</strong><small>Lista de la compra en la nevera</small></span>
+    </button>
+  </div>
+
+  <p id="aviso" class="aviso" role="status" hidden></p>
+</section>
+
+<!-- ===================== PANTALLA 2 · AHORRO ===================== -->
+<section id="ahorro" class="pantalla" aria-label="Pantalla 2 · Ahorro" style="padding-top:28px">
+  <p class="rotulo">Pantalla 2 · Ahorro</p>
+  <h2 class="slab">Libro de recetas de la casa</h2>
+  <p class="intro">La receta para llenar los seis tarros: cuánto echar cada mes y cuándo estarán llenos.</p>
+
+  <div class="receta">
+    <h3 class="slab">La receta</h3>
+    <ol>
+      <li>Echa <strong>390 € al mes</strong>.</li>
+      <li>Durante 12 meses, hasta <strong>octubre de 2027</strong>.</li>
+      <li>Así llegas a 8.870 €: seis meses de gasto normal.</li>
+    </ol>
+    <p class="resultado">Al ritmo de los últimos 3 meses (unos 650 € al mes) llegas en <strong>junio de 2027</strong>. Vas por delante.</p>
+  </div>
+
+  <div class="trio" role="list">
+    <div role="listitem"><b>390 €</b><span>al mes que apartar</span></div>
+    <div role="listitem"><b>oct 2027</b><span>fecha de los 6 meses</span></div>
+    <div role="listitem"><b>jun 2027</b><span>a tu ritmo, sí llegas</span></div>
+  </div>
+
+  <table class="libro">
+    <caption>Cada 25 de mayo a octubre</caption>
+    <thead>
+      <tr><th scope="col">Día</th><th scope="col">Colchón a fin de mes</th><th scope="col">Echado ese mes</th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">25 may</th><td>2.200 €</td><td>punto de partida</td></tr>
+      <tr><th scope="row">25 jun</th><td>2.200 €</td><td class="echado">0 €</td></tr>
+      <tr><th scope="row">25 jul</th><td>2.300 €</td><td class="echado">+100 €</td></tr>
+      <tr><th scope="row">25 ago</th><td>2.750 €</td><td class="echado">+450 €</td></tr>
+      <tr><th scope="row">25 sep</th><td>3.550 €</td><td class="echado">+800 €</td></tr>
+      <tr><th scope="row">25 oct</th><td>4.200 €</td><td class="echado">+650 €</td></tr>
+    </tbody>
+  </table>
+
+  <p class="nota"><strong>Colchón</strong>: dinero guardado en la cuenta de ahorro para imprevistos.
+  <strong>Meses de gasto</strong>: el colchón dividido entre lo que gastas en un mes normal (1.478 €). Con 4.200 € tienes 2,8 meses.</p>
+
+  <a class="bot volver" href="#portada"><span><strong>Volver a la portada</strong></span></a>
+</section>
+
+<script>
+(function(){
+  var aviso = document.getElementById('aviso');
+  document.querySelectorAll('button[data-aviso]').forEach(function(b){
+    b.addEventListener('click', function(){
+      aviso.textContent = b.getAttribute('data-aviso');
+      aviso.hidden = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>

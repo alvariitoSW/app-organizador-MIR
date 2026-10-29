@@ -1,0 +1,367 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412">
+<title>Dinero · modelo final</title>
+<link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+:root{--ok:#34d399;--warn:#fde38a;--bad:#fb7185}
+.wrap{padding:8px 12px 16px}
+.e{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2);text-transform:uppercase}
+.mini{font-size:12px;color:var(--ink2)}.mini b{color:var(--ink)}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.num{font-variant-numeric:tabular-nums}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.up{color:var(--bad);font-weight:800}.dn{color:var(--ok);font-weight:800}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:14px;padding:8px 12px;margin-bottom:8px}
+.cartel b{font-size:14px}.cartel p{margin:2px 0 0;font-size:12px;color:var(--ink2)}
+.card{margin-bottom:8px}
+.vista[hidden],.fld[hidden]{display:none}
+/* cabecera común */
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:44px}
+.top h1{margin:0;font-size:20px;flex:1;letter-spacing:0;text-transform:none;color:var(--ink)}
+.volver{min-height:44px;padding:0 12px 0 6px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+/* botones */
+.btn{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.p{border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#12081a}
+.btn.full{width:100%;margin-top:10px}
+.btn.sec{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 18%,transparent)}
+.ie{width:44px;height:44px;flex:none;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-weight:900;font-size:15px;cursor:pointer}
+.ie[aria-expanded=true]{border-color:var(--brand2);color:var(--ink)}
+.nota{font-size:12.5px;color:var(--ink2);margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:10px}
+.nota b{color:var(--ink)}
+/* conclusión: cifra → conclusión en € → acción */
+.con{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.msg{margin:0;font-size:16px;font-weight:800;line-height:1.3}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+/* filas de la portada */
+.lista{padding:0;overflow:hidden}
+.fila{display:flex;align-items:center;gap:10px;width:100%;min-height:64px;padding:8px 12px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fila:first-child{border-top:0}
+.fila .ic{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;font-weight:900;font-size:13px;color:var(--ink2);flex:none;background:var(--bg2)}
+.fila .t{flex:1;min-width:0}
+.fila .t small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.fila .t b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.fila .t>span{display:block;font-size:11.5px;color:var(--ink2)}
+.fila .t>.seg{display:grid}.fila .t>.parte{display:flex}
+.con .dn{white-space:nowrap}
+.fila .ch{color:var(--ink2);font-size:20px;flex:none}
+/* barras: siempre las mismas */
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:5px}
+.seg i{height:8px;border-radius:3px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;position:relative}
+.seg i b{position:absolute;inset:0 auto 0 0;background:var(--brand2)}
+.seg.g i{height:14px;border-radius:5px}
+.parte{display:flex;height:10px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin-top:5px}
+.parte.g{height:20px;border-radius:7px;margin:8px 0 6px}
+.parte i{display:block;height:100%}
+.f{background:var(--brand2)}.v{background:repeating-linear-gradient(45deg,var(--accent) 0 5px,#d9a21b 5px 10px)}
+.mb{height:5px;border-radius:3px;background:var(--bg2);overflow:hidden;margin-top:4px}.mb i{display:block;height:100%;background:var(--brand2)}
+.mb.a i{background:var(--accent)}
+.leg{display:flex;gap:14px;font-size:12px;font-weight:700}
+.sq{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tag{font-size:10.5px;font-weight:900;padding:2px 7px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);white-space:nowrap}
+/* reparto de la nómina */
+.rep .li:first-of-type{border-top:0}
+.fld{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:0 12px;min-height:44px;margin-top:6px}
+.fld input{background:transparent;border:0;color:var(--ink);font:inherit;font-size:20px;font-weight:900;width:100%;outline:0;min-height:42px}
+/* filas de lista dentro de pantalla */
+.li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line);font-size:14px;min-height:34px}
+.li b{font-variant-numeric:tabular-nums}
+.li .t{flex:1;min-width:0}
+.li .t span{display:block;font-size:11.5px;color:var(--ink2)}
+/* gastos */
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.vr{display:grid;grid-template-columns:1fr 64px 50px;gap:2px 8px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+.vr:first-of-type{border-top:0}
+.vr b{font-size:14px}.vr .r{text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.vr .mb{grid-column:1/-1;margin-top:0}
+.idea{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
+.idea h3{margin:0;font-size:14.5px}
+.idea h3 .ah{color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
+.idea p{margin:0;font-size:12px;color:var(--ink2);grid-column:1}
+.idea p b{color:var(--ink)}
+.idea .btn{grid-column:2;grid-row:1/3;font-size:12.5px;padding:0 10px}
+:target{scroll-margin-top:8px}
+/* ahorro */
+.ejem{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;font-size:10.5px;color:var(--ink2);font-weight:700;text-align:center;margin-top:2px}
+.racha{display:flex;gap:4px;align-items:center;margin-top:8px}
+.racha span{flex:1;text-align:center;border-radius:8px;padding:4px 0;font-size:11px;font-weight:800;border:1px dashed var(--line);color:var(--ink2)}
+.racha span.on{border-style:solid;background:color-mix(in srgb,var(--ok) 16%,transparent);border-color:var(--ok);color:var(--ink)}
+.ap{display:flex;gap:6px;align-items:flex-end;height:72px;margin-top:6px}
+.ap div{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--ink2);display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+.ap i{display:block;border-radius:4px 4px 0 0;background:var(--brand2);min-height:3px}.ap b{color:var(--ink);font-size:11px}
+details summary{list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;cursor:pointer;color:var(--brand2)}
+details summary::-webkit-details-marker{display:none}
+label.sl{display:block;font-size:13px;font-weight:800;margin-top:2px}
+label.sl output{float:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:44px;accent-color:var(--brand);margin:0}
+.res{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.res div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center}
+.res .k{font-size:10.5px;color:var(--ink2);font-weight:800}.res .v{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums}
+/* compras (R2-C) */
+.cols{display:grid;grid-template-columns:1fr 64px 56px 74px;gap:6px;padding:0 10px;margin:8px 0 4px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--ink2);text-transform:uppercase}
+.cols span:not(:first-child){text-align:right}
+.cf{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;overflow:hidden}
+.cf.espera{border-style:dashed;background:var(--bg2)}
+.cab{width:100%;background:none;border:0;color:var(--ink);font:inherit;text-align:left;display:grid;grid-template-columns:1fr 64px 56px 74px;gap:6px;align-items:center;min-height:44px;padding:8px 10px;cursor:pointer}
+.nm{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.n.sec{color:var(--ink2);font-weight:700;font-size:12px}
+.n.cuenta{color:var(--warn)}
+.cf .barra{height:5px;background:var(--bg2)}
+.cf .barra i{display:block;height:100%;background:var(--brand2)}
+.espera .barra i{background:var(--accent)}
+.det{padding:8px 10px 10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+.det b{color:var(--ink)}
+.pill{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px;border:1px solid;white-space:nowrap;margin-right:4px}
+.pill.nec{border-color:#34d39999;background:#34d3991f;color:#8ef0c4}
+.pill.util{border-color:#38bdf899;background:#38bdf81f;color:#9fdcf7}
+.pill.ilu{border-color:#f050c899;background:#f050c81f;color:#f7a6e6}
+.pill.esp{border-color:#fbbf2499;background:#fbbf241f;color:#fde38a}
+</style><body>
+<div class="wrap">
+
+<div class="cartel" id="cartel"><b>Modelo final · Educación y Artes Visuales</b>
+<p>Portada R2-A + En qué se me va (3) + Ahorro (R2-B) + Compras (R2-C). Toca cada fila.</p></div>
+
+<!-- ============ PORTADA ============ -->
+<section class="vista" id="v-portada" aria-label="Dinero">
+ <div class="top"><h1>Dinero</h1>
+  <button class="btn sec" id="b-nom" aria-expanded="false" aria-controls="rep" onclick="tog(this,'rep')">Ya ha llegado la nómina</button></div>
+
+ <div class="card rep" id="rep" hidden>
+  <label class="fld" style="margin-top:0"><span class="mini" style="white-space:nowrap">Ha entrado</span><input id="nom" value="2800" inputmode="numeric" aria-label="Nómina que ha entrado" oninput="reparto()"><span class="mini">€</span></label>
+  <div class="li" style="margin-top:6px"><span class="t">Tu gasto normal del mes</span><b>1.478 €</b></div>
+  <div class="li"><span class="t">Al colchón · <span style="display:inline">la mitad de lo que sobra</span></span><b class="ok" id="r-col">661 €</b></div>
+  <div class="li"><span class="t">A tus compras</span><b id="r-com">460 €</b></div>
+  <div class="li"><span class="t">Libre</span><b id="r-lib">201 €</b></div>
+  <button class="btn p full" onclick="this.textContent='✓ Apartado. Racha: 5 meses seguidos'">Aparta <span id="r-bt">661 €</span> al colchón</button>
+ </div>
+
+ <div class="card con">
+  <p class="msg">Octubre: la mitad se fue en gastos que eliges. Con 3 recortes podrías quedarte <span class="dn">~1.700 € al año</span>.</p>
+  <div class="row" style="margin-top:8px">
+   <button class="btn p" style="flex:1" onclick="ir('gastos','recortes')">Ver los 3 recortes ›</button>
+   <button class="ie" aria-expanded="false" aria-controls="i-con" aria-label="De dónde sale" onclick="tog(this,'i-con')">ⓘ</button></div>
+  <div class="nota" id="i-con" hidden>Sale de tus gastos de octubre (Fintonic, 27 oct): <b>750 €</b> de los 1.478 € fueron variables. Comer fuera <b>600</b> + taxis <b>540</b> + compras online <b>540</b> € al año, si pruebas los tres.</div>
+ </div>
+
+ <div class="card lista">
+  <button class="fila" onclick="ir('ahorro')"><span class="ic" aria-hidden="true">A</span>
+   <span class="t"><small>AHORRO</small><b>2,8 meses de vida cubiertos</b>
+    <span class="seg" role="img" aria-label="2,8 de 6 meses"><i><b style="width:100%"></b></i><i><b style="width:100%"></b></i><i><b style="width:84%"></b></i><i></i><i></i><i></i></span>
+    <span>Faltan 4.668 € para 6 meses · luego, invertir</span></span>
+   <span class="ch" aria-hidden="true">›</span></button>
+  <button class="fila" onclick="ir('gastos')"><span class="ic" aria-hidden="true">G</span>
+   <span class="t"><small>EN QUÉ SE ME VA · OCT</small><b>1.478 € <span style="display:inline;font-weight:600">· 49 % fijos</span></b>
+    <span class="parte" role="img" aria-label="Fijos 728 euros, variables 750 euros"><i class="f" style="width:49%"></i><i class="v" style="width:51%"></i></span>
+    <span><span class="up">▲ 105 €</span> más que septiembre</span></span>
+   <span class="ch" aria-hidden="true">›</span></button>
+  <button class="fila" onclick="ir('compras')"><span class="ic" aria-hidden="true">C</span>
+   <span class="t"><small>LO QUE QUIERO COMPRAR</small><b>460 € al mes · 4 compras</b>
+    <span class="mb" role="img" aria-label="Fonendo: 150 de 190 euros"><i style="width:79%"></i></span>
+    <span>Lo próximo: fonendo, en diciembre</span></span>
+   <span class="ch" aria-hidden="true">›</span></button>
+ </div>
+
+ <div class="card row" style="padding:10px 12px;font-size:13px">
+  <span class="e">Cobro</span><span>Última nómina <b class="num">2.800 €</b> · la de nov. trae <b class="num">+~600 €</b> de guardias</span>
+ </div>
+</section>
+
+<!-- ============ EN QUÉ SE ME VA ============ -->
+<section class="vista" id="v-gastos" hidden aria-label="En qué se me va">
+ <div class="top"><button class="volver" onclick="ir('portada')">← Dinero</button><h1>En qué se me va</h1></div>
+
+ <div class="card con">
+  <div class="tabs" role="group" aria-label="Mes">
+   <button aria-pressed="true" onclick="mes(this,'oct')">Octubre</button>
+   <button aria-pressed="false" onclick="mes(this,'sep')">Septiembre</button></div>
+  <p class="msg" id="g-msg"></p>
+  <div class="row" style="align-items:baseline;margin-top:6px"><span class="big" id="g-tot"></span><span class="e">gastado en <span id="g-mn"></span></span></div>
+  <div class="parte g" role="img" id="g-bar"><i class="f" id="g-bf"></i><i class="v" id="g-bv"></i></div>
+  <div class="leg"><span><span class="sq f"></span>Fijos <b class="num">728 €</b></span><span><span class="sq v"></span>Variables <b class="num" id="g-lv"></b></span></div>
+ </div>
+
+ <div class="card">
+  <div class="row"><span class="e">Variables · se pueden mover</span><span class="sp"></span><span class="e" id="g-vs">vs sep</span></div>
+  <div id="g-vars"></div>
+  <p class="msg" style="font-size:14px;margin-top:6px" id="g-dif"></p>
+ </div>
+
+ <div class="card" id="recortes">
+  <p class="msg">Con 3 cambios pequeños, unos <span class="dn">1.700 € al año</span>.</p>
+  <div class="idea" style="border-top:0"><h3>Comer fuera · <span class="ah">~600 €/año</span></h3>
+   <p><b>180 €/mes</b>. 2 tuppers más a la semana.</p>
+   <button class="btn p" onclick="probar(this)">Probar</button></div>
+  <div class="idea"><h3>Taxis al hospital · <span class="ah">~540 €/año</span></h3>
+   <p><b>90 €/mes</b>. La mitad en guagua o compartiendo.</p>
+   <button class="btn p" onclick="probar(this)">Probar</button></div>
+  <div class="idea"><h3>Compras online · <span class="ah">~540 €/año</span></h3>
+   <p><b>140 €/mes</b>. Al carrito y esperar 48 h.</p>
+   <button class="btn p" onclick="probar(this)">Probar</button></div>
+ </div>
+
+ <div class="card">
+  <div class="e">Fijos · salen cada mes (728 €)</div>
+  <div class="li" style="border-top:0"><span class="t">Alquiler</span><b>550 €</b></div>
+  <div class="li"><span class="t">Luz + agua</span><b>60 €</b></div>
+  <div class="li"><span class="t">Gimnasio <span>5 veces en oct → 8 € por visita</span></span><span class="tag">¿lo usas?</span><b>40 €</b></div>
+  <div class="li"><span class="t">Móvil + internet</span><b>35 €</b></div>
+  <div class="li"><span class="t">Seguro <span>sube cada año sin avisar</span></span><span class="tag">pide precio</span><b>25 €</b></div>
+  <div class="li"><span class="t">Spotify / Netflix <span>¿las dos a la vez?</span></span><span class="tag">alterna</span><b>18 €</b></div>
+  <p class="msg" style="font-size:14px;margin-top:6px">Las 3 marcadas: 83 €/mes, <span class="dn">casi 1.000 € al año</span>.</p>
+ </div>
+
+ <div class="card row" style="padding:8px 12px"><span class="mini" style="flex:1">De Fintonic, 27 oct</span>
+  <button class="btn p">Traer de Fintonic</button><button class="btn">A mano</button></div>
+</section>
+
+<!-- ============ AHORRO ============ -->
+<section class="vista" id="v-ahorro" hidden aria-label="Ahorro">
+ <div class="top"><button class="volver" onclick="ir('portada')">← Dinero</button><h1>Ahorro</h1></div>
+
+ <div class="card con">
+  <div class="row"><span class="e">Tu colchón</span><span class="sp"></span>
+   <span class="mini"><b id="tengo">4.200 €</b> ahorrados · <b id="mm">2,8</b> meses</span>
+   <button class="ie" aria-expanded="false" aria-controls="i-col" aria-label="Qué es el colchón" onclick="tog(this,'i-col')">ⓘ</button></div>
+  <div class="nota" id="i-col" hidden>Un mes de vida = tu gasto normal, <b>1.478 €</b> (728 fijos + 750 variables). Con <b>6 meses</b> ahorrados, si un mes no hay guardias o pasa algo, vives tranquilo.</div>
+  <svg id="gr" viewBox="0 0 388 128" width="100%" role="img" aria-label="Ahorrado mes a mes y camino hasta el objetivo" style="display:block;margin-top:2px"></svg>
+  <div class="leg" style="margin:2px 0 6px;font-size:11px;flex-wrap:wrap;gap:4px 12px">
+   <span><i class="sq" style="background:var(--brand2)"></i>Ahorrado</span>
+   <span><i class="sq" style="background:var(--accent)"></i>Lo que necesitas</span>
+   <span><i class="sq" style="background:none;border:1.5px dotted var(--ink2)"></i>Tu regla actual</span></div>
+  <div class="row" style="gap:6px">
+   <label class="fld" style="flex:1;margin:0;padding:0 8px"><span class="mini">Objetivo</span><input id="om" value="6" inputmode="decimal" aria-label="Objetivo en meses de vida" style="font-size:17px" oninput="deMeses()"><span class="mini">meses</span></label>
+   <label class="fld" style="flex:1;margin:0;padding:0 8px"><input id="oe" value="8868" inputmode="numeric" aria-label="Objetivo en euros" style="font-size:17px;text-align:right" oninput="deEuros()"><span class="mini">€</span></label></div>
+  <div class="tabs" id="pl" style="margin:6px 0 0;gap:4px">
+   <button aria-pressed="false" onclick="plazo(6)">6 m</button><button aria-pressed="false" onclick="plazo(12)">12 m</button><button aria-pressed="false" onclick="plazo(18)">18 m</button>
+   <input type="month" id="fe" value="2027-06" min="2026-11" aria-label="O elige una fecha" onchange="calc()" style="flex:1.3;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:13px;padding:0 6px"></div>
+  <p class="msg" id="msg" style="margin-top:8px"></p>
+  <div class="mini" id="regla"></div>
+  <button class="btn p full" style="margin-top:8px" onclick="this.textContent='✓ Objetivo fijado'">Fijar este objetivo</button>
+ </div>
+
+ <div class="card lista">
+  <div class="li" style="padding:8px 12px;border-top:0;min-height:48px"><span class="t"><b>Racha: 4 meses seguidos ✓</b><span>Apartado cada 25: jul 61 · ago 486 · sep 811 · oct 661 = <b class="dn">2.019 €</b></span></span></div>
+  <button class="fila" style="min-height:56px" onclick="ir('compras')"><span class="ic" aria-hidden="true">C</span>
+   <span class="t"><small>APARTE, PARA TUS COMPRAS</small><b>460 € al mes · llevas 850 €</b></span>
+   <span class="ch" aria-hidden="true">›</span></button>
+  <button class="fila" style="min-height:48px" aria-expanded="false" aria-controls="ed" onclick="tog(this,'ed')"><span class="t"><b style="font-size:14px">Corregir lo que tengo ahorrado</b></span><span class="ch" aria-hidden="true">＋</span></button>
+  <label class="fld" id="ed" hidden style="margin:0 12px 8px"><span class="mini">Tengo ahorrado</span><input id="inp" value="4200" inputmode="numeric" aria-label="Ahorrado" oninput="calc()"><span class="mini">€</span></label>
+ </div>
+
+ <p class="mini" style="text-align:center;margin:0 8px">Cuando llegues al objetivo, te digo qué hacer con lo que sobre.</p>
+</section>
+
+<!-- ============ COMPRAS (R2-C) ============ -->
+<section class="vista" id="v-compras" hidden aria-label="Lo que quiero comprar">
+ <div class="top"><button class="volver" onclick="ir('portada')">← Dinero</button><h1>Lo que quiero comprar</h1></div>
+
+ <div class="card con" style="padding:8px 8px 8px 12px">
+  <div class="row"><span class="big" style="font-size:26px">460 €</span><span class="mini" style="flex:1">al mes · 4 compras · llevas <b>850 €</b><br>Lo próximo: <b>fonendo</b>, faltan <b>40 €</b></span>
+   <button class="ie" aria-expanded="false" aria-controls="i-com" aria-label="Ver cuándo cabe" onclick="tog(this,'i-com')">ⓘ</button></div>
+  <div class="nota" id="i-com" hidden>Con la nómina base (1.350 €) <b class="warn">no cabe entera</b>; con una con guardias (oct, 2.800 €) sí. Si un mes cobras poco, se pausa primero el viaje. El fonendo no se toca.</div>
+ </div>
+
+ <div class="cols" aria-hidden="true"><span>Compra</span><span>Precio</span><span>Al mes</span><span>Llega</span></div>
+
+ <div class="cf"><button class="cab" aria-expanded="false">
+   <span class="nm">Fonendo Littmann</span><span class="n">190 €</span><span class="n sec">20 €</span><span class="n sec">dic 2026</span></button>
+  <div class="barra"><i style="width:79%"></i></div>
+  <div class="det" hidden><span class="pill nec">Necesario</span> Llevas <b>150 €</b> de 190 · faltan 40 €.
+   <button class="btn p full" onclick="compre(this)">Lo compré</button></div></div>
+
+ <div class="cf"><button class="cab" aria-expanded="false">
+   <span class="nm">Portátil</span><span class="n">1.100 €</span><span class="n sec">115 €</span><span class="n sec">may 2027</span></button>
+  <div class="barra"><i style="width:27%"></i></div>
+  <div class="det" hidden><span class="pill nec">Necesario</span> Llevas <b>300 €</b> de 1.100 · faltan 800 €.
+   <button class="btn p full" onclick="compre(this)">Lo compré</button></div></div>
+
+ <div class="cf"><button class="cab" aria-expanded="false">
+   <span class="nm">Curso de ecografía</span><span class="n">350 €</span><span class="n sec">90 €</span><span class="n sec">feb 2027</span></button>
+  <div class="barra"><i style="width:0%"></i></div>
+  <div class="det" hidden><span class="pill util">Útil para el trabajo</span> Llevas <b>0 €</b> de 350 · faltan 350 €.
+   <button class="btn p full" onclick="compre(this)">Lo compré</button></div></div>
+
+ <div class="cf"><button class="cab" aria-expanded="false">
+   <span class="nm">Viaje a Japón</span><span class="n">2.500 €</span><span class="n sec">235 €</span><span class="n sec">jul 2027</span></button>
+  <div class="barra"><i style="width:16%"></i></div>
+  <div class="det" hidden><span class="pill ilu">Me hace ilusión</span> Llevas <b>400 €</b> de 2.500 · faltan 2.100 €.
+   <button class="btn p full" onclick="compre(this)">Lo compré</button></div></div>
+
+ <div class="cf espera"><button class="cab" aria-expanded="false">
+   <span class="nm">Auriculares nuevos</span><span class="n">120 €</span><span class="n sec">—</span><span class="n cuenta">18 días</span></button>
+  <div class="barra"><i style="width:40%"></i></div>
+  <div class="det" hidden><span class="pill esp">En espera 30 días</span> Si en 30 días sigues queriéndolo, pasa a la lista. Hasta entonces no se aparta nada.
+   <button class="btn full">Ya no lo quiero</button></div></div>
+
+ <button class="btn p full" style="margin-top:4px">+ Añadir algo que quiero</button>
+</section>
+
+</div>
+<script>
+var $=function(i){return document.getElementById(i)},
+ f=function(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' €'},V=1478;
+// navegación: una vista a la vez, sin guardar nada
+function ir(v,ancla){
+ document.querySelectorAll('.vista').forEach(function(s){s.hidden=s.id!=='v-'+v});
+ if(ancla){$(ancla).scrollIntoView()}else{window.scrollTo(0,0)}
+}
+function tog(b,id){var a=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',String(!a));$(id).hidden=a}
+// reparto de la nómina (portada)
+function reparto(){var n=+$('nom').value||0,s=Math.max(0,n-V),c=Math.round(s/2),com=Math.min(460,s-c),l=Math.max(0,s-c-com);
+ $('r-col').textContent=f(c);$('r-com').textContent=f(com);$('r-lib').textContent=f(l);$('r-bt').textContent=f(c)}
+// gastos
+var D={oct:{n:'octubre',p:'sep',v:[['Súper',230,220],['Comer fuera',180,150],['Taxis al hospital',90,60],['Compras online',140,95],['Ocio',110,120]]},
+ sep:{n:'septiembre',p:null,v:[['Súper',220],['Comer fuera',150],['Taxis al hospital',60],['Compras online',95],['Ocio',120]]}};
+function mes(b,k){
+ [].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-pressed',String(x===b))});
+ var d=D[k],t=d.v.reduce(function(a,x){return a+x[1]},0),all=t+728,pf=Math.round(728/all*100);
+ $('g-mn').textContent=d.n;$('g-tot').textContent=f(all);$('g-lv').textContent=f(t);
+ $('g-bf').style.width=pf+'%';$('g-bv').style.width=(100-pf)+'%';
+ $('g-bar').setAttribute('aria-label','Fijos 728 euros, variables '+t+' euros');
+ $('g-msg').textContent='De cada 100 € que gastas, '+pf+' no los puedes tocar: son fijos.';
+ var mx=Math.max.apply(null,d.v.map(function(x){return x[1]}));
+ $('g-vs').textContent=d.p?'vs '+d.p:'';
+ $('g-vars').innerHTML=d.v.map(function(x){var df=x[2]==null?'':(x[1]-x[2]>0?'<span class="up">▲ '+(x[1]-x[2])+'</span>':'<span class="dn">▼ '+(x[2]-x[1])+'</span>');
+  return '<div class="vr"><b>'+x[0]+'</b><span class="r"><b>'+f(x[1])+'</b></span><span class="r">'+df+'</span><div class="mb a"><i style="width:'+Math.round(x[1]/mx*100)+'%"></i></div></div>'}).join('');
+ $('g-dif').innerHTML=d.p?'Octubre costó <span class="up">105 € más</span> que septiembre, sobre todo compras online y taxis.':'Septiembre: 645 € en variables, tu mes más contenido.';
+}
+function probar(b){var on=b.textContent==='Probar';b.textContent=on?'Probando ✓':'Probar';b.classList.toggle('p',!on)}
+// ahorro: historial (fin de mes) y objetivo con plazo
+var H=[2181,2181,2242,2728,3539,4200],HM=['may','jun','jul','ago','sep','oct'],R=500,
+ MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'],
+ MC=['E','F','M','A','M','J','J','A','S','O','N','D'];
+function nm(i){var m=(9+i)%12,y=2026+Math.floor((9+i)/12);return MN[m]+' de '+y}
+function deMeses(){var m=parseFloat(String($('om').value).replace(',','.'))||0;$('oe').value=Math.round(m*V);calc()}
+function deEuros(){$('om').value=(Math.round((+$('oe').value||0)/V*10)/10).toString().replace('.',',');calc()}
+function plazo(n){var d=new Date(2026,9+n,1);$('fe').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');calc()}
+function calc(){var a=+$('inp').value||0,m=a/V,g=+$('oe').value||0,
+ pv=($('fe').value||'2027-06').split('-'),n=Math.max(1,(+pv[0]-2026)*12+(+pv[1]-10)),fl=g-a,
+ need=Math.ceil(fl/n),rn=fl>0?Math.ceil(fl/R):0;
+ $('mm').textContent=m.toFixed(1).replace('.',',');$('tengo').textContent=f(a);
+ [].forEach.call($('pl').querySelectorAll('button'),function(b,i){b.setAttribute('aria-pressed',String(n===[6,12,18][i]))});
+ if(fl<=0){$('msg').innerHTML='<span class="ok">Ya llegas</span> a '+f(g)+': el colchón está completo.';$('regla').textContent='';}
+ else{$('msg').innerHTML='Para '+f(g)+' en '+nm(n)+': aparta <span class="dn" style="white-space:nowrap">'+f(need)+'/mes</span>';
+  $('regla').innerHTML=rn<=n?'Con tu regla actual (~500 €/mes) <b class="ok">llegas a tiempo</b>, en '+nm(rn)+'.':'Con tu regla actual (~500 €/mes) <b class="warn">no llegas</b>: llegas en '+nm(rn)+', '+(rn-n)+(rn-n==1?' mes':' meses')+' tarde.'}
+ grafica(a,g,n,rn)}
+function grafica(a,g,n,rn){var W=388,L=34,Rr=8,T=8,B=20,Hh=128,fin=Math.max(n,fl0(rn,n)),N=5+fin,mx=Math.max(g,a)*1.08,
+ X=function(i){return L+i*(W-L-Rr)/N},Y=function(v){return Hh-B-v/mx*(Hh-B-T)},o='';
+ [0,.5,1].forEach(function(t){var v=Math.round(g*t/100)*100;o+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-4)+'" y="'+(Y(v)+3.5)+'" text-anchor="end" font-size="9.5" fill="var(--ink2)">'+(v?(v/1000).toFixed(1).replace('.',',')+'k':'0')+'</text>'});
+ o+='<line x1="'+X(0)+'" x2="'+(W-Rr)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 3"/>';
+ var pts=H.map(function(v,i){return X(i)+','+Y(v)}).join(' ');
+ o+='<polyline points="'+pts+'" fill="none" stroke="var(--brand2)" stroke-width="2.5" stroke-linejoin="round"/>';
+ o+='<line x1="'+X(5)+'" y1="'+Y(a)+'" x2="'+X(5+n)+'" y2="'+Y(Math.max(g,a))+'" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 3"/>';
+ if(rn>0)o+='<line x1="'+X(5)+'" y1="'+Y(a)+'" x2="'+X(5+rn)+'" y2="'+Y(g)+'" stroke="var(--ink2)" stroke-width="1.6" stroke-dasharray="1.5 3" stroke-linecap="round"/>';
+ o+='<circle cx="'+X(5)+'" cy="'+Y(a)+'" r="4" fill="var(--brand2)"/><circle cx="'+X(5+n)+'" cy="'+Y(Math.max(g,a))+'" r="4" fill="var(--accent)"/>';
+ o+='<text x="'+(X(5)-6)+'" y="'+(Y(a)-8)+'" text-anchor="end" font-size="10.5" font-weight="800" fill="var(--ink)">hoy '+f(a)+'</text>';
+ for(var i=0;i<=N;i+=1){if(i%Math.ceil(N/9)==0||i==5)o+='<text x="'+X(i)+'" y="'+(Hh-6)+'" text-anchor="middle" font-size="9.5" fill="var(--ink2)">'+(i<=5?HM[i][0].toUpperCase():MC[(9+i-5)%12])+'</text>'}
+ $('gr').innerHTML=o;$('gr').setAttribute('aria-label','Ahorrado de mayo a octubre: de '+f(H[0])+' a '+f(a)+'. Objetivo '+f(g)+' en '+nm(n))}
+function fl0(rn,n){return rn>n&&rn<60?rn:n}
+// compras
+document.querySelectorAll('.cab').forEach(function(b){b.addEventListener('click',function(){
+ var a=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',String(!a));b.parentElement.querySelector('.det').hidden=a})});
+function compre(b){b.textContent='✓ Comprado: su cuota pasa a la siguiente'}
+mes(document.querySelector('.tabs button'),'oct');calc();reparto();
+</script>
+</body></html>

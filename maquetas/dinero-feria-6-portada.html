@@ -1,0 +1,118 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412"><title>Feria 6 · Portada de Dinero</title><link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.tit{font-size:10px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:16px 0 8px}
+.e{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.cartel{border:2px dashed var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
+.cartel b{font-size:15px}.cartel p{margin:4px 0 0;font-size:12.5px;color:var(--ink2)}
+.b44{min-height:46px;width:100%;font-size:15px;font-weight:800;border-radius:12px;margin-top:10px;cursor:pointer}
+.bar{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden;border:0}.bar i{display:block;height:100%;background:var(--brand2)}
+.parte{margin-top:8px;display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;min-height:64px}
+.parte .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:var(--bg2);border:1px solid var(--line);flex:none}
+.parte .t{flex:1;min-width:0}.parte .t b{display:block;font-size:15px}.parte .t span{font-size:12px;color:var(--ink2)}
+.parte .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:900;font-size:16px}.parte .n small{display:block;font-size:10.5px;color:var(--ink2);font-weight:700}
+.parte .go{color:var(--ink2);font-size:20px}
+.plan{display:none;margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.plan.on{display:block}
+.rp{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;font-weight:700}
+.rp .st{display:flex;align-items:center;gap:6px}
+.rp .st button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-size:20px;font-weight:900}
+.rp .st b{min-width:62px;text-align:center;font-variant-numeric:tabular-nums}
+.fld{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:4px}
+.li{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:8px 0;border-top:1px dashed var(--line);font-variant-numeric:tabular-nums}.li:first-of-type{border-top:0}
+.ok{color:#34d399}.warn{color:#fbbf24}
+.apil{display:flex;height:22px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-top:8px}.apil i{display:block;height:100%}
+.apil i+i{border-left:2px solid var(--card)}
+.ley{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:11.5px;color:var(--ink2);font-weight:700}.ley s{text-decoration:none}.ley i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.cbar{display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:8px}
+.cbar div{flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink2)}.cbar i{display:block;background:var(--brand2);border-radius:4px 4px 0 0;margin-bottom:3px}.cbar b{display:block;color:var(--ink);font-size:11px}
+.cbar .hoy i{background:var(--brand)}
+.base{position:relative}
+.tip{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;font-size:13px}
+</style><body><div class="wrap">
+
+<div class="card cartel"><div class="e" style="color:var(--accent)">PUESTO 6 · LA PORTADA</div><b>«Cobro, reparto, y ya»</b>
+<p>Dinero se abre con un único mensaje del mes («tus guardias pagan tu ahorro») y cinco partes en fila, cada una con una frase de estado.</p>
+<p>El gesto que más usarás es uno solo: el día 25 tocas «Ya ha llegado la nómina», confirmas el reparto y se acabó.</p></div>
+
+<div class="tit">PANTALLA 1 · LA PORTADA (toca el botón grande)</div>
+
+<div class="card hero">
+ <div class="e">MENSAJE DE OCTUBRE</div>
+ <div style="font-size:19px;font-weight:900;line-height:1.2;margin-top:4px">Con tu sueldo base (1.350 €) casi llegas. Lo que ganas en guardias, <span style="color:var(--accent)">ahórralo</span>.</div>
+ <div class="mini" style="margin-top:6px;font-size:12.5px">Tu mes normal cuesta unos 1.478 €. Este mes cobraste 2.800 €: sobraron <b style="color:var(--ink)">1.322 €</b>.</div>
+ <button class="btn p b44" id="bn" onclick="tg()">💶 Ya ha llegado la nómina</button>
+ <div class="plan" id="pl">
+  <div class="e">¿CUÁNTO HA LLEGADO? (lo que ves en el banco)</div>
+  <div class="fld">2.800 €</div>
+  <div class="mini" style="margin:8px 0 2px;font-size:12.5px">Te propongo repartir <b style="color:var(--ink)">1.300 €</b> y dejar el resto para tu mes. Cambia lo que quieras:</div>
+  <div class="rp"><span style="flex:1">🏦 A tu ahorro</span><span class="st"><button onclick="m(0,-50)" aria-label="menos">−</button><b id="v0">800 €</b><button onclick="m(0,50)" aria-label="más">+</button></span></div>
+  <div class="rp"><span style="flex:1">🛍️ A lo que quieres comprar</span><span class="st"><button onclick="m(1,-50)" aria-label="menos">−</button><b id="v1">300 €</b><button onclick="m(1,50)" aria-label="más">+</button></span></div>
+  <div class="rp"><span style="flex:1">📈 A invertir</span><span class="st"><button onclick="m(2,-50)" aria-label="menos">−</button><b id="v2">200 €</b><button onclick="m(2,50)" aria-label="más">+</button></span></div>
+  <div class="mini" id="rest" style="margin:4px 0">Te quedan para el mes: 1.500 € (fijos 728 + resto de gastos)</div>
+  <button class="btn p b44" onclick="tg()">Hecho: apuntar reparto</button>
+  <div class="mini" style="margin-top:6px">Es un apunte tuyo: no mueve dinero. Tú haces la transferencia en el banco.</div>
+ </div>
+</div>
+
+<button class="card parte row">
+ <span class="ic">🏦</span><span class="t"><b>Mi ahorro</b><span>colchón de 2,8 meses · meta 6 meses</span></span>
+ <span class="n">4.200 €<small>faltan 4.668 €</small></span><span class="go">›</span></button>
+<div class="card" style="margin-top:-4px;padding:8px 12px 10px;background:var(--bg2)"><div class="bar"><i style="width:47%"></i></div><div class="mini" style="margin-top:4px">Colchón = dinero que te cubre unos meses si un día cobras menos.</div></div>
+
+<button class="card parte row"><span class="ic">💶</span><span class="t"><b>Lo que cobro</b><span>base 1.350 € · media de 5 meses 2.260 €</span></span>
+ <span class="n">2.800 €<small>cobrado el 25 oct</small></span><span class="go">›</span></button>
+<div class="card" style="margin-top:-4px;padding:8px 12px 10px;background:var(--bg2)">
+ <div class="cbar"><div><i style="height:30px"></i><b>1.350</b>jun</div><div><i style="height:36px"></i><b>1.600</b>jul</div><div><i style="height:55px"></i><b>2.450</b>ago</div><div><i style="height:69px"></i><b>3.100</b>sep</div><div class="hoy"><i style="height:62px"></i><b>2.800</b>oct</div></div></div>
+
+<button class="card parte row"><span class="ic">🧾</span><span class="t"><b>En qué se me va</b><span>fijos 728 € · variables 750 €</span></span>
+ <span class="n">1.478 €<small>octubre</small></span><span class="go">›</span></button>
+<div class="card" style="margin-top:-4px;padding:8px 12px 10px;background:var(--bg2)">
+ <div class="apil"><i style="width:37%;background:#6d5dfc"></i><i style="width:15%;background:#34d399"></i><i style="width:12%;background:#f59e0b"></i><i style="width:6%;background:#fb7185"></i><i style="width:9%;background:#38bdf8"></i><i style="width:7%;background:#b7a3c9"></i></div>
+ <div class="ley"><s><i style="background:#6d5dfc"></i>fijos 728</s><s><i style="background:#34d399"></i>súper 230</s><s><i style="background:#f59e0b"></i>comer fuera 180</s><s><i style="background:#fb7185"></i>taxis 90</s><s><i style="background:#38bdf8"></i>online 140</s><s><i style="background:#b7a3c9"></i>ocio 110</s></div></div>
+
+<button class="card parte row"><span class="ic">🛍️</span><span class="t"><b>Lo que quiero comprar</b><span>4 cosas · portátil, Japón, eco, fonendo</span></span>
+ <span class="n">4.140 €<small>en total</small></span><span class="go">›</span></button>
+
+<button class="card parte row"><span class="ic">📈</span><span class="t"><b>Invertir</b><span>aún nada apartado · idea: fondo indexado (muchas empresas en uno, a largo plazo)</span></span>
+ <span class="n">0 €<small>empezar</small></span><span class="go">›</span></button>
+
+<div class="tit">PANTALLA 2 · EL RESUMEN DE OCTUBRE (al cerrar el mes)</div>
+<div class="card hero">
+ <div class="e">OCTUBRE CERRADO</div>
+ <div style="font-size:19px;font-weight:900;line-height:1.2;margin-top:4px">Has ahorrado <span class="ok">1.300 €</span> de los 1.322 € que sobraron.</div>
+ <div class="mini" style="margin-top:4px;font-size:12.5px">Mes muy bueno: lo normal para ti son unos 800 €.</div>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="e">DE DÓNDE VINO Y A DÓNDE FUE</div>
+ <div class="li"><span>💶 Cobré (25 oct)</span><b>2.800 €</b></div>
+ <div class="li"><span>🧾 Gastos fijos</span><b>− 728 €</b></div>
+ <div class="li"><span>🧾 Gastos variables</span><b>− 750 €</b></div>
+ <div class="li"><span><b>Sobró</b></span><b class="ok">1.322 €</b></div>
+ <div class="e" style="margin-top:10px">LO QUE APARTASTE</div>
+ <div class="li"><span>🏦 Ahorro</span><b>800 €</b></div>
+ <div class="li"><span>🛍️ Compras (portátil)</span><b>300 €</b></div>
+ <div class="li"><span>📈 Invertir</span><b>200 €</b></div>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="e">DÓNDE PUEDES AHORRAR EL MES QUE VIENE</div>
+ <div class="tip"><b>Compras online: 140 €</b> (en septiembre, 95 €).<br><span class="mini">Si vuelves a esa cifra, +45 € al mes.</span></div>
+ <div class="tip"><b>Comer fuera: 180 €</b> (en septiembre, 150 €).<br><span class="mini">Un tupper tras la guardia, 2 días por semana, ahorra unos 30 €.</span></div>
+ <div class="mini" style="margin-top:8px;font-size:12.5px">Las guardias de octubre se cobrarán más tarde: no cuentes con ellas todavía.</div>
+</div>
+<div class="card" style="margin-top:8px">
+ <div class="e">TU AHORRO AHORA</div>
+ <div class="row" style="align-items:baseline"><span class="big">5.000 €</span><span class="mini">= 3,4 meses de colchón (+0,6)</span></div>
+ <div class="bar" style="margin-top:6px"><i style="width:56%"></i></div>
+ <button class="btn p b44">Cerrar octubre y ver noviembre</button>
+</div>
+
+</div><script>
+var v=[800,300,200];
+function tg(){document.getElementById('pl').classList.toggle('on')}
+function f(n){return n.toLocaleString('es-ES')+' €'}
+function m(i,d){v[i]=Math.max(0,v[i]+d);document.getElementById('v'+i).textContent=f(v[i]);
+ var r=2800-v[0]-v[1]-v[2];document.getElementById('rest').textContent='Te quedan para el mes: '+f(r)+' (fijos 728 + resto de gastos)'}
+</script></html>

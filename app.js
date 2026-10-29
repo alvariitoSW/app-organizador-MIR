@@ -902,6 +902,7 @@ function normalize(o){
    else e.dias=EST_NIVELES.map(function(n,i){
      const v=+e.dias[i];return (v>=1&&v<=365)?Math.round(v):n.dias;});}
   ahorroLimpia(o);
+  dinero3Limpia(o);
   /* 🌿 consumo: sesiones con su forma, cantidad y contexto; objetivo semanal y €/g */
   if(o.consumo&&typeof o.consumo==='object'){const c=o.consumo;
     c.ses=(Array.isArray(c.ses)?c.ses:[]).filter(function(x){return x&&esFecha(x.fecha||'');}).slice(0,2000).map(function(x){return {id:String(x.id||uid('cn')),ts:+x.ts||0,fecha:x.fecha,
@@ -1869,7 +1870,7 @@ function finEntrenoDe(dateStr,infOpt){
     const hi=propias?sh.start:((gymS()||{}).hora||'');
     const m=mins(hi);
     if(m!=null){
-      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+(+(gymS()||{}).duracion||75));
+      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+gymDur(dateStr));
       if(f!=null&&(fin==null||f>fin))fin=f;}}
   const g2=diaSegundo(dateStr,inf);
   if(g2&&g2.on){const m=mins(g2.hora||'15:30');
@@ -7510,7 +7511,7 @@ function agendaDia0(key,inf){
   /* a la hora del plan de la semana: si chocaba con algo, la app ya le ha buscado otra */
   const en=hayEntreno?null:entrenoDe(key),hE=(en&&en.hora)||gymS().hora;
   if(rt&&!hayEntreno&&hE)
-    add(hE,hm(mins(hE)+((en&&en.dur)||+gymS().duracion||75)),'💪','Entreno · '+rt.nombre,'','gym',tlColor('gym'));
+    add(hE,hm(mins(hE)+((en&&en.dur)||gymDur(key))),'💪','Entreno · '+rt.nombre,'','gym',tlColor('gym'));
   else if(en&&en.tipo==='pisc'&&en.hora)add(en.hora,hm(mins(en.hora)+en.dur),'🏊','Piscina','','gym',tlColor('gym'));
   const s2=diaSegundo(key,inf);
   if(s2&&s2.on)add(s2.hora,'','🏊',(s2.tipo||'entreno').replace(/^./,function(c){return c.toUpperCase();}),'segundo entreno','gym',tlColor('gym'));
@@ -7865,7 +7866,7 @@ function abrirHojaDia(k){
    hoja de Comer. */
 const HOJAS={
   dia:{abierta:function(){return ui.tab==='month'&&ui.hojaDia;},html:function(){return hojaDiaHTML();},cerrar:function(){ui.hojaDia='';ui.hojaVista='';ui.hojaRec=false;ui.hojaMas=false;}},
-  dinero:{abierta:function(){return ui.tab==='dinero'&&(!ui.dineroVista||ui.dineroVista==='cierre')&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';ui.deseoNuevo='';}},
+  dinero:{abierta:function(){return ui.tab==='dinero'&&!ui.dineroVista&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';}},
   sol:{abierta:function(){return ui.tab==='hoy'&&!!ui.solHoja;},html:function(){return solHojaHTML();},cerrar:function(){ui.solHoja='';}},
   cien:{abierta:function(){return ui.tab==='hoy'&&ui.hoyVista==='sueno'&&!!ui.snCienH&&!ui.snHoja;},html:function(){return suenoCienciaHTML();},cerrar:function(){ui.snCienH=false;ui.snCien='';}},
   sueno:{abierta:function(){return ui.tab==='hoy'&&!!ui.snHoja;},html:function(){return suenoHojaHTML();},cerrar:function(){if(ui.snHoja){ui.snHoja='';ui.snTr=null;}}},
@@ -8424,21 +8425,36 @@ function entrenoCfg(){const g=gymS(),p=(g.piscinaSal&&typeof g.piscinaSal==='obj
     fuerza:(g.fuerzaMin!=null&&+g.fuerzaMin>=0)?Math.min(7,Math.round(+g.fuerzaMin)):2,
     pisc:{on:p.on!==false,hora:/^\d{1,2}:\d{2}$/.test(String(p.hora||''))?p.hora:'18:00',dur:(+p.dur>=30&&+p.dur<=240)?Math.round(+p.dur):90}};}
 function gymForzar(){const g=gymS();if(!g.forzar||typeof g.forzar!=='object'||Array.isArray(g.forzar))g.forzar={};return g.forzar;}
+function franja(){
+  /* LA FRANJA DEL ENTRENO. Entre semana, a las 15:00 (50 min) y, si algo la pisa, la sesión mínima de 25 min a
+     las 15:30: nunca de tarde-noche, que es cuando se come, se descansa y se duerme. Sábado y domingo, al
+     parque a las 10:00 (40 min). Se lee de gym.franja con estos valores por defecto: nada que migrar. */
+  const f=(gymS().franja&&typeof gymS().franja==='object')?gymS().franja:{},ok=function(h){return /^\d{1,2}:\d{2}$/.test(String(h||''));},
+    d=function(x,v){return (+x>=15&&+x<=240)?Math.round(+x):v;};
+  return {sem:ok(f.sem)?f.sem:'15:00',fin:ok(f.fin)?f.fin:'10:00',durSem:d(f.durSem,50),durFin:d(f.durFin,40),min:'15:30',durMin:25};}
+function esFinDeSemana(key){const d=parseDate(key);return !!d&&(d.getDay()===0||d.getDay()===6);}
+function lugarEntreno(key){return esFinDeSemana(key)?'parque':'gimnasio';}
+const PARQUE_RUTINA=['Sentadilla','Flexiones inclinadas','Remo invertido','Zancadas','Plancha','Subir escalones'];
+function rutinaParque(){
+  /* la rutina del parque, sin material: se crea una vez y se reutiliza (addRutina ya mete los ejercicios) */
+  const g=gymS();let rt=g.rutinas.filter(function(r){return r.parque;})[0];
+  if(rt)return rt;
+  rt={id:uid('rt'),nombre:'Parque · sin material',notas:'',ejercicios:[],parque:true};g.rutinas.push(rt);
+  PARQUE_RUTINA.forEach(function(n){addRutina(rt.id,n,{series:3,reps:n==='Plancha'?30:10,descansoSeg:60});});
+  return rt;}
 function gymHoraDe(key,infOpt){
-  /* a qué hora entrenas ese día. Sin hora puesta en el gym la franja no se pintaba en ningún
-     sitio: ahora sale del día —al salir del trabajo, lo que tardas en llegar; en un libre, a las 17—. */
+  /* a qué hora entrenas ese día: la que pongas tú en el gym o, si no, la franja fija (15:00 entre semana,
+     10:00 el fin de semana). Antes salía de la hora de salir del trabajo y a veces caía por la tarde-noche. */
   const h=gymS().hora;if(h)return h;
-  const inf=infOpt||dayInfo(key),jor=jornadaOf(key,inf);
-  const f=jor&&jor.end?mins(jor.end):null;
-  if(f!=null&&f<20*60)return hm(f+entrenoCfg().ida);
-  return '17:00';}
+  return esFinDeSemana(key)?franja().fin:franja().sem;}
+function gymDur(key){return +gymS().duracion>0?+gymS().duracion:(esFinDeSemana(key)?franja().durFin:franja().durSem);}
 function ventanaEntreno(key,tipo,inf){
   /* el rato que te ocupa entrenar, con ir y volver: es lo que no puede pisar un evento */
   const c=entrenoCfg();
   if(tipo==='pisc'){const d=mins(c.pisc.hora);return {de:d-c.ida,a:d+c.pisc.dur+c.vuelta,hora:c.pisc.hora,dur:c.pisc.dur};}
   const sh=shiftById((inf||dayInfo(key)).shiftId),jor=jornadaOf(key,inf);
   const propias=sh&&sh.start&&/fuerza|entreno/i.test(sh.name||'')&&!(jor&&jor.start===sh.start);
-  const hi=propias?sh.start:gymHoraDe(key,inf),d=mins(hi),dur=(propias&&sh.end&&sh.end>sh.start)?(mins(sh.end)-d):(+gymS().duracion||75);
+  const hi=propias?sh.start:gymHoraDe(key,inf),d=mins(hi),dur=(propias&&sh.end&&sh.end>sh.start)?(mins(sh.end)-d):gymDur(key);
   return {de:d-c.ida,a:d+dur+c.vuelta,hora:hi,dur:dur};}
 function eventoQueChoca(key,v){
   /* el Lloretazo de cada noche es rutina (ir a fumar, no deporte): cede ante el entreno y no lo
@@ -8453,16 +8469,19 @@ function llChoca(key,v){
   const ll=lloretDe(key),de=ll&&mins(ll.hora||'');if(de==null)return null;
   let a=mins(ll.fin||'');if(a==null||a<=de)a=de+60;
   return (de<v.a&&v.de<a)?ll:null;}
+/* fuerza entre semana: solo las 15:00 y la sesión mínima de las 15:30; el fin de semana, el parque a las 10:00 primero */
 const ENT_HORAS={pisc:['18:00','17:00','17:30','16:30','19:00','10:00','11:00','12:00'],
-  fuerza:['17:00','18:00','10:00','11:00','12:00','16:00','19:00','09:00']};
+  fuerza:['10:00','11:00','12:00','17:00','18:00','16:00','19:00','09:00'],fuerzaSem:['15:00','15:30']};
 function horaLibreEntreno(key,tipo,inf,v0){
   /* la primera hora de la lista que no pisa trabajo, siesta, eventos ni el Lloretazo, y acaba antes
      de las 22:00 (luego toca cenar y dormir) */
   const c=entrenoCfg(),dur=v0.dur,sl=sleepOf(key,inf),sie=sl&&sl.siesta?[mins(sl.siesta.de),mins(sl.siesta.a)+30]:null;
   const bs=bloquesTrabajo(key,inf);
-  const hs=[tipo==='pisc'?c.pisc.hora:null].concat(ENT_HORAS[tipo==='pisc'?'pisc':'fuerza']).filter(Boolean);
+  const fz=esFinDeSemana(key)?ENT_HORAS.fuerza:ENT_HORAS.fuerzaSem,fr=franja();
+  const hs=[tipo==='pisc'?c.pisc.hora:null].concat(tipo==='pisc'?ENT_HORAS.pisc:fz).filter(Boolean);
   for(let i=0;i<hs.length;i++){const h=mins(hs[i]);if(h==null||hs[i]===v0.hora)continue;
-    const v={de:h-c.ida,a:h+dur+c.vuelta,hora:hs[i],dur:dur};
+    const dm=tipo!=='pisc'&&hs[i]===fr.min?Math.min(dur,fr.durMin):dur;   /* a las 15:30 solo cabe la sesión mínima */
+    const v={de:h-c.ida,a:h+dm+c.vuelta,hora:hs[i],dur:dm};
     if(v.a>22*60)continue;
     if(sie&&sie[0]!=null&&v.de<sie[1]&&sie[0]<v.a)continue;
     if(bs.some(function(b){return v.de<b.a&&b.de<v.a;}))continue;
@@ -8666,7 +8685,7 @@ function fechaCortaTxt(key){
   const d=parseDate(key);
   return d?(DAYN[(d.getDay()+6)%7].toLowerCase()+' '+d.getDate()):key;}
 /* ===================== empezar/terminar una rutina = una sesión ===================== */
-function empezarRutina(rid,fecha,corta){
+function empezarRutina(rid,fecha,corta,minima){
   /* monta las series de esa rutina con el último peso que usaste en cada ejercicio (misma idea que
      antes pasarRutina(), pero ahora sabiendo de qué rutina se trata) y abre una "sesión en curso":
      hasta que no le des a «he terminado» (o «descartar»), no hay una sola sesión más que empezar. */
@@ -8680,7 +8699,7 @@ function empezarRutina(rid,fecha,corta){
      peso de la última vez; como ui.gymSesionActiva no se guarda, cerrar la app a mitad dejaba en tu
      historial 17 series que no habías hecho. Ahora cada serie entra cuando la apuntas. */
   const n=rt.ejercicios.reduce(function(a,ej){return a+ejSets(ej).length;},0);
-  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
+  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta,min:!!minima};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
   ui.gymDesc=null;ui.gymInforme='';
   /* empezar una rutina te deja DENTRO del entreno, no en un formulario — y también cuando le das
      desde «Hoy», que es donde sale el aviso de que hoy toca: sin cambiar de pestaña, pulsabas
@@ -9032,9 +9051,42 @@ function setMetaNum(campo,val){
     p.metaProt[m]=n;save();
     return fmt(n)+' g de proteína por kilo';}
   return '';}
+const OBJ_RITMOS=[0.25,0.5,0.75,1];
+function pesoPartida(){
+  /* de dónde partes: la media de los pesos de los últimos 7 días apuntados (el del día sube y baja con la sal y el agua) */
+  const p=perfilS(),u=p.pesos.length?p.pesos[p.pesos.length-1].k:'';
+  if(!u)return +p.pesoKg||0;
+  const d=iso(addDays(parseDate(u),-6)),t=p.pesos.filter(function(x){return x.k>=d;});
+  return Math.round(t.reduce(function(a,x){return a+x.kg;},0)/t.length*10)/10;}
+function objetivoPeso(){
+  /* OBJETIVO DE PESO: kg de meta + ritmo (kg/semana) → kcal al día, proteína, semanas y fecha. Con topes para que
+     no sea nunca una dieta agresiva: ritmo ≤1 % del peso por semana, déficit ≤25 % de lo que gastas, kcal ≥ tu basal y
+     ≥1.500, y meta con IMC ≥18,5. `topes` dice cuáles se han aplicado. Sin objetivo o sin perfil: null. */
+  const p=perfilS(),o=p.objetivo,g=gastoDiario(),b=metabolismoBasal(),par=pesoPartida();
+  if(!o||!(+o.kg>0)||!g||!par)return null;
+  const topes=[],imcMin=+p.alturaCm>0?Math.ceil(18.5*Math.pow(p.alturaCm/100,2)*10)/10:0;
+  let meta=+o.kg;
+  if(imcMin&&meta<imcMin){meta=imcMin;topes.push('imc');}
+  if(!(meta<par))return {meta:meta,partida:par,perder:false,topes:topes,kcal:0,prot:0,semanas:0,fecha:'',ritmo:0};
+  let rit=OBJ_RITMOS.indexOf(+o.ritmo)>=0?+o.ritmo:0.5;
+  if(rit>par*0.01){rit=Math.floor(par*0.01*100)/100;topes.push('ritmo');}
+  let def=rit*7700/7;
+  if(def>g*0.25){def=g*0.25;topes.push('deficit');}
+  let kcal=Math.round((g-def)/10)*10;
+  if(kcal<Math.max(b,1500)){kcal=Math.max(b,1500);topes.push('basal');}
+  const real=Math.max(0,g-kcal),sem=real>0?Math.ceil((par-meta)/(real*7/7700)):0;
+  return {meta:meta,partida:par,perder:true,topes:topes,kcal:kcal,prot:Math.round(par*2/5)*5,semanas:sem,
+    fecha:sem?iso(addDays(new Date(),sem*7)):'',ritmo:Math.round(real*7/7700*100)/100};}
+function setObjetivoPeso(kg,ritmo){
+  const p=perfilS(),v=Math.round((+kg||0)*10)/10;
+  if(!(v>=30&&v<=300))return 'esa meta no puede ser';
+  p.objetivo={kg:v,ritmo:OBJ_RITMOS.indexOf(+ritmo)>=0?+ritmo:((p.objetivo&&p.objetivo.ritmo)||0.5)};
+  save();render();return 'objetivo guardado: '+fmtKg(v)+' kg';}
 function kcalSugeridas(){
   const g=gastoDiario();
   if(!g)return 0;
+  const ob=perfilS().meta==='perder'?objetivoPeso():null;
+  if(ob&&ob.perder)return ob.kcal;   /* con objetivo de peso, manda su cuenta (ya respeta basal y 1.500) */
   const k=Math.round(g*(1+ajusteMeta())/10)*10;
   /* nunca por debajo del metabolismo basal: comer menos de lo que gastas en reposo no es un plan */
   return Math.max(metabolismoBasal(),k);}
@@ -15319,30 +15371,6 @@ function gymDiasHechos(){
   g.cardio.forEach(function(x){if(x.fecha)d.add(x.fecha);});
   _ghDias=d;_ghTick=_renderTick;return d;}
 function gymHechoEn(key){return gymDiasHechos().has(foodKey(key)||key);}
-function gymDiaEstado(key){
-  /* el estado de un día para la tira de la semana, y la línea que lo explica al tocarlo */
-  const inf=dayInfo(key),sh=shiftById(inf.shiftId),hoy=iso(new Date());
-  const rt=rutinaDeFecha(key),malo=gymDiaMalo(key,inf),hecho=gymHechoEn(key);
-  let est='libre';
-  if(hecho)est='hecho';
-  else if(rt&&malo)est='choque';
-  else if(key===hoy)est='hoy';
-  else if(malo)est='guardia';
-  else if(rt)est='plan';
-  const partes=[];
-  const hd=horasDelDiaTxt(key,inf);
-  if(hd)partes.push(hd);
-  if(hecho){
-    const n=setsDe(key).length;
-    if(n)partes.push(n+' serie'+(n===1?'':'s')+' apuntada'+(n===1?'':'s'));
-    const cd=gymS().cardio.filter(function(x){return x.fecha===key;});
-    if(cd.length)partes.push(cd.length+' de cardio');
-  }else if(rt&&malo)partes.push('«'+rt.nombre+'» puesto aquí, pero estás de '+malo);
-  else if(rt)partes.push('toca «'+rt.nombre+'»');
-  else if(malo)partes.push('de '+malo+', sin entreno');
-  else if(!hd)partes.push('sin nada puesto');
-  return {key:key,est:est,rt:rt,malo:malo,hecho:hecho,sh:sh,txt:partes.join(' · ')};}
-const GYM_EST_NOM={hecho:'hecho',hoy:'hoy',plan:'planeado',guardia:'guardia',choque:'choca con la guardia',libre:'libre'};
 const GYM_DESC_GRUPOS=['pecho','espalda','hombros','cuadriceps','core'];
 let _gdTick=-1,_gdDia='',_gdMemo=null;
 function gymDescanso(){
@@ -15948,7 +15976,8 @@ function sesionFilas(sa){
   if(!rt)return [];
   const hechas=seriesDeSesion(sa.id);
   const edit=ui.gymFila||{},extra=(sa.extra&&typeof sa.extra==='object')?sa.extra:{};
-  return rt.ejercicios.map(function(ej,x){
+  /* sesión mínima: los 3 primeros ejercicios con 2 series cada uno (unos 25 min) */
+  return (sa.min?rt.ejercicios.slice(0,3):rt.ejercicios).map(function(ej,x){
     const med=ejMedida(ej),plan=ejSets(ej).map(function(s){return Object.assign({},s);});
     const ultima=Object.assign({},plan[plan.length-1]||{t:'n',kg:0,reps:8});
     /* la vez anterior, serie a serie (solo las de trabajo) */
@@ -15956,17 +15985,17 @@ function sesionFilas(sa){
     const antes=dias.length?seriesDeDia(ej.ex,dias[0]).filter(function(s){return s.t!=='c';}):[];
     /* semana de descarga o versión corta: mitad de series de trabajo y −10 % */
     const vu=regresoDe(sa.fecha);
-    const suave=!vu&&(!!sa.corta||bloqueDe(sa.fecha).descarga);
+    const suave=!vu&&(!!sa.corta||!!sa.min||bloqueDe(sa.fecha).descarga);
     if(vu){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=vu.series(w);let k2=0;
       for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
-    if(suave){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=Math.ceil(w/2);let k2=0;
+    if(suave){const w=plan.filter(function(q){return q.t!=='c';}).length,keep=sa.min?Math.min(2,w):Math.ceil(w/2);let k2=0;
       for(let i=plan.length-1;i>=0&&w-k2>keep;i--)if(plan[i].t!=='c'){plan.splice(i,1);k2++;}}
     /* las que añades hoy van DESPUÉS de recortar a la mitad: si no, el recorte se las comía y «＋ serie»
        no salía hasta pulsarlo dos veces */
     for(let k=0;k<(+extra[x]||0);k++)plan.push(Object.assign({},ultima));
     const nw=plan.filter(function(s){return s.t!=='c';}).length;
     const pr0=(med==='kg'||med==='lastre')?progresionDe(ej.ex,nw,ejRango(ej)[1],sa.fecha):null;
-    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*0.9),cl:'baja',txt:(sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*0.9))+' kg y la mitad de series. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
+    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*0.9),cl:'baja',txt:(sa.min?'Sesión mínima':sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*0.9))+' kg y '+(sa.min?'2 series':'la mitad de series')+'. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
     const kgHoy=(pr&&pr.kg>0)?pr.kg:null;
     let wi=0;
     const filas=plan.map(function(s,si){
@@ -16109,32 +16138,6 @@ function relojGym(){
   _gymReloj=setInterval(tic,1000);}
 const RPE_CR10=[[1,'muy suave'],[2,'suave'],[3,'moderada'],[4,'algo dura'],[5,'dura'],[6,''],[7,'muy dura'],[8,''],[9,''],[10,'al límite']];
 /* ---------- PORTADA: abres y empiezas ---------- */
-function gymSemanaCirculos(sel){
-  const d0=parseDate(sel)||new Date(),lun=mondayOf(d0),hoy=iso(new Date()),s=entrenoSemana(iso(lun));
-  const L=['lun','mar','mié','jue','vie','sáb','dom'];
-  let hechos=0,selTxt='';
-  const celdas=[];
-  for(let i=0;i<7;i++){
-    const k=iso(addDays(lun,i)),e=gymDiaEstado(k),x=s?s.dias[i]:null,pl=entrenoDe(k);
-    const hecho=e.hecho;if(hecho)hechos++;
-    let cl='',ic='';
-    if(hecho){cl='ok';ic='✓';}
-    else if(e.est==='choque'){cl='choque';ic='!';}
-    else if(pl&&pl.tipo==='pisc'){cl='pis';ic='🏊';}
-    else if(pl){cl='plan';ic='💪';}
-    else if(e.malo==='guardia'||(x&&x.motivo==='guardia')){cl='no';ic='🩺';}
-    if(k===sel)selTxt=L[i]+' '+parseDate(k).getDate()+' · '+e.txt;
-    celdas.push('<button class="gsc '+cl+(k===hoy?' hoy':'')+(k===sel?' sel':'')+'" data-a="gym-dia" data-key="'+k+'" aria-label="'+
-      esc(L[i]+' '+parseDate(k).getDate()+': '+(GYM_EST_NOM[e.est]||e.est))+'"'+(k===sel?' aria-current="true"':'')+'>'+
-      '<span>'+L[i]+'</span><i>'+ic+'</i></button>');}
-  const meta=s&&s.min?s.min:0;
-  const bq=bloqueDe(iso(lun));
-  return '<div class="card gsem"><div class="row"><b>'+(iso(lun)===iso(mondayOf(new Date()))?'Esta semana':('Semana del '+lun.getDate()+' '+MON[lun.getMonth()]))+'</b>'+
-      '<span class="mini" style="margin-left:6px">'+(bq.descarga?'<b style="color:var(--warn)">descarga</b>':('bloque · sem '+bq.sem+'/'+bq.de))+'</span><span class="sp"></span>'+
-      '<button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana"><b>'+hechos+(s&&s.total?(' de '+s.total):'')+'</b> hechos'+(meta?' · mín. '+meta:'')+' ⚙</button></div>'+
-    '<div class="gscs">'+celdas.join('')+'</div>'+
-    '<div class="gtiraq">'+esc(selTxt)+'</div>'+
-    (gymCompleto()?gymKpisHTML():'')+'</div>';}
 function gymSemanasSeguidas(){
   /* semanas seguidas con al menos tu mínimo (o 1 día si no tienes mínimo), contando la actual solo si ya lo cumple */
   const min=Math.max(1,entrenoCfg().min||0);let n=0;
@@ -16143,20 +16146,13 @@ function gymSemanasSeguidas(){
     for(let i=0;i<7;i++)if(gymHechoEn(iso(addDays(l,i))))d++;
     if(d>=min)n++;else if(w>0)break;}
   return n;}
-function gymKpisHTML(){
-  const g=gymS(),ult=sesionesRecientes(8),media=ult.length?Math.round(ult.reduce(function(a,s){return a+(+s.duracionMin||0);},0)/ult.length):null;
-  const hoy=new Date(),vol=function(d0,d1){let v=0;for(let i=d0;i<d1;i++)v+=volumenDe(iso(addDays(hoy,-i)));return v;};
-  /* la media de las semanas de antes CON entreno: dividir entre 4 una sola semana con datos daba «+758 %» */
-  const v7=vol(0,7),prev=[1,2,3,4].map(function(w){return vol(7*w,7*w+7);}).filter(function(v){return v>0;});
-  const v28=prev.length?prev.reduce(function(a,b){return a+b;},0)/prev.length:0;
-  /* sin nada esta semana no es «−100 %»: es que aún no has entrenado */
-  const dv=(v28>0&&v7>0)?Math.round((v7-v28)/v28*100):null;
-  const sem=gymSemanasSeguidas();
-  const k=function(b,s){return '<div><b>'+b+'</b><span>'+s+'</span></div>';};
-  /* sin racha todavía, lo que sí hay: las sesiones de las dos últimas semanas (no «0 semanas seguidas» con 3 hechas) */
-  let d14=0;for(let i=0;i<14;i++)if(gymHechoEn(iso(addDays(hoy,-i))))d14++;
-  return '<div class="gkpi">'+(sem?k('🔥 '+sem,'semanas seguidas'):k(d14,'días en 2 semanas'))+k(gymDiasMes(),'días este mes')+
-    k(media!=null?(media+'′'):'—','de media')+k(dv==null?'—':((dv>0?'+':'')+dv+'%'),dv==null?'volumen (falta otra semana)':'volumen vs. tu media')+'</div>';}
+function gymSemanaLinkHTML(sel){
+  /* lo único de la antigua tarjeta «Esta semana» que la lámina no dibuja: el mínimo semanal (⚙, abre «Tu semana de
+     entreno»), cuántos hechos y en qué semana del bloque vas (o la descarga) */
+  const lun=mondayOf(parseDate(sel)||new Date()),s=entrenoSemana(iso(lun)),bq=bloqueDe(iso(lun));
+  let hechos=0;for(let i=0;i<7;i++)if(gymHechoEn(iso(addDays(lun,i))))hechos++;
+  return '<div class="glnk"><button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana: mínimo de entrenos"><b>'+hechos+(s&&s.total?(' de '+s.total):'')+'</b> hechos'+
+    (s&&s.min?' · mín. '+s.min:'')+' · '+(bq.descarga?'<b style="color:var(--warn)">descarga</b>':'bloque · sem '+bq.sem+'/'+bq.de)+' ⚙</button></div>';}
 function rutinaMeta(rt){
   const ejs=rt.ejercicios,n=ejs.reduce(function(a,e){return a+ejSets(e).length;},0);
   const min=Math.round(ejs.reduce(function(a,e){return a+ejSets(e).length*(40+ejDescanso(e,rt));},0)/60);
@@ -16191,6 +16187,7 @@ function gymHeroHTML(sel){
       '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+(pk?(' · <b style="color:var(--ink)">'+esc(pk)+'</b>'):'')+'</div>'+
       '<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?' data-corta="1"':'')+'>▶ Empezar '+esc(rt.nombre)+'</button>'+
       '<div class="glnk"><button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?'':' data-corta="1"')+'>'+(corta?'versión completa':'versión corta')+'</button><span>·</span>'+
+        '<button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'" data-min="1">mínima · 25 min</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="rutinas">otra rutina</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
   const txt=e&&e.tipo==='pisc'?('Toca piscina'+(e.hora?(' a las '+e.hora):'')+'.'):
@@ -16215,13 +16212,250 @@ function rutinaTarjetaHTML(rt){
       '<span class="ty">'+({fuerza:'FUERZA',calistenia:'CALISTENIA',agua:'AGUA'})[t]+'</span><b>'+esc(rt.nombre)+'</b>'+
       (function(){const vu=t!=='agua'?regresoDe(iso(new Date())):null;return vu?'<span class="gvch">vuelta · sem '+vu.sem+' · '+vu.pct+' %</span>':'';})()+'<ul>'+lista+'</ul></button>'+
     '<button class="grtm" data-a="rt-editar" data-id="'+esc(rt.id)+'" aria-label="editar '+esc(rt.nombre)+'">⋯</button></div>';}
+/* ---------- LA LÁMINA DE LA PORTADA DE ENTRENO ----------
+   Un dibujo en línea (SVG) con los datos de verdad del día elegido: qué toca (hora y lugar, o «hoy no: guardia»),
+   los 7 días de la semana, la vuelta (o la racha si no hay plan) y el peso (o «pon tu meta»). Dos temas
+   (gym.lamina: 'teide' por defecto | 'bancales'); los colores propios van DENTRO del SVG, así que se leen igual
+   en claro y en oscuro. Las partes tocables llevan a donde ya existe (el día, la sesión, el plan de vuelta, el peso).
+   «Explícamelo · 45 s» recorre las 5 partes a 9 s cada una con UN setTimeout encadenado (nunca setInterval);
+   render() y salir de Entreno lo paran (lamParar), y con prefers-reduced-motion solo enseña el texto. */
+const LAM_MS=9000;
+let _lamT=null;
+function laminaTema(){return gymS().lamina==='bancales'?'bancales':'teide';}
+function laminaDatos(sel){
+  const hoy=iso(new Date()),d0=parseDate(sel)||new Date(),lun=mondayOf(d0),LET=['L','M','X','J','V','S','D'],
+    NOM=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+  const cuando=function(k){const d=parseDate(k);return k===hoy?'Hoy':(DIA3[d.getDay()]+' '+d.getDate());};
+  const tipoDe=function(k){
+    const inf=dayInfo(k),sh=shiftById(inf.shiftId),malo=gymDiaMalo(k,inf),e=entrenoDe(k),rt=(e&&e.rutina)||rutinaDeFecha(k);
+    if(malo)return {t:'no',malo:malo,txt:cuando(k)+' no: '+malo,corto:malo,rt:null};
+    if(e&&e.tipo==='pisc'){const h=e.hora||entrenoCfg().pisc.hora;return {t:'pisc',hora:h,txt:'Piscina · '+h,corto:'piscina '+h,rt:null};}
+    if(e||rt){const hora=(e&&e.hora)||gymHoraDe(k,inf),lug=lugarEntreno(k);
+      return {t:lug==='parque'?'parque':'gim',hora:hora,rt:rt,txt:(lug==='parque'?'Parque':'Gimnasio')+' · '+hora,corto:(lug==='parque'?'parque ':'gimnasio ')+hora};}
+    if(esSaliente(sh))return {t:'sal',txt:'Saliente: paseo o nada',corto:'saliente, paseo o nada',rt:null};
+    return {t:'libre',txt:cuando(k)+': libre',corto:'libre',rt:null};};
+  const dias=[];
+  for(let i=0;i<7;i++){const k=iso(addDays(lun,i)),o=tipoDe(k);
+    o.k=k;o.l=LET[i];o.nom=NOM[i]+' '+parseDate(k).getDate();o.hecho=gymHechoEn(k);o.sel=(k===sel);o.hoy=(k===hoy);dias.push(o);}
+  const dia=dias.filter(function(x){return x.sel;})[0]||tipoDe(sel);
+  const vu=regresoDe(sel);let vuelta=null;
+  if(vu){const v0=regresoS(),pcts=[];for(let i=1;i<=vu.de;i++)pcts.push(i===vu.sem?vu.pct:regresoPct(v0,i,vu.de));
+    vuelta={sem:vu.sem,de:vu.de,pct:vu.pct,pcts:pcts};}
+  const ob=objetivoPeso(),ps=perfilS().pesos,hoyKg=ps.length?ps[ps.length-1].kg:0;
+  const peso=ob?{partida:ob.partida,meta:ob.meta,perder:ob.perder,kcal:ob.kcal,prot:ob.prot,semanas:ob.semanas,hoy:hoyKg||ob.partida}:null;
+  return {sel:sel,dia:dia,dias:dias,vuelta:vuelta,racha:gymSemanasSeguidas(),peso:peso};}
+/* cada frase de las cinco va con su parte del dibujo (1 semana · 2 hoy · 3 vuelta · 4 peso · 5 todo). 100-120 palabras
+   en total, y solo lo que la app hace. Los números salen de lo tuyo; sin objetivo, la frase del peso lo dice en general */
+function laminaTextos(tema,d){
+  const p=d&&d.peso&&d.peso.perder?d.peso:null,ini=REGRESO_RITMO.normal.ini;
+  return [
+    'Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.',
+    'Al abrirla ves qué toca hoy, a qué hora y dónde. La sesión trae cargas y descansos. Si vas justo, la mínima dura 25 minutos. El finde, parque.',
+    'Si lo dejas dos semanas, la vuelta arranca al '+ini+' % y sube diez puntos por semana. Si fallas, repites sin castigo. La racha cuenta semanas.',
+    p?('El peso baja de '+fmtKg(p.partida)+' a '+fmtKg(p.meta)+' kilos con '+String(p.kcal).replace(/\B(?=(\d{3})+$)/g,'.')+' kilocalorías y '+p.prot+' gramos de proteína; las comidas cuadran.')
+      :'Con una meta de peso, la app calcula kilocalorías y proteína, y las comidas cuadran.',
+    tema==='bancales'?'Aquí la sombra es la hora, los bancales de abajo son tu semana, la escalera es la vuelta y el agua es tu peso. Ver crecer palmeras anima.'
+      :'Aquí la sombra es la hora, los roques son tu semana, el camino es la vuelta y las nubes son tu peso. Así se sigue mejor.'];}
+/* una pastilla de texto: x es la esquina izquierda ('l'), el centro ('c') o la derecha ('r') */
+function lamPil(x,y,t,sz,al,bg,fg,bd){
+  sz=sz||12;const w=Math.ceil(String(t).length*sz*0.58)+12,x0=al==='c'?x-w/2:(al==='r'?x-w:x);
+  return '<rect x="'+x0+'" y="'+y+'" width="'+w+'" height="'+(sz+8)+'" rx="4" fill="'+(bg||'#efe2c4')+'" stroke="'+(bd||'#2b1d33')+'" stroke-width="1"/>'+
+    '<text x="'+(x0+w/2)+'" y="'+(y+sz+1)+'" text-anchor="middle" font-size="'+sz+'" font-weight="700" font-family="system-ui,sans-serif" fill="'+(fg||'#2b1d33')+'">'+esc(t)+'</text>';}
+/* una parte del dibujo: su contenido, su halo (se enciende en el recorrido) y, si es tocable, su zona de toque */
+function lamParte(n,caja,halo,inner,tocar){
+  const a=tocar?(' role="button" tabindex="0" data-a="'+tocar.a+'"'+Object.keys(tocar.d||{}).map(function(k){return ' data-'+k+'="'+esc(tocar.d[k])+'"';}).join('')+' aria-label="'+esc(tocar.l)+'"'):'';
+  return '<g class="part" data-n="'+n+'"'+a+'>'+inner+'<rect class="halo" x="'+caja[0]+'" y="'+caja[1]+'" width="'+caja[2]+'" height="'+caja[3]+'" rx="6" fill="none" stroke="'+halo+'" stroke-width="3" stroke-dasharray="7 4"/>'+
+    (tocar?'<rect class="hit" x="'+caja[0]+'" y="'+caja[1]+'" width="'+caja[2]+'" height="'+caja[3]+'" fill="#fff" fill-opacity="0"/>':'')+'</g>';}
+function lamRoque(cx,base,h,w){
+  const l=cx-w/2,r=cx+w/2;
+  return 'M'+l+' '+base+' L'+(l+3)+' '+(base-h*.55)+' L'+(cx-w*.28)+' '+(base-h*.78)+' L'+(cx-w*.1)+' '+(base-h)+' L'+(cx+w*.18)+' '+(base-h*.9)+' L'+(r-3)+' '+(base-h*.45)+' L'+r+' '+base+' Z';}
+function lamLunita(x,y,r,col,bd){return '<path d="M'+(x+r*.3)+' '+(y-r)+'A'+r+' '+r+' 0 1 0 '+(x+r*.9)+' '+(y+r*.5)+'A'+(r*.8)+' '+(r*.8)+' 0 0 1 '+(x+r*.3)+' '+(y-r)+'Z" fill="'+col+'"'+(bd?' stroke="'+bd+'" stroke-width=".8"':'')+'/>';}
+function lamCheck(x,y,col){return '<circle cx="'+x+'" cy="'+y+'" r="9" fill="'+col+'" stroke="#2b1d33" stroke-width="1.4"/><path d="M'+(x-4)+' '+y+' l3 3.5 l6 -7" fill="none" stroke="#2b1d33" stroke-width="2"/>';}
+/* a dónde lleva cada parte tocable: a lo que ya existe */
+function lamToques(d){
+  const sa=!!ui.gymSesionActiva,rt=d.dia.rt;
+  return {
+    hoy:(rt&&!sa)?{a:'ses-empezar',d:{id:rt.id,key:d.sel},l:d.dia.txt+'. Toca para empezar '+rt.nombre}:null,
+    vuelta:d.vuelta?{a:'gym-panel',d:{p:'regreso'},l:'Tu vuelta: semana '+d.vuelta.sem+' de '+d.vuelta.de+', al '+d.vuelta.pct+' %. Toca para ver el plan'}:null,
+    peso:{a:'gym-panel',d:{p:'peso'},l:d.peso?('Tu objetivo de peso: de '+fmtKg(d.peso.partida)+' a '+fmtKg(d.peso.meta)+' kilos. Toca para verlo'):'Sin objetivo de peso. Toca para ponerte una meta'}};}
+function lamDiaTxt(x){return x.nom+': '+x.corto+(x.hecho?' (hecho)':'');}
+function laminaTeide(d){
+  const P='lt',TIN='#2b1d33',PAP='#efe2c4',ORO='#f2c46b',yN=170,H=300,toq=lamToques(d);
+  let s='<svg viewBox="0 0 412 '+H+'" role="group" aria-label="Lámina del entreno: La Sombra del Teide. '+esc(d.dia.txt)+'.">'+
+    '<defs><pattern id="'+P+'h" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="5" stroke="'+TIN+'" stroke-width="1.1" opacity=".55"/></pattern>'+
+    '<pattern id="'+P+'h2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#f3e6c8" stroke-width=".8" opacity=".5"/></pattern>'+
+    '<linearGradient id="'+P+'c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4d3a6b"/><stop offset=".55" stop-color="#9a6f8d"/><stop offset="1" stop-color="#e2b46d"/></linearGradient>'+
+    '<linearGradient id="'+P+'n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf9f"/><stop offset=".35" stop-color="#b79bb8"/><stop offset="1" stop-color="#5f4a7e"/></linearGradient></defs>';
+  /* cielo, sol, Teide y mar de nubes */
+  s+='<rect width="412" height="'+yN+'" fill="url(#'+P+'c)"/>';
+  for(let i=0;i<10;i++)s+='<line x1="0" x2="412" y1="'+(8+i*16)+'" y2="'+(8+i*16)+'" stroke="'+TIN+'" stroke-width=".6" opacity=".12"/>';
+  s+='<circle cx="34" cy="108" r="18" fill="'+ORO+'" stroke="'+TIN+'" stroke-width="1.2"/>';
+  for(let a=0;a<12;a++){const an=a*Math.PI/6;s+='<line x1="'+(34+22*Math.cos(an))+'" y1="'+(108+22*Math.sin(an))+'" x2="'+(34+30*Math.cos(an))+'" y2="'+(108+30*Math.sin(an))+'" stroke="'+TIN+'" stroke-width="1.2"/>';}
+  const mont='M88 '+yN+' L198 32 L203 26 L206 22 L212 28 L216 36 L324 '+yN+' Z';
+  s+='<path d="'+mont+'" fill="#3a2a46" stroke="'+TIN+'" stroke-width="1.5"/><path d="M88 '+yN+' L198 32 L203 26 L206 22 L206 '+yN+' Z" fill="url(#'+P+'h2)"/>'+
+    '<path d="M206 22 L212 28 L216 36 L324 '+yN+' L206 '+yN+' Z" fill="url(#'+P+'h)"/><path d="M192 44 L200 38 L208 44 L215 40 L206 32 Z" fill="#f3e6c8" opacity=".8"/>';
+  s+='<rect y="'+yN+'" width="412" height="'+(H-yN)+'" fill="url(#'+P+'n)"/>';
+  for(let k=0;k<7;k++){const y=yN+10+k*17;let w='M0 '+y;for(let x=0;x<=412;x+=46)w+=' q 11 '+(-5-k*.4)+' 23 0 t 23 0';s+='<path d="'+w+'" fill="none" stroke="#f3e6c8" stroke-width="'+(1+k*.12)+'" opacity=".4"/>';}
+  s+='<path d="M0 '+yN+' q 23 -6 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0" fill="none" stroke="'+TIN+'" stroke-width="1.4"/>';
+  /* 3 · la vuelta: el camino al Teide (o la racha, si no hay plan) */
+  const v=d.vuelta,n=v?v.de:8,pts=[];
+  for(let k=0;k<n;k++){const f=n>1?k/(n-1):1,y=Math.round(160-f*118),hw=118*(y-22)/148,x=k===n-1?206:Math.round(206+(k%2?1:-1)*hw*.5);pts.push([x,y]);}
+  const trazo='M'+pts.map(function(p){return p[0]+' '+p[1];}).join(' L');
+  let c3='<path d="'+trazo+'" fill="none" stroke="'+PAP+'" stroke-width="2.4" stroke-dasharray="6 4"/>';
+  pts.forEach(function(p,k){
+    const cur=v&&k===v.sem-1,hecho=v?k<v.sem-1:k<Math.min(d.racha,n);
+    c3+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(cur?8:5)+'" fill="'+(cur||hecho?ORO:PAP)+'" stroke="'+TIN+'" stroke-width="1.6"/>';
+    if(cur)c3+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="12" fill="none" stroke="'+ORO+'" stroke-width="3"/>';});
+  const cu=pts[n-1];
+  c3+='<path d="M'+cu[0]+' '+(cu[1]-5)+' v-16 l12 4 l-12 4" fill="#c9893a" stroke="'+TIN+'" stroke-width="1.2"/>';
+  if(v){const pc=pts[v.sem-1];c3+=v.sem===n?lamPil(pc[0]+16,pc[1]-6,'100 %',12):lamPil(pc[0]+16,pc[1]-9,v.sem+'/'+n+' · '+v.pct+' %',12)+lamPil(cu[0]+16,cu[1]-10,'100 %',12);}
+  else{const q=pts[Math.min(n-1,3)];c3+=lamPil(q[0]+14,q[1]-9,'Racha: '+d.racha+' semana'+(d.racha===1?'':'s'),12);}
+  s+=lamParte(3,[84,14,244,152],ORO,c3,v?toq.vuelta:null);
+  /* 4 · el peso: dos rayas de nube, de dónde partes a tu meta */
+  const pe=d.peso;let c4='<line x1="6" x2="146" y1="'+(yN+8)+'" y2="'+(yN+8)+'" stroke="#f3e6c8" stroke-width="1.4" stroke-dasharray="6 4"/>';
+  if(pe&&pe.perder)c4+='<line x1="6" x2="146" y1="'+(yN+50)+'" y2="'+(yN+50)+'" stroke="'+ORO+'" stroke-width="2" stroke-dasharray="6 3"/>'+
+    '<path d="M122 '+(yN+22)+' v14 l-5 -6 m5 6 l5 -6" fill="none" stroke="'+TIN+'" stroke-width="2"/>'+
+    lamPil(8,yN+12,fmtKg(pe.partida)+' kg',13)+lamPil(8,yN+32,fmtKg(pe.meta)+' kg · meta',12)+
+    (pe.hoy&&Math.abs(pe.hoy-pe.partida)>=.1?lamPil(8,yN+54,'hoy '+fmtKg(pe.hoy),12):'');
+  else if(pe)c4+=lamPil(8,yN+16,'Meta: '+fmtKg(pe.meta)+' kg',13);
+  else c4+=lamPil(8,yN+16,'Pon tu meta de peso',12);
+  s+=lamParte(4,[4,yN+3,146,74],ORO,c4,toq.peso);
+  /* 2 · hoy: la sombra del Teide marca la hora en la regla */
+  const dd=d.dia,hh=/^\d{1,2}:/.test(dd.hora||'')?parseInt(dd.hora,10):null,ok=hh!=null&&(dd.t==='gim'||dd.t==='parque'||dd.t==='pisc'),h0=ok?hh-2:13;
+  let c2='<polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 326,'+(yN+24)+'" fill="#2d1f4a" opacity=".82" stroke="'+TIN+'" stroke-width="1.2"/><polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 326,'+(yN+24)+'" fill="url(#'+P+'h2)"/>'+
+    '<rect x="252" y="'+(yN+24)+'" width="148" height="28" fill="'+PAP+'" stroke="'+TIN+'" stroke-width="1.3" opacity="'+(ok?1:.65)+'"/>';
+  for(let i=0;i<5;i++){const x=268+i*30,hn=h0+i;
+    c2+='<line x1="'+x+'" x2="'+x+'" y1="'+(yN+24)+'" y2="'+(yN+32)+'" stroke="'+TIN+'" stroke-width="1.5"/><text x="'+(x+2)+'" y="'+(yN+46)+'" font-size="'+(ok&&i===2?13:11)+'" font-weight="'+(ok&&i===2?700:400)+'" font-family="system-ui,sans-serif" fill="'+TIN+'">'+(((hn%24)+24)%24)+'</text>';}
+  if(ok)c2+='<rect x="313" y="'+(yN+20)+'" width="30" height="36" fill="'+ORO+'" fill-opacity=".55" stroke="'+TIN+'" stroke-width="1.6"/>';
+  else c2+=lamLunita(236,yN+38,8,ORO,TIN);
+  c2+=lamPil(326,yN+56,dd.txt,12,'c');
+  s+=lamParte(2,[152,yN+3,254,74],ORO,c2,toq.hoy);
+  /* 1 · la semana: siete roques (el pinar es el parque, la luna la guardia, el morado el saliente, el azul la piscina) */
+  let c1='';
+  d.dias.forEach(function(x,i){
+    const cx=30+i*58,base=297,fill=x.t==='no'?'#1f1428':(x.t==='sal'?'#7a5f94':(x.t==='libre'?'#d3bd92':(x.t==='pisc'?'#3b6a8a':'#3a2a46'))),h=34+(i%3)*5;
+    let g='';
+    if(x.sel)g+='<rect x="'+(cx-28)+'" y="250" width="56" height="47" rx="4" fill="'+ORO+'" fill-opacity=".4"/>';
+    if(x.t==='parque')g+='<path d="M'+cx+' '+(base-46)+' l-14 20 h8 l-12 16 h12 l-14 18 h40 l-14 -18 h12 l-12 -16 h8 Z" fill="#44532f" stroke="'+TIN+'" stroke-width="1.2"/>';
+    else{g+='<path d="'+lamRoque(cx,base,h,36)+'" fill="'+fill+'" stroke="#f3e6c8" stroke-width="1.4"/><path d="'+lamRoque(cx,base,h,36)+'" fill="url(#'+P+(x.t==='libre'||x.t==='sal'?'h':'h2')+')"/>'+
+      '<path d="'+lamRoque(cx,base,h,36)+'" fill="none" stroke="'+TIN+'" stroke-width="1"/>';
+      if(x.t==='no')g+=lamLunita(cx+1,base-h-7,7,ORO,TIN);
+      if(x.t==='pisc')g+='<path d="M'+(cx-12)+' '+(base-h*.45)+' q 4 -4 8 0 t 8 0 t 8 0" fill="none" stroke="#bfe3ee" stroke-width="2"/>';}
+    if(x.hecho)g+=lamCheck(cx+14,base-40,ORO);
+    g+=lamPil(cx,base-22,x.l,12,'c',x.hoy?ORO:PAP);
+    c1+='<g class="gdia" role="button" tabindex="0" data-a="gym-dia" data-key="'+x.k+'" aria-label="'+esc(lamDiaTxt(x))+'"'+(x.sel?' aria-current="true"':'')+'>'+g+
+      '<rect class="hit" x="'+(cx-29)+'" y="248" width="58" height="50" fill="#fff" fill-opacity="0"/></g>';});
+  s+=lamParte(1,[2,247,408,52],ORO,c1,null);
+  s+='</svg>';
+  return s;}
+function laminaBancales(d){
+  const P='lb',INK='#2a1d12',G1='#4f8a4a',G2='#2f6b3a',NAR='#b45a12',H=300,toq=lamToques(d),PB='#fbf5e2',PBD='#7a5a36';
+  const palm=function(x,y,s,c1,c2){const h=24*s,tx=x,ty=y-h;let o='<path d="M'+(x-1.6*s)+' '+y+' Q'+(x+3*s)+' '+(y-h/2)+' '+tx+' '+ty+' L'+(tx+2.4*s)+' '+ty+' Q'+(x+6*s)+' '+(y-h/2)+' '+(x+1.8*s)+' '+y+'Z" fill="#7a5230"/>';
+    [[-165,0],[-130,1],[-90,0],[-50,1],[-15,0],[25,1],[155,1]].forEach(function(a){const r=a[0]*Math.PI/180,L=11*s,cx=tx+Math.cos(r)*L,cy=ty+Math.sin(r)*L;
+      o+='<ellipse cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" rx="'+L.toFixed(1)+'" ry="'+(3.2*s).toFixed(1)+'" transform="rotate('+a[0]+' '+cx.toFixed(1)+' '+cy.toFixed(1)+')" fill="'+(a[1]?c2:c1)+'"/>';});return o;};
+  const terr=function(x,y,w,hw,top,wall){return '<g filter="url(#'+P+'s2)"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(hw+8)+'" rx="4" fill="'+wall+'"/><rect x="'+x+'" y="'+(y+8)+'" width="'+w+'" height="'+hw+'" fill="url(#'+P+'p)"/><rect x="'+x+'" y="'+y+'" width="'+w+'" height="9" rx="4" fill="'+top+'"/></g>';};
+  const sol=function(x,y,r){let o='';for(let i=0;i<12;i++){const a=i*Math.PI/6;o+='<path d="M'+(x+Math.cos(a)*(r+3))+' '+(y+Math.sin(a)*(r+3))+'L'+(x+Math.cos(a)*(r+8))+' '+(y+Math.sin(a)*(r+8))+'" stroke="#e8a31c" stroke-width="3" stroke-linecap="round"/>';}return o+'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#f7c948"/>';};
+  const pil=function(x,y,t,sz,al){return lamPil(x,y,t,sz,al,PB,INK,PBD);};
+  let s='<svg viewBox="0 0 412 '+H+'" role="group" aria-label="Lámina del entreno: Los Bancales. '+esc(d.dia.txt)+'.">'+
+    '<defs><filter id="'+P+'s" x="-15%" y="-15%" width="135%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="2.2" flood-color="#3a2410" flood-opacity=".5"/></filter>'+
+    '<filter id="'+P+'s2" x="-15%" y="-15%" width="135%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.2" flood-color="#3a2410" flood-opacity=".45"/></filter>'+
+    '<linearGradient id="'+P+'c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe0ea"/><stop offset="1" stop-color="#eaf4ee"/></linearGradient>'+
+    '<pattern id="'+P+'p" width="14" height="8" patternUnits="userSpaceOnUse"><path d="M0 4H14M7 0V4M0 4V8M14 4V8" stroke="#6a4a2c" stroke-opacity=".35" stroke-width="1" fill="none"/></pattern>'+
+    '<pattern id="'+P+'n" width="16" height="8" patternUnits="userSpaceOnUse"><path d="M0 4Q4 0 8 4T16 4" stroke="#5f6b70" stroke-width="1.6" fill="none"/></pattern></defs>'+
+    '<rect width="412" height="'+H+'" fill="url(#'+P+'c)"/>';
+  /* la montaña */
+  s+='<g filter="url(#'+P+'s)"><path d="M0 238V30L50 12L120 70L156 120V238Z" fill="#b57b4b"/><path d="M0 238V70L40 52L90 100L110 238Z" fill="#9c6438"/></g>';
+  /* 4 · el peso: la cascada baja a la acequia, de dónde partes a tu meta */
+  const pe=d.peso;let c4='<path d="M62 70 Q72 110 60 150 L84 150 Q92 110 80 70Z" fill="#4aa3c9" filter="url(#'+P+'s2)"/><path d="M62 76 Q70 110 62 146" stroke="#d9f2fb" stroke-width="3" fill="none"/>'+
+    '<rect x="30" y="150" width="86" height="26" rx="8" fill="#3a8fb7" filter="url(#'+P+'s2)"/><path d="M40 160H106M46 168H98" stroke="#d9f2fb" stroke-width="2"/>';
+  if(pe&&pe.perder)c4+=pil(6,50,fmtKg(pe.partida)+' kg',13)+pil(6,180,fmtKg(pe.meta)+' kg · meta',12)+
+    (pe.hoy&&Math.abs(pe.hoy-pe.partida)>=.1?pil(6,78,'hoy '+fmtKg(pe.hoy),12):'');
+  else if(pe)c4+=pil(6,180,'Meta: '+fmtKg(pe.meta)+' kg',13);
+  else c4+=pil(6,180,'Pon tu meta de peso',12);
+  s+=lamParte(4,[4,44,150,166],NAR,c4,toq.peso);
+  /* 2 · hoy: el sol, la sombra de la montaña y la hora */
+  const dd=d.dia,ok=dd.t==='gim'||dd.t==='parque'||dd.t==='pisc';
+  let c2='<path d="M156 120 L270 200 L412 214 L412 238 L156 238Z" fill="#2a2147" opacity=".3"/><path d="M156 120 L270 200" stroke="#2a2147" stroke-width="2" stroke-dasharray="5 4" fill="none"/>';
+  c2+=ok?sol(362,32,14)+'<path d="M346 46 L304 84" stroke="#f7c948" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 9"/>'
+    :(dd.t==='no'?lamLunita(358,34,15,'#ffe9a8','#4b4f7a'):'<path d="M336 38Q346 32 356 38T376 38" stroke="#5f6b70" stroke-width="3" fill="none"/>');
+  c2+=pil(406,56,dd.txt,12,'r');
+  s+=lamParte(2,[200,6,208,78],NAR,c2,toq.hoy);
+  /* 3 · la vuelta: la escalera de bancales, con la palmera de cada semana (o la racha, si no hay plan) */
+  const v=d.vuelta,n=v?v.de:8,dx=n>1?Math.min(34,206/(n-1)):0,dy=n>1?Math.min(17,112/(n-1)):0;let c3='';
+  for(let i=n-1;i>=0;i--){
+    const x=Math.round(160+i*dx),y=Math.round(206-i*dy),hecho=v?i<v.sem-1:i<Math.min(d.racha,n),cur=!!v&&i===v.sem-1,alto=238-y;
+    c3+=terr(x,y,38,alto-8,hecho||cur?'#e0b27a':'#efe3c2',hecho||cur?'#c98a5a':'#e6d6b0');
+    if(!hecho&&!cur)c3+='<rect x="'+x+'" y="'+y+'" width="38" height="'+alto+'" rx="4" fill="none" stroke="#8a6a44" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    c3+=palm(x+19,y+4,hecho?.7+i*.07:(cur?.8:.4),hecho||cur?G2:'#8fb58a',hecho||cur?G1:'#a9c9a2');}
+  if(v)c3+=pil(Math.min(366,Math.round(160+(v.sem-1)*dx)+19),Math.round(206-(v.sem-1)*dy)-42,v.sem+'/'+n+' · '+v.pct+' %',12,'c')+
+    (v.sem<n?pil(Math.min(380,Math.round(160+(n-1)*dx)+19),Math.round(206-(n-1)*dy)+16,'100 %',12,'c'):'');
+  else c3+=pil(300,104,'Racha: '+d.racha+' semana'+(d.racha===1?'':'s'),12,'c');
+  s+=lamParte(3,[156,84,252,156],NAR,c3,v?toq.vuelta:null);
+  /* 1 · la semana: siete bancales (sol = entreno, luna = guardia, niebla = saliente, palmera = parque, olas = piscina) */
+  let c1='';
+  d.dias.forEach(function(x,i){
+    const bx=8+i*57,fill=x.t==='no'?'#4b4f7a':(x.t==='sal'?'#d5dcdc':(x.t==='parque'?'#eddba5':(x.t==='pisc'?'#bfe3ee':(x.t==='libre'?'#e6dcc0':'#f3d9a0'))));
+    let g='<g filter="url(#'+P+'s2)"><rect x="'+bx+'" y="248" width="52" height="46" rx="6" fill="'+fill+'"/></g>';
+    if(x.t==='no')g+=lamLunita(bx+26,268,9,'#ffe9a8');
+    else if(x.t==='sal')g+='<rect x="'+(bx+5)+'" y="258" width="42" height="14" fill="url(#'+P+'n)"/>';
+    else if(x.t==='parque')g+=palm(bx+24,276,.6,G2,G1)+'<path d="M'+(bx+5)+' 279Q'+(bx+15)+' 274 '+(bx+26)+' 279T'+(bx+47)+' 279" stroke="#3a8fb7" stroke-width="3" fill="none"/>';
+    else if(x.t==='pisc')g+='<path d="M'+(bx+6)+' 260Q'+(bx+14)+' 254 '+(bx+22)+' 260T'+(bx+38)+' 260T'+(bx+48)+' 260M'+(bx+6)+' 268Q'+(bx+14)+' 262 '+(bx+22)+' 268T'+(bx+38)+' 268T'+(bx+48)+' 268" stroke="#3a8fb7" stroke-width="2.4" fill="none"/>';
+    else if(x.t==='libre')g+='<path d="M'+(bx+15)+' 266H'+(bx+37)+'" stroke="#8a6a44" stroke-width="3" stroke-linecap="round"/>';
+    else g+=sol(bx+26,266,6);
+    g+='<text x="'+(bx+26)+'" y="288" text-anchor="middle" font-size="13" font-weight="800" font-family="system-ui,sans-serif" fill="'+(x.t==='no'?'#fff':INK)+'">'+x.l+'</text>';
+    if(x.hecho)g+=lamCheck(bx+42,255,'#f7c948');
+    if(x.sel)g+='<rect x="'+(bx-1)+'" y="247" width="54" height="48" rx="7" fill="none" stroke="'+INK+'" stroke-width="3"/>';
+    if(x.hoy)g+='<rect x="'+(bx+16)+'" y="241" width="20" height="5" rx="2" fill="'+NAR+'"/>';
+    c1+='<g class="gdia" role="button" tabindex="0" data-a="gym-dia" data-key="'+x.k+'" aria-label="'+esc(lamDiaTxt(x))+'"'+(x.sel?' aria-current="true"':'')+'>'+g+
+      '<rect class="hit" x="'+(bx-2)+'" y="244" width="56" height="54" fill="#fff" fill-opacity="0"/></g>';});
+  s+=lamParte(1,[4,240,404,58],NAR,c1,null);
+  s+='</svg>';
+  return s;}
+function laminaHTML(sel){
+  /* la lámina de arriba de la portada: el dibujo y el botón del recorrido de 45 s con su texto */
+  const tema=laminaTema(),d=laminaDatos(sel),tx=laminaTextos(tema,d);
+  return '<div class="card glam t-'+tema+'" data-lam="'+tema+'">'+
+    (tema==='bancales'?laminaBancales(d):laminaTeide(d))+
+    '<button class="gbig2 sec glamgo" data-a="lam-tour" aria-pressed="false">Explícamelo · 45 s</button>'+
+    '<div class="glt" hidden>'+tx.map(function(t,i){return '<p class="fr" data-i="'+i+'"><b>'+(i+1)+'</b>'+esc(t)+'</p>';}).join('')+'</div>'+
+    '<span class="sr" role="status" aria-live="polite"></span></div>';}
+function lamTimerVivo(){return !!_lamT;}
+function lamParar(fin){
+  /* quita el temporizador y los resaltados; sin `fin` (Parar, render, salir de Entreno) esconde también el texto */
+  if(_lamT){clearTimeout(_lamT);_lamT=null;}
+  const c=document.querySelector('.glam');if(!c)return;
+  c.classList.remove('run');
+  c.querySelectorAll('.on').forEach(function(x){x.classList.remove('on');});
+  const sv=c.querySelector('svg');if(sv)sv.classList.remove('tour');
+  const b=c.querySelector('[data-a="lam-tour"]');if(b){b.textContent='Explícamelo · 45 s';b.setAttribute('aria-pressed','false');}
+  const t=c.querySelector('.glt');if(t&&!fin)t.hidden=true;}
+function lamPaso(i){
+  const c=document.querySelector('.glam');if(!c){_lamT=null;return;}
+  if(_lamT){clearTimeout(_lamT);_lamT=null;}
+  c.classList.add('run');c.querySelector('svg').classList.add('tour');
+  c.querySelectorAll('.on').forEach(function(x){x.classList.remove('on');});
+  if(i===4)c.querySelectorAll('.part').forEach(function(p){p.classList.add('on');});
+  else{const p=c.querySelector('.part[data-n="'+(i+1)+'"]');if(p)p.classList.add('on');}
+  const fr=c.querySelector('.fr[data-i="'+i+'"]');
+  if(fr){fr.classList.add('on');const live=c.querySelector('.sr');if(live)live.textContent='Punto '+(i+1)+' de 5. '+fr.textContent.replace(/^\d/,'');}
+  _lamT=setTimeout(function(){_lamT=null;if(i>=4){lamParar(true);const l=c.querySelector('.sr');if(l)l.textContent='Listo.';}else lamPaso(i+1);},LAM_MS);}
+function lamTour(){
+  const c=document.querySelector('.glam');if(!c)return;
+  const t=c.querySelector('.glt'),b=c.querySelector('[data-a="lam-tour"]');
+  if(_lamT){lamParar();return;}
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){
+    /* sin animación: solo el texto entero, que se abre y se cierra */
+    t.hidden=!t.hidden;b.setAttribute('aria-pressed',t.hidden?'false':'true');b.textContent=t.hidden?'Explícamelo · 45 s':'Ocultar la explicación';return;}
+  t.hidden=false;b.textContent='Parar';b.setAttribute('aria-pressed','true');
+  lamPaso(0);}
 function renderGymPortada(){
   const c=gymCtx(),g=c.g;
   const cerr=ui.gymCerrada?gymCerradaHTML():'';
   $('#main').innerHTML='<div class="grid">'+cerr+
-    gymSemanaCirculos(c.sel)+
+    laminaHTML(c.sel)+
+    gymSemanaLinkHTML(c.sel)+
     gymAvisoHTML(c.sel)+
-    avisosPuertaHTML()+regresoCardHTML(c.sel)+
+    avisosPuertaHTML()+
     (c.sel===iso(new Date())&&!ui.gymSesionActiva&&(gymCompleto()||regresoDe(c.sel))?listoHTML(c.sel):'')+
     gymHeroHTML(c.sel)+pesoCorporalAvisoHTML()+
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="plannuevo">📋 plan</button><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
@@ -16229,6 +16463,7 @@ function renderGymPortada(){
     (gymCompleto()?musculosHTML(c.sel):'')+
     '<div class="gtiles">'+
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
+      gymFicha('peso','barras','Objetivo de peso',(perfilS().objetivo||{}).kg>0?fmtKg(perfilS().objetivo.kg)+' kg':'—',(perfilS().objetivo||{}).kg>0?'tu meta':'ponte una meta')+
       gymFicha('progreso','barras','Progreso',gymDiasMes(),'días este mes')+
       gymFicha('cardio','pulso','Cardio',gymCardioSemana(),'esta semana')+
       gymFicha('biblioteca','lupa','Biblioteca',gymS().biblioteca.length||'—','ejercicios · limpiar')+
@@ -16531,7 +16766,17 @@ function ejRir(ej){const n=+(ej&&ej.rir);if(n>=0&&n<=5&&ej&&ej.rir!==''&&ej.rir!
    Se guarda en gym.regreso (gym.vuelta son los minutos de volver a casa). */
 const REGRESO_DIAS=14;
 function repsTxt(n){return n+(n===1?' repetición':' repeticiones');}
-const REGRESO_RITMO={suave:{ini:60,mas:2,txt:'más suave'},normal:{ini:70,mas:0,txt:'normal'},rapido:{ini:75,mas:-1,txt:'más rápido'}};
+/* plan nuevo: arranca en `ini` % y sube 10 puntos por semana hasta el 100 (35·45·…·95·100). `vi`/`mas` son la
+   fórmula vieja (lineal desde 60/70/75): la siguen usando los planes guardados sin `ini`, para no cambiarles las cifras */
+const REGRESO_RITMO={suave:{ini:30,vi:60,mas:2,txt:'más suave'},normal:{ini:35,vi:70,mas:0,txt:'normal'},rapido:{ini:40,vi:75,mas:-1,txt:'más rápido'}};
+function regresoPct(v,i,N){
+  /* el % de peso de la semana i: sube por pasos si el plan trae `ini`; si no, la fórmula lineal de antes */
+  if(+v.ini>0)return Math.min(100,Math.round(+v.ini+(+v.paso||10)*(i-1)));
+  const r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,t=N>1?(i-1)/(N-1):1;
+  return Math.round((r.vi+(100-r.vi)*t)/5)*5;}
+function regresoCon(v,k){
+  /* ese plan con otro ritmo (sin guardarlo): el `ini` del plan nuevo cambia con el ritmo, el del viejo no existe */
+  const o=Object.assign({},v,{ritmo:k});if(+v.ini>0)o.ini=REGRESO_RITMO[k].ini;return o;}
 function diasEntreK(a,b){const x=parseDate(a),y=parseDate(b);return x&&y?Math.round((y-x)/864e5):0;}
 function ultimoEntreno(antes){
   /* el último día con una serie apuntada antes de esa fecha */
@@ -16544,23 +16789,31 @@ function regresoS(){
   let v=g.regreso&&typeof g.regreso==='object'?g.regreso:null;
   const parado=diasEntreK(ult,hoy);
   if(parado>=REGRESO_DIAS&&(!v||ult>=v.desde))
-    v=g.regreso={desde:hoy,ultimo:ult,parado:parado,ritmo:(v&&REGRESO_RITMO[v.ritmo])?v.ritmo:'normal'};
+    {const rit=(v&&REGRESO_RITMO[v.ritmo])?v.ritmo:'normal';
+      v=g.regreso={desde:hoy,ultimo:ult,parado:parado,ritmo:rit,ini:REGRESO_RITMO[rit].ini,paso:10};}
+  /* un plan en curso de antes del sistema nuevo (sin `ini`: empezaba al 70 %, dos semanas) se rehace UNA vez con el sistema nuevo
+     (ini según su ritmo, +10 por semana). Conserva ultimo, parado y ritmo; el registro de entrenos no se toca */
+  if(v&&!v.fin&&!(+v.ini>0)){
+    const rit=REGRESO_RITMO[v.ritmo]?v.ritmo:'normal';
+    const lun=iso(mondayOf(new Date()));   /* desde el lunes (o desde que empezó, si fue después): así cuentan los entrenos de esta semana */
+    v=g.regreso=Object.assign({},v,{desde:(v.desde&&v.desde>lun?v.desde:lun),ritmo:rit,ini:REGRESO_RITMO[rit].ini,paso:10});save();}
   return v&&!v.fin?v:null;}
 function regresoSemanas(v){
+  if(+v.ini>0)return 1+Math.max(1,Math.ceil((100-v.ini)/(+v.paso||10)));   /* semanas hasta llegar al 100 */
   const r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,w=Math.floor((+v.parado||REGRESO_DIAS)/7);
   return Math.max(2,Math.min(8,Math.max(2,Math.min(6,Math.round(w/2)))+r.mas));}
 function regresoDiasSem(i){return i===1?2:Math.max(2,Math.min(4,+gymS().minSemana||3));}
 function regresoDe(key){
   /* en qué semana del plan cae ese día: cuenta los días entrenados desde que empezó (antes de ese día) */
   const v=regresoS();if(!v||!key||key<v.desde)return null;
-  const N=regresoSemanas(v),r=REGRESO_RITMO[v.ritmo]||REGRESO_RITMO.normal,f={};
+  const N=regresoSemanas(v),f={};
   gymS().registro.forEach(function(x){if(x.fecha&&x.fecha>=v.desde&&x.fecha<key)f[x.fecha]=1;});
   const hechos=Object.keys(f).length;
   let acc=0,i=1;
   for(;i<=N;i++){const d=regresoDiasSem(i);if(hechos<acc+d)break;acc+=d;}
   if(i>N){if(key===iso(new Date())){v.fin=key;}return null;}
   const t=N>1?(i-1)/(N-1):1;
-  let pct=Math.round((r.ini+(100-r.ini)*t)/5)*5;
+  let pct=regresoPct(v,i,N);
   /* si la última sesión del plan fue «dura», esta semana se queda un 5 % más abajo */
   const ses=gymS().sesiones.filter(function(x){return x.fecha>=v.desde&&x.fecha<key;}).sort(function(a,b){return a.fecha<b.fecha?1:-1;})[0];
   const duro=i>1&&ses&&+ses.rpe>=8;if(duro)pct-=5;
@@ -16572,38 +16825,52 @@ function regresoRef(nombre,desde){
   const d=diasDeEjercicio(nombre).filter(function(f){return f<desde;})[0];if(!d)return null;
   const l=seriesDeDia(nombre,d).filter(function(x){return x.t!=='c';});
   return {kg:l.reduce(function(a,x){return Math.max(a,+x.kg||0);},0),reps:l.reduce(function(a,x){return Math.max(a,+x.reps||0);},0),n:l.length,dia:d};}
-function regresoCardHTML(sel){
-  const vu=regresoDe(sel||iso(new Date()));if(!vu)return '';
-  const g=gymS(),fuerza=g.rutinas.filter(function(r){return rutTipo(r)!=='agua'&&r.ejercicios.length;});
-  const ultS=sesionesRecientes(1)[0],iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
-  const rt=rutinaDeFecha(sel)||(fuerza.length?fuerza[(iu+1)%fuerza.length]:null);
-  const pasos=[];for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal;
-    pasos.push('<div class="'+(i===vu.sem?'on':(i<vu.sem?'ok':''))+'"><b>'+(i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5)+' %</b><span>sem '+i+'</span></div>');}
-  const d=parseDate(vu.ultimo);
-  return '<div class="card gvuelta"><div class="cap">TU VUELTA AL GIMNASIO</div>'+
-    '<div class="big">Semana '+vu.sem+' de '+vu.de+'</div>'+
-    '<p class="mini">Llevabas <b>'+(vu.semanasParado>=2?vu.semanasParado+' semanas':diasEntreK(vu.ultimo,vu.desde)+' días')+'</b> sin entrenar'+(d?' (último día: '+d.getDate()+' '+MON[d.getMonth()]+')':'')+
-      '. Vuelves a tu rutina en '+vu.de+' semanas, sin lesionarte ni quemarte.</p>'+
-    '<div class="gvesc">'+pasos.join('')+'</div>'+
-    '<p class="mini">Esta semana: <b>'+vu.dias+' días</b> · '+(vu.sem===vu.de?'tus series':'2'+(vu.sem>1?'–3':'')+' series por ejercicio')+' · el '+vu.pct+' % de tu peso · que te sobren '+repsTxt(vu.rir)+(vu.duro?' · un 5 % menos porque la última fue dura':'')+'.</p>'+
-    '<div class="gvprog"><i style="width:'+Math.round(Math.min(1,vu.hechos/vu.dias)*100)+'%"></i></div>'+
-    '<p class="mini">'+vu.hechos+' de '+vu.dias+' entrenos de esta semana</p>'+
-    (rt&&!ui.gymSesionActiva?'<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(rt.nombre)+' (vuelta)</button>':'')+
-    '<button class="btn s gvplan" data-a="gym-panel" data-p="regreso">ver el plan entero y el porqué ›</button></div>';}
+function diaMesTxt(key){const d=parseDate(key);return d?d.getDate()+' '+MON[d.getMonth()]:String(key||'');}
+function renderGymPeso(){
+  /* «Tu objetivo de peso»: meta, ritmo, lo que sale (kcal, proteína, fecha) y la gráfica del peso. Todo en el móvil. */
+  const p=perfilS(),o=p.objetivo||{},ob=objetivoPeso(),ps=p.pesos.slice(-60);
+  const TOPE={imc:'tu meta quedaba por debajo de un IMC de 18,5: la he subido',ritmo:'el ritmo pasaba del 1 % de tu peso por semana: lo he bajado',
+    deficit:'el déficit pasaba del 25 % de lo que gastas: lo he recortado',basal:'las kcal bajaban de tu metabolismo basal o de 1.500: me quedo ahí'};
+  let svg='';
+  if(ps.length>=2){const W=300,H=90,v=ps.map(function(x){return x.kg;}).concat(ob?[ob.meta]:[]),lo=Math.min.apply(null,v)-1,hi=Math.max.apply(null,v)+1,
+      px=function(i){return Math.round(i/(ps.length-1)*W);},py=function(k){return Math.round(H-6-(k-lo)/(hi-lo)*(H-12));};
+    svg='<svg class="gline" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Tu peso apuntado">'+
+      (ob?'<line x1="0" x2="'+W+'" y1="'+py(ob.meta)+'" y2="'+py(ob.meta)+'" stroke="var(--ok)" stroke-dasharray="4 4"></line>':'')+
+      '<polyline fill="none" stroke="var(--brand)" stroke-width="3" stroke-linejoin="round" points="'+ps.map(function(x,i){return px(i)+','+py(x.kg);}).join(' ')+'"></polyline></svg>';}
+  const sin=!gastoDiario();
+  $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu objetivo de peso')+
+    '<div class="card"><div class="cap gvcap">TU META</div>'+
+      (sin?'<p class="mini">Para calcularlo faltan tu peso, altura, edad y sexo (Ajustes → perfil).</p>':'')+
+      '<label class="fld">peso de meta (kg)<input type="number" inputmode="decimal" min="30" max="300" step="0.5" value="'+(+o.kg>0?o.kg:'')+'" data-a="obj-kg"></label>'+
+      '<div class="cap gvcap" style="margin-top:10px">RITMO (kg por semana)</div><div class="chips gpesorit">'+OBJ_RITMOS.map(function(r){
+        return '<button class="chipx'+((+o.ritmo||0.5)===r?' on':'')+'" data-a="obj-ritmo" data-v="'+r+'">'+fmtC(r)+'</button>';}).join('')+'</div></div>'+
+    (ob&&ob.perder?'<div class="card"><div class="cap gvcap">TU CUENTA</div><div class="big">'+ob.kcal+' kcal al día</div>'+
+      '<p class="mini">Proteína: <b>'+ob.prot+' g</b> al día · de '+fmtKg(ob.partida)+' a '+fmtKg(ob.meta)+' kg a '+fmtC(ob.ritmo)+' kg por semana: <b>'+ob.semanas+' semanas</b>, hacia el '+esc(fechaCortaTxt(ob.fecha))+' de '+esc(MON[(parseDate(ob.fecha)||new Date()).getMonth()])+'.</p>'+
+      (ob.topes.length?'<p class="mini" style="color:var(--warn,var(--ink2))">'+ob.topes.map(function(t){return esc(TOPE[t]);}).join('. ')+'.</p>':'')+
+      (p.meta!=='perder'?'<button class="btn s" data-a="obj-usar">usar estas kcal (poner mi meta en «perder»)</button>':'<p class="mini">Estas son ya tus kcal de Comer.</p>')+'</div>':
+     (ob?'<div class="card"><p class="mini">Tu meta no está por debajo de tu peso de ahora ('+fmtKg(ob.partida)+' kg): no hay déficit que calcular.</p></div>':''))+
+    '<div class="card"><div class="cap gvcap">TU PESO</div>'+(svg||'<p class="mini">Apunta tu peso un par de días y sale la gráfica.</p>')+
+      /* la gráfica se estira al ancho y sus textos saldrían deformados: las cifras van debajo, en texto */
+      (svg?'<p class="mini gpesoeje"><span>'+esc(diaMesTxt(ps[0].k))+' · <b>'+fmtKg(ps[0].kg)+' kg</b></span><span>'+esc(diaMesTxt(ps[ps.length-1].k))+' · <b>'+fmtKg(ps[ps.length-1].kg)+' kg</b></span></p>'+
+        (ob?'<p class="mini">La línea verde a rayas es tu meta: <b>'+fmtKg(ob.meta)+' kg</b>.</p>':''):'')+
+      '<p class="mini">Partes de '+(pesoPartida()?fmtKg(pesoPartida())+' kg (media de tus últimos 7 días apuntados)':'—')+'.</p></div>'+
+    '<div class="card"><p class="mini">Si has tenido problemas con la comida, habla antes con tu médico/a. Estos números son una guía, no una dieta. Todo se queda en tu móvil.</p>'+
+      (+o.kg>0?'<button class="btn s" data-a="obj-quitar">quitar el objetivo</button>':'')+'</div></div>';}
 function renderGymRegreso(){
   const vu=regresoDe(iso(new Date()));
   if(!vu){ui.gymPanel='';return renderGymPortada();}
-  const r=REGRESO_RITMO[vu.ritmo]||REGRESO_RITMO.normal,filas=[];
-  for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,pct=i===vu.sem?vu.pct:Math.round((r.ini+(100-r.ini)*t)/5)*5;
+  const v0=regresoS(),filas=[];
+  for(let i=1;i<=vu.de;i++){const t=vu.de>1?(i-1)/(vu.de-1):1,pct=i===vu.sem?vu.pct:regresoPct(v0,i,vu.de);
     filas.push('<tr class="'+(i===vu.sem?'on':'')+'"><td><b>'+i+'</b>'+(i===vu.sem?' · ahora':'')+'</td><td>'+regresoDiasSem(i)+'</td><td>'+(i===vu.de?'tus series':(i===1?'2':'2–3'))+
       '</td><td><b>'+pct+' %</b></td><td>'+Math.round(4-3*t)+'</td></tr>');}
   const refs=[];gymS().rutinas.forEach(function(rt){rt.ejercicios.forEach(function(e){const x=regresoRef(e.ex,vu.desde);if(x&&x.kg>0&&refs.length<3)refs.push(e.ex.toLowerCase()+' '+fmtKg(x.kg)+' kg');});});
   $('#main').innerHTML='<div class="grid">'+gymSubcab('Tu plan de vuelta')+
     '<div class="card"><div class="cap gvcap">'+(vu.semanasParado>=2?vu.semanasParado+' SEMANAS':diasEntreK(vu.ultimo,vu.desde)+' DÍAS')+' PARADO → '+vu.de+' SEMANAS DE VUELTA</div>'+
       '<table class="gvtab"><tr><th>Semana</th><th>Días</th><th>Series</th><th>Peso</th><th>Te sobran</th></tr>'+filas.join('')+'</table>'+
+      '<p class="mini">Esta semana: <b>'+vu.dias+' días</b> · '+(vu.sem===vu.de?'tus series':'2'+(vu.sem>1?'–3':'')+' series por ejercicio')+' · el '+vu.pct+' % de tu peso · que te sobren '+repsTxt(vu.rir)+(vu.duro?' · un 5 % menos porque la última fue dura':'')+'. Llevas <b>'+vu.hechos+' de '+vu.dias+'</b> entrenos de esta semana.</p>'+
       '<p class="mini">El 100 % es lo que movías antes de parar'+(refs.length?' ('+esc(refs.join(', '))+'…)':'')+'. Después vuelve tu progresión de siempre.</p></div>'+
     '<div class="card"><div class="cap gvcap">EL RITMO</div><div class="chips">'+['suave','normal','rapido'].map(function(k){
-      const v2=Object.assign({},regresoS(),{ritmo:k});
+      const v2=regresoCon(regresoS(),k);
       return '<button class="chipx'+(vu.ritmo===k?' on':'')+'" data-a="regreso-ritmo" data-v="'+k+'">'+REGRESO_RITMO[k].txt+' · '+regresoSemanas(v2)+' sem</button>';}).join('')+'</div>'+
       '<p class="mini">Elige «más suave» si estás de guardias seguidas o durmiendo poco.</p></div>'+
     '<div class="card"><div class="cap gvcap">EN QUÉ SE BASA</div><ul class="gvcien">'+
@@ -17234,6 +17501,7 @@ function renderGym(){
   if(p==='sup')return renderGymSup();
   if(p==='plannuevo')return renderGymPlanNuevo();
   if(p==='regreso')return renderGymRegreso();
+  if(p==='peso')return renderGymPeso();
   if(ui.gymInforme)return renderGymInforme();
   if(p==='vivo')return renderGymVivo();
   if(p==='cambiar')return renderGymCambiar();
@@ -20068,23 +20336,16 @@ function renderDinero(){
   if(v==='fijos')return renderDineroFijos();
   if(v==='recibos')return renderDineroMes();
   if(v==='nomina')return renderAhorroNomina();
-  if(v==='huchas')return ui.huchaEd?renderAhorroHuchas():renderHuchasLista();
-  if(v==='hucha-nueva')return renderHuchaNueva();
   if(v==='hoja')return renderDineroHoja();
   if(v==='fintonic')return renderFintonic();
-  if(v==='banco')return renderBanco();
-  if(v==='plan')return renderDinPlan();
   if(v==='categoria')return renderDinCategoria();
-  /* el cierre, el análisis y la salud financiera ya no son pantallas: viven en Mes y en el asistente */
-  if(v==='cierre'||v==='analisis'){ui.dineroVista='';ui.dinTab='mes';}
-  else if(v==='salud'){ui.dineroVista='';ui.dinTab='ahorro';}
-  /* tres pestañas: Hoy (lo que te queda), Ahorro (lo que tienes y cuándo llega cada meta) y Mes */
+  /* cuatro pestañas: Bosque (portada), Gastos, Ahorro y Compras; el cierre del mes (`mes`) cuelga de Gastos */
   const t=dinTabDe();
-  $('#main').innerHTML=t==='ahorro'?dinAhorroHTML():(t==='mes'?dinMes8HTML():dinHoyHTML());}
+  $('#main').innerHTML=t==='ahorro'?d4AhorroHTML():(t==='mes'?dinMes8HTML():(t==='gastos'?dinGastosHTML():(t==='compras'?dinComprasHTML():dinBosqueHTML())));}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
   return '<div class="subcab">'+
-    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas',analisis:'Análisis'}[vv]||'Dinero')+'</button>'+
+    '<button class="btn s volver" data-a="dinero-vista" data-v="'+vv+'">'+gymIco('atras','gico sm')+' '+({recibos:'Recibos',huchas:'Huchas'}[vv]||'Dinero')+'</button>'+
     '<h2 class="subtit">'+esc(titulo)+'</h2>'+(extra||'')+'</div>';}
 function renderDineroMes(){
   const hoy=new Date(),y=hoy.getFullYear(),m=hoy.getMonth();
@@ -20191,6 +20452,68 @@ function ahorroS(){
   if(!a.meses||typeof a.meses!=='object'||Array.isArray(a.meses))a.meses={};
   if(!Array.isArray(a.movs))a.movs=[];
   return a;}
+/* ===================== DINERO 3.0 · datos nuevos (tanda Dinero, D3) =====================
+   store.dinero3 = {v:1, ahorro:{guardado,objetivoMeses,plazoMeses,desde}, compras:[{id,nombre,precio,llevas,mes,estado,alta,tipo}], migrado}
+   estado: 'espera' | 'plan' | 'comprada' | 'no'. NADA de lo viejo (store.dinero, store.ahorro) se borra ni se toca: la
+   migración COPIA una vez y, si falla, la app sigue con lo viejo. Entra en la copia de seguridad con el resto del store. */
+const D3_ESTADOS=['espera','plan','comprada','no'];
+function d3Num(v,mn,mx,def){const n=+v;return isFinite(n)&&n>=mn&&n<=mx?n:def;}
+function d4ApartadoLimpio(m){
+  /* lo apartado al cobrar, por mes: {'2026-10':{cobrado,v}} (para no repetir y para el histórico) */
+  const out={};if(!m||typeof m!=='object'||Array.isArray(m))return out;
+  Object.keys(m).forEach(function(k){const x=m[k];if(/^\d{4}-\d{2}$/.test(k)&&x&&+x.v>0)out[k]={cobrado:Math.max(0,+x.cobrado||0),v:Math.round(+x.v*100)/100};});
+  return out;}
+function dinero3Limpia(o){
+  /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
+  const d=o.dinero3;if(d==null)return;
+  if(typeof d!=='object'||Array.isArray(d)){delete o.dinero3;return;}
+  const A=d.ahorro&&typeof d.ahorro==='object'?d.ahorro:{};
+  o.dinero3={v:1,migrado:!!d.migrado,
+    ahorro:{guardado:Math.max(0,Math.round((+A.guardado||0)*100)/100),objetivoMeses:Math.round(d3Num(A.objetivoMeses,1,36,6)),
+      plazoMeses:Math.round(d3Num(A.plazoMeses,1,60,12)),desde:esFecha(A.desde||'')?A.desde:'',apartado:d4ApartadoLimpio(A.apartado)},
+    compras:(Array.isArray(d.compras)?d.compras:[]).filter(function(c){return c&&c.id;}).slice(0,300).map(function(c){
+      return {id:String(c.id).slice(0,40),nombre:String(c.nombre||'').slice(0,60),precio:Math.max(0,+c.precio||0),llevas:Math.max(0,+c.llevas||0),
+        mes:/^\d{4}-\d{2}$/.test(c.mes||'')?c.mes:'',estado:D3_ESTADOS.indexOf(c.estado)>=0?c.estado:'espera',
+        alta:esFecha(c.alta||'')?c.alta:'',tipo:String(c.tipo||'').slice(0,20)};})};}
+function dinero3Migra(){
+  /* copia, no toca: el colchón y las huchas sin objetivo → lo guardado; cada hucha con objetivo → una compra en plan;
+     sus deseos sin hacer → compras en espera; la meta antigua propone el objetivo en meses */
+  const a=ahorroS(),hoy=iso(new Date()),res={guardado:0,objetivoMeses:6,compras:[]};
+  a.huchas.forEach(function(h){
+    if(!h||typeof h!=='object')return;
+    const saldo=Math.max(0,+h.saldo||0),puro=h.id===a.puroId||h.id==='hu-colchon',obj=puro?0:Math.round((metaObjetivo(h)||0)*100)/100;
+    if(!obj)res.guardado+=saldo;
+    else res.compras.push({id:uid('co'),nombre:String(h.nombre||'Compra').slice(0,60),precio:obj,llevas:saldo,
+      mes:/^\d{4}-\d{2}$/.test(h.para||'')?h.para:'',estado:'plan',alta:hoy,tipo:String(h.tipo||'').slice(0,20)});
+    (Array.isArray(h.deseos)?h.deseos:[]).filter(function(x){return x&&!x.hecho&&+x.precio>0;}).forEach(function(x){
+      res.compras.push({id:uid('co'),nombre:String(x.txt||'Deseo').slice(0,60),precio:+x.precio,llevas:0,mes:'',estado:'espera',alta:hoy,tipo:String(h.tipo||'').slice(0,20)});});});
+  res.guardado=Math.round(res.guardado*100)/100;
+  const g=mesTipo().gasto;
+  if(a.meta&&+a.meta.importe>0&&g>0)res.objetivoMeses=Math.max(1,Math.min(24,Math.round(+a.meta.importe/g)));
+  return res;}
+function dinero3S(){
+  if(!store.dinero3||typeof store.dinero3!=='object'||Array.isArray(store.dinero3))store.dinero3={};
+  const d=store.dinero3;
+  if(!d.ahorro||typeof d.ahorro!=='object')d.ahorro={};
+  const A=d.ahorro;
+  A.guardado=Math.max(0,+A.guardado||0);A.objetivoMeses=Math.round(d3Num(A.objetivoMeses,1,36,6));
+  A.plazoMeses=Math.round(d3Num(A.plazoMeses,1,60,12));if(!esFecha(A.desde||''))A.desde=iso(new Date());
+  A.apartado=d4ApartadoLimpio(A.apartado);
+  if(!Array.isArray(d.compras))d.compras=[];
+  d.v=1;
+  if(!d.migrado){
+    d.migrado=true;   /* una sola vez, salga bien o mal */
+    try{const r=dinero3Migra();A.guardado=r.guardado;A.objetivoMeses=r.objetivoMeses;d.compras=d.compras.concat(r.compras);}
+    catch(e){console.warn('la migración de Dinero no ha podido; se sigue con lo de antes',e);}
+    save();}
+  d5Madura(d);
+  return d;}
+/* ---- D5 · Compras: la espera de 30 días ---- */
+function d5Dias(c){const a=parseDate(c.alta),h=new Date();if(!a)return 0;h.setHours(12,0,0,0);a.setHours(12,0,0,0);return Math.round((h-a)/864e5);}
+function d5Madura(d){
+  /* lo que entró en espera y lleva 30 días pasa solo a planificada (no aparta nada hasta entonces) */
+  let ch=false;d.compras.forEach(function(c){if(c.estado==='espera'&&d5Dias(c)>=30){c.estado='plan';ch=true;}});
+  if(ch)save();}
 function ahorroLimpia(o){
   /* al cargar: lo guardado se deja en su forma (una copia vieja o tocada a mano no rompe nada) */
   if(!o.ahorro||typeof o.ahorro!=='object')return;
@@ -20296,51 +20619,10 @@ function repartoDe(importe){
   if(tot>0){let usado=0;pcts.forEach(function(h){const v=Math.floor(queda*h.pct/tot);out[h.id]+=v;usado+=v;});out[pcts[0].id]+=queda-usado;}
   else out[P.id]+=queda;
   return out;}
-function ahoMov(hucha,importe,txt){ahorroS().movs.unshift({fecha:iso(new Date()),hucha:hucha,importe:Math.round(importe*100)/100,txt:String(txt||'').slice(0,60)});
-  ahorroS().movs=ahorroS().movs.slice(0,200);}
-function apartarMes(mk){
-  const x=ahorroMes(mk,true);
-  if(x.hecho)return 'este mes ya estaba apartado';
-  if(!(x.aparto>0))return 'pon primero cuánto apartas';
-  const r=repartoDe(x.aparto);
-  ahorroS().huchas.forEach(function(h){if(r[h.id]){h.saldo=Math.round((h.saldo+r[h.id])*100)/100;ahoMov(h.id,r[h.id],'apartado de '+ahoMesTxt(mk));}});
-  x.reparto=r;x.hecho=true;save();render();
-  return eur(x.aparto)+' repartidos en tus huchas';}
-function apartarAlCobrar(mk){
-  /* «ya lo he apartado»: lo que pasas a ahorro el día que cobras (tu % de lo que entra). Va en su
-     propio registro (x.ini): antes usaba el mismo que «Repartir» al cerrar el mes, y uno dejaba el
-     otro como hecho con la cantidad equivocada */
-  const x=ahorroMes(mk,true);
-  if(x.ini)return 'lo de '+ahoMesTxt(mk)+' ya estaba apartado';
-  const v=apartarObj(mk);if(!(v>0))return 'pon primero cuánto cobras';
-  const r=repartoDe(v);
-  ahorroS().huchas.forEach(function(h){if(r[h.id]){h.saldo=Math.round((h.saldo+r[h.id])*100)/100;ahoMov(h.id,r[h.id],'apartado al cobrar '+ahoMesTxt(mk));}});
-  x.ini={v:v,reparto:r};save();render();
-  return eur(v)+' apartados en tus huchas';}
-function deshacerAlCobrar(mk){
-  const x=ahorroMes(mk,false);
-  if(!x||!x.ini)return 'no había nada apartado';
-  ahorroS().huchas.forEach(function(h){const v=+x.ini.reparto[h.id]||0;if(v){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,'deshecho '+ahoMesTxt(mk));}});
-  delete x.ini;save();render();
-  return 'deshecho: vuelve a contar como «lo que apartas este mes»';}
 function restoPorRepartir(mk){
   /* al cerrar el mes se reparte lo ahorrado de verdad MENOS lo que ya apartaste al cobrar */
   const a=ahorroDeMes(mk),x=ahorroMes(mk,false)||{};
   return a?Math.max(0,Math.round(a.ahorro-(x.ini?+x.ini.v||0:0))):0;}
-function deshacerApartado(mk){
-  const x=ahorroMes(mk,false);
-  if(!x.hecho)return 'no había nada apartado';
-  ahorroS().huchas.forEach(function(h){const v=+x.reparto[h.id]||0;if(v){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,'deshecho '+ahoMesTxt(mk));}});
-  x.reparto={};x.hecho=false;save();render();
-  return 'deshecho: el dinero vuelve a estar sin apartar';}
-function sacarHucha(id,importe,txt,meter){
-  /* sacar para el viaje, o meter a mano lo que ya tenías ahorrado de antes */
-  const h=huchaDe(id);
-  if(!h)return 'esa hucha no existe';
-  const v=numEuro(importe);if(!v)return meter?'pon cuánto metes':'pon cuánto sacas';
-  const d=meter?v:-v;
-  h.saldo=Math.round((h.saldo+d)*100)/100;ahoMov(h.id,d,txt||(meter?'metido a mano':'sacado'));save();render();
-  return eur(v)+(meter?' metidos en ':' sacados de ')+h.nombre;}
 /* ===================== el objetivo de ahorro =====================
    «Poner un objetivo mensual y anual en función de lo que ahorre cada mes y del objetivo a ahorrar,
    y que la app recomiende cuánto ahorrar al mes». Se pone UNA meta (cuánto y para cuándo); de ahí
@@ -20398,31 +20680,6 @@ function renderAhorroNomina(){
           ' <button class="mini2 d" data-a="aho-fest-del" data-f="'+f+'" aria-label="quitar">×</button></span>';}).join('')+'</div>'+
       '<div class="row" style="margin-top:8px"><input type="date" id="ahFest"><button class="btn s" data-a="aho-fest-add">+ festivo</button></div>'+
       '<p class="mini" style="margin:6px 0 0">Vienen los nacionales; añade los de tu comunidad y tu ciudad.</p></div>'+
-  '</div>';}
-function renderAhorroHuchas(){
-  /* una hucha cada vez: antes eran las tres abiertas a la vez, 21 campos de golpe */
-  const a=ahorroS(),tot=a.huchas.reduce(function(t,h){return t+h.pct;},0);
-  const sola=a.huchas.filter(function(h){return h.id===ui.huchaEd;})[0];
-  if(!sola){ui.huchaEd='';return renderHuchasLista();}
-  $('#main').innerHTML='<div class="grid">'+dinSubcab(sola.ico+' '+sola.nombre,'','huchas')+
-    (tot!==100?'<p class="note" style="margin:0;color:var(--warn)">El reparto suma '+tot+' %: se reparte en proporción, pero lo normal es que sume 100.</p>':'')+
-    [sola].map(function(h){
-      const f=function(k,txt,val,w){return '<label class="fld"'+(w?' style="flex:'+w+'"':'')+'>'+txt+'<input '+(k==='nombre'||k==='meta'||k==='ico'?'':'inputmode="decimal" ')+
-        'value="'+esc(val)+'" data-a="aho-hu" data-id="'+esc(h.id)+'" data-k="'+k+'"'+(k==='ico'?' maxlength="4"':'')+'></label>';};
-      return '<div class="card ahhued" style="border-left:3px solid '+h.color+'">'+
-        '<div class="row" style="gap:6px">'+f('ico','icono',h.ico,'0 0 62px')+f('nombre','nombre',h.nombre,'1 1 120px')+
-          '<label class="fld" style="flex:0 0 52px">color<input type="color" value="'+esc(h.color)+'" data-a="aho-hu" data-id="'+esc(h.id)+'" data-k="color"></label></div>'+
-        '<div class="row" style="gap:6px;margin-top:6px">'+f('pct','% de lo que apartas',h.pct,'1')+f('objetivo','meta (€, opcional)',h.objetivo?fmt(h.objetivo):'','1')+'</div>'+
-        '<div class="row" style="gap:6px;margin-top:6px">'+f('meta','para qué','' +h.meta,'1')+'</div>'+
-        '<div class="row" style="gap:6px;margin-top:8px;align-items:flex-end"><b style="font-size:15px">'+esc(eur(h.saldo))+'</b><span class="sp"></span>'+
-          '<input id="ahSac-'+esc(h.id)+'" inputmode="decimal" placeholder="€" style="width:80px" aria-label="cuánto sacas">'+
-          '<button class="btn s" data-a="aho-sacar" data-id="'+esc(h.id)+'">sacar</button>'+
-          '<button class="btn s" data-a="aho-meter" data-id="'+esc(h.id)+'">meter</button>'+
-          '<button class="mini2 d" data-a="aho-hu-del" data-id="'+esc(h.id)+'" aria-label="quitar la hucha">×</button></div></div>';}).join('')+
-    (a.movs.some(function(mv){return mv.hucha===sola.id;})?('<div class="card"><h2>Movimientos</h2>'+a.movs.filter(function(mv){return mv.hucha===sola.id;}).slice(0,15).map(function(mv){
-      const h=a.huchas.filter(function(q){return q.id===mv.hucha;})[0];
-      return '<div class="ahcob"><span class="t">'+esc((h?h.ico+' ':'')+mv.txt)+'<span class="mini"> · '+esc(fechaCorta(mv.fecha))+'</span></span>'+
-        '<b class="'+(mv.importe>=0?'ok':'')+'">'+(mv.importe>=0?'+':'')+esc(eur(mv.importe))+'</b></div>';}).join('')+'</div>'):'')+
   '</div>';}
 
 /* ===================== lo real: capturas de Fintonic =====================
@@ -20722,16 +20979,6 @@ function llegadaHucha(objetivo,saldo,aporte){
   const meses=Math.ceil(falta/aporte),hoy=new Date(),d=new Date(hoy.getFullYear(),hoy.getMonth()+meses,1,12);
   return {falta:falta,meses:meses,mk:ahoMk(d.getFullYear(),d.getMonth())};}
 function mkLargo(mk){const t=ahoYm(mk);return t?(MONTH_FULL[t.m].toLowerCase()+' de '+t.y):'—';}
-function enTrabajo(euros){
-  /* «cuánto tardaría en ganarlo»: en guardias de finde y en días de jornada, con tu época de nómina */
-  const hoy=new Date(),ep=epocaDe(ahoMk(hoy.getFullYear(),hoy.getMonth()))||{};
-  const g=+ep.finde>0?euros/ep.finde:null,dia=+ep.neto>0?euros/(ep.neto/21):null;
-  return {guardias:g,dias:dia};}
-function mediaAhorroReal(n){
-  /* lo que ahorras de media los últimos n meses con gasto conocido */
-  const hoy=new Date();let mk=ahoMk(hoy.getFullYear(),hoy.getMonth()),v=[];
-  for(let i=0;i<12&&v.length<n;i++){const a=ahorroDeMes(mk);if(a)v.push(a.ahorro);mk=mkSuma(mk,-1);}
-  return v.length?Math.round(v.reduce(function(s,x){return s+x;},0)/v.length):null;}
 
 function metaStepHTML(cat,meta,ref){
   return '<div class="d4step">'+(meta!=null?'<button data-a="din-meta" data-c="'+esc(cat)+'" data-d="-10" aria-label="bajar la meta de '+esc(cat)+'">−</button><b>'+esc(fmt(meta))+'</b>'+
@@ -20799,25 +21046,6 @@ const DIN5_COL={dark:['#3987e5','#199e70','#d95926','#c98500','#9b6bdf','#1f9fb4
 function bolsillos(){
   const P=puroHucha(),a=ahorroS(),pal=DIN5_COL[document.documentElement.classList.contains('dark')?'dark':'light'];
   return [P].concat(a.huchas.filter(function(h){return h.id!==P.id;})).map(function(h,i){return {h:h,col:pal[i%pal.length],puro:i===0};});}
-function bolsilloShares(){
-  /* el % de lo que ahorras que va a cada bolsillo: el intocable su puroPct y el resto, en proporción a
-     su pct, hasta sumar 100. Los de aporte fijo (€/mes) no entran en los % */
-  const P=puroHucha(),pp=puroPct(),out={};out[P.id]=pp;
-  const otras=ahorroS().huchas.filter(function(h){return h.id!==P.id&&!(+h.mensual>0);});
-  const tot=otras.reduce(function(t,h){return t+(+h.pct||0);},0),libre=100-pp;
-  otras.forEach(function(h){out[h.id]=tot>0?Math.round((+h.pct||0)/tot*libre):(otras.length?Math.round(libre/otras.length):0);});
-  return out;}
-function bolsilloSetPct(id,v){
-  /* mover un deslizador: los demás (menos el intocable) se reparten lo que quede, en su proporción */
-  const P=puroHucha(),a=ahorroS(),sh=bolsilloShares();
-  const otras=a.huchas.filter(function(h){return h.id!==P.id&&!(+h.mensual>0);});
-  const repartir=function(ids,total){const t=ids.reduce(function(s,h){return s+(sh[h.id]||0);},0);let usado=0;
-    ids.forEach(function(h,i){const x=i===ids.length-1?total-usado:(t>0?Math.round((sh[h.id]||0)/t*total):Math.round(total/ids.length));h.pct=Math.max(0,x);usado+=h.pct;});};
-  if(id===P.id){a.puroPct=Math.max(puroMin(),Math.min(100,Math.round(v)));repartir(otras,100-a.puroPct);return;}
-  const h=otras.filter(function(q){return q.id===id;})[0];if(!h)return;
-  const libre=100-puroPct();h.pct=Math.max(0,Math.min(libre,Math.round(v)));
-  const resto=otras.filter(function(q){return q.id!==id;});
-  if(resto.length)repartir(resto,libre-h.pct);else h.pct=libre;}
 function metaPct(){const v=+ahorroS().metaPct;return v>=5&&v<=80?Math.round(v):30;}
 let _nomT=-1,_nomM=null;
 function nominaMedia(){
@@ -20841,74 +21069,6 @@ function cierreAbierto(mk){
   if(mk<mkHoy)return true;if(mk>mkHoy)return false;
   const dim=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
   return hoy.getDate()>=dim-2||iso(llegadaNomina(hoy.getFullYear(),hoy.getMonth()).llega)<=iso(hoy);}
-function renderDinPlan(){
-  const bs=bolsillos(),sh=bolsilloShares(),med=nominaMedia(),mp=metaPct();
-  const inv=ahorroS().huchas.some(function(h){return metaTipo(h)==='inversion';});
-  $('#main').innerHTML='<div class="grid dinv2 din5">'+dinSubcab('Cambiar el reparto')+
-    '<div class="card"><div class="row"><span class="cap">META DE AHORRO</span><span class="sp"></span><b id="d5metaTxt">'+mp+' % del sueldo</b></div>'+
-      '<input type="range" min="5" max="60" step="5" value="'+mp+'" data-a="din-meta-pct" class="drange" aria-label="meta de ahorro en % del sueldo">'+
-      '<p class="mini" style="margin:4px 0 0">≈ '+esc(eurR(med*mp/100))+'/mes con tu nómina media ('+esc(eurR(med))+'). Solo es la meta: se compara con lo que ahorres de verdad.</p></div>'+
-    '<div class="card"><div class="cap">LO QUE AHORRES, SE REPARTE ASÍ</div>'+
-      bs.map(function(b){const h=b.h,fijo=!b.puro&&+h.mensual>0,v=sh[h.id]||0;
-        return '<div class="d5pl"><span class="ic">'+esc(h.ico)+'</span><div class="t"><b>'+esc(h.nombre)+'</b><span>'+(b.puro?'mínimo '+puroMin()+' %':esc(h.meta||(h.objetivo?'meta '+eurR(h.objetivo):'')))+'</span></div>'+
-          (fijo?'<span class="pc">'+esc(eurR(h.mensual))+'<small>/mes</small></span><button class="btn s d5fijo" data-a="din-a-pct" data-id="'+esc(h.id)+'">pasar a %</button>':
-            '<span class="pc">'+v+' %</span><input type="range" min="0" max="100" step="5" value="'+v+'" data-a="din-plan-pct" data-id="'+esc(h.id)+'" class="drange d5sl" style="--c:'+b.col+'" aria-label="% para '+esc(h.nombre)+'">')+'</div>';}).join('')+
-      '<p class="mini" style="margin:8px 0 0">Suma 100 %: al subir uno, bajan los otros (nunca el intocable por debajo de '+puroMin()+').'+
-        (bs.some(function(b){return !b.puro&&+b.h.mensual>0;})?' Los de «€/mes» se llevan su parte fija antes del reparto.':'')+'</p></div>'+
-    (function(){const R=din7Reparto(),cr=repartoComoRec(),igual=R.every(function(r){return Math.abs((cr[r[0]]||0)-r[1])<=2;});
-      return '<div class="card">'+(igual?'<p class="mini" style="margin:0">✓ Tu reparto coincide con lo recomendado. Pautas generales, no asesoramiento.</p>':
-        '<div class="d7sug"><div class="cap">LA APP TE SUGIERE</div><p class="mini" style="margin:2px 0 6px">'+R.map(function(r){return esc(r[2].replace(' a largo plazo','').toLowerCase())+' '+r[1]+' %';}).join(' · ')+
-        '. Cuando el colchón llegue a 6 meses de gastos, su parte pasa a inversión y metas. Pautas generales, no asesoramiento.</p>'+
-        '<button class="btn s" data-a="din7-aplicar">Aplicar la sugerencia a mis bolsillos</button></div>')+'</div>';})()+
-    '<div class="two d5two">'+(inv?'':'<button class="btn" data-a="din-bolsillo-inv">📈 Añadir inversión</button>')+
-      '<button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nuevo bolsillo</button></div></div>';}
-function gasteEstado(){
-  const bs=bolsillos().filter(function(b){return !b.puro;});
-  const g=ui.dinGaste||(ui.dinGaste={imp:'',txt:'',de:'',resto:''});
-  if(!bs.some(function(b){return b.h.id===g.de;}))g.de=(bs.filter(function(b){return /viaj/i.test(b.h.nombre);})[0]||bs.slice().sort(function(p,q){return q.h.saldo-p.h.saldo;})[0]||{h:{}}).h.id||'';
-  const v=numEuro(g.imp)||0,de=bs.filter(function(b){return b.h.id===g.de;})[0];
-  const salen={};let falta=v;
-  if(de){const x=Math.min(falta,Math.max(0,de.h.saldo));salen[de.h.id]=x;falta-=x;}
-  let resto=null;
-  if(falta>0.004){
-    const cand=bs.filter(function(b){return b.h.id!==g.de&&b.h.saldo>0;});
-    resto=cand.filter(function(b){return b.h.id===g.resto;})[0]||cand.slice().sort(function(p,q){return q.h.saldo-p.h.saldo;})[0]||null;
-    if(resto){g.resto=resto.h.id;const x=Math.min(falta,resto.h.saldo);salen[resto.h.id]=x;falta-=x;}}
-  return {g:g,v:v,bs:bs,de:de,resto:resto,salen:salen,falta:Math.round(falta*100)/100};}
-function gasteQuedaHTML(){
-  const s=gasteEstado(),todos=bolsillos(),tot0=todos.reduce(function(t,b){return t+b.h.saldo;},0);
-  if(!s.v)return '<p class="mini" style="margin:8px 0 0">Pon cuánto y te enseño cómo quedan los bolsillos.</p>';
-  let aviso=s.de&&s.salen[s.de.h.id]<s.v?('<p class="mini" style="margin:6px 0 0">En '+esc(s.de.h.nombre)+' hay '+esc(eurR(s.de.h.saldo))+': faltan <b>'+esc(eurR(s.v-s.salen[s.de.h.id]))+'</b>'+
-    (s.resto?' → los cojo de '+esc(s.resto.h.ico+' '+s.resto.h.nombre)+'.':'')+'</p>'):'';
-  if(s.de&&s.salen[s.de.h.id]<s.v){const cand=s.bs.filter(function(b){return b.h.id!==s.de.h.id&&b.h.saldo>0;});
-    if(cand.length>1)aviso+='<div class="hcap">LO QUE FALTA, DE</div><div class="hchips">'+cand.map(function(b){const on=s.resto&&s.resto.h.id===b.h.id;
-      return '<button class="hchip'+(on?' on':'')+'" data-a="din-gaste-resto" data-id="'+esc(b.h.id)+'"'+(on?' aria-pressed="true"':'')+'>'+esc(b.h.ico)+' '+esc(b.h.nombre)+'</button>';}).join('')+'</div>';}
-  return aviso+(s.falta>0?'<p class="mini bad" style="margin:4px 0 0">No llega sin tocar el intocable: faltan '+esc(eurR(s.falta))+'.</p>':'')+
-    '<div class="hcap">ASÍ QUEDA</div>'+todos.map(function(b){const x=s.salen[b.h.id]||0;
-      return '<div class="d5q"><span>'+esc(b.h.ico)+'</span><span>'+esc(b.h.nombre)+'</span><span class="mini">'+(x?esc(fmtMil((b.h.saldo))):'')+'</span>'+
-        '<b>'+esc(fmtMil((b.h.saldo-x)))+'</b><em class="'+(x?'baja':'ok')+'">'+(x?'−'+esc(fmtMil((x))):'sin tocar')+'</em></div>';}).join('')+
-    '<div class="d5q tot"><span></span><b>Total</b><span class="mini">'+esc(fmtMil((tot0)))+' →</span><b>'+esc(fmtMil((tot0-(s.v-s.falta))))+'</b><em></em></div>';}
-function gasteHojaHTML(){
-  const s=gasteEstado(),P=puroHucha();
-  return '<h3 class="sh">Gasté de mis ahorros</h3>'+
-    '<div class="hdos"><label class="hfld">CUÁNTO (€)<input id="dgImp" data-a="din-gaste-in" data-k="imp" inputmode="decimal" placeholder="1000" value="'+esc(s.g.imp)+'"></label>'+
-      '<label class="hfld">EN QUÉ<input id="dgTxt" data-a="din-gaste-in" data-k="txt" maxlength="60" placeholder="Viaje a Lisboa" value="'+esc(s.g.txt)+'"></label></div>'+
-    '<div class="hcap">DE QUÉ BOLSILLO</div><div class="hchips">'+
-      s.bs.map(function(b){const on=b.h.id===s.g.de,rs=s.resto&&b.h.id===s.resto.h.id;
-        return '<button class="hchip'+(on?' on':'')+(rs?' d5rs':'')+'" data-a="din-gaste-de" data-id="'+esc(b.h.id)+'"'+(on?' aria-pressed="true"':'')+'>'+esc(b.h.ico)+' '+esc(b.h.nombre)+' · '+esc(fmtMil((b.h.saldo)))+'</button>';}).join('')+
-      '<button class="hchip" disabled aria-disabled="true" title="el intocable no se usa para gastos">🔒 '+esc(P.nombre)+'</button></div>'+
-    '<div id="dgQueda">'+gasteQuedaHTML()+'</div>'+
-    '<button class="btn p gbig" style="margin-top:12px" data-a="din-gaste-ok">Apuntar el gasto</button>';}
-function gasteApuntar(){
-  const s=gasteEstado();
-  if(!(s.v>0))return 'pon cuánto te has gastado';
-  if(s.falta>0)return 'no llega con esos bolsillos: faltan '+eurR(s.falta);
-  const txt=(s.g.txt||'gasto de ahorros').trim();
-  Object.keys(s.salen).forEach(function(id){const v=s.salen[id];if(!v)return;const h=huchaDe(id);
-    if(h){h.saldo=Math.round((h.saldo-v)*100)/100;ahoMov(h.id,-v,txt);}});
-  ui.dinGaste=null;save();
-  return eurR(s.v)+' de «'+txt+'»: '+Object.keys(s.salen).filter(function(id){return s.salen[id];}).map(function(id){
-    const h=huchaDe(id);return (h?h.nombre:'')+' −'+eurR(s.salen[id]);}).join(', ');}
 /* ===================== DINERO v6 · analizar lo que gastas =====================
    «Que me haga un análisis de gastos, que me diga en qué debería ahorrar más, en qué me tengo que
    fijar para gastar menos, cuánto debería gastarme al día máximo y que me ayude con consejos.»
@@ -20979,7 +21139,6 @@ function mesTipo0(){
   const ingreso=nominaMedia(),fijos=n?Math.round(f/n):0,vars=n?Math.round(v/n):0;
   const ep=epocaDe(mkHoy)||{};
   return {n:n,ingreso:ingreso,fijos:fijos,vars:vars,gasto:fijos+vars,libre:Math.max(0,ingreso-fijos-vars),finde:+ep.finde||0};}
-function colchonMeses(){const t=mesTipo();return t.gasto?Math.round(puroHucha().saldo/t.gasto*10)/10:0;}
 function metaTipo(h){
   if(h.tipo)return h.tipo;
   if(/invers|indexad|fondo/i.test(h.nombre))return 'inversion';
@@ -21005,43 +21164,7 @@ function huchaLlega(h){
   /* la hoja, la lista y el Excel con la cuenta del asistente: la lista de casa y la fecha mandan */
   const m=metaHucha(h);return m.obj?{obj:m.obj,falta:m.falta,mk:m.mk||'',men:m.men||0,fecha:!!m.fecha}:null;}
 function huchaLlegaTxt(ll){return ll.fecha?('para '+mkLargo(ll.mk)+' · '+eurR(ll.men)+'/mes'):(ll.mk?'llegas en '+mkLargo(ll.mk):'sin aporte no llegas');}
-function metaCuando(c){
-  if(!c.mk)return 'sin aporte no llegas';
-  if(c.meses!=null&&c.meses<=1&&c.falta<=60)return 'en 1 semana';
-  return 'llegas en '+ahoMesTxt(c.mk).toLowerCase()+(ahoYm(c.mk).y!==new Date().getFullYear()?' '+ahoYm(c.mk).y:'');}
 function apartasMes(){const hoy=new Date();return baseReparto(ahoMk(hoy.getFullYear(),hoy.getMonth())).v;}
-function din7Reparto(){
-  /* el recomendado: colchón hasta 6 meses de gastos y, con él lleno, su parte pasa a inversión y
-     metas. Ya no hay un «plan» aparte de tus bolsillos: tres repartos a la vez (Plan 30/25/30/15,
-     Huchas 50/30/20, Cierre…) era no saber cuál mandaba. Manda el de tus bolsillos. */
-  return din7RepartoRec(colchonMeses()>=6&&mesTipo().gasto>0);}
-function repartoComoRec(){
-  /* tus bolsillos agrupados como el recomendado, para compararlos */
-  const sh=bolsilloShares(),P=puroHucha(),o={colchon:sh[P.id]||0,inversion:0,metas:0,caprichos:0};
-  ahorroS().huchas.forEach(function(h){if(h.id===P.id||sh[h.id]==null)return;const t=metaTipo(h);
-    o[t==='inversion'?'inversion':(t==='capricho'?'caprichos':'metas')]+=sh[h.id]||0;});
-  return o;}
-function din7RepartoRec(lleno){
-  return lleno?[['colchon',10,'Colchón','ya tienes 6 meses: solo lo mantiene al día'],['inversion',35,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',40,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']]:
-    [['colchon',30,'Colchón',''],['inversion',25,'Inversión a largo plazo','fondo indexado global, dinero que no tocarás en 5+ años'],['metas',30,'Metas',''],['caprichos',15,'Caprichos','gastar sin culpa']];}
-function din7Aplicar(){
-  /* el reparto recomendado en los bolsillos: crea inversión y caprichos si faltan y fija los % */
-  const a=ahorroS(),P=puroHucha(),R={};din7Reparto().forEach(function(r){R[r[0]]=r[1];});
-  let inv=a.huchas.filter(function(h){return h.id!==P.id&&metaTipo(h)==='inversion';})[0];
-  if(!inv){inv={id:uid('hu'),nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[],tipo:'inversion',para:''};a.huchas.push(inv);}
-  let cap=a.huchas.filter(function(h){return h.id!==P.id&&h.id!==inv.id&&(metaTipo(h)==='capricho'&&/capricho/i.test(h.nombre));})[0];
-  if(!cap){cap={id:uid('hu'),nombre:'Caprichos',ico:'🎁',color:'#fbbf24',pct:0,objetivo:0,meta:'para gastar sin culpa',saldo:0,mensual:0,deseos:[],tipo:'capricho',para:''};a.huchas.push(cap);}
-  const metas=a.huchas.filter(function(h){return h.id!==P.id&&h.id!==inv.id&&h.id!==cap.id;});
-  a.puroPct=R.colchon;inv.mensual=0;cap.mensual=0;
-  inv.pct=R.inversion;cap.pct=R.caprichos;
-  /* las metas con fecha se llevan lo que piden (€/mes); las demás, su parte del 30 % */
-  metas.forEach(function(h){const c=metaHucha(h);if(c.fecha)h.mensual=c.men;});
-  const libres=metas.filter(function(h){return !(+h.mensual>0);});
-  libres.forEach(function(h){h.pct=Math.round(R.metas/libres.length);});
-  if(!libres.length&&!metas.length)inv.pct+=R.metas;
-  const T=mesTipo();if(T.ingreso&&T.libre)a.metaPct=Math.max(5,Math.min(80,Math.round(T.libre/T.ingreso*100)));
-  save();
-  return 'plan aplicado: colchón '+R.colchon+' %, inversión '+R.inversion+' %, metas '+R.metas+' %, caprichos '+R.caprichos+' %';}
 const D6_COMO=[
   [/restaur|bar|comida fuera|delivery|glovo|uber eats/i,['Los días de guardia y de saliente es cuando más se come fuera: deja un táper hecho la víspera.','Pedir a domicilio cuesta varias veces lo que cocinar lo mismo: mira Comer → Rápido y sano.']],
   [/super|mercad|aliment/i,['Ve con la lista de Compra: sale de tu menú y evita lo que no ibas a comer.','Compra una vez por semana: cada visita extra suma caprichos.']],
@@ -21082,63 +21205,6 @@ function renderDinCategoria(){
 function bancoS(){
   const a=ahorroS();if(!a.banco||typeof a.banco!=='object')a.banco={};
   const b=a.banco;if(!Array.isArray(b.cuentas))b.cuentas=[];if(!Array.isArray(b.capturas))b.capturas=[];return b;}
-const BK_NOLAB=/^(saldo|disponible|saldo disponible|saldo actual|retenido|pendiente|cuentas?|mis cuentas|ver m[aá]s|ver todo|euros?|eur)$/i;
-function bkNum(tok){
-  /* «1.670,32», «1670,32», «-12,50»: con céntimos es seguro; sin ellos, se enseña para revisar */
-  let t=String(tok||'').replace(/\s+/g,'').replace(/€|EUR/gi,'');
-  const neg=/^[-–]/.test(t);t=t.replace(/^[-–]+/,'');
-  /* una O leída por 0 o una l por 1 se arregla, pero ya no es «seguro»: se enseña para revisar */
-  const cambiada=/[OoIl|]/.test(t);t=t.replace(/[Oo]/g,'0').replace(/[Il|]/g,'1');
-  let v=null,ok=false;
-  if(/^\d{1,3}(\.\d{3})*,\d{2}$/.test(t)||/^\d+,\d{2}$/.test(t)){v=+t.replace(/\./g,'').replace(',','.');ok=true;}
-  else if(/^\d{1,3}(,\d{3})*\.\d{2}$/.test(t))v=+t.replace(/,/g,'');
-  else if(/^\d{1,3}(\.\d{3})+$/.test(t)||/^\d+$/.test(t))v=+t.replace(/\./g,'');
-  if(v==null||!isFinite(v))return null;
-  return {v:Math.round((neg?-v:v)*100)/100,ok:ok&&!cambiada};}
-function bkLabel(s){
-  return String(s||'').replace(/ES\d{2}[\d\s*·•.]*/g,' ').replace(/(\*+|[·•]{2,}|\.{3}|…)\s*\d{4}/g,' ')
-    .replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñü0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
-function bkDigitos(s){
-  /* los 4 últimos números de la cuenta: «···4821», «**** 4821» o el IBAN */
-  const m=/(?:\*{2,}|[·•]{2,}|\.{3}|…|[xX]{3,})\s*(\d{4})\b/.exec(s);if(m)return m[1];
-  const ib=/\bES\d{2}[\d\s*·•]{8,}/.exec(s);if(ib){const d=ib[0].replace(/\D/g,'');return d.length>=8?d.slice(-4):'';}
-  return '';}
-function bancoParse(texto){
-  /* la pantalla de cuentas de cualquier banco: cada importe con su nombre (en la misma línea o en las
-     de encima) y sus cuatro últimos números. «Saldo disponible» no es un nombre: se busca más arriba */
-  const lin=[],out=[];
-  /* «1.670,32» y «EUR» en dos líneas son un importe */
-  String(texto||'').split(/\n+/).map(function(l){return l.trim();}).filter(Boolean).forEach(function(l){
-    if(/^(€|EUR)$/i.test(l)&&lin.length)lin[lin.length-1]+=' '+l;else lin.push(l);});
-  const conEuro=/€|EUR/i.test(texto||'');
-  /* el importe empieza por una cifra y no va pegado a letras ni a otros números: antes «Saldo
-     actual 850,00 €» daba 1.850 (la l de «actual» como un 1) y «···4821 300,00 €» daba 821.300 */
-  const RE=conEuro?/(?<![\dA-Za-zÁÉÍÓÚÑáéíóúñ.,])(-?\s?\d[\dOoIl]{0,2}(?:[.\s][\dOoIl]{3})*(?:,[\dOoIl]{2})?|-?\d+,\d{2})\s*(?:€|EUR)/i:/(?<![\d.,])(-?\d{1,3}(?:\.\d{3})*,\d{2})(?!\d)/;
-  lin.forEach(function(l,i){
-    const m=RE.exec(l);if(!m)return;
-    const n=bkNum(m[1]);if(!n)return;
-    let nom=bkLabel(l.slice(0,m.index)),otra=false;
-    for(let j=i-1;j>=Math.max(0,i-3)&&(!nom||nom.length<3||BK_NOLAB.test(nom)||/^\d/.test(nom));j--){
-      /* «Disponible 1.650 €» justo debajo de otro importe es otra cifra de la misma cuenta */
-      if(RE.test(lin[j])){otra=BK_NOLAB.test(nom);break;}nom=bkLabel(lin[j]);}
-    if(otra)return;
-    if(!nom||nom.length<3||BK_NOLAB.test(nom)||/^\d/.test(nom))nom='Cuenta';
-    /* sus cuatro números, sin pasar por encima del importe de otra cuenta: una cuenta sin número
-       propio heredaba el de la de arriba y luego se descartaba por repetida */
-    let num='';for(let j=i;j>=Math.max(0,i-3)&&!num;j--){if(j<i&&RE.test(lin[j]))break;num=bkDigitos(lin[j]);}
-    out.push({nombre:nom.slice(0,40),num:num,v:n.v,ok:n.ok,total:/total|posici[oó]n|patrimonio|global|resumen/i.test(nom)});});
-  /* saldo y disponible de la misma cuenta: vale el primero */
-  const visto={};
-  return out.filter(function(c){const k=c.num||c.nombre.toLowerCase();if(visto[k])return false;visto[k]=1;return true;}).slice(0,8);}
-function bkCuenta(c){
-  const cs=bancoS().cuentas;
-  return (c.num&&cs.filter(function(q){return q.num===c.num;})[0])||cs.filter(function(q){return q.nombre.toLowerCase()===String(c.nombre||'').toLowerCase()&&(!q.num||!c.num);})[0]||null;}
-function bkRolDe(c,usados){
-  /* la primera vez se adivina (y tú lo cambias); después, lo que dijiste la otra vez */
-  const k=bkCuenta(c);if(k)return k.rol;
-  if(c.total)return 'no';
-  if(/ahorr|remunerad|dep[oó]sito|naranja|invers|hucha|plazo/i.test(c.nombre))return 'ahorro';
-  return usados.gasto?'no':'gasto';}
 function bkTotal(c,rol){
   let t=0,n=0;bancoS().cuentas.forEach(function(q){if(q.rol===rol&&c.s[q.id]!=null){t+=c.s[q.id];n++;}});
   return n?Math.round(t*100)/100:null;}
@@ -21198,12 +21264,6 @@ function bkGastoMes0(mk){
   const A=antes(llegadaNomina(t.y,t.m-1)),B=antes(llegadaNomina(t.y,t.m));if(!A||!B)return null;
   const e=entraMes(mkSuma(mk,-1));if(!e)return null;
   const g=Math.round(e.neto-(tot(B)-tot(A)));return g>0&&g<e.neto*3?g:null;}
-function huchaDe(id){return ahorroS().huchas.filter(function(h){return h.id===id;})[0]||null;}
-function bkCuadre(cuentas){
-  /* lo que dice el banco de tu ahorro frente a lo que suman tus bolsillos */
-  const ah=cuentas.filter(function(c){return c.rol==='ahorro'&&isFinite(c.v);});if(!ah.length)return null;
-  const banco=Math.round(ah.reduce(function(s,c){return s+c.v;},0)),bol=Math.round(ahorradoTotal()),diff=banco-bol;
-  return Math.abs(diff)>=1?{banco:banco,bol:bol,diff:diff}:null;}
 function imgsDe(files){return Array.prototype.slice.call(files||[]).filter(function(f){return /^image\//.test(f.type||'image/');}).slice(0,8);}
 function capturaCuando(fs){
   /* la fecha de la captura es la del archivo: la del día en que la hiciste, no la de hoy */
@@ -21218,77 +21278,6 @@ function ocrTextos(fs,cada){
     .then(function(w){worker=w;return fs.reduce(function(p,f){return p.then(function(){
       return ocrPrepara(f).then(function(c){return worker.recognize(c);}).then(function(r){out.push(r.data.text||'');if(cada)cada(out.length);});});},Promise.resolve());})
     .then(function(){fin();return out;},function(e){fin();throw e;});}
-function bkLeer(files){
-  const fs=imgsDe(files);if(!fs.length){flash('elige la captura del banco');return Promise.resolve();}
-  const q=capturaCuando(fs);
-  ui.bk={estado:'leyendo',hechas:0,total:fs.length,fecha:q.fecha,hora:q.hora,cuentas:[],msg:'',cuadre:''};
-  ui.dineroVista='banco';render();window.scrollTo(0,0);
-  return ocrTextos(fs,function(n){if(ui.bk){ui.bk.hechas=n;if(ui.dineroVista==='banco')render();}}).then(function(ts){
-    const vistos={},cs=[],usados={};
-    ts.forEach(function(t){bancoParse(t).forEach(function(c){const k=c.num||c.nombre.toLowerCase();if(!vistos[k]){vistos[k]=1;cs.push(c);}});});
-    cs.forEach(function(c){c.rol=bkRolDe(c,usados);usados[c.rol]=1;});
-    ui.bk.cuentas=cs.slice(0,8);ui.bk.estado=cs.length?'listo':'nada';
-    if(!cs.length)ui.bk.msg='No he encontrado saldos en esa captura. Hazla en la pantalla donde salen tus cuentas con su saldo, o ponlos a mano.';
-  }).catch(function(e){if(ui.bk){ui.bk.estado='error';ui.bk.msg=(e&&e.message)||'no se ha podido leer';}}).then(function(){render();});}
-function bkMano(desde){
-  /* sin captura: lo mismo, con tus cuentas y su último saldo para cambiarlo */
-  const b=bancoS(),u=desde||b.capturas[0]||null,h=new Date();
-  const cs=b.cuentas.length?b.cuentas.map(function(q){return {nombre:q.nombre,num:q.num,v:u&&u.s[q.id]!=null?u.s[q.id]:NaN,ok:true,rol:q.rol};}):
-    [{nombre:'Cuenta nómina',num:'',v:NaN,ok:true,rol:'gasto'},{nombre:'Cuenta ahorro',num:'',v:NaN,ok:true,rol:'ahorro'}];
-  ui.bk={estado:'listo',hechas:0,total:0,fecha:desde?u.fecha:iso(h),hora:desde?u.hora:horaLocal(h),
-    cuentas:cs,msg:'',cuadre:'',mano:true};
-  ui.dineroVista='banco';}
-function bkGuardar(){
-  const B=ui.bk;if(!B||!B.cuentas.length)return 'no hay nada que guardar';
-  const b=bancoS(),s={},usadas={};
-  B.cuentas.forEach(function(c){if(!isFinite(c.v))return;
-    let q=bkCuenta(c);if(q&&usadas[q.id])q=null;
-    if(!q){q={id:uid('bk'),nombre:c.nombre||'Cuenta',num:c.num||'',rol:c.rol};b.cuentas.push(q);}
-    else{q.rol=c.rol;if(c.nombre&&c.nombre!=='Cuenta')q.nombre=c.nombre;}
-    usadas[q.id]=1;s[q.id]=Math.round(c.v*100)/100;});
-  if(!Object.keys(s).length)return 'pon el saldo de alguna cuenta';
-  b.capturas=[{fecha:B.fecha,hora:B.hora||'',s:s}].concat(b.capturas.filter(function(x){return !(x.fecha===B.fecha&&x.hora===(B.hora||''));}))
-    .sort(function(p,q){return (q.fecha+q.hora).localeCompare(p.fecha+p.hora);}).slice(0,60);
-  /* el cuadre: la diferencia entre el banco y tus bolsillos va donde dijiste */
-  const d=bkCuadre(B.cuentas);let extra='';
-  if(d&&B.cuadre&&B.cuadre!=='no'){
-    if(B.cuadre==='rep'&&d.diff>0){const r=repartoDe(d.diff);Object.keys(r).forEach(function(id){const h=huchaDe(id);if(h&&r[id]){h.saldo=Math.round((h.saldo+r[id])*100)/100;ahoMov(h.id,r[id],'cuadre con el banco');}});
-      extra=' · '+eurR(d.diff)+' repartidos en tus bolsillos';}
-    else{const h=huchaDe(B.cuadre);if(h){const v=d.diff<0?-Math.min(Math.max(0,h.saldo),-d.diff):d.diff;   /* con saldo negativo restaba al revés y agrandaba la diferencia */h.saldo=Math.round((h.saldo+v)*100)/100;ahoMov(h.id,v,'cuadre con el banco');
-      extra=' · '+h.nombre+' '+(v>=0?'+':'−')+eurR(Math.abs(v));}}}
-  ui.bk=null;ui.dineroVista='';save();
-  const Q=bkQueda();return 'guardado'+(Q?': te quedan '+eurR(Q.queda)+' hasta la nómina':'')+extra;}
-function renderBanco(){
-  const B=ui.bk,cab=dinSubcab('Captura del banco');
-  const subir=function(t,p){return '<label class="btn'+(p?' p':'')+' gbig" style="margin-top:10px">📷 '+t+'<input type="file" accept="image/*" multiple data-a="bk-fotos" hidden></label>';};
-  if(!B){$('#main').innerHTML='<div class="grid dinv2">'+cab+'<div class="card"><p class="mini" style="margin:0">Haz una captura de la pantalla de tu banco donde salen tus cuentas con su saldo. Se lee aquí, en el móvil, y la imagen no se guarda.</p>'+
-    subir('Subir captura',1)+'<button class="btn gbig" style="margin-top:8px" data-a="bk-mano">Ponerlo a mano</button></div></div>';return;}
-  if(B.estado==='leyendo'){$('#main').innerHTML='<div class="grid dinv2">'+cab+'<div class="card"><h2>Leyendo '+Math.min(B.total,B.hechas+1)+' de '+B.total+'…</h2>'+
-    '<div class="prog"><span class="bar"><i style="width:'+Math.round(B.hechas/Math.max(1,B.total)*100)+'%"></i></span></div>'+
-    '<p class="mini" style="margin:8px 0 0">La primera vez se descarga el lector (unos 6 MB); después funciona sin internet.</p></div></div>';return;}
-  if(B.estado!=='listo'){$('#main').innerHTML='<div class="grid dinv2">'+cab+'<div class="card"><div class="empty">'+esc(B.msg||'no se ha podido leer')+'</div>'+
-    subir('Probar con otra')+'<button class="btn gbig" style="margin-top:8px" data-a="bk-mano">Ponerlo a mano</button></div></div>';return;}
-  const ROL=[['gasto','Para gastar'],['ahorro','Ahorro'],['no','No usar']];
-  const filas=B.cuentas.map(function(c,i){
-    return '<div class="card bkc'+(c.ok===false?' duda':'')+'"><div class="row" style="gap:8px;align-items:center">'+
-        '<input class="bknom" value="'+esc(c.nombre)+'" data-a="bk-nom" data-i="'+i+'" aria-label="nombre de la cuenta" maxlength="40">'+
-        (c.num?'<span class="mini">···'+esc(c.num)+'</span>':'')+
-        '<input class="bkv" inputmode="decimal" value="'+(isFinite(c.v)?esc(String(c.v.toFixed(2)).replace('.',',')):'')+'" placeholder="saldo" data-a="bk-v" data-i="'+i+'" aria-label="saldo de '+esc(c.nombre)+' en euros">'+
-        '<span class="m">'+(c.ok===false?'⚠':'€')+'</span></div>'+
-      '<div class="hchips" role="radiogroup" aria-label="para qué es '+esc(c.nombre)+'">'+ROL.map(function(r){const on=c.rol===r[0];
-        return '<button class="hchip'+(on?' on':'')+'" role="radio" aria-checked="'+on+'" data-a="bk-rol" data-i="'+i+'" data-v="'+r[0]+'">'+r[1]+'</button>';}).join('')+'</div></div>';}).join('');
-  const d=bkCuadre(B.cuentas);
-  if(d&&!B.cuadre)B.cuadre=d.diff>0?(d.bol<1?'rep':puroHucha().id):'no';
-  const cuadre=d?('<div class="card bkcuadre"><p style="margin:0 0 8px">Tus bolsillos suman <b>'+fmtMil(d.bol)+' €</b> y el banco dice <b>'+fmtMil(d.banco)+' €</b>. '+
-      (d.diff>0?'¿Los <b>'+fmtMil(d.diff)+' €</b> de más?':'Faltan <b>'+fmtMil(-d.diff)+' €</b>: ¿de qué bolsillo salieron?')+'</p><div class="hchips">'+
-      (d.diff>0?[['rep','Repartir como siempre']]:[]).concat(bolsillos().map(function(x){return [x.h.id,x.h.ico+' '+x.h.nombre];})).concat([['no','Dejarlo así']]).map(function(o){const on=B.cuadre===o[0];
-        return '<button class="hchip'+(on?' on':'')+'" aria-pressed="'+on+'" data-a="bk-cuadre" data-v="'+esc(o[0])+'">'+esc(o[1])+'</button>';}).join('')+'</div></div>'):'';
-  $('#main').innerHTML='<div class="grid dinv2">'+cab+
-    '<p class="note" style="margin:0">'+(B.mano?'Pon lo que hay en cada cuenta':'He leído '+B.cuentas.length+' cuenta'+(B.cuentas.length===1?'':'s')+': revisa el saldo')+
-      ' y dime para qué es cada una (lo recuerdo para la próxima). Nada se guarda hasta que pulses «guardar».</p>'+
-    '<label class="fld">día<input type="date" value="'+esc(B.fecha)+'" data-a="bk-fecha"></label>'+
-    filas+'<button class="btn s" data-a="bk-mas">＋ otra cuenta</button>'+cuadre+
-    '<button class="btn p gbig" data-a="bk-guardar">✓ guardar</button><button class="btn s" data-a="bk-descartar">descartar</button></div>';}
 
 /* ---------- el asistente: una frase, la primera que se cumpla ---------- */
 function dinMesNom(mk){const t=ahoYm(mk);return t?MONTH_FULL[t.m].toLowerCase():'';}
@@ -21296,17 +21285,7 @@ function dinMesAno(mk){/* «junio» este año; «junio de 2027» si es otro */co
 function dinMetaPrincipal(){
   /* la meta que se nombra en «vas bien»: la primera con objetivo que aún no está llena */
   const P=puroHucha();return ahorroS().huchas.filter(function(h){if(h.id===P.id)return false;const c=metaHucha(h);return c.obj&&c.falta&&c.mk;})[0]||null;}
-function dinLlegadasAl(){
-  /* «cuándo llega cada meta» la última vez que lo viste: si cambia, el asistente lo dice una vez */
-  const a=ahorroS();if(!a.visto||typeof a.visto!=='object')a.visto={};
-  ahorroS().huchas.forEach(function(h){const c=metaHucha(h);if(c.obj&&c.falta&&c.mk&&!c.fecha&&!a.visto['lleg:'+h.id])a.visto['lleg:'+h.id]=c.mk;});
-  return a.visto;}
 const DIN_R=[
-  function banco(X){ /* 1 · la captura del banco, vieja o ninguna */
-    const c=bkUltima('gasto'),e=bkEdad(c);if(c&&e<=7)return null;
-    return {id:'din-banco',ico:'🏦',t:c?'Tu captura del banco es de hace '+e+' días':'¿Cuánto tienes en el banco?',
-      txt:c?'Súbela y te digo cuánto te queda de verdad hasta la nómina.':'Sube una captura de tu banco (la pantalla de tus cuentas) y te digo cuánto te queda para gastar hasta la nómina y cuánto tienes ahorrado. Se lee en el móvil.',
-      acc:[['Subir captura','bk-fotos','',1,'file'],['A mano','bk-mano','']]};},
   function recibo(X){ /* 2 · un recibo hoy o mañana */
     const r=recibosEntre(iso(addDays(X.hoy,-1)),iso(addDays(X.hoy,2)));if(!r.length)return null;
     const x=r[0],mas=r.length>1?' (y '+(r.length-1)+' más)':'';
@@ -21327,15 +21306,6 @@ const DIN_R=[
     const c=d6Cats(mk).filter(function(c){return !c.fijo&&c.m&&c.v-c.m>=30&&c.v>c.m*1.2;}).sort(function(a,b){return (b.v-b.m)-(a.v-a.m);})[0];if(!c)return null;
     return {id:'din-cat:'+mk+':'+c.k,ico:finCatIco(c.k),t:'En '+c.k.toLowerCase()+', '+(c.v-c.m)+' € más que tu media',
       txt:'En '+dinMesNom(mk)+' fueron '+c.v+' € y tu media es '+c.m+' €. Ponle un tope y te digo cuánto ganas al año.',acc:[['Ponerle un tope','d6-cat',' data-c="'+esc(c.k)+'"',1]]};},
-  function meta(X){ /* 6 · una meta se retrasa o se adelanta */
-    const V=dinLlegadasAl();
-    for(const h of ahorroS().huchas){const c=metaHucha(h),prev=V['lleg:'+h.id];if(!(c.obj&&c.falta&&c.mk&&!c.fecha&&prev&&prev!==c.mk))continue;
-      const tarde=c.mk>prev,nec=Math.ceil(c.falta/Math.max(1,mkEntre(X.mkHoy,prev))/5)*5,mas=Math.max(0,nec-(c.men||0));
-      return {id:'din-meta:'+h.id+':'+c.mk,ico:h.ico,t:h.nombre+' llega en '+dinMesAno(c.mk)+' '+(tarde?'y no en ':'en vez de ')+dinMesAno(prev),
-        txt:tarde?(mas?'Para llegar en '+dinMesAno(prev)+': '+mas+' € más al mes.':'Lo que apartas ya no llega a tiempo.'):'Vas por delante: bien.',
-        acc:tarde&&mas?[['Subir '+mas+' €','din-meta-subir',' data-id="'+esc(h.id)+'" data-v="'+nec+'"',1],['Dejarlo así','din-lleg-ok',' data-id="'+esc(h.id)+'" data-mk="'+c.mk+'"']]:
-          [['Vale','din-lleg-ok',' data-id="'+esc(h.id)+'" data-mk="'+c.mk+'"',1]]};}
-    return null;},
   function guardia(X){ /* 7 · guardias de finde de más este mes */
     const t=ahoYm(X.mkHoy),nm=nominaMes(t.y,t.m);if(!(nm.ep&&nm.finde>1&&nm.ep.finde>0))return null;
     const n=nm.finde-1,v=Math.round(n*nm.ep.finde);
@@ -21363,52 +21333,335 @@ function asistTjHTML(t,cls,plegable){
         '<button class="btn '+(a[3]?'p ':'')+'s" data-a="'+a[1]+'"'+a[2]+'>'+esc(a[0])+'</button>';}).join('')+
       (t.nada?'':'<span class="sp"></span><button class="dlink" data-a="asist-nunca" data-id="'+esc(t.id)+'">no me lo digas más</button>')+'</div>':'')+'</div>';}
 
-/* ---------- las tres pestañas ---------- */
-function din8Tabs(on){
-  return '<div class="dtop"><h2 class="subtit">💶 Dinero</h2><span class="sp"></span><div class="d6seg d7seg" role="tablist">'+
-    [['','Hoy'],['ahorro','Ahorro'],['mes','Mes']].map(function(t){return '<button role="tab"'+(t[0]===on?' class="on" aria-selected="true"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"')+'>'+t[1]+'</button>';}).join('')+'</div></div>';}
-function dinTabDe(){const t=ui.dinTab||'';return (t==='metas'||t==='ahorros'||t==='plan')?'ahorro':(t==='mes'?'mes':(t==='ahorro'?'ahorro':''));}
-function bkFuenteHTML(c,txt){
-  const e=bkEdad(c),viejo=e>7;
-  return '<div class="bkfu'+(viejo?' viejo':'')+'"><span>'+txt+(e===0?'hoy'+(c.hora?', '+esc(c.hora):''):(e===1?'ayer':'hace '+e+' días ('+esc(fechaCorta(c.fecha))+')'))+'</span>'+
-    '<label class="btn s">📷 Actualizar<input type="file" accept="image/*" multiple data-a="bk-fotos" hidden></label></div>';}
-function dinHoyHTML(){
-  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),Q=bkQueda(),t=dinAsis(false),M=Q?null:d6Mes(mkHoy);
-  let hero;
-  if(Q&&Q.caducada){
-    hero='<div class="card dhero"><div class="cap">HA LLEGADO LA NÓMINA</div>'+
-      '<p style="margin:4px 0 0">Tu última captura del banco es del '+esc(fechaCorta(Q.c.fecha))+', de antes de la nómina del '+Q.L1.getDate()+' '+esc(MON[Q.L1.getMonth()])+'. Sube una nueva para saber lo que te queda.</p>'+
-      '<label class="btn p gbig" style="margin-top:10px">📷 Captura del banco<input type="file" accept="image/*" multiple data-a="bk-fotos" hidden></label></div>';}
-  else if(Q){const L=Q.L1,justo=Q.queda<0;
-    hero='<div class="card dhero"><div class="cap">'+(justo?'ESTE MES NO LLEGA':'TE QUEDA PARA GASTAR')+'</div>'+
-      '<div class="row" style="align-items:flex-end;gap:10px"><div class="dbig'+(justo?' ex':'')+'">'+fmtMil(Q.queda)+' <small>€</small></div>'+
-        '<span class="mini">'+(justo?'faltan para la nómina del '+L.getDate():'<b style="color:var(--ink)">'+Q.dia+' € al día</b> hasta la nómina del '+L.getDate()+' '+esc(MON[L.getMonth()]))+'</span></div>'+
-      '<div class="dcuen">'+
-        '<div><span>En tu cuenta (banco)</span><b>'+fmtMil(Q.saldo)+' €</b></div>'+
-        '<div><span>Recibos que faltan hasta el '+L.getDate()+(Q.rec.length?' ('+Q.rec.length+')':'')+'</span><b>− '+fmtMil(Q.rv)+' €</b></div>'+
-        (Q.hecho?'<div class="ok"><span>Ahorro de '+esc(dinMesNom(Q.mk0))+' ya apartado ✓ <button class="dlink" data-a="din-apartar-ini-x" data-mk="'+Q.mk0+'">deshacer</button></span><b></b></div>':
-          (Q.ap?'<div><span>Lo que apartas este mes <button class="dlink" data-a="din-apartar-meta" data-mk="'+Q.mk0+'">ya lo he apartado</button></span><b>− '+fmtMil(Q.ap)+' €</b></div>':''))+'</div>'+
-      bkFuenteHTML(Q.c,'Banco: ')+'</div>';}
-  else if(M.p&&M.p.g.fuente==='Fintonic'){
-    /* sin banco pero con Fintonic de este mes: lo variable que queda entre los días que faltan */
-    hero='<div class="card dhero"><div class="cap">PUEDES GASTAR HOY</div>'+
-      '<div class="row" style="align-items:flex-end;gap:10px"><div class="dbig">'+fmtMil(M.hoyMax)+' <small>€</small></div><span class="mini">te quedan '+fmtMil(M.queda)+' € para '+M.dias+' día'+(M.dias===1?'':'s')+'</span></div>'+
-      '<p class="mini" style="margin:6px 0 0">Lo variable: '+fmtMil(M.gastado)+' de '+fmtMil(M.presu)+' €, ya quitados lo fijo y tu ahorro. Fintonic del '+esc(fechaCorta(M.fecha))+'.</p>'+
-      '<div class="d5two" style="margin-top:10px"><label class="btn">📷 Captura del banco<input type="file" accept="image/*" multiple data-a="bk-fotos" hidden></label>'+
-        '<button class="btn" data-a="bk-mano">Ponerlo a mano</button></div></div>';}
-  else{const pres=M.presu,dia=Math.floor(pres/Math.max(1,M.dim));
-    hero='<div class="card dhero"><div class="cap">PUEDES GASTAR AL DÍA</div>'+
-      '<div class="row" style="align-items:flex-end;gap:10px"><div class="dbig">≈ '+fmtMil(dia)+' <small>€</small></div><span class="mini">unos '+fmtMil(pres)+' € al mes para el día a día</span></div>'+
-      '<p class="mini" style="margin:6px 0 0">Con tu nómina ('+fmtMil(M.ingreso)+' €), tus recibos ('+fmtMil(M.fijos)+' €) y lo que quieres ahorrar ('+metaPct()+' %). '+
-        'Con una captura de tu banco te digo lo que te queda de verdad.</p>'+
-      '<div class="d5two" style="margin-top:10px"><label class="btn p">📷 Captura del banco<input type="file" accept="image/*" multiple data-a="bk-fotos" hidden></label>'+
-        '<button class="btn" data-a="bk-mano">Ponerlo a mano</button></div></div>';}
-  const sem=recibosEntre(iso(addDays(hoy,-1)),iso(addDays(hoy,8)));
+/* ===================== DINERO 3.0 · Bosque y Gastos (tanda Dinero, D3) =====================
+   Portada = el bosque (maquetas/dinero-rara2-laurisilva.html): la copa llega a los MESES DE VIDA (guardado ÷ gasto de un mes
+   típico, mesTipo), la copa de puntos es el objetivo, el musgo lo guardado, el tocón el gasto variable más grande y los frutos
+   las compras planificadas. Gastos = maquetas/dinero-laurisilva-gastos.html con cifras reales. Ahorro y Compras, de momento, las
+   pantallas de antes (las rehacen la D4 y la D5). */
+function d3Ritmo(){
+  /* lo que ahorras de verdad al mes: la media de los últimos meses con cifra; si no, tu meta sobre lo que entra */
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),v=[];
+  for(let i=1;i<=3;i++){const x=ahorroDeMes(mkSuma(mkHoy,-i));if(x&&x.ahorro>0)v.push(x.ahorro);}
+  return v.length?Math.round(v.reduce(function(s,x){return s+x;},0)/v.length):Math.round(nominaMedia()*metaPct()/100);}
+function d3Claro(){
+  /* el gasto variable más grande del mes (o del último mes con cifras) */
+  const hoy=new Date();let mk=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  if(!gastoMes(mk))mk=dinMesCerrado();
+  const p=mk?mesPartes(mk):null;if(!p)return null;
+  let mejor=null;p.V.forEach(function(k){const v=+p.g.cats[k]||0;if(!mejor||v>mejor.v)mejor={k:k,v:Math.round(v)};});
+  return mejor&&mejor.v>=1?{mk:mk,k:mejor.k,v:mejor.v}:null;}
+function d3Datos(){
+  const d=dinero3S(),A=d.ahorro,g=mesTipo().gasto||0,hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const vida=g>0?Math.round(A.guardado/g*10)/10:0,objE=Math.round(A.objetivoMeses*g/10)*10,falta=Math.max(0,objE-Math.round(A.guardado));
+  const dd=parseDate(A.desde),mk0=dd?ahoMk(dd.getFullYear(),dd.getMonth()):mkHoy,llega=mkSuma(mk0,A.plazoMeses),rest=Math.max(1,mkEntre(mkHoy,llega));
+  const ritmo=d3Ritmo();
+  return {A:A,g:g,vida:vida,objE:objE,falta:falta,llega:llega,futuro:mkEntre(mkHoy,llega)>0,rest:rest,ritmo:ritmo,
+    pide:falta?Math.ceil(falta/rest/10)*10:0,delante:ritmo>=falta/rest,
+    frutos:d.compras.filter(function(c){return c.estado==='plan';}).length,claro:d3Claro()};}
+const D3_COMA=function(n){return String(n).replace('.',',');};
+let _d3Hojas='';
+function d3Hojas(){
+  /* las hojas de la copa, siempre en el mismo sitio (determinista) */
+  if(_d3Hojas)return _d3Hojas;
+  let s=7;const r=function(){s=(s*9301+49297)%233280;return s/233280;},C=[[270,519,52],[218,548,46],[322,548,46],[245,575,40],[295,575,40]];
+  for(let i=0;i<70;i++){const c=C[i%5],a=r()*6.283,d=Math.sqrt(r())*c[2]*.85,x=(c[0]+Math.cos(a)*d).toFixed(1),y=(c[1]+Math.sin(a)*d).toFixed(1);
+    _d3Hojas+='<ellipse cx="'+x+'" cy="'+y+'" rx="6" ry="2.6" transform="rotate('+Math.round(r()*180)+' '+x+' '+y+')"/>';}
+  return _d3Hojas;}
+function d3EscenaSVG(D){
+  const A=D.A,maxM=Math.max(A.objetivoMeses,D.vida,1),u=456/maxM,Y=function(m){return 680-u*m;};
+  const objTop=Y(A.objetivoMeses),k=Math.max(.4,Math.min(1,.4+D.vida*.25)),topY=Math.min(Y(D.vida),660-148*k),yt=topY+113*k;
+  const f=function(x){return Math.round(x*10)/10;};
+  const C=[[270,519,52],[218,548,46],[322,548,46],[245,575,40],[295,575,40]];
+  const paso=Math.ceil(maxM/8);let regla='';
+  for(let m=paso;m<=Math.floor(maxM);m+=paso)regla+='<path d="M38 '+f(Y(m))+'h14"/><text x="4" y="'+f(Y(m)+5)+'" stroke="none">'+m+'</text>';
+  const copa='<g transform="translate(270 '+f(topY)+') scale('+k+') translate(-270 -467)">'+
+    '<g fill="var(--lau-copa)">'+C.map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'"/>';}).join('')+'</g><g fill="var(--lau-hoja)">'+d3Hojas()+'</g></g>';
+  const meta='<g transform="translate(0 '+f(objTop-224)+')" fill="var(--lau-pastel)" fill-opacity=".55" stroke="var(--lau-verde)" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round">'+
+    C.map(function(c){return '<circle cx="'+c[0]+'" cy="'+(c[1]-243)+'" r="'+c[2]+'"/>';}).join('')+'</g>';
+  const y1=objTop+156,y2=topY+4,union=y1<y2-10?'<path d="M262 '+f(y1)+'V'+f(y2)+'M278 '+f(y1)+'V'+f(y2)+'" stroke="var(--lau-verde)" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round" fill="none"/>':'';
+  const FR=[[322,68],[348,80],[376,62],[306,96],[334,104],[362,94],[290,70],[392,84]],fr=FR.slice(0,Math.min(D.frutos,FR.length));
+  const frutos=fr.length?'<path d="M412 14 C370 14 330 22 296 48" stroke="var(--lau-tronco)" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+    '<g stroke="var(--lau-tronco)" stroke-width="2.5" stroke-linecap="round">'+fr.map(function(q){return '<path d="M'+q[0]+' '+(q[1]-34)+'V'+(q[1]-10)+'"/>';}).join('')+'</g>'+
+    '<g fill="var(--lau-fruta)" stroke="var(--lau-fruta-borde)" stroke-width="2">'+fr.map(function(q){return '<circle cx="'+q[0]+'" cy="'+q[1]+'" r="11"/>';}).join('')+'</g>'+
+    '<g fill="#fff" fill-opacity=".6">'+fr.map(function(q){return '<circle cx="'+(q[0]-4)+'" cy="'+(q[1]-4)+'" r="3"/>';}).join('')+'</g>':'';
+  const tit='Bosque de laurisilva en la niebla. Un árbol con la copa a '+D3_COMA(D.vida)+' de '+A.objetivoMeses+' meses de la regla de madera; la copa de puntos, arriba, es el objetivo de '+
+    A.objetivoMeses+' meses'+(D.g?' ('+fmtMil(D.objE)+' euros)':'')+'. Debajo, el musgo guarda '+fmtMil(A.guardado)+' euros. '+
+    (D.claro?'A la izquierda, un tocón es el gasto de '+D.claro.k+': '+fmtMil(D.claro.v)+' euros al mes. ':'')+
+    (D.frutos?'Arriba a la derecha cuelgan '+D.frutos+(D.frutos===1?' fruto, una compra planificada.':' frutos, las compras planificadas.'):'Aún no hay compras planificadas.');
+  return '<svg class="lau-svg" viewBox="0 0 412 900" role="img" aria-labelledby="lauT" preserveAspectRatio="xMidYMid slice">'+
+    '<title id="lauT">'+esc(tit)+'</title>'+
+    '<defs><linearGradient id="lauCielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--lau-cielo1)"/><stop offset="1" stop-color="var(--lau-cielo2)"/></linearGradient>'+
+    '<filter id="lauBl"><feGaussianBlur stdDeviation="9"/></filter></defs>'+
+    '<rect width="412" height="900" fill="url(#lauCielo)"/>'+
+    '<path d="M0 640 q20 -34 44 -10 q16 -30 44 -4 q22 -34 50 -6 q20 -26 46 -2 q24 -30 50 -4 q22 -28 48 0 q26 -26 52 -2 q24 -22 78 -4 V690 H0Z" fill="var(--lau-lomo1)"/>'+
+    '<path d="M0 664 q24 -30 50 -8 q20 -26 48 -2 q24 -30 50 -4 q26 -24 52 0 q22 -26 50 -2 q24 -24 50 0 q30 -22 62 -6 V700 H0Z" fill="var(--lau-lomo2)"/>'+
+    '<rect x="26" y="'+f(objTop-10)+'" width="12" height="'+f(684-objTop+10)+'" rx="6" fill="var(--lau-madera)"/>'+
+    '<g stroke="var(--lau-madera-osc)" stroke-width="3" stroke-linecap="round" fill="var(--lau-ink)" font-size="13" font-weight="700">'+regla+'</g>'+
+    '<text x="4" y="'+f(objTop-22)+'" font-size="12" fill="var(--lau-ink2)">meses</text>'+
+    '<path d="M62 '+f(objTop)+'H400" stroke="var(--lau-ink2)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>'+
+    '<text x="402" y="'+f(objTop-10)+'" font-size="13" font-weight="700" fill="var(--lau-ink)" text-anchor="end">Objetivo · '+A.objetivoMeses+' meses · '+esc(mkCorto(D.llega)+' '+ahoYm(D.llega).y)+'</text>'+
+    meta+union+
+    '<g class="lau-nb" filter="url(#lauBl)"><ellipse cx="120" cy="'+f(Math.min(Math.max(topY+110,300),640))+'" rx="150" ry="16" fill="#fff" fill-opacity=".7"/><ellipse cx="330" cy="'+f(Math.min(Math.max(topY+140,320),650))+'" rx="130" ry="13" fill="#fff" fill-opacity=".65"/></g>'+
+    '<path d="M258 690 C261 '+f(yt+(690-yt)*.55)+' 261 '+f(yt+(690-yt)*.2)+' 260 '+f(yt)+' H282 C281 '+f(yt+(690-yt)*.2)+' 281 '+f(yt+(690-yt)*.55)+' 286 690Z" fill="var(--lau-tronco)"/>'+
+    '<path d="M270 '+f(yt+55)+' L238 '+f(yt+18)+' M272 '+f(yt+44)+' L306 '+f(yt+14)+'" stroke="var(--lau-tronco)" stroke-width="7" stroke-linecap="round"/>'+
+    copa+
+    '<path d="M52 '+f(topY)+'H220" stroke="var(--lau-ink)" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>'+
+    '<rect x="56" y="'+f(topY-27)+'" width="68" height="24" rx="12" fill="var(--lau-ink)"/><text x="90" y="'+f(topY-10)+'" font-size="13" font-weight="700" fill="var(--lau-fondo)" text-anchor="middle">hoy '+D3_COMA(D.vida)+'</text>'+
+    '<g fill="var(--lau-agua-clara)" stroke="var(--lau-ink)" stroke-width="1"><path class="lau-gt" d="M246 640q-5 8 0 11q5 -3 0 -11z"/><path class="lau-gt" style="animation-delay:1s" d="M282 644q-5 8 0 11q5 -3 0 -11z"/><path class="lau-gt" style="animation-delay:2s" d="M264 648q-5 8 0 11q5 -3 0 -11z"/></g>'+
+    '<ellipse cx="110" cy="690" rx="44" ry="8" fill="var(--lau-tocon-suelo)" fill-opacity=".6"/>'+
+    '<path d="M78 648 L80 686 Q110 696 140 686 L142 648Z" fill="var(--lau-tronco)"/>'+
+    '<ellipse cx="110" cy="648" rx="32" ry="10" fill="var(--lau-tocon)" stroke="var(--lau-madera-osc)" stroke-width="2"/><ellipse cx="110" cy="648" rx="20" ry="6" fill="none" stroke="var(--lau-madera)" stroke-width="1.5"/><ellipse cx="110" cy="648" rx="9" ry="3" fill="none" stroke="var(--lau-madera)" stroke-width="1.5"/>'+
+    frutos+
+    '<path d="M0 684 q14 -12 30 -2 q16 -14 34 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q16 -12 36 -2 q18 -12 36 0 q10 -8 26 -2 V704 H0Z" fill="var(--lau-musgo)"/>'+
+    '<path d="M0 700 q50 -9 100 0 t100 0 t100 0 t112 0 V744 H0Z" fill="var(--lau-agua)"/>'+
+    '</svg>';}
+function d3GuardarHTML(D,vacio){
+  const A=D.A;
+  return '<div class="card lau-card"><label class="lau-e" for="d3Guardado">'+(vacio?'¿CUÁNTO TIENES GUARDADO?':'LO QUE TIENES GUARDADO (€)')+'</label>'+
+    '<div class="lau-fila"><input id="d3Guardado" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="4.200" value="'+(A.guardado>0?esc(String(A.guardado).replace('.',',')):'')+'">'+
+    '<button class="lau-btn p" data-a="d3-guardar">'+(vacio?'Plantar el bosque':'Apuntar')+'</button></div>'+
+    '<p class="lau-mini">Lo que hay en tu cuenta de ahorro y en tus huchas, sumado. Solo vive en tu móvil.</p></div>';}
+function dinBosqueHTML(){
+  const D=d3Datos(),A=D.A;
+  if(A.guardado<=0){
+    return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('')+
+      '<div class="card lau-card lau-vacio"><svg viewBox="0 0 120 90" width="120" height="90" role="img" aria-label="un brote de laurisilva en la niebla"><ellipse cx="60" cy="80" rx="46" ry="7" fill="var(--lau-musgo)"/><path d="M57 80C58 66 58 58 60 50H64C63 58 63 68 66 80Z" fill="var(--lau-tronco)"/><circle cx="62" cy="40" r="16" fill="var(--lau-copa)"/><circle cx="48" cy="48" r="11" fill="var(--lau-copa)"/><circle cx="76" cy="48" r="11" fill="var(--lau-copa)"/></svg>'+
+      '<h3 class="lau-h">Tu bosque aún está por plantar</h3>'+
+      '<p class="lau-p">Escribe cuánto tienes guardado y verás cuántos meses de vida te da: esa es la altura de la copa.</p></div>'+
+      d3GuardarHTML(D,true)+
+      (dinero3S().compras.length?'<button class="lau-btn" data-a="d6-tab" data-v="compras">Ver mis compras ('+dinero3S().compras.length+')</button>':'')+'</div>';}
+  const sin=D.g<=0,pil=sin?'':(D.falta===0?'✓ La copa ya llega':(D.delante?'▲ Vas por delante':'▼ Vas por detrás'));
+  const hacer=sin?['Cuéntame lo que gastas','para saber cuántos meses de vida guardas']:
+    (D.falta===0?['Ya llegaste','la copa llega al objetivo de '+A.objetivoMeses+' meses']:
+      ['Este mes, sube '+fmtMil(D.pide)+' €',D.futuro?'para que la copa llegue arriba en '+mkLargo(D.llega):'para llegar a tu objetivo cuanto antes']);
+  const cl=D.claro;
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('')+
+    '<div class="lau-esc">'+d3EscenaSVG(D)+
+      '<div class="lau-ini"><div class="lau-peq">tu bosque hoy</div><div class="lau-gran">'+(sin?'—':D3_COMA(D.vida))+' <small>'+(sin?'meses de vida':'de '+A.objetivoMeses+' meses')+'</small></div>'+
+        '<div class="lau-sub">'+fmtMil(A.guardado)+' €'+(sin?'':' de '+fmtMil(D.objE)+' €')+'</div>'+(pil?'<span class="lau-pil">'+pil+'</span>':'')+'</div>'+
+      '<button class="lau-baya" data-a="d6-tab" data-v="compras" aria-label="Compras: '+(D.frutos?D.frutos+(D.frutos===1?' compra planificada':' compras planificadas'):'ninguna planificada todavía')+'"><span>Compras · '+D.frutos+(D.frutos===1?' fruto':' frutos')+'</span></button>'+
+      (cl?'<button class="lau-claro" data-a="d3-claro" data-mk="'+esc(cl.mk)+'" aria-label="Gastos: el claro del bosque. '+esc(cl.k)+', '+fmtMil(cl.v)+' euros al mes"><span><b>El claro</b>'+esc(cl.k)+'<br>'+fmtMil(cl.v)+' € al mes</span></button>':
+        '<button class="lau-claro" data-a="d6-tab" data-v="gastos" aria-label="Gastos: aún sin cifras de gasto"><span><b>El claro</b>mira tus gastos</span></button>')+
+      '<div class="lau-musgo">Musgo: '+fmtMil(A.guardado)+' € guardados<small>el agua que el suelo retiene</small></div>'+
+      '<div class="lau-hacer"><p class="lau-g">'+esc(hacer[0])+'</p><p>'+esc(hacer[1])+'</p></div>'+
+      '<button class="lau-ir" data-a="d6-tab" data-v="ahorro">Ver el bosque mes a mes ↓</button></div>'+
+    d4NominaHTML(D)+d3GuardarHTML(D,false)+'</div>';}
+/* ---------- D4 · Ahorro: «Tu bosque, mes a mes» y «Ya ha llegado la nómina» ---------- */
+function d4Cobro(){
+  /* la nómina de este mes: cuánto se espera, si estamos en los días de cobro (desde que llega hasta 10 días después) y si ya se apartó */
+  const h=iso(new Date()),L=nominaAntes(h),t=L.transfiere,mk=ahoMk(t.getFullYear(),t.getMonth()),dias=Math.round((parseDate(h)-parseDate(iso(L.llega)))/864e5);
+  return {mk:mk,esperado:Math.round(nominaMes(t.getFullYear(),t.getMonth()).neto||0),enDias:dias>=0&&dias<=10,hecho:dinero3S().ahorro.apartado[mk]||null};}
+function d4Propone(D,cobrado){
+  /* lo que pide el plan este mes (o, si ya llegaste, tu % de ahorro), y nunca más de lo cobrado */
+  const plan=D.pide>0?D.pide:Math.round(cobrado*metaPct()/100/10)*10;
+  return Math.max(0,Math.min(Math.round(cobrado),plan));}
+function d4NominaHTML(D){
+  const C=d4Cobro(),N=ui.d4Nom&&ui.d4Nom.mk===C.mk?ui.d4Nom:null,mes=dinMesNom(C.mk);let c;
+  if(C.hecho)c='<p class="lau-msg">Nómina de '+esc(mes)+' apartada ✓</p><p class="lau-p">'+fmtMil(C.hecho.v)+' € ya están en el bosque (musgo).</p>'+
+    '<div class="lau-enl"><button data-a="d4-nom-x" data-mk="'+esc(C.mk)+'">Deshacer</button></div>';
+  else if(N&&N.paso==='propone')c='<p class="lau-msg">Aparta '+fmtMil(N.v)+' € al bosque</p><p class="lau-p">'+(D.pide>0?'Es lo que pide tu plan este mes':'Es tu '+metaPct()+' % de ahorro')+', de los '+fmtMil(N.cobrado)+' € que has cobrado.</p>'+
+    '<div class="lau-fila" style="margin-top:10px"><button class="lau-btn p" data-a="d4-nom-hecho">Hecho</button><button class="lau-btn" data-a="d4-nom">Cambiar lo cobrado</button></div>';
+  else if(N)c='<label class="lau-e" for="d4Cobrado">¿CUÁNTO HAS COBRADO? (€)</label><div class="lau-fila"><input id="d4Cobrado" class="lau-in" inputmode="decimal" autocomplete="off" value="'+(C.esperado>0?esc(String(C.esperado)):'')+'" placeholder="2.000">'+
+    '<button class="lau-btn p" data-a="d4-nom-ok">Ver cuánto apartar</button></div><p class="lau-mini">Ya te lo he puesto con lo que esperabas cobrar.</p>';
+  else c=C.enDias?'<p class="lau-msg">¿Ha llegado la nómina de '+esc(mes)+'?</p><button class="lau-btn p" data-a="d4-nom">Ya ha llegado la nómina</button>':
+    '<button class="lau-link" data-a="d4-nom">Ya ha llegado la nómina</button>';
+  return '<div class="card lau-card" id="d4Nom">'+c+'</div>';}
+function d4Hist(D){
+  /* los meses ya crecidos: hacia atrás desde hoy, con lo apartado al cobrar o el ahorro del mes; se para en el primer mes sin dato */
+  if(D.g<=0)return [];
+  const hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth()),out=[];let acc=D.A.guardado;
+  for(let k=1;k<=5;k++){const mk=mkSuma(mkH,-k),ap=D.A.apartado[mk],x=ap?null:ahorroDeMes(mk),v=ap?ap.v:(x&&x.ahorro>0?x.ahorro:0);
+    if(!(v>0))break;acc-=v;out.unshift({mk:mk,v:Math.max(0,acc)/D.g});}
+  return out;}
+function d4GrafSVG(D,H,mr,txt){
+  const A=D.A,rest=Math.min(D.rest,36),K=Math.max(rest,Math.min(mr,36)),h=H.length,N=h+K,x0=36,x1=398,st=(x1-x0)/Math.max(1,N),yb=282,yt=24,
+    ym=Math.max(A.objetivoMeses,D.vida,1)*1.15,X=function(i){return x0+i*st;},Y=function(v){return yb-v/ym*(yb-yt);},f=function(x){return Math.round(x*10)/10;},r=Math.min(8,st*.42),
+    hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  let s='<path d="M'+x0+' '+f(Y(A.objetivoMeses))+'H'+x1+'" stroke="var(--lau-ink2)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>'+
+    '<text x="'+x0+'" y="'+f(Y(A.objetivoMeses)-16)+'" font-size="12" font-weight="700" fill="var(--lau-ink)">objetivo: '+A.objetivoMeses+' meses ('+fmtMil(D.objE)+' €)</text>'+
+    '<path d="M'+(x0-8)+' '+yb+'H'+(x1+6)+'" stroke="var(--lau-verde)" stroke-width="6" stroke-linecap="round"/>';
+  H.forEach(function(p,i){s+='<path d="M'+f(X(i))+' '+yb+'V'+f(Y(p.v))+'" stroke="var(--lau-tronco)" stroke-width="2.5"/><circle cx="'+f(X(i))+'" cy="'+f(Y(p.v))+'" r="'+f(r)+'" fill="var(--lau-copa)"/>';});
+  s+='<path d="M'+f(X(h))+' '+yb+'V'+f(Y(D.vida))+'" stroke="var(--lau-tronco)" stroke-width="2.5"/><circle cx="'+f(X(h))+'" cy="'+f(Y(D.vida))+'" r="'+f(r)+'" fill="var(--lau-copa)"/>';
+  for(let i=1;i<=rest;i++){const v=D.vida+(A.objetivoMeses-D.vida)*i/rest;
+    s+='<path d="M'+f(X(h+i))+' '+yb+'V'+f(Y(v))+'" stroke="var(--lau-verde)" stroke-width="1.3" stroke-dasharray="2 3"/><circle cx="'+f(X(h+i))+'" cy="'+f(Y(v))+'" r="'+f(r)+'" fill="var(--lau-pastel)" stroke="var(--lau-verde)" stroke-width="1.8" stroke-dasharray="3 3"/>';}
+  if(D.falta>0&&mr>0){let d='M'+f(X(h))+' '+f(Y(D.vida));const m2=Math.min(mr,36);
+    for(let i=1;i<=m2;i++)d+=' L'+f(X(h+i))+' '+f(Y(Math.min(A.objetivoMeses,D.vida+D.ritmo*i/D.g)));
+    const xe=X(h+m2),ini=xe<200;
+    s+='<path d="'+d+'" fill="none" stroke="var(--lau-marron)" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/><rect x="'+f(xe-6)+'" y="'+f(Y(A.objetivoMeses)-6)+'" width="12" height="12" fill="var(--lau-fondo)" stroke="var(--lau-marron)" stroke-width="3"/>'+
+      '<text x="'+f(xe+(ini?10:-10))+'" y="'+f(Y(A.objetivoMeses)+22)+'" font-size="12" font-weight="700" fill="var(--lau-marron)" text-anchor="'+(ini?'start':'end')+'">tu ritmo: '+esc(mkCorto(mkSuma(mkH,mr)))+'</text>';}
+  const eje=function(i,t,a){return '<text x="'+f(X(i))+'" y="306" font-size="12" text-anchor="'+(a||'middle')+'" fill="var(--lau-ink)">'+esc(t)+'</text><path d="M'+f(X(i))+' '+(yb+6)+'v5" stroke="var(--lau-ink)" stroke-width="1.5"/>';};
+  if(h)s+=eje(0,mkCorto(H[0].mk),'start');
+  s+=eje(h,'hoy',h?'middle':'start')+eje(h+rest,mkCorto(D.llega)+' '+String(ahoYm(D.llega).y).slice(2),'end');
+  const tit='Gráfica del bosque: '+(h?'los árboles llenos son los meses ya crecidos, hasta '+D3_COMA(D.vida)+' meses hoy. ':'Hoy el árbol tiene '+D3_COMA(D.vida)+' meses. ')+
+    'Los árboles de puntos son el plan de '+fmtMil(D.pide)+' euros al mes hasta '+A.objetivoMeses+' meses en '+mkLargo(D.llega)+'. '+txt;
+  return '<svg id="d4Graf" viewBox="0 0 412 330" width="100%" role="img" aria-label="'+esc(tit)+'" style="display:block;margin:0 auto;max-width:460px"><title>'+esc(tit)+'</title>'+s+'</svg>';}
+function d4AjustesHTML(){
+  /* tu % de ahorro (el reparto entre huchas y el cuadre con el banco se fueron con la D6) */
+  const mp=metaPct();
+  return '<div class="card lau-card"><div class="lau-fila"><span class="lau-t"><b>Quieres ahorrar</b><span>el '+mp+' % de lo que entra</span></span>'+
+    '<div class="d4step" aria-label="lo que quieres ahorrar, en % de lo que entra"><button data-a="d7-meta" data-d="-5" aria-label="ahorrar menos">−</button><b>'+mp+' %</b><button data-a="d7-meta" data-d="5" aria-label="ahorrar más">+</button></div></div></div>';}
+function d4AhorroHTML(){
+  const D=d3Datos(),A=D.A,vacio=A.guardado<=0&&D.g<=0,hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const sw=function(k,vals,act){return '<div class="lau-sw" role="group" aria-label="'+(k==='objetivoMeses'?'Meses de vida a guardar':'Plazo en meses')+'">'+vals.map(function(m){
+    return '<button data-a="'+act+'" data-v="'+m+'" aria-pressed="'+(A[k]===m)+'">'+m+' meses</button>';}).join('')+'</div>'+
+    '<div class="lau-fila" style="margin-top:8px"><label class="lau-mini" for="d4o-'+k+'" style="margin:0">u otro:</label><input id="d4o-'+k+'" class="lau-in" style="max-width:110px" inputmode="numeric" autocomplete="off" data-a="d4-otro" data-k="'+k+'" placeholder="meses"'+
+    (vals.indexOf(A[k])<0?' value="'+A[k]+'"':'')+' aria-label="'+(k==='objetivoMeses'?'Otro objetivo, en meses':'Otro plazo, en meses')+'"></div>';};
+  const rit=D.ritmo,mr=D.falta>0&&rit>0?Math.ceil(D.falta/rit):0;let res;
+  if(D.g<=0)res='Cuéntame lo que gastas (en Gastos) y calculo cuánto apartar cada mes.';
+  else if(!D.falta)res='Ya tienes esos meses: la copa ya llega al objetivo.';
+  else if(!(rit>0))res='Ahora mismo no se ve que estés ahorrando al mes: apartando '+fmtMil(D.pide)+' € llegas en '+mkLargo(D.llega)+'.';
+  else if(mr<=D.rest){const d=D.rest-mr;res='A tu ritmo ('+fmtMil(rit)+' €/mes) llegas en '+mkLargo(mkSuma(mkH,mr))+': '+(d?'vas por delante, '+d+(d===1?' mes':' meses')+' antes.':'justo a tiempo.');}
+  else res='A tu ritmo ('+fmtMil(rit)+' €/mes) llegarías '+(mr-D.rest)+(mr-D.rest===1?' mes':' meses')+' tarde. Para llegar a tiempo, aparta ~'+fmtMil(D.pide)+' € al mes.';
+  const H=d4Hist(D),cl=D.claro,fila=function(t,s,n){return '<div class="lau-li"><div class="lau-t"><b>'+t+'</b><span>'+s+'</span></div><div class="lau-n"><b>'+n+'</b></div></div>';};
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('ahorro')+
+    '<div class="card lau-card"><button class="lau-btn" data-a="d6-tab" data-v="" style="min-height:44px;padding:8px 18px">← Volver al bosque</button>'+
+    '<h3 class="lau-h">Tu bosque, mes a mes</h3>'+
+    (vacio?'<p class="lau-p">Escribe lo que tienes guardado y lo que gastas, y aquí verás cuánto apartar cada mes.</p>':
+      '<p class="lau-big" id="d4Cifra">'+(D.g>0?'~'+fmtMil(D.pide)+' € <small>al mes</small>':'—')+'</p>'+
+      '<p class="lau-p">'+(D.g>0?'hasta '+esc(mkLargo(D.llega))+' para tener '+A.objetivoMeses+' meses de vida ('+fmtMil(D.objE)+' €). Faltan '+fmtMil(D.falta)+' €.':'Aún no sé cuánto gastas al mes.')+'</p>')+
+    '<p class="lau-e" style="margin-top:12px" id="d4q1">¿Cuántos meses de vida quieres guardar?</p>'+sw('objetivoMeses',[3,6,9],'d4-obj')+
+    '<p class="lau-e" style="margin-top:12px" id="d4q2">¿En cuánto tiempo?</p>'+sw('plazoMeses',[6,12,18],'d4-plazo')+
+    '<p class="lau-msg" aria-live="polite" id="d4Res">'+esc(res)+'</p>'+(vacio?'':d4GrafSVG(D,H,mr,res)+
+    '<p class="lau-mini">'+(H.length?'Árboles llenos: lo ya crecido, mes a mes. ':'Aún no hay meses con ahorro apuntado: hoy es el primer árbol. ')+'Árboles de puntos: el plan. Línea de puntos con cuadrado: tu ritmo, '+fmtMil(rit)+' €/mes.</p>')+'</div>'+
+    (vacio?d3GuardarHTML(D,true):'<div class="card lau-card">'+fila('Guardado hoy',D3_COMA(D.vida)+' meses de vida',fmtMil(A.guardado)+' €')+fila('Objetivo',A.objetivoMeses+' meses',fmtMil(D.objE)+' €')+fila('Tu ritmo real','lo que ahorras al mes',fmtMil(rit)+' €')+'</div>')+
+    d4NominaHTML(D)+d4AjustesHTML()+
+    (cl&&D.g>0?'<div class="card lau-card"><p class="lau-p"><b>Un empujón fácil:</b> si '+esc(cl.k)+' baja de '+fmtMil(cl.v)+' € a '+fmtMil(cl.v/2)+' €, el bosque gana '+fmtMil(cl.v/2)+' € más cada mes.</p>'+
+      '<div class="lau-enl"><button data-a="d3-claro" data-mk="'+esc(cl.mk)+'">Ver el claro (Gastos)</button></div></div>':'')+
+    '<p class="lau-mini" style="text-align:center;margin:0 10px">Invertir fuera: opcional; primero, la copa a '+A.objetivoMeses+' meses.</p></div>';}
+function dinSemanaHTML(){
+  /* los recibos de la semana (de la antigua pestaña Hoy), ahora dentro de Gastos */
+  const hoy=new Date(),sem=recibosEntre(iso(addDays(hoy,-1)),iso(addDays(hoy,8)));
   const dn=function(f){const d=Math.round((parseDate(f)-parseDate(iso(hoy)))/864e5);return d===0?'hoy':(d===1?'mañana':DOWN0[parseDate(f).getDay()]);};
-  const semana='<div class="card"><div class="row"><span class="cap">ESTA SEMANA</span><span class="sp"></span><button class="dlink" data-a="dinero-vista" data-v="recibos">Recibos fijos ›</button></div>'+
-    (sem.length?sem.map(function(r){return '<div class="drec"><span>'+esc(dinCatIco(r.g.cat))+' '+esc(r.g.nombre)+'</span><span class="mini'+(dn(r.f)==='mañana'||dn(r.f)==='hoy'?' warn':'')+'">'+esc(dn(r.f))+' · <b>'+esc(eur(r.v))+'</b></span></div>';}).join(''):
-      '<p class="mini" style="margin:4px 0 0">'+(gastosFijos().length?'Ningún recibo esta semana.':'Apunta tus recibos fijos (alquiler, luz, móvil…) y te aviso antes de que salgan.')+'</p>')+'</div>';
-  return '<div class="grid dinv2 din6 din7 din8 mt">'+din8Tabs('')+hero+(t?'<div class="card asist dasis">'+asistTjHTML(t)+'</div>':'')+semana+dinTaxisHTML(mkHoy)+'</div>';}
+  return '<div class="card lau-card"><div class="lau-fila"><span class="lau-e">ESTA SEMANA</span><span class="lau-sp"></span><button class="lau-link" data-a="dinero-vista" data-v="recibos">Recibos fijos ›</button></div>'+
+    (sem.length?sem.map(function(r){return '<div class="lau-li"><div class="lau-t"><b>'+esc(dinCatIco(r.g.cat))+' '+esc(r.g.nombre)+'</b></div><div class="lau-n"><span class="'+(dn(r.f)==='mañana'||dn(r.f)==='hoy'?'lau-up':'')+'">'+esc(dn(r.f))+'</span> · <b>'+esc(eur(r.v))+'</b></div></div>';}).join(''):
+      '<p class="lau-mini">'+(gastosFijos().length?'Ningún recibo esta semana.':'Apunta tus recibos fijos (alquiler, luz, móvil…) y te aviso antes de que salgan.')+'</p>')+'</div>';}
+const D3_SUS=/suscrip|streaming|spotify|netflix|gimnas|seguro|cuota|plataforma|abono|hbo|disney|prime/i;
+function d3Truco(k,v){
+  /* un truco por tipo de gasto y lo que se ahorraría: (txt, parte que se recorta) */
+  if(/super|aliment|mercad/i.test(k))return {t:'Lista cerrada antes de ir y marca blanca en lo básico.',f:.1};
+  if(/comer fuera|restaur|\bbar\b|caf[eé]|delivery|comida/i.test(k))return {t:'Con 2 tuppers más a la semana (unas 8 comidas al mes a menos precio) recortas un buen trozo.',f:.28};
+  if(/taxi|transp|guagua|gasolin|parking/i.test(k))return {t:'Si la mitad de los viajes los haces en guagua o compartiendo coche, bajas a la mitad.',f:.5};
+  if(/compra|online|ropa|amazon|moda/i.test(k))return {t:'Regla de espera: lo metes en el carrito y esperas 48 h. Con quitar un tercio, ya está.',f:.33};
+  if(/ocio|entreten|cine|salidas|copas/i.test(k))return {t:'Un plan gratis de cada tres: senderismo, playa, casa de amigos.',f:.2};
+  return {t:'Ponle un tope semanal y mira el sábado cómo vas.',f:.15};}
+function dinGastosHTML(){
+  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
+  const mks=[mkHoy,mkSuma(mkHoy,-1),mkSuma(mkHoy,-2)];
+  const mk=/^\d{4}-\d{2}$/.test(ui.d3Mes||'')?ui.d3Mes:mkHoy;if(mks.indexOf(mk)<0)mks.push(mk);
+  const sel='<div class="lau-sw" role="group" aria-label="Mes">'+mks.map(function(m){return '<button data-a="d3-mes" data-mk="'+m+'" aria-pressed="'+(m===mk)+'">'+esc(MONTH_FULL[ahoYm(m).m].replace(/^./,function(c){return c.toUpperCase();}))+'</button>';}).join('')+'</div>';
+  const p=mesPartes(mk),mn=dinMesNom(mk);
+  let cuerpo,ideas='',sus='',comp='';
+  if(!p){
+    cuerpo='<div class="card lau-card">'+sel+'<p class="lau-msg">No tengo gastos de '+esc(mn)+' todavía.</p><p class="lau-mini">Trae la captura de Fintonic o apunta un gasto y aquí verás en qué se va.</p></div>';
+  }else{
+    const pf=Math.round(p.fijos/Math.max(1,p.fijos+p.vars)*100);
+    const fijos=p.F.map(function(k){return [k,+p.g.cats[k]||0];}).sort(function(a,b){return b[1]-a[1];});
+    const vars=p.V.map(function(k){return [k,+p.g.cats[k]||0];}).concat(p.resto?[['Sin categoría',p.resto]]:[]).sort(function(a,b){return b[1]-a[1];});
+    const mx=Math.max(1,vars.length?vars[0][1]:1);
+    const fu=p.g.fuente==='Fintonic'?'de Fintonic'+(p.g.fecha?' ('+fechaCorta(p.g.fecha)+')':''):(p.g.fuente==='tu cifra'?'con tu cifra del mes':(p.g.fuente==='banco'?'del banco (aprox.)':'lo que has apuntado'));
+    cuerpo='<div class="card lau-card">'+sel+
+      '<p class="lau-msg">De cada 100 € que gastas, '+pf+' € no los puedes tocar: son fijos.</p>'+
+      '<div class="lau-fila" style="align-items:baseline"><span class="lau-big">'+fmtMil(p.total)+' €</span><span class="lau-e">GASTADO EN '+esc(mn.toUpperCase())+'</span></div>'+
+      '<p class="lau-mini" style="margin:2px 0 0">'+esc(fu)+'</p>'+
+      '<div class="lau-parte" role="img" aria-label="Fijos '+fmtMil(p.fijos)+' euros, variables '+fmtMil(p.vars)+' euros"><i class="f" style="width:'+pf+'%"></i><i class="v" style="width:'+(100-pf)+'%"></i></div>'+
+      '<div class="lau-leg"><span><span class="lau-sq f"></span>Fijos <b>'+fmtMil(p.fijos)+' €</b></span><span><span class="lau-sq v"></span>Variables <b>'+fmtMil(p.vars)+' €</b></span></div>'+
+      '<div class="lau-e" style="margin-top:16px">FIJOS · SALEN CADA MES ('+fmtMil(p.fijos)+' €)</div>'+
+      (fijos.length?fijos.map(function(r){return '<div class="lau-li"><div class="lau-t"><b>'+esc(r[0])+'</b></div><div class="lau-n"><b>'+fmtMil(r[1])+' €</b></div></div>';}).join(''):'<p class="lau-mini">Ninguno todavía.</p>')+
+      '<div class="lau-e" style="margin-top:16px">VARIABLES · SE PUEDEN MOVER</div>'+
+      vars.map(function(r){const pu=r[0]!=='Sin categoría'&&r[0]!==DIN_DIA,cab='<div class="lau-fila"><b class="lau-vn">'+esc(r[0])+(pu?' ›':'')+'</b><b>'+fmtMil(r[1])+' €</b></div><div class="lau-mb"><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></div>';
+        return pu?'<button class="lau-li lau-bl" data-a="d6-cat" data-c="'+esc(r[0])+'" aria-label="'+esc(r[0])+', '+fmtMil(r[1])+' euros. Ver el detalle">'+cab+'</button>':'<div class="lau-li lau-bl">'+cab+'</div>';}).join('')+'</div>';
+    /* dónde ahorrar: los tres variables más grandes con un truco por tipo */
+    const top=vars.filter(function(r){return r[1]>=10;}).slice(0,3).map(function(r){const t=d3Truco(r[0],r[1]),mes=Math.round(r[1]*t.f);return {k:r[0],v:r[1],t:t.t,mes:mes,anio:Math.round(mes*12/10)*10};});
+    if(top.length){const tot=top.reduce(function(s,x){return s+x.anio;},0);
+      ideas='<div class="card lau-card"><p class="lau-msg">Con '+(top.length===1?'1 cambio pequeño':top.length+' cambios pequeños')+' podrías quedarte unos <span class="lau-dn">'+fmtMil(tot)+' € al año</span>.</p>'+
+        '<p class="lau-mini">Salen de tus gastos de '+esc(mn)+'. Tú decides cuáles probar.</p>'+
+        top.map(function(x,i){return '<div class="lau-idea"><div class="lau-fila"><span class="lau-num">'+(i+1)+'</span><h3>'+esc(x.k)+'</h3><span class="lau-ah">~'+fmtMil(x.anio)+' €/año</span></div>'+
+          '<p>Gastas <b>'+fmtMil(x.v)+' €/mes</b>. '+esc(x.t)+' Unos <b>'+fmtMil(x.mes)+' € al mes</b>.</p></div>';}).join('')+'</div>';}
+    /* suscripciones y cuotas: los fijos que suelen colarse sin revisar */
+    const nom={};const ss=[];
+    fijos.forEach(function(r){if(D3_SUS.test(r[0])){nom[r[0]]=1;ss.push(r);}});
+    gastosFijos().forEach(function(g){if(D3_SUS.test(g.nombre)&&!nom[g.nombre]){nom[g.nombre]=1;ss.push([g.nombre,+g.importe||0]);}});
+    if(ss.length){const t=ss.reduce(function(s,r){return s+r[1];},0);
+      sus='<div class="card lau-card"><div class="lau-e">SUSCRIPCIONES Y CUOTAS A REVISAR</div>'+
+        ss.map(function(r){const gim=/gimnas/i.test(r[0]),seg=/seguro/i.test(r[0]);
+          return '<div class="lau-li"><div class="lau-t"><b>'+esc(r[0])+'</b><span>'+(gim?'¿Cuántas veces fuiste este mes?':(seg?'Pide otro precio: suelen subir sin avisar':'¿Las usas todas?'))+'</span></div>'+
+            '<div class="lau-n"><b>'+fmtMil(r[1])+' €/mes</b><span class="lau-tag">'+(gim?'¿lo usas?':(seg?'comparar':'revisar'))+'</span></div></div>';}).join('')+
+        '<p class="lau-mini" style="margin-top:8px">Juntas son '+fmtMil(t)+' € al mes, unos '+fmtMil(t*12)+' € al año.</p></div>';}
+    /* comparado con el mes anterior (lo variable) */
+    const mk2=mkSuma(mk,-1),p2=mesPartes(mk2),n2=dinMesNom(mk2);
+    if(p2){const t1={},t2={},ks=[];
+      p.V.forEach(function(k){t1[k]=+p.g.cats[k]||0;if(ks.indexOf(k)<0)ks.push(k);});p2.V.forEach(function(k){t2[k]=+p2.g.cats[k]||0;if(ks.indexOf(k)<0)ks.push(k);});
+      ks.sort(function(a,b){return Math.max(t2[b]||0,t1[b]||0)-Math.max(t2[a]||0,t1[a]||0);});
+      const fl=function(d){return d>0?'<span class="lau-up">▲ '+fmtMil(d)+'</span>':(d<0?'<span class="lau-dn">▼ '+fmtMil(-d)+'</span>':'=');};
+      const dt=Math.round(p.vars)-Math.round(p2.vars);
+      comp='<div class="card lau-card"><div class="lau-e">COMPARADO CON '+esc(n2.toUpperCase())+' (VARIABLES)</div><div class="lau-cmp">'+
+        '<div class="h">&nbsp;</div><div class="h r">'+esc(mkCorto(mk2).toUpperCase())+'</div><div class="h r">'+esc(mkCorto(mk).toUpperCase())+'</div><div class="h r">DIF.</div>'+
+        ks.slice(0,6).map(function(k){return '<div>'+esc(k)+'</div><div class="r">'+fmtMil(t2[k]||0)+'</div><div class="r">'+fmtMil(t1[k]||0)+'</div><div class="r">'+fl(Math.round(t1[k]||0)-Math.round(t2[k]||0))+'</div>';}).join('')+
+        '<div><b>Total</b></div><div class="r"><b>'+fmtMil(p2.vars)+'</b></div><div class="r"><b>'+fmtMil(p.vars)+'</b></div><div class="r"><b>'+fl(dt)+'</b></div></div>'+
+        '<p class="lau-msg" style="font-size:14px;margin-top:10px">'+(dt===0?'Lo variable fue igual que en '+esc(n2)+'.':esc(mn.replace(/^./,function(c){return c.toUpperCase();}))+' costó '+fmtMil(Math.abs(dt))+' € '+(dt>0?'más':'menos')+' que '+esc(n2)+' en lo variable.')+'</p></div>';}
+  }
+  const origen='<div class="card lau-card"><div class="lau-e">¿DE DÓNDE SALEN ESTOS GASTOS?</div><div class="lau-fila" style="margin-top:8px">'+
+    '<label class="lau-btn p">Traer de Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label>'+
+    '<button class="lau-btn" data-a="dinero-apuntar">Apuntar a mano</button></div></div>';
+  const mas='<div class="card lau-card"><div class="lau-e">MÁS DE TUS GASTOS</div><div class="lau-enl">'+
+    '<button data-a="dinero-vista" data-v="recibos">Recibos del mes</button><button data-a="dinero-vista" data-v="fijos">Gastos fijos</button>'+
+    '<button data-a="d6-tab" data-v="mes">Cierre del mes</button><button data-a="dinero-vista" data-v="hoja">Excel del año</button>'+
+    '<button data-a="dinero-vista" data-v="fintonic">Lo leído de Fintonic</button></div></div>';
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('gastos')+cuerpo+ideas+sus+comp+origen+dinSemanaHTML()+dinTaxisHTML(mkHoy)+mas+'</div>';}
+const D5_TIPOS=[['nec','Necesario'],['util','Útil para el trabajo'],['ilu','Me hace ilusión']];
+function d5Tipo(c){return c.tipo==='nec'||c.tipo==='util'?c.tipo:'ilu';}
+function d5Fila(c,mkH){
+  const t=d5Tipo(c),en=c.estado==='espera',pr=Math.max(0,+c.precio||0),ll=Math.min(pr,+c.llevas||0),pct=pr>0?Math.round(ll/pr*100):0,falta=Math.max(0,pr-ll),
+    m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0,mes=en||!m?0:Math.ceil(falta/m),abierta=ui.d5Abre===c.id,dias=Math.max(0,30-d5Dias(c)),
+    tn=D5_TIPOS.filter(function(x){return x[0]===t;})[0][1];
+  let det='';
+  if(abierta){
+    det='<div class="lau-det"><span class="lau-tag">'+(en?'En espera 30 días':esc(tn))+'</span> '+
+      (en?'Si en '+dias+(dias===1?' día':' días')+' sigues queriéndolo, pasa a la lista. Hasta entonces no se aparta nada.':'Llevas <b>'+fmtMil(ll)+' €</b> de '+fmtMil(pr)+' · faltan '+fmtMil(falta)+' €.')+
+      (en?'':'<div class="lau-fila" style="margin-top:8px"><input id="d5Apar" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="50" aria-label="Cuánto has apartado, en euros"><button class="lau-btn p" data-a="d5-aparte" data-id="'+esc(c.id)+'">Aparté</button></div>'+
+        (ui.d5Deshacer&&ui.d5Deshacer.id===c.id?'<button class="lau-btn" style="width:100%;margin-top:8px" data-a="d5-deshacer">Deshacer: quitar '+fmtMil(ui.d5Deshacer.v)+' €</button>':''))+
+      '<div class="lau-fila" style="margin-top:8px"><label class="lau-mini" style="margin:0">precio €<input class="lau-in" inputmode="decimal" autocomplete="off" data-a="d5-precio" data-id="'+esc(c.id)+'" value="'+pr+'"></label>'+
+        '<label class="lau-mini" style="margin:0">mes<input class="lau-in" type="month" data-a="d5-mes" data-id="'+esc(c.id)+'" value="'+esc(c.mes)+'"></label></div>'+
+      '<label class="lau-mini" style="display:block">tipo<select class="lau-in" style="width:100%" data-a="d5-tipo" data-id="'+esc(c.id)+'">'+D5_TIPOS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===t?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select></label>'+
+      (en?'':'<button class="lau-btn p" style="width:100%;margin-top:8px" data-a="d5-compre" data-id="'+esc(c.id)+'">Lo compré</button>')+
+      '<button class="lau-btn" style="width:100%;margin-top:8px" data-a="d5-no" data-id="'+esc(c.id)+'">Ya no lo quiero</button></div>';}
+  return '<div class="lau-compra'+(en?' espera':'')+'"><button class="lau-cab" data-a="d5-abre" data-id="'+esc(c.id)+'" aria-expanded="'+abierta+'">'+
+    '<span class="lau-nm"><span class="lau-fr" style="--p:'+pct+'%" role="img" aria-label="Fruto al '+pct+' % de madurez"></span><span>'+esc(c.nombre)+'</span></span>'+
+    '<span class="lau-cifra">'+fmtMil(pr)+' €</span><span class="lau-cifra sec">'+(en||!m?'—':fmtMil(mes)+' €')+'</span>'+
+    '<span class="lau-cifra sec'+(en?' cuenta':'')+'">'+(en?dias+(dias===1?' día':' días'):(c.mes?esc(mkCorto(c.mes)+' '+c.mes.slice(0,4)):'sin mes'))+'</span></button>'+
+    '<div class="lau-barra" aria-hidden="true"><i style="width:'+pct+'%"></i></div>'+det+'</div>';}
+function d5ListaHTML(){
+  const d=dinero3S(),hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth()),o={nec:0,util:1,ilu:2},
+    L=d.compras.filter(function(c){return c.estado==='plan'||c.estado==='espera';});
+  const ord=function(a,b){return o[d5Tipo(a)]-o[d5Tipo(b)]||String(a.mes||'9999').localeCompare(String(b.mes||'9999'));};
+  const plan=L.filter(function(c){return c.estado==='plan';}).sort(ord),esp=L.filter(function(c){return c.estado==='espera';}).sort(ord);
+  const tot=plan.reduce(function(s,c){const m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0;return s+(m?Math.ceil(Math.max(0,c.precio-c.llevas)/m):0);},0);
+  const ep=epocaDe(mkH),base=ep?Math.round(ep.neto):nominaMedia(),g=mesTipo().gasto||0,sobra=base-g;
+  const nota=ui.d5Nota?'<p class="lau-nota" id="d5Nota">'+(base>0?'Con la nómina base ('+fmtMil(base)+' €)'+(g>0?' y lo que gastas ('+fmtMil(g)+' €)':'')+(tot<=sobra||(!g&&tot<=base)?' <b>cabe</b>.':' <b>no cabe entera</b>.'):'Aún no sé tu nómina base.')+
+    ' Si un mes cobras poco, se pausa primero lo de «me hace ilusión». Lo necesario no se toca.</p>':'';
+  const nuevo=ui.d5Nuevo?'<div class="card lau-card"><div class="lau-e">Algo que quiero</div>'+
+    '<label class="lau-mini" style="display:block">¿Qué es?<input id="d5Nom" class="lau-in" style="width:100%" autocomplete="off" maxlength="60"></label>'+
+    '<label class="lau-mini" style="display:block">Precio (€)<input id="d5Pre" class="lau-in" style="width:100%" inputmode="decimal" autocomplete="off"></label>'+
+    '<label class="lau-mini" style="display:block">Tipo<select id="d5Tip" class="lau-in" style="width:100%">'+D5_TIPOS.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('')+'</select></label>'+
+    '<label class="lau-mini" style="display:block">Para qué mes (opcional)<input id="d5Mes" class="lau-in" style="width:100%" type="month"></label>'+
+    '<div class="lau-fila" style="margin-top:10px"><button class="lau-btn p" data-a="d5-add">Guardar</button><button class="lau-btn" data-a="d5-nuevo">Cancelar</button></div></div>':
+    '<button class="lau-btn p" style="width:100%" data-a="d5-nuevo">+ Añadir algo que quiero</button>';
+  return '<div class="card lau-card"><h3 class="lau-h">Los frutos</h3><p class="lau-p">Lo que quiero comprar. Cuanto más llevas, más madura el fruto. Toca una fila.</p>'+
+    '<div class="lau-fila" style="margin-top:8px"><span class="lau-t"><b id="d5Total">'+fmtMil(tot)+' € al mes · '+plan.length+(plan.length===1?' compra':' compras')+'</b></span>'+
+    '<button class="lau-ie" data-a="d5-nota" aria-expanded="'+!!ui.d5Nota+'" aria-label="Ver si cabe con tu nómina">ⓘ</button></div>'+nota+'</div>'+
+    (plan.length?'<div class="lau-cols" aria-hidden="true"><span>Compra</span><span>Precio</span><span>Al mes</span><span>Llega</span></div>'+plan.map(function(c){return d5Fila(c,mkH);}).join(''):
+      '<div class="card lau-card"><p class="lau-p">Aún no hay compras planificadas. Añade algo que quieras y aquí verás cuánto apartar al mes.</p></div>')+
+    (esp.length?'<p class="lau-e" style="margin:12px 8px 4px">En espera 30 días</p>'+esp.map(function(c){return d5Fila(c,mkH);}).join(''):'')+nuevo;}
+function dinComprasHTML(){
+  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('compras')+d5ListaHTML()+'</div>';}
+/* ---------- las cuatro pestañas: Bosque · Gastos · Ahorro · Compras ---------- */
+function din8Tabs(on){
+  /* «mes» (el cierre del mes) cuelga de Gastos */
+  const o=on==='mes'?'gastos':on;
+  return '<div class="dtop"><h2 class="subtit">💶 Dinero</h2></div><div class="d6seg d7seg lau-tabs" role="tablist" aria-label="Dinero">'+
+    [['','Bosque'],['gastos','Gastos'],['ahorro','Ahorro'],['compras','Compras']].map(function(t){
+      return '<button role="tab"'+(t[0]===o&&on!=='mes'?' class="on" aria-selected="true"':(t[0]===o?' class="on" aria-selected="true" data-a="d6-tab" data-v="gastos"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"'))+'>'+t[1]+'</button>';}).join('')+'</div>';}
+function dinTabDe(){const t=ui.dinTab||'';return t==='ahorro'||t==='mes'||t==='gastos'||t==='compras'?t:'';}
 function dinTaxisHTML(mk){
   /* el taxi al hospital es un hábito que se quiere bajar, y aquí es lo que cuesta: tantos este mes, tantos euros,
      frente al mes pasado. Sin viaje con bus apuntado no hay nada que contar */
@@ -21417,52 +21670,6 @@ function dinTaxisHTML(mk){
   return '<div class="card dtaxi"><div class="row"><span class="cap">🚕 TAXIS AL HOSPITAL</span><span class="sp"></span><button class="dlink" data-a="ir-viaje">'+esc(eur(p))+' el viaje ›</button></div>'+
     '<div class="row" style="align-items:flex-end;gap:10px;margin-top:4px"><div class="dbig'+(T.n?' ex':'')+'">'+T.n+' <small>este mes</small></div><span class="mini">≈ <b style="color:var(--ink)">'+fmtMil(T.eur)+' €</b>'+(A.n||A.eur?' · '+esc(dinMesNom(mkSuma(mk,-1)))+': '+A.n+' ('+fmtMil(A.eur)+' €)':'')+'</span></div>'+
     '<p class="mini" style="margin:6px 0 0">'+(viajeCfg().taxi?'De serie cada jornada cuenta como taxi: en Hoy, «fui en bus» lo quita.':'Cuenta solo los días en que apuntas en Hoy que saliste después del último bus.')+'</p></div>';}
-function dinBolsillosHTML(){
-  /* cada bolsillo con lo que tiene, lo que le falta y cuándo llega; el colchón, en meses de gastos */
-  const bs=bolsillos(),P=puroHucha(),T=mesTipo();
-  const COL={viaje:'var(--bp)',casa:'var(--bc)',capricho:'var(--bg3)',inversion:'var(--bg3)',otro:'var(--bp)'};
-  const filas=bs.filter(function(b){return !b.puro;}).map(function(b){const h=b.h,c=metaHucha(h),tp=metaTipo(h);
-    const ds=(h.deseos||[]).filter(function(d){return !d.hecho;});
-    let sub;
-    if(tp==='inversion')sub='largo plazo · '+(c.men?fmtMil(c.men)+' €/mes':(aporteHucha(h)?'≈ '+fmtMil(aporteHucha(h))+' €/mes':'sin aporte'));
-    else if(!c.obj)sub=(aporteHucha(h)?'≈ '+fmtMil(aporteHucha(h))+' €/mes · ':'')+'sin objetivo: <u>ponle precio y fecha</u>';
-    else if(c.ok)sub='✓ ya lo tienes';
-    else if(tp==='casa'&&ds.length)sub=esc(ds.slice(0,4).map(function(d){return d.txt+' '+fmtMil(d.precio);}).join(' · '))+' → <b>'+esc(metaCuando(c).replace(/^llegas en /,''))+'</b>';
-    else if(c.fecha)sub=fmtMil(c.men)+' €/mes → <b>'+esc(metaCuando(c))+'</b> <span>(≈ '+c.meses+' mes'+(c.meses===1?'':'es')+')</span>';
-    else if(c.falta<=150)sub='te faltan '+fmtMil(c.falta)+' € → <b>'+esc(metaCuando(c))+'</b>';
-    else sub=(c.men?fmtMil(c.men)+' €/mes → ':'')+'<b>'+esc(metaCuando(c))+'</b>';
-    const pct=c.obj?Math.min(100,Math.round((+h.saldo||0)/c.obj*100)):0;
-    return '<button class="d7meta" data-a="din-hoja" data-h="hucha" data-id="'+esc(h.id)+'"><span class="ic">'+esc(h.ico)+'</span>'+
-      '<span class="t"><span class="r"><b>'+esc(h.nombre)+(tp==='casa'&&ds.length?' · '+ds.length:'')+'</b><b class="v">'+fmtMil(h.saldo)+(c.obj?' / '+fmtMil(c.obj):' €')+'</b></span>'+
-      (c.obj?'<span class="d7bar"><i style="width:'+pct+'%;background:'+(COL[tp]||'var(--bp)')+'"></i></span>':'')+
-      '<span class="s">'+sub+'</span></span></button>';}).join('');
-  const meses=colchonMeses(),faltaC=Math.max(0,Math.round(T.gasto*6-P.saldo));
-  const colchon='<button class="d7meta" data-a="din-hoja" data-h="puro"><span class="ic">'+esc(P.ico)+'</span>'+
-    '<span class="t"><span class="r"><b>'+esc(P.nombre)+'</b><b class="v">'+fmtMil(P.saldo)+'</b></span>'+
-    (T.gasto?'<span class="d7bar"><i style="width:'+Math.min(100,Math.round(meses/6*100))+'%;background:var(--ink2)"></i></span>':'')+
-    '<span class="s">no se toca'+(T.gasto?' · cubre '+String(meses).replace('.',',')+' meses de gastos'+(faltaC?' (meta 6: faltan '+fmtMil(faltaC)+' €)':' ✓'):'')+'</span></span></button>';
-  return '<div class="card dbols">'+colchon+filas+'</div>';}
-function dinAhorroHTML(){
-  const bs=bolsillos(),sh=bolsilloShares(),L=apartasMes(),mp=metaPct(),cA=bkUltima('ahorro');
-  const tiene=cA?bkTotal(cA,'ahorro'):ahorradoTotal(),cu=cA?Math.round(tiene-ahorradoTotal()):0;
-  const fuente=cA?bkFuenteHTML(cA,'Cuenta ahorro: ')+(Math.abs(cu)>=1?'<p class="mini warn" style="margin:6px 0 0">Tus bolsillos suman '+fmtMil(ahorradoTotal())+' €: '+
-      (cu>0?'hay '+fmtMil(cu)+' € sin bolsillo':'faltan '+fmtMil(-cu)+' €')+'. <button class="dlink" data-a="bk-cuadrar">Cuadrarlo</button></p>':''):
-    '<p class="mini" style="margin:6px 0 0">Lo que suman tus bolsillos. Con una captura del banco lo cuadro con tu cuenta de ahorro.</p>';
-  const hero='<div class="card dhero"><div class="cap">TIENES AHORRADO</div>'+
-    '<div class="row" style="align-items:flex-end;gap:10px"><div class="dbig">'+fmtMil(tiene)+' <small>€</small></div><span class="mini">+ '+fmtMil(L)+' € al mes · el '+mp+' % de lo que entra</span></div>'+
-    '<div class="d6stk" style="margin-top:10px" role="img" aria-label="reparto de lo que ahorras">'+bs.map(function(b){const v=+b.h.mensual>0&&!b.puro?0:(sh[b.h.id]||0);return v?'<i style="flex:'+v+';background:'+b.col+'"></i>':'';}).join('')+'</div>'+
-    '<div class="mini" style="margin-top:4px">Cada mes: '+bs.map(function(b){const fijo=!b.puro&&+b.h.mensual>0,v=fijo?+b.h.mensual:Math.round(L*(sh[b.h.id]||0)/100);
-      return v?'<span class="d6k" style="background:'+b.col+'"></span>'+esc(b.h.nombre)+' '+fmtMil(v)+' €':'';}).filter(Boolean).join(' · ')+'</div>'+
-    '<div class="row" style="margin-top:8px;gap:8px"><div class="d4step" aria-label="lo que quieres ahorrar, en % de lo que entra"><button data-a="d7-meta" data-d="-5" aria-label="ahorrar menos">−</button><b>'+mp+' %</b><button data-a="d7-meta" data-d="5" aria-label="ahorrar más">+</button></div>'+
-      '<span class="sp"></span><button class="btn s" data-a="dinero-vista" data-v="plan">Cambiar el reparto</button></div>'+
-    fuente+'</div>';
-  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
-  const t=dinAsis(true,['din-meta','din-finde']);
-  const mkC=[mkSuma(mkHoy,-1),mkHoy].filter(function(mk){const x=ahorroMes(mk,false)||{};return cierreAbierto(mk)&&!x.hecho&&restoPorRepartir(mk)>0;})[0];
-  const cierre=mkC?'<button class="d7cierre" data-a="d6-tab" data-v="mes">📥 En '+esc(dinMesNom(mkC))+' te quedan por repartir <b>'+fmtMil(restoPorRepartir(mkC))+' €</b> · repartirlo ›</button>':'';
-  return '<div class="grid dinv2 din6 din7 din8 mt">'+din8Tabs('ahorro')+hero+(t?'<div class="card asist dasis">'+asistTjHTML(t)+'</div>':'')+cierre+dinBolsillosHTML()+
-    '<div class="d5two"><button class="btn" data-a="din-hoja" data-h="gaste">💸 Gasté de mis ahorros</button><button class="btn" data-a="dinero-vista" data-v="hucha-nueva">＋ Nueva meta</button></div>'+
-    '<p class="mini" style="text-align:center;margin:0 10px">Gastar de una meta solo baja esa meta: el colchón no se mueve.</p></div>';}
 function dinMesCerrado(){
   /* el último mes cerrado con algo que contar: el anterior, o hasta tres atrás */
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth());
@@ -21481,9 +21688,7 @@ function dinMes8HTML(){
       fila('Día a día','− '+fmtMil(p.vars)+' €')+
       (a?'<div class="dfila dtot"><span>'+(a.ahorro>=0?'Ahorraste':'Gastaste de más')+'</span><b class="'+(a.ahorro>=0?'ok':'ex')+'">'+fmtMil(Math.abs(a.ahorro))+' €</b></div>':'')+
       (dif!=null&&Math.abs(dif)>=10?'<p class="mini" style="margin:6px 0 0">Frente a tu mes tipo: el día a día, '+fmtMil(Math.abs(dif))+' € '+(dif>0?'por encima':'por debajo')+'.</p>':'')+
-      (x.ini?'<p class="mini" style="margin:6px 0 0">Ya apartaste '+fmtMil(x.ini.v)+' € al cobrar.</p>':'')+
-      (restoPorRepartir(mk)>0&&!x.hecho?'<button class="btn p gbig" style="margin-top:10px" data-a="din-apartar" data-mk="'+mk+'">Repartir '+fmtMil(restoPorRepartir(mk))+' € en tus bolsillos</button>':
-        (x.hecho?'<p class="mini ok" style="margin:6px 0 0">✓ Repartido en tus bolsillos · <button class="dlink" data-a="aho-deshacer" data-mk="'+mk+'">deshacer</button></p>':''))+'</div>';
+      (x.ini?'<p class="mini" style="margin:6px 0 0">Ya apartaste '+fmtMil(x.ini.v)+' € al cobrar.</p>':'')+'</div>';
     const cs=g.fuente==='Fintonic'?d6Cats(mk).filter(function(c){return !c.fijo;}):[];
     if(cs.length){const max=Math.max(1,Math.max.apply(null,cs.map(function(c){return Math.max(c.v,c.m||0);})));
       const tip=d6Consejos(mk)[0];
@@ -21507,8 +21712,7 @@ function dinMes8HTML(){
 function dinHojaHTML(){
   const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),mk=ui.dinMes||mkHoy,C=dinCol(),h0=ui.dinHoja||'';
   let cuerpo='',tit='Dinero';
-  if(h0==='gaste'){tit='Gasté de mis ahorros';cuerpo=gasteHojaHTML();}
-  else if(h0==='gastos'){
+  if(h0==='gastos'){
     const p=mesPartes(mk);tit='Gastos de '+MONTH_FULL[ahoYm(mk).m].toLowerCase();
     if(!p)cuerpo='<div class="empty">Sin captura de Fintonic de este mes.</div>';
     else{
@@ -21525,60 +21729,6 @@ function dinHojaHTML(){
         (p.resto?'<div class="d4cat"><span>❔</span><div class="n">Sin categoría<small>lo que Fintonic cuenta y no he leído en ninguna</small></div><b>'+esc(fmt(Math.round(p.resto)))+'</b></div>':'')+
         '<div class="hcap">🔒 FIJOS · '+esc(eurR(p.fijos))+' · IGUAL CADA MES</div>'+(p.F.length?p.F.map(function(k){return fila(k,true);}).join(''):'<div class="mini">Ninguno todavía.</div>')+
         '<div class="hnota">La app marca «fijo» sola lo que se repite igual; tú mandas.</div>';}
-  }else if(h0==='gano'){
-    tit='Lo que ganas';
-    const meses=[];for(let i=-3;i<=2;i++){const k=mkSuma(mkHoy,i),t=ahoYm(k),n=nominaMes(t.y,t.m);meses.push({mk:k,n:n,fut:i>0});}
-    const mx=Math.max.apply(null,meses.map(function(q){return q.n.neto;}).concat([1]));
-    const barras=meses.map(function(q){const ep=q.n.ep||{},fp=Math.min(q.n.neto,(q.n.finde||0)*(+ep.finde||0)),bp=Math.max(0,q.n.neto-fp);
-      return '<div class="c'+(q.n.real==null?' est':'')+'" title="'+esc(MONTH_FULL[ahoYm(q.mk).m]+': '+eur(q.n.neto)+(q.n.real==null?' (estimado)':' (cobrado)'))+'">'+
-        '<em>'+(q.n.real==null?'≈':'')+esc(fmt(Math.round(q.n.neto)))+(q.n.paga?'*':'')+'</em>'+
-        '<b style="height:'+Math.round(fp/mx*100)+'%;background:'+C.finde+'"></b><b style="height:'+Math.round(bp/mx*100)+'%;background:'+C.base+'"></b>'+
-        '<span>'+esc(mkCorto(q.mk))+'</span></div>';}).join('');
-    const ep=(nominaMes(hoy.getFullYear(),hoy.getMonth()).ep)||{};
-    const linea=function(k){const t=ahoYm(k),n=nominaMes(t.y,t.m);
-      return '<tr><td>'+esc(MONTH_FULL[t.m])+' · '+n.finde+' de finde'+(n.g&&n.g.dias&&n.g.dias.length?' ('+esc(n.g.dias.map(function(x){const d=parseDate(x);return DIA3[d.getDay()].toLowerCase()+' '+d.getDate();}).join(', '))+')':(n.supuesto?' (supuesta)':''))+'</td>'+
-        '<td>'+(n.real==null?'≈ ':'')+esc(eurR(n.neto))+'</td></tr>';};
-    cuerpo='<div class="row sh"><h3>💶 Lo que ganas</h3></div>'+
-      '<div class="d4mbar">'+barras+'</div>'+
-      '<div class="mini" style="margin-top:6px"><i class="d4sw" style="background:'+C.base+'"></i>base · <i class="d4sw" style="background:'+C.finde+'"></i>guardias de finde · claros = estimado con tu calendario · * paga extra</div>'+
-      '<table class="d4tab"><tr><td>Neto con 1 guardia de finde'+(ep.nombre?' ('+esc(ep.nombre)+')':'')+'</td><td>'+esc(eurR(ep.neto||0))+'</td></tr>'+
-        '<tr><td>Cada guardia de finde de más</td><td>+'+esc(eurR(ep.finde||0))+'</td></tr>'+linea(mkHoy)+linea(mkSuma(mkHoy,1))+'</table>'+
-      '<button class="dlink" data-a="din-ir" data-v="nomina">corregir lo cobrado o tu nómina ›</button>';
-  }else if(h0==='puro'){
-    const P=puroHucha(),br=baseReparto(mkHoy),r=repartoDe(br.v),a=ahorroS(),meta=a.meta&&+a.meta.importe>0?a.meta:null;
-    const ll=meta&&r[P.id]?llegadaHucha(meta.importe,P.saldo,r[P.id]):null;
-    cuerpo='<div class="row sh"><span style="font-size:26px">🔒</span><div><h3>Ahorro puro</h3><div class="hsub">no se toca · para lo que venga</div></div></div>'+
-      '<div class="dbig" style="margin-top:10px">'+esc(fmt(Math.round(P.saldo)))+' <small>€</small></div>'+
-      '<div class="mini">este mes entran <b style="color:var(--ink)">'+esc(eurR(r[P.id]||0))+'</b>'+(ll&&ll.mk?' · a este ritmo, '+esc(eurR(meta.importe))+' en <b style="color:var(--ink)">'+esc(mkLargo(ll.mk))+'</b>':'')+'</div>'+
-      '<label class="hfld" style="margin-top:14px">PARTE DEL AHORRO QUE VA AQUÍ · <b id="puroTxt" style="color:var(--ink)">'+puroPct()+' %</b>'+
-        '<input type="range" min="'+puroMin()+'" max="100" step="5" value="'+puroPct()+'" data-a="din-puro" class="drange" aria-label="porcentaje a ahorro puro"></label>'+
-      '<div class="row mini"><span>'+puroMin()+' % (mínimo)</span><span class="sp"></span><span>100 %</span></div>'+
-      '<div class="hnota">Si le das más a una hucha, sale de las otras huchas; el ahorro puro nunca baja del '+puroPct()+' %.</div>';
-  }else if(h0==='hucha'){
-    const h=huchaDe(ui.dinHuId);
-    if(!h){ui.dinHoja='';return '';}
-    const br=baseReparto(mkHoy),r=repartoDe(br.v),ap=r[h.id]||0,ll=huchaLlega(h),tr=ll?enTrabajo(ll.falta):null;
-    const libre=Math.max(0,br.v-(r[puroHucha().id]||0));
-    const ds=h.deseos||[];
-    cuerpo='<div class="row sh"><span style="font-size:26px">'+esc(h.ico)+'</span><div><h3>'+esc(h.nombre)+'</h3><div class="hsub">'+esc(eurR(h.saldo))+(ll?' de '+esc(eurR(ll.obj)):'')+
-        (ll&&ll.falta?' · '+esc(huchaLlegaTxt(ll)):(ll?' · ✓ ya la tienes':''))+'</div></div>'+
-        '<span class="sp"></span><button class="dlink" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'">editar ›</button></div>'+
-      '<div class="hdos" style="margin-top:12px"><label class="hfld">TIENES (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="saldo" data-id="'+esc(h.id)+'" value="'+esc(String(Math.round(h.saldo*100)/100).replace('.',','))+'"></label>'+
-        '<label class="hfld">CUESTA (€)<input inputmode="decimal" data-a="din-hu-campo" data-k="objetivo" data-id="'+esc(h.id)+'" value="'+esc(h.objetivo?String(h.objetivo).replace('.',','):'')+'" placeholder="sin objetivo"></label></div>'+
-      '<label class="hfld">NOMBRE<input maxlength="30" data-a="din-hu-campo" data-k="nombre" data-id="'+esc(h.id)+'" value="'+esc(h.nombre)+'"></label>'+
-      '<label class="hfld" style="margin-top:12px">APARTAS CADA MES · <b id="huMenTxt" style="color:var(--ink)">'+esc(eurR(h.mensual||ap))+'</b>'+
-        '<input type="range" min="0" max="'+Math.max(50,Math.ceil(libre/10)*10)+'" step="10" value="'+Math.min(Math.max(50,Math.ceil(libre/10)*10),Math.round(h.mensual||ap))+'" data-a="din-hu-men" data-id="'+esc(h.id)+'" class="drange" aria-label="lo que apartas cada mes"></label>'+
-      '<div class="hnota">Sale de lo que va a huchas ('+esc(eurR(libre))+'): el ahorro puro no se toca.</div>'+
-      '<label class="hfld" style="margin-top:10px">PARA CUÁNDO<input type="month" data-a="din-hu-para" data-id="'+esc(h.id)+'" value="'+esc(h.para||'')+'" aria-label="para cuándo"></label>'+
-      (function(){const c=metaHucha(h);return c.fecha&&c.falta?'<div class="hnota">Para llegar en '+esc(ahoMesTxt(h.para).toLowerCase())+': <b>'+fmtMil(c.men)+' €/mes</b> ('+c.dia+' €/día).</div>':'';})()+
-      (tr&&ll.falta?'<div class="deq"><div><b>≈ '+(tr.guardias!=null?Math.max(1,Math.round(tr.guardias)):'—')+'</b>guardias de finde</div><div><b>≈ '+(tr.dias!=null?Math.max(1,Math.round(tr.dias)):'—')+'</b>días de trabajo</div></div>':'')+
-      '<div class="hcap">EN QUÉ ME LO GASTO'+(ds.length?' · '+esc(eurR(ds.reduce(function(s,d){return s+(+d.precio||0);},0))):'')+'</div>'+
-      '<div class="dwish" style="border-top:0;margin-top:0">'+ds.map(function(d){
-        return '<div class="dw'+(d.hecho?' ok':'')+'"><button class="ck" data-a="deseo-ok" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-pressed="'+!!d.hecho+'" aria-label="'+(d.hecho?'desmarcar ':'marcar ')+esc(d.txt)+'"></button>'+
-          '<span>'+esc(d.txt)+'</span><em>'+esc(eurR(d.precio))+'</em><button class="x" data-a="deseo-del" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-label="quitar">×</button></div>';}).join('')+'</div>'+
-      (ui.deseoNuevo===h.id?'<div class="dwadd"><input id="dsTxt" placeholder="vuelos, hotel, casco…" maxlength="60" aria-label="qué"><input id="dsPre" inputmode="decimal" placeholder="€" aria-label="cuánto">'+
-          '<button class="btn p s" data-a="deseo-add" data-h="'+esc(h.id)+'">añadir</button></div>':
-        '<button class="dlink" data-a="deseo-nuevo" data-h="'+esc(h.id)+'">＋ añadir</button>');
   }else return '';
   return hojaMarco('hoja-cerrar','din4h',tit,cuerpo);}
 
@@ -21724,72 +21874,6 @@ function dineroXlsx(anio){
   return xlsxLibro([res,gas].concat(porMes,[hu]));}
 function dineroXlsxBlob(anio){return new Blob([dineroXlsx(anio)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
 
-/* ---- huchas: lista con fecha y deseos, y la hucha nueva ---- */
-function renderHuchasLista(){
-  const a=ahorroS(),C=dinCol(),tot=a.huchas.reduce(function(t,h){return t+h.saldo;},0);
-  /* solo mirar: abrir la lista ya no crea el mes (con un 20 % que pisaba tu % de ahorro) */
-  const hoy=new Date(),x=ahorroMes(ahoMk(hoy.getFullYear(),hoy.getMonth()),false)||{aparto:0,hecho:false,reparto:{},retos:[]},med=mediaAhorroReal(3);
-  const tarjeta=function(h){
-    const ap=aporteHucha(h),ll=huchaLlega(h),pc=ll?Math.min(100,Math.round(h.saldo/ll.obj*100)):null;
-    const ds=h.deseos||[],sumaD=ds.reduce(function(s,d){return s+(+d.precio||0);},0);
-    return '<div class="card dhu"><button class="dhucab" data-a="aho-hu-abrir" data-id="'+esc(h.id)+'" aria-label="cambiar '+esc(h.nombre)+'">'+
-        '<span class="ic" style="background:color-mix(in srgb,'+esc(h.color)+' 24%,var(--bg2))">'+esc(h.ico)+'</span>'+
-        '<span class="t"><b>'+esc(h.nombre)+'</b><span>'+esc(eurR(h.saldo))+(ll?' de '+esc(eurR(ll.obj)):'')+' · '+(ap?esc(eurR(ap))+'/mes':'sin aporte')+(h.meta?' · '+esc(h.meta):'')+'</span></span>'+
-        (pc!=null?'<b class="pc">'+pc+' %</b>':'')+'</button>'+
-      (pc!=null?'<div class="dmeter" role="img" aria-label="'+pc+' por ciento"><b style="width:'+pc+'%;background:'+C.seq[2]+'"></b></div>'+
-        '<div class="deta">'+(ll.falta?(ll.mk?'<b>'+esc(huchaLlegaTxt(ll))+'</b>':'<b style="color:var(--warn)">sin aporte no llegas</b>')+'<span>faltan '+esc(eurR(ll.falta))+'</span>':'<b style="color:var(--ok)">✓ ya la tienes</b>')+'</div>':'')+
-      (ds.length||ui.deseoNuevo===h.id?'<div class="dwish">'+ds.map(function(d){
-          return '<div class="dw'+(d.hecho?' ok':'')+'"><button class="ck" data-a="deseo-ok" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-pressed="'+!!d.hecho+'" aria-label="'+(d.hecho?'desmarcar ':'marcar ')+esc(d.txt)+'"></button>'+
-            '<span>'+esc(d.txt)+'</span><em>'+esc(eurR(d.precio))+'</em><button class="x" data-a="deseo-del" data-h="'+esc(h.id)+'" data-id="'+esc(d.id)+'" aria-label="quitar">×</button></div>';}).join('')+
-        (ds.length?'<div class="mini" style="margin-top:4px">la lista suma '+esc(eurR(sumaD))+(h.objetivo&&Math.abs(sumaD-h.objetivo)>=1?' · <button class="dlink" data-a="deseo-objetivo" data-h="'+esc(h.id)+'">que sea el objetivo</button>':'')+'</div>':'')+'</div>':'')+
-      (ui.deseoNuevo===h.id?'<div class="dwadd"><input id="dsTxt" placeholder="vuelos, hotel, casco…" maxlength="60" aria-label="qué"><input id="dsPre" inputmode="decimal" placeholder="€" aria-label="cuánto">'+
-          '<button class="btn p s" data-a="deseo-add" data-h="'+esc(h.id)+'">añadir</button></div>':
-        '<button class="dlink" style="margin-top:6px" data-a="deseo-nuevo" data-h="'+esc(h.id)+'">＋ en qué me lo quiero gastar</button>')+'</div>';};
-  $('#main').innerHTML='<div class="grid dinv2">'+dinSubcab('🐷 Huchas','<span class="sp"></span><span class="mini">'+esc(eurR(tot))+' en total</span>')+
-    a.huchas.map(tarjeta).join('')+
-    '<button class="card dnueva" data-a="dinero-vista" data-v="hucha-nueva"><b>＋ Nueva hucha</b><span class="mini">'+
-      (med!=null?'ahorras '+esc(eurR(med))+'/mes de media':'apartas '+esc(eurR(x.aparto||0))+' este mes')+'</span></button></div>';}
-const META_TIPOS=[['viaje','✈️','Viaje'],['casa','🏠','Casa (lista)'],['capricho','🎮','Capricho'],['otro','🚗','Otro']];
-function renderHuchaNueva(){
-  /* nueva meta: qué es, cuánto cuesta, para cuándo y lo que ya tienes → lo que pide al mes y al día */
-  const hoy=new Date(),d6=new Date(hoy.getFullYear(),hoy.getMonth()+6,1,12);
-  const f=ui.hn||(ui.hn={tipo:'viaje',nombre:'',ico:'✈️',precio:'',ya:'',para:ahoMk(d6.getFullYear(),d6.getMonth())});
-  if(!f.tipo)f.tipo='viaje';
-  $('#main').innerHTML='<div class="grid dinv2 din6 din7 mt">'+
-    '<div class="subcab"><button class="btn s volver" data-a="dinero-vista" data-v="">'+gymIco('atras','gico sm')+' Ahorro</button><h2 class="subtit">Nueva meta</h2></div>'+
-    '<div class="card">'+
-      '<div class="hchips">'+META_TIPOS.map(function(t){return '<button class="hchip'+(f.tipo===t[0]?' on':'')+'" data-a="hn-tipo" data-v="'+t[0]+'"'+(f.tipo===t[0]?' aria-pressed="true"':'')+'>'+t[1]+' '+t[2]+'</button>';}).join('')+'</div>'+
-      '<label class="hfld">NOMBRE<input id="hnNom" data-a="hn-in" maxlength="30" placeholder="'+({viaje:'Viaje a Lisboa',casa:'Cosas de casa',capricho:'Juego de la Play',otro:'Carnet de moto'}[f.tipo])+'" value="'+esc(f.nombre)+'"></label>'+
-      '<div class="hdos"><label class="hfld">CUESTA (€)<input id="hnPre" data-a="hn-in" inputmode="decimal" placeholder="'+(f.tipo==='casa'?'la suma de la lista':'900')+'" value="'+esc(f.precio)+'"></label>'+
-        '<label class="hfld">PARA<input id="hnPara" data-a="hn-in" type="month" min="'+ahoMk(hoy.getFullYear(),hoy.getMonth())+'" value="'+esc(f.para||'')+'"></label></div>'+
-      '<label class="hfld">YA TENGO (€)<input id="hnYa" data-a="hn-in" inputmode="decimal" placeholder="0" value="'+esc(f.ya)+'"></label>'+
-      (f.tipo==='casa'?'<p class="mini" style="margin:6px 0 0">Luego le añades la lista (aspiradora, sartenes…) y el objetivo sale de ella.</p>':'')+
-    '</div>'+
-    '<div id="hnRes"></div>'+
-    '<button class="btn p gbig" data-a="hn-crear" id="hnCrear">Crear meta</button></div>';
-  hnPinta();}
-function hnCalc(f){
-  const hoy=new Date(),mkHoy=ahoMk(hoy.getFullYear(),hoy.getMonth()),pre=numEuro(f.precio),ya=numEuro(f.ya),falta=Math.max(0,pre-ya);
-  const meses=/^\d{4}-\d{2}$/.test(f.para||'')?Math.max(1,mkEntre(mkHoy,f.para)):6;
-  const men=falta?Math.ceil(falta/meses/5)*5:0;
-  return {pre:pre,ya:ya,falta:falta,meses:meses,men:men,dia:men?Math.max(1,Math.round(men/30)):0};}
-function hnPinta(){
-  /* se recalcula al teclear sin repintar la pantalla (que perdería el foco) */
-  const g=function(id){const el=document.getElementById(id);return el?el.value:null;};
-  const f=ui.hn;if(!f)return;
-  ['nombre:hnNom','precio:hnPre','ya:hnYa','para:hnPara'].forEach(function(x){const k=x.split(':'),v=g(k[1]);if(v!=null)f[k[0]]=v;});
-  const b=document.getElementById('hnCrear');if(b)b.textContent='Crear meta'+(f.nombre?' «'+f.nombre+'»':'');
-  const r=document.getElementById('hnRes');if(!r)return;
-  const c=hnCalc(f);
-  if(!(c.pre>0)){r.innerHTML=f.tipo==='casa'?'':'<p class="mini" style="margin:0 10px">Pon cuánto cuesta y para cuándo, y te digo cuánto apartar al mes.</p>';return;}
-  if(!c.falta){r.innerHTML='<div class="card"><div class="dbig" style="font-size:22px;color:var(--ok)">✓ ya lo tienes</div></div>';return;}
-  const ap=apartasMes(),usado=ahorroS().huchas.reduce(function(s,h){return s+(h.id!==puroHucha().id&&+h.mensual>0?+h.mensual:0);},0),quedan=ap-usado-c.men;
-  const antes=c.meses>2?Math.ceil(c.falta/(c.meses-2)/5)*5:0,mkAntes=antes?mkSuma(ahoMk(new Date().getFullYear(),new Date().getMonth()),c.meses-2):'';
-  r.innerHTML='<div class="card"><div class="cap">PARA LLEGAR</div>'+
-    '<div class="row" style="align-items:baseline"><div class="dbig">'+fmtMil(c.men)+' <small>€/mes</small></div><span class="sp"></span><span class="mini">'+c.meses+' mes'+(c.meses===1?'':'es')+' · '+c.dia+' €/día</span></div>'+
-    '<p class="mini" style="margin:4px 0 0">'+(ap?(quedan>=0?'Cabe en lo que apartas ('+fmtMil(ap)+' €/mes): quedan <b style="color:var(--ink)">'+fmtMil(quedan)+' €</b> para colchón, inversión y el resto.':
-      'Apartas '+fmtMil(ap)+' €/mes y tus metas ya piden '+fmtMil(usado)+' €: <b class="ex">no cabe</b>. Alarga la fecha o baja el precio.'):'Sube una captura de Fintonic y te digo si te cabe.')+
-      (antes?' Si lo quieres para '+esc(ahoMesTxt(mkAntes).toLowerCase())+': '+fmtMil(antes)+' €/mes.':'')+'</p></div>';}
 
 function eventosS(){if(!Array.isArray(store.eventos))store.eventos=[];return store.eventos;}
 /* ---- cuánto dura un evento ----
@@ -22723,7 +22807,7 @@ function renderAjustes(){
         <label class="fld" style="flex:0 0 150px">Hora de ir a entrenar
           <input type="time" value="${esc(gymS().hora||'')}" data-a="gym-hora"></label>
         <label class="fld" style="flex:0 0 130px">Dura (min)
-          <input type="number" min="15" max="240" step="5" value="${+gymS().duracion||75}" data-a="gym-duracion"></label></div>
+          <input type="number" min="15" max="240" step="5" value="${gymDur(iso(new Date()))}" data-a="gym-duracion"></label></div>
       <p class="mini" style="margin:6px 0 0">Para los días con rutina que no traen hora propia. El «Día de fuerza» manda con sus horas (${esc(((shiftById('sh-f')||{}).start||'—')+'–'+((shiftById('sh-f')||{}).end||'—'))}); sin ninguna de las dos, el entreno va como aviso de todo el día.</p>
       ${`<div style="margin-top:11px;border-top:1px solid var(--line);padding-top:10px">
         <p class="mini" style="margin:0 0 4px"><b style="color:var(--ink)">Un fichero por color.</b>
@@ -22846,6 +22930,13 @@ function renderAjustes(){
       </div>
       <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
       </details></div>
+    <div class="card" data-cfg="lamina"><h2>Dibujo del entreno</h2>
+      <p class="note">El dibujo que abre la portada de Entreno: tu día, tu semana, tu vuelta y tu peso con los datos de verdad. Se queda en tu móvil.</p>
+      <div class="lamms" role="group" aria-label="Dibujo del entreno">${[['teide','La Sombra del Teide'],['bancales','Los Bancales']].map(function(o){const on=laminaTema()===o[0];
+        return '<button class="lamm'+(on?' on':'')+'" data-a="lamina-tema" data-id="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'">'+
+          (o[0]==='teide'?'<svg viewBox="0 0 120 56" aria-hidden="true"><rect width="120" height="34" fill="#9a6f8d"/><rect y="34" width="120" height="22" fill="#b79bb8"/><path d="M30 34 L56 6 L62 4 L68 8 L94 34Z" fill="#3a2a46"/><circle cx="16" cy="22" r="7" fill="#f2c46b"/><path d="M64 34 L84 34 L96 44 L58 44Z" fill="#2d1f4a" opacity=".8"/></svg>'
+            :'<svg viewBox="0 0 120 56" aria-hidden="true"><rect width="120" height="56" fill="#d8ecf0"/><path d="M0 56V8L24 14L30 56Z" fill="#b57b4b"/><rect x="40" y="38" width="22" height="18" fill="#c98a5a"/><rect x="62" y="28" width="22" height="28" fill="#c98a5a"/><rect x="84" y="18" width="22" height="38" fill="#c98a5a"/><rect x="40" y="36" width="22" height="5" fill="#e0b27a"/><rect x="62" y="26" width="22" height="5" fill="#e0b27a"/><rect x="84" y="16" width="22" height="5" fill="#e0b27a"/><circle cx="110" cy="8" r="5" fill="#f7c948"/></svg>')+
+          '<span class="tnom">'+o[1]+(on?' \u2713':'')+'</span></button>';}).join('')}</div></div>
     <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
       <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
         sea cual sea el tipo de día, y aquí se cambian.</p>
@@ -23228,6 +23319,8 @@ function render(){
     const m=$('#main');
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
+  /* cualquier repintado (también salir de Entreno) para el recorrido de 45 s de la lámina: ningún temporizador sobrevive */
+  if(_lamT)lamParar();
   _pintando=true;
   try{renderNow();_pintando=false;trasPintar();try{navTras();}catch(e5){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
@@ -23661,8 +23754,11 @@ function act(a,el){
     case 'viaje-on':{if(!store.rotation.viaje)store.rotation.viaje={};
       store.rotation.viaje.on=!viajeCfg().on;save();render();
       flash(viajeCfg().on?'se tiene en cuenta el viaje':'el viaje deja de contar');break;}
-    case 'regreso-ritmo':{const v=regresoS();if(v&&REGRESO_RITMO[el.dataset.v]){v.ritmo=el.dataset.v;save();render();
+    case 'regreso-ritmo':{const v=regresoS();if(v&&REGRESO_RITMO[el.dataset.v]){v.ritmo=el.dataset.v;if(+v.ini>0)v.ini=REGRESO_RITMO[v.ritmo].ini;save();render();
       const vu=regresoDe(iso(new Date()));flash('ritmo '+REGRESO_RITMO[v.ritmo].txt+(vu?' · '+vu.de+' semanas, ahora al '+vu.pct+' %':''));}break;}
+    case 'obj-ritmo':{const p=perfilS(),o=p.objetivo||(p.objetivo={kg:0});o.ritmo=+el.dataset.v;save();render();break;}
+    case 'obj-usar':perfilS().meta='perder';save();render();flash('listo: Comer usa las kcal de tu objetivo');break;
+    case 'obj-quitar':delete perfilS().objetivo;save();render();flash('objetivo quitado');break;
     case 'regreso-quitar':{const v=regresoS();if(v){v.fin=iso(new Date());save();}ui.gymPanel='';render();flash('plan de vuelta quitado: vuelve tu progresión de siempre');break;}
     case 'sem-dia':{ui.diaHoy=el.dataset.k||'';ui.tab='hoy';ui.calMode='hoy';
       render();window.scrollTo(0,0);break;}
@@ -23822,18 +23918,12 @@ function act(a,el){
     case 'ir-sueno':irACard('cfg','sueno');break;
     case 'datos-vista':{ui.tab='data';ui.datosVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
     case 'nota-proy-f':{ui.notaProy=el.dataset.p||'';render();break;}
-    case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';ui.dinHoja='';ui.dinDeAju=false;if(ui.dineroVista==='huchas')ui.huchaEd='';
-      if(ui.dineroVista==='hucha-nueva')ui.hn=null;render();window.scrollTo(0,0);break;}
-    case 'din-hoja':{ui.dinHoja=el.dataset.h||'';ui.dinHuId=el.dataset.id||'';ui.deseoNuevo='';if(el.dataset.mk)ui.dinMes=el.dataset.mk;render();break;}
-    case 'din-ir':{cerrarHojaDia();ui.dineroVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
+    case 'dinero-vista':{ui.dineroVista=el.dataset.v||'';ui.dinHoja='';ui.dinDeAju=false;render();window.scrollTo(0,0);break;}
+    case 'din-hoja':{ui.dinHoja=el.dataset.h||'';if(el.dataset.mk)ui.dinMes=el.dataset.mk;render();break;}
     case 'din-meta':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0}),d=+el.dataset.d||0;
       if(!(c.meta>0))c.meta=Math.max(10,Math.round((+el.dataset.ref||100)*0.85/10)*10);else c.meta=Math.max(0,c.meta+d);
       if(c.meta===0)flash('sin meta en '+k);save();render();break;}
     case 'din-cat-tipo':{const k=el.dataset.c||'',cc=catCfg(),c=cc[k]||(cc[k]={tipo:'',meta:0});c.tipo=el.dataset.t==='fijo'?'fijo':'variable';save();render();break;}
-    case 'din-apartar':{const h=new Date(),mk=el.dataset.mk||ahoMk(h.getFullYear(),h.getMonth());
-      if(!cierreAbierto(mk)){flash('el mes se cierra al llegar la nómina o el último día');break;}
-      const x=ahorroMes(mk,true);
-      if(!x.hecho)x.aparto=baseReparto(mk).v;flash(apartarMes(mk));break;}
     case 'hoja-modo':ui.hojaModo=el.dataset.m||'gastos';render();break;
     case 'hoja-todo':ui.hojaTodo=!ui.hojaTodo;render();break;
     case 'hoja-anio':{const y=(ui.hojaAnio||new Date().getFullYear())+(+el.dataset.d||0);if(y<=new Date().getFullYear())ui.hojaAnio=y;render();break;}
@@ -23848,28 +23938,6 @@ function act(a,el){
     case 'hoja-copiar':{const tx=hojaTSV(ui.hojaAnio||new Date().getFullYear());
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(tx):Promise.reject())
         .then(function(){flash('tabla copiada: pégala en Excel o en Sheets');},function(){flash('no he podido copiar');});break;}
-    case 'deseo-nuevo':ui.deseoNuevo=el.dataset.h||'';render();{const f2=document.getElementById('dsTxt');if(f2)f2.focus();}break;
-    case 'deseo-add':{const h=huchaDe(el.dataset.h);if(!h)break;
-      const tx=((document.getElementById('dsTxt')||{}).value||'').trim(),pr=numEuro((document.getElementById('dsPre')||{}).value);
-      if(!tx){flash('¿en qué? vuelos, hotel, casco…');break;}
-      if(!Array.isArray(h.deseos))h.deseos=[];
-      h.deseos.push({id:uid('ds'),txt:tx.slice(0,60),precio:Math.max(0,pr),hecho:false});
-      if(!h.objetivo){h.objetivo=h.deseos.reduce(function(s2,d){return s2+(+d.precio||0);},0);}
-      ui.deseoNuevo='';save();render();break;}
-    case 'deseo-ok':case 'deseo-del':{const h=huchaDe(el.dataset.h);if(!h||!h.deseos)break;
-      const i=h.deseos.findIndex(function(d){return d.id===el.dataset.id;});if(i<0)break;
-      if(a==='deseo-ok')h.deseos[i].hecho=!h.deseos[i].hecho;else h.deseos.splice(i,1);save();render();break;}
-    case 'deseo-objetivo':{const h=huchaDe(el.dataset.h);if(!h)break;
-      h.objetivo=(h.deseos||[]).reduce(function(s2,d){return s2+(+d.precio||0);},0);save();render();flash('objetivo: '+eurR(h.objetivo));break;}
-    case 'hn-tipo':if(ui.hn){hnPinta();ui.hn.tipo=el.dataset.v||'viaje';}render();break;
-    case 'hn-crear':{hnPinta();const f=ui.hn||{},c=hnCalc(f),tp=f.tipo||'otro';
-      if(!String(f.nombre||'').trim()){flash('¿para qué es? ponle un nombre');const n2=document.getElementById('hnNom');if(n2)n2.focus();break;}
-      const COLS=['#38bdf8','#8b5cf6','#fbbf24','#34d399','#f472b6','#fb923c'],hs=ahorroS().huchas;
-      const h={id:uid('hu'),nombre:String(f.nombre).trim().slice(0,30),ico:(META_TIPOS.filter(function(t){return t[0]===tp;})[0]||[0,'🐷'])[1],color:COLS[hs.length%COLS.length],pct:0,objetivo:c.pre,meta:'',saldo:Math.round(c.ya*100)/100,
-        mensual:c.men,deseos:[],tipo:tp,para:/^\d{4}-\d{2}$/.test(f.para||'')?f.para:''};
-      hs.push(h);if(c.ya>0)ahoMov(h.id,c.ya,'lo que ya tenías');
-      ui.hn=null;ui.dineroVista='';ui.dinTab='ahorro';ui.huchaEd='';ui.dinHoja=tp==='casa'?'hucha':'';ui.dinHuId=h.id;if(tp==='casa')ui.deseoNuevo=h.id;save();render();window.scrollTo(0,0);
-      flash('meta «'+h.nombre+'» creada'+(h.mensual?' · '+eurR(h.mensual)+'/mes':''));break;}
     case 'fin-guardar':flash(finGuardar());break;
     case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
     case 'din-gastado':{const mk=el.dataset.mk,n=document.getElementById('dinGast'),txt=String(n?n.value:'').trim().replace(/\s|€/g,'');
@@ -23882,25 +23950,12 @@ function act(a,el){
       const x=ahorroDeMes(mk),t=ahoYm(mk);flash(MONTH_FULL[t.m]+': '+(x?(x.ahorro>=0?'ahorraste '+eurR(x.ahorro):'gastaste '+eurR(-x.ahorro)+' de más'):'guardado'));render();break;}
     case 'din-gastado-ed':ui.dinGastEd=el.dataset.mk||'';ui.dinTab='mes';ui.dineroVista='';render();break;
     /* la captura del banco: para qué es cada cuenta, otra cuenta, a mano, el cuadre y guardar */
-    case 'bk-rol':{const c=ui.bk&&ui.bk.cuentas[+el.dataset.i];if(c){c.rol=el.dataset.v;ui.bk.cuadre='';}render();break;}
-    case 'bk-mas':{if(ui.bk)ui.bk.cuentas.push({nombre:'Cuenta',num:'',v:NaN,ok:true,rol:'ahorro'});render();break;}
-    case 'bk-mano':{cerrarHojaDia();ui.tab='dinero';bkMano();render();window.scrollTo(0,0);break;}
-    case 'bk-cuadrar':{const c=bkUltima('ahorro');bkMano(c);render();window.scrollTo(0,0);break;}
-    case 'bk-cuadre':{if(ui.bk)ui.bk.cuadre=el.dataset.v||'no';render();break;}
-    case 'bk-guardar':{flash(bkGuardar(),4500);render();window.scrollTo(0,0);break;}
-    case 'bk-descartar':{ui.bk=null;ui.dineroVista='';render();break;}
     /* «ya lo he apartado»: el ahorro del mes, al cobrar, a tus bolsillos */
-    case 'din-apartar-meta':flash(apartarAlCobrar(el.dataset.mk));render();break;
-    case 'din-apartar-ini-x':flash(deshacerAlCobrar(el.dataset.mk));break;
-    case 'din-lleg-ok':{const V=dinLlegadasAl();V['lleg:'+el.dataset.id]=el.dataset.mk;save();render();break;}
-    case 'din-meta-subir':{const h=huchaDe(el.dataset.id);if(h){h.mensual=Math.max(0,Math.round(+el.dataset.v||0));const c=metaHucha(h);dinLlegadasAl()['lleg:'+h.id]=c.mk||'';save();
-      flash(h.nombre+': '+h.mensual+' € al mes'+(c.mk?' → '+dinMesAno(c.mk):''));}render();break;}
     case 'din-a-aju':{ui.dinDeAju=false;ui.dineroVista='';ui.tab='ajustes';render();window.scrollTo(0,0);break;}
     case 'din-sueldo':{ui.tab='dinero';ui.dineroVista='nomina';ui.dinDeAju=true;ui.ajuVista='';render();window.scrollTo(0,0);break;}
     case 'din-gastado-x':ui.dinGastEd='';render();break;
     case 'fin-cobrado':{const f=ui.fin;if(!f||!f.res||!f.res.ingresos)break;
       ahorroS().cobrado[f.res.mes]=f.res.ingresos.v;save();flash(eur(f.res.ingresos.v)+' apuntados como lo cobrado de '+ahoMesTxt(f.res.mes));render();break;}
-    case 'aho-deshacer':{const hoy=new Date();flash(deshacerApartado(el.dataset.mk||ahoMk(hoy.getFullYear(),hoy.getMonth())));break;}
     case 'bowl-tipo':{const B=bowlS();B.tipo=el.dataset.v||'equi';B.obj=bowlObjetivo(B.tipo);render();break;}
     case 'bowl-usar':{const B=bowlS(),x=bowlSugerencias(B.obj)[+el.dataset.i||0];if(x){B.it=x.it.map(function(y){return [y[0],y[1]];});B.n=x.n;B.e=x.e;B.paso=5;}render();window.scrollTo(0,0);break;}
     case 'bowl-nuevo':{const B=bowlS();B.it=[];B.n='';B.e='';B.paso=1;render();window.scrollTo(0,0);break;}
@@ -23917,15 +23972,7 @@ function act(a,el){
       ui.bowl=null;ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'bowl-guardar':flash(bowlGuardar());render();break;
     case 'bowl-compra':{const B=bowlS();flash(listaAMano(B.it.map(function(x){return x[1]+' g '+bowlIng(x[0]).n.toLowerCase();}).join('\n')));break;}
-    case 'din-gaste-de':{const g=ui.dinGaste||{imp:'',txt:''};g.de=el.dataset.id||'';g.resto='';ui.dinGaste=g;render();break;}
-    case 'din-gaste-resto':{const g=ui.dinGaste||{imp:'',txt:''};g.resto=el.dataset.id||'';ui.dinGaste=g;render();break;}
-    case 'din-gaste-ok':{const m=gasteApuntar();flash(m,4500);if(!ui.dinGaste)ui.dinHoja='';render();break;}
     case 'd7-meta':{const a=ahorroS();a.metaPct=Math.max(5,Math.min(80,metaPct()+(+el.dataset.d||0)));save();render();break;}
-    case 'din7-aplicar':{flash(din7Aplicar(),4500);render();window.scrollTo(0,0);break;}
-    case 'din-bolsillo-inv':{const a=ahorroS(),id='hu-inv'+Date.now().toString(36);
-      a.huchas.push({id:id,nombre:'Inversión',ico:'📈',color:'#199e70',pct:0,objetivo:0,meta:'fondo indexado',saldo:0,mensual:0,deseos:[]});
-      bolsilloSetPct(id,20);save();flash('bolsillo de inversión creado con un 20 %');render();break;}
-    case 'din-a-pct':{const h=huchaDe(el.dataset.id);if(h){h.mensual=0;bolsilloSetPct(h.id,10);save();}render();break;}
     case 'aho-ep-add':{const eps=ahorroS().epocas,ult=eps.slice().sort(function(p,q){return p.desde.localeCompare(q.desde);}).pop()||{};
       const d=ahoYm(ult.desde||ahoMk(new Date().getFullYear(),new Date().getMonth()));
       eps.push({id:uid('ep'),nombre:'Nueva época',desde:ahoMk(d.y+1,d.m),neto:ult.neto||0,finde:ult.finde||0,pagaJun:ult.pagaJun||0,pagaDic:ult.pagaDic||0});
@@ -23936,12 +23983,6 @@ function act(a,el){
       if(!esFecha(v)){flash('elige el día');break;}
       if(ahorroS().festivos.indexOf(v)<0)ahorroS().festivos.push(v);save();render();break;}
     case 'aho-fest-del':{const a2=ahorroS();a2.festivos=a2.festivos.filter(function(f){return f!==el.dataset.f;});save();render();break;}
-    case 'aho-hu-abrir':{ui.huchaEd=el.dataset.id||'';ui.dineroVista='huchas';ui.dinHoja='';render();window.scrollTo(0,0);break;}
-    case 'aho-hu-del':{const h=huchaDe(el.dataset.id);if(!h)break;
-      confirmar('¿Quitar la hucha «'+h.nombre+'»?'+(h.saldo?' Tiene '+eur(h.saldo)+': ese dinero deja de contarse aquí.':'')).then(function(ok){
-        if(!ok)return;const a2=ahorroS();a2.huchas=a2.huchas.filter(function(q){return q.id!==h.id;});save();render();});break;}
-    case 'aho-sacar':case 'aho-meter':{const inp=document.getElementById('ahSac-'+el.dataset.id);const v=inp?inp.value:'';
-      flash(sacarHucha(el.dataset.id,v,'',a==='aho-meter'));break;}
     case 'dinero-pagar':{const n=new Date();flash(pagarGasto(el.dataset.id,n.getFullYear(),n.getMonth()));render();break;}
     case 'dinero-del':{const g=dineroS().gastos.filter(function(x){return x.id===el.dataset.id;})[0];
       const gid=el.dataset.id;
@@ -24364,6 +24405,44 @@ function act(a,el){
     case 'nav-atras':navAtras();break;   /* el «‹ atrás» de la cabecera (index.html) */
     /* también desde las tarjetas del asistente en Hoy: llevan a Dinero (antes solo cambiaban algo por detrás) */
     case 'd6-tab':ui.tab='dinero';ui.dinTab=el.dataset.v||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
+    case 'd3-guardar':{const v=leeImporte((document.getElementById('d3Guardado')||{}).value);
+      if(!isFinite(v)||v<0){flash('escribe cuánto tienes guardado, por ejemplo 4.200');break;}
+      dinero3S().ahorro.guardado=v;save();render();flash('apuntado: '+fmtMil(v)+' € guardados');break;}
+    case 'd4-obj':case 'd4-plazo':{const A=dinero3S().ahorro,k=a==='d4-obj'?'objetivoMeses':'plazoMeses',v=+el.dataset.v;
+      if(v>0){A[k]=v;if(k==='plazoMeses')A.desde=iso(new Date());save();}render();break;}
+    case 'd4-nom':ui.d4Nom={mk:d4Cobro().mk,paso:'pide'};render();break;
+    case 'd4-nom-ok':{const c=leeImporte((document.getElementById('d4Cobrado')||{}).value);
+      if(!isFinite(c)||c<=0){flash('escribe cuánto has cobrado, por ejemplo 2.000');break;}
+      ui.d4Nom={mk:d4Cobro().mk,paso:'propone',cobrado:c,v:d4Propone(d3Datos(),c)};render();break;}
+    case 'd4-nom-hecho':{const N=ui.d4Nom,A=dinero3S().ahorro;
+      if(!N||N.paso!=='propone'||!(N.v>0)){flash('no hay nada que apartar este mes');ui.d4Nom=null;render();break;}
+      if(A.apartado[N.mk]){flash('lo de '+dinMesNom(N.mk)+' ya estaba apartado');ui.d4Nom=null;render();break;}
+      A.apartado[N.mk]={cobrado:N.cobrado,v:N.v};A.guardado=Math.round((A.guardado+N.v)*100)/100;ui.d4Nom=null;save();render();
+      flash(fmtMil(N.v)+' € apartados al bosque');break;}
+    case 'd4-nom-x':{const A=dinero3S().ahorro,x=A.apartado[el.dataset.mk];
+      if(!x){flash('no había nada apartado');break;}
+      A.guardado=Math.max(0,Math.round((A.guardado-x.v)*100)/100);delete A.apartado[el.dataset.mk];save();render();flash('deshecho: el bosque vuelve a lo de antes');break;}
+    case 'd5-abre':ui.d5Abre=ui.d5Abre===el.dataset.id?'':el.dataset.id;ui.d5Deshacer=null;render();break;
+    case 'd5-nota':ui.d5Nota=!ui.d5Nota;render();break;
+    case 'd5-nuevo':ui.d5Nuevo=!ui.d5Nuevo;render();break;
+    case 'd5-add':{const nom=String((document.getElementById('d5Nom')||{}).value||'').trim().slice(0,60),pre=leeImporte((document.getElementById('d5Pre')||{}).value),
+      tip=(document.getElementById('d5Tip')||{}).value,mes=(document.getElementById('d5Mes')||{}).value;
+      if(!nom){flash('ponle un nombre');break;}
+      if(!isFinite(pre)||!(pre>0)){flash('escribe el precio, por ejemplo 120');break;}
+      const t=tip==='nec'||tip==='util'?tip:'ilu';
+      dinero3S().compras.push({id:uid('co'),nombre:nom,precio:pre,llevas:0,mes:/^\d{4}-\d{2}$/.test(mes||'')?mes:'',estado:t==='nec'?'plan':'espera',alta:iso(new Date()),tipo:t});
+      ui.d5Nuevo=false;save();render();flash(t==='nec'?'apuntado: '+nom:'«'+nom+'» espera 30 días antes de entrar en la lista');break;}
+    case 'd5-aparte':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;}),v=leeImporte((document.getElementById('d5Apar')||{}).value);
+      if(!c)break;if(!isFinite(v)||!(v>0)){flash('escribe cuánto has apartado, por ejemplo 50');break;}
+      const n=Math.min(c.precio,c.llevas+v)-c.llevas;c.llevas=Math.round((c.llevas+n)*100)/100;ui.d5Deshacer={id:c.id,v:n};save();render();flash('apartados '+fmtMil(n)+' € para '+c.nombre);break;}
+    case 'd5-deshacer':{const u=ui.d5Deshacer,c=u&&dinero3S().compras.find(function(x){return x.id===u.id;});
+      if(c){c.llevas=Math.max(0,Math.round((c.llevas-u.v)*100)/100);save();}ui.d5Deshacer=null;render();break;}
+    case 'd5-compre':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      addPago({nombre:c.nombre,importe:c.precio,cat:'otros'});c.estado='comprada';ui.d5Abre='';ui.d5Deshacer=null;save();render();flash('apuntado como gasto: '+c.nombre);break;}
+    case 'd5-no':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      c.estado='no';ui.d5Abre='';save();render();flash('«'+c.nombre+'» fuera de la lista (no se borra nada)');break;}
+    case 'd3-mes':ui.d3Mes=el.dataset.mk||'';render();break;
+    case 'd3-claro':ui.tab='dinero';ui.dinTab='gastos';ui.d3Mes=el.dataset.mk||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
     case 'd6-cat':ui.tab='dinero';ui.dinCat=el.dataset.c||'';ui.dineroVista='categoria';render();window.scrollTo(0,0);break;
     case 'ss-celda':ui.elegir={modo:'sb',w:+el.dataset.w,c:el.dataset.c||'comida',q:'',f:el.dataset.c||'comida'};ui.tab='types';ui.typesVista='elegir';render();window.scrollTo(0,0);break;
     case 'ss-auto':flash(sbAuto());render();break;
@@ -24760,6 +24839,8 @@ function act(a,el){
       ui.gymDate=iso(addDays(gd,a==='gym-next'?1:-1));render();break;}
     case 'gym-today':ui.gymDate=iso(new Date());render();break;
     case 'gym-dia':ui.gymDate=el.dataset.key||iso(new Date());render();break;
+    case 'lam-tour':lamTour();break;
+    case 'lamina-tema':{const g=gymS();g.lamina=(id==='bancales')?'bancales':'teide';save();render();flash('Dibujo del entreno: '+(g.lamina==='bancales'?'Los Bancales':'La Sombra del Teide'));break;}
     case 'gym-mover':flash(moverEntreno(el.dataset.key,el.dataset.to));break;
     case 'gym-deshacer':flash(deshacerMovido(el.dataset.key));break;
     case 'gym-fetch':flash('bajando la biblioteca de openGym: pesan unos 17 MB, en el móvil mejor con wifi');
@@ -24784,7 +24865,7 @@ function act(a,el){
     case 'rt-borrar':{const nm=((rutinaPorId(el.dataset.id))||{}).nombre||'';
       confirmar('¿Eliminar la rutina «'+nm+'» entera? Las sesiones ya guardadas con ella se quedan en el historial.').then(function(ok){
         if(!ok)return;flash(delRutinaCard(el.dataset.id));});break;}
-    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1'));break;
+    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1',el.dataset.min==='1'));break;
     case 'gv-ir':{const sa=ui.gymSesionActiva;if(!sa)break;
       sa.ix=+el.dataset.ix||0;ui.gymPanel='vivo';render();window.scrollTo(0,0);break;}
     case 'gv-cambiar':ui.gymPanel='cambiar';render();window.scrollTo(0,0);break;
@@ -26377,7 +26458,7 @@ function calEventos(desde,hasta){
       /* sin hora puesta en el gym, la del plan (al salir del trabajo, o las 17 en un libre) */
       const entP=entrenoDe(k),hG=gymS().hora||(entP&&entP.hora)||'';
       const hIni=propias?st:(hG?icsHM(hG):''),hFin=propias?((en&&en>st)?en:''):'';
-      out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:(+gymS().duracion||75),
+      out.push({allDay:!hIni,fecha:icsNum(k),isoKey:k,hora:hIni,horaFin:hFin,dur:hFin?0:gymDur(k),
         uid:icsUID('entreno|'+k),
         /* con rutina puesta, el nombre de la rutina ES lo que quieres leer: «💪 Torso A», no
            «💪 Entreno · Torso A» cortado en «💪 Entreno ·…» */
@@ -26767,6 +26848,9 @@ document.addEventListener('keydown',e=>{
     return;}
   if(escribiendo&&e.key==='Enter'&&t.id==='frIn'){e.preventDefault();frEnter();return;}
   if(escribiendo){if(e.key==='Escape'&&t.blur)t.blur();return;}
+  /* las partes tocables de la lámina del entreno son <g role=button> dentro de un SVG: Enter y espacio las pulsan */
+  if((e.key==='Enter'||e.key===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset&&t.dataset.a&&t.closest&&t.closest('.glam')){
+    e.preventDefault();t.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
   const k=e.key||'';
   if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];if(CAL_SET.has(tb[0]))ui.calMode=tb[0];render();
     const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]')||document.querySelector('#calModes button[data-t="'+tb[0]+'"]');
@@ -26882,13 +26966,7 @@ document.addEventListener('paste',function(e){
   e.preventDefault();_fbLec={k:fbClave(R.q),fr:R};ui.foodBusca=R.q;el.value=R.q;buscarRepinta();});
 document.addEventListener('input',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
-  if(a==='hn-in'){hnPinta();return;}
   if(a==='fr-in'){frTeclea(el.value||'');return;}   /* la frase: se lee sola debajo, sin repintar */
-  if(a==='din-gaste-in'){const g=ui.dinGaste||(ui.dinGaste={imp:'',txt:'',de:'',resto:''});g[el.dataset.k==='txt'?'txt':'imp']=el.value||'';
-    if(el.dataset.k!=='txt'){const q=document.getElementById('dgQueda');if(q)q.innerHTML=gasteQuedaHTML();}return;}
-  if(a==='din-meta-pct'){const t=document.getElementById('d5metaTxt');if(t)t.textContent=el.value+' % del sueldo';return;}
-  if(a==='din-puro'){const t=document.getElementById('puroTxt');if(t)t.textContent=el.value+' %';return;}
-  if(a==='din-hu-men'){const t=document.getElementById('huMenTxt');if(t)t.textContent=eurR(+el.value||0);return;}
   if(a==='cal-url-in'){ui.calUrl=el.value||'';return;}
   if(a==='ics-in'){ui.icsTxt=el.value||'';return;}
   if(a==='imp-txt'){ui.imp.txt=el.value||'';return;}
@@ -26951,12 +27029,15 @@ document.addEventListener('change',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   switch(a){
     case 'fin-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';finLeer(fs);}break;}
-    case 'bk-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';bkLeer(fs);}break;}
     case 'dinero-f':render();break;
-    case 'bk-v':{const c=ui.bk&&ui.bk.cuentas[+el.dataset.i];if(c){const t=String(el.value||'').trim().replace(/\s|€/g,'');
-      c.v=leeImporte(t);c.ok=true;ui.bk.cuadre='';}render();break;}
-    case 'bk-nom':{const c=ui.bk&&ui.bk.cuentas[+el.dataset.i];if(c)c.nombre=String(el.value||'').trim().slice(0,40)||'Cuenta';break;}
-    case 'bk-fecha':{if(ui.bk&&esFecha(el.value))ui.bk.fecha=el.value;break;}
+    case 'd5-precio':case 'd5-mes':case 'd5-tipo':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
+      if(a==='d5-precio'){const v=leeImporte(el.value);if(!isFinite(v)||!(v>0)){flash('escribe un precio válido');render();break;}c.precio=v;}
+      else if(a==='d5-mes')c.mes=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';
+      else c.tipo=el.value==='nec'||el.value==='util'?el.value:'ilu';
+      save();render();break;}
+    case 'd4-otro':{const k=el.dataset.k==='plazoMeses'?'plazoMeses':'objetivoMeses',v=leeImporte(el.value),mx=k==='plazoMeses'?60:36;
+      if(!isFinite(v)||v<1||v>mx){flash('escribe un número de meses entre 1 y '+mx);break;}
+      const A=dinero3S().ahorro;A[k]=Math.round(v);if(k==='plazoMeses')A.desde=iso(new Date());save();render();break;}
     case 'tk-ocr':{const fs=el.files;if(fs&&fs.length)tkOcr(fs);break;}
     case 'fin-fecha':{if(ui.fin&&esFecha(el.value||''))ui.fin.fecha=el.value;render();break;}
     case 'fin-mes':{if(ui.fin&&ui.fin.res&&/^\d{4}-\d{2}$/.test(el.value||''))ui.fin.res.mes=el.value;render();break;}
@@ -26977,15 +27058,6 @@ document.addEventListener('change',e=>{
       save();render();break;}
     case 'aho-cobrado':{const c=ahorroS().cobrado,v=String(el.value||'').trim();
       if(!v)delete c[el.dataset.mk];else{const n=numEuro(v);if(n)c[el.dataset.mk]=n;}
-      save();render();break;}
-    case 'aho-hu':{const h=huchaDe(el.dataset.id);if(!h)break;
-      const k=el.dataset.k;
-      if(k==='pct')h.pct=Math.max(0,Math.min(100,Math.round(num(el.value,0))));
-      else if(k==='objetivo')h.objetivo=numEuro(el.value);
-      else if(k==='color'){if(esColor(el.value))h.color=el.value;}
-      else if(k==='ico')h.ico=String(el.value||'').trim().slice(0,4)||'🐷';
-      else if(k==='nombre')h.nombre=String(el.value||'').trim().slice(0,30)||'Hucha';
-      else h.meta=String(el.value||'').trim().slice(0,60);
       save();render();break;}
     /* cada cuánto haces la compra: es un <select>, así que vive en ESTE switch */
     case 'compra-cada':{const v=+el.value;if(v>=1&&v<=14){food().compraCada=v;save();render();}break;}
@@ -27031,10 +27103,6 @@ document.addEventListener('change',e=>{
       rd.readAsText(f);break;}
     case 'pm-obj':{const pm=pmS(),k=el.dataset.k;if(['kcal','p','c','g'].indexOf(k)>=0)pm.obj[k]=Math.max(0,Math.min(k==='kcal'?3000:400,Math.round(+el.value||0)));render();break;}
     case 'bowl-obj':{const B=bowlS(),k=el.dataset.k;if(['kcal','p','c','gr'].indexOf(k)>=0)B.obj[k]=Math.max(0,Math.min(k==='kcal'?3000:400,Math.round(+el.value||0)));render();break;}
-    case 'din-meta-pct':{ahorroS().metaPct=Math.max(5,Math.min(80,Math.round(+el.value||30)));save();render();break;}
-    case 'din-plan-pct':{bolsilloSetPct(el.dataset.id,+el.value||0);save();render();break;}
-    case 'din-puro':{ahorroS().puroPct=Math.max(puroMin(),Math.min(100,+el.value||50));save();render();break;}
-    case 'din-hu-men':{const h=huchaDe(el.dataset.id);if(h){h.mensual=Math.max(0,Math.round(+el.value||0));save();render();}break;}
     case 'tk-nom':{const t=ui.ticket,x=t&&t.leido&&t.leido.items[+el.dataset.i];if(x){x.nom=ticketNombre(el.value)||x.nom;render();}break;}
     case 'fr-pos':{ui.frPos=el.value||'';if(ui.frase)ui.frase.pos=ui.frPos;lecRepinta('fr');break;}
     case 'rut-copia':{if(!el.value)break;const t=ui.rutTipo||diaTipo(iso(new Date())),r=store.rutinas||(store.rutinas={});
@@ -27053,17 +27121,6 @@ document.addEventListener('change',e=>{
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
     case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
-    case 'din-hu-campo':{const h=huchaDe(el.dataset.id);if(!h)break;const k=el.dataset.k;
-      if(k==='nombre'){const v=String(el.value||'').trim().slice(0,30);if(v)h.nombre=v;}
-      else{const v=numEuro(el.value);
-        /* «-200», letras o lo que no sea un importe NO pone la hucha a 0 (antes lo hacía, apuntaba el
-           movimiento y no había deshacer): se avisa y se deja como estaba */
-        if(k==='saldo'&&String(el.value||'').trim()!==''&&!(leeImporte(el.value)>=0)){flash('eso no es un importe: la hucha sigue con '+fmtMil(h.saldo)+' €');render();break;}
-        if(k==='saldo'&&String(el.value||'').trim()!==''){const dif=Math.round((v-h.saldo)*100)/100;if(dif)ahoMov(h.id,dif,'corregido a mano');h.saldo=Math.round(v*100)/100;}
-        if(k==='objetivo')h.objetivo=v!=null&&v>0?Math.round(v):0;}
-      save();render();break;}
-    case 'din-hu-para':{const h=huchaDe(el.dataset.id);if(!h)break;
-      h.para=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';const c=metaHucha(h);if(c.fecha&&c.men)h.mensual=c.men;save();render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
     case 'pat-name':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.name=el.value;save();}break;}
     case 'pat-note':{const p=store.patterns.find(x=>x.id===el.dataset.id);if(p){p.note=el.value;save();}break;}
@@ -27159,7 +27216,8 @@ document.addEventListener('change',e=>{
       const v=Math.round(+el.value||0);if(s2&&v>=1&&v<=600){s2.duracionMin=v;s2.fin=(+s2.inicio||Date.now())+v*60000;if(s2.rpe)s2.carga=s2.rpe*v;save();}render();break;}
     case 'gym-descanso':{gymS().descansoSeg=Math.max(0,Math.min(600,Math.round(+el.value||0)));
       save();render();flash(gymS().descansoSeg?('descanso de '+gymS().descansoSeg+' s entre series'):'sin cronómetro de descanso');break;}
-    case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||75));save();render();break;}
+    case 'obj-kg':flash(setObjetivoPeso(el.value,(perfilS().objetivo||{}).ritmo));break;
+    case 'gym-duracion':{gymS().duracion=Math.max(15,Math.min(240,+el.value||franja().durSem));save();render();break;}
     case 'ics-aviso-min':{const v=String(el.value).trim()===''?30:+el.value;store.rotation.icsAvisoMin=Math.max(0,Math.min(180,isFinite(v)?Math.round(v):30));save();render();break;}
     case 'cal-weekstart':{store.rotation.calWeekStart=el.value==='dom'?'dom':'lun';save();render();break;}
     case 'backup-aviso-d':{if(!store.meta)store.meta={owner:'',notes:''};
@@ -27448,7 +27506,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,apartarAlCobrar,huchaDe,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoParse,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,bkMano,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,metaHucha,din7Aplicar,din7Reparto,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -27462,7 +27520,7 @@ window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegl
   fechaHoy,moverDiaHoy,imprimir,
   gTipos,gTipo,setHorasTipo,guardiaHoras,salidaDeGuardia,bloquesTrabajo,horasDelDiaTxt,esDiaDeJornada,
   comidasCfg,comidaPrincipalDe,hayEntrenoEn,finEntrenoDe,esComidaPrincipal,horaDeToma,hoyTresHTML,hoyItems,hoyDiaHTML,hoyHojaHTML,
-  gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaEstado,gymDiaMalo,gymHechoEn,
+  gymCambios,rutinaDelDia,rutinaDeFecha,moverEntreno,deshacerMovido,gymDiaMalo,gymHechoEn,
   gymDescanso,gymChoque,fechaCortaTxt,
   objetivosS,delObjetivo,objetivoTitulo,objetivoEstado,objetivoConsejoTxt,OBJ_TIPOS,
   pesoMaximo,volumenSemanal,tocaDescarga,estancados,cambioSugerido,cruceEntreno,
@@ -27509,10 +27567,10 @@ window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegl
   TEMAS,temaById,ponerTema,ponerTemaPropio,temaAzar,temasMios,guardarTemaActual,borrarTemaMio,contraste,tintaLegible,eventoAplica,mesRejilla,
   gramosDeIng,ingAlim,migrarPlato,migrarPlatos,platoMacrosDe,alimTodos,alimBuscar,alimById,
   suenoRealS,suenoReal,suenoSemana,snTipoDia,snMargenLibre,suenoAnclaDe,snAHora,snCamaDe,snVuelta,suenoMes,suenoEficiencia,snCamaEventos,suenoFase,informeDatos,librosS,libroNuevo,libroPag,libroCalc,hudLeer,HUD_LIBROS,
-  lloretPlan,lloretPoner,lloretDe,gymSemanaCirculos,mCeldas,guardiaCelda,sbKey,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,slotItems,
+  lloretPlan,lloretPoner,lloretDe,mCeldas,guardiaCelda,sbKey,cocinaDelDia,entrenoPorQue,entrenoDe,entrenoContadorHTML,entrenoSemanaHTML,entrenoSemana,entrenoCfg,gymForzar,rutinaDeFechaBase,servicioCorto,calRangoExport,metaCalc,metaAhorro,mealCls,mealMacros,mealUsos,mealGuardar,sbS,sbCelda,sbActiva,sbCopiar,sbRellenar,sbConsumo,sbDeToma,cocinarDatos,elegirOpciones,slotItems,
   FUERA_CADENAS,FUERA_OJO,fueraBuscables,fueraItem,fueraMenuCalc,fueraApuntar,fueraUltimos,
   finNum,finParse,finJunta,finLeer,finGuardar,llegadaNomina,nominaCfg,
-  ahorroS,nominaMes,guardiasDelMes,ahorroMes,apartarMes,deshacerApartado,sacarHucha,epocaDe,
+  ahorroS,nominaMes,guardiasDelMes,ahorroMes,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
   estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,estDias,setEstDias,
   arrS,arrLee,arrAplica,ARR_PASOS,
@@ -27528,7 +27586,7 @@ window.PG={regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegl
   frecuentes,buscableDe,racionesDe,previaMacrosDe,apuntaBuscable,
   renderFoodBuscar,renderFoodCantidad,renderFoodVitaminas,renderFoodProductos,renderMisPlatos,
   platosPorAntojo,antojoS,
-  esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,repartoComoRec,cierreAbierto,kcalPlanMedia,kcalCompletar,sinGlutenTexto,neveraGramos,escalaIng,parseIng,
+  esReceta,dishById,iso,momentoAhora,foodCtx,foodBuscables,platosCocinables,cierreAbierto,kcalPlanMedia,kcalCompletar,sinGlutenTexto,neveraGramos,escalaIng,parseIng,
   get monthDate(){return monthDate;},set monthDate(v){monthDate=v;},nextIso,trayectoMin,
   set weekDate(v){weekDate=v;},get weekDate(){return weekDate;},DEFAULTS,
   openDrawer,closeDrawer,CAL_SET,isToday,daySleepLineHTML,dayPanelHTML,modoAvisoHTML,

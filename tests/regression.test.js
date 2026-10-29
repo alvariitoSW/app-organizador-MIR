@@ -4431,6 +4431,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // uno como pagado y se comprueba que lo pendiente baja y lo pagado sube. Encadenado a propósito:
   // el fallo que se busca es el del estado que queda de un gesto al siguiente.
   {
+    // los fijos caen el 1 y el 3: con «hoy» en esos días la fila marcada cambiaba y la prueba caía según el día real;
+    // se congela «hoy» al día 15 del mes en curso durante el bloque (mismo patrón que la 221) y se restaura al final
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const frozen = new Orig(n.getFullYear(), n.getMonth(), 15, 12, 0, 0).getTime();
+      window.__origDate75 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
     await gotoTab('dinero');
     await page.waitForTimeout(200);
     // los recibos siguen en su pantalla (Dinero v7 ya no la enseña en la portada: lo del día a día
@@ -4470,6 +4475,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const n = new Date(), d = window.PG.mesDinero(n.getFullYear(), n.getMonth());
       return { pend: d.pend, pagado: d.pagado, pagos: d.pagos.length };
     });
+    await page.evaluate(() => { if (window.__origDate75) { window.Date = window.__origDate75; delete window.__origDate75; } });
     check('los gastos fijos: el mes suma, marcar uno pagado baja lo pendiente y desmarcarlo lo deshace',
       mes0.fijoTotal === 682.5 && mes0.pend === 682.5 && mes0.pagado === 0 &&
       mes1.pagado === 650 && mes1.pend === 32.5 && mes1.pagos === 1 && mes1.marcada === 1 &&
@@ -4840,22 +4846,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // 1 · la tira: siete días con su estado, y el viernes marcado como choque
     const tira = await page.evaluate(() => {
-      const dd = [...document.querySelectorAll('#main .gsc')];
-      return { n: dd.length,
-        estados: dd.map((e) => e.className.replace('gsc', '').trim().split(' ')[0]),
-        pie: (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim() };
+      // la semana ya no es una tarjeta con círculos: son los 7 bancales/roques de la lámina, cada uno con su frase
+      const dd = [...document.querySelectorAll('#main .glam .gdia')];
+      return { n: dd.length, tarjeta: !!document.querySelector('#main .gsem, #main .gsc'),
+        etiquetas: dd.map((e) => e.getAttribute('aria-label')),
+        pie: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim() };
     });
-    check('«Entreno» abre con la semana delante y el día de choque marcado en rojo',
-      tira.n === 7 && tira.estados.filter((x) => x === 'choque').length >= 1 && /saliente|guardia/i.test(tira.pie),
+    check('«Entreno» abre con la semana en la lámina (7 días) y el día de guardia dicho como guardia, sin la tarjeta de círculos',
+      tira.n === 7 && !tira.tarjeta && tira.etiquetas.filter((x) => /guardia/i.test(x)).length >= 1,
       JSON.stringify(tira));
 
     // 2 · tocar otro día cambia la línea que lo explica (la tira no es decoración)
-    const antesPie = tira.pie;
-    const botLun = await page.$('#main .gsc[data-key="' + mont.lunes + '"]');
+    const antesPie = tira.pie + '|' + mont.jueves;
+    const botLun = await page.$('#main .glam .gdia[data-key="' + mont.lunes + '"]');
     if (botLun) { await botLun.click(); await page.waitForTimeout(300); }
-    const piel = await page.evaluate(() => (document.querySelector('#main .gtiraq') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim());
-    check('tocar un día de la tira cuenta lo que hay ese día, no solo lo selecciona',
-      !!botLun && piel !== antesPie && piel.length > 3, JSON.stringify({ antes: antesPie, ahora: piel }));
+    const piel = await page.evaluate(() => ((document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent + '|' + ((document.querySelector('#main .glam .gdia[aria-current]') || { dataset: {} }).dataset.key || '')).replace(/\s+/g, ' ').trim());
+    check('tocar un día de la lámina lo selecciona y la tarjeta grande cuenta lo que hay ese día',
+      !!botLun && piel !== antesPie && piel.endsWith('|' + mont.lunes), JSON.stringify({ antes: antesPie, ahora: piel }));
 
     // 3 · el descanso por grupo muscular: lo que justifica que hoy toque torso y no pierna (vive en «Progreso»)
     const desc = await page.evaluate(() => {
@@ -5912,19 +5919,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('dinero');
     await page.waitForTimeout(250);
     const toca = async (sel) => { const el = await page.$(sel); if (el) await el.click(); await page.waitForTimeout(200); return !!el; };
-    // apartar y deshacer: lo mismo que hace el botón «Apartado» del plan
-    const rep = await page.evaluate((mk) => { const P = window.PG, a = P.ahorroS();
-      a.meses[mk].aparto = 750; P.apartarMes(mk);
-      const s1 = a.huchas.map((h) => h.saldo);
-      P.deshacerApartado(mk);
-      const s0 = a.huchas.map((h) => h.saldo);
-      P.apartarMes(mk);
-      P.store = JSON.parse(JSON.stringify(P.store));
-      return { s1, s0, vuelta: P.ahorroS().huchas.map((h) => h.saldo) }; }, base.mk);
-    check('Dinero estima la nómina con las guardias de finde y reparte lo que apartas en las huchas',
-      base.finde === 2 && base.total === 3 && base.est === 3066 &&
-      rep.s1.join() === '375,225,150' && rep.s0.join() === '0,0,0' && rep.vuelta.join() === '375,225,150',
-      JSON.stringify({ base, rep }));
+    check('Dinero estima la nómina con las guardias de finde (D6: el reparto en huchas se quitó)',
+      base.finde === 2 && base.total === 3 && base.est === 3066, JSON.stringify({ base }));
     // un festivo entre semana cuenta como guardia de finde; el viernes normal, no
     const fest = await page.evaluate(() => {
       const P = window.PG, a = P.ahorroS();
@@ -6992,17 +6988,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const m0 = await page.evaluate(() => { const P = window.PG, a = P.store.ahorro;
       a.meta = { importe: 10000, fecha: (new Date().getFullYear() + 1) + '-12', para: '' };
       const c = P.metaCalc(); delete a.meta;
-      P.ui.tab = 'dinero'; P.ui.dineroVista = 'huchas'; P.ui.huchaEd = ''; P.save(); P.render();
+      P.save(); P.render();
       return c && { rec: c.rec, falta: c.falta, meses: c.meses }; });
     await page.waitForTimeout(200);
     check('ahorro: con una meta y una fecha, la app dice cuánto apartar al mes',
       m0 && m0.rec > 0 && Math.abs(m0.rec * m0.meses - m0.falta) < m0.meses * 10 + 1,
       JSON.stringify({ m0 }));
-    const hu = await page.$('[data-a="aho-hu-abrir"]');
-    if (hu) await hu.click();
-    await page.waitForTimeout(200);
-    const campos = await page.evaluate(() => document.querySelectorAll('#main input').length);
-    check('huchas: se abre una cada vez (antes 21 campos a la vez)', campos > 0 && campos <= 8, String(campos));
+    // (D6: las pantallas de huchas se quitaron; su comprobación de «una cada vez» se fue con ellas)
 
     // sueño de verdad, en Hoy: dormí mal y se desveló una hora. Ya no hay un segundo formulario
     // plegado: cada trozo lleva su hora de empezar y de acabar, y un hueco entre dos es el desvelo
@@ -8301,7 +8293,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const hoyToca = msgs.some((m) => m.tipo === 'aviso' && /Hoy toca/.test(m.titulo));
       // modo sencillo: sin las cifras de la semana ni «cuántas te quedaban»
       g.modo = 'sencillo'; P.ui.gymPanel = ''; P.render();
-      const kpiS = !!document.querySelector('#main .gkpi');
+      const kpiS = !!document.querySelector('#main .gkpi') || !document.querySelector('#main .glam');   // las cifras de la semana ya no existen; y la lámina sigue
       P.empezarRutina('r212'); const rirS = !!document.querySelector('#main .grir');
       g.modo = 'completo'; P.render(); const rirC = !!document.querySelector('#main .grir');
       // libras: se ve y se escribe en libras, se guarda en kilos
@@ -8359,7 +8351,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.gymDate = K1; P.render();
       const heroS = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
       // y la semana no lo marca como choque ni ofrece «moverla»: la pusiste ahí tú
-      const circS = (document.querySelector('#main .gsc[data-key="' + K1 + '"]') || { className: 'NO' }).className;
+      const circS = (document.querySelector('#main .glam .gdia[data-key="' + K1 + '"]') || { getAttribute: () => 'NO' }).getAttribute('aria-label');
       const avisos = Array.from(document.querySelectorAll('#main .gaviso')).map((x) => x.textContent).join(' | ');
       // 4) sin repintar: se pregunta por K6 (se memoriza «no hay salida»), se pone guardia en K5 y se
       //    exporta. El saliente de K6 tiene que ir a Google
@@ -8374,7 +8366,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('una rutina pegada a propósito al tipo «Saliente» hace de ese día fuerza (no piscina) y sale en la tarjeta grande',
       r.puesS && r.diaS === 'fuerza' && /R213 saliente/.test(r.heroS), JSON.stringify(r));
     check('la rutina pegada a propósito al saliente no se marca como choque ni se ofrece moverla',
-      r.circS !== 'NO' && !/choque/.test(r.circS) && !/de saliente/.test(r.avisos), JSON.stringify(r));
+      r.circS !== 'NO' && /gimnasio|parque/i.test(r.circS) && !/guardia/i.test(r.circS) && !/de saliente/.test(r.avisos), JSON.stringify(r));
     check('una guardia puesta sin repintar lleva su saliente a Google aunque antes se hubiera preguntado por ese día',
       !r.antes && r.salK6, JSON.stringify(r));
   }
@@ -8508,12 +8500,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       try { await el.click({ timeout: 2500 }); } catch (e) { return false; } await page.waitForTimeout(80); return true; };
     // v8: tres pestañas. Hoy = lo que puedes gastar y los recibos de la semana; Ahorro = lo que tienes y
     // cada bolsillo; Mes = el mes cerrado, en qué se fue y lo ahorrado mes a mes
-    const pestana = async (v) => { await clic(`#main .d7seg [data-v="${v}"]`); return page.evaluate(() => { const m = document.querySelector('#main');
+    const pestana = async (v) => { if (v === 'mes') { await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); }); await clic('#main [data-a="d6-tab"][data-v="mes"]'); } else { await clic(`#main .d7seg [data-v="${v}"]`); if (v === 'compras') await page.evaluate(() => { window.PG.render(); }); } return page.evaluate(() => { const m = document.querySelector('#main');
       return { txt: m.innerText.replace(/\s+/g, ' '), metas: m.querySelectorAll('.d7meta').length, cats: m.querySelectorAll('.d6cat').length,
         apartar: !!m.querySelector('[data-v="apartar"]'), alto: m.scrollHeight }; }); };
     const portada = await page.evaluate(() => { const m = document.querySelector('#main');
       return { txt: m.innerText.replace(/\s+/g, ' '), apartar: !!m.querySelector('[data-v="apartar"]'), apunta: !!m.querySelector('[data-a="dinero-apuntar"]'), alto: m.scrollHeight }; });
-    const metas = await pestana('ahorro');
+    // tanda Dinero D3: la portada es el Bosque; los recibos de la semana viven ahora en Gastos
+    const semana = await page.evaluate(() => { const P = window.PG; P.ui.dinTab = 'gastos'; P.render(); return /ESTA SEMANA/.test(document.querySelector('#main').innerText); });
+    const metas = await pestana('compras');   // D4: los bolsillos con sus saldos viven en Compras hasta la D5; Ahorro es el nuevo
     const mes = await pestana('mes');
     // fijo / variable y meta, desde la hoja de gastos que sube encima (la fila «Fijo» del mes cerrado)
     const hojaGastos = await clic('#main [data-a="din-hoja"][data-h="gastos"]');
@@ -8542,40 +8536,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const txt = new TextDecoder('latin1').decode(b);
       return { pk: b[0] === 0x50 && b[1] === 0x4b, libro: txt.includes('xl/workbook.xml'), hojas: (txt.match(/xl\/worksheets\/sheet\d+\.xml/g) || []).length / 2,
         gastos: txt.includes('Gastos por categor') }; });
-    // el reparto (en Ahorro, «Cambiar el reparto») y una hucha nueva desde ahí
-    await clic('#main .subcab .volver');
-    await pestana('ahorro');
-    await clic('#main [data-a="dinero-vista"][data-v="plan"]');
-    const plan7 = await page.evaluate(() => { const m = document.querySelector('#main'); return { txt: m.innerText.replace(/\s+/g, ' '), rep: m.querySelectorAll('.d5pl').length }; });
-    await clic('#main [data-v="hucha-nueva"]');
-    await page.evaluate(() => { const s = (id, v) => { const el = document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
-      const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 7);
-      s('hnNom', 'Japón 216'); s('hnPre', '2400'); s('hnYa', '300'); s('hnPara', d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')); });
-    const cuando = await page.evaluate(() => (document.getElementById('hnRes') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
-    const creada = await clic('#main [data-a="hn-crear"]');
-    const h = await page.evaluate(() => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.nombre === 'Japón 216')[0];
-      return x ? { id: x.id, saldo: x.saldo, objetivo: x.objetivo, mensual: x.mensual, reparto: P.repartoDe(600)[x.id], puro: P.repartoDe(600)['hu-colchon'] } : null; });
-    let deseo = null;
-    if (h) {
-      // creada, vuelve a Metas; su fila abre la hoja encima
-      await clic(`#main .d7meta[data-id="${h.id}"]`);
-      await clic(`.din4h [data-a="deseo-nuevo"][data-h="${h.id}"]`);
-      await page.evaluate(() => { const t = document.getElementById('dsTxt'), p = document.getElementById('dsPre'); if (t) t.value = 'Vuelos 216'; if (p) p.value = '900'; });
-      await clic(`.din4h [data-a="deseo-add"][data-h="${h.id}"]`);
-      await clic(`.din4h [data-a="deseo-ok"][data-h="${h.id}"]`);
-      deseo = await page.evaluate((id) => { const P = window.PG, x = P.store.ahorro.huchas.filter((q) => q.id === id)[0];
-        const vuelta = P.normalize ? P.normalize(JSON.parse(JSON.stringify(P.store))) : null;
-        const y = vuelta && vuelta.ahorro ? vuelta.ahorro.huchas.filter((q) => q.id === id)[0] : null;
-        return { lista: (x.deseos || []).map((d) => d.txt + ':' + d.hecho).join(','), trasRecargar: y ? (y.deseos || []).length + '/' + y.mensual : 'sin normalize' }; }, h.id);
-    }
+    // (D6: el reparto por % y las huchas nuevas ya no existen; sus comprobaciones se quitaron con ellos)
     await page.mouse.click(200, 30); await page.waitForTimeout(120);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia216; P.save(); P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('Dinero v8: Hoy dice lo que puedes gastar y los recibos de la semana, sin apuntar gastos; Ahorro, cada bolsillo; Mes, en qué se fue; el reparto, con su sugerencia',
-      /PUEDES GASTAR/.test(portada.txt) && /ESTA SEMANA/.test(portada.txt) && !portada.apunta && portada.alto < 1000 &&
-      /TIENES AHORRADO/.test(metas.txt) && metas.metas >= 3 && /no se toca/.test(metas.txt) && metas.alto < 1000 &&
+    check('Dinero v8 (D3): la portada es el Bosque y no dice «puedes gastar»; Gastos enseña los recibos de la semana; Ahorro, cada bolsillo; Mes, en qué se fue; ',
+      /bosque/i.test(portada.txt) && !/PUEDES GASTAR/.test(portada.txt) && semana && portada.alto < 1000 &&
       /CERRADO/.test(mes.txt) && /EN QUÉ SE FUE/.test(mes.txt) && mes.cats >= 2 &&
-      plan7.rep >= 2 && (/Aplicar la sugerencia/.test(plan7.txt) || /coincide con lo recomendado/.test(plan7.txt)) &&
-      !portada.apartar && !metas.apartar, JSON.stringify({ portada: [portada.alto, portada.apunta, portada.txt.slice(0, 120)], metas: [metas.metas, metas.alto], mes: [mes.cats, mes.txt.slice(0, 120)], plan7: plan7.rep }));
+      !portada.apartar && !metas.apartar, JSON.stringify({ portada: [portada.alto, portada.apunta, portada.txt.slice(0, 120)], mes: [mes.cats, mes.txt.slice(0, 120)] }));
     check('la hoja de gastos separa fijos y variables (alquiler fijo solo), se cambia a mano y pone meta; toca fuera y se cierra',
       hojaGastos && g1 && g1.fijos >= 1 && g1.variables >= 2 && aFijo && tipo === 'fijo' && pon && meta > 0 && cerrada,
       JSON.stringify({ hojaGastos, g1, aFijo, tipo, pon, meta, cerrada, enPunto }));
@@ -8583,11 +8550,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       aHoja && hoja && hoja.filas >= 4 && hoja.cols >= 4 && hoja.enOrden && hoja.cabeTodo, JSON.stringify(hoja));
     check('«Descargar Excel» baja un .xlsx de verdad (zip con libro, resumen, gastos y huchas)',
       /\.xlsx$/.test(descarga) && xlsx.pk && xlsx.libro && xlsx.hojas >= 4 && xlsx.gastos, JSON.stringify({ descarga, xlsx }));
-    check('nueva meta: con precio, lo que tienes y para cuándo, dice cuánto apartar al mes y al día',
-      /PARA LLEGAR/.test(cuando) && /300 €\/mes/.test(cuando) && /7 meses/.test(cuando) && /€\/día/.test(cuando), cuando);
-    check('la meta se crea con lo que pide al mes: la mitad va antes a ahorro puro, luego su fijo; y la lista de deseos sobrevive a recargar',
-      creada && h && h.saldo === 300 && h.objetivo === 2400 && h.mensual === 300 && h.reparto === 300 && h.puro === 300 &&
-      deseo && deseo.lista === 'Vuelos 216:true' && deseo.trasRecargar === '1/300', JSON.stringify({ h, deseo }));
   }
 
   // 217) BUSCADOR QUE NO SE CONGELA + INTERNET SOLO + CERRAR LA HOJA ARRASTRANDO, encadenado:
@@ -8676,30 +8638,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !trasHoja.hoja && trasHoja.r && trasHoja.r.h === 8 && trasHoja.r.kss === 3 && trasHoja.r.acostar === '23:00' && trasHoja.r.desp === '07:00' &&
       trasHoja.r.tr.some((x) => x[0] === 23 && x[1] === 31 && !x[2]), JSON.stringify(trasHoja));
 
-    const din = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
-      a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: 'no se toca', saldo: 5000, mensual: 0, deseos: [] },
-        { id: 'hu-v', nombre: 'Viajes', ico: '✈️', color: '#38bdf8', pct: 60, objetivo: 0, meta: '', saldo: 800, mensual: 0, deseos: [] },
-        { id: 'hu-c', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 40, objetivo: 0, meta: '', saldo: 300, mensual: 0, deseos: [] }];
-      a.puroId = 'hu-colchon'; a.puroPct = 50; P.ui.dinGaste = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorros'; P.ui.dineroVista = ''; P.render();
-      return { total: [...document.querySelectorAll('.d7meta .v')].map((e) => e.textContent).join('|'), filas: document.querySelectorAll('.d7meta').length }; });
-    await page.click('[data-a="din-hoja"][data-h="gaste"]'); await page.waitForTimeout(120);
-    await page.click('.hoja [data-a="din-gaste-de"][data-id="hu-v"]'); await page.waitForTimeout(80);
-    await page.fill('#dgImp', '1000'); await page.fill('#dgTxt', 'Viaje a Lisboa');
-    const foco = await page.evaluate(() => (document.activeElement || {}).id);
-    const queda = await page.evaluate(() => (document.getElementById('dgQueda') || {}).innerText || '');
-    await page.click('.hoja [data-a="din-gaste-ok"]'); await page.waitForTimeout(120);
-    const trasG = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja'), s: window.PG.ahorroS().huchas.map((h) => h.saldo), mov: (window.PG.ahorroS().movs[0] || {}).txt }));
-    check('«Gasté de mis ahorros»: 1.000 € salen de Viajes (800) y lo que falta de Caprichos; el intocable sigue igual',
-      /5\.000/.test(din.total) && din.filas === 3 && foco === 'dgTxt' && /5\.100/.test(queda) &&
-      !trasG.hoja && trasG.s.join() === '5000,0,100' && trasG.mov === 'Viaje a Lisboa', JSON.stringify({ din, foco, queda, trasG }));
-    const plan = await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'plan'; P.render();
-      const set = (id, v) => { const el = document.querySelector('input[data-a="din-plan-pct"][data-id="' + id + '"]'); el.value = v; el.dispatchEvent(new Event('change', { bubbles: true })); };
-      set('hu-v', 40); const a1 = [...document.querySelectorAll('.d5pl .pc')].map((e) => parseInt(e.textContent, 10));
-      set('hu-colchon', 20); const a2 = [...document.querySelectorAll('.d5pl .pc')].map((e) => parseInt(e.textContent, 10));
-      P.ui.dineroVista = ''; P.render(); return { a1, a2 }; });
-    const suma = (x) => x.reduce((s, v) => s + v, 0);
-    check('«Mi plan»: al mover un bolsillo los demás se ajustan para sumar 100 y el intocable no baja de 50',
-      plan.a1.join() === '50,40,10' && suma(plan.a2) === 100 && plan.a2[0] === 50, JSON.stringify(plan));
+    // (D6: «Gasté de mis ahorros» y «Mi plan» (reparto por %) se quitaron; sus comprobaciones, con ellos)
 
     const bw = await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'sano';
       P.ui.bowl = { tipo: 'equi', obj: { kcal: 600, p: 40, c: 65, gr: 20 }, it: [['arroz', 150], ['salmon', 100], ['aguacate', 50], ['mayosri', 15]], paso: 4, n: '', e: '' }; P.render();
@@ -8801,21 +8740,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const M = d6.M;
     check('Dinero · Mes: «puedes gastar hoy» = lo variable que queda (sin fijos ni ahorro) entre los días que faltan, con el día a día de 6 meses; lo apuntado tras la captura ya cuenta',
       M.presu === Math.max(0, M.ingreso - M.fijos - M.ahorro) && M.queda === Math.max(0, M.presu - M.gastado) && M.hoyMax === Math.floor(M.queda / M.dias) &&
-      d6.big.indexOf(String(M.hoyMax).replace(/\B(?=(\d{3})+(?!\d))/g, '.')) === 0 && d6.hoy &&
+      !d6.hoy &&   // D3: Dinero ya no enseña «puedes gastar hoy» (acta del 28/10); queda el cálculo
       (d6.sin === null || (d6.sin.mas === 50 && d6.sin.n === 1)), JSON.stringify(d6));
     // v8: el análisis vive en Mes (el mes cerrado, solo lo del día a día) con su consejo
-    await page.click('#main .d7seg [data-v="mes"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); }); await page.click('#main [data-a="d6-tab"][data-v="mes"]'); await page.waitForTimeout(150);
     const an = await page.evaluate(() => ({ n: document.querySelectorAll('.din6 .d6cat').length, cats: [...document.querySelectorAll('.din6 .d6cat')].map((b) => b.dataset.c),
       tips: [...document.querySelectorAll('#main .card .mini b')].map((e) => e.textContent) }));
     await page.click('.d6cat[data-c="Restaurantes"]'); await page.waitForTimeout(150);
     await page.click('[data-a="din-meta"][data-c="Restaurantes"]'); await page.waitForTimeout(120);
     const cat = await page.evaluate(() => ({ barras: document.querySelectorAll('.d6m > div').length, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), meta: (window.PG.store.ahorro.catCfg || {}).Restaurantes }));
-    // la salud financiera ya no es pantalla: su ruta vieja lleva a Ahorro, donde el colchón dice cuántos meses cubre
-    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); });
+    // Ahorro (la ruta vieja «salud» ya no existe), donde el colchón dice cuántos meses cubre
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.dinTab = 'ahorro'; P.render(); });
     const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { ahorro: /TIENES AHORRADO/.test(t), colchon: /meses de gastos/.test(t), vista: window.PG.ui.dineroVista }; });
+      return { ahorro: /Tu bosque, mes a mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
     await page.evaluate(() => { const P = window.PG; if (window.__origDate221) { window.Date = window.__origDate221; delete window.__origDate221; } P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Salud lleva a Ahorro',
+    check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Ahorro es el bosque mes a mes',
       an.n >= 3 && !an.cats.includes('Alquiler y casa') && an.tips.some((t) => /Restaurantes a \d+ €/.test(t)) && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
       sal.ahorro && sal.colchon && sal.vista === '', JSON.stringify({ an, cat: { barras: cat.barras, meta: cat.meta }, sal }));
   }
@@ -8845,8 +8784,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   //  · Comer tiene cuatro pestañas (Hoy · Semana · Nevera · Compra); «Móntamela» llena la semana con
   //    lo que hay; «Hoy cocino» apunta lo cocinado con los días que aguanta; Hoy se apunta con ✓ y ±;
   //  · el ticket de Mercadona (texto como el que sale del OCR) va a la nevera y a una lista habitual;
-  //  · «Aplicar a mis bolsillos» crea inversión y caprichos, y el colchón puede bajar del 50 % porque
-  //    lo que no se toca es colchón + inversión; una meta con fecha pide su €/mes;
   {
     await page.evaluate(() => { const P = window.PG; window.__copia223 = JSON.parse(JSON.stringify(P.store));
       P.store.semBase = { on: true, d: {} };
@@ -8873,19 +8810,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const r = P.ticketLeer('MERCADONA, S.A.\n1 LECHE SEMIDESNATADA 0,89\n2 HUEVOS FRESCOS L 2,35 4,70\n1 PECHUGA POLLO FILETE 5,49\n0,862 kg PLATANO 2,19/kg 1,89\nTOTAL (€) 12,97');
       P.tkHabitual(r.items); const l = (P.store.listas || []).filter((x) => x.habitual)[0];
       return { n: r.items.length, platano: r.items.some((x) => /pl[aá]tano/i.test(x.nom) && !/\/kg/.test(x.nom)), total: r.total, habitual: l ? l.items.length : 0 }; });
-    const din = await page.evaluate(() => { const P = window.PG, a = P.ahorroS();
-      a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 0, objetivo: 0, meta: '', saldo: 3000, mensual: 0, deseos: [] },
-        { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#38bdf8', pct: 50, objetivo: 2400, meta: '', saldo: 800, mensual: 0, deseos: [], para: '' },
-        { id: 'hu-p', nombre: 'Juego de la Play', ico: '🎮', color: '#fbbf24', pct: 50, objetivo: 70, meta: '', saldo: 50, mensual: 0, deseos: [] }];
-      a.puroId = 'hu-colchon'; a.puroPct = 50;
-      const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 4); a.huchas[1].para = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-      const c = P.metaHucha(a.huchas[1]);
-      P.ui.tab = 'dinero'; P.ui.dineroVista = 'plan'; P.ui.dinTab = 'ahorro'; P.render();
-      return { men: c.men, meses: c.meses, dia: c.dia, rep: document.querySelectorAll('.d5pl').length }; });
-    await page.click('#main [data-a="din7-aplicar"]'); await page.waitForTimeout(150);
-    const tras = await page.evaluate(() => { const P = window.PG, hs = P.ahorroS().huchas;
-      return { puro: P.puroPct(), min: P.puroMin(), inv: hs.some((h) => /Inversión/.test(h.nombre)), cap: hs.some((h) => /Caprichos/.test(h.nombre)),
-        japon: hs.filter((h) => h.id === 'hu-j')[0].mensual, suma: Object.values(P.repartoDe(1000)).reduce((s, v) => s + v, 0) }; });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia223; P.save(); P.ui.ajuVista = ''; P.ui.dinTab = ''; P.ui.foodVista = ''; P.ui.typesVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Cocina simple: Hoy · Semana · Nevera · Compra; «Móntamela» llena huecos con lo que hay; «Hoy cocino» guarda raciones con los días que aguanta; ✓ apunta el día',
       tabs.length === 3 && /Hoy/.test(tabs[0]) && /Semana/.test(tabs[1]) && /Casa/.test(tabs[2]) &&
@@ -8907,10 +8831,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       real.vida.join() === '1,10,30,no,365', JSON.stringify(real));
     check('ticket de Mercadona: lee los productos (el plátano sin el «€/kg»), el total, y guarda la compra como lista habitual',
       tk.n === 4 && tk.platano && Math.abs(tk.total - 12.97) < 0.01 && tk.habitual === 4, JSON.stringify(tk));
-    check('Dinero v7: una meta con fecha pide su €/mes y €/día; «Aplicar» crea inversión y caprichos, el colchón baja a 30 % y el reparto suma todo',
-      // el reparto es el de tus bolsillos (una fila por bolsillo); el recomendado va dentro como sugerencia
-      din.men > 0 && din.meses === 4 && din.dia >= 1 && din.rep >= 2 &&
-      tras.puro === 30 && tras.min === 10 && tras.inv && tras.cap && tras.japon === din.men && tras.suma === 1000, JSON.stringify({ din, tras }));
+    // (D6: «Aplicar a mis bolsillos» y la meta con fecha de las huchas se quitaron; su comprobación, con ellos)
   }
 
   // 224) SEGUIMIENTO Y CLASIFICACIÓN DE PLATOS: ✓ en Hoy apunta «del plan» y pregunta «¿qué tal?» por
@@ -9075,8 +8996,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
   // 228) PLAN DE LA SEMANA CON LO QUE HAY y DINERO EDITABLE: con el menú vacío, «Móntamela» rellena las
   // 21 comidas con lo de la nevera; el día de guardia come y cena «Menú del hospital (aprox.)»; Hoy enseña
-  // el plan; Hoy cocino ofrece platos de la nevera y «hecho» lo cocina. En Dinero se cambia el % de ahorro,
-  // el reparto (siempre suma 100, y vuelve al recomendado) y lo que llevas en una hucha
+  // el plan; Hoy cocino ofrece platos de la nevera y «hecho» lo cocina. En Dinero se cambia el % de ahorro
   {
     const NOMS = ['pechuga pollo ajillo', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino', 'jamón extrafino', 'maria sin gluten',
       'picada de vacuno', 'mayonesa pequeña', 'leche desnatada, prot p6', 'nuez natural', 'queso feta', 'baguette sin gluten', 'kiwi verde bandeja',
@@ -9101,27 +9021,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hc = await page.$$eval('.hcop .t b', (e) => e.map((x) => x.textContent));
     const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).length);
-    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.tab = 'dinero'; P.ui.dinTab = 'plan'; P.ui.dineroVista = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorro'; P.ui.dineroVista = ''; P.render(); });
     const m0 = await page.evaluate(() => window.PG.ahorroS().metaPct);
     await page.click('[data-a="d7-meta"][data-d="5"]'); await page.waitForTimeout(80);
     const m1 = await page.evaluate(() => window.PG.ahorroS().metaPct);
-    // un solo reparto: el de tus bolsillos; el recomendado es una sugerencia que se aplica a ellos
-    await page.click('#main [data-a="dinero-vista"][data-v="plan"]'); await page.waitForTimeout(100);
-    const sug = await page.$('#main [data-a="din7-aplicar"]'); if (sug) { await sug.click(); await page.waitForTimeout(100); }
-    const plan = await page.evaluate(() => { const P = window.PG, c = P.repartoComoRec(), r = {}; P.din7Reparto().forEach((x) => { r[x[0]] = x[1]; });
-      return { p: c, suma: Object.values(c).reduce((a, b) => a + b, 0), rec: r, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ') }; });
-    const rec = /coincide con lo recomendado/.test(plan.txt) && !plan.txt.includes('LA APP TE SUGIERE');
-    await page.click('#main .subcab .volver'); await page.waitForTimeout(100);
-    const meta = await page.$('.d7meta[data-h="hucha"]'); if (meta) { await meta.click(); await page.waitForTimeout(120); }
-    const inp = await page.$('input[data-a="din-hu-campo"][data-k="saldo"]');
-    if (inp) { await inp.fill('1234,5'); await inp.dispatchEvent('change'); await page.waitForTimeout(120); }
-    const hu = await page.evaluate(() => window.PG.ahorroS().huchas.some((h) => h.saldo === 1234.5));
+    // (D6: el reparto por bolsillos, su sugerencia y corregir lo que llevas en una hucha se quitaron con ellas)
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia228; P.save(); P.ui.foodVista = ''; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('«Móntamela» con el menú vacío rellena la semana con lo de la nevera, y la guardia come y cena el menú del hospital',
       r.guardia && /comidas puestas/.test(sb.flash) && sb.llenas >= 18 && sb.hosp.includes('3comida') && sb.hosp.includes('3cena') && !sb.hosp.includes('3desayuno') && hoy >= 3, JSON.stringify({ r, sb, hoy }));
     check('Hoy cocino ofrece platos de tu nevera y «hecho» lo deja cocinado', hc.length >= 2 && coc >= 1, JSON.stringify({ hc, coc }));
-    check('Dinero: el % de ahorro y el reparto se cambian (suma 100 y vuelve al recomendado) y lo que llevas en una hucha se corrige a mano',
-      m1 === (m0 == null ? 30 : m0) + 5 && Math.abs(plan.suma - 100) <= 2 && plan.p.inversion > 0 && rec && hu, JSON.stringify({ m0, m1, plan: [plan.p, plan.rec], rec, hu }));
+    check('Dinero: el % de ahorro se cambia desde Ahorro',
+      m1 === (m0 == null ? 30 : m0) + 5, JSON.stringify({ m0, m1 }));
   }
 
   // 229) LA SEMANA LLEGA A LA PROTEÍNA: «Móntamela» reparte la proteína (desayunos con proteína de
@@ -9806,8 +9716,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const dias = (diario) => { P.store.lloret = { diario }; P.save(); P.render();
         return P.entrenoSemana(k).dias.map((x) => (x.apto ? 'A' : '') + (x.choca ? 'C' : '')).join(','); };
       const sin = dias(false), con = dias(true);
-      const div = document.createElement('div'); div.innerHTML = P.gymSemanaCirculos(k);
-      const hoja = div.textContent;
+      const hoja = P.laminaDatos(k).dias.map((x) => x.txt + ' ' + x.corto).join(' ');   // lo que dice la lámina de cada día
       P.store = c; P.save(); P.render(); return { sin, con, hoja12: /🌿/.test(hoja) }; });
     check('el Lloretazo diario no quita entrenos ni sale como 🌿 en Entreno', ent.sin === ent.con && !ent.hoja12, JSON.stringify(ent));
     check('en guardia de UMI la comida es a las 13:45', !r.kg || r.comidaUmi === '13:45', JSON.stringify(r));
@@ -9939,15 +9848,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const lib = P.store.shifts.find((s) => /libre/i.test(s.name)); P.store.rotation.mode = 'date'; P.setDayOverride(sab, lib.id, '');
       const g = P.gymS(); g.hora = ''; g.piscinaSal = {}; g.forzar = {}; g.forzar[sab] = true;
       g.rutinas = [{ id: 'rv', nombre: 'Vacía', notas: '', ejercicios: [] }, { id: 'rf', nombre: 'Fuerza', notas: '', ejercicios: [{ ex: 'Sentadilla', sets: [{ kg: 60, reps: 8 }] }] }];
-      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '17:00', fin: '18:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
+      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
       P.render();
       const s = P.entrenoSemana(sab), x = s.dias.find((d) => d.k === sab);
       const out = { hora: x.hora, movido: !!x.movido, choca: !!x.choca, perdido: !!x.perdido,
         agenda: P.agendaDia(sab).filter((a) => a.tipo === 'gym').map((a) => a.hora),
         asig: Object.values(s.asig).map((q) => q.nombre), pisc: P.entrenoCfg().pisc.hora };
       P.store = c; P.save(); P.render(); return out; });
-    check('el entreno del sábado con dentista a las 17:00 se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
-      r.hora !== '17:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
+    check('el entreno del sábado con dentista a las 10:00 (la hora fija del fin de semana) se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
+      r.hora !== '10:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
       r.asig.indexOf('Vacía') < 0 && r.asig.indexOf('Fuerza') >= 0 && r.pisc === '18:00', JSON.stringify(r));
   }
 
@@ -10188,6 +10097,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     for (let i = 0; i < 8; i++) pasos.push(await cl('[data-a="cn-cudit-r"][data-v="1"]'));
     pasos.push(await cl('[data-a="cn-tb"][data-v="7"]'));
     const plan = await page.evaluate(() => { const c = window.PG.consumoS(); return { cudit: c.cudit.length && c.cudit[0].p, tb: !!(c.plan.tb && c.plan.tb.dias === 7) }; });
+    // el check-in de la mañana no sale antes de las 5: se fija la hora a las 12:00 de hoy (mismo patrón que la 75) para que no dependa de cuándo corre la suite
+    await page.evaluate(() => { const Orig = Date, n = new Orig(); const fijo = new Orig(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0).getTime();
+      window.__origDate257 = Orig; window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fijo); else super(...a); } static now() { return fijo; } }; });
     // asistente en Hoy: check-in y una sola tarjeta; × la silencia
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
     const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj:not(.din):not(.cn)').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
@@ -10196,6 +10108,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const antes = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
     pasos.push(await cl('#main .astj [data-a="asist-sil"]'));
     const despues = await page.evaluate(() => (window.PG.asistTarjeta(window.PG.iso(new Date())) || {}).id || '');
+    await page.evaluate(() => { window.Date = window.__origDate257; });
     // hábitos: Tu semana y un experimento
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = ''; P.render(); });
     pasos.push(await cl('[data-a="hab-vista"][data-v="rev"]'));
@@ -10467,7 +10380,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.ed = await page.evaluate(() => ({ v: (document.getElementById('dinGast') || {}).value, mk: (document.querySelector('#main [data-a="din-gastado"]') || { dataset: {} }).dataset.mk, filas: document.querySelectorAll('#main .dcifl').length }));
     await page.fill('#dinGast', '1300'); await page.click('#main [data-a="din-gastado"]'); await page.waitForTimeout(150);
     r.vuelta = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); return P.ahorroS().gastado; });
-    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'salud'; P.render(); }); await page.waitForTimeout(150);
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.dinTab = 'ahorro'; P.render(); }); await page.waitForTimeout(150);
     r.salud = await page.evaluate(() => (document.querySelector('#main').innerText || '').replace(/\s+/g, ' '));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia262; P.save(); P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.dinGastEd = ''; P.ui.tab = 'hoy'; P.render(); });
     const [m1, m2, m3] = r.mks;
@@ -10511,31 +10424,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hu-caprichos', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 310 }];
       a.puroId = 'hu-colchon'; a.puroPct = 50;
       const A = P.asistS(); A.sil = {}; A.nunca = {};
-      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.ui.bk = null; P.save(); P.render();
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render();
       const m = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { estima: /PUEDES GASTAR AL DÍA/.test(m), pide: /¿Cuánto tienes en el banco\?/.test(m), apunta: !!document.querySelector('#main [data-a="dinero-apuntar"]') }; });
-    // a mano: las dos cuentas de serie, con su saldo
-    await page.click('#main [data-a="bk-mano"]'); await page.waitForTimeout(150);
-    await page.fill('#main input[data-a="bk-v"][data-i="0"]', '1.670,32'); await page.keyboard.press('Tab'); await page.waitForTimeout(120);
-    await page.fill('#main input[data-a="bk-v"][data-i="1"]', '4810'); await page.keyboard.press('Tab'); await page.waitForTimeout(120);
-    r.cuadre = await page.evaluate(() => ({ txt: ((document.querySelector('#main .bkcuadre') || {}).innerText || '').replace(/\s+/g, ' '),
-      on: ((document.querySelector('#main .bkcuadre .hchip.on') || {}).textContent || '') }));
-    await page.click('#main [data-a="bk-cuadre"][data-v="rep"]'); await page.waitForTimeout(100);
-    await page.click('#main [data-a="bk-guardar"]'); await page.waitForTimeout(200);
+      // tanda Dinero D3: Dinero ya no enseña «Te queda / Puedes gastar hoy» (acta del 28/10); lo que se comprueba es el cálculo y que el Bosque no pide apuntar gastos
+      return { estima: P.bkQueda() === null && !/PUEDES GASTAR|TE QUEDA/.test(m), pide: !!P.d6Mes().presu, apunta: !!document.querySelector('#main [data-a="dinero-apuntar"]') }; });
+    // D6: la pantalla del banco ya no existe; lo leído antes sigue guardado. Se siembra una captura de las dos cuentas de serie
+    // (1.670,32 € y 4.810 €) y se comprueba que el asistente y el cálculo la siguen usando
+    await page.evaluate(() => { const P = window.PG, b = P.bancoS(), s = {};
+      if (!b.cuentas.length) b.cuentas = [{ id: 'cb1', nombre: 'Cuenta nómina', num: '', rol: 'gasto' }, { id: 'cb2', nombre: 'Cuenta ahorro', num: '', rol: 'ahorro' }];
+      s[b.cuentas.filter((c) => c.rol === 'gasto')[0].id] = 1670.32; s[b.cuentas.filter((c) => c.rol === 'ahorro')[0].id] = 4810;
+      b.capturas.unshift({ fecha: P.iso(new Date()), hora: '10:00', s }); P.save(); P.render(); });
     r.hoy = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(), m = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { saldo: Q.saldo, rv: Q.rv, ap: Q.ap, queda: Q.queda, dia: Q.dia, big: ((document.querySelector('#main .dhero .dbig') || {}).textContent || '').replace(/\s+/g, ' '),
-        bols: P.ahorroS().huchas.map((h) => h.saldo).join(','), asis: ((document.querySelector('#main .dasis') || {}).innerText || '').replace(/\s+/g, ' '),
+      return { saldo: Q.saldo, rv: Q.rv, ap: Q.ap, queda: Q.queda, dia: Q.dia, big: String(Q.queda),
+        bols: P.ahorroS().huchas.map((h) => h.saldo).join(','), asis: (() => { const t = P.dinAsis(false); return t ? JSON.stringify(t).replace(/\s+/g, ' ') : ''; })(),
         recibos: (Q.rec || []).map((x) => x.g.nombre).join(','), m: m.slice(0, 200) }; });
-    // «ya lo he apartado»: lo de este mes, a los bolsillos, y ya no se resta
-    await page.click('#main [data-a="din-apartar-meta"]'); await page.waitForTimeout(150);
-    r.apartado = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(); return { ap: Q.ap, hecho: Q.hecho, queda: Q.queda,
-      total: Math.round(P.ahorroS().huchas.reduce((s, h) => s + h.saldo, 0)), ok: /ya apartado/.test(document.querySelector('#main .dhero').innerText) }; });
-    await page.click('#main .d7seg [data-v="ahorro"]'); await page.waitForTimeout(150);
-    r.ahorro = await page.evaluate(() => ({ txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), cuadrar: !!document.querySelector('#main [data-a="bk-cuadrar"]') }));
-    await page.click('#main [data-a="bk-cuadrar"]'); await page.waitForTimeout(150);
-    r.cuadrar = await page.evaluate(() => ({ vista: window.PG.ui.dineroVista, txt: ((document.querySelector('#main .bkcuadre') || {}).innerText || '').replace(/\s+/g, ' ') }));
-    await page.click('#main [data-a="bk-descartar"]'); await page.waitForTimeout(120);
-    await page.click('#main .d7seg [data-v="mes"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); }); await page.click('#main [data-a="d6-tab"][data-v="mes"]'); await page.waitForTimeout(150);
     r.mes = await page.evaluate(() => ({ txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), cats: document.querySelectorAll('#main .d6cat').length }));
     // la frase del asistente, también en Hoy; y sobrevive a recargar (normalize)
     r.app = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); const b = P.bancoS();
@@ -10547,11 +10450,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.sueldo = await page.evaluate(() => ({ tit: (document.querySelector('#main .subtit') || {}).textContent, epoca: !!document.querySelector('#main [data-a="aho-ep"]') }));
     await page.click('#main [data-a="din-a-aju"]'); await page.waitForTimeout(120);
     r.vuelta = await page.evaluate(() => window.PG.ui.tab + ':' + /Ajustes/.test((document.querySelector('#main .subtit') || {}).textContent || ''));
-    // el lector de texto: tres pantallas de banco distintas
-    r.parse = await page.evaluate(() => { const P = window.PG, f = (t) => P.bancoParse(t).map((c) => c.nombre + '|' + c.num + '|' + c.v + '|' + (c.ok ? 1 : 0) + (c.total ? '|T' : ''));
-      return [f('Mis cuentas\nCuenta Online Sin Comisiones\nES12 3456 7890 1234 5678 4821\nSaldo disponible\n1.670,32 €\nCuenta Ahorro\n**** 0937\n4.810,00 €'),
-        f('Posición global 6.480,32 €\nCuenta NÓMINA ···4821  1.670,32 €\nCuenta Naranja ···0937  4.810,00 €'),
-        f('Cuenta Smart\n1.670,32\nEUR\nDisponible 1.650,00 EUR')]; });
     // lo gastado con dos capturas, una antes de cada nómina: lo que entró menos lo que creció lo tuyo
     r.gasto = await page.evaluate(() => { const P = window.PG, b = P.bancoS(), h = new Date();
       const mk = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
@@ -10562,42 +10460,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       b.capturas.sort((p, q) => (q.fecha + q.hora).localeCompare(p.fecha + p.hora));
       const n = P.nominaMes(new Date(h.getFullYear(), h.getMonth() - 3, 1).getFullYear(), new Date(h.getFullYear(), h.getMonth() - 3, 1).getMonth()).neto;
       return { g: P.bkGastoMes(mk(2)), espera: Math.round(n - (4850 - 4300)) }; });
-    // el lector de verdad (vendor/ocr) sobre una captura de banco dibujada aquí
-    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 900; c.height = 640;
-      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 640); x.fillStyle = '#111'; x.font = '42px sans-serif';
-      x.fillText('Cuenta Online **** 4821', 50, 120); x.fillText('1.670,32 €', 560, 200);
-      x.fillText('Cuenta Ahorro **** 0937', 50, 360); x.fillText('4.810,00 €', 560, 440);
-      return c.toDataURL('image/png').split(',')[1]; });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = 'banco'; P.ui.bk = null; P.render(); });
-    const inp = await page.$('#main input[data-a="bk-fotos"]');
-    if (inp) { await inp.setInputFiles({ name: 'banco.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
-      try { await page.waitForFunction(() => window.PG.ui.bk && window.PG.ui.bk.estado !== 'leyendo', null, { timeout: 120000 }); } catch (e) { /* abajo */ } }
-    r.ocr = await page.evaluate(() => { const B = window.PG.ui.bk || {}; return { estado: B.estado, msg: B.msg, c: (B.cuentas || []).map((c) => c.num + ':' + c.v + ':' + c.rol) }; });
-    await page.evaluate(() => { const P = window.PG; if (window.__origDate263) { window.Date = window.__origDate263; delete window.__origDate263; } P.store = window.__copia263; P.save(); P.ui.bk = null; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.ajuVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; if (window.__origDate263) { window.Date = window.__origDate263; delete window.__origDate263; } P.store = window.__copia263; P.save(); P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.ajuVista = ''; P.ui.tab = 'hoy'; P.render(); });
     const Hq = r.hoy;
     check('Dinero sin banco estima lo del día con tu nómina y tus recibos, pide una captura y no pide apuntar gastos',
       r.ini.estima && r.ini.pide && !r.ini.apunta, JSON.stringify(r.ini));
-    check('a mano, el saldo de cada cuenta; la diferencia con tus bolsillos se cuadra (150 € repartidos como siempre)',
-      /4\.660 €/.test(r.cuadre.txt) && /4\.810 €/.test(r.cuadre.txt) && /150 €/.test(r.cuadre.txt) && /Colchón/.test(r.cuadre.on) && Hq.bols === '3275,1195,340', JSON.stringify({ c: r.cuadre, bols: Hq.bols }));
     check('Hoy: te queda = saldo − recibos que faltan hasta la nómina − lo que toca apartar, y el asistente avisa del recibo de mañana',
       Hq.saldo === 1670.32 && /Alquiler/.test(Hq.recibos) && Hq.ap === 602 && Hq.queda === Math.round(Hq.saldo - Hq.rv - Hq.ap) && Hq.big.indexOf(String(Hq.queda).replace(/\B(?=(\d{3})+(?!\d))/g, '.')) === 0 &&
       /alquiler \(650 €\)/.test(Hq.asis) && /descontado/.test(Hq.asis), JSON.stringify(Hq));
-    check('«ya lo he apartado» mete lo del mes en los bolsillos y deja de restarse de lo que te queda',
-      r.apartado.ap === 0 && r.apartado.hecho && r.apartado.queda === Hq.queda + Hq.ap && r.apartado.total === 4810 + 602 && r.apartado.ok, JSON.stringify(r.apartado));
-    check('Ahorro dice lo que hay en el banco y avisa si no cuadra con los bolsillos; «Cuadrarlo» abre el cuadre',
-      /TIENES AHORRADO 4\.810/.test(r.ahorro.txt) && /faltan 602 €/.test(r.ahorro.txt) && r.ahorro.cuadrar && r.cuadrar.vista === 'banco' && /Faltan 602 €/.test(r.cuadrar.txt), JSON.stringify({ a: r.ahorro.txt.slice(0, 260), c: r.cuadrar }));
     check('Mes enseña el mes cerrado con Fintonic y en qué se fue el día a día',
       /CERRADO/.test(r.mes.txt) && /Ahorraste 585 €/.test(r.mes.txt) && r.mes.cats >= 3, r.mes.txt.slice(0, 300));
     check('las cuentas y sus saldos sobreviven a recargar y la frase de dinero sale también en Hoy',
       r.app.cuentas === 'Cuenta nómina:gasto|Cuenta ahorro:ahorro' && r.app.caps === 1 && /1670\.32/.test(r.app.s) && /alquiler/.test(r.app.din), JSON.stringify(r.app));
     check('Tu sueldo está en Ajustes y vuelve a Ajustes', r.sueldo.tit === 'Tu sueldo' && r.sueldo.epoca && r.vuelta === 'ajustes:true', JSON.stringify({ s: r.sueldo, v: r.vuelta }));
-    check('el lector de texto entiende tres pantallas de banco: nombre, últimos números, saldo (con céntimos, seguro) y el total aparte',
-      r.parse[0].join() === 'Cuenta Online Sin Comisiones|4821|1670.32|1,Cuenta Ahorro|0937|4810|1' &&
-      r.parse[1].join() === 'Posición global|' + '|6480.32|1|T,Cuenta NÓMINA|4821|1670.32|1,Cuenta Naranja|0937|4810|1' &&
-      r.parse[2].join() === 'Cuenta Smart||1670.32|1', JSON.stringify(r.parse));
     check('con una captura antes de cada nómina sale lo gastado del mes sin Fintonic ni cifra', r.gasto.g === r.gasto.espera && r.gasto.g > 0, JSON.stringify(r.gasto));
-    check('una captura del banco se lee en el móvil: dos cuentas con sus cuatro números, su saldo y para qué es cada una',
-      r.ocr.estado === 'listo' && r.ocr.c.join() === '4821:1670.32:gasto,0937:4810:ahorro', JSON.stringify(r.ocr));
+    // (D6: se quitaron la pantalla del banco, su lector de capturas y el cuadre; lo leído se queda guardado)
   }
 
   // 264) HÁBITOS COMO ASISTENTE, EN CADENA: tres en marcha como mucho, «día N de ~66», el mínimo que se
@@ -10780,29 +10656,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.real = []; a.gastado = {}; a.meses = {}; a.metaPct = 30; delete a.banco;
       a.huchas = [{ id: 'hu-a', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 100, objetivo: 0, meta: '', saldo: 1000 }];
       a.puroId = 'hu-a'; a.puroPct = 50;
+      delete P.store.dinero3;   // otra prueba pudo dejarlo migrado y vacío: aquí migra desde estas huchas
       P.dineroS().pagos = []; P.dineroS().gastos = [{ id: 'g266', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }];
-      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.ui.bk = null; P.save(); P.render(); });
-    // (b) la hucha, escrita como en España, por el campo de verdad
-    const campo = async (v) => { await page.evaluate((v) => { const i = document.createElement('input'); i.dataset.a = 'din-hu-campo'; i.dataset.id = 'hu-a'; i.dataset.k = 'saldo'; i.value = v;
-      document.getElementById('main').appendChild(i); i.dispatchEvent(new Event('change', { bubbles: true })); }, v); await page.waitForTimeout(60);
-      return page.evaluate(() => window.PG.huchaDe('hu-a').saldo); };
-    r.h1 = await campo('1.500'); r.h2 = await campo('-200'); r.h3 = await campo('aa');
-    // (c) la captura
-    r.bk = await page.evaluate(() => { const P = window.PG;
-      const a = P.bancoParse('Saldo actual 850,00 €'), b = P.bancoParse('Cuenta Online ···4821 300,00 €'),
-        c = P.bancoParse('Cuenta Nómina ···4821\n1.670,32 €\nCuenta Naranja\n5.000,00 €');
-      return [a[0] && a[0].v, b[0] && b[0].v, c.length, c.map((x) => x.num || '-').join('/')].join('|'); });
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render(); });
+    // (b) y (c): el campo de la hucha y el lector de capturas del banco se quitaron en la D6
     // (d) captura de hoy → «ya lo he apartado» → deshacer → otra vez; el cierre sigue por repartir
     await page.evaluate(() => { const P = window.PG, B = P.bancoS(), hoy = P.iso(new Date());
       B.cuentas = [{ id: 'c266', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: hoy, hora: '10:00', s: { c266: 1500 } }];
       P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); });
     r.d0 = await page.evaluate(() => { const Q = window.PG.bkQueda(); return { ap: Q.ap, mk: Q.mk0, cad: Q.caducada }; });
     const pulsa = async (sel) => { const b = await page.$(sel); if (b) { await b.click(); await page.waitForTimeout(120); } return !!b; };
-    r.d1 = await pulsa('#main [data-a="din-apartar-meta"]');
-    r.d2 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(), x = P.ahorroMes(Q.mk0, false) || {};
-      return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho }; });
-    r.d3 = await pulsa('#main [data-a="din-apartar-ini-x"]');
-    r.d4 = await page.evaluate(() => { const P = window.PG, Q = P.bkQueda(); return { ap: Q.ap, hecho: Q.hecho, saldo: P.huchaDe('hu-a').saldo }; });
+    // D4: el botón «ya lo he apartado» de la tarjeta vieja se sustituye por «Ya ha llegado la nómina» del Bosque: cobrado → Hecho → deshacer, con gestos reales
+    const musgo = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, x = P.ahorroMes(P.d4Cobro().mk, false) || {};
+      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.ahorroS().huchas.filter((h) => h.id === 'hu-a')[0].saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .lau-musgo') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.d4Nom = null; P.render(); });
+    r.d1m = await musgo();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    r.d1 = await pulsa('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(120);
+    r.d1p = await page.evaluate(() => (document.querySelector('#d4Nom') || {}).innerText || '');
+    r.d1h = await pulsa('#main [data-a="d4-nom-hecho"]'); await page.waitForTimeout(120);
+    r.d2 = await musgo();
+    r.d3 = await pulsa('#main [data-a="d4-nom-x"]'); await page.waitForTimeout(120);
+    r.d4 = await musgo();
     // (e) sin datos de gasto de verdad no hay ahorro del mes
     r.e = await page.evaluate(() => { const P = window.PG, h = new Date(), mk = h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0'); return P.ahorroDeMes(mk); });
     // (f) la captura de hace 40 días, de antes de la última nómina
@@ -10817,16 +10692,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('«copos de avena y trigo» y «harina de avena y espelta» llevan gluten; la avena sola, no',
       r.gluten === 'si,si,no', r.gluten);
     check('un solo lector de importes: «1.500», «2.766,40», «12.50» y «41,30»', r.lee === '1500|2766.4|12.5|41.3', r.lee);
-    check('en una hucha «1.500» son 1.500 € y «-200» o letras no la ponen a 0', r.h1 === 1500 && r.h2 === 1500 && r.h3 === 1500, [r.h1, r.h2, r.h3].join(','));
-    check('la captura del banco no lee letras como cifras ni pega el número de cuenta, y cada cuenta tiene el suyo',
-      r.bk === '850|300|2|4821/-', r.bk);
-    check('«ya lo he apartado» al cobrar: a la hucha, deja de restarse y no marca el cierre del mes como repartido',
-      r.d0.ap > 0 && r.d1 && r.d2.ap === 0 && r.d2.hecho && r.d2.ini === r.d0.ap && r.d2.saldo === 1500 + r.d0.ap && !r.d2.cierre, JSON.stringify({ d0: r.d0, d2: r.d2 }));
-    check('y tiene «deshacer»: vuelve a contar como lo que apartas y la hucha queda como estaba',
-      r.d3 && r.d4.ap === r.d0.ap && !r.d4.hecho && r.d4.saldo === 1500, JSON.stringify(r.d4));
+    check('«Ya ha llegado la nómina» (Bosque): cobrado → «Hecho» suma al bosque lo que pide el plan (nunca más de lo cobrado), apunta el mes y no marca el cierre del mes como repartido ni toca las huchas',
+      r.d0.ap > 0 && r.d1 && r.d1h && /Aparta/.test(r.d1p) && r.d2.ap > 0 && r.d2.ap <= 2000 && r.d2.g === r.d1m.g + r.d2.ap && r.d2.txt.includes(String(r.d2.g).replace(/\B(?=(\d{3})+(?!\d))/g, '.')) && r.d2.saldo === r.d1m.saldo && !r.d2.cierre && r.d2.ini === 0, JSON.stringify({ d0: r.d0, d1m: r.d1m, p: r.d1p, d2: r.d2 }));
+    check('y tiene «deshacer»: el musgo vuelve a lo de antes, el mes queda sin apuntar y las huchas viejas no se han movido',
+      r.d3 && r.d4.g === r.d1m.g && r.d4.ap === 0 && r.d4.saldo === r.d1m.saldo, JSON.stringify(r.d4));
     check('sin Fintonic, banco ni tu cifra no hay «has ahorrado» inventado', r.e === null, JSON.stringify(r.e));
     check('una captura de antes de la última nómina pide otra en vez de contar hasta una nómina pasada',
-      r.f.cad === true && /HA LLEGADO LA NÓMINA/.test(r.f.txt), JSON.stringify(r.f));
+      r.f.cad === true && !/HA LLEGADO LA NÓMINA/.test(r.f.txt), JSON.stringify(r.f));
     check('«Poner la cifra» desde Hoy lleva a Dinero → Mes', r.g === 'dinero/mes', r.g);
   }
 
@@ -11054,17 +10926,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     const r = {};
     await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia270', JSON.stringify(P.store));   // la recarga de (c) borra las variables de la página
-      P.ui.tab = 'dinero'; P.ui.dineroVista = 'hucha-nueva'; P.ui.dinHoja = ''; P.ui.hn = null; P.render(); });
-    await page.fill('#hnNom', 'Viaje a Lisboa'); await page.fill('#hnPre', '1.500'); await page.fill('#hnYa', '200');
-    await page.click('#hnCrear'); await page.waitForTimeout(150);
-    r.meta = await page.evaluate(() => { const h = window.PG.ahorroS().huchas.filter((x) => x.nombre === 'Viaje a Lisboa')[0]; return h ? h.objetivo + '|' + h.saldo : null; });
-    // la de casa abre su lista de deseos: «1.200» por el sofá
-    await page.evaluate(() => { const P = window.PG; P.ui.dinHoja = ''; P.ui.dineroVista = 'hucha-nueva'; P.ui.hn = null; P.render(); });
-    await page.click('#main [data-a="hn-tipo"][data-v="casa"]'); await page.waitForTimeout(100);
-    await page.fill('#hnNom', 'Cosas de casa'); await page.click('#hnCrear'); await page.waitForTimeout(150);
-    await page.fill('#dsTxt', 'Sofá'); await page.fill('#dsPre', '1.200');
-    await page.click('[data-a="deseo-add"]'); await page.waitForTimeout(120);
-    r.deseo = await page.evaluate(() => { const h = window.PG.ahorroS().huchas.filter((x) => x.nombre === 'Cosas de casa')[0]; return h && h.deseos.map((d) => d.txt + ':' + d.precio).join(); });
+      P.render(); });
+    // (a) la meta nueva y el deseo de casa se quitaron en la D6 (las huchas y su alta ya no existen)
     // la época: lo que cobras, con punto de miles
     await page.evaluate(() => { const P = window.PG; P.ui.dinHoja = ''; P.ui.dineroVista = 'nomina'; P.render(); });
     const neto = await page.$('#main [data-a="aho-ep"][data-k="neto"]');
@@ -11080,20 +10943,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.resto = await page.evaluate(() => { const P = window.PG, out = {};
       P.store.rotation.icsAvisoMin = 10; P.store.rotation.calAlarm = true;
       out.alarm = (/<minutes>(\d+)<\/minutes>/.exec(P.calUrlBloque('x.ics', 'Guardias')) || [])[1];
-      P.ahorroS().huchas.push({ id: 'hu270', nombre: 'Fondo indexado', tipo: 'inversion', ico: '📈', color: '#38bdf8', pct: 10, objetivo: 0, saldo: 0, deseos: [] });
-      P.ui.tab = 'dinero'; P.ui.dinHoja = ''; P.ui.dineroVista = 'plan'; P.render();
-      out.inv = /Añadir inversión/.test(document.querySelector('#main').innerText);
       const bk0 = localStorage.getItem('planGuardias.lastBackup');
       localStorage.setItem('planGuardias.lastBackup', String(Date.now() - P.avisoBackupD() * 864e5 - 3600e3));
       P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render();
       out.copia = /te toca otra/.test(document.querySelector('#main').innerText);
       P.store = JSON.parse(localStorage.getItem('__copia270')); localStorage.removeItem('__copia270'); if (bk0) localStorage.setItem('planGuardias.lastBackup', bk0); else localStorage.removeItem('planGuardias.lastBackup'); P.save(); P.ui.datosVista = ''; P.ui.dineroVista = ''; P.ui.tab = 'hoy'; P.render(); return out; });
-    check('una meta de «1.500» con «200» ya ahorrados es de 1.500 €, y el deseo «1.200» de la lista de casa también',
-      r.meta === '1500|200' && r.deseo === 'Sofá:1200', JSON.stringify(r));
     check('el neto de la época escrito «2.766» son 2.766 € y el proyecto de una nota aguanta recargar',
       r.neto === true && r.proy === 'Casa', JSON.stringify({ neto: r.neto, proy: r.proy }));
-    check('la suscripción por URL avisa con tus minutos, «Fondo indexado» de tipo inversión cuenta como inversión y el día del aviso toca copia',
-      r.resto.alarm === '10' && r.resto.inv === false && r.resto.copia === true, JSON.stringify(r.resto));
+    check('la suscripción por URL avisa con tus minutos y el día del aviso toca copia',
+      r.resto.alarm === '10' && r.resto.copia === true, JSON.stringify(r.resto));
   }
   // 271) ESCANEAR UN CÓDIGO ENSEÑA EL NOMBRE ANTES DE GUARDARLO, EN CADENA: se guardaba al momento, sin
   // verlo, como «80135463 sin nombre» (Nutella) o en portugués («Salmão com legumes»). Ahora se pide el
@@ -11165,22 +11023,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r0 = await page.evaluate(() => document.body.innerText);   // lo que dice la confirmación
     await page.click('[data-a="confirm-yes"]'); await page.waitForTimeout(150);
     r.suelta = await page.evaluate((a) => ({ nota: !!window.PG.store.notas.filter((x) => x.id === a.id)[0] }), k1); r.suelta.aviso = r0;
-    // (c) una meta con fecha en la lista de huchas, y (d) el aviso de copia sin tocar
-    r.resto = await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = new Date(hoy.getFullYear(), hoy.getMonth() + 6, 1, 12);
-      const para = P.iso(d).slice(0, 7);
-      P.ahorroS().huchas.push({ id: 'hu272', nombre: 'Viaje 272', tipo: 'viaje', ico: '✈️', color: '#38bdf8', pct: 0, objetivo: 600, saldo: 0, deseos: [], para });
-      P.ui.tab = 'dinero'; P.ui.dinHoja = ''; P.ui.dineroVista = 'huchas'; P.render();
-      const card = Array.from(document.querySelectorAll('#main .dhu')).filter((c) => /Viaje 272/.test(c.innerText))[0];
-      delete P.store.meta.backupAvisoD;
-      return { lista: card ? card.innerText.replace(/\s+/g, ' ') : '', copia: P.avisoBackupD() }; });
+    // (c) la lista de huchas se quitó en la D6; (d) el aviso de copia sin tocar
+    r.resto = await page.evaluate(() => { const P = window.PG; delete P.store.meta.backupAvisoD; return { copia: P.avisoBackupD() }; });
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia272')); localStorage.removeItem('__copia272'); P.save();
       P.ui.dineroVista = ''; P.ui.evVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('un hábito nuevo no «tocaba» los días de antes de crearlo, pero lo marcado antes sí cuenta',
       r.hab && r.hab.ayer === false && r.hab.hace5 === true, JSON.stringify(r.hab));
     check('mover el evento de una nota mueve la nota, en Google sale una vez, y quitar el evento (avisando) quita también la nota',
       r.nota.fecha === k1.k2 && r.nota.google.join() === 'EVENTO' && r.suelta.nota === false && /y su nota/.test(r.suelta.aviso), JSON.stringify({ nota: r.nota, suelta: r.suelta }));
-    check('la lista de huchas dice lo mismo que el asistente («para <mes> · X €/mes») y el aviso de copia por defecto es de 13 días',
-      /para [a-zé]+ de \d{4} · 100 €\/mes/.test(r.resto.lista) && r.resto.copia === 13, JSON.stringify(r.resto));
+    check('el aviso de copia por defecto es de 13 días', r.resto.copia === 13, JSON.stringify(r.resto));
   }
   // 273) TU RELOJ AHORA, EN CADENA: (a) un día normal, Sueño → Hoy trae el reloj de arena con lo que
   // dormiste de verdad (la noche apuntada), corto y sin leyenda; (b) el día de guardia, el mismo reloj lleva
@@ -11272,10 +11123,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { window.PG.store.food.compraCada = 14; });
     await toca('[data-a="tp-semana"]');
     if (dow274 >= 3) await toca('#main [data-a="cje-sem"][data-d="1"]', 200);
-    r.c = await page.evaluate(() => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
+    r.c = await page.evaluate((sig) => { const P = window.PG; if (!P.plmReparto || !P.ui.plM) return { compra: {} }; const R = P.plmReparto(P.ui.plM), av = P.tpTodos().filter((d) => /avena/i.test(d.name))[0];
       const fut = R.dia.filter((d) => !d.pas), g = R.dia[2];
-      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, quedan: 7 - (new Date().getDay() + 6) % 7, ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
-        cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; });
+      return { paso: P.ui.plM.paso, dias: P.ui.plM.dias.length, filas: fut.length, quedan: 7 - (sig ? 0 : (new Date().getDay() + 6) % 7), ollas2: R.ollas.map((o) => o.c.n + '/' + o.c.de + '/' + o.dias.length), des: fut.every((x) => x.s.desayuno && av && x.s.desayuno.d && x.s.desayuno.d.id === av.id),
+        cenaG: g.s.cena && g.s.cena.t, comG: !!(g.s.comida && g.s.comida.t !== 'ho'), cal: document.querySelectorAll('#main .plcal7 button.si').length, ollas: document.querySelectorAll('#main .plolla').length }; }, dow274 >= 3);
     await toca('[data-a="plm-paso"][data-v="2"]', 150);
     r.c.paso2 = await page.evaluate(() => ({ paso: (window.PG.ui.plM || {}).paso, celdas: document.querySelectorAll('#main .plmini button').length }));
     await toca('[data-a="plm-usar"]', 200);
@@ -11854,6 +11705,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     await page.click('[data-a="drawer-nav"][data-t="dinero"]');
     await page.waitForTimeout(300);
+    await page.click('#main [data-a="d6-tab"][data-v="gastos"]'); await page.waitForTimeout(150);   // D3: los taxis de Hoy viven ahora en Gastos
     r.hoy = await page.evaluate(() => { const e = document.querySelector('#main .dtaxi'); return e ? e.textContent.replace(/\s+/g, ' ') : ''; });
     await page.evaluate(() => { const P = window.PG; P.ui.dinTab = 'mes'; P.render(); });
     r.mes = await page.evaluate(() => (document.querySelector('#main') || {}).textContent.replace(/\s+/g, ' ').indexOf('Taxis al hospital') >= 0);
@@ -12853,9 +12705,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Fija: «que no solo salga la línea en rojo, sino el día entero», y que lo de Semana no se pierda al quitarla.
   {
     const r = {};
-    const K = await page.evaluate(() => { const P = window.PG, d = P.addDays(new Date(), 3), k = P.iso(d), k1 = P.iso(P.addDays(d, 1));
-      P.__t321 = { k, k1, ov: (P.store.rotation.shiftByDay || {})[k], ov1: (P.store.rotation.shiftByDay || {})[k1], mode: P.store.rotation.mode };
-      P.store.rotation.mode = 'date'; P.setDayOverride(k, 'sh-t', ''); P.setDayOverride(k1, 'sh-t', '');
+    const K = await page.evaluate(() => { const P = window.PG, d = P.addDays(new Date(), 3), k = P.iso(d), k1 = P.iso(P.addDays(d, 1)), k0 = P.iso(P.addDays(d, -1));
+      // el día de ANTES también se fija a trabajo: si cae en guardia (el sábado de la rotación de prueba), el día k saldría «saliente» y no «trabajo»
+      P.__t321 = { k, k1, k0, ov: (P.store.rotation.shiftByDay || {})[k], ov1: (P.store.rotation.shiftByDay || {})[k1], ov0: (P.store.rotation.shiftByDay || {})[k0], mode: P.store.rotation.mode };
+      P.store.rotation.mode = 'date'; P.setDayOverride(k0, 'sh-t', ''); P.setDayOverride(k, 'sh-t', ''); P.setDayOverride(k1, 'sh-t', '');
       P.ui.monSel = ''; P.ui.hojaDia = ''; P.ui.mesModo = null; P.store.meta.pulsarVisto = true; P.save(); P.render(); return { k, k1 }; });
     await page.click('[data-a="nav-cal"]');
     await page.click('#calModes button[data-t="month"]');
@@ -12885,7 +12738,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .volver[data-a="aju-vista"]');
     r.vuelta = await page.evaluate(() => (document.querySelector('#main .subtit') || {}).textContent || '');
     await page.evaluate(() => { const P = window.PG, t = P.__t321;
-      P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.setDayOverride(t.k1, t.ov1 ? t.ov1.shift : null, t.ov1 ? t.ov1.guard : '');
+      P.setDayOverride(t.k0, t.ov0 ? t.ov0.shift : null, t.ov0 ? t.ov0.guard : ''); P.setDayOverride(t.k, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.setDayOverride(t.k1, t.ov1 ? t.ov1.shift : null, t.ov1 ? t.ov1.guard : '');
       P.store.rotation.mode = t.mode; P.ui.monSel = ''; P.ui.hojaDia = ''; P.ui.tab = 'month'; delete P.__t321; P.save(); P.render(); });
     check('Calendario solo tiene Mes y Hoy (sin Semana)', r.modos === 'month,hoy', r.modos);
     check('poner guardia desde la hoja pinta la casilla entera de guardia, con 🚨 y el número grande, y el día siguiente queda saliente',
@@ -12933,30 +12786,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save(); P.ui.tab = 'hoy'; P.render(); });
     await page.click('#tabs [data-a="tab"][data-t="gym"]'); await page.waitForTimeout(300);
     const r = {}, clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
-    r.a = await page.evaluate(() => { const c = document.querySelector('#main .gvuelta'), l = document.querySelector('#main .glisto');
-      return { hay: !!c, sem: c ? (c.querySelector('.big') || {}).textContent : '', on: c ? (c.querySelector('.gvesc .on') || {}).textContent : '', listo: l ? l.textContent : '' }; });
-    await clic('#main .gvuelta [data-a="gym-panel"][data-p="regreso"]');
+    r.a = await page.evaluate(() => { const c = document.querySelector('#main .glam [data-a="gym-panel"][data-p="regreso"]'), l = document.querySelector('#main .glisto');
+      return { hay: !!c, sem: c ? c.getAttribute('aria-label') : '', on: c ? c.textContent : '', listo: l ? l.textContent : '', vieja: !!document.querySelector('#main .gvuelta') }; });
+    await clic('#main .glam [data-a="gym-panel"][data-p="regreso"]');
     r.b = { filas: await page.evaluate(() => document.querySelectorAll('#main .gvtab tr').length - 1) };
     await clic('#main [data-a="regreso-ritmo"][data-v="suave"]');
     Object.assign(r.b, await page.evaluate(() => ({ filasSuave: document.querySelectorAll('#main .gvtab tr').length - 1, pct: (document.querySelector('#main .gvtab tr.on') || {}).textContent || '' })));
     await clic('#main .volver[data-a="gym-panel"]');
-    await clic('#main .gvuelta [data-a="ses-empezar"]');
+    await clic('#main .ghero2 [data-a="ses-empezar"]');
     r.c = await page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva; if (!sa) return { sesion: false };
       const rt = P.gymS().rutinas.find((x) => x.id === sa.rutinaId), ex = rt.ejercicios[0].ex, v = P.regresoDe(sa.fecha), ref = v ? P.regresoRef(ex, v.desde) : null;
       if (!v || !ref) return { sesion: true, sinPlan: true };
-      const kg = +(document.querySelector('#main input[data-k="kg"]') || {}).value;
+      const kg = +String((document.querySelector('#main input[data-k="kg"]') || {}).value).replace(',', '.');   // 32,5 sale con coma
       const filas = P.sesionFilas(sa).map((q) => q.filas.filter((f) => f.t !== 'c').length);
       return { sesion: true, ex, kg, ref: ref.kg, pct: v.pct, esperado: P.redondeaEj(ex, ref.kg * v.pct / 100), filas: filas.join(',') }; });
     await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.ui.tab = 'gym'; P.ui.gymPanel = 'regreso'; P.render(); });
     await clic('#main [data-a="regreso-quitar"]');
-    r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main .gvuelta'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
+    r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main .glam [data-p="regreso"]'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia323; delete window.__copia323; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp323);
-    check('tras 8 semanas sin entrenar, Entreno abre con «Semana 1 de 4» al 70 % y el «listo» no dice 100 %',
-      r.a.hay && /Semana 1 de 4/.test(r.a.sem) && /70 %/.test(r.a.on) && !/100/.test(r.a.listo) && /vuelta/.test(r.a.listo), JSON.stringify(r.a));
-    check('el plan enseña las 4 semanas y «más suave» lo alarga a 6 y empieza al 60 %', r.b.filas === 4 && r.b.filasSuave === 6 && /60 %/.test(r.b.pct), JSON.stringify(r.b));
-    check('«Empezar (vuelta)» monta la sesión con el 60 % del peso de antes y 2 series por ejercicio',
-      r.c.sesion && r.c.pct === 60 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
+    check('tras 8 semanas sin entrenar, la lámina de Entreno dice la semana 1 de 8 al 35 % (sin tarjeta aparte) y el «listo» no dice 100 %',
+      r.a.hay && !r.a.vieja && /semana 1 de 8/.test(r.a.sem) && /35 %/.test(r.a.on) && !/100/.test(r.a.listo) && /vuelta/.test(r.a.listo), JSON.stringify(r.a));
+    check('el plan enseña las 8 semanas y «más suave» (la vuelta nueva) empieza al 30 %', r.b.filas === 8 && r.b.filasSuave === 8 && /30 %/.test(r.b.pct), JSON.stringify(r.b));
+    check('«Empezar» de la tarjeta grande monta la sesión de vuelta con el 30 % del peso de antes y 2 series por ejercicio',
+      r.c.sesion && r.c.pct === 30 && r.c.kg === r.c.esperado && r.c.kg < r.c.ref && /^2(,2)*$/.test(r.c.filas), JSON.stringify(r.c));
     check('«quitar el plan» devuelve la progresión de siempre', !r.d.tarjeta && r.d.pr !== 'vuelta', JSON.stringify(r.d));
   }
   // 324) EL CONDUCTOR CONTADO, EN CADENA (a 412×915): un día de trabajo con la «Sesión clínica» a las 10:00. (a) A las 9:40
@@ -13339,6 +13192,277 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.e.ns === 'A' && r.e.nova === '1' && r.e.adi === '0' && r.e.sd === 0 &&
       r.f.ns === 'C' && r.f.nova === '' && r.f.sd === 1 && r.f.adi === '1', JSON.stringify(r));
   }
+  // 340) DINERO, FOTO DE CIFRAS (tanda Dinero · D1): red para rehacer la pantalla sin cambiar lo que sale. Con
+  //      «hoy» congelado en una fecha ABSOLUTA (15/03/2026) y datos conocidos (nómina sin guardias de finde, dos recibos, dos
+  //      pagos, tres meses con gasto de las tres fuentes, huchas, una captura del banco) se miden las FUNCIONES de cálculo,
+  //      no el HTML: gastoMes (Fintonic · tu cifra · apuntado), ahorroDeMes, mesDinero, d6Mes (lo de Hoy y Mes), repartoDe y
+  //      llegadaHucha (Ahorro), bkQueda (lo que te queda hasta la nómina). Si un rediseño toca una cifra, cae esta.
+  {
+    await page.evaluate(() => { const Orig = Date, frozen = new Orig(2026, 2, 15, 12, 0, 0).getTime();
+      window.__origDate340 = Orig;
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(frozen); else super(...a); } static now() { return frozen; } }; });
+    const f = await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia340 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), d = P.dineroS();
+      a.epocas = [{ id: 'e340', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
+      a.real = [{ fecha: '2026-02-27', hora: '10:00', mes: '2026-02', banco: null, ingresos: 2000, gastos: 1300, cats: { Alquiler: 650, Gimnasio: 30, Supermercado: 300, Ocio: 150, Otros: 170 } }];
+      a.gastado = { '2026-01': 1100 }; a.meses = {}; a.metaPct = 30; delete a.banco; delete a.meta;
+      a.huchas = [{ id: 'hu-c', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 60, objetivo: 0, meta: '', saldo: 3000 },
+        { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#10b981', pct: 40, objetivo: 2000, meta: '', saldo: 500 }];
+      a.puroId = 'hu-c'; a.puroPct = 50;
+      d.gastos = [{ id: 'g340a', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }, { id: 'g340b', nombre: 'Gimnasio', importe: 30, dia: 5, cat: 'salud', on: true }];
+      d.pagos = [{ id: 'p340a', fecha: '2026-03-01', nombre: 'Alquiler', importe: 650, cat: 'casa', gastoId: 'g340a', ts: 1 },
+        { id: 'p340b', fecha: '2026-03-10', nombre: 'cena', importe: 40, cat: 'ocio', ts: 2 }, { id: 'p340c', fecha: '2026-03-12', nombre: 'compra', importe: 25.5, cat: 'compra', ts: 3 }];
+      d.presupuesto = 0;
+      const B = P.bancoS(); B.cuentas = [{ id: 'c340', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: '2026-03-14', hora: '10:00', s: { c340: 1500 } }];
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      const g = (mk) => { const x = P.gastoMes(mk); return x ? [x.fuente, x.total, JSON.stringify(x.cats)].join('|') : null; };
+      const M = P.d6Mes(), md = P.mesDinero(2026, 2), t = P.mesTipo(), Q = P.bkQueda(), ah = P.ahorroDeMes('2026-02');
+      return { ene: g('2026-01'), feb: g('2026-02'), mar: g('2026-03'),
+        entra: P.entraMes('2026-03').neto, ahorroFeb: ah && [ah.entra, ah.sale, ah.ahorro].join('|'), restoFeb: P.restoPorRepartir('2026-02'),
+        mes: [md.fijoTotal, md.pend, md.pagado, md.previsto, JSON.stringify(md.porCat)].join('|'),
+        d6: [M.ingreso, M.fijos, M.ahorro, M.presu, M.gastado, M.queda, M.dias, M.hoyMax, M.est].join('|'),
+        tipo: [t.n, t.ingreso, t.fijos, t.vars, t.gasto, t.libre].join('|'),
+        reparto: JSON.stringify(P.repartoDe(600)), llega: JSON.stringify(P.llegadaHucha(2000, 500, 240)), colchon: P.puroPct(),
+        bk: [Q.caducada, Q.ap, Q.mk0].join('|') }; });
+    await page.evaluate(() => { const P = window.PG; if (window.__origDate340) { window.Date = window.__origDate340; delete window.__origDate340; } P.store = window.__copia340; P.save(); P.ui.tab = 'hoy'; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.render(); });
+    check('FOTO de cifras de Dinero con «hoy» fijo al 15/03/2026: gasto por fuente, ahorro, recibos, Hoy/Mes, reparto y llegada de la hucha',
+      JSON.stringify(f) === JSON.stringify({"ene": "tu cifra|1100|{\"Alquiler\":650,\"Gimnasio\":30,\"Día a día\":420}", "feb": "Fintonic|1300|{\"Alquiler\":650,\"Gimnasio\":30,\"Supermercado\":300,\"Ocio\":150,\"Otros\":170}", "mar": "apuntado|745.5|{\"compra\":25.5,\"ocio\":40,\"Alquiler\":650,\"Gimnasio\":30}", "entra": 2000, "ahorroFeb": "2000|1300|700", "restoFeb": 700, "mes": "680|30|715.5|745.5|{\"compra\":25.5,\"ocio\":40,\"casa\":650}", "d6": "2000|680|600|720|66|654|17|38|bien", "tipo": "2|2000|680|520|1200|800", "reparto": "{\"hu-c\":300,\"hu-j\":300}", "llega": "{\"falta\":1500,\"meses\":7,\"mk\":\"2026-10\"}", "colchon": 50, "bk": "false|600|2026-02"}), JSON.stringify(f));
+  }
+  // 341) DINERO 3.0 · D3 · MIGRACIÓN Y BOSQUE, EN CADENA: con huchas viejas (colchón y una sin objetivo con saldo, una con
+  //      objetivo, deseos) y SIN store.dinero3, abrir Dinero crea lo nuevo COPIANDO (guardado = colchón + sin objetivo; la hucha con
+  //      objetivo → compra en plan; el deseo sin hacer → compra en espera) y el Bosque lo enseña (musgo, un fruto, meses de vida);
+  //      ir a Compras y volver al Bosque no duplica nada, y lo viejo sigue idéntico (nada se borra). Sobrevive a recargar.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia341 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
+      a.gastado = {}; delete a.meta; delete s.dinero3;
+      a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 50, objetivo: 0, meta: '', saldo: 3000 },
+        { id: 'hu-j', nombre: 'Japón <i>', ico: '✈️', color: '#10b981', pct: 30, objetivo: 2000, meta: '', saldo: 500, deseos: [{ id: 'd341a', txt: 'vuelos', precio: 800, hecho: false }, { id: 'd341b', txt: 'hotel', precio: 600, hecho: true }] },
+        { id: 'hu-s', nombre: 'Imprevistos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 200 }];
+      a.puroId = 'hu-colchon'; a.puroPct = 50; window.__viejo341 = JSON.stringify([a.huchas, s.dinero]);
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dineroVista = ''; P.render(); });
+    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(150);
+    r.a = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3, m = document.querySelector('#main');
+      return { guardado: d.ahorro.guardado, migrado: d.migrado, compras: d.compras.map((c) => c.nombre + '|' + c.precio + '|' + c.llevas + '|' + c.estado).join(';'),
+        musgo: (m.querySelector('.lau-musgo') || {}).textContent, baya: ((m.querySelector('.lau-baya') || {}).textContent || ''), titulo: (m.querySelector('#lauT') || {}).textContent || '',
+        pestanas: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), hoyHero: /PUEDES GASTAR|TE QUEDA/.test(m.innerText), vida: P.d3Datos().vida,
+        ancho: document.documentElement.scrollWidth, sinXSS: !m.querySelector('i') }; });
+    await page.click('#main [data-a="d6-tab"][data-v="compras"]'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(100);
+    r.b = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3; return { n: d.compras.length, viejo: JSON.stringify([P.store.ahorro.huchas, P.store.dinero]) === window.__viejo341,
+      recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))); return o.dinero3 && o.dinero3.ahorro.guardado + '/' + o.dinero3.compras.length; })() }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia341; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · migración: colchón + huchas sin objetivo → lo guardado (3.200 €); la hucha con objetivo → compra en plan; el deseo sin hacer → compra en espera; el Bosque lo enseña (musgo, 1 fruto, meses de vida) y las cuatro pestañas',
+      r.a.guardado === 3200 && r.a.migrado && r.a.compras === 'Japón <i>|2000|500|plan;vuelos|800|0|espera' && /3\.200 € guardados/.test(r.a.musgo) && /1 fruto/.test(r.a.baya) &&
+      /3\.200 euros/.test(r.a.titulo) && r.a.vida === 2 && r.a.pestanas === 'Bosque,Gastos,Ahorro,Compras' && !r.a.hoyHero && r.a.sinXSS, JSON.stringify(r.a));
+    check('Dinero 3.0 · migración: ir a Compras y volver al Bosque no duplica compras, lo viejo (huchas y recibos) queda idéntico y lo nuevo sobrevive a recargar',
+      r.b.n === 2 && r.b.viejo && r.b.recarga === '3200/2', JSON.stringify(r.b));
+  }
+
+  // 342) DINERO 3.0 · D3 · BOSQUE → TOCÓN → GASTOS → MES ANTERIOR, EN CADENA: con Fintonic de este mes y del anterior (Comer fuera es
+  //      lo variable más grande), el tocón de «El claro» lleva a Gastos con las cifras de este mes (fijos, variables, comparado con
+  //      el anterior); el selector pasa al mes anterior (sin «comparado», no hay mes antes) y desde Gastos se llega a Recibos y se vuelve.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia342 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [{ fecha: mkDe(0) + '-02', hora: '10:00', mes: mkDe(0), banco: null, ingresos: 2000, gastos: 1290, cats: { Alquiler: 650, Supermercado: 230, 'Comer fuera': 320, Ocio: 90 } },
+        { fecha: mkDe(1) + '-27', hora: '10:00', mes: mkDe(1), banco: null, ingresos: 2000, gastos: 1250, cats: { Alquiler: 650, Supermercado: 300, 'Comer fuera': 180, Ocio: 120 } }];
+      a.gastado = {}; a.catCfg = {}; delete a.meta; window.__mk342 = [mkDe(0), mkDe(1)];
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2500, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()) }, compras: [{ id: 'c342', nombre: 'Portátil', precio: 900, llevas: 100, mes: '', estado: 'plan', alta: P.iso(new Date()), tipo: '' }] };
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.d3Mes = ''; P.render(); });
+    r.bosque = await page.evaluate(() => { const b = document.querySelector('#main .lau-claro'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
+    await page.click('#main .lau-claro'); await page.waitForTimeout(150);
+    r.actual = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText.replace(/\s+/g, ' ');
+      return { tab: window.PG.ui.dinTab, mes: window.PG.ui.d3Mes, total: /1\.290 €/.test(t), fijos: /Fijos 650 €/.test(t), vars: /Variables 640 €/.test(t), top: /Comer fuera/.test(t), ahorrar: /Con 3 cambios pequeños/.test(t),
+        comp: /COMPARADO CON/.test(t) && /costó 40 € más/.test(t), ancho: document.documentElement.scrollWidth }; });
+    await page.click(`#main [data-a="d3-mes"][data-mk="${await page.evaluate(() => window.__mk342[1])}"]`); await page.waitForTimeout(150);
+    r.previo = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
+      return { total: /1\.250 €/.test(t), sinComp: !/COMPARADO CON/.test(t), pressed: document.querySelector('#main .lau-sw [aria-pressed="true"]').dataset.mk === window.__mk342[1] }; });
+    await page.click('#main [data-a="dinero-vista"][data-v="recibos"]'); await page.waitForTimeout(150);
+    r.recibos = await page.evaluate(() => /Recibos del mes/.test(document.querySelector('#main').innerText));
+    await page.click('#main .subcab .volver'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => window.PG.ui.dinTab + '|' + /GASTADO EN/.test(document.querySelector('#main').innerText));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia342; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.d3Mes = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · Bosque → tocón → Gastos: el tocón es lo variable más grande (Comer fuera, 320 €) y lleva a Gastos de este mes con fijos, variables, «dónde ahorrar» y el comparado con el anterior',
+      /Comer fuera/.test(r.bosque) && /320/.test(r.bosque) && r.actual.tab === 'gastos' && r.actual.mes === r.actual.mes && r.actual.total && r.actual.fijos && r.actual.vars && r.actual.top && r.actual.ahorrar && r.actual.comp, JSON.stringify(r));
+    check('Dinero 3.0 · Gastos: el selector pasa al mes anterior con sus cifras, y desde Gastos se llega a Recibos y se vuelve a Gastos',
+      r.previo.total && r.previo.sinComp && r.previo.pressed && r.recibos && r.vuelta === 'gastos|true', JSON.stringify({ p: r.previo, rec: r.recibos, v: r.vuelta }));
+  }
+  // 343) DINERO 3.0 · D4 · BOSQUE → AHORRO → OBJETIVO Y PLAZO, EN CADENA: con 2.000 € guardados y 1.600 € de gasto al mes, el Bosque lleva a
+  //      «Tu bosque, mes a mes»; cambiar el objetivo (9 meses), el plazo (6 meses) y escribir otro objetivo cambia la cifra «aparta X €/mes»
+  //      (y la gráfica la lleva en su descripción); todo se guarda (sobrevive a recargar) y «Volver al bosque» vuelve al Bosque.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia343 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
+      a.gastado = {}; delete a.meta;
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), c = (m.querySelector('#d4Cifra') || {}).textContent || '', d = window.PG.store.dinero3.ahorro;
+      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('#d4Graf') || {}).getAttribute('aria-label') || ''), ancho: document.documentElement.scrollWidth,
+        peq: [...m.querySelectorAll('.lau-card button, .lau-card input')].filter((b) => b.getBoundingClientRect().height < 43.5).map((b) => b.className + ':' + b.textContent.slice(0, 12) + ':' + Math.round(b.getBoundingClientRect().height)).join('|') }; });
+    const vp343 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.click('#main .lau-ir'); await page.waitForTimeout(150);
+    r.a = await lee();
+    await page.click('#main [data-a="d4-obj"][data-v="9"]'); await page.waitForTimeout(100); r.b = await lee();
+    await page.click('#main [data-a="d4-plazo"][data-v="6"]'); await page.waitForTimeout(100); r.c = await lee();
+    await page.fill('#d4o-objetivoMeses', '4'); await page.press('#d4o-objetivoMeses', 'Tab'); await page.waitForTimeout(120); r.d = await lee();
+    r.rec = await page.evaluate(() => { const P = window.PG, o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.objetivoMeses + '/' + o.plazoMeses; });
+    await page.click('#main .lau-btn[data-a="d6-tab"]'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .lau-esc') && window.PG.ui.dinTab === '');
+    await page.setViewportSize(vp343);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia343; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · Bosque → Ahorro: cambiar objetivo y plazo cambia «aparta X €/mes» (6 meses/12: menos que 9/12; 9/6: más) y la gráfica lo cuenta',
+      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /plan de \d/.test(r.c.svg) && /9 meses/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
+    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y «Volver al bosque» vuelve al Bosque; a 412 sin scroll horizontal y con todo ≥44 px',
+      r.d.obj === 4 && r.d.cifra < r.c.cifra && r.rec === '4/6' && r.vuelta && r.a.ancho <= 412 && r.a.peq === '', JSON.stringify({ d: r.d, rec: r.rec, v: r.vuelta, a: r.a.ancho, peq: r.a.peq }));
+  }
+
+  // 344) DINERO 3.0 · D4 · «YA HA LLEGADO LA NÓMINA», EN CADENA: desde el Bosque, un toque → «¿Cuánto has cobrado?» → propone apartar lo que pide
+  //      el plan (nunca más de lo cobrado: con 300 € cobrados, 300) → «Hecho» sube el musgo y apunta el mes → «Deshacer» lo deja como estaba.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia344 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), pad = (n) => String(n).padStart(2, '0'), h = new Date(), mkDe = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+      a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
+      a.gastado = {}; delete a.meta; a.epocas = [{ id: 'e344', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+    const est = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, mk = P.d4Cobro().mk;
+      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .lau-musgo') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
+        recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.guardado + '/' + (o.apartado[mk] ? o.apartado[mk].v : 0); })() }; });
+    r.a = await est();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    r.pide = await page.evaluate(() => document.querySelector('#d4Cobrado').value);
+    await page.fill('#d4Cobrado', '300'); await page.click('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(100);
+    r.poco = await est();
+    await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
+    await page.fill('#d4Cobrado', '1.800'); await page.click('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(100);
+    r.plan = await est();
+    await page.click('#main [data-a="d4-nom-hecho"]'); await page.waitForTimeout(150);
+    r.hecho = await est();
+    await page.click('#main [data-a="d4-nom-x"]'); await page.waitForTimeout(150);
+    r.x = await est();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia344; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · «Ya ha llegado la nómina»: pregunta cuánto has cobrado (prefijado con lo esperado, 2000) y propone apartar lo que pide el plan, y nunca más de lo cobrado (con 300 €, 300)',
+      r.pide === '2000' && /Aparta 300 €/.test(r.poco.card) && /Aparta 640 €/.test(r.plan.card) && r.a.ap === 0, JSON.stringify({ pide: r.pide, poco: r.poco.card, plan: r.plan.card }));
+    check('Dinero 3.0 · «Hecho» sube el musgo (2.000 → 2.640 €), apunta el mes y se guarda; «Deshacer» lo deja en 2.000 € y sin mes apuntado',
+      r.hecho.g === 2640 && r.hecho.ap === 640 && /2\.640 €/.test(r.hecho.musgo) && /apartada/.test(r.hecho.card) && r.hecho.recarga === '2640/640' && r.x.g === 2000 && r.x.ap === 0 && /2\.000 €/.test(r.x.musgo) && r.x.recarga === '2000/0',
+      JSON.stringify({ hecho: r.hecho, x: r.x }));
+  }
+  // 345) DINERO 3.0 · D5 · COMPRAS: LA ESPERA DE 30 DÍAS, EN CADENA: «+ Añadir algo que quiero» (una de ilusión, con el nombre con HTML) → sale
+  //      EN ESPERA con su cuenta atrás de 30 días y no cuenta en el «al mes» ni en los frutos → pasan 31 días → sola pasa a planificada con su €/mes y el fruto cuelga.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia345 = JSON.parse(JSON.stringify(P.store));
+      P.store.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 1000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.d5Nuevo = false; P.ui.d5Abre = ''; P.render(); });
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), t = m.innerText.replace(/\s+/g, ' ');
+      return { total: (document.getElementById('d5Total') || {}).textContent, espera: /en espera 30 días/i.test(t), cuenta: /\b30 días\b/.test(t), filas: m.querySelectorAll('.lau-compra').length,
+        frutos: P.d3Datos().frutos, estados: P.store.dinero3.compras.map((c) => c.estado).join(), fila: ((m.querySelector('.lau-compra') || {}).innerText || '').replace(/\s+/g, ' '),
+        html: !!m.querySelector('.lau-compra img, .lau-compra b > i'), ancho: m.scrollWidth - m.clientWidth }; });
+    await page.click('#main [data-a="d5-nuevo"]'); await page.waitForTimeout(100);
+    await page.fill('#d5Nom', 'Auriculares <img src=x onerror=1>'); await page.fill('#d5Pre', '120');
+    await page.selectOption('#d5Tip', 'ilu');
+    await page.evaluate(() => { const d = new Date(); d.setMonth(d.getMonth() + 6); document.getElementById('d5Mes').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
+    await page.click('#main [data-a="d5-add"]'); await page.waitForTimeout(150);
+    r.espera = await lee();
+    await page.evaluate(() => { const P = window.PG, c = P.store.dinero3.compras[0], d = P.parseDate(c.alta); d.setDate(d.getDate() - 31); c.alta = P.iso(d); P.save(); P.render(); });
+    r.plan = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia345; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.render(); });
+    check('Dinero 3.0 · Compras: lo nuevo que me hace ilusión entra EN ESPERA con 30 días, sin contar en el «al mes» ni en los frutos, y el nombre con HTML sale como texto',
+      r.espera.estados === 'espera' && r.espera.espera && r.espera.cuenta && /^0 € al mes · 0 compras/.test(r.espera.total) && r.espera.frutos === 0 && !r.espera.html && r.espera.ancho <= 1, JSON.stringify(r.espera));
+    check('Dinero 3.0 · Compras: a los 31 días lo que esperaba pasa solo a planificada, con su €/mes (120 € en 6 meses = 20 €) y el fruto del Bosque cuelga',
+      r.plan.estados === 'plan' && !r.plan.espera && r.plan.frutos === 1 && /20 €/.test(r.plan.fila) && /^20 € al mes · 1 compra/.test(r.plan.total), JSON.stringify(r.plan));
+  }
+  // 346) DINERO 3.0 · D5 · COMPRAS: APARTAR, DESHACER Y «LO COMPRÉ», EN CADENA: abrir una planificada → «Aparté 50 €» (llevas 50 y el fruto madura) →
+  //      deshacer (vuelve a 0) → «Lo compré»: aparece en los gastos del mes, sale de la lista y los frutos del Bosque bajan; «Ya no lo quiero» no borra.
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; window.__copia346 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()), d = new Date(); d.setMonth(d.getMonth() + 4);
+      const mes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      P.store.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 1000, objetivoMeses: 6, plazoMeses: 12, desde: hoy, apartado: {} }, compras: [
+        { id: 'c346', nombre: 'Fonendo 346', precio: 200, llevas: 0, mes, estado: 'plan', alta: hoy, tipo: 'nec' },
+        { id: 'c346b', nombre: 'Curso 346', precio: 300, llevas: 0, mes, estado: 'plan', alta: hoy, tipo: 'util' }] };
+      window.__pagos346 = P.store.dinero.pagos.length; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.d5Abre = ''; P.render(); });
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), c = P.store.dinero3.compras;
+      return { llevas: c[0].llevas, estado: c.map((x) => x.estado).join(), frutos: P.d3Datos().frutos, filas: m.querySelectorAll('.lau-compra').length,
+        pagos: P.store.dinero.pagos.filter((p) => p.nombre === 'Fonendo 346').map((p) => p.importe).join(), fr: (m.querySelector('.lau-fr') ? m.querySelector('.lau-fr').getAttribute('style') : '') }; });
+    await page.click('#main [data-a="d5-abre"][data-id="c346"]'); await page.waitForTimeout(100);
+    r.det = await page.evaluate(() => /Llevas 0 € de 200 · faltan 200 €/.test(document.querySelector('#main').innerText.replace(/\s+/g, ' ')));
+    /* D6: Precio / Al mes / Llega son cifras sueltas (no la insignia redonda de 26 px de Gastos): caben en su caja */
+    r.cifras = await page.evaluate(() => { const l = [].slice.call(document.querySelectorAll('#main .lau-cab .lau-cifra'));
+      return { n: l.length, mal: l.filter((e) => e.scrollWidth > e.clientWidth || parseFloat(getComputedStyle(e).borderTopLeftRadius) > 0).length }; });
+    await page.fill('#d5Apar', '50'); await page.click('#main [data-a="d5-aparte"]'); await page.waitForTimeout(120);
+    r.aparte = await lee();
+    await page.click('#main [data-a="d5-deshacer"]'); await page.waitForTimeout(120);
+    r.deshecho = await lee();
+    await page.click('#main [data-a="d5-compre"][data-id="c346"]'); await page.waitForTimeout(150);
+    r.compro = await lee();
+    r.gastos = await page.evaluate(() => { window.PG.ui.dinTab = 'gastos'; window.PG.render(); return /Fonendo 346/.test(document.querySelector('#main').innerText) || window.PG.store.dinero.pagos.some((p) => p.nombre === 'Fonendo 346'); });
+    await page.evaluate(() => { window.PG.ui.dinTab = 'compras'; window.PG.ui.d5Abre = 'c346b'; window.PG.render(); });
+    await page.click('#main [data-a="d5-no"][data-id="c346b"]'); await page.waitForTimeout(120);
+    r.no = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia346; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.render(); });
+    check('Dinero 3.0 · Compras: abrir una planificada → «Aparté 50 €» suma a «llevas» (el fruto madura) → «Deshacer» lo deja en 0',
+      r.det && r.cifras.n === 6 && r.cifras.mal === 0 && r.aparte.llevas === 50 && /25%/.test(r.aparte.fr) && r.deshecho.llevas === 0, JSON.stringify({ det: r.det, ci: r.cifras, a: r.aparte, d: r.deshecho }));
+    check('Dinero 3.0 · Compras: «Lo compré» lo apunta como gasto (200 €), lo saca de la lista y baja los frutos del Bosque; «Ya no lo quiero» no borra nada',
+      r.deshecho.frutos === 2 && r.compro.estado === 'comprada,plan' && r.compro.pagos === '200' && r.compro.filas === 1 && r.compro.frutos === 1 && r.gastos && r.no.estado === 'comprada,no' && r.no.frutos === 0, JSON.stringify({ c: r.compro, g: r.gastos, n: r.no }));
+  }
+  // 347) DINERO 3.0 · D6 · QUITAR CÓDIGO, NUNCA DATOS, EN CADENA: con un móvil de antes (huchas con saldo y deseos, meta antigua, captura del banco, épocas, festivos,
+  //      movimientos) → abrir Dinero y recorrer Bosque → Gastos → Ahorro → Compras con clics → copia de seguridad: lo viejo de store.ahorro sigue ahí intacto (y en la copia),
+  //      lo migrado sale (musgo, la hucha con objetivo como compra, el deseo en espera), Ahorro no guarda «Cambiar el reparto» ni «Cuadrarlo», «Volver al bosque» es una píldora
+  //      y «tu ritmo» no pisa la etiqueta del objetivo. Cae si algo borra o reescribe lo viejo.
+  {
+    const r = {}; const errores0 = pageErrors.length;
+    await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia347 = JSON.parse(JSON.stringify(s));
+      const a = P.ahorroS(), h = new Date(), mk = (i) => { const d = new Date(h.getFullYear(), h.getMonth() - i, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+      a.huchas = [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 50, objetivo: 0, meta: 'no se toca', saldo: 3000, mensual: 0, deseos: [] },
+        { id: 'hu-j347', nombre: 'Japón 347', ico: '✈️', color: '#38bdf8', pct: 50, objetivo: 2400, meta: '', saldo: 800, mensual: 0, tipo: 'viaje', para: '', deseos: [{ id: 'd347', txt: 'Vuelos 347', precio: 900, hecho: false }] }];
+      a.puroId = 'hu-colchon'; a.puroPct = 50; a.metaPct = 25; a.meta = { importe: 9000, fecha: (h.getFullYear() + 1) + '-12', para: '' };
+      a.movs = [{ fecha: P.iso(h), hucha: 'hu-j347', importe: 50, txt: 'Aporte 347' }];
+      a.epocas = [{ id: 'e347', nombre: 'R1 347', desde: '2000-01', neto: 9000, finde: 120, pagaJun: 0, pagaDic: 0 }];
+      a.festivos = ['2026-12-25'];
+      a.real = [{ fecha: P.iso(h), hora: '', mes: mk(1), banco: 3000, ingresos: 2005, gastos: 1400, cats: { 'Alquiler y casa': 650, 'Supermercado': 300, 'Restaurantes': 200 } }];
+      const b = P.bancoS(); b.cuentas = [{ id: 'cb347', nombre: 'Cuenta 347', num: '4821', rol: 'gasto' }]; b.capturas = [{ fecha: P.iso(h), hora: '10:00', s: { cb347: 1234.5 } }];
+      delete s.dinero3;
+      const K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
+      window.__viejo347 = JSON.stringify(K.map((k) => a[k]));
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+    const sigue = () => page.evaluate(() => { const P = window.PG, a = P.ahorroS(), K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
+      return JSON.stringify(K.map((k) => a[k])) === window.__viejo347; });
+    r.recorrido = [];
+    for (const v of ['gastos', 'ahorro', 'compras', '']) {
+      await page.click(`#main .d7seg [data-v="${v}"]`); await page.waitForTimeout(120);
+      r.recorrido.push(await page.evaluate((v) => ({ v, tab: window.PG.ui.dinTab, on: (document.querySelector('#main .d7seg .on') || {}).textContent, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ').slice(0, 90) }), v));
+      r.recorrido[r.recorrido.length - 1].sigue = await sigue(); }
+    // Ahorro: sin «Cambiar el reparto» ni «Cuadrarlo»; «Volver al bosque» es una píldora; «tu ritmo» no pisa «objetivo: …»
+    await page.click('#main .d7seg [data-v="ahorro"]'); await page.waitForTimeout(150);
+    r.ahorro = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText, vb = m.querySelector('[data-a="d6-tab"][data-v=""]:not(.d7seg *)'), g = document.getElementById('d4Graf');
+      const cx = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom, txts = g ? [].slice.call(g.querySelectorAll('text')).map((e) => [e.textContent, e.getBoundingClientRect()]) : [];
+      const obj = txts.filter((q) => /^objetivo:/.test(q[0]))[0], rit = g ? g.querySelector('rect') : null;
+      return { reparto: /Cambiar el reparto/.test(t), cuadrar: /Cuadrarlo/.test(t), pct: !!m.querySelector('[data-a="d7-meta"]'), pildora: vb ? parseFloat(getComputedStyle(vb).borderTopLeftRadius) >= 20 : false,
+        pisa: obj && rit ? cx(obj[1], rit.getBoundingClientRect()) : 'sin gráfica', graf: !!g }; });
+    // copia de seguridad: lo viejo va entero y lo migrado también
+    r.copia = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.storeParaCopia())), a = c.ahorro || {}, d3 = c.dinero3 || {}, K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
+      return { viejo: JSON.stringify(K.map((k) => a[k])) === window.__viejo347, guardado: d3.ahorro && d3.ahorro.guardado, japon: (d3.compras || []).filter((q) => q.nombre === 'Japón 347').map((q) => q.precio + '/' + q.llevas).join(),
+        deseo: (d3.compras || []).filter((q) => q.nombre === 'Vuelos 347').map((q) => q.estado).join() }; });
+    // al recargar (normalize) puede reordenar campos: lo que cuenta es que no falte nada
+    r.vuelta = await page.evaluate(() => { const P = window.PG, a = P.normalize(JSON.parse(JSON.stringify(P.storeParaCopia()))).ahorro;
+      return [a.huchas.map((q) => q.id + ':' + q.saldo + ':' + (q.deseos || []).length).join(), a.meta && a.meta.importe, a.banco.capturas.length + '/' + a.banco.cuentas.length, a.epocas.map((e) => e.id).join(),
+        a.festivos.join(), a.movs.length, a.metaPct, a.real.length].join('|'); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia347; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
+    check('Dinero 3.0 · D6: con un móvil de antes, Bosque → Gastos → Ahorro → Compras se recorre con clics y lo viejo (huchas, meta, banco, épocas, festivos, movimientos) sigue intacto tras cada paso',
+      r.recorrido.length === 4 && r.recorrido.every((q) => q.sigue && q.tab === q.v && q.on) && pageErrors.length === errores0, JSON.stringify(r.recorrido));
+    check('Dinero 3.0 · D6: en Ahorro ya no hay «Cambiar el reparto» ni «Cuadrarlo»; sí el %; «Volver al bosque» es una píldora y «tu ritmo» no pisa la etiqueta del objetivo',
+      r.ahorro.graf && !r.ahorro.reparto && !r.ahorro.cuadrar && r.ahorro.pct && r.ahorro.pildora && r.ahorro.pisa === false, JSON.stringify(r.ahorro));
+    check('Dinero 3.0 · D6: la copia de seguridad lleva lo viejo intacto (y vuelve igual tras normalizar) y lo migrado: musgo, Japón como compra (2.400 / 800) y el deseo en espera',
+      r.copia.viejo && r.vuelta === 'hu-colchon:3000:0,hu-j347:800:1|9000|1/1|e347|2026-12-25|1|25|1' && r.copia.guardado >= 3000 && r.copia.japon === '2400/800' && r.copia.deseo === 'espera', JSON.stringify({ c: r.copia, v: r.vuelta }));
+  }
   // 332) LA LÍNEA DEL DÍA EN COMER › HOY, EN CADENA: (a) se abre Comer y salen la lupa, «Ahora» con kcal/P/HC/G, LO SIGUIENTE
   // (el primer momento sin apuntar desde ahora, con «✓ Hecho» y «Otra cosa») y la semana de un vistazo (7 días, cada uno con
   // su icono); (b) «✓ Hecho» apunta lo que tocaba y LO SIGUIENTE pasa al momento siguiente (o desaparece tras la cena);
@@ -13634,6 +13758,323 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /^\d+ cosas$/.test(r.c.faltan) && +r.c.faltan.split(' ')[0] > 6 && r.c.huecos === 6 && r.c.mas === 'y ' + (+r.c.faltan.split(' ')[0] - 6) + ' más ›' && r.c.fz >= 1 && /CONGELADOR · [1-9]/.test(r.c.fzCab) && r.c.ancho >= 110 &&
       r.c2.vista === 'eje' && r.c2.cjeTab === 'casa', JSON.stringify({ c: r.c, c2: r.c2 }));
     check('«pizza barbacoa del telepizza, 3 trozos»: 3 trozos cuentan como raciones de pizza y ya no pregunta «¿Cuánta?»', r.d.dudas === 0 && r.d.items === 1 && r.d.rac === 3, JSON.stringify(r.d));
+  }
+  // 348) LA FRANJA Y EL LUGAR DEL ENTRENO, EN CADENA (A1-A3, a 412×915): sin hora puesta a mano, (a) un lunes libre forzado a
+  // entrenar sale a las 15:00, 50 min, en el gimnasio; (b) al pulsar el sábado en la semana, la portada dice parque a las
+  // 10:00 (40 min) y su rutina es la de sin material; (c) con una reunión que acaba a las 15:10 el lunes, la hora libre es la sesión
+  // mínima de las 15:30 (25 min) y nunca de tarde-noche; (d) una hora puesta a mano en el gym manda. Fija: salía a las
+  // 17:00 y 75 min, y el fin de semana también en el gimnasio.
+  {
+    const vp348 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia348 = JSON.parse(JSON.stringify(P.store));
+      const d = new Date(); d.setDate(d.getDate() + 14); while (d.getDay() !== 1) d.setDate(d.getDate() + 1); window.__lun348 = P.iso(d);
+      g.rutinas = [{ id: 'r348', nombre: 'Torso 348', dias: [], ejercicios: ['Press banca (barra)', 'Remo con barra', 'Sentadilla (barra)', 'Peso muerto rumano'].map((ex) => ({ ex, series: 3, reps: 8, rmax: 10 })) }];
+      delete g.hora; delete g.duracion; delete g.franja; delete g.regreso; g.registro = []; g.sesiones = []; P.ui.gymSesionActiva = null; P.ui.gymPanel = '';
+      P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || ''));
+      const T = P.store.shifts.find((x) => /libre/i.test(x.name));   // días libres: sin trabajo que pise las 15:00
+      for (let i = 0; i < 7; i++) P.setDayOverride(P.iso(P.addDays(d, i)), T.id, '');
+      for (const i of [0, 5]) P.gymForzar()[P.iso(P.addDays(d, i))] = true;
+      P.ui.gymDate = window.__lun348; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const P = window.PG, k = P.ui.gymDate; return { k, hero: (document.querySelector('#main .ghero2 .k') || {}).textContent || '',
+      hora: P.gymHoraDe(k), lugar: P.lugarEntreno(k), dur: P.ventanaEntreno(k, 'fuerza', P.dayInfo(k)).dur }; });
+    const r = { a: await lee() };
+    await page.click('#main [data-a="gym-dia"][data-key="' + await page.evaluate(() => window.PG.iso(window.PG.addDays(window.PG.parseDate(window.__lun348), 5))) + '"]'); await page.waitForTimeout(250);
+    r.b = await lee(); r.b.rt = await page.evaluate(() => window.PG.rutinaParque().ejercicios.map((e) => e.ex).join('|'));
+    r.c = await page.evaluate(() => { const P = window.PG, lun = window.__lun348, inf = P.dayInfo(lun);
+      P.eventosS().push({ id: 'ev348', titulo: 'Reunión 348', hora: '14:30', fin: '15:10', modo: 'fecha', fecha: lun, dow: [], on: true });
+      const l = P.horaLibreEntreno(lun, 'fuerza', inf, P.ventanaEntreno(lun, 'fuerza', inf)); return { hora: l && l.hora, dur: l && l.dur }; });
+    r.d = await page.evaluate(() => { const P = window.PG; P.gymS().hora = '19:30'; return P.gymHoraDe(window.__lun348); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia348; delete window.__copia348; delete window.__lun348; P.save(); P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp348);
+    check('entre semana, sin hora puesta, el entreno es a las 15:00, 50 min, en el gimnasio y la portada lo dice',
+      r.a.hora === '15:00' && r.a.lugar === 'gimnasio' && r.a.dur === 50 && /15:00/.test(r.a.hero), JSON.stringify(r.a));
+    check('al pulsar el sábado: parque a las 10:00, 40 min, con la rutina de 6 ejercicios sin material',
+      r.b.k !== r.a.k && r.b.hora === '10:00' && r.b.lugar === 'parque' && r.b.dur === 40 && /10:00/.test(r.b.hero) && /Sentadilla/.test(r.b.rt) && /Plancha/.test(r.b.rt) && r.b.rt.split('|').length === 6, JSON.stringify(r.b));
+    check('si un evento pisa las 15:00 (ida incluida), la hora libre es la sesión mínima de las 15:30 (25 min), nunca de tarde-noche', r.c.hora === '15:30' && r.c.dur === 25, JSON.stringify(r.c));
+    check('una hora puesta a mano en el gym manda sobre la franja', r.d === '19:30', JSON.stringify(r.d));
+  }
+  // 349) LA SESIÓN MÍNIMA, EN CADENA (A4, a 412×915): con una rutina de 4 ejercicios × 3 series, (a) «mínima · 25 min» en la
+  // portada abre el entreno con 3 ejercicios y 2 series cada uno (6 series); (b) tras descartarla, «Empezar» normal monta
+  // las 12 series enteras. Fija: no había forma de hacer solo un rato; y la mínima no puede quedarse pegada a la siguiente.
+  {
+    const vp349 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia349 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r349', nombre: 'Torso 349', dias: [], ejercicios: ['Press banca (barra)', 'Remo con barra', 'Sentadilla (barra)', 'Peso muerto rumano'].map((ex) => ({ ex, series: 3, reps: 8, rmax: 10 })) }];
+      delete g.regreso; g.registro = []; g.sesiones = []; P.ui.gymSesionActiva = null; P.ui.gymPanel = '';
+      // un lunes libre y forzado: el estado de hoy (guardia, saliente…) no decide si sale el botón
+      const d = new Date(); d.setDate(d.getDate() + 14); while (d.getDay() !== 1) d.setDate(d.getDate() + 1); const lk = P.iso(d);
+      P.setDayOverride(lk, P.store.shifts.find((x) => /libre/i.test(x.name)).id, ''); P.gymForzar()[lk] = true; P.ui.gymDate = lk;
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const plan = () => page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva; if (!sa) return { sesion: false };
+      const pl = P.sesionFilas(sa); return { sesion: true, min: !!sa.min, ej: pl.length, series: pl.reduce((a, q) => a + q.total, 0), panel: P.ui.gymPanel }; });
+    const r = {};
+    await page.click('#main .ghero2 [data-a="ses-empezar"][data-min="1"]'); await page.waitForTimeout(250); r.a = await plan();
+    await page.evaluate(() => { window.PG.descartarSesion(); window.PG.ui.tab = 'gym'; window.PG.ui.gymPanel = ''; window.PG.render(); }); await page.waitForTimeout(200);
+    await page.click('#main .ghero2 .gbig2[data-a="ses-empezar"]'); await page.waitForTimeout(250); r.b = await plan();
+    await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.store = window.__copia349; delete window.__copia349; P.save(); P.ui.gymPanel = ''; P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp349);
+    check('«mínima · 25 min» abre el entreno con 3 ejercicios y 2 series cada uno', r.a.sesion && r.a.min && r.a.ej === 3 && r.a.series === 6 && r.a.panel === 'vivo', JSON.stringify(r.a));
+    check('tras descartar la mínima, «Empezar» monta la rutina entera (4 ejercicios, 12 series)', r.b.sesion && !r.b.min && r.b.ej === 4 && r.b.series === 12, JSON.stringify(r.b));
+  }
+  // 350) LA VUELTA AL 35 % Y EL PLAN VIEJO MIGRADO, EN CADENA (A5, a 412×915): (a) tras 8 semanas parado, el plan nuevo
+  // arranca al 35 % y «ver el plan» enseña 35·45·…·95·100 (8 filas); (b) «más rápido» lo recorta (empieza al 40 %, 7
+  // filas); (c) un plan guardado SIN `ini` (de antes) se rehace UNA vez al leerlo, con el sistema nuevo (35 %, 8 filas,
+  // desde el lunes de esta semana; conserva ritmo, último y parado; no toca el registro). Fija: la vuelta nueva era lineal
+  // desde el 70 % y quien tenía un plan en curso se quedaba con la fórmula vieja.
+  {
+    const vp350 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia350 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r350', nombre: 'Torso 350', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 4, reps: 6, rmax: 8 }, { ex: 'Remo con barra', series: 4, reps: 8, rmax: 10 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.ui.gymDate = '';
+      const hoy = new Date(); for (let w = 0; w < 6; w++) for (const dd of [0, 2, 4]) { const d = new Date(hoy); d.setDate(d.getDate() - 60 - (5 - w) * 7 - (4 - dd)); const k = P.iso(d);
+        g.rutinas[0].ejercicios.forEach((e) => { for (let i = 0; i < e.series; i++) g.registro.push({ id: 'g350' + Math.random(), fecha: k, ex: e.ex, kg: 60 + w * 2.5, reps: e.rmax, rpe: 7, t: 'n' }); });
+        g.sesiones.push({ id: 's350' + k, fecha: k, rutinaId: 'r350', rpe: 7 }); }
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
+    const tabla = () => page.evaluate(() => ({ filas: document.querySelectorAll('#main .gvtab tr').length - 1, pcts: [...document.querySelectorAll('#main .gvtab tr td:nth-child(4)')].map((t) => t.textContent.replace(/\D/g, '')).join(','),
+      ahora: ((document.querySelector('#main .gvtab tr.on') || {}).textContent || '') }));
+    const r = {};
+    await clic('#main .glam [data-a="gym-panel"][data-p="regreso"]'); r.a = await tabla();
+    r.a.guardado = await page.evaluate(() => { const v = window.PG.gymS().regreso; return { ini: v.ini, paso: v.paso }; });
+    await clic('#main [data-a="regreso-ritmo"][data-v="rapido"]'); r.b = await tabla();
+    r.b.ini = await page.evaluate(() => window.PG.gymS().regreso.ini);
+    // un plan de antes (sin ini ni paso, empezado hace 10 días) se rehace UNA vez con el sistema nuevo al leerlo
+    await page.evaluate(() => { const P = window.PG, v = P.gymS().regreso; delete v.ini; delete v.paso; v.ritmo = 'normal'; v.desde = P.iso(P.addDays(new Date(), -10)); window.__old350 = { ultimo: v.ultimo, parado: v.parado }; P.ui.gymPanel = 'regreso'; P.render(); });
+    r.c = await tabla();
+    r.c.mig = await page.evaluate(() => { const P = window.PG, v = P.gymS().regreso, d1 = v.desde; P.render(); P.render();   // leerlo otra vez no lo vuelve a rehacer
+      return { ini: v.ini, paso: v.paso, ritmo: v.ritmo, ultimo: v.ultimo === window.__old350.ultimo, parado: v.parado === window.__old350.parado, estable: P.gymS().regreso.desde === d1,
+        lunes: d1 === P.iso(P.mondayOf(new Date())), registro: P.gymS().registro.length }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia350; delete window.__copia350; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp350);
+    check('el plan de vuelta nuevo arranca al 35 % y sube de 10 en 10 (35·45·…·95·100), y guarda ini y paso',
+      r.a.filas === 8 && r.a.pcts === '35,45,55,65,75,85,95,100' && /35 %/.test(r.a.ahora) && r.a.guardado.ini === 35 && r.a.guardado.paso === 10, JSON.stringify(r.a));
+    check('«más rápido» empieza al 40 % y lo acorta a 7 semanas', r.b.filas === 7 && /^40,50,/.test(r.b.pcts) && r.b.ini === 40, JSON.stringify(r.b));
+    check('un plan guardado sin ini se rehace una vez con el sistema nuevo: 8 semanas desde el 35 %, conserva ritmo, último y parado, y no borra el registro',
+      r.c.filas === 8 && /^35,45,/.test(r.c.pcts) && /35 %/.test(r.c.ahora) && r.c.mig.ini === 35 && r.c.mig.paso === 10 && r.c.mig.ritmo === 'normal' && r.c.mig.ultimo && r.c.mig.parado &&
+      r.c.mig.estable && r.c.mig.lunes && r.c.mig.registro > 0, JSON.stringify(r.c));
+  }
+  // 351) EL OBJETIVO DE PESO CON SUS TOPES, EN CADENA (A6, a 412×915): con 80 kg, 175 cm, 28 años, hombre, (a) la ficha
+  // «Objetivo de peso» de la portada abre la pantalla; (b) meta 72 kg al ritmo 0,5 da kcal ≥1.500 y ≥ basal, proteína 160 g
+  // y una fecha; (c) a 1 kg/semana con 60 kg de partida el ritmo se recorta al 1 % (0,6) y lo dice; (d) una meta de 50 kg
+  // se sube a la de IMC 18,5; (e) «usar estas kcal» con meta «perder» manda en Comer (kcalSugeridas). Fija: no había objetivo.
+  {
+    const vp351 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, p = P.perfilS(); window.__copia351 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 175, pesoKg: 80, sexo: 'h', nacido: new Date().getFullYear() - 28, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] }); delete p.objetivo;
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 80 });
+      P.ui.gymPanel = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    await page.click('#main [data-a="gym-panel"][data-p="peso"]'); await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => ({ panel: window.PG.ui.gymPanel, tit: (document.querySelector('#main .subtit') || {}).textContent, aviso: /médico/.test(document.getElementById('main').textContent) }));
+    await page.fill('#main [data-a="obj-kg"]', '72'); await page.keyboard.press('Tab'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="obj-ritmo"][data-v="0.5"]'); await page.waitForTimeout(250);
+    r.b = await page.evaluate(() => { const P = window.PG, o = P.objetivoPeso(); return { o, basal: P.metabolismoBasal(), svg: !!document.querySelector('#main svg.gline'), txt: (document.querySelector('#main .big') || {}).textContent || '' }; });
+    r.f = await page.evaluate(() => { const m = document.getElementById('main'), meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      return { chips: [...m.querySelectorAll('[data-a="obj-ritmo"]')].map((b) => Math.round(b.getBoundingClientRect().width)), mes: new RegExp('hacia el \\S+ \\d+ de (' + meses.join('|') + ')').test(m.textContent),
+        eje: m.querySelectorAll('.gpesoeje span').length, meta: /tu meta: 72 kg/.test(m.textContent) }; });
+    r.c = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 60 }]; p.pesoKg = 60; p.objetivo = { kg: 55, ritmo: 1 }; const o = P.objetivoPeso(); return { ritmo: o.ritmo, topes: o.topes, kcal: o.kcal }; });
+    r.d = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 50, ritmo: 0.5 }; P.ui.gymPanel = 'peso'; P.render(); const o = P.objetivoPeso(); return { meta: o.meta, topes: o.topes, nota: /IMC/.test(document.getElementById('main').textContent) }; });
+    r.e = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 72, ritmo: 0.5 }; p.meta = 'mantener'; const antes = P.kcalSugeridas(); P.render(); return { antes }; });
+    await page.click('#main [data-a="obj-usar"]'); await page.waitForTimeout(250);
+    r.e.despues = await page.evaluate(() => ({ k: window.PG.kcalSugeridas(), o: window.PG.objetivoPeso().kcal, meta: window.PG.perfilS().meta }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia351; delete window.__copia351; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp351);
+    check('la ficha «Objetivo de peso» de la portada abre su pantalla, con el aviso de hablar con el médico', r.a.panel === 'peso' && /objetivo de peso/i.test(r.a.tit) && r.a.aviso, JSON.stringify(r.a));
+    check('meta 72 kg a 0,5 kg/semana: kcal ≥ basal y ≥1.500, proteína 160 g, semanas, fecha, gráfica y cifra en pantalla',
+      r.b.o && r.b.o.perder && r.b.o.kcal >= 1500 && r.b.o.kcal >= r.b.basal && r.b.o.prot === 160 && r.b.o.semanas >= 10 && /^\d{4}-/.test(r.b.o.fecha) && r.b.svg && r.b.txt.indexOf(String(r.b.o.kcal)) >= 0, JSON.stringify(r.b));
+    check('objetivo de peso (verificador): los chips del ritmo miden ≥44 px de ancho, la fecha lleva el mes y la gráfica dice fechas, kilos y la meta',
+      r.f.chips.length === 4 && r.f.chips.every((w) => w >= 44) && r.f.mes && r.f.eje === 2 && r.f.meta, JSON.stringify(r.f));
+    check('1 kg/semana con 60 kg de partida se recorta al 1 % del peso (0,6 kg/semana)', r.c.ritmo <= 0.6 && r.c.topes.indexOf('ritmo') >= 0 && r.c.kcal >= 1500, JSON.stringify(r.c));
+    check('una meta de 50 kg con 175 cm se sube a la del IMC 18,5 (56,7 kg) y lo dice', r.d.meta >= 56.6 && r.d.topes.indexOf('imc') >= 0 && r.d.nota, JSON.stringify(r.d));
+    check('«usar estas kcal» pone la meta en perder y kcalSugeridas pasa a las del objetivo', r.e.despues.meta === 'perder' && r.e.despues.k === r.e.despues.o && r.e.despues.k !== r.e.antes, JSON.stringify(r.e));
+  }
+  // 352) EL DIBUJO DEL ENTRENO SE ELIGE EN AJUSTES Y SALE EN LA PORTADA, EN CADENA (B3, a 412×915): (a) Ajustes → Cómo se ve
+  // enseña dos muestras con aria-pressed (el Teide, marcado por defecto); (b) elegir «Los Bancales» la guarda en gym.lamina y la
+  // portada de Entreno dibuja los bancales; (c) volver a Ajustes y elegir el Teide la cambia de vuelta. Fija: no había dibujo.
+  {
+    const vp352 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia352 = JSON.parse(JSON.stringify(P.store)); delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const abre = async () => { await page.click('[data-a="drawer-toggle"]'); await page.click('[data-a="drawer-nav"][data-t="ajustes"]'); await page.click('[data-a="aju-vista"][data-v="aspecto"]'); await page.waitForTimeout(250); };
+    const muestras = () => page.evaluate(() => [...document.querySelectorAll('[data-cfg="lamina"] [data-a="lamina-tema"]')].map((b) => b.dataset.id + ':' + b.getAttribute('aria-pressed') + ':' + Math.round(b.getBoundingClientRect().height)).join(' '));
+    const portada = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { tema: c ? c.dataset.lam : '', etq: c ? (c.querySelector('svg').getAttribute('aria-label') || '') : '' }; });
+    const r = {};
+    await abre(); r.a = await muestras();
+    await page.click('[data-a="lamina-tema"][data-id="bancales"]'); await page.waitForTimeout(250);
+    r.b = { m: await muestras(), g: await page.evaluate(() => window.PG.gymS().lamina) };
+    await page.click('[data-a="tab"][data-t="gym"]'); await page.waitForTimeout(250); r.c = await portada();
+    await abre(); await page.click('[data-a="lamina-tema"][data-id="teide"]'); await page.waitForTimeout(250);
+    await page.click('[data-a="tab"][data-t="gym"]'); await page.waitForTimeout(250); r.d = await portada();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia352; delete window.__copia352; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp352);
+    check('Ajustes → Cómo se ve enseña las dos muestras del dibujo, el Teide marcado por defecto y cada una de ≥44 px', /^teide:true:\d+ bancales:false:\d+$/.test(r.a) && r.a.split(' ').every((x) => +x.split(':')[2] >= 44), r.a);
+    check('elegir «Los Bancales» en Ajustes la guarda y la portada de Entreno la dibuja', /bancales:true/.test(r.b.m) && /teide:false/.test(r.b.m) && r.b.g === 'bancales' && r.c.tema === 'bancales' && /Los Bancales/.test(r.c.etq), JSON.stringify(r));
+    check('volver a Ajustes y elegir el Teide cambia el dibujo de la portada de vuelta', r.d.tema === 'teide' && /Teide/.test(r.d.etq), JSON.stringify(r.d));
+  }
+  // 353) LA LÁMINA DICE «HOY NO: GUARDIA» Y VUELVE A DECIR LA HORA, EN CADENA (B1, a 412×915): (a) con hoy de guardia la lámina
+  // dice «Hoy no: guardia», sin zona para empezar sesión; (b) quitada la guardia y con entreno puesto hoy, dice el lugar y la
+  // hora de la franja (gimnasio 15:00 entre semana, parque 10:00 el finde) y su zona lleva a la sesión; (c) las partes tocables
+  // (7 días y peso) miden ≥44 px en pantalla y el peso abre su pantalla. Fija: la lámina no existía.
+  {
+    const vp353 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), p = P.perfilS(); window.__copia353 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 178, pesoKg: 82, sexo: 'h', nacido: new Date().getFullYear() - 26, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] }); p.objetivo = { kg: 75, ritmo: 0.5 };
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 82 });
+      delete g.lamina; delete g.hora; g.rutinas = [{ id: 'r353', nombre: 'Torso 353', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8, rmax: 10 }] }];
+      const hoy = P.iso(new Date()), sh = (c) => P.store.shifts.find((s) => s.code === c).id;
+      window.__ov353 = (P.store.rotation.daySet || {})[hoy];
+      P.setDayOverride(hoy, sh('G'), ''); P.gymForzar()[hoy] = false; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const txt = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { t: c ? c.querySelector('svg').textContent : '', ses: c ? c.querySelectorAll('[data-a="ses-empezar"]').length : -1 }; });
+    const r = {};
+    r.a = await txt();
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, P.store.shifts.find((s) => s.code === 'T').id, ''); P.gymForzar()[hoy] = true; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    r.b = await txt(); r.b.esp = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return (P.lugarEntreno(k) === 'parque' ? 'Parque' : 'Gimnasio') + ' · ' + P.gymHoraDe(k); });
+    r.c = await page.evaluate(() => [...document.querySelectorAll('.glam [role="button"]')].map((e) => { const q = e.getBoundingClientRect(); return Math.round(q.width) + 'x' + Math.round(q.height); }));
+    await page.click('.glam [data-a="gym-panel"][data-p="peso"]'); await page.waitForTimeout(250);
+    r.d = await page.evaluate(() => window.PG.ui.gymPanel);
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.store = window.__copia353; delete window.__copia353; delete window.__ov353; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp353);
+    check('con hoy de guardia la lámina dice «Hoy no: guardia» y no ofrece empezar sesión', /Hoy no: guardia/.test(r.a.t) && r.a.ses === 0, JSON.stringify(r.a));
+    check('quitada la guardia y con entreno hoy, la lámina dice lugar y hora de la franja y su zona lleva a la sesión', r.b.t.indexOf(r.b.esp) >= 0 && !/Hoy no/.test(r.b.t) && r.b.ses === 1, JSON.stringify(r.b));
+    check('las partes tocables de la lámina (7 días + peso, y hoy) miden ≥44 px a 412×915', r.c.length >= 8 && r.c.every((x) => +x.split('x')[0] >= 44 && +x.split('x')[1] >= 44), JSON.stringify(r.c));
+    check('tocar el peso del dibujo abre «Tu objetivo de peso»', r.d === 'peso', r.d);
+  }
+  // 354) EXPLÍCAMELO · 45 s: ARRANCA, RESALTA, SE PARA Y NO DEJA TEMPORIZADORES, EN CADENA (B2, a 412×915): (a) el botón abre el
+  // texto, enciende la parte 1 y su frase y hay temporizador; (b) a los 9 s pasa a la parte 2; (c) «Parar» lo apaga todo y
+  // esconde el texto; (d) en marcha, cualquier repintado (tocar un día) y salir de Entreno lo paran sin temporizador vivo.
+  {
+    const vp354 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia354 = JSON.parse(JSON.stringify(P.store)); delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const est = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { run: !!c && c.classList.contains('run'), partes: c ? [...c.querySelectorAll('.part.on')].map((p) => p.dataset.n).join(',') : '?', fr: c ? [...c.querySelectorAll('.fr.on')].map((p) => p.dataset.i).join(',') : '?',
+      visible: !!c && !c.querySelector('.glt').hidden, boton: c ? c.querySelector('[data-a="lam-tour"]').textContent : '', vivo: window.PG.lamTimerVivo() }; });
+    const r = {};
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(300); r.a = await est();
+    await page.waitForTimeout(9100); r.b = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200); r.c = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200);
+    await page.click('#main .glam .gdia:not([aria-current])'); await page.waitForTimeout(250); r.d = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200); r.e0 = await est();
+    await page.click('[data-a="nav-cal"]'); await page.waitForTimeout(250); r.e = await page.evaluate(() => window.PG.lamTimerVivo());
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia354; delete window.__copia354; P.save(); P.ui.gymPanel = ''; P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp354);
+    check('«Explícamelo · 45 s» abre el texto, enciende la parte 1 con su frase y pone «Parar»', r.a.run && r.a.partes === '1' && r.a.fr === '0' && r.a.visible && r.a.boton === 'Parar' && r.a.vivo, JSON.stringify(r.a));
+    check('a los 9 s el recorrido pasa a la parte 2 y su frase', r.b.partes === '2' && r.b.fr === '1' && r.b.vivo, JSON.stringify(r.b));
+    check('«Parar» apaga resaltados y temporizador y esconde el texto', !r.c.run && r.c.partes === '' && r.c.fr === '' && !r.c.visible && !r.c.vivo && /45 s/.test(r.c.boton), JSON.stringify(r.c));
+    check('repintar (tocar otro día) con el recorrido en marcha lo para sin dejar temporizador', r.e0.vivo && !r.d.vivo && !r.d.run && r.d.partes === '' && !r.d.visible, JSON.stringify([r.e0, r.d]));
+    check('salir de Entreno con el recorrido en marcha no deja ningún temporizador vivo', r.e0.vivo && r.e === false, JSON.stringify([r.e0, r.e]));
+  }
+  // 355) EL TEXTO DE 45 s TIENE 100-120 PALABRAS EN LOS DOS DIBUJOS Y CON O SIN OBJETIVO, Y CON MOVIMIENTO REDUCIDO NO ANIMA (B2,
+  // a 412×915): (a) las cinco frases de cada tema suman 100-120 palabras con y sin objetivo de peso, y con objetivo llevan sus
+  // cifras; (b) con prefers-reduced-motion el botón solo abre y cierra el texto entero, sin recorrido ni temporizador.
+  {
+    const vp355 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, p = P.perfilS(); window.__copia355 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 178, pesoKg: 82, sexo: 'h', nacido: new Date().getFullYear() - 26, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] });
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 82 });
+      p.objetivo = { kg: 75, ritmo: 0.5 }; delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.pal = await page.evaluate(() => { const P = window.PG, o = {}, d = P.laminaDatos(P.iso(new Date())), cuenta = (a) => a.join(' ').split(/\s+/).filter(Boolean).length;
+      o.con = { teide: cuenta(P.laminaTextos('teide', d)), bancales: cuenta(P.laminaTextos('bancales', d)), cifras: /75/.test(P.laminaTextos('teide', d)[3]) && /proteína/.test(P.laminaTextos('teide', d)[3]) };
+      delete P.perfilS().objetivo; const d2 = P.laminaDatos(P.iso(new Date()));
+      o.sin = { teide: cuenta(P.laminaTextos('teide', d2)), bancales: cuenta(P.laminaTextos('bancales', d2)) }; return o; });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => { const c = document.querySelector('.glam'); return { visible: !c.querySelector('.glt').hidden, run: c.classList.contains('run'), partes: c.querySelectorAll('.part.on').length, vivo: window.PG.lamTimerVivo(), boton: c.querySelector('[data-a="lam-tour"]').textContent }; });
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(150);
+    r.b = await page.evaluate(() => ({ visible: !document.querySelector('.glam .glt').hidden }));
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia355; delete window.__copia355; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp355);
+    const en = (n) => n >= 100 && n <= 120;
+    check('el texto de 45 s tiene 100-120 palabras en los dos dibujos, con y sin objetivo de peso, y con objetivo lleva sus cifras',
+      en(r.pal.con.teide) && en(r.pal.con.bancales) && en(r.pal.sin.teide) && en(r.pal.sin.bancales) && r.pal.con.cifras, JSON.stringify(r.pal));
+    check('con movimiento reducido el botón solo abre el texto entero: sin recorrido, sin resaltado y sin temporizador, y lo cierra', r.a.visible && !r.a.run && r.a.partes === 0 && !r.a.vivo && /Ocultar/.test(r.a.boton) && !r.b.visible, JSON.stringify([r.a, r.b]));
+  }
+  // 356) LA PORTADA DE ENTRENO YA NO REPITE LA LÁMINA, EN CADENA (a 412×915): con 8 semanas parado y rutinas, (a) la portada no trae la
+  // tarjeta «Esta semana» (círculos, línea, 4 cifras) ni «Tu vuelta al gimnasio», pero sí la lámina; (b) tocar la vuelta de la
+  // lámina abre el plan entero (8 filas) y «volver» deja la portada sin la tarjeta. Fija: el mismo dato salía dos veces.
+  {
+    const vp356 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia356 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r356', nombre: 'Torso 356', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 4, reps: 6, rmax: 8 }, { ex: 'Remo con barra', series: 4, reps: 8, rmax: 10 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.ui.gymDate = ''; delete g.lamina;
+      const hoy = new Date(); for (let w = 0; w < 6; w++) for (const dd of [0, 2, 4]) { const d = new Date(hoy); d.setDate(d.getDate() - 60 - (5 - w) * 7 - (4 - dd)); const k = P.iso(d);
+        g.rutinas[0].ejercicios.forEach((e) => { for (let i = 0; i < e.series; i++) g.registro.push({ id: 'g356' + Math.random(), fecha: k, ex: e.ex, kg: 60 + w * 2.5, reps: e.rmax, rpe: 7, t: 'n' }); });
+        g.sesiones.push({ id: 's356' + k, fecha: k, rutinaId: 'r356', rpe: 7 }); }
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const portada = () => page.evaluate(() => ({ lamina: !!document.querySelector('#main .glam'), semana: !!document.querySelector('#main .gsem, #main .gsc, #main .gkpi'),
+      vuelta: !!document.querySelector('#main .gvuelta'), texto: /Esta semana|Tu vuelta al gimnasio|TU VUELTA AL GIMNASIO/.test(document.querySelector('#main').textContent),
+      rutinas: document.querySelectorAll('#main .grt').length, hero: !!document.querySelector('#main .ghero2') }));
+    const r = {}; r.a = await portada();
+    const t = await page.$('#main .glam [data-a="gym-panel"][data-p="regreso"]'); if (t) { await t.click(); await page.waitForTimeout(250); }
+    r.b = await page.evaluate(() => ({ panel: window.PG.ui.gymPanel, filas: document.querySelectorAll('#main .gvtab tr').length - 1 }));
+    const v = await page.$('#main .volver[data-a="gym-panel"]'); if (v) { await v.click(); await page.waitForTimeout(250); }
+    r.c = await portada();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia356; delete window.__copia356; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp356);
+    check('la portada de Entreno ya no trae «Esta semana» ni «Tu vuelta al gimnasio»: queda la lámina, la tarjeta grande y las rutinas',
+      r.a.lamina && !r.a.semana && !r.a.vuelta && !r.a.texto && r.a.hero && r.a.rutinas === 1, JSON.stringify(r.a));
+    check('tocar la vuelta de la lámina abre el plan entero (8 semanas) y al volver la portada sigue sin la tarjeta vieja',
+      !!t && r.b.panel === 'regreso' && r.b.filas === 8 && !!v && r.c.lamina && !r.c.vuelta && !r.c.texto, JSON.stringify([r.b, r.c]));
+  }
+  // 357) EL MÍNIMO SEMANAL SIGUE A UN TOQUE Y SE VE EL BLOQUE, EN CADENA (a 412×915): (a) la portada trae la fila «N hechos · mín. M ·
+  // bloque · sem x/y ⚙»; (b) tocarla abre «Tu semana de entreno»; (c) «+» sube el mínimo y «volver» lo deja en la fila. Fija: al quitar
+  // la tarjeta «Esta semana» el ⚙ del mínimo era el único camino a esa pantalla y se perdía.
+  {
+    const vp357 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia357 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r357', nombre: 'Torso 357', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 4, reps: 6, rmax: 8 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; g.minSemana = 2; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const r = {};
+    r.a = await page.evaluate(() => { const b = document.querySelector('#main .gsemcfg[data-p="plan"]'); return { hay: !!b, txt: b ? b.textContent.replace(/\s+/g, ' ') : '', tarjeta: !!document.querySelector('#main .gsem') }; });
+    const b = await page.$('#main .gsemcfg[data-p="plan"]'); if (b) { await b.click(); await page.waitForTimeout(250); }
+    r.b = await page.evaluate(() => ({ panel: window.PG.ui.gymPanel, min: window.PG.entrenoCfg().min, mas: !!document.querySelector('#main [data-a="ent-min"][data-d="1"]') }));
+    const mas = await page.$('#main [data-a="ent-min"][data-d="1"]'); if (mas) { await mas.click(); await page.waitForTimeout(250); }
+    const v = await page.$('#main .volver[data-a="gym-panel"]'); if (v) { await v.click(); await page.waitForTimeout(250); }
+    r.c = await page.evaluate(() => { const b = document.querySelector('#main .gsemcfg[data-p="plan"]'); return { min: window.PG.entrenoCfg().min, txt: b ? b.textContent.replace(/\s+/g, ' ') : '' }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia357; delete window.__copia357; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp357);
+    check('la portada trae la fila de la semana con el mínimo y el bloque (o la descarga), sin la tarjeta «Esta semana»',
+      r.a.hay && !r.a.tarjeta && /hechos/.test(r.a.txt) && /mín\. 2/.test(r.a.txt) && /bloque · sem \d+\/\d+|descarga/.test(r.a.txt), JSON.stringify(r.a));
+    check('esa fila abre «Tu semana de entreno», el «+» sube el mínimo y la fila lo refleja al volver',
+      r.b.panel === 'plan' && r.b.mas && r.b.min === 2 && r.c.min === 3 && /mín\. 3/.test(r.c.txt), JSON.stringify([r.b, r.c]));
+  }
+  // 358) CON UNA SESIÓN EN CURSO, LA PORTADA TAMPOCO TRAE LAS TARJETAS Y EL DÍA SE CAMBIA DESDE LA LÁMINA, EN CADENA (a 412×915):
+  // (a) «Empezar» monta la sesión; (b) de vuelta en la portada manda «EN CURSO · Seguir», sin las tarjetas viejas y con la fila ⚙;
+  // (c) tocar otro día de la lámina cambia el día elegido sin tirar la sesión; (d) la fila ⚙ sigue abriendo el plan de la semana.
+  {
+    const vp358 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia358 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas = [{ id: 'r358', nombre: 'Torso 358', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8, rmax: 10 }] }];
+      g.registro = []; g.sesiones = []; delete g.regreso; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const r = {};
+    const emp = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (emp) { await emp.click(); await page.waitForTimeout(300); }
+    r.a = await page.evaluate(() => ({ sesion: !!window.PG.ui.gymSesionActiva }));
+    await page.evaluate(() => { window.PG.ui.gymPanel = ''; window.PG.render(); });
+    r.b = await page.evaluate(() => ({ hero: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent, seguir: !!document.querySelector('#main .ghero2 [data-p="vivo"]'),
+      viejas: !!document.querySelector('#main .gsem, #main .gvuelta, #main .gkpi'), fila: !!document.querySelector('#main .gsemcfg[data-p="plan"]') }));
+    const antes = await page.evaluate(() => window.PG.ui.gymDate || '');
+    const d = await page.$('#main .glam .gdia:not([aria-current])'); if (d) { await d.click(); await page.waitForTimeout(250); }
+    r.c = await page.evaluate((a) => ({ cambia: (window.PG.ui.gymDate || '') !== a && !!window.PG.ui.gymDate, sesion: !!window.PG.ui.gymSesionActiva, hero: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent }), antes);
+    const f = await page.$('#main .gsemcfg[data-p="plan"]'); if (f) { await f.click(); await page.waitForTimeout(250); }
+    r.d = await page.evaluate(() => window.PG.ui.gymPanel);
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva = null; P.store = window.__copia358; delete window.__copia358; P.save(); P.ui.gymPanel = ''; P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp358);
+    check('con la sesión en curso la portada manda «EN CURSO · Seguir», trae la fila ⚙ y no las tarjetas «Esta semana» ni «Tu vuelta»',
+      r.a.sesion && /EN CURSO/.test(r.b.hero) && r.b.seguir && !r.b.viejas && r.b.fila, JSON.stringify([r.a, r.b]));
+    check('cambiar de día desde la lámina cambia el día elegido sin tirar la sesión en curso, y la fila ⚙ sigue abriendo el plan',
+      !!d && r.c.cambia && r.c.sesion && /EN CURSO/.test(r.c.hero) && r.d === 'plan', JSON.stringify([r.c, r.d]));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

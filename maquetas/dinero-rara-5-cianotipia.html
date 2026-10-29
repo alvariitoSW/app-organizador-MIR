@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>Cianotipia · La Hamaca</title>
+<style>
+:root{--az:#0b2d5c;--az2:#0f3a73;--tx:#eef6ff;--t2:#bcd6f6;--li:#8fb4e6}
+*{box-sizing:border-box}
+html{background:#071d3d}
+body{width:412px;margin:0;background:var(--az);color:var(--tx);font-family:ui-monospace,"Courier New",monospace;font-size:14px;line-height:1.35;overflow-x:hidden}
+.serif{font-family:Georgia,"Times New Roman",serif;font-style:italic}
+.cartel{padding:14px 16px;border-bottom:1px dashed var(--li)}
+.cartel b{font-family:Georgia,serif;font-size:17px;letter-spacing:.06em;text-transform:uppercase}
+.cartel p{margin:4px 0 0;color:var(--t2);font-size:12.5px}
+.rot{padding:8px 16px 0;color:var(--t2);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+section{position:relative;background-image:linear-gradient(rgba(143,180,230,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(143,180,230,.14) 1px,transparent 1px);background-size:24px 24px;border-bottom:1px dashed var(--li);padding:6px 0 14px;overflow:hidden}
+h1,h2{margin:0;font-family:Georgia,serif;font-weight:normal;letter-spacing:.04em}
+.cab{padding:6px 16px 0;display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
+.gran{padding:4px 16px 0}
+.gran .n{font-size:34px;line-height:1.05;letter-spacing:-.02em;font-weight:bold}
+.gran .m{font-size:15px;margin-top:2px}
+.gran .v{margin-top:6px;font-size:14px;border-top:1px solid var(--li);padding-top:6px}
+.cielo{position:relative;width:412px;height:392px}
+.cielo svg{display:block}
+.t{display:flex;align-items:flex-end;justify-content:center;text-align:center;position:absolute;background:transparent;border:1.5px dashed var(--tx);color:var(--tx);font:inherit;font-size:12.5px;line-height:1.2;border-radius:48%;min-height:44px;cursor:pointer;padding:4px 10px}
+.t:focus-visible,.btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.btn{display:block;width:calc(100% - 32px);margin:0 16px;min-height:48px;background:var(--tx);color:var(--az);border:0;font:inherit;font-weight:bold;font-size:15px;letter-spacing:.03em;cursor:pointer;padding:8px 12px}
+.btn.o{background:transparent;color:var(--tx);border:1.5px solid var(--tx)}
+.hoy{padding:8px 16px;font-size:15px}
+.hoy b{border-bottom:2px solid var(--tx)}
+.aviso{margin:8px 16px 0;min-height:22px;color:var(--t2);font-size:12.5px}
+.leyenda{padding:0 16px;color:var(--t2);font-size:12px}
+.plan{margin:8px 16px;padding:10px 0;border-top:1px solid var(--li);border-bottom:1px solid var(--li)}
+.plan .g{font-size:26px;font-weight:bold;line-height:1.1}
+.sel{display:flex;gap:8px;margin:8px 16px}
+.sel button{flex:1;min-height:48px;background:transparent;color:var(--tx);border:1.5px solid var(--li);font:inherit;font-size:13px;cursor:pointer}
+.sel button[aria-pressed=true]{background:var(--tx);color:var(--az);font-weight:bold;border-color:var(--tx)}
+.mes{display:flex;gap:8px;align-items:baseline;padding:7px 16px;border-top:1px dotted var(--li)}
+.mes .k{width:40px;text-transform:uppercase;color:var(--t2)}
+.mes .s{flex:1;letter-spacing:.12em;font-size:15px;min-height:20px}
+.mes .c{width:96px;text-align:right}
+p{margin:0}
+</style></head><body>
+
+<div class="cartel"><b>Cianotipia</b>
+<p>Tu ahorro es una constelación impresa en azul de plano antiguo. Cada 100 € apartados es una estrella: 89 estrellas son los 6 meses de colchón.</p></div>
+
+<div class="rot">Pantalla 1 · Portada</div>
+<section id="p1" aria-label="Portada">
+<div class="cab"><span class="serif">Carta celeste · «La Hamaca»</span><span>25 oct</span></div>
+<div class="gran">
+ <div class="n">42 de 89 estrellas</div>
+ <div class="m">2,8 de 6 meses · 4.200 de 8.870 €</div>
+ <div class="v">▲ Vas por delante: llegas hacia junio de 2027 (la meta es octubre).</div>
+</div>
+<div class="cielo" id="cielo">
+ <svg id="sv" width="412" height="392" viewBox="0 0 412 392" role="img" aria-labelledby="svt"><title id="svt">La constelación La Hamaca: 42 de 89 estrellas encendidas, de izquierda a derecha</title></svg>
+ <button class="t" id="bPla" style="left:8px;top:4px;width:170px;height:74px" data-ir="Compras">Planetas: lo que<br>quiero comprar</button>
+ <button class="t" id="bNub" style="left:226px;top:4px;width:176px;height:74px" data-ir="Gastos">Nube: en qué<br>se me va</button>
+</div>
+<div class="leyenda">★ encendida · ○ por encender · ◎ las de este mes</div>
+<div class="hoy">Este mes enciende <b>4 estrellas (390 €)</b>.</div>
+<button class="btn" data-abre="p2">Abrir el cuaderno de observación ›</button>
+<div class="aviso" id="av" role="status" aria-live="polite"></div>
+</section>
+
+<div class="rot">Pantalla 2 · Ahorro</div>
+<section id="p2" aria-label="Ahorro">
+<div class="cab"><span class="serif">Cuaderno de observación</span><span>oct 2026</span></div>
+<div class="plan">
+ <div class="g">Aparta ~390 € al mes</div>
+ <div>= 4 estrellas, hasta octubre de 2027 (89 estrellas, 8.870 €).</div>
+ <div style="margin-top:6px" id="res">▲ A tu ritmo de ahora (~650 €/mes) llegas hacia junio de 2027: vas por delante.</div>
+</div>
+<div class="sel" role="group" aria-label="Elige el ritmo">
+ <button data-r="390" aria-pressed="false">390 € al mes</button>
+ <button data-r="650" aria-pressed="true">650 € (tu ritmo)</button>
+</div>
+<svg id="gr" width="412" height="330" viewBox="0 0 412 330" role="img" aria-labelledby="grt"><title id="grt">Estrellas encendidas mes a mes: de 22 en mayo a 42 en octubre de 2026, y previsión hasta 89 en junio de 2027 a 650 euros al mes o en octubre de 2027 a 390 euros al mes</title></svg>
+<div class="leyenda" style="margin-top:2px">Línea continua: lo ya encendido. Punteada: previsión. Eje: estrellas (89 = meta).</div>
+<div style="padding:10px 16px 4px" class="serif">Lo que se encendió cada mes</div>
+<div class="mes"><span class="k">may</span><span class="s">★ × 22 · de partida</span><span class="c">22 en total</span></div>
+<div class="mes"><span class="k">jun</span><span class="s">· ninguna</span><span class="c">+0 → 22</span></div>
+<div class="mes"><span class="k">jul</span><span class="s">★</span><span class="c">+1 → 23</span></div>
+<div class="mes"><span class="k">ago</span><span class="s">★★★★</span><span class="c">+4 → 27</span></div>
+<div class="mes"><span class="k">sep</span><span class="s">★★★★★★★★</span><span class="c">+8 → 35</span></div>
+<div class="mes"><span class="k">oct</span><span class="s">★★★★★★★</span><span class="c">+7 → 42</span></div>
+<p style="padding:10px 16px;color:var(--t2);font-size:13px">Si dejas de comer fuera (180 €/mes), enciendes casi 2 estrellas más cada mes. Las guardias hacen saltar unos meses más que otros; por eso cuenta el ritmo de varios meses.</p>
+<button class="btn o" data-abre="p1">‹ Volver a la portada</button>
+</section>
+
+<script>
+var NS='http://www.w3.org/2000/svg';
+function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function estrella(p,x,y,r,rel){var d='M'+x+' '+(y-r)+' L'+(x+r*.28)+' '+(y-r*.28)+' L'+(x+r)+' '+y+' L'+(x+r*.28)+' '+(y+r*.28)+' L'+x+' '+(y+r)+' L'+(x-r*.28)+' '+(y+r*.28)+' L'+(x-r)+' '+y+' L'+(x-r*.28)+' '+(y-r*.28)+' Z';return el('path',{d:d,fill:rel||'#fff'},p)}
+/* ---- constelación: 89 puntos ---- */
+var sv=document.getElementById('sv'),pts=[];
+function sag(x,x0,x1,y0,h){var u=(x-(x0+x1)/2)/((x1-x0)/2);return y0+h*(1-u*u)}
+function jit(i){return ((Math.sin(i*12.9898)*43758.5453)%1+1)%1-.5}
+var i,x;
+for(i=0;i<50;i++){x=36+i*(340/49);pts.push([x+jit(i)*6,sag(x,36,376,150,120)+jit(i+99)*8,'A'])}
+for(i=0;i<20;i++){x=90+i*(230/19);pts.push([x+jit(i+200)*6,sag(x,90,320,176,80)+jit(i+300)*7,'B'])}
+for(i=0;i<10;i++){pts.push([i%2?28:380,140-Math.floor(i/2)*22+jit(i+400)*5,'P'])}
+var extra=[[120,92],[170,60],[205,112],[262,100],[300,78],[318,122],[150,128],[100,205],[340,215]];
+extra.forEach(function(e,k){pts.push([e[0],e[1],'E'])});
+pts.sort(function(a,b){return a[0]-b[0]});
+
+var gl=el('g',{transform:'translate(0 34)'},sv);
+/* hilos de la figura */
+['A','B'].forEach(function(s){var q=pts.filter(function(p){return p[2]===s});el('polyline',{points:q.map(function(p){return p[0].toFixed(0)+','+p[1].toFixed(0)}).join(' '),fill:'none',stroke:'#8fb4e6','stroke-width':1,'stroke-dasharray':'2 4',opacity:.7},gl)});
+/* órbita de los planetas */
+el('path',{d:'M8 36 Q90 -26 190 18',fill:'none',stroke:'#8fb4e6','stroke-width':1,'stroke-dasharray':'5 4'},gl);
+pts.forEach(function(p,k){
+ if(k<42){estrella(gl,p[0],p[1],5.5)}
+ else if(k<46){el('circle',{cx:p[0],cy:p[1],r:11,fill:'none',stroke:'#fff','stroke-width':1.6},gl);el('circle',{cx:p[0],cy:p[1],r:5,fill:'none',stroke:'#fff','stroke-width':1.6,'stroke-dasharray':'2 2'},gl)}
+ else{el('circle',{cx:p[0],cy:p[1],r:3.5,fill:'none',stroke:'#8fb4e6','stroke-width':1.3},gl)}
+});
+/* nube (tapa estrellas) */
+var nb=el('g',{},sv);
+el('path',{d:'M262 46 Q246 46 250 32 Q252 20 266 22 Q272 8 290 12 Q302 2 316 14 Q336 10 342 26 Q362 26 362 38 Q364 48 346 46 Z',fill:'#0b2d5c','fill-opacity':.94,stroke:'#fff','stroke-width':1.5},nb);
+[0,1,2].forEach(function(f,k){el('path',{d:'M'+(266+k*30)+' 34 q8 -6 18 0',fill:'none',stroke:'#bcd6f6','stroke-width':1},nb)});
+/* planetas */
+function planeta(cx,cy,r){var g=el('g',{},sv);el('circle',{cx:cx,cy:cy,r:r,fill:'#0b2d5c',stroke:'#fff','stroke-width':1.5},g);el('ellipse',{cx:cx,cy:cy,rx:r*1.9,ry:r*.5,fill:'none',stroke:'#fff','stroke-width':1.3,transform:'rotate(-18 '+cx+' '+cy+')'},g);el('path',{d:'M'+(cx-r*.7)+' '+(cy-r*.2)+' q'+(r*.7)+' '+(r*.5)+' '+(r*1.4)+' 0',fill:'none',stroke:'#bcd6f6','stroke-width':1},g)}
+planeta(50,22,9);planeta(130,22,5);
+/* marca de coordenadas y rótulo de la figura */
+var tx=el('text',{x:206,y:384,'text-anchor':'middle',fill:'#bcd6f6','font-family':'Georgia,serif','font-style':'italic','font-size':13},sv);tx.textContent='La Hamaca · 89 estrellas · 8.870 €';
+/* ---- avisos y navegación ---- */
+var av=document.getElementById('av');
+document.querySelectorAll('[data-ir]').forEach(function(b){b.onclick=function(){av.textContent='Aquí se abre «'+(b.dataset.ir==='Gastos'?'En qué se me va':'Lo que quiero comprar')+'».'}});
+document.querySelectorAll('[data-abre]').forEach(function(b){b.onclick=function(){var s=document.getElementById(b.dataset.abre);s.scrollIntoView({behavior:'smooth',block:'start'})}});
+sv.onclick=function(){document.getElementById('p2').scrollIntoView({behavior:'smooth'})};
+/* ---- gráfico de Ahorro ---- */
+var gr=document.getElementById('gr'),ms=['may','jun','jul','ago','sep','oct'],cum=[22,22,23,27,35,42];
+var X0=44,XW=352,Y0=290,YH=250;
+function px(m){return X0+m*XW/17}function py(v){return Y0-v*YH/89}
+var M=['may','jun','jul','ago','sep','oct','nov','dic','ene','feb','mar','abr','may','jun','jul','ago','sep','oct'];
+[0,22,44,66,89].forEach(function(v){el('line',{x1:X0,x2:X0+XW,y1:py(v),y2:py(v),stroke:'#8fb4e6','stroke-width':.6,'stroke-dasharray':v===89?'0':'2 4'},gr);var t=el('text',{x:X0-6,y:py(v)+4,'text-anchor':'end',fill:'#bcd6f6','font-size':11},gr);t.textContent=v});
+var mt=el('text',{x:X0+6,y:py(89)-5,'text-anchor':'start',fill:'#eef6ff','font-size':11},gr);mt.textContent='META · 89 · oct 2027';
+[0,3,6,9,12,15,17].forEach(function(m){var t=el('text',{x:px(m),y:Y0+16,'text-anchor':'middle',fill:'#bcd6f6','font-size':10.5},gr);t.textContent=M[m]});
+var a1=el('text',{x:px(0),y:Y0+30,fill:'#bcd6f6','font-size':10},gr);a1.textContent='2026';
+var a2=el('text',{x:px(7),y:Y0+30,fill:'#bcd6f6','font-size':10},gr);a2.textContent='2027';
+var real=cum.map(function(v,m){return px(m)+','+py(v)}).join(' ');
+el('polyline',{points:real,fill:'none',stroke:'#fff','stroke-width':1.8},gr);
+cum.forEach(function(v,m){estrella(gr,px(m),py(v),7)});
+var ft=el('text',{x:px(5)+4,y:py(42)+22,fill:'#eef6ff','font-size':11},gr);ft.textContent='hoy: 42';
+var fut=el('g',{},gr);
+function pronostico(r){fut.innerHTML='';var fin=r===390?17:13,d=r===390?[[5,42],[17,89]]:[[5,42],[12,87.5],[13,89]];
+ var pts2=d.map(function(q){return px(q[0])+','+py(q[1])}).join(' ');
+ el('polyline',{points:pts2,fill:'none',stroke:'#fff','stroke-width':1.8,'stroke-dasharray':'6 4'},fut);
+ for(var m=6;m<=fin;m++){var v=Math.min(89,42+(m-5)*r/100);el('circle',{cx:px(m),cy:py(v),r:3.5,fill:'#0b2d5c',stroke:'#fff','stroke-width':1.4},fut)}
+ estrella(fut,px(fin),py(89),9);
+ var tt=el('text',{x:X0+XW,y:py(50),'text-anchor':'end',fill:'#fff','font-size':12,'font-weight':'bold'},fut);
+ tt.textContent=r===390?'oct 2027: figura completa':'jun 2027: figura completa'}
+var res=document.getElementById('res');
+function elige(r){pronostico(r);document.querySelectorAll('.sel button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.r==r)});
+ res.textContent=r===390?'▲ Con 390 € al mes llegas justo en octubre de 2027: es el mínimo para cumplir.':'▲ A tu ritmo de ahora (~650 €/mes) llegas hacia junio de 2027: vas por delante.'}
+document.querySelectorAll('.sel button').forEach(function(b){b.onclick=function(){elige(+b.dataset.r)}});
+elige(650);
+</script>
+</body></html>

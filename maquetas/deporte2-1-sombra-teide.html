@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>La Sombra del Teide · maqueta</title>
+<style>
+:root{--papel:#efe2c4;--papel2:#e4d3ac;--tinta:#2b1d33;--sepia:#6b4423;--viol:#5a3f78;--ocre:#c9893a;--oro:#f2c46b;--pino:#44532f}
+*{box-sizing:border-box}
+html{background:#cdbd98}
+body{width:412px;margin:0;background:#cdbd98;color:var(--tinta);font:15px/1.45 Georgia,"Times New Roman",serif;overflow-x:hidden}
+button{font:inherit;color:inherit}
+.cartel{background:var(--tinta);color:var(--papel);padding:16px 18px 14px;text-align:center}
+.cartel small{display:block;letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:#e6c98d}
+.cartel h1{margin:2px 0 6px;font-size:25px;font-weight:normal;letter-spacing:.02em}
+.cartel p{margin:0;font-size:14px;line-height:1.4}
+.rotulo{margin:0;padding:10px 18px 4px;font:12px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#4a3a2a;font-weight:600}
+.pantalla{position:relative;background:var(--papel);margin:0 0 4px;padding:18px 18px 18px;
+  box-shadow:inset 0 0 0 7px var(--papel),inset 0 0 0 8px #8a6b4a,inset 0 0 0 11px var(--papel),inset 0 0 0 12px #b9a27c}
+.pantalla h2{margin:6px 6px 2px;font-size:25px;font-weight:normal;line-height:1.15;color:var(--tinta)}
+.pantalla .sub{margin:0 6px 10px;color:var(--sepia);font-size:14px}
+svg{display:block;max-width:100%;height:auto}
+.lamina{margin:0 -6px;border:1px solid #8a6b4a;background:#d9c69b}
+.sin-texto{position:absolute;width:0;height:0;overflow:hidden}
+/* pantalla 0 */
+#s0{height:auto}
+.zona-texto{margin:10px 6px 0}
+#texto45{margin:0;font-size:15px;line-height:1.45}
+#texto45 .p{padding:1px 2px;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+#texto45 .p.on{background:var(--oro);outline:1px solid var(--tinta)}
+.fila-boton{display:flex;align-items:center;gap:10px;margin:10px 6px 0}
+#btnTour{min-height:48px;min-width:48px;padding:0 16px;border:2px solid var(--tinta);background:var(--viol);color:#fff;border-radius:6px;font:700 15px system-ui,sans-serif;cursor:pointer}
+#btnTour[aria-pressed="true"]{background:var(--oro);color:var(--tinta)}
+#cap{font:13px/1.3 system-ui,sans-serif;color:var(--sepia);flex:1}
+.quieto #btnTour{display:none}
+.part{transition:opacity .4s}
+.halo{display:none}
+.tour .part:not(.on){opacity:.3}
+.part.on .halo{display:block}
+.todo .part .halo{display:none}
+#marco{display:none}
+.todo #marco{display:block}
+@media (prefers-reduced-motion:reduce){.part{transition:none}}
+/* pantalla 1 */
+.hoy{margin:2px 6px 10px}
+.hoy b{display:block;font-size:30px;line-height:1.05;font-weight:normal}
+.hoy span{display:block;font:600 15px system-ui,sans-serif;color:var(--viol);margin-top:4px}
+.ejs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 6px 0}
+.ej{min-height:64px;text-align:left;padding:8px 10px;background:var(--papel2);border:1px solid #8a6b4a;border-radius:4px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--papel2),inset 0 0 0 4px #b9a27c;position:relative}
+.ej b{display:block;font-size:15px;font-weight:600;line-height:1.2}
+.ej i{display:block;font:normal 14px system-ui,sans-serif;color:var(--sepia);margin-top:2px}
+.ej em{display:none}
+.nota{margin:8px 6px 0;font:13px/1.35 system-ui,sans-serif;color:#4a3a2a}
+#btnMin{display:block;width:calc(100% - 12px);margin:12px 6px 0;min-height:56px;padding:6px 12px;border:2px solid var(--tinta);background:var(--viol);color:#fff;border-radius:6px;font:700 16px/1.2 system-ui,sans-serif;cursor:pointer;text-align:center}
+#btnMin small{display:block;font-weight:400;font-size:13px}
+#minima{margin:8px 6px 0;padding:10px 12px;border:2px dashed var(--viol);border-radius:4px;background:var(--papel2);font:15px/1.4 system-ui,sans-serif}
+#minima[hidden]{display:none}
+.semana{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:12px 6px 0;text-align:center;font:12px/1.2 system-ui,sans-serif}
+.semana div{padding:2px 0}
+.semana svg{margin:0 auto}
+.semana .hoyd{outline:2px solid var(--tinta);background:var(--oro);border-radius:4px}
+/* pantalla 2 */
+.panel{margin:10px 6px 0;padding:10px 12px;background:var(--papel2);border:1px solid #8a6b4a;border-radius:4px;box-shadow:inset 0 0 0 3px var(--papel2),inset 0 0 0 4px #b9a27c;font:14px/1.4 system-ui,sans-serif}
+.panel b{font:600 16px Georgia,serif;display:block;margin-bottom:2px}
+.cargas{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;text-align:center}
+.cargas div{background:var(--papel);border:1px solid #b9a27c;border-radius:3px;padding:4px 0;font-size:12px;line-height:1.2}
+.cargas strong{display:block;font-size:16px;font-family:Georgia,serif}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 6px 0}
+.dos .panel{margin:0}
+.est{cursor:pointer}
+.est:focus-visible circle.hit{stroke:var(--tinta);stroke-width:3}
+/* pantalla 3 */
+.tres{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 6px 0}
+.tres .panel{margin:0;padding:8px 6px;text-align:center;font-size:12px}
+.tres strong{display:block;font:22px/1.1 Georgia,serif}
+</style>
+</head>
+<body>
+
+<svg class="sin-texto" aria-hidden="true" focusable="false"><defs>
+  <pattern id="hat" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="5" stroke="#2b1d33" stroke-width="1.1" opacity=".55"/></pattern>
+  <pattern id="hat2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#f3e6c8" stroke-width=".8" opacity=".5"/></pattern>
+  <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4d3a6b"/><stop offset=".55" stop-color="#9a6f8d"/><stop offset="1" stop-color="#e2b46d"/></linearGradient>
+  <linearGradient id="nubes" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf9f"/><stop offset=".35" stop-color="#b79bb8"/><stop offset="1" stop-color="#5f4a7e"/></linearGradient>
+</defs></svg>
+
+<header class="cartel">
+  <small>Escuela 1 · concurso La Vuelta, 2.ª ronda</small>
+  <h1>La Sombra del Teide</h1>
+  <p>Aguatinta al atardecer en Las Cañadas: la sombra del Teide sobre el mar de nubes es la aguja del reloj.
+  Cuando toca la marca de las 15 h, gimnasio; la vuelta se sube por etapas y el peso es el mar de nubes que baja.</p>
+</header>
+
+<!-- ======================= PANTALLA 0 ======================= -->
+<p class="rotulo">Pantalla 0 · En 45 segundos</p>
+<section class="pantalla" id="s0" aria-labelledby="t0">
+  <h2 id="t0">En 45 segundos</h2>
+  <p class="sub">La app, explicada con este dibujo.</p>
+  <div class="lamina" id="lam0"></div>
+  <div class="zona-texto">
+    <p id="texto45"><span class="p" data-p="1">Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.</span> <span class="p" data-p="2">Al abrirla ves qué toca hoy, a qué hora y dónde, con sus cargas y descansos. Si vas justo, hay una mínima de 25 minutos. El fin de semana, parque.</span> <span class="p" data-p="3">Si lo dejas dos semanas, la vuelta arranca al 35 % y sube diez puntos por semana. Si fallas, repites sin castigo; la racha cuenta semanas.</span> <span class="p" data-p="4">El peso baja de 82 a 75 kilos con 2.000 kilocalorías y 140 gramos de proteína; el plan de comidas cuadra.</span> <span class="p" data-p="5">Aquí, la sombra es la hora, los roques son tu semana, el camino es la vuelta y las nubes son tu peso. Así se sigue mejor.</span></p>
+  </div>
+  <div class="fila-boton">
+    <button id="btnTour" type="button" aria-pressed="false">Explícamelo · 45 s</button>
+    <div id="cap" role="status" aria-live="polite">Toca el botón y te lo enseño sobre el dibujo.</div>
+  </div>
+</section>
+
+<!-- ======================= PANTALLA 1 ======================= -->
+<p class="rotulo">Pantalla 1 · Hoy toca</p>
+<section class="pantalla" id="s1" aria-labelledby="t1">
+  <h2 id="t1">Hoy toca</h2>
+  <div class="hoy"><b>Gimnasio · 15:00 a 16:00</b><span>Jueves · semana 3 de la vuelta, al 55 %</span></div>
+  <div class="lamina" id="lam1"></div>
+    <div class="ejs" id="ejs"></div>
+  <p class="nota">2 series de cada uno, esfuerzo suave (sobran ~4 repeticiones). Entre series suena el descanso. Toca un ejercicio para cambiarlo por otro del mismo músculo.</p>
+  <button id="btnMin" type="button" aria-expanded="false" aria-controls="minima">Voy justo · sesión mínima<small>25 min a las 15:30 · toca para verla</small></button>
+  <div id="minima" hidden><b>Mínima, 25 min a las 15:30</b><br>3 ejercicios × 2 series: sentadilla 45 kg, press de banca 32,5 kg y remo 27,5 kg. Cuenta igual para la racha.</div>
+  <div class="semana" id="sem" aria-label="Tu semana"></div>
+</section>
+
+<!-- ======================= PANTALLA 2 ======================= -->
+<p class="rotulo">Pantalla 2 · La vuelta</p>
+<section class="pantalla" id="s2" aria-labelledby="t2">
+  <h2 id="t2">La vuelta</h2>
+  <p class="sub">Ocho etapas de subida a la cumbre. Estás en la 3.</p>
+  <div class="lamina" id="lam2"></div>
+  <div class="panel" id="infoEt" aria-live="polite"><b>Etapa 3 · Los Huevos · 55 %</b>Esta semana, 2 series con estas cargas:
+    <div class="cargas"><div><strong>45</strong>sentadilla</div><div><strong>32,5</strong>banca</div><div><strong>50</strong>muerto</div><div><strong>27,5</strong>remo</div><div><strong>20</strong>militar</div></div>
+    <div style="margin-top:4px;font-size:12px">kg, un 55 % de tus cargas de antes. Toca otra etapa para verla.</div></div>
+  <div class="dos">
+    <div class="panel"><b>Si fallas</b>Una semana: repites esta etapa. Dos: bajas una. Nada se seca.</div>
+    <div class="panel"><b>Si lo dejas</b>Tras dos semanas parado, vuelves a la etapa 1, al 35 %.</div>
+  </div>
+</section>
+
+<!-- ======================= PANTALLA 3 ======================= -->
+<p class="rotulo">Pantalla 3 · Tu objetivo de peso</p>
+<section class="pantalla" id="s3" aria-labelledby="t3">
+  <h2 id="t3">Tu objetivo de peso</h2>
+  <p class="sub">El mar de nubes baja de 82 a 75 kg.</p>
+  <div class="lamina" id="lam3"></div>
+  <div class="tres">
+    <div class="panel"><strong>~2.000</strong>kcal cada día</div>
+    <div class="panel"><strong>140 g</strong>de proteína</div>
+    <div class="panel"><strong>−0,5 kg</strong>por semana · 14 semanas</div>
+  </div>
+  <p class="nota">Meta: 8 de febrero de 2027. Hoy 81,4 kg, semana 2 de 14. Las kcal del entreno no se suman para comer más.</p>
+  <div class="panel"><b>Tu plan semanal de comidas, cuadrado</b>Cada piedra es un día; la raya es 2.000 kcal.
+    <div class="lamina" id="lam3b" style="margin:6px 0 0"></div>
+    <div style="margin-top:6px">Media de los días que cuentan: 2.020 kcal, cuadra. El sábado se pasa y se avisa, sin drama: se compensa en la semana.</div></div>
+</section>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+function $(id){return document.getElementById(id)}
+// ---------- piezas del grabado ----------
+function ondas(y0,H,n,col,op){var s='';for(var k=0;k<n;k++){var y=y0+8+k*((H-y0-10)/n);var d='M0 '+y;for(var x=0;x<=412;x+=46){d+=' q 11 '+(-5-k*.4)+' 23 0 t 23 0';}s+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+(1+k*.12)+'" opacity="'+op+'"/>';}return s}
+function cielo(H,yNube,ap,mitad,ybase){
+  // cielo + sol + Teide + mar de nubes
+  var s='<rect width="412" height="'+yNube+'" fill="url(#cielo)"/>';
+  for(var i=0;i<14;i++){s+='<line x1="0" x2="412" y1="'+(10+i*(yNube/14))+'" y2="'+(10+i*(yNube/14))+'" stroke="#2b1d33" stroke-width=".6" opacity=".12"/>'}
+  s+='<circle cx="34" cy="'+(yNube-60)+'" r="22" fill="#f2c46b" stroke="#2b1d33" stroke-width="1.2"/>';
+  for(var a=0;a<12;a++){var an=a*Math.PI/6,x=34,y=yNube-60;s+='<line x1="'+(x+27*Math.cos(an))+'" y1="'+(y+27*Math.sin(an))+'" x2="'+(x+36*Math.cos(an))+'" y2="'+(y+36*Math.sin(an))+'" stroke="#2b1d33" stroke-width="1.2"/>'}
+  var L=206-mitad,R=206+mitad;
+  s+='<path d="M'+L+' '+ybase+' L'+(206-8)+' '+(ap+8)+' L'+(206-3)+' '+(ap+2)+' L'+206+' '+ap+' L'+(206+6)+' '+(ap+6)+' L'+(206+10)+' '+(ap+12)+' L'+R+' '+ybase+' Z" fill="#3a2a46" stroke="#2b1d33" stroke-width="1.5"/>';
+  s+='<path d="M'+L+' '+ybase+' L'+(206-8)+' '+(ap+8)+' L'+(206-3)+' '+(ap+2)+' L206 '+ap+' L206 '+ybase+' Z" fill="url(#hat2)"/>';
+  s+='<path d="M206 '+ap+' L'+(206+6)+' '+(ap+6)+' L'+(206+10)+' '+(ap+12)+' L'+R+' '+ybase+' L206 '+ybase+' Z" fill="url(#hat)"/>';
+  s+='<path d="M'+(206-14)+' '+(ap+18)+' L'+(206-6)+' '+(ap+14)+' L'+(206+2)+' '+(ap+20)+' L'+(206+9)+' '+(ap+15)+' L206 '+(ap+8)+' Z" fill="#f3e6c8" opacity=".8"/>';
+  s+='<rect y="'+yNube+'" width="412" height="'+(H-yNube)+'" fill="url(#nubes)"/>';
+  s+=ondas(yNube,H,9,'#f3e6c8',.45);
+  s+='<path d="M0 '+yNube+' q 23 -6 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0" fill="none" stroke="#2b1d33" stroke-width="1.4"/>';
+  return s}
+function sombra(yN,yReloj,conBanda){
+  var s='';
+  // regla de horas sobre el mar de nubes
+  s+='<rect x="258" y="'+yReloj+'" width="142" height="30" fill="#efe2c4" stroke="#2b1d33" stroke-width="1.3"/>';
+  var hs=[13,14,15,16,17];
+  hs.forEach(function(h,i){var x=272+i*30;s+='<line x1="'+x+'" x2="'+x+'" y1="'+yReloj+'" y2="'+(yReloj+8)+'" stroke="#2b1d33" stroke-width="1.5"/><text x="'+(x+2)+'" y="'+(yReloj+25)+'" font-size="'+(h==15?13:11)+'" font-weight="'+(h==15?700:400)+'" font-family="system-ui,sans-serif" fill="#2b1d33">'+h+'</text>'});
+  s+='<rect x="332" y="'+(yReloj-4)+'" width="30" height="38" fill="#f2c46b" opacity=".85" stroke="#2b1d33" stroke-width="1.6"/>';
+  s+='<text x="337" y="'+(yReloj+27)+'" font-size="13" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">15</text>';
+  s+='<polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 332,'+(yReloj+4)+'" fill="#2d1f4a" opacity=".82" stroke="#2b1d33" stroke-width="1.2"/>';
+  s+='<polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 332,'+(yReloj+4)+'" fill="url(#hat2)"/>';
+  s+='<rect x="332" y="'+(yReloj-30)+'" width="68" height="20" rx="3" fill="#efe2c4" stroke="#2b1d33"/><text x="366" y="'+(yReloj-16)+'" text-anchor="middle" font-size="12" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">gimnasio</text>';
+  return s}
+function roque(cx,base,h,w){
+  var l=cx-w/2,r=cx+w/2;
+  return 'M'+l+' '+base+' L'+(l+3)+' '+(base-h*.55)+' L'+(cx-w*.28)+' '+(base-h*.78)+' L'+(cx-w*.1)+' '+(base-h)+' L'+(cx+w*.18)+' '+(base-h*.9)+' L'+(r-3)+' '+(base-h*.45)+' L'+r+' '+base+' Z'}
+function pastilla(x,y,w,t,sz){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+((sz||12)+7)+'" rx="3" fill="#efe2c4" stroke="#2b1d33" stroke-width="1"/><text x="'+(x+w/2)+'" y="'+(y+(sz||12)+1)+'" text-anchor="middle" font-size="'+(sz||12)+'" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">'+t+'</text>'}
+function fila(base,altos,tipos,letras,dx,paso,fx){
+  var s='';
+  for(var i=0;i<7;i++){var cx=dx+i*paso,t=tipos[i],h=altos[i],w=fx||38;
+    if(t=='pinar'){
+      s+='<g stroke="#2b1d33" stroke-width="1.2"><path d="M'+cx+' '+(base-h)+' l-14 22 h8 l-12 18 h12 l-14 20 h40 l-14 -20 h12 l-12 -18 h8 Z" fill="#44532f" transform="translate(0,0) scale(1)"/><rect x="'+(cx-3)+'" y="'+(base-4)+'" width="6" height="6" fill="#3a2a46" stroke="none"/></g>';
+    } else {
+      var fill = t=='noche'?'#1f1428':(t=='pen'?'#7a5f94':(t=='desc'?'#d3bd92':'#3a2a46'));
+      s+='<path d="'+roque(cx,base,h,w)+'" fill="'+fill+'" stroke="#f3e6c8" stroke-width="1.6"/>';
+      if(t!='desc')s+='<path d="'+roque(cx,base,h,w)+'" fill="url(#'+(t=='pen'?'hat':'hat2')+')"/>';
+      else s+='<path d="'+roque(cx,base,h,w)+'" fill="url(#hat)"/>';
+      s+='<path d="'+roque(cx,base,h,w)+'" fill="none" stroke="#2b1d33" stroke-width="1"/>';
+      if(t=='noche'){s+='<path d="M'+(cx+2)+' '+(base-h-14)+' a8 8 0 1 0 8 10 a6.5 6.5 0 1 1 -8 -10z" fill="#f2c46b" stroke="#2b1d33" stroke-width=".8"/><circle cx="'+(cx-12)+'" cy="'+(base-h-6)+'" r="1.6" fill="#f2c46b"/><circle cx="'+(cx+16)+'" cy="'+(base-h+4)+'" r="1.4" fill="#f2c46b"/>'}
+    }
+    s+=pastilla(cx-11,base-26,22,letras[i],12);
+  }
+  return s}
+var LET=['L','M','X','J','V','S','D'];
+var TIP=['gim','noche','pen','gim','gim','pinar','desc'];
+var ALT=[48,52,42,50,46,56,40];
+
+// ---------- Pantalla 0: la lámina ----------
+(function(){
+  var yN=240,H=400,s='';
+  s+='<svg viewBox="0 0 412 400" width="412" height="400" role="img" aria-labelledby="ti0 de0" id="svg0"><title id="ti0">Las Cañadas del Teide al atardecer</title><desc id="de0">La sombra del Teide cae sobre el mar de nubes y marca las horas; abajo, siete roques son la semana; un camino con ocho etapas sube al Teide; las nubes bajan de 82 a 75 kilos.</desc>';
+  s+=cielo(H,yN,48,118,yN);
+  // camino (parte 3)
+  var P=[[92,234],[228,224],[112,198],[210,182],[132,158],[198,138],[156,108],[170,66]];
+  var d='M'+P[0][0]+' '+P[0][1];for(var i=1;i<P.length;i++)d+=' L'+P[i][0]+' '+P[i][1];
+  s+='<g class="part" id="p3" data-p="3"><path class="halo" d="'+d+'" fill="none" stroke="#f2c46b" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/><path d="'+d+'" fill="none" stroke="#efe2c4" stroke-width="2.4" stroke-dasharray="6 4"/>';
+  P.forEach(function(p,i){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i==2?7:4.5)+'" fill="'+(i<2?'#f2c46b':(i==2?'#f2c46b':'#efe2c4'))+'" stroke="#2b1d33" stroke-width="1.5"/>'});
+  s+=pastilla(P[0][0]+8,P[0][1]-4,36,'35 %',11)+pastilla(P[7][0]+8,P[7][1]-6,46,'100 %',11)+pastilla(P[2][0]+10,P[2][1]-8,36,'55 %',11);
+  s+='</g>';
+  // peso (parte 4)
+  s+='<g class="part" id="p4" data-p="4"><rect class="halo" x="3" y="214" width="406" height="84" rx="4" fill="none" stroke="#f2c46b" stroke-width="3" stroke-dasharray="7 4"/>';
+  s+='<line x1="6" x2="406" y1="'+yN+'" y2="'+yN+'" stroke="#f3e6c8" stroke-width="1.4" stroke-dasharray="6 4"/><line x1="6" x2="406" y1="282" y2="282" stroke="#f3e6c8" stroke-width="1.4" stroke-dasharray="6 4"/>';
+  s+=pastilla(6,222,48,'82 kg',12)+pastilla(6,250,48,'81,4',12)+pastilla(6,272,48,'75 kg',12)+'</g>';
+  // sombra (parte 2)
+  s+='<g class="part" id="p2" data-p="2"><rect class="halo" x="138" y="232" width="268" height="104" rx="4" fill="none" stroke="#f2c46b" stroke-width="3" stroke-dasharray="7 4"/>'+sombra(yN,300,true)+'</g>';
+  // roques (parte 1)
+  s+='<g class="part" id="p1" data-p="1"><rect class="halo" x="3" y="332" width="406" height="64" rx="4" fill="none" stroke="#f2c46b" stroke-width="3" stroke-dasharray="7 4"/>'+fila(392,ALT,TIP,LET,28,59)+'</g>';
+  s+='<rect id="marco" x="3" y="3" width="406" height="394" fill="none" stroke="#f2c46b" stroke-width="5" stroke-dasharray="10 5"/>';
+  s+='</svg>';
+  $('lam0').innerHTML=s;
+})();
+
+// ---------- Pantalla 1: reloj + ejercicios + semana ----------
+(function(){
+  var s='<svg viewBox="0 28 412 304" width="412" height="304" role="img" aria-labelledby="ti1"><title id="ti1">La sombra del Teide toca la marca de las 15 horas: toca gimnasio</title>';
+  s+=cielo(340,240,48,118,240)+sombra(240,300,true)+'</svg>';
+  $('lam1').innerHTML=s;
+  var EJ=[['Sentadilla','45 kg','Prensa de piernas'],['Press de banca','32,5 kg','Press con mancuernas'],['Peso muerto','50 kg','Peso muerto rumano'],['Remo','27,5 kg','Remo con mancuerna'],['Press militar','20 kg','Press de hombro sentado']];
+  var est=EJ.map(function(){return 0});
+  var cont=$('ejs');
+  function pinta(){cont.innerHTML='';EJ.forEach(function(e,i){var b=document.createElement('button');b.type='button';b.className='ej';
+    var nombre=est[i]?e[2]:e[0];
+    b.innerHTML='<b>'+nombre+'</b><i>'+(est[i]?'carga: la propone la app':e[1])+' · 2 × '+[8,8,5,10,8][i]+'</i><em>'+(est[i]?'del mismo músculo · toca para volver':'toca para cambiarlo')+'</em>';
+    b.setAttribute('aria-label',nombre+', 2 series. Toca para cambiarlo por otro del mismo músculo.');
+    b.onclick=function(){est[i]=est[i]?0:1;pinta();cont.children[i].focus()};cont.appendChild(b)});}
+  pinta();
+  $('btnMin').onclick=function(){var m=$('minima');var abre=m.hidden;m.hidden=!abre;this.setAttribute('aria-expanded',abre)};
+  // semana
+  var tx=['Gimnasio 15:00','Guardia','Saliente','Hoy · gimnasio','Mínima 15:30','Parque 10:00','Descanso'];
+  var w='';
+  for(var i=0;i<7;i++){
+    var fl=TIP[i]=='noche'?'#1f1428':(TIP[i]=='pen'?'#7a5f94':(TIP[i]=='desc'?'#d3bd92':'#3a2a46'));
+    var sv='<svg viewBox="0 0 52 50" width="48" height="46" aria-hidden="true"><path d="'+roque(26,46,34+(i%3)*4,34)+'" fill="'+fl+'" stroke="#2b1d33" stroke-width="1.2"/><path d="'+roque(26,46,34+(i%3)*4,34)+'" fill="url(#'+(TIP[i]=='pen'||TIP[i]=='desc'?'hat':'hat2')+')"/>'+pastilla(15,26,22,LET[i],12)+'</svg>';
+    if(TIP[i]=='pinar')sv='<svg viewBox="0 0 52 50" width="48" height="46" aria-hidden="true"><path d="M26 4 l-12 18 h8 l-11 16 h12 l-12 14 h38 l-12 -14 h12 l-11 -16 h8 Z" fill="#44532f" stroke="#2b1d33" stroke-width="1.2"/>'+pastilla(15,26,22,'S',12)+'</svg>';
+    w+='<div'+(i==3?' class="hoyd"':'')+'>'+sv+'<br>'+tx[i].replace(' ','<br>')+'</div>';
+  }
+  $('sem').innerHTML=w;
+})();
+
+// ---------- Pantalla 2: la subida ----------
+(function(){
+  var H=720,yN=640,ap=50,s='<svg viewBox="0 0 412 '+H+'" width="412" height="'+H+'" role="img" aria-labelledby="ti2"><title id="ti2">El Teide con ocho etapas de subida, del 35 al 100 por ciento; estás en la tercera</title>';
+  s+=cielo(H,yN,ap,180,yN);
+  var N=['El Portillo','Montaña Blanca','Los Huevos','Estancia','Altavista','La Rambleta','El Pitón','Cumbre'];
+  var PC=[35,45,55,65,75,85,95,100];
+  var P=[[90,610],[300,550],[120,490],[290,430],[140,370],[270,310],[170,250],[206,100]];
+  var d='M'+P[0][0]+' '+P[0][1];for(var i=1;i<P.length;i++)d+=' L'+P[i][0]+' '+P[i][1];
+  s+='<path d="'+d+'" fill="none" stroke="#efe2c4" stroke-width="2.6" stroke-dasharray="7 5"/>';
+  // refugio (guardia)
+  s+='<g><path d="M26 392 l22 -20 l22 20 v22 h-44 z" fill="#efe2c4" stroke="#2b1d33" stroke-width="1.5"/><rect x="40" y="396" width="16" height="18" fill="#3a2a46"/><path d="M62 364 a8 8 0 1 0 8 10 a6.5 6.5 0 1 1 -8 -10z" fill="#f2c46b" stroke="#2b1d33" stroke-width=".8"/>'+pastilla(8,418,118,'Guardia: noche',12)+pastilla(8,440,118,'en el refugio',12)+'</g>';
+  // etapas
+  P.forEach(function(p,i){
+    var cur=i==2,hecho=i<2,x=p[0],y=p[1];
+    var lw=118,lx=Math.max(6,Math.min(412-lw-6,x-lw/2));
+    s+='<g class="est" tabindex="0" role="button" data-e="'+i+'" aria-label="Etapa '+(i+1)+', '+N[i]+', '+PC[i]+' por ciento'+(cur?', estás aquí':(hecho?', hecha':''))+'">';
+    s+='<circle class="hit" cx="'+x+'" cy="'+y+'" r="24" fill="rgba(242,196,107,0)" stroke="none"/>';
+    if(cur)s+='<circle cx="'+x+'" cy="'+y+'" r="17" fill="none" stroke="#f2c46b" stroke-width="4"/><circle cx="'+x+'" cy="'+y+'" r="11" fill="#f2c46b" stroke="#2b1d33" stroke-width="2"/>';
+    else s+='<circle cx="'+x+'" cy="'+y+'" r="9" fill="'+(hecho?'#f2c46b':'#efe2c4')+'" stroke="#2b1d33" stroke-width="1.8"/>';
+    if(hecho)s+='<path d="M'+(x-4)+' '+y+' l3 3.5 l6 -7" fill="none" stroke="#2b1d33" stroke-width="2"/>';
+    if(i==7)s+='<path d="M'+x+' '+(y-9)+' v-26 l18 6 l-18 6" fill="#c9893a" stroke="#2b1d33" stroke-width="1.5"/>';
+    s+=pastilla(lx,y+(i==7?14:13),lw,(i+1)+' · '+PC[i]+' %'+(cur?' · estás aquí':''),11);
+    s+=pastilla(lx,y+(i==7?32:31),lw,N[i],11);
+    s+='</g>';
+  });
+  // racha
+  s+='<g><path d="M238 640 v-30 l16 7 l-16 7" fill="#f2c46b" stroke="#2b1d33" stroke-width="1.4"/><path d="M268 640 v-30 l16 7 l-16 7" fill="#f2c46b" stroke="#2b1d33" stroke-width="1.4"/><line x1="238" x2="238" y1="640" y2="656" stroke="#2b1d33" stroke-width="2"/><line x1="268" x2="268" y1="640" y2="656" stroke="#2b1d33" stroke-width="2"/>'+pastilla(212,664,150,'Racha: 2 semanas',13)+'</g>';
+  s+='</svg>';
+  $('lam2').innerHTML=s;
+  var C={2:['45','32,5','50','27,5','20']};
+  var L=['sentadilla','banca','muerto','remo','militar'];
+  function info(i){
+    var h='<b>Etapa '+(i+1)+' · '+N[i]+' · '+PC[i]+' %</b>';
+    if(C[i]){h+='Esta semana, 2 series con estas cargas:<div class="cargas">'+C[i].map(function(c,k){return '<div><strong>'+c+'</strong>'+L[k]+'</div>'}).join('')+'</div><div style="margin-top:4px;font-size:12px">kg, un 55 % de tus cargas de antes. Toca otra etapa para verla.</div>'}
+    else h+=(i<2?'Hecha. ':'Todavía no. ')+'Aquí subes al '+PC[i]+' % de tus cargas de antes, con 2 series y esfuerzo suave.'+(i==7?' Es la cumbre: tus cargas de antes.':'');
+    $('infoEt').innerHTML=h;}
+  document.querySelectorAll('#lam2 .est').forEach(function(g){
+    function ir(){info(+g.getAttribute('data-e'))}
+    g.addEventListener('click',ir);g.addEventListener('keydown',function(e){if(e.key=='Enter'||e.key==' '){e.preventDefault();ir()}});});
+})();
+
+// ---------- Pantalla 3: el mar de nubes baja ----------
+(function(){
+  var H=582,y0=230,k=40,s='<svg viewBox="0 0 412 '+H+'" width="412" height="'+H+'" role="img" aria-labelledby="ti3 de3"><title id="ti3">El mar de nubes baja de 82 a 75 kilos</title><desc id="de3">Hoy el mar de nubes está en 81,4 kilos, en la semana 2 de 14. La línea de abajo marca los 75 kilos, el 8 de febrero de 2027. Al bajar, el Teide se descubre más.</desc>';
+  var yHoy=y0+Math.round((82-81.4)*k);
+  s+='<rect width="412" height="'+y0+'" fill="url(#cielo)"/>';
+  for(var i=0;i<12;i++)s+='<line x1="0" x2="412" y1="'+(10+i*19)+'" y2="'+(10+i*19)+'" stroke="#2b1d33" stroke-width=".6" opacity=".12"/>';
+  s+='<rect y="'+y0+'" width="412" height="'+(H-y0)+'" fill="#9a6f8d"/>';
+  var ap=40,mid=110,yb=510,hm=function(y){return mid*(y-ap)/(y0-ap)};
+  s+='<path d="M'+(206-hm(yb))+' '+yb+' L198 '+(ap+8)+' L206 '+ap+' L214 '+(ap+10)+' L'+(206+hm(yb))+' '+yb+' Z" fill="#3a2a46" stroke="#2b1d33" stroke-width="1.5"/>';
+  s+='<path d="M'+(206-hm(yb))+' '+yb+' L198 '+(ap+8)+' L206 '+ap+' L206 '+yb+' Z" fill="url(#hat2)"/><path d="M206 '+ap+' L214 '+(ap+10)+' L'+(206+hm(yb))+' '+yb+' L206 '+yb+' Z" fill="url(#hat)"/>';
+  s+='<path d="M192 '+(ap+20)+' L200 '+(ap+14)+' L208 '+(ap+22)+' L216 '+(ap+16)+' L206 '+(ap+8)+' Z" fill="#f3e6c8" opacity=".8"/>';
+  s+='<rect y="'+yHoy+'" width="412" height="'+(H-yHoy)+'" fill="url(#nubes)" opacity=".86"/>'+ondas(yHoy,H,12,'#f3e6c8',.4);
+  s+='<path d="M0 '+yHoy+' q 23 -6 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0" fill="none" stroke="#2b1d33" stroke-width="1.6"/>';
+  // niveles por kilo
+  for(var kg=82;kg>=75;kg--){var y=y0+(82-kg)*k;
+    s+='<line x1="52" x2="406" y1="'+y+'" y2="'+y+'" stroke="'+(kg==75?'#f2c46b':'#f3e6c8')+'" stroke-width="'+(kg==75?2.4:1)+'" stroke-dasharray="'+(kg==75?'8 4':'3 5')+'"/>';
+    s+=pastilla(6,y-9,40,kg+'',13);}
+  // hoy
+  s+='<g><rect x="262" y="'+(yHoy-30)+'" width="142" height="24" rx="3" fill="#f2c46b" stroke="#2b1d33" stroke-width="1.4"/><text x="333" y="'+(yHoy-13)+'" text-anchor="middle" font-size="13" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">Hoy 81,4 · semana 2</text></g>';
+  // meta
+  s+='<g><path d="M370 '+(y0+7*k)+' v-44 l24 9 l-24 9" fill="#f2c46b" stroke="#2b1d33" stroke-width="1.6"/><line x1="370" x2="370" y1="'+(y0+7*k)+'" y2="'+(y0+7*k+10)+'" stroke="#2b1d33" stroke-width="2.4"/>'+pastilla(246,y0+7*k+14,158,'8 feb 2027 · 75 kg',13)+pastilla(246,y0+7*k+38,158,'semana 14 de 14',12)+'</g>';
+  // ritmo
+  s+=pastilla(60,y0+3*k-10,150,'−0,5 kg cada semana',13);
+  s+='</svg>';
+  $('lam3').innerHTML=s;
+  // plan semanal: siete piedras
+  var kc=[1980,0,0,2020,1950,2150,2000],tp=['gim','noche','pen','gim','gim','gim','desc'];
+  var t='<svg viewBox="0 0 364 190" width="100%" role="img" aria-labelledby="ti3b"><title id="ti3b">Plan semanal de comidas: cada día ronda las 2.000 kcal; el sábado se pasa</title><rect width="364" height="190" fill="#e4d3ac"/>';
+  var yl=70;t+='<line x1="0" x2="364" y1="'+yl+'" y2="'+yl+'" stroke="#2b1d33" stroke-width="1.4" stroke-dasharray="6 3"/><text x="4" y="'+(yl-4)+'" font-size="11" font-family="system-ui,sans-serif" fill="#2b1d33">2.000</text>';
+  for(var i=0;i<7;i++){var cx=36+i*49,base=150,over=kc[i]?(kc[i]-2000)/2.5:0,h=kc[i]?80+over:80,fill=kc[i]?'#3a2a46':(tp[i]=='noche'?'#1f1428':'#7a5f94');
+    t+='<path d="'+roque(cx,base,h,36)+'" fill="'+fill+'" stroke="#2b1d33" stroke-width="1.2"/><path d="'+roque(cx,base,h,36)+'" fill="url(#'+(kc[i]?'hat2':'hat')+')"/>';
+    t+=pastilla(cx-10,base-24,20,LET[i],12);
+    var tag=kc[i]?kc[i].toLocaleString('es-ES'):(i==1?'guardia':'saliente');
+    t+='<text x="'+cx+'" y="168" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui,sans-serif" fill="#2b1d33">'+tag+'</text>';
+    t+='<text x="'+cx+'" y="183" text-anchor="middle" font-size="9.5" font-family="system-ui,sans-serif" fill="#2b1d33">'+(kc[i]?(kc[i]>2100?'se pasa ▲':'cuadra'):'fuera')+'</text>';}
+  t+='</svg>';
+  $('lam3b').innerHTML=t;
+})();
+
+// ---------- El recorrido de 45 s ----------
+(function(){
+  var STEP=9000,N=5,caps=['Los siete roques son tu semana: guardia, saliente, gimnasio y parque.','La sombra del Teide es la hora: en la marca de las 15 h, gimnasio.','El camino de ocho etapas es la vuelta: 35 % y subir.','Las nubes bajan de 82 a 75 kilos.','Todo junto: un solo dibujo, sin pensar.'];
+  // el texto va en orden 1..5, el dibujo se recorre con ese mismo orden
+  var btn=$('btnTour'),cap=$('cap'),svg=$('svg0'),textos=document.querySelectorAll('#texto45 .p'),hs=[],t0=0,run=false;
+  var reducido=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reducido){document.body.classList.add('quieto');cap.textContent='Aquí tienes el texto completo, sin animación.';return;}
+  function limpia(){svg.classList.remove('tour','todo');document.querySelectorAll('#svg0 .part').forEach(function(p){p.classList.remove('on')});textos.forEach(function(p){p.classList.remove('on')});}
+  function paso(i){
+    limpia();svg.classList.add('tour');
+    var n=i+1;
+    if(n==5){svg.classList.add('todo');document.querySelectorAll('#svg0 .part').forEach(function(p){p.classList.add('on')});}
+    else{var m={1:'p1',2:'p2',3:'p3',4:'p4'}[n];$(m).classList.add('on');}
+    textos[i].classList.add('on');
+    cap.textContent='Punto '+n+' de 5 · '+caps[i];
+    textos[i].scrollIntoView&&textos[i].scrollIntoView({block:'nearest'});
+  }
+  function para(fin){hs.forEach(clearTimeout);hs=[];run=false;limpia();btn.textContent='Explícamelo · 45 s';btn.setAttribute('aria-pressed','false');
+    if(fin){document.body.setAttribute('data-tour-ms',Math.round(performance.now()-t0));cap.textContent='Listo. Puedes repetirlo cuando quieras.';}
+    else cap.textContent='Parado. Toca otra vez para empezar de nuevo.';}
+  function arranca(){run=true;t0=performance.now();document.body.removeAttribute('data-tour-ms');btn.textContent='Parar';btn.setAttribute('aria-pressed','true');
+    for(var i=0;i<N;i++)(function(i){hs.push(setTimeout(function(){paso(i)},i*STEP))})(i);
+    hs.push(setTimeout(function(){para(true)},N*STEP));}
+  btn.addEventListener('click',function(){run?para(false):arranca()});
+})();
+})();
+</script>
+</body>
+</html>

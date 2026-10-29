@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>El Aljibe</title>
+<style>
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#e9dcbc;color:#2a2620;font-family:Georgia,"Palatino Linotype",serif;line-height:1.35;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left;padding:0}
+button:focus-visible{outline:3px solid #0a3e48;outline-offset:2px}
+.cartel{padding:18px 20px 16px;background:#3d2e20;color:#f4e9cf;border-radius:0 0 30px 30px}
+.cartel h1{margin:0 0 4px;font-size:22px;font-weight:400;letter-spacing:.04em}
+.cartel p{margin:0;font-size:14px}
+.rot{margin:14px 20px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4a402f}
+.pant{position:relative;width:412px;background:#f1e6cb;overflow:hidden}
+#p1{height:850px}
+#p1>svg{position:absolute;left:0;top:0}
+.suma{position:absolute;left:0;right:0;top:8px;text-align:center}
+.suma .peq{font-size:12px;color:#3d2e20;letter-spacing:.1em;text-transform:uppercase}
+.suma .gran{font-size:44px;line-height:46px;color:#0a4f5c}
+.suma .gran small{font-size:19px}
+.suma .sub{font-size:16px;line-height:20px}
+.pil{display:inline-block;margin-top:6px;padding:3px 14px;border-radius:20px;background:#0a5f6e;color:#fff;font-size:14px}
+.nom{position:absolute;left:118px;top:134px;font-size:12px;line-height:15px;color:#2a2620;width:112px}
+.comp{position:absolute;left:236px;top:128px;width:172px;height:154px}
+.comp span,.cubo{display:block;min-height:48px;padding:6px 12px;border-radius:26px 20px 26px 22px;background:#2f6b4f;color:#fff;font-size:13px;line-height:17px}
+.comp b,.cubo b{display:block;font-size:14px;font-weight:700}
+.cubo{position:absolute;left:216px;top:440px;width:162px}
+.faltan{position:absolute;left:96px;top:384px;font-size:12px;line-height:16px;color:#3d2e20}
+.faltan b{display:block;font-size:19px;line-height:22px;color:#8a2f1d}
+.hacer{position:absolute;left:20px;right:20px;top:688px;text-align:center}
+.hacer .gran{font-size:30px;line-height:34px;color:#2a2620;margin:0}
+.hacer p{margin:2px 0 0;font-size:14px;color:#4a402f}
+.ir{position:absolute;left:16px;right:16px;top:772px;min-height:48px;padding:10px 20px;border-radius:30px 24px 30px 22px;background:#0a5f6e;color:#fff;font-size:17px;text-align:center}
+#p2{padding:16px 12px 24px;background:#f1e6cb}
+.volver{min-height:44px;padding:8px 18px;border-radius:26px 20px 26px 22px;background:#d9c9a0;font-size:15px}
+#p2 h2{font-size:28px;font-weight:400;margin:14px 8px 0;color:#0a4f5c}
+.cifra{margin:4px 8px 0;font-size:40px;line-height:1.05;color:#2a2620}
+.cifra small{font-size:18px}
+.dice{margin:4px 8px 10px;font-size:15px}
+.preg{margin:0 8px 4px;font-size:13px;color:#4a402f}
+.sw{display:flex;gap:8px;margin:0 8px 8px}
+.sw button{flex:1;min-height:48px;padding:6px 8px;border-radius:26px 20px 26px 22px;background:#e2d3ac;font-size:14px;border:2px solid transparent;text-align:center}
+.sw button[aria-pressed=true]{background:#0a5f6e;color:#fff;border-color:#0a3e48}
+.sw button[aria-pressed=true]::before{content:"● "}
+.sw button[aria-pressed=false]::before{content:"○ "}
+#res{margin:0 8px 8px;font-size:16px;min-height:44px}
+#grafico{display:block;margin:0 auto}
+.ley{margin:4px 8px 8px;font-size:12px;color:#4a402f}
+.nota{margin:8px 8px;padding:12px 18px;border-radius:30px 22px 28px 20px;background:#e2d3ac;font-size:15px}
+.nota button{display:block;margin-top:6px;min-height:44px;padding:8px 16px;border-radius:24px 18px 24px 20px;background:#2f6b4f;color:#fff;font-size:15px}
+.aviso{position:absolute;left:16px;right:16px;bottom:8px;min-height:48px;padding:10px 18px;border-radius:26px 20px 26px 22px;background:#3d2e20;color:#f4e9cf;font-size:14px;display:none;z-index:5}
+.aviso.on{display:block}
+</style></head><body>
+<header class="cartel"><h1>El Aljibe</h1><p>Tu ahorro es el agua de un aljibe canario bajo la azotea, visto en corte: la lluvia de cada nómina entra por la gavia y el nivel son los meses de vida.<br>La marca de cal en la pared es tu objetivo.</p></header>
+
+<div class="rot">Pantalla 1 · Portada</div>
+<section class="pant" id="p1" aria-label="Portada">
+<svg viewBox="0 0 412 680" width="412" height="680" role="img" aria-labelledby="pt">
+<title id="pt">Corte de una casa canaria: la lluvia de la azotea baja por la gavia al aljibe bajo tierra. El agua llega a 2,8 de las 6 marcas de meses; la marca roja de cal arriba es el objetivo, 6 meses en octubre de 2027. A la derecha, la huerta con cuatro plantas son las compras; el cubo colgado del brocal son los gastos.</title>
+<defs><linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3e6"/><stop offset="1" stop-color="#f3e9cf"/></linearGradient>
+<linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b93a2"/><stop offset="1" stop-color="#0a4f5c"/></linearGradient>
+<clipPath id="ch"><path d="M36 650 V362 Q36 326 72 326 H352 Q388 326 388 362 V650 Z"/></clipPath></defs>
+<rect width="412" height="280" fill="url(#cielo)"/>
+<path d="M14 156 q0 -18 20 -18 q6 -14 24 -8 q18 -8 28 8 q22 0 22 18 q0 12 -14 12 H28 q-14 0 -14 -12Z" fill="#fff" stroke="#8fb8be" stroke-width="2"/>
+<path transform="translate(26 172) scale(0.9)" d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/><path transform="translate(48 184) scale(1.0)" d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/><path transform="translate(70 170) scale(1.3)" d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/><path transform="translate(92 186) scale(1.5)" d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/><path transform="translate(114 174) scale(1.4)" d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/>
+<rect y="280" width="412" height="392" fill="#6b4f38"/><rect y="280" width="412" height="8" fill="#c9a96a"/>
+<g fill="none" stroke="#5a4230" stroke-width="3" stroke-linecap="round"><path d="M0 310 q60 -10 120 0 t120 0 t120 0 t52 0"/><path d="M0 470 q50 10 100 0 t100 0 t100 0 t112 0"/><path d="M0 560 q70 -8 140 0 t140 0 t132 0"/><path d="M0 640 q80 8 160 0 t160 0 t92 0"/></g>
+<g fill="#5a4230"><ellipse cx="14" cy="400" rx="9" ry="6"/><ellipse cx="396" cy="440" rx="9" ry="7"/><ellipse cx="20" cy="580" rx="10" ry="6"/><ellipse cx="398" cy="600" rx="8" ry="6"/><ellipse cx="404" cy="330" rx="6" ry="5"/></g>
+<rect x="189" y="280" width="14" height="48" fill="#d9ccae"/>
+<path d="M36 650 V362 Q36 326 72 326 H352 Q388 326 388 362 V650 Z" fill="#efe6cf"/>
+<g clip-path="url(#ch)"><path d="M36 512 q13 -7 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 L400 660 L36 660 Z" fill="url(#ag)"/><path d="M36 512 q13 -7 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0" fill="none" stroke="#bdeaf0" stroke-width="2.5"/>
+<ellipse cx="260" cy="570" rx="30" ry="9" fill="none" stroke="#8fd3dc" stroke-width="2"/><ellipse cx="130" cy="610" rx="24" ry="7" fill="none" stroke="#8fd3dc" stroke-width="2"/>
+<ellipse cx="88" cy="512" rx="14" ry="4" fill="none" stroke="#fff" stroke-width="2"/></g>
+<path d="M44 350 H380" stroke="#b0432a" stroke-width="6"/>
+<path d="M44 600 H56" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="604" font-size="12" font-weight="bold" fill="#fff">1</text><path d="M44 550 H56" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="554" font-size="12" font-weight="bold" fill="#fff">2</text><path d="M44 500 H56" stroke="#8a7650" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="504" font-size="12" font-weight="bold" fill="#3d2e20">3</text><path d="M44 450 H56" stroke="#8a7650" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="454" font-size="12" font-weight="bold" fill="#3d2e20">4</text><path d="M44 400 H56" stroke="#8a7650" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="404" font-size="12" font-weight="bold" fill="#3d2e20">5</text><path d="M44 350 H56" stroke="#8a7650" stroke-width="2.5" stroke-linecap="round"/><text x="62" y="354" font-size="12" font-weight="bold" fill="#3d2e20">6</text>
+<path d="M36 650 V362 Q36 326 72 326 H352 Q388 326 388 362 V650 Z" fill="none" stroke="#b79d72" stroke-width="16"/>
+<text x="235" y="342" font-size="12" font-weight="bold" fill="#8a2f1d" text-anchor="middle">MARCA DE CAL · 6 meses · oct 2027</text>
+<text x="206" y="590" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">el agua, hoy · 2,8 meses</text>
+<path d="M156 226 V292 Q156 310 130 310 H88 V338" fill="none" stroke="#b79d72" stroke-width="12" stroke-linecap="round"/><path d="M156 226 V292 Q156 310 130 310 H88 V338" fill="none" stroke="#4a8f98" stroke-width="4" stroke-linecap="round"/>
+<path transform="translate(88 372)" d="M0 -7 C5 -1 6 2 6 4 A6 6 0 0 1 -6 4 C-6 2 -5 -1 0 -7Z" fill="#2aa6b4" stroke="#0a4f5c" stroke-width="1.2"/><path transform="translate(88 418)" d="M0 -7 C5 -1 6 2 6 4 A6 6 0 0 1 -6 4 C-6 2 -5 -1 0 -7Z" fill="#2aa6b4" stroke="#0a4f5c" stroke-width="1.2"/><path transform="translate(88 464)" d="M0 -7 C5 -1 6 2 6 4 A6 6 0 0 1 -6 4 C-6 2 -5 -1 0 -7Z" fill="#2aa6b4" stroke="#0a4f5c" stroke-width="1.2"/>
+<rect x="6" y="198" width="148" height="12" rx="4" fill="#f6f1e4" stroke="#b79d72" stroke-width="2"/>
+<rect x="10" y="208" width="140" height="72" fill="#f6f1e4" stroke="#b79d72" stroke-width="2"/>
+<path d="M146 204 h14 v8 h-14" fill="#b79d72"/>
+<rect x="28" y="236" width="24" height="44" rx="3" fill="#2f6b4f"/><circle cx="46" cy="260" r="2" fill="#f4e9cf"/>
+<rect x="84" y="228" width="30" height="26" fill="#9fd0d6" stroke="#2f6b4f" stroke-width="3"/><path d="M99 228 V254 M84 241 H114" stroke="#2f6b4f" stroke-width="2"/>
+<rect x="120" y="236" width="20" height="44" fill="#a67c52"/>
+<rect x="176" y="262" width="40" height="18" rx="4" fill="#b79d72" stroke="#4a3a2f" stroke-width="1.5"/>
+<path d="M182 262 L196 240 L210 262" fill="none" stroke="#4a3a2f" stroke-width="4" stroke-linejoin="round"/><circle cx="196" cy="242" r="5" fill="#d9ccae" stroke="#4a3a2f" stroke-width="2"/>
+<path d="M196 247 V450" stroke="#4a3a2f" stroke-width="3"/>
+<path d="M180 452 H212 L208 484 Q196 490 184 484 Z" fill="#8a5a2b" stroke="#4a3a2f" stroke-width="2"/><path d="M182 462 H210 M183 474 H209" stroke="#4a3a2f" stroke-width="2"/>
+<path transform="translate(196 498)" d="M0 -6 C4 -1 5 2 5 3 A5 5 0 0 1 -5 3 C-5 2 -4 -1 0 -6Z" fill="#2aa6b4" stroke="#0a4f5c"/>
+
+<g stroke="#4a3a2f" stroke-width="1.5">
+<rect x="240" y="262" width="34" height="18" rx="5" fill="#a67c52"/><rect x="280" y="262" width="34" height="18" rx="5" fill="#a67c52"/><rect x="320" y="262" width="34" height="18" rx="5" fill="#a67c52"/><rect x="360" y="262" width="34" height="18" rx="5" fill="#a67c52"/></g>
+<g fill="none" stroke="#2f6b4f" stroke-width="3" stroke-linecap="round">
+<path d="M257 262 V226"/><path d="M297 262 V214"/><path d="M337 262 V232"/><path d="M377 262 V222"/></g>
+<g fill="#4f9a4a" stroke="#2f6b4f" stroke-width="1.2">
+<ellipse cx="249" cy="232" rx="9" ry="5" transform="rotate(-25 249 232)"/><ellipse cx="265" cy="238" rx="9" ry="5" transform="rotate(25 265 238)"/>
+<ellipse cx="289" cy="222" rx="9" ry="5" transform="rotate(-25 289 222)"/><ellipse cx="305" cy="228" rx="9" ry="5" transform="rotate(25 305 228)"/>
+<ellipse cx="329" cy="240" rx="9" ry="5" transform="rotate(-25 329 240)"/><ellipse cx="345" cy="246" rx="9" ry="5" transform="rotate(25 345 246)"/>
+<ellipse cx="369" cy="230" rx="9" ry="5" transform="rotate(-25 369 230)"/><ellipse cx="385" cy="236" rx="9" ry="5" transform="rotate(25 385 236)"/></g>
+<circle cx="297" cy="212" r="5" fill="#c4452c"/><circle cx="377" cy="220" r="5" fill="#e0a82e"/><circle cx="257" cy="224" r="4" fill="#c4452c"/>
+
+<rect y="672" width="412" height="8" fill="#f1e6cb"/>
+</svg>
+<div class="suma"><div class="peq">tu aljibe de ahorro</div><div class="gran">2,8 <small>de 6 meses</small></div><div class="sub">4.200 € de 8.868 €</div><span class="pil">▲ Vas por delante</span></div>
+<div class="nom">La lluvia del 25:<br>tu nómina</div>
+<button class="comp" data-av="Compras: aquí se abre «Lo que quiero comprar» (portátil, fonendo, viaje a Japón, curso de eco)." aria-label="Compras: lo que quiero comprar, la huerta con cuatro plantas esperando riego"><span><b>La huerta · 4 compras</b>esperan su riego</span></button>
+<div class="faltan">Faltan<b>4.668 €</b></div>
+<button class="cubo" data-av="Gastos: aquí se abre «En qué se me va». Lo que más se puede recortar: comer fuera, 180 € al mes." aria-label="Gastos: el cubo saca agua cada día. Comer fuera, 180 euros al mes"><b>El cubo: comer fuera</b>180 € al mes se sacan</button>
+<div class="hacer"><p class="gran">Este mes, aparta 390 €</p><p>para que el agua llegue a la marca de cal en octubre de 2027</p></div>
+<button class="ir" id="ir">Ver el aljibe mes a mes ↓</button>
+<div class="aviso" role="status"></div>
+</section>
+
+<div class="rot" id="r2">Pantalla 2 · Ahorro</div>
+<section class="pant" id="p2" aria-label="Ahorro" tabindex="-1">
+<button class="volver" id="vol">← Volver a la casa</button>
+<h2>El aljibe, mes a mes</h2>
+<p class="cifra" id="cif">~390 € <small>al mes</small></p>
+<p class="dice" id="dic"></p>
+<p class="preg">¿Para cuándo quieres llenarlo?</p>
+<div class="sw" role="group" aria-label="Elige el plazo"><button data-p="6" aria-pressed="false">6 meses</button><button data-p="12" aria-pressed="true">12 meses</button><button data-p="18" aria-pressed="false">18 meses</button></div>
+<p id="res" aria-live="polite"></p>
+<svg id="grafico" viewBox="0 0 412 340" width="388" role="img" aria-labelledby="gt"><title id="gt"></title><g id="gg"></g></svg>
+<p class="ley" id="ley"></p>
+<div class="nota">Un empujón fácil: si el cubo (comer fuera) baja de 180 € a 90 €, el aljibe sube 90 € más cada mes.<button data-av="Gastos: aquí se abre «En qué se me va».">Ver el cubo (Gastos)</button></div>
+<div class="aviso" role="status"></div>
+</section>
+<script>
+(function(){
+var MES=['may','jun','jul','ago','sep','oct','nov','dic','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic','ene','feb','mar','abr'];
+var LARGO={'may':'mayo','jun':'junio','jul':'julio','ago':'agosto','sep':'septiembre','oct':'octubre','nov':'noviembre','dic':'diciembre','ene':'enero','feb':'febrero','mar':'marzo','abr':'abril'};
+function yy(i){return 26+(i<8?0:i<20?1:2);}
+function cor(i){return MES[i]+' '+yy(i);}
+function lar(i){return LARGO[MES[i]]+' de 20'+yy(i);}
+var GAS=1478,META=6*GAS,AHORRO=4200,FALTA=META-AHORRO,RIT=650;
+var niv=[2200,2200,2300,2750,3550,4200].map(function(v){return v/GAS});
+var nom=[0,1350,1600,2450,3100,2800];
+function f(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function c1(n){return (Math.round(n*10)/10).toString().replace('.',',')}
+var g=document.getElementById('gg');
+function draw(P){
+var N=5+P,X0=48,X1=380,F=292;
+function xx(i){return X0+i*(X1-X0)/N}
+function ky(k){return F-k*32}
+var hoy=niv[5],rm=RIT/GAS,rI=5+(6-hoy)/rm,llega=rI<=N;
+var s='<defs><clipPath id="rr"><rect width="412" height="312" rx="24"/></clipPath><clipPath id="cc"><path d="M36 292 V92 Q36 64 64 64 H360 Q388 64 388 92 V292 Z"/></clipPath>'+
+'<pattern id="ray" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#d4ecec"/><path d="M0 0 V7" stroke="#2a8f9e" stroke-width="2"/></pattern>'+
+'<linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b93a2"/><stop offset="1" stop-color="#0a4f5c"/></linearGradient></defs>';
+s+='<g clip-path="url(#rr)"><rect width="412" height="56" fill="#cfe8ea"/><rect y="56" width="412" height="256" fill="#6b4f38"/><rect y="56" width="412" height="6" fill="#c9a96a"/>';
+s+='<g fill="none" stroke="#5a4230" stroke-width="3" stroke-linecap="round"><path d="M0 200 q10 8 20 0"/><path d="M384 120 q10 8 20 0"/></g></g>';
+s+='<path d="M36 292 V92 Q36 64 64 64 H360 Q388 64 388 92 V292 Z" fill="#efe6cf"/><g clip-path="url(#cc)">';
+for(var k=1;k<=5;k++)s+='<path d="M36 '+ky(k)+' H388" stroke="#b9a883" stroke-width="1" stroke-dasharray="3 5"/>';
+var p='M36 '+ky(niv[0]);
+for(var i=0;i<6;i++){var x=xx(i),y=ky(niv[i]);if(i==0)p+=' L'+x+' '+y;else{var px=xx(i-1),py=ky(niv[i-1]),m=(px+x)/2;p+=' C'+m+' '+py+' '+m+' '+y+' '+x+' '+y;}}
+s+='<path d="'+p+' L'+xx(5)+' 292 L36 292 Z" fill="url(#ag3)"/><path d="'+p+'" fill="none" stroke="#bdeaf0" stroke-width="3" stroke-linecap="round"/>';
+s+='<path d="M'+xx(5)+' '+ky(hoy)+' L'+xx(N)+' '+ky(6)+' V292 H'+xx(5)+'Z" fill="url(#ray)" opacity=".85"/>';
+s+='<path d="M36 100 H388" stroke="#b0432a" stroke-width="6"/></g>';
+for(k=1;k<=6;k++){s+='<path d="M22 '+ky(k)+' H34" stroke="#f4e9cf" stroke-width="2.5" stroke-linecap="round"/><text x="15" y="'+(ky(k)+4)+'" font-size="12" font-weight="bold" fill="#f4e9cf" text-anchor="middle">'+k+'</text>';}
+s+='<path d="M36 292 V92 Q36 64 64 64 H360 Q388 64 388 92 V292 Z" fill="none" stroke="#b79d72" stroke-width="14"/>';
+for(i=1;i<=5;i++){var n=nom[i],sc=Math.sqrt(n)/36;s+='<g transform="translate('+xx(i)+' 28) scale('+sc.toFixed(2)+')"><title>Nómina de '+MES[i]+': '+f(n)+' €</title><path d="M0 -9 C5 -2 7 2 7 5 A7 7 0 0 1 -7 5 C-7 2 -5 -2 0 -9Z" fill="#2f86a0" stroke="#0a4f5c" stroke-width="1"/></g>';}
+s+='<text x="402" y="21" font-size="12" fill="#0a3e48" text-anchor="end">cada gota, una nómina</text><text x="402" y="37" font-size="12" fill="#0a3e48" text-anchor="end">(más grande, más guardias)</text>';
+s+='<path d="M'+xx(5)+' '+ky(hoy)+' L'+xx(N)+' 100" stroke="#3d2e20" stroke-width="3.5" stroke-dasharray="2 7" stroke-linecap="round" fill="none"/>';
+var ey=llega?100:ky(hoy+rm*P),ex=llega?xx(rI):xx(N);
+s+='<path d="M'+xx(5)+' '+ky(hoy)+' L'+ex+' '+ey+'" stroke="#fff" stroke-width="3.5" stroke-dasharray="11 7" stroke-linecap="round" fill="none"/><path d="M'+xx(5)+' '+ky(hoy)+' L'+ex+' '+ey+'" stroke="#0a3e48" stroke-width="3" stroke-dasharray="10 8" stroke-linecap="round" fill="none"/>';
+for(i=0;i<6;i++)s+='<circle cx="'+xx(i)+'" cy="'+ky(niv[i])+'" r="'+(i==5?6:4)+'" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/>';
+s+='<circle cx="'+xx(N)+'" cy="100" r="6" fill="#f1e6cb" stroke="#3d2e20" stroke-width="3"/>';
+if(llega)s+='<rect x="'+(ex-5)+'" y="95" width="10" height="10" rx="2" fill="#f1e6cb" stroke="#0a3e48" stroke-width="3" transform="rotate(45 '+ex+' 100)"/>';
+s+='<text x="'+(xx(5)-9)+'" y="'+(ky(hoy)-9)+'" font-size="12" font-weight="bold" fill="#0a3e48" text-anchor="end">hoy: 2,8</text>';
+s+='<text x="44" y="'+(ky(niv[0])+19)+'" font-size="12" fill="#fff">1,5</text>';
+var falt=Math.round((META-AHORRO-RIT*P)/10)*10;
+s+='<text x="'+Math.min(366,ex+(llega?0:-10))+'" y="77" font-size="12" font-weight="bold" fill="#0a3e48" text-anchor="'+(llega?'middle':'end')+'">'+(llega?'a tu ritmo: '+cor(13):'a tu ritmo: faltan ~'+f(falt)+' €')+'</text>';
+s+='<text x="366" y="92" font-size="12" font-weight="bold" fill="#8a2f1d" text-anchor="end">META: 6 meses · '+cor(N)+'</text>';
+var t=[[5,'hoy'],[N,cor(N)],[0,'may 26']];if(llega)t.splice(2,0,[rI,cor(13)]);var ok=[];
+t.forEach(function(a){if(ok.every(function(b){return Math.abs(xx(a[0])-xx(b[0]))>=56}))ok.push(a)});
+ok.forEach(function(a){s+='<path d="M'+xx(a[0])+' 296 v8" stroke="#3a3326" stroke-width="1.5"/><text x="'+(a[0]==N?xx(N)+8:xx(a[0]))+'" y="326" font-size="12" fill="#3a3326" text-anchor="'+(a[0]==N?'end':'middle')+'">'+a[1]+'</text>';});
+g.innerHTML=s;
+var cu=Math.round(FALTA/P/10)*10;
+document.getElementById('gt').textContent='Corte del aljibe: el nivel sube de 1,5 meses en mayo a 2,8 en octubre. Para llegar a la marca de 6 meses en '+cor(N)+' hay que apartar unos '+cu+' euros al mes; a 650 euros al mes '+(llega?'se llega en junio de 2027.':'faltarían unos '+f(falt)+' euros.');
+document.getElementById('cif').innerHTML='~'+f(cu)+' € <small>al mes</small>';
+document.getElementById('dic').textContent='hasta '+lar(N)+' para llenar el aljibe: de '+f(AHORRO)+' € a '+f(META)+' € (6 meses de vida). Faltan '+f(FALTA)+' €.';
+var r;if(!llega)r='A tu ritmo (~650 € al mes) no llegas a esa fecha: te faltarían ~'+f(falt)+' €. Llegarías en junio de 2027, '+(13-N)+' meses tarde.';
+else r='A tu ritmo (~650 € al mes) llegas en junio de 2027: vas '+(N-13)+' meses por delante.';
+document.getElementById('res').textContent=r;
+document.getElementById('ley').textContent='Puntos blancos: lo ya ocurrido. Línea de rayas largas: tu ritmo, ~650 €/mes. Línea de puntos: lo que hay que apartar, ~'+f(cu)+' €/mes.';
+}
+var bs=document.querySelectorAll('.sw button');
+[].forEach.call(bs,function(b){b.onclick=function(){[].forEach.call(bs,function(x){x.setAttribute('aria-pressed',x===b)});draw(+b.getAttribute('data-p'));}});
+draw(12);
+document.getElementById('ir').onclick=function(){var p=document.getElementById('p2');p.scrollIntoView({behavior:'smooth'});p.focus({preventScroll:true});};
+document.getElementById('vol').onclick=function(){document.getElementById('p1').scrollIntoView({behavior:'smooth'});};
+var tm;[].forEach.call(document.querySelectorAll('[data-av]'),function(b){b.addEventListener('click',function(){var a=b.closest('.pant').querySelector('.aviso');a.textContent=b.getAttribute('data-av');a.className='aviso on';clearTimeout(tm);tm=setTimeout(function(){a.className='aviso'},3500);});});
+})();
+</script>
+</body></html>

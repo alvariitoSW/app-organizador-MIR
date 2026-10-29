@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>El claro · Gastos</title>
+<style>
+*{box-sizing:border-box}
+html{background:#dfe9e2}
+body{width:412px;margin:0;background:#dfe9e2;color:#16301f;font-family:"Trebuchet MS","Gill Sans",system-ui,sans-serif;line-height:1.3;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left;padding:0}
+button:focus-visible,a:focus-visible{outline:3px solid #0b3d2a;outline-offset:2px}
+.cartel{padding:14px 20px;background:#0f2e1e;color:#e9f3ea;display:flex;gap:12px;align-items:center}
+.cartel svg{flex:none}
+.cartel h1{margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:.02em}
+.cartel p{margin:0;font-size:14px}
+.volver{display:inline-flex;align-items:center;min-height:44px;padding:8px 18px;border-radius:24px;background:#c9dccd;font-size:15px;color:#16301f;text-decoration:none;margin:12px 12px 4px}
+.wrap{padding:4px 12px 24px}
+.rot{margin:14px 8px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#2d4a38}
+.card{background:#e9f1ec;border:1px solid #b9cfbf;border-radius:22px;padding:14px}
+.card+.card{margin-top:10px}
+.e{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#2d4a38;font-weight:700}
+.msg{font-size:17px;font-weight:700;line-height:1.3;margin:0 0 4px;color:#0b3d2a}
+.big{font-size:34px;line-height:1.05;font-weight:700;color:#0b3d2a;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.btn2{min-height:48px;padding:10px 18px;border-radius:26px;background:#cfe0d3;font-size:15px;text-align:center;border:2px solid transparent}
+.btn2.p{background:#1f5c3f;color:#fff;font-weight:700}
+.tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;border:1.5px solid #7a3b12;color:#7a3b12;white-space:nowrap}
+.up{color:#7a3b12;font-weight:700}.dn{color:#1f5c3f;font-weight:700}
+.mini{font-size:13px;color:#2d4a38}
+.nav{position:sticky;bottom:0;display:flex;width:412px;background:#0f2e1e;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:4px;z-index:9}
+.nav a{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:18px;color:#c9dccd;text-decoration:none;font-size:13px}
+.nav a[aria-current=page]{background:#1f5c3f;color:#fff;font-weight:700}
+.nav svg{width:22px;height:22px}
+
+.tabs{display:flex;gap:8px;margin:0 0 10px}
+.tabs button{flex:1;min-height:48px;padding:6px 8px;border-radius:24px;background:#cfe0d3;font-size:14px;border:2px solid transparent;text-align:center}
+.tabs button[aria-pressed=true]{background:#1f5c3f;color:#fff;border-color:#0b3d2a;font-weight:700}
+.tabs button[aria-pressed=true]::before{content:"● "}.tabs button[aria-pressed=false]::before{content:"○ "}
+.parte{display:flex;height:26px;border-radius:13px;overflow:hidden;border:1px solid #7f9c88;margin:8px 0 6px}
+.parte i{display:block;height:100%}
+.f{background:#1f5c3f}.v{background:repeating-linear-gradient(45deg,#8a5a2b 0 6px,#d9b779 6px 12px)}
+.leg{display:flex;gap:14px;font-size:14px;flex-wrap:wrap}
+.leg b{font-variant-numeric:tabular-nums}
+.sq{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.li{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px dashed #8fb39f;min-height:44px}
+.t{flex:1;min-width:0}.li .t b{display:block;font-size:15px}.li .t span{font-size:13px;color:#2d4a38}
+.li .n{text-align:right;font-variant-numeric:tabular-nums}.li .n b{font-size:15px;display:block}.li .n span{margin-top:2px;display:inline-block}
+.mb{height:7px;border-radius:4px;background:#cfe0d3;margin-top:5px;overflow:hidden}.mb i{display:block;height:100%;background:#8a5a2b}
+.idea{border:1px solid #b9cfbf;border-radius:18px;padding:12px;background:#dfe9e2;margin-top:8px}
+.idea .top{display:flex;align-items:center;gap:8px}
+.idea .num{width:26px;height:26px;border-radius:50%;background:#1f5c3f;color:#fff;font-weight:700;display:grid;place-items:center;flex:none;font-size:14px}
+.idea h3{margin:0;font-size:16px;flex:1}
+.idea .ah{font-size:17px;font-weight:700;color:#1f5c3f;font-variant-numeric:tabular-nums;white-space:nowrap}
+.idea p{margin:6px 0 0;font-size:14px;color:#2d4a38}.idea p b{color:#16301f}
+.cmp{display:grid;grid-template-columns:1fr auto auto auto;gap:0 12px;font-size:14px;font-variant-numeric:tabular-nums;align-items:center}
+.cmp>*{padding:10px 0;border-top:1px dashed #8fb39f;min-height:44px;display:flex;align-items:center}
+.cmp .h{font-size:12px;color:#2d4a38;font-weight:700;letter-spacing:.08em;border-top:0;min-height:0;padding:0 0 4px}
+.cmp .r{justify-content:flex-end}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body>
+<header class="cartel"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><ellipse cx="28" cy="50" rx="24" ry="4" fill="#a98b5c" fill-opacity=".6"/><path d="M10 28 L12 48 Q28 54 44 48 L46 28Z" fill="#6b4423"/><ellipse cx="28" cy="28" rx="18" ry="6" fill="#d9b779" stroke="#5b3a18" stroke-width="2"/><ellipse cx="28" cy="28" rx="11" ry="3.5" fill="none" stroke="#8a5a2b" stroke-width="1.5"/><ellipse cx="28" cy="28" rx="5" ry="1.8" fill="none" stroke="#8a5a2b" stroke-width="1.5"/></svg><div><h1>El claro</h1><p>En qué se me va y dónde ahorrar. Tus gastos separados en fijos (no los eliges cada mes) y variables (sí). Te señala 3 sitios concretos donde recortar y cuánto serían al año.</p></div></header>
+<a class="volver" href="dinero-rara2-laurisilva.html">← Volver al bosque</a>
+<div class="wrap">
+
+<div class="rot">Pantalla 1 · Mis gastos de octubre</div>
+<div class="card" id="p1">
+ <div class="tabs" role="group" aria-label="Mes">
+  <button aria-pressed="true" onclick="mes(this,'oct')">Octubre</button>
+  <button aria-pressed="false" onclick="mes(this,'sep')">Septiembre</button>
+ </div>
+ <p class="msg" id="msg">De cada 100 € que gastas, 49 € no los puedes tocar: son fijos.</p>
+ <div class="row" style="align-items:baseline"><span class="big" id="tot">1.478 €</span><span class="e">GASTADO EN <span id="mn">OCTUBRE</span></span></div>
+ <div class="parte" role="img" aria-label="Fijos 728 euros, variables 750 euros"><i class="f" id="bf" style="width:49%"></i><i class="v" id="bv" style="width:51%"></i></div>
+ <div class="leg"><span><span class="sq f"></span>Fijos <b id="lf">728 €</b></span><span><span class="sq v"></span>Variables <b id="lv">750 €</b></span></div>
+
+ <div class="e" style="margin-top:18px">FIJOS · SALEN CADA MES (728 €)</div>
+ <div class="li"><div class="t"><b>Alquiler</b></div><div class="n"><b>550 €</b></div></div>
+ <div class="li"><div class="t"><b>Luz + agua</b></div><div class="n"><b>60 €</b></div></div>
+ <div class="li"><div class="t"><b>Móvil + internet</b></div><div class="n"><b>35 €</b></div></div>
+ <div class="li"><div class="t"><b>Gimnasio</b></div><div class="n"><b>40 €</b></div></div>
+ <div class="li"><div class="t"><b>Spotify / Netflix</b></div><div class="n"><b>18 €</b></div></div>
+ <div class="li"><div class="t"><b>Seguro</b></div><div class="n"><b>25 €</b></div></div>
+
+ <div class="e" style="margin-top:18px">VARIABLES · SE PUEDEN MOVER</div>
+ <div id="vars"></div>
+</div>
+
+<div class="rot">Pantalla 2 · Dónde ahorrar</div>
+<div class="card">
+ <p class="msg">Con 3 cambios pequeños podrías quedarte unos <span class="dn">1.700 € al año</span>.</p>
+ <div class="mini" >Salen de tus gastos de octubre. Tú decides cuáles probar.</div>
+
+ <div class="idea">
+  <div class="top"><span class="num">1</span><h3>Comer fuera</h3><span class="ah">~600 €/año</span></div>
+  <p>Gastas <b>180 €/mes</b>. Con <b>2 tuppers más a la semana</b> (unas 8 comidas al mes a ~6 € menos cada una) te ahorras ~50 € al mes.</p>
+  <div class="row" style="margin-top:8px"><button class="btn2 p" onclick="this.textContent=this.textContent.includes('Probar')?'Probando ✓':'Probar este mes'">Probar este mes</button><span class="sp"></span></div>
+ </div>
+ <div class="idea">
+  <div class="top"><span class="num">2</span><h3>Taxis al hospital</h3><span class="ah">~540 €/año</span></div>
+  <p>Gastas <b>90 €/mes</b>. Si la mitad de los viajes los haces en guagua o compartiendo coche, ~45 € menos al mes.</p>
+  <div class="row" style="margin-top:8px"><button class="btn2 p" onclick="this.textContent=this.textContent.includes('Probar')?'Probando ✓':'Probar este mes'">Probar este mes</button></div>
+ </div>
+ <div class="idea">
+  <div class="top"><span class="num">3</span><h3>Compras online</h3><span class="ah">~540 €/año</span></div>
+  <p>Gastas <b>140 €/mes</b>. Regla de espera: lo metes en el carrito y esperas 48 h. Con quitar un tercio, ~45 € al mes.</p>
+  <div class="row" style="margin-top:8px"><button class="btn2 p" onclick="this.textContent=this.textContent.includes('Probar')?'Probando ✓':'Probar este mes'">Probar este mes</button></div>
+ </div>
+</div>
+
+<div class="card">
+ <div class="e">SUSCRIPCIONES Y CUOTAS A REVISAR</div>
+ <div class="li"><div class="t"><b>Gimnasio</b><span>Fuiste 5 veces en octubre → 8 € por visita</span></div><div class="n"><b>40 €/mes</b><span class="tag">¿lo usas?</span></div></div>
+ <div class="li"><div class="t"><b>Spotify / Netflix</b><span>¿Necesitas las dos a la vez? Alternar una</span></div><div class="n"><b>18 €/mes</b><span class="tag">revisar</span></div></div>
+ <div class="li"><div class="t"><b>Seguro</b><span>Sube sin avisar cada año: pide otro precio</span></div><div class="n"><b>25 €/mes</b><span class="tag">comparar</span></div></div>
+ <div class="mini" style="margin-top:8px">Juntas son 83 € al mes, casi 1.000 € al año.</div>
+</div>
+
+<div class="card">
+ <div class="e">COMPARADO CON SEPTIEMBRE (VARIABLES)</div>
+ <div class="cmp" style="margin-top:6px">
+  <div class="h">&nbsp;</div><div class="h r">SEP</div><div class="h r">OCT</div><div class="h r">DIF.</div>
+  <div>Súper</div><div class="r">220</div><div class="r">230</div><div class="r up">▲ 10</div>
+  <div>Comer fuera</div><div class="r">150</div><div class="r">180</div><div class="r up">▲ 30</div>
+  <div>Taxis</div><div class="r">60</div><div class="r">90</div><div class="r up">▲ 30</div>
+  <div>Compras online</div><div class="r">95</div><div class="r">140</div><div class="r up">▲ 45</div>
+  <div>Ocio</div><div class="r">120</div><div class="r">110</div><div class="r dn">▼ 10</div>
+  <div><b>Total</b></div><div class="r"><b>645</b></div><div class="r"><b>750</b></div><div class="r up"><b>▲ 105</b></div>
+ </div>
+ <p class="msg" style="font-size:14px;margin-top:10px">Octubre costó 105 € más que septiembre, sobre todo por compras y taxis.</p>
+</div>
+
+<div class="card">
+ <div class="row"><div class="e">¿DE DÓNDE SALEN ESTOS GASTOS?</div><span class="sp"></span></div>
+ <div class="row" style="margin-top:8px"><button class="btn2 p">Traer de Fintonic</button><button class="btn2">Apuntar a mano</button></div>
+</div>
+
+</div>
+<script>
+var D={oct:{n:'OCTUBRE',v:[['Súper',230],['Comer fuera',180],['Taxis al hospital',90],['Compras online',140],['Ocio',110]]},
+ sep:{n:'SEPTIEMBRE',v:[['Súper',220],['Comer fuera',150],['Taxis al hospital',60],['Compras online',95],['Ocio',120]]}};
+function f(n){return n.toLocaleString('es-ES')+' €'}
+function mes(b,k){
+ [].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-pressed',x===b)});
+ var d=D[k],t=d.v.reduce(function(a,x){return a+x[1]},0),fi=728,all=t+fi,pf=Math.round(fi/all*100);
+ document.getElementById('mn').textContent=d.n;
+ document.getElementById('tot').textContent=f(all);
+ document.getElementById('lv').textContent=f(t);
+ document.getElementById('bf').style.width=pf+'%';document.getElementById('bv').style.width=(100-pf)+'%';
+ document.getElementById('msg').textContent='De cada 100 € que gastas, '+pf+' € no los puedes tocar: son fijos.';
+ var mx=Math.max.apply(null,d.v.map(function(x){return x[1]}));
+ document.getElementById('vars').innerHTML=d.v.map(function(x){return '<div class="li" style="display:block"><div class="row"><b style="font-size:14px;flex:1">'+x[0]+'</b><b style="font-variant-numeric:tabular-nums">'+f(x[1])+'</b></div><div class="mb"><i style="width:'+Math.round(x[1]/mx*100)+'%"></i></div></div>'}).join('');
+}
+mes(document.querySelector('.tabs button'),'oct');
+</script>
+<nav class="nav" aria-label="Secciones">
+<a href="dinero-rara2-laurisilva.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="9" r="7"/><rect x="10.5" y="14" width="3" height="8"/></svg>Bosque</a>
+<a href="dinero-laurisilva-gastos.html" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 10l1 8q6 3 12 0l1-8z"/><ellipse cx="12" cy="10" rx="7" ry="3"/></svg>Gastos</a>
+<a href="dinero-rara2-laurisilva.html#r2"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 17q5-4 10 0t10 0v4H2z"/><circle cx="12" cy="8" r="5"/></svg>Ahorro</a>
+<a href="dinero-laurisilva-compras.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="15" r="5"/><circle cx="16" cy="11" r="4"/><path d="M12 3q3 1 3 4" stroke="currentColor" stroke-width="2" fill="none"/></svg>Compras</a>
+</nav>
+</body></html>

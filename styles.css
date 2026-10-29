@@ -1145,14 +1145,6 @@ ul.slots{list-style:none;margin:0;padding:0}
    fichero a propósito: el bloque @media(max-width:560px) está ENCIMA de las reglas base, así que
    lo que se añade aquí es lo que gana en el móvil. */
 
-.gtiraq{display:flex;align-items:flex-start;gap:7px;min-height:28px;margin:0 2px 2px;
-  font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35}
-.gtiraq .pt{flex-shrink:0;display:block;width:7px;height:7px;border-radius:999px;margin-top:5px;
-  border:1px solid var(--line);background:transparent}
-.gtiraq .pt.hecho{background:var(--accent);border-color:transparent}
-.gtiraq .pt.hoy,.gtiraq .pt.plan{background:var(--brand);border-color:transparent}
-.gtiraq .pt.guardia{background:var(--warn);border-color:transparent}
-.gtiraq .pt.choque{background:var(--bad);border-color:transparent}
 .gdesc{display:flex;flex-direction:column;gap:5px}
 .gdesch{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
 .gdesch .mini{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:0;text-transform:none;opacity:.75}
@@ -1784,24 +1776,8 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
 .pasord .pfila .btn[disabled]{opacity:.3;cursor:default}
 
 /* ============ ENTRENO: abrir y empezar, serie a serie ============ */
-.gsem .row b{font-size:13.5px}
 .gsemcfg{border:0;background:none;color:var(--ink2);font:inherit;font-size:12px;cursor:pointer;padding:4px 0}
 .gsemcfg b{color:var(--ink);font-size:15px}
-.gscs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:6px}
-.gsc{border:0;background:none;font:inherit;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0;cursor:pointer;min-width:0}
-.gsc span{font-size:10.5px;font-weight:800}
-.gsc i{display:grid;place-items:center;width:36px;height:36px;max-width:100%;border-radius:50%;border:2px solid var(--line);font-style:normal;font-size:14px;color:var(--ink)}
-.gsc.ok i{background:var(--brand);border-color:var(--brand);color:#0b1020;font-weight:900}
-.gsc.plan i{border-color:var(--brand)}
-.gsc.pis i{border-color:var(--brand2)}
-.gsc.no i{border-style:dashed;opacity:.6}
-.gsc.choque i{border-color:var(--bad);color:var(--bad);font-weight:900}
-.gsc.hoy span{color:var(--brand)}
-.gsc.sel i{box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 35%,transparent)}
-.gsem .gtiraq{margin-top:6px;font-size:11.5px;color:var(--ink2);font-weight:700}
-.gkpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
-.gkpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:7px 3px;text-align:center;min-width:0}
-.gkpi b{display:block;font-size:17px;line-height:1.2}.gkpi span{font-size:10px;color:var(--ink2);font-weight:700}
 .ghero2{border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:18px;padding:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 16%,var(--card)),var(--card))}
 .ghero2.calma{border-color:var(--line);background:var(--card)}
@@ -3710,20 +3686,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .mt-guardia.mlc{box-shadow:inset 0 0 0 1.5px #e5383b}
 
 /* LA VUELTA AL GIMNASIO TRAS UN PARÓN (design/entreno-vuelta) */
-.gvuelta{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 16%,var(--card)),var(--card) 60%);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
-.gvuelta .cap,.gvcap{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand)}
-.gvuelta .big{font-size:20px;font-weight:900;margin:2px 0 4px}
-.gvuelta .mini b{color:var(--ink)}
-.gvesc{display:flex;gap:5px;margin:10px 0 6px}
-.gvesc>div{flex:1;min-width:0;border-radius:10px;padding:7px 2px;text-align:center;background:var(--bg2);border:1px solid var(--line)}
-.gvesc>div b{display:block;font-size:15px}
-.gvesc>div span{font-size:10.5px;color:var(--ink2)}
-.gvesc>div.on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
-.gvesc>div.ok{opacity:.55}
-.gvprog{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin:6px 0 2px}
-.gvprog i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-.gvuelta .gbig2{margin-top:10px}
-.gvuelta .gvplan{width:100%;margin-top:8px}
+.gvcap{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand)}
 .gvtab{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
 .gvtab th{color:var(--ink2);font-weight:700;text-align:left;font-size:11px;padding:4px 3px}
 .gvtab td{padding:7px 3px;border-top:1px solid var(--line)}
@@ -3766,6 +3729,111 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
   color:var(--ink2);font-variant-numeric:tabular-nums;cursor:pointer}
 .rueda button.c{font-size:24px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--brand) 14%,transparent);border-radius:10px}
 .ruedap{display:flex;justify-content:space-between;align-items:center;margin-top:7px}
+
+/* ============ DINERO 3.0 · LA LAURISILVA (tanda Dinero, D3) =====
+   Los colores del bosque de maquetas/dinero-rara2-laurisilva.html con prefijo propio (--lau-*), claros y, bajo html.dark, oscuros.
+   Bosque = portada de Dinero; Gastos = «El claro». 412×915 sin scroll de lado, botones ≥44 px. */
+:root{--lau-fondo:#dfe9e2;--lau-cielo1:#cfe0d8;--lau-cielo2:#eaf1ec;--lau-lomo1:#b6cfc0;--lau-lomo2:#8fb39f;
+  --lau-ink:#16301f;--lau-ink2:#2d4a38;--lau-hondo:#0b3d2a;--lau-verde:#1f5c3f;--lau-copa:#1f5c3f;--lau-hoja:#4d9a5e;
+  --lau-pastel:#cfe0d3;--lau-panel:#e9f1ec;--lau-borde:#b9cfbf;--lau-madera:#8a5a2b;--lau-madera-osc:#5b3a18;--lau-tronco:#6b4423;
+  --lau-fruta:#5a2f6e;--lau-fruta-borde:#2b1a3a;--lau-musgo:#3e8a45;--lau-agua:#276f83;--lau-agua-clara:#7fc4d6;
+  --lau-tocon:#d9b779;--lau-tocon-suelo:#a98b5c;--lau-marron:#7a3b12;--lau-rotulo:rgba(240,246,242,.93);--lau-rotulo-ink:#5a2410;
+  --lau-boton:#1f5c3f;--lau-boton-ink:#fff}
+html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lomo1:#26443a;--lau-lomo2:#1c392e;
+  --lau-ink:#e3efe6;--lau-ink2:#b4cdbb;--lau-hondo:#cfe9d8;--lau-verde:#6fc194;--lau-copa:#2f7a52;--lau-hoja:#5fb272;
+  --lau-pastel:#264235;--lau-panel:#162a1d;--lau-borde:#33503f;--lau-madera:#b0803f;--lau-madera-osc:#d9b779;--lau-tronco:#8a6035;
+  --lau-fruta:#9a63b8;--lau-fruta-borde:#e6c9f2;--lau-musgo:#3d8a48;--lau-agua:#2a7f98;--lau-agua-clara:#8fd0e0;
+  --lau-tocon:#c9a66a;--lau-tocon-suelo:#8a6f45;--lau-marron:#f0b384;--lau-rotulo:rgba(15,31,22,.92);--lau-rotulo-ink:#f6c9a8;
+  --lau-boton:#2e7d57;--lau-boton-ink:#fff}
+.lau{--u:1px}
+.lau-tabs{width:100%;margin:2px 0 4px}.lau-tabs button{flex:1 1 0;min-width:0;white-space:nowrap}
+.lau-esc{position:relative;container-type:inline-size;width:100%;aspect-ratio:412/900;overflow:hidden;border-radius:var(--r-24);background:var(--lau-cielo2);
+  color:var(--lau-ink);border:1px solid var(--lau-borde)}
+.lau-esc>*{--u:calc(100cqw / 412)}
+.lau-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lau-ini{position:absolute;left:calc(20 * var(--u));top:calc(12 * var(--u));width:calc(240 * var(--u))}
+.lau-peq{font-size:calc(12 * var(--u));letter-spacing:.1em;text-transform:uppercase;color:var(--lau-ink2)}
+.lau-gran{font-size:calc(54 * var(--u));line-height:1;font-weight:700;color:var(--lau-hondo)}
+.lau-gran small{font-size:calc(20 * var(--u));font-weight:400}
+.lau-sub{font-size:calc(16 * var(--u));margin:2px 0 6px}
+.lau-pil{display:inline-block;padding:calc(5 * var(--u)) calc(14 * var(--u));border-radius:20px;background:var(--lau-boton);color:var(--lau-boton-ink);font-size:calc(14 * var(--u));font-weight:700}
+.lau-esc button{appearance:none;border:0;background:none;font:inherit;color:inherit;cursor:pointer;text-align:left;padding:0}
+.lau-esc button:focus-visible,.lau-card button:focus-visible,.lau-card .lau-btn:focus-within{outline:3px solid var(--lau-verde);outline-offset:2px}
+.lau-baya{position:absolute;left:calc(262 * var(--u));top:0;width:calc(150 * var(--u));height:calc(134 * var(--u))}
+.lau-baya span{white-space:nowrap;position:absolute;right:calc(10 * var(--u));bottom:calc(4 * var(--u));font-size:calc(13 * var(--u));font-weight:700;background:var(--lau-rotulo);color:var(--lau-ink);padding:calc(5 * var(--u)) calc(11 * var(--u));border-radius:16px;min-height:28px;display:flex;align-items:center}
+.lau-claro{position:absolute;left:calc(52 * var(--u));top:calc(560 * var(--u));width:calc(130 * var(--u));min-height:44px;height:calc(124 * var(--u))}
+.lau-claro span{position:absolute;left:0;top:calc(12 * var(--u));width:calc(122 * var(--u));padding:calc(5 * var(--u)) calc(9 * var(--u));font-size:calc(14 * var(--u));border-radius:14px;background:var(--lau-rotulo);color:var(--lau-rotulo-ink);line-height:1.25}
+.lau-claro b{display:block;font-size:calc(15 * var(--u))}
+.lau-musgo{position:absolute;left:0;right:0;top:calc(696 * var(--u));text-align:center;color:#fff;font-size:calc(15 * var(--u));font-weight:700;pointer-events:none;line-height:1.25}
+.lau-musgo small{display:block;font-size:calc(13 * var(--u));font-weight:400}
+.lau-hacer{position:absolute;left:calc(16 * var(--u));right:calc(16 * var(--u));top:calc(754 * var(--u));text-align:center}
+.lau-hacer p{margin:0;font-size:calc(14 * var(--u));color:var(--lau-ink2)}.lau-hacer .lau-g{font-size:calc(28 * var(--u));font-weight:700;color:var(--lau-hondo);line-height:1.15}
+.lau-esc .lau-ir{position:absolute;left:calc(16 * var(--u));right:calc(16 * var(--u));top:calc(836 * var(--u));min-height:48px;padding:12px 20px;border-radius:30px;background:var(--lau-boton);color:var(--lau-boton-ink);font-size:calc(17 * var(--u));font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center}
+.lau-nb{animation:lauNieb 9s ease-in-out infinite alternate}.lau-gt{animation:lauGota 3.2s ease-in infinite}
+@keyframes lauNieb{from{transform:translateX(-34px)}to{transform:translateX(34px)}}
+@keyframes lauGota{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(50px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lau-nb,.lau-gt{animation:none}}
+.lau-card{background:var(--lau-panel);color:var(--lau-ink);border:1px solid var(--lau-borde);border-radius:22px;padding:14px;min-width:0}
+.lau-e{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--lau-ink2);font-weight:700}
+.lau-fila{display:flex;gap:8px;align-items:center;min-width:0}.lau-sp{flex:1}
+.lau-in{flex:1;min-width:0;min-height:48px;padding:8px 14px;border-radius:26px;border:2px solid var(--lau-borde);background:var(--lau-fondo);color:var(--lau-ink);font:inherit;font-size:16px}
+.lau-in:focus-visible{outline:3px solid var(--lau-verde);outline-offset:1px}
+.lau-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;border-radius:26px;background:var(--lau-pastel);color:var(--lau-ink);font:inherit;font-size:15px;text-align:center;border:2px solid transparent;cursor:pointer}
+.lau-btn.p{background:var(--lau-boton);color:var(--lau-boton-ink);font-weight:700}
+.lau-card .lau-fila>.lau-btn{flex:1}
+.lau-mini{margin:6px 0 0;font-size:13px;color:var(--lau-ink2)}
+.lau-msg{margin:10px 0 6px;font-size:17px;font-weight:700;line-height:1.3;color:var(--lau-hondo)}
+.lau-h{margin:6px 0 4px;font-size:20px;color:var(--lau-hondo)}.lau-p{margin:0;font-size:15px}
+.lau-vacio{text-align:center;display:grid;justify-items:center;gap:2px}
+.lau-big{font-size:34px;line-height:1.05;font-weight:700;color:var(--lau-hondo)}
+.lau-sw{display:flex;gap:8px;flex-wrap:wrap}
+.lau-sw button{flex:1 1 0;min-width:0;min-height:48px;padding:6px 8px;border-radius:24px;background:var(--lau-pastel);color:var(--lau-ink);font:inherit;font-size:14px;border:2px solid transparent;text-align:center;cursor:pointer}
+.lau-sw button[aria-pressed=true]{background:var(--lau-boton);color:var(--lau-boton-ink);border-color:var(--lau-hondo);font-weight:700}
+.lau-sw button[aria-pressed=true]::before{content:"● "}.lau-sw button[aria-pressed=false]::before{content:"○ "}
+.lau-parte{display:flex;height:26px;border-radius:13px;overflow:hidden;border:1px solid var(--lau-ink2);margin:8px 0 6px}
+.lau-parte i{display:block;height:100%}.lau-parte .f,.lau-sq.f{background:var(--lau-verde)}
+.lau-parte .v,.lau-sq.v{background:repeating-linear-gradient(45deg,var(--lau-madera) 0 6px,var(--lau-tocon) 6px 12px)}
+.lau-leg{display:flex;gap:14px;font-size:14px;flex-wrap:wrap}
+.lau-sq{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.lau-li{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px dashed var(--lau-lomo2);min-height:44px;min-width:0}
+.lau-bl{display:block;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.lau-t{flex:1;min-width:0}.lau-t b{display:block;font-size:15px}.lau-t span{font-size:13px;color:var(--lau-ink2)}
+.lau-n{text-align:right;font-size:14px}.lau-n b{font-size:15px;display:block}
+.lau-vn{flex:1;font-size:14px}
+.lau-mb{height:7px;border-radius:4px;background:var(--lau-pastel);margin-top:5px;overflow:hidden}.lau-mb i{display:block;height:100%;background:var(--lau-madera)}
+.lau-tag{display:inline-block;margin-top:2px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;border:1.5px solid var(--lau-marron);color:var(--lau-marron);white-space:nowrap}
+.lau-up{color:var(--lau-marron);font-weight:700}.lau-dn{color:var(--lau-verde);font-weight:700}
+.lau-idea{border:1px solid var(--lau-borde);border-radius:18px;padding:12px;background:var(--lau-fondo);margin-top:8px}
+.lau-idea h3{margin:0;font-size:16px;flex:1;min-width:0}.lau-idea p{margin:6px 0 0;font-size:14px;color:var(--lau-ink2)}.lau-idea p b{color:var(--lau-ink)}
+.lau-num{width:26px;height:26px;border-radius:50%;background:var(--lau-boton);color:var(--lau-boton-ink);font-weight:700;display:grid;place-items:center;flex:none;font-size:14px}
+.lau-ah{font-size:16px;font-weight:700;color:var(--lau-verde);white-space:nowrap}
+.lau-cmp{display:grid;grid-template-columns:1fr auto auto auto;gap:0 12px;font-size:14px;margin-top:6px;align-items:center}
+.lau-cmp>*{padding:10px 0;border-top:1px dashed var(--lau-lomo2);min-height:44px;display:flex;align-items:center}
+.lau-cmp .h{font-size:12px;color:var(--lau-ink2);font-weight:700;letter-spacing:.08em;border-top:0;min-height:0;padding:0 0 4px}
+.lau-cmp .r{justify-content:flex-end}
+.lau-link{background:none;border:0;color:var(--lau-verde);font:inherit;font-size:14px;font-weight:700;min-height:44px;padding:0 4px;cursor:pointer}
+.lau-enl{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.lau-enl button{min-height:44px;padding:8px 14px;border-radius:24px;background:var(--lau-pastel);color:var(--lau-ink);border:0;font:inherit;font-size:14px;cursor:pointer}
+.lau-card button:focus-visible{outline:3px solid var(--lau-verde);outline-offset:2px}
+
+/* ===== DINERO 3.0 · D5 · Compras (los frutos) ===== */
+.lau-cols,.lau-cab{display:grid;grid-template-columns:1fr 58px 52px 72px;gap:6px;align-items:center}
+.lau-cols{padding:0 12px;margin:14px 0 4px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--lau-ink2);text-transform:uppercase}
+.lau-cols span:not(:first-child){text-align:right}
+.lau-compra{background:var(--lau-panel);color:var(--lau-ink);border:1px solid var(--lau-borde);border-radius:20px;margin-bottom:8px;overflow:hidden}
+.lau-compra.espera{border-style:dashed;background:var(--lau-fondo)}
+.lau-cab{width:100%;min-height:56px;padding:8px 12px;appearance:none;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.lau-cab:focus-visible,.lau-ie:focus-visible{outline:3px solid var(--lau-verde);outline-offset:-3px}
+.lau-nm{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;min-width:0;line-height:1.2;overflow-wrap:anywhere}
+.lau-fr{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--lau-fruta-borde);background:linear-gradient(to top,var(--lau-fruta) var(--p),var(--lau-pastel) var(--p))}
+.lau-compra.espera .lau-fr{border-style:dashed;border-color:var(--lau-marron);background:var(--lau-fondo)}
+.lau-cifra{font-size:13px;font-weight:700;text-align:right;white-space:nowrap}.lau-cifra.sec{color:var(--lau-ink2);font-weight:400}.lau-cifra.cuenta{color:var(--lau-marron);font-weight:700}
+.lau-barra{height:5px;background:var(--lau-pastel)}.lau-barra i{display:block;height:100%;background:var(--lau-verde)}.lau-compra.espera .lau-barra i{background:var(--lau-madera)}
+.lau-det{padding:10px 12px 12px;border-top:1px solid var(--lau-borde);font-size:14px;color:var(--lau-ink2)}.lau-det b{color:var(--lau-ink)}
+.lau-det .lau-in{min-width:0;width:100%}
+.lau-ie{border:2px solid var(--lau-borde);border-radius:99px;width:44px;height:44px;font-size:16px;font-weight:700;background:none;color:var(--lau-ink);cursor:pointer}
+.lau-nota{font-size:14px;color:var(--lau-ink2);margin:8px 0 0;padding:10px 14px;background:var(--lau-pastel);border-radius:18px}
+=======
 /* Comer › Hoy: la línea del día (Ahora · Lo siguiente · la semana de un vistazo) */
 .cjahora{padding:10px 12px;margin-bottom:8px}.cjahora .row{margin-bottom:7px}
 .cjsigb{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.cjsigb .btn:only-child{grid-column:1/-1}
@@ -3820,3 +3888,36 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .inv .ex .mini{color:var(--brand);font-weight:700}.inv .ojo{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 6px 32px}
 .inv .ojo input{width:90px}
 .lecit .inv{grid-column:1/-1;--bx:#d95926}.lecit .inv .ojo input[type=text]{flex:1;min-width:140px;width:auto}
+
+/* ---------- La lámina de la portada de Entreno (los dos dibujos: La Sombra del Teide y Los Bancales) ----------
+   Los colores del dibujo van DENTRO del SVG (se leen igual en claro y en oscuro); aquí solo el marco, el
+   resaltado del recorrido de 45 s y los botones, con los tokens de la app. Todo lo tocable mide ≥44 px. */
+.glam{padding:8px 8px 12px;overflow:hidden}
+.glam svg{display:block;width:100%;height:auto;border-radius:12px}
+.glam .part{transition:opacity .4s}
+.glam .halo{display:none}
+.glam svg.tour .part:not(.on){opacity:.32}
+.glam .part.on .halo{display:block}
+.glam .part[role=button],.glam .gdia{cursor:pointer;outline:none}
+.glam [role=button]:focus-visible .hit{stroke:var(--brand);stroke-width:3;stroke-opacity:1}
+.glam .glamgo{margin-top:10px;min-height:48px;padding:10px 14px;font-size:15px}
+.glam .glt{margin-top:10px;padding:8px 10px;border-radius:12px;background:var(--card2,var(--card));border:1px solid var(--line)}
+.glam .glt[hidden]{display:none}
+.glam .fr{margin:0 0 6px;padding:5px 8px;border-radius:8px;border-left:4px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink);
+  transition:background .4s,border-color .4s}
+.glam .fr:last-child{margin-bottom:0}
+.glam .fr b{display:inline-block;min-width:20px;height:20px;line-height:20px;margin-right:6px;text-align:center;border-radius:10px;background:var(--brand);color:#0b1020;font-size:12px}
+.glam.run .fr{opacity:.55}
+.glam.run .fr.on{opacity:1;background:color-mix(in srgb,var(--brand) 22%,var(--card));border-left-color:var(--brand)}
+.glam .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.glam .part,.glam .fr{transition:none}}
+/* Ajustes → Cómo se ve → Dibujo del entreno: dos muestras */
+.lamms{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lamm{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-height:44px;padding:8px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.lamm svg{display:block;width:100%;height:auto;border-radius:8px}
+.lamm .tnom{font-size:13px;font-weight:800;text-align:center}
+.lamm.on{border-color:var(--brand)}
+
+/* objetivo de peso: el chip «1» quedaba en 34 px de ancho; las fechas de la gráfica a los dos lados */
+.gpesorit .chipx{min-width:44px;min-height:44px;justify-content:center}
+.gpesoeje{display:flex;justify-content:space-between;gap:8px;margin:4px 0 0}

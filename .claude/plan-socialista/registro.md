@@ -116,6 +116,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-29-la-vuelta] La Vuelta: 50 min dentro de 15-16, vuelta al 35 % (+10/sem), 0,5 kg/semana por defecto; plan de vuelta viejo sigue con su fórmula; si el turno pisa 15:00 y 15:30, ese día no hay fuerza; rutina del parque fija (6 ejercicios, sin filtrar openGym); los círculos de la semana siguen bajo la lámina · DECISIONS «La Vuelta» · contado el 2026-10-29
+- [sup-2026-10-28-dinero] Dinero (D1-D6, Consejo por delegación): lo viejo (huchas, meta, banco, épocas) se queda guardado sin enseñarse; el colchón y las huchas sin objetivo → «guardado», las huchas con objetivo → compras planificadas, los deseos sin hacer → compras en espera; objetivo por defecto 6 meses en 12; lo no necesario espera 30 días y pasa solo a planificado (sin «Sigo queriéndolo»); una compra sin mes no suma al «al mes»; la pantalla del banco (capturas) ya no existe y «Cuadrarlo» se fue; la pestaña Mes vieja sigue colgando de Gastos («Cierre del mes») · DECISIONS D1-D6 y acta `consejo/2026-10-28-dinero-ejecucion.md` · contado el 2026-10-28
 - [sup-2026-10-28-comer-reloj2] Comer del reloj (S3b): el montar sigue de lunes a domingo; «Cocino ese día» solo marca el 🍳; en guardia no hay texto libre; el pie de Semana cuenta solo cenas; «a ojo» = 250/450/700 kcal con 15/50/35 y no se memoriza; sin nevera la sugerencia de vitaminas propone el alimento más rico; el congelador dibuja una caja por plato; la barra Hoy·Semana·Casa solo en pantallas sueltas · DECISIONS «El Comer del reloj, sesión 2» · contado el 2026-10-28
 - [sup-2026-10-28-comer-reloj1] Comer del reloj (S3 sesión 1): horas fijas sin ajuste (desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00); merienda y picoteo no son «lo siguiente»; teclear gramos pone la fila en ✓; la cantidad de la rueda no se recuerda; «investigar» sin cambios hasta la S3b · DECISIONS.md:1505 · contado el 2026-10-28
 - [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
@@ -146,6 +148,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - 2026-10-14 · **No valen → encargos de arriba:** 2, 3, 4, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
 
 ## Contado
+
+- [enc-la-vuelta] 2026-10-29 · Consejo de deporte + concurso «La Vuelta» (2 rondas, eligió Teide y Bancales) + obra: entreno 15-16, parque, mínima, vuelta al 35 %, objetivo de peso y dos dibujos en Ajustes · hecha y en main 3170dc0
 
 <!-- - [id] AAAA-MM-DD · qué se dijo · estado en ese momento -->
 - [run-38605035020] 2026-10-14 · último despliegue de main (cfac5e9) · success
@@ -182,6 +186,9 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-nutriscore-2026-10-27] 2026-10-27 · parte con tarea D de enc-comida-ri (Nutri-Score/NOVA/aditivos); propuesto decidir dónde va el sello y gasto media 200-350k · propuesto
 - [run-40591125346] 2026-10-27 · despliegue de main (2416c99, sello Nutri-Score/NOVA/aditivos) · success; sellado (version.json 2416c99); rama 2 por delante solo con registro y traspaso; 0 issues/PR · ok
 - [parte-orden-2026-10-27] 2026-10-27 · parte de una línea: todo en orden, sin cambios de estado · ok
+- [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, sello del lector de frases) · success; sellado; 0 issues/PR · ok
+- [rama-ebe7052] 2026-10-28 · rama ccr-c4997bb6-02fys3: 14 commits por detrás de main (Comer S2/S2b, app.js tocado) y 28 por delante (Dinero/Consejo); traer main antes de construir D1 · abierto
+- [parte-dinero-2026-10-28] 2026-10-28 · parte de la Tanda Dinero (D1-D6 delegada en el Consejo): pendiente qué se quita de Dinero; siguiente D1 ~0,4 M sonnet · propuesto
 - [run-40714087144] 2026-10-28 · despliegue de main (7d874f8, plan 3.0 y gastos; solo herramientas) · success; código sellado (version.json 2416c99 posterior al último código 66a7d0d); rama = main; 0 issues/PR · ok
 - [parte-s2-2026-10-28] 2026-10-28 · parte con la S2 (mapa de Comer, maqueta) ya elegida; propuesto decidir antes qué entra en el mapa y juntar con las dudas de A/D · propuesto
 - [run-40725644165] 2026-10-28 · despliegue de main (eddb09d, maquetas S2 y plan; sin código de app) · success; sellado (version.json 2416c99 posterior al último código); rama 7d874f8 = 10 commits por detrás de main; 0 issues/PR · ok

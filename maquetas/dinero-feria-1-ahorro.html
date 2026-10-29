@@ -1,0 +1,130 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412">
+<title>Ahorro · una regla</title><link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.rot{font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--ink2);margin:18px 0 8px;text-transform:uppercase}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 20%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.cartel b.n{font-size:17px}
+.e{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.big{font-size:40px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.med{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.t{font-size:15px}.s{font-size:13px;color:var(--ink2)}
+.pista{height:14px;border-radius:7px;background:var(--bg);border:1px solid var(--line);overflow:hidden;margin:8px 0 4px}
+.pista i{display:block;height:100%;background:var(--ok)}
+.pista.b i{background:var(--brand2)}
+.m{padding:12px 0;border-top:1px dashed var(--line)}.m:first-of-type{border-top:0}
+.btn{min-height:44px;padding:0 14px;font-size:15px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.btn.p{width:100%}
+.tag{font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.pri{color:var(--accent);border-color:var(--accent)}
+.regla{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px}
+.regla b{color:var(--accent)}
+.lin{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px dashed var(--line);font-size:15px;font-variant-numeric:tabular-nums}
+.lin:first-of-type{border-top:0}.lin.tot{font-weight:900;font-size:17px;border-top:2px solid var(--line)}
+.lin .s{display:block;font-size:12px}
+.meses{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:6px}
+.meses div{flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--ink2);display:flex;flex-direction:column;justify-content:flex-end;gap:3px;height:100%}
+.meses i{display:block;border-radius:4px 4px 0 0;background:var(--brand2);min-height:3px}
+.meses b{color:var(--ink);font-size:12px}
+.mas{display:none}.mas.on{display:block}
+.fld{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:baseline;gap:6px}
+.fld input{background:transparent;border:0;color:var(--ink);font:inherit;font-size:30px;font-weight:900;width:100%;outline:0;font-variant-numeric:tabular-nums}
+.sw{display:flex;gap:6px}.sw span{flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;min-height:44px;display:grid;place-items:center;font-weight:800;color:var(--ink2);cursor:pointer}
+.sw .on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.hecho{display:none;text-align:center;padding:14px;border:1px solid var(--ok);border-radius:12px;color:var(--ok);font-weight:800;font-size:16px;margin-top:10px}
+a.l{color:var(--ink2);text-decoration:underline;font-size:13px;cursor:pointer}
+</style>
+<body><div class="wrap">
+
+<div class="card cartel">
+ <div class="e">1 · AHORRO REHECHO</div>
+ <b class="n">Una sola regla, una sola hucha</b>
+ <div class="s" style="margin-top:4px;color:var(--ink)">Tu sueldo base paga la vida; de lo que traen las guardias apartas la mitad. Un solo ahorro, y le dices «para qué» con etiquetas, sin repartir en bolsillos.</div>
+</div>
+
+<div class="rot">Pantalla 1 · Ahorro</div>
+<div class="card" id="p1">
+ <div class="e">LO QUE TIENES AHORRADO</div>
+ <div class="big">4.200 €</div>
+ <div class="s">Es lo que hay en tu cuenta de ahorro. <a class="l" onclick="toggle('edit')">Corregir</a></div>
+ <div class="mas" id="edit" style="margin-top:8px"><div class="fld"><input value="4.200" inputmode="numeric" aria-label="Ahorrado"><span class="s">€</span></div></div>
+
+ <div class="m" style="margin-top:14px">
+  <div class="row"><b class="t">1º Colchón</b><span class="sp"></span><span class="tag pri">primero</span></div>
+  <div class="s">3 meses de tu vida (1.480 € al mes) por si un mes no hay guardias.</div>
+  <div class="pista"><i style="width:95%"></i></div>
+  <div class="row s"><span><b style="color:var(--ink)">4.200</b> de 4.440 €</span><span class="sp"></span><span>faltan 240 €</span></div>
+ </div>
+
+ <div class="e" style="margin-top:6px">2º TUS METAS · se llenan cuando el colchón está lleno</div>
+ <div class="m">
+  <div class="row"><b class="t">Viaje a Japón</b><span class="sp"></span><span class="tag pri">la siguiente</span></div>
+  <div class="pista b"><i style="width:0%"></i></div>
+  <div class="row s"><span><b style="color:var(--ink)">0</b> de 2.500 €</span><span class="sp"></span><span>verano</span></div>
+ </div>
+ <div class="m"><div class="row"><b class="t">Portátil</b><span class="sp"></span><span class="med" style="font-size:16px">1.100 €</span></div><div class="s">Esperando su turno</div></div>
+ <div class="m"><div class="row"><b class="t">Curso de eco</b><span class="sp"></span><span class="med" style="font-size:16px">350 €</span></div><div class="s">Esperando su turno</div></div>
+ <div class="m"><div class="row"><b class="t">Fonendo</b><span class="sp"></span><span class="med" style="font-size:16px">190 €</span></div><div class="s">Esperando su turno</div></div>
+ <div class="s" style="margin-top:4px">Para cambiar el orden: mantén pulsada una meta y arrástrala. Si gastas del ahorro, usa «Gasté de mi ahorro» (resta de la meta de arriba).</div>
+
+ <div class="e" style="margin-top:16px">LO QUE HAS APARTADO CADA 25</div>
+ <div class="meses" aria-label="Apartado por mes: junio 0, julio 125, agosto 550, septiembre 875, octubre 661">
+  <div><b>0</b><i style="height:3px"></i>jun</div>
+  <div><b>125</b><i style="height:12px"></i>jul</div>
+  <div><b>550</b><i style="height:55px"></i>ago</div>
+  <div><b>875</b><i style="height:80px"></i>sep</div>
+  <div><b>661</b><i style="height:66px"></i>oct</div>
+ </div>
+ <div class="s" style="margin-top:6px">Cada mes distinto, porque las guardias cambian. Lo importante es que siempre apartas la mitad de lo extra.</div>
+</div>
+
+<div class="rot">Pantalla 2 · El día 25: ha entrado la nómina</div>
+<div class="card" id="p2">
+ <div class="e">¿CUÁNTO HA ENTRADO?</div>
+ <div class="fld"><input id="nom" value="2800" inputmode="numeric" aria-label="Nómina neta" oninput="calc()"><span class="s">€</span></div>
+
+ <div class="regla" style="margin-top:12px">
+  Tu vida cuesta unos <b>1.480 €</b> al mes (fijos 728 + gastos del mes 750). Lo que cobras de más, es extra de guardias: <b>aparta la mitad</b>.
+  <div class="sw" style="margin-top:10px" role="group" aria-label="Qué parte apartar"><span onclick="par(30,this)">30 %</span><span class="on" onclick="par(50,this)">50 %</span><span onclick="par(70,this)">70 %</span></div>
+ </div>
+
+ <div style="margin-top:10px">
+  <div class="lin"><span>Entra<span class="s">tu nómina de este mes</span></span><b id="a">2.800 €</b></div>
+  <div class="lin"><span>Para vivir<span class="s">lo que gastas normalmente</span></span><b>− 1.480 €</b></div>
+  <div class="lin"><span>Extra de guardias<span class="s" id="ex2">lo que sobra</span></span><b id="c">1.320 €</b></div>
+  <div class="lin tot"><span>Apartas <span class="tag ok" id="pp">50 %</span></span><b id="d" style="color:var(--accent)">660 €</b></div>
+ </div>
+
+ <div class="regla" style="margin-top:10px" id="dest">
+  Va así: <b>240 €</b> completan el colchón y <b>420 €</b> empiezan el viaje a Japón.
+ </div>
+ <div class="s" id="aviso" style="margin-top:8px;display:none;color:var(--accent)"></div>
+
+ <button class="btn p" style="margin-top:12px;border:0" onclick="ok()" id="bt">Pasar <span id="e">660</span> € a mi cuenta de ahorro</button>
+ <div class="hecho" id="hecho">✓ Hecho. Ya tienes 4.860 € ahorrados.</div>
+ <div class="s" style="margin-top:8px">Un toque en tu banco y listo. Si ya lo has pasado, esto solo lo anota.</div>
+</div>
+
+</div>
+<script>
+var pct=50,VIDA=1480,COL=240;
+function fmt(n){return Math.round(n).toLocaleString('es-ES')+' €'}
+function toggle(i){document.getElementById(i).classList.toggle('on')}
+function par(p,el){pct=p;[].forEach.call(el.parentNode.children,function(x){x.classList.remove('on')});el.classList.add('on');calc()}
+function calc(){
+ var n=+document.getElementById('nom').value||0,ex=Math.max(0,n-VIDA),ap=Math.round(ex*pct/100/10)*10;
+ document.getElementById('a').textContent=fmt(n);
+ document.getElementById('c').textContent=fmt(ex);
+ document.getElementById('d').textContent=fmt(ap);
+ document.getElementById('e').textContent=ap;
+ document.getElementById('pp').textContent=pct+' %';
+ var av=document.getElementById('aviso'),de=document.getElementById('dest');
+ if(n<VIDA){av.style.display='block';av.textContent='Este mes no llegas a lo que cuesta tu vida: no apartas nada y no pasa nada.';de.style.display='none'}
+ else{av.style.display='none';de.style.display='block';
+  var c=Math.min(ap,COL),m=ap-c;
+  de.innerHTML='Va así: <b>'+fmt(c)+'</b> completan el colchón'+(m>0?' y <b>'+fmt(m)+'</b> empiezan el viaje a Japón.':'.')}
+}
+function ok(){document.getElementById('bt').style.display='none';var h=document.getElementById('hecho');h.style.display='block';
+ h.textContent='✓ Hecho. Ya tienes '+fmt(4200+(+document.getElementById('e').textContent))+' ahorrados.'}
+</script></body></html>

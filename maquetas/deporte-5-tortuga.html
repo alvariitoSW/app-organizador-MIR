@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5 · La Tortuga</title>
+<style>
+:root{--tinta:#1f2d33;--tinta2:#46565c;--papel:#fbf6ea;--tarjeta:#f2e7c9;--terra:#b4482c;--verde:#6b8f55;--linea:#34482b;--pintada:#9cc68a}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{width:412px;background:#e9dfc8;color:var(--tinta);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+.cartel{width:412px;background:#dfeedb;padding:16px}
+.cartel h1{margin:0 0 6px;font-size:22px;line-height:1.2}
+.cartel p{margin:0;font-size:15px;line-height:1.4;color:var(--tinta2)}
+.rotulo{display:block;padding:14px 16px 6px;font-size:14px;font-weight:700;color:var(--tinta2)}
+.pantalla{width:412px;background:var(--papel);overflow:hidden;position:relative}
+.p1{height:860px;display:flex;flex-direction:column}
+.cab1{height:96px;padding:14px 16px 0}
+.cab1 h2{margin:0;font-size:26px;line-height:1.15}
+.cab1 p{margin:4px 0 0;font-size:16px;color:var(--tinta2)}
+.mapa{display:block;width:412px;height:580px}
+.bajo{height:184px;padding:12px 16px 0;display:flex;flex-direction:column;gap:8px}
+.bajo .pre{margin:0;font-size:17px;font-weight:700}
+.paso{min-height:56px;width:100%;border:0;border-radius:16px;background:var(--terra);color:#fff;font-family:inherit;font-size:18px;font-weight:700;line-height:1.25;padding:10px 14px;cursor:pointer}
+.paso:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.bajo .nota{margin:0;font-size:15px;color:var(--tinta2)}
+.meta{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700}
+.meta svg{width:84px;height:28px;flex:none}
+.p2{padding-bottom:16px}
+.cab2{padding:14px 16px 0}
+.cab2 h2{margin:0;font-size:26px;line-height:1.15}
+.cab2 p{margin:4px 0 0;font-size:16px;color:var(--tinta2)}
+.p2 .concha{display:block;width:412px;height:660px}
+.leyenda{display:flex;gap:12px;flex-wrap:wrap;padding:6px 16px 0;font-size:14px;color:var(--tinta2)}
+.leyenda span{display:flex;align-items:center;gap:6px}
+.sw{width:18px;height:18px;border-radius:4px;border:2px solid var(--linea);display:inline-block;flex:none}
+.caja{margin:12px 16px 0;background:var(--tarjeta);border-radius:18px;padding:14px}
+.caja h3{margin:0 0 8px;font-size:18px}
+.caja p{margin:8px 0 0;font-size:15px;line-height:1.4;color:var(--tinta2)}
+.cargas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cargas li{background:var(--papel);border-radius:12px;padding:10px 12px;min-height:58px;display:flex;flex-direction:column;justify-content:center}
+.cargas li.ancha{grid-column:1 / -1}
+.cargas li span{font-size:14px;color:var(--tinta2)}
+.cargas li b{font-size:24px;line-height:1.2}
+.p3{padding-bottom:16px}
+.cab3{padding:14px 16px 0}
+.cab3 h2{margin:0;font-size:36px;line-height:1.1}
+.cab3 p{margin:6px 0 0;font-size:16px;line-height:1.4;color:var(--tinta2)}
+.p3 .huellas{display:block;width:412px;height:520px;margin-top:10px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.tile{background:var(--tarjeta);border-radius:18px;padding:14px}
+.tile b{display:block;font-size:32px;line-height:1.1}
+.tile span{font-size:15px;color:var(--tinta2)}
+.comidas{margin:14px 16px 0;background:var(--tarjeta);border-radius:18px;padding:14px}
+.comidas h3{margin:0 0 4px;font-size:18px}
+.comidas p{margin:6px 0 0;font-size:15px;line-height:1.4;color:var(--tinta2)}
+.conchas{display:block;width:100%;height:150px;margin-top:6px}
+.nota3{margin:12px 16px 0;font-size:15px;line-height:1.4;color:var(--tinta2)}
+/* dibujo */
+.cap{fill:var(--linea);}
+.caparazon{fill:#6b8f55;stroke:#34482b;stroke-width:2.5}
+.escuta{fill:#8fb36f;stroke:#34482b;stroke-width:1.5}
+.lin{fill:none;stroke:#34482b;stroke-width:1.5}
+.pata{fill:#a7bf7e;stroke:#34482b;stroke-width:1.5}
+.ojo{fill:#1f2d33}
+.ins{fill:#fbf6ea;stroke:#1f2d33;stroke-width:1.5}
+.ins-hoy{fill:#b4482c;stroke:#b4482c;stroke-width:1.5}
+.letra{font-size:18px;font-weight:700;text-anchor:middle;fill:#1f2d33;font-family:inherit}
+.letra-hoy{font-size:18px;font-weight:700;text-anchor:middle;fill:#fff;font-family:inherit}
+.c1{font-size:16px;font-weight:700;fill:#1f2d33;font-family:inherit}
+.c2{font-size:14px;fill:#46565c;font-family:inherit}
+.plaq{fill:#fbf6ea;stroke:#34482b;stroke-width:1.8}
+.plaq-ok{fill:#9cc68a;stroke:#34482b;stroke-width:1.8}
+.plaq-mitad{fill:none;stroke:#34482b;stroke-width:1.8;stroke-dasharray:6 4}
+.txt-pl{font-size:18px;font-weight:700;text-anchor:middle;fill:#1f2d33;font-family:inherit}
+.kg{font-size:18px;font-weight:700;fill:#1f2d33;font-family:inherit}
+.kg-hoy{font-size:16px;font-weight:700;fill:#b4482c;font-family:inherit}
+.fecha{font-size:15px;fill:#46565c;font-family:inherit}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="t-caparazon">
+      <ellipse rx="42" ry="32" class="caparazon"/>
+      <polygon points="-18,-12 0,-18 18,-12 18,12 0,18 -18,12" class="escuta"/>
+      <path class="lin" d="M0,-18 L0,-28 M18,-12 L30,-17 M18,12 L30,17 M0,18 L0,28 M-18,12 L-30,17 M-18,-12 L-30,-17"/>
+    </g>
+    <g id="t-camina">
+      <ellipse cx="24" cy="-30" rx="10" ry="7" class="pata"/>
+      <ellipse cx="24" cy="30" rx="10" ry="7" class="pata"/>
+      <ellipse cx="-24" cy="-30" rx="10" ry="7" class="pata"/>
+      <ellipse cx="-24" cy="30" rx="10" ry="7" class="pata"/>
+      <path d="M-38,-4 L-58,0 L-38,4 Z" class="pata"/>
+      <ellipse cx="46" cy="0" rx="13" ry="10" class="pata"/>
+      <circle cx="51" cy="-4" r="1.8" class="ojo"/>
+      <circle cx="51" cy="4" r="1.8" class="ojo"/>
+      <use href="#t-caparazon"/>
+    </g>
+    <g id="huella">
+      <ellipse cx="-7" cy="-7" rx="6" ry="5"/>
+      <ellipse cx="7" cy="-7" rx="6" ry="5"/>
+      <ellipse cx="-8" cy="6" rx="6" ry="5"/>
+      <ellipse cx="8" cy="6" rx="6" ry="5"/>
+    </g>
+    <g id="concha">
+      <path d="M-22,6 C-24,-10 -12,-20 0,-20 C12,-20 24,-10 22,6 Z" fill="#f2b899" stroke="#7a4a2a" stroke-width="1.5"/>
+      <path d="M0,6 L-14,-15 M0,6 L-7,-19 M0,6 L7,-19 M0,6 L14,-15" stroke="#7a4a2a" stroke-width="1.2" fill="none"/>
+    </g>
+  </defs>
+</svg>
+
+<section class="cartel" aria-label="Escuela 5, La Tortuga">
+  <h1>5 · La Tortuga</h1>
+  <p>La lentitud como virtud: una tortuga camina la playa de Corralejo, un tramo cada día.</p>
+  <p>Sin prisa. El paso corto (25 min) también cuenta, y una semana que no sale solo repite la placa.</p>
+</section>
+
+<!-- PANTALLA 1 -->
+<span class="rotulo">Pantalla 1 · Hoy toca</span>
+<section class="pantalla p1" aria-label="Pantalla 1, hoy toca">
+  <header class="cab1">
+    <h2>Hoy: gimnasio a las 15:00</h2>
+    <p>De 15:00 a 16:00. El resto de la semana, en la playa.</p>
+  </header>
+
+  <svg class="mapa" viewBox="0 0 412 580" role="img" aria-labelledby="mapa-titulo">
+    <title id="mapa-titulo">Playa en siete tramos, de lunes arriba a domingo abajo. Jueves: la tortuga camina a las 15:00, gimnasio. Martes: guardia, duerme dentro del caparazón. Miércoles: sombra y un paseo corto. Viernes: un paso corto a las 15:30. Sábado: dunas, parque a las 10:00. Domingo: descanso.</title>
+    <rect width="412" height="580" fill="#f6e7bd"/>
+
+    <!-- orilla: arena mojada, mar y espuma -->
+    <path d="M298,0 C292,30 286,50 288,74 C290,100 310,122 306,148 C302,172 292,200 296,222 C300,246 276,270 280,300 C284,330 300,356 296,380 C292,404 280,430 290,456 C298,480 310,500 300,520 C292,540 300,570 300,580" fill="none" stroke="#e6d19a" stroke-width="18"/>
+    <path d="M298,0 C292,30 286,50 288,74 C290,100 310,122 306,148 C302,172 292,200 296,222 C300,246 276,270 280,300 C284,330 300,356 296,380 C292,404 280,430 290,456 C298,480 310,500 300,520 C292,540 300,570 300,580 L412,580 L412,0 Z" fill="#5fc3bb"/>
+    <path d="M298,0 C292,30 286,50 288,74 C290,100 310,122 306,148 C302,172 292,200 296,222 C300,246 276,270 280,300 C284,330 300,356 296,380 C292,404 280,430 290,456 C298,480 310,500 300,520 C292,540 300,570 300,580" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="8 6" opacity=".9"/>
+    <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".7">
+      <path d="M338,96 q6,-6 12,0 q6,-6 12,0"/>
+      <path d="M366,160 q6,-6 12,0 q6,-6 12,0"/>
+      <path d="M340,300 q6,-6 12,0 q6,-6 12,0"/>
+      <path d="M372,420 q6,-6 12,0 q6,-6 12,0"/>
+      <path d="M350,520 q6,-6 12,0 q6,-6 12,0"/>
+    </g>
+
+    <!-- separadores de tramo -->
+    <path d="M12,74H262M12,148H262M12,222H262M12,342H262M12,416H262M12,490H262" fill="none" stroke="#c9a963" stroke-width="1.5" stroke-dasharray="3 5"/>
+
+    <!-- tramo de hoy (jueves) -->
+    <rect x="3" y="225" width="262" height="114" rx="14" fill="none" stroke="#b4482c" stroke-width="2.5"/>
+
+    <!-- L · gimnasio -->
+    <circle cx="26" cy="37" r="17" class="ins"/>
+    <text x="26" y="43" class="letra">L</text>
+    <text x="54" y="26" class="c1">Gimnasio</text>
+    <text x="54" y="44" class="c2">15:00 · 50 min</text>
+    <use href="#t-camina" transform="translate(232 40) scale(.55)"/>
+
+    <!-- M · guardia -->
+    <circle cx="26" cy="111" r="17" class="ins"/>
+    <text x="26" y="117" class="letra">M</text>
+    <text x="54" y="100" class="c1">Guardia</text>
+    <text x="54" y="118" class="c2">duerme dentro</text>
+    <use href="#t-caparazon" transform="translate(232 112) scale(.55)"/>
+    <path d="M266,96 a8,8 0 1 0 0,16 a6,6 0 1 1 0,-16 Z" fill="#fff8d6" stroke="#1f2d33" stroke-width="1.2"/>
+
+    <!-- X · saliente, sombra -->
+    <circle cx="26" cy="185" r="17" class="ins"/>
+    <text x="26" y="191" class="letra">X</text>
+    <text x="54" y="178" class="c1">Saliente</text>
+    <text x="54" y="196" class="c2">20 min o nada</text>
+    <ellipse cx="244" cy="186" rx="26" ry="20" fill="#dcc07a" opacity=".75"/>
+    <circle cx="240" cy="176" r="18" fill="#fbf6ea" stroke="#1f2d33" stroke-width="1"/>
+    <path d="M240,176 L258,176 A18,18 0 0 1 252.7,188.7 Z" fill="#b4482c"/>
+    <path d="M240,176 L240,194 A18,18 0 0 1 227.3,188.7 Z" fill="#b4482c"/>
+    <path d="M240,176 L222,176 A18,18 0 0 1 227.3,163.3 Z" fill="#b4482c"/>
+    <path d="M240,176 L240,158 A18,18 0 0 1 252.7,163.3 Z" fill="#b4482c"/>
+    <circle cx="240" cy="176" r="2.5" fill="#1f2d33"/>
+    <use href="#t-camina" transform="translate(204 204) scale(.4)"/>
+
+    <!-- J · HOY, gimnasio 15:00 -->
+    <circle cx="26" cy="282" r="17" class="ins-hoy"/>
+    <text x="26" y="288" class="letra-hoy">J</text>
+    <text x="54" y="246" class="c1">Hoy · gimnasio</text>
+    <text x="54" y="264" class="c2">15:00 · 50 min</text>
+    <use href="#huella" transform="translate(62 298) scale(.65)" fill="#b98c4a"/>
+    <use href="#huella" transform="translate(84 286) scale(.65)" fill="#b98c4a"/>
+    <use href="#huella" transform="translate(106 298) scale(.65)" fill="#b98c4a"/>
+    <use href="#t-camina" transform="translate(200 292) scale(1.15)"/>
+
+    <!-- V · un paso -->
+    <circle cx="26" cy="379" r="17" class="ins"/>
+    <text x="26" y="385" class="letra">V</text>
+    <text x="54" y="372" class="c1">Un paso</text>
+    <text x="54" y="390" class="c2">25 min · 15:30</text>
+    <use href="#huella" transform="translate(236 382) scale(1.8)" fill="#5f7d48"/>
+
+    <!-- S · dunas, parque -->
+    <path d="M0,490 Q70,462 150,478 T290,472 L290,490 Z" fill="#e8c06a"/>
+    <path d="M24,484 q30,-9 60,0 M130,486 q30,-9 60,0" fill="none" stroke="#c8973a" stroke-width="1.5"/>
+    <circle cx="26" cy="453" r="17" class="ins"/>
+    <text x="26" y="459" class="letra">S</text>
+    <text x="54" y="442" class="c1">Parque</text>
+    <text x="54" y="460" class="c2">10:00 · 40 min</text>
+    <use href="#t-camina" transform="translate(232 456) scale(.55)"/>
+
+    <!-- D · descanso -->
+    <circle cx="26" cy="527" r="17" class="ins"/>
+    <text x="26" y="533" class="letra">D</text>
+    <text x="54" y="516" class="c1">Descanso</text>
+    <text x="54" y="534" class="c2">sol y agua</text>
+    <use href="#t-camina" transform="translate(228 530) rotate(-18) scale(.5)"/>
+  </svg>
+
+  <div class="bajo">
+    <p class="pre">Si no llegas a las 15:00</p>
+    <button class="paso" id="btn-paso" type="button" aria-pressed="false">Un paso corto · 25 min a las 15:30</button>
+    <p class="nota">3 ejercicios de 2 series. Cuenta igual.</p>
+    <div class="meta">
+      <span>Meta: 3 sesiones</span>
+      <svg viewBox="0 0 84 28" role="img" aria-label="Tres huellas: tres sesiones a la semana">
+        <g fill="#6b8f55">
+          <ellipse cx="6" cy="8" rx="4" ry="3.5"/><ellipse cx="12" cy="8" rx="4" ry="3.5"/><ellipse cx="6" cy="19" rx="4" ry="3.5"/><ellipse cx="12" cy="19" rx="4" ry="3.5"/>
+        </g>
+        <g fill="#6b8f55" transform="translate(30 0)">
+          <ellipse cx="6" cy="8" rx="4" ry="3.5"/><ellipse cx="12" cy="8" rx="4" ry="3.5"/><ellipse cx="6" cy="19" rx="4" ry="3.5"/><ellipse cx="12" cy="19" rx="4" ry="3.5"/>
+        </g>
+        <g fill="#6b8f55" transform="translate(60 0)">
+          <ellipse cx="6" cy="8" rx="4" ry="3.5"/><ellipse cx="12" cy="8" rx="4" ry="3.5"/><ellipse cx="6" cy="19" rx="4" ry="3.5"/><ellipse cx="12" cy="19" rx="4" ry="3.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- PANTALLA 2 -->
+<span class="rotulo">Pantalla 2 · La vuelta</span>
+<section class="pantalla p2" aria-label="Pantalla 2, la vuelta">
+  <header class="cab2">
+    <h2>Semana 3 de 8: al 55 %</h2>
+    <p>La vuelta sube 10 puntos cada semana. Cada placa es una semana.</p>
+  </header>
+
+  <svg class="concha" viewBox="0 0 412 660" role="img" aria-labelledby="concha-titulo">
+    <title id="concha-titulo">Caparazón de tortuga visto desde arriba, con 8 placas de arriba abajo: semanas 1 y 2 pintadas, la 3 a medias al 55 %, y las demás vacías hasta la 8 al 100 %.</title>
+    <!-- patas, cola y cabeza -->
+    <ellipse cx="66" cy="170" rx="28" ry="20" class="pata"/>
+    <ellipse cx="346" cy="170" rx="28" ry="20" class="pata"/>
+    <ellipse cx="70" cy="500" rx="28" ry="20" class="pata"/>
+    <ellipse cx="342" cy="500" rx="28" ry="20" class="pata"/>
+    <path d="M196,600 L206,640 L216,600 Z" class="pata"/>
+    <ellipse cx="206" cy="40" rx="28" ry="24" class="pata"/>
+    <circle cx="196" cy="36" r="2.2" class="ojo"/>
+    <circle cx="216" cy="36" r="2.2" class="ojo"/>
+    <!-- caparazón -->
+    <ellipse cx="206" cy="334" rx="186" ry="268" fill="#6b8f55" stroke="#34482b" stroke-width="3"/>
+    <ellipse cx="206" cy="334" rx="166" ry="246" fill="#7fa366"/>
+    <!-- placas: semana 1 arriba, semana 8 abajo -->
+    <rect x="141" y="110" width="130" height="48" rx="10" class="plaq-ok"/>
+    <text x="206" y="140" class="txt-pl">✓ 1 · 35 %</text>
+    <rect x="141" y="166" width="130" height="48" rx="10" class="plaq-ok"/>
+    <text x="206" y="196" class="txt-pl">✓ 2 · 45 %</text>
+    <rect x="141" y="222" width="130" height="48" rx="10" class="plaq"/>
+    <rect x="141" y="243.6" width="130" height="26.4" clip-path="url(#c3)" fill="#9cc68a"/>
+    <rect x="141" y="222" width="130" height="48" rx="10" class="plaq-mitad"/>
+    <text x="206" y="252" class="txt-pl">3 · 55 %</text>
+    <rect x="141" y="278" width="130" height="48" rx="10" class="plaq"/>
+    <text x="206" y="308" class="txt-pl">4 · 65 %</text>
+    <rect x="141" y="334" width="130" height="48" rx="10" class="plaq"/>
+    <text x="206" y="364" class="txt-pl">5 · 75 %</text>
+    <rect x="141" y="390" width="130" height="48" rx="10" class="plaq"/>
+    <text x="206" y="420" class="txt-pl">6 · 85 %</text>
+    <rect x="141" y="446" width="130" height="48" rx="10" class="plaq"/>
+    <text x="206" y="476" class="txt-pl">7 · 95 %</text>
+    <rect x="141" y="502" width="130" height="48" rx="10" class="plaq"/>
+    <text x="206" y="532" class="txt-pl">8 · 100 %</text>
+    <defs>
+      <clipPath id="c3"><rect x="141" y="222" width="130" height="48" rx="10"/></clipPath>
+    </defs>
+  </svg>
+
+  <div class="leyenda" aria-label="Leyenda de las placas">
+    <span><i class="sw" style="background:#9cc68a"></i>✓ ya pintada</span>
+    <span><i class="sw" style="background:linear-gradient(#fbf6ea 50%,#9cc68a 50%);border-style:dashed"></i>a medias: esta semana</span>
+    <span><i class="sw" style="background:#fbf6ea"></i>falta</span>
+  </div>
+
+  <div class="caja">
+    <h3>Esta semana, al 55 %</h3>
+    <ul class="cargas">
+      <li><span>Sentadilla</span><b>45 kg</b></li>
+      <li><span>Press de banca</span><b>32,5 kg</b></li>
+      <li><span>Peso muerto</span><b>50 kg</b></li>
+      <li><span>Remo</span><b>27,5 kg</b></li>
+      <li class="ancha"><span>Press militar</span><b>20 kg</b></li>
+    </ul>
+    <p>2 series de cada una, con esfuerzo suave: que sobren unas 4 repeticiones.</p>
+  </div>
+
+  <div class="caja">
+    <h3>Si una semana no sale</h3>
+    <p>La placa se repite al mismo %. No cuenta como fallo.</p>
+    <p>Racha: 2 semanas cumplidas seguidas.</p>
+  </div>
+</section>
+
+<!-- PANTALLA 3 -->
+<span class="rotulo">Pantalla 3 · Tu objetivo de peso</span>
+<section class="pantalla p3" aria-label="Pantalla 3, tu objetivo de peso">
+  <header class="cab3">
+    <h2>De 82 a 75 kg</h2>
+    <p>Medio kilo a la semana, hacia el 8 de febrero de 2027. Hoy: 81,4 kg (semana 2 de 14).</p>
+  </header>
+
+  <svg class="huellas" viewBox="0 0 412 520" role="img" aria-labelledby="huellas-titulo">
+    <title id="huellas-titulo">Huellas en la arena de abajo arriba: al principio, marcadas (82 kg); hacia arriba, cada vez más ligeras hasta 75 kg, el 8 de febrero de 2027.</title>
+    <rect width="412" height="520" fill="#f6e7bd"/>
+    <rect width="412" height="48" fill="#5fc3bb"/>
+    <path d="M0,48 Q51,40 103,48 T206,48 T309,48 T412,48" fill="none" stroke="#ffffff" stroke-width="2"/>
+    <g id="huellas" fill="#6b4a22"></g>
+    <circle cx="256" cy="414" r="24" fill="none" stroke="#b4482c" stroke-width="2.5" stroke-dasharray="5 4"/>
+    <text x="170" y="478" text-anchor="end" class="kg">82 kg</text>
+    <text x="288" y="420" class="kg-hoy">hoy: 81,4 kg</text>
+    <text x="208" y="84" text-anchor="end" class="kg">75 kg</text>
+    <text x="208" y="108" text-anchor="end" class="fecha">8 de febrero de 2027</text>
+  </svg>
+
+  <div class="tiles">
+    <div class="tile"><b>2.000</b><span>kcal al día</span></div>
+    <div class="tile"><b>140 g</b><span>de proteína al día</span></div>
+  </div>
+
+  <div class="comidas">
+    <h3>El plan de comidas de la semana</h3>
+    <p>Una concha por día, unas 2.000 kcal cada uno. Una concha rota = un día que se pasa.</p>
+    <svg class="conchas" viewBox="0 0 412 150" role="img" aria-label="Siete conchas, una por día de lunes a domingo, cada una con unas 2.000 kcal">
+      <rect width="412" height="150" fill="#f6e7bd"/>
+      <rect width="412" height="36" fill="#5fc3bb"/>
+      <path d="M0,36 Q51,28 103,36 T206,36 T309,36 T412,36" fill="none" stroke="#ffffff" stroke-width="2"/>
+      <use href="#concha" transform="translate(30 84)"/>
+      <use href="#concha" transform="translate(88 84)"/>
+      <use href="#concha" transform="translate(146 84)"/>
+      <use href="#concha" transform="translate(204 84)"/>
+      <use href="#concha" transform="translate(262 84)"/>
+      <use href="#concha" transform="translate(320 84)"/>
+      <use href="#concha" transform="translate(378 84)"/>
+      <g class="letra" style="font-size:18px">
+        <text x="30" y="130" class="letra">L</text>
+        <text x="88" y="130" class="letra">M</text>
+        <text x="146" y="130" class="letra">X</text>
+        <text x="204" y="130" class="letra">J</text>
+        <text x="262" y="130" class="letra">V</text>
+        <text x="320" y="130" class="letra">S</text>
+        <text x="378" y="130" class="letra">D</text>
+      </g>
+    </svg>
+  </div>
+
+  <p class="nota3">El entreno no suma kcal para comer más. Guardia y saliente no cuentan en la media.</p>
+</section>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var grupo = document.getElementById('huellas');
+  for (var i = 0; i <= 14; i++) {
+    var x = 206 + 60 * Math.sin(i * 0.5);
+    var y = 470 - i * 28;
+    var s = 1.4 - i * 0.02;
+    var rot = Math.cos(i * 0.5) * 10;
+    var u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', '#huella');
+    u.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + rot.toFixed(1) + ') scale(' + s.toFixed(2) + ')');
+    u.setAttribute('opacity', (1 - (i / 14) * 0.8).toFixed(2));
+    grupo.appendChild(u);
+  }
+
+  var b = document.getElementById('btn-paso');
+  b.addEventListener('click', function () {
+    var on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? 'Apuntado: un paso corto a las 15:30' : 'Un paso corto · 25 min a las 15:30';
+  });
+})();
+</script>
+</body>
+</html>

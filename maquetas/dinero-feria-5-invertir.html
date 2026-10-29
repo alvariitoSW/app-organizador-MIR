@@ -1,0 +1,115 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412">
+<title>Qué puedo invertir</title><link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.wrap{padding:10px 12px 30px}
+.rot{font-size:11px;letter-spacing:.12em;color:var(--ink2);font-weight:800;margin:18px 0 8px}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line));margin-bottom:6px}
+.cartel b{font-size:17px}.cartel p{margin:6px 0 0;font-size:13px;color:var(--ink2)}
+.card{margin-bottom:10px}
+.e{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.big{font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.msg{font-size:17px;font-weight:800;line-height:1.3;margin:0}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.seg{display:flex;gap:6px;margin-top:8px}
+.seg button{flex:1;min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink2);font:inherit;font-size:14px;font-weight:800}
+.seg button.on{background:color-mix(in srgb,var(--brand) 22%,transparent);border-color:var(--brand);color:var(--ink)}
+.bar{height:16px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);position:relative;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--brand2)}
+.bar u{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+.mini{font-size:12px;color:var(--ink2)}
+.li{display:flex;gap:8px;justify-content:space-between;padding:9px 0;border-top:1px dashed var(--line);font-size:14px}
+.li:first-of-type{border-top:0}.li b{font-variant-numeric:tabular-nums}
+.ok{color:var(--ok,#34d399)}.warn{color:var(--warn,#fbbf24)}
+.aviso{border:1px solid var(--warn,#fbbf24);background:#fbbf241a;border-radius:12px;padding:10px;font-size:13px;margin-top:8px}
+.op{border-top:1px dashed var(--line)}.op:first-of-type{border-top:0}
+.op summary{list-style:none;min-height:48px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;cursor:pointer}
+.op summary::after{content:"＋";margin-left:auto;color:var(--ink2)}
+.op[open] summary::after{content:"－"}
+.op p{margin:0 0 10px;font-size:13px;color:var(--ink2)}
+.nv{font-size:11px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+label.sl{display:block;font-size:13px;font-weight:800;margin-top:12px}
+label.sl output{float:right;font-size:18px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:44px;accent-color:var(--brand);margin:0}
+.res{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px}
+.res div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center}
+.res .k{font-size:10.5px;color:var(--ink2);font-weight:800}.res .v{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:2px}
+.res small{display:block;font-size:10px;color:var(--ink2)}
+</style><body><div class="wrap">
+
+<div class="card cartel"><b>5 · Qué puedo invertir</b>
+<p>La idea: primero un colchón por si algo falla; solo lo que sobra se puede invertir.<br>Un simulador sencillo te enseña qué pasa si apartas X al mes durante N años.</p></div>
+
+<div class="rot">PANTALLA 1 · COLCHÓN Y LO QUE SOBRA</div>
+<div class="card">
+ <p class="msg" id="msg1"></p>
+ <div class="e" style="margin-top:14px">COLCHÓN: CUÁNTOS MESES QUIERES CUBRIR</div>
+ <div class="seg" id="meses"><button data-m="3" class="on">3 meses</button><button data-m="4">4 meses</button><button data-m="6">6 meses</button></div>
+ <div class="mini" style="margin-top:8px">El colchón es dinero quieto para imprevistos (una baja, una avería). Se cuenta en meses de gastos.</div>
+</div>
+
+<div class="card">
+ <div class="e">COLCHÓN QUE TE CONVIENE</div>
+ <div class="row" style="align-items:baseline"><span class="big" id="col">4.440 €</span><span class="mini" id="colN">3 × 1.480 € de gastos al mes</span></div>
+ <div class="bar"><i id="barra" style="width:95%"></i><u id="meta" style="left:100%"></u></div>
+ <div class="row mini" style="margin-top:6px"><span>tienes <b style="color:var(--ink)">4.200 €</b> ahorrados</span><span class="sp"></span><span id="falta">faltan 240 €</span></div>
+</div>
+
+<div class="card">
+ <div class="e">DE DÓNDE SALE EL 1.480 €</div>
+ <div class="li"><span>Gastos fijos (alquiler, luz, móvil…)</span><b>728 €</b></div>
+ <div class="li"><span>Gastos variables (media de octubre)</span><b>750 €</b></div>
+ <div class="li"><span>Lo que sueles ahorrar al mes</span><b>~500 €</b></div>
+ <div class="mini">Tu nómina media de 5 meses es 2.260 €, así que sobrarían ~780 €. Cuentas con 500 € por prudencia: tu base sin guardias (1.350 €) no cubre todos los gastos.</div>
+</div>
+
+<div class="card">
+ <div class="e">¿CUÁNDO PODRÍAS EMPEZAR A INVERTIR?</div>
+ <p class="msg" id="cuando" style="margin-top:6px"></p>
+ <div class="aviso">Antes de invertir, mira lo que vas a comprar pronto: <b>Japón (2.500 €, verano)</b> y el <b>portátil (1.100 €)</b>. Lo que gastarás en menos de 3 años no conviene invertirlo.</div>
+</div>
+
+<div class="rot">PANTALLA 2 · OPCIONES Y SIMULADOR</div>
+<div class="card">
+ <div class="e">OPCIONES GENERALES, SIN MARCAS</div>
+ <details class="op"><summary>Cuenta de ahorro <span class="nv ok">Riesgo bajo</span></summary><p>Tu dinero está quieto y sacas cuando quieras. Gana poco, pero no pierde. Ideal para el colchón.</p></details>
+ <details class="op"><summary>Depósito a plazo <span class="nv ok">Riesgo bajo</span></summary><p>Lo bloqueas unos meses o años y a cambio te pagan algo más. Sirve para dinero que sabes que no vas a tocar.</p></details>
+ <details class="op"><summary>Fondo indexado <span class="nv warn">Riesgo medio</span></summary><p>Un único producto que reparte tu dinero en cientos de empresas a la vez. Sube y baja por el camino; suele compensar a 5 años o más. No sirve para algo que necesites pronto.</p></details>
+ <details class="op"><summary>Renta fija <span class="nv warn">Riesgo bajo-medio</span></summary><p>Prestas dinero a un Estado o empresa y te devuelven con intereses. Se mueve menos que el fondo indexado.</p></details>
+</div>
+
+<div class="card">
+ <div class="e">SIMULADOR · SI APARTO…</div>
+ <label class="sl">Aparto al mes <output id="oX">200 €</output><input type="range" id="X" min="25" max="800" step="25" value="200"></label>
+ <label class="sl">Durante <output id="oN">10 años</output><input type="range" id="N" min="1" max="30" step="1" value="10"></label>
+ <p class="msg" style="margin-top:14px">Habrías apartado <span id="ap">24.000 €</span></p>
+ <div class="res">
+  <div><div class="k">Cuenta (2 %)</div><div class="v" id="r1">—</div></div>
+  <div><div class="k">Medio (4 %)</div><div class="v" id="r2">—</div></div>
+  <div><div class="k">Fondo (6 %)</div><div class="v" id="r3">—</div></div>
+ </div>
+ <div class="mini" style="margin-top:8px">Cada cifra es lo que tendrías al final con esa ganancia media al año. El % en la vida real cambia cada año y puede ser negativo.</div>
+ <div class="aviso"><b>Solo orientativo.</b> No es una promesa ni un consejo personal. Rentabilidades inventadas para el ejemplo. Antes de invertir, infórmate bien o habla con un profesional.</div>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id),f=n=>Math.round(n).toLocaleString('es-ES')+' €';
+const GASTO=1480,AHORRADO=4200,MES=500;let m=3;
+function p1(){const col=m*GASTO,falta=col-AHORRADO;
+ $('col').textContent=f(col);$('colN').textContent=m+' × '+f(GASTO)+' de gastos al mes';
+ const pct=Math.min(100,AHORRADO/col*100),mx=Math.max(col,AHORRADO);
+ $('barra').style.width=(AHORRADO/mx*100)+'%';$('meta').style.left=(col/mx*100)+'%';
+ const meses=Math.ceil(Math.max(0,falta)/MES);
+ if(falta>0){$('msg1').innerHTML='Casi: tu colchón cubre <span class="warn">'+(AHORRADO/GASTO).toFixed(1).replace('.',',')+' meses</span>. Aún no sobra para invertir.';
+  $('falta').textContent='faltan '+f(falta);
+  $('cuando').textContent='En '+meses+(meses==1?' mes':' meses')+', apartando '+f(MES)+' al mes. Desde entonces, esos '+f(MES)+' mensuales se podrían invertir.';}
+ else{$('msg1').innerHTML='Colchón completo. Te sobran <span class="ok">'+f(-falta)+'</span> que podrías invertir.';
+  $('falta').textContent='te sobran '+f(-falta);
+  $('cuando').textContent='Ya. Pueden invertirse '+f(-falta)+' y, además, los '+f(MES)+' que apartas cada mes.';}}
+document.querySelectorAll('#meses button').forEach(b=>b.onclick=()=>{m=+b.dataset.m;document.querySelectorAll('#meses button').forEach(x=>x.classList.toggle('on',x===b));p1()});
+function fv(x,n,r){const i=r/12,k=n*12;return x*((Math.pow(1+i,k)-1)/i)}
+function p2(){const x=+$('X').value,n=+$('N').value;
+ $('oX').textContent=f(x);$('oN').textContent=n+(n==1?' año':' años');
+ $('ap').textContent=f(x*12*n);$('r1').textContent=f(fv(x,n,.02));$('r2').textContent=f(fv(x,n,.04));$('r3').textContent=f(fv(x,n,.06));}
+$('X').oninput=$('N').oninput=p2;p1();p2();
+</script></html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>El Sofá · La Vuelta</title>
+<style>
+:root{--pared:#f3e6c8;--suelo:#7a4a28;--pana:#d99a1c;--panaO:#a86f0a;--tinta:#2b1a0a;--cafe:#5a3410;--crema:#fff6dc;--verde:#2f6b3a;--azul:#2a5d8a;--rojo:#9b2c1c}
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#e9dcc0;color:var(--tinta);font:16px/1.35 system-ui,sans-serif;overflow-x:hidden}
+.cartel{background:var(--cafe);color:#fff6dc;padding:14px 16px;border-bottom:6px double var(--pana)}
+.cartel h1{margin:0;font:700 22px Georgia,serif}.cartel p{margin:4px 0 0;font-size:15px}
+.rot{margin:0;padding:8px 12px;font:700 13px system-ui;letter-spacing:.06em;text-transform:uppercase;background:var(--tinta);color:#fff6dc}
+.p{width:412px;position:relative;background:var(--pared);overflow:hidden}
+.p1{height:900px}.p2{height:1240px}.p3{height:1240px}
+svg{display:block}
+text{font-family:system-ui,sans-serif;fill:var(--tinta)}
+.dias{display:flex;gap:4px;padding:0 5px;position:absolute;left:0;top:455px;width:412px}
+.cj{width:54px;height:100px;min-height:44px;border:0;padding:0;background:none;cursor:pointer;position:relative}
+.cj svg{width:54px;height:100px}
+.cj.hoy{transform:translateY(-22px) rotate(-3deg)}
+.cj:focus-visible,.btn:focus-visible{outline:4px solid var(--azul);outline-offset:2px}
+.info{position:absolute;left:12px;right:12px;font-size:16px;background:var(--crema);border:3px solid var(--cafe);border-radius:12px;padding:8px 12px;min-height:44px}
+.btn{font:700 17px system-ui;min-height:56px;border:3px solid var(--tinta);border-radius:14px;background:var(--crema);color:var(--tinta);padding:8px 14px;cursor:pointer}
+.mando{position:absolute;left:12px;top:650px;width:388px;display:flex;align-items:center;gap:12px;background:#2b2b2b;color:#fff;border:3px solid #000;border-radius:28px;min-height:92px;padding:8px 16px;text-align:left}
+.mando b{font-size:19px;display:block}.mando span{font-size:15px}
+.cargas{position:absolute;left:8px;top:680px;width:396px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.cg{background:var(--crema);border:3px solid var(--cafe);border-radius:12px;padding:6px 2px;text-align:center;min-height:84px}
+.cg b{display:block;font-size:22px}.cg small{font-size:13px;display:block}
+.fallo{position:absolute;left:12px;top:790px;width:388px}
+.hechos{position:absolute;left:12px;top:945px;width:388px;font-size:16px}
+.hechos li{margin:3px 0}
+</style></head><body>
+<div class="cartel"><h1>Escuela 2 · El Sofá</h1><p>El vago, a la vista y con cariño: un sofá de pana de los 70 con la marca de tu cuerpo. Cada cojín es un día; el muelle de dentro es la vuelta; la funda holgada, tu peso.</p></div>
+
+<!-- ============ P1 ============ -->
+<h2 class="rot">Pantalla 1 · Hoy toca</h2>
+<section class="p p1">
+<svg width="412" height="900" viewBox="0 0 412 900" role="img" aria-label="Salón: el reloj marca las 15:00 y el cojín de hoy, jueves, se levanta hacia la puerta. Hoy toca gimnasio de 15:00 a 16:00.">
+<title>Hoy jueves: gimnasio de 15:00 a 16:00</title>
+<defs><pattern id="papel" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#f3e6c8"/><circle cx="12" cy="12" r="3" fill="#e6d3a6"/></pattern></defs>
+<rect width="412" height="640" fill="url(#papel)"/><rect y="640" width="412" height="260" fill="#7a4a28"/>
+<rect y="636" width="412" height="8" fill="#4d2b12"/>
+<!-- reloj -->
+<g><circle cx="96" cy="100" r="70" fill="#fffaf0" stroke="#5a3410" stroke-width="10"/>
+<circle cx="96" cy="100" r="70" fill="none" stroke="#d99a1c" stroke-width="3" transform="scale(1)"/>
+<g font-size="18" font-weight="700" text-anchor="middle"><text x="96" y="58">12</text><text x="146" y="107">3</text><text x="96" y="156">6</text><text x="46" y="107">9</text></g>
+<line x1="96" y1="100" x2="96" y2="50" stroke="#2b1a0a" stroke-width="5" stroke-linecap="round"/>
+<line x1="96" y1="100" x2="133" y2="100" stroke="#9b2c1c" stroke-width="8" stroke-linecap="round"/>
+<circle cx="96" cy="100" r="6" fill="#2b1a0a"/>
+<text x="96" y="203" text-anchor="middle" font-size="22" font-weight="700">15:00</text></g>
+<!-- puerta -->
+<g><rect x="290" y="70" width="104" height="566" rx="6" fill="#8b5a2b" stroke="#4d2b12" stroke-width="6"/>
+<rect x="302" y="86" width="80" height="150" rx="4" fill="#a8743a" stroke="#4d2b12" stroke-width="3"/><rect x="302" y="256" width="80" height="150" rx="4" fill="#a8743a" stroke="#4d2b12" stroke-width="3"/>
+<circle cx="308" cy="360" r="8" fill="#e6c25a" stroke="#2b1a0a" stroke-width="2"/>
+<rect x="306" y="18" width="88" height="40" rx="6" fill="#2f6b3a"/><text x="350" y="45" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">GIMNASIO</text>
+<text x="342" y="480" text-anchor="middle" font-size="40" style="fill:#fff6dc">&#8594;</text>
+</g>
+<!-- huellas hasta la puerta -->
+<g fill="#2b1a0a" opacity=".6"><ellipse cx="230" cy="594" rx="8" ry="12" transform="rotate(70 230 594)"/><ellipse cx="256" cy="570" rx="8" ry="12" transform="rotate(70 256 570)"/><ellipse cx="282" cy="588" rx="8" ry="12" transform="rotate(70 282 588)"/></g>
+<!-- placa -->
+<rect x="14" y="224" width="256" height="150" rx="14" fill="#fff6dc" stroke="#5a3410" stroke-width="5"/>
+<text x="142" y="256" text-anchor="middle" font-size="17" font-weight="700">HOY · JUEVES</text>
+<text x="142" y="306" text-anchor="middle" font-size="35" font-weight="800">15:00–16:00</text>
+<text x="142" y="348" text-anchor="middle" font-size="26" font-weight="700">Gimnasio</text>
+<!-- cojin que se levanta (hueco en sofa) -->
+<!-- sofa -->
+<g>
+<rect x="6" y="396" width="400" height="170" rx="34" fill="#a86f0a" stroke="#4d2b12" stroke-width="5"/>
+<g fill="#6e4505"><circle cx="46" cy="430" r="7"/><circle cx="126" cy="430" r="7"/><circle cx="206" cy="430" r="7"/><circle cx="286" cy="430" r="7"/><circle cx="366" cy="430" r="7"/>
+<circle cx="86" cy="470" r="7"/><circle cx="166" cy="470" r="7"/><circle cx="246" cy="470" r="7"/><circle cx="326" cy="470" r="7"/></g>
+<path d="M46 430 L86 470 L126 430 L166 470 L206 430 L246 470 L286 430 L326 470 L366 430" fill="none" stroke="#6e4505" stroke-width="2" stroke-dasharray="4 4"/>
+<rect x="0" y="540" width="52" height="150" rx="24" fill="#d99a1c" stroke="#4d2b12" stroke-width="5"/><rect x="360" y="540" width="52" height="150" rx="24" fill="#d99a1c" stroke="#4d2b12" stroke-width="5"/>
+<rect x="30" y="556" width="352" height="120" rx="20" fill="#d99a1c" stroke="#4d2b12" stroke-width="5"/>
+<rect x="48" y="684" width="22" height="26" fill="#4d2b12"/><rect x="342" y="684" width="22" height="26" fill="#4d2b12"/>
+<!-- manta de ganchillo en el brazo -->
+<g transform="translate(4 560)"><rect width="48" height="62" rx="6" fill="#c8442b" stroke="#2b1a0a" stroke-width="2"/><path d="M0 20H48M0 40H48M16 0V62M32 0V62" stroke="#fff6dc" stroke-width="3" stroke-dasharray="6 3"/></g>
+</g>
+<text x="206" y="730" text-anchor="middle" font-size="15" font-weight="700">LA SEMANA · un cojín por día</text>
+</svg>
+<div class="dias" id="dias"></div>
+<div class="info" id="info" style="top:744px" aria-live="polite">Toca un cojín para ver su día.</div>
+<button class="btn mando" id="mando" style="top:804px;left:12px;width:388px;height:92px;position:absolute" aria-expanded="false">
+<svg width="60" height="76" viewBox="0 0 60 76" aria-hidden="true"><rect x="8" y="2" width="44" height="72" rx="14" fill="#555" stroke="#000" stroke-width="3"/><circle cx="30" cy="22" r="10" fill="#c8442b" stroke="#fff" stroke-width="2"/><g fill="#ddd"><rect x="16" y="40" width="10" height="8" rx="2"/><rect x="34" y="40" width="10" height="8" rx="2"/><rect x="16" y="54" width="10" height="8" rx="2"/><rect x="34" y="54" width="10" height="8" rx="2"/></g></svg>
+<span><b>No llego a las 15:00</b><span id="mtxt">Sesión mínima · 25 min a las 15:30</span></span></button>
+</section>
+
+<!-- ============ P2 ============ -->
+<h2 class="rot">Pantalla 2 · La vuelta</h2>
+<section class="p p2">
+<svg width="412" height="640" viewBox="0 0 412 640" role="img" aria-label="Corte del sofá: un muelle de 8 vueltas; cada semana es una vuelta un 10 por ciento más tensa, de 35 a 100. Estás en la vuelta 3, al 55 por ciento.">
+<title>Muelle del sofá en corte: 8 semanas, de 35 a 100 por ciento; ahora, semana 3 al 55 por ciento</title>
+<rect width="412" height="640" fill="#e0c58a"/>
+<rect x="16" y="14" width="380" height="612" rx="30" fill="#a86f0a" stroke="#4d2b12" stroke-width="5"/>
+<rect x="30" y="28" width="352" height="584" rx="20" fill="#3b2410"/>
+<text x="206" y="56" text-anchor="middle" font-size="16" font-weight="700" style="fill:#fff6dc">DENTRO DEL SOFÁ · 8 vueltas de muelle</text>
+<g id="muelle"></g>
+</svg>
+<div class="cargas" id="cargas"></div>
+<div style="position:absolute;left:12px;top:626px;font-weight:700;font-size:16px;width:388px"></div>
+<div class="fallo">
+<svg width="388" height="150" viewBox="0 0 388 150" role="img" aria-label="Si falla una semana, el cojín no se hunde más: se queda igual">
+<title>Si falla una semana el cojín se queda igual</title>
+<g><rect x="6" y="20" width="170" height="90" rx="30" fill="#d99a1c" stroke="#4d2b12" stroke-width="4"/><path d="M40 70Q91 100 142 70" fill="none" stroke="#6e4505" stroke-width="4"/><text x="91" y="136" text-anchor="middle" font-size="16" font-weight="700">Esta semana · 55 %</text></g>
+<g><rect x="212" y="20" width="170" height="90" rx="30" fill="#d99a1c" stroke="#4d2b12" stroke-width="4" stroke-dasharray="9 5"/><path d="M246 70Q297 100 348 70" fill="none" stroke="#6e4505" stroke-width="4"/><text x="297" y="136" text-anchor="middle" font-size="16" font-weight="700">¿No pudiste? Igual</text></g>
+<text x="194" y="70" text-anchor="middle" font-size="30" font-weight="800">=</text>
+</svg>
+<button class="btn" id="fallo" style="width:100%;margin-top:6px" aria-expanded="false">¿Y si fallo esta semana?</button>
+<div class="info" id="falloTxt" style="position:static;margin-top:8px;display:none">Se repite la semana al mismo 55 %. El cojín no se hunde más y no pasa nada. Si faltan dos, bajas un escalón: 45 %.</div>
+</div>
+<div class="hechos" style="top:1090px;font-weight:700;font-size:16px">Racha: 2 semanas cumplidas &#9679;&#9679;<br><span style="font-weight:400">La sesión mínima de 25 min también cuenta.</span></div>
+</section>
+
+<!-- ============ P3 ============ -->
+<h2 class="rot">Pantalla 3 · Tu objetivo de peso</h2>
+<section class="p p3">
+<svg width="412" height="1240" viewBox="0 0 412 1240" role="img" aria-label="Sofá con la funda cada vez más holgada: de 82 kilos a 75 kilos, 0,5 kilos por semana, 14 semanas, hasta el 8 de febrero de 2027. Hoy 81,4 kg. Mesa baja con el plan semanal de comidas.">
+<title>Funda del sofá holgada: 82 a 75 kg hacia el 8 de febrero de 2027</title>
+<rect width="412" height="1240" fill="#f3e6c8"/>
+<text x="20" y="44" font-size="20" font-weight="700">La funda te va quedando holgada</text>
+<!-- sofa con funda -->
+<rect x="14" y="70" width="384" height="220" rx="40" fill="#a86f0a" stroke="#4d2b12" stroke-width="5"/>
+<path d="M30 150Q60 120 90 150T150 150T210 150T270 150T330 150T380 150V270H30Z" fill="#d99a1c" stroke="#4d2b12" stroke-width="4"/>
+<path d="M60 190Q80 230 100 190M150 200Q170 250 190 200M240 190Q260 240 280 190M320 205Q335 240 350 205" fill="none" stroke="#7a4f08" stroke-width="4" stroke-linecap="round"/>
+<text x="206" y="268" text-anchor="middle" font-size="40" font-weight="800">82 → 75 kg</text>
+<text x="206" y="106" text-anchor="middle" font-size="17" font-weight="700">Hoy 81,4 kg · semana 2 de 14</text>
+<!-- 14 botones -->
+<text x="20" y="330" font-size="16" font-weight="700">14 botones = 14 semanas</text>
+<g id="botones"></g>
+<text x="206" y="428" text-anchor="middle" font-size="17" font-weight="700">1 botón cada semana · −0,5 kg</text>
+<rect x="46" y="446" width="320" height="64" rx="12" fill="#fff6dc" stroke="#5a3410" stroke-width="4"/>
+<text x="206" y="488" text-anchor="middle" font-size="26" font-weight="800">Meta: 8 feb 2027</text>
+<!-- mesa baja -->
+<text x="20" y="574" font-size="20" font-weight="700">La mesa baja: tu semana de comidas</text>
+<rect x="10" y="590" width="392" height="300" rx="20" fill="#8b5a2b" stroke="#4d2b12" stroke-width="5"/>
+<rect x="30" y="890" width="22" height="50" fill="#4d2b12"/><rect x="360" y="890" width="22" height="50" fill="#4d2b12"/>
+<g id="platos"></g>
+<text x="206" y="800" text-anchor="middle" font-size="19" font-weight="700" style="fill:#fff6dc">~2.000 kcal al día · 140 g de proteína</text>
+<text x="206" y="828" text-anchor="middle" font-size="15" style="fill:#fff6dc">El entreno no suma comida extra.</text>
+<text x="206" y="862" text-anchor="middle" font-size="15" style="fill:#fff6dc">Plato punteado: guardia o saliente, no cuenta.</text>
+<g><rect x="16" y="960" width="380" height="70" rx="12" fill="#fff6dc" stroke="#5a3410" stroke-width="4"/>
+<text x="206" y="990" text-anchor="middle" font-size="17" font-weight="700">Viernes: +120 kcal de más</text><text x="206" y="1016" text-anchor="middle" font-size="16">Se nota en un plato, no en toda la semana.</text></g>
+</svg>
+</section>
+
+<script>
+const D=[["L","Gimnasio","15:00","gym"],["M","Guardia","—","bata"],["X","Saliente","paseo 20 min o nada","manta"],["J","HOY · Gimnasio","15:00","gym"],["V","Mínima 25 min","15:30","min"],["S","Parque","10:00 · 40 min","hoja"],["D","Descanso","","zz"]];
+const ic={gym:'<rect x="14" y="40" width="26" height="6" rx="3" fill="#2b1a0a"/><rect x="10" y="33" width="6" height="20" rx="2" fill="#2b1a0a"/><rect x="38" y="33" width="6" height="20" rx="2" fill="#2b1a0a"/>',
+bata:'<path d="M14 30h26l4 26H10z" fill="#fff" stroke="#2b1a0a" stroke-width="2"/><path d="M27 30v26" stroke="#2a5d8a" stroke-width="2"/><path d="M24 38h6M27 35v6" stroke="#9b2c1c" stroke-width="3"/>',
+manta:'<rect x="10" y="30" width="34" height="26" rx="3" fill="#c8442b" stroke="#2b1a0a" stroke-width="2"/><path d="M10 40h34M10 48h34M22 30v26M34 30v26" stroke="#fff6dc" stroke-width="2.5" stroke-dasharray="4 2"/>',
+min:'<circle cx="27" cy="44" r="14" fill="#fff6dc" stroke="#2b1a0a" stroke-width="2"/><text x="27" y="49" text-anchor="middle" font-size="13" font-weight="800">25\'</text>',
+hoja:'<path d="M27 56C8 46 10 28 28 26c16 4 18 20-1 30z" fill="#2f6b3a" stroke="#14301a" stroke-width="2"/><path d="M27 56V34" stroke="#fff" stroke-width="2"/>',
+zz:'<text x="27" y="52" text-anchor="middle" font-size="22" font-weight="800">Zz</text>'};
+const dias=document.getElementById('dias'),info=document.getElementById('info');
+D.forEach((d,i)=>{const b=document.createElement('button');b.className='cj'+(i==3?' hoy':'');
+b.setAttribute('aria-label',d[0]+': '+d[1]+' '+d[2]);
+b.innerHTML='<svg viewBox="0 0 54 100"><rect x="2" y="6" width="50" height="88" rx="18" fill="'+(i==3?'#f2b232':'#d99a1c')+'" stroke="#4d2b12" stroke-width="'+(i==3?5:3)+'"'+(i==1||i==2?' stroke-dasharray="6 3"':'')+'/><circle cx="27" cy="16" r="3" fill="#6e4505"/><text x="27" y="30" text-anchor="middle" font-size="17" font-weight="800">'+d[0]+'</text><g transform="translate(0 10) scale(1)">'+ic[d[3]]+'</g><text x="27" y="82" text-anchor="middle" font-size="11" font-weight="700">'+(d[2].slice(0,5)=="15:00"||d[2]=="15:30"?d[2]:d[0]=="S"?"10:00":"")+'</text></svg>';
+b.onclick=()=>info.textContent=d[0]+' · '+d[1]+(d[2]?' · '+d[2]:'');dias.appendChild(b)});
+const m=document.getElementById('mando'),mt=document.getElementById('mtxt');
+m.onclick=()=>{const a=m.getAttribute('aria-expanded')=='true';m.setAttribute('aria-expanded',!a);mt.textContent=a?'Sesión mínima · 25 min a las 15:30':'3 ejercicios × 2 series. Cuenta igual. Pulsa otra vez para cerrar.'};
+// muelle
+const NS='http://www.w3.org/2000/svg',mu=document.getElementById('muelle');let s='';
+for(let i=0;i<8;i++){const p=Math.min(100,35+i*10),y=96+i*64,cur=i==2,fut=i>2;
+s+='<ellipse cx="120" cy="'+y+'" rx="'+(78-i*2)+'" ry="22" fill="none" stroke="'+(cur?'#f2b232':'#e6c25a')+'" stroke-width="'+(6+i*1.2)+'"'+(fut?' stroke-dasharray="10 8"':'')+'/>';
+s+='<line x1="'+(120+78-i*2+10)+'" y1="'+y+'" x2="222" y2="'+y+'" stroke="#e6c25a" stroke-width="2"/>';
+s+='<text x="232" y="'+(y+6)+'" font-size="'+(cur?24:19)+'" font-weight="800" style="fill:#fff6dc">'+(i+1)+' · '+p+' %'+'</text>';
+s+='<text x="232" y="'+(y+26)+'" font-size="13" style="fill:#fff6dc">'+(i<2?'hecha':cur?'ESTÁS AQUÍ':'por venir')+'</text>';}
+mu.innerHTML=s;
+const cg=document.getElementById('cargas');
+[["Sentadilla",45],["Press banca",32.5],["Peso muerto",50],["Remo",27.5],["Press militar",20]].forEach(c=>{cg.insertAdjacentHTML('beforeend','<div class="cg"><small>'+c[0]+'</small><b>'+String(c[1]).replace('.',',')+'</b><small>kg</small></div>')});
+document.getElementById('cargas').insertAdjacentHTML('afterend','<div style="position:absolute;left:12px;top:650px;width:388px;font-weight:700;font-size:16px">Esta semana (55 %) · 2 series, suave: te sobran ~4 repeticiones</div>');
+const f=document.getElementById('fallo'),ft=document.getElementById('falloTxt');
+f.onclick=()=>{const o=ft.style.display=='none';ft.style.display=o?'block':'none';f.setAttribute('aria-expanded',o)};
+// botones y platos
+let b='';for(let i=0;i<14;i++){const x=34+(i%7)*57,y=i<7?352:392,h=i<2;
+b+='<circle cx="'+x+'" cy="'+y+'" r="'+(h?14:11)+'" fill="'+(h?'#6e4505':'#d99a1c')+'" stroke="#2b1a0a" stroke-width="3"'+(h?'':' stroke-dasharray="4 3"')+'/><text x="'+x+'" y="'+(y+5)+'" text-anchor="middle" font-size="13" font-weight="800" style="fill:'+(h?'#fff':'#2b1a0a')+'">'+(i+1)+'</text>';}
+document.getElementById('botones').innerHTML=b;
+const P=[["L",1990],["M",2050],["X",1980],["J",2000],["V",2120],["S",2010],["D",1990]];let pl='';
+P.forEach((p,i)=>{const x=36+i*56,no=i==1||i==2,pasa=p[1]>2100;
+pl+='<circle cx="'+x+'" cy="680" r="25" fill="#fff6dc" stroke="'+(pasa?'#ffd24a':'#2b1a0a')+'" stroke-width="'+(pasa?6:3)+'"'+(no?' stroke-dasharray="5 4"':'')+'/><text x="'+x+'" y="685" text-anchor="middle" font-size="13" font-weight="800">'+p[1]+'</text><text x="'+x+'" y="730" text-anchor="middle" font-size="19" font-weight="800" style="fill:#fff6dc">'+p[0]+(pasa?' !':'')+'</text>';});
+document.getElementById('platos').innerHTML=pl;
+</script></body></html>

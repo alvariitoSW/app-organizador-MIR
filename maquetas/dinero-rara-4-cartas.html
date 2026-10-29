@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartas del Futuro</title>
+<style>
+:root{
+  --paper:#f6efdc; --sheet:#fffbf1; --ink:#1c2f57; --ink2:#4a5a78;
+  --sepia:#7a4a22; --fold:#e7d7b2; --line:rgba(28,47,87,.2); --r:6px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+body{width:412px;padding-bottom:28px}
+.sans{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.hand{font-family:"Segoe Script","Bradley Hand","Brush Script MT","Lucida Handwriting",cursive}
+
+/* cartel de la escuela (encima de todo) */
+.cartel{margin:12px 16px 4px;padding:12px 14px;border:2px solid var(--ink);border-radius:var(--r);background:var(--sheet)}
+.cartel h1{font-size:20px;line-height:1.2;margin:0 0 4px}
+.cartel p{margin:0;font-size:15px;line-height:1.4;color:var(--ink2)}
+
+.pantalla{width:412px;padding:0 16px;position:relative}
+.rotulo{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink2);margin:14px 0 6px;text-transform:uppercase}
+.cab{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:6px;margin-bottom:8px}
+.cab strong{font-size:18px}
+.cab span{font-size:14px;color:var(--ink2)}
+
+/* PORTADA */
+#portada{padding-bottom:12px}
+.grande{display:flex;align-items:baseline;gap:10px;margin:4px 0 0}
+.grande b{font-size:76px;line-height:1;font-weight:700}
+.grande span{font-size:22px;line-height:1.2}
+.explica{font-size:15px;line-height:1.4;color:var(--ink2);margin:4px 0 0}
+.sellos{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:12px 0 0}
+.sello{text-align:center;font-size:13px;font-weight:700}
+.sello svg{display:block;width:100%;height:56px}
+.vas{font-size:15px;line-height:1.4;margin:6px 0 0}
+.ahora{margin:12px 0 0;padding:10px 12px;background:var(--sheet);border:2px solid var(--ink);border-radius:var(--r)}
+.ahora small{font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em}
+.ahora p{margin:2px 0 0;font-size:16px;line-height:1.35}
+.ahora b{font-size:30px;line-height:1.1}
+
+.sobre{position:relative;height:236px;margin:14px 0 0}
+.sobre .fondo{position:absolute;left:0;right:0;top:44px;bottom:0;background:var(--fold);border:2px solid var(--ink);border-radius:4px}
+.carta{position:absolute;left:18px;right:18px;top:0;height:206px;padding:12px 14px 0;
+  background:var(--sheet);border:1.5px solid var(--ink);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 25px,var(--line) 25px 26px);
+  background-position:0 12px;font-size:17px;line-height:26px}
+.carta p{margin:0}
+.carta .firma{text-align:right;margin-top:2px}
+.bolsillo{position:absolute;left:0;bottom:0;width:100%;height:92px;display:block}
+.sello-carta{position:absolute;right:-6px;top:-12px;width:58px;height:66px}
+.sello-carta text{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+
+.posd{display:grid;gap:8px;margin:10px 0 0}
+.btn{display:block;width:100%;min-height:48px;padding:9px 12px;font:inherit;font-size:15px;line-height:1.35;color:var(--ink);
+  background:var(--sheet);border:2px solid var(--ink);border-radius:var(--r);text-align:left;text-decoration:none;cursor:pointer}
+.btn b{font-weight:700}
+.btn:focus-visible,.plazo button:focus-visible,a:focus-visible{outline:3px solid var(--sepia);outline-offset:2px}
+.aviso{margin:8px 0 0;min-height:0;padding:8px 12px;font-size:15px;line-height:1.4;border-left:4px solid var(--sepia);background:var(--sheet)}
+.aviso[hidden]{display:none}
+
+/* AHORRO */
+#ahorro{height:auto;padding-bottom:20px}
+.volver{display:inline-block;min-height:44px;line-height:44px;font-size:15px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.bloque{margin:16px 0 0;padding:12px 0 0;border-top:1.5px dashed var(--ink)}
+.bloque h2{font-size:18px;line-height:1.25;margin:0 0 6px}
+.bloque p{font-size:16px;line-height:1.45;margin:0}
+.gordo{font-size:44px;line-height:1.05;font-weight:700;margin:0 0 4px}
+.pila{position:relative;height:222px;margin:12px 0 0}
+.car{position:absolute;left:0;right:0;height:84px;top:calc(var(--i) * 26px);z-index:calc(var(--i) + 1);
+  transform:rotate(calc((var(--i) - 2.5) * .5deg));transform-origin:50% 100%;
+  background:var(--sheet);border:1.5px solid var(--ink);border-radius:4px;padding:3px 12px 0;overflow:hidden;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 25px,var(--line) 25px 26px);background-position:0 30px}
+.car .mes{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px;line-height:22px;height:22px;font-weight:700}
+.mata{display:inline-block;font-size:13px;font-weight:700;border:1.5px dashed var(--ink);border-radius:999px;padding:0 8px;line-height:20px;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;white-space:nowrap}
+.car .texto{font-size:15px;line-height:26px;margin-top:8px;color:var(--ink2)}
+.nota-pila{font-size:14px;line-height:1.4;color:var(--ink2);margin:0}
+
+.plazo{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 0}
+.plazo button{min-height:56px;padding:6px 4px;font:inherit;font-size:15px;line-height:1.2;color:var(--ink);background:var(--sheet);
+  border:2px solid var(--ink);border-radius:var(--r);cursor:pointer}
+.plazo button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.plazo button b{display:block;font-size:17px}
+.resultado{margin:12px 0 0;padding:12px;border:2px solid var(--ink);border-radius:var(--r);background:var(--sheet)}
+.resultado .cuota{font-size:34px;font-weight:700;line-height:1.1}
+.resultado p{font-size:16px;line-height:1.4;margin:4px 0 0}
+.carta-resp{margin:12px 0 0;padding:12px 14px;border:1.5px solid var(--ink);border-radius:4px;background:var(--sheet);
+  background-image:repeating-linear-gradient(to bottom,transparent 0 25px,var(--line) 25px 26px);background-position:0 12px;
+  font-size:18px;line-height:26px;min-height:130px}
+.carta-resp p{margin:0}
+.firma-resp{text-align:right}
+</style>
+</head>
+<body>
+
+<header class="cartel">
+  <h1>Cartas del Futuro</h1>
+  <p>El ahorro no se ve, se lee: una carta escrita desde octubre de 2027 te cuenta cómo va tu colchón.</p>
+  <p>Cada pantalla lleva a su sitio: las posdatas llevan a gastos y compras, y «Ver todas las cartas» a tu ahorro.</p>
+</header>
+
+<!-- ============ PANTALLA 1 · PORTADA ============ -->
+<section class="pantalla" id="portada" aria-labelledby="t-portada">
+  <p class="rotulo">Pantalla 1 · Portada</p>
+  <div class="cab"><strong id="t-portada">Dinero</strong><span>octubre de 2026</span></div>
+
+  <div class="grande" aria-label="2,8 de 6 meses de colchón">
+    <b>2,8</b><span>de 6 meses<br>de colchón</span>
+  </div>
+  <p class="explica">Colchón es el dinero guardado para imprevistos. 2,8 meses = lo que aguantarías con tu gasto normal (1.478 €/mes).</p>
+
+  <div class="sellos" role="img" aria-label="Seis sellos: dos llenos, el tercero casi lleno en un 80 por ciento, y tres vacíos">
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--ink)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>1</div>
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--ink)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>2</div>
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/><rect x="4" y="13" width="44" height="45" fill="var(--ink)"/></svg>3</div>
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>4</div>
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>5</div>
+    <div class="sello"><svg viewBox="0 0 52 60" aria-hidden="true"><rect x="2" y="2" width="48" height="56" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/></svg>6</div>
+  </div>
+  <p class="vas">Llevas 2 sellos y 0,8 del tercero. Vas por delante: a tu ritmo llegas a los 6 meses en junio de 2027, antes de octubre de 2027.</p>
+
+  <div class="ahora">
+    <small>Este mes</small>
+    <p><b>Aparta 390 €</b></p>
+    <p>Así llegas a los 6 meses (8.870 €) en octubre de 2027.</p>
+  </div>
+
+  <div class="sobre">
+    <div class="fondo" aria-hidden="true"></div>
+    <div class="carta hand">
+      <svg class="sello-carta" viewBox="0 0 58 66" role="img" aria-label="Sello de correos">
+        <title>Sello de correos</title>
+        <rect x="1" y="1" width="56" height="64" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 3"/>
+        <rect x="8" y="8" width="42" height="34" fill="var(--ink)"/>
+        <text x="29" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">6 MESES</text>
+      </svg>
+      <p>Querido yo de octubre de 2026:</p>
+      <p>Tengo 6 meses de colchón porque cada 25 aparté 390 €. Hoy vas por 2,8. Vas antes de lo previsto.</p>
+      <p class="firma">Tú, en octubre de 2027</p>
+    </div>
+    <svg class="bolsillo" viewBox="0 0 376 92" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 0 L188 54 L376 0 L376 92 L0 92 Z" fill="var(--fold)" stroke="var(--ink)" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <div class="posd">
+    <button class="btn" type="button" data-aviso="Aquí se abriría «En qué se me va»: comer fuera, 180 € al mes, lo que más se puede recortar.">
+      <b>P.D.</b> Lo de comer fuera: 180 € al mes, lo que más se puede recortar.
+    </button>
+    <button class="btn" type="button" data-aviso="Aquí se abriría «Lo que quiero comprar»: portátil 1.100 €, fonendo 190 €, viaje a Japón 2.500 € en verano, curso de eco 350 €.">
+      <b>P.D.</b> El portátil (1.100 €) y el fonendo (190 €).
+    </button>
+    <a class="btn" href="#ahorro"><b>Ver todas las cartas</b> · de mayo a octubre, tu ahorro</a>
+  </div>
+  <p class="aviso" id="aviso" role="status" hidden></p>
+</section>
+
+<!-- ============ PANTALLA 2 · AHORRO ============ -->
+<section class="pantalla" id="ahorro" aria-labelledby="t-ahorro">
+  <p class="rotulo">Pantalla 2 · Ahorro</p>
+  <div class="cab"><strong id="t-ahorro">Ahorro</strong><a class="volver" href="#portada">Volver a la portada</a></div>
+
+  <div class="bloque">
+    <h2>Cuánto apartar</h2>
+    <p class="gordo">390 €</p>
+    <p>al mes, hasta octubre de 2027, para llegar a 6 meses de colchón (8.870 €). Ahora tienes 4.200 €: te faltan 4.670 €.</p>
+  </div>
+
+  <div class="bloque">
+    <h2>¿Llegas al ritmo de ahora?</h2>
+    <p>Sí. Los últimos 3 meses has apartado unos 650 € al mes. Con ese ritmo llegarías en junio de 2027, unos 4 meses antes.</p>
+  </div>
+
+  <div class="bloque">
+    <h2>Tus cartas de mayo a octubre</h2>
+    <p class="nota-pila">Una carta por mes. El sello dice cuánto tenías en el colchón a fin de mes y cuántos meses de gasto cubría (colchón ÷ 1.478 €).</p>
+    <div class="pila" role="img" aria-label="Cartas apiladas: mayo 2.200 euros, 1,5 meses; junio 2.200 euros, 1,5 meses; julio 2.300 euros, 1,6 meses; agosto 2.750 euros, 1,9 meses; septiembre 3.550 euros, 2,4 meses; octubre 4.200 euros, 2,8 meses">
+      <div class="car" style="--i:0"><div class="mes"><span>Mayo · 2.200 €</span><span class="mata">1,5 meses</span></div><div class="texto">Empezó la costumbre.</div></div>
+      <div class="car" style="--i:1"><div class="mes"><span>Junio · 2.200 €</span><span class="mata">1,5 meses</span></div><div class="texto">Un mes plano.</div></div>
+      <div class="car" style="--i:2"><div class="mes"><span>Julio · 2.300 €</span><span class="mata">1,6 meses</span></div><div class="texto">Entraron guardias.</div></div>
+      <div class="car" style="--i:3"><div class="mes"><span>Agosto · 2.750 €</span><span class="mata">1,9 meses</span></div><div class="texto">Se nota el salto.</div></div>
+      <div class="car" style="--i:4"><div class="mes"><span>Septiembre · 3.550 €</span><span class="mata">2,4 meses</span></div><div class="texto">Un buen mes de guardias.</div></div>
+      <div class="car" style="--i:5"><div class="mes"><span>Octubre · 4.200 €</span><span class="mata">2,8 meses</span></div><div class="texto">Hoy. Vas por delante.</div></div>
+    </div>
+  </div>
+
+  <div class="bloque">
+    <h2>Responde a tu yo de 2027</h2>
+    <p>Elige en cuánto tiempo quieres llegar a los 6 meses.</p>
+    <div class="plazo" role="group" aria-label="Plazo para llegar a 6 meses">
+      <button type="button" data-meses="6" aria-pressed="false"><b>6 meses</b>abril 2027</button>
+      <button type="button" data-meses="12" aria-pressed="true"><b>12 meses</b>octubre 2027</button>
+      <button type="button" data-meses="18" aria-pressed="false"><b>18 meses</b>abril 2028</button>
+    </div>
+    <div class="resultado" aria-live="polite">
+      <p>Aparta cada mes</p>
+      <p class="cuota" id="cuota">390 €</p>
+      <p id="fecha">Llegas en octubre de 2027.</p>
+      <p id="ritmo">Con tu ritmo (650 €/mes) llegas antes: en junio de 2027.</p>
+    </div>
+    <div class="carta-resp hand" aria-live="polite">
+      <p id="carta">Querido yo: aparta 390 € al mes y en octubre de 2027 tendrás 6 meses. Vas antes de lo previsto.</p>
+      <p class="firma-resp">Tú, en 2027</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var aviso = document.getElementById('aviso');
+  document.querySelectorAll('[data-aviso]').forEach(function(b){
+    b.addEventListener('click', function(){
+      aviso.textContent = b.getAttribute('data-aviso');
+      aviso.hidden = false;
+    });
+  });
+
+  var planes = {
+    '6':  {cuota:'780 €', fecha:'Llegas en abril de 2027.', ritmo:'Con tu ritmo (650 €/mes) no llegas: te faltan 130 € al mes.',
+           carta:'Querido yo: aparta 780 € al mes y en abril de 2027 tendrás 6 meses. Con 650 € no basta: faltan 130 € al mes.'},
+    '12': {cuota:'390 €', fecha:'Llegas en octubre de 2027.', ritmo:'Con tu ritmo (650 €/mes) llegas antes: en junio de 2027.',
+           carta:'Querido yo: aparta 390 € al mes y en octubre de 2027 tendrás 6 meses. Vas antes de lo previsto.'},
+    '18': {cuota:'260 €', fecha:'Llegas en abril de 2028.', ritmo:'Con tu ritmo (650 €/mes) llegas antes: en junio de 2027.',
+           carta:'Querido yo: aparta 260 € al mes y en abril de 2028 tendrás 6 meses. Tienes margen para lo que te gusta.'}
+  };
+  var botones = document.querySelectorAll('[data-meses]');
+  botones.forEach(function(b){
+    b.addEventListener('click', function(){
+      var p = planes[b.getAttribute('data-meses')];
+      botones.forEach(function(o){ o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      document.getElementById('cuota').textContent = p.cuota;
+      document.getElementById('fecha').textContent = p.fecha;
+      document.getElementById('ritmo').textContent = p.ritmo;
+      document.getElementById('carta').textContent = p.carta;
+    });
+  });
+})();
+</script>
+</body>
+</html>

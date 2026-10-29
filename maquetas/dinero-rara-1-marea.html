@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>La Marea</title>
+<style>
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#e9dcbc;color:#2a2620;font-family:Georgia,"Palatino Linotype",serif;font-weight:400;line-height:1.35;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left}
+button:focus-visible{outline:3px solid #0a4f5c;outline-offset:2px}
+.cartel{padding:18px 20px 16px;background:#2b2b31;color:#f1e6cb;border-radius:0 0 40px 40px / 0 0 26px 26px}
+.cartel h1{margin:0 0 4px;font-size:22px;font-weight:400;letter-spacing:.04em}
+.cartel p{margin:0;font-size:14px}
+.rot{margin:14px 20px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4a402f}
+.pant{position:relative;width:412px;background:#f1e6cb;overflow:hidden}
+#p1{height:878px}
+.suma{position:absolute;left:0;right:0;top:100px;text-align:center}
+.suma .peq{font-size:13px;color:#4a402f;letter-spacing:.08em;text-transform:uppercase}
+.suma .gran{font-size:46px;line-height:1.05;margin:2px 0 0;color:#0a4f5c}
+.suma .gran small{font-size:20px}
+.suma .sub{font-size:17px;margin:2px 0 6px}
+.pil{display:inline-block;padding:5px 14px;border-radius:22px;background:#0a5f6e;color:#fff;font-size:14px}
+.pool{position:absolute;left:0;right:0;top:218px}
+.comp{position:absolute;left:0;top:0;width:412px;height:98px}
+.comp span{position:absolute;left:16px;bottom:6px;font-size:14px;color:#0a3e48;background:rgba(241,230,203,.9);padding:5px 12px;border-radius:20px}
+.grieta{position:absolute;left:16px;right:16px;top:680px;min-height:52px;padding:8px 16px 8px 52px;border-radius:30px 22px 30px 24px;background:#d9c9a0;font-size:15px}
+.grieta b{display:block}
+.grieta svg{position:absolute;left:12px;top:6px}
+.hacer{position:absolute;left:20px;right:20px;top:748px;text-align:center}
+.hacer .gran{font-size:30px;color:#2a2620;margin:0}
+.hacer p{margin:2px 0 0;font-size:14px;color:#4a402f}
+.ir{position:absolute;left:16px;right:16px;top:822px;min-height:48px;padding:10px 20px;border-radius:30px 24px 30px 22px;background:#0a5f6e;color:#fff;font-size:17px;text-align:center}
+#p2{padding:16px 12px 24px;background:#f1e6cb}
+.volver{min-height:44px;padding:8px 18px;border-radius:26px 20px 26px 22px;background:#d9c9a0;font-size:15px}
+#p2 h2{font-size:28px;font-weight:400;margin:14px 8px 0;color:#0a4f5c}
+.cifra{margin:6px 8px 0;font-size:40px;line-height:1.05;color:#2a2620}
+.cifra small{font-size:18px}
+.dice{margin:4px 8px 12px;font-size:16px}
+.sw{display:flex;gap:8px;margin:0 8px 8px}
+.sw button{flex:1;min-height:48px;padding:6px 12px;border-radius:26px 20px 26px 22px;background:#e2d3ac;font-size:14px;border:2px solid transparent}
+.sw button[aria-pressed=true]{background:#0a5f6e;color:#fff;border-color:#0a3e48}
+.sw button[aria-pressed=true]::before{content:"● "}
+.sw button[aria-pressed=false]::before{content:"○ "}
+#res{margin:0 8px 10px;font-size:16px;min-height:44px}
+.rot2{margin:6px 8px 4px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#4a402f}
+.alt{list-style:none;margin:0 8px 12px;padding:0;display:flex;justify-content:space-between}
+.alt li{text-align:center;font-size:12px}
+.alt b{display:block;font-weight:400;color:#4a402f}
+.alt span{font-size:22px;color:#0a4f5c}
+.nota{margin:8px 8px 8px;padding:12px 18px;border-radius:30px 22px 28px 20px;background:#e2d3ac;font-size:15px}
+.nota button{display:block;margin-top:6px;min-height:44px;padding:8px 16px;border-radius:24px 18px 24px 20px;background:#0a5f6e;color:#fff;font-size:15px}
+.aviso{position:absolute;left:16px;right:16px;bottom:8px;min-height:48px;padding:10px 18px;border-radius:26px 20px 26px 22px;background:#2b2b31;color:#f1e6cb;font-size:14px;display:none;z-index:5}
+.aviso.on{display:block}
+</style></head><body>
+<header class="cartel"><h1>La Marea</h1><p>Tu ahorro es el agua de un charco de marea en Canarias, visto desde arriba en acuarela.<br>El nivel son los meses de vida; la pleamar tallada en la roca es tu objetivo.</p></header>
+
+<div class="rot">Pantalla 1 · Portada</div>
+<section class="pant" id="p1" aria-label="Portada">
+<button class="comp" data-av="Compras: aquí se abre «Lo que quiero comprar» (portátil, fonendo, viaje a Japón, curso de eco)." aria-label="Compras: lo que quiero comprar, cuatro barquitos en el horizonte"><svg viewBox="0 0 412 100" width="412" height="100" aria-hidden="true" style="position:absolute;left:0;top:0"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3dc"/><stop offset="1" stop-color="#c5ecec"/></linearGradient></defs>
+<path d="M0 0 H412 V74 Q380 98 330 84 T230 88 T130 84 T40 90 Q12 90 0 76 Z" fill="url(#sg)"/>
+<path d="M20 30 q15 -5 30 0 t30 0 M250 54 q15 -5 30 0 t30 0 M120 22 q12 -4 24 0 t24 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+<g transform="translate(250 56) scale(1)"><path d="M-14 0 q14 16 28 0 Z" fill="#8a5a2b"/><path d="M0 -3 V-34 Q14 -22 12 -3 Z" fill="#fffaf0" stroke="#8a5a2b" stroke-width="1.5"/><path d="M-2 -6 Q-12 -16 -10 -6 Z" fill="#f1e6cb" stroke="#8a5a2b" stroke-width="1.5"/></g><g transform="translate(310 44) scale(0.75)"><path d="M-14 0 q14 16 28 0 Z" fill="#8a5a2b"/><path d="M0 -3 V-34 Q14 -22 12 -3 Z" fill="#fffaf0" stroke="#8a5a2b" stroke-width="1.5"/><path d="M-2 -6 Q-12 -16 -10 -6 Z" fill="#f1e6cb" stroke="#8a5a2b" stroke-width="1.5"/></g><g transform="translate(358 58) scale(0.9)"><path d="M-14 0 q14 16 28 0 Z" fill="#8a5a2b"/><path d="M0 -3 V-34 Q14 -22 12 -3 Z" fill="#fffaf0" stroke="#8a5a2b" stroke-width="1.5"/><path d="M-2 -6 Q-12 -16 -10 -6 Z" fill="#f1e6cb" stroke="#8a5a2b" stroke-width="1.5"/></g><g transform="translate(206 38) scale(0.55)"><path d="M-14 0 q14 16 28 0 Z" fill="#8a5a2b"/><path d="M0 -3 V-34 Q14 -22 12 -3 Z" fill="#fffaf0" stroke="#8a5a2b" stroke-width="1.5"/><path d="M-2 -6 Q-12 -16 -10 -6 Z" fill="#f1e6cb" stroke="#8a5a2b" stroke-width="1.5"/></g></svg><span>Compras · 4 barquitos esperan</span></button>
+<div class="suma"><div class="peq">tu colchón de ahorro</div><div class="gran">2,8 <small>de 6 meses</small></div><div class="sub">4.200 € de 8.870 €</div><span class="pil">▲ Vas por delante</span></div>
+<div class="pool"><svg viewBox="0 0 412 540" width="350" role="img" aria-labelledby="pt" style="display:block;margin:0 auto">
+<title id="pt">Charco de marea visto desde arriba. El agua llega a 2,8 de las 6 marcas de meses talladas en la roca; la pleamar, arriba, es el objetivo de 6 meses.</title>
+<defs><clipPath id="cp"><path d="M206 52 C280 44 346 70 348 150 C352 250 346 380 336 440 C326 496 270 500 206 498 C140 500 84 492 76 440 C66 380 70 250 72 160 C74 80 130 56 206 52Z"/></clipPath>
+<linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e7686"/><stop offset="1" stop-color="#0a4f5c"/></linearGradient>
+<filter id="acu" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter></defs>
+<path d="M206 14 C330 6 398 30 400 150 C406 260 392 400 384 470 C372 530 290 524 200 526 C110 530 30 520 18 450 C8 360 14 250 16 160 C10 34 60 12 206 14Z" fill="#2b2b31" filter="url(#acu)"/>
+<path d="M60 40 C90 28 130 30 150 36 M300 36 C340 44 366 80 372 120" fill="none" stroke="#45454e" stroke-width="5" stroke-linecap="round"/>
+<path d="M206 52 C280 44 346 70 348 150 C352 250 346 380 336 440 C326 496 270 500 206 498 C140 500 84 492 76 440 C66 380 70 250 72 160 C74 80 130 56 206 52Z" fill="#d9c9a0"/>
+<g clip-path="url(#cp)"><path d="M0 299.6 q25 -9 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 L412 540 L0 540Z" fill="url(#ag2)" filter="url(#acu)"/>
+<ellipse cx="150" cy="349.6" rx="26" ry="9" fill="none" stroke="#8fd3dc" stroke-width="2"/><ellipse cx="260" cy="409.6" rx="34" ry="11" fill="none" stroke="#8fd3dc" stroke-width="2"/><ellipse cx="190" cy="469.6" rx="20" ry="7" fill="none" stroke="#8fd3dc" stroke-width="2"/>
+<path d="M0 296.6 q25 -9 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="#bdeaf0" stroke-width="2.5"/></g>
+<path d="M84 82 q30 -8 60 0 t60 0 t60 0 t60 0" fill="none" stroke="#2b2b31" stroke-width="3" stroke-dasharray="1 8" stroke-linecap="round"/>
+<text x="206" y="70" font-size="12" text-anchor="middle" fill="#2a2620" font-weight="bold">PLEAMAR · oct 2027</text>
+<text x="206" y="329.6" font-size="15" text-anchor="middle" fill="#fff" font-weight="bold">el agua, hoy</text>
+<text x="206" y="347.6" font-size="12" text-anchor="middle" fill="#fff">2,8 meses</text>
+<path d="M38 422 q14 -3 28 0" fill="none" stroke="#e8dcc0" stroke-width="3" stroke-linecap="round"/><text x="25" y="426" font-size="12" fill="#e8dcc0" text-anchor="middle">1</text><path d="M38 354 q14 -3 28 0" fill="none" stroke="#e8dcc0" stroke-width="3" stroke-linecap="round"/><text x="25" y="358" font-size="12" fill="#e8dcc0" text-anchor="middle">2</text><path d="M38 286 q14 -3 28 0" fill="none" stroke="#e8dcc0" stroke-width="3" stroke-linecap="round"/><text x="25" y="290" font-size="12" fill="#e8dcc0" text-anchor="middle">3</text><path d="M38 218 q14 -3 28 0" fill="none" stroke="#e8dcc0" stroke-width="3" stroke-linecap="round"/><text x="25" y="222" font-size="12" fill="#e8dcc0" text-anchor="middle">4</text><path d="M38 150 q14 -3 28 0" fill="none" stroke="#e8dcc0" stroke-width="3" stroke-linecap="round"/><text x="25" y="154" font-size="12" fill="#e8dcc0" text-anchor="middle">5</text><path d="M34 82 q14 -3 34 0" fill="none" stroke="#e8dcc0" stroke-width="4" stroke-linecap="round"/><text x="25" y="86" font-size="12" fill="#e8dcc0" text-anchor="middle">6</text>
+<path d="M338 420 C350 436 344 452 358 468 C368 480 362 496 376 512" fill="none" stroke="#1b93a2" stroke-width="6" stroke-linecap="round"/>
+<circle cx="378" cy="530" r="0" />
+</svg></div>
+<button class="grieta" data-av="Gastos: aquí se abre «En qué se me va». Lo que más se puede recortar: comer fuera, 180 € al mes." aria-label="Gastos: la grieta se lleva agua. Comer fuera, 180 euros al mes"><svg width="32" height="40" viewBox="0 0 32 40" aria-hidden="true"><path d="M14 2 C20 10 10 16 16 24 C20 30 14 34 18 38" fill="none" stroke="#0a5f6e" stroke-width="5" stroke-linecap="round"/></svg><b>La grieta: comer fuera</b>se escapan 180 € al mes. Toca para ver.</button>
+<div class="hacer"><p class="gran">Este mes, sube 390 €</p><p>para que la marea llegue a la pleamar en octubre de 2027</p></div>
+<button class="ir" id="ir">Ver la tabla de mareas ↓</button>
+<div class="aviso" role="status"></div>
+</section>
+
+<div class="rot" id="r2">Pantalla 2 · Ahorro</div>
+<section class="pant" id="p2" aria-label="Ahorro" tabindex="-1">
+<button class="volver" id="vol">← Volver al charco</button>
+<h2>Tabla de mareas</h2>
+<p class="cifra">~390 € <small>al mes</small></p>
+<p class="dice">hasta octubre de 2027 para llenar el charco: 6 meses de vida, 8.870 €.</p>
+<div class="sw" role="group" aria-label="Elige a qué ritmo mirar"><button id="b390" aria-pressed="true">Aparto 390 € al mes</button><button id="b650" aria-pressed="false">Mi ritmo: ~650 € al mes</button></div>
+<p id="res" aria-live="polite"></p>
+<svg id="grafico" viewBox="0 0 412 310" width="388" role="img" aria-labelledby="gt" style="display:block;margin:0 auto">
+<title id="gt">Tabla de mareas: el colchón sube de 1,5 meses en mayo a 2,8 en octubre; a 390 euros al mes llega a 6 meses en octubre de 2027, y a 650 euros al mes hacia junio de 2027.</title>
+<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2aa6b4" stop-opacity=".85"/><stop offset="1" stop-color="#0e7686" stop-opacity=".95"/></linearGradient></defs>
+<path d="M26 233.51041666666666 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" opacity=".7"/><text x="6" y="237.51041666666666" font-size="12" fill="#4a402f">1</text><path d="M26 195.02083333333331 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" opacity=".7"/><text x="6" y="199.02083333333331" font-size="12" fill="#4a402f">2</text><path d="M26 156.53125 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" opacity=".7"/><text x="6" y="160.53125" font-size="12" fill="#4a402f">3</text><path d="M26 118.04166666666666 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" opacity=".7"/><text x="6" y="122.04166666666666" font-size="12" fill="#4a402f">4</text><path d="M26 79.55208333333334 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" opacity=".7"/><text x="6" y="83.55208333333334" font-size="12" fill="#4a402f">5</text><path d="M26 41.0625 q12 -4 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t24 0 t16 0" fill="none" stroke="#b9a883" stroke-width="1" /><text x="6" y="45.0625" font-size="12" fill="#4a402f">6</text>
+<text x="32" y="35.01041666666666" font-size="12" fill="#3a3326" font-style="italic">pleamar: 6 meses · 8.870 €</text>
+<path d="M30.0 214.7 C40.4 214.7 40.4 214.7 50.7 214.7 C61.1 214.7 61.1 212.1 71.4 212.1 C81.8 212.1 81.8 200.4 92.1 200.4 C102.5 200.4 102.5 179.6 112.8 179.6 C123.2 179.6 123.2 162.6 133.5 162.6 L133.52941176470588 272 L30 272 Z" fill="url(#ag)" filter="url(#acu)"/>
+<path d="M30.0 214.7 C40.4 214.7 40.4 214.7 50.7 214.7 C61.1 214.7 61.1 212.1 71.4 212.1 C81.8 212.1 81.8 200.4 92.1 200.4 C102.5 200.4 102.5 179.6 112.8 179.6 C123.2 179.6 123.2 162.6 133.5 162.6" fill="none" stroke="#0a4f5c" stroke-width="3.2" stroke-linecap="round"/>
+<path id="lPlan" d="M133.52941176470588 162.625 L382 41.01041666666666" fill="none" stroke="#8a5a2b" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+<path id="lRit" d="M133.52941176470588 162.625 L282.29321266968327 41.01041666666666" fill="none" stroke="#0a5f6e" stroke-width="3" stroke-dasharray="10 7" stroke-linecap="round"/>
+<circle cx="30" cy="214.70833333333334" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/><circle cx="50.705882352941174" cy="214.70833333333334" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/><circle cx="71.41176470588235" cy="212.10416666666666" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/><circle cx="92.11764705882354" cy="200.38541666666669" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/><circle cx="112.82352941176471" cy="179.55208333333331" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/><circle cx="133.52941176470588" cy="162.625" r="4.5" fill="#fff" stroke="#0a5f6e" stroke-width="2.5"/>
+<circle cx="282.29321266968327" cy="41.01041666666666" r="7" fill="#f1e6cb" stroke="#0a5f6e" stroke-width="3"/>
+<text x="270.29321266968327" y="46.01041666666666" font-size="12" fill="#0a4f5c" text-anchor="end" font-weight="bold">tu ritmo: junio</text>
+<circle cx="382" cy="41.01041666666666" r="6" fill="#f1e6cb" stroke="#8a5a2b" stroke-width="3"/>
+<text x="380" y="75.01041666666666" font-size="12" fill="#6b4220" text-anchor="end" font-weight="bold">390 €/mes: oct 27</text>
+<text x="125.52941176470588" y="150.625" font-size="12" fill="#0a3e48" text-anchor="end" font-weight="bold">hoy: 2,8</text>
+<text x="30" y="296" font-size="12" fill="#3a3326" text-anchor="middle">may</text><path d="M30 274 v5" stroke="#3a3326" stroke-width="1.5" stroke-linecap="round"/><text x="133.52941176470588" y="296" font-size="12" fill="#3a3326" text-anchor="middle">oct</text><path d="M133.52941176470588 274 v5" stroke="#3a3326" stroke-width="1.5" stroke-linecap="round"/><text x="195.64705882352942" y="296" font-size="12" fill="#3a3326" text-anchor="middle">ene 27</text><path d="M195.64705882352942 274 v5" stroke="#3a3326" stroke-width="1.5" stroke-linecap="round"/><text x="299.1764705882353" y="296" font-size="12" fill="#3a3326" text-anchor="middle">jun 27</text><path d="M299.1764705882353 274 v5" stroke="#3a3326" stroke-width="1.5" stroke-linecap="round"/><text x="382" y="296" font-size="12" fill="#3a3326" text-anchor="middle">oct 27</text><path d="M382 274 v5" stroke="#3a3326" stroke-width="1.5" stroke-linecap="round"/></svg>
+<p class="rot2">Altura del agua (meses de vida) al acabar cada mes</p>
+<ul class="alt"><li><b>may</b><span>1,5</span></li><li><b>jun</b><span>1,5</span></li><li><b>jul</b><span>1,6</span></li><li><b>ago</b><span>1,9</span></li><li><b>sep</b><span>2,4</span></li><li><b>oct</b><span>2,8</span></li></ul>
+<div class="nota">Un empujón fácil: si comer fuera baja de 180 € a 90 €, el agua sube 90 € más cada mes.<button data-av="Gastos: aquí se abre «En qué se me va»." >Ver la grieta (Gastos)</button></div>
+<p class="rot2" style="text-transform:none;letter-spacing:0;font-size:12px">Línea de puntos cortos: 390 €/mes. Línea de rayas: tu ritmo, 650 €/mes. Línea continua: lo ya ocurrido.</p>
+<div class="aviso" role="status"></div>
+</section>
+<script>
+(function(){
+var T={390:"Si apartas 390 € al mes llegas a la pleamar justo en octubre de 2027.",650:"A ~650 € al mes (tu ritmo de los últimos 3 meses) llegas hacia junio de 2027: vas por delante, unos 4 meses antes."};
+var lp=document.getElementById('lPlan'),lr=document.getElementById('lRit'),b3=document.getElementById('b390'),b6=document.getElementById('b650'),res=document.getElementById('res');
+function sel(k){b3.setAttribute('aria-pressed',k==390);b6.setAttribute('aria-pressed',k==650);res.textContent=T[k];lp.setAttribute('stroke-width',k==390?5:2);lr.setAttribute('stroke-width',k==650?5:2);}
+b3.onclick=function(){sel(390)};b6.onclick=function(){sel(650)};sel(390);
+document.getElementById('ir').onclick=function(){var p=document.getElementById('p2');p.scrollIntoView({behavior:'smooth'});p.focus({preventScroll:true});};
+document.getElementById('vol').onclick=function(){document.getElementById('p1').scrollIntoView({behavior:'smooth'});};
+var tm;[].forEach.call(document.querySelectorAll('[data-av]'),function(b){b.addEventListener('click',function(){var a=b.closest('.pant').querySelector('.aviso');a.textContent=b.getAttribute('data-av');a.className='aviso on';clearTimeout(tm);tm=setTimeout(function(){a.className='aviso'},3500);});});
+})();
+</script>
+</body></html>

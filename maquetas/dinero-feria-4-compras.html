@@ -1,0 +1,166 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><link rel=stylesheet href=comun.css>
+<title>Feria 4 · Lo que quiero comprar</title>
+<style>
+body{width:412px}
+.wrap{padding:10px 10px 30px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.tit{font-size:10px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:14px 0 8px}
+.lab{font-size:11px;letter-spacing:.08em;color:var(--ink2);font-weight:800;margin:18px 0 6px;text-transform:uppercase}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:16px;padding:12px}
+.cartel h2{margin:2px 0 4px;font-size:17px}
+.cartel p{margin:0;font-size:12.5px;color:var(--ink)}
+.mini{font-size:11.5px;color:var(--ink2)}
+.big{font-size:30px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05}
+.big small{font-size:13px;color:var(--ink2);font-weight:700;letter-spacing:0}
+.btn{display:flex;align-items:center;justify-content:center;min-height:44px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:8px 12px;font:inherit;font-size:13.5px;font-weight:800;width:100%}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#12081a}
+.btn.s{width:auto;flex:1}
+.bar{height:9px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--brand2)}
+.bar i.ok{background:#34d399}
+.pill{font-size:10.5px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid;white-space:nowrap}
+.pill.nec{border-color:#34d39999;background:#34d3991f;color:#8ef0c4}
+.pill.util{border-color:#38bdf899;background:#38bdf81f;color:#9fdcf7}
+.pill.ilu{border-color:#f050c899;background:#f050c81f;color:#f7a6e6}
+.pill.esp{border-color:#fbbf2499;background:#fbbf241f;color:#fde38a}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.item .nm{font-size:15px;font-weight:800}
+.item .pr{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .cuota{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .cuota b{display:block;font-size:20px;font-weight:900;line-height:1.1}
+.item .cuota span{font-size:11px;color:var(--ink2);font-weight:700}
+.meta{font-size:12px;color:var(--ink2);margin-top:6px;font-weight:700}
+.meta b{color:var(--ink)}
+.sum{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;font-size:12.5px}
+.sum b{font-variant-numeric:tabular-nums}
+.warn{color:#fde38a}
+.espera{background:var(--bg2);border:1px dashed color-mix(in srgb,var(--accent) 60%,var(--line));border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.espera .nm{font-size:14px;font-weight:800}
+.espera p{font-size:12px;color:var(--ink2);margin:6px 0 8px}
+.ntiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:9px 8px}
+.tile .k{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--ink2);text-transform:uppercase}
+.tile .v{font-size:17px;font-weight:900;margin-top:3px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:10.5px;color:var(--ink2);margin-top:2px}
+.paso{display:flex;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13px}
+.paso:first-of-type{border-top:0}
+.paso .n{flex:none;width:24px;height:24px;border-radius:99px;background:var(--brand2);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center}
+.paso b{display:block;font-size:13.5px}
+.paso span{color:var(--ink2);font-size:12px}
+.precio{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.precio .big{font-size:24px}
+.frame{border:1px dashed var(--line);border-radius:18px;margin-bottom:22px;overflow:hidden}
+.frame .lab{padding:0 10px}
+</style>
+<body>
+
+<div class="wrap">
+
+<div class="cartel" style="margin-top:4px">
+  <div class="mini" style="letter-spacing:.12em;font-weight:800">4 · LO QUE QUIERO COMPRAR</div>
+  <h2>«Cada compra, con su fecha»</h2>
+  <p>Cada cosa que quieres comprar tiene precio, fecha y una cuota mensual. Lo que no es necesario espera 30 días antes de entrar en la lista.</p>
+</div>
+
+<div class="lab">Pantalla 1 · Mi lista: cuánto apartar al mes y cuándo llega</div>
+<div class="frame"><div class="wrap">
+
+<div class="card" style="padding:12px">
+  <div class="row"><span class="mini" style="font-weight:800;letter-spacing:.08em">APARTAS EN TOTAL</span><span class="sp"></span><span class="mini">4 compras</span></div>
+  <div class="big" style="margin-top:4px">460 € <small>al mes</small></div>
+  <div class="mini" style="margin-top:4px">Ya tienes apartados <b style="color:var(--ink)">850 €</b> de tus 4.200 € ahorrados. Siguen en tu cuenta de ahorro: no hace falta cuenta aparte.</div>
+  <div class="sum">
+    Con tu nómina base (1.350 €) <b class="warn">no cabe entera</b>. Con una nómina con guardias (como la de octubre, 2.800 €) sí cabe.
+    <div style="margin-top:6px">Si un mes cobras poco, <b>se pausa primero lo que menos prioridad tiene</b> (el viaje). El fonendo no se toca.</div>
+  </div>
+</div>
+
+<div class="tit" style="margin-top:14px">COMPRAS CON FECHA</div>
+
+<div class="item">
+  <div class="row">
+    <div style="flex:1;min-width:0"><div class="nm">Fonendo Littmann</div><div style="margin-top:4px"><span class="pill nec">Necesario</span></div></div>
+    <div class="cuota"><b>20 €</b><span>al mes</span></div>
+  </div>
+  <div class="bar"><i style="width:79%"></i></div>
+  <div class="meta">Llevas <b>150 €</b> de 190 · llega <b>dic 2026</b> (2 meses)</div>
+</div>
+
+<div class="item">
+  <div class="row">
+    <div style="flex:1;min-width:0"><div class="nm">Portátil</div><div style="margin-top:4px"><span class="pill nec">Necesario</span></div></div>
+    <div class="cuota"><b>115 €</b><span>al mes</span></div>
+  </div>
+  <div class="bar"><i style="width:27%"></i></div>
+  <div class="meta">Llevas <b>300 €</b> de 1.100 · llega <b>may 2027</b> (7 meses)</div>
+</div>
+
+<div class="item">
+  <div class="row">
+    <div style="flex:1;min-width:0"><div class="nm">Curso de ecografía</div><div style="margin-top:4px"><span class="pill util">Útil para el trabajo</span></div></div>
+    <div class="cuota"><b>90 €</b><span>al mes</span></div>
+  </div>
+  <div class="bar"><i style="width:0%"></i></div>
+  <div class="meta">Llevas <b>0 €</b> de 350 · llega <b>feb 2027</b> (4 meses)</div>
+</div>
+
+<div class="item">
+  <div class="row">
+    <div style="flex:1;min-width:0"><div class="nm">Viaje a Japón</div><div style="margin-top:4px"><span class="pill ilu">Me hace ilusión</span></div></div>
+    <div class="cuota"><b>235 €</b><span>al mes</span></div>
+  </div>
+  <div class="bar"><i style="width:16%"></i></div>
+  <div class="meta">Llevas <b>400 €</b> de 2.500 · llega <b>jul 2027</b> (9 meses)</div>
+</div>
+
+<div class="tit" style="margin-top:14px">EN ESPERA · 30 DÍAS</div>
+
+<div class="espera">
+  <div class="row"><span class="nm">Auriculares nuevos</span><span class="sp"></span><span class="pill esp">Espera</span></div>
+  <div class="mini" style="margin-top:3px">120 € · no es necesario · lo añadiste hace 12 días</div>
+  <p>Te quedan <b style="color:var(--ink)">18 días</b>. Si en 30 días sigues queriéndolo, pasa a la lista con su fecha. Hasta entonces no se aparta nada.</p>
+  <div class="row"><span class="btn s" style="font-size:13px">Ya no lo quiero</span><span class="btn s" style="font-size:13px">Ver el día</span></div>
+</div>
+
+<div style="margin-top:12px"><span class="btn p">+ Añadir algo que quiero</span></div>
+
+</div></div>
+
+<div class="lab">Pantalla 2 · Ficha de una compra: qué pasa cuando la compras</div>
+<div class="frame"><div class="wrap">
+
+<div class="row" style="margin-top:4px"><span class="mini" style="font-weight:800;letter-spacing:.08em">PORTÁTIL</span><span class="sp"></span><span class="pill nec">Necesario</span></div>
+<div class="big" style="margin-top:6px">1.100 € <small>· llega may 2027</small></div>
+<div class="bar" style="height:12px"><i style="width:27%"></i></div>
+<div class="mini" style="margin-top:4px">Ya apartado 300 € · faltan 800 € · 7 meses</div>
+
+<div class="ntiles">
+  <div class="tile"><div class="k">Ya tienes</div><div class="v">300 €</div><div class="s">apartados</div></div>
+  <div class="tile"><div class="k">Te faltan</div><div class="v">800 €</div><div class="s">por apartar</div></div>
+  <div class="tile"><div class="k">Cada mes</div><div class="v">115 €</div><div class="s">hasta may</div></div>
+</div>
+
+<div class="sum" style="margin-top:10px">
+  <b>Si un mes no llega el dinero:</b> esta cuota se pausa después del viaje y antes que el fonendo. Si se pausa un mes, la fecha pasa a jun 2027. Se avisa, no se cambia sola.
+</div>
+
+<div class="tit" style="margin-top:14px">CUANDO LO COMPRAS</div>
+<div class="card" style="padding:4px 12px">
+  <div class="paso"><span class="n">1</span><div><b>Pagas el precio de verdad</b><span>Sale de lo que ya tienes apartado; no cuenta como gasto del mes.</span></div></div>
+  <div class="paso"><span class="n">2</span><div><b>Pasa a «Comprado»</b><span>Queda con fecha y precio pagado, y en Gastos como compra planificada, no como sorpresa.</span></div></div>
+  <div class="paso"><span class="n">3</span><div><b>Sus cuotas dejan de salir</b><span>Ese dinero se suma a la siguiente de la lista (el curso de ecografía). Si no hay ninguna, vuelve a tu ahorro.</span></div></div>
+  <div class="paso"><span class="n">4</span><div><b>Si costó distinto, se ajusta</b><span>Si pagaste menos, la diferencia se va al siguiente de la lista.</span></div></div>
+</div>
+
+<div class="precio" style="margin-top:10px">
+  <div class="mini" style="font-weight:800;letter-spacing:.08em">PRECIO QUE PAGASTE</div>
+  <div class="row" style="margin-top:4px"><span class="big">1.100 €</span><span class="sp"></span><span class="mini">lo pones tú al comprar</span></div>
+</div>
+
+<div style="margin-top:12px"><span class="btn p">Lo compré · registrar</span></div>
+<div class="mini" style="margin-top:8px;text-align:center">Mientras no lo registres, sigue apartándose cada mes.</div>
+
+</div></div>
+
+</div>
+</body></html>

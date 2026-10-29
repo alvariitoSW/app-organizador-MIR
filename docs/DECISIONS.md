@@ -1487,6 +1487,100 @@ buena: la app suele tener razón (un cortado y una magdalena son ~145 kcal, no 2
 de tablas típicas españolas por 100 g. «Un cacho / un pedazo» es una ración; «un trocito», un trozo. «De primero…, de
 segundo…» es la comida. La seguridad se calcula al momento (no se guarda), así que al cambiar los gramos en la S3 cambiará.
 
+## 2026-10-28 · El gobierno del repositorio y el Consejo de Dinero
+
+**Elegido.** Copiar de fiebres-neutropenias el gobierno (papeles por skill) y el Consejo de Ministros, adaptados:
+Educación pasa a ser **Bienestar** (si le sirve al R1 en el móvil); un **ministerio del asunto** se invita según el tema
+(Economía para Dinero); Hacienda cuenta tokens con `tools/gasto.mjs`; tope por reunión 0,6 M. Reservado al usuario:
+presupuesto total, lo que cambia lo que ve, los datos y pasar a `main`. Primer Consejo: reforma de Dinero en 6
+sesiones (D1-D6, ≈5,0 M), método «págate primero + bolsillos» con un solo disponible; acta en
+`.claude/plan-socialista/consejo/2026-10-28.md`.
+**Descartado.** Copiar Exteriores (`/radar`) y los jueces automáticos (aquí no existen; Justicia es la suite, los hooks
+y `/revisa-seguridad`). Hacer el informe de la S8 aparte (el acta lo sustituye).
+**Supuestos.** Que «el repositorio de fiebres neutropenias» es `fiebres-neutropenias` (el más reciente) y no
+`urgencias-fiebre-neutropenica`. Que pedir instalarlo equivale a aprobar la constitución adaptada.
+
+## 2026-10-28 · Dinero: la feria y el concurso «La Rara»
+
+**Elegido.** Dinero deja de decir «cuánto me queda» (lo da el banco) y pasa a ayudar a ahorrar. Tras tres rondas de
+feria (17 maquetas por partes) y dos de concurso de ideas opuestas (10 maquetas), el diseño es: **Portada + Ahorro en
+el mundo de La Laurisilva** (5/5), **Gastos = «En qué se me va y dónde ahorrar»** (5/5) y **Compras compactas** (5/5),
+estas dos con la piel de la Laurisilva. Ahorro con objetivo a fecha y su gráfica; invertir fuera. Tanda D1-D6 ≈4,3 M.
+**Descartado.** Un solo número arriba (el banco ya lo da); huchas por %; la lista larga de cobros (2/5); los estilos
+de truco sin dibujo que informe (teletexto, oca, cartas: 1/5). Reserva: El Aljibe.
+**Supuestos.** Las cifras de todas las maquetas son inventadas (el repositorio es público). Lo que se quita de la
+Dinero actual lo decide el usuario antes de la D3.
+
+## 2026-10-28 · Dinero D1: pruebas por fecha, «foto» de cifras y limpieza invisible
+
+**Elegido.** La prueba 75 (fijos del día 1 y 3) congela «hoy» al día 15 (la 221 y la 263 ya lo hacían): se probó la tanda
+de Dinero en todo noviembre con el reloj movido y solo caía esa, el día 3. Prueba nueva 332: foto de cifras (gasto por
+fuente, ahorro, recibos, Hoy/Mes, reparto, llegada, lo que queda hasta la nómina) sobre funciones y con fecha absoluta, para
+las D3-D6. Limpieza mínima en `app.js`: se quitan las vistas `cierre` y `analisis` (nadie las abre) y su etiqueta.
+**Descartado.** Quitar `salud` (dos pruebas la usan); tocar saneados y migraciones de lectura (son datos guardados); borrar
+acciones o funciones de Dinero (todas tienen emisor y lector).
+**Supuestos.** Las cifras de la 332 son inventadas. Lo que ve el usuario no cambia en nada.
+
+## 2026-10-28 · Dinero D3: Portada (el Bosque), Gastos y datos nuevos
+
+**Elegido.** `store.dinero3` {v, ahorro{guardado, objetivoMeses, plazoMeses, desde}, compras[], migrado}, con una migración que
+copia una sola vez y no toca `store.dinero` ni `store.ahorro` (colchón y huchas sin objetivo → lo guardado; hucha con objetivo →
+compra en plan; deseos sin hacer → compras en espera; la meta antigua propone el objetivo en meses; si falla, la app sigue con lo
+viejo). Entra en la copia de seguridad con el resto del store. Pestañas Bosque · Gastos · Ahorro · Compras (el cierre del mes
+cuelga de Gastos). Bosque = maqueta Laurisilva: copa = meses de vida (guardado ÷ gasto de `mesTipo`), «Vas por delante/detrás»
+comparando tu ritmo real (media de lo ahorrado, o tu meta sobre lo que entra) con lo que pide el plazo. Gastos = maqueta del puesto 3
+con cifras reales y enlaces a recibos, fijos, hoja, Fintonic, categoría, taxis y la semana. Tokens `--lau-*` con versión `html.dark`.
+**Descartado.** Mover el guardado a un cálculo automático desde las huchas (Ahorro/Compras aún enseñan lo de antes: lo rehacen D4/D5);
+añadir acciones al switch de `change` (todo son botones); borrar `dinHoyHTML` ahora (queda sin llamadas hasta la D6).
+**Supuestos.** El «guardado» nuevo es una cifra que se puede editar en el Bosque y puede diferir de la suma de huchas hasta la D4.
+Sin gasto conocido el Bosque pide contar los gastos. Las pruebas 221, 263, 266, 216 y 290 miraban el «Te queda / Puedes gastar hoy»
+y los botones de esa tarjeta: se conserva el cálculo (d6Mes, bkQueda) y se cambia el camino; lo que comprobaba el texto de esa
+tarjeta se quita (acta del 28/10). Las cifras de las pruebas 333-334 son inventadas.
+
+## 2026-10-28 · Dinero D4: Ahorro («Tu bosque, mes a mes») y «Ya ha llegado la nómina»
+
+**Elegido.** La pestaña Ahorro enseña la pantalla 2 de la maqueta Laurisilva (`d4AhorroHTML`): «← Volver al bosque», «~X €/mes» (lo que ya
+calcula `d3Datos().pide`), objetivo 3/6/9 meses y plazo 6/12/18 (más un campo «u otro»), guardados en `dinero3.ahorro`; gráfica de
+árboles (llenos = meses ya crecidos, solo con meses que tienen dato: lo apartado al cobrar o `ahorroDeMes`; de puntos = el plan; línea
+del ritmo real de `d3Ritmo`), tres filas, «Un empujón fácil» (`d3Claro`) con enlace a Gastos e invertir fuera en una línea. Cambiar el
+plazo lo cuenta desde hoy (`desde`). «Ya ha llegado la nómina» (`d4NominaHTML`, en Bosque y Ahorro; tarjeta con aviso en los 10 días
+de cobro, enlace discreto el resto): ¿cuánto has cobrado? (prefijado con `nominaMes`) → propone lo que pide el plan, nunca más de lo
+cobrado → «Hecho» suma a `ahorro.guardado` y apunta `ahorro.apartado[mes]={cobrado,v}` (no repite el mes) → «Deshacer». Sustituye
+«ya lo he apartado» (la 266 pasa a este camino).
+**Descartado.** Mover dinero a las huchas viejas (sus datos no se tocan); guardar el cobrado real en `ahorro.cobrado` (cambiaría el
+cálculo de otros meses); borrar `dinAhorroHTML`, `apartarAlCobrar` y sus acciones (la D6 las limpia).
+**Supuestos.** Sin meses con dato la gráfica enseña solo hoy y el plan. Si el plan ya se cumple, «Hecho» propone tu % de ahorro. El
+árbol de cada mes pasado es el estado al empezarlo (guardado menos lo ahorrado desde entonces). Cifras de las pruebas 335-336 inventadas.
+No he sacado capturas a 412×915 (las hace el verificador); sí comprobado por prueba: sin scroll horizontal y controles ≥44 px.
+
+## 2026-10-28 · Dinero D5: Compras («Los frutos»)
+
+**Elegido.** La pestaña Compras (`dinComprasHTML` → `d5ListaHTML`, `d5Fila`) lista `dinero3.compras` planificadas (necesario → útil → ilusión,
+luego por mes) con precio, «al mes» (lo que falta ÷ meses hasta su mes), cuándo llega y un fruto que madura según llevas/precio; cabecera
+«X € al mes · N compras» y nota ⓘ (nómina base de la época, o la media, menos lo que gastas). Detalle: «Llevas X de Y · faltan Z», «Aparté»
+(con «Deshacer»), precio/mes/tipo editables (listener de `change`), «Lo compré» (`addPago`, estado `comprada`) y «Ya no lo quiero» (estado `no`).
+«+ Añadir algo que quiero»: lo necesario entra en el plan; lo demás, **en espera 30 días** sin apartar nada, y `d5Madura` (dentro de
+`dinero3S`) lo pasa solo a planificada al cumplirse. Los frutos del Bosque ya contaban las `plan`. Las huchas viejas no se enseñan en Compras.
+**Descartado.** Botón «Sigo queriéndolo» (a los 30 días pasa solo, no queda nada que confirmar); borrar las huchas viejas y sus pantallas (D6).
+**Supuestos.** Sin mes, la compra sale con «sin mes» y no suma al «al mes». Las pruebas 216, 218 y el reparto/hucha de la 228 miraban las huchas
+y «Gasté de mis ahorros», que el acta quita: llegan por `ui.dinViejo` (solo lo pone la prueba) hasta que la D6 borre ese código y esas
+comprobaciones. «Pasan 31 días» en la prueba 337 = se retrasa `alta` 31 días. Sin capturas a 412×915 (las hace el verificador).
+
+## 2026-10-28 · Dinero D6: quitar código y vistas, nunca datos
+
+**Elegido.** Se quita lo que la reforma dejó sin botón (acta, punto 2): «Te queda / Puedes gastar hoy» (`dinHoyHTML`), las huchas por % o €
+con su reparto, «Repartir X €», «Gasté de mis ahorros», las pantallas de huchas / hucha nueva / plan, `dinBolsillosHTML`, `dinAhorroHTML`,
+`ui.dinViejo`, la pantalla de capturas del banco con su lector, la vista `salud`, y ~40 acciones de los dos switches sin emisor. Unas
+~680 líneas de `app.js` (27.964 → 27.300). **No se toca ningún dato:** `store.dinero` y `store.ahorro` (huchas, meta, banco, épocas, festivos,
+movs) siguen en el store, en la copia y en la exportación; `dinero3Migra` y las migraciones de lectura quedan. Prueba 339: un móvil viejo
+sembrado recorre Bosque/Gastos/Ahorro/Compras y la copia de seguridad lleva lo viejo intacto y lo migrado. En `d4AjustesHTML` se van
+«Cambiar el reparto» (era de huchas por %) y «Cuadrarlo» (con la pantalla del banco); el % de ahorro se queda. Retoques: la etiqueta del
+objetivo en la gráfica ya no la pisa «tu ritmo», «← Volver al bosque» es píldora, y en Compras las cifras dejan de ser insignias redondas.
+**Descartado.** Quitar la pestaña Mes («Cierre del mes»): Gastos enlaza a ella y es donde se escribe «tu cifra» del mes sin Fintonic. Quitar
+`bkQueda` y lo del banco: el asistente y `gastoMes` los usan. Quitar épocas/festivos: Ajustes, Hoy, Mes y el .ics los usan.
+**Supuestos.** Las comprobaciones de las pruebas 204, 216, 218, 223, 228, 263, 266, 270 y 272 que miraban lo quitado se quitaron (el acta lo
+manda), dejando las del resto; 221 y 262 pasan de la vista `salud` a la pestaña Ahorro. Se quitan también dos reglas del asistente que
+hablaban de huchas y de la pantalla del banco. Mi script de código muerto quitó `frSeg` por error (la usa `frases.test.js`): restaurada.
 ## El Comer del reloj, sesión 1: la línea del día y escribir lo comido (2026-10-28 · S3)
 
 **Elegido.** Comer › Hoy es **una sola línea** (`maquetas/comer-debate-1-reloj.html`, pantalla 1): la lupa «¿Qué has
@@ -1534,3 +1628,46 @@ se saltó. Zinc, yodo, selenio, fósforo y sal (casi siempre «sin datos»). El 
 cambia las tandas. En un día de guardia no se apunta texto libre (ofrece hospital o táper). El pie de Semana cuenta solo
 cenas. «A ojo» es pequeña 250 / mediana 450 / grande 700 kcal, con reparto supuesto 15 % P · 50 % HC · 35 % G, y no se
 memoriza. Si no hay nada en la nevera, la sugerencia de vitaminas propone el alimento más rico en ese micro.
+
+## La Vuelta: entreno de 15 a 16, vuelta al 35 %, objetivo de peso y dos dibujos (2026-10-29 · V1-V2)
+
+Consejo de Ministros (acta `.claude/plan-socialista/consejo/2026-10-28-deporte.md`) y concurso «La Vuelta» en dos rondas:
+el usuario eligió **La Sombra del Teide** y **Los Bancales** (`maquetas/deporte2-1-sombra-teide.html`,
+`deporte2-5-bancales.html`) y pidió las dos como temas en Ajustes. Ficha: `.claude/plan-socialista/fichas/v3-la-vuelta.md`.
+
+**Elegido.** Sin hora puesta a mano, el entreno va **entre semana a las 15:00 (50 min) en el gimnasio** y **el fin de
+semana a las 10:00 (40 min) en el parque**, con una rutina sin material (`franja`, `lugarEntreno`, `rutinaParque`). Si algo
+pisa las 15:00 entre semana, la alternativa es la **sesión mínima de 25 min a las 15:30** (3 ejercicios × 2 series, botón
+«mínima · 25 min»), nunca la tarde-noche. **El plan de vuelta** arranca al **35 %** (30 % «más suave», 40 % «más rápido»)
+y sube 10 puntos por semana hasta el 100 %. **Objetivo de peso** (Entreno → «Objetivo de peso»): kg de meta y ritmo
+(0,25-1 kg/semana) → kcal, proteína, semanas y fecha, con topes de seguridad (ritmo ≤1 % del peso/semana, déficit ≤25 %
+del gasto, kcal ≥ basal y ≥1.500, meta con IMC ≥18,5), la gráfica del peso y el aviso de hablar con el médico/a; con la
+meta en «perder», esas kcal son las de Comer. **La lámina** abre la portada de Entreno: el dibujo elegido en Ajustes →
+Cómo se ve → «Dibujo del entreno» (el Teide de fábrica) con lo que toca hoy (o «hoy no: guardia»), la semana, la vuelta o
+la racha y el peso, y **«Explícamelo · 45 s»** (5 frases × 9 s, se para, sin animar con movimiento reducido).
+
+**Descartado.** La Sobremesa, La Tortuga, El Sofá, El Reloj de Sol, El Drago y las otras cuatro de la 2.ª ronda; el jurado de
+modelo en la 2.ª ronda; filtrar la biblioteca openGym para el parque (lista fija de 6 ejercicios); «bajar un escalón» al
+fallar dos semanas (parar dos semanas ya rehace el plan).
+
+**Supuestos.** Las tres dudas del Consejo sin contestar se tomaron con lo recomendado: 50 min, 35 % y 0,5 kg/semana. Un
+plan de vuelta en curso guardado sin `ini` sigue con la fórmula vieja (60/70/75 → 100). Los círculos de la semana siguen
+debajo de la lámina aunque repiten los 7 días. Si un turno pisa las 15:00 y las 15:30, ese día no hay fuerza. Tres pruebas
+que dependían de la hora o del día de la semana (asistente antes de las 5:00, «Montar la semana» de jueves a domingo y la
+guardia del sábado antes del 1 de noviembre) se arreglaron en la prueba; ninguna se saltó.
+
+**Quitado de la portada (2026-10-29).** Decidido por el usuario: la lámina ya enseña la semana, la vuelta o la racha, la hora y
+el lugar de hoy y el peso, así que fuera lo que lo repetía. **Quitado** de la portada de Entreno: la tarjeta «Esta semana»
+(`gymSemanaCirculos`: círculos, línea del día, y las 4 cifras de `gymKpisHTML`) y la tarjeta «Tu vuelta al gimnasio»
+(`regresoCardHTML`), con `gymDiaEstado`, `GYM_EST_NOM` y su CSS (`.gsem`, `.gsc*`, `.gscs`, `.gtiraq`, `.gkpi`, `.gvuelta`,
+`.gvesc`, `.gvprog`, `.gvplan`). Se queda «Listo al N %» (`listoHTML`, sueño y guardias: la lámina no lo dice), la tarjeta
+grande, los avisos, las rutinas, las fichas y el informe. **Movido, para que nada se quede sin camino:** el ⚙ del mínimo
+semanal, los «N hechos» y el «bloque · sem x/y» (o «descarga») van en una fila bajo la lámina (`gymSemanaLinkHTML`) que abre
+«Tu semana de entreno» (ahí está el − / + del mínimo); el cambio de día se hace tocando el día en la lámina (`gym-dia`); lo
+de la tarjeta de la vuelta que no estaba en el plan («esta semana: N días, series, % de tu peso, te sobran X reps, llevas
+H de N») pasa a «Tu plan de vuelta», y «Empezar» ya lo da la tarjeta grande. Se pierde, a propósito: las 4 cifras («días en 2
+semanas», «días este mes», «de media», «volumen») y la barra de entrenos de la semana; «días este mes» sigue en la ficha
+Progreso. **Migrado:** un plan de vuelta en curso sin `ini` (el de la fórmula vieja: 70 %, 2 semanas) se rehace **una sola
+vez** al leerlo (`regresoS`) con el sistema nuevo: `ini` según su ritmo (30/35/40), `paso:10`, `desde` = el lunes de esta
+semana (o su `desde`, si fue después, para que cuenten los entrenos de esta semana); conserva `ultimo`, `parado` y `ritmo`, y
+no se borra nada del registro. Esto sustituye al supuesto anterior («sigue con la fórmula vieja») y al de los círculos.

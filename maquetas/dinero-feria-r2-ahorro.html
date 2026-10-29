@@ -1,0 +1,102 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412">
+<title>R2-B · Ahorro</title><link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.wrap{padding:10px 12px 20px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.card{margin-bottom:8px;padding:12px}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.cartel b{font-size:16px}.cartel p{margin:4px 0 0;font-size:12.5px;color:var(--ink2)}
+.e{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.big{font-size:40px;font-weight:900;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.msg{font-size:16px;font-weight:800;line-height:1.3;margin:6px 0 0}
+.mini{font-size:12px;color:var(--ink2)}.mini b{color:var(--ink)}
+.ok{color:var(--ok,#34d399)}.warn{color:var(--warn,#fbbf24)}
+.meses{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:10px}
+.meses .c{height:14px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);position:relative;overflow:hidden}
+.meses .c i{position:absolute;left:0;top:0;bottom:0;background:var(--brand2)}
+.ejem{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;font-size:10.5px;color:var(--ink2);font-weight:700;text-align:center;margin-top:3px}
+.ejem .m{color:var(--ink)}
+.racha{display:flex;gap:4px;align-items:center;margin-top:10px}
+.racha span{flex:1;text-align:center;border-radius:8px;padding:5px 0;font-size:11px;font-weight:800;border:1px dashed var(--line);color:var(--ink2)}
+.racha span.on{border-style:solid;background:color-mix(in srgb,var(--ok,#34d399) 16%,transparent);border-color:var(--ok,#34d399);color:var(--ink)}
+.btn{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn.p{width:100%;border:0;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#12081a;margin-top:10px}
+a.l{color:var(--ink2);text-decoration:underline;cursor:pointer;display:inline-flex;align-items:center;min-height:44px}
+.fld{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:6px 12px;display:none;align-items:baseline;gap:6px}
+.fld.on{display:flex}
+.fld input{background:transparent;border:0;color:var(--ink);font:inherit;font-size:26px;font-weight:900;width:100%;outline:0}
+.li{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--line);font-size:14px;min-height:36px}
+.li b{font-variant-numeric:tabular-nums}
+.tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);white-space:nowrap}
+.mb{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:4px}.mb i{display:block;height:100%;background:var(--brand2)}
+.ap{display:flex;gap:6px;align-items:flex-end;height:78px;margin-top:6px}
+.ap div{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--ink2);display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+.ap i{display:block;border-radius:4px 4px 0 0;background:var(--brand2);min-height:3px}.ap b{color:var(--ink);font-size:11px}
+details summary{list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;cursor:pointer;color:var(--brand2)}
+details summary::-webkit-details-marker{display:none}
+label.sl{display:block;font-size:13px;font-weight:800;margin-top:4px}
+label.sl output{float:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:44px;accent-color:var(--brand);margin:0}
+.res{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.res div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center}
+.res .k{font-size:10.5px;color:var(--ink2);font-weight:800}.res .v{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums}
+</style><body><div class="wrap">
+
+<div class="card cartel" id="cartel"><b>R2-B · Ahorro (con invertir dentro)</b>
+<p>Todo en meses de vida cubiertos: primero el colchón hasta 6, luego tus metas, y lo que sobra se puede invertir.</p></div>
+
+<div class="card" id="p1">
+ <div class="row"><span class="e">TU COLCHÓN AGUANTA</span><span class="sp"></span><a class="l mini" onclick="document.getElementById('ed').classList.toggle('on')">Corregir 4.200 €</a></div>
+ <div class="fld" id="ed"><input id="inp" value="4200" inputmode="numeric" aria-label="Ahorrado" oninput="calc()"><span class="mini">€</span></div>
+ <div class="row" style="align-items:baseline"><span class="big" id="mm">2,8</span><b style="font-size:18px">meses</b><span class="sp"></span><span class="mini">meta <b>6 meses</b> · 8.868 €</span></div>
+ <div class="meses" role="img" id="bar" aria-label="2,8 de 6 meses"></div>
+ <div class="ejem"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span class="m">6</span></div>
+ <p class="msg" id="msg">Te faltan <span class="warn">4.668 €</span> para dormir tranquilo.</p>
+ <div class="mini">A unos 500 € al mes, llegas en <b id="en">10 meses</b>.</div>
+ <div class="racha" aria-label="Racha de 4 meses apartando"><span>jun –</span><span class="on">jul ✓</span><span class="on">ago ✓</span><span class="on">sep ✓</span><span class="on">oct ✓</span><b class="mini" style="flex:none;padding-left:4px">4 seguidos</b></div>
+ <button class="btn p" onclick="this.textContent='✓ Anotado: 660 € al colchón'">El día 25: aparta 660 €</button>
+</div>
+
+<div class="card">
+ <div class="e">TUS METAS · SE LLENAN CUANDO EL COLCHÓN LLEGA A 6</div>
+ <div class="li" style="border-top:0"><div style="flex:1"><b>Viaje a Japón</b> <span class="tag">la siguiente</span><div class="mb"><i style="width:0"></i></div></div><b>2.500 €</b></div>
+ <div class="li"><span style="flex:1">Portátil</span><b>1.100 €</b></div>
+ <div class="li"><span style="flex:1">Curso de eco</span><b>350 €</b></div>
+ <div class="li"><span style="flex:1">Fonendo</span><b>190 €</b></div>
+</div>
+
+<div class="card">
+ <div class="e">LO QUE APARTASTE CADA 25 · SOBRA LA MITAD DEL EXTRA</div>
+ <div class="ap" aria-label="Jun 0, jul 125, ago 550, sep 875, oct 661">
+  <div><b>0</b><i style="height:3px"></i>jun</div><div><b>125</b><i style="height:12px"></i>jul</div>
+  <div><b>550</b><i style="height:38px"></i>ago</div><div><b>875</b><i style="height:56px"></i>sep</div><div><b>661</b><i style="height:44px"></i>oct</div>
+ </div>
+</div>
+
+<div class="card">
+ <div class="e">INVERTIR · CUANDO EL COLCHÓN LLEGUE A 6 MESES</div>
+ <p class="msg">Lo que apartes desde entonces, unos <span class="ok">500 € al mes</span>, ya sobra.</p>
+ <div class="mini" style="margin-top:4px">Lo que no vayas a gastar en 5 años puede ir a un fondo indexado; Japón y el portátil, no: van a cuenta de ahorro.</div>
+ <details><summary>Ver simulación ＋</summary>
+  <label class="sl">Aparto al mes <output id="oX">200 €</output><input type="range" id="X" min="25" max="800" step="25" value="200"></label>
+  <label class="sl">Durante <output id="oN">10 años</output><input type="range" id="N" min="1" max="30" value="10"></label>
+  <div class="res" style="margin-top:4px"><div><div class="k">Cuenta 2 %</div><div class="v" id="r1"></div></div><div><div class="k">Medio 4 %</div><div class="v" id="r2"></div></div><div><div class="k">Fondo 6 %</div><div class="v" id="r3"></div></div></div>
+  <div class="mini" style="margin-top:6px">Solo orientativo, rentabilidades inventadas; puede salir negativo. No es un consejo personal.</div>
+ </details>
+</div>
+
+</div>
+<script>
+const $=i=>document.getElementById(i),f=n=>Math.round(n).toLocaleString('es-ES')+' €',V=1478;
+function calc(){const a=+$('inp').value||0,m=a/V;
+ $('mm').textContent=m.toFixed(1).replace('.',',');
+ $('bar').innerHTML=[0,1,2,3,4,5].map(i=>'<div class="c"><i style="width:'+Math.max(0,Math.min(1,m-i))*100+'%"></i></div>').join('');
+ const fl=6*V-a;
+ $('msg').innerHTML=fl>0?'Te faltan <span class="warn">'+f(fl)+'</span> para dormir tranquilo.':'Colchón completo: te sobran <span class="ok">'+f(-fl)+'</span>.';
+ $('en').textContent=fl>0?Math.ceil(fl/500)+' meses':'ya';}
+function fv(x,n,r){const i=r/12;return x*((Math.pow(1+i,n*12)-1)/i)}
+function sim(){const x=+$('X').value,n=+$('N').value;$('oX').textContent=f(x);$('oN').textContent=n+(n==1?' año':' años');
+ $('r1').textContent=f(fv(x,n,.02));$('r2').textContent=f(fv(x,n,.04));$('r3').textContent=f(fv(x,n,.06));}
+$('X').oninput=$('N').oninput=sim;calc();sim();
+</script></html>

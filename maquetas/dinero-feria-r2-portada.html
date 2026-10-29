@@ -1,0 +1,78 @@
+<!doctype html><html lang="es"><meta charset=utf-8><meta name=viewport content="width=412">
+<title>Dinero · portada compacta</title>
+<link rel=stylesheet href=comun.css>
+<style>
+body{width:412px}
+.wrap{padding:8px 12px 12px}
+.e{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--ink2)}
+.cartel{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:16px;padding:10px 12px}
+.cartel h2{margin:2px 0 2px;font-size:15px}.cartel p{margin:0;font-size:12px;color:var(--ink2)}
+.rot{font-size:11px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:10px 0 6px;text-transform:uppercase}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.top h1{margin:0;font-size:20px;flex:1;letter-spacing:0;text-transform:none;color:var(--ink)}
+.nom{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--brand);background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--ink);font:inherit;font-weight:800;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.con{padding:12px;border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.con p{margin:0;font-size:16px;font-weight:800;line-height:1.3}
+.con .dn{color:#34d399;white-space:nowrap}
+.con .s{margin-top:6px;font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.lista{margin-top:8px;overflow:hidden}
+.fila{display:flex;align-items:center;gap:10px;width:100%;min-height:68px;padding:8px 12px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.fila:first-child{border-top:0}
+.fila .ic{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;font-weight:900;font-size:13px;color:var(--ink2);flex:none;background:var(--bg2)}
+.fila .t{flex:1;min-width:0}
+.fila .t small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.fila .t b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.fila .t span{display:block;font-size:11.5px;color:var(--ink2)}
+.fila .ch{color:var(--ink2);font-size:20px;flex:none}
+.fila .t .seg{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-top:5px}
+.seg i{height:8px;border-radius:3px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;position:relative}
+.seg i b{position:absolute;inset:0 auto 0 0;background:var(--brand2)}
+.fila .t .parte{display:flex;height:12px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin-top:5px}
+.parte i{display:block;height:100%}
+.f{background:var(--brand2)}.v{background:repeating-linear-gradient(45deg,var(--accent) 0 5px,#d9a21b 5px 10px)}
+.tag{font-size:11px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap;flex:none}
+.tag.ok{border-color:#34d399;color:#34d399}
+.cob{margin-top:8px;padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:center;min-height:44px}
+.cob b{font-variant-numeric:tabular-nums}
+</style><body>
+<div class="wrap">
+
+<div class="card cartel" id="cartel">
+ <div class="e">R2-A · PORTADA COMPACTA</div>
+ <h2>Todo Dinero en una pantalla</h2>
+ <p>Una conclusión arriba y cuatro filas que se tocan para entrar. Lo que cobro, en una línea.</p>
+</div>
+
+<div class="rot">Pantalla única · Dinero</div>
+<div class="top"><h1>Dinero</h1><button class="nom" onclick="this.textContent='Nómina anotada ✓'">Ya ha llegado la nómina</button></div>
+
+<div class="card con">
+ <p>Octubre: la mitad se fue en gastos que eliges. Con 3 recortes podrías quedarte <span class="dn">~1.700 € al año</span>.</p>
+ <div class="s">Comer fuera, taxis y compras online.
+  <span style="margin-left:auto" title="Sale de tus gastos de octubre">ⓘ</span></div>
+</div>
+
+<div class="card lista">
+ <button class="fila" onclick="alert('→ Ahorro')"><span class="ic" aria-hidden="true">A</span>
+  <span class="t"><small>AHORRO</small><b>2,8 meses de vida cubiertos</b>
+   <span class="seg" role="img" aria-label="2,8 de 6 meses"><i><b style="width:100%"></b></i><i><b style="width:100%"></b></i><i><b style="width:80%"></b></i><i><b style="width:0%"></b></i><i><b style="width:0%"></b></i><i><b style="width:0%"></b></i></span></span>
+  <span class="ch">›</span></button>
+ <button class="fila" onclick="alert('→ En qué se me va')"><span class="ic" aria-hidden="true">G</span>
+  <span class="t"><small>EN QUÉ SE ME VA · OCT</small><b>1.478 € <span style="display:inline;font-weight:600">· 49 % fijos</span></b>
+   <span class="parte" role="img" aria-label="Fijos 728 euros, variables 750 euros"><i class="f" style="width:49%"></i><i class="v" style="width:51%"></i></span></span>
+  <span class="ch">›</span></button>
+ <button class="fila" onclick="alert('→ Lo que quiero comprar')"><span class="ic" aria-hidden="true">C</span>
+  <span class="t"><small>LO QUE QUIERO COMPRAR</small><b>Fonendo · 190 €</b><span>Llega a finales de noviembre · luego portátil</span></span>
+  <span class="ch">›</span></button>
+ <button class="fila" onclick="alert('→ Invertir')"><span class="ic" aria-hidden="true">I</span>
+  <span class="t"><small>INVERTIR</small><b>Aún no toca</b><span>Primero el colchón: faltan 4.668 € para 6 meses</span></span>
+  <span class="ch">›</span></button>
+</div>
+
+<div class="card cob">
+ <span class="e">COBRO</span><span>Última nómina <b>2.800 €</b> · en noviembre viene buena: <b>+~600 €</b> de guardias</span>
+</div>
+
+</div>
+</body></html>

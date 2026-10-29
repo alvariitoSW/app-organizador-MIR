@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412, initial-scale=1">
+<title>El Drago de Icod · La Vuelta</title>
+<style>
+:root{--papel:#f2e8cf;--papel2:#e8dcbc;--tinta:#2a2f26;--verde:#3f5a47;--salvia:#8fa58f;--savia:#8f1d22;--musgo:#5b5a4a;--corteza:#b59f78}
+*{box-sizing:border-box}
+html{background:#d9cfb2}
+body{width:412px;margin:0;background:var(--papel);color:var(--tinta);font-family:Georgia,'Times New Roman',serif;overflow-x:hidden}
+svg{display:block;width:412px}
+svg text{font-family:Georgia,'Times New Roman',serif;fill:var(--tinta)}
+.cartel{padding:18px 16px 14px;border-bottom:3px double var(--tinta);background:var(--papel2)}
+.cartel .esc{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--verde);margin:0 0 4px}
+.cartel h1{font-size:30px;line-height:1.05;margin:0 0 2px;font-weight:700}
+.cartel .lat{font-style:italic;font-size:13px;color:var(--musgo);margin:0 0 8px}
+.cartel p.idea{margin:0 0 3px;font-size:14px;line-height:1.3}
+.rotulo{height:28px;line-height:28px;padding:0 16px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;background:var(--tinta);color:var(--papel);font-family:Georgia,serif}
+.pantalla{width:412px;overflow:hidden;border-bottom:3px double var(--tinta);position:relative}
+#p1{height:810px}
+.cap{margin:0;padding:8px 16px;font-size:14px;line-height:1.3;min-height:56px;background:var(--papel2);border-top:1px solid var(--corteza)}
+.gota{display:flex;align-items:center;gap:12px;width:380px;min-height:60px;margin:6px 16px;padding:6px 14px;border:2px solid var(--savia);border-radius:30px 30px 30px 8px;background:var(--papel);color:var(--tinta);font:inherit;text-align:left;cursor:pointer}
+.gota b{display:block;font-size:16px}
+.gota span.s{display:block;font-size:13px;color:var(--musgo)}
+.gota[aria-pressed=true]{background:var(--savia);color:#fff}
+.gota[aria-pressed=true] span.s{color:#fff}
+.tap{cursor:pointer}
+.tap:focus{outline:none}
+.tap:focus-visible .foco,.tap:hover .foco{stroke:var(--savia);stroke-width:2;stroke-dasharray:3 3}
+.foco{fill:transparent;stroke:none}
+.titulo{padding:10px 16px 2px;font-size:20px;font-weight:700}
+.titulo small{display:block;font-size:13px;font-weight:400;color:var(--musgo);font-style:italic}
+</style>
+</head>
+<body>
+
+<header class="cartel">
+  <p class="esc">Escuela 4 · Concurso «La Vuelta»</p>
+  <h1>El Drago de Icod</h1>
+  <p class="lat">Dracaena draco · lámina de un árbol que no tiene prisa</p>
+  <p class="idea">Vuelves a entrenar como crece el Drago milenario: despacio y rama a rama, sin secarte nunca.</p>
+  <p class="idea">Cada dato tiene su parte en el árbol: yema, hoja, rama, anillo, savia, hoja que cae y fruto.</p>
+</header>
+
+<!-- ============ P1 ============ -->
+<div class="rotulo">Pantalla 1 · Hoy toca</div>
+<section class="pantalla" id="p1" aria-label="Hoy toca">
+  <svg id="yema" viewBox="0 0 412 330" height="330" role="img" aria-labelledby="yt">
+    <title id="yt">Hoy jueves: gimnasio a las 15:00, de 15 a 16 horas. Una yema que se abre.</title>
+    <defs>
+      <filter id="mano" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>
+    </defs>
+    <text x="206" y="26" text-anchor="middle" font-size="14" letter-spacing="3" font-weight="700">HOY · JUEVES</text>
+    <g filter="url(#mano)">
+      <path d="M206 330 C200 300 212 280 206 250" stroke="#2a2f26" stroke-width="16" fill="none" stroke-linecap="round"/>
+      <path d="M206 330 C200 300 212 280 206 250" stroke="#b59f78" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <g transform="translate(206 252)" id="sepalos"></g>
+      <circle cx="206" cy="168" r="70" fill="#f8f1dc" stroke="#2a2f26" stroke-width="2.5"/>
+      <circle cx="206" cy="168" r="63" fill="none" stroke="#8f1d22" stroke-width="1.5" stroke-dasharray="2 4"/>
+    </g>
+    <text x="206" y="140" text-anchor="middle" font-size="14" fill="#3f5a47" style="fill:#3f5a47" letter-spacing="2">GIMNASIO</text>
+    <text x="206" y="188" text-anchor="middle" font-size="50" font-weight="700" style="fill:#8f1d22">15:00</text>
+    <text x="206" y="214" text-anchor="middle" font-size="16">de 15 a 16 h</text>
+    <path d="M206 232 q-7 10 0 16 q7 -6 0 -16z" fill="#8f1d22" stroke="#2a2f26" stroke-width="1"/>
+    <text x="404" y="322" text-anchor="end" font-size="12" font-style="italic" style="fill:#5b5a4a">Fig. 1 · yema de jueves, abriéndose</text>
+  </svg>
+
+  <button class="gota" id="gota" aria-pressed="false">
+    <svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true" style="width:30px;flex:none"><path d="M15 2 C6 16 3 22 3 26 a12 12 0 0 0 24 0 C27 22 24 16 15 2z" fill="#8f1d22" stroke="#2a2f26" stroke-width="1.5"/><path d="M10 26 a5 5 0 0 0 5 5" stroke="#f8f1dc" stroke-width="2" fill="none"/></svg>
+    <span><b id="gotaT">Una gota · 25 min a las 15:30</b><span class="s" id="gotaS">Si no llegas a las 15:00. Cuenta igual. Un toque.</span></span>
+  </button>
+
+  <svg id="copa" viewBox="0 0 412 330" height="330" role="group" aria-label="La semana: siete hojas de la copa del drago">
+    <title>La semana en siete hojas</title>
+    <defs><filter id="mano2"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="2.5"/></filter></defs>
+    <path d="M206 320 L206 330" stroke="#2a2f26" stroke-width="22"/>
+    <g id="hojas"></g>
+    <ellipse cx="206" cy="322" rx="16" ry="10" fill="#b59f78" stroke="#2a2f26" stroke-width="2"/>
+  </svg>
+  <p class="cap" id="cap1" aria-live="polite">Toca una hoja. Meta de la semana: 3 sesiones (2 si hay guardia).</p>
+</section>
+
+<!-- ============ P2 ============ -->
+<div class="rotulo">Pantalla 2 · La vuelta</div>
+<section class="pantalla" id="p2" aria-label="La vuelta">
+  <div class="titulo">Ramificación 3 de 8 · 55 %<small>Cada semana, una rama nueva. Se llega al 100 % de antes.</small></div>
+  <svg id="arbol" viewBox="0 0 412 760" height="760" role="img" aria-labelledby="at">
+    <title id="at">Tronco con ocho ramificaciones, de 35 por ciento a 100 por ciento. Vas en la tercera, al 55 por ciento, con sentadilla 45 kilos, banca 32,5, muerto 50, remo 27,5 y militar 20.</title>
+  </svg>
+  <svg viewBox="0 0 412 180" height="180" role="img" aria-labelledby="rt">
+    <title id="rt">Racha: dos anillos de tronco cortado, y un tercero punteado que se cierra esta semana.</title>
+    <g id="anillos" filter="url(#mano)"></g>
+    <text x="196" y="36" font-size="12" letter-spacing="2" style="fill:#5b5a4a">RACHA</text>
+    <text x="196" y="68" font-size="26" font-weight="700">2 anillos</text>
+    <text x="196" y="90" font-size="14">= 2 semanas seguidas</text>
+    <text x="196" y="116" font-size="13" style="fill:#5b5a4a">El 3.º (punteado) se cierra</text>
+    <text x="196" y="133" font-size="13" style="fill:#5b5a4a">con 1 sesión esta semana</text>
+    <text x="196" y="150" font-size="13" style="fill:#5b5a4a">(hay guardia). La gota cuenta.</text>
+  </svg>
+  <svg viewBox="0 0 412 210" height="210" role="img" aria-labelledby="ft">
+    <title id="ft">Si falla una semana, la rama espera y repites el 55 por ciento. Si fallan dos, bajas un escalón al 45 por ciento. Nada se seca.</title>
+    <rect x="0" y="0" width="412" height="210" fill="#e8dcbc"/>
+    <text x="206" y="26" text-anchor="middle" font-size="15" font-weight="700">¿Y si una semana falla?</text>
+    <g id="espera" filter="url(#mano)"></g>
+    <text x="103" y="148" text-anchor="middle" font-size="14" font-weight="700">Falla 1 semana</text>
+    <text x="103" y="166" text-anchor="middle" font-size="13">La rama espera.</text>
+    <text x="103" y="183" text-anchor="middle" font-size="13">Repites el 55 %.</text>
+    <text x="309" y="148" text-anchor="middle" font-size="14" font-weight="700">Fallan 2</text>
+    <text x="309" y="166" text-anchor="middle" font-size="13">Bajas un escalón:</text>
+    <text x="309" y="183" text-anchor="middle" font-size="13">45 %. Sin drama.</text>
+    <text x="206" y="202" text-anchor="middle" font-size="12" font-style="italic" style="fill:#5b5a4a">Nada se seca. El Drago tiene mil años.</text>
+  </svg>
+</section>
+
+<!-- ============ P3 ============ -->
+<div class="rotulo">Pantalla 3 · Tu objetivo de peso</div>
+<section class="pantalla" id="p3" aria-label="Tu objetivo de peso">
+  <div class="titulo">82 → 75 kg · 14 semanas<small>Una hoja cae cada semana: media por hoja, 0,5 kg. Hacia el 8 de febrero de 2027.</small></div>
+  <svg id="caen" viewBox="0 0 412 622" height="622" role="group" aria-label="Copa con catorce hojas, una por semana. La primera ya cayó, la segunda se está soltando. Hoy 81,4 kilos.">
+    <title>Catorce hojas, una por semana</title>
+    <defs><filter id="mano3"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="2.5"/></filter></defs>
+  </svg>
+  <p class="cap" id="cap3" aria-live="polite" style="min-height:48px">Toca una hoja: te dice el peso que toca esa semana.</p>
+  <svg viewBox="0 0 412 250" height="250" role="img" aria-labelledby="st">
+    <title id="st">La savia diaria: una gota grande de 2.000 kilocalorías y una gota de 140 gramos de proteína.</title>
+    <text x="206" y="22" text-anchor="middle" font-size="15" font-weight="700">La savia de cada día</text>
+    <g filter="url(#mano)">
+      <path d="M130 44 C80 120 58 150 58 178 a72 72 0 0 0 144 0 C202 150 180 120 130 44z" fill="#8f1d22" stroke="#2a2f26" stroke-width="2.5"/>
+      <path d="M86 184 a46 46 0 0 0 30 40" stroke="#f8f1dc" stroke-width="4" fill="none" opacity=".8"/>
+      <path d="M312 84 C282 130 268 148 268 168 a44 44 0 0 0 88 0 C356 148 342 130 312 84z" fill="#f8f1dc" stroke="#8f1d22" stroke-width="3"/>
+    </g>
+    <text x="130" y="178" text-anchor="middle" font-size="36" font-weight="700" style="fill:#fff">2.000</text>
+    <text x="130" y="202" text-anchor="middle" font-size="15" style="fill:#fff">kcal al día</text>
+    <text x="312" y="170" text-anchor="middle" font-size="28" font-weight="700" style="fill:#8f1d22">140 g</text>
+    <text x="312" y="192" text-anchor="middle" font-size="14">proteína</text>
+    <text x="206" y="226" text-anchor="middle" font-size="13" style="fill:#5b5a4a">Lo que gastas entrenando no se come.</text><text x="206" y="243" text-anchor="middle" font-size="13" style="fill:#5b5a4a">Guardia y saliente no cuentan en la media.</text>
+  </svg>
+  <svg id="frutos" viewBox="0 0 412 250" height="250" role="group" aria-label="El plan de comidas: siete frutos, uno por día, todos cerca de 2.000 kilocalorías. El jueves se pasa.">
+    <title>Plan semanal de comidas: siete frutos</title>
+  </svg>
+  <p class="cap" id="cap4" aria-live="polite" style="min-height:48px">Semana: 14.000 kcal = 7 × 2.000. El jueves se pasa (+250); viernes y domingo lo compensan.</p>
+</section>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function E(t,a,p,tx){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(tx!=null)e.textContent=tx;if(p)p.appendChild(e);return e}
+const INK='#2a2f26',SAL='#8f1d22',VER='#8fa58f',COR='#b59f78';
+function leaf(len,w){return `M0 0 C ${w} ${-len*.3} ${w*.8} ${-len*.8} 0 ${-len} C ${-w*.8} ${-len*.8} ${-w} ${-len*.3} 0 0Z`}
+function drop(x,y,s,f){return E('path',{d:`M${x} ${y-s} C ${x-s*.9} ${y-s*.1} ${x-s} ${y+s*.2} ${x-s} ${y+s*.4} a${s} ${s} 0 0 0 ${s*2} 0 C ${x+s} ${y+s*.2} ${x+s*.9} ${y-s*.1} ${x} ${y-s}z`,fill:f||SAL,stroke:INK,'stroke-width':1})}
+function fmt(n){return n.toFixed(1).replace('.',',')}
+
+/* ---------- P1: sépalos de la yema ---------- */
+(function(){const g=document.getElementById('sepalos');
+[-78,-40,40,78,0].forEach((a,i)=>{const gg=E('g',{transform:`rotate(${a})`},g);E('path',{d:leaf(i==4?170:150,i==4?30:28),fill:i==4?'#a7b8a0':VER,stroke:INK,'stroke-width':2,'stroke-linejoin':'round'},gg);E('path',{d:`M0 -6 L0 ${-(i==4?150:130)}`,stroke:INK,'stroke-width':1,opacity:.6},gg)})})();
+
+/* ---------- P1: la copa (siete hojas) ---------- */
+const DIAS=[
+ {k:'L',n:'Lunes',a:-72,len:140,t:'gym',w1:'gimnasio',w2:'15:00',txt:'Lunes · gimnasio a las 15:00.'},
+ {k:'M',n:'Martes',a:-48,len:165,t:'guard',w1:'guardia',w2:'duerme',txt:'Martes · guardia. La hoja duerme: hoy no toca nada.'},
+ {k:'X',n:'Miércoles',a:-24,len:185,t:'fold',w1:'saliente',w2:'plegada',txt:'Miércoles · saliente. Hoja plegada: paseo de 20 min o nada.'},
+ {k:'J',n:'Jueves',a:0,len:215,t:'hoy',w1:'HOY',w2:'15:00',txt:'Jueves · HOY. Gimnasio de 15:00 a 16:00. Si no llegas, la gota: 25 min a las 15:30.'},
+ {k:'V',n:'Viernes',a:24,len:185,t:'gota',w1:'mínima',w2:'15:30',txt:'Viernes · sesión mínima de 25 min a las 15:30 (3 ejercicios × 2 series).'},
+ {k:'S',n:'Sábado',a:48,len:165,t:'sol',w1:'parque',w2:'10:00',txt:'Sábado · parque a las 10:00, 40 min, sin material. Hoja al sol.'},
+ {k:'D',n:'Domingo',a:72,len:140,t:'rest',w1:'descanso',w2:'',txt:'Domingo · descanso. La hoja reposa.'}];
+(function(){const root=document.getElementById('hojas'),cap=document.getElementById('cap1');
+DIAS.forEach(d=>{
+ const rad=d.a*Math.PI/180,r=d.len+(d.t=='hoy'?62:38),lx=206+r*Math.sin(rad),ly=320-r*Math.cos(rad);
+ const g=E('g',{class:'tap',tabindex:0,role:'button','aria-label':d.txt},root);
+ const sh=E('g',{transform:`translate(206 320) rotate(${d.a})`,filter:'url(#mano2)'},g);
+ const L=d.len;
+ if(d.t=='gym'){E('path',{d:leaf(L,24),fill:VER,stroke:INK,'stroke-width':2},sh);E('path',{d:`M0 -4 L0 ${-L+8}`,stroke:INK,opacity:.6},sh)}
+ if(d.t=='guard'){E('path',{d:'M-10 0 C -14 -80 0 -140 56 -128 C 14 -112 10 -70 10 0Z',fill:'#aebbc2',stroke:INK,'stroke-width':2},sh);E('path',{d:'M0 -4 C -2 -70 10 -110 50 -126',stroke:INK,fill:'none',opacity:.6},sh)}
+ if(d.t=='fold'){E('path',{d:leaf(L,8),fill:'#d3dac8',stroke:INK,'stroke-width':2,'stroke-dasharray':'5 3'},sh);[.3,.5,.7].forEach(f=>E('path',{d:`M-9 ${-L*f} l9 -8 l9 8`,stroke:INK,'stroke-width':1.5,fill:'none'},sh))}
+ if(d.t=='hoy'){E('path',{d:leaf(L,34),fill:'#a7b8a0',stroke:SAL,'stroke-width':4},sh);E('path',{d:`M0 -4 L0 ${-L+10}`,stroke:INK,opacity:.6},sh);E('g',{transform:'rotate('+(-d.a)+')'},sh);drop(0,-L*.5,13)}
+ if(d.t=='gota'){E('path',{d:leaf(L,20),fill:VER,stroke:INK,'stroke-width':2},sh);drop(0,-L-4,9).setAttribute('transform','')}
+ if(d.t=='sol'){E('path',{d:leaf(L,22),fill:'#c9d3a0',stroke:INK,'stroke-width':2},sh);}
+ if(d.t=='rest'){E('path',{d:leaf(L,30),fill:'#e3e6d3',stroke:INK,'stroke-width':2},sh);E('path',{d:`M-12 ${-L*.5} h24`,stroke:INK,opacity:.5},sh)}
+ if(d.t=='sol'){const sx=206+(L+4)*Math.sin(rad),sy=320-(L+4)*Math.cos(rad);
+  for(let i=0;i<10;i++){const q=i*36*Math.PI/180;E('path',{d:`M${sx+14*Math.cos(q)} ${sy+14*Math.sin(q)} L${sx+22*Math.cos(q)} ${sy+22*Math.sin(q)}`,stroke:INK,'stroke-width':2},g)}
+  E('circle',{cx:sx,cy:sy,r:10,fill:'#e3b04b',stroke:INK,'stroke-width':2},g)}
+ E('circle',{cx:lx,cy:ly,r:24,class:'foco'},g);
+ const big=d.t=='hoy';
+ E('text',{x:lx,y:ly-4,'text-anchor':'middle','font-size':big?24:18,'font-weight':700,style:big?'fill:#8f1d22':''},g,d.k);
+ E('text',{x:lx,y:ly+11,'text-anchor':'middle','font-size':12,'font-weight':big?700:400},g,d.w1);
+ if(d.w2)E('text',{x:lx,y:ly+25,'text-anchor':'middle','font-size':12},g,d.w2);
+ const go=()=>{cap.textContent=d.txt};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();go()}})});
+ })();
+(function(){const b=document.getElementById('gota');b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!='true';b.setAttribute('aria-pressed',on);
+ document.getElementById('gotaT').textContent=on?'Gota puesta · 25 min':'Una gota · 25 min a las 15:30';
+ document.getElementById('gotaS').textContent=on?'3 ejercicios × 2 series. Cuenta igual que la sesión entera.':'Si no llegas a las 15:00. Cuenta igual. Un toque.'})})();
+
+/* ---------- P2: el tronco ---------- */
+(function(){const s=document.getElementById('arbol');
+ E('defs',{},s).innerHTML='<filter id="mano4"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>';
+ const P=[35,45,55,65,75,85,95,100],NY=[650,565,480,395,315,240,170,100],NX=[230,226,234,227,233,228,232,230],SD=[-1,1,-1,1,-1,1,-1,0];
+ const g=E('g',{filter:'url(#mano4)'},s);
+ /* suelo */
+ E('path',{d:'M10 738 H402',stroke:INK,'stroke-width':1.5},g);
+ for(let i=0;i<30;i++)E('path',{d:`M${14+i*13} 738 l-5 9`,stroke:INK,opacity:.5},g);
+ E('path',{d:'M230 738 q-30 6 -60 14 M230 738 q30 6 62 14',stroke:INK,'stroke-width':3,fill:'none'},g);
+ /* segmentos del tronco */
+ let px=230,py=738;const W=[50,44,38,32,27,23,19,16];
+ for(let i=0;i<8;i++){const d=`M${px} ${py} C ${px+4} ${(py+NY[i])/2+10} ${NX[i]-4} ${(py+NY[i])/2-10} ${NX[i]} ${NY[i]}`;
+  E('path',{d,stroke:INK,'stroke-width':W[i]+4,fill:'none',opacity:i<3?1:.9,'stroke-linecap':'round'},g);
+  E('path',{d,stroke:i<3?COR:'#d9ccaa',fill:'none','stroke-width':W[i],'stroke-linecap':'round'},g);
+  for(let k=0;k<3;k++)E('path',{d:`M${px-W[i]/3+k*W[i]/3} ${py-6} L${NX[i]-W[i]/3+k*W[i]/3} ${NY[i]+6}`,stroke:INK,opacity:.3,'stroke-width':1,'stroke-dasharray':'6 5'},g);
+  px=NX[i];py=NY[i]}
+ /* savia que escurre en el tronco ya hecho */
+ [[300,-0],[0,0]].length;
+ E('path',{d:'M222 700 q-4 14 0 22 M238 560 q4 12 0 20 M228 510 q-4 12 0 18',stroke:SAL,'stroke-width':3,fill:'none','stroke-linecap':'round'},g);
+ function rosette(x,y,r,mode){const rg=E('g',{transform:`translate(${x} ${y})`},g);
+  for(let i=0;i<7;i++){const a=i*360/7-90;E('path',{d:leaf(r,r*.34),transform:`rotate(${a+90})`,fill:mode=='futuro'?'none':(mode=='hoy'?'#a7b8a0':VER),stroke:INK,'stroke-width':mode=='hoy'?2.5:1.8,'stroke-dasharray':mode=='futuro'?'4 3':'',opacity:1},rg)}
+  if(mode=='hoy')drop(0,4,7)}
+ function tag(x,y,w,h,mode,lines,focus){
+  E('rect',{x,y,width:w,height:h,rx:5,fill:'#f8f1dc',stroke:mode=='hoy'?SAL:INK,'stroke-width':mode=='hoy'?3:1.5,'stroke-dasharray':mode=='futuro'?'5 3':''},s);
+  E('circle',{cx:x+w/2,cy:y-0,r:0},s);return}
+ for(let i=0;i<8;i++){
+  const mode=i<2?'hecho':i==2?'hoy':'futuro',sd=SD[i];
+  if(i==7){ /* copa */
+   E('path',{d:`M${NX[i]} ${NY[i]} L${NX[i]-40} ${NY[i]-28} M${NX[i]} ${NY[i]} L${NX[i]+40} ${NY[i]-28} M${NX[i]} ${NY[i]} L${NX[i]} ${NY[i]-34}`,stroke:INK,'stroke-width':2.5,'stroke-dasharray':'5 3',fill:'none'},g);
+   rosette(NX[i]-42,NY[i]-44,20,'futuro');rosette(NX[i]+42,NY[i]-44,20,'futuro');rosette(NX[i],NY[i]-52,22,'futuro');
+   E('rect',{x:NX[i]-64,y:6,width:128,height:34,rx:5,fill:'#f8f1dc',stroke:INK,'stroke-width':1.5,'stroke-dasharray':'5 3'},s);
+   E('text',{x:NX[i],y:21,'text-anchor':'middle','font-size':12},s,'Semana 8 · la copa');
+   E('text',{x:NX[i],y:36,'text-anchor':'middle','font-size':14,'font-weight':700},s,'100 % de antes');
+   continue}
+  const ex=NX[i]+sd*58,ey=NY[i]-42;
+  const bp=`M${NX[i]} ${NY[i]} C ${NX[i]+sd*20} ${NY[i]-6} ${ex-sd*20} ${ey+6} ${ex} ${ey}`;
+  E('path',{d:bp,stroke:INK,'stroke-width':mode=='futuro'?2:9,fill:'none','stroke-dasharray':mode=='futuro'?'5 4':'','stroke-linecap':'round'},g);
+  if(mode!='futuro')E('path',{d:bp,stroke:COR,'stroke-width':5,fill:'none','stroke-linecap':'round'},g);
+  rosette(ex,ey-6,22,mode);
+  if(mode=='hoy'){
+   const x=4,y=ey-76,w=150,h=168;
+   E('rect',{x,y,width:w,height:h,rx:6,fill:'#f8f1dc',stroke:SAL,'stroke-width':3},s);
+   E('path',{d:`M${x+w} ${ey} L${ex-24} ${ey-4}`,stroke:SAL,'stroke-width':2,'stroke-dasharray':'3 3'},s);
+   E('text',{x:x+10,y:y+20,'font-size':12,style:'fill:#8f1d22','font-weight':700,'letter-spacing':1},s,'AQUÍ · SEMANA 3');
+   E('text',{x:x+10,y:y+44,'font-size':26,'font-weight':700},s,'55 %');
+   [['Sentadilla','45'],['Banca','32,5'],['Muerto','50'],['Remo','27,5'],['Militar','20']].forEach((c,j)=>{
+    E('text',{x:x+10,y:y+68+j*20,'font-size':14,'font-style':'italic'},s,c[0]);
+    E('text',{x:x+w-10,y:y+68+j*20,'font-size':14,'font-weight':700,'text-anchor':'end'},s,c[1]+' kg')});
+   E('text',{x:x+10,y:y+h-8,'font-size':12,style:'fill:#5b5a4a'},s,'2 series · suave');
+  }else{
+   const w=92,h=38,x=sd>0?ex+28:ex-28-w,y=ey-18;
+   E('rect',{x,y,width:w,height:h,rx:5,fill:'#f8f1dc',stroke:INK,'stroke-width':1.5,'stroke-dasharray':mode=='futuro'?'5 3':''},s);
+   E('text',{x:x+w/2,y:y+15,'text-anchor':'middle','font-size':12,style:'fill:#5b5a4a'},s,'Sem. '+(i+1)+(mode=='hecho'?' (hecha)':''));
+   E('text',{x:x+w/2,y:y+32,'text-anchor':'middle','font-size':15,'font-weight':700},s,P[i]+' %')}
+ }
+})();
+
+/* ---------- P2: anillos ---------- */
+(function(){const g=document.getElementById('anillos'),cx=92,cy=92;
+ function blob(r,ph,amp){let d='';for(let i=0;i<=48;i++){const a=i/48*Math.PI*2,rr=r+amp*Math.sin(a*3+ph)+amp*.6*Math.sin(a*5+ph*2);d+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1)}return d+'Z'}
+ E('path',{d:blob(76,1,2),fill:COR,stroke:INK,'stroke-width':2.5},g);
+ E('path',{d:blob(66,2,2),fill:'#ead9a8',stroke:INK},g);
+ E('path',{d:blob(55,3,2),fill:'none',stroke:INK,'stroke-width':2.2,'stroke-dasharray':'3 4'},g);
+ E('path',{d:blob(40,4,2),fill:'none',stroke:INK,'stroke-width':2.4},g);
+ E('path',{d:blob(24,5,1.5),fill:'none',stroke:INK,'stroke-width':2.4},g);
+ E('path',{d:blob(9,6,1),fill:SAL,stroke:INK},g);
+ E('path',{d:`M${cx} ${cy} L${cx+62} ${cy-30}`,stroke:INK,opacity:.35},g);
+ const t=document.getElementById('anillos').parentNode;
+ E('text',{x:cx+24,y:cy+46,'font-size':12,'text-anchor':'middle',style:'fill:#2a2f26'},t,'');
+})();
+
+/* ---------- P2: la rama que espera ---------- */
+(function(){const g=document.getElementById('espera');
+ function rama(x,steps,dash){E('path',{d:`M${x} 135 C ${x} 105 ${x} 90 ${x} 70`,stroke:INK,'stroke-width':14,fill:'none','stroke-linecap':'round'},g);E('path',{d:`M${x} 135 L${x} 70`,stroke:COR,'stroke-width':9,fill:'none','stroke-linecap':'round'},g)}
+ /* izquierda: la rama espera */
+ rama(103);
+ E('path',{d:'M103 100 C 118 90 130 78 138 66',stroke:INK,'stroke-width':8,fill:'none','stroke-linecap':'round'},g);E('path',{d:'M103 100 C 118 90 130 78 138 66',stroke:COR,'stroke-width':4,fill:'none'},g);
+ E('path',{d:leaf(30,9),transform:'translate(103 62)',fill:VER,stroke:INK,'stroke-width':1.8},g);
+ E('path',{d:leaf(30,9),transform:'translate(138 56) rotate(35)',fill:'none',stroke:INK,'stroke-width':1.8,'stroke-dasharray':'4 3'},g);
+ E('path',{d:leaf(22,7),transform:'translate(138 56) rotate(35) scale(.7)',fill:'none',stroke:INK,'stroke-width':1.3,'stroke-dasharray':'3 3'},g);
+ E('text',{x:162,y:50,'font-size':20,'font-weight':700,style:'fill:#8f1d22'},g,'55 %');
+ E('text',{x:162,y:68,'font-size':12},g,'espera');
+ /* derecha: baja un escalón */
+ rama(309);
+ E('path',{d:'M309 108 C 300 96 292 86 286 78',stroke:INK,'stroke-width':8,fill:'none','stroke-linecap':'round'},g);E('path',{d:'M309 108 C 300 96 292 86 286 78',stroke:COR,'stroke-width':4,fill:'none'},g);
+ E('path',{d:leaf(30,9),transform:'translate(309 62)',fill:VER,stroke:INK,'stroke-width':1.8},g);
+ E('path',{d:leaf(26,8),transform:'translate(286 74) rotate(-40)',fill:'#a7b8a0',stroke:INK,'stroke-width':1.8},g);
+ E('text',{x:330,y:90,'font-size':20,'font-weight':700,style:'fill:#8f1d22'},g,'45 %');
+ E('text',{x:330,y:108,'font-size':12},g,'un escalón');
+ E('path',{d:'M10 135 H402',stroke:INK,'stroke-width':1.2},g);
+})();
+
+/* ---------- P3: la copa y las hojas que caen ---------- */
+(function(){const s=document.getElementById('caen'),cap=document.getElementById('cap3');
+ const g=E('g',{filter:'url(#mano3)'},s);
+ /* suelo */
+ E('path',{d:'M10 590 H402',stroke:INK,'stroke-width':1.5},g);
+ for(let i=0;i<30;i++)E('path',{d:`M${14+i*13} 590 l-5 9`,stroke:INK,opacity:.5},g);
+ /* tronco y espina */
+ E('path',{d:'M206 590 C 200 520 212 450 206 388',stroke:INK,'stroke-width':44,fill:'none','stroke-linecap':'round'},g);
+ E('path',{d:'M206 590 C 200 520 212 450 206 388',stroke:COR,'stroke-width':38,fill:'none','stroke-linecap':'round'},g);
+ E('path',{d:'M206 388 L206 150',stroke:INK,'stroke-width':12,fill:'none'},g);E('path',{d:'M206 388 L206 150',stroke:COR,'stroke-width':7,fill:'none'},g);
+ const arc=(cx,cy,rx,ry,t0,t1)=>{let d='';for(let i=0;i<=20;i++){const t=(t0+(t1-t0)*i/20)*Math.PI/180;d+=(i?'L':'M')+(cx+rx*Math.cos(t)).toFixed(1)+' '+(cy-ry*Math.sin(t)).toFixed(1)}return d};
+ E('path',{d:arc(206,360,165,210,175,5),stroke:INK,'stroke-width':6,fill:'none'},g);
+ E('path',{d:arc(206,360,100,130,165,15),stroke:INK,'stroke-width':6,fill:'none'},g);
+ E('path',{d:arc(206,360,165,210,175,5),stroke:COR,'stroke-width':3,fill:'none'},g);
+ E('path',{d:arc(206,360,100,130,165,15),stroke:COR,'stroke-width':3,fill:'none'},g);
+ E('path',{d:'M206 388 C 150 380 80 350 42 322 M206 388 C 262 380 332 350 370 322',stroke:INK,'stroke-width':4,fill:'none'},g);
+ const pts=[];
+ for(let i=0;i<8;i++){const t=(170-i*160/7)*Math.PI/180;pts.push([206+165*Math.cos(t),360-210*Math.sin(t)])}
+ for(let i=0;i<6;i++){const t=(160-i*120/5)*Math.PI/180;pts.push([206+100*Math.cos(t),360-130*Math.sin(t)])}
+ const lay=E('g',{},s);
+ pts.forEach((p,i)=>{const n=i+1,w=82-0.5*n;
+  let txt='Semana '+n+' · '+fmt(w)+' kg previsto.';
+  if(n==1)txt='Semana 1 · 81,5 kg. La hoja ya cayó.';
+  if(n==2)txt='Semana 2 (ahora) · hoy 81,4 kg. La hoja se está soltando.';
+  if(n==14)txt='Semana 14 · 75 kg · 8 de febrero de 2027. La última hoja.';
+  const q=E('g',{class:'tap',tabindex:0,role:'button','aria-label':txt},lay);
+  const caida=n==1,suelta=n==2;
+  if(!caida){
+   const rot=suelta?150:180;
+   E('path',{d:leaf(46,13),transform:`translate(${p[0]} ${p[1]+10}) rotate(${rot})`,fill:suelta?'#d9c97a':VER,stroke:INK,'stroke-width':1.8,'stroke-dasharray':suelta?'4 3':'',filter:'url(#mano3)'},q);
+   if(suelta)drop(p[0]+14,p[1]+56,5);
+  }else{
+   E('path',{d:'M'+p[0]+' '+(p[1]+10)+' l0 10',stroke:INK,'stroke-width':2},q);
+   E('path',{d:leaf(46,13),transform:'translate(70 592) rotate(78)',fill:'#d9c97a',stroke:INK,'stroke-width':1.8,filter:'url(#mano3)'},q);
+  }
+  E('circle',{cx:p[0],cy:p[1],r:11,fill:'#f8f1dc',stroke:n==14?SAL:INK,'stroke-width':n==14?3:1.5},q);
+  E('text',{x:p[0],y:p[1]+4,'text-anchor':'middle','font-size':12,'font-weight':700},q,n);
+  E('circle',{cx:p[0],cy:p[1]+14,r:22,class:'foco'},q);
+  const go=()=>{cap.textContent=txt};q.addEventListener('click',go);q.addEventListener('keydown',e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();go()}})});
+ /* etiquetas */
+ function etq(x,y,w,h,l1,l2,l3,col){E('rect',{x,y,width:w,height:h,rx:5,fill:'#f8f1dc',stroke:col||INK,'stroke-width':col?3:1.5},s);
+  E('text',{x:x+w/2,y:y+20,'text-anchor':'middle','font-size':12,style:'fill:#5b5a4a'},s,l1);
+  E('text',{x:x+w/2,y:y+42,'text-anchor':'middle','font-size':20,'font-weight':700,style:col?'fill:'+col:''},s,l2);
+  if(l3)E('text',{x:x+w/2,y:y+58,'text-anchor':'middle','font-size':12},s,l3)}
+ E('path',{d:'M43 368 V452',stroke:INK,'stroke-dasharray':'3 4'},s);
+ E('path',{d:'M300 340 L352 452',stroke:SAL,'stroke-dasharray':'3 4','stroke-width':1.5},s);
+ etq(4,452,104,66,'Salida','82 kg');
+ etq(298,452,110,66,'Meta · 8 feb 2027','75 kg','−0,5 kg/semana',SAL);
+ E('text',{x:79,y:614,'text-anchor':'middle','font-size':16,'font-weight':700},s,'Hoy: 81,4 kg');
+ E('text',{x:270,y:614,'text-anchor':'middle','font-size':12,style:'fill:#5b5a4a'},s,'semana 2 de 14');
+})();
+
+/* ---------- P3: siete frutos ---------- */
+(function(){const s=document.getElementById('frutos'),cap=document.getElementById('cap4');
+ E('text',{x:206,y:24,'text-anchor':'middle','font-size':15,'font-weight':700},s,'El plan de comidas: siete frutos');
+ const F=[['L','Lunes',2000],['M','Martes',2000],['X','Miércoles',2000],['J','Jueves',2250],['V','Viernes',1850],['S','Sábado',2000],['D','Domingo',1900]];
+ const k=n=>String(n).replace(/(\d)(\d{3})$/,'$1.$2');
+ const g=E('g',{filter:'url(#mano)'},s);
+ E('path',{d:'M10 150 H402',stroke:INK,'stroke-width':1.5},g);
+ for(let i=0;i<30;i++)E('path',{d:`M${14+i*13} 150 l-5 9`,stroke:INK,opacity:.5},g);
+ F.forEach((f,i)=>{const x=36+i*56.7,pas=f[2]>2100,r=pas?29:24,y=150-r-30;
+  const q=E('g',{class:'tap',tabindex:0,role:'button','aria-label':f[1]+': '+f[2]+' kcal y 140 g de proteína'+(pas?'. Se pasa 250 kcal.':'')},s);
+  const gg=E('g',{filter:'url(#mano)'},q);
+  E('path',{d:`M${x} ${150} C ${x-6} ${150-14} ${x+5} ${150-20} ${x} ${y+r}`,stroke:INK,'stroke-width':2,fill:'none'},gg);
+  E('path',{d:`M${x} ${y+r-2} q-12 -4 -16 6 q10 4 16 -6z`,fill:VER,stroke:INK},gg);
+  E('circle',{cx:x,cy:y,r,fill:pas?'#e9a05a':'#e3b04b',stroke:pas?SAL:INK,'stroke-width':pas?3.5:2},gg);
+  if(pas)E('path',{d:`M${x+r-6} ${y-14} a12 12 0 0 0 0 24 a8 8 0 0 1 0 -24z`,fill:'#f2e8cf',stroke:INK},gg);
+  E('circle',{cx:x-7,cy:y-6,r:2,fill:INK,opacity:.5},gg);E('circle',{cx:x+4,cy:y+8,r:2,fill:INK,opacity:.5},gg);
+  E('circle',{cx:x,cy:y,r:r+4,class:'foco'},q);
+  E('text',{x,y:176,'text-anchor':'middle','font-size':16,'font-weight':700},q,f[0]);
+  E('text',{x,y:194,'text-anchor':'middle','font-size':12,'font-weight':pas?700:400,style:pas?'fill:#8f1d22':''},q,k(f[2]));
+  if(pas){E('path',{d:`M${x} 204 l-8 12 h16z`,fill:SAL},q);E('text',{x,y:232,'text-anchor':'middle','font-size':12,'font-weight':700,style:'fill:#8f1d22'},q,'se pasa +250')}
+  const txt=f[1]+' · '+k(f[2])+' kcal · 140 g de proteína'+(pas?' · se pasa 250 kcal.':(f[2]<2000?' · '+(2000-f[2])+' menos para compensar.':'.'));
+  const go=()=>{cap.textContent=txt};q.addEventListener('click',go);q.addEventListener('keydown',e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();go()}})});
+ E('text',{x:206,y:245,'text-anchor':'middle','font-size':12,style:'fill:#5b5a4a'},s,'7 días × 2.000 = 14.000 kcal a la semana');
+})();
+</script>
+</body>
+</html>
