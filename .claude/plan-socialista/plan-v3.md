@@ -12,6 +12,8 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
+**La Reforma · R1 · Fintonic** (sesión nueva): el fallo de «belleza», revisión editable, cuenta de control y pegar texto.
+
 **Ley de La Noche · N3 · pasar a main** (sesión aparte): repaso final de N1 y N2 y pasar a `main`. N1 y N2 hechas el 29/10 en la rama (El cartel; hoja He vuelto/He llegado, Alarmas, Tu semana, sugerencia de la cama, `.ics` apagado).
 
 ## Por hacer
@@ -78,7 +80,7 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 [v3-reforma] «nueva reforma y hacerla ya»: fijos más bonitos y «te queda», gasto grande frente al ahorro, Fintonic
 mal («300 y pico en belleza»), la compra base (pollo, lomo, pescado de 1 kg) hecha semana con platos congelables,
 proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen, Hoy con dinero y trabajo (2026-10-29).
-**Espera al usuario:** presupuesto (~15 M), Bosque/Ahorro y compartir recetas. Sesiones «La Reforma · R<n> · …».
+**Aprobada por delegación** (29/10): ~15 M; el Consejo elige maquetas y pasa a main; Bosque y Ahorro juntos del todo; recetas con botón Compartir. Sesiones «La Reforma · R<n> · …».
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
