@@ -1629,7 +1629,7 @@ cambia las tandas. En un día de guardia no se apunta texto libre (ofrece hospit
 cenas. «A ojo» es pequeña 250 / mediana 450 / grande 700 kcal, con reparto supuesto 15 % P · 50 % HC · 35 % G, y no se
 memoriza. Si no hay nada en la nevera, la sugerencia de vitaminas propone el alimento más rico en ese micro.
 
-## 2026-10-29 · La Vuelta: entreno de 15 a 16, vuelta al 35 %, objetivo de peso y dos dibujos
+## La Vuelta: entreno de 15 a 16, vuelta al 35 %, objetivo de peso y dos dibujos (2026-10-29 · V1-V2)
 
 Consejo de Ministros (acta `.claude/plan-socialista/consejo/2026-10-28-deporte.md`) y concurso «La Vuelta» en dos rondas:
 el usuario eligió **La Sombra del Teide** y **Los Bancales** (`maquetas/deporte2-1-sombra-teide.html`,
