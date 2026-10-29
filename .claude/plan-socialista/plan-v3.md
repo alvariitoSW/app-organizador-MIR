@@ -59,6 +59,19 @@ De dónde sale el ahorro:
 Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) → V1 → V2. [aparc-comida-entreno] se cierra en V1
 (con entreno a las 15:00 la comida de después pasa a ~16:30). V1 es el primer trozo de [v3-entrenador].
 
+### Tanda La Noche (los tiempos del día: Lloret, cama, despertar y salir) · Consejo 2026-10-29 · acta `consejo/2026-10-29.md`
+
+[v3-calendario-sueno] «mejorar la parte principal del calendario… me estoy yendo al Lloret a fumar tarde, me acuesto
+tarde y me cuesta despertarme a las 6:45, llego tarde al curro; que la app me ayude con los tiempos» (2026-10-29).
+**Espera tus 3 respuestas y el presupuesto** (preguntas en el acta). Va antes de [v3-coach] (Consejo, 2026-10-29).
+
+| # | Sesión | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|
+| N0 | Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
+| N1 | Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
+| N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
+| N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
+
 ### Después (sin planificar todavía)
 
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
