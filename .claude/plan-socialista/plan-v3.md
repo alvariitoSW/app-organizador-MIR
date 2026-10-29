@@ -87,6 +87,7 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- **Simulador de ventilación propio para residente** (2026-10-29): estudiado VentLoop; ideas, ecuaciones y qué cambiar en `docs/informe-ventilador-2026-10.md`. Falta decidir si va en esta app o aparte, y los modos y casos de la primera versión.
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 

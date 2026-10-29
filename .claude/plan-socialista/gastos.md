@@ -53,6 +53,7 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n1 | construir | opus-5-5 + sonnet-5-5 | 2 | 66 | **1,1 M** | Construir N1 la cuenta atrás (76 %) | N1 de La Noche: cartel arriba de Hoy en 4 modos, quita sueño y mañana suelta; obra sonnet ~0,87 M, capturas ~0,08 M |
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
 | 2026-10-29 | la-noche-n3 | desplegar | opus-5-5 + sonnet-5-5 | 1 | 42 | **643 k** | sesión principal (75 %) | repaso del verificador, 2 arreglos con prueba (nota de Vete, apilado 07:58), suite 813/813 y main ec1370b |
+| 2026-10-29 | ventilador-ri | estudio | opus-5-5 | 0 | 28 | **587 k** | sesión principal (100 %) | web bloqueada al principio (un mensaje perdido); el código ordenado con prettier y leído por trozos bastó, sin ayudantes |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan

@@ -3,6 +3,15 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-29 · Estudio del simulador de ventilación VentLoop
+
+**Elegido:** solo informe (`docs/informe-ventilador-2026-10.md`): qué hace VentLoop y cómo calcula
+(VC/PC/PSV, Rohrer, 64 unidades con apertura y cierre, pared torácica, Pmus, gases y circulación,
+Canvas 2D con paso fijo de 2 ms), y qué aprovechar o cambiar para un simulador nuestro de residente.
+Leído de la web pública, sin copiar código ni textos (lo descargado queda fuera del repositorio).
+**Descartado:** entrar en la app con cuenta (`vent.nodefield.jp`) y construir nada todavía: falta que el
+usuario decida dónde va y qué modos y casos lleva. **Supuestos:** los del registro `sup-2026-10-29-ventilador`.
+
 ## 2026-10-27 · Gastar menos tokens por sesión
 
 **Elegido** (visto bueno del usuario): REA deja de cargarse en cada sesión (`.mcp.json` → `tools/rea.mcp.json`;
