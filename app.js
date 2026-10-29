@@ -16894,6 +16894,7 @@ function regresoCardHTML(sel){
     '<p class="mini">'+vu.hechos+' de '+vu.dias+' entrenos de esta semana</p>'+
     (rt&&!ui.gymSesionActiva?'<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(rt.nombre)+' (vuelta)</button>':'')+
     '<button class="btn s gvplan" data-a="gym-panel" data-p="regreso">ver el plan entero y el porqué ›</button></div>';}
+function diaMesTxt(key){const d=parseDate(key);return d?d.getDate()+' '+MON[d.getMonth()]:String(key||'');}
 function renderGymPeso(){
   /* «Tu objetivo de peso»: meta, ritmo, lo que sale (kcal, proteína, fecha) y la gráfica del peso. Todo en el móvil. */
   const p=perfilS(),o=p.objetivo||{},ob=objetivoPeso(),ps=p.pesos.slice(-60);
@@ -16910,14 +16911,17 @@ function renderGymPeso(){
     '<div class="card"><div class="cap gvcap">TU META</div>'+
       (sin?'<p class="mini">Para calcularlo faltan tu peso, altura, edad y sexo (Ajustes → perfil).</p>':'')+
       '<label class="fld">peso de meta (kg)<input type="number" inputmode="decimal" min="30" max="300" step="0.5" value="'+(+o.kg>0?o.kg:'')+'" data-a="obj-kg"></label>'+
-      '<div class="cap gvcap" style="margin-top:10px">RITMO (kg por semana)</div><div class="chips">'+OBJ_RITMOS.map(function(r){
+      '<div class="cap gvcap" style="margin-top:10px">RITMO (kg por semana)</div><div class="chips gpesorit">'+OBJ_RITMOS.map(function(r){
         return '<button class="chipx'+((+o.ritmo||0.5)===r?' on':'')+'" data-a="obj-ritmo" data-v="'+r+'">'+fmtC(r)+'</button>';}).join('')+'</div></div>'+
     (ob&&ob.perder?'<div class="card"><div class="cap gvcap">TU CUENTA</div><div class="big">'+ob.kcal+' kcal al día</div>'+
-      '<p class="mini">Proteína: <b>'+ob.prot+' g</b> al día · de '+fmtKg(ob.partida)+' a '+fmtKg(ob.meta)+' kg a '+fmtC(ob.ritmo)+' kg por semana: <b>'+ob.semanas+' semanas</b>, hacia el '+esc(fechaCortaTxt(ob.fecha))+'.</p>'+
+      '<p class="mini">Proteína: <b>'+ob.prot+' g</b> al día · de '+fmtKg(ob.partida)+' a '+fmtKg(ob.meta)+' kg a '+fmtC(ob.ritmo)+' kg por semana: <b>'+ob.semanas+' semanas</b>, hacia el '+esc(fechaCortaTxt(ob.fecha))+' de '+esc(MON[(parseDate(ob.fecha)||new Date()).getMonth()])+'.</p>'+
       (ob.topes.length?'<p class="mini" style="color:var(--warn,var(--ink2))">'+ob.topes.map(function(t){return esc(TOPE[t]);}).join('. ')+'.</p>':'')+
       (p.meta!=='perder'?'<button class="btn s" data-a="obj-usar">usar estas kcal (poner mi meta en «perder»)</button>':'<p class="mini">Estas son ya tus kcal de Comer.</p>')+'</div>':
      (ob?'<div class="card"><p class="mini">Tu meta no está por debajo de tu peso de ahora ('+fmtKg(ob.partida)+' kg): no hay déficit que calcular.</p></div>':''))+
     '<div class="card"><div class="cap gvcap">TU PESO</div>'+(svg||'<p class="mini">Apunta tu peso un par de días y sale la gráfica.</p>')+
+      /* la gráfica se estira al ancho y sus textos saldrían deformados: las cifras van debajo, en texto */
+      (svg?'<p class="mini gpesoeje"><span>'+esc(diaMesTxt(ps[0].k))+' · <b>'+fmtKg(ps[0].kg)+' kg</b></span><span>'+esc(diaMesTxt(ps[ps.length-1].k))+' · <b>'+fmtKg(ps[ps.length-1].kg)+' kg</b></span></p>'+
+        (ob?'<p class="mini">La línea verde a rayas es tu meta: <b>'+fmtKg(ob.meta)+' kg</b>.</p>':''):'')+
       '<p class="mini">Partes de '+(pesoPartida()?fmtKg(pesoPartida())+' kg (media de tus últimos 7 días apuntados)':'—')+'.</p></div>'+
     '<div class="card"><p class="mini">Si has tenido problemas con la comida, habla antes con tu médico/a. Estos números son una guía, no una dieta. Todo se queda en tu móvil.</p>'+
       (+o.kg>0?'<button class="btn s" data-a="obj-quitar">quitar el objetivo</button>':'')+'</div></div>';}

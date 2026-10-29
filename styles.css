@@ -3954,3 +3954,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .lamm svg{display:block;width:100%;height:auto;border-radius:8px}
 .lamm .tnom{font-size:13px;font-weight:800;text-align:center}
 .lamm.on{border-color:var(--brand)}
+
+/* objetivo de peso: el chip «1» quedaba en 34 px de ancho; las fechas de la gráfica a los dos lados */
+.gpesorit .chipx{min-width:44px;min-height:44px;justify-content:center}
+.gpesoeje{display:flex;justify-content:space-between;gap:8px;margin:4px 0 0}

@@ -1628,3 +1628,30 @@ se saltó. Zinc, yodo, selenio, fósforo y sal (casi siempre «sin datos»). El 
 cambia las tandas. En un día de guardia no se apunta texto libre (ofrece hospital o táper). El pie de Semana cuenta solo
 cenas. «A ojo» es pequeña 250 / mediana 450 / grande 700 kcal, con reparto supuesto 15 % P · 50 % HC · 35 % G, y no se
 memoriza. Si no hay nada en la nevera, la sugerencia de vitaminas propone el alimento más rico en ese micro.
+
+## 2026-10-29 · La Vuelta: entreno de 15 a 16, vuelta al 35 %, objetivo de peso y dos dibujos
+
+Consejo de Ministros (acta `.claude/plan-socialista/consejo/2026-10-28-deporte.md`) y concurso «La Vuelta» en dos rondas:
+el usuario eligió **La Sombra del Teide** y **Los Bancales** (`maquetas/deporte2-1-sombra-teide.html`,
+`deporte2-5-bancales.html`) y pidió las dos como temas en Ajustes. Ficha: `.claude/plan-socialista/fichas/v3-la-vuelta.md`.
+
+**Elegido.** Sin hora puesta a mano, el entreno va **entre semana a las 15:00 (50 min) en el gimnasio** y **el fin de
+semana a las 10:00 (40 min) en el parque**, con una rutina sin material (`franja`, `lugarEntreno`, `rutinaParque`). Si algo
+pisa las 15:00 entre semana, la alternativa es la **sesión mínima de 25 min a las 15:30** (3 ejercicios × 2 series, botón
+«mínima · 25 min»), nunca la tarde-noche. **El plan de vuelta** arranca al **35 %** (30 % «más suave», 40 % «más rápido»)
+y sube 10 puntos por semana hasta el 100 %. **Objetivo de peso** (Entreno → «Objetivo de peso»): kg de meta y ritmo
+(0,25-1 kg/semana) → kcal, proteína, semanas y fecha, con topes de seguridad (ritmo ≤1 % del peso/semana, déficit ≤25 %
+del gasto, kcal ≥ basal y ≥1.500, meta con IMC ≥18,5), la gráfica del peso y el aviso de hablar con el médico/a; con la
+meta en «perder», esas kcal son las de Comer. **La lámina** abre la portada de Entreno: el dibujo elegido en Ajustes →
+Cómo se ve → «Dibujo del entreno» (el Teide de fábrica) con lo que toca hoy (o «hoy no: guardia»), la semana, la vuelta o
+la racha y el peso, y **«Explícamelo · 45 s»** (5 frases × 9 s, se para, sin animar con movimiento reducido).
+
+**Descartado.** La Sobremesa, La Tortuga, El Sofá, El Reloj de Sol, El Drago y las otras cuatro de la 2.ª ronda; el jurado de
+modelo en la 2.ª ronda; filtrar la biblioteca openGym para el parque (lista fija de 6 ejercicios); «bajar un escalón» al
+fallar dos semanas (parar dos semanas ya rehace el plan).
+
+**Supuestos.** Las tres dudas del Consejo sin contestar se tomaron con lo recomendado: 50 min, 35 % y 0,5 kg/semana. Un
+plan de vuelta en curso guardado sin `ini` sigue con la fórmula vieja (60/70/75 → 100). Los círculos de la semana siguen
+debajo de la lámina aunque repiten los 7 días. Si un turno pisa las 15:00 y las 15:30, ese día no hay fuerza. Tres pruebas
+que dependían de la hora o del día de la semana (asistente antes de las 5:00, «Montar la semana» de jueves a domingo y la
+guardia del sábado antes del 1 de noviembre) se arreglaron en la prueba; ninguna se saltó.

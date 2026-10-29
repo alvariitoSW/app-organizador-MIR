@@ -13866,6 +13866,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.fill('#main [data-a="obj-kg"]', '72'); await page.keyboard.press('Tab'); await page.waitForTimeout(250);
     await page.click('#main [data-a="obj-ritmo"][data-v="0.5"]'); await page.waitForTimeout(250);
     r.b = await page.evaluate(() => { const P = window.PG, o = P.objetivoPeso(); return { o, basal: P.metabolismoBasal(), svg: !!document.querySelector('#main svg.gline'), txt: (document.querySelector('#main .big') || {}).textContent || '' }; });
+    r.f = await page.evaluate(() => { const m = document.getElementById('main'), meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      return { chips: [...m.querySelectorAll('[data-a="obj-ritmo"]')].map((b) => Math.round(b.getBoundingClientRect().width)), mes: new RegExp('hacia el \\S+ \\d+ de (' + meses.join('|') + ')').test(m.textContent),
+        eje: m.querySelectorAll('.gpesoeje span').length, meta: /tu meta: 72 kg/.test(m.textContent) }; });
     r.c = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 60 }]; p.pesoKg = 60; p.objetivo = { kg: 55, ritmo: 1 }; const o = P.objetivoPeso(); return { ritmo: o.ritmo, topes: o.topes, kcal: o.kcal }; });
     r.d = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 50, ritmo: 0.5 }; P.ui.gymPanel = 'peso'; P.render(); const o = P.objetivoPeso(); return { meta: o.meta, topes: o.topes, nota: /IMC/.test(document.getElementById('main').textContent) }; });
     r.e = await page.evaluate(() => { const P = window.PG, p = P.perfilS(); p.pesos = [{ k: P.iso(new Date()), kg: 80 }]; p.pesoKg = 80; p.objetivo = { kg: 72, ritmo: 0.5 }; p.meta = 'mantener'; const antes = P.kcalSugeridas(); P.render(); return { antes }; });
@@ -13876,6 +13879,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('la ficha «Objetivo de peso» de la portada abre su pantalla, con el aviso de hablar con el médico', r.a.panel === 'peso' && /objetivo de peso/i.test(r.a.tit) && r.a.aviso, JSON.stringify(r.a));
     check('meta 72 kg a 0,5 kg/semana: kcal ≥ basal y ≥1.500, proteína 160 g, semanas, fecha, gráfica y cifra en pantalla',
       r.b.o && r.b.o.perder && r.b.o.kcal >= 1500 && r.b.o.kcal >= r.b.basal && r.b.o.prot === 160 && r.b.o.semanas >= 10 && /^\d{4}-/.test(r.b.o.fecha) && r.b.svg && r.b.txt.indexOf(String(r.b.o.kcal)) >= 0, JSON.stringify(r.b));
+    check('objetivo de peso (verificador): los chips del ritmo miden ≥44 px de ancho, la fecha lleva el mes y la gráfica dice fechas, kilos y la meta',
+      r.f.chips.length === 4 && r.f.chips.every((w) => w >= 44) && r.f.mes && r.f.eje === 2 && r.f.meta, JSON.stringify(r.f));
     check('1 kg/semana con 60 kg de partida se recorta al 1 % del peso (0,6 kg/semana)', r.c.ritmo <= 0.6 && r.c.topes.indexOf('ritmo') >= 0 && r.c.kcal >= 1500, JSON.stringify(r.c));
     check('una meta de 50 kg con 175 cm se sube a la del IMC 18,5 (56,7 kg) y lo dice', r.d.meta >= 56.6 && r.d.topes.indexOf('imc') >= 0 && r.d.nota, JSON.stringify(r.d));
     check('«usar estas kcal» pone la meta en perder y kcalSugeridas pasa a las del objetivo', r.e.despues.meta === 'perder' && r.e.despues.k === r.e.despues.o && r.e.despues.k !== r.e.antes, JSON.stringify(r.e));
