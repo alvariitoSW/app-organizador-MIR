@@ -41,16 +41,16 @@ Ninguna abierta: todo lo decidió el Consejo por delegación (Resolución 1-4). 
 
 ## 4 · Pasos
 **N1** (~1,2 M)
-- [ ] P1 Prueba encadenada que falla: Hoy a las 21:20 con Lloret → abrir modo Línea → la pieza `.noche` dice «Vete del
+- [x] P1 Prueba encadenada que falla: Hoy a las 21:20 con Lloret → abrir modo Línea → la pieza `.noche` dice «Vete del
   Lloret» y «21:45»; tocar la fila → se despliega; pasar a Conductor → sigue arriba; no hay `.drsol`/`suenoHoyCard` ·
   tests/regression.test.js · sonnet · ~8
-- [ ] P2 Función pura `nocheCadena(key,nowMin)` (hitos con hora en minutos, cama del escalón; `pendientes`, `grande`
+- [x] P2 Función pura `nocheCadena(key,nowMin)` (hitos con hora en minutos, cama del escalón; `pendientes`, `grande`
   como en la maqueta) · app.js junto a `lloretPlan` · sonnet · ~10
-- [ ] P3 Componente `nocheHTML(key,esHoy)` (cartel LED + chips + desplegada) y CSS `.noche` · app.js `hoyDiaHTML` (justo
+- [x] P3 Componente `nocheHTML(key,esHoy)` (cartel LED + chips + desplegada) y CSS `.noche` · app.js `hoyDiaHTML` (justo
   después de `seg`) + styles.css · sonnet · ~12
-- [ ] P4 Quitar `horasSuenoHTML` de 7415, `suenoHoyCardHTML` de 7429 y `mananaHTML` de 5479 (su botón de salida vive en
+- [x] P4 Quitar `horasSuenoHTML` de 7415, `suenoHoyCardHTML` de 7429 y `mananaHTML` de 5479 (su botón de salida vive en
   la pieza) · app.js · sonnet · ~6
-- [ ] P5 `verificador` a 412×915: 21:20, 07:17, 4 modos; la prueba cae al revertir P3 y ninguna otra · ~6
+- [x] P5 `verificador` a 412×915: 21:20, 07:17, 4 modos; la prueba cae al revertir P3 y ninguna otra · ~6
 **N2** (~1,2 M)
 - [ ] P6 Pruebas encadenadas que fallan: «He vuelto» → −5 → Guardar → `lloret.vuelta[hoy]` y la cadena sin «Vete»;
   «He llegado» → `manana[hoy].llego` sobrevive a `normalize` · tests · haiku · ~8

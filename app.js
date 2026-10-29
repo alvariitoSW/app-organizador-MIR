@@ -5468,6 +5468,25 @@ function hoyQuedaHTML(it,key,n){
     (ya.length?'<div class="hlst"><button class="hya" data-a="hoy-hechas" aria-expanded="'+!!ui.hoyHechas+'">✓ '+ya.length+' hecha'+(ya.length===1?'':'s')+': '+
       esc(ya.map(function(x){return x.txt;}).join(', '))+'<span>'+(ui.hoyHechas?'▾':'▸')+'</span></button>'+
       (ui.hoyHechas?ya.map(function(x){return hoyFilaHTML(x,key,n);}).join(''):'')+'</div>':'');}
+/* LA NOCHE EN HOY: el cartel LED con lo siguiente («Vete del Lloret · 21:45 / en 25 min»), debajo una fila plegada con lo que
+   falta y, al tocarla, la cadena con sus notas. Va justo debajo del selector, igual en los 4 modos. El plegado vive en
+   ui.nocheAbierta (no se guarda). Otro día que no es hoy: solo la tira de la mañana, si hay algo apuntado. */
+function nocheHTML(key,esHoy){
+  if(!esHoy)return mananaHTML(key,false);
+  const C=nocheCadena(key,hoyNow(true));if(!C)return '';
+  const g=C.g,abierta=!!ui.nocheAbierta,P=C.pend;
+  const cartel='<div class="ncartel nled" role="status"><div class="l1">'+(g.ico||'')+' '+(g.h?esc(g.h.cartel):'')+(g.hora?' · '+esc(g.hora):'')+'</div>'+
+    '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div></div>';
+  const m=mananaDe(key),h=hoyNow(true)/60;
+  const sali=m&&m.salio==null&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
+    '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>':'';
+  let pie='';
+  if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
+    '<div class="ncad" id="nocheCad">'+P.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
+      (x.nota?'<small>'+esc(x.nota)+'</small>':'')+'</div><span class="nh">'+hm(x.hora)+'</span></div>';}).join('')+'</div>'+mananaHTML(key,true);
+  else if(P.length>1)pie='<button class="nchips" data-a="noche-plegar" aria-expanded="false" aria-controls="nocheCad" title="ver lo que falta">'+
+    P.slice(1,5).map(function(x){return '<span class="nchip">'+x.ico+' '+hm(x.hora)+(x.id==='desp'?' <small>fijo</small>':'')+'</span>';}).join('')+'<span class="nmas">▾</span></button>';
+  return '<div class="noche">'+cartel+sali+pie+'</div>';}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
@@ -5475,10 +5494,10 @@ function hoyDiaHTML(key,inf,esHoy){
     const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
     return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
-  if(m==='linea')return seg+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
-  if(m==='bus')return seg+hoyChoqueHTML(key,inf)+mananaHTML(key,esHoy)+hoyBusHTML(key,inf,esHoy);
+  if(m==='linea')return seg+nocheHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
+  if(m==='bus')return seg+nocheHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
-  return seg+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
+  return seg+nocheHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
 /* ===================== HOY DESDE EL ASIENTO DEL CONDUCTOR =====================
    fig/conductor.js dibuja el día como una ruta (ver su cabecera). Se pinta DENTRO de Hoy: el mismo
@@ -7341,6 +7360,38 @@ function lloretPlan(key){
   if(tope!=null&&pref>tope){de=tope;ajustado=true;}
   return {de:de,a:de+tot,vuelta:de+tot,bed:bed,wake:wake,tot:tot,ajustado:ajustado,cfg:c,
     justo:tope!=null?tope-de:null,pronto:de<18*60};}
+/* LA NOCHE: la cadena de hitos que va de salir al Lloret a llegar al trabajo, con minutos desde las 00:00 del día de la
+   noche (la mañana siguiente va +1440). De madrugada y por la mañana cuenta la noche de AYER. Reutiliza lloretPlan
+   (de, bed, wake), acostarsePara/suenoAnclaDe (sin despertador de ese día) y mananaPlan (bus y salida). Pura: no pinta. */
+function nocheFalta(d){return d<60?d+' min':Math.floor(d/60)+' h'+(d%60?' '+String(d%60).padStart(2,'0'):'');}
+function nocheCadena(key,nowMin){
+  const am=nowMin<12*60,d=am?iso(addDays(parseDate(key),-1)):key,now=am?nowMin+1440:nowMin;
+  const sig=nextIso(d),pl=lloretPlan(d),w=mins(pl.wake||suenoAnclaDe(sig));
+  if(w==null)return null;
+  const wake=w+1440,bed=acostarsePara(hm(w)),b0=mins(bed);
+  const cama=b0==null?null:(b0<12*60?b0+1440:b0),c=pl.cfg,H=[];
+  const ll=cama!=null&&lloretDe(d)?lloretDe(d):null;
+  if(ll){const casa=cama-c.margen,vete=casa-c.ida,ir=mins(ll.hora);
+    H.push({id:'ir',ico:'🌿',hora:ir!=null?ir:pl.de,cartel:'Sal al Lloret',corto:'Ir al Lloret',nota:'a tu hora de siempre'},
+      {id:'vete',ico:'🌿',hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · lo último allí antes de las '+hm(cama-60)},
+      {id:'casa',ico:'🏠',hora:casa,cartel:'En casa',corto:'En casa',nota:'pantallas fuera: el Lloret ya contó como rato sin pantalla'});}
+  if(cama!=null)H.push({id:'cama',ico:'🛌',hora:cama,cartel:'A la cama',corto:'A la cama',nota:'para dormir tus '+fmt(suenoCfg().min)+' h antes del despertador'});
+  H.push({id:'desp',ico:'⏰',hora:wake,cartel:'Despertador',corto:'Despertador',nota:'fijo, lejos de la cama y sin posponer'});
+  const P=mananaPlan();
+  if(P&&mananaDiaDeBus(sig)){const v=viajeCfg(),bus=Math.round(P.bus*60)+1440;
+    H.push({id:'salir',ico:'🚪',hora:Math.round(P.plan*60)+1440,cartel:'Sal de casa',corto:'Sal de casa',nota:v.antes+' min hasta la parada'},
+      {id:'bus',ico:'🚌',hora:bus,cartel:'Bus',corto:'Bus',nota:''},
+      {id:'llegar',ico:'🏢',hora:bus+v.min,cartel:'Llegas al trabajo',corto:'Llegas',nota:'sobre esta hora'});}
+  const pend=H.filter(function(h){return h.hora>now||(h.id==='llegar'&&now<h.hora+60);});
+  /* la frase grande: «Vete del Lloret · 21:45 / en 25 min»; por la mañana, «Bus en 18 min · sal de casa a las 07:31» */
+  let g={txt:'Buen día',sub:'',h:null};const h=pend[0];
+  if(h){const dd=h.hora-now,bs=H.filter(function(x){return x.id==='bus';})[0];
+    if(h.id==='desp'&&dd>60)g={txt:'Despertador '+hm(h.hora),sub:'quedan '+nocheFalta(dd)+' de sueño',h:h,ico:'⏰',sinCuenta:true};
+    else if((h.id==='salir'||h.id==='bus')&&bs){const db=bs.hora-now,ant=bs.hora-H.filter(function(x){return x.id==='salir';})[0].hora;
+      g={txt:'Bus en '+nocheFalta(db),hora:hm(bs.hora),sub:db>ant?'sal de casa a las '+hm(bs.hora-ant):'¡a la parada!',h:bs,ico:'🚌',min:db};}
+    else if(h.id==='llegar'&&dd<=0)g={txt:'¿Ya en el trabajo?',sub:'sobre la hora del trabajo',h:h,ico:'🏢'};
+    else g={txt:h.cartel+' en '+nocheFalta(dd),hora:hm(h.hora),sub:h.nota,h:h,ico:h.ico,min:dd};}
+  return {noche:d,now:now,hitos:H,pend:pend,g:g};}
 let _llTick=-1,_llCache={},_llEv=null,_llN=-1,_llCfg=null;
 function lloretDe(key){
   /* memorizado por pintado (y por si cambian los eventos o la config a mano): las rachas y el
@@ -7412,7 +7463,7 @@ function renderHoy(){
     /* el pie: las horas del sueño y del sol, y cuánto llevas comido frente al plan */
     /* con el conductor, el sueño, el sol y lo comido ya van en el salpicadero */
     (hoyModo()==='bus'?'':'<div class="hoypie">'+
-      '<div class="drsol">'+horasSuenoHTML(hoy,inf)+solPiesHTML(hoy)+'</div>'+
+      '<div class="drsol">'+solPiesHTML(hoy)+'</div>'+
       '<button class="hoykcal" data-a="hoy-food-obj" title="cambiar el objetivo de kcal"><b>'+ft.kcal+'</b> / '+(pl.kcal||'—')+' kcal ›</button></div>')+
     '</div>'+
     /* el orden manda: primero el día, luego LO QUE HAY QUE HACER —entrenar, las tareas, lo que
@@ -7426,7 +7477,7 @@ function renderHoy(){
     /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
     /* con el conductor, el sueño y el «¿cómo amaneces?» van en la radio y «Para hoy» en el quiosco de la ciudad y
        el poste de los hábitos: debajo del dibujo solo queda lo que no está dentro de la cabina */
-    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':suenoHoyCardHTML()+paraHoyHTML(hoy))+loQueVieneHTML():
+    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
   hoyBusMonta();carrMonta('hoy');
@@ -24214,6 +24265,7 @@ function act(a,el){
       break;}
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
+    case 'noche-plegar':ui.nocheAbierta=!ui.nocheAbierta;render();break;
     case 'hoy-modo':{const v=el.dataset.v;ui.hoyModo=/^(reloj|linea)$/.test(v)?v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}
       if(v==='bus'||v==='est'){ui.hoyBusV=v==='est'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}}render();break;}
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
@@ -27506,7 +27558,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,

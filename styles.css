@@ -3921,3 +3921,27 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 /* objetivo de peso: el chip «1» quedaba en 34 px de ancho; las fechas de la gráfica a los dos lados */
 .gpesorit .chipx{min-width:44px;min-height:44px;justify-content:center}
 .gpesoeje{display:flex;justify-content:space-between;gap:8px;margin:4px 0 0}
+
+/* LA NOCHE (Hoy): cartel LED, fila de chips plegada y cadena desplegada. Siempre oscuro, como un letrero. */
+.noche{margin:8px 0 10px}
+.noche .ncartel{background:#05070c;border:2px solid #1d2433;border-radius:14px;padding:10px 14px;box-shadow:inset 0 0 18px rgba(0,0,0,.8)}
+.noche .nled{font-family:ui-monospace,Menlo,monospace;color:#ffc94a;text-shadow:0 0 6px rgba(255,190,60,.55);text-transform:uppercase;letter-spacing:1px}
+.noche .nled .l1{font-size:13px;opacity:.9}
+.noche .nled .l2{font-size:27px;font-weight:700;line-height:1.15}
+.noche .nled .l3{font:13px/1.3 system-ui,sans-serif;color:#ffe9b8;text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.noche .nsali{width:100%;min-height:44px;margin-top:8px}
+.noche .nchips{display:flex;gap:6px;align-items:center;width:100%;min-height:44px;margin-top:8px;padding:8px 10px;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--ink);font:inherit;cursor:pointer}
+.noche .nchip{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.noche .nchip+.nchip:before{content:"›";color:var(--ink2);margin-right:6px}
+.noche .nchip small{color:var(--ink2);font-size:11px}
+.noche .nmas{margin-left:auto;color:var(--ink2)}
+.noche .nplegar{min-height:44px;margin-top:8px}
+.noche .ncad{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px}
+.noche .ncf{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.noche .ncf:first-child{border-top:0}
+.noche .ncf.ya b{color:var(--brand)}
+.noche .ncf .nico{font-size:20px;width:28px;text-align:center}
+.noche .ncf div{flex:1;min-width:0}
+.noche .ncf small{display:block;color:var(--ink2);font-size:12px}
+.noche .ncf .nh{font-variant-numeric:tabular-nums;font-weight:700}

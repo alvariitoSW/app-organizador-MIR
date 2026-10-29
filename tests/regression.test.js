@@ -50,6 +50,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // «Hoy» abre de serie en la vista del conductor; las pruebas de antes son del reloj y la línea, que
   // siguen ahí: arrancan en el reloj como antes, y la 275 prueba el conductor
   await context.addInitScript(() => { try { if (!sessionStorage.getItem('__conductor')) localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} });
+  // la tarjeta «¿cómo has dormido?» y la tira de horas del pie ya no van en Hoy (las sustituye la pieza de la noche, N1);
+  // las pruebas de esas dos piezas las montan a mano con estas funciones para seguir midiendo su lógica
+  await context.addInitScript(() => { window.__snMonta = () => { const P = window.PG, g = document.querySelector('#main .grid'); if (!g) return;
+      document.querySelectorAll('#main .snhoy').forEach((e) => e.remove()); g.insertAdjacentHTML('beforeend', P.suenoHoyCardHTML()); };
+    window.__drsolMonta = () => { const P = window.PG, g = document.querySelector('#main .grid'); if (!g) return null; const hoy = P.iso(new Date());
+      document.querySelectorAll('#main .drsol-t').forEach((e) => e.remove()); g.insertAdjacentHTML('beforeend', '<div class="drsol drsol-t">' + P.horasSuenoHTML(hoy, P.dayInfo(hoy)) + '</div>'); return g.querySelector('.drsol-t'); }; });
   await context.grantPermissions(['camera']);
   const page = await context.newPage();
   const nativeDialogs = [];
@@ -3984,7 +3990,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(250);
     const hoySueno = await page.evaluate(() => {
       const P = window.PG, k = P.iso(new Date()), sl = P.sleepOf(k);
-      const tira = document.querySelector('#main .drsol');
+      const tira = window.__drsolMonta();
       return { bed: sl.bed, wake: sl.wake, txt: tira ? tira.innerText : '' };
     });
     check('«Hoy» enseña las dos horas del sueño sin tocar nada',
@@ -4010,7 +4016,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save(); P.render();
       // se mira en «Hoy», que es hoy (el día que esta prueba ha puesto de trabajo)
       P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render();
-      const f = document.querySelector('#main .drsol');
+      const f = window.__drsolMonta();
       const txt = f && f.querySelector('.pie.sue.corto') ? f.innerText : '';
       P.store.rhythm['sh-t'] = guardado;
       P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
@@ -4032,7 +4038,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rhythm['sh-t'].sleep = ''; P.store.rhythm['sh-t'].wake = '';
       P.save(); P.render();
       P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render();
-      const f = document.querySelector('#main .drsol');
+      const f = window.__drsolMonta();
       const txt = f && f.querySelector('.pie.sue.falta') ? f.innerText : '';
       P.store.rhythm['sh-t'] = guardado;
       P.setDayOverride(hoyK, ovAntes ? ovAntes.shift : null, ovAntes ? ovAntes.guard : '');
@@ -4240,10 +4246,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       // relativas y no «el sueño es la 1»)
       /* lunes y martes: antes del sueño va la puerta del informe de la semana */
       /* el entreno y las comidas ya no son tarjetas aparte: van en la lista del día, dentro de la primera */
-      dia.dia === 0 && dia.sueno > dia.dia && dia.sueno <= ([1, 2].includes(new Date().getDay()) ? 3 : 2) && dia.entrenar < 0 && dia.comidas < 0 &&
+      dia.dia === 0 && dia.sueno < 0 && dia.entrenar < 0 && dia.comidas < 0 &&
       /* los recibos, las notas y los hábitos van ahora juntos en «Para hoy», después del sueño; el sol
          ya no es una tarjeta (es la hoja del arco amarillo del reloj) */
-      dia.tareas > dia.sueno && dia.pagar < 0 && dia.alquiler && dia.sol < 0 &&
+      dia.tareas > dia.dia && dia.pagar < 0 && dia.alquiler && dia.sol < 0 &&
       /* el reloj de 24 h (≈300 px) y «lo siguiente» entran arriba: el tope sube a 3.100 */
       dia.alto < 3100 && dia.ancho <= 412, JSON.stringify(dia));
     await page.evaluate(() => {
@@ -7001,6 +7007,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.suenoRealS()[P.iso(new Date())] = undefined; delete P.suenoRealS()[P.iso(new Date())];
       P.ui.snTr = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
     await page.waitForTimeout(250);
+    await page.evaluate(() => window.__snMonta());
     const anotar = await page.$('.snhoy [data-a="sn-hoja"]');
     if (anotar) await anotar.click();
     await page.waitForTimeout(200);
@@ -8614,7 +8621,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       sr[P.iso(P.addDays(hoy, -2))] = { h: 6, guardia: false };
       sr[P.iso(P.addDays(hoy, -1))] = { h: 2, guardia: true, ratos: true, siesta: 3 };
       sr[P.iso(hoy)] = { h: 5, guardia: false };
-      P.save(); P.render(); const st = P.suenoEstado(P.iso(hoy));
+      P.save(); P.render(); window.__snMonta(); const st = P.suenoEstado(P.iso(hoy));
       return { nivel: st.nivel, suma: st.suma, card: (document.querySelector('.snhoy') || {}).textContent || '',
         listo: P.listoDe(P.iso(hoy)).motivos.join(' | '), deuda: typeof P.suenoDeuda };});
     await page.click('.snhoy .snhoyc'); await page.waitForTimeout(150);
@@ -9647,7 +9654,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // probar dos semanas, y la pregunta de cada mañana en Hoy
     await page.evaluate(() => { const P = window.PG; P.ui.snAj = 'hora'; P.render(); });
     await page.click('#snAj [data-a="sn-probar"]'); await page.waitForTimeout(120);
-    await page.evaluate(() => { const P = window.PG, x = P.store.sueno.pruebas[P.store.sueno.pruebas.length - 1]; x.desde = P.iso(P.addDays(new Date(), -2)); P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG, x = P.store.sueno.pruebas[P.store.sueno.pruebas.length - 1]; x.desde = P.iso(P.addDays(new Date(), -2)); P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.render(); window.__snMonta(); });
     await page.click('.snhoy [data-a="sn-prueba-dia"][data-v="1"]'); await page.waitForTimeout(120);
     r.prueba = await page.evaluate(() => { const P = window.PG, x = P.store.sueno.pruebas[P.store.sueno.pruebas.length - 1]; return { id: x.id, ayer: x.dias[P.iso(P.addDays(new Date(), -1))] }; });
     // el anillo de energía en el reloj de Hoy
@@ -9784,7 +9791,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { hoja: document.querySelector('#hojaDia .snres').innerText.replace(/\s+/g, ' '), boton: document.querySelector('#hojaDia .gbig').innerText }; });
     await page.click('#hojaDia [data-a="sn-tguardar"]'); await page.waitForTimeout(150);
     const tras = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), n = P.normalize(JSON.parse(JSON.stringify(P.store)));
-      const out = { total: P.fmtHM ? '' : '', cuenta: Math.round(P.suenoCuenta(k).h * 60), vuelta: JSON.stringify(n.suenoReal[k].tramos),
+      window.__snMonta(); const out = { total: P.fmtHM ? '' : '', cuenta: Math.round(P.suenoCuenta(k).h * 60), vuelta: JSON.stringify(n.suenoReal[k].tramos),
         card: (document.querySelector('.snhoy [data-a="sn-hoja"]') || {}).innerText || '' };
       P.store = window.__copia249; P.save(); P.render(); return out; });
     check('guardia 1:00–6:30 + 12:10–14:30 en casa = 7h50 en la hoja, al guardar, al recargar y en la tarjeta de Hoy (que sigue dejando añadir)',
@@ -10251,6 +10258,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0], ay = P.iso(P.addDays(new Date(), -1));
       P.store.suenoReal = {}; P.setDayOverride(ay, G.id, 'urg'); P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.waitForTimeout(150);
+    await page.evaluate(() => window.__snMonta());
     r.b = await page.evaluate(() => { const c = document.querySelector('#main .snhoy'), n = document.querySelector('#main .snhoy .snnota');
       return { t: c ? c.innerText.replace(/\s+/g, ' ') : '', nota: n ? n.innerText : '' }; });
     if (r.b.nota) { await page.click('#main .snhoy .snnota'); await page.waitForTimeout(150);
@@ -10337,6 +10345,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.cama = await page.evaluate(() => { const P = window.PG, h = P.iso(new Date()), ev = P.calEventos(h, h).filter((e) => /A la cama/.test(e.summ))[0];
       return { cama: P.snCamaDe(h), ev: ev && ev.hora, mañana: P.suenoAnclaDe(P.iso(P.addDays(new Date(), 1))) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); }); await page.waitForTimeout(120);
+    await page.evaluate(() => window.__snMonta());
     r.hoyCard = await page.evaluate(() => ((document.querySelector('#main .snhoy') || {}).innerText || '').replace(/\s+/g, ' '));
     await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'datos'; P.render(); }); await page.waitForTimeout(120);
     r.datos = await page.evaluate(() => [...document.querySelectorAll('#main .sntile')].map((e) => e.innerText.replace(/\s+/g, ' ')));
@@ -11311,7 +11320,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('el saliente a las 07:30 sigue de servicio hasta el relevo', /SERVICIO NOCTURNO/.test(r.f.nxl) && /hasta/.test(r.f.nxa), JSON.stringify(r.f));
     check('la guardia de sábado acaba al día siguiente (24 h la de urgencias, 25¼ h la UMI) y el saliente empieza de servicio',
       r.k.urg[0] === '24@9' && /^24@-15$/.test(r.k.sal[0] || '') && r.k.umi[0] === '25.25@10' && r.k.it > 1440, JSON.stringify(r.k));
-    check('elegir «Reloj» se recuerda y vuelve la vista de antes con su tarjeta de Sueño', r.j.ls === 'reloj' && !r.j.bus && r.j.snhoy, JSON.stringify(r.j));
+    check('elegir «Reloj» se recuerda y vuelve la vista de antes (la tarjeta de Sueño ya no va en Hoy: la sustituye la pieza de la noche)', r.j.ls === 'reloj' && !r.j.bus && !r.j.snhoy, JSON.stringify(r.j));
   }
   // 277) MES CON LAS FICHAS ESTÁTICAS, EL CARNÉ Y LA HOJA DEL MES, EN CADENA: (a) cada casilla va entera del
   // color de su tipo de día y la guardia escribe sus horas; (b) el carné dice
@@ -12990,6 +12999,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(200);
     r.pista0 = await page.evaluate(() => (document.querySelector('#main .cd [data-r="rh"]') || {}).textContent || '');
     const caja = (sel) => page.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, bottom: b.bottom }; }, sel);
+    // la pieza de la noche empuja el dibujo hacia abajo: se lleva la radio a la vista antes de tocarla
+    await page.evaluate(() => { const e = document.querySelector('#main .cd g[data-o="radio"] rect.cd-tkb'); if (e) e.scrollIntoView({ block: 'center' }); });
     let c = await caja('#main .cd g[data-o="radio"] rect.cd-tkb');
     if (c) await page.mouse.click(c.x + c.w / 2, c.y + c.h / 2);
     await page.waitForTimeout(400);
@@ -14075,6 +14086,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.a.sesion && /EN CURSO/.test(r.b.hero) && r.b.seguir && !r.b.viejas && r.b.fila, JSON.stringify([r.a, r.b]));
     check('cambiar de día desde la lámina cambia el día elegido sin tirar la sesión en curso, y la fila ⚙ sigue abriendo el plan',
       !!d && r.c.cambia && r.c.sesion && /EN CURSO/.test(r.c.hero) && r.d === 'plan', JSON.stringify([r.c, r.d]));
+  }
+  // 359) LA NOCHE ARRIBA DE HOY, EN CADENA (N1, a 412×915): con «hoy» congelado el jueves 29/10/2026 a las 21:20, Lloretazo y
+  // despertador de las 6:45 el viernes (bus 7:35): (a) el cartel dice «Vete del Lloret · 21:45 / en 25 min» y la fila plegada trae
+  // 22:20 › 22:35 › 06:45 fijo; (b) pasando a Línea y a Reloj sigue arriba, sin las horas de sueño del pie ni la tarjeta del sueño;
+  // (c) tocar la fila la despliega (aria-expanded, notas, «▴ plegar»); (d) pasando a Conductor sigue desplegada y la tira de la
+  // mañana ya no va suelta; (e) a las 7:17 del viernes: «Bus en 18 min · sal de casa a las 07:31» y el botón «he salido» está en
+  // la pieza. Fija: las horas de sueño y la mañana repartidas por cuatro sitios, sin una cuenta atrás arriba del todo.
+  {
+    const vp359 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate359 || Date; window.__origDate359 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 20, 29);
+    await page.evaluate(() => { const P = window.PG; window.__copia359 = JSON.parse(JSON.stringify(P.store));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.setDayOverride('2026-10-29', SH.id, ''); P.setDayOverride('2026-10-30', SH.id, '');
+      P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {}; P.store.rotation.dayRhythm['2026-10-30'] = { wake: '06:45' }; P.store.rotation.dayRhythm['2026-10-31'] = { wake: '06:45' };
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10 });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), seg = document.querySelector('#main .hoyseg');
+      return { hay: !!n, arriba: !!(n && seg && seg.nextElementSibling === n), txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', chips: n ? [...n.querySelectorAll('.nchip')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()) : [],
+        exp: (n && n.querySelector('[data-a="noche-plegar"]') || { getAttribute: () => null }).getAttribute('aria-expanded'), alto: n && n.querySelector('[data-a="noche-plegar"]') ? Math.round(n.querySelector('[data-a="noche-plegar"]').getBoundingClientRect().height) : 0,
+        notas: n ? n.querySelectorAll('.ncf small').length : 0, sueno: !!document.querySelector('#main .pie.sue'), tarjeta: !!document.querySelector('#main .suenocard, #main [data-a="sueno-hoy"]'), tira: !!document.querySelector('#main .hoyest ~ .manana, #main > .grid .manana') }; });
+    const r = {};
+    r.a = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250);
+    r.b = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="reloj"]'); await page.waitForTimeout(250);
+    r.b2 = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250);
+    await page.click('#main .noche [data-a="noche-plegar"]'); await page.waitForTimeout(250);
+    r.c = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(300);
+    r.d = await lee();
+    await page.click('#main .noche [data-a="noche-plegar"]'); await page.waitForTimeout(250);
+    r.e = await lee();
+    await pon(7, 17, 30);
+    await page.evaluate(() => { const P = window.PG; P.ui.nocheAbierta = false; P.render(); });
+    await page.waitForTimeout(250);
+    r.f = await lee(); r.fBoton = await page.evaluate(() => !!document.querySelector('#main .noche [data-a="manana-sali"]'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia359; delete window.__copia359; P.ui.nocheAbierta = false; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate359; });
+    await page.setViewportSize(vp359);
+    check('a las 21:20 el cartel de la noche va arriba del todo: «Vete del Lloret · 21:45 / en 25 min» y la fila plegada trae 22:20, 22:35 y 06:45 fijo',
+      r.a.hay && r.a.arriba && /Vete del Lloret · 21:45/.test(r.a.txt) && /en 25 min/.test(r.a.txt) && r.a.chips.join('|').indexOf('22:20') >= 0 && r.a.chips.join('|').indexOf('22:35') >= 0 && /06:45 fijo/.test(r.a.chips.join('|')) && r.a.exp === 'false', JSON.stringify(r.a));
+    check('en Línea y en Reloj la pieza sigue arriba, sin las horas de sueño del pie ni la tarjeta del sueño',
+      r.b.arriba && /Vete del Lloret/.test(r.b.txt) && !r.b.sueno && !r.b.tarjeta && r.b2.arriba && /Vete del Lloret/.test(r.b2.txt) && !r.b2.sueno && !r.b2.tarjeta, JSON.stringify([r.b, r.b2]));
+    check('tocar la fila la despliega (aria-expanded, notas, «▴ plegar», objetivo de 44 px), el Conductor la conserva y la mañana no va suelta; otro toque la pliega',
+      r.c.exp === 'true' && /▴ plegar/.test(r.c.txt) && r.c.notas >= 3 && r.c.alto >= 44 && r.d.arriba && r.d.exp === 'true' && r.d.notas >= 3 && r.e.exp === 'false' && r.e.chips.length >= 3, JSON.stringify([r.c, r.d, r.e]));
+    check('a las 7:17 la pieza dice «Bus en 18 min · sal de casa a las 07:31» y trae el botón «he salido»',
+      r.f.arriba && /Bus/.test(r.f.txt) && /en 18 min/.test(r.f.txt) && /sal de casa a las 07:31/.test(r.f.txt) && r.fBoton, JSON.stringify([r.f, r.fBoton]));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

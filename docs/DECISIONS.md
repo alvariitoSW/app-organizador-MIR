@@ -1690,3 +1690,22 @@ gradual). Monoespaciada en la línea pequeña del letrero (se partía a 412 px).
 **Supuestos.** La hora a la que «vete del Lloret» es la última posible (cama − 15 − 35), no la de la estancia de 60 min desde
 las 20:00. «Lo último allí antes de las HH:MM» = cama − 60, una sola línea de reducción de daños, sin juicio. «Llegas» = bus +
 20 min. «He vuelto» se ofrece de vete−20 a vete+120 min. Ficha de N1 y N2: `.claude/plan-socialista/fichas/la-noche.md`.
+
+## Ley de La Noche · N1 · la cuenta atrás arriba de Hoy (2026-10-29)
+
+**Elegido (Consejo por delegación).** `nocheCadena(key,nowMin)` (junto a `lloretPlan`; reutiliza `lloretPlan`, `acostarsePara`,
+`suenoAnclaDe`, `mananaPlan`, `viajeCfg`; hasta las 12:00 cuenta la noche de ayer) y `nocheHTML(key,esHoy)` (El cartel, justo
+debajo de los modos, en los cuatro). La fila plegada es un botón con `aria-expanded`; plegar/desplegar es `noche-plegar` en
+`act()` con el estado en `ui.nocheAbierta` (no se guarda). Salen de Hoy el pie de horas de sueño (`horasSuenoHTML`), la
+tarjeta de Sueño (`suenoHoyCardHTML`) y la tira de la mañana suelta del Conductor: la tira va dentro de la pieza desplegada y
+«🚪 he salido» en la pieza a la hora de salir. Las funciones se quedan (las usan las pruebas); no se borra ningún dato. Prueba
+359. Medido a 412×915: plegada 143 px (16 %) a las 21:20 y 195 px (21 %) a las 07:17 con «he salido»; desplegada 570 px.
+
+**Descartado.** Borrar `horasSuenoHTML` y `suenoHoyCardHTML` (las pruebas siguen midiendo su lógica). Quitar `.drsol` entero
+(lleva la salida y la puesta del sol). Quitar de la lista desplegada el primer hito que ya dice el cartel (la maqueta lo
+repite resaltado; se queda como en la maqueta).
+
+**Supuestos.** La fila plegada lleva 🚪 salir de casa (07:31) y no 🚌 07:35, como la maqueta. Sin despertador la pieza no
+pinta nada; sin Lloret la cadena empieza en 🛌; sin nada pendiente dice «Buen día». Otro día que no es hoy: solo la tira de la
+mañana si hay algo apuntado. «Anotar anoche» y el aviso «te faltan X» ya no están en Reloj/Línea de Hoy (siguen en Sueño y en
+la radio del Conductor): N2 decide si los repone en la pieza.
