@@ -1655,3 +1655,19 @@ plan de vuelta en curso guardado sin `ini` sigue con la fórmula vieja (60/70/75
 debajo de la lámina aunque repiten los 7 días. Si un turno pisa las 15:00 y las 15:30, ese día no hay fuerza. Tres pruebas
 que dependían de la hora o del día de la semana (asistente antes de las 5:00, «Montar la semana» de jueves a domingo y la
 guardia del sábado antes del 1 de noviembre) se arreglaron en la prueba; ninguna se saltó.
+
+**Quitado de la portada (2026-10-29).** Decidido por el usuario: la lámina ya enseña la semana, la vuelta o la racha, la hora y
+el lugar de hoy y el peso, así que fuera lo que lo repetía. **Quitado** de la portada de Entreno: la tarjeta «Esta semana»
+(`gymSemanaCirculos`: círculos, línea del día, y las 4 cifras de `gymKpisHTML`) y la tarjeta «Tu vuelta al gimnasio»
+(`regresoCardHTML`), con `gymDiaEstado`, `GYM_EST_NOM` y su CSS (`.gsem`, `.gsc*`, `.gscs`, `.gtiraq`, `.gkpi`, `.gvuelta`,
+`.gvesc`, `.gvprog`, `.gvplan`). Se queda «Listo al N %» (`listoHTML`, sueño y guardias: la lámina no lo dice), la tarjeta
+grande, los avisos, las rutinas, las fichas y el informe. **Movido, para que nada se quede sin camino:** el ⚙ del mínimo
+semanal, los «N hechos» y el «bloque · sem x/y» (o «descarga») van en una fila bajo la lámina (`gymSemanaLinkHTML`) que abre
+«Tu semana de entreno» (ahí está el − / + del mínimo); el cambio de día se hace tocando el día en la lámina (`gym-dia`); lo
+de la tarjeta de la vuelta que no estaba en el plan («esta semana: N días, series, % de tu peso, te sobran X reps, llevas
+H de N») pasa a «Tu plan de vuelta», y «Empezar» ya lo da la tarjeta grande. Se pierde, a propósito: las 4 cifras («días en 2
+semanas», «días este mes», «de media», «volumen») y la barra de entrenos de la semana; «días este mes» sigue en la ficha
+Progreso. **Migrado:** un plan de vuelta en curso sin `ini` (el de la fórmula vieja: 70 %, 2 semanas) se rehace **una sola
+vez** al leerlo (`regresoS`) con el sistema nuevo: `ini` según su ritmo (30/35/40), `paso:10`, `desde` = el lunes de esta
+semana (o su `desde`, si fue después, para que cuenten los entrenos de esta semana); conserva `ultimo`, `parado` y `ritmo`, y
+no se borra nada del registro. Esto sustituye al supuesto anterior («sigue con la fórmula vieja») y al de los círculos.

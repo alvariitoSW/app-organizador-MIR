@@ -1145,14 +1145,6 @@ ul.slots{list-style:none;margin:0;padding:0}
    fichero a propósito: el bloque @media(max-width:560px) está ENCIMA de las reglas base, así que
    lo que se añade aquí es lo que gana en el móvil. */
 
-.gtiraq{display:flex;align-items:flex-start;gap:7px;min-height:28px;margin:0 2px 2px;
-  font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35}
-.gtiraq .pt{flex-shrink:0;display:block;width:7px;height:7px;border-radius:999px;margin-top:5px;
-  border:1px solid var(--line);background:transparent}
-.gtiraq .pt.hecho{background:var(--accent);border-color:transparent}
-.gtiraq .pt.hoy,.gtiraq .pt.plan{background:var(--brand);border-color:transparent}
-.gtiraq .pt.guardia{background:var(--warn);border-color:transparent}
-.gtiraq .pt.choque{background:var(--bad);border-color:transparent}
 .gdesc{display:flex;flex-direction:column;gap:5px}
 .gdesch{display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
 .gdesch .mini{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:0;text-transform:none;opacity:.75}
@@ -1784,24 +1776,8 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
 .pasord .pfila .btn[disabled]{opacity:.3;cursor:default}
 
 /* ============ ENTRENO: abrir y empezar, serie a serie ============ */
-.gsem .row b{font-size:13.5px}
 .gsemcfg{border:0;background:none;color:var(--ink2);font:inherit;font-size:12px;cursor:pointer;padding:4px 0}
 .gsemcfg b{color:var(--ink);font-size:15px}
-.gscs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:6px}
-.gsc{border:0;background:none;font:inherit;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0;cursor:pointer;min-width:0}
-.gsc span{font-size:10.5px;font-weight:800}
-.gsc i{display:grid;place-items:center;width:36px;height:36px;max-width:100%;border-radius:50%;border:2px solid var(--line);font-style:normal;font-size:14px;color:var(--ink)}
-.gsc.ok i{background:var(--brand);border-color:var(--brand);color:#0b1020;font-weight:900}
-.gsc.plan i{border-color:var(--brand)}
-.gsc.pis i{border-color:var(--brand2)}
-.gsc.no i{border-style:dashed;opacity:.6}
-.gsc.choque i{border-color:var(--bad);color:var(--bad);font-weight:900}
-.gsc.hoy span{color:var(--brand)}
-.gsc.sel i{box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 35%,transparent)}
-.gsem .gtiraq{margin-top:6px;font-size:11.5px;color:var(--ink2);font-weight:700}
-.gkpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
-.gkpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:7px 3px;text-align:center;min-width:0}
-.gkpi b{display:block;font-size:17px;line-height:1.2}.gkpi span{font-size:10px;color:var(--ink2);font-weight:700}
 .ghero2{border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:18px;padding:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 16%,var(--card)),var(--card))}
 .ghero2.calma{border-color:var(--line);background:var(--card)}
@@ -3710,20 +3686,7 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .mt-guardia.mlc{box-shadow:inset 0 0 0 1.5px #e5383b}
 
 /* LA VUELTA AL GIMNASIO TRAS UN PARÓN (design/entreno-vuelta) */
-.gvuelta{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 16%,var(--card)),var(--card) 60%);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
-.gvuelta .cap,.gvcap{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand)}
-.gvuelta .big{font-size:20px;font-weight:900;margin:2px 0 4px}
-.gvuelta .mini b{color:var(--ink)}
-.gvesc{display:flex;gap:5px;margin:10px 0 6px}
-.gvesc>div{flex:1;min-width:0;border-radius:10px;padding:7px 2px;text-align:center;background:var(--bg2);border:1px solid var(--line)}
-.gvesc>div b{display:block;font-size:15px}
-.gvesc>div span{font-size:10.5px;color:var(--ink2)}
-.gvesc>div.on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--bg2))}
-.gvesc>div.ok{opacity:.55}
-.gvprog{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin:6px 0 2px}
-.gvprog i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-.gvuelta .gbig2{margin-top:10px}
-.gvuelta .gvplan{width:100%;margin-top:8px}
+.gvcap{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand)}
 .gvtab{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
 .gvtab th{color:var(--ink2);font-weight:700;text-align:left;font-size:11px;padding:4px 3px}
 .gvtab td{padding:7px 3px;border-top:1px solid var(--line)}
