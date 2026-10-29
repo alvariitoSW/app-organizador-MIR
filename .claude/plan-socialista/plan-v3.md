@@ -73,6 +73,28 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 | N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
 | N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
 
+### Tanda «La Reforma» (Dinero, Comer y Entreno) · Consejo 2026-10-29 (2.ª) · acta `consejo/2026-10-29-2.md`
+
+[v3-reforma] «nueva reforma y hacerla ya»: fijos más bonitos y «te queda», gasto grande frente al ahorro, Fintonic
+mal («300 y pico en belleza»), la compra base (pollo, lomo, pescado de 1 kg) hecha semana con platos congelables,
+proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen, Hoy con dinero y trabajo (2026-10-29).
+**Espera al usuario:** presupuesto (~15 M), Bosque/Ahorro y compartir recetas. Sesiones «La Reforma · R<n> · …».
+
+| # | Sesión | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|
+| R1 | Fintonic: el fallo de «belleza», revisión editable, cuenta de control, pegar texto | arreglo + construir | sonnet con ficha | ~1,6 M |
+| R2 | Maqueta de Dinero: fijos + te queda, gasto grande, Bosque/Ahorro, línea en Hoy | maqueta | opus dirige, sonnet maqueta | ~1,5 M |
+| R3 | Construir fijos + «te queda» + línea en Hoy | construir | sonnet con ficha | ~1,0 M |
+| R4 | Construir gasto grande + Ahorro/Bosque | construir | sonnet con ficha | ~1,8 M |
+| R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
+| R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
+| R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
+| R8 | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
+| R9 | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
+| R10 | Construir Entreno: 12 dibujos, un toque por serie, «prueba +2,5 kg», récord (absorbe el primer trozo de [v3-entrenador]) | construir | haiku dibujos, sonnet obra | ~2,0 M |
+
+Orden (Consejo, 2026-10-29): R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
+
 ### Después (sin planificar todavía)
 
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
