@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Ley de La Noche · N2 · medir y avisar** (sesión aparte, pasos P6-P11 de `fichas/la-noche.md`). N1 hecha el 29/10 (El cartel arriba de Hoy, en la rama). Después N3 (pasa a `main`).
+**Ley de La Noche · N3 · pasar a main** (sesión aparte): repaso final de N1 y N2 y pasar a `main`. N1 y N2 hechas el 29/10 en la rama (El cartel; hoja He vuelto/He llegado, Alarmas, Tu semana, sugerencia de la cama, `.ics` apagado).
 
 ## Por hacer
 

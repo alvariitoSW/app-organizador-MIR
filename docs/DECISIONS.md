@@ -1709,3 +1709,23 @@ repite resaltado; se queda como en la maqueta).
 pinta nada; sin Lloret la cadena empieza en 🛌; sin nada pendiente dice «Buen día». Otro día que no es hoy: solo la tira de la
 mañana si hay algo apuntado. «Anotar anoche» y el aviso «te faltan X» ya no están en Reloj/Línea de Hoy (siguen en Sueño y en
 la radio del Conductor): N2 decide si los repone en la pieza.
+
+## Ley de La Noche · N2 · medir y avisar (2026-10-29)
+
+**Elegido (Consejo por delegación).** En la pieza `.noche`, botón vivo «🏠 He vuelto» (vete−20…vete+120) y «🏢 He llegado»
+(llegar−25…llegar+90) que abre una hoja con la hora puesta (−5/+5, Guardar) → `store.lloret.vuelta[noche]` y
+`store.manana[fecha].llego` (`normalize` los conserva: `okL` y `lloret.vuelta` filtrado). La cama de la cadena es la del
+**escalón** (`nocheEscalon`: `store.sueno.escalon`, o la mediana de 7 camas reales, 00:30 sin datos; nunca antes de la objetivo);
+`nocheSugerencia` la ofrece 15 min antes cada 3 días si las 3 últimas camas están a ≤15 min («Vale» / «Aún no»), con interruptor
+en Sueño (`adelanto`, encendido). Pantallas `ui.hoyVista='alarmas'|'semana'` desde la desplegada: alarmas del Reloj (vete, cama,
+salir, con «antes HH:MM» tras un cambio hasta «Ya las he puesto») y «Tu semana» (3 cifras en minutos frente a la semana pasada,
+sin rojo, una propuesta). `.ics`: «Vete del Lloret» y «Sal de casa» (`snNocheEventos`), apagados por defecto. «🛌 Anotar anoche»
+vuelve a Hoy en la desplegada por la mañana; «te faltan X» no se repone (lo cuenta Tu semana y Sueño). Pruebas 360-364; la 359
+siembra `escalon:'22:35'`. Medido a 412×915: pieza con «He vuelto» 195 px, desplegada 672 px, sugerencia 120 px.
+
+**Descartado.** Mover el aviso de cama del `.ics` al escalón (con el 00:30 por defecto movía avisos de otras pruebas; queda la
+objetivo, revisar en N3). Contar en Tu semana con la cama que valía cada noche (se compara con la cadena actual).
+
+**Supuestos.** Las alarmas son siempre las de la noche de hoy; los días de guardia no cuentan en Tu semana; «Vete» y «Sal de
+casa» suenan a su hora en el `.ics`. Pendiente menor para N3: a las 07:58 «🚪 he salido» y «🏢 He llegado» salen apilados con el
+mismo peso; «lo último allí antes de» = cama−60 queda 10 min antes de «Vete» (así lo dice el acta).

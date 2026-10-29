@@ -52,14 +52,14 @@ Ninguna abierta: todo lo decidió el Consejo por delegación (Resolución 1-4). 
   la pieza) · app.js · sonnet · ~6
 - [x] P5 `verificador` a 412×915: 21:20, 07:17, 4 modos; la prueba cae al revertir P3 y ninguna otra · ~6
 **N2** (~1,2 M)
-- [ ] P6 Pruebas encadenadas que fallan: «He vuelto» → −5 → Guardar → `lloret.vuelta[hoy]` y la cadena sin «Vete»;
+- [x] P6 Pruebas encadenadas que fallan: «He vuelto» → −5 → Guardar → `lloret.vuelta[hoy]` y la cadena sin «Vete»;
   «He llegado» → `manana[hoy].llego` sobrevive a `normalize` · tests · haiku · ~8
-- [ ] P7 Normalizador (`vuelta`, `okL`) + acciones `noche-hoja`, `noche-h±5`, `noche-guardar` en `act()` · sonnet · ~10
-- [ ] P8 Pantallas «Alarmas» y «Tu semana» (`ui.hoyVista='alarmas'|'semana'`, como `'sueno'` en `renderHoy` 7373)
+- [x] P7 Normalizador (`vuelta`, `okL`) + acciones `noche-hoja`, `noche-h±5`, `noche-guardar` en `act()` · sonnet · ~10
+- [x] P8 Pantallas «Alarmas» y «Tu semana» (`ui.hoyVista='alarmas'|'semana'`, como `'sueno'` en `renderHoy` 7373)
   · sonnet · ~12
-- [ ] P9 Sugerencia de adelantar la cama (`suenoCfg().adelanto` on/off, escalón en `store.sueno.escalon`) · sonnet · ~8
-- [ ] P10 `.ics` «vete del Lloret» y «sal de casa» apagados por defecto + DECISIONS · haiku · ~5
-- [ ] P11 `verificador` + suite corta de lo tocado · ~6
+- [x] P9 Sugerencia de adelantar la cama (`suenoCfg().adelanto` on/off, escalón en `store.sueno.escalon`) · sonnet · ~8
+- [x] P10 `.ics` «vete del Lloret» y «sal de casa» apagados por defecto + DECISIONS · haiku · ~5
+- [x] P11 `verificador` + suite corta de lo tocado · ~6
 
 ## 5 · Comprobación
 Cada historia tiene paso y prueba (N1-a/b/c → P1-P5; N2-a/b → P6-P7; N2-c/d → P8; N2-e → P9). Maqueta aprobada

@@ -51,6 +51,7 @@ traspaso explica por qué.
 | 2026-10-29 | consejo-calendario-sueno | estudio | opus-5-5 + sonnet-5-5 | 3 | 52 | **886 k** | sesión principal (48 %) | Consejo de La Noche: mapa sonnet 21 pasos (amplio) + 2 dictámenes; juntar la rama con main (3 conflictos) encareció la principal · mapa con tope de 12 pasos y rama al día antes del Consejo |
 | 2026-10-29 | la-noche-n0 | maqueta | opus-5-5 + sonnet-5-5 | 3 | 56 | **794 k** | sesión principal (74 %) | 3 maquetas (A cartel gana, empate decidido por Bienestar), 2 rondas de verificador, jurado opus; ficha N1-N2 |
 | 2026-10-29 | la-noche-n1 | construir | opus-5-5 + sonnet-5-5 | 2 | 66 | **1,1 M** | Construir N1 la cuenta atrás (76 %) | N1 de La Noche: cartel arriba de Hoy en 4 modos, quita sueño y mañana suelta; obra sonnet ~0,87 M, capturas ~0,08 M |
+| 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
