@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Reforma · R1 · Fintonic** (sesión nueva): el fallo de «belleza», revisión editable, cuenta de control y pegar texto.
+**La Reforma · R1 · Concurso de Dinero** (sesión nueva): escuelas baratas, el Consejo elige; «Tu mes» de principio a fin de mes.
 
 **Ley de La Noche · N3 · pasar a main** (sesión aparte): repaso final de N1 y N2 y pasar a `main`. N1 y N2 hechas el 29/10 en la rama (El cartel; hoja He vuelto/He llegado, Alarmas, Tu semana, sugerencia de la cama, `.ics` apagado).
 
@@ -84,10 +84,10 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| R1 | Fintonic: el fallo de «belleza», revisión editable, cuenta de control, pegar texto | arreglo + construir | sonnet con ficha | ~1,6 M |
-| R2 | Maqueta de Dinero: fijos + te queda, gasto grande, Bosque/Ahorro, línea en Hoy | maqueta | opus dirige, sonnet maqueta | ~1,5 M |
-| R3 | Construir fijos + «te queda» + línea en Hoy | construir | sonnet con ficha | ~1,0 M |
-| R4 | Construir gasto grande + Ahorro/Bosque | construir | sonnet con ficha | ~1,8 M |
+| R1 | **Concurso de Dinero** (antes R2): 4-5 escuelas baratas (sonnet/haiku) maquetan «Tu mes» moderno: con cuánto empiezas el mes, los fijos, lo que te queda, con cuánto acabarás y cuánto ahorras **este mes**; el gasto grande; Bosque y Ahorro juntos; la línea de Hoy. Jurado a ciegas y el Consejo elige (por delegación) | maqueta | escuelas sonnet/haiku; jurado haiku; Artes Visuales opus deja la ganadora navegable | ~2,5 M |
+| R2 | Construir «Tu mes»: fijos + te queda + fin de mes previsto + línea en Hoy | construir | sonnet con ficha | ~1,2 M |
+| R3 | Construir gasto grande + Bosque y Ahorro juntos, mirando a meses, no a años | construir | sonnet con ficha | ~1,8 M |
+| R4 | Fintonic, en pequeño: revisión gasto a gasto editable antes de guardar y aviso si no cuadra (sin pegar texto) | arreglo | sonnet | ~0,8 M |
 | R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
 | R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
 | R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
@@ -95,10 +95,11 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | R9 | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
 | R10 | Construir Entreno: 12 dibujos, un toque por serie, «prueba +2,5 kg», récord (absorbe el primer trozo de [v3-entrenador]) | construir | haiku dibujos, sonnet obra | ~2,0 M |
 
-Orden (Consejo, 2026-10-29): R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
+Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
 ### Después (sin planificar todavía)
 
+0. [v3-viajes] **Viajes y vacaciones** (2026-10-29, «un poco más adelante»), con su propio Consejo (Sanidad + Bienestar): el vuelo (hora, aeropuerto), a qué hora salir de casa, bus o taxi y cómo está la carretera, el billete apuntado como gasto (y si va a Madrid a menudo, como fijo); y **la rutina en vacaciones**: la app es para la continuidad, y en vacaciones no se usa ni hace falta apuntar: debatir cómo ayudar sin romper rachas y cómo volver. Primeras notas en el acta `consejo/2026-10-29-2.md` · maqueta → construir
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
 2. [v3-420-descanso] 4:20 que relacione lo que fumas con el descanso y la energía, y ayude a bajar · maqueta → construir
 3. [v3-entrenador] Entreno como entrenador propio basado en ciencia (la vuelta tras un parón ya está) · maqueta → construir
