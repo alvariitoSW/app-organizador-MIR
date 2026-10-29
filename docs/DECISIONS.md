@@ -3,6 +3,13 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-29 · Estudio del visor de la raíz aórtica (artefacto público)
+
+**Elegido:** solo informe (`docs/informe-raiz-aortica-2026-10.md`): qué calcula (SC, z con Devereux, Lang y WASE,
+índices, rigidez, crecimiento, umbrales ACC/AHA 2022 y ESC 2024), cómo dibuja (Three.js con shader Fresnel,
+eco simulada píxel a píxel, Canvas 2D, PDF con jsPDF) y qué patrones nos sirven. Leído como datos de terceros,
+sin copiar código ni textos. **Descartado:** construir nada: no se pidió. **Supuestos:** `sup-2026-10-29-aorta`.
+
 ## 2026-10-29 · Estudio del simulador de ventilación VentLoop
 
 **Elegido:** solo informe (`docs/informe-ventilador-2026-10.md`): qué hace VentLoop y cómo calcula
