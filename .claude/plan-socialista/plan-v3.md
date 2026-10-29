@@ -53,9 +53,9 @@ De dónde sale el ahorro:
 
 | # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|---|
-| V0 | Concurso «La Vuelta» hecho: jurado 1.º La Sobremesa (10), luego Reloj de Sol, Tortuga y Sofá (9) · 2.ª ronda (6 sonnet, explicación en 45 s, bases `consejo/2026-10-28-la-vuelta-ronda2.md`) · **espera tus notas** · 3,9 M + ~2,4 M | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
-| V1 | Entreno: franja fija 15:00-16:00 entre semana (`gymHoraDe`, `ENT_HORAS`), parque el finde con rutina sin material de openGym, sesión mínima de 25 min, guardia/saliente sin fallo; la vuelta al 35 % +10/semana (`REGRESO_RITMO`, sin romper un plan en curso) y racha por semanas | [v3-entreno-franja] + [v3-vuelta-35] | construir | sonnet con ficha; `verificador` | ~1,8 M |
-| V2 | Comer: objetivo de peso (kg y fecha, 0,5 kg/sem por defecto, tope 1 %/sem, suelo basal y 1.500 kcal, media de 7 días, sin sumar kcal del entreno) atado al plan semanal; gráfica del peso; `/revisa-seguridad` | [v3-peso-objetivo] | construir | sonnet con ficha; `verificador` | ~1,0 M |
+| ~~V0~~ | ✅ Concurso «La Vuelta» hecho: jurado 1.º La Sobremesa (10), luego Reloj de Sol, Tortuga y Sofá (9) · 2.ª ronda (6 sonnet, explicación en 45 s, bases `consejo/2026-10-28-la-vuelta-ronda2.md`) · **espera tus notas** · 3,9 M + ~2,4 M | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
+| ~~V1~~ | ✅ main 3170dc0 · Entreno: franja fija 15:00-16:00 entre semana (`gymHoraDe`, `ENT_HORAS`), parque el finde con rutina sin material de openGym, sesión mínima de 25 min, guardia/saliente sin fallo; la vuelta al 35 % +10/semana (`REGRESO_RITMO`, sin romper un plan en curso) y racha por semanas | [v3-entreno-franja] + [v3-vuelta-35] | construir | sonnet con ficha; `verificador` | ~1,8 M |
+| ~~V2~~ | ✅ main 3170dc0 · objetivo de peso + **dos dibujos (Teide y Bancales) en Ajustes** · V1+V2 ~3,7 M · Comer: objetivo de peso (kg y fecha, 0,5 kg/sem por defecto, tope 1 %/sem, suelo basal y 1.500 kcal, media de 7 días, sin sumar kcal del entreno) atado al plan semanal; gráfica del peso; `/revisa-seguridad` | [v3-peso-objetivo] | construir | sonnet con ficha; `verificador` | ~1,0 M |
 
 Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) → V1 → V2. [aparc-comida-entreno] se cierra en V1
 (con entreno a las 15:00 la comida de después pasa a ~16:30). V1 es el primer trozo de [v3-entrenador].
@@ -82,6 +82,8 @@ Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) �
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-la-vuelta] La Vuelta: entreno 15-16 y parque, sesión mínima, vuelta al 35 %, objetivo de peso con topes, lámina del Teide o de los Bancales con «Explícamelo · 45 s» · main 3170dc0 · ~11,7 M la sesión entera (Consejo + 2 rondas + obra) · 2026-10-29
 
 - [v3-dinero] Tanda Dinero D1-D6 por delegación al Consejo: el Bosque (portada), Gastos, Ahorro con objetivo a fecha y «Ya ha llegado la nómina», Compras con espera de 30 días; lo viejo quitado (−664 líneas) sin borrar datos; migración `dinero3Migra` · main · ~10 M (presupuesto 4,9) · 2026-10-28
 
