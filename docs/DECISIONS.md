@@ -1671,3 +1671,22 @@ Progreso. **Migrado:** un plan de vuelta en curso sin `ini` (el de la fórmula v
 vez** al leerlo (`regresoS`) con el sistema nuevo: `ini` según su ritmo (30/35/40), `paso:10`, `desde` = el lunes de esta
 semana (o su `desde`, si fue después, para que cuenten los entrenos de esta semana); conserva `ultimo`, `parado` y `ritmo`, y
 no se borra nada del registro. Esto sustituye al supuesto anterior («sigue con la fórmula vieja») y al de los círculos.
+
+## Ley de La Noche · N0 · la maqueta de arriba de Hoy (2026-10-29)
+
+**Elegido (Consejo por delegación).** `maquetas/la-noche-a-cartel.html` · **El cartel**: arriba de Hoy, en los cuatro modos, un
+letrero tipo autobús con la próxima hora y lo que falta («🌿 Vete del Lloret · 21:45 / en 25 min»; por la mañana «Bus en 18 min ·
+sal de casa a las 07:31») y debajo una fila plegada con solo los hitos que faltan (🏠 › 🛌 › ⏰ fijo › 🚌), que se despliega con
+sus notas. «🏠 He vuelto» y «🏢 He llegado» aparecen solo en su franja, de un toque con la hora puesta y −5/+5. Pantalla «Pon
+estas alarmas en tu Reloj» (vete del Lloret, a la cama de esta noche, sal de casa) y «Tu semana en minutos» (cama, levantarse,
+salir). La cama baja 15 min cada 3 días desde 00:30 hasta 22:35 como sugerencia («Vale» / «Aún no»), y la cadena usa la cama
+del escalón de esta noche. El Lloret cuenta como rato sin pantallas: «pantallas fuera» va con la llegada a casa. Alto de la
+pieza a 21:20: 376 px (41 % de 915). Votos: Bienestar A, Sanidad B; empate, decide Bienestar.
+
+**Descartado.** B · La cuenta (cifra en un aro y puntos; 450 px, 49 %; de ella se toma la marca «fijo» del despertador) y
+C · La escalera (frase grande y dos hitos; 479 px, 52 %). Contar la cadena desde las 22:35 de golpe (choca con el adelanto
+gradual). Monoespaciada en la línea pequeña del letrero (se partía a 412 px).
+
+**Supuestos.** La hora a la que «vete del Lloret» es la última posible (cama − 15 − 35), no la de la estancia de 60 min desde
+las 20:00. «Lo último allí antes de las HH:MM» = cama − 60, una sola línea de reducción de daños, sin juicio. «Llegas» = bus +
+20 min. «He vuelto» se ofrece de vete−20 a vete+120 min. Ficha de N1 y N2: `.claude/plan-socialista/fichas/la-noche.md`.

@@ -1,0 +1,34 @@
+/* Ley de La Noche · N0 · piel común (tokens de styles.css, modo HUD nocturno) */
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;
+  --r:16px;--card2:color-mix(in srgb,var(--card),var(--bg) 45%);--marca-suave:color-mix(in srgb,var(--brand) 16%,var(--card));}
+*{box-sizing:border-box}
+body{margin:0;background:#02040a;color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:24px 16px}
+#tel{width:412px;height:915px;overflow:auto;background:var(--bg);border-radius:28px;border:1px solid var(--line);position:relative;padding:14px 12px 24px}
+.mandos{width:300px;font-size:13px;color:var(--ink2)}.mandos h2{color:var(--ink);font-size:16px;margin:0 0 6px}.mandos .row{margin:6px 0}
+.mandos button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:6px 9px;margin:2px;font:inherit;cursor:pointer}
+.mandos b{color:var(--ink)}
+.cab{display:flex;align-items:center;justify-content:space-between;margin:2px 4px 10px}.cab h1{font-size:18px;margin:0}
+.modos{display:flex;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.modos button{border:0;background:none;color:var(--ink2);font:inherit;font-size:12.5px;padding:6px 10px;border-radius:999px;min-height:44px}.modos .on{background:var(--marca-suave);color:var(--ink)}
+.b{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;padding:0 14px;cursor:pointer}
+.b.p{background:var(--brand);color:#04121c;border-color:transparent}.b.s{min-height:44px;font-size:13px;padding:0 11px}.b.ancho{width:100%;margin-top:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.sub{color:var(--ink2);font-size:13px;margin:4px 0 10px}.nota{color:var(--ink2);font-size:13px;background:var(--card2);border-radius:12px;padding:10px 12px;margin:10px 0 0}
+.fantasma{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:10px;display:flex;justify-content:space-between;opacity:.8;font-size:13px}.fantasma span{color:var(--ink2)}
+.sug{background:var(--card);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:var(--r);padding:12px 14px;margin-top:10px;font-size:14px}
+/* la hoja de «He vuelto» / «He llegado» */
+.velo{position:absolute;inset:0;background:rgba(0,0,0,.55);border-radius:28px}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:22px 22px 28px 28px;padding:10px 18px 22px;border-top:1px solid var(--line)}
+.hoja h3{margin:6px 0 0;font-size:18px}.asa{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto}
+.horab{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:8px}.horab .hora{font-size:44px;font-variant-numeric:tabular-nums;letter-spacing:1px}.horab .b{min-width:64px;font-size:17px}
+/* pantallas de alarmas y semana */
+.pant h2{font-size:20px;margin:10px 0 0}.volver{background:none;border:0;color:var(--brand);font:inherit;font-size:15px;min-height:44px;padding:0}
+.al{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:8px}
+.al div{flex:1}.al small{display:block;color:var(--ink2);font-size:12.5px}.alico{font-size:24px}
+.alh{font-size:28px;font-variant-numeric:tabular-nums;font-weight:700;text-align:right}.alh i{display:block;font-size:11px;font-weight:400;color:var(--ink2);font-style:normal}
+.dif{display:grid;grid-template-columns:1fr auto;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:8px}
+.dif b{font-size:26px;font-variant-numeric:tabular-nums}.dif small{grid-column:1/-1;color:var(--ink2);font-size:12.5px}
+.cad{margin-top:8px}.cadf{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}.cadf div{flex:1}.cadf small{display:block;color:var(--ink2);font-size:12px}
+.cadf .ch{font-variant-numeric:tabular-nums;font-weight:700}.cadf.ya b,.cadf.ya .ch{color:var(--brand)}.cico{width:24px;text-align:center}
+.cadok{color:var(--ok);font-size:13px;padding:6px 2px}
+.vivo{width:100%;margin-top:10px;min-height:52px;font-size:17px}

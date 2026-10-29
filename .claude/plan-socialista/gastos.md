@@ -49,6 +49,7 @@ traspaso explica por qué.
 | 2026-10-29 | v3-la-vuelta | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 20 | 466 | **11,7 M** | sesión principal (23 %) | Obra A sonnet 1,2 M + Obra B sonnet 2,0 M + pruebas de fecha 0,24 M + verificador 0,2 M; la ficha con líneas exactas evitó releer app.js |
 | 2026-10-28 | v3-comer-reloj-s2 | construir | opus-5-5 + sonnet-5-5 | 6 | 402 | **12,1 M** | S3b P1: Semana y Casa (61 %) | 4 historias + quitar 3 pestañas en una sesión: P1 Semana+Casa 7,4 M (167 pasos, caché leída 40 M al ir quitando y reescribiendo 13 pruebas viejas), P2 vitaminas+investigar 2,4 M, pulido tras capturas 1,1 M · ahorro: partir lo que quita pestañas en su propio encargo y tope duro de pasos; el worktree nace en main viejo, dar el commit base en el encargo |
 | 2026-10-29 | consejo-calendario-sueno | estudio | opus-5-5 + sonnet-5-5 | 3 | 52 | **886 k** | sesión principal (48 %) | Consejo de La Noche: mapa sonnet 21 pasos (amplio) + 2 dictámenes; juntar la rama con main (3 conflictos) encareció la principal · mapa con tope de 12 pasos y rama al día antes del Consejo |
+| 2026-10-29 | la-noche-n0 | maqueta | opus-5-5 + sonnet-5-5 | 3 | 56 | **794 k** | sesión principal (74 %) | 3 maquetas (A cartel gana, empate decidido por Bienestar), 2 rondas de verificador, jurado opus; ficha N1-N2 |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan

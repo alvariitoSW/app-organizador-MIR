@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Ley de La Noche · N0 · maquetas** (sesión aparte, 29/10). Después N1, N2 y N3, cada una en su sesión.
+**Ley de La Noche · N1 · construir la cuenta atrás** (sesión aparte, ficha `fichas/la-noche.md`). Después N2 y N3, cada una en su sesión.
 
 ## Por hacer
 
@@ -68,7 +68,7 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| N0 | Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
+| ~~N0~~ | ✅ 29/10 · gana **A · El cartel** (`maquetas/la-noche-a-cartel.html`, acta «N0 · la maqueta elegida») · Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
 | N1 | Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
 | N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
 | N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |

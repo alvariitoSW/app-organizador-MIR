@@ -1,0 +1,30 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Noche · C · La escalera</title><link rel="stylesheet" href="la-noche-comun.css"><style>
+.frase{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.frase .t{font-size:26px;font-weight:750;line-height:1.15}.frase .t span{color:var(--brand)}.frase .h{font-size:15px;color:var(--ink2);margin-top:3px;font-variant-numeric:tabular-nums}
+.esc{position:relative}.sobre{position:absolute;left:0;right:0;top:0;padding:14px 16px;background:linear-gradient(rgba(5,8,18,.85),rgba(5,8,18,0));border-radius:16px 16px 0 0}
+.sobre .frase{background:none;border:0;padding:0}
+.esca{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:4px 14px}
+.esca .f{display:flex;gap:10px;align-items:center;padding:8px 0;font-size:14px}.esca .f+.f{border-top:1px solid var(--line)}.esca .f b{margin-left:auto;font-variant-numeric:tabular-nums}
+.esca .mas{width:100%;background:none;border:0;border-top:1px solid var(--line);color:var(--ink2);font:inherit;font-size:13px;min-height:44px;cursor:pointer}
+</style></head>
+<body><div id="tel"></div>
+<div class="mandos"><h2>Para navegar</h2>
+<div>Hora simulada: <b id="reloj"></b></div>
+<div class="row"><button data-a="t-10">−10 min</button><button data-a="t+10">+10 min</button></div>
+<div class="row"><button data-a="ir-20:05">20:05</button><button data-a="ir-21:20">21:20</button><button data-a="ir-22:25">22:25</button><button data-a="ir-01:10">01:10</button><button data-a="ir-07:17">07:17</button><button data-a="ir-07:50">07:50</button></div>
+<div>Cama esta noche: <b id="cama"></b> (adelanto de 15 min cada 3 días)</div>
+<div class="row"><button data-a="cama-">más tarde</button><button data-a="cama+">más pronto</button><button data-a="sug">día de cambio (sugerencia)</button></div>
+<div class="row"><button data-a="alarmas">⏰ pantalla de alarmas</button><button data-a="semana">📊 la semana</button><button data-a="borra">borrar vuelta/llegada</button></div>
+</div>
+<script src="la-noche-comun.js"></script><script>
+function frase(G){const t=G.min!=null?G.h.cartel+" en <span>"+falta(G.min)+"</span>":G.txt;
+  return "<div class=\"frase\"><div class=\"t\">"+(G.ico?G.ico+" ":"")+t+"</div><div class=\"h\">"+(G.hora?G.hora+" · ":"")+(G.sub||"")+"</div></div>";}
+function escalera(C){if(S.abierta)return cadenaAbierta(C)+"<button class=\"b s\" style=\"margin-top:6px\" data-a=\"plegar\">▴ plegar</button>";
+  const P=pendientes(C).slice(1);const v=P.slice(0,2);
+  return "<div class=\"esca\">"+v.map(h=>"<div class=\"f\">"+h.ico+" "+h.corto+"<b>"+HM(h.hora)+"</b></div>").join("")+(P.length>2?"<button class=\"mas\" data-a=\"plegar\">+"+(P.length-2)+" más hasta el bus ▾</button>":"")+"</div>";}
+function pintaArriba(S,C){const G=grande(C),B=botonVivo(C);
+  const viv=B?"<button class=\"b p vivo\" data-a=\""+B.k+"\">"+B.txt+"</button>":"";
+  if(S.modo==="conductor")return "<div class=\"esc\">"+escena(270)+"<div class=\"sobre\">"+frase(G)+"</div></div>"+viv+escalera(C);
+  return frase(G)+viv+escalera(C);}
+</script></body></html>

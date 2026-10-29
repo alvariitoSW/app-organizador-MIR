@@ -1,0 +1,32 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Noche · B · La cuenta</title><link rel="stylesheet" href="la-noche-comun.css"><style>
+.cuenta{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.aro{flex:none;width:104px;height:104px;position:relative}.aro svg{position:absolute;inset:0}.aro .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.aro .n b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums}.aro .n small{font-size:12px;color:var(--ink2)}
+.que b{display:block;font-size:20px}.que .hh{font-size:15px;color:var(--brand);font-variant-numeric:tabular-nums}.que small{display:block;color:var(--ink2);font-size:12.5px;margin-top:4px}
+.esc{position:relative}.sobre{position:absolute;left:10px;right:10px;top:10px}.sobre .cuenta{background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(6px)}
+.pasos{position:relative;display:flex;justify-content:space-between;margin-top:12px;padding:0 6px;cursor:pointer}
+.pasos:before{content:"";position:absolute;left:18px;right:18px;top:13px;height:2px;background:var(--line)}
+.paso{position:relative;text-align:center;font-size:11.5px;color:var(--ink2);width:58px}.paso i{display:block;width:26px;height:26px;margin:0 auto 3px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-style:normal;line-height:26px;font-size:13px}
+.paso.ya i{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}.paso b{display:block;color:var(--ink);font-variant-numeric:tabular-nums}
+</style></head>
+<body><div id="tel"></div>
+<div class="mandos"><h2>Para navegar</h2>
+<div>Hora simulada: <b id="reloj"></b></div>
+<div class="row"><button data-a="t-10">−10 min</button><button data-a="t+10">+10 min</button></div>
+<div class="row"><button data-a="ir-20:05">20:05</button><button data-a="ir-21:20">21:20</button><button data-a="ir-22:25">22:25</button><button data-a="ir-01:10">01:10</button><button data-a="ir-07:17">07:17</button><button data-a="ir-07:50">07:50</button></div>
+<div>Cama esta noche: <b id="cama"></b> (adelanto de 15 min cada 3 días)</div>
+<div class="row"><button data-a="cama-">más tarde</button><button data-a="cama+">más pronto</button><button data-a="sug">día de cambio (sugerencia)</button></div>
+<div class="row"><button data-a="alarmas">⏰ pantalla de alarmas</button><button data-a="semana">📊 la semana</button><button data-a="borra">borrar vuelta/llegada</button></div>
+</div>
+<script src="la-noche-comun.js"></script><script>
+function aro(G){const tot=G.h&&G.h.id==="vete"?60:G.h&&G.h.id==="bus"?50:90,pc=G.min!=null?Math.max(0,Math.min(1,G.min/tot)):1,r=46,L=2*Math.PI*r;
+  return "<div class=\"aro\"><svg viewBox=\"0 0 104 104\"><circle cx=\"52\" cy=\"52\" r=\""+r+"\" fill=\"none\" stroke=\"#1e2b44\" stroke-width=\"7\"/><circle cx=\"52\" cy=\"52\" r=\""+r+"\" fill=\"none\" stroke=\"#38e1ff\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-dasharray=\""+(L*pc)+" "+L+"\" transform=\"rotate(-90 52 52)\"/></svg>"+
+    "<div class=\"n\">"+(G.min!=null?(G.min<60?"<b>"+G.min+"</b><small>min</small>":"<b>"+falta(G.min).replace(" ","&nbsp;")+"</b>"):"<b>"+(G.ico||"✓")+"</b>")+"</div></div>";}
+function cuenta(G){return "<div class=\"cuenta\">"+aro(G)+"<div class=\"que\"><b>"+(G.h?G.h.cartel:G.txt)+"</b>"+(G.hora?"<span class=\"hh\">a las "+G.hora+"</span>":"<span class=\"hh\">"+(G.min==null&&G.h?G.txt:"")+"</span>")+"<small>"+(G.sub||"")+"</small></div></div>";}
+function pasos(C){const P=pendientes(C).slice(0,5);return "<div class=\"pasos\" data-a=\"plegar\">"+P.map((h,i)=>"<div class=\"paso"+(i===0?" ya":"")+"\"><i>"+h.ico+"</i><b>"+HM(h.hora)+"</b>"+h.corto.split(" ").slice(-1)[0]+"</div>").join("")+"</div>";}
+function pintaArriba(S,C){const G=grande(C),B=botonVivo(C);
+  const viv=B?"<button class=\"b p vivo\" data-a=\""+B.k+"\">"+B.txt+"</button>":"";
+  if(S.modo==="conductor")return "<div class=\"esc\">"+escena(330)+"<div class=\"sobre\">"+cuenta(G)+"</div></div>"+viv+pasos(C)+(S.abierta?cadenaAbierta(C):"");
+  return cuenta(G)+viv+pasos(C)+(S.abierta?cadenaAbierta(C):"");}
+</script></body></html>
