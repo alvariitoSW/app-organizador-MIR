@@ -5,6 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
+- ~~[aparc-la-noche-a-main]~~ HECHO 2026-10-29: la Ley de La Noche (N1-N3) en main ec1370b (run 40877861030); delegación cerrada
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)

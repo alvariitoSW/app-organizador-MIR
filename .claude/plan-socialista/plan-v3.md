@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Ley de La Noche · N3 · pasar a main** (sesión aparte): repaso final de N1 y N2 y pasar a `main`. N1 y N2 hechas el 29/10 en la rama (El cartel; hoja He vuelto/He llegado, Alarmas, Tu semana, sugerencia de la cama, `.ics` apagado).
+(nada: la Ley de La Noche quedó hecha el 29/10; la siguiente es la primera de «Por hacer»)
 
 ## Por hacer
 
@@ -69,11 +69,14 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
 | ~~N0~~ | ✅ 29/10 · gana **A · El cartel** (`maquetas/la-noche-a-cartel.html`, acta «N0 · la maqueta elegida») · Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
-| N1 | Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
-| N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
-| N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
+| ~~N1~~ | ✅ main ec1370b · 29/10 · Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
+| ~~N2~~ | ✅ main ec1370b · 29/10 · Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
+| ~~N3~~ | ✅ main ec1370b · 29/10 · repaso del `verificador`, 2 arreglos (nota de «Vete», apilado de las 07:58) · Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
 
 ### Después (sin planificar todavía)
+
+- [idea] Botones de 20-34 px en la línea de Hoy (Reloj: comidas e `ir-viaje` a 20 px; filas de días a 34 px), anteriores a la Ley de La Noche · arreglo
+- [idea] Aviso de cama del `.ics` con la cama del escalón (hoy usa la objetivo; las alarmas del Reloj ya dan la del escalón) · arreglo
 
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
 2. [v3-420-descanso] 4:20 que relacione lo que fumas con el descanso y la energía, y ayude a bajar · maqueta → construir

@@ -52,6 +52,7 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n0 | maqueta | opus-5-5 + sonnet-5-5 | 3 | 56 | **794 k** | sesión principal (74 %) | 3 maquetas (A cartel gana, empate decidido por Bienestar), 2 rondas de verificador, jurado opus; ficha N1-N2 |
 | 2026-10-29 | la-noche-n1 | construir | opus-5-5 + sonnet-5-5 | 2 | 66 | **1,1 M** | Construir N1 la cuenta atrás (76 %) | N1 de La Noche: cartel arriba de Hoy en 4 modos, quita sueño y mañana suelta; obra sonnet ~0,87 M, capturas ~0,08 M |
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
+| 2026-10-29 | la-noche-n3 | desplegar | opus-5-5 + sonnet-5-5 | 1 | 42 | **643 k** | sesión principal (75 %) | repaso del verificador, 2 arreglos con prueba (nota de Vete, apilado 07:58), suite 813/813 y main ec1370b |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
