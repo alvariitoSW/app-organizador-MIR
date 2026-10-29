@@ -654,9 +654,13 @@ function normalize(o){
     if(TLKEYS.indexOf(k)<0||!esColor(o.franja.colores[k]||''))delete o.franja.colores[k];});
   if(!o.calcol||typeof o.calcol!=='object')o.calcol={};
   if(!o.manana||typeof o.manana!=='object')o.manana={};   /* a qué hora saliste de casa cada día: {'2026-10-15':{salio:'07:29'}} */
-  /* {salio, bus (fuiste en bus), real (hora real), eur (lo que costó el taxi ese día)}: vale con hora de salida o con precio */
-  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];const okS=v&&/^\d{2}:\d{2}$/.test(v.salio||''),okE=v&&v.eur!=null&&isFinite(+v.eur);
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!(okS||okE)){delete o.manana[k];return;}if(!okS)delete v.salio;if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;});
+  /* {salio, bus (fuiste en bus), real (hora real), eur (lo que costó el taxi ese día), llego (a qué hora llegaste al trabajo)}: vale con hora de salida, de llegada o con precio */
+  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];const okS=v&&/^\d{2}:\d{2}$/.test(v.salio||''),okE=v&&v.eur!=null&&isFinite(+v.eur),okL=v&&/^\d{2}:\d{2}$/.test(v.llego||'');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!(okS||okE||okL)){delete o.manana[k];return;}if(!okS)delete v.salio;if(!okL)delete v.llego;if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;});
+  /* La noche: a qué hora volviste del Lloret cada noche, {'2026-10-29':'21:52'} (lo demás de lloret se deja como está) */
+  if(o.lloret&&typeof o.lloret==='object'){const vv=o.lloret.vuelta,nv={};
+    if(vv&&typeof vv==='object'&&!Array.isArray(vv))Object.keys(vv).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&/^\d{2}:\d{2}$/.test(String(vv[k]||'')))nv[k]=vv[k];});
+    o.lloret.vuelta=nv;}
   Object.keys(o.calcol).forEach(function(k){if(CAL_KEYS.indexOf(k)<0||!esColor(o.calcol[k]||''))delete o.calcol[k];});
   if(!Array.isArray(o.rotation.servicios)||!o.rotation.servicios.length)o.rotation.servicios=d.rotation.servicios.slice();
   o.rotation.servicios=o.rotation.servicios.map(function(x){return String(x||'').trim();}).filter(Boolean);
@@ -830,6 +834,9 @@ function normalize(o){
   /* lo nuevo de Sueño: hora fija, el plan de cada guardia, sus avisos, las pruebas, los tests y lo demás */
   if(!/^\d{2}:\d{2}$/.test(o.sueno.ancla||''))delete o.sueno.ancla;
   if(!(typeof o.sueno.margen==='number'&&o.sueno.margen>=0&&o.sueno.margen<=180))delete o.sueno.margen;
+  /* La noche: el escalón de la cama (HH:MM), el de antes, el que ya pusiste en el Reloj y desde cuándo rige */
+  ['escalon','escalonAntes','alarmasOk'].forEach(function(q){if(!/^\d{2}:\d{2}$/.test(o.sueno[q]||''))delete o.sueno[q];});
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(o.sueno.escalonDesde||''))delete o.sueno.escalonDesde;
   {const ok=esFecha,num=function(v){return isFinite(+v)?+v:0;};
    const sim={};Object.keys(o.sueno.sim||{}).filter(ok).sort().slice(-30).forEach(function(k){const m=o.sueno.sim[k];if(!m||!Array.isArray(m.sueno)||!Array.isArray(m.cafes))return;
      sim[k]={sueno:m.sueno.filter(function(x){return x&&num(x.b)>num(x.a);}).slice(0,8).map(function(x){return {id:String(x.id||'nap').slice(0,12),a:num(x.a),b:num(x.b),ratos:x.ratos?1:0,txt:String(x.txt||'Siesta').slice(0,40)};}),
@@ -1507,6 +1514,8 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   /* mientras pruebas «siesta de 3 h» (2 semanas), la siesta es esa; al acabar vuelve la tuya sola */
   if(siesta3On())d.siesta=180;
   d.avisoCama=!!o.avisoCama;
+  d.avisoLloret=!!o.avisoLloret;d.avisoSalir=!!o.avisoSalir;   /* al .ics, apagados de serie */
+  d.adelanto=o.adelanto!==false;   /* La noche: adelantar la cama 15 min cada 3 días (encendido de serie) */
   d.conduce=o.conduce===true;   /* «no tengo carné»: por defecto vuelves en transporte, no conduciendo */
   return d;}
 function siesta3On(){
@@ -5480,13 +5489,74 @@ function nocheHTML(key,esHoy){
   const m=mananaDe(key),h=hoyNow(true)/60;
   const sali=m&&m.salio==null&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
     '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>':'';
+  /* el botón vivo: «He vuelto» cerca de la hora de irte del Lloret, «He llegado» cerca de la de llegar al trabajo */
+  const hv=C.hitos.filter(function(x){return x.id==='vete';})[0],hl=C.hitos.filter(function(x){return x.id==='llegar';})[0];
+  const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','🏠 He vuelto']:
+    (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','🏢 He llegado']:null);
+  const vivo=viv?'<button class="btn p nvivo" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
+  const anoche=hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
   let pie='';
   if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
     '<div class="ncad" id="nocheCad">'+P.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
-      (x.nota?'<small>'+esc(x.nota)+'</small>':'')+'</div><span class="nh">'+hm(x.hora)+'</span></div>';}).join('')+'</div>'+mananaHTML(key,true);
+      (x.nota?'<small>'+esc(x.nota)+'</small>':'')+'</div><span class="nh">'+hm(x.hora)+'</span></div>';}).join('')+
+      (C.vuelta?'<div class="nok">✓ Volviste a las '+esc(C.vuelta)+'</div>':'')+(C.llego?'<div class="nok">✓ Llegaste a las '+esc(C.llego)+'</div>':'')+
+      '<div class="row nvistas"><button class="btn s" data-a="noche-vista" data-v="alarmas">⏰ Alarmas del móvil</button><button class="btn s" data-a="noche-vista" data-v="semana">📊 Tu semana</button>'+anoche+'</div></div>'+mananaHTML(key,true);
   else if(P.length>1)pie='<button class="nchips" data-a="noche-plegar" aria-expanded="false" aria-controls="nocheCad" title="ver lo que falta">'+
     P.slice(1,5).map(function(x){return '<span class="nchip">'+x.ico+' '+hm(x.hora)+(x.id==='desp'?' <small>fijo</small>':'')+'</span>';}).join('')+'<span class="nmas">▾</span></button>';
-  return '<div class="noche">'+cartel+sali+pie+'</div>';}
+  return '<div class="noche">'+cartel+sali+vivo+pie+'</div>'+nocheSugHTML(key);}
+function nocheSugHTML(key){
+  const s=nocheSugerencia(key);if(!s)return '';
+  return '<div class="nsug" role="group" aria-label="Sugerencia de hora de cama">💡 Llevas 3 noches cerca de las '+hm(s.de)+'. ¿Probamos a la cama a las <b>'+hm(s.a)+'</b> desde hoy?'+
+    '<div class="row"><button class="btn s p" data-a="noche-sug-si">Vale, '+hm(s.a)+'</button><button class="btn s" data-a="noche-sug-no">Aún no</button></div></div>';}
+/* La hoja de «He vuelto» / «He llegado»: la hora de ahora ya puesta, −5 / +5 y Guardar. No se guarda nada hasta Guardar. */
+function nocheHojaHTML(){
+  const h=ui.nocheHoja;if(!h)return '';const vuelta=h.k==='vuelta',tit=vuelta?'🏠 He vuelto del Lloret':'🏢 He llegado al trabajo';
+  return hojaMarco('noche-cerrar','nhoja',tit,'<h3 class="sh">'+tit+'</h3><p class="mini">La hora ya está puesta. Si no es, muévela.</p>'+
+    '<div class="nhb"><button class="btn" data-a="noche-h-5" aria-label="5 minutos antes">−5</button><b class="nhora" role="status">'+hm(h.t)+'</b><button class="btn" data-a="noche-h+5" aria-label="5 minutos después">+5</button></div>'+
+    '<button class="btn p nancho" data-a="noche-guardar">Guardar '+hm(h.t)+'</button>');}
+/* Las dos pantallas de la noche (ui.hoyVista='alarmas'|'semana'): se pintan como Sueño o el informe, con «‹ Hoy» arriba. */
+function nocheAlarmasHTML(){
+  const hoy=fechaHoy(),C=nocheCadena(hoy,20*60);if(!C)return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="">‹ Hoy</button></div><p class="mini">Aún no hay despertador para esta noche.</p></div>';
+  const g=function(id){return C.hitos.filter(function(x){return x.id===id;})[0];},so=store.sueno||{};
+  const fila=function(ico,nom,h,dias,antes,tuHora){return '<div class="nal"><span class="alico">'+ico+'</span><div><b>'+esc(nom)+'</b><small>'+esc(dias)+(tuHora?' · tu hora: '+hm(tuHora):'')+'</small></div><span class="alh">'+hm(h)+(antes!=null?'<i>antes '+hm(antes)+'</i>':'')+'</span></div>';};
+  /* «antes»: lo que ya tienes puesto en el Reloj si el escalón ha cambiado desde que pulsaste «Ya las he puesto» */
+  const ant=so.escalonAntes&&so.alarmasOk!==hm(C.cama)?Math.max(C.obj,nocheCamaMin(so.escalonAntes)):null,antCama=ant!=null&&ant!==C.cama?ant:null;
+  const v=g('vete'),s=g('salir'),mg=snMargenLibre();
+  return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="">‹ Hoy</button></div>'+
+    '<h2 class="subtit">⏰ Pon estas alarmas en tu Reloj</h2><p class="mini">Así suenan aunque la app esté cerrada. Ponlas una vez con este mismo nombre.</p>'+
+    (v?fila('🌿','Vete del Lloret',v.hora,'todas las noches menos guardia',antCama!=null?antCama-C.cfg.margen-C.cfg.ida:null):'')+
+    fila('🛌','A la cama',C.cama,'todas las noches',antCama,C.cama>C.obj?C.obj:null)+
+    (s?fila('🚪','Sal de casa',s.hora,'lunes a viernes',null):'')+
+    '<p class="nnota">⏰ El despertador de las <b>'+hm(g('desp').hora)+'</b> ya lo tienes: déjalo lejos de la cama.'+(mg>0?' En libres, como mucho '+fmtHM(mg)+' más tarde.':'')+'</p>'+
+    (antCama!=null?'<p class="nnota">Lo que ha cambiado desde que las pusiste va en pequeño al lado.</p>':'')+
+    '<button class="btn p nancho" data-a="noche-alarmas-ok">Ya las he puesto</button></div>';}
+/* Tu semana en minutos: de media, lo hecho menos lo puesto, los últimos 7 días frente a los 7 anteriores. Pura: no escribe nada. */
+function nocheSemanaDatos(){
+  const hoy=fechaHoy(),dia=function(i){return iso(addDays(parseDate(hoy),-i));},acc={cama:[[],[]],desp:[[],[]],salir:[[],[]]};
+  const ajusta=function(x){if(x>720)x-=1440;if(x<-720)x+=1440;return x;};
+  for(let i=0;i<14;i++){
+    const k=dia(i),C=nocheCadena(dia(i+1),20*60);if(!C)continue;const j=i<7?0:1,r=suenoReal(k),h=function(id){return C.hitos.filter(function(x){return x.id===id;})[0];};
+    if(r&&!r.guardia){
+      const a=nocheCamaMin(r.acostar),c=h('cama');if(a!=null&&c)acc.cama[j].push(a-c.hora);
+      const d=mins(r.desp),w=h('desp');if(d!=null&&w)acc.desp[j].push(ajusta(d-(w.hora-1440)));}
+    const sa=(((store.manana||{})[k])||{}).salio,ms=mins(sa),sp=h('salir'),P=mananaPlan(),pl=sp?sp.hora-1440:(P?Math.round(P.plan*60):null);
+    if(ms!=null&&pl!=null)acc.salir[j].push(ajusta(ms-pl));}
+  const med=function(a){return a.length?Math.round(a.reduce(function(t,x){return t+x;},0)/a.length):null;};
+  const filas=[['cama','🛌','A la cama'],['desp','⏰','Levantarte'],['salir','🚪','Salir de casa']].map(function(f){return {id:f[0],ico:f[1],nom:f[2],act:med(acc[f[0]][0]),ant:med(acc[f[0]][1])};});
+  /* una sola propuesta: la fila que más se retrasa */
+  const con=filas.filter(function(f){return f.act!=null;}).sort(function(a,b){return b.act-a.act;})[0];
+  let prop='Apunta unas noches en Sueño y aquí verás cómo vas';
+  if(con){const ll=!!lloretDe(hoy);
+    prop=con.act<=0?'vas a tu hora: sigue así':con.id==='cama'?(ll?'vete del Lloret cuando suene la alarma':'a la cama cuando suene la alarma'):con.id==='desp'?'el despertador lejos de la cama':'sal con la alarma de salir';}
+  return {filas:filas,prop:prop,hay:!!con};}
+function nocheSemanaHTML(){
+  const D=nocheSemanaDatos(),n=function(x){return (x>0?'+':x<0?'−':'')+Math.abs(x);};
+  return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="">‹ Hoy</button></div>'+
+    '<h2 class="subtit">Tu semana en minutos</h2><p class="mini">De media, lo que hiciste frente a la hora puesta. Solo tres cifras.</p>'+
+    D.filas.map(function(f){return '<div class="nsem"><span>'+f.ico+' '+esc(f.nom)+'</span>'+(f.act!=null?'<b>'+n(f.act)+' min</b>':'<b class="sd">sin datos</b>')+
+      (f.act!=null&&f.ant!=null?'<small>la semana pasada '+n(f.ant)+'</small>':'<small>'+(f.act==null?'apunta unas noches en Sueño':'la semana pasada: sin datos')+'</small>')+'</div>';}).join('')+
+    '<p class="nnota">'+(D.hay?'Un cambio para esta semana: <b>'+esc(D.prop)+'</b>.':esc(D.prop)+'.')+'</p></div>';}
+function renderNochePant(){$('#main').innerHTML=ui.hoyVista==='alarmas'?nocheAlarmasHTML():nocheSemanaHTML();}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
@@ -5743,7 +5813,8 @@ function mananaHTML(key,esHoy){
     '<div class="mnlin"><span>'+linea+'</span>'+boton+'</div>'+(semTxt?'<p class="mini">'+esc(semTxt)+'</p>':'')+'</div>';}
 function mananaSali(key,hhmm){
   if(!store.manana)store.manana={};
-  if(hhmm)store.manana[key]=Object.assign({},store.manana[key]||{},{salio:hhmm});else delete store.manana[key];
+  if(hhmm)store.manana[key]=Object.assign({},store.manana[key]||{},{salio:hhmm});
+  else{const x=store.manana[key];if(x&&x.llego)store.manana[key]={llego:x.llego};else delete store.manana[key];}   /* deshacer la salida no borra la llegada */
   /* los hábitos «salir a tiempo» y «taxi», si los tienes, se marcan solos (son automáticos); nada que hacer aquí */
   save();render();}
 function estadoDe(key,h){
@@ -6382,6 +6453,18 @@ function snCamaEventos(desde,hasta){
     out.push({allDay:false,fecha:icsNum(kc),isoKey:kc,hora:bed.padStart(5,'0'),horaFin:'',dur:10,avisoMin:15,uid:icsUID('cama|'+k),
       summ:'🛏 A la cama',desc:'Para dormir '+fmtC(c.min)+' h y levantarte a las '+man+'.',cat:'TAREA'});}
   return out;}
+function snNocheEventos(desde,hasta){
+  /* «🌿 Vete del Lloret» (noches con Lloretazo) y «🚪 Sal de casa» (días de bus), con las horas de La noche; apagados de serie */
+  const c=suenoCfg(),out=[];if(!c.avisoLloret&&!c.avisoSalir)return out;
+  const mk=function(k,m,summ,desc,clave){const kc=m>=1440?nextIso(k):k;if(kc<desde||kc>hasta)return;
+    out.push({allDay:false,fecha:icsNum(kc),isoKey:kc,hora:hm(m),horaFin:'',dur:10,avisoMin:0,uid:icsUID(clave+'|'+k),summ:summ,desc:desc,cat:'TAREA'});};
+  /* la noche de ayer trae la salida de hoy: se empieza un día antes */
+  for(let d=addDays(parseDate(desde),-1),i=0;d&&iso(d)<=hasta&&i<121;d=addDays(d,1),i++){
+    const k=iso(d);let C=null;try{C=nocheCadena(k,20*60);}catch(e){C=null;}if(!C)continue;
+    const v=C.hitos.filter(function(x){return x.id==='vete';})[0],s2=C.hitos.filter(function(x){return x.id==='salir';})[0];
+    if(c.avisoLloret&&v)mk(k,v.hora,'🌿 Vete del Lloret','Para llegar a casa y a la cama a las '+hm(C.cama)+'.','vetell');
+    if(c.avisoSalir&&s2)mk(nextIso(k),s2.hora-1440,'🚪 Sal de casa','Para el bus de las '+hm(C.hitos.filter(function(x){return x.id==='bus';})[0].hora)+'.','salirb');}
+  return out;}
 function snAvisosEventos(desde,hasta){
   return snAvisosOn(desde,hasta).filter(function(a){return a.k>=desde&&a.k<=hasta;}).map(function(a){
     return {allDay:false,fecha:icsNum(a.k),isoKey:a.k,hora:snHH(a.x.t).padStart(5,'0'),horaFin:'',dur:15,avisoMin:0,uid:icsUID('sueno|'+a.G+'|'+a.x.k),
@@ -6699,6 +6782,9 @@ function suenoAjustaHTML(hoyK){
       '<div class="snctl"><span>Necesito</span><input type="range" id="snNeed" data-a="sn-need" min="6.5" max="9" step="0.25" value="'+c.min+'"><output>'+fmtHM(c.min*60)+'</output></div>'+
       '<label class="snrel" style="margin-top:8px"><input type="checkbox" data-a="sn-avcama"'+(c.avisoCama?' checked':'')+'> Aviso de cama 15 min antes, a la hora de cada día</label>'+
       (c.avisoCama?'<p class="mini" style="margin:2px 0 0">La noche antes de un libre, a la del libre. Suena con la app abierta y, con ella cerrada, desde tu calendario de «Eventos, recibos y tareas» si lo tienes suscrito en Google. Los días de guardia no.</p>':'')+
+      '<label class="snrel"><input type="checkbox" data-a="sn-adelanto"'+(c.adelanto?' checked':'')+'> Sugerirme adelantar la cama 15 min cada 3 días</label>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-avlloret"'+(c.avisoLloret?' checked':'')+'> Aviso «🌿 Vete del Lloret» en el calendario</label>'+
+      '<label class="snrel"><input type="checkbox" data-a="sn-avsalir"'+(c.avisoSalir?' checked':'')+'> Aviso «🚪 Sal de casa» en el calendario (días de bus)</label>'+
       '<p class="snref">Levantarte a horas parecidas predice la salud más que las horas que duermes; más de 1 h de diferencia los libres es como cambiar de huso cada semana. <i>Windred 2024 (Sleep) · Roenneberg 2012</i></p>'+
       '<div class="row" style="gap:6px;margin-top:6px">'+snPorQue('regular')+snPorQue('jetlag')+'</div>'+
       suenoProbarHTML('hora','Levantarme a mi hora: '+hCortaHM(an)+' trabajo, hasta '+hCortaHM(anL)+' los libres');}
@@ -7369,20 +7455,23 @@ function nocheCadena(key,nowMin){
   const sig=nextIso(d),pl=lloretPlan(d),w=mins(pl.wake||suenoAnclaDe(sig));
   if(w==null)return null;
   const wake=w+1440,bed=acostarsePara(hm(w)),b0=mins(bed);
-  const cama=b0==null?null:(b0<12*60?b0+1440:b0),c=pl.cfg,H=[];
+  const obj=b0==null?null:(b0<12*60?b0+1440:b0),cama=obj==null?null:nocheEscalon(obj),c=pl.cfg,H=[];
   const ll=cama!=null&&lloretDe(d)?lloretDe(d):null;
   if(ll){const casa=cama-c.margen,vete=casa-c.ida,ir=mins(ll.hora);
     H.push({id:'ir',ico:'🌿',hora:ir!=null?ir:pl.de,cartel:'Sal al Lloret',corto:'Ir al Lloret',nota:'a tu hora de siempre'},
       {id:'vete',ico:'🌿',hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · lo último allí antes de las '+hm(cama-60)},
       {id:'casa',ico:'🏠',hora:casa,cartel:'En casa',corto:'En casa',nota:'pantallas fuera: el Lloret ya contó como rato sin pantalla'});}
-  if(cama!=null)H.push({id:'cama',ico:'🛌',hora:cama,cartel:'A la cama',corto:'A la cama',nota:'para dormir tus '+fmt(suenoCfg().min)+' h antes del despertador'});
+  if(cama!=null)H.push({id:'cama',ico:'🛌',hora:cama,cartel:'A la cama',corto:'A la cama',
+    nota:cama>obj?'paso hacia las '+hm(obj)+' (tu hora: '+fmtHM(suenoCfg().min*60+suenoCfg().latencia)+' antes del despertador)':'para dormir tus '+fmt(suenoCfg().min)+' h antes del despertador'});
   H.push({id:'desp',ico:'⏰',hora:wake,cartel:'Despertador',corto:'Despertador',nota:'fijo, lejos de la cama y sin posponer'});
   const P=mananaPlan();
   if(P&&mananaDiaDeBus(sig)){const v=viajeCfg(),bus=Math.round(P.bus*60)+1440;
     H.push({id:'salir',ico:'🚪',hora:Math.round(P.plan*60)+1440,cartel:'Sal de casa',corto:'Sal de casa',nota:v.antes+' min hasta la parada'},
       {id:'bus',ico:'🚌',hora:bus,cartel:'Bus',corto:'Bus',nota:''},
       {id:'llegar',ico:'🏢',hora:bus+v.min,cartel:'Llegas al trabajo',corto:'Llegas',nota:'sobre esta hora'});}
-  const pend=H.filter(function(h){return h.hora>now||(h.id==='llegar'&&now<h.hora+60);});
+  /* «He vuelto» da por pasado el hito de vete; «He llegado», el de llegar */
+  const vuelta=(((store.lloret||{}).vuelta||{})[d])||'',llego=(((store.manana||{})[sig])||{}).llego||'';
+  const pend=H.filter(function(h){if(h.id==='vete'&&vuelta)return false;if(h.id==='llegar')return !llego&&now<h.hora+60;return h.hora>now;});
   /* la frase grande: «Vete del Lloret · 21:45 / en 25 min»; por la mañana, «Bus en 18 min · sal de casa a las 07:31» */
   let g={txt:'Buen día',sub:'',h:null};const h=pend[0];
   if(h){const dd=h.hora-now,bs=H.filter(function(x){return x.id==='bus';})[0];
@@ -7391,7 +7480,31 @@ function nocheCadena(key,nowMin){
       g={txt:'Bus en '+nocheFalta(db),hora:hm(bs.hora),sub:db>ant?'sal de casa a las '+hm(bs.hora-ant):'¡a la parada!',h:bs,ico:'🚌',min:db};}
     else if(h.id==='llegar'&&dd<=0)g={txt:'¿Ya en el trabajo?',sub:'sobre la hora del trabajo',h:h,ico:'🏢'};
     else g={txt:h.cartel+' en '+nocheFalta(dd),hora:hm(h.hora),sub:h.nota,h:h,ico:h.ico,min:dd};}
-  return {noche:d,now:now,hitos:H,pend:pend,g:g};}
+  return {noche:d,now:now,hitos:H,pend:pend,g:g,obj:obj,cama:cama,cfg:c,vuelta:vuelta,llego:llego};}
+/* LA CAMA DEL ESCALÓN: no se salta de golpe de la de ahora a la tuya. Con el interruptor apagado, la tuya (objetivo). Encendido: el
+   escalón guardado (store.sueno.escalon) o, sin él, la mediana de tus últimas 7 camas apuntadas (00:30 sin datos); nunca antes de la
+   tuya. Todo en minutos desde las 00:00 del día de la noche (la madrugada va +1440). */
+function nocheCamaMin(t){const m=mins(t);return m==null?null:(m<12*60?m+1440:m);}
+function nocheMed(a){a=a.slice().sort(function(x,y){return x-y;});const n=a.length;return n%2?a[(n-1)/2]:Math.round((a[n/2-1]+a[n/2])/2);}
+function nocheCamasReales(n){
+  /* las n últimas camas apuntadas (la fecha es la de la mañana), de la más nueva a la más vieja */
+  const out=[];
+  for(let i=0,d=parseDate(fechaHoy());d&&i<30&&out.length<n;i++,d=addDays(d,-1)){
+    const r=suenoReal(iso(d)),m=r&&!r.guardia&&r.acostar?nocheCamaMin(r.acostar):null;if(m!=null)out.push(m);}
+  return out;}
+function nocheEscalon(objMin){
+  if(!suenoCfg().adelanto)return objMin;
+  let v=nocheCamaMin((store.sueno||{}).escalon);
+  if(v==null){const c=nocheCamasReales(7);v=c.length?nocheMed(c):nocheCamaMin('00:30');}
+  return Math.max(v,objMin);}
+/* ¿toca proponer 15 min menos? Con el interruptor encendido, el escalón por encima de la tuya, 3 días desde el último cambio y la
+   mediana de las 3 últimas camas a 15 min o menos del escalón. Pura: solo mira. */
+function nocheSugerencia(key){
+  if(!suenoCfg().adelanto)return null;
+  const C=nocheCadena(key,20*60);if(!C||C.cama==null||C.cama<=C.obj)return null;
+  const desde=(store.sueno||{}).escalonDesde;if(desde&&diasEntreK(desde,key)<3)return null;
+  const cs=nocheCamasReales(3);if(cs.length<3||Math.abs(nocheMed(cs)-C.cama)>15)return null;
+  return {de:C.cama,a:Math.max(C.obj,C.cama-15)};}
 let _llTick=-1,_llCache={},_llEv=null,_llN=-1,_llCfg=null;
 function lloretDe(key){
   /* memorizado por pintado (y por si cambian los eventos o la config a mano): las rachas y el
@@ -7422,6 +7535,7 @@ function lloretPoner(key){
 function renderHoy(){
   if(ui.hoyVista==='informe')return renderInforme();
   if(ui.hoyVista==='sueno')return renderSueno();
+  if(ui.hoyVista==='alarmas'||ui.hoyVista==='semana')return renderNochePant();
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
   const esHoy=esHoyDeVerdad(hoy);
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
@@ -7929,6 +8043,7 @@ const HOJAS={
        Comer (Hoy, el calendario), que es cuando el día lo puso el atajo y no tú */
     cerrar:function(){const h=ui.cjeHoja;if(h&&/^(mom|dia|acc)$/.test(h.v||'')){if(h.fuera)ui.foodDate='';ui.frPos='';ui.frase=null;ui.frTxt=null;}ui.cjeHoja=null;}},
   semp:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja;},html:function(){return semPHojaHTML();},cerrar:function(){ui.semPHoja=null;}},
+  noche:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&!!ui.nocheHoja;},html:function(){return nocheHojaHTML();},cerrar:function(){ui.nocheHoja=null;}},
   hoy:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&ui.hoyIt;},html:function(){return hoyHojaHTML();},cerrar:function(){ui.hoyIt=null;}},
   hab:{abierta:function(){return ui.tab==='habitos'&&ui.habEd;},html:function(){return habHojaHTML();},cerrar:function(){ui.habEd=null;}},
   mes:{abierta:function(){return ui.tab==='month'&&!!ui.mesHoja;},html:function(){return hojaMesHTML();},cerrar:function(){ui.mesHoja=false;}}};
@@ -24266,6 +24381,19 @@ function act(a,el){
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'noche-plegar':ui.nocheAbierta=!ui.nocheAbierta;render();break;
+    case 'noche-vista':ui.hoyVista=/^(alarmas|semana)$/.test(el.dataset.v||'')?el.dataset.v:'';render();window.scrollTo(0,0);break;
+    case 'noche-hoja':ui.nocheHoja={k:el.dataset.k==='llego'?'llego':'vuelta',t:hoyNow(true)};render();break;
+    case 'noche-h-5':case 'noche-h+5':if(ui.nocheHoja){ui.nocheHoja.t=(ui.nocheHoja.t+(a==='noche-h-5'?-5:5)+1440)%1440;render();}break;
+    case 'noche-cerrar':ui.nocheHoja=null;render();break;
+    case 'noche-guardar':{const h=ui.nocheHoja,C=h&&nocheCadena(fechaHoy(),hoyNow(true));if(!h||!C){ui.nocheHoja=null;render();break;}
+      const hh=hm(h.t);
+      if(h.k==='vuelta'){if(!store.lloret||typeof store.lloret!=='object')store.lloret={};if(!store.lloret.vuelta||typeof store.lloret.vuelta!=='object')store.lloret.vuelta={};store.lloret.vuelta[C.noche]=hh;}
+      else{const m=nextIso(C.noche);if(!store.manana)store.manana={};store.manana[m]=Object.assign({},store.manana[m]||{},{llego:hh});}
+      ui.nocheHoja=null;save();render();flash(h.k==='vuelta'?'Apuntado: volviste a las '+hCortaHM(hh):'Apuntado: llegaste a las '+hCortaHM(hh));break;}
+    case 'noche-sug-si':case 'noche-sug-no':{const hoy=fechaHoy(),sg=nocheSugerencia(hoy);if(!sg)break;const so=store.sueno;
+      if(a==='noche-sug-si'){so.escalonAntes=hm(sg.de);so.escalon=hm(sg.a);}else so.escalon=hm(sg.de);
+      so.escalonDesde=hoy;save();render();break;}
+    case 'noche-alarmas-ok':{const C=nocheCadena(fechaHoy(),20*60);if(C&&C.cama!=null)store.sueno.alarmasOk=hm(C.cama);ui.hoyVista='';save();render();window.scrollTo(0,0);break;}
     case 'hoy-modo':{const v=el.dataset.v;ui.hoyModo=/^(reloj|linea)$/.test(v)?v:'bus';try{localStorage.setItem(HOY_MODO_KEY,ui.hoyModo);}catch(e){}
       if(v==='bus'||v==='est'){ui.hoyBusV=v==='est'?'estacion':'conductor';try{localStorage.setItem(HOY_BUSV_KEY,ui.hoyBusV);}catch(e){}}render();break;}
     case 'hoy-sel':ui.hoySel=null;ui.hoyCursor=null;render();break;
@@ -26649,6 +26777,7 @@ function calEventos(desde,hasta){
   /* los pasos del plan de guardia que pediste que te avisen: con la app cerrada solo suenan así */
   snAvisosEventos(desde,hasta).forEach(function(e){out.push(e);});
   snCamaEventos(desde,hasta).forEach(function(e){out.push(e);});
+  snNocheEventos(desde,hasta).forEach(function(e){out.push(e);});
   return out;}
 function icsTexto(desde,hasta,opt){
   /* el .ics que Google entiende: cabecera de cuaderno, eventos con UID estable y su VALARM */
@@ -27311,6 +27440,9 @@ document.addEventListener('change',e=>{
     case 'sn-tt':snTCambia(+el.dataset.i,+el.dataset.k,el.value);render();break;
     case 'sn-conduce':store.sueno.conduce=!!el.checked;save();render();break;
     case 'sn-avcama':store.sueno.avisoCama=!!el.checked;save();programarAvisoCama();render();break;
+    case 'sn-avlloret':store.sueno.avisoLloret=!!el.checked;save();render();break;
+    case 'sn-avsalir':store.sueno.avisoSalir=!!el.checked;save();render();break;
+    case 'sn-adelanto':store.sueno.adelanto=!!el.checked;save();render();break;
     case 'sn-reloj':store.sueno.relojEnergia=!!el.checked;save();render();break;
     /* cambiar tu hora o lo que necesitas dormir mueve también el aviso de cama de esta noche */
     case 'sn-ancla':{store.sueno.ancla=hm(+el.value);save();programarAvisoCama();render();break;}

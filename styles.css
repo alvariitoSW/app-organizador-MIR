@@ -3945,3 +3945,26 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .noche .ncf div{flex:1;min-width:0}
 .noche .ncf small{display:block;color:var(--ink2);font-size:12px}
 .noche .ncf .nh{font-variant-numeric:tabular-nums;font-weight:700}
+.noche .nvivo{width:100%;min-height:52px;margin-top:8px;font-size:17px}
+.noche .nok{color:var(--ok);font-size:13px;padding:6px 2px}
+.noche .nvistas{margin-top:6px;gap:8px}
+.noche .nvistas .btn{min-height:44px}
+.nsug{background:var(--card);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;padding:12px 14px;margin:0 0 10px;font-size:14px}
+.nsug .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.nsug .btn{min-height:44px}
+.hoja.nhoja .nhb{display:flex;align-items:center;justify-content:center;gap:18px;margin:10px 0}
+.hoja.nhoja .nhb .btn{min-width:64px;min-height:44px;font-size:17px}
+.hoja.nhoja .nhora{font-size:44px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.hoja.nhoja .nancho{width:100%;min-height:48px;margin-top:6px}
+.npant .nal{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px}
+.npant .nal>div{flex:1;min-width:0}
+.npant .nal small{display:block;color:var(--ink2);font-size:12.5px}
+.npant .alico{font-size:24px}
+.npant .alh{font-size:28px;font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+.npant .alh i{display:block;font-size:11px;font-weight:400;color:var(--ink2);font-style:normal}
+.npant .nsem{display:grid;grid-template-columns:1fr auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px}
+.npant .nsem b{font-size:26px;font-variant-numeric:tabular-nums}
+.npant .nsem b.sd{font-size:15px;font-weight:600;color:var(--ink2);align-self:center}
+.npant .nsem small{grid-column:1/-1;color:var(--ink2);font-size:12.5px}
+.npant .nnota{color:var(--ink2);font-size:13px;background:var(--card2,var(--card));border-radius:12px;padding:10px 12px;margin:10px 0 0}
+.npant .nancho{width:100%;min-height:48px;margin-top:14px}

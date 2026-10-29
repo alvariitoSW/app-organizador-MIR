@@ -14104,7 +14104,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.mode = 'date'; P.setDayOverride('2026-10-29', SH.id, ''); P.setDayOverride('2026-10-30', SH.id, '');
       P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {}; P.store.rotation.dayRhythm['2026-10-30'] = { wake: '06:45' }; P.store.rotation.dayRhythm['2026-10-31'] = { wake: '06:45' };
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
-      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10 });
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {};
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.save(); P.render(); });
     await page.waitForTimeout(300);
@@ -14139,6 +14139,238 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.c.exp === 'true' && /▴ plegar/.test(r.c.txt) && r.c.notas >= 3 && r.c.alto >= 44 && r.d.arriba && r.d.exp === 'true' && r.d.notas >= 3 && r.e.exp === 'false' && r.e.chips.length >= 3, JSON.stringify([r.c, r.d, r.e]));
     check('a las 7:17 la pieza dice «Bus en 18 min · sal de casa a las 07:31» y trae el botón «he salido»',
       r.f.arriba && /Bus/.test(r.f.txt) && /en 18 min/.test(r.f.txt) && /sal de casa a las 07:31/.test(r.f.txt) && r.fBoton, JSON.stringify([r.f, r.fBoton]));
+  }
+  // 360) LA NOCHE · «🏠 He vuelto» (N2, 412×915, hoy = jue 29/10/2026 21:30): botón → hoja con la hora → −5 → Guardar apunta store.lloret.vuelta[hoy],
+  // el cartel deja de pedir «Vete del Lloret», la cadena dice «✓ Volviste…» y el dato sobrevive a normalize. Fija: no había forma de decir que ya estabas en casa.
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate36 || Date; window.__origDate36 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia36 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (sueno, opt) => page.evaluate(([sueno, opt]) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia36));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' }, sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      const dia = (i) => P.iso(P.addDays(new Date(2026, 9, 29, 12), -i));
+      if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
+        P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
+      if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
+      return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+        boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
+        hoja: h ? h.textContent.replace(/\s+/g, ' ').trim() : '', hora: h && h.querySelector('.nhora') ? h.querySelector('.nhora').textContent.trim() : '',
+        altoH: h ? Math.round(Math.min.apply(null, [...h.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height))) : 0, aria: h ? h.getAttribute('aria-label') : '',
+        sug: q('#main .nsug') ? q('#main .nsug').textContent.replace(/\s+/g, ' ').trim() : '', sugPegada: !!q('#main .noche + .nsug'), ancho: document.documentElement.scrollWidth }; });
+    const hoy = '2026-10-29', man = '2026-10-30';
+    await siembra(); await page.waitForTimeout(250);
+    const r = {};
+    r.a = await lee();
+    await pon(21, 0, 29); await page.evaluate(() => window.PG.render()); r.pronto = await lee(); await pon(21, 30, 29); await page.evaluate(() => window.PG.render());
+    await page.click('#main .noche [data-a="noche-hoja"][data-k="vuelta"]'); await page.waitForTimeout(250);
+    r.b = await lee();
+    await page.click('#hojaDia [data-a="noche-h-5"]'); await page.waitForTimeout(150);
+    r.c = await lee();
+    await page.click('#hojaDia [data-a="noche-guardar"]'); await page.waitForTimeout(250);
+    r.d = await lee();
+    r.vuelta = await page.evaluate((h) => { const P = window.PG; const v = (P.store.lloret.vuelta || {})[h]; P.store = JSON.parse(JSON.stringify(P.store)); return [v, (P.store.lloret.vuelta || {})[h]]; }, hoy);
+    await page.evaluate(() => { window.PG.ui.nocheAbierta = true; window.PG.render(); }); await page.waitForTimeout(150);
+    r.e = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
+    await page.setViewportSize(vp36);
+    check('360 a las 21:30 «🏠 He vuelto» abre la hoja con 21:30; −5 la deja en 21:25; Guardar apunta store.lloret.vuelta[hoy] y el cartel deja de pedir «Vete del Lloret»',
+      /He vuelto/.test(r.a.boton) && r.a.botonK === 'vuelta' && r.pronto.boton === '' && /Vete del Lloret · 21:45/.test(r.a.txt) && r.b.hora === '21:30' && /He vuelto/.test(r.b.hoja) && r.b.altoH >= 44 && !!r.b.aria && r.c.hora === '21:25'
+      && r.vuelta[0] === '21:25' && r.vuelta[1] === '21:25' && r.d.hoja === '' && !/Vete del Lloret/.test(r.d.txt) && r.d.boton === '', JSON.stringify([r.a, r.pronto, r.b, r.c, r.d, r.vuelta]));
+    check('360 con la vuelta apuntada la cadena desplegada dice «✓ Volviste a las 21:25» y no lista el hito de vete', /✓ Volviste a las 21:25/.test(r.e.txt) && !/Vete del Lloret/.test(r.e.txt), JSON.stringify(r.e));
+  }
+  // 361) LA NOCHE · «🏢 He llegado» (viernes 7:58, día de bus): botón → hoja → Guardar apunta store.manana[hoy].llego (sin salio) y sobrevive a normalize.
+  // Fija: normalize borraba las entradas de manana sin salio ni eur.
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate36 || Date; window.__origDate36 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia36 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (sueno, opt) => page.evaluate(([sueno, opt]) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia36));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' }, sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      const dia = (i) => P.iso(P.addDays(new Date(2026, 9, 29, 12), -i));
+      if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
+        P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
+      if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
+      return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+        boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
+        hoja: h ? h.textContent.replace(/\s+/g, ' ').trim() : '', hora: h && h.querySelector('.nhora') ? h.querySelector('.nhora').textContent.trim() : '',
+        altoH: h ? Math.round(Math.min.apply(null, [...h.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height))) : 0, aria: h ? h.getAttribute('aria-label') : '',
+        sug: q('#main .nsug') ? q('#main .nsug').textContent.replace(/\s+/g, ' ').trim() : '', sugPegada: !!q('#main .noche + .nsug'), ancho: document.documentElement.scrollWidth }; });
+    const hoy = '2026-10-29', man = '2026-10-30';
+    await siembra(); await pon(7, 58, 30); await page.evaluate(() => { window.PG.render(); }); await page.waitForTimeout(250);
+    const s = {};
+    s.a = await lee();
+    await page.click('#main .noche [data-a="noche-hoja"][data-k="llego"]'); await page.waitForTimeout(250);
+    s.b = await lee();
+    await page.click('#hojaDia [data-a="noche-guardar"]'); await page.waitForTimeout(250);
+    s.c = await lee();
+    s.m = await page.evaluate((h) => { const P = window.PG, x = P.store.manana[h] || {}; const a = JSON.stringify(x); P.store = JSON.parse(JSON.stringify(P.store)); P.ui.nocheAbierta = true; P.render(); return [a, JSON.stringify(P.store.manana[h] || null)]; }, man);
+    await page.waitForTimeout(150); s.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
+    await page.setViewportSize(vp36);
+    check('361 el viernes a las 7:58 «🏢 He llegado» → Guardar apunta store.manana[hoy].llego (sin salio), sobrevive a normalize y la cadena dice «✓ Llegaste a las 07:58»',
+      /He llegado/.test(s.a.boton) && s.a.botonK === 'llego' && /He llegado/.test(s.b.hoja) && s.b.hora === '07:58' && s.c.hoja === '' && s.c.boton === '' && s.m[0] === '{"llego":"07:58"}' && s.m[1] === '{"llego":"07:58"}' && /✓ Llegaste a las 07:58/.test(s.d.txt), JSON.stringify([s.a, s.b, s.c, s.m, s.d]));
+  }
+  // 362) LA NOCHE · pantallas: desplegar → «⏰ Alarmas del móvil» (vete, cama, sal con hora) → «Ya las he puesto» vuelve a Hoy; «📊 Tu semana» con 3 filas en minutos, sin rojo.
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate36 || Date; window.__origDate36 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia36 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (sueno, opt) => page.evaluate(([sueno, opt]) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia36));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' }, sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      const dia = (i) => P.iso(P.addDays(new Date(2026, 9, 29, 12), -i));
+      if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
+        P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
+      if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
+      return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+        boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
+        hoja: h ? h.textContent.replace(/\s+/g, ' ').trim() : '', hora: h && h.querySelector('.nhora') ? h.querySelector('.nhora').textContent.trim() : '',
+        altoH: h ? Math.round(Math.min.apply(null, [...h.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height))) : 0, aria: h ? h.getAttribute('aria-label') : '',
+        sug: q('#main .nsug') ? q('#main .nsug').textContent.replace(/\s+/g, ' ').trim() : '', sugPegada: !!q('#main .noche + .nsug'), ancho: document.documentElement.scrollWidth }; });
+    const hoy = '2026-10-29', man = '2026-10-30';
+    await pon(21, 30, 29); await siembra(null, { semana: true }); await page.waitForTimeout(250);
+    const t = {};
+    await page.click('#main .noche [data-a="noche-plegar"]'); await page.waitForTimeout(200);
+    await page.click('#main .noche [data-a="noche-vista"][data-v="alarmas"]'); await page.waitForTimeout(250);
+    t.a = await page.evaluate(() => ({ txt: document.getElementById('main').textContent.replace(/\s+/g, ' '), filas: [...document.querySelectorAll('#main .nal')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()), volver: !!document.querySelector('#main [data-a="noche-vista"][data-v=""]'), ancho: document.documentElement.scrollWidth }));
+    await page.click('#main [data-a="noche-alarmas-ok"]'); await page.waitForTimeout(250);
+    t.b = await lee(); t.ok = await page.evaluate(() => [window.PG.store.sueno.alarmasOk, window.PG.ui.hoyVista || '']);
+    await page.click('#main .noche [data-a="noche-vista"][data-v="semana"]'); await page.waitForTimeout(250);
+    t.c = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .nsem')]; const rojo = (el) => { const m = /rgb\((\d+), (\d+), (\d+)/.exec(getComputedStyle(el).color); return !!m && +m[1] > 170 && +m[2] < 90 && +m[3] < 90; };
+      return { txt: document.getElementById('main').textContent.replace(/\s+/g, ' '), filas: f.map((x) => x.textContent.replace(/\s+/g, ' ').trim()), rojo: [...document.querySelectorAll('#main .npant *')].some(rojo), ancho: document.documentElement.scrollWidth }; });
+    await page.click('#main [data-a="noche-vista"][data-v=""]'); await page.waitForTimeout(200); t.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
+    await page.setViewportSize(vp36);
+    check('362 desplegar → «⏰ Alarmas del móvil» enseña vete (21:45), cama (22:35) y sal de casa (07:31) con su hora; «Ya las he puesto» vuelve a Hoy y recuerda la cama',
+      /Pon estas alarmas en tu Reloj/.test(t.a.txt) && t.a.filas.length === 3 && /Vete del Lloret.*21:45/.test(t.a.filas[0]) && /A la cama.*22:35/.test(t.a.filas[1]) && /Sal de casa.*07:31/.test(t.a.filas[2]) && t.a.volver && t.a.ancho <= 412
+      && /Vete del Lloret|En casa|A la cama/.test(t.b.txt) && t.ok[0] === '22:35' && t.ok[1] === '', JSON.stringify([t.a, t.b, t.ok]));
+    check('362 «📊 Tu semana»: 3 filas en minutos (cama +32, levantarte +9, salir +4; la semana pasada +48, +14, +11), sin rojo, y «‹ Hoy» vuelve',
+      /Tu semana en minutos/.test(t.c.txt) && t.c.filas.length === 3 && /A la cama.*\+32 min.*\+48/.test(t.c.filas[0]) && /Levantarte.*\+9 min.*\+14/.test(t.c.filas[1]) && /Salir de casa.*\+4 min.*\+11/.test(t.c.filas[2]) && !t.c.rojo && t.c.ancho <= 412 && /Vete del Lloret/.test(t.d.txt), JSON.stringify([t.c, t.d.txt]));
+  }
+  // 363) LA NOCHE · adelantar la cama: con 3 camas reales cerca del escalón y 3 días desde el último cambio sale «💡 Llevas 3 noches…»; «Vale» baja la cama 15 min
+  // (cartel y alarma) y guarda el escalón de antes; «Aún no» lo fija; con el interruptor apagado ni sale ni se adelanta.
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate36 || Date; window.__origDate36 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia36 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (sueno, opt) => page.evaluate(([sueno, opt]) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia36));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' }, sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      const dia = (i) => P.iso(P.addDays(new Date(2026, 9, 29, 12), -i));
+      if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
+        P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
+      if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
+      return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+        boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
+        hoja: h ? h.textContent.replace(/\s+/g, ' ').trim() : '', hora: h && h.querySelector('.nhora') ? h.querySelector('.nhora').textContent.trim() : '',
+        altoH: h ? Math.round(Math.min.apply(null, [...h.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height))) : 0, aria: h ? h.getAttribute('aria-label') : '',
+        sug: q('#main .nsug') ? q('#main .nsug').textContent.replace(/\s+/g, ' ').trim() : '', sugPegada: !!q('#main .noche + .nsug'), ancho: document.documentElement.scrollWidth }; });
+    const hoy = '2026-10-29', man = '2026-10-30';
+    await siembra({ escalon: '23:20', escalonDesde: '2026-10-26' }, { camas: ['23:25', '23:15', '23:20'] }); await page.waitForTimeout(250);
+    const u = {};
+    u.a = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250); u.linea = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="reloj"]'); await page.waitForTimeout(250); u.reloj = await lee();
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250);
+    await page.click('#main .nsug [data-a="noche-sug-si"]'); await page.waitForTimeout(250);
+    u.b = await lee(); u.s = await page.evaluate((h) => { const x = window.PG.store.sueno; return [x.escalon, x.escalonAntes, x.escalonDesde === h]; }, hoy);
+    await page.click('#main .noche [data-a="noche-plegar"]'); await page.waitForTimeout(200);
+    await page.click('#main .noche [data-a="noche-vista"][data-v="alarmas"]'); await page.waitForTimeout(250);
+    u.al = await page.evaluate(() => [...document.querySelectorAll('#main .nal')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    await siembra({ escalon: '23:20', escalonDesde: '2026-10-26' }, { camas: ['23:25', '23:15', '23:20'] }); await page.waitForTimeout(200);
+    await page.click('#main .nsug [data-a="noche-sug-no"]'); await page.waitForTimeout(250);
+    u.c = await lee(); u.n = await page.evaluate((h) => { const x = window.PG.store.sueno; return [x.escalon, x.escalonAntes || '', x.escalonDesde === h]; }, hoy);
+    await siembra({ escalon: '23:20', escalonDesde: '2026-10-26', adelanto: false }, { camas: ['23:25', '23:15', '23:20'] }); await page.waitForTimeout(250);
+    u.off = await lee();
+    await siembra({ escalon: '23:20', escalonDesde: '2026-10-28' }, { camas: ['23:25', '23:15', '23:20'] }); await page.waitForTimeout(250);
+    u.pronto = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
+    await page.setViewportSize(vp36);
+    check('363 con 3 camas cerca del escalón (23:20) y 3 días sin cambiar sale «💡 Llevas 3 noches cerca de las 23:20… 23:05» pegada a la pieza en los 3 modos; sin tres días o con el interruptor apagado no sale',
+      /Llevas 3 noches cerca de las 23:20/.test(u.a.sug) && /23:05/.test(u.a.sug) && u.a.sugPegada && u.linea.sugPegada && u.reloj.sugPegada && u.off.sug === '' && u.pronto.sug === '' && /Vete del Lloret · 22:30/.test(u.a.txt) && /Vete del Lloret · 21:45/.test(u.off.txt), JSON.stringify([u.a, u.linea.sug, u.reloj.sug, u.off, u.pronto.sug]));
+    check('363 «Vale, 23:05» baja la cama 15 min (cartel 22:15, alarmas 23:05 con «antes 23:20»), guarda el escalón de antes y quita la sugerencia; «Aún no» fija el escalón sin cambiarlo',
+      u.b.sug === '' && /Vete del Lloret · 22:15/.test(u.b.txt) && u.s[0] === '23:05' && u.s[1] === '23:20' && u.s[2] === true && /A la cama.*23:05.*antes 23:20/.test(u.al.join('|')) && /Vete del Lloret.*22:15.*antes 22:30/.test(u.al.join('|'))
+      && u.c.sug === '' && /Vete del Lloret · 22:30/.test(u.c.txt) && u.n[0] === '23:20' && u.n[1] === '' && u.n[2] === true, JSON.stringify([u.b, u.s, u.al, u.c, u.n]));
+  }
+  // 364) LA NOCHE · el .ics: «🌿 Vete del Lloret» y «🚪 Sal de casa» solo salen cuando se encienden sus interruptores de Sueño (apagados de serie).
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate36 || Date; window.__origDate36 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia36 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (sueno, opt) => page.evaluate(([sueno, opt]) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia36));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' }, sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      const dia = (i) => P.iso(P.addDays(new Date(2026, 9, 29, 12), -i));
+      if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
+        P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
+      if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+    const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
+      return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+        boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
+        hoja: h ? h.textContent.replace(/\s+/g, ' ').trim() : '', hora: h && h.querySelector('.nhora') ? h.querySelector('.nhora').textContent.trim() : '',
+        altoH: h ? Math.round(Math.min.apply(null, [...h.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height))) : 0, aria: h ? h.getAttribute('aria-label') : '',
+        sug: q('#main .nsug') ? q('#main .nsug').textContent.replace(/\s+/g, ' ').trim() : '', sugPegada: !!q('#main .noche + .nsug'), ancho: document.documentElement.scrollWidth }; });
+    const hoy = '2026-10-29', man = '2026-10-30';
+    await pon(21, 30, 29); await siembra();
+    const v = {};
+    const evs = () => page.evaluate(() => { const P = window.PG, h = P.iso(new Date()), f = P.iso(P.addDays(new Date(), 5)), e = P.calEventos(h, f);
+      return { ll: e.filter((x) => /Vete del Lloret/.test(x.summ)).map((x) => x.hora + '@' + x.isoKey), sal: e.filter((x) => /Sal de casa/.test(x.summ)).map((x) => x.hora + '@' + x.isoKey) }; });
+    v.a = await evs();
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = 'sueno'; P.ui.snTab = 'ajusta'; P.ui.snAj = 'hora'; P.render(); }); await page.waitForTimeout(250);
+    await page.click('#snAj [data-a="sn-avlloret"]'); await page.waitForTimeout(150); v.b = await evs();
+    await page.click('#snAj [data-a="sn-avsalir"]'); await page.waitForTimeout(150); v.c = await evs();
+    v.on = await page.evaluate(() => [window.PG.suenoCfg().avisoLloret, window.PG.suenoCfg().avisoSalir]);
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.ui.snTab = ''; P.ui.snAj = ''; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
+    await page.setViewportSize(vp36);
+    check('364 el .ics no trae «🌿 Vete del Lloret» ni «🚪 Sal de casa» de serie; con sus interruptores de Sueño encendidos trae los de cada noche con Lloret (21:45) y cada día de bus (07:31)',
+      v.a.ll.length === 0 && v.a.sal.length === 0 && v.b.ll.length >= 4 && /^21:45@/.test(v.b.ll[0]) && v.b.sal.length === 0 && v.c.sal.length >= 3 && /^07:31@/.test(v.c.sal[0]) && v.on[0] === true && v.on[1] === true, JSON.stringify([v.a, v.b, v.c, v.on]));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
