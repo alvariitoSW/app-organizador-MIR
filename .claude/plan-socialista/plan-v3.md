@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada en marcha: la S3 (Comer del reloj) y La Vuelta quedaron hechas y en main. Lo siguiente es la primera de «Por hacer».
+**Ley de La Noche · N0 · maquetas** (sesión aparte, 29/10). Después N1, N2 y N3, cada una en su sesión.
 
 ## Por hacer
 
@@ -59,11 +59,12 @@ De dónde sale el ahorro:
 Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) → V1 → V2. [aparc-comida-entreno] se cierra en V1
 (con entreno a las 15:00 la comida de después pasa a ~16:30). V1 es el primer trozo de [v3-entrenador].
 
-### Tanda La Noche (los tiempos del día: Lloret, cama, despertar y salir) · Consejo 2026-10-29 · acta `consejo/2026-10-29.md`
+### Tanda «Ley de La Noche» (los tiempos del día: Lloret, cama, despertar y salir) · Consejo 2026-10-29 · acta `consejo/2026-10-29.md`
 
 [v3-calendario-sueno] «mejorar la parte principal del calendario… me estoy yendo al Lloret a fumar tarde, me acuesto
 tarde y me cuesta despertarme a las 6:45, llego tarde al curro; que la app me ayude con los tiempos» (2026-10-29).
-**Espera tus 3 respuestas y el presupuesto** (preguntas en el acta). Va antes de [v3-coach] (Consejo, 2026-10-29).
+**Aprobada por delegación** (29/10): arriba (c), cama (b) 15 min cada 3 días, avisos (a) alarmas del móvil; ~4,5 M;
+el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche · N<n> · …». Va antes de [v3-coach].
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|

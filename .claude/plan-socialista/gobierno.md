@@ -51,6 +51,14 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   La Laurisilva + el puesto 3 + Compras R2-C) y **pasar a `main`**. No cambia el cómo: suite completa en verde,
   `npm run sella` + `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`.
   Cada decisión que antes era del usuario va al acta con «(Consejo por delegación)». Se acaba al cerrar la D6.
+- **Delegación del 29/10/2026 · «Ley de La Noche» (N0-N3).** El usuario: «lo de que tengo que decidir yo, que lo
+  decida el congreso, y apruebo todo lo que digan, adelante con el proyecto». Para esta tanda el Consejo decide también
+  lo reservado: el presupuesto (~4,5 M), las tres preguntas del acta `consejo/2026-10-29.md`, **la maqueta que se
+  construye** (lo que cambia lo que ve), qué se quita de Hoy (lo que la cuenta atrás sustituye, sin borrar datos) y
+  **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
+  que caen al revertir, privacidad y Actions en `success`. Cada sesión nueva de la tanda se titula
+  **«Ley de La Noche · N<n> · <qué>»** para que el usuario sepa de dónde viene. En el acta, «(Consejo por delegación)».
+  Se acaba al cerrar la N3.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.
