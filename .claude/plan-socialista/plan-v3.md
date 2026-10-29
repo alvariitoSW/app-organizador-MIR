@@ -71,6 +71,8 @@ Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) �
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- [v3-calendario-sueno] (2026-10-29, para un Consejo en sesión nueva) Mejorar la parte principal del calendario y organizar la app para que ayude con los tiempos: «me estoy yendo al Lloret a fumar tarde, me acuesto tarde, me cuesta despertarme a las 6:45, me levanto tarde y llego tarde al curro». Que ayude a gestionar la hora de dormir, el Lloret y la salida al trabajo.
+
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
 - [v3-gmail] «La función de Gmail»: falta que digas qué es
@@ -83,7 +85,7 @@ Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) �
 
 ## Hecha
 
-- [v3-la-vuelta] La Vuelta: entreno 15-16 y parque, sesión mínima, vuelta al 35 %, objetivo de peso con topes, lámina del Teide o de los Bancales con «Explícamelo · 45 s» · main 3170dc0 · ~11,7 M la sesión entera (Consejo + 2 rondas + obra) · 2026-10-29
+- [v3-la-vuelta] (+ limpieza: sin «Esta semana» ni «Tu vuelta» en la portada, plan viejo migrado al 35 % · main f0d65dd) La Vuelta: entreno 15-16 y parque, sesión mínima, vuelta al 35 %, objetivo de peso con topes, lámina del Teide o de los Bancales con «Explícamelo · 45 s» · main 3170dc0 · ~11,7 M la sesión entera (Consejo + 2 rondas + obra) · 2026-10-29
 
 - [v3-dinero] Tanda Dinero D1-D6 por delegación al Consejo: el Bosque (portada), Gastos, Ahorro con objetivo a fecha y «Ya ha llegado la nómina», Compras con espera de 30 días; lo viejo quitado (−664 líneas) sin borrar datos; migración `dinero3Migra` · main · ~10 M (presupuesto 4,9) · 2026-10-28
 

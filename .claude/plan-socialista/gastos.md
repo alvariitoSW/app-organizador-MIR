@@ -46,6 +46,7 @@ traspaso explica por qué.
 | 2026-10-28 | consejo-deporte | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 10 | 138 | **3,9 M** | sesión principal (21 %) | Consejo + concurso de 6 (4 sonnet, 2 haiku): las haiku gastaron casi el doble que las sonnet (580-626 k frente a 150-350 k); el jurado con capturas de página entera, 337 k |
 | 2026-10-28 | la-vuelta-r2 | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 16 | 258 | **7,0 M** | sesión principal (22 %) | 2.ª ronda: 6 sonnet sin jurado; la sesión entera 7,0 M (Consejo + 2 rondas). Sin jurado se ahorra ~0,35 M por ronda |
 | 2026-10-29 | v3-la-vuelta | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 20 | 466 | **11,7 M** | sesión principal (23 %) | Obra A sonnet 1,2 M + Obra B sonnet 2,0 M + pruebas de fecha 0,24 M + verificador 0,2 M; la ficha con líneas exactas evitó releer app.js |
+| 2026-10-29 | v3-la-vuelta-limpieza | arreglo | opus-5-5 + sonnet-5-5 + haiku-5-5 | 21 | 519 | **13,4 M** | sesión principal (27 %) | quitar tarjetas viejas de la portada y migrar la vuelta: constructor sonnet ~0,9 M; la suite tuvo un fallo suelto en la 273 (pasa sola y en la repetición) |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
