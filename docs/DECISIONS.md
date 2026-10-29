@@ -1745,3 +1745,23 @@ la cadena desplegada (620-677 px): es la vista de detalle, la plegada mide 143-1
 
 **Supuestos.** Con camas reales entre 23:30 y 00:15 la cama arranca en la mediana (23:50) y baja 15 min cada 3 días: es lo que
 decidió el acta, no un fallo. La maqueta `la-noche-comun.js` conserva el texto viejo (es historia, no se publica).
+
+## La Reforma · R1 · Concurso «Tu mes» de Dinero (2026-10-29)
+
+**Elegido (Consejo por delegación).** Concurso de 5 escuelas sonnet con bases comunes
+(`.claude/plan-socialista/consejo/2026-10-29-2-tu-mes-bases.md`): La Cascada, Bento, El Calendario vivo, El Vaso y La Guagua
+(`maquetas/dinero-mes-1…5-*.html`). Las cinco pasan el oficio a 412×915 (sin errores, ancho 412, tocables ≥44 px; fijos → 1.652;
+portátil «apartando» → 150), salvo Bento, que con los fijos abiertos mide 1.096 px. Jurado haiku a ciegas: **El Vaso 10**,
+Cascada 9, Calendario 8, Guagua 8, Bento 7. Gana **El Vaso**: el dinero del mes es un vaso por capas (fijos abajo, gastos, margen,
+ahorro arriba) con la cadena 2.380 − 728 − 750 = ~900 y «ahorras 700» como lo que manda; tocar el vaso separa los fijos y dice
+«te quedan 1.652 €»; el portátil se apunta («lo voy apartando» / «sale de lo ahorrado» / quitar) y cambia el mes, el ahorro y la
+línea de Hoy. Artes Visuales la dejó navegable y aligerada en `maquetas/dinero-tu-mes.html` (Hoy | Dinero; Tu mes · Ahorro y
+Bosque), con el bosque de un árbol por mes de colchón de La Cascada y el «150 al colchón + 550 apartados» de Bento. Medido:
+Tu mes 728 px (769 con portátil), Ahorro y Bosque 877 (926 con portátil, 11 px de scroll), Hoy 613-634.
+
+**Descartado.** Escuelas en haiku (maquetaron peor y gastaron más en concursos anteriores). Ahorro a años vista como
+protagonista: el objetivo de 6 meses queda como dato pequeño. Bento como base (no cabe con los fijos abiertos).
+
+**Supuestos.** El mes va de nómina a nómina; «puedes ahorrar» deja ~200 € de margen; con el portátil «apartando», «para gastar»
+(812 € · 30 €/día) no cambia; el botón «🌳 Ahorro y Bosque» en Tu mes repite la pestaña y se puede quitar. Las cifras son
+inventadas.
