@@ -141,6 +141,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-19-auditoria] limpieza: una clase CSS está viva si su nombre aparece en app.js/index/sw/fig; las compuestas al vuelo ('t-', 'ev') se quedan; lo de dentro de :is()/:not() no se toca · DECISIONS «Lo mínimo primero» · contado el 2026-10-19
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
+- [sup-2026-10-29-la-noche] La Noche (N0-N3): «Vete del Lloret» = cama−15−35; fila plegada con 🚪 salir de casa; alarmas siempre las de hoy y guardias fuera de Tu semana; cama arranca en la mediana 23:50 y baja 15 min cada 3 días · DECISIONS.md:1690-1746 · contado el 2026-10-29
+
 ## Cerrados
 - ~~[sup-2026-10-27-sello]~~ VALE (usuario, 2026-10-27) Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
 
@@ -196,3 +198,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, lector de frases S2b) · success; sellado (version.json 2e30a00 posterior al código f7dc69b); rama 1 por delante (solo plan); 0 issues/PR · ok
 - [parte-s3-2026-10-28] 2026-10-28 · parte con la S3 (Comer del reloj) elegida; presupuesto ~2,1 M medido (plan 1,8 M ×2); propuesto decidir antes qué entra en la sesión 1 · propuesto
 - [parte-s3b-2026-10-28] 2026-10-28 · parte: rama con la S3 sesión 1 (12 commits, app.js/styles.css sin sellar, suite 754/754) sin pasar a main; main 2e30a00 success; siguiente S3b (~2,8 M); el usuario pide S3b y luego pasar todo a main · propuesto
+- [run-40877861030] 2026-10-29 · despliegue de main (ec1370b, Ley de La Noche N3) · success; sellado (version.json ec1370b posterior al código 27b8b68); 0 issues/PR · ok
+- [rama-706d99d] 2026-10-29 · rama ccr-874ee141-nk8306 = main + 4 commits solo de plan/acta (La Reforma); la rama magical-clarke tiene 6 docs médicos sin pasar a main (no son de la app) · ok
+- [parte-reforma-r1-2026-10-29] 2026-10-29 · parte con R1 (concurso de Dinero, maqueta) elegida; presupuesto ~2,5 M del plan (medida: 1,5 M sin concurso, 3,2 con) · propuesto
