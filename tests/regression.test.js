@@ -13875,6 +13875,112 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('una meta de 50 kg con 175 cm se sube a la del IMC 18,5 (56,7 kg) y lo dice', r.d.meta >= 56.6 && r.d.topes.indexOf('imc') >= 0 && r.d.nota, JSON.stringify(r.d));
     check('«usar estas kcal» pone la meta en perder y kcalSugeridas pasa a las del objetivo', r.e.despues.meta === 'perder' && r.e.despues.k === r.e.despues.o && r.e.despues.k !== r.e.antes, JSON.stringify(r.e));
   }
+  // 352) EL DIBUJO DEL ENTRENO SE ELIGE EN AJUSTES Y SALE EN LA PORTADA, EN CADENA (B3, a 412×915): (a) Ajustes → Cómo se ve
+  // enseña dos muestras con aria-pressed (el Teide, marcado por defecto); (b) elegir «Los Bancales» la guarda en gym.lamina y la
+  // portada de Entreno dibuja los bancales; (c) volver a Ajustes y elegir el Teide la cambia de vuelta. Fija: no había dibujo.
+  {
+    const vp352 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia352 = JSON.parse(JSON.stringify(P.store)); delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const abre = async () => { await page.click('[data-a="drawer-toggle"]'); await page.click('[data-a="drawer-nav"][data-t="ajustes"]'); await page.click('[data-a="aju-vista"][data-v="aspecto"]'); await page.waitForTimeout(250); };
+    const muestras = () => page.evaluate(() => [...document.querySelectorAll('[data-cfg="lamina"] [data-a="lamina-tema"]')].map((b) => b.dataset.id + ':' + b.getAttribute('aria-pressed') + ':' + Math.round(b.getBoundingClientRect().height)).join(' '));
+    const portada = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { tema: c ? c.dataset.lam : '', etq: c ? (c.querySelector('svg').getAttribute('aria-label') || '') : '' }; });
+    const r = {};
+    await abre(); r.a = await muestras();
+    await page.click('[data-a="lamina-tema"][data-id="bancales"]'); await page.waitForTimeout(250);
+    r.b = { m: await muestras(), g: await page.evaluate(() => window.PG.gymS().lamina) };
+    await page.click('[data-a="tab"][data-t="gym"]'); await page.waitForTimeout(250); r.c = await portada();
+    await abre(); await page.click('[data-a="lamina-tema"][data-id="teide"]'); await page.waitForTimeout(250);
+    await page.click('[data-a="tab"][data-t="gym"]'); await page.waitForTimeout(250); r.d = await portada();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia352; delete window.__copia352; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp352);
+    check('Ajustes → Cómo se ve enseña las dos muestras del dibujo, el Teide marcado por defecto y cada una de ≥44 px', /^teide:true:\d+ bancales:false:\d+$/.test(r.a) && r.a.split(' ').every((x) => +x.split(':')[2] >= 44), r.a);
+    check('elegir «Los Bancales» en Ajustes la guarda y la portada de Entreno la dibuja', /bancales:true/.test(r.b.m) && /teide:false/.test(r.b.m) && r.b.g === 'bancales' && r.c.tema === 'bancales' && /Los Bancales/.test(r.c.etq), JSON.stringify(r));
+    check('volver a Ajustes y elegir el Teide cambia el dibujo de la portada de vuelta', r.d.tema === 'teide' && /Teide/.test(r.d.etq), JSON.stringify(r.d));
+  }
+  // 353) LA LÁMINA DICE «HOY NO: GUARDIA» Y VUELVE A DECIR LA HORA, EN CADENA (B1, a 412×915): (a) con hoy de guardia la lámina
+  // dice «Hoy no: guardia», sin zona para empezar sesión; (b) quitada la guardia y con entreno puesto hoy, dice el lugar y la
+  // hora de la franja (gimnasio 15:00 entre semana, parque 10:00 el finde) y su zona lleva a la sesión; (c) las partes tocables
+  // (7 días y peso) miden ≥44 px en pantalla y el peso abre su pantalla. Fija: la lámina no existía.
+  {
+    const vp353 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), p = P.perfilS(); window.__copia353 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 178, pesoKg: 82, sexo: 'h', nacido: new Date().getFullYear() - 26, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] }); p.objetivo = { kg: 75, ritmo: 0.5 };
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 82 });
+      delete g.lamina; delete g.hora; g.rutinas = [{ id: 'r353', nombre: 'Torso 353', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8, rmax: 10 }] }];
+      const hoy = P.iso(new Date()), sh = (c) => P.store.shifts.find((s) => s.code === c).id;
+      window.__ov353 = (P.store.rotation.daySet || {})[hoy];
+      P.setDayOverride(hoy, sh('G'), ''); P.gymForzar()[hoy] = false; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const txt = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { t: c ? c.querySelector('svg').textContent : '', ses: c ? c.querySelectorAll('[data-a="ses-empezar"]').length : -1 }; });
+    const r = {};
+    r.a = await txt();
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, P.store.shifts.find((s) => s.code === 'T').id, ''); P.gymForzar()[hoy] = true; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    r.b = await txt(); r.b.esp = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return (P.lugarEntreno(k) === 'parque' ? 'Parque' : 'Gimnasio') + ' · ' + P.gymHoraDe(k); });
+    r.c = await page.evaluate(() => [...document.querySelectorAll('.glam [role="button"]')].map((e) => { const q = e.getBoundingClientRect(); return Math.round(q.width) + 'x' + Math.round(q.height); }));
+    await page.click('.glam [data-a="gym-panel"][data-p="peso"]'); await page.waitForTimeout(250);
+    r.d = await page.evaluate(() => window.PG.ui.gymPanel);
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.store = window.__copia353; delete window.__copia353; delete window.__ov353; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp353);
+    check('con hoy de guardia la lámina dice «Hoy no: guardia» y no ofrece empezar sesión', /Hoy no: guardia/.test(r.a.t) && r.a.ses === 0, JSON.stringify(r.a));
+    check('quitada la guardia y con entreno hoy, la lámina dice lugar y hora de la franja y su zona lleva a la sesión', r.b.t.indexOf(r.b.esp) >= 0 && !/Hoy no/.test(r.b.t) && r.b.ses === 1, JSON.stringify(r.b));
+    check('las partes tocables de la lámina (7 días + peso, y hoy) miden ≥44 px a 412×915', r.c.length >= 8 && r.c.every((x) => +x.split('x')[0] >= 44 && +x.split('x')[1] >= 44), JSON.stringify(r.c));
+    check('tocar el peso del dibujo abre «Tu objetivo de peso»', r.d === 'peso', r.d);
+  }
+  // 354) EXPLÍCAMELO · 45 s: ARRANCA, RESALTA, SE PARA Y NO DEJA TEMPORIZADORES, EN CADENA (B2, a 412×915): (a) el botón abre el
+  // texto, enciende la parte 1 y su frase y hay temporizador; (b) a los 9 s pasa a la parte 2; (c) «Parar» lo apaga todo y
+  // esconde el texto; (d) en marcha, cualquier repintado (tocar un día) y salir de Entreno lo paran sin temporizador vivo.
+  {
+    const vp354 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia354 = JSON.parse(JSON.stringify(P.store)); delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const est = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { run: !!c && c.classList.contains('run'), partes: c ? [...c.querySelectorAll('.part.on')].map((p) => p.dataset.n).join(',') : '?', fr: c ? [...c.querySelectorAll('.fr.on')].map((p) => p.dataset.i).join(',') : '?',
+      visible: !!c && !c.querySelector('.glt').hidden, boton: c ? c.querySelector('[data-a="lam-tour"]').textContent : '', vivo: window.PG.lamTimerVivo() }; });
+    const r = {};
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(300); r.a = await est();
+    await page.waitForTimeout(9100); r.b = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200); r.c = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200);
+    await page.click('#main .gsc:not(.sel)'); await page.waitForTimeout(250); r.d = await est();
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(200); r.e0 = await est();
+    await page.click('[data-a="nav-cal"]'); await page.waitForTimeout(250); r.e = await page.evaluate(() => window.PG.lamTimerVivo());
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia354; delete window.__copia354; P.save(); P.ui.gymPanel = ''; P.ui.gymDate = ''; P.render(); });
+    await page.setViewportSize(vp354);
+    check('«Explícamelo · 45 s» abre el texto, enciende la parte 1 con su frase y pone «Parar»', r.a.run && r.a.partes === '1' && r.a.fr === '0' && r.a.visible && r.a.boton === 'Parar' && r.a.vivo, JSON.stringify(r.a));
+    check('a los 9 s el recorrido pasa a la parte 2 y su frase', r.b.partes === '2' && r.b.fr === '1' && r.b.vivo, JSON.stringify(r.b));
+    check('«Parar» apaga resaltados y temporizador y esconde el texto', !r.c.run && r.c.partes === '' && r.c.fr === '' && !r.c.visible && !r.c.vivo && /45 s/.test(r.c.boton), JSON.stringify(r.c));
+    check('repintar (tocar otro día) con el recorrido en marcha lo para sin dejar temporizador', r.e0.vivo && !r.d.vivo && !r.d.run && r.d.partes === '' && !r.d.visible, JSON.stringify([r.e0, r.d]));
+    check('salir de Entreno con el recorrido en marcha no deja ningún temporizador vivo', r.e0.vivo && r.e === false, JSON.stringify([r.e0, r.e]));
+  }
+  // 355) EL TEXTO DE 45 s TIENE 100-120 PALABRAS EN LOS DOS DIBUJOS Y CON O SIN OBJETIVO, Y CON MOVIMIENTO REDUCIDO NO ANIMA (B2,
+  // a 412×915): (a) las cinco frases de cada tema suman 100-120 palabras con y sin objetivo de peso, y con objetivo llevan sus
+  // cifras; (b) con prefers-reduced-motion el botón solo abre y cierra el texto entero, sin recorrido ni temporizador.
+  {
+    const vp355 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, p = P.perfilS(); window.__copia355 = JSON.parse(JSON.stringify(P.store));
+      Object.assign(p, { alturaCm: 178, pesoKg: 82, sexo: 'h', nacido: new Date().getFullYear() - 26, nacidoF: '', actividad: 1.55, meta: 'mantener', pesos: [] });
+      for (let i = 6; i >= 0; i--) p.pesos.push({ k: P.iso(P.addDays(new Date(), -i)), kg: 82 });
+      p.objetivo = { kg: 75, ritmo: 0.5 }; delete P.gymS().lamina; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.pal = await page.evaluate(() => { const P = window.PG, o = {}, d = P.laminaDatos(P.iso(new Date())), cuenta = (a) => a.join(' ').split(/\s+/).filter(Boolean).length;
+      o.con = { teide: cuenta(P.laminaTextos('teide', d)), bancales: cuenta(P.laminaTextos('bancales', d)), cifras: /75/.test(P.laminaTextos('teide', d)[3]) && /proteína/.test(P.laminaTextos('teide', d)[3]) };
+      delete P.perfilS().objetivo; const d2 = P.laminaDatos(P.iso(new Date()));
+      o.sin = { teide: cuenta(P.laminaTextos('teide', d2)), bancales: cuenta(P.laminaTextos('bancales', d2)) }; return o; });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(250);
+    r.a = await page.evaluate(() => { const c = document.querySelector('.glam'); return { visible: !c.querySelector('.glt').hidden, run: c.classList.contains('run'), partes: c.querySelectorAll('.part.on').length, vivo: window.PG.lamTimerVivo(), boton: c.querySelector('[data-a="lam-tour"]').textContent }; });
+    await page.click('.glam [data-a="lam-tour"]'); await page.waitForTimeout(150);
+    r.b = await page.evaluate(() => ({ visible: !document.querySelector('.glam .glt').hidden }));
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia355; delete window.__copia355; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.setViewportSize(vp355);
+    const en = (n) => n >= 100 && n <= 120;
+    check('el texto de 45 s tiene 100-120 palabras en los dos dibujos, con y sin objetivo de peso, y con objetivo lleva sus cifras',
+      en(r.pal.con.teide) && en(r.pal.con.bancales) && en(r.pal.sin.teide) && en(r.pal.sin.bancales) && r.pal.con.cifras, JSON.stringify(r.pal));
+    check('con movimiento reducido el botón solo abre el texto entero: sin recorrido, sin resaltado y sin temporizador, y lo cierra', r.a.visible && !r.a.run && r.a.partes === 0 && !r.a.vivo && /Ocultar/.test(r.a.boton) && !r.b.visible, JSON.stringify([r.a, r.b]));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

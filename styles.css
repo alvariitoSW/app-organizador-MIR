@@ -3925,3 +3925,32 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .inv .ex .mini{color:var(--brand);font-weight:700}.inv .ojo{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 6px 32px}
 .inv .ojo input{width:90px}
 .lecit .inv{grid-column:1/-1;--bx:#d95926}.lecit .inv .ojo input[type=text]{flex:1;min-width:140px;width:auto}
+
+/* ---------- La lámina de la portada de Entreno (los dos dibujos: La Sombra del Teide y Los Bancales) ----------
+   Los colores del dibujo van DENTRO del SVG (se leen igual en claro y en oscuro); aquí solo el marco, el
+   resaltado del recorrido de 45 s y los botones, con los tokens de la app. Todo lo tocable mide ≥44 px. */
+.glam{padding:8px 8px 12px;overflow:hidden}
+.glam svg{display:block;width:100%;height:auto;border-radius:12px}
+.glam .part{transition:opacity .4s}
+.glam .halo{display:none}
+.glam svg.tour .part:not(.on){opacity:.32}
+.glam .part.on .halo{display:block}
+.glam .part[role=button],.glam .gdia{cursor:pointer;outline:none}
+.glam [role=button]:focus-visible .hit{stroke:var(--brand);stroke-width:3;stroke-opacity:1}
+.glam .glamgo{margin-top:10px;min-height:48px;padding:10px 14px;font-size:15px}
+.glam .glt{margin-top:10px;padding:8px 10px;border-radius:12px;background:var(--card2,var(--card));border:1px solid var(--line)}
+.glam .glt[hidden]{display:none}
+.glam .fr{margin:0 0 6px;padding:5px 8px;border-radius:8px;border-left:4px solid transparent;font-size:14.5px;line-height:1.4;color:var(--ink);
+  transition:background .4s,border-color .4s}
+.glam .fr:last-child{margin-bottom:0}
+.glam .fr b{display:inline-block;min-width:20px;height:20px;line-height:20px;margin-right:6px;text-align:center;border-radius:10px;background:var(--brand);color:#0b1020;font-size:12px}
+.glam.run .fr{opacity:.55}
+.glam.run .fr.on{opacity:1;background:color-mix(in srgb,var(--brand) 22%,var(--card));border-left-color:var(--brand)}
+.glam .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.glam .part,.glam .fr{transition:none}}
+/* Ajustes → Cómo se ve → Dibujo del entreno: dos muestras */
+.lamms{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.lamm{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-height:44px;padding:8px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.lamm svg{display:block;width:100%;height:auto;border-radius:8px}
+.lamm .tnom{font-size:13px;font-weight:800;text-align:center}
+.lamm.on{border-color:var(--brand)}

@@ -16269,10 +16269,247 @@ function rutinaTarjetaHTML(rt){
       '<span class="ty">'+({fuerza:'FUERZA',calistenia:'CALISTENIA',agua:'AGUA'})[t]+'</span><b>'+esc(rt.nombre)+'</b>'+
       (function(){const vu=t!=='agua'?regresoDe(iso(new Date())):null;return vu?'<span class="gvch">vuelta · sem '+vu.sem+' · '+vu.pct+' %</span>':'';})()+'<ul>'+lista+'</ul></button>'+
     '<button class="grtm" data-a="rt-editar" data-id="'+esc(rt.id)+'" aria-label="editar '+esc(rt.nombre)+'">⋯</button></div>';}
+/* ---------- LA LÁMINA DE LA PORTADA DE ENTRENO ----------
+   Un dibujo en línea (SVG) con los datos de verdad del día elegido: qué toca (hora y lugar, o «hoy no: guardia»),
+   los 7 días de la semana, la vuelta (o la racha si no hay plan) y el peso (o «pon tu meta»). Dos temas
+   (gym.lamina: 'teide' por defecto | 'bancales'); los colores propios van DENTRO del SVG, así que se leen igual
+   en claro y en oscuro. Las partes tocables llevan a donde ya existe (el día, la sesión, el plan de vuelta, el peso).
+   «Explícamelo · 45 s» recorre las 5 partes a 9 s cada una con UN setTimeout encadenado (nunca setInterval);
+   render() y salir de Entreno lo paran (lamParar), y con prefers-reduced-motion solo enseña el texto. */
+const LAM_MS=9000;
+let _lamT=null;
+function laminaTema(){return gymS().lamina==='bancales'?'bancales':'teide';}
+function laminaDatos(sel){
+  const hoy=iso(new Date()),d0=parseDate(sel)||new Date(),lun=mondayOf(d0),LET=['L','M','X','J','V','S','D'],
+    NOM=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+  const cuando=function(k){const d=parseDate(k);return k===hoy?'Hoy':(DIA3[d.getDay()]+' '+d.getDate());};
+  const tipoDe=function(k){
+    const inf=dayInfo(k),sh=shiftById(inf.shiftId),malo=gymDiaMalo(k,inf),e=entrenoDe(k),rt=(e&&e.rutina)||rutinaDeFecha(k);
+    if(malo)return {t:'no',malo:malo,txt:cuando(k)+' no: '+malo,corto:malo,rt:null};
+    if(e&&e.tipo==='pisc'){const h=e.hora||entrenoCfg().pisc.hora;return {t:'pisc',hora:h,txt:'Piscina · '+h,corto:'piscina '+h,rt:null};}
+    if(e||rt){const hora=(e&&e.hora)||gymHoraDe(k,inf),lug=lugarEntreno(k);
+      return {t:lug==='parque'?'parque':'gim',hora:hora,rt:rt,txt:(lug==='parque'?'Parque':'Gimnasio')+' · '+hora,corto:(lug==='parque'?'parque ':'gimnasio ')+hora};}
+    if(esSaliente(sh))return {t:'sal',txt:'Saliente: paseo o nada',corto:'saliente, paseo o nada',rt:null};
+    return {t:'libre',txt:cuando(k)+': libre',corto:'libre',rt:null};};
+  const dias=[];
+  for(let i=0;i<7;i++){const k=iso(addDays(lun,i)),o=tipoDe(k);
+    o.k=k;o.l=LET[i];o.nom=NOM[i]+' '+parseDate(k).getDate();o.hecho=gymHechoEn(k);o.sel=(k===sel);o.hoy=(k===hoy);dias.push(o);}
+  const dia=dias.filter(function(x){return x.sel;})[0]||tipoDe(sel);
+  const vu=regresoDe(sel);let vuelta=null;
+  if(vu){const v0=regresoS(),pcts=[];for(let i=1;i<=vu.de;i++)pcts.push(i===vu.sem?vu.pct:regresoPct(v0,i,vu.de));
+    vuelta={sem:vu.sem,de:vu.de,pct:vu.pct,pcts:pcts};}
+  const ob=objetivoPeso(),ps=perfilS().pesos,hoyKg=ps.length?ps[ps.length-1].kg:0;
+  const peso=ob?{partida:ob.partida,meta:ob.meta,perder:ob.perder,kcal:ob.kcal,prot:ob.prot,semanas:ob.semanas,hoy:hoyKg||ob.partida}:null;
+  return {sel:sel,dia:dia,dias:dias,vuelta:vuelta,racha:gymSemanasSeguidas(),peso:peso};}
+/* cada frase de las cinco va con su parte del dibujo (1 semana · 2 hoy · 3 vuelta · 4 peso · 5 todo). 100-120 palabras
+   en total, y solo lo que la app hace. Los números salen de lo tuyo; sin objetivo, la frase del peso lo dice en general */
+function laminaTextos(tema,d){
+  const p=d&&d.peso&&d.peso.perder?d.peso:null,ini=REGRESO_RITMO.normal.ini;
+  return [
+    'Esto sirve para organizar tu entreno y tu peso alrededor de las guardias, sin pensar.',
+    'Al abrirla ves qué toca hoy, a qué hora y dónde. La sesión trae cargas y descansos. Si vas justo, la mínima dura 25 minutos. El finde, parque.',
+    'Si lo dejas dos semanas, la vuelta arranca al '+ini+' % y sube diez puntos por semana. Si fallas, repites sin castigo. La racha cuenta semanas.',
+    p?('El peso baja de '+fmtKg(p.partida)+' a '+fmtKg(p.meta)+' kilos con '+String(p.kcal).replace(/\B(?=(\d{3})+$)/g,'.')+' kilocalorías y '+p.prot+' gramos de proteína; las comidas cuadran.')
+      :'Con una meta de peso, la app calcula kilocalorías y proteína, y las comidas cuadran.',
+    tema==='bancales'?'Aquí la sombra es la hora, los bancales de abajo son tu semana, la escalera es la vuelta y el agua es tu peso. Ver crecer palmeras anima.'
+      :'Aquí la sombra es la hora, los roques son tu semana, el camino es la vuelta y las nubes son tu peso. Así se sigue mejor.'];}
+/* una pastilla de texto: x es la esquina izquierda ('l'), el centro ('c') o la derecha ('r') */
+function lamPil(x,y,t,sz,al,bg,fg,bd){
+  sz=sz||12;const w=Math.ceil(String(t).length*sz*0.58)+12,x0=al==='c'?x-w/2:(al==='r'?x-w:x);
+  return '<rect x="'+x0+'" y="'+y+'" width="'+w+'" height="'+(sz+8)+'" rx="4" fill="'+(bg||'#efe2c4')+'" stroke="'+(bd||'#2b1d33')+'" stroke-width="1"/>'+
+    '<text x="'+(x0+w/2)+'" y="'+(y+sz+1)+'" text-anchor="middle" font-size="'+sz+'" font-weight="700" font-family="system-ui,sans-serif" fill="'+(fg||'#2b1d33')+'">'+esc(t)+'</text>';}
+/* una parte del dibujo: su contenido, su halo (se enciende en el recorrido) y, si es tocable, su zona de toque */
+function lamParte(n,caja,halo,inner,tocar){
+  const a=tocar?(' role="button" tabindex="0" data-a="'+tocar.a+'"'+Object.keys(tocar.d||{}).map(function(k){return ' data-'+k+'="'+esc(tocar.d[k])+'"';}).join('')+' aria-label="'+esc(tocar.l)+'"'):'';
+  return '<g class="part" data-n="'+n+'"'+a+'>'+inner+'<rect class="halo" x="'+caja[0]+'" y="'+caja[1]+'" width="'+caja[2]+'" height="'+caja[3]+'" rx="6" fill="none" stroke="'+halo+'" stroke-width="3" stroke-dasharray="7 4"/>'+
+    (tocar?'<rect class="hit" x="'+caja[0]+'" y="'+caja[1]+'" width="'+caja[2]+'" height="'+caja[3]+'" fill="#fff" fill-opacity="0"/>':'')+'</g>';}
+function lamRoque(cx,base,h,w){
+  const l=cx-w/2,r=cx+w/2;
+  return 'M'+l+' '+base+' L'+(l+3)+' '+(base-h*.55)+' L'+(cx-w*.28)+' '+(base-h*.78)+' L'+(cx-w*.1)+' '+(base-h)+' L'+(cx+w*.18)+' '+(base-h*.9)+' L'+(r-3)+' '+(base-h*.45)+' L'+r+' '+base+' Z';}
+function lamLunita(x,y,r,col,bd){return '<path d="M'+(x+r*.3)+' '+(y-r)+'A'+r+' '+r+' 0 1 0 '+(x+r*.9)+' '+(y+r*.5)+'A'+(r*.8)+' '+(r*.8)+' 0 0 1 '+(x+r*.3)+' '+(y-r)+'Z" fill="'+col+'"'+(bd?' stroke="'+bd+'" stroke-width=".8"':'')+'/>';}
+function lamCheck(x,y,col){return '<circle cx="'+x+'" cy="'+y+'" r="9" fill="'+col+'" stroke="#2b1d33" stroke-width="1.4"/><path d="M'+(x-4)+' '+y+' l3 3.5 l6 -7" fill="none" stroke="#2b1d33" stroke-width="2"/>';}
+/* a dónde lleva cada parte tocable: a lo que ya existe */
+function lamToques(d){
+  const sa=!!ui.gymSesionActiva,rt=d.dia.rt;
+  return {
+    hoy:(rt&&!sa)?{a:'ses-empezar',d:{id:rt.id,key:d.sel},l:d.dia.txt+'. Toca para empezar '+rt.nombre}:null,
+    vuelta:d.vuelta?{a:'gym-panel',d:{p:'regreso'},l:'Tu vuelta: semana '+d.vuelta.sem+' de '+d.vuelta.de+', al '+d.vuelta.pct+' %. Toca para ver el plan'}:null,
+    peso:{a:'gym-panel',d:{p:'peso'},l:d.peso?('Tu objetivo de peso: de '+fmtKg(d.peso.partida)+' a '+fmtKg(d.peso.meta)+' kilos. Toca para verlo'):'Sin objetivo de peso. Toca para ponerte una meta'}};}
+function lamDiaTxt(x){return x.nom+': '+x.corto+(x.hecho?' (hecho)':'');}
+function laminaTeide(d){
+  const P='lt',TIN='#2b1d33',PAP='#efe2c4',ORO='#f2c46b',yN=170,H=300,toq=lamToques(d);
+  let s='<svg viewBox="0 0 412 '+H+'" role="group" aria-label="Lámina del entreno: La Sombra del Teide. '+esc(d.dia.txt)+'.">'+
+    '<defs><pattern id="'+P+'h" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="5" stroke="'+TIN+'" stroke-width="1.1" opacity=".55"/></pattern>'+
+    '<pattern id="'+P+'h2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#f3e6c8" stroke-width=".8" opacity=".5"/></pattern>'+
+    '<linearGradient id="'+P+'c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4d3a6b"/><stop offset=".55" stop-color="#9a6f8d"/><stop offset="1" stop-color="#e2b46d"/></linearGradient>'+
+    '<linearGradient id="'+P+'n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf9f"/><stop offset=".35" stop-color="#b79bb8"/><stop offset="1" stop-color="#5f4a7e"/></linearGradient></defs>';
+  /* cielo, sol, Teide y mar de nubes */
+  s+='<rect width="412" height="'+yN+'" fill="url(#'+P+'c)"/>';
+  for(let i=0;i<10;i++)s+='<line x1="0" x2="412" y1="'+(8+i*16)+'" y2="'+(8+i*16)+'" stroke="'+TIN+'" stroke-width=".6" opacity=".12"/>';
+  s+='<circle cx="34" cy="108" r="18" fill="'+ORO+'" stroke="'+TIN+'" stroke-width="1.2"/>';
+  for(let a=0;a<12;a++){const an=a*Math.PI/6;s+='<line x1="'+(34+22*Math.cos(an))+'" y1="'+(108+22*Math.sin(an))+'" x2="'+(34+30*Math.cos(an))+'" y2="'+(108+30*Math.sin(an))+'" stroke="'+TIN+'" stroke-width="1.2"/>';}
+  const mont='M88 '+yN+' L198 32 L203 26 L206 22 L212 28 L216 36 L324 '+yN+' Z';
+  s+='<path d="'+mont+'" fill="#3a2a46" stroke="'+TIN+'" stroke-width="1.5"/><path d="M88 '+yN+' L198 32 L203 26 L206 22 L206 '+yN+' Z" fill="url(#'+P+'h2)"/>'+
+    '<path d="M206 22 L212 28 L216 36 L324 '+yN+' L206 '+yN+' Z" fill="url(#'+P+'h)"/><path d="M192 44 L200 38 L208 44 L215 40 L206 32 Z" fill="#f3e6c8" opacity=".8"/>';
+  s+='<rect y="'+yN+'" width="412" height="'+(H-yN)+'" fill="url(#'+P+'n)"/>';
+  for(let k=0;k<7;k++){const y=yN+10+k*17;let w='M0 '+y;for(let x=0;x<=412;x+=46)w+=' q 11 '+(-5-k*.4)+' 23 0 t 23 0';s+='<path d="'+w+'" fill="none" stroke="#f3e6c8" stroke-width="'+(1+k*.12)+'" opacity=".4"/>';}
+  s+='<path d="M0 '+yN+' q 23 -6 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0 t 46 0" fill="none" stroke="'+TIN+'" stroke-width="1.4"/>';
+  /* 3 · la vuelta: el camino al Teide (o la racha, si no hay plan) */
+  const v=d.vuelta,n=v?v.de:8,pts=[];
+  for(let k=0;k<n;k++){const f=n>1?k/(n-1):1,y=Math.round(160-f*118),hw=118*(y-22)/148,x=k===n-1?206:Math.round(206+(k%2?1:-1)*hw*.5);pts.push([x,y]);}
+  const trazo='M'+pts.map(function(p){return p[0]+' '+p[1];}).join(' L');
+  let c3='<path d="'+trazo+'" fill="none" stroke="'+PAP+'" stroke-width="2.4" stroke-dasharray="6 4"/>';
+  pts.forEach(function(p,k){
+    const cur=v&&k===v.sem-1,hecho=v?k<v.sem-1:k<Math.min(d.racha,n);
+    c3+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(cur?8:5)+'" fill="'+(cur||hecho?ORO:PAP)+'" stroke="'+TIN+'" stroke-width="1.6"/>';
+    if(cur)c3+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="12" fill="none" stroke="'+ORO+'" stroke-width="3"/>';});
+  const cu=pts[n-1];
+  c3+='<path d="M'+cu[0]+' '+(cu[1]-5)+' v-16 l12 4 l-12 4" fill="#c9893a" stroke="'+TIN+'" stroke-width="1.2"/>';
+  if(v){const pc=pts[v.sem-1];c3+=v.sem===n?lamPil(pc[0]+16,pc[1]-6,'100 %',12):lamPil(pc[0]+16,pc[1]-9,v.sem+'/'+n+' · '+v.pct+' %',12)+lamPil(cu[0]+16,cu[1]-10,'100 %',12);}
+  else{const q=pts[Math.min(n-1,3)];c3+=lamPil(q[0]+14,q[1]-9,'Racha: '+d.racha+' semana'+(d.racha===1?'':'s'),12);}
+  s+=lamParte(3,[84,14,244,152],ORO,c3,v?toq.vuelta:null);
+  /* 4 · el peso: dos rayas de nube, de dónde partes a tu meta */
+  const pe=d.peso;let c4='<line x1="6" x2="146" y1="'+(yN+8)+'" y2="'+(yN+8)+'" stroke="#f3e6c8" stroke-width="1.4" stroke-dasharray="6 4"/>';
+  if(pe&&pe.perder)c4+='<line x1="6" x2="146" y1="'+(yN+50)+'" y2="'+(yN+50)+'" stroke="'+ORO+'" stroke-width="2" stroke-dasharray="6 3"/>'+
+    '<path d="M122 '+(yN+22)+' v14 l-5 -6 m5 6 l5 -6" fill="none" stroke="'+TIN+'" stroke-width="2"/>'+
+    lamPil(8,yN+12,fmtKg(pe.partida)+' kg',13)+lamPil(8,yN+32,fmtKg(pe.meta)+' kg · meta',12)+
+    (pe.hoy&&Math.abs(pe.hoy-pe.partida)>=.1?lamPil(8,yN+54,'hoy '+fmtKg(pe.hoy),12):'');
+  else if(pe)c4+=lamPil(8,yN+16,'Meta: '+fmtKg(pe.meta)+' kg',13);
+  else c4+=lamPil(8,yN+16,'Pon tu meta de peso',12);
+  s+=lamParte(4,[4,yN+3,146,74],ORO,c4,toq.peso);
+  /* 2 · hoy: la sombra del Teide marca la hora en la regla */
+  const dd=d.dia,hh=/^\d{1,2}:/.test(dd.hora||'')?parseInt(dd.hora,10):null,ok=hh!=null&&(dd.t==='gim'||dd.t==='parque'||dd.t==='pisc'),h0=ok?hh-2:13;
+  let c2='<polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 326,'+(yN+24)+'" fill="#2d1f4a" opacity=".82" stroke="'+TIN+'" stroke-width="1.2"/><polygon points="150,'+(yN+2)+' 288,'+(yN+2)+' 326,'+(yN+24)+'" fill="url(#'+P+'h2)"/>'+
+    '<rect x="252" y="'+(yN+24)+'" width="148" height="28" fill="'+PAP+'" stroke="'+TIN+'" stroke-width="1.3" opacity="'+(ok?1:.65)+'"/>';
+  for(let i=0;i<5;i++){const x=268+i*30,hn=h0+i;
+    c2+='<line x1="'+x+'" x2="'+x+'" y1="'+(yN+24)+'" y2="'+(yN+32)+'" stroke="'+TIN+'" stroke-width="1.5"/><text x="'+(x+2)+'" y="'+(yN+46)+'" font-size="'+(ok&&i===2?13:11)+'" font-weight="'+(ok&&i===2?700:400)+'" font-family="system-ui,sans-serif" fill="'+TIN+'">'+(((hn%24)+24)%24)+'</text>';}
+  if(ok)c2+='<rect x="313" y="'+(yN+20)+'" width="30" height="36" fill="'+ORO+'" fill-opacity=".55" stroke="'+TIN+'" stroke-width="1.6"/>';
+  else c2+=lamLunita(236,yN+38,8,ORO,TIN);
+  c2+=lamPil(326,yN+56,dd.txt,12,'c');
+  s+=lamParte(2,[152,yN+3,254,74],ORO,c2,toq.hoy);
+  /* 1 · la semana: siete roques (el pinar es el parque, la luna la guardia, el morado el saliente, el azul la piscina) */
+  let c1='';
+  d.dias.forEach(function(x,i){
+    const cx=30+i*58,base=297,fill=x.t==='no'?'#1f1428':(x.t==='sal'?'#7a5f94':(x.t==='libre'?'#d3bd92':(x.t==='pisc'?'#3b6a8a':'#3a2a46'))),h=34+(i%3)*5;
+    let g='';
+    if(x.sel)g+='<rect x="'+(cx-28)+'" y="250" width="56" height="47" rx="4" fill="'+ORO+'" fill-opacity=".4"/>';
+    if(x.t==='parque')g+='<path d="M'+cx+' '+(base-46)+' l-14 20 h8 l-12 16 h12 l-14 18 h40 l-14 -18 h12 l-12 -16 h8 Z" fill="#44532f" stroke="'+TIN+'" stroke-width="1.2"/>';
+    else{g+='<path d="'+lamRoque(cx,base,h,36)+'" fill="'+fill+'" stroke="#f3e6c8" stroke-width="1.4"/><path d="'+lamRoque(cx,base,h,36)+'" fill="url(#'+P+(x.t==='libre'||x.t==='sal'?'h':'h2')+')"/>'+
+      '<path d="'+lamRoque(cx,base,h,36)+'" fill="none" stroke="'+TIN+'" stroke-width="1"/>';
+      if(x.t==='no')g+=lamLunita(cx+1,base-h-7,7,ORO,TIN);
+      if(x.t==='pisc')g+='<path d="M'+(cx-12)+' '+(base-h*.45)+' q 4 -4 8 0 t 8 0 t 8 0" fill="none" stroke="#bfe3ee" stroke-width="2"/>';}
+    if(x.hecho)g+=lamCheck(cx+14,base-40,ORO);
+    g+=lamPil(cx,base-22,x.l,12,'c',x.hoy?ORO:PAP);
+    c1+='<g class="gdia" role="button" tabindex="0" data-a="gym-dia" data-key="'+x.k+'" aria-label="'+esc(lamDiaTxt(x))+'"'+(x.sel?' aria-current="true"':'')+'>'+g+
+      '<rect class="hit" x="'+(cx-29)+'" y="248" width="58" height="50" fill="#fff" fill-opacity="0"/></g>';});
+  s+=lamParte(1,[2,247,408,52],ORO,c1,null);
+  s+='</svg>';
+  return s;}
+function laminaBancales(d){
+  const P='lb',INK='#2a1d12',G1='#4f8a4a',G2='#2f6b3a',NAR='#b45a12',H=300,toq=lamToques(d),PB='#fbf5e2',PBD='#7a5a36';
+  const palm=function(x,y,s,c1,c2){const h=24*s,tx=x,ty=y-h;let o='<path d="M'+(x-1.6*s)+' '+y+' Q'+(x+3*s)+' '+(y-h/2)+' '+tx+' '+ty+' L'+(tx+2.4*s)+' '+ty+' Q'+(x+6*s)+' '+(y-h/2)+' '+(x+1.8*s)+' '+y+'Z" fill="#7a5230"/>';
+    [[-165,0],[-130,1],[-90,0],[-50,1],[-15,0],[25,1],[155,1]].forEach(function(a){const r=a[0]*Math.PI/180,L=11*s,cx=tx+Math.cos(r)*L,cy=ty+Math.sin(r)*L;
+      o+='<ellipse cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" rx="'+L.toFixed(1)+'" ry="'+(3.2*s).toFixed(1)+'" transform="rotate('+a[0]+' '+cx.toFixed(1)+' '+cy.toFixed(1)+')" fill="'+(a[1]?c2:c1)+'"/>';});return o;};
+  const terr=function(x,y,w,hw,top,wall){return '<g filter="url(#'+P+'s2)"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+(hw+8)+'" rx="4" fill="'+wall+'"/><rect x="'+x+'" y="'+(y+8)+'" width="'+w+'" height="'+hw+'" fill="url(#'+P+'p)"/><rect x="'+x+'" y="'+y+'" width="'+w+'" height="9" rx="4" fill="'+top+'"/></g>';};
+  const sol=function(x,y,r){let o='';for(let i=0;i<12;i++){const a=i*Math.PI/6;o+='<path d="M'+(x+Math.cos(a)*(r+3))+' '+(y+Math.sin(a)*(r+3))+'L'+(x+Math.cos(a)*(r+8))+' '+(y+Math.sin(a)*(r+8))+'" stroke="#e8a31c" stroke-width="3" stroke-linecap="round"/>';}return o+'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#f7c948"/>';};
+  const pil=function(x,y,t,sz,al){return lamPil(x,y,t,sz,al,PB,INK,PBD);};
+  let s='<svg viewBox="0 0 412 '+H+'" role="group" aria-label="Lámina del entreno: Los Bancales. '+esc(d.dia.txt)+'.">'+
+    '<defs><filter id="'+P+'s" x="-15%" y="-15%" width="135%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="2.2" flood-color="#3a2410" flood-opacity=".5"/></filter>'+
+    '<filter id="'+P+'s2" x="-15%" y="-15%" width="135%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.2" flood-color="#3a2410" flood-opacity=".45"/></filter>'+
+    '<linearGradient id="'+P+'c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe0ea"/><stop offset="1" stop-color="#eaf4ee"/></linearGradient>'+
+    '<pattern id="'+P+'p" width="14" height="8" patternUnits="userSpaceOnUse"><path d="M0 4H14M7 0V4M0 4V8M14 4V8" stroke="#6a4a2c" stroke-opacity=".35" stroke-width="1" fill="none"/></pattern>'+
+    '<pattern id="'+P+'n" width="16" height="8" patternUnits="userSpaceOnUse"><path d="M0 4Q4 0 8 4T16 4" stroke="#5f6b70" stroke-width="1.6" fill="none"/></pattern></defs>'+
+    '<rect width="412" height="'+H+'" fill="url(#'+P+'c)"/>';
+  /* la montaña */
+  s+='<g filter="url(#'+P+'s)"><path d="M0 238V30L50 12L120 70L156 120V238Z" fill="#b57b4b"/><path d="M0 238V70L40 52L90 100L110 238Z" fill="#9c6438"/></g>';
+  /* 4 · el peso: la cascada baja a la acequia, de dónde partes a tu meta */
+  const pe=d.peso;let c4='<path d="M62 70 Q72 110 60 150 L84 150 Q92 110 80 70Z" fill="#4aa3c9" filter="url(#'+P+'s2)"/><path d="M62 76 Q70 110 62 146" stroke="#d9f2fb" stroke-width="3" fill="none"/>'+
+    '<rect x="30" y="150" width="86" height="26" rx="8" fill="#3a8fb7" filter="url(#'+P+'s2)"/><path d="M40 160H106M46 168H98" stroke="#d9f2fb" stroke-width="2"/>';
+  if(pe&&pe.perder)c4+=pil(6,50,fmtKg(pe.partida)+' kg',13)+pil(6,180,fmtKg(pe.meta)+' kg · meta',12)+
+    (pe.hoy&&Math.abs(pe.hoy-pe.partida)>=.1?pil(6,78,'hoy '+fmtKg(pe.hoy),12):'');
+  else if(pe)c4+=pil(6,180,'Meta: '+fmtKg(pe.meta)+' kg',13);
+  else c4+=pil(6,180,'Pon tu meta de peso',12);
+  s+=lamParte(4,[4,44,150,166],NAR,c4,toq.peso);
+  /* 2 · hoy: el sol, la sombra de la montaña y la hora */
+  const dd=d.dia,ok=dd.t==='gim'||dd.t==='parque'||dd.t==='pisc';
+  let c2='<path d="M156 120 L270 200 L412 214 L412 238 L156 238Z" fill="#2a2147" opacity=".3"/><path d="M156 120 L270 200" stroke="#2a2147" stroke-width="2" stroke-dasharray="5 4" fill="none"/>';
+  c2+=ok?sol(362,32,14)+'<path d="M346 46 L304 84" stroke="#f7c948" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 9"/>'
+    :(dd.t==='no'?lamLunita(358,34,15,'#ffe9a8','#4b4f7a'):'<path d="M336 38Q346 32 356 38T376 38" stroke="#5f6b70" stroke-width="3" fill="none"/>');
+  c2+=pil(406,56,dd.txt,12,'r');
+  s+=lamParte(2,[200,6,208,78],NAR,c2,toq.hoy);
+  /* 3 · la vuelta: la escalera de bancales, con la palmera de cada semana (o la racha, si no hay plan) */
+  const v=d.vuelta,n=v?v.de:8,dx=n>1?Math.min(34,206/(n-1)):0,dy=n>1?Math.min(17,112/(n-1)):0;let c3='';
+  for(let i=n-1;i>=0;i--){
+    const x=Math.round(160+i*dx),y=Math.round(206-i*dy),hecho=v?i<v.sem-1:i<Math.min(d.racha,n),cur=!!v&&i===v.sem-1,alto=238-y;
+    c3+=terr(x,y,38,alto-8,hecho||cur?'#e0b27a':'#efe3c2',hecho||cur?'#c98a5a':'#e6d6b0');
+    if(!hecho&&!cur)c3+='<rect x="'+x+'" y="'+y+'" width="38" height="'+alto+'" rx="4" fill="none" stroke="#8a6a44" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    c3+=palm(x+19,y+4,hecho?.7+i*.07:(cur?.8:.4),hecho||cur?G2:'#8fb58a',hecho||cur?G1:'#a9c9a2');}
+  if(v)c3+=pil(Math.min(366,Math.round(160+(v.sem-1)*dx)+19),Math.round(206-(v.sem-1)*dy)-42,v.sem+'/'+n+' · '+v.pct+' %',12,'c')+
+    (v.sem<n?pil(Math.min(380,Math.round(160+(n-1)*dx)+19),Math.round(206-(n-1)*dy)+16,'100 %',12,'c'):'');
+  else c3+=pil(300,104,'Racha: '+d.racha+' semana'+(d.racha===1?'':'s'),12,'c');
+  s+=lamParte(3,[156,84,252,156],NAR,c3,v?toq.vuelta:null);
+  /* 1 · la semana: siete bancales (sol = entreno, luna = guardia, niebla = saliente, palmera = parque, olas = piscina) */
+  let c1='';
+  d.dias.forEach(function(x,i){
+    const bx=8+i*57,fill=x.t==='no'?'#4b4f7a':(x.t==='sal'?'#d5dcdc':(x.t==='parque'?'#eddba5':(x.t==='pisc'?'#bfe3ee':(x.t==='libre'?'#e6dcc0':'#f3d9a0'))));
+    let g='<g filter="url(#'+P+'s2)"><rect x="'+bx+'" y="248" width="52" height="46" rx="6" fill="'+fill+'"/></g>';
+    if(x.t==='no')g+=lamLunita(bx+26,268,9,'#ffe9a8');
+    else if(x.t==='sal')g+='<rect x="'+(bx+5)+'" y="258" width="42" height="14" fill="url(#'+P+'n)"/>';
+    else if(x.t==='parque')g+=palm(bx+24,276,.6,G2,G1)+'<path d="M'+(bx+5)+' 279Q'+(bx+15)+' 274 '+(bx+26)+' 279T'+(bx+47)+' 279" stroke="#3a8fb7" stroke-width="3" fill="none"/>';
+    else if(x.t==='pisc')g+='<path d="M'+(bx+6)+' 260Q'+(bx+14)+' 254 '+(bx+22)+' 260T'+(bx+38)+' 260T'+(bx+48)+' 260M'+(bx+6)+' 268Q'+(bx+14)+' 262 '+(bx+22)+' 268T'+(bx+38)+' 268T'+(bx+48)+' 268" stroke="#3a8fb7" stroke-width="2.4" fill="none"/>';
+    else if(x.t==='libre')g+='<path d="M'+(bx+15)+' 266H'+(bx+37)+'" stroke="#8a6a44" stroke-width="3" stroke-linecap="round"/>';
+    else g+=sol(bx+26,266,6);
+    g+='<text x="'+(bx+26)+'" y="288" text-anchor="middle" font-size="13" font-weight="800" font-family="system-ui,sans-serif" fill="'+(x.t==='no'?'#fff':INK)+'">'+x.l+'</text>';
+    if(x.hecho)g+=lamCheck(bx+42,255,'#f7c948');
+    if(x.sel)g+='<rect x="'+(bx-1)+'" y="247" width="54" height="48" rx="7" fill="none" stroke="'+INK+'" stroke-width="3"/>';
+    if(x.hoy)g+='<rect x="'+(bx+16)+'" y="241" width="20" height="5" rx="2" fill="'+NAR+'"/>';
+    c1+='<g class="gdia" role="button" tabindex="0" data-a="gym-dia" data-key="'+x.k+'" aria-label="'+esc(lamDiaTxt(x))+'"'+(x.sel?' aria-current="true"':'')+'>'+g+
+      '<rect class="hit" x="'+(bx-2)+'" y="244" width="56" height="54" fill="#fff" fill-opacity="0"/></g>';});
+  s+=lamParte(1,[4,240,404,58],NAR,c1,null);
+  s+='</svg>';
+  return s;}
+function laminaHTML(sel){
+  /* la lámina de arriba de la portada: el dibujo y el botón del recorrido de 45 s con su texto */
+  const tema=laminaTema(),d=laminaDatos(sel),tx=laminaTextos(tema,d);
+  return '<div class="card glam t-'+tema+'" data-lam="'+tema+'">'+
+    (tema==='bancales'?laminaBancales(d):laminaTeide(d))+
+    '<button class="gbig2 sec glamgo" data-a="lam-tour" aria-pressed="false">Explícamelo · 45 s</button>'+
+    '<div class="glt" hidden>'+tx.map(function(t,i){return '<p class="fr" data-i="'+i+'"><b>'+(i+1)+'</b>'+esc(t)+'</p>';}).join('')+'</div>'+
+    '<span class="sr" role="status" aria-live="polite"></span></div>';}
+function lamTimerVivo(){return !!_lamT;}
+function lamParar(fin){
+  /* quita el temporizador y los resaltados; sin `fin` (Parar, render, salir de Entreno) esconde también el texto */
+  if(_lamT){clearTimeout(_lamT);_lamT=null;}
+  const c=document.querySelector('.glam');if(!c)return;
+  c.classList.remove('run');
+  c.querySelectorAll('.on').forEach(function(x){x.classList.remove('on');});
+  const sv=c.querySelector('svg');if(sv)sv.classList.remove('tour');
+  const b=c.querySelector('[data-a="lam-tour"]');if(b){b.textContent='Explícamelo · 45 s';b.setAttribute('aria-pressed','false');}
+  const t=c.querySelector('.glt');if(t&&!fin)t.hidden=true;}
+function lamPaso(i){
+  const c=document.querySelector('.glam');if(!c){_lamT=null;return;}
+  if(_lamT){clearTimeout(_lamT);_lamT=null;}
+  c.classList.add('run');c.querySelector('svg').classList.add('tour');
+  c.querySelectorAll('.on').forEach(function(x){x.classList.remove('on');});
+  if(i===4)c.querySelectorAll('.part').forEach(function(p){p.classList.add('on');});
+  else{const p=c.querySelector('.part[data-n="'+(i+1)+'"]');if(p)p.classList.add('on');}
+  const fr=c.querySelector('.fr[data-i="'+i+'"]');
+  if(fr){fr.classList.add('on');const live=c.querySelector('.sr');if(live)live.textContent='Punto '+(i+1)+' de 5. '+fr.textContent.replace(/^\d/,'');}
+  _lamT=setTimeout(function(){_lamT=null;if(i>=4){lamParar(true);const l=c.querySelector('.sr');if(l)l.textContent='Listo.';}else lamPaso(i+1);},LAM_MS);}
+function lamTour(){
+  const c=document.querySelector('.glam');if(!c)return;
+  const t=c.querySelector('.glt'),b=c.querySelector('[data-a="lam-tour"]');
+  if(_lamT){lamParar();return;}
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){
+    /* sin animación: solo el texto entero, que se abre y se cierra */
+    t.hidden=!t.hidden;b.setAttribute('aria-pressed',t.hidden?'false':'true');b.textContent=t.hidden?'Explícamelo · 45 s':'Ocultar la explicación';return;}
+  t.hidden=false;b.textContent='Parar';b.setAttribute('aria-pressed','true');
+  lamPaso(0);}
 function renderGymPortada(){
   const c=gymCtx(),g=c.g;
   const cerr=ui.gymCerrada?gymCerradaHTML():'';
   $('#main').innerHTML='<div class="grid">'+cerr+
+    laminaHTML(c.sel)+
     gymSemanaCirculos(c.sel)+
     gymAvisoHTML(c.sel)+
     avisosPuertaHTML()+regresoCardHTML(c.sel)+
@@ -22757,6 +22994,13 @@ function renderAjustes(){
       </div>
       <p class="mini" style="margin-top:8px">Se aplica igual en modo claro y en modo oscuro. Si en algún móvil ves letras en negro que casi no se leen (por ejemplo en el nombre del tipo de día en «Mes»), pon aquí el color de texto a mano — aunque ya debería verse bien de fábrica.</p>
       </details></div>
+    <div class="card" data-cfg="lamina"><h2>Dibujo del entreno</h2>
+      <p class="note">El dibujo que abre la portada de Entreno: tu día, tu semana, tu vuelta y tu peso con los datos de verdad. Se queda en tu móvil.</p>
+      <div class="lamms" role="group" aria-label="Dibujo del entreno">${[['teide','La Sombra del Teide'],['bancales','Los Bancales']].map(function(o){const on=laminaTema()===o[0];
+        return '<button class="lamm'+(on?' on':'')+'" data-a="lamina-tema" data-id="'+o[0]+'" aria-pressed="'+(on?'true':'false')+'">'+
+          (o[0]==='teide'?'<svg viewBox="0 0 120 56" aria-hidden="true"><rect width="120" height="34" fill="#9a6f8d"/><rect y="34" width="120" height="22" fill="#b79bb8"/><path d="M30 34 L56 6 L62 4 L68 8 L94 34Z" fill="#3a2a46"/><circle cx="16" cy="22" r="7" fill="#f2c46b"/><path d="M64 34 L84 34 L96 44 L58 44Z" fill="#2d1f4a" opacity=".8"/></svg>'
+            :'<svg viewBox="0 0 120 56" aria-hidden="true"><rect width="120" height="56" fill="#d8ecf0"/><path d="M0 56V8L24 14L30 56Z" fill="#b57b4b"/><rect x="40" y="38" width="22" height="18" fill="#c98a5a"/><rect x="62" y="28" width="22" height="28" fill="#c98a5a"/><rect x="84" y="18" width="22" height="38" fill="#c98a5a"/><rect x="40" y="36" width="22" height="5" fill="#e0b27a"/><rect x="62" y="26" width="22" height="5" fill="#e0b27a"/><rect x="84" y="16" width="22" height="5" fill="#e0b27a"/><circle cx="110" cy="8" r="5" fill="#f7c948"/></svg>')+
+          '<span class="tnom">'+o[1]+(on?' \u2713':'')+'</span></button>';}).join('')}</div></div>
     <div class="card" data-cfg="franja"><h2>El carril del d\u00eda</h2>
       <p class="note">El carril de horas de «Hoy» y de la rejilla de la semana. Cada cosa lleva su color fijo,
         sea cual sea el tipo de día, y aquí se cambian.</p>
@@ -23139,6 +23383,8 @@ function render(){
     const m=$('#main');
     if(a&&m&&a!==document.body&&m.contains(a)&&typeof a.blur==='function')a.blur();
   }catch(e0){}
+  /* cualquier repintado (también salir de Entreno) para el recorrido de 45 s de la lámina: ningún temporizador sobrevive */
+  if(_lamT)lamParar();
   _pintando=true;
   try{renderNow();_pintando=false;trasPintar();try{navTras();}catch(e5){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
@@ -24657,6 +24903,8 @@ function act(a,el){
       ui.gymDate=iso(addDays(gd,a==='gym-next'?1:-1));render();break;}
     case 'gym-today':ui.gymDate=iso(new Date());render();break;
     case 'gym-dia':ui.gymDate=el.dataset.key||iso(new Date());render();break;
+    case 'lam-tour':lamTour();break;
+    case 'lamina-tema':{const g=gymS();g.lamina=(id==='bancales')?'bancales':'teide';save();render();flash('Dibujo del entreno: '+(g.lamina==='bancales'?'Los Bancales':'La Sombra del Teide'));break;}
     case 'gym-mover':flash(moverEntreno(el.dataset.key,el.dataset.to));break;
     case 'gym-deshacer':flash(deshacerMovido(el.dataset.key));break;
     case 'gym-fetch':flash('bajando la biblioteca de openGym: pesan unos 17 MB, en el móvil mejor con wifi');
@@ -26664,6 +26912,9 @@ document.addEventListener('keydown',e=>{
     return;}
   if(escribiendo&&e.key==='Enter'&&t.id==='frIn'){e.preventDefault();frEnter();return;}
   if(escribiendo){if(e.key==='Escape'&&t.blur)t.blur();return;}
+  /* las partes tocables de la lámina del entreno son <g role=button> dentro de un SVG: Enter y espacio las pulsan */
+  if((e.key==='Enter'||e.key===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset&&t.dataset.a&&t.closest&&t.closest('.glam')){
+    e.preventDefault();t.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
   const k=e.key||'';
   if(/^[1-9]$/.test(k)){const tb=TABS[+k-1];if(tb){ui.tab=tb[0];if(CAL_SET.has(tb[0]))ui.calMode=tb[0];render();
     const b=document.querySelector('#tabs button[data-t="'+tb[0]+'"]')||document.querySelector('#calModes button[data-t="'+tb[0]+'"]');
@@ -27319,7 +27570,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={franja,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
