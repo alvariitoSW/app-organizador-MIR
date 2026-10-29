@@ -5,6 +5,7 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
+- [aparc-medicas-a-fiebres] 2026-10-29: los estudios médicos de esta sesión (VentLoop, visor aórtico, clase de shock e Impella) eran para `fiebres-neutropenias` (UCI); el usuario los lleva allí a una sesión de gobierno. Aquí quedan `docs/webs-medicas.md` y los dos informes; decidir si se borran de este repo cuando estén allí
 - ~~[aparc-la-noche-a-main]~~ HECHO 2026-10-29: la Ley de La Noche (N1-N3) en main ec1370b (run 40877861030); delegación cerrada
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
