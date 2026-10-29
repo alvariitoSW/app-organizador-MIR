@@ -56,6 +56,7 @@ traspaso explica por qué.
 | 2026-10-29 | ventilador-ri | estudio | opus-5-5 | 0 | 28 | **587 k** | sesión principal (100 %) | web bloqueada al principio (un mensaje perdido); el código ordenado con prettier y leído por trozos bastó, sin ayudantes |
 | 2026-10-29 | aorta-ri | estudio | opus-5-5 | 0 | 39 | **918 k** | sesión principal (100 %) | HTML entero de una vez con la herramienta de artefactos; mapa de funciones con rg y lectura por secciones; sin ayudantes; misma sesión que ventilador-ri |
 | 2026-10-29 | webs-medicas | texto | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | lista desde rg en el repo + list_repos; misma sesión larga que dos estudios |
+| 2026-10-29 | antaa-shock | estudio | opus-5-5 | 0 | 56 | **1,5 M** | sesión principal (100 %) | texto de las 62 diapositivas sacado del JSON de la página (__NEXT_DATA__), sin imágenes; sesión ya muy larga |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
