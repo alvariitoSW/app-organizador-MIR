@@ -14186,6 +14186,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('360 a las 21:30 «🏠 He vuelto» abre la hoja con 21:30; −5 la deja en 21:25; Guardar apunta store.lloret.vuelta[hoy] y el cartel deja de pedir «Vete del Lloret»',
       /He vuelto/.test(r.a.boton) && r.a.botonK === 'vuelta' && r.pronto.boton === '' && /Vete del Lloret · 21:45/.test(r.a.txt) && r.b.hora === '21:30' && /He vuelto/.test(r.b.hoja) && r.b.altoH >= 44 && !!r.b.aria && r.c.hora === '21:25'
       && r.vuelta[0] === '21:25' && r.vuelta[1] === '21:25' && r.d.hoja === '' && !/Vete del Lloret/.test(r.d.txt) && r.d.boton === '', JSON.stringify([r.a, r.pronto, r.b, r.c, r.d, r.vuelta]));
+    check('360 el cartel de las 21:30 no contradice la hora de irse: «Vete del Lloret · 21:45 … empieza a despedirte a las 21:35»',
+      /Vete del Lloret · 21:45/.test(r.a.txt) && /empieza a despedirte a las 21:35/.test(r.a.txt) && !/lo último allí/.test(r.a.txt), r.a.txt);
     check('360 con la vuelta apuntada la cadena desplegada dice «✓ Volviste a las 21:25» y no lista el hito de vete', /✓ Volviste a las 21:25/.test(r.e.txt) && !/Vete del Lloret/.test(r.e.txt), JSON.stringify(r.e));
   }
   // 361) LA NOCHE · «🏢 He llegado» (viernes 7:58, día de bus): botón → hoja → Guardar apunta store.manana[hoy].llego (sin salio) y sobrevive a normalize.
@@ -14219,14 +14221,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await siembra(); await pon(7, 58, 30); await page.evaluate(() => { window.PG.render(); }); await page.waitForTimeout(250);
     const s = {};
     s.a = await lee();
+    const bots = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), sa = n && n.querySelector('[data-a="manana-sali"]'), vi = n && n.querySelector('[data-a="noche-hoja"]');
+      return { sali: sa ? sa.textContent.trim() : '', saliP: !!(sa && sa.classList.contains('p')), vivoP: !!(vi && vi.classList.contains('p')), vivoAlto: vi ? Math.round(vi.getBoundingClientRect().height) : 0 }; });
+    s.ba = await bots();
     await page.click('#main .noche [data-a="noche-hoja"][data-k="llego"]'); await page.waitForTimeout(250);
     s.b = await lee();
     await page.click('#hojaDia [data-a="noche-guardar"]'); await page.waitForTimeout(250);
-    s.c = await lee();
+    s.c = await lee(); s.bc = await bots();
     s.m = await page.evaluate((h) => { const P = window.PG, x = P.store.manana[h] || {}; const a = JSON.stringify(x); P.store = JSON.parse(JSON.stringify(P.store)); P.ui.nocheAbierta = true; P.render(); return [a, JSON.stringify(P.store.manana[h] || null)]; }, man);
     await page.waitForTimeout(150); s.d = await lee();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
     await page.setViewportSize(vp36);
+    check('361 a las 7:58 «🚪 He salido» (mayúscula) es el principal y «🏢 He llegado» va de segundo, ≥44 px; al guardar la llegada «He salido» desaparece',
+      s.ba.sali === '🚪 He salido' && s.ba.saliP && !s.ba.vivoP && s.ba.vivoAlto >= 44 && s.bc.sali === '', JSON.stringify([s.ba, s.bc]));
     check('361 el viernes a las 7:58 «🏢 He llegado» → Guardar apunta store.manana[hoy].llego (sin salio), sobrevive a normalize y la cadena dice «✓ Llegaste a las 07:58»',
       /He llegado/.test(s.a.boton) && s.a.botonK === 'llego' && /He llegado/.test(s.b.hoja) && s.b.hora === '07:58' && s.c.hoja === '' && s.c.boton === '' && s.m[0] === '{"llego":"07:58"}' && s.m[1] === '{"llego":"07:58"}' && /✓ Llegaste a las 07:58/.test(s.d.txt), JSON.stringify([s.a, s.b, s.c, s.m, s.d]));
   }

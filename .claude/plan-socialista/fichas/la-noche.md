@@ -67,3 +67,6 @@ Cada historia tiene paso y prueba (N1-a/b/c → P1-P5; N2-a/b → P6-P7; N2-c/d 
 
 **Supuestos:** el escalón de la cama arranca en la mediana de 7 noches (00:30 sin datos); «He vuelto» se ofrece de
 vete−20 a vete+120; «llegar» = bus + `viajeCfg().min`; el chip ⏰ lleva «fijo».
+
+**N3** (29/10, cerrada): repaso del `verificador`; arreglados la nota de «Vete» (pruebas 360) y el apilado de las 07:58 (361);
+suite en verde y a `main`. Ver DECISIONS «Ley de La Noche · N3».

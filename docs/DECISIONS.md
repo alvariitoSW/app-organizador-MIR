@@ -1729,3 +1729,19 @@ objetivo, revisar en N3). Contar en Tu semana con la cama que valía cada noche 
 **Supuestos.** Las alarmas son siempre las de la noche de hoy; los días de guardia no cuentan en Tu semana; «Vete» y «Sal de
 casa» suenan a su hora en el `.ics`. Pendiente menor para N3: a las 07:58 «🚪 he salido» y «🏢 He llegado» salen apilados con el
 mismo peso; «lo último allí antes de» = cama−60 queda 10 min antes de «Vete» (así lo dice el acta).
+
+## Ley de La Noche · N3 · repaso y paso a main (2026-10-29)
+
+**Elegido (Consejo por delegación).** Repaso del `verificador` a 412×915 (4 modos a las 21:20 y 07:17, hoja, Alarmas, Tu semana,
+sugerencia; sin errores ni desborde). Dos arreglos con su prueba: (1) la nota de «Vete del Lloret» decía «lo último allí antes de
+las 21:35» con la hora de irse a las 21:45 (cama−60 frente a cama−margen−ida): ahora «empieza a despedirte a las» vete−10 (prueba
+360); (2) a las 07:58 «🚪 he salido» y «🏢 He llegado» salían apilados como dos principales: ahora «🚪 He salido» (mayúscula) es el
+principal, «He llegado» va de segundo (44 px) y, guardada la llegada, «He salido» se quita (prueba 361). Ambas caen al revertir y
+ninguna otra. Suite 813/813. Pasa a `main`.
+
+**Descartado.** Mover el aviso de cama del `.ics` a la cama del escalón (se queda la objetivo; las alarmas del Reloj ya dan la del
+escalón, que es el aviso elegido). Agrandar los botones de 20-34 px de la línea de Hoy (anteriores a la Ley: va a «Ideas»). Plegar
+la cadena desplegada (620-677 px): es la vista de detalle, la plegada mide 143-195 px.
+
+**Supuestos.** Con camas reales entre 23:30 y 00:15 la cama arranca en la mediana (23:50) y baja 15 min cada 3 días: es lo que
+decidió el acta, no un fallo. La maqueta `la-noche-comun.js` conserva el texto viejo (es historia, no se publica).

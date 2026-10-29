@@ -3946,6 +3946,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .noche .ncf small{display:block;color:var(--ink2);font-size:12px}
 .noche .ncf .nh{font-variant-numeric:tabular-nums;font-weight:700}
 .noche .nvivo{width:100%;min-height:52px;margin-top:8px;font-size:17px}
+.noche .nvivo.n2{min-height:44px;font-size:inherit}
 .noche .nok{color:var(--ok);font-size:13px;padding:6px 2px}
 .noche .nvistas{margin-top:6px;gap:8px}
 .noche .nvistas .btn{min-height:44px}

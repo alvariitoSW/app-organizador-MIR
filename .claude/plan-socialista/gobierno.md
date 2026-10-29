@@ -58,7 +58,7 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
   que caen al revertir, privacidad y Actions en `success`. Cada sesión nueva de la tanda se titula
   **«Ley de La Noche · N<n> · <qué>»** para que el usuario sepa de dónde viene. En el acta, «(Consejo por delegación)».
-  Se acaba al cerrar la N3.
+  Se acaba al cerrar la N3. **Cerrada el 29/10/2026** (N3 en `main`): lo reservado vuelve al usuario.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.

@@ -5487,13 +5487,15 @@ function nocheHTML(key,esHoy){
   const cartel='<div class="ncartel nled" role="status"><div class="l1">'+(g.ico||'')+' '+(g.h?esc(g.h.cartel):'')+(g.hora?' · '+esc(g.hora):'')+'</div>'+
     '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div></div>';
   const m=mananaDe(key),h=hoyNow(true)/60;
-  const sali=m&&m.salio==null&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
-    '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 he salido</button>':'';
+  /* ya en el trabajo («He llegado» guardado) no se ofrece «He salido» */
+  const sali=m&&m.salio==null&&!C.llego&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
+    '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button>':'';
   /* el botón vivo: «He vuelto» cerca de la hora de irte del Lloret, «He llegado» cerca de la de llegar al trabajo */
   const hv=C.hitos.filter(function(x){return x.id==='vete';})[0],hl=C.hitos.filter(function(x){return x.id==='llegar';})[0];
   const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','🏠 He vuelto']:
     (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','🏢 He llegado']:null);
-  const vivo=viv?'<button class="btn p nvivo" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
+  /* con «He salido» a la vista, «He llegado» va de segundo (no dos botones principales apilados) */
+  const vivo=viv?'<button class="btn '+(sali?'s nvivo n2':'p nvivo')+'" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
   const anoche=hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
   let pie='';
   if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
@@ -7459,7 +7461,7 @@ function nocheCadena(key,nowMin){
   const ll=cama!=null&&lloretDe(d)?lloretDe(d):null;
   if(ll){const casa=cama-c.margen,vete=casa-c.ida,ir=mins(ll.hora);
     H.push({id:'ir',ico:'🌿',hora:ir!=null?ir:pl.de,cartel:'Sal al Lloret',corto:'Ir al Lloret',nota:'a tu hora de siempre'},
-      {id:'vete',ico:'🌿',hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · lo último allí antes de las '+hm(cama-60)},
+      {id:'vete',ico:'🌿',hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · empieza a despedirte a las '+hm(vete-10)},
       {id:'casa',ico:'🏠',hora:casa,cartel:'En casa',corto:'En casa',nota:'pantallas fuera: el Lloret ya contó como rato sin pantalla'});}
   if(cama!=null)H.push({id:'cama',ico:'🛌',hora:cama,cartel:'A la cama',corto:'A la cama',
     nota:cama>obj?'paso hacia las '+hm(obj)+' (tu hora: '+fmtHM(suenoCfg().min*60+suenoCfg().latencia)+' antes del despertador)':'para dormir tus '+fmt(suenoCfg().min)+' h antes del despertador'});
