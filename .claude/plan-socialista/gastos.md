@@ -55,6 +55,7 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n3 | desplegar | opus-5-5 + sonnet-5-5 | 1 | 42 | **643 k** | sesión principal (75 %) | repaso del verificador, 2 arreglos con prueba (nota de Vete, apilado 07:58), suite 813/813 y main ec1370b |
 | 2026-10-29 | ventilador-ri | estudio | opus-5-5 | 0 | 28 | **587 k** | sesión principal (100 %) | web bloqueada al principio (un mensaje perdido); el código ordenado con prettier y leído por trozos bastó, sin ayudantes |
 | 2026-10-29 | aorta-ri | estudio | opus-5-5 | 0 | 39 | **918 k** | sesión principal (100 %) | HTML entero de una vez con la herramienta de artefactos; mapa de funciones con rg y lectura por secciones; sin ayudantes; misma sesión que ventilador-ri |
+| 2026-10-29 | webs-medicas | texto | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | lista desde rg en el repo + list_repos; misma sesión larga que dos estudios |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan

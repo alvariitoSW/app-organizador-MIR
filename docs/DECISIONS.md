@@ -3,6 +3,13 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-29 · Recopilación de webs y apps médicas
+
+**Elegido:** una lista por temas en `docs/webs-medicas.md` (intensivos y ventilación, cardiología, urgencias y
+fiebre neutropénica, estudio MIR, guardias y nutrición), con enlace, resumen e informe de cada una. VentLoop y
+el visor aórtico quedan «guardados» como enlace + informe. **Descartado:** guardar copia de su código o de sus
+textos en el repositorio (son ajenos y sin licencia libre). **Supuestos:** `sup-2026-10-29-webs-medicas`.
+
 ## 2026-10-29 · Estudio del visor de la raíz aórtica (artefacto público)
 
 **Elegido:** solo informe (`docs/informe-raiz-aortica-2026-10.md`): qué calcula (SC, z con Devereux, Lang y WASE,
