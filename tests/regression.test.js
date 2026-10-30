@@ -15573,6 +15573,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       guardia.comida === '14:00' && guardia.cena === '21:00' && saliente.desayuno === '8:45' && saliente.comida === '15:00' && saliente.cena === '21:30', JSON.stringify({ K, guardia, saliente }));
   }
 
+  // 399) El Cierre · C2 · iconos en vez de emojis: Hoy con la tira de la mañana (taxi de serie) → cada ficha lleva un svg de ico()
+  // (taxi, no 🚕) → abrir «Más» → los 6 recuadros llevan su svg + el nombre, Ajustes el suyo y el ✕ es un svg de 44×44 → tocar
+  // «Notas» abre Notas y cierra el cajón. Fija: fichas y cajón eran emojis sueltos que cada móvil dibuja a su manera.
+  {
+    await page.evaluate(() => { const P = window.PG; window.__copia399 = JSON.parse(JSON.stringify(P.store)); const d = new Date(); d.setDate(d.getDate() - 1); const kt = P.iso(d);
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true }; P.store.manana = {};
+      P.habitosS().items.push({ id: 'hb399t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.ui.drawerOpen = false; P.save(); P.render(); });
+    const fichas = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .manana .mnp')]; const m = f[0] && f[0].getBoundingClientRect();
+      return { n: f.length, svg: f.filter((x) => x.querySelector('i svg.ico')).length, emoji: f.filter((x) => /[\u{1F300}-\u{1FAFF}☀-➿]/u.test((x.querySelector('i') || {}).textContent || '')).length, nombres: f.map((x) => (x.querySelector('i svg') || {}).dataset ? x.querySelector('i svg').dataset.ico : ''), w: m ? Math.round(m.width) : 0, h: m ? Math.round(m.height) : 0,
+        letra: f.length ? Math.min(...[...f[0].querySelectorAll('b,small')].map((x) => parseFloat(getComputedStyle(x).fontSize))) : 0 }; });
+    await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(350);
+    const cajon = await page.evaluate(() => { const t = [...document.querySelectorAll('#drawer .cti')]; const x = document.querySelector('#drawer [data-a="drawer-close"]'), r = x && x.getBoundingClientRect(), aj = document.querySelector('#drawer .cli .e svg');
+      return { n: t.length, svg: t.filter((b) => b.querySelector('.t svg.ico')).length, ico: t.map((b) => (b.querySelector('.t svg') || {}).dataset && b.querySelector('.t svg').dataset.ico), txt: t.map((b) => b.querySelector('.t').textContent.trim()), x: !!(x && x.querySelector('svg.ico')), xw: r ? Math.round(r.width) : 0, xh: r ? Math.round(r.height) : 0, aj: !!aj, ajIco: aj && aj.dataset.ico }; });
+    await page.click('#drawer .cti[data-t="notas"]'); await page.waitForTimeout(350);
+    const luego = await page.evaluate(() => ({ tab: window.PG.ui.tab, abierto: !!window.PG.ui.drawerOpen }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia399; P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
+    check('399 Iconos en vez de emojis: la tira de la mañana lleva un svg por ficha (taxi, no 🚕), «Más» enseña 6 recuadros con planta/hucha/libro/hoja420/eventos/notas + su nombre, Ajustes con su icono y el ✕ svg de 44×44; tocar Notas abre Notas y cierra el cajón',
+      fichas.n >= 3 && fichas.svg === fichas.n && fichas.emoji === 0 && fichas.nombres.includes('taxi') && fichas.w >= 54 && fichas.h >= 56 && fichas.letra >= 11 &&
+      cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,hoja420,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,4:20,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
+      luego.tab === 'notas' && !luego.abierto, JSON.stringify({ fichas, cajon, luego }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

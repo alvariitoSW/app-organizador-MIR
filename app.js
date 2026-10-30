@@ -5821,11 +5821,11 @@ function mananaHTML(key,esHoy){
   /* el taxi de ese día: lo que costó de verdad (de serie, el precio de Ajustes) */
   const eurHTML='<label class="mnreal">🚕 € <input type="number" min="0" max="100" step="0.5" value="'+esc(String(taxiEurDia(key)))+'" data-a="manana-eur" data-key="'+esc(key)+'"></label>';
   /* los pasos de la mañana como fichas: la de ahora encendida, las pasadas tachadas, cada una con su hora */
-  const ICO={cama:'⏰',ducha:'🚿',cafe:'☕',vestir:'👕',parada:'🚪',bus:'🚌',taxi:'🚕',cabina:'🏥',guardia:'🏥'},NOM={cama:'levantarse',ducha:'ducha',cafe:'café',vestir:'vestirse',parada:'puerta',bus:'bus',taxi:'taxi',cabina:'hospital',guardia:'hospital'};
+  const ICO={cama:['reloj','⏰'],ducha:['ducha','🚿'],cafe:['taza','☕'],vestir:['vestir','👕'],parada:['saliente','🚪'],bus:['bus','🚌'],taxi:['taxi','🚕'],cabina:['fonendo','🏥'],guardia:['fonendo','🏥']},NOM={cama:'levantarse',ducha:'ducha',cafe:'café',vestir:'vestirse',parada:'puerta',bus:'bus',taxi:'taxi',cabina:'hospital',guardia:'hospital'};
   const st=esHoy&&m.salio==null?estadoDe(key,h):null,ahoraE=st?st.e:'';
   const fichas=m.regleta.filter(function(x){return x.e!=='ultimo';});
   pasos='<div class="mnpasos">'+fichas.map(function(x,i){const sig=fichas[i+1],fin=sig?sig.h:x.h+0.25,hecho=pasadoTaxi||(esHoy&&(m.salio!=null?x.h<=m.salio:h>=fin)),ahora=!hecho&&esHoy&&m.salio==null&&h>=x.h&&h<fin;
-    return '<span class="mnp'+(ahora?' ahora':hecho?' hecho':'')+'"><i>'+ICO[x.e]+'</i><b>'+esc(HH(x.h))+'</b><small>'+esc(NOM[x.e]||x.txt)+'</small></span>';}).join('')+'</div>';
+    return '<span class="mnp'+(ahora?' ahora':hecho?' hecho':'')+'"><i>'+icoOEmoji((ICO[x.e]||[])[0],(ICO[x.e]||[])[1]||'',22)+'</i><b>'+esc(HH(x.h))+'</b><small>'+esc(NOM[x.e]||x.txt)+'</small></span>';}).join('')+'</div>';
   if(m.salio!=null){const tarde=m.salio>plan+1e-6,taxi=m.salio>m.ultimo+1e-6,dif=Math.round((m.salio-plan)*60);
     linea=(taxi?'🚕 Saliste a las <b>'+esc(HH(m.salio))+'</b> · '+dif+' min tarde: taxi '+eurHTML:tarde?'⏱ Saliste a las <b>'+esc(HH(m.salio))+'</b> · '+dif+' min tarde, aún a tiempo del último bus':
       (dm.bus?'🚌 <b>Fuiste en bus</b> (cuenta como a tiempo) '+realHTML:'✓ Saliste a las <b>'+esc(HH(m.salio))+'</b> · a tiempo'+(deSerie?' · hoy sin taxi':'')));
@@ -24191,7 +24191,9 @@ function comerModosHTML(){
     return '<button data-a="comer-modo" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('');}
 /* «Más»: seis recuadros que ya dicen algo de lo suyo y UNA entrada a Ajustes (que junta Turno y
    rotación, Ajustes y Datos). Antes eran 9 líneas de texto y media pantalla vacía. */
-const CAJON=[['habitos','✅','Hábitos'],['dinero','💶','Dinero'],['estudio','📚','Estudio'],['consumo','🌿','4:20'],['eventos','📌','Eventos'],['notas','📝','Notas']];
+const CAJON=[['habitos','✅','Hábitos','planta'],['dinero','💶','Dinero','hucha'],['estudio','📚','Estudio','libro'],['consumo','🌿','4:20','hoja420'],['eventos','📌','Eventos','eventos'],['notas','📝','Notas','notas']];
+/* icono vivo (decorativo: el texto de al lado ya lo nombra) o, si fig/iconos.js no cargó, el emoji de siempre */
+function icoOEmoji(n,emoji,tam){return n&&typeof window.ico==='function'&&window.ico(n,{decorativo:true,tam:tam||22})||emoji||'';}
 function cajonVivo(t){
   /* la línea de cada recuadro: solo se calcula con el cajón abierto (render() lo pinta siempre) */
   try{
@@ -24216,12 +24218,12 @@ function cajonVivo(t){
 function cajonHTML(){
   const d=diasDesdeBackup(),copia=d===null||d>=avisoBackupD(),aj=['ajustes','cfg','data'].indexOf(ui.tab)>=0;
   const oculto=!!(store.consumo&&(consumoS().priv.oculto||cnTapado()));   /* 4:20 discreto: sin nombre ni cifras */
-  return '<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
+  return '<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">'+icoOEmoji('cerrar','✕',22)+'</button></div>'+
     '<div class="ctil">'+CAJON.map(function(t){
       const priv=oculto&&t[0]==='consumo';
-      return '<button class="cti'+(ui.tab===t[0]?' on':'')+'" data-a="drawer-nav" data-t="'+t[0]+'"><span class="t">'+(priv?'🔒 Privado':t[1]+' '+t[2])+'</span>'+
+      return '<button class="cti'+(ui.tab===t[0]?' on':'')+'" data-a="drawer-nav" data-t="'+t[0]+'"><span class="t">'+(priv?icoOEmoji('candado','🔒')+' Privado':icoOEmoji(t[3],t[1])+' '+t[2])+'</span>'+
         '<span class="v">'+(ui.drawerOpen&&!priv?cajonVivo(t[0]):'')+'</span></button>';}).join('')+'</div>'+
-    '<button class="cli'+(aj?' on':'')+'" data-a="drawer-nav" data-t="ajustes"><span class="e">⚙️</span><b>Ajustes</b>'+
+    '<button class="cli'+(aj?' on':'')+'" data-a="drawer-nav" data-t="ajustes"><span class="e">'+icoOEmoji('ajustes','⚙️')+'</span><b>Ajustes</b>'+
       (copia?'<em class="w">⚠ copia</em>':'')+'<span class="ch">›</span></button>';}
 const MONTH_FULL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 /* ===================== buscar mientras escribes, sin soltar el campo =====================

@@ -12,21 +12,21 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** «Los Remates» también (main 42b230d, 30/10). Queda: los iconos [aparc-arte-iconos] y [v3-horas-guardia] en Ideas.
+**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** «Los Remates» también (main 42b230d, 30/10). «El Cierre» también (C1-C4, 30/10): iconos en la mañana y el cajón, horas de comer que siguen a la guardia. **El plan está terminado.**
 
 ## Por hacer
 
-### «El Cierre» (lo último del plan) · delegada el 2026-10-30 · sesión «El Cierre · iconos y horas de comer»
+### «El Cierre» (lo último del plan) · **HECHA · 30/10** · delegada el 2026-10-30 · sesión «El Cierre · iconos y horas de comer»
 
 [v3-cierre] «terminamos de una vez ya la app entera» (2026-10-30). **Aprobada por delegación**: ~3,5 M; el Consejo elige
 la maqueta, decide y pasa a `main`.
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| C1 | Maqueta de iconos: `ico()` (fig/iconos.js) en la barra de abajo y en la tabla `ICO` de Hoy (~10 iconos), con el muestrario de `design/arte/direccion/iconos/` y la letra nueva de los Remates; el Consejo elige [aparc-arte-iconos] | maqueta | sonnet | ~0,9 M |
-| C2 | Construir los iconos (sin romper las pruebas que buscan emoji: cambiarlas solo en el icono) | construir | sonnet con ficha | ~1,0 M |
-| C3 | Horas de comer que siguen a guardias y salientes (desayuno, comida, cena según jornada/guardia/saliente que ya conoce la app) [v3-horas-guardia] | construir | sonnet con ficha | ~1,0 M |
-| C4 | Cierre: verificador a 412×915, suite completa, sella, main, Actions | arreglo | sonnet | ~0,6 M |
+| ~~C1~~ | ✅ Maqueta de iconos: `ico()` (fig/iconos.js) en la barra de abajo y en la tabla `ICO` de Hoy (~10 iconos), con el muestrario de `design/arte/direccion/iconos/` y la letra nueva de los Remates; el Consejo elige [aparc-arte-iconos] | maqueta | sonnet | ~0,9 M |
+| ~~C2~~ | ✅ Construir los iconos (sin romper las pruebas que buscan emoji: cambiarlas solo en el icono) | construir | sonnet con ficha | ~1,0 M |
+| ~~C3~~ | ✅ Horas de comer que siguen a guardias y salientes (desayuno, comida, cena según jornada/guardia/saliente que ya conoce la app) [v3-horas-guardia] | construir | sonnet con ficha | ~1,0 M |
+| ~~C4~~ | ✅ Cierre: verificador a 412×915, suite completa, sella, main, Actions | arreglo | sonnet | ~0,6 M |
 
 ### «Los Remates» (lo que quedaba aparcado) · Consejo 2026-10-30 (3.ª) · acta `consejo/2026-10-30-3.md`
 
@@ -158,12 +158,12 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 3. [v3-entrenador] Entreno como entrenador propio basado en ciencia (la vuelta tras un parón ya está) · maqueta → construir
 4. [v3-coach] La app como entrenador de tu persona (descanso, comida, entreno, el día de Lloret) · maqueta → construir
 5. [aparc-arte-energia] Arte: la energía del día que se gasta y se recarga · maqueta → construir
-6. [aparc-arte-iconos] Arte: los iconos con vida propia · maqueta → construir
+6. ~~[aparc-arte-iconos]~~ ✅ El Cierre C1-C2
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
-- (→ El Cierre C3) [v3-horas-guardia] Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
+- ~~(→ El Cierre C3) [v3-horas-guardia]~~ ✅ hecho 30/10 · Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
 - ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
@@ -175,6 +175,8 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-cierre] El Cierre C1-C4: iconos dibujados en los pasos de la mañana y el cajón «Más» (ducha y camiseta nuevos), horas de comer que siguen a la guardia y al saliente · pruebas 398-399 · 2026-10-30
 
 - [v3-remates] Los Remates L1-L5: ración real en vitaminas, Fintonic (presupuesto, miles, quitar fila), sin compensar en guardia, 7 noches tocables, letra ≥11 px y botones 44 px, «Te faltan N noches» en Hoy, vuelo a mano con Maps/DGT, minutos de móvil, suite en ~4 min · main 42b230d · 2026-10-30
 

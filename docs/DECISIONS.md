@@ -2219,3 +2219,16 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - Con 5 navegadores en 4 núcleos no se pierde tiempo (medido). El margen hasta los 4 min es de solo unos 5 s.
   - Si una prueba de la 1 a la 69 cambia lo que deja puesto, hay que poner al día `tests/siembra-70.js`: un fallo nuevo en el trozo 2 que no salga con `TROZOS=1` apunta a la siembra.
+
+## El Cierre · iconos en la mañana y en el cajón (Consejo por delegación) (2026-10-30)
+- **Elegido**
+  - Las fichas de la mañana en Hoy y el cajón «Más» dejan los emojis por `ico()` (decorativos, el texto ya los nombra): levantarse→reloj, ducha→ducha, café→taza, vestirse→vestir (camiseta), puerta→saliente, bus, taxi, hospital→fonendo; Hábitos→planta, Dinero→hucha, Estudio→libro, 4:20→hoja420, Privado→candado, Eventos, Notas, Ajustes→ajustes, ✕→cerrar. `ducha` y `vestir` son dibujos nuevos de `fig/iconos.js`.
+  - Función `icoOEmoji(nombre, emoji, tam)` en `app.js`: si `fig/iconos.js` no cargó, cae al emoji de siempre.
+  - CSS: letra de las fichas a 12 px (hora) y 11 px (nombre), fichas de al menos 54×56, «✕» del cajón de 44×44, icono de la ficha «ahora» en color de marca. Ninguna letra baja de 11 px.
+  - Prueba 399 encadenada (tira de la mañana con svg → abrir «Más» → 6 recuadros con su svg y nombre, Ajustes, ✕ de 44×44 → tocar Notas). Cae si se vuelve a los emojis; la 289 sigue en verde.
+- **Descartado**
+  - Cambiar el «🔥» de la racha en `cajonVivo`: se queda como emoji.
+  - Dibujar iconos nuevos para todo: solo faltaban ducha y camiseta.
+- **Supuestos**
+  - Las pruebas viejas no dependían de los emojis que cambian (comprobado con grep), así que ninguna se toca.
+  - Las fichas mantienen su orden y sus textos; solo cambia lo que va dentro de la `<i>`.
