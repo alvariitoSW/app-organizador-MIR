@@ -1926,3 +1926,31 @@ aparte de recetas de microondas. Un segundo número de proteína en Hoy.
 - La caja de la frase lleva un botón ↵ a la derecha.
 - Comprobado en la app (G1): el sueño de una guardia se anota al día siguiente desde Reloj, Línea o Sueño, y el día después
   desde la barrita de Sueño. A partir del tercer día no hay ruta visible: aparcado [aparc-sueno-noche-olvidada].
+
+## Gran Ley · G4 · Proteína en Hoy, aviso tras entreno y la frase en Comer (2026-10-30)
+
+**Elegido.**
+- **Proteína en Hoy** (`protHoyHTML`, `protHoyDatos`, `protHoyObj`): una tarjeta bajo el estado del día, antes del carril. Solo si
+  faltan **más de 30 g**: «🥚 85 de 120 g · te faltan 35», una barra y UNA sugerencia con «Apuntar» (acción `prot-hoy`). La
+  sugerencia es la de `protExtras()` (lo de la nevera) que más acerca sin pasarse; si todas se pasan, la más pequeña. No propone
+  nada «a comprar». Día de guardia: «🥚 Hoy, lo que se pueda: 40 g», sin «te faltan» ni rojo.
+- **Objetivo del día = 1,6 g/kg × peso** (`perfil.pesoKg`); sin peso, el de Ajustes. Ajustes y la semana no cambian.
+- **Aviso tras entreno** (`entrenoReciente`): una sesión de Entreno cerrada hoy cuya hora de fin (`sesiones[].fin`, la que guarda
+  `cerrarSesionCore`) cae en las últimas 2 h. La misma línea añade «Has entrenado: mejor algo de proteína en las 2 h siguientes.»
+  Sin hora fija ni notificaciones.
+- **La frase arriba en Hoy de Comer** (`renderComerEje`): `fraseCardHTML(true)` en la pestaña Hoy, sin foco automático (no abre
+  teclado), con los mismos gestos que la vista antigua. Cierra [aparc-comer-eje-frase]. Pruebas 380, 381 y 382.
+
+**Descartado.**
+- **Semana básica (S6): no se construye.** Ya está cubierta: la S3b dio «Mi semana» a mano con «¿Me la propones?» (`pl-montar`) y la
+  R6 «Tu semana por caducidad» y «Mi compra base». No hay un hueco claro y pequeño que cerrar.
+- Quitar el botón «¿Qué has comido? o busca…»: sigue abriendo el buscador, que la frase no hace.
+- Mensaje «Hecho ✓ · 117 de 120 g» tras apuntar (maqueta): basta el aviso flotante y que la línea desaparezca.
+- Avisar tras entreno aunque falten ≤30 g: el acuerdo dice «esa misma línea».
+
+**Supuestos.**
+- Sin sesión de Entreno cerrada no hay aviso (el cardio suelto no guarda hora, así que no cuenta).
+- Con 1,6 g/kg el objetivo se redondea al gramo; la barra de Comer sigue con el objetivo de Ajustes (puede decir otra cifra).
+- «Apuntar» lo mete en el momento que toca ahora (`momentoAhora`).
+- La tarjeta va dentro de la tarjeta de Hoy, encima del carril, para verse sin bajar; solo se ve en el día de hoy.
+- La frase en Comer sirve para el día que estés mirando (como la vista antigua). Con una hoja de momento abierta se oculta la de arriba (dos campos con el mismo id dejaban sin pintar la lectura de la hoja); la prueba 317 se adaptó (ya no se abre la hoja: se toca la fila de lo apuntado).
