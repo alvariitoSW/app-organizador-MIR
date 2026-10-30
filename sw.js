@@ -9,7 +9,7 @@ const CACHE='guardias-v6';
 const RAIZ=new URL('./',self.registration?self.registration.scope:self.location.href);
 const INDEX=new URL('index.html',RAIZ).href;
 /* las dos figuras del sueño (claro y oscuro) también: se abren dentro de la app y tienen que ir sin red */
-const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json','fig/sueno.html','fig/sueno-light.html','fig/conductor.html','fig/conductor.js','fig/estacion.js','fig/calendario.js','fig/carretera.js','fig/carretera.html','fig/iconos.js']
+const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json','fig/sueno.html','fig/sueno-light.html','fig/conductor.html','fig/conductor.js','fig/estacion.js','fig/calendario.js','fig/carretera.js','fig/carretera.html','fig/iconos.js','fig/ejercicios.js']
   .map(function(f){return new URL(f,RAIZ).href;});
 
 self.addEventListener('install',function(e){

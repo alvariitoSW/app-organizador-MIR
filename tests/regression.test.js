@@ -15013,6 +15013,124 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /≤\d min · \+\d+ g/.test(r.hoy.t) && r.hoy.fila === 1 && r.card && r.card.n === 1 && /¿Algo rápido\?/.test(r.card.t) && /≤\d min · \d+ g/.test(r.card.t) && r.card.h >= 44 && r.hayCard && r.a && r.a.pasos >= 2 && r.a.ing >= 2 && r.a.alts === 2 && r.a.px >= 44 && !r.a.no && r.a.ancho <= 412 &&
       r.hayAlt && r.b && r.b.n !== r.a.n && r.hayApunta && r.fin.n === 2 && r.fin.nom === r.b.n && r.fin.prot >= 20 && !r.fin.hoja && r.lista, JSON.stringify(r));
   }
+  // 387-391) ENTRENO · G7, EN CADENA (412×915): ficha del ejercicio, un toque por serie, progresión doble, récord discreto y el entrenador de la guardia. Cada una es un bloque suelto.
+  // 387) ENTRENO · G7 — ficha plegable con dibujo, músculo, 3 claves y error; las series siguen a la vista
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r387 = { empieza: await empezar() };
+    r387.hayFicha = !!(await page.$('#main .gficha summary'));
+    if (r387.hayFicha) { r387.cerrada = await page.evaluate(() => !document.querySelector('#main .gficha').open); await page.click('#main .gficha summary'); await page.waitForTimeout(150); }
+    r387.f = await page.evaluate(() => { const d = document.querySelector('#main .gficha'); if (!d) return null; const sv = d.querySelector('svg.ejf'); const st = document.getElementById('ejfCss');
+      return { svg: !!sv, w: sv ? Math.round(sv.getBoundingClientRect().width) : 0, css: !!st, claves: d.querySelectorAll('ol li').length, err: /Error típico/.test(d.textContent), mus: /Trabaja/.test(d.textContent), h: Math.round(d.querySelector('summary').getBoundingClientRect().height), ok: !!document.querySelector('#main [data-a="gv-ok"]'), okY: document.querySelector('#main [data-a="gv-ok"]') ? Math.round(document.querySelector('#main [data-a="gv-ok"]').getBoundingClientRect().top) : 0 }; });
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('387 Entreno · ficha: al empezar, «Cómo se hace» (≥44 px) se abre con dibujo de dos posturas, músculo, 3 claves y error típico; el estilo del dibujo se inyecta una vez', r387.empieza && r387.hayFicha && r387.cerrada && r387.f && r387.f.svg && r387.f.w > 250 && r387.f.css && r387.f.claves === 3 && r387.f.err && r387.f.mus && r387.f.h >= 44, JSON.stringify(r387));
+  }
+  // 388) ENTRENO · G7 — un toque por serie con el peso y las reps de la vez anterior ya puestos
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r388 = { empieza: await empezar() };
+    r388.hay = !!(await page.$('#main [data-a="gv-ok"]'));
+    if (r388.hay) {
+      r388.pre = await page.evaluate(() => ({ kg: document.querySelector('#main input[data-k="kg"]').value, reps: document.querySelector('#main input[data-k="reps"]').value, h: Math.round(document.querySelector('#main [data-a="gv-ok"]').getBoundingClientRect().height) }));
+      await page.click('#main [data-a="gv-ok"]'); await page.waitForTimeout(250);
+      r388.reg = await page.evaluate(() => window.PG.store.gym.registro.filter((x) => x.sesionId).map((x) => x.kg + 'x' + x.reps));
+    }
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('388 Entreno · un toque: la primera serie sale con 16 kg × 10 (la vez anterior), el ✓ mide ≥44 px y UN toque la apunta tal cual', r388.empieza && r388.hay && r388.pre.kg === '16' && r388.pre.reps === '10' && r388.pre.h >= 44 && r388.reg.length === 1 && r388.reg[0] === '16x10', JSON.stringify(r388));
+  }
+  // 389) ENTRENO · G7 — progresión doble: todas al tope (12) con RPE 8 -> «Prueba +2 kg» arriba con su porqué, y la serie ya sale con ese peso
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Remo con mancuerna', 20, 12, 8, 12);
+    const r389 = { hayLinea: !!(await page.$('#main .gtoca .sug')) };
+    if (r389.hayLinea) r389.t = await page.evaluate(() => ({ sug: document.querySelector('#main .gtoca .sug').textContent, nota: (document.querySelector('#main .gtnota') || { textContent: '' }).textContent }));
+    r389.empieza = await empezar();
+    r389.kg = await page.evaluate(() => (document.querySelector('#main input[data-k="kg"]') || {}).value);
+    await sembrar('Remo con mancuerna', 20, 12, 10, 12);   // la misma historia pero «al fallo»: no sube
+    r389.sinSug = !(await page.$('#main .gtoca .sug'));
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('389 Entreno · progresión doble: con todas las series al tope y RPE 8, «Prueba +2 kg» con su porqué y la serie sale a 22 kg; si fue al fallo, no se sugiere', r389.hayLinea && /Prueba \+2 kg/.test(r389.t.sug) && /22/.test(r389.t.nota) && /llegaste a 12/.test(r389.t.nota) && r389.empieza && r389.kg === '22' && r389.sinSug, JSON.stringify(r389));
+  }
+  // 390) ENTRENO · G7 — récord discreto: subir el peso y apuntar deja una marca «récord» pequeña (sin rojo); igualar lo anterior, no
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r390 = { empieza: await empezar() };
+    r390.hay = !!(await page.$('#main [data-a="gv-ok"]'));
+    if (r390.hay) {
+      await page.click('#main [data-a="gv-ok"]'); await page.waitForTimeout(200);
+      r390.sin = await page.evaluate(() => document.querySelectorAll('#main .grec').length);
+      r390.hayPaso = !!(await page.$('#main [data-a="gv-paso"][data-k="kg"][data-d="2"]'));
+      if (r390.hayPaso) { await page.click('#main [data-a="gv-paso"][data-k="kg"][data-d="2"]'); await page.waitForTimeout(150); }
+      await page.click('#main [data-a="gv-ok"]:not(.on)'); await page.waitForTimeout(250);
+      r390.con = await page.evaluate(() => { const m = document.querySelector('#main .grec'); return m ? { t: m.textContent, fs: parseFloat(getComputedStyle(m).fontSize), col: getComputedStyle(m).color } : null; });
+    }
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('390 Entreno · récord discreto: igualar 16×10 no marca nada; subir a 18 kg y apuntar deja «récord» (≥14 px, sin rojo)', r390.empieza && r390.hay && r390.sin === 0 && r390.hayPaso && r390.con && /récord/.test(r390.con.t) && r390.con.fs >= 14 && !/rgb\(2[0-9]{2}, ?\d{1,2}, ?\d{1,2}\)/.test(r390.con.col), JSON.stringify(r390));
+  }
+  // 391) ENTRENO · G7 — entrenador de la guardia: saliente -> 25 min al 65 % / movilidad / descansar sin culpa; guardia -> «hoy no toca» + movilidad
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    await page.evaluate(() => { const P = window.PG; P.setDayOverride(P.iso(new Date()), 'sh-s', ''); P.ui.gymPanel = ''; P.render(); });
+    const r391 = { sal: !!(await page.$('#main .gsal')) };
+    if (r391.sal) {
+      r391.lista = await page.evaluate(() => ({ t: document.querySelector('#main .gsal').textContent, mov: !!document.querySelector('#main .gsal .gmov'), btn: Math.round(document.querySelector('#main .gsal [data-a="gym-descansa"]').getBoundingClientRect().height) }));
+      await page.click('#main .gsal .gmov summary'); await page.waitForTimeout(100);
+      r391.hayMov = !!(await page.$('#main .gsal [data-a="gym-mov"]'));
+      if (r391.hayMov) { await page.click('#main .gsal [data-a="gym-mov"]'); await page.waitForTimeout(200); }
+      r391.card = await page.evaluate(() => window.PG.store.gym.cardio.map((c) => c.tipo + c.duracionMin));
+      await page.click('#main .gsal [data-a="gym-descansa"][data-v="1"]'); await page.waitForTimeout(150);
+      r391.desc = await page.evaluate(() => (document.querySelector('#main .gsal') || { textContent: '' }).textContent);
+      await page.click('#main .gsal [data-a="gym-descansa"][data-v=""]'); await page.waitForTimeout(150);
+      r391.haySal = !!(await page.$('#main .gsal [data-a="ses-empezar"][data-sal="1"]'));
+      if (r391.haySal) { await page.click('#main .gsal [data-a="ses-empezar"][data-sal="1"]'); await page.waitForTimeout(250); }
+      r391.viv = await page.evaluate(() => ({ kg: (document.querySelector('#main input[data-k="kg"]') || {}).value, filas: document.querySelectorAll('#main [data-a="gv-ok"]').length }));
+    }
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.setDayOverride(P.iso(new Date()), 'sh-g', ''); P.store.gym.rutinas = []; P.render(); });
+    r391.guardia = await page.evaluate(() => { const h = document.querySelector('#main .ghero2'); return h ? { t: h.textContent, mov: !!h.querySelector('.gmov') } : null; });
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('391 Entreno · entrenador de la guardia: el saliente ofrece 25 min al 65 % (10,5 kg de 16, 2 series), movilidad que se apunta y «hoy descanso» reversible, sin culpa; la guardia dice «hoy no toca» y ofrece movilidad',
+      r391.sal && /25 min/.test(r391.lista.t) && /antes 16/.test(r391.lista.t) && r391.lista.mov && r391.lista.btn >= 44 && r391.hayMov && r391.card.join() === 'movilidad10' && /descansas, y está bien/.test(r391.desc) && r391.haySal &&
+      r391.viv.kg === '10,5' && r391.viv.filas === 2 && r391.guardia && /Hoy no toca/.test(r391.guardia.t) && r391.guardia.mov && !/culpa|deberías/i.test(r391.lista.t + r391.desc), JSON.stringify(r391));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
