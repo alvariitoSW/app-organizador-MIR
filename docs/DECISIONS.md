@@ -1841,3 +1841,24 @@ Quitar una fila no baja el total del mes: lo quitado cuenta como variable sin ca
 queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila no tiene sitio; el ⚠ sigue).
 Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
 pinta «1000 €» sin punto de miles en esta pantalla.
+
+## Gran Ley · G1 · Arreglos y pulidos (2026-10-30)
+
+*Redactada después, el 30/10, por acuerdo del Consejo (`.claude/plan-socialista/consejo/2026-10-30-g2.md`).*
+
+**Elegido.** Cinco arreglos pequeños, cada uno con su prueba (372-375):
+- **Tu mes:** la muestra de «Apartado» en el vaso es a rayas, como su capa. La cifra va fuera del vaso y a 14 px (contraste 5,7:1).
+- **Hoy, modo plantilla:** el aviso «Usar las fechas del Mes» tiene 10 px de aire arriba y abajo (antes tapaba «＋ añadir»).
+- **Lector de comida:** «pizza barbacoa 3 porciones» sin coma. La sugerencia de vitaminas es comida de verdad, nunca chocolate ni dulces.
+- **Sueño:** «Anotar anoche» a la vista en Reloj y en Línea de Hoy, con la misma hoja que en Sueño.
+- **Cerrar R4 (Fintonic en pequeño):** el verificador la comprobó en el móvil (renombrar, quitar con 44 px y aviso «faltan X» en vez de «Todo cuadra»). No hacía falta arreglar nada.
+- **Parte de la mañana:** programado lunes y jueves a las 7:40 (hora de Madrid), en sesión nueva y con aviso al móvil. La primera vez será el lunes 2/11. No lleva conectores: no ve Actions, usa git.
+
+Lo hecho está en `main` (commit 0d867cf). Suite 825/825 en verde. Medido a 412×915.
+
+**Descartado.** Arreglar ya el «100 g de ajo» de la sugerencia de vitamina B6 (cantidad absurda). Queda aparcado como [aparc-vit-b6-ajo] en el registro. También queda aparcado [aparc-comer-eje-frase].
+
+**Supuestos.**
+- «Alimentos de verdad» se mira por grupo y por nombre. Fuera: chocolate, cacao, galletas, bollería, tarta, helado y cremas de untar.
+- El botón de sueño solo sale el día de hoy.
+- En Conductor no se añade. (VALE: Consejo por delegación, 30/10)
