@@ -1818,3 +1818,19 @@ Quitar una fila no baja el total del mes: lo quitado cuenta como variable sin ca
 queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila no tiene sitio; el ⚠ sigue).
 Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
 pinta «1000 €» sin punto de miles en esta pantalla.
+
+## La Reforma · R5 · Maqueta de Comer (2026-10-30)
+
+**Elegido.** `maquetas/comer-reforma.html`, aprobada por el Consejo por delegación (acta 2026-10-29-2, «R5»). Compra base
+que se copia a la compra restando la nevera, con la cuenta a la vista y la semana por caducidad (pollo 1-2, lomo 3-5,
+pescado del congelador de uno en uno). Al terminar un lote, hoja «¿Cómo las repartes?» (propone 2 nevera · 4 ❄) y raciones
+❄ con «3 meses · hasta …»; el kilo de pescado como 4 × 250 g. En Hoy, «🥚 85 de 120 g · te faltan 35» + una sugerencia de
+un toque, solo si faltan más de 30 g; en guardia, «lo que se pueda». Página de receta: ingredientes que se tachan, pasos
+grandes, Añadir a la compra, Ver en TikTok (fuera, **sin iframe de TikTok ni imágenes externas**) y Compartir sin datos
+personales; cola de TikTok plegada.
+
+**Descartado.** Concurso de escuelas (acuerdo 9: una maqueta por área). Vídeo incrustado.
+
+**Supuestos.** Duraciones: platos cocinados 3 meses, merluza y fajitas 2 (USDA FoodKeeper/AESAN). El reparto propuesto
+deja 2 raciones en la nevera y el resto al congelador. La sugerencia de proteína es una sola, la que más acerca sin pasarse.
+La compra base es una lista fija que se edita a mano (no se aprende de las compras).

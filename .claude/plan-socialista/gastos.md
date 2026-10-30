@@ -23,7 +23,7 @@ traspaso explica por qué.
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
+| maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) | ~2,7 M con concurso · ~0,9 M sin él | reforma-r5-comer (2026-10-30) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
 | construir (Reforma, ficha + 1 constructor) | opus + sonnet | 2,2 M (115 pasos; obra 1,2 M, principal 0,7 M, parte y salud 0,13 M) | ~2,0 M | reforma-r3-gasto-grande (2026-10-30) |
@@ -57,6 +57,7 @@ traspaso explica por qué.
 | 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
 | 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
 | 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
+| 2026-10-30 | reforma-r5-comer | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 5 | 92 | **1,0 M** | sesión principal (38 %) | una sola maqueta sonnet + 1 ronda de retoques; el mapa haiku de app.js (176 k) se reaprovecha en R6-R8 · ahorrar: pasar al maquetador la ficha con §3 y los retoques de Bienestar desde el principio |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan

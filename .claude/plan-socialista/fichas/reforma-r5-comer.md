@@ -36,18 +36,20 @@ La maqueta es la que construyen R6 (compra base + congelador), R7 (proteína en 
 - Estilo de maquetas: `maquetas/comun.css`, `maquetas/dinero-tu-mes.html` (412 de ancho, tocables ≥44 px).
 
 ## 4. Pasos
-- [ ] P1 Maqueta navegable `maquetas/comer-reforma.html`: 4 vistas (Compra base · Nevera y congelador con la hoja del
+- [x] P1 Maqueta navegable `maquetas/comer-reforma.html`: 4 vistas (Compra base · Nevera y congelador con la hoja del
   reparto · Hoy con la línea de proteína · Página de receta + cola de TikTok), datos inventados, sin red · general-purpose
   sonnet · ~25 pasos
-- [ ] P2 Oficio a 412×915: sin errores de JS, ancho 412, tocables ≥44 px, letra ≥14 px en etiquetas, alto de cada vista;
+- [x] P2 Oficio a 412×915: sin errores de JS, ancho 412, tocables ≥44 px, letra ≥14 px en etiquetas, alto de cada vista;
   guion que toca: compra base → resta la nevera; terminar lote → reparto 2·4 → ❄ en la nevera; tachar un ingrediente;
   Hoy con 85/120 sale, con 100/120 no · verificador sonnet · ~12 pasos
-- [ ] P3 Consejo (por delegación): Sanidad (duraciones con su fuente, proteína prudente), Interior+Justicia (reutiliza lo
+- [x] P3 Consejo (por delegación): Sanidad (duraciones con su fuente, proteína prudente), Interior+Justicia (reutiliza lo
   de §3, nada sale del móvil, sin iframe), Hacienda (cabe en R6-R8). Aprueba o pide retoques · principal
-- [ ] P4 Retoques si los hay · el mismo ayudante de P1 (SendMessage) · ~8 pasos
+- [x] P4 Retoques si los hay · el mismo ayudante de P1 (SendMessage) · ~8 pasos
 - [ ] P5 Acta (addenda en `consejo/2026-10-29-2.md`), DECISIONS «La Reforma · R5», plan, gasto y traspaso con el prompt
   de R6 · principal
 
 ## 5. Comprobación
 H1→P1,P2 · H2→P1,P2 · H3→P1,P2 · H4→P1,P2. Sin `[ACLARAR]` abiertas. Es maqueta (no toca `app.js`); medida a 412×915 (P2).
 Sin capturas en el repo (solo el `.html`). Duraciones de congelado con fuente (USDA/AESAN) escrita en la maqueta.
+
+**Gasto:** 1,0 M de ~1,5 M (principal 38 %, maqueta 26 %, mapa haiku 17 %). El mapa de §3 vale para R6-R8.

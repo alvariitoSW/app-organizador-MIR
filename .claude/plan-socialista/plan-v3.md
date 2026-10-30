@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-(nada: la siguiente es **La Reforma · R4 · Fintonic en pequeño**, abajo)
+(nada: la siguiente es **La Reforma · R6 · Construir compra base + congelador**, abajo)
 
 ## Por hacer
 
@@ -86,7 +86,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | ~~R2~~ | ✅ main 7942d02 · 30/10 · sin medir · Construir «Tu mes» con la maqueta `maquetas/dinero-tu-mes.html` (El Vaso): vaso y cadena 2.380 − 728 − 750, fijos → te queda, «acabarás con» y «ahorras este mes» + línea en Hoy. El gasto grande y el Bosque quedan para R3 | construir | sonnet con ficha | ~1,2 M |
 | ~~R3~~ | ✅ main 0561783 · 30/10 · 2,2 M · Construir gasto grande + Bosque y Ahorro juntos, mirando a meses (ficha `fichas/reforma-r3-gasto-grande.md`) | construir | sonnet con ficha | ~1,8 M |
 | ~~R4~~ | ✅ main 8786ed2 · 30/10 · 1,2 M (con parte y salud) · Fintonic en pequeño: renombrar y quitar filas en la revisión, aviso si no cuadra (ficha `fichas/reforma-r4-fintonic.md`) | arreglo | sonnet | ~0,8 M |
-| R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
+| ~~R5~~ | ✅ rama claude/magical-clarke-dlp8mb-r5 · 30/10 · maqueta aprobada `maquetas/comer-reforma.html` (ficha `fichas/reforma-r5-comer.md`) | maqueta | opus + sonnet | ~1,5 M |
 | R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
 | R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
 | R8 | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
