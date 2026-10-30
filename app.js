@@ -5062,7 +5062,8 @@ function modoAvisoHTML(){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
   if(store.rotation.mode==='date')return '';
-  return '<div class="row mini" style="gap:8px"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
+  /* margen arriba y abajo: en Hoy va justo debajo de «＋ añadir» y sin él los dos botones se tocaban */
+  return '<div class="row mini" style="gap:8px;margin:10px 0"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
 }
 function daySleepLineHTML(dateStr,inf){
   const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr),r=suenoReal(dateStr);
@@ -5511,7 +5512,7 @@ function nocheHTML(key,esHoy){
     (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','🏢 He llegado']:null);
   /* con «He salido» a la vista, «He llegado» va de segundo (no dos botones principales apilados) */
   const vivo=viv?'<button class="btn '+(sali?'s nvivo n2':'p nvivo')+'" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
-  const anoche=hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
+  const anoche=hoyModo()==='bus'&&hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
   let pie='';
   if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
     '<div class="ncad" id="nocheCad">'+P.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
@@ -5581,10 +5582,11 @@ function hoyDiaHTML(key,inf,esHoy){
     const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
     return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
-  if(m==='linea')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
+  const sn=esHoy?snBotonHTML(key,'margin:0 0 10px'):'';
+  if(m==='linea')return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
   if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
-  return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
+  return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
 /* ===================== HOY DESDE EL ASIENTO DEL CONDUCTOR =====================
    fig/conductor.js dibuja el día como una ruta (ver su cabecera). Se pinta DENTRO de Hoy: el mismo
@@ -6986,8 +6988,13 @@ function suenoHoyCardHTML(){
       '<div class="sn3t">'+tres.map(function(x){return '<div><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>';}).join('')+'</div>')+nota+
     (pend?snPruebaPregunta(pr,'¿Cumpliste ayer «'+pr.txt.toLowerCase()+'»?'):'')+
     /* con algo ya apuntado el botón no se va: tras la guardia se duerme otra vez al llegar a casa */
-    '<button class="btn '+(r?'':'p ')+'s" style="margin-top:8px;width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(r?'✎ '+(r.guardia?'Hoy':'Anoche')+': '+fmtHM(suenoTotal(r)*60)+' · cambiar o añadir':(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche'))+'</button>'+
+    snBotonHTML(hoyK,'margin-top:8px')+
   '</div>';}
+function snBotonHTML(hoyK,estilo){
+  /* «Anotar anoche» / «✎ Anoche: 7 h · cambiar o añadir»: abre la hoja de la noche (suenoHojaHTML). Lo usan Sueño
+     y las vistas Reloj y Línea de Hoy, donde antes solo salía dentro del cartel de la noche desplegado */
+  const r=suenoReal(hoyK);
+  return '<button class="btn '+(r?'':'p ')+'s snbtn" style="'+(estilo?estilo+';':'')+'width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(r?'✎ '+(r.guardia?'Hoy':'Anoche')+': '+fmtHM(suenoTotal(r)*60)+' · cambiar o añadir':(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche'))+'</button>';}
 
 /* ---------- anotar la noche dibujándola ----------
    La franja va de las 18:00 a las 18:00 del día siguiente. Lo dormido en la guardia va a rayas
@@ -10120,8 +10127,8 @@ function fraseLeer(txt,opt){
   fx.comp.forEach(function(c){if((tipo==='bocata'||tipo==='tostada')&&plant.test(c))return;
     if((' '+t+' ').indexOf(' '+c+' ')>=0)t=t.replace(c,c.replace(/ /g,'_'));});
   if(fx.compFuera.indexOf(t.replace(/^(un|una) /,''))>=0)t=t.replace(/ /g,'_');
-  /* «pizza barbacoa del telepizza, 3 trozos»: la cantidad que viene después de la coma es de la pizza */
-  t=t.replace(/([^,+]*\bpizzas?\b[^,+]*?)\s*,\s*(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho)\s+(trozos?|porcion(?:es)?)\b/,'$2 $3 de $1');
+  /* «pizza barbacoa del telepizza, 3 trozos» (o sin la coma: «pizza barbacoa 3 porciones»): la cantidad de detrás es de la pizza */
+  t=t.replace(/([^,+]*\bpizzas?\b[^,+]*?)(?:\s*,\s*|\s+)(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho)\s+(trozos?|porcion(?:es)?)\b/,'$2 $3 de $1');
   /* trocear, sabiendo qué va después de un «con» (acompaña) y qué no (es lo principal) */
   const trozos=[];let enCon=false;
   t.split(/((?:\s*(?:,|\+|\by\b|\be\b|\bcon\b)\s*)+)/).forEach(function(w,i){
@@ -12986,8 +12993,11 @@ function vitSugerencia(dk,datos){
     let v=0;d.alims.forEach(function(x){const a=alimById(x.id);if(a&&typeof a[k]==='number')v+=a[k]*(+x.g||0)/100;});
     const up=microPct(k,v/Math.max(1,+d.portions||1));
     if(up>0)return {n:m.n,que:(/^(comida|cena|merienda|media)/i.test(sg.lbl)?'la ':'el ')+sg.lbl.toLowerCase()+' ('+cjeNomPlan(d).toLowerCase()+')',up:up};}
+  /* criterio de Sanidad: se sugiere comida de verdad (fruta, verdura, legumbre, pescado…), nunca chocolate ni dulces
+     aunque traigan mucho hierro o magnesio */
+  const deVerdad=function(a){return /^(fruta|verdura|legumbre|pescado|carne|huevo|lacteo|cereal|graso)$/.test(a.g||'')&&!/chocolate|cacao|galleta|boll|bizcoch|tarta|helado|crema de|nocilla|nutella/i.test(a.n||'');};
   const casa={};despensaS().forEach(function(x){const a=despAlim(x);if(a)casa[a.id]=1;});
-  const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0;}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,1)[0];
+  const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0&&deVerdad(a);}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,40).filter(deVerdad)[0];
   if(!r)return null;
   return {n:m.n,que:'100 g de '+r.n.toLowerCase()+(a?' (de tu nevera)':''),up:microPct(k,r[k])};}
 function vitParadaHTML(dk,esHoy){
@@ -21998,10 +22008,11 @@ function dinTuMesHTML(){
   if(!D.hay)return cab+'<div class="card tm-vacio"><div class="tm-vv">'+tmVasoSVG({lista:[],fijos:0,recibos:0,gastado:0,prev:0,acabas:0,ingreso:0,margen:0,ahorras:0},false)+'</div>'+
     '<p class="tm-p"><b>Aún no hay mes que mostrar.</b> Apunta tus gastos fijos y tu nómina y aquí verás con cuánto acabarás el mes y cuánto ahorras.</p>'+
     '<div class="tm-bts"><button class="tm-bt p" data-a="dinero-vista" data-v="fijos">Apuntar mis fijos</button><button class="tm-bt" data-a="dinero-vista" data-v="nomina">Mi nómina</button></div></div></div>';
+  /* la muestra de cada capa, igual que su capa (la apartada, a rayas): la cifra va aquí fuera, a 14 px, no dentro del vaso */
   const f=fmtMil,fila=function(c,t,v){return '<li class="tm-ley"><i style="background:'+c+'"></i><span>'+t+'</span><b>'+f(v)+' €</b></li>';};
   const ladoA='<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>'+
     (D.lista.length?'<div>✓ '+f(D.pagado)+' € pagados · ○ '+f(D.porPagar)+' € por pagar</div>':'')+
-    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+(D.aparta>0?fila('#be123c','Apartado (rayas)',D.aparta):'')+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
+    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+(D.aparta>0?fila('repeating-linear-gradient(45deg,#be123c 0 3px,#fff1f2 3px 6px)','Apartado (rayas)',D.aparta):'')+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
     '<div class="tm-toca">Toca el vaso ↓</div>';
   const ladoB='<div class="tm-quedan">Te quedan '+f(D.tras)+' €</div>'+
     '<ul class="tm-fijos" aria-label="Fijos del mes">'+D.lista.map(function(x){

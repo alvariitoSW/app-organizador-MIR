@@ -14599,11 +14599,108 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
       r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
   }
-  // 372) COMER · R6 · Compra base, EN CADENA (412×915): con 1 kg de arroz ya en casa → «Hacer la compra base» entra como grupo «Compra base» con 6 líneas, la del arroz apagada y fuera de la
+  // 372) DINERO · G1 [aparc-tu-mes-r2], EN CADENA (412×915): Tu mes → «Apuntar gasto grande» → Portátil «Lo voy apartando» → Listo → la leyenda del vaso nombra «Apartado (rayas)»
+  //      fuera del vaso, a ≥14 px y con su muestra A RAYAS (como la capa, no un cuadro liso) → abrir su fila → Quitar → la fila de la leyenda desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate372 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia372 = JSON.parse(JSON.stringify(window.PG.store));
+      const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r372', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e372', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const li = [...document.querySelectorAll('#main .tm-ley')].find((l) => /Apartado/.test(l.textContent));
+      if (!li) return { hay: false, capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]') };
+      const i = li.querySelector('i'), cs = getComputedStyle(li);
+      return { hay: true, txt: li.textContent.replace(/\s+/g, ' ').trim(), px: parseFloat(cs.fontSize), fuera: !li.closest('svg'), rayas: /repeating-linear-gradient/.test(getComputedStyle(i).backgroundImage),
+        capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]'), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.a = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+    await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+    await page.click('#hojaDia [data-a="tg-modo"][data-v="apartando"]'); await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate372; });
+    await page.setViewportSize(vp);
+    check('372 Dinero · Tu mes: al apartar para un gasto grande la leyenda nombra «Apartado (rayas) 550 €» fuera del vaso, a ≥14 px y con la muestra a rayas como su capa; al quitarlo desaparece',
+      !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
+  }
+  // 373) HOY y MES · G1 [aparc-hoy-plantilla], EN CADENA (412×915): semana en modo plantilla → en Hoy el aviso «Usar las fechas del Mes» queda separado ≥8 px de «＋ añadir»
+  //      (antes se tocaban) → en Mes, separado ≥8 px de la fila de «hoy» → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.rotation.mode = 'pattern'; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    const mide = () => page.evaluate(() => { const b = document.querySelector('#main [data-a="mon-sync"]'); if (!b) return { hay: false };
+      const r = b.getBoundingClientRect(), bs = [...document.querySelectorAll('#main button')].filter((x) => x !== b).map((x) => x.getBoundingClientRect()).filter((q) => q.width && q.right > r.left && q.left < r.right);
+      const encima = bs.filter((q) => q.bottom <= r.top + 1).map((q) => r.top - q.bottom), debajo = bs.filter((q) => q.top >= r.bottom - 1).map((q) => q.top - r.bottom);
+      return { hay: true, arriba: encima.length ? Math.round(Math.min(...encima)) : 99, abajo: debajo.length ? Math.round(Math.min(...debajo)) : 99, ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.hoy = await mide();
+    r.hoyAnade = await page.evaluate(() => [...document.querySelectorAll('#main button')].some((x) => /añadir/.test(x.textContent)));
+    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); r.mes = await mide();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.tab = 'hoy'; P.save(); P.render(); }); await page.waitForTimeout(200); r.tras = await mide(); r.modo = await page.evaluate(() => window.PG.store.rotation.mode);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('373 Hoy y Mes · modo plantilla: «Usar las fechas del Mes» separado ≥8 px de «＋ añadir» en Hoy y de la fila de «hoy» en Mes; en modo fecha el aviso se va',
+      r.hoy.hay && r.hoyAnade && r.hoy.arriba >= 8 && r.hoy.abajo >= 8 && r.mes.hay && r.mes.arriba >= 8 && r.mes.abajo >= 8 && r.hoy.ancho <= 412 && !r.tras.hay && r.modo === 'date', JSON.stringify(r));
+  }
+  // 374) COMER · G1 · lector y vitaminas, EN CADENA (412×915): en el día de ayer (sin plan que sugerir), con la nevera vacía (salvo una tableta de chocolate negro) apuntas «un vaso de leche» por el lector →
+  //      tocas la línea de micros → «Vitaminas y minerales»: falta lo que más falta y la sugerencia es comida de verdad, nunca chocolate, cacao ni dulces
+  //      (criterio de Sanidad) → apuntas «pizza barbacoa 3 porciones» SIN coma → sale «Pizza barbacoa» de 300 g sin preguntas (antes no la entendía)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store));
+      window.__d374 = P.iso(P.addDays ? P.addDays(new Date(), -1) : new Date(Date.now() - 864e5)); P.store.food.log[window.__d374] = []; P.store.food.despensa = []; P.despensaAdd('chocolate negro 70%', 1, '');
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = window.__d374; P.render(); });
+    const r = {};
+    await page.fill('#frIn', 'un vaso de leche'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.n1 = await page.evaluate(() => window.PG.foodLog(window.__d374).length);
+    await page.click('#main .h2mic'); await page.waitForTimeout(250);
+    r.sug = await page.evaluate(() => ((document.querySelector('#main .vitsug') || {}).textContent || '').replace(/\s+/g, ' ').trim());
+    r.vista = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+    await page.fill('#frIn', 'pizza barbacoa 3 porciones'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.pizza = await page.evaluate(() => window.PG.foodLog(window.__d374).filter((e) => /pizza barbacoa/i.test(JSON.stringify(e))).map((e) => Math.round(e.kcal || 0)).join('|'));
+    r.dudas = await page.evaluate(() => !!(window.PG.ui.frase && (window.PG.ui.frase.dudas || []).length));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («100 g de …»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
+      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
+      r.pizza === '780' && !r.dudas, JSON.stringify(r));
+  }
+  // 375) HOY · G1 [aparc-sueno-vistas], EN CADENA (412×915): en la vista Reloj, sin la noche apuntada, sale «Anotar anoche» a la vista (antes solo dentro del cartel
+  //      de la noche desplegado y antes de las 12) → abre la hoja de la noche (la misma de Sueño) → Guardar → el botón pasa a «✎ Anoche: … · cambiar o añadir» →
+  //      vista Línea: el mismo botón → abre la misma hoja; en Conductor no se añade (allí lo ofrece el propio conductor)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo2'); } catch (e) {}
+      delete P.suenoRealS()[P.iso(new Date())]; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const b = document.querySelector('#main .snbtn[data-a="sn-hoja"]'), h = document.querySelector('.hoja [data-a="sn-tguardar"]');
+      return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', alto: b ? Math.round(b.getBoundingClientRect().height) : 0, hoja: !!h,
+        tit: h ? ((h.closest('.hoja').querySelector('.sh') || {}).textContent || '') : '', ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.reloj = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaR = await lee();
+    await page.click('.hoja [data-a="sn-tguardar"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.tras = await lee();
+    r.guardado = await page.evaluate(() => !!window.PG.suenoRealS()[window.PG.iso(new Date())]);
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250); r.linea = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaL = await lee();
+    await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); });
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250); r.bus = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo2'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('375 Hoy · Reloj y Línea: «Anotar anoche» a la vista (≥44 px) abre la hoja de la noche; al guardar dice «✎ Anoche: … · cambiar o añadir»; en Línea el mismo botón abre la misma hoja; en Conductor no se duplica',
+      /Anotar anoche|Cuánto dormiste/.test(r.reloj.btn) && r.reloj.alto >= 44 && r.hojaR.hoja && /Anoche|Noche/.test(r.hojaR.tit) && !r.tras.hoja && r.guardado &&
+      /^✎ (Anoche|Hoy): .* · cambiar o añadir$/.test(r.tras.btn) && r.linea.btn === r.tras.btn && r.hojaL.hoja && r.bus.btn === '' && r.reloj.ancho <= 412, JSON.stringify(r));
+  }
+  // 376) COMER · R6 · Compra base, EN CADENA (412×915): con 1 kg de arroz ya en casa → «Hacer la compra base» entra como grupo «Compra base» con 6 líneas, la del arroz apagada y fuera de la
   //      cuenta (la lista pide 5) → marcar pollo y lomo → «He hecho esta compra» → pollo y lomo en la despensa, el grupo se va (compraBaseOn se borra) y la tarjeta «Mi compra base» sigue
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { const P = window.PG; window.__copia372 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; delete f.compraBase; delete f.compraBaseOn; f.despensa = [];
+    await page.evaluate(() => { const P = window.PG; window.__copia376 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; delete f.compraBase; delete f.compraBaseOn; f.despensa = [];
       P.despensaAdd('1 kg arroz'); P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.compraCerradas = new Set(); P.ui.shopVista = ''; P.ui.compraSalida = 'todo'; P.ui.tab = 'shop'; P.save(); P.render(); });
     await page.waitForTimeout(250);
     const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.store.food, base = m.querySelector('.cbase');
@@ -14621,33 +14718,33 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.c = await lee();
     await page.click('#main [data-a="compra-hecha"]'); await page.waitForTimeout(300);
     r.d = await lee();
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia376; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
     const tot = (x) => +(/\/\s*(\d+)/.exec(x.tag) || [0, -1])[1];
-    check('372 Comer · compra base: tarjeta «Mi compra base» con 6 líneas y botón de 44 px; «Hacer la compra base» mete el grupo «Compra base» con 6 líneas, la del arroz (ya en casa) apagada y la lista pide 5 más; marcar pollo y lomo y «He hecho esta compra» los lleva a la despensa, el grupo se va y la tarjeta se queda; debajo, «Tu semana por caducidad» con la fuente',
+    check('376 Comer · compra base: tarjeta «Mi compra base» con 6 líneas y botón de 44 px; «Hacer la compra base» mete el grupo «Compra base» con 6 líneas, la del arroz (ya en casa) apagada y la lista pide 5 más; marcar pollo y lomo y «He hecho esta compra» los lleva a la despensa, el grupo se va y la tarjeta se queda; debajo, «Tu semana por caducidad» con la fuente',
       r.a.tarjeta && r.a.filas === 6 && r.a.btn && r.a.btnH >= 44 && !r.a.grupo && r.a.lineas === 0 && !r.a.on && r.a.cad && r.a.fuente &&
       r.b.grupo && r.b.lineas === 6 && r.b.tengo === 1 && r.b.on && tot(r.b) - tot(r.a) === 5 &&
       /^2 \//.test(r.c.tag) && r.d.desp.indexOf('pollo') >= 0 && r.d.desp.indexOf('lomo') >= 0 && !r.d.grupo && r.d.lineas === 0 && !r.d.on && r.d.tarjeta && r.d.filas === 6 && r.b.ancho <= 412, JSON.stringify(r));
   }
-  // 373) COMER · R6 · reparto del lote, EN CADENA (412×915): cocinar 6 raciones de lentejas (el menú pide 3 o 4 en lo que aguantan) → «✓ hecho» abre la hoja «¿Cómo las repartes?» con
+  // 377) COMER · R6 · reparto del lote, EN CADENA (412×915): cocinar 6 raciones de lentejas (el menú pide 3 o 4 en lo que aguantan) → «✓ hecho» abre la hoja «¿Cómo las repartes?» con
   //      «3 nevera · 3 ❄» → Cancelar no apunta nada → otra vez hecho → «+» → «4 nevera · 2 ❄» (los botones ≥44, sube hasta 6 y no más) → Guardar → 4 en la nevera y 2 ❄ con «hasta» a 3 meses
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.semBase = { on: true, d: {} }; P.store.food.log[P.iso(new Date())] = [];
-      P.store.dishes.push({ id: 'd373', name: 'Lentejas de domingo', icon: '🍲', portions: 6, kcal: 450, prot: 25, ingredients: ['500 g lentejas'], steps: ['Cuece las lentejas.'] });
+    await page.evaluate(() => { const P = window.PG; window.__copia377 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.semBase = { on: true, d: {} }; P.store.food.log[P.iso(new Date())] = [];
+      P.store.dishes.push({ id: 'd377', name: 'Lentejas de domingo', icon: '🍲', portions: 6, kcal: 450, prot: 25, ingredients: ['500 g lentejas'], steps: ['Cuece las lentejas.'] });
       const k = (j) => P.iso(P.addDays(new Date(), j));
       for (let j = 0; j < 7; j++) ['comida', 'cena'].forEach((c) => P.sbPoner(k(j), c, P.dishNada().id));
-      P.sbPoner(k(0), 'comida', 'd373'); P.sbPoner(k(0), 'cena', 'd373'); P.sbPoner(k(1), 'comida', 'd373');
-      P.ui.tab = 'food'; P.ui.foodVista = 'cocina'; P.ui.cocinaPlato = 'd373'; P.ui.cocinaPaso = 0; P.ui.cocinaRac = 0; P.save(); P.render(); });
+      P.sbPoner(k(0), 'comida', 'd377'); P.sbPoner(k(0), 'cena', 'd377'); P.sbPoner(k(1), 'comida', 'd377');
+      P.ui.tab = 'food'; P.ui.foodVista = 'cocina'; P.ui.cocinaPlato = 'd377'; P.ui.cocinaPaso = 0; P.ui.cocinaRac = 0; P.save(); P.render(); });
     await page.waitForTimeout(250);
     const lee = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'), q = (s) => h ? h.querySelector(s) : null, P = window.PG;
-      const sum = (c) => P.cocinadoS().filter((x) => x.dishId === 'd373' && !!x.cong === c).reduce((a, x) => a + x.total, 0), hasta = P.cocinadoS().filter((x) => x.cong)[0];
+      const sum = (c) => P.cocinadoS().filter((x) => x.dishId === 'd377' && !!x.cong === c).reduce((a, x) => a + x.total, 0), hasta = P.cocinadoS().filter((x) => x.cong)[0];
       return { hay: !!h, rol: h ? h.getAttribute('role') : '', tit: q("h2") ? q("h2").textContent : '', n: q('#repN') ? q('#repN').textContent.replace(/\s+/g, ' ').trim() : '',
         menos: q('[data-a="rep-menos"]') ? Math.round(q('[data-a="rep-menos"]').getBoundingClientRect().height) : 0, mas: q('[data-a="rep-mas"]') ? Math.round(q('[data-a="rep-mas"]').getBoundingClientRect().height) : 0,
         nev: sum(false), cong: sum(true), hasta: hasta ? hasta.hasta : '', fecha: hasta ? hasta.fecha : '', ancho: document.documentElement.scrollWidth, vista: P.ui.foodVista }; });
     const r = {};
     // lo que el menú pide de este plato mientras aguanta en la nevera (hoy y los días que dura): la propuesta tiene que ser esa cifra, no el 2 de reserva
-    r.exp = await page.evaluate(() => { const P = window.PG; let n = 0; for (let i = 0; i <= P.diasAguanta({ name: 'Lentejas de domingo' }); i++) { const pm = P.menuPorMomento(P.iso(P.addDays(new Date(), i))); Object.keys(pm).forEach((q) => pm[q].forEach((it) => { if (it.id === 'd373') n += it.portions || 1; })); } return n; });
+    r.exp = await page.evaluate(() => { const P = window.PG; let n = 0; for (let i = 0; i <= P.diasAguanta({ name: 'Lentejas de domingo' }); i++) { const pm = P.menuPorMomento(P.iso(P.addDays(new Date(), i))); Object.keys(pm).forEach((q) => pm[q].forEach((it) => { if (it.id === 'd377') n += it.portions || 1; })); } return n; });
     await page.click('#main [data-a="cocina-rac"][data-n="6"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cocina-hecho"]'); await page.waitForTimeout(250);
     r.a = await lee();
@@ -14661,48 +14758,48 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     for (let i = 0; i < 2; i++) await page.click('#hojaDia [data-a="rep-menos"]');
     await page.click('#hojaDia [data-a="rep-ok"]'); await page.waitForTimeout(300);
     r.d = await lee();
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.foodVista = ''; P.ui.cocinaPlato = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia377; P.ui.foodVista = ''; P.ui.cocinaPlato = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
     const meses3 = (r.d.fecha && r.d.hasta) ? Math.round((new Date(r.d.hasta) - new Date(r.d.fecha)) / 86400000) : 0;
-    check('373 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
+    check('377 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
       r.a.hay && r.a.rol === 'dialog' && /repartes/.test(r.a.tit) && r.exp >= 1 && r.exp <= 5 && r.a.n === r.exp + ' nevera · ' + (6 - r.exp) + ' ❄' && r.a.menos >= 44 && r.a.mas >= 44 && r.a.nev === 0 && r.a.cong === 0 &&
       !r.b.hay && r.b.nev === 0 && r.b.cong === 0 && r.b.vista === 'cocina' &&
       r.c.n === (r.exp + 1) + ' nevera · ' + (5 - r.exp) + ' ❄' && r.tope.n === '6 nevera · 0 ❄' && r.tope.masOff && r.d.nev === 4 && r.d.cong === 2 && !r.d.hay && meses3 >= 85 && meses3 <= 95 && r.a.ancho <= 412, JSON.stringify(r));
   }
-  // 374) COMER · R6 · la Nevera con congelador, EN CADENA (412×915): 2 raciones en la nevera, 3 ❄ y 1 kg de pescado congelado en casa → la Nevera pinta la zona «❄ Congelador» (3 raciones con
+  // 378) COMER · R6 · la Nevera con congelador, EN CADENA (412×915): 2 raciones en la nevera, 3 ❄ y 1 kg de pescado congelado en casa → la Nevera pinta la zona «❄ Congelador» (3 raciones con
   //      «❄ 3 meses · hasta…» y «4 × 250 g ❄ · saca una la noche antes»; el pescado no sale en lo fresco) → comer 2 raciones gasta la nevera (el COCINADO se vacía) y el congelador sigue en 3 →
   //      la tercera ya gasta del congelador (2) → «Platos que congelan bien» lista los 8 platos
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; f.cocinado = []; f.despensa = [];
-      P.store.dishes.push({ id: 'd374', name: 'Boloñesa de lenteja roja', icon: '🍝', portions: 5, kcal: 480, prot: 30, ingredients: ['200 g lenteja roja'] });
-      P.cocinadoAdd('d374', 2); P.cocinadoAdd('d374', 3, true); P.despensaAdd('1 kg pescado congelado');
+    await page.evaluate(() => { const P = window.PG; window.__copia378 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; f.cocinado = []; f.despensa = [];
+      P.store.dishes.push({ id: 'd378', name: 'Boloñesa de lenteja roja', icon: '🍝', portions: 5, kcal: 480, prot: 30, ingredients: ['200 g lenteja roja'] });
+      P.cocinadoAdd('d378', 2); P.cocinadoAdd('d378', 3, true); P.despensaAdd('1 kg pescado congelado');
       P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.ui.nvTodo = true; P.save(); P.render(); });
     await page.waitForTimeout(250);
     const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), cong = m.querySelector('.nvcong'), P = window.PG;
       const fresco = [...m.querySelectorAll('.nvg:not(.nvcong) .nvf')].map((e) => e.innerText).join('|'), coc = [...m.querySelectorAll('.nvcoc .nvf')].map((e) => e.innerText.replace(/\s+/g, ' ')).join('|');
       return { hayCong: !!cong, cabCong: cong ? cong.querySelector('.cap').textContent : '', cong: cong ? cong.innerText.replace(/\s+/g, ' ') : '', coc: coc, fresco: fresco.replace(/\s+/g, ' '),
-        queda: P.cocinadoS().filter((x) => x.dishId === 'd374').map((x) => (x.cong ? 'c' : 'n') + x.queda).join(','), ancho: document.documentElement.scrollWidth }; });
+        queda: P.cocinadoS().filter((x) => x.dishId === 'd378').map((x) => (x.cong ? 'c' : 'n') + x.queda).join(','), ancho: document.documentElement.scrollWidth }; });
     const r = {};
     r.a = await lee();
     r.base = await page.evaluate(() => { const d = document.querySelector('#main details.nvplega'); return d ? { filas: d.querySelectorAll('.nvpl').length, txt: d.textContent.replace(/\s+/g, ' ') } : null; });
-    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.addFoodEntry(k, { dishId: 'd374', rac: 1, pos: 'comida' }); P.addFoodEntry(k, { dishId: 'd374', rac: 1, pos: 'cena' }); P.render(); });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.addFoodEntry(k, { dishId: 'd378', rac: 1, pos: 'comida' }); P.addFoodEntry(k, { dishId: 'd378', rac: 1, pos: 'cena' }); P.render(); });
     await page.waitForTimeout(200); r.b = await lee();
-    await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { dishId: 'd374', rac: 1, pos: 'desayuno' }); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { dishId: 'd378', rac: 1, pos: 'desayuno' }); P.render(); });
     await page.waitForTimeout(200); r.c = await lee();
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.nvTodo = false; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia378; P.ui.nvTodo = false; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    check('374 Comer · congelador: la Nevera pinta «❄ Congelador» aparte con las 3 raciones ❄ («❄ 3 meses · hasta …») y el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» (no sale en lo fresco); comer 2 raciones gasta la nevera y el COCINADO se vacía con el congelador en 3; la tercera gasta del congelador; «Platos que congelan bien» lista 8 platos con la fuente',
+    check('378 Comer · congelador: la Nevera pinta «❄ Congelador» aparte con las 3 raciones ❄ («❄ 3 meses · hasta …») y el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» (no sale en lo fresco); comer 2 raciones gasta la nevera y el COCINADO se vacía con el congelador en 3; la tercera gasta del congelador; «Platos que congelan bien» lista 8 platos con la fuente',
       r.a.hayCong && /congelador/i.test(r.a.cabCong) && /3 raciones/.test(r.a.cong) && /❄ 3 meses · hasta \d+ \w{3}/.test(r.a.cong) && /4 × 250 g ❄/.test(r.a.cong) && /saca una la noche antes/i.test(r.a.cong) &&
       /Boloñesa/.test(r.a.coc) && /2 rac/.test(r.a.coc) && !/pescado/i.test(r.a.fresco) && r.a.queda === 'n2,c3' &&
       r.b.queda === 'c3' && r.b.coc === '' && /3 raciones/.test(r.b.cong) && r.c.queda === 'c2' && /2 raciones/.test(r.c.cong) &&
       r.base && r.base.filas === 8 && /FoodKeeper/.test(r.base.txt) && /Merluza en salsa verde/.test(r.base.txt) && r.a.ancho <= 412, JSON.stringify(r));
   }
-  // 375) COMER · R6 · `congela` del plato, EN CADENA (412×915): crear un plato con ingredientes, rellenar «nevera (días)» 6 y «congelador (meses)» 5 (change) → guardar → datos.congela {6,5} y
+  // 379) COMER · R6 · `congela` del plato, EN CADENA (412×915): crear un plato con ingredientes, rellenar «nevera (días)» 6 y «congelador (meses)» 5 (change) → guardar → datos.congela {6,5} y
   //      diasAguanta 6 → una ración suya ❄ → la Nevera dice «❄ 5 meses»; un plato igual SIN `congela` sigue con diasAguanta por nombre; vaciar los campos y guardar quita `congela`
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.despensa = [];
+    await page.evaluate(() => { const P = window.PG; window.__copia379 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.despensa = [];
       P.ui.plato = P.platoVacio(); P.ui.platoQ = ''; P.ui.tab = 'food'; P.ui.foodVista = 'plato'; P.render(); });
     await page.waitForTimeout(150);
     await page.fill('#plQ', 'lentejas'); await page.waitForTimeout(320); await page.click('#main .alim'); await page.waitForTimeout(220);
@@ -14721,9 +14818,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.fill('#plCongNev', ''); await page.dispatchEvent('#plCongNev', 'change'); await page.fill('#plCongMes', ''); await page.dispatchEvent('#plCongMes', 'change'); await page.waitForTimeout(120);
     await page.click('[data-a="plato-guardar"]'); await page.waitForTimeout(300);
     r.c = await page.evaluate((id) => { const P = window.PG, d = P.dishById(id); return { congela: 'congela' in d, dias: P.diasAguanta(d) }; }, r.a.id);
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.plato = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia379; P.ui.plato = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    check('375 Comer · `congela` del plato: el formulario tiene «nevera (días)» y «congelador (meses)» (≥44 px); con 6 y 5 se guarda `congela` {nevera 6, meses 5} y diasAguanta pasa a 6; una ración ❄ suya sale en la Nevera con «❄ 5 meses»; al reabrir el plato los campos vuelven con 6/5 y vaciarlos y guardar quita `congela` (diasAguanta vuelve al de siempre, y «Lentejas estofadas» sigue en 4)',
+    check('379 Comer · `congela` del plato: el formulario tiene «nevera (días)» y «congelador (meses)» (≥44 px); con 6 y 5 se guarda `congela` {nevera 6, meses 5} y diasAguanta pasa a 6; una ración ❄ suya sale en la Nevera con «❄ 5 meses»; al reabrir el plato los campos vuelven con 6/5 y vaciarlos y guardar quita `congela` (diasAguanta vuelve al de siempre, y «Lentejas estofadas» sigue en 4)',
       r.campos.a && r.campos.b && r.campos.ha >= 44 && r.campos.hb >= 44 && r.a.congela === '{"nevera":6,"meses":5}' && r.a.dias === 6 && r.a.sin === 3 && r.a.lent === 4 &&
       /Plato raro de prueba/.test(r.b) && /❄ 5 meses/.test(r.b) && r.vuelve === '6/5' && !r.c.congela && r.c.dias === 3, JSON.stringify(r));
   }

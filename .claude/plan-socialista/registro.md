@@ -5,9 +5,11 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 
-- [aparc-lloret-suite] La prueba 205 del Lloretazo de un toque falló en la suite completa (trozo 2, 08:44 del 30/10) y sola pasa: depende de la hora o del orden · tests/regression.test.js:7247
-- [aparc-tu-mes-r2] Al construir «Tu mes» (R2): la capa de ahorro del vaso con el portátil apartado mide ~13 px y su «150» va a 11 px: etiqueta fuera de la capa y ≥14 px; medir el contraste con herramienta · `maquetas/dinero-tu-mes.html`
-- [aparc-hoy-plantilla] Hoy y Mes: el botón «Usar las fechas del Mes/Calendario» (aviso de modo plantilla) queda muy pegado a «Añadir» (revisión de salud 29/10) · menor
+- [aparc-lloret-suite] La prueba 205 del Lloretazo falló una vez en la suite completa (08:44 del 30/10); en las dos suites completas de la R6 (09:47 y 10:00 del 30/10) pasó. Se vigila; si no vuelve a caer, se cierra · tests/regression.test.js:7247
+- ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
+- ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
+- [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
+- [aparc-comer-eje-frase] La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
@@ -110,7 +112,7 @@ Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-
 
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
 Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/informe-sueno-2026-10.md`, DECISIONS «Apuntar el sueño desde la radio del conductor»).
-- [aparc-sueno-vistas] Revisar si en Estación, Reloj y Línea apuntar el sueño también está escondido · desde 2026-10-27
+- ~~[aparc-sueno-vistas]~~ HECHO 2026-10-30 (G1, main 0d867cf): «Anotar anoche» a la vista en Reloj y Línea (Estación ya lo ofrecía el conductor)
 - [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
 
 - [aparc-fin-presupuesto] Fintonic: una línea «Presupuesto de 300 288,00 €» se lee como categoría de 300.288 (`finParse`, el filtro `de\s*\d+\s*€` no la quita) y `eur()` pinta «1000 €» sin punto de miles en la revisión · DECISIONS «La Reforma · R4» · desde 2026-10-30
@@ -154,6 +156,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-29-la-noche] La Noche (N0-N3): «Vete del Lloret» = cama−15−35; fila plegada con 🚪 salir de casa; alarmas siempre las de hoy y guardias fuera de Tu semana; cama arranca en la mediana 23:50 y baja 15 min cada 3 días · DECISIONS.md:1690-1746 · contado el 2026-10-29
 
 - [sup-2026-10-30-r3] R3: «apartando» exige el mes y «de lo ahorrado» no; el gasto grande se guarda «me hace ilusión», en plan y con 0 apartado; «para gastar» no cambia con el apartado; pestañas a 12,5 px y cifras de la cadena a 12 px · DECISIONS «La Reforma · R3» (1786-1804) · contado el 2026-10-30
+- [sup-2026-10-30-g1] G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
 - [sup-2026-10-30-r4] R4: «gasto a gasto» = fila a fila de categorías de la captura; quitar una fila no baja el total (pasa a variable sin categoría); nombre vacío deja el de antes; en las categorías ya no sale «en otra captura: X» · DECISIONS «La Reforma · R4» · 2026-10-30
 
 ## Cerrados
