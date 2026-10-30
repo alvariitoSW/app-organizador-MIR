@@ -21003,7 +21003,7 @@ function finGuardar(){
   const f=ui.fin;if(!f||!f.res)return 'no hay nada leído';
   const r=f.res,a=ahorroS();
   if(!Array.isArray(a.real))a.real=[];
-  const cats={};r.cats.forEach(function(c){if(c.v>0)cats[c.nombre]=c.v;});
+  const cats={};r.cats.forEach(function(c){if(c.v>0)cats[c.nombre]=Math.round(((cats[c.nombre]||0)+c.v)*100)/100;});
   const reg={fecha:f.fecha,hora:f.hora||'',mes:r.mes,banco:r.banco?r.banco.v:null,ingresos:r.ingresos?r.ingresos.v:null,
     gastos:r.gastos?r.gastos.v:null,cats:cats};
   a.real=[reg].concat(a.real.filter(function(x){return !(x.fecha===reg.fecha&&x.hora===reg.hora);}))
@@ -21025,10 +21025,15 @@ function renderFintonic(){
   const r=f.res;
   const campo=function(k,txt,o,dec){
     if(!o)return '';
-    return '<div class="finfila'+(o.ok?' ok':' duda')+'"><span class="t">'+esc(txt)+
-        (o.otra!=null&&!o.ok?'<span class="mini"> · en otra captura: '+esc(String(o.otra.toFixed(2)).replace('.',','))+'</span>':'')+'</span>'+
+    const cat=/^cat:/.test(k);
+    return '<div class="finfila'+(o.ok?' ok':' duda')+'">'+
+      (cat?'<input class="t" value="'+esc(txt)+'" maxlength="40" list="finCats" data-a="fin-n" data-k="'+k+'" aria-label="categoría">':'<span class="t">'+esc(txt)+
+        (o.otra!=null&&!o.ok?'<span class="mini"> · en otra captura: '+esc(String(o.otra.toFixed(2)).replace('.',','))+'</span>':'')+'</span>')+
       '<input inputmode="decimal" value="'+esc((dec||o.v%1)?String(o.v.toFixed(2)).replace('.',','):fmt(o.v))+'" data-a="fin-v" data-k="'+k+'" aria-label="'+esc(txt)+'">'+
-      '<span class="m">'+(o.ok?'✓':'⚠')+'</span></div>';};
+      '<span class="m">'+(o.ok?'✓':'⚠')+'</span>'+
+      (cat?'<button class="btn s fin-x" data-a="fin-quitar" data-k="'+k.slice(4)+'" aria-label="quitar '+esc(txt)+'">✕</button>':'')+'</div>';};
+  const nombres=[];(ahorroS().real||[]).forEach(function(x){Object.keys(x.cats||{}).forEach(function(n){nombres.push(n);});});
+  gastosFijos().forEach(function(g){nombres.push(g.nombre);});
   const sum=r.cats.reduce(function(t,c){return t+c.v;},0);
   const dudas=[r.banco,r.ingresos,r.gastos].concat(r.cats).filter(function(o){return o&&!o.ok;}).length;
   $('#main').innerHTML='<div class="grid">'+cab+
@@ -21046,7 +21051,8 @@ function renderFintonic(){
       ((r.gastos&&Math.abs(sum-r.gastos.v)>=0.5)?('<p class="mini" style="margin:0 0 8px;color:var(--warn)">⚠ No cuadran: '+
         (sum>r.gastos.v?'sobran ':'faltan ')+esc(eur(Math.abs(sum-r.gastos.v)))+'. Alguna cifra está mal leída aunque parezca buena: compáralas con Fintonic. '+
         'Si falta alguna categoría, no pasa nada: se guarda lo que haya.</p>'):'')+
-      r.cats.map(function(c,i){return campo('cat:'+i,c.nombre,c,true);}).join('')+'</div>'):'')+
+      r.cats.map(function(c,i){return campo('cat:'+i,c.nombre,c,true);}).join('')+
+      '<datalist id="finCats">'+nombres.filter(function(n,i){return nombres.indexOf(n)===i;}).map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div>'):'')+
     '<button class="btn p gbig" data-a="fin-guardar">✓ guardar lo del '+esc(fechaCorta(f.fecha))+'</button>'+
     '<button class="btn s" data-a="fin-descartar">descartar</button>'+
   '</div>';}
@@ -24244,6 +24250,7 @@ function act(a,el){
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(tx):Promise.reject())
         .then(function(){flash('tabla copiada: pégala en Excel o en Sheets');},function(){flash('no he podido copiar');});break;}
     case 'fin-guardar':flash(finGuardar());break;
+    case 'fin-quitar':{if(ui.fin&&ui.fin.res){ui.fin.res.cats.splice(+el.dataset.k,1);render();}break;}
     case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
     case 'din-gastado':{const mk=el.dataset.mk,n=document.getElementById('dinGast'),txt=String(n?n.value:'').trim().replace(/\s|€/g,'');
       /* «1.420», «1420», «1.420,50» y «1420,5» son lo mismo */
@@ -27378,6 +27385,8 @@ document.addEventListener('change',e=>{
     case 'tk-ocr':{const fs=el.files;if(fs&&fs.length)tkOcr(fs);break;}
     case 'fin-fecha':{if(ui.fin&&esFecha(el.value||''))ui.fin.fecha=el.value;render();break;}
     case 'fin-mes':{if(ui.fin&&ui.fin.res&&/^\d{4}-\d{2}$/.test(el.value||''))ui.fin.res.mes=el.value;render();break;}
+    case 'fin-n':{const c=ui.fin&&ui.fin.res&&ui.fin.res.cats[+String(el.dataset.k).slice(4)],n=String(el.value).trim().slice(0,40);
+      if(c&&n)c.nombre=n;render();break;}
     case 'fin-v':{const f=ui.fin;if(!f||!f.res)break;const k=el.dataset.k,v=leeImporte(String(el.value).replace(/[^\d,.-]/g,''));
       if(!(v>=0))break;
       let o=null;if(/^cat:/.test(k))o=f.res.cats[+k.slice(4)];else o=f.res[k];

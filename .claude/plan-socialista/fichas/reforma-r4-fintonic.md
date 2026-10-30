@@ -35,12 +35,12 @@ Ninguna: el Consejo lo decidió por delegación. Lo de por defecto, en Supuestos
   `input[data-a="fin-fotos"]` con un PNG cualquiera. Texto inventado, nunca de capturas reales.
 
 ## 4. Pasos
-- [ ] P1 Prueba 371 encadenada (412×915): subir (OCR simulado: «Gastos 1.000,00 €» + Supermercado 400,00 · Belleza
+- [x] P1 Prueba 371 encadenada (412×915): subir (OCR simulado: «Gastos 1.000,00 €» + Supermercado 400,00 · Belleza
   312,00 · Presupuesto de 300 288,00) → renombrar Belleza a «Alquiler» → quitar la tercera → ve «faltan 288» →
   guardar → `gastoMes('2026-10').cats` = {Supermercado:400, Alquiler:312} y `mesPartes` cuenta 312 fijo; y H4 aparte.
   Debe fallar antes del cambio · `tests/regression.test.js` tras la 370 · general-purpose sonnet · ~10 pasos
-- [ ] P2 El cambio (H1–H4) · `app.js` (renderFintonic, fin-n, fin-quitar, finGuardar) + `styles.css` · el mismo · ~10 pasos
-- [ ] P3 Comprobar que la 371 cae al revertir P2 y que pasa con P2; `tools/pruebas-corto.sh --solo 371` y la de Fintonic
+- [x] P2 El cambio (H1–H4) · `app.js` (renderFintonic, fin-n, fin-quitar, finGuardar) + `styles.css` · el mismo · ~10 pasos
+- [x] P3 Comprobar que la 371 cae al revertir P2 y que pasa con P2; `tools/pruebas-corto.sh --solo 371` y la de Fintonic
   · el mismo · ~4 pasos
 - [ ] P4 Captura de la revisión a 412×915 (filas, ✕, aviso) · verificador · ~5 pasos
 - [ ] P5 Suite completa, DECISIONS «La Reforma · R4», sello, main, gasto y traspaso · conversación principal
