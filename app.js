@@ -7265,6 +7265,89 @@ function programarAvisoCama(){
   _avisoCamaT=setTimeout(function(){
     swMensaje({tipo:'aviso',tag:'cama-'+k,titulo:'🛏 A la cama a las '+hCortaHM(p.cama),cuerpo:'Para dormir '+fmtC(p.obj)+' h y levantarte a tu hora.'});
     store.sueno.camaHecho=k;save();},t*60000);}
+/* ===================== G11 · energía del día, coach y «sin pantallas» ===================== */
+/* LA ENERGÍA DE HOY EN PALABRAS: 4 tramos sobre snEnergiaDia (la misma curva del reloj). No puntúa:
+   es una guía y dice por qué */
+function energiaHoy(k){
+  const se=snEnergiaMemo(k)||[];if(!se.length)return null;
+  const d=new Date(),h=d.getHours()+d.getMinutes()/60;let q=SNM.en(se,h);
+  if(q.A==null){const s2=se.filter(function(x){return x.A!=null&&x.t>=h;})[0]||se.filter(function(x){return x.A!=null;}).pop();q=s2||q;}
+  if(q.A==null)return null;
+  const n=q.A>=70?4:q.A>=55?3:q.A>=35?2:1,nom=['','Baja','Media','Buena','Alta'][n],sc=suenoCuenta(k);
+  let por;
+  if(sc&&sc.guardia)por='Dormiste '+fmtC(sc.h)+' h tras la guardia. Es lo normal en un día así.';
+  else if(sc&&sc.real)por='Dormiste '+fmtC(sc.h)+' h esta noche.';
+  else por='Es una estimación con tu calendario: aún no has apuntado la noche.';
+  return {n:n,nom:nom,por:por,poco:!!(sc&&sc.real&&sc.h<suenoCfg().min-1.5),sin:!sc};}
+/* EL COACH: UNA recomendación que junta descanso, comida y entreno de hoy, con reglas sencillas y prudentes
+   por tipo de día. El entreno lo dice la misma función que la lámina de Entreno (laminaDatos) y la
+   proteína, la de G4 (protHoyDatos): así no se contradicen */
+function coachHoy(k){
+  const e=energiaHoy(k),tipo=diaTipo(k),inf=dayInfo(k),now=new Date(),antes15=now.getHours()<15;
+  const L=laminaDatos(k).dia,pd=protHoyDatos(k),guardia=tipo==='guardia',sal=tipo==='saliente';
+  let des,porque;
+  if(guardia){des='siesta corta antes de entrar, si puedes';porque='De guardia lo que más ayuda es llegar con el sueño cubierto.';}
+  else if(sal){des=antes15?'siesta de 20 min antes de las 15:00':'esta tarde sin siesta: pronto a la cama';
+    porque='Tras una guardia, una siesta corta recupera sin robarte el sueño de esta noche.';}
+  else if(e&&e.poco){des=antes15?'siesta de 20 min antes de las 15:00':'esta noche, a la cama a tu hora';
+    porque='Tras una noche corta, una siesta breve recupera sin quitarte el sueño de esta noche.';}
+  else if(tipo==='libre'){des='un paseo con luz natural y a la cama a tu hora';porque='En un día libre la luz de la mañana ordena el sueño de esta noche.';}
+  else{des='sin siesta: con tu noche basta';porque=e&&e.sin?'Sin datos de anoche, va lo de un día normal: la siesta solo te quitaría sueño esta noche.':'Con una noche cumplida, la siesta solo te quitaría sueño esta noche.';}
+  const com=pd?'comida con proteína':(protHoyObj()?'la proteína de hoy va bien: comida a tu aire':'comida con proteína');
+  let ent;
+  if(L.t==='no')ent='entreno: '+(L.malo||'hoy no');
+  else if(L.t==='sal')ent='entreno: paseo o nada';
+  else if(L.t==='libre')ent='sin entreno hoy';
+  else ent='entreno '+(L.hora||'')+(e&&(e.poco||e.n<=2)?', más ligero si notas el cuerpo pesado':'');
+  const txt=des.charAt(0).toUpperCase()+des.slice(1)+', '+com+' y '+ent+'.';
+  return {txt:txt,porque:porque+(pd?' La proteína ayuda a recuperar.':''),tipo:tipo};}
+function coachHTML(k){
+  const e=energiaHoy(k);if(!e)return '';
+  let c=null;try{c=coachHoy(k);}catch(x){c=null;}
+  return '<div class="card coach"><h2>⚡ Tu energía de hoy</h2>'+
+    '<div class="bat" role="img" aria-label="Energía '+e.nom.toLowerCase()+', '+e.n+' de 4">'+[1,2,3,4].map(function(i){return '<i'+(i<=e.n?' class="l"':'')+'></i>';}).join('')+'</div>'+
+    '<div class="coachn"><b>'+esc(e.nom)+'</b> <span class="mini">'+esc(e.por)+'</span></div>'+
+    (c?'<div class="coacht"><b>Tu coach, hoy</b><p>'+esc(c.txt)+'</p><p class="mini">Por qué: '+esc(c.porque)+'</p></div>':'')+
+    '<p class="mini">Es una guía, no una nota. Hay días que se trata solo de llegar.</p></div>';}
+/* ---------- SIN PANTALLAS: fijo en el código. No hay botón, ajuste ni pausa; borrar datos no lo quita ---------- */
+const PANT_ANTES=45;
+function pantS(){const s=store.sueno;return s.pant||(s.pant={resp:{}});}
+function snPantallas(d){
+  /* la franja de la noche a la que pertenece «d» (por defecto, ahora): desde 45 min antes de la cama, y no en guardia */
+  d=d||new Date();const k=d.getHours()<12?iso(addDays(d,-1)):iso(d);
+  const p=suenoCamaHoy(k);if(!p)return null;
+  const bm=mins(p.cama);if(bm==null)return null;const cama=bm<12*60?bm+1440:bm,ini=cama-PANT_ANTES;
+  const ahora=(d.getHours()<12?d.getHours()*60+1440:d.getHours()*60)+d.getMinutes();
+  return {k:k,cama:p.cama,ini:ini,hIni:hm(ini%1440),activa:ahora>=ini&&ahora<=cama+30};}
+function pantHTML(){
+  const P=snPantallas(),d=new Date(),pr=pantS();let h='';
+  if(P&&P.activa)h+='<div class="card pant"><h2>🌙 Sin pantallas desde las '+esc(hCortaHM(P.hIni))+'</h2>'+
+    '<p class="mini">45 min antes de tu hora de cama ('+esc(hCortaHM(P.cama))+'). Si cambias de guardia, se mueve contigo.</p>'+
+    '<p class="mini pantf">Esto no se quita desde la app; solo pidiéndoselo a Claude.</p>'+pantGuiaHTML(P)+'</div>';
+  /* por la mañana, sin racha ni castigo */
+  const n=d.getHours();
+  if(n>=5&&n<12){const k=nocheDeAhora(),Q=snPantallas(new Date(d.getFullYear(),d.getMonth(),d.getDate()-1,22,0));
+    if(Q&&Q.k===k&&!pr.resp[k])h+='<div class="card pant"><h2>✓ ¿Anoche lo cumpliste?</h2><p class="mini">Sin pantallas desde las '+esc(hCortaHM(Q.hIni))+'.</p>'+
+      '<div class="row" style="gap:8px"><button class="btn p" data-a="pant-resp" data-v="si" data-k="'+esc(k)+'">Sí</button>'+
+      '<button class="btn" data-a="pant-resp" data-v="no" data-k="'+esc(k)+'">No, y no pasa nada</button></div></div>';}
+  return h;}
+function pantGuiaHTML(P){
+  if(pantS().guia)return '';
+  return '<details class="pantguia"><summary>Que el móvil te ayude</summary>'+
+    '<p class="mini">La web no puede ver cuánto usas el móvil. Para que se corte de verdad, actívalo una vez en el móvil:</p>'+
+    '<ul class="mini"><li>Ajustes → Bienestar digital</li><li>Hora de dormir → Programar</li><li>Pon las '+esc(hCortaHM(P.hIni))+' como inicio</li></ul>'+
+    '<button class="btn s" data-a="pant-guia-cierra">Ya está hecho, no mostrar más</button></details>';}
+let _pantT=null;
+function programarAvisoPant(){
+  /* el aviso al empezar, con el mismo sistema de avisos (si no hay permiso, nada) */
+  if(_pantT){clearTimeout(_pantT);_pantT=null;}
+  if(!avisosListos())return;
+  const P=snPantallas();if(!P||pantS().avisado===P.k)return;
+  const d=new Date(),ahora=(d.getHours()<12?d.getHours()*60+1440:d.getHours()*60)+d.getMinutes(),t=P.ini-ahora;
+  if(t>18*60||t<-PANT_ANTES)return;
+  _pantT=setTimeout(function(){const Q=snPantallas();if(!Q||pantS().avisado===Q.k)return;
+    swMensaje({tipo:'aviso',tag:'pant-'+Q.k,titulo:'🌙 Sin pantallas',cuerpo:'Desde ahora, hasta la cama a las '+hCortaHM(Q.cama)+'.'});
+    pantS().avisado=Q.k;save();},Math.max(0,t)*60000);}
 /* ===================== el informe de la semana ===================== */
 function informeDatos(lunKey){
   const lun=parseDate(lunKey),ks=[];for(let i=0;i<7;i++)ks.push(iso(addDays(lun,i)));
@@ -7629,7 +7712,7 @@ function renderHoy(){
     /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
     /* con el conductor, el sueño y el «¿cómo amaneces?» van en la radio y «Para hoy» en el quiosco de la ciudad y
        el poste de los hábitos: debajo del dibujo solo queda lo que no está dentro de la cabina */
-    (esHoy?informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
+    (esHoy?coachHTML(hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
   hoyBusMonta();carrMonta('hoy');
@@ -25828,6 +25911,8 @@ function act(a,el){
 
     case 'sn-cerrar':ui.hoyVista='';ui.snVista='';ui.snHoja='';render();window.scrollTo(0,0);break;
     case 'sn-vista':if(_pvt){pvtCorta(_pvt);_pvt=null;}ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
+    case 'pant-resp':{const k=el.dataset.k;if(!/^\d{4}-\d{2}-\d{2}$/.test(k||''))break;pantS().resp[k]=el.dataset.v==='si'?'si':'no';save();render();break;}
+    case 'pant-guia-cierra':pantS().guia=true;save();render();break;
     case 'sn-hoja':{const k=el.dataset.k||iso(new Date());if(k>iso(new Date()))break;ui.snHoja=k;ui.snTr=null;render();break;}
     case 'hoy-informe':{ui.tab='hoy';ui.hoyVista='informe';ui.infLun=el.dataset.sem==='pasada'?'':iso(mondayOf(new Date()));render();window.scrollTo(0,0);break;}
     case 'hoy-informe-cerrar':ui.hoyVista='';render();window.scrollTo(0,0);break;
@@ -28287,7 +28372,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -28410,11 +28495,11 @@ impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
-programarAvisoHoy();programarAvisoCama();snProgramaAvisos();
+programarAvisoHoy();programarAvisoCama();programarAvisoPant();snProgramaAvisos();
 /* al volver a la app (otra noche, otra hora) se recoloca el aviso de cama */
 document.addEventListener('visibilitychange',function(){if(document.hidden){ui.cnSeFue=Date.now();return;}
   if(ui.cnSeFue&&Date.now()-ui.cnSeFue>120000&&ui.cnAbierto){ui.cnAbierto=false;if(ui.tab==='consumo')render();}   /* 2 min en segundo plano: la cortina se cierra */
-  try{programarAvisoCama();}catch(e){}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
+  try{programarAvisoCama();programarAvisoPant();}catch(e){}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */

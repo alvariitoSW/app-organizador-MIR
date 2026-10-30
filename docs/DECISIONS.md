@@ -2100,3 +2100,27 @@ existente (se queda, y Descanso va encima en el Plan).
 **Supuestos.** La cortina se cierra al salir de la sección (más estricto que «la sesión»). Las «etiquetas» de hábitos que el
 usuario escribió a mano no se tocan. Con la cortina, una copia hecha con «4:20 fuera de la copia» tampoco lleva el hash.
 El Descanso convive con el T-break (son dos cosas: el T-break mide, el Descanso acompaña).
+
+## Gran Ley · G11 · Coach, energía del día y sin pantallas (2026-10-30)
+
+*Aprobado por el usuario en `consejo/2026-10-30-parte.md` (P3). Maqueta: `maquetas/la-noche-2.html`, pantallas 1 y 2.*
+
+**Elegido.**
+- **Energía + coach** (`energiaHoy`, `coachHoy`, `coachHTML`): una sola tarjeta en Hoy, antes de lo demás del día. Batería de 4 tramos
+  (Alta/Buena/Media/Baja) sobre `snEnergiaDia` (la curva del reloj) con una línea del porqué («Dormiste 5 h tras la guardia») y UNA
+  recomendación que junta descanso, comida y entreno. Reglas por tipo de día (`diaTipo`): guardia, saliente (siesta de 20 min antes de
+  las 15:00), poca noche, libre, normal. El entreno sale de `laminaDatos` (lo mismo que Entreno en G7: en saliente, «paseo o nada») y la
+  comida de `protHoyDatos`/`protHoyObj` (G4): no se contradicen. Sin puntuar, sin rojo, sin culpa.
+- **Sin pantallas** (`snPantallas`, `pantHTML`): desde 45 min antes de la cama de La Noche (`suenoCamaHoy`, se mueve con ella y con las
+  guardias; en guardia no hay). Fijo en el código: ni botón, ni ajuste, ni pausa; borrar datos no lo quita. Aviso al empezar con
+  `avisosListos`/`swMensaje` (`programarAvisoPant`, una vez por noche). Por la mañana (5:00–12:00) «¿Anoche lo cumpliste?» guarda
+  `store.sueno.pant.resp[fecha]` = sí/no, sin racha. Guía plegable «Que el móvil te ayude» (Hora de dormir de Bienestar digital) que se
+  cierra para siempre.
+
+**Descartado.** Puntuar el cansancio o hablar de burnout; un interruptor o pausa para sin pantallas; leer el uso del móvil (imposible
+desde una web); duplicar la tarjeta de energía (no había ninguna en Hoy).
+
+**Supuestos.** Tramos de energía A≥70 / ≥55 / ≥35. Como no existe una tarjeta «Esta noche» en Hoy, coach y sin pantallas van antes de
+«Lo que viene». La franja dura hasta 30 min después de la cama. En saliente el coach dice «paseo o nada» (no «movilidad») para
+coincidir con Entreno. Sin noche apuntada, el coach lo dice y propone lo de un día normal. Las respuestas del ✓ no entran en la
+copia de más allá de `store.sueno` (viajan con él).

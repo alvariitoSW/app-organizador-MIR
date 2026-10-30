@@ -4125,3 +4125,16 @@ html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
 .cn .cnseg.c2 button{min-height:44px;font-size:14px}
 button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer}
 .cnpin .mini{font-size:14px;color:var(--ink2)}
+/* G11 · energía, coach y sin pantallas */
+.coach .bat{display:flex;gap:6px;margin:6px 0}
+.coach .bat i{flex:1;height:14px;border-radius:5px;background:var(--bg2);border:1.5px solid var(--line)}
+.coach .bat i.l{background:var(--ok);border-color:var(--ok)}
+.coach .coachn{font-size:16px}
+.coach .coacht{margin:10px 0;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1.5px solid var(--line)}
+.coach .coacht p{margin:4px 0;font-size:16px}
+.coach .mini,.pant .mini{font-size:14px;color:var(--ink2)}
+.pant{border:1.5px solid var(--brand2)}
+.pant .pantf{font-weight:700}
+.pantguia summary{min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;cursor:pointer}
+.pantguia .btn{min-height:44px;font-size:14px}
+.pant .row .btn{min-height:44px;font-size:14px}
