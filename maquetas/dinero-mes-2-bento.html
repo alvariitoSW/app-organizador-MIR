@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412, initial-scale=1">
+<title>Tu mes · Bento</title>
+<style>
+:root{
+  --bg:#e9ebf5; --card:#ffffff; --ink:#151a33; --mut:#4b5170; --line:#d5d9ea;
+  --ac:#4a2fd6; --ac-d:#1f1466; --lime:#c6ff3d; --lime-ink:#1c2a00;
+  --ok-bg:#dff5ea; --ok:#0b6b4a; --pen-bg:#fff0d0; --pen:#7d4300;
+  --tree:#1f9d63; --tree-d:#0e6b43; --fruit:#e0670a;
+  --r:26px; --sh:0 1px 2px rgba(21,26,51,.06),0 10px 26px -12px rgba(41,31,120,.28);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{width:412px;margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text-align:left;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.cartel{background:var(--ac-d);color:#fff;padding:14px 16px}
+.cartel b{display:block;font-size:17px}
+.cartel span{display:block;font-size:14px;color:#e4e0ff;margin-top:3px}
+.pant{padding:10px 16px 18px}
+.rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700;margin:0 0 8px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;margin:0 2px 10px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.top small{font-size:13px;color:var(--mut);text-align:right}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  grid-template-areas:"hero hero" "ini var" "fij fij" "gas mas" "col col"}
+.grid.act{grid-template-areas:"hero hero" "ini var" "fij fij" "mas mas" "gas col"}
+.b{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;position:relative;transition:transform .15s}
+.b:active{transform:scale(.98)}
+.lab{font-size:13px;color:var(--mut);font-weight:600}
+.big{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.sub{font-size:13px;color:var(--mut)}
+.hero{grid-area:hero;background:linear-gradient(140deg,#1f1466 0%,#4a2fd6 100%);color:#fff;overflow:hidden;padding:18px}
+.hero:before{content:"";position:absolute;right:-40px;top:-50px;width:170px;height:170px;border-radius:50%;background:rgba(198,255,61,.22)}
+.hero .lab{color:#e4e0ff;position:relative}
+.hero .num{font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1;margin:2px 0 8px;position:relative}
+.glass{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 14px;border-radius:22px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:relative}
+.glass strong{background:var(--lime);color:var(--lime-ink);border-radius:14px;padding:3px 10px;font-size:20px}
+.hero .calc{font-size:13px;color:#e4e0ff;margin-top:8px;position:relative}
+.hero .extra{font-size:14px;margin-top:6px;position:relative;font-weight:600}
+.ini{grid-area:ini}.var{grid-area:var}
+.ini .big,.var .big{font-size:26px;margin:2px 0}
+.bar{height:10px;border-radius:6px;background:#e3e6f4;margin:8px 0 4px;overflow:hidden}
+.bar i{display:block;height:100%;width:18.7%;background:var(--ac);border-radius:6px}
+.fij{grid-area:fij;padding:0}
+.fhead{display:flex;width:100%;align-items:center;justify-content:space-between;min-height:76px;padding:14px 16px;border-radius:var(--r)}
+.fhead .big{font-size:26px}
+.chev{width:44px;height:44px;border-radius:50%;background:#eceafd;display:grid;place-items:center;color:var(--ac);transition:transform .3s}
+.fij.open .chev{transform:rotate(180deg)}
+.fres{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.fij.open .fres{grid-template-rows:1fr}
+.fres>div{overflow:hidden}
+.fin{padding:0 14px 14px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.chip{border-radius:14px;padding:6px 10px;font-size:13px;line-height:1.25;transform:scale(.9);opacity:0;transition:transform .3s,opacity .3s}
+.fij.open .chip{transform:none;opacity:1}
+.chip b{display:block;font-size:14px}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.pen{background:var(--pen-bg);color:var(--pen);border:1.5px dashed var(--pen)}
+.queda{margin-top:10px;border-radius:20px;background:var(--lime);color:var(--lime-ink);padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.queda .big{font-size:34px}
+.queda span{font-size:13px;font-weight:700}
+.gas{grid-area:gas}.gas .big{font-size:26px;margin:2px 0}
+.mas{grid-area:mas;display:flex;align-items:center;gap:12px;min-height:76px;border:2px dashed #8d7cf0;background:rgba(255,255,255,.55);box-shadow:none;width:100%}
+.mas .plus{flex:none;width:44px;height:44px;border-radius:50%;background:var(--ac);color:#fff;font-size:30px;line-height:42px;text-align:center;transition:transform .3s}
+.mas:active .plus{transform:rotate(90deg)}
+.mas b{display:block}.mas span.s{font-size:13px;color:var(--mut)}
+.mas.on{border-style:solid;border-color:var(--ac);background:#fff}
+.col{grid-area:col;display:block;width:100%;min-height:76px}
+.col .big{font-size:24px;margin:2px 0}
+.col .go{color:var(--ac);font-weight:700;font-size:14px}
+.pop{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.88);opacity:.4}60%{transform:scale(1.06)}100%{transform:none;opacity:1}}
+/* pantalla 2 */
+.back{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;background:#fff;box-shadow:var(--sh);font-weight:700;color:var(--ac);margin-bottom:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.s-ah{grid-column:1/3;background:linear-gradient(140deg,#0e6b43,#1f9d63);color:#fff;overflow:hidden}
+.s-ah .lab{color:#e3fbef}
+.s-ah .num{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1;margin:2px 0 4px}
+.s-ah .sub{color:#e3fbef}
+.full{grid-column:1/3}
+.ck .big{font-size:24px;margin:2px 0}
+svg{display:block;width:100%;height:auto}
+.leg{font-size:13px;color:var(--mut);margin:6px 0 0}
+.cols{display:flex;justify-content:space-between;align-items:flex-end;gap:6px;margin-top:8px}
+.cl{flex:1;text-align:center;font-size:13px}
+.cl .v{font-weight:800;font-size:14px;display:block;margin-bottom:3px}
+.cl .m{display:block;color:var(--mut);margin-top:4px}
+.cl .t{height:128px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.cl .a{width:70%;max-width:44px;background:var(--tree);border-radius:10px 10px 4px 4px;transition:height .5s ease}
+.cl .p{width:70%;max-width:44px;border:2px dashed var(--fruit);background:repeating-linear-gradient(45deg,#ffe8d2 0 5px,#fff 5px 10px);border-radius:10px 10px 0 0;transition:height .5s ease;border-bottom:0}
+.cl.nuevo .a{background:var(--ac)}
+.dic p{margin:4px 0 0}
+.dic .big{font-size:24px}
+/* pantalla 3 */
+.cart{height:92px;border-radius:var(--r);background:#c9ccd6;color:#2d3040;display:grid;place-items:center;font-weight:700;text-align:center}
+.cart small{display:block;font-weight:400;font-size:13px}
+.est{margin-top:12px}
+.est h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:0 0 6px}
+.linea{border-radius:22px;background:var(--ac-d);color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center;min-height:56px;font-size:15px;font-weight:600}
+.linea em{font-style:normal}
+.sin{border:2px dashed #7b819b;border-radius:22px;min-height:56px;display:grid;place-items:center;color:var(--mut);font-weight:700;font-size:14px}
+/* hoja */
+.vel{position:fixed;inset:0;background:rgba(21,26,51,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;z-index:9}
+.vel.on{opacity:1;visibility:visible}
+.hoja{position:fixed;left:0;bottom:0;width:412px;max-width:100%;background:#fff;border-radius:30px 30px 0 0;padding:10px 16px 24px;z-index:10;transform:translateY(105%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.8,.2,1),visibility .4s}
+.hoja.on{transform:none;visibility:visible}
+.asa{width:44px;height:5px;border-radius:3px;background:#b9bdd3;margin:0 auto 10px}
+.hh{display:flex;justify-content:space-between;align-items:center}
+.hh h2{margin:0;font-size:20px}
+.x{width:44px;height:44px;border-radius:50%;background:#eceafd;font-size:22px;text-align:center;line-height:44px;color:var(--ac)}
+.item{background:var(--bg);border-radius:20px;padding:10px 14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}
+.item b{font-size:20px}
+.op{display:block;width:100%;border:2px solid var(--line);border-radius:22px;padding:12px 14px;margin-top:10px;min-height:76px;transition:border-color .2s,background .2s}
+.op b{display:block;font-size:17px}
+.op span{font-size:14px;color:var(--mut)}
+.op:active{transform:scale(.98)}
+.op[aria-pressed=true]{border-color:var(--ac);background:#f1eeff}
+.quitar{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:12px;border-radius:24px;border:2px solid var(--pen);color:var(--pen);font-weight:700;text-align:center}
+.quitar[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="cartel"><b>Escuela 2 · Bento</b><span>Una rejilla de bloques de varios tamaños, como widgets: manda el grande («acabarás con ~900 €») y los fijos se despliegan al tocarlos para contar hasta lo que te queda. El gasto grande reordena los bloques y cambia las cifras.</span></div>
+
+<!-- PANTALLA 1 -->
+<section class="pant" data-pantalla="1">
+  <p class="rot">Pantalla 1 · Tu mes</p>
+  <div class="top"><h1>Tu mes</h1><small>25 oct → 24 nov<br>quedan 27 días</small></div>
+  <div class="grid" id="grid">
+    <div class="b hero" aria-live="polite">
+      <div class="lab">Acabarás el mes con</div>
+      <div class="num">~900 €</div>
+      <div class="glass"><span>Ahorras este mes</span><strong id="h-ah">700 €</strong></div>
+      <div class="calc">2.380 − 728 fijos − 750 de gasto normal</div>
+      <div class="extra" id="h-ex" hidden></div>
+    </div>
+    <div class="b ini"><div class="lab">Empiezas con</div><div class="big">2.380 €</div><div class="sub">280 que traías + nómina 2.100</div></div>
+    <div class="b var"><div class="lab">Gastado ya</div><div class="big">140 €</div><div class="bar" role="img" aria-label="140 euros gastados de 750 de un mes normal"><i></i></div><div class="sub">de 750 en un mes normal</div></div>
+
+    <div class="b fij" id="fij">
+      <button class="fhead" id="fbtn" aria-expanded="false" aria-controls="fres">
+        <span><span class="lab" style="display:block">Fijos del mes · toca para ver</span><span class="big" style="display:block">728 €</span><span class="sub" style="display:block">pagados 610 · por pagar 118</span></span>
+        <span class="chev" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 7l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </button>
+      <div class="fres" id="fres"><div><div class="fin">
+        <div class="chips">
+          <div class="chip ok"><b>✓ Alquiler 550 €</b>pagado el 1</div>
+          <div class="chip ok"><b>✓ Luz y agua 60 €</b>pagado el 27</div>
+          <div class="chip pen"><b>◷ Gimnasio 40 €</b>por pagar · 1 nov</div>
+          <div class="chip pen"><b>◷ Móvil e internet 35 €</b>por pagar · 5 nov</div>
+          <div class="chip pen"><b>◷ Spotify y Netflix 18 €</b>por pagar · 10 nov</div>
+          <div class="chip pen"><b>◷ Seguro 25 €</b>por pagar · 15 nov</div>
+        </div>
+        <div class="queda"><span>Te quedan<br>tras los fijos</span><span class="big" id="cuenta">0 €</span></div>
+      </div></div></div>
+    </div>
+
+    <div class="b gas"><div class="lab">Para gastar sin tocar el ahorro</div><div class="big">812 €</div><div class="sub">unos 30 € al día hasta el 24</div></div>
+    <button class="b mas" id="abrir" aria-haspopup="dialog"><span class="plus" aria-hidden="true">+</span><span><b id="mas-t">Apuntar gasto grande</b><span class="s" id="mas-s">Viaje, ordenador…</span></span></button>
+    <button class="b col" id="ir2"><div class="lab">Colchón al acabar el mes</div><div class="big" id="c-eur">4.900 €</div><div class="sub" id="c-mes">3,3 meses de vida</div><div class="go">Ahorro y bosque ›</div></button>
+  </div>
+</section>
+
+<!-- PANTALLA 2 -->
+<section class="pant" data-pantalla="2" id="p2">
+  <p class="rot">Pantalla 2 · Ahorro y Bosque</p>
+  <button class="back" id="ir1">‹ Tu mes</button>
+  <div class="g2">
+    <div class="b s-ah" aria-live="polite">
+      <div class="lab">Este mes ahorras al colchón</div>
+      <div class="num" id="a-ah">700 €</div>
+      <div class="sub" id="a-sub">dejando unos 200 € de margen</div>
+    </div>
+    <div class="b ck"><div class="lab">Colchón hoy</div><div class="big">4.200 €</div><div class="sub">2,8 meses de vida</div></div>
+    <div class="b ck"><div class="lab">Con este mes</div><div class="big" id="a-c">4.900 €</div><div class="sub" id="a-m">3,3 meses</div></div>
+
+    <div class="b full">
+      <div class="lab">Tu bosque · un árbol por mes de colchón</div>
+      <svg id="bosque" viewBox="0 0 360 142" role="img" aria-label="Bosque de seis huecos"><title id="bt">Bosque</title></svg>
+      <p class="leg" id="b-leg">Árbol entero = 1 mes cubierto · plantón de trazos = lo que falta hasta 6 meses (8.868 €).</p>
+    </div>
+
+    <div class="b full">
+      <div class="lab">Lo ahorrado cada mes</div>
+      <div class="cols" id="cols"></div>
+      <p class="leg" id="c-leg"></p>
+    </div>
+
+    <div class="b full dic">
+      <div class="lab">Diciembre</div>
+      <div id="dic"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PANTALLA 3 -->
+<section class="pant" data-pantalla="3">
+  <p class="rot">Pantalla 3 · La línea de Hoy</p>
+  <div class="cart">El cartel de la noche<small>(sin diseñar)</small></div>
+  <div class="est">
+    <h3>Cuando aporta</h3>
+    <div class="linea"><span aria-hidden="true">💶</span><span>Te quedan 812 € · 30 €/día hasta el 24 · <em>el 1 nov pagas el gimnasio (40 €)</em></span></div>
+  </div>
+  <div class="est">
+    <h3>Cuando no aporta</h3>
+    <div class="sin">sin línea hoy</div>
+  </div>
+</section>
+
+<div class="vel" id="vel"></div>
+<div class="hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hh" aria-hidden="true">
+  <div class="asa"></div>
+  <div class="hh"><h2 id="hh">Apuntar gasto grande</h2><button class="x" id="cerrar" aria-label="Cerrar">×</button></div>
+  <div class="item"><span>Portátil<br><span class="sub">para diciembre</span></span><b>1.100 €</b></div>
+  <button class="op" data-m="apartando" aria-pressed="false"><b>Lo voy apartando</b><span>550 € en noviembre y 550 en diciembre. Este mes ahorras 150.</span></button>
+  <button class="op" data-m="sale" aria-pressed="false"><b>Sale de lo ahorrado</b><span>Este mes ahorras los 700; en diciembre el portátil se lleva 1.100.</span></button>
+  <button class="quitar" id="quitar" hidden>Quitar el gasto grande</button>
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var fmt=function(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')};
+  var mode='none', lastFocus=null;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function bump(el){if(!el)return;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
+  function setT(id,t){var e=$(id);if(e.textContent!==t){e.textContent=t;bump(e)}}
+
+  /* fijos: abrir y contar hacia arriba */
+  var raf=0;
+  function cuenta(){
+    var el=$('cuenta'),to=1652,t0=null;cancelAnimationFrame(raf);
+    if(reduce){el.textContent='1.652 €';return}
+    function f(t){if(t0===null)t0=t;var p=Math.min((t-t0)/1000,1),e=1-Math.pow(1-p,3);el.textContent=fmt(to*e)+' €';if(p<1)raf=requestAnimationFrame(f)}
+    raf=requestAnimationFrame(f);
+  }
+  $('fbtn').addEventListener('click',function(){
+    var f=$('fij'),open=!f.classList.contains('open');
+    f.classList.toggle('open',open);this.setAttribute('aria-expanded',open);
+    if(open){cuenta()}else{cancelAnimationFrame(raf);$('cuenta').textContent='0 €'}
+  });
+
+  /* hoja */
+  function abrir(){lastFocus=document.activeElement;$('vel').classList.add('on');var h=$('hoja');h.classList.add('on');h.setAttribute('aria-hidden','false');setTimeout(function(){h.querySelector('.op').focus()},60)}
+  function cerrar(){$('vel').classList.remove('on');var h=$('hoja');h.classList.remove('on');h.setAttribute('aria-hidden','true');if(lastFocus)lastFocus.focus()}
+  $('abrir').addEventListener('click',abrir);
+  $('cerrar').addEventListener('click',cerrar);
+  $('vel').addEventListener('click',cerrar);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')cerrar()});
+  [].forEach.call(document.querySelectorAll('.op'),function(b){b.addEventListener('click',function(){mode=b.dataset.m;render();setTimeout(cerrar,350)})});
+  $('quitar').addEventListener('click',function(){mode='none';render();cerrar()});
+
+  /* saltos */
+  $('ir2').addEventListener('click',function(){$('p2').scrollIntoView({behavior:reduce?'auto':'smooth'})});
+  $('ir1').addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'})});
+
+  /* bosque */
+  function arbol(cx,f){
+    var g='';
+    if(f>=1){
+      g='<g transform="translate('+cx+',118)"><rect x="-4" y="-16" width="8" height="16" fill="#6b4a2b"/><polygon points="-24,-14 24,-14 0,-52" fill="#1f9d63"/><polygon points="-20,-38 20,-38 0,-72" fill="#178655"/><polygon points="-15,-60 15,-60 0,-92" fill="#0e6b43"/></g>';
+    }else if(f>0){
+      var s=(0.4+0.5*f).toFixed(2);
+      g='<g transform="translate('+cx+',118) scale('+s+')"><rect x="-4" y="-16" width="8" height="16" fill="#6b4a2b"/><polygon points="-24,-14 24,-14 0,-52" fill="#5cc58f"/><polygon points="-20,-38 20,-38 0,-72" fill="#46b57d"/><polygon points="-15,-60 15,-60 0,-92" fill="#2f9b66"/></g>';
+    }else{
+      g='<g transform="translate('+cx+',118)" fill="none" stroke="#4b5170" stroke-width="2" stroke-dasharray="4 3"><path d="M0 0V-22"/><path d="M0-14C-12-14-14-26-14-26S-2-28 0-14Z"/><path d="M0-20C12-20 14-32 14-32S2-34 0-20Z"/></g>';
+    }
+    return g;
+  }
+  function bosque(meses){
+    var s='<title id="bt">Bosque: '+String(meses).replace('.',',')+' meses de colchón</title><line x1="6" y1="118" x2="354" y2="118" stroke="#9aa0bb" stroke-width="2" stroke-linecap="round"/>';
+    for(var i=0;i<6;i++){
+      var cx=30+i*60,f=Math.max(0,Math.min(1,meses-i));
+      s+=arbol(cx,f)+'<text x="'+cx+'" y="136" text-anchor="middle" font-size="12" fill="#4b5170">'+(f>=1?'mes '+(i+1):f>0?(''+f.toFixed(1)).replace('.',',')+' mes':'falta')+'</text>';
+    }
+    if(mode!=='none'){
+      s+='<g transform="translate(330,30)"><polygon points="0,-14 14,0 0,14 -14,0" fill="#e0670a" stroke="#7d4300" stroke-width="2"/><text y="32" text-anchor="middle" font-size="12" fill="#7d4300" font-weight="700">portátil dic</text></g>';
+    }
+    $('bosque').innerHTML=s;
+  }
+
+  /* columnas */
+  function cols(){
+    var d=[['jul',100],['ago',450],['sep',800],['oct',650]],h='',k=128/800;
+    d.forEach(function(x){h+='<div class="cl"><span class="v">'+x[1]+' €</span><div class="t"><div class="a" style="height:'+Math.round(x[1]*k)+'px"></div></div><span class="m">'+x[0]+'</span></div>'});
+    var ah=mode==='apartando'?150:700,ap=mode==='apartando'?550:0;
+    h+='<div class="cl nuevo"><span class="v">'+ah+' €</span><div class="t">'+(ap?'<div class="p" style="height:'+Math.round(ap*k)+'px"></div>':'')+'<div class="a" style="height:'+Math.round(ah*k)+'px"></div></div><span class="m">este mes</span></div>';
+    $('cols').innerHTML=h;
+    $('c-leg').textContent=mode==='apartando'?'Trazos naranjas: 550 € apartados para el portátil, no van al colchón.':'Verde: lo que fue al colchón. La última columna es este mes.';
+  }
+
+  function render(){
+    var ap=mode==='apartando',sa=mode==='sale',on=mode!=='none';
+    var ah=ap?150:700,col=ap?4350:4900,mes=ap?'2,9':'3,3',mnum=ap?2.9:3.3;
+    document.getElementById('grid').classList.toggle('act',on);
+    var m=$('abrir');m.classList.toggle('on',on);
+    $('mas-t').textContent=on?'Portátil · 1.100 €':'Apuntar gasto grande';
+    $('mas-s').textContent=ap?'Lo voy apartando · toca para cambiar':sa?'Sale de lo ahorrado · toca para cambiar':'Viaje, ordenador…';
+    setT('h-ah',fmt(ah)+(ap?' € al colchón':' €'));
+    var ex=$('h-ex');ex.hidden=!on;
+    ex.textContent=ap?'+ 550 € apartados para el portátil (de los ~900)':sa?'El portátil (1.100 €) saldrá de lo ahorrado en diciembre':'';
+    setT('c-eur',fmt(col)+' €');setT('c-mes',mes+' meses de vida');
+    setT('a-ah',fmt(ah)+' €');
+    $('a-sub').textContent=ap?'y 550 € apartados para el portátil (700 en total)':sa?'los 700 enteros; el portátil sale de ahí en diciembre':'dejando unos 200 € de margen';
+    setT('a-c',fmt(col)+' €');setT('a-m',mes+' meses');
+    bosque(mnum);cols();
+    $('dic').innerHTML=on
+      ?'<div class="big">Colchón 4.500 €</div><p class="sub">3,0 meses de vida, con el portátil ya pagado. '+(ap?'Vas apartando 550 en nov y 550 en dic.':'En dic ahorras otros 700 y el portátil se lleva 1.100.')+'</p>'
+      :'<p class="sub">Ningún gasto grande apuntado. Toca «Apuntar gasto grande» en Tu mes para ver cómo cambia.</p>';
+    document.querySelectorAll('.op').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.m===mode)});
+    $('quitar').hidden=!on;
+    [].forEach.call(document.querySelectorAll('.col,.gas'),bump);
+  }
+  mode='none';render();
+  /* primer render sin animación de entrada */
+  [].forEach.call(document.querySelectorAll('.pop'),function(e){e.classList.remove('pop')});
+})();
+</script>
+</body>
+</html>

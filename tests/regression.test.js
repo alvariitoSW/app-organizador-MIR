@@ -3292,6 +3292,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(200);
   await page.click('[data-a="cocina-hecho"]');
   await page.waitForTimeout(250);
+  const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } // R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta
+  await page.waitForTimeout(150);
   const trasHecho = await page.evaluate((k) => ({
     kcal: window.PG.foodTotals(k).kcal,
     vista: window.PG.ui.foodVista,
@@ -8759,7 +8761,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // Ahorro (la ruta vieja «salud» ya no existe), donde el colchón dice cuántos meses cubre
     await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.dinTab = 'ahorro'; P.render(); });
     const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { ahorro: /Tu bosque, mes a mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
+      return { ahorro: /Lo que ahorraste cada mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
     await page.evaluate(() => { const P = window.PG; if (window.__origDate221) { window.Date = window.__origDate221; delete window.__origDate221; } P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Ahorro es el bosque mes a mes',
       an.n >= 3 && !an.cats.includes('Alquiler y casa') && an.tips.some((t) => /Restaurantes a \d+ €/.test(t)) && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
@@ -8805,7 +8807,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const trasAuto = await page.$$eval('.ssc', (e) => e.filter((x) => /＋/.test(x.textContent)).length);
     const hc = await page.$('[data-a="food-vista"][data-v="hoycocino"]'); if (hc) { await hc.click(); await page.waitForTimeout(200); }
     const opciones = await page.$$eval('.hcop', (e) => e.length);
-    const okb = await page.$('[data-a="hc-ok"]'); if (okb) { await okb.click(); await page.waitForTimeout(200); }
+    const okb = await page.$('[data-a="hc-ok"]'); if (okb) { await okb.click(); await page.waitForTimeout(200); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).map((x) => ({ total: x.total, dias: Math.round((new Date(x.hasta) - new Date(x.fecha)) / 86400000) })));
     const aguanta = await page.evaluate(() => { const P = window.PG; return ['Arroz con pollo', 'Merluza al horno', 'Lentejas estofadas', 'Pollo asado'].map((n) => P.diasAguanta({ name: n })); });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.render(); }); await page.waitForTimeout(150);
@@ -8957,7 +8959,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const p = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date()))[0].p);
     await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'vitaminas'; P.render(); });
     /* la vista vieja de micros («LO QUE MÁS TE FALTA») la sustituye la hoja «% diario» con su sugerencia */
-    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|la (cena|comida|desayuno)/.test(s) }; });
+    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|(la|el) (cena|comida|desayuno)/i.test(s) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); P.ui.feVer = P.foodLog(P.iso(new Date()))[0].id; P.render(); });
     await page.click('.fehoja [data-a="fe-borrar"]'); await page.waitForTimeout(120);
     const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
@@ -9026,7 +9028,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hoy = await page.$$eval('#main .h2mom', (e) => e.filter((x) => /\S/.test(x.innerText)).length);
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'hoycocino'; P.render(); });
     const hc = await page.$$eval('.hcop .t b', (e) => e.map((x) => x.textContent));
-    const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); }
+    const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).length);
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorro'; P.ui.dineroVista = ''; P.render(); });
     const m0 = await page.evaluate(() => window.PG.ahorroS().metaPct);
@@ -9134,7 +9136,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const hayHoja = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjtd').length);
-    const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); }
+    const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).reduce((a, x) => a + x.total, 0));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
     const sg = await page.evaluate(() => [window.PG.compraSG('Pan de masa madre'), window.PG.compraSG('Pasta'), window.PG.compraSG('Leche')]);
@@ -9595,6 +9597,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: P.hm(h * 60 - 60), fin: P.hm(h * 60 + 60), modo: 'fecha', fecha: k, on: true });
       P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); return h * 60; });
     await page.waitForTimeout(150);
+    // según la hora, lo de encima del reloj crece y lo baja por debajo de los 720 px de la ventana de prueba: se trae a la vista
+    await page.evaluate(() => document.querySelector('#main .hoyreloj svg').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(80);
     const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / s.width, t = m / 1440 * 2 * Math.PI;
       return { x: s.left + (150 + r * Math.sin(t) + 60) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
     const est = () => page.evaluate(() => { const P = window.PG, it = P.ui.hoySel ? P.hoyItems(P.ui.hoySel.k, P.dayInfo(P.ui.hoySel.k))[P.ui.hoySel.i] : null;
@@ -10433,7 +10438,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hu-caprichos', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 310 }];
       a.puroId = 'hu-colchon'; a.puroPct = 50;
       const A = P.asistS(); A.sil = {}; A.nunca = {};
-      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render();
+      P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render();
       const m = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
       // tanda Dinero D3: Dinero ya no enseña «Te queda / Puedes gastar hoy» (acta del 28/10); lo que se comprueba es el cálculo y que el Bosque no pide apuntar gastos
       return { estima: P.bkQueda() === null && !/PUEDES GASTAR|TE QUEDA/.test(m), pide: !!P.d6Mes().presu, apunta: !!document.querySelector('#main [data-a="dinero-apuntar"]') }; });
@@ -10672,13 +10677,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (d) captura de hoy → «ya lo he apartado» → deshacer → otra vez; el cierre sigue por repartir
     await page.evaluate(() => { const P = window.PG, B = P.bancoS(), hoy = P.iso(new Date());
       B.cuentas = [{ id: 'c266', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: hoy, hora: '10:00', s: { c266: 1500 } }];
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.render(); });
     r.d0 = await page.evaluate(() => { const Q = window.PG.bkQueda(); return { ap: Q.ap, mk: Q.mk0, cad: Q.caducada }; });
     const pulsa = async (sel) => { const b = await page.$(sel); if (b) { await b.click(); await page.waitForTimeout(120); } return !!b; };
     // D4: el botón «ya lo he apartado» de la tarjeta vieja se sustituye por «Ya ha llegado la nómina» del Bosque: cobrado → Hecho → deshacer, con gestos reales
     const musgo = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, x = P.ahorroMes(P.d4Cobro().mk, false) || {};
-      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.ahorroS().huchas.filter((h) => h.id === 'hu-a')[0].saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .lau-musgo') || {}).textContent || '' }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.d4Nom = null; P.render(); });
+      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.ahorroS().huchas.filter((h) => h.id === 'hu-a')[0].saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .ab-col') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.d4Nom = null; P.render(); });
     r.d1m = await musgo();
     await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
     r.d1 = await pulsa('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(120);
@@ -10803,7 +10808,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {};
     await page.evaluate(() => { window.__copia268 = JSON.parse(JSON.stringify(window.PG.store)); });
     r.a = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), log = P.foodLog(k);
-      log.push({ id: 'fe268', when: '', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25 }); P.save();
+      /* la toma se apunta en la categoría del hueco (en día de gimnasio la «Comida post-entreno» cuenta como post-entreno): no depende del día de la semana */
+      const cat = (l) => /post.?.?entreno|pre.?.?entreno/i.test(l) ? 'post-entreno' : 'comida';
+      const sl = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && x.slot && /comida/i.test(x.slot.label || ''))[0];
+      log.push({ id: 'fe268', when: '', p: sl ? cat(sl.slot.label) : 'comida', nombre: 'Lentejas', kcal: 500, prot: 25 }); P.save();
       const it = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && x.slot && /comida/i.test(x.slot.label || ''));
       return it.length ? it.some((x) => x.hecha) : 'sin comida en Hoy'; });
     r.b = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return /data-i="undefined"/.test(P.hoyTresHTML(P.hoyItems(k, P.dayInfo(k)), 1439, k)); });
@@ -11588,15 +11596,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // registro de la real ni hábito.
   {
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
-      const kt = kd(3), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      /* kt y el día anterior (kp) deben caer en la misma semana: si kt fuese lunes, kp sería de la semana pasada y «esta semana» no lo contaría */
+      const off = new Date(d.getTime() + 3 * 864e5).getDay() === 1 ? 4 : 3, kt = kd(off), kp = kd(off - 1), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
       P.__t285 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
       P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.habitosS().items.push({ id: 'hb285t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
-      P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kd(2)] = { salio: '07:29' };
+      P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kp] = { salio: '07:29' };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
       const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small')].map((x) => x.textContent) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
-        taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kd(2)), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
+        taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kp), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
       return out; });
     // «deshacer» quita la hora; «he salido» (hoy) guarda la del móvil
     await page.click('#main [data-a="manana-deshacer"]');
@@ -12568,6 +12577,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.fill('#frIn', 'un vaso de leche'); await page.waitForTimeout(700);
     await page.click('[data-a="fr-leer"]'); await page.waitForTimeout(400);
     // abrir lo apuntado (la última toma): su línea dice la cantidad
+    // con la frase arriba en Hoy (R7) ya no se abre la hoja: se toca la fila de lo apuntado para llegar a «Cantidad o corregir»
+    if (!(await page.$('[data-a="fe-ver"]'))) { const fila = await page.$('#main .cjml [data-a="cje-mom"]:has-text("Leche")'); if (fila) { await fila.click(); await page.waitForTimeout(300); } }
     const fe = await page.$$('[data-a="fe-ver"]'); if (fe.length) { await fe[fe.length - 1].click(); await page.waitForTimeout(300); }
     r.apuntado = await page.evaluate(() => { const t = document.body.innerText; const m = t.match(/\d+ (ml|g)(?= · |\n|$)/gm); return { ml: /\b\d+ ml\b/.test(t), lista: (m || []).slice(0, 6) }; });
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia317')); localStorage.removeItem('__copia317'); P.save(); P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.render(); });
@@ -13225,7 +13236,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'p340b', fecha: '2026-03-10', nombre: 'cena', importe: 40, cat: 'ocio', ts: 2 }, { id: 'p340c', fecha: '2026-03-12', nombre: 'compra', importe: 25.5, cat: 'compra', ts: 3 }];
       d.presupuesto = 0;
       const B = P.bancoS(); B.cuentas = [{ id: 'c340', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: '2026-03-14', hora: '10:00', s: { c340: 1500 } }];
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.render();
       const g = (mk) => { const x = P.gastoMes(mk); return x ? [x.fuente, x.total, JSON.stringify(x.cats)].join('|') : null; };
       const M = P.d6Mes(), md = P.mesDinero(2026, 2), t = P.mesTipo(), Q = P.bkQueda(), ah = P.ahorroDeMes('2026-02');
       return { ene: g('2026-01'), feb: g('2026-02'), mar: g('2026-03'),
@@ -13242,7 +13253,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 341) DINERO 3.0 · D3 · MIGRACIÓN Y BOSQUE, EN CADENA: con huchas viejas (colchón y una sin objetivo con saldo, una con
   //      objetivo, deseos) y SIN store.dinero3, abrir Dinero crea lo nuevo COPIANDO (guardado = colchón + sin objetivo; la hucha con
   //      objetivo → compra en plan; el deseo sin hacer → compra en espera) y el Bosque lo enseña (musgo, un fruto, meses de vida);
-  //      ir a Compras y volver al Bosque no duplica nada, y lo viejo sigue idéntico (nada se borra). Sobrevive a recargar.
+  //      ir a Compras y volver a Ahorro y Bosque no duplica nada, y lo viejo sigue idéntico (nada se borra). Sobrevive a recargar.
   {
     const r = {};
     await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia341 = JSON.parse(JSON.stringify(s));
@@ -13254,21 +13265,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hu-s', nombre: 'Imprevistos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 200 }];
       a.puroId = 'hu-colchon'; a.puroPct = 50; window.__viejo341 = JSON.stringify([a.huchas, s.dinero]);
       P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dineroVista = ''; P.render(); });
-    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(150);
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(150);
     r.a = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3, m = document.querySelector('#main');
       return { guardado: d.ahorro.guardado, migrado: d.migrado, compras: d.compras.map((c) => c.nombre + '|' + c.precio + '|' + c.llevas + '|' + c.estado).join(';'),
-        musgo: (m.querySelector('.lau-musgo') || {}).textContent, baya: ((m.querySelector('.lau-baya') || {}).textContent || ''), titulo: (m.querySelector('#lauT') || {}).textContent || '',
+        musgo: (m.querySelector('.ab-col') || {}).textContent, baya: P.d3Datos().frutos + ' fruto', titulo: (m.querySelector('.ab-bosque title') || {}).textContent || '',
         pestanas: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), hoyHero: /PUEDES GASTAR|TE QUEDA/.test(m.innerText), vida: P.d3Datos().vida,
         ancho: document.documentElement.scrollWidth, sinXSS: !m.querySelector('i') }; });
     await page.click('#main [data-a="d6-tab"][data-v="compras"]'); await page.waitForTimeout(100);
-    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(100);
     r.b = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3; return { n: d.compras.length, viejo: JSON.stringify([P.store.ahorro.huchas, P.store.dinero]) === window.__viejo341,
       recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))); return o.dinero3 && o.dinero3.ahorro.guardado + '/' + o.dinero3.compras.length; })() }; });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia341; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · migración: colchón + huchas sin objetivo → lo guardado (3.200 €); la hucha con objetivo → compra en plan; el deseo sin hacer → compra en espera; el Bosque lo enseña (musgo, 1 fruto, meses de vida) y las cuatro pestañas',
-      r.a.guardado === 3200 && r.a.migrado && r.a.compras === 'Japón <i>|2000|500|plan;vuelos|800|0|espera' && /3\.200 € guardados/.test(r.a.musgo) && /1 fruto/.test(r.a.baya) &&
-      /3\.200 euros/.test(r.a.titulo) && r.a.vida === 2 && r.a.pestanas === 'Bosque,Gastos,Ahorro,Compras' && !r.a.hoyHero && r.a.sinXSS, JSON.stringify(r.a));
-    check('Dinero 3.0 · migración: ir a Compras y volver al Bosque no duplica compras, lo viejo (huchas y recibos) queda idéntico y lo nuevo sobrevive a recargar',
+    check('Dinero 3.0 · migración: colchón + huchas sin objetivo → lo guardado (3.200 €); la hucha con objetivo → compra en plan; el deseo sin hacer → compra en espera; Ahorro y Bosque lo enseña (colchón, 1 compra en plan, meses de vida) y las cuatro pestañas',
+      r.a.guardado === 3200 && r.a.migrado && r.a.compras === 'Japón <i>|2000|500|plan;vuelos|800|0|espera' && /Hoy 3\.200 €/.test(r.a.musgo) && /1 fruto/.test(r.a.baya) &&
+      /meses de colchón/.test(r.a.titulo) && r.a.vida === 2 && r.a.pestanas === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && !r.a.hoyHero && r.a.sinXSS, JSON.stringify(r.a));
+    check('Dinero 3.0 · migración: ir a Compras y volver a Ahorro y Bosque no duplica compras, lo viejo (huchas y recibos) queda idéntico y lo nuevo sobrevive a recargar',
       r.b.n === 2 && r.b.viejo && r.b.recarga === '3200/2', JSON.stringify(r.b));
   }
 
@@ -13283,9 +13294,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { fecha: mkDe(1) + '-27', hora: '10:00', mes: mkDe(1), banco: null, ingresos: 2000, gastos: 1250, cats: { Alquiler: 650, Supermercado: 300, 'Comer fuera': 180, Ocio: 120 } }];
       a.gastado = {}; a.catCfg = {}; delete a.meta; window.__mk342 = [mkDe(0), mkDe(1)];
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2500, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()) }, compras: [{ id: 'c342', nombre: 'Portátil', precio: 900, llevas: 100, mes: '', estado: 'plan', alta: P.iso(new Date()), tipo: '' }] };
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.d3Mes = ''; P.render(); });
-    r.bosque = await page.evaluate(() => { const b = document.querySelector('#main .lau-claro'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
-    await page.click('#main .lau-claro'); await page.waitForTimeout(150);
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.d3Mes = ''; P.render(); });
+    r.bosque = await page.evaluate(() => { const b = document.querySelector('#main .ab-empuje'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
+    await page.click('#main [data-a="d3-claro"]'); await page.waitForTimeout(150);
     r.actual = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText.replace(/\s+/g, ' ');
       return { tab: window.PG.ui.dinTab, mes: window.PG.ui.d3Mes, total: /1\.290 €/.test(t), fijos: /Fijos 650 €/.test(t), vars: /Variables 640 €/.test(t), top: /Comer fuera/.test(t), ahorrar: /Con 3 cambios pequeños/.test(t),
         comp: /COMPARADO CON/.test(t) && /costó 40 € más/.test(t), ancho: document.documentElement.scrollWidth }; });
@@ -13297,7 +13308,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .subcab .volver'); await page.waitForTimeout(150);
     r.vuelta = await page.evaluate(() => window.PG.ui.dinTab + '|' + /GASTADO EN/.test(document.querySelector('#main').innerText));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia342; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.d3Mes = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · Bosque → tocón → Gastos: el tocón es lo variable más grande (Comer fuera, 320 €) y lleva a Gastos de este mes con fijos, variables, «dónde ahorrar» y el comparado con el anterior',
+    check('Dinero 3.0 · Ahorro y Bosque → el empujón → Gastos: lo variable más grande (Comer fuera, 320 €) y lleva a Gastos de este mes con fijos, variables, «dónde ahorrar» y el comparado con el anterior',
       /Comer fuera/.test(r.bosque) && /320/.test(r.bosque) && r.actual.tab === 'gastos' && r.actual.mes === r.actual.mes && r.actual.total && r.actual.fijos && r.actual.vars && r.actual.top && r.actual.ahorrar && r.actual.comp, JSON.stringify(r));
     check('Dinero 3.0 · Gastos: el selector pasa al mes anterior con sus cifras, y desde Gastos se llega a Recibos y se vuelve a Gastos',
       r.previo.total && r.previo.sinComp && r.previo.pressed && r.recibos && r.vuelta === 'gastos|true', JSON.stringify({ p: r.previo, rec: r.recibos, v: r.vuelta }));
@@ -13312,24 +13323,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
       a.gastado = {}; delete a.meta;
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), c = (m.querySelector('#d4Cifra') || {}).textContent || '', d = window.PG.store.dinero3.ahorro;
-      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('#d4Graf') || {}).getAttribute('aria-label') || ''), ancho: document.documentElement.scrollWidth,
+      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('.ab-bosque svg title') || {}).textContent || ''), ancho: document.documentElement.scrollWidth,
         peq: [...m.querySelectorAll('.lau-card button, .lau-card input')].filter((b) => b.getBoundingClientRect().height < 43.5).map((b) => b.className + ':' + b.textContent.slice(0, 12) + ':' + Math.round(b.getBoundingClientRect().height)).join('|') }; });
     const vp343 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.click('#main .lau-ir'); await page.waitForTimeout(150);
     r.a = await lee();
     await page.click('#main [data-a="d4-obj"][data-v="9"]'); await page.waitForTimeout(100); r.b = await lee();
     await page.click('#main [data-a="d4-plazo"][data-v="6"]'); await page.waitForTimeout(100); r.c = await lee();
     await page.fill('#d4o-objetivoMeses', '4'); await page.press('#d4o-objetivoMeses', 'Tab'); await page.waitForTimeout(120); r.d = await lee();
     r.rec = await page.evaluate(() => { const P = window.PG, o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.objetivoMeses + '/' + o.plazoMeses; });
-    await page.click('#main .lau-btn[data-a="d6-tab"]'); await page.waitForTimeout(150);
-    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .lau-esc') && window.PG.ui.dinTab === '');
+    await page.click('#main .lau-tabs [data-v="gastos"]'); await page.waitForTimeout(150); await page.click('#main .lau-tabs [data-v="ahorro"]'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .ab-bosque svg') && window.PG.ui.dinTab === 'ahorro');
     await page.setViewportSize(vp343);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia343; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
     check('Dinero 3.0 · Bosque → Ahorro: cambiar objetivo y plazo cambia «aparta X €/mes» (6 meses/12: menos que 9/12; 9/6: más) y la gráfica lo cuenta',
-      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /plan de \d/.test(r.c.svg) && /9 meses/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
-    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y «Volver al bosque» vuelve al Bosque; a 412 sin scroll horizontal y con todo ≥44 px',
+      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /objetivo de 9/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
+    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y ir a Gastos y volver a Ahorro y Bosque lo deja igual; a 412 sin scroll horizontal y con todo ≥44 px',
       r.d.obj === 4 && r.d.cifra < r.c.cifra && r.rec === '4/6' && r.vuelta && r.a.ancho <= 412 && r.a.peq === '', JSON.stringify({ d: r.d, rec: r.rec, v: r.vuelta, a: r.a.ancho, peq: r.a.peq }));
   }
 
@@ -13342,9 +13352,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
       a.gastado = {}; delete a.meta; a.epocas = [{ id: 'e344', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
-      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const est = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, mk = P.d4Cobro().mk;
-      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .lau-musgo') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
+      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .ab-col') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
         recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.guardado + '/' + (o.apartado[mk] ? o.apartado[mk].v : 0); })() }; });
     r.a = await est();
     await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
@@ -13443,21 +13453,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       delete s.dinero3;
       const K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       window.__viejo347 = JSON.stringify(K.map((k) => a[k]));
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const sigue = () => page.evaluate(() => { const P = window.PG, a = P.ahorroS(), K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       return JSON.stringify(K.map((k) => a[k])) === window.__viejo347; });
     r.recorrido = [];
-    for (const v of ['gastos', 'ahorro', 'compras', '']) {
+    for (const v of ['gastos', 'ahorro', 'compras']) {
       await page.click(`#main .d7seg [data-v="${v}"]`); await page.waitForTimeout(120);
       r.recorrido.push(await page.evaluate((v) => ({ v, tab: window.PG.ui.dinTab, on: (document.querySelector('#main .d7seg .on') || {}).textContent, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ').slice(0, 90) }), v));
       r.recorrido[r.recorrido.length - 1].sigue = await sigue(); }
-    // Ahorro: sin «Cambiar el reparto» ni «Cuadrarlo»; «Volver al bosque» es una píldora; «tu ritmo» no pisa «objetivo: …»
+    // Ahorro y Bosque: sin «Cambiar el reparto» ni «Cuadrarlo»; con el % de ahorro, el bosque y las barras de cada mes
     await page.click('#main .d7seg [data-v="ahorro"]'); await page.waitForTimeout(150);
-    r.ahorro = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText, vb = m.querySelector('[data-a="d6-tab"][data-v=""]:not(.d7seg *)'), g = document.getElementById('d4Graf');
-      const cx = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom, txts = g ? [].slice.call(g.querySelectorAll('text')).map((e) => [e.textContent, e.getBoundingClientRect()]) : [];
-      const obj = txts.filter((q) => /^objetivo:/.test(q[0]))[0], rit = g ? g.querySelector('rect') : null;
-      return { reparto: /Cambiar el reparto/.test(t), cuadrar: /Cuadrarlo/.test(t), pct: !!m.querySelector('[data-a="d7-meta"]'), pildora: vb ? parseFloat(getComputedStyle(vb).borderTopLeftRadius) >= 20 : false,
-        pisa: obj && rit ? cx(obj[1], rit.getBoundingClientRect()) : 'sin gráfica', graf: !!g }; });
+    r.ahorro = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText;
+      return { reparto: /Cambiar el reparto/.test(t), cuadrar: /Cuadrarlo/.test(t), pct: !!m.querySelector('[data-a="d7-meta"]'), graf: !!m.querySelector('.ab-bosque svg'), barras: m.querySelectorAll('.ab-barra').length }; });
     // copia de seguridad: lo viejo va entero y lo migrado también
     r.copia = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.storeParaCopia())), a = c.ahorro || {}, d3 = c.dinero3 || {}, K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       return { viejo: JSON.stringify(K.map((k) => a[k])) === window.__viejo347, guardado: d3.ahorro && d3.ahorro.guardado, japon: (d3.compras || []).filter((q) => q.nombre === 'Japón 347').map((q) => q.precio + '/' + q.llevas).join(),
@@ -13467,10 +13474,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return [a.huchas.map((q) => q.id + ':' + q.saldo + ':' + (q.deseos || []).length).join(), a.meta && a.meta.importe, a.banco.capturas.length + '/' + a.banco.cuentas.length, a.epocas.map((e) => e.id).join(),
         a.festivos.join(), a.movs.length, a.metaPct, a.real.length].join('|'); });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia347; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · D6: con un móvil de antes, Bosque → Gastos → Ahorro → Compras se recorre con clics y lo viejo (huchas, meta, banco, épocas, festivos, movimientos) sigue intacto tras cada paso',
-      r.recorrido.length === 4 && r.recorrido.every((q) => q.sigue && q.tab === q.v && q.on) && pageErrors.length === errores0, JSON.stringify(r.recorrido));
-    check('Dinero 3.0 · D6: en Ahorro ya no hay «Cambiar el reparto» ni «Cuadrarlo»; sí el %; «Volver al bosque» es una píldora y «tu ritmo» no pisa la etiqueta del objetivo',
-      r.ahorro.graf && !r.ahorro.reparto && !r.ahorro.cuadrar && r.ahorro.pct && r.ahorro.pildora && r.ahorro.pisa === false, JSON.stringify(r.ahorro));
+    check('Dinero 3.0 · D6: con un móvil de antes, Gastos → Ahorro y Bosque → Compras se recorre con clics y lo viejo (huchas, meta, banco, épocas, festivos, movimientos) sigue intacto tras cada paso',
+      r.recorrido.length === 3 && r.recorrido.every((q) => q.sigue && q.tab === q.v && q.on) && pageErrors.length === errores0, JSON.stringify(r.recorrido));
+    check('Dinero 3.0 · D6: en Ahorro y Bosque no hay «Cambiar el reparto» ni «Cuadrarlo»; sí el %, el bosque y las 5 barras de cada mes',
+      r.ahorro.graf && !r.ahorro.reparto && !r.ahorro.cuadrar && r.ahorro.pct && r.ahorro.barras === 5, JSON.stringify(r.ahorro));
     check('Dinero 3.0 · D6: la copia de seguridad lleva lo viejo intacto (y vuelve igual tras normalizar) y lo migrado: musgo, Japón como compra (2.400 / 800) y el deseo en espera',
       r.copia.viejo && r.vuelta === 'hu-colchon:3000:0,hu-j347:800:1|9000|1/1|e347|2026-12-25|1|25|1' && r.copia.guardado >= 3000 && r.copia.japon === '2400/800' && r.copia.deseo === 'espera', JSON.stringify({ c: r.copia, v: r.vuelta }));
   }
@@ -13488,7 +13495,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.food.log[P.iso(new Date())] = [];
       P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
     await page.waitForTimeout(200);
-    const lee = () => page.evaluate(() => ({ lupa: !!document.querySelector('#main .cjbusca'),
+    const lee = () => page.evaluate(() => ({ lupa: !!document.querySelector('#main .cjfrtop [data-a="cje-busca"]'),
       mac: Array.prototype.map.call(document.querySelectorAll('#main .cjahora .cjmac > span'), (x) => x.className).join(''),
       sig: (document.querySelector('#main .cjsig') || {}).dataset ? document.querySelector('#main .cjsig').dataset.p : '',
       hecho: !!document.querySelector('#main .cjsig [data-a="cje-ok"]'), otra: !!document.querySelector('#main .cjsig [data-a="cje-mom"]'),
@@ -14378,6 +14385,957 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp36);
     check('364 el .ics no trae «🌿 Vete del Lloret» ni «🚪 Sal de casa» de serie; con sus interruptores de Sueño encendidos trae los de cada noche con Lloret (21:45) y cada día de bus (07:31)',
       v.a.ll.length === 0 && v.a.sal.length === 0 && v.b.ll.length >= 4 && /^21:45@/.test(v.b.ll[0]) && v.b.sal.length === 0 && v.c.sal.length >= 3 && /^07:31@/.test(v.c.sal[0]) && v.on[0] === true && v.on[1] === true, JSON.stringify([v.a, v.b, v.c, v.on]));
+  }
+  // 365) DINERO · R2 «Tu mes» (412×915, hoy = jue 29/10/2026, nómina 2.380, fijos 728 con 118 sin pagar): Dinero abre en el vaso («Acabarás con ~… · ahorras …»
+  //      y la cadena empiezas − fijos − gastos = acabas); tocar el vaso separa los fijos («Te quedan 1.652 €» y la lista con ✓/○); la ficha «Fijos» lo pliega; el estado
+  //      vive en ui y el Bosque sigue en su pestaña. Sin scroll lateral.
+  // 366) HOY · la línea «💶 Te quedan N € · M €/día» con «mañana pagas X»: sale con un fijo sin pagar mañana, tocarla abre Dinero · Tu mes; sin nada que aporte, no sale.
+  // 367) DINERO · Tu mes sin nómina ni fijos: vaso vacío con «Apuntar mis fijos» (vista fijos) y «Mi nómina».
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate365 || Date; window.__origDate365 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(10, 0, 29);
+    await page.evaluate(() => { window.__copia365 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (opt) => page.evaluate((opt) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia365));
+      const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      /* con una captura de Fintonic (200 € de día a día) se sabe con cuánto acabas; opt.sinVars = sin ninguna, que es el caso del aviso «Sube Fintonic…» */
+      a.real = opt.sinVars ? [] : [{ id: 'r365', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e365', nombre: 'R1', desde: '2000-01', neto: opt.nomina ? 2380 : 0, finde: 0, pagaJun: 0, pagaDic: 0 }];   // sin épocas normalize pone las de serie: «sin nómina» es neto 0
+      d.gastos = opt.fijos ? [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }, { id: 'g2', nombre: 'Luz y agua', importe: 60, dia: 5, cat: 'casa', on: true },
+        { id: 'g3', nombre: 'Seguro', importe: 25, dia: 30, cat: 'otros', on: true }, { id: 'g4', nombre: 'Spotify', importe: 18, dia: 31, cat: 'ocio', on: true },
+        { id: 'g5', nombre: 'Móvil', importe: 35, dia: 31, cat: 'casa', on: true }, { id: 'g6', nombre: 'Gimnasio', importe: 40, dia: 31, cat: 'salud', on: true }] : [];
+      d.pagos = opt.fijos ? [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }]
+        .concat(opt.seguroPagado ? [{ id: 'p3', fecha: '2026-10-30', nombre: 'Seguro', importe: 25, cat: 'otros', gastoId: 'g3', ts: 3 }] : []) : [];
+      if (opt.sinManana) d.gastos = d.gastos.filter((g) => g.id !== 'g3');
+      P.ui.tmFijos = false; P.ui.tab = opt.hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, opt);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
+      const vaso = q('.tm-vaso'), fx = q('.tm-fx');
+      return { hay: !!q('.tm'), hero: t('.tm-hero'), lado: t('.tm-lado'), cadena: t('.tm-cadena'), fijosLista: m.querySelectorAll('.tm-fijos li').length, hechos: m.querySelectorAll('.tm-fijos li.si').length,
+        capas: m.querySelectorAll('.tm-vaso svg g.l').length, pv: vaso ? vaso.getAttribute('aria-pressed') : null, pf: fx ? fx.getAttribute('aria-pressed') : null, ui: window.PG.ui.tmFijos,
+        altoVaso: vaso ? Math.round(vaso.getBoundingClientRect().height) : 0, altoFx: fx ? Math.round(fx.getBoundingClientRect().height) : 0,
+        tabs: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), on: t('.lau-tabs button.on'), ancho: document.documentElement.scrollWidth,
+        vacio: !!q('.tm-vacio'), btns: [...m.querySelectorAll('.tm-vacio button')].map((b) => b.textContent.trim() + '>' + (b.dataset.v || '')).join('|'), titulo: t('.tm-vaso svg title'),
+        linea: t('.tm-hoy'), lineaA: q('.tm-hoy') ? q('.tm-hoy').dataset.a + ':' + q('.tm-hoy').dataset.v : '', lineaAlto: q('.tm-hoy') ? Math.round(q('.tm-hoy').getBoundingClientRect().height) : 0,
+        bosque: !!q('.ab-bosque') }; });
+    // 365
+    const r = {};
+    await siembra({ nomina: true, fijos: true }); await page.waitForTimeout(250);
+    r.a = await lee();
+    await page.click('#main .tm-vaso'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); r.c = await lee();
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); r.d = await lee();
+    await page.click('#main .tm-vaso'); await page.waitForTimeout(250); r.e = await lee();
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(250); r.f = await lee();
+    check('365 Dinero · Tu mes: abre en el vaso con «Acabarás con ~… · ahorras …» y la cadena; tocar el vaso muestra «Te quedan 1.652 €» y los 6 fijos (2 ✓); la ficha Fijos lo pliega; el Bosque queda en su pestaña',
+      r.a.hay && /Acabarás/.test(r.a.hero) && /~1\.452 €/.test(r.a.hero) && /ahorras 1\.282/.test(r.a.hero) && /Empiezas\s*2\.380.*Fijos\s*728.*Gastos\s*200.*Acabas\s*1\.452/.test(r.a.cadena) && r.a.capas >= 5 &&
+      r.a.pv === 'false' && r.a.pf === 'false' && r.a.ui === false && !/Te quedan 1\.652/.test(r.a.lado) && /Fijos 728/.test(r.a.lado) && /118/.test(r.a.lado) &&
+      r.b.pv === 'true' && r.b.pf === 'true' && r.b.ui === true && /Te quedan 1\.652 €/.test(r.b.lado) && r.b.fijosLista === 6 && r.b.hechos === 2 &&
+      r.c.pv === 'false' && r.c.ui === false && !/Te quedan 1\.652/.test(r.c.lado) && r.d.ui === true && /Te quedan 1\.652 €/.test(r.d.lado) &&
+      r.e.ui === false && !r.f.hay && r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.a.on === 'Tu mes' && r.f.on === 'Ahorro y Bosque' && r.f.bosque &&
+      r.a.altoVaso >= 44 && r.a.altoFx >= 44 && r.a.ancho <= 412 && r.b.ancho <= 412, JSON.stringify(r));
+    // 366
+    const h = {};
+    await siembra({ nomina: true, fijos: true, hoy: true }); await page.waitForTimeout(300); h.con = await lee();
+    { const el = await page.$('#main .tm-hoy'); h.clic = !!el; if (el) await el.click(); } await page.waitForTimeout(300); h.abre = await lee(); h.tab = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dinTab);
+    await siembra({ nomina: true, fijos: true, hoy: true, seguroPagado: true }); await page.waitForTimeout(300); h.pagado = await lee();
+    await siembra({ nomina: true, fijos: true, hoy: true, sinManana: true }); await page.waitForTimeout(300); h.sin = await lee();
+    await siembra({ hoy: true }); await page.waitForTimeout(300); h.nada = await lee();
+    check('366 Hoy · la línea «💶 Te quedan 170 € · 56 €/día hasta fin de mes · mañana pagas Seguro (25 €)» sale con un fijo sin pagar mañana y al tocarla abre Dinero · Tu mes; pagado, sin fijo mañana o sin datos, no sale',
+      /^💶 Te quedan 170 € · 56 €\/día hasta fin de mes · mañana pagas Seguro \(25 €\)$/.test(h.con.linea) && h.clic && h.con.lineaAlto >= 44 && h.con.ancho <= 412 && h.tab === 'dinero|' && h.abre.hay && /Acabarás/.test(h.abre.hero) &&
+      h.pagado.linea === '' && h.sin.linea === '' && h.nada.linea === '', JSON.stringify(h));
+    // 367
+    const v = {};
+    await siembra({}); await page.waitForTimeout(250); v.a = await lee();
+    await page.click('#main .tm-vacio [data-v="fijos"]'); await page.waitForTimeout(250); v.b = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dineroVista);
+    await siembra({}); await page.waitForTimeout(150);
+    await page.click('#main .tm-vacio [data-v="nomina"]'); await page.waitForTimeout(250); v.c = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dineroVista);
+    check('367 Dinero · Tu mes sin nómina ni fijos: vaso vacío con «Apuntar mis fijos» (vista fijos) y «Mi nómina» (vista nomina), sin cifras inventadas',
+      v.a.hay && v.a.vacio && v.a.btns === 'Apuntar mis fijos>fijos|Mi nómina>nomina' && !/Acabarás con ~/.test(v.a.hero) && v.a.fijosLista === 0 && v.b === 'dinero|fijos' && v.c === 'dinero|nomina' && v.a.ancho <= 412, JSON.stringify([v.a, v.b, v.c]));
+    // (misma tanda, 368) sin nada del día a día (ni captura ni gasto apuntado) «ahorras» saldría inflado: no se dice «acabarás con» ni «ahorras»; sale el aviso con el botón de subir Fintonic y el vaso enseña empiezas, fijos y te queda
+    const w = {};
+    await siembra({ nomina: true, fijos: true, sinVars: true }); await page.waitForTimeout(250); w.a = await lee();
+    w.sub = await page.evaluate(() => !!document.querySelector('#main .tm-hero input[data-a="fin-fotos"]'));
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); w.b = await lee();
+    await siembra({ nomina: true, fijos: true, sinVars: true, hoy: true }); await page.waitForTimeout(300); w.hoy = await lee();
+    check('367b Dinero · Tu mes sin gasto del día a día: no sale «Acabarás con» ni «ahorras», sale «Sube la captura de Fintonic…» con el botón de subir; el vaso dice Empiezas 2.380, Fijos 728, Te queda 1.652; tocar Fijos da «Te quedan 1.652 €»; Hoy no habla de €/día',
+      w.a.hay && !/Acabarás|ahorras/i.test(w.a.hero + w.a.lado + w.a.cadena) && /Sube la captura de Fintonic de este mes para saber con cuánto acabas/.test(w.a.hero) && w.sub &&
+      /Empiezas\s*2\.380.*Fijos\s*728.*Te queda\s*1\.652/.test(w.a.cadena) && !/Te quedan 1\.652/.test(w.a.lado) && /Te queda\s*1\.652/.test(w.a.lado) &&
+      w.b.ui === true && /Te quedan 1\.652 €/.test(w.b.lado) && w.b.fijosLista === 6 && !/ahorras/i.test(w.b.hero) && w.a.ancho <= 412 &&
+      /^💶 Mañana pagas Seguro \(25 €\)$/.test(w.hoy.linea) && !/€\/día/.test(w.hoy.linea), JSON.stringify(w));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia365; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.tmFijos = false; P.save(); P.render(); window.Date = window.__origDate365; });
+    await page.setViewportSize(vp36);
+  }
+  // 368) DINERO · R3 «Gasto grande», EN CADENA (412×915, hoy = jue 29/10/2026, nómina 2.380, fijos 728, ahorras 1.282): Tu mes → «Apuntar gasto grande» → Portátil 1.100 para dentro de 2 meses →
+  //      «Lo voy apartando» → Listo → chip «732 € al colchón + 550 apartados», «ahorras» baja a 732, el vaso gana su capa a rayas y Hoy dice «apartas 550 a Portátil» → abrir su fila → Quitar → todo como al
+  //      principio (la compra queda en estado «no», no se borra). Con «Sale de lo ahorrado» lo que pide el bosque (d3Datos().pide) sube y el chip dice que sale de lo ahorrado; Quitar lo deja como estaba.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate368 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia368 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (hoy) => page.evaluate((hoy) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia368));
+      const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r368', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e368', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }, { id: 'g2', nombre: 'Luz y agua', importe: 60, dia: 5, cat: 'casa', on: true },
+        { id: 'g3', nombre: 'Seguro', importe: 25, dia: 30, cat: 'otros', on: true }, { id: 'g4', nombre: 'Spotify', importe: 18, dia: 31, cat: 'ocio', on: true },
+        { id: 'g5', nombre: 'Móvil', importe: 35, dia: 31, cat: 'casa', on: true }, { id: 'g6', nombre: 'Gimnasio', importe: 40, dia: 31, cat: 'salud', on: true }];
+      d.pagos = [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, hoy);
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
+      const cs = P.dinero3S().compras;
+      return { hero: t('.tm-hero'), chip: t('.tm-chip'), filas: m.querySelectorAll('.tm-gfila').length, btn: !!q('.tm-gbtn'), capaRayas: !!q('.tm-vaso svg [data-capa="aparta"]'), linea: t('.tm-hoy'),
+        pide: P.d3Datos().pide, n: cs.length, estados: cs.map((c) => c.estado + ':' + (c.grande || '-')).join(','), ancho: document.documentElement.scrollWidth,
+        hoja: !!document.querySelector('#hojaDia .hoja[role="dialog"]') }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'), q = (s) => h ? h.querySelector(s) : null;
+      return { hay: !!h, rol: h ? h.getAttribute('role') : '', prev: q('#tgPrev') ? q('#tgPrev').textContent.replace(/\s+/g, ' ').trim() : '',
+        pres: [...(h ? h.querySelectorAll('[data-a="tg-modo"]') : [])].map((b) => b.dataset.v + ':' + b.getAttribute('aria-pressed') + ':' + Math.round(b.getBoundingClientRect().height)).join('|'),
+        nom: q('#tgNom') ? q('#tgNom').value : '', quita: !!q('[data-a="tg-quita"]'), listo: !!q('[data-a="tg-listo"]') }; });
+    const apunta = async (modo) => {
+      await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+      await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+      await page.click('#hojaDia [data-a="tg-modo"][data-v="' + modo + '"]'); await page.waitForTimeout(150);
+      const h = await hoja(); await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); return h; };
+    const r = {};
+    await siembra(false); await page.waitForTimeout(250); r.a = await lee();
+    r.hojaA = await apunta('apartando'); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); r.hojaB = await hoja();
+    await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    r.hojaC = await apunta('ahorrado'); r.d = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.e = await lee();
+    await siembra(true); await page.waitForTimeout(250); r.h0 = await lee();
+    await page.evaluate(() => { const P = window.PG; P.dinero3S().compras.push({ id: 'cg', nombre: 'Portátil', precio: 1100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-29', tipo: 'util', grande: 'apartando' }); P.save(); P.render(); });
+    await page.waitForTimeout(250); r.h1 = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia368; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate368; });
+    await page.setViewportSize(vp);
+    check('368 Dinero · gasto grande: Portátil 1.100 para dic «Lo voy apartando» → chip «732 € al colchón + 550 apartados», ahorras baja de 1.282 a 732, capa a rayas en el vaso y Hoy dice «apartas 550 a Portátil»; Quitar lo deja todo como estaba (estado «no», no se borra); con «Sale de lo ahorrado» pide sube y sale el chip; Quitar vuelve',
+      r.a.btn && r.a.filas === 0 && r.a.chip === '' && /ahorras 1\.282/.test(r.a.hero) && r.hojaA.hay && r.hojaA.rol === 'dialog' && r.hojaA.pres === 'apartando:true:' + r.hojaA.pres.split(':')[2].split('|')[0] + '|ahorrado:false:' + r.hojaA.pres.split('|')[1].split(':')[2] &&
+      /Este mes: 732 € al colchón \+ 550 apartados/.test(r.hojaA.prev) && r.hojaA.pres.split('|').every((x) => +x.split(':')[2] >= 44) &&
+      /732 € al colchón \+ .*550 apartados/.test(r.b.chip) && /ahorras 732/.test(r.b.hero) && r.b.filas === 1 && r.b.capaRayas && r.b.estados === 'plan:apartando' && r.b.pide === r.a.pide &&
+      r.hojaB.hay && r.hojaB.quita && r.hojaB.nom === 'Portátil' && r.c.estados === 'no:apartando' && r.c.n === 1 && r.c.chip === '' && r.c.filas === 0 && /ahorras 1\.282/.test(r.c.hero) && !r.c.capaRayas && r.c.pide === r.a.pide &&
+      /sale de lo ahorrado/.test(r.d.chip) && /ahorras 1\.282/.test(r.d.hero) && r.d.pide > r.a.pide && r.d.estados === 'no:apartando,plan:ahorrado' &&
+      r.e.chip === '' && r.e.pide === r.a.pide && r.e.estados === 'no:apartando,no:ahorrado' && r.e.n === 2 &&
+      !/apartas/.test(r.h0.linea) && /apartas 550 a Portátil/.test(r.h1.linea) && r.a.ancho <= 412 && r.b.ancho <= 412, JSON.stringify(r));
+  }
+  // 369) DINERO · R3 · datos viejos: un store con huchas y meta de ahorro, store.dinero y dinero3 SIN «grande» carga sin perder nada, ninguna compra es grande y Tu mes no enseña chips ni filas;
+  //      normalize conserva «grande» si es 'apartando' o 'ahorrado' y lo descarta si es otra cosa
+  {
+    const r = await page.evaluate(() => { const P = window.PG, copia = JSON.parse(JSON.stringify(P.store)), o = {};
+      const s = JSON.parse(JSON.stringify(copia));
+      s.ahorro = { huchas: [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 50, objetivo: 0, meta: '', saldo: 3000 }, { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#10b981', pct: 50, objetivo: 2000, meta: '', saldo: 500 }], puroId: 'hu-colchon', puroPct: 50, meta: { importe: 5000 } };
+      s.dinero = { gastos: [{ id: 'g369', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }], pagos: [] };
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 3200, objetivoMeses: 6, plazoMeses: 12, desde: '2026-01-01' }, compras: [
+        { id: 'c1', nombre: 'Portátil', precio: 1100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-01', tipo: 'util' }, { id: 'c2', nombre: 'Gafas', precio: 200, llevas: 0, mes: '', estado: 'espera', alta: '2026-10-01', tipo: 'ilu' }] };
+      const resumen = (x) => JSON.stringify([x.ahorro.huchas.map((h) => h.id + ':' + h.saldo + ':' + h.objetivo), x.dinero.gastos.map((g) => g.id + ':' + g.importe)]); const viejo = resumen(s);
+      P.store = s; o.sinGrande = P.store.dinero3.compras.map((c) => 'grande' in c ? c.grande : '-').join(','); o.n = P.store.dinero3.compras.length;
+      o.intacto = resumen(P.store) === viejo; o.res = resumen(P.store);
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      o.filas = document.querySelectorAll('#main .tm-gfila').length; o.chip = document.querySelectorAll('#main .tm-chip').length; o.btn = !!document.querySelector('#main .tm-gbtn');
+      const s2 = JSON.parse(JSON.stringify(s)); const gs = ['apartando', 'ahorrado', 'otra', 7, null];
+      s2.dinero3.compras = gs.map((g, i) => ({ id: 'x' + i, nombre: 'X' + i, precio: 100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-01', tipo: 'ilu', grande: g }));
+      P.store = s2; o.grandes = P.store.dinero3.compras.map((c) => c.grande || '-').join(',');
+      P.store = copia; P.ui.tab = 'hoy'; P.render(); return o; });
+    check('369 Dinero · datos viejos (huchas+meta+dinero+dinero3 sin «grande»): nada se pierde, ninguna compra es grande, Tu mes sin chips ni filas pero con el botón; normalize conserva apartando/ahorrado y descarta lo demás',
+      r.n === 2 && r.sinGrande === '-,-' && r.intacto && r.filas === 0 && r.chip === 0 && r.btn && r.grandes === 'apartando,ahorrado,-,-,-', JSON.stringify(r));
+  }
+  // 370) DINERO · R3 · «Ahorro y Bosque» en una pestaña: cuatro pestañas (Tu mes · Ahorro y Bosque · Gastos · Compras); ui.dinTab «bosque» (datos viejos) abre la nueva igual que «ahorro»; un árbol por mes
+  //      del objetivo (6), un fruto por cada gasto grande, cinco barras de «lo que ahorraste cada mes» y, desde ahí, «Apuntar gasto grande» abre la hoja
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia370 = JSON.parse(JSON.stringify(P.store)); const A = P.dinero3S(); A.ahorro.guardado = 4200; A.ahorro.objetivoMeses = 6; A.compras = [];
+      P.ahorroS().real = [{ id: 'r370', mes: '2026-10', fecha: '2026-10-20', gastos: 1400, cats: {} }]; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s);
+      return { tabs: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), on: [...m.querySelectorAll('.lau-tabs button.on')].map((b) => b.textContent).join(','), pesta: window.PG.ui.dinTab,
+        arboles: m.querySelectorAll('.ab-arb').length, llenos: m.querySelectorAll('.ab-arb[data-lleno="1"]').length, frutos: m.querySelectorAll('.ab-fruto').length, barras: m.querySelectorAll('.ab-barra').length,
+        colchon: q('.ab-col') ? q('.ab-col').textContent.replace(/\s+/g, ' ').trim() : '', btn: !!q('.tm-gbtn'), nomina: !!q('#d4Nom'), guardar: !!q('#d3Guardado'), ancho: document.documentElement.scrollWidth, hoja: !!document.querySelector('#hojaDia .hoja') }; });
+    const r = {};
+    r.a = await lee();
+    await page.click('#main .lau-tabs [data-v="ahorro"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.evaluate(() => { const P = window.PG; P.dinero3S().compras.push({ id: 'cg370', nombre: 'Viaje', precio: 900, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-29', tipo: 'ilu', grande: 'apartando' }); P.ui.dinTab = 'bosque'; P.render(); });
+    await page.waitForTimeout(250); r.c = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(250); r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia370; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('370 Dinero · Ahorro y Bosque: cuatro pestañas (Tu mes, Ahorro y Bosque, Gastos, Compras); «bosque» abre la nueva; 6 árboles (objetivo), sin fruto hasta que hay un gasto grande, 5 barras, nómina y guardado debajo; el botón abre la hoja',
+      r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.b.on === 'Ahorro y Bosque' && r.b.arboles === 6 && r.b.llenos >= 1 && r.b.llenos < 6 && r.b.frutos === 0 && r.b.barras === 5 && /4\.200/.test(r.b.colchon) && r.b.btn && r.b.nomina && r.b.guardar &&
+      r.c.on === 'Ahorro y Bosque' && r.c.frutos === 1 && r.c.arboles === 6 && r.d.hoja && r.b.ancho <= 412 && r.c.ancho <= 412, JSON.stringify(r));
+  }
+  // 371) DINERO · R4 · Fintonic en pequeño, EN CADENA (412×915, hoy = 29/10/2026): subir una captura (OCR simulado) → renombrar «Belleza» a «Alquiler» (input de la fila + change) → quitar la fila del
+  //      «de 300» con ✕ → «suman 712 de 1.000» y «faltan 288» → guardar → gastoMes = {Supermercado 400, Alquiler 312} y Tu mes cuenta 312 como fijo (el total no cambia). H4: renombrar «Bares» a «Supermercado»
+  //      (ya existía) y guardar SUMA las dos filas. Restaura window.ocrTextos y el store.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate371 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia371 = JSON.parse(JSON.stringify(window.PG.store)); window.__ocr371 = window.ocrTextos; });
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 20; c.height = 20; return c.toDataURL('image/png').split(',')[1]; });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia371)); const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = []; a.gastado = {}; a.cobrado = {}; d.gastos = []; d.pagos = []; P.ui.fin = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const subir = async (texto) => {
+      await page.evaluate((t) => { window.ocrTextos = () => Promise.resolve([t]); }, texto);
+      await page.setInputFiles('#main input[data-a="fin-fotos"]', { name: 'c.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado === 'listo', null, { timeout: 10000 }); await page.waitForTimeout(150); };
+    const cambia = async (sel, valor) => { await page.fill(sel, valor); await page.dispatchEvent(sel, 'change'); await page.waitForTimeout(150); };
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.ui.fin;
+      const x = m.querySelector('.fin-x'), rx = x ? x.getBoundingClientRect() : null;
+      return { filas: [...m.querySelectorAll('.finfila')].map((e) => { const n = e.querySelector('[data-a="fin-n"]'); return n ? n.value : ''; }).filter(Boolean).join('|'),
+        cats: f && f.res ? f.res.cats.map((c) => c.nombre + ':' + c.v).join('|') : '', xs: m.querySelectorAll('.fin-x').length, xw: rx ? Math.round(rx.width) : 0, xh: rx ? Math.round(rx.height) : 0,
+        txt: m.innerText.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth, lista: !!document.querySelector("#finCats") }; });
+    const r = {};
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nPresupuesto mensual 288,00 €');
+    r.a = await lee();
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Alquiler'); r.b = await lee();
+    await page.click('#main .fin-x[data-k="2"]'); await page.waitForTimeout(150); r.c = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.d = await page.evaluate(() => { const g = window.gastoMes('2026-10'), p = window.mesPartes('2026-10'); return { cats: JSON.stringify(g.cats), total: g.total, fijos: p.fijos, F: p.F.join(','), vars: p.vars, fin: window.PG.ui.fin }; });
+    // H4: dos filas con el mismo nombre se suman
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 500,00 €\nSupermercado 400,00 €\nBares 100,00 €');
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Supermercado');
+    r.e = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.f = await page.evaluate(() => JSON.stringify(window.gastoMes('2026-10').cats));
+    await page.evaluate(() => { const P = window.PG; window.ocrTextos = window.__ocr371; P.store = window.__copia371; P.ui.fin = null; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); window.Date = window.__origDate371; });
+    await page.setViewportSize(vp);
+    check('371 Dinero · Fintonic en pequeño: subir → renombrar Belleza a «Alquiler» → quitar la fila del presupuesto con ✕ (44×44) → «suman 712 de 1.000» y «faltan 288» → guardar → {Supermercado 400, Alquiler 312}, Alquiler cuenta como fijo; dos filas con el mismo nombre se suman',
+      r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
+      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
+      r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
+  }
+  // 372) DINERO · G1 [aparc-tu-mes-r2], EN CADENA (412×915): Tu mes → «Apuntar gasto grande» → Portátil «Lo voy apartando» → Listo → la leyenda del vaso nombra «Apartado (rayas)»
+  //      fuera del vaso, a ≥14 px y con su muestra A RAYAS (como la capa, no un cuadro liso) → abrir su fila → Quitar → la fila de la leyenda desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate372 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia372 = JSON.parse(JSON.stringify(window.PG.store));
+      const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r372', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e372', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const li = [...document.querySelectorAll('#main .tm-ley')].find((l) => /Apartado/.test(l.textContent));
+      if (!li) return { hay: false, capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]') };
+      const i = li.querySelector('i'), cs = getComputedStyle(li);
+      return { hay: true, txt: li.textContent.replace(/\s+/g, ' ').trim(), px: parseFloat(cs.fontSize), fuera: !li.closest('svg'), rayas: /repeating-linear-gradient/.test(getComputedStyle(i).backgroundImage),
+        capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]'), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.a = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+    await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+    await page.click('#hojaDia [data-a="tg-modo"][data-v="apartando"]'); await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate372; });
+    await page.setViewportSize(vp);
+    check('372 Dinero · Tu mes: al apartar para un gasto grande la leyenda nombra «Apartado (rayas) 550 €» fuera del vaso, a ≥14 px y con la muestra a rayas como su capa; al quitarlo desaparece',
+      !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
+  }
+  // 373) HOY y MES · G1 [aparc-hoy-plantilla], EN CADENA (412×915): semana en modo plantilla → en Hoy el aviso «Usar las fechas del Mes» queda separado ≥8 px de «＋ añadir»
+  //      (antes se tocaban) → en Mes, separado ≥8 px de la fila de «hoy» → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.rotation.mode = 'pattern'; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    const mide = () => page.evaluate(() => { const b = document.querySelector('#main [data-a="mon-sync"]'); if (!b) return { hay: false };
+      const r = b.getBoundingClientRect(), bs = [...document.querySelectorAll('#main button')].filter((x) => x !== b).map((x) => x.getBoundingClientRect()).filter((q) => q.width && q.right > r.left && q.left < r.right);
+      const encima = bs.filter((q) => q.bottom <= r.top + 1).map((q) => r.top - q.bottom), debajo = bs.filter((q) => q.top >= r.bottom - 1).map((q) => q.top - r.bottom);
+      return { hay: true, arriba: encima.length ? Math.round(Math.min(...encima)) : 99, abajo: debajo.length ? Math.round(Math.min(...debajo)) : 99, ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.hoy = await mide();
+    r.hoyAnade = await page.evaluate(() => [...document.querySelectorAll('#main button')].some((x) => /añadir/.test(x.textContent)));
+    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); r.mes = await mide();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.tab = 'hoy'; P.save(); P.render(); }); await page.waitForTimeout(200); r.tras = await mide(); r.modo = await page.evaluate(() => window.PG.store.rotation.mode);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('373 Hoy y Mes · modo plantilla: «Usar las fechas del Mes» separado ≥8 px de «＋ añadir» en Hoy y de la fila de «hoy» en Mes; en modo fecha el aviso se va',
+      r.hoy.hay && r.hoyAnade && r.hoy.arriba >= 8 && r.hoy.abajo >= 8 && r.mes.hay && r.mes.arriba >= 8 && r.mes.abajo >= 8 && r.hoy.ancho <= 412 && !r.tras.hay && r.modo === 'date', JSON.stringify(r));
+  }
+  // 374) COMER · G1 · lector y vitaminas, EN CADENA (412×915): en el día de ayer (sin plan que sugerir), con la nevera vacía (salvo una tableta de chocolate negro) apuntas «un vaso de leche» por el lector →
+  //      tocas la línea de micros → «Vitaminas y minerales»: falta lo que más falta y la sugerencia es comida de verdad, nunca chocolate, cacao ni dulces
+  //      (criterio de Sanidad) → apuntas «pizza barbacoa 3 porciones» SIN coma → sale «Pizza barbacoa» de 300 g sin preguntas (antes no la entendía)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store));
+      window.__d374 = P.iso(P.addDays ? P.addDays(new Date(), -1) : new Date(Date.now() - 864e5)); P.store.food.log[window.__d374] = []; P.store.food.despensa = []; P.despensaAdd('chocolate negro 70%', 1, '');
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = window.__d374; P.render(); });
+    const r = {};
+    await page.fill('#frIn', 'un vaso de leche'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.n1 = await page.evaluate(() => window.PG.foodLog(window.__d374).length);
+    await page.click('#main .h2mic'); await page.waitForTimeout(250);
+    r.sug = await page.evaluate(() => ((document.querySelector('#main .vitsug') || {}).textContent || '').replace(/\s+/g, ' ').trim());
+    r.vista = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+    await page.fill('#frIn', 'pizza barbacoa 3 porciones'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.pizza = await page.evaluate(() => window.PG.foodLog(window.__d374).filter((e) => /pizza barbacoa/i.test(JSON.stringify(e))).map((e) => Math.round(e.kcal || 0)).join('|'));
+    r.dudas = await page.evaluate(() => !!(window.PG.ui.frase && (window.PG.ui.frase.dudas || []).length));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («100 g de …»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
+      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
+      r.pizza === '780' && !r.dudas, JSON.stringify(r));
+  }
+  // 375) HOY · G1 [aparc-sueno-vistas], EN CADENA (412×915): en la vista Reloj, sin la noche apuntada, sale «Anotar anoche» a la vista (antes solo dentro del cartel
+  //      de la noche desplegado y antes de las 12) → abre la hoja de la noche (la misma de Sueño) → Guardar → el botón pasa a «✎ Anoche: … · cambiar o añadir» →
+  //      vista Línea: el mismo botón → abre la misma hoja; en Conductor no se añade (allí lo ofrece el propio conductor)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo2'); } catch (e) {}
+      delete P.suenoRealS()[P.iso(new Date())]; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const b = document.querySelector('#main .snbtn[data-a="sn-hoja"]'), h = document.querySelector('.hoja [data-a="sn-tguardar"]');
+      return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', alto: b ? Math.round(b.getBoundingClientRect().height) : 0, hoja: !!h,
+        tit: h ? ((h.closest('.hoja').querySelector('.sh') || {}).textContent || '') : '', ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.reloj = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaR = await lee();
+    await page.click('.hoja [data-a="sn-tguardar"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.tras = await lee();
+    r.guardado = await page.evaluate(() => !!window.PG.suenoRealS()[window.PG.iso(new Date())]);
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250); r.linea = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaL = await lee();
+    await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); });
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250); r.bus = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo2'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('375 Hoy · Reloj y Línea: «Anotar anoche» a la vista (≥44 px) abre la hoja de la noche; al guardar dice «✎ Anoche: … · cambiar o añadir»; en Línea el mismo botón abre la misma hoja; en Conductor no se duplica',
+      /Anotar anoche|Cuánto dormiste/.test(r.reloj.btn) && r.reloj.alto >= 44 && r.hojaR.hoja && /Anoche|Noche/.test(r.hojaR.tit) && !r.tras.hoja && r.guardado &&
+      /^✎ (Anoche|Hoy): .* · cambiar o añadir$/.test(r.tras.btn) && r.linea.btn === r.tras.btn && r.hojaL.hoja && r.bus.btn === '' && r.reloj.ancho <= 412, JSON.stringify(r));
+  }
+  // 376) COMER · R6 · Compra base, EN CADENA (412×915): con 1 kg de arroz ya en casa → «Hacer la compra base» entra como grupo «Compra base» con 6 líneas, la del arroz apagada y fuera de la
+  //      cuenta (la lista pide 5) → marcar pollo y lomo → «He hecho esta compra» → pollo y lomo en la despensa, el grupo se va (compraBaseOn se borra) y la tarjeta «Mi compra base» sigue
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia376 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; delete f.compraBase; delete f.compraBaseOn; f.despensa = [];
+      P.despensaAdd('1 kg arroz'); P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.compraCerradas = new Set(); P.ui.shopVista = ''; P.ui.compraSalida = 'todo'; P.ui.tab = 'shop'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.store.food, base = m.querySelector('.cbase');
+      const sec = [...m.querySelectorAll('.seccion')].filter((b) => /Compra base/.test(b.textContent))[0];
+      return { tarjeta: !!base, filas: base ? base.querySelectorAll('.cb-fila').length : 0, btn: !!m.querySelector('[data-a="compra-base-hacer"]'), btnH: m.querySelector('[data-a="compra-base-hacer"]') ? Math.round(m.querySelector('[data-a="compra-base-hacer"]').getBoundingClientRect().height) : 0,
+        grupo: !!sec, lineas: m.querySelectorAll('.linea[data-id^="cb#"]').length, tengo: m.querySelectorAll('.linea.tengo[data-id^="cb#"]').length, tag: (m.querySelector('.subcab .tag') || {}).textContent || '',
+        on: !!f.compraBaseOn, desp: (f.despensa || []).map((x) => x.k).sort().join(','), cad: /Tu semana por caducidad/.test(m.innerText), fuente: /FoodKeeper/.test(m.innerText), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    r.a = await lee();
+    await page.click('#main [data-a="compra-base-hacer"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="compra-todo"]'); await page.waitForTimeout(200);
+    r.b = await lee();
+    await page.click('#main .linea[data-id="cb#Pollo"]'); await page.waitForTimeout(120);
+    await page.click('#main .linea[data-id="cb#Lomo"]'); await page.waitForTimeout(120);
+    r.c = await lee();
+    await page.click('#main [data-a="compra-hecha"]'); await page.waitForTimeout(300);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia376; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    const tot = (x) => +(/\/\s*(\d+)/.exec(x.tag) || [0, -1])[1];
+    check('376 Comer · compra base: tarjeta «Mi compra base» con 6 líneas y botón de 44 px; «Hacer la compra base» mete el grupo «Compra base» con 6 líneas, la del arroz (ya en casa) apagada y la lista pide 5 más; marcar pollo y lomo y «He hecho esta compra» los lleva a la despensa, el grupo se va y la tarjeta se queda; debajo, «Tu semana por caducidad» con la fuente',
+      r.a.tarjeta && r.a.filas === 6 && r.a.btn && r.a.btnH >= 44 && !r.a.grupo && r.a.lineas === 0 && !r.a.on && r.a.cad && r.a.fuente &&
+      r.b.grupo && r.b.lineas === 6 && r.b.tengo === 1 && r.b.on && tot(r.b) - tot(r.a) === 5 &&
+      /^2 \//.test(r.c.tag) && r.d.desp.indexOf('pollo') >= 0 && r.d.desp.indexOf('lomo') >= 0 && !r.d.grupo && r.d.lineas === 0 && !r.d.on && r.d.tarjeta && r.d.filas === 6 && r.b.ancho <= 412, JSON.stringify(r));
+  }
+  // 377) COMER · R6 · reparto del lote, EN CADENA (412×915): cocinar 6 raciones de lentejas (el menú pide 3 o 4 en lo que aguantan) → «✓ hecho» abre la hoja «¿Cómo las repartes?» con
+  //      «3 nevera · 3 ❄» → Cancelar no apunta nada → otra vez hecho → «+» → «4 nevera · 2 ❄» (los botones ≥44, sube hasta 6 y no más) → Guardar → 4 en la nevera y 2 ❄ con «hasta» a 3 meses
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia377 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.semBase = { on: true, d: {} }; P.store.food.log[P.iso(new Date())] = [];
+      P.store.dishes.push({ id: 'd377', name: 'Lentejas de domingo', icon: '🍲', portions: 6, kcal: 450, prot: 25, ingredients: ['500 g lentejas'], steps: ['Cuece las lentejas.'] });
+      const k = (j) => P.iso(P.addDays(new Date(), j));
+      for (let j = 0; j < 7; j++) ['comida', 'cena'].forEach((c) => P.sbPoner(k(j), c, P.dishNada().id));
+      P.sbPoner(k(0), 'comida', 'd377'); P.sbPoner(k(0), 'cena', 'd377'); P.sbPoner(k(1), 'comida', 'd377');
+      P.ui.tab = 'food'; P.ui.foodVista = 'cocina'; P.ui.cocinaPlato = 'd377'; P.ui.cocinaPaso = 0; P.ui.cocinaRac = 0; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'), q = (s) => h ? h.querySelector(s) : null, P = window.PG;
+      const sum = (c) => P.cocinadoS().filter((x) => x.dishId === 'd377' && !!x.cong === c).reduce((a, x) => a + x.total, 0), hasta = P.cocinadoS().filter((x) => x.cong)[0];
+      return { hay: !!h, rol: h ? h.getAttribute('role') : '', tit: q("h2") ? q("h2").textContent : '', n: q('#repN') ? q('#repN').textContent.replace(/\s+/g, ' ').trim() : '',
+        menos: q('[data-a="rep-menos"]') ? Math.round(q('[data-a="rep-menos"]').getBoundingClientRect().height) : 0, mas: q('[data-a="rep-mas"]') ? Math.round(q('[data-a="rep-mas"]').getBoundingClientRect().height) : 0,
+        nev: sum(false), cong: sum(true), hasta: hasta ? hasta.hasta : '', fecha: hasta ? hasta.fecha : '', ancho: document.documentElement.scrollWidth, vista: P.ui.foodVista }; });
+    const r = {};
+    // lo que el menú pide de este plato mientras aguanta en la nevera (hoy y los días que dura): la propuesta tiene que ser esa cifra, no el 2 de reserva
+    r.exp = await page.evaluate(() => { const P = window.PG; let n = 0; for (let i = 0; i <= P.diasAguanta({ name: 'Lentejas de domingo' }); i++) { const pm = P.menuPorMomento(P.iso(P.addDays(new Date(), i))); Object.keys(pm).forEach((q) => pm[q].forEach((it) => { if (it.id === 'd377') n += it.portions || 1; })); } return n; });
+    await page.click('#main [data-a="cocina-rac"][data-n="6"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cocina-hecho"]'); await page.waitForTimeout(250);
+    r.a = await lee();
+    await page.click('#hojaDia [data-a="rep-no"]'); await page.waitForTimeout(250);
+    r.b = await lee();
+    await page.click('#main [data-a="cocina-hecho"]'); await page.waitForTimeout(250);
+    await page.click('#hojaDia [data-a="rep-mas"]'); await page.waitForTimeout(120);
+    r.c = await lee();
+    for (let i = 0; i < 5 - r.exp; i++) await page.click('#hojaDia [data-a="rep-mas"]');
+    r.tope = await lee(); r.tope.masOff = await page.evaluate(() => !!document.querySelector('#hojaDia [data-a="rep-mas"]').disabled);
+    for (let i = 0; i < 2; i++) await page.click('#hojaDia [data-a="rep-menos"]');
+    await page.click('#hojaDia [data-a="rep-ok"]'); await page.waitForTimeout(300);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia377; P.ui.foodVista = ''; P.ui.cocinaPlato = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    const meses3 = (r.d.fecha && r.d.hasta) ? Math.round((new Date(r.d.hasta) - new Date(r.d.fecha)) / 86400000) : 0;
+    check('377 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
+      r.a.hay && r.a.rol === 'dialog' && /repartes/.test(r.a.tit) && r.exp >= 1 && r.exp <= 5 && r.a.n === r.exp + ' nevera · ' + (6 - r.exp) + ' ❄' && r.a.menos >= 44 && r.a.mas >= 44 && r.a.nev === 0 && r.a.cong === 0 &&
+      !r.b.hay && r.b.nev === 0 && r.b.cong === 0 && r.b.vista === 'cocina' &&
+      r.c.n === (r.exp + 1) + ' nevera · ' + (5 - r.exp) + ' ❄' && r.tope.n === '6 nevera · 0 ❄' && r.tope.masOff && r.d.nev === 4 && r.d.cong === 2 && !r.d.hay && meses3 >= 85 && meses3 <= 95 && r.a.ancho <= 412, JSON.stringify(r));
+  }
+  // 378) COMER · R6 · la Nevera con congelador, EN CADENA (412×915): 2 raciones en la nevera, 3 ❄ y 1 kg de pescado congelado en casa → la Nevera pinta la zona «❄ Congelador» (3 raciones con
+  //      «❄ 3 meses · hasta…» y «4 × 250 g ❄ · saca una la noche antes»; el pescado no sale en lo fresco) → comer 2 raciones gasta la nevera (el COCINADO se vacía) y el congelador sigue en 3 →
+  //      la tercera ya gasta del congelador (2) → «Platos que congelan bien» lista los 8 platos
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia378 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; f.cocinado = []; f.despensa = [];
+      P.store.dishes.push({ id: 'd378', name: 'Boloñesa de lenteja roja', icon: '🍝', portions: 5, kcal: 480, prot: 30, ingredients: ['200 g lenteja roja'] });
+      P.cocinadoAdd('d378', 2); P.cocinadoAdd('d378', 3, true); P.despensaAdd('1 kg pescado congelado');
+      P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.ui.nvTodo = true; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), cong = m.querySelector('.nvcong'), P = window.PG;
+      const fresco = [...m.querySelectorAll('.nvg:not(.nvcong) .nvf')].map((e) => e.innerText).join('|'), coc = [...m.querySelectorAll('.nvcoc .nvf')].map((e) => e.innerText.replace(/\s+/g, ' ')).join('|');
+      return { hayCong: !!cong, cabCong: cong ? cong.querySelector('.cap').textContent : '', cong: cong ? cong.innerText.replace(/\s+/g, ' ') : '', coc: coc, fresco: fresco.replace(/\s+/g, ' '),
+        queda: P.cocinadoS().filter((x) => x.dishId === 'd378').map((x) => (x.cong ? 'c' : 'n') + x.queda).join(','), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    r.a = await lee();
+    r.base = await page.evaluate(() => { const d = document.querySelector('#main details.nvplega'); return d ? { filas: d.querySelectorAll('.nvpl').length, txt: d.textContent.replace(/\s+/g, ' ') } : null; });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.addFoodEntry(k, { dishId: 'd378', rac: 1, pos: 'comida' }); P.addFoodEntry(k, { dishId: 'd378', rac: 1, pos: 'cena' }); P.render(); });
+    await page.waitForTimeout(200); r.b = await lee();
+    await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { dishId: 'd378', rac: 1, pos: 'desayuno' }); P.render(); });
+    await page.waitForTimeout(200); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia378; P.ui.nvTodo = false; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('378 Comer · congelador: la Nevera pinta «❄ Congelador» aparte con las 3 raciones ❄ («❄ 3 meses · hasta …») y el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» (no sale en lo fresco); comer 2 raciones gasta la nevera y el COCINADO se vacía con el congelador en 3; la tercera gasta del congelador; «Platos que congelan bien» lista 8 platos con la fuente',
+      r.a.hayCong && /congelador/i.test(r.a.cabCong) && /3 raciones/.test(r.a.cong) && /❄ 3 meses · hasta \d+ \w{3}/.test(r.a.cong) && /4 × 250 g ❄/.test(r.a.cong) && /saca una la noche antes/i.test(r.a.cong) &&
+      /Boloñesa/.test(r.a.coc) && /2 rac/.test(r.a.coc) && !/pescado/i.test(r.a.fresco) && r.a.queda === 'n2,c3' &&
+      r.b.queda === 'c3' && r.b.coc === '' && /3 raciones/.test(r.b.cong) && r.c.queda === 'c2' && /2 raciones/.test(r.c.cong) &&
+      r.base && r.base.filas === 8 && /FoodKeeper/.test(r.base.txt) && /Merluza en salsa verde/.test(r.base.txt) && r.a.ancho <= 412, JSON.stringify(r));
+  }
+  // 379) COMER · R6 · `congela` del plato, EN CADENA (412×915): crear un plato con ingredientes, rellenar «nevera (días)» 6 y «congelador (meses)» 5 (change) → guardar → datos.congela {6,5} y
+  //      diasAguanta 6 → una ración suya ❄ → la Nevera dice «❄ 5 meses»; un plato igual SIN `congela` sigue con diasAguanta por nombre; vaciar los campos y guardar quita `congela`
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia379 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.despensa = [];
+      P.ui.plato = P.platoVacio(); P.ui.platoQ = ''; P.ui.tab = 'food'; P.ui.foodVista = 'plato'; P.render(); });
+    await page.waitForTimeout(150);
+    await page.fill('#plQ', 'lentejas'); await page.waitForTimeout(320); await page.click('#main .alim'); await page.waitForTimeout(220);
+    await page.fill('#plName', 'Plato raro de prueba'); await page.dispatchEvent('#plName', 'change'); await page.waitForTimeout(150);
+    const campos = await page.evaluate(() => { const a = document.querySelector('#plCongNev'), b = document.querySelector('#plCongMes'), h = (e) => e ? Math.round(e.getBoundingClientRect().height) : 0; return { a: !!a, b: !!b, ha: h(a), hb: h(b) }; });
+    await page.fill('#plCongNev', '6'); await page.dispatchEvent('#plCongNev', 'change'); await page.waitForTimeout(120);
+    await page.fill('#plCongMes', '5'); await page.dispatchEvent('#plCongMes', 'change'); await page.waitForTimeout(120);
+    await page.click('[data-a="plato-guardar"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.campos = campos;
+    r.a = await page.evaluate(() => { const P = window.PG, d = P.store.dishes[P.store.dishes.length - 1]; return { name: d.name, congela: JSON.stringify(d.congela || null), dias: P.diasAguanta(d), sin: P.diasAguanta({ name: d.name }), lent: P.diasAguanta({ name: 'Lentejas estofadas' }), id: d.id }; });
+    await page.evaluate((id) => { const P = window.PG; P.cocinadoAdd(id, 2, true); P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.render(); }, r.a.id); await page.waitForTimeout(200);
+    r.b = await page.evaluate(() => { const c = document.querySelector('#main .nvcong'); return c ? c.innerText.replace(/\s+/g, ' ') : ''; });
+    await page.evaluate((id) => { const P = window.PG; P.ui.plato = P.platoDesdeDish(id); P.ui.tab = 'food'; P.ui.foodVista = 'plato'; P.render(); }, r.a.id); await page.waitForTimeout(150);
+    r.vuelve = await page.evaluate(() => [document.querySelector('#plCongNev').value, document.querySelector('#plCongMes').value].join('/'));
+    await page.fill('#plCongNev', ''); await page.dispatchEvent('#plCongNev', 'change'); await page.fill('#plCongMes', ''); await page.dispatchEvent('#plCongMes', 'change'); await page.waitForTimeout(120);
+    await page.click('[data-a="plato-guardar"]'); await page.waitForTimeout(300);
+    r.c = await page.evaluate((id) => { const P = window.PG, d = P.dishById(id); return { congela: 'congela' in d, dias: P.diasAguanta(d) }; }, r.a.id);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia379; P.ui.plato = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('379 Comer · `congela` del plato: el formulario tiene «nevera (días)» y «congelador (meses)» (≥44 px); con 6 y 5 se guarda `congela` {nevera 6, meses 5} y diasAguanta pasa a 6; una ración ❄ suya sale en la Nevera con «❄ 5 meses»; al reabrir el plato los campos vuelven con 6/5 y vaciarlos y guardar quita `congela` (diasAguanta vuelve al de siempre, y «Lentejas estofadas» sigue en 4)',
+      r.campos.a && r.campos.b && r.campos.ha >= 44 && r.campos.hb >= 44 && r.a.congela === '{"nevera":6,"meses":5}' && r.a.dias === 6 && r.a.sin === 3 && r.a.lent === 4 &&
+      /Plato raro de prueba/.test(r.b) && /❄ 5 meses/.test(r.b) && r.vuelve === '6/5' && !r.c.congela && r.c.dias === 3, JSON.stringify(r));
+  }
+  // 380) HOY · R7 · proteína en Hoy, EN CADENA (412×915): con peso 75 kg (objetivo de Ajustes 90 g, el del día 1,6 g/kg = 120) y 85 g comidos → Hoy dice «85 de 120 g · te faltan 35» con UNA sugerencia
+  //      (huevos de la nevera) y «Apuntar» ≥44 px → tocarlo apunta la comida y la línea desaparece (quedan ≤30) → con 40 g en día de guardia: «lo que se pueda», sin «te faltan» → sin peso vuelve al de Ajustes
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia380 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.food.objetivo.prot = 90;
+      P.store.gym.sesiones = []; P.store.food.despensa = []; P.despensaAdd('6 huevos');
+      P.store.food.log[hoy] = [{ id: 'e380', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 85, carb: 60, gresa: 10, rac: 1 }]; P.ui.hoyVista = ''; P.ui.tab = 'food'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const lee = () => page.evaluate(() => { const l = document.querySelector('#main .prothoy'), b = l && l.querySelector('[data-a="prot-hoy"]'); return { txt: l ? l.querySelector('.t').innerText.replace(/\s+/g, ' ') : '', sug: l ? l.querySelectorAll('.sug').length : 0, bh: b ? Math.round(b.getBoundingClientRect().height) : 0,
+      ent: l ? /entrenado/.test(l.innerText) : false, ancho: document.documentElement.scrollWidth, prot: Math.round(window.PG.foodTotals(window.PG.iso(new Date())).prot) }; });
+    const r = {};
+    r.a = await lee();
+    r.hayBtn = !!(await page.$('#main .prothoy [data-a="prot-hoy"]'));
+    if (r.hayBtn) { await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300); }
+    r.b = await lee();
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, 'sh-g', 'urg'); P.store.food.log[hoy] = [{ id: 'e380b', p: 'comida', nombre: 'Tostada', kcal: 200, prot: 40, carb: 30, gresa: 5, rac: 1 }]; P.save(); P.render(); }); await page.waitForTimeout(250);
+    r.c = await lee();
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, 'sh-t', ''); P.store.perfil.pesoKg = 0; P.save(); P.render(); }); await page.waitForTimeout(250);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia380; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('380 Hoy · proteína: con 75 kg y 85 g sale «85 de 120 g · te faltan 35» (1,6 g/kg y no los 90 de Ajustes) con UNA sugerencia y «Apuntar» ≥44 px; apuntarla sube la proteína y quita la línea (faltan ≤30); en guardia con 40 g dice «lo que se pueda» sin «te faltan»; sin peso usa el de Ajustes (90 → «te faltan 50»)',
+      /^🥚 85 de 120 g · te faltan 35$/.test(r.a.txt) && r.a.sug === 1 && r.a.bh >= 44 && !r.a.ent && r.a.ancho <= 412 &&
+      r.hayBtn && r.b.prot >= 100 && r.b.txt === '' && /lo que se pueda: 40 g/.test(r.c.txt) && !/faltan/.test(r.c.txt) && r.c.sug === 1 && /^🥚 40 de 90 g · te faltan 50$/.test(r.d.txt), JSON.stringify(r));
+  }
+  // 381) HOY · R7 · aviso tras entreno, EN CADENA (412×915): con la línea de proteína visible y SIN entreno no hay aviso → entreno terminado hace 1 h → la misma línea añade «has entrenado: mejor algo de proteína
+  //      en las 2 h siguientes» → apuntar la sugerencia no lo duplica ni lo quita mientras falten >30 g → si el entreno acabó hace 3 h, ya no
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia381 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.gym.sesiones = []; P.store.food.despensa = []; P.despensaAdd('2 yogures griegos');
+      P.store.food.log[hoy] = [{ id: 'e381', p: 'comida', nombre: 'Arroz', kcal: 500, prot: 20, carb: 80, gresa: 5, rac: 1 }]; P.ui.hoyVista = ''; P.ui.tab = 'food'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const lee = () => page.evaluate(() => { const l = document.querySelector('#main .prothoy'); return { hay: !!l, n: l ? (l.innerText.match(/entrenado/g) || []).length : 0, txt: l ? l.innerText.replace(/\s+/g, ' ') : '' }; });
+    const pon = (hace) => page.evaluate((h) => { const P = window.PG, hoy = P.iso(new Date()), fin = Date.now() - h; P.store.gym.sesiones = [{ id: 's381', rutinaId: 'x', fecha: hoy, duracionMin: 45, seriesIds: [], plan: 1, completo: true, inicio: fin - 45 * 60000, fin: fin, tipo: 'fuerza' }]; P.save(); P.render(); }, hace);
+    const r = {};
+    r.a = await lee();
+    await pon(3600000); await page.waitForTimeout(250); r.b = await lee();
+    if (await page.$('#main .prothoy [data-a="prot-hoy"]')) { await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300); } r.c = await lee();
+    await pon(3 * 3600000); await page.waitForTimeout(250); r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia381; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('381 Hoy · aviso tras entreno: sin entreno la línea de proteína no avisa; con un entreno terminado hace 1 h añade «has entrenado: mejor algo de proteína en las 2 h siguientes» (una vez); con el entreno de hace 3 h ya no',
+      r.a.hay && r.a.n === 0 && r.b.hay && r.b.n === 1 && /2 h siguientes/.test(r.b.txt) && r.c.n <= 1 && r.d.hay && r.d.n === 0, JSON.stringify(r));
+  }
+  // 382) COMER · R7 · la frase arriba en Hoy de Comer, EN CADENA (412×915): Comer → Hoy trae arriba el campo «qué has comido» sin teclado abierto y de ≥44 px → escribir «bocata de pavo con queso» y Apuntar
+  //      lo apunta y repinta (la fila de comidas lo enseña y el campo se vacía) → la pestaña Semana no lo trae → volver a Hoy sí
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia382 = JSON.parse(JSON.stringify(P.store)); P.store.food.log[P.iso(new Date())] = []; P.ui.frase = null; P.ui.frTxt = ''; P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(250);
+    const r = {};
+    r.a = await page.evaluate(() => { const lp = document.querySelector('#main .cjfrtop [data-a="cje-busca"]'); return { lupa: !!lp, lh: lp ? Math.round(lp.getBoundingClientRect().height) : 0, aria: lp ? lp.getAttribute('aria-label') : '', viejo: !!document.querySelector('#main .cjbusca') }; });
+    r.a0 = r.a; r.a = await page.evaluate(() => { const i = document.querySelector('#main .cjfrtop #frIn'), g = document.querySelector('#main .cjfrtop'), b = document.querySelector('#main .cjfrtop [data-a="fr-leer"]');
+      const y = (e) => e ? Math.round(e.getBoundingClientRect().top) : -1; return { i: !!i, foco: document.activeElement === i, hi: i ? Math.round(i.getBoundingClientRect().height) : 0, hb: b ? Math.round(b.getBoundingClientRect().height) : 0, arriba: y(g) < 200, ancho: document.documentElement.scrollWidth }; });
+    r.hayIn = !!(await page.$('#frIn'));
+    if (r.hayIn) { await page.fill('#frIn', 'bocata de pavo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(400); }
+    r.b = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { n: l.length, nom: l.map((x) => x.nombre).join('|'), campo: (document.querySelector('#main #frIn') || {}).value, fila: /bocata/i.test(document.querySelector('#main .cjml').innerText), eje: !!document.querySelector('#main .cjml') }; });
+    await page.click('[data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(200);
+    r.c = await page.evaluate(() => !!document.querySelector('#main #frIn'));
+    await page.click('[data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(200);
+    r.d = await page.evaluate(() => !!document.querySelector('#main .cjfrtop #frIn'));
+    // con una hoja de momento abierta solo hay UN campo de frase (dos con el mismo id dejaban la lectura de la hoja sin pintar)
+    await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(250);
+    r.e = await page.evaluate(() => document.querySelectorAll('#frIn').length);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia382; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('382 Comer · la frase arriba en Hoy: el campo «qué has comido» sale arriba de Hoy (≥44 px, sin foco ni teclado, sin scroll lateral) con una lupa 🔍 «Buscar alimento» de 44 px y sin el botón viejo; «bocata de pavo con queso» + Enter lo apunta y repinta (la fila de comidas lo enseña, el campo se vacía); Semana no lo trae y Hoy sí; con una hoja abierta hay un solo campo',
+      r.hayIn && r.a0.lupa && r.a0.lh >= 44 && r.a0.aria === 'Buscar alimento' && !r.a0.viejo && r.a.i && !r.a.foco && r.a.hi >= 44 && r.a.hb >= 44 && r.a.arriba && r.a.ancho <= 412 && r.b.n === 1 && /bocata/i.test(r.b.nom) && r.b.eje && r.b.fila && !r.b.campo && !r.c && r.d && r.e === 1, JSON.stringify(r));
+  }
+  // 383) HOY/COMER · R7 · un solo número de proteína al día, EN CADENA (412×915): con 75 kg y objetivo de Ajustes 90 g, Hoy dice «de 120 g» → Comer → Hoy la barra de proteína dice «/120 g» (no 90) → la
+  //      lupa de la caja abre el buscador → volver y mirar el día de ayer (no es «hoy») usa el de Ajustes (90)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia383 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.food.objetivo.prot = 90; P.store.gym.sesiones = [];
+      P.store.food.log[hoy] = [{ id: 'e383', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 40, carb: 60, gresa: 10, rac: 1 }]; P.ui.hoyVista = ''; P.ui.foodDate = ''; P.ui.tab = 'food'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.hoy = await page.evaluate(() => ((document.querySelector('#main .prothoy .t') || {}).innerText || '').match(/de (\d+) g/));
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(300);
+    const barra = () => page.evaluate(() => { const e = document.querySelector('#main .cjmac .p b'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
+    r.comer = await barra();
+    r.lupa = !!(await page.$('#main .cjfrtop [data-a="cje-busca"]'));
+    if (r.lupa) { await page.click('#main .cjfrtop [data-a="cje-busca"]'); await page.waitForTimeout(250); }
+    r.buscador = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = P.iso(new Date(Date.now() - 864e5)); P.render(); }); await page.waitForTimeout(250);
+    r.ayer = await barra();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia383; P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('383 Hoy/Comer · un solo número de proteína: Hoy dice «de 120 g» y la barra de Comer → Hoy dice «40/120 g» (no los 90 de Ajustes); la lupa de la caja abre el buscador; un día pasado sigue con el de Ajustes',
+      r.hoy && r.hoy[1] === '120' && /^40\s*\/120 g$/.test(r.comer) && r.lupa && r.buscador === 'buscar' && /\/90 g/.test(r.ayer), JSON.stringify(r));
+  }
+  // 384) COMER · G5 · página de receta, EN CADENA (412×915): Mis platos → abrir un plato con receta → «Abrir la receta» trae la página (icono grande, 3 ingredientes de ≥44 px, pasos de ≥18 px, sin vídeo ni iframe)
+  //      → tocar un ingrediente lo tacha → «Añadir a la compra» lleva solo los NO tachados a la lista → «Ver en TikTok» abre fuera (noopener) → «Compartir» manda nombre, ingredientes y pasos (y sin share lo copia)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia384 = JSON.parse(JSON.stringify(P.store));
+      P.store.dishes.push({ id: 'd384', name: 'Pollo al curry de prueba', icon: '🍛', portions: 4, kcal: 520, prot: 42, tuyo: true, url: 'https://www.tiktok.com/@cocina/video/123',
+        ingredients: ['400 g de pollo', '200 ml de nata', '1 cebolla'], steps: ['Dora el pollo.', 'Añade la nata y la cebolla.', 'Cuece 15 minutos.'] });
+      P.store.listas = []; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'platos', f: '' }; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.hayPlato = !!(await page.$('[data-a="cje-pver"][data-id="d384"]'));
+    if (r.hayPlato) { await page.click('[data-a="cje-pver"][data-id="d384"]'); await page.waitForTimeout(150); }
+    r.hayAbre = !!(await page.$('[data-a="rec-abre"][data-id="d384"]'));
+    if (r.hayAbre) { await page.click('[data-a="rec-abre"][data-id="d384"]'); await page.waitForTimeout(200); }
+    r.pag = await page.evaluate(() => { const h = document.querySelector('#hojaDia .recp'); if (!h) return null; const q = (x) => h.querySelectorAll(x);
+      const hh = (e) => e ? Math.round(e.getBoundingClientRect().height) : 0;
+      return { ic: parseInt(getComputedStyle(h.querySelector('.recic')).fontSize), ing: q('.reci').length, hmin: Math.min.apply(null, [...q('.reci')].map(hh)), paso: parseInt(getComputedStyle(h.querySelector('.recs li')).fontSize), npasos: q('.recs li').length,
+        fuera: q('iframe,video,img,embed').length, ancho: document.documentElement.scrollWidth, btns: [...q('.recb .btn')].map(hh) }; });
+    r.hayIng = !!(await page.$('#hojaDia .reci'));
+    if (r.hayIng) { await page.click('#hojaDia .reci:nth-of-type(1)'); await page.waitForTimeout(120); }
+    r.tach = await page.evaluate(() => [...document.querySelectorAll('#hojaDia .reci')].map((e) => e.getAttribute('aria-pressed')).join(','));
+    r.hayCompra = !!(await page.$('#hojaDia [data-a="rec-compra"]'));
+    if (r.hayCompra) { await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(200); }
+    r.lista = await page.evaluate(() => { const l = (window.PG.store.listas || []).filter((x) => x.nombre === 'A mano')[0]; return l ? l.items.join('|') : ''; });
+    r.link = await page.evaluate(() => { const a = document.querySelector('#hojaDia .recb a'); return a ? { href: a.href, t: a.target, rel: a.rel, txt: a.innerText } : null; });
+    await page.evaluate(() => { window.__sh384 = null; Object.defineProperty(navigator, 'share', { value: (o) => { window.__sh384 = o; return Promise.resolve(); }, configurable: true }); });
+    r.hayCom = !!(await page.$('#hojaDia [data-a="rec-comparte"]'));
+    if (r.hayCom) { await page.click('#hojaDia [data-a="rec-comparte"]'); await page.waitForTimeout(150); }
+    r.sh = await page.evaluate(() => window.__sh384);
+    await page.evaluate(() => { window.__cp384 = ''; Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: (t) => { window.__cp384 = t; return Promise.resolve(); } }, configurable: true }); });
+    if (r.hayCom) { await page.click('#hojaDia [data-a="rec-comparte"]'); await page.waitForTimeout(200); }
+    r.cp = await page.evaluate(() => ({ t: window.__cp384, flash: (document.querySelector('#flash') || {}).innerText || '' }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia384; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('384 Comer · página de receta: icono grande, 3 ingredientes (≥44 px) que se tachan al tocar, pasos ≥18 px, sin vídeo ni imagen incrustados; «Añadir a la compra» lleva solo los no tachados; «Ver en TikTok» abre fuera con noopener; «Compartir» manda nombre, ingredientes y pasos y sin share los copia con aviso',
+      r.hayPlato && r.hayAbre && r.pag && r.pag.ic >= 48 && r.pag.ing === 3 && r.pag.hmin >= 44 && r.pag.paso >= 18 && r.pag.npasos === 3 && r.pag.fuera === 0 && r.pag.ancho <= 412 && r.pag.btns.every((h) => h >= 44) &&
+      r.hayIng && r.tach === 'true,false,false' && r.hayCompra && r.lista === '200 ml de nata|1 cebolla' && r.link && /tiktok\.com/.test(r.link.href) && r.link.t === '_blank' && /noopener/.test(r.link.rel) && /TikTok/.test(r.link.txt) &&
+      r.hayCom && r.sh && /Pollo al curry/.test(r.sh.text) && /400 g de pollo/.test(r.sh.text) && /Cuece 15 minutos/.test(r.sh.text) && r.cp.t === r.sh.text && /copiada/i.test(r.cp.flash), JSON.stringify(r));
+  }
+  // 385) IMPORTAR · G5 · cola de TikTok, EN CADENA (412×915): plegada con «0» → abrirla → pegar 3 enlaces (uno repetido) en líneas → «Guardar en la cola» deja 2 → «Pasar a receta» del primero lo saca de la cola
+  //      y lo pone en el campo del enlace (el segundo sigue en la cola) → quitar el que queda con × → la cola vuelve a estar vacía; todo en el estado local
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia385 = JSON.parse(JSON.stringify(P.store)); P.store.colaTT = []; P.ui.imp = null; P.ui.colaAb = false; P.ui.tab = 'import'; P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.plegada = await page.evaluate(() => { const h = document.querySelector('#main .cola .colah'); return { t: h ? h.innerText.replace(/\s+/g, ' ') : '', area: !!document.querySelector('#colaTxt'), h: h ? Math.round(h.getBoundingClientRect().height) : 0 }; });
+    r.hayVer = !!(await page.$('[data-a="cola-ver"]'));
+    if (r.hayVer) { await page.click('[data-a="cola-ver"]'); await page.waitForTimeout(150); }
+    r.hayArea = !!(await page.$('#colaTxt'));
+    if (r.hayArea) { await page.fill('#colaTxt', 'https://www.tiktok.com/@a/video/1\nhttps://vm.tiktok.com/ZM2/\nhttps://www.tiktok.com/@a/video/1'); }
+    r.hayAdd = !!(await page.$('[data-a="cola-add"]'));
+    if (r.hayAdd) { await page.click('[data-a="cola-add"]'); await page.waitForTimeout(200); }
+    r.dos = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .colai').length, q: window.PG.store.colaTT.length, hb: Math.round(((document.querySelector('#main .colai .btn')) || document.body).getBoundingClientRect().height), ancho: document.documentElement.scrollWidth }));
+    r.hayPasa = !!(await page.$('[data-a="cola-pasa"][data-i="0"]'));
+    if (r.hayPasa) { await page.click('[data-a="cola-pasa"][data-i="0"]'); await page.waitForTimeout(250); }
+    r.pasa = await page.evaluate(() => ({ url: (window.PG.ui.imp || {}).url, q: window.PG.store.colaTT.slice(), filas: document.querySelectorAll('#main .colai').length, campo: (document.getElementById('impUrl') || {}).value }));
+    r.hayX = !!(await page.$('[data-a="cola-quita"][data-i="0"]'));
+    if (r.hayX) { await page.click('[data-a="cola-quita"][data-i="0"]'); await page.waitForTimeout(150); }
+    r.vacia = await page.evaluate(() => ({ q: window.PG.store.colaTT.length, t: ((document.querySelector('#main .cola .colah') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia385; P.ui.imp = null; P.ui.colaAb = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('385 Importar · cola de TikTok: plegada y con su cuenta; pegar 3 enlaces (uno repetido) deja 2; «Pasar a receta» saca el primero de la cola y lo pone en el campo del enlace; × la vacía; botones ≥44 px y sin scroll lateral',
+      /Cola de TikTok · 0/.test(r.plegada.t) && !r.plegada.area && r.plegada.h >= 44 && r.hayVer && r.hayArea && r.hayAdd && r.dos.filas === 2 && r.dos.q === 2 && r.dos.hb >= 44 && r.dos.ancho <= 412 &&
+      r.hayPasa && r.pasa.url === 'https://www.tiktok.com/@a/video/1' && r.pasa.q.length === 1 && /vm\.tiktok/.test(r.pasa.q[0]) && r.pasa.filas === 1 && r.pasa.campo === r.pasa.url && r.hayX && r.vacia.q === 0 && /Cola de TikTok · 0/.test(r.vacia.t), JSON.stringify(r));
+  }
+  // 386) COMER/HOY · G5 · antojo de microondas, EN CADENA (412×915): con 75 kg, 40 g de 120 y la nevera vacía, Hoy propone una de la lista (≤5 min, g de proteína) → Comer → Hoy trae la tarjeta «¿Algo rápido?» de ≥44 px →
+  //      abre la pantalla (por qué, receta con pasos, 2 alternativas) → elegir una alternativa cambia la receta → «Apuntar que me lo he comido» apunta esa con ≥20 g y cierra; sin ningún «no»
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia386 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.food.despensa = []; P.store.gym.sesiones = [];
+      P.store.food.log[hoy] = [{ id: 'e386', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 40, carb: 60, gresa: 10, rac: 1 }]; P.ui.hoyVista = ''; P.ui.foodDate = ''; P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.hoy = await page.evaluate(() => { const s = document.querySelector('#main .prothoy .sug span'); return { t: s ? s.innerText : '', fila: document.querySelectorAll('#main .prothoy .sug').length }; });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(300);
+    r.card = await page.evaluate(() => { const c = document.querySelector('#main .antcard'); return c ? { t: c.innerText.replace(/\s+/g, ' '), h: Math.round(c.getBoundingClientRect().height), n: document.querySelectorAll('#main .antcard').length } : null; });
+    r.hayCard = !!(await page.$('#main .antcard[data-a="micro-abre"]'));
+    if (r.hayCard) { await page.click('#main .antcard[data-a="micro-abre"]'); await page.waitForTimeout(250); }
+    const pant = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .antr'); return h ? { n: h.querySelector('b').innerText, pasos: h.querySelectorAll('ol li').length, ing: h.querySelectorAll('ul li').length, alts: document.querySelectorAll('#hojaDia [data-a="micro-cambia"]').length,
+      px: Math.min.apply(null, [...document.querySelectorAll('#hojaDia .btn,#hojaDia .cjalt')].map((e) => Math.round(e.getBoundingClientRect().height))), no: /\bno (puedes|debes|comas)|prohib/i.test(document.querySelector('#hojaDia').innerText), ancho: document.documentElement.scrollWidth } : null; });
+    r.a = await pant();
+    r.hayAlt = !!(await page.$('#hojaDia [data-a="micro-cambia"]'));
+    if (r.hayAlt) { await page.click('#hojaDia [data-a="micro-cambia"]'); await page.waitForTimeout(150); }
+    r.b = await pant();
+    r.hayApunta = !!(await page.$('#hojaDia [data-a="micro-apunta"]'));
+    if (r.hayApunta) { await page.click('#hojaDia [data-a="micro-apunta"]'); await page.waitForTimeout(250); }
+    r.fin = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { n: l.length, nom: (l[1] || {}).nombre, prot: (l[1] || {}).prot, hoja: !!document.querySelector('#hojaDia .hoja') }; });
+    r.lista = await page.evaluate(() => window.PG.MICRO.map((m) => m.min <= 5 && m.prot >= 20 && m.pasos.length >= 2 && m.pasos.length <= 4).every(Boolean) && window.PG.MICRO.length >= 6);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia386; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('386 Hoy/Comer · antojo de microondas: Hoy propone una de la lista (≤5 min, g) con la nevera vacía; Comer trae UNA tarjeta «¿Algo rápido?» de ≥44 px; abre la pantalla con receta, 2 alternativas y sin ningún «no»; cambiar de alternativa cambia la receta; «Apuntar» apunta esa (≥20 g) y cierra; la lista fija cumple ≤5 min y ≥20 g',
+      /≤\d min · \+\d+ g/.test(r.hoy.t) && r.hoy.fila === 1 && r.card && r.card.n === 1 && /¿Algo rápido\?/.test(r.card.t) && /≤\d min · \d+ g/.test(r.card.t) && r.card.h >= 44 && r.hayCard && r.a && r.a.pasos >= 2 && r.a.ing >= 2 && r.a.alts === 2 && r.a.px >= 44 && !r.a.no && r.a.ancho <= 412 &&
+      r.hayAlt && r.b && r.b.n !== r.a.n && r.hayApunta && r.fin.n === 2 && r.fin.nom === r.b.n && r.fin.prot >= 20 && !r.fin.hoja && r.lista, JSON.stringify(r));
+  }
+  // 387-391) ENTRENO · G7, EN CADENA (412×915): ficha del ejercicio, un toque por serie, progresión doble, récord discreto y el entrenador de la guardia. Cada una es un bloque suelto.
+  // 387) ENTRENO · G7 — ficha plegable con dibujo, músculo, 3 claves y error; las series siguen a la vista
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r387 = { empieza: await empezar() };
+    r387.hayFicha = !!(await page.$('#main .gficha summary'));
+    if (r387.hayFicha) { r387.cerrada = await page.evaluate(() => !document.querySelector('#main .gficha').open); await page.click('#main .gficha summary'); await page.waitForTimeout(150); }
+    r387.f = await page.evaluate(() => { const d = document.querySelector('#main .gficha'); if (!d) return null; const sv = d.querySelector('svg.ejf'); const st = document.getElementById('ejfCss');
+      return { svg: !!sv, w: sv ? Math.round(sv.getBoundingClientRect().width) : 0, css: !!st, claves: d.querySelectorAll('ol li').length, err: /Error típico/.test(d.textContent), mus: /Trabaja/.test(d.textContent), h: Math.round(d.querySelector('summary').getBoundingClientRect().height), ok: !!document.querySelector('#main [data-a="gv-ok"]'), okY: document.querySelector('#main [data-a="gv-ok"]') ? Math.round(document.querySelector('#main [data-a="gv-ok"]').getBoundingClientRect().top) : 0 }; });
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('387 Entreno · ficha: al empezar, «Cómo se hace» (≥44 px) se abre con dibujo de dos posturas, músculo, 3 claves y error típico; el estilo del dibujo se inyecta una vez', r387.empieza && r387.hayFicha && r387.cerrada && r387.f && r387.f.svg && r387.f.w > 250 && r387.f.css && r387.f.claves === 3 && r387.f.err && r387.f.mus && r387.f.h >= 44, JSON.stringify(r387));
+  }
+  // 388) ENTRENO · G7 — un toque por serie con el peso y las reps de la vez anterior ya puestos
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r388 = { empieza: await empezar() };
+    r388.hay = !!(await page.$('#main [data-a="gv-ok"]'));
+    if (r388.hay) {
+      r388.pre = await page.evaluate(() => ({ kg: document.querySelector('#main input[data-k="kg"]').value, reps: document.querySelector('#main input[data-k="reps"]').value, h: Math.round(document.querySelector('#main [data-a="gv-ok"]').getBoundingClientRect().height) }));
+      await page.click('#main [data-a="gv-ok"]'); await page.waitForTimeout(250);
+      r388.reg = await page.evaluate(() => window.PG.store.gym.registro.filter((x) => x.sesionId).map((x) => x.kg + 'x' + x.reps));
+    }
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('388 Entreno · un toque: la primera serie sale con 16 kg × 10 (la vez anterior), el ✓ mide ≥44 px y UN toque la apunta tal cual', r388.empieza && r388.hay && r388.pre.kg === '16' && r388.pre.reps === '10' && r388.pre.h >= 44 && r388.reg.length === 1 && r388.reg[0] === '16x10', JSON.stringify(r388));
+  }
+  // 389) ENTRENO · G7 — progresión doble: todas al tope (12) con RPE 8 -> «Prueba +2 kg» arriba con su porqué, y la serie ya sale con ese peso
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Remo con mancuerna', 20, 12, 8, 12);
+    const r389 = { hayLinea: !!(await page.$('#main .gtoca .sug')) };
+    if (r389.hayLinea) r389.t = await page.evaluate(() => ({ sug: document.querySelector('#main .gtoca .sug').textContent, nota: (document.querySelector('#main .gtnota') || { textContent: '' }).textContent }));
+    r389.empieza = await empezar();
+    r389.kg = await page.evaluate(() => (document.querySelector('#main input[data-k="kg"]') || {}).value);
+    await sembrar('Remo con mancuerna', 20, 12, 10, 12);   // la misma historia pero «al fallo»: no sube
+    r389.sinSug = !(await page.$('#main .gtoca .sug'));
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('389 Entreno · progresión doble: con todas las series al tope y RPE 8, «Prueba +2 kg» con su porqué y la serie sale a 22 kg; si fue al fallo, no se sugiere', r389.hayLinea && /Prueba \+2 kg/.test(r389.t.sug) && /22/.test(r389.t.nota) && /llegaste a 12/.test(r389.t.nota) && r389.empieza && r389.kg === '22' && r389.sinSug, JSON.stringify(r389));
+  }
+  // 390) ENTRENO · G7 — récord discreto: subir el peso y apuntar deja una marca «récord» pequeña (sin rojo); igualar lo anterior, no
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    const r390 = { empieza: await empezar() };
+    r390.hay = !!(await page.$('#main [data-a="gv-ok"]'));
+    if (r390.hay) {
+      await page.click('#main [data-a="gv-ok"]'); await page.waitForTimeout(200);
+      r390.sin = await page.evaluate(() => document.querySelectorAll('#main .grec').length);
+      r390.hayPaso = !!(await page.$('#main [data-a="gv-paso"][data-k="kg"][data-d="2"]'));
+      if (r390.hayPaso) { await page.click('#main [data-a="gv-paso"][data-k="kg"][data-d="2"]'); await page.waitForTimeout(150); }
+      await page.click('#main [data-a="gv-ok"]:not(.on)'); await page.waitForTimeout(250);
+      r390.con = await page.evaluate(() => { const m = document.querySelector('#main .grec'); return m ? { t: m.textContent, fs: parseFloat(getComputedStyle(m).fontSize), col: getComputedStyle(m).color } : null; });
+    }
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('390 Entreno · récord discreto: igualar 16×10 no marca nada; subir a 18 kg y apuntar deja «récord» (≥14 px, sin rojo)', r390.empieza && r390.hay && r390.sin === 0 && r390.hayPaso && r390.con && /récord/.test(r390.con.t) && r390.con.fs >= 14 && !/rgb\(2[0-9]{2}, ?\d{1,2}, ?\d{1,2}\)/.test(r390.con.col), JSON.stringify(r390));
+  }
+  // 391) ENTRENO · G7 — entrenador de la guardia: saliente -> 25 min al 65 % / movilidad / descansar sin culpa; guardia -> «hoy no toca» + movilidad
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const sembrar = (ex, kg, reps, rpe, rmax) => page.evaluate((a) => { const P = window.PG, g = P.store.gym, hoy = P.iso(new Date()), ayer = P.iso(P.addDays(new Date(), -3));
+      if (!window.__copia387) window.__copia387 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r387', nombre: 'R387', dias: ['sh-t'], ejercicios: [{ ex: a.ex, series: 2, reps: 8, rmax: a.rmax }] }];
+      g.registro = [0, 1].map((i) => ({ id: 'p387' + i, fecha: ayer, ex: a.ex, kg: a.kg, reps: a.reps, si: i, ts: 1, rpe: a.rpe })); P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, { ex, kg, reps, rpe, rmax });
+    const empezar = async () => { const b = await page.$('#main .ghero2 [data-a="ses-empezar"]'); if (b) { await b.click(); await page.waitForTimeout(250); } return !!b; };
+    await sembrar('Sentadilla goblet', 16, 10, null, 12);
+    await page.evaluate(() => { const P = window.PG; P.setDayOverride(P.iso(new Date()), 'sh-s', ''); P.ui.gymPanel = ''; P.render(); });
+    const r391 = { sal: !!(await page.$('#main .gsal')) };
+    if (r391.sal) {
+      r391.lista = await page.evaluate(() => ({ t: document.querySelector('#main .gsal').textContent, mov: !!document.querySelector('#main .gsal .gmov'), btn: Math.round(document.querySelector('#main .gsal [data-a="gym-descansa"]').getBoundingClientRect().height) }));
+      await page.click('#main .gsal .gmov summary'); await page.waitForTimeout(100);
+      r391.hayMov = !!(await page.$('#main .gsal [data-a="gym-mov"]'));
+      if (r391.hayMov) { await page.click('#main .gsal [data-a="gym-mov"]'); await page.waitForTimeout(200); }
+      r391.card = await page.evaluate(() => window.PG.store.gym.cardio.map((c) => c.tipo + c.duracionMin));
+      await page.click('#main .gsal [data-a="gym-descansa"][data-v="1"]'); await page.waitForTimeout(150);
+      r391.desc = await page.evaluate(() => (document.querySelector('#main .gsal') || { textContent: '' }).textContent);
+      await page.click('#main .gsal [data-a="gym-descansa"][data-v=""]'); await page.waitForTimeout(150);
+      r391.haySal = !!(await page.$('#main .gsal [data-a="ses-empezar"][data-sal="1"]'));
+      if (r391.haySal) { await page.click('#main .gsal [data-a="ses-empezar"][data-sal="1"]'); await page.waitForTimeout(250); }
+      r391.viv = await page.evaluate(() => ({ kg: (document.querySelector('#main input[data-k="kg"]') || {}).value, filas: document.querySelectorAll('#main [data-a="gv-ok"]').length }));
+    }
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva = null; P.ui.gymPanel = ''; P.setDayOverride(P.iso(new Date()), 'sh-g', ''); P.store.gym.rutinas = []; P.render(); });
+    r391.guardia = await page.evaluate(() => { const h = document.querySelector('#main .ghero2'); return h ? { t: h.textContent, mov: !!h.querySelector('.gmov') } : null; });
+    await page.evaluate(() => { const P = window.PG; if (window.__copia387) { P.store = window.__copia387; window.__copia387 = null; } P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('391 Entreno · entrenador de la guardia: el saliente ofrece 25 min al 65 % (10,5 kg de 16, 2 series), movilidad que se apunta y «hoy descanso» reversible, sin culpa; la guardia dice «hoy no toca» y ofrece movilidad',
+      r391.sal && /25 min/.test(r391.lista.t) && /antes 16/.test(r391.lista.t) && r391.lista.mov && r391.lista.btn >= 44 && r391.hayMov && r391.card.join() === 'movilidad10' && /descansas, y está bien/.test(r391.desc) && r391.haySal &&
+      r391.viv.kg === '10,5' && r391.viv.filas === 2 && r391.guardia && /Hoy no toca/.test(r391.guardia.t) && r391.guardia.mov && !/culpa|deberías/i.test(r391.lista.t + r391.desc), JSON.stringify(r391));
+  }
+  // 392) COMER · G8 — el lector entiende la comida rápida: en la caja de frase de Comer, «big tasty y patatas medianas» se lee
+  // como UNA hamburguesa de McDonald's + sus patatas (840 + 330 kcal, 42 g de proteína) y se apunta; y encadenado, «menú Big Mac
+  // con coca cola zero» cambia la bebida del menú en vez de sumarla (840, no 1009). Antes «big tasty» no se conocía (preguntaba).
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia392', JSON.stringify(P.store)); P.store.food.log = {}; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.foodPos = 'comida'; P.ui.foodDate = ''; P.render(); });
+    await page.waitForTimeout(150);
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    const ult = () => page.evaluate((k) => { const l = window.PG.foodLog(k), e = l[l.length - 1]; return e ? { n: e.nombre, kcal: Math.round(e.kcal), prot: Math.round(e.prot || (e.macro && e.macro.prot) || 0), cuenta: l.length } : null; }, hoyK);
+    await page.fill('#fbQ', 'big tasty y patatas medianas'); await page.waitForTimeout(450);
+    r.l1 = await page.evaluate(() => { const f = window.PG.fbLectura(window.PG.ui.foodBusca); return f ? { dudas: f.dudas.length, k: window.PG.fraseMacros(f).kcal, p: Math.round(window.PG.fraseMacros(f).prot), it: f.items.map((x) => x.nom) } : null; });
+    const ok1 = await page.$('#fbRes [data-a="fb-lec-ok"]'); r.hayOk1 = !!ok1;
+    if (ok1) { await ok1.click(); await page.waitForTimeout(250); }
+    r.a1 = await ult();
+    await page.evaluate(() => { const P = window.PG; P.ui.foodBusca = ''; P.ui.frase = null; P.ui.foodVista = ''; P.ui.foodPos = 'comida'; P.render(); }); await page.waitForTimeout(100);
+    await page.fill('#frIn', 'menú big mac con coca cola zero'); await page.waitForTimeout(450);
+    r.l2 = await page.evaluate(() => { const f = window.PG.ui.frase; return f ? { dudas: f.dudas.length, k: window.PG.fraseMacros(f).kcal, it: f.items.map((x) => x.nom) } : null; });
+    const ok2 = await page.$('[data-a="fr-ok"]'); r.hayOk2 = !!ok2;
+    if (ok2) { await ok2.click(); await page.waitForTimeout(250); }
+    r.a2 = await ult();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia392')); localStorage.removeItem('__copia392'); P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('392 Comer · «big tasty y patatas medianas» se lee y se apunta como 1170 kcal / 42 g de proteína (sin preguntar), y «menú Big Mac con coca cola zero» apunta 840 kcal (la bebida se cambia, no se suma)',
+      r.hayOk1 && r.l1 && r.l1.dudas === 0 && r.l1.k === 1170 && r.l1.p === 42 && r.a1 && r.a1.kcal === 1170 && r.a1.prot === 42 &&
+      r.hayOk2 && r.l2 && r.l2.dudas === 0 && r.l2.k === 840 && r.a2 && r.a2.cuenta === 2 && r.a2.kcal === 840, JSON.stringify(r));
+  }
+  // 393) 4:20 · G10 — la cortina con PIN y el descanso, encadenados por la interfaz. Fija: (a) con cortina, salir y volver a
+  // entrar pide el PIN (el malo no abre, el bueno sí) y el PIN no se guarda en claro; (b) fuera del 4:20 la cortina deja lo del
+  // 4:20 neutro (el cajón no lo nombra y el conductor no fuma); (c) quitar la cortina desde Copia de seguridad conserva los
+  // datos; (d) el descanso de 14 días sigue en pie tras apuntar un consumo («seguimos desde aquí»), sin reiniciar.
+  {
+    const r = {};
+    const pin = async (d) => { for (const c of d) { await page.click('[data-a="cn-pin"][data-v="' + c + '"]'); } await page.waitForTimeout(250); };
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia393', JSON.stringify(P.store)); delete P.store.consumo; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.cnPin = null; P.ui.cnAbierto = false; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
+    // (d) primero: empezar 14 días y apuntar un consumo
+    r.d0 = await page.$$eval('[data-a="cn-desc"]', (b) => b.length);
+    if (r.d0 === 4) await page.click('[data-a="cn-desc"][data-v="14"]');
+    await page.waitForTimeout(100);
+    r.dDia = await page.evaluate(() => (document.querySelector('#main .cndesc .cnbig') || {}).textContent || '');
+    await page.click('[data-a="cn-vista"][data-v=""]'); await page.waitForTimeout(100);
+    r.dLinea = await page.$$eval('[data-a="cn-vista"].cndl', (b) => b.length);
+    r.dAdd = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
+    if (r.dAdd) await page.click('[data-a="cn-add"]');
+    await page.waitForTimeout(2300);
+    r.dFlash = await page.evaluate(() => (document.querySelector('#flash') || {}).textContent || '');
+    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
+    r.dTxt = await page.evaluate(() => (document.querySelector('#main .cndesc') || {}).innerText || '');
+    r.dPlan = await page.evaluate(() => { const d = window.PG.consumoS().plan.desc; return d && d.dias; });
+    check('393d 4:20 · descanso: empezar 14 días y apuntar una sesión no reinicia ni castiga: sigue «Día 1 de 14» y dice «seguimos desde aquí»',
+      r.d0 === 4 && /Día 1 de 14/.test(r.dDia) && r.dLinea === 1 && r.dAdd === 1 && /seguimos desde aquí/.test(r.dTxt) && /seguimos desde aquí/.test(r.dFlash) && r.dPlan === 14 && !/fallaste|has fallado|recaíste/i.test(r.dTxt), JSON.stringify(r));
+    // (a) poner la cortina, salir, entrar
+    r.aBtn = await page.$$eval('[data-a="cn-pin-nuevo"]', (b) => b.length);
+    if (r.aBtn) await page.click('[data-a="cn-pin-nuevo"]');
+    await page.waitForTimeout(80);
+    r.aTec = await page.$$eval('[data-a="cn-pin"]', (b) => b.map((x) => Math.round(x.getBoundingClientRect().height)));
+    await pin('4821'); await pin('4821');
+    r.aHash = await page.evaluate(() => { const p = window.PG.consumoS().priv.pin; return p && { s: p.s.length, h: p.h.length }; });
+    r.aClaro = await page.evaluate(() => { const q = '"4821"'; return JSON.stringify(window.PG.store).indexOf(q) >= 0 || Object.keys(localStorage).some((k) => (localStorage.getItem(k) || '').indexOf(q) >= 0); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); }); await page.waitForTimeout(80);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(80);
+    r.aTeclado = await page.$$eval('[data-a="cn-pin"]', (b) => b.length);
+    r.aSinSeccion = await page.$$eval('#main .cnvis', (b) => b.length);
+    if (r.aTeclado) { await pin('1111'); }
+    r.aMalCierra = (await page.$$eval('#main .cnvis', (b) => b.length)) === 0 && (await page.$$eval('[data-a="cn-pin"]', (b) => b.length)) > 0;
+    if (r.aTeclado) { await pin('4821'); }
+    r.aAbre = await page.$$eval('#main .cnvis', (b) => b.length);
+    check('393a 4:20 · cortina: tras ponerla, salir y entrar pide el PIN; uno malo no abre, el bueno sí; teclas ≥ 44 px; solo se guarda sal + hash (nunca el PIN)',
+      r.aBtn === 1 && r.aTec.length === 11 && r.aTec.every((h) => h >= 44) && r.aHash && r.aHash.s === 32 && r.aHash.h === 64 && !r.aClaro &&
+      r.aTeclado > 0 && r.aSinSeccion === 0 && r.aMalCierra && r.aAbre === 1, JSON.stringify(r));
+    // (b) fuera del 4:20, neutro (con una sesión de hoy apuntada)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.drawerOpen = false; P.render(); }); await page.waitForTimeout(80);
+    r.bTog = await page.$$eval('[data-a="drawer-toggle"]', (b) => b.length);
+    if (r.bTog) await page.click('[data-a="drawer-toggle"]');
+    await page.waitForTimeout(150);
+    r.bCajon = await page.evaluate(() => (document.querySelector('#drawer') || {}).innerText || '');
+    r.bFuma = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return P.conductorEscenas(k).fumar; });
+    await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(150);
+    check('393b 4:20 · con la cortina puesta, fuera de su sección (el cajón «Más» y el conductor) se ve neutro, sin nombrar el 4:20 ni el consumo',
+      r.bTog === 1 && /Privado/.test(r.bCajon) && !/4:20/.test(r.bCajon) && r.bFuma === false, JSON.stringify(r));
+    // (c) quitar la cortina desde Copia de seguridad: los datos se conservan
+    await page.evaluate(() => { const P = window.PG; P.ui.drawerOpen = false; P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render(); }); await page.waitForTimeout(100);
+    r.cBtn = await page.$$eval('[data-a="cn-cortina-quita"]', (b) => b.length);
+    if (r.cBtn) await page.click('[data-a="cn-cortina-quita"]');
+    await page.waitForTimeout(150);
+    r.cConf = await page.$$eval('[data-a="confirm-yes"]', (b) => b.length);
+    if (r.cConf) await page.click('[data-a="confirm-yes"]');
+    await page.waitForTimeout(200);
+    r.cEstado = await page.evaluate(() => { const c = window.PG.consumoS(); return { pin: !!c.priv.pin, ses: c.ses.length, desc: !!c.plan.desc }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.ui.cnVista = ''; P.render(); }); await page.waitForTimeout(100);
+    r.cAbre = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
+    check('393c 4:20 · quitar la cortina desde Ajustes → Copia de seguridad (con aviso) abre el 4:20 y conserva las sesiones y el descanso',
+      r.cBtn === 1 && r.cConf === 1 && r.cEstado.pin === false && r.cEstado.ses === 1 && r.cEstado.desc === true && r.cAbre === 1, JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia393')); localStorage.removeItem('__copia393'); P.ui.cnVista = ''; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+  }
+  // 394) G11 · coach, energía del día y «sin pantallas», encadenados por la interfaz. Fija: (a) el coach del saliente y su coherencia con Entreno; (b) la franja sin pantallas, sin botón para quitarla y sin guardia; (c) el ✓ de la mañana.
+  {
+    // «ahora» congelado a una hora de hoy (patrón de la 75); el calendario se guarda y se restaura entero
+    const congela = (h, m) => page.evaluate(([h, m]) => { if (!window.__origDate394) window.__origDate394 = Date; const O = window.__origDate394, n = new O();
+      const f = new O(n.getFullYear(), n.getMonth(), n.getDate(), 0, h * 60 + m, 0).getTime();
+      window.Date = class extends O { constructor(...a) { if (!a.length) super(f); else super(...a); } static now() { return f; } }; }, [h, m]);
+    const descongela = () => page.evaluate(() => { if (window.__origDate394) { window.Date = window.__origDate394; delete window.__origDate394; } });
+    const dias = (def) => page.evaluate((def) => { const P = window.PG; window.__daySet394 = window.__daySet394 || JSON.stringify(P.store.rotation.daySet || {});
+      const hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1)), ma = P.iso(P.addDays(new Date(), 1));
+      [ay, hoy, ma].forEach((k, i) => { if (def[i] === 'sh-g') P.setDayOverride(k, 'sh-g', 'urg'); else P.setDayOverride(k, def[i], ''); }); P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.save(); P.render(); }, def);
+    const r = {};
+    await congela(12, 0);
+    // (a) día saliente: el coach habla del saliente y lo de entrenar es lo mismo que dice Entreno
+    await dias(['sh-g', 'sh-s', 'sh-l']); await page.waitForTimeout(250);
+    r.aN = await page.$$eval('#main .coach', (b) => b.length);
+    r.aTxt = r.aN ? await page.$eval('#main .coach .coacht', (e) => e.innerText) : '';
+    r.aEnt = await page.evaluate(() => window.PG.laminaDatos(window.PG.iso(new Date())).dia.corto);
+    r.aBat = await page.$$eval('#main .coach .bat i', (b) => b.length);
+    await dias(['sh-l', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.aTxt2 = await page.$eval('#main .coach .coacht', (e) => e.innerText).catch(() => '');
+    r.aN2 = await page.$$eval('#main .coach', (b) => b.length);
+    check('394a Coach · el día saliente dice siesta de 20 min antes de las 15:00 y «paseo o nada» (lo mismo que Entreno); un día de trabajo ya no, y siempre UNA tarjeta, sin puntuar ni culpa',
+      r.aN === 1 && r.aN2 === 1 && r.aBat === 4 && /siesta de 20 min antes de las 15:00/i.test(r.aTxt) && /paseo o nada/.test(r.aTxt) && /paseo o nada/.test(r.aEnt) &&
+      !/paseo o nada/.test(r.aTxt2) && !/siesta de 20 min/i.test(r.aTxt2) && !/burnout|culpa|fallo|\d+\s*\/\s*100/i.test(r.aTxt + r.aTxt2), JSON.stringify(r));
+    // (b) a 30 min de la cama sale «Sin pantallas»; no hay con qué quitarlo; en guardia no sale
+    await dias(['sh-t', 'sh-t', 'sh-t']);
+    const cama = await page.evaluate(() => { const P = window.PG, n = new Date(); return P.snPantallas(new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0)); });
+    r.bCama = cama && cama.cama;
+    if (cama) { const cm = cama.ini + 45; await descongela(); await congela(Math.floor((cm - 30) / 60), (cm - 30) % 60); }
+    await dias(['sh-t', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.bN = await page.$$eval('#main .pant', (b) => b.length);
+    r.bTxt = r.bN ? await page.$eval('#main .pant', (e) => e.innerText) : '';
+    r.bQuita = await page.$$eval('#main .pant select, #main .pant input, #main .pant [data-a*="quita"], #main .pant [data-a*="paus"], #main .pant [data-a*="pant-off"], #main .pant [role="switch"]', (b) => b.length);
+    await dias(['sh-t', 'sh-g', 'sh-s']); await page.waitForTimeout(250);
+    r.bG = await page.$$eval('#main .pant', (b) => b.length);
+    check('394b Sin pantallas · a 30 min de la cama sale «Sin pantallas desde…» con el texto honrado y sin botón, ajuste ni pausa; en guardia no sale',
+      r.bN === 1 && /Sin pantallas desde las \d{1,2}:\d{2}/.test(r.bTxt) && /solo pidiéndoselo a Claude/.test(r.bTxt) && r.bQuita === 0 && r.bG === 0, JSON.stringify(r));
+    // (c) por la mañana: «¿Anoche lo cumpliste?» guarda la respuesta por fecha y desaparece
+    await descongela(); await congela(7, 30);
+    await dias(['sh-t', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.cN = await page.$$eval('#main .pant [data-a="pant-resp"]', (b) => b.length);
+    if (r.cN === 2) await page.click('#main .pant [data-a="pant-resp"][data-v="no"]');
+    await page.waitForTimeout(200);
+    r.cGuardado = await page.evaluate(() => { const P = window.PG, ay = P.iso(P.addDays(new Date(), -1)); return (P.store.sueno.pant || {resp: {}}).resp[ay]; });
+    r.cDespues = await page.$$eval('#main .pant', (b) => b.length);
+    check('394c Sin pantallas · por la mañana «¿Anoche lo cumpliste?» guarda «no, y no pasa nada» con la fecha de anoche y la tarjeta desaparece (sin racha)',
+      r.cN === 2 && r.cGuardado === 'no' && r.cDespues === 0, JSON.stringify(r));
+    await descongela();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.daySet = JSON.parse(window.__daySet394); delete window.__daySet394; if (P.store.sueno.pant) delete P.store.sueno.pant; P.save(); P.render(); });
+  }
+  // 395) G12 · el modo viaje, sin red (activar, billete y Hoy en viaje, encadenados con la interfaz)
+  {
+    const r = {};
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    // un hábito de todos los días, hecho de hace 8 a hace 3 días y NO ayer ni anteayer ni hoy
+    await page.evaluate(() => { const P = window.PG, H = P.habitosS(); H.items.push({ id: 'hab-vj', nombre: 'Estirar viaje', icono: '🧘', color: '#38e1ff', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01' });
+      for (let i = 3; i <= 8; i++) { const k = P.iso(P.addDays(new Date(), -i)); (H.registro[k] || (H.registro[k] = {}))['hab-vj'] = 'ok'; } P.save(); P.render(); });
+    r.sin = await page.evaluate(() => window.PG.rachaHabito(window.PG.habitosS().items.filter((h) => h.id === 'hab-vj')[0]));
+    // (a) activar un viaje de 3 días (hace 2 días → hoy) desde Ajustes: los 2 días sin hábito no rompen la racha
+    await gotoTab('ajustes', 'modoviaje');
+    r.aBtn = await page.$$eval('[data-a="mv-activa"]', (b) => b.length);
+    if (r.aBtn === 1) {
+      await page.fill('#mvDestino', 'Valencia <b>boda</b>');
+      await page.fill('#mvIda', isoDate(new Date(Date.now() - 2 * 86400000)));
+      await page.fill('#mvVuelta', hoyK);
+      await page.click('[data-a="mv-activa"]');
+    }
+    await page.waitForTimeout(200);
+    r.con = await page.evaluate(() => window.PG.rachaHabito(window.PG.habitosS().items.filter((h) => h.id === 'hab-vj')[0]));
+    r.aGuardado = await page.evaluate(() => { const v = window.PG.store.modoViaje; return v && v.destino + '|' + Object.values(v.pausa).filter(Boolean).length; });
+    check('395a Modo viaje · activar un viaje de 3 días desde Ajustes congela la racha: sin viaje los 2 días sin hábito la rompían (0), con viaje sigue en 6; y el destino se guarda tal cual',
+      r.sin === 0 && r.con === 6 && /^Valencia <b>boda<\/b>\|5$/.test(r.aGuardado || ''), JSON.stringify(r));
+    // (b) el billete entra en Dinero una sola vez, en viajes
+    await gotoTab('ajustes', 'modoviaje');
+    r.bBtn = await page.$$eval('[data-a="mv-billete"]', (b) => b.length);
+    if (r.bBtn === 1) {
+      await page.click('[data-a="mv-medio"][data-v="Tren"]');
+      await page.fill('#mvPrecio', '64,50');
+      await page.click('[data-a="mv-billete"]');
+      await page.waitForTimeout(200);
+      await page.fill('#mvPrecio', '64,50');
+      await page.click('[data-a="mv-billete"]');   // el mismo billete otra vez: no se duplica
+      await page.waitForTimeout(200);
+    }
+    r.bLista = await page.$$eval('.mvit .mvbil', (b) => b.length);
+    r.bPagos = await page.evaluate(() => window.PG.dineroS().pagos.filter((p) => p.cat === 'viajes').length);
+    await gotoTab('dinero');
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'recibos'; P.render(); });
+    await page.waitForTimeout(200);
+    r.bFilas = await page.$$eval('#main .gfila', (f) => f.filter((x) => /viajes/.test(x.innerText) && /64,50/.test(x.innerText)).length);
+    check('395b Modo viaje · apuntar el billete lo mete en Dinero una vez en la categoría viajes (pulsarlo dos veces no lo duplica)',
+      r.bBtn === 1 && r.bLista === 1 && r.bPagos === 1 && r.bFilas === 1, JSON.stringify(r));
+    // (c) Hoy en viaje: cabecera y no lo pausado; terminar el viaje lo quita
+    await gotoTab('hoy');
+    await page.waitForTimeout(200);
+    r.cCab = await page.$$eval('#main .mvcab', (b) => b.length);
+    r.cTxt = r.cCab ? await page.$eval('#main .mvcab', (e) => e.innerText) : '';
+    r.cMain = await page.$eval('#main', (e) => e.innerText);
+    r.cPausa = await page.$$eval('#main .mvp', (b) => b.length);
+    r.cFin = await page.$$eval('#main [data-a="mv-fin"]', (b) => b.length);
+    if (r.cFin === 1) { await page.click('#main [data-a="mv-fin"]'); await page.waitForTimeout(250); }
+    r.cDespues = await page.$$eval('#main .mvcab', (b) => b.length);
+    r.cMain2 = await page.$eval('#main', (e) => e.innerText);
+    check('395c Modo viaje · Hoy muestra «De viaje · día 3 de 3», lo esencial y las rachas «en pausa ⏸», sin los hábitos ni el coach; «Terminar el viaje antes» lo quita',
+      r.cCab === 1 && /De viaje · día 3 de 3 · vuelves hoy/.test(r.cTxt) && r.cPausa >= 2 && !/Estirar viaje/.test(r.cMain) && !/Tu energía de hoy/.test(r.cMain) &&
+      r.cFin === 1 && r.cDespues === 0 && !/De viaje · día/.test(r.cMain2), JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store.modoViaje = null; P.dineroS().pagos = P.dineroS().pagos.filter((p) => p.cat !== 'viajes');
+      P.habitosS().items = P.habitosS().items.filter((h) => h.id !== 'hab-vj'); P.save(); P.render(); });
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

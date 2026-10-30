@@ -22,10 +22,11 @@ traspaso explica por qué.
 | Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) | ~0,8 M uno pequeño · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
+| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
+| maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) | ~2,7 M con concurso · ~0,9 M sin él · ~0,6 M si solo completa otra (G2) | reforma-r5-comer (2026-10-30) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
+| construir (Reforma, ficha + 1 constructor) | opus + sonnet | 3,6 M (178 pasos; obra 1,7 M, principal 1,6 M, verificador 0,18 M, parte 0,07 M) | ~3,2 M (90 %); sin el lío de main a mitad, ~2,5 M | reforma-r6-compra-congelador (2026-10-30) |
 | construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
 | estudio | — | sin medir | — | — |
@@ -53,9 +54,34 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n1 | construir | opus-5-5 + sonnet-5-5 | 2 | 66 | **1,1 M** | Construir N1 la cuenta atrás (76 %) | N1 de La Noche: cartel arriba de Hoy en 4 modos, quita sueño y mañana suelta; obra sonnet ~0,87 M, capturas ~0,08 M |
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
 | 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
+| 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
+| 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
+| 2026-10-30 | consejo-gran-ley | estudio | opus-5-5 + sonnet-5-5 | 3 | 30 | **688 k** | sesión principal (47 %) | mapa sonnet + 2 dictámenes en paralelo; el mapa encontró R4 casi hecha |
+| 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
+| 2026-10-30 | reforma-r5-comer | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 5 | 92 | **1,0 M** | sesión principal (38 %) | una sola maqueta sonnet + 1 ronda de retoques; el mapa haiku de app.js (176 k) se reaprovecha en R6-R8 · ahorrar: pasar al maquetador la ficha con §3 y los retoques de Bienestar desde el principio |
+| 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (1,7 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
+| 2026-10-30 | reforma-r6-compra-congelador | construir | opus-5-5 + sonnet-5-5 | 3 | 178 | **3,6 M** | R6 obra: compra base y congelador (47 %) | obra sonnet 1,7 M (64 pasos) + principal 1,6 M: main cambió dos veces a mitad (G1) y hubo que mezclar, renumerar pruebas y pasar 3 suites enteras · ahorro: antes de construir, git fetch de main y numerar las pruebas detrás de lo último de main |
 <!-- fin de tareas medidas -->
+| 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
+| 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
+| 2026-10-30 | G5 · receta, cola de TikTok, antojo de microondas | construir | sonnet | 1 | 48 | 1,0 M | 4,7 M de caché leída | todas las condiciones en el primer encargo y una sola suite completa: −33 % sobre presupuesto |
+| 2026-10-30 | G6 · maqueta de Entreno | maqueta | sonnet + verificador sonnet | 2 | 16 | ~0,3 M (sin la presidencia) | verificador rehízo los dibujos | maqueta sin concurso con lenguaje ya elegido y acuerdos escritos: ~0,3 M |
+| 2026-10-30 | G7 · Entreno: 12 dibujos, ficha, progresión doble, saliente | construir | sonnet ×2 en paralelo + verificador | 3 | 79 | ~1,5 M | constructor 1,1 M | dibujos y obra en paralelo con un contrato de datos (`EJ_FICHAS`): −25 % sobre presupuesto |
+| 2026-10-30 | G8 · lector de comida rápida | construir | sonnet | 1 | 53 | 1,7 M (presupuesto 0,8: +112 %) | 7,0 M de caché leída | dos suites completas y buscar un fallo ajeno (la 244, que dependía de la hora) · ante un fallo ajeno, parar y avisar en vez de investigarlo dentro del encargo |
+| 2026-10-30 | G9 · maqueta de La Noche 2 | maqueta | sonnet | 1 | 13 | ~0,1 M (sin presidencia) | — | acuerdos ya escritos y aprobados: maqueta en un solo paso |
+| 2026-10-30 | G10 · cortina con PIN y descanso del 4:20 | construir | sonnet + verificador | 2 | 52 | ~0,9 M (presupuesto 1,5) | constructor 0,8 M | encargo completo + «si algo ajeno falla, dilo y sigue» |
+| 2026-10-30 | G12 · maqueta del modo viaje | maqueta | sonnet | 1 | 6 | ~0,1 M | — | acuerdo ya escrito |
+| 2026-10-30 | G11 · coach, energía y sin pantallas | construir | sonnet | 1 | 39 | 0,7 M (presupuesto 2,0) | 3,8 M de caché leída | encargo completo con las funciones de G4 y G7 a reutilizar: −65 % |
+| 2026-10-30 | G13 (1/2) · PNG de design/ | herramientas | haiku | 1 | 9 | 0,13 M | — | tarea mecánica en haiku |
+| 2026-10-30 | G12 · modo viaje (maqueta + obra) | maqueta → construir | sonnet + verificador | 3 | 63 | ~1,1 M (presupuesto 2,5) | constructor ~0,9 M | maqueta adelantada en paralelo y encargo completo |
+| 2026-10-30 | G13 (2/2) · la suite en ~2 min (no conseguida) | herramientas | sonnet | 1 | 67 | ~1,0 M | muchas pasadas completas de 5-6 min | medir CPU antes de suponer que es «solo espera»; la siembra va en tarea propia |
 
 ## Ahorros que funcionan
+
+- **Mirar main antes de construir y otra vez antes de las pruebas** (R6, 30/10): otra sesión metió la G1 a mitad y costó ~0,8 M mezclar, renumerar las pruebas (372-375 → 376-379) y repetir 2 suites enteras. `git fetch origin main` al abrir y al acabar la obra; numerar las pruebas nuevas detrás de lo último de `main`.
+- **Un solo constructor sonnet con la ficha (R3, 30/10):** P1-P5 en 48 pasos y 1,2 M, sin releer app.js; la suite completa y las capturas a la vez, de fondo. Lo que más pesa ya es la principal (0,7 M): ficha con greps cortos, no leer funciones enteras.
+
+- **Concursos de maquetas (R1, 29/10):** bases con las cifras ya cuadradas y un guion común de oficio y de capturas a ciegas (`tools/concurso/`): cada escuela sonnet costó 0,22-0,37 M en ≤14 pasos, y el jurado no abre los HTML (solo capturas + texto). Lo que más gasta ya es la sesión principal (30 %): esperar en silencio, sin mirar capturas.
 
 - Un constructor que además QUITA pestañas y reescribe pruebas viejas se dispara (S3b P1: 7,4 M, 167 pasos): lo de quitar va en su encargo aparte, con tope de pasos.
 - La ficha dice qué se **quita** además de qué se añade: sin eso el constructor deja lo viejo debajo y hace falta otra vuelta (S3, ~250 k).
@@ -74,5 +100,6 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
   constructor recibe la ficha, no la conversación.
 - Una ronda de maquetas para una sección entera antes que una por cada función (plan de Comer, 2026-10-27).
 - Un concurso de diseñadores sonnet con escuelas opuestas y críticas cruzadas da ideas que una sola mano no saca (los tres robaron «Ahora toca»); los diseñadores se continúan con SendMessage, no se relanzan (v3-comer-mapa).
+- Un encargo con todas las condiciones (una sola caja, un solo número, pruebas que caen limpias, una suite completa) evita la ronda de retoques: G5 1,0 M frente a G4 2,1 M (2026-10-30).
 - Abrir en sonnet las sesiones mecánicas (arreglos localizados, construir con ficha y maqueta aprobada).
 - Concursos de diseño libre: sonnet, no haiku (haiku sacó 1, 1 y 3 de 5 en La Rara; sonnet ganó con 5/5). (la-rara, 2026-10-28)

@@ -1,0 +1,149 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entreno G6 · maqueta</title>
+<style>
+:root{--bg:#eef2f9;--card:#fff;--card2:#e6ecf7;--ink:#0d1729;--ink2:#4f6280;--line:#c9d5ea;--brand:#2563eb;--onbrand:#fff;--acc:#126a32;--accsoft:#dcf1e3;--brandsoft:#dbe6fd;--warn:#8a4a05;--warnsoft:#fbeed6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#070b14;--card:#111a2b;--card2:#0b1120;--ink:#e9f2ff;--ink2:#9db2d0;--line:#27375a;--brand:#38e1ff;--onbrand:#04121c;--acc:#a3e635;--accsoft:#1f2d1b;--brandsoft:#10304a;--warn:#fbbf24;--warnsoft:#2d2410;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--card2);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+.barra{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.barra button{min-height:44px;padding:0 9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;font:600 14px system-ui;cursor:pointer}
+.barra button[aria-pressed=true]{background:var(--brand);color:var(--onbrand);border-color:var(--brand)}
+.marco{display:none;width:412px;height:915px;margin:16px auto;background:var(--bg);border:1px solid var(--line);border-radius:24px;overflow:hidden;position:relative}
+.marco.on{display:block}
+.pant{height:851px;overflow:auto;padding:16px 16px 12px}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:64px;display:flex;background:var(--card);border-top:1px solid var(--line)}
+.tabs span{flex:1;display:grid;place-items:center;font-size:14px;color:var(--ink2)}
+.tabs span.a{color:var(--ink);font-weight:700;box-shadow:inset 0 -3px 0 var(--brand)}
+h1{font-size:24px;line-height:1.15;margin:0}h2{font-size:16px;margin:0 0 8px}
+.sub{margin:2px 0 12px;color:var(--ink2);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 12px}
+.chip{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:var(--brandsoft);font-size:14px;font-weight:600}
+.chip.ok{background:var(--accsoft);color:var(--acc)}
+.fila{display:flex;gap:12px;align-items:center;min-height:56px;padding:6px 0;border-top:1px solid var(--line)}
+.fila:first-of-type{border-top:0}
+.fila svg{flex:none;width:48px;height:51px;background:var(--card2);border-radius:10px}
+.fila b{display:block}.fila small{color:var(--ink2);font-size:14px}
+.fila .sug{margin-left:auto;flex:none;background:var(--accsoft);color:var(--acc);font-weight:700;font-size:14px;border-radius:10px;padding:4px 8px;text-align:center}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border:0;border-radius:14px;background:var(--brand);color:var(--onbrand);font:700 16px system-ui;cursor:pointer}
+.btn.sec{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.nota{background:var(--accsoft);border-radius:12px;padding:10px 12px;font-size:14px;margin:10px 0 0}
+.aviso{background:var(--warnsoft);border-radius:12px;padding:10px 12px;font-size:14px}
+.sem{display:flex;gap:8px}.sem span{flex:1;text-align:center;border:1px solid var(--line);border-radius:12px;padding:6px 0;font-size:14px}.sem .h{background:var(--accsoft);color:var(--acc);font-weight:700}.sem .x{background:var(--card2);color:var(--ink2)}
+.atras{min-height:44px;min-width:44px;display:inline-flex;align-items:center;color:var(--brand);font-weight:600;background:none;border:0;padding:0;font-size:15px}
+/* dibujos */
+.pose{display:grid;border-radius:14px;background:var(--card2);margin-bottom:8px}
+.pose>div{grid-area:1/1;text-align:center;opacity:0;animation:alt 3.6s ease-in-out infinite}
+.pose>div:last-child{animation-delay:-1.8s}
+.pose svg{width:100%;max-width:170px;height:auto;display:inline-block}
+.pose.g svg{max-width:210px}
+.pose figcaption,.pose small{display:block;font-size:14px;color:var(--ink2)}
+@keyframes alt{0%,8%{opacity:0}22%,42%{opacity:1}56%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.pose{grid-template-columns:1fr 1fr}.pose>div{grid-area:auto;animation:none;opacity:1}}
+.mu{fill:none;stroke:var(--acc);stroke-linecap:round;opacity:.6}
+.mf{fill:var(--acc);opacity:.55}
+.ol{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round}.fl{fill:none;stroke:var(--card);stroke-linecap:round;stroke-linejoin:round}
+.cf{fill:var(--card);stroke:var(--ink);stroke-width:4}
+.pe{fill:var(--brand);stroke:var(--ink);stroke-width:2.5}
+.mb{fill:var(--card);stroke:var(--ink2);stroke-width:2.5}
+.su{stroke:var(--ink2);stroke-width:3;stroke-linecap:round}
+ol.cl{margin:0 0 8px;padding-left:22px}ol.cl li{padding:2px 0;font-weight:600}
+.err{border-left:4px solid var(--warn);padding:4px 10px;margin:8px 0;font-size:14px;background:var(--warnsoft);border-radius:0 10px 10px 0}
+.pauta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0}
+.musc{font-size:14px;color:var(--ink2);margin:0 0 8px}.musc i{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--acc);opacity:.55;vertical-align:-1px;margin-right:4px}
+.serie{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin:0 0 8px;padding:6px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.serie b{font-size:16px}.serie small{display:block;color:var(--ink2);font-size:14px}
+.serie em{margin-left:auto;font-style:normal;font-weight:700;font-size:14px;color:var(--ink2)}
+.serie[aria-pressed=true]{background:var(--accsoft);border-color:var(--acc)}
+.serie[aria-pressed=true] em{color:var(--acc)}
+.serie[aria-pressed=true] em::before{content:"✓ "}
+.rec{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink2);padding:6px 2px}
+.rec svg{flex:none}
+.opc{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 10px;cursor:pointer;min-height:56px}
+.opc[aria-pressed=true]{border-color:var(--brand);background:var(--brandsoft)}
+.opc b{display:block;font-size:16px}.opc small{color:var(--ink2);font-size:14px}
+.frase{font-size:17px;line-height:1.4;font-weight:600;margin:0}
+.tira{display:flex;gap:6px;margin-bottom:12px}.tira div{flex:1;border:1px solid var(--line);border-radius:12px;padding:6px 4px;text-align:center;font-size:14px;background:var(--card)}.tira .hoy{border:2px solid var(--brand);font-weight:700}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<!-- sentadilla goblet: arriba / abajo -->
+<symbol id="sq-a" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><path class="ol" stroke-width="16" d="M86 112L84 146"/><path class="fl" stroke-width="11" d="M86 112L84 146"/><path class="ol" stroke-width="14" d="M80 148L98 148"/><path class="fl" stroke-width="9" d="M80 148L98 148"/><path class="ol" stroke-width="19" d="M80 84L86 112"/><path class="fl" stroke-width="14" d="M80 84L86 112"/><path class="ol" stroke-width="29" d="M82 52L80 84"/><path class="fl" stroke-width="24" d="M82 52L80 84"/><path class="mu" stroke-width="10" d="M80 86L86 112"/><circle class="mf" cx="76" cy="88" r="10"/><circle class="cf" cx="84" cy="30" r="11"/><path class="ol" stroke-width="14" d="M82 56L91 78L98 64"/><path class="fl" stroke-width="9" d="M82 56L91 78L98 64"/><path class="su" d="M99 47V65"/><rect class="pe" x="91" y="40" width="16" height="8" rx="3"/><rect class="pe" x="91" y="64" width="16" height="8" rx="3"/></symbol>
+<symbol id="sq-b" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><path class="ol" stroke-width="16" d="M104 104L88 144"/><path class="fl" stroke-width="11" d="M104 104L88 144"/><path class="ol" stroke-width="14" d="M84 148L102 148"/><path class="fl" stroke-width="9" d="M84 148L102 148"/><path class="ol" stroke-width="19" d="M62 118L104 104"/><path class="fl" stroke-width="14" d="M62 118L104 104"/><path class="ol" stroke-width="29" d="M76 72L62 118"/><path class="fl" stroke-width="24" d="M76 72L62 118"/><path class="mu" stroke-width="10" d="M64 116L102 106"/><circle class="mf" cx="58" cy="120" r="10"/><circle class="cf" cx="84" cy="54" r="11"/><path class="ol" stroke-width="14" d="M80 78L92 100L100 84"/><path class="fl" stroke-width="9" d="M80 78L92 100L100 84"/><path class="su" d="M102 67V85"/><rect class="pe" x="94" y="60" width="16" height="8" rx="3"/><rect class="pe" x="94" y="84" width="16" height="8" rx="3"/></symbol>
+<!-- press banca con mancuernas -->
+<symbol id="pr-a" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><rect class="mb" x="14" y="112" width="120" height="10" rx="3"/><path class="su" d="M28 122V152M120 122V152"/><path class="ol" stroke-width="17" d="M92 104L120 92L122 146"/><path class="fl" stroke-width="12" d="M92 104L120 92L122 146"/><path class="ol" stroke-width="14" d="M122 148L140 148"/><path class="fl" stroke-width="9" d="M122 148L140 148"/><path class="ol" stroke-width="25" d="M38 102L92 102"/><path class="fl" stroke-width="20" d="M38 102L92 102"/><ellipse class="mf" cx="54" cy="96" rx="15" ry="8"/><circle class="cf" cx="24" cy="100" r="11"/><path class="ol" stroke-width="15" d="M54 98L54 52"/><path class="fl" stroke-width="10" d="M54 98L54 52"/><path class="su" d="M45 46H63"/><rect class="pe" x="38" y="38" width="8" height="16" rx="3"/><rect class="pe" x="62" y="38" width="8" height="16" rx="3"/></symbol>
+<symbol id="pr-b" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><rect class="mb" x="14" y="112" width="120" height="10" rx="3"/><path class="su" d="M28 122V152M120 122V152"/><path class="ol" stroke-width="17" d="M92 104L120 92L122 146"/><path class="fl" stroke-width="12" d="M92 104L120 92L122 146"/><path class="ol" stroke-width="14" d="M122 148L140 148"/><path class="fl" stroke-width="9" d="M122 148L140 148"/><path class="ol" stroke-width="25" d="M38 102L92 102"/><path class="fl" stroke-width="20" d="M38 102L92 102"/><ellipse class="mf" cx="54" cy="96" rx="15" ry="8"/><circle class="cf" cx="24" cy="100" r="11"/><path class="ol" stroke-width="15" d="M54 98L60 116L60 88"/><path class="fl" stroke-width="10" d="M54 98L60 116L60 88"/><path class="su" d="M51 82H69"/><rect class="pe" x="44" y="74" width="8" height="16" rx="3"/><rect class="pe" x="68" y="74" width="8" height="16" rx="3"/></symbol>
+<!-- remo con mancuerna -->
+<symbol id="re-a" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><rect class="mb" x="6" y="118" width="40" height="10" rx="3"/><path class="su" d="M14 128V152M38 128V152"/><path class="ol" stroke-width="17" d="M96 88L122 148"/><path class="fl" stroke-width="12" d="M96 88L122 148"/><path class="ol" stroke-width="14" d="M122 148L140 148"/><path class="fl" stroke-width="9" d="M122 148L140 148"/><path class="ol" stroke-width="17" d="M96 88L108 118L102 148"/><path class="fl" stroke-width="12" d="M96 88L108 118L102 148"/><path class="ol" stroke-width="14" d="M102 148L120 148"/><path class="fl" stroke-width="9" d="M102 148L120 148"/><path class="ol" stroke-width="9" d="M96 88L96 88"/><path class="fl" stroke-width="4" d="M96 88L96 88"/><path class="ol" stroke-width="27" d="M46 80L96 86"/><path class="fl" stroke-width="22" d="M46 80L96 86"/><path class="ol" stroke-width="15" d="M46 80L24 114"/><path class="fl" stroke-width="10" d="M46 80L24 114"/><path class="mu" stroke-width="10" d="M52 78L90 84"/><circle class="cf" cx="32" cy="72" r="11"/><path class="ol" stroke-width="15" d="M46 82L58 130"/><path class="fl" stroke-width="10" d="M46 82L58 130"/><path class="su" d="M49 136H67"/><rect class="pe" x="42" y="128" width="8" height="16" rx="3"/><rect class="pe" x="66" y="128" width="8" height="16" rx="3"/></symbol>
+<symbol id="re-b" viewBox="0 0 160 170"><path class="su" d="M10 152H150"/><rect class="mb" x="6" y="118" width="40" height="10" rx="3"/><path class="su" d="M14 128V152M38 128V152"/><path class="ol" stroke-width="17" d="M96 88L122 148"/><path class="fl" stroke-width="12" d="M96 88L122 148"/><path class="ol" stroke-width="14" d="M122 148L140 148"/><path class="fl" stroke-width="9" d="M122 148L140 148"/><path class="ol" stroke-width="17" d="M96 88L108 118L102 148"/><path class="fl" stroke-width="12" d="M96 88L108 118L102 148"/><path class="ol" stroke-width="14" d="M102 148L120 148"/><path class="fl" stroke-width="9" d="M102 148L120 148"/><path class="ol" stroke-width="9" d="M96 88L96 88"/><path class="fl" stroke-width="4" d="M96 88L96 88"/><path class="ol" stroke-width="27" d="M46 80L96 86"/><path class="fl" stroke-width="22" d="M46 80L96 86"/><path class="ol" stroke-width="15" d="M46 80L24 114"/><path class="fl" stroke-width="10" d="M46 80L24 114"/><path class="mu" stroke-width="10" d="M52 78L90 84"/><circle class="cf" cx="32" cy="72" r="11"/><path class="ol" stroke-width="15" d="M46 82L76 94L74 114"/><path class="fl" stroke-width="10" d="M46 82L76 94L74 114"/><path class="su" d="M65 120H83"/><rect class="pe" x="58" y="112" width="8" height="16" rx="3"/><rect class="pe" x="82" y="112" width="8" height="16" rx="3"/></symbol>
+</defs></svg>
+
+<nav class="barra" aria-label="Pantallas de la maqueta">
+<button aria-pressed="true" data-p="0">1 Hoy</button><button aria-pressed="false" data-p="1">2 Ejercicio</button><button aria-pressed="false" data-p="2">3 Dibujos</button><button aria-pressed="false" data-p="3">4 Saliente</button></nav>
+
+<!-- 1 HOY -->
+<section class="marco on" aria-label="Pantalla 1: Hoy en Entreno"><div class="pant">
+<h1>Entreno</h1><p class="sub">Jueves 5 nov · día normal</p>
+<div class="card"><h2>Lo que toca hoy</h2><p class="sub" style="margin-top:-4px">Cuerpo completo A · 45 min · 4 ejercicios</p>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#sq-a"/></svg><div><b>Sentadilla goblet</b><small>3 × 10 · 16 kg</small></div></div>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#pr-a"/></svg><div><b>Press banca mancuernas</b><small>3 × 8 · 14 kg</small></div></div>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#re-a"/></svg><div><b>Remo con mancuerna</b><small>3 × 12 · 20 kg</small></div><span class="sug">Prueba<br>+2,5 kg</span></div>
+<div class="fila"><div style="width:48px;height:51px;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:14px;color:var(--ink2)">30 s</div><div><b>Plancha</b><small>3 × 30 s</small></div></div>
+<p class="nota"><b>Remo:</b> hiciste 12 repeticiones en las 3 series y te quedaba 1-2 en recámara. Hoy prueba 22,5 kg; si cuesta, vuelves a 20 sin pasar nada.</p>
+<div style="height:12px"></div><button class="btn">Empezar sesión</button></div>
+<div class="card"><h2>Esta semana</h2><div class="sem"><span class="h">L ✓</span><span>M</span><span class="h">X ✓</span><span><b>J</b> hoy</span><span>V</span><span class="x">S guardia</span><span>D</span></div>
+<p class="sub" style="margin:8px 0 0">El sábado hay guardia: ese día no toca nada.</p></div>
+<div class="rec"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 8l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>Mejor press hasta ahora: 14 kg × 10 (lunes).</div>
+</div><div class="tabs"><span>Calendario</span><span>Comer</span><span class="a">Entreno</span><span>Sueño</span><span>Más</span></div></section>
+
+<!-- 2 EJERCICIO -->
+<section class="marco" aria-label="Pantalla 2: Ejercicio abierto"><div class="pant">
+<button class="atras">‹ Hoy</button>
+<h1>Sentadilla goblet</h1><p class="sub">Pauta: 3 series × 8-12 reps · descansa 90 s</p>
+<div class="pose g" role="group" aria-label="Dos posturas de la sentadilla: de pie y abajo"><div><svg viewBox="0 0 160 170" role="img" aria-label="De pie con la mancuerna al pecho"><use href="#sq-a"/></svg><small>Arriba</small></div><div><svg viewBox="0 0 160 170" role="img" aria-label="Abajo, cadera por debajo de las rodillas"><use href="#sq-b"/></svg><small>Abajo</small></div></div>
+<p class="musc"><i></i>Trabaja: cuádriceps y glúteo.</p>
+<div class="card"><h2>3 claves</h2><ol class="cl"><li>Pecho alto, mancuerna pegada</li><li>Rodillas siguen la punta</li><li>Baja despacio, sube empujando</li></ol>
+<div class="err"><b>Error típico:</b> los talones se despegan. Separa un poco más los pies o baja menos.</div></div>
+<h2>Series</h2>
+<button class="serie" aria-pressed="true"><span><b>16 kg × 10</b><small>Serie 1 · antes: 16 kg × 10</small></span><em>Hecha</em></button>
+<button class="serie" aria-pressed="false"><span><b>16 kg × 10</b><small>Serie 2 · un toque y queda anotada</small></span><em>Toca</em></button>
+<button class="serie" aria-pressed="false"><span><b>16 kg × 10</b><small>Serie 3 · antes: 16 kg × 9</small></span><em>Toca</em></button>
+<div class="rec"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 8l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>Récord: 16 kg × 11 en la serie 1 de hoy, tu mejor marca.</div>
+<p class="sub" style="margin:4px 0 0">Tope: 12 reps en las 3 series con 1-2 en recámara, y sube 2,5 kg.</p>
+</div><div class="tabs"><span>Calendario</span><span>Comer</span><span class="a">Entreno</span><span>Sueño</span><span>Más</span></div></section>
+
+<!-- 3 OTROS DIBUJOS -->
+<section class="marco" aria-label="Pantalla 3: press y remo"><div class="pant">
+<h1>Otros dos dibujos</h1><p class="sub">Mismo estilo: dos posturas que se alternan.</p>
+<div class="card"><h2>Press banca con mancuernas</h2>
+<div class="pose" role="group" aria-label="Press: brazos arriba y mancuernas al pecho"><div><svg viewBox="0 0 160 170" role="img" aria-label="Brazos extendidos"><use href="#pr-a"/></svg><small>Arriba</small></div><div><svg viewBox="0 0 160 170" role="img" aria-label="Mancuernas al pecho"><use href="#pr-b"/></svg><small>Abajo</small></div></div>
+<p class="musc"><i></i>Pecho, hombro y tríceps · 3 × 8-10 · 90 s</p>
+<ol class="cl"><li>Omóplatos juntos y abajo</li><li>Codos a 45° del cuerpo</li><li>Baja hasta tocar pecho</li></ol>
+<div class="err"><b>Error típico:</b> codos abiertos a 90°; castiga el hombro.</div></div>
+<div class="card"><h2>Remo con mancuerna</h2>
+<div class="pose" role="group" aria-label="Remo: brazo estirado y codo atrás"><div><svg viewBox="0 0 160 170" role="img" aria-label="Brazo estirado hacia abajo"><use href="#re-a"/></svg><small>Abajo</small></div><div><svg viewBox="0 0 160 170" role="img" aria-label="Codo atrás, mancuerna a la cadera"><use href="#re-b"/></svg><small>Arriba</small></div></div>
+<p class="musc"><i></i>Dorsal y espalda media · 3 × 10-12 · 90 s</p>
+<ol class="cl"><li>Espalda plana, mira al suelo</li><li>Codo hacia la cadera</li><li>Sin girar el tronco</li></ol>
+<div class="err"><b>Error típico:</b> tirar con el hombro y girar el tronco.</div></div>
+</div><div class="tabs"><span>Calendario</span><span>Comer</span><span class="a">Entreno</span><span>Sueño</span><span>Más</span></div></section>
+
+<!-- 4 SALIENTE -->
+<section class="marco" aria-label="Pantalla 4: día saliente de guardia"><div class="pant">
+<h1>Entreno</h1><p class="sub">Viernes 6 nov · saliente de guardia</p>
+<div class="tira" aria-label="Ayer, hoy y mañana"><div>Ayer<br>guardia</div><div class="hoy">Hoy<br>saliente</div><div>Mañana<br>normal</div></div>
+<div class="card"><p class="frase">Vienes de 24 horas despierto. Hoy basta con poco: elige la versión corta o solo movilidad. Tu semana no se resiente.</p></div>
+<button class="opc" aria-pressed="true"><b>Versión de 25 min · al 65 %</b><small>3 ejercicios × 2 series, sin llegar al límite</small></button>
+<button class="opc" aria-pressed="false"><b>Solo movilidad · 10 min</b><small>Cadera, espalda y hombros</small></button>
+<div class="card"><h2>Tu versión de 25 min</h2>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#sq-a"/></svg><div><b>Sentadilla goblet</b><small>2 × 8 · 10 kg (antes 16)</small></div></div>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#pr-a"/></svg><div><b>Press banca mancuernas</b><small>2 × 8 · 9 kg (antes 14)</small></div></div>
+<div class="fila"><svg viewBox="0 0 160 170" aria-hidden="true"><use href="#re-a"/></svg><div><b>Remo con mancuerna</b><small>2 × 8 · 13 kg (antes 20)</small></div></div>
+<div style="height:10px"></div><button class="btn">Empezar 25 min</button>
+<p class="sub" style="margin:8px 0 0">Sin récords ni subidas de peso hoy.</p></div>
+<button class="btn sec">Hoy descanso, nos vemos mañana</button>
+</div><div class="tabs"><span>Calendario</span><span>Comer</span><span class="a">Entreno</span><span>Sueño</span><span>Más</span></div></section>
+
+<script>
+(function(){var b=document.querySelectorAll('.barra button'),m=document.querySelectorAll('.marco');
+b.forEach(function(x,i){x.addEventListener('click',function(){b.forEach(function(y,j){y.setAttribute('aria-pressed',i===j);m[j].classList.toggle('on',i===j)})})});
+document.querySelectorAll('.serie,.opc').forEach(function(x){x.addEventListener('click',function(){
+if(x.classList.contains('opc')){x.parentNode.querySelectorAll('.opc').forEach(function(o){o.setAttribute('aria-pressed','false')});x.setAttribute('aria-pressed','true')}
+else{var on=x.getAttribute('aria-pressed')!=='true';x.setAttribute('aria-pressed',on);x.querySelector('em').textContent=on?'Hecha':'Toca'}})});})();
+</script></body></html>

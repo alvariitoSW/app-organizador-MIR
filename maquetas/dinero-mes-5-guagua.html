@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412">
+<title>Tu mes · La Guagua</title>
+<style>
+:root{--bg:#f4f1e8;--ink:#10233f;--mut:#475467;--teal:#00796b;--ora:#b34700;--pur:#6a2c91;--card:#fff;--yel:#ffd23f}
+*{box-sizing:border-box}
+body{width:412px;margin:0;background:#dcd8cb;color:var(--ink);font:15px/1.25 "Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+button,a.btn{font:inherit;color:inherit;cursor:pointer}
+.cartel{background:#10233f;color:#fff;padding:14px 16px}
+.cartel b{display:block;font-size:19px;letter-spacing:.2px}
+.cartel span{display:block;font-size:13px;margin-top:4px;color:#e3e9f3}
+.rot{margin:0;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#10233f;background:#dcd8cb}
+section{position:relative;background:var(--bg);overflow:hidden;width:412px}
+/* P1 */
+.top{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 4px}
+.top h1{margin:0;font-size:20px}
+.top small{font-size:12.5px;color:var(--mut);text-align:right}
+.hero{display:flex;gap:8px;padding:4px 16px 8px}
+.hero div{flex:1;background:var(--ink);color:#fff;border-radius:10px;padding:8px 10px}
+.hero div.b{background:var(--yel);color:var(--ink)}
+.hero small{display:block;font-size:12.5px}
+.hero strong{display:block;font-size:34px;line-height:1.05;letter-spacing:-1px}
+.hero em{display:block;font-style:normal;font-size:12px;min-height:15px}
+.linea{position:relative}
+.row{position:relative;display:flex;align-items:center;min-height:35px;padding-left:68px;padding-right:76px}
+.row::before{content:"";position:absolute;left:28px;top:0;bottom:0;width:12px;background:var(--teal)}
+.row.first::before{top:50%}.row.last::before{bottom:50%}
+.row.por::before{background:repeating-linear-gradient(180deg,var(--teal) 0 8px,#fff 8px 11px);outline:0}
+.row.var::before{background:repeating-linear-gradient(180deg,var(--ora) 0 8px,#fff 8px 11px)}
+.dot{position:absolute;left:23px;top:50%;margin-top:-11px;width:22px;height:22px;border-radius:50%;background:#fff;border:4px solid var(--ink);display:grid;place-items:center;font-size:12px;font-weight:700}
+.pag .dot{background:var(--ink);color:#fff;border-color:var(--ink)}
+.row .n{flex:1;font-weight:700;font-size:15px}
+.row .n small{display:block;font-weight:400;font-size:12.5px;color:var(--mut)}
+.row .m{font-weight:700;font-size:15px;white-space:nowrap}
+.row.big{min-height:46px}.row.big .dot{width:30px;height:30px;margin-top:-15px;left:19px;border-width:5px}
+.row.big .n{font-size:17px}
+.hoy{background:var(--yel);}
+.hoy .bus{position:absolute;right:6px;top:6px}
+.var .dot{border-color:var(--ora)}
+.tramo{position:absolute;right:8px;width:62px;border:3px solid var(--teal);background:#fff;color:var(--teal);border-radius:10px;font-weight:700;font-size:12.5px;line-height:1.15;padding:2px;min-height:44px;writing-mode:horizontal-tb}
+.tramo[aria-pressed=true]{background:var(--teal);color:#fff}
+.tramo b{display:block;font-size:16px}
+.cartelp{margin:6px 16px;border:3px solid var(--teal);border-radius:10px;background:#fff;padding:7px 12px;min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cartelp small{font-size:13px;color:var(--mut)}
+.cartelp b{font-size:26px;letter-spacing:-.5px}
+.cartelp.on{background:var(--teal);color:#fff}.cartelp.on small{color:#fff}
+.ramal{padding-left:68px;position:relative;min-height:54px;display:flex;align-items:center}
+.ramal::before{content:"";position:absolute;left:28px;top:0;height:50%;width:12px;background:var(--pur);}
+.ramal::after{content:"";position:absolute;left:28px;top:calc(50% - 6px);width:44px;height:12px;background:var(--pur);border-radius:0 0 0 0}
+.ramal a{margin-left:56px;margin-right:16px;flex:1;min-height:44px;display:flex;align-items:center;justify-content:space-between;background:var(--pur);color:#fff;text-decoration:none;font-weight:700;border-radius:22px;padding:0 16px;font-size:16px}
+.ramal.dic a{background:#fff;color:var(--pur);border:3px dashed var(--pur)}
+.ramal.dic{display:none}.ramal.dic.on{display:flex}
+.acc{padding:6px 16px 8px}
+.acc button,.btn,.volver{min-height:44px;border-radius:10px;border:3px solid var(--ink);background:#fff;font-weight:700;padding:0 14px}
+.acc button{width:100%}
+.acc button.p{background:var(--ink);color:#fff}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:6px solid var(--ink);border-radius:18px 18px 0 0;padding:14px 16px 16px;display:none;box-shadow:0 -6px 20px rgba(0,0,0,.25);z-index:5}
+.hoja.on{display:block}
+.hoja h2{margin:0 0 4px;font-size:19px}
+.hoja p{margin:0 0 8px;font-size:13.5px;color:var(--mut)}
+.op{display:block;width:100%;text-align:left;margin:0 0 8px;min-height:64px;padding:8px 12px;border-radius:12px;border:3px solid var(--ink);background:#fff}
+.op b{display:block;font-size:16px}.op small{font-size:13px;color:var(--mut)}
+.op[aria-pressed=true]{background:var(--ink);color:#fff}.op[aria-pressed=true] small{color:#fff}
+.op[aria-pressed=true] b::before{content:"✓ "}
+.fila{display:flex;gap:8px}.fila button{flex:1}
+/* P2 */
+.volver{margin:8px 16px 0;display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)}
+.parada{margin:8px 16px 0;background:var(--pur);color:#fff;border-radius:12px;padding:10px 14px}
+.parada h2{margin:0;font-size:22px}.parada small{font-size:13px}
+.parque{margin:8px 16px 0;background:#e6f2dc;border:3px solid var(--teal);border-radius:12px;padding:6px 4px 4px}
+.parque svg{display:block;width:100%;height:auto}
+.cifras{display:flex;gap:8px;margin:8px 16px 0}
+.cifras div{flex:1;background:#fff;border:3px solid var(--ink);border-radius:10px;padding:6px 10px}
+.cifras small{display:block;font-size:12.5px;color:var(--mut)}
+.cifras b{font-size:24px;display:block;letter-spacing:-.5px}
+.cifras span{font-size:13px}
+.nota{margin:8px 16px 0;font-size:13.5px;border-left:6px solid var(--ora);padding:4px 10px;background:#fff;min-height:44px}
+h3{margin:12px 16px 4px;font-size:16px}
+.bill{position:relative;margin:6px 16px;background:#fff;border:2px solid var(--ink);border-radius:10px;padding:7px 14px;display:flex;align-items:center;gap:10px;min-height:56px}
+.bill::before,.bill::after{content:"";position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--bg);border:2px solid var(--ink)}
+.bill::before{left:-10px}.bill::after{right:-10px}
+.bill .mes{font-weight:700;font-size:18px;width:44px}
+.bill .barra{flex:1}
+.bill .barra i{display:block;height:12px;background:var(--teal);border-radius:6px;min-width:6px}
+.bill .barra small{font-size:12.5px;color:var(--mut)}
+.bill .eu{font-weight:700;font-size:17px;width:68px;text-align:right}
+.bill.nuevo{border-style:dashed;background:#fff8d6}
+.bill.nuevo .barra i{background:var(--ora)}
+.peq{margin:8px 16px 14px;font-size:13px;color:var(--mut)}
+/* P3 */
+.gris{margin:10px 16px 0;background:#b9bec6;color:#1d2433;border-radius:10px;padding:14px;font-weight:700;text-align:center}
+.lin{margin:8px 16px 0;background:var(--ink);color:#fff;border-radius:10px;padding:10px 14px;font-size:15.5px;border-left:10px solid var(--yel)}
+.lin small{display:block;color:#e3e9f3;font-size:12.5px;margin-top:2px}
+.est{margin:12px 16px 0;font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mut)}
+.sin{margin:8px 16px 0;border:2px dashed var(--mut);border-radius:10px;padding:10px;text-align:center;color:var(--mut);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="cartel"><b>La Guagua · escuela 5</b><span>El mes es una línea de guagua de nómina a nómina: cada fijo es una parada, la guagua está en hoy y el final de línea es lo que llegas a tener, con un ramal a la hucha. El gasto grande abre un ramal nuevo en diciembre.</span></div>
+
+<p class="rot">Pantalla 1 · Tu mes</p>
+<section data-pantalla="1" id="p1" style="height:880px">
+  <div class="top"><h1>Tu mes</h1><small>25 oct → 24 nov<br>quedan 27 días</small></div>
+  <div class="hero">
+    <div><small>Acabarás el mes con</small><strong>~900 €</strong><em id="hAc">&nbsp;</em></div>
+    <div class="b"><small>Puedes ahorrar este mes</small><strong id="hAh">700 €</strong><em id="hNo">dejando ~200 € de margen</em></div>
+  </div>
+  <div class="linea" id="linea">
+    <div class="row first pag big"><span class="dot" aria-hidden="true">✓</span><span class="n">Salida · Nómina<small>25 oct · 280 € que te quedaban + 2.100 €</small></span><span class="m">2.380 €</span></div>
+    <div class="row pag"><span class="dot" aria-hidden="true">✓</span><span class="n">Alquiler<small>✓ pagado</small></span><span class="m">550 €</span></div>
+    <div class="row pag"><span class="dot" aria-hidden="true">✓</span><span class="n">Luz y agua<small>✓ pagado el 27</small></span><span class="m">60 €</span></div>
+    <div class="row pag hoy big" style="background:linear-gradient(90deg,transparent 0,transparent 60px,var(--yel) 60px);margin-right:76px;padding-right:0"><span class="dot" aria-hidden="true" style="background:var(--ink)"></span><span class="n">Hoy · 29 oct<small>la guagua está aquí</small></span>
+      <svg class="bus" width="64" height="34" viewBox="0 0 64 34" role="img" aria-label="Guagua"><title>Guagua</title><rect x="2" y="3" width="58" height="23" rx="6" fill="#10233f"/><rect x="7" y="8" width="10" height="8" fill="#fff"/><rect x="21" y="8" width="10" height="8" fill="#fff"/><rect x="35" y="8" width="10" height="8" fill="#fff"/><rect x="49" y="8" width="8" height="14" fill="#ffd23f"/><circle cx="16" cy="27" r="5" fill="#10233f" stroke="#fff" stroke-width="2"/><circle cx="46" cy="27" r="5" fill="#10233f" stroke="#fff" stroke-width="2"/></svg></div>
+    <div class="row por"><span class="dot" aria-hidden="true"></span><span class="n">Gimnasio<small>1 nov</small></span><span class="m">40 €</span></div>
+    <div class="row por"><span class="dot" aria-hidden="true"></span><span class="n">Móvil e internet<small>5 nov</small></span><span class="m">35 €</span></div>
+    <div class="row por"><span class="dot" aria-hidden="true"></span><span class="n">Spotify y Netflix<small>10 nov</small></span><span class="m">18 €</span></div>
+    <div class="row por"><span class="dot" aria-hidden="true"></span><span class="n">Seguro<small>15 nov</small></span><span class="m">25 €</span></div>
+    <button class="tramo" id="tramo" aria-pressed="false" aria-controls="panel" style="top:52px;height:262px" aria-label="Fijos, 728 euros. Toca para ver lo que te queda"><b>728 €</b>fijos<br>toca</button>
+    <div class="row var big"><span class="dot" aria-hidden="true"></span><span class="n">Día a día<small>súper, comer fuera, taxis… llevas 140 €</small></span><span class="m">~750 €</span></div>
+    <div class="row last big"><span class="dot" aria-hidden="true" style="background:var(--ink);border-color:var(--ink)"></span><span class="n">Final · 24 nov<small>llegas con ~900 €</small></span><span class="m">~900 €</span></div>
+    <div class="ramal"><a class="btn" href="#p2" id="hucha"><span>Hucha</span><span id="hucM">700 € ›</span></a></div>
+    <div class="ramal dic" id="ramDic"><a class="btn" href="#p2"><span id="dicT">Dic · Portátil</span><span>1.100 €</span></a></div>
+  </div>
+  <div class="cartelp" id="panel" role="status" aria-live="polite"><small id="pS">Toca los fijos de la línea y verás lo que te queda.</small><b id="pB"></b></div>
+  <div class="acc"><button class="p" id="abre" aria-haspopup="dialog">Apuntar gasto grande</button></div>
+
+  <div class="hoja" id="hoja" role="dialog" aria-label="Apuntar gasto grande">
+    <h2>Portátil · 1.100 € · para diciembre</h2>
+    <p>¿Cómo lo quieres pagar?</p>
+    <button class="op" data-e="apartando" aria-pressed="false"><b>Lo voy apartando</b><small>550 € en noviembre y 550 € en diciembre. Este mes ahorras 150 €.</small></button>
+    <button class="op" data-e="ahorrado" aria-pressed="false"><b>Sale de lo ahorrado</b><small>Este mes ahorras los 700 €. En diciembre se lleva 1.100 € del colchón.</small></button>
+    <div class="fila"><button id="quita">Quitar gasto</button><button id="cierra">Hecho</button></div>
+  </div>
+</section>
+
+<p class="rot">Pantalla 2 · Ahorro y Bosque</p>
+<section data-pantalla="2" id="p2">
+  <a class="volver" href="#p1">‹ Volver a tu mes</a>
+  <div class="parada"><small>Parada final</small><h2>Bosque y Ahorro</h2><small id="bSub">Un árbol por cada mes de colchón</small></div>
+  <div class="parque"><svg id="parque" viewBox="0 0 380 150" role="img" aria-label="Parque con un árbol por cada mes de colchón"><title>Parque del colchón</title></svg></div>
+  <div class="cifras">
+    <div><small>Colchón hoy</small><b>4.200 €</b><span>2,8 meses</span></div>
+    <div><small id="c2s">Con este mes</small><b id="c2b">4.900 €</b><span id="c2m">3,3 meses</span></div>
+  </div>
+  <div class="nota" id="nota">Sin gasto grande: ahorras 700 € este mes.</div>
+  <h3>Los billetes de los últimos meses</h3>
+  <div class="bill"><span class="mes">jul</span><span class="barra"><i style="width:12%"></i><small>colchón 2.300 €</small></span><span class="eu">100 €</span></div>
+  <div class="bill"><span class="mes">ago</span><span class="barra"><i style="width:56%"></i><small>colchón 2.750 €</small></span><span class="eu">450 €</span></div>
+  <div class="bill"><span class="mes">sep</span><span class="barra"><i style="width:100%"></i><small>colchón 3.550 €</small></span><span class="eu">800 €</span></div>
+  <div class="bill"><span class="mes">oct</span><span class="barra"><i style="width:81%"></i><small>colchón 4.200 €</small></span><span class="eu">650 €</span></div>
+  <div class="bill nuevo"><span class="mes">nov</span><span class="barra"><i id="bn" style="width:88%"></i><small id="bnS">este mes · sin cerrar</small></span><span class="eu" id="bnE">700 €</span></div>
+  <p class="peq">Objetivo a largo plazo: 6 meses de colchón (8.868 €). Gasto normal: 1.478 € al mes.</p>
+</section>
+
+<p class="rot">Pantalla 3 · La línea de Hoy</p>
+<section data-pantalla="3" id="p3">
+  <div class="gris">El cartel de la noche</div>
+  <div class="lin" id="linH">💶 Te quedan 812 € · 30 €/día hasta el 24<small>Con tus 700 € de ahorro ya apartados.</small></div>
+  <p class="est">Otro día, si toca un pago</p>
+  <div class="lin" style="border-left-color:var(--teal)">💶 Te quedan 812 € · 30 €/día hasta el 24 · mañana pagas el gimnasio (40 €)</div>
+  <p class="est">Cuando no aporta</p>
+  <div class="sin">sin línea hoy (todo en orden y nada que pagar: no sale nada)</div>
+</section>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var est='ninguno';
+var T={ninguno:{ah:'700 €',no:'dejando ~200 € de margen',huc:'700 € ›',cB:'4.900 €',cM:'3,3 meses',cS:'Con este mes',m:3.3,nota:'Sin gasto grande: ahorras 700 € este mes.',bn:'88%',bnS:'este mes · sin cerrar',bnE:'700 €',h:'Un árbol por cada mes de colchón'},
+apartando:{ah:'150 €',no:'550 € apartados para el portátil',huc:'150 € ›',cB:'4.350 €',cM:'2,9 meses',cS:'Con este mes',m:2.9,nota:'Apartando: 550 € en nov y 550 € en dic. Colchón 4.350 € en nov y 4.500 € en dic, con el portátil pagado.',bn:'19%',bnS:'este mes · 700 − 550 apartados',bnE:'150 €',h:'Un árbol por mes · fruto: el portátil, que se paga solo'},
+ahorrado:{ah:'700 €',no:'en dic el portátil se lleva 1.100 €',huc:'700 € ›',cB:'4.900 €',cM:'3,3 meses',cS:'Con este mes',m:3.3,nota:'De lo ahorrado: este mes 700 € (colchón 4.900 €). En dic ahorras otros 700 y el portátil se lleva 1.100 €: colchón 4.500 € (3,0 meses).',bn:'88%',bnS:'este mes · sin cerrar',bnE:'700 €',h:'Un árbol por mes · fruto: el portátil, que se cae en dic'}};
+function arbol(x,f,i){
+ var s='';
+ if(f<=0){return '<g><path d="M'+x+' 120 q0 -14 -8 -20 M'+x+' 120 q0 -14 8 -20" fill="none" stroke="#00796b" stroke-width="3" stroke-dasharray="4 3"/><text x="'+x+'" y="140" text-anchor="middle" font-size="11" fill="#475467">plantón</text></g>';}
+ var r=8+18*f,h=14+22*f,full=f>=0.995;
+ s+='<rect x="'+(x-4)+'" y="'+(120-h)+'" width="8" height="'+h+'" fill="#5b3a1e"/>';
+ s+='<circle cx="'+x+'" cy="'+(120-h-r+6)+'" r="'+r+'" fill="'+(full?'#00796b':'#4aa86b')+'" stroke="#10233f" stroke-width="2"'+(full?'':' stroke-dasharray="5 3"')+'/>';
+ s+='<text x="'+x+'" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#10233f">'+(full?'mes '+(i+1):(f*1).toFixed(1).replace('.',',')+' de mes')+'</text>';
+ return s;
+}
+function bosque(m){
+ var s='<line x1="6" y1="120" x2="374" y2="120" stroke="#10233f" stroke-width="3"/>';
+ for(var i=0;i<6;i++){s+=arbol(31+i*63,Math.max(0,Math.min(1,m-i)),i);}
+ if(est!=='ninguno'){s+='<circle cx="'+(31+3*63+20)+'" cy="62" r="9" fill="#ffd23f" stroke="#10233f" stroke-width="2"/><rect x="'+(31+3*63+14)+'" y="58" width="12" height="8" fill="#10233f"/><text x="'+(31+3*63+34)+'" y="48" font-size="11" font-weight="700" fill="#10233f">portátil</text>';}
+ s+='<text x="374" y="14" text-anchor="end" font-size="12" font-weight="700" fill="#10233f">'+String(m).replace('.',',')+' de 6 meses</text>';
+ $('parque').innerHTML=s+'<title>Parque del colchón</title>';
+}
+function pinta(){
+ var t=T[est];
+ $('hAh').textContent=t.ah;$('hNo').textContent=t.no;$('hAc').textContent=est==='ninguno'?' ':(est==='apartando'?'incluye 550 € apartados':'sin tocar el colchón');
+ $('hucM').textContent=t.huc;$('c2b').textContent=t.cB;$('c2m').textContent=t.cM;$('c2s').textContent=est==='apartando'?'Con este mes (nov)':'Con este mes';
+ $('nota').textContent=t.nota;$('bn').style.width=t.bn;$('bnS').textContent=t.bnS;$('bnE').textContent=t.bnE;$('bSub').textContent=t.h;
+ $('ramDic').className='ramal dic'+(est==='ninguno'?'':' on');
+ $('dicT').textContent=est==='apartando'?'Dic · Portátil (ya apartado)':'Dic · Portátil (del colchón)';
+ $('linH').lastChild.textContent=est==='apartando'?'Aparte, vas apartando 550 € para el portátil.':'Con tus 700 € de ahorro ya apartados.';
+ if(est==='apartando')$('linH').lastChild.textContent='Con 150 € al colchón; 550 € van al portátil.';
+ var ops=document.querySelectorAll('.op');for(var i=0;i<ops.length;i++)ops[i].setAttribute('aria-pressed',ops[i].dataset.e===est?'true':'false');
+ $('abre').textContent=est==='ninguno'?'Apuntar gasto grande':'Gasto grande apuntado · cambiar';
+ bosque(t.m);
+}
+$('tramo').onclick=function(){
+ var on=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',on);
+ var p=$('panel');p.className='cartelp'+(on?' on':'');
+ $('pS').innerHTML=on?'Parada · Te quedan<br>2.380 − 728 fijos':'Toca los fijos de la línea y verás lo que te queda.';
+ $('pB').textContent=on?'1.652 €':'';
+};
+$('abre').onclick=function(){$('hoja').className='hoja on'};
+$('cierra').onclick=function(){$('hoja').className='hoja'};
+$('quita').onclick=function(){est='ninguno';pinta();$('hoja').className='hoja'};
+var ops=document.querySelectorAll('.op');
+for(var i=0;i<ops.length;i++)ops[i].onclick=function(){est=this.dataset.e;pinta()};
+pinta();
+})();
+</script>
+</body>
+</html>

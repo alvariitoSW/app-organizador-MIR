@@ -1,0 +1,171 @@
+<!doctype html><html lang=es><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Comer · G2 · El reloj</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#9fb3d1;--line:#26354f;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--ayuda:#7cb4ff;--sobre:#04121c;--page:#02040a}
+@media (prefers-color-scheme:light){:root{--bg:#eef2f9;--bg2:#e6ecf7;--card:#fff;--ink:#0d1729;--ink2:#4a5d7a;--line:#c9d5e8;--brand:#1d4ed8;--brand2:#6d28d9;--ok:#15803d;--warn:#92400e;--ayuda:#1d4ed8;--sobre:#fff;--page:#d9e0ee}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 40px}
+.barra{position:sticky;top:0;z-index:9;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;padding:10px;background:var(--bg2);border-bottom:1px solid var(--line)}
+.barra b{font-size:14px;color:var(--ink2)}
+.barra button{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 14px system-ui;cursor:pointer}
+.barra button[aria-pressed=true]{border-color:var(--ok);background:color-mix(in srgb,var(--brand2) 18%,var(--card))}
+.mundo{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:20px 12px}
+.ab{width:412px;height:915px;position:relative;overflow:hidden;border-radius:26px;border:1px solid var(--line);background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 76px}
+.ab .cuerpo{height:100%;overflow:hidden}
+.js .ab{display:none}.js .ab.ver{display:block}
+.lbl{position:absolute;top:-1px;right:14px;font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--sobre);background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px;z-index:3}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:14px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:20px;margin:0}
+.ic{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);display:grid;place-items:center;font-size:18px;color:var(--ink)}
+.back{width:44px;height:44px;display:grid;place-items:center;font-size:22px;color:var(--ink2);border-radius:12px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.seg div{text-align:center;padding:12px 2px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:800;color:var(--ink2)}
+.seg div.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.busca{display:flex;align-items:center;gap:8px;min-height:46px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);padding:0 12px;color:var(--ink2);margin-bottom:8px;font-size:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-weight:800;font-size:14px;padding:0 12px;text-align:center}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:var(--sobre);border:0}
+.btn.g{min-height:52px;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.chip.on{border-color:var(--ayuda);background:color-mix(in srgb,var(--ayuda) 16%,var(--bg2));color:var(--ink)}
+.tag{font-size:14px;font-weight:900;letter-spacing:.06em;padding:3px 8px;border-radius:7px;background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.nav{position:absolute;left:0;right:0;bottom:0;height:64px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:14px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.ej{position:absolute;bottom:68px;left:14px;font-size:14px;color:var(--ink2)}
+/* reloj */
+.tl{position:relative;margin-left:50px;padding-left:20px}
+.tl::before{content:"";position:absolute;left:0;top:4px;bottom:0;width:2px;background:linear-gradient(var(--brand),var(--brand2) 55%,var(--line))}
+.st{position:relative;margin-bottom:7px}
+.st::before{content:"";position:absolute;left:-25px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--bg2);border:2px solid var(--ink2)}
+.st .t{position:absolute;left:-70px;top:8px;width:40px;text-align:right;font-size:14px;font-weight:900;color:var(--ink2)}
+.st.ya::before{background:var(--ok);border-color:var(--ok)}
+.st.now::before{left:-28px;top:8px;width:16px;height:16px;background:var(--brand);border-color:#fff;box-shadow:0 0 0 5px color-mix(in srgb,var(--brand) 25%,transparent)}
+.st.now .t{color:var(--brand)}
+.st.ant::before{border-color:var(--brand2);background:var(--brand2)}
+.st .card{margin:0;padding:10px 12px}
+.st.now .card{border-color:var(--brand)}
+.st.ant .card{border-color:color-mix(in srgb,var(--brand2) 60%,var(--line))}
+.bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--ayuda)}
+.big{font-size:20px;font-weight:900;line-height:1.2}
+/* frase */
+.frase{display:flex;align-items:center;gap:8px;min-height:48px;border-radius:14px;border:1px solid var(--brand);background:var(--bg2);padding:0 6px 0 12px;margin-bottom:8px;color:var(--ink2);font-size:14px}
+.frase .go{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--line);color:var(--ink2)}
+/* casa */
+.lin{display:grid;grid-template-columns:44px 1fr auto;gap:6px;align-items:center;min-height:46px;border-top:1px solid var(--line);font-size:14px}
+.lin:first-of-type{border-top:0}
+.x{width:24px;height:24px;border-radius:8px;border:2px solid var(--ink2);margin:auto}
+.x.on{background:var(--ok);border-color:var(--ok);color:var(--sobre);display:grid;place-items:center;font-weight:900;font-size:14px}
+.lin small{display:block;font-size:14px;color:var(--ink2)}
+.frio{min-height:44px;display:inline-flex;align-items:center;padding:0 10px;border-radius:12px;border:1px dashed var(--line);font-size:14px;font-weight:800;color:var(--ink2);background:transparent}
+.frio.on{border:1px solid var(--ayuda);border-style:solid;color:var(--ink);background:color-mix(in srgb,var(--ayuda) 16%,var(--bg2))}
+/* receta */
+.foto{height:150px;border-radius:16px;position:relative;overflow:hidden;margin-bottom:8px;background:radial-gradient(circle at 50% 56%,#f2b134 0 34%,#d9871c 35% 46%,transparent 47%),radial-gradient(circle at 50% 56%,#e8edf5 0 52%,#b9c4d6 53% 58%,transparent 59%),linear-gradient(135deg,#3a2a14,#1c2740)}
+.foto::before{content:"";position:absolute;left:41%;top:46%;width:14%;height:20%;border-radius:40% 60% 50% 50%;background:#f6e7c1;box-shadow:34px 12px 0 -3px #f6e7c1,-8px 28px 0 -4px #5aa05a}
+.foto .ori{position:absolute;left:8px;bottom:8px;background:#000c;color:#fff;font-size:14px;font-weight:800;padding:4px 8px;border-radius:8px}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.kpi div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:6px;text-align:center}
+.kpi b{display:block;font-size:17px}.kpi span{font-size:14px;color:var(--ink2);font-weight:800}
+ol.pasos{margin:0;padding:0;list-style:none;counter-reset:p}
+ol.pasos li{counter-increment:p;display:grid;grid-template-columns:28px 1fr;gap:8px;font-size:14px;padding:5px 0}
+ol.pasos li::before{content:counter(p);width:26px;height:26px;border-radius:50%;background:#6d28d9;color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px}
+ul.ing{margin:0;padding:0;list-style:none;font-size:14px;columns:2;column-gap:12px}ul.ing li{padding:2px 0}
+.pie{position:absolute;left:0;right:0;bottom:64px;padding:8px 12px 10px;background:var(--bg2);border-top:1px solid var(--line)}
+.pie .mini{text-align:center;margin-top:5px;font-size:14px}
+.alt{display:grid;grid-template-columns:44px 1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.alt:first-of-type{border-top:0}
+.alt .e{width:44px;height:44px;border-radius:12px;background:var(--bg2);display:grid;place-items:center;font-size:22px;grid-row:span 2}
+.alt b{font-size:15px}.alt .s{font-size:14px;color:var(--ink2)}
+.alt .btn{grid-row:span 2;min-height:44px}
+</style>
+<body>
+<div class=barra><b>Maqueta G2 · Comer</b>
+<button data-p=1 aria-pressed=true>1 · Hoy</button><button data-p=2 aria-pressed=false>2 · Casa</button><button data-p=3 aria-pressed=false>3 · Receta</button><button data-p=4 aria-pressed=false>4 · Antojo</button></div>
+<div class=mundo>
+
+<!-- 1 HOY -->
+<div class="ab ver" id=p1><div class=lbl>1 · HOY</div><div class=cuerpo>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=seg><div class=on>Hoy</div><div>Semana</div><div>Casa</div></div>
+<div class=frase>✏️ <span>2 huevos y una tostada…</span><span class=sp></span><div class=go>↵</div></div>
+<div class=tl>
+ <div class="st now"><div class=t>18:40</div><div class=card><div class=row><b>Ahora · viernes 30</b><span class=sp></span><span class=mini>tras entrenar</span></div>
+  <div class=big style="margin-top:6px;color:var(--ayuda)">Te faltan 38 g de proteína hoy</div>
+  <div class=bar style="margin:8px 0 5px"><i style="width:66%"></i></div>
+  <div class=mini>suelo 1,6 g/kg · 112 g · llevas 74 g</div></div></div>
+ <div class="st ya"><div class=t>9:00</div><div class=card style="padding:8px 12px"><div class=row><span class=mini>✓ Desayuno · avena y plátano</span><span class=sp></span><span class=mini>520</span></div><div style="height:1px;background:var(--line);margin:5px 0"></div><div class=row><span class=mini>✓ Comida · pollo al curry (táper)</span><span class=sp></span><span class=mini>760</span></div></div></div>
+ <div class="st"><div class=t>20:30</div><div class=card style="border-color:var(--ok)"><div class=cap style="margin:0 0 3px;color:var(--ok)">LO SIGUIENTE</div><div class=big style="font-size:18px">¿Cena?</div><div class=mini>Tortilla francesa y ensalada · 32 g de proteína</div><div class=two style="margin-top:8px"><div class="btn p">✓ Hecho</div><div class=btn>Otra cosa</div></div></div></div>
+ <div class="st ant"><div class=t>ahora</div><div class=card><div class=cap style="margin-bottom:3px">😋 ¿ALGO RÁPIDO?</div><div class=row><div><b>Taza de huevo y queso</b><div class=mini><span class=tag>≤5 MIN</span> · 24 g de proteína</div></div><span class=sp></span><div class=btn style="min-width:64px">Ver</div></div></div></div>
+</div>
+<div class=ej>cifras de ejemplo</div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 2 CASA -->
+<div class=ab id=p2><div class=lbl>2 · CASA</div><div class=cuerpo>
+<div class=top><h1>Comer</h1><span class=sp></span><div class=ic>⚙️</div></div>
+<div class=seg><div>Hoy</div><div>Semana</div><div class=on>Casa</div></div>
+<div class=card><div class=row><b>🧊 La nevera</b><span class=sp></span><span class=mini>toca ❄ para congelado</span></div>
+ <div class=lin><div class="x on">✓</div><div>Lentejas guisadas<small>3 raciones</small></div><span class="frio on">❄ congelado</span></div>
+ <div class=lin><div class="x on">✓</div><div>Pollo al curry<small>2 raciones</small></div><span class="frio on">❄ congelado</span></div>
+ <div class=lin><div class="x on">✓</div><div>Huevos<small>6</small></div><span class=frio>❄</span></div>
+ <div class=lin><div class="x on">✓</div><div>Boloñesa<small>3 raciones</small></div><span class=frio>❄</span></div>
+ <div class=lin><div class="x on">✓</div><div>Yogur griego<small>4</small></div><span class=frio>❄</span></div></div>
+<div class=card><div class=row><b>🛒 La compra de siempre</b><span class=sp></span><span class=mini>4 cosas</span></div>
+ <div class=lin><div class="x on">✓</div><span>Leche</span><span class=mini>1 L</span></div>
+ <div class=lin><div class=x></div><span>Aceite de oliva</span><span class=mini>queda poco</span></div>
+ <div class=lin><div class=x></div><span>Avena</span><span class=mini></span></div>
+ <div class=lin><div class=x></div><span>Plátanos</span><span class=mini></span></div></div>
+<div class=card style="border-color:var(--ayuda)"><div class=row><b>Lo que falta, a la compra</b><span class=sp></span><span class=mini>2 cosas</span></div>
+ <div class=lin><div class=x></div><span>Queso rallado</span><span class=mini>para la taza</span></div>
+ <div class=lin><div class=x></div><span>Zanahoria</span><span class=mini>falta</span></div>
+ <div class="btn p" style="margin-top:6px">＋ Pasar a la lista de la compra</div></div>
+<div class=ej>cifras de ejemplo</div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 3 RECETA -->
+<div class=ab id=p3 style="padding-bottom:0"><div class=lbl>3 · RECETA</div><div class=cuerpo style="height:calc(100% - 140px)">
+<div class=top><div class=back>‹</div><h1>Pollo al curry de TikTok</h1></div>
+<div class=foto role=img aria-label="Plato dibujado"><span class=ori>Pegada desde TikTok</span></div>
+<div class=kpi><div><b>4</b><span>raciones</span></div><div><b>35 min</b><span>tiempo</span></div><div><b style="color:var(--ayuda)">36 g</b><span>proteína / ración</span></div></div>
+<div class=card style="padding:10px 12px"><div class=cap style="margin-bottom:3px">INGREDIENTES</div>
+<ul class=ing><li>600 g pechuga</li><li>1 cebolla</li><li>400 ml leche de coco</li><li>2 cdas curry</li><li>1 diente de ajo</li><li>Arroz basmati</li></ul></div>
+<div class=card style="padding:10px 12px"><div class=cap style="margin-bottom:3px">PASOS</div>
+<ol class=pasos><li>Dora la cebolla y el ajo picados 5 min.</li><li>Añade el pollo en dados y el curry; sella.</li><li>Echa la leche de coco y cocina 15 min.</li><li>Sirve con arroz. Aguanta 3 días o congela.</li></ol></div>
+</div>
+<div class=pie style="bottom:64px"><div class=two><div class="btn p g">🛒 Añadir a la compra</div><div class="btn g">↗ Compartir</div></div><div class=mini>se comparte la receta, sin tus datos</div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 4 ANTOJO -->
+<div class=ab id=p4><div class=lbl>4 · ANTOJO</div><div class=cuerpo>
+<div class=top><div class=back>‹</div><h1>¿Algo rápido?</h1></div>
+<div class=card style="border-color:var(--brand2)"><div class=cap style="margin-bottom:3px">POR QUÉ TE LO PROPONGO</div><div style="font-size:15px">Has entrenado y te faltan <b style="color:var(--ayuda)">38 g</b> de proteína. Esto te acerca en 4 minutos.</div></div>
+<div class=card><div class=row><b class=big>Taza de huevo y queso</b></div>
+ <div class=row style="margin:6px 0"><span class=tag>≤5 MIN · ≥20 G</span><span class=mini>4 min · 24 g de proteína</span></div>
+ <div class=cap style="margin:8px 0 3px">INGREDIENTES</div><div style="font-size:14px">2 huevos · 30 g de queso rallado · sal y pimienta · un chorrito de leche</div>
+ <ol class=pasos style="margin-top:6px"><li>Bate los huevos con la leche en una taza.</li><li>Añade el queso, sal y pimienta.</li><li>Microondas 90 s, remueve y 60 s más.</li></ol></div>
+<div class=card><div class=cap>OTRAS IDEAS</div>
+ <div class=alt><div class=e>🥣</div><b>Yogur griego con avena</b><div class=s>2 min · 22 g de proteína</div><div class=btn>Ver</div></div>
+ <div class=alt><div class=e>🐟</div><b>Atún con patata al micro</b><div class=s>8 min · 30 g de proteína</div><div class=btn>Ver</div></div></div>
+<div class="btn p g">✓ Apuntar que me lo he comido</div>
+<div class=ej>cifras de ejemplo</div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+</div>
+<script>
+document.documentElement.classList.add('js');
+var bs=document.querySelectorAll('.barra button');
+function ir(n){for(var i=1;i<=4;i++)document.getElementById('p'+i).classList.toggle('ver',i==n);bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.p==n)})}
+bs.forEach(function(b){b.onclick=function(){ir(b.dataset.p)}});
+</script>
+<!--
+Reutilizado: CSS base (:root, .ab, .card, .cap, .btn, .seg, .nav, .tag, .bar) de comer-debate-1-reloj.html, con tamaños de letra subidos a ≥14 px.
+Reutilizado: la línea del tiempo (.tl/.st con parada «ahora», «ya», «ant») de comer-debate-1-reloj.html pantalla 1 y 4 para Hoy y el antojo.
+Reutilizado: el campo único de «Escribir lo comido» (idea del .busca con borde de marca) de comer-escribir.html / .busca del reloj.
+Reutilizado: filas .lin/.x de la compra y el estilo de .alt (antes .rec) de comer-debate-1-reloj.html pantallas 4 y 5; la nevera aquí es lista, sin el armario dibujado.
+Nuevo: foto CSS de receta, chip ❄ congelado, pie con 2 botones, tarjeta de proteína (azul de ayuda, nunca rojo) y modo claro por prefers-color-scheme (las bases solo tenían oscuro).
+-->

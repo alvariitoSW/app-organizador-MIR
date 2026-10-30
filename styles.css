@@ -1400,6 +1400,8 @@ ul.slots{list-style:none;margin:0;padding:0}
 .finfila{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
 .finfila:first-of-type{border-top:0}
 .finfila .t{flex:1;min-width:0;font-size:14px}
+.finfila input.t{width:auto;text-align:left;font-weight:600}
+.finfila .fin-x{min-width:44px;min-height:44px;padding:0;flex:none}
 .finfila input{width:104px;text-align:right;font-weight:700}
 .finfila .m{width:16px;text-align:center;font-weight:800}
 .finfila.ok .m{color:var(--ok)}
@@ -2690,6 +2692,18 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjt.on{background:#34d399;color:#04121c;border-color:#34d399}
 .cjfr{margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
 .cjfr .frase{margin:0}
+.cjfrtop{margin:0 0 8px;padding:0;border:0}
+.cjfrtop .frase .btn,.cjfrtop .cjrc button{min-height:44px;font-size:14px}
+.cjfrtop .frase input{font-size:16px;min-height:44px}
+.cjfrtop .frbus{min-width:44px;min-height:44px;padding:0;display:grid;place-items:center}
+.prothoy{margin:10px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2)}
+.prothoy .t{font-size:16px;font-weight:800}
+.prothoy .barra{height:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:8px 0;overflow:hidden}
+.prothoy .barra i{display:block;height:100%;background:var(--brand);border-radius:8px}
+.prothoy .mini{font-size:14px;color:var(--ink2);margin-bottom:6px}
+.prothoy .sug{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.prothoy .sug span{font-size:15px;font-weight:700;min-width:0}
+.prothoy .sug .btn{font-size:14px;min-height:44px;min-width:44px;flex:none}
 .cjrc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .cjrc button{font:inherit;font-size:12.5px;padding:7px 11px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);cursor:pointer}
 .cjh .cjst{font-size:19px;font-weight:900;margin-bottom:2px}
@@ -3969,3 +3983,174 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .npant .nsem small{grid-column:1/-1;color:var(--ink2);font-size:12.5px}
 .npant .nnota{color:var(--ink2);font-size:13px;background:var(--card2,var(--card));border-radius:12px;padding:10px 12px;margin:10px 0 0}
 .npant .nancho{width:100%;min-height:48px;margin-top:14px}
+/* ===== Dinero · Tu mes (El Vaso) ===== */
+.tm .tm-hero{padding:12px}
+.tm-t{font-size:13px;font-weight:800;color:var(--ink2)}
+.tm-fila{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tm-n{font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+.tm-a{font-size:22px;font-weight:900;color:#15803d}.tm-a.mal{color:#be123c;font-size:16px}
+.tm-vrow{display:grid;grid-template-columns:170px 1fr;gap:10px;align-items:end}
+.tm-vaso{display:block;padding:0;border:0;background:transparent;border-radius:18px;width:170px;min-height:44px;cursor:pointer}
+.tm-vaso svg{display:block;width:170px;height:236px}
+.tm-vaso:focus-visible,.tm-fi:focus-visible,.tm-hoy:focus-visible,.tm-bt:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tm-lado{font-size:14px;color:var(--ink2);padding-bottom:6px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.tm-lado b{color:var(--ink)}
+.tm-gr{font-size:17px;font-weight:900;color:var(--ink)}
+.tm-toca{color:var(--brand);font-weight:900}
+.tm-leyes,.tm-fijos{list-style:none;margin:0;padding:0}
+.tm-ley{display:flex;align-items:center;gap:6px;font-size:14px;line-height:1.6}
+.tm-ley i{width:12px;height:12px;border-radius:3px;border:1px solid #64748b;flex:none}
+.tm-ley span{flex:1}
+.tm-quedan{display:inline-block;align-self:flex-start;background:var(--ink);color:var(--bg);border-radius:12px;padding:5px 10px;font-size:17px;font-weight:900}
+.tm-fijos{font-size:14px;line-height:1.55}
+.tm-fijos li{display:flex;justify-content:space-between;gap:6px}
+.tm-fijos .si{color:var(--ink);font-weight:800}
+.tm-fijos .no{color:var(--ink2);font-weight:700}
+.tm-cadena{display:grid;grid-template-columns:1fr 14px 1fr 14px 1fr 14px 1fr;align-items:center;margin-top:10px}
+.tm-op{text-align:center;font-weight:900;color:var(--ink2);font-size:17px}
+.tm-fi{background:var(--card);border:1px solid var(--line);border-radius:12px;min-height:56px;padding:5px 2px;text-align:center;font:inherit;font-size:12px;font-weight:700;color:var(--ink2);line-height:1.15;display:flex;flex-direction:column;justify-content:center}
+.tm-fi b{display:block;font-size:17px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+button.tm-fi{border:2px dashed #64748b;cursor:pointer}
+button.tm-fi[aria-pressed=true]{background:var(--ink);border:2px solid var(--ink);color:var(--bg)}
+button.tm-fi[aria-pressed=true] b{color:var(--bg)}
+.tm-fi.fin{background:var(--bg2);border-color:#94a3b8}
+.tm-libre{font-size:14px;color:var(--ink2);margin:10px 0;text-align:center}.tm-libre b{color:var(--ink)}
+.tm-vacio{text-align:center}.tm-vv{opacity:.75}.tm-vv svg{width:140px;height:auto}
+.tm-p{font-size:14px;color:var(--ink2);margin:8px 0 12px}
+.tm-bts{display:grid;gap:8px}
+.tm-bt{min-height:48px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.tm-bt.p{background:var(--ink);color:var(--bg)}
+.tm-hoy{display:block;width:100%;min-height:44px;margin:8px 0;padding:9px 12px;text-align:left;border:2px solid var(--ink);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.tm-vaso svg g.l{transition:transform .5s cubic-bezier(.3,.8,.3,1)}}
+/* ===== Dinero · R3 · Gasto grande y «Ahorro y Bosque» (maquetas/dinero-tu-mes.html) ===== */
+.tm-chip{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:12px;font-size:14px;font-weight:800;line-height:1.3;background:#ecfdf3;border:1.5px solid #86efac;color:#14532d}
+.tm-chip.sa{background:#fff1f2;border-color:#fda4af;color:#881337}
+html.dark .tm-chip{background:#12301f;border-color:#2f7a52;color:#c9f0d6}
+html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
+.tm-gbtn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 14px;text-align:left}
+.tm-gbtn small{font-size:14px;font-weight:700}
+.tm-glista{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.tm-gfila{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 12px;text-align:left;border:2px dashed #be123c;border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.tm-gfila span:last-child{font-weight:700;color:var(--ink2);text-align:right}
+.tm-gfila:focus-visible,.tm-opc:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tg-hoja .tg-l{display:block;margin:8px 0 0;font-size:14px;min-width:0}
+.tg-hoja .tg-l input{width:100%;min-width:0;box-sizing:border-box}
+.tg-hoja .tg-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
+.tm-opc{display:block;width:100%;min-height:64px;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:8px 12px;margin:0 0 8px;font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.tm-opc small{display:block;font-size:14px;font-weight:700;color:var(--ink2)}
+.tm-opc[aria-pressed=true]{border-color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--ink)}
+.tm-opc[aria-pressed=true]::after{content:" ✓ elegido";font-size:14px;color:#15803d}
+.tg-prev{margin:0 0 8px;font-size:14px;font-weight:800}
+.tg-bts{grid-template-columns:1fr 1fr}
+.tm-bt:disabled{opacity:.5;cursor:default}
+.tm-gbtn{margin-top:8px}
+.ab .card{margin:0 0 10px}
+.ab-col .ab-n{font-size:38px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;font-variant-numeric:tabular-nums}
+.ab-col .ab-n small{font-size:17px;letter-spacing:0;color:var(--ink2);font-weight:800}
+.ab-p{margin:2px 0;font-size:14px;color:var(--ink2)}.ab-p b{color:var(--ink)}
+.ab-h{margin:0;font-size:17px;font-weight:900}
+.ab-svg{display:block;width:100%;height:auto}
+.ab-ley{font-size:14px;color:var(--ink2);margin:4px 0 0}
+.lau-tabs button.ab-t{flex:1.6 1 0;white-space:normal;line-height:1.1}
+@media (prefers-reduced-motion:reduce){.tm-vaso svg g.l{transition:none}}
+
+/* R6 · compra base, congelador y reparto del lote */
+.cb-lista{list-style:none;margin:8px 0 0;padding:0}
+.cb-fila{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;border-top:1px solid var(--line);font-size:15px}
+.cb-fila:first-child{border-top:0}
+.cb-fr{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.cb-d{font-weight:900;color:var(--ink2);font-size:13px}
+.nvcong{border:2px dashed var(--brand);background:color-mix(in srgb,var(--brand) 7%,var(--card))}
+.nvcong .nvf{grid-template-columns:24px 1fr auto}
+.nvcong .nvf .n{white-space:normal}
+.nvcong .nvf small{display:block;font-size:12px;color:var(--ink2);font-weight:700;margin-top:2px}
+.etqh{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--brand);color:var(--brand);font-size:12px;font-weight:800}
+.nvplega summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:14px}
+.nvpl{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;border-top:1px solid var(--line);font-size:14px}
+.rep-sel{display:grid;grid-template-columns:56px 1fr 56px;gap:10px;align-items:center;margin:14px 0}
+.rep-sel button{min-height:56px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:900;font-size:24px;cursor:pointer}
+.rep-sel button:disabled{opacity:.4;cursor:default}
+.rep-sel .v{text-align:center;font-weight:900;font-size:18px}.rep-sel .v small{display:block;font-size:12.5px;color:var(--ink2);font-weight:700}
+.rep-bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* G5 · página de receta, cola de TikTok y antojo de microondas */
+.recp{display:flex;flex-direction:column;gap:6px}
+.recic{font-size:56px;line-height:1.1;text-align:center}
+.recn{margin:0;font-size:22px;text-align:center}
+.reci{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 4px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.reci .rk{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid var(--ink2);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.reci.hecho{color:var(--ink2);text-decoration:line-through}.reci.hecho .rk{background:var(--brand);border-color:var(--brand);color:#fff;text-decoration:none}
+.recs{margin:4px 0 0;padding-left:24px}.recs li{font-size:18px;line-height:1.45;margin-bottom:10px}
+.recb{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.recb .btn{flex:1 1 104px;font-size:14px;padding-left:8px;padding-right:8px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center;text-decoration:none}
+.cola .colah{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;border:0;background:none;color:var(--ink);font:inherit;font-size:16px;font-weight:700;text-align:left;cursor:pointer;padding:0}
+.cola .sp{flex:1}.colai{display:flex;align-items:center;gap:8px;margin-top:8px}.colai .colau{flex:1;min-width:0;font-size:14px;overflow-wrap:anywhere;color:var(--ink2)}
+.colai .btn,.colai .x{min-height:44px;min-width:44px}.colai .x{border:0;background:none;color:var(--ink2);font-size:20px;cursor:pointer}
+.antcard{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:8px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2);color:var(--ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.antcard .antt{flex:1;min-width:0}.antcard .ae,.ant1 .ae{font-size:22px}
+.antr{margin:10px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2)}
+.ant1{display:flex;align-items:center;gap:8px;font-size:17px}
+.antl{margin:6px 0 0;padding-left:22px;font-size:15px;line-height:1.45}
+
+/* G7 · Entreno: ficha, lo que toca hoy y el día saliente (letra ≥14 px, táctiles ≥44 px) */
+.gficha{border:1px solid var(--line);border-radius:14px;padding:0 12px;margin:8px 0}
+.gficha summary{min-height:44px;display:flex;align-items:center;font-size:15px;font-weight:700;cursor:pointer}
+.gfdib{background:var(--card2,var(--line));border-radius:12px;padding:6px;margin-bottom:8px}
+.gfmus,.gfcl,.gferr{font-size:14px;margin:6px 0}
+.gfcl{padding-left:22px}.gfcl li{padding:2px 0;font-weight:600}
+.gferr{border-left:4px solid var(--warn);padding:6px 10px;background:color-mix(in srgb,var(--warn) 14%,var(--card));border-radius:0 10px 10px 0}
+.gficha[open]{padding-bottom:10px}
+.grec{display:block;font-size:14px;font-weight:700;color:var(--ink)}
+.gtoca{margin-top:10px}.gtoca h3{font-size:16px;margin:0 0 4px}
+.gtf{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 0;border-top:1px solid var(--line)}
+.gtf .n{flex:1;min-width:0}.gtf .n b{display:block;font-size:15px}.gtf .n small{font-size:14px;color:var(--ink2)}
+.gtf .sug{flex:none;font-size:14px;font-weight:700;text-align:center;color:var(--ink);padding:4px 8px;border-radius:10px;background:color-mix(in srgb,var(--ok) 22%,var(--card))}
+.gtnota{font-size:14px;margin:8px 0 0;padding:10px 12px;border-radius:12px;color:var(--ink);background:color-mix(in srgb,var(--ok) 14%,var(--card))}
+.gtnota.flat{background:none;padding:6px 0;color:var(--ink2)}
+.gsal .gfrase{font-size:16px;font-weight:600;line-height:1.4;margin:8px 0;color:var(--ink)}
+.gmov{border:1px solid var(--line);border-radius:14px;padding:0 12px;margin-top:10px}
+.gmov summary{min-height:48px;display:flex;align-items:center;font-size:15px;font-weight:700;cursor:pointer}
+.gmov ul{margin:0 0 8px;padding-left:20px;font-size:14px}
+.gsalb{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:10px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.gfdib{--acc:var(--ok)}
+/* 4:20 · cortina con PIN y descanso */
+.cnpin{text-align:center}.cnpt{font-size:17px;font-weight:800;margin:4px 0 14px}
+.cnpd{display:flex;justify-content:center;gap:14px;margin-bottom:14px}.cnpd b{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink2)}.cnpd b.f{background:var(--ink);border-color:var(--ink)}
+.cnpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:0 auto}
+.cnpad button{min-height:56px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:22px;font-weight:800;cursor:pointer}
+.cnolv{margin:12px 0 0;font-size:14px}.cnolv summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brand);font-weight:700}
+.cntx{font-size:14px;line-height:1.45;margin:8px 0}.cnbig{font-size:20px;font-weight:800;margin:6px 0}
+.cnprog{height:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);overflow:hidden}.cnprog i{display:block;height:100%;background:var(--brand)}
+.cnul{margin:6px 0 12px;padding-left:20px;font-size:14px;line-height:1.5}
+.cndesc .btn,.cnpin .btn,.cn .card>.btn{min-height:44px;font-size:14px}
+.cn .cnseg.c2 button{min-height:44px;font-size:14px}
+button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer}
+.cnpin .mini{font-size:14px;color:var(--ink2)}
+/* G11 · energía, coach y sin pantallas */
+.coach .bat{display:flex;gap:6px;margin:6px 0}
+.coach .bat i{flex:1;height:14px;border-radius:5px;background:var(--bg2);border:1.5px solid var(--line)}
+.coach .bat i.l{background:var(--ok);border-color:var(--ok)}
+.coach .coachn{font-size:16px}
+.coach .coacht{margin:10px 0;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1.5px solid var(--line)}
+.coach .coacht p{margin:4px 0;font-size:16px}
+.coach .mini,.pant .mini{font-size:14px;color:var(--ink2)}
+.pant{border:1.5px solid var(--brand2)}
+.pant .pantf{font-weight:700}
+.pantguia summary{min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;cursor:pointer}
+.pantguia .btn{min-height:44px;font-size:14px}
+.pant .row .btn{min-height:44px;font-size:14px}
+
+/* G12 · modo viaje: letra de 14 px o más y toques de 44 px */
+.mv p,.mv .mvr,.mv .mvc,.mv .mvbil,.mv .fld{font-size:14px}
+.mv p{margin:8px 0 0;color:var(--ink2)}
+.mv .fld input{min-height:44px;font-size:16px}
+.mvcab h2{font-size:18px}
+.mvpasos{display:flex;gap:4px;margin-top:10px}.mvpasos i{flex:1;height:10px;border-radius:6px;background:var(--card2,var(--bg));border:1px solid var(--line)}.mvpasos i.h{background:var(--brand);border-color:var(--brand)}
+.mvr{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;border-bottom:1px solid var(--line)}.mvr:last-of-type{border-bottom:0}
+.mvp{color:var(--warn);border:1px solid currentColor;border-radius:99px;padding:2px 10px;white-space:nowrap;font-weight:700}
+.mvc{display:flex;align-items:center;gap:12px;min-height:44px}.mvc input{width:24px;height:24px;flex:none;accent-color:var(--brand)}
+.mvit{display:flex;align-items:center;gap:8px;min-height:44px}.mvit .mvc,.mvit .mvbil{flex:1}
+.mvx{flex:none;min-width:44px;padding:0}
+.mvmed{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.mvmed .btn{flex:1;min-width:84px}
+.mvmed .btn[aria-pressed=true]{background:var(--brand);color:var(--sobre-marca);border-color:var(--brand)}
+.mv .btn{width:100%}.mv .row .btn,.mv .mvx{width:auto}.mv .mvx{min-width:44px}
+.mv input[type=text]{min-height:44px;font-size:16px;flex:1;min-width:0}

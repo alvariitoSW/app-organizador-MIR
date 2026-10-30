@@ -8999,5 +8999,569 @@
 300,
 700
 ]
+},
+{
+"f": "pizza barbacoa 3 porciones",
+"tiene": [
+"pizza barbacoa"
+],
+"dudas": 0,
+"kcal": [
+600,
+1100
+]
+},
+{
+"f": "un big tasty",
+"tiene": [
+"big tasty"
+],
+"dudas": 0,
+"kcal": [
+756,
+925
+]
+},
+{
+"f": "big tasty del mcdonalds",
+"tiene": [
+"big tasty"
+],
+"dudas": 0,
+"kcal": [
+756,
+925
+]
+},
+{
+"f": "un big mac",
+"tiene": [
+"big mac"
+],
+"dudas": 0,
+"kcal": [
+457,
+559
+]
+},
+{
+"f": "un menú big mac",
+"tiene": [
+"menú big mac"
+],
+"dudas": 0,
+"kcal": [
+907,
+1109
+]
+},
+{
+"f": "menú big mac con coca cola zero",
+"tiene": [
+"menú big mac"
+],
+"dudas": 0,
+"kcal": [
+756,
+925
+]
+},
+{
+"f": "menú big tasty con agua",
+"tiene": [
+"menú big tasty"
+],
+"dudas": 0,
+"kcal": [
+1053,
+1287
+]
+},
+{
+"f": "menú big mac zero",
+"tiene": [
+"menú big mac"
+],
+"dudas": 0,
+"kcal": [
+756,
+925
+]
+},
+{
+"f": "menú whopper con fanta",
+"tiene": [
+"menú whopper"
+],
+"dudas": 0,
+"kcal": [
+1013,
+1239
+]
+},
+{
+"f": "un menú whopper del burger king",
+"tiene": [
+"menú whopper"
+],
+"dudas": 0,
+"kcal": [
+1031,
+1261
+]
+},
+{
+"f": "un happy meal",
+"tiene": [
+"happy meal hamburguesa"
+],
+"dudas": 0,
+"kcal": [
+432,
+528
+]
+},
+{
+"f": "happy meal de cheeseburger",
+"tiene": [
+"happy meal cheeseburger"
+],
+"dudas": 0,
+"kcal": [
+477,
+583
+]
+},
+{
+"f": "happy meal de nuggets",
+"tiene": [
+"happy meal 4 mcnuggets"
+],
+"dudas": 0,
+"kcal": [
+369,
+452
+]
+},
+{
+"f": "un mcpollo",
+"tiene": [
+"mcpollo"
+],
+"dudas": 0,
+"kcal": [
+405,
+496
+]
+},
+{
+"f": "un cuarto de libra",
+"tiene": [
+"cuarto de libra con queso"
+],
+"dudas": 0,
+"kcal": [
+468,
+572
+]
+},
+{
+"f": "cuarto de libra con queso del mcdonalds",
+"tiene": [
+"cuarto de libra con queso"
+],
+"dudas": 0,
+"kcal": [
+468,
+572
+]
+},
+{
+"f": "mcnuggets 9",
+"tiene": [
+"mcnuggets 6 uds"
+],
+"dudas": 0,
+"kcal": [
+351,
+430
+]
+},
+{
+"f": "9 mcnuggets del mcdonalds",
+"tiene": [
+"mcnuggets 6 uds"
+],
+"dudas": 0,
+"kcal": [
+351,
+430
+]
+},
+{
+"f": "nuggets de 20 del mcdonalds",
+"tiene": [
+"mcnuggets 6 uds"
+],
+"dudas": 0,
+"kcal": [
+779,
+953
+]
+},
+{
+"f": "patatas grandes del mcdonalds",
+"tiene": [
+"patatas grandes"
+],
+"dudas": 0,
+"kcal": [
+396,
+485
+]
+},
+{
+"f": "patatas medianas del burger king",
+"tiene": [
+"patatas medianas"
+],
+"dudas": 0,
+"kcal": [
+306,
+375
+]
+},
+{
+"f": "un whopper",
+"tiene": [
+"whopper"
+],
+"dudas": 0,
+"kcal": [
+572,
+700
+]
+},
+{
+"f": "whopper del burger king",
+"tiene": [
+"whopper"
+],
+"dudas": 0,
+"kcal": [
+572,
+700
+]
+},
+{
+"f": "un long chicken del burger",
+"tiene": [
+"long chicken"
+],
+"dudas": 0,
+"kcal": [
+540,
+660
+]
+},
+{
+"f": "cubo de kfc",
+"tiene": [
+"bucket 8 piezas (para compartir)"
+],
+"dudas": 0,
+"kcal": [
+1800,
+2200
+]
+},
+{
+"f": "boneless de kfc",
+"tiene": [
+"boneless 6 uds"
+],
+"dudas": 0,
+"kcal": [
+297,
+364
+]
+},
+{
+"f": "tiras de kfc",
+"tiene": [
+"tiras crujientes 3 uds"
+],
+"dudas": 0,
+"kcal": [
+270,
+330
+]
+},
+{
+"f": "un burrito de taco bell",
+"tiene": [
+"burrito supreme"
+],
+"dudas": 0,
+"kcal": [
+351,
+430
+]
+},
+{
+"f": "un crunchy taco",
+"tiene": [
+"taco crujiente"
+],
+"dudas": 0,
+"kcal": [
+153,
+188
+]
+},
+{
+"f": "dos crunchy tacos de taco bell",
+"tiene": [
+"taco crujiente"
+],
+"dudas": 0,
+"kcal": [
+306,
+375
+]
+},
+{
+"f": "nachos de taco bell",
+"tiene": [
+"nachos bellgrande"
+],
+"dudas": 0,
+"kcal": [
+666,
+815
+]
+},
+{
+"f": "una quesadilla de taco bell",
+"tiene": [
+"quesadilla de pollo"
+],
+"dudas": 0,
+"kcal": [
+459,
+561
+]
+},
+{
+"f": "una porción de pizza de telepizza",
+"tiene": [
+"porción de pizza (mediana)"
+],
+"dudas": 0,
+"kcal": [
+180,
+221
+]
+},
+{
+"f": "dos porciones de pizza de dominos",
+"tiene": [
+"porción de pizza (mediana)"
+],
+"dudas": 0,
+"kcal": [
+378,
+463
+]
+},
+{
+"f": "porción de pizza barbacoa de domino's",
+"tiene": [
+"pizza barbacoa (porción mediana)"
+],
+"dudas": 0,
+"kcal": [
+207,
+254
+]
+},
+{
+"f": "un montadito",
+"tiene": [
+"montadito (medio, de fiambre o queso)"
+],
+"dudas": 0,
+"kcal": [
+207,
+254
+]
+},
+{
+"f": "un montadito de jamón de 100 montaditos",
+"tiene": [
+"montadito de jamón serrano"
+],
+"dudas": 0,
+"kcal": [
+198,
+243
+]
+},
+{
+"f": "3 montaditos de jamón serrano",
+"tiene": [
+"montadito de jamón serrano"
+],
+"dudas": 0,
+"kcal": [
+594,
+727
+]
+},
+{
+"f": "un montadito de lomo del 100 montaditos",
+"tiene": [
+"montadito de lomo con queso"
+],
+"dudas": 0,
+"kcal": [
+234,
+286
+]
+},
+{
+"f": "menú del día del bar",
+"tiene": [
+"menú del día"
+],
+"dudas": 0,
+"kcal": [
+999,
+1221
+]
+},
+{
+"f": "menú del día de la cafetería del hospital",
+"tiene": [
+"menú del día"
+],
+"dudas": 0,
+"kcal": [
+999,
+1221
+]
+},
+{
+"f": "menú del día",
+"tiene": [
+"menú del día"
+],
+"dudas": 0,
+"kcal": [
+999,
+1221
+]
+},
+{
+"f": "un paquete de patatas fritas",
+"tiene": [
+"patatas fritas de bolsa"
+],
+"dudas": 0,
+"kcal": [
+192,
+236
+]
+},
+{
+"f": "una bolsa de patatas fritas",
+"tiene": [
+"patatas fritas de bolsa"
+],
+"dudas": 0,
+"kcal": [
+192,
+236
+]
+},
+{
+"f": "un paquete de galletas",
+"tiene": [
+"galletas maría"
+],
+"dudas": 0,
+"kcal": [
+158,
+194
+]
+},
+{
+"f": "un paquete de cacahuetes",
+"tiene": [
+"cacahuete"
+],
+"dudas": 0,
+"kcal": [
+255,
+313
+]
+},
+{
+"f": "dos paquetes de cacahuetes",
+"tiene": [
+"cacahuete"
+],
+"dudas": 0,
+"kcal": [
+510,
+624
+]
+},
+{
+"f": "un paquete de frutos secos",
+"tiene": [
+"mezcla de frutos secos"
+],
+"dudas": 0,
+"kcal": [
+270,
+330
+]
+},
+{
+"f": "un paquete de chocolatinas",
+"tiene": [
+"chocolate con leche"
+],
+"dudas": 0,
+"kcal": [
+192,
+236
+]
+},
+{
+"f": "big tasty y patatas medianas",
+"tiene": [
+"big tasty",
+"patatas medianas"
+],
+"dudas": 0,
+"kcal": [
+1053,
+1287
+]
+},
+{
+"f": "big tasty con patatas grandes y una coca cola zero",
+"tiene": [
+"big tasty",
+"patatas grandes",
+"refresco zero"
+],
+"dudas": 0,
+"kcal": [
+1152,
+1410
+]
 }
 ]

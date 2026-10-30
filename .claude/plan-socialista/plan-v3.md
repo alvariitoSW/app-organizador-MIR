@@ -12,11 +12,37 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Reforma · R1 · Concurso de Dinero** (sesión nueva): escuelas baratas, el Consejo elige; «Tu mes» de principio a fin de mes.
-
-**Ley de La Noche · N3 · pasar a main** (sesión aparte): repaso final de N1 y N2 y pasar a `main`. N1 y N2 hechas el 29/10 en la rama (El cartel; hoja He vuelto/He llegado, Alarmas, Tu semana, sugerencia de la cama, `.ics` apagado).
+**La Gran Ley está hecha (G1-G12 en main; G13 a medias: la suite sigue en ~5-6 min).** Lo siguiente: elegir en `/bitacora` entre los aparcados (siembra de la suite, rótulos de 10,5 px, noche olvidada, B6 «100 g de ajo», Fintonic «Presupuesto»).
 
 ## Por hacer
+
+### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
+
+[v3-gran-ley] «todas las mejoras de bitácora y todo lo que quedaba por hacer quiero que se haga ya» (2026-10-30).
+**Delegada en el Consejo** (~20 M, incluye los ~15 M de La Reforma): maquetas, qué se quita y paso a `main`.
+**Parte aprobado por el usuario (30/10)** (`consejo/2026-10-30-parte.md`): Gmail fuera; 4:20 con cortina de PIN (G10);
+sin pantallas 45 min antes de la cama, fijo en el código (G11); parte lunes y jueves 7:40 (se programa en la G1). Absorbe R4-R10, S6,
+S7, v3-entrenador, v3-coach, aparc-arte-energia, v3-420-*, v3-viajes (sin red), el lector, comida-entreno,
+sueño-vistas, bienestar digital, suite-2min, png-design, tu-mes-r2 y hoy-plantilla. Aplazados: iconos y Gmail.
+Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de G1-G4.
+
+| # | Sesión | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|
+| ~~G1~~ | ✅ main 0d867cf · 30/10 · 1,7 M (se pasó: todo en opus) · vaso con muestra a rayas, aviso de plantilla con aire, pizza sin coma y vitaminas sin dulces, «Anotar anoche» en Reloj y Línea, R4 comprobada, parte programado (lu y ju 7:40) · pruebas 372-375 | arreglo | sonnet; haiku textos | ~1,0 M |
+| ~~G2~~ | ✅ 30/10 · `maquetas/comer-g2.html` · **completa la R5** (`comer-reforma.html`, que manda en proteína, receta, compra y nevera): «Escribir lo comido» arriba en Hoy y el antojo de microondas S7 (≤5 min · ≥20 g, dos alternativas, «Apuntar que me lo he comido») · sin concurso (Consejo por delegación, acta `consejo/2026-10-30-g2.md`) · ~0,6 M | maqueta | sonnet monta, haiku textos | ~1,5 M |
+| ~~G3~~ | ✅ main 56f30af · 30/10 · adelantada (sesión R6, con la maqueta R5) · compra base con un toque restando la casa, semana por caducidad, hoja del reparto según tu semana, zona ❄ Congelador, pescado 4 × 250 g, 8 platos que congelan bien (lista), `dishes[].congela` · pruebas 376-379 · ficha `fichas/reforma-r6-compra-congelador.md` | construir | sonnet con ficha | ~2,0 M |
+| ~~G4~~ | ✅ 30/10 · proteína en Hoy a 1,6 g/kg (solo si faltan >30 g, una sugerencia de la nevera; guardia «lo que se pueda»), aviso tras entreno (2 h), la frase arriba en Comer → Hoy con lupa (una sola caja), barra de Comer con el mismo número · S6 ya cubierta (no se construye) · pruebas 380-383 · ~2,1 M (se pasó: dos suites completas y retoques) | construir | sonnet | ~1,2 M |
+| ~~G5~~ | ✅ 30/10 · página de receta (hoja de Comer: tachar ingredientes, Añadir a la compra, Ver en TikTok fuera, Compartir sin datos), cola de TikTok en Importar, antojo de microondas (7 recetas ≤5 min · 23-31 g) en Hoy y Comer · pruebas 384-386 · 1,0 M | construir | sonnet | ~1,5 M |
+| ~~G6~~ | ✅ 30/10 · `maquetas/entreno-g6.html` · Lo que toca hoy, 3 dibujos de dos posturas, una serie por toque, +2,5 kg, récord discreto, día saliente · sin concurso (Consejo por delegación) · ~0,3 M | maqueta | sonnet | ~1,0 M |
+| ~~G7~~ | ✅ 30/10 · 12 ejercicios dibujados con ficha (`fig/ejercicios.js`, «Cómo se hace» en la sesión), reps de la vez anterior, «Prueba +X kg» en Lo que toca hoy (progresión doble con `progresionDe`), récord discreto, saliente 25 min al 65 % / movilidad / descanso, guardia «Hoy no toca» · pruebas 387-391 · ~1,4 M | construir | sonnet dibujos y obra | ~2,0 M |
+| ~~G8~~ | ✅ 30/10 · lector de comida rápida: 12 productos y «Menú Big Tasty» nuevos (100 Montaditos, Happy Meal, Big Tasty…), «menú … con coca cola zero» cambia la bebida, menú del día ~1110 kcal, «un paquete de» = paquete individual · 50 frases nuevas (891) · prueba 392 · la 244 ya no depende de la hora | construir | sonnet | ~0,8 M |
+| ~~G9~~ | ✅ 30/10 · `maquetas/la-noche-2.html` · energía y coach, sin pantallas fijo, cortina con PIN, descanso del 4:20, ajustes · sin concurso (Consejo por delegación) · ~0,2 M | maqueta | sonnet | ~1,5 M |
+| ~~G10~~ | ✅ 30/10 · cortina con PIN (solo hash con sal; 5 fallos = 30 s; se cierra al salir, al cerrar y tras 2 min) y neutro fuera del 4:20 (Más, Hoy, Tu semana, hábitos, conductor), quitarla desde Copia de seguridad; descanso 7/14/21 o a la mitad con «seguimos desde aquí» · pruebas 393a-d · revisión de seguridad hecha | construir | sonnet | ~1,5 M |
+| ~~G11~~ | ✅ 30/10 · energía del día (4 tramos) y UNA recomendación del coach en Hoy (sin puntuar), sin pantallas 45 min antes de la cama, fijo y sin botón, aviso al empezar, ✓ por la mañana sin racha, guía de «Hora de dormir» · pruebas 394a-c | construir | sonnet | ~2,0 M |
+| ~~G12~~ | ✅ 30/10 · modo viaje sin red en Ajustes → YO: rachas en pausa (hábitos, entreno, sin pantallas, coach), Hoy en viaje, salida a mano con aviso, billete como gasto en «viajes» 🧳, resumen al volver · pruebas 395a-c · maqueta `maquetas/modo-viaje.html` | maqueta → construir | sonnet | ~2,5 M |
+| ~~G13~~ | ½ 30/10 · PNG ✅ (70 → 22 MB, `design/` fuera de la caché de sw.js) · **suite en ~2 min NO conseguida**: más trozos no acelera (12 trozos 272 s y `actualiza` cae; cada navegador gasta CPU) y la cadena 1-201 no se parte sin siembra → aparcado [aparc-suite-siembra] · DECISIONS «Gran Ley · G13» | herramientas | sonnet + haiku | ~1,4 M |
+
+Las tablas de abajo (Comer, La Reforma, «Después») quedan como historia: lo que falta de ellas está en esta cola.
 
 ### Tanda Comer (+ las pruebas y Dinero) · planificada el 2026-10-27 · al día el 2026-10-28: 7 de 9 hechas
 
@@ -84,12 +110,12 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| R1 | **Concurso de Dinero** (antes R2): 4-5 escuelas baratas (sonnet/haiku) maquetan «Tu mes» moderno: con cuánto empiezas el mes, los fijos, lo que te queda, con cuánto acabarás y cuánto ahorras **este mes**; el gasto grande; Bosque y Ahorro juntos; la línea de Hoy. Jurado a ciegas y el Consejo elige (por delegación) | maqueta | escuelas sonnet/haiku; jurado haiku; Artes Visuales opus deja la ganadora navegable | ~2,5 M |
-| R2 | Construir «Tu mes»: fijos + te queda + fin de mes previsto + línea en Hoy | construir | sonnet con ficha | ~1,2 M |
-| R3 | Construir gasto grande + Bosque y Ahorro juntos, mirando a meses, no a años | construir | sonnet con ficha | ~1,8 M |
-| R4 | Fintonic, en pequeño: revisión gasto a gasto editable antes de guardar y aviso si no cuadra (sin pegar texto) | arreglo | sonnet | ~0,8 M |
-| R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
-| R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
+| ~~R1~~ | ✅ 29/10 · gana **El Vaso** → `maquetas/dinero-tu-mes.html` (acta 2026-10-29-2, «R1») · **Concurso de Dinero** (antes R2): 4-5 escuelas baratas (sonnet/haiku) maquetan «Tu mes» moderno: con cuánto empiezas el mes, los fijos, lo que te queda, con cuánto acabarás y cuánto ahorras **este mes**; el gasto grande; Bosque y Ahorro juntos; la línea de Hoy. Jurado a ciegas y el Consejo elige (por delegación) | maqueta | escuelas sonnet/haiku; jurado haiku; Artes Visuales opus deja la ganadora navegable | ~2,5 M |
+| ~~R2~~ | ✅ main 7942d02 · 30/10 · sin medir · Construir «Tu mes» con la maqueta `maquetas/dinero-tu-mes.html` (El Vaso): vaso y cadena 2.380 − 728 − 750, fijos → te queda, «acabarás con» y «ahorras este mes» + línea en Hoy. El gasto grande y el Bosque quedan para R3 | construir | sonnet con ficha | ~1,2 M |
+| ~~R3~~ | ✅ main 0561783 · 30/10 · 2,2 M · Construir gasto grande + Bosque y Ahorro juntos, mirando a meses (ficha `fichas/reforma-r3-gasto-grande.md`) | construir | sonnet con ficha | ~1,8 M |
+| ~~R4~~ | ✅ main 8786ed2 · 30/10 · 1,2 M (con parte y salud) · Fintonic en pequeño: renombrar y quitar filas en la revisión, aviso si no cuadra (ficha `fichas/reforma-r4-fintonic.md`) | arreglo | sonnet | ~0,8 M |
+| ~~R5~~ | ✅ rama claude/magical-clarke-dlp8mb-r5 · 30/10 · maqueta aprobada `maquetas/comer-reforma.html` (ficha `fichas/reforma-r5-comer.md`) | maqueta | opus + sonnet | ~1,5 M |
+| ~~R6~~ | ✅ main 56f30af · 30/10 (= G3) · Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
 | R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
 | R8 | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
 | R9 | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
@@ -112,7 +138,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
-- [v3-gmail] «La función de Gmail»: falta que digas qué es
+- ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
 - [aparc-comida-entreno] Los días de entreno a las 18:30, ¿la comida después del entreno?
 - [aparc-sueno-vistas] / [aparc-sueno-sitio] Apuntar el sueño en Estación, Reloj y Línea; dónde vive el sueño en Hoy
 - [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo
@@ -122,6 +148,8 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Hecha
 
+- [v3-reforma-r1] La Reforma · R1 · Concurso «Tu mes»: 5 escuelas sonnet, jurado haiku a ciegas, gana El Vaso; navegable en `maquetas/dinero-tu-mes.html` · rama ccr-874ee141-nk8306 (maqueta, no va a main) · 2026-10-29
+- [v3-ley-noche] Ley de La Noche N1-N3 · main ec1370b · 2026-10-29
 - [v3-la-vuelta] La Vuelta: entreno 15-16 y parque, sesión mínima, vuelta al 35 %, objetivo de peso con topes, lámina del Teide o de los Bancales con «Explícamelo · 45 s» · main 3170dc0 · ~11,7 M la sesión entera (Consejo + 2 rondas + obra) · 2026-10-29
 
 - [v3-dinero] Tanda Dinero D1-D6 por delegación al Consejo: el Bosque (portada), Gastos, Ahorro con objetivo a fecha y «Ya ha llegado la nómina», Compras con espera de 30 días; lo viejo quitado (−664 líneas) sin borrar datos; migración `dinero3Migra` · main · ~10 M (presupuesto 4,9) · 2026-10-28

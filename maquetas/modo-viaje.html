@@ -1,0 +1,104 @@
+<!doctype html><html lang="es" class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modo viaje · rachas, salida y billete</title><style>
+:root{--bg:#070b14;--card:#111a2b;--card2:#0d1626;--ink:#e9f2ff;--ink2:#9db1cf;--line:#2a3a5a;--brand:#38e1ff;--ok:#34d399;--warn:#fbbf24;--sobre:#04121c;--suave:color-mix(in srgb,var(--brand) 16%,var(--card));--r:16px;--toque:44px;color-scheme:dark}
+html:not(.dark){--bg:#eef2f9;--card:#fff;--card2:#f3f6fc;--ink:#0d1729;--ink2:#506384;--line:#c5d1e6;--brand:#2563eb;--ok:#15803d;--warn:#92400e;--sobre:#fff;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit;min-height:var(--toque)}button{cursor:pointer}
+.barra{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--card2);border-bottom:1px solid var(--line)}
+.barra button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 12px;font-size:14px}
+.barra button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.marco{width:412px;height:915px;margin:12px auto;background:var(--bg);border:1px solid var(--line);border-radius:24px;overflow:auto;padding:16px;display:none}
+.marco.on{display:block}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:16px;margin:0 0 6px}p{margin:0 0 8px}
+.sub,.porque{color:var(--ink2);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:12px 0}
+.card.s{background:var(--suave);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.btn{display:block;width:100%;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 14px;font-size:15px;text-align:center;margin-top:8px}
+.btn.p{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.fila{display:flex;gap:8px}.fila>*{flex:1}
+label.c{display:flex;align-items:center;gap:12px;min-height:var(--toque);font-size:15px}
+label.c input{width:24px;height:24px;min-height:0;accent-color:var(--brand);flex:none}
+.campo{display:block;margin:8px 0}.campo span{display:block;font-size:14px;color:var(--ink2);margin-bottom:2px}
+.campo input,.campo select{width:100%;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px 12px;font-size:16px}
+.nota{font-size:14px;color:var(--ink2);border-left:3px solid var(--brand);padding-left:10px;margin:10px 0}
+.cab{background:var(--suave);border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-radius:var(--r);padding:14px;margin:8px 0 12px}
+.cab b{font-size:20px;display:block}
+.pasos{display:flex;gap:4px;margin:8px 0}.pasos i{flex:1;height:10px;border-radius:6px;background:var(--card2);border:1px solid var(--line)}.pasos i.h{background:var(--brand);border-color:var(--brand)}
+.racha{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:var(--toque);border-bottom:1px solid var(--line);font-size:15px}
+.racha:last-child{border:0}.pausa{font-size:14px;color:var(--warn);border:1px solid currentColor;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.grande{font-size:34px;font-weight:700;letter-spacing:.5px}
+.fila2{display:flex;justify-content:space-between;gap:8px;font-size:15px;padding:6px 0}
+.tag{display:inline-block;font-size:14px;color:var(--ok);font-weight:600}
+.item{display:flex;align-items:center;gap:8px}.item label.c{flex:1}.item .x{width:var(--toque);border:1px solid var(--line);background:var(--card2);border-radius:12px;font-size:18px}
+.med{display:flex;gap:6px;flex-wrap:wrap}.med button{flex:1;min-width:84px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px}
+.med button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+<div class="barra" role="toolbar" aria-label="Pantallas de la maqueta">
+<button data-p="0">1 Activar</button><button data-p="1">2 Hoy en viaje</button><button data-p="2">3 La salida</button><button data-p="3">4 El billete</button><button id="tema">Tema claro/oscuro</button></div>
+
+<section class="marco" aria-label="Activar el modo viaje">
+<h1>Modo viaje</h1><p class="sub">Para que viajar no te rompa nada</p>
+<div class="card"><h2>Tu viaje</h2>
+<label class="campo"><span>Destino</span><input type="text" value="Valencia, boda de Marta" aria-label="Destino"></label>
+<div class="fila"><label class="campo"><span>Ida</span><input type="date" value="2026-11-05"></label><label class="campo"><span>Vuelta</span><input type="date" value="2026-11-08"></label></div>
+<p class="porque">4 días. Se activa solo la mañana de la ida y se apaga al volver.</p></div>
+<div class="card"><h2>Qué se pone en pausa</h2>
+<label class="c"><input type="checkbox" checked>Hábitos</label><label class="c"><input type="checkbox" checked>Entreno</label><label class="c"><input type="checkbox" checked>Sin pantallas</label><label class="c"><input type="checkbox" checked>Sueño (horas de cama)</label><label class="c"><input type="checkbox" checked>Comida del plan</label>
+<p class="porque">Las rachas no se rompen: se congelan y siguen al volver.</p></div>
+<button class="btn p" data-ir="1">Activar el modo viaje</button>
+<div class="nota">Todo se queda en tu móvil. No busca trenes ni vuelos ni usa internet.</div>
+</section>
+
+<section class="marco" aria-label="Hoy en viaje">
+<h1>Hoy</h1>
+<div class="cab"><b>De viaje · día 2 de 4</b><span>Valencia · vuelves el domingo</span>
+<div class="pasos" role="img" aria-label="Día 2 de 4"><i class="h"></i><i class="h"></i><i></i><i></i></div></div>
+<div class="card"><h2>Lo esencial de hoy</h2>
+<div class="fila2"><span>Comida</span><span>Algo con proteína y verdura</span></div>
+<div class="fila2"><span>Sueño</span><span>Cama sobre las 23:30</span></div>
+<p class="porque">Hoy no hay entreno ni tareas. Descansa.</p></div>
+<div class="card s"><h2>Tus rachas, a salvo</h2>
+<div class="racha"><span>Hábitos · 21 días</span><span class="pausa">en pausa ⏸</span></div>
+<div class="racha"><span>Entreno · 6 semanas</span><span class="pausa">en pausa ⏸</span></div>
+<div class="racha"><span>Sin pantallas · 9 noches</span><span class="pausa">en pausa ⏸</span></div>
+<p class="porque" style="margin-top:8px">Siguen donde estaban cuando vuelvas el domingo.</p></div>
+<button class="btn" data-ir="2">La salida de vuelta</button><button class="btn">Terminar el viaje antes</button>
+</section>
+
+<section class="marco" aria-label="La salida">
+<h1>La salida</h1><p class="sub">Domingo 8 · vuelta a casa</p>
+<div class="card s"><h2>Sales de casa a las</h2>
+<label class="campo"><span>Hora (la pones tú)</span><input type="time" value="16:30" aria-label="Hora de salida"></label>
+<div class="grande">Faltan 2 h 15 min</div><p class="porque">Te aviso 1 hora antes y otra vez a los 15 minutos.</p></div>
+<div class="card"><h2>Antes de salir</h2>
+<div class="item"><label class="c"><input type="checkbox" checked>Cargador y móvil</label><button class="x" aria-label="Quitar">✕</button></div>
+<div class="item"><label class="c"><input type="checkbox" checked>Billete y DNI</label><button class="x" aria-label="Quitar">✕</button></div>
+<div class="item"><label class="c"><input type="checkbox">Llaves y ventanas</label><button class="x" aria-label="Quitar">✕</button></div>
+<div class="item"><label class="c"><input type="checkbox">Agua y algo de comer</label><button class="x" aria-label="Quitar">✕</button></div>
+<div class="fila" style="margin-top:8px"><input type="text" placeholder="Añadir otra cosa" aria-label="Añadir" style="border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px 12px"><button class="btn p" style="margin:0;width:auto">Añadir</button></div></div>
+<div class="nota">La hora y la lista las escribes tú; la app no consulta horarios.</div>
+</section>
+
+<section class="marco" aria-label="El billete">
+<h1>El billete</h1><p class="sub">Se apunta como gasto, sin más</p>
+<div class="card"><h2>Apuntar billete</h2>
+<div class="med" id="med"><button aria-pressed="true">Tren</button><button aria-pressed="false">Avión</button><button aria-pressed="false">Autobús</button><button aria-pressed="false">Coche</button></div>
+<div class="fila"><label class="campo"><span>Precio (€)</span><input type="text" inputmode="decimal" value="64"></label><label class="campo"><span>Fecha</span><input type="date" value="2026-11-05"></label></div>
+<button class="btn p">Apuntar</button></div>
+<div class="card s"><h2>En Dinero</h2>
+<div class="fila2"><span>Viajes</span><b>64 €</b></div><p class="porque">Tren Madrid–Valencia · 5 nov. Va a su categoría solo.</p></div>
+<div class="card"><h2>Al volver · tu viaje</h2>
+<p>Valencia, 4 días. Las rachas siguen: hábitos 21, entreno 6 semanas, sin pantallas 9 noches.</p>
+<p>Gastaste 64 € en billetes. Buen viaje, bienvenido de vuelta.</p>
+<p class="porque">Sin notas ni puntos: solo para que lo veas.</p></div>
+</section>
+<script>
+const M=[...document.querySelectorAll('.marco')],B=[...document.querySelectorAll('.barra [data-p]')];
+function ver(i){M.forEach((m,j)=>m.classList.toggle('on',i===j));B.forEach((b,j)=>b.setAttribute('aria-pressed',i===j))}
+B.forEach((b,i)=>b.onclick=()=>ver(i));document.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>ver(+b.dataset.ir));
+ver(+(location.hash.slice(1))||0);
+document.getElementById('tema').onclick=()=>document.documentElement.classList.toggle('dark');
+document.querySelectorAll('#med button').forEach(b=>b.onclick=()=>document.querySelectorAll('#med button').forEach(x=>x.setAttribute('aria-pressed',x===b)));
+if(location.search.includes('claro'))document.documentElement.classList.remove('dark');
+</script></body></html>

@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=412, initial-scale=1">
+<title>Comer · La Reforma (maqueta)</title>
+<style>
+:root{--ink:#0f172a;--mut:#475569;--bg:#f5f7fb;--card:#fff;--line:#dbe2ee;--ok:#15803d;--okbg:#ecfdf3;--ro:#be123c;--azul:#1d4ed8;--hielo:#e0f2fe;--hielo2:#7dd3fc}
+*{box-sizing:border-box}
+html,body{background:#e2e8f0}
+body{width:412px;margin:0;color:var(--ink);font:600 15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.app{position:relative;width:412px;height:915px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.vista{flex:1;overflow-y:auto;overflow-x:hidden}
+.vista[hidden]{display:none}
+.demo{width:412px;padding:2px 16px;background:#fef9c3;border-bottom:1px dashed #a16207;font-size:14px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.demo[hidden]{display:none}
+.demo b{font-size:14px}
+.demo .seg{flex:1;min-width:200px;margin:0}
+.demo .lnk{min-width:44px}
+.demo .seg button{min-height:44px}
+.demo .lnk{min-height:44px;background:none;border:0;text-decoration:underline;font-weight:800;font-size:14px}
+.cab{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 0;min-height:52px}
+.cab h1{margin:0;font-size:22px;font-weight:900;letter-spacing:-.4px}
+.cab small{font-size:14px;color:var(--mut);font-weight:700;text-align:right;line-height:1.25}
+.panel{padding:12px 16px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:0 0 10px;box-shadow:0 6px 18px -12px rgba(15,23,42,.3)}
+.card h2{margin:0;font-size:17px;font-weight:900}
+.card h3{margin:0;font-size:16px;font-weight:900}
+.card p{margin:3px 0;font-size:14px;color:var(--mut)}
+.card p b{color:var(--ink)}
+.fuente{font-size:14px;color:var(--mut);font-weight:700;margin:6px 0 0}
+.fila{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bt{width:100%;min-height:50px;border-radius:16px;border:2px solid var(--ink);background:#fff;font-weight:900;font-size:16px;padding:6px 14px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;text-decoration:none;color:var(--ink)}
+.bt.p{background:var(--ink);color:#fff}
+.bt.grande{min-height:60px;font-size:18px;border-radius:18px}
+.bt:disabled{opacity:.5;cursor:default}
+.mini{min-height:44px;min-width:44px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-weight:900;font-size:15px;padding:4px 12px}
+.sub{font-size:14px;font-weight:700;color:var(--mut);margin:2px 0 0}
+/* barra de vistas */
+.nav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:#fff;padding:6px 8px 10px;gap:4px}
+.nav button{min-height:52px;border:0;border-radius:14px;background:transparent;font-weight:800;color:var(--mut);font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.nav button span{font-size:19px}
+.nav button[aria-current=page]{background:#e0e7ff;color:#1e3a8a;box-shadow:inset 0 -3px 0 #1e3a8a}
+/* compra */
+.base li,.lista li{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;border-bottom:1px solid var(--line);font-size:15px}
+.base,.lista{margin:6px 0 0;padding:0}
+.base li:last-child,.lista li:last-child{border-bottom:0}
+.lista li{min-height:52px}
+.lista .tengo{display:block;font-size:14px;color:#475569;font-weight:700}
+.etq{display:inline-block;border-radius:10px;padding:2px 8px;font-size:14px;font-weight:800;border:1.5px solid var(--line);background:#f1f5f9;color:#334155}
+.etq.hielo{background:var(--hielo);border-color:var(--hielo2);color:#0c4a6e}
+.franja{display:grid;grid-template-columns:76px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
+.franja:last-of-type{border-bottom:0}
+.franja .dias{font-weight:900;font-size:14px;background:#e2e8f0;border-radius:10px;padding:6px 4px;text-align:center}
+.franja b{font-size:16px}
+.aviso{font-size:14px;color:var(--mut);margin-top:2px}
+.nuevo{animation:ap .5s ease-out}
+@keyframes ap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* nevera */
+.zona{border-radius:18px;padding:12px;margin:0 0 10px;border:2px solid var(--line);background:#fff}
+.zona.cong{background:var(--hielo);border-color:var(--hielo2)}
+.zona h2{margin:0 0 4px;font-size:18px;font-weight:900}
+.rac{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:6px 10px;margin-top:6px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.rac b{font-size:15px}
+.rac small{display:block;font-size:14px;color:var(--mut);font-weight:700}
+.lote{border:3px solid #b45309;background:#fffbeb;box-shadow:0 8px 20px -10px rgba(180,83,9,.5)}
+.zona.cong{background:#f0f9ff}
+.plegable>summary{list-style:none;min-height:44px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:900;font-size:17px}
+.plegable>summary::-webkit-details-marker{display:none}
+.plegable>summary::after{content:"▾";font-size:18px}
+.plegable[open]>summary::after{content:"▴"}
+.plegable summary:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.plato{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;border-bottom:1px solid var(--line);font-size:15px}
+.plato:last-of-type{border-bottom:0}
+/* hojas */
+.vela{position:absolute;inset:0;background:rgba(15,23,42,.55);z-index:5}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:14px 16px 18px;z-index:6;box-shadow:0 -12px 40px rgba(0,0,0,.3);max-height:88%;overflow-y:auto;animation:sube .28s ease-out}
+@keyframes sube{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.hoja[hidden],.vela[hidden]{display:none}
+.hoja h2{margin:0 0 6px;font-size:21px;font-weight:900}
+.sel{display:grid;grid-template-columns:56px 1fr 56px;gap:8px;align-items:center;margin:10px 0}
+.sel button{min-height:56px;font-size:26px;border-radius:16px;border:2px solid var(--ink);background:#fff;font-weight:900}
+.sel .v{text-align:center;font-size:20px;font-weight:900;line-height:1.2}
+.sel .v small{display:block;font-size:14px;color:var(--mut);font-weight:700}
+.sel button:disabled{opacity:.4}
+.fin2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+/* hoy */
+.dia{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
+.dia h1{margin:0;font-size:22px;font-weight:900}
+.cartel{margin:12px 16px 0;border-radius:18px;background:#1e293b;color:#fff;padding:14px}
+.cartel .g{font-size:14px;font-weight:700;color:#cbd5e1}
+.cartel .t{font-size:22px;font-weight:900;margin:2px 0}
+.cartel .z{font-size:14px;font-weight:700;color:#e2e8f0}
+.sim{display:block;margin:6px 16px 0;font-size:14px;color:var(--mut);font-weight:700}
+.prot{margin:12px 16px 0;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:10px 12px}
+.prot[hidden]{display:none}
+.prot .t{font-size:16px;font-weight:900}
+.barra{height:12px;background:#e2e8f0;border-radius:8px;margin:8px 0;overflow:hidden;border:1px solid #94a3b8}
+.barra i{display:block;height:100%;background:#0f172a;border-radius:8px;transition:width .5s}
+.sug{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sug span{font-size:15px;font-weight:800}
+.hecho{margin:12px 16px 0;border:2px solid var(--ok);background:var(--okbg);color:#14532d;border-radius:14px;padding:10px 12px;font-weight:900;font-size:16px}
+.hecho[hidden]{display:none}
+.gris2{background:#e2e8f0;border-radius:16px;height:110px;margin:12px 16px 0;display:flex;align-items:center;justify-content:center;color:#475569;font-size:14px;font-weight:700;text-align:center;padding:0 12px}
+/* receta */
+.rh{text-align:center;padding:6px 0}
+.rh .ic{font-size:64px;line-height:1}
+.rh h1{margin:4px 0;font-size:26px;font-weight:900;letter-spacing:-.4px}
+.rh p{margin:0;font-size:15px;color:var(--mut);font-weight:800}
+.ing{list-style:none;margin:6px 0 0;padding:0}
+.ing button{width:100%;min-height:48px;display:flex;align-items:center;gap:10px;text-align:left;background:#fff;border:0;border-bottom:1px solid var(--line);font-size:17px;font-weight:700;padding:4px 2px}
+.ing .cj{flex:none;width:28px;height:28px;border:2.5px solid var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff}
+.ing button[aria-pressed=true]{color:#64748b;text-decoration:line-through}
+.ing button[aria-pressed=true] .cj{background:var(--ink)}
+.pasos{margin:6px 0 0;padding:0;list-style:none;counter-reset:p}
+.pasos li{counter-increment:p;display:grid;grid-template-columns:36px 1fr;gap:8px;font-size:19px;line-height:1.4;padding:8px 0;border-bottom:1px solid var(--line);font-weight:600}
+.pasos li::before{content:counter(p);width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center}
+.acc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px}
+.acc .bt{min-height:52px}
+.acc .ancho{grid-column:1/-1}
+.okmsg{background:#ecfdf3;color:#14532d;border:1.5px solid #86efac;border-radius:12px;padding:8px 10px;font-size:14px;font-weight:800;margin:0}
+.okmsg[hidden]{display:none}
+.cola input{width:100%;min-height:48px;border:2px solid var(--ink);border-radius:14px;padding:6px 12px;font-size:16px;margin:8px 0}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:52px;border-top:1px solid var(--line);padding:4px 0}
+.item .u{font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .mini{white-space:nowrap;flex:none}
+.cola>summary::after{content:none}
+.item small{display:block;overflow:hidden;text-overflow:ellipsis;font-size:14px;color:var(--mut);font-weight:700}
+.tarj{border:2px solid var(--ink);border-radius:18px;padding:14px;background:#fffbeb;margin-top:8px}
+.tarj h3{margin:0 0 6px;font-size:20px}
+.tarj ul,.tarj ol{margin:4px 0 8px;padding-left:20px;font-size:15px}
+@media (prefers-reduced-motion:reduce){.nuevo,.hoja{animation:none}.barra i{transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="demo" id="demoHoy" hidden>
+    <div class="seg" role="group" aria-label="Tipo de día (solo demo)" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#fde68a;border-radius:14px;padding:4px">
+    <button id="dNormal" aria-pressed="true" class="sg">día normal</button>
+    <button id="dGuardia" aria-pressed="false" class="sg">día de guardia</button>
+  </div>
+  <button class="lnk" id="dReset">Reiniciar</button>
+  <span id="demoNota" hidden style="flex-basis:100%;font-size:14px">Con 30 g o menos por llegar, la línea de proteína no aparece.</span>
+</div>
+
+<div class="app" id="app">
+
+<!-- ============ COMPRA ============ -->
+<div class="vista" id="v-compra" tabindex="-1">
+  <div class="cab"><h1>Comer · Compra</h1><small>vie 30 oct</small></div>
+  <section class="panel">
+    <div class="card">
+      <div class="fila"><h2>Mi compra base</h2><button class="mini" id="edBase">Editar</button></div>
+      <ul class="base">
+        <li><span>🍗 Pollo</span><b>1 kg</b></li>
+        <li><span>🥩 Lomo</span><b>600 g</b></li>
+        <li><span>🐟 Pescado congelado</span><b>1 kg</b></li>
+        <li><span>🍚 Arroz</span><b>1 kg</b></li>
+        <li><span>🥚 Huevos</span><b>12</b></li>
+        <li><span>🥫 Atún</span><b>3 latas</b></li>
+      </ul>
+      <p class="sub" id="edMsg" hidden>En la app aquí cambiarías cantidades y productos.</p>
+    </div>
+
+    <button class="bt p grande" id="hacerBase">🛒 Hacer la compra base</button>
+
+    <div class="card" id="listaCard" style="margin-top:10px" hidden>
+      <h2>Lista de la compra</h2>
+      <p>Ya restado lo que tienes en la nevera.</p>
+      <ul class="lista" id="lista"></ul>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <h2>Tu semana por caducidad</h2>
+      <div class="franja"><div class="dias">Lun–Mar</div><div><b>🍗 Pollo</b><div class="aviso">El pollo, antes del miércoles; lo que sobre, al congelador hoy.</div></div></div>
+      <div class="franja"><div class="dias">Mié–Vie</div><div><b>🥩 Lomo</b><div class="aviso">El lomo aguanta hasta el viernes; después, congelador.</div></div></div>
+      <div class="franja"><div class="dias">Jue–Dom</div><div><b>🐟 Pescado</b><div class="aviso">De 1 en 1 del congelador (250 g): saca uno la noche antes.</div></div></div>
+      <p class="fuente">Duraciones: USDA FoodKeeper y AESAN.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ============ NEVERA ============ -->
+<div class="vista" id="v-nevera" tabindex="-1" hidden>
+  <div class="cab"><h1>Comer · Nevera</h1><small>vie 30 oct</small></div>
+  <section class="panel">
+    <div class="card lote" id="lote">
+      <h3>🍲 Lentejas · 6 raciones</h3>
+      <p>Cocina del domingo</p>
+      <button class="bt p" id="yaHecho" style="margin-top:8px">Ya está hecho</button>
+    </div>
+
+    <div class="zona">
+      <h2>🧊 Nevera</h2>
+      <div id="zNev">
+        <div class="rac"><div><b>🥚 Huevos</b><small>6 en casa</small></div></div>
+        <div class="rac"><div><b>🥫 Atún</b><small>2 latas</small></div></div>
+        <div class="rac"><div><b>🍗 Pollo</b><small>500 g · antes del miércoles</small></div></div>
+      </div>
+    </div>
+
+    <div class="zona cong">
+      <h2>❄ Congelador</h2>
+      <div id="zCong">
+        <div class="rac"><div><b>🐟 Pescado 4 × 250 g ❄</b><small>Saca una la noche antes</small></div></div>
+        <div class="rac"><div><b>🍛 Pollo al curry · 2 raciones</b><small><span class="etq hielo">❄ 3 meses · hasta 12 ene</span></small></div></div>
+        <div class="rac"><div><b>🥣 Boloñesa con lenteja roja · 3 raciones</b><small><span class="etq hielo">❄ 3 meses · hasta 2 ene</span></small></div></div>
+      </div>
+    </div>
+
+    <details class="card plegable">
+      <summary>Platos que congelan bien</summary>
+      <div class="plato"><span>🍲 Lentejas</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🫘 Garbanzos</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🌶 Chili</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🧆 Albóndigas</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🍛 Pollo al curry</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🍝 Boloñesa con lenteja roja</span><span class="etq hielo">❄ 3 meses</span></div>
+      <div class="plato"><span>🐟 Merluza en salsa verde</span><span class="etq hielo">❄ 2 meses</span></div>
+      <div class="plato"><span>🌯 Fajitas</span><span class="etq hielo">❄ 2 meses</span></div>
+      <p class="fuente">Fuente: USDA FoodKeeper y AESAN. Son plazos de calidad, no de peligro.</p>
+    </details>
+  </section>
+</div>
+
+<!-- ============ HOY ============ -->
+<div class="vista" id="v-hoy" tabindex="-1" hidden>
+  <div class="dia"><h1>Hoy · vie 30 oct</h1><div class="sub" id="diaSub">Trozo simulado de la pantalla Hoy</div></div>
+  <div class="cartel" aria-label="Cartel de la noche (contexto)">
+    <div class="g" id="cartelG">Esta noche</div>
+    <div class="t" id="cartelT">🌙 Cena en casa, sin prisas</div>
+    <div class="z" id="cartelZ">Cenar a las 21:30 · dormir antes de las 23:30</div>
+  </div>
+  <span class="sim">Más arriba, el resto de Hoy (comidas, entreno…)</span>
+
+  <div class="prot" id="prot">
+    <div class="t" id="protT">🥚 85 de 120 g · te faltan 35</div>
+    <div class="barra" role="img" aria-label="Proteína del día"><i id="protB" style="width:71%"></i></div>
+    <div class="sug" id="sug"><span>Yogur proteico + atún · +32 g</span><button class="mini" id="apuntar">Apuntar</button></div>
+  </div>
+  <div class="hecho" id="hecho" hidden role="status">Hecho ✓ · 117 de 120 g</div>
+    <div class="gris2">Resto de Hoy (comidas, agua, hábitos…)</div>
+</div>
+
+<!-- ============ RECETA ============ -->
+<div class="vista" id="v-receta" tabindex="-1" hidden>
+  <div class="cab"><h1>Comer · Receta</h1><small>vie 30 oct</small></div>
+  <section class="panel">
+    <details class="card cola plegable">
+      <summary>▶ Cola de TikTok · <span id="nCola">3</span> por pasar ›</summary>
+      <label for="enl" class="sub">Pega un enlace</label>
+      <input id="enl" type="url" inputmode="url" placeholder="https://vm.tiktok.com/…">
+      <button class="bt" id="addEnl">Añadir a la cola</button>
+      <div id="cola">
+        <div class="item"><div class="u">tiktok.com/@cocina/pollo-curry<small>Pollo al curry</small></div><button class="mini" id="pasar">Pasar a receta</button></div>
+        <div class="item"><div class="u">tiktok.com/@cocina/hummus<small>Sin pasar</small></div><button class="mini cp">Pasar a receta</button></div>
+        <div class="item"><div class="u">tiktok.com/@cocina/tortilla<small>Sin pasar</small></div><button class="mini cp">Pasar a receta</button></div>
+      </div>
+      <p class="fuente">En Android, compártelo desde TikTok a la app; en iPhone, pega el enlace.</p>
+    </details>
+
+    <div class="card" id="rec">
+      <div class="rh">
+        <div class="ic" aria-hidden="true">🍛</div>
+        <h1 id="recH" tabindex="-1">Pollo al curry de TikTok</h1>
+        <p>4 raciones · 35 min · 38 g proteína/ración</p>
+      </div>
+      <h2 style="margin-top:8px">Ingredientes</h2>
+      <ul class="ing" id="ings"></ul>
+      <h2 style="margin-top:12px">Pasos</h2>
+      <ol class="pasos">
+        <li>Corta el pollo en dados y sálalo.</li>
+        <li>Dora la cebolla y el ajo en una sartén grande.</li>
+        <li>Añade el pollo y el curry; sella cinco minutos.</li>
+        <li>Vierte la leche de coco y cuece a fuego suave 15 minutos.</li>
+        <li>Sirve con el arroz hervido.</li>
+      </ol>
+      <div class="acc">
+        <button class="bt p ancho" id="addCompra">🛒 Añadir a la compra</button>
+        <p class="okmsg ancho" id="addMsg" hidden role="status">Añadido ✓</p>
+        <a class="bt" href="https://www.tiktok.com/" target="_blank" rel="noopener">▶ Ver en TikTok</a>
+        <button class="bt" id="compartir">Compartir</button>
+        <p class="sub ancho" style="text-align:center;margin:0">Se abre en TikTok, fuera de la app</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- barra de vistas -->
+<nav class="nav" aria-label="Vistas de la maqueta">
+  <button data-v="compra" aria-current="page"><span aria-hidden="true">🛒</span>Compra</button>
+  <button data-v="nevera"><span aria-hidden="true">🧊</span>Nevera</button>
+  <button data-v="hoy"><span aria-hidden="true">☀</span>Hoy</button>
+  <button data-v="receta"><span aria-hidden="true">🍛</span>Receta</button>
+</nav>
+
+<!-- hoja: reparto -->
+<div class="vela" id="vela" hidden></div>
+<div class="hoja" id="hojaRep" role="dialog" aria-modal="true" aria-labelledby="repT" hidden>
+  <h2 id="repT">¿Cómo las repartes?</h2>
+  <p class="sub">Lentejas · 6 raciones. Propuesta: las que vas a comer esta semana, en la nevera; el resto, congelado.</p>
+  <div class="sel">
+    <button id="menos" aria-label="Una ración menos en la nevera">−</button>
+    <div class="v" aria-live="polite"><span id="repN">2 nevera · 4 ❄</span><small>Suman 6 siempre</small></div>
+    <button id="mas" aria-label="Una ración más en la nevera">+</button>
+  </div>
+  <div class="fin2">
+    <button class="bt" id="repNo">Cancelar</button>
+    <button class="bt p" id="repOk">Guardar</button>
+  </div>
+</div>
+
+<!-- hoja: compartir -->
+<div class="hoja" id="hojaCom" role="dialog" aria-modal="true" aria-labelledby="comT" hidden>
+  <h2 id="comT">Compartir receta</h2>
+  <p class="sub">Vista previa de la imagen (sin tu nombre ni datos tuyos):</p>
+  <div class="tarj">
+    <h3>🍛 Pollo al curry · 4 raciones</h3>
+    <b>Ingredientes</b>
+    <ul id="tarjIng"></ul>
+    <b>Pasos</b>
+    <ol>
+      <li>Corta y sala el pollo.</li>
+      <li>Dora cebolla y ajo.</li>
+      <li>Añade pollo y curry.</li>
+      <li>Coco, 15 min a fuego suave.</li>
+      <li>Sirve con arroz.</li>
+    </ol>
+  </div>
+  <div class="fin2">
+    <button class="bt" id="comNo">Cerrar</button>
+    <button class="bt p" id="comOk">Enviar</button>
+  </div>
+  <p class="sub" id="comMsg" hidden role="status">En la app aquí se abriría tu WhatsApp; tú eliges a quién.</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var vistas=['compra','nevera','hoy','receta'];
+function ir(v){
+  vistas.forEach(function(n){$('#v-'+n).hidden=(n!==v)});
+  $$('.nav button').forEach(function(b){if(b.dataset.v===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  $('#demoHoy').hidden=(v!=='hoy');
+  $('#v-'+v).scrollTop=0;
+}
+$$('.nav button').forEach(function(b){b.addEventListener('click',function(){ir(b.dataset.v)})});
+
+/* ---- Compra ---- */
+$('#edBase').addEventListener('click',function(){$('#edMsg').hidden=!$('#edMsg').hidden});
+var base=[['🍗 Pollo','1 kg',0],['🥩 Lomo','600 g',0],['🐟 Pescado congelado','1 kg',0],['🍚 Arroz','1 kg',0],['🥚 Huevos','compra 6',6,12],['🥫 Atún','compra 1',2,3]];
+$('#hacerBase').addEventListener('click',function(){
+  var ul=$('#lista');ul.innerHTML='';
+  base.forEach(function(r){
+    var li=document.createElement('li');
+    li.className='nuevo'+(r[2]?' resta':'');
+    li.innerHTML='<span class="nom">'+r[0]+' · <b>'+r[1]+'</b>'+(r[2]?'<span class="tengo">tienes '+r[2]+' de '+r[3]+'</span>':'')+'</span>';
+    ul.appendChild(li);
+  });
+  $('#listaCard').hidden=false;
+  $('#listaCard').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+});
+
+/* ---- Nevera ---- */
+var nev=2;
+function pintaRep(){
+  $('#repN').textContent=nev+' nevera · '+(6-nev)+' ❄';
+  $('#menos').disabled=nev<=0;$('#mas').disabled=nev>=6;
+}
+var ultimoFoco=null;
+function abre(h){ultimoFoco=document.activeElement;$('#vela').hidden=false;$(h).hidden=false;var b=$(h).querySelector('button');if(b)b.focus()}
+function cierra(){$('#vela').hidden=true;$('#hojaRep').hidden=true;$('#hojaCom').hidden=true;if(ultimoFoco&&ultimoFoco.focus)ultimoFoco.focus()}
+$('#yaHecho').addEventListener('click',function(){nev=2;pintaRep();abre('#hojaRep')});
+$('#menos').addEventListener('click',function(){if(nev>0){nev--;pintaRep()}});
+$('#mas').addEventListener('click',function(){if(nev<6){nev++;pintaRep()}});
+$('#repNo').addEventListener('click',cierra);
+$('#vela').addEventListener('click',cierra);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cierra()});
+$('#repOk').addEventListener('click',function(){
+  var c=6-nev;
+  if(nev>0){
+    var d=document.createElement('div');d.className='rac nuevo';
+    d.innerHTML='<div><b>🍲 Lentejas · '+nev+' raciones</b><small>Para esta semana</small></div>';
+    $('#zNev').appendChild(d);
+  }
+  if(c>0){
+    var e=document.createElement('div');e.className='rac nuevo';
+    e.innerHTML='<div><b>🍲 Lentejas · '+c+' raciones ❄</b><small><span class="etq hielo">❄ 3 meses · hasta 30 ene</span></small></div>';
+    $('#zCong').appendChild(e);
+  }
+  $('#lote').innerHTML='<h3>🍲 Lentejas · 6 raciones</h3><p>Hecho ✓ · '+nev+' en la nevera, '+c+' ❄ en el congelador</p>';
+  cierra();
+  $('#lote').focus&&0;
+});
+
+/* ---- Hoy ---- */
+var prot=85,guardia=false,pasado=false;
+function pintaHoy(){
+  var falta=120-prot;
+  $('#protB').style.width=Math.min(100,prot/120*100)+'%';
+  if(guardia){
+    $('#diaSub').textContent='Día de guardia · trozo simulado de Hoy';
+    $('#cartelG').textContent='Esta noche';
+    $('#cartelT').textContent='🏥 Guardia de 24 h';
+    $('#cartelZ').textContent='Come y bebe cuando puedas';
+    $('#protT').textContent='🥚 Hoy, lo que se pueda: '+prot+' g';
+  }else{
+    $('#diaSub').textContent='Trozo simulado de la pantalla Hoy';
+    $('#cartelG').textContent='Esta noche';
+    $('#cartelT').textContent='🌙 Cena en casa, sin prisas';
+    $('#cartelZ').textContent='Cenar a las 21:30 · dormir antes de las 23:30';
+    $('#protT').textContent='🥚 '+prot+' de 120 g · te faltan '+falta;
+  }
+  var ver=falta>30;
+  $('#prot').hidden=!ver;
+  $('#demoNota').hidden=ver;
+}
+$('#apuntar').addEventListener('click',function(){
+  prot=117;pintaHoy();
+  var h=$('#hecho');h.hidden=false;
+  setTimeout(function(){h.hidden=true;pintaHoy()},1800);
+});
+function modo(g){guardia=g;$('#dNormal').setAttribute('aria-pressed',String(!g));$('#dGuardia').setAttribute('aria-pressed',String(g));pintaHoy()}
+$('#dNormal').addEventListener('click',function(){modo(false)});
+$('#dGuardia').addEventListener('click',function(){modo(true)});
+$('#dReset').addEventListener('click',function(){prot=85;$('#hecho').hidden=true;pintaHoy()});
+$$('.sg').forEach(function(b){b.style.cssText='min-height:44px;border:0;border-radius:11px;background:transparent;font-weight:800;font-size:14px'});
+function estiloSg(){$$('.sg').forEach(function(b){var on=b.getAttribute('aria-pressed')==='true';b.style.background=on?'#fff':'transparent';b.style.boxShadow=on?'0 2px 8px -3px rgba(15,23,42,.35)':'none'})}
+['#dNormal','#dGuardia','#dReset'].forEach(function(s){$(s).addEventListener('click',estiloSg)});
+estiloSg();pintaHoy();
+
+/* ---- Receta ---- */
+var ingr=['600 g de pechuga de pollo','1 cebolla','2 dientes de ajo','2 cucharaditas de curry','200 ml de leche de coco','250 g de arroz'];
+ingr.forEach(function(t){
+  var li=document.createElement('li');
+  li.innerHTML='<button aria-pressed="false"><span class="cj" aria-hidden="true"></span><span>'+t+'</span></button>';
+  var b=li.firstChild;
+  b.addEventListener('click',function(){
+    var on=b.getAttribute('aria-pressed')!=='true';
+    b.setAttribute('aria-pressed',String(on));
+    b.querySelector('.cj').textContent=on?'✓':'';
+  });
+  $('#ings').appendChild(li);
+});
+var cola=3;
+function cuenta(){$('#nCola').textContent=cola}
+$('#pasar').addEventListener('click',function(){
+  var it=this.closest('.item');it.parentNode.removeChild(it);cola--;cuenta();
+  $('#rec').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+  $('#recH').focus({preventScroll:true});
+});
+$$('.cp').forEach(function(b){b.addEventListener('click',function(){
+  var s=b.parentNode.querySelector('small');s.textContent='En la app abriría su página';
+})});
+$('#addEnl').addEventListener('click',function(){
+  var v=$('#enl').value.trim();if(!v)return;
+  var d=document.createElement('div');d.className='item nuevo';
+  var u=document.createElement('div');u.className='u';u.textContent=v.replace(/^https?:\/\//,'');
+  var sm=document.createElement('small');sm.textContent='Sin pasar';u.appendChild(sm);
+  var b=document.createElement('button');b.className='mini';b.textContent='Pasar a receta';
+  d.appendChild(u);d.appendChild(b);$('#cola').appendChild(d);$('#enl').value='';cola++;cuenta();
+});
+$('#addCompra').addEventListener('click',function(){
+  var n=$$('#ings button[aria-pressed=false]').length;
+  $('#addMsg').textContent='Añadido ✓ · '+n+' ingredientes';$('#addMsg').hidden=false;
+});
+$('#compartir').addEventListener('click',function(){
+  $('#tarjIng').innerHTML=ingr.map(function(t){return '<li>'+t+'</li>'}).join('');
+  $('#comMsg').hidden=true;abre('#hojaCom');
+});
+$('#comNo').addEventListener('click',cierra);
+$('#comOk').addEventListener('click',function(){$('#comMsg').hidden=false});
+})();
+</script>
+</body>
+</html>

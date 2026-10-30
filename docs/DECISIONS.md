@@ -3,6 +3,29 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-29 · Recopilación de webs y apps médicas
+
+**Elegido:** una lista por temas en `docs/webs-medicas.md` (intensivos y ventilación, cardiología, urgencias y
+fiebre neutropénica, estudio MIR, guardias y nutrición), con enlace, resumen e informe de cada una. VentLoop y
+el visor aórtico quedan «guardados» como enlace + informe. **Descartado:** guardar copia de su código o de sus
+textos en el repositorio (son ajenos y sin licencia libre). **Supuestos:** `sup-2026-10-29-webs-medicas`.
+
+## 2026-10-29 · Estudio del visor de la raíz aórtica (artefacto público)
+
+**Elegido:** solo informe (`docs/informe-raiz-aortica-2026-10.md`): qué calcula (SC, z con Devereux, Lang y WASE,
+índices, rigidez, crecimiento, umbrales ACC/AHA 2022 y ESC 2024), cómo dibuja (Three.js con shader Fresnel,
+eco simulada píxel a píxel, Canvas 2D, PDF con jsPDF) y qué patrones nos sirven. Leído como datos de terceros,
+sin copiar código ni textos. **Descartado:** construir nada: no se pidió. **Supuestos:** `sup-2026-10-29-aorta`.
+
+## 2026-10-29 · Estudio del simulador de ventilación VentLoop
+
+**Elegido:** solo informe (`docs/informe-ventilador-2026-10.md`): qué hace VentLoop y cómo calcula
+(VC/PC/PSV, Rohrer, 64 unidades con apertura y cierre, pared torácica, Pmus, gases y circulación,
+Canvas 2D con paso fijo de 2 ms), y qué aprovechar o cambiar para un simulador nuestro de residente.
+Leído de la web pública, sin copiar código ni textos (lo descargado queda fuera del repositorio).
+**Descartado:** entrar en la app con cuenta (`vent.nodefield.jp`) y construir nada todavía: falta que el
+usuario decida dónde va y qué modos y casos lleva. **Supuestos:** los del registro `sup-2026-10-29-ventilador`.
+
 ## 2026-10-27 · Gastar menos tokens por sesión
 
 **Elegido** (visto bueno del usuario): REA deja de cargarse en cada sesión (`.mcp.json` → `tools/rea.mcp.json`;
@@ -1745,3 +1768,395 @@ la cadena desplegada (620-677 px): es la vista de detalle, la plegada mide 143-1
 
 **Supuestos.** Con camas reales entre 23:30 y 00:15 la cama arranca en la mediana (23:50) y baja 15 min cada 3 días: es lo que
 decidió el acta, no un fallo. La maqueta `la-noche-comun.js` conserva el texto viejo (es historia, no se publica).
+
+## La Reforma · R1 · Concurso «Tu mes» de Dinero (2026-10-29)
+
+**Elegido (Consejo por delegación).** Concurso de 5 escuelas sonnet con bases comunes
+(`.claude/plan-socialista/consejo/2026-10-29-2-tu-mes-bases.md`): La Cascada, Bento, El Calendario vivo, El Vaso y La Guagua
+(`maquetas/dinero-mes-1…5-*.html`). Las cinco pasan el oficio a 412×915 (sin errores, ancho 412, tocables ≥44 px; fijos → 1.652;
+portátil «apartando» → 150), salvo Bento, que con los fijos abiertos mide 1.096 px. Jurado haiku a ciegas: **El Vaso 10**,
+Cascada 9, Calendario 8, Guagua 8, Bento 7. Gana **El Vaso**: el dinero del mes es un vaso por capas (fijos abajo, gastos, margen,
+ahorro arriba) con la cadena 2.380 − 728 − 750 = ~900 y «ahorras 700» como lo que manda; tocar el vaso separa los fijos y dice
+«te quedan 1.652 €»; el portátil se apunta («lo voy apartando» / «sale de lo ahorrado» / quitar) y cambia el mes, el ahorro y la
+línea de Hoy. Artes Visuales la dejó navegable y aligerada en `maquetas/dinero-tu-mes.html` (Hoy | Dinero; Tu mes · Ahorro y
+Bosque), con el bosque de un árbol por mes de colchón de La Cascada y el «150 al colchón + 550 apartados» de Bento. Medido:
+Tu mes 728 px (769 con portátil), Ahorro y Bosque 877 (926 con portátil, 11 px de scroll), Hoy 613-634.
+
+**Descartado.** Escuelas en haiku (maquetaron peor y gastaron más en concursos anteriores). Ahorro a años vista como
+protagonista: el objetivo de 6 meses queda como dato pequeño. Bento como base (no cabe con los fijos abiertos).
+
+**Supuestos.** El mes va de nómina a nómina; «puedes ahorrar» deja ~200 € de margen; con el portátil «apartando», «para gastar»
+(812 € · 30 €/día) no cambia; el botón «🌳 Ahorro y Bosque» en Tu mes repite la pestaña y se puede quitar. Las cifras son
+inventadas.
+
+## La Reforma · R2 · Construir «Tu mes» (2026-10-30)
+
+**Elegido (Consejo por delegación).** La portada de Dinero es **Tu mes** (maqueta `maquetas/dinero-tu-mes.html`, El Vaso):
+arriba «Acabarás con ~X € · ahorras Y», el vaso por capas (fijos abajo, gastos, margen, ahorro arriba; etiquetas fuera de las
+capas, a 14 px) y la cadena «empiezas − fijos − gastos = acabas». Tocar el vaso o «Fijos» separa los fijos y dice «Te quedan N €»
+con la lista ✓ pagado / ○ por pagar. Cifras de `d6Mes` y `mesTipo` (`tuMesDatos()`, sin cálculos nuevos salvo «acabarás» y
+«ahorras»). Sin captura de Fintonic del mes no se dice «acabarás» ni «ahorras»: pide la captura. En Hoy, debajo del cartel de la
+noche, «💶 Te quedan N € · M €/día hasta fin de mes · mañana pagas X» solo si hay un fijo sin pagar mañana o el ritmo va en
+«ojo»/«pasa»; tocarla abre Tu mes. Pestañas: Tu mes · Bosque · Gastos · Ahorro · Compras (el Bosque se junta con Ahorro en R3).
+Pruebas 365-368 (caen al revertir cada parte y ninguna otra). De paso, tres pruebas que dependían del día (226, 268, 285) ya no:
+la 226 destapó «la desayuno» en la sugerencia de vitaminas (ahora «el desayuno»). Suite 817/817.
+
+**Descartado.** El mes de nómina a nómina de la maqueta (se queda el del calendario, como el resto de Dinero). Repetir «Hoy toca
+pagar» en la línea de Hoy (ya está en Para hoy). Animar el vaso al plegar (la app repinta la pantalla entera).
+
+**Supuestos.** «Puedes ahorrar» = acabarás − un margen del 10 % de lo que queda tras los fijos (redondeado a 10 €); gastos
+previstos = lo gastado o el mes típico, lo que sea mayor. La línea de Hoy no se puede ocultar todavía. La franja de casillas que
+asomó bajo Tu mes en una captura es un resto de pintado del navegador de pruebas (no hay elemento ahí): mirarlo en el móvil.
+
+## La Reforma · R3 · Gasto grande + Ahorro y Bosque juntos (2026-10-30)
+
+**Elegido (Consejo por delegación).** Un gasto grande (viaje, portátil) se apunta desde Tu mes o Ahorro y Bosque con la hoja
+«Apuntar gasto grande» (qué es, precio, para qué mes y «Lo voy apartando» / «Sale de lo ahorrado»). Se guarda como una compra
+más de `compras[]` con el campo opcional `grande` (ausente = no es grande). «Apartando» reparte el ahorro del mes: «🟩 N € al
+colchón + 💻 C apartados», con la capa roja a rayas en el vaso y «· apartas C a …» en la línea de Hoy; la cuota es la misma de
+Compras (`d5Cuota`). «De lo ahorrado» no toca el mes, pero `falta` y `pide` suben lo que hay que reponer. «Quitar» lo deja en
+`estado:'no'` y todo vuelve. Bosque y Ahorro, una pestaña (**Tu mes · Ahorro y Bosque · Gastos · Compras**; `bosque`/`ahorro`
+viejos abren la nueva): colchón a fin de mes, un árbol por mes de colchón hasta el objetivo con el gasto grande como fruto, las
+barras de cada mes y, debajo, objetivo, plazo, nómina y guardado como antes. Pruebas 368-370 (368 cae al revertir); ocho viejas
+pasadas a la pestaña nueva. `store.ahorro`, `store.dinero` y las compras no se borran (369 lo comprueba con datos viejos).
+
+**Descartado.** Borrar la compra al quitarla. El laurisilva (`d3EscenaSVG` se queda sin usar) y la gráfica `#d4Graf` de Ahorro.
+
+**Supuestos.** «Apartando» exige el mes; «de lo ahorrado», no. El gasto grande se guarda como «me hace ilusión», en plan y con
+0 apartado. «Para gastar» no cambia con el apartado (como en la maqueta). Las pestañas siguen a 12,5 px y las cifras de la cadena
+de Tu mes a 12 px (de antes de R3).
+
+## La Reforma · R4 · Fintonic en pequeño (2026-10-30)
+
+**Elegido.** En la revisión de la captura (acta 2026-10-29-2, addenda acuerdo 2), cada categoría leída se puede **renombrar**
+(campo de texto con la lista de categorías que ya conoces y tus recibos) y **quitar** (✕ de 44 px), además de cambiar el
+importe como antes. El aviso «⚠ No cuadran: faltan/sobran X» ya existía y se recalcula con cada cambio. Al guardar, dos filas
+con el mismo nombre **se suman** (antes una pisaba a la otra). Renombrar a «Alquiler» hace que Tu mes lo cuente como fijo.
+Prueba 371 (subir → renombrar → quitar → guardar → `gastoMes`/`mesPartes`), que cae al revertir.
+
+**Descartado.** «Pegar texto», partidas propias con memoria del reparto (retirados en la addenda) y «añadir fila».
+
+**Supuestos.** «Gasto a gasto» = fila a fila de lo que trae la captura (categorías de Fintonic, no movimientos sueltos).
+Quitar una fila no baja el total del mes: lo quitado cuenta como variable sin categoría. Si el nombre se deja vacío, se
+queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila no tiene sitio; el ⚠ sigue).
+Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
+pinta «1000 €» sin punto de miles en esta pantalla.
+
+## La Reforma · R5 · Maqueta de Comer (2026-10-30)
+
+**Elegido.** `maquetas/comer-reforma.html`, aprobada por el Consejo por delegación (acta 2026-10-29-2, «R5»). Compra base
+que se copia a la compra restando la nevera, con la cuenta a la vista y la semana por caducidad (pollo 1-2, lomo 3-5,
+pescado del congelador de uno en uno). Al terminar un lote, hoja «¿Cómo las repartes?» (propone 2 nevera · 4 ❄) y raciones
+❄ con «3 meses · hasta …»; el kilo de pescado como 4 × 250 g. En Hoy, «🥚 85 de 120 g · te faltan 35» + una sugerencia de
+un toque, solo si faltan más de 30 g; en guardia, «lo que se pueda». Página de receta: ingredientes que se tachan, pasos
+grandes, Añadir a la compra, Ver en TikTok (fuera, **sin iframe de TikTok ni imágenes externas**) y Compartir sin datos
+personales; cola de TikTok plegada.
+
+**Descartado.** Concurso de escuelas (acuerdo 9: una maqueta por área). Vídeo incrustado.
+
+**Supuestos.** Duraciones: platos cocinados 3 meses, merluza y fajitas 2 (USDA FoodKeeper/AESAN). El reparto propuesto
+deja 2 raciones en la nevera y el resto al congelador. La sugerencia de proteína es una sola, la que más acerca sin pasarse.
+La compra base es una lista fija que se edita a mano (no se aprende de las compras).
+
+## La Reforma · R6 · Compra base + congelador (2026-10-30)
+
+**Elegido.** Lo de la maqueta R5 (vistas Compra y Nevera), construido. «Mi compra base» (`food().compraBase`, los 6 de
+la maqueta, editable una por línea) y «🛒 Hacer la compra base», que la mete en la Compra como grupo propio **solo al
+tocarlo**, restando lo que hay en casa con el mismo `casaTiene`; «He hecho esta compra» la limpia. «Tu semana por
+caducidad» con la fuente. Al marcar hecho un lote (tanda, «Hoy cocino» o modo cocina), hoja «¿Cómo las repartes?» con la
+propuesta **según la semana** (las raciones que el menú pide mientras aguanta; sin ninguna, 2) y −/+ que suman siempre el
+total; las ❄ van al cocinado con `cong` y «hasta» a sus meses, y comer gasta primero la nevera. Zona «❄ Congelador» en la
+Nevera, el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» y el plegable «Platos que congelan bien» (los 8,
+**solo como lista**, USDA FoodKeeper y AESAN). `dishes[].congela:{nevera,meses}` opcional desde el formulario del plato.
+Pruebas 372–375, que caen al revertir; 51, 223, 228 y 231 cierran la hoja nueva con «Guardar».
+
+**Descartado.** Compra base que entra sola cada semana (eso ya lo hacen las listas «de rutina»). Crear los 8 platos base
+en Mis platos. Reparto fijo de 2 en la nevera.
+
+**Supuestos.** Con 1 ración no sale la hoja (va a la nevera como antes). «Tu semana por caducidad» es texto fijo (pollo,
+lomo, pescado), no se calcula de la compra base editada. Las raciones ❄ siguen contando como ya cocinadas en lo que pide la
+compra. Si en «Hoy cocino» se cancela la hoja, no se crea el plato de la combinación. Los botones − y × de la despensa en la
+zona del congelador miden 30 px, como en el resto de la Nevera (ya era así).
+
+## Gran Ley · G1 · Arreglos y pulidos (2026-10-30)
+
+*Redactada después, el 30/10, por acuerdo del Consejo (`.claude/plan-socialista/consejo/2026-10-30-g2.md`).*
+
+**Elegido.** Cinco arreglos pequeños, cada uno con su prueba (372-375):
+- **Tu mes:** la muestra de «Apartado» en el vaso es a rayas, como su capa. La cifra va fuera del vaso y a 14 px (contraste 5,7:1).
+- **Hoy, modo plantilla:** el aviso «Usar las fechas del Mes» tiene 10 px de aire arriba y abajo (antes tapaba «＋ añadir»).
+- **Lector de comida:** «pizza barbacoa 3 porciones» sin coma. La sugerencia de vitaminas es comida de verdad, nunca chocolate ni dulces.
+- **Sueño:** «Anotar anoche» a la vista en Reloj y en Línea de Hoy, con la misma hoja que en Sueño.
+- **Cerrar R4 (Fintonic en pequeño):** el verificador la comprobó en el móvil (renombrar, quitar con 44 px y aviso «faltan X» en vez de «Todo cuadra»). No hacía falta arreglar nada.
+- **Parte de la mañana:** programado lunes y jueves a las 7:40 (hora de Madrid), en sesión nueva y con aviso al móvil. La primera vez será el lunes 2/11. No lleva conectores: no ve Actions, usa git.
+
+Lo hecho está en `main` (commit 0d867cf). Suite 825/825 en verde. Medido a 412×915.
+
+**Descartado.** Arreglar ya el «100 g de ajo» de la sugerencia de vitamina B6 (cantidad absurda). Queda aparcado como [aparc-vit-b6-ajo] en el registro. También queda aparcado [aparc-comer-eje-frase].
+
+**Supuestos.**
+- «Alimentos de verdad» se mira por grupo y por nombre. Fuera: chocolate, cacao, galletas, bollería, tarta, helado y cremas de untar.
+- El botón de sueño solo sale el día de hoy.
+- En Conductor no se añade. (VALE: Consejo por delegación, 30/10)
+
+## Gran Ley · G2 · Maqueta de Comer (2026-10-30)
+
+*Por el Consejo por delegación (acta `.claude/plan-socialista/consejo/2026-10-30-g2.md`). Maqueta: `maquetas/comer-g2.html`.*
+
+**Ajuste al juntar con `main` (mismo día).** Otra sesión cerró antes la R5 (`maquetas/comer-reforma.html`, abajo), aprobada
+por el Consejo. **Manda la R5** en proteína en Hoy («85 de 120 g · te faltan 35», solo si faltan >30 g), página de receta,
+compra y nevera. De esta maqueta se construye solo lo que la R5 no tiene: **la frase arriba en Hoy** y **el antojo de
+microondas** (pantallas 1 y 4). Las pantallas de proteína, Casa y receta quedan como referencia.
+
+**Elegido.** Una sola maqueta con el lenguaje de «El reloj», en 4 pantallas a 412×915, claro y oscuro:
+- **Hoy:** «Escribir lo comido» arriba (cierra [aparc-comer-eje-frase] cuando se construya), el reloj, «Te faltan X g de
+  proteína hoy» con suelo de 1,6 g/kg (la semana sigue con el objetivo de Ajustes) y un antojo de microondas propuesto.
+- **Casa:** la nevera con chip «❄ congelado» (sin lotes ni caducidades), «La compra de siempre» y «Lo que falta».
+- **Página de receta:** de dónde vino, raciones, tiempo, proteína por ración, ingredientes, pasos, «Añadir a la compra» y
+  «Compartir» (sin datos personales).
+- **Antojo de microondas:** por qué lo propone, receta corta, «≤5 min · ≥20 g», dos alternativas y «Apuntar que me lo he comido».
+Verificador: sin cortes ni scroll horizontal, letra ≥14 px (subidas las de 11-12), táctiles ≥44 px, contraste AA (paso de
+receta en oscuro corregido a 7:1).
+
+**Descartado.** Concurso de escuelas (repetía una decisión ya tomada, +1,2 M). Congelador con lotes y caducidades. Lista
+aparte de recetas de microondas. Un segundo número de proteína en Hoy.
+
+**Supuestos.**
+- Modo claro añadido a la maqueta (las de base solo tenían oscuro).
+- La caja de la frase lleva un botón ↵ a la derecha.
+- Comprobado en la app (G1): el sueño de una guardia se anota al día siguiente desde Reloj, Línea o Sueño, y el día después
+  desde la barrita de Sueño. A partir del tercer día no hay ruta visible: aparcado [aparc-sueno-noche-olvidada].
+
+## Gran Ley · G4 · Proteína en Hoy, aviso tras entreno y la frase en Comer (2026-10-30)
+
+**Elegido.**
+- **Proteína en Hoy** (`protHoyHTML`, `protHoyDatos`, `protHoyObj`): una tarjeta bajo el estado del día, antes del carril. Solo si
+  faltan **más de 30 g**: «🥚 85 de 120 g · te faltan 35», una barra y UNA sugerencia con «Apuntar» (acción `prot-hoy`). La
+  sugerencia es la de `protExtras()` (lo de la nevera) que más acerca sin pasarse; si todas se pasan, la más pequeña. No propone
+  nada «a comprar». Día de guardia: «🥚 Hoy, lo que se pueda: 40 g», sin «te faltan» ni rojo.
+- **Objetivo del día = 1,6 g/kg × peso** (`perfil.pesoKg`); sin peso, el de Ajustes. Ajustes y la semana no cambian.
+- **Aviso tras entreno** (`entrenoReciente`): una sesión de Entreno cerrada hoy cuya hora de fin (`sesiones[].fin`, la que guarda
+  `cerrarSesionCore`) cae en las últimas 2 h. La misma línea añade «Has entrenado: mejor algo de proteína en las 2 h siguientes.»
+  Sin hora fija ni notificaciones.
+- **La frase arriba en Hoy de Comer** (`renderComerEje`): `fraseCardHTML(true)` en la pestaña Hoy, sin foco automático (no abre
+  teclado), con los mismos gestos que la vista antigua. Cierra [aparc-comer-eje-frase]. Pruebas 380, 381 y 382.
+
+**Descartado.**
+- **Semana básica (S6): no se construye.** Ya está cubierta: la S3b dio «Mi semana» a mano con «¿Me la propones?» (`pl-montar`) y la
+  R6 «Tu semana por caducidad» y «Mi compra base». No hay un hueco claro y pequeño que cerrar.
+- Dejar los dos campos arriba en Comer: ahora hay una sola caja (S2, «Escribir lo comido»).
+- Mensaje «Hecho ✓ · 117 de 120 g» tras apuntar (maqueta): basta el aviso flotante y que la línea desaparezca.
+- Avisar tras entreno aunque falten ≤30 g: el acuerdo dice «esa misma línea».
+
+**Supuestos.**
+- Sin sesión de Entreno cerrada no hay aviso (el cardio suelto no guarda hora, así que no cuenta).
+- Con 1,6 g/kg el objetivo se redondea al gramo; la barra de Comer sigue con el objetivo de Ajustes (puede decir otra cifra).
+- «Apuntar» lo mete en el momento que toca ahora (`momentoAhora`).
+- La tarjeta va dentro de la tarjeta de Hoy, encima del carril, para verse sin bajar; solo se ve en el día de hoy.
+- La frase en Comer sirve para el día que estés mirando (como la vista antigua). Con una hoja de momento abierta se oculta la de arriba (dos campos con el mismo id dejaban sin pintar la lectura de la hoja); la prueba 317 se adaptó (ya no se abre la hoja: se toca la fila de lo apuntado).
+
+**Retoques del Consejo (mismo día).**
+- **Una sola caja** arriba en Comer → Hoy: se quita el botón «¿Qué has comido? o busca…» y la caja de frase lleva dentro una lupa 🔍
+  (44 px, «Buscar alimento») que abre el mismo buscador (`cje-busca`).
+- **Un solo número de proteína al día:** la barra de Comer → Hoy usa `protHoyObj()` (1,6 g/kg) cuando mira hoy; un día pasado y la
+  semana siguen con el objetivo de Ajustes. Prueba 383.
+- Pruebas 380 y 382 comprueban que el botón/campo existe antes de pulsar: al revertir caen ellas y el trozo sigue.
+
+## Gran Ley · G5 · Página de receta, cola de TikTok y antojo de microondas (2026-10-30)
+
+**Elegido**
+- **Página de receta (H4).** Una hoja de Comer (`ui.cjeHoja={v:'receta'}`, `cjeHojaReceta`) que se abre con «Abrir la receta», un único botón que va dentro de `recetaHTML` (así sale en Mis platos, en el plato del día y en cocinar). Icono grande (emoji, sin imágenes), raciones, «Añadir a la compra / Ver en TikTok / Compartir» arriba (siempre a la vista), ingredientes que se tachan al tocarlos y pasos en 18 px. «Añadir a la compra» reutiliza `listaAMano` y lleva solo los NO tachados (los tachados «ya los tengo»). «Ver en TikTok» es un enlace `target=_blank rel="noopener noreferrer"`, sin iframe ni vídeo. «Compartir» usa `navigator.share` con nombre, ingredientes y pasos; sin share, copia al portapapeles y avisa. El plato guarda `url` al importarlo (solo `https`).
+- **Cola de TikTok.** `store.colaTT` (estado local, máx. 30, sin repetir) en la pantalla Importar receta, plegada con su cuenta. Se pegan varios enlaces (uno por línea); «Pasar a receta» saca uno y lo manda al flujo de importar que ya existía (`impFuenteNueva` + `impAutoDesdeEnlace`). Si se comparte otro enlace estando uno pendiente, el anterior va a la cola en vez de perderse.
+- **Antojo de microondas (S7).** Lista fija `MICRO` (7 recetas, ≤5 min, 23-31 g de proteína, 2-3 pasos). En Hoy, dentro de la línea de proteína (`protHoyHTML`), solo si no hay sugerencia de la nevera; en Comer → Hoy, una tarjeta «¿Algo rápido?» (`antojoCardHTML`); ambas abren la hoja `micro` (por qué, receta, 2 alternativas, «Apuntar que me lo he comido» con `addFoodEntry`). La elegida es la que más se acerca a lo que falta; sin falta, una distinta cada día. Nunca hay un «no».
+- Pruebas 384, 385 y 386; caen al revertir su pieza (botón «Abrir la receta», la cola en Importar, la tarjeta de Comer) y las otras dos no.
+
+**Descartado**
+- Página de receta a pantalla completa (ruta nueva): la hoja ya trae cerrar, «atrás» y desplazamiento, y no suma otra pila de navegación.
+- Escalar los ingredientes por raciones: son texto libre («2 cucharadas»); escalar a ojo daría cifras falsas.
+- Imagen o vídeo de TikTok incrustados: privacidad y peso; solo un enlace que abre fuera.
+- Cola con lectura automática de todos a la vez: gasta red y pisa lo que el usuario está revisando; de uno en uno.
+- Una pestaña o caja nueva para el antojo: ya existía «Qué me apetece» (platos tuyos por filtros), que se deja intacta; el de microondas son una línea en Hoy y una tarjeta.
+
+**Supuestos**
+- Las cifras de `MICRO` son aproximadas y prudentes (raciones normales, proteína de tablas medias).
+- Los acciones se llaman `micro-*` y la hoja `micro` porque `antojo-*` y `antojoHTML` ya eran los de «Qué me apetece».
+- Un plato hecho de alimentos (sin líneas escritas) enseña como ingredientes «N g de alimento».
+- El icono grande es el emoji del plato (sin imágenes externas).
+- «Apuntar» lo mete como comida «por macros» en el momento de ahora (`momentoAhora`).
+
+## Gran Ley · G6 · Maqueta de Entreno (2026-10-30)
+
+*Por el Consejo por delegación (acuerdos 2026-10-29-2 «9 · Entreno» y 2026-10-30 «A · R9-R10»). Maqueta: `maquetas/entreno-g6.html`. Sin concurso.*
+
+**Elegido.** Lenguaje de Entreno ya construido (Teide y Bancales), 4 pantallas a 412×915 en claro y oscuro:
+- **Hoy en Entreno:** «Lo que toca hoy» con 4 ejercicios, «Prueba +2,5 kg» en uno con su porqué, la semana con la guardia
+  marcada y un récord discreto.
+- **Ejercicio abierto** (sentadilla goblet): dibujo SVG propio de dos posturas que se alternan (quietas lado a lado con
+  movimiento reducido), músculo resaltado, 3 claves de ≤6 palabras, error típico, pauta y una serie por toque con el peso
+  anterior puesto.
+- **Los otros dibujos:** press con mancuernas y remo con mancuerna (apoyo de mano en el banco).
+- **Día saliente:** frase del entrenador, 25 min al 65 % o 10 min de movilidad, y descansar sin culpa. Nada de rojo.
+Progresión doble: tope de repeticiones con 1-2 en recámara en todas las series → +2,5 kg. Verificador: contraste AA
+(verde claro oscurecido a `#126a32`), táctiles ≥44 px, dibujos rehechos con volumen (no palitos).
+
+**Descartado.** Imágenes externas (openGym): SVG propios en `fig/`. Concurso. Confeti o rojo en récords y días flojos.
+
+**Supuestos.** Pesos de ejemplo; los 12 ejercicios de G7 siguen el estilo de estos 3 dibujos; el remo se dibuja con apoyo
+de mano y no de rodilla.
+
+## Gran Ley · G7 · Entreno: fichas dibujadas, un toque por serie, progresión doble y el entrenador de la guardia (2026-10-30)
+
+*Por el Consejo por delegación. Maqueta aprobada: `maquetas/entreno-g6.html`. Pruebas 387-391.*
+
+**Elegido.**
+- **Ficha** (`fichaHTML`, app.js): «Cómo se hace» plegable sobre las series de la sesión en curso, con el dibujo de dos posturas de `fig/ejercicios.js`
+  (12 ejercicios; el CSS de los dibujos se inyecta una vez), músculo, 3 claves, error típico y pauta. Sin ficha, todo igual que antes.
+- **Un toque por serie:** ya existía el ✓ por fila con el peso de hoy; ahora las repeticiones también salen con las de la vez anterior
+  (salvo cuando hoy sube el peso, que salen las del plan).
+- **Progresión doble:** se reutiliza `progresionDe` (todas las series al tope y sin pasar de «justo») y su salto por ejercicio (`pasoEj`):
+  «Prueba +X kg» con una línea de porqué en «Lo que toca hoy»; la serie ya sale con ese peso; nunca obligatorio.
+- **Récord discreto:** la serie que supera el mejor 1RM estimado guarda `rec` y la fila enseña «récord» en texto normal, sin confeti ni rojo.
+- **«Lo que toca hoy»** (`tocaHoyHTML`) sustituye a la línea «primer ejercicio · peso ▲» de la tarjeta grande: todos los ejercicios con series × reps y peso.
+- **Entrenador de la guardia** (`salienteHTML`, `movilidadHTML`): hoy saliente (shift «saliente» o día tras guardia) → 25 min al 65 % (3 ejercicios × 2 series,
+  sin récords), movilidad de 10 min que se apunta como cardio, o «hoy descanso» reversible. Guardia sin rutina → «Hoy no toca» + movilidad.
+
+**Descartado.** Segundo dibujo de ejercicio en la lista de hoy (empujaba las series); una tira Ayer/Hoy/Mañana; confeti o rojo; un botón de serie nuevo
+(el ✓ de la fila ya es un toque).
+
+**Supuestos.** «1-2 en recámara» = la regla que ya tenía la app (RPE < 9 y RIR ≠ 0; sin dato cuenta como bien). El entrenador solo actúa sobre HOY; en otros
+días se ve la tarjeta de siempre (y la rutina pegada a guardia sigue con «pero estás de guardia»). La movilidad son 4 gestos fijos. Saliente al 65 % del peso
+de hoy, redondeado al salto del ejercicio. Light theme comprobado solo por tokens (la captura en claro no cambió de tema en el driver).
+
+## Gran Ley · G8 · El lector entiende la comida rápida (2026-10-30)
+
+*Por el Consejo por delegación. Prueba 392 y 50 frases nuevas en `tests/frases.json` (841 → 891).*
+
+**Elegido.** Sin red y reutilizando lo que ya había: la tabla de cadenas `FUERA_CADENAS` (app.js) y el lector `fraseLeer`; solo se completa y se afina.
+- **Tablas:** Big Tasty, Happy Meal (hamburguesa, cheeseburger, 4 McNuggets; con patatas pequeñas y agua), menú Big Tasty (McDonald's); Whopper Jr. (Burger King);
+  «Porción de pizza (mediana)» sin sabor (Telepizza y Domino's); cadena nueva **100 Montaditos** (6 montaditos). Cifras redondeadas y prudentes, de la información
+  nutricional que publica cada cadena; el resto de lo pedido (Big Mac, McPollo, Cuarto de Libra, McNuggets, patatas, Whopper, Long Chicken, KFC, Taco Bell…) ya estaba.
+- **Con y sin marca:** «cuarto de libra», «crunchy taco», «burrito de Taco Bell», «cubo de KFC», «9 mcnuggets», «happy meal de nuggets», «montadito» y «bk» se
+  traducen en `FR_PALABRAS`/`FR_CADENAS`. Si hay cadena, manda lo de la cadena sobre el alimento genérico o el plato casero que se llame igual («nachos de Taco Bell»,
+  «quesadilla de Taco Bell»), y no se pregunta «¿qué pizza?» si la cadena tiene su porción.
+- **Menú con bebida:** «menú Big Mac con coca cola zero» **cambia** la bebida del menú (`it.beb`, `frMenuBeb`), antes la sumaba (1009 en vez de 840). Se apunta con esas macros.
+- **Menú del día:** el genérico del bar baja de 1510 a ~1110 kcal (judías 250 + lomo 550 + flan 180 + pan 130), corregible por huecos como siempre.
+- **«Un paquete de X»:** el paquete individual está en la ración del alimento (`['1 paquete', g]`): patatas de bolsa 40 g, cacahuetes y frutos secos 50 g, galletas y chocolate 40 g.
+  Un paquete de otra cosa («de copos de avena de Hacendado») sigue siendo el producto, no una unidad.
+- Arreglo de paso: «dos porciones» no se leía como porción (el plural `porcione`).
+
+**Descartado.** Una tabla nueva de platos para la comida rápida (ya existe la de cadenas con menús); un modelo de «paquete» por categoría (basta la ración del alimento);
+buscar datos en la red.
+
+**Supuestos.** Bebida del menú por defecto: la **normal** (es lo que lleva el menú y no infravalora kcal); zero/light/«sin azúcar», agua, cerveza, fanta o nestea si lo dices.
+«Cubo» de KFC = Bucket 8 piezas. «Happy Meal» a secas = el de hamburguesa. «Un montadito» sin relleno = montadito medio de fiambre (230 kcal). «Un paquete de galletas» =
+40 g (individual), no el familiar. «9 nuggets de McDonald's» = 1,5 × el de 6 (390 kcal), no una entrada propia por tamaño.
+
+## Gran Ley · G9 · Maqueta de La Noche 2 (2026-10-30)
+
+*Por el Consejo por delegación, dentro de lo aprobado por el usuario en el parte (`consejo/2026-10-30-parte.md`, P2 y P3).
+Maqueta: `maquetas/la-noche-2.html`. Sin concurso.*
+
+**Elegido.** Lenguaje de La Noche (El cartel), 5 pantallas a 412×915 en claro y oscuro:
+- **Energía del día y coach:** batería de 4 tramos en palabras («Media: dormiste 5 h tras la guardia») sobre `snEnergiaDia`
+  y UNA recomendación que junta descanso, comida y entreno, con su porqué. En Hoy, encima de «Esta noche». Sin puntuar.
+- **Sin pantallas:** desde 45 min antes de la cama (se mueve con las guardias; en guardia no hay), **sin botón de quitar
+  ni de pausar** («solo pidiéndoselo a Claude»), aviso al empezar, ✓ por la mañana sin castigo y una guía única para la
+  «Hora de dormir» de Bienestar digital (la web no ve el uso del móvil).
+- **4:20 con cortina:** PIN de 4 cifras, texto honrado («tapa la sección; no cifra tus datos»), «¿Lo olvidaste?» → Ajustes →
+  Copia de seguridad; lo del 4:20 fuera de su sección sale neutro con la cortina puesta.
+- **4:20 · Descanso:** 7 / 14 / 21 días o bajar a la mitad, «Día 4 de 14», aviso de que los primeros 7 días se duerme peor,
+  3 ayudas para dormir y «recaer no borra nada: seguimos desde aquí».
+- **Ajustes:** cambiar el PIN, quitar la cortina con aviso y qué protege.
+
+**Descartado.** Cifrar de verdad (si se olvida la clave se pierde todo), un simple interruptor, puntuar el cansancio,
+moralizar el consumo, leer el uso de pantalla (imposible desde una web).
+
+**Supuestos.** El coach va en Hoy encima de «Esta noche»; cifras y textos de ejemplo.
+
+*Nota de la G8:* la prueba 244 (el reloj de Hoy) fallaba según la hora: lo de encima del reloj crece y lo baja por debajo
+de los 720 px de la ventana de prueba, y los toques caían fuera. La prueba ahora trae el reloj a la vista antes de tocar;
+la app no cambia (a 915 px se ve entero).
+
+## Gran Ley · G10 · El 4:20: cortina con PIN y descanso (2026-10-30)
+
+*Aprobado por el usuario en `consejo/2026-10-30-parte.md` (P2). Maqueta: `maquetas/la-noche-2.html`, pantallas 3, 4 y 5.*
+
+**Elegido.**
+- **Cortina con PIN de 4 cifras** (opcional, se pone desde 4:20 → Plan → «Cortina con PIN»). Se guarda solo `{sal, hash}` en
+  `store.consumo.priv.pin` (SHA-256 de sal+PIN con `crypto.subtle`, sal de `crypto.getRandomValues`); el PIN nunca se guarda y
+  el hash viaja en la copia. Teclado con teclas de 56 px. Cambiar el PIN pide el actual. 5 fallos seguidos = 30 s de espera.
+  «¿Lo olvidaste?» → Ajustes → Copia de seguridad → «Quitar la cortina…» (con aviso; no borra ningún dato).
+- **Abierta solo en memoria** (`ui.cnAbierto`): se cierra al salir de la sección 4:20, al cerrar la app y tras 2 min en segundo plano.
+- **Neutro fuera** mientras la cortina está puesta: el cajón «Más» (🔒 Privado), la tarjeta del asistente en Hoy, la fila 4:20 de
+  «Tu semana», las etiquetas de los hábitos automáticos, el conductor (no fuma) y la tarjeta de monchis.
+- **Descanso** (tarjeta en 4:20 → Plan, y una línea en Hoy del 4:20 mientras está en marcha): 7 / 14 / 21 días o «bajar a la
+  mitad» (14 días; compara la última semana con la mitad de la media de las 2 semanas previas). «Día N de M», aviso de que los
+  primeros 7 días se duerme peor, 3 ayudas para dormir, «recaer no borra nada: seguimos desde aquí» (no reinicia ni castiga),
+  y «Dejarlo por ahora» / «Cerrar» sin culpa.
+
+**Descartado.** Cifrar de verdad; pestaña nueva «Descanso» (no caben 5 pestañas a 412 px con letra ≥ 14 px); quitar el T-break
+existente (se queda, y Descanso va encima en el Plan).
+
+**Supuestos.** La cortina se cierra al salir de la sección (más estricto que «la sesión»). Las «etiquetas» de hábitos que el
+usuario escribió a mano no se tocan. Con la cortina, una copia hecha con «4:20 fuera de la copia» tampoco lleva el hash.
+El Descanso convive con el T-break (son dos cosas: el T-break mide, el Descanso acompaña).
+
+## Gran Ley · G11 · Coach, energía del día y sin pantallas (2026-10-30)
+
+*Aprobado por el usuario en `consejo/2026-10-30-parte.md` (P3). Maqueta: `maquetas/la-noche-2.html`, pantallas 1 y 2.*
+
+**Elegido.**
+- **Energía + coach** (`energiaHoy`, `coachHoy`, `coachHTML`): una sola tarjeta en Hoy, antes de lo demás del día. Batería de 4 tramos
+  (Alta/Buena/Media/Baja) sobre `snEnergiaDia` (la curva del reloj) con una línea del porqué («Dormiste 5 h tras la guardia») y UNA
+  recomendación que junta descanso, comida y entreno. Reglas por tipo de día (`diaTipo`): guardia, saliente (siesta de 20 min antes de
+  las 15:00), poca noche, libre, normal. El entreno sale de `laminaDatos` (lo mismo que Entreno en G7: en saliente, «paseo o nada») y la
+  comida de `protHoyDatos`/`protHoyObj` (G4): no se contradicen. Sin puntuar, sin rojo, sin culpa.
+- **Sin pantallas** (`snPantallas`, `pantHTML`): desde 45 min antes de la cama de La Noche (`suenoCamaHoy`, se mueve con ella y con las
+  guardias; en guardia no hay). Fijo en el código: ni botón, ni ajuste, ni pausa; borrar datos no lo quita. Aviso al empezar con
+  `avisosListos`/`swMensaje` (`programarAvisoPant`, una vez por noche). Por la mañana (5:00–12:00) «¿Anoche lo cumpliste?» guarda
+  `store.sueno.pant.resp[fecha]` = sí/no, sin racha. Guía plegable «Que el móvil te ayude» (Hora de dormir de Bienestar digital) que se
+  cierra para siempre.
+
+**Descartado.** Puntuar el cansancio o hablar de burnout; un interruptor o pausa para sin pantallas; leer el uso del móvil (imposible
+desde una web); duplicar la tarjeta de energía (no había ninguna en Hoy).
+
+**Supuestos.** Tramos de energía A≥70 / ≥55 / ≥35. Como no existe una tarjeta «Esta noche» en Hoy, coach y sin pantallas van antes de
+«Lo que viene». La franja dura hasta 30 min después de la cama. En saliente el coach dice «paseo o nada» (no «movilidad») para
+coincidir con Entreno. Sin noche apuntada, el coach lo dice y propone lo de un día normal. Las respuestas del ✓ no entran en la
+copia de más allá de `store.sueno` (viajan con él).
+
+## Gran Ley · G12 · El modo viaje, sin red (2026-10-30)
+
+*Consejo por delegación, `consejo/2026-10-30.md` línea 35 («C · viajes»). Maqueta aprobada: `maquetas/modo-viaje.html`.*
+
+**Elegido.**
+- **Un solo sitio para activarlo:** Ajustes → YO → «Modo viaje» (`renderModoViaje`). Destino en texto libre, ida y vuelta, y cinco casillas
+  de pausa, todas marcadas (hábitos, entreno, sin pantallas, sueño, comida). Se activa y se apaga por fechas (`mvDia`), sin interruptor.
+  «Terminar el viaje antes» pone la vuelta en ayer (o quita el viaje si aún no ha empezado).
+- **Rachas en pausa sin tocar sus cálculos:** `habitoToca` devuelve «no toca» los días de viaje (ni piden ni fallan, y salen de los %);
+  `gymSemanasSeguidas` y `rachaConstancia` saltan las semanas con días de viaje (ni suman ni rompen). `snPantallas` (G11) devuelve
+  `null` y `coachHTML` no sale si está marcado; el aviso de cama tampoco suena en pausa de sueño.
+- **Hoy en viaje** (`renderHoyViaje`): cabecera «De viaje · día 2 de 4 · vuelves el domingo» y solo lo esencial (comida, sueño), la salida
+  y las rachas «en pausa ⏸». «Ver mi día completo» deja volver al Hoy de siempre sin perder el viaje.
+- **La salida:** día y hora puestos a mano, lista corta editable, aviso a 1 h y a 15 min con `avisosListos`/`swMensaje`
+  (`programarAvisoViaje`, una vez por hora puesta). Sin permiso, nada.
+- **El billete** (`mvBillete`): medio, precio y fecha → un pago en Dinero con la categoría nueva «viajes» (🧳, añadida a `DIN_CAT`, que es
+  como la app define sus categorías). Un mismo billete no se apunta dos veces; quitarlo del viaje quita también su gasto; borrarlo desde
+  Dinero lo quita de la lista. Al volver, un resumen amable sin puntuar (rachas, billetes) con «Vale».
+- Datos en `store.modoViaje`; sin él, todo igual que antes.
+
+**Descartado.** Buscar trenes, vuelos u horarios (sin red; dato real solo con OK expreso); una segunda entrada desde Hoy; un número de
+racha para «sin pantallas» (G11 no lleva racha); puntuar el viaje.
+
+**Supuestos.** El coach se pausa con la casilla de sueño. «Comida del plan» y «Sueño» en pausa solo quitan las exigencias del plan en
+Hoy (y el aviso de cama): la comida y el sueño siguen apuntables. La hora de salida es de un solo día (por defecto, el de ida). Las
+pruebas 395a-c (en `regression.test.js`) caen cada una al revertir su pieza y ninguna otra. G11 decía «sin pausa» para sin pantallas:
+aquí la pausa solo existe durante un viaje que el usuario activa y marca.
+
+## Gran Ley · G13 · La suite en ~2 min y los PNG de design/ (2026-10-30)
+
+**Elegido.** Los PNG de `design/` comprimidos con Pillow a paleta de 256 colores (70 → 22 MB, mismas rutas); `design/` no está en la caché de `sw.js` (`BASE` solo lleva la app y `fig/`). La suite se queda como estaba (3 trozos, cortes 202 y 270): nada de lo probado la mejoró.
+
+**Descartado (medido, cada tramo corrido suelto con node).** (1) Más cortes de la 270 al final (282, 292 … 392): pasan solos, pero 6-12 trozos a la vez en 4 núcleos tardaron MÁS (272-394 s) y tumban a `actualiza`: la suite no es solo espera, cada navegador gasta CPU. (2) Cortes en 1-201 (40, 47, 53b, 45#2, 69): arrancando de cero fallan las pruebas «Hoy junta las cinco patas», «la guardia entra y sale a su hora», «el carril», «la despensa» y «Entreno: la biblioteca se filtra»; necesitan la jornada 8-15, los tipos de guardia con relevo a las 08:00 y las rutinas con sesiones. (3) Repartir por tiempo y por núcleos se escribió y probó, pero sin cortes nuevos válidos en 1-201 no baja de ~5-6 min.
+
+**Supuestos.** Para llegar a ~2 min falta una siembra por `window.PG` (jornada, `guardiaTipos`, rutina y sesiones, platos y menú) al arrancar un trozo que parta la cadena 1-201; es la tarea siguiente. Nada se saltó ni se aflojó.
