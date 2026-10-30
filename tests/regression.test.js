@@ -3292,6 +3292,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   await page.waitForTimeout(200);
   await page.click('[data-a="cocina-hecho"]');
   await page.waitForTimeout(250);
+  const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } // R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta
+  await page.waitForTimeout(150);
   const trasHecho = await page.evaluate((k) => ({
     kcal: window.PG.foodTotals(k).kcal,
     vista: window.PG.ui.foodVista,
@@ -8805,7 +8807,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const trasAuto = await page.$$eval('.ssc', (e) => e.filter((x) => /＋/.test(x.textContent)).length);
     const hc = await page.$('[data-a="food-vista"][data-v="hoycocino"]'); if (hc) { await hc.click(); await page.waitForTimeout(200); }
     const opciones = await page.$$eval('.hcop', (e) => e.length);
-    const okb = await page.$('[data-a="hc-ok"]'); if (okb) { await okb.click(); await page.waitForTimeout(200); }
+    const okb = await page.$('[data-a="hc-ok"]'); if (okb) { await okb.click(); await page.waitForTimeout(200); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).map((x) => ({ total: x.total, dias: Math.round((new Date(x.hasta) - new Date(x.fecha)) / 86400000) })));
     const aguanta = await page.evaluate(() => { const P = window.PG; return ['Arroz con pollo', 'Merluza al horno', 'Lentejas estofadas', 'Pollo asado'].map((n) => P.diasAguanta({ name: n })); });
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.render(); }); await page.waitForTimeout(150);
@@ -9026,7 +9028,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hoy = await page.$$eval('#main .h2mom', (e) => e.filter((x) => /\S/.test(x.innerText)).length);
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'hoycocino'; P.render(); });
     const hc = await page.$$eval('.hcop .t b', (e) => e.map((x) => x.textContent));
-    const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); }
+    const ok = await page.$('[data-a="hc-ok"]'); if (ok) { await ok.click(); await page.waitForTimeout(200); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).length);
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.ui.tab = 'dinero'; P.ui.dinTab = 'ahorro'; P.ui.dineroVista = ''; P.render(); });
     const m0 = await page.evaluate(() => window.PG.ahorroS().metaPct);
@@ -9134,7 +9136,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(120);
     await page.click('#main [data-a="cje-hoja"][data-v="cocinar"]'); await page.waitForTimeout(120);
     const hayHoja = await page.evaluate(() => document.querySelectorAll('#hojaDia .cjtd').length);
-    const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); }
+    const bh = await page.$('#hojaDia [data-a="cje-hecho"]'); if (bh) { await bh.click(); await page.waitForTimeout(120); const rok = await page.$('#hojaDia [data-a="rep-ok"]'); if (rok) { await rok.click(); await page.waitForTimeout(250); } /* R6: al marcar hecho sale «¿Cómo las repartes?»; se acepta la propuesta */ }
     const coc = await page.evaluate(() => (window.PG.store.food.cocinado || []).reduce((a, x) => a + x.total, 0));
     await page.click('#hojaDia .hgrab'); await page.waitForTimeout(100);
     const sg = await page.evaluate(() => [window.PG.compraSG('Pan de masa madre'), window.PG.compraSG('Pasta'), window.PG.compraSG('Leche')]);
@@ -14596,6 +14598,134 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
       /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
       r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
+  }
+  // 372) COMER · R6 · Compra base, EN CADENA (412×915): con 1 kg de arroz ya en casa → «Hacer la compra base» entra como grupo «Compra base» con 6 líneas, la del arroz apagada y fuera de la
+  //      cuenta (la lista pide 5) → marcar pollo y lomo → «He hecho esta compra» → pollo y lomo en la despensa, el grupo se va (compraBaseOn se borra) y la tarjeta «Mi compra base» sigue
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia372 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; delete f.compraBase; delete f.compraBaseOn; f.despensa = [];
+      P.despensaAdd('1 kg arroz'); P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.compraCerradas = new Set(); P.ui.shopVista = ''; P.ui.compraSalida = 'todo'; P.ui.tab = 'shop'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.store.food, base = m.querySelector('.cbase');
+      const sec = [...m.querySelectorAll('.seccion')].filter((b) => /Compra base/.test(b.textContent))[0];
+      return { tarjeta: !!base, filas: base ? base.querySelectorAll('.cb-fila').length : 0, btn: !!m.querySelector('[data-a="compra-base-hacer"]'), btnH: m.querySelector('[data-a="compra-base-hacer"]') ? Math.round(m.querySelector('[data-a="compra-base-hacer"]').getBoundingClientRect().height) : 0,
+        grupo: !!sec, lineas: m.querySelectorAll('.linea[data-id^="cb#"]').length, tengo: m.querySelectorAll('.linea.tengo[data-id^="cb#"]').length, tag: (m.querySelector('.subcab .tag') || {}).textContent || '',
+        on: !!f.compraBaseOn, desp: (f.despensa || []).map((x) => x.k).sort().join(','), cad: /Tu semana por caducidad/.test(m.innerText), fuente: /FoodKeeper/.test(m.innerText), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    r.a = await lee();
+    await page.click('#main [data-a="compra-base-hacer"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="compra-todo"]'); await page.waitForTimeout(200);
+    r.b = await lee();
+    await page.click('#main .linea[data-id="cb#Pollo"]'); await page.waitForTimeout(120);
+    await page.click('#main .linea[data-id="cb#Lomo"]'); await page.waitForTimeout(120);
+    r.c = await lee();
+    await page.click('#main [data-a="compra-hecha"]'); await page.waitForTimeout(300);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    const tot = (x) => +(/\/\s*(\d+)/.exec(x.tag) || [0, -1])[1];
+    check('372 Comer · compra base: tarjeta «Mi compra base» con 6 líneas y botón de 44 px; «Hacer la compra base» mete el grupo «Compra base» con 6 líneas, la del arroz (ya en casa) apagada y la lista pide 5 más; marcar pollo y lomo y «He hecho esta compra» los lleva a la despensa, el grupo se va y la tarjeta se queda; debajo, «Tu semana por caducidad» con la fuente',
+      r.a.tarjeta && r.a.filas === 6 && r.a.btn && r.a.btnH >= 44 && !r.a.grupo && r.a.lineas === 0 && !r.a.on && r.a.cad && r.a.fuente &&
+      r.b.grupo && r.b.lineas === 6 && r.b.tengo === 1 && r.b.on && tot(r.b) - tot(r.a) === 5 &&
+      /^2 \//.test(r.c.tag) && r.d.desp.indexOf('pollo') >= 0 && r.d.desp.indexOf('lomo') >= 0 && !r.d.grupo && r.d.lineas === 0 && !r.d.on && r.d.tarjeta && r.d.filas === 6 && r.b.ancho <= 412, JSON.stringify(r));
+  }
+  // 373) COMER · R6 · reparto del lote, EN CADENA (412×915): cocinar 6 raciones de lentejas (el menú pide 3 o 4 en lo que aguantan) → «✓ hecho» abre la hoja «¿Cómo las repartes?» con
+  //      «3 nevera · 3 ❄» → Cancelar no apunta nada → otra vez hecho → «+» → «4 nevera · 2 ❄» (los botones ≥44, sube hasta 6 y no más) → Guardar → 4 en la nevera y 2 ❄ con «hasta» a 3 meses
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.tandasHechas = {}; P.store.semBase = { on: true, d: {} }; P.store.food.log[P.iso(new Date())] = [];
+      P.store.dishes.push({ id: 'd373', name: 'Lentejas de domingo', icon: '🍲', portions: 6, kcal: 450, prot: 25, ingredients: ['500 g lentejas'], steps: ['Cuece las lentejas.'] });
+      const k = (j) => P.iso(P.addDays(new Date(), j));
+      for (let j = 0; j < 7; j++) ['comida', 'cena'].forEach((c) => P.sbPoner(k(j), c, P.dishNada().id));
+      P.sbPoner(k(0), 'comida', 'd373'); P.sbPoner(k(0), 'cena', 'd373'); P.sbPoner(k(1), 'comida', 'd373');
+      P.ui.tab = 'food'; P.ui.foodVista = 'cocina'; P.ui.cocinaPlato = 'd373'; P.ui.cocinaPaso = 0; P.ui.cocinaRac = 0; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'), q = (s) => h ? h.querySelector(s) : null, P = window.PG;
+      const sum = (c) => P.cocinadoS().filter((x) => x.dishId === 'd373' && !!x.cong === c).reduce((a, x) => a + x.total, 0), hasta = P.cocinadoS().filter((x) => x.cong)[0];
+      return { hay: !!h, rol: h ? h.getAttribute('role') : '', tit: q("h2") ? q("h2").textContent : '', n: q('#repN') ? q('#repN').textContent.replace(/\s+/g, ' ').trim() : '',
+        menos: q('[data-a="rep-menos"]') ? Math.round(q('[data-a="rep-menos"]').getBoundingClientRect().height) : 0, mas: q('[data-a="rep-mas"]') ? Math.round(q('[data-a="rep-mas"]').getBoundingClientRect().height) : 0,
+        nev: sum(false), cong: sum(true), hasta: hasta ? hasta.hasta : '', fecha: hasta ? hasta.fecha : '', ancho: document.documentElement.scrollWidth, vista: P.ui.foodVista }; });
+    const r = {};
+    // lo que el menú pide de este plato mientras aguanta en la nevera (hoy y los días que dura): la propuesta tiene que ser esa cifra, no el 2 de reserva
+    r.exp = await page.evaluate(() => { const P = window.PG; let n = 0; for (let i = 0; i <= P.diasAguanta({ name: 'Lentejas de domingo' }); i++) { const pm = P.menuPorMomento(P.iso(P.addDays(new Date(), i))); Object.keys(pm).forEach((q) => pm[q].forEach((it) => { if (it.id === 'd373') n += it.portions || 1; })); } return n; });
+    await page.click('#main [data-a="cocina-rac"][data-n="6"]'); await page.waitForTimeout(120);
+    await page.click('#main [data-a="cocina-hecho"]'); await page.waitForTimeout(250);
+    r.a = await lee();
+    await page.click('#hojaDia [data-a="rep-no"]'); await page.waitForTimeout(250);
+    r.b = await lee();
+    await page.click('#main [data-a="cocina-hecho"]'); await page.waitForTimeout(250);
+    await page.click('#hojaDia [data-a="rep-mas"]'); await page.waitForTimeout(120);
+    r.c = await lee();
+    for (let i = 0; i < 5 - r.exp; i++) await page.click('#hojaDia [data-a="rep-mas"]');
+    r.tope = await lee(); r.tope.masOff = await page.evaluate(() => !!document.querySelector('#hojaDia [data-a="rep-mas"]').disabled);
+    for (let i = 0; i < 2; i++) await page.click('#hojaDia [data-a="rep-menos"]');
+    await page.click('#hojaDia [data-a="rep-ok"]'); await page.waitForTimeout(300);
+    r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.foodVista = ''; P.ui.cocinaPlato = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    const meses3 = (r.d.fecha && r.d.hasta) ? Math.round((new Date(r.d.hasta) - new Date(r.d.fecha)) / 86400000) : 0;
+    check('373 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta, 3 o 4; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
+      r.a.hay && r.a.rol === 'dialog' && /repartes/.test(r.a.tit) && r.exp >= 3 && r.exp <= 5 && r.a.n === r.exp + ' nevera · ' + (6 - r.exp) + ' ❄' && r.a.menos >= 44 && r.a.mas >= 44 && r.a.nev === 0 && r.a.cong === 0 &&
+      !r.b.hay && r.b.nev === 0 && r.b.cong === 0 && r.b.vista === 'cocina' &&
+      r.c.n === (r.exp + 1) + ' nevera · ' + (5 - r.exp) + ' ❄' && r.tope.n === '6 nevera · 0 ❄' && r.tope.masOff && r.d.nev === 4 && r.d.cong === 2 && !r.d.hay && meses3 >= 85 && meses3 <= 95 && r.a.ancho <= 412, JSON.stringify(r));
+  }
+  // 374) COMER · R6 · la Nevera con congelador, EN CADENA (412×915): 2 raciones en la nevera, 3 ❄ y 1 kg de pescado congelado en casa → la Nevera pinta la zona «❄ Congelador» (3 raciones con
+  //      «❄ 3 meses · hasta…» y «4 × 250 g ❄ · saca una la noche antes»; el pescado no sale en lo fresco) → comer 2 raciones gasta la nevera (el COCINADO se vacía) y el congelador sigue en 3 →
+  //      la tercera ya gasta del congelador (2) → «Platos que congelan bien» lista los 8 platos
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store)); const f = P.store.food; f.cocinado = []; f.despensa = [];
+      P.store.dishes.push({ id: 'd374', name: 'Boloñesa de lenteja roja', icon: '🍝', portions: 5, kcal: 480, prot: 30, ingredients: ['200 g lenteja roja'] });
+      P.cocinadoAdd('d374', 2); P.cocinadoAdd('d374', 3, true); P.despensaAdd('1 kg pescado congelado');
+      P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.ui.nvTodo = true; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), cong = m.querySelector('.nvcong'), P = window.PG;
+      const fresco = [...m.querySelectorAll('.nvg:not(.nvcong) .nvf')].map((e) => e.innerText).join('|'), coc = [...m.querySelectorAll('.nvcoc .nvf')].map((e) => e.innerText.replace(/\s+/g, ' ')).join('|');
+      return { hayCong: !!cong, cabCong: cong ? cong.querySelector('.cap').textContent : '', cong: cong ? cong.innerText.replace(/\s+/g, ' ') : '', coc: coc, fresco: fresco.replace(/\s+/g, ' '),
+        queda: P.cocinadoS().filter((x) => x.dishId === 'd374').map((x) => (x.cong ? 'c' : 'n') + x.queda).join(','), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    r.a = await lee();
+    r.base = await page.evaluate(() => { const d = document.querySelector('#main details.nvplega'); return d ? { filas: d.querySelectorAll('.nvpl').length, txt: d.textContent.replace(/\s+/g, ' ') } : null; });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.addFoodEntry(k, { dishId: 'd374', rac: 1, pos: 'comida' }); P.addFoodEntry(k, { dishId: 'd374', rac: 1, pos: 'cena' }); P.render(); });
+    await page.waitForTimeout(200); r.b = await lee();
+    await page.evaluate(() => { const P = window.PG; P.addFoodEntry(P.iso(new Date()), { dishId: 'd374', rac: 1, pos: 'desayuno' }); P.render(); });
+    await page.waitForTimeout(200); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.nvTodo = false; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('374 Comer · congelador: la Nevera pinta «❄ Congelador» aparte con las 3 raciones ❄ («❄ 3 meses · hasta …») y el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» (no sale en lo fresco); comer 2 raciones gasta la nevera y el COCINADO se vacía con el congelador en 3; la tercera gasta del congelador; «Platos que congelan bien» lista 8 platos con la fuente',
+      r.a.hayCong && /congelador/i.test(r.a.cabCong) && /3 raciones/.test(r.a.cong) && /❄ 3 meses · hasta \d+ \w{3}/.test(r.a.cong) && /4 × 250 g ❄/.test(r.a.cong) && /saca una la noche antes/i.test(r.a.cong) &&
+      /Boloñesa/.test(r.a.coc) && /2 rac/.test(r.a.coc) && !/pescado/i.test(r.a.fresco) && r.a.queda === 'n2,c3' &&
+      r.b.queda === 'c3' && r.b.coc === '' && /3 raciones/.test(r.b.cong) && r.c.queda === 'c2' && /2 raciones/.test(r.c.cong) &&
+      r.base && r.base.filas === 8 && /FoodKeeper/.test(r.base.txt) && /Merluza en salsa verde/.test(r.base.txt) && r.a.ancho <= 412, JSON.stringify(r));
+  }
+  // 375) COMER · R6 · `congela` del plato, EN CADENA (412×915): crear un plato con ingredientes, rellenar «nevera (días)» 6 y «congelador (meses)» 5 (change) → guardar → datos.congela {6,5} y
+  //      diasAguanta 6 → una ración suya ❄ → la Nevera dice «❄ 5 meses»; un plato igual SIN `congela` sigue con diasAguanta por nombre; vaciar los campos y guardar quita `congela`
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); P.store.food.cocinado = []; P.store.food.despensa = [];
+      P.ui.plato = P.platoVacio(); P.ui.platoQ = ''; P.ui.tab = 'food'; P.ui.foodVista = 'plato'; P.render(); });
+    await page.waitForTimeout(150);
+    await page.fill('#plQ', 'lentejas'); await page.waitForTimeout(320); await page.click('#main .alim'); await page.waitForTimeout(220);
+    await page.fill('#plName', 'Plato raro de prueba'); await page.dispatchEvent('#plName', 'change'); await page.waitForTimeout(150);
+    const campos = await page.evaluate(() => { const a = document.querySelector('#plCongNev'), b = document.querySelector('#plCongMes'), h = (e) => e ? Math.round(e.getBoundingClientRect().height) : 0; return { a: !!a, b: !!b, ha: h(a), hb: h(b) }; });
+    await page.fill('#plCongNev', '6'); await page.dispatchEvent('#plCongNev', 'change'); await page.waitForTimeout(120);
+    await page.fill('#plCongMes', '5'); await page.dispatchEvent('#plCongMes', 'change'); await page.waitForTimeout(120);
+    await page.click('[data-a="plato-guardar"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.campos = campos;
+    r.a = await page.evaluate(() => { const P = window.PG, d = P.store.dishes[P.store.dishes.length - 1]; return { name: d.name, congela: JSON.stringify(d.congela || null), dias: P.diasAguanta(d), sin: P.diasAguanta({ name: d.name }), lent: P.diasAguanta({ name: 'Lentejas estofadas' }), id: d.id }; });
+    await page.evaluate((id) => { const P = window.PG; P.cocinadoAdd(id, 2, true); P.ui.tab = 'food'; P.ui.foodVista = 'nevera2'; P.render(); }, r.a.id); await page.waitForTimeout(200);
+    r.b = await page.evaluate(() => { const c = document.querySelector('#main .nvcong'); return c ? c.innerText.replace(/\s+/g, ' ') : ''; });
+    await page.evaluate((id) => { const P = window.PG; P.ui.plato = P.platoDesdeDish(id); P.ui.tab = 'food'; P.ui.foodVista = 'plato'; P.render(); }, r.a.id); await page.waitForTimeout(150);
+    r.vuelve = await page.evaluate(() => [document.querySelector('#plCongNev').value, document.querySelector('#plCongMes').value].join('/'));
+    await page.fill('#plCongNev', ''); await page.dispatchEvent('#plCongNev', 'change'); await page.fill('#plCongMes', ''); await page.dispatchEvent('#plCongMes', 'change'); await page.waitForTimeout(120);
+    await page.click('[data-a="plato-guardar"]'); await page.waitForTimeout(300);
+    r.c = await page.evaluate((id) => { const P = window.PG, d = P.dishById(id); return { congela: 'congela' in d, dias: P.diasAguanta(d) }; }, r.a.id);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.plato = null; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('375 Comer · `congela` del plato: el formulario tiene «nevera (días)» y «congelador (meses)» (≥44 px); con 6 y 5 se guarda `congela` {nevera 6, meses 5} y diasAguanta pasa a 6; una ración ❄ suya sale en la Nevera con «❄ 5 meses»; al reabrir el plato los campos vuelven con 6/5 y vaciarlos y guardar quita `congela` (diasAguanta vuelve al de siempre, y «Lentejas estofadas» sigue en 4)',
+      r.campos.a && r.campos.b && r.campos.ha >= 44 && r.campos.hb >= 44 && r.a.congela === '{"nevera":6,"meses":5}' && r.a.dias === 6 && r.a.sin === 3 && r.a.lent === 4 &&
+      /Plato raro de prueba/.test(r.b) && /❄ 5 meses/.test(r.b) && r.vuelve === '6/5' && !r.c.congela && r.c.dias === 3, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

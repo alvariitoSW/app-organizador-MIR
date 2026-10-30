@@ -4041,3 +4041,22 @@ html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
 .ab-ley{font-size:14px;color:var(--ink2);margin:4px 0 0}
 .lau-tabs button.ab-t{flex:1.6 1 0;white-space:normal;line-height:1.1}
 @media (prefers-reduced-motion:reduce){.tm-vaso svg g.l{transition:none}}
+
+/* R6 · compra base, congelador y reparto del lote */
+.cb-lista{list-style:none;margin:8px 0 0;padding:0}
+.cb-fila{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;border-top:1px solid var(--line);font-size:15px}
+.cb-fila:first-child{border-top:0}
+.cb-fr{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.cb-d{font-weight:900;color:var(--ink2);font-size:13px}
+.nvcong{border:2px dashed var(--brand);background:color-mix(in srgb,var(--brand) 7%,var(--card))}
+.nvcong .nvf{grid-template-columns:24px 1fr auto}
+.nvcong .nvf .n{white-space:normal}
+.nvcong .nvf small{display:block;font-size:12px;color:var(--ink2);font-weight:700;margin-top:2px}
+.etqh{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--brand);color:var(--brand);font-size:12px;font-weight:800}
+.nvplega summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:14px}
+.nvpl{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;border-top:1px solid var(--line);font-size:14px}
+.rep-sel{display:grid;grid-template-columns:56px 1fr 56px;gap:10px;align-items:center;margin:14px 0}
+.rep-sel button{min-height:56px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:900;font-size:24px;cursor:pointer}
+.rep-sel button:disabled{opacity:.4;cursor:default}
+.rep-sel .v{text-align:center;font-weight:900;font-size:18px}.rep-sel .v small{display:block;font-size:12.5px;color:var(--ink2);font-weight:700}
+.rep-bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}

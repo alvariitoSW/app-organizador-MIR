@@ -44,13 +44,13 @@ Maqueta aprobada `maquetas/comer-reforma.html` (vistas **Compra** y **Nevera**; 
 - Pruebas: `tests/regression.test.js`, última la 371 (l. 14557). La 205 (l. 7185) es la del Lloretazo, aparcada.
 
 ## 4. Pasos
-- [ ] P1 Pruebas encadenadas 372–375 (fallan antes): compra base → Hacer → grupo con lo de casa apagado → He hecho
+- [x] P1 Pruebas encadenadas 372–375 (fallan antes): compra base → Hacer → grupo con lo de casa apagado → He hecho
   la compra la limpia; lote 6 → hoja con la propuesta de la semana → + → Guardar → nevera N y ❄ resto con «hasta»;
   comer del táper gasta nevera primero; plato con `congela` → la Nevera dice sus meses · general-purpose sonnet · ~15
-- [ ] P2 Datos y tabla (`CONGELA_TABLA`, `congelaDe`, `cocinado` con `cong`, `diasAguanta`) · sonnet (mismo) · ~10
-- [ ] P3 Compra base (grupo, tarjeta, editar, caducidad) · sonnet (mismo) · ~15
-- [ ] P4 Hoja del reparto y los tres «hecho» · sonnet (mismo) · ~15
-- [ ] P5 Zona congelador + kilo en raciones + plegable + campos del plato · sonnet (mismo) · ~15
+- [x] P2 Datos y tabla (`CONGELA_TABLA`, `congelaDe`, `cocinado` con `cong`, `diasAguanta`) · sonnet (mismo) · ~10
+- [x] P3 Compra base (grupo, tarjeta, editar, caducidad) · sonnet (mismo) · ~15
+- [x] P4 Hoja del reparto y los tres «hecho» · sonnet (mismo) · ~15
+- [x] P5 Zona congelador + kilo en raciones + plegable + campos del plato · sonnet (mismo) · ~15
 - [ ] P6 Suite en corto + capturas Compra y Nevera (con la hoja) a 412×915 frente a la maqueta · verificador sonnet · ~12
 - [ ] P7 DECISIONS, plan, gasto, sello, 205, main y traspaso con el prompt de R7 · principal
 
