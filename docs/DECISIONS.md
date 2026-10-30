@@ -2180,3 +2180,18 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - Quitar una fila resta del total solo si la captura traía «Gastos»; si no, el total no existe y no hay nada que bajar.
   - «Saliente» = el día marcado como saliente o el siguiente a una guardia (`salidaDeGuardia`).
   - Pruebas ajustadas por el cambio: 371 (la fila quitada pasa a ser «Ocio 288», porque «Presupuesto…» ya no es categoría, y el total baja a 712) y la de Sueño de 3 barras (ahora 7).
+
+## Remates · L3 · Letra, sueño en Hoy, vuelo y minutos de móvil (2026-10-30)
+- **Elegido**
+  - **Letra y botones** (`styles.css`): `.inftile .k`, `.ghero2 .k`, `.dinv2 .cap`, `.h2 .cap/.mt .cap`, `.mesres .cap` a 11 px; `.mini` 12; `.glnk` 13; `.cnseg button` y `.cnvis button` a 44 px; casillas del 4:20 a 16 px en filas de 44 px (`.cn label.mini`; se quitó el `width:auto` en línea de las tres casillas de privacidad/guardia).
+  - **Sueño en Hoy** (`suenoFaltaHTML`, `hoyDiaHTML`): fila ámbar de 44 px bajo el selector de modo y la pieza de la noche, en los 4 modos, solo en el Hoy de hoy; «Te falta(n) N noche(s) · anotar» mirando las 3 últimas noches con `suenoReal`; abre `sn-hoja` con la más reciente sin anotar. Se quitó «Anotar anoche» de `nocheHTML`.
+  - **Vuelo** (`mvVueloHTML`, `mvVueloCalc`, `mvVueloAplica`, `store.modoViaje.vuelo`): con Avión, tarjeta con día, hora, aeropuerto, antelación 2/3 h y trayecto; la cuenta (hora − antelación − trayecto) rellena `salida` (editable) y avisa. En Hoy en viaje, la tarjeta «Sal de casa» suma detalle y enlaces (Maps y DGT, `target=_blank rel=noopener`) cuando faltan menos de 3 h. Sin ningún fetch.
+  - **Minutos de móvil** (`suenoHojaHTML`, `snTGuardar`, `snMovilSemanaHTML`): campo + chips 30/60/90/120/180 en la hoja de la noche, guardado como `movilMin` en `suenoReal` (va en la copia); en el informe de la semana, fila «📱 1h50» por día y la media.
+- **Descartado**
+  - Semáforos o juicio sobre el móvil; consultar tráfico o vuelos desde la app.
+  - Una frase «duermes X min menos con más de 2 h de móvil» (la maqueta la condicionaba a 7 días con dato: no entra en esta tanda).
+- **Supuestos**
+  - «Falta» una noche = no hay registro en `suenoReal` (un registro sin tramos pero guardado cuenta como anotado).
+  - La fila de móvil por día solo sale si hay algún dato; la semana de Sueño es la del informe semanal (`suenoSemanaHTML`).
+  - La tarjeta «Sal de casa» ya salía todo el día de la salida; el detalle y los enlaces del vuelo solo con <3 h. No hay agenda en el Hoy de viaje, así que «parada» es la propia tarjeta.
+  - El título de esa tarjeta pasa de «Sales de casa a las» a «Sal de casa a las».

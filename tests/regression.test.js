@@ -15442,6 +15442,116 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('396f Sueño · 7 noches en la barrita (a 412 px caben, botones ≥40 px) y la noche olvidada (hace 4 días) abre la hoja de ESA fecha y se guarda en ella, sin tocar la de hoy',
       r.a.n === 7 && r.a.vacias.join() === r.k && r.a.minW >= 40 && r.a.dentro && r.a.ancho <= 412 && r.b.hoja && r.b.k === r.k && /Noche del/.test(r.b.tit) && !r.c.hoja && r.c.esa && r.c.hoyTocada === 7.5, JSON.stringify(r));
   }
+  // 397) Remates L3 · letra y botones, sueño en Hoy, vuelo en el modo viaje y minutos de móvil
+  // (a) letra y botones: 12 px en .mini, 44 px en los botones del 4:20 y casillas de 16 px con la fila tocable
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const r = {};
+    await gotoTab('hoy'); await page.waitForTimeout(200);
+    r.hoyMini = await page.evaluate(() => { const e = document.querySelector('#main .mini'); return e ? parseFloat(getComputedStyle(e).fontSize) : -1; });
+    await gotoTab('consumo'); await page.waitForTimeout(200);
+    r.vis = await page.evaluate(() => [...document.querySelectorAll('#main .cnvis button')].map((b) => Math.round(b.getBoundingClientRect().height)));
+    await page.click('#main [data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(200);
+    r.plan = await page.evaluate(() => {
+      const seg = [...document.querySelectorAll('#main .cnseg button')].map((b) => Math.round(b.getBoundingClientRect().height));
+      const chk = [...document.querySelectorAll('#main .cn label.mini input[type=checkbox]')].map((i) => ({ w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), fila: Math.round(i.closest('label').getBoundingClientRect().height) }));
+      return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), ancho: document.documentElement.scrollWidth };
+    });
+    await gotoTab('hoy');
+    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 12 px, pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, sin desbordar a 412',
+      r.hoyMini === 12 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
+      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 12 && r.plan.ancho <= 412, JSON.stringify(r));
+    await page.setViewportSize(vp);
+  }
+  // (b) sueño en Hoy: la fila de «te faltan N noches» sale en los 4 modos solo el día de hoy y abre la hoja de la noche más reciente sin anotar
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia397b', JSON.stringify(P.store));
+      const sr = P.store.suenoReal = {}, hoy = new Date(); sr[P.iso(P.addDays(hoy, -2))] = { h: 7, guardia: false };
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.save(); P.render(); });
+    const r = { modos: {} };
+    r.hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    for (const m of ['bus', 'est', 'reloj', 'linea']) {
+      await page.click('#main [data-a="hoy-modo"][data-v="' + m + '"]'); await page.waitForTimeout(300);
+      r.modos[m] = await page.evaluate(() => { const f = document.querySelectorAll('#main .snfalta'), e = f[0], seg = document.querySelector('#main .hoyseg');
+        return { n: f.length, h: e ? Math.round(e.getBoundingClientRect().height) : 0, w: e ? Math.round(e.getBoundingClientRect().width) : 0, txt: e ? e.innerText.replace(/\s+/g, ' ') : '',
+          bajoCab: !!(e && seg && (seg.compareDocumentPosition(e) & 4)), dos: document.querySelectorAll('#main .nanoche').length }; });
+    }
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(300);
+    await page.click('#main .snfalta'); await page.waitForTimeout(250);
+    r.hoja = await page.evaluate(() => ({ k: window.PG.ui.snHoja, hoja: !!document.querySelector('.hoja') }));
+    await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(250);
+    r.tras = await page.evaluate(() => { const e = document.querySelector('#main .snfalta'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
+    await page.click('#main [data-a="dia-prev"]'); await page.waitForTimeout(250);
+    r.ayer = await page.$$eval('#main .snfalta', (b) => b.length);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397b')); localStorage.removeItem('__copia397b'); P.ui.snHoja = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.click('#main [data-a="dia-hoy"]').catch(() => {});
+    await page.setViewportSize(vp);
+    const ok = Object.values(r.modos).every((x) => x.n === 1 && x.h >= 44 && x.w >= 340 && /Te faltan 2 noches/.test(x.txt) && x.bajoCab && x.dos === 0);
+    check('397b Sueño en Hoy · con 2 noches sin anotar sale UNA fila «Te faltan 2 noches · anotar» (44 px, ancho completo, bajo la cabecera) en los 4 modos; abre la hoja de anoche, al guardar pasa a «Te falta 1 noche» y en el día de ayer no sale',
+      ok && r.hoja.hoja && r.hoja.k === r.hoyK && /Te falta 1 noche/.test(r.tras) && r.ayer === 0, JSON.stringify(r));
+  }
+  // (c) vuelo en el modo viaje: la cuenta «sal de casa» rellena la salida y sale en Hoy con los enlaces fuera de la app
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia397c', JSON.stringify(P.store)); P.store.modoViaje = null; P.ui.mvMedio = ''; P.save(); });
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    const vu = await page.evaluate(() => { const d = new Date(Date.now() + 4 * 3600e3), p = (n) => ('0' + n).slice(-2); return { f: window.PG.iso(d), h: p(d.getHours()) + ':' + p(d.getMinutes()) }; });
+    const sal = (ant, tray) => { const [h, m] = vu.h.split(':').map(Number); const x = (((h * 60 + m - ant * 60 - tray) % 1440) + 1440) % 1440; return ('0' + Math.floor(x / 60)).slice(-2) + ':' + ('0' + (x % 60)).slice(-2); };
+    const r = {};
+    await gotoTab('ajustes', 'modoviaje');
+    await page.fill('#mvIda', hoyK); await page.fill('#mvVuelta', isoDate(new Date(Date.now() + 3 * 86400000)));
+    await page.click('[data-a="mv-activa"]'); await page.waitForTimeout(250);
+    await gotoTab('ajustes', 'modoviaje');
+    r.sinTarjeta = await page.$$eval('#mvVuelo', (b) => b.length);
+    await page.click('[data-a="mv-medio"][data-v="Avión"]'); await page.waitForTimeout(200);
+    r.conTarjeta = await page.$$eval('#mvVuelo', (b) => b.length);
+    await page.fill('#mvVuelo [data-k="fecha"]', vu.f); await page.waitForTimeout(150);
+    await page.fill('#mvVuelo [data-k="hora"]', vu.h); await page.waitForTimeout(150);
+    await page.fill('#mvVuelo [data-k="aero"]', 'Aeropuerto <b>Valencia</b> & Co'); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await page.fill('#mvVuelo [data-k="tray"]', '45'); await page.keyboard.press('Tab'); await page.waitForTimeout(200);
+    r.a = await page.evaluate(() => { const v = window.PG.store.modoViaje; return { salida: v.salida, vuelo: v.vuelo, calc: (document.querySelector('#mvVuelo .mvcalc b') || {}).textContent || '', negrita: document.querySelectorAll('#mvVuelo b b').length }; });
+    await page.click('#mvVuelo [data-a="mv-vuelo-ant"][data-v="3"]'); await page.waitForTimeout(200);
+    r.b = await page.evaluate(() => ({ salida: window.PG.store.modoViaje.salida, calc: (document.querySelector('#mvVuelo .mvcalc b') || {}).textContent || '' }));
+    r.enl = await page.$$eval('#mvVuelo a', (as) => as.map((a) => ({ h: a.getAttribute('href'), t: a.target, r: a.rel })));
+    await gotoTab('hoy'); await page.waitForTimeout(250);
+    r.hoy = await page.evaluate(() => { const c = [...document.querySelectorAll('#main .card.mv')].filter((x) => /Sal de casa/.test(x.innerText))[0];
+      return c ? { txt: c.innerText.replace(/\s+/g, ' '), enl: [...c.querySelectorAll('a')].map((a) => ({ h: a.getAttribute('href'), t: a.target, r: a.rel })), ancho: document.documentElement.scrollWidth } : null; });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397c')); localStorage.removeItem('__copia397c'); P.ui.mvMedio = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    const maps = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent('Aeropuerto <b>Valencia</b> & Co');
+    check('397c Vuelo en el modo viaje · al elegir Avión sale «El vuelo»; día, hora, aeropuerto (con HTML escapado) y trayecto rellenan la salida (2 h → 3 h la adelanta 1 h) y en Hoy sale «Sal de casa» con Maps y DGT en pestaña aparte',
+      r.sinTarjeta === 0 && r.conTarjeta === 1 && r.a.salida && r.a.salida.hora === sal(2, 45) && r.a.negrita === 0 && r.a.vuelo.aero === 'Aeropuerto <b>Valencia</b> & Co' && r.a.calc === 'Sal de casa a las ' + sal(2, 45) &&
+      r.b.salida.hora === sal(3, 45) && r.b.calc === 'Sal de casa a las ' + sal(3, 45) &&
+      r.enl.length === 2 && r.enl[0].h === maps && r.enl[1].h === 'https://infocar.dgt.es/etraffic/' && r.enl.every((e) => e.t === '_blank' && /noopener/.test(e.r)) &&
+      r.hoy && r.hoy.txt.indexOf('Sal de casa a las ' + sal(3, 45).replace(/^0/, '')) >= 0 && r.hoy.enl.length === 2 && r.hoy.enl.every((e) => e.t === '_blank') && r.hoy.ancho <= 412, JSON.stringify(r));
+  }
+  // (d) minutos de móvil: se apuntan en la hoja de la noche (campo y chips), vuelven al reabrirla y salen en la semana con su media
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia397d', JSON.stringify(P.store));
+      const sr = P.store.suenoReal = {}, hoy = new Date(); sr[P.iso(P.addDays(hoy, -1))] = { h: 7, guardia: false, movilMin: 60 };
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.save(); P.render(); });
+    const r = {};
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250);
+    await page.click('#main .snfalta'); await page.waitForTimeout(250);
+    r.campo = await page.$$eval('.hoja [data-a="sn-movil"]', (b) => b.length);
+    r.chips = await page.$$eval('.hoja [data-a="sn-movil-chip"]', (b) => b.map((x) => x.innerText + ':' + Math.round(x.getBoundingClientRect().height)));
+    await page.fill('.hoja [data-a="sn-movil"]', '90'); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
+    await page.click('.hoja [data-a="sn-movil-chip"][data-v="120"]'); await page.waitForTimeout(150);
+    r.val = await page.$eval('.hoja [data-a="sn-movil"]', (e) => e.value);
+    await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(250);
+    r.guardado = await page.evaluate(() => { const P = window.PG; return P.suenoReal(P.iso(new Date())).movilMin; });
+    r.copia = await page.evaluate(() => { const P = window.PG; return JSON.stringify(P.storeParaCopia()).indexOf('"movilMin":120') >= 0; });
+    await page.click('#main [data-a="hoy-informe"]').catch(async () => { await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = 'informe'; P.ui.infLun = P.iso(P.mondayOf(new Date())); P.render(); }); });
+    await page.waitForTimeout(250);
+    r.sem = await page.evaluate(() => { const e = document.querySelector('#main .snmov'); const p = e && e.nextElementSibling; return e ? { n: e.children.length, txt: e.innerText.replace(/\s+/g, ' '), frase: p ? p.innerText : '', ancho: document.documentElement.scrollWidth } : null; });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397d')); localStorage.removeItem('__copia397d'); P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('397d Minutos de móvil · escribir 90 y luego tocar el chip 120 deja 120, se guarda en la noche (y en la copia) y la semana de Sueño enseña «📱» por día y la media',
+      r.campo === 1 && r.chips.length === 5 && r.chips.every((c) => parseInt(c.split(':')[1], 10) >= 44) && r.val === '120' && r.guardado === 120 && r.copia &&
+      r.sem && r.sem.n === 7 && /2h00/.test(r.sem.txt) && /1h00/.test(r.sem.txt) && /—/.test(r.sem.txt) && /media 1 h 30 al día, 2 días apuntados/.test(r.sem.frase) && r.sem.ancho <= 412, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
