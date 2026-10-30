@@ -27,7 +27,7 @@ if [ "${1:-}" = "--solo" ]; then
   trap 'rm -f tests/zz-sueltas.test.js; rm -rf test-results "$TMP"' EXIT
   set -- tests/zz-sueltas.test.js
 fi
-PEQUENOS=(tests/frases.test.js tests/compartir.test.js tests/enlaces.test.js tests/actualiza.test.js
+PEQUENOS=(tests/frases.test.js tests/recetario.test.js tests/compartir.test.js tests/enlaces.test.js tests/actualiza.test.js
   tests/worker-recetas.test.mjs tests/worker-calendario.test.mjs)
 TROZOS=${TROZOS:-5}
 BANCOS=("$@")

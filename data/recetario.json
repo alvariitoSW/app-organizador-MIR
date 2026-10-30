@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "esquema": {
+    "n": "Nombre del plato, como sale en la app.",
+    "e": "Icono (un emoji).",
+    "alias": "Otras formas de escribirlo (las busca tpLeer, como el 3.º campo de TP_RECETAS).",
+    "m": "Momentos: d desayuno · c comida · n cena (como TP_RECETAS).",
+    "min": "Minutos de cocina activa + fuego, sin contar remojos ni reposos largos (esos van en tmp).",
+    "rac": "Raciones que salen de una vez con el equipo de la receta (≤6 por olla de 5-6 L).",
+    "ing": "Ingredientes POR RACIÓN: [nombre exacto de la tabla de alimentos, gramos]. Lo que lleva gluten va como «X sin gluten».",
+    "pasos": "Pasos (≥3), escritos para el equipo de la receta: fuego en números de la vitro (1-9) y tiempos.",
+    "tmp": "Temporizadores: [{p: índice del paso, min: minutos, t: qué se cronometra}].",
+    "duda": "Opcional, como el 8.º campo de TP_RECETAS.",
+    "kcal": "kcal por ración (la prueba las rehace con la tabla: ±10 %).",
+    "prot": "Gramos de proteína por ración (igual, ±10 % o ±2 g).",
+    "region": "Región de España (AST, GAL…) o IT, GR, MED fuera de España.",
+    "cocina": "es · it · gr · med.",
+    "tipo": "cu cuchara · fr fríos · ar arroces · pa pasta y risotto · pe pescado · ca carne · ve huevos y verdura · ta tapas · de desayunos · po postres.",
+    "equipo": "Lo que hace falta: {fuegos: n.º de fuegos a la vez, olla: litros (0 si no hay olla), micro, horno, freidora: true/false, expres: minutos con olla exprés (0 si no se usa)}.",
+    "dif": "Dificultad 1 fácil · 2 media · 3 con oficio.",
+    "dias": "Días que aguanta en la nevera, bien tapado y enfriado en menos de 2 h.",
+    "congela": "true si se congela bien (3 meses).",
+    "tanda": "true si es de tanda o táper (se cocina una vez y se come varios días).",
+    "fiesta": "true si es de fiesta: nunca sola en la semana.",
+    "porque": "Los trucos y su por qué (plegables en el modo cocina).",
+    "error": "El error típico y cómo evitarlo.",
+    "etiqueta": "Ingredientes cuya etiqueta hay que mirar (los «depende» de la tabla y los «X sin gluten»).",
+    "aviso": "Qué mirar en esa etiqueta, en una frase. Vacío si etiqueta está vacía.",
+    "gluten": "no · depende (depende si y solo si etiqueta no está vacía). Nunca si."
+  },
+  "recetas": [
+    {
+      "n": "Fabada asturiana",
+      "e": "🫘",
+      "alias": ["fabada", "fabes con compango", "fabada de olla"],
+      "m": "cn",
+      "min": 170,
+      "rac": 4,
+      "ing": [
+        ["Alubia blanca", 90],
+        ["Chorizo", 30],
+        ["Morcilla", 25],
+        ["Panceta", 20],
+        ["Cebolla", 30],
+        ["Ajo", 3],
+        ["Azafrán", 0.05],
+        ["Pimentón", 1],
+        ["Sal", 1.5]
+      ],
+      "pasos": [
+        "La víspera, pon las fabes en remojo en el doble de su volumen de agua fría, unas 12 h. Tira las que floten.",
+        "Escurre las fabes y ponlas en la olla de 5 L con el chorizo, la morcilla y la panceta enteros, la cebolla pelada entera y los ajos. Cubre con agua fría dos dedos por encima.",
+        "Pon la olla en el fuego grande de la vitro al 8 hasta que rompa a hervir (unos 15 min). Quita la espuma con una cuchara.",
+        "Baja al 2-3: que apenas tiemble, sin borbotones. Disuelve el azafrán y el pimentón en un poco del caldo y échalo.",
+        "Cuece 2 h 30 min con la tapa medio puesta. Cada 30 min «asusta» la olla con medio vaso de agua fría y muévela por las asas, sin cuchara.",
+        "Prueba una faba: tiene que estar mantecosa. Sala ahora, saca la cebolla y deja reposar 15 min fuera del fuego. Trocea el compango y sírvelo aparte o encima."
+      ],
+      "tmp": [
+        { "p": 0, "min": 720, "t": "Remojo de las fabes" },
+        { "p": 2, "min": 15, "t": "Que rompa a hervir" },
+        { "p": 4, "min": 150, "t": "Cocción a fuego mínimo" },
+        { "p": 4, "min": 30, "t": "Asustar con agua fría" },
+        { "p": 5, "min": 15, "t": "Reposo" }
+      ],
+      "kcal": 654,
+      "prot": 34,
+      "region": "AST",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": { "fuegos": 1, "olla": 5, "micro": false, "horno": false, "freidora": false, "expres": 35 },
+      "dif": 2,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El remojo largo hace que la faba se cueza por igual y no se arrugue.",
+        "A fuego mínimo la piel aguanta; si hierve fuerte, la piel se separa y la faba se deshace.",
+        "«Asustar» con agua fría corta el hervor un momento y deja la faba entera y cremosa.",
+        "La sal al final: con sal desde el principio, la piel se endurece.",
+        "De un día para otro está más buena: el caldo espesa solo, sin harina.",
+        "Con olla exprés: tras el remojo, 35 min desde que sube la válvula, a fuego medio (4-5)."
+      ],
+      "error": "Hervirla a borbotones o removerla con cuchara: se rompen las fabes. Mueve la olla por las asas y mantén el fuego al 2-3.",
+      "etiqueta": ["Chorizo", "Morcilla"],
+      "aviso": "El chorizo y la morcilla a veces llevan harina, pan o pimentón con trazas: que el envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    }
+  ]
+}

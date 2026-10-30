@@ -2244,3 +2244,35 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - Los postres no entran solos en la semana: se apuntan como capricho.
   - El whisky y la sidra cuentan como sin gluten, según el criterio de FACE para destilados y sidra.
+
+## El Chef · CH1 · esquema del recetario, su prueba y el catálogo corregido (2026-10-30)
+- **Elegido**
+  - `data/recetario.json` con el esquema dentro (campo `esquema`): lo de `TP_RECETAS` (nombre, icono, alias, momentos,
+    minutos, ingredientes por ración, pasos, duda) más raciones, kcal y proteína, región, cocina (es/it/gr/med), tipo,
+    equipo (fuegos, olla en litros, micro, horno, freidora, minutos con exprés), dificultad 1-3, días que aguanta,
+    congela, tanda, fiesta, temporizadores por paso (`tmp`), trucos con su por qué, error típico, etiqueta y aviso.
+    Ejemplo entero: **fabada asturiana** en olla de 5 L a 1 fuego (654 kcal, 34 g de proteína, 4 días).
+  - `tests/recetario.test.js` en node, sin navegador (0 s): lee la tabla, `glutenDe` y `TP_RECETAS` de `app.js` tal cual
+    (`tools/recetario-tabla.js`). Comprueba campos, ingredientes en la tabla, ningún «lleva gluten», etiqueta coherente
+    con «depende», kcal/proteína razonables y que cuadren con la tabla (±10 %), ≥3 pasos, `tmp` válido, ≤6 raciones
+    por olla y sin repetidos (tampoco con las 43 de siempre). Entra en `npm test` y en `test:corto`.
+  - `tools/recetario-faltan.js` dice qué ingredientes faltan en la tabla y da la línea para pegar. Añadidos 11 a
+    `ALIMENTOS_MAS`: panceta, azafrán y, como «X sin gluten», harina de arroz, de garbanzo y de maíz, tamari, fideos,
+    pasta de lentejas, placas de lasaña, pan rallado y tinta de calamar (USDA; lo de marca, con la etiqueta típica).
+  - Catálogo de la maqueta corregido según Sanidad: majados sin pan frito, tinta, enharinados, vinagre de vino (no de
+    malta), surimi, harinas de maíz y garbanzo «sin gluten: etiqueta», butifarra, y caldos, fumet, colorante y tomate
+    frito en ámbar. 30 platos «de fiesta» (🎉). Cada plato con su equipo y si sale con micro + vitro.
+  - Ampliado con **95** de fuera (Italia 46, Grecia 28, Mediterráneo 21), tipo nuevo «🍝 Pasta y risotto» y el filtro
+    «Cocina» en la portada; la región, solo con España. Total 344: 293 salen tal cual con micro + vitro, 34 adaptados
+    (papillote al micro, en cazuela, baño maría), 17 esperan a tener horno.
+- **Descartado**
+  - Abrir la app en un navegador para la prueba: con node basta y tarda 0 s.
+  - Escribir el esquema aparte: dentro del JSON, la prueba exige que cada campo esté explicado.
+  - Embutidos como «Chorizo sin gluten»: van con su nombre (la tabla ya los marca «depende» y salen en ámbar hasta
+    «Mis marcas seguras», CH8).
+  - Pizza, focaccia, masa filo, pasta fresca rellena y cannoli (Sanidad).
+- **Supuestos**
+  - «X sin gluten» solo para lo procesado que de normal puede llevarlo; la panceta fresca y el azafrán en hebra, con su
+    nombre. Todo «X sin gluten» va también en `etiqueta` (hay que comprar el certificado).
+  - Salen 93 ámbar y no ~70-80: los 95 nuevos traen caldos, guanciale y especias.
+  - Los 95 nuevos son más que los ~85 del acta: los he dejado.

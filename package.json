@@ -3,7 +3,7 @@
   "private": true,
   "description": "Guardias · rotación y cocina — app de una sola página, sin build.",
   "scripts": {
-    "test": "node tests/regression.test.js && node tests/frases.test.js && node tests/compartir.test.js && node tests/enlaces.test.js && node tests/actualiza.test.js && node tests/worker-recetas.test.mjs && node tests/worker-calendario.test.mjs",
+    "test": "node tests/regression.test.js && node tests/frases.test.js && node tests/recetario.test.js && node tests/compartir.test.js && node tests/enlaces.test.js && node tests/actualiza.test.js && node tests/worker-recetas.test.mjs && node tests/worker-calendario.test.mjs",
     "test:corto": "bash tools/pruebas-corto.sh",
     "test:app": "node tests/regression.test.js",
     "test:compartir": "node tests/compartir.test.js",
@@ -11,7 +11,8 @@
     "test:lector": "node tests/worker-recetas.test.mjs",
     "sella": "node tools/sella-version.mjs",
     "test:actualiza": "node tests/actualiza.test.js",
-    "test:frases": "node tests/frases.test.js"
+    "test:frases": "node tests/frases.test.js",
+    "test:recetario": "node tests/recetario.test.js"
   },
   "devDependencies": {
     "playwright": "^1.47.0"

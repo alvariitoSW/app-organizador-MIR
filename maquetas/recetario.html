@@ -48,6 +48,7 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 .cat{max-width:880px;margin:0 auto;padding:0 16px}
 .cat h2{font-size:19px;margin:22px 0 4px}.cat h3{font-size:16px;margin:16px 0 6px;color:var(--brand)}
 .cat table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cat .tw{overflow-x:auto}
 .cat td,.cat th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .cat th{color:var(--ink2);font-weight:800}
 </style>
@@ -62,12 +63,13 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 <!-- 1 · portada -->
 <div class=ab><span class=lbl>1 · PORTADA</span><div class=cuerpo>
 <div class=top><span class=back>‹</span><h1>Recetario</h1><span class=sp></span><span class=ic>🗺️</span><span class=ic>＋</span></div>
-<div class=sg>🌾 <span><b>Todo sin gluten</b> · <span id=total>249</span> platos de España</span></div>
+<div class=sg>🌾 <span><b>Todo sin gluten</b> · <span id=total>344</span> platos · <span id=hoy></span> con tu micro y tu vitro</span></div>
 <div class=busca>🔍 busca un plato o un ingrediente…</div>
+<div class=chips id=cocinas></div>
 <div class=chips><span class="chip on">Todo</span><span class=chip>🥣 Cuchara</span><span class=chip>🥘 Arroces</span><span class=chip>🐟 Pescado</span><span class=chip>🍗 Carne</span></div>
 <div class=chips><span class="chip on">🍲 Para tanda</span><span class=chip>⏱ ≤ 20 min</span><span class=chip>🥚 +30 g prot</span><span class=chip>🍮 Postres</span></div>
 <div class=card style="padding:4px 10px">
-<div class=pl><span class=e>🫘</span><div><div class=n>Fabada asturiana</div><div class=mini>Asturias · 2 h 30 · 38 g prot · <span class=duda>chorizo y morcilla: etiqueta</span></div></div></div>
+<div class=pl><span class=e>🫘</span><div><div class=n>Fabada asturiana</div><div class=mini>Asturias · 2 h 30 · 34 g prot · <span class=duda>chorizo y morcilla: etiqueta</span></div></div></div>
 <div class=pl><span class=e>🍲</span><div><div class=n>Cocido madrileño</div><div class=mini>Madrid · 3 h · 45 g prot · <span class=ok>fideos sin gluten</span></div></div></div>
 <div class=pl><span class=e>🐟</span><div><div class=n>Marmitako</div><div class=mini>País Vasco · 45 min · 34 g prot · <span class=ok>sin gluten</span></div></div></div>
 <div class=pl><span class=e>🥘</span><div><div class=n>Arroz al horno</div><div class=mini>C. Valenciana · 1 h 15 · 29 g prot · <span class=duda>morcilla: etiqueta</span></div></div></div>
@@ -92,7 +94,7 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 <!-- 3 · receta -->
 <div class=ab><span class=lbl>3 · RECETA</span><div class=cuerpo>
 <div class=top><span class=back>‹</span><span class=sp></span><span class=ic>↗</span></div>
-<div class=hero><span class=e>🫘</span><div><h2>Fabada asturiana</h2><div class=mini>Asturias · 2 h 30 · 4 raciones · 38 g prot/ración</div></div></div>
+<div class=hero><span class=e>🫘</span><div><h2>Fabada asturiana</h2><div class=mini>Asturias · 2 h 30 · 4 raciones · 34 g prot/ración</div></div></div>
 <div class=sg style="margin-top:10px">🌾 <span><b>Sin gluten</b> si el chorizo y la morcilla lo dicen en el envase</span></div>
 <div class=card>
 <div class=cap>INGREDIENTES · POR 4</div>
@@ -159,101 +161,172 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 
 <div class=cat>
 <h2>El catálogo completo · <span id=total2></span> platos</h2>
-<p class=mini>Columnas: región · minutos · para tanda (🍲) · el cambio que lo hace sin gluten. «Etiqueta» = depende de la marca. Los 43 platos que ya tiene la app siguen ahí y no se repiten aquí.</p>
+<p class=mini>Columnas: región o cocina · minutos · para tanda (🍲) · el cambio que lo hace sin gluten («etiqueta» = depende de la marca) · equipo del plato clásico (🔥 fuegos · 📡 micro · ♨️ horno) · si sale hoy con micro + vitro pequeña (✓, o ↪ cómo se adapta; — espera a tener horno). 🎉 = de fiesta, nunca solo en la semana. Corregido según Sanidad (Consejo «El Chef», 30/10). Los 43 platos que ya tiene la app siguen ahí y no se repiten aquí.</p>
+<p class=mini id=cuentas></p>
 <div id=cat></div>
 </div>
 
 <script>
-const REG={AND:'Andalucía',ARA:'Aragón',AST:'Asturias',BAL:'Baleares',CAN:'Canarias',CTB:'Cantabria',CLM:'Castilla-La Mancha',CYL:'Castilla y León',CAT:'Cataluña',VAL:'C. Valenciana',EXT:'Extremadura',GAL:'Galicia',MAD:'Madrid',MUR:'Murcia',NAV:'Navarra',PV:'País Vasco',RIO:'La Rioja',ESP:'De toda España'};
-const TIPO={cu:'🥣 Cuchara',fr:'🥗 Fríos y ensaladas',ar:'🥘 Arroces',pe:'🐟 Pescado y marisco',ca:'🍗 Carne',ve:'🥚 Huevos y verdura',ta:'🫒 Tapas y masas',de:'🥐 Desayunos y meriendas',po:'🍮 Postres'};
-/* [nombre, región, tipo, minutos, tanda(1/0), cambio sin gluten ('' = sin gluten de siempre)] */
+const REG={AND:'Andalucía',ARA:'Aragón',AST:'Asturias',BAL:'Baleares',CAN:'Canarias',CTB:'Cantabria',CLM:'Castilla-La Mancha',CYL:'Castilla y León',CAT:'Cataluña',VAL:'C. Valenciana',EXT:'Extremadura',GAL:'Galicia',MAD:'Madrid',MUR:'Murcia',NAV:'Navarra',PV:'País Vasco',RIO:'La Rioja',ESP:'De toda España',IT:'Italia',GR:'Grecia',MED:'Mediterráneo'};
+const COC={es:'🇪🇸 España',it:'🇮🇹 Italia',gr:'🇬🇷 Grecia',med:'🌊 Mediterráneo'};
+const cocinaDe=function(p){return {IT:'it',GR:'gr',MED:'med'}[p[1]]||'es';};
+/* la cocina de hoy (Canarias): micro + vitro pequeña. Si gana horno o freidora, se añade aquí y suben los platos */
+const TENGO={v:1,m:1};
+const hoyVale=function(p){return p[6].split('').every(function(c){return TENGO[c];});};
+const EQ={v:'🔥',m:'📡',h:'♨️',f:'💨'};
+const TIPO={cu:'🥣 Cuchara',fr:'🥗 Fríos y ensaladas',ar:'🥘 Arroces',pa:'🍝 Pasta y risotto',pe:'🐟 Pescado y marisco',ca:'🍗 Carne',ve:'🥚 Huevos y verdura',ta:'🫒 Tapas y masas',de:'🥐 Desayunos y meriendas',po:'🍮 Postres'};
+/* [nombre, región, tipo, minutos, tanda(1/0), cambio sin gluten ('' = sin gluten de siempre),
+    equipo del clásico (v fuegos · m micro · h horno · f freidora · '' sin cocinar), fiesta(1/0),
+    cómo se hace con micro + vitro si el clásico pide horno ('' = espera a tener horno)] */
 const P=[
-['Cocido madrileño','MAD','cu',180,1,'fideos sin gluten · chorizo: etiqueta'],['Sopa de cocido','MAD','cu',15,0,'fideos sin gluten'],
-['Fabada asturiana','AST','cu',150,1,'chorizo y morcilla: etiqueta'],['Fabes con almejas','AST','cu',90,1,''],['Pote asturiano','AST','cu',120,1,'chorizo y morcilla: etiqueta'],
-['Caldo gallego','GAL','cu',90,1,''],['Lacón con grelos','GAL','cu',120,1,'chorizo: etiqueta'],['Marmitako','PV','cu',45,1,''],['Porrusalda','PV','cu',40,1,''],
-['Alubias de Tolosa','PV','cu',150,1,'chorizo y morcilla: etiqueta'],['Potaje de vigilia','AND','cu',60,1,''],['Puchero andaluz','AND','cu',150,1,''],
-['Sopa de picadillo','AND','cu',20,0,'fideos sin gluten'],['Berza jerezana','AND','cu',120,1,'chorizo y morcilla: etiqueta'],['Cocido montañés','CTB','cu',150,1,'chorizo y morcilla: etiqueta'],
-['Olla podrida','CYL','cu',180,1,'chorizo y morcilla: etiqueta'],['Sopa castellana','CYL','cu',30,0,'pan sin gluten · chorizo: etiqueta'],['Judías del Barco','CYL','cu',120,1,'chorizo: etiqueta'],
-['Cocido maragato','CYL','cu',180,1,'chorizo: etiqueta'],['Garbanzos con langostinos','ESP','cu',30,1,''],['Olla gitana','MUR','cu',90,1,''],['Michirones','MUR','cu',120,1,'chorizo: etiqueta'],
-['Escudella i carn d’olla','CAT','cu',180,1,'galets sin gluten · pilota con pan rallado sin gluten'],['Patatas a la riojana','RIO','cu',50,1,'chorizo: etiqueta'],['Pochas a la navarra','NAV','cu',60,1,''],
-['Gazpacho manchego','CLM','cu',60,1,'torta cenceña sin gluten'],['Sopa de tomate extremeña','EXT','cu',30,0,'pan sin gluten'],['Potaje canario','CAN','cu',60,1,''],
-['Rancho canario','CAN','cu',60,1,'fideos sin gluten · chorizo: etiqueta'],['Puchero canario','CAN','cu',150,1,''],['Lentejas con arroz','ESP','cu',40,1,''],
-['Alubias rojas con arroz','ESP','cu',90,1,''],['Sopa de pescado y marisco','ESP','cu',45,1,''],['Crema de puerros','ESP','cu',30,1,''],['Crema de champiñones','ESP','cu',25,1,''],
-['Crema de zanahoria','ESP','cu',25,1,''],['Caldo de pollo casero','ESP','cu',120,1,''],['Garbanzos con callos','AND','cu',120,1,'chorizo y morcilla: etiqueta'],
-['Patatas con costillas','ESP','cu',50,1,''],['Patatas con sepia','AND','cu',50,1,''],['Garbanzos con bacalao','ESP','cu',40,1,''],['Sopa de ajo con huevo','CYL','cu',25,0,'pan sin gluten'],
+['Cocido madrileño','MAD','cu',180,1,'fideos sin gluten · chorizo: etiqueta','v',0,''],['Sopa de cocido','MAD','cu',15,0,'fideos sin gluten','v',0,''],['Fabada asturiana','AST','cu',150,1,'chorizo y morcilla: etiqueta','v',0,''],
+['Fabes con almejas','AST','cu',90,1,'fumet: etiqueta','v',0,''],['Pote asturiano','AST','cu',120,1,'chorizo y morcilla: etiqueta','v',0,''],['Caldo gallego','GAL','cu',90,1,'','v',0,''],
+['Lacón con grelos','GAL','cu',120,1,'chorizo: etiqueta','v',0,''],['Marmitako','PV','cu',45,1,'','v',0,''],['Porrusalda','PV','cu',40,1,'','v',0,''],
+['Alubias de Tolosa','PV','cu',150,1,'chorizo y morcilla: etiqueta','v',0,''],['Potaje de vigilia','AND','cu',60,1,'majado sin pan frito · bacalao sin enharinar','v',0,''],['Puchero andaluz','AND','cu',150,1,'','v',0,''],
+['Sopa de picadillo','AND','cu',20,0,'fideos sin gluten','v',0,''],['Berza jerezana','AND','cu',120,1,'chorizo y morcilla: etiqueta','v',0,''],['Cocido montañés','CTB','cu',150,1,'chorizo y morcilla: etiqueta','v',0,''],
+['Olla podrida','CYL','cu',180,1,'chorizo y morcilla: etiqueta','v',1,''],['Sopa castellana','CYL','cu',30,0,'pan sin gluten · chorizo: etiqueta','v',0,''],['Judías del Barco','CYL','cu',120,1,'chorizo: etiqueta','v',0,''],
+['Cocido maragato','CYL','cu',180,1,'chorizo: etiqueta','v',1,''],['Garbanzos con langostinos','ESP','cu',30,1,'fumet: etiqueta','v',0,''],['Olla gitana','MUR','cu',90,1,'','v',0,''],
+['Michirones','MUR','cu',120,1,'chorizo: etiqueta','v',0,''],['Escudella i carn d’olla','CAT','cu',180,1,'galets y pan rallado sin gluten · butifarra: etiqueta','v',0,''],['Patatas a la riojana','RIO','cu',50,1,'chorizo: etiqueta','v',0,''],
+['Pochas a la navarra','NAV','cu',60,1,'','v',0,''],['Gazpacho manchego','CLM','cu',60,1,'torta cenceña sin gluten','v',0,''],['Sopa de tomate extremeña','EXT','cu',30,0,'pan sin gluten','v',0,''],
+['Potaje canario','CAN','cu',60,1,'','v',0,''],['Rancho canario','CAN','cu',60,1,'fideos sin gluten · chorizo: etiqueta','v',0,''],['Puchero canario','CAN','cu',150,1,'','v',0,''],
+['Lentejas con arroz','ESP','cu',40,1,'','v',0,''],['Alubias rojas con arroz','ESP','cu',90,1,'','v',0,''],['Sopa de pescado y marisco','ESP','cu',45,1,'fumet casero (el de brick: etiqueta)','v',0,''],
+['Crema de puerros','ESP','cu',30,1,'','v',0,''],['Crema de champiñones','ESP','cu',25,1,'sin harina · caldo: etiqueta','v',0,''],['Crema de zanahoria','ESP','cu',25,1,'','v',0,''],
+['Caldo de pollo casero','ESP','cu',120,1,'','v',0,''],['Garbanzos con callos','AND','cu',120,1,'chorizo y morcilla: etiqueta','v',0,''],['Patatas con costillas','ESP','cu',50,1,'','v',0,''],
+['Patatas con sepia','AND','cu',50,1,'','v',0,''],['Garbanzos con bacalao','ESP','cu',40,1,'','v',0,''],['Sopa de ajo con huevo','CYL','cu',25,0,'pan sin gluten','v',0,''],
+['Pasta e fagioli','IT','cu',40,1,'pasta sin gluten (mejor de legumbre)','v',0,''],['Pasta e ceci','IT','cu',35,1,'pasta sin gluten (mejor de legumbre)','v',0,''],['Minestrone','IT','cu',45,1,'pasta sin gluten (mejor de legumbre)','v',0,''],
+['Ribollita','IT','cu',60,1,'pan sin gluten','v',0,''],['Pappa al pomodoro','IT','cu',30,1,'pan sin gluten','v',0,''],['Stracciatella (sopa de huevo)','IT','cu',15,0,'caldo casero (el de brick: etiqueta)','v',0,''],
+['Fasolada (sopa de alubias)','GR','cu',90,1,'','v',0,''],['Fakes (sopa de lentejas)','GR','cu',45,1,'','v',0,''],['Revithia (garbanzos al limón)','GR','cu',60,1,'','v',0,''],
+['Avgolemono (sopa de pollo y limón)','GR','cu',40,1,'','v',0,''],['Gigantes plaki (judiones con tomate)','GR','cu',90,1,'','h',0,'en cazuela'],['Mujaddara (lentejas con arroz)','MED','cu',45,1,'','v',0,''],
+['Harira','MED','cu',60,1,'fideos sin gluten · maicena para espesar','v',0,''],['Cuscús de mijo con verduras','MED','cu',40,1,'mijo en lugar de sémola','v',0,''],['Sopa al pistou','MED','cu',45,1,'pasta sin gluten (mejor de legumbre)','v',0,''],
+['Sopa de lentejas rojas turca','MED','cu',35,1,'','v',0,''],
 
-['Salmorejo','AND','fr',15,1,'pan sin gluten'],['Ajoblanco','AND','fr',15,1,'pan sin gluten'],['Porra antequerana','AND','fr',15,1,'pan sin gluten'],
-['Pipirrana','AND','fr',15,0,''],['Remojón granadino','AND','fr',15,0,''],['Esqueixada de bacalao','CAT','fr',20,0,''],['Xató','CAT','fr',20,0,'romesco con pan sin gluten'],
-['Empedrat','CAT','fr',15,1,''],['Ensalada murciana','MUR','fr',15,0,''],['Salpicón de marisco','ESP','fr',20,1,''],['Ensalada campera','ESP','fr',25,1,''],
-['Pimientos asados con ventresca','ESP','fr',40,1,''],['Tomates aliñados','AND','fr',10,0,''],
+['Salmorejo','AND','fr',15,1,'pan sin gluten','',0,''],['Ajoblanco','AND','fr',15,1,'pan sin gluten','',0,''],['Porra antequerana','AND','fr',15,1,'pan sin gluten','',0,''],
+['Pipirrana','AND','fr',15,0,'','',0,''],['Remojón granadino','AND','fr',15,0,'','',0,''],['Esqueixada de bacalao','CAT','fr',20,0,'','',0,''],
+['Xató','CAT','fr',20,0,'romesco con pan sin gluten','h',0,'romesco con la verdura asada al micro'],['Empedrat','CAT','fr',15,1,'','',0,''],['Ensalada murciana','MUR','fr',15,0,'','',0,''],
+['Salpicón de marisco','ESP','fr',20,1,'sin surimi (o surimi: etiqueta)','v',0,''],['Ensalada campera','ESP','fr',25,1,'','v',0,''],['Pimientos asados con ventresca','ESP','fr',40,1,'','h',0,'pimientos asados al micro'],
+['Tomates aliñados','AND','fr',10,0,'','',0,''],['Ensalada caprese','IT','fr',10,0,'','',0,''],['Panzanella','IT','fr',15,0,'pan sin gluten','',0,''],
+['Carpaccio de ternera','IT','fr',15,0,'','',0,''],['Bresaola con rúcula','IT','fr',5,0,'bresaola: etiqueta','',0,''],['Ensalada griega (horiatiki)','GR','fr',10,0,'','',0,''],
+['Tabulé de quinoa','MED','fr',25,1,'quinoa en lugar de bulgur','v',0,''],['Fattoush','MED','fr',15,0,'pan sin gluten tostado','v',0,''],['Ensalada niçoise','MED','fr',20,0,'','v',0,''],
 
-['Paella valenciana','VAL','ar',60,0,''],['Arroz a banda','VAL','ar',45,0,''],['Arroz negro','VAL','ar',45,0,'tinta: etiqueta'],['Arroz al horno','VAL','ar',75,1,'morcilla: etiqueta'],
-['Arroz con costra','VAL','ar',75,1,'embutidos: etiqueta'],['Arroz del senyoret','VAL','ar',45,0,''],['Arroz caldoso con bogavante','ESP','ar',45,0,''],['Arroz caldoso de marisco','ESP','ar',40,0,''],
-['Arroz con verduras','ESP','ar',40,1,''],['Arroz meloso de setas','ESP','ar',40,0,''],['Arroz con conejo','MUR','ar',60,0,''],['Caldero murciano','MUR','ar',60,0,''],
-['Arroz con alcachofas','ESP','ar',40,1,''],['Fideuà','VAL','ar',40,0,'fideos sin gluten'],['Arròs amb fesols i naps','VAL','ar',120,1,'morcilla: etiqueta'],['Arroz a la cubana','ESP','ar',25,0,'tomate frito: etiqueta'],
-['Paella mixta','ESP','ar',60,0,''],['Arroz con bacalao','ESP','ar',40,0,''],['Arroz con secreto y setas','ESP','ar',45,0,''],['Arroz a la zamorana','CYL','ar',60,1,'chorizo: etiqueta'],
+['Paella valenciana','VAL','ar',60,0,'colorante: etiqueta (o azafrán en hebra)','v',0,''],['Arroz a banda','VAL','ar',45,0,'fumet casero (el de brick: etiqueta)','v',0,''],['Arroz negro','VAL','ar',45,0,'tinta y fumet: etiqueta','v',0,''],
+['Arroz al horno','VAL','ar',75,1,'morcilla: etiqueta','h',0,'en cazuela a fuego («arroz de cazuela»)'],['Arroz con costra','VAL','ar',75,1,'embutidos: etiqueta','h',0,''],['Arroz del senyoret','VAL','ar',45,0,'fumet casero (el de brick: etiqueta)','v',0,''],
+['Arroz caldoso con bogavante','ESP','ar',45,0,'fumet casero (el de brick: etiqueta)','v',1,''],['Arroz caldoso de marisco','ESP','ar',40,0,'fumet casero (el de brick: etiqueta)','v',0,''],['Arroz con verduras','ESP','ar',40,1,'caldo casero (el de brick: etiqueta)','v',0,''],
+['Arroz meloso de setas','ESP','ar',40,0,'caldo casero (el de brick: etiqueta)','v',0,''],['Arroz con conejo','MUR','ar',60,0,'caldo casero (el de brick: etiqueta)','v',0,''],['Caldero murciano','MUR','ar',60,0,'fumet casero (el de brick: etiqueta)','v',0,''],
+['Arroz con alcachofas','ESP','ar',40,1,'caldo casero (el de brick: etiqueta)','v',0,''],['Fideuà','VAL','ar',40,0,'fideos sin gluten · fumet: etiqueta','v',0,''],['Arròs amb fesols i naps','VAL','ar',120,1,'morcilla: etiqueta','v',0,''],
+['Arroz a la cubana','ESP','ar',25,0,'tomate frito casero (el de bote: etiqueta)','v',0,''],['Paella mixta','ESP','ar',60,0,'caldo y colorante: etiqueta','v',0,''],['Arroz con bacalao','ESP','ar',40,0,'caldo casero (el de brick: etiqueta)','v',0,''],
+['Arroz con secreto y setas','ESP','ar',45,0,'caldo casero (el de brick: etiqueta)','v',0,''],['Arroz a la zamorana','CYL','ar',60,1,'chorizo: etiqueta','v',0,''],['Giouvetsi (ternera con arroz)','GR','ar',90,1,'arroz en lugar de orzo','h',0,'en cazuela'],
+['Spanakorizo (arroz con espinacas)','GR','ar',35,1,'','v',0,''],
 
-['Pulpo a la gallega','GAL','pe',50,0,''],['Bacalao al pil-pil','PV','pe',30,0,''],['Bacalao a la vizcaína','PV','pe',45,1,''],['Bacalao al ajoarriero','NAV','pe',30,1,''],
-['Bacalao a la riojana','RIO','pe',40,1,''],['Merluza a la koskera','PV','pe',25,0,'sin harina (o de arroz)'],['Merluza a la gallega','GAL','pe',30,0,''],['Merluza rebozada','ESP','pe',20,0,'harina de arroz'],
-['Boquerones fritos','AND','pe',20,0,'harina de garbanzo'],['Boquerones en vinagre','AND','pe',20,1,''],['Pescaíto frito','AND','pe',30,0,'harina de garbanzo'],['Cazón en adobo','AND','pe',30,0,'harina de garbanzo'],
-['Sardinas asadas','ESP','pe',15,0,''],['Dorada a la sal','ESP','pe',35,0,''],['Lubina a la bilbaína','PV','pe',25,0,''],['Besugo al horno','MAD','pe',40,0,'pan rallado sin gluten'],
-['Rape en salsa de almendras','ESP','pe',35,1,'sin pan frito (o sin gluten)'],['Zarzuela de pescado','CAT','pe',50,1,''],['Suquet de peix','CAT','pe',45,1,'picada con pan sin gluten'],['Calamares en su tinta','PV','pe',60,1,''],
-['Chipirones encebollados','ESP','pe',30,0,''],['Calamares a la romana','MAD','pe',20,0,'harina de arroz'],['Sepia a la plancha','ESP','pe',15,0,''],['Gambas al ajillo','ESP','pe',15,0,''],
-['Gambas a la plancha','ESP','pe',10,0,''],['Mejillones a la marinera','GAL','pe',20,0,'maicena para espesar'],['Mejillones al vapor','ESP','pe',10,0,''],['Almejas a la marinera','GAL','pe',20,0,'maicena para espesar'],
-['Navajas a la plancha','ESP','pe',10,0,''],['Truchas a la navarra','NAV','pe',25,0,'harina de arroz · jamón: etiqueta'],['Atún encebollado','AND','pe',30,1,''],['Bonito con tomate','CTB','pe',40,1,''],
-['Caballa al horno','ESP','pe',20,0,''],['Sardinas en escabeche','ESP','pe',40,1,''],['Pez espada a la plancha','ESP','pe',15,0,''],['Atascaburras','CLM','pe',40,1,''],
+['Espaguetis al pomodoro','IT','pa',20,0,'pasta sin gluten (mejor de legumbre)','v',0,''],['Espaguetis aglio, olio e peperoncino','IT','pa',15,0,'pasta sin gluten (mejor de legumbre)','v',0,''],['Espaguetis a la carbonara','IT','pa',20,0,'pasta sin gluten (mejor de legumbre) · guanciale: etiqueta','v',0,''],
+['Pasta all’amatriciana','IT','pa',25,0,'pasta sin gluten (mejor de legumbre) · guanciale: etiqueta','v',0,''],['Penne all’arrabbiata','IT','pa',20,0,'pasta sin gluten (mejor de legumbre)','v',0,''],['Pasta alla norma','IT','pa',30,0,'pasta sin gluten (mejor de legumbre)','v',0,''],
+['Pasta al pesto genovés','IT','pa',15,0,'pasta sin gluten (mejor de legumbre)','v',0,''],['Pasta alla puttanesca','IT','pa',20,0,'pasta sin gluten (mejor de legumbre)','v',0,''],['Espaguetis con almejas','IT','pa',25,0,'pasta sin gluten (mejor de legumbre)','v',0,''],
+['Pasta con atún y tomate','IT','pa',20,1,'pasta sin gluten (mejor de legumbre)','v',0,''],['Tallarines con ragú a la boloñesa','IT','pa',90,1,'pasta sin gluten (mejor de legumbre)','v',0,''],['Lasaña boloñesa','IT','pa',90,1,'placas sin gluten · bechamel de maicena','h',0,'al micro, por capas'],
+['Risotto de setas','IT','pa',35,0,'caldo casero (el de brick: etiqueta)','v',0,''],['Risotto a la milanesa','IT','pa',35,0,'caldo casero (el de brick: etiqueta)','v',0,''],['Risotto de calabaza','IT','pa',35,0,'caldo casero (el de brick: etiqueta)','v',0,''],
+['Ñoquis de patata caseros','IT','pa',50,1,'harina de arroz sin gluten','v',0,''],['Pastitsio','GR','pa',90,1,'pasta sin gluten (mejor de legumbre) · bechamel de maicena','h',0,''],
 
-['Cochinillo asado','CYL','ca',150,0,''],['Lechazo asado','CYL','ca',120,0,''],['Ternasco asado','ARA','ca',120,0,''],['Pollo al chilindrón','ARA','ca',60,1,'jamón: etiqueta'],
-['Pollo en pepitoria','MAD','ca',60,1,'sin harina; picada de almendra'],['Pollo al limón','ESP','ca',40,1,''],['Pollo en salsa de almendras','ESP','ca',45,1,''],['Pollo guisado con patatas','ESP','ca',50,1,''],
-['Pollo con tomate','ESP','ca',45,1,''],['Pollo en escabeche','ESP','ca',60,1,''],['Conejo al ajillo','ESP','ca',40,0,''],['Conejo en salmorejo','CAN','ca',60,1,''],
-['Perdiz estofada','CLM','ca',90,1,''],['Rabo de toro','AND','ca',180,1,'sin harina (o de arroz)'],['Callos a la madrileña','MAD','ca',180,1,'chorizo y morcilla: etiqueta'],['Carrillada ibérica','AND','ca',120,1,''],
-['Solomillo al whisky','AND','ca',25,0,'whisky: destilado, sin gluten'],['Solomillo al Cabrales','AST','ca',25,0,''],['Cachopo','AST','ca',30,0,'pan rallado y harina sin gluten'],['Flamenquín','AND','ca',30,0,'pan rallado sin gluten'],
-['San Jacobo','ESP','ca',20,0,'pan rallado sin gluten · jamón cocido: etiqueta'],['Filete empanado','ESP','ca',20,0,'pan rallado sin gluten'],['Carne con tomate','ESP','ca',60,1,''],['Ternera guisada con patatas','ESP','ca',90,1,''],
-['Estofado de ternera','ESP','ca',120,1,''],['Cordero al chilindrón','NAV','ca',90,1,''],['Caldereta extremeña','EXT','ca',90,1,''],['Chuletillas de cordero','ESP','ca',15,0,''],
-['Secreto ibérico a la plancha','ESP','ca',15,0,''],['Presa ibérica','ESP','ca',15,0,''],['Costillas al horno','ESP','ca',90,1,''],['Lomo en adobo','AND','ca',30,1,''],
-['Cochifrito','CYL','ca',60,0,''],['Torreznos','CYL','ca',60,0,''],['Morteruelo','CLM','ca',120,1,'pan sin gluten'],['Carne mechada','AND','ca',120,1,''],
-['Fricandó','CAT','ca',90,1,'harina de arroz'],['Mar y montaña (pollo con langostinos)','CAT','ca',60,1,'picada con pan sin gluten'],['Butifarra con judías','CAT','ca',25,0,'butifarra: etiqueta'],['Frito mallorquín','BAL','ca',45,1,''],
-['Lomo con col','BAL','ca',60,1,'sobrasada: etiqueta'],['Pinchos morunos','AND','ca',20,0,'especias: etiqueta'],['Hígado encebollado','ESP','ca',20,0,''],['Chuletón','ESP','ca',20,0,''],
-['Pollo asado entero','ESP','ca',90,1,''],['Albóndigas de pollo en salsa','ESP','ca',50,1,'pan rallado sin gluten'],
+['Pulpo a la gallega','GAL','pe',50,0,'','v',0,''],['Bacalao al pil-pil','PV','pe',30,0,'','v',0,''],['Bacalao a la vizcaína','PV','pe',45,1,'salsa sin pan frito (solo choricero)','v',0,''],
+['Bacalao al ajoarriero','NAV','pe',30,1,'','v',0,''],['Bacalao a la riojana','RIO','pe',40,1,'sin enharinar · choricero','v',0,''],['Merluza a la koskera','PV','pe',25,0,'sin harina (o de arroz)','v',0,''],
+['Merluza a la gallega','GAL','pe',30,0,'','v',0,''],['Merluza rebozada','ESP','pe',20,0,'harina de arroz sin gluten','v',0,''],['Boquerones fritos','AND','pe',20,0,'harina de garbanzo sin gluten: etiqueta','v',0,''],
+['Boquerones en vinagre','AND','pe',20,1,'vinagre de vino (no de malta)','v',0,''],['Pescaíto frito','AND','pe',30,0,'harina de garbanzo sin gluten: etiqueta','v',0,''],['Cazón en adobo','AND','pe',30,0,'harina de garbanzo sin gluten: etiqueta','v',0,''],
+['Sardinas asadas','ESP','pe',15,0,'','v',0,''],['Dorada a la sal','ESP','pe',35,0,'','h',0,'en papillote al micro'],['Lubina a la bilbaína','PV','pe',25,0,'','v',0,''],
+['Besugo al horno','MAD','pe',40,0,'pan rallado sin gluten','h',0,'en papillote al micro'],['Rape en salsa de almendras','ESP','pe',35,1,'picada sin pan frito (o pan sin gluten)','v',0,''],['Zarzuela de pescado','CAT','pe',50,1,'picada sin pan · pescado sin enharinar · fumet: etiqueta','v',0,''],
+['Suquet de peix','CAT','pe',45,1,'picada con pan sin gluten','v',0,''],['Calamares en su tinta','PV','pe',60,1,'tinta: etiqueta · sin enharinar','v',0,''],['Chipirones encebollados','ESP','pe',30,0,'','v',0,''],
+['Calamares a la romana','MAD','pe',20,0,'harina de arroz sin gluten','v',0,''],['Sepia a la plancha','ESP','pe',15,0,'','v',0,''],['Gambas al ajillo','ESP','pe',15,0,'','v',0,''],
+['Gambas a la plancha','ESP','pe',10,0,'','v',0,''],['Mejillones a la marinera','GAL','pe',20,0,'maicena para espesar','v',0,''],['Mejillones al vapor','ESP','pe',10,0,'','v',0,''],
+['Almejas a la marinera','GAL','pe',20,0,'maicena para espesar','v',0,''],['Navajas a la plancha','ESP','pe',10,0,'','v',0,''],['Truchas a la navarra','NAV','pe',25,0,'harina de arroz · jamón: etiqueta','v',0,''],
+['Atún encebollado','AND','pe',30,1,'','v',0,''],['Bonito con tomate','CTB','pe',40,1,'tomate frito casero (el de bote: etiqueta)','v',0,''],['Caballa al horno','ESP','pe',20,0,'','h',0,'a la plancha'],
+['Sardinas en escabeche','ESP','pe',40,1,'vinagre de vino (no de malta) · sin enharinar','v',0,''],['Pez espada a la plancha','ESP','pe',15,0,'','v',0,''],['Atascaburras','CLM','pe',40,1,'','v',0,''],
+['Pescado all’acqua pazza','IT','pe',25,0,'','v',0,''],['Lubina al cartoccio','IT','pe',25,0,'','h',0,'en papillote al micro'],['Mejillones a la tarantina','IT','pe',20,0,'','v',0,''],
+['Calamares rellenos','IT','pe',50,1,'pan rallado sin gluten','v',0,''],['Pulpo a la parrilla con aceite y orégano','GR','pe',60,0,'','v',0,''],['Gambas saganaki','GR','pe',20,0,'','v',0,''],
+['Psari plaki (pescado con tomate)','GR','pe',40,1,'','h',0,'en cazuela'],['Bullabesa','MED','pe',60,1,'rouille sin pan · fumet: etiqueta','v',0,''],['Pescado con chermoula','MED','pe',25,0,'','v',0,''],
 
-['Huevos a la flamenca','AND','ve',25,0,'chorizo: etiqueta'],['Huevos rellenos','ESP','ve',25,1,'mayonesa: etiqueta'],['Revuelto de ajetes y gambas','ESP','ve',15,0,''],
-['Tortilla de bacalao','PV','ve',15,0,''],['Tortilla de espinacas','ESP','ve',15,1,''],['Tortilla de calabacín','ESP','ve',20,1,''],['Tortilla Sacromonte','AND','ve',20,0,''],
-['Duelos y quebrantos','CLM','ve',15,0,'chorizo: etiqueta'],['Piperrada','PV','ve',25,1,''],['Asadillo manchego','CLM','ve',50,1,''],['Escalivada','CAT','ve',50,1,''],
-['Samfaina','CAT','ve',40,1,''],['Tumbet','BAL','ve',60,1,''],['Espinacas a la catalana','CAT','ve',15,0,''],['Alcachofas con jamón','NAV','ve',30,0,''],
-['Cardo con almendras','NAV','ve',40,1,'maicena para espesar'],['Borraja con patatas','ARA','ve',30,1,''],['Pimientos rellenos de carne','ESP','ve',60,1,''],['Piquillos rellenos de bacalao','NAV','ve',40,1,'bechamel con maicena'],
-['Berenjenas rellenas','ESP','ve',50,1,'bechamel con maicena'],['Calabacines rellenos','ESP','ve',45,1,''],['Coliflor gratinada','ESP','ve',35,1,'bechamel con maicena'],['Acelgas con patatas','ESP','ve',30,1,''],
-['Judías verdes con tomate','ESP','ve',30,1,''],['Setas al ajillo','ESP','ve',15,0,''],['Champiñones al ajillo','ESP','ve',15,0,''],['Espárragos trigueros a la plancha','ESP','ve',10,0,''],
-['Papas arrugadas con mojo','CAN','ve',30,0,''],['Pimientos de Padrón','GAL','ve',10,0,''],['Patatas a lo pobre','AND','ve',30,0,''],['Ajo cabañil','MUR','ve',30,0,''],
-['Berenjenas con miel','AND','ve',25,0,'harina de garbanzo'],['Zarangollo','MUR','ve',25,0,''],['Pisto con huevo y atún','CLM','ve',45,1,''],
+['Cochinillo asado','CYL','ca',150,0,'','h',1,''],['Lechazo asado','CYL','ca',120,0,'','h',1,''],['Ternasco asado','ARA','ca',120,0,'','h',1,''],
+['Pollo al chilindrón','ARA','ca',60,1,'jamón: etiqueta','v',0,''],['Pollo en pepitoria','MAD','ca',60,1,'sin harina; picada de almendra','v',0,''],['Pollo al limón','ESP','ca',40,1,'','v',0,''],
+['Pollo en salsa de almendras','ESP','ca',45,1,'picada sin pan frito (o pan sin gluten)','v',0,''],['Pollo guisado con patatas','ESP','ca',50,1,'','v',0,''],['Pollo con tomate','ESP','ca',45,1,'tomate frito casero (el de bote: etiqueta)','v',0,''],
+['Pollo en escabeche','ESP','ca',60,1,'vinagre de vino (no de malta)','v',0,''],['Conejo al ajillo','ESP','ca',40,0,'','v',0,''],['Conejo en salmorejo','CAN','ca',60,1,'','v',0,''],
+['Perdiz estofada','CLM','ca',90,1,'sin enharinar','v',0,''],['Rabo de toro','AND','ca',180,1,'sin enharinar · caldo: etiqueta','v',0,''],['Callos a la madrileña','MAD','ca',180,1,'chorizo y morcilla: etiqueta','v',0,''],
+['Carrillada ibérica','AND','ca',120,1,'sin enharinar (o harina de arroz)','v',0,''],['Solomillo al whisky','AND','ca',25,0,'whisky: destilado, sin gluten','v',0,''],['Solomillo al Cabrales','AST','ca',25,0,'','v',0,''],
+['Cachopo','AST','ca',30,0,'pan rallado y harina sin gluten','v',1,''],['Flamenquín','AND','ca',30,0,'pan rallado sin gluten','v',1,''],['San Jacobo','ESP','ca',20,0,'pan rallado sin gluten · jamón cocido: etiqueta','v',1,''],
+['Filete empanado','ESP','ca',20,0,'pan rallado sin gluten','v',0,''],['Carne con tomate','ESP','ca',60,1,'tomate frito casero (el de bote: etiqueta)','v',0,''],['Ternera guisada con patatas','ESP','ca',90,1,'sin enharinar (o harina de arroz)','v',0,''],
+['Estofado de ternera','ESP','ca',120,1,'sin enharinar (o harina de arroz)','v',0,''],['Cordero al chilindrón','NAV','ca',90,1,'','v',0,''],['Caldereta extremeña','EXT','ca',90,1,'majado sin pan frito','v',0,''],
+['Chuletillas de cordero','ESP','ca',15,0,'','v',0,''],['Secreto ibérico a la plancha','ESP','ca',15,0,'','v',0,''],['Presa ibérica','ESP','ca',15,0,'','v',0,''],
+['Costillas al horno','ESP','ca',90,1,'','h',0,'en cazuela con su salsa'],['Lomo en adobo','AND','ca',30,1,'adobo casero (el hecho: etiqueta)','v',0,''],['Cochifrito','CYL','ca',60,0,'','v',1,''],
+['Torreznos','CYL','ca',60,0,'','v',1,''],['Morteruelo','CLM','ca',120,1,'pan sin gluten','v',0,''],['Carne mechada','AND','ca',120,1,'','v',0,''],
+['Fricandó','CAT','ca',90,1,'harina de arroz','v',0,''],['Mar y montaña (pollo con langostinos)','CAT','ca',60,1,'picada con pan sin gluten · fumet: etiqueta','v',0,''],['Butifarra con judías','CAT','ca',25,0,'butifarra: etiqueta','v',0,''],
+['Frito mallorquín','BAL','ca',45,1,'','v',0,''],['Lomo con col','BAL','ca',60,1,'sobrasada: etiqueta','v',0,''],['Pinchos morunos','AND','ca',20,0,'especias: etiqueta','v',0,''],
+['Hígado encebollado','ESP','ca',20,0,'sin enharinar (o harina de arroz)','v',0,''],['Chuletón','ESP','ca',20,0,'','v',1,''],['Pollo asado entero','ESP','ca',90,1,'','h',0,'en cazuela («pollo en cazuela»)'],
+['Albóndigas de pollo en salsa','ESP','ca',50,1,'pan rallado sin gluten · sin enharinar','v',0,''],['Pollo a la cazadora','IT','ca',60,1,'','v',0,''],['Saltimbocca a la romana','IT','ca',20,0,'sin enharinar · jamón: etiqueta','v',0,''],
+['Escalopines al limón','IT','ca',20,0,'harina de arroz sin gluten','v',0,''],['Ossobuco a la milanesa','IT','ca',120,1,'sin enharinar (o harina de arroz)','v',0,''],['Albóndigas en salsa de tomate (polpette)','IT','ca',50,1,'pan rallado sin gluten','v',0,''],
+['Vitello tonnato','IT','ca',60,1,'mayonesa: etiqueta','v',0,''],['Moussaka','GR','ca',90,1,'bechamel de maicena','h',0,'al micro, por capas'],['Souvlaki de pollo','GR','ca',20,0,'','v',0,''],
+['Kleftiko (cordero al horno)','GR','ca',180,0,'','h',1,''],['Stifado (ternera con cebollitas)','GR','ca',120,1,'sin enharinar','v',0,''],['Keftedes (albóndigas)','GR','ca',35,1,'pan rallado sin gluten','v',0,''],
+['Soutzoukakia (albóndigas en salsa)','GR','ca',50,1,'pan rallado sin gluten','v',0,''],['Tajín de pollo con limón y aceitunas','MED','ca',60,1,'especias: etiqueta','v',0,''],['Tajín de cordero con ciruelas','MED','ca',120,1,'especias: etiqueta','v',0,''],
+['Kofta de cordero','MED','ca',25,0,'especias: etiqueta','v',0,''],['Pollo shawarma en plato','MED','ca',30,1,'sin pan de pita · especias: etiqueta','v',0,''],
 
-['Croquetas de jamón','ESP','ta',60,1,'bechamel con harina de arroz · pan rallado sin gluten'],['Croquetas de pollo','ESP','ta',60,1,'harina de arroz · pan rallado sin gluten'],['Croquetas de bacalao','ESP','ta',60,1,'harina de arroz · pan rallado sin gluten'],
-['Empanada gallega de atún','GAL','ta',90,1,'masa sin gluten'],['Empanadillas de atún','ESP','ta',45,1,'obleas sin gluten'],['Patatas bravas','MAD','ta',30,0,'salsa con maicena'],['Patatas alioli','ESP','ta',25,0,''],
-['Pan con tomate','CAT','ta',5,0,'pan sin gluten'],['Migas extremeñas','EXT','ta',40,0,'pan sin gluten · chorizo: etiqueta'],['Gildas','PV','ta',10,0,''],['Morcilla con pimientos','CYL','ta',15,0,'morcilla: etiqueta'],
-['Chorizo a la sidra','AST','ta',20,0,'chorizo: etiqueta · sidra sin gluten'],['Mojama con almendras','AND','ta',5,0,''],['Talo con chistorra','PV','ta',20,0,'harina de maíz · chistorra: etiqueta'],['Pa amb oli','BAL','ta',5,0,'pan sin gluten'],
-['Coca de recapte','CAT','ta',60,1,'masa sin gluten'],['Champiñones rellenos','ESP','ta',25,0,''],['Pulpo con cachelos','GAL','ta',50,0,''],
+['Huevos a la flamenca','AND','ve',25,0,'chorizo: etiqueta','h',0,'en cazuela tapada a fuego'],['Huevos rellenos','ESP','ve',25,1,'mayonesa: etiqueta','v',0,''],['Revuelto de ajetes y gambas','ESP','ve',15,0,'','v',0,''],
+['Tortilla de bacalao','PV','ve',15,0,'','v',0,''],['Tortilla de espinacas','ESP','ve',15,1,'','v',0,''],['Tortilla de calabacín','ESP','ve',20,1,'','v',0,''],
+['Tortilla Sacromonte','AND','ve',20,0,'','v',0,''],['Duelos y quebrantos','CLM','ve',15,0,'chorizo: etiqueta','v',0,''],['Piperrada','PV','ve',25,1,'','v',0,''],
+['Asadillo manchego','CLM','ve',50,1,'','h',0,'pimientos asados al micro'],['Escalivada','CAT','ve',50,1,'','h',0,'a la plancha o al micro'],['Samfaina','CAT','ve',40,1,'','v',0,''],
+['Tumbet','BAL','ve',60,1,'','h',0,'en sartén, por capas'],['Espinacas a la catalana','CAT','ve',15,0,'','v',0,''],['Alcachofas con jamón','NAV','ve',30,0,'','v',0,''],
+['Cardo con almendras','NAV','ve',40,1,'maicena para espesar','v',0,''],['Borraja con patatas','ARA','ve',30,1,'','v',0,''],['Pimientos rellenos de carne','ESP','ve',60,1,'','h',0,'en cazuela tapada'],
+['Piquillos rellenos de bacalao','NAV','ve',40,1,'bechamel con maicena','v',0,''],['Berenjenas rellenas','ESP','ve',50,1,'bechamel con maicena','h',0,'al micro'],['Calabacines rellenos','ESP','ve',45,1,'','h',0,'al micro'],
+['Coliflor gratinada','ESP','ve',35,1,'bechamel con maicena','h',0,'al micro, sin gratinar'],['Acelgas con patatas','ESP','ve',30,1,'','v',0,''],['Judías verdes con tomate','ESP','ve',30,1,'','v',0,''],
+['Setas al ajillo','ESP','ve',15,0,'','v',0,''],['Champiñones al ajillo','ESP','ve',15,0,'','v',0,''],['Espárragos trigueros a la plancha','ESP','ve',10,0,'','v',0,''],
+['Papas arrugadas con mojo','CAN','ve',30,0,'','v',0,''],['Pimientos de Padrón','GAL','ve',10,0,'','v',0,''],['Patatas a lo pobre','AND','ve',30,0,'','v',0,''],
+['Ajo cabañil','MUR','ve',30,0,'','v',0,''],['Berenjenas con miel','AND','ve',25,0,'harina de garbanzo sin gluten: etiqueta','v',0,''],['Zarangollo','MUR','ve',25,0,'','v',0,''],
+['Pisto con huevo y atún','CLM','ve',45,1,'tomate frito casero (el de bote: etiqueta)','v',0,''],['Parmigiana de berenjena','IT','ve',60,1,'sin rebozar (o harina de arroz)','h',0,'al micro, por capas'],['Caponata siciliana','IT','ve',45,1,'','v',0,''],
+['Peperonata','IT','ve',40,1,'','v',0,''],['Frittata de calabacín','IT','ve',20,1,'','v',0,''],['Polenta con setas','IT','ve',30,0,'harina de maíz sin gluten: etiqueta','v',0,''],
+['Gemistá (verduras rellenas de arroz)','GR','ve',75,1,'','h',0,'en cazuela tapada'],['Briam (verduras asadas)','GR','ve',60,1,'','h',0,'en cazuela'],['Horta (verdura hervida con limón)','GR','ve',20,0,'','v',0,''],
+['Shakshuka','MED','ve',25,0,'','v',0,''],['Ratatouille','MED','ve',50,1,'','v',0,''],['Imam bayildi (berenjenas rellenas)','MED','ve',60,1,'','h',0,'en cazuela tapada'],
 
-['Churros','MAD','de',30,0,'harina sin gluten (mezcla)'],['Chocolate a la taza','ESP','de',10,0,'maicena · cacao: etiqueta'],['Tortitas de avena y plátano','ESP','de',15,0,'avena certificada'],
-['Ensaimada','BAL','de',240,0,'harina sin gluten (mezcla)'],['Sobaos','CTB','de',60,1,'harina sin gluten (mezcla)'],['Magdalenas','ESP','de',45,1,'harina sin gluten (mezcla)'],['Bizcocho de yogur','ESP','de',50,1,'harina sin gluten (mezcla)'],
+['Croquetas de jamón','ESP','ta',60,1,'bechamel con harina de arroz · pan rallado sin gluten','v',0,''],['Croquetas de pollo','ESP','ta',60,1,'harina de arroz · pan rallado sin gluten','v',0,''],['Croquetas de bacalao','ESP','ta',60,1,'harina de arroz · pan rallado sin gluten','v',0,''],
+['Empanada gallega de atún','GAL','ta',90,1,'masa sin gluten','h',0,''],['Empanadillas de atún','ESP','ta',45,1,'obleas sin gluten','v',0,''],['Patatas bravas','MAD','ta',30,0,'salsa con maicena','v',0,''],
+['Patatas alioli','ESP','ta',25,0,'','v',0,''],['Pan con tomate','CAT','ta',5,0,'pan sin gluten','v',0,''],['Migas extremeñas','EXT','ta',40,0,'pan sin gluten · chorizo: etiqueta','v',0,''],
+['Gildas','PV','ta',10,0,'','',0,''],['Morcilla con pimientos','CYL','ta',15,0,'morcilla: etiqueta','v',0,''],['Chorizo a la sidra','AST','ta',20,0,'chorizo: etiqueta · sidra sin gluten','v',0,''],
+['Mojama con almendras','AND','ta',5,0,'','',0,''],['Talo con chistorra','PV','ta',20,0,'harina de maíz sin gluten y chistorra: etiqueta','v',0,''],['Pa amb oli','BAL','ta',5,0,'pan sin gluten','',0,''],
+['Coca de recapte','CAT','ta',60,1,'masa sin gluten','h',0,''],['Champiñones rellenos','ESP','ta',25,0,'','h',0,'al micro'],['Pulpo con cachelos','GAL','ta',50,0,'','v',0,''],
+['Arancini','IT','ta',60,0,'pan rallado sin gluten','v',1,''],['Tzatziki','GR','ta',10,1,'','',0,''],['Fava de Santorini','GR','ta',50,1,'','v',0,''],
+['Melitzanosalata','GR','ta',40,1,'','h',0,'berenjena al micro'],['Taramosalata','GR','ta',15,1,'con patata, sin pan · tarama: etiqueta','v',0,''],['Dolmades (hojas de parra rellenas)','GR','ta',60,1,'hojas de parra: etiqueta','v',0,''],
+['Hummus','MED','ta',10,1,'tahini: etiqueta','',0,''],['Baba ganoush','MED','ta',40,1,'tahini: etiqueta','h',0,'berenjena al micro'],['Falafel casero','MED','ta',40,1,'garbanzo crudo, sin harina','v',0,''],
 
-['Arroz con leche','AST','po',50,1,''],['Natillas','ESP','po',25,1,'maicena'],['Flan de huevo','ESP','po',50,1,''],['Flan de queso','ESP','po',60,1,''],['Crema catalana','CAT','po',30,1,'maicena'],
-['Leche frita','CYL','po',40,1,'maicena · harina de arroz'],['Torrijas','ESP','po',30,0,'pan sin gluten'],['Tarta de Santiago','GAL','po',50,1,''],['Tarta de queso al horno','PV','po',50,1,'maicena'],
-['Tocino de cielo','AND','po',60,1,''],['Pestiños','AND','po',45,1,'harina sin gluten (mezcla)'],['Buñuelos de viento','ESP','po',40,0,'harina sin gluten (mezcla)'],['Panellets','CAT','po',40,1,''],
-['Polvorones','AND','po',40,1,'harina sin gluten tostada'],['Turrón blando casero','ESP','po',20,1,''],['Peras al vino','RIO','po',40,1,''],['Manzanas asadas','ESP','po',40,1,''],
-['Dulce de membrillo','ESP','po',90,1,''],['Cuajada con miel','NAV','po',20,1,''],['Mel i mató','CAT','po',5,0,''],['Filloas','GAL','po',30,0,'harina sin gluten (mezcla)'],
-['Frixuelos','AST','po',30,0,'harina sin gluten (mezcla)'],['Casadielles','AST','po',60,1,'masa sin gluten'],['Quesada pasiega','CTB','po',60,1,'harina de arroz'],['Bienmesabe canario','CAN','po',30,1,''],
-['Frangollo','CAN','po',40,1,'millo (maíz)'],['Leche merengada','MAD','po',20,1,''],['Gató mallorquín','BAL','po',50,1,''],['Rosquillas de anís','MAD','po',40,1,'harina sin gluten (mezcla)'],
-['Fresas con nata','ESP','po',5,0,''],['Macedonia','ESP','po',10,0,''],['Mousse de chocolate','ESP','po',20,1,'chocolate: etiqueta'],['Natillas de chocolate','ESP','po',25,1,'maicena · cacao: etiqueta']
+['Churros','MAD','de',30,0,'harina sin gluten (mezcla)','v',1,''],['Chocolate a la taza','ESP','de',10,0,'maicena · cacao: etiqueta','vm',1,''],['Tortitas de avena y plátano','ESP','de',15,0,'avena certificada','v',0,''],
+['Ensaimada','BAL','de',240,0,'harina sin gluten (mezcla)','h',1,''],['Sobaos','CTB','de',60,1,'harina sin gluten (mezcla)','h',0,''],['Magdalenas','ESP','de',45,1,'harina sin gluten (mezcla)','h',0,''],
+['Bizcocho de yogur','ESP','de',50,1,'harina sin gluten (mezcla)','h',0,'bizcocho en taza al micro'],
+
+['Arroz con leche','AST','po',50,1,'','v',0,''],['Natillas','ESP','po',25,1,'maicena','vm',0,''],['Flan de huevo','ESP','po',50,1,'','h',0,'al baño maría en olla o al micro'],
+['Flan de queso','ESP','po',60,1,'','h',0,'al baño maría en olla o al micro'],['Crema catalana','CAT','po',30,1,'maicena','v',0,''],['Leche frita','CYL','po',40,1,'maicena · harina de arroz','v',1,''],
+['Torrijas','ESP','po',30,0,'pan sin gluten','v',1,''],['Tarta de Santiago','GAL','po',50,1,'','h',1,''],['Tarta de queso al horno','PV','po',50,1,'maicena','h',0,''],
+['Tocino de cielo','AND','po',60,1,'','h',0,'al baño maría en olla'],['Pestiños','AND','po',45,1,'harina sin gluten (mezcla)','v',1,''],['Buñuelos de viento','ESP','po',40,0,'harina sin gluten (mezcla)','v',1,''],
+['Panellets','CAT','po',40,1,'','h',1,''],['Polvorones','AND','po',40,1,'harina sin gluten tostada','h',1,''],['Turrón blando casero','ESP','po',20,1,'','v',1,''],
+['Peras al vino','RIO','po',40,1,'','v',0,''],['Manzanas asadas','ESP','po',40,1,'','h',0,'al micro'],['Dulce de membrillo','ESP','po',90,1,'','vm',0,''],
+['Cuajada con miel','NAV','po',20,1,'','vm',0,''],['Mel i mató','CAT','po',5,0,'','',0,''],['Filloas','GAL','po',30,0,'harina sin gluten (mezcla)','v',0,''],
+['Frixuelos','AST','po',30,0,'harina sin gluten (mezcla)','v',0,''],['Casadielles','AST','po',60,1,'masa sin gluten','v',1,''],['Quesada pasiega','CTB','po',60,1,'harina de arroz','h',0,''],
+['Bienmesabe canario','CAN','po',30,1,'','v',1,''],['Frangollo','CAN','po',40,1,'harina de millo sin gluten: etiqueta','v',0,''],['Leche merengada','MAD','po',20,1,'','v',0,''],
+['Gató mallorquín','BAL','po',50,1,'','h',1,''],['Rosquillas de anís','MAD','po',40,1,'harina sin gluten (mezcla)','v',1,''],['Fresas con nata','ESP','po',5,0,'','',0,''],
+['Macedonia','ESP','po',10,0,'','',0,''],['Mousse de chocolate','ESP','po',20,1,'chocolate: etiqueta','vm',0,''],['Natillas de chocolate','ESP','po',25,1,'maicena · cacao: etiqueta','vm',0,''],
+['Panna cotta','IT','po',20,1,'','v',0,''],['Tiramisú','IT','po',30,1,'solo con soletillas sin gluten · cacao: etiqueta','',1,''],['Zabaione','IT','po',15,0,'','v',0,''],
+['Affogato al café','IT','po',5,0,'helado: etiqueta','',0,''],['Yogur griego con miel y nueces','GR','po',5,0,'','',0,''],['Rizogalo (arroz con leche)','GR','po',45,1,'','v',0,''],
+['Mahalabia','MED','po',20,1,'maicena','v',0,'']
 ];
 document.getElementById('total').textContent=P.length;
 document.getElementById('total2').textContent=P.length;
+const nHoy=P.filter(hoyVale).length,nAd=P.filter(function(p){return !hoyVale(p)&&p[8];}).length;
+document.getElementById('hoy').textContent=nHoy+nAd;
+document.getElementById('cuentas').textContent=nHoy+' salen tal cual con micro + vitro · '+nAd+' adaptados (↪) · '+(P.length-nHoy-nAd)+' esperan a tener horno · '+
+  P.filter(function(p){return /etiqueta/.test(p[5]);}).length+' con algo de etiqueta · '+P.filter(function(p){return p[7];}).length+' de fiesta.';
+/* el filtro «Cocina» de la portada */
+const porCoc={};P.forEach(function(p){const c=cocinaDe(p);porCoc[c]=(porCoc[c]||0)+1;});
+document.getElementById('cocinas').innerHTML='<span class="chip on">Todas</span>'+Object.keys(COC).map(function(c){return '<span class=chip>'+COC[c]+' '+porCoc[c]+'</span>';}).join('');
 /* regiones con su cuenta */
 const cuenta={};P.forEach(function(p){cuenta[p[1]]=(cuenta[p[1]]||0)+1;});
-document.getElementById('regs').innerHTML=Object.keys(REG).map(function(k){
+/* la región, solo con España */
+document.getElementById('regs').innerHTML=Object.keys(REG).filter(function(k){return !/^(IT|GR|MED)$/.test(k);}).map(function(k){
   return '<div'+(k==='AST'?' class=on':'')+'>'+REG[k]+'<span>'+(cuenta[k]||0)+' platos</span></div>';}).join('');
 /* el catálogo, por tipo */
 document.getElementById('cat').innerHTML=Object.keys(TIPO).map(function(t){
   const l=P.filter(function(p){return p[2]===t;});
-  return '<h3>'+TIPO[t]+' · '+l.length+'</h3><table><tr><th>Plato</th><th>Región</th><th>Min</th><th>Tanda</th><th>Sin gluten</th></tr>'+
-    l.map(function(p){return '<tr><td>'+p[0]+'</td><td>'+REG[p[1]]+'</td><td>'+p[3]+'</td><td>'+(p[4]?'🍲':'')+'</td><td>'+
-      (p[5]?(/etiqueta/.test(p[5])?'<span class=duda>':'<span class=ok>')+p[5]+'</span>':'<span class=ok>de siempre</span>')+'</td></tr>';}).join('')+'</table>';}).join('');
+  return '<h3>'+TIPO[t]+' · '+l.length+'</h3><div class=tw><table><tr><th>Plato</th><th>Región</th><th>Min</th><th>Tanda</th><th>Sin gluten</th><th>Equipo</th><th>Hoy</th></tr>'+
+    l.map(function(p){return '<tr><td>'+p[0]+(p[7]?' 🎉':'')+'</td><td>'+REG[p[1]]+'</td><td>'+p[3]+'</td><td>'+(p[4]?'🍲':'')+'</td><td>'+
+      (p[5]?(/etiqueta/.test(p[5])?'<span class=duda>':'<span class=ok>')+p[5]+'</span>':'<span class=ok>de siempre</span>')+'</td><td>'+
+      (p[6]?p[6].split('').map(function(c){return EQ[c];}).join(''):'—')+'</td><td>'+
+      (hoyVale(p)?'<span class=ok>✓</span>':p[8]?'<span class=ok>↪ '+p[8]+'</span>':'<span class=duda>— horno</span>')+'</td></tr>';}).join('')+'</table></div>';}).join('');
 </script>
