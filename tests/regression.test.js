@@ -15554,6 +15554,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.campo === 1 && r.chips.length === 5 && r.chips.every((c) => parseInt(c.split(':')[1], 10) >= 44) && r.val === '120' && r.guardado === 120 && r.copia &&
       r.sem && r.sem.n === 7 && /2h00/.test(r.sem.txt) && /1h00/.test(r.sem.txt) && /—/.test(r.sem.txt) && /media 1 h 30 al día, 2 días apuntados/.test(r.sem.frase) && r.sem.ancho <= 412, JSON.stringify(r));
   }
+  // 398) El Cierre · C3 · las horas de Comer siguen a la guardia: guardia ayer → Comer de ayer (comida 14:00 y cena 21:00 en el
+  // hospital) → «›» a hoy, que es el saliente (desayuno = relevo 8:00 + 45 min, comida 15:00, cena 21:30) → «hoy». Fija: la línea del día
+  // ponía siempre 9:00 / 21:30 aunque el día fuera de guardia o de saliente.
+  {
+    const K = await page.evaluate(() => { const P = window.PG; window.__copia398 = JSON.parse(JSON.stringify(P.store));
+      const r = P.store.rotation; r.jornada = Object.assign({}, r.jornada, { start: '08:00', end: '15:00', workdays: [0, 1, 2, 3, 4, 5, 6] });
+      r.guardiaTipos = [{ code: 'urg', label: 'Urgencias', relevoSem: '08:00', relevoFinde: '08:00', pase: 0 }];
+      const ay = P.iso(P.addDays(new Date(), -1)); P.setGuardiaTipo(ay, 'urg');
+      P.ui.feVer = ''; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'hoy'; P.ui.foodDate = ''; P.render(); return ay; });
+    const horas = () => page.evaluate(() => { const o = {}; document.querySelectorAll('#main .cjml .cjmm').forEach((f) => { o[f.dataset.p] = (f.querySelector('.cjhr') || {}).textContent; }); return o; });
+    await page.click('#main [data-a="food-prev"]'); await page.waitForTimeout(150);
+    const guardia = await horas();
+    await page.click('#main [data-a="food-next"]'); await page.waitForTimeout(150);
+    const saliente = await horas();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia398; P.save(); P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('398 Comer sigue a la guardia: el día de guardia come a las 14:00 y cena a las 21:00; el saliente desayuna a las 8:45 (relevo + 45), come a las 15:00 y cena a las 21:30',
+      guardia.comida === '14:00' && guardia.cena === '21:00' && saliente.desayuno === '8:45' && saliente.comida === '15:00' && saliente.cena === '21:30', JSON.stringify({ K, guardia, saliente }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

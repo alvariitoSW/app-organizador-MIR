@@ -15167,8 +15167,17 @@ function renderComerEje(){
   else body=cjeSemanaTabHTML();
   $('#main').innerHTML='<div class="grid cje">'+cab+body+'</div>';}
 function cjeHoraMom(p,k){
-  /* la hora de cada momento en la línea del día: la comida, la de tu ajuste (con o sin entreno) */
-  if(p==='comida')return comidasCfg()[entrenoDe(k)?'conEntreno':'sinEntreno'].de;
+  /* la hora de cada momento en la línea del día. Sigue a la guardia y al saliente: el desayuno cae en el café
+     de la mañana (día de trabajo o de guardia) o 45 min después del relevo (saliente); la comida y la cena del
+     día de guardia son en el hospital (14:00 y 21:00), la del saliente tras dormir (15:00). Libre: las de siempre. */
+  const C=cjeDia(k),sal=C.guardia?null:salidaDeGuardia(k),H=function(m){return Math.floor(m/60)+':'+String(Math.round(m%60)).padStart(2,'0');};
+  if(p==='desayuno'&&sal&&sal.relevo)return H(mins(sal.relevo)+45);
+  if(p==='desayuno'&&(C.guardia||C.trabajo)){
+    try{const R=mananaRegleta(k),cf=R.filter(function(x){return x.e==='cafe';})[0];
+      if(cf)return H(Math.round(cf.h*60));if(R[0]&&R[0].e==='cama')return H(Math.round(R[0].h*60)+20);}catch(e){}}
+  if(p==='comida')return C.guardia?comidasCfg().sinEntreno.de:sal?'15:00':comidasCfg()[entrenoDe(k)?'conEntreno':'sinEntreno'].de;
+  if(p==='cena'&&C.guardia)return '21:00';
+  if(p==='post-entreno'){const f=finEntrenoDe(k);if(f!=null)return H(f+15);}   /* la hora del entreno real manda */
   return {desayuno:'9:00',cena:'21:30','post-entreno':'18:30'}[p]||'17:00';}
 function cjeAhoraHTML(dk,esHoy,ft){
   /* «AHORA» de la línea del día: la hora, el día (con guardia si la hay) y kcal/P/HC/G frente al objetivo */

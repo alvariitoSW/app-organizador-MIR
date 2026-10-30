@@ -3,6 +3,16 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-30 · El Cierre · horas de comer que siguen a la guardia (Consejo por delegación)
+
+**Elegido:** `cjeHoraMom` (app.js) lee lo que la app ya sabe: `cjeDia(k)` (guardia / trabajo), `salidaDeGuardia(k)` (el relevo del día
+anterior, aunque el saliente no esté marcado), `mananaRegleta(k)` (hora del paso «café») y `finEntrenoDe(k)`. Día de trabajo o de guardia:
+desayuno en el café de la mañana (o levantarse + 20 min). Guardia: comida 14:00 y cena 21:00 en el hospital. Saliente: desayuno = relevo + 45 min,
+comida 15:00, cena 21:30. Entreno real conocido: post-entreno = fin del entreno + 15 min. Libre: 9:00 / 21:30 / 18:30 / 17:00 como antes.
+Prueba 398 (guardia ayer → Comer de ayer → «›» a hoy), que cae al revertir. **Descartado:** guardar las horas en ajustes (ya salen de la
+rotación) y una tabla nueva por tipo de día. **Supuestos:** `sup-2026-10-30-comer-reloj2`: la comida de guardia usa `comidasCfg().sinEntreno.de`;
+el saliente come a las 15:00 fija; el post-entreno va 15 min después de acabar el entreno; sin plan de la mañana, 9:00.
+
 ## 2026-10-29 · Recopilación de webs y apps médicas
 
 **Elegido:** una lista por temas en `docs/webs-medicas.md` (intensivos y ventilación, cardiología, urgencias y
