@@ -66,6 +66,7 @@ traspaso explica por qué.
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
 | 2026-10-30 | G5 · receta, cola de TikTok, antojo de microondas | construir | sonnet | 1 | 48 | 1,0 M | 4,7 M de caché leída | todas las condiciones en el primer encargo y una sola suite completa: −33 % sobre presupuesto |
 | 2026-10-30 | G6 · maqueta de Entreno | maqueta | sonnet + verificador sonnet | 2 | 16 | ~0,3 M (sin la presidencia) | verificador rehízo los dibujos | maqueta sin concurso con lenguaje ya elegido y acuerdos escritos: ~0,3 M |
+| 2026-10-30 | G7 · Entreno: 12 dibujos, ficha, progresión doble, saliente | construir | sonnet ×2 en paralelo + verificador | 3 | 79 | ~1,5 M | constructor 1,1 M | dibujos y obra en paralelo con un contrato de datos (`EJ_FICHAS`): −25 % sobre presupuesto |
 
 ## Ahorros que funcionan
 

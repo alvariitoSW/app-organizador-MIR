@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G7 · Construir R10: 12 dibujos, un toque por serie, progresión doble, récord** (maqueta `maquetas/entreno-g6.html`)
+**Gran Ley · G8 · Lector de comida rápida** (Happy Meal, Big Tasty, Taco Bell, «menú del día de X», «un paquete de»)
 
 ## Por hacer
 
@@ -34,7 +34,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | ~~G4~~ | ✅ 30/10 · proteína en Hoy a 1,6 g/kg (solo si faltan >30 g, una sugerencia de la nevera; guardia «lo que se pueda»), aviso tras entreno (2 h), la frase arriba en Comer → Hoy con lupa (una sola caja), barra de Comer con el mismo número · S6 ya cubierta (no se construye) · pruebas 380-383 · ~2,1 M (se pasó: dos suites completas y retoques) | construir | sonnet | ~1,2 M |
 | ~~G5~~ | ✅ 30/10 · página de receta (hoja de Comer: tachar ingredientes, Añadir a la compra, Ver en TikTok fuera, Compartir sin datos), cola de TikTok en Importar, antojo de microondas (7 recetas ≤5 min · 23-31 g) en Hoy y Comer · pruebas 384-386 · 1,0 M | construir | sonnet | ~1,5 M |
 | ~~G6~~ | ✅ 30/10 · `maquetas/entreno-g6.html` · Lo que toca hoy, 3 dibujos de dos posturas, una serie por toque, +2,5 kg, récord discreto, día saliente · sin concurso (Consejo por delegación) · ~0,3 M | maqueta | sonnet | ~1,0 M |
-| G7 | Construir R10: 12 dibujos, un toque por serie, progresión doble, récord | construir | haiku dibujos, sonnet | ~2,0 M |
+| ~~G7~~ | ✅ 30/10 · 12 ejercicios dibujados con ficha (`fig/ejercicios.js`, «Cómo se hace» en la sesión), reps de la vez anterior, «Prueba +X kg» en Lo que toca hoy (progresión doble con `progresionDe`), récord discreto, saliente 25 min al 65 % / movilidad / descanso, guardia «Hoy no toca» · pruebas 387-391 · ~1,4 M | construir | sonnet dibujos y obra | ~2,0 M |
 | G8 | Lector de comida rápida | construir | haiku datos, sonnet | ~0,8 M |
 | G9 | MAQUETA La Noche 2: coach + energía + 4:20 y descanso + sin pantallas | maqueta | opus + sonnet | ~1,5 M |
 | G10 | Construir 4:20 y descanso (+ clave según P2) | construir | sonnet | ~1,5 M |
