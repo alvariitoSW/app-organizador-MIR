@@ -1842,6 +1842,42 @@ queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila
 Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
 pinta «1000 €» sin punto de miles en esta pantalla.
 
+## La Reforma · R5 · Maqueta de Comer (2026-10-30)
+
+**Elegido.** `maquetas/comer-reforma.html`, aprobada por el Consejo por delegación (acta 2026-10-29-2, «R5»). Compra base
+que se copia a la compra restando la nevera, con la cuenta a la vista y la semana por caducidad (pollo 1-2, lomo 3-5,
+pescado del congelador de uno en uno). Al terminar un lote, hoja «¿Cómo las repartes?» (propone 2 nevera · 4 ❄) y raciones
+❄ con «3 meses · hasta …»; el kilo de pescado como 4 × 250 g. En Hoy, «🥚 85 de 120 g · te faltan 35» + una sugerencia de
+un toque, solo si faltan más de 30 g; en guardia, «lo que se pueda». Página de receta: ingredientes que se tachan, pasos
+grandes, Añadir a la compra, Ver en TikTok (fuera, **sin iframe de TikTok ni imágenes externas**) y Compartir sin datos
+personales; cola de TikTok plegada.
+
+**Descartado.** Concurso de escuelas (acuerdo 9: una maqueta por área). Vídeo incrustado.
+
+**Supuestos.** Duraciones: platos cocinados 3 meses, merluza y fajitas 2 (USDA FoodKeeper/AESAN). El reparto propuesto
+deja 2 raciones en la nevera y el resto al congelador. La sugerencia de proteína es una sola, la que más acerca sin pasarse.
+La compra base es una lista fija que se edita a mano (no se aprende de las compras).
+
+## La Reforma · R6 · Compra base + congelador (2026-10-30)
+
+**Elegido.** Lo de la maqueta R5 (vistas Compra y Nevera), construido. «Mi compra base» (`food().compraBase`, los 6 de
+la maqueta, editable una por línea) y «🛒 Hacer la compra base», que la mete en la Compra como grupo propio **solo al
+tocarlo**, restando lo que hay en casa con el mismo `casaTiene`; «He hecho esta compra» la limpia. «Tu semana por
+caducidad» con la fuente. Al marcar hecho un lote (tanda, «Hoy cocino» o modo cocina), hoja «¿Cómo las repartes?» con la
+propuesta **según la semana** (las raciones que el menú pide mientras aguanta; sin ninguna, 2) y −/+ que suman siempre el
+total; las ❄ van al cocinado con `cong` y «hasta» a sus meses, y comer gasta primero la nevera. Zona «❄ Congelador» en la
+Nevera, el pescado congelado como «4 × 250 g ❄ · saca una la noche antes» y el plegable «Platos que congelan bien» (los 8,
+**solo como lista**, USDA FoodKeeper y AESAN). `dishes[].congela:{nevera,meses}` opcional desde el formulario del plato.
+Pruebas 372–375, que caen al revertir; 51, 223, 228 y 231 cierran la hoja nueva con «Guardar».
+
+**Descartado.** Compra base que entra sola cada semana (eso ya lo hacen las listas «de rutina»). Crear los 8 platos base
+en Mis platos. Reparto fijo de 2 en la nevera.
+
+**Supuestos.** Con 1 ración no sale la hoja (va a la nevera como antes). «Tu semana por caducidad» es texto fijo (pollo,
+lomo, pescado), no se calcula de la compra base editada. Las raciones ❄ siguen contando como ya cocinadas en lo que pide la
+compra. Si en «Hoy cocino» se cancela la hoja, no se crea el plato de la combinación. Los botones − y × de la despensa en la
+zona del congelador miden 30 px, como en el resto de la Nevera (ya era así).
+
 ## Gran Ley · G1 · Arreglos y pulidos (2026-10-30)
 
 *Redactada después, el 30/10, por acuerdo del Consejo (`.claude/plan-socialista/consejo/2026-10-30-g2.md`).*
@@ -1866,6 +1902,11 @@ Lo hecho está en `main` (commit 0d867cf). Suite 825/825 en verde. Medido a 412�
 ## Gran Ley · G2 · Maqueta de Comer (2026-10-30)
 
 *Por el Consejo por delegación (acta `.claude/plan-socialista/consejo/2026-10-30-g2.md`). Maqueta: `maquetas/comer-g2.html`.*
+
+**Ajuste al juntar con `main` (mismo día).** Otra sesión cerró antes la R5 (`maquetas/comer-reforma.html`, abajo), aprobada
+por el Consejo. **Manda la R5** en proteína en Hoy («85 de 120 g · te faltan 35», solo si faltan >30 g), página de receta,
+compra y nevera. De esta maqueta se construye solo lo que la R5 no tiene: **la frase arriba en Hoy** y **el antojo de
+microondas** (pantallas 1 y 4). Las pantallas de proteína, Casa y receta quedan como referencia.
 
 **Elegido.** Una sola maqueta con el lenguaje de «El reloj», en 4 pantallas a 412×915, claro y oscuro:
 - **Hoy:** «Escribir lo comido» arriba (cierra [aparc-comer-eje-frase] cuando se construya), el reloj, «Te faltan X g de

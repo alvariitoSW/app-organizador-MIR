@@ -5,6 +5,9 @@ tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
 - [aparc-sueno-noche-olvidada] Una noche sin anotar solo se alcanza 2 días (barrita de Sueño, 3 noches); al tercero no hay ruta visible · verificador G2 · 2026-10-30
+
+- [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
+- [aparc-lloret-suite] La prueba 205 del Lloretazo falló una vez en la suite completa (08:44 del 30/10); en las dos suites completas de la R6 (09:47 y 10:00 del 30/10) pasó. Se vigila; si no vuelve a caer, se cierra · tests/regression.test.js:7247
 - ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
 - ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
 - [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
@@ -123,6 +126,9 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+
+- [sup-2026-10-30-r5-comer] Maqueta de Comer: contestado en la R6 (30/10): reparto **según tu semana** (no 2 fijos), compra base al tocar el botón, platos base solo como lista. Sigue sin «vale»: ❄ 3 meses (merluza y fajitas 2) y una sola sugerencia de proteína · DECISIONS «La Reforma · R5/R6»
+- [sup-2026-10-30-r4-fintonic] Fintonic en pequeño (R4): «gasto a gasto» = fila a fila de las categorías de la captura; quitar una fila no baja el total del mes (cuenta como variable sin categoría); nombre vacío = se queda el de antes; ya no sale «en otra captura: X». Visto y pendiente: «Presupuesto de 300 288,00 €» se lee como 300.288 y `eur()` pinta «1000 €» sin punto · DECISIONS «La Reforma · R4» · contado el 2026-10-30
 - ~~[sup-2026-10-29-tu-mes]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 - ~~[sup-2026-10-29-la-vuelta]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 - ~~[sup-2026-10-28-dinero]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
