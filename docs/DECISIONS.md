@@ -2232,3 +2232,15 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - Las pruebas viejas no dependían de los emojis que cambian (comprobado con grep), así que ninguna se toca.
   - Las fichas mantienen su orden y sus textos; solo cambia lo que va dentro de la `<i>`.
+
+## Recetario español sin gluten · maqueta (2026-10-30)
+- **Elegido**
+  - Maqueta `maquetas/recetario.html` (5 pantallas a 412×915 y el catálogo): portada con buscador, tipos y filtros rápidos (para tanda, ≤20 min, +30 g de proteína, postres); por región; página de receta con aviso de gluten; postres; y una receta de TikTok con gluten que se guarda **ya cambiada** (pan rallado → sin gluten, harina → de arroz, soja → tamari).
+  - Catálogo de **249 platos** (33 postres y 7 desayunos), además de los 43 que ya tiene el recetario. Son recetas propias, que van dentro de la app y funcionan sin conexión.
+  - **Todo sin gluten:** lo que de siempre lleva trigo va ya cambiado. Lo que depende de la marca (chorizo, morcilla, caldo, chocolate) sale en ámbar con «mira la etiqueta», con los mismos tres estados de `glutenDe`.
+- **Descartado**
+  - APIs de recetas (TheMealDB, Spoonacular): tienen pocas recetas españolas, están en inglés, son de pago y la búsqueda sale del móvil.
+  - Bases de datos abiertas («RecetasDeLaAbuela»): copiadas de webs y con una licencia que no es Creative Commons.
+- **Supuestos**
+  - Los postres no entran solos en la semana: se apuntan como capricho.
+  - El whisky y la sidra cuentan como sin gluten, según el criterio de FACE para destilados y sidra.
