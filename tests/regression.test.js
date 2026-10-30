@@ -14455,8 +14455,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     w.sub = await page.evaluate(() => !!document.querySelector('#main .tm-hero input[data-a="fin-fotos"]'));
     await page.click('#main .tm-fx'); await page.waitForTimeout(250); w.b = await lee();
     await siembra({ nomina: true, fijos: true, sinVars: true, hoy: true }); await page.waitForTimeout(300); w.hoy = await lee();
-    check('368 Dinero · Tu mes sin gasto del día a día: no sale «Acabarás con» ni «ahorras», sale «Sube Fintonic o apunta un gasto…» con el botón de subir; el vaso dice Empiezas 2.380, Fijos 728, Te queda 1.652; tocar Fijos da «Te quedan 1.652 €»; Hoy no habla de €/día',
-      w.a.hay && !/Acabarás|ahorras/i.test(w.a.hero + w.a.lado + w.a.cadena) && /Sube Fintonic o apunta un gasto para saber con cuánto acabas/.test(w.a.hero) && w.sub &&
+    check('368 Dinero · Tu mes sin gasto del día a día: no sale «Acabarás con» ni «ahorras», sale «Sube la captura de Fintonic…» con el botón de subir; el vaso dice Empiezas 2.380, Fijos 728, Te queda 1.652; tocar Fijos da «Te quedan 1.652 €»; Hoy no habla de €/día',
+      w.a.hay && !/Acabarás|ahorras/i.test(w.a.hero + w.a.lado + w.a.cadena) && /Sube la captura de Fintonic de este mes para saber con cuánto acabas/.test(w.a.hero) && w.sub &&
       /Empiezas\s*2\.380.*Fijos\s*728.*Te queda\s*1\.652/.test(w.a.cadena) && !/Te quedan 1\.652/.test(w.a.lado) && /Te queda\s*1\.652/.test(w.a.lado) &&
       w.b.ui === true && /Te quedan 1\.652 €/.test(w.b.lado) && w.b.fijosLista === 6 && !/ahorras/i.test(w.b.hero) && w.a.ancho <= 412 &&
       /^💶 Mañana pagas Seguro \(25 €\)$/.test(w.hoy.linea) && !/€\/día/.test(w.hoy.linea), JSON.stringify(w));

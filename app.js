@@ -21887,7 +21887,7 @@ function dinTuMesHTML(){
     '<ul class="tm-fijos" aria-label="Fijos del mes">'+D.lista.map(function(x){
       return '<li class="'+(x.pg?'si':'no')+'"><span>'+(x.pg?'✓ ':'○ ')+esc(x.g.nombre)+'</span><span>'+f(x.g.importe)+' · '+(x.pg?'pagado':esc(fechaCorta(x.f)))+'</span></li>';}).join('')+'</ul>'+
     (D.lista.length?'':'<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>');
-  const aviso='<div class="card tm-hero"><div class="tm-t">Aún no sé tus gastos del día a día</div><p class="tm-p">Sube Fintonic o apunta un gasto para saber con cuánto acabas.</p>'+
+  const aviso='<div class="card tm-hero"><div class="tm-t">Aún no sé tus gastos del día a día</div><p class="tm-p">Sube la captura de Fintonic de este mes para saber con cuánto acabas.</p>'+
     '<label class="tm-bt p" style="cursor:pointer">📷 Subir Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   return cab+
     (D.sinVar?aviso:'<div class="card tm-hero"><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
