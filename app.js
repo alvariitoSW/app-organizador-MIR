@@ -5047,7 +5047,8 @@ function modoAvisoHTML(){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
   if(store.rotation.mode==='date')return '';
-  return '<div class="row mini" style="gap:8px"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
+  /* margen arriba y abajo: en Hoy va justo debajo de «＋ añadir» y sin él los dos botones se tocaban */
+  return '<div class="row mini" style="gap:8px;margin:10px 0"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
 }
 function daySleepLineHTML(dateStr,inf){
   const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr),r=suenoReal(dateStr);

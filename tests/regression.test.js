@@ -14626,6 +14626,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('372 Dinero · Tu mes: al apartar para un gasto grande la leyenda nombra «Apartado (rayas) 550 €» fuera del vaso, a ≥14 px y con la muestra a rayas como su capa; al quitarlo desaparece',
       !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
   }
+  // 373) HOY y MES · G1 [aparc-hoy-plantilla], EN CADENA (412×915): semana en modo plantilla → en Hoy el aviso «Usar las fechas del Mes» queda separado ≥8 px de «＋ añadir»
+  //      (antes se tocaban) → en Mes, separado ≥8 px de la fila de «hoy» → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.rotation.mode = 'pattern'; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    const mide = () => page.evaluate(() => { const b = document.querySelector('#main [data-a="mon-sync"]'); if (!b) return { hay: false };
+      const r = b.getBoundingClientRect(), bs = [...document.querySelectorAll('#main button')].filter((x) => x !== b).map((x) => x.getBoundingClientRect()).filter((q) => q.width && q.right > r.left && q.left < r.right);
+      const encima = bs.filter((q) => q.bottom <= r.top + 1).map((q) => r.top - q.bottom), debajo = bs.filter((q) => q.top >= r.bottom - 1).map((q) => q.top - r.bottom);
+      return { hay: true, arriba: encima.length ? Math.round(Math.min(...encima)) : 99, abajo: debajo.length ? Math.round(Math.min(...debajo)) : 99, ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.hoy = await mide();
+    r.hoyAnade = await page.evaluate(() => [...document.querySelectorAll('#main button')].some((x) => /añadir/.test(x.textContent)));
+    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); r.mes = await mide();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.tab = 'hoy'; P.save(); P.render(); }); await page.waitForTimeout(200); r.tras = await mide(); r.modo = await page.evaluate(() => window.PG.store.rotation.mode);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('373 Hoy y Mes · modo plantilla: «Usar las fechas del Mes» separado ≥8 px de «＋ añadir» en Hoy y de la fila de «hoy» en Mes; en modo fecha el aviso se va',
+      r.hoy.hay && r.hoyAnade && r.hoy.arriba >= 8 && r.hoy.abajo >= 8 && r.mes.hay && r.mes.arriba >= 8 && r.mes.abajo >= 8 && r.hoy.ancho <= 412 && !r.tras.hay && r.modo === 'date', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
