@@ -1,0 +1,134 @@
+<!doctype html><html lang="es" class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Remates · letra, sueño, viaje, móvil</title><style>
+:root{--bg:#070b14;--card:#111a2b;--card2:#0d1626;--ink:#e9f2ff;--ink2:#9db1cf;--line:#2a3a5a;--brand:#38e1ff;--ok:#34d399;--warn:#fbbf24;--sobre:#04121c;--suave:color-mix(in srgb,var(--brand) 16%,var(--card));--r:16px;--toque:44px;color-scheme:dark}
+html:not(.dark){--bg:#eef2f9;--card:#fff;--card2:#f3f6fc;--ink:#0d1729;--ink2:#506384;--line:#c5d1e6;--brand:#2563eb;--ok:#15803d;--warn:#92400e;--sobre:#fff;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit;min-height:var(--toque)}button{cursor:pointer}
+.barra{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--card2);border-bottom:1px solid var(--line)}
+.barra button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 12px;font-size:14px}
+.barra button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.marco{width:412px;height:915px;margin:12px auto;background:var(--bg);border:1px solid var(--line);border-radius:24px;overflow:auto;padding:16px;display:none}
+.marco.on{display:block}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:16px;margin:0 0 6px}p{margin:0 0 8px}
+.sub,.porque{color:var(--ink2);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:12px 0}
+.card.s{background:var(--suave);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.btn{display:block;width:100%;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 14px;font-size:15px;text-align:center;margin-top:8px}
+.btn.p{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.fila{display:flex;gap:8px}.fila>*{flex:1}
+label.c{display:flex;align-items:center;gap:12px;min-height:var(--toque);font-size:15px}
+label.c input{width:24px;height:24px;min-height:0;accent-color:var(--brand);flex:none}
+.campo{display:block;margin:8px 0}.campo span{display:block;font-size:14px;color:var(--ink2);margin-bottom:2px}
+.campo input,.campo select{width:100%;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px 12px;font-size:16px}
+.nota{font-size:14px;color:var(--ink2);border-left:3px solid var(--brand);padding-left:10px;margin:10px 0}
+.cab{background:var(--suave);border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-radius:var(--r);padding:14px;margin:8px 0 12px}
+.cab b{font-size:20px;display:block}
+.pasos{display:flex;gap:4px;margin:8px 0}.pasos i{flex:1;height:10px;border-radius:6px;background:var(--card2);border:1px solid var(--line)}.pasos i.h{background:var(--brand);border-color:var(--brand)}
+.racha{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:var(--toque);border-bottom:1px solid var(--line);font-size:15px}
+.racha:last-child{border:0}.pausa{font-size:14px;color:var(--warn);border:1px solid currentColor;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.grande{font-size:34px;font-weight:700;letter-spacing:.5px}
+.fila2{display:flex;justify-content:space-between;gap:8px;font-size:15px;padding:6px 0}
+.tag{display:inline-block;font-size:14px;color:var(--ok);font-weight:600}
+.item{display:flex;align-items:center;gap:8px}.item label.c{flex:1}.item .x{width:var(--toque);border:1px solid var(--line);background:var(--card2);border-radius:12px;font-size:18px}
+.med{display:flex;gap:6px;flex-wrap:wrap}.med button{flex:1;min-width:84px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px}
+.med button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+
+.cap,.k{font-size:var(--cap);font-weight:900;letter-spacing:.12em;color:var(--ink2);text-transform:uppercase}
+.mini{font-size:var(--mini);color:var(--ink2)}.glnk{display:flex;gap:10px;justify-content:center;margin-top:9px;font-size:var(--glnk);color:var(--ink2)}
+:root{--cap:10px;--mini:11.5px;--glnk:12.5px;--pot:36px;--chk:13px}
+body.nuevo{--cap:11px;--mini:12px;--glnk:13px;--pot:44px;--chk:16px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}.seg button{min-height:var(--pot);border-radius:10px;border:1px solid var(--line);background:var(--card2);font-size:12px;font-weight:800;padding:0 2px}.seg button.on{border-color:var(--brand);background:var(--suave)}
+.chk{display:flex;align-items:center;gap:8px;margin-top:6px}.chk input{width:var(--chk);height:var(--chk);min-height:0;flex:none;accent-color:var(--brand)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tile{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px}.tile b{display:block;font-size:18px}
+.hlin{display:flex;align-items:center;gap:10px;min-height:var(--toque);width:100%;text-align:left;border:1px solid color-mix(in srgb,var(--warn) 50%,var(--line));background:color-mix(in srgb,var(--warn) 10%,var(--card));border-radius:14px;padding:6px 12px;margin:8px 0;font-size:15px}
+.hlin b{flex:1}.hlin u{color:var(--brand);text-decoration:none;font-weight:700;font-size:14px}
+.modos{display:flex;gap:4px;margin:6px 0}.modos button{flex:1;min-height:36px;font-size:13px;border:1px solid var(--line);border-radius:10px;background:var(--card2)}.modos button[aria-pressed=true]{background:var(--brand);color:var(--sobre);font-weight:700}
+.ag{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}.ag:last-child{border:0}.ag time{width:48px;color:var(--ink2);flex:none}.ag.sal{color:var(--warn);font-weight:700}
+.ln{display:block;text-align:center;text-decoration:none;color:var(--brand);font-weight:700;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:12px;margin-top:8px}
+.hoja{position:sticky;bottom:-16px;margin:12px -16px -16px;background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 16px}
+.nm{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.nm button{min-height:44px;flex:1;min-width:56px;border:1px solid var(--line);border-radius:12px;background:var(--card2)}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px}.sem div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;height:96px}.sem i{display:block;width:22px;background:var(--brand);border-radius:4px}.sem i.v{background:transparent;border:1px dashed var(--ink2)}.sem small{color:var(--ink2);font-size:11px}
+.mov{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}.mov span{display:block;color:var(--ink2);font-size:11px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:6px}.dos .marco{display:none}
+pre{white-space:pre-wrap;font-size:12px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}</style></head><body><div class="barra"><button data-p="0" aria-pressed="true">1 Letra</button><button data-p="1">2 Hoy</button><button data-p="2">3 Entreno</button><button data-p="3">4:20</button><button data-p="4">CSS</button><button data-p="5">Sueño en Hoy</button><button data-p="6">Viaje: editor</button><button data-p="7">Viaje: Hoy</button><button data-p="8">Móvil: hoja</button><button data-p="9">Móvil: semana</button><button id="cv" aria-pressed="false">Letra: antes/después</button><button id="tema">Tema</button></div><section class="marco" aria-label="Letra y botones"><h1>Letra y botones</h1><p class="sub">Antes ↔ después. Cambia con el conmutador de arriba; las tres pantallas se ven a la vez abajo y nada pasa de 412 px.</p>
+<div class="card"><h2>Hoy</h2><div class="cap">Próximo · cena</div><p class="mini">.cap 10 → 11 · .mini 11,5 → 12 · .glnk 12,5 → 13</p></div>
+<div class="card"><h2>Entreno (portada)</h2><div class="cap">Hoy toca</div></div>
+<div class="card"><h2>4:20</h2><div class="seg"><button>Suave</button><button class="on">Media</button><button>Fuerte</button></div><label class="chk mini"><input type="checkbox" checked> casilla de privacidad</label></div>
+<button class="btn" data-ir="4">Ver las tres pantallas completas →</button></section><section class="marco" aria-label="Hoy"><h1>Hoy</h1><p class="sub">Viernes 30 de octubre</p>
+<div class="card s"><h2>💪 Día de fuerza · 8–15 · UMI</h2><p class="mini">Rótulo pequeño: <span class="cap">Próximo · cena</span></p>
+<div class="tiles"><div class="tile"><span class="k">Proteína</span><b>92 g</b></div><div class="tile"><span class="k">Agua</span><b>1,4 l</b></div></div>
+<p class="mini" style="margin-top:8px">Tu semana de guardias va al día · <a href="#" style="color:var(--brand)">ver</a></p><div class="glnk"><span>Plan</span><span>·</span><span>Guardias</span><span>·</span><span>Mes</span></div></div></section><section class="marco" aria-label="Entreno"><h1>Entreno</h1><div class="card"><span class="cap">Hoy toca</span><h2>Empuje · 5 ejercicios</h2><p class="mini">~55 min · última vez hace 4 días</p><button class="btn p">Empezar</button></div>
+<div class="card"><span class="cap">Esta semana</span><div class="tiles" style="margin-top:6px"><div class="tile"><span class="k">Series</span><b>38</b></div><div class="tile"><span class="k">Volumen</span><b>6,2 t</b></div></div><p class="mini">Descanso entre series: 2 min · peso en kg</p></div></section><section class="marco" aria-label="4:20"><h1>4:20</h1><div class="card"><h2>Potencia</h2><div class="seg"><button>Suave</button><button class="on">Media</button><button>Fuerte</button></div>
+<h2 style="margin-top:12px">Ganas</h2><div class="seg"><button>Pocas</button><button class="on">Bastantes</button><button>Muchas</button></div>
+<h2 style="margin-top:12px">Privacidad y guardia</h2>
+<label class="chk mini"><input type="checkbox" checked> en «Más», mostrar como «🔒 Privado», sin cifras</label>
+<label class="chk mini"><input type="checkbox" checked> dejar 4:20 fuera de la copia que compartes</label>
+<label class="chk mini"><input type="checkbox"> avisarme la víspera de una guardia</label></div></section><section class="marco" aria-label="Lista CSS"><h1>Lista de reglas CSS</h1><pre>styles.css (selector → valor, antes → después)
+.cap / .k (todas las variantes):
+ .inftile .k  (l.1722)  font-size 10px → 11px
+ .ghero2 .k   (l.1786)  10.5px → 11px
+ .dinv2 .cap  (l.2118)  10.5px → 11px
+ .h2 .cap, .mt .cap (l.2328) 10.5px → 11px
+ .mesres .cap (l.2989)  10px → 11px
+.mini  (l.474)  11.5px → 12px
+.glnk  (l.1792) 12.5px → 13px
+4:20 potencia (botones de 36): .cnseg button (l.2634) añadir min-height:44px (hoy solo padding 9px ≈ 36)
+ .cnvis button (l.2644) min-height 36px → 44px
+ (ganas/«cómo sentó» usan .cnseg: se benefician igual)
+casillas 4:20 (privacidad/guardia/tabaco, líneas ~11341/11450/11458/11459 en app.js, style="width:auto"):
+ nueva regla  .cn label.mini input[type=checkbox]{width:16px;height:16px}
+ (hoy salen al tamaño por defecto 13px). La fila sigue siendo tocable: label con min-height:44px.
+Cuidado con letter-spacing .12-.14em en mayúsculas a 11px: medido, sin desbordes a 412.</pre></section><section class="marco" aria-label="Sueño en Hoy"><h1>Hoy</h1>
+<div class="modos" role="group" aria-label="Modo de Hoy"><button aria-pressed="true">Conductor</button><button aria-pressed="false">Estación</button><button aria-pressed="false">Reloj</button><button aria-pressed="false">Línea</button></div>
+<p class="sub" id="modoN">Modo Conductor · son las 16:20</p>
+<div class="card s"><h2 id="mt">🚌 Siguiente: cena 21:30</h2><p class="mini">La cabecera propia de cada modo no cambia.</p></div>
+<button class="hlin" id="hl" data-ir="s"><span aria-hidden="true">🛌</span><b>Te faltan 2 noches</b><u>anotar</u></button>
+<div class="card"><h2>Tu día</h2><div class="ag"><time>08:00</time>UMI</div><div class="ag"><time>14:30</time>Comida</div><div class="ag"><time>18:00</time>Entreno</div></div>
+<div class="nota">Dónde va: justo bajo la cabecera del modo y sobre la agenda, igual en los 4 modos (misma posición, 44 px, ancho completo). Es una sola fila de ámbar suave: se nota sin gritar. No sale si las 3 últimas noches están anotadas (una noche «supuesta» sin confirmar cuenta como que falta, como en las barras de Sueño).</div>
+<div class="nota">Textos: 1 → «Te falta 1 noche · anotar»; 2 → «Te faltan 2 noches · anotar»; 3 → «Te faltan 3 noches · anotar». Toca → hoja de anotar de la noche más reciente sin apuntar; al guardar, la línea pasa a «1 noche» o desaparece. En modo bus antes de las 12 sustituye a «🛌 Anotar anoche» (no salen las dos).</div>
+<button class="btn" id="cambia">Ver con 1 noche que falta / ninguna</button>
+</section><section class="marco" aria-label="Viaje con vuelo"><h1>Modo viaje · Avión</h1>
+<div class="card"><h2>El billete</h2><div class="med"><button>Tren</button><button aria-pressed="true">Avión</button><button>Autobús</button><button>Coche</button></div></div>
+<div class="card" id="vuelo"><h2>✈ El vuelo (todo a mano)</h2>
+<div class="fila"><label class="campo"><span>Día del vuelo</span><input type="date" value="2026-11-05"></label><label class="campo"><span>Hora del vuelo</span><input type="time" id="vh" value="18:40"></label></div>
+<label class="campo"><span>Aeropuerto</span><input type="text" id="av" value="Aeropuerto de Valencia" maxlength="60"></label>
+<div class="campo"><span>Estar en el aeropuerto con antelación</span><div class="med" id="ant"><button aria-pressed="true" data-h="2">2 h · nacional</button><button aria-pressed="false" data-h="3">3 h · internacional</button></div></div>
+<label class="campo"><span>Trayecto de casa al aeropuerto (minutos)</span><input type="text" inputmode="numeric" id="tr" value="45"></label>
+<div class="cab"><span>Calculado</span><b id="sal">Sal de casa a las 15:55</b><span class="mini" id="det">18:40 − 2 h = 16:40 en el aeropuerto − 45 min</span></div>
+<p class="porque">Las cuentas las hace la app con lo que tú escribes; no consulta vuelos ni retrasos ni tráfico.</p>
+<a class="ln" href="https://www.google.com/maps/dir/?api=1&destination=Aeropuerto+de+Valencia&travelmode=driving" target="_blank" rel="noopener">🗺 Abrir Google Maps hacia el aeropuerto</a>
+<a class="ln" href="https://infocar.dgt.es/etraffic/" target="_blank" rel="noopener">🚦 Tráfico en la DGT (otra app)</a>
+<p class="mini">Los enlaces se abren fuera de la app, en el navegador o en Maps. Mañana, antes de salir, tú decides si te vale lo previsto.</p></div>
+<div class="card"><h2>La salida</h2><p class="mini">El campo «Sales de casa a las» del viaje se rellena solo con 15:55 (sigue siendo editable).</p></div>
+<button class="btn p">Guardar los cambios</button></section>
+<section class="marco" aria-label="Hoy en viaje (vuelo)"><h1>Hoy</h1><div class="cab"><b>De viaje · día 1 de 4</b><span>Valencia · vuelves el domingo</span></div>
+<div class="card s"><h2>🚪 Sal de casa a las 15:55</h2><p class="mini">Vuelo 18:40 · aeropuerto 16:40 · trayecto 45 min</p>
+<a class="ln" href="https://www.google.com/maps/dir/?api=1&destination=Aeropuerto+de+Valencia" target="_blank" rel="noopener">🗺 Google Maps al aeropuerto</a><a class="ln" href="https://infocar.dgt.es/etraffic/" target="_blank" rel="noopener">🚦 Tráfico DGT</a></div>
+<div class="card"><h2>Tu día de viaje</h2><div class="ag"><time>12:00</time>Comida</div><div class="ag sal"><time>15:55</time>🚪 Sal de casa</div><div class="ag"><time>16:40</time>En el aeropuerto</div><div class="ag"><time>18:40</time>✈ Vuelo</div></div>
+<div class="nota">«Sal de casa» es una parada más del día, la primera tarjeta cuando faltan menos de 3 h, y se marca en la agenda. Mantiene los avisos de 1 h y 15 min que ya tiene la salida.</div></section><section class="marco" aria-label="Móvil: hoja"><h1>Hoja de anotar sueño</h1><p class="sub">Con la hoja sobre Sueño</p>
+<div class="card"><h2>Noche del jueves al viernes</h2><p class="mini">Dormí 6 h 40 · 23:30 → 06:10</p><div class="cap">¿Cómo de despejado estás ahora?</div></div>
+<div class="hoja"><h3 style="margin:0 0 4px">Anoche</h3>
+<label class="campo"><span>📱 Minutos de móvil ayer <small>(opcional)</small></span><input type="text" inputmode="numeric" id="mm" value="130" placeholder="p. ej. 90" aria-label="Minutos de móvil ayer"></label>
+<div class="nm"><button>30</button><button>60</button><button>90</button><button>120</button><button>180</button></div>
+<p class="mini">Míralo en Ajustes del móvil → Bienestar digital / Tiempo de uso. Tardas 10 segundos; puedes dejarlo vacío.</p>
+<button class="btn p">Guardar · 6 h 40 dormidas</button></div></section>
+<section class="marco" aria-label="Móvil: semana"><h1>Sueño · Datos</h1>
+<div class="card"><h2>Tu semana</h2><div class="sem"><div><i style="height:62px"></i><b>7,1</b><span>L</span></div><div><i style="height:50px"></i><b>6,2</b><span>M</span></div><div><i style="height:30px;opacity:.55"></i><b>≈4</b><span>X</span></div><div><i style="height:60px"></i><b>7</b><span>J</span></div><div><i style="height:56px"></i><b>6,7</b><span>V</span></div><div><i class="v" style="height:6px"></i><b>—</b><span>S</span></div><div><i style="height:66px"></i><b>7,6</b><span>D</span></div></div>
+<div class="mov" role="img" aria-label="Minutos de móvil por día"><div><span>📱</span>1h50</div><div><span>📱</span>2h10</div><div><span>📱</span>3h05</div><div><span>📱</span>1h20</div><div><span>📱</span>2h10</div><div><span>📱</span>—</div><div><span>📱</span>1h05</div></div>
+<p class="mini" style="margin-top:8px">Móvil: media 1 h 53 al día (6 días apuntados). La noche siguiente a más móvil: 6,2 h en la del martes.</p></div>
+<div class="nota">Dónde: una fila bajo las barras de la semana (cada día alineado con su barra, 11 px, «—» si no hay dato), y una frase con la media. Sin semáforos ni juicio; con 7 o más días con dato, se añade «los días de más de 2 h de móvil duermes X min menos» (cuenta con n, como el resto de comparaciones).</div></section><script>
+const M=[...document.querySelectorAll('.marco')];let cur=0;
+function show(i){cur=i;M.forEach((m,j)=>m.classList.toggle('on',j==i));document.querySelectorAll('.barra [data-p]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p==i))}
+document.querySelectorAll('.barra [data-p]').forEach(b=>b.onclick=()=>show(+b.dataset.p));
+document.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{const t=b.dataset.ir;show(t==='s'?5:+t)});
+cv.onclick=()=>{const n=document.body.classList.toggle('nuevo');cv.setAttribute('aria-pressed',n);cv.textContent='Letra: '+(n?'DESPUÉS':'ANTES')};
+tema.onclick=()=>document.documentElement.classList.toggle('dark');
+const modos=['Conductor','Estación','Reloj','Línea'];
+document.querySelectorAll('.modos button').forEach((b,i)=>b.onclick=()=>{document.querySelectorAll('.modos button').forEach(x=>x.setAttribute('aria-pressed',x==b));modoN.textContent='Modo '+modos[i]+' · son las 16:20';mt.textContent=['🚌 Siguiente: cena 21:30','🚉 Estación: andén 2 · 16:40','⏱ Reloj: faltan 5 h 10','📈 Línea del día: 3 de 7'][i]});
+let f=2;cambia.onclick=()=>{f=(f+1)%3;hl.style.display=f==2?'none':'';hl.querySelector('b').textContent=f==0?'Te falta 1 noche':'Te faltan 2 noches';if(f==2)cambia.textContent='Con 2 que faltan (ver línea)'};
+cambia.textContent='Pasar: 2 noches → 1 → ninguna';
+function calc(){const [h,m]=vh.value.split(':').map(Number);const a=+document.querySelector('#ant [aria-pressed=true]').dataset.h,t=+tr.value||0;let x=h*60+m-a*60-t;x=((x%1440)+1440)%1440;const p=n=>String(n).padStart(2,'0');sal.textContent='Sal de casa a las '+p(Math.floor(x/60))+':'+p(x%60);const e=h*60+m-a*60;det.textContent=vh.value+' − '+a+' h = '+p(Math.floor(e/60))+':'+p(e%60)+' en el aeropuerto − '+t+' min'}
+document.querySelectorAll('#ant button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#ant button').forEach(x=>x.setAttribute('aria-pressed',x==b));calc()});vh.oninput=calc;tr.oninput=calc;
+document.querySelectorAll('.nm button').forEach(b=>b.onclick=()=>mm.value=b.textContent);
+show(0);
+</script></body></html>
