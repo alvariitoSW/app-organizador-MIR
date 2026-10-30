@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G2 · MAQUETA Comer** (la siguiente: sesión nueva)
+**Gran Ley · G2 · MAQUETA Comer** (la siguiente: sesión nueva). Ojo: la parte de Compra y Nevera de la maqueta ya está construida (G3/R6, main 56f30af); la G2 se queda con receta, proteína y microondas, partiendo de `maquetas/comer-reforma.html`
 
 ## Por hacer
 
@@ -30,7 +30,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 |---|---|---|---|---|
 | ~~G1~~ | ✅ main 0d867cf · 30/10 · 1,7 M (se pasó: todo en opus) · vaso con muestra a rayas, aviso de plantilla con aire, pizza sin coma y vitaminas sin dulces, «Anotar anoche» en Reloj y Línea, R4 comprobada, parte programado (lu y ju 7:40) · pruebas 372-375 | arreglo | sonnet; haiku textos | ~1,0 M |
 | G2 | MAQUETA Comer: R5 + página de receta + proteína + S7 microondas | maqueta | opus + sonnet | ~1,5 M |
-| G3 | Construir R6: compra base + congelador | construir | sonnet con ficha | ~2,0 M |
+| ~~G3~~ | ✅ main 56f30af · 30/10 · adelantada (sesión R6, con la maqueta R5) · compra base con un toque restando la casa, semana por caducidad, hoja del reparto según tu semana, zona ❄ Congelador, pescado 4 × 250 g, 8 platos que congelan bien (lista), `dishes[].congela` · pruebas 376-379 · ficha `fichas/reforma-r6-compra-congelador.md` | construir | sonnet con ficha | ~2,0 M |
 | G4 | Construir R7: proteína en Hoy + semana básica + aviso tras entreno | construir | sonnet | ~1,2 M |
 | G5 | Construir R8 + S7: cola TikTok, página de receta con Compartir, microondas | construir | sonnet | ~1,5 M |
 | G6 | MAQUETA Entreno: R9 + entrenador que respeta la guardia | maqueta | opus + sonnet | ~1,0 M |
@@ -115,7 +115,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | ~~R3~~ | ✅ main 0561783 · 30/10 · 2,2 M · Construir gasto grande + Bosque y Ahorro juntos, mirando a meses (ficha `fichas/reforma-r3-gasto-grande.md`) | construir | sonnet con ficha | ~1,8 M |
 | ~~R4~~ | ✅ main 8786ed2 · 30/10 · 1,2 M (con parte y salud) · Fintonic en pequeño: renombrar y quitar filas en la revisión, aviso si no cuadra (ficha `fichas/reforma-r4-fintonic.md`) | arreglo | sonnet | ~0,8 M |
 | ~~R5~~ | ✅ rama claude/magical-clarke-dlp8mb-r5 · 30/10 · maqueta aprobada `maquetas/comer-reforma.html` (ficha `fichas/reforma-r5-comer.md`) | maqueta | opus + sonnet | ~1,5 M |
-| R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
+| ~~R6~~ | ✅ main 56f30af · 30/10 (= G3) · Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
 | R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
 | R8 | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
 | R9 | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
