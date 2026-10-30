@@ -11155,11 +11155,35 @@ function platoDeTexto(t){
   t=String(t||'').trim();const fr=t&&fraseLeer(t,{soloAlim:true});if(!fr)return null;
   fr.items=fr.items.filter(function(x){return x.id&&!x.dish&&!x.fuera&&!x.ean;});if(!fr.items.length)return null;
   fr.txt=t.charAt(0).toUpperCase()+t.slice(1);const d=comboADish(fr,FR_TIPOS[fr.tipo][0]);d.nevera=false;return d;}
+function recIngr(d){
+  /* lo que lleva un plato: sus líneas escritas o, si se hizo de alimentos, cada uno con sus gramos */
+  if((d.ingredients||[]).length)return d.ingredients.slice();
+  return (d.alims||[]).map(function(x){const a=alimById(x.id);return a?Math.round(+x.g||0)+' g de '+a.n.toLowerCase():'';}).filter(Boolean);}
+function recTexto(d,t){
+  /* el texto que se comparte: nombre, ingredientes y pasos. Nada de ti */
+  const ing=recIngr(d),p=d.steps||[];
+  return (d.icon||'🍽')+' '+d.name+'\n'+(+d.portions||1)+' ración'+((+d.portions||1)===1?'':'es')+
+    (ing.length?'\n\nIngredientes\n'+ing.map(function(x){return '- '+x;}).join('\n'):'')+
+    (p.length?'\n\nPasos\n'+p.map(function(x,j){return (j+1)+'. '+x;}).join('\n'):'');}
+function cjeHojaReceta(h){
+  /* la página de la receta (H4): icono grande, ingredientes que se tachan, pasos grandes, compra, TikTok y compartir */
+  const d=dishById(h.id);if(!d)return '';
+  const ing=recIngr(d),pasos=d.steps||[],t=h.tach||{},n=+d.portions||1,
+    url=/^https:\/\//i.test(d.url||'')?d.url:'';
+  return '<div class="recp"><div class="recic" aria-hidden="true">'+esc(d.icon||'🍽')+'</div><h2 class="recn">'+esc(d.name)+'</h2>'+
+    '<div class="mini" style="font-size:14px">'+n+' ración'+(n===1?'':'es')+'</div>'+
+    '<div class="recb">'+(ing.length?'<button class="btn p" data-a="rec-compra">Añadir a la compra</button>':'')+
+    (url?'<a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+(/tiktok\.com/i.test(url)?'Ver en TikTok':'Ver el vídeo')+'</a>':'')+
+    '<button class="btn" data-a="rec-comparte">Compartir</button></div>'+
+    (ing.length?'<div class="cap">INGREDIENTES · toca los que ya tienes</div>'+ing.map(function(x,j){
+      return '<button class="reci'+(t[j]?' hecho':'')+'" data-a="rec-tacha" data-j="'+j+'" aria-pressed="'+(t[j]?'true':'false')+'"><span class="rk" aria-hidden="true">'+(t[j]?'✓':'')+'</span>'+esc(x)+'</button>';}).join(''):'')+
+    (pasos.length?'<div class="cap">PASOS</div><ol class="recs">'+pasos.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ol>':'')+'</div>';}
 function recetaHTML(d,pie){
   /* lo que lleva y los pasos de un plato, en su cajita (con una línea al pie si hace falta) */
   const l=(d.ingredients||[]).map(function(x){return '<div class="li">'+esc(x)+'</div>';}).join(''),
     p=(d.steps||[]).map(function(x,j){return '<div class="li"><b>'+(j+1)+'</b> '+esc(x)+'</div>';}).join('');
-  return '<div class="cjrec">'+(l&&p?'<div class="cap">LLEVA</div>':'')+l+(l&&p?'<div class="cap" style="margin-top:8px">PASOS</div>':'')+p+(l||p?'':'<div class="mini">sin ingredientes guardados</div>')+(pie||'')+'</div>';}
+  return '<div class="cjrec">'+(l&&p?'<div class="cap">LLEVA</div>':'')+l+(l&&p?'<div class="cap" style="margin-top:8px">PASOS</div>':'')+p+(l||p?'':'<div class="mini">sin ingredientes guardados</div>')+(pie||'')+
+    (d.id&&(l||p||d.url)?'<button class="btn s" data-a="rec-abre" data-id="'+esc(d.id)+'" style="margin-top:8px">Abrir la receta</button>':'')+'</div>';}
 function esDiaGuardia(k){const sh=shiftById(dayInfo(k).shiftId);return !!(sh&&isGuardia(sh));}
 function nevCombos(cls){
   /* lo que la nevera da para cada momento */
@@ -11190,6 +11214,43 @@ function protHoyDatos(k){
   const cabe=ex.filter(function(x){return x.prot<=falta;});
   const sug=cabe.length?cabe[0]:(ex.length?ex[ex.length-1]:null);   /* protExtras va de más a menos proteína */
   return {obj:obj,llevo:llevo,falta:falta,sug:sug,ent:entrenoReciente()};}
+/* ---- antojo de microondas (G5 · S7): lista FIJA, cada una ≤5 min y ≥20 g de proteína. Cifras prudentes y aproximadas.
+   Se PROPONE, nunca se prohíbe: ni aquí ni en ninguna pantalla hay un «no». ---- */
+const MICRO=[
+  {e:'🥚',n:'Taza de huevo y queso',min:3,prot:24,kcal:290,carb:3,gr:20,ing:['2 huevos','1 clara','30 g de queso rallado','sal y pimienta'],
+    pasos:['Bate los huevos y la clara en una taza grande.','Añade el queso, sal y pimienta.','Microondas 1 min, remueve y otro minuto más.']},
+  {e:'🥣',n:'Yogur griego con avena al micro',min:2,prot:26,kcal:270,carb:27,gr:5,ing:['250 g de yogur griego natural','30 g de copos de avena','canela'],
+    pasos:['Pon la avena con 4 cucharadas de agua en un bol.','Microondas 1 min y medio.','Mezcla con el yogur y la canela.']},
+  {e:'🐟',n:'Atún con patata al micro',min:5,prot:24,kcal:260,carb:34,gr:4,ing:['1 patata mediana (200 g)','1 lata de atún al natural','aceite de oliva, sal'],
+    pasos:['Pincha la patata y dale 4 min al micro, girándola a la mitad.','Ábrela y aplástala con un tenedor.','Añade el atún escurrido, un chorrito de aceite y sal.']},
+  {e:'🍳',n:'Claras con espinacas',min:4,prot:24,kcal:150,carb:3,gr:3,ing:['200 g de claras','60 g de espinacas','20 g de queso fresco','sal'],
+    pasos:['Pon las espinacas en un bol y 30 s al micro.','Añade las claras y la sal.','Microondas 2 min, removiendo a la mitad; termina con el queso.']},
+  {e:'🍗',n:'Pollo cocido con arroz de vaso',min:3,prot:31,kcal:330,carb:42,gr:5,ing:['100 g de pollo cocido','1 vaso de arroz cocido (125 g)','salsa de soja o tomate'],
+    pasos:['Pon el arroz en un bol y el pollo desmenuzado encima.','Una cucharada de agua o salsa.','Microondas 2 min y remueve.']},
+  {e:'🍓',n:'Requesón con fruta y nueces',min:2,prot:23,kcal:280,carb:22,gr:12,ing:['200 g de requesón','100 g de fruta','10 g de nueces'],
+    pasos:['Calienta la fruta troceada 1 min en el micro.','Ponla sobre el requesón.','Remata con las nueces picadas.']},
+  {e:'🫘',n:'Lentejas de bote con huevo',min:4,prot:24,kcal:330,carb:38,gr:8,ing:['200 g de lentejas cocidas (de bote)','1 huevo','pimentón, sal'],
+    pasos:['Escurre las lentejas y ponlas en un bol con pimentón.','Haz un hueco y casca el huevo; pincha la yema.','Tapa y microondas 2 min, hasta que cuaje.']}];
+function antojoElige(k){
+  /* la que más se acerca a lo que te falta; sin falta que cubrir, una distinta cada día */
+  const d=protHoyDatos(k);if(!d)return new Date().getDate()%MICRO.length;
+  let b=0;MICRO.forEach(function(r,i){if(Math.abs(r.prot-d.falta)<Math.abs(MICRO[b].prot-d.falta))b=i;});return b;}
+function microHTML(h){
+  /* la pantalla del antojo: por qué, la receta, dos alternativas y apuntar */
+  const i=Math.max(0,Math.min(MICRO.length-1,+h.i||0)),r=MICRO[i],d=protHoyDatos(iso(new Date()));
+  const alts=[1,2].map(function(n){return (i+n)%MICRO.length;});
+  return '<div class="cjst">😋 ¿Algo rápido?</div>'+
+    '<div class="mini" style="font-size:14px">'+(d?'Te faltan '+d.falta+' g de proteína hoy y esto son '+r.min+' min en el microondas.':'No hace falta fuego: '+r.min+' min en el microondas y a comer.')+'</div>'+
+    '<div class="antr"><div class="ant1"><span class="ae" aria-hidden="true">'+r.e+'</span><b>'+esc(r.n)+'</b></div>'+
+    '<div class="mini" style="font-size:14px">≤'+r.min+' min · '+r.prot+' g de proteína · unas '+r.kcal+' kcal</div>'+
+    '<ul class="antl">'+r.ing.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+
+    '<ol class="antl">'+r.pasos.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ol></div>'+
+    '<button class="btn p gbig" data-a="micro-apunta">Apuntar que me lo he comido</button>'+
+    '<div class="cap" style="margin-top:12px">OTRAS DOS</div>'+
+    alts.map(function(j){return '<button class="cjalt" data-a="micro-cambia" data-i="'+j+'"><span>'+MICRO[j].e+'</span>'+esc(MICRO[j].n)+'<span class="sp"></span><span class="mini">'+MICRO[j].prot+' g</span></button>';}).join('');}
+function antojoCardHTML(k){
+  const i=antojoElige(k),r=MICRO[i];
+  return '<button class="antcard" data-a="micro-abre" data-i="'+i+'"><span class="ae" aria-hidden="true">😋</span><span class="antt"><b>¿Algo rápido?</b> '+esc(r.n)+' · ≤'+r.min+' min · '+r.prot+' g</span><span>›</span></button>';}
 function protHoyHTML(k,guardia){
   const d=protHoyDatos(k);if(!d)return '';
   const t=guardia?'🥚 Hoy, lo que se pueda: '+d.llevo+' g':'🥚 '+d.llevo+' de '+d.obj+' g · te faltan '+d.falta;
@@ -11197,7 +11258,9 @@ function protHoyHTML(k,guardia){
     '<div class="barra" role="img" aria-label="Proteína del día"><i style="width:'+Math.min(100,Math.round(100*d.llevo/d.obj))+'%"></i></div>'+
     (d.ent?'<div class="mini">Has entrenado: mejor algo de proteína en las 2 h siguientes.</div>':'')+
     (d.sug?'<div class="sug"><span>'+esc(d.sug.n.replace(/^./,function(c){return c.toUpperCase();}))+' · +'+Math.round(d.sug.prot)+' g</span>'+
-      '<button class="btn p s" data-a="prot-hoy">Apuntar</button></div>':'')+'</div>';}
+      '<button class="btn p s" data-a="prot-hoy">Apuntar</button></div>':
+      (function(){const i=antojoElige(k),r=MICRO[i];return '<div class="sug"><span>'+r.e+' '+esc(r.n)+' · ≤'+r.min+' min · +'+r.prot+' g</span>'+
+        '<button class="btn p s" data-a="micro-abre" data-i="'+i+'">Ver</button></div>';})())+'</div>';}
 function protPor100(a){return a?(alimEntrada(a,100).prot||0):0;}
 function nvDe(re,rol){return qcNevera().filter(function(o){return (rol&&qcRol(o.a)===rol)||(re&&re.test(alimTxt(o.a.n+' '+o.x.nom)));})
   .sort(function(p,q){return (p.r==null?99:p.r)-(q.r==null?99:q.r);});}
@@ -14693,7 +14756,7 @@ function renderComerEje(){
         '<b>'+(esHoy?'Hoy · ':'')+(esHoy?DIA3[dd.getDay()]:DIA3[dd.getDay()].replace(/^./,function(c){return c.toUpperCase();}))+' '+dd.getDate()+'</b>'+
         (esHoy?'':'<button class="dlink" data-a="food-today">hoy</button>')+
         '<button class="cji" data-a="food-next"'+(esHoy?' disabled':'')+' aria-label="día siguiente">›</button></div>'+
-      cjeAhoraHTML(dk,esHoy,ft)+
+      cjeAhoraHTML(dk,esHoy,ft)+(esHoy?antojoCardHTML(dk):'')+
       '<div class="card cjml">'+cjeComidas(dk).map(function(r){return cjeComidaHTML(r,dk,sg&&sg.p===r.p);}).join('')+
         '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button>'+vitParadaHTML(dk,esHoy)+'</div>'+
       (esHoy?nutSemHTML(hoyK)+nutLloretHTML(hoyK):'')+
@@ -14975,6 +15038,8 @@ function cjeHojaHTML(){
   else if(v==='dia')body=cjeHojaDia(h);
   else if(v==='acc')body=cjeHojaAcc(h);
   else if(v==='hueco')body=cjeHojaHueco(h);
+  else if(v==='receta')body=cjeHojaReceta(h);
+  else if(v==='micro')body=microHTML(h);
   if(!body)return '';
   return hojaMarco('cje-cerrar','cjh','Comer',body);}
 function cjeCambios(w,c){
@@ -18740,6 +18805,7 @@ function impGuardar(){
   const plato={id:uid('d'),name:r.name,icon:r.icon||'🍽',batchId:lote,
     portions:Math.max(1,+r.portions||1),kcal:Math.max(0,+r.kcal||0),prot:Math.max(0,+r.prot||0),
     ingredients:(r.ingredients||[]).slice(),steps:(r.steps||[]).slice()};
+  if(/^https:\/\//i.test(ui.imp.url||''))plato.url=ui.imp.url.slice(0,300);   /* para «Ver en TikTok» en su página */
   store.dishes.push(plato);
   let extra='';
   const dia=ui.imp.destinoDia;
@@ -18751,6 +18817,21 @@ function impGuardar(){
   store.impPendiente=null;   /* ya está guardada: no hay nada pendiente que rescatar */
   save();render();
   return 'Guardado: '+plato.icon+' '+plato.name+extra;}
+function colaAdd(txt){
+  /* la cola de TikTok: varios enlaces (uno por línea), sin repetir; se pasan a receta de uno en uno */
+  const l=store.colaTT||(store.colaTT=[]);let n=0;
+  (String(txt||'').match(/https?:\/\/[^\s<>"']+/g)||[]).forEach(function(u){u=u.slice(0,300);
+    if(l.indexOf(u)<0&&l.length<30){l.push(u);n++;}});
+  if(n)save();return n;}
+function colaHTML(){
+  const l=store.colaTT||[];
+  return '<div class="card cola"><button class="colah" data-a="cola-ver" aria-expanded="'+(ui.colaAb?'true':'false')+'">📚 Cola de TikTok · '+l.length+'<span class="sp"></span>'+(ui.colaAb?'▴':'▾')+'</button>'+
+    (ui.colaAb?'<label class="fld">pega varios enlaces, uno por línea<textarea id="colaTxt" rows="3" placeholder="https://www.tiktok.com/@…"></textarea></label>'+
+      '<button class="btn s" data-a="cola-add">Guardar en la cola</button>'+
+      l.map(function(u,i){return '<div class="colai"><span class="colau">'+esc(u.replace(/^https?:\/\/(www\.)?/,'').slice(0,42))+'</span>'+
+        '<button class="btn s" data-a="cola-pasa" data-i="'+i+'">Pasar a receta</button>'+
+        '<button class="x" data-a="cola-quita" data-i="'+i+'" aria-label="quitar de la cola">×</button></div>';}).join('')+
+      (l.length?'':'<p class="mini">La cola está vacía.</p>'):'')+'</div>';}
 function impPegar(){
   /* la red de seguridad de todo esto: en iPhone no hay «compartir con la app» que valga, y en
      Android TikTok solo enseña la app si tiras de «Más». Copiar el enlace sí funciona siempre. */
@@ -18813,7 +18894,7 @@ function renderImport(){
   const trayendo=ui.imp.estado==='trayendo';
   const tipos=puedeImagen?(_sampleLim.images.mediaTypes||[]).join(','):'';
   const nImg=(ui.imp.imagenes&&ui.imp.imagenes.length)||0;
-  $('#main').innerHTML='<div class="grid">'+
+  $('#main').innerHTML='<div class="grid">'+colaHTML()+
     '<div class="card"><h2>📥 Importar una receta</h2>'+
       '<p class="note">Pega el enlace y la app intenta traer la descripción sola; si no puede, te lo dice y '+
       'pegas el texto tú. Lo que no hay forma de hacer es escuchar el vídeo: si la receta solo se dice en voz alta '+
@@ -25197,6 +25278,25 @@ function act(a,el){
     case 'qc-ver':{const c=qcCombos(ui.qcTipo||(new Date().getHours()<11?'bocata':'plato'))[+el.dataset.i];if(!c)break;
       ui.frase=c.fr;ui.frTxt=c.fr.txt;ui.foodVista='';render();window.scrollTo(0,0);break;}
     case 'fr-leer':frEnter();break;
+    case 'micro-abre':{ui.tab='food';ui.foodVista='eje';ui.cjeTab='';ui.foodDate='';ui.cjeHoja={v:'micro',i:+el.dataset.i||0,fuera:true};render();window.scrollTo(0,0);break;}
+    case 'micro-cambia':{const h=ui.cjeHoja;if(!h||h.v!=='micro')break;h.i=+el.dataset.i||0;render();break;}
+    case 'micro-apunta':{const h=ui.cjeHoja,r=h&&MICRO[+h.i];if(!r)break;
+      flash(addFoodEntry(iso(new Date()),{macro:{nombre:r.n,kcal:r.kcal,prot:r.prot,carb:r.carb,gresa:r.gr,emoji:r.e},pos:momentoAhora(),rac:1}));ui.cjeHoja=null;render();break;}
+    case 'rec-abre':{if(!dishById(el.dataset.id))break;ui.cjeHoja={v:'receta',id:el.dataset.id,tach:{}};render();break;}
+    case 'rec-tacha':{const h=ui.cjeHoja;if(!h||h.v!=='receta')break;h.tach=h.tach||{};const j=+el.dataset.j;h.tach[j]=!h.tach[j];render();break;}
+    case 'rec-compra':{const h=ui.cjeHoja,d=h&&dishById(h.id);if(!d)break;
+      flash(listaAMano(recIngr(d).filter(function(x,j){return !(h.tach||{})[j];}).join('\n')));break;}
+    case 'rec-comparte':{const h=ui.cjeHoja,d=h&&dishById(h.id);if(!d)break;const tx=recTexto(d);
+      if(navigator.share){navigator.share({title:d.name,text:tx}).catch(function(){});}
+      else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(tx).then(function(){flash('Receta copiada: pégala donde quieras');}).catch(function(){flash('No he podido copiarla');});}
+      else flash('Este navegador no deja compartir ni copiar');break;}
+    case 'cola-ver':ui.colaAb=!ui.colaAb;render();break;
+    case 'cola-add':{const t=document.getElementById('colaTxt'),n=colaAdd(t?t.value:'');
+      flash(n?'En la cola: '+n+' enlace'+(n===1?'':'s'):'No he visto ningún enlace nuevo');if(n)ui.colaAb=true;render();break;}
+    case 'cola-quita':{const l=store.colaTT||[];l.splice(+el.dataset.i,1);save();render();break;}
+    case 'cola-pasa':{const l=store.colaTT||[],u=l[+el.dataset.i];if(!u)break;l.splice(+el.dataset.i,1);
+      if(!ui.imp)ui.imp=impVacio();ui.imp.url=u;ui.imp.txt='';impFuenteNueva();save();render();window.scrollTo(0,0);
+      flash('Enlace listo: voy a por la receta…');impAutoDesdeEnlace();break;}
     case 'prot-hoy':{const d=protHoyDatos(iso(new Date()));if(!d||!d.sug)break;flash(fraseApuntar(d.sug.fr,momentoAhora()));render();break;}
     /* la tarjeta «Te leo»: la misma en la frase (c «fr», ui.frase) y en el buscador (c «fb») */
     case 'fr-elige':lecOp(el,function(fr){frEligeDuda(fr,+el.dataset.d,+el.dataset.o);});break;
@@ -27925,6 +28025,7 @@ function compartidoEntrante(){
     const cuerpo=[titulo,texto].filter(Boolean).join('\n').replace(/https?:\/\/\S+/g,'').replace(/\n{2,}/g,'\n').trim();
     if(!cuerpo&&!url)return;
     if(!ui.imp)ui.imp=impVacio();
+    const antes=store.impPendiente;if(antes&&antes.url&&url&&antes.url!==url)colaAdd(antes.url);   /* compartir otra vez: el anterior no se pierde, va a la cola */
     ui.imp.txt=cuerpo;
     ui.imp.url=url;
     ui.tab='import';
@@ -28146,7 +28247,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden){try
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+Object.assign(window.PG,{MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();

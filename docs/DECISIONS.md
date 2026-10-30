@@ -1961,3 +1961,45 @@ aparte de recetas de microondas. Un segundo número de proteína en Hoy.
 - **Un solo número de proteína al día:** la barra de Comer → Hoy usa `protHoyObj()` (1,6 g/kg) cuando mira hoy; un día pasado y la
   semana siguen con el objetivo de Ajustes. Prueba 383.
 - Pruebas 380 y 382 comprueban que el botón/campo existe antes de pulsar: al revertir caen ellas y el trozo sigue.
+
+## Gran Ley · G5 · Página de receta, cola de TikTok y antojo de microondas (2026-10-30)
+
+**Elegido**
+- **Página de receta (H4).** Una hoja de Comer (`ui.cjeHoja={v:'receta'}`, `cjeHojaReceta`) que se abre con «Abrir la receta», un único botón que va dentro de `recetaHTML` (así sale en Mis platos, en el plato del día y en cocinar). Icono grande (emoji, sin imágenes), raciones, «Añadir a la compra / Ver en TikTok / Compartir» arriba (siempre a la vista), ingredientes que se tachan al tocarlos y pasos en 18 px. «Añadir a la compra» reutiliza `listaAMano` y lleva solo los NO tachados (los tachados «ya los tengo»). «Ver en TikTok» es un enlace `target=_blank rel="noopener noreferrer"`, sin iframe ni vídeo. «Compartir» usa `navigator.share` con nombre, ingredientes y pasos; sin share, copia al portapapeles y avisa. El plato guarda `url` al importarlo (solo `https`).
+- **Cola de TikTok.** `store.colaTT` (estado local, máx. 30, sin repetir) en la pantalla Importar receta, plegada con su cuenta. Se pegan varios enlaces (uno por línea); «Pasar a receta» saca uno y lo manda al flujo de importar que ya existía (`impFuenteNueva` + `impAutoDesdeEnlace`). Si se comparte otro enlace estando uno pendiente, el anterior va a la cola en vez de perderse.
+- **Antojo de microondas (S7).** Lista fija `MICRO` (7 recetas, ≤5 min, 23-31 g de proteína, 2-3 pasos). En Hoy, dentro de la línea de proteína (`protHoyHTML`), solo si no hay sugerencia de la nevera; en Comer → Hoy, una tarjeta «¿Algo rápido?» (`antojoCardHTML`); ambas abren la hoja `micro` (por qué, receta, 2 alternativas, «Apuntar que me lo he comido» con `addFoodEntry`). La elegida es la que más se acerca a lo que falta; sin falta, una distinta cada día. Nunca hay un «no».
+- Pruebas 384, 385 y 386; caen al revertir su pieza (botón «Abrir la receta», la cola en Importar, la tarjeta de Comer) y las otras dos no.
+
+**Descartado**
+- Página de receta a pantalla completa (ruta nueva): la hoja ya trae cerrar, «atrás» y desplazamiento, y no suma otra pila de navegación.
+- Escalar los ingredientes por raciones: son texto libre («2 cucharadas»); escalar a ojo daría cifras falsas.
+- Imagen o vídeo de TikTok incrustados: privacidad y peso; solo un enlace que abre fuera.
+- Cola con lectura automática de todos a la vez: gasta red y pisa lo que el usuario está revisando; de uno en uno.
+- Una pestaña o caja nueva para el antojo: ya existía «Qué me apetece» (platos tuyos por filtros), que se deja intacta; el de microondas son una línea en Hoy y una tarjeta.
+
+**Supuestos**
+- Las cifras de `MICRO` son aproximadas y prudentes (raciones normales, proteína de tablas medias).
+- Los acciones se llaman `micro-*` y la hoja `micro` porque `antojo-*` y `antojoHTML` ya eran los de «Qué me apetece».
+- Un plato hecho de alimentos (sin líneas escritas) enseña como ingredientes «N g de alimento».
+- El icono grande es el emoji del plato (sin imágenes externas).
+- «Apuntar» lo mete como comida «por macros» en el momento de ahora (`momentoAhora`).
+
+## Gran Ley · G6 · Maqueta de Entreno (2026-10-30)
+
+*Por el Consejo por delegación (acuerdos 2026-10-29-2 «9 · Entreno» y 2026-10-30 «A · R9-R10»). Maqueta: `maquetas/entreno-g6.html`. Sin concurso.*
+
+**Elegido.** Lenguaje de Entreno ya construido (Teide y Bancales), 4 pantallas a 412×915 en claro y oscuro:
+- **Hoy en Entreno:** «Lo que toca hoy» con 4 ejercicios, «Prueba +2,5 kg» en uno con su porqué, la semana con la guardia
+  marcada y un récord discreto.
+- **Ejercicio abierto** (sentadilla goblet): dibujo SVG propio de dos posturas que se alternan (quietas lado a lado con
+  movimiento reducido), músculo resaltado, 3 claves de ≤6 palabras, error típico, pauta y una serie por toque con el peso
+  anterior puesto.
+- **Los otros dibujos:** press con mancuernas y remo con mancuerna (apoyo de mano en el banco).
+- **Día saliente:** frase del entrenador, 25 min al 65 % o 10 min de movilidad, y descansar sin culpa. Nada de rojo.
+Progresión doble: tope de repeticiones con 1-2 en recámara en todas las series → +2,5 kg. Verificador: contraste AA
+(verde claro oscurecido a `#126a32`), táctiles ≥44 px, dibujos rehechos con volumen (no palitos).
+
+**Descartado.** Imágenes externas (openGym): SVG propios en `fig/`. Concurso. Confeti o rojo en récords y días flojos.
+
+**Supuestos.** Pesos de ejemplo; los 12 ejercicios de G7 siguen el estilo de estos 3 dibujos; el remo se dibuja con apoyo
+de mano y no de rodilla.
