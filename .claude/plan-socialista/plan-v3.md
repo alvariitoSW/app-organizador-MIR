@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G1 · Arreglos** (sesión abierta el 30/10)
+**Gran Ley · G2 · MAQUETA Comer** (la siguiente: sesión nueva)
 
 ## Por hacer
 
@@ -28,7 +28,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| G1 | Arreglos: vaso a 14 px, aviso de plantilla, lector (pizza barbacoa, vitaminas sin chocolate), sueño en Reloj y Línea, cerrar R4 | arreglo | sonnet; haiku textos | ~1,0 M |
+| ~~G1~~ | ✅ main 0d867cf · 30/10 · ~1,6 M (se pasó: todo en opus) · vaso con muestra a rayas, aviso de plantilla con aire, pizza sin coma y vitaminas sin dulces, «Anotar anoche» en Reloj y Línea, R4 comprobada, parte programado (lu y ju 7:40) · pruebas 372-375 | arreglo | sonnet; haiku textos | ~1,0 M |
 | G2 | MAQUETA Comer: R5 + página de receta + proteína + S7 microondas | maqueta | opus + sonnet | ~1,5 M |
 | G3 | Construir R6: compra base + congelador | construir | sonnet con ficha | ~2,0 M |
 | G4 | Construir R7: proteína en Hoy + semana básica + aviso tras entreno | construir | sonnet | ~1,2 M |
