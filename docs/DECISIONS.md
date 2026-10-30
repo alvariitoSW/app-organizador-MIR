@@ -2076,3 +2076,27 @@ moralizar el consumo, leer el uso de pantalla (imposible desde una web).
 *Nota de la G8:* la prueba 244 (el reloj de Hoy) fallaba según la hora: lo de encima del reloj crece y lo baja por debajo
 de los 720 px de la ventana de prueba, y los toques caían fuera. La prueba ahora trae el reloj a la vista antes de tocar;
 la app no cambia (a 915 px se ve entero).
+
+## Gran Ley · G10 · El 4:20: cortina con PIN y descanso (2026-10-30)
+
+*Aprobado por el usuario en `consejo/2026-10-30-parte.md` (P2). Maqueta: `maquetas/la-noche-2.html`, pantallas 3, 4 y 5.*
+
+**Elegido.**
+- **Cortina con PIN de 4 cifras** (opcional, se pone desde 4:20 → Plan → «Cortina con PIN»). Se guarda solo `{sal, hash}` en
+  `store.consumo.priv.pin` (SHA-256 de sal+PIN con `crypto.subtle`, sal de `crypto.getRandomValues`); el PIN nunca se guarda y
+  el hash viaja en la copia. Teclado con teclas de 56 px. Cambiar el PIN pide el actual. 5 fallos seguidos = 30 s de espera.
+  «¿Lo olvidaste?» → Ajustes → Copia de seguridad → «Quitar la cortina…» (con aviso; no borra ningún dato).
+- **Abierta solo en memoria** (`ui.cnAbierto`): se cierra al salir de la sección 4:20, al cerrar la app y tras 2 min en segundo plano.
+- **Neutro fuera** mientras la cortina está puesta: el cajón «Más» (🔒 Privado), la tarjeta del asistente en Hoy, la fila 4:20 de
+  «Tu semana», las etiquetas de los hábitos automáticos, el conductor (no fuma) y la tarjeta de monchis.
+- **Descanso** (tarjeta en 4:20 → Plan, y una línea en Hoy del 4:20 mientras está en marcha): 7 / 14 / 21 días o «bajar a la
+  mitad» (14 días; compara la última semana con la mitad de la media de las 2 semanas previas). «Día N de M», aviso de que los
+  primeros 7 días se duerme peor, 3 ayudas para dormir, «recaer no borra nada: seguimos desde aquí» (no reinicia ni castiga),
+  y «Dejarlo por ahora» / «Cerrar» sin culpa.
+
+**Descartado.** Cifrar de verdad; pestaña nueva «Descanso» (no caben 5 pestañas a 412 px con letra ≥ 14 px); quitar el T-break
+existente (se queda, y Descanso va encima en el Plan).
+
+**Supuestos.** La cortina se cierra al salir de la sección (más estricto que «la sesión»). Las «etiquetas» de hábitos que el
+usuario escribió a mano no se tocan. Con la cortina, una copia hecha con «4:20 fuera de la copia» tampoco lleva el hash.
+El Descanso convive con el T-break (son dos cosas: el T-break mide, el Descanso acompaña).

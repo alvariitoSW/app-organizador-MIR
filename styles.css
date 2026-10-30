@@ -4112,3 +4112,16 @@ html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
 .gmov ul{margin:0 0 8px;padding-left:20px;font-size:14px}
 .gsalb{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:10px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
 .gfdib{--acc:var(--ok)}
+/* 4:20 · cortina con PIN y descanso */
+.cnpin{text-align:center}.cnpt{font-size:17px;font-weight:800;margin:4px 0 14px}
+.cnpd{display:flex;justify-content:center;gap:14px;margin-bottom:14px}.cnpd b{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink2)}.cnpd b.f{background:var(--ink);border-color:var(--ink)}
+.cnpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:0 auto}
+.cnpad button{min-height:56px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:22px;font-weight:800;cursor:pointer}
+.cnolv{margin:12px 0 0;font-size:14px}.cnolv summary{min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brand);font-weight:700}
+.cntx{font-size:14px;line-height:1.45;margin:8px 0}.cnbig{font-size:20px;font-weight:800;margin:6px 0}
+.cnprog{height:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);overflow:hidden}.cnprog i{display:block;height:100%;background:var(--brand)}
+.cnul{margin:6px 0 12px;padding-left:20px;font-size:14px;line-height:1.5}
+.cndesc .btn,.cnpin .btn,.cn .card>.btn{min-height:44px;font-size:14px}
+.cn .cnseg.c2 button{min-height:44px;font-size:14px}
+button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer}
+.cnpin .mini{font-size:14px;color:var(--ink2)}
