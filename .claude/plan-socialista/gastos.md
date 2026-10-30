@@ -25,7 +25,7 @@ traspaso explica por qué.
 | arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) | ~0,8 M uno pequeño · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
 | maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
-| construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
+| construir (pantalla con maqueta) | sonnet | R2 2,4 M (en la misma sesión que la R1) · D5 0,86 M | ~1,2 M con ficha y sesión nueva | reforma-r2-tu-mes (2026-10-30) |
 | construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
 | estudio | — | sin medir | — | — |
@@ -54,9 +54,12 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
 | 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
 | 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
+| 2026-10-30 | reforma-r2-tu-mes | construir | opus-5-5 + sonnet-5-5 | 4 | 141 | **2,4 M** | sesión principal (1,0 M: arrastraba la R1 en la misma sesión) | medido a mano: total de la sesión 5,4 M − R1 3,0 M · constructor 0,73 · arreglos de 3 pruebas de fecha + «Tu mes» sin gastos 0,42 · verificador 0,17 · ahorro: R2 en sesión nueva (la caché leída de la principal fue 14,5 M) |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
+
+- **Una tarea por sesión, de verdad (R2, 30/10):** hacer la R2 detrás de la R1 en la misma sesión dobló la principal (1,0 M solo de releer lo de la R1). El constructor con ficha de líneas exactas costó 0,73 M: en sesión nueva la R2 habría ido a ~1,3 M.
 
 - **Concursos de maquetas (R1, 29/10):** bases con las cifras ya cuadradas y un guion común de oficio y de capturas a ciegas (`tools/concurso/`): cada escuela sonnet costó 0,22-0,37 M en ≤14 pasos, y el jurado no abre los HTML (solo capturas + texto). Lo que más gasta ya es la sesión principal (30 %): esperar en silencio, sin mirar capturas.
 

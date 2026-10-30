@@ -4,7 +4,6 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
-- [aparc-tu-mes-r2] Al construir «Tu mes» (R2): la capa de ahorro del vaso con el portátil apartado mide ~13 px y su «150» va a 11 px: etiqueta fuera de la capa y ≥14 px; medir el contraste con herramienta · `maquetas/dinero-tu-mes.html`
 - [aparc-hoy-plantilla] Hoy y Mes: el botón «Usar las fechas del Mes/Calendario» (aviso de modo plantilla) queda muy pegado a «Añadir» (revisión de salud 29/10) · menor
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
@@ -118,6 +117,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-30-tu-mes-r2] «Tu mes» construido: mes del calendario (no de nómina a nómina); «ahorras» = acabarás − 10 % de lo que queda tras fijos; gastos previstos = lo gastado o el mes típico, lo mayor; sin captura de Fintonic del mes no dice «acabarás» ni «ahorras»; la línea de Hoy no se oculta todavía; mirar en el móvil si asoma una franja de casillas bajo Tu mes · DECISIONS «La Reforma · R2» · contado el 2026-10-30
 - [sup-2026-10-29-tu-mes] Concurso «Tu mes» (R1): el mes va de nómina a nómina (25 → 24); «puedes ahorrar» = lo que acabarás menos ~200 € de margen; «para gastar» = te queda − gastado − ahorro, ÷ días hasta la nómina; con el portátil «apartando», el 812 €/30 €/día de Hoy no cambia (sale lo mismo del mes); botón «🌳 Ahorro y Bosque» repetido en Tu mes (se puede quitar) · DECISIONS «La Reforma · R1» · contado el 2026-10-29
 - [sup-2026-10-29-la-vuelta] La Vuelta: 50 min dentro de 15-16, vuelta al 35 % (+10/sem), 0,5 kg/semana por defecto; plan de vuelta viejo sigue con su fórmula; si el turno pisa 15:00 y 15:30, ese día no hay fuerza; rutina del parque fija (6 ejercicios, sin filtrar openGym); los círculos de la semana siguen bajo la lámina · DECISIONS «La Vuelta» · contado el 2026-10-29
 - [sup-2026-10-28-dinero] Dinero (D1-D6, Consejo por delegación): lo viejo (huchas, meta, banco, épocas) se queda guardado sin enseñarse; el colchón y las huchas sin objetivo → «guardado», las huchas con objetivo → compras planificadas, los deseos sin hacer → compras en espera; objetivo por defecto 6 meses en 12; lo no necesario espera 30 días y pasa solo a planificado (sin «Sigo queriéndolo»); una compra sin mes no suma al «al mes»; la pantalla del banco (capturas) ya no existe y «Cuadrarlo» se fue; la pestaña Mes vieja sigue colgando de Gastos («Cierre del mes») · DECISIONS D1-D6 y acta `consejo/2026-10-28-dinero-ejecucion.md` · contado el 2026-10-28

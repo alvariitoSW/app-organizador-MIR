@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-(nada: la siguiente es **La Reforma · R2 · Construir «Tu mes»**, abajo)
+(nada: la siguiente es **La Reforma · R3 · gasto grande + Bosque y Ahorro juntos**, abajo)
 
 ## Por hacer
 
@@ -83,7 +83,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
 | ~~R1~~ | ✅ 29/10 · gana **El Vaso** → `maquetas/dinero-tu-mes.html` (acta 2026-10-29-2, «R1») · **Concurso de Dinero** (antes R2): 4-5 escuelas baratas (sonnet/haiku) maquetan «Tu mes» moderno: con cuánto empiezas el mes, los fijos, lo que te queda, con cuánto acabarás y cuánto ahorras **este mes**; el gasto grande; Bosque y Ahorro juntos; la línea de Hoy. Jurado a ciegas y el Consejo elige (por delegación) | maqueta | escuelas sonnet/haiku; jurado haiku; Artes Visuales opus deja la ganadora navegable | ~2,5 M |
-| R2 | Construir «Tu mes» con la maqueta `maquetas/dinero-tu-mes.html` (El Vaso): vaso y cadena 2.380 − 728 − 750, fijos → te queda, «acabarás con» y «ahorras este mes» + línea en Hoy. El gasto grande y el Bosque quedan para R3 | construir | sonnet con ficha | ~1,2 M |
+| ~~R2~~ | ✅ main 7942d02 · 30/10 · 2,4 M · Construir «Tu mes» con la maqueta `maquetas/dinero-tu-mes.html` (El Vaso): vaso y cadena 2.380 − 728 − 750, fijos → te queda, «acabarás con» y «ahorras este mes» + línea en Hoy. El gasto grande y el Bosque quedan para R3 | construir | sonnet con ficha | ~1,2 M |
 | R3 | Construir gasto grande + Bosque y Ahorro juntos, mirando a meses, no a años | construir | sonnet con ficha | ~1,8 M |
 | R4 | Fintonic, en pequeño: revisión gasto a gasto editable antes de guardar y aviso si no cuadra (sin pegar texto) | arreglo | sonnet | ~0,8 M |
 | R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
@@ -120,6 +120,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Hecha
 
+- [v3-reforma-r2] La Reforma · R2 · «Tu mes» en la portada de Dinero (vaso, fijos → te queda, acabarás/ahorras) + línea de Hoy; pruebas 365-368 y tres de fecha arregladas · main 7942d02 · 2,4 M · 2026-10-30
 - [v3-reforma-r1] La Reforma · R1 · Concurso «Tu mes»: 5 escuelas sonnet, jurado haiku a ciegas, gana El Vaso; navegable en `maquetas/dinero-tu-mes.html` · rama ccr-874ee141-nk8306 (maqueta, no va a main) · 2026-10-29
 - [v3-ley-noche] Ley de La Noche N1-N3 · main ec1370b · 2026-10-29
 - [v3-la-vuelta] La Vuelta: entreno 15-16 y parque, sesión mínima, vuelta al 35 %, objetivo de peso con topes, lámina del Teide o de los Bancales con «Explícamelo · 45 s» · main 3170dc0 · ~11,7 M la sesión entera (Consejo + 2 rondas + obra) · 2026-10-29
