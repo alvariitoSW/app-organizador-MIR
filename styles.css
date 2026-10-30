@@ -4019,8 +4019,9 @@ html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
 .tm-gfila{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 12px;text-align:left;border:2px dashed #be123c;border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 .tm-gfila span:last-child{font-weight:700;color:var(--ink2);text-align:right}
 .tm-gfila:focus-visible,.tm-opc:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
-.tg-hoja .tg-l{display:block;margin:8px 0 0}
-.tg-hoja .tg-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tg-hoja .tg-l{display:block;margin:8px 0 0;font-size:14px;min-width:0}
+.tg-hoja .tg-l input{width:100%;min-width:0;box-sizing:border-box}
+.tg-hoja .tg-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
 .tm-opc{display:block;width:100%;min-height:64px;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:8px 12px;margin:0 0 8px;font:inherit;font-weight:900;font-size:16px;cursor:pointer}
 .tm-opc small{display:block;font-size:14px;font-weight:700;color:var(--ink2)}
 .tm-opc[aria-pressed=true]{border-color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--ink)}

@@ -1784,3 +1784,21 @@ pagar» en la línea de Hoy (ya está en Para hoy). Animar el vaso al plegar (la
 **Supuestos.** «Puedes ahorrar» = acabarás − un margen del 10 % de lo que queda tras los fijos (redondeado a 10 €); gastos
 previstos = lo gastado o el mes típico, lo que sea mayor. La línea de Hoy no se puede ocultar todavía. La franja de casillas que
 asomó bajo Tu mes en una captura es un resto de pintado del navegador de pruebas (no hay elemento ahí): mirarlo en el móvil.
+
+## La Reforma · R3 · Gasto grande + Ahorro y Bosque juntos (2026-10-30)
+
+**Elegido (Consejo por delegación).** Un gasto grande (viaje, portátil) se apunta desde Tu mes o Ahorro y Bosque con la hoja
+«Apuntar gasto grande» (qué es, precio, para qué mes y «Lo voy apartando» / «Sale de lo ahorrado»). Se guarda como una compra
+más de `compras[]` con el campo opcional `grande` (ausente = no es grande). «Apartando» reparte el ahorro del mes: «🟩 N € al
+colchón + 💻 C apartados», con la capa roja a rayas en el vaso y «· apartas C a …» en la línea de Hoy; la cuota es la misma de
+Compras (`d5Cuota`). «De lo ahorrado» no toca el mes, pero `falta` y `pide` suben lo que hay que reponer. «Quitar» lo deja en
+`estado:'no'` y todo vuelve. Bosque y Ahorro, una pestaña (**Tu mes · Ahorro y Bosque · Gastos · Compras**; `bosque`/`ahorro`
+viejos abren la nueva): colchón a fin de mes, un árbol por mes de colchón hasta el objetivo con el gasto grande como fruto, las
+barras de cada mes y, debajo, objetivo, plazo, nómina y guardado como antes. Pruebas 368-370 (368 cae al revertir); ocho viejas
+pasadas a la pestaña nueva. `store.ahorro`, `store.dinero` y las compras no se borran (369 lo comprueba con datos viejos).
+
+**Descartado.** Borrar la compra al quitarla. El laurisilva (`d3EscenaSVG` se queda sin usar) y la gráfica `#d4Graf` de Ahorro.
+
+**Supuestos.** «Apartando» exige el mes; «de lo ahorrado», no. El gasto grande se guarda como «me hace ilusión», en plan y con
+0 apartado. «Para gastar» no cambia con el apartado (como en la maqueta). Las pestañas siguen a 12,5 px y las cifras de la cadena
+de Tu mes a 12 px (de antes de R3).
