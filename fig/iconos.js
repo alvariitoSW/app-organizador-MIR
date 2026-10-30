@@ -246,6 +246,16 @@
       vivo: e => { const n = lim(num(e.nivel, 0.7), 0, 1); return { vars: { nivel: r3(n) }, label: n > 0 ? 'Táper preparado' : 'Táper vacío' }; }
     },
     plato: { label: 'Plato', emoji: '🍽', dibujo: () => '<circle class="s" cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/>' },
+    ducha: {
+      label: 'Ducha', emoji: '🚿',
+      dibujo: () => '<path class="s" d="M9 10.5a5 5 0 0 1 10 0z"/>' +
+        P('M5 21V7.5a3.5 3.5 0 0 1 3.5-3.5H14v1.5M9 10.5a5 5 0 0 1 10 0zM9.5 14v1.8M14 14v2.8M18.5 14v1.8M11.8 19.2v1.6M16.2 19.2v1.6')
+    },
+    vestir: {
+      label: 'Vestirse', emoji: '👕',
+      dibujo: () => '<path class="s" d="M8.5 4 3 6.5l1.8 4 2.7-1V20h9V9.5l2.7 1 1.8-4L15.5 4a3.5 3.5 0 0 1-7 0z"/>' +
+        P('M8.5 4 3 6.5l1.8 4 2.7-1V20h9V9.5l2.7 1 1.8-4L15.5 4a3.5 3.5 0 0 1-7 0z')
+    },
     cama: {
       label: 'Cama', emoji: '🛌',
       dibujo: () => '<path class="s" d="M10.5 11V9h8a2.5 2.5 0 0 1 2.5 2.5v.5z"/>' +
