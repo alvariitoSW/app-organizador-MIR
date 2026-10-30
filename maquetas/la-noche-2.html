@@ -1,0 +1,96 @@
+<!doctype html><html lang="es" class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Noche 2 · energía, pantallas y 4:20</title><style>
+:root{--bg:#070b14;--card:#111a2b;--card2:#0d1626;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#2a3a5a;--brand:#38e1ff;--ok:#34d399;--warn:#fbbf24;--sobre:#04121c;--suave:color-mix(in srgb,var(--brand) 16%,var(--card));--r:16px;--toque:44px;color-scheme:dark}
+html:not(.dark){--bg:#eef2f9;--card:#fff;--card2:#f3f6fc;--ink:#0d1729;--ink2:#506384;--line:#c5d1e6;--brand:#2563eb;--ok:#15803d;--warn:#92400e;--sobre:#fff;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;min-height:var(--toque);cursor:pointer}
+.barra{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--card2);border-bottom:1px solid var(--line)}
+.barra button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 12px;font-size:14px}
+.barra button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.marco{width:412px;height:915px;margin:12px auto;background:var(--bg);border:1px solid var(--line);border-radius:24px;overflow:auto;padding:16px;display:none}
+.marco.on{display:block}
+h1{font-size:22px;margin:4px 0 2px}h2{font-size:16px;margin:0 0 6px}p{margin:0 0 8px}
+.sub{color:var(--ink2);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:12px 0}
+.card.s{background:var(--suave);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.btn{display:block;width:100%;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:10px 14px;font-size:15px;text-align:center;margin-top:8px}
+.btn.p{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.fila{display:flex;gap:8px}.fila .btn{margin-top:8px}
+.bat{display:flex;gap:4px;margin:8px 0}.bat i{flex:1;height:22px;border-radius:6px;background:var(--card2);border:1px solid var(--line)}
+.bat i.l{background:var(--warn);border-color:var(--warn)}
+.nivel{font-size:20px;font-weight:700}
+.porque{color:var(--ink2);font-size:14px}
+.nota{font-size:14px;color:var(--ink2);border-left:3px solid var(--brand);padding-left:10px;margin:10px 0}
+.pin{display:flex;justify-content:center;gap:14px;margin:18px 0}.pin b{width:18px;height:18px;border-radius:50%;border:2px solid var(--brand)}.pin b.f{background:var(--brand)}
+.tec{display:grid;grid-template-columns:repeat(3,76px);gap:12px;justify-content:center}
+.tec button{height:64px;border-radius:50%;width:76px;border:1px solid var(--line);background:var(--card);font-size:24px;font-weight:600}
+.tec .v{visibility:hidden}.tec .x{font-size:16px;color:var(--ink2)}
+.dias{display:flex;gap:6px;flex-wrap:wrap}.dias button{flex:1;min-width:84px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:8px}
+.dias button[aria-pressed=true]{background:var(--brand);color:var(--sobre);border-color:var(--brand);font-weight:700}
+.prog{height:12px;border-radius:99px;background:var(--card2);border:1px solid var(--line);overflow:hidden;margin:8px 0}.prog div{height:100%;background:var(--ok);width:28.5%}
+ul{margin:6px 0;padding-left:20px}li{margin-bottom:4px}
+.neutro{display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+a{color:var(--brand);display:inline-block;min-height:var(--toque);line-height:var(--toque)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+<div class="barra" role="toolbar" aria-label="Pantallas de la maqueta">
+<button data-p="0">1 Energía</button><button data-p="1">2 Sin pantallas</button><button data-p="2">3 Cortina</button><button data-p="3">4 Descanso</button><button data-p="4">5 Ajustes</button><button id="tema">☀/🌙 Tema</button></div>
+
+<section class="marco" aria-label="Energía y coach">
+<h1>Hoy</h1><p class="sub">Viernes 30 · saliste de guardia a las 09:00</p>
+<div class="card"><h2>Tu energía de hoy</h2>
+<div class="bat" role="img" aria-label="Energía media, 2 de 4"><i class="l"></i><i class="l"></i><i></i><i></i></div>
+<div class="nivel">Media</div><p class="porque">Dormiste 5 h tras la guardia. Es lo normal en un día así.</p></div>
+<div class="card s"><h2>Tu coach, hoy</h2>
+<p style="font-size:17px">Hoy siesta de 20 min antes de las 15:00, comida con proteína y entreno solo movilidad.</p>
+<p class="porque">Por qué: tras una noche corta, una siesta corta recupera sin robarte el sueño de esta noche.</p>
+<button class="btn p">Vale, lo tengo en cuenta</button><button class="btn">Hoy prefiero otra cosa</button></div>
+<div class="nota">Es una guía, no una nota. Hay días que se trata solo de llegar.</div>
+<div class="card"><h2>Esta noche</h2><p>Cama a las 22:35 · sin pantallas desde las 21:50.</p></div>
+</section>
+
+<section class="marco" aria-label="Sin pantallas">
+<h1>Sin pantallas</h1><p class="sub">Para que la cama llegue más fácil</p>
+<div class="card s"><h2>Esta noche, desde las 21:50</h2><p>45 min antes de tu hora de cama (22:35). Si cambias de guardia, se mueve contigo. En guardia no hay.</p>
+<p class="porque">Te avisaré al empezar, una sola vez.</p></div>
+<div class="nota">Esto no se quita desde la app; solo pidiéndoselo a Claude.</div>
+<div class="card"><h2>Mañana, 07:30</h2><p>✓ ¿Anoche lo cumpliste?</p><div class="fila"><button class="btn p">Sí</button><button class="btn">No, y no pasa nada</button></div></div>
+<div class="card"><h2>Que el móvil te ayude</h2>
+<p>La web no puede ver cuánto usas el móvil. Para que se corte de verdad, actívalo una vez en el móvil:</p>
+<ul><li>Ajustes → Bienestar digital</li><li>Hora de dormir → Programar</li><li>Pon 21:50 como inicio</li></ul></div>
+</section>
+
+<section class="marco" aria-label="4:20 con cortina">
+<h1>4:20</h1><p class="sub">Escribe tu PIN para entrar</p>
+<div class="pin" role="img" aria-label="2 de 4 cifras"><b class="f"></b><b class="f"></b><b></b><b></b></div>
+<div class="tec"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button class="v"></button><button>0</button><button class="x" aria-label="Borrar">Borrar</button></div>
+<p class="nota" style="margin-top:20px">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>
+<a href="#">¿Lo olvidaste?</a><p class="sub">Se quita desde Ajustes → Copia de seguridad.</p>
+<div class="card"><h2>Así se ve fuera, con la cortina</h2><p class="sub">En Hoy y el resumen, lo del 4:20 sale neutro:</p>
+<div class="neutro"><span>Hábitos</span><span>—</span></div></div>
+</section>
+
+<section class="marco" aria-label="4:20 descanso">
+<h1>Descanso</h1><p class="sub">Bajar o parar unos días, a tu ritmo</p>
+<div class="card"><h2>Elige tu plan</h2><div class="dias" id="dias"><button aria-pressed="false">7 días</button><button aria-pressed="true">14 días</button><button aria-pressed="false">21 días</button><button aria-pressed="false">Bajar a la mitad</button></div></div>
+<div class="card s"><h2>Día 4 de 14</h2><div class="prog" role="img" aria-label="4 de 14 días"><div></div></div><p class="porque">Cada día cuenta. Sigues bien.</p></div>
+<div class="nota">Los primeros 7 días al bajar se duerme peor; es normal y pasa.</div>
+<div class="card"><h2>Para dormir mejor estos días</h2><ul><li><b>Rutina:</b> misma hora de cama, aunque tardes en dormirte.</li><li><b>Luz:</b> sal a la calle por la mañana; por la noche, luz baja.</li><li><b>Sin pantallas</b> desde 45 min antes de la cama.</li></ul></div>
+<button class="btn">Hoy ha sido difícil</button><p class="sub" style="margin-top:8px">Recaer no borra nada: seguimos desde aquí.</p>
+</section>
+
+<section class="marco" aria-label="Ajustes">
+<h1>Ajustes</h1><p class="sub">Copia de seguridad · 4:20</p>
+<div class="card"><h2>PIN del 4:20</h2><button class="btn">Cambiar PIN</button><p class="porque" style="margin-top:8px">Te pide el PIN actual y luego el nuevo, dos veces.</p></div>
+<div class="card"><h2>Quitar la cortina</h2><p>El 4:20 quedará abierto para quien coja el móvil.</p><button class="btn">Quitar la cortina…</button>
+<p class="porque" style="margin-top:8px">Aviso: te pediremos confirmar. No se borra ningún dato.</p></div>
+<div class="nota"><b>Qué protege</b>: tapa la sección ante quien coja el móvil. No cifra tus datos: quien tenga acceso al archivo del móvil los puede leer.</div>
+</section>
+<script>
+const M=[...document.querySelectorAll('.marco')],B=[...document.querySelectorAll('.barra [data-p]')];
+function ver(i){M.forEach((m,j)=>m.classList.toggle('on',i===j));B.forEach((b,j)=>b.setAttribute('aria-pressed',i===j))}
+B.forEach((b,i)=>b.onclick=()=>ver(i));ver(+(location.hash.slice(1))||0);
+document.getElementById('tema').onclick=()=>document.documentElement.classList.toggle('dark');
+document.querySelectorAll('#dias button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#dias button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+if(location.search.includes('claro'))document.documentElement.classList.remove('dark');
+</script></body></html>
