@@ -12,15 +12,16 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-(nada: la siguiente es **Gran Ley · G1 · Arreglos** (cierra R4), abajo)
+**Gran Ley · G1 · Arreglos** (sesión abierta el 30/10)
 
 ## Por hacer
 
 ### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
 
 [v3-gran-ley] «todas las mejoras de bitácora y todo lo que quedaba por hacer quiero que se haga ya» (2026-10-30).
-**Delegada en el Consejo** (~20 M, incluye los ~15 M de La Reforma): maquetas, qué se quita y paso a `main`. Fuera
-de la delegación: P1 Gmail, P2 clave del 4:20, P3 sin pantallas, P4 hora del parte (en el acta). Absorbe R4-R10, S6,
+**Delegada en el Consejo** (~20 M, incluye los ~15 M de La Reforma): maquetas, qué se quita y paso a `main`.
+**Parte aprobado por el usuario (30/10)** (`consejo/2026-10-30-parte.md`): Gmail fuera; 4:20 con cortina de PIN (G10);
+sin pantallas 45 min antes de la cama, fijo en el código (G11); parte lunes y jueves 7:40 (se programa en la G1). Absorbe R4-R10, S6,
 S7, v3-entrenador, v3-coach, aparc-arte-energia, v3-420-*, v3-viajes (sin red), el lector, comida-entreno,
 sueño-vistas, bienestar digital, suite-2min, png-design, tu-mes-r2 y hoy-plantilla. Aplazados: iconos y Gmail.
 Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de G1-G4.
@@ -137,7 +138,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
-- [v3-gmail] «La función de Gmail»: falta que digas qué es
+- ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
 - [aparc-comida-entreno] Los días de entreno a las 18:30, ¿la comida después del entreno?
 - [aparc-sueno-vistas] / [aparc-sueno-sitio] Apuntar el sueño en Estación, Reloj y Línea; dónde vive el sueño en Hoy
 - [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo
