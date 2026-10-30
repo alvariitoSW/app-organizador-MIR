@@ -15278,6 +15278,65 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await descongela();
     await page.evaluate(() => { const P = window.PG; P.store.rotation.daySet = JSON.parse(window.__daySet394); delete window.__daySet394; if (P.store.sueno.pant) delete P.store.sueno.pant; P.save(); P.render(); });
   }
+  // 395) G12 · el modo viaje, sin red (activar, billete y Hoy en viaje, encadenados con la interfaz)
+  {
+    const r = {};
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    // un hábito de todos los días, hecho de hace 8 a hace 3 días y NO ayer ni anteayer ni hoy
+    await page.evaluate(() => { const P = window.PG, H = P.habitosS(); H.items.push({ id: 'hab-vj', nombre: 'Estirar viaje', icono: '🧘', color: '#38e1ff', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01' });
+      for (let i = 3; i <= 8; i++) { const k = P.iso(P.addDays(new Date(), -i)); (H.registro[k] || (H.registro[k] = {}))['hab-vj'] = 'ok'; } P.save(); P.render(); });
+    r.sin = await page.evaluate(() => window.PG.rachaHabito(window.PG.habitosS().items.filter((h) => h.id === 'hab-vj')[0]));
+    // (a) activar un viaje de 3 días (hace 2 días → hoy) desde Ajustes: los 2 días sin hábito no rompen la racha
+    await gotoTab('ajustes', 'modoviaje');
+    r.aBtn = await page.$$eval('[data-a="mv-activa"]', (b) => b.length);
+    if (r.aBtn === 1) {
+      await page.fill('#mvDestino', 'Valencia <b>boda</b>');
+      await page.fill('#mvIda', isoDate(new Date(Date.now() - 2 * 86400000)));
+      await page.fill('#mvVuelta', hoyK);
+      await page.click('[data-a="mv-activa"]');
+    }
+    await page.waitForTimeout(200);
+    r.con = await page.evaluate(() => window.PG.rachaHabito(window.PG.habitosS().items.filter((h) => h.id === 'hab-vj')[0]));
+    r.aGuardado = await page.evaluate(() => { const v = window.PG.store.modoViaje; return v && v.destino + '|' + Object.values(v.pausa).filter(Boolean).length; });
+    check('395a Modo viaje · activar un viaje de 3 días desde Ajustes congela la racha: sin viaje los 2 días sin hábito la rompían (0), con viaje sigue en 6; y el destino se guarda tal cual',
+      r.sin === 0 && r.con === 6 && /^Valencia <b>boda<\/b>\|5$/.test(r.aGuardado || ''), JSON.stringify(r));
+    // (b) el billete entra en Dinero una sola vez, en viajes
+    await gotoTab('ajustes', 'modoviaje');
+    r.bBtn = await page.$$eval('[data-a="mv-billete"]', (b) => b.length);
+    if (r.bBtn === 1) {
+      await page.click('[data-a="mv-medio"][data-v="Tren"]');
+      await page.fill('#mvPrecio', '64,50');
+      await page.click('[data-a="mv-billete"]');
+      await page.waitForTimeout(200);
+      await page.fill('#mvPrecio', '64,50');
+      await page.click('[data-a="mv-billete"]');   // el mismo billete otra vez: no se duplica
+      await page.waitForTimeout(200);
+    }
+    r.bLista = await page.$$eval('.mvit .mvbil', (b) => b.length);
+    r.bPagos = await page.evaluate(() => window.PG.dineroS().pagos.filter((p) => p.cat === 'viajes').length);
+    await gotoTab('dinero');
+    await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = 'recibos'; P.render(); });
+    await page.waitForTimeout(200);
+    r.bFilas = await page.$$eval('#main .gfila', (f) => f.filter((x) => /viajes/.test(x.innerText) && /64,50/.test(x.innerText)).length);
+    check('395b Modo viaje · apuntar el billete lo mete en Dinero una vez en la categoría viajes (pulsarlo dos veces no lo duplica)',
+      r.bBtn === 1 && r.bLista === 1 && r.bPagos === 1 && r.bFilas === 1, JSON.stringify(r));
+    // (c) Hoy en viaje: cabecera y no lo pausado; terminar el viaje lo quita
+    await gotoTab('hoy');
+    await page.waitForTimeout(200);
+    r.cCab = await page.$$eval('#main .mvcab', (b) => b.length);
+    r.cTxt = r.cCab ? await page.$eval('#main .mvcab', (e) => e.innerText) : '';
+    r.cMain = await page.$eval('#main', (e) => e.innerText);
+    r.cPausa = await page.$$eval('#main .mvp', (b) => b.length);
+    r.cFin = await page.$$eval('#main [data-a="mv-fin"]', (b) => b.length);
+    if (r.cFin === 1) { await page.click('#main [data-a="mv-fin"]'); await page.waitForTimeout(250); }
+    r.cDespues = await page.$$eval('#main .mvcab', (b) => b.length);
+    r.cMain2 = await page.$eval('#main', (e) => e.innerText);
+    check('395c Modo viaje · Hoy muestra «De viaje · día 3 de 3», lo esencial y las rachas «en pausa ⏸», sin los hábitos ni el coach; «Terminar el viaje antes» lo quita',
+      r.cCab === 1 && /De viaje · día 3 de 3 · vuelves hoy/.test(r.cTxt) && r.cPausa >= 2 && !/Estirar viaje/.test(r.cMain) && !/Tu energía de hoy/.test(r.cMain) &&
+      r.cFin === 1 && r.cDespues === 0 && !/De viaje · día/.test(r.cMain2), JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store.modoViaje = null; P.dineroS().pagos = P.dineroS().pagos.filter((p) => p.cat !== 'viajes');
+      P.habitosS().items = P.habitosS().items.filter((h) => h.id !== 'hab-vj'); P.save(); P.render(); });
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
