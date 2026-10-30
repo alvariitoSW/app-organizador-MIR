@@ -15159,6 +15159,75 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.hayOk1 && r.l1 && r.l1.dudas === 0 && r.l1.k === 1170 && r.l1.p === 42 && r.a1 && r.a1.kcal === 1170 && r.a1.prot === 42 &&
       r.hayOk2 && r.l2 && r.l2.dudas === 0 && r.l2.k === 840 && r.a2 && r.a2.cuenta === 2 && r.a2.kcal === 840, JSON.stringify(r));
   }
+  // 393) 4:20 · G10 — la cortina con PIN y el descanso, encadenados por la interfaz. Fija: (a) con cortina, salir y volver a
+  // entrar pide el PIN (el malo no abre, el bueno sí) y el PIN no se guarda en claro; (b) fuera del 4:20 la cortina deja lo del
+  // 4:20 neutro (el cajón no lo nombra y el conductor no fuma); (c) quitar la cortina desde Copia de seguridad conserva los
+  // datos; (d) el descanso de 14 días sigue en pie tras apuntar un consumo («seguimos desde aquí»), sin reiniciar.
+  {
+    const r = {};
+    const pin = async (d) => { for (const c of d) { await page.click('[data-a="cn-pin"][data-v="' + c + '"]'); } await page.waitForTimeout(250); };
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia393', JSON.stringify(P.store)); delete P.store.consumo; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.cnPin = null; P.ui.cnAbierto = false; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
+    // (d) primero: empezar 14 días y apuntar un consumo
+    r.d0 = await page.$$eval('[data-a="cn-desc"]', (b) => b.length);
+    if (r.d0 === 4) await page.click('[data-a="cn-desc"][data-v="14"]');
+    await page.waitForTimeout(100);
+    r.dDia = await page.evaluate(() => (document.querySelector('#main .cndesc .cnbig') || {}).textContent || '');
+    await page.click('[data-a="cn-vista"][data-v=""]'); await page.waitForTimeout(100);
+    r.dLinea = await page.$$eval('[data-a="cn-vista"].cndl', (b) => b.length);
+    r.dAdd = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
+    if (r.dAdd) await page.click('[data-a="cn-add"]');
+    await page.waitForTimeout(2300);
+    r.dFlash = await page.evaluate(() => (document.querySelector('#flash') || {}).textContent || '');
+    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
+    r.dTxt = await page.evaluate(() => (document.querySelector('#main .cndesc') || {}).innerText || '');
+    r.dPlan = await page.evaluate(() => { const d = window.PG.consumoS().plan.desc; return d && d.dias; });
+    check('393d 4:20 · descanso: empezar 14 días y apuntar una sesión no reinicia ni castiga: sigue «Día 1 de 14» y dice «seguimos desde aquí»',
+      r.d0 === 4 && /Día 1 de 14/.test(r.dDia) && r.dLinea === 1 && r.dAdd === 1 && /seguimos desde aquí/.test(r.dTxt) && /seguimos desde aquí/.test(r.dFlash) && r.dPlan === 14 && !/fallaste|has fallado|recaíste/i.test(r.dTxt), JSON.stringify(r));
+    // (a) poner la cortina, salir, entrar
+    r.aBtn = await page.$$eval('[data-a="cn-pin-nuevo"]', (b) => b.length);
+    if (r.aBtn) await page.click('[data-a="cn-pin-nuevo"]');
+    await page.waitForTimeout(80);
+    r.aTec = await page.$$eval('[data-a="cn-pin"]', (b) => b.map((x) => Math.round(x.getBoundingClientRect().height)));
+    await pin('4821'); await pin('4821');
+    r.aHash = await page.evaluate(() => { const p = window.PG.consumoS().priv.pin; return p && { s: p.s.length, h: p.h.length }; });
+    r.aClaro = await page.evaluate(() => { const q = '"4821"'; return JSON.stringify(window.PG.store).indexOf(q) >= 0 || Object.keys(localStorage).some((k) => (localStorage.getItem(k) || '').indexOf(q) >= 0); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); }); await page.waitForTimeout(80);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(80);
+    r.aTeclado = await page.$$eval('[data-a="cn-pin"]', (b) => b.length);
+    r.aSinSeccion = await page.$$eval('#main .cnvis', (b) => b.length);
+    if (r.aTeclado) { await pin('1111'); }
+    r.aMalCierra = (await page.$$eval('#main .cnvis', (b) => b.length)) === 0 && (await page.$$eval('[data-a="cn-pin"]', (b) => b.length)) > 0;
+    if (r.aTeclado) { await pin('4821'); }
+    r.aAbre = await page.$$eval('#main .cnvis', (b) => b.length);
+    check('393a 4:20 · cortina: tras ponerla, salir y entrar pide el PIN; uno malo no abre, el bueno sí; teclas ≥ 44 px; solo se guarda sal + hash (nunca el PIN)',
+      r.aBtn === 1 && r.aTec.length === 11 && r.aTec.every((h) => h >= 44) && r.aHash && r.aHash.s === 32 && r.aHash.h === 64 && !r.aClaro &&
+      r.aTeclado > 0 && r.aSinSeccion === 0 && r.aMalCierra && r.aAbre === 1, JSON.stringify(r));
+    // (b) fuera del 4:20, neutro (con una sesión de hoy apuntada)
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.drawerOpen = false; P.render(); }); await page.waitForTimeout(80);
+    r.bTog = await page.$$eval('[data-a="drawer-toggle"]', (b) => b.length);
+    if (r.bTog) await page.click('[data-a="drawer-toggle"]');
+    await page.waitForTimeout(150);
+    r.bCajon = await page.evaluate(() => (document.querySelector('#drawer') || {}).innerText || '');
+    r.bFuma = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return P.conductorEscenas(k).fumar; });
+    await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(150);
+    check('393b 4:20 · con la cortina puesta, fuera de su sección (el cajón «Más» y el conductor) se ve neutro, sin nombrar el 4:20 ni el consumo',
+      r.bTog === 1 && /Privado/.test(r.bCajon) && !/4:20/.test(r.bCajon) && r.bFuma === false, JSON.stringify(r));
+    // (c) quitar la cortina desde Copia de seguridad: los datos se conservan
+    await page.evaluate(() => { const P = window.PG; P.ui.drawerOpen = false; P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render(); }); await page.waitForTimeout(100);
+    r.cBtn = await page.$$eval('[data-a="cn-cortina-quita"]', (b) => b.length);
+    if (r.cBtn) await page.click('[data-a="cn-cortina-quita"]');
+    await page.waitForTimeout(150);
+    r.cConf = await page.$$eval('[data-a="confirm-yes"]', (b) => b.length);
+    if (r.cConf) await page.click('[data-a="confirm-yes"]');
+    await page.waitForTimeout(200);
+    r.cEstado = await page.evaluate(() => { const c = window.PG.consumoS(); return { pin: !!c.priv.pin, ses: c.ses.length, desc: !!c.plan.desc }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.ui.cnVista = ''; P.render(); }); await page.waitForTimeout(100);
+    r.cAbre = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
+    check('393c 4:20 · quitar la cortina desde Ajustes → Copia de seguridad (con aviso) abre el 4:20 y conserva las sesiones y el descanso',
+      r.cBtn === 1 && r.cConf === 1 && r.cEstado.pin === false && r.cEstado.ses === 1 && r.cEstado.desc === true && r.cAbre === 1, JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia393')); localStorage.removeItem('__copia393'); P.ui.cnVista = ''; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

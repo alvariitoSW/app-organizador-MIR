@@ -927,8 +927,11 @@ function normalize(o){
     const pl=c.plan&&typeof c.plan==='object'?c.plan:{};
     c.plan={pot:[10,15,20].indexOf(+pl.pot)>=0?+pl.pot:15,ventana:/^\d{2}:\d{2}$/.test(pl.ventana||'')?pl.ventana:'',guardia:pl.guardia!==false,
       tb:pl.tb&&esFecha(pl.tb.desde||'')&&[3,7,28].indexOf(+pl.tb.dias)>=0?{desde:pl.tb.desde,dias:+pl.tb.dias}:null,
-      tbHist:(Array.isArray(pl.tbHist)?pl.tbHist:[]).filter(function(h){return h&&esFecha(h.desde||'');}).slice(-30).map(function(h){return {desde:h.desde,dias:+h.dias||0,roto:!!h.roto};})};
-    c.priv={oculto:!!(c.priv&&c.priv.oculto),fueraCopia:!!(c.priv&&c.priv.fueraCopia)};
+      tbHist:(Array.isArray(pl.tbHist)?pl.tbHist:[]).filter(function(h){return h&&esFecha(h.desde||'');}).slice(-30).map(function(h){return {desde:h.desde,dias:+h.dias||0,roto:!!h.roto};}),
+      desc:pl.desc&&esFecha(pl.desc.desde||'')?{desde:pl.desc.desde,dias:[7,14,21].indexOf(+pl.desc.dias)>=0?+pl.desc.dias:14,mitad:!!pl.desc.mitad,base:Math.max(0,Math.min(99,+pl.desc.base||0))}:null};
+    const pv0=c.priv||{};c.priv={oculto:!!pv0.oculto,fueraCopia:!!pv0.fueraCopia};
+    /* la cortina del 4:20: solo sal y hash (nunca el PIN) */
+    if(pv0.pin&&/^[0-9a-f]{32}$/.test(String(pv0.pin.s))&&/^[0-9a-f]{64}$/.test(String(pv0.pin.h)))c.priv.pin={s:pv0.pin.s,h:pv0.pin.h};
     if(!idDe(CN_MOT,c.ultMotivo))delete c.ultMotivo;}
   else delete o.consumo;
   if(o.food&&o.food.monchisTope!=null)o.food.monchisTope=Math.max(0,Math.min(3000,Math.round(+o.food.monchisTope||0)));
@@ -5868,7 +5871,7 @@ function conductorEscenas(key,sinAyer){
   const d=parseDate(key),ms=d?monthService(d.getFullYear(),d.getMonth()):null,sv=ms&&ms.service?String(ms.service):'';
   const CASA={cama:1,movil:1,leer:1,siesta:1,ducha:1,cafe:1,vestir:1,escritorio:1,salon:1,casa:1},hab=habitosEscena(key);
   /* fumar es cosa tuya si lo llevas como hábito o has apuntado 4:20 en las dos últimas semanas; si no, el conductor no fuma en el Lloretazo */
-  let fuma=!!hab.fumar;if(!fuma)try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
+  let fuma=!cnTapado()&&!!hab.fumar;if(!fuma&&!cnTapado())try{for(let i=0;i<14&&!fuma;i++)if(consumoDe(iso(addDays(d,-i))).length)fuma=true;}catch(e){}
   return {taxi:D.seg.some(function(x){return x.e==='taxi';}),bici:iv('bici'),parque:iv('parque'),rot:sv?nombreCorto(sv).toUpperCase().slice(0,22):'',fumar:fuma,
     /* las comidas que no caen dentro de un turno se hacen en casa: también se ven desde dentro */
     casa:(function(){const own=D.seg.filter(function(x){return CASA[x.e]||(x.e==='comida'&&!x.dentro);}).map(function(x){return x.e==='comida'?[x.a,x.b,'mesa',x.t||'']:[x.a,x.b,x.e];});
@@ -10817,7 +10820,7 @@ function monchisOpciones(){
   const conM=function(x){const fr={txt:x.n,tipo:'libre',tam:'m',items:x.it};x.fr=fr;x.m=fraseMacros(fr);return x;};
   return {sanos:sanos.map(conM).slice(0,3),caprichos:caprichos.map(conM).slice(0,4)};}
 function monchisCardHTML(sel){
-  const ll=lloretDe(sel),hoy=sel===iso(new Date()),hay=monchisKcal(sel)>0||consumoDe(sel).length>0;
+  const ll=lloretDe(sel),hoy=sel===iso(new Date()),hay=monchisKcal(sel)>0||(!cnTapado()&&consumoDe(sel).length>0);
   if(!ll&&!hay)return '';
   const tope=monchisTope(sel),ya=monchisKcal(sel),p=ll?lloretPlan(sel):null;
   /* con el Lloretazo de cada noche la tarjeta salía todos los días a todas horas: hasta las 21:00, y
@@ -11002,7 +11005,63 @@ function cuditToca(){const l=consumoS().cudit;return !l.length||l[l.length-1].fe
 function cnCab(v){
   return '<div class="subcab"><h2 class="subtit">🌿 4:20</h2></div>'+
     '<div class="cnvis" role="tablist">'+CN_VISTAS.map(function(x){return '<button role="tab" aria-selected="'+(v===x[0])+'" class="'+(v===x[0]?'on':'')+'" data-a="cn-vista" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';}
+/* ---------- la cortina (PIN de 4 cifras) y el descanso ----------
+   La cortina tapa la sección ante quien coja el móvil; NO cifra nada. Se guarda sal + hash SHA-256, nunca el PIN.
+   Abierta = en memoria (ui.cnAbierto): se cierra al salir de la sección, al cerrar la app o tras 2 min en segundo plano. */
+function cnTapado(){try{return !!(store.consumo&&store.consumo.priv&&store.consumo.priv.pin);}catch(e){return false;}}   /* try: HAB_AUTOS lo lee al cargar, antes de que exista store */
+async function cnHash(sal,pin){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(sal+pin));
+  return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
+async function cnPinOk(pin){const p=consumoS().priv.pin;return !!p&&(await cnHash(p.s,pin))===p.h;}
+async function cnPinPone(pin){const v=crypto.getRandomValues(new Uint8Array(16)),s=Array.prototype.map.call(v,function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+  consumoS().priv.pin={s:s,h:await cnHash(s,pin)};save();}
+async function cnPinSigue(P){
+  /* con las 4 cifras puestas: según el paso, comprueba, pide el nuevo o lo guarda */
+  const t=P.t;P.t='';P.mal=false;
+  if(P.modo==='entrar'||P.modo==='actual'){
+    if(await cnPinOk(t)){if(P.modo==='entrar'){ui.cnAbierto=true;ui.cnPin=null;ui.cnFallos=0;}else P.modo='nuevo';}
+    else{P.mal=true;ui.cnFallos=(ui.cnFallos||0)+1;if(ui.cnFallos>=5){ui.cnBloq=Date.now()+30000;ui.cnFallos=0;}}
+  }else if(P.modo==='nuevo'){P.nuevo=t;P.modo='repite';}
+  else if(P.modo==='repite'){
+    if(t===P.nuevo){await cnPinPone(t);ui.cnAbierto=true;ui.cnPin=null;flash('Cortina puesta');}
+    else{P.mal=true;P.modo='nuevo';P.nuevo='';}}
+  render();}
+function cnPinHTML(P){
+  const tit={entrar:'Escribe tu PIN para entrar',actual:'Escribe tu PIN actual',nuevo:'Elige un PIN de 4 cifras',repite:'Repítelo para confirmar'}[P.modo]||'',n=P.t.length,
+    bloq=Date.now()<(ui.cnBloq||0);
+  return '<div class="grid mt cn"><div class="subcab"><h2 class="subtit">🌿 4:20</h2></div><div class="card cnpin">'+
+    '<p class="cnpt">'+esc(tit)+'</p><div class="cnpd" role="img" aria-label="'+n+' de 4 cifras">'+[0,1,2,3].map(function(i){return '<b'+(i<n?' class="f"':'')+'></b>';}).join('')+'</div>'+
+    (bloq?'<p class="mini" role="alert">Demasiados intentos. Espera un momento y prueba otra vez.</p>':(P.mal?'<p class="mini" role="alert">'+(P.modo==='nuevo'?'No coincidían. Elige el PIN otra vez.':'Ese no es. Prueba otra vez.')+'</p>':''))+
+    '<div class="cnpad">'+[1,2,3,4,5,6,7,8,9].map(function(d){return '<button data-a="cn-pin" data-v="'+d+'" aria-label="'+d+'">'+d+'</button>';}).join('')+
+      '<span></span><button data-a="cn-pin" data-v="0" aria-label="0">0</button><button data-a="cn-pin" data-v="x" aria-label="Borrar">⌫</button></div>'+
+    '<p class="mini" style="margin-top:14px">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
+    (P.modo==='entrar'?'<details class="cnolv"><summary>¿Lo olvidaste?</summary><p class="mini">Se quita desde Ajustes → Copia de seguridad. No pierdes ningún dato.</p></details>':
+      '<button class="btn s" data-a="cn-pin-x">Cancelar</button>')+'</div></div>';}
+function cnPinPantalla(){
+  /* ¿hay que pintar el teclado en vez de la sección? */
+  if(cnTapado()&&!ui.cnAbierto)ui.cnPin=ui.cnPin&&ui.cnPin.modo==='entrar'?ui.cnPin:{modo:'entrar',t:''};
+  if(!ui.cnPin)return false;
+  $('#main').innerHTML=cnPinHTML(ui.cnPin);return true;}
+/* el descanso: 7, 14 o 21 días, o bajar a la mitad (14 días con la mitad de tu media de antes) */
+function cnDesc(){
+  const d=consumoS().plan.desc;if(!d||!esFecha(d.desde))return null;
+  const dias=d.dias||14,dia=1-diasHasta(d.desde),ses=consumoS().ses.filter(function(x){return x.fecha>=d.desde;}),sem=cnSes(7).filter(function(x){return x.fecha>=d.desde;}).length;
+  const meta=d.mitad?Math.round(d.base/2*10)/10:0,pasa=d.mitad?sem>meta:ses.length>0;
+  return {desde:d.desde,dias:dias,mitad:!!d.mitad,base:d.base||0,meta:meta,dia:Math.max(1,Math.min(dia,dias)),fin:dia>dias,n:ses.length,sem:sem,pasa:pasa};}
+function cnDescHTML(){
+  const D=cnDesc(),btn=function(v,t){return '<button data-a="cn-desc" data-v="'+v+'">'+t+'</button>';};
+  if(!D)return '<div class="card"><div class="cap">DESCANSO</div><p class="cntx">Unos días con menos o sin, a tu ritmo.</p>'+
+    '<div class="cnseg c2">'+btn(7,'7 días')+btn(14,'14 días')+btn(21,'21 días')+btn('mitad','Bajar a la mitad')+'</div>'+
+    '<p class="cntx">Los primeros 7 días al bajar se duerme peor; es normal y pasa.</p></div>';
+  return '<div class="card cndesc"><div class="cap">DESCANSO</div>'+
+    '<p class="cnbig">'+(D.fin?'Terminaste los '+D.dias+' días':'Día '+D.dia+' de '+D.dias)+'</p>'+
+    '<div class="cnprog" role="img" aria-label="'+D.dia+' de '+D.dias+' días"><i style="width:'+Math.round(D.dia/D.dias*100)+'%"></i></div>'+
+    (D.mitad?'<p class="cntx">Tu media de antes: '+String(D.base).replace('.',',')+' sesiones por semana. Tu mitad: '+String(D.meta).replace('.',',')+'. Esta semana: '+D.sem+'.</p>':'')+
+    (D.pasa?'<p class="cntx">Recaer no borra nada: seguimos desde aquí.</p>':'<p class="cntx">Cada día cuenta. Sigues bien.</p>')+
+    (D.fin?'':'<p class="cntx">Los primeros 7 días al bajar se duerme peor; es normal y pasa.</p>')+
+    '<div class="cap" style="margin-top:10px">PARA DORMIR MEJOR</div><ul class="cnul"><li><b>Rutina:</b> misma hora de cama, aunque tardes en dormirte.</li><li><b>Luz:</b> sal a la calle por la mañana; por la noche, luz baja.</li><li><b>Sin pantallas</b> desde 45 min antes de la cama.</li></ul>'+
+    '<button class="btn" data-a="cn-desc-fin">'+(D.fin?'Cerrar':'Dejarlo por ahora')+'</button>'+(D.fin?'':'<p class="cntx">Sin culpa: cuando quieras, empiezas otro.</p>')+'</div>';}
 function renderConsumo(){
+  if(cnPinPantalla())return;
   const v=ui.cnVista||'';
   if(v==='efectos')return renderConsumoEfectos();
   if(v==='ciencia')return renderConsumoCiencia();
@@ -11025,6 +11084,7 @@ function renderConsumo(){
     '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
       '<div><b>'+(S.mg||0)+' mg</b><span>THC esta semana · '+String(S.g).replace('.',',')+' g</span></div>'+
       '<div><b>'+sin+'</b><span>'+(sin===1?'día sin':'días seguidos sin')+(sin>=2?' · tolerancia −'+cnTolerancia(sin)+' %':'')+'</span></div></div>'+
+    (cnDesc()&&!cnDesc().fin?'<button class="card cndl" data-a="cn-vista" data-v="plan">Descanso · Día '+cnDesc().dia+' de '+cnDesc().dias+'</button>':'')+
     (tb&&!tb.fin?'<div class="card cntb"><b>T-break · día '+tb.dia+' de '+tb.dias+'</b>'+(tb.roto?' <span class="mini">(con alguna sesión: sigue contando)</span>':'')+'<p class="mini" style="margin:4px 0 0">'+esc(cnAbstinencia(tb.dia))+'</p></div>':
       (sin>=1&&!tb?'<p class="mini cnlinea">'+esc(cnAbstinencia(sin))+'</p>':''))+
     (pend?'<div class="card cnsento"><span>¿Qué tal te sentó la de '+esc(cnDiaTxt(pend.fecha)+(pend.hora?' '+pend.hora:''))+'?</span><div class="cnseg c5">'+[1,2,3,4,5].map(function(n){
@@ -11149,7 +11209,7 @@ function renderConsumoPlan(){
       '<div class="row" style="margin-top:6px"><span class="mini">hora tope<small style="display:block">aviso si apuntas después</small></span><span class="sp"></span><input type="time" data-a="cn-ventana" value="'+esc(p.ventana)+'" aria-label="hora tope" style="width:auto"></div>'+
       '<div class="row" style="margin-top:6px"><span class="mini">potencia aproximada<small style="display:block">para los mg de THC</small></span><span class="sp"></span><div class="cnseg c3">'+[10,15,20].map(function(n){return '<button class="'+(p.pot===n?'on':'')+'" data-a="cn-pot" data-v="'+n+'">'+n+' %</button>';}).join('')+'</div></div>'+
       '<label class="row mini" style="margin-top:8px;gap:6px"><input type="checkbox" data-a="cn-guardia"'+(p.guardia?' checked':'')+' style="width:auto"> avisarme la víspera de una guardia</label></div>'+
-    '<div class="card"><div class="cap">T-BREAK</div>'+cuerpoTB+'</div>'+
+    cnDescHTML()+'<div class="card"><div class="cap">T-BREAK</div>'+cuerpoTB+'</div>'+
     '<div class="card"><div class="row"><span class="cap">CUDIT-R · UNA VEZ AL MES</span><span class="sp"></span>'+(Q?'':'<button class="btn '+(cuditToca()?'p ':'')+'s" data-a="cn-cudit">'+(cuditToca()?'hacerlo':'repetir')+'</button>')+'</div>'+
       (Q?'<div class="cncu"><p class="mini" style="margin:4px 0">'+(Q.i+1)+' de 8</p><b>'+esc(CUDIT[Q.i][0])+'</b><div class="cncuo">'+CUDIT[Q.i][1].map(function(t,j){return '<button data-a="cn-cudit-r" data-v="'+j+'">'+esc(t)+'</button>';}).join('')+'</div>'+
         '<button class="dlink" data-a="cn-cudit-x">cancelar</button></div>':
@@ -11158,6 +11218,9 @@ function renderConsumoPlan(){
     '<div class="card"><div class="cap">PRIVACIDAD</div>'+
       '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="oculto"'+(c.priv.oculto?' checked':'')+' style="width:auto"> en «Más», mostrar como «🔒 Privado», sin cifras</label>'+
       '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(c.priv.fueraCopia?' checked':'')+' style="width:auto"> dejar 4:20 fuera de la copia que compartes</label>'+
+      '<div class="cap" style="margin-top:10px">CORTINA CON PIN</div>'+
+      (cnTapado()?'<p class="cntx">Puesta. Para quitarla: Ajustes → Copia de seguridad.</p><button class="btn" data-a="cn-pin-cambia">Cambiar el PIN</button>':
+        '<p class="cntx">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p><button class="btn" data-a="cn-pin-nuevo">Poner cortina con PIN</button>')+
       '<p class="mini" style="margin:6px 0 0">Todo vive en tu móvil; nada se manda a ningún servidor.</p></div>'+
   '</div>';}
 /* ---- la semana con lo que hay en la nevera ----
@@ -18062,13 +18125,13 @@ const HAB_AUTO={
   estudio:{lab:'📚 30 min de estudio',estado:function(key){const m=estMinDe(key);return m>=30?'ok':(m>0?'min':'');}},
   prot:{lab:'🍗 llegar a la proteína',estado:function(key){const ob=+objetivoMacros().prot||0;if(!ob||!logDe(key).length)return '';const p=foodTotals(key).prot;
     return p>=ob?'ok':(p>=ob*0.75&&key<iso(new Date())?'min':'');}},
-  sin420:{lab:'🌿 día sin 4:20',estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
+  sin420:{get lab(){return cnTapado()?'✔ día sin (privado)':'🌿 día sin 4:20';},estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
   /* de la hora apuntada al salir y del plan del viaje, sin pasar por las escenas (que a su vez leen los hábitos) */
   puerta:{lab:'🚪 salir de casa a tiempo',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P||s==null)return '';return s<=P.plan+1e-6?'ok':(s<=P.ultimo+1e-6?'min':'');}},
   taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P)return '';
     if(s!=null)return s>P.ultimo+1e-6?'ok':'';
     return viajeCfg().taxi&&key<=iso(new Date())?'ok':'';}},   /* sin hora apuntada: de serie, taxi */
-  lloretsin:{lab:'🌿 Lloretazo sin',toca:function(key){return !!lloretDe(key);},
+  lloretsin:{get lab(){return cnTapado()?'🌙 Lloretazo (privado)':'🌿 Lloretazo sin';},toca:function(key){return !!lloretDe(key);},
     estado:function(key){return habCerrado(key)&&!consumoDe(key).some(function(x){return x.ctx==='lloret';})?'ok':'';}}};
 const HAB_AUTOS=[['','No, a mano']].concat(Object.keys(HAB_AUTO).map(function(k){return [k,HAB_AUTO[k].lab];}));
 const HAB_TRAS=[['despertar','al despertar'],['guardia','al salir de guardia'],['comer','después de comer'],['entreno','después de entrenar'],
@@ -18328,7 +18391,7 @@ function asistIntenciones(k){
   /* lo que propone para hoy, sacado de lo que hay hoy: elegir una es la intención del día */
   const out=[],e=entrenoDe(k),hb=habitosS().items.filter(function(h){return habitoToca(h,k);});
   if(e&&e.hora&&!gymHechoEn(k))out.push(['entreno','💪 entreno a las '+hCortaHM(e.hora)]);
-  if(lloretDe(k))out.push(['lloretsin','🌿 Lloretazo sin']);
+  if(lloretDe(k))out.push(['lloretsin',cnTapado()?'🌙 Lloretazo (privado)':'🌿 Lloretazo sin']);
   const est=hb.filter(function(h){return /estudi|mir|repas/i.test(h.nombre)||h.auto==='estudio';})[0];
   if(est)out.push(['estudio','📚 '+(est.min&&habCorto(k)?est.min:'estudio')+(lloretDe(k)?' antes del Lloretazo':'')]);
   if(habCorto(k)&&hb.some(function(h){return h.min;}))out.push(['corto','🌱 lo mínimo y descansar']);
@@ -18453,7 +18516,7 @@ function asistTarjetaHab(k){return reglasDe(HAB_R,k,true,false);}
 function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
 function asistHoyHTML(k){
   /* en Hoy: el check-in (si falta) y una tarjeta por asistente (hábitos, dinero y 4:20) si hay algo que decir */
-  const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK?cnTarjeta(k):null,hh=new Date().getHours();
+  const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK&&!cnTapado()?cnTarjeta(k):null,hh=new Date().getHours();
   const ck=hh>=5&&hoyModo()!=='bus'?asistCheckinHTML(k):'';   /* con el conductor, el check-in es la radio */
   if(!ck&&!t&&!d&&!c)return '';
   /* la primera abierta; las otras, en una línea que se abre al tocar (eran 482 px entre las tres) */
@@ -18489,7 +18552,7 @@ function renderRevision(){
   subPantalla('hab-vista','Hábitos','Tu semana',
     '<div class="card"><div class="cap">LOS ÚLTIMOS 7 DÍAS, FRENTE A LOS 7 DE ANTES</div><div class="rvg">'+
       n('😴 Sueño',S.sueno==null?null:String(S.sueno).replace('.',','),P.sueno==null?null:String(P.sueno).replace('.',','),' h',1,S.nS+' noches',S.sueno,P.sueno)+
-      n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj)+
+      (cnTapado()?'':n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj))+
       n('✅ Hábitos',S.hab,P.hab,' %',1,'de los días que tocaban')+
       n('📚 Estudio',fmtHM(S.est||0),fmtHM(P.est||0),'',1,'',S.est||0,P.est||0)+
       n('💪 Entrenos',S.ent,P.ent,'',1)+
@@ -23719,6 +23782,9 @@ function renderData(){
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
+      ${cnTapado()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Cortina del 4:20</b>
+        <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos del 4:20 y la cortina. Si olvidaste el PIN, quítala aquí: no se borra ningún dato.</span>
+        <button class="btn" data-a="cn-cortina-quita">Quitar la cortina…</button></div>`:''}
       <details class="plegable" style="margin-top:12px" data-tg="copiaInfo"${ui.copiaInfo||_almacen.estado==='no'?' open':''}><summary>dónde se guarda todo esto y qué lo borra</summary>
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
       se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
@@ -23835,7 +23901,7 @@ function cajonVivo(t){
   return '';}
 function cajonHTML(){
   const d=diasDesdeBackup(),copia=d===null||d>=avisoBackupD(),aj=['ajustes','cfg','data'].indexOf(ui.tab)>=0;
-  const oculto=!!(store.consumo&&consumoS().priv.oculto);   /* 4:20 discreto: sin nombre ni cifras */
+  const oculto=!!(store.consumo&&(consumoS().priv.oculto||cnTapado()));   /* 4:20 discreto: sin nombre ni cifras */
   return '<div class="drawer-head"><strong>Más</strong><button class="btn s" data-a="drawer-close" aria-label="Cerrar menú">✕</button></div>'+
     '<div class="ctil">'+CAJON.map(function(t){
       const priv=oculto&&t[0]==='consumo';
@@ -24068,6 +24134,7 @@ function renderNow(){
     /* reiniciar la animación sin forzar un reflow síncrono (antes: void mm.offsetWidth) */
     requestAnimationFrame(function(){mm.classList.add('in');});}
   pintaBotonTema();
+  if(ui.tab!=='consumo'){ui.cnAbierto=false;ui.cnPin=null;}   /* la cortina se cierra al salir del 4:20 */
   ({hoy:renderHoy,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,consumo:renderConsumo,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
@@ -25327,10 +25394,25 @@ function act(a,el){
     case 'mc-tope':{const f=food(),t=monchisTope(foodCtx().sel);f.monchisTope=Math.max(50,Math.min(3000,t+(+el.dataset.d||0)));save();render();break;}
     case 'cn-f':{const f=ui.cnF||{};const k=el.dataset.k;f[k]=k==='g'?+el.dataset.v:el.dataset.v;if(k==='dia')delete f.fecha;ui.cnF=f;render();break;}
     case 'cn-add':{const x=consumoApuntar(ui.cnF||{});flash('apuntada '+cnDiaTxt(x.fecha)+(x.hora?' '+x.hora:'')+' · '+String(x.g).replace('.',',')+' g');
+      {const D=cnDesc();if(D&&!D.fin&&D.pasa)setTimeout(function(){flash('Recaer no borra nada: seguimos desde aquí');},1800);}
       if(ui.cnF){delete ui.cnF.fecha;ui.cnF.dia='0';}render();break;}
     case 'cn-del':{const c=consumoS();c.ses=c.ses.filter(function(x){return x.id!==el.dataset.id;});save();render();break;}
     case 'cn-obj':{const c=consumoS();c.obj=Math.max(0,Math.min(21,(+c.obj||0)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
+    case 'cn-pin':{const P=ui.cnPin;if(!P)break;
+      if(Date.now()<(ui.cnBloq||0)){render();break;}
+      const v=el.dataset.v;if(v==='x'){P.t=P.t.slice(0,-1);render();break;}
+      if(P.t.length>=4)break;P.t+=v;if(P.t.length<4){render();break;}
+      render();cnPinSigue(P);break;}
+    case 'cn-pin-nuevo':ui.cnPin={modo:'nuevo',t:''};render();break;
+    case 'cn-pin-cambia':ui.cnPin={modo:'actual',t:''};render();break;
+    case 'cn-pin-x':ui.cnPin=null;render();break;
+    case 'cn-cortina-quita':confirmar('¿Quitar la cortina del 4:20? Quedará abierto para quien coja el móvil. No se borra ningún dato.','Sí, quitarla').then(function(ok){
+      if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Cortina quitada: tus datos siguen ahí');render();});break;
+    case 'cn-desc':{const p=consumoS().plan;if(cnDesc()&&!cnDesc().fin)break;const m=el.dataset.v==='mitad',d=iso(addDays(new Date(),-14));
+      const n14=consumoS().ses.filter(function(x){return x.fecha>=d&&x.fecha<iso(new Date());}).length;
+      p.desc={desde:iso(new Date()),dias:m?14:(+el.dataset.v||14),mitad:m,base:Math.round(n14/2*10)/10};save();flash('Descanso: empieza hoy');render();break;}
+    case 'cn-desc-fin':{consumoS().plan.desc=null;save();flash('Hecho. Cuando quieras, empiezas otro');render();break;}
     case 'cn-vista':ui.cnVista=el.dataset.v||'';ui.cnCudit=null;render();window.scrollTo(0,0);break;
     case 'cn-sento':{const x=consumoS().ses.filter(function(q){return q.id===el.dataset.id;})[0];if(x){x.sento=+el.dataset.v||0;save();flash('apuntado: '+ANIMO[x.sento]);}render();break;}
     case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2};render();break;
@@ -28330,7 +28412,9 @@ avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
 programarAvisoHoy();programarAvisoCama();snProgramaAvisos();
 /* al volver a la app (otra noche, otra hora) se recoloca el aviso de cama */
-document.addEventListener('visibilitychange',function(){if(!document.hidden){try{programarAvisoCama();}catch(e){}}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
+document.addEventListener('visibilitychange',function(){if(document.hidden){ui.cnSeFue=Date.now();return;}
+  if(ui.cnSeFue&&Date.now()-ui.cnSeFue>120000&&ui.cnAbierto){ui.cnAbierto=false;if(ui.tab==='consumo')render();}   /* 2 min en segundo plano: la cortina se cierra */
+  try{programarAvisoCama();}catch(e){}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */

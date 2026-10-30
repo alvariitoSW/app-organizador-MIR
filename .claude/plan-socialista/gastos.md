@@ -69,6 +69,8 @@ traspaso explica por qué.
 | 2026-10-30 | G7 · Entreno: 12 dibujos, ficha, progresión doble, saliente | construir | sonnet ×2 en paralelo + verificador | 3 | 79 | ~1,5 M | constructor 1,1 M | dibujos y obra en paralelo con un contrato de datos (`EJ_FICHAS`): −25 % sobre presupuesto |
 | 2026-10-30 | G8 · lector de comida rápida | construir | sonnet | 1 | 53 | 1,7 M (presupuesto 0,8: +112 %) | 7,0 M de caché leída | dos suites completas y buscar un fallo ajeno (la 244, que dependía de la hora) · ante un fallo ajeno, parar y avisar en vez de investigarlo dentro del encargo |
 | 2026-10-30 | G9 · maqueta de La Noche 2 | maqueta | sonnet | 1 | 13 | ~0,1 M (sin presidencia) | — | acuerdos ya escritos y aprobados: maqueta en un solo paso |
+| 2026-10-30 | G10 · cortina con PIN y descanso del 4:20 | construir | sonnet + verificador | 2 | 52 | ~0,9 M (presupuesto 1,5) | constructor 0,8 M | encargo completo + «si algo ajeno falla, dilo y sigue» |
+| 2026-10-30 | G12 · maqueta del modo viaje | maqueta | sonnet | 1 | 6 | ~0,1 M | — | acuerdo ya escrito |
 
 ## Ahorros que funcionan
 
