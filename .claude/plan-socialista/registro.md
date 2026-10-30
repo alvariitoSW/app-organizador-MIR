@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- [aparc-rotulos-10px] Los rótulos en mayúsculas `.cap`/`.k` de toda la app van a 10,5 px y algunos `.mini` a 11,5 (Dinero, Sano, Entreno, 4:20); en 4:20 los botones de potencia miden 36 px de ancho y las casillas de privacidad y guardia 13 px. Es un estilo de toda la app: decidir en una tanda propia · verificador G7 y G10 · 2026-10-30
 - [aparc-entreno-letra] Portada de Entreno: `.ghero2 .k` a 10,5 px y `.glnk` a 12,5 px (ya eran así antes de la G7) · verificador G7 · 2026-10-30
 - [aparc-sueno-noche-olvidada] Una noche sin anotar solo se alcanza 2 días (barrita de Sueño, 3 noches); al tercero no hay ruta visible · verificador G2 · 2026-10-30
 

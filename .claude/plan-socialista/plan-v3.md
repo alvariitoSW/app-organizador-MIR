@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G10 · Construir el 4:20: cortina con PIN + descanso** (maqueta `maquetas/la-noche-2.html`, pantallas 3-5)
+**Gran Ley · G11 · Construir coach + energía + sin pantallas** (maqueta `maquetas/la-noche-2.html`, pantallas 1-2)
 
 ## Por hacer
 
@@ -37,9 +37,9 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | ~~G7~~ | ✅ 30/10 · 12 ejercicios dibujados con ficha (`fig/ejercicios.js`, «Cómo se hace» en la sesión), reps de la vez anterior, «Prueba +X kg» en Lo que toca hoy (progresión doble con `progresionDe`), récord discreto, saliente 25 min al 65 % / movilidad / descanso, guardia «Hoy no toca» · pruebas 387-391 · ~1,4 M | construir | sonnet dibujos y obra | ~2,0 M |
 | ~~G8~~ | ✅ 30/10 · lector de comida rápida: 12 productos y «Menú Big Tasty» nuevos (100 Montaditos, Happy Meal, Big Tasty…), «menú … con coca cola zero» cambia la bebida, menú del día ~1110 kcal, «un paquete de» = paquete individual · 50 frases nuevas (891) · prueba 392 · la 244 ya no depende de la hora | construir | sonnet | ~0,8 M |
 | ~~G9~~ | ✅ 30/10 · `maquetas/la-noche-2.html` · energía y coach, sin pantallas fijo, cortina con PIN, descanso del 4:20, ajustes · sin concurso (Consejo por delegación) · ~0,2 M | maqueta | sonnet | ~1,5 M |
-| G10 | Construir 4:20 y descanso (+ clave según P2) | construir | sonnet | ~1,5 M |
+| ~~G10~~ | ✅ 30/10 · cortina con PIN (solo hash con sal; 5 fallos = 30 s; se cierra al salir, al cerrar y tras 2 min) y neutro fuera del 4:20 (Más, Hoy, Tu semana, hábitos, conductor), quitarla desde Copia de seguridad; descanso 7/14/21 o a la mitad con «seguimos desde aquí» · pruebas 393a-d · revisión de seguridad hecha | construir | sonnet | ~1,5 M |
 | G11 | Construir coach + energía + sin pantallas (según P3) | construir | sonnet | ~2,0 M |
-| G12 | Modo viaje sin red | maqueta → construir | opus + sonnet | ~2,5 M |
+| G12 | Modo viaje sin red · maqueta ✅ `maquetas/modo-viaje.html` (Consejo por delegación); falta construir | maqueta → construir | sonnet | ~2,5 M |
 | G13 | Suite en ~2 min y PNG de `design/` | herramientas | sonnet + haiku | ~1,4 M |
 
 Las tablas de abajo (Comer, La Reforma, «Después») quedan como historia: lo que falta de ellas está en esta cola.
