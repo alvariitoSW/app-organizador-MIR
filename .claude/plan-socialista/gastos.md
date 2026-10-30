@@ -58,7 +58,7 @@ traspaso explica por qué.
 | 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
 | 2026-10-30 | consejo-gran-ley | estudio | opus-5-5 + sonnet-5-5 | 3 | 30 | **688 k** | sesión principal (47 %) | mapa sonnet + 2 dictámenes en paralelo; el mapa encontró R4 casi hecha |
 | 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
-| 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (~1,6 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
+| 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (1,7 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
