@@ -5497,7 +5497,7 @@ function nocheHTML(key,esHoy){
     (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','🏢 He llegado']:null);
   /* con «He salido» a la vista, «He llegado» va de segundo (no dos botones principales apilados) */
   const vivo=viv?'<button class="btn '+(sali?'s nvivo n2':'p nvivo')+'" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
-  const anoche=hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
+  const anoche=hoyModo()==='bus'&&hoyNow(true)<12*60&&!suenoReal(key)?'<button class="btn s nanoche" data-a="sn-hoja" data-k="'+esc(key)+'">🛌 Anotar anoche</button>':'';
   let pie='';
   if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
     '<div class="ncad" id="nocheCad">'+P.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
@@ -5567,10 +5567,11 @@ function hoyDiaHTML(key,inf,esHoy){
     const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
     return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
-  if(m==='linea')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
+  const sn=esHoy?snBotonHTML(key,'margin:0 0 10px'):'';
+  if(m==='linea')return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
   if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
-  return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
+  return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
 /* ===================== HOY DESDE EL ASIENTO DEL CONDUCTOR =====================
    fig/conductor.js dibuja el día como una ruta (ver su cabecera). Se pinta DENTRO de Hoy: el mismo
@@ -6972,8 +6973,13 @@ function suenoHoyCardHTML(){
       '<div class="sn3t">'+tres.map(function(x){return '<div><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>';}).join('')+'</div>')+nota+
     (pend?snPruebaPregunta(pr,'¿Cumpliste ayer «'+pr.txt.toLowerCase()+'»?'):'')+
     /* con algo ya apuntado el botón no se va: tras la guardia se duerme otra vez al llegar a casa */
-    '<button class="btn '+(r?'':'p ')+'s" style="margin-top:8px;width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(r?'✎ '+(r.guardia?'Hoy':'Anoche')+': '+fmtHM(suenoTotal(r)*60)+' · cambiar o añadir':(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche'))+'</button>'+
+    snBotonHTML(hoyK,'margin-top:8px')+
   '</div>';}
+function snBotonHTML(hoyK,estilo){
+  /* «Anotar anoche» / «✎ Anoche: 7 h · cambiar o añadir»: abre la hoja de la noche (suenoHojaHTML). Lo usan Sueño
+     y las vistas Reloj y Línea de Hoy, donde antes solo salía dentro del cartel de la noche desplegado */
+  const r=suenoReal(hoyK);
+  return '<button class="btn '+(r?'':'p ')+'s snbtn" style="'+(estilo?estilo+';':'')+'width:100%" data-a="sn-hoja" data-k="'+hoyK+'">'+(r?'✎ '+(r.guardia?'Hoy':'Anoche')+': '+fmtHM(suenoTotal(r)*60)+' · cambiar o añadir':(salidaDeGuardia(hoyK)?'¿Cuánto dormiste en la guardia?':'Anotar anoche'))+'</button>';}
 
 /* ---------- anotar la noche dibujándola ----------
    La franja va de las 18:00 a las 18:00 del día siguiente. Lo dormido en la guardia va a rayas

@@ -14669,6 +14669,31 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
       r.pizza === '780' && !r.dudas, JSON.stringify(r));
   }
+  // 375) HOY · G1 [aparc-sueno-vistas], EN CADENA (412×915): en la vista Reloj, sin la noche apuntada, sale «Anotar anoche» a la vista (antes solo dentro del cartel
+  //      de la noche desplegado y antes de las 12) → abre la hoja de la noche (la misma de Sueño) → Guardar → el botón pasa a «✎ Anoche: … · cambiar o añadir» →
+  //      vista Línea: el mismo botón → abre la misma hoja; en Conductor no se añade (allí lo ofrece el propio conductor)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo2'); } catch (e) {}
+      delete P.suenoRealS()[P.iso(new Date())]; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const b = document.querySelector('#main .snbtn[data-a="sn-hoja"]'), h = document.querySelector('.hoja [data-a="sn-tguardar"]');
+      return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', alto: b ? Math.round(b.getBoundingClientRect().height) : 0, hoja: !!h,
+        tit: h ? ((h.closest('.hoja').querySelector('.sh') || {}).textContent || '') : '', ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.reloj = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaR = await lee();
+    await page.click('.hoja [data-a="sn-tguardar"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.tras = await lee();
+    r.guardado = await page.evaluate(() => !!window.PG.suenoRealS()[window.PG.iso(new Date())]);
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250); r.linea = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaL = await lee();
+    await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); });
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250); r.bus = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo2'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('375 Hoy · Reloj y Línea: «Anotar anoche» a la vista (≥44 px) abre la hoja de la noche; al guardar dice «✎ Anoche: … · cambiar o añadir»; en Línea el mismo botón abre la misma hoja; en Conductor no se duplica',
+      /Anotar anoche|Cuánto dormiste/.test(r.reloj.btn) && r.reloj.alto >= 44 && r.hojaR.hoja && /Anoche|Noche/.test(r.hojaR.tit) && !r.tras.hoja && r.guardado &&
+      /^✎ (Anoche|Hoy): .* · cambiar o añadir$/.test(r.tras.btn) && r.linea.btn === r.tras.btn && r.hojaL.hoja && r.bus.btn === '' && r.reloj.ancho <= 412, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
