@@ -12910,7 +12910,7 @@ function vitSugerencia(dk,datos){
   if(d&&(d.alims||[]).length){
     let v=0;d.alims.forEach(function(x){const a=alimById(x.id);if(a&&typeof a[k]==='number')v+=a[k]*(+x.g||0)/100;});
     const up=microPct(k,v/Math.max(1,+d.portions||1));
-    if(up>0)return {n:m.n,que:'la '+sg.lbl.toLowerCase()+' ('+cjeNomPlan(d).toLowerCase()+')',up:up};}
+    if(up>0)return {n:m.n,que:(/^(comida|cena|merienda|media)/i.test(sg.lbl)?'la ':'el ')+sg.lbl.toLowerCase()+' ('+cjeNomPlan(d).toLowerCase()+')',up:up};}
   const casa={};despensaS().forEach(function(x){const a=despAlim(x);if(a)casa[a.id]=1;});
   const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0;}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,1)[0];
   if(!r)return null;
@@ -21845,7 +21845,9 @@ function tuMesDatos(){
     .sort(function(a,b){return (a.pg-b.pg)||a.f.localeCompare(b.f);});
   const pagado=lista.reduce(function(s,x){return s+(x.pg?+x.g.importe||0:0);},0);
   const recibos=lista.reduce(function(s,x){return s+(+x.g.importe||0);},0);
-  return {M:M,hay:ingreso>0||fijos>0,ingreso:ingreso,fijos:fijos,gastado:gastado,prev:prev,acabas:acabas,tras:tras,margen:margen,
+  /* sin gasto del día a día conocido (ni mes típico ni nada gastado) no se sabe con cuánto acabas: «ahorras» saldría inflado */
+  const sinVar=!T.vars&&!gastado;
+  return {M:M,hay:ingreso>0||fijos>0,sinVar:sinVar,ingreso:ingreso,fijos:fijos,gastado:gastado,prev:prev,acabas:acabas,tras:tras,margen:margen,
     ahorras:ahorras,paraGastar:paraGastar,porDia:Math.floor(paraGastar/M.dias),dias:M.dias,est:M.est,lista:lista,
     pagado:Math.round(pagado),porPagar:Math.round(recibos-pagado),recibos:recibos};}
 function tmVasoSVG(D,sep){
@@ -21853,9 +21855,10 @@ function tmVasoSVG(D,sep){
   const L=[];
   D.lista.slice().sort(function(a,b){return a.f.localeCompare(b.f);}).forEach(function(x,i){L.push({v:+x.g.importe||0,c:paleta[i%paleta.length],pat:!x.pg,fijo:1});});
   if(D.fijos>D.recibos)L.unshift({v:D.fijos-D.recibos,c:'#334155',fijo:1});
-  L.push({v:D.gastado,c:'#b45309'});
-  if(D.prev>D.gastado)L.push({v:D.prev-D.gastado,c:'#f59e0b',pat:1,pc:'#fde68a'});
-  if(D.acabas>0){L.push({v:Math.min(D.margen,D.acabas),c:'#cbd5e1'});L.push({v:D.ahorras,c:'#15803d'});}
+  if(D.sinVar)L.push({v:Math.max(0,D.tras),c:'#cbd5e1'});
+  else{L.push({v:D.gastado,c:'#b45309'});}
+  if(!D.sinVar&&D.prev>D.gastado)L.push({v:D.prev-D.gastado,c:'#f59e0b',pat:1,pc:'#fde68a'});
+  if(!D.sinVar&&D.acabas>0){L.push({v:Math.min(D.margen,D.acabas),c:'#cbd5e1'});L.push({v:D.ahorras,c:'#15803d'});}
   const nF=L.filter(function(l){return l.fijo;}).length,tot=Math.max(D.ingreso,L.reduce(function(s,l){return s+l.v;},0),1),K=216/tot,G=3;
   let cum=0,defs='',rects='';
   L.forEach(function(l,i){
@@ -21878,30 +21881,37 @@ function dinTuMesHTML(){
   const f=fmtMil,fila=function(c,t,v){return '<li class="tm-ley"><i style="background:'+c+'"></i><span>'+t+'</span><b>'+f(v)+' €</b></li>';};
   const ladoA='<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>'+
     (D.lista.length?'<div>✓ '+f(D.pagado)+' € pagados · ○ '+f(D.porPagar)+' € por pagar</div>':'')+
-    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev)+fila('#475569','Fijos',D.fijos)+'</ul>'+
+    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
     '<div class="tm-toca">Toca el vaso ↓</div>';
   const ladoB='<div class="tm-quedan">Te quedan '+f(D.tras)+' €</div>'+
     '<ul class="tm-fijos" aria-label="Fijos del mes">'+D.lista.map(function(x){
       return '<li class="'+(x.pg?'si':'no')+'"><span>'+(x.pg?'✓ ':'○ ')+esc(x.g.nombre)+'</span><span>'+f(x.g.importe)+' · '+(x.pg?'pagado':esc(fechaCorta(x.f)))+'</span></li>';}).join('')+'</ul>'+
     (D.lista.length?'':'<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>');
+  const aviso='<div class="card tm-hero"><div class="tm-t">Aún no sé tus gastos del día a día</div><p class="tm-p">Sube Fintonic o apunta un gasto para saber con cuánto acabas.</p>'+
+    '<label class="tm-bt p" style="cursor:pointer">📷 Subir Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   return cab+
-    '<div class="card tm-hero"><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
-      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div></div>'+
+    (D.sinVar?aviso:'<div class="card tm-hero"><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
+      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div></div>')+
     '<div class="tm-vrow"><button class="tm-vaso" data-a="tumes-fijos" aria-pressed="'+sep+'" aria-label="Vaso del mes. Toca para separar los fijos y ver cuánto te queda tras pagarlos.">'+tmVasoSVG(D,sep)+'</button>'+
       '<div class="tm-lado" aria-live="polite">'+(sep?ladoB:ladoA)+'</div></div>'+
+    (D.sinVar?'<div class="tm-cadena" role="group" aria-label="La cuenta del mes: '+f(D.ingreso)+' menos '+f(D.fijos)+' igual a '+f(D.tras)+'">'+
+      '<div class="tm-fi">Empiezas<b>'+f(D.ingreso)+'</b></div><span class="tm-op" aria-hidden="true">−</span>'+
+      '<button class="tm-fi tm-fx" data-a="tumes-fijos" aria-pressed="'+sep+'">Fijos<b>'+f(D.fijos)+'</b><span>'+(sep?'quedan '+f(D.tras):'toca')+'</span></button><span class="tm-op" aria-hidden="true">=</span>'+
+      '<div class="tm-fi fin">Te queda<b>'+f(D.tras)+'</b></div></div></div>':
     '<div class="tm-cadena" role="group" aria-label="La cuenta del mes: '+f(D.ingreso)+' menos '+f(D.fijos)+' menos '+f(D.prev)+' igual a '+f(D.acabas)+'">'+
       '<div class="tm-fi">Empiezas<b>'+f(D.ingreso)+'</b></div><span class="tm-op" aria-hidden="true">−</span>'+
       '<button class="tm-fi tm-fx" data-a="tumes-fijos" aria-pressed="'+sep+'">Fijos<b>'+f(D.fijos)+'</b><span>'+(sep?'quedan '+f(D.tras):'toca')+'</span></button><span class="tm-op" aria-hidden="true">−</span>'+
       '<div class="tm-fi">Gastos<b>'+f(D.prev)+'</b><span>llevas '+f(D.gastado)+'</span></div><span class="tm-op" aria-hidden="true">=</span>'+
       '<div class="tm-fi fin">Acabas<b>'+f(D.acabas)+'</b></div></div>'+
-    '<p class="tm-libre">Para gastar sin tocar el ahorro: <b>'+f(D.paraGastar)+' €</b> · unos <b>'+f(D.porDia)+' €/día</b></p></div>';}
+    '<p class="tm-libre">Para gastar sin tocar el ahorro: <b>'+f(D.paraGastar)+' €</b> · unos <b>'+f(D.porDia)+' €/día</b></p></div>');}
 function dinHoyLineaHTML(key,esHoy){
   /* debajo del cartel de la noche: lo que te queda del mes y, si toca, el fijo de mañana. «Hoy toca pagar» ya lo dice pagosHoyHTML */
   if(!esHoy)return '';
   const D=tuMesDatos();if(!D.hay)return '';
   const man=addDays(parseDate(key),1),sig=gastosDeFecha(iso(man)).filter(function(g){return !gastoPagado(g,man.getFullYear(),man.getMonth());});
-  if(!sig.length&&D.est!=='ojo'&&D.est!=='pasa')return '';
+  if(!sig.length&&(D.sinVar||(D.est!=='ojo'&&D.est!=='pasa')))return '';
   const tot=sig.reduce(function(s,g){return s+(+g.importe||0);},0);
+  if(D.sinVar)return '<button class="tm-hoy" data-a="d6-tab" data-v="">💶 Mañana pagas '+esc(sig.map(function(g){return g.nombre;}).join(' y '))+' ('+esc(eur(tot))+')</button>';
   return '<button class="tm-hoy" data-a="d6-tab" data-v="">💶 Te quedan '+fmtMil(D.paraGastar)+' € · '+fmtMil(D.porDia)+' €/día hasta fin de mes'+
     (sig.length?' · mañana pagas '+esc(sig.map(function(g){return g.nombre;}).join(' y '))+' ('+esc(eur(tot))+')':'')+'</button>';}
 function dinTabDe(){const t=ui.dinTab||'';return t==='ahorro'||t==='mes'||t==='gastos'||t==='compras'||t==='bosque'?t:'';}
