@@ -12,11 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-<<<<<<< HEAD
-(nada: la Ley de La Noche quedó hecha el 29/10; la siguiente es la primera de «Por hacer»)
-=======
 **Gran Ley · G2 · MAQUETA Comer** (la siguiente: sesión nueva)
->>>>>>> origin/main
 
 ## Por hacer
 
@@ -101,9 +97,9 @@ el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
 | ~~N0~~ | ✅ 29/10 · gana **A · El cartel** (`maquetas/la-noche-a-cartel.html`, acta «N0 · la maqueta elegida») · Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
-| ~~N1~~ | ✅ main ec1370b · 29/10 · Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
-| ~~N2~~ | ✅ main ec1370b · 29/10 · Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
-| ~~N3~~ | ✅ main ec1370b · 29/10 · repaso del `verificador`, 2 arreglos (nota de «Vete», apilado de las 07:58) · Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
+| N1 | Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
+| N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
+| N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
 
 ### Tanda «La Reforma» (Dinero, Comer y Entreno) · Consejo 2026-10-29 (2.ª) · acta `consejo/2026-10-29-2.md`
 
@@ -129,13 +125,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ### Después (sin planificar todavía)
 
-<<<<<<< HEAD
-- [idea] Botones de 20-34 px en la línea de Hoy (Reloj: comidas e `ir-viaje` a 20 px; filas de días a 34 px), anteriores a la Ley de La Noche · arreglo
-- [idea] Aviso de cama del `.ics` con la cama del escalón (hoy usa la objetivo; las alarmas del Reloj ya dan la del escalón) · arreglo
-
-=======
 0. [v3-viajes] **Viajes y vacaciones** (2026-10-29, «un poco más adelante»), con su propio Consejo (Sanidad + Bienestar): el vuelo (hora, aeropuerto), a qué hora salir de casa, bus o taxi y cómo está la carretera, el billete apuntado como gasto (y si va a Madrid a menudo, como fijo); y **la rutina en vacaciones**: la app es para la continuidad, y en vacaciones no se usa ni hace falta apuntar: debatir cómo ayudar sin romper rachas y cómo volver. Primeras notas en el acta `consejo/2026-10-29-2.md` · maqueta → construir
->>>>>>> origin/main
 1. [v3-420-clave] 4:20 con contraseña (solo esa parte, cambiable desde dentro) · construir
 2. [v3-420-descanso] 4:20 que relacione lo que fumas con el descanso y la energía, y ayude a bajar · maqueta → construir
 3. [v3-entrenador] Entreno como entrenador propio basado en ciencia (la vuelta tras un parón ya está) · maqueta → construir
@@ -145,7 +135,6 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
-- **Simulador de ventilación propio para residente** (2026-10-29): estudiado VentLoop; ideas, ecuaciones y qué cambiar en `docs/informe-ventilador-2026-10.md`. Falta decidir si va en esta app o aparte, y los modos y casos de la primera versión.
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
