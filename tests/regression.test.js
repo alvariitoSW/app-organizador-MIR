@@ -14434,12 +14434,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 366
     const h = {};
     await siembra({ nomina: true, fijos: true, hoy: true }); await page.waitForTimeout(300); h.con = await lee();
-    await page.click('#main .tm-hoy'); await page.waitForTimeout(300); h.abre = await lee(); h.tab = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dinTab);
+    { const el = await page.$('#main .tm-hoy'); h.clic = !!el; if (el) await el.click(); } await page.waitForTimeout(300); h.abre = await lee(); h.tab = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dinTab);
     await siembra({ nomina: true, fijos: true, hoy: true, seguroPagado: true }); await page.waitForTimeout(300); h.pagado = await lee();
     await siembra({ nomina: true, fijos: true, hoy: true, sinManana: true }); await page.waitForTimeout(300); h.sin = await lee();
     await siembra({ hoy: true }); await page.waitForTimeout(300); h.nada = await lee();
     check('366 Hoy · la línea «💶 Te quedan 170 € · 56 €/día hasta fin de mes · mañana pagas Seguro (25 €)» sale con un fijo sin pagar mañana y al tocarla abre Dinero · Tu mes; pagado, sin fijo mañana o sin datos, no sale',
-      /^💶 Te quedan 170 € · 56 €\/día hasta fin de mes · mañana pagas Seguro \(25 €\)$/.test(h.con.linea) && h.con.lineaAlto >= 44 && h.con.ancho <= 412 && h.tab === 'dinero|' && h.abre.hay && /Acabarás/.test(h.abre.hero) &&
+      /^💶 Te quedan 170 € · 56 €\/día hasta fin de mes · mañana pagas Seguro \(25 €\)$/.test(h.con.linea) && h.clic && h.con.lineaAlto >= 44 && h.con.ancho <= 412 && h.tab === 'dinero|' && h.abre.hay && /Acabarás/.test(h.abre.hero) &&
       h.pagado.linea === '' && h.sin.linea === '' && h.nada.linea === '', JSON.stringify(h));
     // 367
     const v = {};
