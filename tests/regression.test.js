@@ -9597,6 +9597,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: P.hm(h * 60 - 60), fin: P.hm(h * 60 + 60), modo: 'fecha', fecha: k, on: true });
       P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); return h * 60; });
     await page.waitForTimeout(150);
+    // según la hora, lo de encima del reloj crece y lo baja por debajo de los 720 px de la ventana de prueba: se trae a la vista
+    await page.evaluate(() => document.querySelector('#main .hoyreloj svg').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(80);
     const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / s.width, t = m / 1440 * 2 * Math.PI;
       return { x: s.left + (150 + r * Math.sin(t) + 60) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
     const est = () => page.evaluate(() => { const P = window.PG, it = P.ui.hoySel ? P.hoyItems(P.ui.hoySel.k, P.dayInfo(P.ui.hoySel.k))[P.ui.hoySel.i] : null;
