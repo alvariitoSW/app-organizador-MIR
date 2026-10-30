@@ -42,14 +42,14 @@ la ficha «150 + 550». Presupuesto: ~1,2 M (constructor sonnet).
   que la portada es el Bosque: se cambian a la pestaña `bosque` (no se borran).
 
 ## 4. Pasos
-- [ ] P1 Pruebas encadenadas que fallan: (a) Dinero → vaso → toca fijos → «Te quedan 1.652 €» → toca otra vez → se pliega;
+- [x] ~~P1 Pruebas encadenadas que fallan: (a) Dinero → vaso → toca fijos → «Te quedan 1.652 €» → toca otra vez → se pliega;~~
   (b) Hoy con un fijo sin pagar mañana → sale la línea → tocarla abre Tu mes; sin nada que aporte → no sale; (c) sin nómina ni
   fijos → vaso vacío con «Apuntar mis fijos». Sembrar con `window.PG`/store como las de `d6-tab` · tests/regression.test.js ·
   constructor sonnet · ~10 pasos
-- [ ] P2 `tuMesDatos()` + `dinTuMesHTML()` + pestañas (`din8Tabs`, `dinTabDe`, `renderDinero`) + `act('tumes-fijos')` + CSS ·
+- [x] ~~P2 `tuMesDatos()` + `dinTuMesHTML()` + pestañas (`din8Tabs`, `dinTabDe`, `renderDinero`) + `act('tumes-fijos')` + CSS ·~~
   app.js, styles.css · constructor sonnet · ~20 pasos
-- [ ] P3 `dinHoyLineaHTML()` en `hoyDiaHTML` · app.js · mismo constructor · ~6 pasos
-- [ ] P4 Arreglar las pruebas viejas que daban la portada por Bosque (a `bosque`) · tests · mismo constructor · ~6 pasos
+- [x] ~~P3 `dinHoyLineaHTML()` en `hoyDiaHTML` · app.js · mismo constructor · ~6 pasos~~
+- [x] ~~P4 Arreglar las pruebas viejas que daban la portada por Bosque (a `bosque`) · tests · mismo constructor · ~6 pasos~~
 - [ ] P5 Comprobar que las de P1 caen al revertir y ninguna otra; `tools/pruebas-corto.sh --solo …`; luego `npm run test:corto` ·
   verificador sonnet
 - [ ] P6 Capturas a 412×915: Tu mes plegado y desplegado, sin datos, Hoy con y sin línea; medir altos (Tu mes ≤915 sin
