@@ -56,6 +56,7 @@ traspaso explica por qué.
 | 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
 | 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
 | 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
+| 2026-10-30 | consejo-gran-ley | estudio | opus-5-5 + sonnet-5-5 | 3 | 30 | **688 k** | sesión principal (47 %) | mapa sonnet + 2 dictámenes en paralelo; el mapa encontró R4 casi hecha |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
