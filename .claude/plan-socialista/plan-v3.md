@@ -150,6 +150,26 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
+### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **espera al usuario** (presupuesto ~10 M y 3 preguntas)
+
+Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
+la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta
+general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a `main` al cerrar la CH8) · **El Chef II** = CH9-CH11 (~2,7 M).
+
+| Clave | Qué | Tipo | Quién | Presupuesto |
+|---|---|---|---|---|
+| CH1 | Ficha, esquema del JSON (equipo, cocina, dificultad, días, por qué, error, `tmp`), `tests/recetario.test.js`, alimentos que faltan, catálogo corregido y ampliado | datos | sonnet con ficha | ~0,7 M |
+| CH2 | «A la compra» desde la receta → compra de la semana (pasillos, sin gluten, «ya lo tengo») | construir | sonnet con ficha | ~0,9 M |
+| CH3 | Maqueta corta: modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», aviso «Cambiado» de TikTok | maqueta | opus + sonnet | ~0,6 M |
+| CH4 | Primeros ~60 platos enteros, para micro + vitro | datos | sonnet (+ haiku en arreglos) | ~0,6 M |
+| CH5 | Recetario navegable (JSON de carga perezosa en `sw.js`, filtros) + «Tu cocina» ampliando `cocinaPref` | construir | sonnet con ficha | ~0,9 M |
+| CH6 | Modo cocina: temporizadores, pantalla encendida, «tenlo a mano», por qué, conservación | construir | sonnet con ficha | ~0,9 M |
+| CH7 | Semana con el recetario + reglas de Sanidad + 1 fuego / ≤6 raciones por olla + «Estoy reventado» | construir | sonnet con ficha | ~0,9 M |
+| CH8 | TikTok → sin gluten al importar + «Mis marcas seguras» (según la respuesta) | construir | sonnet con ficha | ~0,9 M |
+| CH9 | Resto del catálogo entero (~270 platos), por lotes | datos | sonnet ×5 | ~1,5 M |
+| CH10 | Ruta de 8 técnicas + «Ahora puedes hacer N platos más» al ganar horno | construir | sonnet con ficha | ~0,6 M |
+| CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
+
 ### Después (sin planificar todavía)
 
 0. [v3-viajes] **Viajes y vacaciones** (2026-10-29, «un poco más adelante»), con su propio Consejo (Sanidad + Bienestar): el vuelo (hora, aeropuerto), a qué hora salir de casa, bus o taxi y cómo está la carretera, el billete apuntado como gasto (y si va a Madrid a menudo, como fijo); y **la rutina en vacaciones**: la app es para la continuidad, y en vacaciones no se usa ni hace falta apuntar: debatir cómo ayudar sin romper rachas y cómo volver. Primeras notas en el acta `consejo/2026-10-29-2.md` · maqueta → construir
