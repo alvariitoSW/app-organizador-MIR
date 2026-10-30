@@ -21894,10 +21894,11 @@ function dinTuMesHTML(){
   if(!D.hay)return cab+'<div class="card tm-vacio"><div class="tm-vv">'+tmVasoSVG({lista:[],fijos:0,recibos:0,gastado:0,prev:0,acabas:0,ingreso:0,margen:0,ahorras:0},false)+'</div>'+
     '<p class="tm-p"><b>Aún no hay mes que mostrar.</b> Apunta tus gastos fijos y tu nómina y aquí verás con cuánto acabarás el mes y cuánto ahorras.</p>'+
     '<div class="tm-bts"><button class="tm-bt p" data-a="dinero-vista" data-v="fijos">Apuntar mis fijos</button><button class="tm-bt" data-a="dinero-vista" data-v="nomina">Mi nómina</button></div></div></div>';
+  /* la muestra de cada capa, igual que su capa (la apartada, a rayas): la cifra va aquí fuera, a 14 px, no dentro del vaso */
   const f=fmtMil,fila=function(c,t,v){return '<li class="tm-ley"><i style="background:'+c+'"></i><span>'+t+'</span><b>'+f(v)+' €</b></li>';};
   const ladoA='<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>'+
     (D.lista.length?'<div>✓ '+f(D.pagado)+' € pagados · ○ '+f(D.porPagar)+' € por pagar</div>':'')+
-    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+(D.aparta>0?fila('#be123c','Apartado (rayas)',D.aparta):'')+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
+    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+(D.aparta>0?fila('repeating-linear-gradient(45deg,#be123c 0 3px,#fff1f2 3px 6px)','Apartado (rayas)',D.aparta):'')+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
     '<div class="tm-toca">Toca el vaso ↓</div>';
   const ladoB='<div class="tm-quedan">Te quedan '+f(D.tras)+' €</div>'+
     '<ul class="tm-fijos" aria-label="Fijos del mes">'+D.lista.map(function(x){

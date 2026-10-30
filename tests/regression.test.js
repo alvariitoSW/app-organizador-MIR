@@ -14597,6 +14597,35 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
       r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
   }
+  // 372) DINERO · G1 [aparc-tu-mes-r2], EN CADENA (412×915): Tu mes → «Apuntar gasto grande» → Portátil «Lo voy apartando» → Listo → la leyenda del vaso nombra «Apartado (rayas)»
+  //      fuera del vaso, a ≥14 px y con su muestra A RAYAS (como la capa, no un cuadro liso) → abrir su fila → Quitar → la fila de la leyenda desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate372 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia372 = JSON.parse(JSON.stringify(window.PG.store));
+      const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r372', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e372', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const li = [...document.querySelectorAll('#main .tm-ley')].find((l) => /Apartado/.test(l.textContent));
+      if (!li) return { hay: false, capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]') };
+      const i = li.querySelector('i'), cs = getComputedStyle(li);
+      return { hay: true, txt: li.textContent.replace(/\s+/g, ' ').trim(), px: parseFloat(cs.fontSize), fuera: !li.closest('svg'), rayas: /repeating-linear-gradient/.test(getComputedStyle(i).backgroundImage),
+        capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]'), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.a = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+    await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+    await page.click('#hojaDia [data-a="tg-modo"][data-v="apartando"]'); await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate372; });
+    await page.setViewportSize(vp);
+    check('372 Dinero · Tu mes: al apartar para un gasto grande la leyenda nombra «Apartado (rayas) 550 €» fuera del vaso, a ≥14 px y con la muestra a rayas como su capa; al quitarlo desaparece',
+      !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
